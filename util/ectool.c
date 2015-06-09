@@ -3209,9 +3209,10 @@ static int cmd_lightbar(int argc, char **argv)
 		sizeof(((struct ec_response_motion_sense *)0)->dump) \
 		+ sizeof(struct ec_response_motion_sensor_data) * \
 		  ECTOOL_MAX_SENSOR}
+
 static const struct {
-	uint8_t insize;
 	uint8_t outsize;
+	uint8_t insize;
 } ms_command_sizes[] = {
 	MS_DUMP_SIZE(),
 	MS_SIZES(info),
@@ -3242,7 +3243,8 @@ static int cmd_motionsense(int argc, char **argv)
 {
 	int i, rv, status_only = (argc == 2);
 	struct ec_params_motion_sense param;
-	uint8_t resp_buffer[ms_command_sizes[MOTIONSENSE_CMD_DUMP].outsize];
+	/* The largest size using resp as a response buffer */
+	uint8_t resp_buffer[ms_command_sizes[MOTIONSENSE_CMD_DUMP].insize];
 	struct ec_response_motion_sense *resp =
 		(struct ec_response_motion_sense *)resp_buffer;
 	char *e;
@@ -3266,8 +3268,8 @@ static int cmd_motionsense(int argc, char **argv)
 		param.dump.max_sensor_count = ECTOOL_MAX_SENSOR;
 		rv = ec_command(
 			EC_CMD_MOTION_SENSE_CMD, 1,
-			&param, ms_command_sizes[param.cmd].insize,
-			resp, ms_command_sizes[param.cmd].outsize);
+			&param, ms_command_sizes[param.cmd].outsize,
+			resp, ms_command_sizes[param.cmd].insize);
 		if (rv > 0) {
 			printf("%s\n", motion_status_string[
 					!!(resp->dump.module_flags &
@@ -3309,13 +3311,13 @@ static int cmd_motionsense(int argc, char **argv)
 
 		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
 		if (e && *e) {
-			fprintf(stderr, "Bad %s arg.\n", argv[1]);
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
-				&param, ms_command_sizes[param.cmd].insize,
-				resp, ms_command_sizes[param.cmd].outsize);
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
 
 		if (rv < 0)
 			return rv;
@@ -3366,14 +3368,14 @@ static int cmd_motionsense(int argc, char **argv)
 		if (argc == 3) {
 			param.ec_rate.data = strtol(argv[2], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				fprintf(stderr, "Bad %s arg.\n", argv[2]);
 				return -1;
 			}
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
-				&param, ms_command_sizes[param.cmd].insize,
-				resp, ms_command_sizes[param.cmd].outsize);
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
 
 		if (rv < 0)
 			return rv;
@@ -3389,14 +3391,14 @@ static int cmd_motionsense(int argc, char **argv)
 
 		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
 		if (e && *e) {
-			fprintf(stderr, "Bad %s arg.\n", argv[1]);
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
 		}
 
 		if (argc >= 4) {
 			param.sensor_odr.data = strtol(argv[3], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				fprintf(stderr, "Bad %s arg.\n", argv[3]);
 				return -1;
 			}
 		}
@@ -3404,14 +3406,14 @@ static int cmd_motionsense(int argc, char **argv)
 		if (argc == 5) {
 			param.sensor_odr.roundup = strtol(argv[4], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				fprintf(stderr, "Bad %s arg.\n", argv[4]);
 				return -1;
 			}
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
-				&param, ms_command_sizes[param.cmd].insize,
-				resp, ms_command_sizes[param.cmd].outsize);
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
 
 		if (rv < 0)
 			return rv;
@@ -3423,18 +3425,18 @@ static int cmd_motionsense(int argc, char **argv)
 	if (argc > 2 && !strcasecmp(argv[1], "range")) {
 		param.cmd = MOTIONSENSE_CMD_SENSOR_RANGE;
 		param.sensor_range.data = EC_MOTION_SENSE_NO_VALUE;
-		param.sensor_odr.roundup = 1;
+		param.sensor_range.roundup = 1;
 
 		param.sensor_range.sensor_num = strtol(argv[2], &e, 0);
 		if (e && *e) {
-			fprintf(stderr, "Bad %s arg.\n", argv[1]);
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
 		}
 
 		if (argc >= 4) {
 			param.sensor_range.data = strtol(argv[3], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				fprintf(stderr, "Bad %s arg.\n", argv[3]);
 				return -1;
 			}
 		}
@@ -3442,14 +3444,14 @@ static int cmd_motionsense(int argc, char **argv)
 		if (argc == 5) {
 			param.sensor_odr.roundup = strtol(argv[4], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				fprintf(stderr, "Bad %s arg.\n", argv[4]);
 				return -1;
 			}
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
-				&param, ms_command_sizes[param.cmd].insize,
-				resp, ms_command_sizes[param.cmd].outsize);
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
 
 		if (rv < 0)
 			return rv;
@@ -3465,14 +3467,14 @@ static int cmd_motionsense(int argc, char **argv)
 		if (argc == 3) {
 			param.kb_wake_angle.data = strtol(argv[2], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[1]);
+				fprintf(stderr, "Bad %s arg.\n", argv[2]);
 				return -1;
 			}
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
-				&param, ms_command_sizes[param.cmd].insize,
-				resp, ms_command_sizes[param.cmd].outsize);
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
 
 		if (rv < 0)
 			return rv;
