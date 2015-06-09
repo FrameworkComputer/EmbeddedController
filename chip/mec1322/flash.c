@@ -172,7 +172,11 @@ uint32_t flash_physical_get_valid_flags(void)
 uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
-	enum spi_flash_wp wp_status = spi_flash_check_wp();
+	enum spi_flash_wp wp_status = SPI_WP_NONE;
+
+	spi_enable(1);
+	wp_status = spi_flash_check_wp();
+	spi_enable(0);
 
 	if (wp_status == SPI_WP_NONE || (wp_status == SPI_WP_HARDWARE &&
 	   !(cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED)))
