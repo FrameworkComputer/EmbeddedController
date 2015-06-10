@@ -27,7 +27,7 @@ struct protect_range {
 };
 
 /* Compare macro for (x =? b) for 'X' comparison */
-#define COMPARE_BIT(a, b) ((a) != X && (a) != (b))
+#define COMPARE_BIT(a, b) ((a) != X && (a) != !!(b))
 /* Assignment macro where 'X' = 0 */
 #define GET_BIT(a) ((a) == X ? 0 : (a))
 
@@ -44,6 +44,9 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 	{ X, X, 1, { 0, 0, 1 }, 0, 0x10000 }, /* Lower 1/8 */
 	{ X, X, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/4 */
 	{ X, X, X, { 1, X, X }, 0, 0x80000 }, /* All protected */
+	{ X, X, 0, { 0, 0, 1 }, 0x70000, 0x10000 }, /* Upper 1/8*/
+	{ X, X, 0, { 0, 1, 0 }, 0x60000, 0x20000 }, /* Upper 1/4*/
+	{ X, X, 0, { 0, 1, 1 }, 0x40000, 0x40000 }, /* Upper 1/2*/
 };
 
 #elif defined(CONFIG_SPI_FLASH_W25Q64)

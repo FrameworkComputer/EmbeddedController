@@ -723,9 +723,6 @@
 #undef CONFIG_RW_STORAGE_OFF
 #undef CONFIG_RW_SIZE
 
-/* Enable SPI Flash write protect. */
-#undef CONFIG_WP_ENABLE
-
 /*
  * Write protect region offset / size. This region normally encompasses the
  * RO image, but may also contain additional images or data.

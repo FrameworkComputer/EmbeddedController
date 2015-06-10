@@ -48,7 +48,7 @@
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SIZE 524288
 /* TODO: Add flash protect support for the SPI part cyan actually has */
-#define CONFIG_SPI_FLASH_W25Q64
+#define CONFIG_SPI_FLASH_W25X40
 
 #define CONFIG_USB_PORT_POWER_SMART
 #define CONFIG_USB_PORT_POWER_SMART_SIMPLE

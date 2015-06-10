@@ -97,22 +97,9 @@ int flash_physical_erase(int offset, int size)
  */
 int flash_physical_get_protect(int bank)
 {
-#ifdef CONFIG_WP_ENABLE
-/*
- * TODO(crosbug/p/40908): This section was causing SPI to lock up
- * while installing via firmware updater. Disabled it temporarily.
- * will get re-enabled after Flash protection is tested under all
- * scenarios
- */
-
-	uint32_t addr = bank * CONFIG_FLASH_BANK_SIZE;
-	int ret;
-
-	ret = spi_flash_check_protect(addr, CONFIG_FLASH_BANK_SIZE);
-	return ret;
-#else
-	return 0;
-#endif
+	return spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
+			bank * CONFIG_FLASH_BANK_SIZE,
+			CONFIG_FLASH_BANK_SIZE);
 }
 
 /**
@@ -123,29 +110,18 @@ int flash_physical_get_protect(int bank)
  */
 int flash_physical_protect_now(int all)
 {
-#ifdef CONFIG_WP_ENABLE
-/*
- * TODO(crosbug/p/40908): This section was causing SPI to lock up
- * while installing via firmware updater. Disabled it temporarily.
- * will get re-enabled after Flash protection is tested under all
- * scenarios
- */
-
 	int offset, size, ret;
 
 	if (all) {
-		offset = 0;
+		offset = CONFIG_FLASH_BASE_SPI;
 		size = CONFIG_FLASH_PHYSICAL_SIZE;
 	} else {
-		offset = CONFIG_WP_OFF;
+		offset = CONFIG_WP_OFF + CONFIG_FLASH_BASE_SPI;
 		size = CONFIG_WP_SIZE;
 	}
 
 	ret = spi_flash_set_protect(offset, size);
 	return ret;
-#else
-	return 0;
-#endif
 }
 
 /**
@@ -159,21 +135,14 @@ uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
-#ifdef CONFIG_WP_ENABLE
-/*
- * TODO(crosbug/p/40908): This section was causing SPI to lock up
- * while installing via firmware updater. Disabled it temporarily.
- * will get re-enabled after Flash protection is tested under all
- * scenarios
- */
-
-	if (spi_flash_check_protect(CONFIG_RO_STORAGE_OFF, CONFIG_RO_SIZE)) {
+	if (spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
+				    CONFIG_RO_STORAGE_OFF, CONFIG_RO_SIZE)) {
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
-		if (spi_flash_check_protect(CONFIG_RW_STORAGE_OFF,
+		if (spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
+					    CONFIG_RW_STORAGE_OFF,
 					    CONFIG_RW_SIZE))
 			flags |= EC_FLASH_PROTECT_ALL_NOW;
 	}
-#endif
 	return flags;
 }
 
@@ -198,22 +167,14 @@ uint32_t flash_physical_get_valid_flags(void)
 uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
+	enum spi_flash_wp wp_status = SPI_WP_NONE;
 
-#ifdef CONFIG_WP_ENABLE
-/*
- * TODO(crosbug/p/40908): This section was causing SPI to lock up
- * while installing via firmware updater. Disabled it temporarily.
- * will get re-enabled after Flash protection is tested under all
- * scenarios
- */
-
-	enum spi_flash_wp wp_status = spi_flash_check_wp();
+	wp_status = spi_flash_check_wp();
 
 	if (wp_status == SPI_WP_NONE || (wp_status == SPI_WP_HARDWARE &&
 	   !(cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED)))
 		ret = EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 		      EC_FLASH_PROTECT_ALL_NOW;
-#endif
 	return ret;
 }
 
@@ -230,35 +191,30 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
  */
 int flash_physical_protect_at_boot(enum flash_wp_range range)
 {
-#ifdef CONFIG_WP_ENABLE
-/*
- * TODO(crosbug/p/40908): This section was causing SPI to lock up
- * while installing via firmware updater. Disabled it temporarily.
- * will get re-enabled after Flash protection is tested under all
- * scenarios
- */
-
 	int offset, size, ret;
+	enum spi_flash_wp flashwp = SPI_WP_NONE;
 
 	switch (range) {
 	case FLASH_WP_NONE:
 		offset = size = 0;
+		flashwp = SPI_WP_NONE;
 		break;
 	case FLASH_WP_RO:
-		offset = CONFIG_WP_OFF;
+		offset = CONFIG_FLASH_BASE_SPI + CONFIG_WP_OFF;
 		size = CONFIG_WP_SIZE;
+		flashwp = SPI_WP_HARDWARE;
 		break;
 	case FLASH_WP_ALL:
-		offset = 0;
+		offset = CONFIG_FLASH_BASE_SPI;
 		size = CONFIG_FLASH_PHYSICAL_SIZE;
+		flashwp = SPI_WP_HARDWARE;
 		break;
 	}
 
 	ret = spi_flash_set_protect(offset, size);
+	if (ret == EC_SUCCESS)
+		ret = spi_flash_set_wp(flashwp);
 	return ret;
-#else
-	return 0;
-#endif
 }
 
 /**
