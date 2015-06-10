@@ -446,6 +446,11 @@ function flash_mec1322() {
 		die "no flashrom util found."
 	fi
 
+	SERIALNAME=$(${DUT_CONTROL_CMD} serialname | cut -d: -f2)
+	if [[ "$SERIALNAME" != "" ]] ; then
+		FLASHROM_PARAM="${FLASHROM_PARAM},serial=${SERIALNAME}"
+	fi
+
 	dut_control cold_reset:on
 
 	# Turn on SPI1 interface on servo for 3.3V SPI Flash Chip
