@@ -21,6 +21,7 @@
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "pi3usb30532.h"
+#include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
@@ -156,6 +157,10 @@ void i2c_set_timeout(int port, uint32_t timeout)
 /* Initialize board. */
 static void board_init(void)
 {
+	int i, bc12_status;
+	struct charge_port_info charge_none, charge_vbus;
+	struct charge_port_info *charge_sel;
+
 	/* Enable rev1 testing GPIOs */
 	gpio_set_level(GPIO_SYSTEM_POWER_H, 1);
 	/* Enable PD MCU interrupt */
@@ -165,6 +170,43 @@ static void board_init(void)
 #ifdef CONFIG_AP_WARM_RESET_INTERRUPT
 	gpio_enable_interrupt(GPIO_AP_RESET_L);
 #endif
+
+	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.current = 0;
+	charge_vbus.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_vbus.current = DEFAULT_CURR_LIMIT;
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		/* Initialize all pericom charge suppliers to 0 */
+		charge_manager_update_charge(
+				CHARGE_SUPPLIER_PROPRIETARY,
+				i,
+				&charge_none);
+		charge_manager_update_charge(
+				CHARGE_SUPPLIER_BC12_CDP,
+				i,
+				&charge_none);
+		charge_manager_update_charge(
+				CHARGE_SUPPLIER_BC12_DCP,
+				i,
+				&charge_none);
+		charge_manager_update_charge(
+				CHARGE_SUPPLIER_BC12_SDP,
+				i,
+				&charge_none);
+		charge_manager_update_charge(
+				CHARGE_SUPPLIER_OTHER,
+				i,
+				&charge_none);
+
+		/* Initialize VBUS supplier based on VBUS */
+		bc12_status = pi3usb9281_get_charger_status(i);
+		charge_sel = PI3USB9281_CHG_STATUS_ANY(bc12_status) ?
+				&charge_vbus : &charge_none;
+		charge_manager_update_charge(
+				CHARGE_SUPPLIER_VBUS,
+				i,
+				charge_sel);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
