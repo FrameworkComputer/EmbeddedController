@@ -9,8 +9,8 @@
 #define __BOARD_H
 
 #undef CONFIG_BOARD_OAK_REV_1
-#define CONFIG_BOARD_OAK_REV_1_5
-#undef CONFIG_BOARD_OAK_REV_2
+#define CONFIG_BOARD_OAK_REV_2
+#undef CONFIG_BOARD_OAK_REV_3
 
 /*
  * The flash size is only 32kB.

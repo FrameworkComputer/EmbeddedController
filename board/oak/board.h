@@ -10,8 +10,8 @@
 
 /* Board revision */
 #undef  CONFIG_BOARD_OAK_REV_1
-#define CONFIG_BOARD_OAK_REV_1_5
-#undef  CONFIG_BOARD_OAK_REV_2
+#define CONFIG_BOARD_OAK_REV_2
+#undef  CONFIG_BOARD_OAK_REV_3
 
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
