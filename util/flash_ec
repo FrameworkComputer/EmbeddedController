@@ -479,7 +479,7 @@ function flash_mec1322() {
 	dut_control cold_reset:on
 
 	# Turn on SPI1 interface on servo for 3.3V SPI Flash Chip
-	dut-control spi1_vref:pp3300 spi1_buf_en:on spi1_buf_on_flex_en:on
+	dut_control spi1_vref:pp3300 spi1_buf_en:on spi1_buf_on_flex_en:on
 
 	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | tail -n 1)
 	IMG_SIZE=$(stat -c%s "$IMG")
