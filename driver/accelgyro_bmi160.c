@@ -449,7 +449,7 @@ static int init(const struct motion_sensor_t *s)
 		struct bmi160_drv_data_t *data =
 			(struct bmi160_drv_data_t *)s->drv_data;
 		if ((data->flags & BMI160_FLAG_SEC_I2C_ENABLED) == 0) {
-			int ext_page_reg;
+			int ext_page_reg, pullup_reg;
 			/* Enable secondary interface */
 			/*
 			 * This is not part of the normal configuration but from
@@ -477,8 +477,10 @@ static int init(const struct motion_sensor_t *s)
 					&ext_page_reg);
 			raw_write8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
 					ext_page_reg | BMI160_CMD_PAGING_EN);
+			raw_read8(s->i2c_addr, BMI160_COM_C_TRIM_ADDR,
+					&pullup_reg);
 			raw_write8(s->i2c_addr, BMI160_COM_C_TRIM_ADDR,
-					BMI160_COM_C_TRIM);
+					pullup_reg | BMI160_COM_C_TRIM);
 			raw_read8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
 					&ext_page_reg);
 			raw_write8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
