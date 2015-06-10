@@ -30,7 +30,7 @@ GPIO_INT(KB_IN07, PIN(D, 2),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO(5V_POWER_GOOD, PIN(A, 1), GPIO_INPUT)
 GPIO(EC_WAKE,       PIN(A, 0), GPIO_INPUT|GPIO_PULL_DOWN)
 GPIO(WP_L,          PIN(B, 4), GPIO_INPUT)      /* Write protect input */
-GPIO(BATT_TH,       PIN(E, 3),  GPIO_INPUT|GPIO_PULL_UP)
+GPIO(BAT_PRESENT_L, PIN(E, 3), GPIO_INPUT|GPIO_PULL_UP)
 
 /* Board version */
 GPIO(BOARD_VERSION1, PIN(E, 10), GPIO_INPUT|GPIO_PULL_UP) /* Board ID 0 */
