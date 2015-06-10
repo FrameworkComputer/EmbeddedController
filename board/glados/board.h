@@ -10,6 +10,7 @@
 
 /* Optional features */
 #define CONFIG_ADC
+#define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BUTTON_COUNT 2
 #define CONFIG_CHARGE_MANAGER
@@ -75,7 +76,6 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_BATT_TEMP,
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_PSYS,
