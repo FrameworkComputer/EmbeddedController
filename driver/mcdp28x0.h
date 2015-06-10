@@ -21,6 +21,16 @@
 #define MCDP_RSP_LEN(len) (len + 3)
 #define MCDP_LEN_GETINFO 12
 
+/* List of common error codes that can be returned */
+enum mcdp_error_list {
+	MCDP_SUCCESS = 0,
+	MCDP_ERROR_TX_CNT,
+	MCDP_ERROR_TX_BODY,
+	MCDP_ERROR_TX_CHKSUM,
+	MCDP_ERROR_CHKSUM,
+	MCDP_ERROR_RX_BYTES,
+	MCDP_ERROR_RX_ACK,
+};
 
 /**
  * Enable mcdp driver.

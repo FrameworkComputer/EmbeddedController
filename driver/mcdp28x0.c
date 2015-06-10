@@ -93,17 +93,17 @@ static int tx_serial(const uint8_t *msg, int cnt)
 	uint8_t chksum = compute_checksum(cnt + 2, msg, cnt);
 
 	if (queue_add_unit(&usart_mcdp_tx_queue, &out) != 1)
-		return EC_ERROR_UNKNOWN;
+		return MCDP_ERROR_TX_CNT;
 
 	if (queue_add_units(&usart_mcdp_tx_queue, msg, cnt) != cnt)
-		return EC_ERROR_UNKNOWN;
+		return MCDP_ERROR_TX_BODY;
 
 	print_buffer((uint8_t *)msg, cnt);
 
 	if (queue_add_unit(&usart_mcdp_tx_queue, &chksum) != 1)
-		return EC_ERROR_UNKNOWN;
+		return MCDP_ERROR_TX_CHKSUM;
 
-	return EC_SUCCESS;
+	return MCDP_SUCCESS;
 }
 
 /**
@@ -142,20 +142,26 @@ static int rx_serial(uint8_t *msg, int cnt)
 		cnt = msg[0];
 
 	if (msg[cnt-1] != compute_checksum(0, msg, cnt-1))
-		return EC_ERROR_UNKNOWN;
+		return MCDP_ERROR_CHKSUM;
 
-	return !(read == cnt);
+	if (read != cnt) {
+		CPRINTF("rx_serial: read bytes %d != %d cnt\n", read, cnt);
+		return MCDP_ERROR_RX_BYTES;
+	}
+
+	return MCDP_SUCCESS;
 }
 
 static int rx_serial_ack(void)
 {
-	if (rx_serial(mcdp_inbuf, 3))
-		return EC_ERROR_UNKNOWN;
+	int rv = rx_serial(mcdp_inbuf, 3);
+	if (rv)
+		return rv;
 
 	if (mcdp_inbuf[1] != MCDP_CMD_ACK)
-		return EC_ERROR_UNKNOWN;
+		return MCDP_ERROR_RX_ACK;
 
-	return EC_SUCCESS;
+	return rv;
 }
 
 void mcdp_enable(void)
@@ -171,33 +177,38 @@ void mcdp_disable(void)
 int mcdp_get_info(struct mcdp_info  *info)
 {
 	const uint8_t msg[2] = {MCDP_CMD_APPSTEST, 0x28};
+	int rv = tx_serial(msg, sizeof(msg));
 
-	if (tx_serial(msg, sizeof(msg)))
-		return EC_ERROR_UNKNOWN;
+	if (rv)
+		return rv;
 
-	if (rx_serial_ack())
-		return EC_ERROR_UNKNOWN;
+	rv = rx_serial_ack();
+	if (rv)
+		return rv;
 
 	/* chksum is unreliable ... don't check */
 	rx_serial(mcdp_inbuf, MCDP_RSP_LEN(MCDP_LEN_GETINFO));
 
 	memcpy(info, &mcdp_inbuf[2], MCDP_LEN_GETINFO);
 
-	return EC_SUCCESS;
+	return rv;
 }
 
 #ifdef CONFIG_CMD_MCDP
 static int mcdp_get_dev_id(char *dev, uint8_t dev_id, int dev_cnt)
 {
 	uint8_t msg[2];
+	int rv;
 	msg[0] = MCDP_CMD_GETDEVID;
 	msg[1] = dev_id;
 
-	if (tx_serial(msg, sizeof(msg)))
-		return EC_ERROR_UNKNOWN;
+	rv = tx_serial(msg, sizeof(msg));
+	if (rv)
+		return rv;
 
-	if (rx_serial(mcdp_inbuf, sizeof(mcdp_inbuf)))
-		return EC_ERROR_UNKNOWN;
+	rv = rx_serial(mcdp_inbuf, sizeof(mcdp_inbuf));
+	if (rv)
+		return rv;
 
 	memcpy(dev, &mcdp_inbuf[2], mcdp_inbuf[0] - 3);
 	dev[mcdp_inbuf[0] - 3] = '\0';
@@ -209,6 +220,7 @@ static int mcdp_appstest(uint8_t cmd, int paramc, char **paramv)
 	uint8_t msg[6];
 	char *e;
 	int i;
+	int rv = MCDP_SUCCESS;
 
 	/* setup any appstest params */
 	msg[0] = MCDP_CMD_APPSTESTPARAM;
@@ -221,20 +233,24 @@ static int mcdp_appstest(uint8_t cmd, int paramc, char **paramv)
 		msg[3] = (param >> 16) & 0xff;
 		msg[4] = (param >>  8) & 0xff;
 		msg[5] = (param >>  0) & 0xff;
-		if (tx_serial(msg, sizeof(msg)))
-			return EC_ERROR_UNKNOWN;
+		rv = tx_serial(msg, sizeof(msg));
+		if (rv)
+			return rv;
 
-		if (rx_serial_ack())
-			return EC_ERROR_UNKNOWN;
+		rv = rx_serial_ack();
+		if (rv)
+			return rv;
 	}
 
 	msg[0] = MCDP_CMD_APPSTEST;
 	msg[1] = cmd;
-	if (tx_serial(msg, 2))
-		return EC_ERROR_UNKNOWN;
+	rv = tx_serial(msg, 2);
+	if (rv)
+		return rv;
 
-	if (rx_serial_ack())
-		return EC_ERROR_UNKNOWN;
+	rv = rx_serial_ack();
+	if (rv)
+		return rv;
 
 	/* magic */
 	rx_serial(mcdp_inbuf, sizeof(mcdp_inbuf));
@@ -267,7 +283,7 @@ int command_mcdp(int argc, char **argv)
 		uint8_t dev_id = strtoi(argv[2], &e, 10);
 		char dev[32];
 		if (*e)
-			rv = EC_ERROR_PARAM2;
+			return EC_ERROR_PARAM2;
 		else
 			rv = mcdp_get_dev_id(dev, dev_id, 32);
 		if (!rv)
@@ -275,17 +291,20 @@ int command_mcdp(int argc, char **argv)
 	} else if (!strncasecmp(argv[1], "appstest", 4)) {
 		uint8_t cmd = strtoi(argv[2], &e, 10);
 		if (*e)
-			rv = EC_ERROR_PARAM2;
+			return EC_ERROR_PARAM2;
 		else
 			rv = mcdp_appstest(cmd, argc - 3, &argv[3]);
 		if (!rv)
 			ccprintf("appstest[%d] completed\n", cmd);
 	} else {
-		rv = EC_ERROR_PARAM1;
+		return EC_ERROR_PARAM1;
 	}
 
 	mcdp_disable();
-	return rv;
+	if (rv)
+		ccprintf("mcdp_error:%d\n", rv);
+
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(mcdp, command_mcdp,
 			"info|devid <id>|appstest <cmd> [<params>]",
