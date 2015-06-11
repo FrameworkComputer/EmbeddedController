@@ -141,6 +141,10 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+		/* Exit SOC G3 */
+		gpio_set_level(GPIO_SUSPWRDNACK_SOC_EC, 0);
+		CPRINTS("Exit SOC G3");
+
 		if (power_wait_signals(IN_PGOOD_S5)) {
 			chipset_force_shutdown();
 			return POWER_G3;
@@ -296,10 +300,37 @@ enum power_state power_handle_state(enum power_state state)
 		return power_get_pause_in_s5() ? POWER_S5 : POWER_S5G3;
 
 	case POWER_S5G3:
-		/* Assert RSMRST# */
-		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
-		return POWER_G3;
-	}
+		if (gpio_get_level(GPIO_PCH_SUSPWRDNACK) == 1) {
+			/* Assert RSMRST# */
+			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 
+			/* Config pins for SOC G3 */
+			gpio_config_module(MODULE_GPIO, 1);
+
+			/* Enter SOC G3 */
+			gpio_set_level(GPIO_SUSPWRDNACK_SOC_EC, 1);
+			CPRINTS("Enter SOC G3");
+
+			return POWER_G3;
+		} else {
+			CPRINTS("waiting for PMC_SUSPWRDNACK to assert!");
+			return POWER_S5;
+		}
+	}
 	return state;
 }
+
+#ifdef CONFIG_LOW_POWER_PSEUDO_G3
+void enter_pseudo_g3(void)
+{
+	CPRINTS("Enter Psuedo G3");
+	cflush();
+
+	gpio_set_level(GPIO_EC_HIB_L, 1);
+	gpio_set_level(GPIO_SMC_SHUTDOWN, 1);
+
+	/* Power to EC should shut down now */
+	while (1)
+		;
+}
+#endif
