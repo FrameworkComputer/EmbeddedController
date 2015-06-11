@@ -29,6 +29,7 @@
 #include "switch.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
@@ -40,6 +41,9 @@
 
 /* Default input current limit when VBUS is present */
 #define DEFAULT_CURR_LIMIT      500  /* mA */
+
+/* Dispaly port hardware can connect to port 0, 1 or neither. */
+#define PD_PORT_NONE -1
 
 static void ap_reset_deferred(void)
 {
@@ -129,6 +133,20 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
 
 static int discharging_on_ac;
+
+/**
+ * Store the state of our USB data switches so that they can be restored
+ * after pericom reset.
+ */
+static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
+static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t ss_mux_mode[CONFIG_USB_PD_PORT_COUNT];
+
+/**
+ * Store the current DP hardware route.
+ */
+static int dp_hw_port = PD_PORT_NONE;
+static struct mutex dp_hw_lock;
 
 /**
  * Discharge battery when on AC power for factory test.
@@ -280,6 +298,150 @@ void board_charge_manager_override_timeout(void)
 	/* TODO: what to do here? */
 }
 DECLARE_DEFERRED(board_charge_manager_override_timeout);
+
+/**
+ * Set type-C port USB2.0 switch state.
+ *
+ * @param port       the type-C port to change
+ * @param setting    enum usb_switch
+ */
+void board_set_usb_switches(int port, enum usb_switch setting)
+{
+	/* If switch is not charging, then return */
+	if (setting == usb_switch_state[port])
+		return;
+
+	mutex_lock(&usb_switch_lock[port]);
+	if (setting != USB_SWITCH_RESTORE)
+		usb_switch_state[port] = setting;
+	pi3usb9281_set_switches(port, usb_switch_state[port]);
+	mutex_unlock(&usb_switch_lock[port]);
+}
+
+/**
+ * Set USB3.0/DP mux.
+ *
+ * @param port       the type-C port to change
+ * @param mux        mux setting in enum typec_mux
+ * @param usb        USB2.0 switch
+ * @param polarity   0 or 1
+ */
+void board_set_usb_mux(int port, enum typec_mux mux,
+		       enum usb_switch usb, int polarity)
+{
+	const uint8_t modes[] = {
+		[TYPEC_MUX_NONE] = PI3USB30532_MODE_POWERON,
+		[TYPEC_MUX_USB] = PI3USB30532_MODE_USB,
+		[TYPEC_MUX_DP] = PI3USB30532_MODE_DP,
+		[TYPEC_MUX_DOCK] = PI3USB30532_MODE_DP_USB,
+	};
+
+	/* Configure USB2.0 */
+	board_set_usb_switches(port, usb);
+
+	/* Configure superspeed lanes */
+	ss_mux_mode[port] = modes[mux] | (polarity ? PI3USB30532_BIT_SWAP : 0);
+	pi3usb30532_set_switch(port, ss_mux_mode[port]);
+	CPRINTS("usb/dp mux: port(%d) typec_mux(%d) usb2(%d) polarity(%d)",
+			port, mux, usb, polarity);
+}
+
+/**
+ * Get USB/DP mux state.
+ *
+ * @param port       the type-C port to check
+ * @param dp_str     return DP mux status in "DP1", "DP2" or NULL
+ * @param usb_str    return USB mux status in "USB1", "USB2" or NULL
+ *
+ * @return           superspeed lane enable or not.
+ */
+int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
+{
+	const char *dp, *usb;
+	int has_ss, has_dp, has_usb, polarity;
+	int mode = ss_mux_mode[port];
+
+	polarity = mode & PI3USB30532_BIT_SWAP;
+	dp = polarity ? "DP2" : "DP1";
+	usb = polarity ? "USB2" : "USB1";
+
+	has_ss = mode & (PI3USB30532_BIT_DP | PI3USB30532_BIT_USB);
+	has_dp = mode & PI3USB30532_BIT_DP;
+	has_usb = mode & PI3USB30532_BIT_USB;
+	*dp_str = has_dp ? dp : NULL;
+	*usb_str = has_usb ? usb : NULL;
+
+	return has_ss ? 1 : 0;
+}
+
+static void hpd_irq_deferred(void)
+{
+	gpio_set_level(GPIO_USB_DP_HPD, 1);
+}
+DECLARE_DEFERRED(hpd_irq_deferred);
+
+/**
+ * Turn on DP hardware on type-C port.
+ */
+void board_typec_dp_on(int port)
+{
+	mutex_lock(&dp_hw_lock);
+
+	if (dp_hw_port != !port) {
+		/* Get control of DP hardware */
+		dp_hw_port = port;
+		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
+
+		if (!gpio_get_level(GPIO_USB_DP_HPD)) {
+			gpio_set_level(GPIO_USB_DP_HPD, 1);
+		} else {
+			gpio_set_level(GPIO_USB_DP_HPD, 0);
+			hook_call_deferred(hpd_irq_deferred,
+					HPD_DSTREAM_DEBOUNCE_IRQ);
+		}
+	}
+
+	mutex_unlock(&dp_hw_lock);
+}
+
+/**
+ * Turn off a PD port's DP output.
+ */
+void board_typec_dp_off(int port, int *dp_flags)
+{
+	mutex_lock(&dp_hw_lock);
+
+	if (dp_hw_port == !port) {
+		mutex_unlock(&dp_hw_lock);
+		return;
+	}
+
+	dp_hw_port = PD_PORT_NONE;
+	gpio_set_level(GPIO_USB_DP_HPD, 0);
+	mutex_unlock(&dp_hw_lock);
+
+	/* Enable the other port if its dp flag is on */
+	if (dp_flags[!port] & DP_FLAGS_DP_ON)
+		board_typec_dp_on(!port);
+}
+
+/**
+ * Set DP hotplug detect level.
+ */
+void board_typec_dp_set(int port, int level)
+{
+	mutex_lock(&dp_hw_lock);
+
+	if (dp_hw_port == PD_PORT_NONE) {
+		dp_hw_port = port;
+		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
+	}
+
+	if (dp_hw_port == port)
+		gpio_set_level(GPIO_USB_DP_HPD, level);
+
+	mutex_unlock(&dp_hw_lock);
+}
 
 #ifndef CONFIG_AP_WARM_RESET_INTERRUPT
 /* Using this hook if system doesn't have enough external line. */

@@ -37,6 +37,7 @@
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_V2
 #define CONFIG_CHIPSET_MEDIATEK
+#define CONFIG_CMD_TYPEC
 #define CONFIG_FORCE_CONSOLE_RESUME
 #undef  CONFIG_HIBERNATE
 #define CONFIG_HOST_COMMAND_STATUS
@@ -49,6 +50,7 @@
 #define CONFIG_PMIC_FW_LONG_PRESS_TIMER
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_COMMON
+#define CONFIG_USBC_SS_MUX
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
@@ -71,7 +73,7 @@
 #undef CONFIG_UART_RX_DMA
 
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 10
+#define DEFERRABLE_MAX_COUNT 11
 
 /*
  * Allow dangerous commands.
@@ -160,6 +162,11 @@ int board_discharge_on_ac(int enable);
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
+
+/* Control type-C DP route and hotplug detect signal */
+void board_typec_dp_on(int port);
+void board_typec_dp_off(int port, int *dp_flags);
+void board_typec_dp_set(int port, int level);
 
 #endif  /* !__ASSEMBLER__ */
 
