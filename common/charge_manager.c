@@ -4,6 +4,7 @@
  */
 
 #include "adc.h"
+#include "battery.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
 #include "console.h"
@@ -74,12 +75,28 @@ enum charge_manager_change_type {
 };
 
 /**
+ * In certain cases we need to override the default behavior of not charging
+ * from non-dedicated chargers. If the system is in RO and locked, we have no
+ * way of determining the actual dualrole capability of the charger because
+ * PD communication is not allowed, so we must assume that it is dedicated.
+ * Also, if no battery is present, the charger may be our only source of power,
+ * so again we must assume that the charger is dedicated.
+ */
+static int charge_manager_spoof_dualrole_capability(void)
+{
+	return (system_get_image_copy() == SYSTEM_IMAGE_RO &&
+		system_is_locked()) ||
+		(battery_is_present() != BP_YES);
+}
+
+/**
  * Initialize available charge. Run before board init, so board init can
  * initialize data, if needed.
  */
 static void charge_manager_init(void)
 {
 	int i, j;
+	int spoof_capability = charge_manager_spoof_dualrole_capability();
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; ++j) {
@@ -89,7 +106,8 @@ static void charge_manager_init(void)
 				CHARGE_VOLTAGE_UNINITIALIZED;
 		}
 		charge_ceil[i] = CHARGE_CEIL_NONE;
-		dualrole_capability[i] = CAP_UNKNOWN;
+		dualrole_capability[i] = spoof_capability ? CAP_DEDICATED :
+							    CAP_UNKNOWN;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_DEFAULT-1);
@@ -629,11 +647,7 @@ void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
-	/*
-	 * We have no way of determining the charger dualrole capability in
-	 * locked RO, so just assume we always have a dedicated charger.
-	 */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RO && system_is_locked())
+	if (charge_manager_spoof_dualrole_capability())
 		cap = CAP_DEDICATED;
 
 	/* Ignore when capability is unchanged */

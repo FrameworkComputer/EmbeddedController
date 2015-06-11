@@ -5,6 +5,7 @@
  * Test charge manager module.
  */
 
+#include "battery.h"
 #include "charge_manager.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -64,6 +65,11 @@ void board_charge_manager_override_timeout(void)
 void pd_set_new_power_request(int port)
 {
 	new_power_request[port] = 1;
+}
+
+enum battery_present battery_is_present(void)
+{
+	return BP_YES;
 }
 
 static void clear_new_power_requests(void)
