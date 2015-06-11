@@ -18,11 +18,14 @@
 #include "i2c.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
+#include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_charge.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
@@ -44,24 +47,51 @@ static void pd_mcu_interrupt(enum gpio_signal signal)
 	host_command_pd_send_status(0);
 }
 
+static void update_vbus_supplier(int port, int vbus_level)
+{
+	struct charge_port_info charge;
+
+	/*
+	 * If VBUS is low, or VBUS is high and we are not outputting VBUS
+	 * ourselves, then update the VBUS supplier.
+	 */
+	if (!vbus_level || !usb_charger_port_is_sourcing_vbus(port)) {
+		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
+					     port,
+					     &charge);
+	}
+}
+
 void vbus0_evt(enum gpio_signal signal)
 {
-	CPRINTF("VBUS C0, %d\n", !gpio_get_level(signal));
+	/* VBUS present GPIO is inverted */
+	int vbus_level = !gpio_get_level(signal);
+
+	CPRINTF("VBUS C0, %d\n", vbus_level);
+	update_vbus_supplier(0, vbus_level);
 	task_wake(TASK_ID_PD_C0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
 {
-	CPRINTF("VBUS C1, %d\n", !gpio_get_level(signal));
+	/* VBUS present GPIO is inverted */
+	int vbus_level = !gpio_get_level(signal);
+
+	CPRINTF("VBUS C1, %d\n", vbus_level);
+	update_vbus_supplier(0, vbus_level);
 	task_wake(TASK_ID_PD_C1);
 }
 
 void usb0_evt(enum gpio_signal signal)
 {
+	task_wake(TASK_ID_USB_CHG_P0);
 }
 
 void usb1_evt(enum gpio_signal signal)
 {
+	task_wake(TASK_ID_USB_CHG_P1);
 }
 
 #include "gpio_list.h"
@@ -97,6 +127,24 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"pmic",     MEC1322_I2C3,   400,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA  },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+struct pi3usb9281_config pi3usb9281_chips[] = {
+	{
+		.i2c_port = I2C_PORT_USB_CHARGER_1,
+		.mux_lock = NULL,
+	},
+	{
+		.i2c_port = I2C_PORT_USB_CHARGER_2,
+		.mux_lock = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
+	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+
+void board_set_usb_switches(int port, enum usb_switch setting)
+{
+	/* TODO: Set open / close USB switches based on param */
+}
 
 /**
  * Discharge battery when on AC power for factory test.
@@ -141,7 +189,7 @@ DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmic_init, HOOK_PRIO_DEFAULT);
 static void board_init(void)
 {
 	int i;
-	struct charge_port_info charge_none, charge_vbus;
+	struct charge_port_info charge_none;
 
 	/* Enable PD MCU interrupt */
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
@@ -171,21 +219,12 @@ static void board_init(void)
 	}
 
 	/* Initialize VBUS supplier based on whether or not VBUS is present */
-	charge_vbus.voltage = USB_BC12_CHARGE_VOLTAGE;
-	charge_vbus.current = DEFAULT_CURR_LIMIT;
-	if (!gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L))
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
-					     &charge_vbus);
-	else
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
-					     &charge_none);
+	update_vbus_supplier(0, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+	update_vbus_supplier(1, !gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
 
-	if (!gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L))
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 1,
-					     &charge_vbus);
-	else
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 1,
-					     &charge_none);
+	/* Enable pericom BC1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
