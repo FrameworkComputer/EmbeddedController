@@ -199,8 +199,7 @@ int pd_is_connected(int port)
 		pd[port].task_state != PD_STATE_SNK_DISCONNECTED_DEBOUNCE,
 		/* source */
 		pd[port].task_state != PD_STATE_SRC_DISCONNECTED &&
-		pd[port].task_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE &&
-		pd[port].task_state != PD_STATE_SRC_ACCESSORY);
+		pd[port].task_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE);
 }
 
 static inline void set_state(int port, enum pd_states next_state)
