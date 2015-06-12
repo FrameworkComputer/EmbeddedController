@@ -366,12 +366,8 @@ int pd_start_tx(int port, int polarity, int bit_len)
 void pd_tx_done(int port, int polarity)
 {
 #if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
-	int rv;
-
 	/* wait for DMA, DMA interrupt will stop the SPI clock */
-	do {
-		rv = task_wait_event(DMA_TRANSFER_TIMEOUT_US);
-	} while (!(rv & (TASK_EVENT_TIMER | TASK_EVENT_DMA_TC)));
+	task_wait_event_mask(TASK_EVENT_DMA_TC, DMA_TRANSFER_TIMEOUT_US);
 	dma_disable_tc_interrupt(DMAC_SPI_TX(port));
 #else
 	tx_dma_polarities[port] = polarity;
