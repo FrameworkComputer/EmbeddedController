@@ -1503,11 +1503,8 @@ void pd_task(void)
 				pd_power_supply_reset(port);
 #endif
 
-#ifdef CONFIG_USBC_SS_MUX
-				board_set_usb_mux(port, TYPEC_MUX_USB,
-						  USB_SWITCH_CONNECT,
-						  pd[port].polarity);
-#endif
+				/* Set the USB muxes and the default USB role */
+				pd_set_data_role(port, CONFIG_USB_PD_DEBUG_DR);
 
 #ifdef CONFIG_CASE_CLOSED_DEBUG
 				if (new_cc_state == PD_CC_DEBUG_ACC) {
