@@ -757,22 +757,25 @@ int tcpc_run(int port, int evt)
 		else
 			alert(port, TCPC_REG_ALERT1,
 			      TCPC_REG_ALERT1_TX_DISCARDED);
-	}
+	} else {
+		/* If we have nothing to transmit, then sample CC lines */
 
-	/* CC pull changed, wait 1ms for CC voltage to stabilize */
-	if (evt & PD_EVENT_CC)
-		usleep(MSEC);
+		/* CC pull changed, wait 1ms for CC voltage to stabilize */
+		if (evt & PD_EVENT_CC)
+			usleep(MSEC);
 
-	/* check CC lines */
-	for (i = 0; i < 2; i++) {
-		/* read CC voltage */
-		cc = pd_adc_read(port, i);
+		/* check CC lines */
+		for (i = 0; i < 2; i++) {
+			/* read CC voltage */
+			cc = pd_adc_read(port, i);
 
-		/* convert voltage to status, and check status change */
-		cc = cc_voltage_to_status(port, cc);
-		if (pd[port].cc_status[i] != cc) {
-			pd[port].cc_status[i] = cc;
-			alert(port, TCPC_REG_ALERT1, TCPC_REG_ALERT1_CC_STATUS);
+			/* convert voltage to status, and check status change */
+			cc = cc_voltage_to_status(port, cc);
+			if (pd[port].cc_status[i] != cc) {
+				pd[port].cc_status[i] = cc;
+				alert(port, TCPC_REG_ALERT1,
+				      TCPC_REG_ALERT1_CC_STATUS);
+			}
 		}
 	}
 
