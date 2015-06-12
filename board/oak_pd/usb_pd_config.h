@@ -170,32 +170,34 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	if (port == 0) {
-		if (polarity) {/* PA6 is SPI1 MISO */
+		if (polarity) {
+			/* Set TX_DATA to Hi-Z, PA6 is SPI1 MISO */
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
+					& ~(3 << (2*6)));
 			/* set ADC PA4 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-					|  (3 << (2*4))) /* PA4 as ADC */
-					& ~(1 << (2*4)); /* disable GPO */
-			gpio_set_alternate_function(GPIO_A, 0x0040, -1);
-		} else {/* PB4 is SPI1 MISO */
-			/* set ADC PA4 pin to ADC function (Hi-Z) */
+					|  (3 << (2*4))); /* PA4 as ADC */
+		} else {
+			/* Set TX_DATA to Hi-Z, PB4 is SPI1 MISO */
+			STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
+					& ~(3 << (2*4)));
+			/* set ADC PA2 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-					|  (3 << (2*2))) /* PA2 as ADC */
-					& ~(1 << (2*2)); /* disable GPO */
-			gpio_set_alternate_function(GPIO_B, 0x0010, -1);
+					|  (3 << (2*2))); /* PA2 as ADC */
 		}
 	} else {
+		/* Set TX_DATA (PB14) Hi-Z */
+		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
+					& ~(3 << (2*14)));
 		if (polarity) {
-			/* set ADC PA4 pin to ADC function (Hi-Z) */
+			/* set ADC PA5 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-					|  (3 << (2*5))) /* PA5 as ADC */
-					& ~(1 << (2*5)); /* disable GPO */
+					|  (3 << (2*5))); /* PA5 as ADC */
 		} else {
-			/* set ADC PA4 pin to ADC function (Hi-Z) */
+			/* set ADC PA0 pin to ADC function (Hi-Z) */
 			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-					|  (3 << (2*0))) /* PA0 as ADC */
-					& ~(1 << (2*0)); /* disable GPO */
+					|  (3 << (2*0))); /* PA0 as ADC */
 		}
-		gpio_set_alternate_function(GPIO_B, 0x4000, -1);
 	}
 }
 
