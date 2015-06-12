@@ -295,11 +295,11 @@ static void tx_dma_done(void *data)
 	while (spi->sr & STM32_SPI_SR_BSY)
 		; /* wait for BSY == 0 */
 
-	/* put TX pins and reference in Hi-Z */
-	pd_tx_disable(port, polarity);
-
 	/* Stop counting */
 	pd_phy[port].tim_tx->cr1 &= ~1;
+
+	/* put TX pins and reference in Hi-Z */
+	pd_tx_disable(port, polarity);
 
 #if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
 	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_DMA_TC, 0);
