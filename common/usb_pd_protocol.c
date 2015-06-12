@@ -202,6 +202,33 @@ int pd_is_connected(int port)
 		pd[port].task_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE);
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+static int pd_snk_debug_acc_toggle(int port)
+{
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+	/*
+	 * when we are in SNK_DISCONNECTED and we see VBUS appearing
+	 * (without having seen Rp before), that might be a powered debug
+	 * accessory, let's toggle to source to try to detect it.
+	 */
+	return pd_snk_is_vbus_provided(port);
+#else
+	/* Debug accessories not supported, never toggle */
+	return 0;
+#endif
+}
+
+static int pd_debug_acc_plugged(int port)
+{
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+	return pd[port].task_state == PD_STATE_SRC_ACCESSORY;
+#else
+	/* Debug accessories not supported */
+	return 0;
+#endif
+}
+#endif
+
 static inline void set_state(int port, enum pd_states next_state)
 {
 	enum pd_states last_state = pd[port].task_state;
@@ -1146,9 +1173,9 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 		 * disconnected state).
 		 */
 		if (pd[i].power_role == PD_ROLE_SOURCE &&
-		    (drp_state == PD_DRP_FORCE_SINK ||
-		     ((drp_state == PD_DRP_TOGGLE_OFF
-		       || drp_state == PD_DRP_DEBUG_ACC_TOGGLE)
+		    ((drp_state == PD_DRP_FORCE_SINK &&
+		      !pd_debug_acc_plugged(i)) ||
+		     (drp_state == PD_DRP_TOGGLE_OFF
 		      && pd[i].task_state == PD_STATE_SRC_DISCONNECTED))) {
 			pd[i].power_role = PD_ROLE_SINK;
 			set_state(i, PD_STATE_SNK_DISCONNECTED);
@@ -1834,8 +1861,7 @@ void pd_task(void)
 			 */
 			if ((drp_state == PD_DRP_TOGGLE_ON &&
 			     get_time().val >= next_role_swap) ||
-			    (drp_state == PD_DRP_DEBUG_ACC_TOGGLE &&
-			     pd_snk_is_vbus_provided(port))) {
+			    pd_snk_debug_acc_toggle(port)) {
 				/* Swap roles to source */
 				pd[port].power_role = PD_ROLE_SOURCE;
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
@@ -2423,15 +2449,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
 
 static void dual_role_off(void)
 {
-#ifdef CONFIG_CASE_CLOSED_DEBUG
-	/*
-	 * Allow toggling to source only if VBUS is present in order
-	 * to detect debug accessory.
-	 */
-	pd_set_dual_role(PD_DRP_DEBUG_ACC_TOGGLE);
-#else
 	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
-#endif
 	CPRINTS("chipset -> S3");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, dual_role_off, HOOK_PRIO_DEFAULT);
@@ -2441,13 +2459,6 @@ static void dual_role_force_sink(void)
 {
 	pd_set_dual_role(PD_DRP_FORCE_SINK);
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG
-	/*
-	 * Allow toggling to source only if VBUS is present in order
-	 * to detect debug accessory.
-	 */
-	pd_set_dual_role(PD_DRP_DEBUG_ACC_TOGGLE);
-#endif
 	CPRINTS("chipset -> S5");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
@@ -2646,9 +2657,6 @@ static int command_pd(int argc, char **argv)
 			case PD_DRP_FORCE_SOURCE:
 				ccprintf("force source\n");
 				break;
-			case PD_DRP_DEBUG_ACC_TOGGLE:
-				ccprintf("debug acc toggle\n");
-				break;
 			}
 		} else {
 			if (!strcasecmp(argv[2], "on"))
@@ -2659,8 +2667,6 @@ static int command_pd(int argc, char **argv)
 				pd_set_dual_role(PD_DRP_FORCE_SINK);
 			else if (!strcasecmp(argv[2], "source"))
 				pd_set_dual_role(PD_DRP_FORCE_SOURCE);
-			else if (!strcasecmp(argv[2], "debug"))
-				pd_set_dual_role(PD_DRP_DEBUG_ACC_TOGGLE);
 			else
 				return EC_ERROR_PARAM3;
 		}
