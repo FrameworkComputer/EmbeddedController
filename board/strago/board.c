@@ -4,7 +4,9 @@
  */
 /* Strago board-specific configuration */
 
+#include "adc.h"
 #include "als.h"
+#include "button.h"
 #include "charger.h"
 #include "charge_state.h"
 #include "driver/accel_kxcj9.h"
@@ -104,6 +106,14 @@ struct ec_thermal_config thermal_params[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
+const struct button_config buttons[] = {
+	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN,
+		30 * MSEC, 0},
+	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP,
+		30 * MSEC, 0},
+};
+BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
+
 /* Four Motion sensors */
 /* kxcj9 mutex and local/private data*/
 static struct mutex g_kxcj9_mutex[2];
@@ -195,3 +205,11 @@ static void motion_sensors_pre_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sensors_pre_init,
 	MOTION_SENSE_HOOK_PRIO - 1);
+
+/* init ADC ports to avoid floating state due to thermistors */
+static void adc_pre_init(void)
+{
+       /* Configure GPIOs */
+	gpio_config_module(MODULE_ADC, 1);
+}
+DECLARE_HOOK(HOOK_INIT, adc_pre_init, HOOK_PRIO_INIT_ADC - 1);
