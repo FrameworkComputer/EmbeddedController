@@ -75,6 +75,36 @@ static int test_check_detached(int port, int slave_addr)
 	return 0;
 }
 
+int i2c_read32(int port, int slave_addr, int offset, int *data)
+{
+	const struct test_i2c_read_dev *p;
+	int rv;
+
+	if (test_check_detached(port, slave_addr))
+		return EC_ERROR_UNKNOWN;
+	for (p = __test_i2c_read32; p < __test_i2c_read32_end; ++p) {
+		rv = p->routine(port, slave_addr, offset, data);
+		if (rv != EC_ERROR_INVAL)
+			return rv;
+	}
+	return EC_ERROR_UNKNOWN;
+}
+
+int i2c_write32(int port, int slave_addr, int offset, int data)
+{
+	const struct test_i2c_write_dev *p;
+	int rv;
+
+	if (test_check_detached(port, slave_addr))
+		return EC_ERROR_UNKNOWN;
+	for (p = __test_i2c_write32; p < __test_i2c_write32_end; ++p) {
+		rv = p->routine(port, slave_addr, offset, data);
+		if (rv != EC_ERROR_INVAL)
+			return rv;
+	}
+	return EC_ERROR_UNKNOWN;
+}
+
 int i2c_read16(int port, int slave_addr, int offset, int *data)
 {
 	const struct test_i2c_read_dev *p;

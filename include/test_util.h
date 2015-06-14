@@ -256,6 +256,18 @@ struct test_i2c_write_dev {
 	__attribute__((section(".rodata.test_i2c.write16")))		\
 		= {routine}
 
+/* Register an I2C 32-bit read function. */
+#define DECLARE_TEST_I2C_READ32(routine)				\
+	const struct test_i2c_read_dev __test_i2c_read32_##routine	\
+	__attribute__((section(".rodata.test_i2c.read32")))		\
+		= {routine}
+
+/* Register an I2C 32-bit write function. */
+#define DECLARE_TEST_I2C_WRITE32(routine)				\
+	const struct test_i2c_write_dev __test_i2c_write32_##routine	\
+	__attribute__((section(".rodata.test_i2c.write32")))		\
+		= {routine}
+
 #define DECLARE_TEST_I2C_READ_STRING(routine)				\
 	const struct test_i2c_read_string_dev __test_i2c_rs_##routine	\
 	__attribute__((section(".rodata.test_i2c.read_string")))	\

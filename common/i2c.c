@@ -77,15 +77,68 @@ void i2c_prepare_sysjump(void)
 		i2c_lock(i2c_ports[i].port, 1);
 }
 
+int i2c_read32(int port, int slave_addr, int offset, int *data)
+{
+	int rv;
+	uint8_t reg, buf[sizeof(uint32_t)];
+
+	reg = offset & 0xff;
+	/* I2C read 32-bit word: transmit 8-bit offset, and read 32bits */
+	i2c_lock(port, 1);
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, sizeof(uint32_t),
+		      I2C_XFER_SINGLE);
+	i2c_lock(port, 0);
+
+	if (rv)
+		return rv;
+
+	if (slave_addr & I2C_FLAG_BIG_ENDIAN)
+		*data = ((int)buf[0] << 24) | ((int)buf[1] << 16) |
+			((int)buf[0] << 8) | buf[1];
+	else
+		*data = ((int)buf[3] << 24) | ((int)buf[2] << 16) |
+			((int)buf[1] << 8) | buf[0];
+
+	return EC_SUCCESS;
+}
+
+int i2c_write32(int port, int slave_addr, int offset, int data)
+{
+	int rv;
+	uint8_t buf[1 + sizeof(uint32_t)];
+
+	buf[0] = offset & 0xff;
+
+	if (slave_addr & I2C_FLAG_BIG_ENDIAN) {
+		buf[1] = (data >> 24) & 0xff;
+		buf[2] = (data >> 16) & 0xff;
+		buf[3] = (data >> 8) & 0xff;
+		buf[4] = data & 0xff;
+	} else {
+		buf[1] = data & 0xff;
+		buf[2] = (data >> 8) & 0xff;
+		buf[3] = (data >> 16) & 0xff;
+		buf[4] = (data >> 24) & 0xff;
+	}
+
+	i2c_lock(port, 1);
+	rv = i2c_xfer(port, slave_addr, buf, sizeof(uint32_t) + 1, NULL, 0,
+		      I2C_XFER_SINGLE);
+	i2c_lock(port, 0);
+
+	return rv;
+}
+
 int i2c_read16(int port, int slave_addr, int offset, int *data)
 {
 	int rv;
-	uint8_t reg, buf[2];
+	uint8_t reg, buf[sizeof(uint16_t)];
 
 	reg = offset & 0xff;
 	/* I2C read 16-bit word: transmit 8-bit offset, and read 16bits */
 	i2c_lock(port, 1);
-	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, 2, I2C_XFER_SINGLE);
+	rv = i2c_xfer(port, slave_addr, &reg, 1, buf, sizeof(uint16_t),
+		      I2C_XFER_SINGLE);
 	i2c_lock(port, 0);
 
 	if (rv)
@@ -102,7 +155,7 @@ int i2c_read16(int port, int slave_addr, int offset, int *data)
 int i2c_write16(int port, int slave_addr, int offset, int data)
 {
 	int rv;
-	uint8_t buf[3];
+	uint8_t buf[1 + sizeof(uint16_t)];
 
 	buf[0] = offset & 0xff;
 
@@ -115,7 +168,8 @@ int i2c_write16(int port, int slave_addr, int offset, int data)
 	}
 
 	i2c_lock(port, 1);
-	rv = i2c_xfer(port, slave_addr, buf, 3, NULL, 0, I2C_XFER_SINGLE);
+	rv = i2c_xfer(port, slave_addr, buf, 1 + sizeof(uint16_t), NULL, 0,
+		      I2C_XFER_SINGLE);
 	i2c_lock(port, 0);
 
 	return rv;

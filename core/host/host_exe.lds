@@ -104,6 +104,14 @@ SECTIONS {
     *(.rodata.test_i2c.write16)
     __test_i2c_write16_end = .;
 
+    __test_i2c_read32 = .;
+    *(.rodata.test_i2c.read32)
+    __test_i2c_read32_end = .;
+
+    __test_i2c_write32 = .;
+    *(.rodata.test_i2c.write32)
+    __test_i2c_write32_end = .;
+
     __test_i2c_read_string = .;
     *(.rodata.test_i2c.read_string)
     __test_i2c_read_string_end = .;

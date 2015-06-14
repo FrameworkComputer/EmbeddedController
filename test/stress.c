@@ -98,6 +98,12 @@ static int test_i2c(void)
 	else if (param->width == 16 && param->data >= 0)
 		res = i2c_write16(param->port, param->addr,
 				  param->offset, param->data);
+	else if (param->width == 32 && param->data == -1)
+		res = i2c_read32(param->port, param->addr,
+				 param->offset, &dummy_data);
+	else if (param->width == 32 && param->data >= 0)
+		res = i2c_write32(param->port, param->addr,
+				  param->offset, param->data);
 
 	return res;
 }
