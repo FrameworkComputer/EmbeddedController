@@ -703,6 +703,8 @@ void tcpc_init(int port)
 {
 	/* Initialize physical layer */
 	pd_hw_init(port, PD_ROLE_DEFAULT);
+	pd[port].cc_pull = PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
+							       TYPEC_CC_RD;
 
 	/* make sure PD monitoring is disabled initially */
 	pd[port].rx_enabled = 0;
