@@ -1326,10 +1326,9 @@ void pd_task(void)
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
 
-#ifdef CONFIG_USB_PD_TCPC
-	/* Initialize port controller */
-	tcpc_init(port);
-#endif
+	/* Initialize TCPM driver and wait for TCPC to be ready */
+	tcpm_init(port);
+	CPRINTF("[%T TCPC p%d ready]\n", port);
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);

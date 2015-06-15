@@ -40,6 +40,9 @@ static struct mutex pd_crc_lock;
 static const int debug_level;
 #endif
 
+/* USB Vendor ID, initialized to 0, written to actual VID when TCPC is ready */
+static int tcpc_vid;
+
 /* Encode 5 bits using Biphase Mark Coding */
 #define BMC(x)   ((x &  1 ? 0x001 : 0x3FF) \
 		^ (x &  2 ? 0x004 : 0x3FC) \
@@ -785,6 +788,9 @@ int tcpc_run(int port, int evt)
 	if (pd[port].rx_enabled)
 		pd_rx_enable_monitoring(port);
 
+	/* write our TCPC VID to notify TCPM that we are ready */
+	tcpc_vid = USB_VID_GOOGLE;
+
 	/* TODO: adjust timeout based on how often to sample CC */
 	return 10*MSEC;
 }
@@ -963,6 +969,9 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	int cc1, cc2;
 
 	switch (reg) {
+	case TCPC_REG_VENDOR_ID:
+		*(uint16_t *)payload = tcpc_vid;
+		return 2;
 	case TCPC_REG_CC1_STATUS:
 		tcpc_get_cc(port, &cc1, &cc2);
 		payload[0] = TCPC_REG_CC_STATUS_SET(

@@ -6,6 +6,7 @@
 /* Type-C port manager */
 
 #include "i2c.h"
+#include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
 #include "usb_pd_tcpm.h"
@@ -18,6 +19,23 @@
 #define I2C_ADDR_TCPC(p) (CONFIG_TCPC_I2C_BASE_ADDR + 2*(p))
 
 static int tcpc_polarity, tcpc_vconn;
+
+int tcpm_init(int port)
+{
+	int rv, vid = 0;
+
+	while (1) {
+		rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+				TCPC_REG_VENDOR_ID, &vid);
+		/*
+		 * If i2c succeeds and VID is non-zero, then initialization
+		 * is complete
+		 */
+		if (rv == EC_SUCCESS && vid)
+			return rv;
+		msleep(10);
+	}
+}
 
 int tcpm_get_cc(int port, int *cc1, int *cc2)
 {

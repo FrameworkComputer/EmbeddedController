@@ -161,6 +161,15 @@ int tcpm_alert_status(int port, int alert_reg, uint8_t *alert);
 
 
 /**
+ * Initialize TCPM driver and wait for TCPC readiness.
+ *
+ * @param port Type-C port number
+ *
+ * @return EC_SUCCESS or error
+ */
+int tcpm_init(int port);
+
+/**
  * Read the CC line status.
  *
  * @param port Type-C port number

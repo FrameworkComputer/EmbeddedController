@@ -20,6 +20,12 @@ extern int tcpc_get_message(int port, uint32_t *payload, int *head);
 extern int tcpc_transmit(int port, enum tcpm_transmit_type type,
 			 uint16_t header, const uint32_t *data);
 
+int tcpm_init(int port)
+{
+	tcpc_init(port);
+	return EC_SUCCESS;
+}
+
 int tcpm_get_cc(int port, int *cc1, int *cc2)
 {
 	return tcpc_get_cc(port, cc1, cc2);
