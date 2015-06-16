@@ -564,16 +564,15 @@ struct pd_policy {
  * DisplayPort Configure VDO
  * -------------------------
  * <31:24> : SBZ
- * <23:16> : sink pin assignment requested.  Choose one from mode caps.
- * <15:8>  : source pin assignment requested.  Choose one from mode caps.
+ * <23:16> : SBZ
+ * <15:8>  : Pin assignment requested.  Choose one from mode caps.
  * <7:6>   : SBZ
  * <5:2>   : signalling : 1h == DP v1.3, 2h == Gen 2
  *           Oh is only for USB, remaining values are reserved
  * <1:0>   : cfg : 00 == USB, 01 == DFP_D, 10 == UFP_D, 11 == reserved
  */
-#define VDO_DP_CFG(snkp, srcp, sig, cfg)				\
-	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
-	 | ((sig) & 0xf) << 2 | ((cfg) & 0x3))
+#define VDO_DP_CFG(pin, sig, cfg) \
+	(((pin) & 0xff) << 8 | ((sig) & 0xf) << 2 | ((cfg) & 0x3))
 
 #define PD_DP_CFG_DPON(x) (((x & 0x3) == 1) || ((x & 0x3) == 2))
 /*

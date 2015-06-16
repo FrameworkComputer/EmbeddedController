@@ -218,8 +218,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
 			  pd_get_polarity(port));
 	dp_on = 1;
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG);
-	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* sink pins */
-				MODE_DP_PIN_E, /* src pins */
+	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* pin mode */
 				1,             /* DPv1.3 signaling */
 				2);	       /* UFP connected */
 	return 2;
