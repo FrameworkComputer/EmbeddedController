@@ -343,7 +343,7 @@ static void gpio_interrupt(int port, uint8_t mask)
 	const struct gpio_info *g = gpio_list;
 
 	for (i = 0; i < GPIO_IH_COUNT; i++, g++) {
-		if (port == g->port && (mask & g->mask))
+		if (port == g->port && (mask & g->mask)) {
 			gpio_irq_handlers[i](i);
 			return;
 		}

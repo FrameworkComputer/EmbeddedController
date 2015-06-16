@@ -10,5 +10,11 @@
 
 void lpc_kbc_ibf_interrupt(void);
 void lpc_kbc_obe_interrupt(void);
+void pm1_ibf_interrupt(void);
+void pm2_ibf_interrupt(void);
+void pm3_ibf_interrupt(void);
+void pm4_ibf_interrupt(void);
+void pm5_ibf_interrupt(void);
+void lpcrst_interrupt(enum gpio_signal signal);
 
 #endif /* __CROS_EC_IT83XX_INTC_H */

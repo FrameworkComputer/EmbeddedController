@@ -34,3 +34,36 @@ void intc_cpu_int_group_5(void)
 	}
 }
 DECLARE_IRQ(CPU_INT_GROUP_5, intc_cpu_int_group_5, 2);
+
+void intc_cpu_int_group_4(void)
+{
+	/* Determine interrupt number. */
+	int intc_group_4 = IT83XX_INTC_IVCT4 - 16;
+
+	switch (intc_group_4) {
+#ifdef CONFIG_LPC
+	case IT83XX_IRQ_PMC_IN:
+		pm1_ibf_interrupt();
+		break;
+
+	case IT83XX_IRQ_PMC2_IN:
+		pm2_ibf_interrupt();
+		break;
+
+	case IT83XX_IRQ_PMC3_IN:
+		pm3_ibf_interrupt();
+		break;
+
+	case IT83XX_IRQ_PMC4_IN:
+		pm4_ibf_interrupt();
+		break;
+
+	case IT83XX_IRQ_PMC5_IN:
+		pm5_ibf_interrupt();
+		break;
+#endif
+	default:
+		break;
+	}
+}
+DECLARE_IRQ(CPU_INT_GROUP_4, intc_cpu_int_group_4, 2);

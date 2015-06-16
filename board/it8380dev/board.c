@@ -21,6 +21,7 @@
 #include "keyboard_scan.h"
 #include "timer.h"
 #include "lpc.h"
+#include "intc.h"
 
 /* Test GPIO interrupt function that toggles one LED. */
 void test_interrupt(enum gpio_signal signal)
@@ -66,6 +67,39 @@ const struct ec2i_t pnpcfg_settings[] = {
 
 	/* Select logical device 11h(PM1 ACPI) */
 	{HOST_INDEX_LDN, LDN_PMC1},
+	/* Set IRQ=00h for logical device */
+	{HOST_INDEX_IRQNUMX, 0x00},
+	/* Enable logical device */
+	{HOST_INDEX_LDA, 0x01},
+
+	/* Select logical device 12h(PM2) */
+	{HOST_INDEX_LDN, LDN_PMC2},
+	/* I/O Port Base Address 200h/204h */
+	{HOST_INDEX_IOBAD0_MSB, 0x02},
+	{HOST_INDEX_IOBAD0_LSB, 0x00},
+	{HOST_INDEX_IOBAD1_MSB, 0x02},
+	{HOST_INDEX_IOBAD1_LSB, 0x04},
+	/* Set IRQ=00h for logical device */
+	{HOST_INDEX_IRQNUMX, 0x00},
+	/* Enable logical device */
+	{HOST_INDEX_LDA, 0x01},
+
+	/* Select logical device 0Fh(SMFI) */
+	{HOST_INDEX_LDN, LDN_SMFI},
+	/* H2RAM LPC I/O cycle Dxxx */
+	{HOST_INDEX_DSLDC6, 0x00},
+	/* Enable H2RAM LPC I/O cycle */
+	{HOST_INDEX_DSLDC7, 0x01},
+	/* Enable logical device */
+	{HOST_INDEX_LDA, 0x01},
+
+	/* Select logical device 17h(PM3) */
+	{HOST_INDEX_LDN, LDN_PMC3},
+	/* I/O Port Base Address 80h */
+	{HOST_INDEX_IOBAD0_MSB, 0x00},
+	{HOST_INDEX_IOBAD0_LSB, 0x80},
+	{HOST_INDEX_IOBAD1_MSB, 0x00},
+	{HOST_INDEX_IOBAD1_LSB, 0x00},
 	/* Set IRQ=00h for logical device */
 	{HOST_INDEX_IRQNUMX, 0x00},
 	/* Enable logical device */
