@@ -13,6 +13,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #undef CONFIG_KEYBOARD_KSI_WUC_INT
+#undef CONFIG_SPI_USE_CS1
 
 /* Debug */
 #undef CONFIG_KEYBOARD_DEBUG
@@ -30,7 +31,6 @@ enum pwm_channel {
 	PWM_CH_3,
 	PWM_CH_4,
 	PWM_CH_5,
-	PWM_CH_6,
 	PWM_CH_7,
 
 	/* Number of PWM channels */

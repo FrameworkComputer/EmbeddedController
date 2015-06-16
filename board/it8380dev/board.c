@@ -43,7 +43,6 @@ const struct pwm_t pwm_channels[] = {
 	{3, PWM_CONFIG_ACTIVE_LOW},
 	{4, 0},
 	{5, PWM_CONFIG_ACTIVE_LOW},
-	{6, 0},
 	{7, PWM_CONFIG_ACTIVE_LOW},
 };
 
