@@ -38,7 +38,7 @@ static inline void print_buffer(uint8_t *buf, int cnt)
 static inline void print_buffer(uint8_t *buf, int cnt) {}
 #endif
 
-struct usart_config const usart_mcdp;
+static struct usart_config const usart_mcdp;
 
 struct queue const usart_mcdp_rx_queue = QUEUE_DIRECT(MCDP_INBUF_MAX,
 						      uint8_t,
@@ -49,11 +49,12 @@ struct queue const usart_mcdp_tx_queue = QUEUE_DIRECT(MCDP_OUTBUF_MAX,
 						      null_producer,
 						      usart_mcdp.consumer);
 
-USART_CONFIG(usart_mcdp,
-	     CONFIG_MCDP28X0,
-	     115200,
-	     usart_mcdp_rx_queue,
-	     usart_mcdp_tx_queue);
+static struct usart_config const usart_mcdp = USART_CONFIG(CONFIG_MCDP28X0,
+							   usart_rx_interrupt,
+							   usart_tx_interrupt,
+							   115200,
+							   usart_mcdp_rx_queue,
+							   usart_mcdp_tx_queue);
 
 /**
  * Compute checksum.

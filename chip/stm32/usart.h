@@ -46,6 +46,32 @@ struct usart_hw_ops {
 };
 
 /*
+ * The usart_rx/usart_tx structures contain functions pointers for the
+ * interrupt handler and producer/consumer operations required to implement a
+ * particular RX/TX strategy.
+ *
+ * These structures are defined by the various RX/TX implementations, and are
+ * used to initialize the usart_config structure to configure the USART driver
+ * for interrupt or DMA based transfer.
+ */
+struct usart_rx {
+	void (*init)(struct usart_config const *config);
+	void (*interrupt)(struct usart_config const *config);
+
+	struct producer_ops producer_ops;
+};
+
+struct usart_tx {
+	void (*init)(struct usart_config const *config);
+	void (*interrupt)(struct usart_config const *config);
+
+	struct consumer_ops consumer_ops;
+};
+
+extern struct usart_rx const usart_rx_interrupt;
+extern struct usart_tx const usart_tx_interrupt;
+
+/*
  * Per-USART hardware configuration stored in flash.  Instances of this
  * structure are provided by each variants driver, one per physical USART.
  */
@@ -72,6 +98,9 @@ struct usart_config {
 	 */
 	struct usart_hw_config const *hw;
 
+	struct usart_rx const *rx;
+	struct usart_tx const *tx;
+
 	/*
 	 * Pointer to USART state structure.  The state structure maintains per
 	 * USART information.
@@ -86,13 +115,6 @@ struct usart_config {
 	struct consumer consumer;
 	struct producer producer;
 };
-
-/*
- * These function tables are defined by the USART driver and are used to
- * initialize the consumer and producer in the usart_config.
- */
-extern struct consumer_ops const usart_consumer_ops;
-extern struct producer_ops const usart_producer_ops;
 
 /*
  * Convenience macro for defining USARTs and their associated state and buffers.
@@ -111,26 +133,22 @@ extern struct producer_ops const usart_producer_ops;
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
  */
-#define USART_CONFIG(NAME,					\
-		     HW,					\
-		     BAUD,					\
-		     RX_QUEUE,					\
-		     TX_QUEUE)					\
-								\
-	static struct usart_state CONCAT2(NAME, _state);	\
-	struct usart_config const NAME = {			\
+#define USART_CONFIG(HW, RX, TX, BAUD, RX_QUEUE, TX_QUEUE)	\
+	((struct usart_config const) {				\
 		.hw       = &HW,				\
-		.state    = &CONCAT2(NAME, _state),		\
+		.rx       = &RX,				\
+		.tx       = &TX,				\
+		.state    = &((struct usart_state){}),		\
 		.baud     = BAUD,				\
 		.consumer = {					\
 			.queue = &TX_QUEUE,			\
-			.ops   = &usart_consumer_ops,		\
+			.ops   = &TX.consumer_ops,		\
 		},						\
 		.producer = {					\
 			.queue = &RX_QUEUE,			\
-			.ops   = &usart_producer_ops,		\
+			.ops   = &RX.producer_ops,		\
 		},						\
-	};
+	})
 
 /*
  * Initialize the given USART.  Once init is finished the USART streams are

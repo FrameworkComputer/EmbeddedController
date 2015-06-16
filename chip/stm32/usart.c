@@ -14,47 +14,6 @@
 #include "usart.h"
 #include "util.h"
 
-static void usart_written(struct consumer const *consumer, size_t count)
-{
-	struct usart_config const *config =
-		DOWNCAST(consumer, struct usart_config, consumer);
-
-	/*
-	 * Enable USART interrupt.  This causes the USART interrupt handler to
-	 * start fetching from the TX queue if it wasn't already.
-	 */
-	if (count)
-		STM32_USART_CR1(config->hw->base) |= STM32_USART_CR1_TXEIE;
-}
-
-static void usart_flush(struct consumer const *consumer)
-{
-	struct usart_config const *config =
-		DOWNCAST(consumer, struct usart_config, consumer);
-
-	/*
-	 * Enable USART interrupt.  This causes the USART interrupt handler to
-	 * start fetching from the TX queue if it wasn't already.
-	 */
-	STM32_USART_CR1(config->hw->base) |= STM32_USART_CR1_TXEIE;
-
-	while (queue_count(consumer->queue))
-		;
-}
-
-struct producer_ops const usart_producer_ops = {
-	/*
-	 * Nothing to do here, we either had enough space in the queue when
-	 * a character came in or we dropped it already.
-	 */
-	.read = NULL,
-};
-
-struct consumer_ops const usart_consumer_ops = {
-	.written = usart_written,
-	.flush   = usart_flush,
-};
-
 void usart_init(struct usart_config const *config)
 {
 	intptr_t base = config->hw->base;
@@ -78,18 +37,18 @@ void usart_init(struct usart_config const *config)
 	gpio_config_module(MODULE_USART, 1);
 
 	/*
-	 * 8N1, 16 samples per bit, enable TX and RX (and associated RX
-	 * interrupt) DMA, error interrupts, and special modes disabled.
+	 * 8N1, 16 samples per bit. error interrupts, and special modes
+	 * disabled.
 	 */
-	STM32_USART_CR1(base) = (STM32_USART_CR1_TE |
-				 STM32_USART_CR1_RE |
-				 STM32_USART_CR1_RXNEIE);
+	STM32_USART_CR1(base) = 0x0000;
 	STM32_USART_CR2(base) = 0x0000;
 	STM32_USART_CR3(base) = STM32_USART_CR3_OVRDIS;
 
 	/*
-	 * Enable the variant specific HW.
+	 * Enable the RX, TX, and variant specific HW.
 	 */
+	config->rx->init(config);
+	config->tx->init(config);
 	config->hw->ops->enable(config);
 
 	/*
@@ -137,51 +96,8 @@ void usart_set_baud_f(struct usart_config const *config, int frequency_hz)
 	STM32_USART_BRR(config->hw->base) = div;
 }
 
-static void usart_interrupt_tx(struct usart_config const *config)
-{
-	intptr_t base = config->hw->base;
-	uint8_t  byte;
-
-	if (queue_remove_unit(config->consumer.queue, &byte)) {
-		STM32_USART_TDR(base) = byte;
-
-		/*
-		 * Make sure the TXE interrupt is enabled and that we won't go
-		 * into deep sleep.  This invocation of the USART interrupt
-		 * handler may have been manually triggered to start
-		 * transmission.
-		 */
-		disable_sleep(SLEEP_MASK_UART);
-
-		STM32_USART_CR1(base) |= STM32_USART_CR1_TXEIE;
-	} else {
-		/*
-		 * The TX queue is empty, disable the TXE interrupt and enable
-		 * deep sleep mode. The TXE interrupt will remain disabled
-		 * until a write call happens.
-		 */
-		enable_sleep(SLEEP_MASK_UART);
-
-		STM32_USART_CR1(base) &= ~STM32_USART_CR1_TXEIE;
-	}
-}
-
-static void usart_interrupt_rx(struct usart_config const *config)
-{
-	intptr_t base = config->hw->base;
-	uint8_t  byte = STM32_USART_RDR(base);
-
-	if (!queue_add_unit(config->producer.queue, &byte))
-		atomic_add((uint32_t *) &config->state->rx_dropped, 1);
-}
-
 void usart_interrupt(struct usart_config const *config)
 {
-	intptr_t base = config->hw->base;
-
-	if (STM32_USART_SR(base) & STM32_USART_SR_TXE)
-		usart_interrupt_tx(config);
-
-	if (STM32_USART_SR(base) & STM32_USART_SR_RXNE)
-		usart_interrupt_rx(config);
+    config->tx->interrupt(config);
+    config->rx->interrupt(config);
 }

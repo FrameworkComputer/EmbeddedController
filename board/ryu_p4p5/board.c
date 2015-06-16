@@ -111,8 +111,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  * Define AP and SH console forwarding queues and associated USART and USB
  * stream endpoints.
  */
-struct usart_config const ap_usart;
-struct usart_config const sh_usart;
+static struct usart_config const ap_usart;
+static struct usart_config const sh_usart;
 
 struct usb_stream_config const ap_usb;
 struct usb_stream_config const sh_usb;
@@ -130,8 +130,19 @@ static struct queue const sh_usb_to_usart = QUEUE_DIRECT(64, uint8_t,
 							 sh_usb.producer,
 							 sh_usart.consumer);
 
-USART_CONFIG(ap_usart, usart1_hw, 115200, ap_usart_to_usb, ap_usb_to_usart)
-USART_CONFIG(sh_usart, usart3_hw, 115200, sh_usart_to_usb, sh_usb_to_usart)
+static struct usart_config const ap_usart = USART_CONFIG(usart1_hw,
+							 usart_rx_interrupt,
+							 usart_tx_interrupt,
+							 115200,
+							 ap_usart_to_usb,
+							 ap_usb_to_usart);
+
+static struct usart_config const sh_usart = USART_CONFIG(usart3_hw,
+							 usart_rx_interrupt,
+							 usart_tx_interrupt,
+							 115200,
+							 sh_usart_to_usb,
+							 sh_usb_to_usart);
 
 #define AP_USB_STREAM_RX_SIZE	16
 #define AP_USB_STREAM_TX_SIZE	16
