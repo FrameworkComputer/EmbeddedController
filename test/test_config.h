@@ -5,8 +5,8 @@
 
 /* Per-test config flags */
 
-#ifndef __CROS_EC_TEST_CONFIG_H
-#define __CROS_EC_TEST_CONFIG_H
+#ifndef __TEST_TEST_CONFIG_H
+#define __TEST_TEST_CONFIG_H
 
 /* Test config flags only apply for test builds */
 #ifdef TEST_BUILD
@@ -119,4 +119,4 @@ int board_discharge_on_ac(int enabled);
 #endif
 
 #endif  /* TEST_BUILD */
-#endif  /* __CROS_EC_TEST_CONFIG_H */
+#endif  /* __TEST_TEST_CONFIG_H */

@@ -5,8 +5,8 @@
  * TPSChrome PMU APIs.
  */
 
-#ifndef __CROS_EC_TPSCHROME_H
-#define __CROS_EC_TPSCHROME_H
+#ifndef __CROS_EC_PMU_TPSCHROME_H
+#define __CROS_EC_PMU_TPSCHROME_H
 
 #include "gpio.h"
 
@@ -294,5 +294,5 @@ int charge_keep_power_off(void);
  */
 int pmu_board_init(void);
 
-#endif /* __CROS_EC_TPSCHROME_H */
+#endif /* __CROS_EC_PMU_TPSCHROME_H */
 

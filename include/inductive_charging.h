@@ -7,8 +7,8 @@
 
 #include "gpio.h"
 
-#ifndef __INDUCTIVE_CHARGING_H
-#define __INDUCTIVE_CHARGING_H
+#ifndef __CROS_EC_INDUCTIVE_CHARGING_H
+#define __CROS_EC_INDUCTIVE_CHARGING_H
 
 /*
  * Interrupt handler for inductive charging signal.

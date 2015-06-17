@@ -5,8 +5,8 @@
 
 /* Plankton board configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
@@ -116,4 +116,4 @@ int board_in_hub_mode(void);
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

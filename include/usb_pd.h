@@ -5,8 +5,8 @@
 
 /* USB Power delivery module */
 
-#ifndef __USB_PD_H
-#define __USB_PD_H
+#ifndef __CROS_EC_USB_PD_H
+#define __CROS_EC_USB_PD_H
 
 #include "common.h"
 
@@ -1558,4 +1558,4 @@ static inline void pd_log_event(uint8_t type, uint8_t size_port,
 static inline int pd_vdm_get_log_entry(uint32_t *payload) { return 0; }
 #endif /* CONFIG_USB_PD_LOGGING */
 
-#endif  /* __USB_PD_H */
+#endif  /* __CROS_EC_USB_PD_H */

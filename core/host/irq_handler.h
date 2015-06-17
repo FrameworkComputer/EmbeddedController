@@ -5,8 +5,8 @@
 
 /* Helper to declare IRQ handling routines */
 
-#ifndef __IRQ_HANDLER_H
-#define __IRQ_HANDLER_H
+#ifndef __CROS_EC_IRQ_HANDLER_H
+#define __CROS_EC_IRQ_HANDLER_H
 
 /* Helper macros to build the IRQ handler and priority struct names */
 #define IRQ_HANDLER(irqname) CONCAT3(irq_, irqname, _handler)
@@ -26,4 +26,4 @@
 	const struct irq_priority IRQ_PRIORITY(irq)		\
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
-#endif  /* __IRQ_HANDLER_H */
+#endif  /* __CROS_EC_IRQ_HANDLER_H */

@@ -8,8 +8,8 @@
  * a queue, and be notified of new additions to the queue, or of requests to
  * flush (empty) the queue.
  */
-#ifndef INCLUDE_CONSUMER_H
-#define INCLUDE_CONSUMER_H
+#ifndef __CROS_EC_CONSUMER_H
+#define __CROS_EC_CONSUMER_H
 
 #include "queue.h"
 
@@ -44,4 +44,4 @@ struct consumer {
 	struct consumer_ops const *ops;
 };
 
-#endif /* INCLUDE_CONSUMER_H */
+#endif /* __CROS_EC_CONSUMER_H */

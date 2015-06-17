@@ -40,8 +40,8 @@
  *  9. cmd.0x35.read.status
  */
 
-#ifndef __EC_SB_FW_UPDATE__
-#define __EC_SB_FW_UPDATE__
+#ifndef __CROS_EC_SB_FW_UPDATE_H
+#define __CROS_EC_SB_FW_UPDATE_H
 
 #define SB_FW_UPDATE_CMD_WRITE_WORD  0x35
 #define SB_FW_UPDATE_CMD_WRITE_WORD_PREPARE  0x1000

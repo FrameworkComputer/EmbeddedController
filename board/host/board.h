@@ -5,8 +5,8 @@
 
 /* Emulator board configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Optional features */
 #define CONFIG_EXTPOWER_GPIO
@@ -72,4 +72,4 @@ extern const int supplier_priority[];
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

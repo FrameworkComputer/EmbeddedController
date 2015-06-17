@@ -5,8 +5,8 @@
  * TI INA219/231 Current/Power monitor driver.
  */
 
-#ifndef INA2XX_H
-#define INA2XX_H
+#ifndef __CROS_EC_INA2XX_H
+#define __CROS_EC_INA2XX_H
 
 #define INA2XX_REG_CONFIG     0x00
 #define INA2XX_REG_SHUNT_VOLT 0x01
@@ -108,4 +108,4 @@ int ina2xx_get_current(uint8_t idx);
 /* Return power in milliWatts */
 int ina2xx_get_power(uint8_t idx);
 
-#endif /* INA2XX_H */
+#endif /* __CROS_EC_INA2XX_H */

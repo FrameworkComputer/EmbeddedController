@@ -5,12 +5,12 @@
 
 /* Power state machine demo module for Chrome EC */
 
-#ifndef __CROS_EC_POWERDEMO_H
-#define __CROS_EC_POWERDEMO_H
+#ifndef __TEST_POWERDEMO_H
+#define __TEST_POWERDEMO_H
 
 #include "common.h"
 
 /* Initializes the module. */
 int power_demo_init(void);
 
-#endif  /* __CROS_EC_POWERDEMO_H */
+#endif  /* __TEST_POWERDEMO_H */

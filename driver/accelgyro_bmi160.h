@@ -5,8 +5,8 @@
 
 /* BMI160 accelerometer and gyro and BMM150 compass module for Chrome EC */
 
-#ifndef __CROS_EC_ACCEL_BMI160_H
-#define __CROS_EC_ACCEL_BMI160_H
+#ifndef __CROS_EC_ACCELGYRO_BMI160_H
+#define __CROS_EC_ACCELGYRO_BMI160_H
 
 #include "accelgyro.h"
 
@@ -285,4 +285,4 @@ struct bmi160_drv_data_t {
 	struct motion_data_t saved_data[3];
 	uint8_t       flags;
 };
-#endif /* __CROS_EC_ACCEL_BMI160_H */
+#endif /* __CROS_EC_ACCELGYRO_BMI160_H */

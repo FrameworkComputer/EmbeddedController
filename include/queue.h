@@ -4,8 +4,8 @@
  *
  * Queue data structure.
  */
-#ifndef INCLUDE_QUEUE_H
-#define INCLUDE_QUEUE_H
+#ifndef __CROS_EC_QUEUE_H
+#define __CROS_EC_QUEUE_H
 
 #include "common.h"
 
@@ -178,4 +178,4 @@ size_t queue_peek_memcpy(struct queue const *q,
 		result;							\
 	})
 
-#endif /* INCLUDE_QUEUE_H */
+#endif /* __CROS_EC_QUEUE_H */

@@ -4,8 +4,8 @@
  */
 /* Synchronous UART debug printf */
 
-#ifndef __BOARD_ZINGER_DEBUG_H
-#define __BOARD_ZINGER_DEBUG_H
+#ifndef __CROS_EC_DEBUG_H
+#define __CROS_EC_DEBUG_H
 
 #ifdef CONFIG_DEBUG_PRINTF
 void debug_printf(const char *format, ...);
@@ -13,4 +13,4 @@ void debug_printf(const char *format, ...);
 #define debug_printf(...)
 #endif
 
-#endif /* __BOARD_ZINGER_DEBUG_H */
+#endif /* __CROS_EC_DEBUG_H */

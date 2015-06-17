@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef CHIP_STM32_USB_SPI_H
-#define CHIP_STM32_USB_SPI_H
+#ifndef __CROS_EC_USB_SPI_H
+#define __CROS_EC_USB_SPI_H
 
 /* STM32 USB SPI driver for Chrome EC */
 
@@ -233,4 +233,4 @@ int  usb_spi_interface(struct usb_spi_config const *config,
 void usb_spi_board_enable(struct usb_spi_config const *config);
 void usb_spi_board_disable(struct usb_spi_config const *config);
 
-#endif /* CHIP_STM32_USB_SPI_H */
+#endif /* __CROS_EC_USB_SPI_H */

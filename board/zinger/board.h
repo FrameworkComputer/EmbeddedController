@@ -8,8 +8,8 @@
  * including zinger and minimuffin.
  */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
@@ -133,4 +133,4 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

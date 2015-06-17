@@ -6,8 +6,8 @@
  * @brief smbus interface APIs
  * @see http://smbus.org/specs/smbus20.pdf
  */
-#ifndef __EC_SMBUS_H__
-#define __EC_SMBUS_H__
+#ifndef __CROS_EC_SMBUS_H
+#define __CROS_EC_SMBUS_H
 
 /** Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
@@ -155,4 +155,4 @@ int smbus_read_block(uint8_t i2c_port, uint8_t slave_addr,
 int smbus_read_string(int i2c_port, uint8_t slave_addr, uint8_t smbus_cmd,
 			uint8_t *data, uint8_t len);
 
-#endif /* __EC_SMBUS_H__ */
+#endif /* __CROS_EC_SMBUS_H */

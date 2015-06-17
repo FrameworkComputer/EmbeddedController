@@ -5,8 +5,8 @@
  * TI LP5562 LED driver.
  */
 
-#ifndef LP5562_H
-#define LP5562_H
+#ifndef __CROS_EC_LP5562_H
+#define __CROS_EC_LP5562_H
 
 #define LP5562_REG_ENABLE	0x00
 #define LP5562_REG_OP_MODE	0x01
@@ -73,4 +73,4 @@ int lp5562_get_pc(int engine);
 /* Set program counter */
 int lp5562_set_pc(int engine, int val);
 
-#endif /* LP5562_H */
+#endif /* __CROS_EC_LP5562_H */

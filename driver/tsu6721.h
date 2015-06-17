@@ -5,8 +5,8 @@
  * TI TSU6721 USB port switch.
  */
 
-#ifndef TSU6721_H
-#define TSU6721_H
+#ifndef __CROS_EC_TSU6721_H
+#define __CROS_EC_TSU6721_H
 
 #define TSU6721_REG_DEV_ID    0x01
 #define TSU6721_REG_CONTROL   0x02
@@ -115,4 +115,4 @@ void tsu6721_set_pins(int mask);
 /* Reset TSU6721. */
 void tsu6721_reset(void);
 
-#endif /* TSU6721_H */
+#endif /* __CROS_EC_TSU6721_H */

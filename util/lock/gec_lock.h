@@ -28,8 +28,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef GEC_LOCK_H__
-#define GEC_LOCK_H__
+#ifndef __UTIL_GEC_LOCK_H
+#define __UTIL_GEC_LOCK_H
 
 /*
  * acquire_gec_lock  -  acquire global lock
@@ -48,4 +48,4 @@ extern int acquire_gec_lock(int timeout_secs);
  */
 extern int release_gec_lock(void);
 
-#endif /* GEC_LOCK_H__ */
+#endif /* __UTIL_GEC_LOCK_H */

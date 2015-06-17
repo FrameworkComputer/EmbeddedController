@@ -5,8 +5,8 @@
 
 /* Dingdong dongle configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
@@ -103,4 +103,4 @@ enum usb_strings {
 #define USB_EP_CONTROL   0
 #define USB_EP_COUNT     1
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

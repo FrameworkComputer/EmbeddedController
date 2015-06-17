@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_EC_FLASH_H
-#define __CROS_EC_EC_FLASH_H
+#ifndef __UTIL_EC_FLASH_H
+#define __UTIL_EC_FLASH_H
 
 /**
  * Read EC flash memory

@@ -5,8 +5,8 @@
 
 /* NPCX-specific clock module for Chrome EC */
 
-#ifndef CLOCK_CHIP_H_
-#define CLOCK_CHIP_H_
+#ifndef __CROS_EC_CLOCK_CHIP_H
+#define __CROS_EC_CLOCK_CHIP_H
 
 /**
  * Return the current APB1 clock frequency in Hz.
@@ -18,4 +18,4 @@ int clock_get_apb1_freq(void);
  */
 int clock_get_apb2_freq(void);
 
-#endif /* CLOCK_CHIP_H_ */
+#endif /* __CROS_EC_CLOCK_CHIP_H */

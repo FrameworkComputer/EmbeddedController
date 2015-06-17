@@ -5,8 +5,8 @@
 
 /* define the task identifier of all compiled tasks */
 
-#ifndef __TASK_ID_H
-#define __TASK_ID_H
+#ifndef __CROS_EC_TASK_ID_H
+#define __CROS_EC_TASK_ID_H
 
 /* excludes non-base tasks for test build */
 #ifdef TEST_BUILD
@@ -60,4 +60,4 @@ enum {
 };
 #undef TASK
 
-#endif  /* __TASK_ID_H */
+#endif  /* __CROS_EC_TASK_ID_H */

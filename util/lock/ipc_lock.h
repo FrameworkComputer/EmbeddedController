@@ -28,8 +28,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef IPC_LOCK_H__
-#define IPC_LOCK_H__
+#ifndef __UTIL_IPC_LOCK_H
+#define __UTIL_IPC_LOCK_H
 
 #include <sys/ipc.h>
 
@@ -68,4 +68,4 @@ extern int acquire_lock(struct ipc_lock *lock, int timeout_msecs);
  */
 extern int release_lock(struct ipc_lock *lock);
 
-#endif /* IPC_LOCK_H__ */
+#endif /* __UTIL_IPC_LOCK_H */

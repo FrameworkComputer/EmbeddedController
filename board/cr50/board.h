@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Features that we don't want just yet */
 #undef CONFIG_CMD_LID_ANGLE
@@ -79,4 +79,4 @@ enum usb_strings {
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

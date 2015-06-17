@@ -32,8 +32,8 @@
  * via Cobalt Networks.  It has been fairly extensively modified since then.
  */
 
-#ifndef CSEM_H__
-#define CSEM_H__
+#ifndef __UTIL_CSEM_H
+#define __UTIL_CSEM_H
 
 #include <sys/ipc.h>
 #include <time.h>
@@ -151,4 +151,4 @@ extern int csem_down_timeout_undo(int sem_id, struct timespec *timeout);
  */
 extern time_t csem_get_otime(int sem_id);
 
-#endif /* CSEM_H__ */
+#endif /* __UTIL_CSEM_H */

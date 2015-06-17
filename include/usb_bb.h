@@ -5,8 +5,8 @@
  * USB billboard definitions.
  */
 
-#ifndef USB_BB_H
-#define USB_BB_H
+#ifndef __CROS_EC_USB_BB_H
+#define __CROS_EC_USB_BB_H
 
 /* per Billboard Device Class Spec Revision 1.0 */
 
@@ -50,5 +50,5 @@ struct usb_bb_caps_base_descriptor {
 /* Note, 7W (111b) is reserved */
 
 
-#endif /* USB_BB_H */
+#endif /* __CROS_EC_USB_BB_H */
 

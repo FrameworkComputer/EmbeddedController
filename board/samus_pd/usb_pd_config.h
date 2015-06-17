@@ -9,8 +9,8 @@
 
 /* USB Power delivery board configuration */
 
-#ifndef __USB_PD_CONFIG_H
-#define __USB_PD_CONFIG_H
+#ifndef __CROS_EC_USB_PD_CONFIG_H
+#define __CROS_EC_USB_PD_CONFIG_H
 
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_C0 17
@@ -274,4 +274,4 @@ static inline void pd_set_vconn(int port, int polarity, int enable)
 					  GPIO_USB_C1_CC2_VCONN1_EN_L, !enable);
 }
 
-#endif /* __USB_PD_CONFIG_H */
+#endif /* __CROS_EC_USB_PD_CONFIG_H */

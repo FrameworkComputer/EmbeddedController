@@ -4,8 +4,8 @@
  *
  * Queue policies.
  */
-#ifndef INCLUDE_QUEUE_POLICIES_H
-#define INCLUDE_QUEUE_POLICIES_H
+#ifndef __CROS_EC_QUEUE_POLICIES_H
+#define __CROS_EC_QUEUE_POLICIES_H
 
 #include "queue.h"
 #include "consumer.h"
@@ -48,4 +48,4 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count);
 extern struct producer const null_producer;
 extern struct consumer const null_consumer;
 
-#endif /* INCLUDE_QUEUE_POLICIES_H */
+#endif /* __CROS_EC_QUEUE_POLICIES_H */

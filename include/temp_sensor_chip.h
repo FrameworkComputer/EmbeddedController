@@ -5,8 +5,8 @@
 
 /* Temperature sensor module for LM4 chip */
 
-#ifndef __CROS_EC_CHIP_TEMP_SENSOR_H
-#define __CROS_EC_CHIP_TEMP_SENSOR_H
+#ifndef __CROS_EC_TEMP_SENSOR_CHIP_H
+#define __CROS_EC_TEMP_SENSOR_CHIP_H
 
 /**
  * Get the last polled value of the sensor.
@@ -18,4 +18,4 @@
  */
 int chip_temp_sensor_get_val(int idx, int *temp_ptr);
 
-#endif /* __CROS_EC_CHIP_TEMP_SENSOR_H */
+#endif /* __CROS_EC_TEMP_SENSOR_CHIP_H */

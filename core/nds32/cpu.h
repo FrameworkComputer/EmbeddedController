@@ -5,8 +5,8 @@
  * Registers map and defintions for Andes cores
  */
 
-#ifndef __CPU_H
-#define __CPU_H
+#ifndef __CROS_EC_CPU_H
+#define __CROS_EC_CPU_H
 
 #include <stdint.h>
 
@@ -54,4 +54,4 @@ static inline uint32_t get_itype(void)
 /* Generic CPU core initialization */
 void cpu_init(void);
 
-#endif /* __CPU_H */
+#endif /* __CROS_EC_CPU_H */

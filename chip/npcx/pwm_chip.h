@@ -5,8 +5,8 @@
 
 /* NPCX-specific PWM module for Chrome EC */
 
-#ifndef __CROS_EC_NPCX_PWM_H
-#define __CROS_EC_NPCX_PWM_H
+#ifndef __CROS_EC_PWM_CHIP_H
+#define __CROS_EC_PWM_CHIP_H
 
 /* Data structure to define PWM channels. */
 struct pwm_t {
@@ -23,4 +23,4 @@ struct pwm_t {
 extern const struct pwm_t pwm_channels[];
 void pwm_config(enum pwm_channel ch);
 
-#endif /* __CROS_EC_NPCX_PWM_H */
+#endif /* __CROS_EC_PWM_CHIP_H */

@@ -5,8 +5,8 @@
 
 /* Helper to declare IRQ handling routines */
 
-#ifndef __IRQ_HANDLER_H
-#define __IRQ_HANDLER_H
+#ifndef __CROS_EC_IRQ_HANDLER_H
+#define __CROS_EC_IRQ_HANDLER_H
 
 #ifdef CONFIG_TASK_PROFILING
 #define bl_task_start_irq_handler "bl task_start_irq_handler\n"
@@ -38,4 +38,4 @@
 	const struct irq_priority IRQ_PRIORITY(irq)		\
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
-#endif  /* __IRQ_HANDLER_H */
+#endif  /* __CROS_EC_IRQ_HANDLER_H */

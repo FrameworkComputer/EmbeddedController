@@ -5,8 +5,8 @@
 
 /* oak board configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Board revision */
 #undef  CONFIG_BOARD_OAK_REV_1
@@ -175,4 +175,4 @@ void board_typec_dp_set(int port, int level);
 
 #endif  /* !__ASSEMBLER__ */
 
-#endif  /* __BOARD_H */
+#endif  /* __CROS_EC_BOARD_H */

@@ -5,8 +5,8 @@
 
 /* LM4-specific PWM module for Chrome EC */
 
-#ifndef __CROS_EC_LM4_PWM_H
-#define __CROS_EC_LM4_PWM_H
+#ifndef __CROS_EC_PWM_CHIP_H
+#define __CROS_EC_PWM_CHIP_H
 
 /* Data structure to define PWM channels. */
 struct pwm_t {
@@ -18,4 +18,4 @@ struct pwm_t {
 
 extern const struct pwm_t pwm_channels[];
 
-#endif /* __CROS_EC_LM4_PWM_H */
+#endif /* __CROS_EC_PWM_CHIP_H */

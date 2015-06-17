@@ -5,8 +5,8 @@
  * Registers map and defintions for Cortex-MLM4x processor
  */
 
-#ifndef __CPU_H
-#define __CPU_H
+#ifndef __CROS_EC_CPU_H
+#define __CROS_EC_CPU_H
 
 #include <stdint.h>
 
@@ -50,4 +50,4 @@ enum {
 /* Set up the cpu to detect faults */
 void cpu_init(void);
 
-#endif /* __CPU_H */
+#endif /* __CROS_EC_CPU_H */

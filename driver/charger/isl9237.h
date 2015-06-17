@@ -5,8 +5,8 @@
  * Intersil ISL-9237 battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_ISL9237_H
-#define __CROS_EC_CHARGER_ISL9237_H
+#ifndef __CROS_EC_ISL9237_H
+#define __CROS_EC_ISL9237_H
 
 #define ISL9237_ADDR 0x12 /* 7bit address 0001001 */
 
@@ -247,4 +247,4 @@ enum isl9237_fsm_state {
 #define INPUT_I_STEP  4
 
 #define I2C_ADDR_CHARGER ISL9237_ADDR
-#endif /* __CROS_EC_CHARGER_ISL9237_H */
+#endif /* __CROS_EC_ISL9237_H */

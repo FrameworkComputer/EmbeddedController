@@ -5,8 +5,8 @@
 
 /* Configuration for Nuvoton M4 EB */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Support Code RAM architecture (Run code in RAM) */
 #define CONFIG_CODERAM_ARCH
@@ -85,4 +85,4 @@ enum mft_channel {
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

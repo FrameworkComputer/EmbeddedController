@@ -4,8 +4,8 @@
  *
  * Very simple 8-bit CRC function.
  */
-#ifndef __EC_CRC8_H__
-#define __EC_CRC8_H__
+#ifndef __CROS_EC_CRC8_H
+#define __CROS_EC_CRC8_H
 
 /**
  * crc8
@@ -18,4 +18,4 @@
  */
 uint8_t crc8(const uint8_t *data, int len);
 
-#endif /* __EC_CRC8_H__ */
+#endif /* __CROS_EC_CRC8_H */

@@ -5,8 +5,8 @@
 
 /* Header file for common math functions. */
 
-#ifndef __CROS_MATH_UTIL_H
-#define __CROS_MATH_UTIL_H
+#ifndef __CROS_EC_MATH_UTIL_H
+#define __CROS_EC_MATH_UTIL_H
 
 /* Fixed-point type */
 typedef int32_t fp_t;
@@ -114,4 +114,4 @@ void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res);
 
 
 
-#endif /* __CROS_MATH_UTIL_H */
+#endif /* __CROS_EC_MATH_UTIL_H */

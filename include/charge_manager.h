@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CHARGE_MANAGER_H
-#define __CHARGE_MANAGER_H
+#ifndef __CROS_EC_CHARGE_MANAGER_H
+#define __CROS_EC_CHARGE_MANAGER_H
 
 #include "common.h"
 
@@ -82,4 +82,4 @@ void board_set_charge_limit(int charge_ma);
 /* Called on delayed override timeout */
 void board_charge_manager_override_timeout(void);
 
-#endif /* __CHARGE_MANAGER_H */
+#endif /* __CROS_EC_CHARGE_MANAGER_H */

@@ -5,8 +5,8 @@
 
 /* EC2I control module for IT83xx. */
 
-#ifndef __CROS_EC_IT83XX_EC2I_H
-#define __CROS_EC_IT83XX_EC2I_H
+#ifndef __CROS_EC_EC2I_CHIP_H
+#define __CROS_EC_EC2I_CHIP_H
 
 /* Index list of the host interface registers of PNPCFG */
 enum host_pnpcfg_index {
@@ -123,4 +123,4 @@ enum ec2i_message ec2i_write(enum host_pnpcfg_index index, uint8_t data);
 /* EC2I read */
 enum ec2i_message ec2i_read(enum host_pnpcfg_index index);
 
-#endif /* __CROS_EC_IT83XX_EC2I_H */
+#endif /* __CROS_EC_EC2I_CHIP_H */

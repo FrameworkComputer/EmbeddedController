@@ -5,8 +5,8 @@
 
 /* LSM6DS0 accelerometer and gyro module for Chrome EC */
 
-#ifndef __CROS_EC_ACCEL_LSM6DS0_H
-#define __CROS_EC_ACCEL_LSM6DS0_H
+#ifndef __CROS_EC_ACCELGYRO_LSM6DS0_H
+#define __CROS_EC_ACCELGYRO_LSM6DS0_H
 
 #include "task.h"
 
@@ -118,4 +118,4 @@ enum lsm6ds0_bdu {
 
 extern const struct accelgyro_drv lsm6ds0_drv;
 
-#endif /* __CROS_EC_ACCEL_LSM6DS0_H */
+#endif /* __CROS_EC_ACCELGYRO_LSM6DS0_H */

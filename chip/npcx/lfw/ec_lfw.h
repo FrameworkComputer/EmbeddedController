@@ -5,8 +5,8 @@
  * NPCX5M5G SoC little FW used by booter
  */
 
-#ifndef __CROS_EC_LFW_H_
-#define __CROS_EC_LFW_H_
+#ifndef __CROS_EC_EC_LFW_H
+#define __CROS_EC_EC_LFW_H
 
 /* Begin address for the .iram section; defined in linker script */
 extern unsigned int __iram_fw_start;
@@ -15,4 +15,4 @@ extern unsigned int __iram_fw_end;
 /* Begin address for the iram codes; defined in linker script */
 extern unsigned int __flash_fw_start;
 
-#endif /* __CROS_EC_LFW_H_ */
+#endif /* __CROS_EC_EC_LFW_H */

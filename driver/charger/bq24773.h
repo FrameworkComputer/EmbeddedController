@@ -5,8 +5,8 @@
  * TI bq24773 battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_BQ24773_H
-#define __CROS_EC_CHARGER_BQ24773_H
+#ifndef __CROS_EC_BQ24773_H
+#define __CROS_EC_BQ24773_H
 
 /* for i2c_read and i2c_write functions. */
 #include "i2c.h"
@@ -119,4 +119,4 @@ static inline int raw_write16(int offset, int value)
 	return i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, offset, value);
 }
 
-#endif /* __CROS_EC_CHARGER_BQ24773_H */
+#endif /* __CROS_EC_BQ24773_H */

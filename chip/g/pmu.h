@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef INC_PMU_H_
-#define INC_PMU_H_
+#ifndef __CROS_EC_PMU_H
+#define __CROS_EC_PMU_H
 
 #include "common.h"
 #include "registers.h"
@@ -110,4 +110,4 @@ extern void pmu_powerdown_exit(void);
  * enable clock doubler for USB purposes
  */
 void pmu_enable_clock_doubler(void);
-#endif /* INC_PMU_H_ */
+#endif /* __CROS_EC_PMU_H */

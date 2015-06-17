@@ -5,8 +5,8 @@
  * TI bq24715 battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_BQ24715_H
-#define __CROS_EC_CHARGER_BQ24715_H
+#ifndef __CROS_EC_BQ24715_H
+#define __CROS_EC_BQ24715_H
 
 /* NOTES:
  * If battery is not present keep charge current register (0x14) at 0.
@@ -127,4 +127,4 @@
 #define INPUT_I_MAX                    (8064)
 #define INPUT_I_STEP                   (64)
 
-#endif /* __CROS_EC_CHARGER_BQ24715_H */
+#endif /* __CROS_EC_BQ24715_H */

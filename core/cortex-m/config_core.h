@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CONFIG_CORE_H
-#define __CONFIG_CORE_H
+#ifndef __CROS_EC_CONFIG_CORE_H
+#define __CROS_EC_CONFIG_CORE_H
 
 /* Linker binary architecture and format */
 #define BFD_ARCH arm
@@ -12,4 +12,4 @@
 
 #define CONFIG_SOFTWARE_PANIC
 
-#endif /* __CONFIG_CORE_H */
+#endif /* __CROS_EC_CONFIG_CORE_H */

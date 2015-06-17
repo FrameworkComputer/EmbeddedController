@@ -5,8 +5,8 @@
  * TI bq24735 battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_BQ24735_H
-#define __CROS_EC_CHARGER_BQ24735_H
+#ifndef __CROS_EC_BQ24735_H
+#define __CROS_EC_BQ24735_H
 
 /* Chip specific commands */
 #define BQ24735_CHARGE_OPTION           0x12
@@ -54,4 +54,4 @@
 #define ACPRES_DEGLITCH_150MS           (0 << 15)
 #define ACPRES_DEGLITCH_1300MS_DEFAULT  (1 << 15)
 
-#endif /* __CROS_EC_CHARGER_BQ24735_H */
+#endif /* __CROS_EC_BQ24735_H */

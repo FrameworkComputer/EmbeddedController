@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef _CROS_EC_DEV_H_
-#define _CROS_EC_DEV_H_
+#ifndef __UTIL_CROS_EC_DEV_H
+#define __UTIL_CROS_EC_DEV_H
 
 #include <linux/ioctl.h>
 #include <linux/types.h>
@@ -50,4 +50,4 @@ struct cros_ec_readmem {
 #define CROS_EC_DEV_IOCXCMD    _IOWR(':', 0, struct cros_ec_command)
 #define CROS_EC_DEV_IOCRDMEM   _IOWR(':', 1, struct cros_ec_readmem)
 
-#endif /* _CROS_EC_DEV_H_ */
+#endif /* __UTIL_CROS_EC_DEV_H */

@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __INJECTOR_H
-#define __INJECTOR_H
+#ifndef __CROS_EC_INJECTOR_H
+#define __CROS_EC_INJECTOR_H
 
 /*
  * Finite state machine definition for sending complex sequences
@@ -85,4 +85,4 @@ enum trace_mode {
 /* Number of words in the FSM command/data buffer  */
 #define INJ_CMD_COUNT 128
 
-#endif /* __INJECTOR_H */
+#endif /* __CROS_EC_INJECTOR_H */

@@ -3,8 +3,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef _SIMULATION_H
-#define _SIMULATION_H
+#ifndef __EXTRA_SIMULATION_H
+#define __EXTRA_SIMULATION_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -112,4 +112,4 @@ uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
 	int fake_consolecmd_##X(int argc, char *argv[]) \
 	{ return fn(argc, argv); }
 
-#endif	/* _SIMULATION_H */
+#endif	/* __EXTRA_SIMULATION_H */

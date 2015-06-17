@@ -5,8 +5,8 @@
 
 /* NPCX-specific MFT module for Chrome EC */
 
-#ifndef __CROS_EC_NPCX_FAN_H
-#define __CROS_EC_NPCX_FAN_H
+#ifndef __CROS_EC_FAN_CHIP_H
+#define __CROS_EC_FAN_CHIP_H
 
 /* MFT module select */
 enum npcx_mft_module {
@@ -59,4 +59,4 @@ struct tacho_status_t {
 
 extern const struct mft_t mft_channels[];
 
-#endif /* __CROS_EC_NPCX_FAN_H */
+#endif /* __CROS_EC_FAN_CHIP_H */

@@ -5,8 +5,8 @@
  * TI bq24707A battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_BQ24707A_H
-#define __CROS_EC_CHARGER_BQ24707A_H
+#ifndef __CROS_EC_BQ24707A_H
+#define __CROS_EC_BQ24707A_H
 
 /* Chip specific commands */
 #define BQ24707_CHARGE_OPTION           0x12
@@ -40,5 +40,5 @@
 #define CHARGE_WATCHDOG_88SEC           (2 << 13)
 #define CHARGE_WATCHDOG_175SEC_DEFAULT  (3 << 13)
 
-#endif /* __CROS_EC_CHARGER_BQ24707A_H */
+#endif /* __CROS_EC_BQ24707A_H */
 

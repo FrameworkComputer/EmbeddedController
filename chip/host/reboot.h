@@ -5,8 +5,8 @@
 
 /* Emulator self-reboot procedure */
 
-#ifndef __REBOOT_H
-#define __REBOOT_H
+#ifndef __CROS_EC_REBOOT_H
+#define __CROS_EC_REBOOT_H
 
 void emulator_reboot(void);
 

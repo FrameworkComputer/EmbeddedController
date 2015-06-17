@@ -6,8 +6,8 @@
  * the EC. This abstracts them.
  */
 
-#ifndef COMM_HOST_H
-#define COMM_HOST_H
+#ifndef __UTIL_COMM_HOST_H
+#define __UTIL_COMM_HOST_H
 
 #include "common.h"
 #include "ec_commands.h"
@@ -74,4 +74,4 @@ extern int (*ec_command_proto)(int command, int version,
  */
 extern int (*ec_readmem)(int offset, int bytes, void *dest);
 
-#endif /* COMM_HOST_H */
+#endif /* __UTIL_COMM_HOST_H */

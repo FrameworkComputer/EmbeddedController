@@ -5,8 +5,8 @@
 
 /* Cyan board configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
@@ -110,4 +110,4 @@ enum temp_sensor_id {
 int board_discharge_on_ac(int enable);
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

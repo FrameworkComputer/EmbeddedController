@@ -5,8 +5,8 @@
 
 /* PWM control module for IT83xx. */
 
-#ifndef __CROS_EC_IT83XX_PWM_H
-#define __CROS_EC_IT83XX_PWM_H
+#ifndef __CROS_EC_PWM_CHIP_H
+#define __CROS_EC_PWM_CHIP_H
 
 /* Data structure to define PWM channel control registers. */
 struct pwm_ctrl_t {
@@ -42,4 +42,4 @@ struct pwm_t {
 
 extern const struct pwm_t pwm_channels[];
 
-#endif /* __CROS_EC_IT83XX_PWM_H */
+#endif /* __CROS_EC_PWM_CHIP_H */

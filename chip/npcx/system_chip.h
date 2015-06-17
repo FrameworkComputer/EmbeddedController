@@ -5,8 +5,8 @@
 
 /* NPCX-specific SIB module for Chrome EC */
 
-#ifndef __CROS_EC_NPCX_LPC_H
-#define __CROS_EC_NPCX_LPC_H
+#ifndef __CROS_EC_SYSTEM_CHIP_H
+#define __CROS_EC_SYSTEM_CHIP_H
 
 /* Indices for battery-backed ram (BBRAM) data position */
 enum bbram_data_index {
@@ -32,4 +32,4 @@ extern unsigned int __flash_lpfw_start;
 /* End flash address for the lpram codes; defined in linker script */
 extern unsigned int __flash_lpfw_end;
 
-#endif /* __CROS_EC_NPCX_LPC_H */
+#endif /* __CROS_EC_SYSTEM_CHIP_H */

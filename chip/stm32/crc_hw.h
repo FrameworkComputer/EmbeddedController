@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef _CRC_HW_H
-#define _CRC_HW_H
+#ifndef __CROS_EC_CRC_HW_H
+#define __CROS_EC_CRC_HW_H
 /* CRC-32 hardware implementation with USB constants */
 
 #include "clock.h"
@@ -38,4 +38,4 @@ static inline uint32_t crc32_result(void)
 	return STM32_CRC_DR ^ 0xFFFFFFFF;
 }
 
-#endif /* _CRC_HW_H */
+#endif /* __CROS_EC_CRC_HW_H */

@@ -5,8 +5,8 @@
 
 /* SHA-1 functions */
 
-#ifndef _SHA1_H
-#define _SHA1_H
+#ifndef __CROS_EC_SHA1_H
+#define __CROS_EC_SHA1_H
 
 #include "common.h"
 #ifdef HOST_TOOLS_BUILD
@@ -33,4 +33,4 @@ void sha1_init(struct sha1_ctx *ctx);
 void sha1_update(struct sha1_ctx *ctx, const uint8_t *data, uint32_t len);
 uint8_t *sha1_final(struct sha1_ctx *ctx);
 
-#endif  /* _SHA1_H */
+#endif  /* __CROS_EC_SHA1_H */

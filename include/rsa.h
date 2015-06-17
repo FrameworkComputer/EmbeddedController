@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef _INCLUDE_RSA_H
-#define _INCLUDE_RSA_H
+#ifndef __CROS_EC_RSA_H
+#define __CROS_EC_RSA_H
 
 #include "config.h"
 
@@ -53,4 +53,4 @@ void check_rw_signature(void);
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* _INCLUDE_RSA_H */
+#endif /* __CROS_EC_RSA_H */

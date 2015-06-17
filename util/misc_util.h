@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_MISC_UTIL_H
-#define __CROS_EC_MISC_UTIL_H
+#ifndef __UTIL_MISC_UTIL_H
+#define __UTIL_MISC_UTIL_H
 
 /* Don't use a macro where an inline will do... */
 static inline int MIN(int a, int b) { return a < b ? a : b; }

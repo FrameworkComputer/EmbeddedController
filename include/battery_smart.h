@@ -5,8 +5,8 @@
  * Smart battery v1.0
  * Smart battery charger v1.1
  */
-#ifndef __CROS_EC_SMART_BATTERY_H
-#define __CROS_EC_SMART_BATTERY_H
+#ifndef __CROS_EC_BATTERY_SMART_H
+#define __CROS_EC_BATTERY_SMART_H
 
 #include "common.h"
 
@@ -153,5 +153,5 @@ int sb_read_string(int port, int slave_addr, int offset, uint8_t *data,
 /* Write to battery */
 int sb_write(int cmd, int param);
 
-#endif /* __CROS_EC_SMART_BATTERY_H */
+#endif /* __CROS_EC_BATTERY_SMART_H */
 

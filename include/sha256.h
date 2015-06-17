@@ -5,8 +5,8 @@
 
 /* SHA-256 functions */
 
-#ifndef _CROS_EC_SHA256_H
-#define _CROS_EC_SHA256_H
+#ifndef __CROS_EC_SHA256_H
+#define __CROS_EC_SHA256_H
 
 #include "common.h"
 
@@ -26,4 +26,4 @@ void SHA256_init(struct sha256_ctx *ctx);
 void SHA256_update(struct sha256_ctx *ctx, const uint8_t *data, uint32_t len);
 uint8_t *SHA256_final(struct sha256_ctx *ctx);
 
-#endif  /* _CROS_EC_SHA256_H */
+#endif  /* __CROS_EC_SHA256_H */

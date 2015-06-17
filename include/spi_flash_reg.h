@@ -6,8 +6,8 @@
  * SPI flash protection register translation functions for Chrome OS EC.
  */
 
-#ifndef __CROS_EC_SPI_FLASH_REGS_H
-#define __CROS_EC_SPI_FLASH_REGS_H
+#ifndef __CROS_EC_SPI_FLASH_REG_H
+#define __CROS_EC_SPI_FLASH_REG_H
 
 #include "common.h"
 
@@ -65,4 +65,4 @@ int spi_flash_reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 int spi_flash_protect_to_reg(unsigned int start, unsigned int len, uint8_t *sr1,
 			     uint8_t *sr2);
 
-#endif  /* __CROS_EC_SPI_FLASH_REGS_H */
+#endif  /* __CROS_EC_SPI_FLASH_REG_H */

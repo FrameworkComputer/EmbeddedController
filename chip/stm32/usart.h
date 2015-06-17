@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef CHIP_STM32_USART_H
-#define CHIP_STM32_USART_H
+#ifndef __CROS_EC_USART_H
+#define __CROS_EC_USART_H
 
 /* STM32 USART driver for Chrome EC */
 
@@ -158,4 +158,4 @@ void usart_interrupt(struct usart_config const *config);
 void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz);
 void usart_set_baud_f(struct usart_config const *config, int frequency_hz);
 
-#endif /* CHIP_STM32_USART_H */
+#endif /* __CROS_EC_USART_H */

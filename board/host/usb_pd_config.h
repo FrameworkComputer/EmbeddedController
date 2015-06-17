@@ -5,8 +5,8 @@
 
 /* USB Power delivery board configuration */
 
-#ifndef __USB_PD_CONFIG_H
-#define __USB_PD_CONFIG_H
+#ifndef __CROS_EC_USB_PD_CONFIG_H
+#define __CROS_EC_USB_PD_CONFIG_H
 
 /* Use software CRC */
 #define CONFIG_SW_CRC
@@ -21,4 +21,4 @@ void pd_config_init(int port, uint8_t power_role);
 
 int pd_adc_read(int port, int cc);
 
-#endif /* __USB_PD_CONFIG_H */
+#endif /* __CROS_EC_USB_PD_CONFIG_H */

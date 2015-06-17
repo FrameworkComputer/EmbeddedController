@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef CHIP_STM32_USB_STREAM_H
-#define CHIP_STM32_USB_STREAM_H
+#ifndef __CROS_EC_USB_STREAM_H
+#define __CROS_EC_USB_STREAM_H
 
 /* STM32 USB STREAM driver for Chrome EC */
 
@@ -206,4 +206,4 @@ void usb_stream_tx(struct usb_stream_config const *config);
 void usb_stream_rx(struct usb_stream_config const *config);
 void usb_stream_reset(struct usb_stream_config const *config);
 
-#endif /* CHIP_STM32_USB_STREAM_H */
+#endif /* __CROS_EC_USB_STREAM_H */

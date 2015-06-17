@@ -5,8 +5,8 @@
 
 /* Charge input current limit ramp header for Chrome EC */
 
-#ifndef __CROS_EC_CHG_RAMP_H
-#define __CROS_EC_CHG_RAMP_H
+#ifndef __CROS_EC_CHARGE_RAMP_H
+#define __CROS_EC_CHARGE_RAMP_H
 
 #include "timer.h"
 
@@ -100,4 +100,4 @@ static inline void chg_ramp_charge_supplier_change(
 #define chg_ramp_set_min_current board_set_charge_limit
 #endif
 
-#endif /* __CROS_EC_CHG_RAMP_H */
+#endif /* __CROS_EC_CHARGE_RAMP_H */

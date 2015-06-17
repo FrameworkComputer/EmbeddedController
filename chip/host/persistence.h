@@ -5,8 +5,8 @@
 
 /* Persistence module for emulator */
 
-#ifndef _PERSISTENCE_H
-#define _PERSISTENCE_H
+#ifndef __CROS_EC_PERSISTENCE_H
+#define __CROS_EC_PERSISTENCE_H
 
 #include <stdio.h>
 
@@ -16,4 +16,4 @@ void release_persistent_storage(FILE *ps);
 
 void remove_persistent_storage(const char *tag);
 
-#endif /* _PERSISTENCE_H */
+#endif /* __CROS_EC_PERSISTENCE_H */

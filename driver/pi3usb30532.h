@@ -5,8 +5,8 @@
  * Pericom PI3USB30532 USB port switch driver.
  */
 
-#ifndef PI3USB30532_H
-#define PI3USB30532_H
+#ifndef __CROS_EC_PI3USB30532_H
+#define __CROS_EC_PI3USB30532_H
 
 #include <inttypes.h>
 
@@ -75,4 +75,4 @@ int pi3usb30532_set_switch(uint8_t chip_idx, uint8_t mode);
 /* Resets PI3USB30532 to power on default value */
 int pi3usb30532_reset(uint8_t chip_idx);
 
-#endif /* PI3USB30532_H */
+#endif /* __CROS_EC_PI3USB30532_H */

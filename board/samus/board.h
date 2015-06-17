@@ -5,8 +5,8 @@
 
 /* Configuration for Samus mainboard */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Debug features */
 #define CONFIG_CONSOLE_CMDHELP
@@ -209,4 +209,4 @@ void set_pp5000_in_g3(int mask, int enable);
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

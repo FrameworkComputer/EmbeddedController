@@ -5,8 +5,8 @@
  * Chip-specific part of the IRQ handling.
  */
 
-#ifndef __IRQ_CHIP_H
-#define __IRQ_CHIP_H
+#ifndef __CROS_EC_IRQ_CHIP_H
+#define __CROS_EC_IRQ_CHIP_H
 
 /**
  * Enable an IRQ in the chip interrupt controller.
@@ -51,4 +51,4 @@ int chip_trigger_irq(int irq);
  */
 void chip_init_irqs(void);
 
-#endif /* __IRQ_CHIP_H */
+#endif /* __CROS_EC_IRQ_CHIP_H */

@@ -28,8 +28,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LOCKS_H__
-#define LOCKS_H__
+#ifndef __UTIL_LOCKS_H
+#define __UTIL_LOCKS_H
 
 /* this is the base key, since we have to pick something global */
 #define IPC_LOCK_KEY	(0x67736c00 & 0xfffffc00) /* 22 bits "gsl" */
@@ -44,4 +44,4 @@
 /* for Google EC */
 #define GECLOCK		(IPC_LOCK_KEY + 1)
 
-#endif /* LOCKS_H__ */
+#endif /* __UTIL_LOCKS_H */

@@ -5,9 +5,9 @@
 
 /* CPU specific header file */
 
-#ifndef __CPU_H
-#define __CPU_H
+#ifndef __CROS_EC_CPU_H
+#define __CROS_EC_CPU_H
 
 static inline void cpu_init(void) { }
 
-#endif /* __CPU_H */
+#endif /* __CROS_EC_CPU_H */

@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef CHIP_STM32_USART_STM32F_H
-#define CHIP_STM32_USART_STM32F_H
+#ifndef __CROS_EC_USART_STM32F_H
+#define __CROS_EC_USART_STM32F_H
 
 #include "usart.h"
 
@@ -17,4 +17,4 @@ extern struct usart_hw_config const usart1_hw;
 extern struct usart_hw_config const usart2_hw;
 extern struct usart_hw_config const usart3_hw;
 
-#endif /* CHIP_STM32_USART_STM32F_H */
+#endif /* __CROS_EC_USART_STM32F_H */

@@ -5,8 +5,8 @@
  * Megachips DisplayPort to HDMI protocol converter / level shifter driver.
  */
 
-#ifndef MCDP28X0_H
-#define MCDP28X0_H
+#ifndef __CROS_EC_MCDP28X0_H
+#define __CROS_EC_MCDP28X0_H
 
 #define MCDP_OUTBUF_MAX 16
 #define MCDP_INBUF_MAX 16

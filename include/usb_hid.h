@@ -5,8 +5,8 @@
  * USB HID definitions.
  */
 
-#ifndef USB_HID_H
-#define USB_HID_H
+#ifndef __CROS_EC_USB_HID_H
+#define __CROS_EC_USB_HID_H
 
 #define USB_HID_SUBCLASS_BOOT     1
 #define USB_HID_PROTOCOL_KEYBOARD 1

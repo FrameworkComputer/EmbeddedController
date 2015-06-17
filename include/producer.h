@@ -8,8 +8,8 @@
  * be notified when the queue is read from so that it can take action, such as
  * adding new units to the queue.
  */
-#ifndef INCLUDE_PRODUCER_H
-#define INCLUDE_PRODUCER_H
+#ifndef __CROS_EC_PRODUCER_H
+#define __CROS_EC_PRODUCER_H
 
 #include "queue.h"
 
@@ -38,4 +38,4 @@ struct producer {
 	struct producer_ops const *ops;
 };
 
-#endif /* INCLUDE_PRODUCER_H */
+#endif /* __CROS_EC_PRODUCER_H */

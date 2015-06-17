@@ -5,8 +5,8 @@
 
 /* NPCX-specific hwtimer module for Chrome EC */
 
-#ifndef HWTIMER_CHIP_H_
-#define HWTIMER_CHIP_H_
+#ifndef __CROS_EC_HWTIMER_CHIP_H
+#define __CROS_EC_HWTIMER_CHIP_H
 
 /* Channel definition for ITIM16 */
 #define ITIM_TIME_NO	ITIM16_1
@@ -25,4 +25,4 @@ void init_hw_timer(int itim_no, enum ITIM16_SOURCE_CLOCK_T source);
 /* Returns time delay cause of deep idle */
 uint32_t __hw_clock_get_sleep_time(void);
 
-#endif /* HWTIMER_CHIP_H_ */
+#endif /* __CROS_EC_HWTIMER_CHIP_H */

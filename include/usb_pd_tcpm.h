@@ -5,8 +5,8 @@
 
 /* USB Power delivery port management */
 
-#ifndef __USB_PD_TCPM_H
-#define __USB_PD_TCPM_H
+#ifndef __CROS_EC_USB_PD_TCPM_H
+#define __CROS_EC_USB_PD_TCPM_H
 
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT 3
@@ -256,4 +256,4 @@ int tcpm_get_message(int port, uint32_t *payload, int *head);
 int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 		   const uint32_t *data);
 
-#endif /* __USB_PD_TCPM_H */
+#endif /* __CROS_EC_USB_PD_TCPM_H */

@@ -5,8 +5,8 @@
 
 /* Handy clever tricks */
 
-#ifndef __CROS_EC_TRICKS_H
-#define __CROS_EC_TRICKS_H
+#ifndef __CROS_EC_COMPILE_TIME_MACROS_H
+#define __CROS_EC_COMPILE_TIME_MACROS_H
 
 /* Test an important condition at compile time, not run time */
 #define _BA1_(cond, line) \
@@ -23,4 +23,4 @@
 #define offsetof(type, member)  __builtin_offsetof(type, member)
 #endif
 
-#endif /* __CROS_EC_TRICKS_H */
+#endif /* __CROS_EC_COMPILE_TIME_MACROS_H */

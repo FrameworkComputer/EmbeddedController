@@ -40,8 +40,8 @@
  *  9. cmd.0x35.read.status
  */
 
-#ifndef __CROS_EC_SB_FIRMWARE_UPDATE_H__
-#define __CROS_EC_SB_FIRMWARE_UPDATE_H__
+#ifndef __UTIL_EC_SB_FIRMWARE_UPDATE_H
+#define __UTIL_EC_SB_FIRMWARE_UPDATE_H
 
 struct sb_fw_header {
 	uint8_t signature[4]; /* "BTFW" */

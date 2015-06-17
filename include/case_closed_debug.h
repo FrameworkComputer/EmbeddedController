@@ -4,8 +4,8 @@
  *
  * Case Closed Debug interface
  */
-#ifndef INCLUDE_CASE_CLOSED_DEBUG_H
-#define INCLUDE_CASE_CLOSED_DEBUG_H
+#ifndef __CROS_EC_CASE_CLOSED_DEBUG_H
+#define __CROS_EC_CASE_CLOSED_DEBUG_H
 
 enum ccd_mode {
 	/*
@@ -33,4 +33,4 @@ enum ccd_mode {
  */
 void ccd_set_mode(enum ccd_mode new_mode);
 
-#endif /* INCLUDE_CASE_CLOSED_DEBUG_H */
+#endif /* __CROS_EC_CASE_CLOSED_DEBUG_H */

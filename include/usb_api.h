@@ -9,8 +9,8 @@
  * implementation.
  */
 
-#ifndef USB_API_H
-#define USB_API_H
+#ifndef __CROS_EC_USB_API_H
+#define __CROS_EC_USB_API_H
 
 /*
  * Initialize the USB peripheral, enabling its clock and configuring the DP/DN
@@ -42,4 +42,4 @@ void usb_disconnect(void);
  */
 void usb_release(void);
 
-#endif /* USB_API_H */
+#endif /* __CROS_EC_USB_API_H */

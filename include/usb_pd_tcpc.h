@@ -5,8 +5,8 @@
 
 /* USB Power delivery port controller */
 
-#ifndef __USB_PD_TCPC_H
-#define __USB_PD_TCPC_H
+#ifndef __CROS_EC_USB_PD_TCPC_H
+#define __CROS_EC_USB_PD_TCPC_H
 
 #ifndef CONFIG_TCPC_I2C_BASE_ADDR
 #define CONFIG_TCPC_I2C_BASE_ADDR 0x9c
@@ -35,4 +35,4 @@
 void tcpc_i2c_process(int read, int port, int len, uint8_t *payload,
 		      void (*send_response)(int));
 
-#endif /* __USB_PD_TCPC_H */
+#endif /* __CROS_EC_USB_PD_TCPC_H */

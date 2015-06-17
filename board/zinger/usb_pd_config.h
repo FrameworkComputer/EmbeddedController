@@ -5,8 +5,8 @@
 
 /* USB Power delivery board configuration */
 
-#ifndef __USB_PD_CONFIG_H
-#define __USB_PD_CONFIG_H
+#ifndef __CROS_EC_USB_PD_CONFIG_H
+#define __CROS_EC_USB_PD_CONFIG_H
 
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_C0 14
@@ -106,4 +106,4 @@ static inline int pd_adc_read(int port, int cc)
 	return (cc == 0) ? adc_read_channel(ADC_CH_CC1_PD) : 4096;
 }
 
-#endif /* __USB_PD_CONFIG_H */
+#endif /* __CROS_EC_USB_PD_CONFIG_H */

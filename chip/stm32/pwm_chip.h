@@ -5,8 +5,8 @@
 
 /* STM32-specific PWM module for Chrome EC */
 
-#ifndef __CROS_EC_STM32_PWM_H
-#define __CROS_EC_STM32_PWM_H
+#ifndef __CROS_EC_PWM_CHIP_H
+#define __CROS_EC_PWM_CHIP_H
 
 /* Data structure to define PWM channels. */
 struct pwm_t {
@@ -36,4 +36,4 @@ extern const struct pwm_t pwm_channels[];
 /* Plain ID mapping for readability */
 #define STM32_TIM_CH(x) (x)
 
-#endif /* __CROS_EC_STM32_PWM_H */
+#endif /* __CROS_EC_PWM_CHIP_H */

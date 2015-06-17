@@ -5,8 +5,8 @@
  * NXP PCA9534 I/O expander
  */
 
-#ifndef PCA9534_H
-#define PCA9534_H
+#ifndef __CROS_EC_IOEXPANDER_PCA9534_H
+#define __CROS_EC_IOEXPANDER_PCA9534_H
 
 #define PCA9534_REG_INPUT  0x0
 #define PCA9534_REG_OUTPUT 0x1
@@ -53,4 +53,4 @@ int pca9534_set_level(int port, int addr, int pin, int level);
  */
 int pca9534_config_pin(int port, int addr, int pin, int is_input);
 
-#endif  /* PCA9534_H */
+#endif  /* __CROS_EC_IOEXPANDER_PCA9534_H */

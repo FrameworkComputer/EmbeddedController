@@ -5,8 +5,8 @@
 
 /* Host communication command constants for Chrome EC */
 
-#ifndef __CROS_EC_COMMANDS_H
-#define __CROS_EC_COMMANDS_H
+#ifndef __CROS_EC_EC_COMMANDS_H
+#define __CROS_EC_EC_COMMANDS_H
 
 /*
  * Current version of this protocol
@@ -3347,4 +3347,4 @@ struct ec_params_pd_write_log_entry {
 #define EC_LPC_ADDR_OLD_PARAM   EC_HOST_CMD_REGION1
 #define EC_OLD_PARAM_SIZE       EC_HOST_CMD_REGION_SIZE
 
-#endif  /* __CROS_EC_COMMANDS_H */
+#endif  /* __CROS_EC_EC_COMMANDS_H */

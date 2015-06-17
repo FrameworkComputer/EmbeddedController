@@ -4,8 +4,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_INCLUDE_SPS_H
-#define __CROS_EC_INCLUDE_SPS_H
+#ifndef __CROS_EC_SPS_H
+#define __CROS_EC_SPS_H
 
 #include "spi.h"
 #include "util.h"

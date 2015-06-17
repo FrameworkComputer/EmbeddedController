@@ -2,8 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#ifndef CHIP_STM32_USB_GPIO_H
-#define CHIP_STM32_USB_GPIO_H
+#ifndef __CROS_EC_USB_GPIO_H
+#define __CROS_EC_USB_GPIO_H
 
 /* STM32 USB GPIO driver for Chrome EC */
 
@@ -125,4 +125,4 @@ void usb_gpio_tx(struct usb_gpio_config const *config);
 void usb_gpio_rx(struct usb_gpio_config const *config);
 void usb_gpio_reset(struct usb_gpio_config const *config);
 
-#endif /* CHIP_STM32_USB_GPIO_H */
+#endif /* __CROS_EC_USB_GPIO_H */

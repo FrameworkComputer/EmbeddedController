@@ -21,8 +21,8 @@
  * powerd_lock.h: header file for power management routines
  */
 
-#ifndef __POWER_H__
-#define __POWER_H__ 1
+#ifndef __UTIL_POWERD_LOCK_H
+#define __UTIL_POWERD_LOCK_H 1
 
 enum POWERD_ERROR_CODE {
 	POWERD_OK = 0,
@@ -38,4 +38,4 @@ int disable_power_management(void);
 /* Re-enable power management. */
 int restore_power_management(void);
 
-#endif	/* __POWER_H__ */
+#endif	/* __UTIL_POWERD_LOCK_H */

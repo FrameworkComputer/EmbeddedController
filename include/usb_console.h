@@ -5,8 +5,8 @@
 
 /* USB serial console module */
 
-#ifndef __USB_CONSOLE_H
-#define __USB_CONSOLE_H
+#ifndef __CROS_EC_USB_CONSOLE_H
+#define __CROS_EC_USB_CONSOLE_H
 
 #ifdef CONFIG_USB_CONSOLE
 
@@ -63,4 +63,4 @@ void usb_console_enable(int enabled);
 #define usb_va_end(x)
 #endif
 
-#endif /* __USB_CONSOLE_H */
+#endif /* __CROS_EC_USB_CONSOLE_H */

@@ -5,8 +5,8 @@
  * TI bq24192 battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_BQ24192_H
-#define __CROS_EC_CHARGER_BQ24192_H
+#ifndef __CROS_EC_BQ24192_H
+#define __CROS_EC_BQ24192_H
 
 #define BQ24192_ADDR 0xd6
 
@@ -25,4 +25,4 @@
 
 #define BQ24192_DEVICE_ID           0x2b
 
-#endif /* __CROS_EC_CHARGER_BQ24192_H */
+#endif /* __CROS_EC_BQ24192_H */

@@ -5,8 +5,8 @@
 
 /* Configuration for Rambi mainboard */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 /* Optional features */
 #define CONFIG_AP_HANG_DETECT
@@ -130,4 +130,4 @@ int board_discharge_on_ac(int enable);
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

@@ -5,8 +5,8 @@
 
 /* USB Power delivery board configuration */
 
-#ifndef __USB_PD_CONFIG_H
-#define __USB_PD_CONFIG_H
+#ifndef __CROS_EC_USB_PD_CONFIG_H
+#define __CROS_EC_USB_PD_CONFIG_H
 
 #include "adc.h"
 #include "charge_state.h"
@@ -192,4 +192,4 @@ static inline void pd_set_vconn(int port, int polarity, int enable)
 				  GPIO_USBC_VCONN2_EN_L, !enable);
 }
 
-#endif /* __USB_PD_CONFIG_H */
+#endif /* __CROS_EC_USB_PD_CONFIG_H */

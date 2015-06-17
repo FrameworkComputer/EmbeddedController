@@ -5,9 +5,9 @@
 
 /* Keyboard matrix scan control module for IT83xx. */
 
-#ifndef __CROS_EC_IT83XX_KMSC_H
-#define __CROS_EC_IT83XX_KMSC_H
+#ifndef __CROS_EC_KMSC_CHIP_H
+#define __CROS_EC_KMSC_CHIP_H
 
 void keyboard_raw_interrupt(void);
 
-#endif /* __CROS_EC_IT83XX_KMSC_H */
+#endif /* __CROS_EC_KMSC_CHIP_H */

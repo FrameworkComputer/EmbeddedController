@@ -5,8 +5,8 @@
  * TI bq25890/bq25892/bq25895 battery charger driver.
  */
 
-#ifndef __CROS_EC_CHARGER_BQ2589X_H
-#define __CROS_EC_CHARGER_BQ2589X_H
+#ifndef __CROS_EC_BQ2589X_H
+#define __CROS_EC_BQ2589X_H
 
 /* Registers */
 #define BQ2589X_REG_INPUT_CURR      0x00
@@ -77,4 +77,4 @@
 #error BQ2589X unknown variant
 #endif
 
-#endif /* __CROS_EC_CHARGER_BQ2589X_H */
+#endif /* __CROS_EC_BQ2589X_H */

@@ -5,8 +5,8 @@
 
 /* oak_pd board configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 #undef CONFIG_BOARD_OAK_REV_1
 #define CONFIG_BOARD_OAK_REV_2
@@ -105,4 +105,4 @@ enum adc_channel {
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */

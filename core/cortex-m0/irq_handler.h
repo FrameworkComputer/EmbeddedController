@@ -5,8 +5,8 @@
 
 /* Helper to declare IRQ handling routines */
 
-#ifndef __IRQ_HANDLER_H
-#define __IRQ_HANDLER_H
+#ifndef __CROS_EC_IRQ_HANDLER_H
+#define __CROS_EC_IRQ_HANDLER_H
 
 #include "cpu.h"
 
@@ -39,4 +39,4 @@
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
 #endif /* CONFIG_TASK_PROFILING */
-#endif  /* __IRQ_HANDLER_H */
+#endif  /* __CROS_EC_IRQ_HANDLER_H */

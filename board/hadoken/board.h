@@ -5,8 +5,8 @@
 
 /* Hadoken board configuration */
 
-#ifndef __BOARD_H
-#define __BOARD_H
+#ifndef __CROS_EC_BOARD_H
+#define __CROS_EC_BOARD_H
 
 #ifndef __ASSEMBLER__
 
@@ -56,5 +56,5 @@
 
 #endif /* !__ASSEMBLER__ */
 
-#endif /* __BOARD_H */
+#endif /* __CROS_EC_BOARD_H */
 
