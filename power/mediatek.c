@@ -390,6 +390,28 @@ void chipset_force_shutdown(void)
 /*****************************************************************************/
 
 /**
+ * Power off the AP
+ */
+static void power_off(void)
+{
+	/* Call hooks before we drop power rails */
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+	/* switch off all rails */
+	chipset_turn_off_power_rails();
+
+	/* Change SUSPEND_L pin to high-Z to reduce power draw. */
+	gpio_set_flags(power_signal_list[MTK_SUSPEND_ASSERTED].gpio,
+		       GPIO_INPUT);
+
+	lid_opened = 0;
+	enable_sleep(SLEEP_MASK_AP_RUN);
+#ifdef HAS_TASK_POWERLED
+	powerled_set_state(POWERLED_STATE_OFF);
+#endif
+	CPRINTS("power shutdown complete");
+}
+
+/**
  * Check if there has been a power-on event
  *
  * This checks all power-on event signals and returns non-zero if any have been
@@ -415,6 +437,12 @@ static int check_for_power_on_event(void)
 			return POWER_ON_BY_IN_POWER_GOOD;
 		}
 	} else {
+		if (ap_off_flag) {
+			CPRINTS("RESET_FLAG_AP_OFF is on");
+			power_off();
+			return POWER_ON_CANCEL;
+		}
+
 		CPRINTS("POWER_GOOD is not asserted");
 	}
 
@@ -528,28 +556,6 @@ static int wait_for_power_button_release(unsigned int timeout_us)
 	CPRINTS("power button released");
 	power_button_was_pressed = 0;
 	return EC_SUCCESS;
-}
-
-/**
- * Power off the AP
- */
-static void power_off(void)
-{
-	/* Call hooks before we drop power rails */
-	hook_notify(HOOK_CHIPSET_SHUTDOWN);
-	/* switch off all rails */
-	chipset_turn_off_power_rails();
-
-	/* Change SUSPEND_L pin to high-Z to reduce power draw. */
-	gpio_set_flags(power_signal_list[MTK_SUSPEND_ASSERTED].gpio,
-		       GPIO_INPUT);
-
-	lid_opened = 0;
-	enable_sleep(SLEEP_MASK_AP_RUN);
-#ifdef HAS_TASK_POWERLED
-	powerled_set_state(POWERLED_STATE_OFF);
-#endif
-	CPRINTS("power shutdown complete");
 }
 
 void chipset_reset(int is_cold)
