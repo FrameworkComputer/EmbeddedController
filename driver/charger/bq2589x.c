@@ -200,7 +200,7 @@ int charger_set_voltage(int voltage)
 	int rv, val;
 	const struct charger_info * const info = charger_get_info();
 
-	voltage = charger_closest_current(voltage);
+	voltage = charger_closest_voltage(voltage);
 
 	rv = bq2589x_read(BQ2589X_REG_CHG_VOLT, &val);
 	if (rv)
