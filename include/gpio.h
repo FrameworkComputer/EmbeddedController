@@ -50,7 +50,7 @@
  * define an emtpy one here.*/
 #ifndef __CROS_EC_GPIO_SIGNAL_H
 enum gpio_signal {
-	NULL
+	GPIO_COUNT
 };
 #endif /* __CROS_EC_GPIO_SIGNAL_H */
 
