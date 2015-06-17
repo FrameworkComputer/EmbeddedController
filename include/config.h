@@ -755,6 +755,15 @@
 #define CONFIG_HOSTCMD_RATE_LIMITING_MIN_REST (3   * MSEC)
 #define CONFIG_HOSTCMD_RATE_LIMITING_RECESS   (20  * MSEC)
 
+/* PD MCU supports host commands */
+#undef CONFIG_HOSTCMD_PD
+
+/*
+ * Use if PD MCU controls charging (selecting charging port and input
+ * current limit).
+ */
+#undef CONFIG_HOSTCMD_PD_CHG_CTRL
+
 /* Panic when status of PD MCU reflects that it has crashed */
 #undef CONFIG_HOSTCMD_PD_PANIC
 
@@ -1307,12 +1316,6 @@
 
 /* The size in bytes of the FIFO used for PD events logging */
 #undef CONFIG_USB_PD_LOG_SIZE
-
-/*
- * Use if PD MCU controls charging (selecting charging port and input
- * current limit).
- */
-#undef CONFIG_USB_PD_MCU_CHG_CTRL
 
 /* Define if USB-PD device has no way of detecting USB VBUS */
 #undef CONFIG_USB_PD_NO_VBUS_DETECT
