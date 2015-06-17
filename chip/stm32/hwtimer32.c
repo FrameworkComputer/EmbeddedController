@@ -72,7 +72,7 @@ void __hw_timer_enable_clock(int n, int enable)
 	 * Mapping of timers to reg/mask is split into a few different ranges,
 	 * some specific to individual chips.
 	 */
-#if defined(CHIP_FAMILY_STM32F) || defined(CHIP_FAMILY_STM32F0)
+#if defined(CHIP_FAMILY_STM32F0)
 	if (n == 1) {
 		reg = &STM32_RCC_APB2ENR;
 		mask = STM32_RCC_PB2_TIM1;

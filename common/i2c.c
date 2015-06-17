@@ -711,19 +711,8 @@ static void scan_bus(int port, const char *desc)
 		watchdog_reload();  /* Otherwise a full scan trips watchdog */
 		ccputs(".");
 
-#ifdef CHIP_FAMILY_STM32F
-		/*
-		 * TODO(crosbug.com/p/23569): The i2c_xfer() implementation on
-		 * STM32F can't read a byte without writing one first.  So
-		 * write a byte and hope nothing bad happens.  Remove this
-		 * workaround when STM32F is fixed.
-		 */
-		tmp = 0;
-		if (!i2c_xfer(port, a, &tmp, 1, &tmp, 1, I2C_XFER_SINGLE))
-#else
 		/* Do a single read */
 		if (!i2c_xfer(port, a, NULL, 0, &tmp, 1, I2C_XFER_SINGLE))
-#endif
 			ccprintf("\n  0x%02x", a);
 	}
 

@@ -42,7 +42,6 @@ chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 chip-$(HAS_TASK_POWERLED)+=power_led.o
 chip-$(CONFIG_FLASH)+=flash-$(CHIP_FAMILY).o
 ifdef CONFIG_FLASH
-chip-$(CHIP_FAMILY_STM32F)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F0)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
 endif

@@ -38,32 +38,11 @@ static void pwm_configure(enum pwm_channel ch)
 	const struct gpio_info *gpio = gpio_list + pwm->pin;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
 	volatile unsigned *ccmr = NULL;
-#ifdef CHIP_FAMILY_STM32F
-	int mask = gpio->mask;
-	volatile uint32_t *gpio_cr = NULL;
-	uint32_t val;
-#endif
 
 	if (using_pwm[ch])
 		return;
 
-#if defined(CHIP_FAMILY_STM32F)
-	if (mask < 0x100) {
-		gpio_cr = &STM32_GPIO_CRL(gpio->port);
-	} else {
-		gpio_cr = &STM32_GPIO_CRH(gpio->port);
-		mask >>= 8;
-	}
-
-	/* Expand mask from 8-bit to 32-bit */
-	mask = mask * mask;
-	mask = mask * mask;
-
-	/* Set alternate function */
-	val = *gpio_cr & ~(mask * 0xf);
-	val |= mask * 0x9;
-	*gpio_cr = val;
-#elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	gpio_set_alternate_function(gpio->port, gpio->mask, pwm->gpio_alt_func);
 #else /* stm32l */
 	gpio_set_alternate_function(gpio->port, gpio->mask,
