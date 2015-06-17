@@ -199,15 +199,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USBC_BC12_INT_L);
 
 	/*
-	 * Determine recovery mode is requested by the power, volup, and
-	 * voldown buttons being pressed.
-	 */
-	if (power_button_signal_asserted() &&
-	    !gpio_get_level(GPIO_BTN_VOLD_L) &&
-	    !gpio_get_level(GPIO_BTN_VOLU_L))
-		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-
-	/*
 	 * Initialize AP and SH console forwarding USARTs and queues.
 	 */
 	queue_init(&ap_usart_to_usb);
@@ -228,6 +219,32 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_CHGR_ACOK);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_startup_key_combo(void)
+{
+	int vold = !gpio_get_level(GPIO_BTN_VOLD_L);
+	int volu = !gpio_get_level(GPIO_BTN_VOLU_L);
+	int pwr = power_button_signal_asserted();
+
+	/*
+	 * Determine recovery mode is requested by the power and
+	 * voldown buttons being pressed (while device was off).
+	 */
+	if (pwr && vold && !volu) {
+		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+		CPRINTS("> RECOVERY mode");
+	}
+
+	/*
+	 * Determine fastboot mode is requested by the power and
+	 * voldown buttons being pressed (while device was off).
+	 */
+	if (pwr && volu && !vold) {
+		host_set_single_event(EC_HOST_EVENT_KEYBOARD_FASTBOOT);
+		CPRINTS("> FASTBOOT mode");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_startup_key_combo, HOOK_PRIO_DEFAULT);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
