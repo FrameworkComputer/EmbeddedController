@@ -12,7 +12,6 @@ SYMLINK := $(shell readlink $(lastword $(MAKEFILE_LIST)))
 ifneq (,$(SYMLINK))
 
 .PHONY: restart
-
 restart: .DEFAULT
 	@true
 
@@ -38,10 +37,10 @@ PEM ?= board/$(BOARD)/dev_key.pem
 
 include Makefile.toolchain
 
-# Define the traditional first target. The dependencies of this are near the bottom
-# as they can be altered by chip and board files.
-all:
+# Define the traditional first target. The dependencies of this are near the
+# bottom as they can be altered by chip and board files.
 .PHONY: all
+all:
 
 # The board makefile sets $CHIP and the chip makefile sets $CORE.
 # Include those now, since they must be defined for _flag_cfg below.

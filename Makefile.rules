@@ -74,8 +74,7 @@ cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
-.PHONY: all tests utils utils-host utils-build hosttests
-
+.PHONY: buildall
 buildall: $(foreach b, $(boards), proj-$(b)) runtests
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
@@ -87,14 +86,19 @@ proj-%:
 dis-y = $(out)/$(PROJECT).RW.dis
 dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/$(PROJECT).RO.dis
 dis: $(dis-y)
+.PHONY: dis
 
 hex-y = $(out)/$(PROJECT).RO.hex $(out)/$(PROJECT).RW.hex $(out)/$(PROJECT).hex
 hex: $(hex-y)
+.PHONY: hex
 
+.PHONY: utils-host
 utils-host: $(host-utils)
 
+.PHONY: utils-build
 utils-build: $(build-utils)
 
+.PHONY: utils
 utils: utils-host utils-build
 
 # On board test binaries
@@ -110,6 +114,7 @@ $(test-targets): test-%:
 	cp $(out)/$*/$*.bin $(out)/test-$*.bin
 endif
 
+.PHONY: tests
 tests: $(test-targets)
 
 # Emulator test executables
@@ -127,6 +132,7 @@ $(host-test-targets): host-%:
 $(run-test-targets): run-%: host-%
 	$(call quiet,host_test,TEST   )
 
+.PHONY: hosttests runtests
 hosttests: $(host-test-targets)
 runtests: $(run-test-targets)
 
@@ -142,11 +148,10 @@ cmd_report_cov=genhtml -q -o build/host/coverage_rpt -t \
 build/host/%.info: run-%
 	$(call quiet,lcov,COV    )
 
+.PHONY: coverage
 coverage: TEST_FLAG=TEST_COVERAGE=y
 coverage: $(cov-test-targets)
 	$(call quiet,report_cov,REPORT )
-
-.PHONY: coverage
 
 $(out)/firmware_image.lds: common/firmware_image.lds.S
 	$(call quiet,lds,LDS    )
