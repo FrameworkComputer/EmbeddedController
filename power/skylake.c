@@ -118,7 +118,23 @@ enum power_state power_chipset_init(void)
 
 enum power_state power_handle_state(enum power_state state)
 {
-	gpio_set_level(GPIO_PCH_RSMRST_L, gpio_get_level(GPIO_RSMRST_L_PGOOD));
+	/*
+	 * Pass through RSMRST asynchronously, as PCH may not react
+	 * immediately to power changes.
+	 */
+	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
+
+	if (rsmrst_in != rsmrst_out) {
+		/*
+		 * Wait at least 10ms between power signals going high
+		 * and deasserting RSMRST to PCH.
+		 */
+		if (rsmrst_in)
+			msleep(10);
+		gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
+		CPRINTS("RSMRST: %d", rsmrst_in);
+	}
 
 	switch (state) {
 	case POWER_G3:
