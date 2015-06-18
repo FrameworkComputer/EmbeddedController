@@ -630,6 +630,8 @@ void charger_task(void)
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
 
+		curr.chg.flags |= CHG_FLAG_INITIALIZED;
+
 		/* Fake state of charge if necessary */
 		if (fake_state_of_charge >= 0) {
 			curr.batt.state_of_charge = fake_state_of_charge;
@@ -912,6 +914,8 @@ int charge_prevent_power_on(void)
 #ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 	struct batt_params params;
 	struct batt_params *current_batt_params = &curr.batt;
+	int charger_is_uninitialized =
+		!(curr.chg.flags & CHG_FLAG_INITIALIZED);
 
 	/* If battery params seem uninitialized then retrieve them */
 	if (current_batt_params->is_present == BP_NOT_SURE) {
@@ -923,9 +927,15 @@ int charge_prevent_power_on(void)
 	    current_batt_params->state_of_charge <
 	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
+
+	/*
+	 * Factory override: Always allow power on if WP is disabled,
+	 * except when EC is starting up, due to brown out potential.
+	 */
+	prevent_power_on &= (system_is_locked() || charger_is_uninitialized);
 #endif
-	/* Factory override: Always allow power on if WP is disabled */
-	return prevent_power_on && system_is_locked();
+
+	return prevent_power_on;
 }
 
 enum charge_state charge_get_state(void)

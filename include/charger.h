@@ -49,6 +49,8 @@ void charger_get_params(struct charger_params *chg);
 #define CHG_FLAG_BAD_INPUT_CURRENT	0x00000004
 #define CHG_FLAG_BAD_STATUS		0x00000008
 #define CHG_FLAG_BAD_OPTION		0x00000010
+/* Bit to indicate that the charger data has been initialized */
+#define CHG_FLAG_INITIALIZED		0x00000020
 /* All of the above CHG_FLAG_BAD_* bits */
 #define CHG_FLAG_BAD_ANY                0x0000001f
 
