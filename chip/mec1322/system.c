@@ -43,12 +43,32 @@ static void check_reset_cause(void)
 {
 	uint32_t status = MEC1322_VBAT_STS;
 	uint32_t flags = 0;
+	uint32_t rst_sts = MEC1322_PCR_CHIP_PWR_RST &
+				(MEC1322_PWR_RST_STS_VCC1 |
+				MEC1322_PWR_RST_STS_VBAT);
 
 	/* Clear the reset causes now that we've read them */
 	MEC1322_VBAT_STS |= status;
+	MEC1322_PCR_CHIP_PWR_RST |= rst_sts;
 
-	if (status & (1 << 7) || check_vcc1_por())
+	/*
+	* BIT[6:5] determine VCC1 reset and VBAT reset status.
+	* when Poweron watchdog is reset and both VCC1 and VBAT
+	* are set
+	*/
+	if ((rst_sts == (MEC1322_PWR_RST_STS_VCC1 |
+			MEC1322_PWR_RST_STS_VBAT))
+			&& check_vcc1_por())
 		flags |= RESET_FLAG_POWER_ON;
+
+	/*
+	* Check for only BIT 6 to determine VCC1_RST# and no
+	* change on VBAT status indicates this is VCC1_RST#
+	*/
+	if ((rst_sts & MEC1322_PWR_RST_STS_VCC1) &&
+		!(rst_sts & MEC1322_PWR_RST_STS_VBAT))
+		flags |= RESET_FLAG_RESET_PIN;
+
 
 	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
@@ -94,7 +114,7 @@ void system_pre_init(void)
 	MEC1322_PCR_PWR_RST_CTL &= ~(1 << 0);
 
 	if (MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) &
-		RESET_FLAG_POWER_ON)
+		(RESET_FLAG_POWER_ON|RESET_FLAG_RESET_PIN))
 		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) = 0;
 
 	check_reset_cause();
