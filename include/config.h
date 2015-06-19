@@ -1535,6 +1535,9 @@
 /* Define the type-c port controller I2C base address. */
 #undef CONFIG_TCPC_I2C_BASE_ADDR
 
+/* Use this option to enable Try.SRC mode for Dual Role devices */
+#undef CONFIG_USB_PD_TRY_SRC
+
 /* Alternative configuration keeping only the TX part of PHY */
 #undef CONFIG_USB_PD_TX_PHY_ONLY
 

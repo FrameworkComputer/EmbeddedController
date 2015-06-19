@@ -160,6 +160,8 @@ enum pd_rx_errors {
 #define PD_T_BIST_TRANSMIT     (50*MSEC) /* 50ms (used for task_wait arg) */
 #define PD_T_BIST_RECEIVE      (60*MSEC) /* 60ms (max time to process bist) */
 #define PD_T_VCONN_SOURCE_ON  (100*MSEC) /* 100ms */
+#define PD_T_TRY_SRC          (125*MSEC) /* Max time for Try.SRC state */
+#define PD_T_TRY_WAIT         (600*MSEC) /* Max time for TryWait.SNK state */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -699,6 +701,7 @@ enum pd_states {
 #define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
 #define PD_FLAGS_PARTNER_EXTPOWER  (1 << 11)/* port partner has external pwr */
 #define PD_FLAGS_VCONN_ON          (1 << 12)/* vconn is being sourced */
+#define PD_FLAGS_TRY_SRC           (1 << 13)/* Try.SRC states are active */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -710,7 +713,8 @@ enum pd_states {
 					   PD_FLAGS_CHECK_PR_ROLE | \
 					   PD_FLAGS_CHECK_DR_ROLE | \
 					   PD_FLAGS_PARTNER_EXTPOWER | \
-					   PD_FLAGS_VCONN_ON)
+					   PD_FLAGS_VCONN_ON | \
+					   PD_FLAGS_TRY_SRC)
 
 
 enum pd_cc_states {
