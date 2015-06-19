@@ -113,4 +113,11 @@ void lpc_clear_acpi_status_mask(uint8_t mask);
  */
 int lpc_get_pltrst_asserted(void);
 
+
+/* Disable LPC ACPI interrupts */
+void lpc_disable_acpi_interrupts(void);
+
+/* Enable LPC ACPI interrupts */
+void lpc_enable_acpi_interrupts(void);
+
 #endif  /* __CROS_EC_LPC_H */

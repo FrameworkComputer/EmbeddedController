@@ -677,6 +677,18 @@ static void lpc_post_sysjump(void)
 	memcpy(event_mask, prev_mask, sizeof(event_mask));
 }
 
+/* Enable LPC ACPI-EC interrupts */
+void lpc_enable_acpi_interrupts(void)
+{
+	LM4_LPC_LPCIM |= LM4_LPC_INT_MASK(LPC_CH_ACPI, 6);
+}
+
+/* Disable LPC ACPI-EC interrupts */
+void lpc_disable_acpi_interrupts(void)
+{
+	LM4_LPC_LPCIM &= ~(LM4_LPC_INT_MASK(LPC_CH_ACPI, 6));
+}
+
 static void lpc_init(void)
 {
 	/* Enable LPC clock in run and sleep modes. */

@@ -557,6 +557,18 @@ int lpc_get_pltrst_asserted(void)
 	return (MEC1322_LPC_BUS_MONITOR & (1<<1)) ? 1 : 0;
 }
 
+/* Enable LPC ACPI-EC0 interrupts */
+void lpc_enable_acpi_interrupts(void)
+{
+	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);
+}
+
+/* Disable LPC ACPI-EC0 interrupts */
+void lpc_disable_acpi_interrupts(void)
+{
+	task_disable_irq(MEC1322_IRQ_ACPIEC0_IBF);
+}
+
 /* On boards without a host, this command is used to set up LPC */
 static int lpc_command_init(int argc, char **argv)
 {

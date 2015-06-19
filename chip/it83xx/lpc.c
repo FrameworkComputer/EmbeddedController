@@ -638,6 +638,18 @@ void lpcrst_interrupt(enum gpio_signal signal)
 		lpc_get_pltrst_asserted() ? "" : "de");
 }
 
+/* Enable LPC ACPI-EC interrupts */
+void lpc_enable_acpi_interrupts(void)
+{
+	task_enable_irq(IT83XX_IRQ_PMC_IN);
+}
+
+/* Disable LPC ACPI-EC interrupts */
+void lpc_disable_acpi_interrupts(void)
+{
+	task_disable_irq(IT83XX_IRQ_PMC_IN);
+}
+
 static void lpc_resume(void)
 {
 	/* Mask all host events until the host unmasks them itself.  */

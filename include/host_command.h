@@ -130,6 +130,11 @@ uint8_t *host_get_memmap(int offset);
  */
 void host_lock_memmap(void);
 
+/*
+ * Returns status of host memmap lock.
+ */
+int host_memmap_is_locked(void);
+
 /**
  * Release the memmap write mutex. This function should be called once
  * a multi-byte variable read from ACPI is done, and when updating multi-byte

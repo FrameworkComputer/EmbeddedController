@@ -42,6 +42,17 @@ static void acpi_unlock_memmap_deferred(void)
 DECLARE_DEFERRED(acpi_unlock_memmap_deferred);
 
 /*
+ * Deferred function to lock memmap and to enable LPC interrupts.
+ * This is due to LPC interrupt was unable to acquire memmap mutex.
+ */
+static void deferred_host_lock_memmap(void)
+{
+	host_lock_memmap();
+	lpc_enable_acpi_interrupts();
+}
+DECLARE_DEFERRED(deferred_host_lock_memmap);
+
+/*
  * This handles AP writes to the EC via the ACPI I/O port. There are only a few
  * ACPI commands (EC_CMD_ACPI_*), but they are all handled here.
  */
@@ -180,8 +191,29 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		*resultptr = evt_index;
 		retval = 1;
 	} else if (acpi_cmd == EC_CMD_ACPI_BURST_ENABLE && !acpi_data_count) {
+		/*
+		 * TODO: The kernel only enables BURST when doing multi-byte
+		 * value reads over the ACPI port. We don't do such reads
+		 * when our memmap data can be accessed directly over LPC,
+		 * so on LM4, for example, this is dead code. We might want
+		 * to re-add the CONFIG, now that we have overhead of one
+		 * deferred function.
+		 */
+		if (host_memmap_is_locked()) {
+			/*
+			 * If already locked by a task, we can not acquire
+			 * the mutex and will have to wait in the interrupt
+			 * context. But then the task will not get chance to
+			 * release the mutex. This will create deadlock
+			 * situation. To avoid the deadlock, disable ACPI
+			 * interrupts and defer locking.
+			 */
+			lpc_disable_acpi_interrupts();
+			hook_call_deferred(deferred_host_lock_memmap, 0);
+		} else {
+			host_lock_memmap();
+		}
 		/* Enter burst mode */
-		host_lock_memmap();
 		lpc_set_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
 
 		/*
