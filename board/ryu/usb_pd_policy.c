@@ -42,6 +42,9 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void typec_set_input_current_limit(int port, uint32_t max_ma,
@@ -51,6 +54,9 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_is_valid_input_voltage(int mv)
@@ -96,6 +102,9 @@ int pd_set_power_supply_ready(int port)
 	gpio_set_level(GPIO_CHGR_OTG, 1);
 	charger_enable_otg_power(1);
 
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -104,6 +113,9 @@ void pd_power_supply_reset(int port)
 	/* Kill VBUS */
 	charger_enable_otg_power(0);
 	gpio_set_level(GPIO_CHGR_OTG, 0);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_snk_is_vbus_provided(int port)
