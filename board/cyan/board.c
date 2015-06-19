@@ -26,6 +26,7 @@
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
 #include "thermal.h"
+#include "uart.h"
 #include "util.h"
 
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)

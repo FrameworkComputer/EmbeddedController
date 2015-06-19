@@ -13,6 +13,9 @@ GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH,                            
 GPIO_INT(ALL_SYS_PGOOD,     PIN(130), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
 GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* SLP_S4# signal from PCH */
 GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* SLP_S3# signal from PCH */
+#ifdef CONFIG_LOW_POWER_IDLE
+GPIO_INT(UART0_RX,          PIN(162), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       uart_deepsleep_interrupt) /* UART0 RX input */
+#endif
 
 GPIO(NC_012,            PIN(12), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                   /* USB current control */
