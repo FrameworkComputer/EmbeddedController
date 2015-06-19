@@ -142,7 +142,11 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_G3S5:
 		/* Exit SOC G3 */
+#ifdef CONFIG_PMIC
+		gpio_set_level(GPIO_PCH_SYS_PWROK, 1);
+#else
 		gpio_set_level(GPIO_SUSPWRDNACK_SOC_EC, 0);
+#endif
 		CPRINTS("Exit SOC G3");
 
 		if (power_wait_signals(IN_PGOOD_S5)) {
@@ -220,24 +224,6 @@ enum power_state power_handle_state(enum power_state state)
 		/* Set SYS and CORE PWROK */
 		gpio_set_level(GPIO_PCH_SYS_PWROK, 1);
 
-		/* Wait 50 ms for platform reset to deassert */
-		{
-		  int i = 0;
-		  CPRINTS("power wait for PLTRST# to deassert");
-		  while (lpc_get_pltrst_asserted()) {
-			usleep(MSEC);
-
-				i++;
-			if (i >= 50) {
-				CPRINTS("power timeout on PLTRST#");
-				chipset_force_shutdown();
-
-				/*wireless_set_state(WIRELESS_OFF);*/
-				return POWER_S3;
-			}
-		  }
-		}
-
 		return POWER_S0;
 
 
@@ -249,8 +235,6 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		if (!power_has_signals(IN_ALL_S0)) {
-			/* Power down to next state */
-			gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
 			return POWER_S0S3;
 		}
 
@@ -259,9 +243,10 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 
+#ifndef CONFIG_PMIC
 		/* Clear SYS and CORE PWROK */
 		gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
-
+#endif
 		/* Wait 40ns */
 		udelay(1);
 
@@ -302,7 +287,13 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_config_module(MODULE_GPIO, 1);
 
 			/* Enter SOC G3 */
+#ifdef CONFIG_PMIC
+			gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
+			udelay(1);
+			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+#else
 			gpio_set_level(GPIO_SUSPWRDNACK_SOC_EC, 1);
+#endif
 			CPRINTS("Enter SOC G3");
 
 			return POWER_G3;
