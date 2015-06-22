@@ -163,6 +163,9 @@ enum temp_sensor_id {
 	TEMP_SENSOR_I2C_U116_DIE,
 	TEMP_SENSOR_I2C_U116_OBJECT,
 
+	/* Battery temperature sensor */
+	TEMP_SENSOR_BATTERY,
+
 	TEMP_SENSOR_COUNT
 };
 

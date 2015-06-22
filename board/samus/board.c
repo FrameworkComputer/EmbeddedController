@@ -11,6 +11,7 @@
 #include "battery.h"
 #include "capsense.h"
 #include "charger.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accel_kxcj9.h"
@@ -161,6 +162,7 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"I2C-Right D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 9, 7},
 	{"I2C-Left D-Die", TEMP_SENSOR_TYPE_BOARD, tmp006_get_val, 10, 7},
 	{"I2C-Left D-Object", TEMP_SENSOR_TYPE_CASE, tmp006_get_val, 11, 7},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -191,6 +193,7 @@ struct ec_thermal_config thermal_params[] = {
 	{{0, 0, 0}, 0, 0},
 	{{0, 0, 0}, C_TO_K(43), C_TO_K(54)},	/* Left D die */
 	{{0, 0, 0}, 0, 0},
+	{{0, 0, 0}, 0, 0},			/* Battery */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
