@@ -38,6 +38,7 @@
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
@@ -679,5 +680,63 @@ static void powerbtn_mtk_changed(void)
 {
 	task_wake(TASK_ID_CHIPSET);
 }
-
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_mtk_changed, HOOK_PRIO_DEFAULT);
+
+/*****************************************************************************/
+/* Console debug command */
+
+static const char *power_req_name[POWER_REQ_COUNT] = {
+	"none",
+	"off",
+	"on",
+};
+
+/* Power states that we can report */
+enum power_state_t {
+	PSTATE_UNKNOWN,
+	PSTATE_OFF,
+	PSTATE_SUSPEND,
+	PSTATE_ON,
+
+	PSTATE_COUNT,
+};
+
+static const char * const state_name[] = {
+	"unknown",
+	"off",
+	"suspend",
+	"on",
+};
+
+static int command_power(int argc, char **argv)
+{
+	int v;
+
+	if (argc < 2) {
+		enum power_state_t state;
+
+		state = PSTATE_UNKNOWN;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			state = PSTATE_OFF;
+		if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+			state = PSTATE_SUSPEND;
+		if (chipset_in_state(CHIPSET_STATE_ON))
+			state = PSTATE_ON;
+		ccprintf("%s\n", state_name[state]);
+
+		return EC_SUCCESS;
+	}
+
+	if (!parse_bool(argv[1], &v))
+		return EC_ERROR_PARAM1;
+
+	power_request = v ? POWER_REQ_ON : POWER_REQ_OFF;
+	ccprintf("Requesting power %s\n", power_req_name[power_request]);
+	task_wake(TASK_ID_CHIPSET);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(power, command_power,
+			"on/off",
+			"Turn AP power on/off",
+			NULL);
