@@ -73,6 +73,8 @@
 #define CONFIG_BOARD_VERSION
 #undef  CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_TMP432
 
 /* UART DMA */
 #undef CONFIG_UART_TX_DMA
@@ -116,6 +118,7 @@
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define I2C_PORT_PERICOM 0
+#define I2C_PORT_THERMAL 0
 #define I2C_PORT_PD_MCU 1
 #define I2C_PORT_USB_SWITCH 1
 #define I2C_PORT_TCPC 1
@@ -144,6 +147,18 @@ enum adc_channel {
 	ADC_PSYS,
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
+};
+
+enum temp_sensor_id {
+	/* TMP432 local and remote sensors */
+	TEMP_SENSOR_I2C_TMP432_LOCAL,
+	TEMP_SENSOR_I2C_TMP432_REMOTE1,
+	TEMP_SENSOR_I2C_TMP432_REMOTE2,
+
+	/* Battery temperature sensor */
+	TEMP_SENSOR_BATTERY,
+
+	TEMP_SENSOR_COUNT
 };
 
 /* start as a sink in case we have no other power supply/battery */
