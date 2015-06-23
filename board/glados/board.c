@@ -23,6 +23,7 @@
 #include "power_button.h"
 #include "switch.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -168,6 +169,21 @@ struct motion_sensor_t motion_sensors[] = {
 
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+const struct temp_sensor_t temp_sensors[] = {
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/*
+ * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
+ * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
+	{{0, 0, 0}, 0, 0},	/* Battery */
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{ 0 },

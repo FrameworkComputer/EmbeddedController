@@ -55,6 +55,7 @@
 #define CONFIG_SPI_FLASH_SIZE 524288
 #define CONFIG_SPI_FLASH_W25Q64
 
+#define CONFIG_TEMP_SENSOR
 /*
  * Allow dangerous commands.
  * TODO(shawnn): Remove this config before production.
@@ -101,6 +102,13 @@ enum power_signal {
 
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT
+};
+
+enum temp_sensor_id {
+	/* Battery temperature sensor */
+	TEMP_SENSOR_BATTERY,
+
+	TEMP_SENSOR_COUNT
 };
 
 /* start as a sink in case we have no other power supply/battery */
