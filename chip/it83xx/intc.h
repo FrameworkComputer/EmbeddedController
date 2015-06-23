@@ -16,5 +16,6 @@ void pm3_ibf_interrupt(void);
 void pm4_ibf_interrupt(void);
 void pm5_ibf_interrupt(void);
 void lpcrst_interrupt(enum gpio_signal signal);
+void peci_interrupt(void);
 
 #endif /* __CROS_EC_INTC_H */

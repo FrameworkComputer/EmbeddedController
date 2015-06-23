@@ -84,6 +84,7 @@
 #define CONFIG_EC2I
 #define CONFIG_LPC
 #define CONFIG_SPI
+#define CONFIG_PECI
 
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
