@@ -54,6 +54,10 @@ driver-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor/g781.o
 driver-$(CONFIG_TEMP_SENSOR_TMP006)+=temp_sensor/tmp006.o
 driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 
+# Type-C port controller (TCPC) drivers
+driver-$(CONFIG_USB_PD_TCPM_STUB)+=tcpm/stub.o
+driver-$(CONFIG_USB_PD_TCPM_TCPCI)+=tcpm/tcpci.o
+
 # USB switches
 driver-$(CONFIG_USB_SWITCH_PI3USB9281)+=usb_switch_pi3usb9281.o
 driver-$(CONFIG_USB_SWITCH_PI3USB30532)+=usb_switch_pi3usb30532.o

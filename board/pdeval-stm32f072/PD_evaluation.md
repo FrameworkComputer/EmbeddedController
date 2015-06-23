@@ -3,7 +3,7 @@ USB PD chip evaluation configuration
 
 This board configuration implements a USB Power Delivery TCPM
 in order to evaluate various TCPC chips.
-The code tries to follow the preliminary USB PD interface standard but for TCPC chip implementing proprietary I2C protocol, a new TCPM file can be implemented as explained in the [Updating the code](#Updating the code) section below.
+The code tries to follow the preliminary USB PD interface standard but for TCPC chip implementing proprietary I2C protocol, a new TCPM file can be implemented as explained in the [Updating the code](#Updating-the-code) section below.
 
 Building
 --------
@@ -26,7 +26,7 @@ Updating the code
 
 ### TCPC Communication code
 
-Please duplicate [`common/usb_pd_tcpm.c`](../../common/usb_pd_tcpm.c) into `common/usb_pd_tcpm_<vendor>.c`.
+Please duplicate [driver/tcpm/tcpci.c](../../driver/tcpm/tcpci.c) into **driver/tcpm/<vendor>.c**.
 Then update the control logic through I2C there.
 
 ### Board configuration
