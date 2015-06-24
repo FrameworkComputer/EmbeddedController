@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 #include "usb.h"
 #include "util.h"
@@ -69,44 +70,70 @@ const uint8_t hx3_settings[5 + HX3_SETTINGS_SIZE] = {
 	 /* Free space for more strings */
 };
 
-static void configure_hx3(void)
+static int hx3_configured;
+
+static int configure_hx3(void)
 {
 	int ret;
 	int remaining, len;
 	uint8_t *data = (uint8_t *)hx3_settings;
 	uint16_t addr = 0x0000;
-
-	/* Reset the bridge to put it back in bootloader mode */
-	gpio_set_level(GPIO_HUB_RESET_L, 0);
-	/* Keep the reset low at least 10ms (same as the RC) */
-	msleep(50);
-	gpio_set_level(GPIO_HUB_RESET_L, 1);
-	msleep(50);
+	int success = 1;
 
 	remaining = sizeof(hx3_settings);
-	while (remaining) {
+	while (remaining && gpio_get_level(GPIO_HUB_RESET_L)) {
 		/* do 64-byte Page Write */
 		len = MIN(remaining, 64);
-		i2c_lock(0, 1);
+		i2c_lock(I2C_PORT_MASTER, 1);
 		/* send Page Write address */
-		ret = i2c_xfer(0, HX3_I2C_ADDR, (uint8_t *)&addr, 2,
-			       NULL, 0, I2C_XFER_START);
+		ret = i2c_xfer(I2C_PORT_MASTER, HX3_I2C_ADDR,
+			       (uint8_t *)&addr, 2, NULL, 0, I2C_XFER_START);
 		/* send page data */
-		ret |= i2c_xfer(0, HX3_I2C_ADDR, data, len,
-				NULL, 0, I2C_XFER_STOP);
-		i2c_lock(0, 0);
-		if (ret != EC_SUCCESS)
+		ret |= i2c_xfer(I2C_PORT_MASTER, HX3_I2C_ADDR,
+				data, len, NULL, 0, I2C_XFER_STOP);
+		i2c_lock(I2C_PORT_MASTER, 0);
+		if (ret != EC_SUCCESS) {
+			success = 0;
 			ccprintf("HX3 transfer failed %d\n", ret);
+			break;
+		}
 		remaining -= len;
 		data += len;
 	}
+	return gpio_get_level(GPIO_HUB_RESET_L) ? success : 0;
 }
-DECLARE_HOOK(HOOK_INIT, configure_hx3, HOOK_PRIO_DEFAULT);
 
+void hx3_task(void)
+{
+	while (1) {
+		task_wait_event(-1);
+		if (!hx3_configured && gpio_get_level(GPIO_HUB_RESET_L)) {
+			/* wait for the HX3 to come out of reset */
+			msleep(5);
+			hx3_configured = configure_hx3();
+		}
+	}
+}
+
+void hx3_enable(int enable)
+{
+	/* Release reset when the Hub is enabled */
+	gpio_set_level(GPIO_HUB_RESET_L, !!enable);
+	/* Trigger I2C configuration if needed */
+	if (enable)
+		task_wake(TASK_ID_USBCFG);
+	else
+		hx3_configured = 0;
+}
 
 static int command_hx3(int argc, char **argv)
 {
-	configure_hx3();
+	/* Reset the bridge to put it back in bootloader mode */
+	hx3_enable(0);
+	/* Keep the reset low at least 10ms (same as the RC) */
+	msleep(50);
+	/* Release reset and wait for the hub to come up */
+	hx3_enable(1);
 
 	return EC_SUCCESS;
 }
