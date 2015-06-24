@@ -231,7 +231,7 @@ static int check_for_power_off_event(void)
 	return 0;
 }
 
-
+#ifndef CONFIG_POWER_IGNORE_LID_OPEN
 static void tegra_lid_event(void)
 {
 	/* Power task only cares about lid-open events */
@@ -242,6 +242,7 @@ static void tegra_lid_event(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, tegra_lid_event, HOOK_PRIO_DEFAULT);
+#endif /* !CONFIG_POWER_IGNORE_LID_OPEN */
 
 enum power_state power_chipset_init(void)
 {

@@ -1059,6 +1059,9 @@
 /* Compile common code for AP power state machine */
 #undef CONFIG_POWER_COMMON
 
+/* Disable the power-on transition when the lid is opened */
+#undef CONFIG_POWER_IGNORE_LID_OPEN
+
 /* Support stopping in S5 on shutdown */
 #undef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 
