@@ -3210,6 +3210,13 @@ static int cmd_lightbar(int argc, char **argv)
 		+ sizeof(struct ec_response_motion_sensor_data) * \
 		  ECTOOL_MAX_SENSOR}
 
+#define MS_FIFO_INFO_SIZE() { \
+		sizeof(((struct ec_params_motion_sense *)0)->fifo_info) \
+		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
+		sizeof(((struct ec_response_motion_sense *)0)->fifo_info) \
+		+ sizeof(uint16_t) * ECTOOL_MAX_SENSOR}
+
+
 static const struct {
 	uint8_t outsize;
 	uint8_t insize;
@@ -3222,7 +3229,7 @@ static const struct {
 	MS_SIZES(kb_wake_angle),
 	MS_SIZES(data),
 	MS_SIZES(fifo_flush),
-	MS_SIZES(fifo_info),
+	MS_FIFO_INFO_SIZE(),
 	MS_SIZES(fifo_read),
 	MS_SIZES(perform_calib),
 	MS_SIZES(sensor_offset),
@@ -3366,6 +3373,9 @@ static int cmd_motionsense(int argc, char **argv)
 		case MOTIONSENSE_CHIP_LSM6DS0:
 			printf("lsm6ds0\n");
 			break;
+		case MOTIONSENSE_CHIP_BMI160:
+			printf("bmi160\n");
+			break;
 		default:
 			printf("unknown\n");
 		}
@@ -3505,8 +3515,14 @@ static int cmd_motionsense(int argc, char **argv)
 
 		printf("Size:     %d\n", resp->fifo_info.size);
 		printf("Count:    %d\n", resp->fifo_info.count);
-		printf("Lost:     %d\n", resp->fifo_info.lost);
 		printf("Timestamp:%" PRIx32 "\n", resp->fifo_info.timestamp);
+		printf("Total lost: %d\n", resp->fifo_info.total_lost);
+		for (i = 0; i < ECTOOL_MAX_SENSOR; i++) {
+			int lost;
+			lost = resp->fifo_info.lost[i];
+			if (lost != 0)
+				printf("Lost %d:     %d\n", i, lost);
+		}
 		return 0;
 	}
 

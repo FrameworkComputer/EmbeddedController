@@ -83,22 +83,20 @@ static struct mutex g_sensor_mutex;
 #ifdef CONFIG_ACCEL_FIFO
 struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
-int motion_sense_fifo_lost;
-
-static void *nullcpy(void *dest, const void *src, size_t n)
-{
-	return dest;
-}
+static int motion_sense_fifo_lost;
 
 void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 				const struct motion_sensor_t *sensor)
 {
+	struct ec_response_motion_sensor_data vector;
 	data->sensor_num = (sensor - motion_sensors);
 	mutex_lock(&g_sensor_mutex);
 	if (queue_space(&motion_sense_fifo) == 0) {
+		queue_remove_unit(&motion_sense_fifo, &vector);
 		motion_sense_fifo_lost++;
-		queue_remove_memcpy(&motion_sense_fifo, NULL, 1,
-				nullcpy);
+		motion_sensors[vector.sensor_num].lost++;
+		if (vector.flags & MOTIONSENSE_SENSOR_FLAG_FLUSH)
+			CPRINTS("Lost flush for sensor %d", vector.sensor_num);
 	}
 	mutex_unlock(&g_sensor_mutex);
 	queue_add_unit(&motion_sense_fifo, data);
@@ -128,8 +126,7 @@ static void motion_sense_get_fifo_info(
 	fifo_info->size = motion_sense_fifo.buffer_units;
 	mutex_lock(&g_sensor_mutex);
 	fifo_info->count = queue_count(&motion_sense_fifo);
-	fifo_info->lost = motion_sense_fifo_lost;
-	motion_sense_fifo_lost = 0;
+	fifo_info->total_lost = motion_sense_fifo_lost;
 	mutex_unlock(&g_sensor_mutex);
 	fifo_info->timestamp = __hw_clock_source_read();
 }
@@ -681,7 +678,13 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		/* passthrough */
 	case MOTIONSENSE_CMD_FIFO_INFO:
 		motion_sense_get_fifo_info(&out->fifo_info);
-		args->response_size = sizeof(out->fifo_info);
+		for (i = 0; i < motion_sensor_count; i++) {
+			out->fifo_info.lost[i] = motion_sensors[i].lost;
+			motion_sensors[i].lost = 0;
+		}
+		motion_sense_fifo_lost = 0;
+		args->response_size = sizeof(out->fifo_info) +
+			sizeof(uint16_t) * motion_sensor_count;
 		break;
 
 	case MOTIONSENSE_CMD_FIFO_READ:

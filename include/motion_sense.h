@@ -29,7 +29,9 @@ enum sensor_state {
 #define SENSOR_ACTIVE_S0_S3_S5 (SENSOR_ACTIVE_S0_S3 | SENSOR_ACTIVE_S5)
 
 struct motion_data_t {
+	/* data rate the sensor will measure, in mHz */
 	int odr;
+	/* range of measurement in SI */
 	int range;
 };
 
@@ -57,7 +59,15 @@ struct motion_sensor_t {
 	enum chipset_state_mask active;
 	vector_3_t raw_xyz;
 	vector_3_t xyz;
+
+	/* How many flush events are pending */
 	uint32_t flush_pending;
+
+	/*
+	 * How many vector events are lost in the FIFO since last time
+	 * FIFO info has been transmitted.
+	 */
+	uint16_t lost;
 };
 
 /* Defined at board level. */

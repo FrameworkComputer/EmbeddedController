@@ -1732,13 +1732,15 @@ struct ec_response_motion_sensor_data {
 
 struct ec_response_motion_sense_fifo_info {
 	/* Size of the fifo */
-	uint32_t size;
+	uint16_t size;
 	/* Amount of space used in the fifo */
-	uint32_t count;
-	/* Lost events since the last fifo_info */
-	uint32_t lost;
+	uint16_t count;
 	/* TImestamp recorded in us */
 	uint32_t timestamp;
+	/* Total amount of vector lost */
+	uint16_t total_lost;
+	/* Lost events since the last fifo_info, per sensors */
+	uint16_t lost[0];
 } __packed;
 
 struct ec_response_motion_sense_fifo_data {
