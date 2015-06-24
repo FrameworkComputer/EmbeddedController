@@ -16,6 +16,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -244,7 +245,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		CPRINTF("Current: %dmA\n", payload[1]);
 		break;
 	case VDO_CMD_FLIP:
-		board_flip_usb_mux(port);
+		usb_mux_flip(port);
 		break;
 #ifdef CONFIG_USB_PD_LOGGING
 	case VDO_CMD_GET_LOG:
@@ -263,7 +264,7 @@ static uint32_t dp_status;
 static void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
-	board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_CONNECT, 0);
+	usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_CONNECT, 0);
 	dp_flags = 0;
 	dp_status = 0;
 }
@@ -304,7 +305,7 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	if (!pin_mode)
 		return 0;
 
-	board_set_usb_mux(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
+	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
 			  USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,

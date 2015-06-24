@@ -13,6 +13,7 @@
 #include "clock.h"
 #include "gpio.h"
 #include "registers.h"
+#include "usb_mux.h"
 
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_C0 3
@@ -171,7 +172,7 @@ static inline void pd_config_init(int port, uint8_t power_role)
 	pd_tx_init();
 
 	/* Reset mux ... for NONE polarity doesn't matter */
-	board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT, 0);
+	usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT, 0);
 
 	gpio_set_level(GPIO_USBC_VCONN1_EN_L, 1);
 	gpio_set_level(GPIO_USBC_VCONN2_EN_L, 1);

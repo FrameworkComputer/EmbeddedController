@@ -1630,8 +1630,8 @@
 /* Number of Pericom PI3USB9281 chips present in system */
 #undef CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT
 
-/* Support the Pericom PI3USB30532. */
-#undef CONFIG_USB_SWITCH_PI3USB30532
+/* Support the Pericom PI3USB30532 USB3.0/DP1.2 Matrix Switch */
+#undef CONFIG_USB_MUX_PI3USB30532
 
 /*****************************************************************************/
 /* USB GPIO config */

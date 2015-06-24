@@ -164,62 +164,6 @@ const void * const usb_strings[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
-void board_set_usb_mux(int port, enum typec_mux mux,
-		       enum usb_switch usb, int polarity)
-{
-	if (mux == TYPEC_MUX_NONE) {
-		/* put the mux in the high impedance state */
-		gpio_set_level(GPIO_SS_MUX_OE_L, 1);
-		/* Disable display hardware */
-		gpio_set_level(GPIO_BRIDGE_RESET_L, 0);
-		gpio_set_level(GPIO_SPLITTER_RESET_L, 0);
-		/* Put the USB hub under reset */
-		hx3_enable(0);
-		return;
-	}
-
-	/* Trigger USB Hub configuration */
-	hx3_enable(1);
-
-	if ((mux == TYPEC_MUX_DOCK) || (mux == TYPEC_MUX_USB)) {
-		/* Low selects USB Dock */
-		gpio_set_level(GPIO_SS_MUX_SEL, 0);
-	} else if (mux == TYPEC_MUX_DP) {
-		/* high selects display port */
-		gpio_set_level(GPIO_SS_MUX_SEL, 1);
-	}
-
-	/* clear OE line to make mux active */
-	gpio_set_level(GPIO_SS_MUX_OE_L, 0);
-
-	if (mux != TYPEC_MUX_USB) {
-		/* Enable display hardware */
-		gpio_set_level(GPIO_BRIDGE_RESET_L, 1);
-		gpio_set_level(GPIO_SPLITTER_RESET_L, 1);
-	}
-}
-
-int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
-{
-	int oe_disabled = gpio_get_level(GPIO_SS_MUX_OE_L);
-	int dp_4lanes = gpio_get_level(GPIO_SS_MUX_SEL);
-
-	if (oe_disabled) {
-		*usb_str = NULL;
-		*dp_str = NULL;
-		return 0;
-	}
-
-	if (dp_4lanes) {
-		*dp_str = "DP_4LANE";
-		*usb_str = NULL;
-	} else {
-		*dp_str = "DP_2LANE";
-		*usb_str = "DOCK";
-	}
-	return 1;
-}
-
 /**
  * USB configuration
  * Any type-C device with alternate mode capabilities must have the following
@@ -279,4 +223,3 @@ const struct bos_context bos_ctx = {
 	.descp = (void *)&bos_desc,
 	.size = sizeof(struct my_bos),
 };
-

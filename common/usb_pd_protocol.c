@@ -19,6 +19,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "version.h"
@@ -271,8 +272,8 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd_dfp_exit_mode(port, 0, 0);
 #endif
 #ifdef CONFIG_USBC_SS_MUX
-		board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-				  pd[port].polarity);
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			    pd[port].polarity);
 #endif
 #ifdef CONFIG_USBC_VCONN
 		tcpm_set_vconn(port, 0);
@@ -787,14 +788,14 @@ static void pd_set_data_role(int port, int role)
 	 * If new data role is UFP, then disconnect the SS mux.
 	 */
 	if (role == PD_ROLE_DFP)
-		board_set_usb_mux(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-				  pd[port].polarity);
+		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+			    pd[port].polarity);
 	else
-		board_set_usb_mux(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-				  pd[port].polarity);
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			    pd[port].polarity);
 #else
-	board_set_usb_mux(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			  pd[port].polarity);
+	usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+		    pd[port].polarity);
 #endif
 #endif
 	pd_update_roles(port);
@@ -1333,6 +1334,11 @@ void pd_task(void)
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
 
+#ifdef CONFIG_USBC_SS_MUX
+	/* Initialize USB mux to its default state */
+	usb_mux_init(port);
+#endif
+
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
@@ -1473,9 +1479,9 @@ void pd_task(void)
 				/* Enable VBUS */
 				if (pd_set_power_supply_ready(port)) {
 #ifdef CONFIG_USBC_SS_MUX
-					board_set_usb_mux(port, TYPEC_MUX_NONE,
-							  USB_SWITCH_DISCONNECT,
-							  pd[port].polarity);
+					usb_mux_set(port, TYPEC_MUX_NONE,
+						    USB_SWITCH_DISCONNECT,
+						    pd[port].polarity);
 #endif
 					break;
 				}
@@ -2801,54 +2807,6 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"USB PD",
 			NULL);
 
-#ifdef CONFIG_USBC_SS_MUX
-#ifdef CONFIG_CMD_TYPEC
-static int command_typec(int argc, char **argv)
-{
-	const char * const mux_name[] = {"none", "usb", "dp", "dock"};
-	char *e;
-	int port;
-	enum typec_mux mux = TYPEC_MUX_NONE;
-	int i;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	port = strtoi(argv[1], &e, 10);
-	if (*e || port >= CONFIG_USB_PD_PORT_COUNT)
-		return EC_ERROR_PARAM1;
-
-	if (argc < 3) {
-		const char *dp_str, *usb_str;
-		ccprintf("Port C%d: polarity:CC%d\n",
-			port, pd_get_polarity(port) + 1);
-		if (board_get_usb_mux(port, &dp_str, &usb_str))
-			ccprintf("Superspeed %s%s%s\n",
-				 dp_str ? dp_str : "",
-				 dp_str && usb_str ? "+" : "",
-				 usb_str ? usb_str : "");
-		else
-			ccprintf("No Superspeed connection\n");
-
-		return EC_SUCCESS;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(mux_name); i++)
-		if (!strcasecmp(argv[2], mux_name[i]))
-			mux = i;
-	board_set_usb_mux(port, mux, mux == TYPEC_MUX_NONE ?
-					USB_SWITCH_DISCONNECT :
-					USB_SWITCH_CONNECT,
-			  pd_get_polarity(port));
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(typec, command_typec,
-			"<port> [none|usb|dp|dock]",
-			"Control type-C connector muxing",
-			NULL);
-#endif /* CONFIG_CMD_TYPEC */
-#endif /* CONFIG_USBC_SS_MUX */
-
 #ifdef HAS_TASK_HOSTCMD
 
 static int hc_pd_ports(struct host_cmd_handler_args *args)
@@ -2898,11 +2856,11 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 
 #ifdef CONFIG_USBC_SS_MUX
 	if (p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
-		board_set_usb_mux(p->port, typec_mux_map[p->mux],
-				  typec_mux_map[p->mux] == TYPEC_MUX_NONE ?
-					USB_SWITCH_DISCONNECT :
-					USB_SWITCH_CONNECT,
-				  pd_get_polarity(p->port));
+		usb_mux_set(p->port, typec_mux_map[p->mux],
+			    typec_mux_map[p->mux] == TYPEC_MUX_NONE ?
+			    USB_SWITCH_DISCONNECT :
+			    USB_SWITCH_CONNECT,
+			    pd_get_polarity(p->port));
 #endif /* CONFIG_USBC_SS_MUX */
 
 	if (args->version == 0) {

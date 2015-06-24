@@ -208,6 +208,10 @@ enum usb_strings {
 /* The lower the input voltage, the higher the power efficiency. */
 #define PD_PREFER_LOW_VOLTAGE
 
+/* Mux driver functions differ by board revision */
+extern const struct usb_mux_driver p4_board_custom_usb_mux_driver;
+extern const struct usb_mux_driver p5_board_custom_usb_mux_driver;
+
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
 

@@ -22,7 +22,6 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGE_RAMP
 #undef  CONFIG_CMD_HASH
-#undef  CONFIG_CMD_TYPEC
 #undef  CONFIG_CMD_I2C_SCAN
 #undef  CONFIG_CMD_I2C_XFER
 /* Minimum ilim = 500 mA */

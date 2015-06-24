@@ -10,6 +10,8 @@
 
 #include <inttypes.h>
 
+#include "usb_pd.h"
+
 /* USB switch registers */
 #define PI3USB30532_REG_ADDR 0x00
 #define PI3USB30532_REG_VENDOR 0x01
@@ -61,18 +63,5 @@
  */
 #define PI3USB30532_MODE_DP_USB_SWAP (PI3USB30532_MODE_DP_USB | \
 				      PI3USB30532_BIT_SWAP)
-
-
-/* Reads PI3USB30532 register */
-int pi3usb30532_read(uint8_t chip_idx, uint8_t reg);
-
-/* Writes PI3USB30532 register */
-int pi3usb30532_write(uint8_t chip_idx, uint8_t reg, uint8_t val);
-
-/* Writes PI3USB30532 control register */
-int pi3usb30532_set_switch(uint8_t chip_idx, uint8_t mode);
-
-/* Resets PI3USB30532 to power on default value */
-int pi3usb30532_reset(uint8_t chip_idx);
 
 #endif /* __CROS_EC_PI3USB30532_H */

@@ -1186,14 +1186,6 @@ extern const int pd_snk_pdo_cnt;
  */
 int pd_get_source_pdo(const uint32_t **src_pdo);
 
-/* Muxing for the USB type C */
-enum typec_mux {
-	TYPEC_MUX_NONE,
-	TYPEC_MUX_USB,
-	TYPEC_MUX_DP,
-	TYPEC_MUX_DOCK,
-};
-
 enum usb_switch {
 	USB_SWITCH_CONNECT,
 	USB_SWITCH_DISCONNECT,
@@ -1207,39 +1199,6 @@ enum usb_switch {
  * @param setting new switch setting to configure.
  */
 void board_set_usb_switches(int port, enum usb_switch setting);
-
-/**
- * Configure superspeed muxes on type-C port.
- *
- * @param port port number.
- * @param mux selected function.
- * @param polarity plug polarity (0=CC1, 1=CC2).
- */
-void board_set_usb_mux(int port, enum typec_mux mux,
-		       enum usb_switch usb, int polarity);
-
-/**
- * Query superspeed mux status on type-C port.
- *
- * @param port port number.
- * @param dp_str pointer to the DP string to return.
- * @param usb_str pointer to the USB string to return.
- * @return Non-zero if superspeed connection is enabled; otherwise, zero.
- */
-int board_get_usb_mux(int port, const char **dp_str, const char **usb_str);
-
-/**
- * Flip the superspeed muxes on type-C port.
- *
- * This is used for factory test automation. Note that this function should
- * only flip the superspeed muxes and leave CC lines alone. Without further
- * changes, this function MUST ONLY be used for testing purpose, because
- * the protocol layer loses track of the superspeed polarity and DP/USB3.0
- * connection may break.
- *
- * @param port port number.
- */
-void board_flip_usb_mux(int port);
 
 /**
  * Request that a host event be sent to notify the AP of a PD power event.

@@ -60,8 +60,13 @@ driver-$(CONFIG_USB_PD_TCPM_TCPCI)+=tcpm/tcpci.o
 
 # USB switches
 driver-$(CONFIG_USB_SWITCH_PI3USB9281)+=usb_switch_pi3usb9281.o
-driver-$(CONFIG_USB_SWITCH_PI3USB30532)+=usb_switch_pi3usb30532.o
 driver-$(CONFIG_USB_SWITCH_TSU6721)+=usb_switch_tsu6721.o
+
+# USB mux high-level driver
+driver-$(CONFIG_USBC_SS_MUX)+=usb_mux.o
+
+# USB muxes
+driver-$(CONFIG_USB_MUX_PI3USB30532)+=usb_mux_pi3usb30532.o
 
 # Firmware Update
 driver-$(CONFIG_SB_FIRMWARE_UPDATE)+=battery/sb_fw_update.o

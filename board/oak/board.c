@@ -21,7 +21,6 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
-#include "pi3usb30532.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -33,6 +32,7 @@
 #include "temp_sensor_chip.h"
 #include "thermal.h"
 #include "timer.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -164,6 +164,17 @@ struct ec_thermal_config thermal_params[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.port_addr = 0x54 << 1,
+		.driver    = &pi3usb30532_usb_mux_driver,
+	},
+	{
+		.port_addr = 0x55 << 1,
+		.driver    = &pi3usb30532_usb_mux_driver,
+	},
+};
+
 static int discharging_on_ac;
 
 /**
@@ -172,7 +183,6 @@ static int discharging_on_ac;
  */
 static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
 static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
-static uint8_t ss_mux_mode[CONFIG_USB_PD_PORT_COUNT];
 
 /**
  * Store the current DP hardware route.
@@ -348,62 +358,6 @@ void board_set_usb_switches(int port, enum usb_switch setting)
 		usb_switch_state[port] = setting;
 	pi3usb9281_set_switches(port, usb_switch_state[port]);
 	mutex_unlock(&usb_switch_lock[port]);
-}
-
-/**
- * Set USB3.0/DP mux.
- *
- * @param port       the type-C port to change
- * @param mux        mux setting in enum typec_mux
- * @param usb        USB2.0 switch
- * @param polarity   0 or 1
- */
-void board_set_usb_mux(int port, enum typec_mux mux,
-		       enum usb_switch usb, int polarity)
-{
-	const uint8_t modes[] = {
-		[TYPEC_MUX_NONE] = PI3USB30532_MODE_POWERON,
-		[TYPEC_MUX_USB] = PI3USB30532_MODE_USB,
-		[TYPEC_MUX_DP] = PI3USB30532_MODE_DP,
-		[TYPEC_MUX_DOCK] = PI3USB30532_MODE_DP_USB,
-	};
-
-	/* Configure USB2.0 */
-	board_set_usb_switches(port, usb);
-
-	/* Configure superspeed lanes */
-	ss_mux_mode[port] = modes[mux] | (polarity ? PI3USB30532_BIT_SWAP : 0);
-	pi3usb30532_set_switch(port, ss_mux_mode[port]);
-	CPRINTS("usb/dp mux: port(%d) typec_mux(%d) usb2(%d) polarity(%d)",
-			port, mux, usb, polarity);
-}
-
-/**
- * Get USB/DP mux state.
- *
- * @param port       the type-C port to check
- * @param dp_str     return DP mux status in "DP1", "DP2" or NULL
- * @param usb_str    return USB mux status in "USB1", "USB2" or NULL
- *
- * @return           superspeed lane enable or not.
- */
-int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
-{
-	const char *dp, *usb;
-	int has_ss, has_dp, has_usb, polarity;
-	int mode = ss_mux_mode[port];
-
-	polarity = mode & PI3USB30532_BIT_SWAP;
-	dp = polarity ? "DP2" : "DP1";
-	usb = polarity ? "USB2" : "USB1";
-
-	has_ss = mode & (PI3USB30532_BIT_DP | PI3USB30532_BIT_USB);
-	has_dp = mode & PI3USB30532_BIT_DP;
-	has_usb = mode & PI3USB30532_BIT_USB;
-	*dp_str = has_dp ? dp : NULL;
-	*usb_str = has_usb ? usb : NULL;
-
-	return has_ss ? 1 : 0;
 }
 
 static void hpd_irq_deferred(void)

@@ -346,68 +346,6 @@ void board_set_usb_switches(int port, enum usb_switch setting)
 	pi3usb9281_set_switches(port, usb_switch_state);
 }
 
-void board_set_usb_mux(int port, enum typec_mux mux,
-		       enum usb_switch usb, int polarity)
-{
-	/* reset everything */
-	gpio_set_level(GPIO_USBC_MUX_CONF0, 0);
-	gpio_set_level(GPIO_USBC_MUX_CONF1, 0);
-	gpio_set_level(GPIO_USBC_MUX_CONF2, 0);
-
-	/* Set D+/D- switch to appropriate level */
-	board_set_usb_switches(port, usb);
-
-	if (mux == TYPEC_MUX_NONE)
-		/* everything is already disabled, we can return */
-		return;
-
-	gpio_set_level(GPIO_USBC_MUX_CONF0, polarity);
-
-	if (mux == TYPEC_MUX_USB || mux == TYPEC_MUX_DOCK)
-		/* USB 3.0 uses 2 superspeed lanes */
-		gpio_set_level(GPIO_USBC_MUX_CONF2, 1);
-
-	if (mux == TYPEC_MUX_DP || mux == TYPEC_MUX_DOCK)
-		/* DP uses available superspeed lanes (x2 or x4) */
-		gpio_set_level(GPIO_USBC_MUX_CONF1, 1);
-}
-
-int board_get_usb_mux(int port, const char **dp_str, const char **usb_str)
-{
-	int has_usb, has_dp, polarity;
-
-	has_usb = gpio_get_level(GPIO_USBC_MUX_CONF2);
-	has_dp = gpio_get_level(GPIO_USBC_MUX_CONF1);
-	polarity = gpio_get_level(GPIO_USBC_MUX_CONF0);
-
-	if (has_dp)
-		*dp_str = polarity ? "DP2" : "DP1";
-	else
-		*dp_str = NULL;
-
-	if (has_usb)
-		*usb_str = polarity ? "USB2" : "USB1";
-	else
-		*usb_str = NULL;
-
-	return has_dp || has_usb;
-}
-
-void board_flip_usb_mux(int port)
-{
-	int has_usb, has_dp, polarity;
-	enum typec_mux mux;
-
-	has_usb = gpio_get_level(GPIO_USBC_MUX_CONF2);
-	has_dp = gpio_get_level(GPIO_USBC_MUX_CONF1);
-	polarity = gpio_get_level(GPIO_USBC_MUX_CONF0);
-	mux = has_usb && has_dp ? TYPEC_MUX_DOCK :
-		(has_dp ? TYPEC_MUX_DP :
-		(has_usb ? TYPEC_MUX_USB : TYPEC_MUX_NONE));
-
-	board_set_usb_mux(port, mux, usb_switch_state, !polarity);
-}
-
 /**
  * Discharge battery when on AC power for factory test.
  */
