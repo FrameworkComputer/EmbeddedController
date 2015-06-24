@@ -253,6 +253,12 @@
 #undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
+ * BQ2589x IR Compensation settings.
+ * Should be the combination of BQ2589X_IR_TREG_xxxC, BQ2589X_IR_VCLAMP_yyyMV
+ * and  BQ2589X_IR_BAT_COMP_zzzMOHM.
+ */
+#undef CONFIG_CHARGER_BQ2589X_IR_COMP
+/*
  * BQ2589x 5V boost current limit and voltage.
  * Should be the combination of BQ2589X_BOOSTV_MV(voltage) and
  * BQ2589X_BOOST_LIM_xxxMA.

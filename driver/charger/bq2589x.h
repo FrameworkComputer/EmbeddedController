@@ -43,6 +43,31 @@
 #define BQ2589X_CFG2_OTG_CONFIG    (1<<5)
 #define BQ2589X_CFG2_WD_RST        (1<<6)
 
+/* REG08 : IR compensation definitions */
+#define BQ2589X_IR_BAT_COMP_140MOHM (7 << 5)
+#define BQ2589X_IR_BAT_COMP_120MOHM (6 << 5)
+#define BQ2589X_IR_BAT_COMP_100MOHM (5 << 5)
+#define BQ2589X_IR_BAT_COMP_80MOHM  (4 << 5)
+#define BQ2589X_IR_BAT_COMP_60MOHM  (3 << 5)
+#define BQ2589X_IR_BAT_COMP_40MOHM  (2 << 5)
+#define BQ2589X_IR_BAT_COMP_20MOHM  (1 << 5)
+#define BQ2589X_IR_BAT_COMP_0MOHM   (0 << 5)
+#define BQ2589X_IR_VCLAMP_224MV     (7 << 2)
+#define BQ2589X_IR_VCLAMP_192MV     (6 << 2)
+#define BQ2589X_IR_VCLAMP_160MV     (5 << 2)
+#define BQ2589X_IR_VCLAMP_128MV     (4 << 2)
+#define BQ2589X_IR_VCLAMP_96MV      (3 << 2)
+#define BQ2589X_IR_VCLAMP_64MV      (2 << 2)
+#define BQ2589X_IR_VCLAMP_32MV      (1 << 2)
+#define BQ2589X_IR_VCLAMP_0MV       (0 << 2)
+#define BQ2589X_IR_TREG_120C        (3 << 0)
+#define BQ2589X_IR_TREG_100C        (2 << 0)
+#define BQ2589X_IR_TREG_80C         (1 << 0)
+#define BQ2589X_IR_TREG_60C         (0 << 0)
+
+#define BQ2589X_IR_COMP_DEFAULT (BQ2589X_IR_TREG_120C | BQ2589X_IR_VCLAMP_0MV |\
+				 BQ2589X_IR_BAT_COMP_0MOHM)
+
 /* 5V VBUS Boost settings */
 #define BQ2589X_BOOSTV_MV(mv)       (((((mv) - 4550)/64) & 0xF) << 4)
 #define BQ2589X_BOOSTV_DEFAULT      BQ2589X_BOOSTV_MV(4998)

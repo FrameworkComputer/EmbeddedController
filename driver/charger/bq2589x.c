@@ -24,6 +24,11 @@
 #define CONFIG_CHARGER_BQ2589X_BOOST BQ2589X_BOOST_DEFAULT
 #endif
 
+/* IR compensation settings */
+#ifndef CONFIG_CHARGER_BQ2589X_IR_COMP
+#define CONFIG_CHARGER_BQ2589X_IR_COMP BQ2589X_IR_COMP_DEFAULT
+#endif
+
 /* Charger information */
 static const struct charger_info bq2589x_charger_info = {
 	.name         = "bq2589x",
@@ -263,6 +268,9 @@ static void bq2589x_init(void)
 		return;
 
 	if (bq2589x_watchdog_reset())
+		return;
+
+	if (bq2589x_write(BQ2589X_REG_IR_COMP, CONFIG_CHARGER_BQ2589X_IR_COMP))
 		return;
 
 	if (bq2589x_write(BQ2589X_REG_BOOST_MODE, CONFIG_CHARGER_BQ2589X_BOOST))
