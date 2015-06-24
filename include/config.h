@@ -63,6 +63,9 @@
 /* Support AP hang detection host command and state machine */
 #undef CONFIG_AP_HANG_DETECT
 
+/* Support AP Warm reset Interrupt. */
+#undef CONFIG_AP_WARM_RESET_INTERRUPT
+
 /*
  * Support controlling the display backlight based on the state of the lid
  * switch.  The EC will disable the backlight when the lid is closed.
@@ -78,6 +81,9 @@
 
 /*****************************************************************************/
 /* Battery config */
+
+/* Support a simple battery. */
+#undef CONFIG_BATTERY
 
 /*
  * Compile battery-specific code.
@@ -176,6 +182,12 @@
  */
 #undef CONFIG_BATTERY_REVIVE_DISCONNECT
 
+/* Boot header storage offset. */
+#undef CONFIG_BOOT_HEADER_STORAGE_OFF
+
+/* Size of boot header in storage. */
+#undef CONFIG_BOOT_HEADER_STORAGE_SIZE
+
 /*****************************************************************************/
 
 /*
@@ -195,6 +207,12 @@
 
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
+
+/******************************************************************************/
+/* Oak Board Revisions */
+#undef CONFIG_BOARD_OAK_REV_1
+#undef CONFIG_BOARD_OAK_REV_2
+#undef CONFIG_BOARD_OAK_REV_3
 
 /*****************************************************************************/
 /* Modify the default behavior to make system bringup easier. */
@@ -244,12 +262,14 @@
 #undef CONFIG_CHARGER_BQ24707A
 #undef CONFIG_CHARGER_BQ24715
 #undef CONFIG_CHARGER_BQ24725
+#undef CONFIG_CHARGER_BQ24735
 #undef CONFIG_CHARGER_BQ24738
 #undef CONFIG_CHARGER_BQ24770
 #undef CONFIG_CHARGER_BQ24773
 #undef CONFIG_CHARGER_BQ25890
 #undef CONFIG_CHARGER_BQ25892
 #undef CONFIG_CHARGER_BQ25895
+#undef CONFIG_CHARGER_ISL9237
 #undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
@@ -297,6 +317,9 @@
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT
 
+/* Minimum battery percentage for power on */
+#undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+
 /*
  * Equivalent of CONFIG_BATTERY_OVERRIDE_PARAMS for use with
  * CONFIG_CHARGER_V2
@@ -335,6 +358,7 @@
 /* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_BAYTRAIL  /* Intel Bay Trail (x86) */
 #undef CONFIG_CHIPSET_BRASWELL  /* Intel Braswell (x86) */
+#undef CONFIG_CHIPSET_ECDRIVEN  /* Dummy power module */
 #undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_MEDIATEK  /* MediaTek MT81xx */
@@ -387,9 +411,11 @@
 #undef CONFIG_CMD_HOSTCMD
 #define CONFIG_CMD_I2C_SCAN
 #define CONFIG_CMD_I2C_XFER
+#undef CONFIG_CMD_I2CWEDGE
 #define CONFIG_CMD_IDLE_STATS
 #undef CONFIG_CMD_ILIM
 #undef CONFIG_CMD_JUMPTAGS
+#undef CONFIG_CMD_LID_ANGLE
 #undef CONFIG_CMD_MCDP
 #define CONFIG_CMD_PD
 #undef CONFIG_CMD_PD_DEV_DUMP_INFO
@@ -411,6 +437,15 @@
 #undef CONFIG_CMD_USB_PD_PE
 
 /*****************************************************************************/
+
+/* Support Code RAM architecture (run code in RAM). */
+#undef CONFIG_CODERAM_ARCH
+
+/* Base address of Code RAM. */
+#undef CONFIG_CDRAM_BASE
+
+/* Size of Code RAM. */
+#undef CONFIG_CDRAM_SIZE
 
 /* Provide common core code to output panic information without interrupts. */
 #define CONFIG_COMMON_PANIC_OUTPUT
@@ -543,6 +578,9 @@
  */
 #define CONFIG_DEBUG_EXCEPTIONS
 
+/* Support Synchronous UART debug printf. */
+#undef CONFIG_DEBUG_PRINTF
+
 /* Check for stack overflows on every context switch */
 #define CONFIG_DEBUG_STACK_OVERFLOW
 
@@ -556,6 +594,9 @@
 
 /* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
+
+/* Support EC to Internal bus bridge. */
+#undef CONFIG_EC2I
 
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
@@ -633,6 +674,9 @@
 #undef CONFIG_FLASH_WRITE_IDEAL_SIZE
 #undef CONFIG_FLASH_WRITE_SIZE
 
+/* Base address of SPI Flash. */
+#undef CONFIG_FLASH_BASE_SPI
+
 /*****************************************************************************/
 
 /* Include a flashmap in the compiled firmware image */
@@ -664,6 +708,9 @@
 #undef CONFIG_RW_MEM_OFF
 #undef CONFIG_RW_STORAGE_OFF
 #undef CONFIG_RW_SIZE
+
+/* Enable SPI Flash write protect. */
+#undef CONFIG_WP_ENABLE
 
 /*
  * Write protect region offset / size. This region normally encompasses the
@@ -720,6 +767,24 @@
  * be enabled or disabled when chipset is suspended.
  */
 #undef CONFIG_LID_ANGLE_KEY_SCAN
+
+/* Define which index in motion_sensors is in the base. */
+#undef CONFIG_SENSOR_BASE
+
+/* Define which index in motion_sensors is in the lid. */
+#undef CONFIG_SENSOR_LID
+
+/******************************************************************************/
+/* Host to RAM (H2RAM) Memory Mapping */
+
+/* H2RAM Base memory address */
+#undef CONFIG_H2RAM_BASE
+
+/* H2RAM Size */
+#undef CONFIG_H2RAM_SIZE
+
+/* H2RAM Host LPC I/O base memory address */
+#undef CONFIG_H2RAM_HOST_LPC_IO_BASE
 
 /*****************************************************************************/
 /*
@@ -808,6 +873,9 @@
 /* For ECs with multiple wakeup pins, define enabled wakeup pins */
 #undef CONFIG_HIBERNATE_WAKEUP_PINS
 
+/* Use a hardware specific udelay(). */
+#undef CONFIG_HW_SPECIFIC_UDELAY
+
 /*****************************************************************************/
 /* I2C configuration */
 
@@ -857,6 +925,11 @@
 /* Enable inductive charging support */
 #undef CONFIG_INDUCTIVE_CHARGING
 
+/******************************************************************************/
+
+/* Support NXP PCA9534 I/O expander. */
+#undef CONFIG_IO_EXPANDER_PCA9534
+
 /*****************************************************************************/
 
 /* Number of IRQs supported on the EC chip */
@@ -881,6 +954,9 @@
 
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
+
+/* Enable Wake-up control interrupt from KSI */
+#undef CONFIG_KEYBOARD_KSI_WUC_INT
 
 /* The board uses a negative edge-triggered GPIO for keyboard interrupts. */
 #undef CONFIG_KEYBOARD_IRQ_GPIO
@@ -943,6 +1019,9 @@
 #undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413, on one-wire interface */
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
 
+/* Offset in flash where little firmware will live. */
+#undef CONFIG_LFW_OFFSET
+
 /*
  * Compile lid switch support.
  *
@@ -963,6 +1042,15 @@
  * battery percentage.
  */
 #undef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
+
+/* Program memory offset for little firmware loader. */
+#undef CONFIG_LOADER_MEM_OFF
+
+/* Size of little firmware loader. */
+#undef CONFIG_LOADER_SIZE
+
+/* Little firmware loader storage offset. */
+#undef CONFIG_LOADER_STORAGE_OFF
 
 /*
  * Low power idle options. These are disabled by default and all boards that
@@ -986,11 +1074,35 @@
 /* Support LPC interface */
 #undef CONFIG_LPC
 
+/* Base address of low power RAM. */
+#undef CONFIG_LPRAM_BASE
+
+/* Size of low power RAM. */
+#undef CONFIG_LPRAM_SIZE
+
 /* Use Link-Time Optimizations to try to reduce the firmware code size */
 #undef CONFIG_LTO
 
 /* Presence of a Bosh Sensortec BMM150 magnetometer behind a BMI160. */
 #undef CONFIG_MAG_BMI160_BMM150
+
+/* Microchip EC SRAM start address */
+#undef CONFIG_MEC_SRAM_BASE_START
+
+/* Microchip EC SRAM end address */
+#undef CONFIG_MEC_SRAM_BASE_END
+
+/* Microchip EC SRAM size */
+#undef CONFIG_MEC_SRAM_SIZE
+
+/*
+ * Define Megachips DisplayPort to HDMI protocol converter/level shifter serial
+ * interface.
+ */
+#undef CONFIG_MCDP28X0
+
+/* Define clock input to MFT module. */
+#undef CONFIG_MFT_INPUT_LFCLK
 
 /* Support MKBP event */
 #undef CONFIG_MKBP_EVENT
@@ -1026,6 +1138,9 @@
 
 /* Support TPS65090 PMU */
 #undef CONFIG_PMU_TPS65090
+
+/* Suport TPS65090 PMU charging LED. */
+#undef CONFIG_PMU_TPS65090_CHARGING_LED
 
 /*
  * Support PMU powerinfo host and console commands.  Note that the
@@ -1075,6 +1190,9 @@
 /* Support PWM control while in low-power idle */
 #undef CONFIG_PWM_DSLEEP
 
+/* Define clock input to PWM module. */
+#undef CONFIG_PWM_INPUT_LFCLK
+
 /*****************************************************************************/
 /* Support PWM output to keyboard backlight */
 #undef CONFIG_PWM_KBLIGHT
@@ -1082,14 +1200,35 @@
 /* Base address of RAM for the chip */
 #undef CONFIG_RAM_BASE
 
+/* Base address of RAM for RO/RW. */
+#undef CONFIG_RAM_BASE_RORW
+
 /* Size of RAM available on the chip, in bytes */
 #undef CONFIG_RAM_SIZE
+
+/* Size of RAM for loader */
+#undef CONFIG_RAM_SIZE_LOADER
+
+/* Size of RAM for RO/RW */
+#undef CONFIG_RAM_SIZE_RORW
+
+/* Size of RAM for RO/RW & loader */
+#undef CONFIG_RAM_SIZE_TOTAL
 
 /* Support IR357x Link voltage regulator debugging / reprogramming */
 #undef CONFIG_REGULATOR_IR357X
 
 /* Support verifying 2048-bit RSA signature */
 #undef CONFIG_RSA
+
+/* Define the RSA key size. */
+#undef CONFIG_RSA_KEY_SIZE
+
+/* Flash address of the RO image. */
+#undef CONFIG_RO_IMAGE_FLASHADDR
+
+/* Flash address of the RW image. */
+#undef CONFIG_RW_IMAGE_FLASHADDR
 
 /*
  * Verify the RW firmware using the RSA signature.
@@ -1124,6 +1263,9 @@
 /* Support SPI interfaces */
 #undef CONFIG_SPI
 
+/* Define SPI chip select GPIO pin. */
+#undef CONFIG_SPI_CS_GPIO
+
 /* Support SPI flash */
 #undef CONFIG_SPI_FLASH
 
@@ -1142,8 +1284,20 @@
 /* SPI module port used for master interface */
 #undef CONFIG_SPI_MASTER_PORT
 
+/* SPI module port. */
+#undef CONFIG_SPI_PORT
+
+/* Use SSPI Chip Enable 1. */
+#undef CONFIG_SPI_USE_CS1
+
+/* Support testing SPI slave controller driver. */
+#undef CONFIG_SPS_TEST
+
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
+
+/* Use 32-bit timer for clock source on stm32. */
+#undef CONFIG_STM_HWTIMER32
 
 /* Fake hibernate mode */
 #undef CONFIG_STM32L_FAKE_HIBERNATE
@@ -1307,8 +1461,15 @@
 /* Dynamic USB PD source capability */
 #undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
 
+/* Support USB PD flash. */
+#undef CONFIG_USB_PD_FLASH
+
 /* Check whether PD is the sole power source before flash erase operation */
 #undef CONFIG_USB_PD_FLASH_ERASE_CHECK
+
+/* Major and Minor ChromeOS specific PD device Hardware IDs. */
+#undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR
+#undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR
 
 /* HW & SW version for alternate mode discover identity response (4bits each) */
 #undef CONFIG_USB_PD_IDENTITY_HW_VERS
@@ -1349,8 +1510,17 @@
 #undef CONFIG_USB_PD_TCPM_STUB
 #undef CONFIG_USB_PD_TCPM_TCPCI
 
+/* Define the type-c port controller I2C base address. */
+#undef CONFIG_TCPC_I2C_BASE_ADDR
+
 /* Alternative configuration keeping only the TX part of PHY */
 #undef CONFIG_USB_PD_TX_PHY_ONLY
+
+/* Use DAC as reference for comparator at 850mV. */
+#undef CONFIG_PD_USE_DAC_AS_REF
+
+/* USB Product ID. */
+#undef CONFIG_USB_PID
 
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
@@ -1381,8 +1551,17 @@
 /* Compile chip support for the USB device controller */
 #undef CONFIG_USB
 
+/* Support USB blob handler. */
+#undef CONFIG_USB_BLOB
+
 /* Common USB / BC1.2 charger task */
 #undef CONFIG_USB_CHARGER
+
+/* Enable USB serial console module. */
+#undef CONFIG_USB_CONSOLE
+
+/* Support USB HID interface. */
+#undef CONFIG_USB_HID
 
 /* USB device buffers and descriptors */
 #undef CONFIG_USB_RAM_ACCESS_SIZE
@@ -1430,6 +1609,12 @@
  */
 #undef CONFIG_USB_PORT_POWER_SMART_INVERTED
 
+/******************************************************************************/
+/* USB port switch */
+
+/* 8-bit USB type-C switch I2C addresses */
+#undef CONFIG_USB_SWITCH_I2C_ADDRS
+
 /* Support the TSU6721 I2C smart switch */
 #undef CONFIG_USB_SWITCH_TSU6721
 
@@ -1438,6 +1623,9 @@
 
 /* Number of Pericom PI3USB9281 chips present in system */
 #undef CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT
+
+/* Support the Pericom PI3USB30532. */
+#undef CONFIG_USB_SWITCH_PI3USB30532
 
 /*****************************************************************************/
 /* USB GPIO config */
@@ -1451,6 +1639,10 @@
 
 /* Support computing hash of code for verified boot */
 #undef CONFIG_VBOOT_HASH
+
+/******************************************************************************/
+/* GPIO pin to wake from hibernate. */
+#undef CONFIG_WAKE_PIN
 
 /*****************************************************************************/
 /* Watchdog config */
