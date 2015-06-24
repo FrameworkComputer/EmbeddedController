@@ -302,9 +302,9 @@ static void inc_id(int port)
 	pd[port].msg_id = (pd[port].msg_id + 1) & PD_MESSAGE_ID_COUNT;
 }
 
-static void pd_transmit_complete(int port, int status)
+void pd_transmit_complete(int port, int status)
 {
-	if (status & TCPC_REG_ALERT_TX_SUCCESS)
+	if (status == TCPC_TX_COMPLETE_SUCCESS)
 		inc_id(port);
 
 	pd[port].tx_status = status;
@@ -329,7 +329,7 @@ static int pd_transmit(int port, enum tcpm_transmit_type type,
 		return -1;
 
 	/* TODO: give different error condition for failed vs discarded */
-	return pd[port].tx_status & TCPC_REG_ALERT_TX_SUCCESS ? 1 : -1;
+	return pd[port].tx_status == TCPC_TX_COMPLETE_SUCCESS ? 1 : -1;
 }
 
 static void pd_update_roles(int port)
@@ -344,7 +344,7 @@ static int send_control(int port, int type)
 	uint16_t header = PD_HEADER(type, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 0);
 
-	bit_len = pd_transmit(port, TRANSMIT_SOP, header, NULL);
+	bit_len = pd_transmit(port, TCPC_TX_SOP, header, NULL);
 
 	if (debug_level >= 1)
 		CPRINTF("CTRL[%d]>%d\n", type, bit_len);
@@ -372,7 +372,7 @@ static int send_source_cap(int port)
 		header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, src_pdo_cnt);
 
-	bit_len = pd_transmit(port, TRANSMIT_SOP, header, src_pdo);
+	bit_len = pd_transmit(port, TCPC_TX_SOP, header, src_pdo);
 	if (debug_level >= 1)
 		CPRINTF("srcCAP>%d\n", bit_len);
 
@@ -386,7 +386,7 @@ static void send_sink_cap(int port)
 	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, pd_snk_pdo_cnt);
 
-	bit_len = pd_transmit(port, TRANSMIT_SOP, header, pd_snk_pdo);
+	bit_len = pd_transmit(port, TCPC_TX_SOP, header, pd_snk_pdo);
 	if (debug_level >= 1)
 		CPRINTF("snkCAP>%d\n", bit_len);
 }
@@ -397,7 +397,7 @@ static int send_request(int port, uint32_t rdo)
 	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1);
 
-	bit_len = pd_transmit(port, TRANSMIT_SOP, header, &rdo);
+	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &rdo);
 	if (debug_level >= 1)
 		CPRINTF("REQ%d>\n", bit_len);
 
@@ -414,7 +414,7 @@ static int send_bist_cmd(int port)
 	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1);
 
-	bit_len = pd_transmit(port, TRANSMIT_SOP, header, &bdo);
+	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &bdo);
 	CPRINTF("BIST>%d\n", bit_len);
 
 	return bit_len;
@@ -464,7 +464,7 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 			PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
 
-static void execute_hard_reset(int port)
+void pd_execute_hard_reset(int port)
 {
 	if (pd[port].last_state == PD_STATE_HARD_RESET_SEND)
 		CPRINTF("C%d HARD RST TX\n", port);
@@ -731,7 +731,7 @@ static void handle_data_request(int port, uint16_t head,
 			/* currently only support sending bist carrier mode 2 */
 			if ((payload[0] >> 28) == 5) {
 				/* bist data object mode is 2 */
-				pd_transmit(port, TRANSMIT_BIST_MODE_2, 0,
+				pd_transmit(port, TCPC_TX_BIST_MODE_2, 0,
 					    NULL);
 				/* Set to appropriate port disconnected state */
 				set_state(port, DUAL_ROLE_IF_ELSE(port,
@@ -1084,7 +1084,7 @@ static void pd_vdm_send_state_machine(int port)
 		header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
 				   pd[port].data_role, pd[port].msg_id,
 				   (int)pd[port].vdo_count);
-		res = pd_transmit(port, TRANSMIT_SOP, header,
+		res = pd_transmit(port, TCPC_TX_SOP, header,
 				  pd[port].vdo_data);
 		if (res < 0) {
 			pd[port].vdm_state = VDM_STATE_ERR_SEND;
@@ -1299,25 +1299,6 @@ void pd_set_new_power_request(int port)
 #error "Backwards compatible DFP does not support USB"
 #endif
 
-int tcpm_init_alert_mask(int port)
-{
-	uint16_t mask;
-	int rv;
-
-	/*
-	 * Create mask of alert events that will cause the TCPC to
-	 * signal the TCPM via the Alert# gpio line.
-	 */
-	mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
-		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
-		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
-	/* Set the alert mask in TCPC */
-	rv = tcpm_alert_mask_set(port, TCPC_REG_ALERT_MASK, mask);
-
-	return rv;
-}
-
-
 void pd_task(void)
 {
 	int head;
@@ -1348,9 +1329,6 @@ void pd_task(void)
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	tcpm_init(port);
 	CPRINTF("[%T TCPC p%d ready]\n", port);
-
-	/* Initialize TCPC alert mask register via the TCPM */
-	tcpm_init_alert_mask(port);
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
@@ -1383,9 +1361,9 @@ void pd_task(void)
 		res = pd_board_checks();
 		if (res != EC_SUCCESS) {
 			/* cut the power */
-			execute_hard_reset(port);
+			pd_execute_hard_reset(port);
 			/* notify the other side of the issue */
-			pd_transmit(port, TRANSMIT_HARD_RESET, 0, NULL);
+			pd_transmit(port, TCPC_TX_HARD_RESET, 0, NULL);
 		}
 
 		/* wait for next event/packet or timeout expiration */
@@ -2298,7 +2276,7 @@ void pd_task(void)
 
 			/* try sending hard reset until it succeeds */
 			if (!hard_reset_sent) {
-				if (pd_transmit(port, TRANSMIT_HARD_RESET,
+				if (pd_transmit(port, TCPC_TX_HARD_RESET,
 						0, NULL) < 0) {
 					timeout = 10*MSEC;
 					break;
@@ -2332,7 +2310,7 @@ void pd_task(void)
 #endif
 
 			/* reset our own state machine */
-			execute_hard_reset(port);
+			pd_execute_hard_reset(port);
 			timeout = 10*MSEC;
 			break;
 #ifdef CONFIG_COMMON_RUNTIME
@@ -2346,7 +2324,7 @@ void pd_task(void)
 						PD_STATE_SRC_DISCONNECTED));
 			break;
 		case PD_STATE_BIST_TX:
-			pd_transmit(port, TRANSMIT_BIST_MODE_2, 0, NULL);
+			pd_transmit(port, TCPC_TX_BIST_MODE_2, 0, NULL);
 			/* Delay at least enough to finish sending BIST */
 			timeout = PD_T_BIST_TRANSMIT + 20*MSEC;
 			/* Set to appropriate port disconnected state */
@@ -2408,41 +2386,6 @@ void pd_task(void)
 			timeout = 5*MSEC;
 		}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
-	}
-}
-
-void tcpc_alert(int port)
-{
-	int status;
-
-	/* Read the Alert register from the TCPC */
-	tcpm_alert_status(port, TCPC_REG_ALERT, (uint16_t *)&status);
-
-	if (status & TCPC_REG_ALERT_CC_STATUS) {
-		/* CC status changed, wake task */
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
-	}
-	if (status & TCPC_REG_ALERT_RX_STATUS) {
-		/* message received */
-		/*
-		 * If TCPC is compiled in, then we will have already
-		 * received PD_EVENT_RX from phy layer in
-		 * pd_rx_event(), so we don't need to set another
-		 * event. If TCPC is not running on this MCU, then
-		 * this needs to wake the PD task.
-		 */
-#ifndef CONFIG_USB_PD_TCPC
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
-#endif
-	}
-	if (status & TCPC_REG_ALERT_RX_HARD_RST) {
-		/* hard reset received */
-		execute_hard_reset(port);
-		task_wake(PD_PORT_TO_TASK_ID(port));
-	}
-	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
-		/* transmit complete */
-		pd_transmit_complete(port, status);
 	}
 }
 

@@ -13,6 +13,7 @@
 #include "host_command.h"
 #include "registers.h"
 #include "task.h"
+#include "tcpci.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
@@ -742,16 +743,16 @@ int tcpc_run(int port, int evt)
 	/* outgoing packet ? */
 	if ((evt & PD_EVENT_TX) && pd[port].rx_enabled) {
 		switch (pd[port].tx_type) {
-		case TRANSMIT_SOP:
+		case TCPC_TX_SOP:
 			res = send_validate_message(port,
 					pd[port].tx_head,
 					pd[port].tx_data);
 			break;
-		case TRANSMIT_BIST_MODE_2:
+		case TCPC_TX_BIST_MODE_2:
 			bist_mode_2_tx(port);
 			res = 0;
 			break;
-		case TRANSMIT_HARD_RESET:
+		case TCPC_TX_HARD_RESET:
 			res = send_hard_reset(port);
 			break;
 		default:
@@ -822,7 +823,7 @@ void pd_rx_event(int port)
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
 }
 
-int tcpc_alert_status(int port, uint16_t *alert)
+int tcpc_alert_status(int port, int *alert)
 {
 	/* return the value of the TCPC Alert register */
 	uint16_t ret = pd[port].alert;
@@ -842,7 +843,7 @@ int tcpc_alert_status_clear(int port, uint16_t mask)
 	return EC_SUCCESS;
 }
 
-int tcpc_alert_mask_update(int port, uint16_t mask)
+int tcpc_alert_mask_set(int port, uint16_t mask)
 {
 	/* Update the alert mask as specificied by the TCPM */
 	pd[port].alert_mask = mask;
@@ -971,7 +972,7 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 	case TCPC_REG_ALERT_MASK:
 		alert = payload[1];
 		alert |= (payload[2] << 8);
-		tcpc_alert_mask_update(port, alert);
+		tcpc_alert_mask_set(port, alert);
 		break;
 	case TCPC_REG_RX_DETECT:
 		tcpc_set_rx_enable(port, payload[1] &
@@ -993,7 +994,7 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 {
 	int cc1, cc2;
-	uint16_t alert;
+	int alert;
 
 	switch (reg) {
 	case TCPC_REG_VENDOR_ID:

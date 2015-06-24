@@ -1479,6 +1479,21 @@ int pd_analyze_rx(int port, uint32_t *payload);
 int pd_is_connected(int port);
 
 /**
+ * Execute a hard reset
+ *
+ * @param port USB-C port number
+ */
+void pd_execute_hard_reset(int port);
+
+/**
+ * Signal to protocol layer that PD transmit is complete
+ *
+ * @param port USB-C port number
+ * @param status status of the transmission
+ */
+void pd_transmit_complete(int port, int status);
+
+/**
  * Get port polarity.
  *
  * @param port USB-C port number

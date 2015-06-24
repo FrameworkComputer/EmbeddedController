@@ -6,19 +6,36 @@
 /* Type-C port manager */
 
 #include "i2c.h"
+#include "task.h"
+#include "tcpci.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#include "console.h"
-
-
 /* Convert port number to tcpc i2c address */
 #define I2C_ADDR_TCPC(p) (CONFIG_TCPC_I2C_BASE_ADDR + 2*(p))
 
 static int tcpc_polarity, tcpc_vconn;
+
+static int init_alert_mask(int port)
+{
+	uint16_t mask;
+	int rv;
+
+	/*
+	 * Create mask of alert events that will cause the TCPC to
+	 * signal the TCPM via the Alert# gpio line.
+	 */
+	mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
+		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
+		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
+	/* Set the alert mask in TCPC */
+	rv = tcpm_alert_mask_set(port, mask);
+
+	return rv;
+}
 
 int tcpm_init(int port)
 {
@@ -32,7 +49,7 @@ int tcpm_init(int port)
 		 * is complete
 		 */
 		if (rv == EC_SUCCESS && vid)
-			return rv;
+			return init_alert_mask(port);
 		msleep(10);
 	}
 }
@@ -92,19 +109,19 @@ int tcpm_set_msg_header(int port, int power_role, int data_role)
 			  TCPC_REG_MSG_HDR_INFO_SET(data_role, power_role));
 }
 
-int tcpm_alert_status(int port, int alert_reg, uint16_t *alert)
+int tcpm_alert_status(int port, int *alert)
 {
 	int rv;
 	/* Read TCPC Alert register */
 	rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			 alert_reg, (int *)alert);
+			TCPC_REG_ALERT, alert);
 	/*
 	 * The PD protocol layer will process all alert bits
 	 * returned by this function. Therefore, these bits
 	 * can now be cleared from the TCPC register.
 	 */
 	i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			 alert_reg, *alert);
+		    TCPC_REG_ALERT, *alert);
 	return rv;
 }
 
@@ -116,12 +133,12 @@ int tcpm_set_rx_enable(int port, int enable)
 			  enable ? TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0);
 }
 
-int tcpm_alert_mask_set(int port, int reg, uint16_t mask)
+int tcpm_alert_mask_set(int port, uint16_t mask)
 {
 	int rv;
 	/* write to the Alert Mask register */
 	rv = i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			 reg, mask);
+			 TCPC_REG_ALERT_MASK, mask);
 
 	if (rv)
 		return rv;
@@ -191,4 +208,30 @@ int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 			TCPC_REG_TRANSMIT, TCPC_REG_TRANSMIT_SET(type));
 
 	return rv;
+}
+
+void tcpc_alert(int port)
+{
+	int status;
+
+	/* Read the Alert register from the TCPC */
+	tcpm_alert_status(port, &status);
+
+	if (status & TCPC_REG_ALERT_CC_STATUS) {
+		/* CC status changed, wake task */
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	}
+	if (status & TCPC_REG_ALERT_RX_STATUS) {
+		/* message received */
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_RX, 0);
+	}
+	if (status & TCPC_REG_ALERT_RX_HARD_RST) {
+		/* hard reset received */
+		pd_execute_hard_reset(port);
+		task_wake(PD_PORT_TO_TASK_ID(port));
+	}
+	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
+		/* transmit complete */
+		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_COMPLETE);
+	}
 }

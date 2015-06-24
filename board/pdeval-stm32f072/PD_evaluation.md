@@ -37,7 +37,7 @@ You also need to create/delete the corresponding `PD_Cx` tasks in [board/pdeval-
 By default, the firmware is using I2C1 with SCL/SDA on pins PB6 and PB7, running with a 100kHz clock.
 To change the pins or speed, you need to edit `i2c_ports` in [board/pdeval-stm32f072/board.c](board.c), update `I2C_PORT_TCPC` in [board/pdeval-stm32f072/board.h](board.h) with the right controller number, and change the pin mux in [board/pdeval-stm32f072/gpio.inc](gpio.inc).
 
-An interrupt line, PA1, is configured to be used for the TCPC to get the attention of the TCPM. The GPIO is configured to trigger an interrupt on the falling edge and will call `tcpc_alert()` which will determine the cause of the interrupt and take action. The GPIO can be changed in [board/pdeval-stm32f072/gpio.inc](gpio.inc).
+An interrupt line, PA1, is configured to be used for the TCPC to get the attention of the TCPM. The GPIO is configured to trigger an interrupt on the falling edge and will call `tcpc_alert()`, which must be implemented in **driver/tcpm/<vendor>.c**, and should determine the cause of the interrupt and take action. The GPIO can be changed in [board/pdeval-stm32f072/gpio.inc](gpio.inc).
 
 Flashing and Running
 --------------------
