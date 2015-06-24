@@ -14,12 +14,15 @@
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
+#include "hwtimer_chip.h"
 
 /* 128us (2^7 us) between 2 ticks */
 #define TICK_INTERVAL_LOG2  7
 
 #define TICK_INTERVAL      (1 << TICK_INTERVAL_LOG2)
 #define TICK_INTERVAL_MASK (TICK_INTERVAL - 1)
+
+#define MS_TO_COUNT(hz, ms) ((hz) * (ms) / 1000)
 
 /*
  * Tick interval must fit in one byte, and must be greater than two
@@ -36,6 +39,22 @@ static volatile uint32_t time_us;
  * process_timers(1) when the timer value rolls over.
  */
 static uint32_t next_event_time;
+
+const struct ext_timer_ctrl_t et_ctrl_regs[] = {
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x08,
+		IT83XX_IRQ_EXT_TIMER3},
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x10,
+		IT83XX_IRQ_EXT_TIMER4},
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x20,
+		IT83XX_IRQ_EXT_TIMER5},
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x40,
+		IT83XX_IRQ_EXT_TIMER6},
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x80,
+		IT83XX_IRQ_EXT_TIMER7},
+	{&IT83XX_INTC_IELMR10, &IT83XX_INTC_IPOLR10, 0x01,
+		IT83XX_IRQ_EXT_TMR8},
+};
+BUILD_ASSERT(ARRAY_SIZE(et_ctrl_regs) == EXT_TIMER_COUNT);
 
 void __hw_clock_event_set(uint32_t deadline)
 {
@@ -65,7 +84,7 @@ void __hw_clock_source_set(uint32_t ts)
 
 static void __hw_clock_source_irq(void)
 {
-#ifdef CONFIG_WATCHDOG
+#if defined(CONFIG_WATCHDOG) || defined(CONFIG_FANS)
 	/* Determine interrupt number. */
 	int irq = IT83XX_INTC_IVCT3 - 16;
 #endif
@@ -91,7 +110,17 @@ static void __hw_clock_source_irq(void)
 	}
 #endif
 
-	/* clear interrupt status */
+#ifdef CONFIG_FANS
+	if (irq == et_ctrl_regs[FAN_CTRL_EXT_TIMER].irq) {
+		fan_ext_timer_interrupt();
+		return;
+	}
+#endif
+
+	/*
+	 * If we're still here, this is actually a hardware interrupt for the
+	 * clock source. Clear its interrupt status and update time_us.
+	 */
 	task_clear_pending_irq(IT83XX_IRQ_TMR_B0);
 
 	time_us += TICK_INTERVAL;
@@ -185,4 +214,99 @@ void udelay(unsigned us)
 	int waits = us*4/61 + 1;
 	while (waits-- >= 0)
 		IT83XX_GCTRL_WNCKR = 0;
+}
+
+void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq)
+{
+	/* enable external timer n */
+	IT83XX_ETWD_ETXCTRL(ext_timer) |= 0x01;
+
+	if (en_irq) {
+		task_clear_pending_irq(et_ctrl_regs[ext_timer].irq);
+		task_enable_irq(et_ctrl_regs[ext_timer].irq);
+	}
+}
+
+void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq)
+{
+	/* disable external timer n */
+	IT83XX_ETWD_ETXCTRL(ext_timer) &= ~0x01;
+
+	if (dis_irq)
+		task_disable_irq(et_ctrl_regs[ext_timer].irq);
+}
+
+static void ext_timer_ctrl(enum ext_timer_sel ext_timer,
+		enum ext_timer_clock_source ext_timer_clock,
+		int start,
+		int with_int,
+		int32_t count)
+{
+	uint8_t intc_mask;
+
+	/* rising-edge-triggered */
+	intc_mask = et_ctrl_regs[ext_timer].mask;
+	*et_ctrl_regs[ext_timer].mode |= intc_mask;
+	*et_ctrl_regs[ext_timer].polarity &= ~intc_mask;
+
+	/* clear interrupt status */
+	task_clear_pending_irq(et_ctrl_regs[ext_timer].irq);
+
+	/* These bits control the clock input source to the exttimer 3 - 8 */
+	IT83XX_ETWD_ETXPSR(ext_timer) = ext_timer_clock;
+
+	/* The count number of external timer n. */
+	IT83XX_ETWD_ETXCNTLH2R(ext_timer) = (count >> 16) & 0xFF;
+	IT83XX_ETWD_ETXCNTLHR(ext_timer) = (count >> 8) & 0xFF;
+	IT83XX_ETWD_ETXCNTLLR(ext_timer) = count & 0xFF;
+
+	ext_timer_stop(ext_timer, 0);
+	if (start)
+		ext_timer_start(ext_timer, 0);
+
+	if (with_int)
+		task_enable_irq(et_ctrl_regs[ext_timer].irq);
+	else
+		task_disable_irq(et_ctrl_regs[ext_timer].irq);
+}
+
+int ext_timer_ms(enum ext_timer_sel ext_timer,
+		enum ext_timer_clock_source ext_timer_clock,
+		int start,
+		int with_int,
+		int32_t ms,
+		int first_time_enable)
+{
+	uint32_t count;
+
+	if (ext_timer_clock == EXT_PSR_32P768K_HZ)
+		count = MS_TO_COUNT(32768, ms);
+	else if (ext_timer_clock == EXT_PSR_1P024K_HZ)
+		count = MS_TO_COUNT(1024, ms);
+	else if (ext_timer_clock == EXT_PSR_32_HZ)
+		count = MS_TO_COUNT(32, ms);
+	else if (ext_timer_clock == EXT_PSR_8M_HZ)
+		count = 8000 * ms;
+	else
+		return -1;
+
+	/*
+	 * IT838X support 24-bits external timer only,
+	 * IT839X support three(4, 6, and 8) 32-bit external timers,
+	 * implemented later.
+	 */
+	if (count >> 24)
+		return -2;
+
+	if (count == 0)
+		return -3;
+
+	if (first_time_enable) {
+		ext_timer_start(ext_timer, 0);
+		ext_timer_stop(ext_timer, 0);
+	}
+
+	ext_timer_ctrl(ext_timer, ext_timer_clock, start, with_int, count);
+
+	return 0;
 }

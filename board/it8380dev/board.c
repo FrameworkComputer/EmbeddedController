@@ -22,6 +22,7 @@
 #include "timer.h"
 #include "lpc.h"
 #include "intc.h"
+#include "fan.h"
 
 /* Test GPIO interrupt function that toggles one LED. */
 void test_interrupt(enum gpio_signal signal)
@@ -35,18 +36,57 @@ void test_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+/*
+ * PWM channels. Must be in the exactly same order as in enum pwm_channel.
+ * There total three 16 bits clock prescaler registers for all pwm channels,
+ * so use the same frequency and prescaler register setting is required if
+ * number of pwm channel greater than three.
+ */
 const struct pwm_t pwm_channels[] = {
-	{0, 0},
-	{1, PWM_CONFIG_ACTIVE_LOW},
-	{2, 0},
-	{3, PWM_CONFIG_ACTIVE_LOW},
-	{4, 0},
-	{5, PWM_CONFIG_ACTIVE_LOW},
-	{7, PWM_CONFIG_ACTIVE_LOW},
+	{7, 0,                     30000, PWM_PRESCALER_C4},
+	{1, PWM_CONFIG_ACTIVE_LOW, 1000,  PWM_PRESCALER_C6},
+	{2, 0,                     200,   PWM_PRESCALER_C7},
+	{3, PWM_CONFIG_ACTIVE_LOW, 1000,  PWM_PRESCALER_C6},
+	{4, 0,                     30000, PWM_PRESCALER_C4},
+	{5, PWM_CONFIG_ACTIVE_LOW, 200,   PWM_PRESCALER_C7},
+	{0, PWM_CONFIG_ACTIVE_LOW, 1000,  PWM_PRESCALER_C6},
 };
 
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+const struct fan_t fans[] = {
+	{.flags = FAN_USE_RPM_MODE,
+	 .rpm_min = 1500,
+	 .rpm_start = 1500,
+	 .rpm_max = 6500,
+	/*
+	 * index of pwm_channels, not pwm output channel.
+	 * pwm output channel is member "channel" of pwm_t.
+	 */
+	 .ch = 0,
+	 .pgood_gpio = -1,
+	 .enable_gpio = -1,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
+
+/*
+ * PWM HW channelx binding tachometer channelx for fan control.
+ * Four tachometer input pins but two tachometer modules only,
+ * so always binding [TACH_CH_TACH0A | TACH_CH_TACH0B] and/or
+ * [TACH_CH_TACH1A | TACH_CH_TACH1B]
+ */
+const struct fan_tach_t fan_tach[] = {
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_NULL,  -1, -1, -1},
+	{TACH_CH_TACH0A, 2, 50, 30},
+};
+BUILD_ASSERT(ARRAY_SIZE(fan_tach) == PWM_HW_CH_TOTAL);
 
 /* PNPCFG settings */
 const struct ec2i_t pnpcfg_settings[] = {

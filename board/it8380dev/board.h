@@ -17,6 +17,8 @@
 #define CONFIG_PECI_TJMAX 100
 /* For IT839X series and IT838X DX only. */
 #define CONFIG_PECI_WITH_INTERRUPT
+#define CONFIG_FANS 1
+#undef CHIP_FAMILY_IT839X
 
 /* Debug */
 #undef CONFIG_KEYBOARD_DEBUG
@@ -28,7 +30,7 @@
 #include "gpio_signal.h"
 
 enum pwm_channel {
-	PWM_CH_0,
+	PWM_CH_FAN,
 	PWM_CH_1,
 	PWM_CH_2,
 	PWM_CH_3,

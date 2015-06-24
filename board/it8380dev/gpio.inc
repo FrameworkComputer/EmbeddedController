@@ -44,3 +44,5 @@ ALTERNATE(PIN_MASK(G, 0x01), 3, MODULE_SPI, 0)             /* SSCE1# of SPI */
 #else
 ALTERNATE(PIN_MASK(G, 0x04), 3, MODULE_SPI, 0)             /* SSCE0# of SPI */
 #endif
+ALTERNATE(PIN_MASK(A, 0x80), 1, MODULE_PWM_FAN, 0)         /* PWM7 for FAN1 */
+ALTERNATE(PIN_MASK(D, 0x40), 3, MODULE_PWM_FAN, 0)         /* TACH0A for FAN1 */
