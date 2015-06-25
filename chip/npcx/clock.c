@@ -175,7 +175,7 @@ int clock_get_apb2_freq(void)
 void clock_wait_cycles(uint32_t cycles)
 {
 	asm("1: subs %0, #1\n"
-	    "   bne 1b\n" :: "r"(cycles));
+	"   bne 1b\n" : : "r"(cycles));
 }
 
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -190,35 +190,30 @@ void clock_refresh_console_in_use(void)
 void clock_uart2gpio(void)
 {
 	/* Is pimux to UART? */
-	if (IS_BIT_SET(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL)) {
+	if (npcx_is_uart()) {
 		/* Change pinmux to GPIO and disable UART IRQ */
 		task_disable_irq(NPCX_IRQ_UART);
-		CLEAR_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL);
-
-		/*Enable MIWU for GPIO (UARTRX) */
-		SET_BIT(NPCX_WKEN(1, 1), 0);
+		/* Set to GPIO */
+		npcx_uart2gpio();
+		/* Enable MIWU for GPIO (UARTRX) */
+		npcx_enable_wakeup(1);
 		/* Clear Pending bit of GPIO (UARTRX) */
-		if (IS_BIT_SET(NPCX_WKPND(1, 1), 0))
-			SET_BIT(NPCX_WKPCL(1, 1), 0);
-		/* Disable MIWU IRQ */
-		task_disable_irq(NPCX_IRQ_WKINTB_1);
+		npcx_clear_wakeup_event();
 	}
 }
 
 void clock_gpio2uart(void)
 {
 	/* Is Pending bit of GPIO (UARTRX) */
-	if (IS_BIT_SET(NPCX_WKPND(1, 1), 0)) {
+	if (npcx_is_wakeup_from_gpio()) {
 		/* Clear Pending bit of GPIO (UARTRX) */
-		SET_BIT(NPCX_WKPCL(1, 1), 0);
+		uart_clear_wakeup_event();
 		/* Refresh console in-use timer */
 		clock_refresh_console_in_use();
-		/* Disable MIWU & IRQ for GPIO (UARTRX) */
-		CLEAR_BIT(NPCX_WKEN(1, 1), 0);
-		/* Enable MIWU IRQ */
-		task_enable_irq(NPCX_IRQ_WKINTB_1);
+		/* Disable MIWU for GPIO (UARTRX) */
+		uart_enable_miwu_wakeup(0);
 		/* Go back CR_SIN*/
-		SET_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL);
+		npcx_gpio2uart();
 		/* Enable uart again */
 		task_enable_irq(NPCX_IRQ_UART);
 	}
@@ -227,7 +222,7 @@ void clock_gpio2uart(void)
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-#ifdef SUPPORT_JTAG
+#if (CHIP_VERSION < 3)
 	while (1) {
 		/*
 		 * TODO:(ML) JTAG bug: if debugger is connected,

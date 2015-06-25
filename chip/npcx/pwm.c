@@ -65,7 +65,7 @@ void pwm_freq_changed(void)
 		 * Using PWM Frequency and Resolution we calculate
 		 * prescaler for input clock
 		 */
-#ifdef CONFIG_PWM_INPUT_LFCLK
+#ifdef NPCX_PWM_INPUT_LFCLK
 		prescaler_divider = (uint32_t)(32768 /
 				(pwm_channels[pwm_init_ch].freq)
 				/(pwm_channels[pwm_init_ch].cycle_pulses));
@@ -226,7 +226,7 @@ void pwm_config(enum pwm_channel ch)
 			| (NPCX_PWM_CLOCK_APB2_LFCLK<<NPCX_PWMCTLEX_FCK_SEL);
 
 	if (ch == PWM_CH_FAN) {
-#ifdef CONFIG_PWM_INPUT_LFCLK
+#ifdef NPCX_PWM_INPUT_LFCLK
 		/* Select default LFCLK clock input to PWM module */
 		SET_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
 				NPCX_PWMCTL_CKSEL);

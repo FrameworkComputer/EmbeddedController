@@ -114,7 +114,7 @@ static void mft_startmeasure(int ch)
 	int mft_ch = fan_op_ch(ch, NPCX_FAN_OP_MFT);
 
 	/* Start measurement */
-#ifdef CONFIG_MFT_INPUT_LFCLK
+#ifdef NPCX_MFT_INPUT_LFCLK
 	/* Set the LFCLK clock. */
 	if (NPCX_MFT_MODULE_PORT_TB == mft_channels[mft_ch].port)
 		NPCX_TCKC(mft_channels[mft_ch].module) =
@@ -199,7 +199,7 @@ static void mft_finalmeasure(int ch)
  * @return  none
  * @notes   changed when initial or HOOK_FREQ_CHANGE command
  */
-#ifndef CONFIG_MFT_INPUT_LFCLK
+#ifndef NPCX_MFT_INPUT_LFCLK
 void mft_freq_changed(void)
 {
 	uint16_t prescaler_divider    = 0;
@@ -243,7 +243,7 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 				& (~(((1<<3)-1)<<NPCX_TMCTRL_MDSEL)))
 				| (NPCX_MFT_MDSEL_5<<NPCX_TMCTRL_MDSEL);
 
-#ifndef CONFIG_MFT_INPUT_LFCLK
+#ifndef NPCX_MFT_INPUT_LFCLK
 		/* Set MFT operation frequence */
 		mft_freq_changed();
 		/* Set the active power mode. */

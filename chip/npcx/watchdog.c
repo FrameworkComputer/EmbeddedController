@@ -26,7 +26,7 @@
 void watchdog_init_warning_timer(void)
 {
 	/* init watchdog timer first */
-	init_hw_timer(ITIM_WDG_NO, ITIM16_SOURCE_CLOCK_32K);
+	init_hw_timer(ITIM_WDG_NO, ITIM_SOURCE_CLOCK_32K);
 
 	/*
 	 * prescaler to TIMER_TICK
@@ -40,7 +40,7 @@ void watchdog_init_warning_timer(void)
 	/* ITIM count down : event expired*/
 	NPCX_ITCNT16(ITIM_WDG_NO) = CONFIG_WATCHDOG_PERIOD_MS-1;
 	/* Event module enable */
-	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITIM16_ITEN);
+	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 	/* Enable interrupt of ITIM */
 	task_enable_irq(ITIM16_INT(ITIM_WDG_NO));
 }
@@ -49,7 +49,7 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
 	/* Clear timeout status for event */
-	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITIM16_TO_STS);
+	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_TO_STS);
 
 	/* Read watchdog counter from TWMWD */
 	wd_cnt = NPCX_TWMWD;

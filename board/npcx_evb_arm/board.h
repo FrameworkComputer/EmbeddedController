@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,18 +13,15 @@
 
 /* Optional modules */
 #define CONFIG_ADC
-#define CONFIG_PECI
 #define CONFIG_PWM
-#define CONFIG_SPI
-#define CONFIG_LPC /* Used in Intel-based platform for host interface */
+#define CONFIG_SHI /* Used in ARM-based platform for host interface */
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
-#define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SIZE          0x00800000 /* 8MB spi flash */
 #define CONFIG_SPI_FLASH_W25Q64
 #define CONFIG_KEYBOARD_BOARD_CONFIG
-#define CONFIG_KEYBOARD_PROTOCOL_8042
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP /* Instead of 8042 protocol of keyboard */
 #define CONFIG_POWER_BUTTON
 #define CONFIG_VBOOT_HASH
 #define CONFIG_PWM_KBLIGHT

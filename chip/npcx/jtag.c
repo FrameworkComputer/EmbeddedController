@@ -11,6 +11,8 @@
 
 void jtag_pre_init(void)
 {
+	/* Setting for fixing JTAG issue */
+	NPCX_DBGCTRL = 0x04;
 	/* Enable automatic freeze mode */
 	CLEAR_BIT(NPCX_DBGFRZEN3, NPCX_DBGFRZEN3_GLBL_FRZ_DIS);
 }

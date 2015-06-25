@@ -19,6 +19,7 @@
 int all_protected; /* Has all-flash protection been requested? */
 int addr_prot_start;
 int addr_prot_length;
+uint8_t flag_prot_inconsistent;
 
 #define FLASH_ABORT_TIMEOUT     10000
 
@@ -179,15 +180,6 @@ static int reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 	if (sec && bp == 6)
 		return EC_ERROR_INVAL;
 
-	/*
-	 * If SRP0 is not set, flash is not protected because status register
-	 * can be rewritten.
-	 */
-	if (!(sr1 & SPI_FLASH_SR1_SRP0)) {
-		*start = *len = 0;
-		return EC_SUCCESS;
-	}
-
 	/* Determine granularity (4kb sector or 64kb block) */
 	/* Computation using 2 * 1024 is correct */
 	size = sec ? (2 * 1024) : (64 * 1024);
@@ -211,6 +203,20 @@ static int reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 		*start = (*start + *len) % CONFIG_FLASH_SIZE;
 		*len = CONFIG_FLASH_SIZE - *len;
 	}
+
+	/*
+	 * If SRP0 is not set, flash is not protected because status register
+	 * can be rewritten.
+	 */
+	if (!(sr1 & SPI_FLASH_SR1_SRP0)) {
+		/* Set protection inconsistent if len != 0*/
+		if (*len != 0)
+			flag_prot_inconsistent = 1;
+		*start = *len = 0;
+		return EC_SUCCESS;
+	}
+	/* Flag for checking protection inconsistent */
+	flag_prot_inconsistent = 0;
 
 	return EC_SUCCESS;
 }
@@ -383,6 +389,22 @@ void flash_burst_write(unsigned int dest_addr, unsigned int bytes,
 	}
 	/* Chip Select up */
 	flash_cs_level(1);
+}
+
+int flash_uma_lock(int enable)
+{
+	UPDATE_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK, enable);
+	return EC_SUCCESS;
+}
+
+int flash_spi_sel_lock(int enable)
+{
+	/*
+	 * F_SPI_QUAD, F_SPI_CS1_1/2, F_SPI_TRIS become read-only
+	 * if this bit is set
+	 */
+	UPDATE_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_F_SPI_SLLK, enable);
+	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_F_SPI_SLLK);
 }
 
 /*****************************************************************************/
@@ -595,6 +617,10 @@ int flash_physical_erase(int offset, int size)
 int flash_physical_get_protect(int bank)
 {
 	uint32_t addr = bank * CONFIG_FLASH_BANK_SIZE;
+	/* All UMA transaction is locked means all banks are protected */
+	if (IS_BIT_SET(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK))
+		return EC_ERROR_ACCESS_DENIED;
+
 	return flash_check_prot_reg(addr, CONFIG_FLASH_BANK_SIZE);
 }
 
@@ -611,6 +637,8 @@ uint32_t flash_physical_get_protect_flags(void)
 	 * TODO: If status register protects a range, but SRP0 is not set,
 	 * flags should indicate EC_FLASH_PROTECT_ERROR_INCONSISTENT.
 	 */
+	if (flag_prot_inconsistent)
+		flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 
 	/* Read all-protected state from our shadow copy */
 	if (all_protected)
@@ -621,9 +649,18 @@ uint32_t flash_physical_get_protect_flags(void)
 
 int flash_physical_protect_now(int all)
 {
-	if (all)
+	if (all) {
 		all_protected = 1;
-
+		/*
+		 * Set UMA_LOCK bit for locking all UMA transaction.
+		 * But we still can read directly from flash mapping address
+		 */
+		flash_uma_lock(1);
+	} else {
+		all_protected = 0;
+		/* Unlocking all UMA transaction */
+		flash_uma_lock(0);
+	}
 	/* TODO: if all, disable SPI interface */
 
 	return EC_SUCCESS;
@@ -634,14 +671,26 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 {
 	switch (range) {
 	case FLASH_WP_NONE:
+		/* Unlock UMA transactions */
+		if (IS_BIT_SET(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK))
+			CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK);
 		/* Clear protection bits in status register */
 		return flash_set_status_for_prot(0, 0);
 	case FLASH_WP_RO:
+		/* Unlock UMA transactions */
+		if (IS_BIT_SET(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK))
+			CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK);
 		/* Protect read-only */
 		return flash_write_prot_reg(
 			    WP_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
 			    WP_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
 	case FLASH_WP_ALL:
+		/* Protect all */
+		/*
+		 * Set UMA_LOCK bit for locking all UMA transaction.
+		 * But we still can read directly from flash mapping address
+		 */
+		return flash_uma_lock(1);
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -686,5 +735,43 @@ int flash_pre_init(void)
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
 #endif
 
+		return EC_SUCCESS;
+}
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_flash_spi_sel_lock(int argc, char **argv)
+{
+	int ena;
+
+	if (argc > 1) {
+		if (!parse_bool(argv[1], &ena))
+			return EC_ERROR_PARAM1;
+		ena = flash_spi_sel_lock(ena);
+	}
+	ccprintf("Enabled: %d\n", ena);
 	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(flash_spi_sel_lock, command_flash_spi_sel_lock,
+			"[0 | 1]",
+			"Lock spi flash interface selection",
+			NULL);
+
+static int command_flash_tristate(int argc, char **argv)
+{
+	int ena;
+
+	if (argc > 1) {
+		if (!parse_bool(argv[1], &ena))
+			return EC_ERROR_PARAM1;
+		flash_tristate(ena);
+	}
+	ccprintf("Enabled: %d\n", ena);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate,
+			"[0 | 1]",
+			"Tristate spi flash pins",
+			NULL);
+

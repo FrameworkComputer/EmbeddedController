@@ -30,6 +30,15 @@
 
 #define LPC_SYSJUMP_TAG 0x4c50          /* "LP" */
 
+/* Timeout to wait PLTRST is deasserted */
+#define LPC_PLTRST_TIMEOUT_US 800000
+
+/* Super-IO index and register definitions */
+#define SIO_OFFSET      0x4E
+#define INDEX_SID       0x20
+#define INDEX_CHPREV    0x24
+#define INDEX_SRID      0x27
+
 static uint32_t host_events;            /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];          /* Event masks for each type */
 static struct	host_packet lpc_packet;
@@ -45,7 +54,6 @@ static uint8_t * const cmd_params = (uint8_t *)shm_mem_host_cmd +
 		EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
 static struct ec_lpc_host_args * const lpc_host_args =
 		(struct ec_lpc_host_args *)shm_mem_host_cmd;
-
 
 #ifdef CONFIG_KEYBOARD_IRQ_GPIO
 static void keyboard_irq_assert(void)
@@ -358,12 +366,6 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 	/* TODO (crbug.com/p/38224): Implement */
 }
 
-int lpc_get_pltrst_asserted(void)
-{
-	/* Read PLTRST status*/
-	return (NPCX_MSWCTL1 & 0x04) ? 0 : 1;
-}
-
 /**
  * Handle write to ACPI I/O port
  *
@@ -544,6 +546,158 @@ static void lpc_post_sysjump(void)
 	memcpy(event_mask, prev_mask, sizeof(event_mask));
 }
 
+int lpc_get_pltrst_asserted(void)
+{
+	/* Read PLTRST status */
+	return (NPCX_MSWCTL1 & 0x04) ? 1 : 0;
+}
+
+/* Super-IO read/write function */
+void lpc_sib_write_reg(uint8_t io_offset, uint8_t index_value,
+		uint8_t io_data)
+{
+	/* Disable interrupts */
+	interrupt_disable();
+
+	/* Lock host CFG module */
+	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+	/* Enable Core access to CFG module */
+	SET_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
+	/* Verify Core read/write to host modules is not in progress */
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD))
+		;
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
+		;
+
+	/* Specify the io_offset A0 = 0. the index register is accessed */
+	NPCX_IHIOA = io_offset;
+	/* Write the data. This starts the write access to the host module */
+	NPCX_IHD = index_value;
+	/* Wait while Core write operation is in progress */
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
+		;
+
+	/* Specify the io_offset A0 = 1. the data register is accessed */
+	NPCX_IHIOA = io_offset+1;
+	/* Write the data. This starts the write access to the host module */
+	NPCX_IHD = io_data;
+	/* Wait while Core write operation is in progress */
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
+		;
+
+	/* Disable Core access to CFG module */
+	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+	/* unlock host CFG  module */
+	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
+
+	/* Enable interrupts */
+	interrupt_enable();
+}
+
+uint8_t lpc_sib_read_reg(uint8_t io_offset, uint8_t index_value)
+{
+	uint8_t data_value;
+
+	/* Disable interrupts */
+	interrupt_disable();
+
+	/* Lock host CFG module */
+	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+	/* Enable Core access to CFG module */
+	SET_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
+	/* Verify Core read/write to host modules is not in progress */
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD))
+		;
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
+		;
+
+
+	/* Specify the io_offset A0 = 0. the index register is accessed */
+	NPCX_IHIOA = io_offset;
+	/* Write the data. This starts the write access to the host module */
+	NPCX_IHD = index_value;
+	/* Wait while Core write operation is in progress */
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
+		;
+
+	/* Specify the io_offset A0 = 1. the data register is accessed */
+	NPCX_IHIOA = io_offset+1;
+	/* Start a Core read from host module */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD);
+	/* Wait while Core read operation is in progress */
+	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD))
+		;
+	/* Read the data */
+	data_value = NPCX_IHD;
+
+	/* Disable Core access to CFG module */
+	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+	/* unlock host CFG  module */
+	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
+
+	/* Enable interrupts */
+	interrupt_enable();
+
+	return data_value;
+}
+
+/* For LPC host register initial via SIB module */
+void lpc_host_register_init(void){
+
+	timestamp_t deadline;
+
+	deadline.val = 0;
+	deadline = get_time();
+	deadline.val += LPC_PLTRST_TIMEOUT_US;
+
+	/* Make sure PLTRST is de-asserted. Or any setting for LPC is useless */
+	while (lpc_get_pltrst_asserted())
+		if (timestamp_expired(deadline, NULL)) {
+			CPRINTS("PLTRST is asserted. LPC settings are ignored");
+			return;
+		}
+
+	/* Setting PMC2 */
+	/* LDN register = 0x12(PMC2) */
+	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x12);
+	/* CMD port is 0x200 */
+	lpc_sib_write_reg(SIO_OFFSET, 0x60, 0x02);
+	lpc_sib_write_reg(SIO_OFFSET, 0x61, 0x00);
+	/* Data port is 0x204 */
+	lpc_sib_write_reg(SIO_OFFSET, 0x62, 0x02);
+	lpc_sib_write_reg(SIO_OFFSET, 0x63, 0x04);
+	/* enable PMC2 */
+	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
+
+	/* Setting SHM */
+	/* LDN register = 0x0F(SHM) */
+	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x0F);
+	/* WIN1&2 mapping to IO */
+	lpc_sib_write_reg(SIO_OFFSET, 0xF1,
+			lpc_sib_read_reg(SIO_OFFSET, 0xF1) | 0x30);
+	/* Host Command on the IO:0x0800 */
+	lpc_sib_write_reg(SIO_OFFSET, 0xF7, 0x00);
+	lpc_sib_write_reg(SIO_OFFSET, 0xF6, 0x00);
+	lpc_sib_write_reg(SIO_OFFSET, 0xF5, 0x08);
+	lpc_sib_write_reg(SIO_OFFSET, 0xF4, 0x00);
+	/* WIN1 as Host Command on the IO:0x0800 */
+	lpc_sib_write_reg(SIO_OFFSET, 0xFB, 0x00);
+	lpc_sib_write_reg(SIO_OFFSET, 0xFA, 0x00);
+	/* WIN2 as MEMMAP on the IO:0x900 */
+	lpc_sib_write_reg(SIO_OFFSET, 0xF9, 0x09);
+	lpc_sib_write_reg(SIO_OFFSET, 0xF8, 0x00);
+	/* enable SHM */
+	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
+}
+
 static void lpc_init(void)
 {
 	/* Enable clock for LPC peripheral */
@@ -643,8 +797,17 @@ static void lpc_init(void)
 
 	update_host_event_status();
 
+	/*
+	 * TODO: For testing LPC with Chromebox, please make sure LPC_CLK is
+	 * generated before executing this function. EC needs LPC_CLK to access
+	 * LPC register through SIB module. For Chromebook platform, this
+	 * functionality should be done by BIOS or executed in hook function of
+	 * HOOK_CHIPSET_STARTUP
+	 */
+#ifdef BOARD_NPCX_EVB
 	/* initial IO port address via SIB-write modules */
-	system_lpc_host_register_init();
+	lpc_host_register_init();
+#endif
 }
 
 /* Enable LPC ACPI-EC interrupts */

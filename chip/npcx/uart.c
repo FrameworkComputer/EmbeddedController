@@ -26,13 +26,11 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
-	if (IS_BIT_SET(NPCX_WKEN(1, 1), 0)) {
-		/* disable MIWU*/
-		CLEAR_BIT(NPCX_WKEN(1, 1), 0);
-		/* go back to original setting */
-		task_enable_irq(NPCX_IRQ_WKINTB_1);
-		/* Go back CR_SIN*/
-		SET_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL);
+	if (uart_is_enable_wakeup()) {
+		/* disable MIWU */
+		uart_enable_wakeup(0);
+		/* Set pin-mask for UART */
+		npcx_gpio2uart();
 		/* enable uart again from MIWU mode */
 		task_enable_irq(NPCX_IRQ_UART);
 	}
@@ -146,9 +144,16 @@ static void uart_config(void)
 {
 	uint32_t div, opt_dev, min_deviation, clk, calc_baudrate, deviation;
 	uint8_t prescalar, opt_prescalar, i;
-	/* Enable the port */
+
 	/* Configure pins from GPIOs to CR_UART */
 	gpio_config_module(MODULE_UART, 1);
+	/* Enable MIWU IRQ of UART*/
+#if NPCX_UART_MODULE2
+	task_enable_irq(NPCX_IRQ_WKINTG_1);
+#else
+	task_enable_irq(NPCX_IRQ_WKINTB_1);
+
+#endif
 
 	/* Calculated UART baudrate , clock source from APB2 */
 	opt_prescalar = opt_dev = 0;
@@ -193,8 +198,7 @@ void uart_init(void)
 	clock_enable_peripheral(CGC_OFFSET_UART, mask, CGC_MODE_ALL);
 
 	/* Set pin-mask for UART */
-	SET_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL);
-	gpio_config_module(MODULE_UART, 1);
+	npcx_gpio2uart();
 
 	/* Configure UARTs (identically) */
 	uart_config();

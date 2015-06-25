@@ -18,16 +18,11 @@
 #include "util.h"
 #include "hwtimer_chip.h"
 #include "system_chip.h"
+#include "rom_chip.h"
 
 /* Flags for BBRM_DATA_INDEX_WAKE */
 #define HIBERNATE_WAKE_MTC        (1 << 0)  /* MTC alarm */
 #define HIBERNATE_WAKE_PIN        (1 << 1)  /* Wake pin */
-
-/* Super-IO index and register definitions */
-#define SIO_OFFSET      0x4E
-#define INDEX_SID       0x20
-#define INDEX_CHPREV    0x24
-#define INDEX_SRID      0x27
 
 /* equivalent to 250us according to 48MHz core clock */
 #define MTC_TTC_LOAD_DELAY 1500
@@ -38,108 +33,15 @@
 /* ROM address of chip revision */
 #define CHIP_REV_ADDR 0x00007FFC
 
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
 /* Begin address for the .lpram section; defined in linker script */
 uintptr_t __lpram_fw_start = CONFIG_LPRAM_BASE;
 
 /*****************************************************************************/
 /* Internal functions */
-
-/* Super-IO read/write function */
-void system_sib_write_reg(uint8_t io_offset, uint8_t index_value,
-		uint8_t io_data)
-{
-	/* Disable interrupts */
-	interrupt_disable();
-
-	/* Lock host CFG module */
-	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
-	/* Enable Core-to-Host Modules Access */
-	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-	/* Enable Core access to CFG module */
-	SET_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
-	/* Verify Core read/write to host modules is not in progress */
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD))
-		;
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
-		;
-
-	/* Specify the io_offset A0 = 0. the index register is accessed */
-	NPCX_IHIOA = io_offset;
-	/* Write the data. This starts the write access to the host module */
-	NPCX_IHD = index_value;
-	/* Wait while Core write operation is in progress */
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
-		;
-
-	/* Specify the io_offset A0 = 1. the data register is accessed */
-	NPCX_IHIOA = io_offset+1;
-	/* Write the data. This starts the write access to the host module */
-	NPCX_IHD = io_data;
-	/* Wait while Core write operation is in progress */
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
-		;
-
-	/* Disable Core access to CFG module */
-	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
-	/* Disable Core-to-Host Modules Access */
-	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-	/* unlock host CFG  module */
-	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
-
-	/* Enable interrupts */
-	interrupt_enable();
-}
-
-uint8_t system_sib_read_reg(uint8_t io_offset, uint8_t index_value)
-{
-	uint8_t data_value;
-
-	/* Disable interrupts */
-	interrupt_disable();
-
-	/* Lock host CFG module */
-	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
-	/* Enable Core-to-Host Modules Access */
-	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-	/* Enable Core access to CFG module */
-	SET_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
-	/* Verify Core read/write to host modules is not in progress */
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD))
-		;
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
-		;
-
-
-	/* Specify the io_offset A0 = 0. the index register is accessed */
-	NPCX_IHIOA = io_offset;
-	/* Write the data. This starts the write access to the host module */
-	NPCX_IHD = index_value;
-	/* Wait while Core write operation is in progress */
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR))
-		;
-
-	/* Specify the io_offset A0 = 1. the data register is accessed */
-	NPCX_IHIOA = io_offset+1;
-	/* Start a Core read from host module */
-	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD);
-	/* Wait while Core read operation is in progress */
-	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD))
-		;
-	/* Read the data */
-	data_value = NPCX_IHD;
-
-	/* Disable Core access to CFG module */
-	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
-	/* Disable Core-to-Host Modules Access */
-	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-	/* unlock host CFG  module */
-	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
-
-	/* Enable interrupts */
-	interrupt_enable();
-
-	return data_value;
-}
 
 void system_watchdog_reset(void)
 {
@@ -277,17 +179,11 @@ void system_check_reset_cause(void)
 	}
 
 	/* Watchdog Reset */
-#ifndef CHIP_NPCX5M5G
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
 		flags |= RESET_FLAG_WATCHDOG;
 		/* Clear watchdog reset status initially*/
 		SET_BIT(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS);
 	}
-#else
-	/* Workaround method to check watchdog reset */
-	if (NPCX_BBRAM(BBRM_DATA_INDEX_RAMLOG) & 0x04)
-		flags |= RESET_FLAG_WATCHDOG;
-#endif
 
 	if ((hib_wake_flags & HIBERNATE_WAKE_PIN))
 		flags |= RESET_FLAG_WAKE_PIN;
@@ -356,12 +252,12 @@ __enter_hibernate_in_lpram(void)
 {
 
 	/* Disable Code RAM first */
-	SET_BIT(NPCX_PWDWN_CTL(5), NPCX_PWDWN_CTL5_MRFSH_DIS);
+	SET_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_MRFSH_DIS);
 	SET_BIT(NPCX_DISIDL_CTL, NPCX_DISIDL_CTL_RAM_DID);
 
 	while (1) {
-		/* Set deep idle - instant wake-up mode*/
-		NPCX_PMCSR = 0x7;
+		/* Set deep idle mode*/
+		NPCX_PMCSR = 0x6;
 		/* Enter deep idle, wake-up by GPIOxx or RTC */
 		asm("wfi");
 
@@ -424,11 +320,11 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	interrupt_disable();
 
 	/* ITIM event module disable */
-	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITIM16_ITEN);
+	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
 	/* ITIM time module disable */
-	CLEAR_BIT(NPCX_ITCTS(ITIM_TIME_NO), NPCX_ITIM16_ITEN);
+	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_ITEN);
 	/* ITIM watchdog warn module disable */
-	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITIM16_ITEN);
+	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 
 	/*
 	 * Set RTC interrupt in time to wake up before
@@ -545,12 +441,21 @@ void system_pre_init(void)
 	 */
 
 	/* Power-down the modules we don't need */
-	NPCX_PWDWN_CTL(0) = 0xF9; /* Skip SDP_PD FIU_PD */
-	NPCX_PWDWN_CTL(1) = 0xFF;
-	NPCX_PWDWN_CTL(2) = 0x8F;
-	NPCX_PWDWN_CTL(3) = 0xF4; /* Skip ITIM2/1_PD */
-	NPCX_PWDWN_CTL(4) = 0xF8;
-	NPCX_PWDWN_CTL(5) = 0x85; /* Skip ITIM5_PD */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_1) = 0xF9; /* Skip SDP_PD FIU_PD */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_2) = 0xFF;
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F; /* Skip GDMA */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = 0x85; /* Skip ITIM5_PD */
+
+	/* Power down the modules used internally */
+	NPCX_INTERNAL_CTRL1 = 0x03;
+	NPCX_INTERNAL_CTRL2 = 0x03;
+	NPCX_INTERNAL_CTRL3 = 0x03;
+
+	/* Enable low-power regulator */
+	CLEAR_BIT(NPCX_LFCGCALCNT, NPCX_LFCGCALCNT_LPREG_CTL_EN);
+	SET_BIT(NPCX_LFCGCALCNT, NPCX_LFCGCALCNT_LPREG_CTL_EN);
 
 	/*
 	 * Configure LPRAM in the MPU as a regular memory
@@ -637,12 +542,9 @@ const char *system_get_chip_name(void)
 const char *system_get_chip_revision(void)
 {
 	static char rev[4];
-#ifndef CHIP_NPCX5M5G
-	uint8_t rev_num = system_sib_read_reg(SIO_OFFSET, INDEX_CHPREV);
-#else
 	/* Read ROM data for chip revision directly */
 	uint8_t rev_num = *((uint8_t *)CHIP_REV_ADDR);
-#endif
+
 	*(rev) = 'A';
 	*(rev + 1) = '.';
 	*(rev + 2) = system_to_hex((rev_num & 0xF0) >> 4);
@@ -789,58 +691,53 @@ DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
 		system_rtc_set_value,
 		EC_VER_MASK(0));
 
-/* For LPC host register initial via SIB module */
-void system_lpc_host_register_init(void){
-	/* Setting PMC2 */
-	/* LDN register = 0x12(PMC2) */
-	system_sib_write_reg(SIO_OFFSET, 0x07, 0x12);
-	/* CMD port is 0x200 */
-	system_sib_write_reg(SIO_OFFSET, 0x60, 0x02);
-	system_sib_write_reg(SIO_OFFSET, 0x61, 0x00);
-	/* Data port is 0x204 */
-	system_sib_write_reg(SIO_OFFSET, 0x62, 0x02);
-	system_sib_write_reg(SIO_OFFSET, 0x63, 0x04);
-	/* enable PMC2 */
-	system_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
-
-	/* Setting SHM */
-	/* LDN register = 0x0F(SHM) */
-	system_sib_write_reg(SIO_OFFSET, 0x07, 0x0F);
-	/* WIN1&2 mapping to IO */
-	system_sib_write_reg(SIO_OFFSET, 0xF1,
-			system_sib_read_reg(SIO_OFFSET, 0xF1) | 0x30);
-	/* Host Command on the IO:0x0800 */
-	system_sib_write_reg(SIO_OFFSET, 0xF7, 0x00);
-	system_sib_write_reg(SIO_OFFSET, 0xF6, 0x00);
-	system_sib_write_reg(SIO_OFFSET, 0xF5, 0x08);
-	system_sib_write_reg(SIO_OFFSET, 0xF4, 0x00);
-	/* WIN1 as Host Command on the IO:0x0800 */
-	system_sib_write_reg(SIO_OFFSET, 0xFB, 0x00);
-	system_sib_write_reg(SIO_OFFSET, 0xFA, 0x00);
-	/* WIN2 as MEMMAP on the IO:0x900 */
-	system_sib_write_reg(SIO_OFFSET, 0xF9, 0x09);
-	system_sib_write_reg(SIO_OFFSET, 0xF8, 0x00);
-	/* enable SHM */
-	system_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
-}
 #ifdef CONFIG_CODERAM_ARCH
-uint32_t system_get_lfw_address(void)
+void system_jump_to_booter(void)
 {
-	/* Little FW located on top of flash - 4K */
-	uint32_t jump_addr = (CONFIG_FLASH_BASE + CONFIG_SPI_FLASH_SIZE
-			- CONFIG_LFW_OFFSET + 1);
+	enum API_RETURN_STATUS_T status;
+	static uint32_t flash_offset;
+	static uint32_t flash_used;
+	static uint32_t addr_entry;
 
+	/* RO region FW */
+	if (IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION)) {
+		flash_offset = CONFIG_RO_MEM_OFF;
+		flash_used = CONFIG_RO_SIZE;
+	} else { /* RW region FW */
+		flash_offset = CONFIG_RW_MEM_OFF;
+		flash_used = CONFIG_RW_SIZE;
+	}
+
+	/* Make sure the reset vector is inside the destination image */
+	addr_entry = *(uintptr_t *)(flash_offset + CONFIG_FLASH_BASE + 4);
+
+	download_from_flash(
+		flash_offset,      /* The offset of the data in spi flash */
+		CONFIG_CDRAM_BASE, /* The address of the downloaded data  */
+		flash_used,        /* Number of bytes to download      */
+		SIGN_NO_CHECK,     /* Need CRC check or not               */
+		addr_entry,        /* jump to this address after download */
+		&status            /* Status fo download */
+	);
+}
+
+uint32_t system_get_lfw_address()
+{
+	/*
+	 * In A3 version, we don't use little FW anymore
+	 * We provide the alternative function in ROM
+	 */
+	uint32_t jump_addr = (uint32_t)system_jump_to_booter;
 	return jump_addr;
 }
 
 void system_set_image_copy(enum system_image_copy_t copy)
 {
-	/* Jump to RO region -- set flag */
-	if (copy == SYSTEM_IMAGE_RO)
-		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
-	else /* Jump to RW region -- clear flag */
+	/* Jump to RW region -- clear flag */
+	if (copy == SYSTEM_IMAGE_RW)
 		CLEAR_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
-
+	else /* Jump to RO region -- set flag */
+		SET_BIT(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION);
 }
 
 enum system_image_copy_t system_get_shrspi_image_copy(void)

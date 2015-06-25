@@ -18,8 +18,6 @@ enum bbram_data_index {
 	BBRM_DATA_INDEX_RAMLOG = 32,	       /* RAM log for Booter */
 };
 
-/* Init lpc register through SIB */
-void system_lpc_host_register_init(void);
 /* Issue a watchdog reset*/
 void system_watchdog_reset(void);
 /* Check reset cause and return reset flags */

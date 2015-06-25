@@ -218,12 +218,12 @@ struct gpio_alt_map {
 
 const struct gpio_alt_map gpio_alt_table[] = {
 	/* I2C Module */
-#if I2C0_BUS0
-	{ NPCX_GPIO(B, 4),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SDA */
-	{ NPCX_GPIO(B, 5),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SCL */
-#else
+#if NPCX_I2C0_BUS2
 	{ NPCX_GPIO(B, 2),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SDA */
 	{ NPCX_GPIO(B, 3),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SCL */
+#else
+	{ NPCX_GPIO(B, 4),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SDA */
+	{ NPCX_GPIO(B, 5),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SCL */
 #endif
 	{ NPCX_GPIO(8, 7),  NPCX_ALT(2, I2C1_0_SL)}, /* SMB1SDA */
 	{ NPCX_GPIO(9, 0),  NPCX_ALT(2, I2C1_0_SL)}, /* SMB1SCL */
@@ -237,9 +237,14 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(4, 3),  NPCX_ALT(6, ADC2_SL)}, /* ADC2  */
 	{ NPCX_GPIO(4, 2),  NPCX_ALT(6, ADC3_SL)}, /* ADC3  */
 	{ NPCX_GPIO(4, 1),  NPCX_ALT(6, ADC4_SL)}, /* ADC4  */
-	/* UART Module */
-	{ NPCX_GPIO(1, 0),  NPCX_ALT(9, NO_KSO08_SL)}, /* CR_SIN/KSO09/GPIO10*/
-	{ NPCX_GPIO(1, 1),  NPCX_ALT(9, NO_KSO09_SL)}, /* CR_SOUT/KSO10/GPIO11*/
+	/* UART Module 1/2 */
+#if NPCX_UART_MODULE2
+	{ NPCX_GPIO(6, 4),  NPCX_ALT(C, UART_SL2)}, /* CR_SIN */
+	{ NPCX_GPIO(6, 5),  NPCX_ALT(C, UART_SL2)}, /* CR_SOUT */
+#else
+	{ NPCX_GPIO(1, 0),  NPCX_ALT(9, NO_KSO08_SL)}, /* CR_SIN/KSO09 */
+	{ NPCX_GPIO(1, 1),  NPCX_ALT(9, NO_KSO09_SL)}, /* CR_SOUT/KSO10 */
+#endif
 	/* SPI Module */
 	{ NPCX_GPIO(9, 5),  NPCX_ALT(0, SPIP_SL)}, /* SPIP_MISO */
 	{ NPCX_GPIO(A, 5),  NPCX_ALT(0, SPIP_SL)}, /* SPIP_CS1  */
@@ -255,24 +260,24 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(C, 0),  NPCX_ALT(4, PWM6_SL)}, /* PWM6 */
 	{ NPCX_GPIO(6, 0),  NPCX_ALT(4, PWM7_SL)}, /* PWM7 */
 	/* MFT Module */
-#if TACH_SEL1
-	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_TACH1_SL1)},/* TA1_TACH1 */
-	{ NPCX_GPIO(A, 4),  NPCX_ALT(3, TB1_TACH2_SL1)},/* TB1_TACH2 */
-#else
+#if NPCX_TACH_SEL2
 	{ NPCX_GPIO(9, 3),  NPCX_ALT(C, TA1_TACH1_SL2)},/* TA1_TACH1 */
 	{ NPCX_GPIO(D, 3),  NPCX_ALT(C, TB1_TACH2_SL2)},/* TB1_TACH2 */
+#else
+	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_TACH1_SL1)},/* TA1_TACH1 */
+	{ NPCX_GPIO(A, 4),  NPCX_ALT(3, TB1_TACH2_SL1)},/* TB1_TACH2 */
 #endif
 	/* JTAG Module */
-#if !(JTAG1)
-	{ NPCX_GPIO(2, 1),  NPCX_ALT(5, NJEN0_EN)	}, /* TCLK */
-	{ NPCX_GPIO(1, 7),  NPCX_ALT(5, NJEN0_EN)	}, /* TDI  */
-	{ NPCX_GPIO(1, 6),  NPCX_ALT(5, NJEN0_EN)	}, /* TDO  */
-	{ NPCX_GPIO(2, 0),  NPCX_ALT(5, NJEN0_EN)	}, /* TMS  */
-#else
+#if NPCX_JTAG_MODULE2
 	{ NPCX_GPIO(D, 5),  NPCX_ALT(5, NJEN1_EN)	}, /* TCLK */
 	{ NPCX_GPIO(E, 2),  NPCX_ALT(5, NJEN1_EN)	}, /* TDI  */
 	{ NPCX_GPIO(D, 4),  NPCX_ALT(5, NJEN1_EN)	}, /* TDO  */
 	{ NPCX_GPIO(E, 5),  NPCX_ALT(5, NJEN1_EN)	}, /* TMS  */
+#else
+	{ NPCX_GPIO(2, 1),  NPCX_ALT(5, NJEN0_EN)	}, /* TCLK */
+	{ NPCX_GPIO(1, 7),  NPCX_ALT(5, NJEN0_EN)	}, /* TDI  */
+	{ NPCX_GPIO(1, 6),  NPCX_ALT(5, NJEN0_EN)	}, /* TDO  */
+	{ NPCX_GPIO(2, 0),  NPCX_ALT(5, NJEN0_EN)	}, /* TMS  */
 #endif
 	/* 01 for PWRGD_OUT*/
 };
@@ -559,6 +564,13 @@ void gpio_pre_init(void)
 	/* Pin_Mux for FIU/SPI (set to GPIO) */
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_GPIO_NO_SPIP);
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_NO_F_SPI);
+
+#ifdef CONFIG_SHI
+	/* Switching to eSPI mode for SHI interface */
+	NPCX_DEVCNT |= 0x08;
+	/* Alternate Intel bus interface LPC/eSPI to GPIOs first */
+	SET_BIT(NPCX_DEVALT(ALT_GROUP_1), NPCX_DEVALT1_NO_LPC_ESPI);
+#endif
 
 	/* Clear all pending bits of GPIOS*/
 	for (i = 0; i < 2; i++)

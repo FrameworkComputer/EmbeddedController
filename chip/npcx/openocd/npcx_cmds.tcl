@@ -10,15 +10,13 @@ source [find mem_helper.tcl]
 proc flash_npcx {image_path image_offset image_size spifw_image} {
 	set UPLOAD_FLAG 0x200C4000;
 
-	# Clear whole 128KB Code RAM
-	mwb 0x10088000 0xFF 0x20000
+	# Clear whole 96KB Code RAM
+	mwb 0x100A8000 0xFF 0x18000
 	# Upload binary image to Code RAM
-	fast_load_image $image_path 0x10088000
-	fast_load
+	load_image $image_path 0x100A8000
 
 	# Upload program spi image FW to lower 16KB Data RAM
-	fast_load_image $spifw_image 0x200C0000
-	fast_load
+	load_image $spifw_image 0x200C0000
 
 	# Set sp to upper 16KB Data RAM
 	reg sp 0x200C8000
@@ -48,71 +46,67 @@ proc flash_npcx {image_path image_offset image_size spifw_image} {
 	halt
 }
 
-proc flash_npcx_ro {image_offset} {
-	# 128 KB for RO& RW regions
-	set fw_size  0x20000
-	# images path
-	set outdir ../../../build/npcx_evb
-	set ro_image_path $outdir/ec.RO.flat
-	set spifw_image	$outdir/chip/npcx/spiflashfw/ec_npcxflash.bin
-
-	# Halt CPU first
-	halt
-	echo "*** Start to program RO region ***"
-	# Write to lower 128kB from offset
-	flash_npcx $ro_image_path $image_offset $fw_size $spifw_image
-	echo "*** Finish program RO region ***"
-
-	# Reset CPU
-	reset
-}
-
-proc flash_npcx_evb {image_offset} {
+proc flash_npcx_ro {image_dir image_offset} {
 	set MPU_RNR  0xE000ED98;
 	set MPU_RASR 0xE000EDA0;
 
-	# 128 KB for RO& RW regions
-	set fw_size  0x20000
-	# 4K little FW
-	set lfw_size 0x1000
-	# 8M spi-flash
-	set flash_size 0x800000
-
+	# 96 KB for RO& RW regions
+	set fw_size  0x18000
 	# images path
-	set outdir ../../../build/npcx_evb
-	set ro_image_path $outdir/ec.RO.flat
-	set rw_image_path $outdir/ec.RW.bin
-	set lfw_image_path $outdir/chip/npcx/lfw/ec_lfw.bin
-	set spifw_image	$outdir/chip/npcx/spiflashfw/ec_npcxflash.bin
-
-	# images offset
-	set rw_image_offset  [expr ($image_offset + $fw_size)]
-	set lfw_image_offset [expr ($flash_size - $lfw_size)]
+	set ro_image_path $image_dir/ec.RO.flat
+	set spifw_image	$image_dir/chip/npcx/spiflashfw/ec_npcxflash.bin
 
 	# Halt CPU first
 	halt
+	adapter_khz 1000
 
-	# diable MPU for Data RAM first
+	# diable MPU for Data RAM
 	mww $MPU_RNR  0x1
 	mww $MPU_RASR 0x0
 
 	echo "*** Start to program RO region ***"
-	# Write to lower 128kB from offset
+	# Write to lower 96kB from offset
+	flash_npcx $ro_image_path $image_offset $fw_size $spifw_image
+	echo "*** Finish program RO region ***"
+
+}
+
+proc flash_npcx_all {image_dir image_offset} {
+	set MPU_RNR  0xE000ED98;
+	set MPU_RASR 0xE000EDA0;
+
+	# 96 KB for RO& RW regions
+	set fw_size  0x18000
+	# 8M spi-flash
+	set flash_size 0x800000
+
+	# images path
+	set ro_image_path $image_dir/ec.RO.flat
+	set rw_image_path $image_dir/ec.RW.bin
+	set spifw_image	$image_dir/chip/npcx/spiflashfw/ec_npcxflash.bin
+
+	# images offset
+	set rw_image_offset  [expr ($image_offset + 0x20000)]
+
+	# Halt CPU first
+	halt
+
+	adapter_khz 1000
+
+	# diable MPU for Data RAM
+	mww $MPU_RNR  0x1
+	mww $MPU_RASR 0x0
+
+	echo "*** Start to program RO region ***"
+	# Write to lower 96kB from offset
 	flash_npcx $ro_image_path $image_offset $fw_size $spifw_image
 	echo "*** Finish program RO region ***\r\n"
 
 	echo "*** Start to program RW region ***"
-	# Write to upper 128kB from offset
+	# Write to upper 96kB from offset
 	flash_npcx $rw_image_path $rw_image_offset $fw_size $spifw_image
 	echo "*** Finish program RW region ***\r\n"
 
-	echo "*** Start to program LFW region ***"
-	# Write to top of flash minus 4KB
-	flash_npcx $lfw_image_path $lfw_image_offset $lfw_size $spifw_image
-	echo "*** Finish program LFW region ***\r\n"
-
-	# Reset CPU
-	reset
 }
 
 proc halt_npcx_cpu { } {

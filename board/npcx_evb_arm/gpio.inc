@@ -1,6 +1,6 @@
 /* -*- mode:c -*-
  *
- * Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+ * Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -9,19 +9,20 @@
 /* TODO: Redefine debug 2 inputs */
 GPIO_INT(RECOVERY_L,       PIN(0, 0), GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
 GPIO_INT(WP_L,             PIN(9, 3), GPIO_PULL_DOWN | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
-
+/* Used for ARM based platform */
+GPIO_INT(SHI_CS_L,         PIN(5, 3), GPIO_INT_FALLING,shi_cs_event)                          /* SHI CS Ready, Low Active. */
 /* For testing keyboard commands, we need the following 4 GPIOs */
 /* TODO: Redefine 4 inputs */
 GPIO_INT(POWER_BUTTON_L,   PIN(0, 2), GPIO_PULL_UP   | GPIO_INT_BOTH, power_button_interrupt) /* Power button */
 GPIO_INT(LID_OPEN,         PIN(3, 3), GPIO_PULL_DOWN | GPIO_INT_BOTH, lid_interrupt)          /* Lid switch */
 
 /**************************** Need a empty line between GPIO_INT and GPIO ****************************/
-GPIO(ENTERING_RW,          PIN(3, 6), GPIO_OUT_LOW)                                    /* Indicate when EC is entering RW code */
-GPIO(PCH_WAKE_L,           PIN(5, 0), GPIO_OUT_HIGH)                                   /* Wake signal output to PCH */
-
+GPIO(ENTERING_RW,          PIN(3, 6), GPIO_OUT_LOW)                 /* Indicate when EC is entering RW code */
+GPIO(PCH_WAKE_L,           PIN(5, 0), GPIO_OUT_HIGH)                /* Wake signal output to PCH */
+/* For testing keyboard mkbp */
+GPIO(EC_INT,               PIN(7, 4),  GPIO_ODR_HIGH)               /* Interrupt pin for keyboard mkbp */
 /* Used for module testing */
-GPIO(PGOOD_FAN,            PIN(C, 7), GPIO_PULL_UP	| GPIO_INPUT)                  /* Power Good for FAN test */
-GPIO(SPI_CS_L,             PIN(A, 5), GPIO_OUT_HIGH)                                   /* SPI_CS Ready, Low Active. */
+GPIO(PGOOD_FAN,            PIN(C, 7), GPIO_PULL_UP   | GPIO_INPUT)  /* Power Good for FAN test */
 
 /*
  * I2C pins should be configured as inputs until I2C module is
@@ -29,7 +30,6 @@ GPIO(SPI_CS_L,             PIN(A, 5), GPIO_OUT_HIGH)                            
  */
 GPIO(MASTER_I2C_SCL,       PIN(B, 5), GPIO_INPUT)
 GPIO(MASTER_I2C_SDA,       PIN(B, 4), GPIO_INPUT)
-
 /* Used for board version command */
 GPIO(BOARD_VERSION1,       PIN(6, 4), GPIO_INPUT)    /* Board version stuffing resistor 1 */
 GPIO(BOARD_VERSION2,       PIN(6, 5), GPIO_INPUT)    /* Board version stuffing resistor 2 */

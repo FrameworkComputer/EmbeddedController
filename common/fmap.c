@@ -20,7 +20,12 @@
  * For address containing CONFIG_FLASH_BASE (symbols in *.RO.lds.S and
  * variable), this computes the offset to the start of the image on flash.
  */
+
+#ifdef NPCX_RO_HEADER
+#define RELATIVE_RO(addr) ((addr) - CONFIG_CDRAM_BASE)
+#else
 #define RELATIVE_RO(addr) ((addr) - CONFIG_FLASH_BASE - CONFIG_RO_MEM_OFF)
+#endif
 
 struct fmap_header {
 	char        fmap_signature[FMAP_SIGNATURE_SIZE];

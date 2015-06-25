@@ -82,6 +82,7 @@ BOARDS_STM32_DFU=(
 
 BOARDS_NPCX=(
 	npcx_evb
+	npcx_evb_arm
 )
 
 BOARDS_MEC1322=(
@@ -389,6 +390,7 @@ function flash_lm4() {
 
 function flash_npcx() {
 	OCD_PATH="${EC_DIR}/chip/npcx/openocd"
+	IMG_PATH="${EC_DIR}/build/${BOARD}"
 	setup_openocd
 
 	dut_control jtag_buf_on_flex_en:on
@@ -396,12 +398,12 @@ function flash_npcx() {
 
 	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 		# Program RO region only
-		OCD_CMDS="init; flash_npcx_ro ${FLAGS_offset}; shutdown;"
+		OCD_CMDS="init; flash_npcx_ro ${IMG_PATH} ${FLAGS_offset}; shutdown;"
 		sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
 		die "Failed to program ${IMG}"
 	else
 		# Program all EC regions
-		OCD_CMDS="init; flash_npcx_evb ${FLAGS_offset}; shutdown;"
+		OCD_CMDS="init; flash_npcx_all ${IMG_PATH} ${FLAGS_offset}; shutdown;"
 		sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -c "${OCD_CMDS}" || \
 		die "Failed to program ${IMG}"
 	fi

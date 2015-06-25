@@ -14,7 +14,13 @@ MEMORY
 SECTIONS
 {
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
+#if defined(NPCX_RO_HEADER)
+/* Replace *_MEM_OFF with *_STORAGE_OFF to indicate flat file contains header
+ * or some struture which doesn't belong to FW */
+    .image.RO : AT(CONFIG_FLASH_BASE + CONFIG_RO_STORAGE_OFF) {
+#else
     .image.RO : AT(CONFIG_FLASH_BASE + CONFIG_RO_MEM_OFF) {
+#endif
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
