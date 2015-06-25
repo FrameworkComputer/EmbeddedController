@@ -7,9 +7,6 @@
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "console.h"
-#include "gpio.h"
-#include "host_command.h"
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */

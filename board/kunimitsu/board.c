@@ -6,8 +6,8 @@
 
 #include "als.h"
 #include "button.h"
-#include "charger.h"
 #include "charge_state.h"
+#include "charger.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/als_isl29035.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -22,8 +22,8 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
-#include "registers.h"
 #include "switch.h"
+#include "task.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
 #include "thermal.h"
@@ -60,65 +60,22 @@ void usb1_evt(enum gpio_signal signal)
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_RSMRST_L_PGOOD,    1, "RSMRST_N_PWRGD"},
-	{GPIO_PCH_SLP_S0_L,      1, "SLP_S0#_DEASSERTED"},
-	{GPIO_PCH_SLP_S3_L,      1, "SLP_S3#_DEASSERTED"},
-	{GPIO_PCH_SLP_S4_L,      1, "SLP_S4#_DEASSERTED"},
+	{GPIO_PCH_SLP_S0_L,      1, "SLP_S0_DEASSERTED"},
+	{GPIO_PCH_SLP_S3_L,      1, "SLP_S3_DEASSERTED"},
+	{GPIO_PCH_SLP_S4_L,      1, "SLP_S4_DEASSERTED"},
 	{GPIO_PCH_SLP_SUS_L,     1, "SLP_SUS_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"batt_chg_thermal", MEC1322_I2C0_0, 100,
-		GPIO_I2C_PORT0_SCL, GPIO_I2C_PORT0_SDA},
-	{"sensors",  MEC1322_I2C2,   100,
-		GPIO_I2C_PORT2_SCL, GPIO_I2C_PORT2_SDA},
+	{"batt",     MEC1322_I2C0_0, 100,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
+	{"sensors",  MEC1322_I2C2,   100,  GPIO_I2C2_SCL,   GPIO_I2C2_SDA  },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/*
- * Temperature sensors data; must be in same order as enum temp_sensor_id.
- * Sensor index and name must match those present in coreboot:
- *     src/mainboard/google/${board}/acpi/dptf.asl
+/**
+ * Discharge battery when on AC power for factory test.
  */
-const struct temp_sensor_t temp_sensors[] = {
-	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_LOCAL, 4},
-	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE1, 4},
-	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE2, 4},
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val,
-		0, 4},
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/* ALS instances. Must be in same order as enum als_id. */
-struct als_t als[] = {
-	{"ISL", isl29035_read_lux, 5},
-};
-BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
-
-#ifdef CONFIG_BUTTON_COUNT
-const struct button_config buttons[] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
-		30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
-		30 * MSEC, 0},
-};
-BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
-#endif
-
-/* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
- * same order as enum temp_sensor_id. To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	{{0, 0, 0}, 0, 0}, /* TMP432_Internal */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_1 */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
-	{{0, 0, 0}, 0, 0}, /* Battery Sensor */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 int board_discharge_on_ac(int enable)
 {
 	return charger_discharge_on_ac(enable);
@@ -213,3 +170,48 @@ static void motion_sensors_pre_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sensors_pre_init,
 	MOTION_SENSE_HOOK_PRIO - 1);
+
+/*
+ * Temperature sensors data; must be in same order as enum temp_sensor_id.
+ * Sensor index and name must match those present in coreboot:
+ *     src/mainboard/google/${board}/acpi/dptf.asl
+ */
+const struct temp_sensor_t temp_sensors[] = {
+	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_LOCAL, 4},
+	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_REMOTE1, 4},
+	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_REMOTE2, 4},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val,
+		0, 4},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/*
+ * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
+ * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
+	{{0, 0, 0}, 0, 0},	/* TMP432_Internal */
+	{{0, 0, 0}, 0, 0},	/* TMP432_Sensor_1 */
+	{{0, 0, 0}, 0, 0},	/* TMP432_Sensor_2 */
+	{{0, 0, 0}, 0, 0},	/* Battery */
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+/* ALS instances. Must be in same order as enum als_id. */
+struct als_t als[] = {
+	{"ISL", isl29035_read_lux, 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
+
+const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
+	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
+		30 * MSEC, 0},
+	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
+		30 * MSEC, 0},
+};
+BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
+
