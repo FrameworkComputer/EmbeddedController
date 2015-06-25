@@ -1396,8 +1396,8 @@ void pd_task(void)
 			tcpm_get_cc(port, &cc1, &cc2);
 
 			/* Vnc monitoring */
-			if ((TYPEC_CC_IS_RD(cc1) ||
-			     TYPEC_CC_IS_RD(cc2)) ||
+			if ((cc1 == TYPEC_CC_VOLT_RD ||
+			     cc2 == TYPEC_CC_VOLT_RD) ||
 			    (cc1 == TYPEC_CC_VOLT_RA &&
 			     cc2 == TYPEC_CC_VOLT_RA)) {
 #ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
@@ -1427,11 +1427,12 @@ void pd_task(void)
 			timeout = 20*MSEC;
 			tcpm_get_cc(port, &cc1, &cc2);
 
-			if (TYPEC_CC_IS_RD(cc1) && TYPEC_CC_IS_RD(cc2)) {
+			if (cc1 == TYPEC_CC_VOLT_RD &&
+			    cc2 == TYPEC_CC_VOLT_RD) {
 				/* Debug accessory */
 				new_cc_state = PD_CC_DEBUG_ACC;
-			} else if (TYPEC_CC_IS_RD(cc1) ||
-				   TYPEC_CC_IS_RD(cc2)) {
+			} else if (cc1 == TYPEC_CC_VOLT_RD ||
+				   cc2 == TYPEC_CC_VOLT_RD) {
 				/* UFP attached */
 				new_cc_state = PD_CC_UFP_ATTACHED;
 			} else if (cc1 == TYPEC_CC_VOLT_RA &&
@@ -1462,7 +1463,7 @@ void pd_task(void)
 			/* Debounce complete */
 			/* UFP is attached */
 			if (new_cc_state == PD_CC_UFP_ATTACHED) {
-				pd[port].polarity = (TYPEC_CC_IS_RD(cc2));
+				pd[port].polarity = (cc2 == TYPEC_CC_VOLT_RD);
 				tcpm_set_polarity(port, pd[port].polarity);
 
 				/* initial data role for source is DFP */
@@ -1528,8 +1529,8 @@ void pd_task(void)
 			     (cc1 != TYPEC_CC_VOLT_RA ||
 			      cc2 != TYPEC_CC_VOLT_RA)) ||
 			    (pd[port].cc_state == PD_CC_DEBUG_ACC &&
-			     (!TYPEC_CC_IS_RD(cc1) ||
-			      !TYPEC_CC_IS_RD(cc2)))) {
+			     (cc1 != TYPEC_CC_VOLT_RD ||
+			      cc2 != TYPEC_CC_VOLT_RD))) {
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 #ifdef CONFIG_CASE_CLOSED_DEBUG
 				ccd_set_mode(CCD_MODE_DISABLED);

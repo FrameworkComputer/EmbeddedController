@@ -59,15 +59,24 @@ int tcpm_get_cc(int port, int *cc1, int *cc2)
 	int status;
 	int rv;
 
-	rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			TCPC_REG_CC1_STATUS, &status);
+	rv = i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+		       TCPC_REG_CC_STATUS, &status);
 
 	/* If i2c read fails, return error */
 	if (rv)
 		return rv;
 
-	*cc1 = TCPC_REG_CC_STATUS_VOLT(status & 0xff);
-	*cc2 = TCPC_REG_CC_STATUS_VOLT((status >> 8) & 0xff);
+	*cc1 = TCPC_REG_CC_STATUS_CC1(status);
+	*cc2 = TCPC_REG_CC_STATUS_CC2(status);
+
+	/*
+	 * If status is not open, then OR in termination to convert to
+	 * enum tcpc_cc_voltage_status.
+	 */
+	if (*cc1 != TYPEC_CC_VOLT_OPEN)
+		*cc1 |= TCPC_REG_CC_STATUS_TERM(status) << 2;
+	if (*cc2 != TYPEC_CC_VOLT_OPEN)
+		*cc2 |= TCPC_REG_CC_STATUS_TERM(status) << 2;
 
 	return rv;
 }
@@ -150,8 +159,6 @@ int tcpm_get_message(int port, uint32_t *payload, int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
 
-	/* TODO: need to first read TCPC_REG_RX_STATUS to check if SOP */
-
 	rv = i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
 		       TCPC_REG_RX_BYTE_CNT, &cnt);
 
@@ -232,6 +239,8 @@ void tcpc_alert(int port)
 	}
 	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
 		/* transmit complete */
-		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_COMPLETE);
+		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
+					   TCPC_TX_COMPLETE_SUCCESS :
+					   TCPC_TX_COMPLETE_FAILED);
 	}
 }

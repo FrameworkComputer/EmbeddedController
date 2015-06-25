@@ -19,39 +19,43 @@
 #define TCPC_REG_DEV_CAP_3         0xe
 #define TCPC_REG_DEV_CAP_4         0xf
 #define TCPC_REG_ALERT             0x10
-#define TCPC_REG_ALERT_GPIO_CHANGE  (1<<10)
-#define TCPC_REG_ALERT_V_ALARM_LO   (1<<9)
-#define TCPC_REG_ALERT_V_ALARM_HI   (1<<8)
-#define TCPC_REG_ALERT_SLEEP_EXITED (1<<7)
-#define TCPC_REG_ALERT_POWER_STATUS (1<<6)
-#define TCPC_REG_ALERT_CC_STATUS    (1<<5)
-#define TCPC_REG_ALERT_RX_STATUS    (1<<4)
+#define TCPC_REG_ALERT_TCPC_INITED  (1<<14)
+#define TCPC_REG_ALERT_INTRFACE_ERR (1<<13)
+#define TCPC_REG_ALERT_GPIO_CHANGE  (1<<12)
+#define TCPC_REG_ALERT_V_CONN_LO    (1<<11)
+#define TCPC_REG_ALERT_V_ALARM_LO   (1<<10)
+#define TCPC_REG_ALERT_V_ALARM_HI   (1<<9)
+#define TCPC_REG_ALERT_SLEEP_EXITED (1<<8)
+#define TCPC_REG_ALERT_WAKE_ON_I2C  (1<<7)
+#define TCPC_REG_ALERT_TX_SUCCESS   (1<<6)
+#define TCPC_REG_ALERT_TX_DISCARDED (1<<5)
+#define TCPC_REG_ALERT_TX_FAILED    (1<<4)
 #define TCPC_REG_ALERT_RX_HARD_RST  (1<<3)
-#define TCPC_REG_ALERT_TX_SUCCESS   (1<<2)
-#define TCPC_REG_ALERT_TX_DISCARDED (1<<1)
-#define TCPC_REG_ALERT_TX_FAILED    (1<<0)
+#define TCPC_REG_ALERT_RX_STATUS    (1<<2)
+#define TCPC_REG_ALERT_POWER_STATUS (1<<1)
+#define TCPC_REG_ALERT_CC_STATUS    (1<<0)
 #define TCPC_REG_ALERT_TX_COMPLETE  (TCPC_REG_ALERT_TX_SUCCESS | \
 				      TCPC_REG_ALERT_TX_DISCARDED | \
 				      TCPC_REG_ALERT_TX_FAILED)
 
 #define TCPC_REG_ALERT_MASK        0x12
 #define TCPC_REG_POWER_STATUS_MASK 0x14
-#define TCPC_REG_CC1_STATUS        0x16
-#define TCPC_REG_CC2_STATUS        0x17
-#define TCPC_REG_CC_STATUS_SET(term, volt) \
-		((term) << 3 | volt)
-#define TCPC_REG_CC_STATUS_TERM(reg) (((reg) & 0x38) >> 3)
-#define TCPC_REG_CC_STATUS_VOLT(reg) ((reg) & 0x7)
+#define TCPC_REG_CC_STATUS         0x18
+#define TCPC_REG_CC_STATUS_SET(term, cc1, cc2) \
+		((term) << 4 | ((cc2) & 0x3) << 2 | ((cc1) & 0x3))
+#define TCPC_REG_CC_STATUS_TERM(reg) (((reg) & 0x10) >> 4)
+#define TCPC_REG_CC_STATUS_CC2(reg)  (((reg) & 0xc) >> 2)
+#define TCPC_REG_CC_STATUS_CC1(reg)  ((reg) & 0x3)
 
-#define TCPC_REG_POWER_STATUS      0x1a
-#define TCPC_REG_ROLE_CTRL         0x1b
-#define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc2, cc1) \
+#define TCPC_REG_POWER_STATUS      0x19
+#define TCPC_REG_ROLE_CTRL         0x1a
+#define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2) \
 		((drp) << 6 | (rp) << 4 | (cc2) << 2 | (cc1))
 #define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg) & 0xc) >> 2)
 #define TCPC_REG_ROLE_CTRL_CC1(reg) ((reg) & 0x3)
 
-#define TCPC_REG_POWER_PATH_CTRL   0x1c
-#define TCPC_REG_POWER_CTRL        0x1d
+#define TCPC_REG_POWER_PATH_CTRL   0x1b
+#define TCPC_REG_POWER_CTRL        0x1c
 #define TCPC_REG_POWER_CTRL_SET(polarity, vconn) \
 		((polarity) << 4 | (vconn))
 #define TCPC_REG_POWER_CTRL_POLARITY(reg) (((reg) & 0x10) >> 4)
@@ -64,10 +68,10 @@
 #define TCPC_REG_MSG_HDR_INFO_DROLE(reg) (((reg) & 0x8) >> 3)
 #define TCPC_REG_MSG_HDR_INFO_PROLE(reg) ((reg) & 0x1)
 
-#define TCPC_REG_RX_BYTE_CNT       0x2f
-#define TCPC_REG_RX_STATUS         0x30
-#define TCPC_REG_RX_DETECT         0x31
+#define TCPC_REG_RX_DETECT         0x2f
 #define TCPC_REG_RX_DETECT_SOP_HRST_MASK 0x21
+#define TCPC_REG_RX_BYTE_CNT       0x30
+#define TCPC_REG_RX_BUF_FRAME_TYPE 0x31
 
 #define TCPC_REG_RX_HDR            0x32
 #define TCPC_REG_RX_DATA           0x34 /* through 0x4f */

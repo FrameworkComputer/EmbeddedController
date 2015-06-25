@@ -131,6 +131,8 @@ void tcpc_alert(int port)
 	}
 	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
 		/* transmit complete */
-		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_COMPLETE);
+		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
+					   TCPC_TX_COMPLETE_SUCCESS :
+					   TCPC_TX_COMPLETE_FAILED);
 	}
 }

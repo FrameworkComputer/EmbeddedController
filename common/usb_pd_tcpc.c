@@ -678,7 +678,7 @@ static int cc_voltage_to_status(int port, int cc_volt)
 		else if (CC_RA(cc_volt))
 			return TYPEC_CC_VOLT_RA;
 		else
-			return TYPEC_CC_VOLT_SNK_DEF;
+			return TYPEC_CC_VOLT_RD;
 	/* If we have a pull-down, then we are sink, check for Rp. */
 	}
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1000,17 +1000,12 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	case TCPC_REG_VENDOR_ID:
 		*(uint16_t *)payload = tcpc_vid;
 		return 2;
-	case TCPC_REG_CC1_STATUS:
+	case TCPC_REG_CC_STATUS:
 		tcpc_get_cc(port, &cc1, &cc2);
 		payload[0] = TCPC_REG_CC_STATUS_SET(
-				pd[port].cc_pull == TYPEC_CC_RP ?
-					TYPEC_CC_TERM_RP_DEF : TYPEC_CC_TERM_RD,
-				pd[port].cc_status[0]);
-		payload[1] = TCPC_REG_CC_STATUS_SET(
-				pd[port].cc_pull == TYPEC_CC_RP ?
-					TYPEC_CC_TERM_RP_DEF : TYPEC_CC_TERM_RD,
-				pd[port].cc_status[1]);
-		return 2;
+				pd[port].cc_pull == TYPEC_CC_RD,
+				pd[port].cc_status[0], pd[port].cc_status[1]);
+		return 1;
 	case TCPC_REG_ROLE_CTRL:
 		payload[0] = TCPC_REG_ROLE_CTRL_SET(0, 0,
 						    pd[port].cc_pull,

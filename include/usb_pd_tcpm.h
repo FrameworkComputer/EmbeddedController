@@ -14,29 +14,14 @@
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
 
-enum tcpc_cc_termination_status {
-	TYPEC_CC_TERM_RA = 0,
-	TYPEC_CC_TERM_RP_DEF = 1,
-	TYPEC_CC_TERM_RP_1_5 = 2,
-	TYPEC_CC_TERM_RP_3_0 = 3,
-	TYPEC_CC_TERM_RD = 4,
-	TYPEC_CC_TERM_VCONN = 5,
-	TYPEC_CC_TERM_OPEN = 6
-};
 enum tcpc_cc_voltage_status {
-	TYPEC_CC_VOLT_RA = 0,
-	TYPEC_CC_VOLT_SNK_DEF = 1,
-	TYPEC_CC_VOLT_SNK_1_5 = 2,
-	TYPEC_CC_VOLT_SNK_3_0 = 3,
-	TYPEC_CC_VOLT_SRC_DEF = 4,
-	TYPEC_CC_VOLT_SRC_1_5 = 5,
-	TYPEC_CC_VOLT_SRC_3_0 = 6,
-	TYPEC_CC_VOLT_OPEN = 7
+	TYPEC_CC_VOLT_OPEN = 0,
+	TYPEC_CC_VOLT_RA = 1,
+	TYPEC_CC_VOLT_RD = 2,
+	TYPEC_CC_VOLT_SNK_DEF = 5,
+	TYPEC_CC_VOLT_SNK_1_5 = 6,
+	TYPEC_CC_VOLT_SNK_3_0 = 7,
 };
-
-/* Check if CC voltage is within Rd */
-#define TYPEC_CC_IS_RD(cc) ((cc) >= TYPEC_CC_VOLT_SNK_DEF && \
-			    (cc) <= TYPEC_CC_VOLT_SNK_3_0)
 
 enum tcpc_cc_pull {
 	TYPEC_CC_RA = 0,
@@ -57,9 +42,9 @@ enum tcpm_transmit_type {
 };
 
 enum tcpc_transmit_complete {
-	TCPC_TX_COMPLETE_SUCCESS =   (1 << 2),
-	TCPC_TX_COMPLETE_DISCARDED = (1 << 1),
-	TCPC_TX_COMPLETE_FAILED =    (1 << 0),
+	TCPC_TX_COMPLETE_SUCCESS =   0,
+	TCPC_TX_COMPLETE_DISCARDED = 1,
+	TCPC_TX_COMPLETE_FAILED =    2,
 };
 
 /**
