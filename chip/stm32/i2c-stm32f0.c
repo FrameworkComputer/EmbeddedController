@@ -78,7 +78,7 @@ static void i2c_set_freq_port(const struct i2c_port_t *p)
 	/* Set clock frequency */
 	switch (p->kbps) {
 	case 1000:
-		STM32_I2C_TIMINGR(port) = 0x50110103;
+		STM32_I2C_TIMINGR(port) = 0x50100103;
 		break;
 	case 400:
 		STM32_I2C_TIMINGR(port) = 0x50330309;
