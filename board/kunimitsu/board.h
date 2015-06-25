@@ -9,9 +9,12 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
+#define CONFIG_ADC
 #define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BUTTON_COUNT 2
+#define CONFIG_CHARGE_MANAGER
 
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
@@ -25,6 +28,7 @@
 #define CONFIG_CHIPSET_SKYLAKE
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_EXTPOWER_GPIO
+#define CONFIG_HOSTCMD_PD
 #define CONFIG_I2C
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #undef CONFIG_KEYBOARD_KSO_BASE
@@ -36,7 +40,16 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
-
+#define CONFIG_USB_CHARGER
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_CUSTOM_VDM
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_SWITCH_PI3USB9281
+#define CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT 2
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
 
 #define CONFIG_SPI_PORT 1
@@ -59,8 +72,16 @@
 #define I2C_PORT_BATTERY MEC1322_I2C0_0
 #define I2C_PORT_CHARGER MEC1322_I2C0_0
 #define I2C_PORT_THERMAL MEC1322_I2C0_0
+#define I2C_PORT_USB_CHARGER_1 MEC1322_I2C0_1
+#define I2C_PORT_PD_MCU MEC1322_I2C1
+#define I2C_PORT_TCPC MEC1322_I2C1
 #define I2C_PORT_ALS MEC1322_I2C2
 #define I2C_PORT_ACCEL MEC1322_I2C2
+#define I2C_PORT_PMIC MEC1322_I2C3
+#define I2C_PORT_USB_CHARGER_2 MEC1322_I2C3
+
+#undef DEFERRABLE_MAX_COUNT
+#define DEFERRABLE_MAX_COUNT 11
 
 #define CONFIG_ALS
 #define CONFIG_ALS_ISL29035
@@ -74,18 +95,23 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID 1
 
 /* Modules we want to exclude */
-#undef CONFIG_EEPROM
-#undef CONFIG_EOPTION
-#undef CONFIG_PSTORE
+#undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_PECI
-#undef CONFIG_FANS
-#undef CONFIG_ADC
 #undef CONFIG_WAKE_PIN
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+/* ADC signal */
+enum adc_channel {
+	ADC_VBUS,
+	ADC_AMON_BMON,
+	ADC_PSYS,
+	/* Number of ADC channels */
+	ADC_CH_COUNT
+};
 
 /* power signal definitions */
 enum power_signal {
@@ -117,8 +143,28 @@ enum als_id {
 	ALS_COUNT,
 };
 
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/* TODO: determine the following board specific type-C power constants */
+/*
+ * delay to turn on the power supply max is ~16ms.
+ * delay to turn off the power supply max is about ~180ms.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
+
 /* Discharge battery when on AC power for factory test. */
 int board_discharge_on_ac(int enable);
+
+/* Reset PD MCU */
+void board_reset_pd_mcu(void);
 
 #endif /* !__ASSEMBLER__ */
 
