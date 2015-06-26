@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "util.h"
 #include "hooks.h"
+#include "task.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
@@ -22,6 +23,12 @@
 #define SPI_BYTE_TRANSFER_POLL_INTERVAL_US 100
 
 #define SPI_DMA_CHANNEL (MEC1322_DMAC_SPI0_RX + CONFIG_SPI_PORT * 2)
+
+/* only regular image needs mutex, LFW does not have scheduling */
+/* TODO: Move SPI locking to common code */
+#ifndef LFW
+static struct mutex spi_mutex;
+#endif
 
 static const struct dma_option spi_rx_option = {
 	SPI_DMA_CHANNEL, (void *)&MEC1322_SPI_RD(CONFIG_SPI_PORT),
@@ -115,10 +122,18 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 {
 	int ret;
 
+#ifndef LFW
+	mutex_lock(&spi_mutex);
+#endif
 	ret = spi_transaction_async(txdata, txlen, rxdata, rxlen);
 	if (ret)
 		return ret;
-	return spi_transaction_flush();
+	ret = spi_transaction_flush();
+
+#ifndef LFW
+	mutex_unlock(&spi_mutex);
+#endif
+	return ret;
 }
 
 int spi_enable(int enable)

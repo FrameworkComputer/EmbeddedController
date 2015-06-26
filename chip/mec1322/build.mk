@@ -53,7 +53,7 @@ objs_lfw += $(out)/common/version.o
 dirs-y+=chip/$(CHIP)/lfw
 
 # objs with -lfw suffix are to include lfw's gpio
-$(out)/%-lfw.o: private CC+=-Iboard/$(BOARD)/lfw
+$(out)/%-lfw.o: private CC+=-Iboard/$(BOARD)/lfw -DLFW
 $(out)/%-lfw.o: %.c
 	$(call quiet,c_to_o,CC     )
 
