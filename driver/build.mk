@@ -67,6 +67,7 @@ driver-$(CONFIG_USBC_SS_MUX)+=usb_mux.o
 
 # USB muxes
 driver-$(CONFIG_USB_MUX_PI3USB30532)+=usb_mux_pi3usb30532.o
+driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux_ps8740.o
 
 # Firmware Update
 driver-$(CONFIG_SB_FIRMWARE_UPDATE)+=battery/sb_fw_update.o
