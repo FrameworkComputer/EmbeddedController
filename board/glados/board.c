@@ -26,6 +26,7 @@
 #include "temp_sensor.h"
 #include "timer.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -141,6 +142,17 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.port_addr = 0xa8,
+		.driver = &pi3usb30532_usb_mux_driver,
+	},
+	{
+		.port_addr = 0x20,
+		.driver = &ps8740_usb_mux_driver,
+	}
+};
 
 void board_set_usb_switches(int port, enum usb_switch setting)
 {
