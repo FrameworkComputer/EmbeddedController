@@ -225,6 +225,15 @@ void lfw_main()
 	/* install vector table */
 	*((uintptr_t *) 0xe000ed08) = (uintptr_t) &hdr_int_vect;
 
+#ifdef CONFIG_WATCHDOG
+	/* Reload watchdog which may be running in case of sysjump */
+	MEC1322_WDG_KICK = 1;
+#ifdef CONFIG_WATCHDOG_HELP
+	/* Stop aux timer */
+	MEC1322_TMR16_CTL(0) &= ~1;
+#endif
+#endif
+
 	timer_init();
 	clock_init();
 	cpu_init();
