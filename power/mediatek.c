@@ -12,14 +12,14 @@
  *
  *  When powered off:
  *  - Press pwron turns on the AP
- *  - Hold pwron turns on the AP, and then 9s later turns it off and leaves
+ *  - Hold pwron turns on the AP, and then 10s later turns it off and leaves
  *    it off until pwron is released and pressed again
  *
  *  When powered on:
  *  - The PMIC PWRON signal is released <= 1 second after the power button is
  *    released
- *  - Holding pwron for 11s powers off the AP
- *  - Pressing and releasing pwron within that 11s is ignored
+ *  - Holding pwron for 10s powers off the AP
+ *  - Pressing and releasing pwron within that 10s is ignored
  *  - If POWER_GOOD is dropped by the AP, then we power the AP off
  *  - If SUSPEND_L goes low, enter suspend mode.
  *
@@ -49,7 +49,7 @@
 #define IN_SUSPEND POWER_SIGNAL_MASK(MTK_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN  (11000 * MSEC)	/* 11 seconds */
+#define DELAY_FORCE_SHUTDOWN  (10000 * MSEC)	/* 10 seconds */
 
 /*
  * The minimum time to assert the PMIC PWRON pin is 20ms.
@@ -82,7 +82,7 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or POWER_GOOD == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(11000 * MSEC)	/* 11 seconds */
+#define DELAY_SHUTDOWN_ON_POWER_HOLD	(10000 * MSEC)	/* 10 seconds */
 
 /*
  * The hold time for pulling down the PMIC_WARM_RESET_H pin so that
