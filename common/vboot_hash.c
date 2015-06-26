@@ -43,10 +43,15 @@ static int in_progress;
 
 static struct sha256_ctx ctx;
 
+int vboot_hash_in_progress(void)
+{
+	return in_progress;
+}
+
 /**
  * Abort hash currently in progress, and invalidate any completed hash.
  */
-static void vboot_hash_abort(void)
+void vboot_hash_abort(void)
 {
 	if (in_progress) {
 		want_abort = 1;
