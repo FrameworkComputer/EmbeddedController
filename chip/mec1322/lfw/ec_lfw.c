@@ -89,14 +89,10 @@ int spi_image_load(uint32_t offset)
 
 	memset((void *)buf, 0xFF, (CONFIG_FW_IMAGE_SIZE - 4));
 
-	spi_enable(1);
-
 	for (i = 0; i < CONFIG_FW_IMAGE_SIZE; i += SPI_CHUNK_SIZE)
 		spi_flash_readloc(&buf[i],
 					offset + i,
 					SPI_CHUNK_SIZE);
-
-	spi_enable(0);
 
 	return 0;
 
@@ -235,6 +231,7 @@ void lfw_main()
 	dma_init();
 	uart_init();
 	system_init();
+	spi_enable(1);
 
 	uart_puts("littlefw");
 	uart_puts(version_data.version);
