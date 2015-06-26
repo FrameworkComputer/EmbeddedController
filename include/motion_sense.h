@@ -28,11 +28,35 @@ enum sensor_state {
 #define SENSOR_ACTIVE_S0_S3 (SENSOR_ACTIVE_S3 | SENSOR_ACTIVE_S0)
 #define SENSOR_ACTIVE_S0_S3_S5 (SENSOR_ACTIVE_S0_S3 | SENSOR_ACTIVE_S5)
 
+/* Events the motion sense task may have to process.*/
+#define TASK_EVENT_MOTION_FLUSH_PENDING TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_MOTION_INTERRUPT     TASK_EVENT_CUSTOM(2)
+#define TASK_EVENT_MOTION_ODR_CHANGE    TASK_EVENT_CUSTOM(4)
+
+/* Define sensor sampling interval in suspend. */
+#ifdef CONFIG_GESTURE_DETECTION
+#define SUSPEND_SAMPLING_INTERVAL (CONFIG_GESTURE_SAMPLING_INTERVAL_MS * MSEC)
+#elif defined(CONFIG_ACCEL_FIFO)
+#define SUSPEND_SAMPLING_INTERVAL (1000 * MSEC)
+#else
+#define SUSPEND_SAMPLING_INTERVAL (100 * MSEC)
+#endif
+
+/* Minimum time in between running motion sense task loop. */
+#define MIN_MOTION_SENSE_WAIT_TIME (3 * MSEC)
+#define MAX_MOTION_SENSE_WAIT_TIME (60000 * MSEC)
+
 struct motion_data_t {
 	/* data rate the sensor will measure, in mHz */
 	int odr;
 	/* range of measurement in SI */
 	int range;
+	/* delay between collection by EC, in ms.
+	 * For non FIFO sensor, should be nead 1e6/odr to
+	 * collect events.
+	 * For sensor with FIFO, can be much longer.
+	 */
+	unsigned ec_rate;
 };
 
 struct motion_sensor_t {
@@ -68,11 +92,26 @@ struct motion_sensor_t {
 	 * FIFO info has been transmitted.
 	 */
 	uint16_t lost;
+
+	/*
+	 * Time since iast collection:
+	 * For sensor with hardware FIFO,  time since last sample
+	 * has move from the hardware FIFO to the FIFO (used if fifo rate != 0).
+	 * For sensor without FIFO, time since the last event was collect
+	 * from sensor registers.
+	 */
+	int last_collection;
 };
 
 /* Defined at board level. */
 extern struct motion_sensor_t motion_sensors[];
-extern const unsigned int motion_sensor_count;
+extern const unsigned motion_sensor_count;
+
+/* For testing purposes: export the sampling interval. */
+extern unsigned accel_interval;
+int motion_sense_set_accel_interval(
+		struct motion_sensor_t *driving_sensor,
+		unsigned data);
 
 /*
  * Priority of the motion sense resume/suspend hooks, to be sure associated
@@ -103,10 +142,4 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 				const struct motion_sensor_t *sensor);
 
 #endif
-
-/* Events the motion sense task may have to process.*/
-#define TASK_EVENT_MOTION_FLUSH_PENDING TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_MOTION_INTERRUPT     TASK_EVENT_CUSTOM(2)
-#define TASK_EVENT_MOTION_ODR_CHANGE    TASK_EVENT_CUSTOM(4)
-
 #endif /* __CROS_EC_MOTION_SENSE_H */

@@ -309,7 +309,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = &base_standard_ref,
 	 .default_config = {
 		 .odr = 119000,
-		 .range = 2
+		 .range = 2,
+		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
 	 }
 	},
 
@@ -325,7 +326,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = &lid_standard_ref,
 	 .default_config = {
 		 .odr = 100000,
-		 .range = 2
+		 .range = 2,
+		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
 	 }
 	},
 
@@ -341,7 +343,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = NULL,
 	 .default_config = {
 		 .odr = 119000,
-		 .range = 2000
+		 .range = 2000,
+		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
 	 }
 	},
 
