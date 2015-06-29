@@ -44,9 +44,11 @@ static void pwm_configure(enum pwm_channel ch)
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 	gpio_set_alternate_function(gpio->port, gpio->mask, pwm->gpio_alt_func);
-#else /* stm32l */
+#elif defined(CHIP_FAMILY_STM32L)
 	gpio_set_alternate_function(gpio->port, gpio->mask,
 				    GPIO_ALT_TIM(pwm->tim.id));
+#else
+#error "GPIO alternate function selection not implemented for chip family."
 #endif
 
 	/* Enable timer */
