@@ -29,6 +29,7 @@
 #define GPIO_DEFAULT       (1 << 13) /* Don't set up on boot */
 #define GPIO_INT_DSLEEP    (1 << 14) /* Interrupt in deep sleep */
 #define GPIO_INT_SHARED    (1 << 15) /* Shared among multiple pins */
+#define GPIO_SEL_1P8V      (1 << 16) /* Support 1.8v */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)

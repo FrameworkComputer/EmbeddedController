@@ -55,11 +55,30 @@ static void check_reset_cause(void)
 	system_set_reset_flags(flags);
 }
 
+int gpio_is_reboot_warm(void)
+{
+	uint32_t reset_flags;
+	/*
+	 * Check reset cause here,
+	 * gpio_pre_init is executed faster than system_pre_init
+	 */
+	check_reset_cause();
+	reset_flags = system_get_reset_flags();
+
+	if ((reset_flags & RESET_FLAG_RESET_PIN) ||
+	    (reset_flags & RESET_FLAG_POWER_ON) ||
+	    (reset_flags & RESET_FLAG_WATCHDOG) ||
+	    (reset_flags & RESET_FLAG_HARD) ||
+	    (reset_flags & RESET_FLAG_SOFT))
+		return 0;
+	else
+		return 1;
+}
+
 void system_pre_init(void)
 {
 	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
 
-	check_reset_cause();
 }
 
 void system_reset(int flags)
