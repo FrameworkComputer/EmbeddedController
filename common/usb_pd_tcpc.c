@@ -41,9 +41,6 @@ static struct mutex pd_crc_lock;
 static const int debug_level;
 #endif
 
-/* USB Vendor ID, initialized to 0, written to actual VID when TCPC is ready */
-static int tcpc_vid;
-
 /* Encode 5 bits using Biphase Mark Coding */
 #define BMC(x)   ((x &  1 ? 0x001 : 0x3FF) \
 		^ (x &  2 ? 0x004 : 0x3FC) \
@@ -712,6 +709,8 @@ static void alert(int port, int mask)
 
 void tcpc_init(int port)
 {
+	int i;
+
 	/* Initialize physical layer */
 	pd_hw_init(port, PD_ROLE_DEFAULT);
 	pd[port].cc_pull = PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
@@ -719,6 +718,12 @@ void tcpc_init(int port)
 
 	/* make sure PD monitoring is disabled initially */
 	pd[port].rx_enabled = 0;
+
+	/* make initial readings of CC voltages */
+	for (i = 0; i < 2; i++) {
+		pd[port].cc_status[i] = cc_voltage_to_status(port,
+						pd_adc_read(port, i));
+	}
 }
 
 int tcpc_run(int port, int evt)
@@ -791,9 +796,6 @@ int tcpc_run(int port, int evt)
 	if (pd[port].rx_enabled)
 		pd_rx_enable_monitoring(port);
 
-	/* write our TCPC VID to notify TCPM that we are ready */
-	tcpc_vid = USB_VID_GOOGLE;
-
 	/* TODO: adjust timeout based on how often to sample CC */
 	return 10*MSEC;
 }
@@ -807,6 +809,9 @@ void pd_task(void)
 
 	/* initialize phy task */
 	tcpc_init(port);
+
+	/* we are now initialized */
+	alert(port, TCPC_REG_ALERT_TCPC_INITED);
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
@@ -998,7 +1003,7 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 
 	switch (reg) {
 	case TCPC_REG_VENDOR_ID:
-		*(uint16_t *)payload = tcpc_vid;
+		*(uint16_t *)payload = USB_VID_GOOGLE;
 		return 2;
 	case TCPC_REG_CC_STATUS:
 		tcpc_get_cc(port, &cc1, &cc2);

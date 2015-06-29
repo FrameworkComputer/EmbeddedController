@@ -39,17 +39,21 @@ static int init_alert_mask(int port)
 
 int tcpm_init(int port)
 {
-	int rv, vid = 0;
+	int rv, alert = 0;
 
 	while (1) {
 		rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				TCPC_REG_VENDOR_ID, &vid);
+				TCPC_REG_ALERT, &alert);
 		/*
 		 * If i2c succeeds and VID is non-zero, then initialization
 		 * is complete
 		 */
-		if (rv == EC_SUCCESS && vid)
+		if (rv == EC_SUCCESS && (alert & TCPC_REG_ALERT_TCPC_INITED)) {
+			/* clear all alert bits */
+			i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+					 TCPC_REG_ALERT, 0xff);
 			return init_alert_mask(port);
+		}
 		msleep(10);
 	}
 }
