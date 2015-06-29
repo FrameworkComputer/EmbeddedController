@@ -24,3 +24,4 @@ chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
+chip-$(CONFIG_I2C)+=i2c.o

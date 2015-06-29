@@ -935,6 +935,18 @@
 /* Number of IRQs supported on the EC chip */
 #undef CONFIG_IRQ_COUNT
 
+/* Enable Wake-up control interrupt from KSI */
+#undef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
+
+/* Interrupt for PECI module. (IT839X series and IT838X DX only) */
+#undef CONFIG_IT83XX_PECI_WITH_INTERRUPT
+
+/* To define it, if I2C channel C and PECI used at the same time. */
+#undef CONFIG_IT83XX_SMCLK2_ON_GPC7
+
+/* Use SSPI Chip Enable 1. */
+#undef CONFIG_IT83XX_SPI_USE_CS1
+
 /*****************************************************************************/
 /* Keyboard config */
 
@@ -954,9 +966,6 @@
 
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
-
-/* Enable Wake-up control interrupt from KSI */
-#undef CONFIG_KEYBOARD_KSI_WUC_INT
 
 /* The board uses a negative edge-triggered GPIO for keyboard interrupts. */
 #undef CONFIG_KEYBOARD_IRQ_GPIO
@@ -1286,9 +1295,6 @@
 
 /* SPI module port. */
 #undef CONFIG_SPI_PORT
-
-/* Use SSPI Chip Enable 1. */
-#undef CONFIG_SPI_USE_CS1
 
 /* Support testing SPI slave controller driver. */
 #undef CONFIG_SPS_TEST

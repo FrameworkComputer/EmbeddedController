@@ -23,6 +23,7 @@
 #include "lpc.h"
 #include "intc.h"
 #include "fan.h"
+#include "i2c.h"
 
 /* Test GPIO interrupt function that toggles one LED. */
 void test_interrupt(enum gpio_signal signal)
@@ -180,6 +181,21 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
+
+/*
+ * I2C channels (A, B, and C) are using the same timing registers (00h~07h)
+ * at default.
+ * In order to set frequency independently for each channels,
+ * We use timing registers 09h~0Bh, and the supported frequency will be:
+ * 50KHz, 100KHz, 400KHz, or 1MHz.
+ */
+/* I2C ports */
+const struct i2c_port_t i2c_ports[] = {
+	{"battery", 2, 100, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
+	{"evb-1",   0, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
+	{"evb-2",   1, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /*****************************************************************************/
 /* Console commands */

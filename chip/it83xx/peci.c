@@ -182,7 +182,7 @@ static enum peci_status peci_transaction(uint8_t addr,
 		IT83XX_PECI_HOWRDR = w_buf[index];
 
 	peci_current_task = task_get_current();
-#ifdef CONFIG_PECI_WITH_INTERRUPT
+#ifdef CONFIG_IT83XX_PECI_WITH_INTERRUPT
 	task_clear_pending_irq(IT83XX_IRQ_PECI);
 	task_enable_irq(IT83XX_IRQ_PECI);
 

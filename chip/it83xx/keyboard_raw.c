@@ -35,7 +35,7 @@ void keyboard_raw_init(void)
 	/* KSO[15:8] pins low. */
 	IT83XX_KBS_KSOH1 = 0x00;
 
-#ifdef CONFIG_KEYBOARD_KSI_WUC_INT
+#ifdef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 	/* KSI[0-7] falling-edge triggered is selected */
 	IT83XX_WUC_WUEMR3 = 0xFF;
 
@@ -58,7 +58,7 @@ void keyboard_raw_init(void)
  */
 void keyboard_raw_task_start(void)
 {
-#ifdef CONFIG_KEYBOARD_KSI_WUC_INT
+#ifdef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 	IT83XX_WUC_WUESR3 = 0xFF;
 	task_clear_pending_irq(IT83XX_IRQ_WKINTC);
 	task_enable_irq(IT83XX_IRQ_WKINTC);
@@ -105,7 +105,7 @@ test_mockable int keyboard_raw_read_rows(void)
 void keyboard_raw_enable_interrupt(int enable)
 {
 	if (enable) {
-#ifdef CONFIG_KEYBOARD_KSI_WUC_INT
+#ifdef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 		IT83XX_WUC_WUESR3 = 0xFF;
 		task_clear_pending_irq(IT83XX_IRQ_WKINTC);
 		task_enable_irq(IT83XX_IRQ_WKINTC);
@@ -114,7 +114,7 @@ void keyboard_raw_enable_interrupt(int enable)
 		task_enable_irq(IT83XX_IRQ_KB_MATRIX);
 #endif
 	} else {
-#ifdef CONFIG_KEYBOARD_KSI_WUC_INT
+#ifdef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 		task_disable_irq(IT83XX_IRQ_WKINTC);
 #else
 		task_disable_irq(IT83XX_IRQ_KB_MATRIX);
@@ -127,7 +127,7 @@ void keyboard_raw_enable_interrupt(int enable)
  */
 void keyboard_raw_interrupt(void)
 {
-#ifdef CONFIG_KEYBOARD_KSI_WUC_INT
+#ifdef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 	task_disable_irq(IT83XX_IRQ_WKINTC);
 #else
 	task_disable_irq(IT83XX_IRQ_KB_MATRIX);

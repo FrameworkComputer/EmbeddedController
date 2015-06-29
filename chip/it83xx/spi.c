@@ -82,7 +82,7 @@ int spi_enable(int enable)
 		 * 01b: SSCK/SMOSI/SMISO/SSCE0# are enabled.
 		 * 11b: SSCK/SMOSI/SMISO/SSCE1#/SSCE0# are enabled.
 		 */
-#ifdef CONFIG_SPI_USE_CS1
+#ifdef CONFIG_IT83XX_SPI_USE_CS1
 		IT83XX_GPIO_GRC1 |= 0x20;
 #else
 		IT83XX_GPIO_GRC1 |= 0x10;
@@ -105,7 +105,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 	IT83XX_SSPI_SPICTRL2 &= ~0x04;
 	for (idx = 0x00; idx < txlen; idx++) {
 		IT83XX_SSPI_SPIDATA = txdata[idx];
-#ifdef CONFIG_SPI_USE_CS1
+#ifdef CONFIG_IT83XX_SPI_USE_CS1
 		/* Write 1 to start the data transmission of CS1 */
 		IT83XX_SSPI_SPISTS |= 0x08;
 #else
@@ -117,7 +117,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 	/* bit[1]: Read cycle */
 	IT83XX_SSPI_SPICTRL2 |= 0x04;
 	for (idx = 0x00; idx < rxlen; idx++) {
-#ifdef CONFIG_SPI_USE_CS1
+#ifdef CONFIG_IT83XX_SPI_USE_CS1
 		/* Write 1 to start the data transmission of CS1 */
 		IT83XX_SSPI_SPISTS |= 0x08;
 #else
