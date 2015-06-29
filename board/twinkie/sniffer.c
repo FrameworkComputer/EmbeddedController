@@ -18,11 +18,26 @@
 #include "timer.h"
 #include "usb.h"
 #include "util.h"
+#include "ina2xx.h"
 
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+struct sniffer_sample_header {
+	uint16_t seq;
+	uint16_t tstamp;
+	uint16_t vbus_value; /* can be voltage or current */
+	int16_t sample_tstamp;
+};
+#endif
 /* Size of one USB packet buffer */
 #define EP_BUF_SIZE 64
+
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+#define EP_PACKET_HEADER_SIZE (sizeof(struct sniffer_sample_header))
+#else
+#define EP_PACKET_HEADER_SIZE 4
+#endif
 /* Size of the payload (packet minus the header) */
-#define EP_PAYLOAD_SIZE (EP_BUF_SIZE - 4)
+#define EP_PAYLOAD_SIZE (EP_BUF_SIZE - EP_PACKET_HEADER_SIZE)
 
 /* Buffer enough to avoid overflowing due to USB latencies on both sides */
 #define RX_COUNT (16 * EP_PAYLOAD_SIZE)
@@ -42,10 +57,102 @@ static uint16_t sample_tstamp[4];
 /* sequence number of the beginning of DMA buffers */
 static uint16_t sample_seq[4];
 
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+/* after how long the deferred reads will wake up for the next read */
+#define DEFERRED_READ_TIME_US 8000
+#define VBUS_ARRAY_SIZE 8
+/* vbus voltage information: the voltage value and the timestamp offset */
+struct vbus_vol_info {
+	uint16_t vol;
+	uint16_t tstamp; /* the average time of before read and after read*/
+};
+
+/* vbus current information: the voltage value and the timestamp offset */
+struct vbus_curr_info {
+	int16_t curr;
+	uint16_t tstamp; /* the average time of before read and after read*/
+};
+
+/* an array-implemented circular queue to hold multiple vbus values */
+static struct vbus_vol_info vbus_vol_array[VBUS_ARRAY_SIZE];
+static uint32_t vbus_vol_head;
+static uint32_t vbus_vol_tail;
+
+static struct vbus_curr_info vbus_curr_array[VBUS_ARRAY_SIZE];
+static uint32_t vbus_curr_head;
+static uint32_t vbus_curr_tail;
+
+/* whether the sniffer task have started sending packet */
+static int flag_started;
+#endif
+
 /* Bulk endpoint double buffer */
 static usb_uint ep_buf[2][EP_BUF_SIZE / 2] __usb_ram;
 /* USB Buffers not used, ready to be filled */
 static volatile uint32_t free_usb = 3;
+
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+static void vbus_vol_read_deferred(void)
+{
+	/* read may be interrupted, use average of start & end as the tstamp */
+	/* Unit: ms */
+	uint16_t tstamp_bf;
+	uint16_t tstamp_af;
+	/* Unit: mV */
+	uint16_t vol;
+	uint16_t temp_tail;
+
+	if (flag_started == 0 || (flag_started == 1 &&
+	   ((vbus_vol_tail - vbus_vol_head) < VBUS_ARRAY_SIZE))) {
+		/* if sniffer isn't started, always write to the first position */
+		temp_tail = (flag_started == 0) ?
+					0 : (vbus_vol_tail & (VBUS_ARRAY_SIZE - 1));
+		tstamp_bf = __hw_clock_source_read();
+		vol = ((ina2xx_read(0, INA2XX_REG_BUS_VOLT)*5) >> 2); /* *125/100 */
+		tstamp_af = __hw_clock_source_read();
+		if (tstamp_bf > tstamp_af)
+			vbus_vol_array[temp_tail].tstamp =
+			((tstamp_bf + tstamp_af + 0xFFFF)>>1) & 0xFFFF;
+		else
+			vbus_vol_array[temp_tail].tstamp = (tstamp_bf + tstamp_af)>>1;
+		vbus_vol_array[temp_tail].vol = vol;
+		vbus_vol_tail =  (flag_started == 0) ? 1 : vbus_vol_tail + 1;
+	}
+
+	hook_call_deferred(vbus_vol_read_deferred, DEFERRED_READ_TIME_US);
+}
+DECLARE_DEFERRED(vbus_vol_read_deferred);
+
+static void vbus_curr_read_deferred(void)
+{
+	/* Unit: ms */
+	uint16_t tstamp_bf;
+	uint16_t tstamp_af;
+	/* Unit: mA */
+	uint16_t curr;
+	uint16_t temp_tail;
+
+	if (flag_started == 0 || (flag_started == 1 &&
+	   ((vbus_curr_tail - vbus_curr_head) < VBUS_ARRAY_SIZE))) {
+		/* if sniffer isn't started, always write to the first position */
+		temp_tail = (flag_started == 0) ?
+					0 : vbus_curr_tail & (VBUS_ARRAY_SIZE - 1);
+		tstamp_bf = __hw_clock_source_read();
+		curr = ina2xx_read(0, INA2XX_REG_CURRENT);
+		tstamp_af = __hw_clock_source_read();
+		if (tstamp_bf > tstamp_af)
+			vbus_curr_array[temp_tail].tstamp =
+			((tstamp_bf + tstamp_af + 0xFFFF)>>1) & 0xFFFF;
+		else
+			vbus_curr_array[temp_tail].tstamp = (tstamp_bf + tstamp_af)>>1;
+		vbus_curr_array[temp_tail].curr = curr;
+		vbus_curr_tail = (flag_started == 0) ? 1 : vbus_curr_tail + 1;
+	}
+
+	hook_call_deferred(vbus_curr_read_deferred, DEFERRED_READ_TIME_US);
+}
+DECLARE_DEFERRED(vbus_curr_read_deferred);
+#endif
 
 static inline void led_set_activity(int ch)
 {
@@ -151,6 +258,11 @@ static volatile uint32_t seq;
 /* Buffer overflow count */
 static uint32_t oflow;
 
+#define SNIFFER_CHANNEL_CC1 0
+#define SNIFFER_CHANNEL_CC2 1
+
+#define get_channel(b)   (((b) >> 12) & 0x1)
+
 void tim_rx1_handler(uint32_t stat)
 {
 	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
@@ -159,7 +271,8 @@ void tim_rx1_handler(uint32_t stat)
 	uint32_t next = idx ? 0x0001 : 0x0100;
 
 	sample_tstamp[idx] = __hw_clock_source_read();
-	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) | (0<<12) /* CC1 */;
+	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) |
+			(SNIFFER_CHANNEL_CC1<<12);
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
@@ -180,7 +293,8 @@ void tim_rx2_handler(uint32_t stat)
 
 	idx += 2;
 	sample_tstamp[idx] = __hw_clock_source_read();
-	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) | (1<<12) /* CC2 */;
+	sample_seq[idx] = ((seq++ << 3) & 0x0ff8) |
+			(SNIFFER_CHANNEL_CC2<<12);
 	if (filled_dma & next) {
 		oflow++;
 		sample_seq[idx] |= 0x8000;
@@ -237,8 +351,23 @@ static void rx_timer_init(int tim_id, timer_ctlr_t *tim, int ch_idx, int up_idx)
 	tim->sr = 0;
 }
 
+
+
 void sniffer_init(void)
 {
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+	vbus_vol_head = 0;
+	vbus_vol_tail = 0;
+	vbus_curr_head = 0;
+	vbus_curr_tail = 0;
+
+	/* whether the sniffer task have started sending packet */
+	flag_started = 0;
+
+	hook_call_deferred(vbus_vol_read_deferred, 0);
+	hook_call_deferred(vbus_curr_read_deferred, 0);
+#endif
+
 	/* remap TIM1 CH1/2/3 to DMA channel 6 */
 	STM32_SYSCFG_CFGR1 |= 1 << 28;
 
@@ -280,10 +409,19 @@ void sniffer_task(void)
 	int d = 0; /* current DMA buffer index */
 	int off = 0; /* DMA buffer offset */
 
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+	int ch; /* sniffer channel */
+	uint16_t vol = 0; /* voltage */
+	uint16_t vol_tstamp; /* timestamp in us */
+	uint16_t curr = 0; /* current */
+	uint16_t curr_tstamp;
+	uint16_t temp_vol_head;
+	uint16_t temp_curr_head;
+#endif
+
 	while (1) {
 		/* Wait for a new buffer of samples or a new USB free buffer */
 		task_wait_event(-1);
-
 		/* send the available samples over USB if we have a buffer*/
 		while (filled_dma && free_usb) {
 			while (!(filled_dma & (1 << d))) {
@@ -292,11 +430,42 @@ void sniffer_task(void)
 				if (off >= RX_COUNT)
 					off = 0;
 			}
+
 			ep_buf[u][0] = sample_seq[d >> 3] | (d & 7);
 			ep_buf[u][1] = sample_tstamp[d >> 3];
-			memcpy_to_usbram(((void *)usb_sram_addr(ep_buf[u] + 2)),
-					 samples[d >> 4]+off, EP_PAYLOAD_SIZE);
-			atomic_clear(&free_usb, 1 << u);
+
+#ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+			flag_started = 1;
+			ch = get_channel(ep_buf[u][0]);
+			if (SNIFFER_CHANNEL_CC1 == ch) {
+				if (vbus_vol_tail - vbus_vol_head > 0) {
+					/* get a value from the queue */
+					temp_vol_head = vbus_vol_head & (VBUS_ARRAY_SIZE - 1);
+					vol = vbus_vol_array[temp_vol_head].vol;
+					vol_tstamp = vbus_vol_array[temp_vol_head].tstamp;
+					++vbus_vol_head;
+				}
+				ep_buf[u][2] = vol; /* use previous values if queue empty*/
+				ep_buf[u][3] = vol_tstamp - ep_buf[u][1];
+
+			} else if (SNIFFER_CHANNEL_CC2 == ch) {
+				if (vbus_curr_tail - vbus_curr_head > 0) {
+					temp_curr_head = vbus_curr_head & (VBUS_ARRAY_SIZE - 1);
+					curr = vbus_curr_array[temp_curr_head].curr;
+					curr_tstamp = vbus_curr_array[temp_curr_head].tstamp;
+					++vbus_curr_head;
+				}
+				ep_buf[u][2] = curr;
+				ep_buf[u][3] = curr_tstamp - ep_buf[u][1];
+			}
+#endif
+
+			memcpy_to_usbram(
+					((void *)usb_sram_addr(ep_buf[u]
+						+ (EP_PACKET_HEADER_SIZE>>1))),
+					samples[d >> 4]+off,
+					EP_PAYLOAD_SIZE);
+			atomic_clear((uint32_t *)&free_usb, 1 << u);
 			u = !u;
 			atomic_clear(&filled_dma, 1 << d);
 		}

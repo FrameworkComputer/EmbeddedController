@@ -1678,6 +1678,14 @@
  */
 #undef CONFIG_USBC_SS_MUX_DFP_ONLY
 
+/* Sniffer header version
+ * Version 1: [timestamp:2B, sequence number:2B]
+ * Version 2: [timestamp:2B, sequence number:2B,
+ *             Vbus value: 2B, vbus timestamp offset: 2B]
+ */
+#undef CONFIG_USBC_SNIFFER_HEADER_V1
+#undef CONFIG_USBC_SNIFFER_HEADER_V2
+
 /* Support v1.1 type-C connection state machine */
 #undef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 
