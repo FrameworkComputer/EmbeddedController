@@ -58,6 +58,11 @@
 #define PMIC_PWRON_DEBOUNCE_TIME  (60 * MSEC)
 
 /*
+ * The suspend signal from SoC should be kept at least 50ms.
+ */
+#define SUSPEND_DEBOUNCE_TIME     (50 * MSEC)
+
+/*
  * The time to bootup the PMIC from power-off to power-on.
  */
 #define PMIC_PWRON_PRESS_TIME   (3000 * MSEC)
@@ -650,7 +655,14 @@ enum power_state power_handle_state(enum power_state state)
 			power_off();
 			return POWER_S0S3;
 		} else if (power_get_signals() & IN_SUSPEND) {
-			return POWER_S0S3;
+			/*
+			 * add susuend signal debounce:
+			 * check suspend signal after 50ms, to avoid
+			 * transient state during SoC boot up.
+			 */
+			usleep(SUSPEND_DEBOUNCE_TIME);
+			if (power_get_signals() & IN_SUSPEND)
+				return POWER_S0S3;
 		}
 		return state;
 
