@@ -250,6 +250,9 @@
 /* Compile input current ramping support */
 #undef CONFIG_CHARGE_RAMP
 
+/* The hardware has some input current ramping/back-off mechanism */
+#undef CONFIG_CHARGE_RAMP_HW
+
 /*****************************************************************************/
 /* Charger config */
 

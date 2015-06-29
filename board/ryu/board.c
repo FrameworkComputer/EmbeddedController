@@ -415,6 +415,36 @@ void board_set_charge_limit(int charge_ma)
 		CPRINTS("Failed to set input current limit for PD");
 }
 
+/**
+ * Return whether ramping is allowed for given supplier
+ */
+int board_is_ramp_allowed(int supplier)
+{
+	return supplier == CHARGE_SUPPLIER_BC12_DCP ||
+	       supplier == CHARGE_SUPPLIER_BC12_SDP ||
+	       supplier == CHARGE_SUPPLIER_BC12_CDP ||
+	       supplier == CHARGE_SUPPLIER_PROPRIETARY;
+}
+
+/**
+ * Return the maximum allowed input current
+ */
+int board_get_ramp_current_limit(int supplier, int sup_curr)
+{
+	switch (supplier) {
+	case CHARGE_SUPPLIER_BC12_DCP:
+		return 2400;
+	case CHARGE_SUPPLIER_BC12_SDP:
+		return 1000;
+	case CHARGE_SUPPLIER_BC12_CDP:
+		return 2400;
+	case CHARGE_SUPPLIER_PROPRIETARY:
+		return sup_curr;
+	default:
+		return 500;
+	}
+}
+
 /* Send host event up to AP */
 void pd_send_host_event(int mask)
 {

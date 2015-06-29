@@ -83,10 +83,14 @@
 #define BQ2589X_BOOST_DEFAULT       (BQ2589X_BOOST_LIM_DEFAULT |\
 				     BQ2589X_BOOSTV_DEFAULT)
 
+/* REG14: Device ID, reset and ICO status */
 #define BQ2589X_DEVICE_ID_MASK      0x38
 #define BQ25890_DEVICE_ID           0x18
 #define BQ25892_DEVICE_ID           0x00
 #define BQ25895_DEVICE_ID           0x38
+
+#define BQ2589X_ID_ICO_OPTIMIZED    0x40
+
 
 /* Variant-specific configuration */
 #if   defined(CONFIG_CHARGER_BQ25890)

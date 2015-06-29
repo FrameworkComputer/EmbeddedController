@@ -239,6 +239,35 @@ int charger_post_init(void)
 	return EC_SUCCESS;
 }
 
+/*****************************************************************************/
+/* Hardware current ramping (aka ICO: Input Current Optimizer) */
+
+#ifdef CONFIG_CHARGE_RAMP_HW
+int chg_ramp_is_stable(void)
+{
+	int val, rv;
+
+	rv = bq2589x_read(BQ2589X_REG_ID, &val);
+	if (!rv && (val & BQ2589X_ID_ICO_OPTIMIZED))
+		return 1;
+	else
+		return 0;
+}
+
+int chg_ramp_is_detected(void)
+{
+	return 1;
+}
+
+int chg_ramp_get_current_limit(void)
+{
+	int input_ma, rv;
+
+	rv = bq2589x_read(BQ2589X_REG_ADC_INPUT_CURR, &input_ma);
+
+	return rv ? -1 : 100 + (input_ma & 0x3f) * 50;
+}
+#endif /* CONFIG_CHARGE_RAMP_HW */
 
 /*****************************************************************************/
 /* Hooks */
