@@ -544,7 +544,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 
 	/* Handle version of current image */
 	if (copy == active_copy || copy == SYSTEM_IMAGE_UNKNOWN)
-		return &RO(version_data).version[0];
+		return &version_data.version[0];
 
 	if (active_copy == SYSTEM_IMAGE_UNKNOWN)
 		return "";
@@ -590,8 +590,8 @@ const char *system_get_version(enum system_image_copy_t copy)
 
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
-	if (v->cookie1 == RO(version_data).cookie1 &&
-	    v->cookie2 == RO(version_data).cookie2)
+	if (v->cookie1 == version_data.cookie1 &&
+	    v->cookie2 == version_data.cookie2)
 		return v->version;
 
 	return "";

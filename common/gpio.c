@@ -64,7 +64,7 @@ static int last_val_changed(int i, int v)
 void gpio_config_module(enum module_id id, int enable)
 {
 	const struct gpio_alt_func *af = gpio_alt_funcs;
-	int count = RO(gpio_alt_funcs_count);
+	int count = gpio_alt_funcs_count;
 	int i;
 
 	/* Set module's pins to alternate functions */
