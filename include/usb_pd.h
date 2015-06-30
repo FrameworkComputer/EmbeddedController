@@ -496,8 +496,8 @@ struct pd_policy {
  * DisplayPort modes capabilities
  * -------------------------------
  * <31:24> : SBZ
- * <23:16> : sink pin assignment supported
- * <15:8>  : source pin assignment supported
+ * <23:16> : UFP_D pin assignment supported
+ * <15:8>  : DFP_D pin assignment supported
  * <7>     : USB 2.0 signaling (0b=yes, 1b=no)
  * <6>     : Plug | Receptacle (0b == plug, 1b == receptacle)
  * <5:2>   : xxx1: Supports DPv1.3, xx1x Supports USB Gen 2 signaling
@@ -508,8 +508,8 @@ struct pd_policy {
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
 	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
 	 | ((sdir) & 0x3))
-#define PD_VDO_MODE_DP_SNKP(x) (((x) >> 16) & 0x3f)
-#define PD_VDO_MODE_DP_SRCP(x) (((x) >> 8) & 0x3f)
+#define PD_DP_PIN_CAPS(x) ((((x) >> 6) & 0x1) ? (((x) >> 16) & 0x3f)	\
+			   : (((x) >> 8) & 0x3f))
 
 #define MODE_DP_PIN_A 0x01
 #define MODE_DP_PIN_B 0x02

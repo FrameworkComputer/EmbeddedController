@@ -437,7 +437,7 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 	mode_caps = modep->data->mode_vdo[modep->opos - 1];
 
 	/* TODO(crosbug.com/p/39656) revisit with DFP that can be a sink */
-	pin_caps = PD_VDO_MODE_DP_SRCP(mode_caps);
+	pin_caps = PD_DP_PIN_CAPS(mode_caps);
 
 	/* if don't want multi-function then ignore those pin configs */
 	if (!PD_VDO_DPSTS_MF_PREF(status))
