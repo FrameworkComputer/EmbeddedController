@@ -69,6 +69,14 @@ void usb_charger_task(void)
 		if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
 			msleep(USB_CHG_DEBOUNCE_DELAY_MS);
 
+			/* next operation might trigger a detach interrupt */
+			pi3usb9281_disable_interrupts(port);
+			/* Ensure D+/D- are open before resetting */
+			pi3usb9281_set_switch_manual(port, 1);
+			pi3usb9281_set_pins(port, 0);
+			/* Let D+/D- relax to their idle state */
+			msleep(40);
+
 			/*
 			 * Trigger chip reset to refresh detection registers.
 			 * WARNING: This reset is acceptable for samus_pd,
