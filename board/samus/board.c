@@ -275,7 +275,7 @@ static struct mutex g_lid_mutex;
 struct kxcj9_data g_kxcj9_data;
 
 /* lsm6ds0 local sensor data (per-sensor) */
-struct motion_data_t g_saved_data[2];
+struct lsm6ds0_data g_saved_data[2];
 
 /* Four Motion sensors */
 /* Matrix to rotate accelrator into standard reference frame */
