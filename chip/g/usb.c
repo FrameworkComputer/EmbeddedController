@@ -37,6 +37,7 @@
 #endif
 
 /* Console output macro */
+#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
 #ifdef CONFIG_USB_BOS
@@ -249,7 +250,7 @@ static void ep0_tx(void)
 	if (set_addr) {
 		GR_USB_DCFG = (GR_USB_DCFG & ~DCFG_DEVADDR(0x7f))
 			    | DCFG_DEVADDR(set_addr);
-		CPRINTF("SETAD %02x\n", set_addr);
+		CPRINTS("SETAD 0x%02x (%d)", set_addr, set_addr);
 		set_addr = 0;
 	}
 	if (desc_ptr) {
@@ -445,7 +446,7 @@ void usb_init(void)
 	usb_connect();
 #endif
 
-	CPRINTF("USB init done\n");
+	CPRINTS("USB init done");
 }
 #ifndef CONFIG_USB_INHIBIT_INIT
 DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
