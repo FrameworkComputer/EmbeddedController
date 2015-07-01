@@ -56,6 +56,8 @@ static int has_interrupt_generator = 1;
 
 static __thread task_id_t my_task_id; /* thread local task id */
 
+static void task_enable_all_tasks_callback(void);
+
 #define TASK(n, r, d, s) void r(void *);
 CONFIG_TASK_LIST
 CONFIG_TEST_TASK_LIST
@@ -331,6 +333,7 @@ static int fast_forward(void)
 		return TASK_ID_IDLE;
 
 	if (task_id != TASK_ID_INVALID &&
+	    tasks[task_id].thread != (pthread_t)NULL &&
 	    tasks[task_id].wake_time.val < generator_sleep_deadline.val) {
 		force_time(tasks[task_id].wake_time);
 		return task_id;
@@ -356,8 +359,15 @@ void task_scheduler(void)
 		now = get_time();
 		i = TASK_ID_COUNT - 1;
 		while (i >= 0) {
-			if (tasks[i].event || now.val >= tasks[i].wake_time.val)
-				break;
+			/*
+			 * Only tasks with spawned threads are valid to be
+			 * resumed.
+			 */
+			if (tasks[i].thread) {
+				if (tasks[i].event ||
+				    now.val >= tasks[i].wake_time.val)
+					break;
+			}
 			--i;
 		}
 		if (i < 0)
@@ -404,7 +414,7 @@ void *_task_int_generator_start(void *d)
 
 int task_start(void)
 {
-	int i;
+	int i = TASK_ID_HOOKS;
 
 	task_register_interrupt();
 
@@ -414,23 +424,25 @@ int task_start(void)
 
 	pthread_mutex_lock(&run_lock);
 
-	for (i = 0; i < TASK_ID_COUNT; ++i) {
-		tasks[i].event = TASK_EVENT_WAKE;
-		tasks[i].wake_time.val = ~0ull;
-		tasks[i].started = 0;
-		pthread_cond_init(&tasks[i].resume, NULL);
-		pthread_create(&tasks[i].thread, NULL, _task_start_impl,
-			       (void *)(uintptr_t)i);
-		pthread_cond_wait(&scheduler_cond, &run_lock);
-		/*
-		 * Interrupt lock is grabbed by the task which just started.
-		 * Let's unlock it so the next task can be started.
-		 */
-		pthread_mutex_unlock(&interrupt_lock);
-	}
+	/*
+	 * Initialize the hooks task first.  After its init, it will callback to
+	 * enable the remaining tasks.
+	 */
+	tasks[i].event = TASK_EVENT_WAKE;
+	tasks[i].wake_time.val = ~0ull;
+	tasks[i].started = 0;
+	pthread_cond_init(&tasks[i].resume, NULL);
+	pthread_create(&tasks[i].thread, NULL, _task_start_impl,
+		       (void *)(uintptr_t)i);
+	pthread_cond_wait(&scheduler_cond, &run_lock);
+	/*
+	 * Interrupt lock is grabbed by the task which just started.
+	 * Let's unlock it so the next task can be started.
+	 */
+	pthread_mutex_unlock(&interrupt_lock);
 
 	/*
-	 * All tasks are now waiting in task_wait_event(). Lock interrupt_lock
+	 * The hooks task is  waiting in task_wait_event(). Lock interrupt_lock
 	 * here so the first task chosen sees it locked.
 	 */
 	pthread_mutex_lock(&interrupt_lock);
@@ -438,7 +450,46 @@ int task_start(void)
 	pthread_create(&interrupt_thread, NULL,
 		       _task_int_generator_start, NULL);
 
+	/*
+	 * Tell the hooks task to continue so that it can call back to enable
+	 * the other tasks.
+	 */
+	pthread_cond_signal(&tasks[i].resume);
+	pthread_cond_wait(&scheduler_cond, &run_lock);
+	task_enable_all_tasks_callback();
+
 	task_scheduler();
 
 	return 0;
+}
+
+static void task_enable_all_tasks_callback(void)
+{
+	int i;
+
+	/* Initialize the remaning tasks. */
+	for (i = 0; i < TASK_ID_COUNT; ++i) {
+		if (tasks[i].thread != (pthread_t)NULL)
+			continue;
+
+		tasks[i].event = TASK_EVENT_WAKE;
+		tasks[i].wake_time.val = ~0ull;
+		tasks[i].started = 0;
+		pthread_cond_init(&tasks[i].resume, NULL);
+		pthread_create(&tasks[i].thread, NULL, _task_start_impl,
+			       (void *)(uintptr_t)i);
+		/*
+		 * Interrupt lock is grabbed by the task which just started.
+		 * Let's unlock it so the next task can be started.
+		 */
+		pthread_mutex_unlock(&interrupt_lock);
+		pthread_cond_wait(&scheduler_cond, &run_lock);
+	}
+
+}
+
+void task_enable_all_tasks(void)
+{
+	/* Signal to the scheduler to enable the remaining tasks. */
+	pthread_cond_signal(&scheduler_cond);
 }

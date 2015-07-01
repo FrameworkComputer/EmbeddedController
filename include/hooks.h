@@ -168,11 +168,6 @@ struct hook_data {
 };
 
 /**
- * Initialize the hooks library.
- */
-void hook_init(void);
-
-/**
  * Call all the hook routines of a specified type.
  *
  * This function must be called from the correct type-specific context (task);

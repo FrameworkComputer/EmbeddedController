@@ -184,6 +184,11 @@ void task_clear_fp_used(void);
 #endif
 
 /**
+ * Mark all tasks as ready to run and reschedule the highest priority task.
+ */
+void task_enable_all_tasks(void);
+
+/**
  * Enable an interrupt.
  */
 void task_enable_irq(int irq);

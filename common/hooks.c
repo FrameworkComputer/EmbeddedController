@@ -131,11 +131,6 @@ void hook_notify(enum hook_type type)
 #endif
 }
 
-void hook_init(void)
-{
-	hook_notify(HOOK_INIT);
-}
-
 int hook_call_deferred(void (*routine)(void), int us)
 {
 	const struct deferred_data *p;
@@ -179,6 +174,12 @@ void hook_task(void)
 	static uint64_t last_tick = -HOOK_TICK_INTERVAL;
 
 	hook_task_started = 1;
+
+	/* Call HOOK_INIT hooks. */
+	hook_notify(HOOK_INIT);
+
+	/* Now, enable the rest of the tasks. */
+	task_enable_all_tasks();
 
 	while (1) {
 		uint64_t t = get_time().val;

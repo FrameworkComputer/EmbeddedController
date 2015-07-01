@@ -139,9 +139,11 @@ int need_resched;
 /*
  * Bitmap of all tasks ready to be run.
  *
- * Currently all tasks are enabled at startup.
+ * Start off with only the hooks task marked as ready such that all the modules
+ * can do their init within a task switching context.  The hooks task will then
+ * make a call to enable all tasks.
  */
-static uint32_t tasks_ready = (1<<TASK_ID_COUNT) - 1;
+static uint32_t tasks_ready = (1 << TASK_ID_HOOKS);
 
 static int start_called;  /* Has task swapping started */
 
@@ -304,6 +306,14 @@ static void set_int_mask(uint32_t val)
 static void set_int_priority(uint32_t val)
 {
 	asm volatile ("mtsr %0, $INT_PRI" : : "r"(val));
+}
+
+void task_enable_all_tasks(void)
+{
+	/* Mark all tasks are ready to run. */
+	tasks_ready = (1 << TASK_ID_COUNT) - 1;
+	/* Reschedule the highest priority task. */
+	__schedule(0, 0, 0);
 }
 
 void task_enable_irq(int irq)

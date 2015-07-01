@@ -160,9 +160,6 @@ test_mockable __keep int main(void)
 	check_rw_signature();
 #endif
 
-	/* Initialize the hook library.  This calls HOOK_INIT hooks. */
-	hook_init();
-
 	/*
 	 * Print the init time.  Not completely accurate because it can't take
 	 * into account the time before timer_init(), but it'll at least catch

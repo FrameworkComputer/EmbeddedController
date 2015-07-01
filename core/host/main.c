@@ -45,7 +45,6 @@ int main(int argc, char **argv)
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
-	hook_init();
 	uart_init();
 
 	if (system_jumped_to_this_image()) {
