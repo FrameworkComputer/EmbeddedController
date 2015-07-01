@@ -175,7 +175,7 @@ static int set_range(const struct motion_sensor_t *s,
 				int rnd)
 {
 	int ret, ctrl1, ctrl1_new, index;
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 
 	/* Find index for interface pair matching the specified range. */
 	index = find_param_index(range, rnd, ranges, ARRAY_SIZE(ranges));
@@ -203,14 +203,13 @@ static int set_range(const struct motion_sensor_t *s,
 		ret = EC_ERROR_UNKNOWN;
 
 	mutex_unlock(s->mutex);
-
 	return ret;
 }
 
 static int get_range(const struct motion_sensor_t *s,
 				int * const range)
 {
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 	*range = ranges[data->sensor_range].val;
 	return EC_SUCCESS;
 }
@@ -220,7 +219,7 @@ static int set_resolution(const struct motion_sensor_t *s,
 				int rnd)
 {
 	int ret, ctrl1, ctrl1_new, index;
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 
 	/* Find index for interface pair matching the specified resolution. */
 	index = find_param_index(res, rnd, resolutions,
@@ -255,7 +254,7 @@ static int set_resolution(const struct motion_sensor_t *s,
 static int get_resolution(const struct motion_sensor_t *s,
 			int *res)
 {
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 	*res = resolutions[data->sensor_resolution].val;
 	return EC_SUCCESS;
 }
@@ -265,7 +264,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 			int rnd)
 {
 	int ret, ctrl1, index;
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 
 	/* Find index for interface pair matching the specified rate. */
 	index = find_param_index(rate, rnd, datarates, ARRAY_SIZE(datarates));
@@ -297,18 +296,41 @@ static int set_data_rate(const struct motion_sensor_t *s,
 static int get_data_rate(const struct motion_sensor_t *s,
 				int *rate)
 {
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 	*rate = datarates[data->sensor_datarate].val;
 	return EC_SUCCESS;
 }
 
+static int set_offset(const struct motion_sensor_t *s,
+			const int16_t *offset,
+			int16_t    temp)
+{
+	/* temperature is ignored */
+	struct kxcj9_data *data = s->drv_data;
+	data->offset[X] = offset[X];
+	data->offset[Y] = offset[Y];
+	data->offset[Z] = offset[Z];
+	return EC_SUCCESS;
+}
+
+static int get_offset(const struct motion_sensor_t *s,
+			int16_t   *offset,
+			int16_t    *temp)
+{
+	struct kxcj9_data *data = s->drv_data;
+	offset[X] = data->offset[X];
+	offset[Y] = data->offset[Y];
+	offset[Z] = data->offset[Z];
+	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
+	return EC_SUCCESS;
+}
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 static int set_interrupt(const struct motion_sensor_t *s,
 		unsigned int threshold)
 {
 	int ctrl1, tmp, ret;
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	struct kxcj9_data *data = s->drv_data;
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	mutex_lock(s->mutex);
@@ -367,8 +389,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 {
 	uint8_t acc[6];
 	uint8_t reg = KXCJ9_XOUT_L;
-	int ret, multiplier;
-	struct kxcj9_data *data = (struct kxcj9_data *)s->drv_data;
+	int ret, i, range, resolution;
+	struct kxcj9_data *data = s->drv_data;
 
 	/* Read 6 bytes starting at KXCJ9_XOUT_L. */
 	mutex_lock(s->mutex);
@@ -381,24 +403,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	/* Determine multiplier based on stored range. */
-	switch (ranges[data->sensor_range].reg) {
-	case KXCJ9_GSEL_2G:
-		multiplier = 1;
-		break;
-	case KXCJ9_GSEL_4G:
-		multiplier = 2;
-		break;
-	case KXCJ9_GSEL_8G:
-	case KXCJ9_GSEL_8G_14BIT:
-		multiplier = 4;
-		break;
-	default:
-		return EC_ERROR_UNKNOWN;
-	}
-
 	/*
-	 * Convert acceleration to a signed 12-bit number. Note, based on
+	 * Convert acceleration to a signed 16-bit number. Note, based on
 	 * the order of the registers:
 	 *
 	 * acc[0] = KXCJ9_XOUT_L
@@ -407,11 +413,17 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	 * acc[3] = KXCJ9_YOUT_H
 	 * acc[4] = KXCJ9_ZOUT_L
 	 * acc[5] = KXCJ9_ZOUT_H
+	 *
+	 * Add calibration offset before returning the data.
 	 */
-	v[0] = multiplier * (((int8_t)acc[1]) << 4) | (acc[0] >> 4);
-	v[1] = multiplier * (((int8_t)acc[3]) << 4) | (acc[2] >> 4);
-	v[2] = multiplier * (((int8_t)acc[5]) << 4) | (acc[4] >> 4);
-
+	get_range(s, &range);
+	get_resolution(s, &resolution);
+	for (i = X; i <= Z; i++) {
+		v[i] = (((int8_t)acc[i * 2 + 1]) << 4) |
+		       (acc[i * 2] >> 4);
+		v[i] <<= (16 - resolution);
+		v[i] += (data->offset[i] << 5) / range;
+	}
 	return EC_SUCCESS;
 }
 
@@ -536,6 +548,8 @@ const struct accelgyro_drv kxcj9_drv = {
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
+	.set_offset = set_offset,
+	.get_offset = get_offset,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.set_interrupt = set_interrupt,
 #endif

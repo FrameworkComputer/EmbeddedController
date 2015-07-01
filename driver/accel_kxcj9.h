@@ -111,6 +111,7 @@ struct kxcj9_data {
 	int sensor_resolution;
 	/* Device address. */
 	int accel_addr;
+	int16_t  offset[3];
 };
 
 extern const struct accelgyro_drv kxcj9_drv;
