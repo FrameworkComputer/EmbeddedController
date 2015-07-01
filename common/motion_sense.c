@@ -672,17 +672,36 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		/* Set new range if the data arg has a value. */
 		if (in->sensor_offset.flags & MOTION_SENSE_SET_OFFSET) {
-			if (sensor->drv->set_offset(sensor,
+			ret = sensor->drv->set_offset(sensor,
 						in->sensor_offset.offset,
-						in->sensor_offset.temp)
-					!= EC_SUCCESS) {
-				CPRINTS("MS bad sensor offsets");
-				return EC_RES_INVALID_PARAM;
-			}
+						in->sensor_offset.temp);
+			if (ret != EC_SUCCESS)
+				return ret;
 		}
 
-		sensor->drv->get_offset(sensor, out->sensor_offset.offset,
+		ret = sensor->drv->get_offset(sensor, out->sensor_offset.offset,
 				&out->sensor_offset.temp);
+		if (ret != EC_SUCCESS)
+			return ret;
+		args->response_size = sizeof(out->sensor_offset);
+		break;
+
+	case MOTIONSENSE_CMD_PERFORM_CALIB:
+		/* Verify sensor number is valid. */
+		sensor = host_sensor_id_to_motion_sensor(
+				in->sensor_offset.sensor_num);
+		if (sensor == NULL)
+			return EC_RES_INVALID_PARAM;
+		if (!sensor->drv->perform_calib)
+			return EC_RES_INVALID_COMMAND;
+
+		ret = sensor->drv->perform_calib(sensor);
+		if (ret != EC_SUCCESS)
+			return ret;
+		ret = sensor->drv->get_offset(sensor, out->sensor_offset.offset,
+				&out->sensor_offset.temp);
+		if (ret != EC_SUCCESS)
+			return ret;
 		args->response_size = sizeof(out->sensor_offset);
 		break;
 

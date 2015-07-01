@@ -91,6 +91,7 @@ struct accelgyro_drv {
 	int (*get_offset)(const struct motion_sensor_t *s,
 				int16_t    *offset,
 				int16_t    *temp);
+	int (*perform_calib)(const struct motion_sensor_t *s);
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	/**
 	 * Setup a one-time accel interrupt. If the threshold is low enough, the

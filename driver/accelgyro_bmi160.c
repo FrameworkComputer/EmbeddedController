@@ -244,6 +244,12 @@ static int get_resolution(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
+static int wakeup_time[] = {
+	[MOTIONSENSE_TYPE_ACCEL] = 4,
+	[MOTIONSENSE_TYPE_GYRO] = 60,
+	[MOTIONSENSE_TYPE_MAG] = 5
+};
+
 static int set_data_rate(const struct motion_sensor_t *s,
 				int rate,
 				int rnd)
@@ -260,10 +266,10 @@ static int set_data_rate(const struct motion_sensor_t *s,
 		data->odr = 0;
 		return ret;
 	} else if (data->odr == 0) {
-		/* back from suspend mode */
+		/* back from suspend mode. */
 		ret = raw_write8(s->i2c_addr, BMI160_CMD_REG,
 				 BMI160_CMD_MODE_NORMAL(s->type));
-		msleep(3);
+		msleep(wakeup_time[s->type]);
 	}
 	ctrl_reg = BMI160_CONF_REG(s->type);
 	reg_val = BMI160_ODR_TO_REG(rate);
@@ -336,36 +342,157 @@ static int get_data_rate(const struct motion_sensor_t *s,
 	*rate = data->odr;
 	return EC_SUCCESS;
 }
-
-void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
+static int get_offset(const struct motion_sensor_t *s,
+			int16_t    *offset,
+			int16_t    *temp)
 {
-	int range;
+	int i, val, val98;
+	switch (s->type) {
+	case MOTIONSENSE_TYPE_ACCEL:
+		/*
+		 * The offset of the accelerometer off_acc_[xyz] is a 8 bit
+		 * two-complement number in units of 3.9 mg independent of the
+		 * range selected for the accelerometer.
+		 */
+		for (i = X; i <= Z; i++) {
+			raw_read8(s->i2c_addr, BMI160_OFFSET_ACC70 + i, &val);
+			if (val > 0x7f)
+				val = -256 + val;
+			offset[i] = val * BMI160_OFFSET_ACC_MULTI_MG /
+				BMI160_OFFSET_ACC_DIV_MG;
+		}
+		break;
+	case MOTIONSENSE_TYPE_GYRO:
+		/* Read the MSB first */
+		raw_read8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, &val98);
+		/*
+		 * The offset of the gyroscope off_gyr_[xyz] is a 10 bit
+		 * two-complement number in units of 0.061 °/s.
+		 * Therefore a maximum range that can be compensated is
+		 * -31.25 °/s to +31.25 °/s
+		 */
+		for (i = X; i <= Z; i++) {
+			raw_read8(s->i2c_addr, BMI160_OFFSET_GYR70 + i, &val);
+			val |= ((val98 >> (2 * i)) & 0x3) << 8;
+			if (val > 0x1ff)
+				val = -1024 + val;
+			offset[i] = val * BMI160_OFFSET_GYRO_MULTI_MDS /
+				BMI160_OFFSET_GYRO_DIV_MDS;
+		}
+		break;
+	default:
+		for (i = X; i <= Z; i++)
+			offset[i] = 0;
+	}
+	/* Saving temperature at calibration not supported yet */
+	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
+	return EC_SUCCESS;
+}
 
-	v[0] = ((int16_t)((data[1] << 8) | data[0]));
-	v[1] = ((int16_t)((data[3] << 8) | data[2]));
-	v[2] = ((int16_t)((data[5] << 8) | data[4]));
-
-	get_range(s, &range);
-
-	v[0] *= range;
-	v[1] *= range;
-	v[2] *= range;
+static int set_offset(const struct motion_sensor_t *s,
+			const int16_t *offset,
+			int16_t    temp)
+{
+	int ret, i, val, val98;
+	ret = raw_read8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, &val98);
+	if (ret != 0)
+		return ret;
 
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		/* normalize the accel scale: 1G = 1024 */
-		v[0] >>= 5;
-		v[1] >>= 5;
-		v[2] >>= 5;
+		for (i = X; i <= Z; i++) {
+			val = offset[i] * BMI160_OFFSET_ACC_DIV_MG /
+				BMI160_OFFSET_ACC_MULTI_MG;
+			if (val > 127)
+				val = 127;
+			if (val < -128)
+				val = -128;
+			if (val < 0)
+				val = 256 + val;
+			raw_write8(s->i2c_addr, BMI160_OFFSET_ACC70 + i, val);
+		}
+		ret = raw_write8(s->i2c_addr, BMI160_OFFSET_EN_GYR98,
+				 val98 | BMI160_OFFSET_ACC_EN);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		v[0] >>= 8;
-		v[1] >>= 8;
-		v[2] >>= 8;
+		for (i = X; i <= Z; i++) {
+			val = offset[i] * BMI160_OFFSET_GYRO_DIV_MDS /
+				BMI160_OFFSET_GYRO_MULTI_MDS;
+			if (val > 511)
+				val = 511;
+			if (val < -512)
+				val = -512;
+			if (val < 0)
+				val = 1024 + val;
+			raw_write8(s->i2c_addr, BMI160_OFFSET_GYR70 + i,
+					val & 0xFF);
+			val98 &= ~(0x3 << (2 * i));
+			val98 |= (val >> 8) << (2 * i);
+		}
+		ret = raw_write8(s->i2c_addr, BMI160_OFFSET_EN_GYR98,
+				 val98 | BMI160_OFFSET_GYRO_EN);
 		break;
 	default:
-		break;
+		ret = EC_RES_INVALID_PARAM;
 	}
+	return ret;
+}
+
+int perform_calib(const struct motion_sensor_t *s)
+{
+	int ret, val, en_flag, status, timeout = 0, rate;
+
+	get_data_rate(s, &rate);
+	/*
+	 * Temperary set frequency to 100Hz to get enough data in a short
+	 * period of fime.
+	 */
+	set_data_rate(s, 100000, 0);
+
+	switch (s->type) {
+	case MOTIONSENSE_TYPE_ACCEL:
+		/* We assume the device is laying flat for calibration */
+		val = (BMI160_FOC_ACC_0G << BMI160_FOC_ACC_X_OFFSET) |
+			(BMI160_FOC_ACC_0G << BMI160_FOC_ACC_Y_OFFSET) |
+			(BMI160_FOC_ACC_PLUS_1G << BMI160_FOC_ACC_Z_OFFSET);
+		en_flag = BMI160_OFFSET_ACC_EN;
+		break;
+	case MOTIONSENSE_TYPE_GYRO:
+		val = BMI160_FOC_GYRO_EN;
+		en_flag = BMI160_OFFSET_GYRO_EN;
+		break;
+	default:
+		/* Not supported on Magnetometer */
+		ret = EC_RES_INVALID_PARAM;
+		goto end_perform_calib;
+	}
+	ret = raw_write8(s->i2c_addr, BMI160_FOC_CONF, val);
+	ret = raw_write8(s->i2c_addr, BMI160_CMD_REG, BMI160_CMD_START_FOC);
+	do {
+		if (timeout > 400) {
+			ret = EC_RES_TIMEOUT;
+			goto end_perform_calib;
+		}
+		msleep(50);
+		ret = raw_read8(s->i2c_addr, BMI160_STATUS, &status);
+		if (ret != EC_SUCCESS)
+			goto end_perform_calib;
+		timeout += 50;
+	} while ((status & BMI160_FOC_RDY) == 0);
+
+	/* Calibration is successful, and loaded, use the result */
+	ret = raw_read8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, &val);
+	ret = raw_write8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, val | en_flag);
+end_perform_calib:
+	set_data_rate(s, rate, 0);
+	return ret;
+}
+
+void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
+{
+	v[0] = ((int16_t)((data[1] << 8) | data[0]));
+	v[1] = ((int16_t)((data[3] << 8) | data[2]));
+	v[2] = ((int16_t)((data[5] << 8) | data[4]));
 }
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
@@ -381,8 +508,7 @@ void bmi160_interrupt(enum gpio_signal signal)
 }
 
 
-static int set_interrupt(const struct motion_sensor_t *s,
-			       unsigned int threshold)
+static int config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret, tmp;
 	if (s->type != MOTIONSENSE_TYPE_ACCEL)
@@ -467,6 +593,12 @@ int irq_handler(const struct motion_sensor_t *s)
 	return EC_SUCCESS;
 }
 
+static int set_interrupt(const struct motion_sensor_t *s,
+			       unsigned int threshold)
+{
+	/* Currently unsupported. */
+	return EC_ERROR_UNKNOWN;
+}
 #endif  /* CONFIG_ACCEL_INTERRUPTS */
 
 #ifdef CONFIG_ACCEL_FIFO
@@ -613,28 +745,13 @@ static int load_fifo(struct motion_sensor_t *s)
 #endif  /* CONFIG_ACCEL_FIFO */
 
 
-static int is_data_ready(const struct motion_sensor_t *s, int *ready)
-{
-	int ret, tmp;
-
-	ret = raw_read8(s->i2c_addr, BMI160_STATUS, &tmp);
-
-	if (ret != EC_SUCCESS) {
-		CPRINTF("[%T %s type:0x%X RS Error]", s->name, s->type);
-		return ret;
-	}
-
-	*ready = tmp & BMI160_DRDY_MASK(s->type);
-	return EC_SUCCESS;
-}
-
 static int read(const struct motion_sensor_t *s, vector_3_t v)
 {
 	uint8_t data[6];
 	uint8_t xyz_reg;
-	int ret, tmp = 0;
+	int ret, status = 0;
 
-	ret = is_data_ready(s, &tmp);
+	ret = raw_read8(s->i2c_addr, BMI160_STATUS, &status);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -643,7 +760,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	 * Note: return success so that motion senor task can read again
 	 * to get the latest updated sensor data quickly.
 	 */
-	if (!tmp) {
+	if (status & BMI160_DRDY_MASK(s->type)) {
 		v[0] = s->raw_xyz[0];
 		v[1] = s->raw_xyz[1];
 		v[2] = s->raw_xyz[2];
@@ -781,7 +898,7 @@ static int init(const struct motion_sensor_t *s)
 	}
 #endif
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	ret = s->drv->set_interrupt(s, 0);
+	ret = config_interrupt(s);
 #endif
 	/* Fifo setup is done elsewhere */
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
@@ -799,6 +916,9 @@ const struct accelgyro_drv bmi160_drv = {
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
+	.set_offset = set_offset,
+	.get_offset = get_offset,
+	.perform_calib = perform_calib,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.set_interrupt = set_interrupt,
 	.irq_handler = irq_handler,

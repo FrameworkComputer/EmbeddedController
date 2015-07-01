@@ -117,28 +117,27 @@ enum fifo_header {
 
 
 #define BMI160_ACC_CONF        0x40
+#define BMI160_ODR_MASK                 0x0F
+#define BMI160_ACC_BW_OFFSET            4
+#define BMI160_ACC_BW_MASK     (0x7 << BMI160_ACC_BW_OFFSET)
+
+#define BMI160_ACC_RANGE       0x41
 #define BMI160_GSEL_2G         0x03
 #define BMI160_GSEL_4G         0x05
 #define BMI160_GSEL_8G         0x08
 #define BMI160_GSEL_16G        0x0c
 
-#define BMI160_ODR_MASK                 0x0F
+#define BMI160_GYR_CONF        0x42
+#define BMI160_GYR_BW_OFFSET   4
+#define BMI160_GYR_BW_MASK     (0x3 << BMI160_GYR_BW_OFFSET)
 
-#define BMI160_ACC_BW_OFFSET            4
-#define BMI160_ACC_BW_MASK     (0x7 << BMI160_ACC_BW_OFFSET)
-#define BMI160_ACC_RANGE       0x41
-
+#define BMI160_GYR_RANGE       0x43
 #define BMI160_DPS_SEL_2000    0x00
 #define BMI160_DPS_SEL_1000    0x01
 #define BMI160_DPS_SEL_500     0x02
 #define BMI160_DPS_SEL_250     0x03
 #define BMI160_DPS_SEL_125     0x04
 
-#define BMI160_GYR_CONF        0x42
-
-#define BMI160_GYR_BW_OFFSET   4
-#define BMI160_GYR_BW_MASK     (0x3 << BMI160_GYR_BW_OFFSET)
-#define BMI160_GYR_RANGE       0x43
 
 #define BMI160_MAG_CONF        0x44
 
@@ -280,6 +279,14 @@ enum fifo_header {
 #define BMI160_INT_FLAT_1      0x68
 
 #define BMI160_FOC_CONF        0x69
+#define BMI160_FOC_GYRO_EN              (1 << 6)
+#define BMI160_FOC_ACC_PLUS_1G          1
+#define BMI160_FOC_ACC_MINUS_1G         2
+#define BMI160_FOC_ACC_0G               3
+#define BMI160_FOC_ACC_Z_OFFSET         0
+#define BMI160_FOC_ACC_Y_OFFSET         2
+#define BMI160_FOC_ACC_X_OFFSET         4
+
 #define BMI160_CONF            0x6a
 #define BMI160_IF_CONF         0x6b
 #define BMI160_IF_MODE_OFF     4
@@ -291,9 +298,21 @@ enum fifo_header {
 #define BMI160_PMU_TRIGGER     0x6c
 #define BMI160_SELF_TEST       0x6d
 
+#define BMI160_OFFSET_ACC70        0x71
+#define BMI160_OFFSET_ACC_MULTI_MG      (3900 * 1024)
+#define BMI160_OFFSET_ACC_DIV_MG        1000000
+#define BMI160_OFFSET_GYR70        0x74
+#define BMI160_OFFSET_GYRO_MULTI_MDS    (61 * 1024)
+#define BMI160_OFFSET_GYRO_DIV_MDS      1000
+#define BMI160_OFFSET_EN_GYR98     0x77
+#define BMI160_OFFSET_ACC_EN            (1 << 6)
+#define BMI160_OFFSET_GYRO_EN           (1 << 7)
+
+
 #define BMI160_CMD_REG             0x7e
 #define BMI160_CMD_SOFT_RESET      0xb6
 #define BMI160_CMD_NOOP            0x00
+#define BMI160_CMD_START_FOC       0x03
 #define BMI160_CMD_ACC_MODE_SUSP   0x10
 #define BMI160_CMD_ACC_MODE_NORMAL 0x11
 #define BMI160_CMD_ACC_MODE_LOWPOWER 0x12

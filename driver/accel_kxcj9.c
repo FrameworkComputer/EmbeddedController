@@ -550,6 +550,7 @@ const struct accelgyro_drv kxcj9_drv = {
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
+	.perform_calib = NULL,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.set_interrupt = set_interrupt,
 #endif
