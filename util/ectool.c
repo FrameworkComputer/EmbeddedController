@@ -3224,6 +3224,8 @@ static const struct {
 	MS_SIZES(fifo_flush),
 	MS_SIZES(fifo_info),
 	MS_SIZES(fifo_read),
+	MS_SIZES(perform_calib),
+	MS_SIZES(sensor_offset),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -3237,6 +3239,7 @@ static int ms_help(const char *cmd)
 	printf("  %s ec_rate [RATE_MS]          - set/get sample rate\n", cmd);
 	printf("  %s odr NUM [ODR [ROUNDUP]]    - set/get sensor ODR\n", cmd);
 	printf("  %s range NUM [RANGE [ROUNDUP]]- set/get sensor range\n", cmd);
+	printf("  %s offset NUM                 - get sensor offset\n", cmd);
 	printf("  %s kb_wake NUM                - set/get KB wake ang\n", cmd);
 	printf("  %s data NUM                   - read sensor latest data\n",
 			cmd);
@@ -3578,6 +3581,36 @@ static int cmd_motionsense(int argc, char **argv)
 		return rv < 0 ? rv : 0;
 	}
 
+	if (argc == 3 && !strcasecmp(argv[1], "offset")) {
+		param.cmd = MOTIONSENSE_CMD_SENSOR_OFFSET;
+		param.sensor_offset.flags = 0;
+
+		param.sensor_offset.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("Offset vector: X:%d, Y:%d, Z:%d\n",
+			resp->sensor_offset.offset[0],
+			resp->sensor_offset.offset[1],
+			resp->sensor_offset.offset[2]);
+		if (resp->sensor_offset.temp ==
+		    EC_MOTION_SENSE_INVALID_CALIB_TEMP)
+			printf("temperature at calibration unknown\n");
+		else
+			printf("temperature at calibration: %d.%02d C\n",
+			       resp->sensor_offset.temp / 100,
+			       resp->sensor_offset.temp % 100);
+		return 0;
+	}
 	return ms_help(argv[0]);
 }
 

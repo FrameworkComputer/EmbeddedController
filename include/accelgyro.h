@@ -77,6 +77,20 @@ struct accelgyro_drv {
 	int (*get_data_rate)(const struct motion_sensor_t *s,
 				int *rate);
 
+
+	/**
+	 * Setter and getter methods for the sensor offset.
+	 * @s Pointer to sensor data.
+	 * @offset: offset to apply to raw data.
+	 * @temp: temperature when calibration was done.
+	 * @return EC_SUCCESS if successful, non-zero if error.
+	 */
+	int (*set_offset)(const struct motion_sensor_t *s,
+				const int16_t    *offset,
+				int16_t    temp);
+	int (*get_offset)(const struct motion_sensor_t *s,
+				int16_t    *offset,
+				int16_t    *temp);
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	/**
 	 * Setup a one-time accel interrupt. If the threshold is low enough, the

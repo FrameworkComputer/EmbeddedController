@@ -1675,6 +1675,20 @@ enum motionsense_command {
 	 */
 	MOTIONSENSE_CMD_FIFO_READ = 9,
 
+	/*
+	 * Perform low level calibration.
+	 * On sensors that support it, ask to do offset calibration.
+	 */
+	MOTIONSENSE_CMD_PERFORM_CALIB = 10,
+
+	/*
+	 * Sensor Offset command is a setter/getter command for the offset
+	 * used for calibration.
+	 * The offsets can be calculated by the host, or via
+	 * PERFORM_CALIB command.
+	 */
+	MOTIONSENSE_CMD_SENSOR_OFFSET = 11,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -1745,6 +1759,12 @@ struct ec_response_motion_sense_fifo_data {
  */
 #define EC_MOTION_SENSE_NO_VALUE -1
 
+#define EC_MOTION_SENSE_INVALID_CALIB_TEMP 0x8000
+
+/* MOTIONSENSE_CMD_SENSOR_OFFSET subcommand flag */
+/* Set Calibration information */
+#define MOTION_SENSE_SET_OFFSET 1
+
 struct ec_params_motion_sense {
 	uint8_t cmd;
 	union {
@@ -1770,10 +1790,11 @@ struct ec_params_motion_sense {
 			int16_t data;
 		} ec_rate, kb_wake_angle;
 
-		/* Used for MOTIONSENSE_CMD_INFO, MOTIONSENSE_CMD_DATA. */
+		/* Used for MOTIONSENSE_CMD_INFO, MOTIONSENSE_CMD_DATA
+		 * and MOTIONSENSE_CMD_PERFORM_CALIB. */
 		struct {
 			uint8_t sensor_num;
-		} info, data, fifo_flush;
+		} info, data, fifo_flush, perform_calib;
 
 		/*
 		 * Used for MOTIONSENSE_CMD_SENSOR_ODR and
@@ -1790,8 +1811,40 @@ struct ec_params_motion_sense {
 			/* Data to set or EC_MOTION_SENSE_NO_VALUE to read. */
 			int32_t data;
 		} sensor_odr, sensor_range;
+
+		/* Used for MOTIONSENSE_CMD_SENSOR_OFFSET */
+		struct __attribute__((__packed__)) {
+			uint8_t sensor_num;
+
+			/*
+			 * bit 0: If set (MOTION_SENSE_SET_OFFSET), set
+			 * the calibration information in the EC.
+			 * If unset, just retrieve calibration information.
+			 */
+			uint16_t flags;
+
+			/*
+			 * Temperature at calibration, in units of 0.01 C
+			 * 0x8000: invalid / unknown.
+			 * 0x0: 0C
+			 * 0x7fff: +327.67C
+			 */
+			int16_t temp;
+
+			/*
+			 * Offset for calibration.
+			 * Unit:
+			 * Accelerometer: 1/1024 g
+			 * Gyro:          1/1024 deg/s
+			 */
+			int16_t offset[3];
+		} sensor_offset;
+
+		/* Used for MOTIONSENSE_CMD_FIFO_INFO */
 		struct {
 		} fifo_info;
+
+		/* Used for MOTIONSENSE_CMD_FIFO_READ */
 		struct {
 			/*
 			 * Number of expected vector to return.
@@ -1842,7 +1895,14 @@ struct ec_response_motion_sense {
 		struct {
 			/* Current value of the parameter queried. */
 			int32_t ret;
-		} ec_rate, sensor_odr, sensor_range, kb_wake_angle;
+		} ec_rate, sensor_odr, sensor_range, kb_wake_angle,
+		  perform_calib;
+
+		/* Used for MOTIONSENSE_CMD_SENSOR_OFFSET */
+		struct {
+			int16_t temp;
+			int16_t offset[3];
+		} sensor_offset;
 
 		struct ec_response_motion_sense_fifo_info fifo_info, fifo_flush;
 

@@ -466,7 +466,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	case MOTIONSENSE_CMD_SENSOR_RANGE:
 		/* Verify sensor number is valid. */
 		sensor = host_sensor_id_to_motion_sensor(
-				in->sensor_odr.sensor_num);
+				in->sensor_range.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 
@@ -489,6 +489,28 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		out->sensor_range.ret = data;
 		args->response_size = sizeof(out->sensor_range);
+		break;
+	case MOTIONSENSE_CMD_SENSOR_OFFSET:
+		/* Verify sensor number is valid. */
+		sensor = host_sensor_id_to_motion_sensor(
+				in->sensor_offset.sensor_num);
+		if (sensor == NULL)
+			return EC_RES_INVALID_PARAM;
+
+		/* Set new range if the data arg has a value. */
+		if (in->sensor_offset.flags & MOTION_SENSE_SET_OFFSET) {
+			if (sensor->drv->set_offset(sensor,
+						in->sensor_offset.offset,
+						in->sensor_offset.temp)
+					!= EC_SUCCESS) {
+				CPRINTS("MS bad sensor offsets");
+				return EC_RES_INVALID_PARAM;
+			}
+		}
+
+		sensor->drv->get_offset(sensor, out->sensor_offset.offset,
+				&out->sensor_offset.temp);
+		args->response_size = sizeof(out->sensor_offset);
 		break;
 	default:
 		/* Call other users of the motion task */
