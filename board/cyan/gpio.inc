@@ -17,8 +17,10 @@ GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH_DSLEEP,                     
 GPIO_INT(UART0_RX,          PIN(162), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       uart_deepsleep_interrupt) /* UART0 RX input */
 #endif
 
+GPIO(NC_GPIO0,          PIN(0),  GPIO_INPUT | GPIO_PULL_UP)       /* NC, JTAG_TCK */
 GPIO(NC_012,            PIN(12), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                   /* USB current control */
+GPIO(LPC_CLK_RUN,       PIN(14), GPIO_OUT_HIGH)                   /* LPC_CLKRUN is not used and set as GPIO HIGH to fix floating */
 GPIO(I2C0_0_SCL,        PIN(15), GPIO_ODR_HIGH)
 GPIO(I2C0_0_SDA,        PIN(16), GPIO_ODR_HIGH)
 GPIO(BOARD_VERSION3,    PIN(17), GPIO_INPUT)                      /* Board ID */
@@ -51,12 +53,15 @@ GPIO(NC_57,             PIN(57), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 
 GPIO(CHGR_PMON,         PIN(60), GPIO_ANALOG)
 GPIO(WIFI_PWREN,        PIN(61), GPIO_OUT_HIGH)                   /* Enable power for WiFi */
-GPIO(BATT_EN_L,         PIN(62), GPIO_INPUT)                      /* Will be NC */
+GPIO(BATT_EN_L,         PIN(62), GPIO_INPUT | GPIO_PULL_UP)       /* NC for EVT */
 GPIO(EC_HIB_L,          PIN(64), GPIO_OUT_LOW)
 GPIO(PCH_SYS_PWROK,     PIN(65), GPIO_OUT_LOW)                    /* EC thinks everything is up and ready (DELAY_ALL_SYS_PWRGD) */
 GPIO(PCH_WAKE_L,        PIN(66), GPIO_ODR_HIGH)                   /* PCH wake pin */
 GPIO(USB1_ENABLE,       PIN(67), GPIO_OUT_LOW)                    /* Enable power for USB3 Port */
 
+GPIO(NC_GPIO100,        PIN(100), GPIO_INPUT | GPIO_PULL_UP)      /* NC, JTAG_TMS */
+GPIO(NC_GPIO101,        PIN(101), GPIO_INPUT | GPIO_PULL_UP)      /* NC, JTAG_TDI */
+GPIO(NC_GPIO102,        PIN(102), GPIO_INPUT | GPIO_PULL_UP)      /* NC, JTAG_TDO */
 GPIO(USB_CTL1,          PIN(105), GPIO_OUT_HIGH)                   /* USB charging mode control */
 
 GPIO(PCH_RCIN_L,        PIN(110), GPIO_ODR_HIGH)                   /* Reset line to PCH (for 8042 emulation) */
@@ -65,18 +70,18 @@ GPIO(NC_115,            PIN(115), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(NC_122,            PIN(122), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(EC_STRAP_GPIO1,    PIN(123), GPIO_OUT_LOW)
 GPIO(NC_124,            PIN(124), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
-GPIO(GYRO_INT2,         PIN(127), GPIO_INT_FALLING)                /* Gyro sensor interrupt 2 to EC */
+GPIO(GYRO_INT2,         PIN(127), GPIO_INPUT | GPIO_PULL_DOWN)     /* Gyro sensor interrupt 2 to EC */
 
 GPIO(NC_132,            PIN(132), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
-GPIO(BAT_LED0_L,        PIN(133), GPIO_ODR_HIGH)                   /* Battery charging LED - blue */
+GPIO(BAT_LED0_L,        PIN(133), GPIO_OUT_HIGH)                   /* Battery charging LED - blue */
 GPIO(BOARD_VERSION2,    PIN(134), GPIO_INPUT)                      /* Board ID */
 GPIO(WWAN_PWREN,        PIN(135), GPIO_OUT_HIGH)                   /* Enable power for WWAN - PROBE_DETECT_L */
-GPIO(BAT_LED1_L,        PIN(136), GPIO_ODR_HIGH)                   /* Battery charging LED - orange */
+GPIO(BAT_LED1_L,        PIN(136), GPIO_OUT_HIGH)                   /* Battery charging LED - orange */
 
 GPIO(NC_140,            PIN(140), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
-GPIO(PWR_LED0_L,        PIN(141), GPIO_ODR_HIGH)                   /* Power LED - blue */
+GPIO(PWR_LED0_L,        PIN(141), GPIO_OUT_HIGH)                   /* Power LED - blue */
 GPIO(PCH_RSMRST_L,      PIN(143), GPIO_OUT_LOW)                    /* RSMRST_N to PCH */
-GPIO(PWR_LED1_L,        PIN(145), GPIO_ODR_HIGH)                   /* Power LED - orange */
+GPIO(PWR_LED1_L,        PIN(145), GPIO_OUT_HIGH)                   /* Power LED - orange */
 GPIO(PVT_CS0,           PIN(146), GPIO_ODR_HIGH)                   /* SPI PVT Chip select */
 GPIO(EC_KBD_ALERT,      PIN(147), GPIO_OUT_HIGH)
 
@@ -84,12 +89,12 @@ GPIO(WLAN_OFF_L,        PIN(150), GPIO_ODR_HIGH)                   /* Wireless L
 GPIO(CPU_PROCHOT,       PIN(151), GPIO_OUT_LOW)
 GPIO(KBD_IRQ_L,         PIN(152), GPIO_ODR_HIGH)                   /* Negative edge triggered irq. */
 GPIO(BOARD_VERSION1,    PIN(154), GPIO_INPUT)                      /* Board ID */
-GPIO(CORE_PWROK,        PIN(155), GPIO_ODR_HIGH)                   /* CORE_PWR_OK_R */
-GPIO(LID_OPEN2,         PIN(156), GPIO_INT_BOTH)                   /* LID_OPEN_OUT2_R */
+GPIO(CORE_PWROK,        PIN(155), GPIO_INPUT | GPIO_PULL_UP)       /* Disconnected.  CORE_PWR_OK_R  */
+GPIO(LID_OPEN2,         PIN(156), GPIO_INT_BOTH_DSLEEP)            /* LID_OPEN_OUT2_R */
 GPIO(PCH_SUSPWRDNACK,   PIN(157), GPIO_INT_FALLING)                /* PMC SUSPWRDNACK signal from SOC to EC */
 
 GPIO(PCH_PWRBTN_L,      PIN(160), GPIO_OUT_HIGH)                   /* Power button output to PCH */
-GPIO(GYRO_INT1,         PIN(161), GPIO_INT_FALLING)                /* Gyro sensor interrupt 1 to EC */
+GPIO(GYRO_INT1,         PIN(161), GPIO_INPUT | GPIO_PULL_DOWN)     /* Gyro sensor interrupt 1 to EC */
 GPIO(NC_163,            PIN(163), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 
 GPIO(STARTUP_LATCH_SET, PIN(201), GPIO_OUT_HIGH)
@@ -98,7 +103,7 @@ GPIO(SMC_SHUTDOWN,      PIN(203), GPIO_OUT_LOW)                    /* Shutdown s
 GPIO(NC_204,            PIN(204), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 
 GPIO(SUSPWRDNACK_SOC_EC,PIN(210), GPIO_OUT_LOW)                    /* SUSPWRDNACK signal from EC to MOIC device */
-GPIO(PCH_SLP_SX_L,      PIN(211), GPIO_INT_BOTH)                   /* Sleep SOIX signal from SOC to EC */
+GPIO(PCH_SLP_SX_L,      PIN(211), GPIO_INPUT | GPIO_PULL_UP)       /* NC for EVT.  Sleep SOIX signal from SOC to EC */
 
 /* Alternate functions GPIO definition */
 ALTERNATE(PIN_MASK(16, 0x24),   1,      MODULE_UART,            0)                      /* UART0 */
@@ -120,7 +125,6 @@ ALTERNATE(PIN_MASK(4,  0x0d),   3,      MODULE_KEYBOARD_SCAN,   GPIO_KB_INPUT)
 ALTERNATE(PIN_MASK(12, 0x60),   2,      MODULE_KEYBOARD_SCAN,   GPIO_KB_INPUT)
 ALTERNATE(PIN_MASK(14, 0x14),   3,      MODULE_KEYBOARD_SCAN,   GPIO_KB_INPUT)
 
-ALTERNATE(PIN_MASK(1,  0x10),   1,      MODULE_LPC,             0)                      /* 14: CLKRUN# */
 ALTERNATE(PIN_MASK(11, 0x9e),   1,      MODULE_LPC,             0)                      /* 111~114: LAD[0:3], 117: PCI_CLK */
 ALTERNATE(PIN_MASK(11, 0x40),   1,      MODULE_LPC,             GPIO_INT_BOTH)          /* 116: LRESET# */
 ALTERNATE(PIN_MASK(12, 0x01),   1,      MODULE_LPC,             0)                      /* 120: LFRAME# */
