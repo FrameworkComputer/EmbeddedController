@@ -169,7 +169,7 @@ static int set_range(const struct motion_sensor_t *s,
 	int ret, ctrl_val, range_tbl_size;
 	uint8_t ctrl_reg, reg_val;
 	const struct accel_param_pair *ranges;
-	struct motion_data_t *data = (struct motion_data_t *)s->drv_data;
+	struct lsm6ds0_data *data = s->drv_data;
 
 	ctrl_reg = get_ctrl_reg(s->type);
 	ranges = get_range_table(s->type, &range_tbl_size);
@@ -191,7 +191,7 @@ static int set_range(const struct motion_sensor_t *s,
 
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->range = get_engineering_val(reg_val, ranges,
+		data->base.range = get_engineering_val(reg_val, ranges,
 				range_tbl_size);
 
 accel_cleanup:
@@ -202,9 +202,9 @@ accel_cleanup:
 static int get_range(const struct motion_sensor_t *s,
 				int *range)
 {
-	struct motion_data_t *data = (struct motion_data_t *)s->drv_data;
+	struct lsm6ds0_data *data = s->drv_data;
 
-	*range = data->range;
+	*range = data->base.range;
 	return EC_SUCCESS;
 }
 
@@ -230,7 +230,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	int ret, val, odr_tbl_size;
 	uint8_t ctrl_reg, reg_val;
 	const struct accel_param_pair *data_rates;
-	struct motion_data_t *data = s->drv_data;
+	struct lsm6ds0_data *data = s->drv_data;
 
 	ctrl_reg = get_ctrl_reg(s->type);
 	data_rates = get_odr_table(s->type, &odr_tbl_size);
@@ -251,7 +251,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 	/* Now that we have set the odr, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->odr = get_engineering_val(reg_val, data_rates,
+		data->base.odr = get_engineering_val(reg_val, data_rates,
 						       odr_tbl_size);
 
 	/* CTRL_REG3_G 12h
@@ -280,9 +280,33 @@ accel_cleanup:
 static int get_data_rate(const struct motion_sensor_t *s,
 				int *rate)
 {
-	struct motion_data_t *data = s->drv_data;
+	struct lsm6ds0_data *data = s->drv_data;
 
-	*rate = data->odr;
+	*rate = data->base.odr;
+	return EC_SUCCESS;
+}
+
+static int set_offset(const struct motion_sensor_t *s,
+			const int16_t *offset,
+			int16_t    temp)
+{
+	/* temperature is ignored */
+	struct lsm6ds0_data *data = s->drv_data;
+	data->offset[X] = offset[X];
+	data->offset[Y] = offset[Y];
+	data->offset[Z] = offset[Z];
+	return EC_SUCCESS;
+}
+
+static int get_offset(const struct motion_sensor_t *s,
+			int16_t    *offset,
+			int16_t    *temp)
+{
+	struct lsm6ds0_data *data = s->drv_data;
+	offset[X] = data->offset[X];
+	offset[Y] = data->offset[Y];
+	offset[Z] = data->offset[Z];
+	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 	return EC_SUCCESS;
 }
 
@@ -316,9 +340,10 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 
 static int read(const struct motion_sensor_t *s, vector_3_t v)
 {
-	uint8_t data[6];
+	uint8_t raw[6];
 	uint8_t xyz_reg;
-	int ret, tmp = 0, range = 0;
+	int ret, range, i, tmp = 0;
+	struct lsm6ds0_data *data = s->drv_data;
 
 	ret = is_data_ready(s, &tmp);
 	if (ret != EC_SUCCESS)
@@ -341,7 +366,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	/* Read 6 bytes starting at xyz_reg */
 	i2c_lock(I2C_PORT_ACCEL, 1);
 	ret = i2c_xfer(I2C_PORT_ACCEL, s->i2c_addr,
-			&xyz_reg, 1, data, 6, I2C_XFER_SINGLE);
+			&xyz_reg, 1, raw, 6, I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_ACCEL, 0);
 
 	if (ret != EC_SUCCESS) {
@@ -350,27 +375,10 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 		return ret;
 	}
 
-	v[0] = ((int16_t)((data[1] << 8) | data[0]));
-	v[1] = ((int16_t)((data[3] << 8) | data[2]));
-	v[2] = ((int16_t)((data[5] << 8) | data[4]));
-
-	ret = get_range(s, &range);
-	if (ret)
-		return EC_ERROR_UNKNOWN;
-
-	v[0] *= range;
-	v[1] *= range;
-	v[2] *= range;
-
-	/* normalize the accel scale: 1G = 1024 */
-	if (MOTIONSENSE_TYPE_ACCEL == s->type) {
-		v[0] >>= 5;
-		v[1] >>= 5;
-		v[2] >>= 5;
-	} else {
-		v[0] >>= 8;
-		v[1] >>= 8;
-		v[2] >>= 8;
+	get_range(s, &range);
+	for (i = X; i <= Z; i++) {
+		v[i] = ((int16_t)((raw[i * 2 + 1] << 8) | raw[i * 2]));
+		v[i] += (data->offset[i] << 5) / range;
 	}
 
 	return EC_SUCCESS;
@@ -456,6 +464,8 @@ const struct accelgyro_drv lsm6ds0_drv = {
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
+	.set_offset = set_offset,
+	.get_offset = get_offset,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.set_interrupt = set_interrupt,
 #endif

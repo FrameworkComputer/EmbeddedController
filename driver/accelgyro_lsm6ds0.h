@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_ACCELGYRO_LSM6DS0_H
 #define __CROS_EC_ACCELGYRO_LSM6DS0_H
 
+#include "motion_sense.h"
 #include "task.h"
 
 /*
@@ -117,5 +118,9 @@ enum lsm6ds0_bdu {
 #define LSM6DS0_RESOLUTION      16
 
 extern const struct accelgyro_drv lsm6ds0_drv;
+struct lsm6ds0_data {
+	struct motion_data_t base;
+	int16_t offset[3];
+};
 
 #endif /* __CROS_EC_ACCELGYRO_LSM6DS0_H */
