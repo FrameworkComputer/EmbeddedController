@@ -58,9 +58,9 @@
 #define PMIC_PWRON_DEBOUNCE_TIME  (60 * MSEC)
 
 /*
- * The suspend signal from SoC should be kept at least 50ms.
+ * The power signal from SoC should be kept at least 50ms.
  */
-#define SUSPEND_DEBOUNCE_TIME     (50 * MSEC)
+#define POWER_DEBOUNCE_TIME     (50 * MSEC)
 
 /*
  * The time to bootup the PMIC from power-off to power-on.
@@ -166,6 +166,60 @@ enum blacklight_override_t {
 
 /* Forward declaration */
 static void chipset_turn_off_power_rails(void);
+
+/**
+ * Check the suspend signal is on after POWER_DEBOUNCE_TIME to avoid transient state.
+ *
+ * @return non-zero if SUSPEND is asserted.
+ */
+static int is_suspend_asserted(void)
+{
+	if (power_get_signals() & IN_SUSPEND)
+		usleep(POWER_DEBOUNCE_TIME);
+
+	return power_get_signals() & IN_SUSPEND;
+}
+
+/**
+ * Check the suspend signal is off after POWER_DEBOUNCE_TIME to avoid transient state.
+ *
+ * @return non-zero if SUSPEND is deasserted.
+ */
+static int is_suspend_deasserted(void)
+{
+	if (!(power_get_signals() & IN_SUSPEND))
+		usleep(POWER_DEBOUNCE_TIME);
+
+	return !(power_get_signals() & IN_SUSPEND);
+}
+
+/**
+ * Check power good signal is on after POWER_DEBOUNCE_TIME to avoid transient state.
+ *
+ * @return non-zero if POWER_GOOD is asserted.
+ */
+static int is_power_good_asserted(void)
+{
+	if (!gpio_get_level(GPIO_SYSTEM_POWER_H))
+		return 0;
+	else if (power_get_signals() & IN_POWER_GOOD)
+		usleep(POWER_DEBOUNCE_TIME);
+
+	return power_get_signals() & IN_POWER_GOOD;
+}
+
+/**
+ * Check power good signal is off after POWER_DEBOUNCE_TIME to avoid transient state.
+ *
+ * @return non-zero if POWER_GOOD is deasserted.
+ */
+static int is_power_good_deasserted(void)
+{
+	if (!(power_get_signals() & IN_POWER_GOOD))
+		usleep(POWER_DEBOUNCE_TIME);
+
+	return !(power_get_signals() & IN_POWER_GOOD);
+}
 
 /**
  * Set the system power signal.
@@ -288,6 +342,12 @@ static int check_for_power_off_event(void)
 
 	power_button_was_pressed = pressed;
 
+	/* POWER_GOOD released by AP : shutdown immediate */
+	if (is_power_good_deasserted()) {
+		CPRINTS("POWER_GOOD is lost");
+		return POWER_OFF_BY_POWER_GOOD_LOST;
+	}
+
 	return POWER_OFF_CANCEL;
 }
 
@@ -346,7 +406,7 @@ enum power_state power_chipset_init(void)
 		init_power_state = POWER_G3;
 	} else {
 		/* In the SYSJUMP case, we check if the AP is on */
-		if (power_get_signals() & IN_POWER_GOOD) {
+		if (is_power_good_asserted()) {
 			CPRINTS("SOC ON\n");
 			init_power_state = POWER_S0;
 			disable_sleep(SLEEP_MASK_AP_RUN);
@@ -400,6 +460,10 @@ void chipset_force_shutdown(void)
  */
 static void power_off(void)
 {
+	/* Check the power off status */
+	if (!gpio_get_level(GPIO_SYSTEM_POWER_H))
+		return;
+
 	/* Call hooks before we drop power rails */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	/* switch off all rails */
@@ -408,6 +472,9 @@ static void power_off(void)
 	/* Change SUSPEND_L pin to high-Z to reduce power draw. */
 	gpio_set_flags(power_signal_list[MTK_SUSPEND_ASSERTED].gpio,
 		       GPIO_INPUT);
+
+	/* Change EC_INT to low */
+	gpio_set_level(GPIO_EC_INT, 0);
 
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
@@ -432,7 +499,7 @@ static int check_for_power_on_event(void)
 	ap_off_flag = system_get_reset_flags() & RESET_FLAG_AP_OFF;
 	system_clear_reset_flags(RESET_FLAG_AP_OFF);
 	/* check if system is already ON */
-	if (power_get_signals() & IN_POWER_GOOD) {
+	if (is_power_good_asserted()) {
 		if (ap_off_flag) {
 			CPRINTS("system is on, but RESET_FLAG_AP_OFF is on");
 			return POWER_ON_CANCEL;
@@ -635,9 +702,10 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S3:
-		if (!(power_get_signals() & IN_POWER_GOOD))
+		if (is_power_good_deasserted()) {
+			power_off();
 			return POWER_S3S5;
-		else if (!(power_get_signals() & IN_SUSPEND))
+		} else if (is_suspend_deasserted())
 			return POWER_S3S0;
 		return state;
 
@@ -654,16 +722,8 @@ enum power_state power_handle_state(enum power_state state)
 			CPRINTS("power off %d", value);
 			power_off();
 			return POWER_S0S3;
-		} else if (power_get_signals() & IN_SUSPEND) {
-			/*
-			 * add susuend signal debounce:
-			 * check suspend signal after 50ms, to avoid
-			 * transient state during SoC boot up.
-			 */
-			usleep(SUSPEND_DEBOUNCE_TIME);
-			if (power_get_signals() & IN_SUSPEND)
-				return POWER_S0S3;
-		}
+		} else if (is_suspend_asserted())
+			return POWER_S0S3;
 		return state;
 
 	case POWER_S0S3:
