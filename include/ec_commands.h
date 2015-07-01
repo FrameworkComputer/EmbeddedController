@@ -3314,6 +3314,14 @@ struct ec_params_pd_write_log_entry {
 
 #endif  /* !__ACPI__ */
 
+
+/*****************************************************************************/
+/*
+ * Blob commands are just opaque chunks of data, sent with proto v3.
+ * params is struct ec_host_request, response is struct ec_host_response.
+ */
+#define EC_CMD_BLOB 0x200
+
 /*****************************************************************************/
 /*
  * Passthru commands
