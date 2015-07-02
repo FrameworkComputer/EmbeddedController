@@ -106,8 +106,12 @@
 #define BMI160_ODR_1600HZ      0x0c
 #define BMI160_ODR_3200HZ      0x0d
 
-#define BMI160_REG_TO_ODR(_regval) (100000 / (1 << (8 - (_regval))))
-#define BMI160_ODR_TO_REG(_odr) (__builtin_clz(100000 / (_odr)) - 23)
+#define BMI160_REG_TO_ODR(_regval) \
+	((_regval) < 8 ? 100000 / (1 << (8 - (_regval))) : \
+			 100000 * (1 << ((_regval) - 8)))
+#define BMI160_ODR_TO_REG(_odr) \
+	((_odr) < 100000 ? (__builtin_clz(100000 / (_odr)) - 23) : \
+			   (39 - __builtin_clz((_odr) / 100000)))
 
 #define BMI160_CONF_REG(_sensor)   (0x40 + 2 * (_sensor))
 #define BMI160_RANGE_REG(_sensor)  (0x41 + 2 * (_sensor))
@@ -283,6 +287,6 @@ enum bmi160_running_mode {
 #define BMI160_FLAG_SEC_I2C_ENABLED    (1 << 0)
 struct bmi160_drv_data_t {
 	struct motion_data_t saved_data[3];
-	uint8_t       flags;
+	uint8_t              flags;
 };
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */
