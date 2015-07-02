@@ -153,8 +153,8 @@ void motion_lid_calc(void)
 			accel_lid->xyz,
 			&lid_angle_deg);
 
-#ifdef CONFIG_LID_ANGLE_KEY_SCAN
-	lidangle_keyscan_update(motion_lid_get_angle());
+#ifdef CONFIG_LID_ANGLE_UPDATE
+	lid_angle_update(motion_lid_get_angle());
 #endif
 
 }
@@ -170,12 +170,12 @@ int host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_KB_WAKE_ANGLE:
-#ifdef CONFIG_LID_ANGLE_KEY_SCAN
+#ifdef CONFIG_LID_ANGLE_UPDATE
 		/* Set new keyboard wake lid angle if data arg has value. */
 		if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
-			lid_angle_set_kb_wake_angle(in->kb_wake_angle.data);
+			lid_angle_set_wake_angle(in->kb_wake_angle.data);
 
-		out->kb_wake_angle.ret = lid_angle_get_kb_wake_angle();
+		out->kb_wake_angle.ret = lid_angle_get_wake_angle();
 #else
 		out->kb_wake_angle.ret = 0;
 #endif

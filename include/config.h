@@ -789,10 +789,10 @@
 /* Which sensor is located on the lid? */
 #undef CONFIG_LID_ANGLE_SENSOR_LID
 /*
- * Allows using the lid angle measurement to determine if key scanning should
- * be enabled or disabled when chipset is suspended.
+ * Allows using the lid angle measurement to determine if peripheral devices
+ * should be enabled or disabled, like key scanning, trackpad interrupt.
  */
-#undef CONFIG_LID_ANGLE_KEY_SCAN
+#undef CONFIG_LID_ANGLE_UPDATE
 
 /* Define which index in motion_sensors is in the base. */
 #undef CONFIG_SENSOR_BASE
