@@ -31,14 +31,23 @@ static void check_reset_cause(void)
 {
 	uint32_t flags = 0;
 	uint8_t raw_reset_cause = IT83XX_GCTRL_RSTS & 0x03;
+	uint8_t raw_reset_cause2 = IT83XX_GCTRL_SPCTRL4 & 0x07;
 
 	/* Clear reset cause. */
-	IT83XX_GCTRL_RSTS |= 0x01;
+	IT83XX_GCTRL_RSTS |= 0x03;
+	IT83XX_GCTRL_SPCTRL4 |= 0x07;
 
 	/* Determine if watchdog reset or power on reset. */
-	if (raw_reset_cause & 0x02)
+	if (raw_reset_cause & 0x02) {
 		flags |= RESET_FLAG_WATCHDOG;
-	else
+	} else if (raw_reset_cause & 0x01) {
+		flags |= RESET_FLAG_POWER_ON;
+	} else {
+		if ((IT83XX_GCTRL_RSTS & 0xC0) == 0x80)
+			flags |= RESET_FLAG_POWER_ON;
+	}
+
+	if (raw_reset_cause2 & 0x04)
 		flags |= RESET_FLAG_POWER_ON;
 
 	/* Restore then clear saved reset flags. */
@@ -166,4 +175,16 @@ int system_get_console_force_enabled(void)
 {
 	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
 	return 0;
+}
+
+uintptr_t system_get_fw_reset_vector(uintptr_t base)
+{
+	uintptr_t reset_vector, num;
+
+	num = *(uintptr_t *)base;
+	reset_vector = ((num>>24)&0xff) | ((num<<8)&0xff0000) |
+			((num>>8)&0xff00) | ((num<<24)&0xff000000);
+	reset_vector = ((reset_vector & 0xffffff) << 1) + base;
+
+	return reset_vector;
 }

@@ -399,4 +399,13 @@ void system_set_image_copy(enum system_image_copy_t copy);
 enum system_image_copy_t system_get_shrspi_image_copy(void);
 
 #endif
+
+#ifdef CONFIG_FW_RESET_VECTOR
+/**
+ * Determine reset vector will be jumped to the assigned address.
+ *
+ * @return The address of the reset vector for RO/RW firmware image jump.
+ */
+uintptr_t system_get_fw_reset_vector(uintptr_t base);
+#endif
 #endif  /* __CROS_EC_SYSTEM_H */

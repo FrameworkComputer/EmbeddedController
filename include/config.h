@@ -731,6 +731,12 @@
 /* If defined, another image (RW) exists with more features */
 #undef CONFIG_FW_LIMITED_IMAGE
 
+/*
+ * If defined, we can use system_get_fw_reset_vector function to decide
+ * reset vector of RO/RW firmware for sysjump.
+ */
+#undef CONFIG_FW_RESET_VECTOR
+
 /*****************************************************************************/
 /* Motion sensor based gesture recognition information */
 /* These all require HAS_TASK_MOTIONSENSE to work */
@@ -937,6 +943,13 @@
 
 /* Number of IRQs supported on the EC chip */
 #undef CONFIG_IRQ_COUNT
+
+/*
+ * This is the block size of the ILM on the it839x chip.
+ * The ILM for static code cache, CPU fetch instruction from
+ * ILM(ILM -> CPU)instead of flash(flash -> IMMU -> CPU) if enabled.
+ */
+#undef CONFIG_IT83XX_ILM_BLOCK_SIZE
 
 /* Enable Wake-up control interrupt from KSI */
 #undef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT

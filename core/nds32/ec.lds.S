@@ -37,6 +37,11 @@ SECTIONS
         KEEP(OUTDIR/core/CORE/init.o (.text.vectirq))
         KEEP(OUTDIR/core/CORE/init.o (.text))
         *(.text*)
+
+        . = ALIGN(CONFIG_IT83XX_ILM_BLOCK_SIZE);
+        __flash_dma_start = .;
+        KEEP(*(.flash_direct_map))
+        . = ALIGN(CONFIG_IT83XX_ILM_BLOCK_SIZE);
 #ifdef COMPILE_FOR_RAM
     } > IRAM
 #else

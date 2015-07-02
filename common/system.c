@@ -516,8 +516,13 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 	system_set_image_copy(copy);
 #else
+#ifdef CONFIG_FW_RESET_VECTOR
+	/* Get reset vector */
+	init_addr = system_get_fw_reset_vector(base);
+#else
 	/* Make sure the reset vector is inside the destination image */
 	init_addr = *(uintptr_t *)(base + 4);
+#endif
 #ifndef EMU_BUILD
 	if (init_addr < base || init_addr >= base + get_size(copy))
 		return EC_ERROR_UNKNOWN;
