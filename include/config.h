@@ -1272,7 +1272,7 @@
 /* Support smbus interface */
 #undef CONFIG_SMBUS
 
-/* Support SPI interfaces */
+/* Support SPI (slave) interfaces */
 #undef CONFIG_SPI
 
 /* Define SPI chip select GPIO pin. */

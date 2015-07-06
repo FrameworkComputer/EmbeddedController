@@ -24,6 +24,9 @@
 
 #define CONFIG_USB_PID 0x5014
 
+/* Enable SPI Slave (SPS) module */
+#define CONFIG_SPI
+
 #endif
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
