@@ -279,6 +279,9 @@
 #undef CONFIG_CHARGER_V1
 #undef CONFIG_CHARGER_V2
 
+/* Enable charger AMON_BMON ADC current detection */
+#undef CONFIG_CHARGER_ADC_AMON_BMON
+
 /* Compile charger-specific code for these chargers (pick at most one) */
 #undef CONFIG_CHARGER_BQ24707A
 #undef CONFIG_CHARGER_BQ24715

@@ -34,6 +34,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 #endif /* BOARD_REV */
 
+#define CONFIG_CHARGER_ADC_AMON_BMON
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_V2
 #define CONFIG_CHIPSET_MEDIATEK
@@ -142,9 +143,9 @@ enum pwm_channel {
 };
 
 enum adc_channel {
-	ADC_VBUS = 0,
-	ADC_PSYS,
-	ADC_AMON_BMON,
+	ADC_PSYS = 0,  /* PC1: STM32_AIN(2) */
+	ADC_AMON_BMON, /* PC0: STM32_AIN(10) */
+	ADC_VBUS,      /* PA2: STM32_AIN(11) */
 	ADC_CH_COUNT
 };
 

@@ -5,6 +5,7 @@
  * Intersil ISL9237 battery charger driver.
  */
 
+#include "adc.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
@@ -22,6 +23,9 @@
 #define CURRENT_TO_REG(CUR) ((CUR) * R_SNS / DEFAULT_R_SNS)
 #define AC_REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_AC / R_AC)
 #define AC_CURRENT_TO_REG(CUR) ((CUR) * R_AC / DEFAULT_R_AC)
+
+/* Console output macros */
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 /* Charger parameters */
 static const struct charger_info isl9237_charger_info = {
@@ -231,3 +235,51 @@ int charger_discharge_on_ac(int enable)
 	return raw_write16(ISL9237_REG_CONTROL1, control1);
 }
 
+#ifdef CONFIG_CHARGER_ADC_AMON_BMON
+/**
+ * Get charger AMON and BMON current.
+ */
+static int console_command_amon_bmon(int argc, char **argv)
+{
+	int adc, curr, val, ret;
+
+	ret = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+			 ISL9237_REG_CONTROL1, &val);
+	if (ret)
+		return ret;
+
+	/* Enable monitor */
+	val &= ~ISL9237_C1_DISABLE_MON;
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'a')) {
+		/* Switch to AMON */
+		val &= ~ISL9237_C1_SELECT_BMON;
+		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+				  ISL9237_REG_CONTROL1, val);
+		if (ret)
+			return ret;
+
+		adc = adc_read_channel(ADC_AMON_BMON);
+		curr = adc / CONFIG_CHARGER_SENSE_RESISTOR_AC;
+		CPRINTF("AMON: %d uV, %d mA\n", adc, curr);
+	}
+
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b')) {
+		/* Switch to BMON */
+		val |= ISL9237_C1_SELECT_BMON;
+		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+				  ISL9237_REG_CONTROL1, val);
+		if (ret)
+			return ret;
+
+		adc = adc_read_channel(ADC_AMON_BMON);
+		curr = adc / CONFIG_CHARGER_SENSE_RESISTOR;
+		CPRINTF("BMON: %d uV, %d mA\n", adc, curr);
+	}
+
+	return ret;
+}
+DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
+			"amonbmon [a|b]",
+			"Get charger AMON/BMON voltage diff, current",
+			NULL);
+#endif /* CONFIG_CHARGER_ADC_AMON_BMON */
