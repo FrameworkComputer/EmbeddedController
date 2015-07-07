@@ -26,8 +26,13 @@
 
 /* Enable SPI Slave (SPS) module */
 #define CONFIG_SPI
+#define CONFIG_HOSTCMD_SPI
 
-#endif
+/* We don't need to send events to the AP */
+#undef  CONFIG_HOSTCMD_EVENTS
+
+#endif	/* not A1 */
+
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
  * switch.

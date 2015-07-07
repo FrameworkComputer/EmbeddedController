@@ -1,0 +1,6 @@
+
+Ubuntu Trusty uses an ancient version of libftdi.
+
+You'll probably want to grab the latest libftdi1-1.2.tar.bz2 from
+http://www.intra2net.com/en/developer/libftdi/ and install it into /usr
+instead.
