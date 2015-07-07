@@ -295,7 +295,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = NULL,
 	 .default_config = {
 		 .odr = 100000,
-		 .range = 2
+		 .range = 8,
 	 }
 	},
 
