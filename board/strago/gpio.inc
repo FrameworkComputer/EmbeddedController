@@ -46,7 +46,7 @@ GPIO(WP_L,              PIN(33), GPIO_INPUT)                    /* EC_SPI_WP_ME_
 #ifndef CONFIG_BUTTON_COUNT
 GPIO(VOLUME_DOWN,       PIN(34), GPIO_INPUT)                    /* Volume down button */
 #endif
-GPIO(USB2_PWR_EN,       PIN(36), GPIO_OUT_LOW)                  /* Enable power for USB2 Port */
+GPIO(USB2_ENABLE,       PIN(36), GPIO_OUT_LOW)                  /* Enable power for USB2 Port */
 
 GPIO(ENTERING_RW,       PIN(41), GPIO_OUT_LOW)                  /* Indicate when EC is entering RW code */
 GPIO(PCH_SMI_L,         PIN(44), GPIO_ODR_HIGH)                 /* SMI output */
@@ -64,7 +64,7 @@ GPIO(EC_ADC0,           PIN(61), GPIO_INPUT)                    /* EC_ADC0 */
 GPIO(EC_HIB_L,          PIN(64), GPIO_OUT_LOW)                  /* Set to high before Pseduo G3 */
 GPIO(PCH_SYS_PWROK,     PIN(65), GPIO_OUT_LOW)                  /* EC thinks everything is up and ready (DELAY_ALL_SYS_PWRGD) */
 GPIO(PCH_WAKE_L,        PIN(66), GPIO_ODR_HIGH)                 /* PCH wake pin */
-GPIO(USB3_PWR_EN,       PIN(67), GPIO_OUT_LOW)                  /* Enable power for USB3 Port */
+GPIO(USB1_ENABLE,       PIN(67), GPIO_OUT_LOW)                  /* Enable power for USB3 Port */
 
 GPIO(NC_GPIO100,        PIN(100), GPIO_INPUT | GPIO_PULL_UP)    /* NC */
 GPIO(NC_GPIO101,        PIN(101), GPIO_INPUT | GPIO_PULL_UP)    /* NC */
