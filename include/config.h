@@ -824,6 +824,11 @@
 #undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 
 /*
+ * Accept EC host commands over the SPI (slave) interface.
+ */
+#undef CONFIG_HOSTCMD_SPI
+
+/*
  * Host command rate limiting assures EC will have time to process lower
  * priority tasks even if the AP is hammering the EC with host commands.
  * If there is less than CONFIG_HOSTCMD_RATE_LIMITING_MIN_REST between
