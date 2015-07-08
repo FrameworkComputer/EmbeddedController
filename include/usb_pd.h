@@ -695,7 +695,6 @@ enum pd_states {
 #define PD_FLAGS_PARTNER_DR_DATA   (1 << 2) /* port partner is dualrole data */
 #define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
 #define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
-#define PD_FLAGS_GET_SNK_CAP_SENT  (1 << 5) /* get sink cap sent */
 #define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
 #define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 7) /* disable comms after soft reset */
 #define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
@@ -709,7 +708,6 @@ enum pd_states {
 					   PD_FLAGS_PARTNER_DR_DATA | \
 					   PD_FLAGS_DATA_SWAPPED | \
 					   PD_FLAGS_SNK_CAP_RECVD | \
-					   PD_FLAGS_GET_SNK_CAP_SENT | \
 					   PD_FLAGS_EXPLICIT_CONTRACT | \
 					   PD_FLAGS_PREVIOUS_PD_CONN | \
 					   PD_FLAGS_CHECK_PR_ROLE | \
