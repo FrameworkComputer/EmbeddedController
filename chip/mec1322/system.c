@@ -26,20 +26,6 @@ enum hibdata_index {
 	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
 };
 
-static int check_vcc1_por(void)
-{
-	/*
-	 * WDT count resets on VCC1 POR. If we see WDT count = 0, we know
-	 * POR has occurred, and we set WDT count to 1.
-	 */
-	if (MEC1322_EC_WDT_CNT == 0) {
-		MEC1322_EC_WDT_CNT = 1;
-		return 1;
-	}
-
-	return 0;
-}
-
 static void check_reset_cause(void)
 {
 	uint32_t status = MEC1322_VBAT_STS;
@@ -53,28 +39,16 @@ static void check_reset_cause(void)
 	MEC1322_PCR_CHIP_PWR_RST |= rst_sts;
 
 	/*
-	* BIT[6:5] determine VCC1 reset and VBAT reset status.
-	* when Poweron watchdog is reset and both VCC1 and VBAT
-	* are set
+	* BIT[6] determine VCC1 reset
 	*/
-	if ((rst_sts == (MEC1322_PWR_RST_STS_VCC1 |
-			MEC1322_PWR_RST_STS_VBAT))
-			&& check_vcc1_por())
-		flags |= RESET_FLAG_POWER_ON;
-
-	/*
-	* Check for only BIT 6 to determine VCC1_RST# and no
-	* change on VBAT status indicates this is VCC1_RST#
-	*/
-	if ((rst_sts & MEC1322_PWR_RST_STS_VCC1) &&
-		!(rst_sts & MEC1322_PWR_RST_STS_VBAT))
+	if (rst_sts & MEC1322_PWR_RST_STS_VCC1)
 		flags |= RESET_FLAG_RESET_PIN;
 
 
 	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
 
-	if (status & (1 << 5) && !(flags & (RESET_FLAG_SOFT |
+	if ((status & MEC1322_VBAT_STS_WDT) && !(flags & (RESET_FLAG_SOFT |
 					    RESET_FLAG_HARD |
 					    RESET_FLAG_HIBERNATE)))
 		flags |= RESET_FLAG_WATCHDOG;
@@ -113,12 +87,6 @@ void system_pre_init(void)
 
 	/* Deassert nSIO_RESET */
 	MEC1322_PCR_PWR_RST_CTL &= ~(1 << 0);
-
-	if (MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) &
-		(RESET_FLAG_POWER_ON|RESET_FLAG_RESET_PIN))
-		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) = 0;
-
-	check_reset_cause();
 
 	spi_enable(1);
 }

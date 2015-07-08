@@ -202,21 +202,13 @@ void uart_init(void)
 void system_init(void)
 {
 
-	uint32_t wdt_cnt = MEC1322_EC_WDT_CNT;
+	uint32_t wdt_sts = MEC1322_VBAT_STS & MEC1322_VBAT_STS_WDT;
 	uint32_t rst_sts = MEC1322_PCR_CHIP_PWR_RST &
-				(MEC1322_PWR_RST_STS_VCC1 |
-				 MEC1322_PWR_RST_STS_VBAT);
+				MEC1322_PWR_RST_STS_VCC1;
 
-	/*
-	 * BIT[6:5] determine VCC1 reset and VBAT reset status.
-	 * when Poweron watchdog is reset and both VCC1 and VBAT
-	 * are set
-	 */
-	if ((rst_sts == (MEC1322_PWR_RST_STS_VCC1 |
-			 MEC1322_PWR_RST_STS_VBAT))
-			 && (wdt_cnt == 0))
+	if (rst_sts || wdt_sts)
 		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX)
-					= SYSTEM_IMAGE_UNKNOWN;
+					= SYSTEM_IMAGE_RO;
 }
 
 enum system_image_copy_t system_get_image_copy(void)

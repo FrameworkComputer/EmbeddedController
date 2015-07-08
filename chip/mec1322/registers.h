@@ -133,6 +133,9 @@ static inline uintptr_t gpio_port_base(int port_id)
 #define MEC1322_VBAT_CE        REG32(MEC1322_VBAT_BASE + 0x8)
 #define MEC1322_VBAT_RAM(x)    REG32(MEC1322_VBAT_BASE + 0x400 + 4 * (x))
 
+/* Bit definition for MEC1322_VBAT_STS */
+#define MEC1322_VBAT_STS_WDT	(1 << 5)
+
 /* Miscellaneous firmware control fields
  * scratch pad index cannot be more than 16 as
  * mec has 64 bytes = 16 indexes of scratchpad RAM
