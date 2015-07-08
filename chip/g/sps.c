@@ -19,15 +19,33 @@ enum sps_mode {
 	SPS_UNDEF_MODE = 3,
 };
 
-#define SPS_FIFO_SIZE		(1 << 10)
-#define SPS_FIFO_MASK		(SPS_FIFO_SIZE - 1)
 /*
- * Hardware pointers use one extra bit, which means that indexing FIFO and
- * values written into the pointers have to have dfferent sizes. Tracked under
- * http://b/20894690
+ * Hardware pointers use one extra bit to indicate wrap around. This means we
+ * can fill the FIFO completely, but it also means that the FIFO index and the
+ * values written into the read/write pointer registers have different sizes.
  */
+#define SPS_FIFO_SIZE		1024
+#define SPS_FIFO_MASK		(SPS_FIFO_SIZE - 1)
 #define SPS_FIFO_PTR_MASK	((SPS_FIFO_MASK << 1) | 1)
 
+/* Just the FIFO-sized part */
+#define low(V) ((V) & SPS_FIFO_MASK)
+
+/* Return the number of bytes in the FIFO (0 to SPS_FIFO_SIZE) */
+static uint32_t fifo_count(uint32_t readptr, uint32_t writeptr)
+{
+	uint32_t tmp = readptr ^ writeptr;
+
+	if (!tmp)				/* completely equal == empty */
+		return 0;
+
+	if (!low(tmp))				/* only high bit diff == full */
+		return SPS_FIFO_SIZE;
+
+	return low(writeptr - readptr);		/* else just |diff| */
+}
+
+/* HW FIFO buffer addresses */
 #define SPS_TX_FIFO_BASE_ADDR (GBASE(SPS) + 0x1000)
 #define SPS_RX_FIFO_BASE_ADDR (SPS_TX_FIFO_BASE_ADDR + SPS_FIFO_SIZE)
 
@@ -38,26 +56,23 @@ void sps_tx_status(uint8_t byte)
 
 int sps_transmit(uint8_t *data, size_t data_size)
 {
-	volatile uint32_t *sps_tx_fifo;
+	volatile uint32_t *sps_tx_fifo32;
 	uint32_t rptr;
 	uint32_t wptr;
 	uint32_t fifo_room;
 	int bytes_sent;
 
-	sps_tx_fifo = (volatile uint32_t *)SPS_TX_FIFO_BASE_ADDR;
-
 	wptr = GREG32(SPS, TXFIFO_WPTR);
 	rptr = GREG32(SPS, TXFIFO_RPTR);
-	fifo_room = (rptr - wptr - 1) & SPS_FIFO_MASK;
+	fifo_room = SPS_FIFO_SIZE - fifo_count(rptr, wptr);
 
-	if (fifo_room < data_size) {
-		bytes_sent = fifo_room;
+	if (fifo_room < data_size)
 		data_size = fifo_room;
-	} else {
-		bytes_sent = data_size;
-	}
+	bytes_sent = data_size;
 
-	sps_tx_fifo += (wptr & SPS_FIFO_MASK) / sizeof(*sps_tx_fifo);
+	/* Need 32-bit pointers for issue b/20894727 */
+	sps_tx_fifo32 = (volatile uint32_t *)SPS_TX_FIFO_BASE_ADDR;
+	sps_tx_fifo32 += (wptr & SPS_FIFO_MASK) / sizeof(*sps_tx_fifo32);
 
 	while (data_size) {
 
@@ -70,7 +85,7 @@ int sps_transmit(uint8_t *data, size_t data_size)
 			uint32_t fifo_contents;
 			int bit_shift;
 
-			fifo_contents = *sps_tx_fifo;
+			fifo_contents = *sps_tx_fifo32;
 			do {
 				/*
 				 * CR50 SPS controller does not allow byte
@@ -87,13 +102,13 @@ int sps_transmit(uint8_t *data, size_t data_size)
 
 			} while (data_size && (wptr & 3));
 
-			*sps_tx_fifo++ = fifo_contents;
+			*sps_tx_fifo32++ = fifo_contents;
 		} else {
 			/*
 			 * Both fifo wptr and data are aligned and there is
 			 * plenty to send.
 			 */
-			*sps_tx_fifo++ = *((uint32_t *)data);
+			*sps_tx_fifo32++ = *((uint32_t *)data);
 			data += 4;
 			data_size -= 4;
 			wptr += 4;
@@ -101,8 +116,8 @@ int sps_transmit(uint8_t *data, size_t data_size)
 		GREG32(SPS, TXFIFO_WPTR) = wptr & SPS_FIFO_PTR_MASK;
 
 		/* Make sure FIFO pointer wraps along with the index. */
-		if (!(wptr & SPS_FIFO_MASK))
-			sps_tx_fifo = (volatile uint32_t *)
+		if (!low(wptr))
+			sps_tx_fifo32 = (volatile uint32_t *)
 				SPS_TX_FIFO_BASE_ADDR;
 	}
 
@@ -168,8 +183,10 @@ static void sps_enable(void)
 }
 
 /*
- * Check how much data is available in the RX FIFO and return a pointer to the
- * available data and its size.
+ * Check how much LINEAR data is available in the RX FIFO and return a pointer
+ * to the data and its size. If the FIFO data wraps around the end of the
+ * physical address space, this only returns the amount up to the the end of
+ * the buffer.
  *
  * @param data   pointer to set to the beginning of data in the fifo
  * @return       number of available bytes
@@ -177,25 +194,30 @@ static void sps_enable(void)
  */
 static int sps_check_rx(uint8_t **data)
 {
-	uint32_t write_ptr = GREG32(SPS, RXFIFO_WPTR) & SPS_FIFO_MASK;
-	uint32_t read_ptr = GREG32(SPS, RXFIFO_RPTR) & SPS_FIFO_MASK;
+	uint32_t wptr = GREG32(SPS, RXFIFO_WPTR);
+	uint32_t rptr = GREG32(SPS, RXFIFO_RPTR);
+	uint32_t count = fifo_count(rptr, wptr);
 
-	if (read_ptr == write_ptr)
+	if (!count)
 		return 0;
 
-	*data = (uint8_t *)(SPS_RX_FIFO_BASE_ADDR + read_ptr);
+	wptr = low(wptr);
+	rptr = low(rptr);
 
-	if (read_ptr > write_ptr)
-		return SPS_FIFO_SIZE - read_ptr;
+	if (rptr >= wptr)
+		count = SPS_FIFO_SIZE - rptr;
+	else
+		count = wptr - rptr;
 
-	return write_ptr - read_ptr;
+	*data = (uint8_t *)(SPS_RX_FIFO_BASE_ADDR + rptr);
+
+	return count;
 }
 
 /* Advance RX FIFO read pointer after data has been read from the FIFO. */
 static void sps_advance_rx(int data_size)
 {
 	uint32_t read_ptr = GREG32(SPS, RXFIFO_RPTR) + data_size;
-
 	GREG32(SPS, RXFIFO_RPTR) = read_ptr & SPS_FIFO_PTR_MASK;
 }
 
