@@ -275,6 +275,10 @@ flash: $(out)/ec.bin
 flash_ec: $(out)/ec.bin
 	./util/flash_ec --board $(BOARD) --image $(out)/ec.bin
 
+.PHONY: flash_dfu
+flash_dfu: $(out)/ec.bin
+	sudo ./board/$(BOARD)/dfu $(out)/ec.bin
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)
