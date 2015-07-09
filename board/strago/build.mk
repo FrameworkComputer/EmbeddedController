@@ -6,9 +6,10 @@
 # Board specific files build
 #
 
-# the IC is SMSC MEC1322 / external SPI is 4MB / external clock is crystal
+# the IC is SMSC MEC1322 / external SPI is 512KB / external clock is crystal
 CHIP:=mec1322
 CHIP_SPI_SIZE_KB:=512
 
 board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
+board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o

@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+GPIO_INT(PD_MCU_INT,        PIN(47),  GPIO_INT_FALLING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
+GPIO_INT(USB_C0_VBUS_WAKE_L,PIN(12),  GPIO_INT_BOTH,                      vbus0_evt)
+GPIO_INT(USB_C0_BC12_INT_L, PIN(155), GPIO_INT_FALLING,                   usb0_evt)
 GPIO_INT(LID_OPEN,          PIN(27),  GPIO_INT_BOTH | GPIO_PULL_UP,       lid_interrupt)            /* Lid switch */
 GPIO_INT(AC_PRESENT,        PIN(30),  GPIO_INT_BOTH | GPIO_PULL_UP | GPIO_PULL_DOWN, extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
 #ifdef CONFIG_BUTTON_COUNT
@@ -22,10 +25,12 @@ GPIO_INT(UART0_RX,          PIN(162), GPIO_INPUT | GPIO_PULL_UP,          NULL) 
 GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH,                      power_signal_interrupt)   /* SLP_S4# signal from PCH */
 GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH,                      power_signal_interrupt)   /* SLP_S3# signal from PCH */
 
+UNIMPLEMENTED(BAT_PRESENT_L)
+UNIMPLEMENTED(USB_PD_WAKE)
+
 GPIO(NC_GPIO0,          PIN(0),  GPIO_INPUT | GPIO_PULL_UP)     /* NC */
 GPIO(KBD_KSO2,          PIN(1),  GPIO_KB_OUTPUT_COL2)           /* Negative edge triggered irq. */
 
-GPIO(NC_USBPD_BOOT0,    PIN(12), GPIO_INPUT | GPIO_PULL_DOWN)   /* NC */
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                 /* USB current control */
 GPIO(I2C_PORT0_SCL,     PIN(15), GPIO_ODR_HIGH)
 GPIO(I2C_PORT0_SDA,     PIN(16), GPIO_ODR_HIGH)
@@ -53,9 +58,9 @@ GPIO(PCH_SMI_L,         PIN(44), GPIO_ODR_HIGH)                 /* SMI output */
 GPIO(USB_OC1_L,         PIN(45), GPIO_INT_FALLING)              /* DB2 BC1.2 over current signal to EC */
 GPIO(DP_USB_C_HPD_Q,    PIN(46), GPIO_OUT_HIGH)                 /* DP hot plug detect from EC to SOC */
 
-GPIO(OTG_SW_EN,         PIN(50), GPIO_OUT_LOW)                  /* */
+GPIO(USB_C0_5V_EN,      PIN(50), GPIO_OUT_LOW)                  /* USB C0 5V enable */
 GPIO(PCH_SUS_STAT_L,    PIN(51), GPIO_INT_FALLING)              /* Signal to inform EC that SOC is entering low power state */
-GPIO(EC_ACDET_CTRL,     PIN(52), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_ACDET_CTRL,     PIN(52), GPIO_OUT_HIGH)                 /* EC AC Detect control */
 GPIO(TRACKPAD_PWREN,    PIN(53), GPIO_OUT_HIGH)                 /* Enable power for Track Pad */
 GPIO(USB_OC0_L,         PIN(55), GPIO_INT_FALLING)              /* Over current signal of the BC1.2 charger to EC */
 GPIO(EC_ADC1,           PIN(57), GPIO_INPUT)                    /* EC_ADC1, TEMP_SENSOR_2 no_stuff */
@@ -84,7 +89,7 @@ GPIO(PD_RST_L,          PIN(135), GPIO_ODR_HIGH)                 /* USB PD MCU r
 
 GPIO(THERMAL_PROBE_EN_L,PIN(140), GPIO_OUT_HIGH)
 GPIO(PCH_RSMRST_L,      PIN(143), GPIO_OUT_LOW)                  /* RSMRST_N to PCH */
-GPIO(EC_KBD_ALERT,      PIN(145), GPIO_OUT_LOW)                   /* EC_KBD_ALERT */
+GPIO(EC_KBD_ALERT,      PIN(145), GPIO_OUT_LOW)                  /* EC_KBD_ALERT */
 GPIO(PVT_CS0,           PIN(146), GPIO_ODR_HIGH)                 /* SPI PVT Chip select */
 GPIO(ALS_INT,           PIN(147), GPIO_INPUT | GPIO_PULL_UP)     /* ALS sensor interrupt to EC */
 
@@ -92,7 +97,6 @@ GPIO(WLAN_OFF_L,        PIN(150), GPIO_ODR_HIGH)                 /* Wireless LAN
 GPIO(CPU_PROCHOT,       PIN(151), GPIO_OUT_LOW)
 GPIO(KBD_IRQ_L,         PIN(152), GPIO_ODR_HIGH)                 /* Negative edge triggered irq. */
 GPIO(BOARD_VERSION1,    PIN(154), GPIO_INPUT)                    /* BOARD_ID0 */
-GPIO(EC_PERICOM_INT,    PIN(155), GPIO_INT_BOTH)                 /* Pericom USB device interrupt */
 GPIO(PWR_BTN_SELECT,    PIN(156), GPIO_ODR_HIGH)                 /* HIGH in clamshell mode and LOW in tablet mode */
 GPIO(PCH_SUSPWRDNACK,   PIN(157), GPIO_INT_FALLING)              /* PMC SUSPWRDNACK signal from SOC to EC */
 
@@ -103,7 +107,7 @@ GPIO(VP9_CODEC_RESET_L, PIN(163), GPIO_OUT_LOW)                  /* VP9_CODEC_RE
 GPIO(STARTUP_LATCH_SET, PIN(201), GPIO_OUT_HIGH)                 /* Output from EC to POL signal of USB Type C Mux */
 GPIO(EC_BL_DISABLE_L,   PIN(202), GPIO_OUT_HIGH)                 /* EDP backligh disable signal from EC */
 GPIO(SMC_SHUTDOWN,      PIN(203), GPIO_OUT_LOW)                  /* Shutdown signal from EC to power sequencing PLD */
-GPIO(USBPD_BST_OFF,     PIN(204), GPIO_OUT_LOW)
+GPIO(USB_C0_CHARGE_EN_L,PIN(204), GPIO_OUT_LOW)
 
 GPIO(SUSPWRDNACK_SOC_EC,PIN(210), GPIO_OUT_LOW)                  /* SUSPWRDNACK signal from MOIC device to EC */
 GPIO(GPIO_3_EC,         PIN(211), GPIO_OUT_LOW)                  /* Sleep SOIX signal from SOC to EC */
@@ -134,10 +138,13 @@ ALTERNATE(PIN_MASK(15, 0x08),   1,    MODULE_SPI,             0)                
 ALTERNATE(PIN_MASK(13, 0x48),   1,    MODULE_PWM_LED,         GPIO_OUTPUT)           /* 133: PWM0, 136: PWM1 */
 ALTERNATE(PIN_MASK(14, 0x02),   1,    MODULE_PWM_LED,         GPIO_OUTPUT)           /* 141: PWM3 */
 ALTERNATE(PIN_MASK(5,  0x40),   1,    MODULE_ADC,             0)                     /* 56: temperature sensor 1 */
-ALTERNATE(PIN_MASK(6,  0x05),   1,    MODULE_ADC,             0)                     /* 60: PC_MON, 62: temperature sensor 3 */
+ALTERNATE(PIN_MASK(6,  0x01),   1,    MODULE_ADC,             0)                     /* 60: PC_MON, 62: temperature sensor 3 */
 
 /* Re-Config LPC Pins to GPIO Open Drain for SOC G3 (EC - POWER_G3) state */
 ALTERNATE(PIN_MASK(1,  0x10),   0,      MODULE_GPIO,          GPIO_ODR_HIGH)         /* 14: LPC CLKRUN */
 ALTERNATE(PIN_MASK(11, 0x9e),   0,      MODULE_GPIO,          GPIO_ODR_HIGH)         /* 111~114:LAD[0:3], 117:PCI_CLK */
 ALTERNATE(PIN_MASK(11, 0x40),   0,      MODULE_GPIO,          GPIO_ODR_HIGH)         /* 116: LRESET# */
 ALTERNATE(PIN_MASK(12, 0x01),   0,      MODULE_GPIO,          GPIO_ODR_HIGH)         /* 120: LFRAME# */
+
+/* FOR USBPD - GP62/ADC4 */
+ALTERNATE(PIN_MASK(6,  0x04), 1, MODULE_ADC, GPIO_ANALOG)

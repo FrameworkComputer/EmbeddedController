@@ -5,10 +5,13 @@
 /* Strago board-specific configuration */
 
 #include "adc.h"
+#include "adc_chip.h"
 #include "als.h"
 #include "button.h"
 #include "charger.h"
+#include "charge_manager.h"
 #include "charge_state.h"
+#include "console.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/als_isl29035.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -21,6 +24,7 @@
 #include "math_util.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
+#include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -29,11 +33,57 @@
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
 #include "thermal.h"
+#include "usb_charge.h"
+#include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
 #define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
+
+/* Exchange status with PD MCU. */
+static void pd_mcu_interrupt(enum gpio_signal signal)
+{
+#ifdef HAS_TASK_PDCMD
+	/* Exchange status with PD MCU to determine interrupt cause */
+	host_command_pd_send_status(0);
+#endif
+}
+
+static void update_vbus_supplier(int port, int vbus_level)
+{
+	struct charge_port_info charge;
+
+	/*
+	 * If VBUS is low, or VBUS is high and we are not outputting VBUS
+	 * ourselves, then update the VBUS supplier.
+	 */
+	if (!vbus_level || !usb_charger_port_is_sourcing_vbus(port)) {
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
+					     port,
+					     &charge);
+	}
+}
+
+void vbus0_evt(enum gpio_signal signal)
+{
+	/* VBUS present GPIO is inverted */
+	int vbus_level = !gpio_get_level(signal);
+
+	update_vbus_supplier(0, vbus_level);
+	task_wake(TASK_ID_PD);
+}
+
+void usb0_evt(enum gpio_signal signal)
+{
+	task_wake(TASK_ID_USB_CHG_P0);
+}
 
 #include "gpio_list.h"
 
@@ -55,12 +105,19 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/* Vbus sensing. Converted to mV, full ADC is equivalent to 33V. */
+	[ADC_VBUS] = {"VBUS", 33000, 1024, 0, 4},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
 const struct i2c_port_t i2c_ports[]  = {
 	{"batt_chg", MEC1322_I2C0_0, 100,
 		GPIO_I2C_PORT0_SCL, GPIO_I2C_PORT0_SDA},
 	{"sensors",  MEC1322_I2C1,   100,
 		GPIO_I2C_PORT1_SCL, GPIO_I2C_PORT1_SDA},
-	{"pd_mcu",   MEC1322_I2C2,   100,
+	{"pd_mcu",   MEC1322_I2C2,   1000,
 		GPIO_I2C_PORT2_SCL, GPIO_I2C_PORT2_SDA},
 	{"thermal",  MEC1322_I2C3,   100,
 		GPIO_I2C_PORT3_SCL, GPIO_I2C_PORT3_SDA}
@@ -68,9 +125,21 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_AC_PRESENT,
+	GPIO_LID_OPEN,
+	GPIO_POWER_BUTTON_L,
 };
 
-const int hibernate_wake_pins_used;
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
+struct pi3usb9281_config pi3usb9281_chips[] = {
+	{
+		.i2c_port = I2C_PORT_USB_CHARGER_1,
+		.mux_lock = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
+	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.
@@ -113,6 +182,21 @@ const struct button_config buttons[] = {
 		30 * MSEC, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
+
+void board_set_usb_switches(int port, enum usb_switch setting)
+{
+	/* TODO: Set open / close USB switches based on param */
+}
+
+/**
+ * Reset PD MCU
+ */
+void board_reset_pd_mcu(void)
+{
+	gpio_set_level(GPIO_PD_RST_L, 0);
+	usleep(100);
+	gpio_set_level(GPIO_PD_RST_L, 1);
+}
 
 /* Four Motion sensors */
 /* kxcj9 mutex and local/private data*/
@@ -213,3 +297,100 @@ static void adc_pre_init(void)
 	gpio_config_module(MODULE_ADC, 1);
 }
 DECLARE_HOOK(HOOK_INIT, adc_pre_init, HOOK_PRIO_INIT_ADC - 1);
+
+/* Initialize board. */
+static void board_init(void)
+{
+	struct charge_port_info charge_none;
+
+	/* Enable PD MCU interrupt */
+	gpio_enable_interrupt(GPIO_PD_MCU_INT);
+	/* Enable VBUS interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+
+	/* Initialize all pericom charge suppliers to 0 */
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_none.current = 0;
+	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+				     0,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+				     0,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+				     0,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+				     0,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+				     0,
+				     &charge_none);
+
+	/* Initialize VBUS supplier based on whether or not VBUS is present */
+	update_vbus_supplier(0, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+
+	/* Enable pericom BC1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Set active charge port -- Enable or Disable charging
+ *
+ * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
+int board_set_active_charge_port(int charge_port)
+{
+	/* charge port is a realy physical port */
+	int is_real_port = (charge_port >= 0 &&
+			    charge_port < CONFIG_USB_PD_PORT_COUNT);
+	/* check if we are source vbus on that port */
+	int source = gpio_get_level(GPIO_USB_C0_5V_EN);
+
+	if (is_real_port && source) {
+		CPRINTS("Skip enable p%d", charge_port);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTS("New chg p%d", charge_port);
+
+	if (charge_port == CHARGE_PORT_NONE) {
+		/* Disable charging port */
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+		gpio_set_level(GPIO_EC_ACDET_CTRL, 1);
+	} else {
+		/* Enable charging port */
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+		gpio_set_level(GPIO_EC_ACDET_CTRL, 0);
+	}
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Set the charge limit based upon desired maximum.
+ *
+ * @param charge_ma     Desired charge limit (mA).
+ */
+void board_set_charge_limit(int charge_ma)
+{
+	charge_set_input_current_limit(MAX(charge_ma,
+					   CONFIG_CHARGER_INPUT_CURRENT));
+}
+
+/**
+ * TODO: Remove this code after the BAT_PRESENT_L GPIO is implemented in
+ * the hardware.
+ *
+ * Get the battery present status.
+ *
+ * Return EC_ERROR_UNIMPLEMENTED.
+ */
+enum battery_present battery_is_present(void)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
