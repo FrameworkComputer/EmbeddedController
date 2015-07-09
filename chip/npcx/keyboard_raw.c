@@ -84,20 +84,23 @@ test_mockable void keyboard_raw_drive_column(int col)
 	 * Nuvoton Keyboard Scan IP supports 18x8 Matrix
 	 * It also support automatic scan functionality
 	 */
-	uint32_t mask;
+	uint32_t mask, col_out;
+
+	/* Add support for CONFIG_KEYBOARD_KSO_BASE shifting */
+	col_out = col + CONFIG_KEYBOARD_KSO_BASE;
 
 	/* Drive all lines to high */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		mask = KB_COL_MASK;
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
-		gpio_set_level(GPIO_KBD_KSO2, 1);
+		gpio_set_level(GPIO_KBD_KSO2, 0);
 #endif
 	}
 	/* Set KBSOUT to zero to detect key-press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
 		mask = 0;
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
-		gpio_set_level(GPIO_KBD_KSO2, 0);
+		gpio_set_level(GPIO_KBD_KSO2, 1);
 #endif
 	}
 	/* Drive one line for detection */
@@ -108,7 +111,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 		else
 			gpio_set_level(GPIO_KBD_KSO2, 0);
 #endif
-		mask = ((~(1 << col)) & KB_COL_MASK);
+		mask = ((~(1 << col_out)) & KB_COL_MASK);
 	}
 
 	/* Set KBSOUT */

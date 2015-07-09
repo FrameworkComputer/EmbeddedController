@@ -273,6 +273,9 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	NPCX_WDSDM = 0x61;
 	NPCX_WDSDM = 0x63;
 
+	/* UMA Unlock */
+	CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK);
+
 	/* Set pinmux first */
 	sspi_flash_pinmux(1);
 

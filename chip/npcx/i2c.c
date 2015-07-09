@@ -25,9 +25,13 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 #endif
 
+/* Pull-up bit for I2C */
+#define NPCX_I2C_PUBIT(port, bus) \
+	((port*2) + bus)
+
 /* Data abort timeout unit:ms*/
-#define I2C_ABORT_TIMEOUT  10000
-/* Maximum time we allow for an I2C transfer */
+#define I2C_ABORT_TIMEOUT 35
+/* Maximum time we allow for an I2C transfer (SMB stardard is 25 ms) */
 #define I2C_TIMEOUT_US  (100*MSEC)
 /* Marco functions of I2C */
 #define I2C_START(port) SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_START)
@@ -94,31 +98,30 @@ int i2c_bus_busy(int port)
 	return IS_BIT_SET(NPCX_SMBCST(port), NPCX_SMBCST_BB) ? 1 : 0;
 }
 
-void i2c_abort_data(int port)
+int i2c_abort_data(int port)
 {
 	uint16_t timeout = I2C_ABORT_TIMEOUT;
-
-	/* Generate a STOP condition */
-	I2C_STOP(port);
 
 	/* Clear NEGACK, STASTR and BER bits */
 	SET_BIT(NPCX_SMBST(port), NPCX_SMBST_BER);
 	SET_BIT(NPCX_SMBST(port), NPCX_SMBST_STASTR);
-	/*
-	 * In Master mode, NEGACK should be cleared only
-	 * after generating STOP
-	 */
 	SET_BIT(NPCX_SMBST(port), NPCX_SMBST_NEGACK);
 
 	/* Wait till STOP condition is generated */
 	while (--timeout) {
-		msleep(1);
 		if (!IS_BIT_SET(NPCX_SMBCTL1(port), NPCX_SMBCTL1_STOP))
 			break;
+		msleep(1);
 	}
 
 	/* Clear BB (BUS BUSY) bit */
 	SET_BIT(NPCX_SMBCST(port), NPCX_SMBCST_BB);
+
+	if (timeout == 0) {
+		cprints(CC_I2C, "Abort i2c %02x fail!", port);
+		return 0;
+	} else
+		return 1;
 }
 
 void i2c_reset(int port)
@@ -128,12 +131,15 @@ void i2c_reset(int port)
 	CLEAR_BIT(NPCX_SMBCTL2(port), NPCX_SMBCTL2_ENABLE);
 
 	while (--timeout) {
-		msleep(1);
 		/* WAIT FOR SCL & SDA IS HIGH */
 		if (IS_BIT_SET(NPCX_SMBCTL3(port), NPCX_SMBCTL3_SCL_LVL) &&
 		    IS_BIT_SET(NPCX_SMBCTL3(port), NPCX_SMBCTL3_SDA_LVL))
 			break;
+		msleep(1);
 	}
+
+	if (timeout == 0)
+		cprints(CC_I2C, "Reset i2c %02x fail!", port);
 
 	/* Enable the SMB module */
 	SET_BIT(NPCX_SMBCTL2(port), NPCX_SMBCTL2_ENABLE);
@@ -141,8 +147,11 @@ void i2c_reset(int port)
 
 void i2c_recovery(int port)
 {
+	CPUTS("RECOVERY\r\n");
 	/* Abort data, generating STOP condition */
-	i2c_abort_data(port);
+	if (i2c_abort_data(port) == 1 &&
+		i2c_stsobjs[port].err_code == SMB_MASTER_NO_ADDRESS_MATCH)
+		return;
 
 	/* Reset i2c port by re-enable i2c port*/
 	i2c_reset(port);
@@ -204,12 +213,12 @@ inline void i2c_handle_sda_irq(int port)
 
 			/* Write the address to the bus R bit*/
 			I2C_WRITE_BYTE(port, (addr | 0x1));
-			CPUTS("-ARR");
+			CPRINTS("-ARR-0x%02x", addr);
 		} else {/* Transmit mode */
 			p_status->oper_state = SMB_WRITE_OPER;
 			/* Write the address to the bus W bit*/
 			I2C_WRITE_BYTE(port, addr);
-			CPUTS("-ARW");
+			CPRINTS("-ARW-0x%02x", addr);
 		}
 		/* Completed handling START condition */
 		return;
@@ -324,6 +333,9 @@ void i2c_master_int_handler (int port)
 	volatile struct i2c_status *p_status = i2c_stsobjs + port;
 	/* Condition 1 : A Bus Error has been identified */
 	if (IS_BIT_SET(NPCX_SMBST(port), NPCX_SMBST_BER)) {
+		/* Generate a STOP condition */
+		I2C_STOP(port);
+		CPUTS("-SP");
 		/* Clear BER Bit */
 		SET_BIT(NPCX_SMBST(port), NPCX_SMBST_BER);
 		/* Set error code */
@@ -336,6 +348,9 @@ void i2c_master_int_handler (int port)
 
 	/* Condition 2: A negative acknowledge has occurred */
 	if (IS_BIT_SET(NPCX_SMBST(port), NPCX_SMBST_NEGACK)) {
+		/* Generate a STOP condition */
+		I2C_STOP(port);
+		CPUTS("-SP");
 		/* Clear NEGACK Bit */
 		SET_BIT(NPCX_SMBST(port), NPCX_SMBST_NEGACK);
 		/* Set error code */
@@ -379,11 +394,19 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + port;
 
-	if (port < 0 || port >= i2c_ports_used)
-		return EC_ERROR_INVAL;
-
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
+
+	interrupt_disable();
+	/* make sure bus is not occupied by the other task */
+	if (p_status->task_waiting != TASK_ID_INVALID) {
+		interrupt_enable();
+		return EC_ERROR_BUSY;
+	}
+
+	/* Assign current task ID */
+	p_status->task_waiting = task_get_current();
+	interrupt_enable();
 
 	/* Copy data to port struct */
 	p_status->flags       = flags;
@@ -402,7 +425,6 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	p_status->idx_buf     = 0;
 	p_status->err_code    = SMB_OK;
 
-
 	/* Make sure we're in a good state to start */
 	if ((flags & I2C_XFER_START) && (i2c_bus_busy(port)
 			|| (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
@@ -418,9 +440,6 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_INTEN);
 
 	CPUTS("\n");
-
-	/* Assign current task ID */
-	p_status->task_waiting = task_get_current();
 
 	/* Start master transaction */
 	i2c_master_transaction(port);
@@ -485,12 +504,11 @@ int i2c_raw_get_sda(int port)
 /* Hooks */
 static void i2c_freq_changed(void)
 {
-	/* I2C is under APB2 */
-	int freq;
-	int port;
+	int freq, i;
 
-	for (port = 0; port < i2c_ports_used; port++) {
-		int bus_freq = i2c_ports[port].kbps;
+	for (i = 0; i < i2c_ports_used; i++) {
+		int bus_freq = i2c_ports[i].kbps;
+		int port = i2c_ports[i].port;
 		int scl_time;
 
 		/* SMB0/1 use core clock & SMB2/3 use apb2 clock */
@@ -520,7 +538,7 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);
 
 static void i2c_init(void)
 {
-	int port = 0;
+	int i;
 	/* Configure pins from GPIOs to I2Cs */
 	gpio_config_module(MODULE_I2C, 1);
 
@@ -533,16 +551,37 @@ static void i2c_init(void)
 	/*
 	 * initialize smb status and register
 	 */
-	for (port = 0; port < i2c_ports_used; port++) {
+	for (i = 0; i < i2c_ports_used; i++) {
+		int port = i2c_ports[i].port;
 		volatile struct i2c_status *p_status = i2c_stsobjs + port;
 		/* Configure pull-up for SMB interface pins */
-#ifndef SMB_SUPPORT18V
-		/* Enable 3.3V pull-up */
-		SET_BIT(NPCX_DEVPU0, port);
+
+		/* Enable 3.3V pull-up or turn to 1.8V support */
+		if (port == NPCX_I2C_PORT0) {
+#if NPCX_I2C0_BUS2
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 1));
 #else
-		/* Set GPIO Pin voltage judgment to 1.8V */
-		SET_BIT(NPCX_LV_GPIO_CTL1, port+1);
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
 #endif
+		} else if (port == NPCX_I2C_PORT2) {
+#ifdef NPCX_I2C2_1P8V
+			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SC2_0_LV);
+			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SD2_0_LV);
+#else
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+#endif
+		} else if (port == NPCX_I2C_PORT3) {
+#ifdef NPCX_I2C3_1P8V
+			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SC3_0_LV);
+			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SD3_0_LV);
+#else
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+#endif
+
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+		} else {
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+		}
 
 		/* Enable module - before configuring CTL1 */
 		SET_BIT(NPCX_SMBCTL2(port), NPCX_SMBCTL2_ENABLE);

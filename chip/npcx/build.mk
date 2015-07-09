@@ -32,3 +32,23 @@ chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 npcx-flash-fw=chip/npcx/spiflashfw/ec_npcxflash
 npcx-flash-fw-bin=${out}/$(npcx-flash-fw).bin
 PROJECT_EXTRA+=${npcx-flash-fw-bin}
+
+# ECST tool is for filling the header used by booter of npcx EC
+show_esct_cmd=$(if $(V),,echo '  ECST   ' $(subst $(out)/,,$@) ; )
+
+# ECST options for header
+bld_ecst=${out}/util/ecst -usearmrst -mode bt -ph -i $(1) -o $(2) -nohcrc \
+-nofcrc -flashsize 8 -spimaxclk 50 -spireadmode dual 1> /dev/null
+
+# Replace original one with the flat file including header
+moveflat=mv -f $(1) $(2)
+
+# Commands for ECST
+cmd_ecst=$(show_esct_cmd)$(call moveflat,$@,$@.tmp);$(call bld_ecst,$@.tmp,$@)
+
+# Commands to append npcx header in ec.RO.flat
+cmd_org_ec_elf_to_flat = $(OBJCOPY) --set-section-flags .roshared=share \
+                         -O binary $(patsubst %.flat,%.elf,$@) $@
+cmd_npcx_ro_elf_to_flat=$(cmd_org_ec_elf_to_flat);$(cmd_ecst)
+cmd_ec_elf_to_flat = $(if $(filter $(out)/RO/ec.RO.flat, $@), \
+                     $(cmd_npcx_ro_elf_to_flat), $(cmd_org_ec_elf_to_flat) )

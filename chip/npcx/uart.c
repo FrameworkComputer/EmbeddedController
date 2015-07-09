@@ -101,6 +101,9 @@ void uart_write_char(char c)
 		;
 
 	NPCX_UTBUF = c;
+#ifdef CONFIG_LOW_POWER_IDLE
+	clock_refresh_console_in_use();
+#endif
 }
 
 int uart_read_char(void)

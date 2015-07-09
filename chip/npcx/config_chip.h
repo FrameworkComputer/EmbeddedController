@@ -19,8 +19,11 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 8192
 
-/* Interval between HOOK_TICK notifications */
-#define HOOK_TICK_INTERVAL_MS 250
+/*
+ * Interval between HOOK_TICK notifications
+ * Notice instant wake-up from deep-idle cannot exceed 200 ms
+ */
+#define HOOK_TICK_INTERVAL_MS 200
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Maximum number of deferrable functions */
@@ -46,12 +49,15 @@
 #define CONFIG_STACK_SIZE       4096
 
 /* non-standard task stack sizes */
-#define IDLE_TASK_STACK_SIZE    512
-#define LARGER_TASK_STACK_SIZE  768
-#define SMALLER_TASK_STACK_SIZE 384
+#define IDLE_TASK_STACK_SIZE		512
+#define LARGER_TASK_STACK_SIZE		640
+
+#define CHARGER_TASK_STACK_SIZE		640
+#define HOOKS_TASK_STACK_SIZE		640
+#define CONSOLE_TASK_STACK_SIZE		640
 
 /* Default task stack size */
-#define TASK_STACK_SIZE         512
+#define TASK_STACK_SIZE			512
 
 /* Address of RAM log used by Booter */
 #define ADDR_BOOT_RAMLOG        0x100C7FC0

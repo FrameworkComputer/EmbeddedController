@@ -34,9 +34,10 @@
 #define SUPPORT_LCT                      1
 #define SUPPORT_WDG                      1
 #define SUPPORT_HIB                      1
+#define SUPPORT_P80_SEG                  0 /* Note: it uses KSO10 & KSO11 */
 /* Switcher of debugging */
 #define DEBUG_I2C                        0
-#define DEBUG_TMR                        1
+#define DEBUG_TMR                        0
 #define DEBUG_WDG                        0
 #define DEBUG_GPIO                       1
 #define DEBUG_FAN                        0
@@ -45,7 +46,8 @@
 #define DEBUG_FLH                        0
 #define DEBUG_PECI                       0
 #define DEBUG_SHI                        1
-#define DEBUG_CLK                        1
+#define DEBUG_CLK                        0
+#define DEBUG_LPC                        0
 
 /* Modules Map */
 #define NPCX_MDC_BASE_ADDR               0x4000C000
@@ -78,7 +80,7 @@
 #define NPCX_PM_CH_BASE_ADDR(mdl)        (0x400C9000 + ((mdl) * 0x2000L))
 #define NPCX_SMB_BASE_ADDR(mdl)          ((mdl < 2) ? (0x40009000 + \
 					 ((mdl) * 0x2000L)) : \
-					 (0x400C0000 + ((mdl) * 0x2000L)))
+					 (0x400C0000 + ((mdl - 2) * 0x2000L)))
 
 /*
  * NPCX-IRQ numbers
@@ -151,7 +153,7 @@
 #define NPCX_IRQ0_NOUSED                 NPCX_IRQ_0
 #define NPCX_IRQ1_NOUSED                 NPCX_IRQ_1
 #define NPCX_IRQ_KBSCAN                  NPCX_IRQ_2
-#define NPCX_IRQ_PM_CHAN_OBF             NPCX_IRQ_3
+#define NPCX_IRQ_PM_CHAN_OBE             NPCX_IRQ_3
 #define NPCX_IRQ_PECI                    NPCX_IRQ_4
 #define NPCX_IRQ5_NOUSED                 NPCX_IRQ_5
 #define NPCX_IRQ_PORT80                  NPCX_IRQ_6
@@ -204,7 +206,7 @@
 #define NPCX_IRQ_WKINTG_1                NPCX_IRQ_53
 #define NPCX_IRQ_WKINTH_1                NPCX_IRQ_54
 #define NPCX_IRQ55_NOUSED                NPCX_IRQ_55
-#define NPCX_IRQ_KBC_OBF                 NPCX_IRQ_56
+#define NPCX_IRQ_KBC_OBE                 NPCX_IRQ_56
 #define NPCX_IRQ_SPI                     NPCX_IRQ_57
 #define NPCX_IRQ58_NOUSED                NPCX_IRQ_58
 #define NPCX_IRQ59_NOUSED                NPCX_IRQ_59
@@ -564,7 +566,13 @@ enum {
 #define NPCX_DEVALTC_TA2_SL2             6
 #define NPCX_DEVALTC_TB2_SL2             7
 
+/* Others bit definitions */
 #define NPCX_LFCGCALCNT_LPREG_CTL_EN     1
+
+#define NPCX_LV_GPIO_CTL1_SC2_0_LV       0
+#define NPCX_LV_GPIO_CTL1_SD2_0_LV       1
+#define NPCX_LV_GPIO_CTL1_SC3_0_LV       2
+#define NPCX_LV_GPIO_CTL1_SD3_0_LV       3
 
 /******************************************************************************/
 /* Development and Debug Support (DBG) Registers */
@@ -758,7 +766,8 @@ enum NPCX_PMC_PWDWN_CTL_T {
 			  (1 << NPCX_PWDWN_CTL2_PWM1_PD))
 #define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
-			 (1 << NPCX_PWDWN_CTL3_SMB2_PD))
+			 (1 << NPCX_PWDWN_CTL3_SMB2_PD) | \
+			 (1 << NPCX_PWDWN_CTL3_SMB3_PD))
 #define CGC_ADC_MASK     (1 << NPCX_PWDWN_CTL4_ADC_PD)
 #define CGC_PECI_MASK    (1 << NPCX_PWDWN_CTL4_PECI_PD)
 #define CGC_SPI_MASK     (1 << NPCX_PWDWN_CTL4_SPIP_PD)
@@ -886,8 +895,14 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define NPCX_SHIKMDI                      REG8(NPCX_KBC_BASE_ADDR + 0x00B)
 
 /* KBC register field */
-#define NPCX_HICTRL_OBFKIE               0
-#define NPCX_HICTRL_OBFMIE               1
+#define NPCX_HICTRL_OBFKIE               0 /* Automatic Serial IRQ1 for KBC */
+#define NPCX_HICTRL_OBFMIE               1 /* Automatic Serial IRQ12 for Mouse*/
+#define NPCX_HICTRL_OBFCIE               2 /* KBC OBE interrupt enable */
+#define NPCX_HICTRL_IBFCIE               3 /* KBC IBF interrupt enable */
+#define NPCX_HICTRL_PMIHIE               4 /* Automatic Serial IRQ11 for PMC1 */
+#define NPCX_HICTRL_PMIOCIE              5 /* PMC1 OBE interrupt enable */
+#define NPCX_HICTRL_PMICIE               6 /* PMC1 IBF interrupt enable */
+#define NPCX_HICTRL_FW_OBF               7 /* Firmware control over OBF */
 
 /******************************************************************************/
 /* PM Channel Registers */
@@ -906,6 +921,7 @@ enum NPCX_PMC_PWDWN_CTL_T {
 /* PM Channel register field */
 #define NPCX_HIPMIE_SCIE                 1
 #define NPCX_HIPMIE_SMIE                 2
+#define NPCX_HIPMCTL_IBFIE               0
 
 /*
  * PM Channel enumeration
@@ -1296,16 +1312,6 @@ static inline int uart_is_wakeup_from_gpio(void)
 #endif
 }
 
-/* This routine clear pending bit of GPIO wake-up functionality */
-static inline void uart_clear_wakeup_event(void)
-{
-#if NPCX_UART_MODULE2
-	SET_BIT(NPCX_WKPND(1, 6), 4);
-#else
-	SET_BIT(NPCX_WKPND(1, 1), 0);
-#endif
-}
-
 /* This routine checks wake-up functionality from GPIO is enabled or not */
 static inline int uart_is_enable_wakeup(void)
 {
@@ -1340,8 +1346,10 @@ static inline int npcx_is_uart(void)
 static inline void npcx_uart2gpio(void)
 {
 #if NPCX_UART_MODULE2
+	UPDATE_BIT(NPCX_WKEDG(1, 6), 4, 1);
 	CLEAR_BIT(NPCX_DEVALT(0x0C), NPCX_DEVALTC_UART_SL2);
 #else
+	UPDATE_BIT(NPCX_WKEDG(1, 1), 0, 1);
 	CLEAR_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
 #endif
 }

@@ -34,6 +34,14 @@ static volatile uint32_t evt_cnt_us_dbg;
 static volatile uint32_t cur_cnt_us_dbg;
 #endif
 
+#if !(DEBUG_TMR)
+#define CPUTS(...)
+#define CPRINTS(...)
+#else
+#define CPUTS(outstr) cputs(CC_CLOCK, outstr)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#endif
+
 /*****************************************************************************/
 /* Internal functions */
 void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source)
@@ -57,7 +65,7 @@ void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source)
 void __hw_clock_event_set(uint32_t deadline)
 {
 	float    inv_evt_tick = INT_32K_CLOCK/(float)SECOND;
-	uint32_t evt_cnt_us;
+	int32_t  evt_cnt_us;
 	/* Is deadline min value? */
 	if (evt_expired_us != 0 && evt_expired_us < deadline)
 		return;
@@ -68,6 +76,9 @@ void __hw_clock_event_set(uint32_t deadline)
 #if DEBUG_TMR
 	evt_cnt_us_dbg = deadline - __hw_clock_source_read();
 #endif
+	/* Deadline is behind current timer */
+	if (evt_cnt_us < 0)
+		evt_cnt_us = 1;
 
 	/* Event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
@@ -76,8 +87,11 @@ void __hw_clock_event_set(uint32_t deadline)
 	 * It must exceed evt_expired_us for process_timers function
 	 */
 	evt_cnt = ((uint32_t)(evt_cnt_us*inv_evt_tick)+1)-1;
-	if (evt_cnt > TICK_EVT_MAX_CNT)
+	if (evt_cnt > TICK_EVT_MAX_CNT) {
+		CPRINTS("Event overflow! 0x%08x, us is %d\r\n",
+				evt_cnt, evt_cnt_us);
 		evt_cnt = TICK_EVT_MAX_CNT;
+	}
 	NPCX_ITCNT16(ITIM_EVENT_NO) = evt_cnt;
 
 	/* Event module enable */

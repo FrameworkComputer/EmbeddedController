@@ -551,20 +551,34 @@ void gpio_pre_init(void)
 	int flags;
 	int i, j;
 
-	uint32_t	ksi_mask = (~((1<<KEYBOARD_ROWS)-1)) & KB_ROW_MASK;
-	uint32_t	ks0_mask = (~((1<<KEYBOARD_COLS)-1)) & KB_COL_MASK;
+	uint32_t ksi_mask = (~((1<<KEYBOARD_ROWS)-1)) & KB_ROW_MASK;
+	uint32_t kso_mask = ((~((1<<KEYBOARD_COLS)-1))
+			<< CONFIG_KEYBOARD_KSO_BASE) & KB_COL_MASK;
 
-	/* Set necessary pin mux first */
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+	kso_mask |= 1 << (CONFIG_KEYBOARD_KSO_BASE + 2);
+#endif
+
+	/* Set necessary pin mux to GPIO first */
 	/* Pin_Mux for KSO0-17 & KSI0-7 */
 	NPCX_DEVALT(ALT_GROUP_7)  = (uint8_t)(ksi_mask);
-	NPCX_DEVALT(ALT_GROUP_8)  = (uint8_t)(ks0_mask);
-	NPCX_DEVALT(ALT_GROUP_9)  = (uint8_t)(ks0_mask >> 8);
-	NPCX_DEVALT(ALT_GROUP_A) |= (uint8_t)(ks0_mask >> 16);
+	NPCX_DEVALT(ALT_GROUP_8)  = (uint8_t)(kso_mask);
+	NPCX_DEVALT(ALT_GROUP_9)  = (uint8_t)(kso_mask >> 8);
+	NPCX_DEVALT(ALT_GROUP_A) |= (uint8_t)(kso_mask >> 16);
 
 	/* Pin_Mux for FIU/SPI (set to GPIO) */
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_GPIO_NO_SPIP);
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_NO_F_SPI);
 
+	/* Pin_Mux for PWRGD */
+	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_NO_PWRGD);
+
+	/* Pin_Mux for PECI */
+#ifndef CONFIG_PECI
+	SET_BIT(NPCX_DEVALT(0xA), NPCX_DEVALTA_NO_PECI_EN);
+#endif
+
+	/* Pin_Mux for LPC & SHI */
 #ifdef CONFIG_SHI
 	/* Switching to eSPI mode for SHI interface */
 	NPCX_DEVCNT |= 0x08;

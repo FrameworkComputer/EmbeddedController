@@ -196,22 +196,18 @@ void clock_uart2gpio(void)
 		/* Set to GPIO */
 		npcx_uart2gpio();
 		/* Enable MIWU for GPIO (UARTRX) */
-		npcx_enable_wakeup(1);
-		/* Clear Pending bit of GPIO (UARTRX) */
-		npcx_clear_wakeup_event();
+		uart_enable_wakeup(1);
 	}
 }
 
 void clock_gpio2uart(void)
 {
 	/* Is Pending bit of GPIO (UARTRX) */
-	if (npcx_is_wakeup_from_gpio()) {
-		/* Clear Pending bit of GPIO (UARTRX) */
-		uart_clear_wakeup_event();
+	if (uart_is_wakeup_from_gpio()) {
 		/* Refresh console in-use timer */
 		clock_refresh_console_in_use();
 		/* Disable MIWU for GPIO (UARTRX) */
-		uart_enable_miwu_wakeup(0);
+		uart_enable_wakeup(0);
 		/* Go back CR_SIN*/
 		npcx_gpio2uart();
 		/* Enable uart again */

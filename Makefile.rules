@@ -44,7 +44,7 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
 cmd_elf_to_flat = $(OBJCOPY) -O binary $(patsubst %.flat,%.elf,$@) $@
 # Allow the .roshared section to overlap other sections (itself)
-cmd_ec_elf_to_flat = $(OBJCOPY) --set-section-flags .roshared=share \
+cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share \
 			-O binary $(patsubst %.flat,%.elf,$@) $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@

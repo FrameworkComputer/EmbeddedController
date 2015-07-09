@@ -8,7 +8,7 @@
 /********************** Inputs with interrupt handlers are first for efficiency **********************/
 /* TODO: Redefine debug 2 inputs */
 GPIO_INT(RECOVERY_L,       PIN(0, 0), GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
-GPIO_INT(WP_L,             PIN(9, 3), GPIO_PULL_DOWN | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
+GPIO_INT(WP_L,             PIN(9, 3), GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */
 
 /* For testing keyboard commands, we need the following 4 GPIOs */
 /* TODO: Redefine 4 inputs */
@@ -52,6 +52,7 @@ ALTERNATE(PIN_MASK(B, 0x30), 1,  MODULE_I2C,         0)    /* I2C0SDA/I2C0SCL   
 #endif
 ALTERNATE(PIN_MASK(8, 0x80), 1,  MODULE_I2C,         0)    /* I2C1SDA                 GPIO87       */
 ALTERNATE(PIN_MASK(9, 0x07), 1,  MODULE_I2C,         0)    /* I2C1SCL/I2C2SDA/I2C2SCL GPIO90/91/92 */
+ALTERNATE(PIN_MASK(D, 0x03), 1,  MODULE_I2C,         0)    /* I2C3SDA/I2C3SCL         GPIOD0/D1    */
 ALTERNATE(PIN_MASK(4, 0x38), 1,  MODULE_ADC,         0)    /* ADC                     GPIO45/44/43 */
 ALTERNATE(PIN_MASK(A, 0x0A), 1,  MODULE_SPI,         0)    /* SPIP_MOSI/SPIP_SCLK     GPIOA3/A1	   */
 ALTERNATE(PIN_MASK(9, 0x20), 1,  MODULE_SPI,         0)    /* SPIP_MISO               GPIO95       */

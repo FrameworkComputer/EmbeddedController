@@ -66,11 +66,30 @@ extern int __task_start(int *task_stack_ready);
 void __idle(void)
 {
 	while (1) {
+#ifdef CHIP_NPCX
+		/*
+		 * TODO (ML): A interrupt that occurs shortly before entering
+		 * idle mode starts getting services while the Core transitions
+		 * into idle mode. The results in a hard fault when the Core,
+		 * shortly therefore, resumes execution on exiting idle mode.
+		 * Workaround: Replace the idle function with the followings
+		 */
+		asm (
+			"cpsid i\n"             /* Disable interrupt */
+			"push {r0-r5}\n"        /* Save needed registers */
+			"ldr r0, =0x100A8000\n" /* Set r0 to a valid RAM addr */
+			"wfi\n"                 /* Wait for int to enter idle */
+			"ldm r0, {r0-r5}\n"     /* Add a delay after WFI */
+			"pop {r0-r5}\n" /* Restore regs before enabling ints */
+			"cpsie i\n"             /* Enable interrupts */
+		);
+#else
 		/*
 		 * Wait for the next irq event.  This stops the CPU clock
 		 * (sleep / deep sleep, depending on chip config).
 		 */
 		asm("wfi");
+#endif
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */

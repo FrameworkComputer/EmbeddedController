@@ -27,7 +27,7 @@
 
 
 /* PECI Time-out */
-#define PECI_DONE_TIMEOUT_US  (100*MSEC)
+#define PECI_DONE_TIMEOUT_US  (10*MSEC)
 /* Task Event for PECI */
 #define TASK_EVENT_PECI_DONE  TASK_EVENT_CUSTOM(1<<26)
 
