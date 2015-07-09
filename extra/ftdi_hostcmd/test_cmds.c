@@ -14,9 +14,10 @@
 
 #include "ec_commands.h"
 
+static int opt_verbose;
+
 /* Communication handle */
 static struct mpsse_context *mpsse;
-
 
 /* enum ec_status meaning */
 static const char *ec_strerr(enum ec_status r)
@@ -48,12 +49,11 @@ static const char *ec_strerr(enum ec_status r)
 
 
 /****************************************************************************
- * TODO: Add an option to enable this stuff to help with debugging
+ * Debugging output
  */
 
 #define LINELEN 16
 
-#if 0
 static void showline(uint8_t *buf, int len)
 {
 	int i;
@@ -68,12 +68,14 @@ static void showline(uint8_t *buf, int len)
 		       (buf[i] >= ' ' && buf[i] <= '~') ? buf[i] : '.');
 	printf("\n");
 }
-#endif
 
 static void show(const char *fmt, uint8_t *buf, int len)
 {
-#if 0
 	int i, m, n;
+
+	if (!opt_verbose)
+		return;
+
 	printf(fmt, len);
 
 	m = len / LINELEN;
@@ -83,7 +85,6 @@ static void show(const char *fmt, uint8_t *buf, int len)
 		showline(buf + i * LINELEN, LINELEN);
 	if (n)
 		showline(buf + m * LINELEN, n);
-#endif
 }
 
 /****************************************************************************
@@ -348,6 +349,9 @@ static int probe_v3(void)
 	memset(&resp, 0, sizeof(resp));
 	memset(&info, 0, sizeof(info));
 
+	if (opt_verbose)
+		printf("Trying EC_CMD_GET_PROTOCOL_INFO...\n");
+
 	ret = send_cmd(EC_CMD_GET_PROTOCOL_INFO, 0,
 		       0, 0,
 		       &resp,
@@ -518,7 +522,7 @@ static void show_command(uint16_t c)
 	printf("  %02x  %s\n", c, desc);
 }
 
-static void scan_commands(void)
+static void scan_commands(uint16_t start, uint16_t stop)
 {
 	struct ec_params_get_cmd_versions_v1 q_vers;
 	struct ec_response_get_cmd_versions r_vers;
@@ -528,30 +532,74 @@ static void scan_commands(void)
 	memset(&ec_resp, 0, sizeof(ec_resp));
 
 	printf("Supported host commands:\n");
-	for (i = 0; i < 0x201; i++) {
+	for (i = start; i <= stop; i++) {
+
+		if (opt_verbose)
+			printf("Querying CMD %02x\n", i);
+
 		q_vers.cmd = i;
 		if (0 != send_cmd(EC_CMD_GET_CMD_VERSIONS, 1,
 				  &q_vers, sizeof(q_vers),
 				  &ec_resp,
 				  &r_vers, sizeof(r_vers))) {
-			printf("query failed on cmd %d - aborting\n", i);
+			printf("query failed on cmd %02x - aborting\n", i);
 			return;
 		}
 
-		if (ec_resp.result == EC_RES_SUCCESS)
+		switch (ec_resp.result) {
+		case EC_RES_SUCCESS:
+			if (opt_verbose)
+				printf("Yes: ");
 			show_command(i);
-		else if (ec_resp.result != EC_RES_INVALID_PARAM)
-			printf("lookup of cmd 0x%02x returned %d %s\n", i,
+			break;
+		case EC_RES_INVALID_PARAM:
+			if (opt_verbose)
+				printf("No\n");
+			break;
+		default:
+			printf("lookup of cmd %02x returned %d %s\n", i,
 			       ec_resp.result,
 			       ec_strerr(ec_resp.result));
+		}
 	}
 }
 
 /****************************************************************************/
 
+static void usage(char *progname)
+{
+	printf("Usage: %s [-v] [start [stop]]\n", progname);
+}
+
 int main(int argc, char *argv[])
 {
 	int retval = 1;
+	int errorcnt = 0;
+	int i;
+	uint16_t start = cmd_table[0].cmd;
+	uint16_t stop = cmd_table[ARRAY_SIZE(cmd_table) - 1].cmd;
+
+	while ((i = getopt(argc, argv, ":v")) != -1) {
+		switch (i) {
+		case 'v':
+			opt_verbose++;
+			break;
+		case '?':
+			printf("unrecognized option: -%c\n", optopt);
+			errorcnt++;
+			break;
+		}
+	}
+	if (errorcnt) {
+		usage(argv[0]);
+		return 1;
+	}
+
+	/* Range (no error checking) */
+	if (optind < argc)
+		start = (uint16_t)strtoul(argv[optind++], 0, 0);
+	if (optind < argc)
+		stop = (uint16_t)strtoul(argv[optind++], 0, 0);
 
 	/* Find something to talk to */
 	mpsse = MPSSE(SPI0, 2000000, 0);
@@ -563,7 +611,7 @@ int main(int argc, char *argv[])
 	if (0 != probe_v3())
 		goto out;
 
-	scan_commands();
+	scan_commands(start, stop);
 
 	retval = 0;
 out:
