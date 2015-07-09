@@ -11,14 +11,6 @@
 #include "sps.h"
 #include "task.h"
 
-/* SPS Control Mode */
-enum sps_mode {
-	SPS_GENERIC_MODE = 0,
-	SPS_SWETLAND_MODE = 1,
-	SPS_ROM_MODE = 2,
-	SPS_UNDEF_MODE = 3,
-};
-
 /*
  * Hardware pointers use one extra bit to indicate wrap around. This means we
  * can fill the FIFO completely, but it also means that the FIFO index and the
@@ -127,18 +119,16 @@ int sps_transmit(uint8_t *data, size_t data_size)
 /*
  * Disable interrupts, clear and reset the HW FIFOs.
  */
-static void sps_reset(void)
-{
-	enum sps_mode mode = SPS_GENERIC_MODE;
-	enum spi_clock_mode clk_mode = SPI_CLOCK_MODE0;
+static void sps_reset(enum spi_clock_mode m_spi, enum sps_mode m_sps)
 
+{
 	/* Disable All Interrupts */
 	GREG32(SPS, ICTRL) = 0;
 
-	GWRITE_FIELD(SPS, CTRL, MODE, mode);
+	GWRITE_FIELD(SPS, CTRL, MODE, m_sps);
 	GWRITE_FIELD(SPS, CTRL, IDLE_LVL, 0);
-	GWRITE_FIELD(SPS, CTRL, CPHA, clk_mode & 1);
-	GWRITE_FIELD(SPS, CTRL, CPOL, (clk_mode >> 1) & 1);
+	GWRITE_FIELD(SPS, CTRL, CPHA, m_spi & 1);
+	GWRITE_FIELD(SPS, CTRL, CPOL, (m_spi >> 1) & 1);
 	GWRITE_FIELD(SPS, CTRL, TXBITOR, 1); /* MSB first */
 	GWRITE_FIELD(SPS, CTRL, RXBITOR, 1); /* MSB first */
 
@@ -260,13 +250,20 @@ void sps_unregister_rx_handler(void)
 {
 	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
 	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
-	sps_reset();
 	sps_rx_handler = NULL;
+
+	/* The modes don't really matter since we're disabling interrupts.
+	 * Mostly we just want to reset the FIFOs. */
+	sps_reset(SPI_CLOCK_MODE0, SPS_GENERIC_MODE);
 }
 
-void sps_register_rx_handler(rx_handler_fn func)
+void sps_register_rx_handler(enum spi_clock_mode m_spi,
+			     enum sps_mode m_sps,
+			     rx_handler_fn func)
 {
-	sps_unregister_rx_handler();
+	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
+	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
+	sps_reset(m_spi, m_sps);
 	sps_rx_handler = func;
 	sps_enable();
 	task_enable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);

@@ -16,6 +16,15 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "spi.h"
+
+/* SPS Control Mode */
+enum sps_mode {
+	SPS_GENERIC_MODE = 0,
+	SPS_SWETLAND_MODE = 1,
+	SPS_ROM_MODE = 2,
+	SPS_UNDEF_MODE = 3,
+};
 
 /**
  * Every RX byte simultaneously sends a TX byte, no matter what. This
@@ -44,16 +53,24 @@ int sps_transmit(uint8_t *data, size_t data_size);
  *
  * The handler is also called when the chip select deasserts, in case any
  * cleanup is required.
+ *
+ * @param data        Pointer to the incoming data, in its buffer
+ * @param data_size   Number of new bytes visible without wrapping
+ * @param cs_enabled  True if the chip select is still enabled
  */
-typedef void (*rx_handler_fn)(uint8_t *data, size_t data_size, int cs_status);
+typedef void (*rx_handler_fn)(uint8_t *data, size_t data_size, int cs_enabled);
 
 /**
  * Register the RX handler function. This will reset and disable the RX FIFO,
  * replace any previous handler, then enable the RX FIFO.
  *
+ * @param m_spi       SPI clock polarity and phase
+ * @param m_sps       SPS interface protocol
  * @param func        RX handler function
  */
-void sps_register_rx_handler(rx_handler_fn func);
+void sps_register_rx_handler(enum spi_clock_mode m_spi,
+			     enum sps_mode m_sps,
+			     rx_handler_fn func);
 
 /**
  * Unregister the RX handler. This will reset and disable the RX FIFO.
