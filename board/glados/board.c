@@ -17,7 +17,6 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lid_switch.h"
-#include "motion_sense.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -173,11 +172,6 @@ void board_reset_pd_mcu(void)
 	usleep(100);
 	gpio_set_level(GPIO_PD_RST_L, 1);
 }
-
-struct motion_sensor_t motion_sensors[] = {
-
-};
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
