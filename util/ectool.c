@@ -3602,7 +3602,7 @@ static int cmd_motionsense(int argc, char **argv)
 			resp->sensor_offset.offset[0],
 			resp->sensor_offset.offset[1],
 			resp->sensor_offset.offset[2]);
-		if (resp->sensor_offset.temp ==
+		if ((uint16_t)resp->sensor_offset.temp ==
 		    EC_MOTION_SENSE_INVALID_CALIB_TEMP)
 			printf("temperature at calibration unknown\n");
 		else
