@@ -290,22 +290,20 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
 static int command_sps(int argc, char **argv)
 {
 	if (argc > 1) {
-		if (!strcasecmp(argv[1], "reset") ||
-		    !strcasecmp(argv[1], "on"))
-			sps_hc_enable();
-		else if (!strcasecmp(argv[1], "off"))
-			sps_hc_disable();
-		else
+		if (0 != strcasecmp(argv[1], "off"))
 			return EC_ERROR_PARAM1;
+
+		sps_hc_disable();
+		ccprintf("SPS host commands disabled\n");
+		return EC_SUCCESS;
 	}
 
-	ccprintf("state=%d rxbuf_count=%d rxbuf_needed=%d, discard=%d\n",
-		 state, rxbuf_count, rxbuf_needed, discard_response);
-
+	sps_hc_enable();
+	ccprintf("SPS host commands enabled\n");
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(sps, command_sps,
-			"[reset|off|on]",
-			"With no args, print some info",
+DECLARE_CONSOLE_COMMAND(spshc, command_sps,
+			"[off]",
+			"Enable (default) or disable SPS host commands",
 			NULL);
