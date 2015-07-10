@@ -1,5 +1,6 @@
 build/
 private/
+private-cr51/
 *.swp
 *.pyc
 tags
