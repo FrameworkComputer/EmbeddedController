@@ -5,14 +5,14 @@
  * found in the LICENSE file.
  */
 
-GPIO_INT(LID_OPEN,          PIN(27),  GPIO_INT_BOTH_DSLEEP,                      lid_interrupt)          /* Lid switch */
-GPIO_INT(AC_PRESENT,        PIN(30),  GPIO_INT_BOTH_DSLEEP,                      extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
-GPIO_INT(WP_L,              PIN(33),  GPIO_INT_BOTH,                             switch_interrupt)       /* Write protect input */
-GPIO_INT(POWER_BUTTON_L,    PIN(35),  GPIO_INT_BOTH_DSLEEP,                      power_button_interrupt) /* Power button */
-GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH,                             power_signal_interrupt) /* RSMRST_N_PWRGD from power logic */
-GPIO_INT(ALL_SYS_PGOOD,     PIN(130), GPIO_INT_BOTH_DSLEEP,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
-GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S4# signal from PCH */
-GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S3# signal from PCH */
+GPIO_INT(LID_OPEN,          PIN(27),  GPIO_INT_BOTH,                      lid_interrupt)          /* Lid switch */
+GPIO_INT(AC_PRESENT,        PIN(30),  GPIO_INT_BOTH,                      extpower_interrupt)     /* BC_ACOK / EC_ACIN - to know if battery or AC connected */
+GPIO_INT(WP_L,              PIN(33),  GPIO_INT_BOTH,                      switch_interrupt)       /* Write protect input */
+GPIO_INT(POWER_BUTTON_L,    PIN(35),  GPIO_INT_BOTH,                      power_button_interrupt) /* Power button */
+GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH,                      power_signal_interrupt) /* RSMRST_N_PWRGD from power logic */
+GPIO_INT(ALL_SYS_PGOOD,     PIN(130), GPIO_INT_BOTH,                      power_signal_interrupt) /* ALL_SYS_PWRGD from power logic */
+GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S4# signal from PCH */
+GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH | GPIO_PULL_UP,       power_signal_interrupt) /* SLP_S3# signal from PCH */
 
 GPIO(NC_012,            PIN(12), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 GPIO(USB_ILIM_SEL,      PIN(13), GPIO_OUT_HIGH)                   /* USB current control */
@@ -82,7 +82,7 @@ GPIO(CPU_PROCHOT,       PIN(151), GPIO_OUT_LOW)
 GPIO(KBD_IRQ_L,         PIN(152), GPIO_ODR_HIGH)                   /* Negative edge triggered irq. */
 GPIO(BOARD_VERSION1,    PIN(154), GPIO_INPUT)                      /* Board ID */
 GPIO(CORE_PWROK,        PIN(155), GPIO_ODR_HIGH)                   /* CORE_PWR_OK_R */
-GPIO(LID_OPEN2,         PIN(156), GPIO_INT_BOTH_DSLEEP)            /* LID_OPEN_OUT2_R */
+GPIO(LID_OPEN2,         PIN(156), GPIO_INT_BOTH)                   /* LID_OPEN_OUT2_R */
 GPIO(PCH_SUSPWRDNACK,   PIN(157), GPIO_INT_FALLING)                /* PMC SUSPWRDNACK signal from SOC to EC */
 
 GPIO(PCH_PWRBTN_L,      PIN(160), GPIO_OUT_HIGH)                   /* Power button output to PCH */
@@ -95,7 +95,7 @@ GPIO(SMC_SHUTDOWN,      PIN(203), GPIO_OUT_LOW)                    /* Shutdown s
 GPIO(NC_204,            PIN(204), GPIO_INPUT | GPIO_PULL_UP)       /* NC */
 
 GPIO(SUSPWRDNACK_SOC_EC,PIN(210), GPIO_OUT_LOW)                    /* SUSPWRDNACK signal from EC to MOIC device */
-GPIO(PCH_SLP_SX_L,      PIN(211), GPIO_INT_BOTH_DSLEEP)            /* Sleep SOIX signal from SOC to EC */
+GPIO(PCH_SLP_SX_L,      PIN(211), GPIO_INT_BOTH)                   /* Sleep SOIX signal from SOC to EC */
 
 /* Alternate functions GPIO definition */
 ALTERNATE(PIN_MASK(16, 0x24),   1,      MODULE_UART,            0)                      /* UART0 */

@@ -5,21 +5,21 @@
  * found in the LICENSE file.
  */
 
-GPIO_INT(LID_OPEN,          PIN(27), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, lid_interrupt)
-GPIO_INT(AC_PRESENT,        PIN(30), GPIO_INT_BOTH_DSLEEP, extpower_interrupt)
+GPIO_INT(LID_OPEN,          PIN(27), GPIO_INT_BOTH | GPIO_PULL_UP, lid_interrupt)
+GPIO_INT(AC_PRESENT,        PIN(30), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(WP_L,              PIN(33), GPIO_INT_BOTH,        switch_interrupt)
 /* Buffered power button input from PMIC / ROP_EC_PWR_BTN_L_R */
-GPIO_INT(POWER_BUTTON_L,    PIN(35), GPIO_INT_BOTH_DSLEEP, power_button_interrupt)
+GPIO_INT(POWER_BUTTON_L,    PIN(35), GPIO_INT_BOTH, power_button_interrupt)
 /* RSMRST from PMIC */
 GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, power_signal_interrupt)
-GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S0_L,      PIN(211), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
 GPIO_INT(PCH_SLP_SUS_L,     PIN(12),  GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
 GPIO_INT(VOLUME_UP_L,       PIN(31),  GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(VOLUME_DOWN_L,     PIN(47),  GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(PMIC_INT_L,        PIN(50),  GPIO_INT_FALLING, power_signal_interrupt)
-GPIO_INT(PD_MCU_INT,        PIN(122), GPIO_INT_FALLING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
+GPIO_INT(PD_MCU_INT,        PIN(122), GPIO_INT_FALLING, pd_mcu_interrupt)
 GPIO_INT(USB_C0_VBUS_WAKE_L,PIN(152), GPIO_INT_BOTH, vbus0_evt)
 GPIO_INT(USB_C1_VBUS_WAKE_L,PIN(123), GPIO_INT_BOTH, vbus1_evt)
 GPIO_INT(USB_C0_BC12_INT_L, PIN(124), GPIO_INT_FALLING, usb0_evt)
