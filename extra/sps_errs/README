@@ -1,0 +1,28 @@
+SETUP:
+
+  Attach an EC to the build host using an FTDI USB-to-SPI adapter.
+
+BUILD:
+
+  make
+  ./prog
+
+
+USAGE:
+
+  Usage: ./prog [-v] [-c BYTES]
+
+  This sends a EC_CMD_HELLO host command. The -c option can
+  be used to truncate the exchange early, to see how the EC
+  deals with the interruption.
+
+NOTE:
+
+  Ubuntu Trusty uses an ancient version of libftdi.
+
+  If building outside of the Chromium chroot, you'll probably want to grab the
+  latest libftdi1-1.2.tar.bz2 from
+
+    http://www.intra2net.com/en/developer/libftdi/
+
+  and install it into /usr instead.
