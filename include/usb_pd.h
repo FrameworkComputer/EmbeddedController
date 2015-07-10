@@ -21,6 +21,8 @@
 #if CONFIG_USB_PD_PORT_COUNT == 1
 #ifdef HAS_TASK_PD
 #define PD_PORT_TO_TASK_ID(port) TASK_ID_PD
+#elif defined(HAS_TASK_PD_C0)
+#define PD_PORT_TO_TASK_ID(port) TASK_ID_PD_C0
 #else
 #define PD_PORT_TO_TASK_ID(port) -1 /* dummy task ID */
 #endif
