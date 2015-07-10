@@ -332,13 +332,6 @@ void board_set_charge_limit(int charge_ma)
 					   CONFIG_CHARGER_INPUT_CURRENT));
 }
 
-/* Charge manager callback function, called on delayed override timeout */
-void board_charge_manager_override_timeout(void)
-{
-	/* TODO: what to do here? */
-}
-DECLARE_DEFERRED(board_charge_manager_override_timeout);
-
 /**
  * Set type-C port USB2.0 switch state.
  *

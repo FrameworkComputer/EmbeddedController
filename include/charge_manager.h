@@ -77,7 +77,4 @@ int board_set_active_charge_port(int charge_port);
 /* Set the charge current limit. */
 void board_set_charge_limit(int charge_ma);
 
-/* Called on delayed override timeout */
-void board_charge_manager_override_timeout(void);
-
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

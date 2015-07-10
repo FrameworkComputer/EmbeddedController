@@ -36,6 +36,11 @@ static unsigned int charge_port_to_reject = CHARGE_PORT_NONE;
 static int new_power_request[CONFIG_USB_PD_PORT_COUNT];
 static int power_role[CONFIG_USB_PD_PORT_COUNT];
 
+/* Callback function from charge_manager to send host event */
+void pd_send_host_event(int mask)
+{
+}
+
 /* Callback functions called by CM on state change */
 void board_set_charge_limit(int charge_ma)
 {

@@ -320,13 +320,6 @@ void usb_board_disconnect(void)
 	gpio_set_level(GPIO_USB_PU_EN_L, 1);
 }
 
-/* Charge manager callback function, called on delayed override timeout */
-void board_charge_manager_override_timeout(void)
-{
-	/* TODO: Implement me! */
-}
-DECLARE_DEFERRED(board_charge_manager_override_timeout);
-
 /**
  * Set active charge port -- only one port can be active at a time.
  *

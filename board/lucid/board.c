@@ -138,12 +138,6 @@ void board_set_charge_limit(int charge_ma)
 		CPRINTS("Failed to set input current limit for PD");
 }
 
-/* Charge manager callback function, called on delayed override timeout */
-void board_charge_manager_override_timeout(void)
-{
-}
-DECLARE_DEFERRED(board_charge_manager_override_timeout);
-
 /**
  * Custom physical check of battery presence.
  */
