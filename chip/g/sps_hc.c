@@ -13,6 +13,22 @@
 /*
  * This implements EC host commands over the SPI bus, using the Cr50 SPS (SPI
  * slave) controller.
+ *
+ * Host commands are communicated using software flow-control, because most of
+ * the embedded controllers either aren't fast enough or don't have any support
+ * for hardware flow-control.
+ *
+ * Every SPI transaction is bi-directional, so when the AP sends commands to
+ * the EC, a default "dummy" byte is returned at the same time. The EC
+ * preconfigures that default response byte to indicate its status (ready,
+ * busy, waiting for more input, etc). Once the AP has sent a complete command
+ * message, it continues clocking bytes to the EC (which the EC ignores) and
+ * just looks at the response byte that comes back. Once the EC has parsed the
+ * command and is ready to reply, it sends a "start of frame" byte, followed by
+ * the actual response. The AP continues to read and ignore bytes from the EC
+ * until it sees the start of frame byte, and then it knows that the EC's
+ * response is starting with the next byte. Refer to include/ec_commands.h for
+ * more details.
  */
 
 /* Console output macros */
@@ -126,7 +142,6 @@ static void hc_rx_handler(uint8_t *data, size_t data_size, int cs_enabled)
 		}
 
 		/* Otherwise, just go back to waiting for new input */
-		/* HEY: should we discard any unsent TX bytes? How? */
 		state = SPI_STATE_READY_TO_RX;
 		sps_tx_status(EC_SPI_RX_READY);
 		return;

@@ -167,17 +167,18 @@ static void sps_enable(void)
 	GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 1);
 
 	/*
-	 * Wait until we have a few bytes in the FIFO before waking up. Note
-	 * that if the master wants to read bytes from us, it may have to clock
-	 * in at least RXFIFO_THRESHOLD + 1 bytes before we notice that it's
-	 * asking.
+	 * Wait until we have a few bytes in the FIFO before waking up. There's
+	 * a tradeoff here: If the master wants to talk to us it will have to
+	 * clock in at least RXFIFO_THRESHOLD + 1 bytes before we notice. On
+	 * the other hand, if we set this too low we waste a lot of time
+	 * handling interrupts before we have enough bytes to know what the
+	 * master is saying.
 	 */
-	GREG32(SPS, RXFIFO_THRESHOLD) = 8;
+	GREG32(SPS, RXFIFO_THRESHOLD) = 7;
 	GWRITE_FIELD(SPS, ICTRL, RXFIFO_LVL, 1);
 
 	/* Also wake up when the master has finished talking to us, so we can
-	 * drain any remaining bytes in the RX FIFO. Too late for TX, of
-	 * course. */
+	 * drain any remaining bytes in the RX FIFO. */
 	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
 	GWRITE_FIELD(SPS, ICTRL, CS_DEASSERT, 1);
 }
@@ -245,8 +246,11 @@ DECLARE_IRQ(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR, _sps0_interrupt, 1);
 
 void _sps0_cs_deassert_interrupt(void)
 {
-	/* Make sure the receive FIFO is drained. */
+	/* Notify the registered handler (and drain the RX FIFO) */
 	sps_rx_interrupt(0);
+	/* Clear the TX FIFO manually, so the next transaction doesn't
+	 * start by clocking out any bytes left over from this one. */
+	GREG32(SPS, TXFIFO_WPTR) = GREG32(SPS, TXFIFO_RPTR);
 	/* Clear the interrupt bit */
 	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
 }
