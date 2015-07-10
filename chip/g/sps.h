@@ -77,4 +77,9 @@ void sps_register_rx_handler(enum spi_clock_mode m_spi,
  */
 void sps_unregister_rx_handler(void);
 
+
+/* Statistics counters, present only with CONFIG_SPS_TEST. */
+extern uint32_t sps_tx_count, sps_rx_count,
+	sps_tx_empty_count, sps_max_rx_batch;
+
 #endif	/* __CROS_EC_SPS_H */

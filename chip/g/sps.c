@@ -41,6 +41,11 @@ static uint32_t fifo_count(uint32_t readptr, uint32_t writeptr)
 #define SPS_TX_FIFO_BASE_ADDR (GBASE(SPS) + 0x1000)
 #define SPS_RX_FIFO_BASE_ADDR (SPS_TX_FIFO_BASE_ADDR + SPS_FIFO_SIZE)
 
+#ifdef CONFIG_SPS_TEST
+/* Statistics counters. Not always present, to save space & time. */
+uint32_t sps_tx_count, sps_rx_count, sps_tx_empty_count, sps_max_rx_batch;
+#endif
+
 void sps_tx_status(uint8_t byte)
 {
 	GREG32(SPS, DUMMY_WORD) = byte;
@@ -53,6 +58,11 @@ int sps_transmit(uint8_t *data, size_t data_size)
 	uint32_t wptr;
 	uint32_t fifo_room;
 	int bytes_sent;
+
+#ifdef CONFIG_SPS_TEST
+	if (GREAD_FIELD(SPS, ISTATE, TXFIFO_EMPTY))
+		sps_tx_empty_count++;
+#endif
 
 	wptr = GREG32(SPS, TXFIFO_WPTR);
 	rptr = GREG32(SPS, TXFIFO_RPTR);
@@ -113,6 +123,9 @@ int sps_transmit(uint8_t *data, size_t data_size)
 				SPS_TX_FIFO_BASE_ADDR;
 	}
 
+#ifdef CONFIG_SPS_TEST
+	sps_tx_count += bytes_sent;
+#endif
 	return bytes_sent;
 }
 
@@ -224,6 +237,11 @@ static void sps_rx_interrupt(int cs_enabled)
 		if (sps_rx_handler)
 			sps_rx_handler(received_data, data_size, cs_enabled);
 		sps_advance_rx(data_size);
+#ifdef CONFIG_SPS_TEST
+		sps_rx_count += data_size;
+		if (data_size > sps_max_rx_batch)
+			sps_max_rx_batch = data_size;
+#endif
 	} while (data_size);
 }
 
