@@ -52,6 +52,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_INPUT_CURRENT 320
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 #define CONFIG_FANS 2
 #define CONFIG_FAN_UPDATE_PERIOD 10
@@ -185,7 +186,6 @@ enum als_id {
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
 
 /* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
 int board_is_discharging_on_ac(void);
 
 /* Reset PD MCU */

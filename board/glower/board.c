@@ -45,10 +45,3 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/**
- * Discharge battery when on AC power for factory test.
- */
-int board_discharge_on_ac(int enable)
-{
-	return charger_discharge_on_ac(enable);
-}

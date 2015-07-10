@@ -90,10 +90,6 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
-int board_is_discharging_on_ac(void);
-
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 
 /* we are never a source : don't care about power supply */

@@ -173,8 +173,6 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
-static int discharging_on_ac;
-
 /**
  * Store the state of our USB data switches so that they can be restored
  * after pericom reset.
@@ -187,19 +185,6 @@ static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
  */
 static int dp_hw_port = PD_PORT_NONE;
 static struct mutex dp_hw_lock;
-
-/**
- * Discharge battery when on AC power for factory test.
- */
-int board_discharge_on_ac(int enable)
-{
-	int rv = charger_discharge_on_ac(enable);
-
-	if (rv == EC_SUCCESS)
-		discharging_on_ac = enable;
-
-	return rv;
-}
 
 /**
  * Reset PD MCU

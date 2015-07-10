@@ -48,11 +48,3 @@ const struct pwm_t pwm_channels[] = {
 	 PWM_CONFIG_ACTIVE_LOW, GPIO_LED_POWER_L},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/**
- * Discharge battery when on AC power for factory test.
- */
-int board_discharge_on_ac(int enable)
-{
-	return charger_discharge_on_ac(enable);
-}

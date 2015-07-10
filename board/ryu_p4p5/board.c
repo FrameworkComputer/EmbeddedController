@@ -297,14 +297,6 @@ void board_set_usb_switches(int port, enum usb_switch setting)
 	pi3usb9281_set_switches(port, usb_switch_state);
 }
 
-/**
- * Discharge battery when on AC power for factory test.
- */
-int board_discharge_on_ac(int enable)
-{
-	return charger_discharge_on_ac(enable);
-}
-
 int extpower_is_present(void)
 {
 	return gpio_get_level(GPIO_CHGR_ACOK);

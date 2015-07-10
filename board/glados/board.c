@@ -157,14 +157,6 @@ void board_set_usb_switches(int port, enum usb_switch setting)
 }
 
 /**
- * Discharge battery when on AC power for factory test.
- */
-int board_discharge_on_ac(int enable)
-{
-	return charger_discharge_on_ac(enable);
-}
-
-/**
  * Reset PD MCU
  */
 void board_reset_pd_mcu(void)

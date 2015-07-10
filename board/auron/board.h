@@ -19,6 +19,7 @@
 #define CONFIG_CHARGER_V1
 #define CONFIG_CHARGER_BQ24707A
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_CHIPSET_HASWELL
 #define CONFIG_POWER_COMMON
@@ -107,9 +108,6 @@ enum temp_sensor_id {
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_LTE_EN
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
-
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
 
 #endif /* !__ASSEMBLER__ */
 

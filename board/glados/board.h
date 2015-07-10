@@ -136,9 +136,6 @@ enum temp_sensor_id {
  */
 #define PD_MAX_VOLTAGE_MV     5000
 
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
-
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
 

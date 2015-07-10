@@ -212,9 +212,6 @@ enum usb_strings {
 extern const struct usb_mux_driver p4_board_custom_usb_mux_driver;
 extern const struct usb_mux_driver p5_board_custom_usb_mux_driver;
 
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
-
 /* Set the charge current limit. */
 void board_set_charge_limit(int charge_ma);
 

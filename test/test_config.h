@@ -48,6 +48,7 @@
 #define CONFIG_CHARGER_V1
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 int board_discharge_on_ac(int enabled);
 #define I2C_PORT_MASTER 1
 #define I2C_PORT_BATTERY 1
@@ -62,6 +63,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 int board_discharge_on_ac(int enabled);
 #define I2C_PORT_MASTER 1
 #define I2C_PORT_BATTERY 1

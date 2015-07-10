@@ -985,7 +985,11 @@ static int charge_command_charge_control(struct host_cmd_handler_args *args)
 		return rv;
 
 #ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
+#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 	rv = board_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
+#else
+	rv = charger_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
+#endif
 	if (rv != EC_SUCCESS)
 		return rv;
 #endif

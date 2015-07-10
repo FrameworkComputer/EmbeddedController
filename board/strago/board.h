@@ -129,9 +129,6 @@ enum als_id {
 	ALS_COUNT,
 };
 
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

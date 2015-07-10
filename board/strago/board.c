@@ -99,11 +99,6 @@ struct ec_thermal_config thermal_params[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
-int board_discharge_on_ac(int enable)
-{
-	return charger_discharge_on_ac(enable);
-}
-
 /* Four Motion sensors */
 /* kxcj9 mutex and local/private data*/
 static struct mutex g_kxcj9_mutex[2];

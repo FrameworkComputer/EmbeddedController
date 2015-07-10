@@ -145,26 +145,3 @@ enum battery_present battery_is_present(void)
 {
 	return gpio_get_level(GPIO_BAT_PRESENT) ? BP_YES : BP_NO;
 }
-
-static int discharging_on_ac;
-
-/**
- * Discharge battery when on AC power for factory test.
- */
-int board_discharge_on_ac(int enable)
-{
-	int rv = charger_discharge_on_ac(enable);
-
-	if (rv == EC_SUCCESS)
-		discharging_on_ac = enable;
-
-	return rv;
-}
-
-/**
- * Check if we are discharging while connected to AC
- */
-int board_is_discharging_on_ac(void)
-{
-	return discharging_on_ac;
-}

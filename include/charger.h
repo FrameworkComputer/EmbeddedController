@@ -99,6 +99,9 @@ int charger_set_voltage(int voltage);
 /* Discharge battery when on AC power. */
 int charger_discharge_on_ac(int enable);
 
+/* Custom board function to discharge battery when on AC power */
+int board_discharge_on_ac(int enable);
+
 /* Other parameters that may be charger-specific, but are common so far. */
 int charger_set_input_current(int input_current);
 int charger_get_input_current(int *input_current);

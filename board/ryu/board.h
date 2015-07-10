@@ -228,9 +228,6 @@ enum usb_strings {
 /* The lower the input voltage, the higher the power efficiency. */
 #define PD_PREFER_LOW_VOLTAGE
 
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
-
 /* Set the charge current limit. */
 void board_set_charge_limit(int charge_ma);
 

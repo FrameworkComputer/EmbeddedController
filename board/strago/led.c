@@ -187,7 +187,7 @@ static int command_led_color(int argc, char **argv)
 		} else if (!strcasecmp(argv[1], "amber")) {
 			set_color(LED_AMBER);
 		} else {
-			/* maybe handle board_discharge_on_ac() too? */
+			/* maybe handle charger_discharge_on_ac() too? */
 			return EC_ERROR_PARAM1;
 		}
 	}

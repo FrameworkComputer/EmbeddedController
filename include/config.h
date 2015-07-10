@@ -305,6 +305,9 @@
  */
 #undef CONFIG_CHARGER_DISCHARGE_ON_AC
 
+/* Board has a custom discharge mode. */
+#undef CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
+
 /*
  * Board specific flag used to disable external ILIM pin used to determine input
  * current limit. When defined, the input current limit is decided only by
