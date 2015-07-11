@@ -31,6 +31,7 @@
 #include "spi.h"
 #include "task.h"
 #include "usb.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 #include "usb_spi.h"
 #include "usb-stm32f3.h"
@@ -40,9 +41,6 @@
 #include "pi3usb9281.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-
-/* Default input current limit when VBUS is present */
-#define DEFAULT_CURR_LIMIT            500  /* mA */
 
 /* VBUS too low threshold */
 #define VBUS_LOW_THRESHOLD_MV 4600
@@ -81,8 +79,8 @@ void vbus_evt(enum gpio_signal signal)
 	 * ourselves, then update the VBUS supplier.
 	 */
 	if (!vbus_level || !gpio_get_level(GPIO_CHGR_OTG)) {
-		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0, &charge);
 	}
 
@@ -175,7 +173,7 @@ static void board_init(void)
 	struct charge_port_info charge_none, charge_vbus;
 
 	/* Initialize all pericom charge suppliers to 0 */
-	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
 	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
 				     0,
@@ -186,8 +184,8 @@ static void board_init(void)
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, 0, &charge_none);
 
 	/* Initialize VBUS supplier based on whether or not VBUS is present */
-	charge_vbus.voltage = USB_BC12_CHARGE_VOLTAGE;
-	charge_vbus.current = DEFAULT_CURR_LIMIT;
+	charge_vbus.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_vbus.current = USB_CHARGER_MIN_CURR_MA;
 	if (gpio_get_level(GPIO_CHGR_ACOK))
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
 					     &charge_vbus);

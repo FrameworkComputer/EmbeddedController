@@ -32,6 +32,7 @@
 #include "temp_sensor_chip.h"
 #include "thermal.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -42,9 +43,6 @@
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
-
-/* Default input current limit when VBUS is present */
-#define DEFAULT_CURR_LIMIT      500  /* mA */
 
 /* Dispaly port hardware can connect to port 0, 1 or neither. */
 #define PD_PORT_NONE -1
@@ -237,10 +235,10 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_AP_RESET_L);
 #endif
 
-	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
-	charge_vbus.voltage = USB_BC12_CHARGE_VOLTAGE;
-	charge_vbus.current = DEFAULT_CURR_LIMIT;
+	charge_vbus.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_vbus.current = USB_CHARGER_MIN_CURR_MA;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		/* Initialize all pericom charge suppliers to 0 */
 		charge_manager_update_charge(

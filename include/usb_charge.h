@@ -10,6 +10,11 @@
 
 #include "common.h"
 
+/* USB charger voltage */
+#define USB_CHARGER_VOLTAGE_MV  5000
+/* USB charger minimum current */
+#define USB_CHARGER_MIN_CURR_MA 500
+
 enum usb_charge_mode {
 	/* Disable USB port. */
 	USB_CHARGE_MODE_DISABLED,

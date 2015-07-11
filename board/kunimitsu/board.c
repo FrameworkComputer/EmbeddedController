@@ -44,9 +44,6 @@
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
 #define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
 
-/* Default input current limit when VBUS is present */
-#define DEFAULT_CURR_LIMIT      500  /* mA */
-
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
@@ -63,8 +60,8 @@ static void update_vbus_supplier(int port, int vbus_level)
 	 * ourselves, then update the VBUS supplier.
 	 */
 	if (!vbus_level || !usb_charger_port_is_sourcing_vbus(port)) {
-		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
 					     port,
 					     &charge);
@@ -317,7 +314,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
 
 	/* Initialize all pericom charge suppliers to 0 */
-	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,

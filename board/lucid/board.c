@@ -16,12 +16,10 @@
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
+#include "usb_charge.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-
-/* Default input current limit when VBUS is present */
-#define DEFAULT_CURR_LIMIT 500  /* mA */
 
 void board_config_pre_init(void)
 {
@@ -45,8 +43,8 @@ static void update_vbus_supplier(int vbus_level)
 {
 	struct charge_port_info charge;
 
-	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-	charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+	charge.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
 	charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0, &charge);
 }
 
@@ -99,7 +97,7 @@ static void board_init(void)
 	 * TODO: use built-in USB peripheral to detect BC1.2 suppliers an
 	 * update charge manager.
 	 */
-	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,

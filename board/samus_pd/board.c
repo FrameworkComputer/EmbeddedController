@@ -33,9 +33,6 @@
 /* Amount to offset the input current limit when sending to EC */
 #define INPUT_CURRENT_LIMIT_OFFSET_MA 192
 
-/* Default input current limit when VBUS is present */
-#define DEFAULT_CURR_LIMIT            500  /* mA */
-
 /*
  * When battery is high, system may not be pulling full current. Also, when
  * high AND input voltage is below boost bypass, then limit input current
@@ -120,8 +117,8 @@ void vbus0_evt(enum gpio_signal signal)
 	 * ourselves, then update the VBUS supplier.
 	 */
 	if (!vbus_level || !gpio_get_level(GPIO_USB_C0_5V_EN)) {
-		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0, &charge);
 	}
 
@@ -146,8 +143,8 @@ void vbus1_evt(enum gpio_signal signal)
 	 * ourselves, then update the VBUS supplier.
 	 */
 	if (!vbus_level || !gpio_get_level(GPIO_USB_C1_5V_EN)) {
-		charge.voltage = USB_BC12_CHARGE_VOLTAGE;
-		charge.current = vbus_level ? DEFAULT_CURR_LIMIT : 0;
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 1, &charge);
 	}
 
@@ -288,7 +285,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE);
 
 	/* Initialize all pericom charge suppliers to 0 */
-	charge_none.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
@@ -309,8 +306,8 @@ static void board_init(void)
 	}
 
 	/* Initialize VBUS supplier based on whether or not VBUS is present */
-	charge_vbus.voltage = USB_BC12_CHARGE_VOLTAGE;
-	charge_vbus.current = DEFAULT_CURR_LIMIT;
+	charge_vbus.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_vbus.current = USB_CHARGER_MIN_CURR_MA;
 	if (gpio_get_level(GPIO_USB_C0_VBUS_WAKE))
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
 					     &charge_vbus);

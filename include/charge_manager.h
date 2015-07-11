@@ -17,8 +17,6 @@
 #define CHARGE_CURRENT_UNINITIALIZED -1
 #define CHARGE_VOLTAGE_UNINITIALIZED -1
 
-#define USB_BC12_CHARGE_VOLTAGE    5000 /* mV */
-
 /* Commonly-used charge suppliers listed in no particular order */
 enum charge_supplier {
 	CHARGE_SUPPLIER_PD,

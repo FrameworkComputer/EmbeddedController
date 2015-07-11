@@ -47,7 +47,7 @@ void usb_charger_task(void)
 	struct charge_port_info charge;
 	int type;
 
-	charge.voltage = USB_BC12_CHARGE_VOLTAGE;
+	charge.voltage = USB_CHARGER_VOLTAGE_MV;
 
 	/* Initialize chip and enable interrupts */
 	pi3usb9281_init(port);
