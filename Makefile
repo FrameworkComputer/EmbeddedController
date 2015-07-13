@@ -117,6 +117,7 @@ include common/build.mk
 include driver/build.mk
 include power/build.mk
 -include private/build.mk
+-include private-cr51/build.mk
 include test/build.mk
 include util/build.mk
 include util/lock/build.mk
@@ -131,11 +132,13 @@ all-y=$(call objs_from_dir,core/$(CORE),core)
 all-y+=$(call objs_from_dir,chip/$(CHIP),chip)
 all-y+=$(call objs_from_dir,board/$(BOARD),board)
 all-y+=$(call objs_from_dir,private,private)
+all-y+=$(call objs_from_dir,private-cr51,private-cr51)
 all-y+=$(call objs_from_dir,common,common)
 all-y+=$(call objs_from_dir,driver,driver)
 all-y+=$(call objs_from_dir,power,power)
 all-y+=$(call objs_from_dir,test,$(PROJECT))
-dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) private common power test util
+dirs=core/$(CORE) chip/$(CHIP) board/$(BOARD) common power test util
+dirs+=private private-cr51
 dirs+=$(shell find driver -type d)
 
 $(config): $(out)/$(PROJECT).bin
