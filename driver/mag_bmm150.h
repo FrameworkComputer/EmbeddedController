@@ -34,4 +34,58 @@
 
 #define BMM150_INT_CTRL          0x4d
 
+/* Hidden registers for RHALL calculation */
+
+#define BMM150_REGA_DIG_X1       0x5d
+#define BMM150_REGA_DIG_Y1       0x5e
+#define BMM150_REGA_DIG_Z4_LSB   0x62
+#define BMM150_REGA_DIG_Z4_MSB   0x63
+#define BMM150_REGA_DIG_X2       0x64
+#define BMM150_REGA_DIG_Y2       0x65
+#define BMM150_REGA_DIG_Z2_LSB   0x68
+#define BMM150_REGA_DIG_Z2_MSB   0x69
+#define BMM150_REGA_DIG_Z1_LSB   0x6a
+#define BMM150_REGA_DIG_Z1_MSB   0x6b
+#define BMM150_REGA_DIG_XYZ1_LSB 0x6c
+#define BMM150_REGA_DIG_XYZ1_MSB 0x6d
+#define BMM150_REGA_DIG_Z3_LSB   0x6e
+#define BMM150_REGA_DIG_Z3_MSB   0x6f
+#define BMM150_REGA_DIG_XY2      0x70
+#define BMM150_REGA_DIG_XY1      0x71
+
+/* Overflow */
+
+#define BMM150_FLIP_OVERFLOW_ADCVAL             (-4096)
+#define BMM150_HALL_OVERFLOW_ADCVAL             (-16384)
+#define BMM150_OVERFLOW_OUTPUT                  (0x8000)
+
+
+struct bmm150_comp_registers {
+	/* Local copy of the compensation registers. */
+	int8_t       dig1[2];
+	int8_t       dig2[2];
+
+	uint16_t     dig_z1;
+	int16_t      dig_z2;
+	int16_t      dig_z3;
+	int16_t      dig_z4;
+
+	uint8_t      dig_xy1;
+	int8_t       dig_xy2;
+
+	uint16_t     dig_xyz1;
+};
+
+#define BMM150_COMP_REG(_s) \
+	(&BMI160_GET_DATA(_s)->comp_regs)
+
+/* Specific initialization of BMM150 when behing BMI160 */
+int bmm150_init(const struct motion_sensor_t *s);
+
+/* Command to normalize and apply temperature compensation */
+void bmm150_normalize(const struct motion_sensor_t *s,
+		      vector_3_t v,
+		      uint8_t *data);
+
+
 #endif /* __CROS_EC_MAG_BMM150_H */

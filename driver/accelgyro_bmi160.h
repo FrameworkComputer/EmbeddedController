@@ -9,6 +9,7 @@
 #define __CROS_EC_ACCELGYRO_BMI160_H
 
 #include "accelgyro.h"
+#include "mag_bmm150.h"
 
 #define BMI160_ADDR0             0xd0
 #define BMI160_ADDR1             0xd2
@@ -374,6 +375,9 @@ enum bmi160_running_mode {
 struct bmi160_drv_data_t {
 	struct motion_data_t saved_data[3];
 	uint8_t              flags;
+#ifdef CONFIG_MAG_BMI160_BMM150
+	struct bmm150_comp_registers comp_regs;
+#endif
 };
 
 #define BMI160_GET_DATA(_s) \
@@ -384,5 +388,12 @@ struct bmi160_drv_data_t {
 extern struct bmi160_drv_data_t g_bmi160_data;
 
 void bmi160_interrupt(enum gpio_signal signal);
+
+#ifdef CONFIG_MAG_BMI160_BMM150
+/* Functions to access the compass through the accel/gyro. */
+int raw_mag_read8(const int addr, const int reg, int *data_ptr);
+int raw_mag_write8(const int addr, const int reg, int data);
+#endif
+
 
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */

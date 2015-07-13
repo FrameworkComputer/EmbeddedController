@@ -4,7 +4,7 @@
  */
 
 /**
- * BMI160/BMC50 accelerometer and gyro module for Chrome EC
+ * BMI160 accelerometer and gyro module for Chrome EC
  * 3D digital accelerometer & 3D digital gyroscope
  */
 
@@ -177,7 +177,7 @@ static int bmm150_mag_access_ctrl(const int addr, const int enable)
  * Read register from compass.
  * Assuming we are in manual access mode, read compass i2c register.
  */
-static int raw_mag_read8(const int addr, const int reg, int *data_ptr)
+int raw_mag_read8(const int addr, const int reg, int *data_ptr)
 {
 	/* Only read 1 bytes */
 	raw_write8(addr, BMI160_MAG_I2C_READ_ADDR, reg);
@@ -188,7 +188,7 @@ static int raw_mag_read8(const int addr, const int reg, int *data_ptr)
  * Write register from compass.
  * Assuming we are in manual access mode, write to compass i2c register.
  */
-static int raw_mag_write8(const int addr, const int reg, int data)
+int raw_mag_write8(const int addr, const int reg, int data)
 {
 	raw_write8(addr, BMI160_MAG_I2C_WRITE_DATA, data);
 	return raw_write8(addr, BMI160_MAG_I2C_WRITE_ADDR, reg);
@@ -505,9 +505,16 @@ end_perform_calib:
 
 void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 {
-	v[0] = ((int16_t)((data[1] << 8) | data[0]));
-	v[1] = ((int16_t)((data[3] << 8) | data[2]));
-	v[2] = ((int16_t)((data[5] << 8) | data[4]));
+#ifdef CONFIG_MAG_BMI160_BMM150
+	if (s->type == MOTIONSENSE_TYPE_MAG)
+		bmm150_normalize(s, v, data);
+	else
+#endif
+	{
+		v[0] = ((int16_t)((data[1] << 8) | data[0]));
+		v[1] = ((int16_t)((data[3] << 8) | data[2]));
+		v[2] = ((int16_t)((data[5] << 8) | data[4]));
+	}
 	if (*s->rot_standard_ref != NULL)
 		rotate(v, *s->rot_standard_ref, v);
 }
@@ -883,22 +890,11 @@ static int init(const struct motion_sensor_t *s)
 
 
 		bmm150_mag_access_ctrl(s->i2c_addr, 1);
-		/* Set the compass from Suspend to Sleep */
-		ret = raw_mag_write8(s->i2c_addr, BMM150_PWR_CTRL,
-				BMM150_PWR_ON);
-		/* Now we can read the device id */
-		ret = raw_mag_read8(s->i2c_addr, BMM150_CHIP_ID, &tmp);
+
+		ret = bmm150_init(s);
 		if (ret)
-			return EC_ERROR_UNKNOWN;
-
-		if (tmp != BMM150_CHIP_ID_MAJOR)
-			return EC_ERROR_ACCESS_DENIED;
-
-		/*
-		 * Set the compass forced mode, to sleep after each measure.
-		 */
-		ret = raw_mag_write8(s->i2c_addr, BMM150_OP_CTRL,
-			BMM150_OP_MODE_FORCED << BMM150_OP_MODE_OFFSET);
+			/* Leave the compass open for tinkering. */
+			return ret;
 
 		/* Leave the address for reading the data */
 		raw_write8(s->i2c_addr, BMI160_MAG_I2C_READ_ADDR,
