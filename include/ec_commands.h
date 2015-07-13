@@ -1825,7 +1825,7 @@ struct ec_params_motion_sense {
 		} ec_rate, sensor_odr, sensor_range;
 
 		/* Used for MOTIONSENSE_CMD_SENSOR_OFFSET */
-		struct __attribute__((__packed__)) {
+		struct {
 			uint8_t sensor_num;
 
 			/*
@@ -1850,7 +1850,7 @@ struct ec_params_motion_sense {
 			 * Gyro:          1/1024 deg/s
 			 */
 			int16_t offset[3];
-		} sensor_offset;
+		} __packed sensor_offset;
 
 		/* Used for MOTIONSENSE_CMD_FIFO_INFO */
 		struct {

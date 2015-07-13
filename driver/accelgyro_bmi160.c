@@ -259,6 +259,12 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
 
 	if (rate == 0) {
+#ifdef CONFIG_ACCEL_FIFO
+		/* FIFO stop collecting events */
+		ret = raw_read8(s->i2c_addr, BMI160_FIFO_CONFIG_1, &val);
+		val &= ~BMI160_FIFO_SENSOR_EN(s->type);
+		ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_1, val);
+#endif
 		/* go to suspend mode */
 		ret = raw_write8(s->i2c_addr, BMI160_CMD_REG,
 				 BMI160_CMD_MODE_SUSPEND(s->type));
@@ -324,10 +330,18 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 	val = (val & ~BMI160_ODR_MASK) | reg_val;
 	ret = raw_write8(s->i2c_addr, ctrl_reg, val);
+	if (ret != EC_SUCCESS)
+		goto accel_cleanup;
 
 	/* Now that we have set the odr, update the driver's value. */
-	if (ret == EC_SUCCESS)
-		data->odr = normalized_rate;
+	data->odr = normalized_rate;
+
+#ifdef CONFIG_ACCEL_FIFO
+	/* FIFO start collecting events */
+	ret = raw_read8(s->i2c_addr, BMI160_FIFO_CONFIG_1, &val);
+	val |= BMI160_FIFO_SENSOR_EN(s->type);
+	ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_1, val);
+#endif
 
 accel_cleanup:
 	mutex_unlock(s->mutex);
@@ -812,9 +826,6 @@ static int init(const struct motion_sensor_t *s)
 			BMI160_CMD_MODE_NORMAL(s->type));
 	msleep(30);
 
-	set_range(s, s->runtime_config.range, 0);
-	set_data_rate(s, s->runtime_config.odr, 0);
-
 #ifdef CONFIG_MAG_BMI160_BMM150
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
 		struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
@@ -881,15 +892,15 @@ static int init(const struct motion_sensor_t *s)
 		if (tmp != BMM150_CHIP_ID_MAJOR)
 			return EC_ERROR_ACCESS_DENIED;
 
-		/* Leave the address for reading the data */
-		raw_write8(s->i2c_addr, BMI160_MAG_I2C_READ_ADDR,
-				BMM150_BASE_DATA);
 		/*
 		 * Set the compass forced mode, to sleep after each measure.
 		 */
 		ret = raw_mag_write8(s->i2c_addr, BMM150_OP_CTRL,
 			BMM150_OP_MODE_FORCED << BMM150_OP_MODE_OFFSET);
 
+		/* Leave the address for reading the data */
+		raw_write8(s->i2c_addr, BMI160_MAG_I2C_READ_ADDR,
+				BMM150_BASE_DATA);
 		/*
 		 * Put back the secondary interface in normal mode.
 		 * BMI160 will poll based on the configure ODR.
@@ -897,6 +908,9 @@ static int init(const struct motion_sensor_t *s)
 		bmm150_mag_access_ctrl(s->i2c_addr, 0);
 	}
 #endif
+	set_range(s, s->runtime_config.range, 0);
+	set_data_rate(s, s->runtime_config.odr, 0);
+
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	ret = config_interrupt(s);
 #endif

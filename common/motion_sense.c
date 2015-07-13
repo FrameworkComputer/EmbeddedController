@@ -467,7 +467,9 @@ void motion_sense_task(void)
 				motion_sense_insert_timestamp();
 			fifo_flush_needed = 0;
 			ts_last_int = ts_end_task;
+#ifdef CONFIG_MKBP_EVENT
 			mkbp_send_event(EC_MKBP_EVENT_SENSOR_FIFO);
+#endif
 		}
 #endif
 		/* Delay appropriately to keep sampling time consistent. */
