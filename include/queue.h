@@ -105,6 +105,58 @@ size_t queue_count(struct queue const *q);
 /* Return the number of units worth of free space the queue has. */
 size_t queue_space(struct queue const *q);
 
+/* Return TRUE if the queue is full. */
+int queue_is_full(struct queue const *q);
+
+/*
+ * Chunk based queue access.  A queue_chunk is a contiguous region of queue
+ * buffer bytes, not units.  It may represent either free space in the queue
+ * or entries.
+ */
+struct queue_chunk {
+	size_t  length;
+	uint8_t *buffer;
+};
+
+/*
+ * Return the largest contiguous block of free space from the tail of the
+ * queue.  This may not be all of the available free space in the queue.  Once
+ * some or all of the free space has been written to you must call
+ * queue_advance_tail to update the queue.  You do not need to fill all of the
+ * free space returned before calling queue_advance_tail, and you may call
+ * queue_advance tail multiple times for a single chunk.  But you must not
+ * advance the tail more than the length of the chunk, or more than the actual
+ * number of units that you have written to the free space represented by the
+ * chunk.
+ */
+struct queue_chunk queue_get_write_chunk(struct queue const *q);
+
+/*
+ * Return the largest contiguous block of units from the head of the queue.
+ * This may not be all of the available units in the queue.  Similar rules to
+ * the above apply to reading from this chunk, you can call queue_advance_head
+ * after reading, and you can all it multiple times if you like.  However, if
+ * you do not call queue_advance_head this chunk will effectively be a peek
+ * into the queue contents, and later calls to queue_remove_* will see the
+ * same units.
+ */
+struct queue_chunk queue_get_read_chunk(struct queue const *q);
+
+/*
+ * Move the queue head pointer forward count units.  This discards count
+ * elements from the head of the queue.  It will only discard up to the total
+ * number of elements in the queue, and it returns the number discarded.
+ */
+size_t queue_advance_head(struct queue const *q, size_t count);
+
+/*
+ * Move the queue tail pointer forward count units.  This signals to the queue
+ * that count new elements have been added to the queue using a queue_chunk
+ * that was returned by queue_get_write_chunk.  Make sure that count units have
+ * been added to the chunk before calling queue_advance_tail.
+ */
+size_t queue_advance_tail(struct queue const *q, size_t count);
+
 /* Add one unit to queue. */
 size_t queue_add_unit(struct queue const *q, const void *src);
 

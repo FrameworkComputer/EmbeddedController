@@ -42,6 +42,82 @@ size_t queue_space(struct queue const *q)
 	return q->buffer_units - queue_count(q);
 }
 
+int queue_is_full(struct queue const *q)
+{
+	return (queue_space(q) == 0);
+}
+
+/*
+ * These pictures make the logic below clearer.  The H and T markers are the
+ * head and tail indicies after they have been modded by the queue size.  The
+ * Empty and Full states are disambiguated by looking at the pre-modded
+ * indicies.
+ *
+ * Empty:       T
+ * T == H       H
+ *          |----------------|
+ *
+ * Normal:      H     T
+ * H < T    |---******-------|
+ *
+ * Wrapped:     T         H
+ * T < H    |***----------***|
+ *
+ * Full:        T
+ * T == H       H
+ *          |****************|
+ */
+
+struct queue_chunk queue_get_write_chunk(struct queue const *q)
+{
+	size_t head = q->state->head & (q->buffer_units - 1);
+	size_t tail = q->state->tail & (q->buffer_units - 1);
+	size_t last = (queue_is_full(q) ? tail : /* Full           */
+		       ((tail < head) ? head :   /* Wrapped        */
+			q->buffer_units));       /* Normal | Empty */
+
+	return ((struct queue_chunk) {
+		.length = (last - tail) * q->unit_bytes,
+		.buffer = q->buffer + tail * q->unit_bytes,
+	});
+}
+
+struct queue_chunk queue_get_read_chunk(struct queue const *q)
+{
+	size_t head = q->state->head & (q->buffer_units - 1);
+	size_t tail = q->state->tail & (q->buffer_units - 1);
+	size_t last = (queue_is_empty(q) ? head : /* Empty          */
+		       ((head < tail) ? tail :    /* Normal         */
+			q->buffer_units));        /* Wrapped | Full */
+
+	return ((struct queue_chunk) {
+		.length = (last - head) * q->unit_bytes,
+		.buffer = q->buffer + head * q->unit_bytes,
+	});
+}
+
+size_t queue_advance_head(struct queue const *q, size_t count)
+{
+	size_t transfer = MIN(count, queue_count(q));
+
+	q->state->head += transfer;
+
+	q->policy->remove(q->policy, transfer);
+
+	return transfer;
+}
+
+size_t queue_advance_tail(struct queue const *q, size_t count)
+{
+	size_t transfer = MIN(count, queue_space(q));
+
+	q->state->tail += transfer;
+
+	q->policy->add(q->policy, transfer);
+
+	return transfer;
+}
+
 size_t queue_add_unit(struct queue const *q, const void *src)
 {
 	size_t tail = q->state->tail & (q->buffer_units - 1);
@@ -54,11 +130,7 @@ size_t queue_add_unit(struct queue const *q, const void *src)
 	else
 		memcpy(q->buffer + tail * q->unit_bytes, src, q->unit_bytes);
 
-	q->state->tail += 1;
-
-	q->policy->add(q->policy, 1);
-
-	return 1;
+	return queue_advance_tail(q, 1);
 }
 
 size_t queue_add_units(struct queue const *q, const void *src, size_t count)
@@ -86,11 +158,7 @@ size_t queue_add_memcpy(struct queue const *q,
 		       ((uint8_t const *) src) + first * q->unit_bytes,
 		       (transfer - first) * q->unit_bytes);
 
-	q->state->tail += transfer;
-
-	q->policy->add(q->policy, transfer);
-
-	return transfer;
+	return queue_advance_tail(q, transfer);
 }
 
 static void queue_read_safe(struct queue const *q,
@@ -125,11 +193,7 @@ size_t queue_remove_unit(struct queue const *q, void *dest)
 	else
 		memcpy(dest, q->buffer + head * q->unit_bytes, q->unit_bytes);
 
-	q->state->head += 1;
-
-	q->policy->remove(q->policy, 1);
-
-	return 1;
+	return queue_advance_head(q, 1);
 }
 
 size_t queue_remove_units(struct queue const *q, void *dest, size_t count)
@@ -149,11 +213,7 @@ size_t queue_remove_memcpy(struct queue const *q,
 
 	queue_read_safe(q, dest, head, transfer, memcpy);
 
-	q->state->head += transfer;
-
-	q->policy->remove(q->policy, transfer);
-
-	return transfer;
+	return queue_advance_head(q, transfer);
 }
 
 size_t queue_peek_units(struct queue const *q,
