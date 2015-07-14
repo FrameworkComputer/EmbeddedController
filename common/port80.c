@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "port80.h"
 #include "task.h"
@@ -58,11 +59,6 @@ void port_80_write(int data)
  */
 void port80_task(void)
 {
-#ifdef CONFIG_PORT80_TASK_EN
-	task_en = 1;
-	task_timeout = PORT80_POLL_PERIOD;
-#endif
-
 	while (1) {
 		int data = port_80_read();
 
@@ -72,7 +68,28 @@ void port80_task(void)
 		task_wait_event(task_timeout);
 	}
 }
-#endif
+
+static void port_80_task_enable(void)
+{
+	task_en = 1;
+	task_timeout = PORT80_POLL_PERIOD;
+	task_wake(TASK_ID_PORT80);
+}
+
+static void port_80_task_disable(void)
+{
+	task_en = 0;
+	task_timeout = -1;
+}
+
+#ifdef CONFIG_PORT80_TASK_EN
+
+/* Only enable the port80 task when the AP is started, to save power */
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, port_80_task_enable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, port_80_task_disable, HOOK_PRIO_DEFAULT);
+
+#endif /* PORT80_TASK_EN */
+#endif /* HAS_TASK_PORT80 */
 
 /*****************************************************************************/
 /* Console commands */
@@ -104,11 +121,9 @@ static int command_port80(int argc, char **argv)
 		} else if (!strcasecmp(argv[1], "task")) {
 			task_en = !task_en;
 			ccprintf("task %sabled\n", task_en ? "en" : "dis");
-			if (task_en) {
-				task_timeout = PORT80_POLL_PERIOD;
-				task_wake(TASK_ID_PORT80);
-			} else
-				task_timeout = -1;
+			task_en ? port_80_task_enable() :
+				  port_80_task_disable();
+
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[1], "poll")) {
 			i = port_80_read();
