@@ -86,8 +86,7 @@ void vbus_evt(enum gpio_signal signal)
 	}
 
 	hook_call_deferred(vbus_log, 0);
-	if (task_start_called())
-		task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD);
 }
 
 void usb_evt(enum gpio_signal signal)

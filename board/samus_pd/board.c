@@ -129,8 +129,7 @@ void vbus0_evt(enum gpio_signal signal)
 	 * these unwanted resets.
 	 */
 	hook_call_deferred(pericom_port0_reenable_interrupts, 0);
-	if (task_start_called())
-		task_wake(TASK_ID_PD_C0);
+	task_wake(TASK_ID_PD_C0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
@@ -155,8 +154,7 @@ void vbus1_evt(enum gpio_signal signal)
 	 * these unwanted resets.
 	 */
 	hook_call_deferred(pericom_port1_reenable_interrupts, 0);
-	if (task_start_called())
-		task_wake(TASK_ID_PD_C1);
+	task_wake(TASK_ID_PD_C1);
 }
 
 static void wake_usb_charger_task(int port)

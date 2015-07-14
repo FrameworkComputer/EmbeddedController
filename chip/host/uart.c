@@ -69,10 +69,7 @@ static void trigger_interrupt(void)
 {
 	if (int_disabled)
 		return;
-	if (task_start_called())
-		task_trigger_test_interrupt(uart_interrupt);
-	else
-		uart_interrupt();
+	task_trigger_test_interrupt(uart_interrupt);
 }
 
 int uart_init_done(void)

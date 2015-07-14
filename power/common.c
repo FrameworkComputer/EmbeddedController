@@ -274,8 +274,7 @@ void chipset_exit_hard_off(void)
 	/* Set a flag to leave G3, then wake the task */
 	want_g3_exit = 1;
 
-	if (task_start_called())
-		task_wake(TASK_ID_CHIPSET);
+	task_wake(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
