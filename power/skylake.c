@@ -191,8 +191,10 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		}
 
-		/* Enable TP so that it can wake the system */
+		/* Enable TP + USB so that they can wake the system */
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
+		gpio_set_level(GPIO_USB1_ENABLE, 1);
+		gpio_set_level(GPIO_USB2_ENABLE, 1);
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
@@ -204,6 +206,8 @@ enum power_state power_handle_state(enum power_state state)
 			chipset_force_shutdown();
 			return POWER_S3S5;
 		}
+
+		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 
 		/* Enable wireless */
 		wireless_set_state(WIRELESS_ON);
@@ -229,6 +233,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 
+		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+
 		/* Suspend wireless */
 		wireless_set_state(WIRELESS_SUSPEND);
 
@@ -248,6 +254,8 @@ enum power_state power_handle_state(enum power_state state)
 		wireless_set_state(WIRELESS_OFF);
 
 		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
+		gpio_set_level(GPIO_USB1_ENABLE, 0);
+		gpio_set_level(GPIO_USB2_ENABLE, 0);
 
 		return POWER_S5G3;
 
