@@ -125,7 +125,7 @@ static void _task_execute_isr(int sig)
 	in_interrupt = 0;
 }
 
-static void task_register_interrupt(void)
+void task_register_interrupt(void)
 {
 	sem_init(&interrupt_sem, 0, 0);
 	signal(SIGNAL_INTERRUPT, _task_execute_isr);
@@ -133,6 +133,7 @@ static void task_register_interrupt(void)
 
 void task_trigger_test_interrupt(void (*isr)(void))
 {
+	pid_t main_pid;
 	pthread_mutex_lock(&interrupt_lock);
 	if (interrupt_disabled) {
 		pthread_mutex_unlock(&interrupt_lock);
@@ -141,7 +142,12 @@ void task_trigger_test_interrupt(void (*isr)(void))
 
 	/* Suspend current task and excute ISR */
 	pending_isr = isr;
-	pthread_kill(tasks[running_task_id].thread, SIGNAL_INTERRUPT);
+	if (task_started) {
+		pthread_kill(tasks[running_task_id].thread, SIGNAL_INTERRUPT);
+	} else {
+		main_pid = getpid();
+		kill(main_pid, SIGNAL_INTERRUPT);
+	}
 
 	/* Wait for ISR to complete */
 	sem_wait(&interrupt_sem);
@@ -415,8 +421,6 @@ void *_task_int_generator_start(void *d)
 int task_start(void)
 {
 	int i = TASK_ID_HOOKS;
-
-	task_register_interrupt();
 
 	pthread_mutex_init(&run_lock, NULL);
 	pthread_mutex_init(&interrupt_lock, NULL);

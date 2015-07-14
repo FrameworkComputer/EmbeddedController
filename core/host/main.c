@@ -8,6 +8,7 @@
 #include "console.h"
 #include "flash.h"
 #include "hooks.h"
+#include "host_task.h"
 #include "keyboard_scan.h"
 #include "stack_trace.h"
 #include "system.h"
@@ -30,6 +31,12 @@ const char *__get_prog_name(void)
 int main(int argc, char **argv)
 {
 	__prog_name = argv[0];
+
+	/*
+	 * In order to properly service IRQs before task switching is enabled,
+	 * we must set up our signal handler for the main thread.
+	 */
+	task_register_interrupt();
 
 	task_register_tracedump();
 
