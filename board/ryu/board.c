@@ -37,6 +37,7 @@
 #include "usb-stm32f3.h"
 #include "usb-stream.h"
 #include "usart-stm32f3.h"
+#include "usart_tx_dma.h"
 #include "util.h"
 #include "pi3usb9281.h"
 
@@ -131,12 +132,16 @@ static struct queue const sh_usb_to_usart = QUEUE_DIRECT(64, uint8_t,
 							 sh_usb.producer,
 							 sh_usart.consumer);
 
-static struct usart_config const ap_usart = USART_CONFIG(usart1_hw,
-							 usart_rx_interrupt,
-							 usart_tx_interrupt,
-							 115200,
-							 ap_usart_to_usb,
-							 ap_usb_to_usart);
+static struct usart_tx_dma const ap_usart_tx_dma =
+	USART_TX_DMA(STM32_DMAC_USART1_TX, 16);
+
+static struct usart_config const ap_usart =
+	USART_CONFIG(usart1_hw,
+		     usart_rx_interrupt,
+		     ap_usart_tx_dma.usart_tx,
+		     115200,
+		     ap_usart_to_usb,
+		     ap_usb_to_usart);
 
 static struct usart_config const sh_usart = USART_CONFIG(usart3_hw,
 							 usart_rx_interrupt,

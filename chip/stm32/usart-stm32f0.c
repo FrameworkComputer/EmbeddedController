@@ -66,6 +66,11 @@ static void freq_change(void)
 
 DECLARE_HOOK(HOOK_FREQ_CHANGE, freq_change, HOOK_PRIO_DEFAULT);
 
+void usart_clear_tc(struct usart_config const *config)
+{
+	STM32_USART_ICR(config->hw->base) |= STM32_USART_ICR_TCCF;
+}
+
 /*
  * USART interrupt bindings.  These functions can not be defined as static or
  * they will be removed by the linker because of the way that DECLARE_IRQ works.

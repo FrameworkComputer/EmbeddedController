@@ -185,6 +185,7 @@
 #define STM32_USART_RQR(base)      STM32_USART_REG(base, 0x18)
 #define STM32_USART_ISR(base)      STM32_USART_REG(base, 0x1C)
 #define STM32_USART_ICR(base)      STM32_USART_REG(base, 0x20)
+#define STM32_USART_ICR_TCCF		(1 << 6)
 #define STM32_USART_RDR(base)      STM32_USART_REG(base, 0x24)
 #define STM32_USART_TDR(base)      STM32_USART_REG(base, 0x28)
 /* register alias */

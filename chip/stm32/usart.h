@@ -176,4 +176,10 @@ void usart_interrupt(struct usart_config const *config);
 void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz);
 void usart_set_baud_f(struct usart_config const *config, int frequency_hz);
 
+/*
+ * Different families provide different ways of clearing the transmit complete
+ * flag.  This function will be provided by the family specific implementation.
+ */
+void usart_clear_tc(struct usart_config const *config);
+
 #endif /* __CROS_EC_USART_H */

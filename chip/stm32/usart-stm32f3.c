@@ -46,6 +46,11 @@ static struct usart_hw_ops const usart_variant_hw_ops = {
 	.disable = usart_variant_disable,
 };
 
+void usart_clear_tc(struct usart_config const *config)
+{
+	STM32_USART_ICR(config->hw->base) |= STM32_USART_ICR_TCCF;
+}
+
 /*
  * USART interrupt bindings.  These functions can not be defined as static or
  * they will be removed by the linker because of the way that DECLARE_IRQ works.
