@@ -13,6 +13,7 @@ driver-$(CONFIG_ACCELGYRO_BMI160)+=accelgyro_bmi160.o
 
 # ALS drivers
 driver-$(CONFIG_ALS_ISL29035)+=als_isl29035.o
+driver-$(CONFIG_ALS_OPT3001)+=als_opt3001.o
 
 # Batteries
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o

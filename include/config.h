@@ -64,6 +64,7 @@
  */
 #undef CONFIG_ALS
 #undef CONFIG_ALS_ISL29035
+#undef CONFIG_ALS_OPT3001
 
 /* Support AP hang detection host command and state machine */
 #undef CONFIG_AP_HANG_DETECT
