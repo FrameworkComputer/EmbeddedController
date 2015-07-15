@@ -243,11 +243,14 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 static int dp_flags[CONFIG_USB_PD_PORT_COUNT];
+/* DP Status VDM as returned by UFP */
+static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
+	dp_status[port] = 0;
 	usb_mux_set(port, TYPEC_MUX_NONE,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 }
@@ -282,26 +285,75 @@ static int svdm_dp_status(int port, uint32_t *payload)
 static int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
+	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
 
-	usb_mux_set(port, TYPEC_MUX_DP,
+	if (!pin_mode)
+		return 0;
+
+	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
+
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* pin mode */
+	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
 				1,             /* DPv1.3 signaling */
 				2);            /* UFP connected */
 	return 2;
 };
 
+#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
 static void svdm_dp_post_config(int port)
 {
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
+
+	gpio_set_level(PORT_TO_HPD(port), 1);
 }
+
+static void hpd0_irq_deferred(void)
+{
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
+}
+
+static void hpd1_irq_deferred(void)
+{
+	gpio_set_level(GPIO_USB_C1_DP_HPD, 1);
+}
+
+DECLARE_DEFERRED(hpd0_irq_deferred);
+DECLARE_DEFERRED(hpd1_irq_deferred);
+#define PORT_TO_HPD_IRQ_DEFERRED(port) ((port) ? hpd1_irq_deferred : \
+					hpd0_irq_deferred)
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
+	int cur_lvl;
+	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
+	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
+	enum gpio_signal hpd = PORT_TO_HPD(port);
+	cur_lvl = gpio_get_level(hpd);
+
+	dp_status[port] = payload[1];
+
+	/* Its initial DP status message prior to config */
+	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
+
+	if (irq & cur_lvl) {
+		gpio_set_level(hpd, 0);
+		hook_call_deferred(PORT_TO_HPD_IRQ_DEFERRED(port),
+				   HPD_DSTREAM_DEBOUNCE_IRQ);
+	} else if (irq & !cur_lvl) {
+		CPRINTF("ERR:HPD:IRQ&LOW\n");
+		return 0; /* nak */
+	} else {
+		gpio_set_level(hpd, lvl);
+	}
 	/* ack */
 	return 1;
 }
@@ -309,7 +361,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
-	/* gpio_set_level(PORT_TO_HPD(port), 0); */
+	gpio_set_level(PORT_TO_HPD(port), 0);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
