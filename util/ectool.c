@@ -419,6 +419,7 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_SUB_MCU] = "Control downstream MCU",
 	[EC_FEATURE_USB_PD] = "USB Cros Power Delievery",
 	[EC_FEATURE_USB_MUX] = "USB Multiplexer",
+	[EC_FEATURE_MOTION_SENSE_FIFO] = "FIFO for Motion Sensors events",
 };
 
 int cmd_inventory(int argc, char *argv[])

@@ -936,7 +936,9 @@ enum ec_feature_code {
 	/* Support USB Power delivery (PD) commands */
 	EC_FEATURE_USB_PD = 22,
 	/* Control USB multiplexer, for audio through USB port for instance. */
-	EC_FEATURE_USB_MUX = 23
+	EC_FEATURE_USB_MUX = 23,
+	/* Motion Sensor code has an internal software FIFO */
+	EC_FEATURE_MOTION_SENSE_FIFO = 24,
 };
 
 #define EC_FEATURE_MASK_0(event_code) (1UL << (event_code % 32))
