@@ -12,6 +12,9 @@ import re
 import os
 import argparse
 
+# Master file which is supposed to include all CONFIG_xxxx descriptions.
+CONFIG_FILE = 'include/config.h'
+
 def find_files_to_check(args):
   """Returns a list of files to check."""
   file_list = []
@@ -35,37 +38,55 @@ def find_files_to_check(args):
 def obtain_current_config_options():
   """Obtains current config options from include/config.h"""
   config_options = []
-  config_option_re = re.compile(r'\s+(CONFIG_[a-zA-Z0-9_]*)\s*')
-  with open('include/config.h', 'r') as config_file:
+  config_option_re = re.compile(r'^#(define|undef)\s+(CONFIG_[A-Z0-9_]+)')
+  with open(CONFIG_FILE, 'r') as config_file:
     for line in config_file:
-      match = re.search(config_option_re, line)
-      if match:
-        if match.group(1) not in config_options:
-          config_options.append(match.group(1))
+      result = config_option_re.search(line)
+      if not result:
+        continue
+      word = result.groups()[1]
+      if word not in config_options:
+        config_options.append(word)
   return config_options
 
 def print_missing_config_options(file_list, config_options):
-  """Searches through all files in file_list for missing config options."""
+  """Searches through all files in file_list for missing config options.
+
+  TODO: make it search only added lines instead.
+  """
   missing_config_option = False
   print_banner = True
   # Determine longest CONFIG_* length to be used for formatting.
   max_option_length = max(len(option) for option in config_options)
   config_option_re = re.compile(r'\s+(CONFIG_[a-zA-Z0-9_]*)\s*')
   for f in file_list:
+    if os.path.realpath(f) == os.path.realpath(CONFIG_FILE):
+      continue
+    extension = os.path.splitext(f)[1]
+    # Do not examine files which are not likely to actually use CONFIG_xxx.
+    # TODO: this list should be fine tuned.
+    if not extension in ('.c', '.h', '.mk', '.inc') and not 'Makefile' in f:
+      continue
     with open(f, 'r') as cur_file:
       line_num = 0
       for line in cur_file:
         line_num += 1
+        if extension == '.mk' and line.startswith('#'):
+          # Ignore pattern found in comments. TODO: this needs to be way more
+          # robust: different file extensions require different comment
+          # encapsulation logic, the comment could be not starting in the
+          # first column, etc.
+          continue
         match = re.search(config_option_re, line)
         if match:
           if match.group(1) not in config_options:
             missing_config_option = True
             # Print the banner once.
             if print_banner:
-              print('Please add all new config options to include/config.h' \
-                    ' along with a description of the option.\n\n' \
-                    'The following config options were found to be missing ' \
-                    'from include/config.h.\n')
+              print('The following config options were found to be missing '
+                    'from %s.\n'
+                    'Please add new config options there along with '
+                    'descriptions.\n\n' % CONFIG_FILE)
               print_banner = False
             # Print the misssing config option.
             print('> %-*s %s:%s' % (max_option_length, match.group(1), f,
