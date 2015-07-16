@@ -95,6 +95,8 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID 1
 
 /* Modules we want to exclude */
+#undef CONFIG_CMD_SHMEM
+#undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_PECI
 
