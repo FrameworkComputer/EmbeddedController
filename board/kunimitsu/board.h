@@ -97,7 +97,6 @@
 /* Modules we want to exclude */
 #undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_PECI
-#undef CONFIG_WAKE_PIN
 
 #ifndef __ASSEMBLER__
 

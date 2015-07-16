@@ -77,7 +77,6 @@
 #undef CONFIG_PECI
 #undef CONFIG_FANS
 #undef CONFIG_ADC
-#undef CONFIG_WAKE_PIN
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

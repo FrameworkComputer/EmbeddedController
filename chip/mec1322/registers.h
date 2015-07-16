@@ -479,4 +479,8 @@ typedef volatile struct mec1322_dma_regs mec1322_dma_regs_t;
 #define MEC1322_IRQ_RTC          91
 #define MEC1322_IRQ_RTC_ALARM    92
 
+/* Wake pin definitions, defined at board-level */
+extern const enum gpio_signal hibernate_wake_pins[];
+extern const int hibernate_wake_pins_used;
+
 #endif /* __CROS_EC_REGISTERS_H */

@@ -188,21 +188,27 @@ static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 	uint32_t val;
 	int want_skip;
 
-	const int pins[16][2] = {{0, 7}, {1, 7}, {2, 7}, {3, 6}, {4, 7}, {5, 7},
-				 {6, 7}, {10, 7}, {11, 7}, {12, 7}, {13, 6},
-				 {14, 7}, {15, 7}, {16, 5}, {20, 6}, {21, 1} };
-
-	const int skip[5][2] = {{13, 1}, /* VCC1_nRST */
-				{6, 3},  /* VCC_PWRGD */
-				{12, 1}, /* nRESET_OUT */
-				{14, 3}, /* RSMRST# */
-				{20, 5}, /* Not exist */
+	const int pins[][2] = {
+				{0, 7}, {1, 7}, {2, 7}, {3, 6}, {4, 7}, {5, 7},
+				{6, 7}, {10, 7}, {11, 7}, {12, 7}, {13, 6},
+				{14, 7}, {15, 7}, {16, 5}, {20, 6}, {21, 1}
 	};
 
-	for (i = 0; i < 16; ++i) {
+	const int skip[][2] = {
+#if defined(BOARD_GLADOS) || defined(BOARD_KUNIMITSU)
+				/*
+				 * TODO(crosbug.com/p/42774): Remove this
+				 * once we have a pull-down on PCH_RTCRST.
+				 */
+				{16, 3}, /* Leave PCH_RTCRST deasserted */
+#endif
+				{20, 5}, /* GPIO 205 doesn't exist */
+	};
+
+	for (i = 0; i < ARRAY_SIZE(pins); ++i) {
 		for (j = 0; j <= pins[i][1]; ++j) {
 			want_skip = 0;
-			for (k = 0; k < 5; ++k)
+			for (k = 0; k < ARRAY_SIZE(skip); ++k)
 				if (skip[k][0] == pins[i][0] &&
 				    skip[k][1] == j)
 					want_skip = 1;
@@ -295,18 +301,22 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 		backup_gpio_ctl = NULL;
 	system_set_gpio_power(0, (uint32_t *)backup_gpio_ctl);
 
-#ifdef CONFIG_WAKE_PIN
-	gpio_set_flags_by_mask(gpio_list[CONFIG_WAKE_PIN].port,
-			       gpio_list[CONFIG_WAKE_PIN].mask,
-			       gpio_list[CONFIG_WAKE_PIN].flags);
-	gpio_enable_interrupt(CONFIG_WAKE_PIN);
-	interrupt_enable();
-	task_enable_irq(MEC1322_IRQ_GIRQ8);
-	task_enable_irq(MEC1322_IRQ_GIRQ9);
-	task_enable_irq(MEC1322_IRQ_GIRQ10);
-	task_enable_irq(MEC1322_IRQ_GIRQ11);
-	task_enable_irq(MEC1322_IRQ_GIRQ20);
-#endif
+	if (hibernate_wake_pins_used > 0) {
+		for (i = 0; i < hibernate_wake_pins_used; ++i) {
+			const enum gpio_signal *pin = &hibernate_wake_pins[i];
+			gpio_set_flags_by_mask(gpio_list[*pin].port,
+					       gpio_list[*pin].mask,
+					       gpio_list[*pin].flags);
+			gpio_enable_interrupt(*pin);
+		}
+
+		interrupt_enable();
+		task_enable_irq(MEC1322_IRQ_GIRQ8);
+		task_enable_irq(MEC1322_IRQ_GIRQ9);
+		task_enable_irq(MEC1322_IRQ_GIRQ10);
+		task_enable_irq(MEC1322_IRQ_GIRQ11);
+		task_enable_irq(MEC1322_IRQ_GIRQ20);
+	}
 
 	if (seconds || microseconds) {
 		MEC1322_INT_BLK_EN |= 1 << 17;

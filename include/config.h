@@ -1690,10 +1690,6 @@
 /* Support computing hash of code for verified boot */
 #undef CONFIG_VBOOT_HASH
 
-/******************************************************************************/
-/* GPIO pin to wake from hibernate. */
-#undef CONFIG_WAKE_PIN
-
 /*****************************************************************************/
 /* Watchdog config */
 

@@ -50,7 +50,6 @@
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_CLOCK_CRYSTAL
-#define CONFIG_WAKE_PIN GPIO_POWER_BUTTON_L
 
 /* 512kb SPI flash */
 #define CONFIG_SPI_FLASH_SIZE 0x00080000
