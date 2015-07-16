@@ -260,6 +260,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5G3;
 
 	case POWER_S5G3:
+#ifdef CONFIG_G3_SLEEP
+		gpio_set_level(GPIO_G3_SLEEP_EN, 1);
+#endif
 		return POWER_G3;
 
 	default:
