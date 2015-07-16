@@ -254,15 +254,13 @@ static void sps_hc_enable(void)
 	state = SPI_STATE_DISABLED;
 
 	/* Ready to receive */
-	sps_register_rx_handler(SPI_CLOCK_MODE0, SPS_GENERIC_MODE,
-				hc_rx_handler);
+	sps_register_rx_handler(SPS_GENERIC_MODE, hc_rx_handler);
 
 	/* Here we go */
 	discard_response = 0;
 	state = SPI_STATE_READY_TO_RX;
 	sps_tx_status(EC_SPI_RX_READY);
 }
-DECLARE_HOOK(HOOK_INIT, sps_hc_enable, HOOK_PRIO_DEFAULT);
 
 static void sps_hc_disable(void)
 {

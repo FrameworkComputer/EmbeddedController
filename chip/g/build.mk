@@ -19,7 +19,6 @@ CPPFLAGS+= -DGC_REVISION="$(ver_str)"
 chip-y=clock.o gpio.o hwtimer.o jtag.o system.o uart.o
 chip-y+= pmu.o
 chip-$(CONFIG_SPI)+= sps.o
-chip-$(CONFIG_SPS_TEST)+=sps_test.o
 chip-$(CONFIG_HOSTCMD_SPI)+=sps_hc.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 

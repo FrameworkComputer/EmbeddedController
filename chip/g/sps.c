@@ -4,77 +4,99 @@
  */
 
 #include "common.h"
+#include "console.h"
 #include "hooks.h"
 #include "pmu.h"
 #include "registers.h"
-#include "spi.h"
 #include "sps.h"
 #include "task.h"
+#include "timer.h"
+#include "watchdog.h"
 
 /*
- * Hardware pointers use one extra bit to indicate wrap around. This means we
- * can fill the FIFO completely, but it also means that the FIFO index and the
- * values written into the read/write pointer registers have different sizes.
+ * This file is a driver for the CR50 SPS (SPI slave) controller. The
+ * controller deploys a 2KB buffer split evenly between receive and transmit
+ * directions.
+ *
+ * Each one kilobyte of memory is organized into a FIFO with read
+ * and write pointers. RX FIFO write and TX FIFO read pointers are managed by
+ * hardware. RX FIFO read and TX FIFO write pointers are managed by
+ * software.
+ *
+ * As of time of writing, TX fifo allows only 32 bit wide write accesses,
+ * which makes the function feeding the FIFO unnecessarily complicated.
+ *
+ * Even though both FIFOs are 1KByte in size, the hardware pointers
+ * controlling access to the FIFOs are 11 bits in size, this is another issue
+ * requiring special software handling.
+ *
+ * The driver API includes three functions:
+ *
+ * - transmit a packet of a certain size, runs on the task context and can
+ *   exit before the entire packet is transmitted.,
+ *
+ * - register a receive callback. The callback is running in interrupt
+ *   context. Registering the callback (re)initializes the interface.
+ *
+ * - unregister receive callback.
  */
-#define SPS_FIFO_SIZE		1024
+
+#define SPS_FIFO_SIZE		(1 << 10)
 #define SPS_FIFO_MASK		(SPS_FIFO_SIZE - 1)
+/*
+ * Hardware pointers use one extra bit, which means that indexing FIFO and
+ * values written into the pointers have to have dfferent sizes. Tracked under
+ * http://b/20894690
+ */
 #define SPS_FIFO_PTR_MASK	((SPS_FIFO_MASK << 1) | 1)
 
-/* Just the FIFO-sized part */
-#define low(V) ((V) & SPS_FIFO_MASK)
-
-/* Return the number of bytes in the FIFO (0 to SPS_FIFO_SIZE) */
-static uint32_t fifo_count(uint32_t readptr, uint32_t writeptr)
-{
-	uint32_t tmp = readptr ^ writeptr;
-
-	if (!tmp)				/* completely equal == empty */
-		return 0;
-
-	if (!low(tmp))				/* only high bit diff == full */
-		return SPS_FIFO_SIZE;
-
-	return low(writeptr - readptr);		/* else just |diff| */
-}
-
-/* HW FIFO buffer addresses */
 #define SPS_TX_FIFO_BASE_ADDR (GBASE(SPS) + 0x1000)
 #define SPS_RX_FIFO_BASE_ADDR (SPS_TX_FIFO_BASE_ADDR + SPS_FIFO_SIZE)
 
-#ifdef CONFIG_SPS_TEST
-/* Statistics counters. Not always present, to save space & time. */
-uint32_t sps_tx_count, sps_rx_count, sps_tx_empty_count, sps_max_rx_batch;
-#endif
+/* SPS Statistic Counters */
+static uint32_t sps_tx_count, sps_rx_count, tx_empty_count, max_rx_batch;
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_SPI, outstr)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
 
 void sps_tx_status(uint8_t byte)
 {
 	GREG32(SPS, DUMMY_WORD) = byte;
 }
 
+/*
+ * Push data to the SPS TX FIFO
+ * @param data Pointer to 8-bit data
+ * @param data_size Number of bytes to transmit
+ * @return : actual number of bytes placed into tx fifo
+ */
 int sps_transmit(uint8_t *data, size_t data_size)
 {
-	volatile uint32_t *sps_tx_fifo32;
+	volatile uint32_t *sps_tx_fifo;
 	uint32_t rptr;
 	uint32_t wptr;
 	uint32_t fifo_room;
 	int bytes_sent;
+	int inst = 0;
 
-#ifdef CONFIG_SPS_TEST
-	if (GREAD_FIELD(SPS, ISTATE, TXFIFO_EMPTY))
-		sps_tx_empty_count++;
-#endif
+	if (GREAD_FIELD_I(SPS, inst, ISTATE, TXFIFO_EMPTY))
+		tx_empty_count++; /* Inside packet this means underrun. */
 
-	wptr = GREG32(SPS, TXFIFO_WPTR);
-	rptr = GREG32(SPS, TXFIFO_RPTR);
-	fifo_room = SPS_FIFO_SIZE - fifo_count(rptr, wptr);
+	sps_tx_fifo = (volatile uint32_t *)SPS_TX_FIFO_BASE_ADDR;
 
-	if (fifo_room < data_size)
+	wptr = GREG32_I(SPS, inst, TXFIFO_WPTR);
+	rptr = GREG32_I(SPS, inst, TXFIFO_RPTR);
+	fifo_room = (rptr - wptr - 1) & SPS_FIFO_MASK;
+
+	if (fifo_room < data_size) {
+		bytes_sent = fifo_room;
 		data_size = fifo_room;
-	bytes_sent = data_size;
+	} else {
+		bytes_sent = data_size;
+	}
 
-	/* Need 32-bit pointers for issue b/20894727 */
-	sps_tx_fifo32 = (volatile uint32_t *)SPS_TX_FIFO_BASE_ADDR;
-	sps_tx_fifo32 += (wptr & SPS_FIFO_MASK) / sizeof(*sps_tx_fifo32);
+	sps_tx_fifo += (wptr & SPS_FIFO_MASK) / sizeof(*sps_tx_fifo);
 
 	while (data_size) {
 
@@ -87,7 +109,7 @@ int sps_transmit(uint8_t *data, size_t data_size)
 			uint32_t fifo_contents;
 			int bit_shift;
 
-			fifo_contents = *sps_tx_fifo32;
+			fifo_contents = *sps_tx_fifo;
 			do {
 				/*
 				 * CR50 SPS controller does not allow byte
@@ -104,194 +126,367 @@ int sps_transmit(uint8_t *data, size_t data_size)
 
 			} while (data_size && (wptr & 3));
 
-			*sps_tx_fifo32++ = fifo_contents;
+			*sps_tx_fifo++ = fifo_contents;
 		} else {
 			/*
 			 * Both fifo wptr and data are aligned and there is
 			 * plenty to send.
 			 */
-			*sps_tx_fifo32++ = *((uint32_t *)data);
+			*sps_tx_fifo++ = *((uint32_t *)data);
 			data += 4;
 			data_size -= 4;
 			wptr += 4;
 		}
-		GREG32(SPS, TXFIFO_WPTR) = wptr & SPS_FIFO_PTR_MASK;
+		GREG32_I(SPS, inst, TXFIFO_WPTR) = wptr & SPS_FIFO_PTR_MASK;
 
 		/* Make sure FIFO pointer wraps along with the index. */
-		if (!low(wptr))
-			sps_tx_fifo32 = (volatile uint32_t *)
+		if (!(wptr & SPS_FIFO_MASK))
+			sps_tx_fifo = (volatile uint32_t *)
 				SPS_TX_FIFO_BASE_ADDR;
 	}
 
-#ifdef CONFIG_SPS_TEST
+	/*
+	 * Start TX if necessary. This happens after FIFO is primed, which
+	 * helps aleviate TX underrun problems but introduces delay before
+	 * data starts coming out.
+	 */
+	if (!GREAD_FIELD(SPS, FIFO_CTRL, TXFIFO_EN))
+		GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 1);
+
 	sps_tx_count += bytes_sent;
-#endif
 	return bytes_sent;
 }
 
-/*
- * Disable interrupts, clear and reset the HW FIFOs.
+/** Configure the data transmission format
+ *
+ *  @param mode Clock polarity and phase mode (0 - 3)
+ *
  */
-static void sps_reset(enum spi_clock_mode m_spi, enum sps_mode m_sps)
-
+static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode)
 {
 	/* Disable All Interrupts */
 	GREG32(SPS, ICTRL) = 0;
 
-	GWRITE_FIELD(SPS, CTRL, MODE, m_sps);
+	GWRITE_FIELD(SPS, CTRL, MODE, mode);
 	GWRITE_FIELD(SPS, CTRL, IDLE_LVL, 0);
-	GWRITE_FIELD(SPS, CTRL, CPHA, m_spi & 1);
-	GWRITE_FIELD(SPS, CTRL, CPOL, (m_spi >> 1) & 1);
+	GWRITE_FIELD(SPS, CTRL, CPHA, clk_mode & 1);
+	GWRITE_FIELD(SPS, CTRL, CPOL, (clk_mode >> 1) & 1);
 	GWRITE_FIELD(SPS, CTRL, TXBITOR, 1); /* MSB first */
 	GWRITE_FIELD(SPS, CTRL, RXBITOR, 1); /* MSB first */
+	/* xfer 0xff when tx fifo is empty */
+	GREG32(SPS, DUMMY_WORD) = GC_SPS_DUMMY_WORD_DEFAULT;
 
-	/* Default dummy word */
-	sps_tx_status(0xff);
-
-	/*
-	 * Reset both FIFOs
-	 *          [5,  4,   3]          [2,  1,   0]
-	 * RX{AUTO_DIS, EN, RST} TX{AUTO_DIS, EN, RST}
+	/* [5,4,3]           [2,1,0]
+	 * RX{DIS, EN, RST} TX{DIS, EN, RST}
 	 */
 	GREG32(SPS, FIFO_CTRL) = 0x9;
 
 	/* wait for reset to self clear. */
 	while (GREG32(SPS, FIFO_CTRL) & 9)
 		;
-}
 
-/*
- * Following a reset, resume listening for and handling incoming bytes.
- */
-static void sps_enable(void)
-{
-	/* Enable the FIFOs */
+	/* Do not enable TX FIFO until we have something to send. */
 	GWRITE_FIELD(SPS, FIFO_CTRL, RXFIFO_EN, 1);
-	GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 1);
 
-	/*
-	 * Wait until we have a few bytes in the FIFO before waking up. There's
-	 * a tradeoff here: If the master wants to talk to us it will have to
-	 * clock in at least RXFIFO_THRESHOLD + 1 bytes before we notice. On
-	 * the other hand, if we set this too low we waste a lot of time
-	 * handling interrupts before we have enough bytes to know what the
-	 * master is saying.
-	 */
-	GREG32(SPS, RXFIFO_THRESHOLD) = 7;
+	GREG32(SPS, RXFIFO_THRESHOLD) = 8;
+
 	GWRITE_FIELD(SPS, ICTRL, RXFIFO_LVL, 1);
 
-	/* Also wake up when the master has finished talking to us, so we can
-	 * drain any remaining bytes in the RX FIFO. */
+	/* Use CS_DEASSERT to retrieve all remaining bytes from RX FIFO. */
 	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
 	GWRITE_FIELD(SPS, ICTRL, CS_DEASSERT, 1);
 }
 
 /*
- * Check how much LINEAR data is available in the RX FIFO and return a pointer
- * to the data and its size. If the FIFO data wraps around the end of the
- * physical address space, this only returns the amount up to the the end of
- * the buffer.
- *
- * @param data   pointer to set to the beginning of data in the fifo
- * @return       number of available bytes
- * zero
+ * Register and unregister rx_handler. Side effects of registering the handler
+ * is reinitializing the interface.
  */
-static int sps_check_rx(uint8_t **data)
-{
-	uint32_t wptr = GREG32(SPS, RXFIFO_WPTR);
-	uint32_t rptr = GREG32(SPS, RXFIFO_RPTR);
-	uint32_t count = fifo_count(rptr, wptr);
+static rx_handler_f sps_rx_handler;
 
-	if (!count)
+int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler)
+{
+	if (sps_rx_handler)
+		return -1;
+
+	sps_rx_handler = rx_handler;
+	sps_configure(mode, SPI_CLOCK_MODE0);
+	task_enable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
+	task_enable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
+
+	return 0;
+}
+
+int sps_unregister_rx_handler(void)
+{
+	if (!sps_rx_handler)
+		return -1;
+
+	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
+	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
+
+	sps_rx_handler = NULL;
+	return 0;
+}
+
+static void sps_init(void)
+{
+	pmu_clock_en(PERIPH_SPS);
+}
+DECLARE_HOOK(HOOK_INIT, sps_init, HOOK_PRIO_DEFAULT);
+
+
+
+/*****************************************************************************/
+/* Interrupt handler stuff */
+
+/*
+ * Check how much data is available in RX FIFO and return pointer to the
+ * available data and its size.
+ *
+ * @param inst Interface number
+ * @param data - pointer to set to the beginning of data in the fifo
+ * @return number of available bytes and the sets the pointer if number of
+ *         bytes is non zero
+ */
+static int sps_check_rx(uint32_t inst, uint8_t **data)
+{
+	uint32_t write_ptr = GREG32_I(SPS, inst, RXFIFO_WPTR) & SPS_FIFO_MASK;
+	uint32_t read_ptr = GREG32_I(SPS, inst, RXFIFO_RPTR) & SPS_FIFO_MASK;
+
+	if (read_ptr == write_ptr)
 		return 0;
 
-	wptr = low(wptr);
-	rptr = low(rptr);
+	*data = (uint8_t *)(SPS_RX_FIFO_BASE_ADDR + read_ptr);
 
-	if (rptr >= wptr)
-		count = SPS_FIFO_SIZE - rptr;
-	else
-		count = wptr - rptr;
+	if (read_ptr > write_ptr)
+		return SPS_FIFO_SIZE - read_ptr;
 
-	*data = (uint8_t *)(SPS_RX_FIFO_BASE_ADDR + rptr);
-
-	return count;
+	return write_ptr - read_ptr;
 }
 
 /* Advance RX FIFO read pointer after data has been read from the FIFO. */
-static void sps_advance_rx(int data_size)
+static void sps_advance_rx(int port, int data_size)
 {
-	uint32_t read_ptr = GREG32(SPS, RXFIFO_RPTR) + data_size;
-	GREG32(SPS, RXFIFO_RPTR) = read_ptr & SPS_FIFO_PTR_MASK;
+	uint32_t read_ptr = GREG32_I(SPS, port, RXFIFO_RPTR) + data_size;
+
+	GREG32_I(SPS, port, RXFIFO_RPTR) = read_ptr & SPS_FIFO_PTR_MASK;
 }
 
-/* RX FIFO handler. If NULL, incoming bytes are silently discarded. */
-static rx_handler_fn sps_rx_handler;
-
-static void sps_rx_interrupt(int cs_enabled)
+/*
+ * Actual receive interrupt processing function. Invokes the callback passing
+ * it a pointer to the linear space in the RX FIFO and the number of bytes
+ * availabe at that address.
+ *
+ * If RX fifo is wrapping around, the callback will be called twice with two
+ * flat pointers.
+ *
+ * If the CS has been deasserted, after all remaining RX FIFO data has been
+ * passed to the callback, the callback is called one last time with zero data
+ * size and the CS indication, this allows the client to delineate received
+ * packets.
+ */
+static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 {
-	size_t data_size;
-	do {
+	for (;;) {
 		uint8_t *received_data;
-		data_size = sps_check_rx(&received_data);
-		if (sps_rx_handler)
-			sps_rx_handler(received_data, data_size, cs_enabled);
-		sps_advance_rx(data_size);
-#ifdef CONFIG_SPS_TEST
+		size_t data_size;
+
+		data_size = sps_check_rx(port, &received_data);
+		if (!data_size)
+			break;
+
 		sps_rx_count += data_size;
-		if (data_size > sps_max_rx_batch)
-			sps_max_rx_batch = data_size;
-#endif
-	} while (data_size);
+
+		if (sps_rx_handler)
+			sps_rx_handler(received_data, data_size, 0);
+
+		if (data_size > max_rx_batch)
+			max_rx_batch = data_size;
+
+		sps_advance_rx(port, data_size);
+	}
+
+	if (cs_deasserted)
+		sps_rx_handler(NULL, 0, 1);
+}
+
+static void sps_cs_deassert_interrupt(uint32_t port)
+{
+	/* Make sure the receive FIFO is drained. */
+	sps_rx_interrupt(port, 1);
+	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
+	GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 0);
 }
 
 void _sps0_interrupt(void)
 {
-	sps_rx_interrupt(1);
-	/* The RXFIFO_LVL interrupt clears itself when the level drops */
+	sps_rx_interrupt(0, 0);
 }
-DECLARE_IRQ(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR, _sps0_interrupt, 1);
 
 void _sps0_cs_deassert_interrupt(void)
 {
-	/* Notify the registered handler (and drain the RX FIFO) */
-	sps_rx_interrupt(0);
-	/* Clear the TX FIFO manually, so the next transaction doesn't
-	 * start by clocking out any bytes left over from this one. */
-	GREG32(SPS, TXFIFO_WPTR) = GREG32(SPS, TXFIFO_RPTR);
-	/* Clear the interrupt bit */
-	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
+	sps_cs_deassert_interrupt(0);
 }
 DECLARE_IRQ(GC_IRQNUM_SPS0_CS_DEASSERT_INTR, _sps0_cs_deassert_interrupt, 1);
+DECLARE_IRQ(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR, _sps0_interrupt, 1);
 
-void sps_unregister_rx_handler(void)
+#ifdef CONFIG_SPS_TEST
+
+/* Function to test SPS driver. It expects the host to send SPI frames of size
+ * <size> (not exceeding 1100) of the following format:
+ *
+ * <size/256> <size%256> [<size> bytes of payload]
+ *
+ * Once the frame is received, it is sent back. The host can receive it and
+ * compare with the original.
+ */
+
+ /*
+  * Receive callback implemets a simple state machine, it could be in one of
+  * three states:  not started, receiving frame, frame finished.
+  */
+
+enum sps_test_rx_state {
+	spstrx_not_started,
+	spstrx_receiving,
+	spstrx_finished
+};
+
+static enum sps_test_rx_state rx_state;
+static uint8_t test_frame[1100]; /* Storage for the received frame. */
+/*
+ * To verify different alignment cases, the frame is saved in the buffer
+ * starting with a certain offset (in range 0..3).
+ */
+static size_t frame_base;
+/*
+ * This is the index of the next location where received data will be added
+ * to. Points to the end of the received frame once it has been pulled in.
+ */
+static size_t frame_index;
+
+static void sps_receive_callback(uint8_t *data, size_t data_size, int cs_status)
 {
-	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
-	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
-	sps_rx_handler = NULL;
+	static size_t frame_size; /* Total size of the frame being received. */
+	size_t to_go; /* Number of bytes still to receive. */
 
-	/* The modes don't really matter since we're disabling interrupts.
-	 * Mostly we just want to reset the FIFOs. */
-	sps_reset(SPI_CLOCK_MODE0, SPS_GENERIC_MODE);
+	if (rx_state == spstrx_not_started) {
+		if (data_size < 2)
+			return; /* Something went wrong.*/
+
+		frame_size = data[0] * 256 + data[1] + 2;
+		frame_base = (frame_base + 1) % 3;
+		frame_index = frame_base;
+
+		if ((frame_index + frame_size) <= sizeof(test_frame))
+			/* Enter 'receiving frame' state. */
+			rx_state = spstrx_receiving;
+		else
+			/*
+			 * If we won't be able to receve this much, enter the
+			 * 'frame finished' state.
+			 */
+			rx_state = spstrx_finished;
+	}
+
+	if (rx_state == spstrx_finished) {
+		/*
+		 * If CS was deasserted (transitioned to 1) - prepare to start
+		 * receiving the next frame.
+		 */
+		if (cs_status)
+			rx_state = spstrx_not_started;
+		return;
+	}
+
+	if (frame_size > data_size)
+		to_go = data_size;
+	else
+		to_go = frame_size;
+
+	memcpy(test_frame + frame_index, data, to_go);
+	frame_index += to_go;
+	frame_size -= to_go;
+
+	if (!frame_size)
+		rx_state = spstrx_finished; /* Frame finished.*/
 }
 
-void sps_register_rx_handler(enum spi_clock_mode m_spi,
-			     enum sps_mode m_sps,
-			     rx_handler_fn func)
+static int command_sps(int argc, char **argv)
 {
-	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
-	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
-	sps_reset(m_spi, m_sps);
-	sps_rx_handler = func;
-	sps_enable();
-	task_enable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
-	task_enable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
-}
+	int count = 0;
+	int target = 10; /* Expect 10 frames by default.*/
+	char *e;
 
-/* At reset the SPS module is initialized, but not enabled */
-static void sps_init(void)
-{
-	pmu_clock_en(PERIPH_SPS);
+	sps_tx_status(GC_SPS_DUMMY_WORD_DEFAULT);
+
+	rx_state = spstrx_not_started;
+	sps_register_rx_handler(SPS_GENERIC_MODE, sps_receive_callback);
+
+	if (argc > 1) {
+		target = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	}
+
+	while (count++ < target) {
+		size_t transmitted;
+		size_t to_go;
+		size_t index;
+
+		/* Wait for a frame to be received.*/
+		while (rx_state != spstrx_finished) {
+			watchdog_reload();
+			usleep(10);
+		}
+
+		/* Transmit the frame back to the host.*/
+		index = frame_base;
+		to_go = frame_index - frame_base;
+		do {
+			if ((index == frame_base) && (to_go > 8)) {
+				/*
+				 * This is the first transmit attempt for this
+				 * frame. Send a little just to prime the
+				 * transmit FIFO.
+				 */
+				transmitted = sps_transmit
+					(test_frame + index, 8);
+			} else {
+				transmitted = sps_transmit
+					(test_frame + index, to_go);
+			}
+			index += transmitted;
+			to_go -= transmitted;
+		} while (to_go);
+
+		/*
+		 * Wait for receive state machine to transition out of 'frame
+		 * finised' state.
+		 */
+		while (rx_state == spstrx_finished) {
+			watchdog_reload();
+			usleep(10);
+		}
+	}
+
 	sps_unregister_rx_handler();
+
+	ccprintf("Processed %d frames\n", count - 1);
+	ccprintf("rx count %d, tx count %d, tx_empty %d, max rx batch %d\n",
+		 sps_rx_count, sps_tx_count,
+		 tx_empty_count, max_rx_batch);
+
+	sps_rx_count =
+		sps_tx_count =
+		tx_empty_count =
+		max_rx_batch = 0;
+
+	return EC_SUCCESS;
 }
-DECLARE_HOOK(HOOK_INIT, sps_init, HOOK_PRIO_INIT_CHIPSET);
+
+DECLARE_CONSOLE_COMMAND(spstest, command_sps,
+			"<num of frames>",
+			"Loop back frames (10 by default) back to the host",
+			NULL);
+#endif /* CONFIG_SPS_TEST */
