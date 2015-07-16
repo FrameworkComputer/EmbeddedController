@@ -94,7 +94,7 @@ static void adc_init(void)
 	MEC1322_INT_BLK_EN |= 1 << 17;
 	task_enable_irq(MEC1322_IRQ_ADC_SNGL);
 }
-DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
 
 void adc_interrupt(void)
 {

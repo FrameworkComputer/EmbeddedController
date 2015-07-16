@@ -168,4 +168,4 @@ static void adc_init(void)
 
 	IT83XX_ADC_ADCCTL = 0x04;
 }
-DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);

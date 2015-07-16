@@ -235,4 +235,4 @@ static void adc_init(void)
 	task_enable_irq(NPCX_IRQ_ADC);
 
 }
-DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);

@@ -284,4 +284,4 @@ static void adc_init(void)
 	clock_disable_peripheral(CGC_OFFSET_ADC, 0x1,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
 }
-DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
