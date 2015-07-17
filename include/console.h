@@ -41,15 +41,21 @@ enum console_channel {
 	CC_KEYBOARD,
 	CC_KEYSCAN,
 	CC_LIDANGLE,
+#ifdef HAS_TASK_LIGHTBAR
 	CC_LIGHTBAR,
+#endif
 	CC_LPC,
 	CC_MOTION_LID,
 	CC_MOTION_SENSE,
+#ifdef HAS_TASK_PDCMD
 	CC_PD_HOST_CMD,
+#endif
 	CC_PORT80,
 	CC_PWM,
 	CC_SPI,
+#ifdef CONFIG_SPS
 	CC_SPS,
+#endif
 	CC_SWITCH,
 	CC_SYSTEM,
 	CC_TASK,
