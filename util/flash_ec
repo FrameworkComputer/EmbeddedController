@@ -85,6 +85,10 @@ BOARDS_NPCX=(
 	npcx_evb_arm
 )
 
+BOARDS_NRF51=(
+	hadoken
+)
+
 BOARDS_MEC1322=(
 	cyan
 	glados
@@ -403,6 +407,16 @@ function flash_lm4() {
 
 }
 
+function flash_nrf51() {
+	OCD_CHIP_CFG="nrf51_chip.cfg"
+	OCD_CMDS="init; flash_nrf51 ${IMG} ${FLAGS_offset}; exit_debug_mode_nrf51; shutdown;"
+
+	flash_openocd
+
+	# waiting 100us for the reset pulse is not necessary, it takes ~2.5ms
+	dut_control swd_reset:on swd_reset:off
+}
+
 function flash_npcx() {
 	IMG_PATH="${EC_DIR}/build/${BOARD}"
 	OCD_CHIP_CFG="npcx_chip.cfg"
@@ -486,6 +500,8 @@ elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
 	CHIP="stm32_dfu"
 elif $(in_array "${BOARDS_NPCX[@]}" "${BOARD}"); then
 	CHIP="npcx"
+elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
+	CHIP="nrf51"
 elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
 	CHIP="mec1322"
 elif [ -n "${FLAGS_chip}" ]; then
