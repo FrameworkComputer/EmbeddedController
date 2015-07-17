@@ -12,7 +12,7 @@
 #include "charger.h"
 #include "console.h"
 #include "driver/accel_kxcj9.h"
-#include "driver/als_isl29035.h"
+#include "driver/als_opt3001.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -291,7 +291,7 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /* ALS instances. Must be in same order as enum als_id. */
 struct als_t als[] = {
-	{"ISL", isl29035_read_lux, 5},
+	{"TI", opt3001_read_lux, 5},
 };
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
