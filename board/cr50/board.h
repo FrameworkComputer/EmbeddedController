@@ -25,8 +25,8 @@
 #define CONFIG_USB_PID 0x5014
 
 /* Enable SPI Slave (SPS) module */
-#define CONFIG_SPI
-#define CONFIG_HOSTCMD_SPI
+#define CONFIG_SPS
+#define CONFIG_HOSTCMD_SPS
 
 /* We don't need to send events to the AP */
 #undef  CONFIG_HOSTCMD_EVENTS

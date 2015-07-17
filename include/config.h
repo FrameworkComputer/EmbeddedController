@@ -835,9 +835,9 @@
 #undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 
 /*
- * Accept EC host commands over the SPI (slave) interface.
+ * Accept EC host commands over the SPI slave (SPS) interface.
  */
-#undef CONFIG_HOSTCMD_SPI
+#undef CONFIG_HOSTCMD_SPS
 
 /*
  * Host command rate limiting assures EC will have time to process lower
@@ -1343,8 +1343,16 @@
 /* Support smbus interface */
 #undef CONFIG_SMBUS
 
-/* Support SPI (slave) interfaces */
+/* Support SPI master interfaces */
 #undef CONFIG_SPI
+
+/*
+ * Support SPI Slave interfaces. The first board supporting this is cr50 and
+ * in its parlance SPI_SLAVE is called SPS. This convention might be
+ * reconsidered later, and the use of "SPI" in different config options needs
+ * to be cleand up. (crbug.com/512613).
+ */
+#undef CONFIG_SPS
 
 /* Define SPI chip select GPIO pin. */
 #undef CONFIG_SPI_CS_GPIO

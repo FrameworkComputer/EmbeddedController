@@ -32,9 +32,9 @@
  */
 
 /* Console output macros */
-#define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
+#define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
 
 /*
  * Incoming messages are collected here until they're ready to process. The

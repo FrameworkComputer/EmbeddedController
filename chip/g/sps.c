@@ -57,8 +57,8 @@
 static uint32_t sps_tx_count, sps_rx_count, tx_empty_count, max_rx_batch;
 
 /* Console output macros */
-#define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPUTS(outstr) cputs(CC_SPS, outstr)
+#define CPRINTS(format, args...) cprints(CC_SPS, format, ## args)
 
 void sps_tx_status(uint8_t byte)
 {

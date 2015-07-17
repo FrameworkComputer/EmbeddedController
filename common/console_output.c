@@ -54,6 +54,7 @@ static const char * const channel_names[] = {
 	"port80",
 	"pwm",
 	"spi",
+	"sps",
 	"switch",
 	"system",
 	"task",

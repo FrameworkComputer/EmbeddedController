@@ -49,6 +49,7 @@ enum console_channel {
 	CC_PORT80,
 	CC_PWM,
 	CC_SPI,
+	CC_SPS,
 	CC_SWITCH,
 	CC_SYSTEM,
 	CC_TASK,
