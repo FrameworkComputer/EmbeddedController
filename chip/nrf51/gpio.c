@@ -58,7 +58,7 @@ BUILD_ASSERT(NRF51_MAX_ALT_FUNCS == ARRAY_SIZE(nrf51_alt_funcs));
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	uint32_t val = 0;
-	uint32_t bit = 31 - __builtin_clz(mask);
+	uint32_t bit = GPIO_MASK_TO_NUM(mask);
 
 	if (flags & GPIO_OUTPUT)
 		val |= NRF51_PIN_CNF_DIR_OUTPUT;
@@ -162,7 +162,7 @@ void gpio_pre_init(void)
  */
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
-	uint32_t bit = 31 - __builtin_clz(mask);
+	uint32_t bit = GPIO_MASK_TO_NUM(mask);
 
 	ASSERT((~mask & (1 << bit)) == 0); /* Only one bit set. */
 	ASSERT(port == GPIO_0);
@@ -212,7 +212,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 		ASSERT(free_slot != -1);
 
 		gpio_ints[free_slot] = g;
-		pin = 31 - __builtin_clz(g->mask);
+		pin = GPIO_MASK_TO_NUM(g->mask);
 		event_config = (pin << NRF51_GPIOTE_PSEL_POS) |
 			NRF51_GPIOTE_MODE_EVENT;
 

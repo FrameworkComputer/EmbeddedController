@@ -46,6 +46,9 @@
 #define GPIO_INT_ANY        (GPIO_INT_BOTH | GPIO_INT_LEVEL)
 #define GPIO_INT_BOTH_DSLEEP (GPIO_INT_BOTH | GPIO_INT_DSLEEP)
 
+/* Convert GPIO mask to GPIO number / index. */
+#define GPIO_MASK_TO_NUM(mask) (31 - __builtin_clz(mask))
+
 /* NOTE: This is normally included from board.h, thru config.h and common.h But,
  * some boards and unit tests don't have a gpio_signal enum defined, so we
  * define an emtpy one here.*/

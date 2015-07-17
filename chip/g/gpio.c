@@ -104,7 +104,7 @@ static void connect_pinmux(uint32_t signal, uint32_t dio, uint16_t flags)
 	} else {
 		/* Connect GPIO to DIO */
 		const struct gpio_info *g = gpio_list + FIELD_GET_GPIO(signal);
-		int bitnum = 31 - __builtin_clz(g->mask);
+		int bitnum = GPIO_MASK_TO_NUM(g->mask);
 
 		if ((g->flags & GPIO_OUTPUT) || (flags & DIO_OUTPUT)) {
 			/* drive DIO output from GPIO */
@@ -186,7 +186,7 @@ static void gpio_interrupt(int port)
 	uint32_t pending = GR_GPIO_CLRINTSTAT(port);
 
 	while (pending) {
-		bitnum = 31 - __builtin_clz(pending);
+		bitnum = GPIO_MASK_TO_NUM(pending);
 		mask = 1 << bitnum;
 		pending &= ~mask;
 		gpio_invoke_handler(port, mask);

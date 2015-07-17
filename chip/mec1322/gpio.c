@@ -54,7 +54,7 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 
 	if (mask == 0)
 		return 0;
-	i = 31 - __builtin_clz(mask);
+	i = GPIO_MASK_TO_NUM(mask);
 	val = MEC1322_GPIO_CTL(gpio_list[signal].port, i);
 
 	return (val & (1 << 24)) ? 1 : 0;
@@ -67,7 +67,7 @@ void gpio_set_level(enum gpio_signal signal, int value)
 
 	if (mask == 0)
 		return;
-	i = 31 - __builtin_clz(mask);
+	i = GPIO_MASK_TO_NUM(mask);
 
 	if (value)
 		MEC1322_GPIO_CTL(gpio_list[signal].port, i) |= (1 << 16);
@@ -80,7 +80,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	int i;
 	uint32_t val;
 	while (mask) {
-		i = 31 - __builtin_clz(mask);
+		i = GPIO_MASK_TO_NUM(mask);
 		mask &= ~(1 << i);
 		val = MEC1322_GPIO_CTL(port, i);
 
@@ -147,7 +147,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	if (gpio_list[signal].mask == 0)
 		return EC_SUCCESS;
 
-	i = 31 - __builtin_clz(gpio_list[signal].mask);
+	i = GPIO_MASK_TO_NUM(gpio_list[signal].mask);
 	port = gpio_list[signal].port;
 	girq_id = int_map[port].girq_id;
 	bit_id = (port - int_map[port].port_offset) * 8 + i;
@@ -165,7 +165,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	if (gpio_list[signal].mask == 0)
 		return EC_SUCCESS;
 
-	i = 31 - __builtin_clz(gpio_list[signal].mask);
+	i = GPIO_MASK_TO_NUM(gpio_list[signal].mask);
 	port = gpio_list[signal].port;
 	girq_id = int_map[port].girq_id;
 	bit_id = (port - int_map[port].port_offset) * 8 + i;

@@ -82,7 +82,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	if (!g->mask || signal >= GPIO_IH_COUNT)
 		return EC_ERROR_INVAL;
 
-	bit = 31 - __builtin_clz(g->mask);
+	bit = GPIO_MASK_TO_NUM(g->mask);
 
 	g_old += exti_events[bit];
 
