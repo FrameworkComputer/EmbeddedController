@@ -152,13 +152,7 @@ static inline void pd_config_init(int port, uint8_t power_role)
 
 static inline int pd_adc_read(int port, int cc)
 {
-	if (board_pd_fake_disconnected())
-		return board_fake_pd_adc_read();
-
-	if (cc == 0)
-		return adc_read_channel(ADC_CH_CC1_PD);
-	else
-		return adc_read_channel(ADC_CH_CC2_PD);
+	return board_fake_pd_adc_read(cc);
 }
 
 #endif /* __CROS_EC_USB_PD_CONFIG_H */

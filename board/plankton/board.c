@@ -29,6 +29,18 @@ static volatile uint64_t hpd_prev_ts;
 static volatile int hpd_prev_level;
 static volatile int hpd_possible_irq;
 
+/* Detect the type of cable used (either single CC or double) */
+enum typec_cable {
+	TYPEC_CABLE_NONE,
+	TYPEC_CABLE_CHECK,
+	TYPEC_CABLE_SINGLE_CC,
+	TYPEC_CABLE_DOUBLE_CC
+};
+static enum typec_cable cable;
+
+static int active_cc;
+static int host_mode;
+
 static int sn75dp130_dpcd_init(void);
 
 /**
@@ -101,7 +113,7 @@ static enum gpio_signal button_pressed;
 
 static int fake_pd_disconnected;
 static int fake_pd_host_mode;
-static int fake_pd_disconnect_duration_ms;
+static int fake_pd_disconnect_duration_us;
 
 enum usbc_action {
 	USBC_ACT_5V_TO_DUT,
@@ -125,6 +137,109 @@ enum board_src_cap src_cap_mapping[USBC_ACT_COUNT] =
 	[USBC_ACT_12V_TO_DUT] = SRC_CAP_12V,
 	[USBC_ACT_20V_TO_DUT] = SRC_CAP_20V,
 };
+
+/**
+ * Set the active CC line. The non-active CC line will be left in
+ * High-Z, and we will fake the ADC reading for it.
+ */
+static void set_active_cc(int cc)
+{
+	active_cc = cc;
+
+	/* High Z for no pull-up or pull-down resistor on CC1 */
+	gpio_set_flags_by_mask(GPIO_A, (1 << 2) | (1 << 9), GPIO_INPUT);
+	/* High Z for no pull-up or pull-down resistor on CC2 */
+	gpio_set_flags_by_mask(GPIO_B, (1 << 6) | (1 << 7), GPIO_INPUT);
+
+	if (cc) {
+		if (host_mode)
+			/* Pull-up on CC2 */
+			gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_OUT_HIGH);
+		else
+			/* Pull-down on CC2 */
+			gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_OUT_LOW);
+	} else {
+		if (host_mode)
+			/* Pull-up on CC1 */
+			gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_OUT_HIGH);
+		else
+			/* Pull-down on CC1 */
+			gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_OUT_LOW);
+	}
+}
+
+/**
+ * Detect type-C cable type. Toggle the active CC line until a type-C connection
+ * is detected. If a type-C connection can be made in both polarities, then we
+ * have a double CC cable, otherwise we have a single CC cable.
+ */
+static void detect_cc_cable(void)
+{
+	/*
+	 * Delay long enough to guarantee a type-C disconnect will be seen and
+	 * a new connection will be made made.
+	 */
+	hook_call_deferred(detect_cc_cable, PD_T_CC_DEBOUNCE + PD_T_SAFE_0V);
+
+	switch (cable) {
+	case TYPEC_CABLE_NONE:
+		/* When no cable attached, toggle active CC line */
+		if (pd_is_connected(0))
+			cable = TYPEC_CABLE_CHECK;
+		set_active_cc(!active_cc);
+		break;
+	case TYPEC_CABLE_CHECK:
+		/* If we still have a connection, we have a double CC cable */
+		cable = pd_is_connected(0) ? TYPEC_CABLE_DOUBLE_CC :
+					     TYPEC_CABLE_SINGLE_CC;
+		/* Flip back to original polarity and enable PD comms */
+		set_active_cc(!active_cc);
+		pd_comm_enable(1);
+		break;
+	case TYPEC_CABLE_SINGLE_CC:
+	case TYPEC_CABLE_DOUBLE_CC:
+		/* Check for disconnection and disable PD comms */
+		if (!pd_is_connected(0)) {
+			cable = TYPEC_CABLE_NONE;
+			pd_comm_enable(0);
+		}
+		break;
+	}
+}
+DECLARE_DEFERRED(detect_cc_cable);
+
+static void fake_disconnect_end(void)
+{
+	fake_pd_disconnected = 0;
+	board_pd_set_host_mode(fake_pd_host_mode);
+
+	/* Restart CC cable detection */
+	hook_call_deferred(detect_cc_cable, 500*MSEC);
+}
+DECLARE_DEFERRED(fake_disconnect_end);
+
+static void fake_disconnect_start(void)
+{
+	/* Cancel detection of CC cable */
+	hook_call_deferred(detect_cc_cable, -1);
+
+	/* Record the current host mode */
+	fake_pd_host_mode = !gpio_get_level(GPIO_USBC_CHARGE_EN);
+	/* Disable VBUS */
+	gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
+	gpio_set_level(GPIO_USBC_VSEL_0, 0);
+	gpio_set_level(GPIO_USBC_VSEL_1, 0);
+	/* High Z for no pull-up or pull-down resistor on CC1 */
+	gpio_set_flags_by_mask(GPIO_A, (1 << 2) | (1 << 9), GPIO_INPUT);
+	/* High Z for no pull-up or pull-down resistor on CC2 */
+	gpio_set_flags_by_mask(GPIO_B, (1 << 6) | (1 << 7), GPIO_INPUT);
+
+	fake_pd_disconnected = 1;
+
+	hook_call_deferred(fake_disconnect_end,
+			   fake_pd_disconnect_duration_us);
+}
+DECLARE_DEFERRED(fake_disconnect_start);
 
 static void set_usbc_action(enum usbc_action act)
 {
@@ -168,9 +283,26 @@ static void set_usbc_action(enum usbc_action act)
 		gpio_set_level(GPIO_USBC_SS_USB_MODE, 0);
 		break;
 	case USBC_ACT_MUX_FLIP:
-		pd_send_vdm(0, USB_VID_GOOGLE, VDO_CMD_FLIP, NULL, 0);
-		gpio_set_level(GPIO_USBC_POLARITY,
-			       !gpio_get_level(GPIO_USBC_POLARITY));
+		/*
+		 * For a single CC cable, send custom VDM to flip
+		 * USB polarity only. For double CC cable, actually
+		 * disconnect and reconnect with opposite polarity.
+		 */
+		if (cable == TYPEC_CABLE_SINGLE_CC) {
+			pd_send_vdm(0, USB_VID_GOOGLE, VDO_CMD_FLIP, NULL, 0);
+			gpio_set_level(GPIO_USBC_POLARITY,
+				       !gpio_get_level(GPIO_USBC_POLARITY));
+		} else if (cable == TYPEC_CABLE_DOUBLE_CC) {
+			/*
+			 * Fake a disconnection for long enough to guarantee
+			 * that we disconnect.
+			 */
+			hook_call_deferred(fake_disconnect_start, -1);
+			hook_call_deferred(fake_disconnect_end, -1);
+			fake_pd_disconnect_duration_us = PD_T_SAFE_0V;
+			hook_call_deferred(fake_disconnect_start, 0);
+			set_active_cc(!active_cc);
+		}
 		break;
 	case USBC_ACT_CABLE_POLARITY0:
 		gpio_set_level(GPIO_USBC_POLARITY, 0);
@@ -354,31 +486,6 @@ static int sn75dp130_redriver_init(void)
 	return rv;
 }
 
-static void board_init(void)
-{
-	timestamp_t now = get_time();
-	hpd_prev_level = gpio_get_level(GPIO_DPSRC_HPD);
-	hpd_prev_ts = now.val;
-	gpio_enable_interrupt(GPIO_DPSRC_HPD);
-
-	/* Enable interrupts on VBUS transitions. */
-	gpio_enable_interrupt(GPIO_VBUS_WAKE);
-
-	/* Enable button interrupts. */
-	gpio_enable_interrupt(GPIO_DBG_5V_TO_DUT_L);
-	gpio_enable_interrupt(GPIO_DBG_12V_TO_DUT_L);
-	gpio_enable_interrupt(GPIO_DBG_CHG_TO_DEV_L);
-	gpio_enable_interrupt(GPIO_DBG_USB_TOGGLE_L);
-	gpio_enable_interrupt(GPIO_DBG_MUX_FLIP_L);
-
-	/* TODO(crosbug.com/33761): poll DBG_20V_TO_DUT_L */
-	enable_dbg20v_poll();
-
-	ina2xx_init(0, 0x399f, INA2XX_CALIB_1MA(10 /* mOhm */));
-	sn75dp130_redriver_init();
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 static int cmd_usbc_action(int argc, char *argv[])
 {
 	enum usbc_action act;
@@ -463,12 +570,31 @@ static void board_usb_hub_reset_no_return(void)
 }
 DECLARE_DEFERRED(board_usb_hub_reset_no_return);
 
-static void board_init_usb_hub(void)
+static int board_pd_fake_disconnected(void)
 {
-	if (system_get_reset_flags() & RESET_FLAG_POWER_ON)
-		hook_call_deferred(board_usb_hub_reset_no_return, 500 * MSEC);
+	return fake_pd_disconnected;
 }
-DECLARE_HOOK(HOOK_INIT, board_init_usb_hub, HOOK_PRIO_DEFAULT);
+
+int board_fake_pd_adc_read(int cc)
+{
+	if (fake_pd_disconnected) {
+		/* Always disconnected */
+		return fake_pd_host_mode ? 3000 : 0;
+	} else {
+		/* Only read the active CC line, fake disconnected on other */
+		if (active_cc == cc)
+			return adc_read_channel(cc ? ADC_CH_CC2_PD :
+						     ADC_CH_CC1_PD);
+		else
+			return host_mode ? 3000 : 0;
+	}
+}
+
+/* Set fake PD pull-up/pull-down */
+static void board_update_fake_adc_value(int host_mode)
+{
+	fake_pd_host_mode = host_mode;
+}
 
 void board_pd_set_host_mode(int enable)
 {
@@ -479,83 +605,63 @@ void board_pd_set_host_mode(int enable)
 		return;
 	}
 
+	/* if host mode changed, reset cable type */
+	if (host_mode != enable) {
+		host_mode = enable;
+		cable = TYPEC_CABLE_NONE;
+	}
+
 	if (enable) {
 		/* Source mode, disable charging */
 		gpio_set_level(GPIO_USBC_CHARGE_EN, 0);
-		/* High Z for no pull-down resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_INPUT);
-		/* Set pull-up resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_OUT_HIGH);
-		/* High Z for no pull-down resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_INPUT);
-		/* Set pull-up resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_OUT_HIGH);
+
+		/* Set CC lines */
+		set_active_cc(active_cc);
 	} else {
 		/* Device mode, disable VBUS */
 		gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
 		gpio_set_level(GPIO_USBC_VSEL_0, 0);
 		gpio_set_level(GPIO_USBC_VSEL_1, 0);
-		/* High Z for no pull-up resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_INPUT);
-		/* Set pull-down resistor on CC1 */
-		gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_OUT_LOW);
-		/* High Z for no pull-up resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_INPUT);
-		/* Set pull-down resistor on CC2 */
-		gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_OUT_LOW);
-		/* Set charge enable */
+
+		/* Set CC lines */
+		set_active_cc(active_cc);
+
+		/* Enable charging */
 		gpio_set_level(GPIO_USBC_CHARGE_EN, 1);
 	}
 }
 
-int board_pd_fake_disconnected(void)
+static void board_init(void)
 {
-	return fake_pd_disconnected;
+	timestamp_t now = get_time();
+	hpd_prev_level = gpio_get_level(GPIO_DPSRC_HPD);
+	hpd_prev_ts = now.val;
+	gpio_enable_interrupt(GPIO_DPSRC_HPD);
+
+	/* Enable interrupts on VBUS transitions. */
+	gpio_enable_interrupt(GPIO_VBUS_WAKE);
+
+	/* Enable button interrupts. */
+	gpio_enable_interrupt(GPIO_DBG_5V_TO_DUT_L);
+	gpio_enable_interrupt(GPIO_DBG_12V_TO_DUT_L);
+	gpio_enable_interrupt(GPIO_DBG_CHG_TO_DEV_L);
+	gpio_enable_interrupt(GPIO_DBG_USB_TOGGLE_L);
+	gpio_enable_interrupt(GPIO_DBG_MUX_FLIP_L);
+
+	/* TODO(crosbug.com/33761): poll DBG_20V_TO_DUT_L */
+	enable_dbg20v_poll();
+
+	ina2xx_init(0, 0x399f, INA2XX_CALIB_1MA(10 /* mOhm */));
+	sn75dp130_redriver_init();
+
+	/* Initialize USB hub */
+	if (system_get_reset_flags() & RESET_FLAG_POWER_ON)
+		hook_call_deferred(board_usb_hub_reset_no_return, 500 * MSEC);
+
+	/* Start detecting CC cable type */
+	hook_call_deferred(detect_cc_cable, SECOND);
 }
-
-int board_fake_pd_adc_read(void)
-{
-	if (fake_pd_host_mode)
-		return 3000; /* mV */
-	else
-		return 0; /* mV */
-}
-
-void board_update_fake_adc_value(int host_mode)
-{
-	fake_pd_host_mode = host_mode;
-}
-
-static void fake_disconnect_end(void)
-{
-	fake_pd_disconnected = 0;
-	board_pd_set_host_mode(fake_pd_host_mode);
-}
-DECLARE_DEFERRED(fake_disconnect_end);
-
-static void fake_disconnect_start(void)
-{
-	/* Record the current host mode */
-	fake_pd_host_mode = !gpio_get_level(GPIO_USBC_CHARGE_EN);
-	/* Disable VBUS */
-	gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
-	gpio_set_level(GPIO_USBC_VSEL_0, 0);
-	gpio_set_level(GPIO_USBC_VSEL_1, 0);
-	/* High Z for no pull-up resistor on CC1 */
-	gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_INPUT);
-	/* High Z for no pull-up resistor on CC2 */
-	gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_INPUT);
-	/* High Z for no pull-down resistor on CC1 */
-	gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_INPUT);
-	/* High Z for no pull-down resistor on CC2 */
-	gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_INPUT);
-
-	fake_pd_disconnected = 1;
-
-	hook_call_deferred(fake_disconnect_end,
-			   fake_pd_disconnect_duration_ms * MSEC);
-}
-DECLARE_DEFERRED(fake_disconnect_start);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 static int cmd_fake_disconnect(int argc, char *argv[])
 {
@@ -576,7 +682,7 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 	hook_call_deferred(fake_disconnect_start, -1);
 	hook_call_deferred(fake_disconnect_end, -1);
 
-	fake_pd_disconnect_duration_ms = duration_ms;
+	fake_pd_disconnect_duration_us = duration_ms * MSEC;
 	hook_call_deferred(fake_disconnect_start, delay_ms * MSEC);
 
 	ccprintf("Fake disconnect for %d ms starting in %d ms.\n",
