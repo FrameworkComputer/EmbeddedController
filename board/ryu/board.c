@@ -292,6 +292,20 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* Sensor mutex */
 static struct mutex g_mutex;
 
+/* Matrix to rotate sensor vector into standard reference frame */
+const matrix_3x3_t accelgyro_standard_ref = {
+	{FLOAT_TO_FP(-1),  0,  0},
+	{ 0, FLOAT_TO_FP(-1),  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+
+const matrix_3x3_t mag_standard_ref = {
+	{ 0,  FLOAT_TO_FP(-1),  0},
+	{FLOAT_TO_FP(-1),  0,  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+
+
 struct motion_sensor_t motion_sensors[] = {
 
 	/*
@@ -308,7 +322,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .i2c_addr = BMI160_ADDR0,
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &accelgyro_standard_ref,
 	 .default_config = {
 		 .odr = 100000,
 		 .range = 8,  /* g */
@@ -325,7 +339,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .i2c_addr = BMI160_ADDR0,
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &accelgyro_standard_ref,
 	 .default_config = {
 		 .odr = 0,
 		 .range = 1000, /* dps */
@@ -342,7 +356,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .i2c_addr = BMI160_ADDR0,
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &mag_standard_ref,
 	 .default_config = {
 		 .odr = 0,
 		 .range = 1,

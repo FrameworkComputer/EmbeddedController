@@ -397,18 +397,9 @@ void motion_sense_task(void)
 				if (ret != EC_SUCCESS)
 					continue;
 				rd_cnt++;
-				/*
-				 * Rotate the accel vector so the reference for
-				 * all sensors are in the same space.
-				 */
 				mutex_lock(&g_sensor_mutex);
-				if (*sensor->rot_standard_ref != NULL)
-					rotate(sensor->raw_xyz,
-					       *sensor->rot_standard_ref,
-					       sensor->xyz);
-				else
-					memcpy(sensor->xyz, sensor->raw_xyz,
-						sizeof(vector_3_t));
+				memcpy(sensor->xyz, sensor->raw_xyz,
+					sizeof(sensor->xyz));
 				mutex_unlock(&g_sensor_mutex);
 			}
 		}
@@ -937,7 +928,7 @@ static int command_accel_read_xyz(int argc, char **argv)
 	while ((n == -1) || (n-- > 0)) {
 		ret = sensor->drv->read(sensor, v);
 		if (ret == 0)
-			ccprintf("Current raw data %d: %-5d %-5d %-5d\n",
+			ccprintf("Current data %d: %-5d %-5d %-5d\n",
 				 id, v[X], v[Y], v[Z]);
 		else
 			ccprintf("vector not ready\n");

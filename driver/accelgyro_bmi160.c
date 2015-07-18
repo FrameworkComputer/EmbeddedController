@@ -508,6 +508,8 @@ void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 	v[0] = ((int16_t)((data[1] << 8) | data[0]));
 	v[1] = ((int16_t)((data[3] << 8) | data[2]));
 	v[2] = ((int16_t)((data[5] << 8) | data[4]));
+	if (*s->rot_standard_ref != NULL)
+		rotate(v, *s->rot_standard_ref, v);
 }
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
@@ -776,9 +778,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	 * to get the latest updated sensor data quickly.
 	 */
 	if (status & BMI160_DRDY_MASK(s->type)) {
-		v[0] = s->raw_xyz[0];
-		v[1] = s->raw_xyz[1];
-		v[2] = s->raw_xyz[2];
+		if (v != s->raw_xyz)
+			memcpy(v, s->raw_xyz, sizeof(s->raw_xyz));
 		return EC_SUCCESS;
 	}
 

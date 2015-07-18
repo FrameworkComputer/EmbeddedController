@@ -425,6 +425,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 		v[i] <<= (16 - resolution);
 		v[i] += (data->offset[i] << 5) / range;
 	}
+	if (*s->rot_standard_ref != NULL)
+		rotate(v, *s->rot_standard_ref, v);
 	return EC_SUCCESS;
 }
 
