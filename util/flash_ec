@@ -70,8 +70,6 @@ BOARDS_STM32=(
 	pit
 	plankton
 	ryu
-	ryu_p4p5
-	ryu_sh
 	samus_pd
 	strago_pd
 	zinger
@@ -264,7 +262,6 @@ function ec_uart() {
 
 # Servo variables management
 case "${BOARD}" in
-	ryu_sh ) MCU="sh" ;;
 	glados_pd|oak_pd|samus_pd ) MCU="usbpd" ;;
 	kunimitsu_pd|strago_pd ) MCU="usbpd" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
