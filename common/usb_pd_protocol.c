@@ -2886,15 +2886,15 @@ static int command_pd(int argc, char **argv)
 	} else
 #endif
 	if (!strncasecmp(argv[2], "state", 5)) {
-		ccprintf("Port C%d, %s - Role: %s-%s%s Polarity: CC%d "
-			 "Flags: 0x%04x, State: %s\n",
-			port, pd_comm_enabled ? "Ena" : "Dis",
+		ccprintf("Port C%d CC%d, %s - Role: %s-%s%s "
+			 "State: %s, Flags: 0x%04x\n",
+			port, pd[port].polarity + 1,
+			pd_comm_enabled ? "Ena" : "Dis",
 			pd[port].power_role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 			pd[port].data_role == PD_ROLE_DFP ? "DFP" : "UFP",
 			(pd[port].flags & PD_FLAGS_VCONN_ON) ? "-VC" : "",
-			pd[port].polarity + 1,
-			pd[port].flags,
-			pd_state_names[pd[port].task_state]);
+			pd_state_names[pd[port].task_state],
+			pd[port].flags);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
