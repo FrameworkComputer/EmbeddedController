@@ -61,6 +61,10 @@ void chipset_force_shutdown(void)
 void chipset_force_g3(void)
 {
 	CPRINTS("Forcing G3");
+#ifdef GLADOS_BOARD_V2
+	gpio_set_level(GPIO_PMIC_SLP_SUS_L, 0);
+	gpio_set_level(GPIO_PCH_BATLOW_L, 0);
+#endif
 }
 
 void chipset_reset(int cold_reset)
@@ -182,6 +186,12 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
+#ifdef GLADOS_BOARD_V2
+		/* Allow AP to power on */
+		gpio_set_level(GPIO_PMIC_SLP_SUS_L, 1);
+		gpio_set_level(GPIO_PCH_BATLOW_L, 1);
+#endif
+
 		return POWER_S5;
 
 	case POWER_S5S3:
@@ -263,6 +273,7 @@ enum power_state power_handle_state(enum power_state state)
 #ifdef CONFIG_G3_SLEEP
 		gpio_set_level(GPIO_G3_SLEEP_EN, 1);
 #endif
+		chipset_force_g3();
 		return POWER_G3;
 
 	default:

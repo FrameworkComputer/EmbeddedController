@@ -200,7 +200,7 @@ static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 	};
 
 	const int skip[][2] = {
-#ifdef BOARD_GLADOS
+#ifdef GLADOS_BOARD_V1
 		/*
 		 * Leave PCH RTCRST deasserted.
 		 * TODO(crosbug.com/p/42774): Remove this once we have a
