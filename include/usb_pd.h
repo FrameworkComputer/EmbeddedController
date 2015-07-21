@@ -325,6 +325,7 @@ struct pd_policy {
 #define VDO_CMD_CURRENT      VDO_CMD_VENDOR(11)
 #define VDO_CMD_FLIP         VDO_CMD_VENDOR(12)
 #define VDO_CMD_GET_LOG      VDO_CMD_VENDOR(13)
+#define VDO_CMD_CCD_EN       VDO_CMD_VENDOR(14)
 
 #define PD_VDO_VID(vdo)  ((vdo) >> 16)
 #define PD_VDO_SVDM(vdo) (((vdo) >> 15) & 1)

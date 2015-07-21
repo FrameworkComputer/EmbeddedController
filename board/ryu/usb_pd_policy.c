@@ -4,6 +4,7 @@
  */
 
 #include "config.h"
+#include "case_closed_debug.h"
 #include "charge_manager.h"
 #include "charger.h"
 #include "common.h"
@@ -252,6 +253,11 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		pd_log_recv_vdm(port, cnt, payload);
 		break;
 #endif /* CONFIG_USB_PD_LOGGING */
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+	case VDO_CMD_CCD_EN:
+		ccd_set_mode(CCD_MODE_ENABLED);
+		break;
+#endif
 	}
 
 	return 0;

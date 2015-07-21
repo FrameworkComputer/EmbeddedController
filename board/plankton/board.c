@@ -126,6 +126,7 @@ enum usbc_action {
 	USBC_ACT_MUX_FLIP,
 	USBC_ACT_CABLE_POLARITY0,
 	USBC_ACT_CABLE_POLARITY1,
+	USBC_ACT_CCD_EN,
 
 	/* Number of USBC actions */
 	USBC_ACT_COUNT
@@ -310,6 +311,9 @@ static void set_usbc_action(enum usbc_action act)
 	case USBC_ACT_CABLE_POLARITY1:
 		gpio_set_level(GPIO_USBC_POLARITY, 1);
 		break;
+	case USBC_ACT_CCD_EN:
+		pd_send_vdm(0, USB_VID_GOOGLE, VDO_CMD_CCD_EN, NULL, 0);
+		break;
 	default:
 		break;
 	}
@@ -357,6 +361,9 @@ static void button_deferred(void)
 		break;
 	case GPIO_DBG_MUX_FLIP_L:
 		set_usbc_action(USBC_ACT_MUX_FLIP);
+		break;
+	case GPIO_DBG_CASE_CLOSE_EN_L:
+		set_usbc_action(USBC_ACT_CCD_EN);
 		break;
 	default:
 		break;
@@ -499,6 +506,8 @@ static int cmd_usbc_action(int argc, char *argv[])
 		act = USBC_ACT_12V_TO_DUT;
 	else if (!strcasecmp(argv[1], "20v"))
 		act = USBC_ACT_20V_TO_DUT;
+	else if (!strcasecmp(argv[1], "ccd"))
+		act = USBC_ACT_CCD_EN;
 	else if (!strcasecmp(argv[1], "dev"))
 		act = USBC_ACT_DEVICE;
 	else if (!strcasecmp(argv[1], "usb"))
@@ -519,7 +528,7 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"<5v|12v|20v|dev|usb|dp|flip|pol0|pol1>",
+			"<5v|12v|20v|ccd|dev|usb|dp|flip|pol0|pol1>",
 			"Set Plankton type-C port state",
 			NULL);
 
@@ -647,6 +656,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_DBG_CHG_TO_DEV_L);
 	gpio_enable_interrupt(GPIO_DBG_USB_TOGGLE_L);
 	gpio_enable_interrupt(GPIO_DBG_MUX_FLIP_L);
+	gpio_enable_interrupt(GPIO_DBG_CASE_CLOSE_EN_L);
 
 	/* TODO(crosbug.com/33761): poll DBG_20V_TO_DUT_L */
 	enable_dbg20v_poll();
