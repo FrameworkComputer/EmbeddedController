@@ -65,6 +65,11 @@ void sps_tx_status(uint8_t byte)
 	GREG32(SPS, DUMMY_WORD) = byte;
 }
 
+unsigned sps_rx_fifo_wrptr(void)
+{
+	return GREG32_I(SPS, 0, RXFIFO_WPTR) & SPS_FIFO_MASK;
+}
+
 /*
  * Push data to the SPS TX FIFO
  * @param data Pointer to 8-bit data

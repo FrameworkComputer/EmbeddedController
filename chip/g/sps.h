@@ -42,5 +42,6 @@ int sps_transmit(uint8_t *data, size_t data_size);
 int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler);
 int sps_unregister_rx_handler(void);
 void sps_tx_status(uint8_t byte);
+unsigned sps_rx_fifo_wrptr(void);
 
 #endif
