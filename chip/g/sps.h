@@ -18,13 +18,17 @@ enum sps_mode {
 	SPS_UNDEF_MODE = 3,
 };
 
+/* Receive and transmit FIFO size and mask. */
+#define SPS_FIFO_SIZE		(1 << 10)
+#define SPS_FIFO_MASK		(SPS_FIFO_SIZE - 1)
+
 /*
  * Tx interrupt callback function prototype. This function returns a portion
  * of the received SPI data and current status of the CS line. When CS is
  * deasserted, this function is called with data_size of zero and a non-zero
  * cs_status. This allows the recipient to delineate the SPS frames.
  */
-typedef void (*rx_handler_f)(uint8_t *data, size_t data_size, int cs_status);
+typedef void (*rx_handler_f)(uint8_t *data, size_t data_size, int cs_disabled);
 
 /*
  * Push data to the SPS TX FIFO

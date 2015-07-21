@@ -41,8 +41,6 @@
  * - unregister receive callback.
  */
 
-#define SPS_FIFO_SIZE		(1 << 10)
-#define SPS_FIFO_MASK		(SPS_FIFO_SIZE - 1)
 /*
  * Hardware pointers use one extra bit, which means that indexing FIFO and
  * values written into the pointers have to have dfferent sizes. Tracked under
@@ -321,6 +319,12 @@ static void sps_cs_deassert_interrupt(uint32_t port)
 	sps_rx_interrupt(port, 1);
 	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
 	GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 0);
+
+	/*
+	 * And transmit FIFO is emptied, so the next transaction doesn't start
+	 * by clocking out any bytes left over from this one.
+	 */
+	GREG32(SPS, TXFIFO_WPTR) = GREG32(SPS, TXFIFO_RPTR);
 }
 
 void _sps0_interrupt(void)
