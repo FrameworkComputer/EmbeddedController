@@ -23,7 +23,6 @@ test-list-$(BOARD_GLADOS_PD)=
 
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
-test-list-$(BOARD_RYU_P4P5)=
 
 # llama has issues when building tests
 test-list-$(BOARD_LLAMA)=
