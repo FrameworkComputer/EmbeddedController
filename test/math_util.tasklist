@@ -14,5 +14,4 @@
  * 'd' in an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
-#define CONFIG_TEST_TASK_LIST  \
-  TASK_TEST(MOTIONSENSE, motion_sense_task, NULL, TASK_STACK_SIZE)
+#define CONFIG_TEST_TASK_LIST  /* No test task */

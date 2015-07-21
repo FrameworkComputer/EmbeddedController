@@ -11,6 +11,7 @@
 #include "driver/accel_kxcj9.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "math_util.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"

@@ -15,6 +15,7 @@
 #include "driver/mag_bmm150.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "math_util.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"

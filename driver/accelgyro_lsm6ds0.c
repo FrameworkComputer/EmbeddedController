@@ -14,6 +14,7 @@
 #include "driver/accelgyro_lsm6ds0.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "math_util.h"
 #include "task.h"
 #include "util.h"
 
