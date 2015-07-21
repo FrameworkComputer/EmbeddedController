@@ -24,6 +24,12 @@ struct usart_state {
 	 * in the RX queue.
 	 */
 	uint32_t rx_dropped;
+
+	/*
+	 * Counter of the number of times an receive overrun condition is
+	 * detected.  This will not usually be a count of the number of bytes
+	 * that were lost due to overrun conditions.
+	 */
 	uint32_t rx_overrun;
 };
 
@@ -59,12 +65,26 @@ struct usart_rx {
 	void (*init)(struct usart_config const *config);
 	void (*interrupt)(struct usart_config const *config);
 
+	/*
+	 * Print to the console any per-strategy diagnostic information, this
+	 * is used by the usart_info command.  This can be NULL if there is
+	 * nothing interesting to display.
+	 */
+	void (*info)(struct usart_config const *config);
+
 	struct producer_ops producer_ops;
 };
 
 struct usart_tx {
 	void (*init)(struct usart_config const *config);
 	void (*interrupt)(struct usart_config const *config);
+
+	/*
+	 * Print to the console any per-strategy diagnostic information, this
+	 * is used by the usart_info command.  This can be NULL if there is
+	 * nothing interesting to display.
+	 */
+	void (*info)(struct usart_config const *config);
 
 	struct consumer_ops consumer_ops;
 };

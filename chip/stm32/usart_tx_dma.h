@@ -39,6 +39,7 @@
 								\
 			.init      = usart_tx_dma_init,		\
 			.interrupt = usart_tx_dma_interrupt,	\
+			.info      = NULL,			\
 		},						\
 								\
 		.state     = &((struct usart_tx_dma_state){}),	\

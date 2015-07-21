@@ -11,6 +11,7 @@
 #include "registers.h"
 #include "task.h"
 #include "usart-stm32f0.h"
+#include "usart_rx_dma.h"
 #include "usart_tx_dma.h"
 #include "util.h"
 
@@ -43,12 +44,15 @@ static struct queue const loopback_queue =
 		     loopback_usart.producer,
 		     loopback_usart.consumer);
 
+static struct usart_rx_dma const loopback_rx_dma =
+	USART_RX_DMA(STM32_DMAC_CH6, 32);
+
 static struct usart_tx_dma const loopback_tx_dma =
 	USART_TX_DMA(STM32_DMAC_CH7, 16);
 
 static struct usart_config const loopback_usart =
 	USART_CONFIG(usart2_hw,
-		     usart_rx_interrupt,
+		     loopback_rx_dma.usart_rx,
 		     loopback_tx_dma.usart_tx,
 		     115200,
 		     loopback_queue,

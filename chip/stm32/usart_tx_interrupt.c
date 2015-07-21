@@ -87,4 +87,5 @@ struct usart_tx const usart_tx_interrupt = {
 
 	.init      = usart_tx_init,
 	.interrupt = usart_tx_interrupt_handler,
+	.info      = NULL,
 };

@@ -45,4 +45,5 @@ struct usart_rx const usart_rx_interrupt = {
 
 	.init      = usart_rx_init,
 	.interrupt = usart_rx_interrupt_handler,
+	.info      = NULL,
 };

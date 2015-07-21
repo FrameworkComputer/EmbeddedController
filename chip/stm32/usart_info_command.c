@@ -26,6 +26,12 @@ static int command_usart_info(int argc, char **argv)
 			 config->hw->index + 1,
 			 atomic_read_clear(&(config->state->rx_dropped)),
 			 atomic_read_clear(&(config->state->rx_overrun)));
+
+		if (config->rx->info)
+			config->rx->info(config);
+
+		if (config->tx->info)
+			config->tx->info(config);
 	}
 
 	return EC_SUCCESS;
