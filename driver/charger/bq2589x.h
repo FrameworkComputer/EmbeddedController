@@ -32,6 +32,7 @@
 #define BQ2589X_REG_ID              0x14
 
 /* REG00 : input current register bit definitions */
+#define BQ2589X_INPUT_CURR_EN_HIZ  (1<<7)
 #define BQ2589X_INPUT_CURR_EN_ILIM (1<<6)
 
 /* REG02 : first configuration register bit definitions */

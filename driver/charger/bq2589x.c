@@ -217,7 +217,18 @@ int charger_set_voltage(int voltage)
 
 int charger_discharge_on_ac(int enable)
 {
-	return EC_SUCCESS;
+	int rv, val;
+
+	rv = bq2589x_read(BQ2589X_REG_INPUT_CURR, &val);
+	if (rv)
+		return rv;
+
+	if (enable)
+		val |= BQ2589X_INPUT_CURR_EN_HIZ;
+	else
+		val &= ~BQ2589X_INPUT_CURR_EN_HIZ;
+
+	return bq2589x_write(BQ2589X_REG_INPUT_CURR, val);
 }
 
 /* Charging power state initialization */
