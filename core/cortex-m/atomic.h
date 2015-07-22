@@ -30,27 +30,27 @@
 			     : "r" (a), "r" (v) : "cc");        \
 } while (0)
 
-static inline void atomic_clear(uint32_t *addr, uint32_t bits)
+static inline void atomic_clear(uint32_t volatile *addr, uint32_t bits)
 {
 	ATOMIC_OP(bic, addr, bits);
 }
 
-static inline void atomic_or(uint32_t *addr, uint32_t bits)
+static inline void atomic_or(uint32_t volatile *addr, uint32_t bits)
 {
 	ATOMIC_OP(orr, addr, bits);
 }
 
-static inline void atomic_add(uint32_t *addr, uint32_t value)
+static inline void atomic_add(uint32_t volatile *addr, uint32_t value)
 {
 	ATOMIC_OP(add, addr, value);
 }
 
-static inline void atomic_sub(uint32_t *addr, uint32_t value)
+static inline void atomic_sub(uint32_t volatile *addr, uint32_t value)
 {
 	ATOMIC_OP(sub, addr, value);
 }
 
-static inline uint32_t atomic_read_clear(uint32_t *addr)
+static inline uint32_t atomic_read_clear(uint32_t volatile *addr)
 {
 	uint32_t ret, tmp;
 

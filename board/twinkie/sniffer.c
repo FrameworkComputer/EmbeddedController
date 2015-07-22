@@ -296,9 +296,9 @@ void sniffer_task(void)
 			ep_buf[u][1] = sample_tstamp[d >> 3];
 			memcpy_to_usbram(((void *)usb_sram_addr(ep_buf[u] + 2)),
 					 samples[d >> 4]+off, EP_PAYLOAD_SIZE);
-			atomic_clear((uint32_t *)&free_usb, 1 << u);
+			atomic_clear(&free_usb, 1 << u);
 			u = !u;
-			atomic_clear((uint32_t *)&filled_dma, 1 << d);
+			atomic_clear(&filled_dma, 1 << d);
 		}
 		led_reset_record();
 

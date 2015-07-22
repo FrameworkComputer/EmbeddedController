@@ -11,7 +11,7 @@
 #include "common.h"
 #include "cpu.h"
 
-static inline void atomic_clear(uint32_t *addr, uint32_t bits)
+static inline void atomic_clear(uint32_t volatile *addr, uint32_t bits)
 {
 	uint32_t psw = get_psw();
 	asm volatile ("setgie.d");
@@ -19,7 +19,7 @@ static inline void atomic_clear(uint32_t *addr, uint32_t bits)
 	set_psw(psw);
 }
 
-static inline void atomic_or(uint32_t *addr, uint32_t bits)
+static inline void atomic_or(uint32_t volatile *addr, uint32_t bits)
 {
 	uint32_t psw = get_psw();
 	asm volatile ("setgie.d");
@@ -27,7 +27,7 @@ static inline void atomic_or(uint32_t *addr, uint32_t bits)
 	set_psw(psw);
 }
 
-static inline void atomic_add(uint32_t *addr, uint32_t value)
+static inline void atomic_add(uint32_t volatile *addr, uint32_t value)
 {
 	uint32_t psw = get_psw();
 	asm volatile ("setgie.d");
@@ -35,7 +35,7 @@ static inline void atomic_add(uint32_t *addr, uint32_t value)
 	set_psw(psw);
 }
 
-static inline void atomic_sub(uint32_t *addr, uint32_t value)
+static inline void atomic_sub(uint32_t volatile *addr, uint32_t value)
 {
 	uint32_t psw = get_psw();
 	asm volatile ("setgie.d");
@@ -43,7 +43,7 @@ static inline void atomic_sub(uint32_t *addr, uint32_t value)
 	set_psw(psw);
 }
 
-static inline uint32_t atomic_read_clear(uint32_t *addr)
+static inline uint32_t atomic_read_clear(uint32_t volatile *addr)
 {
 	uint32_t val;
 	uint32_t psw = get_psw();
