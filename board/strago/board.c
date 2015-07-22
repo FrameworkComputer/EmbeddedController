@@ -34,6 +34,7 @@
 #include "temp_sensor_chip.h"
 #include "thermal.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -140,6 +141,13 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.port_addr = 0xaa,
+		.driver = &pi3usb30532_usb_mux_driver,
+	},
+};
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.
