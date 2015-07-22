@@ -87,6 +87,31 @@ void gpio_config_module(enum module_id id, int enable)
 	}
 }
 
+int gpio_config_pins(enum module_id id,
+		      uint32_t port, uint32_t pin_mask, int enable)
+{
+	const struct gpio_alt_func *af;
+	int i = 0;
+
+	/* Find pins and set to alternate functions */
+	for (af = gpio_alt_funcs; af < gpio_alt_funcs + gpio_alt_funcs_count;
+	     af++, i++) {
+		if (af->module_id != id)
+			continue;  /* Pins for some other module */
+
+		if (af->port == port && (af->mask & pin_mask) == pin_mask) {
+			if (enable)
+				gpio_set_alternate_function(
+					af->port, pin_mask, af->func);
+			else
+				gpio_set_alternate_function(
+					af->port, pin_mask, -1);
+			return EC_SUCCESS;
+		}
+	}
+	return EC_ERROR_INVAL;
+}
+
 void gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	const struct gpio_info *g = gpio_list + signal;
@@ -132,6 +157,7 @@ static int command_gpio_get(int argc, char **argv)
 		/* Flush console to avoid truncating output */
 		cflush();
 	}
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(gpioget, command_gpio_get,

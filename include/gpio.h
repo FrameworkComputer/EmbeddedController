@@ -122,6 +122,18 @@ void gpio_pre_init(void);
 void gpio_config_module(enum module_id id, int enable);
 
 /**
+ * Enable/disable alternate function for pins
+ *
+ * @param id		module ID of pins
+ * @param port		Port of pins
+ * @param pin_mask	Bit mask of pins
+ * @param enable	Enable alternate functions if 1; high-Z pins if 0
+ * @return EC_SUCCESS, or non-zero if pins are not found.
+ * */
+int gpio_config_pins(enum module_id id,
+		     uint32_t port, uint32_t pin_mask, int enable);
+
+/**
  * Get the current value of a signal.
  *
  * @param signal	Signal to get
