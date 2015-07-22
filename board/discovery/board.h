@@ -9,8 +9,12 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
-#undef  CONFIG_WATCHDOG_HELP
+#undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
+
+/* Enable USART2 */
+#define CONFIG_STREAM_USART
+#define CONFIG_STREAM_USART2
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
