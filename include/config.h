@@ -320,7 +320,9 @@
  * Default input current for the board, in mA.
  *
  * This value should depend on external power adapter, designed charging
- * voltage, and the maximum power of the running system.
+ * voltage, and the maximum power of the running system. For type-C chargers,
+ * this should be set to 512 mA in order to not brown-out low-current USB
+ * charge ports.
  */
 #undef CONFIG_CHARGER_INPUT_CURRENT
 
