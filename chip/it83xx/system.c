@@ -51,10 +51,14 @@ static void check_reset_cause(void)
 		flags |= RESET_FLAG_POWER_ON;
 
 	/* Restore then clear saved reset flags. */
-	flags |= REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS) << 24;
-	flags |= REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+1) << 16;
-	flags |= REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+2) << 8;
-	flags |= REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+3);
+	if (!(flags & RESET_FLAG_POWER_ON)) {
+		const uint32_t addr =
+			IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS;
+		flags |= REG8(addr + 0) << 24;
+		flags |= REG8(addr + 1) << 16;
+		flags |= REG8(addr + 2) << 8;
+		flags |= REG8(addr + 3);
+	}
 
 	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS) = 0;
 	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+1) = 0;
