@@ -100,6 +100,8 @@ BOARDS_MEC1322=(
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
+DEFINE_string chip "" \
+	"The chip to run debugger on."
 DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
 DEFINE_string offset "0" \
@@ -118,6 +120,10 @@ if [[ $# -gt 0 ]]; then
 fi
 
 set -e
+
+if [ -z "${FLAGS_board}" -a -z "${FLAGS_chip}" ]; then
+	die "should specify a board or a chip."
+fi
 
 SERVO_TYPE=servo
 
@@ -470,17 +476,25 @@ info "${MCU} UART pty : ${EC_UART}"
 save="$(servo_save)"
 
 if $(in_array "${BOARDS_LM4[@]}" "${BOARD}"); then
-	flash_lm4
+	CHIP="lm4"
 elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
-	flash_stm32
+	CHIP="stm32"
 elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
-	flash_stm32_dfu
+	CHIP="stm32_dfu"
 elif $(in_array "${BOARDS_NPCX[@]}" "${BOARD}"); then
-	flash_npcx
+	CHIP="npcx"
 elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
-	flash_mec1322
+	CHIP="mec1322"
+elif [ -n "${FLAGS_chip}" ]; then
+	CHIP="${FLAGS_chip}"
 else
 	die "board ${BOARD} not supported"
 fi
 
+if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
+	die "board ${BOARD} doesn't use chip ${FLAGS_chip}"
+fi
+
+info "Flashing chip ${CHIP}."
+flash_${CHIP}
 info "Flashing done."
