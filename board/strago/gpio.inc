@@ -56,7 +56,7 @@ GPIO(USB2_ENABLE,       PIN(36), GPIO_OUT_LOW)                  /* Enable power 
 GPIO(ENTERING_RW,       PIN(41), GPIO_OUT_LOW)                  /* Indicate when EC is entering RW code */
 GPIO(PCH_SMI_L,         PIN(44), GPIO_ODR_HIGH)                 /* SMI output */
 GPIO(USB_OC1_L,         PIN(45), GPIO_INT_FALLING)              /* DB2 BC1.2 over current signal to EC */
-GPIO(DP_USB_C_HPD_Q,    PIN(46), GPIO_OUT_HIGH)                 /* DP hot plug detect from EC to SOC */
+GPIO(USB_C0_DP_HPD,     PIN(46), GPIO_OUT_LOW)                  /* DP hot plug detect from EC to SOC */
 
 GPIO(USB_C0_5V_EN,      PIN(50), GPIO_OUT_LOW)                  /* USB C0 5V enable */
 GPIO(PCH_SUS_STAT_L,    PIN(51), GPIO_INT_FALLING)              /* Signal to inform EC that SOC is entering low power state */

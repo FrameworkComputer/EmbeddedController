@@ -145,18 +145,30 @@ void pd_execute_data_swap(int port, int data_role)
 	/* TODO: need to open/close D+/D- switch based on role */
 }
 
-void pd_check_pr_role(int port, int pr_role, int partner_pr_swap)
+void pd_check_pr_role(int port, int pr_role, int flags)
 {
-	/* If sink, and dual role toggling is on, then switch to source */
-	if (partner_pr_swap && pr_role == PD_ROLE_SINK &&
-	    pd_get_dual_role() == PD_DRP_TOGGLE_ON)
-		pd_request_power_swap(port);
+	/*
+	 * If partner is dual-role power and dualrole toggling is on, consider
+	 * if a power swap is necessary.
+	 */
+	if ((flags & PD_FLAGS_PARTNER_DR_POWER) &&
+	    pd_get_dual_role() == PD_DRP_TOGGLE_ON) {
+		/*
+		 * If we are a sink and partner is not externally powered, then
+		 * swap to become a source. If we are source and partner is
+		 * externally powered, swap to become a sink.
+		 */
+		int partner_extpower = flags & PD_FLAGS_PARTNER_EXTPOWER;
+		if ((!partner_extpower && pr_role == PD_ROLE_SINK) ||
+		     (partner_extpower && pr_role == PD_ROLE_SOURCE))
+			pd_request_power_swap(port);
+	}
 }
 
-void pd_check_dr_role(int port, int dr_role, int partner_dr_swap)
+void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
-	if (partner_dr_swap && dr_role == PD_ROLE_UFP)
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
 		pd_request_data_swap(port);
 }
 
@@ -220,11 +232,14 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 static int dp_flags;
+/* DP Status VDM as returned by UFP */
+static uint32_t dp_status;
 
 static void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
 	dp_flags = 0;
+	dp_status = 0;
 	usb_mux_set(port, TYPEC_MUX_NONE,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 }
@@ -259,12 +274,18 @@ static int svdm_dp_status(int port, uint32_t *payload)
 static int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status);
+	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status);
 
-	usb_mux_set(port, TYPEC_MUX_DP,
+	if (!pin_mode)
+		return 0;
+
+	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
+
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(MODE_DP_PIN_E, /* pin mode */
+	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
 				1,             /* DPv1.3 signaling */
 				2);            /* UFP connected */
 	return 2;
@@ -275,10 +296,44 @@ static void svdm_dp_post_config(int port)
 	dp_flags |= DP_FLAGS_DP_ON;
 	if (!(dp_flags & DP_FLAGS_HPD_HI_PENDING))
 		return;
+
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
 }
+
+static void hpd0_irq_deferred(void)
+{
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
+}
+
+DECLARE_DEFERRED(hpd0_irq_deferred);
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
+	int cur_lvl;
+	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
+	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
+	enum gpio_signal hpd = GPIO_USB_C0_DP_HPD;
+	cur_lvl = gpio_get_level(hpd);
+
+	dp_status = payload[1];
+
+	/* Its initial DP status message prior to config */
+	if (!(dp_flags & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
+
+	if (irq & cur_lvl) {
+		gpio_set_level(hpd, 0);
+		hook_call_deferred(hpd0_irq_deferred,
+				   HPD_DSTREAM_DEBOUNCE_IRQ);
+	} else if (irq & !cur_lvl) {
+		CPRINTF("ERR:HPD:IRQ&LOW\n");
+		return 0; /* nak */
+	} else {
+		gpio_set_level(hpd, lvl);
+	}
 	/* ack */
 	return 1;
 }
@@ -286,7 +341,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
-	/* gpio_set_level(PORT_TO_HPD(port), 0); */
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 0);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
