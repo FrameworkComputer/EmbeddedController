@@ -1078,6 +1078,15 @@
 #define CONFIG_LID_SWITCH
 
 /*
+ * GPIOs to use to detect that the lid is opened.
+ *
+ * This is a X-macro composed of a list of LID_OPEN(GPIO_xxx) elements defining
+ * all the GPIOs to check to find whether the lid is currently opened.
+ * If not defined, it is using GPIO_LID_OPEN.
+ */
+#undef CONFIG_LID_SWITCH_GPIO_LIST
+
+/*
  * Support for turning the lightbar power rails on briefly when the AP is off.
  * Enabling this requires implementing the board-specific lb_power() function
  * to do it (see lb_common.h).

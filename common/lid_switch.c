@@ -20,6 +20,11 @@
 
 #define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 
+/* if no X-macro is defined for LID switch GPIO, use GPIO_LID_OPEN as default */
+#ifndef CONFIG_LID_SWITCH_GPIO_LIST
+#define CONFIG_LID_SWITCH_GPIO_LIST LID_GPIO(GPIO_LID_OPEN)
+#endif
+
 static int debounced_lid_open;		/* Debounced lid state */
 static int forced_lid_open;	/* Forced lid open */
 
@@ -30,7 +35,9 @@ static int forced_lid_open;	/* Forced lid open */
  */
 static int raw_lid_open(void)
 {
-	return (forced_lid_open || gpio_get_level(GPIO_LID_OPEN)) ? 1 : 0;
+#define LID_GPIO(gpio) || gpio_get_level(gpio)
+	return (forced_lid_open CONFIG_LID_SWITCH_GPIO_LIST) ? 1 : 0;
+#undef LID_GPIO
 }
 
 /**
@@ -79,7 +86,9 @@ static void lid_init(void)
 		debounced_lid_open = 1;
 
 	/* Enable interrupts, now that we've initialized */
-	gpio_enable_interrupt(GPIO_LID_OPEN);
+#define LID_GPIO(gpio) gpio_enable_interrupt(gpio);
+	CONFIG_LID_SWITCH_GPIO_LIST
+#undef LID_GPIO
 }
 DECLARE_HOOK(HOOK_INIT, lid_init, HOOK_PRIO_INIT_LID);
 
