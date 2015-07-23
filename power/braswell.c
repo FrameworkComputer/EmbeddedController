@@ -51,6 +51,7 @@
 #define IN_ALL_S0 (IN_PGOOD_S0 | IN_ALL_PM_SLP_DEASSERTED)
 
 static int throttle_cpu;      /* Throttle CPU? */
+static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 void chipset_force_shutdown(void)
 {
@@ -62,6 +63,7 @@ void chipset_force_shutdown(void)
 	 */
 	gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+	forcing_shutdown = 1;
 }
 
 void chipset_reset(int cold_reset)
@@ -279,6 +281,25 @@ enum power_state power_handle_state(enum power_state state)
 		return power_get_pause_in_s5() ? POWER_S5 : POWER_S5G3;
 
 	case POWER_S5G3:
+		/*
+		 * in case shutdown is already done by apshutdown
+		 * (or chipset_force_shutdown()), SOC already lost
+		 * power and can't assert PMC_SUSPWRDNACK any more.
+		 */
+		if (forcing_shutdown) {
+			/* Config pins for SOC G3 */
+			gpio_config_module(MODULE_GPIO, 1);
+#ifndef CONFIG_PMIC
+			gpio_set_level(GPIO_SUSPWRDNACK_SOC_EC, 1);
+#endif
+
+			forcing_shutdown = 0;
+
+			CPRINTS("Enter SOC G3");
+
+			return POWER_G3;
+		}
+
 		if (gpio_get_level(GPIO_PCH_SUSPWRDNACK) == 1) {
 			/* Assert RSMRST# */
 			gpio_set_level(GPIO_PCH_RSMRST_L, 0);
