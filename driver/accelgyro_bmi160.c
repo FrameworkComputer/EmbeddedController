@@ -569,10 +569,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_1,
 			BMI160_FIFO_TAG_INT1_EN |
 			BMI160_FIFO_TAG_INT2_EN |
-			BMI160_FIFO_HEADER_EN |
-			BMI160_FIFO_MAG_EN |
-			BMI160_FIFO_ACC_EN |
-			BMI160_FIFO_GYR_EN);
+			BMI160_FIFO_HEADER_EN);
 #endif
 
 	/* Set double tap interrupt and fifo*/
@@ -906,13 +903,13 @@ static int init(const struct motion_sensor_t *s)
 		bmm150_mag_access_ctrl(s->i2c_addr, 0);
 	}
 #endif
+#ifdef CONFIG_ACCEL_INTERRUPTS
+	if (s->type == MOTIONSENSE_TYPE_ACCEL)
+		ret = config_interrupt(s);
+#endif
 	set_range(s, s->runtime_config.range, 0);
 	set_data_rate(s, s->runtime_config.odr, 0);
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-	ret = config_interrupt(s);
-#endif
-	/* Fifo setup is done elsewhere */
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
 			s->name, s->type, s->runtime_config.range,
 			s->runtime_config.odr);
