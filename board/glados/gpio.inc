@@ -93,6 +93,14 @@ GPIO(BOARD_ID2,             PIN(10),  GPIO_INPUT)
 GPIO(PVT_CS0,               PIN(146), GPIO_ODR_HIGH)
 GPIO(SYS_RESET_L,           PIN(121), GPIO_ODR_HIGH)
 
+/*
+ * TODO(crosbug.com/p/40848): These LEDs should be under control of the mec1322
+ * LED control unit. Remove these GPIO definitions once the LED control unit
+ * is functional.
+ */
+GPIO(CHARGE_LED_1,        PIN(155), GPIO_OUT_LOW)
+GPIO(CHARGE_LED_2,        PIN(156), GPIO_OUT_LOW)
+
 /* Alternate functions GPIO definitions */
 
 /* GPIO162(UART_RX),  GPIO165(UART_TX) */
