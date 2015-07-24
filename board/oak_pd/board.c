@@ -25,8 +25,6 @@ static uint32_t ec_int_status;
 
 void pd_send_ec_int(void)
 {
-	/* Indicate that ec_int gpio is active due to host command */
-	atomic_or(&ec_int_status, PD_STATUS_HOST_EVENT);
 	/* If any sources are active, then drive the line low */
 	gpio_set_level(GPIO_EC_INT, !ec_int_status);
 
