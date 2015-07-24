@@ -195,6 +195,8 @@ enum pd_tx_errors {
 	PD_TX_ERR_COLLISION = -5 /* Collision detected during transmit */
 };
 
+#define TCPC_FLAGS_INITIALIZED (1 << 0) /* TCPC is initialized */
+
 static struct pd_port_controller {
 	/* current port power role (SOURCE or SINK) */
 	uint8_t power_role;
@@ -211,6 +213,8 @@ static struct pd_port_controller {
 	uint16_t alert_mask;
 	/* RX enabled */
 	uint8_t rx_enabled;
+	/* TCPC flags */
+	uint8_t flags;
 
 	/* Last received */
 	int rx_head;
@@ -811,7 +815,7 @@ void pd_task(void)
 	tcpc_init(port);
 
 	/* we are now initialized */
-	alert(port, TCPC_REG_ALERT_TCPC_INITED);
+	pd[port].flags |= TCPC_FLAGS_INITIALIZED;
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
@@ -1005,6 +1009,10 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	case TCPC_REG_VENDOR_ID:
 		*(uint16_t *)payload = USB_VID_GOOGLE;
 		return 2;
+	case TCPC_REG_ERROR_STATUS:
+		payload[0] = (pd[port].flags & TCPC_FLAGS_INITIALIZED) ?
+			       0 : TCPC_REG_ERROR_STATUS_UNINIT;
+		return 1;
 	case TCPC_REG_CC_STATUS:
 		tcpc_get_cc(port, &cc1, &cc2);
 		payload[0] = TCPC_REG_CC_STATUS_SET(
