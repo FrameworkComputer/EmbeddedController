@@ -23,6 +23,7 @@ static struct {
 	void *cb_data;		/* Callback data for callback function */
 } dma_irq[STM32_DMAC_COUNT];
 
+
 /**
  * Return the IRQ for the DMA channel
  *
@@ -39,7 +40,11 @@ static int dma_get_irq(enum dma_channel channel)
 		STM32_IRQ_DMA_CHANNEL_4_7 :
 		STM32_IRQ_DMA_CHANNEL_2_3;
 #else
-	return STM32_IRQ_DMA_CHANNEL_1 + channel;
+	if (channel < STM32_DMAC_PER_CTLR)
+		return STM32_IRQ_DMA_CHANNEL_1 + channel;
+	else
+		return STM32_IRQ_DMA2_CHANNEL1 +
+			(channel - STM32_DMAC_PER_CTLR);
 #endif
 }
 
@@ -49,9 +54,9 @@ static int dma_get_irq(enum dma_channel channel)
  */
 stm32_dma_chan_t *dma_get_channel(enum dma_channel channel)
 {
-	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	stm32_dma_regs_t *dma = STM32_DMA_REGS(channel);
 
-	return &dma->chan[channel];
+	return &dma->chan[channel % STM32_DMAC_PER_CTLR];
 }
 
 void dma_disable(enum dma_channel channel)
@@ -143,15 +148,15 @@ int dma_bytes_done(stm32_dma_chan_t *chan, int orig_count)
 #ifdef CONFIG_DMA_HELP
 void dma_dump(enum dma_channel channel)
 {
-	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	stm32_dma_regs_t *dma = STM32_DMA_REGS(channel);
 	stm32_dma_chan_t *chan = dma_get_channel(channel);
 
 	CPRINTF("ccr=%x, cndtr=%x, cpar=%x, cmar=%x\n", chan->ccr,
 		chan->cndtr, chan->cpar, chan->cmar);
 	CPRINTF("chan %d, isr=%x, ifcr=%x\n",
 		channel,
-		(dma->isr >> (channel * 4)) & 0xf,
-		(dma->ifcr >> (channel * 4)) & 0xf);
+		(dma->isr >> ((channel % STM32_DMAC_PER_CTLR) * 4)) & 0xf,
+		(dma->ifcr >> ((channel % STM32_DMAC_PER_CTLR) * 4)) & 0xf);
 }
 
 void dma_check(enum dma_channel channel, char *buf)
@@ -209,15 +214,17 @@ void dma_test(enum dma_channel channel)
 
 void dma_init(void)
 {
-	/* Enable DMA1; current chips don't have DMA2 */
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
+#ifdef CHIP_FAMILY_STM32F3
+	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA2;
+#endif
 	/* Delay 1 AHB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_AHB, 1);
 }
 
 int dma_wait(enum dma_channel channel)
 {
-	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	stm32_dma_regs_t *dma = STM32_DMA_REGS(channel);
 	const uint32_t mask = STM32_DMA_ISR_TCIF(channel);
 	timestamp_t deadline;
 
@@ -270,7 +277,7 @@ void dma_disable_tc_interrupt(enum dma_channel channel)
 
 void dma_clear_isr(enum dma_channel channel)
 {
-	stm32_dma_regs_t *dma = STM32_DMA1_REGS;
+	stm32_dma_regs_t *dma = STM32_DMA_REGS(channel);
 
 	dma->ifcr |= STM32_DMA_ISR_ALL(channel);
 }
@@ -336,6 +343,10 @@ DECLARE_DMA_IRQ(4);
 DECLARE_DMA_IRQ(5);
 DECLARE_DMA_IRQ(6);
 DECLARE_DMA_IRQ(7);
+#ifdef CHIP_FAMILY_STM32F3
+DECLARE_DMA_IRQ(9);
+DECLARE_DMA_IRQ(10);
+#endif
 
 #endif /* CHIP_FAMILY_STM32F0 */
 #endif /* CONFIG_DMA_DEFAULT_HANDLERS */

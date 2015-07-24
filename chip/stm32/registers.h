@@ -144,6 +144,10 @@
 #define STM32_IRQ_TIM19           78 /* STM32F373 only */
 #define STM32_IRQ_FPU             81 /* STM32F373 only */
 
+/* To simplify code generation, define DMA channel 9..10 */
+#define STM32_IRQ_DMA_CHANNEL_9    STM32_IRQ_DMA2_CHANNEL1
+#define STM32_IRQ_DMA_CHANNEL_10   STM32_IRQ_DMA2_CHANNEL2
+
 /* aliases for easier code sharing */
 #define STM32_IRQ_I2C1 STM32_IRQ_I2C1_EV
 #define STM32_IRQ_I2C2 STM32_IRQ_I2C2_EV
@@ -565,6 +569,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_CR2               REG32(STM32_RCC_BASE + 0x34) /* STM32F0XX */
 
 #define STM32_RCC_HB_DMA1		(1 << 0)
+/* STM32F373 */
+#define STM32_RCC_HB_DMA2		(1 << 1)
 #define STM32_RCC_PB2_TIM1		(1 << 11) /* Except STM32F373 */
 #define STM32_RCC_PB2_TIM15		(1 << 16) /* STM32F0XX and STM32F373 */
 #define STM32_RCC_PB2_TIM16		(1 << 17) /* STM32F0XX and STM32F373 */
@@ -1102,6 +1108,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_DMA1_BASE             0x40026000
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #define STM32_DMA1_BASE             0x40020000
+#define STM32_DMA2_BASE             0x40020400
 #else
 #error Unsupported chip variant
 #endif
@@ -1126,6 +1133,12 @@ enum dma_channel {
 	STM32_DMAC_CH5 = 4,
 	STM32_DMAC_CH6 = 5,
 	STM32_DMAC_CH7 = 6,
+	/*
+	 * Skip CH8, it should belong to DMA engine 1.
+	 * Sharing code with STM32s that have 16 engines will be easier.
+	 */
+	STM32_DMAC_CH9 = 8,
+	STM32_DMAC_CH10 = 9,
 
 	/* Channel functions */
 	STM32_DMAC_ADC = STM32_DMAC_CH1,
@@ -1147,18 +1160,22 @@ enum dma_channel {
 #ifdef CHIP_VARIANT_STM32F373
 	STM32_DMAC_SPI2_RX = STM32_DMAC_CH4,
 	STM32_DMAC_SPI2_TX = STM32_DMAC_CH5,
+
+	STM32_DMAC_COUNT = 10,
 #else
 	STM32_DMAC_SPI2_RX = STM32_DMAC_CH6,
 	STM32_DMAC_SPI2_TX = STM32_DMAC_CH7,
-#endif
 
 	/* Only DMA1 (with 7 channels) is present on STM32L151x */
 	STM32_DMAC_COUNT = 7,
+#endif
 
 #else /* stm32f03x and stm32f05x have only 5 channels */
 	STM32_DMAC_COUNT = 5,
 #endif
 };
+
+#define STM32_DMAC_PER_CTLR 8
 
 /* Registers for a single channel of the DMA controller */
 struct stm32_dma_chan {
@@ -1187,8 +1204,18 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 
 #define STM32_DMA1_REGS ((stm32_dma_regs_t *)STM32_DMA1_BASE)
 
+#ifdef CHIP_FAMILY_STM32F3
+#define STM32_DMA2_REGS ((stm32_dma_regs_t *)STM32_DMA2_BASE)
+
+#define STM32_DMA_REGS(channel) \
+	((channel) < STM32_DMAC_PER_CTLR ? STM32_DMA1_REGS : STM32_DMA2_REGS)
+#else
+#define STM32_DMA_REGS(channel) STM32_DMA1_REGS
+#endif
+
 /* Bits for DMA controller regs (isr and ifcr) */
-#define STM32_DMA_ISR_MASK(channel, mask) ((mask) << (4 * (channel)))
+#define STM32_DMA_ISR_MASK(channel, mask) \
+	((mask) << (4 * ((channel) % STM32_DMAC_PER_CTLR)))
 #define STM32_DMA_ISR_GIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 0)
 #define STM32_DMA_ISR_TCIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 1)
 #define STM32_DMA_ISR_HTIF(channel)	STM32_DMA_ISR_MASK(channel, 1 << 2)
