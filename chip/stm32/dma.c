@@ -174,9 +174,8 @@ void dma_check(enum dma_channel channel, char *buf)
 }
 
 /* Run a check of memory-to-memory DMA */
-void dma_test(void)
+void dma_test(enum dma_channel channel)
 {
-	enum dma_channel channel = STM32_DMAC_CH4;
 	stm32_dma_chan_t *chan = dma_get_channel(channel);
 	uint32_t ctrl;
 	char periph[16], memory[16];
