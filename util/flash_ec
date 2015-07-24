@@ -50,9 +50,6 @@ BOARDS_LM4=(
 	samus
 )
 
-# TODO(crbug.com/505003): Remove jerry, which is only present
-# as a short-term fix until servod overlays for non-ToT boards
-# are working in the test lab.
 BOARDS_STM32=(
 	big
 	blaze
@@ -66,7 +63,6 @@ BOARDS_STM32=(
 	minimuffin
 	oak
 	oak_pd
-	pinky
 	pit
 	plankton
 	ryu
