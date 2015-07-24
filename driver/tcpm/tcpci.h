@@ -20,13 +20,11 @@
 #define TCPC_REG_DEV_CAP_4         0xf
 #define TCPC_REG_ALERT             0x10
 #define TCPC_REG_ALERT_TCPC_INITED  (1<<14)
-#define TCPC_REG_ALERT_INTRFACE_ERR (1<<13)
-#define TCPC_REG_ALERT_GPIO_CHANGE  (1<<12)
-#define TCPC_REG_ALERT_V_CONN_LO    (1<<11)
-#define TCPC_REG_ALERT_V_ALARM_LO   (1<<10)
-#define TCPC_REG_ALERT_V_ALARM_HI   (1<<9)
-#define TCPC_REG_ALERT_SLEEP_EXITED (1<<8)
-#define TCPC_REG_ALERT_WAKE_ON_I2C  (1<<7)
+#define TCPC_REG_ALERT_INTRFACE_ERR (1<<11)
+#define TCPC_REG_ALERT_GPIO_CHANGE  (1<<10)
+#define TCPC_REG_ALERT_V_ALARM_LO   (1<<9)
+#define TCPC_REG_ALERT_V_ALARM_HI   (1<<8)
+#define TCPC_REG_ALERT_SLEEP_EXITED (1<<7)
 #define TCPC_REG_ALERT_TX_SUCCESS   (1<<6)
 #define TCPC_REG_ALERT_TX_DISCARDED (1<<5)
 #define TCPC_REG_ALERT_TX_FAILED    (1<<4)
@@ -48,14 +46,15 @@
 #define TCPC_REG_CC_STATUS_CC1(reg)  ((reg) & 0x3)
 
 #define TCPC_REG_POWER_STATUS      0x19
-#define TCPC_REG_ROLE_CTRL         0x1a
+#define TCPC_REG_ERROR_STATUS      0x1a
+#define TCPC_REG_ROLE_CTRL         0x1b
 #define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2) \
 		((drp) << 6 | (rp) << 4 | (cc2) << 2 | (cc1))
 #define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg) & 0xc) >> 2)
 #define TCPC_REG_ROLE_CTRL_CC1(reg) ((reg) & 0x3)
 
-#define TCPC_REG_POWER_PATH_CTRL   0x1b
-#define TCPC_REG_POWER_CTRL        0x1c
+#define TCPC_REG_POWER_PATH_CTRL   0x1c
+#define TCPC_REG_POWER_CTRL        0x1d
 #define TCPC_REG_POWER_CTRL_SET(polarity, vconn) \
 		((polarity) << 4 | (vconn))
 #define TCPC_REG_POWER_CTRL_POLARITY(reg) (((reg) & 0x10) >> 4)
