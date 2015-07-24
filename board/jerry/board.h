@@ -83,9 +83,6 @@ enum pwm_channel {
 #define CONFIG_CHARGER_INPUT_CURRENT 2048 /* mA, based on Link HW design */
 #define CONFIG_CHARGER_CURRENT_LIMIT 3000 /* PL102 inductor 3.0A(3.8A) */
 
-/* Discharge battery when on AC power for factory test. */
-int board_discharge_on_ac(int enable);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
