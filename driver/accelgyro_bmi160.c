@@ -213,7 +213,7 @@ static int set_range(const struct motion_sensor_t *s,
 	ranges = get_range_table(s->type, &range_tbl_size);
 	reg_val = get_reg_val(range, rnd, ranges, range_tbl_size);
 
-	ret = raw_write8(s->i2c_addr, ctrl_reg, reg_val);
+	ret = raw_write8(s->addr, ctrl_reg, reg_val);
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
 		data->range = get_engineering_val(reg_val, ranges,
@@ -262,19 +262,19 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	if (rate == 0) {
 #ifdef CONFIG_ACCEL_FIFO
 		/* FIFO stop collecting events */
-		ret = raw_read8(s->i2c_addr, BMI160_FIFO_CONFIG_1, &val);
+		ret = raw_read8(s->addr, BMI160_FIFO_CONFIG_1, &val);
 		val &= ~BMI160_FIFO_SENSOR_EN(s->type);
-		ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_1, val);
+		ret = raw_write8(s->addr, BMI160_FIFO_CONFIG_1, val);
 #endif
 		/* go to suspend mode */
-		ret = raw_write8(s->i2c_addr, BMI160_CMD_REG,
+		ret = raw_write8(s->addr, BMI160_CMD_REG,
 				 BMI160_CMD_MODE_SUSPEND(s->type));
 		msleep(3);
 		data->odr = 0;
 		return ret;
 	} else if (data->odr == 0) {
 		/* back from suspend mode. */
-		ret = raw_write8(s->i2c_addr, BMI160_CMD_REG,
+		ret = raw_write8(s->addr, BMI160_CMD_REG,
 				 BMI160_CMD_MODE_NORMAL(s->type));
 		msleep(wakeup_time[s->type]);
 	}
@@ -325,12 +325,12 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = raw_read8(s->i2c_addr, ctrl_reg, &val);
+	ret = raw_read8(s->addr, ctrl_reg, &val);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	val = (val & ~BMI160_ODR_MASK) | reg_val;
-	ret = raw_write8(s->i2c_addr, ctrl_reg, val);
+	ret = raw_write8(s->addr, ctrl_reg, val);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
@@ -339,9 +339,9 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 #ifdef CONFIG_ACCEL_FIFO
 	/* FIFO start collecting events */
-	ret = raw_read8(s->i2c_addr, BMI160_FIFO_CONFIG_1, &val);
+	ret = raw_read8(s->addr, BMI160_FIFO_CONFIG_1, &val);
 	val |= BMI160_FIFO_SENSOR_EN(s->type);
-	ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_1, val);
+	ret = raw_write8(s->addr, BMI160_FIFO_CONFIG_1, val);
 #endif
 
 accel_cleanup:
@@ -370,7 +370,7 @@ static int get_offset(const struct motion_sensor_t *s,
 		 * range selected for the accelerometer.
 		 */
 		for (i = X; i <= Z; i++) {
-			raw_read8(s->i2c_addr, BMI160_OFFSET_ACC70 + i, &val);
+			raw_read8(s->addr, BMI160_OFFSET_ACC70 + i, &val);
 			if (val > 0x7f)
 				val = -256 + val;
 			offset[i] = val * BMI160_OFFSET_ACC_MULTI_MG /
@@ -379,7 +379,7 @@ static int get_offset(const struct motion_sensor_t *s,
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		/* Read the MSB first */
-		raw_read8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, &val98);
+		raw_read8(s->addr, BMI160_OFFSET_EN_GYR98, &val98);
 		/*
 		 * The offset of the gyroscope off_gyr_[xyz] is a 10 bit
 		 * two-complement number in units of 0.061 °/s.
@@ -387,7 +387,7 @@ static int get_offset(const struct motion_sensor_t *s,
 		 * -31.25 °/s to +31.25 °/s
 		 */
 		for (i = X; i <= Z; i++) {
-			raw_read8(s->i2c_addr, BMI160_OFFSET_GYR70 + i, &val);
+			raw_read8(s->addr, BMI160_OFFSET_GYR70 + i, &val);
 			val |= ((val98 >> (2 * i)) & 0x3) << 8;
 			if (val > 0x1ff)
 				val = -1024 + val;
@@ -409,7 +409,7 @@ static int set_offset(const struct motion_sensor_t *s,
 			int16_t    temp)
 {
 	int ret, i, val, val98;
-	ret = raw_read8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, &val98);
+	ret = raw_read8(s->addr, BMI160_OFFSET_EN_GYR98, &val98);
 	if (ret != 0)
 		return ret;
 
@@ -424,9 +424,9 @@ static int set_offset(const struct motion_sensor_t *s,
 				val = -128;
 			if (val < 0)
 				val = 256 + val;
-			raw_write8(s->i2c_addr, BMI160_OFFSET_ACC70 + i, val);
+			raw_write8(s->addr, BMI160_OFFSET_ACC70 + i, val);
 		}
-		ret = raw_write8(s->i2c_addr, BMI160_OFFSET_EN_GYR98,
+		ret = raw_write8(s->addr, BMI160_OFFSET_EN_GYR98,
 				 val98 | BMI160_OFFSET_ACC_EN);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
@@ -439,12 +439,12 @@ static int set_offset(const struct motion_sensor_t *s,
 				val = -512;
 			if (val < 0)
 				val = 1024 + val;
-			raw_write8(s->i2c_addr, BMI160_OFFSET_GYR70 + i,
+			raw_write8(s->addr, BMI160_OFFSET_GYR70 + i,
 					val & 0xFF);
 			val98 &= ~(0x3 << (2 * i));
 			val98 |= (val >> 8) << (2 * i);
 		}
-		ret = raw_write8(s->i2c_addr, BMI160_OFFSET_EN_GYR98,
+		ret = raw_write8(s->addr, BMI160_OFFSET_EN_GYR98,
 				 val98 | BMI160_OFFSET_GYRO_EN);
 		break;
 	default:
@@ -481,23 +481,23 @@ int perform_calib(const struct motion_sensor_t *s)
 		ret = EC_RES_INVALID_PARAM;
 		goto end_perform_calib;
 	}
-	ret = raw_write8(s->i2c_addr, BMI160_FOC_CONF, val);
-	ret = raw_write8(s->i2c_addr, BMI160_CMD_REG, BMI160_CMD_START_FOC);
+	ret = raw_write8(s->addr, BMI160_FOC_CONF, val);
+	ret = raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_START_FOC);
 	do {
 		if (timeout > 400) {
 			ret = EC_RES_TIMEOUT;
 			goto end_perform_calib;
 		}
 		msleep(50);
-		ret = raw_read8(s->i2c_addr, BMI160_STATUS, &status);
+		ret = raw_read8(s->addr, BMI160_STATUS, &status);
 		if (ret != EC_SUCCESS)
 			goto end_perform_calib;
 		timeout += 50;
 	} while ((status & BMI160_FOC_RDY) == 0);
 
 	/* Calibration is successful, and loaded, use the result */
-	ret = raw_read8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, &val);
-	ret = raw_write8(s->i2c_addr, BMI160_OFFSET_EN_GYR98, val | en_flag);
+	ret = raw_read8(s->addr, BMI160_OFFSET_EN_GYR98, &val);
+	ret = raw_write8(s->addr, BMI160_OFFSET_EN_GYR98, val | en_flag);
 end_perform_calib:
 	set_data_rate(s, rate, 0);
 	return ret;
@@ -539,48 +539,48 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		return EC_SUCCESS;
 
 	mutex_lock(s->mutex);
-	raw_write8(s->i2c_addr, BMI160_CMD_REG, BMI160_CMD_FIFO_FLUSH);
+	raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_FIFO_FLUSH);
 	msleep(30);
-	raw_write8(s->i2c_addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
+	raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
 
 	/* Latch until interupts */
 	/* configure int2 as an external input */
 	tmp = BMI160_INT2_INPUT_EN | BMI160_LATCH_FOREVER;
-	ret = raw_write8(s->i2c_addr, BMI160_INT_LATCH, tmp);
+	ret = raw_write8(s->addr, BMI160_INT_LATCH, tmp);
 
 	/* configure int1 as an interupt */
-	ret = raw_write8(s->i2c_addr, BMI160_INT_OUT_CTRL,
+	ret = raw_write8(s->addr, BMI160_INT_OUT_CTRL,
 		BMI160_INT_CTRL(1, OUTPUT_EN));
 
 	/* Map Simple/Double Tap to int 1
 	 * Map Flat interrupt to int 1
 	 */
-	ret = raw_write8(s->i2c_addr, BMI160_INT_MAP_REG(1),
+	ret = raw_write8(s->addr, BMI160_INT_MAP_REG(1),
 		BMI160_INT_FLAT | BMI160_INT_D_TAP | BMI160_INT_S_TAP);
 
 #ifdef CONFIG_ACCEL_FIFO
 	/* map fifo water mark to int 1 */
-	ret = raw_write8(s->i2c_addr, BMI160_INT_FIFO_MAP,
+	ret = raw_write8(s->addr, BMI160_INT_FIFO_MAP,
 			BMI160_INT_MAP(1, FWM));
 
 	/* configure fifo watermark at 50% */
-	ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_0,
+	ret = raw_write8(s->addr, BMI160_FIFO_CONFIG_0,
 			512 / sizeof(uint32_t));
-	ret = raw_write8(s->i2c_addr, BMI160_FIFO_CONFIG_1,
+	ret = raw_write8(s->addr, BMI160_FIFO_CONFIG_1,
 			BMI160_FIFO_TAG_INT1_EN |
 			BMI160_FIFO_TAG_INT2_EN |
 			BMI160_FIFO_HEADER_EN);
 #endif
 
 	/* Set double tap interrupt and fifo*/
-	ret = raw_read8(s->i2c_addr, BMI160_INT_EN_0, &tmp);
+	ret = raw_read8(s->addr, BMI160_INT_EN_0, &tmp);
 	tmp |= BMI160_INT_FLAT_EN | BMI160_INT_D_TAP_EN | BMI160_INT_S_TAP_EN;
-	ret = raw_write8(s->i2c_addr, BMI160_INT_EN_0, tmp);
+	ret = raw_write8(s->addr, BMI160_INT_EN_0, tmp);
 
 #ifdef CONFIG_ACCEL_FIFO
-	ret = raw_read8(s->i2c_addr, BMI160_INT_EN_1, &tmp);
+	ret = raw_read8(s->addr, BMI160_INT_EN_1, &tmp);
 	tmp |= BMI160_INT_FWM_EN;
-	ret = raw_write8(s->i2c_addr, BMI160_INT_EN_1, tmp);
+	ret = raw_write8(s->addr, BMI160_INT_EN_1, tmp);
 #endif
 
 	mutex_unlock(s->mutex);
@@ -598,8 +598,8 @@ int irq_handler(const struct motion_sensor_t *s)
 {
 	int interrupt;
 
-	raw_read32(s->i2c_addr, BMI160_INT_STATUS_0, &interrupt);
-	raw_write8(s->i2c_addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
+	raw_read32(s->addr, BMI160_INT_STATUS_0, &interrupt);
+	raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
 
 	if (interrupt & BMI160_S_TAP_INT)
 		CPRINTS("single tap: %08x", interrupt);
@@ -697,7 +697,7 @@ static int load_fifo(struct motion_sensor_t *s)
 		return EC_SUCCESS;
 
 	/* Read fifo length */
-	raw_read16(s->i2c_addr, BMI160_FIFO_LENGTH_0, &fifo_length);
+	raw_read16(s->addr, BMI160_FIFO_LENGTH_0, &fifo_length);
 	fifo_length &= BMI160_FIFO_LENGTH_MASK;
 	if (fifo_length == 0)
 		return EC_SUCCESS;
@@ -706,7 +706,7 @@ static int load_fifo(struct motion_sensor_t *s)
 		uint8_t fifo_reg = BMI160_FIFO_DATA;
 		uint8_t *bp = bmi160_buffer;
 		i2c_lock(I2C_PORT_ACCEL, 1);
-		i2c_xfer(I2C_PORT_ACCEL, s->i2c_addr,
+		i2c_xfer(I2C_PORT_ACCEL, s->addr,
 				&fifo_reg, 1, bmi160_buffer,
 				sizeof(bmi160_buffer), I2C_XFER_SINGLE);
 		i2c_lock(I2C_PORT_ACCEL, 0);
@@ -772,7 +772,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	uint8_t xyz_reg;
 	int ret, status = 0;
 
-	ret = raw_read8(s->i2c_addr, BMI160_STATUS, &status);
+	ret = raw_read8(s->addr, BMI160_STATUS, &status);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -791,7 +791,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 
 	/* Read 6 bytes starting at xyz_reg */
 	i2c_lock(I2C_PORT_ACCEL, 1);
-	ret = i2c_xfer(I2C_PORT_ACCEL, s->i2c_addr,
+	ret = i2c_xfer(I2C_PORT_ACCEL, s->addr,
 			&xyz_reg, 1, data, 6, I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_ACCEL, 0);
 
@@ -808,7 +808,7 @@ static int init(const struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 
-	ret = raw_read8(s->i2c_addr, BMI160_CHIP_ID, &tmp);
+	ret = raw_read8(s->addr, BMI160_CHIP_ID, &tmp);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
@@ -820,15 +820,15 @@ static int init(const struct motion_sensor_t *s)
 		struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
 
 		/* Reset the chip to be in a good state */
-		raw_write8(s->i2c_addr, BMI160_CMD_REG,
+		raw_write8(s->addr, BMI160_CMD_REG,
 				BMI160_CMD_SOFT_RESET);
 		msleep(30);
 		data->flags &= ~BMI160_FLAG_SEC_I2C_ENABLED;
 		/* To avoid gyro wakeup */
-		raw_write8(s->i2c_addr, BMI160_PMU_TRIGGER, 0);
+		raw_write8(s->addr, BMI160_PMU_TRIGGER, 0);
 	}
 
-	raw_write8(s->i2c_addr, BMI160_CMD_REG,
+	raw_write8(s->addr, BMI160_CMD_REG,
 			BMI160_CMD_MODE_NORMAL(s->type));
 	msleep(30);
 
@@ -845,48 +845,48 @@ static int init(const struct motion_sensor_t *s)
 			 *
 			 * Magic command sequences
 			 */
-			raw_write8(s->i2c_addr, BMI160_CMD_REG,
+			raw_write8(s->addr, BMI160_CMD_REG,
 					BMI160_CMD_EXT_MODE_EN_B0);
-			raw_write8(s->i2c_addr, BMI160_CMD_REG,
+			raw_write8(s->addr, BMI160_CMD_REG,
 					BMI160_CMD_EXT_MODE_EN_B1);
-			raw_write8(s->i2c_addr, BMI160_CMD_REG,
+			raw_write8(s->addr, BMI160_CMD_REG,
 					BMI160_CMD_EXT_MODE_EN_B2);
 
 			/*
 			 * Change the register page to target mode, to change
 			 * the internal pull ups of the secondary interface.
 			 */
-			raw_read8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_read8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					&ext_page_reg);
-			raw_write8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_write8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					ext_page_reg | BMI160_CMD_TARGET_PAGE);
-			raw_read8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_read8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					&ext_page_reg);
-			raw_write8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_write8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					ext_page_reg | BMI160_CMD_PAGING_EN);
-			raw_read8(s->i2c_addr, BMI160_COM_C_TRIM_ADDR,
+			raw_read8(s->addr, BMI160_COM_C_TRIM_ADDR,
 					&pullup_reg);
-			raw_write8(s->i2c_addr, BMI160_COM_C_TRIM_ADDR,
+			raw_write8(s->addr, BMI160_COM_C_TRIM_ADDR,
 					pullup_reg | BMI160_COM_C_TRIM);
-			raw_read8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_read8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					&ext_page_reg);
-			raw_write8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_write8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					ext_page_reg & ~BMI160_CMD_TARGET_PAGE);
-			raw_read8(s->i2c_addr, BMI160_CMD_EXT_MODE_ADDR,
+			raw_read8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
 					&ext_page_reg);
 
 			/* Set the i2c address of the compass */
-			ret = raw_write8(s->i2c_addr, BMI160_MAG_IF_0,
+			ret = raw_write8(s->addr, BMI160_MAG_IF_0,
 					BMM150_I2C_ADDRESS);
 
 			/* Enable the secondary interface as I2C */
-			ret = raw_write8(s->i2c_addr, BMI160_IF_CONF,
+			ret = raw_write8(s->addr, BMI160_IF_CONF,
 				BMI160_IF_MODE_AUTO_I2C << BMI160_IF_MODE_OFF);
 			data->flags |= BMI160_FLAG_SEC_I2C_ENABLED;
 		}
 
 
-		bmm150_mag_access_ctrl(s->i2c_addr, 1);
+		bmm150_mag_access_ctrl(s->addr, 1);
 
 		ret = bmm150_init(s);
 		if (ret)
@@ -894,13 +894,13 @@ static int init(const struct motion_sensor_t *s)
 			return ret;
 
 		/* Leave the address for reading the data */
-		raw_write8(s->i2c_addr, BMI160_MAG_I2C_READ_ADDR,
+		raw_write8(s->addr, BMI160_MAG_I2C_READ_ADDR,
 				BMM150_BASE_DATA);
 		/*
 		 * Put back the secondary interface in normal mode.
 		 * BMI160 will poll based on the configure ODR.
 		 */
-		bmm150_mag_access_ctrl(s->i2c_addr, 0);
+		bmm150_mag_access_ctrl(s->addr, 0);
 	}
 #endif
 #ifdef CONFIG_ACCEL_INTERRUPTS

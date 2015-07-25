@@ -124,13 +124,13 @@ static int disable_sensor(const struct motion_sensor_t *s, int *ctrl1)
 	 * so that we can restore it later.
 	 */
 	for (i = 0; i < SENSOR_ENABLE_ATTEMPTS; i++) {
-		ret = raw_read8(s->i2c_addr, KXCJ9_CTRL1, ctrl1);
+		ret = raw_read8(s->addr, KXCJ9_CTRL1, ctrl1);
 		if (ret != EC_SUCCESS)
 			continue;
 
 		*ctrl1 &= ~KXCJ9_CTRL1_PC1;
 
-		ret = raw_write8(s->i2c_addr, KXCJ9_CTRL1, *ctrl1);
+		ret = raw_write8(s->addr, KXCJ9_CTRL1, *ctrl1);
 		if (ret == EC_SUCCESS)
 			return EC_SUCCESS;
 	}
@@ -153,12 +153,12 @@ static int enable_sensor(const struct motion_sensor_t *s, int ctrl1)
 	int i, ret;
 
 	for (i = 0; i < SENSOR_ENABLE_ATTEMPTS; i++) {
-		ret = raw_read8(s->i2c_addr, KXCJ9_CTRL1, &ctrl1);
+		ret = raw_read8(s->addr, KXCJ9_CTRL1, &ctrl1);
 		if (ret != EC_SUCCESS)
 			continue;
 
 		/* Enable accelerometer based on ctrl1 value. */
-		ret = raw_write8(s->i2c_addr, KXCJ9_CTRL1,
+		ret = raw_write8(s->addr, KXCJ9_CTRL1,
 				ctrl1 | KXCJ9_CTRL1_PC1);
 
 		/* On first success, we are done. */
@@ -191,7 +191,7 @@ static int set_range(const struct motion_sensor_t *s,
 
 	/* Determine new value of CTRL1 reg and attempt to write it. */
 	ctrl1_new = (ctrl1 & ~KXCJ9_GSEL_ALL) | ranges[index].reg;
-	ret = raw_write8(s->i2c_addr,  KXCJ9_CTRL1, ctrl1_new);
+	ret = raw_write8(s->addr,  KXCJ9_CTRL1, ctrl1_new);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS) {
@@ -236,7 +236,7 @@ static int set_resolution(const struct motion_sensor_t *s,
 
 	/* Determine new value of CTRL1 reg and attempt to write it. */
 	ctrl1_new = (ctrl1 & ~KXCJ9_RES_12BIT) | resolutions[index].reg;
-	ret = raw_write8(s->i2c_addr,  KXCJ9_CTRL1, ctrl1_new);
+	ret = raw_write8(s->addr,  KXCJ9_CTRL1, ctrl1_new);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS) {
@@ -279,7 +279,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	}
 
 	/* Set output data rate. */
-	ret = raw_write8(s->i2c_addr,  KXCJ9_DATA_CTRL,
+	ret = raw_write8(s->addr,  KXCJ9_DATA_CTRL,
 			datarates[index].reg);
 
 	/* If successfully written, then save the range. */
@@ -342,7 +342,7 @@ static int set_interrupt(const struct motion_sensor_t *s,
 	}
 
 	/* Set interrupt timer to 1 so it wakes up immediately. */
-	ret = raw_write8(s->i2c_addr, KXCJ9_WAKEUP_TIMER, 1);
+	ret = raw_write8(s->addr, KXCJ9_WAKEUP_TIMER, 1);
 	if (ret != EC_SUCCESS)
 		goto error_enable_sensor;
 
@@ -351,7 +351,7 @@ static int set_interrupt(const struct motion_sensor_t *s,
 	 * first we need to divide by 16 to get the value to send.
 	 */
 	threshold >>= 4;
-	ret = raw_write8(s->i2c_addr, KXCJ9_WAKEUP_THRESHOLD, threshold);
+	ret = raw_write8(s->addr, KXCJ9_WAKEUP_THRESHOLD, threshold);
 	if (ret != EC_SUCCESS)
 		goto error_enable_sensor;
 
@@ -360,11 +360,11 @@ static int set_interrupt(const struct motion_sensor_t *s,
 	 * function is called once, the interrupt stays enabled and it is
 	 * only necessary to clear KXCJ9_INT_REL to allow the next interrupt.
 	 */
-	ret = raw_read8(s->i2c_addr, KXCJ9_INT_CTRL1, &tmp);
+	ret = raw_read8(s->addr, KXCJ9_INT_CTRL1, &tmp);
 	if (ret != EC_SUCCESS)
 		goto error_enable_sensor;
 	if (!(tmp & KXCJ9_INT_CTRL1_IEN)) {
-		ret = raw_write8(s->i2c_addr, KXCJ9_INT_CTRL1,
+		ret = raw_write8(s->addr, KXCJ9_INT_CTRL1,
 				tmp | KXCJ9_INT_CTRL1_IEN);
 		if (ret != EC_SUCCESS)
 			goto error_enable_sensor;
@@ -375,7 +375,7 @@ static int set_interrupt(const struct motion_sensor_t *s,
 	 * Note: this register latches motion detected above threshold. Once
 	 * latched, no interrupt can occur until this register is cleared.
 	 */
-	ret = raw_read8(s->i2c_addr, KXCJ9_INT_REL, &tmp);
+	ret = raw_read8(s->addr, KXCJ9_INT_REL, &tmp);
 
 error_enable_sensor:
 	/* Re-enable the sensor. */
@@ -396,7 +396,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	/* Read 6 bytes starting at KXCJ9_XOUT_L. */
 	mutex_lock(s->mutex);
 	i2c_lock(I2C_PORT_ACCEL, 1);
-	ret = i2c_xfer(I2C_PORT_ACCEL, s->i2c_addr, &reg, 1, acc, 6,
+	ret = i2c_xfer(I2C_PORT_ACCEL, s->addr, &reg, 1, acc, 6,
 			I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_ACCEL, 0);
 	mutex_unlock(s->mutex);
@@ -442,25 +442,25 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		goto cleanup_exit;
 
 	/* Enable wake up (motion detect) functionality. */
-	ret = raw_read8(s->i2c_addr, KXCJ9_CTRL1, &tmp);
+	ret = raw_read8(s->addr, KXCJ9_CTRL1, &tmp);
 	tmp &= ~KXCJ9_CTRL1_PC1;
 	tmp |= KXCJ9_CTRL1_WUFE;
-	ret = raw_write8(s->i2c_addr, KXCJ9_CTRL1, tmp);
+	ret = raw_write8(s->addr, KXCJ9_CTRL1, tmp);
 
 	/* Set interrupt polarity to rising edge and keep interrupt disabled. */
-	ret = raw_write8(s->i2c_addr,
+	ret = raw_write8(s->addr,
 			  KXCJ9_INT_CTRL1,
 			  KXCJ9_INT_CTRL1_IEA);
 	if (ret != EC_SUCCESS)
 		goto cleanup_exit;
 
 	/* Set output data rate for wake-up interrupt function. */
-	ret = raw_write8(s->i2c_addr, KXCJ9_CTRL2, KXCJ9_OWUF_100_0HZ);
+	ret = raw_write8(s->addr, KXCJ9_CTRL2, KXCJ9_OWUF_100_0HZ);
 	if (ret != EC_SUCCESS)
 		goto cleanup_exit;
 
 	/* Set interrupt to trigger on motion on any axis. */
-	ret = raw_write8(s->i2c_addr, KXCJ9_INT_CTRL2,
+	ret = raw_write8(s->addr, KXCJ9_INT_CTRL2,
 			KXCJ9_INT_SRC2_XNWU | KXCJ9_INT_SRC2_XPWU |
 			KXCJ9_INT_SRC2_YNWU | KXCJ9_INT_SRC2_YPWU |
 			KXCJ9_INT_SRC2_ZNWU | KXCJ9_INT_SRC2_ZPWU);
@@ -493,7 +493,7 @@ static int init(const struct motion_sensor_t *s)
 	 * sensor to default.
 	 */
 	mutex_lock(s->mutex);
-	ret = raw_write8(s->i2c_addr, KXCJ9_CTRL2, KXCJ9_CTRL2_SRST);
+	ret = raw_write8(s->addr, KXCJ9_CTRL2, KXCJ9_CTRL2_SRST);
 	mutex_unlock(s->mutex);
 	if (ret != EC_SUCCESS)
 		return ret;
@@ -503,7 +503,7 @@ static int init(const struct motion_sensor_t *s)
 		/* Added 1m delay after software reset */
 		msleep(1);
 
-		ret = raw_read8(s->i2c_addr, KXCJ9_CTRL2, &tmp);
+		ret = raw_read8(s->addr, KXCJ9_CTRL2, &tmp);
 		if (ret != EC_SUCCESS)
 			return ret;
 
