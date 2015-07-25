@@ -248,7 +248,7 @@ static void tpm_rx_handler(uint8_t *data, size_t data_size, int cs_disabled)
 		init_new_cycle();
 }
 
-static void sps_tpm_enable(void)
+void sps_tpm_enable(void)
 {
 	/*
 	 * Let's make sure we get an interrupt as soon as the header is

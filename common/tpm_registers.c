@@ -12,6 +12,7 @@
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
+#include "task.h"
 #include "tpm_registers.h"
 #include "util.h"
 
@@ -198,9 +199,11 @@ static void sts_reg_write_tg(void)
 	case tpm_state_ready:
 		break; /* Ignore setting this bit in these states. */
 	case tpm_state_receiving_cmd:
-		if (!(tpm_.state & expect))
+		if (!(tpm_.state & expect)) {
 			/* This should trigger actual command execution. */
 			tpm_.state = tpm_state_executing_cmd;
+			task_set_event(TASK_ID_TPM, TASK_EVENT_WAKE, 0);
+		}
 		break;
 	}
 }
@@ -312,8 +315,6 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 
 	/* All data has been receved, Ready for the 'go' command. */
 	tpm_.regs.sts &= ~expect;
-	CPRINTF("%s: received fifo command 0x%04x\n",
-		__func__, be32_to_cpu(tpm_.regs.data_fifo + 6));
 }
 
 void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
@@ -373,4 +374,16 @@ static void tpm_init(void)
 		(64 << burst_count_shift);
 }
 
-DECLARE_HOOK(HOOK_INIT, tpm_init, HOOK_PRIO_DEFAULT);
+void tpm_task(void)
+{
+	tpm_init();
+	sps_tpm_enable();
+	while (1) {
+		/* Wait for the next command event */
+		task_wait_event(-1);
+		CPRINTF("%s: received fifo command 0x%04x\n",
+			__func__, be32_to_cpu(tpm_.regs.data_fifo + 6));
+
+	}
+}
+
