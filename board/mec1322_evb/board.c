@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "registers.h"
+#include "spi.h"
 #include "util.h"
 
 #define GPIO_KB_INPUT GPIO_INPUT
@@ -44,6 +45,12 @@ const struct i2c_port_t i2c_ports[] = {
 	{"port0", MEC1322_I2C0_0, 100},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* SPI master ports */
+const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SHD_CS0},
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_S1,

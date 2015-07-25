@@ -19,14 +19,23 @@
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
 
 
-int spi_enable(int enable)
+int spi_enable(int port, int enable)
 {
+	int i;
+
 	if (enable) {
 		gpio_config_module(MODULE_SPI, 1);
-		/* Don't use the SSI0 frame output.  CS# is a GPIO so we can
-		 * keep it low during an entire transaction. */
-		gpio_set_flags(GPIO_SPI_CS_L, GPIO_OUTPUT);
-		gpio_set_level(GPIO_SPI_CS_L, 1);
+		for (i = 0; i < spi_devices_used; i++) {
+			if (spi_devices[i].port != port)
+				continue;
+			/*
+			 * Don't use the SSI0 frame output.
+			 * CS# is a GPIO so we can keep it low during an entire
+			 * transaction.
+			*/
+			gpio_set_flags(spi_device[i]->gpio_cs, GPIO_OUTPUT);
+			gpio_set_level(spi_device[i]->gpio_cs, 1);
+		}
 
 		/* Enable SSI port */
 		LM4_SSI_CR1(0) |= 0x02;
@@ -34,9 +43,13 @@ int spi_enable(int enable)
 		/* Disable SSI port */
 		LM4_SSI_CR1(0) &= ~0x02;
 
-		/* Make sure CS# is deselected */
-		gpio_set_level(GPIO_SPI_CS_L, 1);
-		gpio_set_flags(GPIO_SPI_CS_L, GPIO_ODR_HIGH);
+		for (i = 0; i < spi_devices_used; i++) {
+			if (spi_devices[i].port != port)
+				continue;
+			/* Make sure CS# is deselected */
+			gpio_set_level(spi_device[i]->gpio_cs, 1);
+			gpio_set_flags(spi_device->gpio_cs[i], GPIO_ODR_HIGH);
+		}
 
 		gpio_config_module(MODULE_SPI, 0);
 	}
@@ -45,7 +58,8 @@ int spi_enable(int enable)
 }
 
 
-int spi_transaction(const uint8_t *txdata, int txlen,
+int spi_transaction(const struct spi_device_t *spi_device,
+		    const uint8_t *txdata, int txlen,
 		    uint8_t *rxdata, int rxlen)
 {
 	int totallen = txlen + rxlen;
@@ -59,7 +73,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 	/* Start transaction.  Need to do this explicitly because the LM4
 	 * SSI controller pulses its frame select every byte, and the EEPROM
 	 * wants the chip select held low during the entire transaction. */
-	gpio_set_level(GPIO_SPI_CS_L, 0);
+	gpio_set_level(spi_device->gpio_cs, 0);
 
 	while (rxcount < totallen) {
 		/* Handle received bytes if any.  We just checked rxcount <
@@ -89,7 +103,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 	}
 
 	/* End transaction */
-	gpio_set_level(GPIO_SPI_CS_L, 1);
+	gpio_set_level(spi_device->gpio_cs, 1);
 
 	return EC_SUCCESS;
 }
@@ -120,7 +134,7 @@ static int spi_init(void)
 	/* Ensure the SPI port is disabled.  This keeps us from interfering
 	 * with the main chipset when we're not explicitly using the SPI
 	 * bus. */
-	spi_enable(0);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
 
 	return EC_SUCCESS;
 }
@@ -136,7 +150,7 @@ static int printrx(const char *desc, const uint8_t *txdata, int txlen,
 	int rv;
 	int i;
 
-	rv = spi_transaction(txdata, txlen, rxdata, rxlen);
+	rv = spi_transaction(SPI_FLASH_DEVICE, txdata, txlen, rxdata, rxlen);
 	if (rv)
 		return rv;
 
@@ -156,7 +170,7 @@ static int command_spirom(int argc, char **argv)
 	uint8_t txsr1[] = {0x05};
 	uint8_t txsr2[] = {0x35};
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	printrx("Man/Dev ID", txmandev, sizeof(txmandev), 2);
 	printrx("JEDEC ID", txjedec, sizeof(txjedec), 3);
@@ -164,7 +178,7 @@ static int command_spirom(int argc, char **argv)
 	printrx("Status reg 1", txsr1, sizeof(txsr1), 1);
 	printrx("Status reg 2", txsr2, sizeof(txsr2), 1);
 
-	spi_enable(0);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
 
 	return EC_SUCCESS;
 }

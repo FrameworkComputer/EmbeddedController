@@ -23,6 +23,7 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
+#include "spi.h"
 #include "switch.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
@@ -113,6 +114,13 @@ const struct i2c_port_t i2c_ports[] = {
 	 GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/******************************************************************************/
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_CS_L},
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* Keyboard scan setting */

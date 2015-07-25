@@ -20,6 +20,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
+#define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SIZE          0x00800000 /* 8MB spi flash */
 #define CONFIG_SPI_FLASH_W25Q64

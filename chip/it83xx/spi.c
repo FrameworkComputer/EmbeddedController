@@ -72,7 +72,8 @@ static void sspi_transmission_end(void)
 	IT83XX_SSPI_SPISTS = 0x02;
 }
 
-int spi_enable(int enable)
+/* We assume only one SPI port in the chip, one SPI device */
+int spi_enable(int port, int enable)
 {
 	if (enable) {
 		/*
@@ -96,7 +97,8 @@ int spi_enable(int enable)
 	return EC_SUCCESS;
 }
 
-int spi_transaction(const uint8_t *txdata, int txlen,
+int spi_transaction(const struct spi_device_t *spi_device,
+		const uint8_t *txdata, int txlen,
 		uint8_t *rxdata, int rxlen)
 {
 	int idx;
@@ -152,6 +154,6 @@ static void sspi_init(void)
 	IT83XX_SSPI_SPICTRL2 |= 0x02;
 
 	/* Disabling spi module */
-	spi_enable(0);
+	spi_enable(NULL, 0);
 }
 DECLARE_HOOK(HOOK_INIT, sspi_init, HOOK_PRIO_DEFAULT);

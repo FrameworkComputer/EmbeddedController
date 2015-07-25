@@ -15,8 +15,7 @@
 #define CONFIG_ADC
 #define CONFIG_SPI_FLASH_SIZE 0x00800000
 #define CONFIG_SPI_FLASH_W25Q64
-#define CONFIG_SPI_PORT 0
-#define CONFIG_SPI_CS_GPIO GPIO_SHD_CS0
+#define CONFIG_SPI_FLASH_PORT 0
 
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM

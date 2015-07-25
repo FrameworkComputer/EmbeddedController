@@ -44,8 +44,7 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 2240
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 
-#define CONFIG_SPI_PORT 1
-#define CONFIG_SPI_CS_GPIO GPIO_PVT_CS0
+#define CONFIG_SPI_FLASH_PORT 1
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_SIZE 524288
 /* TODO: Add flash protect support for the SPI part cyan actually has */

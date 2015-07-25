@@ -289,6 +289,12 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_FLASH_NSS},
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
+
 /* Sensor mutex */
 static struct mutex g_mutex;
 
@@ -484,7 +490,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
-	gpio_set_flags(GPIO_SPI_FLASH_NSS, GPIO_OUT_HIGH);
+	gpio_set_flags(SPI_FLASH_DEVICE->gpio_cs, GPIO_OUT_HIGH);
 
 	/* Set all four SPI pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xf03c0000;
@@ -499,12 +505,12 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	/* Enable SPI LDO to power the flash chip */
 	gpio_set_level(GPIO_VDDSPI_EN, 1);
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 }
 
 void usb_spi_board_disable(struct usb_spi_config const *config)
 {
-	spi_enable(0);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
 
 	/* Disable SPI LDO */
 	gpio_set_level(GPIO_VDDSPI_EN, 0);
@@ -514,7 +520,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 
 	/* Release SPI GPIOs */
 	gpio_config_module(MODULE_SPI_MASTER, 0);
-	gpio_set_flags(GPIO_SPI_FLASH_NSS, GPIO_INPUT);
+	gpio_set_flags(SPI_FLASH_DEVICE->gpio_cs, GPIO_INPUT);
 
 	/* Release AP from reset */
 	gpio_set_level(GPIO_PMIC_WARM_RESET_L, 1);

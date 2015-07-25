@@ -12,6 +12,7 @@
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"
+#include "spi.h"
 #include "switch.h"
 #include "util.h"
 
@@ -44,6 +45,12 @@ const struct i2c_port_t i2c_ports[] = {
 	{"thermal",  MEC1322_I2C2, 100},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_PVT_CS0},
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,

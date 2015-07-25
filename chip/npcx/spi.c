@@ -68,29 +68,43 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, spi_freq_changed, HOOK_PRIO_FIRST);
 /**
  * Set SPI enabled.
  *
+ * @spi_port port to act on. Only one port supported, one gpio.
  * @param   enable enabled flag
  * @return  success
  */
-int spi_enable(int enable)
+int spi_enable(int port, int enable)
 {
+	int i;
+	enum gpio_signal gpio;
+
 	if (enable) {
 		/* Enabling spi module for gpio configuration */
 		gpio_config_module(MODULE_SPI, 1);
 		/* GPIO No SPI Select */
 		CLEAR_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_GPIO_NO_SPIP);
 
-		/* Make sure CS# is a GPIO output mode. */
-		gpio_set_flags(GPIO_SPI_CS_L, GPIO_OUTPUT);
-		/* Make sure CS# is deselected */
-		gpio_set_level(GPIO_SPI_CS_L, 1);
+		for (i = 0; i < spi_devices_used; i++) {
+			if (spi_devices[i].port != port)
+				continue;
+			gpio = spi_devices[i].gpio_cs;
+			/* Make sure CS# is a GPIO output mode. */
+			gpio_set_flags(gpio, GPIO_OUTPUT);
+			/* Make sure CS# is deselected */
+			gpio_set_level(gpio, 1);
+		}
 		/* Enabling spi module */
 		SET_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_SPIEN);
 	} else {
 		/* Disabling spi module */
 		CLEAR_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_SPIEN);
-		/* Make sure CS# is deselected */
-		gpio_set_level(GPIO_SPI_CS_L, 1);
-		gpio_set_flags(GPIO_SPI_CS_L, GPIO_ODR_HIGH);
+		for (i = 0; i < spi_devices_used; i++) {
+			if (spi_devices[i].port != port)
+				continue;
+			gpio = spi_devices[i].gpio_cs;
+			/* Make sure CS# is deselected */
+			gpio_set_level(gpio, 1);
+			gpio_set_flags(gpio, GPIO_ODR_HIGH);
+		}
 		/* Disabling spi module for gpio configuration */
 		gpio_config_module(MODULE_SPI, 0);
 		/* GPIO No SPI Select */
@@ -103,6 +117,7 @@ int spi_enable(int enable)
 /**
  * Flush an SPI transaction and receive data from slave.
  *
+ * @param   spi_device  device to talk to
  * @param   txdata  transfer data
  * @param   txlen   transfer length
  * @param   rxdata  receive data
@@ -110,19 +125,21 @@ int spi_enable(int enable)
  * @return  success
  * @notes   set master transaction mode in npcx chip
  */
-int spi_transaction(const uint8_t *txdata, int txlen,
+int spi_transaction(const struct spi_device_t *spi_device,
+		const uint8_t *txdata, int txlen,
 		uint8_t *rxdata, int rxlen)
 {
 	int i = 0;
+	enum gpio_signal gpio = spi_device->gpio_cs;
 
 	/* Make sure CS# is a GPIO output mode. */
-	gpio_set_flags(GPIO_SPI_CS_L, GPIO_OUTPUT);
+	gpio_set_flags(gpio, GPIO_OUTPUT);
 	/* Make sure CS# is deselected */
-	gpio_set_level(GPIO_SPI_CS_L, 1);
+	gpio_set_level(gpio, 1);
 	/* Cleaning junk data in the buffer */
 	clear_databuf();
 	/* Assert CS# to start transaction */
-	gpio_set_level(GPIO_SPI_CS_L, 0);
+	gpio_set_level(gpio, 0);
 	CPRINTS("NPCX_SPI_DATA=%x", NPCX_SPI_DATA);
 	CPRINTS("NPCX_SPI_CTL1=%x", NPCX_SPI_CTL1);
 	CPRINTS("NPCX_SPI_STAT=%x", NPCX_SPI_STAT);
@@ -156,7 +173,7 @@ int spi_transaction(const uint8_t *txdata, int txlen,
 		CPRINTS("rxdata[i]=%x", rxdata[i]);
 	}
 	/* Deassert CS# (high) to end transaction */
-	gpio_set_level(GPIO_SPI_CS_L, 1);
+	gpio_set_level(gpio, 1);
 
 	return EC_SUCCESS;
 }
@@ -174,7 +191,7 @@ static void spi_init(void)
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Disabling spi module */
-	spi_enable(0);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
 
 	/* Disabling spi irq */
 	CLEAR_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_EIR);
@@ -208,7 +225,7 @@ static int printrx(const char *desc, const uint8_t *txdata, int txlen,
 	int rv;
 	int i;
 
-	rv = spi_transaction(txdata, txlen, rxdata, rxlen);
+	rv = spi_transaction(SPI_FLASH_DEVICE, txdata, txlen, rxdata, rxlen);
 	if (rv)
 		return rv;
 
@@ -228,7 +245,7 @@ static int command_spirom(int argc, char **argv)
 	uint8_t txsr1[] = {0x05};
 	uint8_t txsr2[] = {0x35};
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	printrx("Man/Dev ID", txmandev, sizeof(txmandev), 2);
 	printrx("JEDEC ID", txjedec, sizeof(txjedec), 3);
@@ -236,7 +253,7 @@ static int command_spirom(int argc, char **argv)
 	printrx("Status reg 1", txsr1, sizeof(txsr1), 1);
 	printrx("Status reg 2", txsr2, sizeof(txsr2), 1);
 
-	spi_enable(0);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
 
 	return EC_SUCCESS;
 }

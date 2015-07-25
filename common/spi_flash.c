@@ -59,7 +59,7 @@ int spi_flash_wait(void)
 static int spi_flash_write_enable(void)
 {
 	uint8_t cmd = SPI_FLASH_WRITE_ENABLE;
-	return spi_transaction(&cmd, 1, NULL, 0);
+	return spi_transaction(SPI_FLASH_DEVICE, &cmd, 1, NULL, 0);
 }
 
 /**
@@ -71,7 +71,7 @@ uint8_t spi_flash_get_status1(void)
 	uint8_t cmd = SPI_FLASH_READ_SR1;
 	uint8_t resp;
 
-	if (spi_transaction(&cmd, 1, &resp, 1) != EC_SUCCESS)
+	if (spi_transaction(SPI_FLASH_DEVICE, &cmd, 1, &resp, 1) != EC_SUCCESS)
 		return -1;
 
 	return resp;
@@ -91,7 +91,7 @@ uint8_t spi_flash_get_status2(void)
 	return 0;
 #endif
 
-	if (spi_transaction(&cmd, 1, &resp, 1) != EC_SUCCESS)
+	if (spi_transaction(SPI_FLASH_DEVICE, &cmd, 1, &resp, 1) != EC_SUCCESS)
 		return -1;
 
 	return resp;
@@ -127,9 +127,9 @@ int spi_flash_set_status(int reg1, int reg2)
 #endif
 
 	if (reg2 == -1)
-		rv = spi_transaction(cmd, 2, NULL, 0);
+		rv = spi_transaction(SPI_FLASH_DEVICE, cmd, 2, NULL, 0);
 	else
-		rv = spi_transaction(cmd, 3, NULL, 0);
+		rv = spi_transaction(SPI_FLASH_DEVICE, cmd, 3, NULL, 0);
 	if (rv)
 		return rv;
 
@@ -158,7 +158,7 @@ int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
-	return spi_transaction(cmd, 4, buf_usr, bytes);
+	return spi_transaction(SPI_FLASH_DEVICE, cmd, 4, buf_usr, bytes);
 }
 
 /**
@@ -198,7 +198,7 @@ static int spi_flash_erase_block(unsigned int offset, unsigned int block)
 	cmd[2] = (offset >> 8) & 0xFF;
 	cmd[3] = offset & 0xFF;
 
-	rv = spi_transaction(cmd, 4, NULL, 0);
+	rv = spi_transaction(SPI_FLASH_DEVICE, cmd, 4, NULL, 0);
 	if (rv)
 		return rv;
 
@@ -294,7 +294,8 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 		buf[2] = (offset) >> 8;
 		buf[3] = offset;
 
-		rv = spi_transaction(buf, 4 + write_size, NULL, 0);
+		rv = spi_transaction(SPI_FLASH_DEVICE,
+				     buf, 4 + write_size, NULL, 0);
 		if (rv)
 			return rv;
 
@@ -316,7 +317,8 @@ uint32_t spi_flash_get_jedec_id(void)
 	uint8_t cmd = SPI_FLASH_JEDEC_ID;
 	uint32_t resp;
 
-	if (spi_transaction(&cmd, 1, (uint8_t *)&resp, 4) != EC_SUCCESS)
+	if (spi_transaction(SPI_FLASH_DEVICE,
+			    &cmd, 1, (uint8_t *)&resp, 4) != EC_SUCCESS)
 		return -1;
 
 	return resp;
@@ -332,7 +334,8 @@ uint64_t spi_flash_get_unique_id(void)
 	uint8_t cmd[5] = {SPI_FLASH_UNIQUE_ID, 0, 0, 0, 0};
 	uint64_t resp;
 
-	if (spi_transaction(cmd, 5, (uint8_t *)&resp, 8) != EC_SUCCESS)
+	if (spi_transaction(SPI_FLASH_DEVICE,
+			    cmd, 5, (uint8_t *)&resp, 8) != EC_SUCCESS)
 		return -1;
 
 	return resp;
@@ -459,7 +462,7 @@ static int command_spi_flashinfo(int argc, char **argv)
 	uint64_t unique;
 	int rv;
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
@@ -497,7 +500,7 @@ static int command_spi_flasherase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Chip has protection */
 	if (spi_flash_check_protect(offset, bytes))
@@ -533,7 +536,7 @@ static int command_spi_flashwrite(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Chip has protection */
 	if (spi_flash_check_protect(offset, bytes))
@@ -586,7 +589,7 @@ static int command_spi_flashread(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Can't read past size of memory */
 	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
@@ -635,7 +638,7 @@ DECLARE_CONSOLE_COMMAND(spi_flashread, command_spi_flashread,
 
 static int command_spi_flashread_sr(int argc, char **argv)
 {
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	ccprintf("Status Register 1: 0x%02x\n", spi_flash_get_status1());
 	ccprintf("Status Register 2: 0x%02x\n", spi_flash_get_status2());
@@ -656,7 +659,7 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
@@ -686,7 +689,7 @@ static int command_spi_flashprotect(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(1);
+	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
