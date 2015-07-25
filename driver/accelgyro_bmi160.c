@@ -16,6 +16,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "spi.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -118,10 +119,70 @@ static int get_engineering_val(const int reg_val,
 	return pairs[i].val;
 }
 
+#ifdef CONFIG_SPI_ACCEL_PORT
+/**
+ * Write 8bit register from accelerometer.
+ */
+static inline int raw_write8(const int addr, const uint8_t reg, int data)
+{
+	uint8_t cmd[2] = { reg, data };
+	return spi_transaction(&spi_devices[addr], cmd, 2, NULL, 0);
+}
+
+static inline int spi_raw_read(const int addr, const uint8_t reg, uint8_t *data,
+			       const int len)
+{
+	uint8_t cmd = 0x80 | reg;
+	return spi_transaction(&spi_devices[addr], &cmd, 1, data, len);
+}
+
 /**
  * Read 8bit register from accelerometer.
  */
-static inline int raw_read8(const int addr, const int reg, int *data_ptr)
+static inline int raw_read8(const int addr, const uint8_t reg, int *data)
+{
+	int rv;
+	uint8_t val;
+	rv = spi_raw_read(addr, reg, &val, 1);
+	if (rv == EC_SUCCESS)
+		*data = val;
+	return rv;
+}
+
+/**
+ * Read 16bit register from accelerometer.
+ */
+static inline int raw_read16(const int addr, const uint8_t reg, int *data)
+{
+	int rv;
+	uint16_t val;
+	rv = spi_raw_read(addr, reg, (uint8_t *)&val, 2);
+	if (rv == EC_SUCCESS)
+		*data = val;
+	return rv;
+}
+
+/**
+ * Read 32bit register from accelerometer.
+ */
+static inline int raw_read32(const int addr, const uint8_t reg, int *data)
+{
+	return spi_raw_read(addr, reg, (uint8_t *)data, 4);
+}
+
+/**
+ * Read n bytes from accelerometer.
+ */
+static inline int raw_read_n(const int addr, const uint8_t reg,
+		uint8_t *data_ptr, const int len)
+{
+	return spi_raw_read(addr, reg, data_ptr, len);
+}
+#else  /* CONFIG_SPI_ACCEL_PORT */
+/**
+ * Read 8bit register from accelerometer.
+ */
+static inline int raw_read8(const int addr, const uint8_t reg, int *data_ptr)
 {
 	return i2c_read8(I2C_PORT_ACCEL, addr, reg, data_ptr);
 }
@@ -129,7 +190,7 @@ static inline int raw_read8(const int addr, const int reg, int *data_ptr)
 /**
  * Write 8bit register from accelerometer.
  */
-static inline int raw_write8(const int addr, const int reg, int data)
+static inline int raw_write8(const int addr, const uint8_t reg, int data)
 {
 	return i2c_write8(I2C_PORT_ACCEL, addr, reg, data);
 }
@@ -137,7 +198,7 @@ static inline int raw_write8(const int addr, const int reg, int data)
 /**
  * Read 16bit register from accelerometer.
  */
-static inline int raw_read16(const int addr, const int reg, int *data_ptr)
+static inline int raw_read16(const int addr, const uint8_t reg, int *data_ptr)
 {
 	return i2c_read16(I2C_PORT_ACCEL, addr, reg, data_ptr);
 }
@@ -145,10 +206,25 @@ static inline int raw_read16(const int addr, const int reg, int *data_ptr)
 /**
  * Read 32bit register from accelerometer.
  */
-static inline int raw_read32(const int addr, const int reg, int *data_ptr)
+static inline int raw_read32(const int addr, const uint8_t reg, int *data_ptr)
 {
 	return i2c_read32(I2C_PORT_ACCEL, addr, reg, data_ptr);
 }
+
+/**
+ * Read n bytes from accelerometer.
+ */
+static inline int raw_read_n(const int addr, const uint8_t reg,
+		uint8_t *data_ptr, const int len)
+{
+	int ret;
+	i2c_lock(I2C_PORT_ACCEL, 1);
+	ret = i2c_xfer(I2C_PORT_ACCEL, addr, &reg, 1, data_ptr, len,
+		       I2C_XFER_SINGLE);
+	i2c_lock(I2C_PORT_ACCEL, 0);
+	return ret;
+}
+#endif  /* CONFIG_SPI_ACCEL_PORT */
 
 #ifdef CONFIG_MAG_BMI160_BMM150
 /**
@@ -177,7 +253,7 @@ static int bmm150_mag_access_ctrl(const int addr, const int enable)
  * Read register from compass.
  * Assuming we are in manual access mode, read compass i2c register.
  */
-int raw_mag_read8(const int addr, const int reg, int *data_ptr)
+int raw_mag_read8(const int addr, const uint8_t reg, int *data_ptr)
 {
 	/* Only read 1 bytes */
 	raw_write8(addr, BMI160_MAG_I2C_READ_ADDR, reg);
@@ -188,7 +264,7 @@ int raw_mag_read8(const int addr, const int reg, int *data_ptr)
  * Write register from compass.
  * Assuming we are in manual access mode, write to compass i2c register.
  */
-int raw_mag_write8(const int addr, const int reg, int data)
+int raw_mag_write8(const int addr, const uint8_t reg, int data)
 {
 	raw_write8(addr, BMI160_MAG_I2C_WRITE_DATA, data);
 	return raw_write8(addr, BMI160_MAG_I2C_WRITE_ADDR, reg);
@@ -703,13 +779,9 @@ static int load_fifo(struct motion_sensor_t *s)
 		return EC_SUCCESS;
 	do {
 		enum fifo_state state = FIFO_HEADER;
-		uint8_t fifo_reg = BMI160_FIFO_DATA;
 		uint8_t *bp = bmi160_buffer;
-		i2c_lock(I2C_PORT_ACCEL, 1);
-		i2c_xfer(I2C_PORT_ACCEL, s->addr,
-				&fifo_reg, 1, bmi160_buffer,
-				sizeof(bmi160_buffer), I2C_XFER_SINGLE);
-		i2c_lock(I2C_PORT_ACCEL, 0);
+		raw_read_n(s->addr, BMI160_FIFO_DATA, bmi160_buffer,
+				sizeof(bmi160_buffer));
 		while (!done && bp != BUFFER_END(bmi160_buffer)) {
 			switch (state) {
 			case FIFO_HEADER: {
@@ -769,7 +841,6 @@ static int load_fifo(struct motion_sensor_t *s)
 static int read(const struct motion_sensor_t *s, vector_3_t v)
 {
 	uint8_t data[6];
-	uint8_t xyz_reg;
 	int ret, status = 0;
 
 	ret = raw_read8(s->addr, BMI160_STATUS, &status);
@@ -787,13 +858,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 		return EC_SUCCESS;
 	}
 
-	xyz_reg = get_xyz_reg(s->type);
-
 	/* Read 6 bytes starting at xyz_reg */
-	i2c_lock(I2C_PORT_ACCEL, 1);
-	ret = i2c_xfer(I2C_PORT_ACCEL, s->addr,
-			&xyz_reg, 1, data, 6, I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_ACCEL, 0);
+	raw_read_n(s->addr, get_xyz_reg(s->type), data, 6);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RD XYZ Error %d]",

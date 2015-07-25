@@ -391,8 +391,8 @@ void bmi160_interrupt(enum gpio_signal signal);
 
 #ifdef CONFIG_MAG_BMI160_BMM150
 /* Functions to access the compass through the accel/gyro. */
-int raw_mag_read8(const int addr, const int reg, int *data_ptr);
-int raw_mag_write8(const int addr, const int reg, int data);
+int raw_mag_read8(const int addr, const uint8_t reg, int *data_ptr);
+int raw_mag_write8(const int addr, const uint8_t reg, int data);
 #endif
 
 
