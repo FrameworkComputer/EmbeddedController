@@ -24,6 +24,16 @@
 
 #define BMI160_ERR_REG         0x02
 #define BMI160_PMU_STATUS      0x03
+#define BMI160_PMU_MAG_OFFSET               0
+#define BMI160_PMU_GYR_OFFSET               2
+#define BMI160_PMU_ACC_OFFSET               4
+#define BMI160_PMU_SENSOR_STATUS(_sensor_type, _val) \
+	(((_val) >> (4 - 2 * (_sensor_type))) & 0x3)
+#define BMI160_PMU_SUSPEND                  0
+#define BMI160_PMU_NORMAL                   1
+#define BMI160_PMU_LOW_POWER                2
+#define BMI160_PMU_FAST_STARTUP             3
+
 #define BMI160_MAG_X_L_G       0x04
 #define BMI160_MAG_X_H_G       0x05
 #define BMI160_MAG_Y_L_G       0x06
@@ -314,6 +324,7 @@ enum fifo_header {
 #define BMI160_CMD_SOFT_RESET      0xb6
 #define BMI160_CMD_NOOP            0x00
 #define BMI160_CMD_START_FOC       0x03
+#define BMI160_CMD_ACC_MODE_OFFSET 0x10
 #define BMI160_CMD_ACC_MODE_SUSP   0x10
 #define BMI160_CMD_ACC_MODE_NORMAL 0x11
 #define BMI160_CMD_ACC_MODE_LOWPOWER 0x12
@@ -323,10 +334,10 @@ enum fifo_header {
 #define BMI160_CMD_MAG_MODE_SUSP   0x18
 #define BMI160_CMD_MAG_MODE_NORMAL 0x19
 #define BMI160_CMD_MAG_MODE_LOWPOWER 0x1a
-#define BMI160_CMD_MODE_SUSPEND(_sensor) \
-	(BMI160_CMD_ACC_MODE_SUSP + 4 * (_sensor))
-#define BMI160_CMD_MODE_NORMAL(_sensor) \
-	(BMI160_CMD_ACC_MODE_NORMAL + 4 * (_sensor))
+#define BMI160_CMD_MODE_SUSPEND(_sensor_type) \
+	(BMI160_CMD_ACC_MODE_OFFSET | (_sensor_type) << 2 | BMI160_PMU_SUSPEND)
+#define BMI160_CMD_MODE_NORMAL(_sensor_type) \
+	(BMI160_CMD_ACC_MODE_OFFSET | (_sensor_type) << 2 | BMI160_PMU_NORMAL)
 
 #define BMI160_CMD_FIFO_FLUSH      0xb0
 #define BMI160_CMD_INT_RESET       0xb1

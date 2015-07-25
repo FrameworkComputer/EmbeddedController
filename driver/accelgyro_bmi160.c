@@ -54,6 +54,12 @@ const struct accel_param_pair dps_ranges[] = {
 	{2000, BMI160_DPS_SEL_2000}
 };
 
+static int wakeup_time[] = {
+	[MOTIONSENSE_TYPE_ACCEL] = 4,
+	[MOTIONSENSE_TYPE_GYRO] = 80,
+	[MOTIONSENSE_TYPE_MAG] = 1
+};
+
 static inline const struct accel_param_pair *get_range_table(
 		enum motionsensor_type type, int *psize)
 {
@@ -320,12 +326,6 @@ static int get_resolution(const struct motion_sensor_t *s,
 	*res = BMI160_RESOLUTION;
 	return EC_SUCCESS;
 }
-
-static int wakeup_time[] = {
-	[MOTIONSENSE_TYPE_ACCEL] = 4,
-	[MOTIONSENSE_TYPE_GYRO] = 60,
-	[MOTIONSENSE_TYPE_MAG] = 5
-};
 
 static int set_data_rate(const struct motion_sensor_t *s,
 				int rate,
@@ -852,7 +852,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	 * Note: return success so that motion senor task can read again
 	 * to get the latest updated sensor data quickly.
 	 */
-	if (status & BMI160_DRDY_MASK(s->type)) {
+	if (!(status & BMI160_DRDY_MASK(s->type))) {
 		if (v != s->raw_xyz)
 			memcpy(v, s->raw_xyz, sizeof(s->raw_xyz));
 		return EC_SUCCESS;
@@ -896,7 +896,7 @@ static int init(const struct motion_sensor_t *s)
 
 	raw_write8(s->addr, BMI160_CMD_REG,
 			BMI160_CMD_MODE_NORMAL(s->type));
-	msleep(30);
+	msleep(wakeup_time[s->type]);
 
 #ifdef CONFIG_MAG_BMI160_BMM150
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
@@ -969,12 +969,13 @@ static int init(const struct motion_sensor_t *s)
 		bmm150_mag_access_ctrl(s->addr, 0);
 	}
 #endif
+
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	if (s->type == MOTIONSENSE_TYPE_ACCEL)
 		ret = config_interrupt(s);
 #endif
-	set_range(s, s->runtime_config.range, 0);
 	set_data_rate(s, s->runtime_config.odr, 0);
+	set_range(s, s->runtime_config.range, 0);
 
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
 			s->name, s->type, s->runtime_config.range,
