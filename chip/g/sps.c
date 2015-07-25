@@ -165,7 +165,8 @@ int sps_transmit(uint8_t *data, size_t data_size)
  *  @param mode Clock polarity and phase mode (0 - 3)
  *
  */
-static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode)
+static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode,
+			  unsigned rx_fifo_threshold)
 {
 	/* Disable All Interrupts */
 	GREG32(SPS, ICTRL) = 0;
@@ -191,7 +192,7 @@ static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode)
 	/* Do not enable TX FIFO until we have something to send. */
 	GWRITE_FIELD(SPS, FIFO_CTRL, RXFIFO_EN, 1);
 
-	GREG32(SPS, RXFIFO_THRESHOLD) = 8;
+	GREG32(SPS, RXFIFO_THRESHOLD) = rx_fifo_threshold;
 
 	GWRITE_FIELD(SPS, ICTRL, RXFIFO_LVL, 1);
 
@@ -206,13 +207,17 @@ static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode)
  */
 static rx_handler_f sps_rx_handler;
 
-int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler)
+int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler,
+			    unsigned rx_fifo_threshold)
 {
 	if (sps_rx_handler)
 		return -1;
 
+	if (!rx_fifo_threshold)
+		rx_fifo_threshold = 8;  /* This is a sensible default. */
 	sps_rx_handler = rx_handler;
-	sps_configure(mode, SPI_CLOCK_MODE0);
+
+	sps_configure(mode, SPI_CLOCK_MODE0, rx_fifo_threshold);
 	task_enable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
 	task_enable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
 
@@ -436,7 +441,7 @@ static int command_sps(int argc, char **argv)
 	sps_tx_status(GC_SPS_DUMMY_WORD_DEFAULT);
 
 	rx_state = spstrx_not_started;
-	sps_register_rx_handler(SPS_GENERIC_MODE, sps_receive_callback);
+	sps_register_rx_handler(SPS_GENERIC_MODE, sps_receive_callback, 0);
 
 	if (argc > 1) {
 		target = strtoi(argv[1], &e, 10);

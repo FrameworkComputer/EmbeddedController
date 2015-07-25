@@ -254,7 +254,7 @@ static void sps_hc_enable(void)
 	state = SPI_STATE_DISABLED;
 
 	/* Ready to receive */
-	sps_register_rx_handler(SPS_GENERIC_MODE, hc_rx_handler);
+	sps_register_rx_handler(SPS_GENERIC_MODE, hc_rx_handler, 0);
 
 	/* Here we go */
 	discard_response = 0;

@@ -250,7 +250,11 @@ static void tpm_rx_handler(uint8_t *data, size_t data_size, int cs_disabled)
 
 static void sps_tpm_enable(void)
 {
-	sps_register_rx_handler(SPS_GENERIC_MODE, tpm_rx_handler);
+	/*
+	 * Let's make sure we get an interrupt as soon as the header is
+	 * received.
+	 */
+	sps_register_rx_handler(SPS_GENERIC_MODE, tpm_rx_handler, 3);
 	init_new_cycle();
 }
 

@@ -42,8 +42,12 @@ int sps_transmit(uint8_t *data, size_t data_size);
  * These functions return zero on success or non-zero on failure (attempt to
  * register a callback on top of existing one, or attempt to unregister
  * non-exitisng callback.
+ *
+ * rx_fifo_threshold value of zero means 'default'.
  */
-int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler);
+int sps_register_rx_handler(enum sps_mode mode,
+			    rx_handler_f rx_handler,
+			    unsigned rx_fifo_threshold);
 int sps_unregister_rx_handler(void);
 void sps_tx_status(uint8_t byte);
 unsigned sps_rx_fifo_wrptr(void);
