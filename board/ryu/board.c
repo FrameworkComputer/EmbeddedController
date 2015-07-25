@@ -234,6 +234,25 @@ static void board_init(void)
 
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACC_IRQ1);
+
+	/* Enable SPI for BMI160 */
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+
+	/* Set all four SPI3 pins to high speed */
+	/* pins C10/C11/C12 */
+	STM32_GPIO_OSPEEDR(GPIO_C) |= 0x03f00000;
+
+	/* pin A4 */
+	STM32_GPIO_OSPEEDR(GPIO_A) |= 0x00000300;
+
+	/* Enable clocks to SPI3 module */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI3;
+
+	/* Reset SPI3 */
+	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI3;
+	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI3;
+
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -292,6 +311,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_FLASH_NSS},
+	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI3_NSS }
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -327,7 +347,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .addr = BMI160_ADDR0,
+	 .addr = 1,
 	 .rot_standard_ref = &accelgyro_standard_ref,
 	 .default_config = {
 		 .odr = 100000,
@@ -344,7 +364,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .addr = BMI160_ADDR0,
+	 .addr = 1,
 	 .rot_standard_ref = &accelgyro_standard_ref,
 	 .default_config = {
 		 .odr = 0,
@@ -361,7 +381,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .addr = BMI160_ADDR0,
+	 .addr = 1,
 	 .rot_standard_ref = &mag_standard_ref,
 	 .default_config = {
 		 .odr = 0,
@@ -493,6 +513,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	gpio_set_flags(SPI_FLASH_DEVICE->gpio_cs, GPIO_OUT_HIGH);
 
 	/* Set all four SPI pins to high speed */
+	/* pins B10/B14/B15 and B9 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xf03c0000;
 
 	/* Enable clocks to SPI2 module */

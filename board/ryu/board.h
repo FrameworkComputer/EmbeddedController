@@ -95,8 +95,8 @@
 #define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_BATTERY I2C_PORT_MASTER
 #define I2C_PORT_LIGHTBAR I2C_PORT_MASTER
-#define I2C_PORT_ACCEL I2C_PORT_MASTER
 #define I2C_PORT_PERICOM I2C_PORT_MASTER
+
 #define BMM150_I2C_ADDRESS BMM150_ADDR0
 
 /* slave address for host commands */
@@ -139,9 +139,12 @@
 /* Enable control of SPI over USB */
 #define CONFIG_SPI_FLASH_PORT    0  /* First SPI master port */
 #define CONFIG_USB_SPI
-
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG
+
+/* Enable Accel over SPI */
+#define CONFIG_SPI_ACCEL_PORT    1  /* Second SPI master port */
+#define SPI_ACCEL_PORT_ID        1  /* stored at spi_ports[1] */
 
 /* Sensor support */
 #define CONFIG_ACCELGYRO_BMI160
