@@ -157,7 +157,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	STM32_SYSCFG_CFGR1 |= (1 << 24);
 
 	/* Configure SPI GPIOs */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_FLASH, 1);
 
 	/* Set all four SPI pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
@@ -180,7 +180,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 
 	/* Release SPI GPIOs */
-	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_config_module(MODULE_SPI_FLASH, 0);
 }
 
 USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI);

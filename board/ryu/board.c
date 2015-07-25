@@ -489,7 +489,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 	gpio_set_level(GPIO_PMIC_WARM_RESET_L, 0);
 
 	/* Configure SPI GPIOs */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_FLASH, 1);
 	gpio_set_flags(SPI_FLASH_DEVICE->gpio_cs, GPIO_OUT_HIGH);
 
 	/* Set all four SPI pins to high speed */
@@ -519,7 +519,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 
 	/* Release SPI GPIOs */
-	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_config_module(MODULE_SPI_FLASH, 0);
 	gpio_set_flags(SPI_FLASH_DEVICE->gpio_cs, GPIO_INPUT);
 
 	/* Release AP from reset */

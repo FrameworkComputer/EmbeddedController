@@ -605,6 +605,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_PB1_WWDG		(1 << 11)
 #define STM32_RCC_PB1_IWDG		(1 << 12) /* DBGMCU only */
 #define STM32_RCC_PB1_SPI2		(1 << 14)
+#define STM32_RCC_PB1_SPI3		(1 << 15)
 #define STM32_RCC_PB1_USART2		(1 << 17)
 #define STM32_RCC_PB1_USART3		(1 << 18)
 #define STM32_RCC_PB1_USART4		(1 << 19)
@@ -681,9 +682,6 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_SPI2_BASE             0x40003800
 #define STM32_SPI3_BASE             0x40003c00 /* STM32F373 */
 
-#define STM32_SPI1_PORT             0
-#define STM32_SPI2_PORT             1
-
 /* The SPI controller registers */
 struct stm32_spi_regs {
 	uint16_t cr1;
@@ -705,6 +703,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
 #define STM32_SPI1_REGS ((stm32_spi_regs_t *)STM32_SPI1_BASE)
 #define STM32_SPI2_REGS ((stm32_spi_regs_t *)STM32_SPI2_BASE)
+#define STM32_SPI3_REGS ((stm32_spi_regs_t *)STM32_SPI3_BASE)
 
 #define STM32_SPI_CR1_BIDIMODE		(1 << 15)
 #define STM32_SPI_CR1_BIDIOE		(1 << 14)
@@ -1160,6 +1159,8 @@ enum dma_channel {
 #ifdef CHIP_VARIANT_STM32F373
 	STM32_DMAC_SPI2_RX = STM32_DMAC_CH4,
 	STM32_DMAC_SPI2_TX = STM32_DMAC_CH5,
+	STM32_DMAC_SPI3_RX = STM32_DMAC_CH9,
+	STM32_DMAC_SPI3_TX = STM32_DMAC_CH10,
 
 	STM32_DMAC_COUNT = 10,
 #else
