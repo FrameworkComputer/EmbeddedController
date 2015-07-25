@@ -95,8 +95,8 @@
 #define I2C_PORT_CHARGER I2C_PORT_MASTER
 #define I2C_PORT_BATTERY I2C_PORT_MASTER
 #define I2C_PORT_LIGHTBAR I2C_PORT_MASTER
+#define I2C_PORT_ACCEL I2C_PORT_MASTER
 #define I2C_PORT_PERICOM I2C_PORT_MASTER
-
 #define BMM150_I2C_ADDRESS BMM150_ADDR0
 
 /* slave address for host commands */
@@ -170,6 +170,13 @@
 #ifndef __ASSEMBLER__
 
 int board_get_version(void);
+int board_has_spi_sensors(void);
+
+/* GPIOs depending on board version */
+#define GPIO_VDDSPI_EN (board_has_spi_sensors() ? GPIO_VDDSPI_EN_0 \
+						: GPIO_VDDSPI_EN_OLD)
+#define GPIO_USBC_CC_EN (board_has_spi_sensors() ?  GPIO_USBC_CC_EN_0 \
+						 : GPIO_SPI3_NSS)
 
 /* Timer selection */
 #define TIM_CLOCK32 5

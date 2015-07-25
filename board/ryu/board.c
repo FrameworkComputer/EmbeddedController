@@ -186,6 +186,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 /* Initialize board. */
 static void board_init(void)
 {
+	int i;
 	struct charge_port_info charge_none, charge_vbus;
 
 	/* Initialize all pericom charge suppliers to 0 */
@@ -235,24 +236,36 @@ static void board_init(void)
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACC_IRQ1);
 
-	/* Enable SPI for BMI160 */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	if (board_has_spi_sensors()) {
+		for (i = MOTIONSENSE_TYPE_ACCEL;
+		     i <= MOTIONSENSE_TYPE_MAG; i++) {
+			motion_sensors[i].addr = BMI160_SET_SPI_ADDRESS(1);
+		}
+		/* SPI sensors: put back the GPIO in its expected state */
+		gpio_set_level(GPIO_SPI3_NSS, 1);
 
-	/* Set all four SPI3 pins to high speed */
-	/* pins C10/C11/C12 */
-	STM32_GPIO_OSPEEDR(GPIO_C) |= 0x03f00000;
+		/* Enable SPI for BMI160 */
+		gpio_config_module(MODULE_SPI_MASTER, 1);
 
-	/* pin A4 */
-	STM32_GPIO_OSPEEDR(GPIO_A) |= 0x00000300;
+		/* Set all four SPI3 pins to high speed */
+		/* pins C10/C11/C12 */
+		STM32_GPIO_OSPEEDR(GPIO_C) |= 0x03f00000;
 
-	/* Enable clocks to SPI3 module */
-	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI3;
+		/* pin A4 */
+		STM32_GPIO_OSPEEDR(GPIO_A) |= 0x00000300;
 
-	/* Reset SPI3 */
-	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI3;
-	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI3;
+		/* Enable clocks to SPI3 module */
+		STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI3;
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+		/* Reset SPI3 */
+		STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI3;
+		STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI3;
+
+		spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+		CPRINTS("Board using SPI sensors");
+	} else { /* I2C sensors on rev v6/7/8 */
+		CPRINTS("Board using I2C sensors");
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -347,7 +360,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .addr = 1,
+	 .addr = BMI160_ADDR0,
 	 .rot_standard_ref = &accelgyro_standard_ref,
 	 .default_config = {
 		 .odr = 100000,
@@ -364,7 +377,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .addr = 1,
+	 .addr = BMI160_ADDR0,
 	 .rot_standard_ref = &accelgyro_standard_ref,
 	 .default_config = {
 		 .odr = 0,
@@ -381,7 +394,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .addr = 1,
+	 .addr = BMI160_ADDR0,
 	 .rot_standard_ref = &mag_standard_ref,
 	 .default_config = {
 		 .odr = 0,
@@ -570,10 +583,20 @@ int board_get_version(void)
 		gpio_set_flags(GPIO_BOARD_ID0, GPIO_INPUT);
 		gpio_set_flags(GPIO_BOARD_ID1, GPIO_INPUT);
 		ver = id1 * 3 + id0;
-		CPRINTS("Board ID = %d\n", ver);
+		CPRINTS("Board ID = %d", ver);
 	}
 
 	return ver;
+}
+
+int board_has_spi_sensors(void)
+{
+	/*
+	 * boards version 6 / 7 / 8 have an I2C bus to sensors.
+	 * board version 0+ has a SPI bus to sensors
+	 */
+	int ver = board_get_version();
+	return (ver < 6);
 }
 
 /****************************************************************************/

@@ -31,11 +31,11 @@ GPIO(BTN_VOLU_L,           PIN(A, 2),  GPIO_INPUT | GPIO_PULL_UP)
 /* PD RX/TX */
 GPIO(USBC_CC1_PD,          PIN(A, 1),  GPIO_ANALOG)
 GPIO(USBC_CC2_PD,          PIN(A, 3),  GPIO_ANALOG)
-GPIO(USBC_CC_EN,           PIN(E, 7),  GPIO_OUT_LOW)
+GPIO(USBC_CC_EN_0,         PIN(E, 7),  GPIO_OUT_LOW) /* on rev v0+ */
 GPIO(USBC_CC_TX_DATA,      PIN(A, 6),  GPIO_OUT_LOW)
 GPIO(USBC_CC_TX_EN,        PIN(D, 7),  GPIO_OUT_LOW)
 
-GPIO(SPI3_NSS,             PIN(A, 4),  GPIO_OUT_HIGH)
+GPIO(SPI3_NSS,             PIN(A, 4),  GPIO_OUT_LOW) /* USB_CC_EN on v6/7/8 */
 #if 0
 /* Alternate functions */
 GPIO(USBC_TX_CLKOUT,       PIN(B, 1),  GPIO_OUT_LOW)
@@ -110,7 +110,8 @@ GPIO(PERICOM_CLK_EN,       PIN(C, 15), GPIO_OUT_HIGH)
 GPIO(USB_PU_EN_L,          PIN(C, 2),  GPIO_OUT_HIGH)
 GPIO(PD_DISABLE_DEBUG,     PIN(C, 6),  GPIO_OUT_LOW)
 GPIO(SPI_FLASH_NSS,        PIN(B, 9),  GPIO_INPUT)
-GPIO(VDDSPI_EN,            PIN(C, 15), GPIO_OUT_LOW)
+GPIO(VDDSPI_EN_0,          PIN(C, 15), GPIO_OUT_LOW) /* on rev v0+ */
+GPIO(VDDSPI_EN_OLD,        PIN(C, 12), GPIO_OUT_LOW) /* on rev v6/7/8 */
 GPIO(SH_RESET,             PIN(C, 4),  GPIO_ODR_HIGH)
 GPIO(SH_BOOT,              PIN(C, 9),  GPIO_ODR_HIGH)
 GPIO(EC_INT_L,             PIN(F, 2),  GPIO_ODR_HIGH)
