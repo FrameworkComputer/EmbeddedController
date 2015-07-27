@@ -360,6 +360,7 @@ DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_RAW,
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_TEMP_SENSOR
 /**
  * Print temperature info for a sensor; used by console command.
  */
@@ -437,6 +438,7 @@ DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info,
 			"[ <index> ]",
 			"Print TMP006 sensors",
 			NULL);
+#endif
 
 /* Disable the t6cal command until/unless we have FP support in printf */
 #if 0

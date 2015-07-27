@@ -204,7 +204,7 @@ static void tsu6721_dump(void)
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_USBMUX
 static int command_usbmux(int argc, char **argv)
 {
 	if (1 == argc) { /* dump all registers */
@@ -232,6 +232,7 @@ DECLARE_CONSOLE_COMMAND(usbmux, command_usbmux,
 			"[usb|uart1|uart2|auto]",
 			"TSU6721 USB mux control",
 			NULL);
+#endif
 
 /*****************************************************************************/
 /* Host commands */

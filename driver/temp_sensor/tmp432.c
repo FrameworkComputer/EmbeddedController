@@ -36,10 +36,12 @@ static int raw_read8(const int offset, int *data_ptr)
 	return i2c_read8(I2C_PORT_THERMAL, TMP432_I2C_ADDR, offset, data_ptr);
 }
 
+#ifdef CONFIG_CMD_TEMP_SENSOR
 static int raw_write8(const int offset, int data)
 {
 	return i2c_write8(I2C_PORT_THERMAL, TMP432_I2C_ADDR, offset, data);
 }
+#endif
 
 static int get_temp(const int offset, int *temp_ptr)
 {
@@ -54,6 +56,7 @@ static int get_temp(const int offset, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_CMD_TEMP_SENSOR
 static int tmp432_set_temp(const int offset, int temp)
 {
 	if (temp < -127 || temp > 127)
@@ -61,6 +64,7 @@ static int tmp432_set_temp(const int offset, int temp)
 
 	return raw_write8(offset, (uint8_t)temp);
 }
+#endif
 
 int tmp432_get_val(int idx, int *temp_ptr)
 {
@@ -102,6 +106,7 @@ static void temp_sensor_poll(void)
 }
 DECLARE_HOOK(HOOK_SECOND, temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
+#ifdef CONFIG_CMD_TEMP_SENSOR
 static void print_temps(
 		const char *name,
 		const int tmp432_temp_reg,
@@ -215,3 +220,4 @@ DECLARE_CONSOLE_COMMAND(tmp432, command_tmp432,
 	"[settemp|setbyte <offset> <value>] or [getbyte <offset>]. "
 	"Temps in Celsius.",
 	"Print tmp432 temp sensor status or set parameters.", NULL);
+#endif

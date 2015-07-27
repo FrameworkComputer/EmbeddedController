@@ -324,7 +324,7 @@ DECLARE_HOOK(HOOK_INIT, bq2589x_init, HOOK_PRIO_LAST);
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_CHARGER
 static int command_bq2589x(int argc, char **argv)
 {
 	int i;
@@ -367,3 +367,4 @@ static int command_bq2589x(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(bq2589x, command_bq2589x,
 			NULL, NULL, NULL);
+#endif

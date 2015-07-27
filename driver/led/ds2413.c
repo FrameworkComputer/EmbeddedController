@@ -148,7 +148,7 @@ DECLARE_HOOK(HOOK_SECOND, onewire_led_tick, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
-
+#define CONFIG_CMD_POWERLED
 static int command_powerled(int argc, char **argv)
 {
 	int i;
@@ -164,3 +164,4 @@ DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
 			"<off | red | yellow | green>",
 			"Set power LED color",
 			NULL);
+#endif
