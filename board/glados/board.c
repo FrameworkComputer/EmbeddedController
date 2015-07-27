@@ -261,8 +261,20 @@ static void board_init(void)
 	/* Enable pericom BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+
+	/* Provide AC status to the PCH */
+	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Buffer the AC present GPIO to the PCH.
+ */
+static void board_extpower(void)
+{
+	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 /**
  * Set active charge port -- only one port can be active at a time.
