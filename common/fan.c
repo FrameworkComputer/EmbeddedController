@@ -484,10 +484,7 @@ static void pwm_fan_second(void)
 			rpm = fan_get_rpm_actual(fans[fan].ch);
 		}
 
-		/* Lock ACPI read access to memmap during multi-byte write */
-		host_lock_memmap();
 		mapped[fan] = rpm;
-		host_unlock_memmap();
 	}
 
 	/*

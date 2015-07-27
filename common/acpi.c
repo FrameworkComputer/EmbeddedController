@@ -13,6 +13,7 @@
 #include "ec_commands.h"
 #include "pwm.h"
 #include "timer.h"
+#include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -30,27 +31,76 @@ static int dptf_temp_threshold;			/* last threshold written */
 #endif
 
 /*
+ * Keep a read cache of four bytes when burst mode is enabled, which is the
+ * size of the largest non-string memmap data type.
+ */
+#define ACPI_READ_CACHE_SIZE 4
+
+/* Start address that indicates read cache is flushed. */
+#define ACPI_READ_CACHE_FLUSHED (EC_ACPI_MEM_MAPPED_BEGIN - 1)
+
+/* Calculate size of valid cache based upon end of memmap data. */
+#define ACPI_VALID_CACHE_SIZE(addr) (MIN( \
+	EC_ACPI_MEM_MAPPED_SIZE + EC_ACPI_MEM_MAPPED_BEGIN - (addr), \
+	ACPI_READ_CACHE_SIZE))
+
+/*
+ * In burst mode, read the requested memmap data and the data immediately
+ * following it into a cache. For future reads in burst mode, try to grab
+ * data from the cache. This ensures the continuity of multi-byte reads,
+ * which is important when dealing with data types > 8 bits.
+ */
+static struct {
+	int enabled;
+	uint8_t start_addr;
+	uint8_t data[ACPI_READ_CACHE_SIZE];
+} acpi_read_cache;
+
+/*
  * Deferred function to ensure that ACPI burst mode doesn't remain enabled
  * indefinitely.
  */
-static void acpi_unlock_memmap_deferred(void)
+static void acpi_disable_burst_deferred(void)
 {
+	acpi_read_cache.enabled = 0;
 	lpc_clear_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
-	host_unlock_memmap();
-	CPUTS("ACPI force unlock mutex, missed burst disable?");
+	CPUTS("ACPI missed burst disable?");
 }
-DECLARE_DEFERRED(acpi_unlock_memmap_deferred);
+DECLARE_DEFERRED(acpi_disable_burst_deferred);
 
-/*
- * Deferred function to lock memmap and to enable LPC interrupts.
- * This is due to LPC interrupt was unable to acquire memmap mutex.
- */
-static void deferred_host_lock_memmap(void)
+/* Read memmapped data, returns read data or 0xff on error. */
+static int acpi_read(uint8_t addr)
 {
-	host_lock_memmap();
-	lpc_enable_acpi_interrupts();
+	uint8_t *memmap_addr = (uint8_t *)(lpc_get_memmap_range() + addr -
+					   EC_ACPI_MEM_MAPPED_BEGIN);
+
+	/* Check for out-of-range read. */
+	if (addr < EC_ACPI_MEM_MAPPED_BEGIN ||
+	    addr >= EC_ACPI_MEM_MAPPED_BEGIN + EC_ACPI_MEM_MAPPED_SIZE) {
+		CPRINTS("ACPI read 0x%02x (ignored)",
+			acpi_addr);
+		return 0xff;
+	}
+
+	/* Read from cache if enabled (burst mode). */
+	if (acpi_read_cache.enabled) {
+		/* Fetch to cache on miss. */
+		if (acpi_read_cache.start_addr == ACPI_READ_CACHE_FLUSHED ||
+		    acpi_read_cache.start_addr > addr ||
+		    addr - acpi_read_cache.start_addr >=
+		    ACPI_READ_CACHE_SIZE) {
+			memcpy(acpi_read_cache.data,
+			       memmap_addr,
+			       ACPI_VALID_CACHE_SIZE(addr));
+			acpi_read_cache.start_addr = addr;
+		}
+		/* Return data from cache. */
+		return acpi_read_cache.data[addr - acpi_read_cache.start_addr];
+	} else {
+		/* Read directly from memmap data. */
+		return *memmap_addr;
+	}
 }
-DECLARE_DEFERRED(deferred_host_lock_memmap);
 
 /*
  * This handles AP writes to the EC via the ACPI I/O port. There are only a few
@@ -114,15 +164,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #endif
 		default:
-			if (acpi_addr >= EC_ACPI_MEM_MAPPED_BEGIN &&
-			    acpi_addr <
-			    EC_ACPI_MEM_MAPPED_BEGIN + EC_ACPI_MEM_MAPPED_SIZE)
-				result = *((uint8_t *)(lpc_get_memmap_range() +
-					   acpi_addr -
-					   EC_ACPI_MEM_MAPPED_BEGIN));
-			else
-				CPRINTS("ACPI read 0x%02x (ignored)",
-					acpi_addr);
+			result = acpi_read(acpi_addr);
 			break;
 		}
 
@@ -196,40 +238,29 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		 * value reads over the ACPI port. We don't do such reads
 		 * when our memmap data can be accessed directly over LPC,
 		 * so on LM4, for example, this is dead code. We might want
-		 * to re-add the CONFIG, now that we have overhead of one
-		 * deferred function.
+		 * to add a config to skip this code for certain chips.
 		 */
-		if (host_memmap_is_locked()) {
-			/*
-			 * If already locked by a task, we can not acquire
-			 * the mutex and will have to wait in the interrupt
-			 * context. But then the task will not get chance to
-			 * release the mutex. This will create deadlock
-			 * situation. To avoid the deadlock, disable ACPI
-			 * interrupts and defer locking.
-			 */
-			lpc_disable_acpi_interrupts();
-			hook_call_deferred(deferred_host_lock_memmap, 0);
-		} else {
-			host_lock_memmap();
-		}
+		acpi_read_cache.enabled = 1;
+		acpi_read_cache.start_addr = ACPI_READ_CACHE_FLUSHED;
+
 		/* Enter burst mode */
 		lpc_set_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
 
 		/*
-		 * Unlock from deferred function in case burst mode is enabled
+		 * Disable from deferred function in case burst mode is enabled
 		 * for an extremely long time  (ex. kernel bug / crash).
 		 */
-		hook_call_deferred(acpi_unlock_memmap_deferred, 1*SECOND);
+		hook_call_deferred(acpi_disable_burst_deferred, 1*SECOND);
 
 		/* ACPI 5.0-12.3.3: Burst ACK */
 		*resultptr = 0x90;
 		retval = 1;
 	} else if (acpi_cmd == EC_CMD_ACPI_BURST_DISABLE && !acpi_data_count) {
+		acpi_read_cache.enabled = 0;
+
 		/* Leave burst mode */
-		hook_call_deferred(acpi_unlock_memmap_deferred, -1);
+		hook_call_deferred(acpi_disable_burst_deferred, -1);
 		lpc_clear_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
-		host_unlock_memmap();
 	}
 
 	return retval;

@@ -124,12 +124,6 @@ static int update_static_battery_info(void)
 	 */
 	int rv;
 
-	/*
-	 * We're updating multi-byte memmap vars, don't allow ACPI to do
-	 * reads while we're updating.
-	 */
-	host_lock_memmap();
-
 	/* Smart battery serial number is 16 bits */
 	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_SERIAL);
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
@@ -172,9 +166,6 @@ static int update_static_battery_info(void)
 	*(int *)host_get_memmap(EC_MEMMAP_BATT_CAP) = 0;
 	*(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC) = 0;
 	*host_get_memmap(EC_MEMMAP_BATT_FLAG) = 0;
-
-	/* No more multi-byte memmap writes. */
-	host_unlock_memmap();
 
 	if (rv)
 		problem(PR_STATIC_UPDATE, rv);
@@ -220,12 +211,6 @@ static void update_dynamic_battery_info(void)
 		batt_present = 0;
 	}
 
-	/*
-	 * We're updating multi-byte memmap vars, don't allow ACPI to do
-	 * reads while we're updating.
-	 */
-	host_lock_memmap();
-
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
 		*memmap_volt = curr.batt.voltage;
 
@@ -251,9 +236,6 @@ static void update_dynamic_battery_info(void)
 		/* Poke the AP if the full_capacity changes. */
 		send_batt_info_event++;
 	}
-
-	/* No more multi-byte memmap writes. */
-	host_unlock_memmap();
 
 	if (curr.batt.is_present == BP_YES &&
 	    !(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&

@@ -113,7 +113,7 @@
 #endif
 
 #undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 13
+#define DEFERRABLE_MAX_COUNT 12
 
 #ifndef __ASSEMBLER__
 

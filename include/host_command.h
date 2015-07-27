@@ -124,25 +124,6 @@ struct host_command {
 uint8_t *host_get_memmap(int offset);
 
 /**
- * Grab the memmap write mutex. This function should be called before
- * multi-byte variable reads from ACPI, and before updating multi-byte
- * memmap variables anywhere else.
- */
-void host_lock_memmap(void);
-
-/*
- * Returns status of host memmap lock.
- */
-int host_memmap_is_locked(void);
-
-/**
- * Release the memmap write mutex. This function should be called once
- * a multi-byte variable read from ACPI is done, and when updating multi-byte
- * memmap variables is done.
- */
-void host_unlock_memmap(void);
-
-/**
  * Process a host command and return its response
  *
  * @param args	        Command handler args

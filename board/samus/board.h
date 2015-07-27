@@ -82,7 +82,7 @@
 /* Do we want EC_WIRELESS_SWITCH_WWAN as well? */
 
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 10
+#define DEFERRABLE_MAX_COUNT 9
 
 #ifndef __ASSEMBLER__
 

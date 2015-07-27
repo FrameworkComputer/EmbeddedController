@@ -30,9 +30,7 @@ void als_task(void)
 	while (1) {
 		for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++) {
 			als_data = als_read(i, &val) == EC_SUCCESS ? val : 0;
-			host_lock_memmap();
 			mapped[i] = als_data;
-			host_unlock_memmap();
 		}
 
 		task_wait_event(SECOND);
