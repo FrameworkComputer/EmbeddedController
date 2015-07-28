@@ -100,6 +100,8 @@ DEFINE_string chip "" \
 	"The chip to run debugger on."
 DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
+DEFINE_integer timeout 600 \
+	"Timeout for flashing the EC, measured in seconds."
 DEFINE_string offset "0" \
 	"Offset where to program the image from."
 DEFINE_integer port 9999 \
@@ -328,7 +330,8 @@ function flash_openocd() {
 	dut_control jtag_buf_on_flex_en:on
 	dut_control jtag_buf_en:on
 
-	sudo openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -f "${OCD_CHIP_CFG}" \
+	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+		openocd -s "${OCD_PATH}" -f "${OCD_CFG}" -f "${OCD_CHIP_CFG}" \
 		-c "${OCD_CMDS}" || \
 	die "Failed to program ${IMG}"
 }
@@ -356,7 +359,8 @@ function flash_stm32() {
 	# Reset the EC
 	ec_reset
 	# Unprotect flash, erase, and write
-	${STM32MON} -d ${EC_UART} -U -u -e -w "${IMG}"
+	timeout -k 10 -s 9 "${FLAGS_timeout}" \
+		${STM32MON} -d ${EC_UART} -U -u -e -w "${IMG}"
 	# Remove the Application processor reset
 	# TODO(crosbug.com/p/30738): we cannot rely on servo_VARS to restore it
 	if $(servo_has_warm_reset); then
@@ -382,11 +386,13 @@ function flash_stm32_dfu() {
 
 	SIZE=$(wc -c ${IMG} | cut -d' ' -f1)
 	# Remove read protection
-	sudo $DFU_UTIL -a 0 -s ${ADDR}:${SIZE}:force:unprotect -D "${IMG}"
+	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+		$DFU_UTIL -a 0 -s ${ADDR}:${SIZE}:force:unprotect -D "${IMG}"
 	# Wait for mass-erase and reboot after unprotection
 	sleep 1
 	# Actual image flashing
-	sudo $DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
+	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+		$DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
 }
 
 function flash_lm4() {
@@ -444,7 +450,8 @@ function flash_mec1322() {
 		cat $IMG
 	} > $T
 
-	sudo ${FLASHROM} ${FLASHROM_PARAM} -w "${T}"
+	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+		${FLASHROM} ${FLASHROM_PARAM} -w "${T}"
 
 	rm $T
 
