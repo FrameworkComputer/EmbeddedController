@@ -15,6 +15,7 @@
 /* Enable USART2 */
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USART2
+#define CONFIG_CMD_USART_INFO
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

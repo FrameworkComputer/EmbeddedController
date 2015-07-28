@@ -7,8 +7,6 @@
 
 #include "usart.h"
 
-#define STM32_USARTS_MAX 3
-
 /*
  * The STM32L series can have as many as three UARTS.  These are the HW configs
  * for those UARTS.  They can be used to initialize STM32 generic UART configs.

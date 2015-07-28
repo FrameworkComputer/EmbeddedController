@@ -5,6 +5,7 @@
 #include "usart-stm32f3.h"
 
 #include "common.h"
+#include "compile_time_macros.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
@@ -15,7 +16,14 @@
  * each USART, an entry will be NULL if no USART driver is initialized for the
  * corresponding hardware instance.
  */
+#define STM32_USARTS_MAX 3
+
 static struct usart_config const *configs[STM32_USARTS_MAX];
+
+struct usart_configs usart_get_configs(void)
+{
+	return (struct usart_configs) {configs, ARRAY_SIZE(configs)};
+}
 
 static void usart_variant_enable(struct usart_config const *config)
 {

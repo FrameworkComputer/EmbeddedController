@@ -183,4 +183,28 @@ void usart_set_baud_f(struct usart_config const *config, int frequency_hz);
  */
 void usart_clear_tc(struct usart_config const *config);
 
+/*
+ * Each family implementation provides the usart_get_configs function to access
+ * a read only list of the configs that are currently enabled.
+ */
+struct usart_configs {
+	/*
+	 * The family's usart_config array, entries in the array for disabled
+	 * configs will be NULL, enabled configs will point to the usart_config
+	 * that was enabled.  And the following will be true:
+	 *
+	 * configs[i]->hw->index == i;
+	 */
+	struct usart_config const * const *configs;
+
+	/*
+	 * The total possible number of configs that this family supports.
+	 * This will be the same as the number of usart_hw structs that the
+	 * family provides in its family specific usart header.
+	 */
+	size_t count;
+};
+
+struct usart_configs usart_get_configs(void);
+
 #endif /* __CROS_EC_USART_H */
