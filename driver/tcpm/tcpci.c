@@ -51,7 +51,7 @@ int tcpm_init(int port)
 		 */
 		if (rv == EC_SUCCESS && !(err & TCPC_REG_ERROR_STATUS_UNINIT)) {
 			i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-					 TCPC_REG_ALERT, 0xff);
+				    TCPC_REG_ALERT, 0xff);
 			return init_alert_mask(port);
 		}
 		msleep(10);
@@ -128,13 +128,6 @@ int tcpm_alert_status(int port, int *alert)
 	/* Read TCPC Alert register */
 	rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
 			TCPC_REG_ALERT, alert);
-	/*
-	 * The PD protocol layer will process all alert bits
-	 * returned by this function. Therefore, these bits
-	 * can now be cleared from the TCPC register.
-	 */
-	i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-		    TCPC_REG_ALERT, *alert);
 	return rv;
 }
 
@@ -169,11 +162,7 @@ int tcpm_get_message(int port, uint32_t *payload, int *head)
 	rv |= i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
 			 TCPC_REG_RX_HDR, (int *)head);
 
-	/* If i2c read fails, return error */
-	if (rv)
-		return rv;
-
-	if (cnt > 0) {
+	if (rv == EC_SUCCESS && cnt > 0) {
 		i2c_lock(I2C_PORT_TCPC, 1);
 		rv = i2c_xfer(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
 			      (uint8_t *)&reg, 1, (uint8_t *)payload,
@@ -181,7 +170,9 @@ int tcpm_get_message(int port, uint32_t *payload, int *head)
 		i2c_lock(I2C_PORT_TCPC, 0);
 	}
 
-	/* TODO: need to write to alert reg to clear status */
+	/* Read complete, clear RX status alert bit */
+	i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+		    TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
 
 	return rv;
 }
@@ -227,6 +218,14 @@ void tcpc_alert(int port)
 
 	/* Read the Alert register from the TCPC */
 	tcpm_alert_status(port, &status);
+
+	/*
+	 * Clear alert status for everything except RX_STATUS, which shouldn't
+	 * be cleared until we have successfully retrieved message.
+	 */
+	if (status & ~TCPC_REG_ALERT_RX_STATUS)
+		i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+			    TCPC_REG_ALERT, status & ~TCPC_REG_ALERT_RX_STATUS);
 
 	if (status & TCPC_REG_ALERT_CC_STATUS) {
 		/* CC status changed, wake task */

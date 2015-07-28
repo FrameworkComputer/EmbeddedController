@@ -75,13 +75,8 @@ int tcpm_set_msg_header(int port, int power_role, int data_role)
 
 int tcpm_alert_status(int port, int *alert)
 {
-	int rv;
-
 	/* Read TCPC Alert register */
-	rv = tcpc_alert_status(port, alert);
-	/* Clear all bits being processed by the protocol layer */
-	tcpc_alert_status_clear(port, *alert);
-	return rv;
+	return tcpc_alert_status(port, alert);
 }
 
 int tcpm_set_rx_enable(int port, int enable)
@@ -96,7 +91,12 @@ int tcpm_alert_mask_set(int port, uint16_t mask)
 
 int tcpm_get_message(int port, uint32_t *payload, int *head)
 {
-	return tcpc_get_message(port, payload, head);
+	int ret = tcpc_get_message(port, payload, head);
+
+	/* Read complete, clear RX status alert bit */
+	tcpc_alert_status_clear(port, TCPC_REG_ALERT_RX_STATUS);
+
+	return ret;
 }
 
 int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
@@ -111,6 +111,14 @@ void tcpc_alert(int port)
 
 	/* Read the Alert register from the TCPC */
 	tcpm_alert_status(port, &status);
+
+	/*
+	 * Clear alert status for everything except RX_STATUS, which shouldn't
+	 * be cleared until we have successfully retrieved message.
+	 */
+	if (status & ~TCPC_REG_ALERT_RX_STATUS)
+		tcpc_alert_status_clear(port,
+					status & ~TCPC_REG_ALERT_RX_STATUS);
 
 	if (status & TCPC_REG_ALERT_CC_STATUS) {
 		/* CC status changed, wake task */

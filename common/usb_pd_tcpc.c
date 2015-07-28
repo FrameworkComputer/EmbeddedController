@@ -195,6 +195,18 @@ enum pd_tx_errors {
 	PD_TX_ERR_COLLISION = -5 /* Collision detected during transmit */
 };
 
+/*
+ * Receive message buffer size. Buffer physical size is RX_BUFFER_SIZE + 1,
+ * but only RX_BUFFER_SIZE of that memory is used to store messages that can
+ * be retrieved from TCPM. The last slot is a temporary buffer for collecting
+ * a message before deciding whether or not to keep it.
+ */
+#ifdef CONFIG_USB_POWER_DELIVERY
+#define RX_BUFFER_SIZE 1
+#else
+#define RX_BUFFER_SIZE 2
+#endif
+
 #define TCPC_FLAGS_INITIALIZED (1 << 0) /* TCPC is initialized */
 
 static struct pd_port_controller {
@@ -217,8 +229,9 @@ static struct pd_port_controller {
 	uint8_t flags;
 
 	/* Last received */
-	int rx_head;
-	uint32_t rx_payload[7];
+	int rx_head[RX_BUFFER_SIZE+1];
+	uint32_t rx_payload[RX_BUFFER_SIZE+1][7];
+	int rx_buf_head, rx_buf_tail;
 
 	/* Next transmit */
 	enum tcpm_transmit_type tx_type;
@@ -226,6 +239,24 @@ static struct pd_port_controller {
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
 } pd[CONFIG_USB_PD_PORT_COUNT];
+
+static int rx_buf_is_full(int port)
+{
+	/* Buffer is full if the tail is 1 ahead of head */
+	int diff = pd[port].rx_buf_tail - pd[port].rx_buf_head;
+	return (diff == 1) || (diff == -RX_BUFFER_SIZE);
+}
+
+static int rx_buf_is_empty(int port)
+{
+	/* Buffer is empty if the head and tail are the same */
+	return pd[port].rx_buf_tail == pd[port].rx_buf_head;
+}
+
+static void rx_buf_increment(int port, int *buf_ptr)
+{
+	*buf_ptr = *buf_ptr == RX_BUFFER_SIZE ? 0 : *buf_ptr + 1;
+}
 
 static inline int encode_short(int port, int off, uint16_t val16)
 {
@@ -657,8 +688,7 @@ packet_err:
 	return bit;
 }
 
-static void handle_request(int port, uint16_t head,
-		uint32_t *payload)
+static void handle_request(int port, uint16_t head)
 {
 	int cnt = PD_HEADER_CNT(head);
 
@@ -736,15 +766,24 @@ int tcpc_run(int port, int evt)
 
 	/* incoming packet ? */
 	if (pd_rx_started(port) && pd[port].rx_enabled) {
-		pd[port].rx_head = pd_analyze_rx(port,
-						 pd[port].rx_payload);
+		/* Get message and place at RX buffer head */
+		res = pd[port].rx_head[pd[port].rx_buf_head] =
+			pd_analyze_rx(port,
+				pd[port].rx_payload[pd[port].rx_buf_head]);
 		pd_rx_complete(port);
-		if (pd[port].rx_head > 0) {
-			handle_request(port,
-				       pd[port].rx_head,
-				       pd[port].rx_payload);
+
+		/*
+		 * If there is space in buffer, then increment head to keep
+		 * the message and send goodCRC. If this is a hard reset,
+		 * send alert regardless of rx buffer status. Else if there is
+		 * no space in buffer, then do not send goodCRC and drop
+		 * message.
+		 */
+		if (res > 0 && !rx_buf_is_full(port)) {
+			rx_buf_increment(port, &pd[port].rx_buf_head);
+			handle_request(port, res);
 			alert(port, TCPC_REG_ALERT_RX_STATUS);
-		} else if (pd[port].rx_head == PD_RX_ERR_HARD_RESET) {
+		} else if (res == PD_RX_ERR_HARD_RESET) {
 			alert(port, TCPC_REG_ALERT_RX_HARD_RST);
 		}
 	}
@@ -842,6 +881,20 @@ int tcpc_alert_status(int port, int *alert)
 
 int tcpc_alert_status_clear(int port, uint16_t mask)
 {
+	/*
+	 * If the RX status alert is attempting to be cleared, then increment
+	 * rx buffer tail pointer. if the RX buffer is not empty, then keep
+	 * the RX status alert active.
+	 */
+	if (mask & TCPC_REG_ALERT_RX_STATUS) {
+		if (!rx_buf_is_empty(port)) {
+			rx_buf_increment(port, &pd[port].rx_buf_tail);
+			if (!rx_buf_is_empty(port))
+				/* buffer is not empty, keep alert active */
+				mask &= ~TCPC_REG_ALERT_RX_STATUS;
+		}
+	}
+
 	/* clear only the bits specified by the TCPM */
 	pd[port].alert &= ~mask;
 #ifndef CONFIG_USB_POWER_DELIVERY
@@ -950,7 +1003,7 @@ int tcpc_set_msg_header(int port, int power_role, int data_role)
 int tcpc_get_message(int port, uint32_t *payload, int *head)
 {
 	memcpy(payload, pd[port].rx_payload, sizeof(pd[port].rx_payload));
-	*head = pd[port].rx_head;
+	*head = pd[port].rx_head[pd[port].rx_buf_tail];
 	return EC_SUCCESS;
 }
 
@@ -1045,16 +1098,18 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 		payload[1] = (pd[port].alert_mask >> 8) & 0xff;
 		return 2;
 	case TCPC_REG_RX_BYTE_CNT:
-		payload[0] = 4*PD_HEADER_CNT(pd[port].rx_head);
+		payload[0] = 4 *
+			PD_HEADER_CNT(pd[port].rx_head[pd[port].rx_buf_tail]);
 		return 1;
 	case TCPC_REG_RX_HDR:
-		payload[0] = pd[port].rx_head & 0xff;
-		payload[1] = (pd[port].rx_head >> 8) & 0xff;
+		payload[0] = pd[port].rx_head[pd[port].rx_buf_tail] & 0xff;
+		payload[1] =
+			(pd[port].rx_head[pd[port].rx_buf_tail] >> 8) & 0xff;
 		return 2;
 	case TCPC_REG_RX_DATA:
-		memcpy(payload, pd[port].rx_payload,
-		       sizeof(pd[port].rx_payload));
-		return sizeof(pd[port].rx_payload);
+		memcpy(payload, pd[port].rx_payload[pd[port].rx_buf_tail],
+		       sizeof(pd[port].rx_payload[pd[port].rx_buf_tail]));
+		return sizeof(pd[port].rx_payload[pd[port].rx_buf_tail]);
 	case TCPC_REG_TX_BYTE_CNT:
 		payload[0] = PD_HEADER_CNT(pd[port].tx_head);
 		return 1;
