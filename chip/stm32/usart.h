@@ -24,6 +24,7 @@ struct usart_state {
 	 * in the RX queue.
 	 */
 	uint32_t rx_dropped;
+	uint32_t rx_overrun;
 };
 
 struct usart_config;

@@ -42,7 +42,7 @@ void usart_init(struct usart_config const *config)
 	 */
 	STM32_USART_CR1(base) = 0x0000;
 	STM32_USART_CR2(base) = 0x0000;
-	STM32_USART_CR3(base) = STM32_USART_CR3_OVRDIS;
+	STM32_USART_CR3(base) = 0x0000;
 
 	/*
 	 * Enable the RX, TX, and variant specific HW.
@@ -50,6 +50,12 @@ void usart_init(struct usart_config const *config)
 	config->rx->init(config);
 	config->tx->init(config);
 	config->hw->ops->enable(config);
+
+	/*
+	 * Clear error counts.
+	 */
+	config->state->rx_overrun = 0;
+	config->state->rx_dropped = 0;
 
 	/*
 	 * Enable the USART, this must be done last since most of the
@@ -98,6 +104,6 @@ void usart_set_baud_f(struct usart_config const *config, int frequency_hz)
 
 void usart_interrupt(struct usart_config const *config)
 {
-    config->tx->interrupt(config);
-    config->rx->interrupt(config);
+	config->tx->interrupt(config);
+	config->rx->interrupt(config);
 }
