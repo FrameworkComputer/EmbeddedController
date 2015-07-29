@@ -46,7 +46,11 @@
 #include "config_std_internal_flash.h"
 
 /* System stack size */
+#if defined(CHIP_VARIANT_STM32F05X)
+#define CONFIG_STACK_SIZE 768
+#else
 #define CONFIG_STACK_SIZE 1024
+#endif
 
 /* Idle task stack size */
 #define IDLE_TASK_STACK_SIZE 256
