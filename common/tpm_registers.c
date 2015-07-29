@@ -16,6 +16,11 @@
 #include "tpm_registers.h"
 #include "util.h"
 
+/* TPM2 library includes. */
+#include "tpm2/ExecCommand_fp.h"
+#include "tpm2/Platform.h"
+#include "tpm2/_TPM_Init_fp.h"
+
 #define CPRINTS(format, args...) cprints(CC_TPM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_TPM, format, ## args)
 
@@ -371,7 +376,12 @@ static void tpm_init(void)
 	tpm_.state = tpm_state_idle;
 	tpm_.regs.access = tpm_reg_valid_sts;
 	tpm_.regs.sts = (tpm_family_tpm2 << tpm_family_shift) |
-		(64 << burst_count_shift);
+		(64 << burst_count_shift) | sts_valid;
+
+	/* TPM2 library functions. */
+	_plat__Signal_PowerOn();
+	_TPM_Init();
+	_plat__SetNvAvail();
 }
 
 void tpm_task(void)
@@ -379,11 +389,17 @@ void tpm_task(void)
 	tpm_init();
 	sps_tpm_enable();
 	while (1) {
+		uint8_t *response;
+		unsigned response_size;
+
 		/* Wait for the next command event */
 		task_wait_event(-1);
 		CPRINTF("%s: received fifo command 0x%04x\n",
 			__func__, be32_to_cpu(tpm_.regs.data_fifo + 6));
 
+		ExecuteCommand(tpm_.fifo_write_index,
+			       tpm_.regs.data_fifo,
+			       &response_size,
+			       &response);
 	}
 }
-

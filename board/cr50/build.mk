@@ -10,6 +10,20 @@ CHIP_FAMILY:=cr50
 CHIP_VARIANT ?= cr50_fpga
 
 board-y=board.o
+LDFLAGS_EXTRA += -L$(out)/tpm2/build -ltpm2
 
 # Need to generate a .hex file
 all: hex
+
+ifeq ($(BOARD_MK_INCLUDED),)
+BOARD_MK_INCLUDED=1
+
+$(out)/RO/ec.RO.elf: $(out)/tpm2/build/libtpm2.a
+$(out)/RW/ec.RW.elf: $(out)/tpm2/build/libtpm2.a
+
+.PHONY: $(out)/tpm2/build/libtpm2.a
+$(out)/tpm2/build/libtpm2.a:
+	rsync -a ../../third_party/tpm2 $(out)
+	$(MAKE) ROOTDIR=$(realpath board/$(BOARD)/tpm2) EMBEDDED_MODE=1 \
+	 -C $(out)/tpm2
+endif

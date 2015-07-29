@@ -14,7 +14,7 @@
 
 /* Describe the RAM layout */
 #define CONFIG_RAM_BASE         0x10000
-#define CONFIG_RAM_SIZE         0x8000
+#define CONFIG_RAM_SIZE         0x10000
 
 /* Flash chip specifics */
 /* TODO(crosbug.com/p/33815): These are probably wrong. Don't use them yet. */
@@ -27,7 +27,7 @@
 /* TODO(wfrichar): Lying about this, so image signing works.
  * I'll file a bug once this CL goes in. */
 /* #define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024) */
-#define CONFIG_FLASH_PHYSICAL_SIZE (256 * 1024)
+#define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024)
 
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
