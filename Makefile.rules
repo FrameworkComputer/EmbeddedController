@@ -274,7 +274,7 @@ $(out)/ec_version.h:
 $(out)/RO/common/version.o: $(out)/ec_date.h
 $(out)/RW/common/version.o: $(out)/ec_date.h
 
-$(out)/ec_date.h: $(filter-out $(out)/%/common/version.o,$(objs))
+$(out)/ec_date.h: $(filter-out $(out)/%/common/version.o,$(ro-objs) $(rw-objs))
 	$(call quiet,date,DATE   )
 
 $(out)/gen_pub_key.h: $(PEM)
