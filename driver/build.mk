@@ -52,6 +52,7 @@ driver-$(CONFIG_LED_DRIVER_LP5562)+=led/lp5562.o
 driver-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 
 # Temperature sensors
+driver-$(CONFIG_TEMP_SENSOR_BD99992GW)+=temp_sensor/bd99992gw.o
 driver-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor/g781.o
 driver-$(CONFIG_TEMP_SENSOR_TMP006)+=temp_sensor/tmp006.o
 driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o

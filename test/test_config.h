@@ -78,6 +78,9 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_FANS 1
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_BD99992GW
+#define I2C_PORT_THERMAL 1
+int bd99992gw_get_temp(uint16_t adc);
 #endif
 
 #ifdef TEST_FAN
