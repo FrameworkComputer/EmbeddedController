@@ -382,6 +382,8 @@ enum bmi160_running_mode {
 };
 
 #define BMI160_FLAG_SEC_I2C_ENABLED    (1 << 0)
+#define BMI160_FIFO_FLAG_OFFSET        4
+#define BMI160_FIFO_ALL_MASK           7
 
 struct bmi160_drv_data_t {
 	struct motion_data_t saved_data[3];
