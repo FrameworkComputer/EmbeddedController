@@ -339,6 +339,9 @@ static int motion_sense_read(struct motion_sensor_t *sensor)
 	if (sensor->state != SENSOR_INITIALIZED)
 		return EC_ERROR_UNKNOWN;
 
+	if (sensor->runtime_config.odr == 0)
+		return EC_ERROR_NOT_POWERED;
+
 	/* Read all raw X,Y,Z accelerations. */
 	return sensor->drv->read(sensor, sensor->raw_xyz);
 }
@@ -429,8 +432,7 @@ void motion_sense_task(void)
 			sensor = &motion_sensors[i];
 
 			/* if the sensor is active in the current power state */
-			if (SENSOR_ACTIVE(sensor) &&
-			    (sensor->runtime_config.odr != 0)) {
+			if (SENSOR_ACTIVE(sensor)) {
 				if (sensor->state != SENSOR_INITIALIZED) {
 					CPRINTS("S%d active, not initalized",
 						sensor);
@@ -669,6 +671,14 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			 */
 			task_set_event(TASK_ID_MOTIONSENSE,
 					TASK_EVENT_MOTION_ODR_CHANGE, 0);
+			/*
+			 * If the sensor was suspended before, or now
+			 * suspended, we have to recalculate the EC sampling
+			 * rate
+			 */
+			motion_sense_set_accel_interval(
+					NULL, MAX_MOTION_SENSE_WAIT_TIME);
+
 		}
 
 		sensor->drv->get_data_rate(sensor, &data);
@@ -678,11 +688,6 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		out->sensor_odr.ret = data;
 
 		args->response_size = sizeof(out->sensor_odr);
-
-		/* If the sensor was suspended before, or now suspended, we have
-		 * to recalculate the EC sampling rate */
-		motion_sense_set_accel_interval(
-				NULL, MAX_MOTION_SENSE_WAIT_TIME);
 
 		break;
 
@@ -948,8 +953,8 @@ static int command_accel_data_rate(int argc, char **argv)
 		 * Write new data rate, if it returns invalid arg, then
 		 * return a parameter error.
 		 */
-		if (sensor->drv->set_data_rate(sensor, data, round)
-			== EC_ERROR_INVAL)
+		if (sensor->drv->set_data_rate(sensor, data, round) ==
+		    EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 		sensor->runtime_config.odr = data;
 		motion_sense_set_accel_interval(
