@@ -227,6 +227,9 @@ static struct pd_port_controller {
 	uint8_t rx_enabled;
 	/* TCPC flags */
 	uint8_t flags;
+	/* Power status */
+	uint8_t power_status;
+	uint8_t power_status_mask;
 
 	/* Last received */
 	int rx_head[RX_BUFFER_SIZE+1];
@@ -958,6 +961,29 @@ int tcpc_set_polarity(int port, int polarity)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_USB_PD_TCPM_VBUS
+static int tcpc_set_power_status(int port, int vbus_present)
+{
+	/* Update VBUS present bit */
+	if (vbus_present)
+		pd[port].power_status |= TCPC_REG_POWER_VBUS_PRES;
+	else
+		pd[port].power_status &= ~TCPC_REG_POWER_VBUS_PRES;
+
+	/* Set bit Port Power Status bit in Alert register */
+	if (pd[port].power_status_mask & TCPC_REG_POWER_VBUS_PRES)
+		alert(port, TCPC_REG_ALERT_POWER_STATUS);
+
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_TCPM_VBUS */
+
+int tcpc_set_power_status_mask(int port, uint8_t mask)
+{
+	pd[port].power_status_mask = mask;
+	return EC_SUCCESS;
+}
+
 int tcpc_set_vconn(int port, int enable)
 {
 #ifdef CONFIG_USBC_VCONN
@@ -1011,6 +1037,25 @@ int tcpc_get_message(int port, uint32_t *payload, int *head)
 	return EC_SUCCESS;
 }
 
+
+#ifdef CONFIG_USB_PD_TCPM_VBUS
+void pd_vbus_evt_p0(enum gpio_signal signal)
+{
+	tcpc_set_power_status(TASK_ID_TO_PD_PORT(TASK_ID_PD_C0),
+				 !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+	task_wake(TASK_ID_PD_C0);
+}
+
+#if CONFIG_USB_PD_PORT_COUNT >= 2
+void pd_vbus_evt_p1(enum gpio_signal signal)
+{
+	tcpc_set_power_status(TASK_ID_TO_PD_PORT(TASK_ID_PD_C1),
+				 !gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
+	task_wake(TASK_ID_PD_C1);
+}
+#endif /* PD_PORT_COUNT >= 2 */
+#endif /* CONFIG_USB_PD_TCPM_VBUS */
+
 #ifndef CONFIG_USB_POWER_DELIVERY
 static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 {
@@ -1043,6 +1088,9 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 	case TCPC_REG_RX_DETECT:
 		tcpc_set_rx_enable(port, payload[1] &
 					 TCPC_REG_RX_DETECT_SOP_HRST_MASK);
+		break;
+	case TCPC_REG_POWER_STATUS_MASK:
+		tcpc_set_power_status_mask(port, payload[1]);
 		break;
 	case TCPC_REG_TX_HDR:
 		pd[port].tx_head = (payload[2] << 8) | payload[1];
@@ -1114,6 +1162,9 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 		memcpy(payload, pd[port].rx_payload[pd[port].rx_buf_tail],
 		       sizeof(pd[port].rx_payload[pd[port].rx_buf_tail]));
 		return sizeof(pd[port].rx_payload[pd[port].rx_buf_tail]);
+	case TCPC_REG_POWER_STATUS:
+		payload[0] = pd[port].power_status;
+		return 1;
 	case TCPC_REG_TX_BYTE_CNT:
 		payload[0] = PD_HEADER_CNT(pd[port].tx_head);
 		return 1;

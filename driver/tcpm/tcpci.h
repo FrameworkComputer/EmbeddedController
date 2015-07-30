@@ -45,6 +45,7 @@
 #define TCPC_REG_CC_STATUS_CC1(reg)  ((reg) & 0x3)
 
 #define TCPC_REG_POWER_STATUS      0x19
+#define TCPC_REG_POWER_VBUS_PRES    (1<<5)
 #define TCPC_REG_ERROR_STATUS      0x1a
 #define TCPC_REG_ERROR_STATUS_UNINIT (1<<7)
 #define TCPC_REG_ROLE_CTRL         0x1b

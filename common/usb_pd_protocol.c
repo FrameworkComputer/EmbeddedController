@@ -20,6 +20,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -211,6 +212,15 @@ int pd_is_connected(int port)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
+static inline int pd_is_vbus_present(int port)
+{
+#ifdef CONFIG_USB_PD_TCPM_VBUS
+	return tcpm_get_vbus_level(port);
+#else
+	return pd_snk_is_vbus_provided(port);
+#endif
+}
+
 static int pd_snk_debug_acc_toggle(int port)
 {
 #ifdef CONFIG_CASE_CLOSED_DEBUG
@@ -219,7 +229,7 @@ static int pd_snk_debug_acc_toggle(int port)
 	 * (without having seen Rp before), that might be a powered debug
 	 * accessory, let's toggle to source to try to detect it.
 	 */
-	return pd_snk_is_vbus_provided(port);
+	return pd_is_vbus_present(port);
 #else
 	/* Debug accessories not supported, never toggle */
 	return 0;
@@ -1966,7 +1976,7 @@ void pd_task(void)
 
 			/* Wait for CC debounce and VBUS present */
 			if (get_time().val < pd[port].cc_debounce ||
-			    !pd_snk_is_vbus_provided(port))
+			    !pd_is_vbus_present(port))
 				break;
 
 			if (pd_try_src_enable &&
@@ -2044,7 +2054,7 @@ void pd_task(void)
 						     PD_STATE_SNK_DISCOVERY);
 			}
 
-			if (!pd_snk_is_vbus_provided(port) &&
+			if (!pd_is_vbus_present(port) &&
 			    !snk_hard_reset_vbus_off) {
 				/* VBUS has gone low, reset timeout */
 				snk_hard_reset_vbus_off = 1;
@@ -2054,7 +2064,7 @@ void pd_task(void)
 						  PD_T_SRC_TURN_ON,
 						  PD_STATE_SNK_DISCONNECTED);
 			}
-			if (pd_snk_is_vbus_provided(port) &&
+			if (pd_is_vbus_present(port) &&
 			    snk_hard_reset_vbus_off) {
 				/* VBUS went high again */
 				set_state(port, PD_STATE_SNK_DISCOVERY);
@@ -2503,7 +2513,7 @@ void pd_task(void)
 		 * a hard reset.
 		 */
 		if (pd[port].power_role == PD_ROLE_SINK &&
-		    !pd_snk_is_vbus_provided(port) &&
+		    !pd_is_vbus_present(port) &&
 		    pd[port].task_state != PD_STATE_SNK_HARD_RESET_RECOVER &&
 		    pd[port].task_state != PD_STATE_HARD_RESET_EXECUTE) {
 			/* Sink: detect disconnect by monitoring VBUS */

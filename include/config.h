@@ -1628,6 +1628,13 @@
 #undef CONFIG_USB_PD_TCPM_STUB
 #undef CONFIG_USB_PD_TCPM_TCPCI
 
+/*
+ * Use this option if the TCPC port controller is on a seperate chip from
+ * the TCPM layer and if VUBS detect GPIO is not available on the TCPM
+ * mcu.
+ */
+#undef CONFIG_USB_PD_TCPM_VBUS
+
 /* Define the type-c port controller I2C base address. */
 #undef CONFIG_TCPC_I2C_BASE_ADDR
 

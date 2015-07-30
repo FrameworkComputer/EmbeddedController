@@ -16,6 +16,7 @@ extern int tcpc_alert_mask_set(int port, uint16_t mask);
 extern int tcpc_get_cc(int port, int *cc1, int *cc2);
 extern int tcpc_set_cc(int port, int pull);
 extern int tcpc_set_polarity(int port, int polarity);
+extern int tcpc_set_power_status_mask(int port, uint8_t mask);
 extern int tcpc_set_vconn(int port, int enable);
 extern int tcpc_set_msg_header(int port, int power_role, int data_role);
 extern int tcpc_set_rx_enable(int port, int enable);
@@ -61,6 +62,11 @@ int tcpm_set_cc(int port, int pull)
 int tcpm_set_polarity(int port, int polarity)
 {
 	return tcpc_set_polarity(port, polarity);
+}
+
+int tcpm_set_power_status_mask(int port, uint8_t mask)
+{
+	return tcpc_set_power_status_mask(port, mask);
 }
 
 int tcpm_set_vconn(int port, int enable)

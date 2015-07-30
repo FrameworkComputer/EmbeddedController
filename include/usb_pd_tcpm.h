@@ -113,6 +113,15 @@ int tcpm_alert_mask_set(int port, uint16_t mask);
 int tcpm_get_cc(int port, int *cc1, int *cc2);
 
 /**
+ * Read VBUS
+ *
+ * @param port Type-C port number
+ *
+ * @return 0 => VBUS not detected, 1 => VBUS detected
+ */
+int tcpm_get_vbus_level(int port);
+
+/**
  * Set the CC pull resistor. This sets our role as either source or sink.
  *
  * @param port Type-C port number
@@ -131,6 +140,16 @@ int tcpm_set_cc(int port, int pull);
  * @return EC_SUCCESS or error
  */
 int tcpm_set_polarity(int port, int polarity);
+
+/**
+ * Set TCPC Power Status Mask
+ *
+ * @param port Type-C port number
+ * @param mask => new mask value
+ *
+ * @return EC_SUCCESS or error
+ */
+int tcpm_set_power_status_mask(int port, uint8_t mask);
 
 /**
  * Set Vconn.
