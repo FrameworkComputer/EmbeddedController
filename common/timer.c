@@ -184,6 +184,11 @@ timestamp_t get_time(void)
 	return ts;
 }
 
+clock_t clock(void)
+{
+	return (clock_t) __hw_clock_source_read();
+}
+
 void force_time(timestamp_t ts)
 {
 	clksrc_high = ts.le.hi;

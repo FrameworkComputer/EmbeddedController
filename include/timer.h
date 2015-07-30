@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_TIMER_H
 #define __CROS_EC_TIMER_H
 
+#include <sys/types.h>
+
 #include "common.h"
 #include "task_id.h"
 
@@ -145,5 +147,12 @@ static inline unsigned time_since32(timestamp_t start)
 {
 	return get_time().le.lo - start.le.lo;
 }
+
+/**
+ * Returns a free running high resolution (ten us or better) clock.
+ *
+ * Used by third party libraries requiring MSDN services.
+ */
+clock_t clock(void);
 
 #endif  /* __CROS_EC_TIMER_H */
