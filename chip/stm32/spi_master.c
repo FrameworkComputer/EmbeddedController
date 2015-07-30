@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "shared_mem.h"
 #include "spi.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -21,6 +22,8 @@ static stm32_spi_regs_t *SPI_REGS[] = {
 	STM32_SPI3_REGS,
 #endif
 };
+
+static struct mutex spi_mutex[ARRAY_SIZE(SPI_REGS)];
 
 #define SPI_TRANSACTION_TIMEOUT_USEC (800 * MSEC)
 
@@ -245,9 +248,12 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		    uint8_t *rxdata, int rxlen)
 {
 	int rv;
+	int port = spi_device->port;
 
+	mutex_lock(spi_mutex + port);
 	rv = spi_transaction_async(spi_device, txdata, txlen, rxdata, rxlen);
 	rv |= spi_transaction_flush(spi_device);
+	mutex_unlock(spi_mutex + port);
 
 	return rv;
 }
