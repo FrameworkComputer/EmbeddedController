@@ -112,6 +112,10 @@
 #define I2C_PORT_CHARGER MEC1322_I2C3
 #endif
 
+/* Modules we want to exclude */
+#undef CONFIG_CMD_TIMERINFO
+#undef CONFIG_CONSOLE_CMDHELP
+
 #undef DEFERRABLE_MAX_COUNT
 #define DEFERRABLE_MAX_COUNT 12
 
