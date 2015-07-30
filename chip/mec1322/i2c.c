@@ -38,6 +38,14 @@
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
 
+/*
+ * Amount of time to blocking wait for i2c bus to finish. After this blocking
+ * timeout, if the bus is still not finished, then allow other tasks to run.
+ * Note: this is just long enough for a 400kHz bus to finish transmitting one
+ * byte assuming the bus isn't being held.
+ */
+#define I2C_WAIT_BLOCKING_TIMEOUT_US 25
+
 /* I2C controller state data */
 struct {
 	/* Transaction timeout, or 0 to use default. */
@@ -115,47 +123,35 @@ static void reset_controller(int controller)
 		}
 }
 
-static int wait_for_interrupt(int controller, int *event)
+static int wait_for_interrupt(int controller)
 {
+	int event;
+
 	cdata[controller].task_waiting = task_get_current();
 	task_enable_irq(MEC1322_IRQ_I2C_0 + controller);
-	/*
-	 * We want to wait here quietly until the I2C interrupt comes
-	 * along, but we don't want to lose any pending events that
-	 * will be needed by the task that started the I2C transaction
-	 * in the first place. So we save them up and restore them when
-	 * the I2C is either completed or timed out. Refer to the
-	 * implementation of usleep() for a similar situation.
-	 */
-	*event |= (task_wait_event(cdata[controller].timeout_us)
-		  & ~TASK_EVENT_I2C_IDLE);
+
+	/* Wait until I2C interrupt or timeout. */
+	event = task_wait_event_mask(TASK_EVENT_I2C_IDLE,
+				     cdata[controller].timeout_us);
 	cdata[controller].task_waiting = TASK_ID_INVALID;
-	if (*event & TASK_EVENT_TIMER) {
-		/* Restore any events that we saw while waiting */
-		task_set_event(task_get_current(),
-				(*event & ~TASK_EVENT_TIMER), 0);
-		return EC_ERROR_TIMEOUT;
-	}
-	return EC_SUCCESS;
+
+	return (event & TASK_EVENT_TIMER) ? EC_ERROR_TIMEOUT : EC_SUCCESS;
 }
 
 static int wait_idle(int controller)
 {
 	uint8_t sts = MEC1322_I2C_STATUS(controller);
+	uint64_t block_timeout = get_time().val + I2C_WAIT_BLOCKING_TIMEOUT_US;
 	int rv;
-	int event = 0;
 
 	while (!(sts & STS_NBB)) {
-		rv = wait_for_interrupt(controller, &event);
-		if (rv)
-			return rv;
+		if (get_time().val > block_timeout) {
+			rv = wait_for_interrupt(controller);
+			if (rv)
+				return rv;
+		}
 		sts = MEC1322_I2C_STATUS(controller);
 	}
-	/*
-	 * Restore any events that we saw while waiting. TASK_EVENT_TIMER isn't
-	 * one, because we've handled it above.
-	 */
-	task_set_event(task_get_current(), event, 0);
 
 	if (sts & (STS_BER | STS_LAB))
 		return EC_ERROR_UNKNOWN;
@@ -165,20 +161,17 @@ static int wait_idle(int controller)
 static int wait_byte_done(int controller)
 {
 	uint8_t sts = MEC1322_I2C_STATUS(controller);
+	uint64_t block_timeout = get_time().val + I2C_WAIT_BLOCKING_TIMEOUT_US;
 	int rv;
-	int event = 0;
 
 	while (sts & STS_PIN) {
-		rv = wait_for_interrupt(controller, &event);
-		if (rv)
-			return rv;
+		if (get_time().val > block_timeout) {
+			rv = wait_for_interrupt(controller);
+			if (rv)
+				return rv;
+		}
 		sts = MEC1322_I2C_STATUS(controller);
 	}
-	/*
-	 * Restore any events that we saw while waiting. TASK_EVENT_TIMER isn't
-	 * one, because we've handled it above.
-	 */
-	task_set_event(task_get_current(), event, 0);
 
 	return sts & STS_LRB;
 }
