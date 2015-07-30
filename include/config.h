@@ -1616,6 +1616,9 @@
 /* Use this option to enable Try.SRC mode for Dual Role devices */
 #undef CONFIG_USB_PD_TRY_SRC
 
+/* Set the default minimum battery percentage for Try.Src to be enabled */
+#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 1
+
 /* Alternative configuration keeping only the TX part of PHY */
 #undef CONFIG_USB_PD_TX_PHY_ONLY
 

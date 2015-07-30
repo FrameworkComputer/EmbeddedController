@@ -624,8 +624,11 @@ void board_set_charge_limit(int charge_ma)
 
 static void board_update_battery_soc(int soc)
 {
-	batt_soc = soc;
-	board_update_charge_limit(desired_charge_rate_ma);
+	if (batt_soc != soc) {
+		batt_soc = soc;
+		board_update_charge_limit(desired_charge_rate_ma);
+		hook_notify(HOOK_BATTERY_SOC_CHANGE);
+	}
 }
 
 /* Send host event up to AP */

@@ -7,6 +7,7 @@
 #include "board.h"
 #include "case_closed_debug.h"
 #include "charge_manager.h"
+#include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -1167,21 +1168,43 @@ enum pd_dual_role_states pd_get_dual_role(void)
 	return drp_state;
 }
 
+#ifdef CONFIG_USB_PD_TRY_SRC
+static void pd_update_try_source(void)
+{
+	int i;
+
+#ifndef CONFIG_CHARGER
+	int batt_soc = board_get_battery_soc();
+#else
+	int batt_soc = charge_get_percent();
+#endif
+
+	/*
+	 * Enable try source when dual-role toggling AND battery is present
+	 * and at some minimum percentage.
+	 */
+	pd_try_src_enable = drp_state == PD_DRP_TOGGLE_ON &&
+			    batt_soc >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC;
+
+	/*
+	 * Clear this flag to cover case where a TrySrc
+	 * mode went from enabled to disabled and trying_source
+	 * was active at that time.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		pd[i].flags &= ~PD_FLAGS_TRY_SRC;
+
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
+#endif
+
 void pd_set_dual_role(enum pd_dual_role_states state)
 {
 	int i;
 	drp_state = state;
 
 #ifdef CONFIG_USB_PD_TRY_SRC
-	pd_try_src_enable = (state == PD_DRP_TOGGLE_ON) ? 1 : 0;
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		/*
-		 * Clear this flag to cover case where a TrySrc
-		 * mode went from enabled to disabled and trying_source
-		 * was active at that time.
-		 */
-		pd[i].flags &= ~PD_FLAGS_TRY_SRC;
-	}
+	pd_update_try_source();
 #endif
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
@@ -2770,14 +2793,16 @@ static int command_pd(int argc, char **argv)
 	else if (!strncasecmp(argv[1], "trysrc", 6)) {
 		int enable;
 
-		if (argc < 3)
+		if (argc < 2) {
 			return EC_ERROR_PARAM_COUNT;
+		} else if (argc >= 3) {
+			enable = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			pd_try_src_enable = enable ? 1 : 0;
+		}
 
-		enable = strtoi(argv[2], &e, 10);
-		if (*e)
-			return EC_ERROR_PARAM3;
-		pd_try_src_enable = enable ? 1 : 0;
-		ccprintf("Try.SRC %s\n", enable ? "on" : "off");
+		ccprintf("Try.SRC %s\n", pd_try_src_enable ? "on" : "off");
 		return EC_SUCCESS;
 	}
 #endif
