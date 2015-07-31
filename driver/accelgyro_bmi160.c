@@ -98,6 +98,7 @@ static int get_reg_val(const int eng_val, const int round_up,
 		const struct accel_param_pair *pairs, const int size)
 {
 	int i;
+
 	for (i = 0; i < size - 1; i++) {
 		if (eng_val <= pairs[i].val)
 			break;
@@ -118,6 +119,7 @@ static int get_engineering_val(const int reg_val,
 		const struct accel_param_pair *pairs, const int size)
 {
 	int i;
+
 	for (i = 0; i < size; i++) {
 		if (reg_val == pairs[i].reg_val)
 			break;
@@ -126,116 +128,102 @@ static int get_engineering_val(const int reg_val,
 }
 
 #ifdef CONFIG_SPI_ACCEL_PORT
-/**
- * Write 8bit register from accelerometer.
- */
-static inline int raw_write8(const int addr, const uint8_t reg, int data)
-{
-	int rv;
-	uint8_t cmd[2] = { reg, data };
-	rv = spi_transaction(&spi_devices[addr], cmd, 2, NULL, 0);
-	msleep(1);
-	return rv;
-}
-
 static inline int spi_raw_read(const int addr, const uint8_t reg, uint8_t *data,
 			       const int len)
 {
 	uint8_t cmd = 0x80 | reg;
+
 	return spi_transaction(&spi_devices[addr], &cmd, 1, data, len);
 }
-
+#endif
 /**
  * Read 8bit register from accelerometer.
  */
-static inline int raw_read8(const int addr, const uint8_t reg, int *data)
+static int raw_read8(const int addr, const uint8_t reg, int *data_ptr)
 {
-	int rv;
-	uint8_t val;
-	rv = spi_raw_read(addr, reg, &val, 1);
-	if (rv == EC_SUCCESS)
-		*data = val;
+	int rv = -EC_ERROR_PARAM1;
+
+	if (BMI160_IS_SPI(addr)) {
+#ifdef CONFIG_SPI_ACCEL_PORT
+		uint8_t val;
+		rv = spi_raw_read(BMI160_SPI_ADDRESS(addr), reg, &val, 1);
+		if (rv == EC_SUCCESS)
+			*data_ptr = val;
+#endif
+	} else {
+#ifdef I2C_PORT_ACCEL
+		rv = i2c_read8(I2C_PORT_ACCEL, BMI160_I2C_ADDRESS(addr),
+			       reg, data_ptr);
+#endif
+	}
 	return rv;
-}
-
-/**
- * Read 16bit register from accelerometer.
- */
-static inline int raw_read16(const int addr, const uint8_t reg, int *data)
-{
-	int rv;
-	uint16_t val;
-	rv = spi_raw_read(addr, reg, (uint8_t *)&val, 2);
-	if (rv == EC_SUCCESS)
-		*data = val;
-	return rv;
-}
-
-/**
- * Read 32bit register from accelerometer.
- */
-static inline int raw_read32(const int addr, const uint8_t reg, int *data)
-{
-	return spi_raw_read(addr, reg, (uint8_t *)data, 4);
-}
-
-/**
- * Read n bytes from accelerometer.
- */
-static inline int raw_read_n(const int addr, const uint8_t reg,
-		uint8_t *data_ptr, const int len)
-{
-	return spi_raw_read(addr, reg, data_ptr, len);
-}
-#else  /* CONFIG_SPI_ACCEL_PORT */
-/**
- * Read 8bit register from accelerometer.
- */
-static inline int raw_read8(const int addr, const uint8_t reg, int *data_ptr)
-{
-	return i2c_read8(I2C_PORT_ACCEL, addr, reg, data_ptr);
 }
 
 /**
  * Write 8bit register from accelerometer.
  */
-static inline int raw_write8(const int addr, const uint8_t reg, int data)
+static int raw_write8(const int addr, const uint8_t reg, int data)
 {
-	int rv = i2c_write8(I2C_PORT_ACCEL, addr, reg, data);
+	int rv = -EC_ERROR_PARAM1;
+
+	if (BMI160_IS_SPI(addr)) {
+#ifdef CONFIG_SPI_ACCEL_PORT
+		uint8_t cmd[2] = { reg, data };
+		rv = spi_transaction(&spi_devices[BMI160_SPI_ADDRESS(addr)],
+				     cmd, 2, NULL, 0);
+#endif
+	} else {
+#ifdef I2C_PORT_ACCEL
+		rv = i2c_write8(I2C_PORT_ACCEL, BMI160_I2C_ADDRESS(addr),
+				reg, data);
+#endif
+	}
 	msleep(1);
 	return rv;
 }
 
 /**
- * Read 16bit register from accelerometer.
- */
-static inline int raw_read16(const int addr, const uint8_t reg, int *data_ptr)
-{
-	return i2c_read16(I2C_PORT_ACCEL, addr, reg, data_ptr);
-}
-
-/**
  * Read 32bit register from accelerometer.
  */
-static inline int raw_read32(const int addr, const uint8_t reg, int *data_ptr)
+static int raw_read32(const int addr, const uint8_t reg, int *data_ptr)
 {
-	return i2c_read32(I2C_PORT_ACCEL, addr, reg, data_ptr);
+	int rv = -EC_ERROR_PARAM1;
+	if (BMI160_IS_SPI(addr)) {
+#ifdef CONFIG_SPI_ACCEL_PORT
+		rv = spi_raw_read(BMI160_SPI_ADDRESS(addr), reg,
+				  (uint8_t *)data_ptr, 4);
+#endif
+	} else {
+#ifdef I2C_PORT_ACCEL
+		rv = i2c_read32(I2C_PORT_ACCEL, BMI160_I2C_ADDRESS(addr),
+				reg, data_ptr);
+#endif
+	}
+	return rv;
 }
 
 /**
  * Read n bytes from accelerometer.
  */
-static inline int raw_read_n(const int addr, const uint8_t reg,
+static int raw_read_n(const int addr, const uint8_t reg,
 		uint8_t *data_ptr, const int len)
 {
-	int ret;
-	i2c_lock(I2C_PORT_ACCEL, 1);
-	ret = i2c_xfer(I2C_PORT_ACCEL, addr, &reg, 1, data_ptr, len,
-		       I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_ACCEL, 0);
-	return ret;
+	int rv = -EC_ERROR_PARAM1;
+
+	if (BMI160_IS_SPI(addr)) {
+#ifdef CONFIG_SPI_ACCEL_PORT
+		rv = spi_raw_read(BMI160_SPI_ADDRESS(addr), reg, data_ptr, len);
+#endif
+	} else {
+#ifdef I2C_PORT_ACCEL
+		i2c_lock(I2C_PORT_ACCEL, 1);
+		rv = i2c_xfer(I2C_PORT_ACCEL, BMI160_I2C_ADDRESS(addr), &reg, 1,
+				data_ptr, len, I2C_XFER_SINGLE);
+		i2c_lock(I2C_PORT_ACCEL, 0);
+#endif
+	}
+	return rv;
 }
-#endif  /* CONFIG_SPI_ACCEL_PORT */
 
 #ifdef CONFIG_MAG_BMI160_BMM150
 /**

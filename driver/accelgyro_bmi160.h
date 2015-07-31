@@ -11,6 +11,23 @@
 #include "accelgyro.h"
 #include "mag_bmm150.h"
 
+/*
+ * The addr field of motion_sensor support both SPI and I2C:
+ *
+ * +-------------------------------+---+
+ * |    7 bit i2c address          | 0 |
+ * +-------------------------------+---+
+ * Or
+ * +-------------------------------+---+
+ * |    SPI device ID              | 1 |
+ * +-------------------------------+---+
+ */
+#define BMI160_SET_SPI_ADDRESS(_addr) (((_addr) << 1) | 1)
+#define BMI160_IS_SPI(_addr)        ((_addr) & 1)
+#define BMI160_SPI_ADDRESS(_addr)   ((_addr) >> 1)
+#define BMI160_I2C_ADDRESS(_addr)   (_addr)
+
+/* I2C addresses */
 #define BMI160_ADDR0             0xd0
 #define BMI160_ADDR1             0xd2
 
