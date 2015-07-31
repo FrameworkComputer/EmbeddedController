@@ -47,19 +47,6 @@
 /* Dispaly port hardware can connect to port 0, 1 or neither. */
 #define PD_PORT_NONE -1
 
-static void ap_reset_deferred(void)
-{
-	/* Warm reset AP */
-	chipset_reset(0);
-}
-DECLARE_DEFERRED(ap_reset_deferred);
-
-void ap_reset_interrupt(enum gpio_signal signal)
-{
-	if (gpio_get_level(GPIO_AP_RESET_L) == 0)
-		hook_call_deferred(ap_reset_deferred, 0);
-}
-
 void vbus_wake_interrupt(enum gpio_signal signal)
 {
 	CPRINTF("VBUS %d\n", !gpio_get_level(signal));
@@ -216,9 +203,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
 	/* Enable VBUS interrupt */
 	gpio_enable_interrupt(GPIO_VBUS_WAKE_L);
-#ifdef CONFIG_AP_WARM_RESET_INTERRUPT
-	gpio_enable_interrupt(GPIO_AP_RESET_L);
-#endif
 
 	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
@@ -352,8 +336,9 @@ void board_typec_dp_on(int port)
 	if (dp_hw_port != !port) {
 		/* Get control of DP hardware */
 		dp_hw_port = port;
+#ifdef CONFIG_BOARD_OAK_REV_2
 		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
-
+#endif
 		if (!gpio_get_level(GPIO_USB_DP_HPD)) {
 			gpio_set_level(GPIO_USB_DP_HPD, 1);
 		} else {
@@ -396,7 +381,9 @@ void board_typec_dp_set(int port, int level)
 
 	if (dp_hw_port == PD_PORT_NONE) {
 		dp_hw_port = port;
+#ifdef CONFIG_BOARD_OAK_REV_2
 		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
+#endif
 	}
 
 	if (dp_hw_port == port)
