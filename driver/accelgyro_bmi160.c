@@ -487,6 +487,8 @@ static int get_offset(const struct motion_sensor_t *s,
 				BMI160_OFFSET_GYRO_DIV_MDS;
 		}
 		break;
+	case MOTIONSENSE_TYPE_MAG:
+		return bmm150_get_offset(s, offset, temp);
 	default:
 		for (i = X; i <= Z; i++)
 			offset[i] = 0;
@@ -538,6 +540,9 @@ static int set_offset(const struct motion_sensor_t *s,
 		}
 		ret = raw_write8(s->addr, BMI160_OFFSET_EN_GYR98,
 				 val98 | BMI160_OFFSET_GYRO_EN);
+		break;
+	case MOTIONSENSE_TYPE_MAG:
+		ret = bmm150_set_offset(s, offset, temp);
 		break;
 	default:
 		ret = EC_RES_INVALID_PARAM;

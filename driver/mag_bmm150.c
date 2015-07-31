@@ -199,6 +199,7 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 {
 	uint16_t r;
 	vector_3_t raw;
+	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
 
 	/* X and Y are two's complement 13 bits vectors */
 	raw[X] = ((int16_t)(data[0] | (data[1] << 8))) >> 3;
@@ -211,5 +212,30 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 
 	bmm150_temp_compensate_xy(s, raw, v, r);
 	bmm150_temp_compensate_z(s, raw, v, r);
+	v[X] += regs->offset[X];
+	v[Y] += regs->offset[Y];
+	v[Z] += regs->offset[Z];
 }
 
+int bmm150_set_offset(const struct motion_sensor_t *s,
+		      const int16_t *offset,
+		      int16_t    temp)
+{
+	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
+	regs->offset[X] = offset[X];
+	regs->offset[Y] = offset[Y];
+	regs->offset[Z] = offset[Z];
+	return EC_SUCCESS;
+}
+
+int bmm150_get_offset(const struct motion_sensor_t *s,
+		      int16_t   *offset,
+		      int16_t    *temp)
+{
+	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
+	offset[X] = regs->offset[X];
+	offset[Y] = regs->offset[Y];
+	offset[Z] = regs->offset[Z];
+	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
+	return EC_SUCCESS;
+}

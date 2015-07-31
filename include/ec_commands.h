@@ -1853,6 +1853,7 @@ struct ec_params_motion_sense {
 			 * Unit:
 			 * Accelerometer: 1/1024 g
 			 * Gyro:          1/1024 deg/s
+			 * Compass:       1/16 uT
 			 */
 			int16_t offset[3];
 		} __packed sensor_offset;

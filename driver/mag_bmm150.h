@@ -74,6 +74,9 @@ struct bmm150_comp_registers {
 	int8_t       dig_xy2;
 
 	uint16_t     dig_xyz1;
+
+  /* Factory or online calibration */
+	int16_t      offset[3];
 };
 
 #define BMM150_COMP_REG(_s) \
@@ -87,5 +90,12 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 		      vector_3_t v,
 		      uint8_t *data);
 
+int bmm150_set_offset(const struct motion_sensor_t *s,
+		      const int16_t *offset,
+		      int16_t    temp);
+
+int bmm150_get_offset(const struct motion_sensor_t *s,
+		      int16_t   *offset,
+		      int16_t    *temp);
 
 #endif /* __CROS_EC_MAG_BMM150_H */
