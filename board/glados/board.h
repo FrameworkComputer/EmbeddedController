@@ -70,6 +70,8 @@
 #define CONFIG_SPI_FLASH_W25Q64
 
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_BD99992GW
+
 /*
  * Allow dangerous commands.
  * TODO(shawnn): Remove this config before production.
@@ -113,6 +115,9 @@
 #define I2C_PORT_CHARGER MEC1322_I2C3
 #endif
 
+/* Thermal sensors read through PMIC ADC interface */
+#define I2C_PORT_THERMAL I2C_PORT_PMIC
+
 /* Modules we want to exclude */
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
@@ -148,8 +153,13 @@ enum power_signal {
 };
 
 enum temp_sensor_id {
-	/* Battery temperature sensor */
 	TEMP_SENSOR_BATTERY,
+
+	/* These temp sensors are only readable in S0 */
+	TEMP_SENSOR_AMBIENT,
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_DRAM,
+	TEMP_SENSOR_WIFI,
 
 	TEMP_SENSOR_COUNT
 };

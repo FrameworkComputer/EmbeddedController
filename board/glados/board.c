@@ -6,6 +6,7 @@
 /* Glados board-specific configuration */
 
 #include "adc_chip.h"
+#include "bd99992gw.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -192,6 +193,16 @@ void board_reset_pd_mcu(void)
 
 const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
+
+	/* These BD99992GW temp sensors are only readable in S0 */
+	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+		BD99992GW_ADC_CHANNEL_SYSTHERM0, 4},
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+		BD99992GW_ADC_CHANNEL_SYSTHERM1, 4},
+	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+		BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
+	{"Wifi", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+		BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -202,6 +213,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 struct ec_thermal_config thermal_params[] = {
 	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
 	{{0, 0, 0}, 0, 0},	/* Battery */
+	{{0, 0, 0}, 0, 0},	/* Ambient */
+	{{0, 0, 0}, 0, 0},	/* Charger */
+	{{0, 0, 0}, 0, 0},	/* DRAM */
+	{{0, 0, 0}, 0, 0},	/* Wifi */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
