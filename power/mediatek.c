@@ -407,11 +407,14 @@ enum power_state power_chipset_init(void)
 	} else {
 		/* In the SYSJUMP case, we check if the AP is on */
 		if (is_power_good_asserted()) {
-			CPRINTS("SOC ON\n");
+			CPRINTS("SOC ON");
 			init_power_state = POWER_S0;
-			disable_sleep(SLEEP_MASK_AP_RUN);
+			if (is_suspend_asserted())
+				enable_sleep(SLEEP_MASK_AP_RUN);
+			else
+				disable_sleep(SLEEP_MASK_AP_RUN);
 		} else {
-			CPRINTS("SOC OFF\n");
+			CPRINTS("SOC OFF");
 			init_power_state = POWER_G3;
 			enable_sleep(SLEEP_MASK_AP_RUN);
 		}
@@ -710,6 +713,7 @@ enum power_state power_handle_state(enum power_state state)
 		return state;
 
 	case POWER_S3S0:
+		disable_sleep(SLEEP_MASK_AP_RUN);
 #ifdef HAS_TASK_POWERLED
 		powerled_set_state(POWERLED_STATE_ON);
 #endif
@@ -735,6 +739,7 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 		/* Call hooks here since we don't know it prior to AP suspend */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+		enable_sleep(SLEEP_MASK_AP_RUN);
 		return POWER_S3;
 
 	case POWER_S3S5:
