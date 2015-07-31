@@ -265,15 +265,27 @@ static void set_pmic_pwron(int asserted)
 }
 
 /**
- * Set the PMIC WARM RESET signal.
+ * Set the WARM RESET signal.
  *
- * @param asserted	Resetting (=0) or idle (=1)
+ * PMIC_WARM_RESET_H (PB3) is stuffed before rev < 3 and connected to PMIC RESET
+ * After rev >= 3, this is removed. This should not effected the new board.
+ *
+ * AP_RESET_L (PC3, CPU_WARM_RESET_L) is stuffed after rev >= 3
+ * and connected to PMIC SYSRSTB
+ *
+ * @param asserted	off (=0) or on (=1)
  */
-static void set_pmic_warm_reset(int asserted)
+static void set_warm_reset(int asserted)
 {
-	/* Signal is active-high */
-	/* @param asserted: Resetting (=0) or idle (=1) */
-	gpio_set_level(GPIO_PMIC_WARM_RESET_H, asserted);
+	if (system_get_board_version() < 3) {
+		/* Signal is active-high */
+		CPRINTS("pmic warm reset(%d)", asserted);
+		gpio_set_level(GPIO_PMIC_WARM_RESET_H, asserted);
+	} else {
+		/* Signal is active-low */
+		CPRINTS("ap warm reset(%d)", asserted);
+		gpio_set_level(GPIO_AP_RESET_L, !asserted);
+	}
 }
 
 /**
@@ -565,7 +577,7 @@ static void power_on(void)
 		       GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH);
 
 	/* Make sure we de-assert and GPIO_PMIC_WARM_RESET_H pin. */
-	set_pmic_warm_reset(0);
+	set_warm_reset(0);
 
 	/*
 	 * Before we push PMIC power button, wait for the PMI RTC ready, which
@@ -646,10 +658,10 @@ void chipset_reset(int is_cold)
 		set_pmic_pwron(0);
 	} else {
 		CPRINTS("EC triggered warm reboot");
-		set_pmic_warm_reset(1);
+		set_warm_reset(1);
 		usleep(PMIC_WARM_RESET_H_HOLD_TIME);
 		/* deassert the reset signals */
-		set_pmic_warm_reset(0);
+		set_warm_reset(0);
 	}
 }
 
