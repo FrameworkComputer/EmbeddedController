@@ -290,6 +290,7 @@ static inline void set_present(uint8_t *lpc_status)
 	*lpc_status |= EC_MEMMAP_ACC_STATUS_PRESENCE_BIT;
 }
 
+#ifdef CONFIG_LPC
 /* Update/Write LPC data */
 static inline void update_sense_data(uint8_t *lpc_status,
 		uint16_t *lpc_data, int *psample_id)
@@ -318,7 +319,8 @@ static inline void update_sense_data(uint8_t *lpc_status,
 #else
 	lpc_data[0] = LID_ANGLE_UNRELIABLE;
 #endif
-	for (i = 0; i < motion_sensor_count; i++) {
+	/* Assumptions on the list of sensors */
+	for (i = 0; i < MIN(motion_sensor_count, 3); i++) {
 		sensor = &motion_sensors[i];
 		lpc_data[1+3*i] = sensor->xyz[X];
 		lpc_data[2+3*i] = sensor->xyz[Y];
@@ -333,6 +335,7 @@ static inline void update_sense_data(uint8_t *lpc_status,
 			EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	*lpc_status = EC_MEMMAP_ACC_STATUS_PRESENCE_BIT | *psample_id;
 }
+#endif
 
 static int motion_sense_read(struct motion_sensor_t *sensor)
 {
@@ -407,19 +410,21 @@ void motion_sense_task(void)
 {
 	int i, ret, wait_us, fifo_flush_needed = 0;
 	timestamp_t ts_begin_task, ts_end_task;
-	uint8_t *lpc_status;
-	uint16_t *lpc_data;
 	uint32_t event = 0;
-	int sample_id = 0;
 	int rd_cnt;
 	struct motion_sensor_t *sensor;
 #ifdef CONFIG_ACCEL_FIFO
 	timestamp_t ts_last_int;
 #endif
+#ifdef CONFIG_LPC
+	int sample_id = 0;
+	uint8_t *lpc_status;
+	uint16_t *lpc_data;
 
 	lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 	lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
 	set_present(lpc_status);
+#endif
 
 #ifdef CONFIG_ACCEL_FIFO
 	ts_last_int = get_time();
@@ -483,7 +488,9 @@ void motion_sense_task(void)
 			CPRINTF("]\n");
 		}
 #endif
+#ifdef CONFIG_LPC
 		update_sense_data(lpc_status, lpc_data, &sample_id);
+#endif
 
 		ts_end_task = get_time();
 #ifdef CONFIG_ACCEL_FIFO
