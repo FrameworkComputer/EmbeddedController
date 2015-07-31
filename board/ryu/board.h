@@ -107,7 +107,6 @@
 /* USART and USB stream drivers */
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USART1
-#define CONFIG_STREAM_USART3
 #define CONFIG_STREAM_USB
 
 /* USB Configuration */
@@ -120,7 +119,7 @@
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE   0
 #define USB_IFACE_AP_STREAM 1
-#define USB_IFACE_SH_STREAM 2
+#define USB_IFACE_UNUSED    2 /* former SH UART interface */
 #define USB_IFACE_SPI       3
 #define USB_IFACE_COUNT     4
 
@@ -128,7 +127,7 @@
 #define USB_EP_CONTROL   0
 #define USB_EP_CONSOLE   1
 #define USB_EP_AP_STREAM 2
-#define USB_EP_SH_STREAM 3
+#define USB_EP_UNUSED    3 /* former SH UART endpoint */
 #define USB_EP_SPI       4
 #define USB_EP_COUNT     5
 
@@ -209,7 +208,6 @@ enum usb_strings {
 	USB_STR_VERSION,
 	USB_STR_CONSOLE_NAME,
 	USB_STR_AP_STREAM_NAME,
-	USB_STR_SH_STREAM_NAME,
 
 	USB_STR_COUNT
 };

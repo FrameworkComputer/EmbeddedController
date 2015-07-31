@@ -81,7 +81,6 @@ GPIO(USBC_DP_HPD,          PIN(C, 1),  GPIO_ODR_LOW)
 /* Inputs */
 GPIO(BOARD_ID0,            PIN(E, 11),  GPIO_INPUT)
 GPIO(BOARD_ID1,            PIN(E, 12),  GPIO_INPUT)
-GPIO(SH_SIGNAL,            PIN(E, 2),   GPIO_INPUT)
 
 /* Lightbar reset */
 GPIO(LB_RST_L,             PIN(D, 15),  GPIO_ODR_HIGH | GPIO_PULL_UP)
@@ -112,8 +111,6 @@ GPIO(PD_DISABLE_DEBUG,     PIN(C, 6),  GPIO_OUT_LOW)
 GPIO(SPI_FLASH_NSS,        PIN(B, 9),  GPIO_INPUT)
 GPIO(VDDSPI_EN_0,          PIN(C, 15), GPIO_OUT_LOW) /* on rev v0+ */
 GPIO(VDDSPI_EN_OLD,        PIN(C, 12), GPIO_OUT_LOW) /* on rev v6/7/8 */
-GPIO(SH_RESET,             PIN(C, 4),  GPIO_ODR_HIGH)
-GPIO(SH_BOOT,              PIN(C, 9),  GPIO_ODR_HIGH)
 GPIO(EC_INT_L,             PIN(F, 2),  GPIO_ODR_HIGH)
 GPIO(ENTERING_RW,          PIN(E, 9),  GPIO_OUT_LOW)
 GPIO(WP_L,                 PIN(F, 6),  GPIO_INPUT)

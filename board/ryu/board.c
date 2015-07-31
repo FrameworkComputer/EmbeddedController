@@ -104,20 +104,17 @@ const void *const usb_strings[] = {
 	[USB_STR_VERSION]        = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_CONSOLE_NAME]   = USB_STRING_DESC("EC_PD"),
 	[USB_STR_AP_STREAM_NAME] = USB_STRING_DESC("AP"),
-	[USB_STR_SH_STREAM_NAME] = USB_STRING_DESC("SH"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /*
- * Define AP and SH console forwarding queues and associated USART and USB
+ * Define AP console forwarding queue and associated USART and USB
  * stream endpoints.
  */
 static struct usart_config const ap_usart;
-static struct usart_config const sh_usart;
 
 struct usb_stream_config const ap_usb;
-struct usb_stream_config const sh_usb;
 
 static struct queue const ap_usart_to_usb = QUEUE_DIRECT(64, uint8_t,
 							 ap_usart.producer,
@@ -125,12 +122,6 @@ static struct queue const ap_usart_to_usb = QUEUE_DIRECT(64, uint8_t,
 static struct queue const ap_usb_to_usart = QUEUE_DIRECT(64, uint8_t,
 							 ap_usb.producer,
 							 ap_usart.consumer);
-static struct queue const sh_usart_to_usb = QUEUE_DIRECT(64, uint8_t,
-							 sh_usart.producer,
-							 sh_usb.consumer);
-static struct queue const sh_usb_to_usart = QUEUE_DIRECT(64, uint8_t,
-							 sh_usb.producer,
-							 sh_usart.consumer);
 
 static struct usart_tx_dma const ap_usart_tx_dma =
 	USART_TX_DMA(STM32_DMAC_USART1_TX, 16);
@@ -143,13 +134,6 @@ static struct usart_config const ap_usart =
 		     ap_usart_to_usb,
 		     ap_usb_to_usart);
 
-static struct usart_config const sh_usart = USART_CONFIG(usart3_hw,
-							 usart_rx_interrupt,
-							 usart_tx_interrupt,
-							 115200,
-							 sh_usart_to_usb,
-							 sh_usb_to_usart);
-
 #define AP_USB_STREAM_RX_SIZE	16
 #define AP_USB_STREAM_TX_SIZE	16
 
@@ -161,18 +145,6 @@ USB_STREAM_CONFIG(ap_usb,
 		  AP_USB_STREAM_TX_SIZE,
 		  ap_usb_to_usart,
 		  ap_usart_to_usb)
-
-#define SH_USB_STREAM_RX_SIZE	16
-#define SH_USB_STREAM_TX_SIZE	16
-
-USB_STREAM_CONFIG(sh_usb,
-		  USB_IFACE_SH_STREAM,
-		  USB_STR_SH_STREAM_NAME,
-		  USB_EP_SH_STREAM,
-		  SH_USB_STREAM_RX_SIZE,
-		  SH_USB_STREAM_TX_SIZE,
-		  sh_usb_to_usart,
-		  sh_usart_to_usb)
 
 struct pi3usb9281_config pi3usb9281_chips[] = {
 	{
@@ -214,14 +186,11 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USBC_BC12_INT_L);
 
 	/*
-	 * Initialize AP and SH console forwarding USARTs and queues.
+	 * Initialize AP console forwarding USART and queues.
 	 */
 	queue_init(&ap_usart_to_usb);
 	queue_init(&ap_usb_to_usart);
-	queue_init(&sh_usart_to_usb);
-	queue_init(&sh_usb_to_usart);
 	usart_init(&ap_usart);
-	usart_init(&sh_usart);
 
 	/*
 	 * Enable CC lines after all GPIO have been initialized. Note, it is
