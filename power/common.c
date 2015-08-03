@@ -131,6 +131,15 @@ void power_set_state(enum power_state new_state)
 		last_shutdown_time = get_time().val;
 
 	state = new_state;
+
+	/*
+	 * Reset want_g3_exit flag here to prevent the situation that if the
+	 * error handler in POWER_S5S3 decides to force shutdown the system and
+	 * the flag is set, the system will go to G3 and then immediately exit
+	 * G3 again.
+	 */
+	if (state == POWER_S5S3)
+		want_g3_exit = 0;
 }
 
 /**
@@ -188,12 +197,23 @@ static enum power_state power_common_state(enum power_state state)
 		break;
 
 	case POWER_S5:
+		/*
+		 * If the power button is pressed before S5 inactivity timer
+		 * expires, the timer will be cancelled and the task of the
+		 * power state machine will be back here again. Since we are
+		 * here, which means the system has been waiting for CPU
+		 * starting up, we don't need want_g3_exit flag to be set
+		 * anymore. Therefore, we can reset the flag here to prevent
+		 * the situation that the flag is still set after S5 inactivity
+		 * timer expires, which can cause the system to exit G3 again.
+		 */
+		want_g3_exit = 0;
+
 		/* Wait for inactivity timeout */
 		power_wait_signals(0);
 		if (task_wait_event(S5_INACTIVITY_TIMEOUT) ==
 		    TASK_EVENT_TIMER) {
-			/* Drop to G3; wake not requested yet */
-			want_g3_exit = 0;
+			/* Prepare to drop to G3; wake not requested yet */
 			return POWER_S5G3;
 		}
 		break;
@@ -267,14 +287,31 @@ int chipset_in_state(int state_mask)
 
 void chipset_exit_hard_off(void)
 {
-	/* If not in the hard-off state nor headed there, nothing to do */
-	if (state != POWER_G3 && state != POWER_S5G3)
+	/*
+	 * If not in the soft-off state, hard-off state, or headed there,
+	 * nothing to do.
+	 */
+	if (state != POWER_G3 && state != POWER_S5G3 && state != POWER_S5)
 		return;
 
-	/* Set a flag to leave G3, then wake the task */
+	/*
+	 * Set a flag to leave G3, then wake the task. If the power state is
+	 * POWER_S5G3, or is POWER_S5 but the S5 inactivity timer has
+	 * expired, set this flag can let system go to G3 and then exit G3
+	 * immediately for powering on.
+	 */
 	want_g3_exit = 1;
 
-	task_wake(TASK_ID_CHIPSET);
+	/*
+	 * If the power state is in POWER_S5 and S5 inactivity timer is
+	 * running, to wake the chipset task can cancel S5 inactivity timer and
+	 * then restart the timer. This will give cpu a chance to start up if
+	 * S5 inactivity timer is about to expire while power button is
+	 * pressed. For other states here, to wake the chipset task to trigger
+	 * the event for leaving G3 is necessary.
+	 */
+	if (task_start_called())
+		task_wake(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
