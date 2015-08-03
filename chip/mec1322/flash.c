@@ -12,8 +12,20 @@
 #include "spi_flash.h"
 #include "system.h"
 #include "util.h"
+#include "hooks.h"
 
 #define PAGE_SIZE 256
+
+#define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
+#define FLASH_HOOK_VERSION 1
+
+static int entire_flash_locked;
+
+/* The previous write protect state before sys jump */
+
+struct flash_wp_state {
+	int entire_flash_locked;
+};
 
 /**
  * Read from physical flash.
@@ -55,6 +67,9 @@ int flash_physical_write(int offset, int size, const char *data)
 {
 	int ret, i, write_size;
 
+	if (entire_flash_locked)
+		return EC_ERROR_ACCESS_DENIED;
+
 	offset += CONFIG_FLASH_BASE_SPI;
 
 	/* Fail if offset, size, and data aren't at least word-aligned */
@@ -84,6 +99,9 @@ int flash_physical_erase(int offset, int size)
 {
 	int ret;
 
+	if (entire_flash_locked)
+		return EC_ERROR_ACCESS_DENIED;
+
 	offset += CONFIG_FLASH_BASE_SPI;
 	ret = spi_flash_erase(offset, size);
 	return ret;
@@ -105,23 +123,23 @@ int flash_physical_get_protect(int bank)
 /**
  * Protect flash now.
  *
- * @param all      Protect all (=1) or just read-only and pstate (=0).
+ * This is always successful, and only emulates "now" protection
+ *
+ * @param all      Protect all (=1) or just read-only
  * @return         non-zero if error.
  */
 int flash_physical_protect_now(int all)
 {
-	int offset, size, ret;
+	if (all)
+		entire_flash_locked = 1;
 
-	if (all) {
-		offset = CONFIG_FLASH_BASE_SPI;
-		size = CONFIG_FLASH_PHYSICAL_SIZE;
-	} else {
-		offset = CONFIG_WP_OFF + CONFIG_FLASH_BASE_SPI;
-		size = CONFIG_WP_SIZE;
-	}
-
-	ret = spi_flash_set_protect(offset, size);
-	return ret;
+	/*
+	 * RO "now" protection is not currently implemented. If needed, it
+	 * can be added by splitting the entire_flash_locked variable into
+	 * and RO and RW vars, and setting + checking the appropriate var
+	 * as required.
+	 */
+	return EC_SUCCESS;
 }
 
 /**
@@ -138,11 +156,11 @@ uint32_t flash_physical_get_protect_flags(void)
 	if (spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
 				    CONFIG_RO_STORAGE_OFF, CONFIG_RO_SIZE)) {
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
-		if (spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
-					    CONFIG_RW_STORAGE_OFF,
-					    CONFIG_RW_SIZE))
-			flags |= EC_FLASH_PROTECT_ALL_NOW;
 	}
+
+	if (entire_flash_locked)
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+
 	return flags;
 }
 
@@ -173,18 +191,22 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 
 	if (wp_status == SPI_WP_NONE || (wp_status == SPI_WP_HARDWARE &&
 	   !(cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED)))
-		ret = EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
-		      EC_FLASH_PROTECT_ALL_NOW;
+		ret = EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
+
+	if (!entire_flash_locked)
+		ret |= EC_FLASH_PROTECT_ALL_NOW;
+
 	return ret;
 }
 
 /**
  * Enable write protect for the specified range.
  *
- * Once write protect is enabled, it will STAY enabled until the system is
- * hard-rebooted with the hardware write protect pin deasserted.  If the write
- * protect pin is deasserted, the protect setting is ignored, and the entire
- * flash will be writable.
+ * Once write protect is enabled, it will stay enabled until HW PIN is
+ * de-asserted and SRP register is unset.
+ *
+ * However, this implementation treats FLASH_WP_ALL as FLASH_WP_RO but
+ * tries to remember if "all" region is protected.
  *
  * @param range         The range to protect.
  * @return              EC_SUCCESS, or nonzero if error.
@@ -199,14 +221,12 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 		offset = size = 0;
 		flashwp = SPI_WP_NONE;
 		break;
+	case FLASH_WP_ALL:
+		entire_flash_locked = 1;
+		/* Fallthrough */
 	case FLASH_WP_RO:
 		offset = CONFIG_FLASH_BASE_SPI + CONFIG_WP_OFF;
 		size = CONFIG_WP_SIZE;
-		flashwp = SPI_WP_HARDWARE;
-		break;
-	case FLASH_WP_ALL:
-		offset = CONFIG_FLASH_BASE_SPI;
-		size = CONFIG_FLASH_PHYSICAL_SIZE;
 		flashwp = SPI_WP_HARDWARE;
 		break;
 	}
@@ -224,5 +244,42 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
  */
 int flash_pre_init(void)
 {
+	flash_physical_restore_state();
 	return EC_SUCCESS;
 }
+
+int flash_physical_restore_state(void)
+{
+	uint32_t reset_flags = system_get_reset_flags();
+	int version, size;
+	const struct flash_wp_state *prev;
+
+	/*
+	 * If we have already jumped between images, an earlier image could
+	 * have applied write protection. Nothing additional needs to be done.
+	 */
+	if (reset_flags & RESET_FLAG_SYSJUMP) {
+		prev = (const struct flash_wp_state *)system_get_jump_tag(
+				FLASH_SYSJUMP_TAG, &version, &size);
+		if (prev && version == FLASH_HOOK_VERSION &&
+		    size == sizeof(*prev))
+			entire_flash_locked = prev->entire_flash_locked;
+		return 1;
+	}
+
+	return 0;
+}
+
+/*****************************************************************************/
+/* Hooks */
+
+static void flash_preserve_state(void)
+{
+	struct flash_wp_state state;
+
+	state.entire_flash_locked = entire_flash_locked;
+
+	system_add_jump_tag(FLASH_SYSJUMP_TAG, FLASH_HOOK_VERSION,
+			    sizeof(state), &state);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);
