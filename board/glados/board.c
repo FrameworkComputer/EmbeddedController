@@ -176,11 +176,6 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	}
 };
 
-void board_set_usb_switches(int port, enum usb_switch setting)
-{
-	/* TODO: Set open / close USB switches based on param */
-}
-
 /**
  * Reset PD MCU
  */

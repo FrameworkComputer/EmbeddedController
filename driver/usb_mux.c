@@ -37,8 +37,10 @@ void usb_mux_set(int port, enum typec_mux mux_mode,
 	int res;
 	mux_state_t mux_state;
 
+#ifdef CONFIG_USB_CHARGER
 	/* Configure USB2.0 */
-	board_set_usb_switches(port, usb_mode);
+	usb_charger_set_switches(port, usb_mode);
+#endif
 
 	/* Configure superspeed lanes */
 	mux_state = polarity ? mux_mode | MUX_POLARITY_INVERTED : mux_mode;

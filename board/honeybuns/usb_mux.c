@@ -10,11 +10,6 @@
 #include "usb_mux.h"
 #include "util.h"
 
-void board_set_usb_switches(int port, enum usb_switch setting)
-{
-	/* Not implemented */
-}
-
 static int board_init_usb_mux(int port)
 {
 	return EC_SUCCESS;

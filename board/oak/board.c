@@ -161,13 +161,6 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 };
 
 /**
- * Store the state of our USB data switches so that they can be restored
- * after pericom reset.
- */
-static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
-static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
-
-/**
  * Store the current DP hardware route.
  */
 static int dp_hw_port = PD_PORT_NONE;
@@ -299,25 +292,6 @@ void board_set_charge_limit(int charge_ma)
 {
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT));
-}
-
-/**
- * Set type-C port USB2.0 switch state.
- *
- * @param port       the type-C port to change
- * @param setting    enum usb_switch
- */
-void board_set_usb_switches(int port, enum usb_switch setting)
-{
-	/* If switch is not charging, then return */
-	if (setting == usb_switch_state[port])
-		return;
-
-	mutex_lock(&usb_switch_lock[port]);
-	if (setting != USB_SWITCH_RESTORE)
-		usb_switch_state[port] = setting;
-	pi3usb9281_set_switches(port, usb_switch_state[port]);
-	mutex_unlock(&usb_switch_lock[port]);
 }
 
 static void hpd_irq_deferred(void)

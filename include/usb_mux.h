@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_USB_MUX_H
 #define __CROS_EC_USB_MUX_H
 
+#include "usb_charge.h"
 #include "usb_pd.h"
 
 /* USB-C mux state */

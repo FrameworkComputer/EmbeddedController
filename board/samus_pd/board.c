@@ -62,13 +62,6 @@ static struct ec_response_host_event_status host_event_status __aligned(4);
 /* Desired input current limit */
 static int desired_charge_rate_ma = -1;
 
-/*
- * Store the state of our USB data switches so that they can be restored
- * after pericom reset.
- */
-static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
-static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
-
 /* PWM channels. Must be in the exact same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	{STM32_TIM(15), STM32_TIM_CH(2), 0, GPIO_ILIM_ADJ_PWM, GPIO_ALT_F1},
@@ -390,19 +383,6 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_SLAVE_I2C_SCL, GPIO_SLAVE_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-void board_set_usb_switches(int port, enum usb_switch setting)
-{
-	/* If switch is not changing then return */
-	if (setting == usb_switch_state[port])
-		return;
-
-	mutex_lock(&usb_switch_lock[port]);
-	if (setting != USB_SWITCH_RESTORE)
-		usb_switch_state[port] = setting;
-	pi3usb9281_set_switches(port, usb_switch_state[port]);
-	mutex_unlock(&usb_switch_lock[port]);
-}
 
 int board_get_battery_soc(void)
 {

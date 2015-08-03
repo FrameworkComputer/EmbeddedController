@@ -27,6 +27,13 @@
  */
 #define USB_CHG_RESET_DELAY_MS 100
 
+/*
+ * Store the state of our USB data switches so that they can be restored
+ * after pericom reset.
+ */
+static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
+static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
+
 int usb_charger_port_is_sourcing_vbus(int port)
 {
 	if (port == 0)
@@ -37,6 +44,19 @@ int usb_charger_port_is_sourcing_vbus(int port)
 #endif
 	/* Not a valid port */
 	return 0;
+}
+
+void usb_charger_set_switches(int port, enum usb_switch setting)
+{
+	/* If switch is not changing then return */
+	if (setting == usb_switch_state[port])
+		return;
+
+	mutex_lock(&usb_switch_lock[port]);
+	if (setting != USB_SWITCH_RESTORE)
+		usb_switch_state[port] = setting;
+	pi3usb9281_set_switches(port, usb_switch_state[port]);
+	mutex_unlock(&usb_switch_lock[port]);
 }
 
 void usb_charger_task(void)
@@ -89,7 +109,7 @@ void usb_charger_task(void)
 			 * Restore data switch settings - switches return to
 			 * closed on reset until restored.
 			 */
-			board_set_usb_switches(port, USB_SWITCH_RESTORE);
+			usb_charger_set_switches(port, USB_SWITCH_RESTORE);
 			/* Clear possible disconnect interrupt */
 			pi3usb9281_get_interrupts(port);
 			/* Mask attach interrupt */

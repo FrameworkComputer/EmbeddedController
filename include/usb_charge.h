@@ -55,4 +55,19 @@ int usb_charge_ports_enabled(void);
  */
 int usb_charger_port_is_sourcing_vbus(int port);
 
+enum usb_switch {
+	USB_SWITCH_CONNECT,
+	USB_SWITCH_DISCONNECT,
+	USB_SWITCH_RESTORE,
+};
+
+/**
+ * Configure USB data switches on type-C port.
+ *
+ * @param port port number.
+ * @param setting new switch setting to configure.
+ */
+void usb_charger_set_switches(int port, enum usb_switch setting);
+
+
 #endif  /* __CROS_EC_USB_CHARGE_H */

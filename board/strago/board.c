@@ -198,11 +198,6 @@ const struct button_config buttons[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
 
-void board_set_usb_switches(int port, enum usb_switch setting)
-{
-	/* TODO: Set open / close USB switches based on param */
-}
-
 /**
  * Reset PD MCU
  */

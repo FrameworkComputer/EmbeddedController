@@ -58,12 +58,6 @@ static int charge_current_limit;
  */
 static struct ec_response_host_event_status host_event_status __aligned(4);
 
-/*
- * Store the state of our USB data switches so that they can be restored
- * after pericom reset.
- */
-static int usb_switch_state;
-
 static void vbus_log(void)
 {
 	CPRINTS("VBUS %d", gpio_get_level(GPIO_CHGR_ACOK));
@@ -372,17 +366,6 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-void board_set_usb_switches(int port, enum usb_switch setting)
-{
-	/* If switch is not changing, then return */
-	if (setting == usb_switch_state)
-		return;
-
-	if (setting != USB_SWITCH_RESTORE)
-		usb_switch_state = setting;
-	pi3usb9281_set_switches(port, usb_switch_state);
-}
 
 int extpower_is_present(void)
 {
