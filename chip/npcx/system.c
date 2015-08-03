@@ -541,7 +541,7 @@ const char *system_get_chip_name(void)
 
 const char *system_get_chip_revision(void)
 {
-	static char rev[4];
+	static char rev[5];
 	/* Read ROM data for chip revision directly */
 	uint8_t rev_num = *((uint8_t *)CHIP_REV_ADDR);
 
@@ -549,6 +549,7 @@ const char *system_get_chip_revision(void)
 	*(rev + 1) = '.';
 	*(rev + 2) = system_to_hex((rev_num & 0xF0) >> 4);
 	*(rev + 3) = system_to_hex(rev_num & 0x0F);
+	*(rev + 4) = '\0';
 
 	return rev;
 }
