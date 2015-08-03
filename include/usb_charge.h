@@ -47,6 +47,10 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode);
  */
 int usb_charge_ports_enabled(void);
 
+/* Events handled by the USB_CHG task */
+#define USB_CHG_EVENT_BC12 TASK_EVENT_CUSTOM(1)
+#define USB_CHG_EVENT_VBUS TASK_EVENT_CUSTOM(2)
+
 /**
  * Returns true if the passed port is a power source.
  *
@@ -69,5 +73,12 @@ enum usb_switch {
  */
 void usb_charger_set_switches(int port, enum usb_switch setting);
 
+/**
+ * Notify USB_CHG task that VBUS level has changed.
+ *
+ * @param port port number.
+ * @param vbus_level new VBUS level
+ */
+void usb_charger_vbus_change(int port, int vbus_level);
 
 #endif  /* __CROS_EC_USB_CHARGE_H */

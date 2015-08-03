@@ -58,34 +58,15 @@ static int charge_current_limit;
  */
 static struct ec_response_host_event_status host_event_status __aligned(4);
 
-static void vbus_log(void)
-{
-	CPRINTS("VBUS %d", gpio_get_level(GPIO_CHGR_ACOK));
-}
-DECLARE_DEFERRED(vbus_log);
-
 void vbus_evt(enum gpio_signal signal)
 {
-	struct charge_port_info charge;
-	int vbus_level = gpio_get_level(signal);
-
-	/*
-	 * If VBUS is low, or VBUS is high and we are not outputting VBUS
-	 * ourselves, then update the VBUS supplier.
-	 */
-	if (!vbus_level || !gpio_get_level(GPIO_CHGR_OTG)) {
-		charge.voltage = USB_CHARGER_VOLTAGE_MV;
-		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0, &charge);
-	}
-
-	hook_call_deferred(vbus_log, 0);
+	usb_charger_vbus_change(0, gpio_get_level(signal));
 	task_wake(TASK_ID_PD);
 }
 
 void usb_evt(enum gpio_signal signal)
 {
-	task_wake(TASK_ID_USB_CHG_P0);
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
 }
 
 #include "gpio_list.h"
@@ -152,28 +133,6 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 static void board_init(void)
 {
 	int i;
-	struct charge_port_info charge_none, charge_vbus;
-
-	/* Initialize all pericom charge suppliers to 0 */
-	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_none.current = 0;
-	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-				     0,
-				     &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP, 0, &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP, 0, &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP, 0, &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, 0, &charge_none);
-
-	/* Initialize VBUS supplier based on whether or not VBUS is present */
-	charge_vbus.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_vbus.current = USB_CHARGER_MIN_CURR_MA;
-	if (gpio_get_level(GPIO_CHGR_ACOK))
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
-					     &charge_vbus);
-	else
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, 0,
-					     &charge_none);
 
 	/* Enable pericom BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USBC_BC12_INT_L);
