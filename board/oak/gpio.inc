@@ -104,9 +104,9 @@ GPIO(PMIC_PWRON_H,      PIN(A, 12), GPIO_OUT_LOW)
 GPIO(PMIC_WARM_RESET_H, PIN(B, 3),  GPIO_OUT_LOW)
 GPIO(LEVEL_SHIFT_EN_L,  PIN(D, 3),  GPIO_OUT_LOW)    /* LID/AC level shift */
 GPIO(USB_PD_RST_L,      PIN(A, 15), GPIO_OUT_HIGH)   /* PD reset */
-GPIO(USB_C0_5V_OUT,     PIN(D, 8),  GPIO_OUT_LOW)    /* USBC port 0 5V */
+GPIO(USB_C0_5V_EN,      PIN(D, 8),  GPIO_OUT_LOW)    /* USBC port 0 5V */
 GPIO(USB_C0_CHARGE_L,   PIN(D, 9),  GPIO_OUT_LOW)    /* USBC port 0 charge */
-GPIO(USB_C1_5V_OUT,     PIN(D, 10), GPIO_OUT_LOW)    /* USBC port 1 5V */
+GPIO(USB_C1_5V_EN,      PIN(D, 10), GPIO_OUT_LOW)    /* USBC port 1 5V */
 GPIO(USB_C1_CHARGE_L,   PIN(D, 11), GPIO_OUT_LOW)    /* USBC port 1 charge */
 GPIO(USB_PD_VBUS_WAKE,  PIN(B, 15), GPIO_OUT_LOW)    /* PD VBUS wake */
 GPIO(USB_DP_HPD,        PIN(F, 3),  GPIO_OUT_LOW)

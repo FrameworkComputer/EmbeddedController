@@ -187,54 +187,12 @@ void i2c_set_timeout(int port, uint32_t timeout)
 /* Initialize board. */
 static void board_init(void)
 {
-	int i, bc12_status;
-	struct charge_port_info charge_none, charge_vbus;
-	struct charge_port_info *charge_sel;
-
 	/* Enable rev1 testing GPIOs */
 	gpio_set_level(GPIO_SYSTEM_POWER_H, 1);
 	/* Enable PD MCU interrupt */
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
 	/* Enable VBUS interrupt */
 	gpio_enable_interrupt(GPIO_VBUS_WAKE_L);
-
-	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_none.current = 0;
-	charge_vbus.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_vbus.current = USB_CHARGER_MIN_CURR_MA;
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		/* Initialize all pericom charge suppliers to 0 */
-		charge_manager_update_charge(
-				CHARGE_SUPPLIER_PROPRIETARY,
-				i,
-				&charge_none);
-		charge_manager_update_charge(
-				CHARGE_SUPPLIER_BC12_CDP,
-				i,
-				&charge_none);
-		charge_manager_update_charge(
-				CHARGE_SUPPLIER_BC12_DCP,
-				i,
-				&charge_none);
-		charge_manager_update_charge(
-				CHARGE_SUPPLIER_BC12_SDP,
-				i,
-				&charge_none);
-		charge_manager_update_charge(
-				CHARGE_SUPPLIER_OTHER,
-				i,
-				&charge_none);
-
-		/* Initialize VBUS supplier based on VBUS */
-		/* TODO(crbug.com/498974): Don't do i2c from hook_init. */
-		bc12_status = pi3usb9281_get_charger_status(i);
-		charge_sel = PI3USB9281_CHG_STATUS_ANY(bc12_status) ?
-				&charge_vbus : &charge_none;
-		charge_manager_update_charge(
-				CHARGE_SUPPLIER_VBUS,
-				i,
-				charge_sel);
-	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -252,8 +210,8 @@ int board_set_active_charge_port(int charge_port)
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
 	/* check if we are source VBUS on the port */
-	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_OUT :
-						       GPIO_USB_C1_5V_OUT);
+	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
+						       GPIO_USB_C1_5V_EN);
 
 	if (is_real_port && source) {
 		CPRINTF("Skip enable p%d", charge_port);

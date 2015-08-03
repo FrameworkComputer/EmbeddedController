@@ -78,8 +78,8 @@ int pd_set_power_supply_ready(int port)
 	gpio_set_level(port ? GPIO_USB_C1_CHARGE_L :
 			      GPIO_USB_C0_CHARGE_L, 1);
 	/* Provide VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_OUT :
-			      GPIO_USB_C0_5V_OUT, 1);
+	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
+			      GPIO_USB_C0_5V_EN, 1);
 
 	return EC_SUCCESS; /* we are ready */
 }
@@ -87,8 +87,8 @@ int pd_set_power_supply_ready(int port)
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_OUT :
-			      GPIO_USB_C0_5V_OUT, 0);
+	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
+			      GPIO_USB_C0_5V_EN, 0);
 
 	/*
 	 * TODO: Currently we can only detect VBUS when charge_l is
