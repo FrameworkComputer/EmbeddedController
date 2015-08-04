@@ -1002,8 +1002,12 @@ int tcpc_set_msg_header(int port, int power_role, int data_role)
 
 int tcpc_get_message(int port, uint32_t *payload, int *head)
 {
-	memcpy(payload, pd[port].rx_payload, sizeof(pd[port].rx_payload));
-	*head = pd[port].rx_head[pd[port].rx_buf_tail];
+	/* Get message at tail of RX buffer */
+	int idx = pd[port].rx_buf_tail;
+
+	memcpy(payload, pd[port].rx_payload[idx],
+	       sizeof(pd[port].rx_payload[idx]));
+	*head = pd[port].rx_head[idx];
 	return EC_SUCCESS;
 }
 
