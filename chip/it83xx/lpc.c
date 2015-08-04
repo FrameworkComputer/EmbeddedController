@@ -528,8 +528,8 @@ static void lpc_init(void)
 
 	IT83XX_GPIO_GCR = 0x06;
 
-	/* The register pair to access PNPCFG is 002Eh and 002Fh */
-	IT83XX_GCTRL_BADRSEL = 0x00;
+	/* The register pair to access PNPCFG is 004Eh and 004Fh */
+	IT83XX_GCTRL_BADRSEL = 0x01;
 
 	/* Disable KBC IRQ */
 	IT83XX_KBC_KBIRQR = 0x00;
