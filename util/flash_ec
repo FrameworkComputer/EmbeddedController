@@ -60,6 +60,7 @@ BOARDS_STM32=(
 	kitty
 	kunimitsu_pd
 	llama
+	lucid
 	minimuffin
 	oak
 	oak_pd
