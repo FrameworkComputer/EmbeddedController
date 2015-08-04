@@ -459,5 +459,8 @@ int raw_mag_read8(const int port, const int addr, const uint8_t reg,
 int raw_mag_write8(const int port, const int addr, const uint8_t reg, int data);
 #endif
 
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
+extern struct i2c_stress_test_dev bmi160_i2c_stress_test_dev;
+#endif
 
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */

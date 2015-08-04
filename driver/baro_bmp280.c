@@ -68,7 +68,7 @@
 
 static const uint16_t standby_durn[] = {1, 63, 125, 250, 500, 1000, 2000, 4000};
 
-static inline int raw_read8(const int port, const int addr, const uint8_t reg,
+static inline int raw_read8(const int port, const int addr, const int reg,
 					 int *data_ptr)
 {
 	return i2c_read8(port, addr, reg, data_ptr);
@@ -92,7 +92,7 @@ static inline int raw_read_n(const int port, const int addr, const uint8_t reg,
 /*
  * Write 8bit register from accelerometer.
  */
-static inline int raw_write8(const int port, const int addr, const uint8_t reg,
+static inline int raw_write8(const int port, const int addr, const int reg,
 		int data)
 {
 	return i2c_write8(port, addr, reg, data);
@@ -405,3 +405,15 @@ const struct accelgyro_drv bmp280_drv = {
 	.set_data_rate = bmp280_set_data_rate,
 	.get_data_rate = bmp280_get_data_rate,
 };
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
+struct i2c_stress_test_dev bmp280_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = BMP280_CHIP_ID_REG,
+		.read_val = BMP280_CHIP_ID,
+		.write_reg = BMP280_CONFIG_REG,
+	},
+	.i2c_read = &raw_read8,
+	.i2c_write = &raw_write8,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_ACCEL */

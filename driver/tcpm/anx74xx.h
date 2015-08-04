@@ -13,6 +13,10 @@
 #define ANX74XX_REG_IRQ_POL_LOW		0x00
 #define ANX74XX_REG_IRQ_POL_HIGH		0x02
 
+#define ANX74XX_REG_VENDOR_ID_L         0x00
+#define ANX74XX_REG_VENDOR_ID_H         0x01
+#define ANX74XX_VENDOR_ID               0xAAAA
+
 /* ANX F/W version：0x50:0x44 which contains otp firmware version */
 #define ANX74XX_REG_FW_VERSION          0x44
 
@@ -161,5 +165,9 @@ void anx74xx_tcpc_set_vbus(int port, int enable);
 void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 void anx74xx_tcpc_clear_hpd_status(int port);
 int anx74xx_tcpc_get_fw_version(int port, int *version);
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
+extern struct i2c_stress_test_dev anx74xx_i2c_stress_test_dev;
+#endif
 
 #endif /* __CROS_EC_USB_PD_TCPM_ANX74XX_H */

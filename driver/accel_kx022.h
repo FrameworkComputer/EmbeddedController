@@ -14,6 +14,7 @@
  */
 #define KX022_ADDR0		0x3c
 #define KX022_ADDR1		0x3e
+#define KX022_WHO_AM_I_VAL	0x14
 
 /* Chip-specific registers */
 #define KX022_XHP_L		0x00

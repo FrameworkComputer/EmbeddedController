@@ -1231,3 +1231,25 @@ DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
 			"amonbmon [a|b]",
 			"Get charger AMON/BMON voltage diff, current");
 #endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_CHARGER
+static int bd9995x_i2c_read(const int reg, int *data)
+{
+	return ch_raw_read16(reg, data, BD9995X_EXTENDED_COMMAND);
+}
+
+static int bd9995x_i2c_write(const int reg, int data)
+{
+	return ch_raw_write16(reg, data, BD9995X_EXTENDED_COMMAND);
+}
+
+struct i2c_stress_test_dev bd9995x_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = BD9995X_CMD_CHIP_ID,
+		.read_val = BD9995X_CHIP_ID,
+		.write_reg = BD9995X_CMD_ITRICH_SET,
+	},
+	.i2c_read_dev = &bd9995x_i2c_read,
+	.i2c_write_dev = &bd9995x_i2c_write,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_CHARGER */

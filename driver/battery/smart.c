@@ -475,3 +475,36 @@ DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_BLOCK,
 		     host_command_sb_write_block,
 		     EC_VER_MASK(0));
 #endif
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_BATTERY
+test_mockable int sb_i2c_test_read(int cmd, int *param)
+{
+	char chemistry[sizeof(CONFIG_BATTERY_DEVICE_CHEMISTRY) + 1];
+	int rv;
+
+	if (cmd == SB_DEVICE_CHEMISTRY) {
+		rv = battery_device_chemistry(chemistry,
+			sizeof(CONFIG_BATTERY_DEVICE_CHEMISTRY));
+		if (rv)
+			return rv;
+		if (strcasecmp(chemistry, CONFIG_BATTERY_DEVICE_CHEMISTRY))
+			return EC_ERROR_UNKNOWN;
+
+		*param = EC_SUCCESS;
+		return EC_SUCCESS;
+	}
+
+
+	return sb_read(cmd, param);
+}
+
+struct i2c_stress_test_dev battery_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = SB_DEVICE_CHEMISTRY,
+		.read_val = EC_SUCCESS,
+		.write_reg = SB_AT_RATE,
+	},
+	.i2c_read_dev = &sb_i2c_test_read,
+	.i2c_write_dev = &sb_write,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_BATTERY */

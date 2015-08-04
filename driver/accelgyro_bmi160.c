@@ -139,7 +139,7 @@ static inline int spi_raw_read(const int addr, const uint8_t reg,
 /**
  * Read 8bit register from accelerometer.
  */
-static int raw_read8(const int port, const int addr, const uint8_t reg,
+static int raw_read8(const int port, const int addr, const int reg,
 					 int *data_ptr)
 {
 	int rv = -EC_ERROR_PARAM1;
@@ -163,7 +163,7 @@ static int raw_read8(const int port, const int addr, const uint8_t reg,
 /**
  * Write 8bit register from accelerometer.
  */
-static int raw_write8(const int port, const int addr, const uint8_t reg,
+static int raw_write8(const int port, const int addr, const int reg,
 					  int data)
 {
 	int rv = -EC_ERROR_PARAM1;
@@ -1248,3 +1248,15 @@ const struct accelgyro_drv bmi160_drv = {
 struct bmi160_drv_data_t g_bmi160_data = {
 	.flags = 0,
 };
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
+struct i2c_stress_test_dev bmi160_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = BMI160_CHIP_ID,
+		.read_val = BMI160_CHIP_ID_MAJOR,
+		.write_reg = BMI160_PMU_TRIGGER,
+	},
+	.i2c_read = &raw_read8,
+	.i2c_write = &raw_write8,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_ACCEL */

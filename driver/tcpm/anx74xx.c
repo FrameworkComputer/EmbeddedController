@@ -882,3 +882,15 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 	.tcpc_discharge_vbus	= &anx74xx_tcpc_discharge_vbus,
 #endif
 };
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
+struct i2c_stress_test_dev anx74xx_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = ANX74XX_REG_VENDOR_ID_L,
+		.read_val = ANX74XX_VENDOR_ID & 0xFF,
+		.write_reg = ANX74XX_REG_CC_SOFTWARE_CTRL,
+	},
+	.i2c_read = &tcpc_i2c_read,
+	.i2c_write = &tcpc_i2c_write,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */

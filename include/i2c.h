@@ -40,6 +40,42 @@ struct i2c_port_t {
 extern const struct i2c_port_t i2c_ports[];
 extern const unsigned int i2c_ports_used;
 
+#ifdef CONFIG_CMD_I2C_STRESS_TEST
+struct i2c_test_reg_info {
+	int read_reg;      /* Read register (WHO_AM_I, DEV_ID, MAN_ID) */
+	int read_val;      /* Expected val (WHO_AM_I, DEV_ID, MAN_ID) */
+	int write_reg;     /* Read/Write reg which doesn't impact the system */
+};
+
+struct i2c_test_results {
+	int read_success;  /* Successful read count */
+	int read_fail;     /* Read fail count */
+	int write_success; /* Successful write count */
+	int write_fail;    /* Write fail count */
+};
+
+/* Data structure to define I2C test configuration. */
+struct i2c_stress_test_dev {
+	struct i2c_test_reg_info reg_info;
+	struct i2c_test_results test_results;
+	int (*i2c_read)(const int port, const int addr,
+				  const int reg, int *data);
+	int (*i2c_write)(const int port, const int addr,
+				   const int reg, int data);
+	int (*i2c_read_dev)(const int reg, int *data);
+	int (*i2c_write_dev)(const int reg, int data);
+};
+
+struct i2c_stress_test {
+	int port;
+	int addr;
+	struct i2c_stress_test_dev *i2c_test;
+};
+
+extern struct i2c_stress_test i2c_stress_tests[];
+extern const int i2c_test_dev_used;
+#endif
+
 /* Flags for i2c_xfer() */
 #define I2C_XFER_START (1 << 0)  /* Start smbus session from idle state */
 #define I2C_XFER_STOP (1 << 1)  /* Terminate smbus session with stop bit */

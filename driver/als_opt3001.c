@@ -87,3 +87,15 @@ int opt3001_read_lux(int *lux, int af)
 
 	return EC_SUCCESS;
 }
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ALS
+struct i2c_stress_test_dev opt3001_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = OPT3001_REG_DEV_ID,
+		.read_val = OPT3001_DEVICE_ID,
+		.write_reg = OPT3001_REG_INT_LIMIT_LSB,
+	},
+	.i2c_read_dev = &opt3001_i2c_read,
+	.i2c_write_dev = &opt3001_i2c_write,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_ALS */

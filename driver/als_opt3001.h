@@ -29,4 +29,8 @@
 int opt3001_init(void);
 int opt3001_read_lux(int *lux, int af);
 
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ALS
+extern struct i2c_stress_test_dev opt3001_i2c_stress_test_dev;
+#endif
+
 #endif	/* __CROS_EC_ALS_OPT3001_H */

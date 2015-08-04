@@ -205,4 +205,9 @@ struct bmp280_drv_data_t {
 
 extern const struct accelgyro_drv bmp280_drv;
 extern struct bmp280_drv_data_t bmp280_drv_data;
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
+extern struct i2c_stress_test_dev bmp280_i2c_stress_test_dev;
+#endif
+
 #endif

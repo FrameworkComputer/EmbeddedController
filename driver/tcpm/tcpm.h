@@ -130,6 +130,20 @@ static inline void tcpc_discharge_vbus(int port, int enable)
 	tcpc_config[port].drv->tcpc_discharge_vbus(port, enable);
 }
 
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
+static inline int tcpc_i2c_read(const int port, const int addr,
+				const int reg, int *data)
+{
+	return tcpc_read(port, reg, data);
+}
+
+static inline int tcpc_i2c_write(const int port, const int addr,
+				 const int reg, int data)
+{
+	return tcpc_write(port, reg, data);
+}
+#endif
+
 #else
 
 /**

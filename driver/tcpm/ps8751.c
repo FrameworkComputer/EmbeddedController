@@ -67,3 +67,15 @@ int ps8751_tcpc_get_fw_version(int port, int *version)
 	return tcpc_read(port, PS8751_REG_VERSION, version);
 }
 #endif
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
+struct i2c_stress_test_dev ps8751_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = PS8751_REG_VENDOR_ID_L,
+		.read_val = PS8751_VENDOR_ID & 0xFF,
+		.write_reg = PS8751_REG_CTRL_1,
+	},
+	.i2c_read = &tcpc_i2c_read,
+	.i2c_write = &tcpc_i2c_write,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */

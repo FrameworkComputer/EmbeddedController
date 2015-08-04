@@ -333,4 +333,8 @@ void print_battery_debug(void);
  */
 enum battery_disconnect_state battery_get_disconnect_state(void);
 
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_BATTERY
+extern struct i2c_stress_test_dev battery_i2c_stress_test_dev;
+#endif
+
 #endif /* __CROS_EC_BATTERY_H */

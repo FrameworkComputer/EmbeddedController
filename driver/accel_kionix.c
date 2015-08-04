@@ -529,3 +529,15 @@ const struct accelgyro_drv kionix_accel_drv = {
 	.set_offset = set_offset,
 	.get_offset = get_offset,
 };
+
+#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
+struct i2c_stress_test_dev kionix_i2c_stress_test_dev = {
+	.reg_info = {
+		.read_reg = KX022_WHOAMI,
+		.read_val = KIONIX_WHO_AM_I_VAL,
+		.write_reg = KIONIX_ODR_REG(V(s)),
+	},
+	.i2c_read = &raw_read8,
+	.i2c_write = &raw_write8,
+};
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_ACCEL */

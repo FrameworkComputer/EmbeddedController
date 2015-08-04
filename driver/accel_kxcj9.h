@@ -16,6 +16,7 @@
  */
 #define KXCJ9_ADDR0		0x1c
 #define KXCJ9_ADDR1		0x1e
+#define KXCJ9_WHO_AM_I_VAL	0x0A
 
 /* Chip-specific registers */
 #define KXCJ9_XOUT_L		0x06
