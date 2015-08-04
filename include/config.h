@@ -988,9 +988,6 @@
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 
-/* Use SSPI Chip Enable 1. */
-#undef CONFIG_IT83XX_SPI_USE_CS1
-
 /*****************************************************************************/
 /* Keyboard config */
 

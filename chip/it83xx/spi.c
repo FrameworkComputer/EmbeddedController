@@ -30,6 +30,11 @@ enum sspi_clk_sel {
 	sspi_clk_3mhz,
 };
 
+enum sspi_ch_sel {
+	SSPI_CH_CS0 = 0,
+	SSPI_CH_CS1,
+};
+
 static void sspi_frequency(enum sspi_clk_sel freq)
 {
 	/* SSPI clock frequency select 48MHz (clk_sspi) */
@@ -83,14 +88,18 @@ int spi_enable(int port, int enable)
 		 * 01b: SSCK/SMOSI/SMISO/SSCE0# are enabled.
 		 * 11b: SSCK/SMOSI/SMISO/SSCE1#/SSCE0# are enabled.
 		 */
-#ifdef CONFIG_IT83XX_SPI_USE_CS1
-		IT83XX_GPIO_GRC1 |= 0x20;
-#else
-		IT83XX_GPIO_GRC1 |= 0x10;
-#endif
+		if (port == SSPI_CH_CS1)
+			IT83XX_GPIO_GRC1 |= 0x20;
+		else
+			IT83XX_GPIO_GRC1 |= 0x10;
+
 		gpio_config_module(MODULE_SPI, 1);
 	} else {
-		IT83XX_GPIO_GRC1 &= ~0x30;
+		if (port == SSPI_CH_CS1)
+			IT83XX_GPIO_GRC1 &= ~0x20;
+		else
+			IT83XX_GPIO_GRC1 &= ~0x10;
+
 		gpio_config_module(MODULE_SPI, 0);
 	}
 
@@ -102,30 +111,29 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		uint8_t *rxdata, int rxlen)
 {
 	int idx;
+	uint8_t port = spi_device->port;
 
 	/* bit[0]: Write cycle */
 	IT83XX_SSPI_SPICTRL2 &= ~0x04;
 	for (idx = 0x00; idx < txlen; idx++) {
 		IT83XX_SSPI_SPIDATA = txdata[idx];
-#ifdef CONFIG_IT83XX_SPI_USE_CS1
-		/* Write 1 to start the data transmission of CS1 */
-		IT83XX_SSPI_SPISTS |= 0x08;
-#else
-		/* Write 1 to start the data transmission of CS0 */
-		IT83XX_SSPI_SPISTS |= 0x10;
-#endif
+		if (port == SSPI_CH_CS1)
+			/* Write 1 to start the data transmission of CS1 */
+			IT83XX_SSPI_SPISTS |= 0x08;
+		else
+			/* Write 1 to start the data transmission of CS0 */
+			IT83XX_SSPI_SPISTS |= 0x10;
 	}
 
 	/* bit[1]: Read cycle */
 	IT83XX_SSPI_SPICTRL2 |= 0x04;
 	for (idx = 0x00; idx < rxlen; idx++) {
-#ifdef CONFIG_IT83XX_SPI_USE_CS1
-		/* Write 1 to start the data transmission of CS1 */
-		IT83XX_SSPI_SPISTS |= 0x08;
-#else
-		/* Write 1 to start the data transmission of CS0 */
-		IT83XX_SSPI_SPISTS |= 0x10;
-#endif
+		if (port == SSPI_CH_CS1)
+			/* Write 1 to start the data transmission of CS1 */
+			IT83XX_SSPI_SPISTS |= 0x08;
+		else
+			/* Write 1 to start the data transmission of CS0 */
+			IT83XX_SSPI_SPISTS |= 0x10;
 		rxdata[idx] = IT83XX_SSPI_SPIDATA;
 	}
 
@@ -136,6 +144,8 @@ int spi_transaction(const struct spi_device_t *spi_device,
 
 static void sspi_init(void)
 {
+	int i;
+
 	sspi_frequency(sspi_clk_8mhz);
 
 	/*
@@ -153,7 +163,8 @@ static void sspi_init(void)
 	 */
 	IT83XX_SSPI_SPICTRL2 |= 0x02;
 
-	/* Disabling spi module */
-	spi_enable(NULL, 0);
+	for (i = 0; i < spi_devices_used; i++)
+		/* Disabling spi module */
+		spi_enable(spi_devices[i].port, 0);
 }
 DECLARE_HOOK(HOOK_INIT, sspi_init, HOOK_PRIO_DEFAULT);

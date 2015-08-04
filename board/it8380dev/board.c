@@ -21,6 +21,7 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
+#include "spi.h"
 #include "switch.h"
 #include "task.h"
 #include "timer.h"
@@ -197,6 +198,12 @@ const struct i2c_port_t i2c_ports[] = {
 	{"evb-2",   1, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_FLASH_PORT, 0, -1},
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /*****************************************************************************/
 /* Console commands */
