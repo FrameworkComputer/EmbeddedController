@@ -65,7 +65,7 @@
 /*
  * The time to bootup the PMIC from power-off to power-on.
  */
-#define PMIC_PWRON_PRESS_TIME   (3000 * MSEC)
+#define PMIC_PWRON_PRESS_TIME   (5000 * MSEC)
 
 /*
  * The minimum time to assert the PMIC THERM pin is 32us. However,
