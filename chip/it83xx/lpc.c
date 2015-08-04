@@ -280,8 +280,10 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 
 	udelay(16);
 
+	task_clear_pending_irq(IT83XX_IRQ_KBC_OUT);
 	/* The data output to the KBC Data Output Register. */
 	IT83XX_KBC_KBHIKDOR = chr;
+	task_enable_irq(IT83XX_IRQ_KBC_OUT);
 }
 
 void lpc_keyboard_clear_buffer(void)
@@ -379,6 +381,10 @@ void lpc_kbc_ibf_interrupt(void)
 	}
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_IN);
+
+#ifdef HAS_TASK_KEYPROTO
+	task_wake(TASK_ID_KEYPROTO);
+#endif
 }
 
 void lpc_kbc_obe_interrupt(void)
@@ -392,6 +398,10 @@ void lpc_kbc_obe_interrupt(void)
 
 		IT83XX_KBC_KBHICR |= 0x01;
 	}
+
+#ifdef HAS_TASK_KEYPROTO
+	task_wake(TASK_ID_KEYPROTO);
+#endif
 }
 
 void pm1_ibf_interrupt(void)
