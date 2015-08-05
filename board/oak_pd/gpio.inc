@@ -6,8 +6,8 @@
  */
 
 /* Interrupts */
-GPIO_INT(USB_C0_VBUS_WAKE_L,     PIN(C, 14),  GPIO_INT_BOTH,    vbus0_evt)
-GPIO_INT(USB_C1_VBUS_WAKE_L,     PIN(C, 15),  GPIO_INT_BOTH,    vbus1_evt)
+GPIO_INT(USB_C0_VBUS_WAKE_L,     PIN(C, 14),  GPIO_INT_BOTH,    pd_vbus_evt_p0)
+GPIO_INT(USB_C1_VBUS_WAKE_L,     PIN(C, 15),  GPIO_INT_BOTH,    pd_vbus_evt_p1)
 
 /* PD RX/TX */
 GPIO(USB_C0_CC1_PD,          PIN(A, 2),  GPIO_ANALOG)

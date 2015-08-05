@@ -16,6 +16,7 @@
 #include "system.h"
 #include "task.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpc.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -28,16 +29,6 @@ void pd_send_ec_int(void)
 	/* If any sources are active, then drive the line low */
 	gpio_set_level(GPIO_EC_INT, !ec_int_status);
 
-}
-
-void vbus0_evt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_PD_C0);
-}
-
-void vbus1_evt(enum gpio_signal signal)
-{
-	task_wake(TASK_ID_PD_C1);
 }
 
 void board_config_pre_init(void)

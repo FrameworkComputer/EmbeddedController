@@ -48,23 +48,6 @@
 /* Dispaly port hardware can connect to port 0, 1 or neither. */
 #define PD_PORT_NONE -1
 
-void vbus_wake_interrupt(enum gpio_signal signal)
-{
-	CPRINTF("VBUS %d\n", !gpio_get_level(signal));
-	gpio_set_level(GPIO_USB_PD_VBUS_WAKE,
-		       !gpio_get_level(GPIO_VBUS_WAKE_L));
-	/*
-	 * TODO(crosbug.com/p/41226):
-	 *   rev1/rev2 boards don't have vbus input on ec. vbus_wake is a
-	 *   logical OR of two vbus status. to workaround the power status
-	 *   issue, wake up both pd tasks on vbus_wake interrupt. a proper
-	 *   hardware fix will be in rev3.
-	 *   enable TCPC POWER_STATUS ALERT1 can solve this issue too.
-	 */
-	task_wake(TASK_ID_PD_C0);
-	task_wake(TASK_ID_PD_C1);
-}
-
 void pd_mcu_interrupt(enum gpio_signal signal)
 {
 #ifdef HAS_TASK_PDCMD
@@ -191,8 +174,6 @@ static void board_init(void)
 	gpio_set_level(GPIO_SYSTEM_POWER_H, 1);
 	/* Enable PD MCU interrupt */
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
-	/* Enable VBUS interrupt */
-	gpio_enable_interrupt(GPIO_VBUS_WAKE_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
