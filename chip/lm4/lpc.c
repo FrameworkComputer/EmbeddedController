@@ -492,7 +492,10 @@ static void handle_acpi_write(int is_cmd)
 static void handle_host_write(int is_cmd)
 {
 	/* Ignore data writes or overlapping commands from host */
-	if (!is_cmd || (LM4_LPC_ST(LPC_CH_CMD) & LM4_LPC_ST_BUSY)) {
+	uint32_t is_overlapping = LM4_LPC_ST(LPC_CH_CMD) & LM4_LPC_ST_BUSY;
+	if (!is_cmd || is_overlapping) {
+		if (is_overlapping)
+			CPRINTS("LPC Ignoring overlapping HC");
 		LM4_LPC_ST(LPC_CH_CMD) &= ~LM4_LPC_ST_FRMH;
 		return;
 	}
