@@ -267,25 +267,11 @@ static void set_pmic_pwron(int asserted)
 /**
  * Set the WARM RESET signal.
  *
- * PMIC_WARM_RESET_H (PB3) is stuffed before rev < 3 and connected to PMIC RESET
- * After rev >= 3, this is removed. This should not effected the new board.
- *
- * AP_RESET_L (PC3, CPU_WARM_RESET_L) is stuffed after rev >= 3
- * and connected to PMIC SYSRSTB
- *
  * @param asserted	off (=0) or on (=1)
  */
 static void set_warm_reset(int asserted)
 {
-	if (system_get_board_version() < 3) {
-		/* Signal is active-high */
-		CPRINTS("pmic warm reset(%d)", asserted);
-		gpio_set_level(GPIO_PMIC_WARM_RESET_H, asserted);
-	} else {
-		/* Signal is active-low */
-		CPRINTS("ap warm reset(%d)", asserted);
-		gpio_set_level(GPIO_AP_RESET_L, !asserted);
-	}
+	board_set_ap_reset(asserted);
 }
 
 /**

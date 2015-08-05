@@ -93,6 +93,9 @@ enum pwm_channel {
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10 /* mOhm */
 #define CONFIG_CHARGER_INPUT_CURRENT 2150 /* mA */
 
+/* Set AP reset pin according to parameter */
+void board_set_ap_reset(int asserted);
+
 #endif				/* !__ASSEMBLER__ */
 
 #endif				/* __CROS_EC_BOARD_H */

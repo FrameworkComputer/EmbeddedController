@@ -178,6 +178,8 @@ enum temp_sensor_id {
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
+/* Set AP reset pin according to parameter */
+void board_set_ap_reset(int asserted);
 
 /* Control type-C DP route and hotplug detect signal */
 void board_typec_dp_on(int port);

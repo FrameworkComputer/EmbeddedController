@@ -27,6 +27,7 @@
 #include "registers.h"
 #include "spi.h"
 #include "switch.h"
+#include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
@@ -385,3 +386,23 @@ static void check_ap_reset_second(void)
 }
 DECLARE_HOOK(HOOK_SECOND, check_ap_reset_second, HOOK_PRIO_DEFAULT);
 #endif
+
+/**
+ * Set AP reset.
+ *
+ * PMIC_WARM_RESET_H (PB3) is connected to PMIC RESET before rev < 3.
+ * AP_RESET_L (PC3, CPU_WARM_RESET_L) is connected to PMIC SYSRSTB
+ * after rev >= 3.
+ */
+void board_set_ap_reset(int asserted)
+{
+	if (system_get_board_version() < 3) {
+		/* Signal is active-high */
+		CPRINTS("pmic warm reset(%d)", asserted);
+		gpio_set_level(GPIO_PMIC_WARM_RESET_H, asserted);
+	} else {
+		/* Signal is active-low */
+		CPRINTS("ap warm reset(%d)", asserted);
+		gpio_set_level(GPIO_AP_RESET_L, !asserted);
+	}
+}

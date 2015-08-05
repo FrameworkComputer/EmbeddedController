@@ -78,3 +78,8 @@ void board_config_pre_init(void)
 	 */
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10); /* Remap USART1 RX/TX DMA */
 }
+
+void board_set_ap_reset(int asserted)
+{
+	gpio_set_level(GPIO_AP_RESET_H, asserted);
+}
