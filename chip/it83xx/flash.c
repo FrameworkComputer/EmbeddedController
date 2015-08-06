@@ -245,17 +245,18 @@ int FLASH_DMA_CODE dma_flash_verify(int addr, int size, const char *data)
 {
 	int i;
 	uint8_t *wbuf = (uint8_t *)data;
+	uint8_t *flash = (uint8_t *)addr;
 
 	/* verify for erase */
 	if (data == NULL) {
 		for (i = 0; i < size; i++) {
-			if (dma_flash_indirect_fast_read(addr + i) != 0xFF)
+			if (flash[i] != 0xFF)
 				return EC_ERROR_UNKNOWN;
 		}
 	/* verify for write */
 	} else {
 		for (i = 0; i < size; i++) {
-			if (dma_flash_indirect_fast_read(addr + i) != wbuf[i])
+			if (flash[i] != wbuf[i])
 				return EC_ERROR_UNKNOWN;
 		}
 	}
