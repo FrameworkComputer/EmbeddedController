@@ -115,6 +115,14 @@ int bmm150_init(const struct motion_sensor_t *s)
 	BMI150_READ_16BIT_COM_REG(regs->dig_z4, BMM150_REGA_DIG_Z4_LSB);
 	BMI150_READ_16BIT_COM_REG(regs->dig_xyz1, BMM150_REGA_DIG_XYZ1_LSB);
 
+
+	/* Set the repetition in "Regular Preset" */
+	raw_mag_write8(s->addr, BMM150_REPXY, 1 + 2 * BMM150_REP(REGULAR, XY));
+	raw_mag_write8(s->addr, BMM150_REPZ, 1 + BMM150_REP(REGULAR, Z));
+	ret = raw_mag_read8(s->addr, BMM150_REPXY, &val);
+	CPRINTS("repxy: 0x%02x", val);
+	ret = raw_mag_read8(s->addr, BMM150_REPZ, &val);
+	CPRINTS("repz: 0x%02x", val);
 	/*
 	 * Set the compass forced mode, to sleep after each measure.
 	 */

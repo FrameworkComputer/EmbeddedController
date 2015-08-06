@@ -400,9 +400,10 @@ static int set_data_rate(const struct motion_sensor_t *s,
 		}
 		break;
 	case MOTIONSENSE_TYPE_MAG:
-		if (reg_val > BMI160_ODR_800HZ) {
-			reg_val = BMI160_ODR_800HZ;
-			normalized_rate = 800000;
+		/* We use the regular preset we can go about 100Hz */
+		if (reg_val > BMI160_ODR_100HZ) {
+			reg_val = BMI160_ODR_100HZ;
+			normalized_rate = 100000;
 		} else if (reg_val < BMI160_ODR_0_78HZ) {
 			reg_val = BMI160_ODR_0_78HZ;
 			normalized_rate = 780;

@@ -34,8 +34,20 @@
 
 #define BMM150_INT_CTRL          0x4d
 
-/* Hidden registers for RHALL calculation */
+#define BMM150_REPXY             0x51
+#define BMM150_LOW_POWER_nXY         3
+#define BMM150_REGULAR_nXY           9
+#define BMM150_ENHANCED_nXY         15
+#define BMM150_HIGH_ACCURACY_nXY    47
+#define BMM150_REPZ              0x52
+#define BMM150_LOW_POWER_nZ          3
+#define BMM150_REGULAR_nZ           15
+#define BMM150_ENHANCED_nZ          27
+#define BMM150_HIGH_ACCURACY_nZ     83
 
+#define BMM150_REP(_preset, _axis) CONCAT4(BMM150_, _preset, _n, _axis)
+
+/* Hidden registers for RHALL calculation */
 #define BMM150_REGA_DIG_X1       0x5d
 #define BMM150_REGA_DIG_Y1       0x5e
 #define BMM150_REGA_DIG_Z4_LSB   0x62

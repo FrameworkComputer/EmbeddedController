@@ -172,6 +172,8 @@ enum fifo_header {
 /* odr = 100 / (1 << (8 - reg)) ,within limit */
 #define BMI160_ODR_0_78HZ      0x01
 #define BMI160_ODR_25HZ	       0x06
+#define BMI160_ODR_50HZ        0x07
+#define BMI160_ODR_100HZ       0x08
 #define BMI160_ODR_800HZ       0x0b
 #define BMI160_ODR_1600HZ      0x0c
 #define BMI160_ODR_3200HZ      0x0d
