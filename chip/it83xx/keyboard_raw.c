@@ -50,7 +50,6 @@ void keyboard_raw_init(void)
 	task_clear_pending_irq(IT83XX_IRQ_KB_MATRIX);
 #endif
 
-	keyboard_raw_enable_interrupt(1);
 }
 
 /*
