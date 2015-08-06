@@ -17,6 +17,7 @@
 #include "util.h"
 #include "system.h"
 #include "system_chip.h"
+#include "lpc_chip.h"
 
 /* Marco functions for GPIO WUI/ALT table */
 #define NPCX_GPIO(grp, pin) \
@@ -683,10 +684,18 @@ void _irq_func(void)				\
 	gpio_interrupt(int_no);			\
 }
 
+/* If we need to handle the other type interrupts except GPIO, add code here */
+void __gpio_wk0efgh_interrupt(void)
+{
+	if (IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5),7))
+		lpc_lreset_pltrst_handler();
+	else
+		gpio_interrupt(NPCX_IRQ_WKINTEFGH_0);
+}
+
 GPIO_IRQ_FUNC(__gpio_wk0ad_interrupt  , NPCX_IRQ_MTC_WKINTAD_0);
 GPIO_IRQ_FUNC(__gpio_wk0b_interrupt   , NPCX_IRQ_TWD_WKINTB_0);
 GPIO_IRQ_FUNC(__gpio_wk0c_interrupt   , NPCX_IRQ_WKINTC_0);
-GPIO_IRQ_FUNC(__gpio_wk0efgh_interrupt, NPCX_IRQ_WKINTEFGH_0);
 GPIO_IRQ_FUNC(__gpio_wk1a_interrupt   , NPCX_IRQ_WKINTA_1);
 GPIO_IRQ_FUNC(__gpio_wk1b_interrupt   , NPCX_IRQ_WKINTB_1);
 GPIO_IRQ_FUNC(__gpio_wk1d_interrupt   , NPCX_IRQ_WKINTD_1);

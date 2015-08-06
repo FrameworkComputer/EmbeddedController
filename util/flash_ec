@@ -429,6 +429,9 @@ function flash_npcx() {
 		OCD_CMDS="init; flash_npcx_all ${IMG_PATH} ${FLAGS_offset}; shutdown;"
 	fi
 
+	# Reset the EC
+	ec_reset
+
 	flash_openocd
 }
 

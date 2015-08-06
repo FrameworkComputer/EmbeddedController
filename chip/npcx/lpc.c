@@ -45,7 +45,6 @@
 #define INDEX_CHPREV    0x24
 #define INDEX_SRID      0x27
 
-static uint8_t  plt_rst_l;              /* Platform reset assert status */
 static uint32_t host_events;            /* Currently pending SCI/SMI events */
 static uint32_t event_mask[3];          /* Event masks for each type */
 static struct	host_packet lpc_packet;
@@ -418,6 +417,8 @@ static void handle_acpi_write(int is_cmd)
  */
 static void handle_host_write(int is_cmd)
 {
+	/* Set processing flag before reading command byte */
+	SET_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
 	/*
 	 * Read the command byte.  This clears the FRMH bit in
 	 * the status byte.
@@ -443,8 +444,7 @@ static void handle_host_write(int is_cmd)
 		lpc_packet.response_size = 0;
 
 		lpc_packet.driver_result = EC_RES_SUCCESS;
-		/* Set processing flag */
-		SET_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
+
 		host_packet_receive(&lpc_packet);
 		return;
 
@@ -452,6 +452,9 @@ static void handle_host_write(int is_cmd)
 		/* Version 2 (link) style command */
 		int size = lpc_host_args->data_size;
 		int csum, i;
+
+		/* Clear processing flag */
+		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
 
 		host_cmd_args.version = lpc_host_args->command_version;
 		host_cmd_args.params = params_copy;
@@ -489,6 +492,8 @@ static void handle_host_write(int is_cmd)
 	} else {
 		/* Old style command, now unsupported */
 		host_cmd_args.result = EC_RES_INVALID_COMMAND;
+		/* Clear processing flag */
+		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
 	}
 
 	/* Hand off to host command handler */
@@ -718,25 +723,33 @@ void lpc_host_register_init(void)
 	lpc_sib_write_reg(SIO_OFFSET, 0xF8, 0x00);
 	/* enable SHM */
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
+
+	/* An active LRESET or PLTRST does not generate host domain reset */
+	SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_LRESET_PLTRST_MODE);
+
 	CPRINTS("Host settings are done!");
 
 }
 
-int lpc_get_pltrst_asserted(void)
+/* Initialize host settings by interrupt */
+void lpc_lreset_pltrst_handler(void)
 {
-	uint8_t cur_plt_rst_l;
-	/* Read current PLTRST status */
-	cur_plt_rst_l = (NPCX_MSWCTL1 & 0x04) ? 1 : 0;
+	/* Clear pending bit of WUI */
+	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 7);
 
 	/*
-	 * If plt_rst is deasserted for the first time
-	 * Initialize all lpc settings
+	 * Once LRESET is de-asserted (low -> high),
+	 * we need to intialize lpc settings again.
+	 * But if RSTCTL_LRESET_PLTRST_MODE is active, we needn't to do it again
 	 */
-	if (cur_plt_rst_l == 0 && plt_rst_l == 1)
+	if(!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_LRESET_PLTRST_MODE))
 		lpc_host_register_init();
+}
 
-	plt_rst_l = cur_plt_rst_l;
-	return plt_rst_l;
+int lpc_get_pltrst_asserted(void)
+{
+	/* Read current PLTRST status */
+	return (NPCX_MSWCTL1 & 0x04) ? 1 : 0;
 }
 
 static void lpc_init(void)
@@ -848,6 +861,15 @@ static void lpc_init(void)
 #ifdef BOARD_NPCX_EVB
 	/* initial IO port address via SIB-write modules */
 	lpc_host_register_init();
+#else
+	/* Initialize LRESET# interrupt */
+	/* Set detection mode to edge */
+	CLEAR_BIT(NPCX_WKMOD(MIWU_TABLE_0, MIWU_GROUP_5), 7);
+	/* Handle interrupting on rising edge */
+	CLEAR_BIT(NPCX_WKAEDG(MIWU_TABLE_0, MIWU_GROUP_5), 7);
+	SET_BIT(NPCX_WKEDG(MIWU_TABLE_0, MIWU_GROUP_5), 7);
+	/* Enable wake-up input sources */
+	SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 7);
 #endif
 }
 /*
