@@ -411,8 +411,12 @@ void motion_sense_task(void)
 	int i, ret, wait_us, fifo_flush_needed = 0;
 	timestamp_t ts_begin_task, ts_end_task;
 	uint32_t event = 0;
-	int rd_cnt;
+	uint16_t ready_status;
 	struct motion_sensor_t *sensor;
+#ifdef CONFIG_LID_ANGLE
+	const uint16_t lid_angle_sensors = ((1 << CONFIG_LID_ANGLE_SENSOR_BASE)|
+					    (1 << CONFIG_LID_ANGLE_SENSOR_LID));
+#endif
 #ifdef CONFIG_ACCEL_FIFO
 	timestamp_t ts_last_int;
 #endif
@@ -431,7 +435,7 @@ void motion_sense_task(void)
 #endif
 	do {
 		ts_begin_task = get_time();
-		rd_cnt = 0;
+		ready_status = 0;
 		for (i = 0; i < motion_sensor_count; ++i) {
 
 			sensor = &motion_sensors[i];
@@ -450,7 +454,7 @@ void motion_sense_task(void)
 						&fifo_flush_needed);
 				if (ret != EC_SUCCESS)
 					continue;
-				rd_cnt++;
+				ready_status |= (1 << i);
 				mutex_lock(&g_sensor_mutex);
 				memcpy(sensor->xyz, sensor->raw_xyz,
 					sizeof(sensor->xyz));
@@ -464,12 +468,11 @@ void motion_sense_task(void)
 #endif
 #ifdef CONFIG_LID_ANGLE
 		/*
-		 * TODO (crosbug.com/p/36132): Checking for ALL sensors on is
-		 * overkill.  It should just check for ACCEL in BASE and ACCEL
-		 * in LID, since those are the only ones needed for the lid
-		 * calculation.
+		 * Check to see that the sensors required for lid angle
+		 * calculation are ready.
 		 */
-		if (rd_cnt == motion_sensor_count)
+		ready_status &= lid_angle_sensors;
+		if (ready_status == lid_angle_sensors)
 			motion_lid_calc();
 #endif
 #ifdef CONFIG_CMD_ACCEL_INFO
