@@ -48,6 +48,7 @@ static const struct dma_option dma_rx_option = {
  */
 #define SPI_CMD_RX_TIMEOUT_US 8192
 
+#ifdef CONFIG_SPI_PROTOCOL_V2
 /*
  * Offset of output parameters needs to account for pad and framing bytes and
  * one last past-end byte at the end so any additional bytes clocked out by
@@ -56,7 +57,7 @@ static const struct dma_option dma_rx_option = {
 #define SPI_PROTO2_OFFSET (EC_PROTO2_RESPONSE_HEADER_BYTES + 2)
 #define SPI_PROTO2_OVERHEAD (SPI_PROTO2_OFFSET +		\
 			     EC_PROTO2_RESPONSE_TRAILER_BYTES + 1)
-
+#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
  * to handle a request/response header, flash write offset/size, and 512 bytes
@@ -103,7 +104,9 @@ static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble) +
 	EC_SPI_PAST_END_LENGTH] __aligned(4);
 static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4);
 static uint8_t enabled;
+#ifdef CONFIG_SPI_PROTOCOL_V2
 static struct host_cmd_handler_args args;
+#endif
 static struct host_packet spi_packet;
 
 /*
@@ -175,6 +178,7 @@ static int wait_for_bytes(stm32_dma_chan_t *rxdma, int needed,
 	}
 }
 
+#ifdef CONFIG_SPI_PROTOCOL_V2
 /**
  * Send a reply on a given port.
  *
@@ -247,6 +251,7 @@ static void reply(stm32_dma_chan_t *txdma,
 	/* Kick off the DMA to send the data */
 	dma_go(txdma);
 }
+#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 
 /**
  * Sends a byte over SPI without DMA
@@ -339,7 +344,7 @@ static void check_setup_transaction_later(void)
 	}
 }
 
-
+#ifdef CONFIG_SPI_PROTOCOL_V2
 /**
  * Called for V2 protocol to indicate that a command has completed
  *
@@ -375,6 +380,7 @@ static void spi_send_response(struct host_cmd_handler_args *args)
 	state = SPI_STATE_SENDING;
 	check_setup_transaction_later();
 }
+#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 
 /**
  * Called to send a response back to the host.
@@ -528,6 +534,7 @@ void spi_event(enum gpio_signal signal)
 		return;
 
 	} else if (in_msg[0] >= EC_CMD_VERSION0) {
+#ifdef CONFIG_SPI_PROTOCOL_V2
 		/*
 		 * Protocol version 2
 		 *
@@ -572,6 +579,10 @@ void spi_event(enum gpio_signal signal)
 
 		host_command_received(&args);
 		return;
+#else /* !defined(CONFIG_SPI_PROTOCOL_V2) */
+		/* Protocol version 2 is deprecated. */
+		CPRINTS("ERROR: Protocol V2 is not supported!");
+#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 	}
 
  spi_event_error:
@@ -664,7 +675,10 @@ static int spi_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 2) | (1 << 3);
+#ifdef CONFIG_SPI_PROTOCOL_V2
+	r->protocol_versions |= (1 << 2);
+#endif
+	r->protocol_versions |= (1 << 3);
 	r->max_request_packet_size = SPI_MAX_REQUEST_SIZE;
 	r->max_response_packet_size = SPI_MAX_RESPONSE_SIZE;
 	r->flags = EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED;
