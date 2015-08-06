@@ -1709,14 +1709,16 @@ enum motionsensor_type {
 	MOTIONSENSE_TYPE_ACCEL = 0,
 	MOTIONSENSE_TYPE_GYRO = 1,
 	MOTIONSENSE_TYPE_MAG = 2,
-	MOTIONSENSE_TYPE_MAX = 3,
+	MOTIONSENSE_TYPE_PROX = 3,
+	MOTIONSENSE_TYPE_LIGHT = 4,
+	MOTIONSENSE_TYPE_MAX,
 };
 
 /* List of motion sensor locations. */
 enum motionsensor_location {
 	MOTIONSENSE_LOC_BASE = 0,
 	MOTIONSENSE_LOC_LID = 1,
-	MOTIONSENSE_LOC_MAX = 2,
+	MOTIONSENSE_LOC_MAX,
 };
 
 /* List of motion sensor chips. */
@@ -1724,6 +1726,9 @@ enum motionsensor_chip {
 	MOTIONSENSE_CHIP_KXCJ9 = 0,
 	MOTIONSENSE_CHIP_LSM6DS0 = 1,
 	MOTIONSENSE_CHIP_BMI160 = 2,
+	MOTIONSENSE_CHIP_SI1141 = 3,
+	MOTIONSENSE_CHIP_SI1142 = 4,
+	MOTIONSENSE_CHIP_SI1143 = 5,
 };
 
 struct ec_response_motion_sensor_data {

@@ -15,6 +15,7 @@ driver-$(CONFIG_MAG_BMI160_BMM150)+=mag_bmm150.o
 # ALS drivers
 driver-$(CONFIG_ALS_ISL29035)+=als_isl29035.o
 driver-$(CONFIG_ALS_OPT3001)+=als_opt3001.o
+driver-$(CONFIG_ALS_SI114X)+=als_si114x.o
 
 # Batteries
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
