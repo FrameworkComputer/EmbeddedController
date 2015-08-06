@@ -49,6 +49,12 @@
 #undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
 
+/*
+ * Define the event to raise when BMI160 interrupt.
+ * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
+ */
+#undef CONFIG_ACCELGYRO_BMI160_INT_EVENT
+
 /* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC
 

@@ -29,9 +29,10 @@ enum sensor_state {
 #define SENSOR_ACTIVE_S0_S3_S5 (SENSOR_ACTIVE_S0_S3 | SENSOR_ACTIVE_S5)
 
 /* Events the motion sense task may have to process.*/
-#define TASK_EVENT_MOTION_FLUSH_PENDING TASK_EVENT_CUSTOM(1)
-#define TASK_EVENT_MOTION_INTERRUPT     TASK_EVENT_CUSTOM(2)
-#define TASK_EVENT_MOTION_ODR_CHANGE    TASK_EVENT_CUSTOM(4)
+#define TASK_EVENT_MOTION_FLUSH_PENDING     TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_MOTION_ODR_CHANGE        TASK_EVENT_CUSTOM(2)
+/* Next 8 events for sensor interrupt lines */
+#define TASK_EVENT_MOTION_INTERRUPT_MASK    (0xff << 2)
 
 /* Define sensor sampling interval in suspend. */
 #ifdef CONFIG_GESTURE_DETECTION
@@ -138,8 +139,16 @@ void accel_int_base(enum gpio_signal signal);
 #ifdef CONFIG_ACCEL_FIFO
 extern struct queue motion_sense_fifo;
 
+/**
+ * Interrupt function for lid accelerometer.
+ *
+ * @param data data to insert in the FIFO
+ * @param sensor sensor the data comes from
+ * @valid_data data should be copied into the public sensor vector
+ */
 void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
-				const struct motion_sensor_t *sensor);
+				struct motion_sensor_t *sensor,
+				int valid_data);
 
 #endif
 #endif /* __CROS_EC_MOTION_SENSE_H */

@@ -69,9 +69,12 @@ struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 static int motion_sense_fifo_lost;
 
 void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
-				const struct motion_sensor_t *sensor)
+				struct motion_sensor_t *sensor,
+				int valid_data)
 {
 	struct ec_response_motion_sensor_data vector;
+	int i;
+
 	data->sensor_num = (sensor - motion_sensors);
 	mutex_lock(&g_sensor_mutex);
 	if (queue_space(&motion_sense_fifo) == 0) {
@@ -81,18 +84,19 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		if (vector.flags & MOTIONSENSE_SENSOR_FLAG_FLUSH)
 			CPRINTS("Lost flush for sensor %d", vector.sensor_num);
 	}
+	for (i = 0; i < valid_data; i++)
+		sensor->xyz[i] = data->data[i];
 	mutex_unlock(&g_sensor_mutex);
 	queue_add_unit(&motion_sense_fifo, data);
 }
 
-static inline void motion_sense_insert_flush(
-		const struct motion_sensor_t *sensor)
+static inline void motion_sense_insert_flush(struct motion_sensor_t *sensor)
 {
 	struct ec_response_motion_sensor_data vector;
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_FLUSH |
 		       MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
 	vector.timestamp = __hw_clock_source_read();
-	motion_sense_fifo_add_unit(&vector, sensor);
+	motion_sense_fifo_add_unit(&vector, sensor, 0);
 }
 
 static inline void motion_sense_insert_timestamp(void)
@@ -100,7 +104,7 @@ static inline void motion_sense_insert_timestamp(void)
 	struct ec_response_motion_sensor_data vector;
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
 	vector.timestamp = __hw_clock_source_read();
-	motion_sense_fifo_add_unit(&vector, motion_sensors);
+	motion_sense_fifo_add_unit(&vector, motion_sensors, 0);
 }
 
 static void motion_sense_get_fifo_info(
@@ -357,9 +361,9 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	int ret = EC_SUCCESS;
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	if ((event & TASK_EVENT_MOTION_INTERRUPT) &&
+	if ((event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
 	    (sensor->drv->irq_handler != NULL))
-		sensor->drv->irq_handler(sensor);
+		sensor->drv->irq_handler(sensor, event);
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 	if (sensor->drv->load_fifo != NULL) {
@@ -370,11 +374,13 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		struct ec_response_motion_sensor_data vector;
 		sensor->last_collection = ts->val;
 		ret = motion_sense_read(sensor);
-		vector.flags = 0;
-		vector.data[X] = sensor->raw_xyz[X];
-		vector.data[Y] = sensor->raw_xyz[Y];
-		vector.data[Z] = sensor->raw_xyz[Z];
-		motion_sense_fifo_add_unit(&vector, sensor);
+		if (ret == EC_SUCCESS) {
+			vector.flags = 0;
+			vector.data[X] = sensor->raw_xyz[X];
+			vector.data[Y] = sensor->raw_xyz[Y];
+			vector.data[Z] = sensor->raw_xyz[Z];
+			motion_sense_fifo_add_unit(&vector, sensor, 3);
+		}
 	} else {
 		ret = EC_ERROR_BUSY;
 	}
@@ -395,6 +401,12 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	} else {
 		ret = EC_ERROR_BUSY;
 	}
+	if (ret == EC_SUCCESS) {
+		mutex_lock(&g_sensor_mutex);
+		memcpy(sensor->xyz, sensor->raw_xyz, sizeof(sensor->xyz));
+		mutex_unlock(&g_sensor_mutex);
+	}
+
 #endif
 	return ret;
 }
@@ -455,10 +467,6 @@ void motion_sense_task(void)
 				if (ret != EC_SUCCESS)
 					continue;
 				ready_status |= (1 << i);
-				mutex_lock(&g_sensor_mutex);
-				memcpy(sensor->xyz, sensor->raw_xyz,
-					sizeof(sensor->xyz));
-				mutex_unlock(&g_sensor_mutex);
 			}
 		}
 
@@ -477,7 +485,7 @@ void motion_sense_task(void)
 #endif
 #ifdef CONFIG_CMD_ACCEL_INFO
 		if (accel_disp) {
-			CPRINTF("[%T ");
+			CPRINTF("[%T event 0x%08x ", event);
 			for (i = 0; i < motion_sensor_count; ++i) {
 				sensor = &motion_sensors[i];
 				CPRINTF("%s=%-5d, %-5d, %-5d ", sensor->name,

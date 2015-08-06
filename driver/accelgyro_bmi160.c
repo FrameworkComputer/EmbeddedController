@@ -625,7 +625,8 @@ void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
  */
 void bmi160_interrupt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_MOTIONSENSE, TASK_EVENT_MOTION_INTERRUPT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE,
+		       CONFIG_ACCELGYRO_BMI160_INT_EVENT, 0);
 }
 
 
@@ -690,11 +691,12 @@ static int config_interrupt(const struct motion_sensor_t *s)
  * For now, we just print out. We should set a bitmask motion sense code will
  * act upon.
  */
-int irq_handler(const struct motion_sensor_t *s)
+static int irq_handler(struct motion_sensor_t *s, uint32_t event)
 {
 	int interrupt;
 
-	if (s->type != MOTIONSENSE_TYPE_ACCEL)
+	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
+	    (!(event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
 		return EC_SUCCESS;
 
 	raw_read32(s->addr, BMI160_INT_STATUS_0, &interrupt);
@@ -770,7 +772,7 @@ static int bmi160_decode_header(struct motion_sensor_t *s,
 				vector.data[X] = v[X];
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
-				motion_sense_fifo_add_unit(&vector, s + i);
+				motion_sense_fifo_add_unit(&vector, s + i, 3);
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
 		}
