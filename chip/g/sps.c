@@ -234,6 +234,12 @@ int sps_unregister_rx_handler(void)
 static void sps_init(void)
 {
 	pmu_clock_en(PERIPH_SPS);
+
+	GWRITE_FIELD(PINMUX, DIOA2_CTL, IE, 1);
+	GWRITE_FIELD(PINMUX, DIOA6_CTL, IE, 1);
+	GWRITE_FIELD(PINMUX, DIOA12_CTL, IE, 1);
+	GWRITE_FIELD(PINMUX, DIOA10_CTL, IE, 0);
+
 }
 DECLARE_HOOK(HOOK_INIT, sps_init, HOOK_PRIO_DEFAULT);
 

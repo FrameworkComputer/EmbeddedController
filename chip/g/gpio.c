@@ -144,11 +144,11 @@ void gpio_pre_init(void)
 
 	/* Enable clocks */
 	REG_WRITE_MLV(GR_PMU_PERICLKSET0,
-		      GC_PMU_PERICLKSET0_DGPIO0_MASK,
-		      GC_PMU_PERICLKSET0_DGPIO0_LSB, 1);
+		      GC_PMU_PERICLKSET0_DGPIO0_CLK_MASK,
+		      GC_PMU_PERICLKSET0_DGPIO0_CLK_LSB, 1);
 	REG_WRITE_MLV(GR_PMU_PERICLKSET0,
-		      GC_PMU_PERICLKSET0_DGPIO1_MASK,
-		      GC_PMU_PERICLKSET0_DGPIO1_LSB, 1);
+		      GC_PMU_PERICLKSET0_DGPIO1_CLK_MASK,
+		      GC_PMU_PERICLKSET0_DGPIO1_CLK_LSB, 1);
 
 	/* Set up the pinmux */
 	for (i = 0; i < gpio_alt_funcs_count; i++, af++)

@@ -9,7 +9,8 @@
 #include "core/cortex-m/config_core.h"
 
 /* Number of IRQ vectors on the NVIC */
-#define CONFIG_IRQ_COUNT 108
+/* TODO_FPGA this should come from the generated .h file */
+#define CONFIG_IRQ_COUNT 188
 
 /* Describe the RAM layout */
 #define CONFIG_RAM_BASE         0x10000
@@ -52,5 +53,8 @@
 
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
+
+/* TODO_FPGA this should come from the generated .h file */
+#define PCLK_FREQ  (24 * 1000 * 1000)
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */

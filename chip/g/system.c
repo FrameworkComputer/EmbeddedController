@@ -18,8 +18,6 @@ static void check_reset_cause(void)
 
 	if (reset_source & (1 << GC_PMU_RSTSRC_POR_LSB))
 		flags |= RESET_FLAG_POWER_ON;
-	else if (reset_source & (1 << GC_PMU_RSTSRC_RESETB_LSB))
-		flags |= RESET_FLAG_RESET_PIN;
 	else if (reset_source & (1 << GC_PMU_RSTSRC_EXIT_LSB))
 		flags |= RESET_FLAG_WAKE_PIN;
 
@@ -80,20 +78,6 @@ const char *system_get_chip_revision(void)
 		return GC_REVISION_STR" BUILD MISMATCH!";
 	else
 		return GC_REVISION_STR;
-}
-
-int system_set_scratchpad(uint32_t value)
-{
-	GR_PMU_PWRDN_SCRATCH_HOLD_CLR = 1;
-	GR_PMU_PWRDN_SCRATCH0 = value;
-	GR_PMU_PWRDN_SCRATCH_HOLD_SET = 1;
-
-	return EC_SUCCESS;
-}
-
-uint32_t system_get_scratchpad(void)
-{
-	return GR_PMU_PWRDN_SCRATCH0;
 }
 
 /* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */

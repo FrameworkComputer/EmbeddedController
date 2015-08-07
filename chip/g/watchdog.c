@@ -77,9 +77,7 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 int watchdog_init(void)
 {
 	/* Enable clocks */
-	REG_WRITE_MLV(GR_PMU_PERICLKSET0,
-		      GC_PMU_PERICLKSET0_DWATCHDOG0_MASK,
-		      GC_PMU_PERICLKSET0_DWATCHDOG0_LSB, 1);
+	/* TODO_FPGA add relevant clock init here, when supported. */
 
 	/* Unlock watchdog registers */
 	GR_WATCHDOG_LOCK = WATCHDOG_MAGIC_WORD;
