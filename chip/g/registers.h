@@ -7,16 +7,7 @@
 #define __CROS_EC_REGISTERS_H
 
 #include "common.h"
-#if defined(CHIP_VARIANT_CR50_FPGA)
 #include "cr50_fpga_regdefs.h"
-#define PCLK_FREQ  30000000
-#elif defined(CHIP_VARIANT_CR50_A1)
-#include "cr50_a1_regdefs.h"
-#define PCLK_FREQ  24000000
-#else
-#error "Unsupported CR50 chip variant"
-#endif
-
 #include "util.h"
 
 /* Constants for setting baud rate */
