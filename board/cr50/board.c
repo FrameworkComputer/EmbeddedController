@@ -80,7 +80,7 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-#if !defined(CHIP_VARIANT_CR50_A1)
+#if defined(CONFIG_USB)
 const void * const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
 	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
