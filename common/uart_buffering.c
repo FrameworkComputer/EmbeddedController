@@ -68,6 +68,12 @@ static int __tx_char(void *context, int c)
 	if (c == '\n' && __tx_char(NULL, '\r'))
 		return 1;
 
+#if defined CONFIG_POLLING_UART
+	(void) tx_buf_next;
+	(void) tx_buf_new_tail;
+	uart_write_char(c);
+#else
+
 	tx_buf_next = TX_BUF_NEXT(tx_buf_head);
 	if (tx_buf_next == tx_buf_tail)
 		return 1;
@@ -89,6 +95,7 @@ static int __tx_char(void *context, int c)
 
 	tx_buf[tx_buf_head] = c;
 	tx_buf_head = tx_buf_next;
+#endif
 	return 0;
 }
 
