@@ -61,7 +61,9 @@ void chipset_force_shutdown(void)
 	 * Force power off. This condition will reset once the state machine
 	 * transitions to G3.
 	 */
+#ifndef CONFIG_PMIC
 	gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
+#endif
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 	forcing_shutdown = 1;
 }
@@ -291,6 +293,8 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_config_module(MODULE_GPIO, 1);
 #ifndef CONFIG_PMIC
 			gpio_set_level(GPIO_SUSPWRDNACK_SOC_EC, 1);
+#else
+			gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
 #endif
 
 			forcing_shutdown = 0;
