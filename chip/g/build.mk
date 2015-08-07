@@ -16,7 +16,12 @@ ver_str := $(shell printf "%s%s %d_%d" $(ver_params))
 CPPFLAGS+= -DGC_REVISION="$(ver_str)"
 
 # Required chip modules
-chip-y=clock.o gpio.o hwtimer.o jtag.o system.o uart.o
+chip-y=clock.o gpio.o hwtimer.o jtag.o system.o
+ifeq ($(CONFIG_POLLING_UART),y)
+chip-y += polling_uart.o
+else
+chip-y += uart.o
+endif
 chip-y+= pmu.o
 chip-$(CONFIG_SPS)+= sps.o
 chip-$(CONFIG_HOSTCMD_SPS)+=sps_hc.o
