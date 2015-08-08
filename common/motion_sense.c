@@ -46,10 +46,6 @@ static int accel_disp;
 
 #define SENSOR_ACTIVE(_sensor) (sensor_active & (_sensor)->active_mask)
 
-/* Minimal amount of time since last collection before triggering a new one */
-#define SENSOR_EC_RATE_THRES(_sensor) \
-	(SENSOR_EC_RATE(_sensor) * 9 / 10)
-
 /*
  * Mutex to protect sensor values between host command task and
  * motion sense task:
@@ -119,6 +115,22 @@ static void motion_sense_get_fifo_info(
 }
 #endif
 
+/* Minimal amount of time since last collection before triggering a new one */
+static inline int motion_sensor_time_to_read(const timestamp_t *ts,
+		const struct motion_sensor_t *sensor)
+{
+	int rate;
+	sensor->drv->get_data_rate(sensor, &rate);
+	if (rate == 0)
+		return 0;
+	/*
+	 * converting from mHz to ms, need 1e6,
+	 * If within 95% of the time, check sensor.
+	 */
+	return time_after(ts->le.lo,
+			  sensor->last_collection + (950000 / rate) / 10);
+}
+
 /*
  * motion_sense_set_accel_interval
  *
@@ -182,7 +194,7 @@ static inline void motion_sense_init(struct motion_sensor_t *sensor)
 	} else {
 		timestamp_t ts = get_time();
 		sensor->state = SENSOR_INITIALIZED;
-		sensor->last_collection = ts.val;
+		sensor->last_collection = ts.le.lo;
 	}
 }
 
@@ -369,10 +381,8 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	if (sensor->drv->load_fifo != NULL) {
 		/* Load fifo is filling raw_xyz sensor vector */
 		sensor->drv->load_fifo(sensor);
-	} else if (ts->val - sensor->last_collection >=
-		   SENSOR_EC_RATE_THRES(sensor)) {
+	} else if (motion_sensor_time_to_read(ts, sensor)) {
 		struct ec_response_motion_sensor_data vector;
-		sensor->last_collection = ts->val;
 		ret = motion_sense_read(sensor);
 		if (ret == EC_SUCCESS) {
 			vector.flags = 0;
@@ -380,6 +390,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 			vector.data[Y] = sensor->raw_xyz[Y];
 			vector.data[Z] = sensor->raw_xyz[Z];
 			motion_sense_fifo_add_unit(&vector, sensor, 3);
+			sensor->last_collection = ts->le.lo;
 		}
 	} else {
 		ret = EC_ERROR_BUSY;
@@ -393,15 +404,14 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		}
 	}
 #else
-	if (ts->val - sensor->last_collection >=
-	    SENSOR_EC_RATE_THRES(sensor)) {
-		sensor->last_collection = ts->val;
+	if (motion_sensor_time_to_read(ts, sensor)) {
 		/* Get latest data for local calculation */
 		ret = motion_sense_read(sensor);
 	} else {
 		ret = EC_ERROR_BUSY;
 	}
 	if (ret == EC_SUCCESS) {
+		sensor->last_collection = ts->le.lo;
 		mutex_lock(&g_sensor_mutex);
 		memcpy(sensor->xyz, sensor->raw_xyz, sizeof(sensor->xyz));
 		mutex_unlock(&g_sensor_mutex);

@@ -101,7 +101,7 @@ struct motion_sensor_t {
 	 * For sensor without FIFO, time since the last event was collect
 	 * from sensor registers.
 	 */
-	int last_collection;
+	 uint32_t last_collection;
 };
 
 /* Defined at board level. */
