@@ -24,6 +24,9 @@
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
 #define DECLARE_IRQ_(irq, routine, priority)                    \
 	void IRQ_HANDLER(irq)(void) __attribute__((naked));	\
+	typedef struct {					\
+		int dummy[irq >= CONFIG_IRQ_COUNT ? -1 : 1];	\
+	} irq_num_check_##irq;					\
 	void __keep routine(void);				\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
