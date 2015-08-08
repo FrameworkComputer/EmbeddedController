@@ -506,19 +506,13 @@ void motion_sense_task(void)
 		ts_end_task = get_time();
 #ifdef CONFIG_ACCEL_FIFO
 		/*
-		 * If ODR of any sensor changed, insert a timestamp to be ease
-		 * calculation of each events.
-		 */
-		if (event & TASK_EVENT_MOTION_ODR_CHANGE)
-			motion_sense_insert_timestamp();
-
-		/*
 		 * Ask the host to flush the queue if
 		 * - a flush event has been queued.
 		 * - the queue is almost full,
 		 * - we haven't done it for a while.
 		 */
 		if (fifo_flush_needed ||
+		    event & TASK_EVENT_MOTION_ODR_CHANGE ||
 		    queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
 		    (ts_end_task.val - ts_last_int.val) > accel_interval) {
 			if (!fifo_flush_needed)

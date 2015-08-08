@@ -797,8 +797,16 @@ static int load_fifo(struct motion_sensor_t *s)
 	if (s->type != MOTIONSENSE_TYPE_ACCEL)
 		return EC_SUCCESS;
 
-	if (!(data->flags & (BMI160_FIFO_ALL_MASK << BMI160_FIFO_FLAG_OFFSET)))
+	if (!(data->flags &
+	      (BMI160_FIFO_ALL_MASK << BMI160_FIFO_FLAG_OFFSET))) {
+		/*
+		 * Flush potiential left over:
+		 *
+		 * When sensor is resumed, we don't want to read old data.
+		 */
+		raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_FIFO_FLUSH);
 		return EC_SUCCESS;
+	}
 
 	do {
 		enum fifo_state state = FIFO_HEADER;
