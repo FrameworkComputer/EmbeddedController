@@ -486,4 +486,11 @@ typedef volatile struct mec1322_dma_regs mec1322_dma_regs_t;
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
 
+/*
+ * Optional board-level function to get hibernate GPIO state.
+ * Returns desired GPIO state in hibernate, or 0 to skip reconfiguration.
+ */
+uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
+	__attribute__((weak));
+
 #endif /* __CROS_EC_REGISTERS_H */

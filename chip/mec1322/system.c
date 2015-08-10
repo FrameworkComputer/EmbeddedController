@@ -182,23 +182,10 @@ uint32_t system_get_scratchpad(void)
 	return MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD);
 }
 
-/* Convert a GPIO to a port + mask, used in the skip table below. */
-#define PORT_MASK_PAIR(gpio) \
-	{ gpio_list[(gpio)].port, \
-	  GPIO_MASK_TO_NUM(gpio_list[(gpio)].mask) }
-
-static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
+/* Returns desired GPIO state in hibernate, or 0 to skip reconfiguration */
+static uint32_t system_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 {
-	int i, j, k;
-	uint32_t val;
-	int want_skip;
-
-	const int pins[][2] = {
-				{0, 7}, {1, 7}, {2, 7}, {3, 6}, {4, 7}, {5, 7},
-				{6, 7}, {10, 7}, {11, 7}, {12, 7}, {13, 6},
-				{14, 7}, {15, 7}, {16, 5}, {20, 6}, {21, 1}
-	};
-
+	int i;
 	const int skip[][2] = {
 #ifdef GLADOS_BOARD_V1
 		/*
@@ -206,21 +193,20 @@ static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 		 * TODO(crosbug.com/p/42774): Remove this once we have a
 		 * pull-down on PCH_RTCRST.
 		 */
-		PORT_MASK_PAIR(GPIO_PCH_RTCRST),
+		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST),
 #endif
-
 		/*
 		 * Leave USB-C charging enabled in hibernate, in order to
 		 * allow wake-on-plug. 5V enable must be pulled low.
 		 */
 #ifdef CONFIG_USB_PD_PORT_COUNT
 #if CONFIG_USB_PD_PORT_COUNT > 0
-		PORT_MASK_PAIR(GPIO_USB_C0_5V_EN),
-		PORT_MASK_PAIR(GPIO_USB_C0_CHARGE_EN_L),
+		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_C0_5V_EN),
+		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_C0_CHARGE_EN_L),
 #endif
 #if CONFIG_USB_PD_PORT_COUNT > 1
-		PORT_MASK_PAIR(GPIO_USB_C1_5V_EN),
-		PORT_MASK_PAIR(GPIO_USB_C1_CHARGE_EN_L),
+		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_C1_5V_EN),
+		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_C1_CHARGE_EN_L),
 #endif
 #endif /* CONFIG_USB_PD_PORT_COUNT */
 
@@ -233,29 +219,42 @@ static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 		{20, 5},
 	};
 
+	for (i = 0; i < ARRAY_SIZE(skip); ++i)
+		if (port == skip[i][0] && pin == skip[i][1])
+			return 0;
+
+	if (board_get_gpio_hibernate_state)
+		return board_get_gpio_hibernate_state(port, pin);
+	else
+		return GPIO_INPUT | GPIO_PULL_UP;
+}
+
+static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
+{
+	int i, j;
+	uint32_t port, flags;
+
+	const int pins[][2] = {
+				{0, 7}, {1, 7}, {2, 7}, {3, 6}, {4, 7}, {5, 7},
+				{6, 7}, {10, 7}, {11, 7}, {12, 7}, {13, 6},
+				{14, 7}, {15, 7}, {16, 5}, {20, 6}, {21, 1}
+	};
+
 	for (i = 0; i < ARRAY_SIZE(pins); ++i) {
+		port = pins[i][0];
 		for (j = 0; j <= pins[i][1]; ++j) {
-			want_skip = 0;
-			for (k = 0; k < ARRAY_SIZE(skip); ++k)
-				if (skip[k][0] == pins[i][0] &&
-				    skip[k][1] == j)
-					want_skip = 1;
-			if (want_skip)
+			flags = system_get_gpio_hibernate_state(port, j);
+			if (flags == 0)
 				continue;
 
 			if (enabled) {
-				MEC1322_GPIO_CTL(pins[i][0], j) =
+				MEC1322_GPIO_CTL(port, j) =
 					backup_gpio_ctl[i * 8 + j];
 			} else {
-				/* GPIO Input, pull-high, interrupt disabled */
-				val = MEC1322_GPIO_CTL(pins[i][0], j);
 				if (backup_gpio_ctl != NULL)
-					backup_gpio_ctl[i * 8 + j] = val;
-				val &= ~((1 << 12) | (1 << 13));
-				val &= ~(1 << 9);
-				val = (val & ~(0xf << 4)) | (0x4 << 4);
-				val = (val & ~0x3) | 0x1;
-				MEC1322_GPIO_CTL(pins[i][0], j) = val;
+					backup_gpio_ctl[i * 8 + j] =
+						MEC1322_GPIO_CTL(port, j);
+				gpio_set_flags_by_mask(port, 1 << j, flags);
 			}
 		}
 	}
