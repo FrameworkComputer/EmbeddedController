@@ -187,14 +187,6 @@ static uint32_t system_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 {
 	int i;
 	const int skip[][2] = {
-#ifdef GLADOS_BOARD_V1
-		/*
-		 * Leave PCH RTCRST deasserted.
-		 * TODO(crosbug.com/p/42774): Remove this once we have a
-		 * pull-down on PCH_RTCRST.
-		 */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST),
-#endif
 		/*
 		 * Leave USB-C charging enabled in hibernate, in order to
 		 * allow wake-on-plug. 5V enable must be pulled low.

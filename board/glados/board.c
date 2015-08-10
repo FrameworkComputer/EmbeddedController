@@ -319,3 +319,33 @@ void board_chipset_suspend(void)
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+/* Turn off LEDs in hibernate */
+uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
+{
+	int i;
+	const uint32_t led_gpios[][2] = {
+		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_1),
+		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_2),
+	};
+
+#ifdef GLADOS_BOARD_V1
+	/*
+	 * Leave PCH RTCRST deasserted.
+	 * TODO(crosbug.com/p/42774): Remove this once we have a
+	 * pull-down on PCH_RTCRST.
+	 */
+	const uint32_t rtcrst_gpio[2] =
+		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST);
+	if (port == rtcrst_gpio[0] && pin == rtcrst_gpio[1])
+		return GPIO_OUTPUT | GPIO_LOW;
+#endif
+
+	/* LED GPIOs should be driven low to turn off LEDs */
+	for (i = 0; i < ARRAY_SIZE(led_gpios); ++i)
+		if (led_gpios[i][0] == port && led_gpios[i][1] == pin)
+			return GPIO_OUTPUT | GPIO_LOW;
+
+	/* Other GPIOs should be put in a low-power state */
+	return GPIO_INPUT | GPIO_PULL_UP;
+}
