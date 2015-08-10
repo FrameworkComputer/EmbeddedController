@@ -14,7 +14,7 @@ host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/
 
 # Don't do a build test on the following boards:
 skip_boards = OWNERS host it8380dev
-boards := $(filter-out $(skip_boards),$(subst board/,,$(wildcard board/*)))
+boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
 
 # Create output directories if necessary
 _common_dir_create := $(foreach d,$(common_dirs),$(shell [ -d $(out)/$(d) ] || \
@@ -317,7 +317,7 @@ xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
 flash: $(out)/ec.bin
 	openocd -c "set BOARD $(BOARD)"\
 		-c "set BUILD_DIR $(out)"\
-		-f board/$(BOARD)/openocd-flash.cfg
+		-f $(BDIR)/openocd-flash.cfg
 
 .PHONY: flash_ec
 flash_ec: $(out)/ec.bin
@@ -325,7 +325,7 @@ flash_ec: $(out)/ec.bin
 
 .PHONY: flash_dfu
 flash_dfu: $(out)/ec.bin
-	sudo ./board/$(BOARD)/dfu $(out)/ec.bin
+	sudo ./$(BDIR)/dfu $(out)/ec.bin
 
 .PHONY: clean
 clean:
