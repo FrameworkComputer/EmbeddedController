@@ -19,6 +19,9 @@ test-list-$(BOARD_SAMUS)=
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
 
+# Kunimitsu PD has issues when building tests
+test-list-$(BOARD_KUNIMITSU_PD)=
+
 # llama has issues when building tests
 test-list-$(BOARD_LLAMA)=
 
