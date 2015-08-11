@@ -133,12 +133,12 @@ static void __hw_clock_source_irq(void)
 	 * check two conditions: the current time is exactly the next event
 	 * time, or this tick just caused us to pass the next event time.
 	 */
-	if (time_us == next_event_time ||
+	if (time_us == 0)
+		process_timers(1);
+	else if (time_us == next_event_time ||
 			(time_us-TICK_INTERVAL) ==
 					(next_event_time & ~TICK_INTERVAL_MASK))
 		process_timers(0);
-	else if (time_us == 0)
-		process_timers(1);
 }
 DECLARE_IRQ(IT83XX_IRQ_TMR_B0, __hw_clock_source_irq, 1);
 

@@ -355,6 +355,8 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
 
+	watchdog_reload();
+
 	/*
 	 * CPU can't fetch instruction from flash while use
 	 * EC-indirect follow mode to access flash, interrupts need to be
