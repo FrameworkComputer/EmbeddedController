@@ -43,8 +43,10 @@
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
+#ifdef HAS_TASK_PDCMD
 	/* Exchange status with PD MCU to determine interrupt cause */
 	host_command_pd_send_status(0);
+#endif
 }
 
 void vbus0_evt(enum gpio_signal signal)

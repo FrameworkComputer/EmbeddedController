@@ -16,11 +16,6 @@ test-list-$(BOARD_PIT)+=kb_scan stress
 # compile with it. Disable them for now.
 test-list-$(BOARD_SAMUS)=
 
-# Glados board-specific chipset code, and the tests don't
-# compile with it. Disable them for now.
-test-list-$(BOARD_GLADOS)=
-test-list-$(BOARD_GLADOS_PD)=
-
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
 
