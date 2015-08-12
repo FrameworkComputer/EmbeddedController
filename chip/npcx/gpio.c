@@ -687,9 +687,11 @@ void _irq_func(void)				\
 /* If we need to handle the other type interrupts except GPIO, add code here */
 void __gpio_wk0efgh_interrupt(void)
 {
+#ifdef CONFIG_LPC
 	if (IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5),7))
 		lpc_lreset_pltrst_handler();
 	else
+#endif
 		gpio_interrupt(NPCX_IRQ_WKINTEFGH_0);
 }
 
