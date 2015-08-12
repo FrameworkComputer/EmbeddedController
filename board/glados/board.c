@@ -23,6 +23,7 @@
 #include "power_button.h"
 #include "spi.h"
 #include "switch.h"
+#include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "timer.h"
@@ -199,8 +200,12 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{ 0 },
 };
 
-static void pmic_init(void)
+static void board_pmic_init(void)
 {
+	/* No need to re-init PMIC since settings are sticky across sysjump */
+	if (system_jumped_to_this_image())
+		return;
+
 	/*
 	 * Set V085ACNT / V0.85A Control Register:
 	 * Lower power mode = 0.7V.
@@ -208,7 +213,7 @@ static void pmic_init(void)
 	 */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
 }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, pmic_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
 /* Initialize board. */
 static void board_init(void)
