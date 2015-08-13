@@ -26,4 +26,4 @@ make BOARD=${BOARD} PROJECT=${VARIANT} out=build/${BOARD}_${VARIANT}
 VERSION=$(echo "VERSION" | cpp -P -imacros build/${BOARD}/ec_version.h)
 FINAL_IMG=build/${BOARD}/${VERSION//\"}.combined.bin
 cp build/${BOARD}/ec.bin ${FINAL_IMG}
-dd if=build/${BOARD}_${VARIANT}/${VARIANT}.RW.bin of=${FINAL_IMG} bs=1 seek=${RO_SIZE} conv=notrunc
+dd if=build/${BOARD}_${VARIANT}/RW/${VARIANT}.RW.bin of=${FINAL_IMG} bs=1 seek=${RO_SIZE} conv=notrunc
