@@ -492,7 +492,7 @@ static int cmd_bufrd(int argc, char **argv)
 		return EC_ERROR_PARAM2;
 
 	if (argc >= 2)
-		cnt = strtoi(argv[0], &e, 10);
+		cnt = strtoi(argv[1], &e, 10);
 		if (*e || idx + cnt > INJ_CMD_COUNT)
 			return EC_ERROR_PARAM3;
 
