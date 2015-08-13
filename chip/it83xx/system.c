@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "cpu.h"
+#include "ec2i_chip.h"
 #include "flash.h"
 #include "registers.h"
 #include "system.h"
@@ -192,3 +193,84 @@ uintptr_t system_get_fw_reset_vector(uintptr_t base)
 
 	return reset_vector;
 }
+
+static int command_rw_ec_reg(int argc, char **argv)
+{
+	volatile uint8_t *addr;
+	uint8_t value = 0;
+	enum ec2i_message em;
+	enum logical_device_number ldn;
+	enum host_pnpcfg_index idx;
+	int i;
+	char *e;
+
+	if ((argc < 2) || (argc > 3))
+		return EC_ERROR_PARAM_COUNT;
+
+	addr = (uint8_t *)strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	if (argc == 3) {
+		value = (uint8_t)strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+	}
+
+	/* access PNPCFG registers */
+	if (((uint32_t)addr & 0xffff0000) == 0xec210000) {
+		/* set LDN */
+		ldn = ((uint32_t)addr & 0xff00) >> 8;
+		idx = (uint32_t)addr & 0xff;
+		if (ec2i_write(HOST_INDEX_LDN, ldn) == EC2I_WRITE_ERROR)
+			return EC_ERROR_UNKNOWN;
+
+		/* ec2i write */
+		if (argc == 3) {
+			if (ec2i_write(idx, value) == EC2I_WRITE_ERROR)
+				return EC_ERROR_UNKNOWN;
+			em = ec2i_read(idx);
+			if (em == EC2I_READ_ERROR)
+				return EC_ERROR_UNKNOWN;
+			value = em & 0xff;
+			ccprintf("LDN%02X IDX%02X = %02x", ldn, idx, value);
+		/* ec2i read */
+		} else {
+			for (i = 0; i < 256; i++) {
+				em = ec2i_read(i);
+				if (em == EC2I_READ_ERROR)
+					return EC_ERROR_UNKNOWN;
+				value = em & 0xff;
+				if (0 == (i % 16))
+					ccprintf("\nLDN%02X IDX%02X: %02x",
+						ldn, i, value);
+				else
+					ccprintf(" %02x", value);
+			}
+		}
+	/* access EC registers */
+	} else {
+		/* write register */
+		if (argc == 3) {
+			*addr = value;
+			ccprintf("%08X = %02x", addr, *addr);
+		/* read registers */
+		} else {
+			for (i = 0; i < 256; i++) {
+				if (0 == (i % 16))
+					ccprintf("\n%08X: %02x", addr+i,
+						addr[i]);
+				else
+					ccprintf(" %02x", addr[i]);
+			}
+		}
+	}
+	ccprintf("\n");
+	cflush();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rwreg, command_rw_ec_reg,
+			"addr [value (byte)]",
+			"R/W EC/PNPCFG registers."
+			" addr 0xec21xxyy for R/W PNPCFG, xx is LDN yy is IDX",
+			NULL);
