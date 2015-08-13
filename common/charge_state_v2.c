@@ -16,7 +16,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "lightbar.h"
 #include "math_util.h"
 #include "printf.h"
 #include "sb_fw_update.h"
@@ -609,9 +608,6 @@ void charger_task(void)
 				battery_seems_to_be_dead = 0;
 				prev_ac = curr.ac;
 			}
-#if defined(HAS_TASK_LIGHTBAR) && !defined(HAS_TASK_PDCMD)
-			lightbar_sequence(LIGHTBAR_TAP);
-#endif
 		}
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
