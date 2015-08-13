@@ -1146,9 +1146,6 @@
  */
 #undef CONFIG_LOW_POWER_S0
 
-/* Support G3 sleep mode */
-#undef CONFIG_G3_SLEEP
-
 /* Support LPC interface */
 #undef CONFIG_LPC
 

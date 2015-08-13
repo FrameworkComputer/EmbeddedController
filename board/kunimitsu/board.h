@@ -113,8 +113,8 @@
 #undef CONFIG_CONSOLE_HISTORY
 #undef CONFIG_PECI
 
-/* Enable sleep mode in G3 */
-#define CONFIG_G3_SLEEP
+/* Enable Pseudo G3 */
+#define CONFIG_LOW_POWER_PSEUDO_G3
 
 #ifndef __ASSEMBLER__
 
