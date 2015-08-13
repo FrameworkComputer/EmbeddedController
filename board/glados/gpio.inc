@@ -26,11 +26,7 @@ GPIO_INT(USB_C0_BC12_INT_L, PIN(124), GPIO_INT_FALLING, usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L, PIN(145), GPIO_INT_FALLING, usb1_evt)
 
 /* Delayed PWR_OK from PMIC */
-#ifdef GLADOS_BOARD_V1
-GPIO_INT(PMIC_DPWROK,       PIN(55),  GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
-#else
 GPIO_INT(PMIC_DPWROK,       PIN(133), GPIO_INT_BOTH, power_signal_interrupt)
-#endif
 
 GPIO(PD_RST_L,              PIN(130), GPIO_ODR_HIGH)
 GPIO(USB2_OTG_ID,           PIN(13),  GPIO_ODR_LOW)
@@ -98,16 +94,6 @@ GPIO(SYS_RESET_L,           PIN(121), GPIO_ODR_HIGH)
 GPIO(CHARGE_LED_1,        PIN(155), GPIO_OUT_LOW)
 GPIO(CHARGE_LED_2,        PIN(156), GPIO_OUT_LOW)
 
-#ifdef GLADOS_BOARD_V1
-GPIO(ACCEL4_INT,            PIN(133), GPIO_INPUT)
-/* Sensor input for KB PROX - UNUSED */
-GPIO(KB_PROX_INT_L,         PIN(141), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(USB_C1_CHARGE_EN_L,    PIN(157), GPIO_OUT_LOW)
-GPIO(PP1800_DX_AUDIO_EN,    PIN(160), GPIO_OUT_LOW)
-GPIO(PCH_RTCRST,            PIN(163), GPIO_OUT_LOW)
-GPIO(TABLET_MODE,           PIN(201), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(EC_WAKE_CLK,           PIN(210), GPIO_INPUT)
-#else
 /* Inhibit the AP from booting until we can supply enough current */
 GPIO(PCH_BATLOW_L,          PIN(55),  GPIO_OUT_LOW)
 GPIO(ACCEL4_INT,            PIN(157), GPIO_INPUT)
@@ -117,7 +103,6 @@ GPIO(TABLET_MODE,           PIN(160), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(PCH_RTCRST,            PIN(163), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(PMIC_SLP_SUS_L,        PIN(201), GPIO_OUT_LOW)
 GPIO(USB_C1_CHARGE_EN_L,    PIN(210), GPIO_OUT_LOW)
-#endif
 
 /* Alternate functions GPIO definitions */
 

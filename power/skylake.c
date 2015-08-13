@@ -65,7 +65,11 @@ void chipset_force_shutdown(void)
 void chipset_force_g3(void)
 {
 	CPRINTS("Forcing G3");
-#ifdef GLADOS_BOARD_V2
+	/*
+	 * Kunimitsu doesn't yet have pass-thru SLP_SUS_L / BATLOW.
+	 * TODO(crosbug.com/p/43075): Remove this when new boards roll out.
+	 */
+#ifndef BOARD_KUNIMITSU
 	gpio_set_level(GPIO_PMIC_SLP_SUS_L, 0);
 	gpio_set_level(GPIO_PCH_BATLOW_L, 0);
 #endif
@@ -132,7 +136,7 @@ enum power_state power_handle_state(enum power_state state)
 	 */
 	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
 	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
-#ifdef GLADOS_BOARD_V2
+#ifndef BOARD_KUNIMITSU
 	int tries = 0;
 #endif
 
@@ -193,7 +197,7 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
-#ifdef GLADOS_BOARD_V2
+#ifndef BOARD_KUNIMITSU
 		/*
 		 * Allow up to 1s for charger to be initialized, in case
 		 * we're trying to boot the AP with no battery.

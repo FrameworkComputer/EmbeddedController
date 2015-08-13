@@ -99,15 +99,6 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-#ifdef GLADOS_BOARD_V1
-const struct i2c_port_t i2c_ports[]  = {
-	{"batt",     MEC1322_I2C0_0, 100,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"muxes",    MEC1322_I2C0_1, 100,  GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"pd_mcu",   MEC1322_I2C1,  1000,  GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"sensors",  MEC1322_I2C2,   400,  GPIO_I2C2_SCL,   GPIO_I2C2_SDA  },
-	{"pmic",     MEC1322_I2C3,   400,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA  },
-};
-#else
 const struct i2c_port_t i2c_ports[]  = {
 	{"pmic",     MEC1322_I2C0_0, 400,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"muxes",    MEC1322_I2C0_1, 400,  GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
@@ -115,7 +106,6 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"sensors",  MEC1322_I2C2,   400,  GPIO_I2C2_SCL,   GPIO_I2C2_SDA  },
 	{"batt",     MEC1322_I2C3,   100,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA  },
 };
-#endif
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* SPI devices */
@@ -335,18 +325,6 @@ uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_1),
 		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_2),
 	};
-
-#ifdef GLADOS_BOARD_V1
-	/*
-	 * Leave PCH RTCRST deasserted.
-	 * TODO(crosbug.com/p/42774): Remove this once we have a
-	 * pull-down on PCH_RTCRST.
-	 */
-	const uint32_t rtcrst_gpio[2] =
-		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST);
-	if (port == rtcrst_gpio[0] && pin == rtcrst_gpio[1])
-		return GPIO_OUTPUT | GPIO_LOW;
-#endif
 
 	/* LED GPIOs should be driven low to turn off LEDs */
 	for (i = 0; i < ARRAY_SIZE(led_gpios); ++i)

@@ -8,13 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/*
- * Certain changes make V1 boards incompatible with V2.
- * TODO(crosbug.com/p/43075): Remove support for V1 when appropriate.
- */
-#define GLADOS_BOARD_V1
-/* #define GLADOS_BOARD_V2 */
-
 /* Optional features */
 #define CONFIG_ADC
 #define CONFIG_BATTERY_CUT_OFF
@@ -93,18 +86,6 @@
 #define GPIO_BAT_LED_GREEN GPIO_CHARGE_LED_2
 
 /* I2C ports */
-#ifdef GLADOS_BOARD_V1
-#define I2C_PORT_BATTERY MEC1322_I2C0_0
-#define I2C_PORT_CHARGER MEC1322_I2C0_0
-#define I2C_PORT_USB_CHARGER_1 MEC1322_I2C0_1
-#define I2C_PORT_USB_MUX MEC1322_I2C0_1
-#define I2C_PORT_PD_MCU MEC1322_I2C1
-#define I2C_PORT_TCPC MEC1322_I2C1
-#define I2C_PORT_ALS MEC1322_I2C2
-#define I2C_PORT_ACCEL MEC1322_I2C2
-#define I2C_PORT_PMIC MEC1322_I2C3
-#define I2C_PORT_USB_CHARGER_2 MEC1322_I2C3
-#else
 #define I2C_PORT_PMIC MEC1322_I2C0_0
 /* TODO(shawnn): Verify that the charge detectors aren't swapped */
 #define I2C_PORT_USB_CHARGER_1 MEC1322_I2C0_0
@@ -116,7 +97,6 @@
 #define I2C_PORT_ACCEL MEC1322_I2C2
 #define I2C_PORT_BATTERY MEC1322_I2C3
 #define I2C_PORT_CHARGER MEC1322_I2C3
-#endif
 
 /* Thermal sensors read through PMIC ADC interface */
 #define I2C_PORT_THERMAL I2C_PORT_PMIC
@@ -183,16 +163,8 @@ enum temp_sensor_id {
 #define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
 
-#ifdef GLADOS_BOARD_V1
-/*
- * TODO: max voltage should be 20V, but this causes excessive i2c noise
- * on battery bus on proto0, which leads to inconsistent charging.
- */
-#define PD_MAX_VOLTAGE_MV     5000
-#else
-/*** Try to negotiate to 20V since i2c noise problems should be fixed. ***/
+/* Try to negotiate to 20V since i2c noise problems should be fixed. */
 #define PD_MAX_VOLTAGE_MV     20000
-#endif
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
