@@ -301,6 +301,16 @@
 #undef CONFIG_CHARGER_CURRENT_LIMIT
 
 /*
+ * Board specific charging current termination limit, in mA.  If defined and
+ * charger supports setting termination current it should be set during charger
+ * init.
+ *
+ * TODO(tbroch): Only valid for bq2589x currently.  Configure defaults for other
+ * charger ICs that support termination currents.
+ */
+#undef CONFIG_CHARGER_TERM_CURRENT_LIMIT
+
+/*
  * Board supports discharge mode.  In this mode, the battery will discharge
  * even if AC is present.  Used for testing.
  */

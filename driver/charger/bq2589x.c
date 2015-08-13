@@ -29,6 +29,11 @@
 #define CONFIG_CHARGER_BQ2589X_IR_COMP BQ2589X_IR_COMP_DEFAULT
 #endif
 
+/* Termination current limit setting */
+#ifndef CONFIG_CHARGER_TERM_CURRENT_LIMIT
+#define CONFIG_CHARGER_TERM_CURRENT_LIMIT BQ2589X_TERM_CURRENT_LIMIT_DEFAULT
+#endif
+
 /* Charger information */
 static const struct charger_info bq2589x_charger_info = {
 	.name         = "bq2589x",
@@ -304,7 +309,7 @@ static void bq2589x_init(void)
 	if (bq2589x_write(BQ2589X_REG_TIMER, val))
 		return;
 
-	if (bq2589x_set_terminate_current(64))
+	if (bq2589x_set_terminate_current(CONFIG_CHARGER_TERM_CURRENT_LIMIT))
 		return;
 
 	if (bq2589x_watchdog_reset())
