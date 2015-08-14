@@ -118,7 +118,8 @@ static void initialize_charge_table(int current, int voltage, int ceil)
 	charge.voltage = voltage;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i) {
-		charge_manager_set_ceil(i, ceil);
+		for (j = 0; j < CEIL_REQUESTOR_COUNT; ++j)
+			charge_manager_set_ceil(i, j, ceil);
 		charge_manager_update_dualrole(i, CAP_DEDICATED);
 		pd_set_role(i, PD_ROLE_SINK);
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; ++j)
@@ -246,13 +247,13 @@ static int test_charge_ceil(void)
 
 	/* Set a 500mA ceiling, verify port is unchanged */
 	port = active_charge_port;
-	charge_manager_set_ceil(port, 500);
+	charge_manager_set_ceil(port, 0, 500);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(port == active_charge_port);
 	TEST_ASSERT(active_charge_limit == 500);
 
 	/* Raise the ceiling to 2A, verify limit goes back to 1A */
-	charge_manager_set_ceil(port, 2000);
+	charge_manager_set_ceil(port, 0, 2000);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(port == active_charge_port);
 	TEST_ASSERT(active_charge_limit == 1000);
@@ -263,10 +264,34 @@ static int test_charge_ceil(void)
 	charge_manager_update_charge(0, 0, &charge);
 	charge.current = 2500;
 	charge_manager_update_charge(0, 1, &charge);
-	charge_manager_set_ceil(1, 750);
+	charge_manager_set_ceil(1, 0, 750);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port == 1);
 	TEST_ASSERT(active_charge_limit == 750);
+
+	/* Set a secondary lower ceiling and verify it takes effect */
+	charge_manager_set_ceil(1, 1, 500);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 500);
+
+	/* Raise the secondary ceiling and verify the primary takes effect */
+	charge_manager_set_ceil(1, 1, 800);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 750);
+
+	/* Remove the primary celing and verify the secondary takes effect */
+	charge_manager_set_ceil(1, 0, CHARGE_CEIL_NONE);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 800);
+
+	/* Remove all ceilings */
+	charge_manager_set_ceil(1, 1, CHARGE_CEIL_NONE);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 2500);
 
 	return EC_SUCCESS;
 }
@@ -293,7 +318,7 @@ static int test_new_power_request(void)
 	clear_new_power_requests();
 
 	/* Reduce port 1 through ceil and verify no NPR */
-	charge_manager_set_ceil(1, 500);
+	charge_manager_set_ceil(1, 0, 500);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(new_power_request[0] == 0);
 	TEST_ASSERT(new_power_request[1] == 0);

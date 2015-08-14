@@ -51,8 +51,21 @@ enum dualrole_capabilities {
 /* Called by charging tasks to indicate partner dualrole capability change */
 void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap);
 
-/* Update charge ceiling for a given port */
-void charge_manager_set_ceil(int port, int ceil);
+/*
+ * Charge ceiling can be set independently by different tasks / functions,
+ * for different purposes.
+ */
+enum ceil_requestor {
+	/* Set by PD task, during negotiation */
+	CEIL_REQUESTOR_PD,
+	/* Set by host commands */
+	CEIL_REQUESTOR_HOST,
+	/* Number of ceiling groups */
+	CEIL_REQUESTOR_COUNT,
+};
+
+/* Update charge ceiling for a given port / requestor */
+void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil);
 
 /* Select an 'override port', which is always the preferred charge port */
 int charge_manager_set_override(int port);

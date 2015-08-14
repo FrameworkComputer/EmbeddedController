@@ -45,10 +45,12 @@ static struct charge_port_info available_charge[CHARGE_SUPPLIER_COUNT]
 static timestamp_t registration_time[CONFIG_USB_PD_PORT_COUNT];
 
 /*
- * Charge ceiling for ports. This can be set to temporarily limit the charge
- * pulled from a port, without influencing the port selection logic.
+ * Charge current ceiling (mA) for ports. This can be set to temporarily limit
+ * the charge pulled from a port, without influencing the port selection logic.
+ * The ceiling can be set independently from several requestors, with the
+ * minimum ceiling taking effect.
  */
-static int charge_ceil[CONFIG_USB_PD_PORT_COUNT];
+static int charge_ceil[CONFIG_USB_PD_PORT_COUNT][CEIL_REQUESTOR_COUNT];
 
 /* Dual-role capability of attached partner port */
 static enum dualrole_capabilities dualrole_capability[CONFIG_USB_PD_PORT_COUNT];
@@ -105,7 +107,8 @@ static void charge_manager_init(void)
 			available_charge[j][i].voltage =
 				CHARGE_VOLTAGE_UNINITIALIZED;
 		}
-		charge_ceil[i] = CHARGE_CEIL_NONE;
+		for (j = 0; j < CEIL_REQUESTOR_COUNT; ++j)
+			charge_ceil[i][j] = CHARGE_CEIL_NONE;
 		dualrole_capability[i] = spoof_capability ? CAP_DEDICATED :
 							    CAP_UNKNOWN;
 	}
@@ -317,6 +320,29 @@ static void charge_manager_cleanup_override_port(int port)
 }
 
 /**
+ * Return the computed charge ceiling for a port, which represents the
+ * minimum ceiling among all valid requestors.
+ *
+ * @param port	Charge port.
+ * @return	Charge ceiling (mA) or CHARGE_CEIL_NONE.
+ */
+static int charge_manager_get_ceil(int port)
+{
+	int ceil = CHARGE_CEIL_NONE;
+	int val, i;
+
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+	for (i = 0; i < CEIL_REQUESTOR_COUNT; ++i) {
+		val = charge_ceil[port][i];
+		if (val != CHARGE_CEIL_NONE &&
+		    (ceil == CHARGE_CEIL_NONE || val < ceil))
+			ceil = val;
+	}
+
+	return ceil;
+}
+
+/**
  * Select the 'best' charge port, as defined by the supplier heirarchy and the
  * ability of the port to provide power.
  */
@@ -411,6 +437,7 @@ static void charge_manager_refresh(void)
 	int new_charge_voltage, i;
 	int updated_new_port = CHARGE_PORT_NONE;
 	int updated_old_port = CHARGE_PORT_NONE;
+	int ceil;
 
 	/* Hunt for an acceptable charge port */
 	while (1) {
@@ -467,8 +494,9 @@ static void charge_manager_refresh(void)
 						 new_charge_current_uncapped);
 #endif /* CONFIG_CHARGE_RAMP_HW */
 		/* Enforce port charge ceiling. */
-		if (charge_ceil[new_port] != CHARGE_CEIL_NONE)
-			new_charge_current = MIN(charge_ceil[new_port],
+		ceil = charge_manager_get_ceil(new_port);
+		if (ceil != CHARGE_CEIL_NONE)
+			new_charge_current = MIN(ceil,
 						 new_charge_current_uncapped);
 		else
 			new_charge_current = new_charge_current_uncapped;
@@ -677,17 +705,20 @@ void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 }
 
 /**
- * Update charge ceiling for a given port.
+ * Update charge ceiling for a given port. The ceiling can be set independently
+ * for several requestors, and the min. ceil will be enforced.
  *
  * @param port			Charge port to update.
+ * @param requestor		Charge ceiling requestor.
  * @param ceil			Charge ceiling (mA).
  */
-void charge_manager_set_ceil(int port, int ceil)
+void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 {
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT &&
+	       requestor >= 0 && requestor < CEIL_REQUESTOR_COUNT);
 
-	if (charge_ceil[port] != ceil) {
-		charge_ceil[port] = ceil;
+	if (charge_ceil[port][requestor] != ceil) {
+		charge_ceil[port][requestor] = ceil;
 		if (port == charge_port && charge_manager_is_seeded())
 				hook_call_deferred(charge_manager_refresh, 0);
 	}

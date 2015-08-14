@@ -265,7 +265,9 @@ static inline void set_state(int port, enum pd_states next_state)
 		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
 		typec_set_input_current_limit(port, 0, 0);
-		charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
+		charge_manager_set_ceil(port,
+					CEIL_REQUESTOR_PD,
+					CHARGE_CEIL_NONE);
 #endif
 #ifdef CONFIG_USBC_VCONN
 		tcpm_set_vconn(port, 0);
@@ -505,7 +507,9 @@ void pd_execute_hard_reset(int port)
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
-		charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
+		charge_manager_set_ceil(port,
+					CEIL_REQUESTOR_PD,
+					CHARGE_CEIL_NONE);
 #endif /* CONFIG_CHARGE_MANAGER */
 
 		set_state(port, PD_STATE_SNK_HARD_RESET_RECOVER);
@@ -870,7 +874,9 @@ static void handle_ctrl_request(int port, uint16_t head,
 			set_state(port, PD_STATE_SNK_READY);
 #ifdef CONFIG_CHARGE_MANAGER
 			/* Set ceiling based on what's negotiated */
-			charge_manager_set_ceil(port, pd[port].curr_limit);
+			charge_manager_set_ceil(port,
+						CEIL_REQUESTOR_PD,
+						pd[port].curr_limit);
 #else
 			pd_set_input_current_limit(port, pd[port].curr_limit,
 						   pd[port].supply_voltage);
@@ -2211,7 +2217,9 @@ void pd_task(void)
 			pd_set_input_current_limit(port, 0, 0);
 #ifdef CONFIG_CHARGE_MANAGER
 			typec_set_input_current_limit(port, 0, 0);
-			charge_manager_set_ceil(port, CHARGE_CEIL_NONE);
+			charge_manager_set_ceil(port,
+						CEIL_REQUESTOR_PD,
+						CHARGE_CEIL_NONE);
 #endif
 			set_state(port, PD_STATE_SNK_SWAP_SRC_DISABLE);
 			timeout = 10*MSEC;
