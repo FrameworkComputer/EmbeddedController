@@ -124,13 +124,13 @@ static int req_header_looks_good(const struct ec_host_request *req)
 }
 
 /* RX FIFO handler (runs in interrupt context) */
-static void hc_rx_handler(uint8_t *data, size_t data_size, int cs_enabled)
+static void hc_rx_handler(uint8_t *data, size_t data_size, int cs_disabled)
 {
 	struct ec_host_request *req = (struct ec_host_request *)rxbuf;
 	static struct host_packet rx_packet;
 	size_t i;
 
-	if (!cs_enabled) {
+	if (cs_disabled) {
 		if (state == SPI_STATE_PROCESSING) {
 			/*
 			 * A task is preparing a response, but the master has

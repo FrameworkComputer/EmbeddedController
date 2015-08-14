@@ -602,7 +602,7 @@ int main(int argc, char *argv[])
 		stop = (uint16_t)strtoul(argv[optind++], 0, 0);
 
 	/* Find something to talk to */
-	mpsse = MPSSE(SPI0, 2000000, 0);
+	mpsse = MPSSE(SPI0, 1000000, 0);
 	if (!mpsse) {
 		printf("Can't find a device to open\n");
 		return 1;
