@@ -12,4 +12,4 @@ CROSS_COMPILE?=nds32le-cros-elf-
 # CPU specific compilation flags
 CFLAGS_CPU+=-march=v3m -Os
 
-core-y=cpu.o init.o panic.o task.o switch.o
+core-y=cpu.o init.o panic.o task.o switch.o __muldi3.o
