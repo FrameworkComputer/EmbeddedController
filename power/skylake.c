@@ -100,7 +100,7 @@ void chipset_reset(int cold_reset)
 	}
 }
 
-void chipset_thottle_cpu(int throttle)
+void chipset_throttle_cpu(int throttle)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
@@ -192,11 +192,6 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks to initialize PMIC */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
-			chipset_force_shutdown();
-			return POWER_G3;
-		}
-
 #ifndef BOARD_KUNIMITSU
 		/*
 		 * Allow up to 1s for charger to be initialized, in case
@@ -216,10 +211,24 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		/* Allow AP to power on */
-		gpio_set_level(GPIO_PMIC_SLP_SUS_L, 1);
 		gpio_set_level(GPIO_PCH_BATLOW_L, 1);
+
+		/* Assert wake pin to PCH to wake from Deep S5 */
+		if (gpio_get_level(GPIO_PCH_WAKE_L) == 1) {
+			gpio_set_level(GPIO_PCH_WAKE_L, 0);
+			udelay(65);
+			gpio_set_level(GPIO_PCH_WAKE_L, 1);
+		}
 #endif
 
+		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
+			chipset_force_shutdown();
+			return POWER_G3;
+		}
+
+#ifndef BOARD_KUNIMITSU
+		gpio_set_level(GPIO_PMIC_SLP_SUS_L, 1);
+#endif
 		return POWER_S5;
 
 	case POWER_S5S3:
