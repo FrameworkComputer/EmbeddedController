@@ -99,6 +99,18 @@ enum tpm_sts_bits {
 	response_retry = (1 << 1),
 };
 
+static void set_tpm_state(enum tpm_states state)
+{
+	CPRINTF("state transition from %d to %d\n", tpm_.state, state);
+	tpm_.state = state;
+
+	if (state == tpm_state_idle) {
+		/* Make sure FIFO is empty. */
+		tpm_.fifo_read_index = 0;
+		tpm_.fifo_write_index = 0;
+	}
+}
+
 /*
  * Some TPM registers allow writing of only exactly one bit. This helper
  * function allows to verify that a value is compliant with this
@@ -160,9 +172,7 @@ static void access_reg_write(uint8_t data)
 		}
 		tpm_.regs.access &= ~active_locality;
 		/* No matter what we do, fall into idle state. */
-		tpm_.state = tpm_state_idle;
-		tpm_.fifo_read_index = 0;
-		tpm_.fifo_write_index = 0;
+		set_tpm_state(tpm_state_idle);
 		break;
 
 	default:
@@ -180,7 +190,7 @@ static void sts_reg_write_cr(void)
 {
 	switch (tpm_.state) {
 	case tpm_state_idle:
-		tpm_.state = tpm_state_ready;
+		set_tpm_state(tpm_state_ready);
 		tpm_.regs.sts |= command_ready;
 		break;
 	case tpm_state_ready:
@@ -189,7 +199,7 @@ static void sts_reg_write_cr(void)
 	case tpm_state_completing_cmd:
 	case tpm_state_executing_cmd:
 	case tpm_state_receiving_cmd:
-		tpm_.state = tpm_state_idle;
+		set_tpm_state(tpm_state_idle);
 		tpm_.regs.sts &= ~command_ready;
 		break;
 	}
@@ -206,7 +216,7 @@ static void sts_reg_write_tg(void)
 	case tpm_state_receiving_cmd:
 		if (!(tpm_.state & expect)) {
 			/* This should trigger actual command execution. */
-			tpm_.state = tpm_state_executing_cmd;
+			set_tpm_state(tpm_state_executing_cmd);
 			task_set_event(TASK_ID_TPM, TASK_EVENT_WAKE, 0);
 		}
 		break;
@@ -284,7 +294,7 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 	 * access.
 	 */
 	if ((tpm_.state == tpm_state_ready) && (tpm_.fifo_write_index == 0))
-		tpm_.state = tpm_state_receiving_cmd;
+		set_tpm_state(tpm_state_receiving_cmd);
 
 	if (tpm_.state != tpm_state_receiving_cmd) {
 		CPRINTF("%s: ignoring data in state %d\n",
@@ -296,7 +306,7 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 		CPRINTF("%s: receive buffer overflow: %d in addition to %d\n",
 			__func__, data_size, tpm_.fifo_write_index);
 		tpm_.fifo_write_index = 0;
-		tpm_.state = tpm_state_ready;
+		set_tpm_state(tpm_state_ready);
 		return;
 	}
 
@@ -325,6 +335,11 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 {
 	uint32_t i;
+	uint32_t idata;
+
+	memcpy(&idata, data, 4);
+	CPRINTF("%s(0x%06x, %d %x)\n", __func__, regaddr, data_size, idata);
+
 	switch (regaddr) {
 	case TPM_ACCESS:
 		/* This is a one byte register, ignore extra data, if any */
@@ -346,8 +361,24 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 
 }
 
+void fifo_reg_read(uint8_t *dest, uint32_t data_size)
+{
+	uint32_t still_in_fifo = tpm_.fifo_write_index -
+		tpm_.fifo_read_index;
+
+	data_size = MIN(data_size, still_in_fifo);
+	memcpy(dest,
+	       tpm_.regs.data_fifo + tpm_.fifo_read_index,
+	       data_size);
+
+	tpm_.fifo_read_index += data_size;
+	if (tpm_.fifo_write_index == tpm_.fifo_read_index)
+		tpm_.regs.sts &= ~(data_avail | command_ready);
+}
+
 void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 {
+	CPRINTF("%s(0x%06x, %d)", __func__, regaddr, data_size);
 	switch (regaddr) {
 	case TPM_DID_VID:
 		copy_bytes(dest, data_size, (GOOGLE_DID << 16) | GOOGLE_VID);
@@ -362,18 +393,23 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 		copy_bytes(dest, data_size, tpm_.regs.access);
 		break;
 	case TPM_STS:
+		CPRINTF(" %x", tpm_.regs.sts);
 		copy_bytes(dest, data_size, tpm_.regs.sts);
+		break;
+	case TPM_DATA_FIFO:
+		fifo_reg_read(dest, data_size);
 		break;
 	default:
 		CPRINTS("%s(0x%06x, %d) => ??", __func__, regaddr, data_size);
 		return;
 	}
+	CPRINTF("\n");
 }
 
 
 static void tpm_init(void)
 {
-	tpm_.state = tpm_state_idle;
+	set_tpm_state(tpm_state_idle);
 	tpm_.regs.access = tpm_reg_valid_sts;
 	tpm_.regs.sts = (tpm_family_tpm2 << tpm_family_shift) |
 		(64 << burst_count_shift) | sts_valid;
@@ -401,5 +437,14 @@ void tpm_task(void)
 			       tpm_.regs.data_fifo,
 			       &response_size,
 			       &response);
+		CPRINTF("got %d bytes in response\n", response_size);
+		if (response_size &&
+		    (response_size <= sizeof(tpm_.regs.data_fifo))) {
+			memcpy(tpm_.regs.data_fifo, response, response_size);
+			tpm_.fifo_read_index = 0;
+			tpm_.fifo_write_index = response_size;
+			tpm_.regs.sts |= data_avail;
+			set_tpm_state(tpm_state_completing_cmd);
+		}
 	}
 }
