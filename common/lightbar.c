@@ -133,6 +133,12 @@ static const struct lightbar_params_v1 default_params = {
 	},
 	.s5_idx = 5,			       /* flash red */
 	.color = {
+#if defined(BOARD_RYU)
+		{0x22, 0x17, 0x3b},		/* Segment0: Google blue */
+		{0x3e, 0x10, 0x0c},		/* Segment1: Google red */
+		{0x48, 0x3a, 0x0c},		/* Segment2: Google yellow */
+		{0x1e, 0x2c, 0x1c},		/* Segment3: Google green */
+#else
 		/*
 		 * These values have been optically calibrated for the
 		 * Samus LEDs to best match the official colors, described at
@@ -143,6 +149,7 @@ static const struct lightbar_params_v1 default_params = {
 		{0xbc, 0x50, 0x2c},		/* 1: Google red */
 		{0xd0, 0xe0, 0x00},		/* 2: Google yellow */
 		{0x50, 0xa0, 0x40},		/* 3: Google green */
+#endif
 		/* These are primary colors */
 		{0x00, 0x00, 0xff},		/* 4: full blue */
 		{0xff, 0x00, 0x00},		/* 5: full red */
