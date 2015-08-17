@@ -34,7 +34,7 @@ static int rw_flash_changed = 1;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 /* Cap on the max voltage requested as a sink (in millivolts) */
-static unsigned max_request_mv = -1; /* no cap */
+static unsigned max_request_mv = PD_MAX_VOLTAGE_MV; /* no cap */
 
 /**
  * Find PDO index that offers the most amount of power and stays within
@@ -52,10 +52,6 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 #ifdef PD_PREFER_LOW_VOLTAGE
 	int cur_mv;
 #endif
-
-	/* max_mv of -1 represents max limit */
-	if (max_mv == -1)
-		max_mv = PD_MAX_VOLTAGE_MV;
 
 	/* max voltage is always limited by this boards max request */
 	max_mv = MIN(max_mv, PD_MAX_VOLTAGE_MV);
@@ -155,7 +151,7 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 	int pdo_index;
 
 	/* Get max power info that we could request */
-	pdo_index = pd_find_pdo_index(cnt, src_caps, -1);
+	pdo_index = pd_find_pdo_index(cnt, src_caps, PD_MAX_VOLTAGE_MV);
 	if (pdo_index < 0)
 		pdo_index = 0;
 	pd_extract_pdo_power(src_caps[pdo_index], &ma, &mv);

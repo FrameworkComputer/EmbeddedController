@@ -247,6 +247,9 @@
 /* Compile charge manager */
 #undef CONFIG_CHARGE_MANAGER
 
+/* Handle the external power limit host command in charge manager */
+#undef CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
+
 /* Compile input current ramping support */
 #undef CONFIG_CHARGE_RAMP
 

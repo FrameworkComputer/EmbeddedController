@@ -43,8 +43,6 @@ static struct option long_opts[] = {
 
 const char help_str[] =
 	"Commands:\n"
-	"  extpwrcurrentlimit\n"
-	"      Set the maximum external power current\n"
 	"  autofanctrl <on>\n"
 	"      Turn on automatic fan speed control.\n"
 	"  backlight <enabled>\n"
@@ -93,6 +91,8 @@ const char help_str[] =
 	"      Sets the SMI mask for EC host events\n"
 	"  eventsetwakemask <mask>\n"
 	"      Sets the wake mask for EC host events\n"
+	"  extpwrlimit\n"
+	"      Set the maximum external power limit\n"
 	"  fanduty <percent>\n"
 	"      Forces the fan PWM to a constant duty cycle\n"
 	"  flasherase <offset> <size>\n"
@@ -4829,26 +4829,34 @@ int cmd_lcd_backlight(int argc, char *argv[])
 }
 
 
-int cmd_ext_power_current_limit(int argc, char *argv[])
+int cmd_ext_power_limit(int argc, char *argv[])
 {
-	struct ec_params_ext_power_current_limit p;
-	int rv;
+	/* Version 1 is used, no support for obsolete version 0 */
+	struct ec_params_external_power_limit_v1 p;
 	char *e;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <max_current_mA>\n", argv[0]);
+	if (argc != 3) {
+		fprintf(stderr,
+			"Usage: %s <max_current_mA> <max_voltage_mV>\n",
+			argv[0]);
 		return -1;
 	}
 
-	p.limit = strtol(argv[1], &e, 0);
+	p.current_lim = strtol(argv[1], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad value.\n");
+		fprintf(stderr, "Bad param1.\n");
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_EXT_POWER_CURRENT_LIMIT, 0, &p, sizeof(p),
-			NULL, 0);
-	return rv;
+	p.voltage_lim = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad param2.\n");
+		return -1;
+	}
+
+	/* Send version 1 of command */
+	return ec_command(EC_CMD_EXTERNAL_POWER_LIMIT, 1, &p, sizeof(p),
+			  NULL, 0);
 }
 
 
@@ -6315,7 +6323,6 @@ int cmd_pd_write_log(int argc, char *argv[])
 
 /* NULL-terminated list of commands */
 const struct command commands[] = {
-	{"extpwrcurrentlimit", cmd_ext_power_current_limit},
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},
 	{"battery", cmd_battery},
@@ -6340,6 +6347,7 @@ const struct command commands[] = {
 	{"eventsetscimask", cmd_host_event_set_sci_mask},
 	{"eventsetsmimask", cmd_host_event_set_smi_mask},
 	{"eventsetwakemask", cmd_host_event_set_wake_mask},
+	{"extpwrlimit", cmd_ext_power_limit},
 	{"fanduty", cmd_fanduty},
 	{"flasherase", cmd_flash_erase},
 	{"flashprotect", cmd_flash_protect},

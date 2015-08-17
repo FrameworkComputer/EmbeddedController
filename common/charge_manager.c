@@ -855,3 +855,76 @@ DECLARE_CONSOLE_COMMAND(chgoverride, command_charge_port_override,
 	"[port | -1 | -2]",
 	"Force charging from a given port (-1 = off, -2 = disable charging)",
 	NULL);
+
+#ifdef CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
+static void charge_manager_set_external_power_limit(int current_lim,
+						    int voltage_lim)
+{
+	int port;
+
+	if (current_lim == EC_POWER_LIMIT_NONE)
+		current_lim = CHARGE_CEIL_NONE;
+	if (voltage_lim == EC_POWER_LIMIT_NONE)
+		voltage_lim = PD_MAX_VOLTAGE_MV;
+
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; ++port) {
+		charge_manager_set_ceil(port, CEIL_REQUESTOR_HOST, current_lim);
+		pd_set_external_voltage_limit(port, voltage_lim);
+	}
+}
+
+/*
+ * On transition out of S0, disable all external power limits, in case AP
+ * failed to clear them.
+ */
+static void charge_manager_external_power_limit_off(void)
+{
+	charge_manager_set_external_power_limit(EC_POWER_LIMIT_NONE,
+						EC_POWER_LIMIT_NONE);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, charge_manager_external_power_limit_off,
+	     HOOK_PRIO_DEFAULT);
+
+static int hc_external_power_limit(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_external_power_limit_v1 *p = args->params;
+
+	charge_manager_set_external_power_limit(p->current_lim,
+						p->voltage_lim);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_EXTERNAL_POWER_LIMIT,
+		     hc_external_power_limit,
+		     EC_VER_MASK(1));
+
+static int command_external_power_limit(int argc, char **argv)
+{
+	int max_current;
+	int max_voltage;
+	char *e;
+
+	if (argc >= 2) {
+		max_current = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	} else
+		max_current = EC_POWER_LIMIT_NONE;
+
+	if (argc >= 3) {
+		max_voltage = strtoi(argv[2], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	} else
+		max_voltage = EC_POWER_LIMIT_NONE;
+
+	charge_manager_set_external_power_limit(max_current, max_voltage);
+	ccprintf("max req: %dmA %dmV\n", max_current, max_voltage);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(chglim, command_external_power_limit,
+	"[max_current (mA)] [max_voltage (mV)]",
+	"Set max charger current / voltage",
+	NULL);
+#endif /* CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT */

@@ -947,6 +947,15 @@ int pd_set_power_supply_ready(int port);
 void pd_request_source_voltage(int port, int mv);
 
 /**
+ * Set a voltage limit from the PD source.
+ *
+ * If the source is currently active, it triggers a new negotiation.
+ * @param port USB-C port number
+ * @param mv limit voltage in millivolts.
+ */
+void pd_set_external_voltage_limit(int port, int mv);
+
+/**
  * Set the PD input current limit.
  *
  * @param port USB-C port number
