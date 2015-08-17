@@ -40,10 +40,7 @@ static int accel_init(const struct motion_sensor_t *s)
 
 static int accel_read(const struct motion_sensor_t *s, vector_3_t v)
 {
-	if (*s->rot_standard_ref != NULL)
-		rotate(s->xyz, *s->rot_standard_ref, v);
-	else if (s->xyz != v)
-		memcpy(v, s->xyz, sizeof(v));
+	rotate(s->xyz, *s->rot_standard_ref, v);
 	return EC_SUCCESS;
 }
 

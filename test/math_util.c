@@ -45,11 +45,45 @@ static int test_acos(void)
 	return EC_SUCCESS;
 }
 
+
+const matrix_3x3_t test_matrices[] = {
+	{{ 0, FLOAT_TO_FP(-1), 0},
+	 {FLOAT_TO_FP(-1), 0, 0},
+	 { 0, 0, FLOAT_TO_FP(1)} },
+	{{ FLOAT_TO_FP(1), 0, FLOAT_TO_FP(5)},
+	 { FLOAT_TO_FP(2), FLOAT_TO_FP(1), FLOAT_TO_FP(6)},
+	 { FLOAT_TO_FP(3), FLOAT_TO_FP(4), 0} }
+};
+
+
+static int test_rotate(void)
+{
+	int i, j, k;
+	vector_3_t v = {1, 2, 3};
+	vector_3_t w;
+
+	for (i = 0; i < ARRAY_SIZE(test_matrices); i++) {
+		for (j = 0; j < 100; j += 10) {
+			for (k = X; k <= Z; k++) {
+				v[k] += j;
+				v[k] %= 7;
+			}
+
+			rotate(v, test_matrices[i], w);
+			rotate_inv(w, test_matrices[i], w);
+			for (k = X; k <= Z; k++)
+				TEST_ASSERT(v[k] == w[k]);
+		}
+	}
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
 
 	RUN_TEST(test_acos);
+	RUN_TEST(test_rotate);
 
 	test_print_result();
 }

@@ -166,6 +166,13 @@ void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 {
 	int64_t t[3];
 
+	if (R == NULL) {
+		if (v != res)
+			memcpy(res, v, sizeof(*v));
+		return;
+	}
+
+
 	/* Rotate */
 	t[0] =	(int64_t)v[0] * R[0][0] +
 		(int64_t)v[1] * R[1][0] +
@@ -181,4 +188,54 @@ void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 	res[0] = t[0] >> FP_BITS;
 	res[1] = t[1] >> FP_BITS;
 	res[2] = t[2] >> FP_BITS;
+}
+
+void rotate_inv(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
+{
+	int64_t t[3];
+	fp_t deter;
+
+	if (R == NULL) {
+		if (v != res)
+			memcpy(res, v, sizeof(*v));
+		return;
+	}
+
+	deter = fp_mul(R[0][0], (fp_mul(R[1][1], R[2][2]) -
+				 fp_mul(R[2][1], R[1][2]))) -
+		fp_mul(R[0][1], (fp_mul(R[1][0], R[2][2]) -
+				 fp_mul(R[1][2], R[2][0]))) +
+		fp_mul(R[0][2], (fp_mul(R[1][0], R[2][1]) -
+				 fp_mul(R[1][1], R[2][0])));
+
+	/*
+	 * invert the matrix: from
+	 * http://stackoverflow.com/questions/983999/
+	 * simple-3x3-matrix-inverse-code-c
+	 */
+	t[0] =  (int64_t)v[0] * (fp_mul(R[1][1], R[2][2]) -
+				 fp_mul(R[2][1], R[1][2])) -
+		(int64_t)v[1] * (fp_mul(R[1][0], R[2][2]) -
+				 fp_mul(R[1][2], R[2][0])) +
+		(int64_t)v[2] * (fp_mul(R[1][0], R[2][1]) -
+				 fp_mul(R[2][0], R[1][1]));
+
+	t[1] =	(int64_t)v[0] * (fp_mul(R[0][1], R[2][2]) -
+				 fp_mul(R[0][2], R[2][1])) * -1 +
+		(int64_t)v[1] * (fp_mul(R[0][0], R[2][2]) -
+				 fp_mul(R[0][2], R[2][0])) -
+		(int64_t)v[2] * (fp_mul(R[0][0], R[2][1]) -
+				 fp_mul(R[2][0], R[0][1]));
+
+	t[2] =	(int64_t)v[0] * (fp_mul(R[0][1], R[1][2]) -
+				 fp_mul(R[0][2], R[1][1])) -
+		(int64_t)v[1] * (fp_mul(R[0][0], R[1][2]) -
+				 fp_mul(R[1][0], R[0][2])) +
+		(int64_t)v[2] * (fp_mul(R[0][0], R[1][1]) -
+				 fp_mul(R[1][0], R[0][1]));
+
+	/* Scale by fixed point shift when writing back to result */
+	res[0] = fp_div(t[0], deter) >> FP_BITS;
+	res[1] = fp_div(t[1], deter) >> FP_BITS;
+	res[2] = fp_div(t[2], deter) >> FP_BITS;
 }
