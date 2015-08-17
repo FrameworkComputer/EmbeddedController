@@ -8,9 +8,7 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-#undef CONFIG_BOARD_OAK_REV_1
-#define CONFIG_BOARD_OAK_REV_2
-#undef CONFIG_BOARD_OAK_REV_3
+#include "board_revs.h"
 
 /*
  * The flash size is only 32kB.

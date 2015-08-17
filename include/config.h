@@ -214,12 +214,6 @@
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
 
-/******************************************************************************/
-/* Oak Board Revisions */
-#undef CONFIG_BOARD_OAK_REV_1
-#undef CONFIG_BOARD_OAK_REV_2
-#undef CONFIG_BOARD_OAK_REV_3
-
 /*****************************************************************************/
 /* Modify the default behavior to make system bringup easier. */
 #undef CONFIG_BRINGUP

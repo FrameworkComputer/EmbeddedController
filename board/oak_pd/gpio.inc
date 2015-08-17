@@ -42,7 +42,7 @@ GPIO(USB_C1_CC2_ODL,         PIN(A, 8),  GPIO_ODR_LOW)
 GPIO(SLAVE_I2C_SCL,          PIN(B, 6),  GPIO_INPUT)
 GPIO(SLAVE_I2C_SDA,          PIN(B, 7),  GPIO_INPUT)
 
-#ifdef CONFIG_OAK_BOARD_REV_1
+#if BOARD_REV == OAK_REV1
 GPIO(EC_INT,                 PIN(A, 14), GPIO_OUT_HIGH)
 #else
 GPIO(EC_INT,                 PIN(B, 5),  GPIO_OUT_HIGH)

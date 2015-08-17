@@ -250,7 +250,7 @@ void board_typec_dp_on(int port)
 	if (dp_hw_port != !port) {
 		/* Get control of DP hardware */
 		dp_hw_port = port;
-#ifdef CONFIG_BOARD_OAK_REV_2
+#if BOARD_REV == OAK_REV2
 		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
 #endif
 		if (!gpio_get_level(GPIO_USB_DP_HPD)) {
@@ -295,7 +295,7 @@ void board_typec_dp_set(int port, int level)
 
 	if (dp_hw_port == PD_PORT_NONE) {
 		dp_hw_port = port;
-#ifdef CONFIG_BOARD_OAK_REV_2
+#if BOARD_REV == OAK_REV2
 		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
 #endif
 	}

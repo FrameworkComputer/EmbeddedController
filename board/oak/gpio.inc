@@ -46,7 +46,7 @@ GPIO(EC_INT,            PIN(B, 9),  GPIO_OUT_HIGH)
 GPIO(ENTERING_RW,       PIN(F, 0),  GPIO_OUT_LOW)
 
 
-#ifdef CONFIG_BOARD_OAK_REV_1
+#if BOARD_REV == OAK_REV1
 GPIO(AP_RESET_L,        PIN(C, 3),  GPIO_INPUT|GPIO_PULL_UP) /* AP reset signal from servo board */
 GPIO(USB_C_BC12_SEL,    PIN(A, 14), GPIO_OUT_LOW)
 GPIO(KB_OUT00,          PIN(B, 0),  GPIO_KB_OUTPUT)
@@ -62,7 +62,8 @@ GPIO(KB_OUT09,          PIN(B, 1),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT10,          PIN(C, 5),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT11,          PIN(C, 4),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT12,          PIN(A, 13), GPIO_KB_OUTPUT)
-#elif defined(CONFIG_BOARD_OAK_REV_2)
+
+#elif BOARD_REV == OAK_REV2
 GPIO(AP_RESET_L,        PIN(C, 3),  GPIO_INPUT|GPIO_PULL_UP) /* AP reset signal from servo board */
 GPIO(USB_C_BC12_SEL,    PIN(D, 7),  GPIO_OUT_LOW)
 GPIO(KB_OUT00,          PIN(B, 0),  GPIO_KB_OUTPUT)
@@ -80,7 +81,8 @@ GPIO(KB_OUT11,          PIN(C, 4),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT12,          PIN(D, 5),  GPIO_KB_OUTPUT)
 GPIO(DP_MUX_EN_L,       PIN(E, 6),  GPIO_OUT_LOW)
 GPIO(DP_SWITCH_CTL,     PIN(E, 5),  GPIO_OUT_LOW)
-#else /* BOARD_OAK_REV_3 or later */
+
+#else /* BOARD_REV >= 3 */
 GPIO(AP_RESET_L,        PIN(C, 3),  GPIO_ODR_HIGH) /* Connect to the PMU_SYSRSTB */
 GPIO(USB_C_BC12_SEL,    PIN(D, 7),  GPIO_OUT_LOW)
 GPIO(KB_OUT00,          PIN(B, 0),  GPIO_KB_OUTPUT)
@@ -96,7 +98,7 @@ GPIO(KB_OUT09,          PIN(B, 1),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT10,          PIN(C, 5),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT11,          PIN(C, 4),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT12,          PIN(C, 2),  GPIO_KB_OUTPUT)
-#endif
+#endif /* BOARD_REV */
 
 GPIO(SYSTEM_POWER_H,    PIN(B, 10), GPIO_OUT_LOW)
 GPIO(PMIC_PWRON_H,      PIN(A, 12), GPIO_OUT_LOW)
