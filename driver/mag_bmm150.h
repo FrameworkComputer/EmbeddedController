@@ -103,11 +103,9 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 		      uint8_t *data);
 
 int bmm150_set_offset(const struct motion_sensor_t *s,
-		      const int16_t *offset,
-		      int16_t    temp);
+		      const vector_3_t offset);
 
 int bmm150_get_offset(const struct motion_sensor_t *s,
-		      int16_t   *offset,
-		      int16_t    *temp);
+		      vector_3_t   offset);
 
 #endif /* __CROS_EC_MAG_BMM150_H */

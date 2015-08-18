@@ -455,6 +455,8 @@ static int get_offset(const struct motion_sensor_t *s,
 			int16_t    *temp)
 {
 	int i, val, val98;
+	vector_3_t v;
+
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		/*
@@ -466,7 +468,7 @@ static int get_offset(const struct motion_sensor_t *s,
 			raw_read8(s->addr, BMI160_OFFSET_ACC70 + i, &val);
 			if (val > 0x7f)
 				val = -256 + val;
-			offset[i] = val * BMI160_OFFSET_ACC_MULTI_MG /
+			v[i] = val * BMI160_OFFSET_ACC_MULTI_MG /
 				BMI160_OFFSET_ACC_DIV_MG;
 		}
 		break;
@@ -484,16 +486,21 @@ static int get_offset(const struct motion_sensor_t *s,
 			val |= ((val98 >> (2 * i)) & 0x3) << 8;
 			if (val > 0x1ff)
 				val = -1024 + val;
-			offset[i] = val * BMI160_OFFSET_GYRO_MULTI_MDS /
+			v[i] = val * BMI160_OFFSET_GYRO_MULTI_MDS /
 				BMI160_OFFSET_GYRO_DIV_MDS;
 		}
 		break;
 	case MOTIONSENSE_TYPE_MAG:
-		return bmm150_get_offset(s, offset, temp);
+		bmm150_get_offset(s, v);
+		break;
 	default:
 		for (i = X; i <= Z; i++)
-			offset[i] = 0;
+			v[i] = 0;
 	}
+	rotate(v, *s->rot_standard_ref, v);
+	offset[X] = v[X];
+	offset[Y] = v[Y];
+	offset[Z] = v[Z];
 	/* Saving temperature at calibration not supported yet */
 	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 	return EC_SUCCESS;
@@ -504,6 +511,10 @@ static int set_offset(const struct motion_sensor_t *s,
 			int16_t    temp)
 {
 	int ret, i, val, val98;
+	vector_3_t v = { offset[X], offset[Y], offset[Z] };
+
+	rotate_inv(v, *s->rot_standard_ref, v);
+
 	ret = raw_read8(s->addr, BMI160_OFFSET_EN_GYR98, &val98);
 	if (ret != 0)
 		return ret;
@@ -511,7 +522,7 @@ static int set_offset(const struct motion_sensor_t *s,
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		for (i = X; i <= Z; i++) {
-			val = offset[i] * BMI160_OFFSET_ACC_DIV_MG /
+			val = v[i] * BMI160_OFFSET_ACC_DIV_MG /
 				BMI160_OFFSET_ACC_MULTI_MG;
 			if (val > 127)
 				val = 127;
@@ -526,7 +537,7 @@ static int set_offset(const struct motion_sensor_t *s,
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		for (i = X; i <= Z; i++) {
-			val = offset[i] * BMI160_OFFSET_GYRO_DIV_MDS /
+			val = v[i] * BMI160_OFFSET_GYRO_DIV_MDS /
 				BMI160_OFFSET_GYRO_MULTI_MDS;
 			if (val > 511)
 				val = 511;
@@ -543,7 +554,7 @@ static int set_offset(const struct motion_sensor_t *s,
 				 val98 | BMI160_OFFSET_GYRO_EN);
 		break;
 	case MOTIONSENSE_TYPE_MAG:
-		ret = bmm150_set_offset(s, offset, temp);
+		ret = bmm150_set_offset(s, v);
 		break;
 	default:
 		ret = EC_RES_INVALID_PARAM;
@@ -613,8 +624,7 @@ void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 		v[1] = ((int16_t)((data[3] << 8) | data[2]));
 		v[2] = ((int16_t)((data[5] << 8) | data[4]));
 	}
-	if (*s->rot_standard_ref != NULL)
-		rotate(v, *s->rot_standard_ref, v);
+	rotate(v, *s->rot_standard_ref, v);
 }
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
