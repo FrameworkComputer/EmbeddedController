@@ -37,6 +37,7 @@
 #include "temp_sensor_chip.h"
 #include "thermal.h"
 #include "timer.h"
+#include "uart.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
