@@ -95,7 +95,7 @@ GPIO(CHARGE_LED_1,        PIN(155), GPIO_OUT_LOW)
 GPIO(CHARGE_LED_2,        PIN(156), GPIO_OUT_LOW)
 
 /* Inhibit the AP from booting until we can supply enough current */
-GPIO(PCH_BATLOW_L,          PIN(55),  GPIO_OUT_LOW)
+GPIO(PCH_BATLOW_L,          PIN(55),  GPIO_ODR_HIGH)
 GPIO(ACCEL4_INT,            PIN(157), GPIO_INPUT)
 GPIO(PP1800_DX_AUDIO_EN,    PIN(141), GPIO_OUT_LOW)
 GPIO(TABLET_MODE,           PIN(160), GPIO_INPUT | GPIO_PULL_UP)
