@@ -26,19 +26,17 @@
 #endif
 
 /* Pull-up bit for I2C */
-#define NPCX_I2C_PUBIT(port, bus) \
-	((port*2) + bus)
+#define NPCX_I2C_PUBIT(controller, port) \
+	((controller*2) + port)
 
 /* Data abort timeout unit:ms*/
 #define I2C_ABORT_TIMEOUT 35
-/* Maximum time we allow for an I2C transfer (SMB stardard is 25 ms) */
-#define I2C_TIMEOUT_US  (100*MSEC)
 /* Marco functions of I2C */
-#define I2C_START(port) SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_START)
-#define I2C_STOP(port)  SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_STOP)
-#define I2C_NACK(port)  SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_ACK)
-#define I2C_WRITE_BYTE(port, data) (NPCX_SMBSDA(port) = data)
-#define I2C_READ_BYTE(port, data)  (data = NPCX_SMBSDA(port))
+#define I2C_START(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_START)
+#define I2C_STOP(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STOP)
+#define I2C_NACK(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_ACK)
+#define I2C_WRITE_BYTE(ctrl, data) (NPCX_SMBSDA(ctrl) = data)
+#define I2C_READ_BYTE(ctrl, data)  (data = NPCX_SMBSDA(ctrl))
 
 /* Error values that functions can return */
 enum smb_error {
@@ -73,11 +71,11 @@ enum smb_oper_state_t {
 
 
 /* IRQ for each port */
-static const uint32_t i2c_irqs[I2C_PORT_COUNT] = {
+static const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
 		NPCX_IRQ_SMB1, NPCX_IRQ_SMB2, NPCX_IRQ_SMB3, NPCX_IRQ_SMB4};
-BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_PORT_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_CONTROLLER_COUNT);
 
-/* I2C port state data */
+/* I2C controller state data */
 struct i2c_status {
 	int                   flags;     /* Flags (I2C_XFER_*) */
 	const uint8_t        *tx_buf;    /* Entry pointer of transmit buffer */
@@ -85,83 +83,105 @@ struct i2c_status {
 	uint16_t              sz_txbuf;  /* Size of Tx buffer in bytes */
 	uint16_t              sz_rxbuf;  /* Size of rx buffer in bytes */
 	uint16_t              idx_buf;   /* Current index of Tx/Rx buffer */
-	uint8_t               slave_addr;/* target slave address */
-	enum smb_oper_state_t oper_state;/* smbus operation state */
+	uint8_t               slave_addr;/* Target slave address */
+	enum smb_oper_state_t oper_state;/* Smbus operation state */
 	enum smb_error        err_code;  /* Error code */
-	int                   task_waiting; /* Task waiting on port */
+	int                   task_waiting; /* Task waiting on controller */
+	uint32_t              timeout_us;/* Transaction timeout */
 };
-/* I2C port state data array */
-static struct i2c_status i2c_stsobjs[I2C_PORT_COUNT];
+/* I2C controller state data array */
+static struct i2c_status i2c_stsobjs[I2C_CONTROLLER_COUNT];
 
-int i2c_bus_busy(int port)
+int i2c_port_to_controller(int port)
 {
-	return IS_BIT_SET(NPCX_SMBCST(port), NPCX_SMBCST_BB) ? 1 : 0;
+	if (port < 0 || port >= I2C_PORT_COUNT)
+		return -1;
+	return (port == NPCX_I2C_PORT0_0) ? 0 : port - 1;
 }
 
-int i2c_abort_data(int port)
+static void i2c_select_port(int port)
+{
+	/*
+	 * I2C0_1 uses port 1 of controller 0. All other I2C pin sets
+	 * use port 0.
+	 */
+	if (port > NPCX_I2C_PORT0_1)
+		return;
+
+	/* Select IO pins for multi-ports I2C controllers */
+	UPDATE_BIT(NPCX_GLUE_SMBSEL, NPCX_SMBSEL_SMB0SEL,
+			(port == NPCX_I2C_PORT0_1));
+}
+
+int i2c_bus_busy(int controller)
+{
+	return IS_BIT_SET(NPCX_SMBCST(controller), NPCX_SMBCST_BB) ? 1 : 0;
+}
+
+int i2c_abort_data(int controller)
 {
 	uint16_t timeout = I2C_ABORT_TIMEOUT;
 
 	/* Clear NEGACK, STASTR and BER bits */
-	SET_BIT(NPCX_SMBST(port), NPCX_SMBST_BER);
-	SET_BIT(NPCX_SMBST(port), NPCX_SMBST_STASTR);
-	SET_BIT(NPCX_SMBST(port), NPCX_SMBST_NEGACK);
+	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
+	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
+	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_NEGACK);
 
 	/* Wait till STOP condition is generated */
 	while (--timeout) {
-		if (!IS_BIT_SET(NPCX_SMBCTL1(port), NPCX_SMBCTL1_STOP))
+		if (!IS_BIT_SET(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STOP))
 			break;
 		msleep(1);
 	}
 
 	/* Clear BB (BUS BUSY) bit */
-	SET_BIT(NPCX_SMBCST(port), NPCX_SMBCST_BB);
+	SET_BIT(NPCX_SMBCST(controller), NPCX_SMBCST_BB);
 
 	if (timeout == 0) {
-		cprints(CC_I2C, "Abort i2c %02x fail!", port);
+		cprints(CC_I2C, "Abort i2c %02x fail!", controller);
 		return 0;
 	} else
 		return 1;
 }
 
-void i2c_reset(int port)
+void i2c_reset(int controller)
 {
 	uint16_t timeout = I2C_ABORT_TIMEOUT;
 	/* Disable the SMB module */
-	CLEAR_BIT(NPCX_SMBCTL2(port), NPCX_SMBCTL2_ENABLE);
+	CLEAR_BIT(NPCX_SMBCTL2(controller), NPCX_SMBCTL2_ENABLE);
 
 	while (--timeout) {
 		/* WAIT FOR SCL & SDA IS HIGH */
-		if (IS_BIT_SET(NPCX_SMBCTL3(port), NPCX_SMBCTL3_SCL_LVL) &&
-		    IS_BIT_SET(NPCX_SMBCTL3(port), NPCX_SMBCTL3_SDA_LVL))
+		if (IS_BIT_SET(NPCX_SMBCTL3(controller), NPCX_SMBCTL3_SCL_LVL)
+		  && IS_BIT_SET(NPCX_SMBCTL3(controller), NPCX_SMBCTL3_SDA_LVL))
 			break;
 		msleep(1);
 	}
 
 	if (timeout == 0)
-		cprints(CC_I2C, "Reset i2c %02x fail!", port);
+		cprints(CC_I2C, "Reset i2c %02x fail!", controller);
 
 	/* Enable the SMB module */
-	SET_BIT(NPCX_SMBCTL2(port), NPCX_SMBCTL2_ENABLE);
+	SET_BIT(NPCX_SMBCTL2(controller), NPCX_SMBCTL2_ENABLE);
 }
 
-void i2c_recovery(int port)
+void i2c_recovery(int controller)
 {
 	CPUTS("RECOVERY\r\n");
 	/* Abort data, generating STOP condition */
-	if (i2c_abort_data(port) == 1 &&
-		i2c_stsobjs[port].err_code == SMB_MASTER_NO_ADDRESS_MATCH)
+	if (i2c_abort_data(controller) == 1 &&
+		i2c_stsobjs[controller].err_code == SMB_MASTER_NO_ADDRESS_MATCH)
 		return;
 
-	/* Reset i2c port by re-enable i2c port*/
-	i2c_reset(port);
+	/* Reset i2c controller by re-enable i2c controller*/
+	i2c_reset(controller);
 }
 
-enum smb_error i2c_master_transaction(int port)
+enum smb_error i2c_master_transaction(int controller)
 {
 	/* Set i2c mode to object */
 	int events = 0;
-	volatile struct i2c_status *p_status = i2c_stsobjs + port;
+	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 
 	if (p_status->oper_state == SMB_IDLE) {
 		p_status->oper_state = SMB_MASTER_START;
@@ -171,15 +191,16 @@ enum smb_error i2c_master_transaction(int port)
 	}
 
 	/* Generate a START condition */
-	I2C_START(port);
+	I2C_START(controller);
 	CPUTS("ST");
 
 	/* Wait for transfer complete or timeout */
-	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE, I2C_TIMEOUT_US);
+	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE,
+			p_status->timeout_us);
 	/* Handle timeout */
 	if ((events & TASK_EVENT_I2C_IDLE) == 0) {
-		/* Recovery I2C port */
-		i2c_recovery(port);
+		/* Recovery I2C controller */
+		i2c_recovery(controller);
 		p_status->err_code = SMB_TIMEOUT_ERROR;
 	}
 
@@ -188,15 +209,15 @@ enum smb_error i2c_master_transaction(int port)
 	 */
 	else if (p_status->err_code == SMB_BUS_ERROR ||
 			p_status->err_code == SMB_MASTER_NO_ADDRESS_MATCH){
-		i2c_recovery(port);
+		i2c_recovery(controller);
 	}
 
 	return p_status->err_code;
 }
 
-inline void i2c_handle_sda_irq(int port)
+inline void i2c_handle_sda_irq(int controller)
 {
-	volatile struct i2c_status *p_status = i2c_stsobjs + port;
+	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 	/* 1 Issue Start is successful ie. write address byte */
 	if (p_status->oper_state == SMB_MASTER_START
 			|| p_status->oper_state == SMB_REPEAT_START) {
@@ -209,15 +230,15 @@ inline void i2c_handle_sda_irq(int port)
 			 * before writing address byte
 			 */
 			if (p_status->sz_rxbuf == 1)
-				I2C_NACK(port);
+				I2C_NACK(controller);
 
 			/* Write the address to the bus R bit*/
-			I2C_WRITE_BYTE(port, (addr | 0x1));
+			I2C_WRITE_BYTE(controller, (addr | 0x1));
 			CPRINTS("-ARR-0x%02x", addr);
 		} else {/* Transmit mode */
 			p_status->oper_state = SMB_WRITE_OPER;
 			/* Write the address to the bus W bit*/
-			I2C_WRITE_BYTE(port, addr);
+			I2C_WRITE_BYTE(controller, addr);
 			CPRINTS("-ARW-0x%02x", addr);
 		}
 		/* Completed handling START condition */
@@ -232,11 +253,11 @@ inline void i2c_handle_sda_irq(int port)
 				/* need to STOP or not */
 				if (p_status->flags & I2C_XFER_STOP) {
 					/* Issue a STOP condition on the bus */
-					I2C_STOP(port);
+					I2C_STOP(controller);
 					CPUTS("-SP");
 				}
 				/* Clear SDA Status bit by writing dummy byte */
-				I2C_WRITE_BYTE(port, 0xFF);
+				I2C_WRITE_BYTE(controller, 0xFF);
 				/* Set error code */
 				p_status->err_code = SMB_OK;
 				/* Notify upper layer */
@@ -262,24 +283,24 @@ inline void i2c_handle_sda_irq(int port)
 				 * Generate (Repeated) Start
 				 * upon next write to SDA
 				 */
-				I2C_START(port);
+				I2C_START(controller);
 				CPUTS("-RST");
 				/*
 				 * Receiving one byte only - set nack just
 				 * before writing address byte
 				 */
 				if (p_status->sz_rxbuf == 1) {
-					I2C_NACK(port);
+					I2C_NACK(controller);
 					CPUTS("-GNA");
 				}
 				/* Write the address to the bus R bit*/
-				I2C_WRITE_BYTE(port, (addr_byte | 0x1));
+				I2C_WRITE_BYTE(controller, (addr_byte | 0x1));
 				CPUTS("-ARR");
 			}
 		}
 		/* write next byte (not last byte and not slave address */
 		else {
-			I2C_WRITE_BYTE(port,
+			I2C_WRITE_BYTE(controller,
 					p_status->tx_buf[p_status->idx_buf++]);
 			CPRINTS("-W(%02x)",
 					p_status->tx_buf[p_status->idx_buf-1]);
@@ -293,7 +314,7 @@ inline void i2c_handle_sda_irq(int port)
 			/* need to STOP or not */
 			if (p_status->flags & I2C_XFER_STOP) {
 				/* Stop should set before reading last byte */
-				I2C_STOP(port);
+				I2C_STOP(controller);
 				CPUTS("-SP");
 			}
 		}
@@ -304,12 +325,12 @@ inline void i2c_handle_sda_irq(int port)
 			 * so that nack will be generated after receive
 			 * of last byte
 			 */
-			I2C_NACK(port);
+			I2C_NACK(controller);
 			CPUTS("-GNA");
 		}
 
 		/* Read data for SMBSDA */
-		I2C_READ_BYTE(port, data);
+		I2C_READ_BYTE(controller, data);
 		CPRINTS("-R(%02x)", data);
 		/* Read to buffer */
 		p_status->rx_buf[p_status->idx_buf++] = data;
@@ -328,16 +349,16 @@ inline void i2c_handle_sda_irq(int port)
 	}
 }
 
-void i2c_master_int_handler (int port)
+void i2c_master_int_handler (int controller)
 {
-	volatile struct i2c_status *p_status = i2c_stsobjs + port;
+	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 	/* Condition 1 : A Bus Error has been identified */
-	if (IS_BIT_SET(NPCX_SMBST(port), NPCX_SMBST_BER)) {
+	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_BER)) {
 		/* Generate a STOP condition */
-		I2C_STOP(port);
+		I2C_STOP(controller);
 		CPUTS("-SP");
 		/* Clear BER Bit */
-		SET_BIT(NPCX_SMBST(port), NPCX_SMBST_BER);
+		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
 		/* Set error code */
 		p_status->err_code = SMB_BUS_ERROR;
 		/* Notify upper layer */
@@ -347,12 +368,12 @@ void i2c_master_int_handler (int port)
 	}
 
 	/* Condition 2: A negative acknowledge has occurred */
-	if (IS_BIT_SET(NPCX_SMBST(port), NPCX_SMBST_NEGACK)) {
+	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_NEGACK)) {
 		/* Generate a STOP condition */
-		I2C_STOP(port);
+		I2C_STOP(controller);
 		CPUTS("-SP");
 		/* Clear NEGACK Bit */
-		SET_BIT(NPCX_SMBST(port), NPCX_SMBST_NEGACK);
+		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_NEGACK);
 		/* Set error code */
 		p_status->err_code = SMB_MASTER_NO_ADDRESS_MATCH;
 		/* Notify upper layer */
@@ -362,18 +383,18 @@ void i2c_master_int_handler (int port)
 	}
 
 	/* Condition 3: SDA status is set - transmit or receive */
-	if (IS_BIT_SET(NPCX_SMBST(port), NPCX_SMBST_SDAST))
-		i2c_handle_sda_irq(port);
+	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_SDAST))
+		i2c_handle_sda_irq(controller);
 }
 
 /**
- * Handle an interrupt on the specified port.
+ * Handle an interrupt on the specified controller.
  *
- * @param port		I2C port generating interrupt
+ * @param controller   I2C controller generating interrupt
  */
-void handle_interrupt(int port)
+void handle_interrupt(int controller)
 {
-	i2c_master_int_handler(port);
+	i2c_master_int_handler(controller);
 }
 
 void i2c0_interrupt(void) { handle_interrupt(0); }
@@ -389,10 +410,19 @@ DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 2);
 /*****************************************************************************/
 /* IC specific low-level driver */
 
+void i2c_set_timeout(int port, uint32_t timeout)
+{
+	int ctrl = i2c_port_to_controller(port);
+	/* Param is port, but timeout is stored by-controller. */
+	i2c_stsobjs[ctrl].timeout_us =
+		timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
+}
+
 int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
-	volatile struct i2c_status *p_status = i2c_stsobjs + port;
+	int ctrl = i2c_port_to_controller(port);
+	volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
@@ -408,7 +438,10 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	p_status->task_waiting = task_get_current();
 	interrupt_enable();
 
-	/* Copy data to port struct */
+	/* Select port for multi-ports i2c controller */
+	i2c_select_port(port);
+
+	/* Copy data to controller struct */
 	p_status->flags       = flags;
 	p_status->tx_buf      = out;
 	p_status->sz_txbuf    = out_size;
@@ -426,30 +459,32 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	p_status->err_code    = SMB_OK;
 
 	/* Make sure we're in a good state to start */
-	if ((flags & I2C_XFER_START) && (i2c_bus_busy(port)
+	if ((flags & I2C_XFER_START) && (i2c_bus_busy(ctrl)
 			|| (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
 
-		/* Attempt to unwedge the port. */
-		i2c_unwedge(port);
-		/* recovery i2c port */
-		i2c_recovery(port);
+		/* Attempt to unwedge the controller. */
+		i2c_unwedge(ctrl);
+		/* recovery i2c controller */
+		i2c_recovery(ctrl);
+		/* Select port again for recovery */
+		i2c_select_port(port);
 	}
 
 	/* Enable SMB interrupt and New Address Match interrupt source */
-	SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_NMINTE);
-	SET_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_INTEN);
+	SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_NMINTE);
+	SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_INTEN);
 
 	CPUTS("\n");
 
 	/* Start master transaction */
-	i2c_master_transaction(port);
+	i2c_master_transaction(ctrl);
 
 	/* Reset task ID */
 	p_status->task_waiting = TASK_ID_INVALID;
 
 	/* Disable SMB interrupt and New Address Match interrupt source */
-	CLEAR_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_NMINTE);
-	CLEAR_BIT(NPCX_SMBCTL1(port), NPCX_SMBCTL1_INTEN);
+	CLEAR_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_NMINTE);
+	CLEAR_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_INTEN);
 
 	CPRINTS("-Err:0x%02x\n", p_status->err_code);
 
@@ -460,8 +495,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
  * Return raw I/O line levels (I2C_LINE_*) for a port when port is in alternate
  * function mode.
  *
- * @param port		Port to check
- * @return			State of SCL/SDA bit 0/1
+ * @param port  Port to check
+ * @return      State of SCL/SDA bit 0/1
  */
 int i2c_get_line_levels(int port)
 {
@@ -469,17 +504,35 @@ int i2c_get_line_levels(int port)
 		   (i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
 
+/*
+ * Due to we couldn't support GPIO reading when IO is selected SMBus, we need
+ * to distingulish which mode we used currently.
+ */
+int i2c_is_raw_mode(int port)
+{
+	int bit = (port > NPCX_I2C_PORT0_1) ? port * 2 : port;
+
+	if (IS_BIT_SET(NPCX_DEVALT(2), bit))
+		return 0;
+	else
+		return 1;
+}
+
 int i2c_raw_get_scl(int port)
 {
 	enum gpio_signal g;
 
-	/* Check do we support this port of i2c and return gpio number of scl */
-	if (get_scl_from_i2c_port(port, &g) == EC_SUCCESS)
-#if !(I2C_LEVEL_SUPPORT)
-		return gpio_get_level(g);
-#else
-		return IS_BIT_SET(NPCX_SMBCTL3(port), NPCX_SMBCTL3_SCL_LVL);
-#endif
+	/*
+	 * Check do we support this port of i2c and return gpio number of scl.
+	 * Please notice we cannot read voltage level from GPIO in M4 EC
+	 */
+	if (get_scl_from_i2c_port(port, &g) == EC_SUCCESS) {
+		if (i2c_is_raw_mode(port))
+			return gpio_get_level(g);
+		else
+			return IS_BIT_SET(NPCX_SMBCTL3(
+			i2c_port_to_controller(port)), NPCX_SMBCTL3_SCL_LVL);
+	}
 
 	/* If no SCL pin defined for this port, then return 1 to appear idle */
 	return 1;
@@ -488,13 +541,19 @@ int i2c_raw_get_scl(int port)
 int i2c_raw_get_sda(int port)
 {
 	enum gpio_signal g;
-	/* Check do we support this port of i2c and return gpio number of scl */
-	if (get_sda_from_i2c_port(port, &g) == EC_SUCCESS)
-#if !(I2C_LEVEL_SUPPORT)
-		return gpio_get_level(g);
-#else
-		return IS_BIT_SET(NPCX_SMBCTL3(port), NPCX_SMBCTL3_SDA_LVL);
-#endif
+
+	/*
+	 * Check do we support this port of i2c and return gpio number of scl.
+	 * Please notice we cannot read voltage level from GPIO in M4 EC
+	 */
+	if (get_sda_from_i2c_port(port, &g) == EC_SUCCESS) {
+		if (i2c_is_raw_mode(port))
+			return gpio_get_level(g);
+		else
+			return IS_BIT_SET(NPCX_SMBCTL3(
+			i2c_port_to_controller(port)), NPCX_SMBCTL3_SDA_LVL);
+	}
+
 
 	/* If no SDA pin defined for this port, then return 1 to appear idle */
 	return 1;
@@ -508,17 +567,17 @@ static void i2c_freq_changed(void)
 
 	for (i = 0; i < i2c_ports_used; i++) {
 		int bus_freq = i2c_ports[i].kbps;
-		int port = i2c_ports[i].port;
+		int ctrl = i2c_port_to_controller(i2c_ports[i].port);
 		int scl_time;
 
 		/* SMB0/1 use core clock & SMB2/3 use apb2 clock */
-		if (port < 2)
+		if (ctrl < 2)
 			freq = clock_get_freq();
 		else
 			freq = clock_get_apb2_freq();
 
 		/* use Fast Mode */
-		SET_BIT(NPCX_SMBCTL3(port)  , NPCX_SMBCTL3_400K);
+		SET_BIT(NPCX_SMBCTL3(ctrl)  , NPCX_SMBCTL3_400K);
 
 		/*
 		 * Set SCLLT/SCLHT:
@@ -530,8 +589,8 @@ static void i2c_freq_changed(void)
 		scl_time = (freq/1000) / (bus_freq * 4);   /* bus_freq is KHz */
 
 		/* set SCL High/Low time */
-		NPCX_SMBSCLLT(port) = scl_time;
-		NPCX_SMBSCLHT(port) = scl_time;
+		NPCX_SMBSCLLT(ctrl) = scl_time;
+		NPCX_SMBSCLHT(ctrl) = scl_time;
 	}
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);
@@ -553,38 +612,50 @@ static void i2c_init(void)
 	 */
 	for (i = 0; i < i2c_ports_used; i++) {
 		int port = i2c_ports[i].port;
-		volatile struct i2c_status *p_status = i2c_stsobjs + port;
+		int ctrl = i2c_port_to_controller(port);
+		volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
 		/* Configure pull-up for SMB interface pins */
 
 		/* Enable 3.3V pull-up or turn to 1.8V support */
-		if (port == NPCX_I2C_PORT0) {
-#if NPCX_I2C0_BUS2
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 1));
+		if (port == NPCX_I2C_PORT0_0) {
+#ifdef NPCX_I2C0_0_1P8V
+			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SC0_0_LV);
+			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SD0_0_LV);
 #else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
+#endif
+		} else if (port == NPCX_I2C_PORT0_1) {
+#ifdef NPCX_I2C0_1_1P8V
+			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL0_SC0_1_LV);
+			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL0_SD0_1_LV);
+#else
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 1));
+#endif
+		} else if (port == NPCX_I2C_PORT1) {
+#ifdef NPCX_I2C1_1P8V
+			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SC1_0_LV);
+			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SD1_0_LV);
+#else
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
 #endif
 		} else if (port == NPCX_I2C_PORT2) {
 #ifdef NPCX_I2C2_1P8V
 			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SC2_0_LV);
 			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SD2_0_LV);
 #else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
 #endif
 		} else if (port == NPCX_I2C_PORT3) {
 #ifdef NPCX_I2C3_1P8V
 			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SC3_0_LV);
 			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SD3_0_LV);
 #else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
+			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
 #endif
-
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
-		} else {
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(port, 0));
 		}
 
 		/* Enable module - before configuring CTL1 */
-		SET_BIT(NPCX_SMBCTL2(port), NPCX_SMBCTL2_ENABLE);
+		SET_BIT(NPCX_SMBCTL2(ctrl), NPCX_SMBCTL2_ENABLE);
 
 		/* status init */
 		p_status->oper_state = SMB_IDLE;
@@ -593,7 +664,10 @@ static void i2c_init(void)
 		p_status->task_waiting = TASK_ID_INVALID;
 
 		/* Enable event and error interrupts */
-		task_enable_irq(i2c_irqs[port]);
+		task_enable_irq(i2c_irqs[ctrl]);
+
+		/* Use default timeout. */
+		i2c_set_timeout(port, 0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);

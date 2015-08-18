@@ -29,8 +29,16 @@
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8
 
+/*
+ * Number of I2C controllers. Controller 0 has 2 ports, so the chip has one
+ * additional port.
+ */
+#define CONFIG_I2C_MULTI_PORT_CONTROLLER
+/* Number of I2C controllers */
+#define I2C_CONTROLLER_COUNT	4
 /* Number of I2C ports */
-#define I2C_PORT_COUNT 4
+#define I2C_PORT_COUNT		5
+
 
 /* Number of PWM ports */
 #define PWM_COUNT 8

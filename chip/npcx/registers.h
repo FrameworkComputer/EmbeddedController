@@ -29,7 +29,6 @@
 /* Global Definition */
 #define CHIP_VERSION                     3 /* A3 version */
 #define I2C_7BITS_ADDR                   0
-#define I2C_LEVEL_SUPPORT                1
 /* Switcher of features */
 #define SUPPORT_LCT                      1
 #define SUPPORT_WDG                      1
@@ -283,6 +282,7 @@
 #define NPCX_GLUE_SDPD0                   REG8(NPCX_GLUE_REGS_BASE + 0x010)
 #define NPCX_GLUE_SDPD1                   REG8(NPCX_GLUE_REGS_BASE + 0x012)
 #define NPCX_GLUE_SDP_CTS                 REG8(NPCX_GLUE_REGS_BASE + 0x014)
+#define NPCX_GLUE_SMBSEL                  REG8(NPCX_GLUE_REGS_BASE + 0x021)
 
 /******************************************************************************/
 /* MIWU registers */
@@ -569,6 +569,13 @@ enum {
 /* Others bit definitions */
 #define NPCX_LFCGCALCNT_LPREG_CTL_EN     1
 
+#define NPCX_LV_GPIO_CTL0_SC0_0_LV       0
+#define NPCX_LV_GPIO_CTL0_SD0_0_LV       1
+#define NPCX_LV_GPIO_CTL0_SC0_1_LV       2
+#define NPCX_LV_GPIO_CTL0_SD0_1_LV       3
+#define NPCX_LV_GPIO_CTL0_SC1_0_LV       4
+#define NPCX_LV_GPIO_CTL0_SD1_0_LV       5
+
 #define NPCX_LV_GPIO_CTL1_SC2_0_LV       0
 #define NPCX_LV_GPIO_CTL1_SD2_0_LV       1
 #define NPCX_LV_GPIO_CTL1_SC3_0_LV       2
@@ -657,16 +664,18 @@ enum {
 #define NPCX_SMBADDR6_SAEN               7
 #define NPCX_SMBADDR7_SAEN               7
 #define NPCX_SMBADDR8_SAEN               7
+#define NPCX_SMBSEL_SMB0SEL              0
 
 /*
  * SMB enumeration
  * I2C Port.
  */
 enum NPCX_I2C_PORT_T {
-	NPCX_I2C_PORT0    = 0, /* I2C port 0, bus 0/1*/
-	NPCX_I2C_PORT1    = 1, /* I2C port 1 */
-	NPCX_I2C_PORT2    = 2, /* I2C port 2 */
-	NPCX_I2C_PORT3    = 3, /* I2C port 3 */
+	NPCX_I2C_PORT0_0  = 0, /* I2C port 0, bus 0*/
+	NPCX_I2C_PORT0_1  = 1, /* I2C port 0, bus 1*/
+	NPCX_I2C_PORT1    = 2, /* I2C port 1 */
+	NPCX_I2C_PORT2    = 3, /* I2C port 2 */
+	NPCX_I2C_PORT3    = 4, /* I2C port 3 */
 };
 
 /******************************************************************************/

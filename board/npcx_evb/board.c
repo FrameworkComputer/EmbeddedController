@@ -110,8 +110,11 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 100,
-	 GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{"master0-0", NPCX_I2C_PORT0_0, 100, GPIO_I2C0_SCL0, GPIO_I2C0_SDA0},
+	{"master0-1", NPCX_I2C_PORT0_1, 100, GPIO_I2C0_SCL1, GPIO_I2C0_SDA1},
+	{"master1",   NPCX_I2C_PORT1,   100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"master2",   NPCX_I2C_PORT2,   100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"master3",   NPCX_I2C_PORT3,   100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

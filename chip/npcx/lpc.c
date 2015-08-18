@@ -546,10 +546,10 @@ void lpc_pmc_obe_interrupt(void)
 }
 DECLARE_IRQ(NPCX_IRQ_PM_CHAN_OBE, lpc_pmc_obe_interrupt, 2);
 
-
 void lpc_port80_interrupt(void)
 {
-	port_80_write((NPCX_GLUE_SDPD0<<0) | (NPCX_GLUE_SDPD1<<8));
+	port_80_write(NPCX_DP80BUF);
+
 	/* No matter what , just clear error status bit */
 	SET_BIT(NPCX_DP80STS, 7);
 	SET_BIT(NPCX_DP80STS, 5);

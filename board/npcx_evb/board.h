@@ -46,7 +46,6 @@
 /* Optional feature - used by nuvoton */
 #define NPCX_PWM_INPUT_LFCLK   /* PWM use LFCLK for input clock */
 #define NPCX_MFT_INPUT_LFCLK   /* MFT use LFCLK for input clock */
-#define NPCX_I2C0_BUS2       0 /* 0:GPIOB4/B5 1:GPIOB2/B3 as I2C0 */
 #define NPCX_UART_MODULE2    0 /* 0:GPIO10/11 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
 #define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
@@ -56,7 +55,7 @@
 #undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
 
 /* Single I2C port, where the EC is the master. */
-#define I2C_PORT_MASTER         0
+#define I2C_PORT_MASTER         NPCX_I2C_PORT0_0
 #define I2C_PORT_HOST           0
 
 #ifndef __ASSEMBLER__

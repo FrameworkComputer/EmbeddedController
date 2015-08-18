@@ -482,11 +482,9 @@ void system_reset(int flags)
 	/* Save reset flag */
 	if (flags & SYSTEM_RESET_HARD)
 		save_flags |= RESET_FLAG_HARD;
-	else {
+	else
 		save_flags |= RESET_FLAG_SOFT;
-		/* Use SYSRESETREQ to trigger a soft reboot */
-		CPU_NVIC_APINT = 0x05fa0004;
-	}
+
 	/* Store flags to battery backed RAM. */
 	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 

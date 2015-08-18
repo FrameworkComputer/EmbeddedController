@@ -219,13 +219,10 @@ struct gpio_alt_map {
 
 const struct gpio_alt_map gpio_alt_table[] = {
 	/* I2C Module */
-#if NPCX_I2C0_BUS2
-	{ NPCX_GPIO(B, 2),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SDA */
-	{ NPCX_GPIO(B, 3),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SCL */
-#else
-	{ NPCX_GPIO(B, 4),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SDA */
-	{ NPCX_GPIO(B, 5),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SCL */
-#endif
+	{ NPCX_GPIO(B, 2),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SDA1 */
+	{ NPCX_GPIO(B, 3),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SCL1 */
+	{ NPCX_GPIO(B, 4),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SDA0 */
+	{ NPCX_GPIO(B, 5),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SCL0 */
 	{ NPCX_GPIO(8, 7),  NPCX_ALT(2, I2C1_0_SL)}, /* SMB1SDA */
 	{ NPCX_GPIO(9, 0),  NPCX_ALT(2, I2C1_0_SL)}, /* SMB1SCL */
 	{ NPCX_GPIO(9, 1),  NPCX_ALT(2, I2C2_0_SL)}, /* SMB2SDA */
@@ -328,7 +325,7 @@ void gpio_pwm_io_type_sel(uint8_t alt_mask, uint8_t func)
 		CLEAR_BIT(NPCX_PWMCTLEX(chan), NPCX_PWMCTLEX_OD_OUT);
 }
 
-int gpio_alt_sel(uint8_t port, uint8_t mask, uint8_t func)
+int gpio_alt_sel(uint8_t port, uint8_t mask, int8_t func)
 {
 	int i;
 	const struct gpio_alt_map *map = gpio_alt_table;

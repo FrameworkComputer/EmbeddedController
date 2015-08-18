@@ -27,8 +27,16 @@ GPIO(SPI_CS_L,             PIN(A, 5), GPIO_OUT_HIGH)                            
  * I2C pins should be configured as inputs until I2C module is
  * initialized. This will avoid driving the lines unintentionally.
  */
-GPIO(MASTER_I2C_SCL,       PIN(B, 5), GPIO_INPUT)
-GPIO(MASTER_I2C_SDA,       PIN(B, 4), GPIO_INPUT)
+GPIO(I2C0_SCL0,     PIN(B, 5), GPIO_ODR_HIGH)
+GPIO(I2C0_SDA0,     PIN(B, 4), GPIO_ODR_HIGH)
+GPIO(I2C0_SCL1,     PIN(B, 3), GPIO_ODR_HIGH)
+GPIO(I2C0_SDA1,     PIN(B, 2), GPIO_ODR_HIGH)
+GPIO(I2C1_SCL,      PIN(9, 0), GPIO_ODR_HIGH)
+GPIO(I2C1_SDA,      PIN(8, 7), GPIO_ODR_HIGH)
+GPIO(I2C2_SCL,      PIN(9, 2), GPIO_ODR_HIGH)
+GPIO(I2C2_SDA,      PIN(9, 1), GPIO_ODR_HIGH)
+GPIO(I2C3_SCL,      PIN(D, 1), GPIO_ODR_HIGH)
+GPIO(I2C3_SDA,      PIN(D, 0), GPIO_ODR_HIGH)
 
 /* Used for board version command */
 GPIO(BOARD_VERSION1,       PIN(6, 4), GPIO_INPUT)    /* Board version stuffing resistor 1 */
@@ -45,11 +53,8 @@ ALTERNATE(PIN_MASK(6, 0x30), 1,  MODULE_UART,        0)    /* CR_SIN/SOUT       
 #else
 ALTERNATE(PIN_MASK(1, 0x03), 1,  MODULE_UART,        0)    /* CR_SIN/SOUT             GPIO10/11    */
 #endif
-#if NPCX_I2C0_BUS2
-ALTERNATE(PIN_MASK(B, 0x0C), 1,  MODULE_I2C,         0)    /* I2C0SDA/I2C0SCL         GPIOB2/B3	   */
-#else
-ALTERNATE(PIN_MASK(B, 0x30), 1,  MODULE_I2C,         0)    /* I2C0SDA/I2C0SCL         GPIOB4/B5	   */
-#endif
+ALTERNATE(PIN_MASK(B, 0x0C), 1,  MODULE_I2C,         0)    /* I2C0SDA1/I2C0SCL1       GPIOB2/B3	   */
+ALTERNATE(PIN_MASK(B, 0x30), 1,  MODULE_I2C,         0)    /* I2C0SDA0/I2C0SCL0       GPIOB4/B5	   */
 ALTERNATE(PIN_MASK(8, 0x80), 1,  MODULE_I2C,         0)    /* I2C1SDA                 GPIO87       */
 ALTERNATE(PIN_MASK(9, 0x07), 1,  MODULE_I2C,         0)    /* I2C1SCL/I2C2SDA/I2C2SCL GPIO90/91/92 */
 ALTERNATE(PIN_MASK(D, 0x03), 1,  MODULE_I2C,         0)    /* I2C3SDA/I2C3SCL         GPIOD0/D1    */
