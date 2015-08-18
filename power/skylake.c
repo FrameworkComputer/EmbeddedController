@@ -62,16 +62,15 @@ void chipset_force_shutdown(void)
 	}
 }
 
-void chipset_force_g3(void)
+static void chipset_force_g3(void)
 {
-	CPRINTS("Forcing G3");
+	CPRINTS("Forcing fake G3.");
 	/*
-	 * Kunimitsu doesn't yet have pass-thru SLP_SUS_L / BATLOW.
+	 * Kunimitsu doesn't yet have pass-thru SLP_SUS_L.
 	 * TODO(crosbug.com/p/43075): Remove this when new boards roll out.
 	 */
 #ifndef BOARD_KUNIMITSU
 	gpio_set_level(GPIO_PMIC_SLP_SUS_L, 0);
-	gpio_set_level(GPIO_PCH_BATLOW_L, 0);
 #endif
 }
 
@@ -128,28 +127,11 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-enum power_state power_handle_state(enum power_state state)
+static enum power_state _power_handle_state(enum power_state state)
 {
-	/*
-	 * Pass through RSMRST asynchronously, as PCH may not react
-	 * immediately to power changes.
-	 */
-	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
-	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
 #ifndef BOARD_KUNIMITSU
 	int tries = 0;
 #endif
-
-	if (rsmrst_in != rsmrst_out) {
-		/*
-		 * Wait at least 10ms between power signals going high
-		 * and deasserting RSMRST to PCH.
-		 */
-		if (rsmrst_in)
-			msleep(10);
-		gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
-		CPRINTS("RSMRST: %d", rsmrst_in);
-	}
 
 	switch (state) {
 	case POWER_G3:
@@ -209,16 +191,6 @@ enum power_state power_handle_state(enum power_state state)
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
-
-		/* Allow AP to power on */
-		gpio_set_level(GPIO_PCH_BATLOW_L, 1);
-
-		/* Assert wake pin to PCH to wake from Deep S5 */
-		if (gpio_get_level(GPIO_PCH_WAKE_L) == 1) {
-			gpio_set_level(GPIO_PCH_WAKE_L, 0);
-			udelay(65);
-			gpio_set_level(GPIO_PCH_WAKE_L, 1);
-		}
 #endif
 
 		if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
@@ -226,9 +198,6 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
-#ifndef BOARD_KUNIMITSU
-		gpio_set_level(GPIO_PMIC_SLP_SUS_L, 1);
-#endif
 		return POWER_S5;
 
 	case POWER_S5S3:
@@ -304,7 +273,10 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_USB1_ENABLE, 0);
 		gpio_set_level(GPIO_USB2_ENABLE, 0);
 
-		return POWER_S5G3;
+		/* Always enter into S5 state. The S5 state is required to
+		 * correctly handle global resets which have a bit of delay
+		 * while the SLP_Sx_L signals are asserted then deasserted. */
+		return POWER_S5;
 
 	case POWER_S5G3:
 #ifdef CONFIG_G3_SLEEP
@@ -318,4 +290,53 @@ enum power_state power_handle_state(enum power_state state)
 	}
 
 	return state;
+}
+
+static void handle_rsmrst(enum power_state state)
+{
+	/*
+	 * Pass through RSMRST asynchronously, as PCH may not react
+	 * immediately to power changes.
+	 */
+	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
+
+	/* Nothing to do. */
+	if (rsmrst_in == rsmrst_out)
+		return;
+	/*
+	 * Wait at least 10ms between power signals going high
+	 * and deasserting RSMRST to PCH.
+	 */
+	if (rsmrst_in)
+		msleep(10);
+	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
+	CPRINTS("RSMRST: %d", rsmrst_in);
+}
+
+static void handle_slp_sus(enum power_state state)
+{
+	/* If we're down or going down don't do anythin with SLP_SUS_L. */
+	if (state == POWER_G3 || state == POWER_S5G3)
+		return;
+
+	/* Always mimic PCH SLP_SUS request for all other states. */
+#ifndef BOARD_KUNIMITSU
+	gpio_set_level(GPIO_PMIC_SLP_SUS_L, gpio_get_level(GPIO_PCH_SLP_SUS_L));
+#endif
+}
+
+enum power_state power_handle_state(enum power_state state)
+{
+	enum power_state new_state;
+
+	/* Process RSMRST_L state changes. */
+	handle_rsmrst(state);
+
+	new_state = _power_handle_state(state);
+
+	/* Process SLP_SUS_L state changes after a new state is decided. */
+	handle_slp_sus(new_state);
+
+	return new_state;
 }
