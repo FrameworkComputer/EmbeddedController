@@ -16,8 +16,16 @@
  * 'd' in an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
+
+#if BOARD_REV < OAK_REV4
+#define TASK_VBUS(n, r, d, s) TASK_ALWAYS(n, r, d, s)
+#else
+#define TASK_VBUS(n, r, d, s)
+#endif
+
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_VBUS(VBUS, vbus_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(USB_CHG_P0, usb_charger_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(USB_CHG_P1, usb_charger_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(CHARGER, charger_task, NULL, LARGER_TASK_STACK_SIZE) \

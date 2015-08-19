@@ -24,6 +24,18 @@ GPIO_INT(KB_IN05, PIN(C, 14), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN06, PIN(C, 15), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN07, PIN(D, 2),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 
+/* Board specific interrupt and input */
+#if BOARD_REV == OAK_REV2
+GPIO(USB_VBUS_WAKE_L,    PIN(E, 1),  GPIO_INPUT)
+#elif BOARD_REV == OAK_REV3
+GPIO(USB_C0_VBUS_WAKE_L, PIN(E, 1),  GPIO_INPUT)
+GPIO(USB_C1_VBUS_WAKE_L, PIN(F, 2),  GPIO_INPUT)
+#elif BOARD_REV >= OAK_REV4
+GPIO_INT(USB_BC12_INT,   PIN(E, 1),  GPIO_INT_FALLING, usb_evt)
+GPIO(USB_C0_VBUS_WAKE_L, PIN(D, 12), GPIO_INPUT)
+GPIO(USB_C1_VBUS_WAKE_L, PIN(F, 2),  GPIO_INPUT)
+#endif
+
 /* Inputs without interrupt handlers */
 GPIO(5V_POWER_GOOD, PIN(A, 1), GPIO_INPUT)
 GPIO(EC_WAKE,       PIN(A, 0), GPIO_INPUT|GPIO_PULL_DOWN)

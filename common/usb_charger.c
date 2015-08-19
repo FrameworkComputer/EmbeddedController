@@ -100,9 +100,6 @@ static void usb_charger_bc12_detect(int port)
 
 	charge.voltage = USB_CHARGER_VOLTAGE_MV;
 
-	/* Read interrupt register to clear on chip */
-	pi3usb9281_get_interrupts(port);
-
 	if (usb_charger_port_is_sourcing_vbus(port)) {
 		/* If we're sourcing VBUS then we're not charging */
 		device_type = charger_status = 0;
@@ -203,7 +200,9 @@ static void usb_charger_bc12_detect(int port)
 
 void usb_charger_task(void)
 {
+	const int attach_mask = PI3USB9281_INT_ATTACH | PI3USB9281_INT_DETACH;
 	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
+	int interrupt;
 	uint32_t evt;
 
 	/* Initialize chip and enable interrupts */
@@ -214,8 +213,16 @@ void usb_charger_task(void)
 	while (1) {
 		/* Wait for interrupt */
 		evt = task_wait_event(-1);
+		/* Read interrupt register to clear on chip */
+		interrupt = pi3usb9281_get_interrupts(port);
 
-		/* Interrupt from the Pericom chip, determine charger type */
+		/* Interrupt from the Pericom chip, determine interrupt type */
+		if (evt & USB_CHG_EVENT_INTR) {
+			if (interrupt & attach_mask)
+				usb_charger_bc12_detect(port);
+		}
+
+		/* Ignore interrupt status and determine charger type */
 		if (evt & USB_CHG_EVENT_BC12)
 			usb_charger_bc12_detect(port);
 

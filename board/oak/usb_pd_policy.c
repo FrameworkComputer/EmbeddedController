@@ -128,6 +128,10 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 
 int pd_board_checks(void)
 {
+#if BOARD_REV <= OAK_REV3
+	/* wake up VBUS task to check vbus change */
+	task_wake(TASK_ID_VBUS);
+#endif
 	return EC_SUCCESS;
 }
 

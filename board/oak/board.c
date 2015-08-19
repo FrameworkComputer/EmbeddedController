@@ -65,6 +65,14 @@ void pd_mcu_interrupt(enum gpio_signal signal)
 #endif
 }
 
+#if BOARD_REV >= OAK_REV4
+void usb_evt(enum gpio_signal signal)
+{
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_INTR, 0);
+	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_INTR, 0);
+}
+#endif /* BOARD_REV >= OAK_REV4 */
+
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */
@@ -195,6 +203,20 @@ static void board_init(void)
 	gpio_set_level(GPIO_SYSTEM_POWER_H, 1);
 	/* Enable PD MCU interrupt */
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
+
+#if BOARD_REV >= OAK_REV4
+	/* Enable BC 1.2 interrupt */
+	gpio_enable_interrupt(GPIO_USB_BC12_INT);
+#endif /* BOARD_REV >= OAK_REV4 */
+
+#if BOARD_REV >= OAK_REV3
+	/* Update VBUS supplier */
+	usb_charger_vbus_change(0, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+	usb_charger_vbus_change(1, !gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
+#else
+	usb_charger_vbus_change(0, 0);
+	usb_charger_vbus_change(1, 0);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -382,3 +404,64 @@ static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, host_event_status_host_cmd,
 			EC_VER_MASK(0));
 
+#if BOARD_REV < OAK_REV4
+/**
+ * Check VBUS state and trigger USB BC1.2 charger.
+ */
+void vbus_task(void)
+{
+	struct {
+		uint8_t interrupt;
+		uint8_t device_type;
+		uint8_t charger_status;
+		uint8_t vbus;
+	} bc12[CONFIG_USB_PD_PORT_COUNT];
+	uint8_t port, vbus, reg, wake;
+
+	while (1) {
+		for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+#if BOARD_REV == OAK_REV3
+			vbus = !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
+						      GPIO_USB_C0_VBUS_WAKE_L);
+#else
+			vbus = tcpm_get_vbus_level(port);
+#endif
+			/* check if VBUS changed */
+			if (((bc12[port].vbus >> port) & 1) == vbus)
+				continue;
+			/* wait 1.2 seconds and check BC 1.2 status */
+			msleep(1200);
+
+			if (vbus)
+				bc12[port].vbus |= 1 << port;
+			else
+				bc12[port].vbus &= ~(1 << port);
+
+			wake = 0;
+			reg = pi3usb9281_get_interrupts(port);
+			if (reg != bc12[port].interrupt) {
+				bc12[port].interrupt = reg;
+				wake++;
+			}
+
+			reg = pi3usb9281_get_device_type(port);
+			if (reg != bc12[port].device_type) {
+				bc12[port].device_type = reg;
+				wake++;
+			}
+
+			reg = pi3usb9281_get_charger_status(port);
+			if (reg != bc12[port].charger_status) {
+				bc12[port].charger_status = reg;
+				wake++;
+			}
+
+			if (wake)
+				task_set_event(port ? TASK_ID_USB_CHG_P1 :
+						      TASK_ID_USB_CHG_P0,
+					       USB_CHG_EVENT_BC12, 0);
+		}
+		task_wait_event(-1);
+	}
+}
+#endif /* BOARD_REV < OAK_REV4 */
