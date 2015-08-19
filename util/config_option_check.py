@@ -19,12 +19,15 @@ class Line(object):
   Attributes:
     line_num: The integer line number that this line appears in the file.
     string: The literal string of this line.
+    line_type: '+' or '-' indicating if this line was an addition or
+      deletion.
   """
 
-  def __init__(self, line_num, string):
+  def __init__(self, line_num, string, line_type):
     """Inits Line with the line number and the actual string."""
     self.line_num = line_num
     self.string = string
+    self.line_type = line_type
 
 
 class Hunk(object):
@@ -54,7 +57,7 @@ def obtain_current_config_options():
   options.
 
   Returns:
-    A list of all the config options in the master CONFIG_FILE.
+    config_options: A list of all the config options in the master CONFIG_FILE.
   """
 
   config_options = []
@@ -69,11 +72,62 @@ def obtain_current_config_options():
         config_options.append(word)
   return config_options
 
+def obtain_config_options_in_use():
+  """Obtains all the config options in use in the repo.
+
+  Scans through the entire repo looking for all CONFIG_* options actively used.
+
+  Returns:
+   options_in_use: A set of all the config options in use in the repo.
+  """
+  file_list = []
+  cwd = os.getcwd()
+  config_option_re = re.compile(r'\b(CONFIG_[a-zA-Z0-9_]+)')
+  config_debug_option_re = re.compile(r'\b(CONFIG_DEBUG_[a-zA-Z0-9_]+)')
+  options_in_use = set()
+  for (dirpath, dirnames, filenames) in os.walk(cwd, topdown=True):
+    # Ignore the build and private directories (taken from .gitignore)
+    if 'build' in dirnames:
+      dirnames.remove('build')
+    if 'private' in dirnames:
+      dirnames.remove('private')
+    for f in filenames:
+      # Only consider C source, assembler, and Make-style files.
+      if (os.path.splitext(f)[1] in ('.c', '.h', '.inc', '.S', '.mk') or
+          'Makefile' in f):
+        file_list.append(os.path.join(dirpath, f))
+
+  # Search through each file and build a set of the CONFIG_* options being
+  # used.
+
+  for f in file_list:
+    if CONFIG_FILE in f:
+      continue
+    with open(f, 'r') as cur_file:
+      for line in cur_file:
+        match = config_option_re.findall(line)
+        if match:
+          for option in match:
+            if not in_comment(f, line, option):
+              if option not in options_in_use:
+                options_in_use.add(option)
+
+  # Since debug options can be turned on at any time, assume that they are
+  # always in use in case any aren't being used.
+
+  with open(CONFIG_FILE, 'r') as config_file:
+    for line in config_file:
+      match = config_debug_option_re.findall(line)
+      if match:
+        for option in match:
+          if not in_comment(CONFIG_FILE, line, option):
+            if option not in options_in_use:
+              options_in_use.add(option)
+
+  return options_in_use
+
 def print_missing_config_options(hunks, config_options):
   """Searches thru all the changes in hunks for missing options and prints them.
-
-  TODO(aaboagye): Improve upon this to detect when files are being removed and a
-  CONFIG_* option is no longer used elsewhere in the repo.
 
   Args:
     hunks: A list of Hunk objects which represent the hunks from the git
@@ -82,15 +136,18 @@ def print_missing_config_options(hunks, config_options):
 
   Returns:
     missing_config_option: A boolean indicating if any CONFIG_* options
-      are missing from the master CONFIG_FILE in this commit.
+      are missing from the master CONFIG_FILE in this commit or if any CONFIG_*
+      options removed are no longer being used in the repo.
   """
   missing_config_option = False
   print_banner = True
+  deprecated_options = set()
   # Determine longest CONFIG_* length to be used for formatting.
   max_option_length = max(len(option) for option in config_options)
   config_option_re = re.compile(r'\b(CONFIG_[a-zA-Z0-9_]+)')
-  c_style_ext = ('.c', '.h', '.inc', '.S')
-  make_style_ext = ('.mk')
+
+  # Search for all CONFIG_* options in use in the repo.
+  options_in_use = obtain_config_options_in_use()
 
   # Check each hunk's line for a missing config option.
   for h in hunks:
@@ -100,41 +157,22 @@ def print_missing_config_options(hunks, config_options):
       if not match:
         continue
 
-      # At this point, an option was found in the string.  However, we need to
-      # verify that it is not within a comment.  Assume every option is a
-      # violation until proven otherwise.
-
+      # At this point, an option was found in the line.  However, we need to
+      # verify that it is not within a comment.
       violations = set()
-      for option in match:
-        violations.add(option)
 
-      # Different files have different comment syntax;  Handle appropriately.
-      extension = os.path.splitext(h.filename)[1]
-      if extension in c_style_ext:
-        beg_comment_idx = l.string.find('/*')
-        end_comment_idx = l.string.find('*/')
-        if end_comment_idx == -1:
-          end_comment_idx = len(l.string)
-        for option in match:
-          option_idx = l.string.find(option)
-          if beg_comment_idx == -1:
-            # Check to see if this line is from a multi-line comment.
-            if l.string.lstrip()[0] == '*':
-              # It _seems_ like it is, therefore ignore this instance.
-              violations.remove(option)
+      for option in match:
+        if not in_comment(h.filename, l.string, option):
+          # Since the CONFIG_* option is not within a comment, we've found a
+          # violation.  We now need to determine if this line is a deletion or
+          # not.  For deletions, we will need to verify if this CONFIG_* option
+          # is no longer being used in the entire repo.
+
+          if l.line_type is '-':
+            if option not in options_in_use and option in config_options:
+              deprecated_options.add(option)
           else:
-            # Check to see if its actually inside the comment.
-            if beg_comment_idx < option_idx < end_comment_idx:
-              # The config option is in the comment.  Ignore it.
-              violations.remove(option)
-      elif extension in make_style_ext or 'Makefile' in h.filename:
-        beg_comment_idx = l.string.find('#')
-        for option in match:
-          option_idx = l.string.find(option)
-          # Ignore everything to the right of the hash.
-          if beg_comment_idx < option_idx and beg_comment_idx != -1:
-            # The option is within a comment.  Ignore it.
-            violations.remove(option)
+            violations.add(option)
 
       # Check to see if the CONFIG_* option is in the config file and print the
       # violations.
@@ -152,7 +190,59 @@ def print_missing_config_options(hunks, config_options):
           print('> %-*s %s:%s' % (max_option_length, option,
                                   h.filename,
                                   l.line_num))
+
+  if deprecated_options:
+    print('\n\nThe following config options are being removed and also appear'
+          ' to be the last uses\nof that option.  Please remove these '
+          'options from %s.\n\n' % CONFIG_FILE)
+    for option in deprecated_options:
+      print('> %s' % option)
+      missing_config_option = True
+
   return missing_config_option
+
+def in_comment(filename, line, substr):
+  """Checks if given substring appears in a comment.
+
+  Args:
+    filename: The filename where this line is from.  This is used to determine
+      what kind of comments to look for.
+    line: String of line to search in.
+    substr: Substring to search for in the line.
+
+  Returns:
+    is_in_comment: Boolean indicating if substr was in a comment.
+  """
+
+  c_style_ext = ('.c', '.h', '.inc', '.S')
+  make_style_ext = ('.mk')
+  is_in_comment = False
+
+  extension = os.path.splitext(filename)[1]
+  substr_idx = line.find(substr)
+
+  # Different files have different comment syntax;  Handle appropriately.
+  if extension in c_style_ext:
+    beg_comment_idx = line.find('/*')
+    end_comment_idx = line.find('*/')
+    if end_comment_idx == -1:
+      end_comment_idx = len(line)
+
+    if beg_comment_idx == -1:
+      # Check to see if this line is from a multi-line comment.
+      if line.lstrip().startswith('* '):
+        # It _seems_ like it is.
+        is_in_comment = True
+    else:
+      # Check to see if its actually inside the comment.
+      if beg_comment_idx < substr_idx < end_comment_idx:
+        is_in_comment = True
+  elif extension in make_style_ext or 'Makefile' in filename:
+    beg_comment_idx = line.find('#')
+    # Ignore everything to the right of the hash.
+    if beg_comment_idx < substr_idx and beg_comment_idx != -1:
+      is_in_comment = True
+  return is_in_comment
 
 def get_hunks():
   """Gets the hunks of the most recent commit.
@@ -168,7 +258,6 @@ def get_hunks():
       output.
   """
 
-  # Get the diff output.
   diff = []
   hunks = []
   hunk_lines = []
@@ -181,8 +270,9 @@ def get_hunks():
   new_file_re = re.compile(r'^diff --git')
   filename_re = re.compile(r'^[+]{3} (.*)')
   hunk_line_num_re = re.compile(r'^@@ -[0-9]+,[0-9]+ \+([0-9]+),[0-9]+ @@.*')
-  line_re = re.compile(r'^([+| ])(.*)')
+  line_re = re.compile(r'^([+| |-])(.*)')
 
+  # Get the diff output.
   cmd = 'git diff --cached -GCONFIG_* --no-prefix --no-ext-diff HEAD~1'
   diff = subprocess.check_output(cmd.split()).split('\n')
   line = diff[0]
@@ -197,11 +287,6 @@ def get_hunks():
 
     # Search the diff output for a file name.
     elif current_state is 'filename_search':
-      # If we're deleting a file, ignore it entirely.
-      if 'deleted' in line:
-        current_state = 'new_file'
-        continue
-
       # Search for a file name.
       match = filename_re.search(line)
       if match:
@@ -238,10 +323,13 @@ def get_hunks():
 
       match = line_re.search(line)
       if match:
-        # Consider this line iff it's an addition.
-        if match.groups(1)[0] == '+':
-          hunk_lines.append(Line(line_num, match.groups(2)[1]))
-        line_num += 1
+        line_type = match.groups(1)[0]
+        # We only care about modifications.
+        if line_type is not ' ':
+          hunk_lines.append(Line(line_num, match.groups(2)[1], line_type))
+        # Deletions don't count towards the line numbers.
+        if line_type is not '-':
+          line_num += 1
 
     # Advance to the next line
     try:
