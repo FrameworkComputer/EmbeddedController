@@ -152,17 +152,42 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 	return tasks + id;
 }
 
+/*
+ * We use INT_MASK to enable (interrupt_enable)/
+ * disable (interrupt_disable) all maskable interrupts.
+ * And, EC modules share HW2 ~ HW15 interrupts. If corresponding
+ * bit of INT_MASK is set, it will never be cleared
+ * (see chip_disable_irq()). To enable/disable individual
+ * interrupt of EC module, we can use corresponding EXT_IERx registers.
+ *
+ * ------------     -----------
+ * |          |     | ------- |
+ * |EC modules|     | | HW2 | |
+ * |          |     | ------- |
+ * | INT 0    |     | ------- |    -------    -------
+ * | ~        | --> | | HW3 | | -> | GIE | -> | CPU |
+ * | INT 167  |     | ------- |    -------    -------
+ * |          |     |   ...   |       |
+ * |          |     |   ...   |        - clear by HW while
+ * |          |     | ------- |          interrupt occur and
+ * |          |     | | HW15| |          restore from IPSW after
+ * |          |     | ------- |          instruction "iret".
+ * | EXT_IERx |     | INT_MASK|
+ * ------------     -----------
+ */
 void interrupt_disable(void)
 {
-	/* clear GIE (Global Interrupt Enable) bit */
-	asm volatile ("setgie.d");
+	/* Mask all interrupts, only keep division by zero exception */
+	uint32_t val = (1 << 30);
+	asm volatile ("mtsr %0, $INT_MASK" : : "r"(val));
 	asm volatile ("dsb");
 }
 
 void interrupt_enable(void)
 {
-	/* set GIE (Global Interrupt Enable) bit */
-	asm volatile ("setgie.e");
+	/* Enable HW2 ~ HW15 and division by zero exception interrupts */
+	uint32_t val = ((1 << 30) | 0xFFFC);
+	asm volatile ("mtsr %0, $INT_MASK" : : "r"(val));
 }
 
 inline int in_interrupt_context(void)
@@ -291,14 +316,14 @@ uint32_t task_wait_event(int timeout_us)
 	return __wait_evt(timeout_us, TASK_ID_IDLE);
 }
 
-static uint32_t get_int_mask(void)
+uint32_t get_int_mask(void)
 {
 	uint32_t ret;
 	asm volatile ("mfsr %0, $INT_MASK" : "=r"(ret));
 	return ret;
 }
 
-static void set_int_mask(uint32_t val)
+void set_int_mask(uint32_t val)
 {
 	asm volatile ("mtsr %0, $INT_MASK" : : "r"(val));
 }
@@ -318,16 +343,12 @@ void task_enable_all_tasks(void)
 
 void task_enable_irq(int irq)
 {
-	int cpu_int = chip_enable_irq(irq);
-	if (cpu_int >= 0)
-		set_int_mask(get_int_mask() | (1 << cpu_int));
+	chip_enable_irq(irq);
 }
 
 void task_disable_irq(int irq)
 {
-	int cpu_int = chip_disable_irq(irq);
-	if (cpu_int >= 0)
-		set_int_mask(get_int_mask() & ~(1 << cpu_int));
+	chip_disable_irq(irq);
 }
 
 void task_clear_pending_irq(int irq)
@@ -356,9 +377,6 @@ static void ivic_init_irqs(void)
 	/* chip-specific interrupt controller initialization */
 	chip_init_irqs();
 
-	/* Mask all interrupts, only keep division by zero exception */
-	set_int_mask(1 << 30 /* IDIVZ */);
-
 	/*
 	 * Re-enable global interrupts in case they're disabled.  On a reboot,
 	 * they're already enabled; if we've jumped here from another image,
@@ -382,24 +400,24 @@ void mutex_lock(struct mutex *mtx)
 	ASSERT(id != TASK_ID_INVALID);
 
 	/* critical section with interrupts off */
-	asm volatile ("setgie.d ; dsb");
+	interrupt_disable();
 	mtx->waiters |= id;
 	while (1) {
 		if (!mtx->lock) { /* we got it ! */
 			mtx->lock = 2;
 			mtx->waiters &= ~id;
 			/* end of critical section : re-enable interrupts */
-			asm volatile ("setgie.e");
+			interrupt_enable();
 			return;
 		} else { /* Contention on the mutex */
 			/* end of critical section : re-enable interrupts */
-			asm volatile ("setgie.e");
+			interrupt_enable();
 			/* Sleep waiting for our turn */
 			/* TODO(crbug.com/435612, crbug.com/435611)
 			 * This discards any pending events! */
 			task_wait_event(0);
 			/* re-enter critical section */
-			asm volatile ("setgie.d ; dsb");
+			interrupt_disable();
 		}
 	}
 }

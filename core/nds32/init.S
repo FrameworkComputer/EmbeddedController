@@ -85,6 +85,19 @@ eflash_sig:
 
 .global reset
 reset:
+        /*
+         * GIE (global interrupt) is always disabled here. the first
+         * "iret" instruction of syscall interrupt (triggered by __task_start)
+         * will restore PSW from IPSW, and will enable GIE.
+         * Firmware will not change GIE settings (set/clear) until the next
+         * reset, unless there's an interrupt event.
+         * When there is an interrupt event, N8 CPU will save PSW register to
+         * IPSW register and clear GIE then jump to interrupt service routine.
+         * N8 will restore PSW from IPSW after "iret" instruction.
+         */
+        setgie.d
+        dsb
+
 	/* GP register is used to access .data and .bss */
 	la $gp, _SDA_BASE_
 

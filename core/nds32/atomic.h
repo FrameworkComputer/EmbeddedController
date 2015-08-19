@@ -10,47 +10,48 @@
 
 #include "common.h"
 #include "cpu.h"
+#include "task.h"
 
 static inline void atomic_clear(uint32_t volatile *addr, uint32_t bits)
 {
-	uint32_t psw = get_psw();
-	asm volatile ("setgie.d");
+	uint32_t int_mask = get_int_mask();
+	interrupt_disable();
 	*addr &= ~bits;
-	set_psw(psw);
+	set_int_mask(int_mask);
 }
 
 static inline void atomic_or(uint32_t volatile *addr, uint32_t bits)
 {
-	uint32_t psw = get_psw();
-	asm volatile ("setgie.d");
+	uint32_t int_mask = get_int_mask();
+	interrupt_disable();
 	*addr |= bits;
-	set_psw(psw);
+	set_int_mask(int_mask);
 }
 
 static inline void atomic_add(uint32_t volatile *addr, uint32_t value)
 {
-	uint32_t psw = get_psw();
-	asm volatile ("setgie.d");
+	uint32_t int_mask = get_int_mask();
+	interrupt_disable();
 	*addr += value;
-	set_psw(psw);
+	set_int_mask(int_mask);
 }
 
 static inline void atomic_sub(uint32_t volatile *addr, uint32_t value)
 {
-	uint32_t psw = get_psw();
-	asm volatile ("setgie.d");
+	uint32_t int_mask = get_int_mask();
+	interrupt_disable();
 	*addr -= value;
-	set_psw(psw);
+	set_int_mask(int_mask);
 }
 
 static inline uint32_t atomic_read_clear(uint32_t volatile *addr)
 {
 	uint32_t val;
-	uint32_t psw = get_psw();
-	asm volatile ("setgie.d");
+	uint32_t int_mask = get_int_mask();
+	interrupt_disable();
 	val = *addr;
 	*addr = 0;
-	set_psw(psw);
+	set_int_mask(int_mask);
 	return val;
 }
 #endif  /* __CROS_EC_ATOMIC_H */

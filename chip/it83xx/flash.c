@@ -347,7 +347,6 @@ int FLASH_DMA_CODE flash_physical_read(int offset, int size, char *data)
  */
 int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 {
-	uint32_t psw = get_psw();
 
 	if (flash_dma_code_enabled == 0)
 		return EC_ERROR_ACCESS_DENIED;
@@ -367,8 +366,7 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 	dma_flash_aai_write(offset, size, data);
 	dma_reset_immu();
 
-	if (psw & PSW_GIE)
-		interrupt_enable();
+	interrupt_enable();
 
 	return dma_flash_verify(offset, size, data);
 }
@@ -384,7 +382,6 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 {
 	int v_size = size, v_addr = offset;
-	uint32_t psw = get_psw();
 
 	if (flash_dma_code_enabled == 0)
 		return EC_ERROR_ACCESS_DENIED;
@@ -406,8 +403,7 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 	}
 	dma_reset_immu();
 
-	if (psw & PSW_GIE)
-		interrupt_enable();
+	interrupt_enable();
 
 	return dma_flash_verify(v_addr, v_size, NULL);
 }
@@ -518,7 +514,6 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 
 static void flash_code_static_dma(void)
 {
-	uint32_t psw = get_psw();
 
 	/* Make sure no interrupt while enable static DMA */
 	interrupt_disable();
@@ -548,8 +543,7 @@ static void flash_code_static_dma(void)
 
 	flash_dma_code_enabled = 0x01;
 
-	if (psw & PSW_GIE)
-		interrupt_enable();
+	interrupt_enable();
 }
 
 /**

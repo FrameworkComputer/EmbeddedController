@@ -52,6 +52,18 @@ void interrupt_enable(void);
 inline int in_interrupt_context(void);
 
 /**
+ * Return current interrupt mask. Meaning is chip-specific and
+ * should not be examined; just pass it to set_int_mask() to
+ * restore a previous interrupt state after interrupt_disable().
+ */
+uint32_t get_int_mask(void);
+
+/**
+ * Set interrupt mask. As with interrupt_disable(), use with care.
+ */
+void set_int_mask(uint32_t val);
+
+/**
  * Set a task event.
  *
  * If the task is higher priority than the current task, this will cause an

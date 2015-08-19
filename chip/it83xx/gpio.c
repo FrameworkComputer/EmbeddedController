@@ -440,9 +440,6 @@ static void __gpio_irq(void)
 	}
 #endif
 
-	/* Run the GPIO master handler above with corresponding port/mask. */
-	gpio_interrupt(gpio_irqs[irq].gpio_port, gpio_irqs[irq].gpio_mask);
-
 	/*
 	 * Clear the WUC status register. Note the external pin first goes
 	 * to the WUC module and is always edge triggered.
@@ -454,6 +451,9 @@ static void __gpio_irq(void)
 	 * controller is level triggered from the WUC status.
 	 */
 	task_clear_pending_irq(irq);
+
+	/* Run the GPIO master handler above with corresponding port/mask. */
+	gpio_interrupt(gpio_irqs[irq].gpio_port, gpio_irqs[irq].gpio_mask);
 }
 
 /* Route all WKO interrupts coming from INT#2 into __gpio_irq. */
