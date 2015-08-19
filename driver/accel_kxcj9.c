@@ -417,16 +417,19 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	 *
 	 * Add calibration offset before returning the data.
 	 */
-	get_range(s, &range);
 	get_resolution(s, &resolution);
 	for (i = X; i <= Z; i++) {
 		v[i] = (((int8_t)acc[i * 2 + 1]) << 4) |
 		       (acc[i * 2] >> 4);
 		v[i] <<= (16 - resolution);
-		v[i] += (data->offset[i] << 5) / range;
 	}
-	if (*s->rot_standard_ref != NULL)
-		rotate(v, *s->rot_standard_ref, v);
+	rotate(v, *s->rot_standard_ref, v);
+
+	/* apply offset in the device coordinates */
+	get_range(s, &range);
+	for (i = X; i <= Z; i++)
+		v[i] += (data->offset[i] << 5) / range;
+
 	return EC_SUCCESS;
 }
 
