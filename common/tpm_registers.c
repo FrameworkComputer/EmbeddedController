@@ -17,9 +17,9 @@
 #include "util.h"
 
 /* TPM2 library includes. */
-#include "tpm2/ExecCommand_fp.h"
-#include "tpm2/Platform.h"
-#include "tpm2/_TPM_Init_fp.h"
+#include "ExecCommand_fp.h"
+#include "Platform.h"
+#include "_TPM_Init_fp.h"
 
 #define CPRINTS(format, args...) cprints(CC_TPM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_TPM, format, ## args)
