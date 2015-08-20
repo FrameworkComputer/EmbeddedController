@@ -622,6 +622,9 @@ static void spi_chipset_shutdown(void)
 
 	/* Set SPI pins to inputs so we don't leak power when AP is off */
 	gpio_config_module(MODULE_SPI, 0);
+
+	/* Allow deep sleep when AP off */
+	enable_sleep(SLEEP_MASK_SPI);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
