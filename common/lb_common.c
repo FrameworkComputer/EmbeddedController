@@ -3,6 +3,93 @@
  * found in the LICENSE file.
  *
  * Lightbar IC interface
+ *
+ * Here's the API provided by this file.
+ *
+ * Looking at it from the outside, the lightbar has four "segments", each of
+ * which can be independently adjusted to display a unique color such as blue,
+ * purple, yellow, pinkish-white, etc. Segment 0 is on the left (looking
+ * straight at it from behind).
+ *
+ * The lb_set_rgb() and lb_get_rgb() functions let you specify the color of a
+ * segment using individual Red, Green, and Blue values in the 0x00 to 0xFF
+ * range (see https://en.wikipedia.org/wiki/Web_color for background info).
+ *
+ * The lb_set_brightness() function provides a simple way to set the intensity,
+ * over a range of 0x00 (off) to 0xFF (full brightness). It does this by
+ * scaling each RGB value proportionally. For example, an RGB value of #FF8000
+ * appears orange. To make the segment half as bright, you could specify a RGB
+ * value of #7f4000, or you could leave the RGB value unchanged and just set
+ * the brightness to 0x80.
+ *
+ * That covers most of the lb_* functions found in include/lb_common.h, and
+ * those functions are what are used to implement the various colors and
+ * sequences for displaying power state changes and other events.
+ *
+ * The internals are a little more messy.
+ *
+ * Each segment has three individual color emitters - red, green, and blue. A
+ * single emitter may consist of 3 to 7 physical LEDs, but they are all wired
+ * in parallel so there is only one wire that provides current for any one
+ * color emitter. That makes a total of 12 current control wires for the
+ * lightbar: four segments, three color emitters per segment.
+ *
+ * The ICs that we use each have seven independently adjustable
+ * current-limiters. We use six of those current limiters (called "Independent
+ * Sink Controls", or "ISC"s ) from each of two ICs to control the 12 color
+ * emitters in the lightbar. The ICs are not identical, but they're close
+ * enough that we can treat them the same. We call the ICs "controller 0" and
+ * "controller 1".
+ *
+ * For no apparent reason, each Chromebook has wired the ICs and the ISCs
+ * differently, so there are a couple of lookup tables that ensure that when we
+ * call lb_set_rgb() to make segment 1 yellow, it looks the same on all
+ * Chromebooks.
+ *
+ * Each ISC has a control register to set the amount of current that passes
+ * through the color emitter control wire. We need to limit the max current so
+ * that the current through each of the emitter's LEDs doesn't exceed the
+ * manufacturer's specifications. For example, if a particular LED can't handle
+ * more than 5 mA, and the emitter is made up of four LEDs in parallel, the
+ * maxiumum limit for that particular ISC would be 20 mA.
+ *
+ * Although the specified maximum currents are usually similar, the three
+ * different colors of LEDs have different brightnesses. For any given current,
+ * green LEDs are pretty bright, red LEDS are medium, and blue are fairly dim.
+ * So we calibrate the max current per ISC differently, depending on which
+ * color it controls.
+ *
+ * First we set one segment to red, one to green, and one to blue, using the
+ * ISC register to allow the max current per LED that the LED manufacturer
+ * recommends. Then we adjust the current of the brighter segments downward
+ * until all three segments appear equally bright to the eye. The MAX_RED,
+ * MAX_BLUE, and MAX_GREEN values are the ISC control register values at this
+ * point. This means that if we set all ISCs to their MAX_* values, all
+ * segments should appear white.
+ *
+ * To translate the RGB values passed to lb_set_rgb() into ISC values, we
+ * perform two transformations. The color value is first scaled according to
+ * the current brightness setting, and then that intensity is scaled according
+ * to the MAX_* value for the particular color. The result is the ISC register
+ * value to use.
+ *
+ * To add lightbar support for a new Chromebook, you do the following:
+ *
+ * 1. Figure out the segment-to-IC and color-to-ISC mappings so that
+ *    lb_set_rgb() does the same thing as on the other Chromebooks.
+ *
+ * 2. Calibrate the MAX_RED, MAX_GREEN, and MAX_BLUE values so that white looks
+ *    white, and solid red, green, and blue all appear to be the same
+ *    brightness.
+ *
+ * 3. Use lb_set_rgb() to set the colors to what *should be* the Google colors
+ *    (at maximum brightness). Tweak the RGB values until the colors match,
+ *    then edit common/lightbar.c to set them as the defaults.
+ *
+ * 4. Curse because the physical variation between the LEDs prevents you from
+ *    getting everything exactly right: white looks bluish, yellow turns
+ *    orange at lower brightness, segment 3 has a bright spot when displaying
+ *    solid red, etc. Go back to step 2, and repeat until deadline.
  */
 
 #include "common.h"
