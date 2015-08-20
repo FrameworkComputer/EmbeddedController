@@ -147,10 +147,14 @@ int motion_lid_get_angle(void)
  */
 void motion_lid_calc(void)
 {
+	/* rotate lid vector by 180 degre to be in the right coordinate frame */
+	vector_3_t lid = { accel_lid->xyz[X],
+			   accel_lid->xyz[Y] * -1,
+			   accel_lid->xyz[Z] * -1};
+
 	/* Calculate angle of lid accel. */
 	lid_angle_is_reliable = calculate_lid_angle(
-			accel_base->xyz,
-			accel_lid->xyz,
+			accel_base->xyz, lid,
 			&lid_angle_deg);
 
 #ifdef CONFIG_LID_ANGLE_UPDATE
