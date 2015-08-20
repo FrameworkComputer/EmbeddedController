@@ -561,3 +561,45 @@ static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, host_event_status_host_cmd,
 			EC_VER_MASK(0));
+
+/****************************************************************************/
+/* Console commands */
+
+static int cmd_btn_press(int argc, char **argv)
+{
+	enum gpio_signal gpio;
+	char *e;
+	int v;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "volup"))
+		gpio = GPIO_BTN_VOLU_L;
+	else if (!strcasecmp(argv[1], "voldown"))
+		gpio = GPIO_BTN_VOLD_L;
+	else
+		return EC_ERROR_PARAM1;
+
+	if (argc < 3) {
+		/* Just reading */
+		ccprintf("Button %s pressed = %d\n", argv[1],
+						     !gpio_get_level(gpio));
+		return EC_SUCCESS;
+	}
+
+	v = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	if (v)
+		gpio_set_flags(gpio, GPIO_OUT_LOW);
+	else
+		gpio_set_flags(gpio, GPIO_INPUT | GPIO_PULL_UP);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(btnpress, cmd_btn_press,
+			"<volup|voldown> [0|1]",
+			"Simulate button press",
+			NULL);
