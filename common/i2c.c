@@ -391,19 +391,20 @@ int i2c_unwedge(int port)
 	 * by a slave.
 	 */
 	if (!i2c_raw_get_scl(port)) {
-		for (i = 0; i < UNWEDGE_SCL_ATTEMPTS; i++) {
+		for (i = 0;; i++) {
+			if (i >= UNWEDGE_SCL_ATTEMPTS) {
+				/*
+				 * If we get here, a slave is holding the clock
+				 * low and there is nothing we can do.
+				 */
+				CPRINTS("I2C unwedge failed, SCL is being held low");
+				ret = EC_ERROR_UNKNOWN;
+				goto unwedge_done;
+			}
 			udelay(I2C_BITBANG_DELAY_US);
 			if (i2c_raw_get_scl(port))
 				break;
 		}
-
-		/*
-		 * If we get here, a slave is holding the clock low and there
-		 * is nothing we can do.
-		 */
-		CPRINTS("I2C unwedge failed, SCL is being held low");
-		ret = EC_ERROR_UNKNOWN;
-		goto unwedge_done;
 	}
 
 	if (i2c_raw_get_sda(port))
