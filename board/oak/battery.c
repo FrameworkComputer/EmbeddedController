@@ -15,10 +15,25 @@
 #define PARAM_CUT_OFF_HIGH 0x00
 
 static const struct battery_info info = {
+#if (BOARD_REV > OAK_REV3)
+	.voltage_max = 13050,
+	.voltage_normal = 11400,
+	.voltage_min = 9000,
+#elif (BOARD_REV == OAK_REV3)
+	.voltage_max = 13050,
+	.voltage_normal = 11400,
+	/*
+	 * TODO(crosbug.com/p/44428):
+	 * In order to compatible with 2S battery, set min voltage as 6V rather
+         * than 9V temporarily. Should set voltage_min to 9V, when 2S battery
+	 * phased out.
+	 */
+	.voltage_min = 6000,
+#else /* BOARD_REV < OAK_REV3 */
 	.voltage_max = 8700,
 	.voltage_normal = 7600,
 	.voltage_min = 6000,
-
+#endif
 	/* Pre-charge values. */
 	.precharge_current = 256, /* mA */
 
@@ -26,7 +41,7 @@ static const struct battery_info info = {
 	.start_charging_max_c = 45,
 	.charging_min_c = 0,
 	.charging_max_c = 45,
-	.discharging_min_c = -10,
+	.discharging_min_c = 0,
 	.discharging_max_c = 60,
 };
 
