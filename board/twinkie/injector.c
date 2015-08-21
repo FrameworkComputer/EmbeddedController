@@ -66,6 +66,7 @@ static const struct res_cfg {
 #define CC_RD(cc) ((cc > PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #define GET_POLARITY(cc1, cc2) (CC_RD(cc2) || CC_RA(cc1))
 
+#ifdef HAS_TASK_SNIFFER
 /* we don't have the default DMA handlers */
 void dma_event_interrupt_channel_3(void)
 {
@@ -75,6 +76,7 @@ void dma_event_interrupt_channel_3(void)
 	}
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_2_3, dma_event_interrupt_channel_3, 3);
+#endif
 
 static void twinkie_init(void)
 {
@@ -182,10 +184,12 @@ static void fsm_wave(uint32_t w)
 
 static void fsm_wait(uint32_t w)
 {
+#ifdef HAS_TASK_SNIFFER
 	uint32_t timeout_ms = INJ_ARG0(w);
 	uint32_t min_edges = INJ_ARG12(w);
 
 	wait_packet(inj_polarity,  min_edges, timeout_ms * 1000);
+#endif
 }
 
 static void fsm_expect(uint32_t w)
@@ -237,7 +241,9 @@ static void fsm_set(uint32_t w)
 		set_resistor(idx - INJ_SET_RESISTOR1, val);
 		break;
 	case INJ_SET_RECORD:
+#ifdef HAS_TASK_SNIFFER
 		recording_enable(val);
+#endif
 		break;
 	case INJ_SET_TX_SPEED:
 		pd_set_clock(0, val * 1000);

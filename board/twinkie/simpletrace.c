@@ -195,7 +195,9 @@ void rx_event(void)
 				 */
 				pd_rx_disable_monitoring(0);
 				/* trigger the analysis in the task */
+#ifdef HAS_TASK_SNIFFER
 				task_set_event(TASK_ID_SNIFFER, 1 << i, 0);
+#endif
 				/* start reception only one CC line */
 				break;
 			} else {
@@ -206,19 +208,23 @@ void rx_event(void)
 		}
 	}
 }
+#ifdef HAS_TASK_SNIFFER
 DECLARE_IRQ(STM32_IRQ_COMP, rx_event, 1);
+#endif
 
 void trace_packets(void)
 {
 	int head;
 	uint32_t payload[7];
 
+#ifdef HAS_TASK_SNIFFER
 	/* Disable sniffer DMA configuration */
 	dma_disable(STM32_DMAC_CH6);
 	dma_disable(STM32_DMAC_CH7);
 	task_disable_irq(STM32_IRQ_DMA_CHANNEL_4_7);
 	/* remove TIM1 CH1/2/3 DMA remapping */
 	STM32_SYSCFG_CFGR1 &= ~(1 << 28);
+#endif
 
 	/* "classical" PD RX configuration */
 	pd_hw_init_rx(0);
@@ -251,7 +257,9 @@ void trace_packets(void)
 	/* Disable tracer DMA configuration */
 	dma_disable(STM32_DMAC_CH2);
 	/* Put back : sniffer RX hardware configuration */
+#ifdef HAS_TASK_SNIFFER
 	sniffer_init();
+#endif
 }
 
 int expect_packet(int pol, uint8_t cmd, uint32_t timeout_us)
@@ -272,5 +280,7 @@ void set_trace_mode(int mode)
 
 	trace_mode = mode;
 	/* kick the task to take into account the new value */
+#ifdef HAS_TASK_SNIFFER
 	task_wake(TASK_ID_SNIFFER);
+#endif
 }
