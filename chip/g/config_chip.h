@@ -21,6 +21,7 @@
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
+#define CONFIG_RO_HEAD_ROOM	    1024	/* Room for ROM signature. */
 
 /* Describe the flash layout */
 #define CONFIG_FLASH_BASE       0x40000
