@@ -68,6 +68,9 @@ SECTIONS
     } > SHARED_LIB
 #endif
     .text : {
+#if defined(CONFIG_RO_HEAD_ROOM)
+	. = . +  CONFIG_RO_HEAD_ROOM;
+#endif
         OUTDIR/core/CORE/init.o (.text.vecttable)
         . = ALIGN(4);
         __version_struct_offset = .;
