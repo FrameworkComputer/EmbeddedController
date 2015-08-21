@@ -11,12 +11,14 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
+#include "chipset.h"
 #include "console.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "pi3usb9281.h"
 #include "power.h"
@@ -72,6 +74,17 @@ void usb0_evt(enum gpio_signal signal)
 void usb1_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+}
+
+/*
+ * enable_input_devices() is called by the tablet_mode ISR, but changes the
+ * state of GPIOs, so its definition must reside after including gpio_list.
+ */
+static void enable_input_devices(void);
+
+void tablet_mode_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(enable_input_devices, 0);
 }
 
 #include "gpio_list.h"
@@ -218,6 +231,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
+	/* Enable tablet mode interrupt for input device enable */
+	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
+
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 }
@@ -289,29 +305,49 @@ void board_set_charge_limit(int charge_ma)
 					   CONFIG_CHARGER_INPUT_CURRENT));
 }
 
+/* Enable or disable input devices, based upon chipset state and tablet mode */
+static void enable_input_devices(void)
+{
+	int kb_enable = 1;
+	int tp_enable = 1;
+
+	/* Disable both TP and KB in tablet mode */
+	if (!gpio_get_level(GPIO_TABLET_MODE_L))
+		kb_enable = tp_enable = 0;
+	/* Disable TP if chipset is off */
+	else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		tp_enable = 0;
+
+	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_ANGLE);
+	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
+}
+DECLARE_DEFERRED(enable_input_devices);
+
 /* Called on AP S5 -> S3 transition */
-void board_chipset_startup(void)
+static void board_chipset_startup(void)
 {
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
+	hook_call_deferred(enable_input_devices, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S5 transition */
-void board_chipset_shutdown(void)
+static void board_chipset_shutdown(void)
 {
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
+	hook_call_deferred(enable_input_devices, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S0 transition */
-void board_chipset_resume(void)
+static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S0 -> S3 transition */
-void board_chipset_suspend(void)
+static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
 }

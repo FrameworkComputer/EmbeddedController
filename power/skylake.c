@@ -207,8 +207,7 @@ static enum power_state _power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		}
 
-		/* Enable TP + USB so that they can wake the system */
-		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
+		/* Enable USB so that it can wake the system */
 		gpio_set_level(GPIO_USB1_ENABLE, 1);
 		gpio_set_level(GPIO_USB2_ENABLE, 1);
 
@@ -269,7 +268,6 @@ static enum power_state _power_handle_state(enum power_state state)
 		/* Disable wireless */
 		wireless_set_state(WIRELESS_OFF);
 
-		gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 		gpio_set_level(GPIO_USB1_ENABLE, 0);
 		gpio_set_level(GPIO_USB2_ENABLE, 0);
 
