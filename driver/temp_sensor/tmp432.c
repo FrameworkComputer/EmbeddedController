@@ -16,6 +16,7 @@
 static int temp_val_local;
 static int temp_val_remote1;
 static int temp_val_remote2;
+static uint8_t is_sensor_shutdown;
 
 /**
  * Determine whether the sensor is powered.
@@ -27,7 +28,7 @@ static int has_power(void)
 #ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
 	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
 #else
-	return 1;
+	return !is_sensor_shutdown;
 #endif
 }
 
@@ -36,12 +37,10 @@ static int raw_read8(const int offset, int *data_ptr)
 	return i2c_read8(I2C_PORT_THERMAL, TMP432_I2C_ADDR, offset, data_ptr);
 }
 
-#ifdef CONFIG_CMD_TEMP_SENSOR
 static int raw_write8(const int offset, int data)
 {
 	return i2c_write8(I2C_PORT_THERMAL, TMP432_I2C_ADDR, offset, data);
 }
-#endif
 
 static int get_temp(const int offset, int *temp_ptr)
 {
@@ -88,6 +87,36 @@ int tmp432_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
+static int tmp432_shutdown(uint8_t want_shutdown)
+{
+	int ret, value;
+
+	if (want_shutdown == is_sensor_shutdown)
+		return EC_SUCCESS;
+
+	ret = raw_read8(TMP432_CONFIGURATION1_R, &value);
+	if (ret < 0) {
+		ccprintf("ERROR: Temp sensor I2C read8 error.\n");
+		return ret;
+	}
+
+	if (want_shutdown && !(value & TMP432_CONFIG1_RUN_L)) {
+		/* tmp432 is running, and want it to shutdown */
+		/* CONFIG REG1 BIT6: 0=Run, 1=Shutdown */
+		/* shut it down */
+		value |= TMP432_CONFIG1_RUN_L;
+		ret = raw_write8(TMP432_CONFIGURATION1_R, value);
+	} else if (!want_shutdown && (value & TMP432_CONFIG1_RUN_L)) {
+		/* tmp432 is shutdown, and want turn it on */
+		value &= ~TMP432_CONFIG1_RUN_L;
+		ret = raw_write8(TMP432_CONFIGURATION1_R, value);
+	}
+	/* else, the current setting is exactly what you want */
+
+	is_sensor_shutdown = want_shutdown;
+	return ret;
+}
+
 static void temp_sensor_poll(void)
 {
 	int temp_c;
@@ -115,6 +144,11 @@ static void print_temps(
 		const int tmp432_low_limit_reg)
 {
 	int value;
+
+	if (!has_power()) {
+		ccprintf("  TMP432 is shutdown\n");
+		return;
+	}
 
 	ccprintf("%s:\n", name);
 
@@ -168,9 +202,26 @@ static int command_tmp432(int argc, char **argv)
 {
 	char *command;
 	char *e;
+	char *power;
 	int data;
 	int offset;
 	int rv;
+
+	/* handle "power" command before checking the power status. */
+	if ((argc == 3) && !strcasecmp(argv[1], "power")) {
+		power = argv[2];
+		if (!strncasecmp(power, "on", sizeof("on"))) {
+			rv = tmp432_set_power(TMP432_POWER_ON);
+			if (!rv)
+				print_status();
+		}
+		else if (!strncasecmp(power, "off", sizeof("off")))
+			rv = tmp432_set_power(TMP432_POWER_OFF);
+		else
+			return EC_ERROR_PARAM2;
+		ccprintf("Set TMP432 %s\n", power);
+		return rv;
+	}
 
 	if (!has_power()) {
 		ccprintf("ERROR: Temp sensor not powered.\n");
@@ -217,7 +268,20 @@ static int command_tmp432(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(tmp432, command_tmp432,
-	"[settemp|setbyte <offset> <value>] or [getbyte <offset>]. "
+	"[settemp|setbyte <offset> <value>] or [getbyte <offset>] or"
+	"[power <on|off>]. "
 	"Temps in Celsius.",
 	"Print tmp432 temp sensor status or set parameters.", NULL);
 #endif
+
+int tmp432_set_power(enum tmp432_power_state power_on)
+{
+#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+	uint8_t shutdown = (power_on == TMP432_POWER_OFF) ? 1 : 0;
+	return tmp432_shutdown(shutdown);
+#else
+	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	return EC_SUCCESS;
+#endif
+}
+

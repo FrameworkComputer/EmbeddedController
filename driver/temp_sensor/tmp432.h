@@ -82,6 +82,12 @@
 #define TMP432_STATUS_TEMP_HIGH_ALARM	(1 << 4)
 #define TMP432_STATUS_BUSY		(1 << 7)
 
+enum tmp432_power_state {
+	TMP432_POWER_OFF = 0,
+	TMP432_POWER_ON,
+	TMP432_POWER_COUNT
+};
+
 /**
  * Get the last polled value of a sensor.
  *
@@ -93,4 +99,13 @@
  */
 int tmp432_get_val(int idx, int *temp_ptr);
 
+/**
+ * Power control function of tmp432 temperature sensor.
+ *
+ * @param power_on	TMP432_POWER_ON: turn tmp432 sensor on.
+ *			TMP432_POWER_OFF: shut tmp432 sensor down.
+ *
+ * @return EC_SUCCESS if successful, non-zero if error.
+ */
+int tmp432_set_power(enum tmp432_power_state power_on);
 #endif /* __CROS_EC_TMP432_H */
