@@ -134,8 +134,7 @@ include util/lock/build.mk
 
 includes+=$(includes-y)
 
-ro-objs_from_dir=$(sort $(foreach obj, $($(2)-y), \
-	        $(out)/RO/$(1)/$(firstword $($(2)-mock-$(PROJECT)-$(obj)) $(obj))))
+ro-objs_from_dir=$(sort $(foreach obj, $($(2)-y), $(out)/RO/$(1)/$(obj)))
 
 # Get all sources to build
 all-ro-y=$(call ro-objs_from_dir,core/$(CORE),core)
