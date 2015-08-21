@@ -196,9 +196,22 @@ void __board_i2c_set_timeout(int port, uint32_t timeout)
 void i2c_set_timeout(int port, uint32_t timeout)
 		__attribute__((weak, alias("__board_i2c_set_timeout")));
 
+/**
+ * There is a level shift for AC_OK & LID_OPEN signal between AP & EC,
+ * disable it (drive high) when AP is off, otherwise enable it (drive low).
+ */
+static void board_extpower_buffer_to_soc(void)
+{
+	/* Drive high when AP is off (G3), else drive low */
+	gpio_set_level(GPIO_LEVEL_SHIFT_EN_L,
+		       chipset_in_state(CHIPSET_STATE_HARD_OFF) ? 1 : 0);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
+	/* Enable Level shift of AC_OK & LID_OPEN signals */
+	board_extpower_buffer_to_soc();
 	/* Enable rev1 testing GPIOs */
 	gpio_set_level(GPIO_SYSTEM_POWER_H, 1);
 	/* Enable PD MCU interrupt */
@@ -465,3 +478,67 @@ void vbus_task(void)
 	}
 }
 #endif /* BOARD_REV < OAK_REV4 */
+
+#ifdef CONFIG_TEMP_SENSOR_TMP432
+static void tmp432_set_power_deferred(void)
+{
+       /* Shut tmp432 down if not in S0 && no external power */
+       if (!extpower_is_present() && !chipset_in_state(CHIPSET_STATE_ON)) {
+               if (EC_SUCCESS != tmp432_set_power(TMP432_POWER_OFF))
+			CPRINTS("ERROR: Can't shutdown TMP432.");
+               return;
+       }
+
+       /*  else, turn it on. */
+       if (EC_SUCCESS != tmp432_set_power(TMP432_POWER_ON))
+		CPRINTS("ERROR: Can't turn on TMP432.");
+}
+DECLARE_DEFERRED(tmp432_set_power_deferred);
+#endif
+
+/**
+ * Hook of AC change. turn on/off tmp432 depends on AP & AC status.
+ */
+static void board_extpower(void)
+{
+	board_extpower_buffer_to_soc();
+#ifdef CONFIG_TEMP_SENSOR_TMP432
+	hook_call_deferred(tmp432_set_power_deferred, 0);
+#endif
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S5 -> S3 transition, and before HOOK_CHIPSET_STARTUP */
+static void board_chipset_pre_init(void)
+{
+	/* Enable level shift of AC_OK when power on */
+	board_extpower_buffer_to_soc();
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void board_chipset_shutdown(void)
+{
+	/* Disable level shift to SoC when shutting down */
+	gpio_set_level(GPIO_LEVEL_SHIFT_EN_L, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+
+/* Called on AP S3 -> S0 transition */
+static void board_chipset_resume(void)
+{
+#ifdef CONFIG_TEMP_SENSOR_TMP432
+	hook_call_deferred(tmp432_set_power_deferred, 0);
+#endif
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+#ifdef CONFIG_TEMP_SENSOR_TMP432
+	hook_call_deferred(tmp432_set_power_deferred, 0);
+#endif
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
