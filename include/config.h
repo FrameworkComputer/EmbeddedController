@@ -394,6 +394,9 @@
 /* Charger enable GPIO is active low */
 #undef CONFIG_CHARGER_EN_ACTIVE_LOW
 
+/* Enable trickle charging */
+#undef CONFIG_TRICKLE_CHARGING
+
 /*****************************************************************************/
 /* Chipset config */
 

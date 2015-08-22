@@ -214,6 +214,14 @@ int charger_set_voltage(int voltage)
 
 int charger_post_init(void)
 {
+#ifdef CONFIG_TRICKLE_CHARGING
+	int rv;
+	const struct battery_info *bi = battery_get_info();
+
+	rv = raw_write16(ISL9237_REG_SYS_VOLTAGE_MIN, bi->voltage_min);
+	if (rv)
+		return rv;
+#endif
 	return EC_SUCCESS;
 }
 
