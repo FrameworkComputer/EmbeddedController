@@ -42,10 +42,11 @@ cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) \
 cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
                   -Wl,--build-id=none -o $@ $<
-cmd_elf_to_flat = $(OBJCOPY) -O binary $(patsubst %.flat,%.elf,$@) $@
 # Allow the .roshared section to overlap other sections (itself)
 cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share \
-			-O binary $(patsubst %.flat,%.elf,$@) $@
+				-O binary $< $@
+cmd_raw_to_flat ?= $(out)/util/signer util/signer/rom-testkey.pem $< \
+	&& mv $<.signed $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
@@ -61,6 +62,8 @@ cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         -MMD -MF $@.d -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c)
+cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) \
+	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_date = $(if $(USE_GIT_DATE),cat /dev/null,./util/getdate.sh) > $@
 cmd_version = ./util/getversion.sh > $@
@@ -190,19 +193,27 @@ $(out)/$(PROJECT).obj: common/firmware_image.S $(out)/firmware_image.lds \
 $(out)/%.dis: $(out)/%.elf
 	$(call quiet,elf_to_dis,OBJDUMP)
 
-$(out)/%.flat: $(out)/%.elf $(out)/%.smap
-	$(call quiet,elf_to_flat,OBJCOPY)
-
-$(out)/RW/ec.RW.flat: $(out)/RW/ec.RW.elf $(out)/RW/ec.RW.smap
-	$(call quiet,ec_elf_to_flat,OBJCOPY)
-$(out)/RO/ec.RO.flat: $(out)/RO/ec.RO.elf $(out)/RO/ec.RO.smap
-	$(call quiet,ec_elf_to_flat,OBJCOPY)
-
 $(out)/RW/%.hex: $(out)/RW/%.elf $(out)/RW/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
+
+ifeq ($(SIGNED_RO_IMAGE),)
+$(out)/%.flat: $(out)/%.elf $(out)/%.smap
+	$(call quiet,ec_elf_to_flat,OBJCOPY)
+
 $(out)/RO/%.hex: $(out)/RO/%.elf $(out)/RO/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
+else
+$(out)/RW/ec.RW.flat: $(out)/RW/ec.RW.elf
+	$(call quiet,ec_elf_to_flat,OBJCOPY)
+$(out)/RO/ec.RO.flat.raw: $(out)/RO/ec.RO.elf $(out)/RO/ec.RO.smap
+	$(call quiet,ec_elf_to_flat,OBJCOPY)
 
+$(out)/RO/ec.RO.flat: $(out)/RO/ec.RO.flat.raw
+	$(call quiet,raw_to_flat,RO_SIGN)
+
+$(out)/RO/%.hex: $(out)/RO/%.flat
+	$(call quiet,bin_to_hex,OBJCOPY)
+endif
 $(out)/$(PROJECT).hex: $(out)/$(PROJECT).bin
 	$(call quiet,bin_to_hex,OBJCOPY)
 

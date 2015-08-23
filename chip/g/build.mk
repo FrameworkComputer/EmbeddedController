@@ -4,6 +4,8 @@
 # found in the LICENSE file.
 #
 
+SIGNED_RO_IMAGE = 1
+
 CORE:=cortex-m
 CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
 
@@ -33,3 +35,7 @@ chip-$(CONFIG_USB_CONSOLE)+=usb_console.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
 # TODO(wfrichar): Document this (and all other CONFIG_USB_*) in config.h
 chip-$(CONFIG_USB_BLOB)+=usb_blob.o
+
+$(out)/RO/ec.RO.flat: $(out)/util/signer
+
+$(out)/RO/ec.RO.hex: $(out)/RO/ec.RO.flat

@@ -18,11 +18,14 @@ OBJDUMP=$(CROSS_COMPILE)objdump
 PKG_CONFIG?=pkg-config
 BUILDCC?=gcc
 HOSTCC?=$(HOST_CROSS_COMPILE)gcc
+HOSTCXX?=$(HOST_CROSS_COMPILE)g++
 
-CFLAGS_WARN=-Wall -Werror -Wundef -Wstrict-prototypes -Wno-trigraphs      \
-            -fno-strict-aliasing -fno-common                              \
-            -Werror-implicit-function-declaration -Wno-format-security    \
-            -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow
+C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
+COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
+	-fno-common -Werror-implicit-function-declaration \
+	-Wno-format-security -fno-strict-overflow
+CFLAGS_WARN = $(COMMON_WARN) $(C_WARN)
+CXXFLAGS_WARN = $(COMMON_WARN)
 CFLAGS_DEBUG= -g
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) ) -I.
 CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
