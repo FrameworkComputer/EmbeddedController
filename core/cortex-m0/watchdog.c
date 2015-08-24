@@ -9,7 +9,6 @@
 #include "panic.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "watchdog.h"
 
 void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)

@@ -11,7 +11,6 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 void report_panic(uint32_t *regs, uint32_t itype)

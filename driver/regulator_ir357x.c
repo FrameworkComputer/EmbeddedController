@@ -10,7 +10,6 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "timer.h"
-#include "uart.h"
 #include "util.h"
 
 /* Console output macros */

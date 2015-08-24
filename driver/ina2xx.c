@@ -11,7 +11,6 @@
 #include "system.h"
 #include "timer.h"
 #include "ina2xx.h"
-#include "uart.h"
 #include "util.h"
 
 /* Console output macros */

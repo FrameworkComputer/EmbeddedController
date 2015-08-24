@@ -13,7 +13,6 @@
 #include "system.h"
 #include "timer.h"
 #include "tsu6721.h"
-#include "uart.h"
 #include "util.h"
 
 /* Console output macros */

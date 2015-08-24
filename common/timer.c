@@ -10,7 +10,6 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "system.h"
-#include "uart.h"
 #include "util.h"
 #include "task.h"
 #include "timer.h"
