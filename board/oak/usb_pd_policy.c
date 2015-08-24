@@ -242,11 +242,23 @@ static uint32_t dp_status[CONFIG_USB_PD_PORT_COUNT];
 
 static void svdm_safe_dp_mode(int port)
 {
+	const char *dp_str, *usb_str;
+	enum typec_mux typec_mux_setting;
+
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
-	usb_mux_set(port, TYPEC_MUX_NONE,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
+
+	/*
+	 * Check current status, due to the mux may be switched to SS
+	 * and SS device was attached before (for example: Type-C dock).
+	 * To avoid broken the SS connection,
+	 * keep the current setting if SS connection is enabled already.
+	 */
+	typec_mux_setting = (usb_mux_get(port, &dp_str, &usb_str) && usb_str) ?
+			    TYPEC_MUX_USB : TYPEC_MUX_NONE;
+	usb_mux_set(port, typec_mux_setting,
+		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 }
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
