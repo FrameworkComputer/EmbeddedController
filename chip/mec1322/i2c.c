@@ -362,8 +362,16 @@ err_chip_i2c_xfer:
 				       CTRL_STO | CTRL_ACK;
 	if (ret_done == STS_LRB)
 		return EC_ERROR_BUSY;
-	else if (ret_done == EC_ERROR_TIMEOUT)
+	else if (ret_done == EC_ERROR_TIMEOUT) {
+		/*
+		 * If our transaction timed out then our i2c controller
+		 * may be wedged without showing any other outward signs
+		 * of failure. Reset the controller so that future
+		 * transactions have a chance of success.
+		 */
+		reset_controller(controller);
 		return EC_ERROR_TIMEOUT;
+	}
 	else
 		return EC_ERROR_UNKNOWN;
 }
