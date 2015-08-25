@@ -326,11 +326,40 @@ static void board_pmic_init(void)
 		goto pmic_error;
 
 	/*
+	 * VCCIOCNT register setting
+	 * [6] : CSDECAYEN
+	 * otherbits: default
+	 */
+	ret = I2C_PMIC_WRITE(TPS650830_REG_VCCIOCNT, 0x4A);
+	if (ret)
+		goto pmic_error;
+
+	/*
+	 * VRMODECTRL:
+	 * [4] : VCCIOLPM clear
+	 * otherbits: default
+	 */
+	ret = I2C_PMIC_WRITE(TPS650830_REG_V33ADSWCNT, 0x2F);
+	if (ret)
+		goto pmic_error;
+
+	/*
+	 * PGMASK1 : Exclude VCCIO from Power Good Tree
+	 * [7] : MVCCIOPG clear
+	 * otherbits: default
+	 */
+	ret = I2C_PMIC_WRITE(TPS650830_REG_PGMASK1, 0x80);
+	if (ret)
+		goto pmic_error;
+
+	/*
 	 * PWFAULT_MASK1 Register settings
+	 * [7] : 1b V4 Power Fault Masked
+	 * [4] : 1b V7 Power Fault Masked
 	 * [2] : 1b V9 Power Fault Masked
 	 * [0] : 1b V13 Power Fault Masked
 	 */
-	ret = I2C_PMIC_WRITE(TPS650830_REG_PWFAULT_MASK1, 0x5);
+	ret = I2C_PMIC_WRITE(TPS650830_REG_PWFAULT_MASK1, 0x95);
 	if (ret)
 		goto pmic_error;
 
