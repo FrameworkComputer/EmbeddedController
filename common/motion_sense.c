@@ -119,8 +119,7 @@ static void motion_sense_get_fifo_info(
 static inline int motion_sensor_time_to_read(const timestamp_t *ts,
 		const struct motion_sensor_t *sensor)
 {
-	int rate;
-	sensor->drv->get_data_rate(sensor, &rate);
+	int rate = sensor->drv->get_data_rate(sensor);
 	if (rate == 0)
 		return 0;
 	/*
@@ -703,7 +702,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		}
 
-		sensor->drv->get_data_rate(sensor, &data);
+		data = sensor->drv->get_data_rate(sensor);
 
 		/* Save configuration parameter: ODR */
 		sensor->runtime_config.odr = data;
@@ -732,7 +731,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			}
 		}
 
-		sensor->drv->get_range(sensor, &data);
+		data = sensor->drv->get_range(sensor);
 
 		/* Save configuration parameter: range */
 		sensor->runtime_config.range = data;
@@ -885,8 +884,8 @@ static int command_accelrange(int argc, char **argv)
 					   round) == EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
-		sensor->drv->get_range(sensor, &data);
-		ccprintf("Range for sensor %d: %d\n", id, data);
+		ccprintf("Range for sensor %d: %d\n", id,
+			 sensor->drv->get_range(sensor));
 	}
 
 	return EC_SUCCESS;
@@ -932,8 +931,8 @@ static int command_accelresolution(int argc, char **argv)
 			== EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
-		sensor->drv->get_resolution(sensor, &data);
-		ccprintf("Resolution for sensor %d: %d\n", id, data);
+		ccprintf("Resolution for sensor %d: %d\n", id,
+			 sensor->drv->get_resolution(sensor));
 	}
 
 	return EC_SUCCESS;
@@ -982,8 +981,8 @@ static int command_accel_data_rate(int argc, char **argv)
 		motion_sense_set_accel_interval(
 				NULL, MAX_MOTION_SENSE_WAIT_TIME);
 	} else {
-		sensor->drv->get_data_rate(sensor, &data);
-		ccprintf("Data rate for sensor %d: %d\n", id, data);
+		ccprintf("Data rate for sensor %d: %d\n", id,
+			 sensor->drv->get_data_rate(sensor));
 		ccprintf("EC rate for sensor %d: %d\n", id,
 			 SENSOR_EC_RATE(sensor));
 		ccprintf("Current EC rate: %d\n", accel_interval);

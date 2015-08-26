@@ -200,13 +200,11 @@ accel_cleanup:
 	return ret;
 }
 
-static int get_range(const struct motion_sensor_t *s,
-				int *range)
+static int get_range(const struct motion_sensor_t *s)
 {
 	struct lsm6ds0_data *data = s->drv_data;
 
-	*range = data->base.range;
-	return EC_SUCCESS;
+	return data->base.range;
 }
 
 static int set_resolution(const struct motion_sensor_t *s,
@@ -217,11 +215,9 @@ static int set_resolution(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int get_resolution(const struct motion_sensor_t *s,
-				int *res)
+static int get_resolution(const struct motion_sensor_t *s)
 {
-	*res = LSM6DS0_RESOLUTION;
-	return EC_SUCCESS;
+	return LSM6DS0_RESOLUTION;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s,
@@ -278,13 +274,11 @@ accel_cleanup:
 	return ret;
 }
 
-static int get_data_rate(const struct motion_sensor_t *s,
-				int *rate)
+static int get_data_rate(const struct motion_sensor_t *s)
 {
 	struct lsm6ds0_data *data = s->drv_data;
 
-	*rate = data->base.odr;
-	return EC_SUCCESS;
+	return data->base.odr;
 }
 
 static int set_offset(const struct motion_sensor_t *s,
@@ -381,7 +375,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	rotate(v, *s->rot_standard_ref, v);
 
 	/* apply offset in the device coordinates */
-	get_range(s, &range);
+	range = get_range(s);
 	for (i = X; i <= Z; i++)
 		v[i] += (data->offset[i] << 5) / range;
 
@@ -454,8 +448,7 @@ static int init(const struct motion_sensor_t *s)
 	}
 
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
-			s->name, s->type, s->runtime_config.range,
-			s->runtime_config.odr);
+			s->name, s->type, get_range(s), get_data_rate(s));
 	return ret;
 }
 

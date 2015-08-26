@@ -45,8 +45,7 @@ struct accelgyro_drv {
 	int (*set_range)(const struct motion_sensor_t *s,
 			int range,
 			int rnd);
-	int (*get_range)(const struct motion_sensor_t *s,
-			int *range);
+	int (*get_range)(const struct motion_sensor_t *s);
 
 	/**
 	 * Setter and getter methods for the sensor resolution.
@@ -59,8 +58,7 @@ struct accelgyro_drv {
 	int (*set_resolution)(const struct motion_sensor_t *s,
 				int res,
 				int rnd);
-	int (*get_resolution)(const struct motion_sensor_t *s,
-				int *res);
+	int (*get_resolution)(const struct motion_sensor_t *s);
 
 	/**
 	 * Setter and getter methods for the sensor output data range. As the
@@ -74,8 +72,7 @@ struct accelgyro_drv {
 	int (*set_data_rate)(const struct motion_sensor_t *s,
 				int rate,
 				int rnd);
-	int (*get_data_rate)(const struct motion_sensor_t *s,
-				int *rate);
+	int (*get_data_rate)(const struct motion_sensor_t *s);
 
 
 	/**

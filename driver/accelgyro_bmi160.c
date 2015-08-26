@@ -323,13 +323,11 @@ static int set_range(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int get_range(const struct motion_sensor_t *s,
-				int *range)
+static int get_range(const struct motion_sensor_t *s)
 {
 	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
 
-	*range = data->range;
-	return EC_SUCCESS;
+	return data->range;
 }
 
 static int set_resolution(const struct motion_sensor_t *s,
@@ -340,11 +338,9 @@ static int set_resolution(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int get_resolution(const struct motion_sensor_t *s,
-				int *res)
+static int get_resolution(const struct motion_sensor_t *s)
 {
-	*res = BMI160_RESOLUTION;
-	return EC_SUCCESS;
+	return BMI160_RESOLUTION;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s,
@@ -442,13 +438,11 @@ accel_cleanup:
 	return ret;
 }
 
-static int get_data_rate(const struct motion_sensor_t *s,
-				int *rate)
+static int get_data_rate(const struct motion_sensor_t *s)
 {
 	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
 
-	*rate = data->odr;
-	return EC_SUCCESS;
+	return data->odr;
 }
 static int get_offset(const struct motion_sensor_t *s,
 			int16_t    *offset,
@@ -566,7 +560,7 @@ int perform_calib(const struct motion_sensor_t *s)
 {
 	int ret, val, en_flag, status, timeout = 0, rate;
 
-	get_data_rate(s, &rate);
+	rate = get_data_rate(s);
 	/*
 	 * Temperary set frequency to 100Hz to get enough data in a short
 	 * period of fime.
@@ -1025,8 +1019,7 @@ static int init(const struct motion_sensor_t *s)
 	set_range(s, s->runtime_config.range, 0);
 
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
-			s->name, s->type, s->runtime_config.range,
-			s->runtime_config.odr);
+			s->name, s->type, get_range(s), get_data_rate(s));
 	return ret;
 }
 

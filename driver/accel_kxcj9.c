@@ -207,12 +207,10 @@ static int set_range(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int get_range(const struct motion_sensor_t *s,
-				int * const range)
+static int get_range(const struct motion_sensor_t *s)
 {
 	struct kxcj9_data *data = s->drv_data;
-	*range = ranges[data->sensor_range].val;
-	return EC_SUCCESS;
+	return ranges[data->sensor_range].val;
 }
 
 static int set_resolution(const struct motion_sensor_t *s,
@@ -252,12 +250,10 @@ static int set_resolution(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int get_resolution(const struct motion_sensor_t *s,
-			int *res)
+static int get_resolution(const struct motion_sensor_t *s)
 {
 	struct kxcj9_data *data = s->drv_data;
-	*res = resolutions[data->sensor_resolution].val;
-	return EC_SUCCESS;
+	return resolutions[data->sensor_resolution].val;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s,
@@ -294,12 +290,10 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int get_data_rate(const struct motion_sensor_t *s,
-				int *rate)
+static int get_data_rate(const struct motion_sensor_t *s)
 {
 	struct kxcj9_data *data = s->drv_data;
-	*rate = datarates[data->sensor_datarate].val;
-	return EC_SUCCESS;
+	return datarates[data->sensor_datarate].val;
 }
 
 static int set_offset(const struct motion_sensor_t *s,
@@ -417,7 +411,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	 *
 	 * Add calibration offset before returning the data.
 	 */
-	get_resolution(s, &resolution);
+	resolution = get_resolution(s);
 	for (i = X; i <= Z; i++) {
 		v[i] = (((int8_t)acc[i * 2 + 1]) << 4) |
 		       (acc[i * 2] >> 4);
@@ -426,7 +420,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	rotate(v, *s->rot_standard_ref, v);
 
 	/* apply offset in the device coordinates */
-	get_range(s, &range);
+	range = get_range(s);
 	for (i = X; i <= Z; i++)
 		v[i] += (data->offset[i] << 5) / range;
 
@@ -488,7 +482,7 @@ cleanup_exit:
 static int init(const struct motion_sensor_t *s)
 {
 	int ret = EC_SUCCESS;
-	int cnt = 0, tmp, range, rate;
+	int cnt = 0, tmp;
 
 	/*
 	 * This sensor can be powered through an EC reboot, so the state of
@@ -537,10 +531,8 @@ static int init(const struct motion_sensor_t *s)
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	config_interrupt(s);
 #endif
-	get_range(s, &range);
-	get_data_rate(s, &rate);
 	CPRINTF("[%T %s: Done Init type:0x%X range:%d rate:%d]\n",
-		s->name, s->type, range, rate);
+		s->name, s->type, get_range(s), get_data_rate(s));
 
 	return ret;
 }

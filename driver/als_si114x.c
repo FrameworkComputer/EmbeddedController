@@ -391,8 +391,7 @@ static int set_resolution(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int get_resolution(const struct motion_sensor_t *s,
-				int *res)
+static int get_resolution(const struct motion_sensor_t *s)
 {
 	int ret, reg, val;
 	if (s->type == MOTIONSENSE_TYPE_PROX)
@@ -404,10 +403,9 @@ static int get_resolution(const struct motion_sensor_t *s,
 	val = 0;
 	ret = si114x_param_op(s, SI114X_CMD_PARAM_QUERY, reg, &val);
 	if (ret != EC_SUCCESS)
-		return ret;
+		return -1;
 
-	*res = val & 0x07;
-	return EC_SUCCESS;
+	return val & 0x07;
 }
 
 static int set_range(const struct motion_sensor_t *s,
@@ -420,21 +418,17 @@ static int set_range(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int get_range(const struct motion_sensor_t *s,
-				int *range)
+static int get_range(const struct motion_sensor_t *s)
 {
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
-	*range = (data->scale << 16) | (data->uscale);
-	return EC_SUCCESS;
+	return (data->scale << 16) | (data->uscale);
 }
 
-static int get_data_rate(const struct motion_sensor_t *s,
-				int *rate)
+static int get_data_rate(const struct motion_sensor_t *s)
 {
 	/* Sensor in forced mode, rate is used by motion_sense */
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
-	*rate = data->rate;
-	return EC_SUCCESS;
+	return data->rate;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s,
@@ -501,7 +495,7 @@ static int init(const struct motion_sensor_t *s)
 	set_resolution(s, resol, 0);
 
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
-			s->name, s->type, s->runtime_config.range);
+			s->name, s->type, get_range(s));
 	return EC_SUCCESS;
 }
 
