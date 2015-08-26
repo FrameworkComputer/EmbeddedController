@@ -22,6 +22,14 @@ enum sensor_state {
 	SENSOR_INIT_ERROR = 2
 };
 
+enum sensor_config {
+	SENSOR_CONFIG_AP, /* Configuration requested/for the AP */
+	SENSOR_CONFIG_EC_S0, /* Configuration from the EC while device in S0 */
+	SENSOR_CONFIG_EC_S3, /* from the EC when device sleep */
+	SENSOR_CONFIG_EC_S5, /* from the EC when device powered off */
+	SENSOR_CONFIG_MAX,
+};
+
 #define SENSOR_ACTIVE_S5 CHIPSET_STATE_SOFT_OFF
 #define SENSOR_ACTIVE_S3 CHIPSET_STATE_SUSPEND
 #define SENSOR_ACTIVE_S0 CHIPSET_STATE_ON
@@ -47,17 +55,21 @@ enum sensor_state {
 #define MIN_MOTION_SENSE_WAIT_TIME (3 * MSEC)
 #define MAX_MOTION_SENSE_WAIT_TIME (60000 * MSEC)
 
+#define ROUND_UP_FLAG (1 << 31)
+
 struct motion_data_t {
-	/* data rate the sensor will measure, in mHz */
-	int odr;
-	/* range of measurement in SI */
-	int range;
+	/*
+	 * data rate the sensor will measure, in mHz: 0 suspended.
+	 * MSB is used to know if we are rounding up.
+	 * */
+	unsigned odr;
 	/* delay between collection by EC, in ms.
 	 * For non FIFO sensor, should be nead 1e6/odr to
 	 * collect events.
 	 * For sensor with FIFO, can be much longer.
+	 * 0: no collection.
 	 */
-	unsigned ec_rate;
+	unsigned short ec_rate;
 };
 
 struct motion_sensor_t {
@@ -74,11 +86,29 @@ struct motion_sensor_t {
 	uint8_t addr;
 	const matrix_3x3_t *rot_standard_ref;
 
-	/* Default configuration parameters, RO only */
-	struct motion_data_t default_config;
+	/*
+	 * default_range: set by default by the EC.
+	 * The host can change it, but rarely does.
+	 */
+	int default_range;
 
-	/* Run-Time configuration parameters */
-	struct motion_data_t runtime_config;
+	/*
+	 * There are 4 configuration parameters to deal with different
+	 * configuration
+	 *
+	 * Power   |         S0        |            S3     |      S5
+	 * --------+-------------------+-------------------+-----------------
+	 * From AP | <------- SENSOR_CONFIG_AP ----------> |
+	 *         | Use for normal    | While sleeping    | Always disabled
+	 *         | operation: game,  | iFor Activity     |
+	 *         | screen rotatopm   | Recognition       |
+	 * --------+-------------------+-------------------+------------------
+	 * From EC |SENSOR_CONFIG_EC_S0|SENSOR_CONFIG_EC_S3|SENSOR_CONFIG_EC_S5
+	 *         | Background        | Gesture  Recognition (Double tap, ...)
+	 *         | Activity: compass,|
+	 *         | ambient light)|
+	 */
+	struct motion_data_t config[SENSOR_CONFIG_MAX];
 
 	/* state parameters */
 	enum sensor_state state;
@@ -87,6 +117,11 @@ struct motion_sensor_t {
 
 	/* How many flush events are pending */
 	uint32_t flush_pending;
+
+	/*
+	 * Allow EC to request an higher frequency for the sensors than the AP.
+	 */
+	fp_t oversampling;
 
 	/*
 	 * How many vector events are lost in the FIFO since last time
@@ -109,10 +144,9 @@ extern struct motion_sensor_t motion_sensors[];
 extern const unsigned motion_sensor_count;
 
 /* For testing purposes: export the sampling interval. */
+extern enum chipset_state_mask sensor_active;
 extern unsigned accel_interval;
-int motion_sense_set_accel_interval(
-		struct motion_sensor_t *driving_sensor,
-		unsigned data);
+int motion_sense_set_accel_interval(void);
 
 /*
  * Priority of the motion sense resume/suspend hooks, to be sure associated

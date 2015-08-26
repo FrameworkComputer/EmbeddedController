@@ -487,7 +487,7 @@ static int init(const struct motion_sensor_t *s)
 		resol = 5;
 	}
 
-	set_range(s, s->runtime_config.range, 0);
+	set_range(s, s->default_range, 0);
 	/*
 	 * Sensor is most likely behind a glass.
 	 * Max out the gain to get correct measurement

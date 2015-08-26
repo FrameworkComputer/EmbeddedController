@@ -304,7 +304,7 @@ static int set_range(const struct motion_sensor_t *s,
 	int ret, range_tbl_size;
 	uint8_t reg_val, ctrl_reg;
 	const struct accel_param_pair *ranges;
-	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
 
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
 		data->range = range;
@@ -325,7 +325,7 @@ static int set_range(const struct motion_sensor_t *s,
 
 static int get_range(const struct motion_sensor_t *s)
 {
-	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
 
 	return data->range;
 }
@@ -349,7 +349,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 {
 	int ret, val, normalized_rate;
 	uint8_t ctrl_reg, reg_val;
-	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
 
 	if (rate == 0) {
 #ifdef CONFIG_ACCEL_FIFO
@@ -429,8 +429,9 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	data->odr = normalized_rate;
 
 #ifdef CONFIG_ACCEL_FIFO
-	/* FIFO start collecting events */
-	enable_fifo(s, 1);
+	/* FIFO start collecting events if AP wants them */
+	if (s->config[SENSOR_CONFIG_AP].odr != 0)
+		enable_fifo(s, 1);
 #endif
 
 accel_cleanup:
@@ -440,7 +441,7 @@ accel_cleanup:
 
 static int get_data_rate(const struct motion_sensor_t *s)
 {
-	struct motion_data_t *data = BMI160_GET_SAVED_DATA(s);
+	struct accelgyro_saved_data_t *data = BMI160_GET_SAVED_DATA(s);
 
 	return data->odr;
 }
@@ -1015,11 +1016,10 @@ static int init(const struct motion_sensor_t *s)
 	if (s->type == MOTIONSENSE_TYPE_ACCEL)
 		ret = config_interrupt(s);
 #endif
-	set_data_rate(s, s->runtime_config.odr, 0);
-	set_range(s, s->runtime_config.range, 0);
+	set_range(s, s->default_range, 0);
 
-	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d odr:%d]\n",
-			s->name, s->type, get_range(s), get_data_rate(s));
+	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
+			s->name, s->type, get_range(s));
 	return ret;
 }
 

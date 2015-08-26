@@ -39,11 +39,6 @@ unsigned accel_interval;
 static int accel_disp;
 #endif
 
-#define SENSOR_EC_RATE(_sensor) \
-	(sensor_active == SENSOR_ACTIVE_S0 ? \
-	 (_sensor)->runtime_config.ec_rate : \
-	 (_sensor)->default_config.ec_rate)
-
 #define SENSOR_ACTIVE(_sensor) (sensor_active & (_sensor)->active_mask)
 
 /*
@@ -71,7 +66,8 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 	struct ec_response_motion_sensor_data vector;
 	int i;
 
-	data->sensor_num = (sensor - motion_sensors);
+	data->sensor_num = sensor - motion_sensors;
+
 	mutex_lock(&g_sensor_mutex);
 	if (queue_space(&motion_sense_fifo) == 0) {
 		queue_remove_unit(&motion_sense_fifo, &vector);
@@ -83,10 +79,29 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 	for (i = 0; i < valid_data; i++)
 		sensor->xyz[i] = data->data[i];
 	mutex_unlock(&g_sensor_mutex);
+
+	if (valid_data) {
+		int ap_odr = sensor->config[SENSOR_CONFIG_AP].odr &
+			~ROUND_UP_FLAG;
+		int rate = INT_TO_FP(sensor->drv->get_data_rate(sensor));
+
+		/* If the AP does not want sensor info, skip */
+		if (ap_odr == 0)
+			return;
+
+		/* Skip if EC is oversampling */
+		if (sensor->oversampling < 0) {
+			sensor->oversampling += fp_div(INT_TO_FP(1000), rate);
+			return;
+		}
+		sensor->oversampling += fp_div(INT_TO_FP(1000), rate) -
+			fp_div(INT_TO_FP(1000), INT_TO_FP(ap_odr));
+	}
+
 	queue_add_unit(&motion_sense_fifo, data);
 }
 
-static inline void motion_sense_insert_flush(struct motion_sensor_t *sensor)
+static void motion_sense_insert_flush(struct motion_sensor_t *sensor)
 {
 	struct ec_response_motion_sensor_data vector;
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_FLUSH |
@@ -95,7 +110,7 @@ static inline void motion_sense_insert_flush(struct motion_sensor_t *sensor)
 	motion_sense_fifo_add_unit(&vector, sensor, 0);
 }
 
-static inline void motion_sense_insert_timestamp(void)
+static void motion_sense_insert_timestamp(void)
 {
 	struct ec_response_motion_sensor_data vector;
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
@@ -130,53 +145,111 @@ static inline int motion_sensor_time_to_read(const timestamp_t *ts,
 			  sensor->last_collection + 950000000 / rate);
 }
 
+static enum sensor_config motion_sense_get_ec_config(void)
+{
+	switch (sensor_active) {
+	case SENSOR_ACTIVE_S0:
+		return SENSOR_CONFIG_EC_S0;
+	case SENSOR_ACTIVE_S3:
+		return SENSOR_CONFIG_EC_S3;
+	case SENSOR_ACTIVE_S5:
+		return SENSOR_CONFIG_EC_S5;
+	default:
+		CPRINTS("get_ec_config: Invalid active state: %x",
+			sensor_active);
+		return SENSOR_CONFIG_MAX;
+	}
+}
+/* motion_sense_set_data_rate
+ *
+ * Set the sensor data rate. It is altered when the AP change the data
+ * rate or when the power state changes.
+ */
+int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
+{
+	int roundup = 0, ec_odr = 0, odr = 0;
+	enum sensor_config config_id;
+
+	/* We assume the sensor is initalized */
+
+	/* Check the AP setting first. */
+	if (sensor_active != SENSOR_ACTIVE_S5)
+		odr = sensor->config[SENSOR_CONFIG_AP].odr & ~ROUND_UP_FLAG;
+
+	/* check if the EC set the sensor ODR at a higher frequency */
+	config_id = motion_sense_get_ec_config();
+	ec_odr = sensor->config[config_id].odr & ~ROUND_UP_FLAG;
+	if (ec_odr > odr)
+		odr = ec_odr;
+	else
+		config_id = SENSOR_CONFIG_AP;
+	roundup = !!(sensor->config[config_id].odr & ROUND_UP_FLAG);
+	CPRINTS("%s ODR: %d - roundup %d from config %d",
+		sensor->name, odr, roundup, config_id);
+	return sensor->drv->set_data_rate(sensor, odr, roundup);
+}
+
+/* motion_sense_ec_rate
+ *
+ * Calculate the sensor ec rate. It will be use to set the motion task polling
+ * rate.
+ *
+ * Return the EC rate, in us.
+ */
+static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
+{
+	int ec_rate = 0, ec_rate_from_cfg;
+	enum sensor_config config_id = SENSOR_CONFIG_AP;
+
+	/* Check the AP setting first. */
+	if (sensor_active != SENSOR_ACTIVE_S5)
+		ec_rate = sensor->config[SENSOR_CONFIG_AP].ec_rate;
+
+	config_id = motion_sense_get_ec_config();
+	ec_rate_from_cfg = sensor->config[config_id].ec_rate;
+	if ((ec_rate == 0 && ec_rate_from_cfg != 0) ||
+	    (ec_rate_from_cfg != 0 && ec_rate_from_cfg < ec_rate))
+		ec_rate = ec_rate_from_cfg;
+	return ec_rate * MSEC;
+}
+
 /*
  * motion_sense_set_accel_interval
  *
  * Set the wake up interval for the motion sense thread.
  * It is set to the highest frequency one of the sensors need to be polled at.
  *
- * driving_sensor: In S0, indicates which sensor has its EC sampling rate
- * changed. In S3, it is hard coded, so in S3 driving_sensor should be NULL.
- * data: The new ec sampling rate for this sensor.
- *
  * Note: Not static to be tested.
  */
-int motion_sense_set_accel_interval(
-		struct motion_sensor_t *driving_sensor,
-		unsigned data)
+int motion_sense_set_accel_interval(void)
 {
-	int i;
+	int i, sensor_ec_rate, ec_rate, wake_up = 0;
 	struct motion_sensor_t *sensor;
-	if (driving_sensor)
-		driving_sensor->runtime_config.ec_rate = data;
-
-	for (i = 0; i < motion_sensor_count; ++i) {
+	for (i = 0, ec_rate = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
-		if (sensor == driving_sensor)
-			continue;
 		/*
 		 * If the sensor is sleeping, no need to check it periodicaly.
 		 */
-		if ((sensor->runtime_config.odr == 0) ||
-		    (sensor->state != SENSOR_INITIALIZED))
+		if ((sensor->state != SENSOR_INITIALIZED) ||
+		    (sensor->drv->get_data_rate(sensor) == 0))
 			continue;
 
-		if (SENSOR_EC_RATE(sensor) < data)
-			data = SENSOR_EC_RATE(sensor);
+		sensor_ec_rate = motion_sense_ec_rate(sensor);
+		if ((ec_rate == 0 && sensor_ec_rate != 0) ||
+		    (sensor_ec_rate != 0 && sensor_ec_rate < ec_rate))
+			ec_rate = sensor_ec_rate;
 	}
-	if (accel_interval > data) {
-		accel_interval = data;
-		/*
-		 * Wake up the motion sense task: we want to sensor task to take
-		 * in account the new period right away.
-		 */
+	/*
+	 * Wake up the motion sense task: we want to sensor task to take
+	 * in account the new period right away.
+	 */
+	if (accel_interval == 0 ||
+	    (ec_rate > 0 && accel_interval > ec_rate))
+		wake_up = 1;
+	accel_interval = ec_rate;
+	if (wake_up)
 		task_wake(TASK_ID_MOTIONSENSE);
-	} else {
-		accel_interval = data;
-	}
-
-	return data;
+	return accel_interval;
 }
 
 static inline void motion_sense_init(struct motion_sensor_t *sensor)
@@ -194,29 +267,36 @@ static inline void motion_sense_init(struct motion_sensor_t *sensor)
 		timestamp_t ts = get_time();
 		sensor->state = SENSOR_INITIALIZED;
 		sensor->last_collection = ts.le.lo;
+		sensor->oversampling = 0;
+		motion_sense_set_data_rate(sensor);
 	}
 }
 
 /*
- * motion_sense_switch_unused_sensor
+ * motion_sense_switch_sensor_rate
  *
  * Suspend all sensors that are not needed.
  * Mark them as unitialized, they wll lose power and
  * need to be initialized again.
  */
-static void motion_sense_switch_unused_sensor(void)
+static void motion_sense_switch_sensor_rate(void)
 {
 	int i;
 	struct motion_sensor_t *sensor;
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
-		if ((sensor->state == SENSOR_INITIALIZED) &&
-		    !SENSOR_ACTIVE(sensor)) {
-			sensor->drv->set_data_rate(sensor, 0, 0);
-			sensor->state = SENSOR_NOT_INITIALIZED;
+		if (SENSOR_ACTIVE(sensor)) {
+			/* Initialize or just back the odr previously set. */
+			if (sensor->state == SENSOR_INITIALIZED)
+				motion_sense_set_data_rate(sensor);
+			else
+				motion_sense_init(sensor);
+		} else {
+			if (sensor->state == SENSOR_INITIALIZED)
+				sensor->state = SENSOR_NOT_INITIALIZED;
 		}
 	}
-	motion_sense_set_accel_interval(NULL, MAX_MOTION_SENSE_WAIT_TIME);
+	motion_sense_set_accel_interval();
 }
 
 static void motion_sense_shutdown(void)
@@ -225,14 +305,16 @@ static void motion_sense_shutdown(void)
 	struct motion_sensor_t *sensor;
 
 	sensor_active = SENSOR_ACTIVE_S5;
-	motion_sense_switch_unused_sensor();
 
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
 		/* Forget about changes made by the AP */
-		memcpy(&sensor->runtime_config, &sensor->default_config,
-		       sizeof(sensor->runtime_config));
+		sensor->config[SENSOR_CONFIG_AP].odr = 0;
+		sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
+		sensor->drv->set_range(sensor, sensor->default_range, 0);
+
 	}
+	motion_sense_switch_sensor_rate();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, motion_sense_shutdown,
 	     MOTION_SENSE_HOOK_PRIO);
@@ -247,27 +329,15 @@ static void motion_sense_suspend(void)
 		return;
 
 	sensor_active = SENSOR_ACTIVE_S3;
-	motion_sense_switch_unused_sensor();
+	motion_sense_switch_sensor_rate();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sense_suspend,
 	     MOTION_SENSE_HOOK_PRIO);
 
 static void motion_sense_resume(void)
 {
-	int i;
-	struct motion_sensor_t *sensor;
-
 	sensor_active = SENSOR_ACTIVE_S0;
-	for (i = 0; i < motion_sensor_count; i++) {
-		sensor = &motion_sensors[i];
-		/* Initialize or just back the odr previously set. */
-		if (sensor->state == SENSOR_INITIALIZED)
-			sensor->drv->set_data_rate(sensor,
-					sensor->runtime_config.odr, 1);
-		else
-			motion_sense_init(sensor);
-	}
-	motion_sense_set_accel_interval(NULL, MAX_MOTION_SENSE_WAIT_TIME);
+	motion_sense_switch_sensor_rate();
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, motion_sense_resume,
 	     MOTION_SENSE_HOOK_PRIO);
@@ -281,11 +351,7 @@ static void motion_sense_startup(void)
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
 		sensor->state = SENSOR_NOT_INITIALIZED;
-
-		memcpy(&sensor->runtime_config, &sensor->default_config,
-		       sizeof(sensor->runtime_config));
 	}
-	motion_sense_set_accel_interval(NULL, MAX_MOTION_SENSE_WAIT_TIME);
 
 	/* If the AP is already in S0, call the resume hook now.
 	 * We may initialize the sensor 2 times (once in RO, anoter time in RW),
@@ -357,7 +423,7 @@ static int motion_sense_read(struct motion_sensor_t *sensor)
 	if (sensor->state != SENSOR_INITIALIZED)
 		return EC_ERROR_UNKNOWN;
 
-	if (sensor->runtime_config.odr == 0)
+	if (sensor->drv->get_data_rate(sensor) == 0)
 		return EC_ERROR_NOT_POWERED;
 
 	/* Read all raw X,Y,Z accelerations. */
@@ -466,7 +532,6 @@ void motion_sense_task(void)
 			/* if the sensor is active in the current power state */
 			if (SENSOR_ACTIVE(sensor)) {
 				if (sensor->state != SENSOR_INITIALIZED) {
-					CPRINTS("S%d active not initalized", i);
 					continue;
 				}
 
@@ -524,7 +589,8 @@ void motion_sense_task(void)
 		if (fifo_flush_needed ||
 		    event & TASK_EVENT_MOTION_ODR_CHANGE ||
 		    queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
-		    (ts_end_task.val - ts_last_int.val) > accel_interval) {
+		    (accel_interval > 0 &&
+		     (ts_end_task.val - ts_last_int.val) > accel_interval)) {
 			if (!fifo_flush_needed)
 				motion_sense_insert_timestamp();
 			fifo_flush_needed = 0;
@@ -540,16 +606,24 @@ void motion_sense_task(void)
 #endif
 		}
 #endif
-		/* Delay appropriately to keep sampling time consistent. */
-		wait_us = accel_interval -
-			(ts_end_task.val - ts_begin_task.val);
+		if (accel_interval > 0) {
+			/*
+			 * Delay appropriately to keep sampling time
+			 * consistent.
+			 */
+			wait_us = accel_interval -
+				(ts_end_task.val - ts_begin_task.val);
 
-		/*
-		 * Guarantee some minimum delay to allow other lower priority
-		 * tasks to run.
-		 */
-		if (wait_us < MIN_MOTION_SENSE_WAIT_TIME)
-			wait_us = MIN_MOTION_SENSE_WAIT_TIME;
+			/*
+			 * Guarantee some minimum delay to allow other lower
+			 * priority tasks to run.
+			 */
+			if (wait_us < MIN_MOTION_SENSE_WAIT_TIME)
+				wait_us = MIN_MOTION_SENSE_WAIT_TIME;
+		} else {
+			wait_us = -1;
+		}
+
 	} while ((event = task_wait_event(wait_us)));
 }
 
@@ -591,7 +665,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	const struct ec_params_motion_sense *in = args->params;
 	struct ec_response_motion_sense *out = args->response;
 	struct motion_sensor_t *sensor;
-	int i, data, ret = EC_RES_INVALID_PARAM, reported;
+	int i, ret = EC_RES_INVALID_PARAM, reported;
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_DUMP:
@@ -657,14 +731,18 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		 * has a value.
 		 */
 		if (in->ec_rate.data != EC_MOTION_SENSE_NO_VALUE) {
+			if (in->ec_rate.data == 0)
+				sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
+			else
+				sensor->config[SENSOR_CONFIG_AP].ec_rate =
+					MAX(in->ec_rate.data,
+					    MIN_MOTION_SENSE_WAIT_TIME / MSEC);
+
 			/* Bound the new sampling rate. */
-			motion_sense_set_accel_interval(
-					sensor,
-					MAX(in->ec_rate.data * MSEC,
-					    MIN_MOTION_SENSE_WAIT_TIME));
+			motion_sense_set_accel_interval();
 		}
 
-		out->ec_rate.ret = sensor->runtime_config.ec_rate / MSEC;
+		out->ec_rate.ret = motion_sense_ec_rate(sensor) / MSEC;
 
 		args->response_size = sizeof(out->ec_rate);
 		break;
@@ -678,14 +756,14 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		/* Set new data rate if the data arg has a value. */
 		if (in->sensor_odr.data != EC_MOTION_SENSE_NO_VALUE) {
-			if (sensor->drv->set_data_rate(sensor,
-						in->sensor_odr.data,
-						in->sensor_odr.roundup)
-					!= EC_SUCCESS) {
-				CPRINTS("MS bad sensor rate %d",
-						in->sensor_odr.data);
+			sensor->config[SENSOR_CONFIG_AP].odr =
+				in->sensor_odr.data |
+				(in->sensor_odr.roundup ? ROUND_UP_FLAG : 0);
+
+			ret = motion_sense_set_data_rate(sensor);
+			if (ret != EC_SUCCESS)
 				return EC_RES_INVALID_PARAM;
-			}
+
 			/*
 			 * To be sure timestamps are calculated properly,
 			 * Send an event to have a timestamp inserted in the
@@ -698,16 +776,10 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			 * suspended, we have to recalculate the EC sampling
 			 * rate
 			 */
-			motion_sense_set_accel_interval(
-					NULL, MAX_MOTION_SENSE_WAIT_TIME);
-
+			motion_sense_set_accel_interval();
 		}
 
-		data = sensor->drv->get_data_rate(sensor);
-
-		/* Save configuration parameter: ODR */
-		sensor->runtime_config.odr = data;
-		out->sensor_odr.ret = data;
+		out->sensor_odr.ret = sensor->drv->get_data_rate(sensor);
 
 		args->response_size = sizeof(out->sensor_odr);
 
@@ -726,18 +798,11 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 						in->sensor_range.data,
 						in->sensor_range.roundup)
 					!= EC_SUCCESS) {
-				CPRINTS("MS bad sensor range %d",
-						in->sensor_range.data);
 				return EC_RES_INVALID_PARAM;
 			}
 		}
 
-		data = sensor->drv->get_range(sensor);
-
-		/* Save configuration parameter: range */
-		sensor->runtime_config.range = data;
-
-		out->sensor_range.ret = data;
+		out->sensor_range.ret = sensor->drv->get_range(sensor);
 		args->response_size = sizeof(out->sensor_range);
 		break;
 
@@ -832,8 +897,6 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (ret == EC_RES_INVALID_PARAM)
 			ret = host_cmd_motion_lid(args);
 #endif
-		if (ret == EC_RES_INVALID_PARAM)
-			CPRINTS("MS bad cmd 0x%x", in->cmd);
 		return ret;
 	}
 
@@ -945,8 +1008,9 @@ DECLARE_CONSOLE_COMMAND(accelres, command_accelresolution,
 static int command_accel_data_rate(int argc, char **argv)
 {
 	char *e;
-	int id, data, round = 1;
+	int id, data, round = 1, ret;
 	struct motion_sensor_t *sensor;
+	enum sensor_config config_id;
 
 	if (argc < 2 || argc > 4)
 		return EC_ERROR_PARAM_COUNT;
@@ -975,17 +1039,19 @@ static int command_accel_data_rate(int argc, char **argv)
 		 * Write new data rate, if it returns invalid arg, then
 		 * return a parameter error.
 		 */
-		if (sensor->drv->set_data_rate(sensor, data, round) ==
-		    EC_ERROR_INVAL)
+		config_id = motion_sense_get_ec_config();
+		sensor->config[config_id].odr =
+			data | (round ? ROUND_UP_FLAG : 0);
+		ret = motion_sense_set_data_rate(sensor);
+		if (ret)
 			return EC_ERROR_PARAM2;
-		sensor->runtime_config.odr = data;
-		motion_sense_set_accel_interval(
-				NULL, MAX_MOTION_SENSE_WAIT_TIME);
+		/* Sensor might be out of suspend, check the ec_rate */
+		motion_sense_set_accel_interval();
 	} else {
 		ccprintf("Data rate for sensor %d: %d\n", id,
 			 sensor->drv->get_data_rate(sensor));
 		ccprintf("EC rate for sensor %d: %d\n", id,
-			 SENSOR_EC_RATE(sensor));
+			 motion_sense_ec_rate(sensor));
 		ccprintf("Current EC rate: %d\n", accel_interval);
 	}
 

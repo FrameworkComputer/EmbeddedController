@@ -405,7 +405,7 @@ enum bmi160_running_mode {
 #define BMI160_FIFO_ALL_MASK           7
 
 struct bmi160_drv_data_t {
-	struct motion_data_t saved_data[3];
+	struct accelgyro_saved_data_t saved_data[3];
 	uint8_t              flags;
 #ifdef CONFIG_MAG_BMI160_BMM150
 	struct bmm150_comp_registers comp_regs;

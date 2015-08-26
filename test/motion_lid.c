@@ -24,7 +24,7 @@
  * Period in us for the motion task period.
  * The task will read the vectors at that interval
  */
-#define TEST_LID_EC_RATE (SUSPEND_SAMPLING_INTERVAL / 10)
+#define TEST_LID_EC_RATE (10)
 
 /*
  * Time in ms to wait for the task to read the vectors.
@@ -51,10 +51,9 @@ static int accel_set_range(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int accel_get_range(const struct motion_sensor_t *s,
-			   int * const range)
+static int accel_get_range(const struct motion_sensor_t *s)
 {
-	return EC_SUCCESS;
+	return 0;
 }
 
 static int accel_set_resolution(const struct motion_sensor_t *s,
@@ -64,23 +63,24 @@ static int accel_set_resolution(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int accel_get_resolution(const struct motion_sensor_t *s,
-				int * const res)
+static int accel_get_resolution(const struct motion_sensor_t *s)
 {
-	return EC_SUCCESS;
+	return 0;
 }
+
+int test_data_rate[2] = { 0 };
 
 static int accel_set_data_rate(const struct motion_sensor_t *s,
 			      const int rate,
 			      const int rnd)
 {
+	test_data_rate[s - motion_sensors] = rate | (rnd ? ROUND_UP_FLAG : 0);
 	return EC_SUCCESS;
 }
 
-static int accel_get_data_rate(const struct motion_sensor_t *s,
-			      int * const rate)
+static int accel_get_data_rate(const struct motion_sensor_t *s)
 {
-	return EC_SUCCESS;
+	return test_data_rate[s - motion_sensors];
 }
 
 const struct accelgyro_drv test_motion_sense = {
@@ -117,11 +117,28 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = NULL,
 	 .addr = 0,
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_config = {
-		 .odr = 119000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 119000 | ROUND_UP_FLAG,
+			 .ec_rate = TEST_LID_EC_RATE
+		 },
+		 /* Used for double tap */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 119000 | ROUND_UP_FLAG,
+			 .ec_rate = TEST_LID_EC_RATE * 100,
+		 },
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
 	},
 	{.name = "lid",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -133,11 +150,28 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = NULL,
 	 .addr = 0,
 	 .rot_standard_ref = &lid_standard_ref,
-	 .default_config = {
-		 .odr = 119000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 119000 | ROUND_UP_FLAG,
+			 .ec_rate = TEST_LID_EC_RATE,
+		 },
+		 /* Used for double tap */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 119000 | ROUND_UP_FLAG,
+			 .ec_rate = TEST_LID_EC_RATE * 100,
+		 },
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -163,19 +197,16 @@ static int test_lid_angle(void)
 	struct motion_sensor_t *lid = &motion_sensors[1];
 
 	/* Go to S3 state */
-	TEST_ASSERT(accel_interval == SUSPEND_SAMPLING_INTERVAL);
-	TEST_ASSERT(motion_sensors[0].active == SENSOR_ACTIVE_S5);
+	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S5);
+	TEST_ASSERT(accel_get_data_rate(lid) == 0);
+	TEST_ASSERT(accel_interval == 0);
 
 	/* Go to S0 state */
 	hook_notify(HOOK_CHIPSET_RESUME);
-	TEST_ASSERT(accel_interval == SUSPEND_SAMPLING_INTERVAL);
-	TEST_ASSERT(motion_sensors[0].active == SENSOR_ACTIVE_S0);
-
-	motion_sense_set_accel_interval(base, TEST_LID_EC_RATE);
-	TEST_ASSERT(accel_interval == TEST_LID_EC_RATE);
-
-	motion_sense_set_accel_interval(lid, TEST_LID_EC_RATE);
-	TEST_ASSERT(accel_interval == TEST_LID_EC_RATE);
+	msleep(1000);
+	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
+	TEST_ASSERT(accel_get_data_rate(lid) == (119000 | ROUND_UP_FLAG));
+	TEST_ASSERT(accel_interval == TEST_LID_EC_RATE * MSEC);
 
 	/*
 	 * Set the base accelerometer as if it were sitting flat on a desk
@@ -191,7 +222,7 @@ static int test_lid_angle(void)
 	task_wake(TASK_ID_MOTIONSENSE);
 
 	/* wait for the EC sampling period to expire   */
-	msleep(TEST_LID_EC_RATE/MSEC);
+	msleep(TEST_LID_EC_RATE);
 	task_wake(TASK_ID_MOTIONSENSE);
 
 	wait_for_valid_sample();
