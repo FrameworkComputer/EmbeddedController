@@ -139,6 +139,10 @@ timestamp_t get_time(void)
 
 void uart_write_c(char c)
 {
+	/* Put in carriage return prior to newline to mimic uart_vprintf() */
+	if (c == '\n')
+		uart_write_c('\r');
+
 	/* Wait for space in transmit FIFO. */
 	while (!(MEC1322_UART_LSR & (1 << 5)))
 		;
@@ -246,7 +250,7 @@ void lfw_main()
 	system_init();
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
-	uart_puts("littlefw");
+	uart_puts("littlefw ");
 	uart_puts(version_data.version);
 	uart_puts("\n");
 
