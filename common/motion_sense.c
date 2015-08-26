@@ -123,11 +123,11 @@ static inline int motion_sensor_time_to_read(const timestamp_t *ts,
 	if (rate == 0)
 		return 0;
 	/*
-	 * converting from mHz to ms, need 1e6,
+	 * converting from mHz to us, need 1e9,
 	 * If within 95% of the time, check sensor.
 	 */
 	return time_after(ts->le.lo,
-			  sensor->last_collection + (950000 / rate) / 10);
+			  sensor->last_collection + 950000000 / rate);
 }
 
 /*
@@ -373,8 +373,10 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	if ((event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
-	    (sensor->drv->irq_handler != NULL))
+	    (sensor->drv->irq_handler != NULL)) {
 		sensor->drv->irq_handler(sensor, event);
+		sensor->last_collection = ts->le.lo;
+	}
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 	if (sensor->drv->load_fifo != NULL) {
@@ -464,8 +466,7 @@ void motion_sense_task(void)
 			/* if the sensor is active in the current power state */
 			if (SENSOR_ACTIVE(sensor)) {
 				if (sensor->state != SENSOR_INITIALIZED) {
-					CPRINTS("S%d active, not initalized",
-						sensor);
+					CPRINTS("S%d active not initalized", i);
 					continue;
 				}
 
