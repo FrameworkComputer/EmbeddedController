@@ -29,6 +29,9 @@
 #define RESET_FLAG_PRESERVED   (1 << 13)  /* Some reset flags preserved from
 					   * previous boot */
 
+/* Per chip implementation to save raw RESET_FLAG_ flags. */
+void chip_save_reset_flags(int flags);
+
 /* System images */
 enum system_image_copy_t {
 	SYSTEM_IMAGE_UNKNOWN = 0,

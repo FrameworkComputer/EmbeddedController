@@ -91,6 +91,11 @@ void system_pre_init(void)
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 }
 
+void chip_save_reset_flags(int flags)
+{
+	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = flags;
+}
+
 void _system_reset(int flags, int wake_from_hibernate)
 {
 	uint32_t save_flags = 0;
@@ -112,7 +117,7 @@ void _system_reset(int flags, int wake_from_hibernate)
 	else
 		save_flags |= RESET_FLAG_SOFT;
 
-	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = save_flags;
+	chip_save_reset_flags(save_flags);
 
 	/* Trigger watchdog in 1ms */
 	MEC1322_WDG_LOAD = 1;
