@@ -370,3 +370,38 @@ uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 	/* Other GPIOs should be put in a low-power state */
 	return GPIO_INPUT | GPIO_PULL_UP;
 }
+
+/* Any glados boards post version 2 should have ROP_LDO_EN stuffed. */
+#define BOARD_MIN_ID_LOD_EN 2
+/* Make the pmic re-sequence the power rails under these conditions. */
+#define PMIC_RESET_FLAGS \
+	(RESET_FLAG_WATCHDOG | RESET_FLAG_SOFT | RESET_FLAG_HARD)
+static void board_handle_reboot(void)
+{
+	int flags;
+	const struct gpio_info *g = &gpio_list[GPIO_BATLOW_L_PMIC_LDO_EN];
+
+	if (system_jumped_to_this_image())
+		return;
+
+	if (system_get_board_version() < BOARD_MIN_ID_LOD_EN)
+		return;
+
+	/* Interrogate current reset flags from previous reboot. */
+	flags = system_get_reset_flags();
+
+	if (!(flags & PMIC_RESET_FLAGS))
+		return;
+
+	/* Preserve AP off request. */
+	if (flags & RESET_FLAG_AP_OFF)
+		chip_save_reset_flags(RESET_FLAG_AP_OFF);
+
+	ccprintf("Restarting system with PMIC.\n");
+	/* Flush console */
+	cflush();
+
+	/* Bring down all rails but RTC rail (including EC power). */
+	gpio_set_flags_by_mask(g->port, g->mask, GPIO_OUT_HIGH);
+}
+DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);

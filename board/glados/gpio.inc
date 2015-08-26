@@ -95,8 +95,12 @@ GPIO(SYS_RESET_L,           PIN(121), GPIO_ODR_HIGH)
 GPIO(CHARGE_LED_1,        PIN(155), GPIO_OUT_LOW)
 GPIO(CHARGE_LED_2,        PIN(156), GPIO_OUT_LOW)
 
-/* Inhibit the AP from booting until we can supply enough current */
-GPIO(PCH_BATLOW_L,          PIN(55),  GPIO_ODR_HIGH)
+/*
+ * BATLOW_L and ROP_LDO_EN are stuffing options. Set as input to dynamically
+ * handle the stuffing option based on board id. As both signals have external
+ * pulls setting this pin as input won't harm anything.
+ */
+GPIO(BATLOW_L_PMIC_LDO_EN,  PIN(55),  GPIO_INPUT)
 GPIO(ACCEL4_INT,            PIN(157), GPIO_INPUT)
 GPIO(PP1800_DX_AUDIO_EN,    PIN(141), GPIO_OUT_LOW)
 /* NC / stuffing option */
