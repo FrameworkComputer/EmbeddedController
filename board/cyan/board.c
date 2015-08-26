@@ -126,11 +126,29 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kxcj9_data[0],
 	 .addr = KXCJ9_ADDR1,
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_config = {
-		 .odr = 100000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 100000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+	 },
 	},
 	{.name = "Lid",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
@@ -142,11 +160,29 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kxcj9_data[1],
 	 .addr = KXCJ9_ADDR0,
 	 .rot_standard_ref = &lid_standard_ref,
-	 .default_config = {
-		 .odr = 100000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 100000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+	 },
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

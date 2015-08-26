@@ -189,11 +189,29 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kxcj9_data[0],
 	 .addr = KXCJ9_ADDR1,
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_config = {
-		 .odr = 100000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 100000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+	 },
 	},
 	{.name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -205,11 +223,29 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kxcj9_data[1],
 	 .addr = KXCJ9_ADDR0,
 	 .rot_standard_ref = &lid_standard_ref,
-	 .default_config = {
-		 .odr = 100000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 100000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+	 },
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -229,28 +265,6 @@ const struct accel_orientation acc_orient = {
 	},
 	.hinge_axis = {1, 0, 0},
 };
-
-/*
- * In S3, power rail for sensors (+V3p3S) goes down asynchronous to EC. We need
- * to execute this routine first and set the sensor state to "Not Initialized".
- * This prevents the motion_sense_suspend hook routine from communicating with
- * the sensor.
- */
-static void motion_sensors_pre_init(void)
-{
-	struct motion_sensor_t *sensor;
-	int i;
-
-	for (i = 0; i < motion_sensor_count; ++i) {
-		sensor = &motion_sensors[i];
-		sensor->state = SENSOR_NOT_INITIALIZED;
-
-		sensor->runtime_config.odr = sensor->default_config.odr;
-		sensor->runtime_config.range = sensor->default_config.range;
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sensors_pre_init,
-	MOTION_SENSE_HOOK_PRIO - 1);
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.
