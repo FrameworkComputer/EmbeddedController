@@ -3350,6 +3350,15 @@ static int cmd_motionsense(int argc, char **argv)
 		case MOTIONSENSE_TYPE_GYRO:
 			printf("gyro\n");
 			break;
+		case MOTIONSENSE_TYPE_MAG:
+			printf("magnetometer\n");
+			break;
+		case MOTIONSENSE_TYPE_LIGHT:
+			printf("light\n");
+			break;
+		case MOTIONSENSE_TYPE_PROX:
+			printf("proximity\n");
+			break;
 		default:
 			printf("unknown\n");
 		}
@@ -3376,6 +3385,9 @@ static int cmd_motionsense(int argc, char **argv)
 			break;
 		case MOTIONSENSE_CHIP_BMI160:
 			printf("bmi160\n");
+			break;
+		case MOTIONSENSE_CHIP_SI1141:
+			printf("si1141\n");
 			break;
 		default:
 			printf("unknown\n");
