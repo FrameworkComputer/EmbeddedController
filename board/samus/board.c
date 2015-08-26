@@ -20,6 +20,7 @@
 #include "driver/temp_sensor/tmp006.h"
 #include "extpower.h"
 #include "fan.h"
+#include "gesture.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -307,11 +308,28 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_saved_data[0],
 	 .addr = LSM6DS0_ADDR1,
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_config = {
-		 .odr = 119000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 119000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Used for double tap */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = TAP_ODR | ROUND_UP_FLAG,
+			 .ec_rate = CONFIG_GESTURE_SAMPLING_INTERVAL_MS
+		 },
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = TAP_ODR | ROUND_UP_FLAG,
+			 .ec_rate = CONFIG_GESTURE_SAMPLING_INTERVAL_MS
+		 },
+	 },
 	},
 
 	{.name = "Lid",
@@ -324,11 +342,28 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kxcj9_data,
 	 .addr = KXCJ9_ADDR0,
 	 .rot_standard_ref = &lid_standard_ref,
-	 .default_config = {
-		 .odr = 100000,
-		 .range = 2,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
-	 }
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 100000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* unused */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
 	},
 
 	{.name = "Base Gyro",
@@ -341,10 +376,27 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_saved_data[1],
 	 .addr = LSM6DS0_ADDR1,
 	 .rot_standard_ref = NULL,
-	 .default_config = {
-		 .odr = 119000,
-		 .range = 2000,
-		 .ec_rate = SUSPEND_SAMPLING_INTERVAL,
+	 .default_range = 2000,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 119000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* unused */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
 	 }
 	},
 

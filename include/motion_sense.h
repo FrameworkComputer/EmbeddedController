@@ -42,15 +42,6 @@ enum sensor_config {
 /* Next 8 events for sensor interrupt lines */
 #define TASK_EVENT_MOTION_INTERRUPT_MASK    (0xff << 2)
 
-/* Define sensor sampling interval in suspend. */
-#ifdef CONFIG_GESTURE_DETECTION
-#define SUSPEND_SAMPLING_INTERVAL (CONFIG_GESTURE_SAMPLING_INTERVAL_MS * MSEC)
-#elif defined(CONFIG_ACCEL_FIFO)
-#define SUSPEND_SAMPLING_INTERVAL (1000 * MSEC)
-#else
-#define SUSPEND_SAMPLING_INTERVAL (100 * MSEC)
-#endif
-
 /* Minimum time in between running motion sense task loop. */
 #define MIN_MOTION_SENSE_WAIT_TIME (3 * MSEC)
 #define MAX_MOTION_SENSE_WAIT_TIME (60000 * MSEC)
