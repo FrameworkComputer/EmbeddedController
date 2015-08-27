@@ -29,8 +29,11 @@
 #define NPCX_I2C_PUBIT(controller, port) \
 	((controller*2) + port)
 
-/* Data abort timeout unit:ms*/
-#define I2C_ABORT_TIMEOUT 35
+/* Timeout for device should be available after reset (SMBus spec. unit:ms) */
+#define I2C_MAX_TIMEOUT 35
+/* Timeout for SCL held to low by slave device . (SMBus spec. unit:ms) */
+#define I2C_MIN_TIMEOUT 25
+
 /* Marco functions of I2C */
 #define I2C_START(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_START)
 #define I2C_STOP(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STOP)
@@ -118,35 +121,49 @@ int i2c_bus_busy(int controller)
 	return IS_BIT_SET(NPCX_SMBCST(controller), NPCX_SMBCST_BB) ? 1 : 0;
 }
 
+static int i2c_wait_stop_completed(int controller, int timeout)
+{
+	if (timeout <= 0)
+		return EC_ERROR_INVAL;
+
+	/* Wait till STOP condition is generated. ie. I2C bus is idle. */
+	while (timeout > 0) {
+		if (!IS_BIT_SET(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STOP))
+			break;
+		if (--timeout > 0)
+			msleep(1);
+	}
+
+	if (timeout)
+		return EC_SUCCESS;
+	else
+		return EC_ERROR_TIMEOUT;
+}
+
 int i2c_abort_data(int controller)
 {
-	uint16_t timeout = I2C_ABORT_TIMEOUT;
-
 	/* Clear NEGACK, STASTR and BER bits */
 	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
 	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
 	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_NEGACK);
 
 	/* Wait till STOP condition is generated */
-	while (--timeout) {
-		if (!IS_BIT_SET(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STOP))
-			break;
-		msleep(1);
+	if (i2c_wait_stop_completed(controller, I2C_MAX_TIMEOUT)
+			!= EC_SUCCESS) {
+		cprints(CC_I2C, "Abort i2c %02x fail!", controller);
+		/* Clear BB (BUS BUSY) bit */
+		SET_BIT(NPCX_SMBCST(controller), NPCX_SMBCST_BB);
+		return 0;
 	}
 
 	/* Clear BB (BUS BUSY) bit */
 	SET_BIT(NPCX_SMBCST(controller), NPCX_SMBCST_BB);
-
-	if (timeout == 0) {
-		cprints(CC_I2C, "Abort i2c %02x fail!", controller);
-		return 0;
-	} else
-		return 1;
+	return 1;
 }
 
 void i2c_reset(int controller)
 {
-	uint16_t timeout = I2C_ABORT_TIMEOUT;
+	uint16_t timeout = I2C_MAX_TIMEOUT;
 	/* Disable the SMB module */
 	CLEAR_BIT(NPCX_SMBCTL2(controller), NPCX_SMBCTL2_ENABLE);
 
@@ -197,7 +214,8 @@ enum smb_error i2c_master_transaction(int controller)
 	/* Wait for transfer complete or timeout */
 	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE,
 			p_status->timeout_us);
-	/* Handle timeout */
+
+	/* Handle bus timeout */
 	if ((events & TASK_EVENT_I2C_IDLE) == 0) {
 		/* Recovery I2C controller */
 		i2c_recovery(controller);
@@ -210,6 +228,14 @@ enum smb_error i2c_master_transaction(int controller)
 	else if (p_status->err_code == SMB_BUS_ERROR ||
 			p_status->err_code == SMB_MASTER_NO_ADDRESS_MATCH){
 		i2c_recovery(controller);
+	}
+
+	/* Wait till STOP condition is generated */
+	if (p_status->err_code == SMB_OK && i2c_wait_stop_completed(controller,
+			I2C_MIN_TIMEOUT) != EC_SUCCESS) {
+		cprints(CC_I2C, "STOP fail! scl %02x is held by slave device!",
+				controller);
+		p_status->err_code = SMB_TIMEOUT_ERROR;
 	}
 
 	return p_status->err_code;
@@ -510,7 +536,7 @@ int i2c_get_line_levels(int port)
  */
 int i2c_is_raw_mode(int port)
 {
-	int bit = (port > NPCX_I2C_PORT0_1) ? port * 2 : port;
+	int bit = (port > NPCX_I2C_PORT0_1) ? ((port - 1) * 2) : port;
 
 	if (IS_BIT_SET(NPCX_DEVALT(2), bit))
 		return 0;
