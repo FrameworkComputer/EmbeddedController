@@ -134,7 +134,6 @@ static int disable_sensor(const struct motion_sensor_t *s, int *ctrl1)
 		if (ret == EC_SUCCESS)
 			return EC_SUCCESS;
 	}
-	CPRINTF("Error trying to disable accelerometer\n");
 	return ret;
 }
 
@@ -165,9 +164,6 @@ static int enable_sensor(const struct motion_sensor_t *s, int ctrl1)
 		if (ret == EC_SUCCESS)
 			return EC_SUCCESS;
 	}
-
-	/* Cannot enable accel, print warning and return an error. */
-	CPRINTF("Error trying to enable accelerometer\n");
 	return ret;
 }
 
@@ -511,7 +507,6 @@ static int init(const struct motion_sensor_t *s)
 		/* Check for timeout. */
 		if (cnt++ > 5) {
 			ret = EC_ERROR_TIMEOUT;
-			CPRINTF("%s: SRST Error.\n", s->name);
 			return ret;
 		}
 	} while (1);
