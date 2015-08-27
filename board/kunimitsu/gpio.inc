@@ -60,7 +60,7 @@ GPIO(PCH_WAKE_L,            PIN(66),  GPIO_ODR_HIGH)
 GPIO(EC_FAN1_TTACH,         PIN(105), GPIO_INPUT)
 /* Fan PWM output - NC / testing only */
 GPIO(EC_FAN1_PWM,           PIN(136), GPIO_OUT_LOW)
-GPIO(PCH_ACOK,              PIN(110), GPIO_ODR_HIGH)
+GPIO(PCH_ACOK,              PIN(110), GPIO_OUT_LOW)
 /* Interrupts from accelerometer / gyro -- not yet implemented */
 GPIO(LID_ACCEL_INT,         PIN(161), GPIO_INPUT | GPIO_PULL_DOWN)  /* Lid ACCEL sensor interrupt to EC */
 GPIO(GYRO_INT,              PIN(127), GPIO_INPUT | GPIO_PULL_DOWN)  /* Lid Gyro sensor interrupt to EC */
