@@ -713,7 +713,7 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_KEYBOARD
 static int command_ksstate(int argc, char **argv)
 {
 	if (argc > 1 && !parse_bool(argv[1], &print_state_changes))
@@ -779,3 +779,4 @@ DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
 			"[col row [0 | 1]]",
 			"Simulate keypress",
 			NULL);
+#endif

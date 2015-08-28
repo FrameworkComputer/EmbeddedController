@@ -962,7 +962,7 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_KEYBOARD
 static int command_typematic(int argc, char **argv)
 {
 	int i;
@@ -1189,6 +1189,7 @@ DECLARE_CONSOLE_COMMAND(8042, command_8042,
 			" kblog | kbd]",
 			"Print 8042 state in one place",
 			NULL);
+#endif
 
 
 /*****************************************************************************/
