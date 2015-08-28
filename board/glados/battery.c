@@ -116,13 +116,13 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	/*
 	 * If battery voltage reading is bad, use the last reading. Otherwise,
-	 * determine voltage range with 20mV * hysteresis.
+	 * determine voltage range with hysteresis.
 	 */
 	if (curr->batt.flags & BATT_FLAG_BAD_VOLTAGE) {
 		batt_voltage = prev_batt_voltage;
 	} else {
 		batt_voltage = prev_batt_voltage = curr->batt.voltage;
-		if (batt_voltage < 8280)
+		if (batt_voltage < 8200)
 			voltage_range = VOLTAGE_RANGE_LOW;
 		else if (batt_voltage > 8300)
 			voltage_range = VOLTAGE_RANGE_HIGH;
