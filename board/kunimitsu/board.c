@@ -46,6 +46,8 @@
 #define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
 #define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
 
+#define TPS650830_I2C_ADDR 0x60
+
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
@@ -309,6 +311,24 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 		30 * MSEC, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
+
+/* Initialize PMIC */
+static void board_pmic_init(void)
+{
+	/*
+	 * PWFAULT_MASK1 Register settings
+	 * [2] : 1b V9 Power Fault Masked
+	 * [0] : 1b V13 Power Fault Masked
+	 */
+	if (i2c_write8(I2C_PORT_PMIC, TPS650830_I2C_ADDR, 0xE5, 0x5))
+		CPRINTS("PMIC write failed");
+}
+/*
+ * TODO (crosbug.com/p/44821): Do the PMIC initialization soon after the I2C
+ * initialization is done.
+ * DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_INIT_I2C + 1);
+ */
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_pmic_init, HOOK_PRIO_DEFAULT + 1);
 
 /* Initialize board. */
 static void board_init(void)
