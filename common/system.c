@@ -440,12 +440,8 @@ static void jump_to_image(uintptr_t init_addr)
 	gpio_set_level(GPIO_ENTERING_RW, 0);
 
 #ifdef CONFIG_USB_POWER_DELIVERY
-	/*
-	 * Notify USB PD module that we are about to sysjump and give it time
-	 * to do what it needs.
-	 */
-	pd_prepare_sysjump();
-	usleep(5*MSEC);
+	/* Notify USB PD module that we are about to reset */
+	pd_prepare_reset();
 #endif
 
 #ifdef CONFIG_I2C
@@ -725,10 +721,15 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_JUMP_RW:
 		return system_run_image_copy(SYSTEM_IMAGE_RW);
 	case EC_REBOOT_COLD:
+#ifdef CONFIG_USB_POWER_DELIVERY
+		/* Notify USB PD module that we are about to reset */
+		pd_prepare_reset();
+#endif
 #ifdef HAS_TASK_PDCMD
 		/* Reboot the PD chip as well */
 		board_reset_pd_mcu();
 #endif
+
 		system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
@@ -918,6 +919,12 @@ static int command_reboot(int argc, char **argv)
 		ccputs("Hard-");
 	ccputs("Rebooting!\n\n\n");
 	cflush();
+
+#ifdef CONFIG_USB_POWER_DELIVERY
+	/* Notify USB PD module that we are about to reset */
+	pd_prepare_reset();
+#endif
+
 	system_reset(flags);
 	return EC_SUCCESS;
 }

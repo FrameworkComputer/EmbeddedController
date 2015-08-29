@@ -558,12 +558,12 @@ void pd_soft_reset(void)
 		}
 }
 
-void pd_prepare_sysjump(void)
+void pd_prepare_reset(void)
 {
 	int i;
 
 	/*
-	 * On sysjump, we are most definitely going to drop pings (if any)
+	 * On reset, we are most definitely going to drop pings (if any)
 	 * and lose all of our PD state. Instead of trying to remember all
 	 * the states and deal with on-going transmission, let's send soft
 	 * reset here and then disable PD communication until after sysjump
@@ -575,6 +575,9 @@ void pd_prepare_sysjump(void)
 			pd[i].flags |= PD_FLAGS_SFT_RST_DIS_COMM;
 
 	pd_soft_reset();
+
+	/* Give time for soft reset to be sent */
+	usleep(5*MSEC);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
