@@ -648,6 +648,10 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	msleep(30);
 	raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
 
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+	ret = raw_write8(s->addr, BMI160_INT_TAP_1,
+		BMI160_TAP_TH(s, CONFIG_GESTURE_TAP_THRES_MG));
+#endif
 	/* configure int2 as an external input */
 	ret = raw_write8(s->addr, BMI160_INT_LATCH,
 		BMI160_INT2_INPUT_EN);
@@ -656,11 +660,12 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	ret = raw_write8(s->addr, BMI160_INT_OUT_CTRL,
 		BMI160_INT_CTRL(1, OUTPUT_EN));
 
-	/* Map Simple/Double Tap to int 1
-	 * Map Flat interrupt to int 1
-	 */
-	ret = raw_write8(s->addr, BMI160_INT_MAP_REG(1),
-		BMI160_INT_FLAT | BMI160_INT_D_TAP | BMI160_INT_S_TAP);
+	/* Map activity interrupt to int 1 */
+	tmp = 0;
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+	tmp |= BMI160_INT_D_TAP;
+#endif
+	ret = raw_write8(s->addr, BMI160_INT_MAP_REG(1), tmp);
 
 #ifdef CONFIG_ACCEL_FIFO
 	/* map fifo water mark to int 1 */
@@ -677,10 +682,9 @@ static int config_interrupt(const struct motion_sensor_t *s)
 #endif
 
 	/* Set double tap interrupt and fifo*/
-	ret = raw_read8(s->addr, BMI160_INT_EN_0, &tmp);
-	tmp |= BMI160_INT_FLAT_EN | BMI160_INT_D_TAP_EN | BMI160_INT_S_TAP_EN;
-	ret = raw_write8(s->addr, BMI160_INT_EN_0, tmp);
-
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+	ret = raw_write8(s->addr, BMI160_INT_EN_0, BMI160_INT_D_TAP_EN);
+#endif
 #ifdef CONFIG_ACCEL_FIFO
 	ret = raw_read8(s->addr, BMI160_INT_EN_1, &tmp);
 	tmp |= BMI160_INT_FWM_EN | BMI160_INT_FFUL_EN;
@@ -707,12 +711,10 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	raw_read32(s->addr, BMI160_INT_STATUS_0, &interrupt);
 
-	if (interrupt & BMI160_S_TAP_INT)
-		CPRINTS("single tap: %08x", interrupt);
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 	if (interrupt & BMI160_D_TAP_INT)
-		CPRINTS("double tap: %08x", interrupt);
-	if (interrupt & BMI160_FLAT_INT)
-		CPRINTS("flat: %08x", interrupt);
+		*event |= CONFIG_GESTURE_TAP_EVENT;
+#endif
 	/*
 	 * No need to read the FIFO here, motion sense task is
 	 * doing it on every interrupt.
@@ -1034,12 +1036,12 @@ static int init(const struct motion_sensor_t *s)
 	}
 #endif
 
+	set_range(s, s->default_range, 0);
+
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	if (s->type == MOTIONSENSE_TYPE_ACCEL)
 		ret = config_interrupt(s);
 #endif
-	set_range(s, s->default_range, 0);
-
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
 			s->name, s->type, get_range(s));
 	return ret;

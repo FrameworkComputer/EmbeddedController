@@ -301,6 +301,8 @@ enum fifo_header {
 
 #define BMI160_INT_TAP_0       0x63
 #define BMI160_INT_TAP_1       0x64
+#define BMI160_TAP_TH(_s, _mg) \
+	 (MIN(((_mg) * 1000) / ((_s)->drv->get_range(_s) * 31250), 0x1f))
 
 #define BMI160_INT_ORIENT_0    0x65
 #define BMI160_INT_ORIENT_1    0x66
