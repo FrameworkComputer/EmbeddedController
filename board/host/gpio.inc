@@ -12,7 +12,7 @@ GPIO_INT(BUTTON_VOLUME_DOWN_L, PIN(0, 0), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(BUTTON_VOLUME_UP,     PIN(0, 0), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(CHARGE_DONE,          PIN(0, 0), GPIO_INT_BOTH, inductive_charging_interrupt)
 
-GPIO(EC_INT,               PIN(0, 0), 0)
+GPIO(EC_INT_L,             PIN(0, 0), 0)
 GPIO(WP,                   PIN(0, 0), 0)
 GPIO(ENTERING_RW,          PIN(0, 0), 0)
 GPIO(PCH_BKLTEN,           PIN(0, 0), 0)

@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "atomic.h"
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -45,6 +46,13 @@
 
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
+
+/*
+ * PD host event status for host command
+ * Note: this variable must be aligned on 4-byte boundary because we pass the
+ * address to atomic_ functions which use assembly to access them.
+ */
+static struct ec_response_host_event_status host_event_status __aligned(4);
 
 /* Dispaly port hardware can connect to port 0, 1 or neither. */
 #define PD_PORT_NONE -1
@@ -159,6 +167,18 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_PD_RST_L, 0);
 	usleep(100);
 	gpio_set_level(GPIO_USB_PD_RST_L, 1);
+}
+
+/* Send host event up to AP */
+void pd_send_host_event(int mask)
+{
+	/* mask must be set */
+	if (!mask)
+		return;
+
+	atomic_or(&(host_event_status.status), mask);
+	/* interrupt the AP */
+	host_set_single_event(EC_HOST_EVENT_PD_MCU);
 }
 
 void __board_i2c_set_timeout(int port, uint32_t timeout)
@@ -346,3 +366,19 @@ void board_set_ap_reset(int asserted)
 		gpio_set_level(GPIO_AP_RESET_L, !asserted);
 	}
 }
+
+/****************************************************************************/
+/* Host commands */
+static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
+{
+	struct ec_response_host_event_status *r = args->response;
+
+	/* Read and clear the host event status to return to AP */
+	r->status = atomic_read_clear(&(host_event_status.status));
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, host_event_status_host_cmd,
+			EC_VER_MASK(0));
+

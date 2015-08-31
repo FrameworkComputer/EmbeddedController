@@ -370,7 +370,7 @@ static void power_off(void)
 	chipset_turn_off_power_rails();
 	/* Change SUSPEND_L and EC_INT pin to high-Z to reduce power draw. */
 	gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT);
-	gpio_set_flags(GPIO_EC_INT, GPIO_INPUT);
+	gpio_set_flags(GPIO_EC_INT_L, GPIO_INPUT);
 
 	/* Wait till we actually turn off to not mess up the state machine. */
 	while (power_get_signals() & IN_POWER_GOOD) {
@@ -453,7 +453,7 @@ enum power_state power_handle_state(enum power_state state)
 				/* setup misc gpio for S3/S0 functionality */
 				gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT
 					| GPIO_INT_BOTH | GPIO_PULL_DOWN);
-				gpio_set_flags(GPIO_EC_INT, GPIO_OUTPUT
+				gpio_set_flags(GPIO_EC_INT_L, GPIO_OUTPUT
 						| GPIO_OUT_HIGH);
 
 				/* Call hooks now that AP is running */

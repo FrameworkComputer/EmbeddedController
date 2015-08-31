@@ -31,7 +31,7 @@ void host_send_response(struct host_cmd_handler_args *args)
 
 void gpio_set_level(enum gpio_signal signal, int level)
 {
-	if (signal == GPIO_EC_INT)
+	if (signal == GPIO_EC_INT_L)
 		ec_int_level = !!level;
 }
 

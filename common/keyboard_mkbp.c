@@ -102,7 +102,7 @@ static int kb_fifo_remove(uint8_t *buffp)
 static void set_host_interrupt(int active)
 {
 	/* interrupt host by using active low EC_INT signal */
-	gpio_set_level(GPIO_EC_INT, !active);
+	gpio_set_level(GPIO_EC_INT_L, !active);
 }
 
 /*****************************************************************************/

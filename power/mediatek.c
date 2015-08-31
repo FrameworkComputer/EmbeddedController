@@ -475,7 +475,7 @@ static void power_off(void)
 		       GPIO_INPUT);
 
 	/* Change EC_INT to low */
-	gpio_set_level(GPIO_EC_INT, 0);
+	gpio_set_level(GPIO_EC_INT_L, 0);
 
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
@@ -589,7 +589,7 @@ static void power_on(void)
 
 	/* enable interrupt */
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
-	gpio_set_flags(GPIO_EC_INT, GPIO_OUTPUT | GPIO_OUT_HIGH);
+	gpio_set_flags(GPIO_EC_INT_L, GPIO_OUTPUT | GPIO_OUT_HIGH);
 
 	disable_sleep(SLEEP_MASK_AP_RUN);
 #ifdef HAS_TASK_POWERLED

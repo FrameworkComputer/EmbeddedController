@@ -20,7 +20,7 @@ GPIO_INT(LID_OPEN,         PIN(3, 3), GPIO_PULL_DOWN | GPIO_INT_BOTH, lid_interr
 GPIO(ENTERING_RW,          PIN(3, 6), GPIO_OUT_LOW)                 /* Indicate when EC is entering RW code */
 GPIO(PCH_WAKE_L,           PIN(5, 0), GPIO_OUT_HIGH)                /* Wake signal output to PCH */
 /* For testing keyboard mkbp */
-GPIO(EC_INT,               PIN(7, 4),  GPIO_ODR_HIGH)               /* Interrupt pin for keyboard mkbp */
+GPIO(EC_INT_L,             PIN(7, 4),  GPIO_ODR_HIGH)               /* Interrupt pin for keyboard mkbp */
 /* Used for module testing */
 GPIO(PGOOD_FAN,            PIN(C, 7), GPIO_PULL_UP   | GPIO_INPUT)  /* Power Good for FAN test */
 
