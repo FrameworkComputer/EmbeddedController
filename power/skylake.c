@@ -135,13 +135,13 @@ static enum power_state _power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
+		break;
+
+	case POWER_S5:
 		if (forcing_shutdown) {
 			power_button_pch_release();
 			forcing_shutdown = 0;
 		}
-		break;
-
-	case POWER_S5:
 		if (gpio_get_level(GPIO_PCH_SLP_S4_L) == 1)
 			return POWER_S5S3; /* Power up to next state */
 		break;
