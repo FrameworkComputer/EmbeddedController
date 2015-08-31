@@ -628,6 +628,81 @@ void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 	rotate(v, *s->rot_standard_ref, v);
 }
 
+/*
+ * Manage gesture recognition.
+ * Defined even if host interface is not defined, to enable double tap even
+ * when the host does not deal with gesture.
+ */
+int manage_activity(struct motion_sensor_t *s,
+		    enum motionsensor_activity activity,
+		    int enable,
+		    struct ec_motion_sense_activity *param)
+{
+	int ret;
+	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
+
+	switch (activity) {
+#ifdef CONFIG_GESTURE_SIGMO
+	case MOTIONSENSE_ACTIVITY_SIG_MOTION: {
+		int tmp;
+		/* Set double tap interrupt and fifo*/
+		ret = raw_read8(s->addr, BMI160_INT_EN_0, &tmp);
+		if (ret)
+			return ret;
+		if (enable) {
+			/* We should use paramters from caller */
+			raw_write8(s->addr, BMI160_INT_MOTION_3,
+				BMI160_MOTION_PROOF_TIME(
+					CONFIG_GESTURE_SIGMO_PROOF_MS) <<
+				BMI160_MOTION_PROOF_OFF |
+				BMI160_MOTION_SKIP_TIME(
+					CONFIG_GESTURE_SIGMO_SKIP_MS) <<
+				BMI160_MOTION_SKIP_OFF |
+				BMI160_MOTION_SIG_MOT_SEL);
+			raw_write8(s->addr, BMI160_INT_MOTION_1,
+				BMI160_MOTION_TH(s,
+					CONFIG_GESTURE_SIGMO_THRES_MG));
+			tmp |= BMI160_INT_ANYMO_X_EN |
+				BMI160_INT_ANYMO_Y_EN |
+				BMI160_INT_ANYMO_Z_EN;
+		} else {
+			tmp &= ~(BMI160_INT_ANYMO_X_EN |
+				 BMI160_INT_ANYMO_Y_EN |
+				 BMI160_INT_ANYMO_Z_EN);
+		}
+		ret = raw_write8(s->addr, BMI160_INT_EN_0, tmp);
+		if (ret)
+			ret = EC_RES_UNAVAILABLE;
+		break;
+	}
+#endif
+	default:
+		ret = EC_RES_INVALID_PARAM;
+	}
+	if (ret == EC_RES_SUCCESS) {
+		if (enable) {
+			data->enabled_activities |= 1 << activity;
+			data->disabled_activities &= ~(1 << activity);
+		} else {
+			data->enabled_activities &= ~(1 << activity);
+			data->disabled_activities |= 1 << activity;
+		}
+	}
+	return ret;
+}
+
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+int list_activities(struct motion_sensor_t *s,
+		uint32_t *enabled,
+		uint32_t *disabled)
+{
+	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
+	*enabled = data->enabled_activities;
+	*disabled = data->disabled_activities;
+	return EC_RES_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_ACCEL_INTERRUPTS
 /**
  * bmi160_interrupt - called when the sensor activate the interrupt line.
@@ -668,6 +743,9 @@ static int config_interrupt(const struct motion_sensor_t *s)
 
 	/* Map activity interrupt to int 1 */
 	tmp = 0;
+#ifdef CONFIG_GESTURE_SIGMO
+	tmp |= BMI160_INT_ANYMOTION;
+#endif
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 	tmp |= BMI160_INT_D_TAP;
 #endif
@@ -720,6 +798,10 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 	if (interrupt & BMI160_D_TAP_INT)
 		*event |= CONFIG_GESTURE_TAP_EVENT;
+#endif
+#ifdef CONFIG_GESTURE_SIGMO
+	if (interrupt & BMI160_SIGMOT_INT)
+		*event |= CONFIG_GESTURE_SIGMO_EVENT;
 #endif
 	/*
 	 * No need to read the FIFO here, motion sense task is
@@ -963,6 +1045,14 @@ static int init(const struct motion_sensor_t *s)
 		data->flags &= ~(BMI160_FLAG_SEC_I2C_ENABLED |
 				(BMI160_FIFO_ALL_MASK <<
 				 BMI160_FIFO_FLAG_OFFSET));
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+		data->enabled_activities = 0;
+		data->disabled_activities = 0;
+#ifdef CONFIG_GESTURE_SIGMO
+		data->disabled_activities |=
+			1 << MOTIONSENSE_ACTIVITY_SIG_MOTION;
+#endif
+#endif
 		/* To avoid gyro wakeup */
 		raw_write8(s->addr, BMI160_PMU_TRIGGER, 0);
 	}
@@ -1072,6 +1162,10 @@ const struct accelgyro_drv bmi160_drv = {
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 	.load_fifo = load_fifo,
+#endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	.manage_activity = manage_activity,
+	.list_activities = list_activities,
 #endif
 };
 
