@@ -9,7 +9,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "i2c_arbitration.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
