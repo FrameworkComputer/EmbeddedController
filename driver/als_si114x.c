@@ -93,10 +93,17 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 		if (ret)
 			break;
 		/* Add offset, calibration */
-		if (val + type_data->offset < 0) {
-			val = 0;
+		if (val + type_data->offset <= 0) {
+			val = 1;
 		} else {
 			val += type_data->offset;
+			/*
+			 * Proxmitiy sensor data is inverse of the distance.
+			 * Return back something proportional to distance,
+			 * we affine with the scale parmeter.
+			 */
+			if (s->type == MOTIONSENSE_TYPE_PROX)
+				val = SI114X_PS_INVERSION(val);
 			val = val * type_data->scale +
 			      val * type_data->uscale / 10000;
 		}

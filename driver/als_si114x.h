@@ -75,6 +75,7 @@
 #define SI114X_REG_PS2_DATA1		0x29
 #define SI114X_REG_PS3_DATA0		0x2a
 #define SI114X_REG_PS3_DATA1		0x2b
+#define SI114X_PS_INVERSION(_data) ((1 << 16) / (_data))
 #define SI114X_REG_AUX_DATA0		0x2c
 #define SI114X_REG_AUX_DATA1		0x2d
 #define SI114X_REG_PARAM_RD		0x2e

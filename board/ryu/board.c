@@ -422,7 +422,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_si114x_data,
 	 .addr = SI114X_ADDR,
 	 .rot_standard_ref = NULL,
-	 .default_range = 1 << 16, /* 100% fuzzy unit */
+	 .default_range = 7630, /* Upon testing at desk */
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
