@@ -796,10 +796,16 @@
 /* Do we want to detect gestures? */
 #undef CONFIG_GESTURE_DETECTION
 
-/* Which sensor to look for gesture recognition */
-#undef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+/* some gesture recognition done in software */
+#undef CONFIG_GESTURE_SW_DETECTION
+/* some gesture recognition done in hardware */
+#undef CONFIG_GESTURE_HW_DETECTION
 /* Sensor sampling interval for gesture recognition */
 #undef CONFIG_GESTURE_SAMPLING_INTERVAL_MS
+
+/* Which sensor to look for gesture recognition */
+#undef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+
 /*
  * Double tap detection parameters
  * Double tap works by looking for two isolated Z-axis accelerometer impulses
@@ -810,11 +816,15 @@
  * period before the initial tap impluse and after the final tap impulse for
  * which to check for relatively calm periods. In between the two impulses
  * there is a minimum and maximum interstice time allowed.
+ *
+ * Define an acceleration threshold to dectect a tap, in mg.
  */
 #undef CONFIG_GESTURE_TAP_OUTER_WINDOW_T
 #undef CONFIG_GESTURE_TAP_INNER_WINDOW_T
 #undef CONFIG_GESTURE_TAP_MIN_INTERSTICE_T
 #undef CONFIG_GESTURE_TAP_MAX_INTERSTICE_T
+#undef CONFIG_GESTURE_TAP_THRES_MG
+
 
 /* Do we want to detect the lid angle? */
 #undef CONFIG_LID_ANGLE

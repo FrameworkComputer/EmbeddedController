@@ -562,7 +562,7 @@ void motion_sense_task(void)
 			}
 		}
 
-#ifdef CONFIG_GESTURE_DETECTION
+#ifdef CONFIG_GESTURE_SW_DETECTION
 		/* Run gesture recognition engine */
 		gesture_calc();
 #endif
