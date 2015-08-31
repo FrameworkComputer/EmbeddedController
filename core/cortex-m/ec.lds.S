@@ -68,7 +68,7 @@ SECTIONS
     } > SHARED_LIB
 #endif
     .text : {
-#if defined(CONFIG_RO_HEAD_ROOM)
+#if defined(SECTION_IS_RO) && defined(CONFIG_RO_HEAD_ROOM)
 	. = . +  CONFIG_RO_HEAD_ROOM;
 #endif
         OUTDIR/core/CORE/init.o (.text.vecttable)
