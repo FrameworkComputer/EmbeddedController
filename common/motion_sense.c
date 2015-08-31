@@ -60,6 +60,12 @@ static struct mutex g_sensor_mutex;
 enum chipset_state_mask sensor_active;
 
 #ifdef CONFIG_ACCEL_FIFO
+/* Need to wake up the AP */
+static int wake_up_needed;
+
+/* Need to send flush events */
+static int fifo_flush_needed;
+
 struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
 static int motion_sense_fifo_lost;
@@ -78,13 +84,16 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		queue_remove_unit(&motion_sense_fifo, &vector);
 		motion_sense_fifo_lost++;
 		motion_sensors[vector.sensor_num].lost++;
-		if (vector.flags & MOTIONSENSE_SENSOR_FLAG_FLUSH)
-			CPRINTS("Lost flush for sensor %d", vector.sensor_num);
+		if (vector.flags)
+			CPRINTS("Lost important event (0x%02x) for sensor %d",
+				vector.flags,
+				vector.sensor_num);
 	}
 	for (i = 0; i < valid_data; i++)
 		sensor->xyz[i] = data->data[i];
 	mutex_unlock(&g_sensor_mutex);
 
+	/* For valid sensors, check if AP really needs this data */
 	if (valid_data) {
 		int ap_odr = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
 		int rate = INT_TO_FP(sensor->drv->get_data_rate(sensor));
@@ -119,7 +128,8 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		sensor->oversampling += fp_div(INT_TO_FP(1000), rate) -
 			fp_div(INT_TO_FP(1000), INT_TO_FP(ap_odr));
 	}
-
+	if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP)
+		wake_up_needed = 1;
 	queue_add_unit(&motion_sense_fifo, data);
 }
 
@@ -461,8 +471,7 @@ static int motion_sense_read(struct motion_sensor_t *sensor)
 
 static int motion_sense_process(struct motion_sensor_t *sensor,
 				uint32_t *event,
-				const timestamp_t *ts,
-				int *flush_needed)
+				const timestamp_t *ts)
 {
 	int ret = EC_SUCCESS;
 
@@ -495,7 +504,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		int flush_pending;
 		flush_pending = atomic_read_clear(&sensor->flush_pending);
 		for (; flush_pending > 0; flush_pending--) {
-			*flush_needed = 1;
+			fifo_flush_needed = 1;
 			motion_sense_insert_flush(sensor);
 		}
 	}
@@ -526,7 +535,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
  */
 void motion_sense_task(void)
 {
-	int i, ret, wait_us, fifo_flush_needed = 0;
+	int i, ret, wait_us;
 	timestamp_t ts_begin_task, ts_end_task;
 	uint32_t event = 0;
 	uint16_t ready_status;
@@ -566,8 +575,7 @@ void motion_sense_task(void)
 
 				ts_begin_task = get_time();
 				ret = motion_sense_process(sensor, &event,
-						&ts_begin_task,
-						&fifo_flush_needed);
+						&ts_begin_task);
 				if (ret != EC_SUCCESS)
 					continue;
 				ready_status |= (1 << i);
@@ -623,7 +631,7 @@ void motion_sense_task(void)
 		 * - the queue is almost full,
 		 * - we haven't done it for a while.
 		 */
-		if (fifo_flush_needed ||
+		if (fifo_flush_needed || wake_up_needed ||
 		    event & TASK_EVENT_MOTION_ODR_CHANGE ||
 		    queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
 		    (accel_interval > 0 &&
@@ -638,8 +646,11 @@ void motion_sense_task(void)
 			 * When we do, add per sensor test to know
 			 * when sending the event.
 			 */
-			if (sensor_active == SENSOR_ACTIVE_S0)
+			if (sensor_active == SENSOR_ACTIVE_S0 ||
+			    wake_up_needed) {
 				mkbp_send_event(EC_MKBP_EVENT_SENSOR_FIFO);
+				wake_up_needed = 0;
+			}
 #endif
 		}
 #endif
