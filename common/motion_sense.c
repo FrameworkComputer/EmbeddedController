@@ -77,8 +77,6 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 	struct ec_response_motion_sensor_data vector;
 	int i;
 
-	data->sensor_num = sensor - motion_sensors;
-
 	mutex_lock(&g_sensor_mutex);
 	if (queue_space(&motion_sense_fifo) == 0) {
 		queue_remove_unit(&motion_sense_fifo, &vector);
@@ -139,6 +137,8 @@ static void motion_sense_insert_flush(struct motion_sensor_t *sensor)
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_FLUSH |
 		       MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
 	vector.timestamp = __hw_clock_source_read();
+	vector.sensor_num = sensor - motion_sensors;
+
 	motion_sense_fifo_add_unit(&vector, sensor, 0);
 }
 
@@ -147,7 +147,8 @@ static void motion_sense_insert_timestamp(void)
 	struct ec_response_motion_sensor_data vector;
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
 	vector.timestamp = __hw_clock_source_read();
-	motion_sense_fifo_add_unit(&vector, motion_sensors, 0);
+	vector.sensor_num = 0;
+	motion_sense_fifo_add_unit(&vector, NULL, 0);
 }
 
 static void motion_sense_get_fifo_info(
@@ -342,6 +343,9 @@ static void motion_sense_shutdown(void)
 {
 	int i;
 	struct motion_sensor_t *sensor;
+#ifdef CONFIG_GESTURE_DETECTION_MASK
+	uint32_t enabled = 0, disabled, mask;
+#endif
 
 	sensor_active = SENSOR_ACTIVE_S5;
 
@@ -351,9 +355,24 @@ static void motion_sense_shutdown(void)
 		sensor->config[SENSOR_CONFIG_AP].odr = 0;
 		sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
 		sensor->drv->set_range(sensor, sensor->default_range, 0);
-
 	}
 	motion_sense_switch_sensor_rate();
+	/* Forget activities set by the AP */
+#ifdef CONFIG_GESTURE_DETECTION_MASK
+	mask = CONFIG_GESTURE_DETECTION_MASK;
+	while (mask) {
+		i = 31 - __builtin_clz(mask);
+		mask &= (1 << mask);
+		sensor = &motion_sensors[i];
+		sensor->drv->list_activities(sensor,
+				&enabled, &disabled);
+		while (enabled) {
+			int activity = 31 - __builtin_clz(enabled);
+			enabled &= ~(1 << activity);
+			sensor->drv->manage_activity(sensor, activity, 0, NULL);
+		}
+	}
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, motion_sense_shutdown,
 	     MOTION_SENSE_HOOK_PRIO);
@@ -491,6 +510,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		ret = motion_sense_read(sensor);
 		if (ret == EC_SUCCESS) {
 			vector.flags = 0;
+			vector.sensor_num = sensor - motion_sensors;
 			vector.data[X] = sensor->raw_xyz[X];
 			vector.data[Y] = sensor->raw_xyz[Y];
 			vector.data[Z] = sensor->raw_xyz[Z];
@@ -593,6 +613,28 @@ void motion_sense_task(void)
 			lightbar_sequence(LIGHTBAR_TAP);
 		}
 #endif
+#ifdef CONFIG_GESTURE_SIGMO
+		if (event & CONFIG_GESTURE_SIGMO_EVENT) {
+			struct motion_sensor_t *activity_sensor;
+#ifdef CONFIG_ACCEL_FIFO
+			struct ec_response_motion_sensor_data vector;
+
+			CPRINTS("significant motion");
+			/* Send events to the FIFO */
+			vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
+			vector.activity = MOTIONSENSE_ACTIVITY_SIG_MOTION;
+			vector.state = 1; /* triggered */
+			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
+			motion_sense_fifo_add_unit(&vector, NULL, 0);
+#endif
+			/* Disable further detection */
+			activity_sensor = &motion_sensors[CONFIG_GESTURE_SIGMO];
+			activity_sensor->drv->manage_activity(
+					activity_sensor,
+					MOTIONSENSE_ACTIVITY_SIG_MOTION,
+					0, NULL);
+		}
+#endif
 #endif
 #ifdef CONFIG_LID_ANGLE
 		/*
@@ -693,7 +735,7 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SENSOR_FIFO, motion_sense_get_next_event);
 
 /* Function to map host sensor IDs to motion sensor. */
 static struct motion_sensor_t
-	*host_sensor_id_to_motion_sensor(int host_id)
+	*host_sensor_id_to_real_sensor(int host_id)
 {
 	struct motion_sensor_t *sensor;
 
@@ -709,6 +751,21 @@ static struct motion_sensor_t
 	return NULL;
 }
 
+static struct motion_sensor_t
+	*host_sensor_id_to_motion_sensor(int host_id)
+{
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	if (host_id == MOTION_SENSE_ACTIVITY_SENSOR_ID)
+		/*
+		 * Return the info for the first sensor that
+		 * support some gestures.
+		 */
+		return host_sensor_id_to_real_sensor(
+			__builtin_ctz(CONFIG_GESTURE_DETECTION_MASK));
+#endif
+	return host_sensor_id_to_real_sensor(host_id);
+}
+
 static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_motion_sense *in = args->params;
@@ -722,18 +779,23 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			(*(host_get_memmap(EC_MEMMAP_ACC_STATUS)) &
 			 EC_MEMMAP_ACC_STATUS_PRESENCE_BIT) ?
 			MOTIONSENSE_MODULE_FLAG_ACTIVE : 0;
-		out->dump.sensor_count = motion_sensor_count;
+		out->dump.sensor_count = ALL_MOTION_SENSORS;
 		args->response_size = sizeof(out->dump);
-		reported = MIN(motion_sensor_count, in->dump.max_sensor_count);
+		reported = MIN(ALL_MOTION_SENSORS, in->dump.max_sensor_count);
 		mutex_lock(&g_sensor_mutex);
 		for (i = 0; i < reported; i++) {
-			sensor = &motion_sensors[i];
 			out->dump.sensor[i].flags =
 				MOTIONSENSE_SENSOR_FLAG_PRESENT;
-			/* casting from int to s16 */
-			out->dump.sensor[i].data[X] = sensor->xyz[X];
-			out->dump.sensor[i].data[Y] = sensor->xyz[Y];
-			out->dump.sensor[i].data[Z] = sensor->xyz[Z];
+			if (i < motion_sensor_count) {
+				sensor = &motion_sensors[i];
+				/* casting from int to s16 */
+				out->dump.sensor[i].data[X] = sensor->xyz[X];
+				out->dump.sensor[i].data[Y] = sensor->xyz[Y];
+				out->dump.sensor[i].data[Z] = sensor->xyz[Z];
+			} else {
+				memset(out->dump.sensor[i].data, 0,
+				       3 * sizeof(int16_t));
+			}
 		}
 		mutex_unlock(&g_sensor_mutex);
 		args->response_size += reported *
@@ -741,7 +803,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		break;
 
 	case MOTIONSENSE_CMD_DATA:
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_odr.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -762,7 +824,13 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 
-		out->info.type = sensor->type;
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+		if (in->sensor_odr.sensor_num ==
+		    MOTION_SENSE_ACTIVITY_SENSOR_ID)
+			out->info.type = MOTIONSENSE_TYPE_ACTIVITY;
+		else
+#endif
+			out->info.type = sensor->type;
 		out->info.location = sensor->location;
 		out->info.chip = sensor->chip;
 
@@ -770,7 +838,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		break;
 
 	case MOTIONSENSE_CMD_EC_RATE:
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_odr.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -798,7 +866,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 	case MOTIONSENSE_CMD_SENSOR_ODR:
 		/* Verify sensor number is valid. */
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_odr.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -836,7 +904,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 	case MOTIONSENSE_CMD_SENSOR_RANGE:
 		/* Verify sensor number is valid. */
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_range.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -857,7 +925,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 	case MOTIONSENSE_CMD_SENSOR_OFFSET:
 		/* Verify sensor number is valid. */
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_offset.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -880,7 +948,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 	case MOTIONSENSE_CMD_PERFORM_CALIB:
 		/* Verify sensor number is valid. */
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_offset.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -899,7 +967,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 #ifdef CONFIG_ACCEL_FIFO
 	case MOTIONSENSE_CMD_FIFO_FLUSH:
-		sensor = host_sensor_id_to_motion_sensor(
+		sensor = host_sensor_id_to_real_sensor(
 				in->sensor_odr.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
@@ -939,6 +1007,56 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		memset(&out->fifo_info, 0, sizeof(out->fifo_info));
 		args->response_size = sizeof(out->fifo_info);
 		break;
+#endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	case MOTIONSENSE_CMD_LIST_ACTIVITIES: {
+		uint32_t enabled, disabled, mask, i;
+		if (in->sensor_offset.sensor_num !=
+		   MOTION_SENSE_ACTIVITY_SENSOR_ID)
+			return EC_RES_INVALID_PARAM;
+		out->list_activities.enabled = 0;
+		out->list_activities.disabled = 0;
+		ret = EC_RES_SUCCESS;
+		mask = CONFIG_GESTURE_DETECTION_MASK;
+		while (mask && ret == EC_RES_SUCCESS) {
+			i = 31 - __builtin_clz(mask);
+			mask &= (1 << mask);
+			sensor = &motion_sensors[i];
+			ret = sensor->drv->list_activities(sensor,
+					&enabled, &disabled);
+			if (ret == EC_RES_SUCCESS) {
+				out->list_activities.enabled |= enabled;
+				out->list_activities.disabled |= disabled;
+			}
+		}
+		if (ret != EC_RES_SUCCESS)
+			return ret;
+		args->response_size = sizeof(out->list_activities);
+		break;
+	}
+	case MOTIONSENSE_CMD_SET_ACTIVITY: {
+		uint32_t enabled, disabled, mask, i;
+		if (in->sensor_offset.sensor_num !=
+		   MOTION_SENSE_ACTIVITY_SENSOR_ID)
+			return EC_RES_INVALID_PARAM;
+		mask = CONFIG_GESTURE_DETECTION_MASK;
+		while (mask && ret == EC_RES_SUCCESS) {
+			i = 31 - __builtin_clz(mask);
+			mask &= (1 << mask);
+			sensor = &motion_sensors[i];
+			sensor->drv->list_activities(sensor,
+					&enabled, &disabled);
+			if (in->set_activity.activity & (enabled | disabled))
+				ret = sensor->drv->manage_activity(sensor,
+						in->set_activity.activity,
+						in->set_activity.enable,
+						NULL);
+		}
+		if (ret != EC_RES_SUCCESS)
+			return ret;
+		args->response_size = sizeof(out->set_activity);
+		break;
+	}
 #endif
 	default:
 		/* Call other users of the motion task */

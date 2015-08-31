@@ -177,4 +177,12 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 				int valid_data);
 
 #endif
+
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+/* Add an extra sensor. We may need to add more */
+#define MOTION_SENSE_ACTIVITY_SENSOR_ID (motion_sensor_count)
+#define ALL_MOTION_SENSORS (MOTION_SENSE_ACTIVITY_SENSOR_ID + 1)
+#else
+#define ALL_MOTION_SENSORS motion_sensor_count
+#endif
 #endif /* __CROS_EC_MOTION_SENSE_H */

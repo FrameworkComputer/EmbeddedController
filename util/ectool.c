@@ -3235,6 +3235,8 @@ static const struct {
 	MS_SIZES(fifo_read),
 	MS_SIZES(perform_calib),
 	MS_SIZES(sensor_offset),
+	MS_SIZES(list_activities),
+	MS_SIZES(set_activity),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -3256,8 +3258,19 @@ static int ms_help(const char *cmd)
 	printf("  %s fifo_read MAX_DATA         - read fifo data\n", cmd);
 	printf("  %s fifo_flush NUM             - trigger fifo interrupt\n",
 			cmd);
+	printf("  %s list_activities NUM        - list supported activities\n",
+			cmd);
+	printf("  %s set_activity NUM ACT EN    - enable/disable activity\n",
+			cmd);
 
 	return 0;
+}
+
+static void motionsense_display_activities(uint32_t activities)
+{
+	if (activities & (1 << MOTIONSENSE_ACTIVITY_SIG_MOTION))
+		printf("%d: Significant motion\n",
+		       MOTIONSENSE_ACTIVITY_SIG_MOTION);
 }
 
 static int cmd_motionsense(int argc, char **argv)
@@ -3359,6 +3372,9 @@ static int cmd_motionsense(int argc, char **argv)
 			break;
 		case MOTIONSENSE_TYPE_PROX:
 			printf("proximity\n");
+			break;
+		case MOTIONSENSE_TYPE_ACTIVITY:
+			printf("activity\n");
 			break;
 		default:
 			printf("unknown\n");
@@ -3642,6 +3658,35 @@ static int cmd_motionsense(int argc, char **argv)
 			printf("temperature at calibration: %d.%02d C\n",
 			       resp->sensor_offset.temp / 100,
 			       resp->sensor_offset.temp % 100);
+		return 0;
+	}
+
+	if (argc == 3 && !strcasecmp(argv[1], "list_activities")) {
+		param.cmd = MOTIONSENSE_CMD_LIST_ACTIVITIES;
+		param.list_activities.sensor_num = strtol(argv[2], &e, 0);
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+
+		printf("Enabled:\n");
+		motionsense_display_activities(resp->list_activities.enabled);
+		printf("Disabled:\n");
+		motionsense_display_activities(resp->list_activities.disabled);
+		return 0;
+	}
+	if (argc == 5 && !strcasecmp(argv[1], "set_activity")) {
+		param.cmd = MOTIONSENSE_CMD_SET_ACTIVITY;
+		param.set_activity.sensor_num = strtol(argv[2], &e, 0);
+		param.set_activity.activity = strtol(argv[3], &e, 0);
+		param.set_activity.enable = strtol(argv[4], &e, 0);
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
 		return 0;
 	}
 	return ms_help(argv[0]);

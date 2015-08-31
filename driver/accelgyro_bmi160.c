@@ -780,6 +780,7 @@ static int bmi160_decode_header(struct motion_sensor_t *s,
 				vector.data[X] = v[X];
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
+				vector.sensor_num = i;
 				motion_sense_fifo_add_unit(&vector, s + i, 3);
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}

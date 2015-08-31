@@ -118,6 +118,30 @@ struct accelgyro_drv {
 	 */
 	int (*load_fifo)(struct motion_sensor_t *s);
 #endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	/**
+	 * handler for setting/getting activity information.
+	 * Manage the high level activity detection of the chip.
+	 * @s Pointer to sensor data.
+	 * @activity activity to work on
+	 * @enable 1 to enable, 0 to disable
+	 * @data addtional data if needed, activity dependant.
+	 */
+	int (*manage_activity)(struct motion_sensor_t *s,
+			       enum motionsensor_activity activity,
+			       int enable,
+			       struct ec_motion_sense_activity *data);
+	/**
+	 * List activities managed by the sensors.
+	 * @s Pointer to sensor data.
+	 * @enable bit mask of activities currently enabled.
+	 * @disabled bit mask of activities currently disabled.
+	 */
+	int (*list_activities)(struct motion_sensor_t *s,
+			       uint32_t *enabled,
+			       uint32_t *disabled);
+
+#endif
 };
 
 /* Used to save sensor information */
