@@ -14,6 +14,12 @@ GPIO_INT(POWER_BUTTON_L,    PIN(35), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH, power_signal_interrupt)
+/*
+ * This pulldown should be removed in future hardware followers. The signal
+ * is pulled up in the SoC when the primary rails are on and/or ramping.
+ * In order to not get interrupt storms there should be external logic
+ * which makes this a true binary signal into the EC.
+ */
 GPIO_INT(PCH_SLP_S0_L,      PIN(211), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
 GPIO_INT(PCH_SLP_SUS_L,     PIN(12),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VOLUME_UP_L,       PIN(31),  GPIO_INT_FALLING | GPIO_PULL_UP, button_interrupt)
