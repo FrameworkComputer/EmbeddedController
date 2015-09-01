@@ -71,6 +71,7 @@
 
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
+#define CONFIG_THERMISTOR_NCP15WB
 
 /*
  * Allow dangerous commands.

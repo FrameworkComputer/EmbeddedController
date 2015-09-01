@@ -1497,6 +1497,8 @@
 #undef CONFIG_TEMP_SENSOR_TMP006	/* TI TMP006 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP432	/* TI TMP432 sensor, on I2C bus */
 
+#undef CONFIG_THERMISTOR_NCP15WB	/* NCP15WB thermistor */
+
 /*
  * If defined, active-high GPIO which indicates temperature sensor chips are
  * powered.  If not defined, temperature sensors are assumed to be always
