@@ -79,43 +79,7 @@
 /* 128 KB alignment for SPI status registers protection */
 #define CONFIG_FLASH_PHYSICAL_SIZE  0x40000 /* 256 KB Flash used for EC */
 
-/* No PSTATE; uses a real SPI flash */
-#undef CONFIG_FLASH_PSTATE
-
-/* Header support which is used by booter to copy FW from flash to code ram */
-#define NPCX_RO_HEADER
-
-/****************************************************************************/
-/* Define npcx flash layout. */
-/* Size of one firmware image in flash */
-#ifndef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE    (CONFIG_FLASH_PHYSICAL_SIZE / 2)
-#endif
-
-/* The storage offset of ec.RO.flat which is used for CONFIG_CDRAM_ARCH */
-#define CONFIG_RO_STORAGE_OFF   0
-#ifdef NPCX_RO_HEADER
-#define CONFIG_RO_HDR_MEM_OFF   0x0
-#define CONFIG_RO_HDR_SIZE      0x40
-/* RO firmware offset in flash */
-#define CONFIG_RO_MEM_OFF       CONFIG_RO_HDR_SIZE
-#else
-#define CONFIG_RO_MEM_OFF       0x0
-#endif
-#define CONFIG_RO_SIZE          CONFIG_CDRAM_SIZE    /* 96KB for RO FW */
-#define CONFIG_FLASH_SIZE       CONFIG_FLASH_PHYSICAL_SIZE
-
-/* The storage offset of ec.RW.flat which is used for CONFIG_CDRAM_ARCH */
-#define CONFIG_RW_STORAGE_OFF   CONFIG_FW_IMAGE_SIZE /* 128 KB alignemnt */
-/* RW firmware offset in flash */
-#define CONFIG_RW_MEM_OFF       CONFIG_RW_STORAGE_OFF
-#define CONFIG_RW_SIZE          CONFIG_CDRAM_SIZE    /* 96KB for RW FW */
-
-#define CONFIG_WP_OFF           CONFIG_RO_STORAGE_OFF
-#define CONFIG_WP_SIZE          CONFIG_FW_IMAGE_SIZE
-
-/****************************************************************************/
-/* Customize the build */
+#include "config_flash_layout.h"
 
 /* Optional features present on this chip */
 #define CONFIG_ADC

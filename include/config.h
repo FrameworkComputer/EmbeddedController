@@ -760,6 +760,13 @@
 #undef CONFIG_RW_SIZE
 
 /*
+ * NPCX-specific bootheader geometry.
+ * TODO(crosbug.com/p/23796): Factor these CONFIGs out.
+ */
+#undef CONFIG_RO_HDR_MEM_OFF
+#undef CONFIG_RO_HDR_SIZE
+
+/*
  * Write protect region offset / size. This region normally encompasses the
  * RO image, but may also contain additional images or data.
  */

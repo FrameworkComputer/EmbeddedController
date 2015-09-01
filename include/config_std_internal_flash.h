@@ -11,8 +11,30 @@
  * - RO image starts at the beginning of flash.
  * - PSTATE immediately follows the RO image.
  * - RW image starts at the second half of flash.
- * - WP region consists of the first half of flash (RO + PSTATE).
+ * - Protected region consists of the first half of flash (RO image + PSTATE).
+ * - Unprotected region consists of second half of flash (RW image).
+ *
+ *                            PSTATE
+ *                              |
+ *                              v
+ * |<-----Protected Region------>|<------Unprotected Region----->|
+ * |<--------RO image--------->| |<----------RW image----------->|
+ * 0                            N/2                              N
+ *
+ * This layout is used by several supported chips. Chips which do not use
+ * this layout MUST NOT include this header file, and must instead define
+ * the configs below in a chip-level header file (config_flash_layout.h).
+ *
+ * See the following page for additional image geometry discussion:
+ *
+ * https://www.chromium.org/chromium-os/ec-development/ec-image-geometry-spec
+ *
+ * TODO(crosbug.com/p/23796): Finish implementing the spec.
  */
+
+/* Memory-mapped internal flash w/ PSTATE */
+#define CONFIG_FLASH_MAPPED
+#define CONFIG_FLASH_PSTATE
 
 /*
  * The EC uses the one bank of flash to emulate a SPI-like write protect
