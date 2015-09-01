@@ -419,7 +419,7 @@ static void board_chipset_startup(void)
 {
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_startup,
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
 	     HOOK_PRIO_DEFAULT);
 
 /* Disable touchpad on chipset shutdown as it is no longer useful */

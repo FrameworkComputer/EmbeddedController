@@ -69,7 +69,7 @@ static void chipset_force_g3(void)
 	 * Kunimitsu doesn't yet have pass-thru SLP_SUS_L.
 	 * TODO(crosbug.com/p/43075): Remove this when new boards roll out.
 	 */
-#ifndef BOARD_KUNIMITSU
+#ifndef BOARD_KUNIMITSU_V3
 	gpio_set_level(GPIO_PMIC_SLP_SUS_L, 0);
 #endif
 }
@@ -129,7 +129,7 @@ enum power_state power_chipset_init(void)
 
 static enum power_state _power_handle_state(enum power_state state)
 {
-#ifndef BOARD_KUNIMITSU
+#ifndef BOARD_KUNIMITSU_V3
 	int tries = 0;
 #endif
 
@@ -174,7 +174,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		/* Call hooks to initialize PMIC */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-#ifndef BOARD_KUNIMITSU
+#ifndef BOARD_KUNIMITSU_V3
 		/*
 		 * Allow up to 1s for charger to be initialized, in case
 		 * we're trying to boot the AP with no battery.
@@ -316,7 +316,7 @@ static void handle_slp_sus(enum power_state state)
 		return;
 
 	/* Always mimic PCH SLP_SUS request for all other states. */
-#ifndef BOARD_KUNIMITSU
+#ifndef BOARD_KUNIMITSU_V3
 	gpio_set_level(GPIO_PMIC_SLP_SUS_L, gpio_get_level(GPIO_PCH_SLP_SUS_L));
 #endif
 }
