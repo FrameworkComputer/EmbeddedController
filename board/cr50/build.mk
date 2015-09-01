@@ -11,6 +11,11 @@ CHIP_VARIANT ?= cr50_fpga
 
 board-y=board.o
 
+# The simulator components have their own subdirectory
+CFLAGS += -I$(realpath $(BDIR)/tpm2)
+dirs-y += $(BDIR)/tpm2
+board-y += tpm2/NVMem.o
+
 # Need to generate a .hex file
 all: hex
 
@@ -24,8 +29,7 @@ else
 
 # Build and link with an external library
 EXTLIB := $(realpath ../../third_party/tpm2)
-
-CFLAGS += -I$(EXTLIB) -I$(realpath $(BDIR)/tpm2)
+CFLAGS += -I$(EXTLIB)
 LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
 
 $(out)/RO/ec.RO.elf: $(out)/tpm2/libtpm2.a
