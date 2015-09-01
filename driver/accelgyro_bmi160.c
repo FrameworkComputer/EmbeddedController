@@ -697,12 +697,12 @@ static int config_interrupt(const struct motion_sensor_t *s)
  * For now, we just print out. We should set a bitmask motion sense code will
  * act upon.
  */
-static int irq_handler(struct motion_sensor_t *s, uint32_t event)
+static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	int interrupt;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-	    (!(event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
+	    (!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
 		return EC_SUCCESS;
 
 	raw_read32(s->addr, BMI160_INT_STATUS_0, &interrupt);

@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "hwtimer.h"
 #include "lid_angle.h"
+#include "lightbar.h"
 #include "math_util.h"
 #include "mkbp_event.h"
 #include "motion_sense.h"
@@ -459,14 +460,14 @@ static int motion_sense_read(struct motion_sensor_t *sensor)
 }
 
 static int motion_sense_process(struct motion_sensor_t *sensor,
-				uint32_t event,
+				uint32_t *event,
 				const timestamp_t *ts,
 				int *flush_needed)
 {
 	int ret = EC_SUCCESS;
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	if ((event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
+	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
 	    (sensor->drv->irq_handler != NULL)) {
 		sensor->drv->irq_handler(sensor, event);
 		sensor->last_collection = ts->le.lo;
@@ -490,7 +491,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	} else {
 		ret = EC_ERROR_BUSY;
 	}
-	if (event & TASK_EVENT_MOTION_FLUSH_PENDING) {
+	if (*event & TASK_EVENT_MOTION_FLUSH_PENDING) {
 		int flush_pending;
 		flush_pending = atomic_read_clear(&sensor->flush_pending);
 		for (; flush_pending > 0; flush_pending--) {
@@ -564,7 +565,7 @@ void motion_sense_task(void)
 				}
 
 				ts_begin_task = get_time();
-				ret = motion_sense_process(sensor, event,
+				ret = motion_sense_process(sensor, &event,
 						&ts_begin_task,
 						&fifo_flush_needed);
 				if (ret != EC_SUCCESS)
@@ -573,9 +574,17 @@ void motion_sense_task(void)
 			}
 		}
 
+#ifdef CONFIG_GESTURE_DETECTION
 #ifdef CONFIG_GESTURE_SW_DETECTION
 		/* Run gesture recognition engine */
-		gesture_calc();
+		gesture_calc(&event);
+#endif
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+		if (event & CONFIG_GESTURE_TAP_EVENT) {
+			CPRINTS("double tap!");
+			lightbar_sequence(LIGHTBAR_TAP);
+		}
+#endif
 #endif
 #ifdef CONFIG_LID_ANGLE
 		/*

@@ -104,9 +104,9 @@ struct accelgyro_drv {
 	 * handler for interrupts triggered by the sensor: it runs in task and
 	 * process the events that triggered an interrupt.
 	 * @s Pointer to sensor data.
-	 * @event Event to process.
+	 * @event Event to process. May add add other events for the next processor.
 	 */
-	int (*irq_handler)(struct motion_sensor_t *s, uint32_t event);
+	int (*irq_handler)(struct motion_sensor_t *s, uint32_t *event);
 #endif
 #ifdef CONFIG_ACCEL_FIFO
 	/**

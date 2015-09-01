@@ -292,19 +292,14 @@ static void gesture_chipset_suspend(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, gesture_chipset_suspend,
 	     GESTURE_HOOK_PRIO);
 
-void gesture_calc(void)
+void gesture_calc(uint32_t *event)
 {
 	/* Only check for gesture if lid is closed and tap detection is on */
 	if (!tap_detection || lid_is_open())
 		return;
 
-	if (gesture_tap_for_battery()) {
-		CPRINTS("Double Tap!");
-		lightbar_sequence(LIGHTBAR_TAP);
-
-		/* Don't need to run motion sense task for a while */
-		task_wait_event(500 * MSEC);
-	}
+	if (gesture_tap_for_battery())
+		*event |= CONFIG_GESTURE_TAP_EVENT;
 }
 
 /*****************************************************************************/

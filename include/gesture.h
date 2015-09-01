@@ -9,9 +9,9 @@
 #define __CROS_EC_GESTURE_H
 
 /**
- * Run gesture detection engine.
+ * Run gesture detection engine. Modify the event flag when gestures are found.
  */
-void gesture_calc(void);
+void gesture_calc(uint32_t *event);
 
 /* gesture hooks are triggered after the motion sense hooks. */
 #define GESTURE_HOOK_PRIO (MOTION_SENSE_HOOK_PRIO + 10)

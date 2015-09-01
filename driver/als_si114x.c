@@ -147,13 +147,13 @@ void si114x_interrupt(enum gpio_signal signal)
  * For now, we just print out. We should set a bitmask motion sense code will
  * act upon.
  */
-static int irq_handler(struct motion_sensor_t *s, uint32_t event)
+static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	int ret = EC_SUCCESS, val;
 	struct si114x_drv_data_t *data = SI114X_GET_DATA(s);
 	struct si114x_typed_data_t *type_data = SI114X_GET_TYPED_DATA(s);
 
-	if (!(event & CONFIG_ALS_SI114X_INT_EVENT))
+	if (!(*event & CONFIG_ALS_SI114X_INT_EVENT))
 		return EC_SUCCESS;
 
 	ret = raw_read8(s->addr, SI114X_REG_IRQ_STATUS, &val);

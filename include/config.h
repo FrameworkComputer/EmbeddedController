@@ -836,7 +836,7 @@
 /* Sensor sampling interval for gesture recognition */
 #undef CONFIG_GESTURE_SAMPLING_INTERVAL_MS
 
-/* Which sensor to look for gesture recognition */
+/* Which sensor to look for battery tap recognition */
 #undef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 
 /*
@@ -858,6 +858,8 @@
 #undef CONFIG_GESTURE_TAP_MAX_INTERSTICE_T
 #undef CONFIG_GESTURE_TAP_THRES_MG
 
+/* Event generated when battery tap is detected */
+#undef CONFIG_GESTURE_TAP_EVENT
 
 /* Do we want to detect the lid angle? */
 #undef CONFIG_LID_ANGLE
