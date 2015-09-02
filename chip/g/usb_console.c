@@ -29,6 +29,7 @@ static int last_tx_ok = 1;
 
 static int is_reset;
 static int is_enabled = 1;
+static int is_readonly;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) =
@@ -76,7 +77,7 @@ static void con_ep_tx(void)
 static void con_ep_rx(void)
 {
 	int i;
-	int rx_size = USB_MAX_PACKET_SIZE
+	int rx_size = is_readonly ? 0 : USB_MAX_PACKET_SIZE
 		    - (ep_out_desc.flags & DOEPDMA_RXBYTES_MASK);
 
 	for (i = 0; i < rx_size; i++) {
@@ -94,7 +95,8 @@ static void con_ep_rx(void)
 	GR_USB_DOEPINT(USB_EP_CONSOLE) = 0xffffffff;
 
 	/* wake-up the console task */
-	console_has_input();
+	if (!is_readonly)
+		console_has_input();
 }
 
 static void ep_reset(void)
@@ -254,7 +256,8 @@ int usb_vprintf(const char *format, va_list args)
 	return ret;
 }
 
-void usb_console_enable(int enabled)
+void usb_console_enable(int enabled, int readonly)
 {
 	is_enabled = enabled;
+	is_readonly = readonly;
 }

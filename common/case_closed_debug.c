@@ -41,10 +41,11 @@ void ccd_set_mode(enum ccd_mode new_mode)
 	current_mode = new_mode;
 
 	/*
-	 * Only enable forwarding the local console over USB if we are now in
-	 * the fully enabled mode.
+	 * The forwarding of the local console over USB is read-only
+	*  if we are not in the fully enabled mode.
 	 */
-	usb_console_enable(new_mode == CCD_MODE_ENABLED);
+	usb_console_enable(new_mode != CCD_MODE_DISABLED,
+			   new_mode != CCD_MODE_ENABLED);
 
 #if defined(CONFIG_USB_SPI)
 	usb_spi_enable(&ccd_usb_spi, new_mode == CCD_MODE_ENABLED);

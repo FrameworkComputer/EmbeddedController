@@ -31,6 +31,10 @@ struct usb_stream_state {
 	 * restart USB reception by marking the RX buffer as VALID.
 	 */
 	int rx_waiting;
+	/*
+	 * Flag indicating that the incoming data on the USB link are discarded.
+	 */
+	int rx_disabled;
 };
 
 /*

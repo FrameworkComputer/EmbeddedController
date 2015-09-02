@@ -255,7 +255,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 #endif /* CONFIG_USB_PD_LOGGING */
 #ifdef CONFIG_CASE_CLOSED_DEBUG
 	case VDO_CMD_CCD_EN:
-		ccd_set_mode(CCD_MODE_ENABLED);
+		ccd_set_mode(system_is_locked() ? CCD_MODE_PARTIAL
+						: CCD_MODE_ENABLED);
 		break;
 #endif
 	}

@@ -56,6 +56,11 @@ static int rx_valid(struct usb_stream_config const *config)
 	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) == EP_RX_VALID;
 }
 
+static int rx_disabled(struct usb_stream_config const *config)
+{
+	return config->state->rx_disabled;
+}
+
 static void usb_read(struct producer const *producer, size_t count)
 {
 	struct usb_stream_config const *config =
@@ -95,7 +100,7 @@ void usb_stream_deferred(struct usb_stream_config const *config)
 	if (!tx_valid(config) && tx_write(config))
 		STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
 
-	if (!rx_valid(config) && rx_read(config))
+	if (!rx_valid(config) && !rx_disabled(config) && rx_read(config))
 		STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
 }
 
@@ -136,5 +141,5 @@ void usb_stream_reset(struct usb_stream_config const *config)
 	STM32_USB_EP(i) = ((i <<  0) | /* Endpoint Addr*/
 			   (2 <<  4) | /* TX NAK */
 			   (0 <<  9) | /* Bulk EP */
-			   (3 << 12)); /* RX VALID */
+			   (rx_disabled(config) ? EP_RX_NAK : EP_RX_VALID));
 }

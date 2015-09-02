@@ -1590,7 +1590,9 @@ void pd_task(void)
 
 #ifdef CONFIG_CASE_CLOSED_DEBUG
 				if (new_cc_state == PD_CC_DEBUG_ACC) {
-					ccd_set_mode(CCD_MODE_ENABLED);
+					ccd_set_mode(system_is_locked() ?
+						     CCD_MODE_PARTIAL :
+						     CCD_MODE_ENABLED);
 					typec_set_input_current_limit(
 						port, 3000, TYPE_C_VOLTAGE);
 					charge_manager_update_dualrole(

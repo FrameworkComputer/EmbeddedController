@@ -29,6 +29,7 @@ static int last_tx_ok = 1;
 
 static int is_reset;
 static int is_enabled = 1;
+static int is_readonly;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
@@ -100,7 +101,8 @@ static void ep_reset(void)
 	STM32_USB_EP(USB_EP_CONSOLE) = (USB_EP_CONSOLE | /* Endpoint Addr */
 					(2 << 4)       | /* TX NAK        */
 					(0 << 9)       | /* Bulk EP       */
-					(3 << 12));      /* RX VALID      */
+					(is_readonly ? EP_RX_NAK
+						     : EP_RX_VALID));
 
 	is_reset = 1;
 }
@@ -248,7 +250,8 @@ int usb_vprintf(const char *format, va_list args)
 	return ret;
 }
 
-void usb_console_enable(int enabled)
+void usb_console_enable(int enabled, int readonly)
 {
 	is_enabled = enabled;
+	is_readonly = readonly;
 }

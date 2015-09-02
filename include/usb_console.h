@@ -50,7 +50,7 @@ int usb_getc(void);
  * is not accessible until the USB peripheral is also initialized, which can
  * be delayed.
  */
-void usb_console_enable(int enabled);
+void usb_console_enable(int enabled, int readonly);
 
 #define usb_va_start va_start
 #define usb_va_end va_end
