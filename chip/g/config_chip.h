@@ -17,7 +17,6 @@
 #define CONFIG_RAM_SIZE         0x10000
 
 /* Flash chip specifics */
-/* TODO(crosbug.com/p/33815): These are probably wrong. Don't use them yet. */
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
@@ -25,9 +24,6 @@
 
 /* Describe the flash layout */
 #define CONFIG_FLASH_BASE       0x40000
-/* TODO(wfrichar): Lying about this, so image signing works.
- * I'll file a bug once this CL goes in. */
-/* #define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024) */
 #define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024)
 
 /* Compute the rest of the flash params from these */

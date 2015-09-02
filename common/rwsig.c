@@ -57,6 +57,7 @@ void check_rw_signature(void)
 	}
 
 	/* SHA-256 Hash of the RW firmware */
+	/* TODO(crosbug.com/p/44803): Do we have to hash the whole region? */
 	SHA256_init(&ctx);
 	SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_RW_MEM_OFF,
 		      CONFIG_RW_SIZE - RSANUMBYTES);
