@@ -112,13 +112,13 @@ static void system_set_htimer_alarm(uint32_t seconds, uint32_t microseconds)
 
 		} else { /* count up to 2 sec. */
 
-			MEC1322_HTIMER_CONTROL = 0; /* 30.5(= 2/71) usec */
+			MEC1322_HTIMER_CONTROL = 0; /* 30.5(= 2/61) usec */
 
 			/* (number of counts to be loaded)
 			 * = (total microseconds) / 30.5;
 			 */
 			MEC1322_HTIMER_PRELOAD =
-				(seconds * 1000000 + microseconds) * 2 / 71;
+				(seconds * 1000000 + microseconds) * 2 / 61;
 		}
 	}
 }
@@ -138,8 +138,8 @@ static timestamp_t system_get_htimer(void)
 		/* 0.125 sec per count */
 		time.le.lo = (uint32_t)(count * 125000);
 	else    /* if < 2 sec */
-		/* 30.5(=71/2)usec per count */
-		time.le.lo = (uint32_t)(count * 71 / 2);
+		/* 30.5(=61/2)usec per count */
+		time.le.lo = (uint32_t)(count * 61 / 2);
 
 	time.le.hi = 0;
 
