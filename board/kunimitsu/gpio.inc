@@ -42,9 +42,7 @@ GPIO(I2C3_SCL,              PIN(24),  GPIO_INPUT)
 GPIO(I2C3_SDA,              PIN(25),  GPIO_INPUT)
 GPIO(PCH_SCI_L,             PIN(26),  GPIO_ODR_HIGH)
 
-#ifndef BOARD_KUNIMITSU_V3
-GPIO(PMIC_SLP_SUS_L,        PIN(34),  GPIO_OUT_LOW)
-#else
+#ifdef BOARD_KUNIMITSU_V3
 GPIO(NC_034,                PIN(34),  GPIO_INPUT | GPIO_PULL_UP)
 #endif
 GPIO(USB1_ENABLE,           PIN(36),  GPIO_OUT_HIGH)
@@ -61,9 +59,11 @@ GPIO(USB_PD_WAKE,           PIN(60),  GPIO_OUT_LOW)
 /* When asserted, ME does not lock security descriptor */
 GPIO(PCH_SEC_DISABLE_L,     PIN(65),  GPIO_ODR_HIGH)
 GPIO(PCH_WAKE_L,            PIN(66),  GPIO_ODR_HIGH)
+#ifdef BOARD_KUNIMITSU_V3
 GPIO(EC_FAN1_TTACH,         PIN(105), GPIO_INPUT)
-/* Fan PWM output - NC / testing only */
-GPIO(EC_FAN1_PWM,           PIN(136), GPIO_OUT_LOW)
+#else
+GPIO(USB2_OTG_VBUSSENSE,    PIN(105), GPIO_ODR_HIGH)
+#endif
 GPIO(PCH_ACOK,              PIN(110), GPIO_OUT_LOW)
 /* Interrupts from accelerometer / gyro -- not yet implemented */
 GPIO(LID_ACCEL_INT,         PIN(161), GPIO_INPUT | GPIO_PULL_DOWN)  /* Lid ACCEL sensor interrupt to EC */
@@ -73,7 +73,16 @@ GPIO(GYRO_DRDY,             PIN(133), GPIO_INPUT | GPIO_PULL_DOWN)  /* Lid Gyro 
 GPIO(WLAN_OFF_L,            PIN(132), GPIO_OUT_HIGH)
 /* RCIN# line to PCH for 8042 emulation */
 GPIO(PCH_RCIN_L,            PIN(135), GPIO_ODR_HIGH)
+/* Fan PWM output - NC / testing only */
+#ifdef BOARD_KUNIMITSU_V3
+GPIO(EC_FAN1_PWM,           PIN(136), GPIO_OUT_LOW)
+#else
+GPIO(NC_136,                PIN(136),  GPIO_INPUT | GPIO_PULL_UP)   /* Reserved for KBD Backlight */
+#endif
+
+#ifdef BOARD_KUNIMITSU_V3
 GPIO(USB2_OTG_VBUSSENSE,    PIN(140), GPIO_ODR_HIGH)
+#endif
 /* Sensor input for KB PROX - UNUSED */
 GPIO(KB_PROX_INT_L,         PIN(141), GPIO_INPUT)
 GPIO(PCH_RSMRST_L,          PIN(143), GPIO_OUT_LOW)
@@ -84,10 +93,18 @@ GPIO(USB_C1_5V_EN,          PIN(204), GPIO_OUT_LOW)
 GPIO(USB_C0_CHARGE_EN_L,    PIN(64),  GPIO_OUT_LOW)
 GPIO(USB_C1_CHARGE_EN_L,    PIN(157), GPIO_OUT_LOW)
 GPIO(NC_011,                PIN(11),  GPIO_INPUT | GPIO_PULL_UP)
+#ifdef BOARD_KUNIMITSU_V3
 GPIO(LID_OPEN2,             PIN(160), GPIO_INPUT | GPIO_PULL_UP)
+#else
+GPIO(FAN_PWR_DIS_L,         PIN(160), GPIO_OUT_HIGH)
+#endif
 GPIO(PCH_RTCRST_L,          PIN(163), GPIO_ODR_HIGH)
 
+#ifdef BOARD_KUNIMITSU_V3
 GPIO(NC_201,                PIN(201), GPIO_INPUT | GPIO_PULL_UP)
+#else
+GPIO(PMIC_SLP_SUS_L,        PIN(201),  GPIO_OUT_LOW)
+#endif
 GPIO(ENABLE_BACKLIGHT,      PIN(202), GPIO_OUT_HIGH)
 GPIO(PP3300_WLAN_EN,        PIN(203), GPIO_OUT_HIGH)
 GPIO(EC_WAKE_CLK,           PIN(210), GPIO_INPUT)
@@ -158,3 +175,11 @@ ALTERNATE(PIN_MASK(6,  0x06), 1, MODULE_ADC, GPIO_ANALOG)
 ALTERNATE(PIN_MASK(13, 0x02), 1, MODULE_PMU, 0)
 /* nRESET_OUT - GPIO121 */
 ALTERNATE(PIN_MASK(12, 0x02), 1, MODULE_PMU, 0)
+
+#ifndef BOARD_KUNIMITSU_V3
+/* RPM-PWM for FAN */
+/* TACH2PWM_OUT - GPIO34 */
+ALTERNATE(PIN_MASK(3,  0x10), 3, MODULE_PWM_FAN, 0)
+/* TACH2PWM_IN - GPIO140 */
+ALTERNATE(PIN_MASK(14, 0x01), 3, MODULE_PWM_FAN, 0)
+#endif

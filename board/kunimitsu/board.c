@@ -17,6 +17,7 @@
 #include "driver/pmic_tps650830.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
+#include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -119,6 +120,21 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"pmic",     MEC1322_I2C3,   400,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA  },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+#ifndef BOARD_KUNIMITSU_V3
+/* Physical fans. These are logically separate from pwm_channels. */
+const struct fan_t fans[] = {
+	{.flags = FAN_USE_RPM_MODE,
+	 .rpm_min = 1000,
+	 .rpm_start = 1000,
+	 .rpm_max = 5200,
+	 .ch = 1,
+	 .pgood_gpio = -1,
+	 .enable_gpio = GPIO_FAN_PWR_DIS_L,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
+#endif
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
