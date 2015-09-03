@@ -81,13 +81,30 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 	mutex_unlock(&g_sensor_mutex);
 
 	if (valid_data) {
-		int ap_odr = sensor->config[SENSOR_CONFIG_AP].odr &
-			~ROUND_UP_FLAG;
+		int ap_odr = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
 		int rate = INT_TO_FP(sensor->drv->get_data_rate(sensor));
 
-		/* If the AP does not want sensor info, skip */
+		/*
+		 * If the AP does not want sensor info, skip.
+		 * It happens:
+		 * - only the EC needs the data
+		 * - when there is event waiting in the FIFO when the AP
+		 *   put the sensor in suspend.
+		 */
 		if (ap_odr == 0)
 			return;
+
+		/*
+		 * BM160 FIFO can return bad data (see chrome-os-partner:43339.
+		 * It looks like an accelrator event.
+		 * It can happen if we are in middle of setting a new ODR
+		 * while we are processing the FIFO.
+		 */
+		if (rate == 0) {
+			CPRINTS("%s: unexpected event: 0x%04x", sensor->name,
+				data->data[0]);
+			return;
+		}
 
 		/* Skip if EC is oversampling */
 		if (sensor->oversampling < 0) {
@@ -174,11 +191,11 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 
 	/* Check the AP setting first. */
 	if (sensor_active != SENSOR_ACTIVE_S5)
-		odr = sensor->config[SENSOR_CONFIG_AP].odr & ~ROUND_UP_FLAG;
+		odr = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
 
 	/* check if the EC set the sensor ODR at a higher frequency */
 	config_id = motion_sense_get_ec_config();
-	ec_odr = sensor->config[config_id].odr & ~ROUND_UP_FLAG;
+	ec_odr = BASE_ODR(sensor->config[config_id].odr);
 	if (ec_odr > odr)
 		odr = ec_odr;
 	else

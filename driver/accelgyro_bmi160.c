@@ -430,7 +430,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 #ifdef CONFIG_ACCEL_FIFO
 	/* FIFO start collecting events if AP wants them */
-	if (s->config[SENSOR_CONFIG_AP].odr != 0)
+	if (BASE_ODR(s->config[SENSOR_CONFIG_AP].odr) != 0)
 		enable_fifo(s, 1);
 #endif
 
@@ -802,22 +802,44 @@ static int load_fifo(struct motion_sensor_t *s)
 	if (s->type != MOTIONSENSE_TYPE_ACCEL)
 		return EC_SUCCESS;
 
-	if (!(data->flags &
-	      (BMI160_FIFO_ALL_MASK << BMI160_FIFO_FLAG_OFFSET))) {
-		/*
-		 * Flush potiential left over:
-		 *
-		 * When sensor is resumed, we don't want to read old data.
-		 */
-		raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_FIFO_FLUSH);
-		return EC_SUCCESS;
-	}
-
 	do {
 		enum fifo_state state = FIFO_HEADER;
 		uint8_t *bp = bmi160_buffer;
+		uint32_t beginning;
+
+		if (!(data->flags &
+		      (BMI160_FIFO_ALL_MASK << BMI160_FIFO_FLAG_OFFSET))) {
+			/*
+			 * The FIFO was disable while were processing it.
+			 *
+			 * Flush potential left over:
+			 * When sensor is resumed, we won't read old data.
+			 */
+			raw_write8(s->addr, BMI160_CMD_REG,
+				   BMI160_CMD_FIFO_FLUSH);
+			return EC_SUCCESS;
+		}
+
 		raw_read_n(s->addr, BMI160_FIFO_DATA, bmi160_buffer,
 				sizeof(bmi160_buffer));
+		beginning = *(uint32_t *)bmi160_buffer;
+		/*
+		 * FIFO is invalid when reading while the sensors are all
+		 * suspended.
+		 * Instead of returning the empty frame, it can return a
+		 * pattern that looks like a valid header: 84 or 40.
+		 * If we see those, assume the sensors have been disabled
+		 * while this thread was running.
+		 */
+		if (beginning == 0x84848484 ||
+		    (beginning & 0xdcdcdcdc) == 0x40404040) {
+			CPRINTS("Suspended FIFO: accel ODR/rate: %d/%d: 0x%08x",
+				BASE_ODR(s->config[SENSOR_CONFIG_AP].odr),
+				get_data_rate(s),
+				beginning);
+			return EC_SUCCESS;
+		}
+
 		while (!done && bp != BUFFER_END(bmi160_buffer)) {
 			switch (state) {
 			case FIFO_HEADER: {

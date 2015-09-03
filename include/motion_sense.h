@@ -47,6 +47,7 @@ enum sensor_config {
 #define MAX_MOTION_SENSE_WAIT_TIME (60000 * MSEC)
 
 #define ROUND_UP_FLAG (1 << 31)
+#define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
 
 struct motion_data_t {
 	/*
