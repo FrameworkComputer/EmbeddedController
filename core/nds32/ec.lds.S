@@ -42,11 +42,7 @@ SECTIONS
         __flash_dma_start = .;
         KEEP(*(.flash_direct_map))
         . = ALIGN(CONFIG_IT83XX_ILM_BLOCK_SIZE);
-#ifdef COMPILE_FOR_RAM
-    } > IRAM
-#else
     } > FLASH
-#endif
     . = ALIGN(4);
     .rodata :  {
         /* Symbols defined here are declared in link_defs.h */
@@ -145,18 +141,10 @@ SECTIONS
         KEEP(*(.google))
 #endif
         . = ALIGN(4);
-#ifdef COMPILE_FOR_RAM
-    } > IRAM
-#else
     } >FLASH
-#endif
     __ro_end = . ;
 
-#ifdef COMPILE_FOR_RAM
     .data : {
-#else
-    .data : {
-#endif
         . = ALIGN(4);
         __data_start = .;
         *(.data.tasks)

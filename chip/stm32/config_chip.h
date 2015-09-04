@@ -94,9 +94,6 @@
 /* Flash protection applies to the next boot, not the current one */
 #define CONFIG_FLASH_PROTECT_NEXT_BOOT
 
-/* Compile for running from RAM instead of flash */
-/* #define COMPILE_FOR_RAM */
-
 #define GPIO_NAME_BY_PIN(port, index) #port#index
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)

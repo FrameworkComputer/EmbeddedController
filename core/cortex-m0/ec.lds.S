@@ -55,11 +55,7 @@ SECTIONS
 #endif
         OUTDIR/core/CORE/init.o (.text)
         *(.text*)
-#ifdef COMPILE_FOR_RAM
-    } > IRAM
-#else
     } > FLASH
-#endif
     . = ALIGN(4);
     .rodata : {
 	/* Symbols defined here are declared in link_defs.h */
@@ -167,11 +163,7 @@ SECTIONS
         KEEP(*(.google))
 #endif
         . = ALIGN(4);
-#ifdef COMPILE_FOR_RAM
-    } > IRAM
-#else
     } > FLASH
-#endif
     __ro_end = . ;
 
     __deferred_funcs_count =
@@ -196,11 +188,7 @@ SECTIONS
         . = ALIGN(4);
         __bss_end = .;
     } > IRAM
-#ifdef COMPILE_FOR_RAM
-    .data : {
-#else
     .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
-#endif
         . = ALIGN(4);
         __data_start = .;
         *(.data.tasks)

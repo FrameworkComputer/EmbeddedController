@@ -12,7 +12,6 @@
 #define FW_SIZE_(section) CONFIG_##section##_SIZE
 #define FW_SIZE(section) FW_SIZE_(section)
 
-
 OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
 OUTPUT_ARCH(BFD_ARCH)
 ENTRY(reset)
@@ -93,11 +92,7 @@ SECTIONS
         __flash_lpfw_end = .;
     } > CDRAM AT > FLASH
 #else
-#ifdef COMPILE_FOR_RAM
-    } > IRAM
-#else
     } > FLASH
-#endif
 #endif
     . = ALIGN(4);
     .rodata : {
@@ -208,11 +203,7 @@ SECTIONS
 #ifdef CONFIG_CODERAM_ARCH
     } > CDRAM AT > FLASH
 #else
-#ifdef COMPILE_FOR_RAM
-    } > IRAM
-#else
     } > FLASH
-#endif
 #endif
     __ro_end = . ;
 
@@ -224,9 +215,8 @@ SECTIONS
     .bss : {
 	/*
 	 * Align to 512 bytes. This is convenient when some memory block
-	 * need big alignment. When COMPILE_FOR_RAM is not set, this is the
-	 * beginning of the RAM, so there is usually no penalty on aligning
-	 * this.
+	 * needs big alignment. This is the beginning of the RAM, so there
+	 * is usually no penalty on aligning this.
 	 */
         . = ALIGN(512);
         __bss_start = .;
@@ -239,14 +229,10 @@ SECTIONS
         . = ALIGN(4);
         __bss_end = .;
     } > IRAM
-#ifdef COMPILE_FOR_RAM
-    .data : {
-#else
 #ifdef CONFIG_CODERAM_ARCH
-	.data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
+    .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
 #else
     .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {
-#endif
 #endif
         . = ALIGN(4);
         __data_start = .;

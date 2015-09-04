@@ -132,7 +132,6 @@ vtable_loop:
 	str r1, [r2]
 #endif
 
-#ifndef COMPILE_FOR_RAM
 	/* Copy initialized data to Internal RAM */
 	ldr r0,_ro_end
 	ldr r1,_data_start
@@ -144,7 +143,6 @@ data_loop:
 	adds r1, #4
 	cmp  r1, r2
 	blt data_loop
-#endif
 
 	/*
 	 * Set stack pointer.  Already done by Cortex-M hardware, but re-doing
