@@ -304,11 +304,11 @@ int adc_disable_watchdog(void)
 
 int flash_physical_write(int offset, int size, const char *data)
 {
-	uint16_t *address = (uint16_t *)(CONFIG_FLASH_BASE + offset);
+	uint16_t *address = (uint16_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	int res = EC_SUCCESS;
 	int i;
 
-	if ((uint32_t)address > CONFIG_FLASH_BASE + CONFIG_FLASH_SIZE)
+	if ((uint32_t)address > CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* unlock CR if needed */
@@ -372,7 +372,7 @@ int flash_physical_erase(int offset, int size)
 	     offset += CONFIG_FLASH_ERASE_SIZE) {
 		int i;
 		/* select page to erase */
-		STM32_FLASH_AR = CONFIG_FLASH_BASE + offset;
+		STM32_FLASH_AR = CONFIG_PROGRAM_MEMORY_BASE + offset;
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= STRT;
 

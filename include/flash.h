@@ -201,7 +201,7 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp);
 /**
  * Read from flash.
  *
- * If flash is mapped (CONFIG_FLASH_MAPPED), it is usually more efficient to
+ * If flash is mapped (CONFIG_MAPPED_STORAGE), it is usually more efficient to
  * use flash_dataptr() to get a pointer directly to the flash memory rather
  * than use flash_read(), since the former saves a memcpy() operation.
  *

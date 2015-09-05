@@ -4,7 +4,6 @@
  */
 
 /* Memory mapping */
-#define CONFIG_FLASH_BASE       0x08000000
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00040000
 #define CONFIG_FLASH_BANK_SIZE  0x2000
 #define CONFIG_FLASH_ERASE_SIZE 0x0800  /* erase bank size */

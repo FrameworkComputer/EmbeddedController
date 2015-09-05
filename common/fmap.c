@@ -17,14 +17,15 @@
 #define FMAP_VER_MINOR 0
 
 /*
- * For address containing CONFIG_FLASH_BASE (symbols in *.RO.lds.S and
+ * For address containing CONFIG_PROGRAM_MEMORY_BASE (symbols in *.RO.lds.S and
  * variable), this computes the offset to the start of the image on flash.
  */
 
 #ifdef NPCX_RO_HEADER
 #define RELATIVE_RO(addr) ((addr) - CONFIG_CDRAM_BASE)
 #else
-#define RELATIVE_RO(addr) ((addr) - CONFIG_FLASH_BASE - CONFIG_RO_MEM_OFF)
+#define RELATIVE_RO(addr) ((addr) - CONFIG_PROGRAM_MEMORY_BASE - \
+			   CONFIG_RO_MEM_OFF)
 #endif
 
 struct fmap_header {
@@ -59,7 +60,7 @@ const struct _ec_fmap {
 		.fmap_signature = {'_', '_', 'F', 'M', 'A', 'P', '_', '_'},
 		.fmap_ver_major = FMAP_VER_MAJOR,
 		.fmap_ver_minor = FMAP_VER_MINOR,
-		.fmap_base = CONFIG_FLASH_BASE,
+		.fmap_base = CONFIG_PROGRAM_MEMORY_BASE,
 		.fmap_size = CONFIG_FLASH_SIZE,
 		.fmap_name = "EC_FMAP",
 		.fmap_nareas = NUM_EC_FMAP_AREAS,

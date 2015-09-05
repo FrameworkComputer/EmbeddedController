@@ -33,8 +33,12 @@
  */
 
 /* Memory-mapped internal flash w/ PSTATE */
-#define CONFIG_FLASH_MAPPED
+#define CONFIG_INTERNAL_STORAGE
+#define CONFIG_MAPPED_STORAGE
 #define CONFIG_FLASH_PSTATE
+
+/* Program is run directly from storage */
+#define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
 /*
  * The EC uses the one bank of flash to emulate a SPI-like write protect

@@ -99,10 +99,8 @@
 #define CONFIG_FLASH_PHYSICAL_SIZE	0x00040000
 
 /* Program memory base address */
-#define CONFIG_FLASH_BASE		0x00100000
-
+#define CONFIG_PROGRAM_MEMORY_BASE	0x00100000
 #define CONFIG_CDRAM_BASE		0x00100000
-#define CONFIG_CDRAM_SIZE		0x00020000
 
 #include "config_flash_layout.h"
 

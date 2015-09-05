@@ -108,9 +108,10 @@ _rw_off:=$(shell echo "$$(($(_rw_off_str)))")
 _rw_size_str:=$(shell echo "CONFIG_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -I$(BDIR) -imacros include/config.h)
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
-_flash_base_str:=$(shell echo "CONFIG_FLASH_BASE" | $(CPP) $(CPPFLAGS) -P \
+_program_memory_base_str:=$(shell echo "CONFIG_PROGRAM_MEMORY_BASE" | \
+		$(CPP) $(CPPFLAGS) -P \
 		-Ichip/$(CHIP) -I$(BDIR) -imacros include/config.h)
-_flash_base=$(shell echo "$$(($(_flash_base_str)))")
+_program_memory_base=$(shell echo "$$(($(_program_memory_base_str)))")
 
 $(eval BOARD_$(UC_BOARD)=y)
 $(eval CHIP_$(UC_CHIP)=y)

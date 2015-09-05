@@ -448,7 +448,8 @@ enum system_image_copy_t system_get_shrspi_image_copy(void)
 
 uint32_t system_get_lfw_address(void)
 {
-	uint32_t * const lfw_vector = (uint32_t * const) CONFIG_FLASH_BASE;
+	uint32_t * const lfw_vector =
+		(uint32_t * const)CONFIG_PROGRAM_MEMORY_BASE;
 
 	return *(lfw_vector + 1);
 }

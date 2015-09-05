@@ -708,7 +708,8 @@ void system_jump_to_booter(void)
 	}
 
 	/* Make sure the reset vector is inside the destination image */
-	addr_entry = *(uintptr_t *)(flash_offset + CONFIG_FLASH_BASE + 4);
+	addr_entry = *(uintptr_t *)(flash_offset +
+				    CONFIG_PROGRAM_MEMORY_BASE + 4);
 
 	download_from_flash(
 		flash_offset,      /* The offset of the data in spi flash */

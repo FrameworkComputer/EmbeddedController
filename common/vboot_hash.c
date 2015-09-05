@@ -63,7 +63,7 @@ void vboot_hash_abort(void)
 	}
 }
 
-#ifndef CONFIG_FLASH_MAPPED
+#ifndef CONFIG_MAPPED_STORAGE
 
 static void vboot_hash_next_chunk(void);
 
@@ -111,8 +111,8 @@ static void vboot_hash_next_chunk(void)
 	/* Compute the next chunk of hash */
 	size = MIN(CHUNK_SIZE, data_size - curr_pos);
 
-#ifdef CONFIG_FLASH_MAPPED
-	SHA256_update(&ctx, (const uint8_t *)(CONFIG_FLASH_BASE +
+#ifdef CONFIG_MAPPED_STORAGE
+	SHA256_update(&ctx, (const uint8_t *)(CONFIG_PROGRAM_MEMORY_BASE +
 					      data_offset + curr_pos), size);
 #else
 	if (read_and_hash_chunk(data_offset + curr_pos, size) != EC_SUCCESS)

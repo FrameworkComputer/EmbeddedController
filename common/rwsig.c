@@ -25,12 +25,13 @@ const struct rsa_public_key pkey __attribute__((section(".rsa_pubkey"))) =
 #include "gen_pub_key.h"
 
 /* The RSA signature is stored at the end of the RW firmware */
-static const void *rw_sig = (void *)CONFIG_FLASH_BASE + CONFIG_RW_MEM_OFF
+static const void *rw_sig = (void *)CONFIG_PROGRAM_MEMORY_BASE
+				 + CONFIG_RW_MEM_OFF
 				 + CONFIG_RW_SIZE - RSANUMBYTES;
 
 /* RW firmware reset vector */
 static uint32_t * const rw_rst =
-	(uint32_t *)(CONFIG_FLASH_BASE+CONFIG_RW_MEM_OFF+4);
+	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
 
 void check_rw_signature(void)
 {
@@ -59,7 +60,8 @@ void check_rw_signature(void)
 	/* SHA-256 Hash of the RW firmware */
 	/* TODO(crosbug.com/p/44803): Do we have to hash the whole region? */
 	SHA256_init(&ctx);
-	SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE + CONFIG_RW_MEM_OFF,
+	SHA256_update(&ctx, (void *)CONFIG_PROGRAM_MEMORY_BASE
+		      + CONFIG_RW_MEM_OFF,
 		      CONFIG_RW_SIZE - RSANUMBYTES);
 	hash = SHA256_final(&ctx);
 

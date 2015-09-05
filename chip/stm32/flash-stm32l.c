@@ -161,7 +161,7 @@ void  __attribute__((section(".iram.text")))
 int flash_physical_write(int offset, int size, const char *data)
 {
 	uint32_t *data32 = (uint32_t *)data;
-	uint32_t *address = (uint32_t *)(CONFIG_FLASH_BASE + offset);
+	uint32_t *address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	int res = EC_SUCCESS;
 	int word_mode = 0;
 	int i;
@@ -255,13 +255,14 @@ int flash_physical_erase(int offset, int size)
 	/* Set PROG and ERASE bits */
 	STM32_FLASH_PECR |= STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_ERASE;
 
-	for (address = (uint32_t *)(CONFIG_FLASH_BASE + offset);
+	for (address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
 	     address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
 		timestamp_t deadline;
 
 		/* Do nothing if already erased */
-		if (flash_is_erased((uint32_t)address - CONFIG_FLASH_BASE,
+		if (flash_is_erased((uint32_t)address -
+				    CONFIG_PROGRAM_MEMORY_BASE,
 				    CONFIG_FLASH_ERASE_SIZE))
 			continue;
 

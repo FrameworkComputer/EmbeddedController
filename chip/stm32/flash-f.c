@@ -205,7 +205,7 @@ static int write_optb(int byte, uint8_t value)
 
 int flash_physical_write(int offset, int size, const char *data)
 {
-	uint16_t *address = (uint16_t *)(CONFIG_FLASH_BASE + offset);
+	uint16_t *address = (uint16_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	int res = EC_SUCCESS;
 	int i;
 
@@ -285,7 +285,7 @@ int flash_physical_erase(int offset, int size)
 			continue;
 
 		/* select page to erase */
-		STM32_FLASH_AR = CONFIG_FLASH_BASE + offset;
+		STM32_FLASH_AR = CONFIG_PROGRAM_MEMORY_BASE + offset;
 
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= STRT;

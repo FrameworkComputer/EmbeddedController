@@ -12,13 +12,13 @@
 #define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
 extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
 
-#define CONFIG_FLASH_BASE       ((uintptr_t)__host_flash)
-#define CONFIG_FLASH_BANK_SIZE  0x1000
-#define CONFIG_FLASH_ERASE_SIZE 0x0010  /* erase bank size */
-#define CONFIG_FLASH_WRITE_SIZE 0x0002  /* minimum write size */
-#define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0080  /* ideal write size */
-#define CONFIG_RAM_BASE         0x0 /* Not supported */
-#define CONFIG_RAM_SIZE         0x0 /* Not supported */
+#define CONFIG_PROGRAM_MEMORY_BASE     ((uintptr_t)__host_flash)
+#define CONFIG_FLASH_BANK_SIZE         0x1000
+#define CONFIG_FLASH_ERASE_SIZE        0x0010  /* erase bank size */
+#define CONFIG_FLASH_WRITE_SIZE        0x0002  /* minimum write size */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE  0x0080  /* ideal write size */
+#define CONFIG_RAM_BASE                0x0 /* Not supported */
+#define CONFIG_RAM_SIZE                0x0 /* Not supported */
 
 #define CONFIG_FPU
 

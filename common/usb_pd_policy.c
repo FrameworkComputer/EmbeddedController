@@ -826,7 +826,7 @@ uint8_t *flash_hash_rw(void)
 	if (rw_flash_changed) {
 		rw_flash_changed = 0;
 		SHA256_init(&ctx);
-		SHA256_update(&ctx, (void *)CONFIG_FLASH_BASE +
+		SHA256_update(&ctx, (void *)CONFIG_PROGRAM_MEMORY_BASE +
 			      CONFIG_RW_MEM_OFF,
 			      CONFIG_RW_SIZE - RSANUMBYTES);
 		return SHA256_final(&ctx);

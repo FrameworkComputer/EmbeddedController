@@ -689,15 +689,30 @@
 #define CONFIG_FLASH
 
 #undef CONFIG_FLASH_BANK_SIZE
-#undef CONFIG_FLASH_BASE
 #undef CONFIG_FLASH_ERASED_VALUE32
 #undef CONFIG_FLASH_ERASE_SIZE
+
+/* Base address of program memory */
+#undef CONFIG_PROGRAM_MEMORY_BASE
+
+/*
+ * EC code can reside on internal or external storage. Only one of these
+ * CONFIGs should be defined.
+ */
+#undef CONFIG_EXTERNAL_STORAGE
+#undef CONFIG_INTERNAL_STORAGE
 
 /*
  * Flash is directly mapped into the EC's address space.  If this is not
  * defined, the flash driver must implement flash_physical_read().
  */
-#define CONFIG_FLASH_MAPPED
+#define CONFIG_MAPPED_STORAGE
+
+/*
+ * Base address of memory-mapped flash storage, for platforms which define
+ * CONFIG_MAPPED_STORAGE.
+ */
+#undef CONFIG_MAPPED_STORAGE_BASE
 
 #undef CONFIG_FLASH_PHYSICAL_SIZE
 #undef CONFIG_FLASH_PROTECT_NEXT_BOOT

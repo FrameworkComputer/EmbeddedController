@@ -43,6 +43,8 @@
 #error "Unsupported chip variant"
 #endif
 
+#define CONFIG_PROGRAM_MEMORY_BASE 0x08000000
+
 #include "config_std_internal_flash.h"
 
 /* System stack size */

@@ -23,7 +23,7 @@
 #define CONFIG_RO_HEAD_ROOM	    1024	/* Room for ROM signature. */
 
 /* Describe the flash layout */
-#define CONFIG_FLASH_BASE       0x40000
+#define CONFIG_PROGRAM_MEMORY_BASE 0x40000
 #define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024)
 
 /* Compute the rest of the flash params from these */

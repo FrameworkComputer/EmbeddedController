@@ -255,7 +255,8 @@ static int test_read(void)
 	TEST_ASSERT(!flash_is_erased(0, sizeof(buf)));
 
 	TEST_ASSERT(host_command_read(0, sizeof(buf), buf) == EC_RES_SUCCESS);
-	TEST_ASSERT_ARRAY_EQ(buf, (char *)CONFIG_FLASH_BASE, sizeof(buf));
+	TEST_ASSERT_ARRAY_EQ(buf, (char *)CONFIG_PROGRAM_MEMORY_BASE,
+			     sizeof(buf));
 
 	return EC_SUCCESS;
 }

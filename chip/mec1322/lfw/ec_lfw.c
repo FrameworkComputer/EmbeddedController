@@ -91,7 +91,8 @@ static int spi_flash_readloc(uint8_t *buf_usr,
 
 int spi_image_load(uint32_t offset)
 {
-	uint8_t *buf = (uint8_t *) (CONFIG_RW_MEM_OFF + CONFIG_FLASH_BASE);
+	uint8_t *buf = (uint8_t *) (CONFIG_RW_MEM_OFF +
+				    CONFIG_PROGRAM_MEMORY_BASE);
 	uint32_t i;
 
 	memset((void *)buf, 0xFF, (CONFIG_FW_IMAGE_SIZE - 4));
@@ -257,7 +258,7 @@ void lfw_main()
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RW:
 		uart_puts("lfw-RW load\n");
-		init_addr = CONFIG_RW_MEM_OFF + CONFIG_FLASH_BASE;
+		init_addr = CONFIG_RW_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
 		spi_image_load(CONFIG_RW_IMAGE_FLASHADDR);
 		break;
 	case SYSTEM_IMAGE_RO:
@@ -267,7 +268,7 @@ void lfw_main()
 	default:
 		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) =
 							SYSTEM_IMAGE_RO;
-		init_addr = CONFIG_RO_MEM_OFF + CONFIG_FLASH_BASE;
+		init_addr = CONFIG_RO_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
 	}
 
 	jump_to_image(*(uintptr_t *)(init_addr + 4));

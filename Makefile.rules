@@ -50,7 +50,7 @@ cmd_raw_to_flat ?= $(out)/util/signer util/signer/rom-testkey.pem $< \
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
-	--change-addresses $(_flash_base) $^ $@
+	--change-addresses $(_program_memory_base) $^ $@
 cmd_smap = $(NM) $< | sort > $@
 cmd_elf = $(CC) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
 	-o $@ -Wl,-T,$< -Wl,-Map,$(patsubst %.elf,%.map,$@)

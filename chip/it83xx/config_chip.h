@@ -42,7 +42,7 @@
 /* Default task stack size */
 #define TASK_STACK_SIZE             512
 
-#define CONFIG_FLASH_BASE           0x00000000
+#define CONFIG_PROGRAM_MEMORY_BASE  0x00000000
 #define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */

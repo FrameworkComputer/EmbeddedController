@@ -7,7 +7,7 @@
 
 #define FW_MEM_OFF_(section) CONFIG_##section##_MEM_OFF
 #define FW_MEM_OFF(section) (FW_MEM_OFF_(section))
-#define FW_OFF(section) (CONFIG_FLASH_BASE + FW_MEM_OFF(section))
+#define FW_OFF(section) (CONFIG_PROGRAM_MEMORY_BASE + FW_MEM_OFF(section))
 
 #define FW_SIZE_(section) CONFIG_##section##_SIZE
 #define FW_SIZE(section) FW_SIZE_(section)
@@ -32,16 +32,16 @@ MEMORY
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
 #ifdef CONFIG_CODERAM_ARCH
-#ifdef CONFIG_FLASH_MAPPED
+#ifdef CONFIG_MAPPED_STORAGE
    /* Geometry constants have non-standard meaning for npcx */
    CDRAM (rx) : \
         ORIGIN = CONFIG_CDRAM_BASE, \
         LENGTH = CONFIG_CDRAM_SIZE
-#else /* CONFIG_FLASH_MAPPED */
+#else /* CONFIG_MAPPED_STORAGE */
    CDRAM (rx) : \
         ORIGIN = CONFIG_CDRAM_BASE + FW_MEM_OFF(SECTION), \
         LENGTH = FW_SIZE(SECTION)
-#endif /* CONFIG_FLASH_MAPPED */
+#endif /* CONFIG_MAPPED_STORAGE */
 #endif /* CONFIG_CODERAM_ARCH */
 #ifdef RSA_PUBLIC_KEY_SIZE
     PSTATE(r)  : \

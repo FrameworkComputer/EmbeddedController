@@ -100,15 +100,11 @@ uint32_t sleep_mask;
  */
 static uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
 {
-	/*
-	 * TODO(crosbug.com/p/23796): CONFIG_FLASH_BASE has overloaded meaning,
-	 * add an explicit CONFIG for program memory base for all boards.
-	 */
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
-		return CONFIG_FLASH_BASE + CONFIG_RO_MEM_OFF;
+		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF;
 	case SYSTEM_IMAGE_RW:
-		return CONFIG_FLASH_BASE + CONFIG_RW_MEM_OFF;
+		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF;
 	default:
 		return 0xffffffff;
 	}
@@ -323,7 +319,7 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 	return system_get_shrspi_image_copy();
 #else
 	uintptr_t my_addr = (uintptr_t)system_get_image_copy -
-			    CONFIG_FLASH_BASE;
+			    CONFIG_PROGRAM_MEMORY_BASE;
 
 	if (my_addr >= CONFIG_RO_MEM_OFF &&
 	    my_addr < (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE))
@@ -339,7 +335,7 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 
 int system_get_image_used(enum system_image_copy_t copy)
 {
-#if !defined(CONFIG_FLASH_MAPPED) && defined(CONFIG_CODERAM_ARCH)
+#if !defined(CONFIG_MAPPED_STORAGE) && defined(CONFIG_CODERAM_ARCH)
 	int image_offset;
 	uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
 #endif
@@ -354,7 +350,7 @@ int system_get_image_used(enum system_image_copy_t copy)
 	 * last byte of the image.  See ec.lds.S for how this is inserted at
 	 * the end of the image.
 	 */
-#if !defined(CONFIG_FLASH_MAPPED) && defined(CONFIG_CODERAM_ARCH)
+#if !defined(CONFIG_MAPPED_STORAGE) && defined(CONFIG_CODERAM_ARCH)
 	image_offset = (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
 			CONFIG_RO_STORAGE_OFF;
 	image = buf;
@@ -542,7 +538,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
-#if !defined(CONFIG_FLASH_MAPPED) && defined(CONFIG_CODERAM_ARCH)
+#if !defined(CONFIG_MAPPED_STORAGE) && defined(CONFIG_CODERAM_ARCH)
 	static struct version_struct vdata;
 #endif
 
@@ -564,7 +560,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 	addr = ((uintptr_t)&version_data -
 	       get_program_memory_addr(active_copy));
 #ifdef CONFIG_CODERAM_ARCH
-#ifdef CONFIG_FLASH_MAPPED
+#ifdef CONFIG_MAPPED_STORAGE
 	/* Geometry constants have non-standard meaning for npcx */
 	addr = ((uintptr_t)&version_data - CONFIG_CDRAM_BASE +
 			   get_program_memory_addr(copy));
@@ -576,7 +572,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 	 */
 	addr += (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
 					    CONFIG_RO_STORAGE_OFF;
-#endif /* CONFIG_FLASH_MAPPED */
+#endif /* CONFIG_MAPPED_STORAGE */
 #else /* CONFIG_CODERAM_ARCH */
 	/*
 	 * Read version from program memory, which is always populated with
@@ -585,7 +581,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 	addr += get_program_memory_addr(copy);
 #endif /*CONFIG_CODERAM_ARCH */
 
-#if defined(CONFIG_FLASH_MAPPED) || !defined(CONFIG_CODERAM_ARCH)
+#if defined(CONFIG_MAPPED_STORAGE) || !defined(CONFIG_CODERAM_ARCH)
 	/* Directly access the data from program memory or mapped flash. */
 	v = (const struct version_struct *)addr;
 #else

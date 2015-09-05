@@ -29,8 +29,8 @@
  * If flash isn't mapped to the EC's address space, it's probably SPI, and
  * should be using SPI write protect, not PSTATE.
  */
-#ifndef CONFIG_FLASH_MAPPED
-#error "PSTATE should only be used with internal mapped mapped flash."
+#if !defined(CONFIG_INTERNAL_STORAGE) || !defined(CONFIG_MAPPED_STORAGE)
+#error "PSTATE should only be used with internal mem-mapped flash."
 #endif
 
 #ifdef CONFIG_FLASH_PSTATE_BANK
@@ -101,7 +101,7 @@ int flash_range_ok(int offset, int size_req, int align)
 	return 1;
 }
 
-#ifdef CONFIG_FLASH_MAPPED
+#ifdef CONFIG_MAPPED_STORAGE
 /**
  * Get the physical memory address of a flash offset
  *
@@ -115,7 +115,7 @@ int flash_range_ok(int offset, int size_req, int align)
  */
 static const char *flash_physical_dataptr(int offset)
 {
-	return (char *)((uintptr_t)CONFIG_FLASH_BASE + offset);
+	return (char *)((uintptr_t)CONFIG_PROGRAM_MEMORY_BASE + offset);
 }
 
 int flash_dataptr(int offset, int size_req, int align, const char **ptrp)
@@ -246,7 +246,8 @@ static int flash_write_pstate(uint32_t flags)
 	 * Write a new pstate.  We can overwrite the existing value, because
 	 * we're only moving bits from the erased state to the unerased state.
 	 */
-	return flash_physical_write(get_pstate_addr() - CONFIG_FLASH_BASE,
+	return flash_physical_write(get_pstate_addr() -
+				    CONFIG_PROGRAM_MEMORY_BASE,
 				    sizeof(new_pstate),
 				    (const char *)&new_pstate);
 }
@@ -258,7 +259,7 @@ int flash_is_erased(uint32_t offset, int size)
 {
 	const uint32_t *ptr;
 
-#ifdef CONFIG_FLASH_MAPPED
+#ifdef CONFIG_MAPPED_STORAGE
 	/* Use pointer directly to flash */
 	if (flash_dataptr(offset, size, sizeof(uint32_t),
 			  (const char **)&ptr) < 0)
@@ -294,7 +295,7 @@ int flash_is_erased(uint32_t offset, int size)
 
 int flash_read(int offset, int size, char *data)
 {
-#ifdef CONFIG_FLASH_MAPPED
+#ifdef CONFIG_MAPPED_STORAGE
 	const char *src;
 
 	if (flash_dataptr(offset, size, 1, &src) < 0)
