@@ -31,18 +31,11 @@ MEMORY
 #endif
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
-#ifdef CONFIG_CODERAM_ARCH
-#ifdef CONFIG_MAPPED_STORAGE
-   /* Geometry constants have non-standard meaning for npcx */
+#ifdef CONFIG_EXTERNAL_STORAGE
    CDRAM (rx) : \
-        ORIGIN = CONFIG_CDRAM_BASE, \
-        LENGTH = CONFIG_CDRAM_SIZE
-#else /* CONFIG_MAPPED_STORAGE */
-   CDRAM (rx) : \
-        ORIGIN = CONFIG_CDRAM_BASE + FW_MEM_OFF(SECTION), \
+        ORIGIN = CONFIG_PROGRAM_MEMORY_BASE + FW_MEM_OFF(SECTION), \
         LENGTH = FW_SIZE(SECTION)
-#endif /* CONFIG_MAPPED_STORAGE */
-#endif /* CONFIG_CODERAM_ARCH */
+#endif /* CONFIG_EXTERNAL_STORAGE */
 #ifdef RSA_PUBLIC_KEY_SIZE
     PSTATE(r)  : \
         ORIGIN = FW_OFF(SECTION) + FW_SIZE(SECTION), \
@@ -85,7 +78,7 @@ SECTIONS
 #endif
         OUTDIR/core/CORE/init.o (.text)
         *(.text*)
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
         __flash_lpfw_start = .;
         /* Entering deep idle FW for better power consumption */
         KEEP(*(.lowpower_ram))
@@ -200,7 +193,7 @@ SECTIONS
         KEEP(*(.google))
 #endif
         . = ALIGN(4);
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
     } > CDRAM AT > FLASH
 #else
     } > FLASH
@@ -229,7 +222,7 @@ SECTIONS
         . = ALIGN(4);
         __bss_end = .;
     } > IRAM
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
     .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
 #else
     .data : AT(ADDR(.rodata) + SIZEOF(.rodata)) {

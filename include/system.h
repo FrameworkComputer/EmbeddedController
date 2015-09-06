@@ -372,7 +372,7 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds);
  */
 void system_reset_rtc_alarm(void);
 
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
 /**
  * Return address of little FW to prepare for sysjump
  *

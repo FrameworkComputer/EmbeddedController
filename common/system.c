@@ -95,7 +95,7 @@ uint32_t sleep_mask;
 
 /**
  * Return the program memory address where the image `copy` begins or should
- * begin. In the case of CODERAM_ARCH, the image may or may not currently
+ * begin. In the case of external storage, the image may or may not currently
  * reside at the location returned.
  */
 static uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
@@ -314,8 +314,8 @@ void system_disable_jump(void)
 
 test_mockable enum system_image_copy_t system_get_image_copy(void)
 {
-#ifdef CONFIG_CODERAM_ARCH
-	/* Return which region is used in Code RAM */
+#ifdef CONFIG_EXTERNAL_STORAGE
+	/* Return which region is used in program memory */
 	return system_get_shrspi_image_copy();
 #else
 	uintptr_t my_addr = (uintptr_t)system_get_image_copy -
@@ -335,7 +335,7 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 
 int system_get_image_used(enum system_image_copy_t copy)
 {
-#if !defined(CONFIG_MAPPED_STORAGE) && defined(CONFIG_CODERAM_ARCH)
+#ifndef CONFIG_MAPPED_STORAGE
 	int image_offset;
 	uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
 #endif
@@ -350,7 +350,7 @@ int system_get_image_used(enum system_image_copy_t copy)
 	 * last byte of the image.  See ec.lds.S for how this is inserted at
 	 * the end of the image.
 	 */
-#if !defined(CONFIG_MAPPED_STORAGE) && defined(CONFIG_CODERAM_ARCH)
+#ifndef CONFIG_MAPPED_STORAGE
 	image_offset = (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
 			CONFIG_RO_STORAGE_OFF;
 	image = buf;
@@ -502,8 +502,8 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	if (base == 0xffffffff)
 		return EC_ERROR_INVAL;
 
-#ifdef CONFIG_CODERAM_ARCH
-	/* Jump to little FW for code ram architecture */
+#ifdef CONFIG_EXTERNAL_STORAGE
+	/* Jump to loader */
 	init_addr = system_get_lfw_address();
 
 	system_set_image_copy(copy);
@@ -538,7 +538,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
-#if !defined(CONFIG_MAPPED_STORAGE) && defined(CONFIG_CODERAM_ARCH)
+#ifndef CONFIG_MAPPED_STORAGE
 	static struct version_struct vdata;
 #endif
 
@@ -559,32 +559,18 @@ const char *system_get_version(enum system_image_copy_t copy)
 	 */
 	addr = ((uintptr_t)&version_data -
 	       get_program_memory_addr(active_copy));
-#ifdef CONFIG_CODERAM_ARCH
-#ifdef CONFIG_MAPPED_STORAGE
-	/* Geometry constants have non-standard meaning for npcx */
-	addr = ((uintptr_t)&version_data - CONFIG_CDRAM_BASE +
-			   get_program_memory_addr(copy));
-#else
+
 	/*
-	 * Since our requested image isn't currently populated in program
-	 * memory, read the version information from the proper location
+	 * Read the version information from the proper location
 	 * on storage.
 	 */
 	addr += (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
 					    CONFIG_RO_STORAGE_OFF;
-#endif /* CONFIG_MAPPED_STORAGE */
-#else /* CONFIG_CODERAM_ARCH */
-	/*
-	 * Read version from program memory, which is always populated with
-	 * both images.
-	 */
-	addr += get_program_memory_addr(copy);
-#endif /*CONFIG_CODERAM_ARCH */
 
-#if defined(CONFIG_MAPPED_STORAGE) || !defined(CONFIG_CODERAM_ARCH)
-	/* Directly access the data from program memory or mapped flash. */
+#ifdef CONFIG_MAPPED_STORAGE
 	v = (const struct version_struct *)addr;
 #else
+
 	/* Read the version struct from flash into a buffer. */
 	if (flash_read(addr, sizeof(vdata), (char *)&vdata))
 		return "";

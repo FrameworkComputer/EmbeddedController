@@ -115,7 +115,7 @@ int flash_range_ok(int offset, int size_req, int align)
  */
 static const char *flash_physical_dataptr(int offset)
 {
-	return (char *)((uintptr_t)CONFIG_PROGRAM_MEMORY_BASE + offset);
+	return (char *)((uintptr_t)CONFIG_MAPPED_STORAGE_BASE + offset);
 }
 
 int flash_dataptr(int offset, int size_req, int align, const char **ptrp)

@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* Support Code RAM architecture (Run code in RAM) */
-#define CONFIG_CODERAM_ARCH
-
 /* Optional modules */
 #define CONFIG_ADC
 #define CONFIG_PECI

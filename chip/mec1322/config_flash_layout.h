@@ -15,7 +15,6 @@
  */
 
 /* Non-memmapped, external SPI */
-#define CONFIG_CODERAM_ARCH
 #define CONFIG_EXTERNAL_STORAGE
 #undef  CONFIG_MAPPED_STORAGE
 #undef  CONFIG_FLASH_PSTATE

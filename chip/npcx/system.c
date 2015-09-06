@@ -690,7 +690,7 @@ DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
 		system_rtc_set_value,
 		EC_VER_MASK(0));
 
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
 void system_jump_to_booter(void)
 {
 	enum API_RETURN_STATUS_T status;
@@ -709,11 +709,11 @@ void system_jump_to_booter(void)
 
 	/* Make sure the reset vector is inside the destination image */
 	addr_entry = *(uintptr_t *)(flash_offset +
-				    CONFIG_PROGRAM_MEMORY_BASE + 4);
+				    CONFIG_MAPPED_STORAGE_BASE + 4);
 
 	download_from_flash(
 		flash_offset,      /* The offset of the data in spi flash */
-		CONFIG_CDRAM_BASE, /* The address of the downloaded data  */
+		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */
 		flash_used,        /* Number of bytes to download      */
 		SIGN_NO_CHECK,     /* Need CRC check or not               */
 		addr_entry,        /* jump to this address after download */

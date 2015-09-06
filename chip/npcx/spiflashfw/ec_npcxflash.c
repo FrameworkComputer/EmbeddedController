@@ -6,8 +6,10 @@
  */
 
 #include <stdint.h>
+
+#include "config.h"
 #include "registers.h"
-#include "config_chip.h"
+#include "util.h"
 
 /*****************************************************************************/
 /* spi flash internal functions */
@@ -241,7 +243,7 @@ int sspi_flash_verify(int offset, int size, const char *data)
 int sspi_flash_get_image_used(const char *fw_base)
 {
 	const uint8_t *image;
-	int size = CONFIG_CDRAM_SIZE; /* maximum size is 128KB */
+	int size = MAX(CONFIG_RO_SIZE, CONFIG_RW_SIZE); /* max size is 128KB */
 
 	image = (const uint8_t *)fw_base;
 	/*
@@ -265,7 +267,7 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	/*
 	 * Flash image has been uploaded to Code RAM
 	 */
-	const char *image_base = (const char *)CONFIG_CDRAM_BASE;
+	const char *image_base = (const char *)CONFIG_PROGRAM_MEMORY_BASE;
 	uint32_t sz_image = spi_size;
 
 	/* Unlock & stop watchdog */

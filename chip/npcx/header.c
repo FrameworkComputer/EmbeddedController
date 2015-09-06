@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Chromium OS Authors. All rights reserved.
+ * Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,8 +11,9 @@
  */
 
 #include <stdint.h>
+
+#include "config.h"
 #include "registers.h"
-#include "config_chip.h"
 
 /* Signature used by fw header */
 #define SIG_FW_EC           0x2A3B4D5E
@@ -24,7 +25,8 @@
 #define ERROR_DETECTION_DIS 0x00
 
 /* Code RAM addresses use by header */
-#define FW_START_ADDR  CONFIG_CDRAM_BASE /* Put FW at the begin of CODE RAM   */
+/* Put FW at the begin of CODE RAM */
+#define FW_START_ADDR  CONFIG_PROGRAM_MEMORY_BASE
 
 /* TODO: It will be filled automatically by ECST */
 /* The entry point of reset handler (filled by ECST tool)*/

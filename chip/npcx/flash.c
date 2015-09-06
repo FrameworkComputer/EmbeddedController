@@ -23,7 +23,7 @@ uint8_t flag_prot_inconsistent;
 
 #define FLASH_ABORT_TIMEOUT     10000
 
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
 #define TRISTATE_FLASH(x)
 #else
 #define TRISTATE_FLASH(x) flash_tristate(x)
@@ -770,7 +770,7 @@ int flash_pre_init(void)
 	/* Enable FIU interface */
 	flash_pinmux(1);
 
-#ifdef CONFIG_CODERAM_ARCH
+#ifdef CONFIG_EXTERNAL_STORAGE
 	/* Disable tristate all the time */
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
 #endif

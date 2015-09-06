@@ -100,7 +100,6 @@
 
 /* Program memory base address */
 #define CONFIG_PROGRAM_MEMORY_BASE	0x00100000
-#define CONFIG_CDRAM_BASE		0x00100000
 
 #include "config_flash_layout.h"
 

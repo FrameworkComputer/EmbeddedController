@@ -496,15 +496,6 @@
 
 /*****************************************************************************/
 
-/* Support Code RAM architecture (run code in RAM). */
-#undef CONFIG_CODERAM_ARCH
-
-/* Base address of Code RAM. */
-#undef CONFIG_CDRAM_BASE
-
-/* Size of Code RAM. */
-#undef CONFIG_CDRAM_SIZE
-
 /* Provide common core code to output panic information without interrupts. */
 #define CONFIG_COMMON_PANIC_OUTPUT
 
