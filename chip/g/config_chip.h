@@ -24,7 +24,7 @@
 
 /* Describe the flash layout */
 #define CONFIG_PROGRAM_MEMORY_BASE 0x40000
-#define CONFIG_FLASH_PHYSICAL_SIZE (512 * 1024)
+#define CONFIG_FLASH_SIZE (512 * 1024)
 
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"

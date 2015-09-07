@@ -9,8 +9,8 @@
 #define __CROS_EC_CONFIG_CHIP_H
 
 /* Memory mapping */
-#define CONFIG_FLASH_PHYSICAL_SIZE 0x00020000
-extern char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
+#define CONFIG_FLASH_SIZE 0x00020000
+extern char __host_flash[CONFIG_FLASH_SIZE];
 
 #define CONFIG_PROGRAM_MEMORY_BASE     ((uintptr_t)__host_flash)
 #define CONFIG_FLASH_BANK_SIZE         0x1000

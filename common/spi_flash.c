@@ -155,7 +155,7 @@ int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 			  (offset >> 8) & 0xFF,
 			  offset & 0xFF};
 
-	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	return spi_transaction(SPI_FLASH_DEVICE, cmd, 4, buf_usr, bytes);
@@ -218,7 +218,7 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes)
 	int rv = EC_SUCCESS;
 
 	/* Invalid input */
-	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Not aligned to sector (4kb) */
@@ -266,7 +266,7 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 	int rv, write_size;
 
 	/* Invalid input */
-	if (!data || offset + bytes > CONFIG_SPI_FLASH_SIZE ||
+	if (!data || offset + bytes > CONFIG_FLASH_SIZE ||
 	    bytes > SPI_FLASH_MAX_WRITE_SIZE)
 		return EC_ERROR_INVAL;
 
@@ -414,7 +414,7 @@ int spi_flash_check_protect(unsigned int offset, unsigned int bytes)
 	int rv = EC_SUCCESS;
 
 	/* Invalid value */
-	if (sr1 == -1 || sr2 == -1 || offset + bytes > CONFIG_SPI_FLASH_SIZE)
+	if (sr1 == -1 || sr2 == -1 || offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Compute current protect range */
@@ -445,7 +445,7 @@ int spi_flash_set_protect(unsigned int offset, unsigned int bytes)
 	uint8_t sr2 = spi_flash_get_status2();
 
 	/* Invalid values */
-	if (sr1 == -1 || sr2 == -1 || offset + bytes > CONFIG_SPI_FLASH_SIZE)
+	if (sr1 == -1 || sr2 == -1 || offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Compute desired protect range */
@@ -592,7 +592,7 @@ static int command_spi_flashread(int argc, char **argv)
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Can't read past size of memory */
-	if (offset + bytes > CONFIG_SPI_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Wait for previous operation to complete */

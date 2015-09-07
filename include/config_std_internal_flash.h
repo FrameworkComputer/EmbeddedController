@@ -48,9 +48,8 @@
 #define CONFIG_FW_PSTATE_OFF	(CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
 
 /* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE	((CONFIG_FLASH_PHYSICAL_SIZE - \
+#define CONFIG_FW_IMAGE_SIZE	((CONFIG_FLASH_SIZE - \
 				  CONFIG_SHAREDLIB_SIZE) / 2)
-#define CONFIG_FLASH_SIZE	CONFIG_FLASH_PHYSICAL_SIZE
 
 /*
  * By default, there is no shared objects library.  However, if configured, the

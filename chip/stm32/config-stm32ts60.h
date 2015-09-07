@@ -4,7 +4,7 @@
  */
 
 /* Memory mapping */
-#define CONFIG_FLASH_PHYSICAL_SIZE 0x0010000 /* Actually 0x8000 */
+#define CONFIG_FLASH_SIZE 0x8000
 #define CONFIG_FLASH_BANK_SIZE  0x1000  /* TODO */
 #define CONFIG_FLASH_ERASE_SIZE 0x0400  /* TODO erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE 0x0002  /* TODO minimum write size */

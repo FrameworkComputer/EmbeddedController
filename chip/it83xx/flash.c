@@ -283,7 +283,7 @@ static enum flash_wp_status flash_check_wp(void)
 	enum flash_wp_status wp_status;
 	int all_bank_count, bank;
 
-	all_bank_count = CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE;
+	all_bank_count = CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE;
 
 	for (bank = 0; bank < all_bank_count; bank++) {
 		if (!(IT83XX_GCTRL_EWPR0PFEC(FWP_REG(bank)) & FWP_MASK(bank)))
@@ -430,7 +430,7 @@ int flash_physical_protect_now(int all)
 	if (all) {
 		/* Protect the entire flash */
 		flash_protect_banks(0,
-			CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE,
+			CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
 			FLASH_WP_EC);
 		all_protected = 1;
 	} else {
@@ -572,11 +572,11 @@ int flash_pre_init(void)
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		/* Protect the entire flash of host interface */
 		flash_protect_banks(0,
-			CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE,
+			CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
 			FLASH_WP_HOST);
 		/* Protect the entire flash of DBGR interface */
 		flash_protect_banks(0,
-			CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE,
+			CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
 			FLASH_WP_DBGR);
 		/*
 		 * Write protect is asserted.  If we want RO flash protected,

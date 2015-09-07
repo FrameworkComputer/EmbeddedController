@@ -12,7 +12,7 @@
 #include "persistence.h"
 #include "util.h"
 
-char __host_flash[CONFIG_FLASH_PHYSICAL_SIZE];
+char __host_flash[CONFIG_FLASH_SIZE];
 uint8_t __host_flash_protect[PHYSICAL_BANKS];
 
 /* Override this function to make flash erase/write operation fail */

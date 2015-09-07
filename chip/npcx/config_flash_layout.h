@@ -20,14 +20,20 @@
 #define CONFIG_MAPPED_STORAGE_BASE 0x64000000
 #undef  CONFIG_FLASH_PSTATE
 
-#define CONFIG_EC_PROTECTED_STORAGE_OFF  (CONFIG_SPI_FLASH_SIZE - 0x40000)
+/*
+ * On NPCX, the first 256KB of external SPI storage belongs to the EC,
+ * regardless of the actual size of external SPI.
+ */
+#define NPCX_EC_FLASH_SIZE	0x40000
+
+#define CONFIG_EC_PROTECTED_STORAGE_OFF  0
 #define CONFIG_EC_PROTECTED_STORAGE_SIZE 0x20000
-#define CONFIG_EC_WRITABLE_STORAGE_OFF   (CONFIG_SPI_FLASH_SIZE - 0x20000)
+#define CONFIG_EC_WRITABLE_STORAGE_OFF   0x20000
 #define CONFIG_EC_WRITABLE_STORAGE_SIZE  0x20000
 
 /* Size of one firmware image in flash */
 #ifndef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE	(CONFIG_FLASH_PHYSICAL_SIZE / 2)
+#define CONFIG_FW_IMAGE_SIZE	(96 * 1024) /* 96 KB for FW images */
 #endif
 
 /* Header support which is used by booter to copy FW from flash to code ram */
@@ -40,12 +46,11 @@
 
 /* RO firmware offset in flash */
 #define CONFIG_RO_MEM_OFF	CONFIG_RO_HDR_SIZE
-#define CONFIG_RO_SIZE		(96 * 1024)   /* 96KB for RO FW */
-#define CONFIG_FLASH_SIZE	CONFIG_FLASH_PHYSICAL_SIZE
+#define CONFIG_RO_SIZE		CONFIG_FW_IMAGE_SIZE
 
 /* RW firmware offset in flash */
 #define CONFIG_RW_MEM_OFF	CONFIG_RW_STORAGE_OFF
-#define CONFIG_RW_SIZE		(96 * 1024)   /* 96KB for RW FW */
+#define CONFIG_RW_SIZE		CONFIG_FW_IMAGE_SIZE
 
 /* The storage offset of ec.R*.flat which is used for CONFIG_CDRAM_ARCH */
 #define CONFIG_RO_STORAGE_OFF	CONFIG_RO_HDR_SIZE

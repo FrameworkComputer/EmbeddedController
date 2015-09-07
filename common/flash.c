@@ -538,7 +538,6 @@ static int command_flash_info(int argc, char **argv)
 {
 	int i;
 
-	ccprintf("Physical:%4d KB\n", CONFIG_FLASH_PHYSICAL_SIZE / 1024);
 	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE / 1024);
 	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
 		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
@@ -565,7 +564,7 @@ static int command_flash_info(int argc, char **argv)
 	ccputs("\n");
 
 	ccputs("Protected now:");
-	for (i = 0; i < CONFIG_FLASH_PHYSICAL_SIZE / CONFIG_FLASH_BANK_SIZE;
+	for (i = 0; i < CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE;
 	     i++) {
 		if (!(i & 31))
 			ccputs("\n    ");

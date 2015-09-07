@@ -74,8 +74,6 @@
 #define CONFIG_FLASH_WRITE_SIZE	0x00000001  /* minimum write size */
 
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 256   /* one page size for write */
-/* 128 KB alignment for SPI status registers protection */
-#define CONFIG_FLASH_PHYSICAL_SIZE  0x40000 /* 256 KB Flash used for EC */
 
 #include "config_flash_layout.h"
 

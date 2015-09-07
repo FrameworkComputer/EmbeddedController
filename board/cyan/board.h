@@ -46,7 +46,7 @@
 
 #define CONFIG_SPI_FLASH_PORT 1
 #define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_SIZE 524288
+#define CONFIG_FLASH_SIZE 524288
 /* TODO: Add flash protect support for the SPI part cyan actually has */
 #define CONFIG_SPI_FLASH_W25X40
 
