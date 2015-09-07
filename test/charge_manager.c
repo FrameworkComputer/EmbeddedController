@@ -415,13 +415,19 @@ static int test_override(void)
 	TEST_ASSERT(active_charge_limit == 100);
 
 	/*
-	 * Verify that an override request on a dual-role source port
-	 * causes a role swap, and we charge from the port if the swap
-	 * is successful.
+	 * Verify that a don't charge override request on a dual-role
+	 * port causes a swap to source.
 	 */
-	charge_manager_set_override(OVERRIDE_DONT_CHARGE);
+	pd_set_role(0, PD_ROLE_SINK);
 	charge_manager_update_dualrole(0, CAP_DUALROLE);
-	pd_set_role(0, PD_ROLE_SOURCE);
+	charge_manager_set_override(OVERRIDE_DONT_CHARGE);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(pd_get_role(0) == PD_ROLE_SOURCE);
+
+	/*
+	 * Verify that an override request to a dual-role source port
+	 * causes a role swap to sink.
+	 */
 	charge_manager_set_override(0);
 	wait_for_charge_manager_refresh();
 	charge.current = 200;

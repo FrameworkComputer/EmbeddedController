@@ -305,15 +305,14 @@ void charge_manager_save_log(int port)
 #endif /* CONFIG_USB_PD_LOGGING */
 
 /**
- * Perform cleanup operations on an override port, when switching to a
- * different port. This involves switching the port from sink to source,
- * if applicable.
+ * Attempt to switch to power source on port if applicable.
  */
-static void charge_manager_cleanup_override_port(int port)
+static void charge_manager_switch_to_source(int port)
 {
 	if (port < 0 || port >= CONFIG_USB_PD_PORT_COUNT)
 		return;
 
+	/* If connected to dual-role device, then ask for a swap */
 	if (dualrole_capability[port] == CAP_DUALROLE &&
 	    pd_get_role(port) == PD_ROLE_SINK)
 		pd_request_power_swap(port);
@@ -472,11 +471,8 @@ static void charge_manager_refresh(void)
 	 * Clear override if it wasn't selected as the 'best' port -- it means
 	 * that no charge is available on the port, or the port was rejected.
 	 */
-	if (override_port >= 0 &&
-	    override_port != new_port) {
-		charge_manager_cleanup_override_port(override_port);
+	if (override_port >= 0 && override_port != new_port)
 		override_port = OVERRIDE_OFF;
-	}
 
 	if (new_supplier == CHARGE_SUPPLIER_NONE) {
 		new_charge_current = 0;
@@ -532,9 +528,13 @@ static void charge_manager_refresh(void)
 	     new_charge_voltage != charge_voltage))
 		updated_new_port = new_port;
 
-	/* Signal new power request on old port if we're switching away. */
-	if (charge_port != new_port && charge_port != CHARGE_PORT_NONE)
+	/* If charge port changed, cleanup old port */
+	if (charge_port != new_port && charge_port != CHARGE_PORT_NONE) {
+		/* Check if need power swap */
+		charge_manager_switch_to_source(charge_port);
+		/* Signal new power request on old port */
 		updated_old_port = charge_port;
+	}
 
 	/* Update globals to reflect current state. */
 	charge_current = new_charge_current;
@@ -637,11 +637,8 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 	    && dualrole_capability[port] == CAP_DEDICATED
 #endif
 	    ) {
-		charge_manager_cleanup_override_port(override_port);
 		override_port = OVERRIDE_OFF;
 		if (delayed_override_port != OVERRIDE_OFF) {
-			charge_manager_cleanup_override_port(
-				delayed_override_port);
 			delayed_override_port = OVERRIDE_OFF;
 			hook_call_deferred(
 				charge_override_timeout,
@@ -752,18 +749,15 @@ int charge_manager_set_override(int port)
 	/* Supersede any pending delayed overrides. */
 	if (delayed_override_port != OVERRIDE_OFF) {
 		if (delayed_override_port != port)
-			charge_manager_cleanup_override_port(
-				delayed_override_port);
+			charge_manager_switch_to_source(delayed_override_port);
 
 		delayed_override_port = OVERRIDE_OFF;
-		hook_call_deferred(
-			charge_override_timeout, -1);
+		hook_call_deferred(charge_override_timeout, -1);
 	}
 
 	/* Set the override port if it's a sink. */
 	if (port < 0 || pd_get_role(port) == PD_ROLE_SINK) {
 		if (override_port != port) {
-			charge_manager_cleanup_override_port(override_port);
 			override_port = port;
 			if (charge_manager_is_seeded())
 				hook_call_deferred(charge_manager_refresh, 0);
