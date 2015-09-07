@@ -259,11 +259,13 @@ void lfw_main()
 	case SYSTEM_IMAGE_RW:
 		uart_puts("lfw-RW load\n");
 		init_addr = CONFIG_RW_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE;
-		spi_image_load(CONFIG_RW_IMAGE_FLASHADDR);
+		spi_image_load(CONFIG_EC_WRITABLE_STORAGE_OFF +
+			       CONFIG_RW_STORAGE_OFF);
 		break;
 	case SYSTEM_IMAGE_RO:
 		uart_puts("lfw-RO load\n");
-		spi_image_load(CONFIG_RO_IMAGE_FLASHADDR);
+		spi_image_load(CONFIG_EC_PROTECTED_STORAGE_OFF +
+			       CONFIG_RO_STORAGE_OFF);
 		/* fall through */
 	default:
 		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) =

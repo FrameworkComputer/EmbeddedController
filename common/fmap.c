@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "common.h"
+#include "util.h"
 #include "version.h"
 
 /* FMAP structs. See http://code.google.com/p/flashmap/wiki/FmapSpec */
@@ -20,9 +21,24 @@
  * For address containing CONFIG_PROGRAM_MEMORY_BASE (symbols in *.RO.lds.S and
  * variable), this computes the offset to the start of the image on flash.
  */
-
 #define RELATIVE_RO(addr) ((addr) - CONFIG_PROGRAM_MEMORY_BASE - \
 			   CONFIG_RO_MEM_OFF)
+
+/*
+ * All internal EC code assumes that offsets are provided relative to
+ * physical address zero of storage. In some cases, the region of storage
+ * belonging to the EC is not physical address zero - a non-zero fmap_base
+ * indicates so. Since fmap_base is not yet handled correctly by external
+ * code, we must perform the adjustment in our host command handlers -
+ * adjust all offsets so they are relative to the beginning of the storage
+ * region belonging to the EC. TODO(crbug.com/529365): Handle fmap_base
+ * correctly in flashrom, dump_fmap, etc. and remove EC_FLASH_REGION_START.
+ */
+#if CONFIG_EC_WRITABLE_STORAGE_OFF < CONFIG_EC_PROTECTED_STORAGE_OFF
+#define FMAP_REGION_START CONFIG_EC_WRITABLE_STORAGE_OFF
+#else
+#define FMAP_REGION_START CONFIG_EC_PROTECTED_STORAGE_OFF
+#endif
 
 struct fmap_header {
 	char        fmap_signature[FMAP_SIGNATURE_SIZE];
@@ -71,14 +87,16 @@ const struct _ec_fmap {
 			 * volatile data (ex, calibration results).
 			 */
 			.area_name = "EC_RO",
-			.area_offset = CONFIG_RO_STORAGE_OFF,
+			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF,
 			.area_size = CONFIG_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 		{
 			/* (Optional) RO firmware code. */
 			.area_name = "FR_MAIN",
-			.area_offset = CONFIG_RO_STORAGE_OFF,
+			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF,
 			.area_size = CONFIG_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -88,7 +106,8 @@ const struct _ec_fmap {
 			 * ASCII, and padded with \0.
 			 */
 			.area_name = "RO_FRID",
-			.area_offset = CONFIG_RO_STORAGE_OFF +
+			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF +
 				RELATIVE_RO((uint32_t)__version_struct_offset) +
 				offsetof(struct version_struct,  version),
 			.area_size = sizeof(version_data.version),
@@ -98,7 +117,8 @@ const struct _ec_fmap {
 		/* Other RO stuff: FMAP, WP, KEYS, etc. */
 		{
 			.area_name = "FMAP",
-			.area_offset = CONFIG_RO_STORAGE_OFF +
+			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF +
 				RELATIVE_RO((uint32_t)&ec_fmap),
 			.area_size = sizeof(ec_fmap),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
@@ -110,8 +130,9 @@ const struct _ec_fmap {
 			 * EC_RO and aligned to hardware specification.
 			 */
 			.area_name = "WP_RO",
-			.area_offset = CONFIG_WP_OFF,
-			.area_size = CONFIG_WP_SIZE,
+			.area_offset = CONFIG_WP_STORAGE_OFF -
+				       FMAP_REGION_START,
+			.area_size = CONFIG_WP_STORAGE_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
@@ -119,7 +140,8 @@ const struct _ec_fmap {
 		{
 			 /* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW",
-			.area_offset = CONFIG_RW_STORAGE_OFF,
+			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF,
 			.area_size = CONFIG_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -132,7 +154,8 @@ const struct _ec_fmap {
 			 * accomodate image asymmetry.
 			 */
 			.area_name = "RW_FWID",
-			.area_offset = CONFIG_RW_STORAGE_OFF +
+			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
 				RELATIVE_RO((uint32_t)__version_struct_offset) +
 				offsetof(struct version_struct,  version),
 			.area_size = sizeof(version_data.version),

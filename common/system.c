@@ -351,8 +351,9 @@ int system_get_image_used(enum system_image_copy_t copy)
 	 * the end of the image.
 	 */
 #ifndef CONFIG_MAPPED_STORAGE
-	image_offset = (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
-			CONFIG_RO_STORAGE_OFF;
+	image_offset = (copy == SYSTEM_IMAGE_RW) ?
+			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF :
+			CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 	image = buf;
 
 	do {
@@ -382,11 +383,13 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
-		r_offset = CONFIG_RO_STORAGE_OFF;
+		r_offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
+			   CONFIG_RO_STORAGE_OFF;
 		r_size = CONFIG_RO_SIZE;
 		break;
 	case SYSTEM_IMAGE_RW:
-		r_offset = CONFIG_RW_STORAGE_OFF;
+		r_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
+			   CONFIG_RW_STORAGE_OFF;
 		r_size = CONFIG_RW_SIZE;
 		break;
 	default:
@@ -564,10 +567,12 @@ const char *system_get_version(enum system_image_copy_t copy)
 	 * Read the version information from the proper location
 	 * on storage.
 	 */
-	addr += (copy == SYSTEM_IMAGE_RW) ? CONFIG_RW_STORAGE_OFF :
-					    CONFIG_RO_STORAGE_OFF;
+	addr += (copy == SYSTEM_IMAGE_RW) ?
+		CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF :
+		CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 
 #ifdef CONFIG_MAPPED_STORAGE
+	addr += CONFIG_MAPPED_STORAGE_BASE;
 	v = (const struct version_struct *)addr;
 #else
 

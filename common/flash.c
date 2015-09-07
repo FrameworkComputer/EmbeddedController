@@ -722,11 +722,24 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 /*****************************************************************************/
 /* Host commands */
 
+/*
+ * All internal EC code assumes that offsets are provided relative to
+ * physical address zero of storage. In some cases, the region of storage
+ * belonging to the EC is not physical address zero - a non-zero fmap_base
+ * indicates so. Since fmap_base is not yet handled correctly by external
+ * code, we must perform the adjustment in our host command handlers -
+ * adjust all offsets so they are relative to the beginning of the storage
+ * region belonging to the EC. TODO(crbug.com/529365): Handle fmap_base
+ * correctly in flashrom, dump_fmap, etc. and remove EC_FLASH_REGION_START.
+ */
+#define EC_FLASH_REGION_START MIN(CONFIG_EC_PROTECTED_STORAGE_OFF, \
+				  CONFIG_EC_WRITABLE_STORAGE_OFF)
+
 static int flash_command_get_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_flash_info_1 *r = args->response;
 
-	r->flash_size = CONFIG_FLASH_SIZE;
+	r->flash_size = CONFIG_FLASH_SIZE - EC_FLASH_REGION_START;
 	r->write_block_size = CONFIG_FLASH_WRITE_SIZE;
 	r->erase_block_size = CONFIG_FLASH_ERASE_SIZE;
 	r->protect_block_size = CONFIG_FLASH_BANK_SIZE;
@@ -772,11 +785,12 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
 static int flash_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_read *p = args->params;
+	uint32_t offset = p->offset + EC_FLASH_REGION_START;
 
 	if (p->size > args->response_max)
 		return EC_RES_OVERFLOW;
 
-	if (flash_read(p->offset, p->size, args->response))
+	if (flash_read(offset, p->size, args->response))
 		return EC_RES_ERROR;
 
 	args->response_size = p->size;
@@ -796,6 +810,7 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_READ,
 static int flash_command_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_write *p = args->params;
+	uint32_t offset = p->offset + EC_FLASH_REGION_START;
 
 	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
@@ -803,10 +818,10 @@ static int flash_command_write(struct host_cmd_handler_args *args)
 	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
 
-	if (system_unsafe_to_overwrite(p->offset, p->size))
+	if (system_unsafe_to_overwrite(offset, p->size))
 		return EC_RES_ACCESS_DENIED;
 
-	if (flash_write(p->offset, p->size, (const uint8_t *)(p + 1)))
+	if (flash_write(offset, p->size, (const uint8_t *)(p + 1)))
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
@@ -818,11 +833,12 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 static int flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;
+	uint32_t offset = p->offset + EC_FLASH_REGION_START;
 
 	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
 
-	if (system_unsafe_to_overwrite(p->offset, p->size))
+	if (system_unsafe_to_overwrite(offset, p->size))
 		return EC_RES_ACCESS_DENIED;
 
 	/* Indicate that we might be a while */
@@ -830,7 +846,7 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 	args->result = EC_RES_IN_PROGRESS;
 	host_send_response(args);
 #endif
-	if (flash_erase(p->offset, p->size))
+	if (flash_erase(offset, p->size))
 		return EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
@@ -890,16 +906,21 @@ static int flash_command_region_info(struct host_cmd_handler_args *args)
 
 	switch (p->region) {
 	case EC_FLASH_REGION_RO:
-		r->offset = CONFIG_RO_STORAGE_OFF;
+		r->offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
+			    CONFIG_RO_STORAGE_OFF -
+			    EC_FLASH_REGION_START;
 		r->size = CONFIG_RO_SIZE;
 		break;
 	case EC_FLASH_REGION_RW:
-		r->offset = CONFIG_RW_STORAGE_OFF;
+		r->offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
+			    CONFIG_RW_STORAGE_OFF -
+			    EC_FLASH_REGION_START;
 		r->size = CONFIG_RW_SIZE;
 		break;
 	case EC_FLASH_REGION_WP_RO:
-		r->offset = CONFIG_WP_OFF;
-		r->size = CONFIG_WP_SIZE;
+		r->offset = CONFIG_WP_STORAGE_OFF -
+			    EC_FLASH_REGION_START;
+		r->size = CONFIG_WP_STORAGE_SIZE;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;

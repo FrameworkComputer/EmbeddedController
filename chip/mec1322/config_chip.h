@@ -94,10 +94,6 @@
 /* One page size for write */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE	256
 
-/* Independent of the Flash Physical size of the board
-256KB Max size used. Located at the top most segment */
-#define CONFIG_FLASH_PHYSICAL_SIZE	0x00040000
-
 /* Program memory base address */
 #define CONFIG_PROGRAM_MEMORY_BASE	0x00100000
 

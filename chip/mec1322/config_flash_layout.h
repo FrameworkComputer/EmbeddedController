@@ -20,13 +20,19 @@
 #undef  CONFIG_FLASH_PSTATE
 #define CONFIG_SPI_FLASH
 
-/* Size of SPI memory used by EC (lfw + RSA Keys + RO + RW + boot header) */
-#define CONFIG_FLASH_BASE_SPI		(CONFIG_SPI_FLASH_SIZE - (0x40000))
+/* EC region of SPI resides at end of ROM, protected region follows writable */
+#define CONFIG_EC_PROTECTED_STORAGE_OFF  (CONFIG_SPI_FLASH_SIZE - 0x20000)
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE 0x20000
+#define CONFIG_EC_WRITABLE_STORAGE_OFF   (CONFIG_SPI_FLASH_SIZE - 0x40000)
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE  0x20000
+
 
 /* Size of one firmware image in flash */
 #ifndef CONFIG_FW_IMAGE_SIZE
 #define CONFIG_FW_IMAGE_SIZE		(96 * 1024)
 #endif
+/* redundant..*/
+#define CONFIG_FLASH_PHYSICAL_SIZE	CONFIG_SPI_FLASH_SIZE
 #define CONFIG_FLASH_SIZE		CONFIG_FLASH_PHYSICAL_SIZE
 
 /* Loader resides at the beginning of program memory */
@@ -34,12 +40,12 @@
 #define CONFIG_LOADER_SIZE		0x1000
 
 /* Write protect Loader and RO Image */
-#define CONFIG_WP_OFF			(CONFIG_FLASH_PHYSICAL_SIZE >> 1)
+#define CONFIG_WP_STORAGE_OFF		CONFIG_EC_PROTECTED_STORAGE_OFF
 /*
  * Write protect 128k section of 256k physical flash which contains loader
  * and RO Images.
  */
-#define CONFIG_WP_SIZE			(CONFIG_FLASH_PHYSICAL_SIZE >> 1)
+#define CONFIG_WP_STORAGE_SIZE		CONFIG_EC_PROTECTED_STORAGE_SIZE
 
 /*
  * RO / RW images follow the loader in program memory. Either RO or RW
@@ -52,7 +58,7 @@
 #define CONFIG_RW_SIZE			CONFIG_RO_SIZE
 
 /* WP region consists of second half of SPI, and begins with the boot header */
-#define CONFIG_BOOT_HEADER_STORAGE_OFF	CONFIG_WP_OFF
+#define CONFIG_BOOT_HEADER_STORAGE_OFF	0
 #define CONFIG_BOOT_HEADER_STORAGE_SIZE	0x240
 
 /* Loader / lfw image immediately follows the boot header on SPI */
@@ -65,10 +71,5 @@
 
 /* RW image starts at the beginning of SPI */
 #define CONFIG_RW_STORAGE_OFF		0
-
-#define CONFIG_RO_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI + \
-					CONFIG_RO_STORAGE_OFF)
-#define CONFIG_RW_IMAGE_FLASHADDR	(CONFIG_FLASH_BASE_SPI + \
-					CONFIG_RW_STORAGE_OFF)
 
 #endif /* __CROS_EC_CONFIG_FLASH_LAYOUT_H */

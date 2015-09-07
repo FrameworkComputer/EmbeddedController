@@ -38,8 +38,6 @@ int flash_physical_read(int offset, int size, char *data)
 {
 	int ret, i, read_size;
 
-	offset += CONFIG_FLASH_BASE_SPI;
-
 	for (i = 0; i < size; i += read_size) {
 		read_size = MIN((size - i), SPI_FLASH_MAX_READ_SIZE);
 		ret = spi_flash_read((uint8_t *)(data + i),
@@ -69,8 +67,6 @@ int flash_physical_write(int offset, int size, const char *data)
 
 	if (entire_flash_locked)
 		return EC_ERROR_ACCESS_DENIED;
-
-	offset += CONFIG_FLASH_BASE_SPI;
 
 	/* Fail if offset, size, and data aren't at least word-aligned */
 	if ((offset | size | (uint32_t)(uintptr_t)data) & 3)
@@ -102,7 +98,6 @@ int flash_physical_erase(int offset, int size)
 	if (entire_flash_locked)
 		return EC_ERROR_ACCESS_DENIED;
 
-	offset += CONFIG_FLASH_BASE_SPI;
 	ret = spi_flash_erase(offset, size);
 	return ret;
 }
@@ -115,8 +110,7 @@ int flash_physical_erase(int offset, int size)
  */
 int flash_physical_get_protect(int bank)
 {
-	return spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
-			bank * CONFIG_FLASH_BANK_SIZE,
+	return spi_flash_check_protect(bank * CONFIG_FLASH_BANK_SIZE,
 			CONFIG_FLASH_BANK_SIZE);
 }
 
@@ -153,8 +147,8 @@ uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
-	if (spi_flash_check_protect(CONFIG_FLASH_BASE_SPI +
-				    CONFIG_RO_STORAGE_OFF, CONFIG_RO_SIZE)) {
+	if (spi_flash_check_protect(CONFIG_WP_STORAGE_OFF,
+				    CONFIG_WP_STORAGE_SIZE)) {
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
 	}
 
@@ -225,8 +219,8 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 		entire_flash_locked = 1;
 		/* Fallthrough */
 	case FLASH_WP_RO:
-		offset = CONFIG_FLASH_BASE_SPI + CONFIG_WP_OFF;
-		size = CONFIG_WP_SIZE;
+		offset = CONFIG_WP_STORAGE_OFF;
+		size = CONFIG_WP_STORAGE_SIZE;
 		flashwp = SPI_WP_HARDWARE;
 		break;
 	}
