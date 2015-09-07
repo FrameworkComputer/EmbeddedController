@@ -140,7 +140,7 @@ static int charge_manager_is_seeded(void)
 	return 1;
 }
 
-#ifndef TEST_CHARGE_MANAGER
+#ifndef TEST_BUILD
 /**
  * Fills passed power_info structure with current info about the passed port.
  */
@@ -273,7 +273,7 @@ static void charge_manager_fill_power_info(int port,
 			r->meas.voltage_now = adc_read_channel(ADC_VBUS);
 	}
 }
-#endif /* TEST_CHARGE_MANAGER */
+#endif /* TEST_BUILD */
 
 #ifdef CONFIG_USB_PD_LOGGING
 /**
@@ -384,6 +384,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				    override_port != j)
 					continue;
 
+#ifndef CONFIG_CHARGE_MANAGER_DRP_CHARGING
 				/*
 				 * Don't charge from a dual-role port unless
 				 * it is our override port.
@@ -391,6 +392,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				if (dualrole_capability[j] != CAP_DEDICATED &&
 				    override_port != j)
 					continue;
+#endif
 
 				candidate_port_power =
 					POWER(available_charge[i][j]);
@@ -609,7 +611,9 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		 * Ignore all except for transition to non-dualrole,
 		 * which may occur some time after we see a charge
 		 */
+#ifndef CONFIG_CHARGE_MANAGER_DRP_CHARGING
 		if (dualrole_capability[port] != CAP_DEDICATED)
+#endif
 			return;
 		/* Clear override only if a charge is present on the port */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
@@ -626,9 +630,13 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		break;
 	}
 
-	/* Remove override when a dedicated charger is plugged */
-	if (clear_override && override_port != port &&
-	    dualrole_capability[port] == CAP_DEDICATED) {
+	/* Remove override when a charger is plugged */
+	if (clear_override && override_port != port
+#ifndef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	    /* only remove override when it's a dedicated charger */
+	    && dualrole_capability[port] == CAP_DEDICATED
+#endif
+	    ) {
 		charge_manager_cleanup_override_port(override_port);
 		override_port = OVERRIDE_OFF;
 		if (delayed_override_port != OVERRIDE_OFF) {
@@ -797,7 +805,7 @@ int charge_manager_get_active_charge_port(void)
 	return charge_port;
 }
 
-#ifndef TEST_CHARGE_MANAGER
+#ifndef TEST_BUILD
 static int hc_pd_power_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_power_info *p = args->params;
@@ -816,7 +824,7 @@ static int hc_pd_power_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_POWER_INFO,
 		     hc_pd_power_info,
 		     EC_VER_MASK(0));
-#endif /* TEST_CHARGE_MANAGER */
+#endif /* TEST_BUILD */
 
 static int hc_charge_port_override(struct host_cmd_handler_args *args)
 {

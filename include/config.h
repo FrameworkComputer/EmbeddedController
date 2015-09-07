@@ -262,6 +262,9 @@
 /* Compile charge manager */
 #undef CONFIG_CHARGE_MANAGER
 
+/* Allow charge manager to default to charging from dual-role partners */
+#undef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+
 /* Handle the external power limit host command in charge manager */
 #undef CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
 

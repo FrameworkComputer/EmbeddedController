@@ -463,17 +463,21 @@ static int test_dual_role(void)
 	/* Initialize table to no charge. */
 	initialize_charge_table(0, 5000, 1000);
 
-	/*
-	 * Mark P0 as dual-role and set a charge. Verify that we don't charge
-	 * from the port.
-	 */
+	/* Mark P0 as dual-role and set a charge. */
 	charge_manager_update_dualrole(0, CAP_DUALROLE);
 	charge.current = 500;
 	charge.voltage = 5000;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST2, 0, &charge);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	/* Verify we do charge from dual-role port */
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+#else
+	/* Verify we don't charge from dual-role port */
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
 	TEST_ASSERT(active_charge_limit == 0);
+#endif
 
 	/* Mark P0 as the override port, verify that we now charge. */
 	charge_manager_set_override(0);
@@ -482,12 +486,17 @@ static int test_dual_role(void)
 	TEST_ASSERT(active_charge_limit == 500);
 	TEST_ASSERT(pd_get_role(0) == PD_ROLE_SINK);
 
-	/* Remove override and verify we go back to not charging */
+	/* Remove override and verify we go back to previous state */
 	charge_manager_set_override(OVERRIDE_OFF);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+#else
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
 	TEST_ASSERT(active_charge_limit == 0);
 	TEST_ASSERT(pd_get_role(0) == PD_ROLE_SOURCE);
+#endif
 
 	/* Mark P0 as the override port, verify that we again charge. */
 	charge_manager_set_override(0);
@@ -530,9 +539,14 @@ static int test_dual_role(void)
 	charge.current = 400;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST6, 1, &charge);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 600);
+#else
 	TEST_ASSERT(active_charge_port == 1);
 	TEST_ASSERT(active_charge_limit == 400);
 	TEST_ASSERT(pd_get_role(0) == PD_ROLE_SOURCE);
+#endif
 
 	/*
 	 * Verify the port is handled normally if the dual-role source is
@@ -548,8 +562,8 @@ static int test_dual_role(void)
 	TEST_ASSERT(active_charge_limit == 500);
 
 	/*
-	 * Verify that we charge from the dedicated port if a dual-role
-	 * source is also attached.
+	 * Test one port connected to dedicated charger and one connected
+	 * to dual-role device.
 	 */
 	charge_manager_update_dualrole(0, CAP_DUALROLE);
 	charge.current = 0;
@@ -559,9 +573,19 @@ static int test_dual_role(void)
 	charge.current = 200;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST6, 1, &charge);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	/* Verify we charge from port with higher priority */
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+#else
+	/*
+	 * Verify that we charge from the dedicated port if a dual-role
+	 * source is also attached.
+	 */
 	TEST_ASSERT(active_charge_port == 1);
 	TEST_ASSERT(active_charge_limit == 200);
 	TEST_ASSERT(pd_get_role(0) == PD_ROLE_SOURCE);
+#endif
 
 	return EC_SUCCESS;
 }
@@ -605,19 +629,23 @@ static int test_unknown_dualrole_capability(void)
 	struct charge_port_info charge;
 
 	/* Initialize table to no charge. */
-	initialize_charge_table(0, 5000, 1000);
+	initialize_charge_table(0, 5000, 2000);
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
 
-	/*
-	 * Set a charge on P0 with unknown dualrole capability,
-	 * verify that we don't charge from the port.
-	 */
+	/* Set a charge on P0 with unknown dualrole capability, */
 	charge.current = 500;
 	charge.voltage = 5000;
 	charge_manager_update_dualrole(0, CAP_UNKNOWN);
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST2, 0, &charge);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	/* Verify we do charge from that port */
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 500);
+#else
+	/* Verify that we don't charge from the port. */
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+#endif
 
 	/* Toggle to dedicated and verify port becomes active. */
 	charge_manager_update_dualrole(0, CAP_DEDICATED);
@@ -629,14 +657,24 @@ static int test_unknown_dualrole_capability(void)
 	charge_manager_update_dualrole(1, CAP_DUALROLE);
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST2, 1, &charge);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 1000);
+#else
 	TEST_ASSERT(active_charge_port == 0);
+#endif
 
 	/* Remove charger on port 0 */
 	charge.current = 0;
 	charge_manager_update_dualrole(0, CAP_UNKNOWN);
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST2, 0, &charge);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 1000);
+#else
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
+#endif
 
 	/* Set override to charge on port 1 */
 	charge_manager_set_override(1);
@@ -651,26 +689,43 @@ static int test_unknown_dualrole_capability(void)
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port == 1);
 
-	/*
-	 * Insert UNKNOWN capability charger on port 0, verify that override
-	 * is still kept.
-	 */
+	/* Insert UNKNOWN capability charger on port 0 */
 	charge_manager_update_dualrole(0, CAP_UNKNOWN);
 	charge.current = 2000;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TEST2, 0, &charge);
 	wait_for_charge_manager_refresh();
 	wait_for_charge_manager_refresh();
+	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	/* Verify override is removed */
+	TEST_ASSERT(active_charge_port == 0);
+	TEST_ASSERT(active_charge_limit == 2000);
+#else
+	/* Verify override is still kept */
 	TEST_ASSERT(active_charge_port == 1);
+#endif
 
-	/* Toggle to dualrole, verify that override is still kept. */
+	/* Toggle to dualrole */
 	charge_manager_update_dualrole(0, CAP_DUALROLE);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	/* Verify no change */
+	TEST_ASSERT(active_charge_port == 0);
+#else
+	/* Verify override is still kept */
 	TEST_ASSERT(active_charge_port == 1);
+#endif
 
-	/* Toggle to dedicated, verify that override is removed. */
+	/* Toggle to dedicated */
 	charge_manager_update_dualrole(0, CAP_UNKNOWN);
 	wait_for_charge_manager_refresh();
+#ifdef CONFIG_CHARGE_MANAGER_DRP_CHARGING
+	/* Verify no change */
+	TEST_ASSERT(active_charge_port == 0);
+#else
+	/* Verify override is still kept */
 	TEST_ASSERT(active_charge_port == 1);
+#endif
 	charge_manager_update_dualrole(0, CAP_DEDICATED);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port == 0);

@@ -37,13 +37,14 @@ test-list-host+=sbs_charging host_command
 test-list-host+=bklight_lid bklight_passthru interrupt timer_dos button
 test-list-host+=math_util sbs_charging_v2 battery_get_params_smart
 test-list-host+=lightbar inductive_charging usb_pd fan charge_manager
-test-list-host+=charge_ramp
+test-list-host+=charge_manager_drp_charging charge_ramp
 
 battery_get_params_smart-y=battery_get_params_smart.o
 bklight_lid-y=bklight_lid.o
 bklight_passthru-y=bklight_passthru.o
 button-y=button.o
 charge_manager-y=charge_manager.o
+charge_manager_drp_charging-y=charge_manager.o
 charge_ramp-y+=charge_ramp.o
 console_edit-y=console_edit.o
 extpwr_gpio-y=extpwr_gpio.o
