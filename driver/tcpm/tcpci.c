@@ -55,31 +55,6 @@ static int init_power_status_mask(int port)
 }
 #endif
 
-int tcpm_init(int port)
-{
-	int rv, err = 0;
-
-	while (1) {
-		rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				TCPC_REG_ERROR_STATUS, &err);
-		/*
-		 * If i2c succeeds and the uninitialized bit is clear, then
-		 * initalization is complete, clear all alert bits and write
-		 * the initial alert mask.
-		 */
-		if (rv == EC_SUCCESS && !(err & TCPC_REG_ERROR_STATUS_UNINIT)) {
-			i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				    TCPC_REG_ALERT, 0xff);
-#ifdef CONFIG_USB_PD_TCPM_VBUS
-			/* Initialize power_status_mask */
-			init_power_status_mask(port);
-#endif
-			return init_alert_mask(port);
-		}
-		msleep(10);
-	}
-}
-
 int tcpm_get_cc(int port, int *cc1, int *cc2)
 {
 	int status;
@@ -292,5 +267,38 @@ void tcpc_alert(int port)
 		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
 					   TCPC_TX_COMPLETE_SUCCESS :
 					   TCPC_TX_COMPLETE_FAILED);
+	}
+}
+
+int tcpm_init(int port)
+{
+	int rv, err = 0;
+#ifdef CONFIG_USB_PD_TCPM_VBUS
+	int power_status;
+#endif
+
+	while (1) {
+		rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+				TCPC_REG_ERROR_STATUS, &err);
+		/*
+		 * If i2c succeeds and the uninitialized bit is clear, then
+		 * initalization is complete, clear all alert bits and write
+		 * the initial alert mask.
+		 */
+		if (rv == EC_SUCCESS && !(err & TCPC_REG_ERROR_STATUS_UNINIT)) {
+			i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+				    TCPC_REG_ALERT, 0xff);
+#ifdef CONFIG_USB_PD_TCPM_VBUS
+			/* Initialize power_status_mask */
+			init_power_status_mask(port);
+			/* Read Power Status register */
+			tcpm_get_power_status(port, &power_status);
+			/* Update VBUS status */
+			tcpc_vbus[port] = power_status &
+				TCPC_REG_POWER_VBUS_PRES ? 1 : 0;
+#endif
+			return init_alert_mask(port);
+		}
+		msleep(10);
 	}
 }

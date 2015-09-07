@@ -744,25 +744,6 @@ static void alert(int port, int mask)
 		tcpc_alert(port);
 }
 
-void tcpc_init(int port)
-{
-	int i;
-
-	/* Initialize physical layer */
-	pd_hw_init(port, PD_ROLE_DEFAULT);
-	pd[port].cc_pull = PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
-							       TYPEC_CC_RD;
-
-	/* make sure PD monitoring is disabled initially */
-	pd[port].rx_enabled = 0;
-
-	/* make initial readings of CC voltages */
-	for (i = 0; i < 2; i++) {
-		pd[port].cc_status[i] = cc_voltage_to_status(port,
-						pd_adc_read(port, i));
-	}
-}
-
 int tcpc_run(int port, int evt)
 {
 	int cc, i, res;
@@ -1037,6 +1018,34 @@ int tcpc_get_message(int port, uint32_t *payload, int *head)
 	return EC_SUCCESS;
 }
 
+void tcpc_init(int port)
+{
+	int i;
+
+	/* Initialize physical layer */
+	pd_hw_init(port, PD_ROLE_DEFAULT);
+	pd[port].cc_pull = PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
+							       TYPEC_CC_RD;
+
+	/* make sure PD monitoring is disabled initially */
+	pd[port].rx_enabled = 0;
+
+	/* make initial readings of CC voltages */
+	for (i = 0; i < 2; i++) {
+		pd[port].cc_status[i] = cc_voltage_to_status(port,
+						pd_adc_read(port, i));
+	}
+
+#ifdef CONFIG_USB_PD_TCPM_VBUS
+#if CONFIG_USB_PD_PORT_COUNT >= 2
+	tcpc_set_power_status(port, !gpio_get_level(port ?
+			      GPIO_USB_C1_VBUS_WAKE_L :
+			      GPIO_USB_C0_VBUS_WAKE_L));
+#else
+	tcpc_set_power_status(port, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+#endif /* CONFIG_USB_PD_PORT_COUNT >= 2 */
+#endif /* CONFIG_USB_PD_TCPM_VBUS */
+}
 
 #ifdef CONFIG_USB_PD_TCPM_VBUS
 void pd_vbus_evt_p0(enum gpio_signal signal)
