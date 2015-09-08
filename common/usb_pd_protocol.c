@@ -1041,7 +1041,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 
 	/* set VDM header with VID & CMD */
 	pd[port].vdo_data[0] = VDO(vid, ((vid & USB_SID_PD) == USB_SID_PD) ?
-				   1 : (PD_VDO_CMD(cmd) < CMD_ATTENTION), cmd);
+				   1 : (PD_VDO_CMD(cmd) <= CMD_ATTENTION), cmd);
 	queue_vdm(port, pd[port].vdo_data, data, count);
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
