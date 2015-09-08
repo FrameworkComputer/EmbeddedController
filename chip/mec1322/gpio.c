@@ -131,12 +131,13 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		/* Use as GPIO */
 		val &= ~((1 << 12) | (1 << 13));
 
-		MEC1322_GPIO_CTL(port, i) = val;
-
+		/* Set up level */
 		if (flags & GPIO_HIGH)
-			MEC1322_GPIO_CTL(port, i) |= (1 << 16);
+			val |= (1 << 16);
 		else if (flags & GPIO_LOW)
-			MEC1322_GPIO_CTL(port, i) &= ~(1 << 16);
+			val &= ~(1 << 16);
+
+		MEC1322_GPIO_CTL(port, i) = val;
 	}
 }
 

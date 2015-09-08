@@ -323,12 +323,7 @@ static void board_pmic_init(void)
 	if (i2c_write8(I2C_PORT_PMIC, TPS650830_I2C_ADDR, 0xE5, 0x5))
 		CPRINTS("PMIC write failed");
 }
-/*
- * TODO (crosbug.com/p/44821): Do the PMIC initialization soon after the I2C
- * initialization is done.
- * DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_INIT_I2C + 1);
- */
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_pmic_init, HOOK_PRIO_DEFAULT + 1);
+DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Initialize board. */
 static void board_init(void)
