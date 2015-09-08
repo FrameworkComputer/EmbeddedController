@@ -1788,6 +1788,7 @@ struct ec_response_motion_sense_fifo_data {
 enum motionsensor_activity {
 	MOTIONSENSE_ACTIVITY_RESERVED = 0,
 	MOTIONSENSE_ACTIVITY_SIG_MOTION = 1,
+	MOTIONSENSE_ACTIVITY_DOUBLE_TAP = 2,
 };
 
 struct ec_motion_sense_activity {

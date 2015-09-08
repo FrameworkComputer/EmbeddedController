@@ -3271,6 +3271,9 @@ static void motionsense_display_activities(uint32_t activities)
 	if (activities & (1 << MOTIONSENSE_ACTIVITY_SIG_MOTION))
 		printf("%d: Significant motion\n",
 		       MOTIONSENSE_ACTIVITY_SIG_MOTION);
+	if (activities & (1 << MOTIONSENSE_ACTIVITY_DOUBLE_TAP))
+		printf("%d: Double tap\n",
+		       MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 }
 
 static int cmd_motionsense(int argc, char **argv)
