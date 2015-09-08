@@ -164,7 +164,7 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 		 /* Used for double tap */
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 119000 | ROUND_UP_FLAG,
+			 .odr = 200000 | ROUND_UP_FLAG,
 			 .ec_rate = TEST_LID_EC_RATE * 100,
 		 },
 		 [SENSOR_CONFIG_EC_S5] = {
@@ -199,14 +199,14 @@ static int test_lid_angle(void)
 	/* Go to S3 state */
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S5);
 	TEST_ASSERT(accel_get_data_rate(lid) == 0);
-	TEST_ASSERT(accel_interval == 0);
+	TEST_ASSERT(motion_interval == 0);
 
 	/* Go to S0 state */
 	hook_notify(HOOK_CHIPSET_RESUME);
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
 	TEST_ASSERT(accel_get_data_rate(lid) == (119000 | ROUND_UP_FLAG));
-	TEST_ASSERT(accel_interval == TEST_LID_EC_RATE * MSEC);
+	TEST_ASSERT(motion_interval == TEST_LID_EC_RATE * MSEC);
 
 	/*
 	 * Set the base accelerometer as if it were sitting flat on a desk

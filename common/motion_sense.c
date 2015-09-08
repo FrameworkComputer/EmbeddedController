@@ -34,7 +34,10 @@
 /*
  * Sampling interval for measuring acceleration and calculating lid angle.
  */
-unsigned accel_interval;
+unsigned int motion_interval;
+
+/* Delay between FIFO interruption. */
+static unsigned int motion_int_interval;
 
 #ifdef CONFIG_CMD_ACCEL_INFO
 static int accel_disp;
@@ -45,6 +48,8 @@ static int accel_disp;
 #if defined(CONFIG_LPC) || defined(TEST_MOTION_LID)
 #define UPDATE_HOST_MEM_MAP
 #endif
+
+
 
 /*
  * Mutex to protect sensor values between host command task and
@@ -232,6 +237,22 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	return sensor->drv->set_data_rate(sensor, odr, roundup);
 }
 
+static inline int motion_sense_select_ec_rate(
+		const struct motion_sensor_t *sensor,
+		enum sensor_config config_id)
+{
+#ifdef CONFIG_ACCEL_FORCE_MODE_MASK
+	if (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors)))
+		/* we have to run ec at the sensor frequency rate.*/
+		if (sensor->config[config_id].odr > 0)
+			return 1000000 / sensor->config[config_id].odr;
+		else
+			return 0;
+	else
+#endif
+		return sensor->config[config_id].ec_rate;
+}
+
 /* motion_sense_ec_rate
  *
  * Calculate the sensor ec rate. It will be use to set the motion task polling
@@ -242,14 +263,14 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
 {
 	int ec_rate = 0, ec_rate_from_cfg;
-	enum sensor_config config_id = SENSOR_CONFIG_AP;
 
 	/* Check the AP setting first. */
 	if (sensor_active != SENSOR_ACTIVE_S5)
-		ec_rate = sensor->config[SENSOR_CONFIG_AP].ec_rate;
+		ec_rate = motion_sense_select_ec_rate(sensor, SENSOR_CONFIG_AP);
 
-	config_id = motion_sense_get_ec_config();
-	ec_rate_from_cfg = sensor->config[config_id].ec_rate;
+	ec_rate_from_cfg = motion_sense_select_ec_rate(
+			sensor, motion_sense_get_ec_config());
+
 	if ((ec_rate == 0 && ec_rate_from_cfg != 0) ||
 	    (ec_rate_from_cfg != 0 && ec_rate_from_cfg < ec_rate))
 		ec_rate = ec_rate_from_cfg;
@@ -257,18 +278,18 @@ static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
 }
 
 /*
- * motion_sense_set_accel_interval
+ * motion_sense_set_motion_intervals
  *
  * Set the wake up interval for the motion sense thread.
  * It is set to the highest frequency one of the sensors need to be polled at.
  *
  * Note: Not static to be tested.
  */
-int motion_sense_set_accel_interval(void)
+int motion_sense_set_motion_intervals(void)
 {
-	int i, sensor_ec_rate, ec_rate, wake_up = 0;
+	int i, sensor_ec_rate, ec_rate = 0, ec_int_rate_ms = 0, wake_up = 0;
 	struct motion_sensor_t *sensor;
-	for (i = 0, ec_rate = 0; i < motion_sensor_count; ++i) {
+	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
 		/*
 		 * If the sensor is sleeping, no need to check it periodicaly.
@@ -278,21 +299,29 @@ int motion_sense_set_accel_interval(void)
 			continue;
 
 		sensor_ec_rate = motion_sense_ec_rate(sensor);
-		if ((ec_rate == 0 && sensor_ec_rate != 0) ||
-		    (sensor_ec_rate != 0 && sensor_ec_rate < ec_rate))
+		if (sensor_ec_rate == 0)
+			continue;
+		if (ec_rate == 0 || sensor_ec_rate < ec_rate)
 			ec_rate = sensor_ec_rate;
+
+		sensor_ec_rate = sensor->config[SENSOR_CONFIG_AP].ec_rate;
+		if (ec_int_rate_ms == 0 || sensor_ec_rate < ec_int_rate_ms)
+			ec_int_rate_ms = sensor_ec_rate;
 	}
 	/*
 	 * Wake up the motion sense task: we want to sensor task to take
 	 * in account the new period right away.
 	 */
-	if (accel_interval == 0 ||
-	    (ec_rate > 0 && accel_interval > ec_rate))
+	if ((motion_interval == 0 ||
+	     (ec_rate > 0 && motion_interval > ec_rate)) ||
+	    (motion_int_interval == 0 ||
+	     (ec_int_rate_ms > 0 && motion_int_interval > ec_int_rate_ms)))
 		wake_up = 1;
-	accel_interval = ec_rate;
+	motion_interval = ec_rate;
+	motion_int_interval = ec_int_rate_ms * MSEC;
 	if (wake_up)
 		task_wake(TASK_ID_MOTIONSENSE);
-	return accel_interval;
+	return motion_interval;
 }
 
 static inline int motion_sense_init(struct motion_sensor_t *sensor)
@@ -346,7 +375,7 @@ static void motion_sense_switch_sensor_rate(void)
 				sensor->state = SENSOR_NOT_INITIALIZED;
 		}
 	}
-	motion_sense_set_accel_interval();
+	motion_sense_set_motion_intervals();
 }
 
 static void motion_sense_shutdown(void)
@@ -701,8 +730,9 @@ void motion_sense_task(void)
 		if (fifo_flush_needed || wake_up_needed ||
 		    event & TASK_EVENT_MOTION_ODR_CHANGE ||
 		    queue_space(&motion_sense_fifo) < CONFIG_ACCEL_FIFO_THRES ||
-		    (accel_interval > 0 &&
-		     (ts_end_task.val - ts_last_int.val) > accel_interval)) {
+		    (motion_int_interval > 0 &&
+		     time_after(ts_end_task.le.lo,
+				ts_last_int.le.lo + motion_int_interval))) {
 			if (!fifo_flush_needed)
 				motion_sense_insert_timestamp();
 			fifo_flush_needed = 0;
@@ -721,12 +751,12 @@ void motion_sense_task(void)
 #endif
 		}
 #endif
-		if (accel_interval > 0) {
+		if (motion_interval > 0) {
 			/*
 			 * Delay appropriately to keep sampling time
 			 * consistent.
 			 */
-			wait_us = accel_interval -
+			wait_us = motion_interval -
 				(ts_end_task.val - ts_begin_task.val);
 
 			/*
@@ -881,7 +911,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 					    MIN_MOTION_SENSE_WAIT_TIME / MSEC);
 
 			/* Bound the new sampling rate. */
-			motion_sense_set_accel_interval();
+			motion_sense_set_motion_intervals();
 		}
 
 		out->ec_rate.ret = motion_sense_ec_rate(sensor) / MSEC;
@@ -918,7 +948,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			 * suspended, we have to recalculate the EC sampling
 			 * rate
 			 */
-			motion_sense_set_accel_interval();
+			motion_sense_set_motion_intervals();
 		}
 
 		out->sensor_odr.ret = sensor->drv->get_data_rate(sensor);
@@ -1236,13 +1266,14 @@ static int command_accel_data_rate(int argc, char **argv)
 		if (ret)
 			return EC_ERROR_PARAM2;
 		/* Sensor might be out of suspend, check the ec_rate */
-		motion_sense_set_accel_interval();
+		motion_sense_set_motion_intervals();
 	} else {
 		ccprintf("Data rate for sensor %d: %d\n", id,
 			 sensor->drv->get_data_rate(sensor));
 		ccprintf("EC rate for sensor %d: %d\n", id,
 			 motion_sense_ec_rate(sensor));
-		ccprintf("Current EC rate: %d\n", accel_interval);
+		ccprintf("Current EC rate: %d\n", motion_interval);
+		ccprintf("Current Interupt rate: %d\n", motion_int_interval);
 	}
 
 	return EC_SUCCESS;
@@ -1342,7 +1373,7 @@ static int command_display_accel_info(int argc, char **argv)
 		if (*e)
 			return EC_ERROR_PARAM2;
 
-		accel_interval = val * MSEC;
+		motion_interval = val * MSEC;
 		task_wake(TASK_ID_MOTIONSENSE);
 
 	}

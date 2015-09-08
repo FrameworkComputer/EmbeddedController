@@ -44,6 +44,12 @@
 /* The amount of free entries that trigger an interrupt to the AP. */
 #undef CONFIG_ACCEL_FIFO_THRES
 
+/*
+ * Sensors in this mask are in forced mode: they needed to be polled
+ * at their data rate frequency.
+ */
+#undef CONFIG_ACCEL_FORCE_MODE_MASK
+
 /* Specify type of accelerometers attached. */
 #undef CONFIG_ACCEL_KXCJ9
 #undef CONFIG_ACCEL_KX022

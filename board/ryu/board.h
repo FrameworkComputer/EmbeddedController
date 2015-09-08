@@ -218,6 +218,15 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+/* Sensor index defintion */
+enum sensor_id {
+	RYU_LID_ACCEL,
+	RYU_LID_GYRO,
+	RYU_LID_MAG,
+	RYU_LID_LIGHT,
+	RYU_LID_PROX
+};
+
 /* ADC signal */
 enum adc_channel {
 	ADC_VBUS = 0,
@@ -270,6 +279,10 @@ void board_set_charge_limit(int charge_ma);
 
 /* PP1800 transition GPIO interrupt handler */
 void pp1800_on_off_evt(enum gpio_signal signal);
+
+/* ALS sensor is in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	((1 << RYU_LID_LIGHT) | (1 << RYU_LID_PROX))
 
 #endif /* !__ASSEMBLER__ */
 

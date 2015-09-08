@@ -282,170 +282,175 @@ struct motion_sensor_t motion_sensors[] = {
 	 * Requirement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
-	{.name = "Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .addr = BMI160_ADDR0,
-	 .rot_standard_ref = &accelgyro_standard_ref,
-	 .default_range = 8,  /* g, use hifi requirements */
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Used for double tap */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = TAP_ODR,
-			 /* Interrupt driven, no polling */
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = TAP_ODR,
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = TAP_ODR,
-			 .ec_rate = 0,
-		 },
-	 },
+	[RYU_LID_ACCEL] = {
+		.name = "Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_BMI160,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bmi160_drv,
+		.mutex = &g_mutex,
+		.drv_data = &g_bmi160_data,
+		.addr = BMI160_ADDR0,
+		.rot_standard_ref = &accelgyro_standard_ref,
+		.default_range = 8,  /* g, use hifi requirements */
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* Used for double tap */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = TAP_ODR,
+				/* Interrupt driven, no polling */
+				.ec_rate = 0,
+			},
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = TAP_ODR,
+				.ec_rate = 0,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = TAP_ODR,
+				.ec_rate = 0,
+			},
+		},
 	},
-	{.name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .addr = BMI160_ADDR0,
-	 .default_range = 1000, /* dps, use hifi requirement */
-	 .rot_standard_ref = &accelgyro_standard_ref,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC does not need gyro in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Unused */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
+	[RYU_LID_GYRO] = {
+		.name = "Gyro",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMI160,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bmi160_drv,
+		.mutex = &g_mutex,
+		.drv_data = &g_bmi160_data,
+		.addr = BMI160_ADDR0,
+		.default_range = 1000, /* dps, use hifi requirement */
+		.rot_standard_ref = &accelgyro_standard_ref,
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC does not need gyro in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* Unused */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+		},
 	},
-	{.name = "Mag",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_MAG,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .addr = BMI160_ADDR0,
-	 .rot_standard_ref = &mag_standard_ref,
-	 .default_range = 1 << 11, /* 16LSB / uT, fixed */
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC does not need compass in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Unused */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
+	[RYU_LID_MAG] = {
+		.name = "Mag",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMI160,
+		.type = MOTIONSENSE_TYPE_MAG,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bmi160_drv,
+		.mutex = &g_mutex,
+		.drv_data = &g_bmi160_data,
+		.addr = BMI160_ADDR0,
+		.rot_standard_ref = &mag_standard_ref,
+		.default_range = 1 << 11, /* 16LSB / uT, fixed */
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC does not need compass in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* Unused */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+		},
 	},
-	{.name = "Light",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_SI1141,
-	 .type = MOTIONSENSE_TYPE_LIGHT,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &si114x_drv,
-	 .mutex = &g_mutex,
-	 .drv_data = &g_si114x_data,
-	 .addr = SI114X_ADDR,
-	 .rot_standard_ref = NULL,
-	 .default_range = 9000, /* 90%: int = 0 - frac = 9000/10000 */
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC needs sensor for light adaptive brightness */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 1000,
-			 .ec_rate = 1000,
-		 },
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 1000,
-			 /* Interrupt driven, for double tap */
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 1000,
-			 .ec_rate = 0,
-		 },
-	 },
+	[RYU_LID_LIGHT] = {
+		.name = "Light",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_SI1141,
+		.type = MOTIONSENSE_TYPE_LIGHT,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &si114x_drv,
+		.mutex = &g_mutex,
+		.drv_data = &g_si114x_data,
+		.addr = SI114X_ADDR,
+		.rot_standard_ref = NULL,
+		.default_range = 9000, /* 90%: int = 0 - frac = 9000/10000 */
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC needs sensor for light adaptive brightness */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 1000,
+				.ec_rate = 1000,
+			},
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 1000,
+				/* Interrupt driven, for double tap */
+				.ec_rate = 0,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 1000,
+				.ec_rate = 0,
+			},
+		},
 	},
-	{.name = "Proxi",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_SI1141,
-	 .type = MOTIONSENSE_TYPE_PROX,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &si114x_drv,
-	 .mutex = &g_mutex,
-	 .drv_data = &g_si114x_data,
-	 .addr = SI114X_ADDR,
-	 .rot_standard_ref = NULL,
-	 .default_range = 7630, /* Upon testing at desk */
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC does not need proximity in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Unused */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
+	[RYU_LID_PROX] = {
+		.name = "Prox",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_SI1141,
+		.type = MOTIONSENSE_TYPE_PROX,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &si114x_drv,
+		.mutex = &g_mutex,
+		.drv_data = &g_si114x_data,
+		.addr = SI114X_ADDR,
+		.rot_standard_ref = NULL,
+		.default_range = 7630, /* Upon testing at desk */
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC does not need proximity in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* Unused */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

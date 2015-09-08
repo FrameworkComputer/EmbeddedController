@@ -137,8 +137,8 @@ extern const unsigned motion_sensor_count;
 
 /* For testing purposes: export the sampling interval. */
 extern enum chipset_state_mask sensor_active;
-extern unsigned accel_interval;
-int motion_sense_set_accel_interval(void);
+extern unsigned motion_interval;
+int motion_sense_set_motion_intervals(void);
 
 /*
  * Priority of the motion sense resume/suspend hooks, to be sure associated
