@@ -713,7 +713,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
-		return EC_SUCCESS;
+		return EC_ERROR_NOT_HANDLED;
 
 	raw_read32(s->addr, BMI160_INT_STATUS_0, &interrupt);
 

@@ -155,11 +155,14 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	struct si114x_typed_data_t *type_data = SI114X_GET_TYPED_DATA(s);
 
 	if (!(*event & CONFIG_ALS_SI114X_INT_EVENT))
-		return EC_SUCCESS;
+		return EC_ERROR_NOT_HANDLED;
 
 	ret = raw_read8(s->addr, SI114X_REG_IRQ_STATUS, &val);
-	if (ret < 0 || !(val & type_data->irq_flags))
-		return EC_SUCCESS;
+	if (ret)
+		return ret;
+
+	if (!(val & type_data->irq_flags))
+		return EC_ERROR_INVAL;
 
 	/* clearing IRQ */
 	ret = raw_write8(s->addr, SI114X_REG_IRQ_STATUS,

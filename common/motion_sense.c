@@ -497,8 +497,9 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
 	    (sensor->drv->irq_handler != NULL)) {
-		sensor->drv->irq_handler(sensor, event);
-		sensor->last_collection = ts->le.lo;
+		ret = sensor->drv->irq_handler(sensor, event);
+		if (ret == EC_SUCCESS)
+			sensor->last_collection = ts->le.lo;
 	}
 #endif
 #ifdef CONFIG_ACCEL_FIFO
