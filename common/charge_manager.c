@@ -578,6 +578,7 @@ DECLARE_DEFERRED(charge_manager_refresh);
  */
 static void charge_override_timeout(void)
 {
+	delayed_override_port = OVERRIDE_OFF;
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 DECLARE_DEFERRED(charge_override_timeout);
@@ -657,8 +658,11 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		*/
 		if (port == delayed_override_port && charge->current > 0 &&
 		    pd_get_role(delayed_override_port) == PD_ROLE_SINK &&
-		    get_time().val < delayed_override_deadline.val)
+		    get_time().val < delayed_override_deadline.val) {
+			delayed_override_port = OVERRIDE_OFF;
+			hook_call_deferred(charge_override_timeout, -1);
 			charge_manager_set_override(port);
+		}
 	}
 
 	/*
@@ -746,14 +750,15 @@ int charge_manager_set_override(int port)
 
 	CPRINTS("Charge Override: %d", port);
 
-	/* Supersede any pending delayed overrides. */
-	if (delayed_override_port != OVERRIDE_OFF) {
-		if (delayed_override_port != port)
-			charge_manager_switch_to_source(delayed_override_port);
-
-		delayed_override_port = OVERRIDE_OFF;
-		hook_call_deferred(charge_override_timeout, -1);
-	}
+	/*
+	 * If attempting to change the override port, then return
+	 * error. Since we may be in the middle of a power swap on
+	 * the original override port, it's too complicated to
+	 * guarantee that the original override port is switched back
+	 * to source.
+	 */
+	if (delayed_override_port != OVERRIDE_OFF)
+		return EC_ERROR_BUSY;
 
 	/* Set the override port if it's a sink. */
 	if (port < 0 || pd_get_role(port) == PD_ROLE_SINK) {
@@ -829,7 +834,8 @@ static int hc_charge_port_override(struct host_cmd_handler_args *args)
 	    override_port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	return charge_manager_set_override(override_port);
+	return charge_manager_set_override(override_port) == EC_SUCCESS ?
+		EC_RES_SUCCESS : EC_RES_ERROR;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE,
 		     hc_charge_port_override,
@@ -894,7 +900,7 @@ static int hc_external_power_limit(struct host_cmd_handler_args *args)
 	charge_manager_set_external_power_limit(p->current_lim,
 						p->voltage_lim);
 
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_EXTERNAL_POWER_LIMIT,
 		     hc_external_power_limit,
