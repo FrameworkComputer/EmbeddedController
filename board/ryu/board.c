@@ -298,13 +298,12 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 0,
 			 .ec_rate = 0,
 		 },
-		 /* EC needs accel for activity recognition. */
+		 /* Used for double tap */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 12500,
+			 .odr = 100000,
 			 /* Interrupt driven, no polling */
 			 .ec_rate = 0,
 		 },
-		 /* Used for double tap */
 		 [SENSOR_CONFIG_EC_S3] = {
 			 .odr = 100000,
 			 .ec_rate = 0,

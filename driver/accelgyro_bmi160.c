@@ -645,7 +645,6 @@ int manage_activity(const struct motion_sensor_t *s,
 #ifdef CONFIG_GESTURE_SIGMO
 	case MOTIONSENSE_ACTIVITY_SIG_MOTION: {
 		int tmp;
-		/* Set double tap interrupt and fifo*/
 		ret = raw_read8(s->addr, BMI160_INT_EN_0, &tmp);
 		if (ret)
 			return ret;
@@ -670,6 +669,23 @@ int manage_activity(const struct motion_sensor_t *s,
 				 BMI160_INT_ANYMO_Y_EN |
 				 BMI160_INT_ANYMO_Z_EN);
 		}
+		ret = raw_write8(s->addr, BMI160_INT_EN_0, tmp);
+		if (ret)
+			ret = EC_RES_UNAVAILABLE;
+		break;
+	}
+#endif
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+	case MOTIONSENSE_ACTIVITY_DOUBLE_TAP: {
+		int tmp;
+		/* Set double tap interrupt */
+		ret = raw_read8(s->addr, BMI160_INT_EN_0, &tmp);
+		if (ret)
+			return ret;
+		if (enable)
+			tmp |= BMI160_INT_D_TAP_EN;
+		else
+			tmp &= ~BMI160_INT_D_TAP_EN;
 		ret = raw_write8(s->addr, BMI160_INT_EN_0, tmp);
 		if (ret)
 			ret = EC_RES_UNAVAILABLE;
@@ -765,10 +781,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 			BMI160_FIFO_HEADER_EN);
 #endif
 
-	/* Set double tap interrupt and fifo*/
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
-	ret = raw_write8(s->addr, BMI160_INT_EN_0, BMI160_INT_D_TAP_EN);
-#endif
+	/* Set fifo*/
 #ifdef CONFIG_ACCEL_FIFO
 	ret = raw_read8(s->addr, BMI160_INT_EN_1, &tmp);
 	tmp |= BMI160_INT_FWM_EN | BMI160_INT_FFUL_EN;
@@ -1052,6 +1065,10 @@ static int init(const struct motion_sensor_t *s)
 		data->disabled_activities |=
 			1 << MOTIONSENSE_ACTIVITY_SIG_MOTION;
 #endif
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+		data->disabled_activities |=
+			1 << MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
+#endif
 #endif
 		/* To avoid gyro wakeup */
 		raw_write8(s->addr, BMI160_PMU_TRIGGER, 0);
@@ -1135,10 +1152,15 @@ static int init(const struct motion_sensor_t *s)
 
 	set_range(s, s->default_range, 0);
 
+	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	if (s->type == MOTIONSENSE_TYPE_ACCEL)
 		ret = config_interrupt(s);
 #endif
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+		/* enable double tap, as soon as the chip is ready */
+		manage_activity(s, MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1, NULL);
+#endif
+	}
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
 			s->name, s->type, get_range(s));
 	return ret;
