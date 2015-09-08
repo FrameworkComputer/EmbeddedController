@@ -633,7 +633,7 @@ void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
  * Defined even if host interface is not defined, to enable double tap even
  * when the host does not deal with gesture.
  */
-int manage_activity(struct motion_sensor_t *s,
+int manage_activity(const struct motion_sensor_t *s,
 		    enum motionsensor_activity activity,
 		    int enable,
 		    struct ec_motion_sense_activity *param)
@@ -692,9 +692,9 @@ int manage_activity(struct motion_sensor_t *s,
 }
 
 #ifdef CONFIG_GESTURE_HOST_DETECTION
-int list_activities(struct motion_sensor_t *s,
-		uint32_t *enabled,
-		uint32_t *disabled)
+int list_activities(const struct motion_sensor_t *s,
+		    uint32_t *enabled,
+		    uint32_t *disabled)
 {
 	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
 	*enabled = data->enabled_activities;

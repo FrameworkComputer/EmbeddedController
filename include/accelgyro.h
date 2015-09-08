@@ -130,7 +130,7 @@ struct accelgyro_drv {
 	 * @enable 1 to enable, 0 to disable
 	 * @data addtional data if needed, activity dependant.
 	 */
-	int (*manage_activity)(struct motion_sensor_t *s,
+	int (*manage_activity)(const struct motion_sensor_t *s,
 			       enum motionsensor_activity activity,
 			       int enable,
 			       struct ec_motion_sense_activity *data);
@@ -140,7 +140,7 @@ struct accelgyro_drv {
 	 * @enable bit mask of activities currently enabled.
 	 * @disabled bit mask of activities currently disabled.
 	 */
-	int (*list_activities)(struct motion_sensor_t *s,
+	int (*list_activities)(const struct motion_sensor_t *s,
 			       uint32_t *enabled,
 			       uint32_t *disabled);
 
