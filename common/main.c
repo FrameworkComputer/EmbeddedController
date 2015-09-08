@@ -12,7 +12,6 @@
 #include "cpu.h"
 #include "dma.h"
 #include "eeprom.h"
-#include "eoption.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -144,9 +143,6 @@ test_mockable __keep int main(void)
 	 */
 #ifdef CONFIG_EEPROM
 	eeprom_init();
-#endif
-#ifdef CONFIG_EOPTION
-	eoption_init();
 #endif
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();

@@ -651,12 +651,6 @@
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 
-/*
- * Compile the eoption module, which provides a higher-level interface to
- * options stored in internal data EEPROM.
- */
-#undef CONFIG_EOPTION
-
 /* Include code for handling external power */
 #define CONFIG_EXTPOWER
 

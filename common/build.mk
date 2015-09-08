@@ -42,7 +42,6 @@ common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_PMU_POWERINFO)+=pmu_tps65090_powerinfo.o
 common-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o
-common-$(CONFIG_EOPTION)+=eoption.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_FANS)+=fan.o
 common-$(CONFIG_FLASH)+=flash.o

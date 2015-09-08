@@ -13,7 +13,6 @@
 
 /* LM4 modules we don't use on link but still want to keep compiling */
 #define CONFIG_EEPROM
-#define CONFIG_EOPTION
 #define CONFIG_PSTORE
 
 /* Modules we want to exclude */
@@ -46,7 +45,6 @@ enum pwm_channel {
 #include "gpio_signal.h"
 
 /* EEPROM blocks */
-#define EEPROM_BLOCK_EOPTION       1  /* EC persistent options */
 #define EEPROM_BLOCK_START_PSTORE 16  /* Host persistent storage */
 #define EEPROM_BLOCK_COUNT_PSTORE 16
 

@@ -63,7 +63,6 @@
 /* Modules we want to exclude */
 #undef CONFIG_ADC
 #undef CONFIG_EEPROM
-#undef CONFIG_EOPTION
 #undef CONFIG_PECI
 #undef CONFIG_PSTORE
 #undef CONFIG_PWM

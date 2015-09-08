@@ -19,7 +19,6 @@
 
 /* Modules we want to exclude */
 #undef CONFIG_EEPROM
-#undef CONFIG_EOPTION
 #undef CONFIG_PSTORE
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_PECI
