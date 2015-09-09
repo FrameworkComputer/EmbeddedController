@@ -11,6 +11,9 @@
 /* Fixed-point type */
 typedef int32_t fp_t;
 
+/* Type used during fp operation */
+typedef int64_t fp_inter_t;
+
 /* Number of bits left of decimal point for fixed-point */
 #define FP_BITS 16
 
@@ -32,7 +35,7 @@ typedef int32_t fp_t;
  */
 static inline fp_t fp_mul(fp_t a, fp_t b)
 {
-	return (fp_t)(((int64_t)a * b) >> FP_BITS);
+	return (fp_t)(((fp_inter_t)a * b) >> FP_BITS);
 }
 
 /**
@@ -40,7 +43,7 @@ static inline fp_t fp_mul(fp_t a, fp_t b)
  */
 static inline fp_t fp_div(fp_t a, fp_t b)
 {
-	return (fp_t)(((int64_t)a << FP_BITS) / b);
+	return (fp_t)(((fp_inter_t)a << FP_BITS) / b);
 }
 
 /**

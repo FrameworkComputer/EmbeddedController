@@ -74,7 +74,7 @@ fp_t arc_cos(fp_t x)
 /**
  * Integer square root.
  */
-int int_sqrtf(int64_t x)
+int int_sqrtf(fp_inter_t x)
 {
 	int rmax = 0x7fffffff;
 	int rmin = 0;
@@ -89,12 +89,12 @@ int int_sqrtf(int64_t x)
 	 */
 	if (x <= 0)
 		return 0;  /* Yeah, for imaginary numbers too */
-	else if (x > (int64_t)rmax * rmax)
+	else if (x > (fp_inter_t)rmax * rmax)
 		return rmax;
 
 	while (1) {
 		int r = (rmax + rmin) / 2;
-		int64_t r2 = (int64_t)r * r;
+		fp_inter_t r2 = (fp_inter_t)r * r;
 
 		if (r2 > x) {
 			/* Guessed too high */
@@ -114,28 +114,28 @@ int int_sqrtf(int64_t x)
 
 int vector_magnitude(const vector_3_t v)
 {
-	int64_t sum =   (int64_t)v[0] * v[0] +
-			(int64_t)v[1] * v[1] +
-			(int64_t)v[2] * v[2];
+	fp_inter_t sum =   (fp_inter_t)v[0] * v[0] +
+			(fp_inter_t)v[1] * v[1] +
+			(fp_inter_t)v[2] * v[2];
 
 	return int_sqrtf(sum);
 }
 
 fp_t cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
 {
-	int64_t dotproduct;
-	int64_t denominator;
+	fp_inter_t dotproduct;
+	fp_inter_t denominator;
 
 	/*
 	 * Angle between two vectors is acos(A dot B / |A|*|B|). To return
 	 * cosine of angle between vectors, then don't do acos operation.
 	 */
 
-	dotproduct =	(int64_t)v1[0] * v2[0] +
-			(int64_t)v1[1] * v2[1] +
-			(int64_t)v1[2] * v2[2];
+	dotproduct =	(fp_inter_t)v1[0] * v2[0] +
+			(fp_inter_t)v1[1] * v2[1] +
+			(fp_inter_t)v1[2] * v2[2];
 
-	denominator = (int64_t)vector_magnitude(v1) * vector_magnitude(v2);
+	denominator = (fp_inter_t)vector_magnitude(v1) * vector_magnitude(v2);
 
 	/* Check for divide by 0 although extremely unlikely. */
 	if (!denominator)
@@ -155,7 +155,7 @@ fp_t cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
 	 * we're a long way away from; the vector components used in
 	 * accelerometer calculations are ~2^11.
 	 */
-	return (dotproduct << FP_BITS) / denominator;
+	return fp_div(dotproduct, denominator);
 }
 
 /*
@@ -164,7 +164,7 @@ fp_t cosine_of_angle_diff(const vector_3_t v1, const vector_3_t v2)
  */
 void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 {
-	int64_t t[3];
+	fp_inter_t t[3];
 
 	if (R == NULL) {
 		if (v != res)
@@ -174,25 +174,25 @@ void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 
 
 	/* Rotate */
-	t[0] =	(int64_t)v[0] * R[0][0] +
-		(int64_t)v[1] * R[1][0] +
-		(int64_t)v[2] * R[2][0];
-	t[1] =	(int64_t)v[0] * R[0][1] +
-		(int64_t)v[1] * R[1][1] +
-		(int64_t)v[2] * R[2][1];
-	t[2] =	(int64_t)v[0] * R[0][2] +
-		(int64_t)v[1] * R[1][2] +
-		(int64_t)v[2] * R[2][2];
+	t[0] =	(fp_inter_t)v[0] * R[0][0] +
+		(fp_inter_t)v[1] * R[1][0] +
+		(fp_inter_t)v[2] * R[2][0];
+	t[1] =	(fp_inter_t)v[0] * R[0][1] +
+		(fp_inter_t)v[1] * R[1][1] +
+		(fp_inter_t)v[2] * R[2][1];
+	t[2] =	(fp_inter_t)v[0] * R[0][2] +
+		(fp_inter_t)v[1] * R[1][2] +
+		(fp_inter_t)v[2] * R[2][2];
 
 	/* Scale by fixed point shift when writing back to result */
-	res[0] = t[0] >> FP_BITS;
-	res[1] = t[1] >> FP_BITS;
-	res[2] = t[2] >> FP_BITS;
+	res[0] = FP_TO_INT(t[0]);
+	res[1] = FP_TO_INT(t[1]);
+	res[2] = FP_TO_INT(t[2]);
 }
 
 void rotate_inv(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 {
-	int64_t t[3];
+	fp_inter_t t[3];
 	fp_t deter;
 
 	if (R == NULL) {
@@ -213,29 +213,29 @@ void rotate_inv(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 	 * http://stackoverflow.com/questions/983999/
 	 * simple-3x3-matrix-inverse-code-c
 	 */
-	t[0] =  (int64_t)v[0] * (fp_mul(R[1][1], R[2][2]) -
+	t[0] =  (fp_inter_t)v[0] * (fp_mul(R[1][1], R[2][2]) -
 				 fp_mul(R[2][1], R[1][2])) -
-		(int64_t)v[1] * (fp_mul(R[1][0], R[2][2]) -
+		(fp_inter_t)v[1] * (fp_mul(R[1][0], R[2][2]) -
 				 fp_mul(R[1][2], R[2][0])) +
-		(int64_t)v[2] * (fp_mul(R[1][0], R[2][1]) -
+		(fp_inter_t)v[2] * (fp_mul(R[1][0], R[2][1]) -
 				 fp_mul(R[2][0], R[1][1]));
 
-	t[1] =	(int64_t)v[0] * (fp_mul(R[0][1], R[2][2]) -
+	t[1] =	(fp_inter_t)v[0] * (fp_mul(R[0][1], R[2][2]) -
 				 fp_mul(R[0][2], R[2][1])) * -1 +
-		(int64_t)v[1] * (fp_mul(R[0][0], R[2][2]) -
+		(fp_inter_t)v[1] * (fp_mul(R[0][0], R[2][2]) -
 				 fp_mul(R[0][2], R[2][0])) -
-		(int64_t)v[2] * (fp_mul(R[0][0], R[2][1]) -
+		(fp_inter_t)v[2] * (fp_mul(R[0][0], R[2][1]) -
 				 fp_mul(R[2][0], R[0][1]));
 
-	t[2] =	(int64_t)v[0] * (fp_mul(R[0][1], R[1][2]) -
+	t[2] =	(fp_inter_t)v[0] * (fp_mul(R[0][1], R[1][2]) -
 				 fp_mul(R[0][2], R[1][1])) -
-		(int64_t)v[1] * (fp_mul(R[0][0], R[1][2]) -
+		(fp_inter_t)v[1] * (fp_mul(R[0][0], R[1][2]) -
 				 fp_mul(R[1][0], R[0][2])) +
-		(int64_t)v[2] * (fp_mul(R[0][0], R[1][1]) -
+		(fp_inter_t)v[2] * (fp_mul(R[0][0], R[1][1]) -
 				 fp_mul(R[1][0], R[0][1]));
 
 	/* Scale by fixed point shift when writing back to result */
-	res[0] = fp_div(t[0], deter) >> FP_BITS;
-	res[1] = fp_div(t[1], deter) >> FP_BITS;
-	res[2] = fp_div(t[2], deter) >> FP_BITS;
+	res[0] = FP_TO_INT(fp_div(t[0], deter));
+	res[1] = FP_TO_INT(fp_div(t[1], deter));
+	res[2] = FP_TO_INT(fp_div(t[2], deter));
 }
