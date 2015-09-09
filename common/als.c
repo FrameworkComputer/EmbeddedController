@@ -10,10 +10,15 @@
 #include "als.h"
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#define ALS_POLL_PERIOD SECOND
+
+static int task_timeout = -1;
 
 int als_read(enum als_id id, int *lux)
 {
@@ -28,18 +33,37 @@ void als_task(void)
 	uint16_t als_data;
 
 	while (1) {
+		task_wait_event(task_timeout);
+
+		/* If task was disabled while waiting do not read from ALS */
+		if (task_timeout < 0)
+			continue;
+
 		for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++) {
 			als_data = als_read(i, &val) == EC_SUCCESS ? val : 0;
 			mapped[i] = als_data;
 		}
-
-		task_wait_event(SECOND);
 	}
 }
+
+static void als_task_enable(void)
+{
+	task_timeout = ALS_POLL_PERIOD;
+	task_wake(TASK_ID_ALS);
+}
+
+static void als_task_disable(void)
+{
+	task_timeout = -1;
+}
+
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, als_task_enable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, als_task_disable, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_ALS
 static int command_als(int argc, char **argv)
 {
 	int i, rv, val;
@@ -62,3 +86,4 @@ DECLARE_CONSOLE_COMMAND(als, command_als,
 			NULL,
 			"Print ALS values",
 			NULL);
+#endif
