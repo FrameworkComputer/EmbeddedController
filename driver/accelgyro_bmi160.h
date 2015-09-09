@@ -262,6 +262,7 @@ enum fifo_header {
 #define BMI160_INT2_INPUT_EN       (1 << 5)
 #define BMI160_LATCH_MASK          0xf
 #define BMI160_LATCH_NONE          0
+#define BMI160_LATCH_5MS           5
 #define BMI160_LATCH_FOREVER       0xf
 
 #define BMI160_INT_MAP_0       0x55
