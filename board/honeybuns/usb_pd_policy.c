@@ -63,11 +63,9 @@ void pd_transition_voltage(int idx)
 	/* PDO index are starting from 1 */
 	switch (idx - 1) {
 	case PDO_IDX_20V:
-#if 0
-		gpio_set_level(GPIO_PPVAR_VBUS_EN, 0);
 		gpio_set_level(GPIO_PP20000_EN, 1);
+		gpio_set_level(GPIO_PPVAR_VBUS_EN, 0);
 		break;
-#endif /* 20V transition is broken, putting 12V instead: fall-through */
 	case PDO_IDX_12V:
 		gpio_set_level(GPIO_PP12000_EN, 1);
 		gpio_set_level(GPIO_PP20000_EN, 0);
