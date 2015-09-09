@@ -59,6 +59,10 @@ static void check_reset_cause(void)
 		flags |= REG8(addr + 1) << 16;
 		flags |= REG8(addr + 2) << 8;
 		flags |= REG8(addr + 3);
+
+		/* watchdog module triggers these reset */
+		if (flags & (RESET_FLAG_HARD | RESET_FLAG_SOFT))
+			flags &= ~RESET_FLAG_WATCHDOG;
 	}
 
 	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS) = 0;
@@ -109,6 +113,11 @@ void system_reset(int flags)
 	/* Add in AP off flag into saved flags. */
 	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
 		save_flags |= RESET_FLAG_AP_OFF;
+
+	if (flags & SYSTEM_RESET_HARD)
+		save_flags |= RESET_FLAG_HARD;
+	else
+		save_flags |= RESET_FLAG_SOFT;
 
 	/* Store flags to battery backed RAM. */
 	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS) = save_flags >> 24;

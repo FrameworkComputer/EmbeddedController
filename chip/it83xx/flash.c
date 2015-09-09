@@ -36,6 +36,7 @@ const char __flash_dma_start;
 #define FLASH_CMD_AAI_WORD     0xAD
 
 static int stuck_locked;
+static int inconsistent_locked;
 static int all_protected;
 static int flash_dma_code_enabled;
 
@@ -472,6 +473,10 @@ uint32_t flash_physical_get_protect_flags(void)
 	if (stuck_locked)
 		flags |= EC_FLASH_PROTECT_ERROR_STUCK;
 
+	/* Check if flash protection is in inconsistent state at pre-init */
+	if (inconsistent_locked)
+		flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+
 	return flags;
 }
 
@@ -609,154 +614,15 @@ int flash_pre_init(void)
 	if (reset_flags & RESET_FLAG_POWER_ON) {
 		stuck_locked = 1;
 		return EC_ERROR_ACCESS_DENIED;
+	} else {
+		/*
+		 * Set inconsistent flag, because there is no software
+		 * reset can clear write-protect.
+		 */
+		inconsistent_locked = 1;
+		return EC_ERROR_ACCESS_DENIED;
 	}
-
-	/* Otherwise, do a hard boot to clear the flash protection registers */
-	system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
 
 	/* That doesn't return, so if we're still here that's an error */
 	return EC_ERROR_UNKNOWN;
 }
-
-static int eflash_test_erase(int addr, int size)
-{
-	int rv, i, rvr;
-	uint8_t *rdata;
-
-	/* Acquire the shared memory buffer */
-	rv = shared_mem_acquire(FLASH_SECTOR_ERASE_SIZE, (char **)&rdata);
-	if (rv) {
-		ccputs("Can't get shared mem\n");
-		return rv;
-	}
-
-	for (; size > 0; size -= FLASH_SECTOR_ERASE_SIZE) {
-
-		rv = flash_physical_erase(addr, FLASH_SECTOR_ERASE_SIZE);
-
-		if (rv) {
-			/* Free the buffer */
-			shared_mem_release(rdata);
-			ccputs("Flash erase error\n");
-			return rv;
-		}
-
-		rvr = flash_read(addr, FLASH_SECTOR_ERASE_SIZE, rdata);
-
-		if (rvr) {
-			/* Free the buffer */
-			shared_mem_release(rdata);
-			ccputs("Flash read error\n");
-			return rvr;
-		}
-
-		for (i = 0; i < FLASH_SECTOR_ERASE_SIZE; i++) {
-			if (rdata[i] != 0xff) {
-				ccprintf("Addr %Xh should be FFh but %Xh\n",
-					(addr+i), rdata[i]);
-				ccprintf("Erase %Xh ~ %Xh fail\n", addr,
-					(addr + FLASH_SECTOR_ERASE_SIZE - 1));
-
-				/* Free the buffer */
-				shared_mem_release(rdata);
-				return rv;
-			}
-		}
-
-		ccprintf("Verify %Xh ~ %Xh OK\n", addr,
-				(addr + FLASH_SECTOR_ERASE_SIZE - 1));
-		addr += FLASH_SECTOR_ERASE_SIZE;
-	}
-	/* Free the buffer */
-	shared_mem_release(rdata);
-	return rv;
-}
-
-static int eflash_test_write(int addr, int size)
-{
-	int rv, i, rvr;
-	uint8_t *rwdata;
-
-	/* Acquire the shared memory buffer */
-	rv = shared_mem_acquire((size * 2), (char **)&rwdata);
-	if (rv) {
-		ccputs("Can't get shared mem\n");
-		return rv;
-	}
-
-	for (i = 0; i < size; i++)
-		rwdata[i] = i;
-
-	rv = flash_physical_write(addr, size, rwdata);
-	if (rv) {
-		/* Free the buffer */
-		shared_mem_release(rwdata);
-		ccputs("Flash write error\n");
-		return rv;
-	}
-
-	rvr = flash_read(addr, size, &rwdata[size]);
-	if (rvr) {
-		/* Free the buffer */
-		shared_mem_release(rwdata);
-		ccputs("Flash read error\n");
-		return rvr;
-	}
-
-	rvr = 0;
-	for (i = 0; i < size; i++) {
-		if (rwdata[i] != rwdata[i+size]) {
-			ccprintf("%Xh should be %Xh but %Xh\n",
-				(addr+i), rwdata[i], rwdata[i+size]);
-			rvr++;
-		}
-	}
-
-	if (rvr)
-		ccprintf("Verify %d bytes fail\n", rvr);
-	else
-		ccprintf("Verify %Xh ~ %Xh OK\n", addr, (addr + size - 1));
-
-	/* Free the buffer */
-	shared_mem_release(rwdata);
-	return rv;
-}
-
-static int eflash_test(int argc, char **argv)
-{
-	char *e;
-	int addr, size;
-	int rv;
-
-	if (argc != 4)
-		return EC_ERROR_PARAM_COUNT;
-
-	addr = strtoi(argv[2], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-
-	size = strtoi(argv[3], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM3;
-
-	/* erase */
-	if (strcasecmp(argv[1], "e") == 0) {
-		rv = eflash_test_erase(addr, size);
-	/* write */
-	} else if (strcasecmp(argv[1], "w") == 0) {
-		if (size > CONFIG_FLASH_WRITE_IDEAL_SIZE) {
-			ccprintf("size need <=%d\n",
-				CONFIG_FLASH_WRITE_IDEAL_SIZE);
-			return EC_ERROR_PARAM3;
-		}
-		rv = eflash_test_write(addr, size);
-	} else {
-		return EC_ERROR_PARAM1;
-	}
-
-	return rv;
-}
-DECLARE_CONSOLE_COMMAND(eflash, eflash_test,
-			"e/w addr size",
-			"erase/write internal eflash",
-			NULL);

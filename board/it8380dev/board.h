@@ -22,6 +22,10 @@
 /* Use CS0 of SSPI */
 #define CONFIG_SPI_FLASH_PORT 0
 
+/* Optional console commands */
+#define CONFIG_CMD_FLASH
+#define CONFIG_CMD_STACKOVERFLOW
+
 /* Debug */
 #undef CONFIG_KEYBOARD_DEBUG
 #undef CONFIG_UART_TX_BUF_SIZE
