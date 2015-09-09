@@ -72,7 +72,7 @@ static void opt3001_init(void)
 	if (ret)
 		CPRINTF("ALS configure failed: ret=%d\n", ret);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, opt3001_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, opt3001_init, HOOK_PRIO_DEFAULT + 1);
 
 /**
  * Read OPT3001 light sensor data.
