@@ -10,6 +10,8 @@
 
 /* Optional features */
 #define CONFIG_ADC
+#define CONFIG_ALS
+#define CONFIG_ALS_OPT3001
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 #define CONFIG_BATTERY_SMART
@@ -105,6 +107,9 @@
 /* Thermal sensors read through PMIC ADC interface */
 #define I2C_PORT_THERMAL I2C_PORT_PMIC
 
+/* Ambient Light Sensor address */
+#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
+
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_I2C_SCAN
@@ -154,6 +159,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_WIFI,
 
 	TEMP_SENSOR_COUNT
+};
+
+/* Light sensors */
+enum als_id {
+	ALS_OPT3001 = 0,
+
+	ALS_COUNT
 };
 
 /* start as a sink in case we have no other power supply/battery */

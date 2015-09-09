@@ -6,6 +6,7 @@
 /* Glados board-specific configuration */
 
 #include "adc_chip.h"
+#include "als.h"
 #include "bd99992gw.h"
 #include "button.h"
 #include "charge_manager.h"
@@ -13,6 +14,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "driver/als_opt3001.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -198,6 +200,12 @@ struct ec_thermal_config thermal_params[] = {
 	{{0, 0, 0}, 0, 0},	/* Wifi */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+/* ALS instances. Must be in same order as enum als_id. */
+struct als_t als[] = {
+	{"TI", opt3001_read_lux, 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{ 0 },
