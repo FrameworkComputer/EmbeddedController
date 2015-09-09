@@ -8,6 +8,19 @@
 #ifndef __CROS_EC_MATH_UTIL_H
 #define __CROS_EC_MATH_UTIL_H
 
+#ifdef CONFIG_FPU
+typedef float fp_t;
+typedef float fp_inter_t;
+
+/* Conversion to/from fixed-point */
+#define INT_TO_FP(x) ((float)(x))
+#define FP_TO_INT(x) ((int32_t)(x))
+/* Float to fixed-point, only for compile-time constants and unit tests */
+#define FLOAT_TO_FP(x) ((float)(x))
+/* Fixed-point to float, for unit tests */
+#define FP_TO_FLOAT(x) ((float)(x))
+
+#else
 /* Fixed-point type */
 typedef int32_t fp_t;
 
@@ -24,12 +37,24 @@ typedef int64_t fp_inter_t;
 #define FLOAT_TO_FP(x) ((fp_t)((x) * (float)(1<<FP_BITS)))
 /* Fixed-point to float, for unit tests */
 #define FP_TO_FLOAT(x) ((float)(x) / (float)(1<<FP_BITS))
+#endif
 
 /*
  * Fixed-point addition and subtraction can be done directly, because they
  * work identically.
  */
 
+#ifdef CONFIG_FPU
+static inline fp_t fp_mul(fp_t a, fp_t b)
+{
+	return a * b;
+}
+
+static inline fp_t fp_div(fp_t a, fp_t b)
+{
+	return a / b;
+}
+#else
 /**
  * Multiplication - return (a * b)
  */
@@ -45,6 +70,7 @@ static inline fp_t fp_div(fp_t a, fp_t b)
 {
 	return (fp_t)(((fp_inter_t)a << FP_BITS) / b);
 }
+#endif
 
 /**
  * Square (a * a)
@@ -59,7 +85,7 @@ static inline fp_t fp_sq(fp_t a)
  */
 static inline fp_t fp_abs(fp_t a)
 {
-	return (a >= 0 ? a : -a);
+	return (a >= INT_TO_FP(0) ? a : -a);
 }
 
 /*
