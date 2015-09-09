@@ -31,9 +31,10 @@ GPIO_INT(USB_C1_VBUS_WAKE_L,PIN(123), GPIO_INT_BOTH, vbus1_evt)
 GPIO_INT(USB_C0_BC12_INT_L, PIN(124), GPIO_INT_FALLING, usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L, PIN(145), GPIO_INT_FALLING, usb1_evt)
 GPIO_INT(TABLET_MODE_L,     PIN(160), GPIO_INT_BOTH | GPIO_PULL_UP, tablet_mode_interrupt)
-
 /* Delayed PWR_OK from PMIC */
 GPIO_INT(PMIC_DPWROK,       PIN(133), GPIO_INT_BOTH, power_signal_interrupt)
+/* UART input */
+GPIO_INT(UART0_RX,          PIN(162), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, uart_deepsleep_interrupt)
 
 GPIO(PD_RST_L,              PIN(130), GPIO_ODR_HIGH)
 GPIO(USB2_OTG_ID,           PIN(13),  GPIO_ODR_LOW)
