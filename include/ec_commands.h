@@ -3149,10 +3149,19 @@ enum usb_pd_control_mux {
 	USB_PD_CTRL_MUX_COUNT
 };
 
+enum usb_pd_control_swap {
+	USB_PD_CTRL_SWAP_NONE = 0,
+	USB_PD_CTRL_SWAP_DATA = 1,
+	USB_PD_CTRL_SWAP_POWER = 2,
+	USB_PD_CTRL_SWAP_VCONN = 3,
+	USB_PD_CTRL_SWAP_COUNT
+};
+
 struct ec_params_usb_pd_control {
 	uint8_t port;
 	uint8_t role;
 	uint8_t mux;
+	uint8_t swap;
 } __packed;
 
 struct ec_response_usb_pd_control {
@@ -3164,7 +3173,8 @@ struct ec_response_usb_pd_control {
 
 struct ec_response_usb_pd_control_v1 {
 	uint8_t enabled; /* [0] comm enabled [1] connected */
-	uint8_t role; /* [0] power: 0=SNK/1=SRC [1] data: 0=UFP/1=DFP */
+	uint8_t role; /* [0] power: 0=SNK/1=SRC [1] data: 0=UFP/1=DFP
+			 [2] vconn 0=off/1=on */
 	uint8_t polarity;
 	char state[32];
 } __packed;

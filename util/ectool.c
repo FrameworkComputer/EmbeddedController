@@ -204,7 +204,8 @@ const char help_str[] =
 	"  usbmux <mux>\n"
 	"      Set USB mux switch state\n"
 	"  usbpd <port> <auto | "
-			"[toggle|toggle-off|sink|source] [none|usb|dp|dock]>\n"
+			"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
+			"[dr_swap|pr_swap|vconn_swap]>\n"
 	"      Control USB PD/type-C\n"
 	"  usbpdpower\n"
 	"      Get USB PD power information\n"
@@ -3836,6 +3837,7 @@ int cmd_usb_pd(int argc, char *argv[])
 {
 	const char *role_str[] = {"", "toggle", "toggle-off", "sink", "source"};
 	const char *mux_str[] = {"", "none", "usb", "dp", "dock", "auto"};
+	const char *swap_str[] = {"", "dr_swap", "pr_swap", "vconn_swap"};
 	struct ec_params_usb_pd_control p;
 	struct ec_response_usb_pd_control_v1 *r_v1 =
 		(struct ec_response_usb_pd_control_v1 *)ec_inbuf;
@@ -3848,8 +3850,10 @@ int cmd_usb_pd(int argc, char *argv[])
 
 	BUILD_ASSERT(ARRAY_SIZE(role_str) == USB_PD_CTRL_ROLE_COUNT);
 	BUILD_ASSERT(ARRAY_SIZE(mux_str) == USB_PD_CTRL_MUX_COUNT);
+	BUILD_ASSERT(ARRAY_SIZE(swap_str) == USB_PD_CTRL_SWAP_COUNT);
 	p.role = USB_PD_CTRL_ROLE_NO_CHANGE;
 	p.mux = USB_PD_CTRL_MUX_NO_CHANGE;
+	p.swap = USB_PD_CTRL_SWAP_NONE;
 
 	if (!ec_cmd_version_supported(EC_CMD_USB_PD_CONTROL, cmdver))
 		cmdver = 0;
@@ -3905,6 +3909,22 @@ int cmd_usb_pd(int argc, char *argv[])
 				break;
 			}
 		}
+		if (option_ok)
+			continue;
+
+		for (j = 0; j < ARRAY_SIZE(swap_str); ++j) {
+			if (!strcmp(argv[i], swap_str[j])) {
+				if (p.swap != USB_PD_CTRL_SWAP_NONE) {
+					fprintf(stderr,
+						"Only one swap type allowed.\n");
+					return -1;
+				}
+				p.swap = j;
+				option_ok = 1;
+				break;
+			}
+		}
+
 
 		if (!option_ok) {
 			fprintf(stderr, "Unknown option: %s\n", argv[i]);
@@ -3924,11 +3944,13 @@ int cmd_usb_pd(int argc, char *argv[])
 		       r->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 		       r->polarity + 1, r->state);
 	} else {
-		printf("Port C%d is %s,%s, Role:%s %s Polarity:CC%d State:%s\n",
+		printf("Port C%d is %s,%s, Role:%s %s%s Polarity:CC%d "
+		       "State:%s\n",
 		       p.port, (r_v1->enabled & 1) ? "enabled" : "disabled",
 		       (r_v1->enabled & 2) ? "connected" : "disconnected",
 		       r_v1->role & PD_ROLE_SOURCE ? "SRC" : "SNK",
 		       r_v1->role & (PD_ROLE_DFP << 1) ? "DFP" : "UFP",
+		       r_v1->role & (1 << 2) ? " VCONN" : "",
 		       r_v1->polarity + 1, r_v1->state);
 	}
 	return (rv < 0 ? rv : 0);

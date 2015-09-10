@@ -789,7 +789,17 @@ void pd_request_power_swap(int port)
 		set_state(port, PD_STATE_SNK_SWAP_INIT);
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
+
+#ifdef CONFIG_USBC_VCONN_SWAP
+static void pd_request_vconn_swap(int port)
+{
+	if (pd[port].task_state == PD_STATE_SRC_READY ||
+	    pd[port].task_state == PD_STATE_SNK_READY)
+		set_state(port, PD_STATE_VCONN_SWAP_SEND);
+	task_wake(PD_PORT_TO_TASK_ID(port));
+}
 #endif
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 void pd_request_data_swap(int port)
 {
@@ -2893,18 +2903,16 @@ static int command_pd(int argc, char **argv)
 		if (argc < 4)
 			return EC_ERROR_PARAM_COUNT;
 
-		if (!strncasecmp(argv[3], "power", 5)) {
+		if (!strncasecmp(argv[3], "power", 5))
 			pd_request_power_swap(port);
-		} else if (!strncasecmp(argv[3], "data", 4)) {
+		else if (!strncasecmp(argv[3], "data", 4))
 			pd_request_data_swap(port);
 #ifdef CONFIG_USBC_VCONN_SWAP
-		} else if (!strncasecmp(argv[3], "vconn", 5)) {
-			set_state(port, PD_STATE_VCONN_SWAP_SEND);
-			task_wake(PD_PORT_TO_TASK_ID(port));
+		else if (!strncasecmp(argv[3], "vconn", 5))
+			pd_request_vconn_swap(port);
 #endif
-		} else {
+		else
 			return EC_ERROR_PARAM3;
-		}
 	} else if (!strncasecmp(argv[2], "ping", 4)) {
 		int enable;
 
@@ -3027,6 +3035,17 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 			    pd_get_polarity(p->port));
 #endif /* CONFIG_USBC_SS_MUX */
 
+	if (p->swap == USB_PD_CTRL_SWAP_DATA)
+		pd_request_data_swap(p->port);
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	else if (p->swap == USB_PD_CTRL_SWAP_POWER)
+		pd_request_power_swap(p->port);
+#ifdef CONFIG_USBC_VCONN_SWAP
+	else if (p->swap == USB_PD_CTRL_SWAP_VCONN)
+		pd_request_vconn_swap(p->port);
+#endif
+#endif
+
 	if (args->version == 0) {
 		r->enabled = pd_comm_enabled;
 		r->role = pd[p->port].power_role;
@@ -3037,7 +3056,9 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		r_v1->enabled = pd_comm_enabled |
 				(pd_is_connected(p->port) << 1);
 		r_v1->role = pd[p->port].power_role |
-			    (pd[p->port].data_role << 1);
+			    (pd[p->port].data_role << 1) |
+			    ((pd[p->port].flags & PD_FLAGS_VCONN_ON) ?
+				1 << 2 : 0);
 		r_v1->polarity = pd[p->port].polarity;
 		strzcpy(r_v1->state,
 			pd_state_names[pd[p->port].task_state],
