@@ -329,7 +329,6 @@ DECLARE_DEFERRED(enable_input_devices);
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
-	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
 	hook_call_deferred(enable_input_devices, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -337,7 +336,6 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
-	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	hook_call_deferred(enable_input_devices, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
@@ -345,6 +343,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
+	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -352,6 +351,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
+	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
