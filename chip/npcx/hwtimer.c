@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
+#include "math_util.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -64,7 +65,7 @@ void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source)
 /* HWTimer event handlers */
 void __hw_clock_event_set(uint32_t deadline)
 {
-	float    inv_evt_tick = INT_32K_CLOCK/(float)SECOND;
+	fp_t inv_evt_tick = FLOAT_TO_FP(INT_32K_CLOCK/(float)SECOND);
 	int32_t  evt_cnt_us;
 	/* Is deadline min value? */
 	if (evt_expired_us != 0 && evt_expired_us < deadline)
@@ -86,7 +87,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	 * ITIM count down : event expired : Unit: 1/32768 sec
 	 * It must exceed evt_expired_us for process_timers function
 	 */
-	evt_cnt = ((uint32_t)(evt_cnt_us*inv_evt_tick)+1)-1;
+	evt_cnt = FP_TO_INT((fp_inter_t)(evt_cnt_us) * inv_evt_tick);
 	if (evt_cnt > TICK_EVT_MAX_CNT) {
 		CPRINTS("Event overflow! 0x%08x, us is %d\r\n",
 				evt_cnt, evt_cnt_us);
@@ -110,17 +111,18 @@ uint32_t __hw_clock_event_get(void)
 /* Returns time delay cause of deep idle */
 uint32_t __hw_clock_get_sleep_time(void)
 {
-	float evt_tick = SECOND/(float)INT_32K_CLOCK;
+	fp_t evt_tick = FLOAT_TO_FP(SECOND/(float)INT_32K_CLOCK);
 	uint32_t sleep_time;
 	uint32_t cnt = NPCX_ITCNT16(ITIM_EVENT_NO);
 
 	interrupt_disable();
 	/* Event has been triggered but timer ISR dosen't handle it */
 	if (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_TO_STS))
-		sleep_time = (uint32_t) (evt_cnt+1)*evt_tick;
+		sleep_time = FP_TO_INT((fp_inter_t)(evt_cnt+1) * evt_tick);
 	/* Event hasn't been triggered */
 	else
-		sleep_time = (uint32_t) (evt_cnt+1 - cnt)*evt_tick;
+		sleep_time = FP_TO_INT((fp_inter_t)(evt_cnt+1 - cnt) *
+				       evt_tick);
 	interrupt_enable();
 
 	return sleep_time;
