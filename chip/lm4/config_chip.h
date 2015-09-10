@@ -87,7 +87,6 @@
 
 /* Optional features present on this chip */
 #define CONFIG_ADC
-#define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_LPC
 #define CONFIG_PECI
