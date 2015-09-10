@@ -25,12 +25,24 @@
 #define MEC1322_PCR_CHIP_SLP_EN  REG32(MEC1322_PCR_BASE + 0x0)
 #define MEC1322_PCR_CHIP_CLK_REQ REG32(MEC1322_PCR_BASE + 0x4)
 #define MEC1322_PCR_EC_SLP_EN    REG32(MEC1322_PCR_BASE + 0x8)
+/* Command all blocks to sleep */
+#define  MEC1322_PCR_EC_SLP_EN_SLEEP	0xe0700ff7
+/* Allow all blocks to request clocks */
+#define  MEC1322_PCR_EC_SLP_EN_WAKE	(~0xe0700ff7)
 #define MEC1322_PCR_EC_CLK_REQ   REG32(MEC1322_PCR_BASE + 0xc)
 #define MEC1322_PCR_HOST_SLP_EN  REG32(MEC1322_PCR_BASE + 0x10)
+/* Command all blocks to sleep */
+#define  MEC1322_PCR_HOST_SLP_EN_SLEEP	0x5f003
+/* Allow all blocks to request clocks */
+#define  MEC1322_PCR_HOST_SLP_EN_WAKE	(~0x5f003)
 #define MEC1322_PCR_HOST_CLK_REQ REG32(MEC1322_PCR_BASE + 0x14)
 #define MEC1322_PCR_SYS_SLP_CTL  REG32(MEC1322_PCR_BASE + 0x18)
 #define MEC1322_PCR_PROC_CLK_CTL REG32(MEC1322_PCR_BASE + 0x20)
 #define MEC1322_PCR_EC_SLP_EN2   REG32(MEC1322_PCR_BASE + 0x24)
+/* Mask to command all blocks to sleep */
+#define  MEC1322_PCR_EC_SLP_EN2_SLEEP	0x1ffffff8
+/* Allow all blocks to request clocks */
+#define  MEC1322_PCR_EC_SLP_EN2_WAKE	(~0x03fffff8)
 #define MEC1322_PCR_EC_CLK_REQ2  REG32(MEC1322_PCR_BASE + 0x28)
 #define MEC1322_PCR_SLOW_CLK_CTL REG32(MEC1322_PCR_BASE + 0x2c)
 #define MEC1322_PCR_CHIP_OSC_ID  REG32(MEC1322_PCR_BASE + 0x30)
