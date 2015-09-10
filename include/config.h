@@ -1642,6 +1642,9 @@
 /* The size in bytes of the FIFO used for PD events logging */
 #undef CONFIG_USB_PD_LOG_SIZE
 
+/* Save power by waking up on VBUS rather than polling CC */
+#undef CONFIG_USB_PD_LOW_POWER
+
 /* Define if USB-PD device has no way of detecting USB VBUS */
 #undef CONFIG_USB_PD_NO_VBUS_DETECT
 
