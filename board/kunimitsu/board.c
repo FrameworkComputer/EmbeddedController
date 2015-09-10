@@ -162,6 +162,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
+#ifdef HAS_TASK_MOTIONSENSE
 /* Four Motion sensors */
 /* kxcj9 mutex and local/private data*/
 static struct mutex g_kxcj9_mutex[2];
@@ -267,6 +268,7 @@ const struct accel_orientation acc_orient = {
 	},
 	.hinge_axis = {1, 0, 0},
 };
+#endif
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.

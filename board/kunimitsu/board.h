@@ -113,10 +113,12 @@
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 
 /* Accelerometer */
+#ifdef HAS_TASK_MOTIONSENSE
 #define CONFIG_ACCEL_KXCJ9
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE 0
 #define CONFIG_LID_ANGLE_SENSOR_LID 1
+#endif
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_ACCEL_INFO
