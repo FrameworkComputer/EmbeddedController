@@ -50,7 +50,7 @@ int usb_charge_ports_enabled(void);
 /* Events handled by the USB_CHG task */
 #define USB_CHG_EVENT_BC12 TASK_EVENT_CUSTOM(1)
 #define USB_CHG_EVENT_VBUS TASK_EVENT_CUSTOM(2)
-#define USB_CHG_EVENT_INTR TASK_EVENT_CUSTOM(3)
+#define USB_CHG_EVENT_INTR TASK_EVENT_CUSTOM(4)
 
 /**
  * Returns true if the passed port is a power source.
