@@ -258,15 +258,9 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTF("New chg p%d", charge_port);
 
 	if (charge_port == CHARGE_PORT_NONE) {
-		/*
-		 * TODO: currently we only get VBUS knowledge when charge
-		 * is enabled. so, when not changing, we need to enable
-		 * both ports. but, this is dangerous if you have two
-		 * chargers plugged in and you set charge override to -1
-		 * then it will enable both sides!
-		 */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
-		gpio_set_level(GPIO_USB_C1_CHARGE_L, 0);
+		/* Disable both ports */
+		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
+		gpio_set_level(GPIO_USB_C1_CHARGE_L, 1);
 	} else {
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :

@@ -90,15 +90,7 @@ void pd_power_supply_reset(int port)
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 0);
 
-	/*
-	 * TODO: Currently we can only detect VBUS when charge_l is
-	 * asserted, so, if there is no active charge port, then enable
-	 * charge_l. If the other port is the active charger, then leave
-	 * this port disabled.
-	 */
-	if (charge_manager_get_active_charge_port() != !port)
-		gpio_set_level(port ? GPIO_USB_C1_CHARGE_L :
-				      GPIO_USB_C0_CHARGE_L, 0);
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
