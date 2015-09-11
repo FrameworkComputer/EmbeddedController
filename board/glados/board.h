@@ -9,6 +9,7 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
+#define CONFIG_ACCEL_KX022
 #define CONFIG_ADC
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
