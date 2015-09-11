@@ -79,6 +79,7 @@ int bmm150_init(const struct motion_sensor_t *s)
 	int ret;
 	int val;
 	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
+	struct mag_cal_t             *moc = BMM150_CAL(s);
 
 	/* Set the compass from Suspend to Sleep */
 	ret = raw_mag_write8(s->addr, BMM150_PWR_CTRL, BMM150_PWR_ON);
@@ -129,6 +130,8 @@ int bmm150_init(const struct motion_sensor_t *s)
 	ret = raw_mag_write8(s->addr, BMM150_OP_CTRL,
 			BMM150_OP_MODE_FORCED << BMM150_OP_MODE_OFFSET);
 
+	init_mag_cal(moc);
+	moc->radius = 0.0f;
 	return ret;
 }
 
@@ -207,7 +210,7 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 {
 	uint16_t r;
 	vector_3_t raw;
-	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
+	struct mag_cal_t *cal = BMM150_CAL(s);
 
 	/* X and Y are two's complement 13 bits vectors */
 	raw[X] = ((int16_t)(data[0] | (data[1] << 8))) >> 3;
@@ -220,27 +223,29 @@ void bmm150_normalize(const struct motion_sensor_t *s,
 
 	bmm150_temp_compensate_xy(s, raw, v, r);
 	bmm150_temp_compensate_z(s, raw, v, r);
-	v[X] += regs->offset[X];
-	v[Y] += regs->offset[Y];
-	v[Z] += regs->offset[Z];
+	mag_cal_update(cal, v);
+
+	v[X] += cal->bias[X];
+	v[Y] += cal->bias[Y];
+	v[Z] += cal->bias[Z];
 }
 
 int bmm150_set_offset(const struct motion_sensor_t *s,
 		      const vector_3_t offset)
 {
-	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
-	regs->offset[X] = offset[X];
-	regs->offset[Y] = offset[Y];
-	regs->offset[Z] = offset[Z];
+	struct mag_cal_t *cal = BMM150_CAL(s);
+	cal->bias[X] = offset[X];
+	cal->bias[Y] = offset[Y];
+	cal->bias[Z] = offset[Z];
 	return EC_SUCCESS;
 }
 
 int bmm150_get_offset(const struct motion_sensor_t *s,
 		      vector_3_t offset)
 {
-	struct bmm150_comp_registers *regs = BMM150_COMP_REG(s);
-	offset[X] = regs->offset[X];
-	offset[Y] = regs->offset[Y];
-	offset[Z] = regs->offset[Z];
+	struct mag_cal_t *cal = BMM150_CAL(s);
+	offset[X] = cal->bias[X];
+	offset[Y] = cal->bias[Y];
+	offset[Z] = cal->bias[Z];
 	return EC_SUCCESS;
 }

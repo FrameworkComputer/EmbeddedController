@@ -99,9 +99,9 @@ typedef fp_t matrix_3x3_t[3][3];
 /* Integer vector */
 typedef int vector_3_t[3];
 
-/* For vector_3_t, define which coordinates are in which location. */
+/* For vectors, define which coordinates are in which location. */
 enum {
-	X, Y, Z
+	X, Y, Z, W
 };
 /*
  * Return absolute value of x.  Note that as a macro expansion, this may have

@@ -19,6 +19,17 @@ static inline float sqrtf(float v)
 	);
 	return root;
 }
+
+static inline float fabsf(float v)
+{
+	float root;
+	asm volatile(
+		"fabss %0, %1"
+		: "=w" (root)
+		: "w" (v)
+	);
+	return root;
+}
 #endif  /* CONFIG_FPU */
 
 #endif  /* __CROS_EC_MATH_H */

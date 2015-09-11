@@ -9,6 +9,7 @@
 #define __CROS_EC_MAG_BMM150_H
 
 #include "accelgyro.h"
+#include "mag_cal.h"
 
 #define BMM150_ADDR0             0x20
 #define BMM150_ADDR1             0x22
@@ -86,13 +87,17 @@ struct bmm150_comp_registers {
 	int8_t       dig_xy2;
 
 	uint16_t     dig_xyz1;
-
-  /* Factory or online calibration */
-	int16_t      offset[3];
 };
 
+struct bmm150_private_data {
+	struct bmm150_comp_registers comp;
+	struct mag_cal_t             cal;
+};
 #define BMM150_COMP_REG(_s) \
-	(&BMI160_GET_DATA(_s)->comp_regs)
+	(&BMI160_GET_DATA(_s)->compass.comp)
+
+#define BMM150_CAL(_s) \
+	(&BMI160_GET_DATA(_s)->compass.cal)
 
 /* Specific initialization of BMM150 when behing BMI160 */
 int bmm150_init(const struct motion_sensor_t *s);

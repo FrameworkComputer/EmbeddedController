@@ -438,7 +438,7 @@ struct bmi160_drv_data_t {
 	uint8_t              enabled_activities;
 	uint8_t              disabled_activities;
 #ifdef CONFIG_MAG_BMI160_BMM150
-	struct bmm150_comp_registers comp_regs;
+	struct bmm150_private_data compass;
 #endif
 };
 
