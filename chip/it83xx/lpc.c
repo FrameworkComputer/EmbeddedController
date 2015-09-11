@@ -9,9 +9,11 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "ec2i_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "irq_chip.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
 #include "port80.h"
@@ -22,7 +24,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
-#include "irq_chip.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -62,6 +63,7 @@ static uint8_t host_cmd_flags;   /* Flags from host command */
 /* Params must be 32-bit aligned */
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static int init_done;
+static int p80l_index;
 
 static uint8_t * const cmd_params = (uint8_t *)host_cmd_memmap +
 	EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
@@ -97,6 +99,12 @@ static uint8_t pm_get_data_in(enum lpc_pm_ch ch)
 static void pm_put_data_out(enum lpc_pm_ch ch, uint8_t out)
 {
 	IT83XX_PMC_PMDO(ch) = out;
+}
+
+static void pm_clear_ibf(enum lpc_pm_ch ch)
+{
+	/* bit7, write-1 clear IBF */
+	IT83XX_PMC_PMIE(ch) |= (1 << 7);
 }
 
 /**
@@ -269,7 +277,7 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	 * bit0 = 0, The IRQ1 is controlled by the IRQ1B bit in KBIRQR.
 	 * bit1 = 0, The IRQ12 is controlled by the IRQ12B bit in KBIRQR.
 	 */
-	IT83XX_KBC_KBHICR &= 0xFC;
+	IT83XX_KBC_KBHICR &= 0x3C;
 
 	/*
 	 * Enable the interrupt to keyboard driver in the host processor
@@ -288,7 +296,12 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 
 void lpc_keyboard_clear_buffer(void)
 {
-	/* --- (not implemented yet) --- */
+	uint32_t int_mask = get_int_mask();
+	interrupt_disable();
+	/* bit6, write-1 clear OBF */
+	IT83XX_KBC_KBHICR |= (1 << 6);
+	IT83XX_KBC_KBHICR &= ~(1 << 6);
+	set_int_mask(int_mask);
 }
 
 void lpc_keyboard_resume_irq(void)
@@ -378,6 +391,9 @@ void lpc_kbc_ibf_interrupt(void)
 	if (lpc_keyboard_input_pending()) {
 		keyboard_host_write(IT83XX_KBC_KBHIDIR,
 			(IT83XX_KBC_KBHISR & 0x08) ? 1 : 0);
+		/* bit7, write-1 clear IBF */
+		IT83XX_KBC_KBHICR |= (1 << 7);
+		IT83XX_KBC_KBHICR &= ~(1 << 7);
 	}
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_IN);
@@ -423,6 +439,8 @@ void pm1_ibf_interrupt(void)
 		if (acpi_ap_to_ec(is_cmd, value, &result))
 			pm_put_data_out(LPC_ACPI_CMD, result);
 
+		pm_clear_ibf(LPC_ACPI_CMD);
+
 		/* Clear the busy bit */
 		pm_set_status(LPC_ACPI_CMD, EC_LPC_STATUS_PROCESSING, 0);
 
@@ -452,6 +470,7 @@ void pm2_ibf_interrupt(void)
 	if (!(status & EC_LPC_STATUS_LAST_CMD)) {
 		/* R/C IBF*/
 		value = pm_get_data_in(LPC_HOST_CMD);
+		pm_clear_ibf(LPC_HOST_CMD);
 		task_clear_pending_irq(IT83XX_IRQ_PMC2_IN);
 		return;
 	}
@@ -487,6 +506,7 @@ void pm2_ibf_interrupt(void)
 		lpc_packet.driver_result = EC_RES_SUCCESS;
 		host_packet_receive(&lpc_packet);
 
+		pm_clear_ibf(LPC_HOST_CMD);
 		task_clear_pending_irq(IT83XX_IRQ_PMC2_IN);
 		return;
 	} else {
@@ -497,29 +517,55 @@ void pm2_ibf_interrupt(void)
 	/* Hand off to host command handler */
 	host_command_received(&host_cmd_args);
 
+	pm_clear_ibf(LPC_HOST_CMD);
 	task_clear_pending_irq(IT83XX_IRQ_PMC2_IN);
 }
 
 void pm3_ibf_interrupt(void)
 {
-	if (pm_get_status(LPC_HOST_PORT_80H) & EC_LPC_STATUS_FROM_HOST)
-		port_80_write(pm_get_data_in(LPC_HOST_PORT_80H));
+	int new_p80_idx, i;
+	enum ec2i_message ec2i_r;
+
+	/* set LDN */
+	if (ec2i_write(HOST_INDEX_LDN, LDN_RTCT) == EC2I_WRITE_SUCCESS) {
+		/* get P80L current index */
+		ec2i_r = ec2i_read(HOST_INDEX_DSLDC6);
+		/* clear IBF */
+		pm_clear_ibf(LPC_HOST_PORT_80H);
+		/* read OK */
+		if ((ec2i_r & 0xff00) == EC2I_READ_SUCCESS) {
+			new_p80_idx = ec2i_r & P80L_BRAM_BANK1_MAX_SIZE;
+			for (i = 0; i < P80L_BRAM_BANK1_MAX_SIZE; i++) {
+				if (++p80l_index > P80L_P80LE)
+					p80l_index = P80L_P80LB;
+				port_80_write(IT83XX_BRAM_BANK1(p80l_index));
+				if (p80l_index == new_p80_idx)
+					break;
+			}
+		}
+	} else {
+		pm_clear_ibf(LPC_HOST_PORT_80H);
+	}
 
 	task_clear_pending_irq(IT83XX_IRQ_PMC3_IN);
 }
 
 void pm4_ibf_interrupt(void)
 {
+	pm_clear_ibf(LPC_PM4);
 	task_clear_pending_irq(IT83XX_IRQ_PMC4_IN);
 }
 
 void pm5_ibf_interrupt(void)
 {
+	pm_clear_ibf(LPC_PM5);
 	task_clear_pending_irq(IT83XX_IRQ_PMC5_IN);
 }
 
 static void lpc_init(void)
 {
+	enum ec2i_message ec2i_r;
+
 	/*
 	 * DLM 52k~56k size select enable.
 	 * For mapping LPC I/O cycle 800h ~ 9FFh to DLM 8D800 ~ 8D9FF.
@@ -537,8 +583,15 @@ static void lpc_init(void)
 	/*
 	 * bit2, Output Buffer Empty CPU Interrupt Enable.
 	 * bit3, Input Buffer Full CPU Interrupt Enable.
+	 * bit5, IBF/OBF EC clear mode.
+	 *   0b: IBF cleared if EC read data register, EC reset, or host reset.
+	 *       OBF cleared if host read data register, or EC reset.
+	 *   1b: IBF cleared if EC write-1 to bit7 at related registers,
+	 *       EC reset, or host reset.
+	 *       OBF cleared if host read data register, EC write-1 to bit6 at
+	 *       related registers, or EC reset.
 	 */
-	IT83XX_KBC_KBHICR |= 0x0C;
+	IT83XX_KBC_KBHICR |= 0x2C;
 
 	/* PM1 Input Buffer Full Interrupt Enable for 62h/66 port */
 	pm_set_ctrl(LPC_ACPI_CMD, PM_CTRL_IBFIE, 1);
@@ -608,6 +661,22 @@ static void lpc_init(void)
 
 	/* PM3 Input Buffer Full Interrupt Enable for 80h port */
 	pm_set_ctrl(LPC_HOST_PORT_80H, PM_CTRL_IBFIE, 1);
+
+	p80l_index = P80L_P80LC;
+	if (ec2i_write(HOST_INDEX_LDN, LDN_RTCT) == EC2I_WRITE_SUCCESS) {
+		/* get P80L current index */
+		ec2i_r = ec2i_read(HOST_INDEX_DSLDC6);
+		/* read OK */
+		if ((ec2i_r & 0xff00) == EC2I_READ_SUCCESS)
+			p80l_index = ec2i_r & P80L_BRAM_BANK1_MAX_SIZE;
+	}
+
+	/*
+	 * bit[7], enable P80L function.
+	 * bit[6], accept port 80h cycle.
+	 * bit[1-0], 10b: I2EC is read-only.
+	 */
+	IT83XX_GCTRL_SPCTRL1 |= 0xC2;
 
 	gpio_enable_interrupt(GPIO_PCH_PLTRST_L);
 

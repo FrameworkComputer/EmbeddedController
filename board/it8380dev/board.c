@@ -146,6 +146,14 @@ const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_IRQNUMX, 0x00},
 	/* Enable logical device */
 	{HOST_INDEX_LDA, 0x01},
+	/* Select logical device 10h(RTCT) */
+	{HOST_INDEX_LDN, LDN_RTCT},
+	/* P80L Begin Index */
+	{HOST_INDEX_DSLDC4, P80L_P80LB},
+	/* P80L End Index */
+	{HOST_INDEX_DSLDC5, P80L_P80LE},
+	/* P80L Current Index */
+	{HOST_INDEX_DSLDC6, P80L_P80LC},
 };
 BUILD_ASSERT(ARRAY_SIZE(pnpcfg_settings) == EC2I_SETTING_COUNT);
 

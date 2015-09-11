@@ -642,6 +642,7 @@ enum clock_gate_offsets {
 #define IT83XX_GCTRL_WNCKR        REG8(IT83XX_GCTRL_BASE+0x0B)
 #define IT83XX_GCTRL_RSTS         REG8(IT83XX_GCTRL_BASE+0x06)
 #define IT83XX_GCTRL_BADRSEL      REG8(IT83XX_GCTRL_BASE+0x0A)
+#define IT83XX_GCTRL_SPCTRL1      REG8(IT83XX_GCTRL_BASE+0x0D)
 #define IT83XX_GCTRL_RSTC4        REG8(IT83XX_GCTRL_BASE+0x11)
 #define IT83XX_GCTRL_SPCTRL4      REG8(IT83XX_GCTRL_BASE+0x1C)
 #define IT83XX_GCTRL_MCCR         REG8(IT83XX_GCTRL_BASE+0x30)
@@ -817,6 +818,8 @@ enum clock_gate_offsets {
 REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 2 : 4) + (ch << 4))
 #define IT83XX_PMC_PMCTL(ch)     \
 REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 3 : 6) + (ch << 4))
+#define IT83XX_PMC_PMIE(ch)     \
+REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 5 : 8) + (ch << 4))
 
 /* Keyboard Matrix Scan control (KBS) */
 #define IT83XX_KBS_BASE   0x00F01D00
@@ -936,13 +939,17 @@ REG8(IT83XX_PMC_BASE + (ch > LPC_PM2 ? 3 : 6) + (ch << 4))
 #define IT83XX_SMB_SMBPCTL(ch)  REG8(IT83XX_SMB_BASE+0x4A+(ch << 6))
 #define IT83XX_SMB_HOCTL2(ch)   REG8(IT83XX_SMB_BASE+0x50+(ch << 6))
 
+/* BRAM */
+#define IT83XX_BRAM_BASE  0x00F02200
+
+#define IT83XX_BRAM_BANK1(i)    REG8(IT83XX_BRAM_BASE + 0x80 + i)
+
 /* --- MISC (not implemented yet) --- */
 
 #define IT83XX_PS2_BASE   0x00F01700
 #define IT83XX_DAC_BASE   0x00F01A00
 #define IT83XX_WUC_BASE   0x00F01B00
 #define IT83XX_EGPIO_BASE 0x00F02100
-#define IT83XX_BRAM_BASE  0x00F02200
 #define IT83XX_CIR_BASE   0x00F02300
 #define IT83XX_DBGR_BASE  0x00F02500
 #define IT83XX_OW_BASE    0x00F02A00
