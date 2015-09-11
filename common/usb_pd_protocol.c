@@ -576,7 +576,11 @@ void pd_prepare_reset(void)
 
 	pd_soft_reset();
 
-	/* Give time for soft reset to be sent */
+	/*
+	 * Give time for soft reset to be sent
+	 * TODO (crosbug.com/p/45133): wait for soft reset to finish instead of
+	 * blind delay.
+	 */
 	usleep(8*MSEC);
 }
 
