@@ -101,19 +101,6 @@
 #define KXCJ9_OSA_400_0HZ	5
 #define KXCJ9_OSA_800_0HZ	6
 #define KXCJ9_OSA_1600_HZ	7
-
-struct kxcj9_data {
-	/* Current range of accelerometer. */
-	int sensor_range;
-	/* Current output data rate of accelerometer. */
-	int sensor_datarate;
-	/* Current resolution of accelerometer. */
-	int sensor_resolution;
-	/* Device address. */
-	int accel_addr;
-	int16_t  offset[3];
-};
-
-extern const struct accelgyro_drv kxcj9_drv;
+#define KXCJ9_OSA_FIELD		0xf
 
 #endif /* __CROS_EC_ACCEL_KXCJ9_H */

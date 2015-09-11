@@ -12,6 +12,7 @@ common-y+=version.o printf.o queue.o queue_policies.o
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DS0)+=math_util.o
 common-$(CONFIG_ACCEL_KXCJ9)+=math_util.o
+common-$(CONFIG_ACCEL_KX022)+=math_util.o
 common-$(CONFIG_ADC)+=adc.o
 common-$(CONFIG_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o

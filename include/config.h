@@ -46,6 +46,7 @@
 
 /* Specify type of accelerometers attached. */
 #undef CONFIG_ACCEL_KXCJ9
+#undef CONFIG_ACCEL_KX022
 #undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
 

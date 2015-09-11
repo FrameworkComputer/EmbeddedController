@@ -7,6 +7,7 @@
 
 #include "charger.h"
 #include "charge_state.h"
+#include "driver/accel_kionix.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -99,7 +100,10 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /* kxcj9 mutex and local/private data*/
 static struct mutex g_kxcj9_mutex[2];
-struct kxcj9_data g_kxcj9_data[2];
+struct kionix_accel_data g_kxcj9_data[2] = {
+	{.variant = KXCJ9},
+	{.variant = KXCJ9},
+};
 
 /* Four Motion sensors */
 /* Matrix to rotate accelrator into standard reference frame */
@@ -121,7 +125,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .chip = MOTIONSENSE_CHIP_KXCJ9,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &kxcj9_drv,
+	 .drv = &kionix_accel_drv,
 	 .mutex = &g_kxcj9_mutex[0],
 	 .drv_data = &g_kxcj9_data[0],
 	 .addr = KXCJ9_ADDR1,
@@ -155,7 +159,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .chip = MOTIONSENSE_CHIP_KXCJ9,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &kxcj9_drv,
+	 .drv = &kionix_accel_drv,
 	 .mutex = &g_kxcj9_mutex[1],
 	 .drv_data = &g_kxcj9_data[1],
 	 .addr = KXCJ9_ADDR0,

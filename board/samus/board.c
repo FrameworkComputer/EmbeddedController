@@ -14,6 +14,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "driver/accel_kionix.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/accelgyro_lsm6ds0.h"
 #include "driver/als_isl29035.h"
@@ -273,7 +274,9 @@ static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
 /* kxcj9 local/private data */
-struct kxcj9_data g_kxcj9_data;
+struct kionix_accel_data g_kxcj9_data = {
+	.variant = KXCJ9,
+};
 
 /* lsm6ds0 local sensor data (per-sensor) */
 struct lsm6ds0_data g_saved_data[2];
@@ -337,7 +340,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .chip = MOTIONSENSE_CHIP_KXCJ9,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &kxcj9_drv,
+	 .drv = &kionix_accel_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_kxcj9_data,
 	 .addr = KXCJ9_ADDR0,
