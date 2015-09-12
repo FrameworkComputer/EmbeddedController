@@ -429,7 +429,7 @@ static uint32_t sequence_S3S0(void)
 	int ci;
 	uint32_t res;
 
-	lb_init();
+	lb_init(1);
 	lb_on();
 	get_battery_level();
 
@@ -623,7 +623,7 @@ static uint32_t sequence_S3(void)
 	int ci;
 
 	lb_off();
-	lb_init();
+	lb_init(1);
 	lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	while (1) {
 		WAIT_OR_RET(st.p.s3_sleep_for);
@@ -669,7 +669,7 @@ static uint32_t sequence_S5S3(void)
 	 * respond. Don't return early, because we still want to initialize the
 	 * lightbar even if another message comes along while we're waiting. */
 	usleep(100);
-	lb_init();
+	lb_init(1);
 	lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	lb_on();
 	/* next sequence */
@@ -732,7 +732,6 @@ static uint32_t sequence_S5(void)
 #ifdef CONFIG_LIGHTBAR_POWER_RAILS
 			/* Request that lightbar power rails be turned on. */
 			if (lb_power(1)) {
-				lb_init();
 				lb_set_rgb(NUM_LEDS, 0, 0, 0);
 			}
 #endif
@@ -788,7 +787,7 @@ static uint32_t sequence_RUN(void)
  */
 static uint32_t sequence_ERROR(void)
 {
-	lb_init();
+	lb_init(1);
 	lb_on();
 
 	lb_set_rgb(0, 255, 255, 255);
@@ -1062,7 +1061,6 @@ static uint32_t sequence_TAP(void)
 #ifdef CONFIG_LIGHTBAR_POWER_RAILS
 	/* Request that the lightbar power rails be turned on. */
 	if (lb_power(1)) {
-		lb_init();
 		lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	}
 #endif
@@ -1667,7 +1665,7 @@ static int lpc_cmd_lightbar(struct host_cmd_handler_args *args)
 		lb_on();
 		break;
 	case LIGHTBAR_CMD_INIT:
-		lb_init();
+		lb_init(1);
 		break;
 	case LIGHTBAR_CMD_SET_BRIGHTNESS:
 		lb_set_brightness(in->set_brightness.num);
@@ -1905,7 +1903,7 @@ static int command_lightbar(int argc, char **argv)
 	}
 
 	if (!strcasecmp(argv[1], "init")) {
-		lb_init();
+		lb_init(1);
 		return EC_SUCCESS;
 	}
 

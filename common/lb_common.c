@@ -101,6 +101,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
+#define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ## args)
 
 /******************************************************************************/
@@ -114,16 +115,24 @@ static const uint8_t i2c_addr[] = { 0x54, 0x56 };
 
 static inline void controller_write(int ctrl_num, uint8_t reg, uint8_t val)
 {
+	uint8_t buf[2];
+
+	buf[0] = reg;
+	buf[1] = val;
 	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr);
-	i2c_write8(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], reg, val);
+	i2c_xfer(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], buf, 2, 0, 0,
+		 I2C_XFER_SINGLE);
 }
 
 static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 {
-	int val = 0;
+	uint8_t buf[1];
+	int rv;
+
 	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr);
-	i2c_read8(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], reg, &val);
-	return val;
+	rv = i2c_xfer(I2C_PORT_LIGHTBAR, i2c_addr[ctrl_num], &reg, 1, buf, 1,
+		      I2C_XFER_SINGLE);
+	return rv ? 0 : buf[0];
 }
 
 /******************************************************************************/
@@ -189,15 +198,6 @@ static const struct initdata_s init_vals[] = {
 	{0x1a, 0x00},				/* current for LED 1 (green) */
 };
 
-static void set_from_array(const struct initdata_s *data, int count)
-{
-	int i;
-	for (i = 0; i < count; i++) {
-		controller_write(0, data[i].reg, data[i].val);
-		controller_write(1, data[i].reg, data[i].val);
-	}
-}
-
 /* Controller register lookup tables. */
 static const uint8_t led_to_ctrl[] = { 1, 1, 0, 0 };
 #ifdef BOARD_BDS
@@ -242,9 +242,11 @@ static void setrgb(int led, int red, int green, int blue)
 	current[led][2] = blue;
 	ctrl = led_to_ctrl[led];
 	bank = led_to_isc[led];
+	i2c_lock(I2C_PORT_LIGHTBAR, 1);
 	controller_write(ctrl, bank, scale(blue, MAX_BLUE));
 	controller_write(ctrl, bank+1, scale(red, MAX_RED));
 	controller_write(ctrl, bank+2, scale(green, MAX_GREEN));
+	i2c_lock(I2C_PORT_LIGHTBAR, 0);
 }
 
 /* LEDs are numbered 0-3, RGB values should be in 0-255.
@@ -289,10 +291,21 @@ uint8_t lb_get_brightness(void)
 }
 
 /* Initialize the controller ICs after reset */
-void lb_init(void)
+void lb_init(int use_lock)
 {
-	CPRINTS("LB_init_vals");
-	set_from_array(init_vals, ARRAY_SIZE(init_vals));
+	int i;
+
+	CPRINTF("[%T LB_init_vals ");
+	for (i = 0; i < ARRAY_SIZE(init_vals); i++) {
+		CPRINTF("%c", '0' + i % 10);
+		if (use_lock)
+			i2c_lock(I2C_PORT_LIGHTBAR, 1);
+		controller_write(0, init_vals[i].reg, init_vals[i].val);
+		controller_write(1, init_vals[i].reg, init_vals[i].val);
+		if (use_lock)
+			i2c_lock(I2C_PORT_LIGHTBAR, 0);
+	}
+	CPRINTF("]\n");
 	memset(current, 0, sizeof(current));
 }
 
@@ -300,16 +313,20 @@ void lb_init(void)
 void lb_off(void)
 {
 	CPRINTS("LB_off");
+	i2c_lock(I2C_PORT_LIGHTBAR, 1);
 	controller_write(0, 0x01, 0x00);
 	controller_write(1, 0x01, 0x00);
+	i2c_lock(I2C_PORT_LIGHTBAR, 0);
 }
 
 /* Come out of standby mode. */
 void lb_on(void)
 {
 	CPRINTS("LB_on");
+	i2c_lock(I2C_PORT_LIGHTBAR, 1);
 	controller_write(0, 0x01, 0x20);
 	controller_write(1, 0x01, 0x20);
+	i2c_lock(I2C_PORT_LIGHTBAR, 0);
 }
 
 static const uint8_t dump_reglist[] = {
@@ -331,13 +348,17 @@ void lb_hc_cmd_dump(struct ec_response_lightbar *out)
 	for (i = 0; i < ARRAY_SIZE(dump_reglist); i++) {
 		reg = dump_reglist[i];
 		out->dump.vals[i].reg = reg;
+		i2c_lock(I2C_PORT_LIGHTBAR, 1);
 		out->dump.vals[i].ic0 = controller_read(0, reg);
 		out->dump.vals[i].ic1 = controller_read(1, reg);
+		i2c_lock(I2C_PORT_LIGHTBAR, 0);
 	}
 }
 
 /* Helper for host command to write controller registers directly */
 void lb_hc_cmd_reg(const struct ec_params_lightbar *in)
 {
+	i2c_lock(I2C_PORT_LIGHTBAR, 1);
 	controller_write(in->reg.ctrl, in->reg.reg, in->reg.value);
+	i2c_lock(I2C_PORT_LIGHTBAR, 0);
 }

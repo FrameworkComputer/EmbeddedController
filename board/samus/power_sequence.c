@@ -11,6 +11,8 @@
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
+#include "i2c.h"
+#include "lb_common.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -317,7 +319,12 @@ enum power_state power_handle_state(enum power_state state)
 		 * available and we won't leak +3VALW through the reset
 		 * line.
 		 */
+		i2c_lock(I2C_PORT_LIGHTBAR, 1);
 		gpio_set_level(GPIO_LIGHTBAR_RESET_L, 1);
+		msleep(1);
+		lb_init(0);
+		msleep(100);
+		i2c_lock(I2C_PORT_LIGHTBAR, 0);
 
 		/*
 		 * Enable touchpad power so it can wake the system from
@@ -544,14 +551,25 @@ int lb_power(int enabled)
 	 * Note, we should delay even if the PP5000 rail was already
 	 * enabled because we can't be sure it's been enabled long
 	 * enough for lightbar IC to respond.
+	 *
+	 * Also, the lightbar do not expect other i2c traffic while
+	 * being power up. Put a lock on the i2c bus.
+	 * see chrome-os-partner:45223.
 	 */
-	if (enabled)
+	if (enabled) {
+		i2c_lock(I2C_PORT_LIGHTBAR, 1);
 		msleep(10);
+	}
 
 	if (enabled != gpio_get_level(GPIO_LIGHTBAR_RESET_L)) {
 		ret = 1;
 		gpio_set_level(GPIO_LIGHTBAR_RESET_L, enabled);
 		msleep(1);
+	}
+	if (enabled) {
+		lb_init(0);
+		msleep(100);
+		i2c_lock(I2C_PORT_LIGHTBAR, 0);
 	}
 
 	return ret;

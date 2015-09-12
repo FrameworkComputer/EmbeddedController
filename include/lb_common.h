@@ -23,7 +23,7 @@ void lb_set_brightness(unsigned int newval);
 /* Get the overall brighness level. */
 uint8_t lb_get_brightness(void);
 /* Initialize the IC controller registers to sane values. */
-void lb_init(void);
+void lb_init(int use_lock);
 /* Disable the LED current off (the IC stays on). */
 void lb_off(void);
 /* Enable the LED current. */
