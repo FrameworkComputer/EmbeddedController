@@ -11,6 +11,7 @@
 #include "cpu.h"
 #include "irq_chip.h"
 #include "link_defs.h"
+#include "registers.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -60,12 +61,33 @@ void __idle(void)
 	 */
 	cprints(CC_TASK, "idle task started");
 
+#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
+	IT83XX_WUC_WUESR4 = 0xff;
+	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
+	/* bit2, wake-up enable for LPC access */
+	IT83XX_WUC_WUENR4 |= (1 << 2);
+#endif
+
 	while (1) {
+#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
+		BRAM_LPC_ACCESS = LPC_ACCESS_INT_BUSY;
+		/* LPC access interrupt pending. */
+		if (IT83XX_WUC_WUESR4 & (1 << 2)) {
+			task_enable_irq(IT83XX_IRQ_WKINTAD);
+			continue;
+		}
+		BRAM_LPC_ACCESS = 0x00;
+		task_enable_irq(IT83XX_IRQ_WKINTAD);
+#endif
+
+		/* doze mode */
+		IT83XX_ECPM_PLLCTRL = 0x00;
+		asm volatile ("dsb");
 		/*
 		 * Wait for the next irq event.  This stops the CPU clock
 		 * (sleep / deep sleep, depending on chip config).
 		 */
-		asm("standby no_wake_grant");
+		asm("standby wake_grant");
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */

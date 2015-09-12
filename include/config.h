@@ -1055,6 +1055,9 @@
 /* Enable Wake-up control interrupt from KSI */
 #undef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 
+/* LPC cycle can wake-up EC from doze / deep doze mode if define it. */
+#undef CONFIG_IT83XX_LPC_ACCESS_INT
+
 /* Interrupt for PECI module. (IT839X series and IT838X DX only) */
 #undef CONFIG_IT83XX_PECI_WITH_INTERRUPT
 

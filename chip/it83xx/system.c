@@ -16,13 +16,6 @@
 #include "version.h"
 #include "watchdog.h"
 
-/* Battery backed RAM indices. */
-enum system_bram_indices {
-	BRAM_INDEX_SAVED_RESET_FLAGS = 0, /* uses 4 bytes */
-};
-
-
-
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
@@ -53,22 +46,20 @@ static void check_reset_cause(void)
 
 	/* Restore then clear saved reset flags. */
 	if (!(flags & RESET_FLAG_POWER_ON)) {
-		const uint32_t addr =
-			IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS;
-		flags |= REG8(addr + 0) << 24;
-		flags |= REG8(addr + 1) << 16;
-		flags |= REG8(addr + 2) << 8;
-		flags |= REG8(addr + 3);
+		flags |= BRAM_RESET_FLAGS << 24;
+		flags |= BRAM_RESET_FLAGS1 << 16;
+		flags |= BRAM_RESET_FLAGS2 << 8;
+		flags |= BRAM_RESET_FLAGS3;
 
 		/* watchdog module triggers these reset */
 		if (flags & (RESET_FLAG_HARD | RESET_FLAG_SOFT))
 			flags &= ~RESET_FLAG_WATCHDOG;
 	}
 
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS) = 0;
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+1) = 0;
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+2) = 0;
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+3) = 0;
+	BRAM_RESET_FLAGS = 0;
+	BRAM_RESET_FLAGS1 = 0;
+	BRAM_RESET_FLAGS2 = 0;
+	BRAM_RESET_FLAGS3 = 0;
 
 	system_set_reset_flags(flags);
 }
@@ -120,13 +111,10 @@ void system_reset(int flags)
 		save_flags |= RESET_FLAG_SOFT;
 
 	/* Store flags to battery backed RAM. */
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS) = save_flags >> 24;
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+1) =
-			(save_flags >> 16) & 0xff;
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+2) =
-			(save_flags >> 8) & 0xff;
-	REG8(IT83XX_BRAM_BASE+BRAM_INDEX_SAVED_RESET_FLAGS+3) =
-			save_flags & 0xff;
+	BRAM_RESET_FLAGS = save_flags >> 24;
+	BRAM_RESET_FLAGS1 = (save_flags >> 16) & 0xff;
+	BRAM_RESET_FLAGS2 = (save_flags >> 8) & 0xff;
+	BRAM_RESET_FLAGS3 = save_flags & 0xff;
 
 	/*
 	 * Writing invalid key to watchdog module triggers a soft reset. For
@@ -152,6 +140,24 @@ uint32_t system_get_scratchpad(void)
 	return 0;
 }
 
+static uint16_t system_get_chip_id(void)
+{
+	return (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
+}
+
+static uint8_t system_get_chip_version(void)
+{
+	/* bit[3-0], chip version */
+	return IT83XX_GCTRL_CHIPVER & 0x0F;
+}
+
+static char to_hex(int x)
+{
+	if (x >= 0 && x <= 9)
+		return '0' + x;
+	return 'a' + x - 10;
+}
+
 const char *system_get_chip_vendor(void)
 {
 	return "ite";
@@ -159,12 +165,28 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	return "it83xx";
+	static char buf[7];
+	uint16_t chip_id = system_get_chip_id();
+
+	buf[0] = 'i';
+	buf[1] = 't';
+	buf[2] = to_hex((chip_id >> 12) & 0xf);
+	buf[3] = to_hex((chip_id >> 8) & 0xf);
+	buf[4] = to_hex((chip_id >> 4) & 0xf);
+	buf[5] = to_hex(chip_id & 0xf);
+	buf[6] = '\0';
+	return buf;
 }
 
 const char *system_get_chip_revision(void)
 {
-	return "";
+	static char buf[3];
+	uint8_t rev = system_get_chip_version();
+
+	buf[0] = to_hex(rev + 0xa);
+	buf[1] = 'x';
+	buf[2] = '\0';
+	return buf;
 }
 
 int system_get_vbnvcontext(uint8_t *block)
