@@ -457,8 +457,9 @@ int flash_pre_init(void)
 		}
 	}
 
-	if (!!(prot_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) !=
-	    !!(prot_flags & EC_FLASH_PROTECT_ALL_NOW)) {
+	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	    (!!(prot_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) !=
+	     !!(prot_flags & EC_FLASH_PROTECT_ALL_NOW))) {
 		/*
 		 * ALL_AT_BOOT and ALL_NOW should be both set or both unset
 		 * at boot. If they are not, it must be that the chip requires
