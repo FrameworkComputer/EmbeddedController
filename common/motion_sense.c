@@ -273,7 +273,7 @@ int motion_sense_set_accel_interval(void)
 	return accel_interval;
 }
 
-static inline void motion_sense_init(struct motion_sensor_t *sensor)
+static inline int motion_sense_init(struct motion_sensor_t *sensor)
 {
 	int ret, cnt = 3;
 
@@ -291,6 +291,7 @@ static inline void motion_sense_init(struct motion_sensor_t *sensor)
 		sensor->oversampling = 0;
 		motion_sense_set_data_rate(sensor);
 	}
+	return ret;
 }
 
 /*
@@ -302,17 +303,23 @@ static inline void motion_sense_init(struct motion_sensor_t *sensor)
  */
 static void motion_sense_switch_sensor_rate(void)
 {
-	int i;
+	int i, ret;
 	struct motion_sensor_t *sensor;
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
 		if (SENSOR_ACTIVE(sensor)) {
 			/* Initialize or just back the odr previously set. */
-			if (sensor->state == SENSOR_INITIALIZED)
+			if (sensor->state == SENSOR_INITIALIZED) {
 				motion_sense_set_data_rate(sensor);
-			else
-				motion_sense_init(sensor);
+			} else {
+				ret = motion_sense_init(sensor);
+				if (ret != EC_SUCCESS) {
+					CPRINTS("%s: %d: init failed: %d",
+						sensor->name, i, ret);
+				}
+			}
 		} else {
+			/* The sensors are being powered off */
 			if (sensor->state == SENSOR_INITIALIZED)
 				sensor->state = SENSOR_NOT_INITIALIZED;
 		}
@@ -1127,7 +1134,7 @@ DECLARE_CONSOLE_COMMAND(accelread, command_accel_read_xyz,
 static int command_accel_init(int argc, char **argv)
 {
 	char *e;
-	int id;
+	int id, ret;
 	struct motion_sensor_t *sensor;
 
 	if (argc < 2)
@@ -1140,9 +1147,9 @@ static int command_accel_init(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	sensor = &motion_sensors[id];
-	motion_sense_init(sensor);
+	ret = motion_sense_init(sensor);
 
-	ccprintf("%s: %d\n", sensor->name, sensor->state);
+	ccprintf("%s: state %d - %d\n", sensor->name, sensor->state, ret);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelinit, command_accel_init,
