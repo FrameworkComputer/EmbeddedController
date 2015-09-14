@@ -15,8 +15,6 @@
 #undef CONFIG_HIBERNATE
 #undef CONFIG_LID_SWITCH
 
-#if !defined(CHIP_VARIANT_CR50_A1)
-
 /* USB configuration */
 #define CONFIG_USB
 #define CONFIG_USB_HID
@@ -31,8 +29,6 @@
 
 /* We don't need to send events to the AP */
 #undef  CONFIG_HOSTCMD_EVENTS
-
-#endif	/* not A1 */
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

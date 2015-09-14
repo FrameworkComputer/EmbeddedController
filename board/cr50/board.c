@@ -27,7 +27,6 @@
 #ifdef CONFIG_USB_HID
 static void send_hid_event(void)
 {
-#if !defined(CHIP_VARIANT_CR50_A1)
 	uint64_t rpt = 0;
 	uint8_t *key_ptr = (void *)&rpt + 2;
 	/* Convert SW_N/SW_S/SW_W/SW_E to A,B,C,D keys */
@@ -43,7 +42,6 @@ static void send_hid_event(void)
 	set_keyboard_report(rpt);
 	/* check release in the future */
 	hook_call_deferred(send_hid_event, 40);
-#endif
 }
 DECLARE_DEFERRED(send_hid_event);
 #endif
