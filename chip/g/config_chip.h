@@ -17,14 +17,17 @@
 #define CONFIG_RAM_SIZE         0x10000
 
 /* Flash chip specifics */
-#define CONFIG_FLASH_BANK_SIZE      0x00000800  /* protect bank size */
-#define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
-#define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
-#define CONFIG_RO_HEAD_ROOM	    1024	/* Room for ROM signature. */
+#define CONFIG_FLASH_BANK_SIZE         0x800	/* protect bank size */
+#define CONFIG_FLASH_ERASE_SIZE        0x800	/* erase bank size */
+/* This flash can only be written as 4-byte words (aligned properly, too). */
+#define CONFIG_FLASH_WRITE_SIZE        4	/* min write size (bytes) */
+/* But we have a 32-word buffer for writing multiple adjacent cells */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE  128	/* best write size (bytes) */
 
 /* Describe the flash layout */
-#define CONFIG_PROGRAM_MEMORY_BASE 0x40000
-#define CONFIG_FLASH_SIZE (512 * 1024)
+#define CONFIG_PROGRAM_MEMORY_BASE     0x40000
+#define CONFIG_FLASH_SIZE              (512 * 1024)
+#define CONFIG_RO_HEAD_ROOM	       1024	/* Room for ROM signature. */
 
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"

@@ -743,9 +743,13 @@
  */
 #define CONFIG_FLASH_PSTATE_BANK
 
+/* Total size of writable flash */
 #undef CONFIG_FLASH_SIZE
-#undef CONFIG_FLASH_WRITE_IDEAL_SIZE
+
+/* Minimum flash write size (in bytes) */
 #undef CONFIG_FLASH_WRITE_SIZE
+/* Most efficient flash write size (in bytes) */
+#undef CONFIG_FLASH_WRITE_IDEAL_SIZE
 
 /* Protected region of storage belonging to EC */
 #undef CONFIG_EC_PROTECTED_STORAGE_OFF

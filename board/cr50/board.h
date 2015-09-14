@@ -10,10 +10,17 @@
 #undef CONFIG_CMD_LID_ANGLE
 #undef CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_DMA_DEFAULT_HANDLERS
-#undef CONFIG_FLASH
 #undef CONFIG_FMAP
 #undef CONFIG_HIBERNATE
 #undef CONFIG_LID_SWITCH
+
+/* Flash configuration */
+#undef CONFIG_FLASH_PSTATE
+/* TODO(crosbug.com/p/44745): Bringup only! Do the right thing for real! */
+#define CONFIG_WP_ALWAYS
+/* TODO(crosbug.com/p/44745): For debugging only */
+#define CONFIG_CMD_FLASH
+
 
 /* USB configuration */
 #define CONFIG_USB
