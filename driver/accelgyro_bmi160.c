@@ -182,6 +182,7 @@ static int raw_write8(const int addr, const uint8_t reg, int data)
 	return rv;
 }
 
+#ifdef CONFIG_ACCEL_INTERRUPTS
 /**
  * Read 32bit register from accelerometer.
  */
@@ -201,6 +202,7 @@ static int raw_read32(const int addr, const uint8_t reg, int *data_ptr)
 	}
 	return rv;
 }
+#endif /* defined(CONFIG_ACCEL_INTERRUPTS) */
 
 /**
  * Read n bytes from accelerometer.
@@ -485,9 +487,11 @@ static int get_offset(const struct motion_sensor_t *s,
 				BMI160_OFFSET_GYRO_DIV_MDS;
 		}
 		break;
+#ifdef CONFIG_MAG_BMI160_BMM150
 	case MOTIONSENSE_TYPE_MAG:
 		bmm150_get_offset(s, v);
 		break;
+#endif /* defined(CONFIG_MAG_BMI160_BMM150) */
 	default:
 		for (i = X; i <= Z; i++)
 			v[i] = 0;
@@ -548,9 +552,11 @@ static int set_offset(const struct motion_sensor_t *s,
 		ret = raw_write8(s->addr, BMI160_OFFSET_EN_GYR98,
 				 val98 | BMI160_OFFSET_GYRO_EN);
 		break;
+#ifdef CONFIG_MAG_BMI160_BMM150
 	case MOTIONSENSE_TYPE_MAG:
 		ret = bmm150_set_offset(s, v);
 		break;
+#endif /* defined(CONFIG_MAG_BMI160) */
 	default:
 		ret = EC_RES_INVALID_PARAM;
 	}

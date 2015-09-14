@@ -17,6 +17,7 @@
 #include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi160.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -427,10 +428,11 @@ static void board_handle_reboot(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 
-/* Motion sensors */
 #ifdef HAS_TASK_MOTIONSENSE
-/* Lid Sensor mutex */
+/* Motion sensors */
+/* Mutexes */
 static struct mutex g_lid_mutex;
+static struct mutex g_base_mutex;
 
 /* KX022 private data */
 struct kionix_accel_data g_kx022_data = {
@@ -438,6 +440,81 @@ struct kionix_accel_data g_kx022_data = {
 };
 
 struct motion_sensor_t motion_sensors[] = {
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	{.name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .addr = BMI160_ADDR0,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default use EC settings */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+	 },
+	},
+
+	{.name = "Base Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .addr = BMI160_ADDR0,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = NULL, /* Identity Matrix. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC does not need in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
+	},
+
 	{.name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0,
 	 .chip = MOTIONSENSE_CHIP_KX022,
