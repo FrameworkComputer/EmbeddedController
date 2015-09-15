@@ -46,7 +46,6 @@
 /* PSYS register 8.6KOhm */
 #define CHARGER_PSYS_REGISTER 8600
 #endif
-#define CONFIG_CMD_PSYS
 /*
  * PSYS gain = 1 / (PYSY register * (1.44 or 0.36) uA/W)
  */

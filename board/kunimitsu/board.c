@@ -555,3 +555,34 @@ static void board_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
+
+#ifndef BOARD_KUNIMITSU_V3
+/* Make the pmic re-sequence the power rails under these conditions. */
+#define PMIC_RESET_FLAGS \
+	(RESET_FLAG_WATCHDOG | RESET_FLAG_SOFT | RESET_FLAG_HARD)
+static void board_handle_reboot(void)
+{
+	int flags;
+
+	if (system_jumped_to_this_image())
+		return;
+
+	/* Interrogate current reset flags from previous reboot. */
+	flags = system_get_reset_flags();
+
+	if (!(flags & PMIC_RESET_FLAGS))
+		return;
+
+	/* Preserve AP off request. */
+	if (flags & RESET_FLAG_AP_OFF)
+		chip_save_reset_flags(RESET_FLAG_AP_OFF);
+
+	ccprintf("Restarting system with PMIC.\n");
+	/* Flush console */
+	cflush();
+
+	/* Bring down all rails but RTC rail (including EC power). */
+	gpio_set_level(GPIO_LDO_EN, 1);
+}
+DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
+#endif
