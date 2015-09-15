@@ -77,7 +77,9 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 	if (enabled)
 		*pwm_ctrl_regs[ch].pwm_pin = 0x00;
 	else
-		*pwm_ctrl_regs[ch].pwm_pin = 0x80;
+		*pwm_ctrl_regs[ch].pwm_pin = 0x80 |
+			((pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW) ?
+			4 : 2);
 }
 
 int pwm_get_enabled(enum pwm_channel ch)

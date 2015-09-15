@@ -27,16 +27,6 @@
 #include "timer.h"
 #include "util.h"
 
-/* Test GPIO interrupt function that toggles one LED. */
-void test_interrupt(enum gpio_signal signal)
-{
-	static int busy_state;
-
-	/* toggle LED */
-	busy_state = !busy_state;
-	gpio_set_level(GPIO_BUSY_LED, busy_state);
-}
-
 #include "gpio_list.h"
 
 /*
@@ -212,44 +202,3 @@ const struct spi_device_t spi_devices[] = {
 	{ CONFIG_SPI_FLASH_PORT, 0, -1},
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
-
-/*****************************************************************************/
-/* Console commands */
-
-void display_7seg(uint8_t val)
-{
-	int i;
-	static const uint8_t digits[16] = {
-		0xc0, 0xf9, 0xa8, 0xb0,
-		0x99, 0x92, 0x82, 0xf8,
-		0x80, 0x98, 0x88, 0x83,
-		0xc6, 0xa1, 0x86, 0x8e,
-	};
-
-	for (i = 0; i < 7; i++)
-		gpio_set_level(GPIO_H_LED0 + i, digits[val >> 4] & (1 << i));
-	for (i = 0; i < 7; i++)
-		gpio_set_level(GPIO_L_LED0 + i, digits[val & 0xf] & (1 << i));
-}
-
-static int command_7seg(int argc, char **argv)
-{
-	uint8_t val;
-	char *e;
-
-	if (argc != 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	val = strtoi(argv[1], &e, 16);
-	if (*e)
-		return EC_ERROR_PARAM1;
-
-	ccprintf("display 0x%02x\n", val);
-	display_7seg(val);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(seg7, command_7seg,
-			"<hex>",
-			"Print 8-bit value on 7-segment display",
-			NULL);
