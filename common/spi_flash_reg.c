@@ -37,7 +37,7 @@ struct protect_range {
  * none or half of the ROM. The table is searched sequentially, so ordering
  * according to likely configurations improves performance slightly.
  */
-#ifdef CONFIG_SPI_FLASH_W25X40
+#if defined(CONFIG_SPI_FLASH_W25X40) || defined(CONFIG_SPI_FLASH_GD25Q41B)
 static const struct protect_range spi_flash_protect_ranges[] = {
 	{ X, X, X, { 0, 0, 0 }, 0, 0 },       /* No protection */
 	{ X, X, 1, { 0, 1, 1 }, 0, 0x40000 }, /* Lower 1/2 */
