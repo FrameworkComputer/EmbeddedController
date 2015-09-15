@@ -2560,6 +2560,8 @@ static void dual_role_on(void)
 #endif
 			pd[i].flags |= PD_FLAGS_CHECK_PR_ROLE |
 				       PD_FLAGS_CHECK_DR_ROLE;
+		/* kick the task to ensure we start toggling immediatly */
+		task_wake(PD_PORT_TO_TASK_ID(i));
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
