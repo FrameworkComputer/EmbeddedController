@@ -214,9 +214,11 @@ struct test_i2c_read_string_dev {
 		       int len);
 };
 
-struct test_i2c_read_dev {
-	/* I2C read handler */
-	int (*routine)(int port, int slave_addr, int offset, int *data);
+struct test_i2c_xfer {
+	/* I2C xfer handler */
+	int (*routine)(int port, int slave_addr,
+		       const uint8_t *out, int out_size,
+		       uint8_t *in, int in_size, int flags);
 };
 
 struct test_i2c_write_dev {
@@ -231,46 +233,11 @@ struct test_i2c_write_dev {
  * mock functionality, or return EC_ERROR_INVAL to indicate it does
  * not respond to the specified port and slave address.
  *
- * @param routine     Function pointer, with the same prototype as i2c_read8()
+ * @param routine     Function pointer, with the same prototype as i2c_xfer()
  */
-#define DECLARE_TEST_I2C_READ8(routine)					\
-	const struct test_i2c_read_dev __test_i2c_read8_##routine	\
-	__attribute__((section(".rodata.test_i2c.read8")))		\
-		= {routine}
-
-/* Register an I2C 8-bit write function. */
-#define DECLARE_TEST_I2C_WRITE8(routine)				\
-	const struct test_i2c_write_dev __test_i2c_write8_##routine	\
-	__attribute__((section(".rodata.test_i2c.write8")))		\
-		= {routine}
-
-/* Register an I2C 16-bit read function. */
-#define DECLARE_TEST_I2C_READ16(routine)				\
-	const struct test_i2c_read_dev __test_i2c_read16_##routine	\
-	__attribute__((section(".rodata.test_i2c.read16")))		\
-		= {routine}
-
-/* Register an I2C 16-bit write function. */
-#define DECLARE_TEST_I2C_WRITE16(routine)				\
-	const struct test_i2c_write_dev __test_i2c_write16_##routine	\
-	__attribute__((section(".rodata.test_i2c.write16")))		\
-		= {routine}
-
-/* Register an I2C 32-bit read function. */
-#define DECLARE_TEST_I2C_READ32(routine)				\
-	const struct test_i2c_read_dev __test_i2c_read32_##routine	\
-	__attribute__((section(".rodata.test_i2c.read32")))		\
-		= {routine}
-
-/* Register an I2C 32-bit write function. */
-#define DECLARE_TEST_I2C_WRITE32(routine)				\
-	const struct test_i2c_write_dev __test_i2c_write32_##routine	\
-	__attribute__((section(".rodata.test_i2c.write32")))		\
-		= {routine}
-
-#define DECLARE_TEST_I2C_READ_STRING(routine)				\
-	const struct test_i2c_read_string_dev __test_i2c_rs_##routine	\
-	__attribute__((section(".rodata.test_i2c.read_string")))	\
+#define DECLARE_TEST_I2C_XFER(routine)					\
+	const struct test_i2c_xfer __test_i2c_xfer_##routine	\
+	__attribute__((section(".rodata.test_i2c.xfer")))		\
 		= {routine}
 
 /*

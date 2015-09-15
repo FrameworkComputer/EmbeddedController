@@ -75,129 +75,34 @@ static int test_check_detached(int port, int slave_addr)
 	return 0;
 }
 
-int i2c_read32(int port, int slave_addr, int offset, int *data)
+int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
+		  uint8_t *in, int in_size, int flags)
 {
-	const struct test_i2c_read_dev *p;
+	const struct test_i2c_xfer *p;
 	int rv;
 
 	if (test_check_detached(port, slave_addr))
 		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_read32; p < __test_i2c_read32_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data);
+	for (p = __test_i2c_xfer; p < __test_i2c_xfer_end; ++p) {
+		rv = p->routine(port, slave_addr, out, out_size,
+				in, in_size, flags);
 		if (rv != EC_ERROR_INVAL)
 			return rv;
 	}
 	return EC_ERROR_UNKNOWN;
 }
 
-int i2c_write32(int port, int slave_addr, int offset, int data)
+int i2c_raw_get_scl(int port)
 {
-	const struct test_i2c_write_dev *p;
-	int rv;
-
-	if (test_check_detached(port, slave_addr))
-		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_write32; p < __test_i2c_write32_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data);
-		if (rv != EC_ERROR_INVAL)
-			return rv;
-	}
-	return EC_ERROR_UNKNOWN;
+	return 1;
 }
 
-int i2c_read16(int port, int slave_addr, int offset, int *data)
+int i2c_raw_get_sda(int port)
 {
-	const struct test_i2c_read_dev *p;
-	int rv;
-
-	if (test_check_detached(port, slave_addr))
-		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_read16; p < __test_i2c_read16_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data);
-		if (rv != EC_ERROR_INVAL)
-			return rv;
-	}
-	return EC_ERROR_UNKNOWN;
+	return 1;
 }
 
-int i2c_write16(int port, int slave_addr, int offset, int data)
+int i2c_get_line_levels(int port)
 {
-	const struct test_i2c_write_dev *p;
-	int rv;
-
-	if (test_check_detached(port, slave_addr))
-		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_write16; p < __test_i2c_write16_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data);
-		if (rv != EC_ERROR_INVAL)
-			return rv;
-	}
-	return EC_ERROR_UNKNOWN;
-}
-
-int i2c_read8(int port, int slave_addr, int offset, int *data)
-{
-	const struct test_i2c_read_dev *p;
-	int rv;
-
-	if (test_check_detached(port, slave_addr))
-		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_read8; p < __test_i2c_read8_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data);
-		if (rv != EC_ERROR_INVAL)
-			return rv;
-	}
-	return EC_ERROR_UNKNOWN;
-}
-
-int i2c_write8(int port, int slave_addr, int offset, int data)
-{
-	const struct test_i2c_write_dev *p;
-	int rv;
-
-	if (test_check_detached(port, slave_addr))
-		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_write8; p < __test_i2c_write8_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data);
-		if (rv != EC_ERROR_INVAL)
-			return rv;
-	}
-	return EC_ERROR_UNKNOWN;
-}
-
-int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
-			int len)
-{
-	const struct test_i2c_read_string_dev *p;
-	int rv;
-
-	if (test_check_detached(port, slave_addr))
-		return EC_ERROR_UNKNOWN;
-	for (p = __test_i2c_read_string; p < __test_i2c_read_string_end; ++p) {
-		rv = p->routine(port, slave_addr, offset, data, len);
-		if (rv != EC_ERROR_INVAL)
-			return rv;
-	}
-	return EC_ERROR_UNKNOWN;
-}
-
-int smbus_write_word(uint8_t i2c_port, uint8_t slave_addr,
-			uint8_t smbus_cmd, uint16_t d16)
-{
-	return i2c_write16(i2c_port, slave_addr, smbus_cmd, d16);
-}
-
-int smbus_read_word(uint8_t i2c_port, uint8_t slave_addr,
-			uint8_t smbus_cmd, uint16_t *p16)
-{
-	int rv, d16 = 0;
-	rv = i2c_read16(i2c_port, slave_addr, smbus_cmd, &d16);
-	*p16 = d16;
-	return rv;
-}
-
-int smbus_read_string(int i2c_port, uint8_t slave_addr, uint8_t smbus_cmd,
-			uint8_t *data, int len)
-{
-	return i2c_read_string(i2c_port, slave_addr, smbus_cmd, data, len);
+	return 0;
 }

@@ -8,6 +8,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "i2c.h"
 #include "inductive_charging.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
@@ -70,3 +71,15 @@ const struct accel_orientation acc_orient = {
 	.hinge_axis = {0, 1, 0},
 };
 
+#ifdef CONFIG_I2C
+/* I2C ports */
+const struct i2c_port_t i2c_ports[] = {
+#ifdef I2C_PORT_BATTERY
+	{"battery", I2C_PORT_BATTERY, 100,  0, 0},
+#elif defined I2C_PORT_LIGHTBAR
+	{"lightbar", I2C_PORT_LIGHTBAR, 100,  0, 0},
+#endif
+};
+
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+#endif

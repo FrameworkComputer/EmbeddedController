@@ -39,4 +39,6 @@ extern char __host_flash[CONFIG_FLASH_SIZE];
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
 
+#define I2C_PORT_COUNT 1
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */
