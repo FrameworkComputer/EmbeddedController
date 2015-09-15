@@ -22,6 +22,7 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "motion_sense.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -345,8 +346,21 @@ static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
+
+	/*
+	 * Now that we have enabled the rail to the sensors, let's give enough
+	 * time for the sensors to boot up.  Without this delay, the very first
+	 * i2c transactions always fail because the sensors aren't ready yet.
+	 * In testing, a 2ms delay seemed to be reliable, but we'll delay for
+	 * 3ms just to be safe.
+	 *
+	 * Additionally, this hook needs to be run before the motion sense hook
+	 * tries to initialize the sensors.
+	 */
+	msleep(3);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
+	     MOTION_SENSE_HOOK_PRIO-1);
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
