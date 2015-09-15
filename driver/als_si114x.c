@@ -522,7 +522,9 @@ const struct accelgyro_drv si114x_drv = {
 	.set_interrupt = set_interrupt,
 	.irq_handler = irq_handler,
 #endif
+#ifdef CONFIG_ACCEL_FIFO
 	.load_fifo = NULL,
+#endif
 };
 
 struct si114x_drv_data_t g_si114x_data = {
