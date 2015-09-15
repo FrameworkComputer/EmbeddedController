@@ -63,6 +63,11 @@
 #define POWER_DEBOUNCE_TIME     (50 * MSEC)
 
 /*
+ * The suspend signal from SoC should be kept at least 50ms.
+ */
+#define SUSPEND_DEBOUNCE_TIME   (50 * MSEC)
+
+/*
  * The time to bootup the PMIC from power-off to power-on.
  */
 #define PMIC_PWRON_PRESS_TIME   (5000 * MSEC)
@@ -93,7 +98,8 @@
 /*
  * The hold time for pulling down the SYSTEM_POWER_H pin.
  */
-#define PMIC_COLD_RESET_L_HOLD_TIME (50 * MSEC)
+#define PMIC_COLD_RESET_L_HOLD_TIME \
+	(SUSPEND_DEBOUNCE_TIME + POWER_DEBOUNCE_TIME + (20 * MSEC))
 
 /*
  * The first time the PMIC sees power (AC or battery) it needs 200ms (+/-12%
@@ -168,33 +174,36 @@ enum blacklight_override_t {
 static void chipset_turn_off_power_rails(void);
 
 /**
- * Check the suspend signal is on after POWER_DEBOUNCE_TIME to avoid transient state.
+ * Check the suspend signal is on after SUSPEND_DEBOUNCE_TIME to avoid transient
+ * state.
  *
  * @return non-zero if SUSPEND is asserted.
  */
 static int is_suspend_asserted(void)
 {
 	if (power_get_signals() & IN_SUSPEND)
-		usleep(POWER_DEBOUNCE_TIME);
+		usleep(SUSPEND_DEBOUNCE_TIME);
 
 	return power_get_signals() & IN_SUSPEND;
 }
 
 /**
- * Check the suspend signal is off after POWER_DEBOUNCE_TIME to avoid transient state.
+ * Check the suspend signal is off after SUSPEND_DEBOUNCE_TIME to avoid
+ * transient state.
  *
  * @return non-zero if SUSPEND is deasserted.
  */
 static int is_suspend_deasserted(void)
 {
 	if (!(power_get_signals() & IN_SUSPEND))
-		usleep(POWER_DEBOUNCE_TIME);
+		usleep(SUSPEND_DEBOUNCE_TIME);
 
 	return !(power_get_signals() & IN_SUSPEND);
 }
 
 /**
- * Check power good signal is on after POWER_DEBOUNCE_TIME to avoid transient state.
+ * Check power good signal is on after POWER_DEBOUNCE_TIME to avoid transient
+ * state.
  *
  * @return non-zero if POWER_GOOD is asserted.
  */
@@ -209,7 +218,8 @@ static int is_power_good_asserted(void)
 }
 
 /**
- * Check power good signal is off after POWER_DEBOUNCE_TIME to avoid transient state.
+ * Check power good signal is off after POWER_DEBOUNCE_TIME to avoid transient
+ * state.
  *
  * @return non-zero if POWER_GOOD is deasserted.
  */
@@ -640,8 +650,8 @@ void chipset_reset(int is_cold)
 		usleep(PMIC_COLD_RESET_L_HOLD_TIME);
 		/* Press the PMIC power button */
 		set_pmic_pwron(1);
-		usleep(PMIC_PWRON_PRESS_TIME);
-		set_pmic_pwron(0);
+		hook_call_deferred(release_pmic_pwron_deferred,
+				   PMIC_PWRON_PRESS_TIME);
 	} else {
 		CPRINTS("EC triggered warm reboot");
 		set_warm_reset(1);
