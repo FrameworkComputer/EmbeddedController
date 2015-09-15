@@ -18,7 +18,7 @@
 /* Convert port number to tcpc i2c address */
 #define I2C_ADDR_TCPC(p) (CONFIG_TCPC_I2C_BASE_ADDR + 2*(p))
 
-static int tcpc_polarity, tcpc_vconn, tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
+static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
 
 static int init_alert_mask(int port)
 {
@@ -48,7 +48,7 @@ static int init_power_status_mask(int port)
 	uint8_t mask;
 	int rv;
 
-	mask = TCPC_REG_POWER_VBUS_PRES;
+	mask = TCPC_REG_POWER_STATUS_VBUS_PRES;
 	rv = tcpm_set_power_status_mask(port, mask);
 
 	return rv;
@@ -102,20 +102,16 @@ int tcpm_set_cc(int port, int pull)
 
 int tcpm_set_polarity(int port, int polarity)
 {
-	/* Write new polarity, leave vconn enable flag untouched */
-	tcpc_polarity = polarity;
 	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_POWER_CTRL,
-			  TCPC_REG_POWER_CTRL_SET(tcpc_polarity, tcpc_vconn));
+			  TCPC_REG_TCPC_CTRL,
+			  TCPC_REG_TCPC_CTRL_SET(polarity));
 }
 
 int tcpm_set_vconn(int port, int enable)
 {
-	/* Write new vconn enable flag, leave polarity untouched */
-	tcpc_vconn = enable;
 	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
 			  TCPC_REG_POWER_CTRL,
-			  TCPC_REG_POWER_CTRL_SET(tcpc_polarity, tcpc_vconn));
+			  TCPC_REG_POWER_CTRL_SET(enable));
 }
 
 int tcpm_set_msg_header(int port, int power_role, int data_role)
@@ -246,7 +242,7 @@ void tcpc_alert(int port)
 		tcpm_get_power_status(port, &power_status);
 		/* Update VBUS status */
 		tcpc_vbus[port] = power_status &
-			TCPC_REG_POWER_VBUS_PRES ? 1 : 0;
+			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 #if defined(CONFIG_USB_PD_TCPM_VBUS) && defined(CONFIG_USB_CHARGER)
 		/* Update charge manager with new VBUS state */
 		usb_charger_vbus_change(port, tcpc_vbus[port]);
@@ -272,30 +268,27 @@ void tcpc_alert(int port)
 
 int tcpm_init(int port)
 {
-	int rv, err = 0;
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+	int rv;
 	int power_status;
-#endif
 
 	while (1) {
-		rv = i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				TCPC_REG_ERROR_STATUS, &err);
+		rv = i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
+				TCPC_REG_POWER_STATUS, &power_status);
 		/*
 		 * If i2c succeeds and the uninitialized bit is clear, then
 		 * initalization is complete, clear all alert bits and write
 		 * the initial alert mask.
 		 */
-		if (rv == EC_SUCCESS && !(err & TCPC_REG_ERROR_STATUS_UNINIT)) {
+		if (rv == EC_SUCCESS &&
+		    !(power_status & TCPC_REG_POWER_STATUS_UNINIT)) {
 			i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				    TCPC_REG_ALERT, 0xff);
+				    TCPC_REG_ALERT, 0xffff);
 #ifdef CONFIG_USB_PD_TCPM_VBUS
 			/* Initialize power_status_mask */
 			init_power_status_mask(port);
-			/* Read Power Status register */
-			tcpm_get_power_status(port, &power_status);
 			/* Update VBUS status */
 			tcpc_vbus[port] = power_status &
-				TCPC_REG_POWER_VBUS_PRES ? 1 : 0;
+				TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 #endif
 			return init_alert_mask(port);
 		}

@@ -10,6 +10,7 @@
 #include "crc.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
 #include "task.h"
@@ -207,8 +208,6 @@ enum pd_tx_errors {
 #define RX_BUFFER_SIZE 2
 #endif
 
-#define TCPC_FLAGS_INITIALIZED (1 << 0) /* TCPC is initialized */
-
 static struct pd_port_controller {
 	/* current port power role (SOURCE or SINK) */
 	uint8_t power_role;
@@ -225,8 +224,6 @@ static struct pd_port_controller {
 	uint16_t alert_mask;
 	/* RX enabled */
 	uint8_t rx_enabled;
-	/* TCPC flags */
-	uint8_t flags;
 	/* Power status */
 	uint8_t power_status;
 	uint8_t power_status_mask;
@@ -838,7 +835,7 @@ void pd_task(void)
 	tcpc_init(port);
 
 	/* we are now initialized */
-	pd[port].flags |= TCPC_FLAGS_INITIALIZED;
+	pd[port].power_status &= ~TCPC_REG_POWER_STATUS_UNINIT;
 
 	while (1) {
 		/* wait for next event/packet or timeout expiration */
@@ -947,12 +944,12 @@ static int tcpc_set_power_status(int port, int vbus_present)
 {
 	/* Update VBUS present bit */
 	if (vbus_present)
-		pd[port].power_status |= TCPC_REG_POWER_VBUS_PRES;
+		pd[port].power_status |= TCPC_REG_POWER_STATUS_VBUS_PRES;
 	else
-		pd[port].power_status &= ~TCPC_REG_POWER_VBUS_PRES;
+		pd[port].power_status &= ~TCPC_REG_POWER_STATUS_VBUS_PRES;
 
 	/* Set bit Port Power Status bit in Alert register */
-	if (pd[port].power_status_mask & TCPC_REG_POWER_VBUS_PRES)
+	if (pd[port].power_status_mask & TCPC_REG_POWER_STATUS_VBUS_PRES)
 		alert(port, TCPC_REG_ALERT_POWER_STATUS);
 
 	return EC_SUCCESS;
@@ -1018,6 +1015,18 @@ int tcpc_get_message(int port, uint32_t *payload, int *head)
 	return EC_SUCCESS;
 }
 
+void tcpc_pre_init(void)
+{
+	int i;
+
+	/* Mark as uninitialized */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		pd[i].power_status |= TCPC_REG_POWER_STATUS_UNINIT |
+				      TCPC_REG_POWER_STATUS_VBUS_DET;
+}
+/* Must be prioritized above i2c init */
+DECLARE_HOOK(HOOK_INIT, tcpc_pre_init, HOOK_PRIO_INIT_I2C - 1);
+
 void tcpc_init(int port)
 {
 	int i;
@@ -1074,9 +1083,11 @@ static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 		tcpc_set_cc(port, TCPC_REG_ROLE_CTRL_CC1(payload[1]));
 		break;
 	case TCPC_REG_POWER_CTRL:
-		tcpc_set_polarity(port,
-				  TCPC_REG_POWER_CTRL_POLARITY(payload[1]));
 		tcpc_set_vconn(port, TCPC_REG_POWER_CTRL_VCONN(payload[1]));
+		break;
+	case TCPC_REG_TCPC_CTRL:
+		tcpc_set_polarity(port,
+				  TCPC_REG_TCPC_CTRL_POLARITY(payload[1]));
 		break;
 	case TCPC_REG_MSG_HDR_INFO:
 		tcpc_set_msg_header(port,
@@ -1123,10 +1134,6 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	case TCPC_REG_VENDOR_ID:
 		*(uint16_t *)payload = USB_VID_GOOGLE;
 		return 2;
-	case TCPC_REG_ERROR_STATUS:
-		payload[0] = (pd[port].flags & TCPC_FLAGS_INITIALIZED) ?
-			       0 : TCPC_REG_ERROR_STATUS_UNINIT;
-		return 1;
 	case TCPC_REG_CC_STATUS:
 		tcpc_get_cc(port, &cc1, &cc2);
 		payload[0] = TCPC_REG_CC_STATUS_SET(
@@ -1138,8 +1145,8 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 						    pd[port].cc_pull,
 						    pd[port].cc_pull);
 		return 1;
-	case TCPC_REG_POWER_CTRL:
-		payload[0] = TCPC_REG_POWER_CTRL_SET(pd[port].polarity, 0);
+	case TCPC_REG_TCPC_CTRL:
+		payload[0] = TCPC_REG_TCPC_CTRL_SET(pd[port].polarity);
 		return 1;
 	case TCPC_REG_MSG_HDR_INFO:
 		payload[0] = TCPC_REG_MSG_HDR_INFO_SET(pd[port].data_role,
