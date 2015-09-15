@@ -22,9 +22,9 @@ static const struct battery_info info = {
 	.precharge_current  = 64,  /* mA */
 	/* Operational temperature range */
 	.start_charging_min_c = 0,
-	.start_charging_max_c = 45,
+	.start_charging_max_c = 60,
 	.charging_min_c       = 0,
-	.charging_max_c       = 50,
+	.charging_max_c       = 60,
 	.discharging_min_c    = -20,
 	.discharging_max_c    = 60,
 };
@@ -86,6 +86,15 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * If temp reading was bad, use last range.
 	 */
 	if (!(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE)) {
+		/* Don't charge if outside of allowable temperature range */
+		if (temp_c >= info.charging_max_c * 10 ||
+		    temp_c < info.charging_min_c * 10) {
+			curr->requested_current = 0;
+			curr->requested_voltage = 0;
+			return 0;
+		}
+
+
 		if (temp_c < 99)
 			temp_range = TEMP_RANGE_1;
 		else if (temp_c > 101 && temp_c < 149)
