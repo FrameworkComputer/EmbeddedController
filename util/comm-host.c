@@ -120,12 +120,14 @@ int comm_init(int interfaces, const char *device_name)
 	/* read max request / response size from ec for protocol v3+ */
 	if (ec_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0, &info,
 		sizeof(info)) == sizeof(info)) {
-		if ((allow_large_buffer) ||
-		    (info.max_request_packet_size < ec_max_outsize))
-			ec_max_outsize = info.max_request_packet_size;
-		if ((allow_large_buffer) ||
-		    (info.max_request_packet_size < ec_max_insize))
-			ec_max_insize = info.max_response_packet_size;
+		int outsize = info.max_request_packet_size -
+			sizeof(struct ec_host_request);
+		int insize = info.max_response_packet_size -
+			sizeof(struct ec_host_response);
+		if ((allow_large_buffer) || (outsize < ec_max_outsize))
+			ec_max_outsize = outsize;
+		if ((allow_large_buffer) || (insize < ec_max_insize))
+			ec_max_insize = insize;
 
 		ec_outbuf = realloc(ec_outbuf, ec_max_outsize);
 		ec_inbuf = realloc(ec_inbuf, ec_max_insize);
