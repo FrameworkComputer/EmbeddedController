@@ -10,16 +10,82 @@
 #include "util.h"
 #include "watchdog.h"
 
+
+enum format {
+	FMT_WORD,
+	FMT_HALF,
+	FMT_BYTE,
+	FMT_STRING,
+};
+
+static void show_val(uint32_t address, uint32_t index, enum format fmt)
+{
+	uint32_t val;
+	uintptr_t ptr = address;
+
+	switch (fmt) {
+	case FMT_WORD:
+		if (0 == (index % 4))
+			ccprintf("\n%08X:", address + index * 4);
+		val = *((uint32_t *)ptr + index);
+		ccprintf(" %08x", val);
+		break;
+	case FMT_HALF:
+		if (0 == (index % 8))
+			ccprintf("\n%08X:", address + index * 2);
+		val = *((uint16_t *)ptr + index);
+		ccprintf(" %04x", val);
+		break;
+	case FMT_BYTE:
+		if (0 == (index % 16))
+			ccprintf("\n%08X:", address + index);
+		val = *((uint8_t *)ptr + index);
+		ccprintf(" %02x", val);
+		break;
+	case FMT_STRING:
+		if (0 == (index % 32))
+			ccprintf("\n%08X: ", address + index);
+		val = *((uint8_t *)ptr + index);
+		if (val >= ' ' && val <= '~')
+			ccprintf("%c", val);
+		else
+			ccprintf("\\x%02x", val);
+		break;
+	}
+	cflush();
+}
+
+
 static int command_mem_dump(int argc, char **argv)
 {
-	volatile uint32_t *address;
-	uint32_t value, num = 1, i;
+	uint32_t address, i, num = 1;
 	char *e;
+	enum format fmt = FMT_WORD;
+
+	if (argc > 1) {
+		if ((argv[1][0] == '.') && (strlen(argv[1]) == 2)) {
+			switch (argv[1][1]) {
+			case 'b':
+				fmt = FMT_BYTE;
+				break;
+			case 'h':
+				fmt = FMT_HALF;
+				break;
+			case 's':
+				fmt = FMT_STRING;
+				break;
+			default:
+				return EC_ERROR_PARAM1;
+			}
+			argc--;
+			argv++;
+		}
+	}
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	address = (uint32_t *)(uintptr_t)strtoi(argv[1], &e, 0);
+	address = strtoi(argv[1], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM1;
 
@@ -27,13 +93,7 @@ static int command_mem_dump(int argc, char **argv)
 		num = strtoi(argv[2], &e, 0);
 
 	for (i = 0; i < num; i++) {
-		value = address[i];
-		if (0 == (i%4))
-			ccprintf("\n%08X: %08x", address+i, value);
-		else
-			ccprintf(" %08x", value);
-		cflush();
-
+		show_val(address, i, fmt);
 		/* Lots of output could take a while.
 		 * Let other things happen, too */
 		if (!(i % 0x100)) {
@@ -47,8 +107,8 @@ static int command_mem_dump(int argc, char **argv)
 }
 
 DECLARE_CONSOLE_COMMAND(md, command_mem_dump,
-			"addr [num]",
-			"dump num of words (4B) in memory",
+			"[.b|.h|.s] addr [count]",
+			"dump memory values, optionally specifying the format",
 			NULL);
 
 static int command_read_word(int argc, char **argv)
@@ -69,7 +129,7 @@ static int command_read_word(int argc, char **argv)
 			case 'b':
 				access_size = 1;
 				break;
-			case 's':
+			case 'h':
 				access_size = 2;
 				break;
 			default:
@@ -129,6 +189,6 @@ static int command_read_word(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND
 	(rw, command_read_word,
-	 "addr [.{b|s}] [value]",
+	 "[.b|.h] addr [value]",
 	 "Read or write a word in memory optionally specifying the size",
 	 NULL);
