@@ -43,6 +43,11 @@
 /* Option bits */
 #define OPTION0_CHARGE_INHIBIT          (1 << 0)
 #define OPTION0_LEARN_ENABLE            (1 << 5)
+#define OPTION0_SWITCHING_FREQ_MASK     (3 << 8)
+#define OPTION0_SWITCHING_FREQ_600KHZ   (0 << 8)
+#define OPTION0_SWITCHING_FREQ_800KHZ   (1 << 8)
+#define OPTION0_SWITCHING_FREQ_1000KHZ  (2 << 8)
+#define OPTION0_SWITCHING_FREQ_1200KHZ  (3 << 8)
 
 #define OPTION2_EN_EXTILIM              (1 << 7)
 

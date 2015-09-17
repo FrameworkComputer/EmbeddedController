@@ -191,6 +191,12 @@ int charger_post_init(void)
 
 	option &= ~OPTION0_LEARN_ENABLE;
 
+#ifdef BOARD_LUCID
+	/* Use 600kHz switching frequency */
+	option &= ~OPTION0_SWITCHING_FREQ_MASK;
+	option |= OPTION0_SWITCHING_FREQ_600KHZ;
+#endif
+
 	rv = charger_set_option(option);
 	if (rv)
 		return rv;
