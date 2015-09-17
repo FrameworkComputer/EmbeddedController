@@ -6,6 +6,7 @@
  */
 
 #include "atomic.h"
+#include "chipset.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "link_defs.h"
@@ -41,6 +42,23 @@ static void set_host_interrupt(int active)
 void mkbp_send_event(uint8_t event_type)
 {
 	set_event(event_type);
+
+#ifdef CONFIG_MKBP_WAKEUP_MASK
+	/* checking the event if AP suspended */
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		uint32_t events;
+		events = *(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
+		/*
+		 * interrupt the AP if it is a wakeup event
+		 * which is defined in the white list.
+		 */
+		if (events & CONFIG_MKBP_WAKEUP_MASK)
+			set_host_interrupt(1);
+
+		return;
+	}
+#endif
+
 	set_host_interrupt(1);
 }
 
