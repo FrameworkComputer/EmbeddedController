@@ -29,7 +29,7 @@
 /*
  * Time in ms to wait for the task to read the vectors.
  */
-#define TEST_LID_SLEEP_RATE (TEST_LID_EC_RATE / (5 * MSEC))
+#define TEST_LID_SLEEP_RATE (TEST_LID_EC_RATE / 5)
 
 /*****************************************************************************/
 /* Mock functions */
@@ -184,7 +184,7 @@ static void wait_for_valid_sample(void)
 	uint8_t *lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 
 	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
-	msleep(TEST_LID_EC_RATE/MSEC);
+	msleep(TEST_LID_EC_RATE);
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		msleep(TEST_LID_SLEEP_RATE);

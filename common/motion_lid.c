@@ -38,6 +38,42 @@ static int lid_angle_is_reliable;
  */
 #define HINGE_ALIGNED_WITH_GRAVITY_THRESHOLD FLOAT_TO_FP(0.96593)
 
+/*
+ * Define the accelerometer orientation matrices based on the standard
+ * reference frame in use (note: accel data is converted to standard ref
+ * frame before calculating lid angle).
+ */
+#ifdef CONFIG_ACCEL_STD_REF_FRAME_OLD
+const struct accel_orientation acc_orient = {
+	/* Hinge aligns with y axis. */
+	.rot_hinge_90 = {
+		{ 0,  0,  FLOAT_TO_FP(1)},
+		{ 0,  FLOAT_TO_FP(1),  0},
+		{ FLOAT_TO_FP(-1), 0,  0}
+	},
+	.rot_hinge_180 = {
+		{ FLOAT_TO_FP(-1), 0,  0},
+		{ 0,  FLOAT_TO_FP(1),  0},
+		{ 0,  0, FLOAT_TO_FP(-1)}
+	},
+	.hinge_axis = {0, 1, 0},
+};
+#else
+const struct accel_orientation acc_orient = {
+	/* Hinge aligns with x axis. */
+	.rot_hinge_90 = {
+		{ FLOAT_TO_FP(1),  0,  0},
+		{ 0,  0,  FLOAT_TO_FP(1)},
+		{ 0, FLOAT_TO_FP(-1),  0}
+	},
+	.rot_hinge_180 = {
+		{ FLOAT_TO_FP(1),  0,  0},
+		{ 0, FLOAT_TO_FP(-1),  0},
+		{ 0,  0, FLOAT_TO_FP(-1)}
+	},
+	.hinge_axis = {1, 0, 0},
+};
+#endif
 
 /* Pointer to constant acceleration orientation data. */
 const struct accel_orientation * const p_acc_orient = &acc_orient;
@@ -147,15 +183,25 @@ int motion_lid_get_angle(void)
  */
 void motion_lid_calc(void)
 {
-	/* rotate lid vector by 180 degre to be in the right coordinate frame */
+#ifndef CONFIG_ACCEL_STD_REF_FRAME_OLD
+	/*
+	 * rotate lid vector by 180 deg to be in the right coordinate frame
+	 * because calculate_lid_angle assumes when the lid is closed, that
+	 * the lid and base accelerometer data matches
+	 */
 	vector_3_t lid = { accel_lid->xyz[X],
 			   accel_lid->xyz[Y] * -1,
 			   accel_lid->xyz[Z] * -1};
-
 	/* Calculate angle of lid accel. */
 	lid_angle_is_reliable = calculate_lid_angle(
 			accel_base->xyz, lid,
 			&lid_angle_deg);
+#else
+	/* Calculate angle of lid accel. */
+	lid_angle_is_reliable = calculate_lid_angle(
+			accel_base->xyz, accel_lid->xyz,
+			&lid_angle_deg);
+#endif
 
 #ifdef CONFIG_LID_ANGLE_UPDATE
 	lid_angle_update(motion_lid_get_angle());

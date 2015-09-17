@@ -51,6 +51,22 @@
 #undef CONFIG_ACCELGYRO_BMI160
 
 /*
+ * Use the old standard reference frame for accelerometers. The old
+ * reference frame is:
+ * Z-axis: perpendicular to keyboard, pointing up, such that if the device
+ *  is sitting flat on a table, the accel reads +G.
+ * X-axis: in the plane of the keyboard, pointing from the front lip to the
+ *  hinge, such that if the device is oriented with the front lip touching
+ *  the table and the hinge directly above, the accel reads +G.
+ * Y-axis: in the plane of the keyboard, pointing to the right, such that
+ *  if the device is on it's left side, the accel reads +G.
+ *
+ * Also, in the old reference frame, the lid accel matches the base accel
+ * readings when lid is closed.
+ */
+#undef CONFIG_ACCEL_STD_REF_FRAME_OLD
+
+/*
  * Define the event to raise when BMI160 interrupt.
  * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
  */
