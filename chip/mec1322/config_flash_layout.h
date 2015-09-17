@@ -28,7 +28,7 @@
 
 /* Loader resides at the beginning of program memory */
 #define CONFIG_LOADER_MEM_OFF		0
-#define CONFIG_LOADER_SIZE		0x1000
+#define CONFIG_LOADER_SIZE		0xC00
 
 /* Write protect Loader and RO Image */
 #define CONFIG_WP_STORAGE_OFF		CONFIG_EC_PROTECTED_STORAGE_OFF
@@ -44,7 +44,7 @@
  */
 #define CONFIG_RO_MEM_OFF		(CONFIG_LOADER_MEM_OFF + \
 					CONFIG_LOADER_SIZE)
-#define CONFIG_RO_SIZE			(96 * 1024)
+#define CONFIG_RO_SIZE			(97 * 1024)
 #define CONFIG_RW_MEM_OFF		CONFIG_RO_MEM_OFF
 #define CONFIG_RW_SIZE			CONFIG_RO_SIZE
 
