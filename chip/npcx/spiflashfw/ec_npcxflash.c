@@ -220,7 +220,7 @@ int sspi_flash_verify(int offset, int size, const char *data)
 	uint8_t		*ptr_flash;
 	uint8_t		*ptr_mram;
 
-	ptr_flash = (uint8_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
+	ptr_flash = (uint8_t *)(CONFIG_MAPPED_STORAGE_BASE + offset);
 	ptr_mram  = (uint8_t *)data;
 	result = 1;
 

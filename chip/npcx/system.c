@@ -700,10 +700,12 @@ void system_jump_to_booter(void)
 
 	/* RO region FW */
 	if (IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION)) {
-		flash_offset = CONFIG_RO_MEM_OFF;
+		flash_offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
+				CONFIG_RO_STORAGE_OFF;
 		flash_used = CONFIG_RO_SIZE;
 	} else { /* RW region FW */
-		flash_offset = CONFIG_RW_MEM_OFF;
+		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
+				CONFIG_RW_STORAGE_OFF;
 		flash_used = CONFIG_RW_SIZE;
 	}
 

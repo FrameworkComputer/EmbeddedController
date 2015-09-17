@@ -14,7 +14,14 @@ MEMORY
 SECTIONS
 {
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
+#if defined(NPCX_RO_HEADER)
+/* Replace *_MEM_OFF with *_STORAGE_OFF to indicate flat file contains header
+ * or some struture which doesn't belong to FW */
+    .image.RO : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_EC_PROTECTED_STORAGE_OFF\
+     ) {
+#else
     .image.RO : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF) {
+#endif
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
@@ -25,7 +32,12 @@ SECTIONS
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
 #endif
-#ifdef CONFIG_EXTERNAL_STORAGE
+
+#if defined(NPCX_RO_HEADER)
+    /* npcx uses *STORAGE_OFF to plan the layout of flash image */
+    .image.RW : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_EC_WRITABLE_STORAGE_OFF \
+     + CONFIG_RW_STORAGE_OFF) {
+#elif (CONFIG_RO_MEM_OFF == CONFIG_RW_MEM_OFF)
 /* This is applicable to ECs in which RO and RW execution is
 mapped to the same location but we still have to generate an ec.bin with RO
 and RW images at different Flash offset */

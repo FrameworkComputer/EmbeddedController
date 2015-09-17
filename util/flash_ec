@@ -81,9 +81,13 @@ BOARDS_STM32_DFU=(
 	twinkie
 )
 
-BOARDS_NPCX=(
+BOARDS_NPCX_JTAG=(
 	npcx_evb
 	npcx_evb_arm
+)
+
+BOARDS_NPCX_SPI=(
+	wheatley
 )
 
 BOARDS_NRF51=(
@@ -341,6 +345,62 @@ function flash_openocd() {
 	die "Failed to program ${IMG}"
 }
 
+# helper function for using servo v2/3 with flashrom
+function flash_flashrom() {
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:/usr/sbin/:$PATH"
+	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
+	FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B"
+
+	if [ ! -x "$FLASHROM" ]; then
+		die "no flashrom util found."
+	fi
+
+	SERIALNAME=$(${DUT_CONTROL_CMD} serialname | cut -d: -f2)
+	if [[ "$SERIALNAME" != "" ]] ; then
+		FLASHROM_PARAM="${FLASHROM_PARAM},serial=${SERIALNAME}"
+	fi
+
+	dut_control cold_reset:on
+
+	# Turn on SPI1 interface on servo for 3.3V SPI Flash Chip
+	dut_control spi1_vref:pp3300 spi1_buf_en:on spi1_buf_on_flex_en:on
+
+	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | tail -n 1)
+	IMG_SIZE=$(stat -c%s "$IMG")
+	PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
+
+	# Temp image
+	T=/tmp/flash_spi_$$
+
+if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
+	{	# Patch temp image up to SPI_SIZE
+		cat $IMG
+		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
+			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | tr '\0' '\377'
+		fi
+	} > $T
+else
+	{	# Patch temp image up to SPI_SIZE
+		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
+			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | tr '\0' '\377'
+		fi
+		cat $IMG
+	} > $T
+fi
+
+
+	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
+		${FLASHROM} ${FLASHROM_PARAM} -w "${T}"
+
+	rm $T
+
+	# Turn off SPI1 interface on servo
+	dut_control spi1_vref:off spi1_buf_en:off spi1_buf_on_flex_en:off
+
+	# Do not save/restore servo settings
+	save=
+}
+
 function flash_stm32() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
@@ -418,7 +478,7 @@ function flash_nrf51() {
 	dut_control swd_reset:on swd_reset:off
 }
 
-function flash_npcx() {
+function flash_npcx_jtag() {
 	IMG_PATH="${EC_DIR}/build/${BOARD}"
 	OCD_CHIP_CFG="npcx_chip.cfg"
 	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
@@ -435,49 +495,12 @@ function flash_npcx() {
 	flash_openocd
 }
 
+function flash_npcx_spi() {
+	flash_flashrom
+}
+
 function flash_mec1322() {
-	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:/usr/sbin/:$PATH"
-	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
-	FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B"
-
-	if [ ! -x "$FLASHROM" ]; then
-		die "no flashrom util found."
-	fi
-
-	SERIALNAME=$(${DUT_CONTROL_CMD} serialname | cut -d: -f2)
-	if [[ "$SERIALNAME" != "" ]] ; then
-		FLASHROM_PARAM="${FLASHROM_PARAM},serial=${SERIALNAME}"
-	fi
-
-	dut_control cold_reset:on
-
-	# Turn on SPI1 interface on servo for 3.3V SPI Flash Chip
-	dut_control spi1_vref:pp3300 spi1_buf_en:on spi1_buf_on_flex_en:on
-
-	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | tail -n 1)
-	IMG_SIZE=$(stat -c%s "$IMG")
-	PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
-
-	# Temp image
-	T=/tmp/flash_mec_$$
-
-	{	# Patch temp image up to SPI_SIZE
-		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | tr '\0' '\377'
-		fi
-		cat $IMG
-	} > $T
-
-	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-		${FLASHROM} ${FLASHROM_PARAM} -w "${T}"
-
-	rm $T
-
-	# Turn off SPI1 interface on servo
-	dut_control spi1_vref:off spi1_buf_en:off spi1_buf_on_flex_en:off
-
-	# Do not save/restore servo settings
-	save=
+	flash_flashrom
 }
 
 if dut_control boot_mode 2>/dev/null ; then
@@ -502,8 +525,10 @@ elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
 	CHIP="stm32"
 elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
 	CHIP="stm32_dfu"
-elif $(in_array "${BOARDS_NPCX[@]}" "${BOARD}"); then
-	CHIP="npcx"
+elif $(in_array "${BOARDS_NPCX_JTAG[@]}" "${BOARD}"); then
+	CHIP="npcx_jtag"
+elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
+	CHIP="npcx_spi"
 elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
 	CHIP="nrf51"
 elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
