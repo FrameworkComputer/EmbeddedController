@@ -112,7 +112,7 @@ static void vboot_hash_next_chunk(void)
 	size = MIN(CHUNK_SIZE, data_size - curr_pos);
 
 #ifdef CONFIG_MAPPED_STORAGE
-	SHA256_update(&ctx, (const uint8_t *)(CONFIG_PROGRAM_MEMORY_BASE +
+	SHA256_update(&ctx, (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
 					      data_offset + curr_pos), size);
 #else
 	if (read_and_hash_chunk(data_offset + curr_pos, size) != EC_SUCCESS)
