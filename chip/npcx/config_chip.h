@@ -47,7 +47,7 @@
 /* Memory mapping */
 #define CONFIG_RAM_BASE            0x200C0000 /* memory address of data ram */
 #define CONFIG_RAM_SIZE            (0x00008000 - 0x800) /* 30KB data ram */
-#define CONFIG_PROGRAM_MEMORY_BASE 0x64000000 /* program memory base address */
+#define CONFIG_PROGRAM_MEMORY_BASE 0x100A8000 /* program memory base address */
 #define CONFIG_LPRAM_BASE          0x40001600 /* memory address of lpwr ram */
 #define CONFIG_LPRAM_SIZE	   0x00000620 /* 1568B low power ram */
 
