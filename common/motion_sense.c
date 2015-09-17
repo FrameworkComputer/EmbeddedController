@@ -539,7 +539,7 @@ void motion_sense_task(void)
 #ifdef CONFIG_ACCEL_FIFO
 	ts_last_int = get_time();
 #endif
-	do {
+	while (1) {
 		ts_begin_task = get_time();
 		ready_status = 0;
 		for (i = 0; i < motion_sensor_count; ++i) {
@@ -641,7 +641,8 @@ void motion_sense_task(void)
 			wait_us = -1;
 		}
 
-	} while ((event = task_wait_event(wait_us)));
+		event = task_wait_event(wait_us);
+	}
 }
 
 #ifdef CONFIG_ACCEL_FIFO
