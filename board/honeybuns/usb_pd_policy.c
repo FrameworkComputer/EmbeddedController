@@ -139,8 +139,11 @@ int pd_check_power_swap(int port)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/* Always allow data swap */
-	return 1;
+	/*
+	 * Ensure we always are a UFP :
+	 * Allow data swap if we are a DFP, otherwise don't allow.
+	 */
+	return (data_role == PD_ROLE_DFP) ? 1 : 0;
 }
 
 void pd_execute_data_swap(int port, int data_role)
@@ -154,6 +157,9 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
+	/* if the partner is a DRP (e.g. tablet), try to switch to UFP */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
+		pd_request_data_swap(port);
 }
 
 int pd_alt_mode(int port, uint16_t svid)
