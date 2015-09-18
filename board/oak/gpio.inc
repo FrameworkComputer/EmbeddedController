@@ -8,7 +8,6 @@
 /* Inputs with interrupt handlers are first for efficiency */
 GPIO_INT(AC_PRESENT,     PIN(C, 6),  GPIO_INT_BOTH,                     extpower_interrupt)
 GPIO_INT(POWER_BUTTON_L, PIN(B, 5),  GPIO_INT_BOTH | GPIO_PULL_UP,      power_button_interrupt)
-GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH | GPIO_PULL_DOWN,    power_signal_interrupt)
 GPIO_INT(LID_OPEN,       PIN(C, 13), GPIO_INT_BOTH,                     lid_interrupt)          /* LID switch detection */
 GPIO_INT(SUSPEND_L,      PIN(C, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,    power_signal_interrupt) /* AP suspend/resume state */
 GPIO_INT(PD_MCU_INT,     PIN(E, 0),  GPIO_INT_FALLING,                  pd_mcu_interrupt)       /* Signal from PD MCU, external pull-up */
@@ -25,15 +24,24 @@ GPIO_INT(KB_IN06, PIN(C, 15), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN07, PIN(D, 2),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 
 /* Board specific interrupt and input */
-#if BOARD_REV == OAK_REV2
+#if BOARD_REV <= OAK_REV1
+GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH | GPIO_PULL_DOWN,    power_signal_interrupt)
+GPIO(EC_INT_L,           PIN(B, 9),  GPIO_OUT_HIGH)
+#elif BOARD_REV == OAK_REV2
+GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH | GPIO_PULL_DOWN,    power_signal_interrupt)
+GPIO(EC_INT_L,           PIN(B, 9),  GPIO_OUT_HIGH)
 GPIO(USB_VBUS_WAKE_L,    PIN(E, 1),  GPIO_INPUT)
 #elif BOARD_REV == OAK_REV3
+GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH | GPIO_PULL_DOWN,    power_signal_interrupt)
+GPIO(EC_INT_L,           PIN(B, 9),  GPIO_OUT_HIGH)
 GPIO(USB_C0_VBUS_WAKE_L, PIN(E, 1),  GPIO_INPUT)
 GPIO(USB_C1_VBUS_WAKE_L, PIN(F, 2),  GPIO_INPUT)
 #elif BOARD_REV >= OAK_REV4
+GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH                 ,    power_signal_interrupt)
 GPIO_INT(USB_BC12_INT,   PIN(E, 1),  GPIO_INT_FALLING, usb_evt)
 GPIO(USB_C0_VBUS_WAKE_L, PIN(D, 12), GPIO_INPUT)
 GPIO(USB_C1_VBUS_WAKE_L, PIN(F, 2),  GPIO_INPUT)
+GPIO(EC_INT_L,           PIN(B, 9),  GPIO_ODR_HIGH)
 #endif
 
 /* Inputs without interrupt handlers */
@@ -54,7 +62,6 @@ GPIO(BAT_LED1,          PIN(A, 11), GPIO_OUT_LOW)   /* LED_ORANGE or LED_RED(>re
 GPIO(PWR_LED0,          PIN(F, 10), GPIO_OUT_LOW)   /* LED_GREEN */
 GPIO(PWR_LED1,          PIN(F,  9), GPIO_OUT_LOW)   /* LED_ORANGE */
 GPIO(EC_BL_OVERRIDE,    PIN(F, 1),  GPIO_OUT_LOW)
-GPIO(EC_INT_L,          PIN(B, 9),  GPIO_OUT_HIGH)
 GPIO(ENTERING_RW,       PIN(F, 0),  GPIO_OUT_LOW)
 
 
