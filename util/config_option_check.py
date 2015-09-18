@@ -92,6 +92,9 @@ def obtain_config_options_in_use():
     if 'private' in dirnames:
       dirnames.remove('private')
     for f in filenames:
+      # Ignore hidden files.
+      if f.startswith('.'):
+        continue
       # Only consider C source, assembler, and Make-style files.
       if (os.path.splitext(f)[1] in ('.c', '.h', '.inc', '.S', '.mk') or
           'Makefile' in f):
