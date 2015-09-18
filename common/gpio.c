@@ -72,18 +72,15 @@ void gpio_config_module(enum module_id id, int enable)
 		if (id != af->module_id)
 			continue;  /* Pins for some other module */
 
-		if (enable) {
-			if (!(af->flags & GPIO_DEFAULT))
-				gpio_set_flags_by_mask(af->port,
-					af->mask, af->flags);
-			gpio_set_alternate_function(af->port, af->mask,
-						    af->func);
-		} else {
-			if (!(af->flags & GPIO_DEFAULT))
-				gpio_set_flags_by_mask(af->port,
-					af->mask, GPIO_INPUT);
-			gpio_set_alternate_function(af->port, af->mask, -1);
-		}
+		if (!(af->flags & GPIO_DEFAULT))
+			gpio_set_flags_by_mask(
+				af->port,
+				af->mask,
+				enable ? af->flags : GPIO_INPUT);
+		gpio_set_alternate_function(
+			af->port,
+			af->mask,
+			enable ? af->func : -1);
 	}
 }
 
@@ -91,21 +88,23 @@ int gpio_config_pins(enum module_id id,
 		      uint32_t port, uint32_t pin_mask, int enable)
 {
 	const struct gpio_alt_func *af;
-	int i = 0;
 
 	/* Find pins and set to alternate functions */
 	for (af = gpio_alt_funcs; af < gpio_alt_funcs + gpio_alt_funcs_count;
-	     af++, i++) {
+	     af++) {
 		if (af->module_id != id)
 			continue;  /* Pins for some other module */
 
 		if (af->port == port && (af->mask & pin_mask) == pin_mask) {
-			if (enable)
-				gpio_set_alternate_function(
-					af->port, pin_mask, af->func);
-			else
-				gpio_set_alternate_function(
-					af->port, pin_mask, -1);
+			if (!(af->flags & GPIO_DEFAULT))
+				gpio_set_flags_by_mask(
+					af->port,
+					pin_mask,
+					enable ? af->flags : GPIO_INPUT);
+			gpio_set_alternate_function(
+				af->port,
+				pin_mask,
+				enable ? af->func : -1);
 			return EC_SUCCESS;
 		}
 	}
