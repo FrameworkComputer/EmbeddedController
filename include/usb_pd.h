@@ -704,6 +704,7 @@ enum pd_states {
 #define PD_FLAGS_PARTNER_EXTPOWER  (1 << 11)/* port partner has external pwr */
 #define PD_FLAGS_VCONN_ON          (1 << 12)/* vconn is being sourced */
 #define PD_FLAGS_TRY_SRC           (1 << 13)/* Try.SRC states are active */
+#define PD_FLAGS_PARTNER_USB_COMM  (1 << 14)/* port partner is USB comms */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -715,7 +716,8 @@ enum pd_states {
 					   PD_FLAGS_CHECK_DR_ROLE | \
 					   PD_FLAGS_PARTNER_EXTPOWER | \
 					   PD_FLAGS_VCONN_ON | \
-					   PD_FLAGS_TRY_SRC)
+					   PD_FLAGS_TRY_SRC | \
+					   PD_FLAGS_PARTNER_USB_COMM)
 
 
 enum pd_cc_states {

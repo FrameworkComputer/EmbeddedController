@@ -3992,14 +3992,32 @@ int cmd_usb_pd(int argc, char *argv[])
 		       r->role == PD_ROLE_SOURCE ? "SRC" : "SNK",
 		       r->polarity + 1, r->state);
 	} else {
-		printf("Port C%d is %s,%s, Role:%s %s%s Polarity:CC%d "
-		       "State:%s\n",
-		       p.port, (r_v1->enabled & 1) ? "enabled" : "disabled",
-		       (r_v1->enabled & 2) ? "connected" : "disconnected",
-		       r_v1->role & PD_ROLE_SOURCE ? "SRC" : "SNK",
-		       r_v1->role & (PD_ROLE_DFP << 1) ? "DFP" : "UFP",
-		       r_v1->role & (1 << 2) ? " VCONN" : "",
-		       r_v1->polarity + 1, r_v1->state);
+		printf("Port C%d: %s, %s  State:%s\n"
+		       "Role:%s %s%s, Polarity:CC%d\n",
+		       p.port,
+		       (r_v1->enabled & PD_CTRL_RESP_ENABLED_COMMS) ?
+				"enabled" : "disabled",
+		       (r_v1->enabled & PD_CTRL_RESP_ENABLED_CONNECTED) ?
+				"connected" : "disconnected",
+		       r_v1->state,
+
+		       (r_v1->role & PD_CTRL_RESP_ROLE_POWER) ? "SRC" : "SNK",
+		       (r_v1->role & PD_CTRL_RESP_ROLE_DATA) ? "DFP" : "UFP",
+		       (r_v1->role & PD_CTRL_RESP_ROLE_VCONN) ? " VCONN" : "",
+		       r_v1->polarity + 1);
+
+		/* If connected to a PD device, then print port partner info */
+		if ((r_v1->enabled & PD_CTRL_RESP_ENABLED_CONNECTED) &&
+		    (r_v1->enabled & PD_CTRL_RESP_ENABLED_PD_CAPABLE))
+			printf("PD Partner Capabilities:\n%s%s%s%s",
+				(r_v1->role & PD_CTRL_RESP_ROLE_DR_POWER) ?
+					" DR power\n" : "",
+				(r_v1->role & PD_CTRL_RESP_ROLE_DR_DATA) ?
+					" DR data\n" : "",
+				(r_v1->role & PD_CTRL_RESP_ROLE_USB_COMM) ?
+					" USB capable\n" : "",
+				(r_v1->role & PD_CTRL_RESP_ROLE_EXT_POWERED) ?
+					" Externally powered\n" : "");
 	}
 	return (rv < 0 ? rv : 0);
 }

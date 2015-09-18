@@ -3210,6 +3210,18 @@ struct ec_params_usb_pd_control {
 	uint8_t swap;
 } __packed;
 
+#define PD_CTRL_RESP_ENABLED_COMMS      (1 << 0) /* Communication enabled */
+#define PD_CTRL_RESP_ENABLED_CONNECTED  (1 << 1) /* Device connected */
+#define PD_CTRL_RESP_ENABLED_PD_CAPABLE (1 << 2) /* Partner is PD capable */
+
+#define PD_CTRL_RESP_ROLE_POWER         (1 << 0) /* 0=SNK/1=SRC */
+#define PD_CTRL_RESP_ROLE_DATA          (1 << 1) /* 0=UFP/1=DFP */
+#define PD_CTRL_RESP_ROLE_VCONN         (1 << 2) /* Vconn status */
+#define PD_CTRL_RESP_ROLE_DR_POWER      (1 << 3) /* Partner is dualrole power */
+#define PD_CTRL_RESP_ROLE_DR_DATA       (1 << 4) /* Partner is dualrole data */
+#define PD_CTRL_RESP_ROLE_USB_COMM      (1 << 5) /* Partner USB comm capable */
+#define PD_CTRL_RESP_ROLE_EXT_POWERED   (1 << 6) /* Partner externally powerd */
+
 struct ec_response_usb_pd_control {
 	uint8_t enabled;
 	uint8_t role;
@@ -3218,9 +3230,8 @@ struct ec_response_usb_pd_control {
 } __packed;
 
 struct ec_response_usb_pd_control_v1 {
-	uint8_t enabled; /* [0] comm enabled [1] connected */
-	uint8_t role; /* [0] power: 0=SNK/1=SRC [1] data: 0=UFP/1=DFP
-			 [2] vconn 0=off/1=on */
+	uint8_t enabled;
+	uint8_t role;
 	uint8_t polarity;
 	char state[32];
 } __packed;

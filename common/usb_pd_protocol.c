@@ -678,6 +678,11 @@ static void pd_update_pdo_flags(int port, uint32_t pdo)
 		pd[port].flags |= PD_FLAGS_PARTNER_EXTPOWER;
 	else
 		pd[port].flags &= ~PD_FLAGS_PARTNER_EXTPOWER;
+
+	if (pdo & PDO_FIXED_COMM_CAP)
+		pd[port].flags |= PD_FLAGS_PARTNER_USB_COMM;
+	else
+		pd[port].flags &= ~PD_FLAGS_PARTNER_USB_COMM;
 #endif
 
 	if (pdo & PDO_FIXED_DATA_SWAP)
@@ -3065,12 +3070,25 @@ static int hc_usb_pd_control(struct host_cmd_handler_args *args)
 		r->state = pd[p->port].task_state;
 		args->response_size = sizeof(*r);
 	} else {
-		r_v1->enabled = pd_comm_enabled |
-				(pd_is_connected(p->port) << 1);
-		r_v1->role = pd[p->port].power_role |
-			    (pd[p->port].data_role << 1) |
-			    ((pd[p->port].flags & PD_FLAGS_VCONN_ON) ?
-				1 << 2 : 0);
+		r_v1->enabled =
+			(pd_comm_enabled ? PD_CTRL_RESP_ENABLED_COMMS : 0) |
+			(pd_is_connected(p->port) ?
+				PD_CTRL_RESP_ENABLED_CONNECTED : 0) |
+			((pd[p->port].flags & PD_FLAGS_PREVIOUS_PD_CONN) ?
+				PD_CTRL_RESP_ENABLED_PD_CAPABLE : 0);
+		r_v1->role =
+			(pd[p->port].power_role ? PD_CTRL_RESP_ROLE_POWER : 0) |
+			(pd[p->port].data_role ? PD_CTRL_RESP_ROLE_DATA : 0) |
+			((pd[p->port].flags & PD_FLAGS_VCONN_ON) ?
+				PD_CTRL_RESP_ROLE_VCONN : 0) |
+			((pd[p->port].flags & PD_FLAGS_PARTNER_DR_POWER) ?
+				PD_CTRL_RESP_ROLE_DR_POWER : 0) |
+			((pd[p->port].flags & PD_FLAGS_PARTNER_DR_DATA) ?
+				PD_CTRL_RESP_ROLE_DR_DATA : 0) |
+			((pd[p->port].flags & PD_FLAGS_PARTNER_USB_COMM) ?
+				PD_CTRL_RESP_ROLE_USB_COMM : 0) |
+			((pd[p->port].flags & PD_FLAGS_PARTNER_EXTPOWER) ?
+				PD_CTRL_RESP_ROLE_EXT_POWERED : 0);
 		r_v1->polarity = pd[p->port].polarity;
 		strzcpy(r_v1->state,
 			pd_state_names[pd[p->port].task_state],
