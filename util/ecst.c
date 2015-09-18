@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Chromium OS Authors. All rights reserved.
+ * Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -880,7 +880,10 @@ void my_printf(int error_level, char *fmt, ...)
 	if ((error_level == TDBG) && (g_verbose != SUPER_VERBOSE))
 		return;
 
-	printf("%s", buffer);
+	if (error_level == TERR)
+		fprintf(stderr, "%s", buffer);
+	else
+		printf("%s", buffer);
 }
 
 /*
