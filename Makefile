@@ -118,6 +118,9 @@ $(eval CHIP_$(UC_CHIP)=y)
 $(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)
 $(eval CHIP_FAMILY_$(UC_CHIP_FAMILY)=y)
 
+# Private subdirectories may call this from their build.mk
+ro-objs_from_dir=$(sort $(foreach obj, $($(2)-y), $(out)/RO/$(1)/$(obj)))
+
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
 include $(BDIR)/build.mk
@@ -136,10 +139,8 @@ include util/signer/build.mk
 
 includes+=$(includes-y)
 
-ro-objs_from_dir=$(sort $(foreach obj, $($(2)-y), $(out)/RO/$(1)/$(obj)))
-
 # Get all sources to build
-all-ro-y=$(call ro-objs_from_dir,core/$(CORE),core)
+all-ro-y+=$(call ro-objs_from_dir,core/$(CORE),core)
 all-ro-y+=$(call ro-objs_from_dir,chip/$(CHIP),chip)
 all-ro-y+=$(call ro-objs_from_dir,$(BDIR),board)
 all-ro-y+=$(call ro-objs_from_dir,private,private)
