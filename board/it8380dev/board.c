@@ -144,6 +144,29 @@ const struct ec2i_t pnpcfg_settings[] = {
 	{HOST_INDEX_DSLDC5, P80L_P80LE},
 	/* P80L Current Index */
 	{HOST_INDEX_DSLDC6, P80L_P80LC},
+#ifdef CONFIG_UART_HOST
+	/* Select logical device 2h(UART2) */
+	{HOST_INDEX_LDN, LDN_UART2},
+	/*
+	 * I/O port base address is 2F8h.
+	 * Host can use LPC I/O port 0x2F8 ~ 0x2FF to access UART2.
+	 * See specification 7.24.4 for more detial.
+	 */
+	{HOST_INDEX_IOBAD0_MSB, 0x02},
+	{HOST_INDEX_IOBAD0_LSB, 0xF8},
+	/* IRQ number is 3 */
+	{HOST_INDEX_IRQNUMX, 0x03},
+	/*
+	 * Interrupt Request Type Select
+	 * bit1, 0: IRQ request is buffered and applied to SERIRQ.
+	 *       1: IRQ request is inverted before being applied to SERIRQ.
+	 * bit0, 0: Edge triggered mode.
+	 *       1: Level triggered mode.
+	 */
+	{HOST_INDEX_IRQTP, 0x02},
+	/* Enable logical device */
+	{HOST_INDEX_LDA, 0x01},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(pnpcfg_settings) == EC2I_SETTING_COUNT);
 

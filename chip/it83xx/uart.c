@@ -15,8 +15,9 @@
 #include "uart.h"
 #include "util.h"
 
-/* Traces on UART0 */
-#define UART_PORT 0
+/* Traces on UART1 */
+#define UART_PORT      0
+#define UART_PORT_HOST 1
 
 static int init_done;
 
@@ -151,20 +152,55 @@ static void uart_config(void)
 	IT83XX_UART_MCR(UART_PORT) = 0x08;
 }
 
+#ifdef CONFIG_UART_HOST
+static void host_uart_config(void)
+{
+	/*
+	 * Specify clock source of the UART is 24MHz,
+	 * must match CLK_UART_DIV_SEL.
+	 */
+	IT83XX_UART_CSSR(UART_PORT_HOST) = 0x01;
+	/* 8-N-1 and DLAB set to allow access to DLL and DLM registers. */
+	IT83XX_UART_LCR(UART_PORT_HOST) = 0x83;
+	/* Set divisor to set baud rate to 115200 */
+	IT83XX_UART_DLM(UART_PORT_HOST) = 0x00;
+	IT83XX_UART_DLL(UART_PORT_HOST) = 0x01;
+	/*
+	 * Clear DLAB bit to exclude access to DLL and DLM and give access to
+	 * RBR and THR.
+	 */
+	IT83XX_UART_LCR(UART_PORT_HOST) = 0x03;
+	/*
+	 * Enable TX and RX FIFOs and set RX FIFO interrupt level to the
+	 * minimum 1 byte.
+	 */
+	IT83XX_UART_FCR(UART_PORT_HOST) = 0x07;
+}
+#endif
+
 void uart_init(void)
 {
 	/* Waiting for when we can use the GPIO module to set pin muxing */
 	gpio_config_module(MODULE_UART, 1);
 
-	/* switch UART0 on without hardware flow control */
-	IT83XX_GPIO_GRC1 = 0x01;
+	/* switch UART1 on without hardware flow control */
+	IT83XX_GPIO_GRC1 |= 0x01;
 	IT83XX_GPIO_GRC6 |= 0x03;
 
 	/* Enable clocks to UART 1 and 2. */
 	clock_enable_peripheral(CGC_OFFSET_UART, 0, 0);
 
-	/* Config UART 0 only for now. */
+	/* Config UART 1 */
 	uart_config();
+
+#ifdef CONFIG_UART_HOST
+	/* bit2, reset UART2 */
+	IT83XX_GCTRL_RSTC4 |= (1 << 2);
+	/* SIN1/SOUT1 of UART 2 is enabled. */
+	IT83XX_GPIO_GRC1 |= (1 << 2);
+	/* Config UART 2 */
+	host_uart_config();
+#endif
 
 	/* clear interrupt status */
 	task_clear_pending_irq(IT83XX_IRQ_UART1);

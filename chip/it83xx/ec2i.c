@@ -59,8 +59,13 @@ static void ec2i_ec_access_disable(void)
 	/* Diable EC to I-Bus access. */
 	IT83XX_EC2I_IBCTL &= ~0x01;
 
+#ifdef CONFIG_IT83XX_PNPCFG_HOST_ACCESS
 	/* Enable host access */
 	IT83XX_EC2I_LSIOHA &= ~0x03;
+#else
+	/* Host access is disabled */
+	IT83XX_EC2I_LSIOHA &= ~0x02;
+#endif
 }
 
 /* EC2I write */
