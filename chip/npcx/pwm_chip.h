@@ -8,6 +8,14 @@
 #ifndef __CROS_EC_PWM_CHIP_H
 #define __CROS_EC_PWM_CHIP_H
 
+/* Optional npcx flags for PWM config table */
+
+/**
+ * Use internal 32K as PWM clock source.
+ * It can keep PWM is active during ec enter deep idle.
+ */
+#define PWM_CONFIG_DSLEEP_CLK   (1 << 31)
+
 /* Data structure to define PWM channels. */
 struct pwm_t {
 	/* PWM channel ID */
@@ -16,8 +24,6 @@ struct pwm_t {
 	uint32_t flags;
 	/* PWM freq. */
 	uint32_t freq;
-	/* PWM pulses each cycle. */
-	uint32_t cycle_pulses;
 };
 
 extern const struct pwm_t pwm_channels[];

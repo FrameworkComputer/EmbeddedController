@@ -30,7 +30,7 @@ enum npcx_pwm_source_clock {
 	NPCX_PWM_CLOCK_APB2_LFCLK  = 0,
 	NPCX_PWM_CLOCK_FX          = 1,
 	NPCX_PWM_CLOCK_FR          = 2,
-	NPCX_PWM_CLOCK_RESERVED    = 0x3,
+	NPCX_PWM_CLOCK_RESERVED    = 3,
 	NPCX_PWM_CLOCK_UNDEF       = 0xFF
 };
 
@@ -43,53 +43,53 @@ enum npcx_pwm_heartbeat_mode {
 	NPCX_PWM_HBM_UNDEF     = 0xFF
 };
 
-/* Global variables */
-static int pwm_init_ch;
+/* Default duty cycle resolution */
+#define DUTY_CYCLE_RESOLUTION 100
 
 /**
- * Preset PWM operation clock.
+ * Set PWM operation clock.
  *
- * @param   none
- * @return  none
- * @notes   changed when initial or HOOK_FREQ_CHANGE command
+ * @param   ch      operation channel
+ * @param   freq    desired PWM frequency
+ * @param   res     resolution for duty cycle
+ * @notes   changed when initialization
  */
-void pwm_freq_changed(void)
+void pwm_set_freq(enum pwm_channel ch, uint32_t freq, uint32_t res)
 {
+	int mdl = pwm_channels[ch].channel;
 	uint32_t prescaler_divider = 0;
+	uint32_t clock;
 
 	/* Disable PWM for module configuration */
-	pwm_enable(pwm_init_ch, 0);
+	pwm_enable(ch, 0);
 
-	if (pwm_init_ch == PWM_CH_FAN) {
-		/*
-		 * Using PWM Frequency and Resolution we calculate
-		 * prescaler for input clock
-		 */
-#ifdef NPCX_PWM_INPUT_LFCLK
-		prescaler_divider = (uint32_t)(32768 /
-				(pwm_channels[pwm_init_ch].freq)
-				/(pwm_channels[pwm_init_ch].cycle_pulses));
-#else
-		prescaler_divider = (uint32_t)(
-			clock_get_apb2_freq() / pwm_channels[pwm_init_ch].freq
-			/ (pwm_channels[pwm_init_ch].cycle_pulses));
-#endif
-	} else {
-		prescaler_divider = (uint32_t)(
-			clock_get_apb2_freq() / pwm_channels[pwm_init_ch].freq
-			/ (pwm_channels[pwm_init_ch].cycle_pulses));
-	}
-	/* Set clock prescalre divider to ADC module*/
+	/* Get PWM clock frequency */
+	if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP_CLK)
+		clock = INT_32K_CLOCK;
+	else
+		clock = clock_get_apb2_freq();
+
+	/*
+	 * Using PWM Frequency and Resolution we calculate
+	 * prescaler for input clock
+	 */
+	prescaler_divider = ((clock / freq)/res);
+
+	/* Set clock prescaler divider to PWM module*/
 	if (prescaler_divider >= 1)
 		prescaler_divider = prescaler_divider - 1;
 	if (prescaler_divider > 0xFFFF)
 		prescaler_divider = 0xFFFF;
 
 	/* Configure computed prescaler and resolution */
-	NPCX_PRSC(pwm_channels[pwm_init_ch].channel) =
-			(uint16_t)prescaler_divider;
+	NPCX_PRSC(mdl) = (uint16_t)prescaler_divider - 1;
+
+	/* Set PWM cycle time */
+	NPCX_CTR(mdl) = res - 1;
+
+	/* Set the duty cycle to 0% since DCR > CTR */
+	NPCX_DCR(mdl) = res;
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, pwm_freq_changed, HOOK_PRIO_DEFAULT);
 
 /**
  * Set PWM enabled.
@@ -100,12 +100,9 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, pwm_freq_changed, HOOK_PRIO_DEFAULT);
  */
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
+	int mdl = pwm_channels[ch].channel;
 	/* Start or close PWM module */
-	if (enabled)
-		SET_BIT(NPCX_PWMCTL(pwm_channels[ch].channel), NPCX_PWMCTL_PWR);
-	else
-		CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
-				NPCX_PWMCTL_PWR);
+	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_PWR, enabled);
 }
 
 /**
@@ -116,8 +113,8 @@ void pwm_enable(enum pwm_channel ch, int enabled)
  */
 int pwm_get_enabled(enum pwm_channel ch)
 {
-	return IS_BIT_SET(NPCX_PWMCTL(pwm_channels[ch].channel),
-			NPCX_PWMCTL_PWR);
+	int mdl = pwm_channels[ch].channel;
+	return IS_BIT_SET(NPCX_PWMCTL(mdl), NPCX_PWMCTL_PWR);
 }
 
 /**
@@ -129,37 +126,38 @@ int pwm_get_enabled(enum pwm_channel ch)
  */
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {
-	uint32_t resolution = 0;
-	uint16_t duty_cycle = 0;
+	int mdl = pwm_channels[ch].channel;
+	uint32_t dc_res = 0;
+	uint16_t dc_cnt = 0;
 
-	CPRINTS("pwm0=%d", percent);
-	/* Assume the fan control is active high and invert it ourselves */
-	if (pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW)
-		SET_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
-				NPCX_PWMCTL_INVP);
-	else
-		CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
-				NPCX_PWMCTL_INVP);
-
+	/* Checking duty value first */
 	if (percent < 0)
 		percent = 0;
 	else if (percent > 100)
 		percent = 100;
-	CPRINTS("pwm1duty=%d", percent);
+	CPRINTS("pwm%d, set duty=%d", mdl, percent);
 
-	resolution = NPCX_CTR(pwm_channels[ch].channel) + 1;
-	duty_cycle = percent*resolution/100;
+	/* Assume the fan control is active high and invert it ourselves */
+	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_INVP,
+			(pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW));
+
+	dc_res = NPCX_CTR(mdl) + 1;
+	dc_cnt = (percent*dc_res)/100;
 	CPRINTS("freq=0x%x", pwm_channels[ch].freq);
-	CPRINTS("resolution=%d", resolution);
-	CPRINTS("duty_cycle=%d", duty_cycle);
-	if (percent*resolution > (duty_cycle*100))
-		duty_cycle += 1;
+	CPRINTS("duty_cycle_res=%d", dc_res);
+	CPRINTS("duty_cycle_cnt=%d", dc_cnt);
+
+
 	/* Set the duty cycle */
-	if (duty_cycle > 0) {
-		NPCX_DCR(pwm_channels[ch].channel) = (duty_cycle - 1);
+	if (percent > 0) {
+		if (percent == 100)
+			NPCX_DCR(mdl) = NPCX_CTR(mdl);
+		else
+			NPCX_DCR(mdl) = (dc_cnt - 1);
 		pwm_enable(ch, 1);
 	} else {
-		NPCX_DCR(pwm_channels[ch].channel) = resolution;
+		/* Output low since DCR > CTR */
+		NPCX_DCR(mdl) = NPCX_CTR(mdl) + 1;
 		pwm_enable(ch, 0);
 	}
 }
@@ -172,74 +170,45 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
  */
 int pwm_get_duty(enum pwm_channel ch)
 {
+	int mdl = pwm_channels[ch].channel;
 	/* Return percent */
-	if ((0 == pwm_get_enabled(ch)) || (NPCX_DCR(pwm_channels[ch].channel)
-			> NPCX_CTR(pwm_channels[ch].channel)))
+	if ((!pwm_get_enabled(ch)) || (NPCX_DCR(mdl) > NPCX_CTR(mdl)))
 		return 0;
 	else
-		return (((NPCX_DCR(pwm_channels[ch].channel) + 1) * 100)
-				/ (NPCX_CTR(pwm_channels[ch].channel) + 1));
+		return ((NPCX_DCR(mdl) + 1) * 100) / (NPCX_CTR(mdl) + 1);
 }
 
 /**
  * PWM configuration.
  *
- * @param ch                        operation channel
+ * @param  ch    operation channel
  * @return none
  */
 void pwm_config(enum pwm_channel ch)
 {
-	pwm_init_ch = ch;
-
-	/* Configure pins from GPIOs to PWM */
-	if (ch == PWM_CH_FAN)
-		gpio_config_module(MODULE_PWM_FAN, 1);
-	else
-		gpio_config_module(MODULE_PWM_KBLIGHT, 1);
+	int mdl = pwm_channels[ch].channel;
 
 	/* Disable PWM for module configuration */
-	pwm_enable(ch, 0);
+	pwm_enable(mdl, 0);
 
-	/* Set PWM heartbeat mode is no heartbeat*/
-	NPCX_PWMCTL(pwm_channels[ch].channel) =
-			(NPCX_PWMCTL(pwm_channels[ch].channel)
-			& (~(((1<<2)-1) << NPCX_PWMCTL_HB_DC_CTL)))
-			| (NPCX_PWM_HBM_NORMAL << NPCX_PWMCTL_HB_DC_CTL);
-
-	/* Set PWM operation frequence */
-	pwm_freq_changed();
-
-	/* Set PWM cycle time */
-	NPCX_CTR(pwm_channels[ch].channel) =
-			(pwm_channels[ch].cycle_pulses - 1);
-
-	/* Set the duty cycle */
-	NPCX_DCR(pwm_channels[ch].channel) = pwm_channels[ch].cycle_pulses;
-
-	/* Set PWM polarity is normal*/
-	CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel), NPCX_PWMCTL_INVP);
+	/* Set PWM heartbeat mode is no heartbeat */
+	SET_FIELD(NPCX_PWMCTL(mdl), NPCX_PWMCTL_HB_DC_CTL_FIELD,
+			NPCX_PWM_HBM_NORMAL);
 
 	/* Select default CLK or LFCLK clock input to PWM module */
-	NPCX_PWMCTLEX(pwm_channels[ch].channel) =
-			(NPCX_PWMCTLEX(pwm_channels[ch].channel)
-			& (~(((1<<2)-1)<<NPCX_PWMCTLEX_FCK_SEL)))
-			| (NPCX_PWM_CLOCK_APB2_LFCLK<<NPCX_PWMCTLEX_FCK_SEL);
+	SET_FIELD(NPCX_PWMCTLEX(mdl), NPCX_PWMCTLEX_FCK_SEL_FIELD,
+			NPCX_PWM_CLOCK_APB2_LFCLK);
 
-	if (ch == PWM_CH_FAN) {
-#ifdef NPCX_PWM_INPUT_LFCLK
-		/* Select default LFCLK clock input to PWM module */
-		SET_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
-				NPCX_PWMCTL_CKSEL);
-#else
-		/* Select default core clock input to PWM module */
-		CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
-				NPCX_PWMCTL_CKSEL);
-#endif
-	} else {
-		/* Select default core clock input to PWM module */
-		CLEAR_BIT(NPCX_PWMCTL(pwm_channels[ch].channel),
-				NPCX_PWMCTL_CKSEL);
-	}
+	/* Set PWM polarity normal first */
+	CLEAR_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_INVP);
+
+	/* Select PWM clock source */
+	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_CKSEL,
+			(pwm_channels[ch].flags & PWM_CONFIG_DSLEEP_CLK));
+
+	/* Set PWM operation frequency */
+	pwm_set_freq(ch, pwm_channels[ch].freq, DUTY_CYCLE_RESOLUTION);
+
 }
 
 /**
@@ -252,14 +221,8 @@ static void pwm_init(void)
 {
 	int i;
 
-#ifdef CONFIG_PWM_DSLEEP
 	/* Enable the PWM module and delay a few clocks */
 	clock_enable_peripheral(CGC_OFFSET_PWM, CGC_PWM_MASK, CGC_MODE_ALL);
-#else
-	/* Enable the PWM module and delay a few clocks */
-	clock_enable_peripheral(CGC_OFFSET_PWM, CGC_PWM_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
-#endif
 
 	for (i = 0; i < PWM_CH_COUNT; i++)
 		pwm_config(i);

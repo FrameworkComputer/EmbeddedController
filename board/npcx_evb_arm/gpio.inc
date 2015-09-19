@@ -20,7 +20,7 @@ GPIO_INT(LID_OPEN,         PIN(3, 3), GPIO_PULL_DOWN | GPIO_INT_BOTH, lid_interr
 GPIO(ENTERING_RW,          PIN(3, 6), GPIO_OUT_LOW)                 /* Indicate when EC is entering RW code */
 GPIO(PCH_WAKE_L,           PIN(5, 0), GPIO_OUT_HIGH)                /* Wake signal output to PCH */
 /* For testing keyboard mkbp */
-GPIO(EC_INT_L,             PIN(7, 4),  GPIO_ODR_HIGH)               /* Interrupt pin for keyboard mkbp */
+GPIO(EC_INT_L,             PIN(7, 4), GPIO_ODR_HIGH)                /* Interrupt pin for keyboard mkbp */
 /* Used for module testing */
 GPIO(PGOOD_FAN,            PIN(C, 7), GPIO_PULL_UP   | GPIO_INPUT)  /* Power Good for FAN test */
 
@@ -63,9 +63,12 @@ ALTERNATE(PIN_MASK(4, 0x38), 1,  MODULE_ADC,         0)    /* ADC               
 ALTERNATE(PIN_MASK(A, 0x0A), 1,  MODULE_SPI,         0)    /* SPIP_MOSI/SPIP_SCLK     GPIOA3/A1	   */
 ALTERNATE(PIN_MASK(9, 0x20), 1,  MODULE_SPI,         0)    /* SPIP_MISO               GPIO95       */
 ALTERNATE(PIN_MASK(C, 0x04), 3,  MODULE_PWM_KBLIGHT, 0)    /* PWM1 for PWM/KBLIGHT Test GPIOC2     */
+/* Alternative functionality for FANS */
+#ifdef CONFIG_FANS
 ALTERNATE(PIN_MASK(C, 0x08), 7,  MODULE_PWM_FAN,     0)    /* PWM0 for PWM/FAN Test   GPIOC3       */
 #if NPCX_TACH_SEL2
 ALTERNATE(PIN_MASK(9, 0x08), 3,  MODULE_PWM_FAN,     0)    /* MFT-1/TA1_TACH1 for FAN GPIO93       */
 #else
 ALTERNATE(PIN_MASK(4, 0x01), 3,  MODULE_PWM_FAN,     0)    /* MFT-1/TA1_TACH1 for FAN Test GPIO40  */
+#endif
 #endif

@@ -36,43 +36,17 @@
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_CH_0] = {"ADC0", NPCX_ADC_INPUT_CH0, ADC_MAX_VOLT,
-			ADC_READ_MAX+1, 0},
-	[ADC_CH_1] = {"ADC1", NPCX_ADC_INPUT_CH1, ADC_MAX_VOLT,
-			ADC_READ_MAX+1, 0},
-	[ADC_CH_2] = {"ADC2", NPCX_ADC_INPUT_CH2, ADC_MAX_VOLT,
-			ADC_READ_MAX+1, 0},
+	[ADC_CH_0] = {"ADC0", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_CH_1] = {"ADC1", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_CH_2] = {"ADC2", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN] =	{
-			.channel = 0,
-			/*
-			 * flags can reverse the PWM output signal according to
-			 * the board design
-			 */
-			.flags = PWM_CONFIG_ACTIVE_LOW,
-			/*
-			 * freq_operation = freq_input / prescaler_divider
-			 * freq_output = freq_operation / cycle_pulses
-			 * and freq_output <= freq_mft
-			 */
-			.freq = 34,
-			/*
-			 * cycle_pulses = (cycle_pulses * freq_output) *
-			 * RPM_EDGES * RPM_SCALE * 60 / poles / rpm_min
-			 */
-			.cycle_pulses = 480,
-	},
-	[PWM_CH_KBLIGHT] = {
-			.channel = 1,
-			.flags = 0,
-			.freq = 10000,
-			.cycle_pulses = 100,
-			},
+	[PWM_CH_FAN] = { 0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP_CLK, 100},
+	[PWM_CH_KBLIGHT] = { 1, 0, 10000 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -84,7 +58,7 @@ const struct fan_t fans[] = {
 		.rpm_min = 1020,
 		.rpm_start = 1020,
 		.rpm_max = 8190,
-		.ch = 0,/* Use PWM/MFT to control fan */
+		.ch = 0,/* Use MFT id to control fan */
 		.pgood_gpio = GPIO_PGOOD_FAN,
 		.enable_gpio = -1,
 	},
@@ -94,16 +68,7 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 /******************************************************************************/
 /* MFT channels. These are logically separate from mft_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] =    {
-			.module = NPCX_MFT_MODULE_1,
-			.port = NPCX_MFT_MODULE_PORT_TA,
-			.default_count = 0xFFFF,
-#ifdef NPCX_MFT_INPUT_LFCLK
-			.freq = 32768,
-#else
-			.freq = 2000000,
-#endif
-			},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_1, 0xFFFF, TCKC_LFCLK, PWM_CH_FAN},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 

@@ -33,13 +33,6 @@ enum npcx_adc_conversion_mode {
 	ADC_SCAN_CONVERSION_MODE  = 1
 };
 
-/* ADC repetitive mode */
-enum npcx_adc_repetitive_mode {
-	ADC_ONE_SHOT_CONVERSION_TYPE    = 0,
-	ADC_REPETITIVE_CONVERSION_TYPE  = 1
-};
-
-
 /* Global variables */
 static task_id_t task_waiting;
 
@@ -62,8 +55,7 @@ void adc_freq_changed(void)
 		prescaler_divider = 0x3F;
 
 	/* Set Core Clock Division Factor in order to obtain the ADC clock */
-	NPCX_ATCTL = (NPCX_ATCTL & (~(((1<<6)-1)<<NPCX_ATCTL_SCLKDIV)))
-			|(prescaler_divider<<NPCX_ATCTL_SCLKDIV);
+	SET_FIELD(NPCX_ATCTL, NPCX_ATCTL_SCLKDIV_FIELD, prescaler_divider);
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, adc_freq_changed, HOOK_PRIO_DEFAULT);
 
@@ -75,7 +67,7 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, adc_freq_changed, HOOK_PRIO_DEFAULT);
  */
 static int get_channel_data(enum npcx_adc_input_channel input_ch)
 {
-	return (NPCX_CHNDAT(input_ch)>>NPCX_CHNDAT_CHDAT) & ((1<<10)-1);
+	return GET_FIELD(NPCX_CHNDAT(input_ch), NPCX_CHNDAT_CHDAT_FIELD);
 }
 
 /**
@@ -94,16 +86,14 @@ static int start_single_and_wait(enum npcx_adc_input_channel input_ch
 	task_waiting = task_get_current();
 
 	/* Set ADC conversion code to SW conversion mode */
-	NPCX_ADCCNF = (NPCX_ADCCNF & (~(((1<<2)-1)<<NPCX_ADCCNF_ADCMD)))
-			|(ADC_CHN_CONVERSION_MODE<<NPCX_ADCCNF_ADCMD);
+	SET_FIELD(NPCX_ADCCNF, NPCX_ADCCNF_ADCMD_FIELD,
+			ADC_CHN_CONVERSION_MODE);
 
 	/* Set conversion type to one-shot type */
-	NPCX_ADCCNF = (NPCX_ADCCNF & (~(((1<<1)-1)<<NPCX_ADCCNF_ADCRPTC)))
-			|(ADC_ONE_SHOT_CONVERSION_TYPE<<NPCX_ADCCNF_ADCRPTC);
+	CLEAR_BIT(NPCX_ADCCNF, NPCX_ADCCNF_ADCRPTC);
 
 	/* Update number of channel to be converted */
-	NPCX_ASCADD = (NPCX_ASCADD & (~(((1<<5)-1)<<NPCX_ASCADD_SADDR)))
-			|(input_ch<<NPCX_ASCADD_SADDR);
+	SET_FIELD(NPCX_ASCADD, NPCX_ASCADD_SADDR_FIELD, input_ch);
 
 	/* Clear End-of-Conversion Event status */
 	SET_BIT(NPCX_ADCSTS, NPCX_ADCSTS_EOCEV);
@@ -139,7 +129,7 @@ int adc_read_channel(enum adc_channel ch)
 
 	if (start_single_and_wait(adc->input_ch, ADC_TIMEOUT_US)) {
 		if ((adc->input_ch ==
-			((NPCX_ASCADD>>NPCX_ASCADD_SADDR)&((1<<5)-1)))
+			GET_FIELD(NPCX_ASCADD, NPCX_ASCADD_SADDR_FIELD))
 			&& (IS_BIT_SET(NPCX_CHNDAT(adc->input_ch),
 					NPCX_CHNDAT_NEW))) {
 			value = get_channel_data(adc->input_ch) *
@@ -223,8 +213,9 @@ static void adc_init(void)
 	adc_freq_changed();
 
 	/* Set regular speed */
-	NPCX_ATCTL = (NPCX_ATCTL & (~(((1<<3)-1)<<NPCX_ATCTL_DLY)))
-				|((ADC_REGULAR_DLY - 1)<<NPCX_ATCTL_DLY);
+	SET_FIELD(NPCX_ATCTL, NPCX_ATCTL_DLY_FIELD, (ADC_REGULAR_DLY - 1));
+
+	/* Set the other ADC settings */
 	NPCX_ADCCNF2 = ADC_REGULAR_ADCCNF2;
 	NPCX_GENDLY = ADC_REGULAR_GENDLY;
 	NPCX_MEAST = ADC_REGULAR_MEAST;

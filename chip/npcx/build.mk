@@ -23,7 +23,7 @@ chip-$(CONFIG_LPC)+=lpc.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(CONFIG_SHI)+=shi.o
 # pwm functions are implemented with the fan functions
-chip-$(CONFIG_PWM)+=pwm.o fan.o
+chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o

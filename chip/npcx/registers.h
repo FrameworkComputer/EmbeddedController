@@ -13,6 +13,7 @@
 /*
  * Macro Functions
  */
+/* Bit functions */
 #define SET_BIT(reg, bit)           ((reg) |= (0x1 << (bit)))
 #define CLEAR_BIT(reg, bit)         ((reg) &= (~(0x1 << (bit))))
 #define IS_BIT_SET(reg, bit)        ((reg >> bit) & (0x1))
@@ -20,6 +21,21 @@
 						SET_BIT(reg, bit); \
 					else \
 						CLEAR_BIT(reg, bit); }
+/* Field functions */
+#define GET_POS_FIELD(pos, size)    pos
+#define GET_SIZE_FIELD(pos, size)   size
+#define FIELD_POS(field)            GET_POS_##field
+#define FIELD_SIZE(field)           GET_SIZE_##field
+/* Read field functions */
+#define GET_FIELD(reg, field) \
+	_GET_FIELD_(reg, FIELD_POS(field), FIELD_SIZE(field))
+#define _GET_FIELD_(reg, f_pos, f_size) (((reg)>>(f_pos)) & ((1<<(f_size))-1))
+/* Write field functions */
+#define SET_FIELD(reg, field, value) \
+	_SET_FIELD_(reg, FIELD_POS(field), FIELD_SIZE(field), value)
+#define _SET_FIELD_(reg, f_pos, f_size, value) \
+	((reg) = ((reg) & (~(((1 << (f_size))-1) << (f_pos)))) \
+			| ((value) << (f_pos)))
 
 /******************************************************************************/
 /*
@@ -1008,17 +1024,17 @@ enum PM_CHANNEL_T {
 #define NPCX_MEAST                  REG16(NPCX_ADC_BASE_ADDR + 0x026)
 
 /* ADC register fields */
-#define NPCX_ATCTL_SCLKDIV               0
-#define NPCX_ATCTL_DLY                   8
-#define NPCX_ASCADD_SADDR                0
+#define NPCX_ATCTL_SCLKDIV_FIELD         FIELD(0, 6)
+#define NPCX_ATCTL_DLY_FIELD             FIELD(8, 3)
+#define NPCX_ASCADD_SADDR_FIELD          FIELD(0, 5)
 #define NPCX_ADCSTS_EOCEV                0
-#define NPCX_ADCCNF_ADCMD                1
+#define NPCX_ADCCNF_ADCMD_FIELD          FIELD(1, 2)
 #define NPCX_ADCCNF_ADCRPTC              3
 #define NPCX_ADCCNF_INTECEN              6
 #define NPCX_ADCCNF_START                4
 #define NPCX_ADCCNF_ADCEN                0
 #define NPCX_ADCCNF_STOP                 11
-#define NPCX_CHNDAT_CHDAT                0
+#define NPCX_CHNDAT_CHDAT_FIELD          FIELD(0, 10)
 #define NPCX_CHNDAT_NEW                  15
 /******************************************************************************/
 /* SPI Register */
@@ -1076,9 +1092,9 @@ enum PM_CHANNEL_T {
 /* PWM register fields */
 #define NPCX_PWMCTL_INVP                 0
 #define NPCX_PWMCTL_CKSEL                1
-#define NPCX_PWMCTL_HB_DC_CTL            2
+#define NPCX_PWMCTL_HB_DC_CTL_FIELD      FIELD(2, 2)
 #define NPCX_PWMCTL_PWR                  7
-#define NPCX_PWMCTLEX_FCK_SEL            4
+#define NPCX_PWMCTLEX_FCK_SEL_FIELD      FIELD(4, 2)
 #define NPCX_PWMCTLEX_OD_OUT             7
 /******************************************************************************/
 /* MFT Registers */
@@ -1096,11 +1112,11 @@ enum PM_CHANNEL_T {
 #define NPCX_TCFG(n)                      REG8(NPCX_MFT_BASE_ADDR(n) + 0x01C)
 
 /* MFT register fields */
-#define NPCX_TMCTRL_MDSEL                0
+#define NPCX_TMCTRL_MDSEL_FIELD          FIELD(0, 3)
 #define NPCX_TCKC_LOW_PWR                7
 #define NPCX_TCKC_PLS_ACC_CLK            6
-#define NPCX_TCKC_C1CSEL                 0
-#define NPCX_TCKC_C2CSEL                 3
+#define NPCX_TCKC_C1CSEL_FIELD           FIELD(0, 3)
+#define NPCX_TCKC_C2CSEL_FIELD           FIELD(3, 3)
 #define NPCX_TMCTRL_TAEN                 5
 #define NPCX_TMCTRL_TBEN                 6
 #define NPCX_TMCTRL_TAEDG                3

@@ -62,9 +62,12 @@ ALTERNATE(PIN_MASK(4, 0x38), 1,  MODULE_ADC,         0)    /* ADC               
 ALTERNATE(PIN_MASK(A, 0x0A), 1,  MODULE_SPI,         0)    /* SPIP_MOSI/SPIP_SCLK     GPIOA3/A1	   */
 ALTERNATE(PIN_MASK(9, 0x20), 1,  MODULE_SPI,         0)    /* SPIP_MISO               GPIO95       */
 ALTERNATE(PIN_MASK(C, 0x04), 3,  MODULE_PWM_KBLIGHT, 0)    /* PWM1 for PWM/KBLIGHT Test GPIOC2     */
+/* Alternative functionality for FANS */
+#ifdef CONFIG_FANS
 ALTERNATE(PIN_MASK(C, 0x08), 7,  MODULE_PWM_FAN,     0)    /* PWM0 for PWM/FAN Test   GPIOC3       */
 #if NPCX_TACH_SEL2
 ALTERNATE(PIN_MASK(9, 0x08), 3,  MODULE_PWM_FAN,     0)    /* MFT-1/TA1_TACH1 for FAN GPIO93       */
 #else
 ALTERNATE(PIN_MASK(4, 0x01), 3,  MODULE_PWM_FAN,     0)    /* MFT-1/TA1_TACH1 for FAN Test GPIO40  */
+#endif
 #endif
