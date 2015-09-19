@@ -292,7 +292,7 @@ static int protect_to_reg(unsigned int start, unsigned int len,
 	blocks = len / size;
 
 	/* Determine bp = log2(blocks) with log2(0) = 0 */
-	bp = blocks ? (31 - __builtin_clz(blocks)) : 0;
+	bp = blocks ? __fls(blocks) : 0;
 
 	/* Clear bits */
 	*sr1 &= ~(SPI_FLASH_SR1_SEC | SPI_FLASH_SR1_TB

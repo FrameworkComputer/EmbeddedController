@@ -47,7 +47,7 @@
 #define GPIO_INT_BOTH_DSLEEP (GPIO_INT_BOTH | GPIO_INT_DSLEEP)
 
 /* Convert GPIO mask to GPIO number / index. */
-#define GPIO_MASK_TO_NUM(mask) (31 - __builtin_clz(mask))
+#define GPIO_MASK_TO_NUM(mask) (__fls(mask))
 
 /* Convert a GPIO to a port + mask pair */
 #define GPIO_TO_PORT_MASK_PAIR(gpio) \

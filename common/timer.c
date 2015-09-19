@@ -65,8 +65,8 @@ void process_timers(int overflow)
 			/* read atomically the current state of timer running */
 			check_timer = running_t0 = timer_running;
 			while (check_timer) {
-				int tskid = 31 - __builtin_clz(check_timer);
 
+				int tskid = __fls(check_timer);
 				/* timer has expired ? */
 				if (timer_deadline[tskid].val <= now.val)
 					expire_timer(tskid);

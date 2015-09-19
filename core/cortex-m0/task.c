@@ -231,7 +231,7 @@ task_  __attribute__((noinline)) *__svc_handler(int desched, task_id_t resched)
 	tasks_ready |= 1 << resched;
 
 	ASSERT(tasks_ready);
-	next = __task_id_to_ptr(31 - __builtin_clz(tasks_ready));
+	next = __task_id_to_ptr(__fls(tasks_ready));
 
 #ifdef CONFIG_TASK_PROFILING
 	/* Track additional time in re-sched exception context */
@@ -530,11 +530,11 @@ void mutex_unlock(struct mutex *mtx)
 			     : "r" (&mtx->lock), "r" (&mtx->waiters), "r" (0)
 			     : "cc");
 	while (waiters) {
-		task_id_t id = 31 - __builtin_clz(waiters);
+		task_id_t id = __fls(waiters);
+		waiters &= ~(1 << id);
 
 		/* Somebody is waiting on the mutex */
 		task_set_event(id, TASK_EVENT_MUTEX, 0);
-		waiters &= ~(1 << id);
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */
