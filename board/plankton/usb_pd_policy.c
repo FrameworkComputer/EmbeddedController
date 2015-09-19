@@ -22,7 +22,8 @@
 /* Acceptable margin between requested VBUS and measured value */
 #define MARGIN_MV 400 /* mV */
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP | PDO_FIXED_EXTERNAL)
+#define PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP | PDO_FIXED_EXTERNAL |\
+			 PDO_FIXED_COMM_CAP)
 
 /* Source PDOs */
 const uint32_t pd_src_pdo[] = {

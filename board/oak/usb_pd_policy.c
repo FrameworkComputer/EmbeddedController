@@ -21,7 +21,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)
+#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
+			 PDO_FIXED_COMM_CAP)
 
 /* TODO: fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
