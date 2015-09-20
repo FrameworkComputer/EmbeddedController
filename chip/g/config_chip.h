@@ -29,6 +29,13 @@
 #define CONFIG_FLASH_SIZE              (512 * 1024)
 #define CONFIG_RO_HEAD_ROOM	       1024	/* Room for ROM signature. */
 
+/* Memory-mapped internal flash */
+#define CONFIG_INTERNAL_STORAGE
+#define CONFIG_MAPPED_STORAGE
+
+/* Program is run directly from storage */
+#define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
+
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 

@@ -32,18 +32,11 @@
  * TODO(crosbug.com/p/23796): Finish implementing the spec.
  */
 
-/* Memory-mapped internal flash w/ PSTATE */
-#define CONFIG_INTERNAL_STORAGE
-#define CONFIG_MAPPED_STORAGE
-#define CONFIG_FLASH_PSTATE
-
-/* Program is run directly from storage */
-#define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
-
 /*
  * The EC uses the one bank of flash to emulate a SPI-like write protect
  * register with persistent state.
  */
+#define CONFIG_FLASH_PSTATE
 #define CONFIG_FW_PSTATE_SIZE	CONFIG_FLASH_BANK_SIZE
 #define CONFIG_FW_PSTATE_OFF	(CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
 

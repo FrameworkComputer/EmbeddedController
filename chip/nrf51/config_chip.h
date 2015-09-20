@@ -43,6 +43,14 @@
 #define CONFIG_FLASH_SIZE 0x00040000
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 
+/* Memory-mapped internal flash */
+#define CONFIG_INTERNAL_STORAGE
+#define CONFIG_MAPPED_STORAGE
+
+/* Program is run directly from storage */
+#define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
+
+/* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 
 /* Number of IRQ vectors on the NVIC */
