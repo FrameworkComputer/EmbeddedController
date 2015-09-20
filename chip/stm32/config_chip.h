@@ -57,14 +57,17 @@
 /* Idle task stack size */
 #define IDLE_TASK_STACK_SIZE 256
 
+/* Smaller task stack size */
+#define SMALLER_TASK_STACK_SIZE 384
+
 /* Default task stack size */
 #define TASK_STACK_SIZE 488
 
 /* Larger task stack size, for hook task */
 #define LARGER_TASK_STACK_SIZE 640
 
-/* Smaller task stack size */
-#define SMALLER_TASK_STACK_SIZE 384
+/* Even bigger */
+#define VENTI_TASK_STACK_SIZE 768
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
