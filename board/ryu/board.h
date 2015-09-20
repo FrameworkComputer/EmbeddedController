@@ -286,6 +286,7 @@ void pp1800_on_off_evt(enum gpio_signal signal);
 /* ALS sensor is in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
 	((1 << RYU_LID_LIGHT) | (1 << RYU_LID_PROX))
+#define CONFIG_ALS_LIGHTBAR_DIMMING RYU_LID_LIGHT
 
 #endif /* !__ASSEMBLER__ */
 
