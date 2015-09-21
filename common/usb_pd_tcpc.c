@@ -1078,6 +1078,11 @@ void pd_vbus_evt_p1(enum gpio_signal signal)
 static void tcpc_i2c_write(int port, int reg, int len, uint8_t *payload)
 {
 	uint16_t alert;
+
+	/* If we are not yet initialized, ignore any write command */
+	if (pd[port].power_status & TCPC_REG_POWER_STATUS_UNINIT)
+		return;
+
 	switch (reg) {
 	case TCPC_REG_ROLE_CTRL:
 		tcpc_set_cc(port, TCPC_REG_ROLE_CTRL_CC1(payload[1]));
