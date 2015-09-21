@@ -244,11 +244,9 @@ $(out)/RO/%.o:%.c
 	$(call quiet,c_to_o,CC     )
 $(out)/RW/%.o:%.c
 	$(call quiet,c_to_o,CC     )
+
 $(out)/$(SHOBJLIB)/%.o: override LATE_CFLAGS_DEFINE:=-DSHAREDLIB_IMAGE
 $(out)/$(SHOBJLIB)/%.o:%.c
-	$(call quiet,c_to_o,CC     )
-
-$(out)/vboot/%.o:$(VBOOT_SOURCE)/%.c
 	$(call quiet,c_to_o,CC     )
 
 $(out)/RO/%.o:%.S
