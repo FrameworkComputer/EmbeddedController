@@ -21,10 +21,10 @@ static const struct battery_info info = {
 	/* Pre-charge current: I <= 0.01C */
 	.precharge_current  = 64,  /* mA */
 	/* Operational temperature range */
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 60,
-	.charging_min_c       = 0,
-	.charging_max_c       = 60,
+	.start_charging_min_c = 5,
+	.start_charging_max_c = 50,
+	.charging_min_c       = 5,
+	.charging_max_c       = 50,
 	.discharging_min_c    = -20,
 	.discharging_max_c    = 60,
 };
@@ -130,7 +130,7 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	/*
 	 * Okay, impose our custom will:
-	 * When battery is 0-10C:
+	 * When battery is 5-10C:
 	 * CC at 900mA @ 4.35V
 	 * CV at 4.35V until current drops to 450mA
 	 *
