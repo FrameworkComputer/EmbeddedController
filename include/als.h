@@ -8,12 +8,16 @@
 
 #include "common.h"
 
+/* Priority for ALS HOOK int */
+#define HOOK_PRIO_ALS_INIT (HOOK_PRIO_DEFAULT + 1)
+
 /* Defined in board.h */
 enum als_id;
 
 /* Initialized in board.c */
 struct als_t {
 	const char const *name;
+	int (*init)(void);
 	int (*read)(int *lux, int af);
 	int attenuation_factor;
 };

@@ -48,7 +48,27 @@ void als_task(void)
 
 static void als_task_enable(void)
 {
-	task_timeout = ALS_POLL_PERIOD;
+	int fail_count = 0;
+	int err;
+	int i;
+
+	for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++) {
+		err = als[i].init();
+		if (err) {
+			fail_count++;
+			ccprintf("%s ALS sensor failed to initialize, err=%d\n",
+				als[i].name, err);
+		}
+	}
+
+	/*
+	 * If all the ALS filed to initialize, disable the ALS task.
+	 */
+	if (fail_count == ALS_COUNT)
+		task_timeout = -1;
+	else
+		task_timeout = ALS_POLL_PERIOD;
+
 	task_wake(TASK_ID_ALS);
 }
 
@@ -57,7 +77,7 @@ static void als_task_disable(void)
 	task_timeout = -1;
 }
 
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, als_task_enable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, als_task_enable, HOOK_PRIO_ALS_INIT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, als_task_disable, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/

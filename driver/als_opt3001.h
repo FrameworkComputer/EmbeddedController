@@ -26,6 +26,7 @@
 #define OPT3001_MANUFACTURER_ID		0x5449
 #define OPT3001_DEVICE_ID		0x3001
 
+int opt3001_init(void);
 int opt3001_read_lux(int *lux, int af);
 
 #endif	/* __CROS_EC_ALS_OPT3001_H */

@@ -6,13 +6,7 @@
  */
 
 #include "driver/als_opt3001.h"
-#include "common.h"
-#include "console.h"
-#include "hooks.h"
 #include "i2c.h"
-#include "timer.h"
-
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 /**
  *  Read register from OPT3001 light sensor.
@@ -45,22 +39,18 @@ static int opt3001_i2c_write(const int reg, int data)
 /**
  * Initialise OPT3001 light sensor.
  */
-static void opt3001_init(void)
+int opt3001_init(void)
 {
 	int data;
 	int ret;
 
 	ret = opt3001_i2c_read(OPT3001_REG_MAN_ID, &data);
-	if (ret || data != OPT3001_MANUFACTURER_ID) {
-		CPRINTF("ALS init failed: ret=%d, data=0x%x\n", ret, data);
-		return;
-	}
+	if (ret || data != OPT3001_MANUFACTURER_ID)
+		return ret;
 
 	ret = opt3001_i2c_read(OPT3001_REG_DEV_ID, &data);
-	if (ret || data != OPT3001_DEVICE_ID) {
-		CPRINTF("ALS init failed: ret=%d, data=0x%x\n", ret, data);
-		return;
-	}
+	if (ret || data != OPT3001_DEVICE_ID)
+		return ret;
 
 	/*
 	 * [15:12]: 0101b Automatic full scale (1310.40lux, 0.32lux/lsb)
@@ -68,11 +58,8 @@ static void opt3001_init(void)
 	 * [10:9] : 10b   Continuous Mode of conversion operation
 	 * [4]    : 1b    Latched window-style comparison operation
 	 */
-	ret = opt3001_i2c_write(OPT3001_REG_CONFIGURE, 0x5C10);
-	if (ret)
-		CPRINTF("ALS configure failed: ret=%d\n", ret);
+	return opt3001_i2c_write(OPT3001_REG_CONFIGURE, 0x5C10);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, opt3001_init, HOOK_PRIO_DEFAULT + 1);
 
 /**
  * Read OPT3001 light sensor data.
@@ -83,10 +70,8 @@ int opt3001_read_lux(int *lux, int af)
 	int data;
 
 	ret = opt3001_i2c_read(OPT3001_REG_RESULT, &data);
-	if (ret) {
-		CPRINTF("ALS read failed: ret=%d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	/*
 	 * The default power-on values will give 12 bits of precision:
