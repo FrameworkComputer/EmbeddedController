@@ -19,8 +19,8 @@
 #undef CONFIG_RO_SIZE
 #define CONFIG_RO_SIZE 0
 /* Fake full size if we had a RO partition */
-#undef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE (64*1024)
+#undef CONFIG_RW_SIZE
+#define CONFIG_RW_SIZE CONFIG_FLASH_SIZE
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000

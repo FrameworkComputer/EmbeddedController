@@ -95,9 +95,10 @@ int spi_image_load(uint32_t offset)
 				    CONFIG_PROGRAM_MEMORY_BASE);
 	uint32_t i;
 
-	memset((void *)buf, 0xFF, (CONFIG_FW_IMAGE_SIZE - 4));
+	BUILD_ASSERT(CONFIG_RO_SIZE == CONFIG_RW_SIZE);
+	memset((void *)buf, 0xFF, (CONFIG_RO_SIZE - 4));
 
-	for (i = 0; i < CONFIG_FW_IMAGE_SIZE; i += SPI_CHUNK_SIZE)
+	for (i = 0; i < CONFIG_RO_SIZE; i += SPI_CHUNK_SIZE)
 		spi_flash_readloc(&buf[i], offset + i, SPI_CHUNK_SIZE);
 
 	return 0;

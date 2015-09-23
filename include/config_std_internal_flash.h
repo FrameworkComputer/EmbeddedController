@@ -33,34 +33,38 @@
  */
 
 /*
+ * Size of one firmware image in flash - half for RO, half for RW.
+ * This is NOT a globally defined config, and is only used in this file
+ * for convenience.
+ */
+#define _IMAGE_SIZE		((CONFIG_FLASH_SIZE - \
+				  CONFIG_SHAREDLIB_SIZE) / 2)
+
+/*
  * The EC uses the one bank of flash to emulate a SPI-like write protect
  * register with persistent state.
  */
 #define CONFIG_FLASH_PSTATE
 #define CONFIG_FW_PSTATE_SIZE	CONFIG_FLASH_BANK_SIZE
-#define CONFIG_FW_PSTATE_OFF	(CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
-
-/* Size of one firmware image in flash */
-#define CONFIG_FW_IMAGE_SIZE	((CONFIG_FLASH_SIZE - \
-				  CONFIG_SHAREDLIB_SIZE) / 2)
+#define CONFIG_FW_PSTATE_OFF	(_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
 
 /*
  * By default, there is no shared objects library.  However, if configured, the
  * shared objects library will be placed after the RO image.
  */
 #define CONFIG_SHAREDLIB_MEM_OFF	(CONFIG_RO_MEM_OFF + \
-					 CONFIG_FW_IMAGE_SIZE)
+					 _IMAGE_SIZE)
 #define CONFIG_SHAREDLIB_STORAGE_OFF	(CONFIG_RO_STORAGE_OFF + \
-					 CONFIG_FW_IMAGE_SIZE)
+					 _IMAGE_SIZE)
 #define CONFIG_SHAREDLIB_SIZE	0
 
 #define CONFIG_RO_MEM_OFF	0
 #define CONFIG_RO_STORAGE_OFF	0
-#define CONFIG_RO_SIZE		(CONFIG_FW_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
+#define CONFIG_RO_SIZE		(_IMAGE_SIZE - CONFIG_FW_PSTATE_SIZE)
 #define CONFIG_RW_MEM_OFF	(CONFIG_SHAREDLIB_MEM_OFF + \
 				 CONFIG_SHAREDLIB_SIZE)
 #define CONFIG_RW_STORAGE_OFF	0
-#define CONFIG_RW_SIZE		CONFIG_FW_IMAGE_SIZE
+#define CONFIG_RW_SIZE		_IMAGE_SIZE
 
 #define CONFIG_EC_PROTECTED_STORAGE_OFF		0
 #define CONFIG_EC_PROTECTED_STORAGE_SIZE	CONFIG_RW_MEM_OFF

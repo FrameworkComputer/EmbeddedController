@@ -31,11 +31,6 @@
 #define CONFIG_EC_WRITABLE_STORAGE_OFF   0x20000
 #define CONFIG_EC_WRITABLE_STORAGE_SIZE  0x20000
 
-/* Size of one firmware image in flash */
-#ifndef CONFIG_FW_IMAGE_SIZE
-#define CONFIG_FW_IMAGE_SIZE	(96 * 1024) /* 96 KB for FW images */
-#endif
-
 /* Header support which is used by booter to copy FW from flash to code ram */
 #define NPCX_RO_HEADER
 #define CONFIG_RO_HDR_MEM_OFF	0x0
@@ -46,11 +41,11 @@
 
 /* RO firmware offset in flash */
 #define CONFIG_RO_MEM_OFF	0
-#define CONFIG_RO_SIZE		CONFIG_FW_IMAGE_SIZE    /* 96KB for RW FW */
+#define CONFIG_RO_SIZE		(96 * 1024)   /* 96KB for RO FW */
 
 /* RW firmware offset in flash */
 #define CONFIG_RW_MEM_OFF	CONFIG_RW_STORAGE_OFF
-#define CONFIG_RW_SIZE		CONFIG_FW_IMAGE_SIZE    /* 96KB for RW FW */
+#define CONFIG_RW_SIZE		(96 * 1024)   /* 96KB for RW FW */
 
 /* The storage offset of ec.R*.flat which is used for firmware_image.lds */
 #define CONFIG_RO_STORAGE_OFF	CONFIG_RO_HDR_SIZE
