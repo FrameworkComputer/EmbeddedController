@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include "common.h"
-#include "ec_date.h"
 #include "ec_version.h"
 #include "version.h"
 
