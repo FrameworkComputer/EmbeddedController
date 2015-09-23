@@ -168,7 +168,8 @@ static void board_init(void)
 	if (board_has_spi_sensors()) {
 		for (i = MOTIONSENSE_TYPE_ACCEL;
 		     i <= MOTIONSENSE_TYPE_MAG; i++) {
-			motion_sensors[i].addr = BMI160_SET_SPI_ADDRESS(1);
+			motion_sensors[i].addr =
+				BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT);
 		}
 		/* SPI sensors: put back the GPIO in its expected state */
 		gpio_set_level(GPIO_SPI3_NSS, 1);
