@@ -431,8 +431,11 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	data->odr = normalized_rate;
 
 #ifdef CONFIG_ACCEL_FIFO
-	/* FIFO start collecting events if AP wants them */
-	enable_fifo(s, !!BASE_ODR(s->config[SENSOR_CONFIG_AP].odr));
+	/*
+	 * FIFO start collecting events.
+	 * They will be discared if AP does not want them.
+	 */
+	enable_fifo(s, 1);
 #endif
 
 accel_cleanup:
