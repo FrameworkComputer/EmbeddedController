@@ -1028,9 +1028,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 	case MOTIONSENSE_CMD_LIST_ACTIVITIES: {
 		uint32_t enabled, disabled, mask, i;
-		if (in->sensor_offset.sensor_num !=
-		   MOTION_SENSE_ACTIVITY_SENSOR_ID)
-			return EC_RES_INVALID_PARAM;
+
 		out->list_activities.enabled = 0;
 		out->list_activities.disabled = 0;
 		ret = EC_RES_SUCCESS;
@@ -1052,10 +1050,9 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	}
 	case MOTIONSENSE_CMD_SET_ACTIVITY: {
 		uint32_t enabled, disabled, mask, i;
-		if (in->sensor_offset.sensor_num !=
-		   MOTION_SENSE_ACTIVITY_SENSOR_ID)
-			return EC_RES_INVALID_PARAM;
+
 		mask = CONFIG_GESTURE_DETECTION_MASK;
+		ret = EC_RES_SUCCESS;
 		while (mask && ret == EC_RES_SUCCESS) {
 			i = get_next_bit(&mask);
 			sensor = &motion_sensors[i];
