@@ -117,6 +117,8 @@ const char help_str[] =
 	"      Configure or start/stop the hang detect timer\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
+	"  hibdelay [sec]\n"
+	"      Set the delay before going into hibernation\n"
 	"  kbpress\n"
 	"      Simulate key press\n"
 	"  i2cread\n"
@@ -327,6 +329,36 @@ int cmd_hello(int argc, char *argv[])
 	}
 
 	printf("EC says hello!\n");
+	return 0;
+}
+
+int cmd_hibdelay(int argc, char *argv[])
+{
+	struct ec_params_hibernation_delay p;
+	struct ec_response_hibernation_delay r;
+	char *e;
+	int rv;
+
+	if (argc < 2) {
+		p.seconds = 0; /* Just read the current settings. */
+	} else {
+		p.seconds = strtoul(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "invalid number\n");
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_HIBERNATION_DELAY, 0, &p, sizeof(p),
+			&r, sizeof(r));
+	if (rv < 0) {
+		fprintf(stderr, "err: rv=%d\n", rv);
+		return -1;
+	}
+
+	printf("Hibernation delay: %u s\n", r.hibernate_delay);
+	printf("Time G3: %u s\n", r.time_g3);
+	printf("Time left: %u s\n", r.time_remaining);
 	return 0;
 }
 
@@ -6463,6 +6495,7 @@ const struct command commands[] = {
 	{"gpioset", cmd_gpio_set},
 	{"hangdetect", cmd_hang_detect},
 	{"hello", cmd_hello},
+	{"hibdelay", cmd_hibdelay},
 	{"kbpress", cmd_kbpress},
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
