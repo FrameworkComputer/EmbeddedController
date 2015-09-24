@@ -1064,6 +1064,9 @@ static uint32_t sequence_TAP(void)
 		lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	}
 #endif
+	/* First clear all segments */
+	lb_set_rgb(NUM_LEDS, 0, 0, 0);
+
 	lb_on();
 
 	for (i = 0; i < NUM_LEDS; i++)
