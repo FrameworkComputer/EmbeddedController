@@ -134,10 +134,10 @@ static const struct lightbar_params_v1 default_params = {
 	.s5_idx = 5,			       /* flash red */
 	.color = {
 #if defined(BOARD_RYU)
-		{0x22, 0x17, 0x3b},		/* Segment0: Google blue */
-		{0x3e, 0x10, 0x0c},		/* Segment1: Google red */
-		{0x48, 0x3a, 0x0c},		/* Segment2: Google yellow */
-		{0x1e, 0x2c, 0x1c},		/* Segment3: Google green */
+		{0x74, 0x58, 0xb4},		/* Segment0: Google blue */
+		{0xd6, 0x40, 0x20},		/* Segment1: Google red */
+		{0xfa, 0xe6, 0x20},		/* Segment2: Google yellow */
+		{0x66, 0xb0, 0x50},		/* Segment3: Google green */
 #else
 		/*
 		 * These values have been optically calibrated for the
