@@ -93,7 +93,7 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 
 	/* For valid sensors, check if AP really needs this data */
 	if (valid_data) {
-		int ap_odr = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
+		fp_t ap_odr = fp_div(BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr), 1000);
 
 		/* Use integer, conversion to FP will overflow */
 		fp_t rate = fp_div(sensor->drv->get_data_rate(sensor), 1000);
