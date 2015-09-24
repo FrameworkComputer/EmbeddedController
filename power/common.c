@@ -562,6 +562,36 @@ DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
 			"[sec]",
 			"Set the delay before going into hibernation",
 			NULL);
+
+static int host_command_hibernation_delay(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_hibernation_delay *p = args->params;
+	struct ec_response_hibernation_delay *r = args->response;
+
+	uint32_t time_g3 = (uint32_t)((get_time().val - last_shutdown_time)
+				      / SECOND);
+
+	/* Only change the hibernation delay if seconds is non-zero. */
+	if (p->seconds)
+		hibernate_delay = p->seconds;
+
+	if (state == POWER_G3 && !extpower_is_present())
+		r->time_g3 = time_g3;
+	else
+		r->time_g3 = 0;
+
+	if ((time_g3 != 0) && (time_g3 > hibernate_delay))
+		r->time_remaining = 0;
+	else
+		r->time_remaining = hibernate_delay - time_g3;
+	r->hibernate_delay = hibernate_delay;
+
+	args->response_size = sizeof(struct ec_response_hibernation_delay);
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY,
+		     host_command_hibernation_delay,
+		     EC_VER_MASK(0));
 #endif /* CONFIG_HIBERNATE */
 
 #ifdef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
