@@ -22,9 +22,9 @@ static const struct battery_info info = {
 	.precharge_current  = 64,  /* mA */
 	/* Operational temperature range */
 	.start_charging_min_c = 5,
-	.start_charging_max_c = 50,
+	.start_charging_max_c = 48,
 	.charging_min_c       = 5,
-	.charging_max_c       = 50,
+	.charging_max_c       = 48,
 	.discharging_min_c    = -20,
 	.discharging_max_c    = 60,
 };
