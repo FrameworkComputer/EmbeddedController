@@ -102,8 +102,11 @@ const struct adc_t adc_channels[] = {
 	[ADC_VBUS] = {"VBUS", 33000, 1024, 0, 1},
 	/* Adapter current output or battery discharging current */
 	[ADC_AMON_BMON] = {"AMON_BMON", 1, 1, 0, 3},
-	/* System current consumption */
-	[ADC_PSYS] = {"PSYS", 1, 1, 0, 4},
+	/*
+	 * System current consumption. Converted to mV,
+	 * full ADC is equivalent to 100W
+	 */
+	[ADC_PSYS] = {"PSYS", 3000, 1024, 0, 4},
 
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);

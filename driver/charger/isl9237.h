@@ -194,8 +194,7 @@
 #define ISL9237_C2_WOC_OFF (1 << 1)
 
 /* Control2: PSYS gain in uA/W */
-#define ISL9237_C2_PSYS_GAIN_1_44 0
-#define ISL9237_C2_PSYS_GAIN_0_36 1
+#define ISL9237_C2_PSYS_GAIN (1 << 0)
 
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864

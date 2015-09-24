@@ -341,6 +341,9 @@
  */
 #undef CONFIG_CHARGER_CURRENT_LIMIT
 
+/* Enable/disable system power monitor PSYS function */
+#undef CONFIG_CHARGER_PSYS
+
 /*
  * Board specific charging current termination limit, in mA.  If defined and
  * charger supports setting termination current it should be set during charger
@@ -502,6 +505,7 @@
 #define CONFIG_CMD_POWER_AP
 #define CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_CMD_POWERLED
+#undef CONFIG_CMD_PSYS
 #undef CONFIG_CMD_RTC_ALARM
 #undef CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_SHMEM

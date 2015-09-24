@@ -11,8 +11,10 @@
 #include "charger.h"
 #include "console.h"
 #include "common.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "isl9237.h"
+#include "timer.h"
 #include "util.h"
 
 #define DEFAULT_R_AC 20
@@ -242,6 +244,83 @@ int charger_discharge_on_ac(int enable)
 
 	return raw_write16(ISL9237_REG_CONTROL1, control1);
 }
+
+#ifdef CONFIG_CHARGER_PSYS
+static void charger_enable_psys(void)
+{
+	int val;
+
+	/*
+	 * enable system power monitor PSYS function
+	 */
+	if (!raw_read16(ISL9237_REG_CONTROL1, &val)) {
+		val |= ISL9237_C1_ENABLE_PSYS;
+		raw_write16(ISL9237_REG_CONTROL1, val);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, charger_enable_psys, HOOK_PRIO_DEFAULT);
+
+static void charger_disable_psys(void)
+{
+	int val;
+
+	/*
+	 * disable system power monitor PSYS function
+	 */
+	if (!raw_read16(ISL9237_REG_CONTROL1, &val)) {
+		val &= ~ISL9237_C1_ENABLE_PSYS;
+		raw_write16(ISL9237_REG_CONTROL1, val);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
+
+#ifdef CONFIG_CMD_PSYS
+#define PSYS_ADC_READ_COUNT 100
+static int charger_get_system_power(void)
+{
+	int adc = 0;
+	int i;
+	int ret;
+	int val;
+
+	ret = raw_read16(ISL9237_REG_CONTROL2, &val);
+	if (ret)
+		return ret;
+
+	/* Read ADC */
+	for (i = 0; i < PSYS_ADC_READ_COUNT; i++) {
+		adc += adc_read_channel(ADC_PSYS);
+		usleep(10);
+	}
+
+	/*
+	 * Calculate the power in mW (Power = adc * gain)
+	 *
+	 * System power monitor PSYS output gain
+	 * [0]: 0 = 1.44 uA/W
+	 *      1 = 0.36 uA/W
+	 *
+	 * Do not divide the constants first to ensure precision is not lost.
+	 */
+	if (val & ISL9237_C2_PSYS_GAIN)
+		return ((adc * ISL9237_C2_PSYS_GAIN_0_36) /
+				PSYS_ADC_READ_COUNT);
+	else
+		return ((adc * ISL9237_C2_PSYS_GAIN_1_44) /
+				PSYS_ADC_READ_COUNT);
+}
+
+static int console_command_psys(int argc, char **argv)
+{
+	CPRINTF("system power = %d mW\n", charger_get_system_power());
+	return 0;
+}
+DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
+			NULL,
+			"Get the system power in mW",
+			NULL);
+#endif /* CONFIG_CMD_PSYS */
+#endif /* CONFIG_CHARGER_PSYS */
 
 #ifdef CONFIG_CHARGER_ADC_AMON_BMON
 /**
