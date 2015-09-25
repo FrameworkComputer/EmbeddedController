@@ -1058,7 +1058,8 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			sensor = &motion_sensors[i];
 			sensor->drv->list_activities(sensor,
 					&enabled, &disabled);
-			if (in->set_activity.activity & (enabled | disabled))
+			if ((1 << in->set_activity.activity) &
+			    (enabled | disabled))
 				ret = sensor->drv->manage_activity(sensor,
 						in->set_activity.activity,
 						in->set_activity.enable,
