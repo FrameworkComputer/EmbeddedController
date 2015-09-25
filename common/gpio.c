@@ -63,31 +63,15 @@ static int last_val_changed(int i, int v)
 
 void gpio_config_module(enum module_id id, int enable)
 {
-	const struct gpio_alt_func *af = gpio_alt_funcs;
-	int count = gpio_alt_funcs_count;
-	int i;
-
-	/* Set module's pins to alternate functions */
-	for (i = 0; i < count; i++, af++) {
-		if (id != af->module_id)
-			continue;  /* Pins for some other module */
-
-		if (!(af->flags & GPIO_DEFAULT))
-			gpio_set_flags_by_mask(
-				af->port,
-				af->mask,
-				enable ? af->flags : GPIO_INPUT);
-		gpio_set_alternate_function(
-			af->port,
-			af->mask,
-			enable ? af->func : -1);
-	}
+	/* Set all the alternate functions for this module. */
+	gpio_config_pins(id, GPIO_CONFIG_ALL_PORTS, 0, enable);
 }
 
 int gpio_config_pins(enum module_id id,
-		      uint32_t port, uint32_t pin_mask, int enable)
+		     uint32_t port, uint32_t pin_mask, int enable)
 {
 	const struct gpio_alt_func *af;
+	int rv = EC_ERROR_INVAL;
 
 	/* Find pins and set to alternate functions */
 	for (af = gpio_alt_funcs; af < gpio_alt_funcs + gpio_alt_funcs_count;
@@ -95,20 +79,32 @@ int gpio_config_pins(enum module_id id,
 		if (af->module_id != id)
 			continue;  /* Pins for some other module */
 
-		if (af->port == port && (af->mask & pin_mask) == pin_mask) {
+		/* Check to see if the requested port matches. */
+		if ((port != GPIO_CONFIG_ALL_PORTS) && (port != af->port))
+			continue;
+
+		/* If we don't care which port, enable all applicable pins. */
+		if (port == GPIO_CONFIG_ALL_PORTS)
+			pin_mask = af->mask;
+
+		if ((af->mask & pin_mask) == pin_mask) {
 			if (!(af->flags & GPIO_DEFAULT))
 				gpio_set_flags_by_mask(
 					af->port,
-					pin_mask,
+					(af->mask & pin_mask),
 					enable ? af->flags : GPIO_INPUT);
 			gpio_set_alternate_function(
 				af->port,
-				pin_mask,
+				(af->mask & pin_mask),
 				enable ? af->func : -1);
-			return EC_SUCCESS;
+			rv = EC_SUCCESS;
+			/* We're done here if we were just setting one port. */
+			if (port != GPIO_CONFIG_ALL_PORTS)
+				break;
 		}
 	}
-	return EC_ERROR_INVAL;
+
+	return rv;
 }
 
 void gpio_set_flags(enum gpio_signal signal, int flags)

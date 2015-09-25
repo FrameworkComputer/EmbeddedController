@@ -10,6 +10,13 @@
 
 #include "common.h"
 
+/*
+ * GPIO_CONFIG_ALL_PORTS signifies a "don't care" for the GPIO port.  This is
+ * used in gpio_config_pins().  When the port parameter is set to this, the
+ * pin_mask parameter is ignored.
+ */
+#define GPIO_CONFIG_ALL_PORTS 0xFFFFFFFF
+
 /* Flag definitions for gpio_info and gpio_alt_func */
 /* The following are valid for both gpio_info and gpio_alt_func: */
 #define GPIO_OPEN_DRAIN    (1 << 0)  /* Output type is open-drain */
@@ -128,6 +135,9 @@ void gpio_config_module(enum module_id id, int enable);
 
 /**
  * Enable/disable alternate function for pins
+ *
+ * Note, you can also configure an entire module by setting the port parameter
+ * equal to GPIO_CONFIG_ALL_PORTS.
  *
  * @param id		module ID of pins
  * @param port		Port of pins
