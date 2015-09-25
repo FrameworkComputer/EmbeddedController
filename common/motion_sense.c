@@ -70,6 +70,8 @@ struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
 static int motion_sense_fifo_lost;
 
+static void motion_sense_insert_timestamp(void);
+
 void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 				struct motion_sensor_t *sensor,
 				int valid_data)
@@ -128,8 +130,14 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		sensor->oversampling += fp_div(INT_TO_FP(1), rate) -
 			fp_div(INT_TO_FP(1), INT_TO_FP(ap_odr));
 	}
-	if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP)
+	if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP) {
+		/*
+		 * Fist, send a timestamp to be sure the event will not
+		 * be tied to an old one.
+		 */
+		motion_sense_insert_timestamp();
 		wake_up_needed = 1;
+	}
 	queue_add_unit(&motion_sense_fifo, data);
 }
 
