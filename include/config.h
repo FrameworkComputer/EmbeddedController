@@ -1383,20 +1383,8 @@
 /* Base address of RAM for the chip */
 #undef CONFIG_RAM_BASE
 
-/* Base address of RAM for RO/RW. */
-#undef CONFIG_RAM_BASE_RORW
-
 /* Size of RAM available on the chip, in bytes */
 #undef CONFIG_RAM_SIZE
-
-/* Size of RAM for loader */
-#undef CONFIG_RAM_SIZE_LOADER
-
-/* Size of RAM for RO/RW */
-#undef CONFIG_RAM_SIZE_RORW
-
-/* Size of RAM for RO/RW & loader */
-#undef CONFIG_RAM_SIZE_TOTAL
 
 /* Support IR357x Link voltage regulator debugging / reprogramming */
 #undef CONFIG_REGULATOR_IR357X
