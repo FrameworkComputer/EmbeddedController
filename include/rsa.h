@@ -12,7 +12,7 @@
 #define CONFIG_RSA_KEY_SIZE 2048 /* default to 2048-bit key length */
 #endif
 
-#define RSANUMBYTES ((CONFIG_RSA_KEY_SIZE)/8)
+#define RSANUMBYTES ((CONFIG_RSA_KEY_SIZE) / 8)
 #define RSANUMWORDS (RSANUMBYTES / sizeof(uint32_t))
 
 #ifdef CONFIG_RSA /* reserve space for public key only if used */
@@ -52,5 +52,33 @@ int rsa_verify(const struct rsa_public_key *key,
 void check_rw_signature(void);
 
 #endif /* !__ASSEMBLER__ */
+
+/*
+ * The signer puts the public key and signature into the RO and RW images
+ * (respectively) at known locations after the complete image is assembled. But
+ * since we compile the RO & RW images separately, the other image's addresses
+ * can't be computed by the linker. So we just hardcode the addresses here.
+ * These can be overridden in board.h files if desired.
+ */
+
+/* The pubkey goes at the end of the first half of flash */
+#ifndef CONFIG_RO_PUBKEY_SIZE
+#define CONFIG_RO_PUBKEY_SIZE RSA_PUBLIC_KEY_SIZE
+#endif
+#ifndef CONFIG_RO_PUBKEY_ADDR
+#define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
+			       + (CONFIG_FLASH_SIZE / 2)	\
+			       - CONFIG_RO_PUBKEY_SIZE)
+#endif
+
+/* The signature goes at the end of the second half of flash */
+#ifndef CONFIG_RW_SIG_SIZE
+#define CONFIG_RW_SIG_SIZE RSANUMBYTES
+#endif
+#ifndef CONFIG_RW_SIG_ADDR
+#define CONFIG_RW_SIG_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
+			    + CONFIG_FLASH_SIZE		\
+			    - CONFIG_RW_SIG_SIZE)
+#endif
 
 #endif /* __CROS_EC_RSA_H */

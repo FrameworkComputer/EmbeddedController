@@ -22,10 +22,6 @@ MEMORY
 #endif
     FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
-#ifdef RSA_PUBLIC_KEY_SIZE
-    PSTATE(r)  : ORIGIN = FW_OFF(SECTION) + FW_SIZE(SECTION), \
-                 LENGTH = CONFIG_FW_PSTATE_SIZE
-#endif
 #ifdef CONFIG_USB_RAM_SIZE
     USB_RAM (rw) : \
         ORIGIN = CONFIG_USB_RAM_BASE, \
@@ -213,24 +209,6 @@ SECTIONS
 	/* NOTHING MAY GO AFTER THIS! */
     } > IRAM
 
-#ifdef RSA_PUBLIC_KEY_SIZE
-#ifdef SECTION_IS_RO
-    .flash_suffix : {
-        FILL(0xff);
-        /*
-	 * Put the public key coefficients at the end of the partition
-	 * after the pstate bits.
-	 */
-        . = ORIGIN(PSTATE) + LENGTH(PSTATE) - RSA_PUBLIC_KEY_SIZE;
-        *(.rsa_pubkey)
-    } > PSTATE
-#else /* RW section: we don't need the RSA public key, put it anywhere */
-    .flash_suffix  : AT(LOADADDR(.data) + SIZEOF(.data)) {
-        *(.rsa_pubkey)
-    } > FLASH
-#endif
-#endif
-
     /* The linker won't notice if the .data section is too big to fit,
      * apparently because we're sending it into IRAM, not FLASH. The following
      * symbol isn't used by the code, but running "objdump -t *.elf | grep hey"
@@ -238,8 +216,14 @@ SECTIONS
      * explicit ASSERT afterwards will cause the linker to abort if we use too
      * much. */
     __hey_flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
-    ASSERT(FW_SIZE(SECTION) >=
-                 (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
+    ASSERT((FW_SIZE(SECTION)
+#if defined(CONFIG_RWSIG) && defined(SECTION_IS_RO)
+        - CONFIG_RO_PUBKEY_SIZE
+#endif
+#if defined(CONFIG_RWSIG) && defined(SECTION_IS_RW)
+        - CONFIG_RW_SIG_SIZE
+#endif
+        ) >= (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
 
 #ifdef CONFIG_USB_RAM_SIZE

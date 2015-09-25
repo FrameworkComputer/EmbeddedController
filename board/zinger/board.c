@@ -16,13 +16,6 @@
 #include "util.h"
 #include "version.h"
 
-/* Insert the RSA public key definition */
-const struct rsa_public_key pkey __attribute__((section(".rsa_pubkey"))) =
-#include "gen_pub_key.h"
-/* The RSA signature is stored at the end of the RW firmware */
-static const void *rw_sig = (void *)CONFIG_PROGRAM_MEMORY_BASE +
-				    CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE -
-				    RSANUMBYTES;
 /* Large 768-Byte buffer for RSA computation : could be re-use afterwards... */
 static uint32_t rsa_workbuf[3 * RSANUMWORDS];
 
@@ -64,7 +57,9 @@ static int check_rw_valid(void *rw_hash)
 	if (*rw_rst == 0xffffffff)
 		return 0;
 
-	good = rsa_verify(&pkey, (void *)rw_sig, rw_hash, rsa_workbuf);
+	good = rsa_verify((const struct rsa_public_key *)CONFIG_RO_PUBKEY_ADDR,
+			  (const uint8_t *)CONFIG_RW_SIG_ADDR,
+			  rw_hash, rsa_workbuf);
 	if (!good) {
 		debug_printf("RSA FAILED\n");
 		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);

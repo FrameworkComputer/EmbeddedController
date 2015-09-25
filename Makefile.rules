@@ -71,7 +71,6 @@ cmd_sharedlib_elf = $(CC) $(libsharedobjs_deps) \
 	-Wl,-Map,$(out)/$(SHOBJLIB)/$(SHOBJLIB).map
 
 # commands for RSA signature
-cmd_pubkey = ./util/pem_extract_pubkey.py $(PEM) > $@
 cmd_rsasign = futility sign --type usbpd1 --pem $(PEM) $(out)/$*.bin.tmp
 
 # commands to build optional xref files
@@ -273,12 +272,6 @@ $(sharedlib-objs): | $(out)/ec_version.h
 
 $(out)/ec_version.h:
 	$(call quiet,version,VERSION)
-
-$(out)/gen_pub_key.h: $(PEM)
-	$(call quiet,pubkey,PUBKEY )
-
-$(out)/RO/common/rwsig.o: $(out)/gen_pub_key.h
-$(out)/RW/common/rwsig.o: $(out)/gen_pub_key.h
 
 $(build-utils): $(out)/%:$(build-srcs)
 	$(call quiet,c_to_build,BUILDCC)

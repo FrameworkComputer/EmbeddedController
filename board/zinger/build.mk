@@ -12,7 +12,3 @@ CHIP_VARIANT:=stm32f03x
 
 board-y=board.o hardware.o runtime.o usb_pd_policy.o
 board-$(CONFIG_DEBUG_PRINTF)+=debug.o
-
-# Add dependency to generate the public key coefficients header
-$(out)/RO/board/$(BOARD)/board.o: $(out)/gen_pub_key.h
-$(out)/RW/board/$(BOARD)/board.o: $(out)/gen_pub_key.h

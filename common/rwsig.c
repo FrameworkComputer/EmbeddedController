@@ -20,15 +20,6 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-/* Insert the RSA public key definition */
-const struct rsa_public_key pkey __attribute__((section(".rsa_pubkey"))) =
-#include "gen_pub_key.h"
-
-/* The RSA signature is stored at the end of the RW firmware */
-static const void *rw_sig = (void *)CONFIG_PROGRAM_MEMORY_BASE
-				 + CONFIG_RW_MEM_OFF
-				 + CONFIG_RW_SIZE - RSANUMBYTES;
-
 /* RW firmware reset vector */
 static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
@@ -62,10 +53,12 @@ void check_rw_signature(void)
 	SHA256_init(&ctx);
 	SHA256_update(&ctx, (void *)CONFIG_PROGRAM_MEMORY_BASE
 		      + CONFIG_RW_MEM_OFF,
-		      CONFIG_RW_SIZE - RSANUMBYTES);
+		      CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
 	hash = SHA256_final(&ctx);
 
-	good = rsa_verify(&pkey, (void *)rw_sig, (void *)hash, rsa_workbuf);
+	good = rsa_verify((const struct rsa_public_key *)CONFIG_RO_PUBKEY_ADDR,
+			  (const uint8_t *)CONFIG_RW_SIG_ADDR,
+			  hash, rsa_workbuf);
 	if (good) {
 		CPRINTS("RW image verified");
 		/* Jump to the RW firmware */

@@ -1412,6 +1412,15 @@
  * (for accessories without software sync)
  */
 #undef CONFIG_RWSIG
+/*
+ * By default the pubkey and sig are put at the end of the first and second
+ * half of the total flash, and take up the minimum space possible. You can
+ * override those defaults with these.
+ */
+#undef CONFIG_RO_PUBKEY_ADDR
+#undef CONFIG_RO_PUBKEY_SIZE
+#undef CONFIG_RW_SIG_ADDR
+#undef CONFIG_RW_SIG_SIZE
 
 /****************************************************************************/
 /* Shared objects library. */
