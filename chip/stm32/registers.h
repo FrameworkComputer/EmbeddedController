@@ -68,11 +68,6 @@
 #define STM32_IRQ_DMA_CHANNEL_5   15
 #define STM32_IRQ_DMA_CHANNEL_6   16
 #define STM32_IRQ_DMA_CHANNEL_7   17
-#define STM32_IRQ_DMA_CHANNEL_8   18 /* STM32TS60 only */
-
-#ifdef CHIP_VARIANT_STM32TS60
-#define STM32_IRQ_ADC_1           21
-#endif
 
 #ifdef CHIP_VARIANT_STM32F373
 #define STM32_IRQ_USB_HP          74
@@ -94,13 +89,10 @@
 #endif
 
 #define STM32_IRQ_CAN_SCE         22 /* STM32F373 only */
-#define STM32_IRQ_ADC_2           22 /* STM32TS60 only */
 #define STM32_IRQ_EXTI9_5         23
 #define STM32_IRQ_LCD             24 /* STM32L15X only */
-#define STM32_IRQ_PMAD            24 /* STM32TS60 only */
 #define STM32_IRQ_TIM15           24 /* STM32F373 only */
 #define STM32_IRQ_TIM9            25 /* STM32L15X only */
-#define STM32_IRQ_PMSE            25 /* STM32TS60 only */
 #define STM32_IRQ_TIM16           25 /* STM32F373 only */
 #define STM32_IRQ_TIM10           26 /* STM32L15X only */
 #define STM32_IRQ_TIM17           26 /* STM32F373 only */
@@ -834,15 +826,8 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #endif
 
 /* --- ADC --- */
-
-#if defined(CHIP_VARIANT_STM32TS60)
-#define STM32_ADC1_BASE             0x40013800
-#define STM32_ADC2_BASE             0x40013c00
-#define STM32_ADC_BASE(x)           (0x40013800 + 0x400 * (x))
-#else /* !CHIP_VARIANT_STM32TS60 */
 #define STM32_ADC1_BASE             0x40012400
 #define STM32_ADC_BASE              0x40012700 /* STM32L15X only */
-#endif
 
 #if defined(CHIP_VARIANT_STM32F373)
 #define STM32_ADC_SR               REG32(STM32_ADC1_BASE + 0x00)
@@ -860,13 +845,6 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_JSQR             REG32(STM32_ADC1_BASE + 0x38)
 #define STM32_ADC_JDR(n)           REG32(STM32_ADC1_BASE + 0x3C + ((n)&3) * 4)
 #define STM32_ADC_DR               REG32(STM32_ADC1_BASE + 0x4C)
-#elif defined(CHIP_VARIANT_STM32TS60)
-#define STM32_ADC_SR(x)            REG32(STM32_ADC_BASE(x) + 0x00)
-#define STM32_ADC_CR1(x)           REG32(STM32_ADC_BASE(x) + 0x04)
-#define STM32_ADC_CR2(x)           REG32(STM32_ADC_BASE(x) + 0x08)
-#define STM32_ADC_SMPR2(x)         REG32(STM32_ADC_BASE(x) + 0x10)
-#define STM32_ADC_SQR3(x)          REG32(STM32_ADC_BASE(x) + 0x34)
-#define STM32_ADC_DR(x)            REG32(STM32_ADC_BASE(x) + 0x4c)
 #elif defined(CHIP_FAMILY_STM32F0)
 #define STM32_ADC_ISR              REG32(STM32_ADC1_BASE + 0x00)
 #define STM32_ADC_ISR_ADRDY        (1 << 0)

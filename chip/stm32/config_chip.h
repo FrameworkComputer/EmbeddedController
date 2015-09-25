@@ -36,9 +36,6 @@
 #elif defined(CHIP_VARIANT_STM32F03X)
 /* STM32F03x */
 #include "config-stm32f03x.h"
-#elif defined(CHIP_VARIANT_STM32TS60)
-/* STM32TS60 */
-#include "config-stm32ts60.h"
 #else
 #error "Unsupported chip variant"
 #endif
