@@ -139,7 +139,7 @@ static uint32_t flash_read_pstate(void)
 {
 	const struct persist_state *pstate =
 		(const struct persist_state *)
-		flash_physical_dataptr(PSTATE_OFFSET);
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
 
 	if ((pstate->version == PERSIST_STATE_VERSION) &&
 	    (pstate->flags & PERSIST_FLAG_PROTECT_RO)) {
@@ -173,7 +173,8 @@ static int flash_write_pstate(uint32_t flags)
 		return EC_SUCCESS;
 
 	/* Erase pstate */
-	rv = flash_physical_erase(PSTATE_OFFSET, PSTATE_SIZE);
+	rv = flash_physical_erase(CONFIG_FW_PSTATE_OFF,
+				  CONFIG_FW_PSTATE_SIZE);
 	if (rv)
 		return rv;
 
@@ -188,7 +189,7 @@ static int flash_write_pstate(uint32_t flags)
 	pstate.version = PERSIST_STATE_VERSION;
 	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
 		pstate.flags |= PERSIST_FLAG_PROTECT_RO;
-	return flash_physical_write(PSTATE_OFFSET, sizeof(pstate),
+	return flash_physical_write(CONFIG_FW_PSTATE_OFF, sizeof(pstate),
 				    (const char *)&pstate);
 }
 
