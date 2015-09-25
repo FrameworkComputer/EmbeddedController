@@ -182,11 +182,6 @@ static int spi_flash_erase_block(unsigned int offset, unsigned int block)
 	if ((offset % (block * 1024)) != 0)
 		return EC_ERROR_INVAL;
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-	if (rv)
-		return rv;
-
 	/* Enable writing to SPI flash */
 	rv = spi_flash_write_enable();
 	if (rv)
@@ -202,7 +197,8 @@ static int spi_flash_erase_block(unsigned int offset, unsigned int block)
 	if (rv)
 		return rv;
 
-	return rv;
+	/* Wait for previous operation to complete */
+	return spi_flash_wait();
 }
 
 /**
@@ -304,7 +300,8 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 		bytes -= write_size;
 	}
 
-	return rv;
+	/* Wait for previous operation to complete */
+	return spi_flash_wait();
 }
 
 /**
@@ -506,18 +503,8 @@ static int command_spi_flasherase(int argc, char **argv)
 	if (spi_flash_check_protect(offset, bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-	if (rv)
-		return rv;
-
 	ccprintf("Erasing %d bytes at 0x%x...\n", bytes, offset);
-	rv = spi_flash_erase(offset, bytes);
-	if (rv)
-		return rv;
-
-	/* Wait for the operation to complete */
-	return spi_flash_wait();
+	return spi_flash_erase(offset, bytes);
 }
 DECLARE_CONSOLE_COMMAND(spi_flasherase, command_spi_flasherase,
 	"offset [bytes]",
@@ -554,11 +541,6 @@ static int command_spi_flashwrite(int argc, char **argv)
 		write_len = ((bytes % SPI_FLASH_MAX_WRITE_SIZE) == bytes) ?
 					bytes : SPI_FLASH_MAX_WRITE_SIZE;
 
-		/* Wait for previous operation to complete */
-		rv = spi_flash_wait();
-		if (rv)
-			return rv;
-
 		/* Perform write */
 		rv = spi_flash_write(offset, write_len, buf);
 		if (rv)
@@ -570,7 +552,7 @@ static int command_spi_flashwrite(int argc, char **argv)
 
 	ASSERT(bytes == 0);
 
-	return spi_flash_wait();
+	return rv;
 }
 DECLARE_CONSOLE_COMMAND(spi_flashwrite, command_spi_flashwrite,
 	"offset [bytes]",
@@ -661,19 +643,9 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-	if (rv)
-		return rv;
-
 	ccprintf("Writing 0x%02x to status register 1, ", val1);
 	ccprintf("0x%02x to status register 2...\n", val2);
-	rv = spi_flash_set_status(val1, val2);
-	if (rv)
-		return rv;
-
-	/* Wait for the operation to complete */
-	return spi_flash_wait();
+	return spi_flash_set_status(val1, val2);
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_wsr, command_spi_flashwrite_sr,
 	"value1 value2",
@@ -691,18 +663,8 @@ static int command_spi_flashprotect(int argc, char **argv)
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
-	/* Wait for previous operation to complete */
-	rv = spi_flash_wait();
-	if (rv)
-		return rv;
-
 	ccprintf("Setting protection for 0x%06x to 0x%06x\n", val1, val1+val2);
-	rv = spi_flash_set_protect(val1, val2);
-	if (rv)
-		return rv;
-
-	/* Wait for the operation to complete */
-	return spi_flash_wait();
+	return spi_flash_set_protect(val1, val2);
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_prot, command_spi_flashprotect,
 	"offset len",
