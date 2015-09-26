@@ -339,7 +339,7 @@ static void board_pmic_init(void)
 	 * [4] : VCCIOLPM clear
 	 * otherbits: default
 	 */
-	ret = I2C_PMIC_WRITE(TPS650830_REG_V33ADSWCNT, 0x2F);
+	ret = I2C_PMIC_WRITE(TPS650830_REG_VRMODECTRL, 0x2F);
 	if (ret)
 		goto pmic_error;
 
