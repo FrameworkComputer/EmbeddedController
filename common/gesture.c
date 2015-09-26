@@ -147,10 +147,15 @@ static int gesture_tap_for_battery(void)
 	y_p = y;
 	z_p = z;
 
-	/* Ignore data until we fill history buffer and wrap around */
-	if (history_idx == 0)
+	/*
+	 * Ignore data until we fill history buffer and wrap around. If
+	 * detection is paused, history_init_index will store the index
+	 * when paused, so that when re-started, we will wait until we
+	 * wrap around again.
+	 */
+	if (history_idx == history_init_index)
 		history_initialized = 1;
-	if (history_initialized == history_init_index)
+	if (!history_initialized)
 		return 0;
 
 	/*
