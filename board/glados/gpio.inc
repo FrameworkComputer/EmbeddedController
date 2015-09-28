@@ -62,7 +62,7 @@ GPIO(USB_C1_DP_HPD,         PIN(51),  GPIO_OUT_LOW)
 GPIO(CPU_PROCHOT,           PIN(52),  GPIO_OUT_LOW)
 GPIO(ENABLE_TOUCHPAD,       PIN(53),  GPIO_OUT_LOW)
 GPIO(BAT_PRESENT_L,         PIN(56),  GPIO_INPUT)
-GPIO(USB_PD_WAKE,           PIN(60),  GPIO_OUT_LOW)
+GPIO(USB_PD_WAKE,           PIN(60),  GPIO_OUT_HIGH)
 /* When asserted, ME does not lock security descriptor */
 GPIO(PCH_SEC_DISABLE_L,     PIN(65),  GPIO_OUT_HIGH)
 GPIO(PCH_WAKE_L,            PIN(66),  GPIO_ODR_HIGH)

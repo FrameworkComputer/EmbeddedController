@@ -104,6 +104,14 @@ void tcpc_alert_clear(int port)
 	pd_send_ec_int();
 }
 
+static void system_hibernate_deferred(void)
+{
+	ccprintf("EC requested hibernate\n");
+	cflush();
+	system_hibernate(0, 0);
+}
+DECLARE_DEFERRED(system_hibernate_deferred);
+
 /****************************************************************************/
 /* Console commands */
 static int command_ec_int(int argc, char **argv)
@@ -121,6 +129,7 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_pd_status *p = args->params;
 	struct ec_response_pd_status *r = args->response;
 
 	/*
@@ -129,6 +138,10 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	 */
 	r->status = ec_int_status;
 	args->response_size = sizeof(*r);
+
+	/* Have the PD follow the EC into hibernate. */
+	if (p->status & EC_STATUS_HIBERNATING)
+		hook_call_deferred(system_hibernate_deferred, 0);
 
 	/*
 	 * If the source of the EC int line was HOST_EVENT, it has

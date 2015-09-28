@@ -375,18 +375,23 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-/* Turn off LEDs in hibernate */
 uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 {
 	int i;
-	const uint32_t led_gpios[][2] = {
+	const uint32_t out_low_gpios[][2] = {
+		/* Turn off LEDs in hibernate */
 		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_1),
 		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_2),
+		/*
+		 * Set PD wake low so that it toggles high to generate a wake
+		 * event once we leave hibernate.
+		 */
+		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_PD_WAKE),
 	};
 
 	/* LED GPIOs should be driven low to turn off LEDs */
-	for (i = 0; i < ARRAY_SIZE(led_gpios); ++i)
-		if (led_gpios[i][0] == port && led_gpios[i][1] == pin)
+	for (i = 0; i < ARRAY_SIZE(out_low_gpios); ++i)
+		if (out_low_gpios[i][0] == port && out_low_gpios[i][1] == pin)
 			return GPIO_OUTPUT | GPIO_LOW;
 
 	/* Other GPIOs should be put in a low-power state */
