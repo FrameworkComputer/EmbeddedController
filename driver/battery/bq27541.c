@@ -46,6 +46,7 @@
 #define REG_PROTECTOR               0x6d
 
 static int battery_type_id;
+static int fake_state_of_charge = -1;
 
 static int bq27541_read(int offset, int *data)
 {
@@ -236,8 +237,11 @@ void battery_get_params(struct batt_params *batt)
 	if (bq27541_read(REG_TEMPERATURE, &batt->temperature))
 		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
 
-	if (bq27541_read8(REG_STATE_OF_CHARGE, &batt->state_of_charge))
+	if (bq27541_read8(REG_STATE_OF_CHARGE, &v) && fake_state_of_charge < 0)
 		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
+
+	batt->state_of_charge = fake_state_of_charge >= 0 ?
+					fake_state_of_charge : v;
 
 	if (bq27541_read(REG_VOLTAGE, &batt->voltage))
 		batt->flags |= BATT_FLAG_BAD_VOLTAGE;
@@ -327,3 +331,28 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	return BATTERY_NOT_DISCONNECTED;
 }
 #endif /* CONFIG_BATTERY_REVIVE_DISCONNECT */
+
+static int command_battfake(int argc, char **argv)
+{
+	char *e;
+	int v;
+
+	if (argc == 2) {
+		v = strtoi(argv[1], &e, 0);
+		if (*e || v < -1 || v > 100)
+			return EC_ERROR_PARAM1;
+
+		fake_state_of_charge = v;
+	}
+
+	if (fake_state_of_charge >= 0)
+		ccprintf("Fake batt %d%%\n",
+			 fake_state_of_charge);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
+			"percent (-1 = use real level)",
+			"Set fake battery level",
+			NULL);
+

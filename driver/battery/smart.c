@@ -21,6 +21,8 @@
 #define BATTERY_WAIT_TIMEOUT		(2800*MSEC)
 #define BATTERY_NO_RESPONSE_TIMEOUT	(1000*MSEC)
 
+static int fake_state_of_charge = -1;
+
 test_mockable int sbc_read(int cmd, int *param)
 {
 	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
@@ -272,8 +274,13 @@ void battery_get_params(struct batt_params *batt)
 	if (sb_read(SB_TEMPERATURE, &batt_new.temperature))
 		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
 
-	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge))
+	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge)
+	    && fake_state_of_charge < 0)
 		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
+
+	/* If soc is faked, override with faked data */
+	if (fake_state_of_charge >= 0)
+		batt_new.state_of_charge = fake_state_of_charge;
 
 	if (sb_read(SB_VOLTAGE, &batt_new.voltage))
 		batt_new.flags |= BATT_FLAG_BAD_VOLTAGE;
@@ -377,6 +384,32 @@ int battery_wait_for_stable(void)
 	CPRINTS("battery wait stable timeout");
 	return EC_ERROR_TIMEOUT;
 }
+
+#ifndef CONFIG_CHARGER_V1
+static int command_battfake(int argc, char **argv)
+{
+	char *e;
+	int v;
+
+	if (argc == 2) {
+		v = strtoi(argv[1], &e, 0);
+		if (*e || v < -1 || v > 100)
+			return EC_ERROR_PARAM1;
+
+		fake_state_of_charge = v;
+	}
+
+	if (fake_state_of_charge >= 0)
+		ccprintf("Fake batt %d%%\n",
+			 fake_state_of_charge);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
+			"percent (-1 = use real level)",
+			"Set fake battery level",
+			NULL);
+#endif
 
 /*****************************************************************************/
 /* Smart battery pass-through

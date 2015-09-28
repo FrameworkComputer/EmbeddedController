@@ -62,7 +62,6 @@ static int battery_was_removed;
 
 static int problems_exist;
 static int debugging;
-static int fake_state_of_charge = -1;
 
 
 /* Track problems in communicating with the battery or charger */
@@ -618,12 +617,6 @@ void charger_task(void)
 
 		curr.chg.flags |= CHG_FLAG_INITIALIZED;
 
-		/* Fake state of charge if necessary */
-		if (fake_state_of_charge >= 0) {
-			curr.batt.state_of_charge = fake_state_of_charge;
-			curr.batt.flags &= ~BATT_FLAG_BAD_STATE_OF_CHARGE;
-		}
-
 		/*
 		 * TODO(crosbug.com/p/27527). Sometimes the battery thinks its
 		 * temperature is 6280C, which seems a bit high. Let's ignore
@@ -1166,30 +1159,6 @@ DECLARE_HOST_COMMAND(EC_CMD_CHARGE_STATE, charge_command_charge_state,
 
 /*****************************************************************************/
 /* Console commands */
-
-static int command_battfake(int argc, char **argv)
-{
-	char *e;
-	int v;
-
-	if (argc == 2) {
-		v = strtoi(argv[1], &e, 0);
-		if (*e || v < -1 || v > 100)
-			return EC_ERROR_PARAM1;
-
-		fake_state_of_charge = v;
-	}
-
-	if (fake_state_of_charge >= 0)
-		ccprintf("Fake batt %d%%\n",
-			 fake_state_of_charge);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
-			"percent (-1 = use real level)",
-			"Set fake battery level",
-			NULL);
 
 static int command_chgstate(int argc, char **argv)
 {
