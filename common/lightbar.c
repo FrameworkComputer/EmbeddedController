@@ -230,11 +230,9 @@ static void get_battery_level(void)
 	bl = quantize_battery_level(pct);
 
 	/* Use some hysteresis to avoid flickering */
-	if (bl > st.battery_level
-	    && pct >= (st.p.battery_threshold[bl-1] + 1))
-		st.battery_level = bl;
-	else if (bl < st.battery_level &&
-		 pct <= (st.p.battery_threshold[bl] - 1))
+	if (bl < st.battery_level ||
+	    (bl > st.battery_level
+	     && pct >= (st.p.battery_threshold[st.battery_level] + 1)))
 		st.battery_level = bl;
 
 #ifdef CONFIG_PWM_KBLIGHT
