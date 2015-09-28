@@ -748,6 +748,8 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	raw_write8(s->addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
 
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+	raw_write8(s->addr, BMI160_INT_TAP_0,
+		BMI160_TAP_TH(s, CONFIG_GESTURE_TAP_MAX_INTERSTICE_T));
 	ret = raw_write8(s->addr, BMI160_INT_TAP_1,
 		BMI160_TAP_TH(s, CONFIG_GESTURE_TAP_THRES_MG));
 #endif

@@ -18,6 +18,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_si114x.h"
 #include "ec_version.h"
+#include "gesture.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -274,7 +275,6 @@ const matrix_3x3_t mag_standard_ref = {
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
-
 struct motion_sensor_t motion_sensors[] = {
 
 	/*
@@ -301,16 +301,16 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 		 /* Used for double tap */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 100000,
+			 .odr = TAP_ODR,
 			 /* Interrupt driven, no polling */
 			 .ec_rate = 0,
 		 },
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 100000,
+			 .odr = TAP_ODR,
 			 .ec_rate = 0,
 		 },
 		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 100000,
+			 .odr = TAP_ODR,
 			 .ec_rate = 0,
 		 },
 	 },

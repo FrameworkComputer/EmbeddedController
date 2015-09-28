@@ -321,6 +321,11 @@ enum fifo_header {
 	(MIN(__fls((_ms) / 250), BMI160_MOTION_PROOF_MASK))
 
 #define BMI160_INT_TAP_0       0x63
+#define BMI160_TAP_DUR(_s, _ms) \
+	((_ms) <= 250 ? MAX((_ms), 50) / 50 - 1 : \
+	 (_ms) <= 500 ? 4 + ((_ms) - 250) / 125 : \
+	 (_ms) < 700 ? 6 : 7)
+
 #define BMI160_INT_TAP_1       0x64
 #define BMI160_TAP_TH(_s, _mg) \
 	 (MIN(((_mg) * 1000) / ((_s)->drv->get_range(_s) * 31250), 0x1f))
