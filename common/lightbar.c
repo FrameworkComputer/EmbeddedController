@@ -934,20 +934,20 @@ static uint32_t sequence_TAP_inner(int dir)
 #endif
 	f_osc = st.p.tap_seg_osc * FP_SCALE / 100;
 
+	get_battery_level();
+
+	if (st.battery_level == 0)
+		base_color = RED;
+	else if (st.battery_percent > st.p.tap_pct_green)
+		base_color = GREEN;
+	else
+		base_color = YELLOW;
+
+	ci = st.p.tap_idx[base_color];
+	max_led = st.battery_percent / CUT;
+
 	start = get_time();
 	while (1) {
-		get_battery_level();
-
-		if (st.battery_level == 0)
-			base_color = RED;
-		else if (st.battery_percent > st.p.tap_pct_green)
-			base_color = GREEN;
-		else
-			base_color = YELLOW;
-
-		ci = st.p.tap_idx[base_color];
-		max_led = st.battery_percent / CUT;
-
 		/* Enable the segments gradually */
 		gi = elapsed_time / st.p.tap_gate_delay;
 		gr = elapsed_time % st.p.tap_gate_delay;
