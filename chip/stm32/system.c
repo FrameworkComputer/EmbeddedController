@@ -377,3 +377,12 @@ int system_get_console_force_enabled(void)
 	else
 		return 0;
 }
+
+int system_is_reboot_warm(void)
+{
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+	return ((STM32_RCC_AHBENR & 0x7e0000) == 0x7e0000);
+#elif defined(CHIP_FAMILY_STM32L)
+	return ((STM32_RCC_AHBENR & 0x3f) == 0x3f);
+#endif
+}

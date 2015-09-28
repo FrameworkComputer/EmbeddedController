@@ -64,7 +64,7 @@ static void check_reset_cause(void)
 	system_set_reset_flags(flags);
 }
 
-int gpio_is_reboot_warm(void)
+int system_is_reboot_warm(void)
 {
 	uint32_t reset_flags;
 	/*

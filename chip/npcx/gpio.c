@@ -521,31 +521,11 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
-int gpio_is_reboot_warm(void)
-{
-	uint32_t reset_flags;
-	/*
-	 * Check reset cause here,
-	 * gpio_pre_init is executed faster than system_pre_init
-	 */
-	system_check_reset_cause();
-	reset_flags = system_get_reset_flags();
-
-	if ((reset_flags & RESET_FLAG_RESET_PIN) ||
-	    (reset_flags & RESET_FLAG_POWER_ON) ||
-	    (reset_flags & RESET_FLAG_WATCHDOG) ||
-	    (reset_flags & RESET_FLAG_HARD) ||
-	    (reset_flags & RESET_FLAG_SOFT))
-		return 0;
-	else
-		return 1;
-}
-
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
 	const struct gpio_wui_map *map;
-	int is_warm = gpio_is_reboot_warm();
+	int is_warm = system_is_reboot_warm();
 	int flags;
 	int i, j;
 

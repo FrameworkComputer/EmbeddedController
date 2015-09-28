@@ -245,14 +245,6 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func);
 
 /**
- * Return true if the EC is warm booting.
- *
- * This function is used by the GPIO implementation and should not be called
- * outside of that context.
- */
-int gpio_is_reboot_warm(void);
-
-/**
  * Enable GPIO peripheral clocks.
  *
  * This function is used by the GPIO implementation and should not be called

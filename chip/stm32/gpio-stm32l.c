@@ -13,11 +13,6 @@
 #include "task.h"
 #include "util.h"
 
-int gpio_is_reboot_warm(void)
-{
-	return ((STM32_RCC_AHBENR & 0x3f) == 0x3f);
-}
-
 void gpio_enable_clocks(void)
 {
 	/*

@@ -411,4 +411,12 @@ enum system_image_copy_t system_get_shrspi_image_copy(void);
  */
 uintptr_t system_get_fw_reset_vector(uintptr_t base);
 #endif
+
+/**
+ * Check if the EC is warm booting.
+ *
+ * @return true if the EC is warm booting.
+ */
+int system_is_reboot_warm(void);
+
 #endif  /* __CROS_EC_SYSTEM_H */

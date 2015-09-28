@@ -180,7 +180,7 @@ void gpio_pre_init(void)
 {
 	int i;
 	int flags;
-	int is_warm = gpio_is_reboot_warm();
+	int is_warm = system_is_reboot_warm();
 	const struct gpio_info *g = gpio_list;
 
 

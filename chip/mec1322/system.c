@@ -56,8 +56,7 @@ static void check_reset_cause(void)
 	system_set_reset_flags(flags);
 }
 
-/* TODO(crbug.com/40789): Rename this function system_is_reboot_warm */
-int gpio_is_reboot_warm(void)
+int system_is_reboot_warm(void)
 {
 	uint32_t reset_flags;
 	/*

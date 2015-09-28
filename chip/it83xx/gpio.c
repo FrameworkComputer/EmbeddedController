@@ -381,7 +381,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
-	int is_warm = gpio_is_reboot_warm();
+	int is_warm = system_is_reboot_warm();
 	int flags;
 	int i;
 
