@@ -216,6 +216,12 @@ void host_throttle_cpu(int throttle);
 void host_command_pd_send_status(enum pd_charge_state new_chg_state);
 
 /**
+ * Signal host command task to inform PD MCU that the EC is going to hibernate,
+ * which will normally cause the PD MCU to hibernate also.
+ */
+void host_command_pd_request_hibernate(void);
+
+/**
  * Get the active charge port from the PD
  *
  * @return -1 == none/unknown, 0 == left, 1 == right.

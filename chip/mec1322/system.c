@@ -281,6 +281,13 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	uint32_t nvic_status[3];
 	char *backup_gpio_ctl;
 
+#ifdef CONFIG_HOSTCMD_PD
+	/* Inform the PD MCU that we are going to hibernate. */
+	host_command_pd_request_hibernate();
+	/* Wait to ensure exchange with PD before hibernating. */
+	msleep(100);
+#endif
+
 	cflush();
 
 	/* Disable interrupts */

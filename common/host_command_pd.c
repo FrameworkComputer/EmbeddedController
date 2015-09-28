@@ -21,6 +21,7 @@
 #define CPRINTS(format, args...) cprints(CC_PD_HOST_CMD, format, ## args)
 
 #define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_HIBERNATING         TASK_EVENT_CUSTOM(2)
 
 /* Define local option for if we are a TCPM with an off chip TCPC */
 #if defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_PD_TCPM_STUB)
@@ -51,26 +52,23 @@ void host_command_pd_send_status(enum pd_charge_state new_chg_state)
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
 }
 
+void host_command_pd_request_hibernate(void)
+{
+	task_set_event(TASK_ID_PDCMD, TASK_EVENT_HIBERNATING, 0);
+}
 
 #ifdef CONFIG_HOSTCMD_PD
 static int pd_send_host_command(struct ec_params_pd_status *ec_status,
 	struct ec_response_pd_status *pd_status)
 {
-	int rv;
-
-	rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 1, ec_status,
-			     sizeof(struct ec_params_pd_status), pd_status,
-			     sizeof(struct ec_response_pd_status));
-
-	/* If PD doesn't support new command version, try old version */
-	if (rv == -EC_RES_INVALID_VERSION)
-		rv = pd_host_command(EC_CMD_PD_EXCHANGE_STATUS, 0, ec_status,
-			     sizeof(struct ec_params_pd_status), pd_status,
-			     sizeof(struct ec_response_pd_status));
-	return rv;
+	return pd_host_command(EC_CMD_PD_EXCHANGE_STATUS,
+			       EC_VER_PD_EXCHANGE_STATUS, ec_status,
+			       sizeof(struct ec_params_pd_status), pd_status,
+			       sizeof(struct ec_response_pd_status));
 }
 
-static void pd_exchange_update_ec_status(struct ec_params_pd_status *ec_status)
+static void pd_exchange_update_ec_status(struct ec_params_pd_status *ec_status,
+					 uint32_t ec_state)
 {
 	/* Send PD charge state and battery state of charge */
 #ifdef CONFIG_HOSTCMD_PD_CHG_CTRL
@@ -80,6 +78,7 @@ static void pd_exchange_update_ec_status(struct ec_params_pd_status *ec_status)
 		ec_status->batt_soc = charge_get_percent();
 	else
 		ec_status->batt_soc = -1;
+	ec_status->status = ec_state;
 }
 
 #ifdef CONFIG_HOSTCMD_PD_PANIC
@@ -146,14 +145,14 @@ static void pd_check_tcpc_alert(struct ec_response_pd_status *pd_status)
 }
 #endif /* USB_TCPM_WITH_OFF_CHIP_TCPC */
 
-static void pd_exchange_status(void)
+static void pd_exchange_status(uint32_t ec_state)
 {
 #ifdef CONFIG_HOSTCMD_PD
 	struct ec_params_pd_status ec_status;
 	struct ec_response_pd_status pd_status;
 	int rv;
 
-	pd_exchange_update_ec_status(&ec_status);
+	pd_exchange_update_ec_status(&ec_status, ec_state);
 #endif
 
 #ifdef USB_TCPM_WITH_OFF_CHIP_TCPC
@@ -165,7 +164,7 @@ static void pd_exchange_status(void)
 #ifdef CONFIG_HOSTCMD_PD
 		rv = pd_send_host_command(&ec_status, &pd_status);
 		if (rv < 0) {
-			CPRINTS("Host command to PD MCU failed");
+			CPRINTS("Host command to PD MCU failed: %d", rv);
 			return;
 		}
 
@@ -196,14 +195,19 @@ static void pd_exchange_status(void)
 void pd_command_task(void)
 {
 	/* On startup exchange status with the PD */
-	pd_exchange_status();
+	pd_exchange_status(0);
 
 	while (1) {
 		/* Wait for the next command event */
 		int evt = task_wait_event(-1);
+		uint32_t ec_state = 0;
+
+		if (evt & TASK_EVENT_HIBERNATING)
+			ec_state = EC_STATUS_HIBERNATING;
 
 		/* Process event to send status to PD */
-		if (evt & TASK_EVENT_EXCHANGE_PD_STATUS)
-			pd_exchange_status();
+		if ((evt & TASK_EVENT_EXCHANGE_PD_STATUS) ||
+		    (evt & TASK_EVENT_HIBERNATING))
+			pd_exchange_status(ec_state);
 	}
 }

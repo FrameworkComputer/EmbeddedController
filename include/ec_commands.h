@@ -3166,6 +3166,7 @@ struct ec_params_reboot_ec {
 
 /* EC to PD MCU exchange status command */
 #define EC_CMD_PD_EXCHANGE_STATUS 0x100
+#define EC_VER_PD_EXCHANGE_STATUS 2
 
 enum pd_charge_state {
 	PD_CHARGE_NO_CHANGE = 0, /* Don't change charge state */
@@ -3175,7 +3176,10 @@ enum pd_charge_state {
 };
 
 /* Status of EC being sent to PD */
+#define EC_STATUS_HIBERNATING	(1 << 0)
+
 struct ec_params_pd_status {
+	uint8_t status;       /* EC status */
 	int8_t batt_soc;      /* battery state of charge */
 	uint8_t charge_state; /* charging state (from enum pd_charge_state) */
 } __packed;
@@ -3192,9 +3196,9 @@ struct ec_params_pd_status {
 				      PD_STATUS_TCPC_ALERT_1 | \
 				      PD_STATUS_HOST_EVENT)
 struct ec_response_pd_status {
-	uint32_t status;      /* PD MCU status */
-	uint32_t curr_lim_ma; /* input current limit */
-	int32_t active_charge_port; /* active charging port */
+	uint32_t curr_lim_ma;       /* input current limit */
+	uint16_t status;            /* PD MCU status */
+	int8_t active_charge_port;  /* active charging port */
 } __packed;
 
 /* AP to PD MCU host event status command, cleared on read */

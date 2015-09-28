@@ -56,8 +56,10 @@ static enum pd_charge_state charge_state = PD_CHARGE_5V;
  * Note: these vars must be aligned on 4-byte boundary because we pass the
  * address to atomic_ functions which use assembly to access them.
  */
-static struct ec_response_pd_status pd_status __aligned(4);
-static struct ec_response_host_event_status host_event_status __aligned(4);
+static int32_t host_event_status_flags __aligned(4);
+static int32_t pd_status_flags __aligned(4);
+
+static struct ec_response_pd_status pd_status;
 
 /* Desired input current limit */
 static int desired_charge_rate_ma = -1;
@@ -252,9 +254,9 @@ static void board_init(void)
 
 	/* Set PD MCU system status bits */
 	if (system_jumped_to_this_image())
-		pd_status.status |= PD_STATUS_JUMPED_TO_IMAGE;
+		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
-		pd_status.status |= PD_STATUS_IN_RW;
+		pd_status_flags |= PD_STATUS_IN_RW;
 
 	/*
 	 * Do not enable PD communication in RO as a security measure.
@@ -536,8 +538,8 @@ void pd_send_host_event(int mask)
 	if (!mask)
 		return;
 
-	atomic_or(&(host_event_status.status), mask);
-	atomic_or(&(pd_status.status), PD_STATUS_HOST_EVENT);
+	atomic_or(&(host_event_status_flags), mask);
+	atomic_or(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 	pd_send_ec_int();
 }
 
@@ -585,84 +587,74 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	/* update battery soc */
 	board_update_battery_soc(p->batt_soc);
 
-	if (args->version == 1) {
-		if (p->charge_state != charge_state) {
-			switch (p->charge_state) {
-			case PD_CHARGE_NONE:
-				/*
-				 * No current allowed in, set new power request
-				 * so that PD negotiates down to vSafe5V.
-				 */
+	if (p->charge_state != charge_state) {
+		switch (p->charge_state) {
+		case PD_CHARGE_NONE:
+			/*
+			 * No current allowed in, set new power request
+			 * so that PD negotiates down to vSafe5V.
+			 */
+			charge_state = p->charge_state;
+			gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+			gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
+			pd_set_new_power_request(
+				pd_status.active_charge_port);
+			/*
+			 * Wake charge ramp task so that it will check
+			 * board_is_vbus_too_low() and stop ramping up.
+			 */
+			task_wake(TASK_ID_CHG_RAMP);
+			CPRINTS("Chg: None");
+			break;
+		case PD_CHARGE_5V:
+			/* Allow current on the active charge port */
+			charge_state = p->charge_state;
+			gpio_set_level(GPIO_USB_C0_CHARGE_EN_L,
+				!(pd_status.active_charge_port == 0));
+			gpio_set_level(GPIO_USB_C1_CHARGE_EN_L,
+				!(pd_status.active_charge_port == 1));
+			CPRINTS("Chg: 5V");
+			break;
+		case PD_CHARGE_MAX:
+			/*
+			 * Allow negotiation above vSafe5V. Should only
+			 * ever get this command when 5V charging is
+			 * already allowed.
+			 */
+			if (charge_state == PD_CHARGE_5V) {
 				charge_state = p->charge_state;
-				gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
-				gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
 				pd_set_new_power_request(
 					pd_status.active_charge_port);
-				/*
-				 * Wake charge ramp task so that it will check
-				 * board_is_vbus_too_low() and stop ramping up.
-				 */
-				task_wake(TASK_ID_CHG_RAMP);
-				CPRINTS("Chg: None");
-				break;
-			case PD_CHARGE_5V:
-				/* Allow current on the active charge port */
-				charge_state = p->charge_state;
-				gpio_set_level(GPIO_USB_C0_CHARGE_EN_L,
-					!(pd_status.active_charge_port == 0));
-				gpio_set_level(GPIO_USB_C1_CHARGE_EN_L,
-					!(pd_status.active_charge_port == 1));
-				CPRINTS("Chg: 5V");
-				break;
-			case PD_CHARGE_MAX:
-				/*
-				 * Allow negotiation above vSafe5V. Should only
-				 * ever get this command when 5V charging is
-				 * already allowed.
-				 */
-				if (charge_state == PD_CHARGE_5V) {
-					charge_state = p->charge_state;
-					pd_set_new_power_request(
-						pd_status.active_charge_port);
-					CPRINTS("Chg: Max");
-				}
-				break;
-			default:
-				break;
+				CPRINTS("Chg: Max");
 			}
+			break;
+		default:
+			break;
 		}
-	} else {
-		/*
-		 * If the EC is using this command version, then it won't ever
-		 * set charging allowed, so we should just assume charging at
-		 * the max is allowed.
-		 */
-		charge_state = PD_CHARGE_MAX;
-		pd_set_new_power_request(pd_status.active_charge_port);
-		CPRINTS("Chg: Max");
 	}
 
 	*r = pd_status;
+	r->status = pd_status_flags;
 
 	/* Clear host event */
-	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
+	atomic_clear(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
-			EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(EC_VER_PD_EXCHANGE_STATUS));
 
 static int host_event_status_host_cmd(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_status *r = args->response;
 
 	/* Clear host event bit to avoid sending more unnecessary events */
-	atomic_clear(&(pd_status.status), PD_STATUS_HOST_EVENT);
+	atomic_clear(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	/* Read and clear the host event status to return to AP */
-	r->status = atomic_read_clear(&(host_event_status.status));
+	r->status = atomic_read_clear(&(host_event_status_flags));
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

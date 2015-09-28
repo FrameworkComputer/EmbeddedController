@@ -9,6 +9,7 @@
 #include "console.h"
 #include "cpu.h"
 #include "flash.h"
+#include "host_command.h"
 #include "registers.h"
 #include "panic.h"
 #include "system.h"
@@ -104,6 +105,13 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
+#ifdef CONFIG_HOSTCMD_PD
+	/* Inform the PD MCU that we are going to hibernate. */
+	host_command_pd_request_hibernate();
+	/* Wait to ensure exchange with PD before hibernating. */
+	msleep(100);
+#endif
+
 	/* Flush console before hibernating */
 	cflush();
 	/* chip specific standby mode */

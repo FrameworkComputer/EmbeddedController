@@ -133,5 +133,5 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_EXCHANGE_STATUS, ec_status_host_cmd,
-			EC_VER_MASK(1));
+		     EC_VER_MASK(EC_VER_PD_EXCHANGE_STATUS));
 
