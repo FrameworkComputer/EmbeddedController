@@ -904,14 +904,13 @@ static void handle_ctrl_request(int port, uint16_t head,
 			/* Do nothing, assume this is a redundant PD_RDY */
 		} else if (pd[port].power_role == PD_ROLE_SINK) {
 			set_state(port, PD_STATE_SNK_READY);
+			pd_set_input_current_limit(port, pd[port].curr_limit,
+						   pd[port].supply_voltage);
 #ifdef CONFIG_CHARGE_MANAGER
 			/* Set ceiling based on what's negotiated */
 			charge_manager_set_ceil(port,
 						CEIL_REQUESTOR_PD,
 						pd[port].curr_limit);
-#else
-			pd_set_input_current_limit(port, pd[port].curr_limit,
-						   pd[port].supply_voltage);
 #endif
 		}
 		break;
