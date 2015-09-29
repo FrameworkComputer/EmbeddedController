@@ -10,7 +10,7 @@
 
 /* Number of IRQ vectors on the NVIC */
 /* TODO_FPGA this should come from the generated .h file */
-#define CONFIG_IRQ_COUNT 188
+#define CONFIG_IRQ_COUNT 192
 
 /* Describe the RAM layout */
 #define CONFIG_RAM_BASE         0x10000
