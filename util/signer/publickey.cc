@@ -1,11 +1,10 @@
-//
-// Copyright 2015 The Chromium OS Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-//
+/* Copyright 2015 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <common/publickey.h>
 
-#include "publickey.h"
-
+#include <string.h>
 #include <string>
 
 #include <openssl/bn.h>
@@ -14,50 +13,64 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
-PublicKey::PublicKey(const char* filename) {
+#include <common/gnubby.h>
+
+PublicKey::PublicKey(const std::string& filename) : key_(NULL), publicOnly_(true) {
   EVP_PKEY* pkey = NULL;
   BIO* bio = BIO_new(BIO_s_file());
 
-  if (BIO_read_filename(bio, filename) == 1) {
+  OpenSSL_add_all_ciphers();  // needed to decrypt PEM.
+  if (BIO_read_filename(bio, filename.c_str()) == 1) {
     pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+
+    if (pkey) {
+      publicOnly_ = false;
+    } else {
+      // Try read as public key.
+      (void)BIO_reset(bio);
+      pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
+      if (pkey) {
+        fprintf(stderr, "read public key only, assuming gnubby for signing..\n");
+      }
+    }
   }
 
-  if (NULL == pkey) {
-    fprintf(stderr, "loadKey: failed to load RSA key from '%s'",
-            filename);
+  if (!pkey) {
+    fprintf(stderr, "loadKey: failed to load RSA key from '%s'\n",
+            filename.c_str());
   }
 
   BIO_free_all(bio);
-  key = pkey;
+  key_ = pkey;
 }
 
 PublicKey::~PublicKey() {
-  if (key) {
-    EVP_PKEY_free(key);
-    key = NULL;
+  if (key_) {
+    EVP_PKEY_free(key_);
+    key_ = NULL;
   }
 }
 
 bool PublicKey::ok() {
-  return key != NULL;
+  return key_ != NULL;
 }
 
 size_t PublicKey::nwords() {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
   size_t result = (BN_num_bytes(rsa->n) + 3) / 4;
   RSA_free(rsa);
   return result;
 }
 
 uint32_t PublicKey::public_exponent() {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
   uint32_t result = BN_get_word(rsa->e);
   RSA_free(rsa);
   return result;
 }
 
 uint32_t PublicKey::n0inv() {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
   BN_CTX* ctx = BN_CTX_new();
   BIGNUM* r = BN_new();
   BIGNUM* rem = BN_new();
@@ -77,7 +90,6 @@ uint32_t PublicKey::n0inv() {
   return result;
 }
 
-/*static*/
 void PublicKey::print(const char* tag, size_t nwords, BIGNUM* n) {
   BN_CTX* ctx = BN_CTX_new();
   BIGNUM* N = BN_new();
@@ -88,7 +100,8 @@ void PublicKey::print(const char* tag, size_t nwords, BIGNUM* n) {
   BN_set_bit(r, 32);  // 2^32
   BN_copy(N, n);
 
-  printf("const uint32_t %s[%lu] = {", tag, nwords);
+  printf("const uint32_t %s[%lu + 1] = {", tag, nwords);
+  printf("0x%08x, ", n0inv());
   for (size_t i = 0; i < nwords; ++i) {
      if (i) printf(", ");
      BN_div(N, rem, N, r, ctx);
@@ -103,7 +116,6 @@ void PublicKey::print(const char* tag, size_t nwords, BIGNUM* n) {
   BN_CTX_free(ctx);
 }
 
-/*static*/
 void PublicKey::print(const char* tag, size_t nwords,
                       uint8_t* data, size_t len) {
   BIGNUM* n = BN_bin2bn(data, len, NULL);
@@ -112,32 +124,8 @@ void PublicKey::print(const char* tag, size_t nwords,
 }
 
 void PublicKey::print(const char* tag) {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
-  print(tag, nwords(), rsa->n);
-  RSA_free(rsa);
-}
-
-void PublicKey::printAll(const char* tag) {
-  std::string t(tag);
-  printf("#define %s_EXP %u\n", tag, public_exponent());
-  printf("#define %s_INV 0x%08x\n", tag, n0inv());
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
-  print((t + "_MOD").c_str(), nwords(), rsa->n);
-
-  BN_CTX* ctx = BN_CTX_new();
-  BIGNUM* RR = BN_new();
-  BIGNUM* rem = BN_new();
-  BIGNUM* quot = BN_new();
-  BN_set_bit(RR, nwords() * 32 * 2);
-  BN_div(quot, rem, RR, rsa->n, ctx);
-
-  print((t + "_RR").c_str(), nwords(), rem);
-
-  BN_free(quot);
-  BN_free(rem);
-  BN_free(RR);
-  BN_CTX_free(ctx);
-
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
+  print(tag, rwords(), rsa->n);
   RSA_free(rsa);
 }
 
@@ -165,7 +153,7 @@ void PublicKey::toArray(uint32_t* dst, size_t nwords, BIGNUM* n) {
 }
 
 int PublicKey::encrypt(uint8_t* msg, int msglen, uint8_t* out) {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
   int result =
       RSA_public_encrypt(msglen, msg, out, rsa, RSA_PKCS1_OAEP_PADDING);
   RSA_free(rsa);
@@ -173,7 +161,7 @@ int PublicKey::encrypt(uint8_t* msg, int msglen, uint8_t* out) {
 }
 
 int PublicKey::decrypt(uint8_t* msg, int msglen, uint8_t* out) {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
   int result =
       RSA_private_decrypt(msglen, msg, out, rsa, RSA_PKCS1_OAEP_PADDING);
   RSA_free(rsa);
@@ -182,7 +170,7 @@ int PublicKey::decrypt(uint8_t* msg, int msglen, uint8_t* out) {
 
 
 int PublicKey::raw(uint8_t* in, int inlen, BIGNUM** out) {
-  RSA* rsa = EVP_PKEY_get1_RSA(key);
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
   BN_CTX* ctx = BN_CTX_new();
   BIGNUM* m = BN_new();
   BIGNUM* r = BN_new();
@@ -210,7 +198,7 @@ int PublicKey::sign(const void* msg, size_t msglen, BIGNUM** output) {
   uint8_t* sig = NULL;
   unsigned int siglen = 0;
 
-  unsigned int tmplen = EVP_PKEY_size(key);
+  unsigned int tmplen = EVP_PKEY_size(key_);
 
   ctx = EVP_MD_CTX_create();
   if (!ctx) goto __fail;
@@ -220,14 +208,29 @@ int PublicKey::sign(const void* msg, size_t msglen, BIGNUM** output) {
   if (EVP_DigestUpdate(ctx, msg, msglen) != 1) goto __fail;
 
   sig = (uint8_t*)malloc(tmplen);
-  result = EVP_SignFinal(ctx, sig, &siglen, key);
+
+  if (publicOnly_) {
+    fprintf(stderr, "gnubby signing..");
+    fflush(stderr);
+    // TODO: 2k -> gnubby, 3k -> HSM?
+
+    Gnubby gnubby;
+    result = gnubby.Sign(ctx, sig, &siglen, key_);
+    fprintf(stderr, "gnubby.Sign: %d\n", result);
+  } else {
+    fprintf(stderr, "ossl signing..");
+    fflush(stderr);
+    result = EVP_SignFinal(ctx, sig, &siglen, key_);
+    fprintf(stderr, "EVP_SignFinal: %d\n", result);
+  }
+
   if (result != 1) goto __fail;
 
   tmp = BN_bin2bn(sig, siglen, NULL);
 
   // compute R*sig mod N
-  rsa = EVP_PKEY_get1_RSA(key);
-  if (BN_lshift(tmp, tmp, nwords() * 32) != 1) goto __fail;
+  rsa = EVP_PKEY_get1_RSA(key_);
+  if (BN_lshift(tmp, tmp, rwords() * 32) != 1) goto __fail;
 
   bnctx = BN_CTX_new();
   if (BN_mod(tmp, tmp, rsa->n, bnctx) != 1) goto __fail;

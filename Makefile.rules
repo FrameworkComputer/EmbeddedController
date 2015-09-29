@@ -40,8 +40,9 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
 # Allow the .roshared section to overlap other sections (itself)
 cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share \
 				-O binary $< $@
-cmd_raw_to_flat ?= $(out)/util/signer util/signer/rom-testkey.pem $< \
-	&& mv $<.signed $@
+cmd_elf_to_signed ?= $(out)/util/signer --key=util/signer/rom-testkey-A.pem \
+	--input=$< --format=bin --output=$@.signed \
+	&& mv $@.signed $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
@@ -57,7 +58,7 @@ cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         -MMD -MF $@.d -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d  -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c)
-cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) \
+cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_version = ./util/getversion.sh > $@
@@ -201,8 +202,8 @@ $(out)/RW/ec.RW.flat: $(out)/RW/ec.RW.elf
 $(out)/RO/ec.RO.flat.raw: $(out)/RO/ec.RO.elf $(out)/RO/ec.RO.smap
 	$(call quiet,ec_elf_to_flat,OBJCOPY)
 
-$(out)/RO/ec.RO.flat: $(out)/RO/ec.RO.flat.raw
-	$(call quiet,raw_to_flat,RO_SIGN)
+$(out)/RO/ec.RO.flat: $(out)/RO/ec.RO.elf  $(out)/RO/ec.RO.smap
+	$(call quiet,elf_to_signed,RO_SIGN)
 
 $(out)/RO/%.hex: $(out)/RO/%.flat
 	$(call quiet,bin_to_hex,OBJCOPY)
