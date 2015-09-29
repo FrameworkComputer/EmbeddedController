@@ -100,9 +100,10 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 
 	/* For valid sensors, check if AP really needs this data */
 	if (valid_data) {
-		fp_t ap_odr = fp_div(BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr), 1000);
-
-		/* Use integer, conversion to FP will overflow */
+		/* Use Hz, conversion to FP will overflow with mHz */
+		fp_t ap_odr =
+			fp_div(BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr),
+			       1000);
 		fp_t rate = fp_div(sensor->drv->get_data_rate(sensor), 1000);
 
 		/*
@@ -127,13 +128,16 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 			return;
 		}
 
-		/* Skip if EC is oversampling */
-		if (sensor->oversampling < 0) {
-			sensor->oversampling += fp_div(INT_TO_FP(1), rate);
-			return;
+		if (fp_mul(ap_odr, INT_TO_FP(2)) < rate) {
+			/* Skip if sensor is significantly oversampling */
+			if (sensor->oversampling < 0) {
+				sensor->oversampling +=
+					fp_div(INT_TO_FP(1), rate);
+				return;
+			}
+			sensor->oversampling += fp_div(INT_TO_FP(1), rate) -
+				fp_div(INT_TO_FP(1), ap_odr);
 		}
-		sensor->oversampling += fp_div(INT_TO_FP(1), rate) -
-			fp_div(INT_TO_FP(1), INT_TO_FP(ap_odr));
 	}
 	if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP) {
 		/*
@@ -234,6 +238,7 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	roundup = !!(sensor->config[config_id].odr & ROUND_UP_FLAG);
 	CPRINTS("%s ODR: %d - roundup %d from config %d",
 		sensor->name, odr, roundup, config_id);
+	sensor->oversampling = 0;
 	return sensor->drv->set_data_rate(sensor, odr, roundup);
 }
 
@@ -339,7 +344,6 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
 		timestamp_t ts = get_time();
 		sensor->state = SENSOR_INITIALIZED;
 		sensor->last_collection = ts.le.lo;
-		sensor->oversampling = 0;
 		motion_sense_set_data_rate(sensor);
 	}
 	return ret;
