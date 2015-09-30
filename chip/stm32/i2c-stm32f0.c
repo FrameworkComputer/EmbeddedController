@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_pd_tcpc.h"
@@ -267,6 +268,8 @@ static void i2c_event_handler(int port)
 
 		/* Clear ADDR bit by writing to ADDRCF bit */
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_ADDRCF;
+		/* Inhibit stop mode when addressed until STOPF flag is set */
+		disable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
 
 	/* Stop condition on bus */
@@ -289,6 +292,9 @@ static void i2c_event_handler(int port)
 
 		/* Clear STOPF bit by writing to STOPCF bit */
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_STOPCF;
+
+		/* No longer inhibit deep sleep after stop condition */
+		enable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
 
 	/* Receiver full event */
