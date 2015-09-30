@@ -294,13 +294,14 @@ enum {
 	/*
 	 * Sleep masks to prevent going in to deep sleep.
 	 */
-	SLEEP_MASK_AP_RUN   = (1 << 0), /* the main CPU is running */
-	SLEEP_MASK_UART     = (1 << 1), /* UART communication on-going */
-	SLEEP_MASK_I2C      = (1 << 2), /* I2C master communication on-going */
-	SLEEP_MASK_CHARGING = (1 << 3), /* Charging loop on-going */
-	SLEEP_MASK_USB_PWR  = (1 << 4), /* USB power loop on-going */
-	SLEEP_MASK_USB_PD   = (1 << 5), /* USB PD device connected */
-	SLEEP_MASK_SPI      = (1 << 6), /* SPI communications on-going */
+	SLEEP_MASK_AP_RUN     = (1 << 0), /* the main CPU is running */
+	SLEEP_MASK_UART       = (1 << 1), /* UART communication ongoing */
+	SLEEP_MASK_I2C_MASTER = (1 << 2), /* I2C master communication ongoing */
+	SLEEP_MASK_CHARGING   = (1 << 3), /* Charging loop ongoing */
+	SLEEP_MASK_USB_PWR    = (1 << 4), /* USB power loop ongoing */
+	SLEEP_MASK_USB_PD     = (1 << 5), /* USB PD device connected */
+	SLEEP_MASK_SPI        = (1 << 6), /* SPI communications ongoing */
+	SLEEP_MASK_I2C_SLAVE  = (1 << 7), /* I2C slave communication ongoing */
 
 	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
 

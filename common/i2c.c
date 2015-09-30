@@ -56,15 +56,18 @@ void i2c_lock(int port, int lock)
 	ASSERT(port != -1);
 #endif
 	if (lock) {
-		/* Don't allow deep sleep when I2C port is locked */
-		disable_sleep(SLEEP_MASK_I2C);
+		/*
+		 * Don't allow deep sleep when I2C port is locked
+		 * TODO(crbug.com/537759): Fix sleep mask for multi-port lock.
+		 */
+		disable_sleep(SLEEP_MASK_I2C_MASTER);
 
 		mutex_lock(port_mutex + port);
 	} else {
 		mutex_unlock(port_mutex + port);
 
 		/* Allow deep sleep again after I2C port is unlocked */
-		enable_sleep(SLEEP_MASK_I2C);
+		enable_sleep(SLEEP_MASK_I2C_MASTER);
 	}
 }
 
