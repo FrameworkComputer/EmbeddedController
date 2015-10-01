@@ -597,12 +597,16 @@ int system_get_board_version(void)
 	int v = 0;
 
 #ifdef CONFIG_BOARD_VERSION
+#ifdef CONFIG_BOARD_SPECIFIC_VERSION
+	v = board_get_version();
+#else
 	if (gpio_get_level(GPIO_BOARD_VERSION1))
 		v |= 0x01;
 	if (gpio_get_level(GPIO_BOARD_VERSION2))
 		v |= 0x02;
 	if (gpio_get_level(GPIO_BOARD_VERSION3))
 		v |= 0x04;
+#endif
 #endif
 
 	return v;

@@ -251,6 +251,8 @@
 
 /* EC has GPIOs attached to board version stuffing resistors */
 #undef CONFIG_BOARD_VERSION
+/* The decoding of the GPIOs defining board version is defined in board code */
+#undef CONFIG_BOARD_SPECIFIC_VERSION
 
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
