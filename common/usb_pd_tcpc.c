@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "tcpci.h"
 #include "timer.h"
@@ -972,11 +973,25 @@ int tcpc_set_vconn(int port, int enable)
 
 int tcpc_set_rx_enable(int port, int enable)
 {
+#if defined(CONFIG_LOW_POWER_IDLE) && !defined(CONFIG_USB_POWER_DELIVERY)
+	int i;
+#endif
 	pd[port].rx_enabled = enable;
 
 	if (!enable)
 		pd_rx_disable_monitoring(port);
 
+#if defined(CONFIG_LOW_POWER_IDLE) && !defined(CONFIG_USB_POWER_DELIVERY)
+	/* If any PD port is connected, then disable deep sleep */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
+		if (pd[port].rx_enabled)
+			break;
+
+	if (i == CONFIG_USB_PD_PORT_COUNT)
+		enable_sleep(SLEEP_MASK_USB_PD);
+	else
+		disable_sleep(SLEEP_MASK_USB_PD);
+#endif
 	return EC_SUCCESS;
 }
 

@@ -459,13 +459,17 @@ void pd_rx_handler(void)
 					PD_RX_TRANSITION_COUNT - 1) ?
 						0 : rx_edge_ts_idx[i] + 1;
 
+#if defined(CONFIG_LOW_POWER_IDLE) &&                        \
+defined(CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED)
 			/*
 			 * Do not deep sleep while waiting for more edges. For
 			 * most boards, sleep is already disabled due to being
-			 * in PD connected state, but other boards can sleep
-			 * while connected.
+			 * in PD connected state, but boards which define
+			 * CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED can
+			 * sleep while connected.
 			 */
 			disable_sleep(SLEEP_MASK_USB_PD);
+#endif
 
 			/*
 			 * If we have seen enough edges in a certain amount of
