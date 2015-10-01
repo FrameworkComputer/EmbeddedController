@@ -48,6 +48,18 @@ static const char * const task_names[] = {
 };
 #undef TASK
 
+#ifdef CONFIG_TASK_PROFILING
+static int task_will_switch;
+static uint64_t exc_sub_time;
+static uint64_t task_start_time; /* Time task scheduling started */
+static uint64_t exc_start_time;  /* Time of task->exception transition */
+static uint64_t exc_end_time;    /* Time of exception->task transition */
+static uint64_t exc_total_time;  /* Total time in exceptions */
+static uint32_t svc_calls;       /* Number of service calls */
+static uint32_t task_switches;   /* Number of times active task changed */
+static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
+#endif
+
 extern int __task_start(void);
 
 #ifndef CONFIG_LOW_POWER_IDLE
@@ -168,6 +180,9 @@ static uint32_t tasks_ready = (1 << TASK_ID_HOOKS);
 
 static int start_called;  /* Has task swapping started */
 
+/* interrupt number of sw interrupt */
+static int sw_int_num;
+
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
 	return tasks + id;
@@ -237,6 +252,14 @@ int task_start_called(void)
 	return start_called;
 }
 
+int get_sw_int(void)
+{
+	/* If this is a SW interrupt */
+	if (get_itype() & 8)
+		return sw_int_num;
+	return 0;
+}
+
 /**
  * Scheduling system call
  *
@@ -251,6 +274,7 @@ void syscall_handler(int desched, task_id_t resched, int swirq)
 		set_ipc(get_ipc() + 4);
 		/* call the regular IRQ handler */
 		handler();
+		sw_int_num = 0;
 		return;
 	}
 
@@ -266,13 +290,27 @@ void syscall_handler(int desched, task_id_t resched, int swirq)
 	/* trigger a re-scheduling on exit */
 	need_resched = 1;
 
+#ifdef CONFIG_TASK_PROFILING
+	svc_calls++;
+#endif
+
 	/* adjust IPC to return *after* the syscall instruction */
 	set_ipc(get_ipc() + 4);
 }
 
 task_ *next_sched_task(void)
 {
-	return __task_id_to_ptr(__fls(tasks_ready));
+	task_ *new_task = __task_id_to_ptr(__fls(tasks_ready));
+
+#ifdef CONFIG_TASK_PROFILING
+	if (current_task != new_task) {
+		current_task->runtime +=
+			(exc_start_time - exc_end_time - exc_sub_time);
+		task_will_switch = 1;
+	}
+#endif
+
+	return new_task;
 }
 
 static inline void __schedule(int desched, int resched, int swirq)
@@ -282,6 +320,67 @@ static inline void __schedule(int desched, int resched, int swirq)
 	register int p2 asm("$r2") = swirq;
 
 	asm("syscall 0" : : "r"(p0), "r"(p1), "r"(p2));
+}
+
+void update_exc_start_time(void)
+{
+#ifdef CONFIG_TASK_PROFILING
+	exc_start_time = get_time().val;
+#endif
+}
+
+void start_irq_handler(void)
+{
+#ifdef CONFIG_TASK_PROFILING
+	int irq;
+
+	/* save r0, r1, and r2 for syscall */
+	asm volatile ("smw.adm $r0, [$sp], $r2, 0");
+
+	update_exc_start_time();
+
+	irq = get_sw_int();
+	if (!irq)
+		irq = IT83XX_INTC_AIVCT - 16;
+
+	/*
+	 * Track IRQ distribution.  No need for atomic add, because an IRQ
+	 * can't pre-empt itself.
+	 */
+	if ((irq > 0) && (irq < ARRAY_SIZE(irq_dist)))
+		irq_dist[irq]++;
+
+	/* restore r0, r1, and r2 */
+	asm volatile ("lmw.bim $r0, [$sp], $r2, 0");
+#endif
+}
+
+void end_irq_handler(void)
+{
+#ifdef CONFIG_TASK_PROFILING
+	uint64_t t, p;
+
+	/*
+	 * save r0 and fp (fp for restore r0-r5, r15, fp, lp and sp
+	 * while interrupt exit.
+	 */
+	asm volatile ("smw.adm $r0, [$sp], $r0, 8");
+
+	t = get_time().val;
+	p = t - exc_start_time;
+
+	exc_total_time += p;
+	exc_sub_time += p;
+	if (task_will_switch) {
+		task_will_switch = 0;
+		exc_sub_time = 0;
+		exc_end_time = t;
+		task_switches++;
+	}
+
+	/* restore r0 and fp */
+	asm volatile ("lmw.bim $r0, [$sp], $r0, 8");
+#endif
 }
 
 static uint32_t __wait_evt(int timeout_us, task_id_t resched)
@@ -380,8 +479,10 @@ void task_clear_pending_irq(int irq)
 void task_trigger_irq(int irq)
 {
 	int cpu_int = chip_trigger_irq(irq);
-	if (cpu_int > 0)
+	if (cpu_int > 0) {
+		sw_int_num = irq;
 		__schedule(0, 0, cpu_int);
+	}
 }
 
 /*
@@ -490,7 +591,31 @@ void task_print_list(void)
 
 int command_task_info(int argc, char **argv)
 {
+#ifdef CONFIG_TASK_PROFILING
+	int total = 0;
+	int i;
+#endif
+
 	task_print_list();
+
+#ifdef CONFIG_TASK_PROFILING
+	ccputs("IRQ counts by type:\n");
+	cflush();
+	for (i = 0; i < ARRAY_SIZE(irq_dist); i++) {
+		if (irq_dist[i]) {
+			ccprintf("%4d %8d\n", i, irq_dist[i]);
+			total += irq_dist[i];
+		}
+	}
+
+	ccprintf("Service calls:          %11d\n", svc_calls);
+	ccprintf("Total exceptions:       %11d\n", total + svc_calls);
+	ccprintf("Task switches:          %11d\n", task_switches);
+	ccprintf("Task switching started: %11.6ld s\n", task_start_time);
+	ccprintf("Time in tasks:          %11.6ld s\n",
+		 get_time().val - task_start_time);
+	ccprintf("Time in exceptions:     %11.6ld s\n", exc_total_time);
+#endif
 
 	return EC_SUCCESS;
 }
@@ -564,6 +689,9 @@ void task_pre_init(void)
 
 int task_start(void)
 {
+#ifdef CONFIG_TASK_PROFILING
+	task_start_time = exc_end_time = get_time().val;
+#endif
 	start_called = 1;
 
 	return __task_start();

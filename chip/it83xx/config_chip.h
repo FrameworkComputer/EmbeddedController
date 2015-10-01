@@ -10,7 +10,7 @@
 #include "core/nds32/config_core.h"
 
 /* Number of IRQ vectors on the IVIC */
-#define CONFIG_IRQ_COUNT 16
+#define CONFIG_IRQ_COUNT IT83XX_IRQ_COUNT
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
@@ -88,8 +88,6 @@
 /****************************************************************************/
 /* Customize the build */
 
-/* Use hardware specific udelay() for this chip */
-#define CONFIG_HW_SPECIFIC_UDELAY
 #define CONFIG_FW_RESET_VECTOR
 
 /* Optional features present on this chip */
@@ -100,7 +98,6 @@
 #define CONFIG_PECI
 #define CONFIG_PWM
 #define CONFIG_SPI
-#undef CONFIG_WATCHDOG
 
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)

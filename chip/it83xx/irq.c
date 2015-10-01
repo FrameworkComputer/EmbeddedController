@@ -69,7 +69,8 @@ int chip_clear_pending_irq(int irq)
 	int group = irq / 8;
 	int bit = irq % 8;
 
-	IT83XX_INTC_REG(irq_groups[group].isr_off) |= 1 << bit;
+	/* always write 1 clear, no | */
+	IT83XX_INTC_REG(irq_groups[group].isr_off) = 1 << bit;
 
 	return -1; /* everything has been done */
 }

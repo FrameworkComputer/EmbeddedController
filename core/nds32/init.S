@@ -20,6 +20,8 @@ __entry_\()\name:
 	smw.adm $r15, [$sp], $r15, 0xb
 	/* r0-r5 are caller saved */
 	smw.adm $r0,  [$sp], $r5, 0
+	/* isr entry */
+	jal start_irq_handler
 	/* switch to system stack if we are called from process stack */
 	la $r3, stack_end
 	mov55 $fp, $sp
@@ -30,6 +32,8 @@ __entry_\()\name:
 	/* check whether we need to change the scheduled task */
 	lwi.gp  $r2, [ + need_resched]
 	bnez $r2, __switch_task
+	/* isr exit */
+	jal end_irq_handler
 	/* restore r0-r5 */
 	lmw.bim $r0, [$fp], $r5, 0
 	/* restore r15, fp, lp and sp */

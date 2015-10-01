@@ -63,6 +63,8 @@ __switch_task:
 	/* exception frame pointer for the new task */
 	mov55 $fp, $r3
 1:      /* un-pile the interruption entry context */
+	/* isr exit */
+	jal end_irq_handler
 	/* restore r0-r5 */
 	lmw.bim $r0, [$fp], $r5, 0
 	/* restore r15, fp, lp and sp */

@@ -51,4 +51,9 @@ int chip_trigger_irq(int irq);
  */
 void chip_init_irqs(void);
 
+/**
+ * Return interrupt number of software interrupt.
+ */
+int get_sw_int(void);
+
 #endif /* __CROS_EC_IRQ_CHIP_H */

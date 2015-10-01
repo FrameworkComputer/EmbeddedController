@@ -180,6 +180,9 @@ static void host_uart_config(void)
 
 void uart_init(void)
 {
+	/* reset uart before config it */
+	IT83XX_GCTRL_RSTC4 |= (1 << 1);
+
 	/* Waiting for when we can use the GPIO module to set pin muxing */
 	gpio_config_module(MODULE_UART, 1);
 

@@ -8,7 +8,11 @@
 #ifndef __CROS_EC_HWTIMER_CHIP_H
 #define __CROS_EC_HWTIMER_CHIP_H
 
+#define FREE_EXT_TIMER_L     EXT_TIMER_3
+#define FREE_EXT_TIMER_H     EXT_TIMER_4
 #define FAN_CTRL_EXT_TIMER   EXT_TIMER_5
+#define EVENT_EXT_TIMER      EXT_TIMER_6
+#define WDT_EXT_TIMER        EXT_TIMER_7
 
 enum ext_timer_clock_source {
 	EXT_PSR_32P768K_HZ = 0,
@@ -17,16 +21,19 @@ enum ext_timer_clock_source {
 	EXT_PSR_8M_HZ      = 3
 };
 
+/*
+ * 24-bit timers: external timer 3, 5, and 7
+ * 32-bit timers: external timer 4, 6, and 8
+ */
 enum ext_timer_sel {
-	/* For WDT capture important state information before being reset */
+	/* timer 3 and 4 combine mode for free running timer */
 	EXT_TIMER_3 = 0,
-	/* reserved */
 	EXT_TIMER_4,
 	/* For fan control */
 	EXT_TIMER_5,
-	/* reserved */
+	/* timer 6 for event timer */
 	EXT_TIMER_6,
-	/* reserved */
+	/* For WDT capture important state information before being reset */
 	EXT_TIMER_7,
 	/* reserved */
 	EXT_TIMER_8,
@@ -44,11 +51,18 @@ extern const struct ext_timer_ctrl_t et_ctrl_regs[];
 void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq);
 void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq);
 void fan_ext_timer_interrupt(void);
+void update_exc_start_time(void);
+/**
+ * Config a external timer.
+ *
+ * @param raw	(!=0) timer count equal to param "ms" no conversion.
+ */
 int ext_timer_ms(enum ext_timer_sel ext_timer,
 		enum ext_timer_clock_source ext_timer_clock,
 		int start,
 		int et_int,
 		int32_t ms,
-		int first_time_enable);
+		int first_time_enable,
+		int raw);
 
 #endif /* __CROS_EC_HWTIMER_CHIP_H */
