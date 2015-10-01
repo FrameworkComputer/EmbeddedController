@@ -128,7 +128,7 @@ GPIO(USB_C0_5V_EN,      PIN(D, 8),  GPIO_OUT_LOW)    /* USBC port 0 5V */
 GPIO(USB_C0_CHARGE_L,   PIN(D, 9),  GPIO_OUT_LOW)    /* USBC port 0 charge */
 GPIO(USB_C1_5V_EN,      PIN(D, 10), GPIO_OUT_LOW)    /* USBC port 1 5V */
 GPIO(USB_C1_CHARGE_L,   PIN(D, 11), GPIO_OUT_LOW)    /* USBC port 1 charge */
-GPIO(USB_PD_VBUS_WAKE,  PIN(B, 15), GPIO_OUT_LOW)    /* PD VBUS wake */
+GPIO(USB_PD_VBUS_WAKE,  PIN(B, 15), GPIO_OUT_LOW)    /* PD MCU wake */
 GPIO(USB_DP_HPD,        PIN(F, 3),  GPIO_OUT_LOW)
 GPIO(USB_C0_DEVMODE_L,  PIN(E, 4),  GPIO_OUT_HIGH)   /* set HSD2 (host mode) path as default */
 GPIO(USB_C1_DEVMODE,    PIN(E, 2),  GPIO_OUT_LOW)    /* set HSD1 (host mode) path as default */

@@ -210,6 +210,14 @@ static void board_extpower_buffer_to_soc(void)
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * Assert wake GPIO to PD MCU to wake it from hibernate.
+	 * This cannot be done from board_pre_init() (or from any function
+	 * called before system_pre_init()), otherwise a spurious wake will
+	 * occur -- see stm32 check_reset_cause() WORKAROUND comment.
+	 */
+	gpio_set_level(GPIO_USB_PD_VBUS_WAKE, 1);
+
 	/* Enable Level shift of AC_OK & LID_OPEN signals */
 	board_extpower_buffer_to_soc();
 	/* Enable rev1 testing GPIOs */
