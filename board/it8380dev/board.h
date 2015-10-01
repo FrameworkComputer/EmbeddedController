@@ -11,6 +11,7 @@
 /* Optional features */
 #undef CHIP_FAMILY_IT839X
 
+#define CONFIG_BATTERY_SMART
 #define CONFIG_FANS 1
 #undef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
 #define CONFIG_IT83XX_LPC_ACCESS_INT
@@ -36,6 +37,9 @@
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
 #ifndef __ASSEMBLER__
+
+#define I2C_PORT_CHARGER 2
+#define I2C_PORT_BATTERY 2
 
 #include "gpio_signal.h"
 

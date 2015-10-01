@@ -84,3 +84,28 @@ void intc_cpu_int_group_12(void)
 	}
 }
 DECLARE_IRQ(CPU_INT_GROUP_12, intc_cpu_int_group_12, 2);
+
+void intc_cpu_int_group_6(void)
+{
+	/* Determine interrupt number. */
+	int intc_group_6 = IT83XX_INTC_IVCT6 - 16;
+
+	switch (intc_group_6) {
+
+	case IT83XX_IRQ_SMB_A:
+		i2c_interrupt(0);
+		break;
+
+	case IT83XX_IRQ_SMB_B:
+		i2c_interrupt(1);
+		break;
+
+	case IT83XX_IRQ_SMB_C:
+		i2c_interrupt(2);
+		break;
+
+	default:
+		break;
+	}
+}
+DECLARE_IRQ(CPU_INT_GROUP_6, intc_cpu_int_group_6, 2);

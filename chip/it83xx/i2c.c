@@ -24,8 +24,6 @@
  */
 #define I2C_CLK_LOW_TIMEOUT  25 /* ~= 25ms */
 
-#define I2C_LOOP_DELAY_US    16
-
 /* Default maximum time we allow for an I2C transfer */
 #define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
 
@@ -59,8 +57,7 @@ enum i2c_host_status_mask {
 
 enum i2c_reset_cause {
 	I2C_RC_NO_IDLE_FOR_START = 1,
-	I2C_RC_READ_NO_FINISH,
-	I2C_RC_WRITE_NO_FINISH,
+	I2C_RC_TIMEOUT,
 };
 
 struct i2c_ch_freq {
@@ -108,6 +105,22 @@ static const struct i2c_pin i2c_pin_regs[] = {
 #endif
 };
 
+struct i2c_ctrl_t {
+	uint8_t irq;
+};
+
+const struct i2c_ctrl_t i2c_ctrl_regs[] = {
+	{IT83XX_IRQ_SMB_A},
+	{IT83XX_IRQ_SMB_B},
+	{IT83XX_IRQ_SMB_C},
+};
+
+enum i2c_ch_status {
+	I2C_CH_NORMAL = 0,
+	I2C_CH_W2R,
+	I2C_CH_WAIT_READ,
+};
+
 /* I2C port state data */
 struct i2c_port_data {
 	const uint8_t *out;  /* Output data pointer */
@@ -120,6 +133,10 @@ struct i2c_port_data {
 	int err;             /* Error code, if any */
 	uint8_t addr;        /* address of device */
 	uint32_t timeout_us; /* Transaction timeout, or 0 to use default */
+
+	enum i2c_ch_status i2ccs;
+	/* Task waiting on port, or TASK_ID_INVALID if none. */
+	int task_waiting;
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
@@ -193,139 +210,152 @@ static void i2c_w2r_change_direction(int p)
 	}
 }
 
-static int i2c_transaction(int p)
+static int i2c_tran_write(int p)
 {
-	uint32_t num;
 	struct i2c_port_data *pd = pdata + p;
 
-	/* i2c write */
-	if (pd->out_size) {
-		if (pd->flags & I2C_XFER_START) {
-			/* i2c enable */
-			IT83XX_SMB_HOCTL2(p) = 0x13;
-			/*
-			 * bit0, Direction of the host transfer.
-			 * bit[1:7}, Address of the targeted slave.
-			 */
-			IT83XX_SMB_TRASLA(p) = pd->addr;
-			/* Send first byte */
-			IT83XX_SMB_HOBDB(p) = *(pd->out++);
-			pd->widx++;
-			/*
-			 * bit0, Host interrupt enable.
-			 * bit[2:4}, Extend command.
-			 * bit6, start.
-			 */
-			IT83XX_SMB_HOCTL(p) = 0x5D;
-		}
-
-		for (num = 0; num < pd->timeout_us; num += I2C_LOOP_DELAY_US) {
-			/* Host has completed the transmission of a byte */
-			if (IT83XX_SMB_HOSTA(p) & HOSTA_BDS) {
-				if (pd->widx < pd->out_size) {
-					/* Send next byte */
-					IT83XX_SMB_HOBDB(p) = *(pd->out++);
-					pd->widx++;
+	if (pd->flags & I2C_XFER_START) {
+		/* i2c enable */
+		IT83XX_SMB_HOCTL2(p) = 0x13;
+		/*
+		 * bit0, Direction of the host transfer.
+		 * bit[1:7}, Address of the targeted slave.
+		 */
+		IT83XX_SMB_TRASLA(p) = pd->addr;
+		/* Send first byte */
+		IT83XX_SMB_HOBDB(p) = *(pd->out++);
+		pd->widx++;
+		/* clear start flag */
+		pd->flags &= ~I2C_XFER_START;
+		/*
+		 * bit0, Host interrupt enable.
+		 * bit[2:4}, Extend command.
+		 * bit6, start.
+		 */
+		IT83XX_SMB_HOCTL(p) = 0x5D;
+	} else {
+		/* Host has completed the transmission of a byte */
+		if (IT83XX_SMB_HOSTA(p) & HOSTA_BDS) {
+			if (pd->widx < pd->out_size) {
+				/* Send next byte */
+				IT83XX_SMB_HOBDB(p) = *(pd->out++);
+				pd->widx++;
+				/* W/C byte done for next byte */
+				IT83XX_SMB_HOSTA(p) = HOSTA_NEXT_BYTE;
+			} else {
+				/* done */
+				pd->out_size = 0;
+				if (pd->in_size > 0) {
+					/* write to read */
+					i2c_w2r_change_direction(p);
 				} else {
-					if (pd->in_size > 0) {
-						i2c_w2r_change_direction(p);
-						goto write_to_read;
-					}
-
-					if (pd->flags & I2C_XFER_STOP)
+					if (pd->flags & I2C_XFER_STOP) {
+						/* set I2C_EN = 0 */
 						IT83XX_SMB_HOCTL2(p) = 0x11;
-					else
-						break;
+						/* W/C byte done for finish */
+						IT83XX_SMB_HOSTA(p) =
+							HOSTA_NEXT_BYTE;
+					} else {
+						pd->i2ccs = I2C_CH_W2R;
+						return 0;
+					}
 				}
-				/* W/C byte done for next byte or finish */
-				IT83XX_SMB_HOSTA(p) = HOSTA_NEXT_BYTE;
-			/* This bit will be set by termination of a command */
-			} else if (IT83XX_SMB_HOSTA(p) & HOSTA_FINTR) {
-				break;
 			}
-			/* - 1 since some time was used in the code above */
-			udelay(I2C_LOOP_DELAY_US - 1);
 		}
-
-		pd->err = IT83XX_SMB_HOSTA(p) & HOSTA_ANY_ERROR;
-
-		if (num > pd->timeout_us) {
-			pd->err = HOSTA_NO_FINISH;
-			i2c_reset(p, I2C_RC_WRITE_NO_FINISH);
-		}
-
-		if (pd->flags & I2C_XFER_STOP) {
-			IT83XX_SMB_HOCTL2(p) = 0x00;
-			/* W/C */
-			IT83XX_SMB_HOSTA(p) = HOSTA_ALL_WC_BIT;
-		}
-		return pd->err;
-	/* i2c read */
-	} else if (pd->in_size) {
-		if (pd->flags & I2C_XFER_START) {
-			/* i2c enable */
-			IT83XX_SMB_HOCTL2(p) = 0x13;
-			/*
-			 * bit0, Direction of the host transfer.
-			 * bit[1:7}, Address of the targeted slave.
-			 */
-			IT83XX_SMB_TRASLA(p) = pd->addr | 0x01;
-			/*
-			 * bit0, Host interrupt enable.
-			 * bit[2:4}, Extend command.
-			 * bit5, The firmware shall write 1 to this bit
-			 *       when the next byte will be the last byte.
-			 * bit6, start.
-			 */
-			if ((1 == pd->in_size) && (pd->flags & I2C_XFER_STOP))
-				IT83XX_SMB_HOCTL(p) = 0x7D;
-			else
-				IT83XX_SMB_HOCTL(p) = 0x5D;
-		} else {
-			i2c_w2r_change_direction(p);
-		}
-
-write_to_read:
-		for (num = 0; num < pd->timeout_us; num += I2C_LOOP_DELAY_US) {
-			/* when the host controller has received a byte */
-			if (IT83XX_SMB_HOSTA(p) & HOSTA_BDS) {
-				if (pd->ridx < pd->in_size) {
-					/* To get received data. */
-					*(pd->in++) = IT83XX_SMB_HOBDB(p);
-					pd->ridx++;
-					/* For last byte */
-					i2c_r_last_byte(p);
-				}
-
-				if ((pd->ridx == pd->in_size) &&
-					(!(pd->flags & I2C_XFER_STOP)))
-					break;
-
-				/* W/C for next byte or finish */
-				IT83XX_SMB_HOSTA(p) = HOSTA_NEXT_BYTE;
-			/* This bit will be set by termination of a command */
-			} else if (IT83XX_SMB_HOSTA(p) & HOSTA_FINTR) {
-				break;
-			}
-
-			/* - 1 since some time was used in the code above */
-			udelay(I2C_LOOP_DELAY_US - 1);
-		}
-
-		pd->err = IT83XX_SMB_HOSTA(p) & HOSTA_ANY_ERROR;
-
-		if (num > pd->timeout_us) {
-			pd->err = HOSTA_NO_FINISH;
-			i2c_reset(p, I2C_RC_READ_NO_FINISH);
-		}
-
-		if (pd->flags & I2C_XFER_STOP) {
-			IT83XX_SMB_HOCTL2(p) = 0x00;
-			/* W/C */
-			IT83XX_SMB_HOSTA(p) = HOSTA_ALL_WC_BIT;
-		}
-		return pd->err;
 	}
+	return 1;
+}
+
+static int i2c_tran_read(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+
+	if (pd->flags & I2C_XFER_START) {
+		/* i2c enable */
+		IT83XX_SMB_HOCTL2(p) = 0x13;
+		/*
+		 * bit0, Direction of the host transfer.
+		 * bit[1:7}, Address of the targeted slave.
+		 */
+		IT83XX_SMB_TRASLA(p) = pd->addr | 0x01;
+		/* clear start flag */
+		pd->flags &= ~I2C_XFER_START;
+		/*
+		 * bit0, Host interrupt enable.
+		 * bit[2:4}, Extend command.
+		 * bit5, The firmware shall write 1 to this bit
+		 *       when the next byte will be the last byte.
+		 * bit6, start.
+		 */
+		if ((1 == pd->in_size) && (pd->flags & I2C_XFER_STOP))
+			IT83XX_SMB_HOCTL(p) = 0x7D;
+		else
+			IT83XX_SMB_HOCTL(p) = 0x5D;
+	} else {
+		if ((pd->i2ccs == I2C_CH_W2R) ||
+			(pd->i2ccs == I2C_CH_WAIT_READ)) {
+			if (pd->i2ccs == I2C_CH_W2R) {
+				/* write to read */
+				i2c_w2r_change_direction(p);
+			} else {
+				/* For last byte */
+				i2c_r_last_byte(p);
+				/* W/C for next byte */
+				IT83XX_SMB_HOSTA(p) = HOSTA_NEXT_BYTE;
+			}
+			pd->i2ccs = I2C_CH_NORMAL;
+			task_enable_irq(i2c_ctrl_regs[p].irq);
+		} else if (IT83XX_SMB_HOSTA(p) & HOSTA_BDS) {
+			if (pd->ridx < pd->in_size) {
+				/* To get received data. */
+				*(pd->in++) = IT83XX_SMB_HOBDB(p);
+				pd->ridx++;
+				/* For last byte */
+				i2c_r_last_byte(p);
+				/* done */
+				if (pd->ridx == pd->in_size) {
+					pd->in_size = 0;
+					if (pd->flags & I2C_XFER_STOP) {
+						/* W/C for finish */
+						IT83XX_SMB_HOSTA(p) =
+							HOSTA_NEXT_BYTE;
+					} else {
+						pd->i2ccs = I2C_CH_WAIT_READ;
+						return 0;
+					}
+				} else {
+					/* W/C for next byte */
+					IT83XX_SMB_HOSTA(p) = HOSTA_NEXT_BYTE;
+				}
+			}
+		}
+	}
+	return 1;
+}
+
+static int i2c_transaction(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+
+	/* any error */
+	if (IT83XX_SMB_HOSTA(p) & HOSTA_ANY_ERROR) {
+		pd->err = (IT83XX_SMB_HOSTA(p) & HOSTA_ANY_ERROR);
+	} else {
+		/* i2c write */
+		if (pd->out_size)
+			return i2c_tran_write(p);
+		/* i2c read */
+		else if (pd->in_size)
+			return i2c_tran_read(p);
+		/* wait finish */
+		if (!(IT83XX_SMB_HOSTA(p) & HOSTA_FINTR))
+			return 1;
+	}
+	/* W/C */
+	IT83XX_SMB_HOSTA(p) = HOSTA_ALL_WC_BIT;
+	/* disable the SMBus host interface */
+	IT83XX_SMB_HOCTL2(p) = 0x00;
+	/* done doing work */
 	return 0;
 }
 
@@ -338,9 +368,15 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size, int flags)
 {
 	struct i2c_port_data *pd = pdata + port;
+	uint32_t events = 0;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
+
+	if ((pd->i2ccs == I2C_CH_W2R) || (pd->i2ccs == I2C_CH_WAIT_READ)) {
+		if ((flags & I2C_XFER_SINGLE) == I2C_XFER_SINGLE)
+			flags &= ~I2C_XFER_START;
+	}
 
 	/* Copy data to port struct */
 	pd->out = out;
@@ -357,13 +393,33 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if ((flags & I2C_XFER_START) && (i2c_is_busy(port)
 			|| (IT83XX_SMB_HOSTA(port) & HOSTA_ALL_WC_BIT)
 			|| (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
+
 		/* Attempt to unwedge the port. */
 		i2c_unwedge(port);
 		/* reset i2c port */
 		i2c_reset(port, I2C_RC_NO_IDLE_FOR_START);
 	}
+
+	pd->task_waiting = task_get_current();
+	if (pd->flags & I2C_XFER_START) {
+		pd->i2ccs = I2C_CH_NORMAL;
+		/* enable i2c interrupt */
+		task_clear_pending_irq(i2c_ctrl_regs[port].irq);
+		task_enable_irq(i2c_ctrl_regs[port].irq);
+	}
 	/* Start transaction */
 	i2c_transaction(port);
+	events = task_wait_event(pd->timeout_us);
+	/* disable i2c interrupt */
+	task_disable_irq(i2c_ctrl_regs[port].irq);
+	pd->task_waiting = TASK_ID_INVALID;
+
+	/* Handle timeout */
+	if (events & TASK_EVENT_TIMER) {
+		pd->err = EC_ERROR_TIMEOUT;
+		/* reset i2c port */
+		i2c_reset(port, I2C_RC_TIMEOUT);
+	}
 
 	return pd->err;
 }
@@ -400,6 +456,24 @@ int i2c_get_line_levels(int port)
 void i2c_set_timeout(int port, uint32_t timeout)
 {
 	pdata[port].timeout_us = timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
+}
+
+void i2c_interrupt(int port)
+{
+	int id = pdata[port].task_waiting;
+
+	/* Clear the interrupt status */
+	task_clear_pending_irq(i2c_ctrl_regs[port].irq);
+
+	/* If no task is waiting, just return */
+	if (id == TASK_ID_INVALID)
+		return;
+
+	/* If done doing work, wake up the task waiting for the transfer */
+	if (!i2c_transaction(port)) {
+		task_disable_irq(i2c_ctrl_regs[port].irq);
+		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
+	}
 }
 
 static void i2c_freq_changed(void)
@@ -455,6 +529,8 @@ static void i2c_init(void)
 		IT83XX_SMB_HOSTA(p) = HOSTA_ALL_WC_BIT;
 
 		IT83XX_SMB_HOCTL2(p) = 0x00;
+
+		pdata[i].task_waiting = TASK_ID_INVALID;
 	}
 
 	i2c_freq_changed();
