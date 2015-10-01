@@ -81,8 +81,17 @@ cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
+# When building with -j, it's easy to miss errors. If you don't have your shell
+# configured to warn you about nonzero exit, you may not even notice that "make
+# buildall -j" failed. To make it more obvious, we'll do one level of recursion
+# here.
+.PHONY: try_buildall
+try_buildall: $(foreach b, $(boards), proj-$(b))
+
 .PHONY: buildall
-buildall: $(foreach b, $(boards), proj-$(b)) runtests
+buildall:
+	$(MAKE) try_buildall
+	$(MAKE) runtests
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
 
