@@ -20,7 +20,9 @@ enum power_state {
 	POWER_S5,		/* System is soft-off */
 	POWER_S3,		/* Suspend; RAM on, processor is asleep */
 	POWER_S0,		/* System is on */
-
+#ifdef CONFIG_POWER_S0IX
+	POWER_S0ix,
+#endif
 	/* Transitions */
 	POWER_G3S5,	/* G3 -> S5 (at system init time) */
 	POWER_S5S3,	/* S5 -> S3 */
@@ -28,6 +30,10 @@ enum power_state {
 	POWER_S0S3,	/* S0 -> S3 */
 	POWER_S3S5,	/* S3 -> S5 */
 	POWER_S5G3,	/* S5 -> G3 */
+#ifdef CONFIG_POWER_S0IX
+	POWER_S0ixS0,   /* S0ix -> S0 */
+	POWER_S0S0ix,   /* S0 -> S0ix */
+#endif
 };
 
 /* Information on an power signal */
@@ -99,9 +105,19 @@ enum power_state power_handle_state(enum power_state state);
  */
 #ifdef HAS_TASK_CHIPSET
 void power_signal_interrupt(enum gpio_signal signal);
+#ifdef CONFIG_POWER_S0IX
+void power_signal_interrupt_S0(enum gpio_signal signal);
+#endif
 #else
 static inline void power_signal_interrupt(enum gpio_signal signal) { }
+#ifdef CONFIG_POWER_S0IX
+static inline void power_signal_interrupt_S0(enum gpio_signal signal) { }
+#endif
 #endif /* !HAS_TASK_CHIPSET */
+
+#ifdef CONFIG_POWER_S0IX
+int chipset_get_ps_debounced_level(enum gpio_signal signal);
+#endif
 
 /**
  * pause_in_s5 getter method.

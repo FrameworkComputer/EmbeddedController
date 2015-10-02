@@ -1441,6 +1441,8 @@
 /* Use part of the EC's data EEPROM to hold persistent storage for the AP. */
 #undef CONFIG_PSTORE
 
+/* Support S0ix */
+#undef CONFIG_POWER_S0IX
 /*****************************************************************************/
 /* Support PWM control */
 #undef CONFIG_PWM
