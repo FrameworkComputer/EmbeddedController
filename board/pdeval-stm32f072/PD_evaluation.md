@@ -76,8 +76,10 @@ EC command line commands
 - `help`  List all available EC console commands
 - `vbus`  Toggle VBUS on/off
 - `pd <port> state`  Print PD protocol state information
-- `i2cscan` Scan i2c bus for any responsive devices
-- `i2cxfer` Perform an i2c transaction
+- `pd <port> swap data`  Request data role swap on port
+- `pd <port> swap power`  Request power role swap on port
+- `i2cscan`  Scan i2c bus for any responsive devices
+- `i2cxfer`  Perform an i2c transaction
 
 On the console, you will the PD state machine transitioning through its states with traces like `C0 st5`.
 You can always the human readable name of the current state by doing `pd 0 state` returning something like :
