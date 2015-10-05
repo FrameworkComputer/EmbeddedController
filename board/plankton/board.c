@@ -313,6 +313,13 @@ static void set_usbc_action(enum usbc_action act)
 		break;
 	case USBC_ACT_CCD_EN:
 		pd_send_vdm(0, USB_VID_GOOGLE, VDO_CMD_CCD_EN, NULL, 0);
+		/* Switch to USB mode when enable CCD. */
+		gpio_set_level(GPIO_USBC_SS_USB_MODE, 1);
+		/* Reset RFU polarity MUX */
+		gpio_set_level(GPIO_CASE_CLOSE_EN, 0);
+		gpio_set_level(GPIO_CASE_CLOSE_DFU_L, 0);
+		gpio_set_level(GPIO_CASE_CLOSE_EN, 1);
+		gpio_set_level(GPIO_CASE_CLOSE_DFU_L, 1);
 		break;
 	default:
 		break;
