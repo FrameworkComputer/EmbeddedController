@@ -21,8 +21,8 @@ class PublicKey {
   bool ok();
 
   // # of words for R.
-  // Currently set at 3104 bits (97*32).
-  size_t rwords() const { return 96 + 1; }
+  // Currently 96 (enough for upto 3071 moduli).
+  size_t rwords() const { return 96; }
 
   // # of significant words in modulus.
   size_t nwords();
@@ -33,7 +33,7 @@ class PublicKey {
   uint32_t n0inv();
 
   // PKCS1.5 SHA256
-  // Mongomery factor 2**(32*rwords()) multiplied in.
+  // Montgomery factor 2**(32*rwords()) multiplied in.
   int sign(const void* msg, size_t msglen, BIGNUM** output);
 
   // PKCS1_OAEP SHA-1, MGF1

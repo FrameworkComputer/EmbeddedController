@@ -13,7 +13,9 @@
 #include <common/image.h>
 #include <common/publickey.h>
 #include <common/signed_header.h>
-//#include <rapidjson/document.h>
+#ifdef HAVE_JSON
+#include <rapidjson/document.h>
+#endif
 
 #include <string>
 #include <map>
@@ -195,7 +197,7 @@ bool readJSON(const string& filename,
               uint32_t* p4cl,
               map<string, uint32_t>* fusemap) {
   bool result = false;
-#if 0
+#ifdef HAVE_JSON
   ifstream ifs(filename.c_str());
   if (ifs) {
 
@@ -235,7 +237,7 @@ bool readJSON(const string& filename,
       result = true;
     }
   }
-#endif
+#endif  // HAVE_JSON
   return result;
 }
 
@@ -253,7 +255,7 @@ void usage(int argc, char* argv[]) {
           "--key=$pem-filename\n"
           "[--xml=$xml-filename] typically 'havenTop.xml'\n"
           "[--json=$json-filename] the signing manifest\n"
-	  "[--format=bin|hex] output file format, hex is default\n",
+          "[--format=bin|hex] output file format, hex is default\n",
           argv[0]);
 }
 
@@ -272,7 +274,7 @@ int getOptions(int argc, char* argv[]) {
   int c, option_index = 0;
   outputFormat.assign("hex");
   while ((c = getopt_long(argc, argv, "i:o:k:x:j:f:h",
-			  long_options, &option_index)) != -1) {
+                          long_options, &option_index)) != -1) {
     switch (c) {
       case 0:
         fprintf(stderr, "option %s", long_options[option_index].name);

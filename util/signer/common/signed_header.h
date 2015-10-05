@@ -29,7 +29,7 @@ typedef struct SignedHeader {
 #endif  // __cplusplus
 
   uint32_t magic;  // -1
-  uint32_t signature[96 + 1];
+  uint32_t signature[96];
   uint32_t tag[7];
   uint32_t keyid;
   uint32_t image_size;
@@ -38,7 +38,7 @@ typedef struct SignedHeader {
   uint32_t rx_base;
   uint32_t rx_max;
   uint32_t fusemap[FUSE_MAX / (8 * sizeof(uint32_t))];
-  uint32_t _pad[256 - 1 - 97 - 7 - 6*1 - 5];
+  uint32_t _pad[256 - 1 - 96 - 7 - 6*1 - 5];
 } SignedHeader;
 
 #ifdef __cplusplus
