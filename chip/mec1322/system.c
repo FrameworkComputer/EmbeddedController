@@ -251,6 +251,7 @@ static void system_set_gpio_power(int enabled, uint32_t *backup_gpio_ctl)
 					backup_gpio_ctl[i * 8 + j] =
 						MEC1322_GPIO_CTL(port, j);
 				gpio_set_flags_by_mask(port, 1 << j, flags);
+				gpio_set_alternate_function(port, 1 << j, -1);
 			}
 		}
 	}
@@ -357,6 +358,8 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 			gpio_set_flags_by_mask(gpio_list[*pin].port,
 					       gpio_list[*pin].mask,
 					       gpio_list[*pin].flags);
+			gpio_set_alternate_function(gpio_list[*pin].port,
+						gpio_list[*pin].mask, -1);
 			gpio_enable_interrupt(*pin);
 		}
 
