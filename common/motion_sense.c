@@ -310,7 +310,8 @@ int motion_sense_set_motion_intervals(void)
 			ec_rate = sensor_ec_rate;
 
 		sensor_ec_rate = sensor->config[SENSOR_CONFIG_AP].ec_rate;
-		if (ec_int_rate_ms == 0 || sensor_ec_rate < ec_int_rate_ms)
+		if (ec_int_rate_ms == 0 ||
+		    (sensor_ec_rate && sensor_ec_rate < ec_int_rate_ms))
 			ec_int_rate_ms = sensor_ec_rate;
 	}
 	/*
