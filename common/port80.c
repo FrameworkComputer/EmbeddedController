@@ -16,7 +16,7 @@
 
 #define CPRINTF(format, args...) cprintf(CC_PORT80, format, ## args)
 
-#define HISTORY_LEN 256
+#define HISTORY_LEN 128
 #define PORT80_POLL_PERIOD MSEC
 
 static uint16_t history[HISTORY_LEN];
