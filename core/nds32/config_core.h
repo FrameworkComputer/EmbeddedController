@@ -10,6 +10,8 @@
 #define BFD_ARCH nds32
 #define BFD_FORMAT "elf32-nds32le"
 
+#define CONFIG_SOFTWARE_PANIC
+
 /*
  * The Andestar v3m architecture has no CLZ instruction (contrary to v3),
  * so let's use the software implementation.

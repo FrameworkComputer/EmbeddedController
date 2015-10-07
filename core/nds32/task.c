@@ -304,9 +304,24 @@ task_ *next_sched_task(void)
 
 #ifdef CONFIG_TASK_PROFILING
 	if (current_task != new_task) {
-		current_task->runtime +=
-			(exc_start_time - exc_end_time - exc_sub_time);
+		if ((current_task - tasks) < TASK_ID_COUNT) {
+			current_task->runtime +=
+				(exc_start_time - exc_end_time - exc_sub_time);
+		}
 		task_will_switch = 1;
+	}
+#endif
+
+#ifdef CONFIG_DEBUG_STACK_OVERFLOW
+	if (*current_task->stack != STACK_UNUSED_VALUE) {
+		int i = task_get_current();
+		if (i < TASK_ID_COUNT) {
+			panic_printf("\n\nStack overflow in %s task!\n",
+				task_names[i]);
+#ifdef CONFIG_SOFTWARE_PANIC
+		software_panic(PANIC_SW_STACK_OVERFLOW, i);
+#endif
+		}
 	}
 #endif
 

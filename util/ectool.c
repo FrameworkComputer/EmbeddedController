@@ -4204,10 +4204,8 @@ static void print_panic_reg(int regnum, const uint32_t *regs, int index)
 	printf((regnum & 3) == 3 ? "\n" : " ");
 }
 
-
-int cmd_panic_info(int argc, char *argv[])
+int cmd_panic_info_cm(int argc, char *argv[])
 {
-	int rv;
 	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
 	const uint32_t *lregs = pdata->cm.regs;
 	const uint32_t *sregs = NULL;
@@ -4218,31 +4216,6 @@ int cmd_panic_info(int argc, char *argv[])
 	} origin = ORIG_UNKNOWN;
 	int i;
 	const char *panic_origins[3] = {"", "PROCESS", "HANDLER"};
-
-	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0,
-			ec_inbuf, ec_max_insize);
-	if (rv < 0)
-		return rv;
-
-	if (rv == 0) {
-		printf("No panic data.\n");
-		return 0;
-	}
-
-	/*
-	 * We only understand panic data with version <= 2. Warn the user
-	 * of higher versions.
-	 */
-	if (pdata->struct_version > 2)
-		fprintf(stderr,
-			"Unknown panic data version (%d). "
-			"Following data may be incorrect!\n",
-			pdata->struct_version);
-
-	if (pdata->arch != PANIC_ARCH_CORTEX_M)
-		fprintf(stderr, "Unknown architecture (%d). "
-			"CPU specific data will be incorrect!\n",
-			pdata->arch);
 
 	printf("Saved panic data:%s\n",
 	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
@@ -4275,6 +4248,69 @@ int cmd_panic_info(int argc, char *argv[])
 	print_panic_reg(15, sregs, 6);
 
 	return 0;
+}
+
+int cmd_panic_info_nds32(int argc, char *argv[])
+{
+	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
+	const uint32_t *regs = pdata->nds_n8.regs;
+	uint32_t itype = pdata->nds_n8.itype;
+	uint32_t ipc = pdata->nds_n8.ipc;
+	uint32_t ipsw = pdata->nds_n8.ipsw;
+
+	printf("Saved panic data:%s\n",
+	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
+
+	printf("=== EXCEP: ITYPE=%x ===\n", itype);
+	printf("R0  %08x R1  %08x R2  %08x R3  %08x\n",
+		     regs[0], regs[1], regs[2], regs[3]);
+	printf("R4  %08x R5  %08x R6  %08x R7  %08x\n",
+		     regs[4], regs[5], regs[6], regs[7]);
+	printf("R8  %08x R9  %08x R10 %08x R15 %08x\n",
+		     regs[8], regs[9], regs[10], regs[11]);
+	printf("FP  %08x GP  %08x LP  %08x SP  %08x\n",
+		     regs[12], regs[13], regs[14], regs[15]);
+	printf("IPC %08x IPSW   %05x\n", ipc, ipsw);
+	printf("SWID of ITYPE: %x\n", ((itype >> 16) & 0x7fff));
+
+	return 0;
+}
+
+int cmd_panic_info(int argc, char *argv[])
+{
+	int rv;
+	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
+
+	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0,
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	if (rv == 0) {
+		printf("No panic data.\n");
+		return 0;
+	}
+
+	/*
+	 * We only understand panic data with version <= 2. Warn the user
+	 * of higher versions.
+	 */
+	if (pdata->struct_version > 2)
+		fprintf(stderr,
+			"Unknown panic data version (%d). "
+			"Following data may be incorrect!\n",
+			pdata->struct_version);
+
+	switch (pdata->arch) {
+	case PANIC_ARCH_CORTEX_M:
+		return cmd_panic_info_cm(argc, argv);
+	case PANIC_ARCH_NDS32_N8:
+		return cmd_panic_info_nds32(argc, argv);
+	default:
+		fprintf(stderr, "Unknown architecture (%d).\n", pdata->arch);
+		break;
+	}
+	return -1;
 }
 
 

@@ -29,6 +29,14 @@ struct cortex_panic_data {
 	uint32_t dfsr;
 };
 
+/* NDS32 N8 registers saved on panic */
+struct nds32_n8_panic_data {
+	uint32_t itype;
+	uint32_t regs[16];        /* r0-r10, r15, fp, gp, lp, sp */
+	uint32_t ipc;
+	uint32_t ipsw;
+};
+
 /* Data saved across reboots */
 struct panic_data {
 	uint8_t arch;             /* Architecture (PANIC_ARCH_*) */
@@ -38,7 +46,8 @@ struct panic_data {
 
 	/* core specific panic data */
 	union {
-		struct cortex_panic_data cm; /* Cortex-Mx registers */
+		struct cortex_panic_data cm;       /* Cortex-Mx registers */
+		struct nds32_n8_panic_data nds_n8; /* NDS32 N8 registers */
 	};
 
 	/*
@@ -50,7 +59,10 @@ struct panic_data {
 };
 
 #define PANIC_DATA_MAGIC 0x21636e50  /* "Pnc!" */
-#define PANIC_ARCH_CORTEX_M 1        /* Cortex-M architecture */
+enum panic_arch {
+	PANIC_ARCH_CORTEX_M = 1,     /* Cortex-M architecture */
+	PANIC_ARCH_NDS32_N8 = 2,     /* NDS32 N8 architecture */
+};
 
 /*
  * Panic data goes at the end of RAM.  This is safe because we don't context

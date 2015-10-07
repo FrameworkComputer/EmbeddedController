@@ -14,6 +14,9 @@
 #include "task.h"
 #include "watchdog.h"
 
+/* Panic data goes at the end of RAM. */
+static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+
 /*
  * We use WDT_EXT_TIMER to trigger an interrupt just before the watchdog timer
  * will fire so that we can capture important state information before
@@ -25,6 +28,9 @@
 
 void watchdog_warning_irq(void)
 {
+#ifdef CONFIG_SOFTWARE_PANIC
+	pdata_ptr->nds_n8.ipc = get_ipc();
+#endif
 	/* clear interrupt status */
 	task_clear_pending_irq(et_ctrl_regs[WDT_EXT_TIMER].irq);
 
