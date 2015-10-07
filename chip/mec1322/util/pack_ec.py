@@ -18,7 +18,6 @@ LOAD_ADDR = 0x100000
 HEADER_SIZE = 0x140
 SPI_CLOCK_LIST = [48, 24, 12, 8]
 SPI_READ_CMD_LIST = [0x3, 0xb, 0x3b]
-IMAGE_SIZE = 97 * 1024
 
 CRC_TABLE = [0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
              0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d]
@@ -133,11 +132,11 @@ def BuildTag(args):
   tag.append(Crc8(0, tag))
   return tag
 
-def PacklfwRoImage(rorw_file, loader_file):
+def PacklfwRoImage(rorw_file, loader_file, image_size):
   """TODO:Clean up to get rid of Temp file and just use memory
   to save data"""
   """Create a temp file with the
-  first IMAGE_SIZE bytes from the rorw file and the
+  first image_size bytes from the rorw file and the
   bytes from the loader_file appended
   return the filename"""
   fo=tempfile.NamedTemporaryFile(delete=False) # Need to keep file around
@@ -145,7 +144,7 @@ def PacklfwRoImage(rorw_file, loader_file):
     pro = fin1.read()
   fo.write(pro)
   with open(rorw_file, 'rb') as fin:
-    ro = fin.read(IMAGE_SIZE)
+    ro = fin.read(image_size)
   fo.write(ro)
   fo.close()
   return fo.name
@@ -191,6 +190,9 @@ def parseargs():
   parser.add_argument("--spi_read_cmd", type=int,
                       help="SPI read command. 0x3, 0xB, or 0x3B.",
                       default=0xb)
+  parser.add_argument("--image_size", type=int,
+                      help="Size of a single image.",
+                      default=(96 * 1024))
   return parser.parse_args()
 
 # Debug helper routine
@@ -208,7 +210,7 @@ def main():
 
   spi_list = []
 
-  rorofile=PacklfwRoImage(args.input, args.loader_file)
+  rorofile=PacklfwRoImage(args.input, args.loader_file, args.image_size)
   payload = GetPayload(rorofile)
   payload_len = len(payload)
   #print payload_len
@@ -217,7 +219,7 @@ def main():
   header_signature = SignByteArray(header, args.header_key)
   tag = BuildTag(args)
   # truncate the RW to 128k
-  payloadrw = GetPayloadFromOffset(args.input,IMAGE_SIZE)[:128*1024]
+  payloadrw = GetPayloadFromOffset(args.input,args.image_size)[:128*1024]
   os.remove(rorofile)           # clean up the temp file
 
   spi_list.append((args.header_loc, header, "header"))
