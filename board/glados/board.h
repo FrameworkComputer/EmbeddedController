@@ -54,6 +54,9 @@
 #undef CONFIG_RO_SIZE
 #define CONFIG_RO_SIZE (100 * 1024)
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
+/* We're space constrained on GLaDOS, so reduce the UART TX buffer size. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 512
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_MUX_PI3USB30532
 #define CONFIG_USB_MUX_PS8740
