@@ -390,9 +390,10 @@ int main(int argc, char* argv[]) {
             it.first.c_str(), it.second, fuse_bits[it.first]);
   }
 
+
   // Compute fuse_values array, according to manifest and xml.
   uint32_t fuse_values[FUSE_MAX];
-  memset(fuse_values, FUSE_IGNORE, sizeof(fuse_values));
+  for (size_t i = 0; i < FUSE_MAX; ++i) fuse_values[i] = FUSE_IGNORE;
 
   for (auto x : fuses) {
     map<string, uint32_t>::const_iterator it = fuse_ids.find(x.first);
@@ -421,8 +422,23 @@ int main(int argc, char* argv[]) {
   }
   fprintf(stderr, "\n");
 
+
+  // Compute info_values array, according to manifest.
+  uint32_t info_values[INFO_MAX];
+  for (size_t i = 0; i < INFO_MAX; ++i) info_values[i] = INFO_IGNORE;
+
+  // TODO: read values from JSON or implement version logic here.
+
+  // Print out info hash input.
+  fprintf(stderr, "expected info state:\n");
+  for (size_t i = 0; i < INFO_MAX; ++i) {
+    fprintf(stderr, "%08x ", info_values[i]);
+  }
+  fprintf(stderr, "\n");
+
+
   // Sign image.
-  if (image.sign(key, &hdr, fuse_values)) {
+  if (image.sign(key, &hdr, fuse_values, info_values)) {
     image.generate(outputFilename, outputFormat == "hex");
   } else {
     fprintf(stderr, "failed to sign\n");

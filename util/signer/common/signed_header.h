@@ -13,18 +13,27 @@
 #define FUSE_IGNORE 0xaaaaaaaa
 #define FUSE_MAX 160
 
+#define INFO_MAX 128
+#define INFO_IGNORE 0xaa3c55c3
+
 typedef struct SignedHeader {
 #ifdef __cplusplus
   SignedHeader() : magic(-1), image_size(0) {
     memset(signature, 'S', sizeof(signature));
     memset(tag, 'T', sizeof(tag));
     memset(fusemap, 0, sizeof(fusemap));
+    memset(infomap, 0, sizeof(infomap));
     memset(_pad, 0xdd, sizeof(_pad));
   }
 
   void markFuse(uint32_t n) {
     assert(n < FUSE_MAX);
     fusemap[n / 32] |= 1 << (n & 31);
+  }
+
+  void markInfo(uint32_t n) {
+    assert(n < INFO_MAX);
+    infomap[n / 32] |= 1 << (n & 31);
   }
 #endif  // __cplusplus
 
@@ -38,7 +47,8 @@ typedef struct SignedHeader {
   uint32_t rx_base;
   uint32_t rx_max;
   uint32_t fusemap[FUSE_MAX / (8 * sizeof(uint32_t))];
-  uint32_t _pad[256 - 1 - 96 - 7 - 6*1 - 5];
+  uint32_t infomap[INFO_MAX / (8 * sizeof(uint32_t))];
+  uint32_t _pad[256 - 1 - 96 - 7 - 6*1 - 5 - 4];
 } SignedHeader;
 
 #ifdef __cplusplus

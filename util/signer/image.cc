@@ -361,7 +361,8 @@ void Image::store(int adr, int v) {
 }
 
 bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
-                 const uint32_t fuses[FUSE_MAX]) {
+                 const uint32_t fuses[FUSE_MAX],
+                 const uint32_t info[INFO_MAX]) {
   BIGNUM* sig = NULL;
   SignedHeader* hdr = (SignedHeader*)(&mem_[base_]);
   SHA256_CTX sha256;
@@ -371,7 +372,7 @@ bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
   struct {
     uint8_t img_hash[SHA256_DIGEST_LENGTH];
     uint8_t fuses_hash[SHA256_DIGEST_LENGTH];
-    // TODO: flash_fuses_hash
+    uint8_t info_hash[SHA256_DIGEST_LENGTH];
   } hashes;
 
   memcpy(hdr, input_hdr, sizeof(SignedHeader));
@@ -397,6 +398,17 @@ bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
   fprintf(stderr, "fuses hash:");
   for (size_t i = 0; i < sizeof(hashes.fuses_hash); ++i) {
     fprintf(stderr, "%02x", hashes.fuses_hash[i]);
+  }
+  fprintf(stderr, "\n");
+
+  // Hash info
+  SHA256_Init(&sha256);
+  SHA256_Update(&sha256, info, INFO_MAX * sizeof(uint32_t));
+  SHA256_Final(hashes.info_hash, &sha256);
+
+  fprintf(stderr, "info hash :");
+  for (size_t i = 0; i < sizeof(hashes.info_hash); ++i) {
+    fprintf(stderr, "%02x", hashes.info_hash[i]);
   }
   fprintf(stderr, "\n");
 
