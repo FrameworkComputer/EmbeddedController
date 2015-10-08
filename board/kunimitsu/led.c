@@ -34,7 +34,6 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 enum led_color {
 	LED_OFF = 0,
 	LED_BLUE,
-	LED_PURPLE,
 	LED_AMBER,
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
@@ -49,10 +48,6 @@ static int bat_led_set_color(enum led_color color)
 	case LED_BLUE:
 		gpio_set_level(GPIO_BAT_LED_BLUE, BAT_LED_ON);
 		gpio_set_level(GPIO_BAT_LED_AMBER, BAT_LED_OFF);
-		break;
-	case LED_PURPLE:
-		gpio_set_level(GPIO_BAT_LED_BLUE, BAT_LED_ON);
-		gpio_set_level(GPIO_BAT_LED_AMBER, BAT_LED_ON);
 		break;
 	case LED_AMBER:
 		gpio_set_level(GPIO_BAT_LED_BLUE, BAT_LED_OFF);
@@ -92,10 +87,7 @@ static int kunimitsu_led_set_color(enum ec_led_id led_id, enum led_color color)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_BLUE] != 0 &&
-	    brightness[EC_LED_COLOR_AMBER] != 0)
-		kunimitsu_led_set_color(led_id, LED_PURPLE);
-	else if (brightness[EC_LED_COLOR_BLUE] != 0)
+	if (brightness[EC_LED_COLOR_BLUE] != 0)
 		kunimitsu_led_set_color(led_id, LED_BLUE);
 	else if (brightness[EC_LED_COLOR_AMBER] != 0)
 		kunimitsu_led_set_color(led_id, LED_AMBER);
@@ -118,19 +110,19 @@ static void kunimitsu_led_set_battery(void)
 	 */
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		kunimitsu_led_set_color_battery(LED_PURPLE);
+		kunimitsu_led_set_color_battery(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE:
 		/* Less than 3%, blink one second every two second */
 		if (charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
 			kunimitsu_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_2SECS_TICKS <
-				 LED_ON_1SEC_TICKS) ? LED_PURPLE : LED_OFF);
+				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
 		/* Less than 10%, blink one second every four seconds */
 		else if (charge_get_percent() < LOW_BATTERY_PERCENTAGE)
 			kunimitsu_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_1SEC_TICKS) ? LED_PURPLE : LED_OFF);
+				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
 		else
 			kunimitsu_led_set_color_battery(LED_OFF);
 		break;
