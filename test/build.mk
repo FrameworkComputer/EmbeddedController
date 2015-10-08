@@ -27,6 +27,7 @@ test-list-$(BOARD_LLAMA)=
 
 # For some tests, we are running out of RAM. Disable them for now.
 test-list-$(BOARD_GLADOS_PD)=
+test-list-$(BOARD_CHELL_PD)=
 test-list-$(BOARD_OAK_PD)=
 test-list-$(BOARD_SAMUS_PD)=
 
