@@ -133,6 +133,8 @@ static int wait_for_interrupt(int controller)
 	/* Wait until I2C interrupt or timeout. */
 	event = task_wait_event_mask(TASK_EVENT_I2C_IDLE,
 				     cdata[controller].timeout_us);
+
+	task_disable_irq(MEC1322_IRQ_I2C_0 + controller);
 	cdata[controller].task_waiting = TASK_ID_INVALID;
 
 	return (event & TASK_EVENT_TIMER) ? EC_ERROR_TIMEOUT : EC_SUCCESS;
