@@ -497,6 +497,8 @@ void board_set_charge_limit(int charge_ma)
 /* Enable touchpad on chipset startup so that it can wake the system */
 static void board_chipset_startup(void)
 {
+	gpio_set_level(GPIO_USB1_ENABLE, 1);
+	gpio_set_level(GPIO_USB2_ENABLE, 1);
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
@@ -505,6 +507,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
 /* Disable touchpad on chipset shutdown as it is no longer useful */
 static void board_chipset_shutdown(void)
 {
+	gpio_set_level(GPIO_USB1_ENABLE, 0);
+	gpio_set_level(GPIO_USB2_ENABLE, 0);
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
