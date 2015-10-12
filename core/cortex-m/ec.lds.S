@@ -36,6 +36,11 @@ MEMORY
 
     IRAM (rw)  : ORIGIN = CONFIG_RAM_BASE, LENGTH = CONFIG_RAM_SIZE
 #ifdef CONFIG_EXTERNAL_STORAGE
+#ifdef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
+   LDR_REGION(rw) : \
+        ORIGIN = CONFIG_PROGRAM_MEMORY_BASE + CONFIG_LOADER_MEM_OFF, \
+        LENGTH = CONFIG_LOADER_SIZE
+#endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
    CDRAM (rx) : \
         ORIGIN = CONFIG_PROGRAM_MEMORY_BASE + FW_MEM_OFF(SECTION), \
         LENGTH = FW_SIZE(SECTION)
@@ -221,6 +226,16 @@ SECTIONS
         . = ALIGN(4);
         __bss_end = .;
     } > IRAM
+
+    .bss.slow : {
+	/* Region of RAM reclaimed from the little firmware(LFW). */
+	*(.bss.slow)
+#ifdef CONFIG_REPLACE_LOADER_WITH_BSS_SLOW
+    } > LDR_REGION
+#else
+    } > IRAM
+#endif /* defined(CONFIG_REPLACE_LOADER_WITH_BSS_SLOW) */
+
 #ifdef CONFIG_EXTERNAL_STORAGE
     .data : AT(LOADADDR(.rodata) + SIZEOF(.rodata)) {
 #else
