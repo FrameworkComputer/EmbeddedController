@@ -33,9 +33,4 @@ class Gnubby {
   libusb_device_handle* handle_;
 };
 
-#define MAX_APDU_SIZE 1200
-#define LIBUSB_ERR -1
-
-#define VERBOSE
-
 #endif // __EC_UTIL_SIGNER_COMMON_GNUBBY_H

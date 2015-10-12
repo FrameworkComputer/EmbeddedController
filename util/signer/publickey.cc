@@ -15,6 +15,12 @@
 
 #include <common/gnubby.h>
 
+extern bool FLAGS_verbose;
+
+#define VERBOSE(...)  do{if(FLAGS_verbose){fprintf(stderr,  __VA_ARGS__);fflush(stderr);}}while(0)
+#define WARN(...)  do{fprintf(stderr,  __VA_ARGS__);}while(0)
+#define FATAL(...)  do{fprintf(stderr,  __VA_ARGS__);abort();}while(0)
+
 PublicKey::PublicKey(const std::string& filename) : key_(NULL), publicOnly_(true) {
   EVP_PKEY* pkey = NULL;
   BIO* bio = BIO_new(BIO_s_file());
@@ -30,14 +36,13 @@ PublicKey::PublicKey(const std::string& filename) : key_(NULL), publicOnly_(true
       (void)BIO_reset(bio);
       pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
       if (pkey) {
-        fprintf(stderr, "read public key only, assuming gnubby for signing..\n");
+        VERBOSE("read public key only, assuming gnubby for signing..\n");
       }
     }
   }
 
   if (!pkey) {
-    fprintf(stderr, "loadKey: failed to load RSA key from '%s'\n",
-            filename.c_str());
+    WARN("loadKey: failed to load RSA key from '%s'\n", filename.c_str());
   }
 
   BIO_free_all(bio);
@@ -152,6 +157,12 @@ void PublicKey::toArray(uint32_t* dst, size_t nwords, BIGNUM* n) {
   BN_CTX_free(ctx);
 }
 
+void PublicKey::modToArray(uint32_t* dst, size_t nwords) {
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
+  toArray(dst, nwords, rsa->n);
+  RSA_free(rsa);
+}
+
 int PublicKey::encrypt(uint8_t* msg, int msglen, uint8_t* out) {
   RSA* rsa = EVP_PKEY_get1_RSA(key_);
   int result =
@@ -210,18 +221,16 @@ int PublicKey::sign(const void* msg, size_t msglen, BIGNUM** output) {
   sig = (uint8_t*)malloc(tmplen);
 
   if (publicOnly_) {
-    fprintf(stderr, "gnubby signing..");
-    fflush(stderr);
+    fprintf(stderr, "gnubby signing.."); fflush(stderr);
     // TODO: 2k -> gnubby, 3k -> HSM?
 
     Gnubby gnubby;
     result = gnubby.Sign(ctx, sig, &siglen, key_);
     fprintf(stderr, "gnubby.Sign: %d\n", result);
   } else {
-    fprintf(stderr, "ossl signing..");
-    fflush(stderr);
+    VERBOSE("ossl signing..");
     result = EVP_SignFinal(ctx, sig, &siglen, key_);
-    fprintf(stderr, "EVP_SignFinal: %d\n", result);
+    VERBOSE("EVP_SignFinal: %d\n", result);
   }
 
   if (result != 1) goto __fail;

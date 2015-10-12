@@ -30,6 +30,10 @@
 
 using namespace std;
 
+#define VERBOSE(...)  do{if(FLAGS_verbose)fprintf(stderr,  __VA_ARGS__);}while(0)
+#define FATAL(...)  do{fprintf(stderr,  __VA_ARGS__);abort();}while(0)
+
+bool FLAGS_verbose = false;
 int last_logical_offset = -1;
 int fuse_index = 0;
 
@@ -195,7 +199,8 @@ bool readJSON(const string& filename,
               string* tag,
               uint32_t* keyId,
               uint32_t* p4cl,
-              map<string, uint32_t>* fusemap) {
+              map<string, uint32_t>* fusemap,
+              map<string, uint32_t>* infomap) {
   bool result = false;
 #ifdef HAVE_JSON
   ifstream ifs(filename.c_str());
@@ -217,12 +222,16 @@ bool readJSON(const string& filename,
     // Try parse.
     rapidjson::Document d;
     if (d.Parse(s.c_str()).HasParseError()) {
-      fprintf(stderr, "JSON %s[%lu]: parse error\n",
-              filename.c_str(), d.GetErrorOffset());
+      FATAL("JSON %s[%lu]: parse error\n", filename.c_str(), d.GetErrorOffset());
     } else {
       const rapidjson::Document::ValueType& fuses = d["fuses"];
       for (auto it = fuses.MemberBegin(); it != fuses.MemberEnd(); ++it) {
         fusemap->insert(make_pair(it->name.GetString(), it->value.GetInt()));
+      }
+
+      const rapidjson::Document::ValueType& infos = d["info"];
+      for (auto it = infos.MemberBegin(); it != infos.MemberEnd(); ++it) {
+        infomap->insert(make_pair(it->name.GetString(), it->value.GetInt()));
       }
 
       const rapidjson::Document::ValueType& keyid = d["keyId"];
@@ -255,7 +264,8 @@ void usage(int argc, char* argv[]) {
           "--key=$pem-filename\n"
           "[--xml=$xml-filename] typically 'havenTop.xml'\n"
           "[--json=$json-filename] the signing manifest\n"
-          "[--format=bin|hex] output file format, hex is default\n",
+          "[--format=bin|hex] output file format, hex is default\n"
+          "[--verbose]\n",
           argv[0]);
 }
 
@@ -268,12 +278,13 @@ int getOptions(int argc, char* argv[]) {
     {"json", required_argument, NULL, 'j'},
     {"key", required_argument, NULL, 'k'},
     {"output", required_argument, NULL, 'o'},
+    {"verbose", no_argument, NULL, 'v'},
     {"xml", required_argument, NULL, 'x'},
     {0, 0, 0, 0}
   };
   int c, option_index = 0;
   outputFormat.assign("hex");
-  while ((c = getopt_long(argc, argv, "i:o:k:x:j:f:h",
+  while ((c = getopt_long(argc, argv, "i:o:k:x:j:f:hv",
                           long_options, &option_index)) != -1) {
     switch (c) {
       case 0:
@@ -302,6 +313,9 @@ int getOptions(int argc, char* argv[]) {
       case 'h':
         usage(argc, argv);
         return 1;
+      case 'v':
+        FLAGS_verbose = true;
+        break;
       case '?':
         // getopt_long printed error
         return 1;
@@ -332,6 +346,7 @@ int main(int argc, char* argv[]) {
   SignedHeader hdr;
 
   hdr.keyid = key.n0inv();
+
   hdr.ro_base = image.ro_base();
   hdr.ro_max = image.ro_max();
   hdr.rx_base = image.rx_base();
@@ -339,31 +354,29 @@ int main(int argc, char* argv[]) {
 
   // Parse signing manifest.
   map<string, uint32_t> fuses;
+  map<string, uint32_t> infos;
   uint32_t keyId = key.n0inv();  // default, in case no JSON.
   uint32_t json_p4cl = 0;
   string tag;
 
   if (!jsonFilename.empty() &&
-      !readJSON(jsonFilename, &tag, &keyId, &json_p4cl, &fuses)) {
-    fprintf(stderr, "Failed to read JSON from '%s'\n", jsonFilename.c_str());
-    abort();
+      !readJSON(jsonFilename, &tag, &keyId, &json_p4cl, &fuses, &infos)) {
+    FATAL("Failed to read JSON from '%s'\n", jsonFilename.c_str());
   }
 
   // Check keyId.
-  fprintf(stderr, "keyId: %08x\n", keyId);
   if (keyId != hdr.keyid) {
-    fprintf(stderr, "mismatched keyid\n");
-    abort();
+    FATAL("mismatched keyid JSON %u vs. key %u\n", keyId, hdr.keyid);
   }
 
   // Fill in tag.
-  fprintf(stderr, "tag: \"%s\"\n", tag.c_str());
+  VERBOSE("tag: \"%s\"\n", tag.c_str());
   strncpy((char*)(&hdr.tag), tag.c_str(), sizeof(hdr.tag));
 
   // List the specific fuses and values.
-  fprintf(stderr, "care about %lu fuses:\n", fuses.size());
+  VERBOSE("care about %lu fuses:\n", fuses.size());
   for (auto it : fuses) {
-    fprintf(stderr, "fuse '%s' should have value %u\n", it.first.c_str(), it.second);
+    VERBOSE("fuse '%s' should have value %u\n", it.first.c_str(), it.second);
   }
 
   // Parse xml.
@@ -373,21 +386,19 @@ int main(int argc, char* argv[]) {
 
   if (!xmlFilename.empty() &&
       !readXML(xmlFilename, &fuse_ids, &fuse_bits, &xml_p4cl)) {
-    fprintf(stderr, "Failed to read XML from '%s'\n", xmlFilename.c_str());
-    abort();
+    FATAL("Failed to read XML from '%s'\n", xmlFilename.c_str());
   }
 
   if (json_p4cl != xml_p4cl) {
-    fprintf(stderr, "mismatching p4cl: xml %u vs. json %u\n",
+    FATAL("mismatching p4cl: xml %u vs. json %u\n",
             xml_p4cl, json_p4cl);
-    abort();
   }
 
-  fprintf(stderr, "found %lu fuse definitions\n", fuse_ids.size());
+  VERBOSE("found %lu fuse definitions\n", fuse_ids.size());
   assert(fuse_ids.size() < FUSE_MAX);
   for (auto it : fuse_ids) {
-    fprintf(stderr, "fuse '%s' at %u, width %u\n",
-            it.first.c_str(), it.second, fuse_bits[it.first]);
+    VERBOSE("fuse '%s' at %u, width %u\n",
+          it.first.c_str(), it.second, fuse_bits[it.first]);
   }
 
 
@@ -398,15 +409,13 @@ int main(int argc, char* argv[]) {
   for (auto x : fuses) {
     map<string, uint32_t>::const_iterator it = fuse_ids.find(x.first);
     if (it == fuse_ids.end()) {
-      fprintf(stderr, "cannot find definition for fuse '%s'\n", x.first.c_str());
-      abort();
+      FATAL("cannot find definition for fuse '%s'\n", x.first.c_str());
     }
     uint32_t idx = it->second;
     assert(idx < FUSE_MAX);
     uint32_t mask = (1 << fuse_bits[x.first]) - 1;
     if ((x.second & mask) != x.second) {
-      fprintf(stderr, "specified fuse value too large\n");
-      abort();
+      FATAL("specified fuse value too large\n");
     }
     uint32_t val = FUSE_PADDING & ~mask;
     val |= x.second;
@@ -416,32 +425,41 @@ int main(int argc, char* argv[]) {
   }
 
   // Print out fuse hash input.
-  fprintf(stderr, "expected fuse state:\n");
+  VERBOSE("expected fuse state:\n");
   for (size_t i = 0; i < FUSE_MAX; ++i) {
-    fprintf(stderr, "%08x ", fuse_values[i]);
+    VERBOSE("%08x ", fuse_values[i]);
   }
-  fprintf(stderr, "\n");
+  VERBOSE("\n");
 
 
   // Compute info_values array, according to manifest.
   uint32_t info_values[INFO_MAX];
   for (size_t i = 0; i < INFO_MAX; ++i) info_values[i] = INFO_IGNORE;
 
+  for (auto x : infos) {
+    uint32_t index = atoi(x.first.c_str());
+    assert(index < INFO_MAX);
+
+    info_values[index] ^= x.second;
+
+    hdr.markInfo(index);
+  }
+
   // TODO: read values from JSON or implement version logic here.
 
   // Print out info hash input.
-  fprintf(stderr, "expected info state:\n");
+  VERBOSE("expected info state:\n");
   for (size_t i = 0; i < INFO_MAX; ++i) {
-    fprintf(stderr, "%08x ", info_values[i]);
+    VERBOSE("%08x ", info_values[i]);
   }
-  fprintf(stderr, "\n");
+  VERBOSE("\n");
 
 
   // Sign image.
   if (image.sign(key, &hdr, fuse_values, info_values)) {
     image.generate(outputFilename, outputFormat == "hex");
   } else {
-    fprintf(stderr, "failed to sign\n");
+    FATAL("failed to sign\n");
   }
 
   return 0;

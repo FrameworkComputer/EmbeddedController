@@ -23,6 +23,10 @@
 
 #include <string>
 
+#define MAX_APDU_SIZE 1200
+#define LIBUSB_ERR -1
+#define VERBOSE
+
 // Largely from gnubby ifd_driver.c
 // -----
 

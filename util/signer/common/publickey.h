@@ -49,6 +49,8 @@ class PublicKey {
 
   static void toArray(uint32_t* dst, size_t nwords, BIGNUM* n);
 
+  void modToArray(uint32_t* dst, size_t nwords);
+
   // outputs rwords() words.
   void print(const char* tag);
 

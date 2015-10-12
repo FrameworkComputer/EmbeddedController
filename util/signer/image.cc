@@ -30,6 +30,12 @@
 
 using namespace std;
 
+extern bool FLAGS_verbose;
+
+#define VERBOSE(...)  do{if(FLAGS_verbose)fprintf(stderr,  __VA_ARGS__);}while(0)
+#define WARN(...)  do{fprintf(stderr,  __VA_ARGS__);}while(0)
+#define FATAL(...)  do{fprintf(stderr,  __VA_ARGS__);abort();}while(0)
+
 static const int FLASH_START = 0x4000;
 static const int FLASH_END = FLASH_START + 512 * 1024;
 
@@ -54,34 +60,34 @@ bool Image::fromElf(const string& filename) {
   int fd;
 
   if ((fd = open(filename.c_str(), O_RDONLY)) < 0) {
-    fprintf(stderr, "failed to open '%s'\n", filename.c_str());
+    WARN("failed to open '%s'\n", filename.c_str());
     goto fail;
   }
   if ((fstat(fd, &elf_stats)) < 0) {
-    fprintf(stderr, "cannot stat '%s'\n", filename.c_str());
+    WARN("cannot stat '%s'\n", filename.c_str());
     goto fail;
   }
 
 //  printf("Elf filesize: %lu\n", elf_stats.st_size);
 
   if ((base_ptr = (char*) malloc(elf_stats.st_size)) == NULL) {
-    fprintf(stderr, "cannot malloc %lu\n", elf_stats.st_size);
+    WARN("cannot malloc %lu\n", elf_stats.st_size);
     goto fail;
   }
 
   if (read(fd, base_ptr, elf_stats.st_size) < elf_stats.st_size) {
-    fprintf(stderr, "cannot read from '%s'\n", filename.c_str());
+    WARN("cannot read from '%s'\n", filename.c_str());
     goto fail;
   }
 
   // Sniff content for sanity
   if (*(uint32_t*) base_ptr != 0x464c457f) {
-//    fprintf(stderr, "'%s' is not elf file\n", filename);
+//    WARN("'%s' is not elf file\n", filename);
     goto fail;
   }
 
   if (elf_version(EV_CURRENT) == EV_NONE) {
-    fprintf(stderr, "Warning: elf library is out of data!\n");
+    WARN("Warning: elf library is out of date!\n");
   }
 
   elf = elf_begin(fd, ELF_C_READ, NULL);
@@ -90,9 +96,9 @@ bool Image::fromElf(const string& filename) {
   while ((scn = elf_nextscn(elf, scn)) != 0) {
     gelf_getshdr(scn, &shdr);
 
-    printf("type %08x; flags %08lx ", shdr.sh_type, shdr.sh_flags);
-    printf("%08lx(@%08lx)[%08lx] align %lu\n",
-           shdr.sh_addr, shdr.sh_offset, shdr.sh_size, shdr.sh_addralign);
+    VERBOSE("type %08x; flags %08lx ", shdr.sh_type, shdr.sh_flags);
+    VERBOSE("%08lx(@%08lx)[%08lx] align %lu\n",
+            shdr.sh_addr, shdr.sh_offset, shdr.sh_size, shdr.sh_addralign);
 
     // Ignore sections that are not alloc
     if (!(shdr.sh_flags & SHF_ALLOC)) {
@@ -121,11 +127,11 @@ bool Image::fromElf(const string& filename) {
 
   // Load image per program headers and track total ro segment
   for (int index = 0; gelf_getphdr(elf, index, &phdr); ++index) {
-    printf("phdr %08lx(@%08lx) [%08lx/%08lx]",
-           phdr.p_vaddr, phdr.p_paddr, phdr.p_filesz, phdr.p_memsz);
+    VERBOSE("phdr %08lx(@%08lx) [%08lx/%08lx]",
+            phdr.p_vaddr, phdr.p_paddr, phdr.p_filesz, phdr.p_memsz);
 
     if (phdr.p_filesz != phdr.p_memsz) {
-      printf(" (not loading)\n");
+      VERBOSE(" (not loading)\n");
       continue;
     }
 
@@ -135,7 +141,7 @@ bool Image::fromElf(const string& filename) {
       continue;
     }
 
-    printf("\n");
+    VERBOSE("\n");
 
     // Track ro boundaries
     if (phdr.p_paddr < ro_base_) {
@@ -162,9 +168,9 @@ bool Image::fromElf(const string& filename) {
 
   high_ = ((high_ + 2047) / 2048) * 2048;  // Round image to multiple of 2K.
 
-  printf("Rounded image size %lu\n", size());
-  printf("ro_base %08lx..%08lx\n", ro_base_, ro_max_);
-  printf("rx_base %08lx..%08lx\n", rx_base_, rx_max_);
+  VERBOSE("Rounded image size %lu\n", size());
+  VERBOSE("ro_base %08lx..%08lx\n", ro_base_, ro_max_);
+  VERBOSE("rx_base %08lx..%08lx\n", rx_base_, rx_max_);
 
   result = true;
 
@@ -188,12 +194,12 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
       if (strchr(line, '\n')) *strchr(line, '\n') = 0;
       if (line[0] != ':') continue;  // assume comment line
       if (strlen(line) < 9) {
-        fprintf(stderr, "short record %s", line);
+        WARN("short record %s", line);
         success_ = false;
         continue;
       }
       if (line[7] != '0') {
-          fprintf(stderr, "unknown record type %s", line);
+          WARN("unknown record type %s", line);
           success_ = false;
       } else switch (line[8]) {
         case '1': {  // 01 eof
@@ -205,10 +211,10 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
             if (s != 0x1000) {
               if (s >= FLASH_START && s <= FLASH_END) {
                 seg = s - FLASH_START;
-                //fprintf(stderr, "at segment %04x\n", seg);
+                //WARN("at segment %04x\n", seg);
               } else {
-                fprintf(stderr, "data should in range %x-%x: %s\n",
-                        FLASH_START, FLASH_END, line);
+                WARN("data should in range %x-%x: %s\n",
+                     FLASH_START, FLASH_END, line);
                 success_ = false;
               }
             }
@@ -224,8 +230,8 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
             if (isRam) {
               int v = parseByte(&p);
               if (v != 0) {
-                fprintf(stderr, "WARNING: non-zero RAM byte %02x at %04x\n",
-                        v, adr);
+                WARN("WARNING: non-zero RAM byte %02x at %04x\n",
+                     v, adr);
 
               }
               ++adr;
@@ -237,14 +243,14 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
         case '3': {  // 03 entry point
         } break;
         default: {
-          fprintf(stderr, "unknown record type %s", line);
+          WARN("unknown record type %s", line);
           success_ = false;
         } break;
       }
     }
     fclose(fp);
   } else {
-    fprintf(stderr, "failed to open file '%s'\n", filename.c_str());
+    WARN("failed to open file '%s'\n", filename.c_str());
     success_ = false;
   }
 
@@ -254,20 +260,20 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
     if (withSignature) {
       // signed images start on 2K boundary.
       if ((low_ & 2047) != 0) {
-        fprintf(stderr, "signed images should start on 2K boundary, not %08x\n", low_);
+        WARN("signed images should start on 2K boundary, not %08x\n", low_);
       }
       base_ = low_;
     } else {
       // unsigned images start on odd 1K boundary.
       if ((low_ & 2047) != 1024) {
-        fprintf(stderr, "unsigned images should start odd 1K boundary, not %08x\n", low_);
+        WARN("unsigned images should start odd 1K boundary, not %08x\n", low_);
       }
       base_ = low_ - sizeof(SignedHeader);
     }
   }
 
   if (success_) {
-    fprintf(stderr, "low %08x, high %08x\n",
+    VERBOSE("low %08x, high %08x\n",
             FLASH_START * 16 + low_, FLASH_START * 16 + high_);
     // Round image to multiple of 2K.
     high_ = ((high_ + 2047) / 2048) * 2048;
@@ -275,7 +281,7 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
     rx_base_ = FLASH_START * 16 + base_;
     ro_max_ = FLASH_START * 16 + base_ + size();
     rx_max_ = FLASH_START * 16 + base_ + size();
-    fprintf(stderr, "base %08lx, size %08lx\n", ro_base_, size());
+    VERBOSE("base %08lx, size %08lx\n", ro_base_, size());
   }
 
   return success_;
@@ -327,7 +333,7 @@ int Image::nibble(char n) {
     case 'e': case 'E': return 14;
     case 'f': case 'F': return 15;
     default:
-      fprintf(stderr, "bad hex digit '%c'\n", n);
+      WARN("bad hex digit '%c'\n", n);
       success_ = false;
       return 0;
   }
@@ -351,7 +357,7 @@ int Image::parseWord(char** p) {
 
 void Image::store(int adr, int v) {
   if (adr < 0 || (size_t)(adr) >= sizeof(mem_)) {
-    fprintf(stderr, "illegal adr %04x\n", adr);
+    WARN("illegal adr %04x\n", adr);
     success_ = false;
     return;
   }
@@ -376,7 +382,12 @@ bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
   } hashes;
 
   memcpy(hdr, input_hdr, sizeof(SignedHeader));
+
   hdr->image_size = this->size();
+
+  // Fill in key traits
+  hdr->keyid = key.n0inv();
+  key.modToArray(hdr->key, key.rwords());
 
   // Hash img
   int size = this->size() - offsetof(SignedHeader, tag);
@@ -384,41 +395,40 @@ bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
   SHA256_Update(&sha256, &hdr->tag, size);
   SHA256_Final(hashes.img_hash, &sha256);
 
-  fprintf(stderr, "img hash  :");
+  VERBOSE("img hash  :");
   for (size_t i = 0; i < sizeof(hashes.img_hash); ++i) {
-    fprintf(stderr, "%02x", hashes.img_hash[i]);
+    VERBOSE("%02x", hashes.img_hash[i]);
   }
-  fprintf(stderr, "\n");
+  VERBOSE("\n");
 
   // Hash fuses
   SHA256_Init(&sha256);
   SHA256_Update(&sha256, fuses, FUSE_MAX * sizeof(uint32_t));
   SHA256_Final(hashes.fuses_hash, &sha256);
 
-  fprintf(stderr, "fuses hash:");
+  VERBOSE("fuses hash:");
   for (size_t i = 0; i < sizeof(hashes.fuses_hash); ++i) {
-    fprintf(stderr, "%02x", hashes.fuses_hash[i]);
+    VERBOSE("%02x", hashes.fuses_hash[i]);
   }
-  fprintf(stderr, "\n");
+  VERBOSE("\n");
 
   // Hash info
   SHA256_Init(&sha256);
   SHA256_Update(&sha256, info, INFO_MAX * sizeof(uint32_t));
   SHA256_Final(hashes.info_hash, &sha256);
 
-  fprintf(stderr, "info hash :");
+  VERBOSE("info hash :");
   for (size_t i = 0; i < sizeof(hashes.info_hash); ++i) {
-    fprintf(stderr, "%02x", hashes.info_hash[i]);
+    VERBOSE("%02x", hashes.info_hash[i]);
   }
-  fprintf(stderr, "\n");
+  VERBOSE("\n");
 
   result = key.sign(&hashes, sizeof(hashes), &sig);
 
   if (result != 1) {
-    fprintf(stderr, "key.sign:%d\n", result);
+    WARN("key.sign: %d\n", result);
   } else {
-    size_t rwords = key.rwords();
-    key.toArray(hdr->signature, rwords, sig);
+    key.toArray(hdr->signature, key.rwords(), sig);
   }
 
   if (sig) BN_free(sig);

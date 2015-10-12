@@ -18,12 +18,12 @@
 
 typedef struct SignedHeader {
 #ifdef __cplusplus
-  SignedHeader() : magic(-1), image_size(0) {
+  SignedHeader() : magic(-1), image_size(0), epoch_(0x1337), major_(0), minor_(0xbabe) {
     memset(signature, 'S', sizeof(signature));
     memset(tag, 'T', sizeof(tag));
     memset(fusemap, 0, sizeof(fusemap));
     memset(infomap, 0, sizeof(infomap));
-    memset(_pad, 0xdd, sizeof(_pad));
+    memset(_pad, 0, sizeof(_pad));
   }
 
   void markFuse(uint32_t n) {
@@ -41,6 +41,7 @@ typedef struct SignedHeader {
   uint32_t signature[96];
   uint32_t tag[7];
   uint32_t keyid;
+  uint32_t key[96];
   uint32_t image_size;
   uint32_t ro_base;
   uint32_t ro_max;
@@ -48,7 +49,10 @@ typedef struct SignedHeader {
   uint32_t rx_max;
   uint32_t fusemap[FUSE_MAX / (8 * sizeof(uint32_t))];
   uint32_t infomap[INFO_MAX / (8 * sizeof(uint32_t))];
-  uint32_t _pad[256 - 1 - 96 - 7 - 6*1 - 5 - 4];
+  uint32_t epoch_;
+  uint32_t major_;
+  uint32_t minor_;
+  uint32_t _pad[256 - 1 - 96 - 7 - 1 - 96 - 5*1 - 5 - 4 - 3*1];
 } SignedHeader;
 
 #ifdef __cplusplus
