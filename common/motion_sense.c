@@ -89,10 +89,6 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		queue_remove_unit(&motion_sense_fifo, &vector);
 		motion_sense_fifo_lost++;
 		motion_sensors[vector.sensor_num].lost++;
-		if (vector.flags)
-			CPRINTS("Lost important event (0x%02x) for sensor %d",
-				vector.flags,
-				vector.sensor_num);
 	}
 	for (i = 0; i < valid_data; i++)
 		sensor->xyz[i] = data->data[i];
@@ -147,7 +143,9 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		motion_sense_insert_timestamp();
 		wake_up_needed = 1;
 	}
+	mutex_lock(&g_sensor_mutex);
 	queue_add_unit(&motion_sense_fifo, data);
+	mutex_unlock(&g_sensor_mutex);
 }
 
 static void motion_sense_insert_flush(struct motion_sensor_t *sensor)
@@ -236,8 +234,9 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	else
 		config_id = SENSOR_CONFIG_AP;
 	roundup = !!(sensor->config[config_id].odr & ROUND_UP_FLAG);
-	CPRINTS("%s ODR: %d - roundup %d from config %d",
-		sensor->name, odr, roundup, config_id);
+	CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]",
+		sensor->name, odr, roundup, config_id,
+		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
 	sensor->oversampling = 0;
 	return sensor->drv->set_data_rate(sensor, odr, roundup);
 }
@@ -933,6 +932,14 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 		/* Set new data rate if the data arg has a value. */
 		if (in->sensor_odr.data != EC_MOTION_SENSE_NO_VALUE) {
+#ifdef CONFIG_ACCEL_FIFO
+			/*
+			 * To be sure timestamps are calculated properly,
+			 * Send an event to have a timestamp inserted in the
+			 * FIFO.
+			 */
+			motion_sense_insert_timestamp();
+#endif
 			sensor->config[SENSOR_CONFIG_AP].odr =
 				in->sensor_odr.data |
 				(in->sensor_odr.roundup ? ROUND_UP_FLAG : 0);
@@ -941,13 +948,14 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			if (ret != EC_SUCCESS)
 				return EC_RES_INVALID_PARAM;
 
+#ifdef CONFIG_ACCEL_FIFO
 			/*
-			 * To be sure timestamps are calculated properly,
-			 * Send an event to have a timestamp inserted in the
-			 * FIFO.
+			 * The new ODR may suspend sensor, leaving samples
+			 * in the FIFO. Flush it explicitly.
 			 */
 			task_set_event(TASK_ID_MOTIONSENSE,
 					TASK_EVENT_MOTION_ODR_CHANGE, 0);
+#endif
 			/*
 			 * If the sensor was suspended before, or now
 			 * suspended, we have to recalculate the EC sampling
