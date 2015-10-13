@@ -49,7 +49,7 @@ int pd_check_requested_voltage(uint32_t rdo)
 	pdo_ma = (pdo & 0x3ff);
 	if (op_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much op current */
-	if (max_ma > pdo_ma)
+	if (max_ma > pdo_ma && !(rdo & RDO_CAP_MISMATCH))
 		return EC_ERROR_INVAL; /* too much max current */
 
 	CPRINTF("Requested %d V %d mA (for %d/%d mA)\n",
