@@ -351,7 +351,6 @@ void emi_interrupt(void)
 }
 DECLARE_IRQ(MEC1322_IRQ_EMI, emi_interrupt, 1);
 
-#ifdef HAS_TASK_PORT80
 /*
  * Port80 POST code polling limitation:
  * - POST code 0xFF is ignored.
@@ -372,7 +371,6 @@ int port_80_read(void)
 
 	return data;
 }
-#endif
 
 void acpi_0_interrupt(void)
 {

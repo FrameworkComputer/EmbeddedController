@@ -23,7 +23,6 @@ enum port_80_event {
  */
 void port_80_write(int data);
 
-#ifdef HAS_TASK_PORT80
 /**
  * Chip specific function to read from port 80.
  *
@@ -31,6 +30,5 @@ void port_80_write(int data);
  *	or PORT_80_IGNORE if no data is available.
  */
 int port_80_read(void);
-#endif
 
 #endif  /* __CROS_EC_PORT80_H */
