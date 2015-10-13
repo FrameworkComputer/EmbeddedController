@@ -748,7 +748,7 @@ static void handle_data_request(int port, uint16_t head,
 
 				/* explicit contract is now in place */
 				pd[port].flags |= PD_FLAGS_EXPLICIT_CONTRACT;
-				pd[port].requested_idx = payload[0] >> 28;
+				pd[port].requested_idx = RDO_POS(payload[0]);
 				set_state(port, PD_STATE_SRC_ACCEPTED);
 				return;
 			}

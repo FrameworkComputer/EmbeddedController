@@ -32,6 +32,45 @@
 
 static int rw_flash_changed = 1;
 
+int pd_check_requested_voltage(uint32_t rdo)
+{
+	int max_ma = rdo & 0x3FF;
+	int op_ma = (rdo >> 10) & 0x3FF;
+	int idx = RDO_POS(rdo);
+	uint32_t pdo;
+	uint32_t pdo_ma;
+
+	/* Board specific check for this request */
+	if (pd_board_check_request(rdo))
+		return EC_ERROR_INVAL;
+
+	/* check current ... */
+	pdo = pd_src_pdo[idx - 1];
+	pdo_ma = (pdo & 0x3ff);
+	if (op_ma > pdo_ma)
+		return EC_ERROR_INVAL; /* too much op current */
+	if (max_ma > pdo_ma)
+		return EC_ERROR_INVAL; /* too much max current */
+
+	CPRINTF("Requested %d V %d mA (for %d/%d mA)\n",
+		 ((pdo >> 10) & 0x3ff) * 50, (pdo & 0x3ff) * 10,
+		 op_ma * 10, max_ma * 10);
+
+	/* Accept the requested voltage */
+	return EC_SUCCESS;
+}
+
+static int stub_pd_board_check_request(uint32_t rdo)
+{
+	int idx = RDO_POS(rdo);
+
+	/* Check for invalid index */
+	return (!idx || idx > pd_src_pdo_cnt) ?
+		EC_ERROR_INVAL : EC_SUCCESS;
+}
+int pd_board_check_request(uint32_t)
+	__attribute__((weak, alias("stub_pd_board_check_request")));
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 /* Cap on the max voltage requested as a sink (in millivolts) */
 static unsigned max_request_mv = PD_MAX_VOLTAGE_MV; /* no cap */

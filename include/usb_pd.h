@@ -918,6 +918,13 @@ int pd_is_valid_input_voltage(int mv);
 int pd_check_requested_voltage(uint32_t rdo);
 
 /**
+ * Run board specific checks on request message
+ *
+ * @return EC_SUCCESS if request is ok , <0 else.
+ */
+int pd_board_check_request(uint32_t rdo);
+
+/**
  * Select a new output voltage.
  *
  * param idx index of the new voltage in the source PDO table.

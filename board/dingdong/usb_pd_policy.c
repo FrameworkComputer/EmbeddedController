@@ -50,11 +50,6 @@ int pd_is_valid_input_voltage(int mv)
 	return 1;
 }
 
-int pd_check_requested_voltage(uint32_t rdo)
-{
-	return EC_SUCCESS;
-}
-
 void pd_transition_voltage(int idx)
 {
 	/* No operation: sink only */
