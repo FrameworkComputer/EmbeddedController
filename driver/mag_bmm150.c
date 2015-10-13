@@ -4,7 +4,7 @@
  */
 
 /**
- * BMM150 compass behing a BMI160
+ * BMM150 compass behind a BMI160
  */
 
 #include "accelgyro.h"

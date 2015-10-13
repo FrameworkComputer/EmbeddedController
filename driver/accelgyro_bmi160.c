@@ -456,7 +456,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 #ifdef CONFIG_ACCEL_FIFO
 	/*
 	 * FIFO start collecting events.
-	 * They will be discared if AP does not want them.
+	 * They will be discarded if AP does not want them.
 	 */
 	enable_fifo(s, 1);
 #endif
@@ -594,8 +594,8 @@ int perform_calib(const struct motion_sensor_t *s)
 
 	rate = get_data_rate(s);
 	/*
-	 * Temperary set frequency to 100Hz to get enough data in a short
-	 * period of fime.
+	 * Temporary set frequency to 100Hz to get enough data in a short
+	 * period of time.
 	 */
 	set_data_rate(s, 100000, 0);
 
@@ -674,7 +674,7 @@ int manage_activity(const struct motion_sensor_t *s,
 		if (ret)
 			return ret;
 		if (enable) {
-			/* We should use paramters from caller */
+			/* We should use parameters from caller */
 			raw_write8(s->addr, BMI160_INT_MOTION_3,
 				BMI160_MOTION_PROOF_TIME(
 					CONFIG_GESTURE_SIGMO_PROOF_MS) <<
