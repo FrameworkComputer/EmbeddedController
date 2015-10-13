@@ -118,8 +118,8 @@ int bmm150_init(const struct motion_sensor_t *s)
 
 
 	/* Set the repetition in "Regular Preset" */
-	raw_mag_write8(s->addr, BMM150_REPXY, BMM150_REP(REGULAR, XY));
-	raw_mag_write8(s->addr, BMM150_REPZ, BMM150_REP(REGULAR, Z));
+	raw_mag_write8(s->addr, BMM150_REPXY, BMM150_REP(SPECIAL, XY));
+	raw_mag_write8(s->addr, BMM150_REPZ, BMM150_REP(SPECIAL, Z));
 	ret = raw_mag_read8(s->addr, BMM150_REPXY, &val);
 	CPRINTS("repxy: 0x%02x", val);
 	ret = raw_mag_read8(s->addr, BMM150_REPZ, &val);
