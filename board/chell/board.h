@@ -42,6 +42,9 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
+/* All data won't fit in data RAM.  So, moving boundary slightly. */
+#undef CONFIG_RO_SIZE
+#define CONFIG_RO_SIZE (100 * 1024)
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_MUX_PS8740
