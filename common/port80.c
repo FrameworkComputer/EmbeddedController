@@ -24,10 +24,6 @@ static int writes;    /* Number of port 80 writes so far */
 static int last_boot; /* Last code from previous boot */
 static int scroll;
 static int print_in_int = 1;
-#ifdef HAS_TASK_PORT80
-static int task_en;   /* Port 80 task control */
-static int task_timeout = -1;
-#endif
 
 void port_80_write(int data)
 {
@@ -50,46 +46,6 @@ void port_80_write(int data)
 	history[writes % ARRAY_SIZE(history)] = data;
 	writes++;
 }
-
-#ifdef HAS_TASK_PORT80
-/*
- * Port80 POST code polling limitation:
- * - POST code 0xFF is ignored.
- * - POST code frequency is greater than 1 msec.
- */
-void port80_task(void)
-{
-	while (1) {
-		int data = port_80_read();
-
-		if (data != PORT_80_IGNORE)
-			port_80_write(data);
-
-		task_wait_event(task_timeout);
-	}
-}
-
-static void port_80_task_enable(void)
-{
-	task_en = 1;
-	task_timeout = PORT80_POLL_PERIOD;
-	task_wake(TASK_ID_PORT80);
-}
-
-static void port_80_task_disable(void)
-{
-	task_en = 0;
-	task_timeout = -1;
-}
-
-#ifdef CONFIG_PORT80_TASK_EN
-
-/* Only enable the port80 task when the AP is started, to save power */
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, port_80_task_enable, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, port_80_task_disable, HOOK_PRIO_DEFAULT);
-
-#endif /* PORT80_TASK_EN */
-#endif /* HAS_TASK_PORT80 */
 
 /*****************************************************************************/
 /* Console commands */
@@ -117,20 +73,6 @@ static int command_port80(int argc, char **argv)
 		} else if (!strcasecmp(argv[1], "flush")) {
 			writes = 0;
 			return EC_SUCCESS;
-#ifdef HAS_TASK_PORT80
-		} else if (!strcasecmp(argv[1], "task")) {
-			task_en = !task_en;
-			ccprintf("task %sabled\n", task_en ? "en" : "dis");
-			task_en ? port_80_task_enable() :
-				  port_80_task_disable();
-
-			return EC_SUCCESS;
-		} else if (!strcasecmp(argv[1], "poll")) {
-			i = port_80_read();
-			if (i != PORT_80_IGNORE)
-				port_80_write(i);
-			/* continue on to print the port 80 history */
-#endif
 		} else {
 			return EC_ERROR_PARAM1;
 		}
