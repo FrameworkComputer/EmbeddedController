@@ -482,6 +482,7 @@ static int set_interrupt(const struct motion_sensor_t *s,
 static int init(const struct motion_sensor_t *s)
 {
 	int ret, resol;
+	struct si114x_drv_data_t *data = SI114X_GET_DATA(s);
 
 	/* initialize only once: light must be declared first. */
 	if (s->type == MOTIONSENSE_TYPE_LIGHT) {
@@ -493,6 +494,8 @@ static int init(const struct motion_sensor_t *s)
 		ret = si114x_initialize(s);
 		if (ret != EC_SUCCESS)
 			return ret;
+
+		data->state = SI114X_IDLE;
 		resol = 7;
 	} else {
 		resol = 5;

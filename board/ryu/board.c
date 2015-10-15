@@ -405,7 +405,7 @@ struct motion_sensor_t motion_sensors[] = {
 			/* EC needs sensor for light adaptive brightness */
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 1000,
-				.ec_rate = 1000,
+				.ec_rate = 0,
 			},
 			[SENSOR_CONFIG_EC_S3] = {
 				.odr = 1000,
