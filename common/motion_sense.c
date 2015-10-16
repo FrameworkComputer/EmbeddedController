@@ -1119,7 +1119,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				ret = sensor->drv->manage_activity(sensor,
 						in->set_activity.activity,
 						in->set_activity.enable,
-						NULL);
+						&in->set_activity);
 		}
 		if (ret != EC_RES_SUCCESS)
 			return ret;

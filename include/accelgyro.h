@@ -133,7 +133,7 @@ struct accelgyro_drv {
 	int (*manage_activity)(const struct motion_sensor_t *s,
 			       enum motionsensor_activity activity,
 			       int enable,
-			       struct ec_motion_sense_activity *data);
+			       const struct ec_motion_sense_activity *data);
 	/**
 	 * List activities managed by the sensors.
 	 * @s Pointer to sensor data.

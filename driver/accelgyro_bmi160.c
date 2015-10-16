@@ -661,7 +661,7 @@ void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 int manage_activity(const struct motion_sensor_t *s,
 		    enum motionsensor_activity activity,
 		    int enable,
-		    struct ec_motion_sense_activity *param)
+		    const struct ec_motion_sense_activity *param)
 {
 	int ret;
 	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
