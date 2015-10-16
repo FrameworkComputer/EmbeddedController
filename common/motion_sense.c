@@ -420,6 +420,9 @@ static void motion_sense_shutdown(void)
 			int activity = get_next_bit(&enabled);
 			sensor->drv->manage_activity(sensor, activity, 0, NULL);
 		}
+		/* Renable double tap in case AP disabled it */
+		sensor->drv->manage_activity(sensor,
+				MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1, NULL);
 	}
 #endif
 }
