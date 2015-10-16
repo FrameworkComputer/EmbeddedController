@@ -448,9 +448,9 @@ static void jump_to_image(uintptr_t init_addr)
 	/* Prepare I2C module for sysjump */
 	i2c_prepare_sysjump();
 #endif
-	/* Flush UART output unless the UART hasn't been initialized yet */
-	if (uart_init_done())
-		uart_flush_output();
+
+	/* Flush UART output */
+	cflush();
 
 	/* Disable interrupts before jump */
 	interrupt_disable();

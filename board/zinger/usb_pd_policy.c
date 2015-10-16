@@ -6,7 +6,7 @@
 #include "adc.h"
 #include "common.h"
 #include "console.h"
-#include "debug.h"
+#include "debug_printf.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "registers.h"

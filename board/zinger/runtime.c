@@ -7,7 +7,7 @@
 #include "clock.h"
 #include "common.h"
 #include "cpu.h"
-#include "debug.h"
+#include "debug_printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"

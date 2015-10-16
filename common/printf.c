@@ -13,12 +13,12 @@ static const char error_str[] = "ERROR";
 
 #define MAX_FORMAT 1024  /* Maximum chars in a single format field */
 
-#ifdef CONFIG_COMMON_RUNTIME
+#ifndef CONFIG_DEBUG_PRINTF
 static inline int divmod(uint64_t *n, int d)
 {
 	return uint64divmod(n, d);
 }
-#else /* !CONFIG_COMMON_RUNTIME */
+#else /* CONFIG_DEBUG_PRINTF */
 /* if we are optimizing for size, remove the 64-bit support */
 #define NO_UINT64_SUPPORT
 static inline int divmod(uint32_t *n, int d)

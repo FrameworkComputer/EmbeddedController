@@ -26,6 +26,7 @@ static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
  * @param c		Character to write.
  * @return 0 if the character was transmitted, 1 if it was dropped.
  */
+#ifndef CONFIG_DEBUG_PRINTF
 static int panic_txchar(void *context, int c)
 {
 	if (c == '\n')
@@ -68,6 +69,7 @@ void panic_printf(const char *format, ...)
 	/* Flush the transmit FIFO */
 	uart_tx_flush();
 }
+#endif
 
 /**
  * Display a message and reboot

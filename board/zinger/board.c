@@ -5,7 +5,7 @@
 /* Tiny charger configuration */
 
 #include "common.h"
-#include "debug.h"
+#include "debug_printf.h"
 #include "ec_commands.h"
 #include "registers.h"
 #include "rsa.h"

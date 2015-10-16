@@ -301,8 +301,8 @@ int uart_printf(const char *format, ...)
 
 void uart_flush_output(void)
 {
-	/* If UART is suspended, ignore flush request. */
-	if (uart_suspended)
+	/* If UART not initialized or is suspended, ignore flush request. */
+	if (!uart_init_done() || uart_suspended)
 		return;
 
 	/* Loop until buffer is empty */
