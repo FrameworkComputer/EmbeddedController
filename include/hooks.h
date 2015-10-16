@@ -251,7 +251,7 @@ struct deferred_data {
  * @param routine	Function pointer, with prototype void routine(void)
  */
 #define DECLARE_DEFERRED(routine)					\
-	const struct deferred_data CONCAT2(__deferred_, routine)	\
+	const struct deferred_data __keep CONCAT2(__deferred_, routine)	\
 	__attribute__((section(".rodata.deferred")))			\
 	     = {routine}
 
