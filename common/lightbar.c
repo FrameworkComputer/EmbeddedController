@@ -90,6 +90,11 @@ BUILD_ASSERT(sizeof(struct lightbar_params_v2_thresholds) <= MAX_PARAM_SIZE);
 BUILD_ASSERT(sizeof(struct lightbar_params_v2_colors) <= MAX_PARAM_SIZE);
 #undef MAX_PARAM_SIZE
 
+#define PRIMARY_BLUE 4
+#define PRIMARY_RED 5
+#define PRIMARY_YELLOW 6
+#define PRIMARY_GREEN 7
+
 static const struct lightbar_params_v1 default_params = {
 	.google_ramp_up = 2500,
 	.google_ramp_down = 10000,
@@ -112,7 +117,7 @@ static const struct lightbar_params_v1 default_params = {
 	.tap_seg_min_on = 35,		        /* min intensity (%) for "on" */
 	.tap_seg_max_on = 100,			/* max intensity (%) for "on" */
 	.tap_seg_osc = 50,			/* amplitude for charging osc */
-	.tap_idx = {5, 6, 7},			/* color [red, yellow, green] */
+	.tap_idx = {PRIMARY_RED, PRIMARY_YELLOW, PRIMARY_GREEN}, /* color */
 
 	.osc_min = { 0x60, 0x60 },		/* battery, AC */
 	.osc_max = { 0xd0, 0xd0 },		/* battery, AC */
@@ -124,14 +129,18 @@ static const struct lightbar_params_v1 default_params = {
 
 	.battery_threshold = { 14, 40, 99 },	/* percent, lowest to highest */
 	.s0_idx = {
-		{ 5, 4, 4, 4 },		/* battery: 0 = red, other = blue */
-		{ 4, 4, 4, 4 }		/* AC: always blue */
+		/* battery: 0 = red, other = blue */
+		{ PRIMARY_RED, PRIMARY_BLUE, PRIMARY_BLUE, PRIMARY_BLUE },
+		/* AC: always blue */
+		{ PRIMARY_BLUE, PRIMARY_BLUE, PRIMARY_BLUE, PRIMARY_BLUE }
 	},
 	.s3_idx = {
-		{ 5, 0xff, 0xff, 0xff },       /* battery: 0 = red, else off */
-		{ 0xff, 0xff, 0xff, 0xff }     /* AC: do nothing */
+		/* battery: 0 = red, else off */
+		{ PRIMARY_RED, 0xff, 0xff, 0xff },
+		/* AC: do nothing */
+		{ 0xff, 0xff, 0xff, 0xff }
 	},
-	.s5_idx = 5,			       /* flash red */
+	.s5_idx = PRIMARY_RED,			       /* flash red */
 	.color = {
 #if defined(BOARD_RYU)
 		{0x74, 0x58, 0xb4},		/* Segment0: Google blue */
@@ -566,9 +575,9 @@ static uint32_t sequence_S0(void)
 				lb_set_rgb(i, r, g, b);
 			}
 		} else {
-			r = st.p.color[5].r;
-			g = st.p.color[5].g;
-			b = st.p.color[5].b;
+			r = st.p.color[PRIMARY_RED].r;
+			g = st.p.color[PRIMARY_RED].g;
+			b = st.p.color[PRIMARY_RED].b;
 			lb_set_rgb(4, r, g, b);
 		}
 
