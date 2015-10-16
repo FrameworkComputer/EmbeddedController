@@ -720,7 +720,7 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef CONFIG_COMMON_GPIO
 		| EC_FEATURE_MASK_0(EC_FEATURE_GPIO)
 #endif
-#ifdef CONFIG_I2C
+#if defined(CONFIG_I2C) && !defined(CONFIG_I2C_SLAVE_ONLY)
 		| EC_FEATURE_MASK_0(EC_FEATURE_I2C)
 #endif
 #ifdef CONFIG_CHARGER

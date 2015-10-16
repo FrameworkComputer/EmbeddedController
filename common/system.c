@@ -444,7 +444,7 @@ static void jump_to_image(uintptr_t init_addr)
 	pd_prepare_reset();
 #endif
 
-#ifdef CONFIG_I2C
+#if defined(CONFIG_I2C) && !defined(CONFIG_I2C_SLAVE_ONLY)
 	/* Prepare I2C module for sysjump */
 	i2c_prepare_sysjump();
 #endif
