@@ -265,19 +265,6 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_TACH1_SL1)},/* TA1_TACH1 */
 	{ NPCX_GPIO(A, 4),  NPCX_ALT(3, TB1_TACH2_SL1)},/* TB1_TACH2 */
 #endif
-	/* JTAG Module */
-#if NPCX_JTAG_MODULE2
-	{ NPCX_GPIO(D, 5),  NPCX_ALT(5, NJEN1_EN)	}, /* TCLK */
-	{ NPCX_GPIO(E, 2),  NPCX_ALT(5, NJEN1_EN)	}, /* TDI  */
-	{ NPCX_GPIO(D, 4),  NPCX_ALT(5, NJEN1_EN)	}, /* TDO  */
-	{ NPCX_GPIO(E, 5),  NPCX_ALT(5, NJEN1_EN)	}, /* TMS  */
-#else
-	{ NPCX_GPIO(2, 1),  NPCX_ALT(5, NJEN0_EN)	}, /* TCLK */
-	{ NPCX_GPIO(1, 7),  NPCX_ALT(5, NJEN0_EN)	}, /* TDI  */
-	{ NPCX_GPIO(1, 6),  NPCX_ALT(5, NJEN0_EN)	}, /* TDO  */
-	{ NPCX_GPIO(2, 0),  NPCX_ALT(5, NJEN0_EN)	}, /* TMS  */
-#endif
-	/* 01 for PWRGD_OUT*/
 };
 
 /*****************************************************************************/
