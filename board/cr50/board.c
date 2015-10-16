@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "trng.h"
 #include "usb.h"
 #include "usb_hid.h"
 #include "util.h"
@@ -64,18 +65,25 @@ void button_event(enum gpio_signal signal)
 	gpio_set_level(signal - GPIO_SW_N + GPIO_LED_4, v);
 }
 
+static void init_interrutps(void)
+{
+	int i;
+	static const enum gpio_signal gpio_signals[] = {
+		GPIO_SW_N, GPIO_SW_S, GPIO_SW_W, GPIO_SW_E,
+		GPIO_SW_N_, GPIO_SW_S_, GPIO_SW_W_, GPIO_SW_E_
+	};
+
+	for (i = 0; i < ARRAY_SIZE(gpio_signals); i++)
+		gpio_enable_interrupt(gpio_signals[i]);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
-	gpio_enable_interrupt(GPIO_SW_N);
-	gpio_enable_interrupt(GPIO_SW_S);
-	gpio_enable_interrupt(GPIO_SW_W);
-	gpio_enable_interrupt(GPIO_SW_E);
-	gpio_enable_interrupt(GPIO_SW_N_);
-	gpio_enable_interrupt(GPIO_SW_S_);
-	gpio_enable_interrupt(GPIO_SW_W_);
-	gpio_enable_interrupt(GPIO_SW_E_);
+	init_interrutps();
+	init_trng();
 }
+
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 #if defined(CONFIG_USB)
