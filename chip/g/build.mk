@@ -25,6 +25,7 @@ else
 chip-y += uart.o
 endif
 chip-y+= pmu.o
+chip-y+= trng.o
 chip-$(CONFIG_SPS)+= sps.o
 chip-$(CONFIG_HOSTCMD_SPS)+=sps_hc.o
 chip-$(CONFIG_TPM_SPS)+=sps_tpm.o
