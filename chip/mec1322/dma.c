@@ -37,12 +37,20 @@ void dma_disable(enum dma_channel channel)
 void dma_disable_all(void)
 {
 	int ch;
+	mec1322_dma_regs_t *dma;
 
 	for (ch = 0; ch < MEC1322_DMAC_COUNT; ch++) {
 		mec1322_dma_chan_t *chan = dma_get_channel(ch);
+		/* Abort any current transfer. */
+		chan->ctrl |= (1 << 25);
+		/* Disable the channel. */
 		chan->ctrl &= ~(1 << 0);
 		chan->act = 0;
 	}
+
+	/* Soft-reset the block. */
+	dma = MEC1322_DMA_REGS;
+	dma->ctrl |= 0x2;
 }
 
 /**
