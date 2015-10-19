@@ -27,8 +27,9 @@ dirs-y += $(BDIR)/tpm2
 
 # Objects that we need to build
 board-y =  board.o
-board-y += tpm2/platform.o
 board-y += tpm2/NVMem.o
+board-y += tpm2/platform.o
+board-y += tpm2/stubs.o
 
 # Build and link with an external library
 EXTLIB := $(realpath ../../third_party/tpm2)
