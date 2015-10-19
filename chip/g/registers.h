@@ -361,6 +361,7 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GR_USB_GRXSTSP                GR_USB_REG(GC_USB_GRXSTSP_OFFSET)
 #define GR_USB_GRXFSIZ                GR_USB_REG(GC_USB_GRXFSIZ_OFFSET)
 #define GR_USB_GNPTXFSIZ              GR_USB_REG(GC_USB_GNPTXFSIZ_OFFSET)
+#define GR_USB_GGPIO                  GR_USB_REG(GC_USB_GGPIO_OFFSET)
 #define GR_USB_GSNPSID                GR_USB_REG(GC_USB_GSNPSID_OFFSET)
 #define GR_USB_GHWCFG1                GR_USB_REG(GC_USB_GHWCFG1_OFFSET)
 #define GR_USB_GHWCFG2                GR_USB_REG(GC_USB_GHWCFG2_OFFSET)
@@ -397,7 +398,10 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GAHBCFG_HBSTLEN_INCR4         (3 << GC_USB_GAHBCFG_HBSTLEN_LSB)
 #define GAHBCFG_NP_TXF_EMP_LVL        (1 <<  GC_USB_GAHBCFG_NPTXFEMPLVL_LSB)
 
-#define GUSBCFG_TOUTCAL(n)            (((n) << GC_USB_GUSBCFG_TOUTCAL_LSB) & GC_USB_GUSBCFG_TOUTCAL_MASK)
+#define GUSBCFG_TOUTCAL(n)            (((n) << GC_USB_GUSBCFG_TOUTCAL_LSB) \
+				       & GC_USB_GUSBCFG_TOUTCAL_MASK)
+#define GUSBCFG_USBTRDTIM(n)          (((n) << GC_USB_GUSBCFG_USBTRDTIM_LSB) \
+				       & GC_USB_GUSBCFG_USBTRDTIM_MASK)
 #define GUSBCFG_PHYSEL_HS             (0 << GC_USB_GUSBCFG_PHYSEL_LSB)
 #define GUSBCFG_PHYSEL_FS             (1 << GC_USB_GUSBCFG_PHYSEL_LSB)
 #define GUSBCFG_FSINTF_6PIN           (0 << GC_USB_GUSBCFG_FSINTF_LSB)
