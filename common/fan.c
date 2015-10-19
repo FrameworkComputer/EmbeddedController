@@ -97,8 +97,8 @@ static void set_duty_cycle(int fan, int percent)
 	/* Move the fan to manual control */
 	fan_set_rpm_mode(fans[fan].ch, 0);
 
-	/* Always enable the fan */
-	set_enabled(fan, 1);
+	/* enable the fan when non-zero duty */
+	set_enabled(fan, (percent > 0) ? 1 : 0);
 
 	/* Disable thermal engine automatic fan control. */
 	set_thermal_control_enabled(fan, 0);
@@ -227,8 +227,8 @@ static int cc_fanset(int argc, char **argv)
 	/* Move the fan to automatic control */
 	fan_set_rpm_mode(fans[fan].ch, 1);
 
-	/* Always enable the fan */
-	set_enabled(fan, 1);
+	/* enable the fan when non-zero rpm */
+	set_enabled(fan, (rpm > 0) ? 1 : 0);
 
 	/* Disable thermal engine automatic fan control. */
 	set_thermal_control_enabled(fan, 0);
@@ -335,8 +335,8 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 
 	if (args->version == 0) {
 		for (fan = 0; fan < CONFIG_FANS; fan++) {
-			/* Always enable the fan */
-			set_enabled(fan, 1);
+			/* enable the fan if rpm is non-zero */
+			set_enabled(fan, (p_v0->rpm > 0) ? 1 : 0);
 
 			set_thermal_control_enabled(fan, 0);
 			fan_set_rpm_mode(fans[fan].ch, 1);
@@ -350,8 +350,8 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 	if (fan >= CONFIG_FANS)
 		return EC_RES_ERROR;
 
-	/* Always enable the fan */
-	set_enabled(fan, 1);
+	/* enable the fan if rpm is non-zero */
+	set_enabled(fan, (p_v1->rpm > 0) ? 1 :0);
 
 	set_thermal_control_enabled(fan, 0);
 	fan_set_rpm_mode(fans[fan].ch, 1);
@@ -531,7 +531,7 @@ static void pwm_fan_S3_S5(void)
 		 * charging or something.
 		 */
 		fan_set_rpm_target(fans[fan].ch, 0);
-		fan_set_enabled(fans[fan].ch, 0); /* crosbug.com/p/8097 */
+		set_enabled(fan, 0); /* crosbug.com/p/8097 */
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwm_fan_S3_S5, HOOK_PRIO_DEFAULT);
