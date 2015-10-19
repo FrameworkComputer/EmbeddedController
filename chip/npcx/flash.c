@@ -210,13 +210,12 @@ static int reg_to_protect(uint8_t sr1, uint8_t sr2, unsigned int *start,
 	*len = size * blocks;
 
 	/* Determine bottom/top of memory to protect */
-	*start = tb ? 0 :
-			(NPCX_EC_FLASH_SIZE - *len) % NPCX_EC_FLASH_SIZE;
+	*start = tb ? 0 : (CONFIG_FLASH_SIZE - *len);
 
 	/* Reverse computations if complement set */
 	if (cmp) {
-		*start = (*start + *len) % NPCX_EC_FLASH_SIZE;
-		*len = NPCX_EC_FLASH_SIZE - *len;
+		*start = *start + *len;
+		*len = CONFIG_FLASH_SIZE - *len;
 	}
 
 	/*
@@ -261,19 +260,19 @@ static int protect_to_reg(unsigned int start, unsigned int len,
 		return EC_ERROR_INVAL;
 
 	/* Invalid data */
-	if ((start && !len) || start + len > NPCX_EC_FLASH_SIZE)
+	if ((start && !len) || start + len > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Set complement bit based on whether length is power of 2 */
 	if ((len & (len - 1)) != 0) {
 		cmp = 1;
-		start = (start + len) % NPCX_EC_FLASH_SIZE;
-		len = NPCX_EC_FLASH_SIZE - len;
+		start = start + len;
+		len = CONFIG_FLASH_SIZE - len;
 	}
 
 	/* Set bottom/top bit based on start address */
-	/* Do not set if len == 0 or len == NPCX_EC_FLASH_SIZE */
-	if (!start && (len % NPCX_EC_FLASH_SIZE))
+	/* Do not set if len == 0 or len == CONFIG_FLASH_SIZE */
+	if (!start && (len % CONFIG_FLASH_SIZE))
 		tb = 1;
 
 	/* Set sector bit and determine block length based on protect length */
@@ -333,7 +332,7 @@ int flash_set_status_for_prot(int reg1, int reg2)
 int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 {
 	/* Invalid value */
-	if (offset + bytes > NPCX_EC_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 	/* Check if ranges overlap */
 	if (MAX(addr_prot_start, offset) < MIN(addr_prot_start +
@@ -354,7 +353,7 @@ int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 	sr2 = flash_get_status2();
 
 	/* Invalid value */
-	if (offset + bytes > NPCX_EC_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Compute current protect range */
@@ -377,7 +376,7 @@ int flash_write_prot_reg(unsigned int offset, unsigned int bytes)
 	uint8_t sr2 = flash_get_status2();
 
 	/* Invalid values */
-	if (offset + bytes > NPCX_EC_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 
 	/* Compute desired protect range */

@@ -20,12 +20,6 @@
 #define CONFIG_MAPPED_STORAGE_BASE 0x64000000
 #undef  CONFIG_FLASH_PSTATE
 
-/*
- * On NPCX, the first 256KB of external SPI storage belongs to the EC,
- * regardless of the actual size of external SPI.
- */
-#define NPCX_EC_FLASH_SIZE	0x40000
-
 #define CONFIG_EC_PROTECTED_STORAGE_OFF  0
 #define CONFIG_EC_PROTECTED_STORAGE_SIZE 0x20000
 #define CONFIG_EC_WRITABLE_STORAGE_OFF   0x20000
