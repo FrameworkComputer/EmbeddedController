@@ -11,6 +11,13 @@
 #include "board_revs.h"
 
 /*
+ * The console task is too big to include in both RO and RW images. Therefore,
+ * if the console task is defined, then only build an RW image. This can be
+ * useful for debugging to have a full console. Otherwise, without this task,
+ * a full RO and RW is built with a limited one-way output console.
+ */
+#ifdef HAS_TASK_CONSOLE
+/*
  * The flash size is only 32kB.
  * No space for 2 partitions,
  * put only RW at the beginning of the flash
@@ -23,6 +30,7 @@
 /* Fake full size if we had a RO partition */
 #undef CONFIG_RW_SIZE
 #define CONFIG_RW_SIZE CONFIG_FLASH_SIZE
+#endif /* HAS_TASK_CONSOLE */
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
@@ -33,15 +41,9 @@
 
 /* Optional features */
 #define CONFIG_ADC
+#undef  CONFIG_ADC_WATCHDOG
 #define CONFIG_BOARD_PRE_INIT
-#undef  CONFIG_CMD_I2C_SCAN
-#undef  CONFIG_CMD_I2C_XFER
-#undef  CONFIG_CMD_IDLE_STATS
-#undef  CONFIG_CMD_SHMEM
 #define CONFIG_COMMON_GPIO_SHORTNAMES
-#define CONFIG_CONSOLE_CMDHELP
-#undef  CONFIG_CONSOLE_HISTORY
-#define CONFIG_CONSOLE_HISTORY 2
 #undef  CONFIG_DEBUG_ASSERT
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_HIBERNATE
@@ -52,6 +54,7 @@
 #define CONFIG_I2C_SLAVE_ONLY
 #undef  CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
+#define CONFIG_LTO
 #define CONFIG_STM_HWTIMER32
 #undef  CONFIG_TASK_PROFILING
 #undef  CONFIG_UART_TX_BUF_SIZE
@@ -67,6 +70,17 @@
 #define CONFIG_VBOOT_HASH
 #undef  CONFIG_WATCHDOG
 #undef  CONFIG_WATCHDOG_HELP
+
+#ifdef HAS_TASK_CONSOLE
+#undef  CONFIG_CONSOLE_HISTORY
+#define CONFIG_CONSOLE_HISTORY 2
+
+#else
+#undef  CONFIG_CONSOLE_CMDHELP
+#define CONFIG_DEBUG_PRINTF
+#define UARTN CONFIG_UART_CONSOLE
+#define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
+#endif /* HAS_TASK_CONSOLE */
 
 /* Use PSTATE embedded in the RO image, not in its own erase block */
 #undef  CONFIG_FLASH_PSTATE_BANK
