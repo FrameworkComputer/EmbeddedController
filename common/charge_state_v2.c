@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -32,6 +33,9 @@
 	(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT * SECOND)
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
 #define LFCC_EVENT_THRESH 5 /* Full-capacity change reqd for host event */
+
+/* Prior to negotiating PD, most PD chargers advertise 15W */
+#define LIKELY_PD_USBC_POWER_MW 15000
 
 /*
  * State for charger_task(). Here so we can reset it on a HOOK_INIT, and
@@ -907,6 +911,19 @@ int charge_prevent_power_on(void)
 	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
 
+#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
+	/*
+	 * Allow power-on if our charger advertises more than
+	 * LIKELY_PD_USBC_POWER_MW since it may speak PD and provide
+	 * sufficient power once we enable PD communication.
+	 */
+	if (prevent_power_on)
+		if (charge_manager_get_power_limit_uw() >=
+		    MIN(LIKELY_PD_USBC_POWER_MW * 1000,
+			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000));
+			prevent_power_on = 0;
+#endif
+
 	/*
 	 * Factory override: Always allow power on if WP is disabled,
 	 * except when EC is starting up, due to brown out potential.
@@ -1144,6 +1161,23 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 			case CS_PARAM_CHG_OPTION:
 				val = curr.chg.option;
 				break;
+			case CS_PARAM_LIMIT_POWER:
+#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
+				/*
+				 * LIMIT_POWER status is based on battery level
+				 * and external charger power.
+				 */
+				if ((curr.batt.is_present != BP_YES ||
+				     curr.batt.state_of_charge <
+				     CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT)
+				     && charge_manager_get_power_limit_uw() <
+				     CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
+				     * 1000 && system_is_locked())
+					val = 1;
+				else
+#endif
+					val = 0;
+				break;
 			default:
 				rv = EC_RES_INVALID_PARAM;
 			}
@@ -1181,6 +1215,7 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 					rv = EC_RES_ERROR;
 				break;
 			case CS_PARAM_CHG_STATUS:
+			case CS_PARAM_LIMIT_POWER:
 				/* Can't set this */
 				rv = EC_RES_ACCESS_DENIED;
 				break;

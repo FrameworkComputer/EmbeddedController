@@ -5136,6 +5136,7 @@ static const char * const base_params[] = {
 	"chg_input_current",
 	"chg_status",
 	"chg_option",
+	"limit_power",
 };
 BUILD_ASSERT(ARRAY_SIZE(base_params) == CS_NUM_BASE_PARAMS);
 

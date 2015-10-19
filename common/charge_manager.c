@@ -804,6 +804,21 @@ int charge_manager_get_active_charge_port(void)
 	return charge_port;
 }
 
+/**
+ * Return the power limit (uW) set by charge manager.
+ */
+int charge_manager_get_power_limit_uw(void)
+{
+	int current_ma = charge_current;
+	int voltage_mv = charge_voltage;
+
+	if (current_ma == CHARGE_CURRENT_UNINITIALIZED ||
+	    voltage_mv == CHARGE_VOLTAGE_UNINITIALIZED)
+		return 0;
+	else
+		return current_ma * voltage_mv;
+}
+
 #ifndef TEST_BUILD
 static int hc_pd_power_info(struct host_cmd_handler_args *args)
 {
