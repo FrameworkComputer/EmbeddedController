@@ -14,6 +14,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/als_opt3001.h"
+#include "driver/gyro_l3gd20h.h"
 #include "driver/pmic_tps650830.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -194,6 +195,13 @@ struct kionix_accel_data g_kxcj9_data[2] = {
 	{.variant = KXCJ9},
 };
 
+#ifdef CONFIG_GYRO_L3GD20H
+/* Gyro sensor */
+/* l3gd20h mutex and local/private data*/
+static struct mutex g_l3gd20h_mutex;
+struct l3gd20_data g_l3gd20h_data;
+#endif
+
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t base_standard_ref = {
 	{ 0,  FLOAT_TO_FP(1),  0},
@@ -276,6 +284,41 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 	 },
 	},
+#ifdef CONFIG_GYRO_L3GD20H
+	{.name = "Lid Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_L3GD20H,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &l3gd20h_drv,
+	 .mutex = &g_l3gd20h_mutex,
+	 .drv_data = &g_l3gd20h_data,
+	 .addr = L3GD20_ADDR1,
+	 .rot_standard_ref = NULL,
+	 .default_range = 2000,  /* DPS */
+	 .config = {
+		/* AP: by default shutdown all sensors */
+		[SENSOR_CONFIG_AP] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 119000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		},
+		/* unused */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		[SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+	 },
+	},
+#endif
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif

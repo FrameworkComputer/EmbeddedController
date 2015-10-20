@@ -131,6 +131,7 @@
 #define I2C_PORT_TCPC MEC1322_I2C1
 #define I2C_PORT_ALS MEC1322_I2C2
 #define I2C_PORT_ACCEL MEC1322_I2C2
+#define I2C_PORT_GYRO MEC1322_I2C2
 #define I2C_PORT_PMIC MEC1322_I2C3
 #define I2C_PORT_USB_CHARGER_2 MEC1322_I2C3
 
@@ -144,6 +145,8 @@
 /* Accelerometer */
 #ifdef HAS_TASK_MOTIONSENSE
 #define CONFIG_ACCEL_KXCJ9
+/* TODO: Enable support for gyrometer once space is availble. */
+/* #define CONFIG_GYRO_L3GD20H */
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE 0
 #define CONFIG_LID_ANGLE_SENSOR_LID 1
