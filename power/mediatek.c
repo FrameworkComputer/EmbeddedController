@@ -416,6 +416,14 @@ enum power_state power_chipset_init(void)
 		/* In the SYSJUMP case, we check if the AP is on */
 		if (is_power_good_asserted()) {
 			CPRINTS("SOC ON");
+			/*
+			 * Check and release PMIC power button signal,
+			 * if it's deferred callback function is not triggered
+			 * in RO before SYSJUMP.
+			 */
+			if (gpio_get_level(GPIO_PMIC_PWRON_H))
+				set_pmic_pwron(0);
+
 			init_power_state = POWER_S0;
 			if (is_suspend_asserted())
 				enable_sleep(SLEEP_MASK_AP_RUN);
