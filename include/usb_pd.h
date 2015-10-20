@@ -42,11 +42,11 @@ enum pd_rx_errors {
 	PD_RX_ERR_CABLE_RESET = -6      /* Got a Cable-Reset packet */
 };
 
-/* incoming/outgoing packet event (for the USB PD task) */
-#define PD_EVENT_RX (1<<2)
-#define PD_EVENT_TX (1<<3)
-/* CC line change event */
-#define PD_EVENT_CC (1<<4)
+/* Events for USB PD task */
+#define PD_EVENT_RX         (1<<2) /* Incoming packet event */
+#define PD_EVENT_TX         (1<<3) /* Outgoing packet event */
+#define PD_EVENT_CC         (1<<4) /* CC line change event */
+#define PD_EVENT_TCPC_RESET (1<<5) /* TCPC has reset */
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7

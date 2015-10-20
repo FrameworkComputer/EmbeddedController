@@ -16,6 +16,7 @@
 #define TCPC_REG_PD_INT_REV        0xa
 #define TCPC_REG_ALERT             0x10
 
+#define TCPC_REG_ALERT_MASK_ALL     0xfff
 #define TCPC_REG_ALERT_VBUS_DISCNCT (1<<11)
 #define TCPC_REG_ALERT_RX_BUF_OVF   (1<<10)
 #define TCPC_REG_ALERT_FAULT        (1<<9)
@@ -59,6 +60,7 @@
 #define TCPC_REG_CC_STATUS_CC1(reg)  ((reg) & 0x3)
 
 #define TCPC_REG_POWER_STATUS      0x1e
+#define TCPC_REG_POWER_STATUS_MASK_ALL  0xff
 #define TCPC_REG_POWER_STATUS_VBUS_PRES (1<<2)
 #define TCPC_REG_POWER_STATUS_VBUS_DET  (1<<3)
 #define TCPC_REG_POWER_STATUS_UNINIT    (1<<6)

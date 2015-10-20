@@ -1069,6 +1069,13 @@ void tcpc_init(int port)
 	tcpc_set_power_status(port, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
 #endif /* CONFIG_USB_PD_PORT_COUNT >= 2 */
 #endif /* CONFIG_USB_PD_TCPM_VBUS */
+
+	/* set default alert and power mask register values */
+	pd[port].alert_mask = TCPC_REG_ALERT_MASK_ALL;
+	pd[port].power_status_mask = TCPC_REG_POWER_STATUS_MASK_ALL;
+
+	/* set power status alert since the UNINIT bit has been set */
+	alert(port, TCPC_REG_ALERT_POWER_STATUS);
 }
 
 #ifdef CONFIG_USB_PD_TCPM_VBUS
@@ -1201,6 +1208,9 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 	case TCPC_REG_POWER_STATUS:
 		payload[0] = pd[port].power_status;
 		return 1;
+	case TCPC_REG_POWER_STATUS_MASK:
+		payload[0] = pd[port].power_status_mask;
+		return 1;
 	case TCPC_REG_TX_BYTE_CNT:
 		payload[0] = PD_HEADER_CNT(pd[port].tx_head);
 		return 1;
@@ -1299,12 +1309,14 @@ static int command_tcpc(int argc, char **argv)
 		ccprintf("set TX frequency to %d Hz\n", freq);
 		return EC_SUCCESS;
 	} else if (!strncasecmp(argv[2], "state", 5)) {
-		ccprintf("Port C%d, %s - CC:%d, CC0:%d, CC1:%d, "
-			 "Alert: 0x%02x\n", port,
+		ccprintf("Port C%d, %s - CC:%d, CC0:%d, CC1:%d\n"
+			 "Alert: 0x%02x Mask: 0x%04x\n"
+			 "Power Status: 0x%02x Mask: 0x%02x\n", port,
 			 pd[port].rx_enabled ? "Ena" : "Dis",
 			 pd[port].cc_pull,
 			 pd[port].cc_status[0], pd[port].cc_status[1],
-			 pd[port].alert);
+			 pd[port].alert, pd[port].alert_mask,
+			 pd[port].power_status, pd[port].power_status_mask);
 	}
 
 	return EC_SUCCESS;

@@ -43,10 +43,21 @@ static int init_alert_mask(int port)
 	return rv;
 }
 
+static int init_power_status_mask(int port)
+{
+	return tcpm_set_power_status_mask(port, 0);
+}
+
 int tcpm_init(int port)
 {
+	int rv;
+
 	tcpc_init(port);
-	return init_alert_mask(port);
+	rv = init_alert_mask(port);
+	if (rv)
+		return rv;
+
+	return init_power_status_mask(port);
 }
 
 int tcpm_get_cc(int port, int *cc1, int *cc2)

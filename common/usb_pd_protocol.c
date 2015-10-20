@@ -285,6 +285,10 @@ static inline void set_state(int port, enum pd_states next_state)
 #else /* CONFIG_USB_PD_DUAL_ROLE */
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 #endif
+		/* If we are source, make sure VBUS is off */
+		if (pd[port].power_role == PD_ROLE_SOURCE)
+			pd_power_supply_reset(port);
+
 		pd[port].dev_id = 0;
 		pd[port].flags &= ~PD_FLAGS_RESET_ON_DISCONNECT_MASK;
 #ifdef CONFIG_CHARGE_MANAGER
@@ -1406,9 +1410,11 @@ void pd_task(void)
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
 
+#ifdef CONFIG_USB_PD_TCPC
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	tcpm_init(port);
 	CPRINTF("[%T TCPC p%d ready]\n", port);
+#endif
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
@@ -1460,6 +1466,36 @@ void pd_task(void)
 		 * messages
 		 */
 		tcpc_run(port, evt);
+#else
+		/* if TCPC has reset, then need to initialize it again */
+		if (evt & PD_EVENT_TCPC_RESET) {
+			CPRINTF("[%T TCPC p%d reset!]\n", port);
+			tcpm_init(port);
+
+			/* Ensure CC termination is default */
+			tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ?
+							      TYPEC_CC_RP :
+							      TYPEC_CC_RD);
+
+			/*
+			 * If we have a stable contract in the default role,
+			 * then simply update TCPC with some missing info
+			 * so that we can continue without resetting PD comms.
+			 * Otherwise, go to the default disconnected state
+			 * and force renegotiation.
+			 */
+			if ((PD_ROLE_DEFAULT == PD_ROLE_SINK &&
+			     pd[port].task_state == PD_STATE_SNK_READY) ||
+			    (PD_ROLE_DEFAULT == PD_ROLE_SOURCE &&
+			     pd[port].task_state == PD_STATE_SRC_READY)) {
+				tcpm_set_polarity(port, pd[port].polarity);
+				tcpm_set_msg_header(port, pd[port].power_role,
+						    pd[port].data_role);
+				tcpm_set_rx_enable(port, 1);
+			} else {
+				set_state(port, PD_DEFAULT_STATE);
+			}
+		}
 #endif
 
 		/* process any potential incoming message */
@@ -1538,10 +1574,6 @@ void pd_task(void)
 				new_cc_state = PD_CC_AUDIO_ACC;
 			} else {
 				/* No UFP */
-#ifdef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
-				/* No connection any more, remove VBUS */
-				pd_power_supply_reset(port);
-#endif
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				timeout = 5*MSEC;
 				break;
@@ -1761,7 +1793,6 @@ void pd_task(void)
 				set_state(port, PD_STATE_SRC_READY);
 			} else {
 				/* The sink did not ack, cut the power... */
-				pd_power_supply_reset(port);
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 			}
 			break;
@@ -2510,7 +2541,6 @@ void pd_task(void)
 			if (pd[port].polarity)
 				cc1 = cc2;
 			if (cc1 == TYPEC_CC_VOLT_OPEN) {
-				pd_power_supply_reset(port);
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				/* Debouncing */
 				timeout = 10*MSEC;
