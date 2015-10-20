@@ -8,11 +8,30 @@
 #ifndef __CROS_EC_HWTIMER_CHIP_H
 #define __CROS_EC_HWTIMER_CHIP_H
 
+#define TIMER_COUNT_1US_SHIFT      3
+
+/* Combinational mode, microseconds to timer counter setting register */
+#define TIMER_H_US_TO_COUNT(us)  ((us) >> (24 - TIMER_COUNT_1US_SHIFT))
+#define TIMER_L_US_TO_COUNT(us)  (((us) << TIMER_COUNT_1US_SHIFT) & 0x00ffffff)
+
+/* Free running timer counter observation value to microseconds */
+#define TIMER_H_COUNT_TO_US(cnt) ((~(cnt)) << (24 - TIMER_COUNT_1US_SHIFT))
+#define TIMER_L_COUNT_TO_US(cnt) (((cnt) & 0x00ffffff) >> TIMER_COUNT_1US_SHIFT)
+
+/* Microseconds to event timer counter setting register */
+#define EVENT_TIMER_US_TO_COUNT(us)  ((us) << TIMER_COUNT_1US_SHIFT)
+/* Event timer counter observation value to microseconds */
+#define EVENT_TIMER_COUNT_TO_US(cnt) ((cnt) >> TIMER_COUNT_1US_SHIFT)
+
+#define TIMER_H_CNT_COMP TIMER_H_US_TO_COUNT(0xffffffff)
+#define TIMER_L_CNT_COMP TIMER_L_US_TO_COUNT(0xffffffff)
+
 #define FREE_EXT_TIMER_L     EXT_TIMER_3
 #define FREE_EXT_TIMER_H     EXT_TIMER_4
 #define FAN_CTRL_EXT_TIMER   EXT_TIMER_5
 #define EVENT_EXT_TIMER      EXT_TIMER_6
 #define WDT_EXT_TIMER        EXT_TIMER_7
+#define LOW_POWER_EXT_TIMER  EXT_TIMER_8
 
 enum ext_timer_clock_source {
 	EXT_PSR_32P768K_HZ = 0,
@@ -35,7 +54,7 @@ enum ext_timer_sel {
 	EXT_TIMER_6,
 	/* For WDT capture important state information before being reset */
 	EXT_TIMER_7,
-	/* reserved */
+	/* HW timer for low power mode */
 	EXT_TIMER_8,
 	EXT_TIMER_COUNT,
 };
@@ -43,6 +62,7 @@ enum ext_timer_sel {
 struct ext_timer_ctrl_t {
 	volatile uint8_t *mode;
 	volatile uint8_t *polarity;
+	volatile uint8_t *isr;
 	uint8_t mask;
 	uint8_t irq;
 };
@@ -52,6 +72,7 @@ void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq);
 void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq);
 void fan_ext_timer_interrupt(void);
 void update_exc_start_time(void);
+
 /**
  * Config a external timer.
  *

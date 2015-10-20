@@ -378,6 +378,18 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	int irq = gpio_to_irq(gpio_list[signal].port, gpio_list[signal].mask);
+
+	if (irq == -1)
+		return EC_ERROR_UNKNOWN;
+
+	*(wuesr(gpio_irqs[irq].wuc_group)) = gpio_irqs[irq].wuc_mask;
+	task_clear_pending_irq(irq);
+	return EC_SUCCESS;
+}
+
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;

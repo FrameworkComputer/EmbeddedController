@@ -56,52 +56,36 @@
  * 8 MHz 32-bit timer to handle events.
  */
 
-#define TIMER_COUNT_1US_SHIFT      3
-
-/* Combinational mode, microseconds to timer counter setting register */
-#define TIMER_H_US_TO_COUNT(us)  ((us) >> (24 - TIMER_COUNT_1US_SHIFT))
-#define TIMER_L_US_TO_COUNT(us)  (((us) << TIMER_COUNT_1US_SHIFT) & 0x00ffffff)
-
-/* Free running timer counter observation value to microseconds */
-#define TIMER_H_COUNT_TO_US(cnt) ((~(cnt)) << (24 - TIMER_COUNT_1US_SHIFT))
-#define TIMER_L_COUNT_TO_US(cnt) (((cnt) & 0x00ffffff) >> TIMER_COUNT_1US_SHIFT)
-
-/* Microseconds to event timer counter setting register */
-#define EVENT_TIMER_US_TO_COUNT(us)  ((us) << TIMER_COUNT_1US_SHIFT)
-/* Event timer counter observation value to microseconds */
-#define EVENT_TIMER_COUNT_TO_US(cnt) ((cnt) >> TIMER_COUNT_1US_SHIFT)
-
-#define TIMER_H_CNT_COMP TIMER_H_US_TO_COUNT(0xffffffff)
-#define TIMER_L_CNT_COMP TIMER_L_US_TO_COUNT(0xffffffff)
-
 #define MS_TO_COUNT(hz, ms) ((hz) * (ms) / 1000)
 
 const struct ext_timer_ctrl_t et_ctrl_regs[] = {
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x08,
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x08,
 		IT83XX_IRQ_EXT_TIMER3},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x10,
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x10,
 		IT83XX_IRQ_EXT_TIMER4},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x20,
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x20,
 		IT83XX_IRQ_EXT_TIMER5},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x40,
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x40,
 		IT83XX_IRQ_EXT_TIMER6},
-	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, 0x80,
+	{&IT83XX_INTC_IELMR19, &IT83XX_INTC_IPOLR19, &IT83XX_INTC_ISR19, 0x80,
 		IT83XX_IRQ_EXT_TIMER7},
-	{&IT83XX_INTC_IELMR10, &IT83XX_INTC_IPOLR10, 0x01,
+	{&IT83XX_INTC_IELMR10, &IT83XX_INTC_IPOLR10, &IT83XX_INTC_ISR10, 0x01,
 		IT83XX_IRQ_EXT_TMR8},
 };
 BUILD_ASSERT(ARRAY_SIZE(et_ctrl_regs) == EXT_TIMER_COUNT);
 
 static void free_run_timer_config_counter(uint32_t us)
 {
+	/* bit0, timer stop */
+	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) &= ~(1 << 0);
 	/*
 	 * microseconds to timer counter,
 	 * timer 3(TIMER_L) and 4(TIMER_H) combinational mode
 	 */
 	IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = TIMER_H_US_TO_COUNT(us);
 	IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) = TIMER_L_US_TO_COUNT(us);
-	/* bit1, timer re-start */
-	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 1);
+	/* bit[0,1], timer start and reset */
+	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= 3;
 }
 
 static void free_run_timer_clear_pending_isr(void)
@@ -174,9 +158,9 @@ void __hw_clock_source_set(uint32_t ts)
 		ext_timer_ms(FREE_EXT_TIMER_L, EXT_PSR_8M_HZ, 1, 1,
 			TIMER_L_US_TO_COUNT(start_us), 1, 1);
 	} else {
-		free_run_timer_clear_pending_isr();
 		/* set timer counter only */
 		free_run_timer_config_counter(start_us);
+		free_run_timer_clear_pending_isr();
 		task_enable_irq(et_ctrl_regs[FREE_EXT_TIMER_H].irq);
 		task_enable_irq(et_ctrl_regs[FREE_EXT_TIMER_L].irq);
 	}
@@ -282,10 +266,13 @@ static void __hw_clock_source_irq(void)
 		 * 0xfffff8(TIMER_L_COUNT_TO_US(0xffffffff)).
 		 */
 		if (IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H)) {
+			/* bit0, timer stop */
+			IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) &= ~(1 << 0);
 			IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) =
 				TIMER_L_US_TO_COUNT(0xffffffff);
 			IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) -= 1;
-			IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 1);
+			/* bit[0,1], timer start and reset */
+			IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= 3;
 			update_exc_start_time();
 		} else {
 			free_run_timer_overflow();

@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "intc.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -177,6 +178,27 @@ static void host_uart_config(void)
 	IT83XX_UART_FCR(UART_PORT_HOST) = 0x07;
 }
 #endif
+
+#ifdef CONFIG_LOW_POWER_IDLE
+void uart_enter_dsleep(void)
+{
+	gpio_clear_pending_interrupt(GPIO_UART1_RX);
+	gpio_enable_interrupt(GPIO_UART1_RX);
+}
+
+void uart_exit_dsleep(void)
+{
+	gpio_disable_interrupt(GPIO_UART1_RX);
+	gpio_clear_pending_interrupt(GPIO_UART1_RX);
+}
+
+void uart_deepsleep_interrupt(enum gpio_signal signal)
+{
+	clock_refresh_console_in_use();
+	/* Disable interrupts on UART1 RX pin to avoid repeated interrupts. */
+	gpio_disable_interrupt(GPIO_UART1_RX);
+}
+#endif /* CONFIG_LOW_POWER_IDLE */
 
 void uart_init(void)
 {

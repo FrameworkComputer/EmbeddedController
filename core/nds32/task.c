@@ -9,6 +9,8 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "hwtimer_chip.h"
+#include "intc.h"
 #include "irq_chip.h"
 #include "link_defs.h"
 #include "registers.h"
@@ -58,6 +60,10 @@ static uint64_t exc_total_time;  /* Total time in exceptions */
 static uint32_t svc_calls;       /* Number of service calls */
 static uint32_t task_switches;   /* Number of times active task changed */
 static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
+static uint32_t exc_current_fth;
+static uint32_t exc_current_ftl;
+#endif
 #endif
 
 extern int __task_start(void);
@@ -92,8 +98,10 @@ void __idle(void)
 		task_enable_irq(IT83XX_IRQ_WKINTAD);
 #endif
 
+#ifdef CHIP_FAMILY_IT83XX
 		/* doze mode */
-		IT83XX_ECPM_PLLCTRL = 0x00;
+		IT83XX_ECPM_PLLCTRL = EC_PLL_DOZE;
+#endif
 		asm volatile ("dsb");
 		/*
 		 * Wait for the next irq event.  This stops the CPU clock
@@ -341,6 +349,10 @@ void update_exc_start_time(void)
 {
 #ifdef CONFIG_TASK_PROFILING
 	exc_start_time = get_time().val;
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
+	exc_current_fth = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
+	exc_current_ftl = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L);
+#endif
 #endif
 }
 
@@ -348,15 +360,20 @@ void start_irq_handler(void)
 {
 #ifdef CONFIG_TASK_PROFILING
 	int irq;
-
+#endif
 	/* save r0, r1, and r2 for syscall */
 	asm volatile ("smw.adm $r0, [$sp], $r2, 0");
-
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
+	clock_sleep_mode_wakeup_isr();
+#endif
+#ifdef CONFIG_TASK_PROFILING
 	update_exc_start_time();
 
 	irq = get_sw_int();
+#ifdef CHIP_FAMILY_IT83XX
 	if (!irq)
 		irq = IT83XX_INTC_AIVCT - 16;
+#endif
 
 	/*
 	 * Track IRQ distribution.  No need for atomic add, because an IRQ
@@ -364,10 +381,9 @@ void start_irq_handler(void)
 	 */
 	if ((irq > 0) && (irq < ARRAY_SIZE(irq_dist)))
 		irq_dist[irq]++;
-
+#endif
 	/* restore r0, r1, and r2 */
 	asm volatile ("lmw.bim $r0, [$sp], $r2, 0");
-#endif
 }
 
 void end_irq_handler(void)
@@ -375,6 +391,9 @@ void end_irq_handler(void)
 #ifdef CONFIG_TASK_PROFILING
 	uint64_t t, p;
 
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
+	uint32_t c;
+#endif
 	/*
 	 * save r0 and fp (fp for restore r0-r5, r15, fp, lp and sp
 	 * while interrupt exit.
@@ -382,6 +401,13 @@ void end_irq_handler(void)
 	asm volatile ("smw.adm $r0, [$sp], $r0, 8");
 
 	t = get_time().val;
+#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
+	if (exc_current_fth != IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H)) {
+		c = (IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) + exc_current_ftl) -
+			IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L);
+		t = exc_start_time + (c >> TIMER_COUNT_1US_SHIFT);
+	}
+#endif
 	p = t - exc_start_time;
 
 	exc_total_time += p;
@@ -478,12 +504,20 @@ void task_enable_all_tasks(void)
 
 void task_enable_irq(int irq)
 {
+	uint32_t int_mask = get_int_mask();
+
+	interrupt_disable();
 	chip_enable_irq(irq);
+	set_int_mask(int_mask);
 }
 
 void task_disable_irq(int irq)
 {
+	uint32_t int_mask = get_int_mask();
+
+	interrupt_disable();
 	chip_disable_irq(irq);
+	set_int_mask(int_mask);
 }
 
 void task_clear_pending_irq(int irq)
@@ -494,6 +528,7 @@ void task_clear_pending_irq(int irq)
 void task_trigger_irq(int irq)
 {
 	int cpu_int = chip_trigger_irq(irq);
+
 	if (cpu_int > 0) {
 		sw_int_num = irq;
 		__schedule(0, 0, cpu_int);
