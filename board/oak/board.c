@@ -189,13 +189,6 @@ void pd_send_host_event(int mask)
 	host_set_single_event(EC_HOST_EVENT_PD_MCU);
 }
 
-void __board_i2c_set_timeout(int port, uint32_t timeout)
-{
-}
-
-void i2c_set_timeout(int port, uint32_t timeout)
-		__attribute__((weak, alias("__board_i2c_set_timeout")));
-
 /**
  * There is a level shift for AC_OK & LID_OPEN signal between AP & EC,
  * disable it (drive high) when AP is off, otherwise enable it (drive low).

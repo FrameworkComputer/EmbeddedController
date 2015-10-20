@@ -40,6 +40,18 @@
 #endif
 #endif
 
+
+/* I2C port state data */
+struct i2c_port_data {
+	uint32_t timeout_us;    /* Transaction timeout, or 0 to use default */
+};
+static struct i2c_port_data pdata[I2C_PORT_COUNT];
+
+void i2c_set_timeout(int port, uint32_t timeout)
+{
+	pdata[port].timeout_us = timeout ? timeout : I2C_TX_TIMEOUT_MASTER;
+}
+
 /**
  * Wait for ISR register to contain the specified mask.
  *
@@ -48,7 +60,7 @@
  */
 static int wait_isr(int port, int mask)
 {
-	uint64_t timeout = get_time().val + I2C_TX_TIMEOUT_MASTER;
+	uint64_t timeout = get_time().val + pdata[port].timeout_us;
 
 	while (get_time().val < timeout) {
 		int isr = STM32_I2C_ISR(port);
@@ -143,6 +155,9 @@ defined(CONFIG_LOW_POWER_IDLE) && \
 
 	/* Set up initial bus frequencies */
 	i2c_set_freq_port(p);
+
+	/* Set up default timeout */
+	i2c_set_timeout(port, 0);
 }
 
 /*****************************************************************************/
