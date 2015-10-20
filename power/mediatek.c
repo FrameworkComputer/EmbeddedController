@@ -225,6 +225,18 @@ static int is_power_good_asserted(void)
  */
 static int is_power_good_deasserted(void)
 {
+	/*
+	 * Warm reset key from servo board lets the POWER_GOOD signal
+	 * deasserted temporarily (about 1~2 seconds) on rev4.
+	 * In order to detect this case, check the AP_RESET_L status,
+	 * ignore the transient state if reset key is pressing.
+	 */
+	if (system_get_board_version() >= 4) {
+		if (0 == gpio_get_level(GPIO_AP_RESET_L)) {
+			return 0;
+		}
+	}
+
 	if (!(power_get_signals() & IN_POWER_GOOD))
 		usleep(POWER_DEBOUNCE_TIME);
 
