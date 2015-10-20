@@ -1074,8 +1074,19 @@ static int init(const struct motion_sensor_t *s)
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
-	if (tmp != BMI160_CHIP_ID_MAJOR)
+	if (tmp != BMI160_CHIP_ID_MAJOR) {
+		/* The device may be lock on paging mode. Try to unlock it. */
+		raw_write8(s->addr, BMI160_CMD_REG,
+				BMI160_CMD_EXT_MODE_EN_B0);
+		raw_write8(s->addr, BMI160_CMD_REG,
+				BMI160_CMD_EXT_MODE_EN_B1);
+		raw_write8(s->addr, BMI160_CMD_REG,
+				BMI160_CMD_EXT_MODE_EN_B2);
+		raw_write8(s->addr, BMI160_CMD_EXT_MODE_ADDR,
+				BMI160_CMD_PAGING_EN);
+		raw_write8(s->addr, BMI160_CMD_EXT_MODE_ADDR, 0);
 		return EC_ERROR_ACCESS_DENIED;
+	}
 
 
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
