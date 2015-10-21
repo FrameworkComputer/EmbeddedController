@@ -135,6 +135,8 @@ if [ -z "${FLAGS_board}" -a -z "${FLAGS_chip}" ]; then
 fi
 
 SERVO_TYPE=servo
+BOARD=${FLAGS_board}
+BOARD_ROOT=/build/${BOARD}
 
 in_array() {
 	local n=$#
@@ -147,6 +149,30 @@ in_array() {
 	done
 	return 1
 }
+
+if $(in_array "${BOARDS_LM4[@]}" "${BOARD}"); then
+	CHIP="lm4"
+elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
+	CHIP="stm32"
+elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
+	CHIP="stm32_dfu"
+elif $(in_array "${BOARDS_NPCX_JTAG[@]}" "${BOARD}"); then
+	CHIP="npcx_jtag"
+elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
+	CHIP="npcx_spi"
+elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
+	CHIP="nrf51"
+elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
+	CHIP="mec1322"
+elif [ -n "${FLAGS_chip}" ]; then
+	CHIP="${FLAGS_chip}"
+else
+	die "board ${BOARD} not supported"
+fi
+
+if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
+	die "board ${BOARD} doesn't use chip ${FLAGS_chip}"
+fi
 
 servo_has_warm_reset() {
 	dut_control warm_reset >/dev/null 2>&1
@@ -222,9 +248,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-BOARD=${FLAGS_board}
-BOARD_ROOT=/build/${BOARD}
-
 # Possible default EC images
 if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 	EC_FILE=ec.RO.flat
@@ -285,7 +308,7 @@ esac
 
 servo_VARS="${MCU}_uart_en ${MCU}_uart_parity \
 ${MCU}_uart_baudrate jtag_buf_on_flex_en jtag_buf_en dev_mode"
-if $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
+if [ "${CHIP}" = "stm32" ] ; then
 	servo_VARS+=" ${MCU}_boot_mode"
 fi
 if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
@@ -520,30 +543,6 @@ EC_UART="$(ec_uart)"
 info "${MCU} UART pty : ${EC_UART}"
 
 save="$(servo_save)"
-
-if $(in_array "${BOARDS_LM4[@]}" "${BOARD}"); then
-	CHIP="lm4"
-elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
-	CHIP="stm32"
-elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
-	CHIP="stm32_dfu"
-elif $(in_array "${BOARDS_NPCX_JTAG[@]}" "${BOARD}"); then
-	CHIP="npcx_jtag"
-elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
-	CHIP="npcx_spi"
-elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
-	CHIP="nrf51"
-elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
-	CHIP="mec1322"
-elif [ -n "${FLAGS_chip}" ]; then
-	CHIP="${FLAGS_chip}"
-else
-	die "board ${BOARD} not supported"
-fi
-
-if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
-	die "board ${BOARD} doesn't use chip ${FLAGS_chip}"
-fi
 
 info "Flashing chip ${CHIP}."
 flash_${CHIP}
