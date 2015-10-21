@@ -83,8 +83,6 @@ static const struct {
 	[IT83XX_IRQ_WKO22] =    {GPIO_C, (1<<4),        2, (1<<2)},
 	[IT83XX_IRQ_WKO23] =    {GPIO_C, (1<<6),        2, (1<<3)},
 	[IT83XX_IRQ_WKO24] =    {GPIO_D, (1<<2),        2, (1<<4)},
-/* E4 is also on WKO114: this one might be a documentation error ? */
-/*	[IT83XX_IRQ_WKO25] =    {GPIO_E, (1<<4),        2, (1<<5)},*/
 	[IT83XX_IRQ_WKO60] =    {GPIO_H, (1<<0),        6, (1<<0)},
 	[IT83XX_IRQ_WKO61] =    {GPIO_H, (1<<1),        6, (1<<1)},
 	[IT83XX_IRQ_WKO62] =    {GPIO_H, (1<<2),        6, (1<<2)},
