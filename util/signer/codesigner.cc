@@ -197,8 +197,7 @@ bool readXML(const string& filename,
 // Read JSON, populate map, name -> val
 bool readJSON(const string& filename,
               string* tag,
-              uint32_t* keyId,
-              uint32_t* p4cl,
+              map<string, uint32_t>* values,
               map<string, uint32_t>* fusemap,
               map<string, uint32_t>* infomap) {
   bool result = false;
@@ -207,14 +206,15 @@ bool readJSON(const string& filename,
   if (ifs) {
 
     // Touch up a bit to allow for comments.
+    // Beware: we drop everything past and including '//' from any line.
+    //         Thus '//' cannot be substring of any value..
     string s;
     while (ifs) {
       string line;
       getline(ifs, line);
-      size_t nonspace = line.find_first_not_of(" \t");
-      if (nonspace != string::npos &&
-          line.find("//", nonspace) == nonspace) {
-        continue;
+      size_t slash = line.find("//");
+      if (slash != string::npos) {
+        line.erase(slash);
       }
       s.append(line);
     }
@@ -224,26 +224,45 @@ bool readJSON(const string& filename,
     if (d.Parse(s.c_str()).HasParseError()) {
       FATAL("JSON %s[%lu]: parse error\n", filename.c_str(), d.GetErrorOffset());
     } else {
+
+#define CHECKVALUE(x) do { \
+    if (!d.HasMember(x)){FATAL("manifest is lacking field '%s'\n", x);}; \
+  } while (0)
+
+#define GETVALUE(x) do { \
+    if (!d.HasMember(x)){FATAL("manifest is lacking field '%s'\n", x);}; \
+    values->insert(make_pair(x, d[x].GetInt())); \
+  } while (0)
+
+      CHECKVALUE("fuses");
       const rapidjson::Document::ValueType& fuses = d["fuses"];
-      for (auto it = fuses.MemberBegin(); it != fuses.MemberEnd(); ++it) {
+      for (rapidjson::Value::ConstMemberIterator it = fuses.MemberBegin(); it != fuses.MemberEnd(); ++it) {
         fusemap->insert(make_pair(it->name.GetString(), it->value.GetInt()));
       }
 
+      CHECKVALUE("info");
       const rapidjson::Document::ValueType& infos = d["info"];
-      for (auto it = infos.MemberBegin(); it != infos.MemberEnd(); ++it) {
+      for (rapidjson::Value::ConstMemberIterator it = infos.MemberBegin(); it != infos.MemberEnd(); ++it) {
         infomap->insert(make_pair(it->name.GetString(), it->value.GetInt()));
       }
 
-      const rapidjson::Document::ValueType& keyid = d["keyId"];
-      *keyId = keyid.GetInt();
+      GETVALUE("keyid");
+      GETVALUE("p4cl");
+      GETVALUE("epoch");
+      GETVALUE("major");
+      GETVALUE("minor");
+      GETVALUE("applysec");
+      GETVALUE("config1");
 
-      const rapidjson::Document::ValueType& P4cl = d["p4cl"];
-      *p4cl = P4cl.GetInt();
-
+      CHECKVALUE("tag");
       const rapidjson::Document::ValueType& Tag = d["tag"];
       tag->assign(Tag.GetString());
 
       result = true;
+
+#undef GETVALUE
+#undef CHECKVALUE
+
     }
   }
 #endif  // HAVE_JSON
@@ -350,23 +369,42 @@ int main(int argc, char* argv[]) {
   hdr.ro_base = image.ro_base();
   hdr.ro_max = image.ro_max();
   hdr.rx_base = image.rx_base();
-  hdr.rx_max = image.rx_max();
+  hdr.rx_max = image.rx_max() + 12;  // TODO: m3 I prefetch sets off GLOBALSEC when too tight
+                                     //       make sure these are nops or such?
+  hdr.timestamp_ = time(NULL);
 
   // Parse signing manifest.
+  map<string, uint32_t> values;
   map<string, uint32_t> fuses;
   map<string, uint32_t> infos;
-  uint32_t keyId = key.n0inv();  // default, in case no JSON.
-  uint32_t json_p4cl = 0;
   string tag;
 
+  if (jsonFilename.empty()) {
+    // Defaults, in case no JSON
+    values.insert(make_pair("keyid", key.n0inv()));
+    values.insert(make_pair("epoch", 0x1337));
+  }
+
   if (!jsonFilename.empty() &&
-      !readJSON(jsonFilename, &tag, &keyId, &json_p4cl, &fuses, &infos)) {
+      !readJSON(jsonFilename, &tag, &values, &fuses, &infos)) {
     FATAL("Failed to read JSON from '%s'\n", jsonFilename.c_str());
   }
 
+  // Fill in more of hdr, per manifest values
+  for (map<string, uint32_t>::const_iterator it = values.begin(); it != values.end(); ++it) {
+    VERBOSE("%s : %u\n", it->first.c_str(), it->second);
+  }
+
+  hdr.p4cl_ = values["p4cl"];
+  hdr.epoch_ = values["epoch"];
+  hdr.major_ = values["major"];
+  hdr.minor_ = values["minor"];
+  hdr.applysec_ = values["applysec"];
+  hdr.config1_ = values["config1"];
+
   // Check keyId.
-  if (keyId != hdr.keyid) {
-    FATAL("mismatched keyid JSON %u vs. key %u\n", keyId, hdr.keyid);
+  if (values["keyid"] != hdr.keyid) {
+    FATAL("mismatched keyid JSON %d vs. key %d\n", values["keyid"], hdr.keyid);
   }
 
   // Fill in tag.
@@ -375,8 +413,8 @@ int main(int argc, char* argv[]) {
 
   // List the specific fuses and values.
   VERBOSE("care about %lu fuses:\n", fuses.size());
-  for (auto it : fuses) {
-    VERBOSE("fuse '%s' should have value %u\n", it.first.c_str(), it.second);
+  for (map<string, uint32_t>::const_iterator it = fuses.begin(); it != fuses.end(); ++it) {
+    VERBOSE("fuse '%s' should have value %u\n", it->first.c_str(), it->second);
   }
 
   // Parse xml.
@@ -389,16 +427,17 @@ int main(int argc, char* argv[]) {
     FATAL("Failed to read XML from '%s'\n", xmlFilename.c_str());
   }
 
-  if (json_p4cl != xml_p4cl) {
+  if (values["p4cl"] != xml_p4cl) {
     FATAL("mismatching p4cl: xml %u vs. json %u\n",
-            xml_p4cl, json_p4cl);
+            xml_p4cl, values["p4cl"]);
   }
 
   VERBOSE("found %lu fuse definitions\n", fuse_ids.size());
   assert(fuse_ids.size() < FUSE_MAX);
-  for (auto it : fuse_ids) {
+
+  for (map<string, uint32_t>::const_iterator it = fuse_ids.begin(); it != fuse_ids.end(); ++it) {
     VERBOSE("fuse '%s' at %u, width %u\n",
-          it.first.c_str(), it.second, fuse_bits[it.first]);
+          it->first.c_str(), it->second, fuse_bits[it->first]);
   }
 
 
@@ -406,19 +445,19 @@ int main(int argc, char* argv[]) {
   uint32_t fuse_values[FUSE_MAX];
   for (size_t i = 0; i < FUSE_MAX; ++i) fuse_values[i] = FUSE_IGNORE;
 
-  for (auto x : fuses) {
-    map<string, uint32_t>::const_iterator it = fuse_ids.find(x.first);
+  for (map<string, uint32_t>::const_iterator x = fuses.begin(); x != fuses.end(); ++x) {
+    map<string, uint32_t>::const_iterator it = fuse_ids.find(x->first);
     if (it == fuse_ids.end()) {
-      FATAL("cannot find definition for fuse '%s'\n", x.first.c_str());
+      FATAL("cannot find definition for fuse '%s'\n", x->first.c_str());
     }
     uint32_t idx = it->second;
     assert(idx < FUSE_MAX);
-    uint32_t mask = (1 << fuse_bits[x.first]) - 1;
-    if ((x.second & mask) != x.second) {
+    uint32_t mask = (1 << fuse_bits[x->first]) - 1;
+    if ((x->second & mask) != x->second) {
       FATAL("specified fuse value too large\n");
     }
     uint32_t val = FUSE_PADDING & ~mask;
-    val |= x.second;
+    val |= x->second;
 
     fuse_values[idx] = val;
     hdr.markFuse(idx);
@@ -436,11 +475,11 @@ int main(int argc, char* argv[]) {
   uint32_t info_values[INFO_MAX];
   for (size_t i = 0; i < INFO_MAX; ++i) info_values[i] = INFO_IGNORE;
 
-  for (auto x : infos) {
-    uint32_t index = atoi(x.first.c_str());
+  for (map<string, uint32_t>::const_iterator x = infos.begin(); x != infos.end(); ++x) {
+    uint32_t index = atoi(x->first.c_str());
     assert(index < INFO_MAX);
 
-    info_values[index] ^= x.second;
+    info_values[index] ^= x->second;
 
     hdr.markInfo(index);
   }

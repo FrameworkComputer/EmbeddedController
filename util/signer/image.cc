@@ -46,6 +46,14 @@ Image::Image()
   memset(mem_, 0xff, sizeof(mem_));  // default memory content
 }
 
+void Image::randomize() {
+  int fd = open("/dev/urandom", O_RDONLY);
+  if (fd >= 0) {
+    read(fd, mem_, sizeof(mem_));
+    close(fd);
+  }
+}
+
 bool Image::fromElf(const string& filename) {
   Elf* elf = NULL;
   Elf_Scn* scn = NULL;
@@ -389,35 +397,54 @@ bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
   hdr->keyid = key.n0inv();
   key.modToArray(hdr->key, key.rwords());
 
-  // Hash img
-  int size = this->size() - offsetof(SignedHeader, tag);
-  SHA256_Init(&sha256);
-  SHA256_Update(&sha256, &hdr->tag, size);
-  SHA256_Final(hashes.img_hash, &sha256);
-
-  VERBOSE("img hash  :");
-  for (size_t i = 0; i < sizeof(hashes.img_hash); ++i) {
-    VERBOSE("%02x", hashes.img_hash[i]);
-  }
-  VERBOSE("\n");
-
   // Hash fuses
   SHA256_Init(&sha256);
   SHA256_Update(&sha256, fuses, FUSE_MAX * sizeof(uint32_t));
   SHA256_Final(hashes.fuses_hash, &sha256);
 
-  VERBOSE("fuses hash:");
-  for (size_t i = 0; i < sizeof(hashes.fuses_hash); ++i) {
-    VERBOSE("%02x", hashes.fuses_hash[i]);
-  }
-  VERBOSE("\n");
+  hdr->fuses_chk_ =
+        (hashes.fuses_hash[0] << 0)
+      | (hashes.fuses_hash[1] << 8)
+      | (hashes.fuses_hash[2] << 16)
+      | (hashes.fuses_hash[3] << 24);
 
   // Hash info
   SHA256_Init(&sha256);
   SHA256_Update(&sha256, info, INFO_MAX * sizeof(uint32_t));
   SHA256_Final(hashes.info_hash, &sha256);
 
-  VERBOSE("info hash :");
+  hdr->info_chk_ =
+        (hashes.info_hash[0] << 0)
+      | (hashes.info_hash[1] << 8)
+      | (hashes.info_hash[2] << 16)
+      | (hashes.info_hash[3] << 24);
+
+  // Hash img
+  int size = this->size() - offsetof(SignedHeader, tag);
+  SHA256_Init(&sha256);
+  SHA256_Update(&sha256, &hdr->tag, size);
+  SHA256_Final(hashes.img_hash, &sha256);
+
+  hdr->img_chk_ =
+        (hashes.img_hash[0] << 0)
+      | (hashes.img_hash[1] << 8)
+      | (hashes.img_hash[2] << 16)
+      | (hashes.img_hash[3] << 24);
+
+  // Dump out values for comparing against boot_rom
+  VERBOSE("Himg =");
+  for (size_t i = 0; i < sizeof(hashes.img_hash); ++i) {
+    VERBOSE("%02x", hashes.img_hash[i]);
+  }
+  VERBOSE("\n");
+
+  VERBOSE("Hfss =");
+  for (size_t i = 0; i < sizeof(hashes.fuses_hash); ++i) {
+    VERBOSE("%02x", hashes.fuses_hash[i]);
+  }
+  VERBOSE("\n");
+
+  VERBOSE("Hinf =");
   for (size_t i = 0; i < sizeof(hashes.info_hash); ++i) {
     VERBOSE("%02x", hashes.info_hash[i]);
   }

@@ -57,6 +57,8 @@ class PublicKey {
   // outputs rwords() words.
   void toArray(uint32_t* dst);
 
+  int writeToGnubby();
+
  private:
   EVP_PKEY* key_;
   bool publicOnly_;

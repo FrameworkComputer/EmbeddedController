@@ -12,6 +12,8 @@
 
 typedef struct env_md_ctx_st EVP_MD_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
+typedef struct rsa_st RSA;
+typedef struct bignum_st BIGNUM;
 
 class Gnubby {
  public:
@@ -20,7 +22,9 @@ class Gnubby {
 
   bool ok() const { return handle_ != NULL; }
 
-  int Sign(EVP_MD_CTX* ctx, uint8_t* signature, uint32_t* siglen, EVP_PKEY* key);
+  int sign(EVP_MD_CTX* ctx, uint8_t* signature, uint32_t* siglen, EVP_PKEY* key);
+
+  int write(RSA* rsa);
 
  private:
   int send_to_device(uint8_t instruction,
@@ -28,6 +32,12 @@ class Gnubby {
                      size_t length);
 
   int receive_from_device(uint8_t* dest, size_t length);
+
+  int write_bn(uint8_t ins, BIGNUM* n, size_t length);
+  int doSign(EVP_MD_CTX* ctx, uint8_t* padded_req,  uint8_t* signature,
+             uint32_t* siglen, EVP_PKEY* key);
+  // Open a gnubby, unspecified selection made when multiple plugged in.
+  int open();
 
   libusb_context* ctx_;
   libusb_device_handle* handle_;

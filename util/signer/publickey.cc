@@ -225,8 +225,8 @@ int PublicKey::sign(const void* msg, size_t msglen, BIGNUM** output) {
     // TODO: 2k -> gnubby, 3k -> HSM?
 
     Gnubby gnubby;
-    result = gnubby.Sign(ctx, sig, &siglen, key_);
-    fprintf(stderr, "gnubby.Sign: %d\n", result);
+    result = gnubby.sign(ctx, sig, &siglen, key_);
+    fprintf(stderr, "Gnubby.sign: %d\n", result);
   } else {
     VERBOSE("ossl signing..");
     result = EVP_SignFinal(ctx, sig, &siglen, key_);
@@ -251,6 +251,19 @@ __fail:
   if (sig) free(sig);
   if (ctx) EVP_MD_CTX_destroy(ctx);
   if (bnctx) BN_CTX_free(bnctx);
+
+  return result;
+}
+
+int PublicKey::writeToGnubby() {
+  if (publicOnly_) return -1;
+
+  RSA* rsa = EVP_PKEY_get1_RSA(key_);
+
+  Gnubby gnubby;
+  int result = gnubby.write(rsa);
+
+  RSA_free(rsa);
 
   return result;
 }

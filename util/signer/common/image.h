@@ -19,6 +19,8 @@ class Image {
   Image();
   ~Image();
 
+  void randomize();
+
   bool fromIntelHex(const std::string& filename, bool withSignature = true);
   bool fromElf(const std::string& filename);
 

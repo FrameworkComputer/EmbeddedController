@@ -15,7 +15,9 @@
 #include <pwd.h>
 
 #include <libusb-1.0/libusb.h>
+#include <openssl/bn.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
 #include <openssl/sha.h>
 
 #include <common/aes.h>
@@ -25,7 +27,8 @@
 
 #define MAX_APDU_SIZE 1200
 #define LIBUSB_ERR -1
-#define VERBOSE
+
+extern bool FLAGS_verbose;
 
 // Largely from gnubby ifd_driver.c
 // -----
@@ -39,8 +42,7 @@ typedef DWORD* PDWORD;
 #define IFD_SUCCESS 0
 #define IFD_COMMUNICATION_ERROR -1
 
-//#define DLOG(...) fprintf(stderr, __VA_ARGS__)
-#define DLOG(...)
+#define DLOG(...) do{if(FLAGS_verbose){fprintf(stderr, __VA_ARGS__);}}while(0)
 
 // usb gnubby commands
 #define CMD_ATR  0x81
@@ -240,23 +242,10 @@ RESPONSECODE gnubby_wink(libusb_device_handle* handle) {
 
 
 // Open a usb device and return (handle_, context).
-Gnubby::Gnubby() {
+Gnubby::Gnubby()
+    : handle_(NULL) {
   libusb_init(&ctx_);
   libusb_set_debug(ctx_, 3);
-
-  handle_ = libusb_open_device_with_vid_pid(
-      ctx_,
-      0x1050,  // Gnubby Vendor ID (VID)
-      0x0211   // Gnubby Product ID (PID)
-      );
-  DLOG("gnubby dev_handle_ %p\n", handle_);
-  int rc = libusb_claim_interface(handle_, 0);
-  DLOG("gnubby claim : %d\n", rc);
-
-  if (rc != 0) {
-    if (handle_) libusb_close(handle_);
-    handle_ = NULL;
-  }
 }
 
 // Close a usb device.
@@ -343,19 +332,17 @@ void forgetToken(const uint8_t* fp) {
   unlink(tokenFilename(fp).c_str());
 }
 
-int Gnubby::Sign(EVP_MD_CTX* ctx, uint8_t* signature, uint32_t* siglen,
-                 EVP_PKEY* key) {
-  // build pkcs1.5 request for ctx hash
-  // lock(100)
-  // select ssh
-  // read slot 0x66
-  // compare against key
-  // try read token from ~/.tmp/attest-fp
-  // loop
-  //  - send sign request
-  //  - handle PIN, touch
-  //  unlock()
-  //  profit!
+static
+bool isGnubby(libusb_device *dev) {
+  struct libusb_device_descriptor lsb_desc;
+  if (!libusb_get_device_descriptor(dev, &lsb_desc)) {
+    return lsb_desc.idVendor == 0x1050 && lsb_desc.idProduct == 0x0211;
+  }
+  return false;
+}
+
+int Gnubby::doSign(EVP_MD_CTX* ctx, uint8_t* padded_req, uint8_t* signature,
+                   uint32_t* siglen, EVP_PKEY* key) {
   RESPONSECODE result = -1;
 
   uint8_t fp[32];
@@ -368,23 +355,6 @@ int Gnubby::Sign(EVP_MD_CTX* ctx, uint8_t* signature, uint32_t* siglen,
   UCHAR req[1024];
   UCHAR resp[2048];
   DWORD resp_len = 0;
-
-  DWORD image_hash_len = SHA256_DIGEST_LENGTH;
-
-  // Compute pkc15 padded inputs for requested sha256.
-  // Brutal hard-coding ftw.
-  uint8_t padded_req[256];
-  memset(padded_req, 0xff, sizeof(padded_req));
-  padded_req[0] = 0x00;
-  padded_req[1] = 0x01;
-  // Fixed asn1 riddle for sha256
-  memcpy(padded_req + 256 - 32 - 20,
-         "\x00\x30\x31\x30\x0d\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01\x05\x00\x04\x20",
-         20);
-  // Append sha256
-  EVP_DigestFinal_ex(ctx,
-                     padded_req + sizeof(padded_req) - SHA256_DIGEST_LENGTH,
-                     &image_hash_len);
 
   // lock(100)
   result = gnubby_lock(handle_, (UCHAR)100);
@@ -412,7 +382,17 @@ __again:
   // save device fingerprint
   memcpy(fp, resp + 1 + 256 + 65 + 65, 32);
 
-  // TODO: compare against key
+  uint8_t pubkey[256];
+  if (key->type != EVP_PKEY_RSA
+      || EVP_PKEY_size(key) != 256
+      || BN_bn2bin(key->pkey.rsa->n, pubkey) != 256) {
+    goto __fail;
+  }
+  if (memcmp(pubkey, resp + 1, 256)) {
+    // Key mis-match, wrong gnubby selected?
+    DLOG("pubkey mis-match, at device handle: %p", handle_);
+    goto __fail;
+  }
 
   if (!getToken(fp, token)) {
     // PIN unlock required.
@@ -486,6 +466,163 @@ __again:
 
   // profit!
   result = 1;
+
+__fail:
+  // (always try to) unlock
+  gnubby_lock(handle_, 0);
+
+  return result;
+}
+
+int Gnubby::sign(EVP_MD_CTX* ctx, uint8_t* signature, uint32_t* siglen,
+                 EVP_PKEY* key) {
+  // build pkcs1.5 request for ctx hash
+  // lock(100)
+  // select ssh
+  // read slot 0x66
+  // compare against key
+  // try read token from ~/.tmp/attest-fp
+  // loop
+  //  - send sign request
+  //  - handle PIN, touch
+  //  unlock()
+  //  profit!
+  RESPONSECODE result = -1;
+  DWORD image_hash_len = SHA256_DIGEST_LENGTH;
+  libusb_device **device_list;
+  ssize_t num_devices = libusb_get_device_list(ctx_, &device_list);
+
+  // Compute pkc15 padded inputs for requested sha256.
+  // Brutal hard-coding ftw.
+  uint8_t padded_req[256];
+  memset(padded_req, 0xff, sizeof(padded_req));
+  padded_req[0] = 0x00;
+  padded_req[1] = 0x01;
+  // Fixed asn1 riddle for sha256
+  memcpy(padded_req + 256 - 32 - 20,
+         "\x00\x30\x31\x30\x0d\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01\x05\x00\x04\x20",
+         20);
+  // Append sha256
+  EVP_DigestFinal_ex(ctx,
+                     padded_req + sizeof(padded_req) - SHA256_DIGEST_LENGTH,
+                     &image_hash_len);
+
+  for (int i = 0; i < num_devices; i++) {
+    if (!isGnubby(device_list[i])) {
+      continue;
+    }
+    int rc = libusb_open(device_list[i], &handle_);
+    if (rc) {
+      DLOG("libusb_open() @ device index: %d failed: %d\n", i, rc);
+      continue;
+    }
+    rc = libusb_claim_interface(handle_, 0);
+    if (rc) {
+      DLOG("libusb_claim_interface() @ device index: %d failed: %d\n", i, rc);
+      if (handle_) {
+        libusb_close(handle_);
+        handle_ = NULL;
+      }
+      continue;
+    }
+    rc = doSign(ctx, padded_req, signature, siglen, key);
+    libusb_release_interface(handle_, 0);
+    libusb_close(handle_);
+    handle_ = NULL;
+    if (rc == 1) {
+      result = 1;
+      break;
+    }
+    // Try next device.
+  }
+
+  libusb_free_device_list(device_list, 1);
+  return result;
+}
+
+// Open a gnubby, unspecified selection made when multiple plugged in.
+int Gnubby::open() {
+  RESPONSECODE result = -1;
+  handle_ = libusb_open_device_with_vid_pid(
+      ctx_,
+      0x1050,  // Gnubby Vendor ID (VID)
+      0x0211   // Gnubby Product ID (PID)
+                                            );
+  DLOG("gnubby dev_handle_ %p\n", handle_);
+  int rc = libusb_claim_interface(handle_, 0);
+  DLOG("gnubby claim : %d\n", rc);
+
+  if (rc != 0) {
+    if (handle_) libusb_close(handle_);
+  } else {
+    result = 1;
+  }
+  return result;
+}
+
+int Gnubby::write_bn(uint8_t p1, BIGNUM* n, size_t length) {
+  RESPONSECODE result = -1;
+
+  UCHAR req[1024];
+  UCHAR resp[1024];
+  DWORD resp_len = 0;
+
+  if (!handle_) {
+    open();
+  }
+
+  memcpy(req, "\x00\x66\x00\x00\x00\x00\x00", 7);
+  req[2] = p1;
+  req[5] = length >> 8;
+  req[6] = length;
+
+  if (BN_bn2bin(n, req + 7) != int(length)) goto __fail;
+
+  resp_len = sizeof(resp);
+  result = gnubby_apdu(handle_,
+                       req, 7 + length,
+                       resp, &resp_len);
+  if (result != 0) goto __fail;
+
+  result = 1;
+  if (getSW12(resp, resp_len) != 0x9000) goto __fail;
+
+  result = 0;
+
+__fail:
+  return result;
+}
+
+int Gnubby::write(RSA* rsa) {
+  RESPONSECODE result = -1;
+
+  UCHAR resp[2048];
+  DWORD resp_len = 0;
+
+  // lock(100)
+  result = gnubby_lock(handle_, (UCHAR)100);
+  if (result != 0) goto __fail;
+  // TODO: handle busy etc.
+
+  // select ssh applet
+  resp_len = sizeof(resp);
+  result = gnubby_apdu(handle_,
+                       (PUCHAR)"\x00\xa4\x04\x00\x06\x53\x53\x48\x00\x01\x01", 11,
+                       resp, &resp_len);
+  if (result != 0) goto __fail;
+
+  result = 1;
+  if (getSW12(resp, resp_len) != 0x9000) goto __fail;
+
+  result = 0;
+
+  result = result || write_bn(0, rsa->p, 128);
+  result = result || write_bn(1, rsa->q, 128);
+  result = result || write_bn(2, rsa->dmp1, 128);
+  result = result || write_bn(3, rsa->dmq1, 128);
+  result = result || write_bn(4, rsa->iqmp, 128);
+  result = result || write_bn(5, rsa->n, 256);
+  result = result || write_bn(6, rsa->e, 1);
 
 __fail:
   // (always try to) unlock
