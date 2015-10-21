@@ -29,7 +29,7 @@
 /* Memory mapping */
 
 #define CONFIG_RAM_BASE             0x00080000
-#define CONFIG_RAM_SIZE             0x00004000
+#define CONFIG_RAM_SIZE             0x0000C000
 
 /* System stack size */
 #define CONFIG_STACK_SIZE           1024

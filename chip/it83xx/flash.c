@@ -66,18 +66,18 @@ enum flash_status_mask {
 
 enum dlm_address_view {
 	SCAR0_ILM0_DLM13   = 0x8D000, /* DLM ~ 0x8DFFF H2RAM map LPC I/O */
-	SCAR1_ILM1_DLM11   = 0x8B000, /* DLM ~ 0x8BFFF reserved */
+	SCAR1_ILM1_DLM11   = 0x8B000, /* DLM ~ 0x8BFFF ram 44K ~ 48K */
 	SCAR2_ILM2_DLM14   = 0x8E000, /* DLM ~ 0x8EFFF RO/RW flash code DMA */
-	SCAR3_ILM3_DLM6    = 0x86000, /* DLM ~ 0x86FFF reserved */
-	SCAR4_ILM4_DLM7    = 0x87000, /* DLM ~ 0x87FFF reserved */
-	SCAR5_ILM5_DLM8    = 0x88000, /* DLM ~ 0x88FFF reserved */
-	SCAR6_ILM6_DLM9    = 0x89000, /* DLM ~ 0x89FFF reserved */
-	SCAR7_ILM7_DLM10   = 0x8A000, /* DLM ~ 0x8AFFF reserved */
-	SCAR8_ILM8_DLM4    = 0x84000, /* DLM ~ 0x84FFF reserved */
-	SCAR9_ILM9_DLM5    = 0x85000, /* DLM ~ 0x85FFF reserved */
+	SCAR3_ILM3_DLM6    = 0x86000, /* DLM ~ 0x86FFF ram 24K ~ 28K */
+	SCAR4_ILM4_DLM7    = 0x87000, /* DLM ~ 0x87FFF ram 28K ~ 32K */
+	SCAR5_ILM5_DLM8    = 0x88000, /* DLM ~ 0x88FFF ram 32K ~ 36K */
+	SCAR6_ILM6_DLM9    = 0x89000, /* DLM ~ 0x89FFF ram 36K ~ 40K */
+	SCAR7_ILM7_DLM10   = 0x8A000, /* DLM ~ 0x8AFFF ram 40K ~ 44K */
+	SCAR8_ILM8_DLM4    = 0x84000, /* DLM ~ 0x84FFF ram 16K ~ 20K */
+	SCAR9_ILM9_DLM5    = 0x85000, /* DLM ~ 0x85FFF ram 20K ~ 24K */
 	SCAR10_ILM10_DLM2  = 0x82000, /* DLM ~ 0x82FFF ram 8K ~ 12K */
 	SCAR11_ILM11_DLM3  = 0x83000, /* DLM ~ 0x83FFF ram 12K ~ 16K */
-	SCAR12_ILM12_DLM12 = 0x8C000, /* DLM ~ 0x8CFFF reserved */
+	SCAR12_ILM12_DLM12 = 0x8C000, /* DLM ~ 0x8CFFF immu cache */
 };
 
 void FLASH_DMA_CODE dma_reset_immu(void)

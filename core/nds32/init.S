@@ -118,6 +118,18 @@ reset:
 	ori $r0, $r0, 0x0C
 	sbi $r0, [$r1]
 
+	/* Enable DLM 16k~36K bit[2-6] */
+	la  $r1, 0x00F0203E
+	lbi $r0, [$r1]
+	ori $r0, $r0, 0x7C
+	sbi $r0, [$r1]
+
+	/* Enable DLM 36k~48K bit[0-2] */
+	la  $r1, 0x00F02044
+	lbi $r0, [$r1]
+	ori $r0, $r0, 0x7
+	sbi $r0, [$r1]
+
 	/* Clear BSS */
 	la   $r0, _bss_start
 	lwi  $r1, [$r0]
