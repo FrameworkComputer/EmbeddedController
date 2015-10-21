@@ -53,7 +53,7 @@ static int ps8740_init(int i2c_addr)
 	res = ps8740_read(i2c_addr, PS8740_REG_REVISION_ID2, &val);
 	if (res)
 		return res;
-	if (val != PS8740_REVISION_ID2)
+	if (val < PS8740_REVISION_ID2)
 		return EC_ERROR_UNKNOWN;
 
 	res = ps8740_read(i2c_addr, PS8740_REG_CHIP_ID1, &val);
