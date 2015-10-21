@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "clock.h"
+#include "charge_state.h"
 #include "console.h"
 #include "host_command.h"
 #include "gpio.h"
@@ -616,6 +617,9 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	const uint8_t *out;
 	int in_len;
 	int ret;
+#if defined(VIRTUAL_BATTERY_ADDR) && defined(I2C_PORT_VIRTUAL_BATTERY)
+	uint8_t batt_param = 0;
+#endif
 
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
 	if (system_is_locked())
@@ -648,7 +652,7 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 		unsigned int addr = (msg->addr_flags & EC_I2C_ADDR_MASK) << 1;
 		int xferflags = I2C_XFER_START;
 		int read_len = 0, write_len = 0;
-		int rv;
+		int rv = 1;
 
 		if (msg->addr_flags & EC_I2C_FLAG_READ)
 			read_len = msg->len;
@@ -659,13 +663,26 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 		if (resp->num_msgs == params->num_msgs - 1)
 			xferflags |= I2C_XFER_STOP;
 
+#if defined(VIRTUAL_BATTERY_ADDR) && defined(I2C_PORT_VIRTUAL_BATTERY)
+		if (params->port == I2C_PORT_VIRTUAL_BATTERY &&
+		    VIRTUAL_BATTERY_ADDR == addr) {
+			/* get batt param from write msg */
+			if (*out)
+				batt_param = *out;
+			rv = virtual_battery_read(batt_param,
+						  &resp->data[in_len],
+						  read_len);
+		}
+#endif
 		/* Transfer next message */
 		PTHRUPRINTF("i2c passthru xfer port=%x, addr=%x, out=%p, "
 			    "write_len=%x, data=%p, read_len=%x, flags=%x",
 			    params->port, addr, out, write_len,
 			    &resp->data[in_len], read_len, xferflags);
-		rv = i2c_xfer(params->port, addr, out, write_len,
-			      &resp->data[in_len], read_len, xferflags);
+		if (rv)
+			rv = i2c_xfer(params->port, addr, out, write_len,
+				      &resp->data[in_len], read_len, xferflags);
+
 		if (rv) {
 			/* Driver will have sent a stop bit here */
 			if (rv == EC_ERROR_TIMEOUT)

@@ -303,6 +303,9 @@ void battery_get_params(struct batt_params *batt)
 	if (battery_full_charge_capacity(&batt_new.full_capacity))
 		batt_new.flags |= BATT_FLAG_BAD_FULL_CAPACITY;
 
+	if (battery_status(&batt_new.status))
+		batt_new.flags |= BATT_FLAG_BAD_STATUS;
+
 	/* If any of those reads worked, the battery is responsive */
 	if ((batt_new.flags & BATT_FLAG_BAD_ANY) != BATT_FLAG_BAD_ANY)
 		batt_new.flags |= BATT_FLAG_RESPONSIVE;

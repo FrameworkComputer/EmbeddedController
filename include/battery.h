@@ -65,6 +65,7 @@ struct batt_params {
 	int desired_current;  /* Charging current desired by battery (mA) */
 	int remaining_capacity;  /* Remaining capacity in mAh */
 	int full_capacity;    /* Capacity in mAh (might change occasionally) */
+	int status;	      /* Battery status */
 	enum battery_present is_present; /* Is the battery physically present */
 	int flags;            /* Flags */
 };
@@ -86,8 +87,9 @@ struct batt_params {
 #define BATT_FLAG_BAD_DESIRED_CURRENT		0x00000080
 #define BATT_FLAG_BAD_REMAINING_CAPACITY	0x00000100
 #define BATT_FLAG_BAD_FULL_CAPACITY		0x00000200
+#define BATT_FLAG_BAD_STATUS			0x00000400
 /* All of the above BATT_FLAG_BAD_* bits */
-#define BATT_FLAG_BAD_ANY			0x000003fc
+#define BATT_FLAG_BAD_ANY			0x000007fc
 
 /* Battery constants */
 struct battery_info {
