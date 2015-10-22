@@ -212,6 +212,11 @@ int pd_is_connected(int port)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
+void pd_vbus_low(int port)
+{
+	pd[port].flags &= ~PD_FLAGS_VBUS_NEVER_LOW;
+}
+
 static inline int pd_is_vbus_present(int port)
 {
 #ifdef CONFIG_USB_PD_TCPM_VBUS
@@ -542,12 +547,6 @@ static void execute_soft_reset(int port)
 	pd[port].msg_id = 0;
 	set_state(port, DUAL_ROLE_IF_ELSE(port, PD_STATE_SNK_DISCOVERY,
 						PD_STATE_SRC_DISCOVERY));
-#ifdef CONFIG_COMMON_RUNTIME
-	/* if flag to disable PD comms after soft reset, then disable comms */
-	if (pd[port].flags & PD_FLAGS_SFT_RST_DIS_COMM)
-		pd_comm_enable(0);
-#endif
-
 	CPRINTF("C%d Soft Rst\n", port);
 }
 
@@ -560,32 +559,6 @@ void pd_soft_reset(void)
 			set_state(i, PD_STATE_SOFT_RESET);
 			task_wake(PD_PORT_TO_TASK_ID(i));
 		}
-}
-
-void pd_prepare_reset(void)
-{
-	int i;
-
-	/*
-	 * On reset, we are most definitely going to drop pings (if any)
-	 * and lose all of our PD state. Instead of trying to remember all
-	 * the states and deal with on-going transmission, let's send soft
-	 * reset here and then disable PD communication until after sysjump
-	 * is complete so that the communication starts over without dropping
-	 * power.
-	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
-		if (pd_is_connected(i))
-			pd[i].flags |= PD_FLAGS_SFT_RST_DIS_COMM;
-
-	pd_soft_reset();
-
-	/*
-	 * Give time for soft reset to be sent
-	 * TODO (crosbug.com/p/45133): wait for soft reset to finish instead of
-	 * blind delay.
-	 */
-	usleep(8*MSEC);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
@@ -1410,6 +1383,15 @@ void pd_task(void)
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	/*
+	 * If VBUS is high, then initialize flag for VBUS has always been
+	 * present. This flag is used to maintain a PD connection after a
+	 * reset by sending a soft reset.
+	 */
+	pd[port].flags = pd_is_vbus_present(port) ? PD_FLAGS_VBUS_NEVER_LOW : 0;
+#endif
+
 #ifdef CONFIG_USB_PD_TCPC
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	tcpm_init(port);
@@ -1427,7 +1409,6 @@ void pd_task(void)
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
-	pd[port].flags = 0;
 	set_state(port, PD_DEFAULT_STATE);
 	tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
 							      TYPEC_CC_RD);
@@ -2142,11 +2123,25 @@ void pd_task(void)
 			if ((pd[port].last_state != pd[port].task_state)
 			    && pd_comm_enabled) {
 				/*
+				 * If VBUS has never been low, and we timeout
+				 * waiting for source cap, try a soft reset
+				 * first, in case we were already in a stable
+				 * contract before this boot.
+				 */
+				if (pd[port].flags & PD_FLAGS_VBUS_NEVER_LOW) {
+					pd[port].flags &=
+						~PD_FLAGS_VBUS_NEVER_LOW;
+					set_state_timeout(port,
+						  get_time().val +
+						  PD_T_SINK_WAIT_CAP,
+						  PD_STATE_SOFT_RESET);
+				}
+				/*
 				 * If we haven't passed hard reset counter,
 				 * start SinkWaitCapTimer, otherwise start
 				 * NoResponseTimer.
 				 */
-				if (hard_reset_count < PD_HARD_RESET_COUNT)
+				else if (hard_reset_count < PD_HARD_RESET_COUNT)
 					set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,
@@ -2414,6 +2409,8 @@ void pd_task(void)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 		case PD_STATE_SOFT_RESET:
 			if (pd[port].last_state != pd[port].task_state) {
+				/* Message ID of soft reset is always 0 */
+				pd[port].msg_id = 0;
 				res = send_control(port, PD_CTRL_SOFT_RESET);
 
 				/* if soft reset failed, try hard reset. */

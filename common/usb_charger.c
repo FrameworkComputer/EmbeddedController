@@ -82,6 +82,8 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 
 void usb_charger_vbus_change(int port, int vbus_level)
 {
+	/* If VBUS has transitioned low, notify PD module directly */
+	pd_vbus_low(port);
 	/* Update VBUS supplier and signal VBUS change to USB_CHG task */
 	update_vbus_supplier(port, vbus_level);
 #if CONFIG_USB_PD_PORT_COUNT == 2

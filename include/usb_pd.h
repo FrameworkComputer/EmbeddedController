@@ -697,7 +697,7 @@ enum pd_states {
 #define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
 #define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
 #define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
-#define PD_FLAGS_SFT_RST_DIS_COMM  (1 << 7) /* disable comms after soft reset */
+#define PD_FLAGS_VBUS_NEVER_LOW    (1 << 7) /* VBUS input has never been low */
 #define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
 #define PD_FLAGS_CHECK_PR_ROLE     (1 << 9) /* check power role in READY */
 #define PD_FLAGS_CHECK_DR_ROLE     (1 << 10)/* check data role in READY */
@@ -998,6 +998,13 @@ int pd_board_checks(void);
  * @return VBUS is detected
  */
 int pd_snk_is_vbus_provided(int port);
+
+/**
+ * Notify PD protocol that VBUS has gone low
+ *
+ * @param port USB-C port number
+ */
+void pd_vbus_low(int port);
 
 /**
  * Check if power swap is allowed.
