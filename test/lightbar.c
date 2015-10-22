@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "util.h"
 
+
 static int get_seq(void)
 {
 	int rv;
@@ -272,6 +273,53 @@ static int test_stable_states(void)
 	return EC_SUCCESS;
 }
 
+const struct lb_brightness_def lb_brightness_levels[] = {
+	{
+		/* regular brightness */
+		.lux_up = 60,
+		.lux_down = 40,
+	},
+	{
+		/* 25 - 50% brightness */
+		.lux_up = 40,
+		.lux_down = 20,
+	},
+	{
+		/* 0 .. 25% brightness */
+		.lux_up = 0,
+		.lux_down = 0,
+	},
+};
+const unsigned int lb_brightness_levels_count =
+		ARRAY_SIZE(lb_brightness_levels);
+
+int lux_level_to_google_color(const int lux);
+extern int google_color_id;
+
+int lid_is_open(void)
+{
+	return 1;
+}
+
+static int test_als_lightbar(void)
+{
+	int lux_data[] = { 500, 100, 35, 15, 30, 35, 55, 70, 55, 100 };
+	int exp_gcid[] = {   0,   0,  1,  2,  2,  2,  1,  0,  0,   0 };
+	int exp_chg[]  = {   0,   0,  1,  1,  0,  0,  1,  1,  0,   0 };
+	int i;
+
+	BUILD_ASSERT(ARRAY_SIZE(lux_data) == ARRAY_SIZE(exp_gcid));
+	BUILD_ASSERT(ARRAY_SIZE(lux_data) == ARRAY_SIZE(exp_chg));
+
+	google_color_id = 0;
+	for (i = 0; i < ARRAY_SIZE(lux_data); i++) {
+		TEST_ASSERT(exp_chg[i] ==
+			    lux_level_to_google_color(lux_data[i]));
+		TEST_ASSERT(exp_gcid[i] == google_color_id);
+	}
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	RUN_TEST(test_stable_states);
@@ -280,5 +328,6 @@ void run_test(void)
 	RUN_TEST(test_stop_timeout);
 	RUN_TEST(test_oneshots_norm_msg);
 	RUN_TEST(test_double_oneshots);
+	RUN_TEST(test_als_lightbar);
 	test_print_result();
 }

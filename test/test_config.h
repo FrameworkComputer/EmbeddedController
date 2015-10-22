@@ -109,6 +109,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #ifdef TEST_LIGHTBAR
 #define CONFIG_I2C
 #define I2C_PORT_LIGHTBAR 0
+#define CONFIG_ALS_LIGHTBAR_DIMMING 0
 #endif
 
 #ifdef TEST_USB_PD

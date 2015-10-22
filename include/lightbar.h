@@ -38,17 +38,19 @@ enum lb_control {
 /*
  * For dimming the lightbar in the dark, we define an array to
  * describe the expected colors:
- * if luminosity is more than 'lux', the color defined will be used.
+ * if luminosity is more than 'lux_up', the color defined will be used.
+ * if luminosity is more than 'lux_down', we will look at the next band.
  * The last entry must have lux == 0.
  * Defining brightness is not enough to prevent washed color in low
  * lux setting.
  */
 struct lb_brightness_def {
-	uint16_t lux;
+	uint16_t lux_up;
+	uint16_t lux_down;
 	struct rgb_s color[4];
 };
 
-extern struct lb_brightness_def lb_brightness_levels[];
+extern const struct lb_brightness_def lb_brightness_levels[];
 extern const unsigned lb_brightness_levels_count;
 #endif
 

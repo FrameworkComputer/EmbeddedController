@@ -456,10 +456,11 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-struct lb_brightness_def lb_brightness_levels[] = {
+const struct lb_brightness_def lb_brightness_levels[] = {
 	{
 		/* regular brightness */
-		.lux = 40,
+		.lux_up = 60,
+		.lux_down = 40,
 		.color = {
 			{0x74, 0x58, 0xb4},	/* Segment0: Google blue */
 			{0xd6, 0x40, 0x20},	/* Segment1: Google red */
@@ -469,7 +470,8 @@ struct lb_brightness_def lb_brightness_levels[] = {
 	},
 	{
 		/* 25 - 50% brightness */
-		.lux = 20,
+		.lux_up = 40,
+		.lux_down = 20,
 		.color = {
 			{0x51, 0x38, 0x7d},
 			{0x99, 0x28, 0x15},
@@ -479,7 +481,8 @@ struct lb_brightness_def lb_brightness_levels[] = {
 	},
 	{
 		/* 0 .. 25% brightness */
-		.lux = 0,
+		.lux_up = 0,
+		.lux_down = 0,
 		.color = {
 			{0x3d, 0x28, 0x5c},
 			{0x71, 0x28, 0x10},

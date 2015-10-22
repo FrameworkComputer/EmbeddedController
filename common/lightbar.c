@@ -204,7 +204,7 @@ static void lightbar_restore_state(void)
 static int last_backlight_level;
 #endif
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
-static int last_google_color = -1;
+test_export_static int google_color_id;
 #endif
 
 static int demo_mode = DEMO_MODE_DEFAULT;
@@ -219,18 +219,37 @@ static int quantize_battery_level(int pct)
 }
 
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
-static int lux_level_to_google_color(int lux)
+test_export_static int lux_level_to_google_color(const int lux)
 {
 	int i;
 
-	if (!lid_is_open())
+	if (!lid_is_open()) {
 		/* The lid shades the light sensor, use full brightness. */
-		return 0;
+		if (google_color_id != 0) {
+			google_color_id = 0;
+			return 1;
+		} else {
+			return 0;
+		}
+	}
 
-	for (i = 0; i < lb_brightness_levels_count ; i++)
-		if (lux >= lb_brightness_levels[i].lux)
+	/* See if we need to decrease brightness */
+	for (i = google_color_id; i < lb_brightness_levels_count ; i++)
+		if (lux >= lb_brightness_levels[i].lux_down)
 			break;
-	return i;
+	if (i > google_color_id) {
+		google_color_id = i;
+		return 1;
+	}
+	/* See if we need to increase brightness */
+	for (i = google_color_id; i > 0;  i--)
+		if (lux < lb_brightness_levels[i - 1].lux_up)
+			break;
+	if (i < google_color_id) {
+		google_color_id = i;
+		return 1;
+	}
+	return 0;
 }
 #endif
 
@@ -239,9 +258,6 @@ static void get_battery_level(void)
 {
 	int pct = 0;
 	int bl;
-#ifdef CONFIG_ALS_LIGHTBAR_DIMMING
-	int color_id;
-#endif
 
 	if (demo_mode)
 		return;
@@ -289,12 +305,9 @@ static void get_battery_level(void)
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
 	/* Read last value (in lux) collected by the motion sensor. */
 	/* Convert lux into brightness percentage */
-	color_id = lux_level_to_google_color(MOTION_SENSE_LUX);
-
-	if (color_id != last_google_color) {
-		last_google_color = pct;
-		memcpy(st.p.color, lb_brightness_levels[color_id].color,
-		       sizeof(lb_brightness_levels[color_id].color));
+	if (lux_level_to_google_color(MOTION_SENSE_LUX)) {
+		memcpy(st.p.color, lb_brightness_levels[google_color_id].color,
+		       sizeof(lb_brightness_levels[google_color_id].color));
 	}
 #endif
 }

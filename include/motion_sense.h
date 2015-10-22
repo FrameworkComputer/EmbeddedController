@@ -187,6 +187,11 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 #endif
 
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
+#ifdef TEST_BUILD
+#define MOTION_SENSE_LUX 0
+#else
 #define MOTION_SENSE_LUX motion_sensors[CONFIG_ALS_LIGHTBAR_DIMMING].raw_xyz[0]
 #endif
+#endif
+
 #endif /* __CROS_EC_MOTION_SENSE_H */
