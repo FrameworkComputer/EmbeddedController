@@ -51,7 +51,7 @@ GPIO(PMIC_WARM_RESET_L,    PIN(E, 4),  GPIO_ODR_HIGH)
  * This GPIO is used to pull it up through an external 100kOhm.
  * EN_PP3300 is still controlled by PMIC though.
  */
-GPIO(EN_PP3300_RSVD,       PIN(E, 13), GPIO_OUT_LOW)
+GPIO(EN_PP3300_RSVD,       PIN(E, 13), GPIO_ODR_HIGH)
 /* sensor temp output and PMIC reset input */
 GPIO(PMIC_THERM_L,         PIN(B, 8),  GPIO_ODR_HIGH)
 GPIO(VBUS_SENSE,           PIN(A, 0),  GPIO_ANALOG)
