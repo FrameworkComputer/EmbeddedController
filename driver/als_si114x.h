@@ -207,6 +207,7 @@
 extern const struct accelgyro_drv si114x_drv;
 
 enum si114x_state {
+	SI114X_NOT_READY,
 	SI114X_IDLE,
 	SI114X_ALS_IN_PROGRESS,
 	SI114X_ALS_IN_PROGRESS_PS_PENDING,

@@ -498,6 +498,8 @@ static int init(const struct motion_sensor_t *s)
 		data->state = SI114X_IDLE;
 		resol = 7;
 	} else {
+		if (data->state == SI114X_NOT_READY)
+			return EC_ERROR_ACCESS_DENIED;
 		resol = 5;
 	}
 
@@ -535,7 +537,7 @@ const struct accelgyro_drv si114x_drv = {
 };
 
 struct si114x_drv_data_t g_si114x_data = {
-	.state = SI114X_IDLE,
+	.state = SI114X_NOT_READY,
 	.type_data = {
 		/* Proximity */
 		{
