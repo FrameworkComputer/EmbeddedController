@@ -9,7 +9,11 @@
 GPIO_INT(AC_PRESENT,     PIN(C, 6),  GPIO_INT_BOTH,                     extpower_interrupt)
 GPIO_INT(POWER_BUTTON_L, PIN(B, 5),  GPIO_INT_BOTH | GPIO_PULL_UP,      power_button_interrupt)
 GPIO_INT(LID_OPEN,       PIN(C, 13), GPIO_INT_BOTH,                     lid_interrupt)          /* LID switch detection */
+#if BOARD_REV <= OAK_REV3
 GPIO_INT(SUSPEND_L,      PIN(C, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,    power_signal_interrupt) /* AP suspend/resume state */
+#else
+GPIO_INT(SUSPEND_L,      PIN(C, 7),  GPIO_INT_BOTH,                     power_signal_interrupt) /* AP suspend/resume state */
+#endif
 GPIO_INT(PD_MCU_INT,     PIN(E, 0),  GPIO_INT_FALLING,                  pd_mcu_interrupt)       /* Signal from PD MCU, external pull-up */
 GPIO_INT(SPI1_NSS,       PIN(A, 4),  GPIO_INT_BOTH | GPIO_PULL_UP,      spi_event)              /* SPI Chip Select */
 
