@@ -98,7 +98,6 @@ BOARDS_NRF51=(
 
 BOARDS_MEC1322=(
 	chell
-	cyan
 	glados
 	glower
 	kunimitsu
