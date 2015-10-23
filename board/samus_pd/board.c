@@ -51,13 +51,9 @@ static int batt_soc;
 /* Default to 5V charging allowed for dead battery case */
 static enum pd_charge_state charge_state = PD_CHARGE_5V;
 
-/*
- * PD MCU status and host event status for host command
- * Note: these vars must be aligned on 4-byte boundary because we pass the
- * address to atomic_ functions which use assembly to access them.
- */
-static int32_t host_event_status_flags __aligned(4);
-static int32_t pd_status_flags __aligned(4);
+/* PD MCU status and host event status for host command */
+static int32_t host_event_status_flags;
+static int32_t pd_status_flags;
 
 static struct ec_response_pd_status pd_status;
 

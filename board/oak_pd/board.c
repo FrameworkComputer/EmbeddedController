@@ -21,14 +21,15 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-/* Variable used to indicate which source is driving the ec_int line */
+/* Indicate which source is driving the ec_int line. */
 static uint32_t ec_int_status;
+
+static uint32_t pd_status_flags;
 
 void pd_send_ec_int(void)
 {
 	/* If any sources are active, then drive the line low */
 	gpio_set_level(GPIO_EC_INT, !ec_int_status);
-
 }
 
 void board_config_pre_init(void)
@@ -52,6 +53,12 @@ static void board_init(void)
 	/* Enable interrupts on VBUS transitions. */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+
+	/* Set PD MCU system status bits */
+	if (system_jumped_to_this_image())
+		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+		pd_status_flags |= PD_STATUS_IN_RW;
 
 	/* OAK_PD: TODO: Power management of ARM based system */
 }
@@ -97,6 +104,14 @@ void tcpc_alert_clear(int port)
 	pd_send_ec_int();
 }
 
+static void system_hibernate_deferred(void)
+{
+	ccprintf("EC requested hibernate\n");
+	cflush();
+	system_hibernate(0, 0);
+}
+DECLARE_DEFERRED(system_hibernate_deferred);
+
 /****************************************************************************/
 /* Console commands */
 static int command_ec_int(int argc, char **argv)
@@ -112,14 +127,6 @@ DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"Toggle EC interrupt line",
 			NULL);
 
-static void system_hibernate_deferred(void)
-{
-	ccprintf("EC requested hibernate\n");
-	cflush();
-	system_hibernate(0, 0);
-}
-DECLARE_DEFERRED(system_hibernate_deferred);
-
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_status *p = args->params;
@@ -129,7 +136,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	 * ec_int_status is used to store state for HOST_EVENT,
 	 * TCPC 0 Alert, and TCPC 1 Alert bits.
 	 */
-	r->status = ec_int_status;
+	r->status = ec_int_status | pd_status_flags;
 	args->response_size = sizeof(*r);
 
 	/* Have the PD follow the EC into hibernate. */

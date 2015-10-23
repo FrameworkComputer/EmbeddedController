@@ -21,13 +21,15 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
+/* Indicate which source is driving the ec_int line. */
 static uint32_t ec_int_status;
+
+static uint32_t pd_status_flags;
 
 void pd_send_ec_int(void)
 {
-	/* If any of 3 sources are active, then drive the line low */
+	/* If any sources are active, then drive the line low */
 	gpio_set_level(GPIO_EC_INT, !ec_int_status);
-
 }
 
 void vbus0_evt(enum gpio_signal signal)
@@ -61,6 +63,12 @@ static void board_init(void)
 	/* Enable interrupts on VBUS transitions. */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+
+	/* Set PD MCU system status bits */
+	if (system_jumped_to_this_image())
+		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+		pd_status_flags |= PD_STATUS_IN_RW;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -136,7 +144,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 	 * ec_int_status is used to store state for HOST_EVENT,
 	 * TCPC 0 Alert, and TCPC 1 Alert bits.
 	 */
-	r->status = ec_int_status;
+	r->status = ec_int_status | pd_status_flags;
 	args->response_size = sizeof(*r);
 
 	/* Have the PD follow the EC into hibernate. */
