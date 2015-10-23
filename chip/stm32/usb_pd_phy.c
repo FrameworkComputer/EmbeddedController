@@ -593,7 +593,7 @@ void pd_hw_init_rx(int port)
 #error Unsupported chip family
 #endif
 #endif /* CONFIG_USB_PD_INTERNAL_COMP */
-	/* DBG */usleep(250000);
+
 	/* comparator interrupt setup */
 	EXTI_XTSR |= EXTI_COMP_MASK(port);
 	STM32_EXTI_IMR |= EXTI_COMP_MASK(port);
