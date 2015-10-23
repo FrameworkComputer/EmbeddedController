@@ -12,7 +12,6 @@
 /* #define CONFIG_BACKLIGHT_LID */
 /* #define CONFIG_BATTERY_SMART */
 #define CONFIG_BOARD_VERSION
-#define CONFIG_PORT80_TASK_EN
 
 #if 0
 #define CONFIG_CHARGER
