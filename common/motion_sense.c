@@ -454,19 +454,13 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, motion_sense_resume,
 
 static void motion_sense_startup(void)
 {
-	int i;
-	struct motion_sensor_t *sensor;
-
-	sensor_active = SENSOR_ACTIVE_S5;
-	for (i = 0; i < motion_sensor_count; ++i) {
-		sensor = &motion_sensors[i];
-		sensor->state = SENSOR_NOT_INITIALIZED;
-	}
-
-	/* If the AP is already in S0, call the resume hook now.
+	/*
+	 * If the AP is already in S0, call the resume hook now.
 	 * We may initialize the sensor 2 times (once in RO, another time in
 	 * RW), but it may be necessary if the init sequence has changed.
 	 */
+	if (chipset_in_state(SENSOR_ACTIVE_S0_S3_S5))
+		motion_sense_shutdown();
 	if (chipset_in_state(SENSOR_ACTIVE_S0_S3))
 		motion_sense_suspend();
 	if (chipset_in_state(SENSOR_ACTIVE_S0))

@@ -1197,10 +1197,6 @@ static int init(const struct motion_sensor_t *s)
 #ifdef CONFIG_ACCEL_INTERRUPTS
 		ret = config_interrupt(s);
 #endif
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
-		/* enable double tap, as soon as the chip is ready */
-		manage_activity(s, MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1, NULL);
-#endif
 	}
 	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
 			s->name, s->type, get_range(s));

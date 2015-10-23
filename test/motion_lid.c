@@ -196,12 +196,14 @@ static int test_lid_angle(void)
 	struct motion_sensor_t *base = &motion_sensors[0];
 	struct motion_sensor_t *lid = &motion_sensors[1];
 
-	/* Go to S3 state */
+	/* We don't have TASK_CHIP so simulate init ourselves */
+	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S5);
 	TEST_ASSERT(accel_get_data_rate(lid) == 0);
 	TEST_ASSERT(motion_interval == 0);
 
 	/* Go to S0 state */
+	hook_notify(HOOK_CHIPSET_SUSPEND);
 	hook_notify(HOOK_CHIPSET_RESUME);
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
