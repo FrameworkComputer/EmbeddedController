@@ -13,6 +13,8 @@
 
 /* Don't compile vboot hash support unless specifically testing for it */
 #undef CONFIG_VBOOT_HASH
+/* Don't compile PD logging unless specifically testing for it */
+#undef CONFIG_USB_PD_LOGGING
 
 #ifdef TEST_BKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID
