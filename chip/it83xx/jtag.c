@@ -11,5 +11,6 @@
 
 void jtag_pre_init(void)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
+	/* bit4, enable debug mode through SMBus */
+	IT83XX_SMB_SLVISELR &= ~(1 << 4);
 }

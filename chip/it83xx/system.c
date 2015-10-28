@@ -16,9 +16,36 @@
 #include "version.h"
 #include "watchdog.h"
 
+void __no_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+#ifdef CONFIG_COMMON_RUNTIME
+	/*
+	 * Hibernate not implemented on this platform.
+	 *
+	 * Until then, treat this as a request to hard-reboot.
+	 */
+	cprints(CC_SYSTEM, "hibernate not supported, so rebooting");
+	cflush();
+	system_reset(SYSTEM_RESET_HARD);
+#endif
+}
+
+void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
+	__attribute__((weak, alias("__no_hibernate")));
+
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
+#ifdef CONFIG_HOSTCMD_PD
+	/* Inform the PD MCU that we are going to hibernate. */
+	host_command_pd_request_hibernate();
+	/* Wait to ensure exchange with PD before hibernating. */
+	msleep(100);
+#endif
+
+	/* Flush console before hibernating */
+	cflush();
+	/* chip specific standby mode */
+	__enter_hibernate(seconds, microseconds);
 }
 
 static void check_reset_cause(void)
@@ -86,7 +113,7 @@ int system_is_reboot_warm(void)
 
 void system_pre_init(void)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
+	/* No initialization required */
 
 }
 
@@ -117,6 +144,13 @@ void system_reset(int flags)
 	BRAM_RESET_FLAGS3 = save_flags & 0xff;
 
 	/*
+	 * bit4, disable debug mode through SMBus.
+	 * If we are in debug mode, we need disable it before triggering
+	 * a soft reset or reset will fail.
+	 */
+	IT83XX_SMB_SLVISELR |= (1 << 4);
+
+	/*
 	 * Writing invalid key to watchdog module triggers a soft reset. For
 	 * now this is the only option, no hard reset.
 	 */
@@ -130,14 +164,24 @@ void system_reset(int flags)
 
 int system_set_scratchpad(uint32_t value)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
-	return 0;
+	BRAM_SCRATCHPAD3 = (value >> 24) & 0xff;
+	BRAM_SCRATCHPAD2 = (value >> 16) & 0xff;
+	BRAM_SCRATCHPAD1 = (value >> 8) & 0xff;
+	BRAM_SCRATCHPAD = value & 0xff;
+
+	return EC_SUCCESS;
 }
 
 uint32_t system_get_scratchpad(void)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
-	return 0;
+	uint32_t value = 0;
+
+	value |= BRAM_SCRATCHPAD3 << 24;
+	value |= BRAM_SCRATCHPAD2 << 16;
+	value |= BRAM_SCRATCHPAD1 << 8;
+	value |= BRAM_SCRATCHPAD;
+
+	return value;
 }
 
 static uint16_t system_get_chip_id(void)
@@ -191,27 +235,25 @@ const char *system_get_chip_revision(void)
 
 int system_get_vbnvcontext(uint8_t *block)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
+	int i;
+
+	for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++)
+		block[i] = IT83XX_BRAM_BANK0((BRAM_IDX_NVCONTEXT + i));
+
 	return EC_SUCCESS;
 }
 
 int system_set_vbnvcontext(const uint8_t *block)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
+	int i;
+
+	for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++)
+		IT83XX_BRAM_BANK0((BRAM_IDX_NVCONTEXT + i)) = block[i];
+
 	return EC_SUCCESS;
 }
-
-int system_set_console_force_enabled(int val)
-{
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
-	return 0;
-}
-
-int system_get_console_force_enabled(void)
-{
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
-	return 0;
-}
+#define BRAM_NVCONTEXT_SIZE (BRAM_IDX_NVCONTEXT_END - BRAM_IDX_NVCONTEXT + 1)
+BUILD_ASSERT(EC_VBNV_BLOCK_SIZE <= BRAM_NVCONTEXT_SIZE);
 
 uintptr_t system_get_fw_reset_vector(uintptr_t base)
 {

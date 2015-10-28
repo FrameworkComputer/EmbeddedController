@@ -8,6 +8,7 @@
 #include "common.h"
 #include "irq_chip.h"
 #include "registers.h"
+#include "util.h"
 
 #define IRQ_GROUP(n, cpu_ints...) \
 	{(uint32_t)&CONCAT2(IT83XX_INTC_ISR, n) - IT83XX_INTC_BASE, \
@@ -85,5 +86,11 @@ int chip_trigger_irq(int irq)
 
 void chip_init_irqs(void)
 {
-	/* TODO(crosbug.com/p/23575): IMPLEMENT ME ! */
+	int i;
+
+	/* Clear all IERx and EXT_IERx */
+	for (i = 0; i < ARRAY_SIZE(irq_groups); i++) {
+		IT83XX_INTC_REG(irq_groups[i].ier_off) = 0;
+		IT83XX_INTC_REG(IT83XX_INTC_EXT_IER_OFF(i)) = 0;
+	}
 }
