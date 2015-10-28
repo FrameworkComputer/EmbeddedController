@@ -399,6 +399,9 @@
 /* Minimum battery percentage for power on */
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 
+/* Narrow VDC power path */
+#undef CONFIG_CHARGER_NARROW_VDC
+
 /*
  * Low energy thresholds - when battery level is below BAT_PCT and an external
  * charger provides less than CHG_MW of power, inform the AP of the situation
