@@ -18,4 +18,7 @@ void cpu_init(void)
 	if (image_type > CONFIG_RW_MEM_OFF)
 		/* Interrupt Vector Table Base Address, in 64k Byte unit */
 		IT83XX_GCTRL_IVTBAR = (CONFIG_RW_MEM_OFF >> 16) & 0xFF;
+
+	/* Global interrupt enable */
+	asm volatile ("setgie.e");
 }

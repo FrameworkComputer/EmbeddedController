@@ -494,6 +494,19 @@ static void set_int_priority(uint32_t val)
 	asm volatile ("mtsr %0, $INT_PRI" : : "r"(val));
 }
 
+uint32_t get_int_ctrl(void)
+{
+	uint32_t ret;
+
+	asm volatile ("mfsr %0, $INT_CTRL" : "=r"(ret));
+	return ret;
+}
+
+void set_int_ctrl(uint32_t val)
+{
+	asm volatile ("mtsr %0, $INT_CTRL" : : "r"(val));
+}
+
 void task_enable_all_tasks(void)
 {
 	/* Mark all tasks are ready to run. */
@@ -548,6 +561,12 @@ static void ivic_init_irqs(void)
 
 	/* chip-specific interrupt controller initialization */
 	chip_init_irqs();
+
+	/*
+	 * bit0 @ INT_CTRL = 0,
+	 * Interrupts still keep programmable priority level.
+	 */
+	set_int_ctrl((get_int_ctrl() & ~(1 << 0)));
 
 	/*
 	 * Re-enable global interrupts in case they're disabled.  On a reboot,
