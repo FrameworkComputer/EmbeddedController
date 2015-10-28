@@ -69,9 +69,9 @@ enum smb_oper_state_t {
 	SMB_WRITE_OPER,
 	SMB_READ_OPER,
 	SMB_REPEAT_START,
-	SMB_WAIT_REPEAT_START,
+	SMB_WRITE_SUSPEND,
+	SMB_READ_SUSPEND,
 };
-
 
 /* IRQ for each port */
 static const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
@@ -140,6 +140,17 @@ static int i2c_wait_stop_completed(int controller, int timeout)
 		return EC_ERROR_TIMEOUT;
 }
 
+static void i2c_interrupt(int controller, int enable)
+{
+	if (enable) {
+		SET_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_NMINTE);
+		SET_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_INTEN);
+	} else {
+		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_NMINTE);
+		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_INTEN);
+	}
+}
+
 int i2c_abort_data(int controller)
 {
 	/* Clear NEGACK, STASTR and BER bits */
@@ -200,16 +211,59 @@ enum smb_error i2c_master_transaction(int controller)
 	int events = 0;
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 
+	/* Assign current SMB status of controller */
 	if (p_status->oper_state == SMB_IDLE) {
+		/* New transaction */
 		p_status->oper_state = SMB_MASTER_START;
-	} else if (p_status->oper_state == SMB_WAIT_REPEAT_START) {
-		p_status->oper_state = SMB_REPEAT_START;
-		CPUTS("R");
+	} else if (p_status->oper_state == SMB_WRITE_SUSPEND) {
+		if (p_status->sz_txbuf == 0) {
+			/* Read bytes from next transaction */
+			p_status->oper_state = SMB_REPEAT_START;
+			CPUTS("R");
+		} else {
+			/* Continue to write the other bytes */
+			p_status->oper_state = SMB_WRITE_OPER;
+			I2C_WRITE_BYTE(controller,
+					p_status->tx_buf[p_status->idx_buf++]);
+			CPRINTS("-W(%02x)",
+					p_status->tx_buf[p_status->idx_buf-1]);
+		}
+	} else if (p_status->oper_state == SMB_READ_SUSPEND) {
+		/* Need to read the other bytes from next transaction */
+		uint8_t data;
+		uint8_t timeout = 10; /* unit: us */
+		p_status->oper_state = SMB_READ_OPER;
+
+		/* wait for SDAST issue */
+		while (timeout > 0) {
+			if (IS_BIT_SET(NPCX_SMBST(controller),
+					NPCX_SMBST_SDAST))
+				break;
+			if (--timeout > 0)
+				usleep(10);
+		}
+		if (timeout == 0)
+			return EC_ERROR_TIMEOUT;
+
+		/*
+		 * Read first byte from SMBSDA in case SDAST interrupt occurs
+		 * immediately before task_wait_event_mask() func
+		 */
+		I2C_READ_BYTE(controller, data);
+		CPRINTS("-R(%02x)", data);
+		/* Read to buffer */
+		p_status->rx_buf[p_status->idx_buf++] = data;
 	}
 
 	/* Generate a START condition */
-	I2C_START(controller);
-	CPUTS("ST");
+	if (p_status->oper_state == SMB_MASTER_START ||
+			p_status->oper_state == SMB_REPEAT_START) {
+		I2C_START(controller);
+		CPUTS("ST");
+	}
+
+	/* Enable SMB interrupt and New Address Match interrupt source */
+	i2c_interrupt(controller, 1);
 
 	/* Wait for transfer complete or timeout */
 	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE,
@@ -281,15 +335,24 @@ inline void i2c_handle_sda_irq(int controller)
 					/* Issue a STOP condition on the bus */
 					I2C_STOP(controller);
 					CPUTS("-SP");
+					/* Clear SDAST by writing dummy byte */
+					I2C_WRITE_BYTE(controller, 0xFF);
 				}
-				/* Clear SDA Status bit by writing dummy byte */
-				I2C_WRITE_BYTE(controller, 0xFF);
+
 				/* Set error code */
 				p_status->err_code = SMB_OK;
-				/* Notify upper layer */
+				/* Set SMB status if we need stall bus */
 				p_status->oper_state
 				= (p_status->flags & I2C_XFER_STOP)
-					? SMB_IDLE : SMB_WAIT_REPEAT_START;
+					? SMB_IDLE : SMB_WRITE_SUSPEND;
+				/*
+				 * Disable interrupt for i2c master stall SCL
+				 * and forbid SDAST generate interrupt
+				 * until common layer start other transactions
+				 */
+				if (p_status->oper_state == SMB_WRITE_SUSPEND)
+					i2c_interrupt(controller, 0);
+				/* Notify upper layer */
 				task_set_event(p_status->task_waiting,
 						TASK_EVENT_I2C_IDLE, 0);
 				CPUTS("-END");
@@ -351,23 +414,38 @@ inline void i2c_handle_sda_irq(int controller)
 			 * so that nack will be generated after receive
 			 * of last byte
 			 */
-			I2C_NACK(controller);
-			CPUTS("-GNA");
+			if (p_status->flags & I2C_XFER_STOP) {
+				I2C_NACK(controller);
+				CPUTS("-GNA");
+			}
+		}
+
+		/* Read last byte but flag don't include I2C_XFER_STOP */
+		if (p_status->idx_buf == p_status->sz_rxbuf-1) {
+			/*
+			 * Disable interrupt before i2c master read SDA reg
+			 * (stall SCL) and forbid SDAST generate interrupt
+			 * until common layer start other transactions
+			 */
+			if (!(p_status->flags & I2C_XFER_STOP))
+				i2c_interrupt(controller, 0);
 		}
 
 		/* Read data for SMBSDA */
 		I2C_READ_BYTE(controller, data);
 		CPRINTS("-R(%02x)", data);
+
 		/* Read to buffer */
 		p_status->rx_buf[p_status->idx_buf++] = data;
 
 		/* last byte is read - end of transaction */
 		if (p_status->idx_buf == p_status->sz_rxbuf) {
+			/* Set current status */
+			p_status->oper_state = (p_status->flags & I2C_XFER_STOP)
+					? SMB_IDLE : SMB_READ_SUSPEND;
 			/* Set error code */
 			p_status->err_code = SMB_OK;
 			/* Notify upper layer of missing data */
-			p_status->oper_state = (p_status->flags & I2C_XFER_STOP)
-					? SMB_IDLE : SMB_WAIT_REPEAT_START;
 			task_set_event(p_status->task_waiting,
 					TASK_EVENT_I2C_IDLE, 0);
 			CPUTS("-END");
@@ -496,10 +574,6 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		i2c_select_port(port);
 	}
 
-	/* Enable SMB interrupt and New Address Match interrupt source */
-	SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_NMINTE);
-	SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_INTEN);
-
 	CPUTS("\n");
 
 	/* Start master transaction */
@@ -509,8 +583,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	p_status->task_waiting = TASK_ID_INVALID;
 
 	/* Disable SMB interrupt and New Address Match interrupt source */
-	CLEAR_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_NMINTE);
-	CLEAR_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_INTEN);
+	i2c_interrupt(ctrl, 0);
 
 	CPRINTS("-Err:0x%02x\n", p_status->err_code);
 
