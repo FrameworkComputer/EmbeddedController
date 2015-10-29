@@ -95,6 +95,17 @@ buildall:
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
 
+# Print any important notices at the end of the build.
+.PHONY: notice
+notice: $(config)
+ifeq ($(CONFIG_EXPERIMENTAL_CONSOLE),y)
+ifeq ($(TEST_BUILD),)
+	@echo "*** NOTE: The experimental console is ENABLED. ***"
+	@echo "You will need to run the EC-3PO interactive console in the util"
+	@echo "directory!  Otherwise, you won't be able to enter any commands."
+endif # not a TEST_BUILD
+endif # CONFIG_EXPERIMENTAL_CONSOLE=y
+
 proj-%:
 	@echo "======= building $*"; \
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
