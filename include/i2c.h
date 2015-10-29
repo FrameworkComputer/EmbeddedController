@@ -13,6 +13,17 @@
 /* Flags for slave address field, in addition to the 8-bit address */
 #define I2C_FLAG_BIG_ENDIAN 0x100  /* 16 byte values are MSB-first */
 
+/*
+ * Supported I2C CLK frequencies.
+ * TODO(crbug.com/549286): Use this enum in i2c_port_t.
+ */
+enum i2c_freq {
+	I2C_FREQ_1000KHZ = 0,
+	I2C_FREQ_400KHZ = 1,
+	I2C_FREQ_100KHZ = 2,
+	I2C_FREQ_COUNT,
+};
+
 /* Data structure to define I2C port configuration. */
 struct i2c_port_t {
 	const char *name;     /* Port name */
