@@ -329,6 +329,10 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GR_XO_OSC_SETHOLD             REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_SETHOLD_OFFSET)
 #define GR_XO_OSC_CLRHOLD             REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_CLRHOLD_OFFSET)
 
+/* Key manager */
+#define GR_KEYMGR_AES_KEY(n)          REG32(GREG32_ADDR(KEYMGR, AES_KEY0) + (n))
+#define GR_KEYMGR_AES_CTR(n)          REG32(GREG32_ADDR(KEYMGR, AES_CTR0) + (n))
+
 /* USB device controller */
 #define GR_USB_REG(off)               REG32(GC_USB0_BASE_ADDR + (off))
 #define GR_USB_GAHBCFG                GR_USB_REG(GC_USB_GAHBCFG_OFFSET)
