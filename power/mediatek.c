@@ -52,12 +52,6 @@
 #define DELAY_FORCE_SHUTDOWN  (8000 * MSEC)	/* 8 seconds */
 
 /*
- * The minimum time to assert the PMIC PWRON pin is 20ms.
- * Give it longer to ensure the PMIC doesn't lose it.
- */
-#define PMIC_PWRON_DEBOUNCE_TIME  (60 * MSEC)
-
-/*
  * The power signal from SoC should be kept at least 50ms.
  */
 #define POWER_DEBOUNCE_TIME     (50 * MSEC)
@@ -181,7 +175,8 @@ static void chipset_turn_off_power_rails(void);
  */
 static int is_suspend_asserted(void)
 {
-	if (power_get_signals() & IN_SUSPEND)
+	if ((power_get_signals() & IN_SUSPEND) &&
+	    (system_get_board_version() < 4))
 		usleep(SUSPEND_DEBOUNCE_TIME);
 
 	return power_get_signals() & IN_SUSPEND;
@@ -195,7 +190,8 @@ static int is_suspend_asserted(void)
  */
 static int is_suspend_deasserted(void)
 {
-	if (!(power_get_signals() & IN_SUSPEND))
+	if (!(power_get_signals() & IN_SUSPEND) &&
+	    (system_get_board_version() < 4))
 		usleep(SUSPEND_DEBOUNCE_TIME);
 
 	return !(power_get_signals() & IN_SUSPEND);
@@ -211,7 +207,8 @@ static int is_power_good_asserted(void)
 {
 	if (!gpio_get_level(GPIO_SYSTEM_POWER_H))
 		return 0;
-	else if (power_get_signals() & IN_POWER_GOOD)
+	else if ((power_get_signals() & IN_POWER_GOOD) &&
+		 (system_get_board_version() < 4))
 		usleep(POWER_DEBOUNCE_TIME);
 
 	return power_get_signals() & IN_POWER_GOOD;
@@ -237,7 +234,8 @@ static int is_power_good_deasserted(void)
 		}
 	}
 
-	if (!(power_get_signals() & IN_POWER_GOOD))
+	if (!(power_get_signals() & IN_POWER_GOOD) &&
+	    (system_get_board_version() < 4))
 		usleep(POWER_DEBOUNCE_TIME);
 
 	return !(power_get_signals() & IN_POWER_GOOD);
@@ -257,7 +255,7 @@ static void set_system_power(int asserted)
 /**
  * Set the PMIC PWRON signal.
  *
- * Note that asserting requires holding for PMIC_PWRON_DEBOUNCE_TIME.
+ * Note that asserting requires holding for PMIC_PWRON_PRESS_TIME.
  *
  * @param asserted	Assert (=1) or deassert (=0) the signal.  This is the
  *			logical level of the pin, not the physical level.
@@ -271,7 +269,6 @@ static void set_pmic_pwron(int asserted)
 	 *   raise GPIO_SYSTEM_POWER_H
 	 *   wait for 5V power good, timeout 1 second
 	 */
-	/* if (system_get_board_version() > 1) { */
 	if (asserted) {
 		set_system_power(asserted);
 		poll_deadline = get_time();
@@ -335,7 +332,6 @@ static int check_for_power_off_event(void)
 		 */
 		CPRINTS("PMIC long-press power off\n");
 		set_pmic_pwron(1);
-		usleep(PMIC_PWRON_DEBOUNCE_TIME);
 #endif
 
 		if (!power_button_was_pressed) {
@@ -364,6 +360,13 @@ static int check_for_power_off_event(void)
 
 	/* POWER_GOOD released by AP : shutdown immediate */
 	if (is_power_good_deasserted()) {
+		/*
+		 * Cancel long press timer if power is lost and the power button
+		 * still press, otherwise EC will crash.
+		 */
+		if (power_button_was_pressed)
+			timer_cancel(TASK_ID_CHIPSET);
+
 		CPRINTS("POWER_GOOD is lost");
 		return POWER_OFF_BY_POWER_GOOD_LOST;
 	}
@@ -769,6 +772,13 @@ enum power_state power_handle_state(enum power_state state)
 		else
 			powerled_set_state(POWERLED_STATE_OFF);
 #endif
+		/*
+		 * if the power button is pressing, we need cancel the long
+		 * press timer, otherwise EC will crash.
+		 */
+		if (power_button_was_pressed)
+			timer_cancel(TASK_ID_CHIPSET);
+
 		/* Call hooks here since we don't know it prior to AP suspend */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		enable_sleep(SLEEP_MASK_AP_RUN);
