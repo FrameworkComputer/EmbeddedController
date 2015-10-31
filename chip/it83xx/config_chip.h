@@ -94,7 +94,6 @@
 #define CHIP_FAMILY_IT83XX
 #define CONFIG_ADC
 #define CONFIG_EC2I
-#define CONFIG_I2C
 #define CONFIG_LPC
 #define CONFIG_PECI
 #define CONFIG_PWM

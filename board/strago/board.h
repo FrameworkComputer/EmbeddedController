@@ -78,6 +78,7 @@
 #define CONFIG_LED_COMMON
 
 #define CONFIG_I2C
+#define CONFIG_I2C_MASTER
 
 /* Accelerometer */
 #define CONFIG_ACCEL_KXCJ9

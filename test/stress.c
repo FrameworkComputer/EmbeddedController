@@ -78,7 +78,7 @@ static int stress(const char *name,
 
 /*****************************************************************************/
 /* Tests */
-#if defined(CONFIG_I2C) && !defined(CONFIG_I2C_SLAVE_ONLY)
+#ifdef CONFIG_I2C_MASTER
 static int test_i2c(void)
 {
 	int res = EC_ERROR_UNKNOWN;
@@ -135,7 +135,7 @@ void run_test(void)
 {
 	test_reset();
 
-#if defined(CONFIG_I2C) && !defined(CONFIG_I2C_SLAVE_ONLY)
+#ifdef CONFIG_I2C_MASTER
 	RUN_STRESS_TEST("I2C Stress Test", test_i2c, I2C_TEST_ITERATION);
 #endif
 #ifdef CONFIG_ADC

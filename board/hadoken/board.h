@@ -16,6 +16,7 @@
 #undef CONFIG_LID_SWITCH
 
 #define CONFIG_I2C
+#define CONFIG_I2C_MASTER
 #define CONFIG_I2C_DEBUG
 
 /*

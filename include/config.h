@@ -1058,8 +1058,11 @@
 #undef CONFIG_I2C_PASSTHRU_RESTRICTED
 #undef CONFIG_I2C_VIRTUAL_BATTERY
 
-/* For EC that is only an I2C slave */
-#undef CONFIG_I2C_SLAVE_ONLY
+/* EC uses an I2C master interface */
+#undef CONFIG_I2C_MASTER
+
+/* EC uses an I2C slave interface */
+#undef CONFIG_I2C_SLAVE
 
 /* Defines I2C operation retry count when slave nack'd(EC_ERROR_BUSY) */
 #define CONFIG_I2C_NACK_RETRY_COUNT 0
