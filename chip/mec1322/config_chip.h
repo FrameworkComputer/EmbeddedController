@@ -37,13 +37,12 @@
 
 /*
  * The memory region for RAM is actually 0x00100000-0x00120000.
- * RAM for Loader = 2k
- * RAM for RO/RW = 24k
- * CODE size of the Loader is 4k
- * As per the above configuartion  the upper 26k
+ * RAM for RO/RW = 20k
+ * CODE size of the Loader is 3k
+ * As per the above configuartion the upper 20k
  * is used to store data.The rest is for code.
- * the lower 100K is flash[ 4k Loader and 96k RO/RW],
- * and the higher 26K is RAM shared by loader and RO/RW.
+ * the lower 107K is flash[ 3k Loader and 104k RO/RW],
+ * and the higher 20K is RAM shared by loader and RO/RW.
  */
 
 /****************************************************************************/
@@ -54,13 +53,13 @@
 #define CONFIG_MEC_SRAM_SIZE		(CONFIG_MEC_SRAM_BASE_END - \
 					CONFIG_MEC_SRAM_BASE_START)
 
-/* 24k RAM for RO / RW / loader */
-#define CONFIG_RAM_SIZE			0x00006000
+/* 20k RAM for RO / RW / loader */
+#define CONFIG_RAM_SIZE			0x00005000
 #define CONFIG_RAM_BASE			(CONFIG_MEC_SRAM_BASE_END - \
 					CONFIG_RAM_SIZE)
 
 /* System stack size */
-#define CONFIG_STACK_SIZE		4096
+#define CONFIG_STACK_SIZE		1024
 
 /* non-standard task stack sizes */
 #define IDLE_TASK_STACK_SIZE		512
