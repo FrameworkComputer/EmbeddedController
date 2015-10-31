@@ -77,11 +77,46 @@ static void init_interrutps(void)
 		gpio_enable_interrupt(gpio_signals[i]);
 }
 
+enum permission_level {
+	PERMISSION_LOW = 0x00,
+	PERMISSION_MEDIUM = 0x33,    /* APPS run at medium */
+	PERMISSION_HIGH = 0x3C,
+	PERMISSION_HIGHEST = 0x55
+};
+
+/* Drop run level to at least medium. */
+static void init_runlevel(const enum permission_level desired_level)
+{
+	volatile uint32_t *const reg_addrs[] = {
+		GREG32_ADDR(GLOBALSEC, CPU0_S_PERMISSION),
+		GREG32_ADDR(GLOBALSEC, CPU0_S_DAP_PERMISSION),
+		GREG32_ADDR(GLOBALSEC, DDMA0_PERMISSION),
+	};
+	int i;
+
+	/* Permission registers drop by 1 level (e.g. HIGHEST -> HIGH)
+	 * each time a write is encountered (the value written does
+	 * not matter).  So we repeat writes and reads, until the
+	 * desired level is reached.
+	 */
+	for (i = 0; i < ARRAY_SIZE(reg_addrs); i++) {
+		uint32_t current_level;
+
+		while (1) {
+			current_level = *reg_addrs[i];
+			if (current_level <= desired_level)
+				break;
+			*reg_addrs[i] = desired_level;
+		}
+	}
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
 	init_interrutps();
 	init_trng();
+	init_runlevel(PERMISSION_MEDIUM);
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
