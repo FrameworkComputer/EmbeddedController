@@ -91,14 +91,14 @@ enum stm32_i2c_clk_src {
 /* timingr register values for supported input clks / i2c clk rates */
 static const uint32_t timingr_regs[I2C_CLK_SRC_COUNT][I2C_FREQ_COUNT] = {
 	[I2C_CLK_SRC_48MHZ] = {
-		[I2C_FREQ_1000KHZ] = 0x00100306,
-		[I2C_FREQ_400KHZ] = 0x00310309,
-		[I2C_FREQ_100KHZ] = 0x10420f13,
-	},
-	[I2C_CLK_SRC_8MHZ] = {
 		[I2C_FREQ_1000KHZ] = 0x50100103,
 		[I2C_FREQ_400KHZ] = 0x50330309,
 		[I2C_FREQ_100KHZ] = 0xB0421214,
+	},
+	[I2C_CLK_SRC_8MHZ] = {
+		[I2C_FREQ_1000KHZ] = 0x00100306,
+		[I2C_FREQ_400KHZ] = 0x00310309,
+		[I2C_FREQ_100KHZ] = 0x10420f13,
 	},
 };
 
