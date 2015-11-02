@@ -260,8 +260,8 @@ void tcpc_alert(int port)
 #if defined(CONFIG_USB_PD_TCPM_VBUS) && defined(CONFIG_USB_CHARGER)
 			/* Update charge manager with new VBUS state */
 			usb_charger_vbus_change(port, tcpc_vbus[port]);
-#endif /* CONFIG_USB_PD_TCPM_VBUS && CONFIG_USB_CHARGER */
 			task_wake(PD_PORT_TO_TASK_ID(port));
+#endif /* CONFIG_USB_PD_TCPM_VBUS && CONFIG_USB_CHARGER */
 		}
 	}
 	if (status & TCPC_REG_ALERT_RX_STATUS) {

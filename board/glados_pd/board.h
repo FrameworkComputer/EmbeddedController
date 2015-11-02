@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* gladoes_pd board configuration */
+/* glados_pd board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -63,6 +63,7 @@
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPC
+#define CONFIG_USB_PD_TCPM_VBUS
 #define CONFIG_USBC_VCONN
 #define CONFIG_VBOOT_HASH
 #define CONFIG_WATCHDOG
