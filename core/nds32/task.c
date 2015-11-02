@@ -60,10 +60,6 @@ static uint64_t exc_total_time;  /* Total time in exceptions */
 static uint32_t svc_calls;       /* Number of service calls */
 static uint32_t task_switches;   /* Number of times active task changed */
 static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
-#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
-static uint32_t exc_current_fth;
-static uint32_t exc_current_ftl;
-#endif
 #endif
 
 extern int __task_start(void);
@@ -79,22 +75,9 @@ void __idle(void)
 	 */
 	cprints(CC_TASK, "idle task started");
 
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-	IT83XX_WUC_WUESR4 = 0xff;
-	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
-	/* bit2, wake-up enable for LPC access */
-	IT83XX_WUC_WUENR4 |= (1 << 2);
-#endif
-
 	while (1) {
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-		BRAM_LPC_ACCESS = LPC_ACCESS_INT_BUSY;
-		/* LPC access interrupt pending. */
-		if (IT83XX_WUC_WUESR4 & (1 << 2)) {
-			task_enable_irq(IT83XX_IRQ_WKINTAD);
-			continue;
-		}
-		BRAM_LPC_ACCESS = 0x00;
+#if defined(CHIP_FAMILY_IT83XX) && defined(CONFIG_LPC) \
+	&& defined(CONFIG_IT83XX_LPC_ACCESS_INT)
 		task_enable_irq(IT83XX_IRQ_WKINTAD);
 #endif
 
@@ -108,6 +91,11 @@ void __idle(void)
 		 * (sleep / deep sleep, depending on chip config).
 		 */
 		asm("standby wake_grant");
+
+#if defined(CHIP_FAMILY_IT83XX) && defined(CONFIG_LPC) \
+	&& defined(CONFIG_IT83XX_LPC_ACCESS_INT)
+		task_disable_irq(IT83XX_IRQ_WKINTAD);
+#endif
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */
@@ -349,10 +337,6 @@ void update_exc_start_time(void)
 {
 #ifdef CONFIG_TASK_PROFILING
 	exc_start_time = get_time().val;
-#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
-	exc_current_fth = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
-	exc_current_ftl = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L);
-#endif
 #endif
 }
 
@@ -390,10 +374,6 @@ void end_irq_handler(void)
 {
 #ifdef CONFIG_TASK_PROFILING
 	uint64_t t, p;
-
-#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
-	uint32_t c;
-#endif
 	/*
 	 * save r0 and fp (fp for restore r0-r5, r15, fp, lp and sp
 	 * while interrupt exit.
@@ -401,13 +381,6 @@ void end_irq_handler(void)
 	asm volatile ("smw.adm $r0, [$sp], $r0, 8");
 
 	t = get_time().val;
-#if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
-	if (exc_current_fth != IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H)) {
-		c = (IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) + exc_current_ftl) -
-			IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L);
-		t = exc_start_time + (c >> TIMER_COUNT_1US_SHIFT);
-	}
-#endif
 	p = t - exc_start_time;
 
 	exc_total_time += p;

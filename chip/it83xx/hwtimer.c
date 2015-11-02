@@ -21,36 +21,31 @@
  * The IT839X series support combinational mode for combining specific pairs of
  * timers: 3(24-bit) and 4(32-bit) / timer 5(24-bit) and 6(32-bit) /
  * timer 7(24-bit) and 8(32-bit).
- * That means we will have a 56-bit timer if timer 3(TIMER_L) and
- * timer 4(TIMER_H) is combined (bit3 @ IT83XX_ETWD_ETXCTRL).
- * For a 32-bit MHz free-running counter, we select 8MHz clock source
- * for timer 3(TIMER_L) and 4(TIMER_H).
- * Counter setting value register(IT83XX_ETWD_ETXCNTLR) and counter observation
- * value register(IT83XX_ETWD_ETXCNTOR) of timer 3 and 4 need to be shifted by
- * 3 (2^3). So that each count will be equal to 0.125us.
+ *
+ * 32-bit MHz free-running counter: We combine (bit3@IT83XX_ETWD_ETXCTRL)
+ * timer 3(TIMER_L) and 4(TIMER_H) and set clock source register to 8MHz.
+ * In combinational mode, the counter register(IT83XX_ETWD_ETXCNTLR) of timer 3
+ * is a fixed value = 7, and observation register(IT83XX_ETWD_ETXCNTOR)
+ * of timer 4 will increase one per-us.
  *
  * For example, if
- * __hw_clock_source_set() set 0 us, the counter setting register are
- * timer 3(TIMER_L) ((0xffffffff << 3) & 0xffffff) = 0xfffff8
- * timer 4(TIMER_H) (0xffffffff >> (24-3)) = 0x000007ff
- * The 56-bit 8MHz timer = 0x000007fffffff8
- * 0x000007fffffff8 / (2^3) = 0xffffffff(32-bit MHz free-running counter)
+ * __hw_clock_source_set() set 0 us, the counter setting registers are
+ * timer 3(TIMER_L) = 0x000007 (fixed, will not change)
+ * timer 4(TIMER_H) = 0xffffffff
  *
  * Note:
  * In combinational mode, the counter observation value of
  * timer 4(TIMER_H), 6, 8 will in incrementing order.
  * For the above example, the counter observation value registers will be
- * timer 3(TIMER_L) 0xfffff8
- * timer 4(TIMER_H) ~0x000007ff = 0xfffff800
+ * timer 3(TIMER_L) 0x0000007
+ * timer 4(TIMER_H) ~0xffffffff = 0x00000000
  *
  * The following will describe timer 3 and 4's operation in combinational mode:
- * 1. When timer 3(TIMER_L) observation value counting down to 0,
+ * 1. When timer 3(TIMER_L) has completed each counting (per-us),
       timer 4(TIMER_H) observation value++.
- * 2. Timer 3(TIMER_L) observation value = counter setting register.
- * 3. Timer 3(TIMER_L) interrupt occurs if interrupt is enabled.
- * 4. When timer 4(TIMER_H) observation value overflows.
- * 5. Timer 4(TIMER_H) observation value = ~counter setting register.
- * 6. Timer 4(TIMER_H) interrupt occurs.
+ * 2. When timer 4(TIMER_H) observation value overflows:
+ *    timer 4(TIMER_H) observation value = ~counter setting register.
+ * 3. Timer 4(TIMER_H) interrupt occurs.
  *
  * IT839X only supports terminal count interrupt. We need a separate
  * 8 MHz 32-bit timer to handle events.
@@ -74,41 +69,21 @@ const struct ext_timer_ctrl_t et_ctrl_regs[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(et_ctrl_regs) == EXT_TIMER_COUNT);
 
-static void free_run_timer_config_counter(uint32_t us)
-{
-	/* bit0, timer stop */
-	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) &= ~(1 << 0);
-	/*
-	 * microseconds to timer counter,
-	 * timer 3(TIMER_L) and 4(TIMER_H) combinational mode
-	 */
-	IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = TIMER_H_US_TO_COUNT(us);
-	IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) = TIMER_L_US_TO_COUNT(us);
-	/* bit[0,1], timer start and reset */
-	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= 3;
-}
-
-static void free_run_timer_clear_pending_isr(void)
-{
-	/* w/c interrupt status */
-	task_clear_pending_irq(et_ctrl_regs[FREE_EXT_TIMER_L].irq);
-	task_clear_pending_irq(et_ctrl_regs[FREE_EXT_TIMER_H].irq);
-}
-
 static void free_run_timer_overflow(void)
 {
 	/*
-	 * If timer counter 4(TIMER_H) + timer counter 3(TIMER_L)
-	 * != 0x000007fffffff8.
+	 * If timer 4 (TIMER_H) counter register != 0xffffffff.
 	 * This usually happens once after sysjump, force time, and etc.
 	 * (when __hw_clock_source_set is called and param 'ts' != 0)
 	 */
-	if ((IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) != TIMER_H_CNT_COMP) ||
-		(IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) != TIMER_L_CNT_COMP))
-		free_run_timer_config_counter(0xffffffff);
-
+	if (IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) != 0xffffffff) {
+		/* set timer counter register */
+		IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = 0xffffffff;
+		/* bit[1], timer reset */
+		IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 1);
+	}
 	/* w/c interrupt status */
-	free_run_timer_clear_pending_isr();
+	task_clear_pending_irq(et_ctrl_regs[FREE_EXT_TIMER_H].irq);
 	/* timer overflow */
 	process_timers(1);
 	update_exc_start_time();
@@ -122,48 +97,19 @@ static void event_timer_clear_pending_isr(void)
 
 uint32_t __hw_clock_source_read(void)
 {
-	uint32_t l_cnt, h_cnt;
-
 	/*
-	 * get timer counter observation value, timer 3(TIMER_L) and 4(TIMER_H)
-	 * combinational mode.
+	 * In combinational mode, the counter observation register of
+	 * timer 4(TIMER_H) will in incrementing order.
 	 */
-	h_cnt = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
-	l_cnt = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L);
-	/* timer 3(TIMER_L) overflow, get counter observation value again */
-	if (h_cnt != IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H)) {
-		h_cnt = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
-		l_cnt = IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L);
-	}
-
-	/* timer counter observation value to microseconds */
-	return 0xffffffff - (TIMER_L_COUNT_TO_US(l_cnt) |
-			TIMER_H_COUNT_TO_US(h_cnt));
+	return IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
 }
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	uint32_t start_us;
-
-	/* counting down timer */
-	start_us = 0xffffffff - ts;
-
-	/* timer 3(TIMER_L) and timer 4(TIMER_H) are not enabled */
-	if ((IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) & 0x09) != 0x09) {
-		/* bit3, timer 3 and timer 4 combinational mode */
-		IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 3);
-		/* microseconds to timer counter, clock source is 8mhz */
-		ext_timer_ms(FREE_EXT_TIMER_H, EXT_PSR_8M_HZ, 0, 1,
-			TIMER_H_US_TO_COUNT(start_us), 1, 1);
-		ext_timer_ms(FREE_EXT_TIMER_L, EXT_PSR_8M_HZ, 1, 1,
-			TIMER_L_US_TO_COUNT(start_us), 1, 1);
-	} else {
-		/* set timer counter only */
-		free_run_timer_config_counter(start_us);
-		free_run_timer_clear_pending_isr();
-		task_enable_irq(et_ctrl_regs[FREE_EXT_TIMER_H].irq);
-		task_enable_irq(et_ctrl_regs[FREE_EXT_TIMER_L].irq);
-	}
+	/* counting down timer, microseconds to timer counter register */
+	IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = 0xffffffff - ts;
+	/* bit[1], timer reset */
+	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 1);
 }
 
 void __hw_clock_event_set(uint32_t deadline)
@@ -205,7 +151,12 @@ void __hw_clock_event_clear(void)
 
 int __hw_clock_source_init(uint32_t start_t)
 {
-	/* enable free running timer */
+	/* bit3, timer 3 and timer 4 combinational mode */
+	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 3);
+	/* init free running timer (timer 4, TIMER_H), clock source is 8mhz */
+	ext_timer_ms(FREE_EXT_TIMER_H, EXT_PSR_8M_HZ, 0, 1, 0xffffffff, 1, 1);
+	/* 1us counter settiing (timer 3, TIMER_L) */
+	ext_timer_ms(FREE_EXT_TIMER_L, EXT_PSR_8M_HZ, 1, 0, 7, 1, 1);
 	__hw_clock_source_set(start_t);
 	/* init event timer */
 	ext_timer_ms(EVENT_EXT_TIMER, EXT_PSR_8M_HZ, 0, 0, 0xffffffff, 1, 1);
@@ -246,39 +197,6 @@ static void __hw_clock_source_irq(void)
 		return;
 	}
 #endif
-
-	/* Interrupt of free running timer TIMER_L. */
-	if (irq == et_ctrl_regs[FREE_EXT_TIMER_L].irq) {
-		/* w/c interrupt status */
-		task_clear_pending_irq(et_ctrl_regs[FREE_EXT_TIMER_L].irq);
-		/* disable timer 3(TIMER_L) interrupt */
-		task_disable_irq(et_ctrl_regs[FREE_EXT_TIMER_L].irq);
-		/* No need to set timer counter */
-		if (IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) == TIMER_L_CNT_COMP)
-			return;
-		/*
-		 * If timer counter 3(TIMER_L) != 0xfffff8.
-		 * This usually happens once after sysjump, force time, and etc.
-		 * (when __hw_clock_source_set is called and param 'ts' != 0)
-		 *
-		 * The interrupt is used to make sure the counter of
-		 * timer 3(TIMER_L) is
-		 * 0xfffff8(TIMER_L_COUNT_TO_US(0xffffffff)).
-		 */
-		if (IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H)) {
-			/* bit0, timer stop */
-			IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) &= ~(1 << 0);
-			IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) =
-				TIMER_L_US_TO_COUNT(0xffffffff);
-			IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) -= 1;
-			/* bit[0,1], timer start and reset */
-			IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= 3;
-			update_exc_start_time();
-		} else {
-			free_run_timer_overflow();
-		}
-		return;
-	}
 
 	/* Interrupt of free running timer TIMER_H. */
 	if (irq == et_ctrl_regs[FREE_EXT_TIMER_H].irq) {

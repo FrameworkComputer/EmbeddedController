@@ -10,21 +10,10 @@
 
 #define TIMER_COUNT_1US_SHIFT      3
 
-/* Combinational mode, microseconds to timer counter setting register */
-#define TIMER_H_US_TO_COUNT(us)  ((us) >> (24 - TIMER_COUNT_1US_SHIFT))
-#define TIMER_L_US_TO_COUNT(us)  (((us) << TIMER_COUNT_1US_SHIFT) & 0x00ffffff)
-
-/* Free running timer counter observation value to microseconds */
-#define TIMER_H_COUNT_TO_US(cnt) ((~(cnt)) << (24 - TIMER_COUNT_1US_SHIFT))
-#define TIMER_L_COUNT_TO_US(cnt) (((cnt) & 0x00ffffff) >> TIMER_COUNT_1US_SHIFT)
-
 /* Microseconds to event timer counter setting register */
 #define EVENT_TIMER_US_TO_COUNT(us)  ((us) << TIMER_COUNT_1US_SHIFT)
 /* Event timer counter observation value to microseconds */
 #define EVENT_TIMER_COUNT_TO_US(cnt) ((cnt) >> TIMER_COUNT_1US_SHIFT)
-
-#define TIMER_H_CNT_COMP TIMER_H_US_TO_COUNT(0xffffffff)
-#define TIMER_L_CNT_COMP TIMER_L_US_TO_COUNT(0xffffffff)
 
 #define FREE_EXT_TIMER_L     EXT_TIMER_3
 #define FREE_EXT_TIMER_H     EXT_TIMER_4

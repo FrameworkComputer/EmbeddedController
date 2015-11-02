@@ -40,8 +40,8 @@ static int console_in_use_timeout_sec = 5;
 static timestamp_t console_expire_time;
 
 /* clock source is 32.768KHz */
-#define TIMER_32P768K_CNT_TO_US(cnt) ((cnt) * 32768 / 1000)
-#define TIMER_CNT_8M_32P768K(cnt)    (((cnt) / 262) + 1)
+#define TIMER_32P768K_CNT_TO_US(cnt) ((uint64_t)(cnt) * 1000000 / 32768)
+#define TIMER_CNT_8M_32P768K(cnt)    (((cnt) / (8000000 / 32768)) + 1)
 #endif /*CONFIG_LOW_POWER_IDLE */
 
 static int freq;
@@ -79,6 +79,13 @@ void clock_init(void)
 
 	/* Default doze mode */
 	IT83XX_ECPM_PLLCTRL = EC_PLL_DOZE;
+
+#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
+	IT83XX_WUC_WUESR4 = 0xff;
+	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
+	/* bit2, wake-up enable for LPC access */
+	IT83XX_WUC_WUENR4 |= (1 << 2);
+#endif
 }
 
 int clock_get_freq(void)
@@ -152,9 +159,6 @@ static void clock_htimer_enable(void)
 {
 	uint32_t c;
 
-	/* disable free running interrupt */
-	task_disable_irq(et_ctrl_regs[FREE_EXT_TIMER_H].irq);
-	task_disable_irq(et_ctrl_regs[FREE_EXT_TIMER_L].irq);
 	/* change event timer clock source to 32.768 KHz */
 	c = TIMER_CNT_8M_32P768K(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER));
 	clock_event_timer_clock_change(EXT_PSR_32P768K_HZ, c);
@@ -170,10 +174,6 @@ static int clock_allow_low_power_idle(void)
 		return 0;
 
 	if (EVENT_TIMER_COUNT_TO_US(IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER)) <
-		SLEEP_SET_HTIMER_DELAY_USEC)
-		return 0;
-
-	if (TIMER_L_COUNT_TO_US(IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_L)) <
 		SLEEP_SET_HTIMER_DELAY_USEC)
 		return 0;
 
@@ -209,17 +209,6 @@ void clock_sleep_mode_wakeup_isr(void)
 		c = 0xffffffff - IT83XX_ETWD_ETXCNTOR(LOW_POWER_EXT_TIMER);
 		st_us = TIMER_32P768K_CNT_TO_US(c);
 		sleep_mode_t1.val = sleep_mode_t0.val + st_us;
-		/*
-		 * When TIMER_L underflow, and because the observation value
-		 * equals to counter setting register, we need a window of
-		 * 64us (at minimum) to reset the value of TIMER_L back to
-		 * 0xfffff8(TIMER_L_COUNT_TO_US(0xffffffff))
-		 */
-		c = TIMER_L_US_TO_COUNT(0xffffffff - sleep_mode_t1.le.lo);
-		if (TIMER_L_COUNT_TO_US(c) < 64) {
-			sleep_mode_t1.le.lo |= 0x3F;
-			sleep_mode_t1.le.lo &= ~(1 << 6);
-		}
 		__hw_clock_source_set(sleep_mode_t1.le.lo);
 
 		/* reset event timer and clock source is 8 MHz */
@@ -243,12 +232,6 @@ void __idle(void)
 	ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 0,
 		0xffffffff, 1, 1);
 
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-	IT83XX_WUC_WUESR4 = 0xff;
-	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
-	/* bit2, wake-up enable for LPC access */
-	IT83XX_WUC_WUENR4 |= (1 << 2);
-#endif
 	/*
 	 * Print when the idle task starts.  This is the lowest priority task,
 	 * so this only starts once all other tasks have gotten a chance to do
@@ -257,20 +240,13 @@ void __idle(void)
 	CPRINTS("low power idle task started");
 
 	while (1) {
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-		BRAM_LPC_ACCESS = LPC_ACCESS_INT_BUSY;
-		/* LPC access interrupt pending. */
-		if (IT83XX_WUC_WUESR4 & (1 << 2)) {
-			task_enable_irq(IT83XX_IRQ_WKINTAD);
-			continue;
-		}
-		BRAM_LPC_ACCESS = 0;
-		task_enable_irq(IT83XX_IRQ_WKINTAD);
-#endif
 		allow_sleep = 0;
 		if (DEEP_SLEEP_ALLOWED)
 			allow_sleep = clock_allow_low_power_idle();
 
+#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
+		task_enable_irq(IT83XX_IRQ_WKINTAD);
+#endif
 		if (allow_sleep) {
 			interrupt_disable();
 			/* reset low power mode hw timer */
@@ -293,6 +269,9 @@ void __idle(void)
 			asm("standby wake_grant");
 			idle_doze_cnt++;
 		}
+#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
+			task_disable_irq(IT83XX_IRQ_WKINTAD);
+#endif
 	}
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
