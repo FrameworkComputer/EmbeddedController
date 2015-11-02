@@ -119,7 +119,7 @@ $(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)
 $(eval CHIP_FAMILY_$(UC_CHIP_FAMILY)=y)
 
 # Private subdirectories may call this from their build.mk
-ro-objs_from_dir=$(sort $(foreach obj, $($(2)-y), $(out)/RO/$(1)/$(obj)))
+objs_from_dir=$(foreach obj, $($(2)-y), $(1)/$(obj))
 
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
@@ -140,27 +140,28 @@ include util/signer/build.mk
 includes+=$(includes-y)
 
 # Get all sources to build
-all-ro-y+=$(call ro-objs_from_dir,core/$(CORE),core)
-all-ro-y+=$(call ro-objs_from_dir,chip/$(CHIP),chip)
-all-ro-y+=$(call ro-objs_from_dir,$(BDIR),board)
-all-ro-y+=$(call ro-objs_from_dir,private,private)
-all-ro-y+=$(call ro-objs_from_dir,private-cr51,private-cr51)
-all-ro-y+=$(call ro-objs_from_dir,common,common)
-all-ro-y+=$(call ro-objs_from_dir,driver,driver)
-all-ro-y+=$(call ro-objs_from_dir,power,power)
-all-ro-y+=$(call ro-objs_from_dir,test,$(PROJECT))
+all-obj-y+=$(call objs_from_dir,core/$(CORE),core)
+all-obj-y+=$(call objs_from_dir,chip/$(CHIP),chip)
+all-obj-y+=$(call objs_from_dir,$(BDIR),board)
+all-obj-y+=$(call objs_from_dir,private,private)
+all-obj-y+=$(call objs_from_dir,private-cr51,private-cr51)
+all-obj-y+=$(call objs_from_dir,common,common)
+all-obj-y+=$(call objs_from_dir,driver,driver)
+all-obj-y+=$(call objs_from_dir,power,power)
+all-obj-y+=$(call objs_from_dir,test,$(PROJECT))
 dirs=core/$(CORE) chip/$(CHIP) $(BDIR) common power test
 dirs+= private private-cr51
 dirs+=$(shell find driver -type d)
 common_dirs=util
 
-ro-objs := $(all-ro-y)
+ro-objs := $(sort $(foreach obj, $(all-obj-y), $(out)/RO/$(obj)))
+rw-objs := $(sort $(foreach obj, $(all-obj-y), $(out)/RW/$(obj)))
+
 # Don't include the shared objects in the RO/RW image if we're enabling
 # the shared objects library.
 ifeq ($(CONFIG_SHAREDLIB),y)
 ro-objs := $(filter-out %_sharedlib.o, $(ro-objs))
 endif
-rw-objs := $(ro-objs:$(out)/RO/%=$(out)/RW/%)
 ro-deps := $(ro-objs:%.o=%.o.d)
 rw-deps := $(rw-objs:%.o=%.o.d)
 deps := $(ro-deps) $(rw-deps)
@@ -181,8 +182,8 @@ rw: $(libsharedobjs_elf-y) $(out)/RW/$(PROJECT).RW.flat
 
 # Shared objects library
 SHOBJLIB := libsharedobjs
-sharedlib-objs := $(filter %_sharedlib.o, $(all-ro-y))
-sharedlib-objs := $(sharedlib-objs:$(out)/RO/%=$(out)/$(SHOBJLIB)/%)
+sharedlib-objs := $(filter %_sharedlib.o, $(all-obj-y))
+sharedlib-objs := $(foreach obj, $(sharedlib-objs), $(out)/$(SHOBJLIB)/$(obj))
 sharedlib-deps := $(sharedlib-objs:%.o=%.o.d)
 deps += $(sharedlib-deps)
 def_libsharedobjs_deps := $(sharedlib-objs)
