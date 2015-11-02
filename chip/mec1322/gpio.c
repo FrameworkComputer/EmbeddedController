@@ -168,7 +168,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	girq_id = int_map[port].girq_id;
 	bit_id = (port - int_map[port].port_offset) * 8 + i;
 
-	MEC1322_INT_DISABLE(girq_id) |= (1 << bit_id);
+	MEC1322_INT_DISABLE(girq_id) = (1 << bit_id);
 
 	return EC_SUCCESS;
 }
