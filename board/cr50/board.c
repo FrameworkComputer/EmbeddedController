@@ -89,7 +89,6 @@ static void init_runlevel(const enum permission_level desired_level)
 {
 	volatile uint32_t *const reg_addrs[] = {
 		GREG32_ADDR(GLOBALSEC, CPU0_S_PERMISSION),
-		GREG32_ADDR(GLOBALSEC, CPU0_S_DAP_PERMISSION),
 		GREG32_ADDR(GLOBALSEC, DDMA0_PERMISSION),
 	};
 	int i;
