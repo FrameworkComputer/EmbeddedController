@@ -5,18 +5,14 @@
 
 /* Type-C port manager */
 
-#include "i2c.h"
 #include "task.h"
 #include "tcpci.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
-#include "usb_pd_tcpm.h"
 #include "util.h"
-
-/* Convert port number to tcpc i2c address */
-#define I2C_ADDR_TCPC(p) (CONFIG_TCPC_I2C_BASE_ADDR + 2*(p))
 
 static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
 
@@ -62,10 +58,9 @@ int tcpm_get_cc(int port, int *cc1, int *cc2)
 	int status;
 	int rv;
 
-	rv = i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-		       TCPC_REG_CC_STATUS, &status);
+	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
 
-	/* If i2c read fails, return error */
+	/* If tcpc read fails, return error */
 	if (rv)
 		return rv;
 
@@ -86,8 +81,7 @@ int tcpm_get_cc(int port, int *cc1, int *cc2)
 
 int tcpm_get_power_status(int port, int *status)
 {
-	return i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			 TCPC_REG_POWER_STATUS, status);
+	return tcpc_read(port, TCPC_REG_POWER_STATUS, status);
 }
 
 int tcpm_set_cc(int port, int pull)
@@ -97,59 +91,51 @@ int tcpm_set_cc(int port, int pull)
 	 * pull.
 	 */
 	/* TODO: set desired Rp strength */
-	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_ROLE_CTRL,
+	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
 			  TCPC_REG_ROLE_CTRL_SET(0, 0, pull, pull));
 }
 
 int tcpm_set_polarity(int port, int polarity)
 {
-	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_TCPC_CTRL,
+	return tcpc_write(port, TCPC_REG_TCPC_CTRL,
 			  TCPC_REG_TCPC_CTRL_SET(polarity));
 }
 
 int tcpm_set_vconn(int port, int enable)
 {
-	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_POWER_CTRL,
+	return tcpc_write(port, TCPC_REG_POWER_CTRL,
 			  TCPC_REG_POWER_CTRL_SET(enable));
 }
 
 int tcpm_set_msg_header(int port, int power_role, int data_role)
 {
-	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_MSG_HDR_INFO,
+	return tcpc_write(port, TCPC_REG_MSG_HDR_INFO,
 			  TCPC_REG_MSG_HDR_INFO_SET(data_role, power_role));
 }
 
 int tcpm_alert_status(int port, int *alert)
 {
 	/* Read TCPC Alert register */
-	return i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_ALERT, alert);
+	return tcpc_read16(port, TCPC_REG_ALERT, alert);
 }
 
 int tcpm_set_rx_enable(int port, int enable)
 {
 	/* If enable, then set RX detect for SOP and HRST */
-	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_RX_DETECT,
+	return tcpc_write(port, TCPC_REG_RX_DETECT,
 			  enable ? TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0);
 }
 
 int tcpm_set_power_status_mask(int port, uint8_t mask)
 {
 	/* write to the Alert Mask register */
-	return i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_POWER_STATUS_MASK , mask);
+	return tcpc_write(port, TCPC_REG_POWER_STATUS_MASK , mask);
 }
 
 int tcpm_alert_mask_set(int port, uint16_t mask)
 {
 	/* write to the Alert Mask register */
-	return i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			   TCPC_REG_ALERT_MASK, mask);
+	return tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
 }
 
 #ifdef CONFIG_USB_PD_TCPM_VBUS
@@ -163,23 +149,20 @@ int tcpm_get_message(int port, uint32_t *payload, int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
 
-	rv = i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-		       TCPC_REG_RX_BYTE_CNT, &cnt);
+	rv = tcpc_read(port, TCPC_REG_RX_BYTE_CNT, &cnt);
 
-	rv |= i2c_read16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			 TCPC_REG_RX_HDR, (int *)head);
+	rv |= tcpc_read16(port, TCPC_REG_RX_HDR, (int *)head);
 
 	if (rv == EC_SUCCESS && cnt > 0) {
-		i2c_lock(I2C_PORT_TCPC, 1);
-		rv = i2c_xfer(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			      (uint8_t *)&reg, 1, (uint8_t *)payload,
-			      cnt, I2C_XFER_SINGLE);
-		i2c_lock(I2C_PORT_TCPC, 0);
+		tcpc_lock(port, 1);
+		rv = tcpc_xfer(port,
+			       (uint8_t *)&reg, 1, (uint8_t *)payload,
+			       cnt, I2C_XFER_SINGLE);
+		tcpc_lock(port, 0);
 	}
 
 	/* Read complete, clear RX status alert bit */
-	i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-		    TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
+	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
 
 	return rv;
 }
@@ -190,31 +173,28 @@ int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 	int reg = TCPC_REG_TX_DATA;
 	int rv, cnt = 4*PD_HEADER_CNT(header);
 
-	rv = i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			TCPC_REG_TX_BYTE_CNT, cnt);
+	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt);
 
-	rv |= i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_TX_HDR, header);
+	rv |= tcpc_write16(port, TCPC_REG_TX_HDR, header);
 
-	/* If i2c read fails, return error */
+	/* If tcpc read fails, return error */
 	if (rv)
 		return rv;
 
 	if (cnt > 0) {
-		i2c_lock(I2C_PORT_TCPC, 1);
-		rv = i2c_xfer(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			      (uint8_t *)&reg, 1, NULL, 0, I2C_XFER_START);
-		rv |= i2c_xfer(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			       (uint8_t *)data, cnt, NULL, 0, I2C_XFER_STOP);
-		i2c_lock(I2C_PORT_TCPC, 0);
+		tcpc_lock(port, 1);
+		rv = tcpc_xfer(port,
+			       (uint8_t *)&reg, 1, NULL, 0, I2C_XFER_START);
+		rv |= tcpc_xfer(port,
+				(uint8_t *)data, cnt, NULL, 0, I2C_XFER_STOP);
+		tcpc_lock(port, 0);
 	}
 
-	/* If i2c read fails, return error */
+	/* If tcpc read fails, return error */
 	if (rv)
 		return rv;
 
-	rv = i2c_write8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			TCPC_REG_TRANSMIT, TCPC_REG_TRANSMIT_SET(type));
+	rv = tcpc_write(port, TCPC_REG_TRANSMIT, TCPC_REG_TRANSMIT_SET(type));
 
 	return rv;
 }
@@ -231,8 +211,8 @@ void tcpc_alert(int port)
 	 * be cleared until we have successfully retrieved message.
 	 */
 	if (status & ~TCPC_REG_ALERT_RX_STATUS)
-		i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			    TCPC_REG_ALERT, status & ~TCPC_REG_ALERT_RX_STATUS);
+		tcpc_write16(port, TCPC_REG_ALERT,
+			     status & ~TCPC_REG_ALERT_RX_STATUS);
 
 	if (status & TCPC_REG_ALERT_CC_STATUS) {
 		/* CC status changed, wake task */
@@ -241,8 +221,7 @@ void tcpc_alert(int port)
 	if (status & TCPC_REG_ALERT_POWER_STATUS) {
 		int reg = 0;
 
-		i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-			  TCPC_REG_POWER_STATUS_MASK, &reg);
+		tcpc_read(port, TCPC_REG_POWER_STATUS_MASK, &reg);
 
 		if (reg == TCPC_REG_POWER_STATUS_MASK_ALL) {
 			/*
@@ -287,17 +266,15 @@ int tcpm_init(int port)
 	int power_status;
 
 	while (1) {
-		rv = i2c_read8(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				TCPC_REG_POWER_STATUS, &power_status);
+		rv = tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status);
 		/*
-		 * If i2c succeeds and the uninitialized bit is clear, then
+		 * If read succeeds and the uninitialized bit is clear, then
 		 * initalization is complete, clear all alert bits and write
 		 * the initial alert mask.
 		 */
 		if (rv == EC_SUCCESS &&
 		    !(power_status & TCPC_REG_POWER_STATUS_UNINIT)) {
-			i2c_write16(I2C_PORT_TCPC, I2C_ADDR_TCPC(port),
-				    TCPC_REG_ALERT, 0xffff);
+			tcpc_write16(port, TCPC_REG_ALERT, 0xffff);
 			/* Initialize power_status_mask */
 			init_power_status_mask(port);
 			/* Update VBUS status */

@@ -47,6 +47,15 @@ enum tcpc_transmit_complete {
 	TCPC_TX_COMPLETE_FAILED =    2,
 };
 
+struct tcpc_config_t {
+	int i2c_host_port;
+	int i2c_slave_addr;
+	/*
+	 * TODO: Consider adding driver struct / function pointers to support
+	 * different TCPM drivers on the same board.
+	 */
+};
+
 /**
  * Initialize TCPM driver and wait for TCPC readiness.
  *

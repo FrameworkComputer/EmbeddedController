@@ -14,6 +14,7 @@
 #include "task.h"
 #include "usb_descriptor.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 void button_event(enum gpio_signal signal);
@@ -53,3 +54,10 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc", I2C_PORT_TCPC, 100 /* kHz */, GPIO_I2C0_SCL, GPIO_I2C0_SDA}
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+	{I2C_PORT_TCPC, TCPC1_I2C_ADDR},
+#if CONFIG_USB_PD_PORT_COUNT >= 2
+	{I2C_PORT_TCPC, TCPC2_I2C_ADDR},
+#endif
+};

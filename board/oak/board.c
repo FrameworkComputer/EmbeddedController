@@ -104,6 +104,11 @@ const struct i2c_port_t i2c_ports[] = {
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
+};
+
 struct mutex pericom_mux_lock;
 struct pi3usb9281_config pi3usb9281_chips[] = {
 	{

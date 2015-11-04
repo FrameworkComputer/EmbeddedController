@@ -46,6 +46,10 @@
 #define I2C_PORT_TCPC 0
 #define I2C_PORT_PD_MCU 0
 
+/* TCPC I2C slave addresses */
+#define TCPC1_I2C_ADDR 0x9c
+#define TCPC2_I2C_ADDR 0x9e
+
 /* Timer selection */
 
 /* USB Configuration */

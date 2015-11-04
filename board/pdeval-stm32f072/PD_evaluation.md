@@ -38,8 +38,8 @@ then document the new `CONFIG_USB_PD_TCPM_` variable in the [include/config.h](.
 In [board/pdeval-stm32f072/board.h](board.h), you can update `CONFIG_USB_PD_PORT_COUNT` to the actual number of ports on your board.
 You also need to create/delete the corresponding `PD_Cx` tasks in [board/pdeval-stm32f072/ec.tasklist](ec.tasklist).
 
-By default, the firmware is using I2C1 with SCL/SDA on pins PB6 and PB7, running with a 100kHz clock.
-To change the pins or speed, you need to edit `i2c_ports` in [board/pdeval-stm32f072/board.c](board.c), update `I2C_PORT_TCPC` in [board/pdeval-stm32f072/board.h](board.h) with the right controller number, and change the pin mux in [board/pdeval-stm32f072/gpio.inc](gpio.inc).
+By default, the firmware is using I2C1 with SCL/SDA on pins PB6 and PB7, running with a 100kHz clock, and tries to talk to TCPCs at i2c slave addresses 0x9c and 0x9e.
+To change the pins or speed, you need to edit `i2c_ports` in [board/pdeval-stm32f072/board.c](board.c), update `I2C_PORT_TCPC` in [board/pdeval-stm32f072/board.h](board.h) with the right controller number, and change the pin mux in [board/pdeval-stm32f072/gpio.inc](gpio.inc). To change TCPC i2c slave addresses, update `TCPC1_I2C_ADDR` and `TCPC2_I2C_ADDR` in [board/pdeval-stm32f072/board.h](board.h).
 
 The I2C bus needs pull-up resistors on SCL/SDA. If your setup doesn't have external pull-ups on those lines, you can activate the chip internal pull-ups (but they are a bit weak for I2C) by editing [board/pdeval-stm32f072/gpio.inc](gpio.inc) and updating the alternate mode configuration flags with `GPIO_PULL_UP` e.g. :
 `ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C,   GPIO_PULL_UP) /* I2C MASTER:PB6/7 */`

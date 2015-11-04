@@ -10,9 +10,6 @@
 #ifndef __CROS_EC_DRIVER_TCPM_FUSB302_H
 #define __CROS_EC_DRIVER_TCPM_FUSB302_H
 
-/* FUSB302 I2C Address */
-#define CONFIG_TCPC_I2C_BASE_ADDR 0x44
-
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT		3
 
@@ -192,7 +189,6 @@ enum fusb302_txfifo_tokens {
 	FUSB302_TKN_EOP = 0x14,
 	FUSB302_TKN_TXOFF = 0xFE,
 };
-
 
 #endif /* __CROS_EC_DRIVER_TCPM_FUSB302_H */
 

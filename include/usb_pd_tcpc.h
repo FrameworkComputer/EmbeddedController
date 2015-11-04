@@ -8,10 +8,6 @@
 #ifndef __CROS_EC_USB_PD_TCPC_H
 #define __CROS_EC_USB_PD_TCPC_H
 
-#ifndef CONFIG_TCPC_I2C_BASE_ADDR
-#define CONFIG_TCPC_I2C_BASE_ADDR 0x9c
-#endif
-
 /* If we are a TCPC but do not a TCPM, then we implement the slave TCPCI */
 #if defined(CONFIG_USB_PD_TCPC) && !defined(CONFIG_USB_PD_TCPM_STUB)
 #define TCPCI_I2C_SLAVE

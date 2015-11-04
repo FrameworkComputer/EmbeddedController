@@ -1783,7 +1783,7 @@
 #undef CONFIG_USB_PD_TCPM_VBUS
 
 /* Define the type-c port controller I2C base address. */
-#undef CONFIG_TCPC_I2C_BASE_ADDR
+#define CONFIG_TCPC_I2C_BASE_ADDR 0x9c
 
 /* Use this option to enable Try.SRC mode for Dual Role devices */
 #undef CONFIG_USB_PD_TRY_SRC
