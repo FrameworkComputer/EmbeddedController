@@ -259,6 +259,23 @@ int charger_post_init(void)
 /* Hardware current ramping (aka ICO: Input Current Optimizer) */
 
 #ifdef CONFIG_CHARGE_RAMP_HW
+int charger_set_hw_ramp(int enable)
+{
+	int val, rv;
+
+	rv = i2c_read8(I2C_PORT_CHARGER, BQ2589X_ADDR, BQ2589X_REG_CFG1, &val);
+	if (rv)
+		return rv;
+
+	if (enable)
+		val |= BQ2589X_CFG1_ICO_EN;
+	else
+		val &= ~BQ2589X_CFG1_ICO_EN;
+
+	return i2c_write8(I2C_PORT_CHARGER, BQ2589X_ADDR, BQ2589X_REG_CFG1,
+			  val);
+}
+
 int chg_ramp_is_stable(void)
 {
 	int val, rv;

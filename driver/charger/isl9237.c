@@ -216,15 +216,30 @@ int charger_set_voltage(int voltage)
 
 int charger_post_init(void)
 {
+	int rv, reg;
+
 #ifdef CONFIG_TRICKLE_CHARGING
-	int rv;
 	const struct battery_info *bi = battery_get_info();
 
 	rv = raw_write16(ISL9237_REG_SYS_VOLTAGE_MIN, bi->voltage_min);
 	if (rv)
 		return rv;
 #endif
-	return EC_SUCCESS;
+
+	rv = charger_get_option(&reg);
+	if (rv)
+		return rv;
+
+#ifdef CONFIG_CHARGE_RAMP_HW
+	/* Set input voltage regulation reference voltage for charge ramp */
+	reg &= ~ISL9237_C0_VREG_REF_MASK;
+	reg |= ISL9237_C0_VREG_REF_4200;
+#else
+	/* Disable voltage regulation loop to disable charge ramp */
+	reg |= ISL9237_C0_DISABLE_VREG;
+#endif
+
+	return charger_set_option(reg);
 }
 
 int charger_discharge_on_ac(int enable)
@@ -244,6 +259,50 @@ int charger_discharge_on_ac(int enable)
 
 	return raw_write16(ISL9237_REG_CONTROL1, control1);
 }
+
+/*****************************************************************************/
+/* Hardware current ramping */
+
+#ifdef CONFIG_CHARGE_RAMP_HW
+int charger_set_hw_ramp(int enable)
+{
+	int rv, reg;
+
+	rv = charger_get_option(&reg);
+	if (rv)
+		return rv;
+
+	/* HW ramp is controlled by input voltage regulation reference bits */
+	if (enable)
+		reg &= ~ISL9237_C0_DISABLE_VREG;
+	else
+		reg |= ISL9237_C0_DISABLE_VREG;
+
+	return charger_set_option(reg);
+}
+
+int chg_ramp_is_stable(void)
+{
+	/*
+	 * Since ISL cannot read the current limit that the ramp has settled
+	 * on, then we can never consider the ramp stable, because we never
+	 * know what the stable limit is.
+	 */
+	return 0;
+}
+
+int chg_ramp_is_detected(void)
+{
+	return 1;
+}
+
+int chg_ramp_get_current_limit(void)
+{
+	/* ISL doesn't have a way to get this info */
+	return 0;
+}
+#endif /* CONFIG_CHARGE_RAMP_HW */
+
 
 #ifdef CONFIG_CHARGER_PSYS
 static void charger_enable_psys(void)

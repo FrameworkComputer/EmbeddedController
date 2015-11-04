@@ -7,6 +7,7 @@
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
+#include "charger.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -511,6 +512,10 @@ static void charge_manager_refresh(void)
 				new_port, new_supplier, new_charge_current,
 				registration_time[new_port]);
 #else
+#ifdef CONFIG_CHARGE_RAMP_HW
+		/* Enable or disable charge ramp */
+		charger_set_hw_ramp(board_is_ramp_allowed(new_supplier));
+#endif
 		board_set_charge_limit(new_charge_current);
 #endif
 		CPRINTS("CL: p%d s%d i%d v%d", new_port, new_supplier,

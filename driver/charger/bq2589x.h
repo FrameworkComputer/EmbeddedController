@@ -37,6 +37,7 @@
 
 /* REG02 : first configuration register bit definitions */
 #define BQ2589X_CFG1_CONV_START    (1<<7)
+#define BQ2589X_CFG1_ICO_EN        (1<<4)
 #define BQ2589X_CFG1_AUTO_DPDM_EN  (1<<0)
 
 /* REG03 : second configuration register bit definitions */
