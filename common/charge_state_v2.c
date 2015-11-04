@@ -101,8 +101,8 @@ BUILD_ASSERT(ARRAY_SIZE(prob_text) == NUM_PROBLEM_TYPES);
  */
 static void problem(enum problem_type p, int v)
 {
-	static int last_prob_val[NUM_PROBLEM_TYPES];
-	static timestamp_t last_prob_time[NUM_PROBLEM_TYPES];
+	static int __bss_slow last_prob_val[NUM_PROBLEM_TYPES];
+	static timestamp_t __bss_slow last_prob_time[NUM_PROBLEM_TYPES];
 	timestamp_t t_now, t_diff;
 
 	if (last_prob_val[p] != v) {
@@ -190,7 +190,7 @@ static void update_dynamic_battery_info(void)
 	uint8_t tmp;
 	int send_batt_status_event = 0;
 	int send_batt_info_event = 0;
-	static int batt_present;
+	static int __bss_slow batt_present;
 
 	tmp = 0;
 	if (curr.ac)
@@ -346,7 +346,7 @@ static void show_charging_progress(void)
 /* Calculate if battery is full based on whether it is accepting charge */
 static int calc_is_full(void)
 {
-	static int ret;
+	static int __bss_slow ret;
 
 	/* If bad state of charge reading, return last value */
 	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE ||
@@ -370,7 +370,7 @@ static int calc_is_full(void)
 static int charge_request(int voltage, int current)
 {
 	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS;
-	static int prev_volt, prev_curr;
+	static int __bss_slow prev_volt, prev_curr;
 
 	if (!voltage || !current)
 #ifdef CONFIG_CHARGER_NARROW_VDC
