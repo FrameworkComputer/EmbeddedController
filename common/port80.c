@@ -19,10 +19,10 @@
 #define HISTORY_LEN 128
 #define PORT80_POLL_PERIOD MSEC
 
-static uint16_t history[HISTORY_LEN];
-static int writes;    /* Number of port 80 writes so far */
+static uint16_t __bss_slow history[HISTORY_LEN];
+static int __bss_slow writes;    /* Number of port 80 writes so far */
 static int last_boot; /* Last code from previous boot */
-static int scroll;
+static int __bss_slow scroll;
 static int print_in_int = 1;
 
 void port_80_write(int data)
