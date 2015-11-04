@@ -22,9 +22,9 @@ struct button_state_t {
 	int debounced_pressed;
 };
 
-static struct button_state_t state[CONFIG_BUTTON_COUNT];
+static struct button_state_t __bss_slow state[CONFIG_BUTTON_COUNT];
 
-static uint64_t next_deferred_time;
+static uint64_t __bss_slow next_deferred_time;
 
 /*
  * Whether a button is currently pressed.
