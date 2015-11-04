@@ -54,37 +54,48 @@
  * Fill a circular buffer with things to print when we get the chance. The
  * number of args is fixed, and there's no rollover detection.
  */
-#define MAX_ENTRIES 256
+#define MAX_ENTRIES 512
 static struct {
 	timestamp_t t;
 	const char *fmt;
 	int a0, a1, a2, a3, a4;
 } stuff_to_print[MAX_ENTRIES];
-static int stuff_in, stuff_out;
+static int stuff_in, stuff_out, stuff_overflow;
 
 /* Call this only from within interrupt handler! */
 void print_later(const char *fmt, int a0, int a1, int a2, int a3, int a4)
 {
+	int next;
+
 	stuff_to_print[stuff_in].t = get_time();
 	stuff_to_print[stuff_in].fmt = fmt;
 	stuff_to_print[stuff_in].a0 = a0;
 	stuff_to_print[stuff_in].a1 = a1;
 	stuff_to_print[stuff_in].a2 = a2;
 	stuff_to_print[stuff_in].a3 = a3;
-	stuff_to_print[stuff_in].a3 = a4;
-	stuff_in++;
-	if (stuff_in >= MAX_ENTRIES)
-		stuff_in = 0;
+	stuff_to_print[stuff_in].a4 = a4;
+
+	next = (stuff_in + 1) % MAX_ENTRIES;
+	if (next == stuff_out)
+		stuff_overflow = 1;
+	else
+		stuff_in = next;
 }
 
 static void do_print_later(void)
 {
 	int lines_per_loop = 32;		/* too much at once fails */
 	int copy_of_stuff_in;
+	int copy_of_overflow;
 
 	interrupt_disable();
 	copy_of_stuff_in = stuff_in;
+	copy_of_overflow = stuff_overflow;
+	stuff_overflow = 0;
 	interrupt_enable();
+
+	if (copy_of_overflow)
+		ccprintf("*** WARNING: SOME MESSAGES WERE LOST ***\n");
 
 	while (lines_per_loop && stuff_out != copy_of_stuff_in) {
 		ccprintf("at %.6ld: ", stuff_to_print[stuff_out].t);
@@ -95,9 +106,7 @@ static void do_print_later(void)
 			 stuff_to_print[stuff_out].a3,
 			 stuff_to_print[stuff_out].a4);
 		ccprintf("\n");
-		stuff_out++;
-		if (stuff_out >= MAX_ENTRIES)
-			stuff_out = 0;
+		stuff_out = (stuff_out + 1) % MAX_ENTRIES;
 		lines_per_loop--;
 	}
 }
