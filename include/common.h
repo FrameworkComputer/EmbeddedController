@@ -68,6 +68,16 @@
 #define __keep __attribute__((used)) __attribute__((externally_visible))
 #endif
 
+/*
+ * Place the object in the .bss.slow region.
+ *
+ * On boards with unoptimized RAM there is no penalty and it simply is appended
+ * to the .bss section.
+ */
+#ifndef __bss_slow
+#define __bss_slow __attribute__((section(".bss.slow")))
+#endif
+
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
 #define K_TO_C(temp_c) ((temp_c) - 273)
