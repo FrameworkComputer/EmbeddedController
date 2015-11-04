@@ -109,19 +109,23 @@ def BuildHeader(args, payload_len, rorofile):
   return header
 
 def SignByteArray(data, pem_file):
-  hash_file = tempfile.mkstemp()[1]
-  sign_file = tempfile.mkstemp()[1]
-  with open(hash_file, 'wb') as f:
-    hasher = hashlib.sha256()
-    hasher.update(data)
-    f.write(hasher.digest())
-  subprocess.check_call(['openssl', 'rsautl', '-sign', '-inkey', pem_file,
-                         '-keyform', 'PEM', '-in', hash_file,
-                         '-out', sign_file])
-  with open(sign_file, 'rb') as f:
-    signed = list(f.read())
-    signed.reverse()
-    return bytearray(''.join(signed))
+  hash_file = tempfile.mkstemp(prefix='pack_ec.')[1]
+  sign_file = tempfile.mkstemp(prefix='pack_ec.')[1]
+  try:
+      with open(hash_file, 'wb') as f:
+        hasher = hashlib.sha256()
+        hasher.update(data)
+        f.write(hasher.digest())
+      subprocess.check_call(['openssl', 'rsautl', '-sign', '-inkey', pem_file,
+                             '-keyform', 'PEM', '-in', hash_file,
+                             '-out', sign_file])
+      with open(sign_file, 'rb') as f:
+        signed = list(f.read())
+        signed.reverse()
+        return bytearray(''.join(signed))
+  finally:
+    os.remove(hash_file)
+    os.remove(sign_file)
 
 def BuildTag(args):
   tag = bytearray([(args.header_loc >> 8) & 0xff,
