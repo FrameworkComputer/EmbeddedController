@@ -1382,7 +1382,7 @@ void pd_task(void)
 	enum pd_cc_states new_cc_state;
 	timestamp_t now;
 	int caps_count = 0, hard_reset_sent = 0;
-	int snk_cap_count;
+	int snk_cap_count = 0;
 	int evt;
 
 	/* Ensure the power supply is in the default state */

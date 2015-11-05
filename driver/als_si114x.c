@@ -241,6 +241,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 			break;
 		default:
 			CPRINTS("Invalid sensor type");
+			return EC_ERROR_INVAL;
 		}
 		ret = raw_write8(s->addr, SI114X_REG_COMMAND, cmd);
 		ret = EC_RES_IN_PROGRESS;

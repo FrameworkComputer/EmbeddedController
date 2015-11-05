@@ -362,7 +362,7 @@ void exception_panic(void)
 		"mov r3, sp\n"
 		"stmia r0, {r1-r11, lr}\n"
 		"mov sp, %[pstack]\n"
-		"b report_panic\n" : :
+		"bl report_panic\n" : :
 			[pregs] "r" (pdata_ptr->cm.regs),
 			[pstack] "r" (pstack_addr) :
 			/* Constraints protecting these from being clobbered.

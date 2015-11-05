@@ -223,6 +223,8 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 		size = CONFIG_WP_STORAGE_SIZE;
 		flashwp = SPI_WP_HARDWARE;
 		break;
+	default:
+		return EC_ERROR_INVAL;
 	}
 
 	ret = spi_flash_set_protect(offset, size);

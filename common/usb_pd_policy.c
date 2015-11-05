@@ -89,7 +89,7 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 	int i, uw, max_uw = 0, mv, ma;
 	int ret = -1;
 #ifdef PD_PREFER_LOW_VOLTAGE
-	int cur_mv;
+	int cur_mv = 0;
 #endif
 
 	/* max voltage is always limited by this boards max request */

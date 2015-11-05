@@ -799,6 +799,7 @@ int tcpc_run(int port, int evt)
 			res = send_hard_reset(port);
 			break;
 		default:
+			res = PD_TX_ERR_DISABLED;
 			break;
 		}
 
