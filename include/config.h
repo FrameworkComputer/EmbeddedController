@@ -605,6 +605,13 @@
 /* Include CRC-8 utility function */
 #undef CONFIG_CRC8
 
+/*
+ * When enabled, do not build RO image from the same set of files as the RW
+ * image. Instead define a separate set of object files in the respective
+ * build.mk files by adding the objects to the custom-ro_objs-y variable.
+ */
+#undef CONFIG_CUSTOMIZED_RO
+
 /*****************************************************************************/
 /*
  * Debugging config

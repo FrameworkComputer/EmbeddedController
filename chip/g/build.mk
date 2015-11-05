@@ -38,14 +38,16 @@ chip-$(CONFIG_USB_BLOB)+=usb_blob.o
 
 chip-$(CONFIG_FLASH)+=flash.o
 
+ifneq ($(CONFIG_CUSTOMIZED_RO),)
 custom-ro_objs-y  = chip/g/loader/main.o
 custom-ro_objs-y += chip/g/system.o chip/g/uart.o
 custom-ro_objs-y += common/printf.o
 custom-ro_objs-y += common/util.o
 custom-ro_objs-y += core/cortex-m/init.o
 custom-ro_objs-y += core/cortex-m/panic.o
-
 dirs-y += chip/g/loader
+endif
+
 
 $(out)/RO/ec.RO.flat: $(out)/util/signer
 
