@@ -221,12 +221,21 @@ int PublicKey::sign(const void* msg, size_t msglen, BIGNUM** output) {
   sig = (uint8_t*)malloc(tmplen);
 
   if (publicOnly_) {
-    fprintf(stderr, "gnubby signing.."); fflush(stderr);
-    // TODO: 2k -> gnubby, 3k -> HSM?
+    if (nwords() == 64) {
+      // 2048 bit public key : gnubby
+      fprintf(stderr, "gnubby signing.."); fflush(stderr);
 
-    Gnubby gnubby;
-    result = gnubby.sign(ctx, sig, &siglen, key_);
-    fprintf(stderr, "Gnubby.sign: %d\n", result);
+      Gnubby gnubby;
+      result = gnubby.sign(ctx, sig, &siglen, key_);
+      fprintf(stderr, "Gnubby.sign: %d\n", result);
+    } else {
+      // other public key : best have signature prefilled
+      fprintf(stderr, "WARNING: public key size %lu; assuming preloaded signature\n", nwords());
+      fprintf(stderr, "         Likely you are trying to use the real rom key, try the -dev flavor\n");
+      fflush(stderr);
+      siglen = BN_bn2bin(*output, sig);
+      result = 1;
+    }
   } else {
     VERBOSE("ossl signing..");
     result = EVP_SignFinal(ctx, sig, &siglen, key_);

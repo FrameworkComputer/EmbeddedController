@@ -492,6 +492,13 @@ void usb_init(void)
 {
 	int i;
 
+	/* TODO: Take this out if USB is known to always be present */
+	if (!(GREG32(SWDP, FPGA_CONFIG) &
+	      GC_CONST_SWDP_FPGA_CONFIG_USB_8X8CRYPTO)) {
+		CPRINTF("This FPGA image has no USB support\n");
+		return;
+	}
+
 	/* TODO(wfrichar): Clean this up. Do only what's needed, and use
 	 * meaningful constants of magic numbers. */
 	GREG32(GLOBALSEC, DDMA0_REGION0_CTRL) = 0xffffffff;

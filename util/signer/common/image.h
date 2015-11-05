@@ -24,9 +24,11 @@ class Image {
   bool fromIntelHex(const std::string& filename, bool withSignature = true);
   bool fromElf(const std::string& filename);
 
-  bool sign(PublicKey& key, const SignedHeader* hdr,
+  bool sign(PublicKey& key,
+            const SignedHeader* hdr,
             const uint32_t fuses[],
-            const uint32_t info[]);
+            const uint32_t info[],
+            const std::string& hashesFilename);
   void generate(const std::string& outputFilename, bool hex_output) const;
 
 

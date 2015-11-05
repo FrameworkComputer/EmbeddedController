@@ -374,9 +374,11 @@ void Image::store(int adr, int v) {
   if (adr < low_) low_ = adr;
 }
 
-bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
+bool Image::sign(PublicKey& key,
+                 const SignedHeader* input_hdr,
                  const uint32_t fuses[FUSE_MAX],
-                 const uint32_t info[INFO_MAX]) {
+                 const uint32_t info[INFO_MAX],
+                 const string& hashesFilename) {
   BIGNUM* sig = NULL;
   SignedHeader* hdr = (SignedHeader*)(&mem_[base_]);
   SHA256_CTX sha256;
@@ -449,6 +451,17 @@ bool Image::sign(PublicKey& key, const SignedHeader* input_hdr,
     VERBOSE("%02x", hashes.info_hash[i]);
   }
   VERBOSE("\n");
+
+  if (!hashesFilename.empty()) {
+    // Write hashes to file for subsequent extraneous (re)signing.
+    int fd = open(hashesFilename.c_str(), O_CREAT|O_TRUNC|O_RDWR, 0600);
+    if (fd >= 0) {
+      write(fd, &hashes, sizeof(hashes));
+      close(fd);
+    }
+  }
+
+  sig = BN_bin2bn((uint8_t*)(hdr->signature), sizeof(hdr->signature), NULL);
 
   result = key.sign(&hashes, sizeof(hashes), &sig);
 

@@ -20,7 +20,7 @@ typedef struct SignedHeader {
 #ifdef __cplusplus
   SignedHeader() : magic(-1), image_size(0),
                    epoch_(0x1337), major_(0), minor_(0xbabe),
-                   p4cl_(0), applysec_(0), config1_(0) {
+                   p4cl_(0), applysec_(0), config1_(0), err_response_(0), expect_response_(0) {
     memset(signature, 'S', sizeof(signature));
     memset(tag, 'T', sizeof(tag));
     memset(fusemap, 0, sizeof(fusemap));
@@ -58,9 +58,11 @@ typedef struct SignedHeader {
   uint32_t minor_;
   uint64_t timestamp_;  // time of signing
   uint32_t p4cl_;
-  uint32_t applysec_;   // bits per FUSE_FW_DEFINED_BROM_APPLYSEC
-  uint32_t config1_;    // bits per FUSE_FW_DEFINED_BROM_CONFIG1
-  uint32_t _pad[256 - 1 - 96 - 1 - 7 - 1 - 96 - 5*1 - 4 - 4 - 7*1 - 2 - 1];
+  uint32_t applysec_;   // bits to and with FUSE_FW_DEFINED_BROM_APPLYSEC
+  uint32_t config1_;    // bits to mesh with FUSE_FW_DEFINED_BROM_CONFIG1
+  uint32_t err_response_; // bits to or with FUSE_FW_DEFINED_BROM_ERR_RESPONSE
+  uint32_t expect_response_;  // action to take when expectation is violated
+  uint32_t _pad[256 - 1 - 96 - 1 - 7 - 1 - 96 - 5*1 - 4 - 4 - 9*1 - 2 - 1];
   uint32_t fuses_chk_;  // top 32 bit of expected fuses hash
   uint32_t info_chk_;   // top 32 bit of expected info hash
 } SignedHeader;

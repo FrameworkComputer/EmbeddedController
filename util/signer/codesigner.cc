@@ -3,12 +3,14 @@
  * found in the LICENSE file.
  */
 #include <assert.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
-#include <getopt.h>
+#include <unistd.h>
 
 #include <common/image.h>
 #include <common/publickey.h>
@@ -253,6 +255,9 @@ bool readJSON(const string& filename,
       GETVALUE("minor");
       GETVALUE("applysec");
       GETVALUE("config1");
+      GETVALUE("err_response");
+      GETVALUE("expect_response");
+      GETVALUE("timestamp");
 
       CHECKVALUE("tag");
       const rapidjson::Document::ValueType& Tag = d["tag"];
@@ -275,6 +280,8 @@ string keyFilename;
 string xmlFilename;
 string jsonFilename;
 string outputFormat;
+string signatureFilename;
+string hashesFilename;
 
 void usage(int argc, char* argv[]) {
   fprintf(stderr, "Usage: %s options\n"
@@ -284,6 +291,8 @@ void usage(int argc, char* argv[]) {
           "[--xml=$xml-filename] typically 'havenTop.xml'\n"
           "[--json=$json-filename] the signing manifest\n"
           "[--format=bin|hex] output file format, hex is default\n"
+          "[--signature=$sig-filename] replace signature with file content\n"
+          "[--hashes=$hashes-filename] destination file for intermediary hashes to be signed\n"
           "[--verbose]\n",
           argv[0]);
 }
@@ -299,11 +308,13 @@ int getOptions(int argc, char* argv[]) {
     {"output", required_argument, NULL, 'o'},
     {"verbose", no_argument, NULL, 'v'},
     {"xml", required_argument, NULL, 'x'},
+    {"signature", required_argument, NULL, 's'},
+    {"hashes", required_argument, NULL, 'H'},
     {0, 0, 0, 0}
   };
   int c, option_index = 0;
   outputFormat.assign("hex");
-  while ((c = getopt_long(argc, argv, "i:o:k:x:j:f:hv",
+  while ((c = getopt_long(argc, argv, "i:o:k:x:j:f:s:H:hv",
                           long_options, &option_index)) != -1) {
     switch (c) {
       case 0:
@@ -323,11 +334,17 @@ int getOptions(int argc, char* argv[]) {
       case 'x':
         xmlFilename.assign(optarg);
         break;
+      case 's':
+        signatureFilename.assign(optarg);
+        break;
       case 'j':
         jsonFilename.assign(optarg);
         break;
       case 'f':
         outputFormat.assign(optarg);
+        break;
+      case 'H':
+        hashesFilename.assign(optarg);
         break;
       case 'h':
         usage(argc, argv);
@@ -401,6 +418,11 @@ int main(int argc, char* argv[]) {
   hdr.minor_ = values["minor"];
   hdr.applysec_ = values["applysec"];
   hdr.config1_ = values["config1"];
+  hdr.err_response_ = values["err_response"];
+  hdr.expect_response_ = values["expect_response"];
+  if (values["timestamp"]) hdr.timestamp_ = values["timestamp"];
+
+  VERBOSE("timestamp: %ld\n", hdr.timestamp_);
 
   // Check keyId.
   if (values["keyid"] != hdr.keyid) {
@@ -452,7 +474,7 @@ int main(int argc, char* argv[]) {
     }
     uint32_t idx = it->second;
     assert(idx < FUSE_MAX);
-    uint32_t mask = (1 << fuse_bits[x->first]) - 1;
+    uint32_t mask = (1ul << fuse_bits[x->first]) - 1;
     if ((x->second & mask) != x->second) {
       FATAL("specified fuse value too large\n");
     }
@@ -493,9 +515,22 @@ int main(int argc, char* argv[]) {
   }
   VERBOSE("\n");
 
+  if (!signatureFilename.empty()) {
+    int fd = ::open(signatureFilename.c_str(), O_RDONLY);
+    if (fd > 0) {
+      int n = ::read(fd, hdr.signature, sizeof(hdr.signature));
+      ::close(fd);
+
+      if (n != sizeof(hdr.signature)) FATAL("cannot read from '%s'\n", signatureFilename.c_str());
+
+      VERBOSE("provided signature\n");
+    } else {
+      FATAL("cannot open '%s'\n", signatureFilename.c_str());
+    }
+  }
 
   // Sign image.
-  if (image.sign(key, &hdr, fuse_values, info_values)) {
+  if (image.sign(key, &hdr, fuse_values, info_values, hashesFilename)) {
     image.generate(outputFilename, outputFormat == "hex");
   } else {
     FATAL("failed to sign\n");
