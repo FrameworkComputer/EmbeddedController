@@ -107,24 +107,29 @@ bool Image::fromElf(const string& filename) {
     gelf_getshdr(scn, &shdr);
 
     VERBOSE("type %08x; flags %08lx ", shdr.sh_type, shdr.sh_flags);
-    VERBOSE("%08lx(@%08lx)[%08lx] align %lu\n",
+    VERBOSE("%08lx(@%08lx)[%08lx] align %lu ",
             shdr.sh_addr, shdr.sh_offset, shdr.sh_size, shdr.sh_addralign);
 
     // Ignore sections that are not alloc
     if (!(shdr.sh_flags & SHF_ALLOC)) {
+      VERBOSE("non aloc, ignored\n");
       continue;
     }
 
     // Ignore sections that are not exec
     if (!(shdr.sh_flags & SHF_EXECINSTR)) {
+      VERBOSE("non exec, ignored\n");
       continue;
     }
 
     // Ignore sections outside our flash range
     if (shdr.sh_addr < FLASH_START * 16 ||
         shdr.sh_addr + shdr.sh_size >= FLASH_END * 16) {
+      VERBOSE("out of bounds, ignored\n");
       continue;
     }
+
+    VERBOSE("\n");
 
     // Track rx boundaries
     if (shdr.sh_addr < rx_base_) {
@@ -141,13 +146,14 @@ bool Image::fromElf(const string& filename) {
             phdr.p_vaddr, phdr.p_paddr, phdr.p_filesz, phdr.p_memsz);
 
     if (phdr.p_filesz != phdr.p_memsz) {
-      VERBOSE(" (not loading)\n");
+      VERBOSE(" (size mismatch, not loading)\n");
       continue;
     }
 
     // Ignore sections outside our flash range
     if (phdr.p_paddr < FLASH_START * 16 ||
         phdr.p_paddr + phdr.p_memsz >= FLASH_END * 16) {
+      VERBOSE(" (out of bounds, not loading)\n");
       continue;
     }
 

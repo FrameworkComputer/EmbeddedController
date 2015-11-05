@@ -486,8 +486,10 @@ int main(int argc, char* argv[]) {
   }
 
   // Print out fuse hash input.
-  VERBOSE("expected fuse state:\n");
+  VERBOSE("expected fuse state:");
   for (size_t i = 0; i < FUSE_MAX; ++i) {
+    if (! (i % 8))
+      VERBOSE("\n");
     VERBOSE("%08x ", fuse_values[i]);
   }
   VERBOSE("\n");
@@ -509,8 +511,10 @@ int main(int argc, char* argv[]) {
   // TODO: read values from JSON or implement version logic here.
 
   // Print out info hash input.
-  VERBOSE("expected info state:\n");
+  VERBOSE("expected info state:");
   for (size_t i = 0; i < INFO_MAX; ++i) {
+    if (! (i % 8))
+      VERBOSE("\n");
     VERBOSE("%08x ", info_values[i]);
   }
   VERBOSE("\n");
