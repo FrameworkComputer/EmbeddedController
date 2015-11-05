@@ -48,14 +48,38 @@ void system_reset(int flags)
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
-	if (flags & SYSTEM_RESET_HARD) /* Reset the full microcontroller */
+	if (flags & SYSTEM_RESET_HARD) {
+		/* Reset the full microcontroller */
 		GR_PMU_GLOBAL_RESET = GC_PMU_GLOBAL_RESET_KEY;
-	else /* Reset only the CPU core */
-		CPU_NVIC_APINT = 0x05fa0004;
+	} else {
+		/* Soft reset is also fairly hard, and requires
+		 * permission registers to be reset to their initial
+		 * state.  To accomplish this, first register a wakeup
+		 * timer and then enter lower power mode. */
 
-	/* Spin and wait for reboot; should never return  */
-	while (1)
-		;
+		/* Low speed timers continue to run in low power mode. */
+		GREG32(TIMELS, TIMER1_CONTROL) = 0x1;
+		/* Wait for this long. */
+		GREG32(TIMELS, TIMER1_LOAD) = 1;
+		/* Setup wake-up on Timer1 firing. */
+		GREG32(PMU, EXITPD_MASK) =
+			GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER1_MASK;
+
+		/* All the components to power cycle. */
+		GREG32(PMU, LOW_POWER_DIS) =
+			GC_PMU_LOW_POWER_DIS_VDDL_MASK |
+			GC_PMU_LOW_POWER_DIS_VDDIOF_MASK |
+			GC_PMU_LOW_POWER_DIS_VDDXO_MASK |
+			GC_PMU_LOW_POWER_DIS_JTR_RC_MASK;
+		/* Start low power sequence. */
+		REG_WRITE_MLV(GREG32(PMU, LOW_POWER_DIS),
+			GC_PMU_LOW_POWER_DIS_START_MASK,
+			GC_PMU_LOW_POWER_DIS_START_LSB,
+			1);
+	}
+
+	/* Wait for reboot; should never return  */
+	asm("wfi");
 }
 
 const char *system_get_chip_vendor(void)

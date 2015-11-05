@@ -65,7 +65,25 @@ void button_event(enum gpio_signal signal)
 	gpio_set_level(signal - GPIO_SW_N + GPIO_LED_4, v);
 }
 
-static void init_interrutps(void)
+static void init_pmu(void)
+{
+	/* This boot sequence may be a result of previous soft reset,
+	 * in which case the PMU low power sequence register needs to
+	 * be reset. */
+	GREG32(PMU, LOW_POWER_DIS) = 0;
+}
+
+static void init_timers(void)
+{
+	/* Cancel low speed timers that may have
+	 * been initialized prior to soft reset. */
+	GREG32(TIMELS, TIMER0_CONTROL) = 0;
+	GREG32(TIMELS, TIMER0_LOAD) = 0;
+	GREG32(TIMELS, TIMER1_CONTROL) = 0;
+	GREG32(TIMELS, TIMER1_LOAD) = 0;
+}
+
+static void init_interrupts(void)
 {
 	int i;
 	static const enum gpio_signal gpio_signals[] = {
@@ -113,7 +131,9 @@ static void init_runlevel(const enum permission_level desired_level)
 /* Initialize board. */
 static void board_init(void)
 {
-	init_interrutps();
+	init_pmu();
+	init_timers();
+	init_interrupts();
 	init_trng();
 	init_runlevel(PERMISSION_MEDIUM);
 }
