@@ -324,7 +324,7 @@ void Image::generate(const std::string& filename, bool hex_output) const {
   if (hex_output)
     toIntelHex(fout);
   else  // TODO: we don't expect write to fail, can be made more robust.
-    fwrite(mem_, 1, high_ - base_, fout);
+    fwrite(mem_ + base_, 1, high_ - base_, fout);
   fclose(fout);
 }
 
