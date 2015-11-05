@@ -15,7 +15,7 @@
 /* Event log FIFO */
 #define UNIT_SIZE sizeof(struct ec_response_pd_log)
 #define LOG_SIZE (CONFIG_USB_PD_LOG_SIZE/UNIT_SIZE)
-static struct ec_response_pd_log log_events[LOG_SIZE];
+static struct ec_response_pd_log __bss_slow log_events[LOG_SIZE];
 BUILD_ASSERT(POWER_OF_TWO(LOG_SIZE));
 /*
  * The FIFO pointers are defined as following :
