@@ -66,7 +66,7 @@ struct fmap_area_header {
 const struct _ec_fmap {
 	struct fmap_header header;
 	struct fmap_area_header area[NUM_EC_FMAP_AREAS];
-} ec_fmap __attribute__((section(".google"))) = {
+} ec_fmap __keep __attribute__((section(".google"))) = {
 	/* Header */
 	{
 		.fmap_signature = {'_', '_', 'F', 'M', 'A', 'P', '_', '_'},
