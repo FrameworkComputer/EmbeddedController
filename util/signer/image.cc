@@ -38,12 +38,12 @@ extern bool FLAGS_verbose;
 #define WARN(...)  do{fprintf(stderr,  __VA_ARGS__);}while(0)
 #define FATAL(...)  do{fprintf(stderr,  __VA_ARGS__);abort();}while(0)
 
-static const int FLASH_START = 0x4000;
+static const int FLASH_START = 0x40000;
 static const int FLASH_END = FLASH_START + 512 * 1024;
 
 Image::Image()
     : success_(true), low_(FLASH_END - FLASH_START), high_(0),
-      base_(0), ro_base_(FLASH_END*16), rx_base_(FLASH_END*16),
+      base_(0), ro_base_(FLASH_END), rx_base_(FLASH_END),
       ro_max_(0), rx_max_(0) {
   memset(mem_, 0xff, sizeof(mem_));  // default memory content
 }
@@ -123,8 +123,8 @@ bool Image::fromElf(const string& filename) {
     }
 
     // Ignore sections outside our flash range
-    if (shdr.sh_addr < FLASH_START * 16 ||
-        shdr.sh_addr + shdr.sh_size >= FLASH_END * 16) {
+    if (shdr.sh_addr < FLASH_START ||
+        shdr.sh_addr + shdr.sh_size >= FLASH_END) {
       VERBOSE("out of bounds, ignored\n");
       continue;
     }
@@ -151,8 +151,8 @@ bool Image::fromElf(const string& filename) {
     }
 
     // Ignore sections outside our flash range
-    if (phdr.p_paddr < FLASH_START * 16 ||
-        phdr.p_paddr + phdr.p_memsz >= FLASH_END * 16) {
+    if (phdr.p_paddr < FLASH_START ||
+        phdr.p_paddr + phdr.p_memsz >= FLASH_END) {
       VERBOSE(" (out of bounds, not loading)\n");
       continue;
     }
@@ -169,7 +169,7 @@ bool Image::fromElf(const string& filename) {
 
     // Copy data into image
     for (size_t n = 0; n < phdr.p_filesz; ++n) {
-      store(phdr.p_paddr + n - FLASH_START * 16,
+      store(phdr.p_paddr + n - FLASH_START,
             base_ptr[phdr.p_offset + n]);
     }
   }
@@ -177,9 +177,9 @@ bool Image::fromElf(const string& filename) {
   low_ &= ~2047;
   base_ = low_;
 
-  if (rx_base_ < base_ + FLASH_START * 16 + sizeof(SignedHeader)) {
+  if (rx_base_ < base_ + FLASH_START + sizeof(SignedHeader)) {
     // Fix-up 1K header that is part of rx in EC builds
-    rx_base_ = base_ + FLASH_START * 16 + sizeof(SignedHeader);
+    rx_base_ = base_ + FLASH_START + sizeof(SignedHeader);
   }
 
   high_ = ((high_ + 2047) / 2048) * 2048;  // Round image to multiple of 2K.
@@ -225,11 +225,11 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
             char* p = line + 9;
             int s = parseWord(&p);
             if (s != 0x1000) {
-              if (s >= FLASH_START && s <= FLASH_END) {
-                seg = s - FLASH_START;
+              if (s >= FLASH_START/16 && s <= FLASH_END/16) {
+                seg = s - FLASH_START/16;
                 //WARN("at segment %04x\n", seg);
               } else {
-                WARN("data should in range %x-%x: %s\n",
+                WARN("data should fit in range %x-%x: %s\n",
                      FLASH_START, FLASH_END, line);
                 success_ = false;
               }
@@ -290,13 +290,13 @@ bool Image::fromIntelHex(const string& filename, bool withSignature) {
 
   if (success_) {
     VERBOSE("low %08x, high %08x\n",
-            FLASH_START * 16 + low_, FLASH_START * 16 + high_);
+            FLASH_START + low_, FLASH_START + high_);
     // Round image to multiple of 2K.
     high_ = ((high_ + 2047) / 2048) * 2048;
-    ro_base_ = FLASH_START * 16 + base_;
-    rx_base_ = FLASH_START * 16 + base_;
-    ro_max_ = FLASH_START * 16 + base_ + size();
-    rx_max_ = FLASH_START * 16 + base_ + size();
+    ro_base_ = FLASH_START + base_;
+    rx_base_ = FLASH_START + base_;
+    ro_max_ = FLASH_START + base_ + size();
+    rx_max_ = FLASH_START + base_ + size();
     VERBOSE("base %08lx, size %08lx\n", ro_base_, size());
   }
 
@@ -309,7 +309,7 @@ void Image::toIntelHex(FILE *fout) const {
   for (int i = base_; i < high_; i += 16) {
     // spit out segment record at start of segment.
     if (!((i - base_)&0xffff)) {
-      int s = FLASH_START + (base_>>4) + ((i - base_)>>4);
+      int s = FLASH_START/16 + (base_>>4) + ((i - base_)>>4);
       fprintf(fout, ":02000002%04X%02X\n", s,
               (~((2 + 2 + (s>>8)) & 255) + 1) & 255);
     }
