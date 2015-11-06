@@ -2,31 +2,33 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <common/image.h>
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+// global C++ includes
+#include <string>
+
+// global C includes
+#include <assert.h>
 #include <fcntl.h>
-
-#include <libelf.h>
 #include <gelf.h>
-
-#include <common/publickey.h>
-
+#include <libelf.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+// local includes
+#include <common/publickey.h>
+#include <common/image.h>
 #include <common/signed_header.h>
 
-#include <string>
 
 using namespace std;
 
