@@ -11,6 +11,11 @@ CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
 CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 
+ifeq ($(CONFIG_LTO),y)
+# Re-include the core's build.mk file so we can remove the lto flag.
+include core/$(CORE)/build.mk
+endif
+
 # Required chip modules
 chip-y=clock.o gpio.o hwtimer.o system.o uart.o jtag.o port80.o
 chip-$(CONFIG_ADC)+=adc.o
@@ -55,6 +60,10 @@ dirs-y+=chip/$(CHIP)/lfw
 
 # objs with -lfw suffix are to include lfw's gpio
 $(out)/RW/%-lfw.o: private CC+=-I$(BDIR)/lfw -DLFW
+# Remove the lto flag for the loader.  It actually causes it to bloat in size.
+ifeq ($(CONFIG_LTO),y)
+$(out)/RW/%-lfw.o: private CFLAGS_CPU := $(filter-out -flto, $(CFLAGS_CPU))
+endif
 $(out)/RW/%-lfw.o: %.c
 	$(call quiet,c_to_o,CC     )
 
