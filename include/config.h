@@ -1982,10 +1982,11 @@
 #undef CONFIG_WP_ALWAYS
 
 /*
- * If needed to allocate some free space in the base of the RO section of the
- * image, define this to be equal the required size of the free space.
+ * If needed to allocate some free space in the base of the RO or RW section
+ * of the image, define these to be equal the required size of the free space.
  */
 #undef CONFIG_RO_HEAD_ROOM
+#undef CONFIG_RW_HEAD_ROOM
 
 /*****************************************************************************/
 /*

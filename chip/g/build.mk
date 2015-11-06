@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 #
 
-SIGNED_RO_IMAGE = 1
+SIGNED_IMAGES = 1
 
 CORE:=cortex-m
 CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
@@ -46,7 +46,9 @@ custom-ro_objs-y += chip/g/loader/main.o
 custom-ro_objs-y += chip/g/loader/rom_flash.o
 custom-ro_objs-y += chip/g/loader/setup.o
 custom-ro_objs-y += chip/g/loader/verify.o
+custom-ro_objs-y += chip/g/pmu.o
 custom-ro_objs-y += chip/g/system.o
+custom-ro_objs-y += chip/g/trng.o
 custom-ro_objs-y += chip/g/uart.o
 custom-ro_objs-y += common/printf.o
 custom-ro_objs-y += common/util.o
@@ -55,7 +57,7 @@ custom-ro_objs-y += core/cortex-m/panic.o
 dirs-y += chip/g/loader
 endif
 
-
 $(out)/RO/ec.RO.flat: $(out)/util/signer
+$(out)/RW/ec.RW.flat: $(out)/util/signer
 
-$(out)/RO/ec.RO.hex: $(out)/RO/ec.RO.flat
+$(out)/%.hex: $(out)/%.flat

@@ -40,7 +40,7 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
 # Allow the .roshared section to overlap other sections (itself)
 cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share \
 				-O binary $< $@
-cmd_elf_to_signed ?= $(out)/util/signer --key=util/signer/rom-testkey-A.pem \
+cmd_elf_to_signed ?= $(out)/util/signer --key=util/signer/$(3).pem \
 	--input=$< --format=bin --output=$@.signed \
 	&& mv $@.signed $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
@@ -199,20 +199,18 @@ $(out)/%.dis: $(out)/%.elf
 $(out)/RW/%.hex: $(out)/RW/%.elf $(out)/RW/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
 
-ifeq ($(SIGNED_RO_IMAGE),)
+ifeq ($(SIGNED_IMAGES),)
 $(out)/%.flat: $(out)/%.elf $(out)/%.smap
 	$(call quiet,ec_elf_to_flat,OBJCOPY)
 
 $(out)/RO/%.hex: $(out)/RO/%.elf $(out)/RO/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
 else
-$(out)/RW/ec.RW.flat: $(out)/RW/ec.RW.elf
-	$(call quiet,ec_elf_to_flat,OBJCOPY)
-$(out)/RO/ec.RO.flat.raw: $(out)/RO/ec.RO.elf $(out)/RO/ec.RO.smap
-	$(call quiet,ec_elf_to_flat,OBJCOPY)
+$(out)/RO/%.flat: $(out)/RO/%.elf  $(out)/RO/%.smap
+	$(call quiet,elf_to_signed,RO_SIGN,rom-testkey-A)
 
-$(out)/RO/ec.RO.flat: $(out)/RO/ec.RO.elf  $(out)/RO/ec.RO.smap
-	$(call quiet,elf_to_signed,RO_SIGN)
+$(out)/RW/%.flat: $(out)/RW/%.elf  $(out)/RW/%.smap
+	$(call quiet,elf_to_signed,RW_SIGN,loader-testkey-A)
 
 $(out)/RO/%.hex: $(out)/RO/%.flat
 	$(call quiet,bin_to_hex,OBJCOPY)

@@ -64,4 +64,11 @@
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT (GC_INTERRUPTS_COUNT - 16)
 
+#undef CONFIG_RW_MEM_OFF
+
+/* Leaving 16K for the RO aka loader. */
+#define CONFIG_RW_MEM_OFF 0x4000
+
+#define CONFIG_CUSTOMIZED_RO
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */
