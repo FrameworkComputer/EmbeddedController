@@ -77,4 +77,9 @@ extern const void *__irqhandler[];
 /* Shared memory buffer.  Use via shared_mem.h interface. */
 extern uint8_t __shared_mem_buf[];
 
+/* Image sections. */
+extern const void *__ro_end;
+extern const void *__data_start;
+extern const void *__data_end;
+
 #endif /* __CROS_EC_LINK_DEFS_H */
