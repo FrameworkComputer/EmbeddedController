@@ -912,6 +912,11 @@ static void handle_ctrl_request(int port, uint16_t head,
 		break;
 	case PD_CTRL_ACCEPT:
 		if (pd[port].task_state == PD_STATE_SOFT_RESET) {
+			/*
+			 * For the case that we sent soft reset in SNK_DISCOVERY
+			 * on startup due to VBUS never low, clear the flag.
+			 */
+			pd[port].flags &= ~PD_FLAGS_VBUS_NEVER_LOW;
 			execute_soft_reset(port);
 		} else if (pd[port].task_state == PD_STATE_DR_SWAP) {
 			/* switch data role */
@@ -2128,14 +2133,11 @@ void pd_task(void)
 				 * first, in case we were already in a stable
 				 * contract before this boot.
 				 */
-				if (pd[port].flags & PD_FLAGS_VBUS_NEVER_LOW) {
-					pd[port].flags &=
-						~PD_FLAGS_VBUS_NEVER_LOW;
+				if (pd[port].flags & PD_FLAGS_VBUS_NEVER_LOW)
 					set_state_timeout(port,
 						  get_time().val +
 						  PD_T_SINK_WAIT_CAP,
 						  PD_STATE_SOFT_RESET);
-				}
 				/*
 				 * If we haven't passed hard reset counter,
 				 * start SinkWaitCapTimer, otherwise start
@@ -2432,7 +2434,10 @@ void pd_task(void)
 			if (pd[port].last_state != pd[port].task_state)
 				hard_reset_sent = 0;
 #ifdef CONFIG_CHARGE_MANAGER
-			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY) {
+			if (pd[port].last_state == PD_STATE_SNK_DISCOVERY ||
+			    (pd[port].last_state == PD_STATE_SOFT_RESET &&
+			     (pd[port].flags & PD_FLAGS_VBUS_NEVER_LOW))) {
+				pd[port].flags &= ~PD_FLAGS_VBUS_NEVER_LOW;
 				/*
 				 * If discovery timed out, assume that we
 				 * have a dedicated charger attached. This
