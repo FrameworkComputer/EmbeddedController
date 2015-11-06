@@ -447,10 +447,16 @@ static int config_i2c(struct ftdi_context *ftdi)
 }
 
 /* Special waveform definition */
-#define SPECIAL_LEN_USEC  50000ULL /* us */
-#define SPECIAL_FREQ     400000ULL
+#define SPECIAL_LEN_USEC 50000ULL /* us */
+#define SPECIAL_FREQ    400000ULL
+
 
 #define SPECIAL_PATTERN 0x0000020301010302ULL
+#define SPECIAL_PATTERN_SDA_L_SCL_L 0x0000000000000000ULL
+#define SPECIAL_PATTERN_SDA_H_SCL_L 0x0202020202020202ULL
+#define SPECIAL_PATTERN_SDA_L_SCL_H 0x0101010101010101ULL
+#define SPECIAL_PATTERN_SDA_H_SCL_H 0x0303030303030303ULL
+#define TICK_COUNT 24
 
 #define MSEC    1000
 #define USEC 1000000
@@ -495,8 +501,23 @@ retry:
 		goto special_failed;
 	}
 
+	/* do usb special waveform */
+
+	wave[0] = 0x0;
+	ftdi_write_data(ftdi, (uint8_t *)wave, 1);
+	usleep(5000);
+
+	/* program each special tick */
+	for (i = 0; i < TICK_COUNT; ) {
+		wave[i++] = SPECIAL_PATTERN_SDA_L_SCL_L;
+		wave[i++] = SPECIAL_PATTERN_SDA_H_SCL_L;
+		wave[i++] = SPECIAL_PATTERN_SDA_L_SCL_L;
+	}
+	wave[19] = SPECIAL_PATTERN_SDA_H_SCL_H;
+
+
 	/* fill the buffer with the waveform pattern */
-	for (i = 0; i < SPECIAL_BUFFER_SIZE / sizeof(uint64_t); i++)
+	for (i = TICK_COUNT; i < SPECIAL_BUFFER_SIZE / sizeof(uint64_t); i++)
 		wave[i] = SPECIAL_PATTERN;
 
 	ret = ftdi_write_data(ftdi, (uint8_t *)wave, SPECIAL_BUFFER_SIZE);
@@ -513,9 +534,10 @@ retry:
 	usleep(10 * MSEC);
 
 	/* if we cannot communicate, retry the sequence */
-	if (check_chipid(ftdi) < 0)
+	if (check_chipid(ftdi) < 0) {
+		sleep(1);
 		goto retry;
-
+	}
 special_failed:
 	printf("Done.\n");
 	free(wave);
