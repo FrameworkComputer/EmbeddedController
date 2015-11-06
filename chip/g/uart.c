@@ -57,8 +57,9 @@ void uart_tx_stop(void)
 
 int uart_tx_in_progress(void)
 {
-	/* Transmit is in progress if the TX idle bit is not set */
-	return !(GR_UART_STATE(0) & GC_UART_STATE_TXIDLE_MASK);
+	/* Transmit is in progress unless the TX FIFO is empty and idle. */
+	return !(GR_UART_STATE(0) & (GC_UART_STATE_TXIDLE_MASK |
+				     GC_UART_STATE_TXEMPTY_MASK));
 }
 
 void uart_tx_flush(void)
