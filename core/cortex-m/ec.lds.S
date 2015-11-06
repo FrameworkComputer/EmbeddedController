@@ -67,6 +67,9 @@ SECTIONS
 #if defined(SECTION_IS_RO) && defined(CONFIG_RO_HEAD_ROOM)
 	. = . +  CONFIG_RO_HEAD_ROOM;
 #endif
+#if defined(SECTION_IS_RW) && defined(CONFIG_RW_HEAD_ROOM)
+	. = . +  CONFIG_RW_HEAD_ROOM;
+#endif
         OUTDIR/core/CORE/init.o (.text.vecttable)
         . = ALIGN(4);
         __version_struct_offset = .;

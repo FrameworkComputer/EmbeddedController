@@ -25,6 +25,7 @@
 #define CONFIG_PROGRAM_MEMORY_BASE     0x40000
 #define CONFIG_FLASH_SIZE              (512 * 1024)
 #define CONFIG_RO_HEAD_ROOM	       1024	/* Room for ROM signature. */
+#define CONFIG_RW_HEAD_ROOM	       CONFIG_RO_HEAD_ROOM  /* same for RW */
 
 /* Memory-mapped internal flash */
 #define CONFIG_INTERNAL_STORAGE
