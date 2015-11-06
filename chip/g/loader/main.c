@@ -6,7 +6,10 @@
 #include "common.h"
 #include "debug_printf.h"
 #include "printf.h"
+#include "registers.h"
+#include "setup.h"
 #include "system.h"
+#include "trng.h"
 #include "uart.h"
 
 /*
@@ -58,9 +61,18 @@ void panic_printf(const char *format, ...)
 
 int main(void)
 {
-	debug_printf("Hello world\n");
-	while (1)
-		;
+	init_trng();
+	uart_init();
+	debug_printf("\n\nCR50 RO, %8u_%u@%u\n", GREG32(SWDP, BUILD_DATE),
+		     GREG32(SWDP, BUILD_TIME), GREG32(SWDP, P4_LAST_SYNC));
+	unlockFlashForRW();
+
+	/* Trying RW A only for now */
+	tryLaunch(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF,
+		  CONFIG_FLASH_SIZE/2 - CONFIG_RW_MEM_OFF);
+	debug_printf("No valid image found, not sure what to do...\n");
+	halt();
+	return 1;
 }
 
 void panic_reboot(void)
