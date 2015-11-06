@@ -60,7 +60,12 @@ while(<>)
             # irqnums must be decimal
             $v = 0 + hex($v);
         }
-        printf("#define %-40s %s\n", "GC_$k", $v);
+	$k = "GC_$k";
+        printf("#define %-40s %s\n", $k, $v);
+	if ( $k =~ m/0_BASE_ADDR$/ ) {
+	    $k =~ s/0_BASE_ADDR/_BASE_ADDR/;
+	    printf("#define %-40s %s\n", $k, $v);
+	}
         next;
     }
 
