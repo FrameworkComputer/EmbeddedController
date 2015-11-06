@@ -91,8 +91,8 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	/* Vbus sensing. Converted to mV, full ADC is equivalent to 33V. */
-	[ADC_VBUS] = {"VBUS", 33000, 1024, 0, 4},
+	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30V. */
+	[ADC_VBUS] = {"VBUS", 30000, 1024, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

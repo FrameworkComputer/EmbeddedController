@@ -108,7 +108,7 @@ const struct adc_t adc_channels[] = {
 	/* Vbus sensing. Converted to mV, full ADC is equivalent to 33V. */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	/* Adapter current output or battery discharging current */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4, 1, 1, 0},
+	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4, 55000, 6144, 0},
 	/* System current consumption */
 	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3, 1, 1, 0},
 };
