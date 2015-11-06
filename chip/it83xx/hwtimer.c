@@ -99,7 +99,7 @@ uint32_t __hw_clock_source_read(void)
 {
 	/*
 	 * In combinational mode, the counter observation register of
-	 * timer 4(TIMER_H) will in incrementing order.
+	 * timer 4(TIMER_H) will increment.
 	 */
 	return IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
 }
