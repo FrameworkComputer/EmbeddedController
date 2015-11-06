@@ -10,6 +10,7 @@
 #include "registers.h"
 #include "task.h"
 #include "util.h"
+#include "system.h"
 #include "watchdog.h"
 
 /* magic value to unlock the watchdog registers */
@@ -17,6 +18,12 @@
 
 /* Watchdog expiration : assume 30 Mhz clock for now */
 #define WATCHDOG_PERIOD (CONFIG_WATCHDOG_PERIOD_MS * (30000000 / 1000))
+
+void trace_and_reset(uint32_t excep_lr, uint32_t excep_sp)
+{
+	watchdog_trace(excep_lr, excep_sp);
+	system_reset(RESET_FLAG_WATCHDOG);
+}
 
 /* Warning interrupt at the middle of the watchdog period */
 void IRQ_HANDLER(GC_IRQNUM_WATCHDOG0_WDOGINT)(void) __attribute__((naked));
@@ -29,19 +36,21 @@ void IRQ_HANDLER(GC_IRQNUM_WATCHDOG0_WDOGINT)(void)
 		      * stack for ARM EABI.  This also conveninently saves
 		      * R0=LR so we can pass it to task_resched_if_needed. */
 		     "push {r0, lr}\n"
-		     "bl watchdog_trace\n"
-		      /* Do NOT reset the watchdog interrupt here; it will
-		       * be done in watchdog_reload(), or reset will be
-		       * triggered if we don't call that by the next watchdog
-		       * period.  Instead, de-activate the interrupt in the
-		       * NVIC, so the watchdog trace will only be printed
-		       * once.
-		       */
+		     /* We've lowered our runlevel, so just rebooting the ARM
+		      * core doesn't work. */
+		     "bl trace_and_reset\n"
+		     /* Do NOT reset the watchdog interrupt here; it will
+		      * be done in watchdog_reload(), or reset will be
+		      * triggered if we don't call that by the next watchdog
+		      * period.  Instead, de-activate the interrupt in the
+		      * NVIC, so the watchdog trace will only be printed
+		      * once.
+		      */
 		     "mov r0, %[irq]\n"
 		     "bl task_disable_irq\n"
 		     "pop {r0, lr}\n"
 		     "b task_resched_if_needed\n"
-			: : [irq] "i" (GC_IRQNUM_WATCHDOG0_WDOGINT));
+		     : : [irq] "i" (GC_IRQNUM_WATCHDOG0_WDOGINT));
 }
 const struct irq_priority IRQ_PRIORITY(GC_IRQNUM_WATCHDOG0_WDOGINT)
 	__attribute__((section(".rodata.irqprio")))

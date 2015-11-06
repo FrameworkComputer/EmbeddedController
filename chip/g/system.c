@@ -45,6 +45,8 @@ void system_pre_init(void)
 
 void system_reset(int flags)
 {
+	/* TODO: if (flags & SYSTEM_RESET_PRESERVE_FLAGS), do so. */
+
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
