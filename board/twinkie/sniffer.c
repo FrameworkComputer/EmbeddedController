@@ -16,7 +16,7 @@
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "util.h"
 #include "ina2xx.h"
 

@@ -14,7 +14,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "usb_hid.h"
 
 /* Console output macro */

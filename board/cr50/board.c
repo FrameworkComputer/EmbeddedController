@@ -11,7 +11,7 @@
 #include "registers.h"
 #include "task.h"
 #include "trng.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "usb_hid.h"
 #include "util.h"
 

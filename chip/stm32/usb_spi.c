@@ -7,7 +7,7 @@
 #include "link_defs.h"
 #include "registers.h"
 #include "spi.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "usb_spi.h"
 
 static int16_t usb_spi_map_error(int error)

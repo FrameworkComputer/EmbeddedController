@@ -14,7 +14,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "watchdog.h"
 
 /* Rev A1 has a RTL bug in the FIFO */

@@ -8,7 +8,7 @@
 /* STM32 USB GPIO driver for Chrome EC */
 
 #include "compile_time_macros.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 
 struct usb_gpio_state {
 	uint32_t set_mask;

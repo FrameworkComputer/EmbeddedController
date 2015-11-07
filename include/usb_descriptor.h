@@ -5,8 +5,8 @@
  * USB definitions.
  */
 
-#ifndef __CROS_EC_USB_H
-#define __CROS_EC_USB_H
+#ifndef __CROS_EC_USB_DESCRIPTOR_H
+#define __CROS_EC_USB_DESCRIPTOR_H
 
 #include <stddef.h> /* for wchar_t */
 
@@ -244,4 +244,4 @@ extern const uint8_t usb_string_desc[];
 extern const void * const usb_fw_version;
 extern const struct bos_context bos_ctx;
 
-#endif /* __CROS_EC_USB_H */
+#endif /* __CROS_EC_USB_DESCRIPTOR_H */

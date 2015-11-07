@@ -9,7 +9,7 @@
 
 #include "compile_time_macros.h"
 #include "hooks.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 
 /*
  * Command:

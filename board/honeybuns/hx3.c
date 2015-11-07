@@ -12,7 +12,7 @@
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "util.h"
 
 /* Cypress HX3 I2C address */

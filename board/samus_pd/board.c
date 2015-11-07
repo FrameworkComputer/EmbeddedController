@@ -23,8 +23,8 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
-#include "usb.h"
 #include "usb_charge.h"
+#include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "util.h"
 

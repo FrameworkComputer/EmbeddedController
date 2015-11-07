@@ -15,7 +15,7 @@
 #include "ina2xx.h"
 #include "registers.h"
 #include "task.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "util.h"
 
 void cc2_event(enum gpio_signal signal)

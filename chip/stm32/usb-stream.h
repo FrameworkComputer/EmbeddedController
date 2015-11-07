@@ -12,7 +12,7 @@
 #include "hooks.h"
 #include "producer.h"
 #include "queue.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 
 #include <stdint.h>
 

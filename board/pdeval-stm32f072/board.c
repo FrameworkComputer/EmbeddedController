@@ -12,7 +12,7 @@
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
-#include "usb.h"
+#include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "util.h"
 
