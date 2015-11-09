@@ -39,6 +39,8 @@ test_export_static unsigned int motion_interval;
 /* Delay between FIFO interruption. */
 static unsigned int motion_int_interval;
 
+/* Minimum time in between running motion sense task loop. */
+unsigned int motion_min_interval = CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC;
 #ifdef CONFIG_CMD_ACCEL_INFO
 static int accel_disp;
 #endif
@@ -769,8 +771,8 @@ void motion_sense_task(void)
 			 * Guarantee some minimum delay to allow other lower
 			 * priority tasks to run.
 			 */
-			if (wait_us < MIN_MOTION_SENSE_WAIT_TIME)
-				wait_us = MIN_MOTION_SENSE_WAIT_TIME;
+			if (wait_us < motion_min_interval)
+				wait_us = motion_min_interval;
 		} else {
 			wait_us = -1;
 		}
@@ -914,7 +916,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			else
 				sensor->config[SENSOR_CONFIG_AP].ec_rate =
 					MAX(in->ec_rate.data,
-					    MIN_MOTION_SENSE_WAIT_TIME / MSEC);
+					    motion_min_interval / MSEC);
 
 			/* Bound the new sampling rate. */
 			motion_sense_set_motion_intervals();
@@ -1327,7 +1329,7 @@ static int command_accel_read_xyz(int argc, char **argv)
 			ccprintf("vector not ready\n");
 		ccprintf("Last calib. data %d: %-5d %-5d %-5d\n",
 			 id, sensor->xyz[X], sensor->xyz[Y], sensor->xyz[Z]);
-		task_wait_event(MIN_MOTION_SENSE_WAIT_TIME);
+		task_wait_event(motion_min_interval);
 	}
 	return EC_SUCCESS;
 }

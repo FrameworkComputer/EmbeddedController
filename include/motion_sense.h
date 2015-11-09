@@ -42,10 +42,6 @@ enum sensor_config {
 /* Next 8 events for sensor interrupt lines */
 #define TASK_EVENT_MOTION_INTERRUPT_MASK    (0xff << 2)
 
-/* Minimum time in between running motion sense task loop. */
-#define MIN_MOTION_SENSE_WAIT_TIME (3 * MSEC)
-#define MAX_MOTION_SENSE_WAIT_TIME (60000 * MSEC)
-
 #define ROUND_UP_FLAG (1 << 31)
 #define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
 
@@ -134,6 +130,9 @@ struct motion_sensor_t {
 /* Defined at board level. */
 extern struct motion_sensor_t motion_sensors[];
 extern const unsigned motion_sensor_count;
+
+/* optionally defined at board level */
+extern unsigned int motion_min_interval;
 
 /*
  * Priority of the motion sense resume/suspend hooks, to be sure associated

@@ -197,6 +197,12 @@ static void board_init(void)
 		CPRINTS("Board using SPI sensors");
 	} else { /* I2C sensors on rev v6/7/8 */
 		CPRINTS("Board using I2C sensors");
+		/*
+		 * On EVT2, when the sensors are on the same bus as other
+		 * sensors, motion task would not leave enough time for
+		 * processing as soon as its frequency is around ~200Hz.
+		 */
+		motion_min_interval = 8 * MSEC;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

@@ -966,6 +966,12 @@
 /* H2RAM Host LPC I/O base memory address */
 #undef CONFIG_H2RAM_HOST_LPC_IO_BASE
 
+/*
+ * Define the minimal amount of time (in ms) betwen running motion sense task
+ * loop.
+ */
+#define CONFIG_MOTION_MIN_SENSE_WAIT_TIME 3
+
 /*****************************************************************************/
 /*
  * Support the host asking the EC about the status of the most recent host
