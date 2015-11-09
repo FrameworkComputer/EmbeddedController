@@ -19,6 +19,8 @@
 #include "timer.h"
 #include "util.h"
 
+extern enum chipset_state_mask sensor_active;
+extern unsigned motion_interval;
 
 /*
  * Period in us for the motion task period.

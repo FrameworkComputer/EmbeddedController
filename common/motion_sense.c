@@ -34,7 +34,7 @@
 /*
  * Sampling interval for measuring acceleration and calculating lid angle.
  */
-unsigned int motion_interval;
+test_export_static unsigned int motion_interval;
 
 /* Delay between FIFO interruption. */
 static unsigned int motion_int_interval;
@@ -62,7 +62,7 @@ static struct mutex g_sensor_mutex;
 /*
  * Current power level (S0, S3, S5, ...)
  */
-enum chipset_state_mask sensor_active;
+test_export_static enum chipset_state_mask sensor_active;
 
 #ifdef CONFIG_ACCEL_FIFO
 /* Need to wake up the AP */
@@ -296,7 +296,7 @@ static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
  *
  * Note: Not static to be tested.
  */
-int motion_sense_set_motion_intervals(void)
+static int motion_sense_set_motion_intervals(void)
 {
 	int i, sensor_ec_rate, ec_rate = 0, ec_int_rate_ms = 0, wake_up = 0;
 	struct motion_sensor_t *sensor;

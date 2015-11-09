@@ -135,11 +135,6 @@ struct motion_sensor_t {
 extern struct motion_sensor_t motion_sensors[];
 extern const unsigned motion_sensor_count;
 
-/* For testing purposes: export the sampling interval. */
-extern enum chipset_state_mask sensor_active;
-extern unsigned motion_interval;
-int motion_sense_set_motion_intervals(void);
-
 /*
  * Priority of the motion sense resume/suspend hooks, to be sure associated
  * hooks are scheduled properly.
