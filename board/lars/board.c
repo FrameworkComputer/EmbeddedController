@@ -64,21 +64,9 @@ void vbus0_evt(enum gpio_signal signal)
 	task_wake(TASK_ID_PD_C0);
 }
 
-void vbus1_evt(enum gpio_signal signal)
-{
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(1, !gpio_get_level(signal));
-	task_wake(TASK_ID_PD_C1);
-}
-
 void usb0_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
-}
-
-void usb1_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
 }
 
 #include "gpio_list.h"
@@ -118,9 +106,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
-#if CONFIG_USB_PD_PORT_COUNT >= 2
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
-#endif
 };
 
 /* Physical fans. These are logically separate from pwm_channels. */
@@ -167,12 +152,6 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.port_addr = 0xa8,
 		.driver = &pi3usb30532_usb_mux_driver,
 	}
-#if CONFIG_USB_PD_PORT_COUNT >= 2
-	, {
-		.port_addr = 0xaa,
-		.driver = &pi3usb30532_usb_mux_driver,
-	}
-#endif
 };
 
 /**
@@ -424,14 +403,12 @@ static void board_init(void)
 {
 	/* Enable PD MCU interrupt */
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
+
 	/* Enable VBUS interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
-#if CONFIG_USB_PD_PORT_COUNT >= 2
-	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
-#endif
+
 	/* Enable pericom BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-/*	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);*/
 
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
@@ -457,19 +434,11 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
  */
 int board_set_active_charge_port(int charge_port)
 {
-	/* charge port is a realy physical port */
-	int is_real_port = (charge_port >= 0 &&
-			    charge_port < CONFIG_USB_PD_PORT_COUNT);
-
-#if CONFIG_USB_PD_PORT_COUNT >= 2
 	/* check if we are source vbus on that port */
-	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
-						       GPIO_USB_C1_5V_EN);
-#else
 	int source = gpio_get_level(GPIO_USB_C0_5V_EN);
-#endif
 
-	if (is_real_port && source) {
+	/* charge port is a realy physical port */
+	if ((charge_port == 0) && source) {
 		CPRINTS("Skip enable p%d", charge_port);
 		return EC_ERROR_INVAL;
 	}
@@ -477,16 +446,13 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("New chg p%d", charge_port);
 
 	if (charge_port == CHARGE_PORT_NONE) {
-		/* Disable both ports */
+		/* Disable charge ports */
 		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
-		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
 	} else {
-		/* Make sure non-charging port is disabled */
-		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_EN_L :
-					     GPIO_USB_C1_CHARGE_EN_L, 1);
+		/* We have only one port, no need to
+		   make sure non-charging port is disabled */
 		/* Enable charging port */
-		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_EN_L :
-					     GPIO_USB_C0_CHARGE_EN_L, 0);
+		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
 	}
 
 	return EC_SUCCESS;

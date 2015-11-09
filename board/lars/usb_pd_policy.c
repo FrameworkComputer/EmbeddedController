@@ -49,30 +49,23 @@ void pd_transition_voltage(int idx)
 
 int pd_set_power_supply_ready(int port)
 {
-	/* Disable charging */
-	gpio_set_level(port ? GPIO_USB_C1_CHARGE_EN_L :
-			      GPIO_USB_C0_CHARGE_EN_L, 1);
+	/* only one port can be selected */
+	if (port >= CONFIG_USB_PD_PORT_COUNT)
+		return EC_ERROR_PARAM1;
 
-#if CONFIG_USB_PD_PORT_COUNT >= 2
+	/* Disable charging */
+	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+
 	/* Provide VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
-			      GPIO_USB_C0_5V_EN, 1);
-#else
 	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
-#endif
 
 	return EC_SUCCESS; /* we are ready */
 }
 
 void pd_power_supply_reset(int port)
 {
-#if CONFIG_USB_PD_PORT_COUNT >= 2
 	/* Disable VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
-			      GPIO_USB_C0_5V_EN, 0);
-#else
 	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
-#endif
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -107,12 +100,7 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 
 int pd_snk_is_vbus_provided(int port)
 {
-#if CONFIG_USB_PD_PORT_COUNT >= 2
-	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
-				      GPIO_USB_C0_VBUS_WAKE_L);
-#else
 	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
-#endif
 }
 
 int pd_board_checks(void)
