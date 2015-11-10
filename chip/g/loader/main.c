@@ -63,7 +63,8 @@ int main(void)
 {
 	init_trng();
 	uart_init();
-	debug_printf("\n\nCR50 RO, %8u_%u@%u\n", GREG32(SWDP, BUILD_DATE),
+	debug_printf("\n\n%s bootloader, %8u_%u@%u\n",
+		     STRINGIFY(BOARD), GREG32(SWDP, BUILD_DATE),
 		     GREG32(SWDP, BUILD_TIME), GREG32(SWDP, P4_LAST_SYNC));
 	unlockFlashForRW();
 
