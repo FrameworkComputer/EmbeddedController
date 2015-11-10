@@ -534,8 +534,8 @@ void pm3_ibf_interrupt(void)
 		pm_clear_ibf(LPC_HOST_PORT_80H);
 		/* read OK */
 		if ((ec2i_r & 0xff00) == EC2I_READ_SUCCESS) {
-			new_p80_idx = ec2i_r & P80L_BRAM_BANK1_MAX_SIZE;
-			for (i = 0; i < P80L_BRAM_BANK1_MAX_SIZE; i++) {
+			new_p80_idx = ec2i_r & P80L_BRAM_BANK1_SIZE_MASK;
+			for (i = 0; i < (P80L_P80LE - P80L_P80LB + 1); i++) {
 				if (++p80l_index > P80L_P80LE)
 					p80l_index = P80L_P80LB;
 				port_80_write(IT83XX_BRAM_BANK1(p80l_index));
@@ -668,7 +668,7 @@ static void lpc_init(void)
 		ec2i_r = ec2i_read(HOST_INDEX_DSLDC6);
 		/* read OK */
 		if ((ec2i_r & 0xff00) == EC2I_READ_SUCCESS)
-			p80l_index = ec2i_r & P80L_BRAM_BANK1_MAX_SIZE;
+			p80l_index = ec2i_r & P80L_BRAM_BANK1_SIZE_MASK;
 	}
 
 	/*

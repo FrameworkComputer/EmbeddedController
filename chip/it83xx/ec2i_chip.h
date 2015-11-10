@@ -11,7 +11,7 @@
 #define P80L_P80LB               0
 #define P80L_P80LE               0x3F
 #define P80L_P80LC               0
-#define P80L_BRAM_BANK1_MAX_SIZE 0x3F
+#define P80L_BRAM_BANK1_SIZE_MASK 0x3F
 
 /* Index list of the host interface registers of PNPCFG */
 enum host_pnpcfg_index {
