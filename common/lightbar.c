@@ -253,14 +253,17 @@ test_export_static int lux_level_to_google_color(const int lux)
 }
 #endif
 
-/* Update the known state. */
-static void get_battery_level(void)
+/*
+ * Update the known state.
+ * Return 1 if something changes.
+ */
+static int get_battery_level(void)
 {
 	int pct = 0;
-	int bl;
+	int bl, change = 0;
 
 	if (demo_mode)
-		return;
+		return 0;
 
 #ifdef HAS_TASK_CHARGER
 	st.battery_percent = pct = charge_get_percent();
@@ -274,8 +277,10 @@ static void get_battery_level(void)
 	/* Use some hysteresis to avoid flickering */
 	if (bl < st.battery_level ||
 	    (bl > st.battery_level
-	     && pct >= (st.p.battery_threshold[st.battery_level] + 1)))
+	     && pct >= (st.p.battery_threshold[st.battery_level] + 1))) {
 		st.battery_level = bl;
+		change = 1;
+	}
 
 #ifdef CONFIG_PWM_KBLIGHT
 	/*
@@ -300,6 +305,7 @@ static void get_battery_level(void)
 	if (pct != last_backlight_level) {
 		last_backlight_level = pct;
 		lb_set_brightness(pct);
+		change = 1;
 	}
 #endif
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
@@ -308,8 +314,10 @@ static void get_battery_level(void)
 	if (lux_level_to_google_color(MOTION_SENSE_LUX)) {
 		memcpy(st.p.color, lb_brightness_levels[google_color_id].color,
 		       sizeof(lb_brightness_levels[google_color_id].color));
+		change = 1;
 	}
 #endif
+	return change;
 }
 
 /* Forcing functions for demo mode, called by the keyboard task. */
@@ -586,7 +594,7 @@ static uint32_t sequence_S0(void)
 static uint32_t sequence_S0(void)
 {
 	int w, i, r, g, b;
-	int f;
+	int f, change;
 
 	lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	lb_on();
@@ -604,22 +612,23 @@ static uint32_t sequence_S0(void)
 	}
 
 	while (1) {
+		change = get_battery_level();
 
-		get_battery_level();
-
-		/* Not really low use google colors */
-		if (st.battery_level) {
-			for (i = 0; i < NUM_LEDS; i++) {
-				r = st.p.color[i].r;
-				g = st.p.color[i].g;
-				b = st.p.color[i].b;
-				lb_set_rgb(i, r, g, b);
+		if (change) {
+			/* Not really low use google colors */
+			if (st.battery_level) {
+				for (i = 0; i < NUM_LEDS; i++) {
+					r = st.p.color[i].r;
+					g = st.p.color[i].g;
+					b = st.p.color[i].b;
+					lb_set_rgb(i, r, g, b);
+				}
+			} else {
+				r = st.p.color[PRIMARY_RED].r;
+				g = st.p.color[PRIMARY_RED].g;
+				b = st.p.color[PRIMARY_RED].b;
+				lb_set_rgb(4, r, g, b);
 			}
-		} else {
-			r = st.p.color[PRIMARY_RED].r;
-			g = st.p.color[PRIMARY_RED].g;
-			b = st.p.color[PRIMARY_RED].b;
-			lb_set_rgb(4, r, g, b);
 		}
 
 		WAIT_OR_RET(1 * SECOND);
@@ -673,9 +682,9 @@ static uint32_t sequence_S3(void)
 	lb_off();
 	lb_init(1);
 	lb_set_rgb(NUM_LEDS, 0, 0, 0);
+	get_battery_level();
 	while (1) {
 		WAIT_OR_RET(st.p.s3_sleep_for);
-		get_battery_level();
 
 		/* only pulse if we've been given a valid color index */
 		ci = st.p.s3_idx[st.battery_is_charging][st.battery_level];
@@ -770,8 +779,8 @@ static uint32_t sequence_S5(void)
 	int initialized = 0;
 	uint32_t res = 0;
 
+	get_battery_level();
 	while (1) {
-		get_battery_level();
 		if (!st.battery_is_power_on_prevented ||
 		    !st.battery_is_charging)
 			break;
