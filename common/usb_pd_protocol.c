@@ -1470,8 +1470,11 @@ void pd_task(void)
 			 * Otherwise, go to the default disconnected state
 			 * and force renegotiation.
 			 */
-			if ((PD_ROLE_DEFAULT == PD_ROLE_SINK &&
+			if (
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+			    (PD_ROLE_DEFAULT == PD_ROLE_SINK &&
 			     pd[port].task_state == PD_STATE_SNK_READY) ||
+#endif
 			    (PD_ROLE_DEFAULT == PD_ROLE_SOURCE &&
 			     pd[port].task_state == PD_STATE_SRC_READY)) {
 				tcpm_set_polarity(port, pd[port].polarity);
