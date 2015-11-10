@@ -34,7 +34,7 @@
 #define CONFIG_USBC_SNIFFER_HEADER_V1
 #define CONFIG_HW_CRC
 
-#ifndef HAS_TASK_PD /* PD sniffer mode */
+#ifndef HAS_TASK_PD_C0 /* PD sniffer mode */
 #undef CONFIG_DMA_DEFAULT_HANDLERS
 #define CONFIG_USB_PD_TX_PHY_ONLY
 /* override the comparator interrupt handler */

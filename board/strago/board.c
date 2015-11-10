@@ -61,7 +61,7 @@ void vbus0_evt(enum gpio_signal signal)
 {
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(0, !gpio_get_level(signal));
-	task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD_C0);
 }
 
 void usb0_evt(enum gpio_signal signal)

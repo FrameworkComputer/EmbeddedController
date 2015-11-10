@@ -57,7 +57,7 @@ void vbus_evt(enum gpio_signal signal)
 
 	update_vbus_supplier(gpio_get_level(signal));
 
-	task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD_C0);
 
 	/* trigger AC present interrupt */
 	extpower_interrupt(signal);

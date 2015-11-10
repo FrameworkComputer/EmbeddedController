@@ -400,7 +400,7 @@ DECLARE_DEFERRED(button_dbg20v_deferred);
 void vbus_event(enum gpio_signal signal)
 {
 	ccprintf("VBUS! =%d\n", gpio_get_level(signal));
-	task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD_C0);
 }
 
 /* ADC channels */

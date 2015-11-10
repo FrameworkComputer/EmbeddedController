@@ -16,21 +16,16 @@
 #ifdef CONFIG_USB_PD_PORT_COUNT
 /*
  * Define PD_PORT_TO_TASK_ID() and TASK_ID_TO_PD_PORT() macros to
- * go between PD port number and task ID.
+ * go between PD port number and task ID. Assume that TASK_ID_PD_C0 is the
+ * lowest task ID and IDs are on a continuous range.
  */
-#if CONFIG_USB_PD_PORT_COUNT == 1
-#ifdef HAS_TASK_PD
-#define PD_PORT_TO_TASK_ID(port) TASK_ID_PD
-#elif defined(HAS_TASK_PD_C0)
-#define PD_PORT_TO_TASK_ID(port) TASK_ID_PD_C0
+#ifdef HAS_TASK_PD_C0
+#define PD_PORT_TO_TASK_ID(port) (TASK_ID_PD_C0 + (port))
+#define TASK_ID_TO_PD_PORT(id) ((id) - TASK_ID_PD_C0)
 #else
 #define PD_PORT_TO_TASK_ID(port) -1 /* dummy task ID */
-#endif
-#define TASK_ID_TO_PD_PORT(id)   0
-#elif CONFIG_USB_PD_PORT_COUNT == 2
-#define PD_PORT_TO_TASK_ID(port) ((port) ? TASK_ID_PD_C1 : TASK_ID_PD_C0)
-#define TASK_ID_TO_PD_PORT(id)   ((id) == TASK_ID_PD_C0 ? 0 : 1)
-#endif
+#define TASK_ID_TO_PD_PORT(id) 0
+#endif /* CONFIG_COMMON_RUNTIME */
 #endif /* CONFIG_USB_PD_PORT_COUNT */
 
 enum pd_rx_errors {

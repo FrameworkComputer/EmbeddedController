@@ -65,7 +65,7 @@ static struct ec_response_host_event_status host_event_status __aligned(4);
 void vbus_evt(enum gpio_signal signal)
 {
 	usb_charger_vbus_change(0, gpio_get_level(signal));
-	task_wake(TASK_ID_PD);
+	task_wake(TASK_ID_PD_C0);
 }
 
 void usb_evt(enum gpio_signal signal)
