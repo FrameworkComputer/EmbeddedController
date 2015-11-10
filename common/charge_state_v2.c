@@ -372,7 +372,7 @@ static int charge_request(int voltage, int current)
 	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS;
 	static int __bss_slow prev_volt, prev_curr;
 
-	if (!voltage || !current)
+	if (!voltage || !current) {
 #ifdef CONFIG_CHARGER_NARROW_VDC
 		current = 0;
 		/* With NVDC charger, keep VSYS voltage higher than battery */
@@ -383,6 +383,7 @@ static int charge_request(int voltage, int current)
 #else
 		voltage = current = 0;
 #endif
+	}
 
 	if (curr.ac) {
 		if (prev_volt != voltage || prev_curr != current)
