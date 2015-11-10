@@ -104,12 +104,18 @@ void uart_enable_interrupt(void)
 
 static void uart_ec_interrupt(void)
 {
+	uint8_t uart_ier;
+
 	/* clear interrupt status */
 	task_clear_pending_irq(IT83XX_IRQ_UART1);
 
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();
 	uart_process_output();
+
+	uart_ier = IT83XX_UART_IER(UART_PORT);
+	IT83XX_UART_IER(UART_PORT) = 0;
+	IT83XX_UART_IER(UART_PORT) = uart_ier;
 }
 DECLARE_IRQ(IT83XX_IRQ_UART1, uart_ec_interrupt, 1);
 
