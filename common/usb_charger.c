@@ -113,15 +113,18 @@ static void usb_charger_bc12_detect(int port)
 
 	/* Debounce pin plug order if we detect a charger */
 	if (device_type || PI3USB9281_CHG_STATUS_ANY(charger_status)) {
-		msleep(USB_CHG_DEBOUNCE_DELAY_MS);
-
 		/* next operation might trigger a detach interrupt */
 		pi3usb9281_disable_interrupts(port);
-		/* Ensure D+/D- are open before resetting */
+		/*
+		 * Ensure D+/D- are open before resetting
+		 * Note: we can't simply call pi3usb9281_set_switches() because
+		 * another task might override it and set the switches closed.
+		 */
 		pi3usb9281_set_switch_manual(port, 1);
 		pi3usb9281_set_pins(port, 0);
-		/* Let D+/D- relax to their idle state */
-		msleep(40);
+
+		/* Delay to debounce pin attach order */
+		msleep(USB_CHG_DEBOUNCE_DELAY_MS);
 
 		/*
 		 * Trigger chip reset to refresh detection registers.
