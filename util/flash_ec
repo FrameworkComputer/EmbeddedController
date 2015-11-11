@@ -70,6 +70,7 @@ BOARDS_STM32=(
 	plankton
 	ryu
 	samus_pd
+	snoball
 	strago_pd
 	zinger
 )
