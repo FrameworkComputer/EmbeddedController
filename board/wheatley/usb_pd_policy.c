@@ -21,7 +21,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)
+#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
+			 PDO_FIXED_COMM_CAP)
 
 /* TODO: fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
@@ -118,6 +119,12 @@ int pd_check_data_swap(int port, int data_role)
 {
 	/* Allow data swap if we are a UFP, otherwise don't allow */
 	return (data_role == PD_ROLE_UFP) ? 1 : 0;
+}
+
+int pd_check_vconn_swap(int port)
+{
+	/* in G3, do not allow vconn swap since pp5000_A rail is off */
+	return gpio_get_level(GPIO_PMIC_SLP_SUS_L);
 }
 
 void pd_execute_data_swap(int port, int data_role)

@@ -6,7 +6,7 @@
  */
 
 GPIO_INT(LID_OPEN,           PIN(9,  5), GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)           /* A47 - SPIP_MISO for LID_OPEN_EC */
-GPIO_INT(AC_PRESENT,         PIN(7,  3), GPIO_INT_BOTH,                   extpower_interrupt)      /* B39 - PS2_CLK3/TA2 for EC_PCH_ACPRESENT */
+GPIO_INT(AC_PRESENT,         PIN(B,  0), GPIO_INT_BOTH,                   extpower_interrupt)      /* B57 - GPIOB0 for EC_PCH_ACPRESENT */
 GPIO_INT(WP_L,               PIN(7,  1), GPIO_INT_BOTH,                   switch_interrupt)        /* B38 - PS2_DAT3/TB2 for EC_WP_L */
 /* Buffered power button input from PMIC / ROP_EC_PWR_BTN_L_R */
 GPIO_INT(POWER_BUTTON_L,     PIN(9,  7), GPIO_INT_BOTH,                   power_button_interrupt)  /* A48 - GPIO97 for ROP_EC_PWR_BTN_L_R */
@@ -68,7 +68,7 @@ GPIO(PCH_WAKE_L,             PIN(3,  5), GPIO_ODR_HIGH)                   /* A17
 GPIO(EC_FAN1_TTACH,          PIN(9,  3), GPIO_INPUT | GPIO_PULL_UP)       /* A46 - TA1/F_DIO2 for EC_FAN1_TACH */
 /* Fan PWM output - NC / testing only */
 GPIO(EC_FAN1_PWM,            PIN(C,  2), GPIO_OUT_LOW)                    /* A59 - PWM1 for EC_FAN1_PWM */
-GPIO(PCH_ACOK,               PIN(B,  0), GPIO_OUT_LOW)                    /* B57 - GPIOB0 for ROP_EC_ACOK */
+GPIO(PCH_ACOK,               PIN(7,  3), GPIO_OUT_LOW)                    /* B39 - PS2_CLK3/TA2for ROP_EC_ACOK */
 /* Interrupts from accelerometer / gyro -- not yet implemented */
 GPIO(ACCEL1_INT,             PIN(A,  3), GPIO_INPUT)                      /* A50 - SPIP_MOSI for ACCEL1_INT_L */
 GPIO(ACCEL2_INT,             PIN(3,  3), GPIO_INPUT)                      /* B17 - GPIO33 for ACCEL2_INT_L */

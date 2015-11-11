@@ -15,6 +15,9 @@
 #include "chipset.h"
 #include "console.h"
 #include "driver/als_opt3001.h"
+#include "driver/accel_kionix.h"
+#include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi160.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -22,10 +25,13 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "math_util.h"
 #include "motion_sense.h"
+#include "motion_lid.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
+#include "spi.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -106,7 +112,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing. Converted to mV, full ADC is equivalent to 33V. */
-	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH1, 33000, ADC_READ_MAX+1, 0},
 	/* Adapter current output or battery discharging current */
 	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4, 55000, 6144, 0},
 	/* System current consumption */
@@ -117,7 +123,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct i2c_port_t i2c_ports[]  = {
 	{"pmic",    NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"muxes",   NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"pd_mcu",  NPCX_I2C_PORT1,  1000, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
+	{"pd_mcu",  NPCX_I2C_PORT1,   400, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
 	{"sensors", NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"batt",    NPCX_I2C_PORT3,   100, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
 };
@@ -206,8 +212,10 @@ struct als_t als[] = {
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	{ 0 },
-	{ 0 },
+	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
+	 30 * MSEC, 0},
+	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
+	 30 * MSEC, 0},
 };
 
 static void board_pmic_init(void)
@@ -327,6 +335,8 @@ DECLARE_DEFERRED(enable_input_devices);
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
+	gpio_set_level(GPIO_USB1_ENABLE, 1);
+	gpio_set_level(GPIO_USB2_ENABLE, 1);
 	hook_call_deferred(enable_input_devices, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -334,6 +344,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
+	gpio_set_level(GPIO_USB1_ENABLE, 0);
+	gpio_set_level(GPIO_USB2_ENABLE, 0);
 	hook_call_deferred(enable_input_devices, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
@@ -367,18 +379,23 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-/* Turn off LEDs in hibernate */
 uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 {
 	int i;
-	const uint32_t led_gpios[][2] = {
+	const uint32_t out_low_gpios[][2] = {
+		/* Turn off LEDs in hibernate */
 		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_1),
 		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_2),
+		/*
+		 * Set PD wake low so that it toggles high to generate a wake
+		 * event once we leave hibernate.
+		 */
+		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_PD_WAKE),
 	};
 
 	/* LED GPIOs should be driven low to turn off LEDs */
-	for (i = 0; i < ARRAY_SIZE(led_gpios); ++i)
-		if (led_gpios[i][0] == port && led_gpios[i][1] == pin)
+	for (i = 0; i < ARRAY_SIZE(out_low_gpios); ++i)
+		if (out_low_gpios[i][0] == port && out_low_gpios[i][1] == pin)
 			return GPIO_OUTPUT | GPIO_LOW;
 
 	/* Other GPIOs should be put in a low-power state */
@@ -415,3 +432,127 @@ static void board_handle_reboot(void)
 	gpio_set_flags_by_mask(g->port, g->mask, GPIO_OUT_HIGH);
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
+
+#ifdef HAS_TASK_MOTIONSENSE
+/* Motion sensors */
+/* Mutexes */
+static struct mutex g_lid_mutex;
+static struct mutex g_base_mutex;
+
+/* KX022 private data */
+struct kionix_accel_data g_kx022_data = {
+	.variant = KX022,
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	{.name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .addr = BMI160_ADDR0,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 2,  /* g, enough for laptop. */
+	 .config = {
+		 /* AP: by default use EC settings */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+			 .ec_rate = 100,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+	 },
+	},
+
+	{.name = "Base Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .addr = BMI160_ADDR0,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = NULL, /* Identity Matrix. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC does not need in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
+	},
+
+	{.name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kionix_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_kx022_data,
+	 .addr = KX022_ADDR1,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 2, /* g, enough for laptop. */
+	 .config = {
+		/* AP: by default use EC settings */
+		[SENSOR_CONFIG_AP] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
+		},
+		/* unused */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		[SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+	 },
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#endif /* defined(HAS_TASK_MOTIONSENSE) */

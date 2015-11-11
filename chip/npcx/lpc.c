@@ -245,7 +245,7 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	CPRINTS("KB put %02x", chr);
 
 	/* Enable OBE interrupt to detect host read data out */
-	SET_BIT(NPCX_HICTRL, NPCX_HICTRL_OBFCIE);
+	SET_BIT(NPCX_HICTRL, NPCX_HICTRL_OBECIE);
 	task_enable_irq(NPCX_IRQ_KBC_OBE);
 	if (send_irq) {
 		keyboard_irq_assert();
@@ -518,7 +518,7 @@ DECLARE_IRQ(NPCX_IRQ_KBC_IBF, lpc_kbc_ibf_interrupt, 2);
 void lpc_kbc_obe_interrupt(void)
 {
 	/* Disable KBC OBE interrupt */
-	CLEAR_BIT(NPCX_HICTRL, NPCX_HICTRL_OBFCIE);
+	CLEAR_BIT(NPCX_HICTRL, NPCX_HICTRL_OBECIE);
 	task_disable_irq(NPCX_IRQ_KBC_OBE);
 
 	CPRINTS("obe isr %02x", NPCX_HIKMST);
@@ -687,8 +687,6 @@ void lpc_host_register_init(void)
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
 	/* enable KBC*/
-	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x05);
-	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x06);
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
@@ -738,12 +736,11 @@ void lpc_lreset_pltrst_handler(void)
 	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 7);
 
 	/*
-	 * Once LRESET is de-asserted (low -> high),
-	 * we need to intialize lpc settings again.
-	 * But if RSTCTL_LRESET_PLTRST_MODE is active, we needn't to do it again
+	 * Once LRESET is de-asserted (low -> high), we need to intialize lpc
+	 * settings once. If RSTCTL_LRESET_PLTRST_MODE is active, LPC registers
+	 * won't be reset by Host domain reset but Core domain does.
 	 */
-	if(!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_LRESET_PLTRST_MODE))
-		lpc_host_register_init();
+	lpc_host_register_init();
 }
 
 int lpc_get_pltrst_asserted(void)
@@ -797,10 +794,7 @@ static void lpc_init(void)
 	/* Turn on PMC2 for Host Command usage */
 	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 0);
 	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 1);
-	/* enable PMC2 IRQ */
-	SET_BIT(NPCX_HIPMIE(PMC_HOST_CMD), 0);
-	/* IRQ control from HW */
-	SET_BIT(NPCX_HIPMIE(PMC_HOST_CMD), 3);
+
 	/*
 	 * Set required control value (avoid setting HOSTWAIT bit at this stage)
 	 */
@@ -829,8 +823,7 @@ static void lpc_init(void)
 #if SUPPORT_P80_SEG
 	SET_BIT(NPCX_GLUE_SDP_CTS, 0);
 #endif
-	/* Just turn on IRQE */
-	NPCX_HIPMIE(PMC_ACPI) = 0x01;
+
 	lpc_task_enable_irq();
 
 	/* Initialize host args and memory map to all zero */

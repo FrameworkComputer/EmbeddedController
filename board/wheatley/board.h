@@ -9,6 +9,8 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCEL_KX022
 #define CONFIG_ADC
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
@@ -37,17 +39,32 @@
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HOSTCMD_PD
+#define CONFIG_HOSTCMD_PD_PANIC
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_LPC
 #define CONFIG_UART_HOST                0
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE 0
+#define CONFIG_LID_ANGLE_SENSOR_LID 2
 #define CONFIG_LID_SWITCH
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
+/* All data won't fit in data RAM.  So, moving boundary slightly. */
+#define RAM_SHIFT_SIZE   (4 * 1024)
+#undef CONFIG_RO_SIZE
+#define CONFIG_RO_SIZE   (96 * 1024 + RAM_SHIFT_SIZE)
+#undef CONFIG_RAM_BASE
+#define CONFIG_RAM_BASE  (0x200C0000 + RAM_SHIFT_SIZE)
+#undef CONFIG_RAM_SIZE
+#define CONFIG_RAM_SIZE  (0x00008000 - 0x800 - RAM_SHIFT_SIZE)
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
+/* We're space constrained on GLaDOS, so reduce the UART TX buffer size. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 512
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_MUX_PI3USB30532
 #define CONFIG_USB_MUX_PS8740
@@ -56,6 +73,8 @@
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_LOGGING
+#define CONFIG_USB_PD_LOG_SIZE 512
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
@@ -64,10 +83,11 @@
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
 #define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_VBOOT_HASH
 
 #define CONFIG_FLASH_SIZE 0x40000 /* 256 KB Flash used for EC */
-#define CONFIG_SPI_FLASH_W25Q64
+#define CONFIG_SPI_FLASH_W25X40
 
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
@@ -100,10 +120,9 @@
 
 /* I2C ports */
 #define I2C_PORT_PMIC                   NPCX_I2C_PORT0_0
-/* TODO(shawnn): Verify that the charge detectors aren't swapped */
-#define I2C_PORT_USB_CHARGER_1          NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_CHARGER_1          NPCX_I2C_PORT0_1
 #define I2C_PORT_USB_MUX                NPCX_I2C_PORT0_1
-#define I2C_PORT_USB_CHARGER_2          NPCX_I2C_PORT0_1
+#define I2C_PORT_USB_CHARGER_2          NPCX_I2C_PORT0_0
 #define I2C_PORT_PD_MCU                 NPCX_I2C_PORT1
 #define I2C_PORT_TCPC                   NPCX_I2C_PORT1
 #define I2C_PORT_ALS                    NPCX_I2C_PORT2
@@ -126,7 +145,6 @@
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_CONSOLE_HISTORY
-#undef CONFIG_TASK_PROFILING
 
 #undef DEFERRABLE_MAX_COUNT
 #define DEFERRABLE_MAX_COUNT 14
@@ -188,9 +206,12 @@ enum als_id {
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
+#define PD_MAX_POWER_MW       45000
 #define PD_MAX_CURRENT_MA     3000
 
 /* Try to negotiate to 20V since i2c noise problems should be fixed. */

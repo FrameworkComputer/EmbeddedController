@@ -922,7 +922,7 @@ enum NPCX_PMC_PWDWN_CTL_T {
 /* KBC register field */
 #define NPCX_HICTRL_OBFKIE               0 /* Automatic Serial IRQ1 for KBC */
 #define NPCX_HICTRL_OBFMIE               1 /* Automatic Serial IRQ12 for Mouse*/
-#define NPCX_HICTRL_OBFCIE               2 /* KBC OBE interrupt enable */
+#define NPCX_HICTRL_OBECIE               2 /* KBC OBE interrupt enable */
 #define NPCX_HICTRL_IBFCIE               3 /* KBC IBF interrupt enable */
 #define NPCX_HICTRL_PMIHIE               4 /* Automatic Serial IRQ11 for PMC1 */
 #define NPCX_HICTRL_PMIOCIE              5 /* PMC1 OBE interrupt enable */
