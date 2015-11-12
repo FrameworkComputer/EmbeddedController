@@ -52,7 +52,8 @@ void mkbp_send_event(uint8_t event_type)
 		 * interrupt the AP if it is a wakeup event
 		 * which is defined in the white list.
 		 */
-		if (events & CONFIG_MKBP_WAKEUP_MASK)
+		if ((events & CONFIG_MKBP_WAKEUP_MASK) ||
+		    (event_type == EC_MKBP_EVENT_KEY_MATRIX))
 			set_host_interrupt(1);
 
 		return;
