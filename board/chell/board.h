@@ -44,6 +44,8 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
+#define CONFIG_PWM
+#define CONFIG_PWM_KBLIGHT
 /* All data won't fit in data RAM.  So, moving boundary slightly. */
 #undef CONFIG_RO_SIZE
 #define CONFIG_RO_SIZE (100 * 1024)
@@ -136,6 +138,13 @@ enum adc_channel {
 	ADC_PSYS,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT,
+
+	/* Number of PWM channels */
+	PWM_CH_COUNT
 };
 
 /* power signal definitions */
