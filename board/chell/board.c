@@ -331,6 +331,8 @@ uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_PD_WAKE),
 		/* The GPIO to reset PMIC is active high */
 		GPIO_TO_PORT_MASK_PAIR(GPIO_PMIC_LDO_EN),
+		/* The GPIO to control RTCRST is active high. */
+		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST),
 	};
 
 	/* LED GPIOs should be driven low to turn off LEDs */
