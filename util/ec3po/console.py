@@ -10,6 +10,7 @@ session-persistent command history.
 """
 from __future__ import print_function
 import argparse
+import binascii
 from chromite.lib import cros_logging as logging
 import multiprocessing
 import os
@@ -83,6 +84,10 @@ class Console(object):
     history_pos: An integer representing the current history buffer position.
       This index is used to show previous commands.
     prompt: A string representing the console prompt displayed to the user.
+    enhanced_ec: A boolean indicating if the EC image that we are currently
+      communicating with is enhanced or not.  Enhanced EC images will support
+      packed commands and host commands over the UART.  This defaults to False
+      until we perform some handshaking.
   """
 
   def __init__(self, master_pty, user_pty, cmd_pipe, dbg_pipe):
@@ -111,6 +116,7 @@ class Console(object):
     self.history = []
     self.history_pos = 0
     self.prompt = PROMPT
+    self.enhanced_ec = False
 
   def __str__(self):
     """Show internal state of Console object as a string."""
@@ -371,12 +377,52 @@ class Console(object):
     logging.debug('Sending command to interpreter.')
     self.cmd_pipe.send(self.input_buffer)
 
+  def CheckForEnhancedECImage(self):
+    """Performs an interrogation of the EC image.
+
+    Send a SYN and expect an ACK.  If no ACK or the response is incorrect, then
+    assume that the current EC image that we are talking to is not enhanced.
+
+    Returns:
+      A boolean indicating whether the EC responded to the interrogation
+      correctly.
+    """
+    # Send interrogation byte and wait for the response.
+    logging.debug('Performing interrogation.')
+    self.cmd_pipe.send(interpreter.EC_SYN)
+
+    response = ''
+    if self.dbg_pipe.poll(interpreter.EC_INTERROGATION_TIMEOUT):
+      response = self.dbg_pipe.recv()
+      logging.debug('response: \'%s\'', binascii.hexlify(response))
+    else:
+      logging.debug('Timed out waiting for EC_ACK')
+
+    # Verify the acknowledgment.
+    return response == interpreter.EC_ACK
+
   def HandleChar(self, byte):
     """HandleChar does a certain action when it receives a character.
 
     Args:
       byte: An integer representing the character received from the user.
     """
+    # Interrogate the EC every time we press the enter key.  This is necessary
+    # so that we know whether or not we should provide the console interface or
+    # simply behave as a pass-thru.
+    if byte == ControlKey.CARRIAGE_RETURN:
+      self.enhanced_ec = self.CheckForEnhancedECImage()
+      logging.debug('Enhanced EC image? %r', self.enhanced_ec)
+
+    if not self.enhanced_ec:
+      # Send everything straight to the EC to handle.
+      self.cmd_pipe.send(chr(byte))
+      # Reset the input buffer.
+      self.input_buffer = ''
+      self.input_buffer_pos = 0
+      logging.debug('Reset input buffer.')
+      return
+
     # Keep handling the ESC sequence if we're in the middle of it.
     if self.esc_state != 0:
       self.HandleEsc(byte)

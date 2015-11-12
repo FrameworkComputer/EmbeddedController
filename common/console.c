@@ -21,6 +21,11 @@
 
 #define PROMPT "> "
 
+#ifdef CONFIG_EXPERIMENTAL_CONSOLE
+#define EC_SYN 0xEC
+#define EC_ACK 0xC0
+#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
+
 /* ASCII control character; for example, CTRL('C') = ^C */
 #define CTRL(c) ((c) - '@')
 
@@ -447,6 +452,18 @@ static int handle_esc(int c)
 
 static void console_handle_char(int c)
 {
+#ifdef CONFIG_EXPERIMENTAL_CONSOLE
+	/*
+	 * If we receive a EC_SYN, we should respond immediately with a EC_ACK.
+	 * This handshake lets the interpreter know that this is an enhanced
+	 * image.
+	 */
+	if (c == EC_SYN) {
+		console_putc(EC_ACK);
+		return;
+	}
+#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
+
 	/* Translate CR and CRLF to LF (newline) */
 	if (c == '\r') {
 		last_rx_was_cr = 1;

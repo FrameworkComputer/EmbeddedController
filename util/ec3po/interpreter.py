@@ -12,6 +12,7 @@ additionally supports automatic command retrying if the EC drops a character in
 a command.
 """
 from __future__ import print_function
+import binascii
 from chromite.lib import cros_logging as logging
 import os
 import Queue
@@ -20,6 +21,10 @@ import select
 
 COMMAND_RETRIES = 3  # Number of attempts to retry a command.
 EC_MAX_READ = 1024  # Max bytes to read at a time from the EC.
+EC_SYN = '\xec'  # Byte indicating EC interrogation.
+EC_ACK = '\xc0'  # Byte representing correct EC response to interrogation.
+EC_INTERROGATION_TIMEOUT = 0.1  # Maximum number of seconds to wait for a
+                                # response to an interrogation.
 
 
 class Interpreter(object):
@@ -27,7 +32,7 @@ class Interpreter(object):
 
   This class essentially performs all of the intepretation for the EC and the
   user.  It handles all of the automatic command retrying as well as the
-  formation of commands.
+  formation of commands for EC images which support that.
 
   Attributes:
     ec_uart_pty: A string representing the EC UART to connect to.
@@ -44,8 +49,15 @@ class Interpreter(object):
       Initially, these are the EC UART and the command pipe.
     outputs: A list of objects that the interpreter selects for writing.
     ec_cmd_queue: A FIFO queue used for sending commands down to the EC UART.
-    cmd_in_progress: A string that represents the current command sent to the
-      EC that is pending reception verification.
+    last_cmd: A string that represents the last command sent to the EC.  If an
+      error is encountered, the interpreter will attempt to retry this command
+      up to COMMAND_RETRIES.
+    enhanced_ec: A boolean indicating if the EC image that we are currently
+      communicating with is enhanced or not.  Enhanced EC images will support
+      packed commands and host commands over the UART.  This defaults to False
+      and is changed depending on the result of an interrogation.
+    interrogating: A boolean indicating if we are in the middle of interrogating
+      the EC.
   """
   def __init__(self, ec_uart_pty, cmd_pipe, dbg_pipe, log_level=logging.INFO):
     """Intializes an Interpreter object with the provided args.
@@ -71,16 +83,38 @@ class Interpreter(object):
     self.inputs = [self.ec_uart_pty, self.cmd_pipe]
     self.outputs = []
     self.ec_cmd_queue = Queue.Queue()
-    self.cmd_in_progress = ''
+    self.last_cmd = ''
+    self.enhanced_ec = False
+    self.interrogating = False
 
-  def EnqueueCmd(self, packed_cmd):
-    """Enqueue a packed console command to be sent to the EC UART.
+  def __str__(self):
+    """Show internal state of the Interpreter object.
+
+    Returns:
+      A string that shows the values of the attributes.
+    """
+    string = []
+    string.append('%r' % self)
+    string.append('ec_uart_pty: %s' % self.ec_uart_pty)
+    string.append('cmd_pipe: %r' % self.cmd_pipe)
+    string.append('dbg_pipe: %r' % self.dbg_pipe)
+    string.append('cmd_retries: %d' % self.cmd_retries)
+    string.append('log_level: %d' % self.log_level)
+    string.append('inputs: %r' % self.inputs)
+    string.append('outputs: %r' % self.outputs)
+    string.append('ec_cmd_queue: %r' % self.ec_cmd_queue)
+    string.append('last_cmd: \'%s\'' % self.last_cmd)
+    string.append('enhanced_ec: %r' % self.enhanced_ec)
+    string.append('interrogating: %r' % self.interrogating)
+    return '\n'.join(string)
+
+  def EnqueueCmd(self, command):
+    """Enqueue a command to be sent to the EC UART.
 
     Args:
-      packed_cmd: A string which contains the packed command to be sent.
+      command: A string which contains the command to be sent.
     """
-    # Enqueue a packed command to be sent to the EC.
-    self.ec_cmd_queue.put(packed_cmd)
+    self.ec_cmd_queue.put(command)
     logging.debug('Commands now in queue: %d', self.ec_cmd_queue.qsize())
     # Add the EC UART as an output to be serviced.
     self.outputs.append(self.ec_uart_pty)
@@ -105,19 +139,23 @@ class Interpreter(object):
     Returns:
       A string which contains the packed command.
     """
-    # The command format is as follows.
-    # &&[x][x][x][x]&{cmd}\n\n
-    packed_cmd = []
-    packed_cmd.append('&&')
-    # The first pair of hex digits are the length of the command.
-    packed_cmd.append('%02x' % len(raw_cmd))
-    # Then the CRC8 of cmd.
-    packed_cmd.append('%02x' % Crc8(raw_cmd))
-    packed_cmd.append('&')
-    # Now, the raw command followed by 2 newlines.
-    packed_cmd.append(raw_cmd)
-    packed_cmd.append('\n\n')
-    return ''.join(packed_cmd)
+    # Don't pack a single carriage return.
+    if raw_cmd != '\r':
+      # The command format is as follows.
+      # &&[x][x][x][x]&{cmd}\n\n
+      packed_cmd = []
+      packed_cmd.append('&&')
+      # The first pair of hex digits are the length of the command.
+      packed_cmd.append('%02x' % len(raw_cmd))
+      # Then the CRC8 of cmd.
+      packed_cmd.append('%02x' % Crc8(raw_cmd))
+      packed_cmd.append('&')
+      # Now, the raw command followed by 2 newlines.
+      packed_cmd.append(raw_cmd)
+      packed_cmd.append('\n\n')
+      return ''.join(packed_cmd)
+    else:
+      return raw_cmd
 
   def ProcessCommand(self, command):
     """Captures the input determines what actions to take.
@@ -125,41 +163,47 @@ class Interpreter(object):
     Args:
       command: A string representing the command sent by the user.
     """
-    command = command.strip()
+    # Remove leading and trailing spaces only if this is an enhanced EC image.
+    # For non-enhanced EC images, commands will be single characters at a time
+    # and can be spaces.
+    if self.enhanced_ec:
+      command = command.strip(' ')
+
     # There's nothing to do if the command is empty.
     if len(command) == 0:
       return
 
-    # All other commands need to be packed first before they go to the EC.
-    packed_cmd = self.PackCommand(command)
-    logging.debug('packed cmd: ' + packed_cmd)
-    self.EnqueueCmd(packed_cmd)
-    # TODO(aaboagye): Make a dict of commands and keys and eventually, handle
-    # partial matching based on unique prefixes.
+    # Check for interrogation command.
+    if command == EC_SYN:
+      # User is requesting interrogation.  Send SYN as is.
+      logging.debug('User requesting interrogation.')
+      self.interrogating = True
+      # Assume the EC isn't enhanced until we get a response.
+      self.enhanced_ec = False
+    elif self.enhanced_ec:
+      # Enhanced EC images require the plaintext commands to be packed.
+      command = self.PackCommand(command)
+      # TODO(aaboagye): Make a dict of commands and keys and eventually,
+      # handle partial matching based on unique prefixes.
 
-  def CheckECResponse(self):
-    """Checks the response from the EC for any errors."""
-    # An invalid response is at most 4 bytes.
-    data = os.read(self.ec_uart_pty.fileno(), 4)
-    if '&E' not in data:
-      # No error received.  Clear the command in progress.
-      self.cmd_in_progress = ''
-      # Reset the retry count.
-      self.cmd_retries = COMMAND_RETRIES
-      # Forward the data to the user.
-      self.dbg_pipe.send(data)
-    elif self.cmd_retries > 0:
+    logging.debug('command: \'%s\'', command)
+    self.EnqueueCmd(command)
+
+  def HandleCmdRetries(self):
+    """Attempts to retry commands if possible."""
+    if self.cmd_retries > 0:
       # The EC encountered an error.  We'll have to retry again.
-      logging.warning('EC replied with error.  Retrying.')
+      logging.warning('Retrying command...')
       self.cmd_retries -= 1
       logging.warning('Retries remaining: %d', self.cmd_retries)
-      # Add the EC UART to the writers again.
+      # Retry the command and add the EC UART to the writers again.
+      self.EnqueueCmd(self.last_cmd)
       self.outputs.append(self.ec_uart_pty)
     else:
       # We're out of retries, so just give up.
       logging.error('Command failed.  No retries left.')
       # Clear the command in progress.
-      self.cmd_in_progress = ''
+      self.last_cmd = ''
       # Reset the retry count.
       self.cmd_retries = COMMAND_RETRIES
 
@@ -167,7 +211,7 @@ class Interpreter(object):
     """Sends a command to the EC."""
     # If we're retrying a command, just try to send it again.
     if self.cmd_retries < COMMAND_RETRIES:
-      cmd = self.cmd_in_progress
+      cmd = self.last_cmd
     else:
       # If we're not retrying, we should not be writing to the EC if we have no
       # items in our command queue.
@@ -176,16 +220,53 @@ class Interpreter(object):
       cmd = self.ec_cmd_queue.get()
 
     # Send the command.
-    logging.debug('Sending command to EC.')
     self.ec_uart_pty.write(cmd)
     self.ec_uart_pty.flush()
+    logging.debug('Sent command to EC.')
 
-    # Now, that we've sent the command we will need to make sure the EC
-    # received it without an error.  Store the current command as in
-    # progress.  We will clear this if the EC responds with a non-error.
-    self.cmd_in_progress = cmd
+    if self.enhanced_ec and cmd != EC_SYN:
+      # Now, that we've sent the command, store the current command as the last
+      # command sent.  If we encounter an error string, we will attempt to retry
+      # this command.
+      if cmd != self.last_cmd:
+        self.last_cmd = cmd
+        # Reset the retry count.
+        self.cmd_retries = COMMAND_RETRIES
     # Remove the EC UART from the writers while we wait for a response.
     self.outputs.remove(self.ec_uart_pty)
+
+  def HandleECData(self):
+    """Handle any debug prints from the EC."""
+    logging.debug('EC has data')
+    # Read what the EC sent us.
+    data = os.read(self.ec_uart_pty.fileno(), EC_MAX_READ)
+    logging.debug('got: \'%s\'', binascii.hexlify(data))
+    if '&E' in data and self.enhanced_ec:
+      # We received an error, so we should retry it if possible.
+      logging.warning('Error string found in data.')
+      self.HandleCmdRetries()
+      return
+
+    # If we were interrogating, check the response and update our knowledge
+    # of the current EC image.
+    if self.interrogating:
+      self.enhanced_ec = data == EC_ACK
+      if self.enhanced_ec:
+        logging.debug('The current EC image seems enhanced.')
+      else:
+        logging.debug('The current EC image does NOT seem enhanced.')
+      # Done interrogating.
+      self.interrogating = False
+    # For now, just forward everything the EC sends us.
+    logging.debug('Forwarding to user...')
+    self.dbg_pipe.send(data)
+
+  def HandleUserData(self):
+    """Handle any incoming commands from the user."""
+    logging.debug('Command data available.  Begin processing.')
+    data = self.cmd_pipe.recv()
+    # Process the command.
+    self.ProcessCommand(data)
 
 
 def Crc8(data):
@@ -232,26 +313,11 @@ def StartLoop(interp):
     for obj in readable:
       # Handle any debug prints from the EC.
       if obj is interp.ec_uart_pty:
-        logging.debug('EC has data')
-        if interp.cmd_in_progress:
-          # A command was just sent to the EC.  We need to check to see if the
-          # EC is telling us that it received a corrupted command.
-          logging.debug('Command in progress so checking response...')
-          interp.CheckECResponse()
-
-        # Read what the EC sent us.
-        data = os.read(obj.fileno(), EC_MAX_READ)
-        logging.debug('got: \'%s\'', data)
-        # For now, just forward everything the EC sends us.
-        logging.debug('Forwarding to user...')
-        interp.dbg_pipe.send(data)
+        interp.HandleECData()
 
       # Handle any commands from the user.
       elif obj is interp.cmd_pipe:
-        logging.debug('Command data available.  Begin processing.')
-        data = interp.cmd_pipe.recv()
-        # Process the command.
-        interp.ProcessCommand(data)
+        interp.HandleUserData()
 
     for obj in writeable:
       # Send a command to the EC.
