@@ -108,8 +108,11 @@ struct motion_sensor_t {
 
 	/*
 	 * Allow EC to request an higher frequency for the sensors than the AP.
+	 * We will downsample according to oversampling_ratio, or ignore the
+	 * samples altogether if oversampling_ratio is 0.
 	 */
-	fp_t oversampling;
+	uint16_t oversampling;
+	uint16_t oversampling_ratio;
 
 	/*
 	 * How many vector events are lost in the FIFO since last time
