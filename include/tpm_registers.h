@@ -14,6 +14,8 @@
 
 #include <stdint.h>
 
+#include "common.h"
+
 /* The SPI master is writing data into a TPM register. */
 void tpm_register_put(uint32_t regaddr,
 		      const uint8_t *data, uint32_t data_size);
@@ -23,5 +25,18 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size);
 
 /* Enable SPS TPM driver. */
 void sps_tpm_enable(void);
+
+/*
+ * This structure describes the header of all commands and responses sent and
+ * received over TPM FIFO.
+ *
+ * Note that all fields are stored in the network (big endian) byte order.
+ */
+
+struct tpm_cmd_header {
+	uint16_t tag;
+	uint32_t size;
+	uint32_t command_code;
+} __packed;
 
 #endif	/* __CROS_EC_TPM_REGISTERS_H */

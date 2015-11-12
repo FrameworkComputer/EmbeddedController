@@ -9,6 +9,7 @@
  * 24-bit address. There is no provision for error reporting at this level.
  */
 
+#include "byteorder.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -273,22 +274,12 @@ static void sts_reg_write(const uint8_t *data, uint32_t data_size)
 	}
 }
 
-/* We presume to be running on a little endian CPU. */
-static uint32_t be32_to_cpu(const uint8_t *data)
-{
-	int i;
-	uint32_t value = 0;
-
-	for (i = 0; i < sizeof(value); i++)
-		value |= ((uint32_t)data[i]) << (8 * (sizeof(value) - i - 1));
-
-	return value;
-}
-
 /* Collect received data in the local buffer and change state accordingly. */
 static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 {
 	uint32_t packet_size;
+	struct tpm_cmd_header *tpmh;
+
 	/*
 	 * Make sure we are in the approriate sate, otherwise ignore this
 	 * access.
@@ -322,7 +313,8 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 		return;
 	}
 
-	packet_size = be32_to_cpu(tpm_.regs.data_fifo + 2);
+	tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;
+	packet_size = be32toh(tpmh->size);
 	if (tpm_.fifo_write_index < packet_size) {
 		tpm_.regs.sts |= expect; /* More data is needed. */
 		return;
@@ -427,11 +419,15 @@ void tpm_task(void)
 	while (1) {
 		uint8_t *response;
 		unsigned response_size;
+		uint32_t command_code;
+		struct tpm_cmd_header *tpmh;
 
 		/* Wait for the next command event */
 		task_wait_event(-1);
+		tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;
+		command_code = be32toh(tpmh->command_code);
 		CPRINTF("%s: received fifo command 0x%04x\n",
-			__func__, be32_to_cpu(tpm_.regs.data_fifo + 6));
+			__func__, command_code);
 
 		ExecuteCommand(tpm_.fifo_write_index,
 			       tpm_.regs.data_fifo,

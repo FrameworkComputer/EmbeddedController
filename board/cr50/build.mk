@@ -40,6 +40,10 @@ EXTLIB := $(realpath ../../third_party/tpm2)
 CFLAGS += -I$(EXTLIB)
 LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
 
+# For the benefit of the tpm2 library.
+INCLUDE_ROOT := $(abspath ./include)
+CFLAGS += -I$(INCLUDE_ROOT)
+
 # Add dependencies on that library
 $(out)/RO/ec.RO.elf: $(out)/tpm2/libtpm2.a
 $(out)/RW/ec.RW.elf: $(out)/tpm2/libtpm2.a
