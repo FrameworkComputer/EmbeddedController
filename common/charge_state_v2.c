@@ -44,6 +44,7 @@
 static const struct battery_info *batt_info;
 static struct charge_state_data curr;
 static int prev_ac, prev_charge, prev_full;
+static enum battery_present prev_bp;
 static int is_full; /* battery not accepting current */
 static int state_machine_force_idle;
 static int manual_mode;  /* volt/curr are no longer maintained by charger */
@@ -560,6 +561,15 @@ void charger_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
 
+int get_desired_input_current(enum battery_present batt_present,
+			      const struct charger_info * const info)
+{
+	if (batt_present == BP_YES || system_is_locked())
+		return CONFIG_CHARGER_INPUT_CURRENT;
+	else
+		return info->input_current_max;
+}
+
 /* Main loop */
 void charger_task(void)
 {
@@ -581,10 +591,8 @@ void charger_task(void)
 	 * as needed.
 	 */
 	battery_get_params(&curr.batt);
-	if (curr.batt.is_present == BP_YES || system_is_locked())
-		curr.desired_input_current = CONFIG_CHARGER_INPUT_CURRENT;
-	else
-		curr.desired_input_current = info->input_current_max;
+	prev_bp = curr.batt.is_present;
+	curr.desired_input_current = get_desired_input_current(prev_bp, info);
 
 	while (1) {
 
@@ -628,6 +636,13 @@ void charger_task(void)
 		}
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
+
+		if (prev_bp != curr.batt.is_present) {
+			prev_bp = curr.batt.is_present;
+			curr.desired_input_current =
+				get_desired_input_current(prev_bp, info);
+			charger_set_input_current(curr.desired_input_current);
+		}
 
 		curr.chg.flags |= CHG_FLAG_INITIALIZED;
 
