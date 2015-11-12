@@ -183,6 +183,7 @@ SECTIONS
         *(.bss.system_stack)
         /* Rest of .bss takes care of its own alignment */
         *(.bss)
+        *(.bss.slow)
         . = ALIGN(4);
         __bss_end = .;
 
