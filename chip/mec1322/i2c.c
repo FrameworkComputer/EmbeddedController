@@ -35,6 +35,10 @@
 #define CTRL_ESO (1 << 6) /* Enable serial output */
 #define CTRL_PIN (1 << 7) /* Pending interrupt not */
 
+/* Completion */
+#define COMP_IDLE (1 << 29)    /* i2c bus is idle */
+#define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
+
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
 
@@ -457,7 +461,7 @@ static void handle_interrupt(int controller)
 	int id = cdata[controller].task_waiting;
 
 	/* Clear the interrupt status */
-	MEC1322_I2C_COMPLETE(controller) |= 1 << 29;
+	MEC1322_I2C_COMPLETE(controller) &= (COMP_RW_BITS_MASK | COMP_IDLE);
 
 	/*
 	 * Write to control register interferes with I2C transaction.
