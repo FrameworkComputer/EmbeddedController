@@ -44,11 +44,15 @@ int pwm_get_duty(enum pwm_channel ch)
 	return MEC1322_PWM_ON(pwm_channels[ch].channel);
 }
 
-static void pwm_configure(int ch, int active_low)
+static void pwm_configure(int ch, int active_low, int clock_low)
 {
+	/*
+	 * clock_low=0 selects the 48MHz Ring Oscillator source
+	 * clock_low=1 selects the 100kHz_Clk source
+	 */
 	MEC1322_PWM_CFG(ch) = (15 << 3) |    /* Pre-divider = 16 */
 			      (active_low ? (1 << 2) : 0) |
-			      (0 << 1);      /* 48M clock */
+			      (clock_low  ? (1 << 1) : 0);
 }
 
 static void pwm_init(void)
@@ -57,7 +61,8 @@ static void pwm_init(void)
 
 	for (i = 0; i < PWM_CH_COUNT; ++i) {
 		pwm_configure(pwm_channels[i].channel,
-			      pwm_channels[i].flags & PWM_CONFIG_ACTIVE_LOW);
+			      pwm_channels[i].flags & PWM_CONFIG_ACTIVE_LOW,
+			      pwm_channels[i].flags & PWM_CONFIG_ALT_CLOCK);
 		pwm_set_duty(i, 0);
 	}
 }

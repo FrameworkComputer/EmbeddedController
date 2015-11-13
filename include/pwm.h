@@ -41,5 +41,10 @@ int pwm_get_duty(enum pwm_channel ch);
  * its duty cycle to produce a given fan RPM.
  */
 #define PWM_CONFIG_HAS_RPM_MODE (1 << 1)
+/**
+ * PWM clock select alternate source.  The actual clock and alternate
+ * source are chip dependent.
+ */
+#define PWM_CONFIG_ALT_CLOCK    (1 << 2)
 
 #endif  /* __CROS_EC_PWM_H */
