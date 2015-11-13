@@ -36,7 +36,7 @@ int DCRYPTO_aes_init(const uint8_t *key, uint32_t key_len, const uint8_t *iv,
 		enum cipher_mode c_mode, enum encrypt_mode e_mode)
 {
 	int i;
-	const uint32_t *p;
+	const struct access_helper *p;
 	uint32_t key_mode;
 
 	switch (key_len) {
@@ -56,9 +56,9 @@ int DCRYPTO_aes_init(const uint8_t *key, uint32_t key_len, const uint8_t *iv,
 	set_control_register(c_mode, key_mode, e_mode);
 
 	/* Initialize hardware with AES key */
-	p = (uint32_t *) key;
+	p = (struct access_helper *) key;
 	for (i = 0; i < (key_len >> 5); i++)
-		GR_KEYMGR_AES_KEY(i) = p[i];
+		GR_KEYMGR_AES_KEY(i) = p[i].udata;
 	/* Trigger key expansion. */
 	GREG32(KEYMGR, AES_KEY_START) = 1;
 
@@ -70,9 +70,9 @@ int DCRYPTO_aes_init(const uint8_t *key, uint32_t key_len, const uint8_t *iv,
 
 	/* Initialize IV for modes that require it. */
 	if (iv) {
-		p = (uint32_t *) iv;
+		p = (struct access_helper *) iv;
 		for (i = 0; i < 4; i++)
-			GR_KEYMGR_AES_CTR(i) = p[i];
+			GR_KEYMGR_AES_CTR(i) = p[i].udata;
 	}
 	return 1;
 }
@@ -80,12 +80,12 @@ int DCRYPTO_aes_init(const uint8_t *key, uint32_t key_len, const uint8_t *iv,
 int DCRYPTO_aes_block(const uint8_t *in, uint8_t *out)
 {
 	int i;
-	uint32_t *outw;
-	const uint32_t *inw = (const uint32_t *) in;
+	struct access_helper *outw;
+	const struct access_helper *inw = (struct access_helper *) in;
 
 	/* Write plaintext. */
 	for (i = 0; i < 4; i++)
-		GREG32(KEYMGR, AES_WFIFO_DATA) = inw[i];
+		GREG32(KEYMGR, AES_WFIFO_DATA) = inw[i].udata;
 
 	/* Wait for the result. */
 	if (!wait_read_data(GREG32_ADDR(KEYMGR, AES_RFIFO_EMPTY))) {
@@ -94,9 +94,9 @@ int DCRYPTO_aes_block(const uint8_t *in, uint8_t *out)
 	}
 
 	/* Read ciphertext. */
-	outw = (uint32_t *) out;
+	outw = (struct access_helper *) out;
 	for (i = 0; i < 4; i++)
-		outw[i] = GREG32(KEYMGR, AES_RFIFO_DATA);
+		outw[i].udata = GREG32(KEYMGR, AES_RFIFO_DATA);
 	return 1;
 }
 
