@@ -44,7 +44,6 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Not using software sync, so verify RW signature instead */
-#define CONFIG_RWSIG
 #define CONFIG_RSA
 #define CONFIG_SHA256
 
