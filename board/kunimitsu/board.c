@@ -114,19 +114,11 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-#ifdef BOARD_KUNIMITSU_V3
-	{"batt",     MEC1322_I2C0_0, 100,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"muxes",    MEC1322_I2C0_1, 100,  GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"pd_mcu",   MEC1322_I2C1,   500,  GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"sensors",  MEC1322_I2C2,   400,  GPIO_I2C2_SCL,   GPIO_I2C2_SDA  },
-	{"pmic",     MEC1322_I2C3,   400,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA  },
-#else
 	{"pmic",     MEC1322_I2C0_0, 400,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"muxes",    MEC1322_I2C0_1, 400,  GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
 	{"pd_mcu",   MEC1322_I2C1,   500,  GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
 	{"sensors",  MEC1322_I2C2,   400,  GPIO_I2C2_SCL,   GPIO_I2C2_SDA  },
 	{"batt",     MEC1322_I2C3,   100,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA  },
-#endif /* BOARD_KUNIMITSU_V3 */
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -135,7 +127,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
 };
 
-#ifndef BOARD_KUNIMITSU_V3
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_t fans[] = {
 	{.flags = FAN_USE_RPM_MODE,
@@ -148,7 +139,6 @@ const struct fan_t fans[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
-#endif
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
@@ -539,23 +529,9 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("New chg p%d", charge_port);
 
 	if (charge_port == CHARGE_PORT_NONE) {
-#ifndef BOARD_KUNIMITSU_V3
 		/* Disable both ports */
 		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
 		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
-#else
-		/*
-		 * TODO (crosbug.com/p/44704): Remove support for V3 when V4 is
-		 * available.
-		 *
-		 * Currently we only get VBUS knowledge when charge is enabled,
-		 * so, when not charging, we need to enable both ports. but,
-		 * this is dangerous if you have two chargers plugged in and you
-		 * set charge override to -1 then it will enable both sides!
-		 */
-		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
-		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
-#endif
 	} else {
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_EN_L :
@@ -595,7 +571,6 @@ static void board_chipset_shutdown(void)
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
 
-#ifndef BOARD_KUNIMITSU_V3
 /* Make the pmic re-sequence the power rails under these conditions. */
 #define PMIC_RESET_FLAGS \
 	(RESET_FLAG_WATCHDOG | RESET_FLAG_SOFT | RESET_FLAG_HARD)
@@ -624,4 +599,3 @@ static void board_handle_reboot(void)
 	gpio_set_level(GPIO_LDO_EN, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
-#endif

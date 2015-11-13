@@ -64,23 +64,9 @@ void pd_power_supply_reset(int port)
 	/* Disable VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 0);
-#ifndef BOARD_KUNIMITSU_V3
+
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-#else
-	/*
-	 * TODO (crosbug.com/p/44704): Remove support for V3 when V4 is
-	 * available.
-	 *
-	 * Currently we can only detect VBUS when charge_en is asserted,
-	 * so, if there is no active charge port, then enable charge_en.
-	 * If the other port is the active charger, then leave this port
-	 * disabled.
-	 */
-	if (charge_manager_get_active_charge_port() != !port)
-		gpio_set_level(port ? GPIO_USB_C1_CHARGE_EN_L :
-				      GPIO_USB_C0_CHARGE_EN_L, 0);
-#endif
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,

@@ -8,11 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/*
- * TODO (crosbug.com/p/44704): Remove support for V3 when V4 is available.
- */
-#define BOARD_KUNIMITSU_V3
-
 /* Optional features */
 #define CONFIG_ADC
 #define CONFIG_BATTERY_CUT_OFF
@@ -29,24 +24,16 @@
 #define CONFIG_CHARGER_ISL9237
 #define CONFIG_CHARGER_ILIM_PIN_DISABLED
 #define CONFIG_CHARGER_INPUT_CURRENT 512
-#ifndef BOARD_KUNIMITSU_V3
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
-#endif
 #define CONFIG_CHARGER_NARROW_VDC
 #define CONFIG_CHARGER_PSYS
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
-#ifndef BOARD_KUNIMITSU_V3
 #define CONFIG_TRICKLE_CHARGING
-#endif
 
-#ifndef BOARD_KUNIMITSU_V3
 /* PSYS resistor 8.25KOhm */
 #define CHARGER_PSYS_RESISTOR 8250
-#else
-/* PSYS resistor 8.6KOhm */
-#define CHARGER_PSYS_RESISTOR 8600
-#endif
+
 /*
  * PSYS gain = 1 / (PSYS resistor * (1.44 or 0.36) uA/W)
  */
@@ -57,9 +44,7 @@
 #define CONFIG_CLOCK_CRYSTAL
 #undef  CONFIG_DEBUG_ASSERT
 #define CONFIG_EXTPOWER_GPIO
-#ifndef BOARD_KUNIMITSU_V3
 #define CONFIG_FANS 1
-#endif
 #define CONFIG_HOSTCMD_PD
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
@@ -67,9 +52,11 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
-#ifdef BOARD_KUNIMITSU_V3
+/*
+ * TODO: Issue is seen with LTO feature, further debug is needed.
+ *
 #define CONFIG_LTO
-#endif
+ */
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
@@ -165,27 +152,6 @@
 
 /* Enable Pseudo G3 */
 #define CONFIG_LOW_POWER_PSEUDO_G3
-
-/**************************************
- * BELOW ARE CONFIG SPECIFIC FOR FAB3 *
- **************************************/
-#ifdef BOARD_KUNIMITSU_V3
-
-#define CONFIG_KEYBOARD_COL2_INVERTED
-
-#undef I2C_PORT_BATTERY
-#undef I2C_PORT_CHARGER
-#undef I2C_PORT_THERMAL
-#define I2C_PORT_BATTERY MEC1322_I2C0_0
-#define I2C_PORT_CHARGER MEC1322_I2C0_0
-#define I2C_PORT_THERMAL MEC1322_I2C0_0
-
-#undef I2C_PORT_PMIC
-#undef I2C_PORT_USB_CHARGER_2
-#define I2C_PORT_PMIC MEC1322_I2C3
-#define I2C_PORT_USB_CHARGER_2 MEC1322_I2C3
-
-#endif /* BOARD_KUNIMITSU_V3 */
 
 #ifndef __ASSEMBLER__
 
