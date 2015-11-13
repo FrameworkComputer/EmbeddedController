@@ -19,6 +19,10 @@
 extern const struct console_command __cmds[];
 extern const struct console_command __cmds_end[];
 
+/* Extension commands. */
+extern const void *__extension_cmds;
+extern const void *__extension_cmds_end;
+
 /* Hooks */
 extern const struct hook_data __hooks_init[];
 extern const struct hook_data __hooks_init_end[];

@@ -116,6 +116,8 @@
 /* Support AP Warm reset Interrupt. */
 #undef CONFIG_AP_WARM_RESET_INTERRUPT
 
+/* Allow proprietary communication protocols' extensions. */
+#undef CONFIG_EXTENSION_COMMAND
 /*
  * Support controlling the display backlight based on the state of the lid
  * switch.  The EC will disable the backlight when the lid is closed.

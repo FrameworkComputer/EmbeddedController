@@ -39,6 +39,9 @@ static const char * const channel_names[] = {
 	"clock",
 	"dma",
 	"events",
+#ifdef CONFIG_EXTENSION_COMMAND
+	"extension",
+#endif
 	"gesture",
 	"gpio",
 	"hostcmd",
