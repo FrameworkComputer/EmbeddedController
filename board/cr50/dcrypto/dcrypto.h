@@ -9,6 +9,9 @@
 #ifndef EC_BOARD_CR50_DCRYPTO_DCRYPTO_H_
 #define EC_BOARD_CR50_DCRYPTO_DCRYPTO_H_
 
+/* TODO(vbendeb) don't forget to disable this for prod builds. */
+#define CRYPTO_TEST_SETUP
+
 #include <inttypes.h>
 
 enum cipher_mode {

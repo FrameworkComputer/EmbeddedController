@@ -218,7 +218,7 @@ CRYPT_RESULT _cpri__AESEncryptECB(
 	assert(key != NULL);
 	/* Initialize AES hardware. */
 	if (!DCRYPTO_aes_init(key, num_bits, NULL,
-				CIPHER_MODE_ECB, ENCRYPT_MODE))
+			      CIPHER_MODE_ECB, ENCRYPT_MODE))
 		return CRYPT_PARAMETER;
 	return _cpri__AESBlock(out, len, in);
 }
@@ -250,3 +250,150 @@ CRYPT_RESULT _cpri__AESEncryptOFB(
 	}
 	return CRYPT_SUCCESS;
 }
+
+#ifdef CRYPTO_TEST_SETUP
+
+#include "console.h"
+#include "extension.h"
+#include "hooks.h"
+#include "uart.h"
+
+#define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
+
+static void aes_command_handler(void *cmd_body,
+				size_t cmd_size,
+				size_t *response_size)
+{
+	uint8_t *key;
+	uint16_t key_len;
+	uint8_t iv_len;
+	uint8_t *iv;
+	enum cipher_mode c_mode;
+	enum encrypt_mode e_mode;
+	uint8_t *cmd = (uint8_t *)cmd_body;
+	int16_t data_len;
+	unsigned max_data_len = *response_size;
+	unsigned actual_cmd_size;
+
+	*response_size = 0;
+
+	/*
+	 * Command structure, shared out of band with the test driver running
+	 * on the host:
+	 *
+	 * field       |    size  |              note
+	 * ================================================================
+	 * mode        |    1     | 0 - decrypt, 1 - encrypt
+	 * cipher_mode |    1     | ECB = 0, CTR = 1, CBC = 2, GCM = 3
+	 * key_len     |    1     | key size in bytes (16, 24 or 32)
+	 * key         | key len  | key to use
+	 * iv_len      |    1     | either 0 or 16
+	 * iv          | 0 or 16  | as defined by iv_len
+	 * text_len    |    2     | size of the text to process, big endian
+	 * text        | text_len | text to encrypt/decrypt
+	 */
+	e_mode = *cmd++;
+	c_mode = *cmd++;
+	key_len = *cmd++;
+
+	if ((key_len != 16) && (key_len != 24) && (key_len != 32)) {
+		CPRINTF("Invalid key len %d\n", key_len * 8);
+		return;
+	}
+	key = cmd;
+	cmd += key_len;
+	key_len *= 8;
+	iv_len = *cmd++;
+	if (iv_len && (iv_len != 16)) {
+		CPRINTF("Invalid vector len %d\n", iv_len);
+		return;
+	}
+	iv = cmd;
+	cmd += iv_len;
+	data_len = *cmd++;
+	data_len = data_len * 256 + *cmd++;
+
+	/*
+	 * We know that the receive buffer is at least this big, i.e. all the
+	 * preceding fields are guaranteed to fit.
+	 *
+	 * Now is a good time to verify overall sanity of the received
+	 * payload: does the actual size match the added up sizes of the
+	 * pieces.
+	 */
+	actual_cmd_size = cmd - (const uint8_t *)cmd_body + data_len;
+	if (actual_cmd_size != cmd_size) {
+		CPRINTF("Command size mismatch: %d != %d (data len %d)\n",
+			actual_cmd_size, cmd_size, data_len);
+		return;
+	}
+
+	if (((data_len + 15) & ~15) > max_data_len) {
+		CPRINTF("Response buffer too small\n");
+		return;
+	}
+
+
+	switch (c_mode) {
+	case CIPHER_MODE_ECB:
+		if (e_mode == 0) {
+			if (_cpri__AESDecryptECB((uint8_t *)cmd_body,
+						 key_len,
+						 key, data_len, cmd) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+			return;
+		}
+		if (e_mode == 1) {
+			/* pad input data to integer block size. */
+			while (data_len & 15)
+				cmd[data_len++] = 0;
+			if (_cpri__AESEncryptECB((uint8_t *)cmd_body,
+						 key_len,
+						 key, data_len, cmd) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+			return;
+		}
+		break;
+	case CIPHER_MODE_CTR:
+		if (e_mode == 0) {
+			if (_cpri__AESDecryptCTR((uint8_t *)cmd_body,
+						 key_len,
+						 key, iv, data_len, cmd) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+			return;
+		}
+		if (e_mode == 1) {
+			/* pad input data to integer block size. */
+			while (data_len & 15)
+				cmd[data_len++] = 0;
+			if (_cpri__AESEncryptCTR((uint8_t *)cmd_body,
+						 key_len,
+						 key, iv, data_len, cmd) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+			return;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+DECLARE_EXTENSION_COMMAND(EXTENSION_AES, aes_command_handler);
+
+#endif   /* CRYPTO_TEST_SETUP */
