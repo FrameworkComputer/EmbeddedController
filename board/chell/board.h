@@ -48,7 +48,7 @@
 #define CONFIG_PWM_KBLIGHT
 /* All data won't fit in data RAM.  So, moving boundary slightly. */
 #undef CONFIG_RO_SIZE
-#define CONFIG_RO_SIZE (100 * 1024)
+#define CONFIG_RO_SIZE (104 * 1024)
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
 /* We're space constrained on Chell, so reduce the UART TX buffer size. */
 #undef CONFIG_UART_TX_BUF_SIZE
