@@ -231,11 +231,6 @@ ec_enable_boot0() {
 	eval ${SERVO_TYPE}_${MCU}_boot0
 }
 
-on_servov3() {
-	grep '^CHROMEOS_RELEASE_BOARD=' /etc/lsb-release | \
-		sed 's/CHROMEOS_RELEASE_BOARD=//'
-}
-
 # Put back the servo and the system in a clean state at exit
 FROZEN_PIDS=""
 cleanup() {
@@ -379,21 +374,15 @@ function flash_openocd() {
 function flash_flashrom() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:/usr/sbin/:$PATH"
 	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
-	if [ on_servov3 ]; then
-		FLASHROM_PARAM="-p linux_spi"
-	else
-		FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B"
-	fi
+	FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B"
 
 	if [ ! -x "$FLASHROM" ]; then
 		die "no flashrom util found."
 	fi
 
-	if [ ! on_servov3 ]; then
-		SERIALNAME=$(${DUT_CONTROL_CMD} serialname | cut -d: -f2)
-		if [[ "$SERIALNAME" != "" ]] ; then
-			FLASHROM_PARAM="${FLASHROM_PARAM},serial=${SERIALNAME}"
-		fi
+	SERIALNAME=$(${DUT_CONTROL_CMD} serialname | cut -d: -f2)
+	if [[ "$SERIALNAME" != "" ]] ; then
+		FLASHROM_PARAM="${FLASHROM_PARAM},serial=${SERIALNAME}"
 	fi
 
 	dut_control cold_reset:on
