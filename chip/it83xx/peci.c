@@ -124,6 +124,9 @@ static enum peci_status peci_transaction(uint8_t addr,
 	uint8_t status;
 	int index;
 
+	/* To enable PECI function pin */
+	IT83XX_GPIO_GPCRF6 = 0x00;
+
 	/*
 	 * bit5, Both write and read data FIFO pointers will be cleared.
 	 *
@@ -239,6 +242,9 @@ static enum peci_status peci_transaction(uint8_t addr,
 	/* W/C */
 	IT83XX_PECI_HOSTAR = PECI_STATUS_ANY_BIT;
 
+	/* Disable PECI function pin */
+	IT83XX_GPIO_GPCRF6 = 0x80;
+
 	return status;
 }
 
@@ -321,13 +327,11 @@ static void peci_init(void)
 {
 	int i;
 
+	clock_enable_peripheral(CGC_OFFSET_PECI, 0, 0);
 	peci_init_vtt_freq();
 
 	/* bit3,this bit enables the PECI host controller. */
 	IT83XX_PECI_HOCTLR |= 0x08;
-
-	/* To enable PECI function pin */
-	IT83XX_GPIO_GPCRF6 = 0x00;
 
 	/* bit4, PECI enable */
 	IT83XX_GPIO_GRC2 |= 0x10;

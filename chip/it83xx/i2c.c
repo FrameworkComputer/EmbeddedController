@@ -107,12 +107,13 @@ static const struct i2c_pin i2c_pin_regs[] = {
 
 struct i2c_ctrl_t {
 	uint8_t irq;
+	enum clock_gate_offsets clock_gate;
 };
 
 const struct i2c_ctrl_t i2c_ctrl_regs[] = {
-	{IT83XX_IRQ_SMB_A},
-	{IT83XX_IRQ_SMB_B},
-	{IT83XX_IRQ_SMB_C},
+	{IT83XX_IRQ_SMB_A, CGC_OFFSET_SMBA},
+	{IT83XX_IRQ_SMB_B, CGC_OFFSET_SMBB},
+	{IT83XX_IRQ_SMB_C, CGC_OFFSET_SMBC},
 };
 
 enum i2c_ch_status {
@@ -511,6 +512,7 @@ static void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++) {
 		/* I2c port mapping. */
 		p = i2c_ports[i].port;
+		clock_enable_peripheral(i2c_ctrl_regs[p].clock_gate, 0, 0);
 		/*
 		 * bit0, The SMBus host interface is enabled.
 		 * bit1, Enable to communicate with I2C device and

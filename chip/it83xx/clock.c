@@ -51,6 +51,19 @@ struct clock_gate_ctrl {
 	uint8_t mask;
 };
 
+static void clock_module_disable(void)
+{
+	/* bit0: FSPI interface tri-state */
+	IT83XX_SMFI_FLHCTRL3R |= (1 << 0);
+	/* bit7: USB pad power-on disable */
+	IT83XX_GCTRL_PMER2 &= ~(1 << 7);
+	clock_disable_peripheral((CGC_OFFSET_EGPC | CGC_OFFSET_CIR), 0, 0);
+	clock_disable_peripheral((CGC_OFFSET_SMBA | CGC_OFFSET_SMBB |
+		CGC_OFFSET_SMBC | CGC_OFFSET_SMBD | CGC_OFFSET_SMBE |
+		CGC_OFFSET_SMBF), 0, 0);
+	clock_disable_peripheral((CGC_OFFSET_SSPI | CGC_OFFSET_PECI), 0, 0);
+}
+
 void clock_init(void)
 {
 #if PLL_CLOCK == 48000000
@@ -79,6 +92,8 @@ void clock_init(void)
 
 	/* Default doze mode */
 	IT83XX_ECPM_PLLCTRL = EC_PLL_DOZE;
+
+	clock_module_disable();
 
 #if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
 	IT83XX_WUC_WUESR4 = 0xff;

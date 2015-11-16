@@ -146,6 +146,7 @@ static void sspi_init(void)
 {
 	int i;
 
+	clock_enable_peripheral(CGC_OFFSET_SSPI, 0, 0);
 	sspi_frequency(sspi_clk_8mhz);
 
 	/*
