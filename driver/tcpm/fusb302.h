@@ -10,6 +10,16 @@
 #ifndef __CROS_EC_DRIVER_TCPM_FUSB302_H
 #define __CROS_EC_DRIVER_TCPM_FUSB302_H
 
+/* I2C slave address varies by part number */
+/* FUSB302BUCX / FUSB302BMPX */
+#define FUSB302_I2C_SLAVE_ADDR 0x44
+/* FUSB302B01MPX */
+#define FUSB302_I2C_SLAVE_ADDR_B01 0x46
+/* FUSB302B10MPX */
+#define FUSB302_I2C_SLAVE_ADDR_B10 0x48
+/* FUSB302B11MPX */
+#define FUSB302_I2C_SLAVE_ADDR_B11 0x4A
+
 /* Default retry count for transmitting */
 #define PD_RETRY_COUNT		3
 

@@ -9,6 +9,7 @@
 #include "adc_chip.h"
 #include "common.h"
 #include "console.h"
+#include "fusb302.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -32,8 +33,6 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc-b", STM32_I2C2_PORT, 1000, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-#define FUSB302_I2C_SLAVE_ADDR 0x44
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{STM32_I2C1_PORT, FUSB302_I2C_SLAVE_ADDR},
