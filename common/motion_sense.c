@@ -52,6 +52,13 @@ static int accel_disp;
 #endif
 
 /*
+ * Adjustment in us to ec rate when calculating interrupt interval:
+ * To be sure the EC will send an interrupt even if it finishes processing
+ * events slighly ealier than the previous period.
+ */
+#define MOTION_SENSOR_INT_ADJUSTMENT_US 10
+
+/*
  * Mutex to protect sensor values between host command task and
  * motion sense task:
  * When we process CMD_DUMP, we want to be sure the motion sense
@@ -321,7 +328,7 @@ static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
  */
 static int motion_sense_set_motion_intervals(void)
 {
-	int i, sensor_ec_rate, ec_rate = 0, ec_int_rate = 0, wake_up = 0;
+	int i, sensor_ec_rate, ec_rate = 0, ec_int_rate = 0;
 	struct motion_sensor_t *sensor;
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
@@ -344,19 +351,15 @@ static int motion_sense_set_motion_intervals(void)
 		    (sensor_ec_rate && sensor_ec_rate < ec_int_rate))
 			ec_int_rate = sensor_ec_rate;
 	}
+	motion_interval = ec_rate;
+
+	motion_int_interval =
+		MAX(0, ec_int_rate - MOTION_SENSOR_INT_ADJUSTMENT_US);
 	/*
 	 * Wake up the motion sense task: we want to sensor task to take
 	 * in account the new period right away.
 	 */
-	if ((motion_interval == 0 ||
-	     (ec_rate > 0 && motion_interval > ec_rate)) ||
-	    (motion_int_interval == 0 ||
-	     (ec_int_rate > 0 && motion_int_interval > ec_int_rate)))
-		wake_up = 1;
-	motion_interval = ec_rate;
-	motion_int_interval = ec_int_rate;
-	if (wake_up)
-		task_wake(TASK_ID_MOTIONSENSE);
+	task_wake(TASK_ID_MOTIONSENSE);
 	return motion_interval;
 }
 

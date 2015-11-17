@@ -51,7 +51,9 @@ struct motion_data_t {
 	 * MSB is used to know if we are rounding up.
 	 */
 	unsigned int odr;
-	/* delay between collection by EC, in us.
+
+	/*
+	 * delay between collection by EC, in us.
 	 * For non FIFO sensor, should be need 1e6/odr to
 	 * collect events.
 	 * For sensor with FIFO, can be much longer.
