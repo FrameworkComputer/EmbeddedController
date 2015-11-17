@@ -246,12 +246,12 @@ static int motion_sense_select_ec_rate(
 		int rate = BASE_ODR(sensor->config[config_id].odr);
 		/* we have to run ec at the sensor frequency rate.*/
 		if (rate > 0)
-			return 1000000 / rate;
+			return SECOND * 1000 / rate;
 		else
 			return 0;
 	} else
 #endif
-		return sensor->config[config_id].ec_rate;
+	return sensor->config[config_id].ec_rate;
 }
 
 /* motion_sense_ec_rate
@@ -275,7 +275,7 @@ static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
 	if (ec_rate_from_cfg != 0)
 		if (ec_rate == 0 || ec_rate_from_cfg < ec_rate)
 			ec_rate = ec_rate_from_cfg;
-	return ec_rate * MSEC;
+	return ec_rate;
 }
 
 /*
@@ -288,7 +288,7 @@ static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
  */
 static int motion_sense_set_motion_intervals(void)
 {
-	int i, sensor_ec_rate, ec_rate = 0, ec_int_rate_ms = 0, wake_up = 0;
+	int i, sensor_ec_rate, ec_rate = 0, ec_int_rate = 0, wake_up = 0;
 	struct motion_sensor_t *sensor;
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];
@@ -307,9 +307,9 @@ static int motion_sense_set_motion_intervals(void)
 
 		sensor_ec_rate = motion_sense_select_ec_rate(
 				sensor, SENSOR_CONFIG_AP);
-		if (ec_int_rate_ms == 0 ||
-		    (sensor_ec_rate && sensor_ec_rate < ec_int_rate_ms))
-			ec_int_rate_ms = sensor_ec_rate;
+		if (ec_int_rate == 0 ||
+		    (sensor_ec_rate && sensor_ec_rate < ec_int_rate))
+			ec_int_rate = sensor_ec_rate;
 	}
 	/*
 	 * Wake up the motion sense task: we want to sensor task to take
@@ -318,10 +318,10 @@ static int motion_sense_set_motion_intervals(void)
 	if ((motion_interval == 0 ||
 	     (ec_rate > 0 && motion_interval > ec_rate)) ||
 	    (motion_int_interval == 0 ||
-	     (ec_int_rate_ms > 0 && motion_int_interval > ec_int_rate_ms)))
+	     (ec_int_rate > 0 && motion_int_interval > ec_int_rate)))
 		wake_up = 1;
 	motion_interval = ec_rate;
-	motion_int_interval = ec_int_rate_ms * MSEC;
+	motion_int_interval = ec_int_rate;
 	if (wake_up)
 		task_wake(TASK_ID_MOTIONSENSE);
 	return motion_interval;
@@ -903,8 +903,8 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
 			else
 				sensor->config[SENSOR_CONFIG_AP].ec_rate =
-					MAX(in->ec_rate.data,
-					    motion_min_interval / MSEC);
+					MAX(in->ec_rate.data * MSEC,
+					    motion_min_interval);
 
 			/* Bound the new sampling rate. */
 			motion_sense_set_motion_intervals();

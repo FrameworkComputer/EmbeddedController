@@ -49,15 +49,15 @@ struct motion_data_t {
 	/*
 	 * data rate the sensor will measure, in mHz: 0 suspended.
 	 * MSB is used to know if we are rounding up.
-	 * */
-	unsigned odr;
-	/* delay between collection by EC, in ms.
+	 */
+	unsigned int odr;
+	/* delay between collection by EC, in us.
 	 * For non FIFO sensor, should be need 1e6/odr to
 	 * collect events.
 	 * For sensor with FIFO, can be much longer.
 	 * 0: no collection.
 	 */
-	unsigned short ec_rate;
+	unsigned int ec_rate;
 };
 
 struct motion_sensor_t {

@@ -26,7 +26,7 @@ extern unsigned motion_interval;
  * Period in us for the motion task period.
  * The task will read the vectors at that interval
  */
-#define TEST_LID_EC_RATE (10)
+#define TEST_LID_EC_RATE (10 * MSEC)
 
 /*
  * Time in ms to wait for the task to read the vectors.
@@ -186,10 +186,10 @@ static void wait_for_valid_sample(void)
 	uint8_t *lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 
 	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
-	msleep(TEST_LID_EC_RATE);
+	usleep(TEST_LID_EC_RATE);
 	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
-		msleep(TEST_LID_SLEEP_RATE);
+		usleep(TEST_LID_SLEEP_RATE);
 }
 
 static int test_lid_angle(void)
@@ -210,7 +210,7 @@ static int test_lid_angle(void)
 	msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
 	TEST_ASSERT(accel_get_data_rate(lid) == (119000 | ROUND_UP_FLAG));
-	TEST_ASSERT(motion_interval == TEST_LID_EC_RATE * MSEC);
+	TEST_ASSERT(motion_interval == TEST_LID_EC_RATE);
 
 	/*
 	 * Set the base accelerometer as if it were sitting flat on a desk
