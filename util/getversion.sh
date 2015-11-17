@@ -58,7 +58,7 @@ if [ -n "$dirty" ]; then
     echo "/* Repo is dirty, using time of last compilation */"
     echo "#define DATE \"$(date '+%F %T')\""
 else
-    echo "/* Repo is clean, use the author date of the last commit */"
-    gitdate=$(git log -1 --format='%ai' HEAD | cut -d ' ' -f '1 2')
+    echo "/* Repo is clean, use the commit date of the last commit */"
+    gitdate=$(git log -1 --format='%ci' HEAD | cut -d ' ' -f '1 2')
     echo "#define DATE \"${gitdate}\""
 fi
