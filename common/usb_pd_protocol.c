@@ -1397,11 +1397,9 @@ void pd_task(void)
 	pd[port].flags = pd_is_vbus_present(port) ? PD_FLAGS_VBUS_NEVER_LOW : 0;
 #endif
 
-#ifdef CONFIG_USB_PD_TCPC
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	tcpm_init(port);
 	CPRINTF("[%T TCPC p%d ready]\n", port);
-#endif
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);

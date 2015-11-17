@@ -326,15 +326,6 @@ static int fusb302_send_message(int port, uint16_t header, const uint32_t *data,
 	return rv;
 }
 
-void tcpm_init_ports(void)
-{
-	int i;
-
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
-		tcpm_init(i);
-}
-DECLARE_HOOK(HOOK_INIT, tcpm_init_ports, HOOK_PRIO_DEFAULT);
-
 int tcpm_init(int port)
 {
 	int reg;
