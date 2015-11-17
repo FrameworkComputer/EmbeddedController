@@ -204,6 +204,9 @@
 #define SI114X_SEQ_REV_A10		0x08
 #define SI114X_SEQ_REV_A11		0x09
 
+/* Proximity sensor finds an object within 5 cm, disable light sensor */
+#define SI114X_COVERED_THRESHOLD        5
+
 extern const struct accelgyro_drv si114x_drv;
 
 enum si114x_state {
@@ -232,6 +235,7 @@ struct si114x_typed_data_t {
 
 struct si114x_drv_data_t {
 	enum si114x_state state;
+	uint8_t covered;
 	struct si114x_typed_data_t type_data[2];
 };
 

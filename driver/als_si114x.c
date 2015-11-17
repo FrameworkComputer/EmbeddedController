@@ -81,6 +81,7 @@ error:
 static int si114x_read_results(struct motion_sensor_t *s, int nb)
 {
 	int i, ret, val;
+	struct si114x_drv_data_t *data = SI114X_GET_DATA(s);
 	struct si114x_typed_data_t *type_data = SI114X_GET_TYPED_DATA(s);
 #ifdef CONFIG_ACCEL_FIFO
 	struct ec_response_motion_sensor_data vector;
@@ -112,6 +113,16 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 
 	if (ret != EC_SUCCESS)
 		return ret;
+
+	if (s->type == MOTIONSENSE_TYPE_PROX)
+		data->covered = (s->raw_xyz[0] < SI114X_COVERED_THRESHOLD);
+	else if (data->covered)
+		/*
+		 * The sensor (proximity & light) is covered. The light data
+		 * will most likely be incorrect (darker than expected), so
+		 * ignore the measurement.
+		 */
+		return EC_SUCCESS;
 
 	/* Add in fifo if changed only */
 	for (i = 0; i < nb; i++) {
@@ -539,6 +550,7 @@ const struct accelgyro_drv si114x_drv = {
 
 struct si114x_drv_data_t g_si114x_data = {
 	.state = SI114X_NOT_READY,
+	.covered = 0,
 	.type_data = {
 		/* Proximity */
 		{
