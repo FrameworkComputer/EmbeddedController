@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!--
+Copyright 2015 The Chromium OS Authors. All rights reserved.
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
+
+This file describes test vectors for various encryption schemes.
+
+Each description is encapsulated in a 'crypto_test' element. This element must
+have the name property set. The name starts witht the encryption scheme's name
+(say AES or DES), delimited by a colon, and followed by a three character
+encryption submode, if necessary (say ECB for AES).
+
+The rest of the attributes are self explanatory. The default format for the
+clear_text element is ASCII, for the rest - hex. This default could be
+overridded using the 'format' property.
+
+The ascii strings are stripped of leading and trailing whitespace and then
+joined using space as a separator. Whitespace in hes strings is ignored.
+
+Hex values are interpreted as a set of 4 byte entities in network byte order.
+Many of the crypto_test elements were borrowed from NIST test vectors.
+-->
+<crypto_tests>
+  <crypto_test name="AES:ECB common">
+    <clear_text>
+      this is the text which will be encrypted if everything is going fine.
+    </clear_text>
+    <key>0123456789abcdef0123456789abcdef0123456789abcdef</key>
+    <cipher_text>
+      <!--
+	  Cipher text matches the case of the clear text padded with zeros to
+	  the nearest block size.
+      -->
+      f90fe23d ce62d9ee 57178af0 d08604c6
+      7244ec3d 871879d8 6d81313f 10bb4c66
+      9fe08dda ccb36763 bde8b464 c9a9b012
+      9ff06d09 fbaee2a4 901cfe0d f0fee26c
+      34b58f68 a9e27607 7bdd8e72 8b2b528b
+    </cipher_text>
+  </crypto_test>
+  <crypto_test name="AES:ECB128 1">
+    <clear_text format="hex">
+      33221100 77665544 bbaa9988 ffeeddcc
+    </clear_text>
+    <key>03020100 07060504 0b0a0908 0f0e0d0c</key>
+    <cipher_text>
+      d8e0c469 30047b6a 80b7cdd8 5ac5b470
+    </cipher_text>
+  </crypto_test>
+  <crypto_test name="AES:ECB192 1">
+    <clear_text format="hex">
+      00000000 00000000 00000000 00000000
+    </clear_text>
+    <key>
+      6e0fd215 9f647ebc b1765bd9 badae607
+      948a7c96 297f7984
+    </key>
+    <cipher_text>
+      42184e8e 3d1a594e 76086f5b 94856ff1
+    </cipher_text>
+  </crypto_test>
+  <crypto_test name="AES:ECB256 1">
+    <clear_text format="hex">
+      00000000 00000000 00000000 00000000
+    </clear_text>
+    <key>
+      00000080 00000000 00000000 00000000
+      00000000 00000000 00000000 00000000
+    </key>
+    <cipher_text>
+      cb6d5ae3 a001b219 8afabc1e 59572ba2
+    </cipher_text>
+  </crypto_test>
+  <crypto_test name="AES:ECB256 2">
+    <clear_text format="hex">
+      45249ff6 179b4fdf 7b412bad 10376ce6
+    </clear_text>
+    <key>
+      10eb3d60 be71ca15 f0ae732b 81777d85
+      072c351f d708613b a310982d f4df1409
+    </key>
+    <cipher_text>
+      7a4b3023 fff3f939 8f8d7d06 c7ec249e
+    </cipher_text>
+  </crypto_test>
+  <crypto_test name="AES:CTR128I 1">
+    <clear_text format="hex">
+      e2bec16b 969f402e 117e3de9 2a179373
+    </clear_text>
+    <key>
+      16157e2b a6d2ae28 8815f7ab 3c4fcf09
+    </key>
+    <cipher_text>
+      91614d87 26e320b6 6468ef1b ceb60d99
+    </cipher_text>
+    <iv>f3f2f1f0 f7f6f5f4 fbfaf9f8 fffefdfc</iv>
+  </crypto_test>
+  <crypto_test name="AES:CTR256I 1">
+    <clear_text format="hex">
+      13c31e60 a5895777 04f5a7b7 28d2f3bb
+    </clear_text>
+    <key>
+      10eb3d60 be71ca15 f0ae732b 81777d85
+      072c351f d708613b a310982d f4df1409
+    </key>
+    <cipher_text>
+      e2bec16b 969f402e 117e3de9 2a179373
+    </cipher_text>
+    <iv>f3f2f1f0 f7f6f5f4 fbfaf9f8 fffefdfc</iv>
+  </crypto_test>
+</crypto_tests>
