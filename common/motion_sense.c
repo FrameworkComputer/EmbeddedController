@@ -426,21 +426,28 @@ static void motion_sense_shutdown(void)
 #endif
 
 	sensor_active = SENSOR_ACTIVE_S5;
-
 	for (i = 0; i < motion_sensor_count; i++) {
 		sensor = &motion_sensors[i];
 		/* Forget about changes made by the AP */
 		sensor->config[SENSOR_CONFIG_AP].odr = 0;
 		sensor->config[SENSOR_CONFIG_AP].ec_rate = 0;
-		sensor->drv->set_range(sensor, sensor->default_range, 0);
 	}
 	motion_sense_switch_sensor_rate();
+
+	for (i = 0; i < motion_sensor_count; i++) {
+		sensor = &motion_sensors[i];
+		if (sensor->state != SENSOR_INITIALIZED)
+			continue;
+		sensor->drv->set_range(sensor, sensor->default_range, 0);
+	}
 	/* Forget activities set by the AP */
 #ifdef CONFIG_GESTURE_DETECTION_MASK
 	mask = CONFIG_GESTURE_DETECTION_MASK;
 	while (mask) {
 		i = get_next_bit(&mask);
 		sensor = &motion_sensors[i];
+		if (sensor->state != SENSOR_INITIALIZED)
+			continue;
 		sensor->drv->list_activities(sensor,
 				&enabled, &disabled);
 		/* exclude double tap, it is used internally. */
