@@ -91,4 +91,6 @@ enum usb_strings {
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+#define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_TPM))
+
 #endif /* __CROS_EC_BOARD_H */
