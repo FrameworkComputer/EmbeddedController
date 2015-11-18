@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#define        TPM_FAIL_C
 #include "Global.h"
 #include "CryptoEngine.h"
 
@@ -450,10 +451,27 @@ int _math__uComp(
 void __assert_func(
   const char *file,
   int line,
-  const char *func)
+  const char *func,
+  const char *condition
+)
 {
-  ecprintf("Failure in %s, line %d, code %d\n",
-           s_failFunction, s_failLine, s_failCode);
+  /*
+   * TPM2 library invokes assert from a common wrapper, which first sets
+   * global variables describing the failure point and then invokes the
+   * assert() macro which ends up calling this function as defined by the gcc
+   * toolchain.
+   *
+   * For some weird reason (or maybe this is a bug), s_FailFunction is defined
+   * in the tpm2 library as a 32 bit int, but on a failure the name of the
+   * failing function (its first four bytes) are copiied into this variable.
+   *
+   * TODO(vbendeb): investigate and fix TPM2 library assert handling.
+   */
+  ecprintf("Failure in %s, func %s, line %d:\n%s\n",
+           file,
+	   s_failFunction ? (const char *)&s_failFunction : func,
+	   s_failLine ? s_failLine : line,
+	   condition);
   while (1)
     ;                           /* Let the watchdog doo the rest. */
 }
