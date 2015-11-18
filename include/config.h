@@ -1431,6 +1431,13 @@
 /* Support stopping in S5 on shutdown */
 #undef CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 
+/*
+ * Detect power signal interrupt storms, defined as more than
+ * CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD occurences of a single
+ * power signal interrupt within one second.
+ */
+#undef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD
+
 /* Use part of the EC's data EEPROM to hold persistent storage for the AP. */
 #undef CONFIG_PSTORE
 

@@ -456,8 +456,42 @@ static void siglog_add(enum gpio_signal signal)
 #define SIGLOG(S)
 #endif	/* CONFIG_BRINGUP */
 
+#ifdef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD
+/*
+ * Print an interrupt storm warning when we receive more than
+ * CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD interrupts of a
+ * single source within 1 second.
+ */
+static int power_signal_interrupt_count[POWER_SIGNAL_COUNT];
+
+static void reset_power_signal_interrupt_count(void)
+{
+	int i;
+
+	for (i = 0; i < POWER_SIGNAL_COUNT; ++i)
+		power_signal_interrupt_count[i] = 0;
+}
+DECLARE_HOOK(HOOK_SECOND,
+	     reset_power_signal_interrupt_count,
+	     HOOK_PRIO_DEFAULT);
+#endif
+
 void power_signal_interrupt(enum gpio_signal signal)
 {
+#ifdef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD
+	int i;
+
+	/* Tally our interrupts and print a warning if necessary. */
+	for (i = 0; i < POWER_SIGNAL_COUNT; ++i) {
+		if (power_signal_list[i].gpio == signal) {
+			if (power_signal_interrupt_count[i]++ ==
+			   CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD)
+				CPRINTS("Interrupt storm! Signal %d\n", i);
+			break;
+		}
+	}
+#endif
+
 	SIGLOG(signal);
 
 	/* Shadow signals and compare with our desired signal state. */
