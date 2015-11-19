@@ -233,6 +233,15 @@ int host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 		break;
 
+	case MOTIONSENSE_CMD_LID_ANGLE:
+#ifdef CONFIG_LID_ANGLE
+		out->lid_angle.value = motion_lid_get_angle();
+		args->response_size = sizeof(out->lid_angle);
+#else
+		return EC_RES_INVALID_PARAM;
+#endif
+		break;
+
 	default:
 		return EC_RES_INVALID_PARAM;
 	}

@@ -10,9 +10,6 @@
 
 #include "host_command.h"
 
-/* Anything outside of lid angle range [-180, 180] should work. */
-#define LID_ANGLE_UNRELIABLE 500
-
 /**
  * This structure defines all of the data needed to specify the orientation
  * of the base and lid accelerometers in order to calculate the lid angle.

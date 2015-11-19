@@ -3250,7 +3250,6 @@ static int cmd_lightbar(int argc, char **argv)
 		sizeof(((struct ec_response_motion_sense *)0)->fifo_info) \
 		+ sizeof(uint16_t) * ECTOOL_MAX_SENSOR}
 
-
 static const struct {
 	uint8_t outsize;
 	uint8_t insize;
@@ -3269,6 +3268,7 @@ static const struct {
 	MS_SIZES(sensor_offset),
 	MS_SIZES(list_activities),
 	MS_SIZES(set_activity),
+	MS_SIZES(lid_angle),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -3294,6 +3294,7 @@ static int ms_help(const char *cmd)
 			cmd);
 	printf("  %s set_activity NUM ACT EN    - enable/disable activity\n",
 			cmd);
+	printf("  %s lid_angle                  - print lid angle\n", cmd);
 
 	return 0;
 }
@@ -3724,6 +3725,24 @@ static int cmd_motionsense(int argc, char **argv)
 			return rv;
 		return 0;
 	}
+
+	if (argc == 2 && !strcasecmp(argv[1], "lid_angle")) {
+		param.cmd = MOTIONSENSE_CMD_LID_ANGLE;
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+
+		printf("Lid angle: ");
+		if (resp->lid_angle.value == LID_ANGLE_UNRELIABLE)
+			printf("unreliable\n");
+		else
+			printf("%d\n", resp->lid_angle.value);
+
+		return 0;
+	}
+
 	return ms_help(argv[0]);
 }
 
