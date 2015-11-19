@@ -129,11 +129,11 @@
 #define IRQ_WD  IRQ_TIM(TIM_WATCHDOG)
 
 /* TIM1 has fancy names for its IRQs; remap count-up IRQ for the macro above */
-#ifdef CHIP_FAMILY_STM32F0
+#if defined TIM_WATCHDOG && (TIM_WATCHDOG == 1)
 #define STM32_IRQ_TIM1 STM32_IRQ_TIM1_BRK_UP_TRG
-#else /* !CHIP_FAMILY_STM32F0 */
-#define STM32_IRQ_TIM1 STM32_IRQ_TIM1_UP_TIM16
-#endif /* !CHIP_FAMILY_STM32F0 */
+#else /* !(TIM_WATCHDOG == 1) */
+#define STM32_IRQ_TIM1 STM32_IRQ_TIM1_CC
+#endif /* !(TIM_WATCHDOG == 1) */
 
 #define TIM_BASE(n) CONCAT3(STM32_TIM, n, _BASE)
 #define TIM_WD_BASE TIM_BASE(TIM_WATCHDOG)
