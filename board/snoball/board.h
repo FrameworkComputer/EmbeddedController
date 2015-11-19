@@ -13,6 +13,9 @@
 
 /* the UART console is on USART1 (PA9/PA10) */
 #define CONFIG_UART_CONSOLE 1
+/* Use DMA channels 2 + 3 (rather than default 4 + 5) */
+#define CONFIG_UART_TX_DMA_CH STM32_DMAC_CH2
+#define CONFIG_UART_RX_DMA_CH STM32_DMAC_CH3
 
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
