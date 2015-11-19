@@ -49,8 +49,8 @@
 
 /* Timer selection */
 #define TIM_CLOCK_MSB 3
-#define TIM_CLOCK_LSB 14
-#define TIM_ADC 1
+#define TIM_CLOCK_LSB 1
+#define TIM_ADC 14
 
 #include "gpio_signal.h"
 
