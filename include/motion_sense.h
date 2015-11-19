@@ -54,7 +54,7 @@ struct motion_data_t {
 
 	/*
 	 * delay between collection by EC, in us.
-	 * For non FIFO sensor, should be need 1e6/odr to
+	 * For non FIFO sensor, should be near 1e9/odr to
 	 * collect events.
 	 * For sensor with FIFO, can be much longer.
 	 * 0: no collection.

@@ -165,15 +165,16 @@ static void motion_sense_get_fifo_info(
 static inline int motion_sensor_time_to_read(const timestamp_t *ts,
 		const struct motion_sensor_t *sensor)
 {
-	int rate = sensor->drv->get_data_rate(sensor);
-	if (rate == 0)
+	int rate_mhz = sensor->drv->get_data_rate(sensor);
+
+	if (rate_mhz == 0)
 		return 0;
 	/*
 	 * converting from kHz to us.
 	 * If within 95% of the time, check sensor.
 	 */
 	return time_after(ts->le.lo,
-			  sensor->last_collection + SECOND * 950 / rate);
+			  sensor->last_collection + SECOND * 950 / rate_mhz);
 }
 
 static enum sensor_config motion_sense_get_ec_config(void)
@@ -198,7 +199,7 @@ static enum sensor_config motion_sense_get_ec_config(void)
  */
 int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 {
-	int roundup, ap_odr = 0, ec_odr, odr, ret;
+	int roundup, ap_odr_mhz = 0, ec_odr_mhz, odr, ret;
 	enum sensor_config config_id;
 	timestamp_t ts = get_time();
 
@@ -206,15 +207,15 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 
 	/* Check the AP setting first. */
 	if (sensor_active != SENSOR_ACTIVE_S5)
-		ap_odr = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
+		ap_odr_mhz = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
 
 	/* check if the EC set the sensor ODR at a higher frequency */
 	config_id = motion_sense_get_ec_config();
-	ec_odr = BASE_ODR(sensor->config[config_id].odr);
-	if (ec_odr > ap_odr) {
-		odr = ec_odr;
+	ec_odr_mhz = BASE_ODR(sensor->config[config_id].odr);
+	if (ec_odr_mhz > ap_odr_mhz) {
+		odr = ec_odr_mhz;
 	} else {
-		odr = ap_odr;
+		odr = ap_odr_mhz;
 		config_id = SENSOR_CONFIG_AP;
 	}
 	roundup = !!(sensor->config[config_id].odr & ROUND_UP_FLAG);
@@ -226,9 +227,9 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 		sensor->name, odr, roundup, config_id,
 		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
 	mutex_lock(&g_sensor_mutex);
-	if (ap_odr)
+	if (ap_odr_mhz)
 		sensor->oversampling_ratio =
-			sensor->drv->get_data_rate(sensor) / ap_odr;
+			sensor->drv->get_data_rate(sensor) / ap_odr_mhz;
 	else
 		sensor->oversampling_ratio = 0;
 
@@ -244,17 +245,17 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 
 static int motion_sense_set_ec_rate_from_ap(
 		const struct motion_sensor_t *sensor,
-		unsigned int new_rate)
+		unsigned int new_rate_us)
 {
-	int ap_odr = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
+	int ap_odr_mhz = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
 
-	if (new_rate == 0)
+	if (new_rate_us == 0)
 		return 0;
 #ifdef CONFIG_ACCEL_FORCE_MODE_MASK
 	if (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors)))
 		goto end_set_ec_rate_from_ap;
 #endif
-	if (ap_odr == 0)
+	if (ap_odr_mhz == 0)
 		goto end_set_ec_rate_from_ap;
 
 	/*
@@ -268,11 +269,11 @@ static int motion_sense_set_ec_rate_from_ap(
 	 * We wll apply that correction only if the ec rate is within 10% of
 	 * the data rate.
 	 */
-	if (SECOND * 1100 / ap_odr > new_rate)
-		new_rate = new_rate / 100 * 105;
+	if (SECOND * 1100 / ap_odr_mhz > new_rate_us)
+		new_rate_us = new_rate_us / 100 * 105;
 
 end_set_ec_rate_from_ap:
-	return MAX(new_rate, motion_min_interval);
+	return MAX(new_rate_us, motion_min_interval);
 }
 
 
@@ -283,10 +284,10 @@ static int motion_sense_select_ec_rate(
 {
 #ifdef CONFIG_ACCEL_FORCE_MODE_MASK
 	if (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors))) {
-		int rate = BASE_ODR(sensor->config[config_id].odr);
+		int rate_mhz = BASE_ODR(sensor->config[config_id].odr);
 		/* we have to run ec at the sensor frequency rate.*/
-		if (rate > 0)
-			return SECOND * 1000 / rate;
+		if (rate_mhz > 0)
+			return SECOND * 1000 / rate_mhz;
 		else
 			return 0;
 	} else
