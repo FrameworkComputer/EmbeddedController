@@ -14,13 +14,6 @@ GPIO_INT(POWER_BUTTON_L,    PIN(35), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH, power_signal_interrupt)
-/*
- * This pulldown should be removed in future hardware followers. The signal
- * is pulled up in the SoC when the primary rails are on and/or ramping.
- * In order to not get interrupt storms there should be external logic
- * which makes this a true binary signal into the EC.
- */
-GPIO_INT(PCH_SLP_S0_L,      PIN(211), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
 GPIO_INT(PCH_SLP_SUS_L,     PIN(12),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VOLUME_UP_L,       PIN(31),  GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(VOLUME_DOWN_L,     PIN(47),  GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -35,6 +28,15 @@ GPIO_INT(TABLET_MODE_L,     PIN(160), GPIO_INT_BOTH | GPIO_PULL_UP, tablet_mode_
 GPIO_INT(PMIC_DPWROK,       PIN(133), GPIO_INT_BOTH, power_signal_interrupt)
 /* UART input */
 GPIO_INT(UART0_RX,          PIN(162), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, uart_deepsleep_interrupt)
+
+/*
+ * This pulldown should be removed and SLP_S0 should be enabled as a power
+ * signal interrupt in future hardware followers. The signal is pulled up in
+ * the SoC when the primary rails are on and/or ramping.
+ * In order to not get interrupt storms there should be external logic
+ * which makes this a true binary signal into the EC.
+ */
+GPIO(PCH_SLP_S0_L,          PIN(211), GPIO_INPUT | GPIO_PULL_DOWN)
 
 GPIO(PD_RST_L,              PIN(130), GPIO_ODR_HIGH)
 GPIO(USB2_OTG_ID,           PIN(13),  GPIO_ODR_LOW)
