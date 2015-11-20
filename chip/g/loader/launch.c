@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "dcrypto.h"
 #include "debug_printf.h"
-#include "hw_sha256.h"
 #include "key_ladder.h"
 #include "registers.h"
 #include "rom_flash.h"
@@ -76,9 +76,9 @@ void tryLaunch(uint32_t adr, size_t max_size)
 		hdr->rx_max - hdr->rx_base - 1;
 	GWRITE_FIELD(GLOBALSEC, CPU0_I_STAGING_REGION1_CTRL, EN, 1);
 	GWRITE_FIELD(GLOBALSEC, CPU0_I_STAGING_REGION1_CTRL, RD_EN, 1);
-	hwSHA256(&hdr->tag,
-		 hdr->image_size - offsetof(SignedHeader, tag),
-		 hashes.img_hash);
+	DCRYPTO_SHA256_hash((uint8_t *) &hdr->tag,
+			hdr->image_size - offsetof(SignedHeader, tag),
+			(uint8_t *) hashes.img_hash);
 
 	VERBOSE("img_hash  : %.32h\n", hashes.img_hash);
 
@@ -102,7 +102,8 @@ void tryLaunch(uint32_t adr, size_t max_size)
 		}
 	}
 
-	hwSHA256(fuses, sizeof(fuses), hashes.fuses_hash);
+	DCRYPTO_SHA256_hash((uint8_t *) fuses, sizeof(fuses),
+			(uint8_t *) hashes.fuses_hash);
 
 	VERBOSE("fuses_hash: %.32h\n", hashes.fuses_hash);
 
@@ -120,11 +121,13 @@ void tryLaunch(uint32_t adr, size_t max_size)
 		}
 	}
 
-	hwSHA256(info, sizeof(info), hashes.info_hash);
+	DCRYPTO_SHA256_hash((uint8_t *) info, sizeof(info),
+			(uint8_t *) hashes.info_hash);
 	VERBOSE("info_hash : %.32h\n", hashes.info_hash);
 
 	/* Hash our set of hashes to get final hash. */
-	hwSHA256(&hashes, sizeof(hashes), hash);
+	DCRYPTO_SHA256_hash((uint8_t *) &hashes, sizeof(hashes),
+			(uint8_t *) hash);
 
 	/*
 	 * Write measured hash to unlock register to try and unlock execution.

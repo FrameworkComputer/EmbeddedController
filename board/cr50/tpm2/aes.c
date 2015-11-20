@@ -7,7 +7,6 @@
 #include "dcrypto.h"
 
 #include <assert.h>
-#include <string.h>
 
 static CRYPT_RESULT _cpri__AESBlock(
 	uint8_t *out, uint32_t len, uint8_t *in);

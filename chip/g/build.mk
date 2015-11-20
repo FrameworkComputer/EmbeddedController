@@ -24,7 +24,11 @@ chip-y += polling_uart.o
 else
 chip-y += uart.o
 endif
-chip-y += dcrypto/aes.o
+
+chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
+chip-$(CONFIG_DCRYPTO)+= dcrypto/sha1.o
+chip-$(CONFIG_DCRYPTO)+= dcrypto/sha256.o
+
 chip-y+= pmu.o
 chip-y+= trng.o
 chip-$(CONFIG_SPS)+= sps.o
@@ -38,10 +42,11 @@ chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_BLOB)+=usb_blob.o
 
 chip-$(CONFIG_FLASH)+=flash.o
+dirs-y += chip/g/dcrypto
 
 ifneq ($(CONFIG_CUSTOMIZED_RO),)
 custom-ro_objs-y  = chip/g/clock.o
-custom-ro_objs-y += chip/g/loader/hw_sha256.o
+custom-ro_objs-y += chip/g/dcrypto/sha256.o
 custom-ro_objs-y += chip/g/loader/key_ladder.o
 custom-ro_objs-y += chip/g/loader/launch.o
 custom-ro_objs-y += chip/g/loader/main.o
@@ -56,6 +61,7 @@ custom-ro_objs-y += common/printf.o
 custom-ro_objs-y += common/util.o
 custom-ro_objs-y += core/cortex-m/init.o
 custom-ro_objs-y += core/cortex-m/panic.o
+dirs-y += chip/g/dcrypto
 dirs-y += chip/g/loader
 endif
 

@@ -2,8 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
+#include "dcrypto.h"
 #include "debug_printf.h"
-#include "hw_sha256.h"
 #include "registers.h"
 #include "setup.h"
 #include "trng.h"
@@ -181,7 +182,7 @@ void LOADERKEY_verify(uint32_t keyid, const uint32_t *signature,
 	VERBOSE("\nsig^ %.384h\n\n", buf);
 
 	/* Hash resulting buffer. */
-	hwSHA256(buf, RSA_NUM_BYTES, hash);
+	DCRYPTO_SHA256_hash((uint8_t *) buf, RSA_NUM_BYTES, (uint8_t *) hash);
 
 	VERBOSE("hash %.32h\n", hash);
 

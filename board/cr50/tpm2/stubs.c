@@ -33,16 +33,6 @@ UINT16 _cpri__CompleteHMAC(
   return -1;
 }
 
-UINT16 _cpri__CompleteHash(
-  CPRI_HASH_STATE * hashState,  // IN: the state of hash stack
-  UINT32 dOutSize,              // IN: size of digest buffer
-  BYTE * dOut                   // OUT: hash digest
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
 CRYPT_RESULT _cpri__DecryptRSA(
   UINT32 * dOutSize,            //   OUT: the size of the decrypted data
   BYTE * dOut,                  //   OUT: the decrypted data
@@ -182,26 +172,11 @@ UINT16 _cpri__GenerateSeededRandom(
   return -1;
 }
 
-TPM_ALG_ID _cpri__GetContextAlg(
-  CPRI_HASH_STATE * hashState)
-{
-  ecprintf("%s called\n", __func__);
-  return TPM_ALG_ERROR;
-}
-
 TPM_ECC_CURVE _cpri__GetCurveIdByIndex(
   UINT16 i)
 {
   ecprintf("%s called\n", __func__);
   return TPM_ECC_NONE;
-}
-
-UINT16 _cpri__GetDigestSize(
-  TPM_ALG_ID hashAlg            // IN: hash algorithm to look up
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
 }
 
 CRYPT_RESULT _cpri__GetEphemeralEcc(
@@ -214,21 +189,6 @@ CRYPT_RESULT _cpri__GetEphemeralEcc(
   return CRYPT_FAIL;
 }
 
-LIB_EXPORT TPM_ALG_ID _cpri__GetHashAlgByIndex(
-  UINT32 index)                 // IN: the index
-{
-  ecprintf("%s called\n", __func__);
-  return TPM_ALG_ERROR;
-}
-
-UINT16 _cpri__GetHashBlockSize(
-  TPM_ALG_ID hashAlg            // IN: hash algorithm to look up
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
 INT16 _cpri__GetSymmetricBlockSize(
   TPM_ALG_ID symmetricAlg,      // IN: the symmetric algorithm
   UINT16 keySizeInBits          // IN: the key size
@@ -236,28 +196,6 @@ INT16 _cpri__GetSymmetricBlockSize(
 {
   ecprintf("%s called\n", __func__);
   return -1;
-}
-
-UINT16 _cpri__HashBlock(
-  TPM_ALG_ID hashAlg,           //   IN: The hash algorithm
-  UINT32 dataSize,              //   IN: size of buffer to hash
-  BYTE * data,                  //   IN: the buffer to hash
-  UINT32 digestSize,            //   IN: size of the digest buffer
-  BYTE * digest                 //   OUT: hash digest
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
-void _cpri__ImportExportHashState(
-  CPRI_HASH_STATE * osslFmt,    // IN/OUT: the hash state formated for use
-  // by openSSL
-  EXPORT_HASH_STATE * externalFmt,      // IN/OUT: the exported hash state
-  IMPORT_EXPORT direction       //
-  )
-{
-  ecprintf("%s called\n", __func__);
 }
 
 UINT16 _cpri__KDFa(
@@ -335,16 +273,6 @@ UINT16 _cpri__StartHMAC(
   return -1;
 }
 
-UINT16 _cpri__StartHash(
-  TPM_ALG_ID hashAlg,           // IN: hash algorithm
-  BOOL sequence,                // IN: TRUE if the state should be saved
-  CPRI_HASH_STATE * hashState   // OUT: the state of hash stack.
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
 BOOL _cpri__Startup(
   void)
 {
@@ -372,16 +300,6 @@ CRYPT_RESULT _cpri__TestKeyRSA(
 {
   ecprintf("%s called\n", __func__);
   return CRYPT_FAIL;
-}
-
-void _cpri__UpdateHash(
-  CPRI_HASH_STATE * hashState,  // IN: the hash context information
-  UINT32 dataSize,              // IN: the size of data to be added
-  // to the digest
-  BYTE * data                   // IN: data to be hashed
-  )
-{
-  ecprintf("%s called\n", __func__);
 }
 
 CRYPT_RESULT _cpri__ValidateSignatureEcc(

@@ -25,6 +25,8 @@
 #define GOFFSET(mname, rname)  \
 	GC_ ## mname ## _ ## rname ## _OFFSET
 
+#define GREG8(mname, rname) \
+	REG8(GBASE(mname) + GOFFSET(mname, rname))
 #define GREG32(mname, rname) \
 	REG32(GBASE(mname) + GOFFSET(mname, rname))
 #define GREG32_ADDR(mname, rname) \
@@ -332,6 +334,8 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 /* Key manager */
 #define GR_KEYMGR_AES_KEY(n)          REG32(GREG32_ADDR(KEYMGR, AES_KEY0) + (n))
 #define GR_KEYMGR_AES_CTR(n)          REG32(GREG32_ADDR(KEYMGR, AES_CTR0) + (n))
+#define GR_KEYMGR_SHA_HASH(n)         REG32(GREG32_ADDR(KEYMGR, SHA_STS_H0) \
+	 + (n))
 
 /* USB device controller */
 #define GR_USB_REG(off)               REG32(GC_USB0_BASE_ADDR + (off))
