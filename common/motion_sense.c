@@ -77,6 +77,8 @@ static int wake_up_needed;
 
 /* Need to send flush events */
 static int fifo_flush_needed;
+/* Number of element the AP should collect */
+static int fifo_queue_count;
 
 struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
@@ -154,7 +156,7 @@ static void motion_sense_get_fifo_info(
 {
 	fifo_info->size = motion_sense_fifo.buffer_units;
 	mutex_lock(&g_sensor_mutex);
-	fifo_info->count = queue_count(&motion_sense_fifo);
+	fifo_info->count = fifo_queue_count;
 	fifo_info->total_lost = motion_sense_fifo_lost;
 	mutex_unlock(&g_sensor_mutex);
 	fifo_info->timestamp = __hw_clock_source_read();
@@ -770,6 +772,13 @@ void motion_sense_task(void)
 				motion_sense_insert_timestamp();
 			fifo_flush_needed = 0;
 			ts_last_int = ts_end_task;
+			/*
+			 * Count the number of event the AP is allowed to
+			 * collect.
+			 */
+			mutex_lock(&g_sensor_mutex);
+			fifo_queue_count = queue_count(&motion_sense_fifo);
+			mutex_unlock(&g_sensor_mutex);
 #ifdef CONFIG_MKBP_EVENT
 			/*
 			 * We don't currently support wake up sensor.
