@@ -177,10 +177,11 @@ bool Image::fromElf(const string& filename) {
   low_ &= ~2047;
   base_ = low_;
 
-  if (rx_base_ < base_ + FLASH_START + sizeof(SignedHeader)) {
-    // Fix-up 1K header that is part of rx in EC builds
-    rx_base_ = base_ + FLASH_START + sizeof(SignedHeader);
-  }
+  // Set ro_base to start, so app can read its own header.
+  ro_base_ = base_ + FLASH_START;
+  // Set rx_base to just past header, where interrupt vectors are,
+  // since fetching a vector gets done on the I bus.
+  rx_base_ = ro_base_ + sizeof(SignedHeader);
 
   high_ = ((high_ + 2047) / 2048) * 2048;  // Round image to multiple of 2K.
 
