@@ -22,14 +22,13 @@ else
 all: hex
 
 # The simulator components have their own subdirectory
-CFLAGS += -I$(realpath $(BDIR)/dcrypto)
+CFLAGS += -I$(realpath chip/$(CHIP)/dcrypto)
 CFLAGS += -I$(realpath $(BDIR)/tpm2)
-dirs-y += $(BDIR)/dcrypto
+dirs-y += chip/$(CHIP)/dcrypto
 dirs-y += $(BDIR)/tpm2
 
 # Objects that we need to build
 board-y =  board.o
-board-y += dcrypto/aes.o
 board-y += tpm2/NVMem.o
 board-y += tpm2/aes.o
 board-y += tpm2/platform.o

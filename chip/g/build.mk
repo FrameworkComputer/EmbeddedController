@@ -24,6 +24,7 @@ chip-y += polling_uart.o
 else
 chip-y += uart.o
 endif
+chip-y += dcrypto/aes.o
 chip-y+= pmu.o
 chip-y+= trng.o
 chip-$(CONFIG_SPS)+= sps.o

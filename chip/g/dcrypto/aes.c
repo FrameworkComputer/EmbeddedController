@@ -5,7 +5,6 @@
 
 #include "dcrypto.h"
 #include "internal.h"
-
 #include "registers.h"
 
 static void set_control_register(
