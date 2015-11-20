@@ -133,16 +133,25 @@ static void pd_check_chg_status(struct ec_response_pd_status *pd_status)
 #endif /* CONFIG_HOSTCMD_PD */
 
 #ifdef USB_TCPM_WITH_OFF_CHIP_TCPC
-static void pd_check_tcpc_alert(struct ec_response_pd_status *pd_status)
+static void pd_service_tcpc_ports(uint16_t port_status)
 {
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		if (!pd_status ||
-		    (pd_status->status & (PD_STATUS_TCPC_ALERT_0 << i)))
+		if (port_status & (PD_STATUS_TCPC_ALERT_0 << i))
 			tcpc_alert(i);
 	}
 }
+
+static int pd_get_alert(void)
+{
+#ifdef CONFIG_HOSTCMD_PD
+	return !gpio_get_level(GPIO_PD_MCU_INT);
+#else
+	return !!tcpc_get_alert_status();
+#endif
+}
+
 #endif /* USB_TCPM_WITH_OFF_CHIP_TCPC */
 
 static void pd_exchange_status(uint32_t ec_state)
@@ -179,16 +188,15 @@ static void pd_exchange_status(uint32_t ec_state)
 
 #ifdef USB_TCPM_WITH_OFF_CHIP_TCPC
 #ifdef CONFIG_HOSTCMD_PD
-		pd_check_tcpc_alert(&pd_status);
+		pd_service_tcpc_ports(pd_status.status);
 #else
-		pd_check_tcpc_alert(NULL);
+		pd_service_tcpc_ports(tcpc_get_alert_status());
 #endif
 
-		if (!first_exchange) {
+		if (!first_exchange)
 			usleep(50*MSEC);
-			first_exchange = 0;
-		}
-	} while (!gpio_get_level(GPIO_PD_MCU_INT));
+		first_exchange = 0;
+	} while (pd_get_alert());
 #endif /* USB_TCPM_WITH_OFF_CHIP_TCPC */
 }
 

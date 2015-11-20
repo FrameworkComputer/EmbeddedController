@@ -39,8 +39,6 @@ GPIO(OPTO_OUT,		PIN(A, 8),	GPIO_OUT_LOW)
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(WP_L)
-/* TODO(crbug.com/551683): Add support for multiple alert GPIOs */
-UNIMPLEMENTED(PD_MCU_INT)
 
 /* Alternate functions */
 #if 0

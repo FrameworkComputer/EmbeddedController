@@ -57,6 +57,14 @@ struct tcpc_config_t {
 };
 
 /**
+ * Returns the PD_STATUS_TCPC_ALERT_* mask corresponding to the TCPC ports
+ * that are currently asserting ALERT.
+ *
+ * @return     PD_STATUS_TCPC_ALERT_* mask.
+ */
+uint16_t tcpc_get_alert_status(void);
+
+/**
  * Initialize TCPM driver and wait for TCPC readiness.
  *
  * @param port Type-C port number

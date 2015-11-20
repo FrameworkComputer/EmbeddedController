@@ -61,3 +61,17 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC, TCPC2_I2C_ADDR},
 #endif
 };
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	if (!gpio_get_level(GPIO_PD_MCU_INT)) {
+		status = PD_STATUS_TCPC_ALERT_0;
+#if CONFIG_USB_PD_PORT_COUNT >= 2
+		status |= PD_STATUS_TCPC_ALERT_1;
+#endif
+	}
+
+	return status;
+}

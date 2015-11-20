@@ -41,6 +41,20 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{STM32_I2C2_PORT, FUSB302_I2C_SLAVE_ADDR + 2},
 };
 
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	if (!gpio_get_level(GPIO_TCPC1_INT))
+		status |= PD_STATUS_TCPC_ALERT_0;
+	if (!gpio_get_level(GPIO_TCPC2_INT))
+		status |= PD_STATUS_TCPC_ALERT_1;
+	if (!gpio_get_level(GPIO_TCPC3_INT))
+		status |= PD_STATUS_TCPC_ALERT_2;
+
+	return status;
+}
+
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Current sensing. Converted to mA (6600mV/4096). */
