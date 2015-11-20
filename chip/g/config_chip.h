@@ -7,7 +7,7 @@
 #define __CROS_EC_CONFIG_CHIP_H
 
 #include "core/cortex-m/config_core.h"
-#include "cr50_fpga_regdefs.h"
+#include "hw_regdefs.h"
 
 /* Describe the RAM layout */
 #define CONFIG_RAM_BASE         0x10000

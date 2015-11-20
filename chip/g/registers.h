@@ -7,7 +7,7 @@
 #define __CROS_EC_REGISTERS_H
 
 #include "common.h"
-#include "cr50_fpga_regdefs.h"
+#include "hw_regdefs.h"
 #include "util.h"
 
 /* Constants for setting baud rate */

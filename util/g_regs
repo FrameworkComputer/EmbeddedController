@@ -15,7 +15,7 @@ my $usage = "
 Usage:  $prog [HEADER]
 
 This converts the FPGA release's generated C header file into the
-cr50_fpga_regdefs.h file that is included by chip/g/registers.h.
+hw_regdefs.h file that is included by chip/g/registers.h.
 Mostly it just prefaces the macros with GC_ to avoid name collision.
 
 ";
