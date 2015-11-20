@@ -22,6 +22,4 @@ const uint8_t *hwSHA256_final(hwSHA256_CTX *ctx);
 
 void hwSHA256(const void *data, size_t len, uint32_t *digest);
 
-void hwKeyLadderStep(uint32_t certificate, const uint32_t *input);
-
 #endif  /* __EC_CHIP_G_LOADER_HW_SHA256_H */

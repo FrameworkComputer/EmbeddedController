@@ -5,11 +5,12 @@
 
 #include "debug_printf.h"
 #include "hw_sha256.h"
+#include "key_ladder.h"
 #include "registers.h"
 #include "rom_flash.h"
 #include "setup.h"
-#include "verify.h"
 #include "uart.h"
+#include "verify.h"
 
 #include "util/signer/common/signed_header.h"
 
@@ -204,7 +205,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 	GREG32(KEYMGR, FWR_VLD) = 2;
 	GREG32(KEYMGR, FWR_LOCK) = 1;
 
-	hwKeyLadderStep(40, FAKE_rom_hash);
+	key_ladder_step(40, FAKE_rom_hash);
 
 	/* TODO: do cert #40 and lock in ROM? */
 	GREG32(GLOBALSEC, HIDE_ROM) = 1;
