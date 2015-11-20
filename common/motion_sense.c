@@ -249,7 +249,7 @@ static int motion_sense_set_ec_rate_from_ap(
 		const struct motion_sensor_t *sensor,
 		unsigned int new_rate_us)
 {
-	int ap_odr_mhz = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
+	int odr_mhz = sensor->drv->get_data_rate(sensor);
 
 	if (new_rate_us == 0)
 		return 0;
@@ -257,7 +257,7 @@ static int motion_sense_set_ec_rate_from_ap(
 	if (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors)))
 		goto end_set_ec_rate_from_ap;
 #endif
-	if (ap_odr_mhz == 0)
+	if (odr_mhz == 0)
 		goto end_set_ec_rate_from_ap;
 
 	/*
@@ -271,7 +271,7 @@ static int motion_sense_set_ec_rate_from_ap(
 	 * We wll apply that correction only if the ec rate is within 10% of
 	 * the data rate.
 	 */
-	if (SECOND * 1100 / ap_odr_mhz > new_rate_us)
+	if (SECOND * 1100 / odr_mhz > new_rate_us)
 		new_rate_us = new_rate_us / 100 * 105;
 
 end_set_ec_rate_from_ap:
