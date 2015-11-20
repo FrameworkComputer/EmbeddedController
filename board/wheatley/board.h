@@ -50,11 +50,12 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE 0
 #define CONFIG_LID_ANGLE_SENSOR_LID 2
 #define CONFIG_LID_SWITCH
+#define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 /* All data won't fit in data RAM.  So, moving boundary slightly. */
-#define RAM_SHIFT_SIZE   (4 * 1024)
+#define RAM_SHIFT_SIZE   (8 * 1024)
 #undef CONFIG_RO_SIZE
 #define CONFIG_RO_SIZE   (96 * 1024 + RAM_SHIFT_SIZE)
 #undef CONFIG_RAM_BASE
@@ -62,7 +63,7 @@
 #undef CONFIG_RAM_SIZE
 #define CONFIG_RAM_SIZE  (0x00008000 - 0x800 - RAM_SHIFT_SIZE)
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
-/* We're space constrained on GLaDOS, so reduce the UART TX buffer size. */
+/* We're space constrained on Wheatley, so reduce the UART TX buffer size. */
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 512
 #define CONFIG_USB_CHARGER
@@ -86,7 +87,7 @@
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_VBOOT_HASH
 
-#define CONFIG_FLASH_SIZE 0x40000 /* 256 KB Flash used for EC */
+#define CONFIG_FLASH_SIZE 0x80000 /* 512 KB Flash used for EC */
 #define CONFIG_SPI_FLASH_W25X40
 
 #define CONFIG_TEMP_SENSOR
@@ -139,12 +140,9 @@
 /* Modules we want to exclude */
 #undef CONFIG_PECI
 #undef CONFIG_CMD_HASH
-#undef CONFIG_CMD_I2C_SCAN
-#undef CONFIG_CMD_KEYBOARD
 #undef CONFIG_CMD_TEMP_SENSOR
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
-#undef CONFIG_CONSOLE_HISTORY
 
 #undef DEFERRABLE_MAX_COUNT
 #define DEFERRABLE_MAX_COUNT 14

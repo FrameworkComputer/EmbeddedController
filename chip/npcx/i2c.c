@@ -230,29 +230,21 @@ enum smb_error i2c_master_transaction(int controller)
 		}
 	} else if (p_status->oper_state == SMB_READ_SUSPEND) {
 		/* Need to read the other bytes from next transaction */
-		uint8_t data;
-		uint8_t timeout = 10; /* unit: us */
 		p_status->oper_state = SMB_READ_OPER;
-
-		/* wait for SDAST issue */
-		while (timeout > 0) {
-			if (IS_BIT_SET(NPCX_SMBST(controller),
-					NPCX_SMBST_SDAST))
-				break;
-			if (--timeout > 0)
-				usleep(10);
+		if (p_status->sz_rxbuf == 1) {
+			/*
+			 * Since SCL is released after reading last byte from
+			 * previous transaction, we have no chance to set NACK
+			 * bit if the next transaction is only one byte. Master
+			 * cannot generate STOP when the last byte is ACK during
+			 * receiving.
+			 */
+			CPRINTS("I2C %d rxbuf size should exceed one byte in "
+					"2th transaction", controller);
+			p_status->err_code = SMB_BUS_ERROR;
+			i2c_recovery(controller);
+			return EC_ERROR_UNKNOWN;
 		}
-		if (timeout == 0)
-			return EC_ERROR_TIMEOUT;
-
-		/*
-		 * Read first byte from SMBSDA in case SDAST interrupt occurs
-		 * immediately before task_wait_event_mask() func
-		 */
-		I2C_READ_BYTE(controller, data);
-		CPRINTS("-R(%02x)", data);
-		/* Read to buffer */
-		p_status->rx_buf[p_status->idx_buf++] = data;
 	}
 
 	/* Generate a START condition */
@@ -274,6 +266,8 @@ enum smb_error i2c_master_transaction(int controller)
 		/* Recovery I2C controller */
 		i2c_recovery(controller);
 		p_status->err_code = SMB_TIMEOUT_ERROR;
+		/* Restore to idle status */
+		p_status->oper_state = SMB_IDLE;
 	}
 
 	/*
@@ -378,7 +372,8 @@ inline void i2c_handle_sda_irq(int controller)
 				 * Receiving one byte only - set nack just
 				 * before writing address byte
 				 */
-				if (p_status->sz_rxbuf == 1) {
+				if (p_status->sz_rxbuf == 1 &&
+					(p_status->flags & I2C_XFER_STOP)) {
 					I2C_NACK(controller);
 					CPUTS("-GNA");
 				}
@@ -405,6 +400,13 @@ inline void i2c_handle_sda_irq(int controller)
 				/* Stop should set before reading last byte */
 				I2C_STOP(controller);
 				CPUTS("-SP");
+			} else {
+				/*
+				 * Disable interrupt before i2c master read SDA
+				 * reg (stall SCL) and forbid SDAST generate
+				 * interrupt until starting other transactions
+				 */
+				i2c_interrupt(controller, 0);
 			}
 		}
 		/* Check if byte-before-last is about to be read */
@@ -418,17 +420,6 @@ inline void i2c_handle_sda_irq(int controller)
 				I2C_NACK(controller);
 				CPUTS("-GNA");
 			}
-		}
-
-		/* Read last byte but flag don't include I2C_XFER_STOP */
-		if (p_status->idx_buf == p_status->sz_rxbuf-1) {
-			/*
-			 * Disable interrupt before i2c master read SDA reg
-			 * (stall SCL) and forbid SDAST generate interrupt
-			 * until common layer start other transactions
-			 */
-			if (!(p_status->flags & I2C_XFER_STOP))
-				i2c_interrupt(controller, 0);
 		}
 
 		/* Read data for SMBSDA */
@@ -566,8 +557,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if ((flags & I2C_XFER_START) && (i2c_bus_busy(ctrl)
 			|| (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
 
-		/* Attempt to unwedge the controller. */
-		i2c_unwedge(ctrl);
+		/* Attempt to unwedge the i2c port. */
+		i2c_unwedge(port);
 		/* recovery i2c controller */
 		i2c_recovery(ctrl);
 		/* Select port again for recovery */
@@ -770,3 +761,4 @@ static void i2c_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
+
