@@ -14,11 +14,7 @@ GPIO_INT(POWER_BUTTON_L,    PIN(35), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH, power_signal_interrupt)
-/*
- * NOTE: This pulldown should be removed in future hardware once the
- * external logic to make SLP_S0 a binary signal to the EC is added.
- */
-GPIO_INT(PCH_SLP_S0_L,      PIN(211), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S0_L,      PIN(211), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_SUS_L,     PIN(12),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_INT_L,        PIN(50),  GPIO_INT_FALLING, power_signal_interrupt)
 GPIO_INT(PD_MCU_INT,        PIN(122), GPIO_INT_FALLING | GPIO_PULL_UP, pd_mcu_interrupt)
@@ -71,7 +67,7 @@ GPIO(TRACKPAD_INT_L,        PIN(127), GPIO_INPUT)
 GPIO(ENABLE_BACKLIGHT,      PIN(202), GPIO_OUT_LOW)
 GPIO(ENABLE_TOUCHPAD,       PIN(53),  GPIO_OUT_LOW)
 GPIO(BAT_PRESENT_L,         PIN(56),  GPIO_INPUT)
-GPIO(PLATFORM_EC_PROCHOT,   PIN(151), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(PLATFORM_EC_PROCHOT,   PIN(151), GPIO_INPUT)
 GPIO(CPU_PROCHOT,           PIN(52),  GPIO_OUT_LOW)
 
 /* USB PD and port power */

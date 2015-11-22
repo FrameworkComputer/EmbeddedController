@@ -230,6 +230,17 @@ static void board_init(void)
 
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+
+	/* Proto board workarounds */
+	if (system_get_board_version() == 0) {
+		/* Disable interrupt for SLP_S0 */
+		gpio_set_flags(GPIO_PCH_SLP_S0_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+
+		/* Add internal pullup on PLATFORM_EC_PROCHOT */
+		gpio_set_flags(GPIO_PLATFORM_EC_PROCHOT,
+			       GPIO_INPUT | GPIO_PULL_UP);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
