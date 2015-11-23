@@ -20,6 +20,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "pi3usb9281.h"
+#include "ps8740.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -149,14 +150,26 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
 
+static int ps8740_tune_mux(const struct usb_mux *mux)
+{
+	/* Apply same USB EQ settings to both Type-C mux */
+	ps8740_tune_usb_eq(mux->port_addr,
+			   PS8740_USB_EQ_TX_6_5_DB,
+			   PS8740_USB_EQ_RX_14_3_DB);
+
+	return EC_SUCCESS;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0x34,
 		.driver = &ps8740_usb_mux_driver,
+		.board_init = &ps8740_tune_mux,
 	},
 	{
 		.port_addr = 0x20,
 		.driver = &ps8740_usb_mux_driver,
+		.board_init = &ps8740_tune_mux,
 	}
 };
 
