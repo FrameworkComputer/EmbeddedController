@@ -24,6 +24,10 @@ void usb_mux_init(int port)
 	res = mux->driver->init(mux->port_addr);
 	if (res)
 		CPRINTS("Error initializing mux port(%d): %d", port, res);
+
+	/* Apply board specific initialization */
+	if (mux->board_init)
+		mux->board_init(mux);
 }
 
 /*

@@ -66,6 +66,15 @@ struct usb_mux {
 	const int port_addr;
 	/* Mux driver */
 	const struct usb_mux_driver *driver;
+
+	/**
+	 * Board specific initialization for USB mux that is
+	 * called after mux->driver->init() function.
+	 *
+	 * @param mux USB mux to tune
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*board_init)(const struct usb_mux *mux);
 };
 
 /* Supported USB mux drivers */
