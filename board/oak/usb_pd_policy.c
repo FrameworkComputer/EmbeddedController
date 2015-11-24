@@ -118,6 +118,12 @@ int pd_check_data_swap(int port, int data_role)
 	return (data_role == PD_ROLE_UFP) ? 1 : 0;
 }
 
+int pd_check_vconn_swap(int port)
+{
+	/* in G3, do not allow vconn swap since 5V power source is off */
+	return gpio_get_level(GPIO_5V_POWER_GOOD);
+}
+
 void pd_execute_data_swap(int port, int data_role)
 {
 }
