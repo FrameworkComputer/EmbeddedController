@@ -56,6 +56,9 @@ int pd_set_power_supply_ready(int port)
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 1);
 
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -65,6 +68,7 @@ void pd_power_supply_reset(int port)
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 0);
 
+	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
@@ -78,6 +82,7 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
 #endif
 	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void typec_set_input_current_limit(int port, uint32_t max_ma,
@@ -91,6 +96,7 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 #endif
 
 	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_board_checks(void)
