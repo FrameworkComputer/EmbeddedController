@@ -53,8 +53,8 @@ CRYPT_RESULT _cpri__DrbgGetPutState(
   int bufferSize,
   BYTE * buffer)
 {
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
+  /* This unction is not implemented in the TPM2 library either. */
+  return CRYPT_SUCCESS;
 }
 
 CRYPT_RESULT _cpri__EccCommitCompute(
@@ -276,8 +276,19 @@ UINT16 _cpri__StartHMAC(
 BOOL _cpri__Startup(
   void)
 {
-  ecprintf("%s called\n", __func__);
-  return 0;
+  /*
+   * Below is the list of functions called by the TPM2 library from
+   * _cpri__Startup().
+   * TODO(vbendeb): verify proper initialization.
+   *
+   *  _cpri__HashStartup() - not doing anything for now, maybe hw
+   *               reinitialization is required?
+   * _cpri__RsaStartup() - not sure what needs to be done in HW
+   * _cpri__EccStartup() - not sure what needs to be done in HW
+   * _cpri__SymStartup() - this function is emtpy in the TPM2 library
+   *                implementation.
+   */
+  return 1;
 }
 
 CRYPT_RESULT _cpri__StirRandom(
