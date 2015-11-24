@@ -34,7 +34,7 @@ enum npcx_adc_conversion_mode {
 };
 
 /* Global variables */
-static task_id_t task_waiting;
+static volatile task_id_t task_waiting;
 
 /**
  * Preset ADC operation clock.

@@ -52,11 +52,7 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
-/*
- * TODO: Issue is seen with LTO feature, further debug is needed.
- *
 #define CONFIG_LTO
- */
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON

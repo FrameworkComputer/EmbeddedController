@@ -21,7 +21,7 @@
 /* Maximum time we allow for an ADC conversion */
 #define ADC_TIMEOUT_US SECOND
 
-static task_id_t task_waiting_on_ss[LM4_ADC_SEQ_COUNT];
+static volatile task_id_t task_waiting_on_ss[LM4_ADC_SEQ_COUNT];
 
 static void configure_gpio(void)
 {

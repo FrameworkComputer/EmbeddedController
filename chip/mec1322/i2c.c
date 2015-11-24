@@ -55,7 +55,7 @@ struct {
 	/* Transaction timeout, or 0 to use default. */
 	uint32_t timeout_us;
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
-	task_id_t task_waiting;
+	volatile task_id_t task_waiting;
 } cdata[I2C_CONTROLLER_COUNT];
 
 static void configure_controller_speed(int controller, int kbps)

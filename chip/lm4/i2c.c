@@ -65,7 +65,7 @@ struct i2c_port_data {
 	uint32_t timeout_us;	/* Transaction timeout, or 0 to use default */
 
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
-	int task_waiting;
+	volatile int task_waiting;
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 

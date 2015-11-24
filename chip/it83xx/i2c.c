@@ -137,7 +137,7 @@ struct i2c_port_data {
 
 	enum i2c_ch_status i2ccs;
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
-	int task_waiting;
+	volatile int task_waiting;
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 

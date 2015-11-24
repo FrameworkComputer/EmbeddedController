@@ -21,7 +21,7 @@
 
 struct mutex adc_lock;
 
-static task_id_t task_waiting;
+static volatile task_id_t task_waiting;
 
 static int start_single_and_wait(int timeout)
 {
@@ -69,8 +69,10 @@ int adc_read_all_channels(int *data)
 	for (i = 0; i < ADC_CH_COUNT; ++i)
 		MEC1322_ADC_SINGLE |= 1 << adc_channels[i].channel;
 
-	if (!start_single_and_wait(ADC_SINGLE_READ_TIME * ADC_CH_COUNT))
+	if (!start_single_and_wait(ADC_SINGLE_READ_TIME * ADC_CH_COUNT)) {
+		ret = EC_ERROR_TIMEOUT;
 		goto exit_all_channels;
+	}
 
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
 		adc = adc_channels + i;
