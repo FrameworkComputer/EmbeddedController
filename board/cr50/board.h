@@ -98,4 +98,10 @@ enum usb_strings {
 
 #define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_TPM))
 
+/*
+ * Let's be on the lookout for stack overflow, while debugging.
+ *
+ * TODO(vbendeb): remove this before finalizing the code.
+ */
+#define CONFIG_DEBUG_STACK_OVERFLOW
 #endif /* __CROS_EC_BOARD_H */
