@@ -208,6 +208,9 @@
 #define SI114X_COVERED_THRESHOLD        5
 #define SI114X_OVERFLOW                 0xffff
 
+/* Time to wait before re-initializing the device if access is denied */
+#define SI114X_DENIED_THRESHOLD		(10 * SECOND)
+
 extern const struct accelgyro_drv si114x_drv;
 
 enum si114x_state {

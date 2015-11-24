@@ -21,6 +21,8 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
+static int init(const struct motion_sensor_t *s);
+
 /**
  * Read 8bit register from device.
  */
@@ -259,8 +261,29 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 		break;
 	case SI114X_ALS_IN_PROGRESS_PS_PENDING:
 	case SI114X_PS_IN_PROGRESS_ALS_PENDING:
-	default:
 		ret = EC_ERROR_ACCESS_DENIED;
+		break;
+	case SI114X_NOT_READY:
+		ret = EC_ERROR_NOT_POWERED;
+	}
+	if (ret == EC_ERROR_ACCESS_DENIED &&
+	    s->type == MOTIONSENSE_TYPE_LIGHT) {
+		timestamp_t ts_now = get_time();
+
+		/*
+		 * We were unable to access the sensor for THRES time.
+		 * We should reset the sensor to clear the interrupt register
+		 * and the state machine.
+		 */
+		if (time_after(ts_now.le.lo,
+			       s->last_collection + SI114X_DENIED_THRESHOLD)) {
+			int ret, val;
+
+			ret = raw_read8(s->addr, SI114X_REG_IRQ_STATUS, &val);
+			CPRINTS("%d stuck IRQ_STATUS 0x%02x - ret %d",
+				s->name, val, ret);
+			init(s);
+		}
 	}
 	return ret;
 }
