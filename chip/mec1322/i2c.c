@@ -234,11 +234,11 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	select_port(port);
 	controller = i2c_port_to_controller(port);
-	if (send_start)
+	if (send_start && out_size)
 		wait_idle(controller);
 
 	reg = MEC1322_I2C_STATUS(controller);
-	if (send_start &&
+	if (send_start && out_size &&
 	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
 			    (get_line_level(controller)
 			    != I2C_LINE_IDLE))) {
@@ -293,23 +293,14 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (in_size) {
 		/* Resend start bit when changing direction */
 		if (out_size || send_start) {
-			/* Repeated start case */
-			if (out_size)
-				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
-							       CTRL_STA |
-							       CTRL_ACK |
-							       CTRL_ENI;
+			/* Repeated start */
+			MEC1322_I2C_CTRL(controller) = CTRL_ESO |
+						       CTRL_STA |
+						       CTRL_ACK |
+						       CTRL_ENI;
 
 			MEC1322_I2C_DATA(controller) = (uint8_t)slave_addr
 						     | 0x01;
-
-			/* New transaction case, clock out slave address. */
-			if (!out_size)
-				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
-							       CTRL_STA |
-							       CTRL_ACK |
-							       CTRL_ENI |
-							       CTRL_PIN;
 
 			/* Skip over the dummy byte */
 			skip = 1;
