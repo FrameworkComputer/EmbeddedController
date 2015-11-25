@@ -279,13 +279,28 @@ end_set_ec_rate_from_ap:
 }
 
 
-
+/*
+ * motion_sense_select_ec_rate
+ *
+ * Calculate the ec_rate for a given sensor.
+ * - sensor: sensor to use
+ * - config_id: determine the requestor (AP or EC).
+ * - interrupt:
+ * If interrupt is set: return the sampling rate requested by AP or EC.
+ * If interrupt is not set and the sensor is in forced mode,
+ * we return the rate needed to probe the sensor at the right ODR.
+ * otherwise return the sampling rate requested by AP or EC.
+ *
+ * return rate in us.
+ */
 static int motion_sense_select_ec_rate(
 		const struct motion_sensor_t *sensor,
-		enum sensor_config config_id)
+		enum sensor_config config_id,
+		int interrupt)
 {
 #ifdef CONFIG_ACCEL_FORCE_MODE_MASK
-	if (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors))) {
+	if (interrupt == 0 &&
+	    (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors)))) {
 		int rate_mhz = BASE_ODR(sensor->config[config_id].odr);
 		/* we have to run ec at the sensor frequency rate.*/
 		if (rate_mhz > 0)
@@ -310,10 +325,11 @@ static int motion_sense_ec_rate(struct motion_sensor_t *sensor)
 
 	/* Check the AP setting first. */
 	if (sensor_active != SENSOR_ACTIVE_S5)
-		ec_rate = motion_sense_select_ec_rate(sensor, SENSOR_CONFIG_AP);
+		ec_rate = motion_sense_select_ec_rate(
+			sensor, SENSOR_CONFIG_AP, 0);
 
 	ec_rate_from_cfg = motion_sense_select_ec_rate(
-			sensor, motion_sense_get_ec_config());
+			sensor, motion_sense_get_ec_config(), 0);
 
 	if (ec_rate_from_cfg != 0)
 		if (ec_rate == 0 || ec_rate_from_cfg < ec_rate)
@@ -349,7 +365,7 @@ static int motion_sense_set_motion_intervals(void)
 			ec_rate = sensor_ec_rate;
 
 		sensor_ec_rate = motion_sense_select_ec_rate(
-				sensor, SENSOR_CONFIG_AP);
+				sensor, SENSOR_CONFIG_AP, 1);
 		if (ec_int_rate == 0 ||
 		    (sensor_ec_rate && sensor_ec_rate < ec_int_rate))
 			ec_int_rate = sensor_ec_rate;
