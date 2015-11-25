@@ -147,6 +147,7 @@ static void thermal_control(void)
 	int num_sensors_read;
 	int fmax;
 	int dptf_tripped;
+	int temp_fan_configured;
 
 	/* Get ready to count things */
 	memset(count_over, 0, sizeof(count_over));
@@ -155,6 +156,7 @@ static void thermal_control(void)
 	num_sensors_read = 0;
 	fmax = 0;
 	dptf_tripped = 0;
+	temp_fan_configured = 0;
 
 	/* go through all the sensors */
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
@@ -186,6 +188,8 @@ static void thermal_control(void)
 						t);
 			if (f > fmax)
 				fmax = f;
+
+			temp_fan_configured = 1;
 		}
 
 		/* and check the dptf thresholds */
@@ -251,15 +255,17 @@ static void thermal_control(void)
 		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	}
 
+	if (temp_fan_configured) {
 #ifdef CONFIG_FANS
 	/* TODO(crosbug.com/p/23797): For now, we just treat all fans the
 	 * same. It would be better if we could assign different thermal
 	 * profiles to each fan - in case one fan cools the CPU while another
 	 * cools the radios or battery.
 	 */
-	for (i = 0; i < CONFIG_FANS; i++)
-		fan_set_percent_needed(i, fmax);
+		for (i = 0; i < CONFIG_FANS; i++)
+			fan_set_percent_needed(i, fmax);
 #endif
+	}
 
 	/* Don't forget to signal any DPTF thresholds */
 	if (dptf_tripped)
