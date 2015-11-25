@@ -18,14 +18,6 @@
 #define BAT_LED_ON 1
 #define BAT_LED_OFF 0
 
-#define CRITICAL_LOW_BATTERY_PERCENTAGE 3
-#define LOW_BATTERY_PERCENTAGE 10
-
-#define LED_TOTAL_4SECS_TICKS 16
-#define LED_TOTAL_2SECS_TICKS 8
-#define LED_ON_1SEC_TICKS 4
-#define LED_ON_2SECS_TICKS 8
-
 const enum ec_led_id supported_led_ids[] = {
 			EC_LED_ID_BATTERY_LED};
 
@@ -33,9 +25,8 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
-	LED_RED,
 	LED_AMBER,
-	LED_GREEN,
+	LED_WHITE,
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
@@ -46,15 +37,11 @@ static int bat_led_set_color(enum led_color color)
 		gpio_set_level(GPIO_BAT_LED_RED, BAT_LED_OFF);
 		gpio_set_level(GPIO_BAT_LED_GREEN, BAT_LED_OFF);
 		break;
-	case LED_RED:
+	case LED_AMBER:
 		gpio_set_level(GPIO_BAT_LED_RED, BAT_LED_ON);
 		gpio_set_level(GPIO_BAT_LED_GREEN, BAT_LED_OFF);
 		break;
-	case LED_AMBER:
-		gpio_set_level(GPIO_BAT_LED_RED, BAT_LED_ON);
-		gpio_set_level(GPIO_BAT_LED_GREEN, BAT_LED_ON);
-		break;
-	case LED_GREEN:
+	case LED_WHITE:
 		gpio_set_level(GPIO_BAT_LED_RED, BAT_LED_OFF);
 		gpio_set_level(GPIO_BAT_LED_GREEN, BAT_LED_ON);
 		break;
@@ -70,37 +57,20 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	brightness_range[EC_LED_COLOR_GREEN] = 1;
 }
 
-static int board_led_set_color_battery(enum led_color color)
-{
-	return bat_led_set_color(color);
-}
-
-static int board_led_set_color(enum ec_led_id led_id, enum led_color color)
-{
-	int rv;
-
-	led_auto_control(led_id, 0);
-	switch (led_id) {
-	case EC_LED_ID_BATTERY_LED:
-		rv = board_led_set_color_battery(color);
-		break;
-	default:
-		return EC_ERROR_UNKNOWN;
-	}
-	return rv;
-}
-
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_RED] != 0 &&
-	    brightness[EC_LED_COLOR_GREEN] != 0)
-		board_led_set_color(led_id, LED_AMBER);
-	else if (brightness[EC_LED_COLOR_RED] != 0)
-		board_led_set_color(led_id, LED_RED);
-	else if (brightness[EC_LED_COLOR_GREEN] != 0)
-		board_led_set_color(led_id, LED_GREEN);
-	else
-		board_led_set_color(led_id, LED_OFF);
+	switch (led_id) {
+	case EC_LED_ID_BATTERY_LED:
+		if (brightness[EC_LED_COLOR_WHITE] != 0)
+			bat_led_set_color(LED_WHITE);
+		else if (brightness[EC_LED_COLOR_YELLOW] != 0)
+			bat_led_set_color(LED_AMBER);
+		else
+			bat_led_set_color(LED_OFF);
+		break;
+	default:
+		break;
+	}
 
 	return EC_SUCCESS;
 }
@@ -109,46 +79,58 @@ static void board_led_set_battery(void)
 {
 	static int battery_ticks;
 	uint32_t chflags = charge_get_flags();
+	static int power_ticks;
+	static int previous_state_suspend;
 
 	battery_ticks++;
+	power_ticks++;
 
-	/* BAT LED behavior:
-	 * Same as the chromeos spec
-	 * Green/Amber for CHARGE_FLAG_FORCE_IDLE
-	 */
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		/*
+		 * Reset ticks if entering suspend so LED turns white
+		 * as soon as possible.
+		 */
+		if (!previous_state_suspend)
+			power_ticks = 0;
+
+		/* Blink once every one second. */
+		bat_led_set_color((power_ticks & 0x4) ? LED_WHITE : LED_OFF);
+
+		previous_state_suspend = 1;
+		return;
+	}
+	previous_state_suspend = 0;
+
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		board_led_set_color_battery(LED_AMBER);
+		bat_led_set_color(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE:
-		/* Less than 3%, blink one second every two second */
-		if (charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
-			board_led_set_color_battery(
-				(battery_ticks % LED_TOTAL_2SECS_TICKS <
-				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
-		/* Less than 10%, blink one second every four seconds */
-		else if (charge_get_percent() < LOW_BATTERY_PERCENTAGE)
-			board_led_set_color_battery(
-				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+		/*
+		 * See crosbug.com/p/22159. There's a 3% difference
+		 * between the battery level seen by the kernel and what's
+		 * really going on, so if they want to see 12%, we use 15%.
+		 * Hard code this number here, because this only affects the
+		 * LED color, not the battery charge state.
+		 */
+		if (charge_get_percent() < 15)
+			bat_led_set_color(
+				(battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
 		else
-			board_led_set_color_battery(LED_OFF);
+			bat_led_set_color(LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		board_led_set_color_battery(
-			(battery_ticks % LED_TOTAL_2SECS_TICKS <
-			 LED_ON_1SEC_TICKS) ? LED_RED : LED_OFF);
+		bat_led_set_color((battery_ticks & 0x2) ? LED_WHITE : LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		board_led_set_color_battery(LED_GREEN);
+		bat_led_set_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			board_led_set_color_battery(
-				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_2SECS_TICKS) ? LED_GREEN : LED_AMBER);
+			bat_led_set_color(
+				(battery_ticks & 0x4) ? LED_AMBER : LED_OFF);
 		else
-			board_led_set_color_battery(LED_GREEN);
+			bat_led_set_color(LED_WHITE);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -156,10 +138,10 @@ static void board_led_set_battery(void)
 	}
 }
 
-/** * Called by hook task every 1 sec  */
-static void led_second(void)
+/* Called by hook task every TICK */
+static void led_tick(void)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		board_led_set_battery();
 }
-DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
