@@ -509,9 +509,8 @@ void mutex_lock(struct mutex *mtx)
 		if (mtx->lock == 0)
 			break;
 		__asm__ __volatile__("cpsie i");
-		/* TODO(crbug.com/435612, crbug.com/435611)
-		 * This discards any pending events! */
-		task_wait_event(0);  /* Contention on the mutex */
+		/* Contention on the mutex */
+		task_wait_event_mask(TASK_EVENT_MUTEX, 0);
 	}
 	mtx->lock = 2;
 	__asm__ __volatile__("cpsie i");
