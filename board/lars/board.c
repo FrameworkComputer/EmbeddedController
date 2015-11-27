@@ -139,10 +139,6 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 		.i2c_port = I2C_PORT_USB_CHARGER_1,
 		.mux_lock = NULL,
 	},
-	{
-		.i2c_port = I2C_PORT_USB_CHARGER_2,
-		.mux_lock = NULL,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
