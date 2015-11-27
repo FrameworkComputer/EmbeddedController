@@ -26,17 +26,6 @@ enum encrypt_mode {
 	ENCRYPT_MODE = 1
 };
 
-#define SHA1_DIGEST_BYTES    20
-#define SHA256_DIGEST_BYTES  32
-#define SHA384_DIGEST_BYTES  48
-#define SHA512_DIGEST_BYTES  64
-#define SHA_DIGEST_MAX_BYTES SHA512_DIGEST_BYTES
-
-#define SHA1_DIGEST_WORDS   (SHA1_DIGEST_BYTES / sizeof(uint32_t))
-#define SHA256_DIGEST_WORDS (SHA256_DIGEST_BYTES / sizeof(uint32_t))
-#define SHA384_DIGEST_WORDS (SHA384_DIGEST_BYTES / sizeof(uint32_t))
-#define SHA512_DIGEST_WORDS (SHA512_DIGEST_BYTES / sizeof(uint32_t))
-
 struct HASH_CTX;   /* Forward declaration. */
 
 typedef struct HASH_CTX SHA1_CTX;

@@ -42,11 +42,11 @@ uint16_t _cpri__GetHashBlockSize(TPM_ALG_ID alg)
 	return lookup_hash_info(alg)->blockSize;
 }
 
+BUILD_ASSERT(sizeof(CPRI_HASH_STATE) == sizeof(EXPORT_HASH_STATE));
 void _cpri__ImportExportHashState(CPRI_HASH_STATE *osslFmt,
 				EXPORT_HASH_STATE *externalFmt,
 				IMPORT_EXPORT direction)
 {
-	pAssert(sizeof(CPRI_HASH_STATE) == sizeof(EXPORT_HASH_STATE));
 	if (direction == IMPORT_STATE)
 		memcpy(osslFmt, externalFmt, sizeof(CPRI_HASH_STATE));
 	else
@@ -88,13 +88,14 @@ uint16_t _cpri__HashBlock(TPM_ALG_ID alg, uint32_t in_len, uint8_t *in,
 	return out_len;
 }
 
+BUILD_ASSERT(sizeof(struct HASH_CTX) <=
+	     sizeof(((CPRI_HASH_STATE *)0)->state));
 uint16_t _cpri__StartHash(TPM_ALG_ID alg, BOOL sequence,
-			CPRI_HASH_STATE *state)
+			  CPRI_HASH_STATE *state)
 {
 	struct HASH_CTX *ctx = (struct HASH_CTX *) state->state;
 	uint16_t result;
 
-	pAssert(sizeof(struct HASH_CTX) < sizeof(state->state));
 	switch (alg) {
 	case TPM_ALG_SHA1:
 		DCRYPTO_SHA1_init(ctx, sequence);

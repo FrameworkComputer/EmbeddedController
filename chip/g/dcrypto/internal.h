@@ -26,10 +26,30 @@ struct HASH_VTAB {
 	uint32_t size;
 };
 
+#define SHA1_DIGEST_BYTES    20
+#define SHA256_DIGEST_BYTES  32
+#define SHA384_DIGEST_BYTES  48
+#define SHA512_DIGEST_BYTES  64
+
+#define SHA1_DIGEST_WORDS   (SHA1_DIGEST_BYTES / sizeof(uint32_t))
+#define SHA256_DIGEST_WORDS (SHA256_DIGEST_BYTES / sizeof(uint32_t))
+#define SHA384_DIGEST_WORDS (SHA384_DIGEST_BYTES / sizeof(uint32_t))
+#define SHA512_DIGEST_WORDS (SHA512_DIGEST_BYTES / sizeof(uint32_t))
+
+#if defined(CONFIG_SHA512)
+#define SHA_DIGEST_MAX_BYTES SHA512_DIGEST_BYTES
+#elif defined(CONFIG_SHA384)
+#define SHA_DIGEST_MAX_BYTES SHA384_DIGEST_BYTES
+#elif defined(CONFIG_SHA256)
+#define SHA_DIGEST_MAX_BYTES SHA256_DIGEST_BYTES
+#elif defined CONFIG_SHA1
+#define SHA_DIGEST_MAX_BYTES SHA1_DIGEST_BYTES
+#endif
+
 struct HASH_CTX {
 	const struct HASH_VTAB *vtab;
 	union {
-		uint8_t buf[64];
+		uint8_t buf[SHA_DIGEST_MAX_BYTES];
 		struct sha1_ctx sw_sha1;
 		struct sha256_ctx sw_sha256;
 	} u;

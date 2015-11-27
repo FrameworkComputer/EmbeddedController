@@ -44,6 +44,9 @@ LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
 # For the benefit of the tpm2 library.
 INCLUDE_ROOT := $(abspath ./include)
 CFLAGS += -I$(INCLUDE_ROOT)
+# Make sure the context of the software sha256 implementation fits. If it ever
+# increases, a compile time assert will fire in tpm2/hash.c.
+CFLAGS += -DUSER_MIN_HASH_STATE_SIZE=210
 
 # Add dependencies on that library
 $(out)/RO/ec.RO.elf: $(out)/tpm2/libtpm2.a

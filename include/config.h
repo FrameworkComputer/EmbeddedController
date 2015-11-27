@@ -1522,8 +1522,10 @@
 /* Support computing SHA-1 hash */
 #undef CONFIG_SHA1
 
-/* Support computing SHA-256 hash (without the VBOOT code) */
+/* Support computing of other hash sizes (without the VBOOT code) */
 #undef CONFIG_SHA256
+#undef CONFIG_SHA384
+#undef CONFIG_SHA512
 
 /* Emulate the CLZ (Count Leading Zeros) in software for CPU lacking support */
 #undef CONFIG_SOFTWARE_CLZ
