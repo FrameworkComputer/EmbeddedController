@@ -137,3 +137,215 @@ uint16_t _cpri__CompleteHash(CPRI_HASH_STATE *state,
 	memcpy(out, DCRYPTO_HASH_final(ctx), out_len);
 	return out_len;
 }
+
+#ifdef CRYPTO_TEST_SETUP
+
+#include "console.h"
+#include "extension.h"
+#include "shared_mem.h"
+
+#define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
+
+struct test_context {
+	int context_handle;
+	CPRI_HASH_STATE hstate;
+};
+
+static struct {
+	int current_context_count;
+	int max_contexts;
+	struct test_context *contexts;
+} hash_test_db;
+
+struct test_context *find_context(int handle)
+{
+	int i;
+
+	for (i = 0; i < hash_test_db.current_context_count; i++)
+		if (hash_test_db.contexts[i].context_handle == handle)
+			return hash_test_db.contexts + i;
+	return NULL;
+}
+
+static void process_start(TPM_ALG_ID alg, int handle, void *response_body,
+			  size_t *response_size)
+{
+	uint8_t *response = response_body;
+	struct test_context *new_context;
+
+	if (find_context(handle)) {
+		*response = EXC_HASH_DUPLICATED_HANDLE;
+		*response_size = 1;
+		return;
+	}
+
+	if (!hash_test_db.max_contexts) {
+		/* Check how many contexts could possible fit. */
+		hash_test_db.max_contexts = shared_mem_size() /
+			sizeof(struct test_context);
+	}
+
+	if (!hash_test_db.contexts)
+		shared_mem_acquire(shared_mem_size(),
+				   (char **)&hash_test_db.contexts);
+
+	if (!hash_test_db.contexts ||
+	    (hash_test_db.current_context_count == hash_test_db.max_contexts)) {
+		*response = EXC_HASH_TOO_MANY_HANDLES;
+		*response_size = 1;
+		return;
+	}
+
+	new_context = hash_test_db.contexts +
+		hash_test_db.current_context_count++;
+	new_context->context_handle = handle;
+	_cpri__StartHash(alg, 0, &new_context->hstate);
+}
+
+static void process_continue(int handle, void *cmd_body, uint16_t text_len,
+			     void *response_body, size_t *response_size)
+{
+	struct test_context *context = find_context(handle);
+
+	if (!context) {
+		*((uint8_t *)response_body) = EXC_HASH_UNKNOWN_CONTEXT;
+		*response_size = 1;
+		return;
+	}
+
+	_cpri__UpdateHash(&context->hstate, text_len, cmd_body);
+}
+
+static void process_finish(int handle, void *response_body,
+			   size_t *response_size)
+{
+	struct test_context *context = find_context(handle);
+
+	if (!context) {
+		*((uint8_t *)response_body) = EXC_HASH_UNKNOWN_CONTEXT;
+		*response_size = 1;
+		return;
+	}
+
+	/* There for sure is enough room in the TPM buffer. */
+	*response_size = _cpri__CompleteHash(&context->hstate,
+					     SHA_DIGEST_MAX_BYTES,
+					     response_body);
+
+	/* drop this context from the database. */
+	hash_test_db.current_context_count--;
+	if (!hash_test_db.current_context_count) {
+		shared_mem_release(hash_test_db.contexts);
+		return;
+	}
+
+	/* Nothing to do, if the deleted context is the last one in memory. */
+	if (context == (hash_test_db.contexts +
+			hash_test_db.current_context_count))
+		return;
+
+	memcpy(context,
+	       hash_test_db.contexts + hash_test_db.current_context_count,
+	       sizeof(*context));
+}
+
+static void hash_command_handler(void *cmd_body,
+				size_t cmd_size,
+				size_t *response_size)
+{
+	int mode;
+	int hash_mode;
+	int handle;
+	uint16_t text_len;
+	uint8_t *cmd;
+	size_t response_room = *response_size;
+	TPM_ALG_ID alg;
+
+	cmd = cmd_body;
+
+	/*
+	 * Empty response is sent as a success indication when the digest is
+	 * not yet expected (i.e. in response to 'start' and 'cont' commands,
+	 * as defined below).
+	 *
+	 * Single byte responses indicate errors, test successes are
+	 * communicated as responses of the size of the appropriate digests.
+	 */
+	*response_size = 0;
+
+	/*
+	 * Command structure, shared out of band with the test driver running
+	 * on the host:
+	 *
+	 * field     |    size  |                  note
+	 * ===================================================================
+	 * mode      |    1     | 0 - start, 1 - cont., 2 - finish, 3 - single
+	 * hash_mode |    1     | 0 - sha1, 1 - sha256
+	 * handle    |    1     | seassion handle, ignored in 'single' mode
+	 * text_len  |    2     | size of the text to process, big endian
+	 * text      | text_len | text to hash
+	 */
+
+	mode = *cmd++;
+	hash_mode = *cmd++;
+	handle = *cmd++;
+	text_len = *cmd++;
+	text_len = text_len * 256 + *cmd++;
+
+	switch (hash_mode) {
+	case 0:
+		alg = TPM_ALG_SHA1;
+		break;
+	case 1:
+		alg = TPM_ALG_SHA256;
+		break;
+
+	default:
+		return;
+	}
+
+	switch (mode) {
+	case 0: /* Start a new hash context. */
+		process_start(alg, handle, cmd_body, response_size);
+		if (*response_size)
+			break; /* Something went wrong. */
+		process_continue(handle, cmd, text_len,
+				 cmd_body, response_size);
+		break;
+
+	case 1:
+		process_continue(handle, cmd, text_len,
+				 cmd_body, response_size);
+		break;
+
+	case 2:
+		process_continue(handle, cmd, text_len,
+				 cmd_body, response_size);
+		if (*response_size)
+			break;  /* Something went wrong. */
+
+		process_finish(handle, cmd_body, response_size);
+		CPRINTF("%s:%d response size %d\n", __func__, __LINE__,
+			*response_size);
+		break;
+
+	case 3: /* Process a buffer in a single shot. */
+		if (!text_len)
+			break;
+		/*
+		 * Error responses are just 1 byte in size, valid responses
+		 * are of various hash sizes.
+		 */
+		*response_size = _cpri__HashBlock(alg, text_len,
+						  cmd, response_room, cmd_body);
+		CPRINTF("%s:%d response size %d\n", __func__,
+			__LINE__, *response_size);
+		break;
+	default:
+		break;
+	}
+}
+
+DECLARE_EXTENSION_COMMAND(EXTENSION_HASH, hash_command_handler);
+
+#endif   /* CRYPTO_TEST_SETUP */
