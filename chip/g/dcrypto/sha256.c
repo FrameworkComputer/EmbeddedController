@@ -187,7 +187,7 @@ void DCRYPTO_SHA256_init(SHA256_CTX *ctx, uint32_t sw_required)
 {
 	if (!sw_required && dcrypto_grab_sha_hw()) {
 		ctx->vtab = &HW_SHA256_VTAB;
-		dcrypto_sha_init(SHA1_MODE);
+		dcrypto_sha_init(SHA256_MODE);
 	}
 #ifndef SECTION_IS_RO
 	else
@@ -198,7 +198,6 @@ void DCRYPTO_SHA256_init(SHA256_CTX *ctx, uint32_t sw_required)
 static const uint8_t *dcrypto_sha256_final(SHA256_CTX *ctx)
 {
 	dcrypto_sha_wait(SHA256_MODE, (uint32_t *) ctx->u.buf);
-	dcrypto_release_sha_hw();
 	return ctx->u.buf;
 }
 
