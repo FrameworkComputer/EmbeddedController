@@ -206,6 +206,7 @@
 
 /* Proximity sensor finds an object within 5 cm, disable light sensor */
 #define SI114X_COVERED_THRESHOLD        5
+#define SI114X_OVERFLOW                 0xffff
 
 extern const struct accelgyro_drv si114x_drv;
 

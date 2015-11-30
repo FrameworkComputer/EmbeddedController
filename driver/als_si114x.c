@@ -96,7 +96,7 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 		/* Add offset, calibration */
 		if (val + type_data->offset <= 0) {
 			val = 1;
-		} else {
+		} else if (val != SI114X_OVERFLOW) {
 			val += type_data->offset;
 			/*
 			 * Proxmitiy sensor data is inverse of the distance.
