@@ -797,6 +797,8 @@ void tcpc_alert(int port)
 	int interruptb;
 	int reg;
 	int toggle_answer;
+	int head;
+	uint32_t payload[7];
 
 	/* reading interrupt registers clears them */
 
@@ -816,10 +818,11 @@ void tcpc_alert(int port)
 	}
 
 	if (interrupta & TCPC_REG_INTERRUPTA_TX_SUCCESS) {
-		/* sent packet was acknowledged with a GoodCRC */
-
-		/* flush out the GoodCRC message*/
-		fusb302_flush_rx_fifo(port);
+		/*
+		 * Sent packet was acknowledged with a GoodCRC,
+		 * so remove GoodCRC message from FIFO.
+		 */
+		tcpm_get_message(port, payload, &head);
 
 		pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
 	}
