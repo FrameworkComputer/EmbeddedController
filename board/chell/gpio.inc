@@ -89,6 +89,7 @@ GPIO(BOARD_VERSION2,        PIN(7),   GPIO_INPUT)
 GPIO(BOARD_VERSION3,        PIN(10),  GPIO_INPUT)
 GPIO(KBD_KSO2,              PIN(101), GPIO_KB_OUTPUT_COL2)
 GPIO(PVT_CS0,               PIN(146), GPIO_ODR_HIGH)
+GPIO(KEYBOARD_BACKLIGHT,    PIN(34),  GPIO_OUT_LOW)
 
 /*
  * TODO(crosbug.com/p/40848): These LEDs should be under control of the mec1322

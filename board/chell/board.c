@@ -365,9 +365,11 @@ uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
 		GPIO_TO_PORT_MASK_PAIR(GPIO_PMIC_LDO_EN),
 		/* The GPIO to control RTCRST is active high. */
 		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST),
+		/* Keep keyboard backlight off, GPIO34 pin is in PWM mode */
+		GPIO_TO_PORT_MASK_PAIR(GPIO_KEYBOARD_BACKLIGHT),
 	};
 
-	/* LED GPIOs should be driven low to turn off LEDs */
+	/* Some GPIOs should be driven low in hibernate */
 	for (i = 0; i < ARRAY_SIZE(out_low_gpios); ++i)
 		if (out_low_gpios[i][0] == port && out_low_gpios[i][1] == pin)
 			return GPIO_OUTPUT | GPIO_LOW;
