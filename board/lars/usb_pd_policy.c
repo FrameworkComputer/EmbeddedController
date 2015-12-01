@@ -49,10 +49,6 @@ void pd_transition_voltage(int idx)
 
 int pd_set_power_supply_ready(int port)
 {
-	/* only one port can be selected */
-	if (port >= CONFIG_USB_PD_PORT_COUNT)
-		return EC_ERROR_PARAM1;
-
 	/* Disable charging */
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
 
@@ -68,7 +64,7 @@ int pd_set_power_supply_ready(int port)
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
-	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
+	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -281,39 +277,28 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
-#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C0_DP_HPD : GPIO_USB_C0_DP_HPD)
 static void svdm_dp_post_config(int port)
 {
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
-	gpio_set_level(PORT_TO_HPD(port), 1);
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
 }
 
 static void hpd0_irq_deferred(void)
 {
 	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
 }
-
-static void hpd1_irq_deferred(void)
-{
-	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
-}
-
 DECLARE_DEFERRED(hpd0_irq_deferred);
-DECLARE_DEFERRED(hpd1_irq_deferred);
-#define PORT_TO_HPD_IRQ_DEFERRED(port) ((port) ? hpd1_irq_deferred : \
-					hpd0_irq_deferred)
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
 	int cur_lvl;
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	enum gpio_signal hpd = PORT_TO_HPD(port);
 
-	cur_lvl = gpio_get_level(hpd);
+	cur_lvl = gpio_get_level(GPIO_USB_C0_DP_HPD);
 
 	dp_status[port] = payload[1];
 
@@ -325,14 +310,13 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 	}
 
 	if (irq & cur_lvl) {
-		gpio_set_level(hpd, 0);
-		hook_call_deferred(PORT_TO_HPD_IRQ_DEFERRED(port),
-				   HPD_DSTREAM_DEBOUNCE_IRQ);
+		gpio_set_level(GPIO_USB_C0_DP_HPD, 0);
+		hook_call_deferred(hpd0_irq_deferred, HPD_DSTREAM_DEBOUNCE_IRQ);
 	} else if (irq & !cur_lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
 	} else {
-		gpio_set_level(hpd, lvl);
+		gpio_set_level(GPIO_USB_C0_DP_HPD, lvl);
 	}
 	/* ack */
 	return 1;
@@ -341,7 +325,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
-	gpio_set_level(PORT_TO_HPD(port), 0);
+	gpio_set_level(GPIO_USB_C0_DP_HPD, 0);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
