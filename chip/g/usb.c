@@ -429,10 +429,10 @@ void usb_interrupt(void)
 {
 	uint32_t status = GR_USB_GINTSTS;
 
-	if (status & GINTSTS_USBRST)
+	if (status & GINTSTS(USBRST))
 		usb_reset();
 
-	if (status & (GINTSTS_OEPINT | GINTSTS_IEPINT)) {
+	if (status & (GINTSTS(OEPINT) | GINTSTS(IEPINT))) {
 		uint32_t daint = GR_USB_DAINT;
 		int ep;
 		for (ep = 0; ep < USB_EP_COUNT && daint; ep++, daint >>= 1) {
@@ -443,10 +443,10 @@ void usb_interrupt(void)
 		}
 	}
 
-	if (status & GINTSTS_GOUTNAKEFF)
+	if (status & GINTSTS(GOUTNAKEFF))
 		GR_USB_DCTL = DCTL_CGOUTNAK;
 
-	if (status & GINTSTS_GINNAKEFF)
+	if (status & GINTSTS(GINNAKEFF))
 		GR_USB_DCTL = DCTL_CGNPINNAK;
 
 	/* ack interrupts */
@@ -588,9 +588,9 @@ void usb_init(void)
 	/* Enable interrupt handlers */
 	task_enable_irq(GC_IRQNUM_USB0_USBINTR);
 	/* set interrupts mask : reset/correct tranfer/errors */
-	GR_USB_GINTMSK = GINTSTS_GOUTNAKEFF | GINTSTS_GINNAKEFF |
-			 GINTSTS_USBRST | GINTSTS_ENUMDONE |
-			 GINTSTS_OEPINT | GINTSTS_IEPINT;
+	GR_USB_GINTMSK = GINTSTS(GOUTNAKEFF) | GINTSTS(GINNAKEFF) |
+			 GINTSTS(USBRST) | GINTSTS(ENUMDONE) |
+			 GINTSTS(OEPINT) | GINTSTS(IEPINT);
 
 #ifndef CONFIG_USB_INHIBIT_CONNECT
 	usb_connect();
