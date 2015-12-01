@@ -458,7 +458,6 @@ static void usb_softreset(void)
 {
 	int timeout;
 
-	GR_USB_GGPIO = 0x80400000;
 	GR_USB_GRSTCTL = GRSTCTL_CSFTRST;
 	timeout = 10000;
 	while ((GR_USB_GRSTCTL & GRSTCTL_CSFTRST) && timeout-- > 0)
@@ -479,7 +478,6 @@ static void usb_softreset(void)
 
 void usb_connect(void)
 {
-	GR_USB_GGPIO = 0x80400000;
 	GR_USB_DCTL &= ~DCTL_SFTDISCON;
 }
 
@@ -519,8 +517,9 @@ void usb_init(void)
 	/* Use the last 128 entries of the FIFO for EP INFO */
 	GR_USB_GDFIFOCFG = ((FIFO_SIZE - 0x80) << 16) | FIFO_SIZE;
 
-	/* PHY configuration */
-	GR_USB_GGPIO = 0x80400000;
+	/* Select the correct PHY */
+	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG,
+				   (USB_PHY_ACTIVE | USB_SEL_PHY0));
 
 	/* Full-Speed Serial PHY */
 	GR_USB_GUSBCFG = GUSBCFG_PHYSEL_FS | GUSBCFG_FSINTF_6PIN

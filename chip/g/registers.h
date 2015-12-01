@@ -380,6 +380,44 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GR_USB_DOEPDMA(n)             GR_USB_EPOREG(0x14, n)
 #define GR_USB_DOEPDMAB(n)            GR_USB_EPOREG(0x1c, n)
 
+/*
+ * GR_USB_GGPIO is a portal to a set of custom 8-bit registers. Logically it is
+ * split into a GP_OUT part and a GP_IN part. Writing to a custom register can
+ * be done in a single operation, with all data transferred in GP_OUT. Reading
+ * requires a GP_OUT write to select the register to read, then a read or GP_IN
+ * to see what the register holds.
+ *   GP_OUT:
+ *    bit  15     direction: 1=write, 0=read
+ *    bits 11:4   value to write to register when bit 15 is set
+ *    bits 3:0    custom register to access
+ *   GP_IN:
+ *    bits 7:0    value read back from register when GP_OUT[15] is clear
+ *
+ * The GP_OUT bit fields aren't defined elsewhere, so we'll define them here
+ */
+#define GP_OUT(v) ((v << GC_USB_GGPIO_GPO_LSB) & GC_USB_GGPIO_GPO_MASK)
+#define GP_IN(v) ((v << GC_USB_GGPIO_GPI_LSB) & GC_USB_GGPIO_GPI_MASK)
+#define GGPIO_WRITE(reg, val) GP_OUT(((1 << 15) |	      /* write bit */ \
+				      ((val & 0xFF) << 4) |   /* value */ \
+				      (reg & 0x0F)))	      /* register */
+#define GGPIO_READ(reg) (v & 0x0F)
+
+/* Further, the custom config registers for the USB module are: */
+#define USB_CUSTOM_CFG_REG    0			/* register number */
+#define  USB_PHY_ACTIVE  0x04			/* bit 2 */
+#define  USB_TESTMODE    0x02			/* bit 1 */
+#define  USB_SEL_PHY0    0x00			/* bit 0 */
+#define  USB_SEL_PHY1    0x01			/* bit 0 */
+#define USB_IDLE_PHY_CTRL_REG 1			/* register number */
+#define  USB_FS_SUSPENDB    (1 << 7)
+#define  USB_FS_EDGE_SEL    (1 << 6)
+#define  USB_DM_PULLUP_EN   (1 << 5)
+#define  USB_DP_RPU2_ENB    (1 << 4)
+#define  USB_DP_RPU1_ENB    (1 << 3)
+#define  USB_TX_OEB         (1 << 2)
+#define  USB_TX_DPO         (1 << 1)
+#define  USB_TX_DMO         (1 << 0)
+
 #define GAHBCFG_DMA_EN                (1 << GC_USB_GAHBCFG_DMAEN_LSB)
 #define GAHBCFG_GLB_INTR_EN           (1 << GC_USB_GAHBCFG_GLBLINTRMSK_LSB)
 #define GAHBCFG_HBSTLEN_INCR4         (3 << GC_USB_GAHBCFG_HBSTLEN_LSB)
