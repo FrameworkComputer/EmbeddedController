@@ -115,6 +115,7 @@ const struct fan_t fans[] = {
 	 .rpm_max = 5200,
 	 .ch = 1,
 	 .pgood_gpio = -1,
+	 .enable_gpio = GPIO_FAN_PWR_DIS_L,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
