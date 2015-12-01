@@ -5,9 +5,12 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
+#include "hooks.h"
 #include "pwm.h"
 #include "util.h"
 
+#ifdef CONFIG_PWM
 /**
  * Print status of a PWM channel.
  *
@@ -61,3 +64,12 @@ DECLARE_CONSOLE_COMMAND(pwmduty, cc_pwm_duty,
 			"[channel [<percent> | -1=disable]]",
 			"Get/set PWM duty cycles ",
 			NULL);
+#endif /* CONFIG_PWM */
+
+/* Initialize all PWM pins as functional */
+static void pwm_pin_init(void)
+{
+	gpio_config_module(MODULE_PWM, 1);
+}
+/* HOOK_PRIO_INIT_PWM may be used for chip PWM unit init, so use PRIO + 1 */
+DECLARE_HOOK(HOOK_INIT, pwm_pin_init, HOOK_PRIO_INIT_PWM + 1);

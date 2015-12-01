@@ -170,9 +170,6 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 	enum npcx_mft_clk_src clk_src = mft_channels[ch].clk_src;
 	volatile struct fan_status_t *p_status = fan_status + ch;
 
-	/* Configure pins from GPIOs to FAN */
-	gpio_config_module(MODULE_PWM_FAN, 1);
-
 	/* Setup pwm with fan spec. */
 	pwm_config(pwm_id);
 

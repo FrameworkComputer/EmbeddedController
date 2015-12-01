@@ -62,9 +62,6 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 static void led_init(void)
 {
-	/* Configure GPIOs */
-	gpio_config_module(MODULE_PWM_LED, 1);
-
 	/*
 	 * Enable PWMs and set to 0% duty cycle.  If they're disabled, the LM4
 	 * seems to ground the pins instead of letting them float.

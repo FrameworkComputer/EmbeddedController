@@ -81,9 +81,6 @@ static void pwm_kblight_init(void)
 	const struct pwm_kbd_state *prev;
 	int version, size;
 
-	/* Configure GPIO */
-	gpio_config_module(MODULE_PWM_KBLIGHT, 1);
-
 	prev = (const struct pwm_kbd_state *)
 		system_get_jump_tag(PWMKBD_SYSJUMP_TAG, &version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {

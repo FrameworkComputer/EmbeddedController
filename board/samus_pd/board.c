@@ -62,7 +62,7 @@ static int desired_charge_rate_ma = -1;
 
 /* PWM channels. Must be in the exact same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	{STM32_TIM(15), STM32_TIM_CH(2), 0, GPIO_ILIM_ADJ_PWM, GPIO_ALT_F1},
+	{STM32_TIM(15), STM32_TIM_CH(2), 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -475,6 +475,9 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 
 static int board_update_charge_limit(int charge_ma)
 {
+#ifdef CONFIG_PWM
+	int pwm_duty;
+#endif
 	static int actual_charge_rate_ma = -1;
 
 	desired_charge_rate_ma = charge_ma;
@@ -490,7 +493,7 @@ static int board_update_charge_limit(int charge_ma)
 	actual_charge_rate_ma = charge_ma;
 
 #ifdef CONFIG_PWM
-	int pwm_duty = MA_TO_PWM(charge_ma);
+	pwm_duty = MA_TO_PWM(charge_ma);
 	if (pwm_duty < 0)
 		pwm_duty = 0;
 	else if (pwm_duty > 100)

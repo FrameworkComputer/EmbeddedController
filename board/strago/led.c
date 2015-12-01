@@ -129,9 +129,6 @@ static void strago_led_set_battery(void)
 
 static void led_init(void)
 {
-	/* Configure GPIOs */
-	gpio_config_module(MODULE_PWM_LED, 1);
-
 	/*
 	 * Enable PWMs and set to 0% duty cycle.  If they're disabled,
 	 * seems to ground the pins instead of letting them float.

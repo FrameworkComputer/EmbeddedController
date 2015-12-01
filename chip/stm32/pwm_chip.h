@@ -22,10 +22,6 @@ struct pwm_t {
 	int channel;
 	/* PWM channel flags. See include/pwm.h */
 	uint32_t flags;
-	/* GPIO pin corresponding to the PWM channel */
-	enum gpio_signal pin;
-	/* GPIO alternate function - only needed for STM32F0 family */
-	int gpio_alt_func;
 };
 
 extern const struct pwm_t pwm_channels[];

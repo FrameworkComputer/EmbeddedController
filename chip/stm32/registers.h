@@ -344,7 +344,6 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_ALT_TIM2                0x1
 #define GPIO_ALT_TIM3_4              0x2
 #define GPIO_ALT_TIM9_11             0x3
-#define GPIO_ALT_TIM(x)              (((x) > 5) ? 0x3 : ((x) / 3 + 1))
 #define GPIO_ALT_I2C                 0x4
 #define GPIO_ALT_SPI                 0x5
 #define GPIO_ALT_USART               0x7

@@ -35,21 +35,11 @@ int pwm_get_duty(enum pwm_channel ch)
 static void pwm_configure(enum pwm_channel ch)
 {
 	const struct pwm_t *pwm = pwm_channels + ch;
-	const struct gpio_info *gpio = gpio_list + pwm->pin;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
 	volatile unsigned *ccmr = NULL;
 
 	if (using_pwm[ch])
 		return;
-
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
-	gpio_set_alternate_function(gpio->port, gpio->mask, pwm->gpio_alt_func);
-#elif defined(CHIP_FAMILY_STM32L)
-	gpio_set_alternate_function(gpio->port, gpio->mask,
-				    GPIO_ALT_TIM(pwm->tim.id));
-#else
-#error "GPIO alternate function selection not implemented for chip family."
-#endif
 
 	/* Enable timer */
 	__hw_timer_enable_clock(pwm->tim.id, 1);

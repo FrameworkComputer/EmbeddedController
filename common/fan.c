@@ -439,8 +439,6 @@ static void pwm_fan_init(void)
 	int i;
 	int fan = 0;
 
-	gpio_config_module(MODULE_PWM_FAN, 1);
-
 	for (fan = 0; fan < CONFIG_FANS; fan++)
 		fan_channel_setup(fans[fan].ch, fans[fan].flags);
 
