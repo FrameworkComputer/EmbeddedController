@@ -15,6 +15,8 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "registers.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "task.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -71,11 +73,24 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
+#define VR_PWM_FLAGS (PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_COMPLEMENTARY_OUTPUT)
+
+const struct pwm_t pwm_channels[] = {
+	{STM32_TIM(15), STM32_TIM_CH(1), VR_PWM_FLAGS, 480000},
+	{STM32_TIM(16), STM32_TIM_CH(1), VR_PWM_FLAGS, 480000},
+	{STM32_TIM(17), STM32_TIM_CH(1), VR_PWM_FLAGS, 480000},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
 static void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_TCPC1_INT);
 	gpio_enable_interrupt(GPIO_TCPC2_INT);
 	gpio_enable_interrupt(GPIO_TCPC3_INT);
+
+	pwm_enable(PWM_PD1, 1);
+	pwm_enable(PWM_PD2, 1);
+	pwm_enable(PWM_PD3, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

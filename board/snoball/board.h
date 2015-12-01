@@ -32,6 +32,7 @@
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_PWM
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_WATCHDOG_HELP
 
@@ -69,6 +70,14 @@ enum adc_channel {
 	ADC_TEMP,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
+};
+
+enum pwm_channel {
+	PWM_PD1 = 0,
+	PWM_PD2,
+	PWM_PD3,
+	/* Number of PWM channels */
+	PWM_CH_COUNT
 };
 
 enum board_src_cap {
