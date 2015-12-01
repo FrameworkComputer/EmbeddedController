@@ -35,16 +35,21 @@ int pwm_get_duty(enum pwm_channel ch);
 /**
  * PWM output signal is inverted, so 100% duty means always low
  */
-#define PWM_CONFIG_ACTIVE_LOW   (1 << 0)
+#define PWM_CONFIG_ACTIVE_LOW		(1 << 0)
 /**
  * PWM channel has a fan controller with a tach input and can auto-adjust
  * its duty cycle to produce a given fan RPM.
  */
-#define PWM_CONFIG_HAS_RPM_MODE (1 << 1)
+#define PWM_CONFIG_HAS_RPM_MODE		(1 << 1)
 /**
  * PWM clock select alternate source.  The actual clock and alternate
  * source are chip dependent.
  */
-#define PWM_CONFIG_ALT_CLOCK    (1 << 2)
+#define PWM_CONFIG_ALT_CLOCK		(1 << 2)
+/**
+ * PWM channel has a complementary output signal which should be enabled in
+ * addition to the primary output.
+ */
+#define PWM_CONFIG_COMPLEMENTARY_OUTPUT	(1 << 3)
 
 #endif  /* __CROS_EC_PWM_H */

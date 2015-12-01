@@ -37,6 +37,9 @@ static void pwm_configure(enum pwm_channel ch)
 	const struct pwm_t *pwm = pwm_channels + ch;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
 	volatile unsigned *ccmr = NULL;
+	/* Default frequency = 100 Hz */
+	int frequency = pwm->frequency ? pwm->frequency : 100;
+	uint16_t ccer;
 
 	if (using_pwm[ch])
 		return;
@@ -54,7 +57,7 @@ static void pwm_configure(enum pwm_channel ch)
 	 *
 	 *     frequency = cpu_freq / (cpu_freq/10000 + 1) / (99 + 1) = 100 Hz.
 	 */
-	tim->psc = clock_get_freq() / 10000 - 1;
+	tim->psc = clock_get_freq() / (frequency * 100) - 1;
 	tim->arr = 99;
 
 	if (pwm->channel <= 2) /* Channel ID starts from 1 */
@@ -70,9 +73,15 @@ static void pwm_configure(enum pwm_channel ch)
 
 	/* Output enable. Set active high/low. */
 	if (pwm->flags & PWM_CONFIG_ACTIVE_LOW)
-		tim->ccer = 3 << (pwm->channel * 4 - 4);
+		ccer = 3 << (pwm->channel * 4 - 4);
 	else
-		tim->ccer = 1 << (pwm->channel * 4 - 4);
+		ccer = 1 << (pwm->channel * 4 - 4);
+
+	/* Enable complementary output, if present. */
+	if (pwm->flags & PWM_CONFIG_COMPLEMENTARY_OUTPUT)
+		ccer |= (ccer << 2);
+
+	tim->ccer = ccer;
 
 	/*
 	 * Main output enable.

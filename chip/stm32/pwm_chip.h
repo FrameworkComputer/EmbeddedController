@@ -22,6 +22,8 @@ struct pwm_t {
 	int channel;
 	/* PWM channel flags. See include/pwm.h */
 	uint32_t flags;
+	/* PWM frequency (Hz) */
+	int frequency;
 };
 
 extern const struct pwm_t pwm_channels[];
