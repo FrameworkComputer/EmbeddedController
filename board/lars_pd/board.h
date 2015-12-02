@@ -61,7 +61,7 @@
 #define CONFIG_UART_TX_BUF_SIZE 128
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
-#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_VBUS
 #define CONFIG_USBC_VCONN
@@ -104,10 +104,8 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_C1_CC1_PD = 0,
-	ADC_C0_CC1_PD,
+	ADC_C0_CC1_PD = 0,
 	ADC_C0_CC2_PD,
-	ADC_C1_CC2_PD,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
