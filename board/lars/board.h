@@ -8,6 +8,12 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/*
+ * Allow dangerous commands.
+ * TODO: Remove this config before production.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* Optional features */
 #define CONFIG_ADC
 #define CONFIG_ALS
@@ -45,6 +51,7 @@
 #define ISL9237_C2_PSYS_GAIN_0_36 (100000000ul / (CHARGER_PSYS_RESISTOR * 36))
 
 #define CONFIG_CHIPSET_SKYLAKE
+#define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_CLOCK_CRYSTAL
 #undef  CONFIG_DEBUG_ASSERT
 #define CONFIG_EXTPOWER_GPIO
@@ -101,10 +108,12 @@
 #define CONFIG_TEMP_SENSOR_TMP432
 
 /*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
+ * Enable 1 slot of secure temporary storage to support
+ * suspend/resume with read/write memory training.
  */
-#define CONFIG_SYSTEM_UNLOCKED
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 #define CONFIG_WATCHDOG_HELP
 
 /* I2C ports */

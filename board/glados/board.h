@@ -8,6 +8,12 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/*
+ * Allow dangerous commands.
+ * TODO(shawnn): Remove this config before production.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* Optional features */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_KX022
@@ -37,6 +43,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 
 #define CONFIG_CHIPSET_SKYLAKE
+#define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HOSTCMD_PD
@@ -93,10 +100,12 @@
 #define CONFIG_THERMISTOR_NCP15WB
 
 /*
- * Allow dangerous commands.
- * TODO(shawnn): Remove this config before production.
+ * Enable 1 slot of secure temporary storage to support
+ * suspend/resume with read/write memory training.
  */
-#define CONFIG_SYSTEM_UNLOCKED
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 #define CONFIG_WATCHDOG_HELP
 
 #define CONFIG_WIRELESS
@@ -136,7 +145,7 @@
 #undef CONFIG_CONSOLE_CMDHELP
 
 #undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 14
+#define DEFERRABLE_MAX_COUNT 15
 
 #ifndef __ASSEMBLER__
 
