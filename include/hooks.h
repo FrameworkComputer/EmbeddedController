@@ -109,6 +109,13 @@ enum hook_type {
 	HOOK_CHIPSET_SHUTDOWN,
 
 	/*
+	 * System reset in S0.  All rails are still up.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_RESET,
+
+	/*
 	 * AC power plugged in or removed.
 	 *
 	 * Hook routines are called from the TICK task.

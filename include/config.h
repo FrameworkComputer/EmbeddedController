@@ -482,6 +482,9 @@
 /* Enable additional chipset debugging */
 #undef CONFIG_CHIPSET_DEBUG
 
+/* Enable chipset reset hook, requires a deferrable function */
+#undef CONFIG_CHIPSET_RESET_HOOK
+
 /* Support power rail control */
 #define CONFIG_CHIPSET_HAS_PP1350
 #define CONFIG_CHIPSET_HAS_PP5000

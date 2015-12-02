@@ -327,6 +327,14 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static void lpc_chipset_reset(void)
+{
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(lpc_chipset_reset);
+#endif
+
 void girq19_interrupt(void)
 {
 	/* Check interrupt result for LRESET# trigger */
@@ -337,6 +345,11 @@ void girq19_interrupt(void)
 		} else {
 			/* Store port 80 reset event */
 			port_80_write(PORT_80_EVENT_RESET);
+
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+			/* Notify HOOK_CHIPSET_RESET */
+			hook_call_deferred(lpc_chipset_reset, MSEC);
+#endif
 		}
 
 		CPRINTS("LPC RESET# %sasserted",

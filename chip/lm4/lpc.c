@@ -578,6 +578,14 @@ static void handle_host_write(int is_cmd)
 	host_command_received(&host_cmd_args);
 }
 
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static void lpc_chipset_reset(void)
+{
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(lpc_chipset_reset);
+#endif
+
 /**
  * LPC interrupt handler
  */
@@ -646,6 +654,11 @@ void lpc_interrupt(void)
 			 */
 			for (i = 0; i < 8; i++)
 				LM4_LPC_ST(i) &= ~LM4_LPC_ST_FRMH;
+
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+			/* Notify HOOK_CHIPSET_RESET */
+			hook_call_deferred(lpc_chipset_reset, MSEC);
+#endif
 		}
 
 		CPRINTS("LPC RESET# %sasserted",

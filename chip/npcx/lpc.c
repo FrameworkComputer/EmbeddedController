@@ -729,6 +729,20 @@ void lpc_host_register_init(void)
 
 }
 
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static void lpc_chipset_reset(void)
+{
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(lpc_chipset_reset);
+#endif
+
+int lpc_get_pltrst_asserted(void)
+{
+	/* Read current PLTRST status */
+	return (NPCX_MSWCTL1 & 0x04) ? 1 : 0;
+}
+
 /* Initialize host settings by interrupt */
 void lpc_lreset_pltrst_handler(void)
 {
@@ -741,12 +755,13 @@ void lpc_lreset_pltrst_handler(void)
 	 * won't be reset by Host domain reset but Core domain does.
 	 */
 	lpc_host_register_init();
-}
 
-int lpc_get_pltrst_asserted(void)
-{
-	/* Read current PLTRST status */
-	return (NPCX_MSWCTL1 & 0x04) ? 1 : 0;
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+	if (lpc_get_pltrst_asserted()) {
+		/* Notify HOOK_CHIPSET_RESET */
+		hook_call_deferred(lpc_chipset_reset, MSEC);
+	}
+#endif
 }
 
 static void lpc_init(void)
