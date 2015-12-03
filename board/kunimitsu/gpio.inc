@@ -97,8 +97,8 @@ GPIO(PVT_CS0,               PIN(146), GPIO_ODR_HIGH)
 GPIO(SYS_RESET_L,           PIN(121), GPIO_ODR_HIGH)
 
 GPIO(NC_150,                PIN(150), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(CHARGE_LED1,           PIN(155), GPIO_OUT_HIGH)
-GPIO(CHARGE_LED2,           PIN(156), GPIO_OUT_HIGH)
+GPIO(CHARGE_LED1,           PIN(155), GPIO_OUT_LOW)
+GPIO(CHARGE_LED2,           PIN(156), GPIO_OUT_LOW)
 
 /* Alternate functions GPIO definitions */
 
