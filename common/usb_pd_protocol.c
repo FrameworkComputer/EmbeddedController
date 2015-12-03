@@ -2533,9 +2533,11 @@ void pd_task(void)
 			}
 		}
 
-		/* Check for disconnection */
+		/* Check for disconnection if we're connected */
+		if (!pd_is_connected(port))
+			continue;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-		if (!pd_is_connected(port) || pd_is_power_swapping(port))
+		if (pd_is_power_swapping(port))
 			continue;
 #endif
 		if (pd[port].power_role == PD_ROLE_SOURCE) {
