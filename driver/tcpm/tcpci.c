@@ -173,7 +173,8 @@ int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 	int reg = TCPC_REG_TX_DATA;
 	int rv, cnt = 4*PD_HEADER_CNT(header);
 
-	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt);
+	/* TX_BYTE_CNT includes 2 bytes for message header */
+	rv = tcpc_write(port, TCPC_REG_TX_BYTE_CNT, cnt + 2);
 
 	rv |= tcpc_write16(port, TCPC_REG_TX_HDR, header);
 
