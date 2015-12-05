@@ -50,12 +50,20 @@
  */
 #define I2C_WAIT_BLOCKING_TIMEOUT_US 25
 
+enum i2c_transaction_state {
+	/* Stop condition was sent in previous transaction */
+	I2C_TRANSACTION_STOPPED,
+	/* Stop condition was not sent in previous transaction */
+	I2C_TRANSACTION_OPEN,
+};
+
 /* I2C controller state data */
 struct {
 	/* Transaction timeout, or 0 to use default. */
 	uint32_t timeout_us;
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
 	volatile task_id_t task_waiting;
+	enum i2c_transaction_state transaction_state;
 } cdata[I2C_CONTROLLER_COUNT];
 
 static void configure_controller_speed(int controller, int kbps)
@@ -118,6 +126,8 @@ static void reset_controller(int controller)
 	for (i = 0; i < i2c_ports_used; ++i)
 		if (controller == i2c_port_to_controller(i2c_ports[i].port)) {
 			configure_controller(controller, i2c_ports[i].kbps);
+			cdata[controller].transaction_state =
+				I2C_TRANSACTION_STOPPED;
 			break;
 		}
 }
@@ -234,11 +244,13 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	select_port(port);
 	controller = i2c_port_to_controller(port);
-	if (send_start)
+	if (send_start &&
+	    cdata[controller].transaction_state == I2C_TRANSACTION_STOPPED)
 		wait_idle(controller);
 
 	reg = MEC1322_I2C_STATUS(controller);
 	if (send_start &&
+	    cdata[controller].transaction_state == I2C_TRANSACTION_STOPPED &&
 	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
 			    (get_line_level(controller)
 			    != I2C_LINE_IDLE))) {
@@ -268,6 +280,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
 						       CTRL_ENI | CTRL_ACK |
 						       CTRL_STA;
+			cdata[controller].transaction_state =
+				I2C_TRANSACTION_OPEN;
 		}
 
 		for (i = 0; i < out_size; ++i) {
@@ -287,6 +301,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		if (send_stop && in_size == 0) {
 			MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
 						       CTRL_STO | CTRL_ACK;
+			cdata[controller].transaction_state =
+				I2C_TRANSACTION_STOPPED;
 		}
 	}
 
@@ -294,7 +310,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		/* Resend start bit when changing direction */
 		if (out_size || send_start) {
 			/* Repeated start case */
-			if (out_size)
+			if (cdata[controller].transaction_state ==
+			    I2C_TRANSACTION_OPEN)
 				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
 							       CTRL_STA |
 							       CTRL_ACK |
@@ -304,12 +321,16 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 						     | 0x01;
 
 			/* New transaction case, clock out slave address. */
-			if (!out_size)
+			if (cdata[controller].transaction_state ==
+			    I2C_TRANSACTION_STOPPED)
 				MEC1322_I2C_CTRL(controller) = CTRL_ESO |
 							       CTRL_STA |
 							       CTRL_ACK |
 							       CTRL_ENI |
 							       CTRL_PIN;
+
+			cdata[controller].transaction_state =
+				I2C_TRANSACTION_OPEN;
 
 			/* Skip over the dummy byte */
 			skip = 1;
@@ -345,6 +366,9 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 			MEC1322_I2C_CTRL(controller) =
 				CTRL_PIN | CTRL_ESO | CTRL_ACK | CTRL_STO;
 
+			cdata[controller].transaction_state =
+				I2C_TRANSACTION_STOPPED;
+
 			/*
 			 * We need to know our stop point two bytes in
 			 * advance. If we don't know soon enough, we need
@@ -365,6 +389,7 @@ err_chip_i2c_xfer:
 	/* Send STOP and return error */
 	MEC1322_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
 				       CTRL_STO | CTRL_ACK;
+	cdata[controller].transaction_state = I2C_TRANSACTION_STOPPED;
 	if (ret_done == STS_LRB)
 		return EC_ERROR_BUSY;
 	else if (ret_done == EC_ERROR_TIMEOUT) {
@@ -453,6 +478,7 @@ static void i2c_init(void)
 		}
 		configure_controller(controller, i2c_ports[i].kbps);
 		cdata[controller].task_waiting = TASK_ID_INVALID;
+		cdata[controller].transaction_state = I2C_TRANSACTION_STOPPED;
 
 		/* Use default timeout. */
 		i2c_set_timeout(i2c_ports[i].port, 0);
