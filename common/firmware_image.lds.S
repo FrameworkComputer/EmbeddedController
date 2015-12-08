@@ -48,6 +48,11 @@ and RW images at different Flash offset */
 #endif
         *(.image.RW)
     } > FLASH =0xff
+#ifdef CONFIG_RW_B_MEM_OFF
+    .image.RW_B : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_B_MEM_OFF) {
+        *(.image.RW_B)
+    } > FLASH =0xff
+#endif
     .padding : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE - 1) {
         BYTE(0xff);
     } > FLASH =0xff

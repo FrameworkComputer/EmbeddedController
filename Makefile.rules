@@ -33,6 +33,7 @@ silent_err = $(if $(V),,2>/dev/null)
 
 # commands to build all targets
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) $< -o $@
+cmd_lds_b = $(cmd_lds) -DRW_B_LDS
 # Allow obj_to_bin to be overridden by board or chip specific commands
 cmd_obj_to_bin ?= $(OBJCOPY) --gap-fill=0xff -O binary $^ $(out)/$*.bin.tmp
 cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
@@ -185,6 +186,9 @@ $(out)/firmware_image.lds: common/firmware_image.lds.S
 	$(call quiet,lds,LDS    )
 $(out)/%.lds: core/$(CORE)/ec.lds.S
 	$(call quiet,lds,LDS    )
+
+$(out)/%_B.lds: core/$(CORE)/ec.lds.S
+	$(call quiet,lds_b,LDS_B  )
 
 $(out)/%.bin: $(out)/%.obj
 	$(call quiet,obj_to_bin,OBJCOPY)

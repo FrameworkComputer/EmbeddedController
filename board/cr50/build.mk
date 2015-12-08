@@ -51,6 +51,7 @@ CFLAGS += -DUSER_MIN_HASH_STATE_SIZE=210
 # Add dependencies on that library
 $(out)/RO/ec.RO.elf: $(out)/tpm2/libtpm2.a
 $(out)/RW/ec.RW.elf: $(out)/tpm2/libtpm2.a
+$(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a
 
 # Force the external build each time, so it can look for changed sources.
 .PHONY: $(out)/tpm2/libtpm2.a

@@ -104,4 +104,5 @@ enum usb_strings {
  * TODO(vbendeb): remove this before finalizing the code.
  */
 #define CONFIG_DEBUG_STACK_OVERFLOW
+#define CONFIG_RW_B
 #endif /* __CROS_EC_BOARD_H */

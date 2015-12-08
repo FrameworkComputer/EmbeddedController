@@ -68,4 +68,8 @@ endif
 $(out)/RO/ec.RO.flat: $(out)/util/signer
 $(out)/RW/ec.RW.flat: $(out)/util/signer
 
-$(out)/%.hex: $(out)/%.flat
+%.hex: %.flat
+
+ifneq ($(CONFIG_RW_B),)
+$(out)/$(PROJECT).obj: $(out)/RW/ec.RW_B.flat
+endif

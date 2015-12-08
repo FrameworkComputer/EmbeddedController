@@ -850,6 +850,11 @@
 #undef CONFIG_RO_SIZE
 
 #undef CONFIG_RW_MEM_OFF
+/* Some targets include two RW sections in the image. */
+#undef CONFIG_RW_B
+/* This is the offset of the second RW section into the flash. */
+#undef CONFIG_RW_B_MEM_OFF
+
 /* Offset relative to CONFIG_EC_WRITABLE_STORAGE_OFF */
 #undef CONFIG_RW_STORAGE_OFF
 #undef CONFIG_RW_SIZE

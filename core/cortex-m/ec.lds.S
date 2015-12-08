@@ -5,7 +5,11 @@
 #include "config.h"
 #include "rsa.h"
 
+#ifdef RW_B_LDS
+#define FW_MEM_OFF_(section) CONFIG_##section##_B_MEM_OFF
+#else
 #define FW_MEM_OFF_(section) CONFIG_##section##_MEM_OFF
+#endif
 #define FW_MEM_OFF(section) (FW_MEM_OFF_(section))
 #define FW_OFF(section) (CONFIG_PROGRAM_MEMORY_BASE + FW_MEM_OFF(section))
 
