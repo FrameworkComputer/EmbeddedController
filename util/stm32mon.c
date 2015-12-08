@@ -13,7 +13,8 @@
  */
 
 /* use cfmakeraw() */
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE /* Newer glibc */
+#define _BSD_SOURCE     /* Older glibc */
 
 #include <arpa/inet.h>
 #include <errno.h>
