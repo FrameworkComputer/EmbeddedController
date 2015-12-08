@@ -1,19 +1,22 @@
-#!/usr/bin/python2
 # Copyright 2015 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """EC-3PO EC Interpreter
 
 interpreter provides the interpretation layer between the EC UART and the user.
-It recives commands through its command pipe, formats the commands for the EC,
+It receives commands through its command pipe, formats the commands for the EC,
 and sends the command to the EC.  It also presents data from the EC to either be
 displayed via the interactive console interface, or some other consumer.  It
 additionally supports automatic command retrying if the EC drops a character in
 a command.
 """
+
 from __future__ import print_function
+
 import binascii
-from chromite.lib import cros_logging as logging
+# pylint: disable=cros-logging-import
+import logging
 import os
 import Queue
 import select
@@ -35,6 +38,7 @@ class Interpreter(object):
   formation of commands for EC images which support that.
 
   Attributes:
+    logger: A logger for this module.
     ec_uart_pty: A string representing the EC UART to connect to.
     cmd_pipe: A multiprocessing.Connection object which represents the
       Interpreter side of the command pipe.  This must be a bidirectional pipe.
@@ -75,6 +79,7 @@ class Interpreter(object):
       log_level: An optional integer representing the numeric value of the log
         level.  By default, the log level will be logging.INFO (20).
     """
+    self.logger = logging.getLogger('EC3PO.Interpreter')
     self.ec_uart_pty = open(ec_uart_pty, 'a+')
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
@@ -115,7 +120,7 @@ class Interpreter(object):
       command: A string which contains the command to be sent.
     """
     self.ec_cmd_queue.put(command)
-    logging.debug('Commands now in queue: %d', self.ec_cmd_queue.qsize())
+    self.logger.debug('Commands now in queue: %d', self.ec_cmd_queue.qsize())
     # Add the EC UART as an output to be serviced.
     self.outputs.append(self.ec_uart_pty)
 
@@ -176,7 +181,7 @@ class Interpreter(object):
     # Check for interrogation command.
     if command == EC_SYN:
       # User is requesting interrogation.  Send SYN as is.
-      logging.debug('User requesting interrogation.')
+      self.logger.debug('User requesting interrogation.')
       self.interrogating = True
       # Assume the EC isn't enhanced until we get a response.
       self.enhanced_ec = False
@@ -186,22 +191,22 @@ class Interpreter(object):
       # TODO(aaboagye): Make a dict of commands and keys and eventually,
       # handle partial matching based on unique prefixes.
 
-    logging.debug('command: \'%s\'', command)
+    self.logger.debug('command: \'%s\'', command)
     self.EnqueueCmd(command)
 
   def HandleCmdRetries(self):
     """Attempts to retry commands if possible."""
     if self.cmd_retries > 0:
       # The EC encountered an error.  We'll have to retry again.
-      logging.warning('Retrying command...')
+      self.logger.warning('Retrying command...')
       self.cmd_retries -= 1
-      logging.warning('Retries remaining: %d', self.cmd_retries)
+      self.logger.warning('Retries remaining: %d', self.cmd_retries)
       # Retry the command and add the EC UART to the writers again.
       self.EnqueueCmd(self.last_cmd)
       self.outputs.append(self.ec_uart_pty)
     else:
       # We're out of retries, so just give up.
-      logging.error('Command failed.  No retries left.')
+      self.logger.error('Command failed.  No retries left.')
       # Clear the command in progress.
       self.last_cmd = ''
       # Reset the retry count.
@@ -222,7 +227,7 @@ class Interpreter(object):
     # Send the command.
     self.ec_uart_pty.write(cmd)
     self.ec_uart_pty.flush()
-    logging.debug('Sent command to EC.')
+    self.logger.debug('Sent command to EC.')
 
     if self.enhanced_ec and cmd != EC_SYN:
       # Now, that we've sent the command, store the current command as the last
@@ -237,13 +242,13 @@ class Interpreter(object):
 
   def HandleECData(self):
     """Handle any debug prints from the EC."""
-    logging.debug('EC has data')
+    self.logger.debug('EC has data')
     # Read what the EC sent us.
     data = os.read(self.ec_uart_pty.fileno(), EC_MAX_READ)
-    logging.debug('got: \'%s\'', binascii.hexlify(data))
+    self.logger.debug('got: \'%s\'', binascii.hexlify(data))
     if '&E' in data and self.enhanced_ec:
       # We received an error, so we should retry it if possible.
-      logging.warning('Error string found in data.')
+      self.logger.warning('Error string found in data.')
       self.HandleCmdRetries()
       return
 
@@ -252,18 +257,18 @@ class Interpreter(object):
     if self.interrogating:
       self.enhanced_ec = data == EC_ACK
       if self.enhanced_ec:
-        logging.debug('The current EC image seems enhanced.')
+        self.logger.debug('The current EC image seems enhanced.')
       else:
-        logging.debug('The current EC image does NOT seem enhanced.')
+        self.logger.debug('The current EC image does NOT seem enhanced.')
       # Done interrogating.
       self.interrogating = False
     # For now, just forward everything the EC sends us.
-    logging.debug('Forwarding to user...')
+    self.logger.debug('Forwarding to user...')
     self.dbg_pipe.send(data)
 
   def HandleUserData(self):
     """Handle any incoming commands from the user."""
-    logging.debug('Command data available.  Begin processing.')
+    self.logger.debug('Command data available.  Begin processing.')
     data = self.cmd_pipe.recv()
     # Process the command.
     self.ProcessCommand(data)

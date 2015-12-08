@@ -2,9 +2,13 @@
 # Copyright 2015 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Unit tests for the EC-3PO interpreter."""
+
 from __future__ import print_function
-from chromite.lib import cros_logging as logging
+
+# pylint: disable=cros-logging-import
+import logging
 import mock
 import multiprocessing
 import tempfile
