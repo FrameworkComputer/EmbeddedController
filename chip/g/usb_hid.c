@@ -114,7 +114,7 @@ static void hid_reset(void)
 	GR_USB_DIEPCTL(USB_EP_HID) = DXEPCTL_MPS(HID_REPORT_SIZE) |
 				     DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_INT |
 				     DXEPCTL_TXFNUM(USB_EP_HID);
-	GR_USB_DAINTMSK |= (1<<USB_EP_HID);
+	GR_USB_DAINTMSK |= DAINT_INEP(USB_EP_HID);
 }
 
 USB_DECLARE_EP(USB_EP_HID, hid_tx, hid_tx, hid_reset);
@@ -160,7 +160,7 @@ static int command_hid(int argc, char **argv)
 
 	/* press then release the key */
 	set_keyboard_report((uint32_t)keycode << 16);
-	udelay(50000);
+	udelay(50 * MSEC);
 	set_keyboard_report(0x000000);
 
 	return EC_SUCCESS;
