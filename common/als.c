@@ -8,10 +8,12 @@
  */
 
 #include "als.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -77,8 +79,20 @@ static void als_task_disable(void)
 	task_timeout = -1;
 }
 
+static void als_task_init(void)
+{
+	/*
+	 * Enable ALS task in S0 only and may need to re-enable
+	 * when sysjumped.
+	 */
+	if (system_jumped_to_this_image() &&
+		chipset_in_state(CHIPSET_STATE_ON))
+		als_task_enable();
+}
+
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, als_task_enable, HOOK_PRIO_ALS_INIT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, als_task_disable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, als_task_init, HOOK_PRIO_ALS_INIT);
 
 /*****************************************************************************/
 /* Console commands */
