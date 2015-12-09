@@ -19,8 +19,11 @@ root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.append(os.path.join(root_dir, '..', '..', 'build', 'tpm_test'))
 
 import crypto_test
-import hash_test
 import ftdi_spi_tpm
+import hash_test
+import rsa_test
+import subcmd
+
 
 # Extension command for dcypto testing
 EXT_CMD = 0xbaccd00a
@@ -133,7 +136,9 @@ if __name__ == '__main__':
 
     crypto_test.crypto_tests(t, os.path.join(root_dir, 'crypto_test.xml'))
     hash_test.hash_test(t)
-  except (TpmError, crypto_test.CryptoError, hash_test.HashError) as e:
+    rsa_test.rsa_test(t)
+  except (TpmError, crypto_test.CryptoError, hash_test.HashError,
+          rsa_test.RSAError) as e:
     print()
     print('Error:', e)
     if debug_needed:

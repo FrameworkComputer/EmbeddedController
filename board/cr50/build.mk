@@ -34,6 +34,7 @@ board-y += tpm2/aes.o
 board-y += tpm2/hash.o
 board-y += tpm2/hash_data.o
 board-y += tpm2/platform.o
+board-y += tpm2/rsa.o
 board-y += tpm2/stubs.o
 
 # Build and link with an external library

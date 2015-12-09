@@ -8,3 +8,4 @@
 # Keep these codes in sync with include/extension.h.
 AES = 0
 HASH = 1
+RSA = 2

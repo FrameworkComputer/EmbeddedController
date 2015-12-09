@@ -33,21 +33,6 @@ UINT16 _cpri__CompleteHMAC(
   return -1;
 }
 
-CRYPT_RESULT _cpri__DecryptRSA(
-  UINT32 * dOutSize,            //   OUT: the size of the decrypted data
-  BYTE * dOut,                  //   OUT: the decrypted data
-  RSA_KEY * key,                //   IN: the key to use for decryption
-  TPM_ALG_ID padType,           //   IN: the type of padding
-  UINT32 cInSize,               //   IN: the amount of data to decrypt
-  BYTE * cIn,                   //   IN: the data to decrypt
-  TPM_ALG_ID hashAlg,           //   IN: in case this is needed for the scheme
-  const char *label             //   IN: in case it is needed for the scheme
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
 CRYPT_RESULT _cpri__DrbgGetPutState(
   GET_PUT direction,
   int bufferSize,
@@ -103,21 +88,6 @@ CRYPT_RESULT _cpri__EccPointMultiply(
   // curve generator
   TPMS_ECC_POINT * Qin,         //   IN: point Q
   TPM2B_ECC_PARAMETER * uIn     //   IN: scalar value for the multiplier of Q
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
-CRYPT_RESULT _cpri__EncryptRSA(
-  UINT32 * cOutSize,            //   OUT: the size of the encrypted data
-  BYTE * cOut,                  //   OUT: the encrypted data
-  RSA_KEY * key,                //   IN: the key to use for encryption
-  TPM_ALG_ID padType,           //   IN: the type of padding
-  UINT32 dInSize,               //   IN: the amount of data to encrypt
-  BYTE * dIn,                   //   IN: the data to encrypt
-  TPM_ALG_ID hashAlg,           //   IN: in case this is needed
-  const char *label             //   IN: in case it is needed
   )
 {
   ecprintf("%s called\n", __func__);
@@ -246,20 +216,6 @@ CRYPT_RESULT _cpri__SignEcc(
   return CRYPT_FAIL;
 }
 
-CRYPT_RESULT _cpri__SignRSA(
-  UINT32 * sigOutSize,          //   OUT: size of signature
-  BYTE * sigOut,                //   OUT: signature
-  RSA_KEY * key,                //   IN: key to use
-  TPM_ALG_ID scheme,            //   IN: the scheme to use
-  TPM_ALG_ID hashAlg,           //   IN: hash algorithm for PKSC1v1_5
-  UINT32 hInSize,               //   IN: size of digest to be signed
-  BYTE * hIn                    //   IN: digest buffer
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
 UINT16 _cpri__StartHMAC(
   TPM_ALG_ID hashAlg,           //   IN: the algorithm to use
   BOOL sequence,                //   IN: indicates if the state should be saved
@@ -323,21 +279,6 @@ CRYPT_RESULT _cpri__ValidateSignatureEcc(
   // signature process
   TPMS_ECC_POINT * Qin,         //   IN: the public point of the key
   TPM2B * digest                //   IN: the digest that was signed
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
-CRYPT_RESULT _cpri__ValidateSignatureRSA(
-  RSA_KEY * key,                //   IN:   key to use
-  TPM_ALG_ID scheme,            //   IN:   the scheme to use
-  TPM_ALG_ID hashAlg,           //   IN:   hash algorithm
-  UINT32 hInSize,               //   IN:   size of digest to be checked
-  BYTE * hIn,                   //   IN:   digest buffer
-  UINT32 sigInSize,             //   IN:   size of signature
-  BYTE * sigIn,                 //   IN:   signature
-  UINT16 saltSize               //   IN:   salt size for PSS
   )
 {
   ecprintf("%s called\n", __func__);

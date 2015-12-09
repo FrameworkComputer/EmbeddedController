@@ -12,6 +12,9 @@
 #include "sha1.h"
 #include "sha256.h"
 
+/*
+ * SHA.
+ */
 #define CTRL_CTR_BIG_ENDIAN (__BYTE_ORDER__  == __ORDER_BIG_ENDIAN__)
 #define CTRL_ENABLE         1
 #define CTRL_ENCRYPT        1
@@ -78,5 +81,28 @@ void dcrypto_sha_init(enum sha_mode mode);
 void dcrypto_sha_update(struct HASH_CTX *unused,
 			const uint8_t *data, uint32_t n);
 void dcrypto_sha_wait(enum sha_mode mode, uint32_t *digest);
+
+/*
+ * BIGNUM.
+ */
+#define BN_BITS2        32
+#define BN_BYTES        4
+
+struct BIGNUM {
+	uint32_t dmax;            /* Size of d, in 32-bit words. */
+	uint32_t *d;              /* Word array, little endian format ... */
+};
+
+void bn_init(struct BIGNUM *bn, void *buf, size_t len);
+#define bn_size(b) ((b)->dmax * BN_BYTES)
+int bn_check_topbit(const struct BIGNUM *N);
+void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
+		const struct BIGNUM *exp, const struct BIGNUM *N);
+
+/*
+ * Utility functions.
+ */
+/* TODO(ngm): memset that doesn't get optimized out. */
+#define dcrypto_memset(p, b, len)  memset((p), (b), (len))
 
 #endif  /* ! __EC_CHIP_G_DCRYPTO_INTERNAL_H */
