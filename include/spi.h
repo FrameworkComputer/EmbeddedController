@@ -49,7 +49,7 @@ extern const struct spi_device_t spi_devices[];
 extern const unsigned int spi_devices_used;
 
 /*
- * The first port in spi_ports define the port to access the SPI flash.
+ * The first port in spi_devices defines the port to access the SPI flash.
  * The first gpio defines the CS GPIO to access the flash,
  * if used.
  */

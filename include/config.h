@@ -1576,6 +1576,10 @@
 /* SPI master feature */
 #undef CONFIG_SPI_MASTER
 
+/* Support SPI masters without GPIO-specified Chip Selects, instead rely on the
+ * SPI master port's hardwired CS pin. */
+#undef CONFIG_SPI_MASTER_NO_CS_GPIOS
+
 /* Support testing SPI slave controller driver. */
 #undef CONFIG_SPS_TEST
 

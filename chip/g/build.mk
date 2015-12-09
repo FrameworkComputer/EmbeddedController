@@ -29,6 +29,8 @@ chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/sha1.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/sha256.o
 
+chip-$(CONFIG_SPI_MASTER)+=spi_master.o
+
 chip-y+= pmu.o
 chip-y+= trng.o
 chip-$(CONFIG_SPS)+= sps.o
