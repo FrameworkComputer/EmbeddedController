@@ -18,19 +18,41 @@
 	void _EP_RX_HANDLER(num)(void)                            \
 		__attribute__ ((alias(STRINGIFY(rx_handler))));	  \
 	void _EP_RESET_HANDLER(num)(void)                         \
-		__attribute__ ((alias(STRINGIFY(rst_handler))));
+		__attribute__ ((alias(STRINGIFY(rst_handler))))
 
-/* arrays with all endpoint callbacks */
+/* Endpoint callbacks */
 extern void (*usb_ep_tx[]) (void);
 extern void (*usb_ep_rx[]) (void);
 extern void (*usb_ep_reset[]) (void);
-/* array with interface-specific control request callbacks */
-extern int (*usb_iface_request[]) (uint8_t *ep0_buf_rx, uint8_t *ep0_buf_tx);
+struct usb_setup_packet;
+/* EP0 Interface handler callbacks */
+static int (*usb_iface_request[]) (struct usb_setup_packet *req);
 
+/*
+ * Declare any interface-specific control request handlers. These Setup packets
+ * arrive on the control endpoint (EP0), but are handled by the interface code.
+ * The callback must prepare the EP0 IN or OUT FIFOs and return the number of
+ * bytes placed in the IN FIFO. A negative return value will STALL the response
+ * (and thus indicate error to the host).
+ */
 #define _IFACE_HANDLER(num) CONCAT3(iface_, num, _request)
-#define USB_DECLARE_IFACE(num, handler)					\
-	int _IFACE_HANDLER(num)(uint8_t *ep0_buf_rx,			\
-				uint8_t *epo_buf_tx)			\
-	__attribute__ ((alias(STRINGIFY(handler))));
+#define USB_DECLARE_IFACE(num, handler)				\
+	int _IFACE_HANDLER(num)(struct usb_setup_packet *req)	\
+		__attribute__ ((alias(STRINGIFY(handler))))
+
+/*
+ * The interface handler can call this to put <len> bytes into the EP0 TX FIFO
+ * (zero is acceptable). It returns (int)<len> on success, -1 if <len> is too
+ * large.
+ */
+int load_in_fifo(const void *source, uint32_t len);
+
+/*
+ * The interface handler can call this to enable the EP0 RX FIFO to receive
+ * <len> bytes of data for a Control Write request. This is not needed to
+ * prepare for the Status phase of a Control Read. It will return (int)<len> on
+ * success, -1 if <len> is too large.
+ */
+int accept_out_fifo(uint32_t len);
 
 #endif	/* __CROS_EC_USB_HW_H */

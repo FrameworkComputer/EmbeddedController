@@ -244,8 +244,8 @@ const uint8_t usb_string_desc[] = {
 };
 
 /* Descriptors for USB controller S/G DMA */
-struct g_usb_desc ep0_out_desc;
-struct g_usb_desc ep0_in_desc;
+static struct g_usb_desc ep0_out_desc;
+static struct g_usb_desc ep0_in_desc;
 
 /* Control endpoint (EP0) buffers */
 static uint8_t ep0_buf_tx[USB_MAX_PACKET_SIZE];
@@ -256,6 +256,29 @@ static int set_addr;
 static int desc_left;
 /* pointer to descriptor data if any */
 static const uint8_t *desc_ptr;
+
+/* Load the EP0 IN FIFO buffer with some data (zero-length works too). Returns
+ * len, or negative on error. */
+int load_in_fifo(const void *source, uint32_t len)
+{
+	if (len > sizeof(ep0_buf_tx))
+		return -1;
+
+	memcpy(ep0_buf_tx, source, len);
+	ep0_in_desc.flags = DIEPDMA_LAST | DIEPDMA_BS_HOST_RDY |
+		DIEPDMA_IOC | DIEPDMA_TXBYTES(len);
+	GR_USB_DIEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
+
+	return len;
+}
+
+/* Prepare the EP0 OUT FIFO buffer to accept some data. Returns len, or
+ * negative on error. */
+int accept_out_fifo(uint32_t len)
+{
+	/* TODO: This is not yet implemented */
+	return -1;
+}
 
 /*
  * Requests on the control endpoint (aka EP0). The USB spec mandates that all
@@ -282,9 +305,18 @@ static void ep0_rx(void)
 	/* interface specific requests */
 	if ((req->bmRequestType & USB_RECIP_MASK) == USB_RECIP_INTERFACE) {
 		uint8_t iface = req->wIndex & 0xff;
-		if (iface < USB_IFACE_COUNT &&
-		    usb_iface_request[iface](ep0_buf_rx, ep0_buf_tx))
+		int bytes;
+
+		if (iface >= USB_IFACE_COUNT)
 			goto unknown_req;
+
+		bytes = usb_iface_request[iface](req);
+		if (bytes < 0)
+			goto unknown_req;
+
+		ep0_out_desc.flags = DOEPDMA_RXBYTES(64) | DOEPDMA_LAST
+			| DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
+		GR_USB_DOEPCTL(0) |= DXEPCTL_CNAK | DXEPCTL_EPENA;
 		return;
 	}
 
