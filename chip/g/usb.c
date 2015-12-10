@@ -41,20 +41,19 @@
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
+/* This is not defined anywhere else. Change it here to debug. */
+#undef DEBUG_ME
+#ifdef DEBUG_ME
 /*
- * We want to print a bunch of things from within the interrupt handlers, but
- * if we try it'll 1) stop working, and 2) mess up the timing that we're trying
- * to measure. Use this instead to print when we have a chance.
+ * For debugging we want to print a bunch of things from within the interrupt
+ * handlers, but if we try it'll 1) stop working, and 2) mess up the timing
+ * that we're trying to measure. Instead we fill a circular buffer with things
+ * to print when we get the chance. The number of args is fixed (a format
+ * string and five uint32_t args), and will be printed a few at a time in a
+ * HOOK_TICK handler.
+ *
  */
-#if 1
-/* do nothing */
-#define print_later(...)
-#else
-/*
- * Fill a circular buffer with things to print when we get the chance. The
- * number of args is fixed, and there's no rollover detection.
- */
-#define MAX_ENTRIES 512
+#define MAX_ENTRIES 350				/* Chosen arbitrarily */
 static struct {
 	timestamp_t t;
 	const char *fmt;
@@ -77,7 +76,7 @@ void print_later(const char *fmt, int a0, int a1, int a2, int a3, int a4)
 
 	next = (stuff_in + 1) % MAX_ENTRIES;
 	if (next == stuff_out)
-		stuff_overflow = 1;
+		stuff_overflow++;
 	else
 		stuff_in = next;
 }
@@ -95,7 +94,8 @@ static void do_print_later(void)
 	interrupt_enable();
 
 	if (copy_of_overflow)
-		ccprintf("*** WARNING: SOME MESSAGES WERE LOST ***\n");
+		ccprintf("*** WARNING: %d MESSAGES WERE LOST ***\n",
+			 copy_of_overflow);
 
 	while (lines_per_loop && stuff_out != copy_of_stuff_in) {
 		ccprintf("at %.6ld: ", stuff_to_print[stuff_out].t);
@@ -111,7 +111,86 @@ static void do_print_later(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, do_print_later, HOOK_PRIO_DEFAULT);
-#endif
+
+/* Debugging stuff to display some registers and bits */
+static const char const *deezbits[32] = {
+	[0]     = "CURMOD",
+	[1]     = "MODEMIS",
+	[2]     = "OTGINT",
+	[3]     = "SOF",
+	[4]     = "RXFLVL",
+	[6]     = "GINNAKEFF",
+	[7]     = "GOUTNAKEFF",
+	[10]    = "ERLYSUSP",
+	[11]    = "USBSUSP",
+	[12]    = "USBRST",
+	[13]    = "ENUMDONE",
+	[14]    = "ISOOUTDROP",
+	[15]    = "EOPF",
+	[17]    = "EPMIS",
+	[18]    = "IEPINT",
+	[19]    = "OEPINT",
+	[20]    = "INCOMPISOIN",
+	[21]    = "INCOMPLP",
+	[22]    = "FETSUSP",
+	[23]    = "RESETDET",
+	[28]    = "CONIDSTSCHNG",
+	[30]    = "SESSREQINT",
+	[31]    = "WKUPINT",
+};
+
+static void showbits(uint32_t b)
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+		if (b & (1 << i)) {
+			if (deezbits[i])
+				ccprintf(" %s", deezbits[i]);
+			else
+				ccprintf(" %d", i);
+		}
+	ccprintf("\n");
+}
+
+static int command_usb(int argc, char **argv)
+{
+	ccprintf("GINTSTS:   0x%08x\n", GR_USB_GINTSTS);
+	showbits(GR_USB_GINTSTS);
+	ccprintf("GINTMSK:   0x%08x\n", GR_USB_GINTMSK);
+	showbits(GR_USB_GINTMSK);
+	ccprintf("DAINT:     0x%08x\n", GR_USB_DAINT);
+	ccprintf("DAINTMSK:  0x%08x\n", GR_USB_DAINTMSK);
+	ccprintf("DOEPMSK:   0x%08x\n", GR_USB_DOEPMSK);
+	ccprintf("DIEPMSK:   0x%08x\n", GR_USB_DIEPMSK);
+	ccprintf("DCFG:      0x%08x\n", GR_USB_DCFG);
+	ccprintf("DOEPCTL0:  0x%08x\n", GR_USB_DOEPCTL(0));
+	ccprintf("DIEPCTL0:  0x%08x\n", GR_USB_DIEPCTL(0));
+	ccprintf("DOEPCTL1:  0x%08x\n", GR_USB_DOEPCTL(1));
+	ccprintf("DIEPCTL1:  0x%08x\n", GR_USB_DIEPCTL(1));
+	ccprintf("DOEPCTL2:  0x%08x\n", GR_USB_DOEPCTL(2));
+	ccprintf("DIEPCTL2:  0x%08x\n", GR_USB_DIEPCTL(2));
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(usb, command_usb,
+			"",
+			"Show some USB regs",
+			NULL);
+
+/* When debugging, print errors as they occur */
+#define report_error(dummy)					\
+		print_later("USB ERROR at usb.c line %d",	\
+			    __LINE__, 0, 0, 0, 0)
+
+#else  /* Not debugging */
+#define print_later(...)
+
+/* TODO: Something unexpected happened. Figure out how to report & fix it. */
+#define report_error(dummy)						\
+		CPRINTS("Unhandled USB error at %s line %d",		\
+			__FILE__, __LINE__)
+
+#endif	/* DEBUG_ME */
 
 #ifdef CONFIG_USB_BOS
 /* v2.01 (vs 2.00) BOS Descriptor provided */
@@ -125,7 +204,7 @@ DECLARE_HOOK(HOOK_TICK, do_print_later, HOOK_PRIO_DEFAULT);
 #endif
 
 #ifndef CONFIG_USB_BCD_DEV
-#define CONFIG_USB_BCD_DEV 0x0100 /* 1.00 */
+#define CONFIG_USB_BCD_DEV 0x0100		/* 1.00 */
 #endif
 
 /* USB Standard Device Descriptor */
@@ -150,18 +229,18 @@ static const struct usb_device_descriptor dev_desc = {
 const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bLength = USB_DT_CONFIG_SIZE,
 	.bDescriptorType = USB_DT_CONFIGURATION,
-	.wTotalLength = 0x0BAD, /* no of returned bytes, set at runtime */
+	.wTotalLength = 0x0BAD,	 /* number of returned bytes, set at runtime */
 	.bNumInterfaces = USB_IFACE_COUNT,
 	.bConfigurationValue = 1,
 	.iConfiguration = USB_STR_VERSION,
-	.bmAttributes = 0x80, /* bus powered */
-	.bMaxPower = 250, /* MaxPower 500 mA */
+	.bmAttributes = 0x80,			/* bus powered */
+	.bMaxPower = 250,			/* MaxPower 500 mA */
 };
 
 const uint8_t usb_string_desc[] = {
-	4, /* Descriptor size */
+	4,					/* Descriptor size */
 	USB_DT_STRING,
-	0x09, 0x04 /* LangID = 0x0409: U.S. English */
+	0x09, 0x04			    /* LangID = 0x0409: U.S. English */
 };
 
 /* Descriptors for USB controller S/G DMA */
@@ -317,12 +396,11 @@ static void ep0_rx(void)
 			 * hardware for this SoC knows that an IN packet will
 			 * be following the SET ADDRESS, so it waits until it
 			 * sees that happen before the address change takes
-			 * effect. If we wait until after the IN packet to make
-			 * the change, the hardware gets confused and doesn't
-			 * respond to anything.
+			 * effect. If we wait until after the IN packet to
+			 * change the register, the hardware gets confused and
+			 * doesn't respond to anything.
 			 */
-			GR_USB_DCFG = (GR_USB_DCFG & ~DCFG_DEVADDR(0x7f))
-				| DCFG_DEVADDR(set_addr);
+			GWRITE_FIELD(USB, DCFG, DEVADDR, set_addr);
 			print_later("SETAD 0x%02x (%d)",
 				    set_addr, set_addr, 0, 0, 0);
 			/* still need a null IN transaction -> TX Valid */
