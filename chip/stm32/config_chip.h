@@ -27,7 +27,7 @@
 #elif defined(CHIP_VARIANT_STM32F09X)
 /* STM32F09xx */
 #include "config-stm32f09x.h"
-#elif defined(CHIP_VARIANT_STM32F07X)
+#elif defined(CHIP_VARIANT_STM32F07X) || defined(CHIP_VARIANT_STM32F070)
 /* STM32F07xx */
 #include "config-stm32f07x.h"
 #elif defined(CHIP_VARIANT_STM32F05X)

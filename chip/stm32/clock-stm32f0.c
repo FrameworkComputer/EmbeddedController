@@ -247,7 +247,10 @@ static void config_hispeed_clock(void)
 	/* Wait until the PLL is the clock source */
 	while ((STM32_RCC_CFGR & 0xc) != 0x8)
 		;
-#elif defined(CHIP_VARIANT_STM32F05X)
+/* F03X and F05X and F070 don't have HSI48 */
+#elif defined(CHIP_VARIANT_STM32F03X) || \
+defined(CHIP_VARIANT_STM32F05X) || \
+defined(CHIP_VARIANT_STM32F070)
 	/* If PLL is the clock source, PLL has already been set up. */
 	if ((STM32_RCC_CFGR & 0xc) == 0x8)
 		return;
