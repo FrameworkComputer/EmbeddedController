@@ -17,25 +17,8 @@
 #include "usb_descriptor.h"
 #include "watchdog.h"
 
-/* Rev A1 has a RTL bug in the FIFO */
-#if CONCAT2(GC_, GC___MAJOR_REV__) == GC___REVA__
-/*
- * WORKAROUND: only the first 256 entries are usable as TX FIFO
- *
- * Use the last 128 entries for EP_INFO (not affected by the bug)
- * and 256 entries for RX/TX FIFOs : total 384 entries.
- *
- * RX FIFO needs more than 64 entries (for reserved space)
- * set RX FIFO to 80 entries
- * set TX0-TX10 FIFO to 64 bytes = 16 (x 32-bit) entries
- * let TX11-TX15 uninitialized for now (WORKAROUND).
- */
-#define FIFO_SIZE   0x180
-#define TX_FIFO_CNT 11
-#else
-#define FIFO_SIZE   0x400
-#define TX_FIFO_CNT 16
-#endif
+/****************************************************************************/
+/* Debug output */
 
 /* Console output macro */
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
@@ -192,6 +175,9 @@ DECLARE_CONSOLE_COMMAND(usb, command_usb,
 
 #endif	/* DEBUG_ME */
 
+/****************************************************************************/
+/* Standard USB stuff */
+
 #ifdef CONFIG_USB_BOS
 /* v2.01 (vs 2.00) BOS Descriptor provided */
 #define USB_DEV_BCDUSB 0x0201
@@ -243,6 +229,9 @@ const uint8_t usb_string_desc[] = {
 	0x09, 0x04			    /* LangID = 0x0409: U.S. English */
 };
 
+/****************************************************************************/
+/* Packet-handling stuff, specific to this SoC */
+
 /* Descriptors for USB controller S/G DMA */
 static struct g_usb_desc ep0_out_desc;
 static struct g_usb_desc ep0_in_desc;
@@ -256,6 +245,19 @@ static int set_addr;
 static int desc_left;
 /* pointer to descriptor data if any */
 static const uint8_t *desc_ptr;
+
+/* Reset all this to a good starting state. */
+static void initialize_dma_buffers(void)
+{
+	ep0_out_desc.flags = DOEPDMA_RXBYTES(64) | DOEPDMA_LAST |
+			     DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
+	ep0_out_desc.addr = ep0_buf_rx;
+	ep0_in_desc.flags = DIEPDMA_TXBYTES(0) | DIEPDMA_LAST |
+			    DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC;
+	ep0_in_desc.addr = ep0_buf_tx;
+	GR_USB_DIEPDMA(0) = (uint32_t)&ep0_in_desc;
+	GR_USB_DOEPDMA(0) = (uint32_t)&ep0_out_desc;
+}
 
 /* Load the EP0 IN FIFO buffer with some data (zero-length works too). Returns
  * len, or negative on error. */
@@ -504,45 +506,94 @@ static void ep0_reset(void)
 {
 	/* Reset EP0 address */
 	GWRITE_FIELD(USB, DCFG, DEVADDR, 0);
+	initialize_dma_buffers();
 
-	ep0_out_desc.flags = DOEPDMA_RXBYTES(64) | DOEPDMA_LAST |
-			     DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
-	ep0_out_desc.addr = ep0_buf_rx;
-	ep0_in_desc.flags = DIEPDMA_TXBYTES(0) | DIEPDMA_LAST |
-			    DIEPDMA_BS_HOST_RDY | DIEPDMA_IOC;
-	ep0_in_desc.addr = ep0_buf_tx;
-	GR_USB_DIEPDMA(0) = (uint32_t)&ep0_in_desc;
-	GR_USB_DOEPDMA(0) = (uint32_t)&ep0_out_desc;
 	GR_USB_DOEPCTL(0) = DXEPCTL_MPS64 | DXEPCTL_USBACTEP |
 			    DXEPCTL_EPTYPE_CTRL |
 			    DXEPCTL_CNAK | DXEPCTL_EPENA;
 	GR_USB_DIEPCTL(0) = DXEPCTL_MPS64 | DXEPCTL_USBACTEP |
 			    DXEPCTL_EPTYPE_CTRL;
 	GR_USB_DAINTMSK = DAINT_OUTEP(0) | DAINT_INEP(0);
+
 }
 USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_reset);
 
+/****************************************************************************/
+/* USB device initialization and shutdown routines */
+
+/*
+ * DATA FIFO Setup. There is an internal SPRAM used to buffer the IN/OUT
+ * packets and track related state without hammering the AHB and system RAM
+ * during USB transactions. We have to specify where and how much of that SPRAM
+ * to use for what.
+ *
+ * See Programmer's Guide chapter 2, "Calculating FIFO Size".
+ * We're using Dedicated TxFIFO Operation, without enabling thresholding.
+ *
+ * Section 2.1.1.2, page 30: RXFIFO size is the same as for Shared FIFO, which
+ * is Section 2.1.1.1, page 28. This is also the same as Method 2 on page 45.
+ *
+ * We support up to 3 control EPs, no periodic IN EPs, up to 16 TX EPs. Max
+ * data packet size is 64 bytes. Total SPRAM available is 1024 slots.
+ */
+#define MAX_CONTROL_EPS   3
+#define MAX_NORMAL_EPS    16
+#define FIFO_RAM_DEPTH    1024
+/*
+ * Device RX FIFO size is thus:
+ *   (4 * 3 + 6) + 2 * ((64 / 4) + 1) + (2 * 16) + 1 == 85
+ */
+#define RXFIFO_SIZE  ((4 * MAX_CONTROL_EPS + 6) + \
+		      2 * ((USB_MAX_PACKET_SIZE / 4) + 1) + \
+		      (2 * MAX_NORMAL_EPS) + 1)
+/*
+ * Device TX FIFO size is 2 * (64 / 4) == 32 for each IN EP (Page 46).
+ */
+#define TXFIFO_SIZE  (2 * (USB_MAX_PACKET_SIZE / 4))
+/*
+ * We need 4 slots per endpoint direction for endpoint status stuff (Table 2-1,
+ * unconfigurable).
+ */
+#define EP_STATUS_SIZE (4 * MAX_NORMAL_EPS * 2)
+/*
+ * Make sure all that fits.
+ */
+BUILD_ASSERT(RXFIFO_SIZE + TXFIFO_SIZE * MAX_NORMAL_EPS + EP_STATUS_SIZE <
+	     FIFO_RAM_DEPTH);
+
+/* Now put those constants into the correct registers */
 static void setup_data_fifos(void)
 {
 	int i;
 
 	print_later("setup_data_fifos()", 0, 0, 0, 0, 0);
 
+	/* Programmer's Guide, p31 */
+	GR_USB_GRXFSIZ = RXFIFO_SIZE;			      /* RXFIFO */
+	GR_USB_GNPTXFSIZ = (TXFIFO_SIZE << 16) | RXFIFO_SIZE; /* TXFIFO 0 */
+
+	/* TXFIFO 1..15 */
+	for (i = 1; i < MAX_NORMAL_EPS; i++)
+		GR_USB_DIEPTXF(i) = ((TXFIFO_SIZE << 16) |
+				     (RXFIFO_SIZE + i * TXFIFO_SIZE));
+
 	/*
-	 * Setup FIFOs configuration
-	 * RX FIFO needs more than 64 entries (for reserved space)
-	 * set RX FIFO to 80 entries
-	 * set TX FIFO to 64 bytes = 16 (x 32-bit) entries
+	 * TODO: The Programmer's Guide is confusing about when or whether to
+	 * flush the FIFOs. Section 2.1.1.2 (p31) just says to flush. Section
+	 * 2.2.2 (p55) says to stop all the FIFOs first, then flush. Section
+	 * 7.5.4 (p162) says that flushing the RXFIFO at reset is not
+	 * recommended at all.
+	 *
+	 * I'm also unclear on whether or not the individual EPs are expected
+	 * to be disabled already (DIEPCTLn/DOEPCTLn.EPENA == 0), and if so,
+	 * whether by firmware or hardware.
 	 */
-	GR_USB_GRXFSIZ = 80;
-	GR_USB_GNPTXFSIZ = 80 | (16 << 16);
-	for (i = 1; i < TX_FIFO_CNT; i++)
-		GR_USB_DIEPTXF(i) = (80 + i*16) | (16 << 16);
-	/* Flush all FIFOs */
+
+	/* Flush all FIFOs according to Section 2.1.1.2 */
 	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH
-					      | GRSTCTL_RXFFLSH;
+		| GRSTCTL_RXFFLSH;
 	while (GR_USB_GRSTCTL & (GRSTCTL_TXFFLSH | GRSTCTL_RXFFLSH))
-		; /* timeout 100ms */
+		;				/* TODO: timeout 100ms */
 }
 
 static void usb_reset(void)
