@@ -522,6 +522,29 @@ static void ep0_reset(void)
 }
 USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_reset);
 
+static void setup_data_fifos(void)
+{
+	int i;
+
+	print_later("setup_data_fifos()", 0, 0, 0, 0, 0);
+
+	/*
+	 * Setup FIFOs configuration
+	 * RX FIFO needs more than 64 entries (for reserved space)
+	 * set RX FIFO to 80 entries
+	 * set TX FIFO to 64 bytes = 16 (x 32-bit) entries
+	 */
+	GR_USB_GRXFSIZ = 80;
+	GR_USB_GNPTXFSIZ = 80 | (16 << 16);
+	for (i = 1; i < TX_FIFO_CNT; i++)
+		GR_USB_DIEPTXF(i) = (80 + i*16) | (16 << 16);
+	/* Flush all FIFOs */
+	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH
+					      | GRSTCTL_RXFFLSH;
+	while (GR_USB_GRSTCTL & (GRSTCTL_TXFFLSH | GRSTCTL_RXFFLSH))
+		; /* timeout 100ms */
+}
+
 static void usb_reset(void)
 {
 	int ep;
@@ -651,8 +674,8 @@ void usb_init(void)
 
 	print_later("usb_init()", 0, 0, 0, 0, 0);
 
-	/* TODO(wfrichar): Clean this up. Do only what's needed, and use
-	 * meaningful constants of magic numbers. */
+	/* TODO(crosbug.com/p/46813): Clean this up. Do only what's needed, and
+	 * use meaningful constants instead of magic numbers. */
 	GREG32(GLOBALSEC, DDMA0_REGION0_CTRL) = 0xffffffff;
 	GREG32(GLOBALSEC, DDMA0_REGION1_CTRL) = 0xffffffff;
 	GREG32(GLOBALSEC, DDMA0_REGION2_CTRL) = 0xffffffff;
@@ -665,11 +688,14 @@ void usb_init(void)
 	/* Enable clocks */
 	clock_enable_module(MODULE_USB, 1);
 
-	/* set up pinmux */
+	/* TODO(crbug.com/496888): set up pinmux */
 	gpio_config_module(MODULE_USB, 1);
 
-	/* Use the last 128 entries of the FIFO for EP INFO */
-	GR_USB_GDFIFOCFG = ((FIFO_SIZE - 0x80) << 16) | FIFO_SIZE;
+	/* Make sure interrupts are disabled */
+	GR_USB_GINTMSK = 0;
+	GR_USB_DAINTMSK = 0;
+	GR_USB_DIEPMSK = 0;
+	GR_USB_DOEPMSK = 0;
 
 	/* Select the correct PHY */
 	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG,
@@ -689,16 +715,9 @@ void usb_init(void)
 		| GUSBCFG_USBTRDTIM(14);
 
 	/* Global + DMA configuration */
+	/* TODO: What about the AHB Burst Length Field? It's 0 now. */
 	GR_USB_GAHBCFG = GAHBCFG_DMA_EN | GAHBCFG_GLB_INTR_EN |
 			 GAHBCFG_NP_TXF_EMP_LVL;
-
-	/* unmask subset of endpoint interrupts */
-	GR_USB_DIEPMSK = DIEPMSK_TIMEOUTMSK | DIEPMSK_AHBERRMSK |
-			 DIEPMSK_EPDISBLDMSK | DIEPMSK_XFERCOMPLMSK |
-			 DIEPMSK_INTKNEPMISMSK;
-	GR_USB_DOEPMSK = DOEPMSK_SETUPMSK | DOEPMSK_AHBERRMSK |
-			 DOEPMSK_EPDISBLDMSK | DOEPMSK_XFERCOMPLMSK;
-	GR_USB_DAINTMSK = 0;
 
 	/* Be in disconnected state until we are ready */
 	usb_disconnect();
@@ -706,30 +725,8 @@ void usb_init(void)
 	/* Max speed: USB2 FS */
 	GR_USB_DCFG = DCFG_DEVSPD_FS48 | DCFG_DESCDMA;
 
-	/* clear pending interrupts */
-	GR_USB_GINTSTS = 0xFFFFFFFF;
-
-	/*
-	 * Setup FIFOs configuration
-	 * RX FIFO needs more than 64 entries (for reserved space)
-	 * set RX FIFO to 80 entries
-	 * set TX FIFO to 64 bytes = 16 (x 32-bit) entries
-	 */
-	GR_USB_GRXFSIZ = 80;
-	GR_USB_GNPTXFSIZ = 80 | (16 << 16);
-	for (i = 1; i < TX_FIFO_CNT; i++)
-		GR_USB_DIEPTXF(i) = (80 + i*16) | (16 << 16);
-	/* Flush all FIFOs */
-	GR_USB_GRSTCTL = GRSTCTL_TXFNUM(0x10) | GRSTCTL_TXFFLSH
-					      | GRSTCTL_RXFFLSH;
-	while (GR_USB_GRSTCTL & (GRSTCTL_TXFFLSH | GRSTCTL_RXFFLSH))
-		; /* timeout 100ms */
-
-	/* Initialize endpoints */
-	for (i = 0; i < 16; i++) {
-		GR_USB_DIEPCTL(i) = 0x00/* TODO  */;
-		GR_USB_DOEPCTL(i) = 0x00/* TODO */;
-	}
+	/* Setup FIFO configuration */
+	 setup_data_fifos();
 
 	/* Device registers have been setup */
 	GR_USB_DCTL |= DCTL_PWRONPRGDONE;
@@ -739,9 +736,22 @@ void usb_init(void)
 	/* Clear global NAKs */
 	GR_USB_DCTL |= DCTL_CGOUTNAK | DCTL_CGNPINNAK;
 
+	/* Clear any pending interrupts */
+	for (i = 0; i < 16; i++) {
+		GR_USB_DIEPINT(i) = 0xffffffff;
+		GR_USB_DOEPINT(i) = 0xffffffff;
+	}
+	GR_USB_GINTSTS = 0xFFFFFFFF;
+
+	/* Unmask some endpoint interrupt causes */
+	GR_USB_DIEPMSK = DIEPMSK_EPDISBLDMSK | DIEPMSK_XFERCOMPLMSK;
+	GR_USB_DOEPMSK = DOEPMSK_EPDISBLDMSK | DOEPMSK_XFERCOMPLMSK |
+		DOEPMSK_SETUPMSK;
+
 	/* Enable interrupt handlers */
 	task_enable_irq(GC_IRQNUM_USB0_USBINTR);
-	/* set interrupts mask : reset/correct tranfer/errors */
+
+	/* Allow USB interrupts to come in */
 	GR_USB_GINTMSK =
 		/* NAK bits that must be cleared by the DCTL register */
 		GINTMSK(GOUTNAKEFF) | GINTMSK(GINNAKEFF) |
@@ -755,6 +765,7 @@ void usb_init(void)
 		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP);
 
 #ifndef CONFIG_USB_INHIBIT_CONNECT
+	/* Indicate our presence to the USB host */
 	usb_connect();
 #endif
 
