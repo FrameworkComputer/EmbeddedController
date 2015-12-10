@@ -36,7 +36,8 @@ struct flash_wp_state {
  */
 int flash_physical_read(int offset, int size, char *data)
 {
-	int ret, i, read_size;
+	int ret = EC_SUCCESS;
+	int i, read_size;
 
 	for (i = 0; i < size; i += read_size) {
 		read_size = MIN((size - i), SPI_FLASH_MAX_READ_SIZE);
@@ -63,7 +64,8 @@ int flash_physical_read(int offset, int size, char *data)
  */
 int flash_physical_write(int offset, int size, const char *data)
 {
-	int ret, i, write_size;
+	int ret = EC_SUCCESS;
+	int  i, write_size;
 
 	if (entire_flash_locked)
 		return EC_ERROR_ACCESS_DENIED;
