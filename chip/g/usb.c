@@ -502,7 +502,8 @@ static void ep0_tx(void)
 
 static void ep0_reset(void)
 {
-	print_later("X", 0, 0, 0, 0, 0);
+	/* Reset EP0 address */
+	GWRITE_FIELD(USB, DCFG, DEVADDR, 0);
 
 	ep0_out_desc.flags = DOEPDMA_RXBYTES(64) | DOEPDMA_LAST |
 			     DOEPDMA_BS_HOST_RDY | DOEPDMA_IOC;
@@ -517,7 +518,7 @@ static void ep0_reset(void)
 			    DXEPCTL_CNAK | DXEPCTL_EPENA;
 	GR_USB_DIEPCTL(0) = DXEPCTL_MPS64 | DXEPCTL_USBACTEP |
 			    DXEPCTL_EPTYPE_CTRL;
-	GR_USB_DAINTMSK = (1<<0) | (1 << (0+16)); /* EPO interrupts */
+	GR_USB_DAINTMSK = DAINT_OUTEP(0) | DAINT_INEP(0);
 }
 USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_reset);
 
@@ -525,30 +526,67 @@ static void usb_reset(void)
 {
 	int ep;
 
+	print_later("usb_reset()", 0, 0, 0, 0, 0);
+
 	for (ep = 0; ep < USB_EP_COUNT; ep++)
 		usb_ep_reset[ep]();
+}
 
-	/*
-	 * set the default address : 0
-	 * as we are not configured yet
-	 */
-	GR_USB_DCFG &= ~DCFG_DEVADDR(0x7f);
+static void usb_enumdone(void)
+{
+	print_later("usb_enumdone()", 0, 0, 0, 0, 0);
+}
+
+static void usb_wakeup(void)
+{
+	print_later("usb_wakeup()", 0, 0, 0, 0, 0);
+}
+
+static void usb_early_suspend(void)
+{
+	print_later("usb_early_suspend()", 0, 0, 0, 0, 0);
+}
+static void usb_suspend(void)
+{
+	print_later("usb_suspend()", 0, 0, 0, 0, 0);
 }
 
 void usb_interrupt(void)
 {
 	uint32_t status = GR_USB_GINTSTS;
+	uint32_t oepint = status & GINTSTS(OEPINT);
+	uint32_t iepint = status & GINTSTS(IEPINT);
+
+	int ep;
+
+	print_later("interrupt: GINTSTS 0x%08x", status, 0, 0, 0, 0);
+
+	if (status & GINTSTS(RESETDET))
+		usb_wakeup();
+
+	if (status & GINTSTS(ERLYSUSP))
+		usb_early_suspend();
+
+	if (status & GINTSTS(USBSUSP))
+		usb_suspend();
 
 	if (status & GINTSTS(USBRST))
 		usb_reset();
 
-	if (status & (GINTSTS(OEPINT) | GINTSTS(IEPINT))) {
+	if (status & GINTSTS(ENUMDONE))
+		usb_enumdone();
+
+	/* Endpoint interrupts */
+	if (oepint || iepint) {
+		/* Note: It seems that the DAINT bits are only trustworthy for
+		 * identifying interrupts when selected by the corresponding
+		 * OEPINT and IEPINT bits from GINTSTS. */
 		uint32_t daint = GR_USB_DAINT;
-		int ep;
-		for (ep = 0; ep < USB_EP_COUNT && daint; ep++, daint >>= 1) {
-			if (daint & (1 << 16)) /* OUT packet */
+
+		for (ep = 0; ep < USB_EP_COUNT; ep++) {
+			if (oepint && (daint & DAINT_OUTEP(ep)))
 				usb_ep_rx[ep]();
-			if (daint & 1) /* IN packet */
+			if (iepint && (daint & DAINT_INEP(ep)))
 				usb_ep_tx[ep]();
 		}
 	}
@@ -559,8 +597,9 @@ void usb_interrupt(void)
 	if (status & GINTSTS(GINNAKEFF))
 		GR_USB_DCTL = DCTL_CGNPINNAK;
 
-	/* ack interrupts */
 	GR_USB_GINTSTS = status;
+
+	print_later("end of interrupt", 0, 0, 0, 0, 0);
 }
 DECLARE_IRQ(GC_IRQNUM_USB0_USBINTR, usb_interrupt, 1);
 
@@ -584,15 +623,18 @@ static void usb_softreset(void)
 		CPRINTF("USB: reset timeout\n");
 		return;
 	}
+	/* TODO: Wait 3 PHY clocks before returning */
 }
 
 void usb_connect(void)
 {
+	print_later("usb_connect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL &= ~DCTL_SFTDISCON;
 }
 
 void usb_disconnect(void)
 {
+	print_later("usb_disconnect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL |= DCTL_SFTDISCON;
 }
 
@@ -606,6 +648,8 @@ void usb_init(void)
 		CPRINTF("This FPGA image has no USB support\n");
 		return;
 	}
+
+	print_later("usb_init()", 0, 0, 0, 0, 0);
 
 	/* TODO(wfrichar): Clean this up. Do only what's needed, and use
 	 * meaningful constants of magic numbers. */
@@ -656,8 +700,8 @@ void usb_init(void)
 			 DOEPMSK_EPDISBLDMSK | DOEPMSK_XFERCOMPLMSK;
 	GR_USB_DAINTMSK = 0;
 
-	/* Be in disconnected state we are ready */
-	GR_USB_DCTL |= DCTL_SFTDISCON;
+	/* Be in disconnected state until we are ready */
+	usb_disconnect();
 
 	/* Max speed: USB2 FS */
 	GR_USB_DCFG = DCFG_DEVSPD_FS48 | DCFG_DESCDMA;
@@ -698,15 +742,23 @@ void usb_init(void)
 	/* Enable interrupt handlers */
 	task_enable_irq(GC_IRQNUM_USB0_USBINTR);
 	/* set interrupts mask : reset/correct tranfer/errors */
-	GR_USB_GINTMSK = GINTSTS(GOUTNAKEFF) | GINTSTS(GINNAKEFF) |
-			 GINTSTS(USBRST) | GINTSTS(ENUMDONE) |
-			 GINTSTS(OEPINT) | GINTSTS(IEPINT);
+	GR_USB_GINTMSK =
+		/* NAK bits that must be cleared by the DCTL register */
+		GINTMSK(GOUTNAKEFF) | GINTMSK(GINNAKEFF) |
+		/* Initialization events */
+		GINTMSK(USBRST) | GINTMSK(ENUMDONE) |
+		/* Endpoint activity, cleared by the DOEPINT/DIEPINT regs */
+		GINTMSK(OEPINT) | GINTMSK(IEPINT) |
+		/* Reset detected while suspended. Need to wake up. */
+		GINTMSK(RESETDET) |
+		/* Idle, Suspend detected. Should go to sleep. */
+		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP);
 
 #ifndef CONFIG_USB_INHIBIT_CONNECT
 	usb_connect();
 #endif
 
-	print_later("USB init done", 0, 0, 0, 0, 0);
+	print_later("usb_init() done", 0, 0, 0, 0, 0);
 }
 #ifndef CONFIG_USB_INHIBIT_INIT
 DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
