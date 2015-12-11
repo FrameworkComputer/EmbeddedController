@@ -96,37 +96,27 @@ static uint32_t __bss_slow post_scan_clock_us;
 static int __bss_slow print_state_changes;
 
 /* Must init to 0 for scanning at boot */
-static int __bss_slow disable_scanning_mask;
+static volatile uint32_t __bss_slow disable_scanning_mask;
 
 /* Constantly incrementing counter of the number of times we polled */
 static volatile int kbd_polls;
 
 static int keyboard_scan_is_enabled(void)
 {
+	/* NOTE: this is just an instantaneous glimpse of the variable. */
 	return !disable_scanning_mask;
 }
 
 void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 {
-	int old_disable_scanning = disable_scanning_mask;
+	/* Access atomically */
+	if (enable)
+		atomic_clear((uint32_t *)&disable_scanning_mask, mask);
+	else
+		atomic_or((uint32_t *)&disable_scanning_mask, mask);
 
-	disable_scanning_mask = enable ? (disable_scanning_mask & ~mask) :
-					 (disable_scanning_mask | mask);
-
-	if (disable_scanning_mask != old_disable_scanning)
-		CPRINTS("KB disable_scanning_mask changed: 0x%08x",
-				disable_scanning_mask);
-
-	if (old_disable_scanning && !disable_scanning_mask) {
-		/*
-		 * Scanning is being enabled, so wake up the scanning task to
-		 * unlock the task_wait_event() loop after enable_interrupt().
-		 */
-		task_wake(TASK_ID_KEYSCAN);
-	} else if (disable_scanning_mask && !old_disable_scanning) {
-		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
-		keyboard_clear_buffer();
-	}
+	/* Let the task figure things out */
+	task_wake(TASK_ID_KEYSCAN);
 }
 
 /**
@@ -622,6 +612,7 @@ void keyboard_scan_task(void)
 {
 	timestamp_t poll_deadline, start;
 	int wait_time;
+	uint32_t local_disable_scanning = 0;
 
 	print_state(debounced_state, "init state");
 
@@ -633,22 +624,51 @@ void keyboard_scan_task(void)
 	while (1) {
 		/* Enable all outputs */
 		CPRINTS("KB wait");
-		if (keyboard_scan_is_enabled())
-			keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+
 		keyboard_raw_enable_interrupt(1);
 
 		/* Wait for scanning enabled and key pressed. */
-		do {
+		while (1) {
+			uint32_t new_disable_scanning;
+
+			/* Read it once to get consistent glimpse */
+			new_disable_scanning = disable_scanning_mask;
+
+			if (local_disable_scanning != new_disable_scanning)
+				CPRINTS("KB disable_scanning_mask changed: "
+					"0x%08x", new_disable_scanning);
+
+			if (!new_disable_scanning) {
+				/* Enabled now */
+				keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+			} else if (!local_disable_scanning) {
+				/*
+				 * Scanning isn't enabled but it was last time
+				 * we looked.
+				 *
+				 * No race here even though we're basing on a
+				 * glimpse of disable_scanning_mask since if
+				 * someone changes disable_scanning_mask they
+				 * are guaranteed to call task_wake() on us
+				 * afterward so we'll run the loop again.
+				 */
+				keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+				keyboard_clear_buffer();
+			}
+
+			local_disable_scanning = new_disable_scanning;
+
 			/*
-			 * Don't wait if scanning is enabled and a key is
+			 * Done waiting if scanning is enabled and a key is
 			 * already pressed.  This prevents a race between the
 			 * user pressing a key and enable_interrupt()
 			 * starting to pay attention to edges.
 			 */
-			if (!keyboard_raw_read_rows() ||
-					!keyboard_scan_is_enabled())
+			if (!local_disable_scanning && keyboard_raw_read_rows())
+				break;
+			else
 				task_wait_event(-1);
-		} while (!keyboard_scan_is_enabled());
+		}
 
 		/* Enter polling mode */
 		CPRINTS("KB poll");
