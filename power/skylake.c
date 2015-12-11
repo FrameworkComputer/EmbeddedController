@@ -205,7 +205,7 @@ static enum power_state _power_handle_state(enum power_state state)
 
 		/* Return to G3 if battery level is too low */
 		if (charge_want_shutdown() ||
-		    tries == CHARGER_INITIALIZED_TRIES) {
+		    tries > CHARGER_INITIALIZED_TRIES) {
 			CPRINTS("power-up inhibited");
 			chipset_force_shutdown();
 			return POWER_G3;
