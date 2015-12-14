@@ -264,12 +264,28 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
+	uint32_t int_mask = get_int_mask();
+
+	/* critical section with interrupts off */
+	interrupt_disable();
 	if (value)
 		IT83XX_GPIO_DATA(gpio_list[signal].port) |=
 				 gpio_list[signal].mask;
 	else
 		IT83XX_GPIO_DATA(gpio_list[signal].port) &=
 				~gpio_list[signal].mask;
+	/* restore interrupts */
+	set_int_mask(int_mask);
+}
+
+void gpio_kbs_pin_gpio_mode(uint32_t port, uint32_t mask, uint32_t flags)
+{
+	if (port == GPIO_KSO_H)
+		IT83XX_KBS_KSOHGCTRL |= mask;
+	else if (port == GPIO_KSO_L)
+		IT83XX_KBS_KSOLGCTRL |= mask;
+	else if (port == GPIO_KSI)
+		IT83XX_KBS_KSIGCTRL |= mask;
 }
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
@@ -410,8 +426,12 @@ void gpio_pre_init(void)
 		if (is_warm)
 			flags &= ~(GPIO_LOW | GPIO_HIGH);
 
-		/* Set up GPIO based on flags */
-		gpio_set_flags_by_mask(g->port, g->mask, flags);
+		if (g->port > GPIO_KBS_OFF)
+			/* KSO/KSI pins to GPIO mode (input only). */
+			gpio_kbs_pin_gpio_mode(g->port, g->mask, flags);
+		else
+			/* Set up GPIO based on flags */
+			gpio_set_flags_by_mask(g->port, g->mask, flags);
 	}
 }
 

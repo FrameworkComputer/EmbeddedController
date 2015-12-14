@@ -38,6 +38,11 @@ GPIO(UART2_SIN1,     PIN(H, 1), GPIO_INPUT)
 GPIO(UART2_SOUT1,    PIN(H, 2), GPIO_INPUT)
 #endif
 
+/* KSO/KSI pins can be used as GPIO input. */
+GPIO(BOARD_VERSION1, PIN(KSO_H, 5), GPIO_INPUT)
+GPIO(BOARD_VERSION2, PIN(KSO_H, 6), GPIO_INPUT)
+GPIO(BOARD_VERSION3, PIN(KSO_H, 7), GPIO_INPUT)
+
 /* Unimplemented signals which we need to emulate for now */
 UNIMPLEMENTED(ENTERING_RW)
 
