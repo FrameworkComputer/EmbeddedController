@@ -572,8 +572,6 @@ static void lpc_init(void)
 	 */
 	IT83XX_GCTRL_MCCR2 |= 0x10;
 
-	IT83XX_GPIO_GCR = 0x06;
-
 	/* The register pair to access PNPCFG is 004Eh and 004Fh */
 	IT83XX_GCTRL_BADRSEL = 0x01;
 

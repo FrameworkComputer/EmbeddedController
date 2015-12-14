@@ -395,6 +395,8 @@ void gpio_pre_init(void)
 	int flags;
 	int i;
 
+	IT83XX_GPIO_GCR = 0x06;
+
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		flags = g->flags;
 
