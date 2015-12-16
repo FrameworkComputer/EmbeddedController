@@ -89,7 +89,7 @@ __task_start:
 	movi55 $r0, 0    /* syscall 1st parameter : de-schedule nothing */
 
 	/* put the dummy stack pointer at the top of the stack in scratchpad */
-	addi $sp, $r3, 4 * 16
+	addi $sp, $r3, 4 * 18
 	/* we are ready to re-schedule */
 	swi.gp  $r4, [ + need_resched]
 

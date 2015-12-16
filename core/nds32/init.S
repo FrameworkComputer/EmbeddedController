@@ -20,13 +20,13 @@ __entry_\()\name:
 	smw.adm $r15, [$sp], $r15, 0xb
 	/* r0-r5 are caller saved */
 	smw.adm $r0,  [$sp], $r5, 0
-	/* isr entry */
-	jal start_irq_handler
 	/* switch to system stack if we are called from process stack */
 	la $r3, stack_end
 	mov55 $fp, $sp
 	slt45 $r3, $sp /* if sp > end of system stack, then r15 = 1 and */
 	cmovn $sp, $r3, $r15 /* point sp to the top of the system stack */
+	/* isr entry */
+	jal start_irq_handler
 	/* C routine handler */
 	jal \name\()_handler
 	/* check whether we need to change the scheduled task */

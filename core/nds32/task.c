@@ -145,9 +145,9 @@ uint8_t task_stacks[0
 
 /* Reserve space to discard context on first context switch. */
 #ifdef CONFIG_FPU
-uint32_t scratchpad[17+18];
+uint32_t scratchpad[19+18];
 #else
-uint32_t scratchpad[17];
+uint32_t scratchpad[19];
 #endif
 
 task_ *current_task = (task_ *)scratchpad;
