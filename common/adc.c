@@ -11,6 +11,8 @@
 #include "console.h"
 #include "util.h"
 
+/* 'adc' console command is not supported in continuous mode */
+#ifndef CONFIG_ADC_PROFILE_FAST_CONTINUOUS
 static enum adc_channel find_adc_channel_by_name(const char *name)
 {
 	const struct adc_t *ch = adc_channels;
@@ -55,3 +57,4 @@ DECLARE_CONSOLE_COMMAND(adc, command_adc,
 			"[name]",
 			"Print ADC channel(s)",
 			NULL);
+#endif

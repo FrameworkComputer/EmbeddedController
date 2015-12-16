@@ -848,12 +848,55 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_ISR              REG32(STM32_ADC1_BASE + 0x00)
 #define STM32_ADC_ISR_ADRDY        (1 << 0)
 #define STM32_ADC_IER              REG32(STM32_ADC1_BASE + 0x04)
+#define STM32_ADC_IER_AWDIE        (1 << 7)
+#define STM32_ADC_IER_OVRIE        (1 << 4)
+#define STM32_ADC_IER_EOSEQIE      (1 << 3)
+#define STM32_ADC_IER_EOCIE        (1 << 2)
+#define STM32_ADC_IER_EOSMPIE      (1 << 1)
+#define STM32_ADC_IER_ADRDYIE      (1 << 0)
+
 #define STM32_ADC_CR               REG32(STM32_ADC1_BASE + 0x08)
 #define STM32_ADC_CR_ADEN          (1 << 0)
 #define STM32_ADC_CR_ADCAL         (1 << 31)
 #define STM32_ADC_CFGR1            REG32(STM32_ADC1_BASE + 0x0C)
+/* Analog watchdog channel selection */
+#define STM32_ADC_CFGR1_AWDCH_MASK (0x1f << 26)
+#define STM32_ADC_CFGR1_AWDEN      (1 << 23)
+#define STM32_ADC_CFGR1_AWDSGL     (1 << 22)
+/* Selects single vs continuous */
+#define STM32_ADC_CFGR1_CONT       (1 << 13)
+/* Selects ADC_DR overwrite vs preserve */
+#define STM32_ADC_CFGR1_OVRMOD     (1 << 12)
+/* External trigger polarity selection */
+#define STM32_ADC_CFGR1_EXTEN_DIS  (0 << 10)
+#define STM32_ADC_CFGR1_EXTEN_RISE (1 << 10)
+#define STM32_ADC_CFGR1_EXTEN_FALL (2 << 10)
+#define STM32_ADC_CFGR1_EXTEN_BOTH (3 << 10)
+#define STM32_ADC_CFGR1_EXTEN_MASK (3 << 10)
+/* External trigger selection */
+#define STM32_ADC_CFGR1_TRG0	   (0 << 6)
+#define STM32_ADC_CFGR1_TRG1	   (1 << 6)
+#define STM32_ADC_CFGR1_TRG2	   (2 << 6)
+#define STM32_ADC_CFGR1_TRG3	   (3 << 6)
+#define STM32_ADC_CFGR1_TRG4	   (4 << 6)
+#define STM32_ADC_CFGR1_TRG5	   (5 << 6)
+#define STM32_ADC_CFGR1_TRG6	   (6 << 6)
+#define STM32_ADC_CFGR1_TRG7	   (7 << 6)
+#define STM32_ADC_CFGR1_TRG_MASK   (7 << 6)
+/* Selects circular vs one-shot */
+#define STM32_ADC_CFGR1_DMACFG     (1 << 1)
+#define STM32_ADC_CFGR1_DMAEN      (1 << 0)
 #define STM32_ADC_CFGR2            REG32(STM32_ADC1_BASE + 0x10)
+/* Sampling time selection - 1.5 ADC cycles min, 239.5 cycles max */
 #define STM32_ADC_SMPR             REG32(STM32_ADC1_BASE + 0x14)
+#define STM32_ADC_SMPR_1_5_CY      0x0
+#define STM32_ADC_SMPR_7_5_CY      0x1
+#define STM32_ADC_SMPR_13_5_CY     0x2
+#define STM32_ADC_SMPR_28_5_CY     0x3
+#define STM32_ADC_SMPR_41_5_CY     0x4
+#define STM32_ADC_SMPR_55_5_CY     0x5
+#define STM32_ADC_SMPR_71_5_CY     0x6
+#define STM32_ADC_SMPR_239_5_CY    0x7
 #define STM32_ADC_TR               REG32(STM32_ADC1_BASE + 0x20)
 #define STM32_ADC_CHSELR           REG32(STM32_ADC1_BASE + 0x28)
 #define STM32_ADC_DR               REG32(STM32_ADC1_BASE + 0x40)

@@ -18,10 +18,56 @@
 
 struct mutex adc_lock;
 
-static const struct dma_option dma_adc_option = {
+struct adc_profile_t {
+	/* Register values. */
+	uint32_t cfgr1_reg;
+	uint32_t cfgr2_reg;
+	uint32_t smpr_reg;
+	uint32_t ier_reg;
+	/* DMA config. */
+	const struct dma_option *dma_option;
+	/* Size of DMA buffer, in units of ADC_CH_COUNT. */
+	int dma_buffer_size;
+};
+
+#ifdef CONFIG_ADC_PROFILE_SINGLE
+static const struct dma_option dma_single = {
 	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
 	STM32_DMA_CCR_MSIZE_32_BIT | STM32_DMA_CCR_PSIZE_32_BIT,
 };
+
+static const struct adc_profile_t profile = {
+	/* Sample all channels once using DMA */
+	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD,
+	.cfgr2_reg = 0,
+	.smpr_reg = STM32_ADC_SMPR_13_5_CY,
+	.ier_reg = 0,
+	.dma_option = &dma_single,
+	.dma_buffer_size = 1,
+};
+#endif
+
+#ifdef CONFIG_ADC_PROFILE_FAST_CONTINUOUS
+static const struct dma_option dma_continuous = {
+	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
+	STM32_DMA_CCR_MSIZE_32_BIT | STM32_DMA_CCR_PSIZE_32_BIT |
+	STM32_DMA_CCR_CIRC,
+};
+
+static const struct adc_profile_t profile = {
+	/* Sample all channels continuously using DMA */
+	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD |
+		     STM32_ADC_CFGR1_CONT |
+		     STM32_ADC_CFGR1_DMACFG,
+	.cfgr2_reg = 0,
+	.smpr_reg = STM32_ADC_SMPR_1_5_CY,
+	/* Fire interrupt at end of sequence. */
+	.ier_reg = STM32_ADC_IER_EOSEQIE,
+	.dma_option = &dma_continuous,
+	/* Double-buffer our samples. */
+	.dma_buffer_size = 2,
+};
+#endif
 
 static void adc_configure(int ain_id)
 {
@@ -29,7 +75,7 @@ static void adc_configure(int ain_id)
 	STM32_ADC_CHSELR = 1 << ain_id;
 
 	/* Disable DMA */
-	STM32_ADC_CFGR1 &= ~0x1;
+	STM32_ADC_CFGR1 &= ~STM32_ADC_CFGR1_DMAEN;
 }
 
 #ifdef CONFIG_ADC_WATCHDOG
@@ -42,7 +88,7 @@ static void adc_continuous_read(int ain_id)
 	adc_configure(ain_id);
 
 	/* CONT=1 -> continuous mode on */
-	STM32_ADC_CFGR1 |= 1 << 13;
+	STM32_ADC_CFGR1 |= STM32_ADC_CFGR1_CONT;
 
 	/* Start continuous conversion */
 	STM32_ADC_CR |= 1 << 2; /* ADSTART */
@@ -58,7 +104,7 @@ static void adc_continuous_stop(void)
 		;
 
 	/* CONT=0 -> continuous mode off */
-	STM32_ADC_CFGR1 &= ~(1 << 13);
+	STM32_ADC_CFGR1 &= ~STM32_ADC_CFGR1_CONT;
 }
 
 static void adc_interval_read(int ain_id, int interval_ms)
@@ -66,10 +112,12 @@ static void adc_interval_read(int ain_id, int interval_ms)
 	adc_configure(ain_id);
 
 	/* EXTEN=01 -> hardware trigger detection on rising edge */
-	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~0xc00) | (1 << 10);
+	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~STM32_ADC_CFGR1_EXTEN_MASK)
+		| STM32_ADC_CFGR1_EXTEN_RISE;
 
 	/* EXTSEL=TRG3 -> Trigger on TIM3_TRGO */
-	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~0x1c0) | (3 << 6);
+	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~STM32_ADC_CFGR1_TRG_MASK) |
+		STM32_ADC_CFGR1_TRG3;
 
 	__hw_timer_enable_clock(TIM_ADC, 1);
 
@@ -96,7 +144,7 @@ static void adc_interval_read(int ain_id, int interval_ms)
 static void adc_interval_stop(void)
 {
 	/* EXTEN=00 -> hardware trigger detection disabled */
-	STM32_ADC_CFGR1 &= ~0xc00;
+	STM32_ADC_CFGR1 &= ~STM32_ADC_CFGR1_EXTEN_MASK;
 
 	/* Set ADSTP to clear ADSTART */
 	STM32_ADC_CR |= 1 << 4; /* ADSTP */
@@ -111,22 +159,22 @@ static void adc_interval_stop(void)
 
 static int adc_watchdog_enabled(void)
 {
-	return STM32_ADC_CFGR1 & (1 << 23);
+	return STM32_ADC_CFGR1 & STM32_ADC_CFGR1_AWDEN;
 }
 
 static int adc_enable_watchdog_no_lock(void)
 {
 	/* Select channel */
-	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~0x7c000000) |
+	STM32_ADC_CFGR1 = (STM32_ADC_CFGR1 & ~STM32_ADC_CFGR1_AWDCH_MASK) |
 			  (watchdog_ain_id << 26);
 	adc_configure(watchdog_ain_id);
 
 	/* Clear AWD interupt flag */
 	STM32_ADC_ISR = 0x80;
 	/* Set Watchdog enable bit on a single channel */
-	STM32_ADC_CFGR1 |= (1 << 23) | (1 << 22);
+	STM32_ADC_CFGR1 |= STM32_ADC_CFGR1_AWDEN | STM32_ADC_CFGR1_AWDSGL;
 	/* Enable interrupt */
-	STM32_ADC_IER |= 1 << 7;
+	STM32_ADC_IER |= STM32_ADC_IER_AWDIE;
 
 	if (watchdog_delay_ms)
 		adc_interval_read(watchdog_ain_id, watchdog_delay_ms);
@@ -160,7 +208,7 @@ static int adc_disable_watchdog_no_lock(void)
 		adc_continuous_stop();
 
 	/* Clear Watchdog enable bit */
-	STM32_ADC_CFGR1 &= ~(1 << 23);
+	STM32_ADC_CFGR1 &= ~STM32_ADC_CFGR1_AWDEN;
 
 	return EC_SUCCESS;
 }
@@ -240,14 +288,15 @@ int adc_read_all_channels(int *data)
 {
 	int i;
 	uint32_t channels = 0;
-	uint32_t raw_data[ADC_CH_COUNT];
 	const struct adc_t *adc;
 	int restore_watchdog = 0;
 	int ret = EC_SUCCESS;
+	int blocking_read = !profile.ier_reg;
 
 	mutex_lock(&adc_lock);
 
 	if (adc_watchdog_enabled()) {
+		ASSERT(blocking_read);
 		restore_watchdog = 1;
 		adc_disable_watchdog_no_lock();
 	}
@@ -258,31 +307,41 @@ int adc_read_all_channels(int *data)
 	STM32_ADC_CHSELR = channels;
 
 	/* Enable DMA */
-	STM32_ADC_CFGR1 |= 0x1;
+	STM32_ADC_CFGR1 |= STM32_ADC_CFGR1_DMAEN;
 
 	dma_clear_isr(STM32_DMAC_ADC);
-	dma_start_rx(&dma_adc_option, ADC_CH_COUNT, raw_data);
+	dma_start_rx(profile.dma_option,
+		     profile.dma_buffer_size * ADC_CH_COUNT,
+		     data);
 
 	/* Clear flags */
 	STM32_ADC_ISR = 0xe;
+	/* Enable requested interrupt(s) */
+	STM32_ADC_IER |= profile.ier_reg;
+	if (!blocking_read)
+		task_enable_irq(STM32_IRQ_ADC_COMP);
 
 	STM32_ADC_CR |= 1 << 2; /* ADSTART */
 
-	if (dma_wait(STM32_DMAC_ADC)) {
-		ret = EC_ERROR_UNKNOWN;
-		goto fail; /* goto fail; goto fail; */
-	}
+	if (blocking_read) {
+		if (dma_wait(STM32_DMAC_ADC)) {
+			ret = EC_ERROR_UNKNOWN;
+			goto fail;
+		}
 
-	for (i = 0; i < ADC_CH_COUNT; ++i) {
-		adc = adc_channels + i;
-		data[i] = (raw_data[i] & 0xffff) *
-			   adc->factor_mul / adc->factor_div + adc->shift;
+		for (i = 0; i < ADC_CH_COUNT; ++i) {
+			adc = adc_channels + i;
+			data[i] = (data[i] & 0xffff) *
+				   adc->factor_mul / adc->factor_div +
+				   adc->shift;
+		}
 	}
 
 fail:
 	if (restore_watchdog)
 		adc_enable_watchdog_no_lock();
-	mutex_unlock(&adc_lock);
+	if (blocking_read)
+		mutex_unlock(&adc_lock);
 	return ret;
 }
 
@@ -306,11 +365,11 @@ static void adc_init(void)
 		;
 
 	/* Single conversion, right aligned, 12-bit */
-	STM32_ADC_CFGR1 = 1 << 12; /* (1 << 15) => AUTOOFF */;
+	STM32_ADC_CFGR1 = profile.cfgr1_reg;
 	/* clock is ADCCLK (ADEN must be off when writing this reg) */
-	STM32_ADC_CFGR2 = 0;
-	/* Sampling time : 13.5 ADC clock cycles. */
-	STM32_ADC_SMPR = 2;
+	STM32_ADC_CFGR2 = profile.cfgr2_reg;
+	/* Sampling time */
+	STM32_ADC_SMPR = profile.smpr_reg;
 
 	/*
 	 * ADC enable (note: takes 4 ADC clocks between end of calibration
