@@ -486,6 +486,16 @@ static void board_pmic_init(void)
 	if (ret)
 		goto pmic_error;
 
+	/*
+	 * PBCONFIG Register configuration
+	 *   [7] :      1b Power button debounce, 0ms (no debounce)
+	 *   [6] :      0b Power button reset timer logic, no action (default)
+	 * [5:0] : 011111b Force an Emergency reset time, 31s (default)
+	 */
+	ret = I2C_PMIC_WRITE(TPS650830_REG_PBCONFIG, 0x9F);
+	if (ret)
+		goto pmic_error;
+
 	CPRINTS("PMIC initialization done");
 	return;
 
