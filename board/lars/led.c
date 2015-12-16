@@ -28,6 +28,10 @@
 #define LED_ON_1SEC_TICKS 4
 #define LED_ON_2SECS_TICKS 8
 
+/* LEDs are High Activity */
+#define TURN_ON		1
+#define TURN_OFF	0
+
 enum led_color {
 	LED_OFF = 0,
 	LED_BLUE,
@@ -48,20 +52,20 @@ static int lars_led_set_gpio(enum led_color color,
 {
 	switch (color) {
 	case LED_OFF:
-		gpio_set_level(gpio_led_blue_l,  1);
-		gpio_set_level(gpio_led_amber_l, 1);
+		gpio_set_level(gpio_led_blue_l,  TURN_OFF);
+		gpio_set_level(gpio_led_amber_l, TURN_OFF);
 		break;
 	case LED_BLUE:
-		gpio_set_level(gpio_led_blue_l,  0);
-		gpio_set_level(gpio_led_amber_l, 1);
+		gpio_set_level(gpio_led_blue_l,  TURN_ON);
+		gpio_set_level(gpio_led_amber_l, TURN_OFF);
 		break;
 	case LED_AMBER:
-		gpio_set_level(gpio_led_blue_l,  1);
-		gpio_set_level(gpio_led_amber_l, 0);
+		gpio_set_level(gpio_led_blue_l,  TURN_OFF);
+		gpio_set_level(gpio_led_amber_l, TURN_ON);
 		break;
 	case LED_PINK:
-		gpio_set_level(gpio_led_blue_l,  0);
-		gpio_set_level(gpio_led_amber_l, 0);
+		gpio_set_level(gpio_led_blue_l,  TURN_ON);
+		gpio_set_level(gpio_led_amber_l, TURN_ON);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
