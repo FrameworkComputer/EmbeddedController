@@ -945,7 +945,7 @@ int charge_prevent_power_on(void)
 	if (prevent_power_on)
 		if (charge_manager_get_power_limit_uw() >=
 		    MIN(LIKELY_PD_USBC_POWER_MW * 1000,
-			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000));
+			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000))
 			prevent_power_on = 0;
 #endif
 
