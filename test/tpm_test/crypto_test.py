@@ -10,10 +10,8 @@ from __future__ import print_function
 import struct
 import xml.etree.ElementTree as ET
 
+import subcmd
 import utils
-
-# Extension 'cryptography' subcommand codes:
-AES = 0
 
 # Basic crypto operations
 DECRYPT = 0
@@ -99,7 +97,7 @@ class CryptoD(object):
     self.submodes = submodes
 
 SUPPORTED_MODES = {
-    'AES': CryptoD(AES, {
+    'AES': CryptoD(subcmd.AES, {
         'ECB': 0,
         'CTR': 1,
         'CBC': 2,

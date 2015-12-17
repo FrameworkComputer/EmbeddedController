@@ -10,9 +10,8 @@ from __future__ import print_function
 import hashlib
 import struct
 
+import subcmd
 import utils
-
-HASH = 1
 
 # Hash command modes
 CMD_START = 0
@@ -92,7 +91,7 @@ def hash_test(tpm):
     cmd += '%c' % handle   # Ignored for single shots
     cmd += struct.pack('>H', len(text))
     cmd += text
-    wrapped_response = tpm.command(tpm.wrap_ext_command(HASH, cmd))
+    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.HASH, cmd))
     if hash_cmd in (CMD_START, CMD_CONT):
       if hash_cmd == CMD_START:
         contexts[handle] = hash_func()
