@@ -26,7 +26,6 @@
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
 
-#define OSC_CLK         48000000  /* Default is 40MHz (target is 48MHz) */
 #define WAKE_INTERVAL   61        /* Unit: 61 usec */
 #define IDLE_PARAMS     0x7       /* Support deep idle, instant wake-up */
 
@@ -47,6 +46,12 @@
 #elif (OSC_CLK == 33000000)
 #define HFCGMH   0x07
 #define HFCGML   0xDE
+#elif (OSC_CLK == 24000000)
+#define HFCGMH   0x05
+#define HFCGML   0xB8
+#elif (OSC_CLK == 16000000)
+#define HFCGMH   0x03
+#define HFCGML   0xDC
 #else
 #error "Unsupported FMCLK Clock Frequency"
 #endif

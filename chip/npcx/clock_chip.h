@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_CLOCK_CHIP_H
 #define __CROS_EC_CLOCK_CHIP_H
 
+/* Default is 40MHz (target is 16MHz) */
+#define OSC_CLK  16000000
+
 /**
  * Return the current APB1 clock frequency in Hz.
  */

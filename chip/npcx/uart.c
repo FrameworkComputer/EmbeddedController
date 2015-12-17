@@ -145,9 +145,6 @@ DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 1);
 
 static void uart_config(void)
 {
-	uint32_t div, opt_dev, min_deviation, clk, calc_baudrate, deviation;
-	uint8_t prescalar, opt_prescalar, i;
-
 	/* Configure pins from GPIOs to CR_UART */
 	gpio_config_module(MODULE_UART, 1);
 	/* Enable MIWU IRQ of UART*/
@@ -158,29 +155,30 @@ static void uart_config(void)
 
 #endif
 
-	/* Calculated UART baudrate , clock source from APB2 */
-	opt_prescalar = opt_dev = 0;
-	prescalar = 10;
-	min_deviation = 0xFFFFFFFF;
-	clk = clock_get_apb2_freq();
-	for (i = 1; i < 31; i++) {
-		div = (clk * 10) / (16 * CONFIG_UART_BAUD_RATE * prescalar);
-		if (div != 0) {
-			calc_baudrate = (clk * 10) / (16 * div * prescalar);
-			deviation = (calc_baudrate > CONFIG_UART_BAUD_RATE) ?
-				(calc_baudrate - CONFIG_UART_BAUD_RATE) :
-				(CONFIG_UART_BAUD_RATE - calc_baudrate);
-			if (deviation < min_deviation) {
-				min_deviation = deviation;
-				opt_prescalar = i;
-				opt_dev = div;
-			}
-		}
-		prescalar += 5;
-	}
-	opt_dev--;
-	NPCX_UPSR = ((opt_prescalar<<3) & 0xF8) | ((opt_dev >> 8) & 0x7);
-	NPCX_UBAUD = (uint8_t)opt_dev;
+	/* Fix baud rate to 115200 */
+#if   (OSC_CLK == 50000000)
+	NPCX_UPSR = 0x10;
+	NPCX_UBAUD = 0x08;
+#elif (OSC_CLK == 48000000)
+	NPCX_UPSR = 0x08;
+	NPCX_UBAUD = 0x0C;
+#elif (OSC_CLK == 40000000)
+	NPCX_UPSR = 0x30;
+	NPCX_UBAUD = 0x02;
+#elif (OSC_CLK == 33000000)
+	NPCX_UPSR = 0x08;
+	NPCX_UBAUD = 0x08;
+#elif (OSC_CLK == 24000000)
+	NPCX_UPSR = 0x60;
+	NPCX_UBAUD = 0x00;
+#elif (OSC_CLK == 16000000)
+	NPCX_UPSR = 0x10;
+	NPCX_UBAUD = 0x02;
+#else
+#error "Unsupported FMCLK Clock Frequency"
+#endif
+
+
 	/*
 	 * 8-N-1, FIFO enabled.  Must be done after setting
 	 * the divisor for the new divisor to take effect.
