@@ -142,7 +142,10 @@ void console_has_input(void);
  * @param shorthelp	String with one-line description of command.
  * @param longhelp	String with long description of command.
  */
-#ifdef CONFIG_CONSOLE_CMDHELP
+#ifndef HAS_TASK_CONSOLE
+#define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
+	int (routine)(int argc, char **argv) __attribute__((unused))
+#elif defined(CONFIG_CONSOLE_CMDHELP)
 #define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
 	static const char __con_cmd_label_##name[] = #name;		\
 	const struct console_command __keep __con_cmd_##name		\

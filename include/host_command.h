@@ -194,10 +194,16 @@ int host_request_expected_size(const struct ec_host_request *r);
 void host_packet_receive(struct host_packet *pkt);
 
 /* Register a host command handler */
+#ifdef HAS_TASK_HOSTCMD
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
 	const struct host_command __keep __host_cmd_##command		\
 	__attribute__((section(".rodata.hcmds")))			\
 	     = {routine, command, version_mask}
+#else
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
+	int (routine)(struct host_cmd_handler_args *args)		\
+	__attribute__((unused))
+#endif
 
 
 /**
