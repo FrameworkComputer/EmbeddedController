@@ -7,6 +7,7 @@
 
 /* Interrupts */
 GPIO_INT(AC_PRESENT,         PIN(C, 13), GPIO_INT_BOTH, vbus_evt)       /* AC power present */
+GPIO_INT(CHARGE_STATUS,      PIN(F, 1),  GPIO_INT_BOTH, charge_state_interrupt)
 
 /* PD RX/TX */
 GPIO(USB_C0_CC1_PD,          PIN(A, 1),  GPIO_ANALOG)
@@ -29,6 +30,9 @@ GPIO(USB_C0_P,               PIN(A, 12), GPIO_INPUT)
 /* Other outputs */
 GPIO(AP_INT_L,               PIN(A, 13), GPIO_ODR_HIGH)
 GPIO(USB_C_CC_EN,            PIN(A, 15), GPIO_OUT_HIGH)
+GPIO(BAT_LED_GREEN,          PIN(C, 14), GPIO_ODR_HIGH)
+GPIO(BAT_LED_RED,            PIN(C, 15), GPIO_ODR_HIGH)
+GPIO(BAT_LED_BLUE,           PIN(F, 0),  GPIO_ODR_HIGH)
 
 UNIMPLEMENTED(ENTERING_RW)
 

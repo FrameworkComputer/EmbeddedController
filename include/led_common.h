@@ -60,4 +60,11 @@ void led_get_brightness_range(enum ec_led_id, uint8_t *brightness_range);
  */
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness);
 
+/**
+ * Enable LED.
+ *
+ * @param enable	1 to enable LED. 0 to disable.
+ *
+ */
+void led_enable(int enable);
 #endif /* __CROS_EC_LED_COMMON_H */

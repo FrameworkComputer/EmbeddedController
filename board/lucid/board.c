@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "led_common.h"
 #include "registers.h"
 #include "task.h"
 #include "usb_charge.h"
@@ -61,6 +62,11 @@ void vbus_evt(enum gpio_signal signal)
 
 	/* trigger AC present interrupt */
 	extpower_interrupt(signal);
+}
+
+void charge_state_interrupt(enum gpio_signal signal)
+{
+	led_enable(gpio_get_level(signal));
 }
 
 #include "gpio_list.h"
@@ -115,6 +121,9 @@ static void board_init(void)
 					     i,
 					     &charge_none);
 	}
+
+	/* Enable charge status interrupt */
+	gpio_enable_interrupt(GPIO_CHARGE_STATUS);
 
 	/* Initialize VBUS supplier based on whether or not VBUS is present */
 	update_vbus_supplier(gpio_get_level(GPIO_AC_PRESENT));
