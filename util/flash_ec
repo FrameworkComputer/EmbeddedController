@@ -301,7 +301,8 @@ function dut_control() {
 # Find the EC UART on the servo v2
 function ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
-	($DUT_CONTROL_CMD ${MCU}_uart_pty || \
+	($DUT_CONTROL_CMD raw_${MCU}_uart_pty || \
+	    $DUT_CONTROL_CMD ${MCU}_uart_pty || \
 	    die "${SERVOD_FAIL}") | cut -d: -f2
 }
 
@@ -341,6 +342,12 @@ function claim_pty() {
 		die "You must run this tool in a chroot that was entered with" \
 		    "'cros_sdk --no-ns-pid' (see crbug.com/444931 for details)"
 	fi
+
+	# Disconnect the EC-3PO interpreter from the UART since it will
+	# interfere with flashing.
+	dut_control ${MCU}_ec3po_interp_connect:off || \
+	    warn "hdctools cannot disconnect the EC-3PO interpreter from" \
+	    "the UART."
 
 	pids=$(lsof -FR 2>/dev/null -- $1 | tr -d 'pR')
 	FROZEN_PIDS=""
@@ -475,6 +482,11 @@ function flash_stm32() {
 	if $(servo_has_warm_reset); then
 		dut_control warm_reset:off
 	fi
+
+	# Reconnect the EC-3PO interpreter to the UART.
+	dut_control ${MCU}_ec3po_interp_connect:on || \
+	    warn "hdctools cannot reconnect the EC-3PO interpreter to" \
+	    "the UART."
 }
 
 function flash_stm32_dfu() {
