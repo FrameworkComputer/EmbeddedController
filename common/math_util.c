@@ -6,7 +6,6 @@
 /* Common math functions. */
 
 #include "common.h"
-#include "math.h"
 #include "math_util.h"
 #include "util.h"
 

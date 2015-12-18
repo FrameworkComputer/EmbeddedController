@@ -16,6 +16,8 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/accel_kionix.h"
+#include "driver/accel_kx022.h"
 #include "driver/als_opt3001.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -25,6 +27,9 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
+#include "math_util.h"
+#include "motion_lid.h"
+#include "motion_sense.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -550,3 +555,51 @@ static void board_chipset_suspend(void)
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+#ifdef HAS_TASK_MOTIONSENSE
+/* Motion sensors */
+/* Mutexes */
+static struct mutex g_lid_mutex;
+
+/* KX022 private data */
+struct kionix_accel_data g_kx022_data = {
+	.variant = KX022,
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	{.name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kionix_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_kx022_data,
+	 .addr = KX022_ADDR1,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 2, /* g, enough for laptop. */
+	 .config = {
+		/* AP: by default use EC settings */
+		[SENSOR_CONFIG_AP] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* unused */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		[SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+	 },
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#endif /* defined(HAS_TASK_MOTIONSENSE) */
