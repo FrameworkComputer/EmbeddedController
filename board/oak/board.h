@@ -13,6 +13,12 @@
 
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
+
+/* Add for Ambient Light Sensor */
+#define CONFIG_ALS
+#define CONFIG_ALS_OPT3001
+#define CONFIG_CMD_ALS
+
 /* Add for AC adaptor, charger, battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
@@ -134,6 +140,10 @@
 #define I2C_PORT_PD_MCU 1
 #define I2C_PORT_USB_MUX 1
 #define I2C_PORT_TCPC 1
+#define I2C_PORT_ALS   I2C_PORT_MASTER
+
+/* Ambient Light Sensor address */
+#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 
 /* Timer selection */
 #define TIM_CLOCK32 2
@@ -180,6 +190,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,
 
 	TEMP_SENSOR_COUNT
+};
+
+/* Light sensors */
+enum als_id {
+	ALS_OPT3001 = 0,
+
+	ALS_COUNT
 };
 
 /* start as a sink in case we have no other power supply/battery */
