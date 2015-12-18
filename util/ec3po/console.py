@@ -635,32 +635,42 @@ def StartLoop(console):
   """
   console.logger.info('EC Console is being served on %s.', console.user_pty)
   console.logger.debug(console)
-  while True:
-    # Check to see if pipes or the console are ready for reading.
-    read_list = [console.master_pty, console.cmd_pipe, console.dbg_pipe]
-    ready_for_reading = select.select(read_list, [], [])[0]
+  try:
+    while True:
+      # Check to see if pipes or the console are ready for reading.
+      read_list = [console.master_pty, console.cmd_pipe, console.dbg_pipe]
+      ready_for_reading = select.select(read_list, [], [])[0]
 
-    for obj in ready_for_reading:
-      if obj is console.master_pty:
-        console.logger.debug('Input from user')
-        # Convert to bytes so we can look for non-printable chars such as
-        # Ctrl+A, Ctrl+E, etc.
-        line = bytearray(os.read(console.master_pty, CONSOLE_MAX_READ))
-        for i in line:
-          # Handle each character as it arrives.
-          console.HandleChar(i)
+      for obj in ready_for_reading:
+        if obj is console.master_pty:
+          console.logger.debug('Input from user')
+          # Convert to bytes so we can look for non-printable chars such as
+          # Ctrl+A, Ctrl+E, etc.
+          line = bytearray(os.read(console.master_pty, CONSOLE_MAX_READ))
+          for i in line:
+            # Handle each character as it arrives.
+            console.HandleChar(i)
 
-      elif obj is console.cmd_pipe:
-        data = console.cmd_pipe.recv()
-        # Write it to the user console.
-        console.logger.debug('|CMD|->\'%s\'', data)
-        os.write(console.master_pty, data)
+        elif obj is console.cmd_pipe:
+          data = console.cmd_pipe.recv()
+          # Write it to the user console.
+          console.logger.debug('|CMD|->\'%s\'', data)
+          os.write(console.master_pty, data)
 
-      elif obj is console.dbg_pipe:
-        data = console.dbg_pipe.recv()
-        # Write it to the user console.
-        console.logger.debug('|DBG|->\'%s\'', data)
-        os.write(console.master_pty, data)
+        elif obj is console.dbg_pipe:
+          data = console.dbg_pipe.recv()
+          # Write it to the user console.
+          console.logger.debug('|DBG|->\'%s\'', data)
+          os.write(console.master_pty, data)
+
+  finally:
+    # Close pipes.
+    console.dbg_pipe.close()
+    console.cmd_pipe.close()
+    # Close file descriptor.
+    os.close(console.master_pty)
+    # Exit.
+    sys.exit(0)
 
 
 def main(argv):
@@ -676,7 +686,6 @@ def main(argv):
   # Set up argument parser.
   parser = argparse.ArgumentParser(description=('Start interactive EC console '
                                                 'and interpreter.'))
-  # TODO(aaboagye): Eventually get this from servod.
   parser.add_argument('ec_uart_pty',
                       help=('The full PTY name that the EC UART'
                             ' is present on. eg: /dev/pts/12'))

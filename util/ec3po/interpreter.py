@@ -20,6 +20,7 @@ import logging
 import os
 import Queue
 import select
+import sys
 
 
 COMMAND_RETRIES = 3  # Number of attempts to retry a command.
@@ -312,19 +313,29 @@ def StartLoop(interp):
   Args:
     interp: An Interpreter object that has been properly initialised.
   """
-  while True:
-    readable, writeable, _ = select.select(interp.inputs, interp.outputs, [])
+  try:
+    while True:
+      readable, writeable, _ = select.select(interp.inputs, interp.outputs, [])
 
-    for obj in readable:
-      # Handle any debug prints from the EC.
-      if obj is interp.ec_uart_pty:
-        interp.HandleECData()
+      for obj in readable:
+        # Handle any debug prints from the EC.
+        if obj is interp.ec_uart_pty:
+          interp.HandleECData()
 
-      # Handle any commands from the user.
-      elif obj is interp.cmd_pipe:
-        interp.HandleUserData()
+        # Handle any commands from the user.
+        elif obj is interp.cmd_pipe:
+          interp.HandleUserData()
 
-    for obj in writeable:
-      # Send a command to the EC.
-      if obj is interp.ec_uart_pty:
-        interp.SendCmdToEC()
+      for obj in writeable:
+        # Send a command to the EC.
+        if obj is interp.ec_uart_pty:
+          interp.SendCmdToEC()
+
+  finally:
+    # Close pipes.
+    interp.cmd_pipe.close()
+    interp.dbg_pipe.close()
+    # Close file descriptor.
+    interp.ec_uart_pty.close()
+    # Exit.
+    sys.exit(0)
