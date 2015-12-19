@@ -198,7 +198,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		 * Allow up to 1s for charger to be initialized, in case
 		 * we're trying to boot the AP with no battery.
 		 */
-		while (charge_prevent_power_on() &&
+		while (charge_prevent_power_on(0) &&
 		       tries++ < CHARGER_INITIALIZED_TRIES) {
 			msleep(CHARGER_INITIALIZED_DELAY_MS);
 		}

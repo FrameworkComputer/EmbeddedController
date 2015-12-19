@@ -682,7 +682,7 @@ int charge_want_shutdown(void)
 		charge_get_percent() < BATTERY_LEVEL_SHUTDOWN;
 }
 
-int charge_prevent_power_on(void)
+int charge_prevent_power_on(int power_button_pressed)
 {
 	int prevent_power_on = 0;
 #ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON

@@ -228,7 +228,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 		/* Return to G3 if battery level is too low */
 		if (charge_want_shutdown() ||
-		    charge_prevent_power_on()) {
+		    charge_prevent_power_on(0)) {
 			CPRINTS("power-up inhibited");
 			chipset_force_g3();
 			return POWER_G3;

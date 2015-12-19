@@ -112,7 +112,7 @@ static const char * const state_names[] = {
  */
 static uint64_t tnext_state;
 
-static void set_pwrbtn_to_pch(int high)
+static void set_pwrbtn_to_pch(int high, int init)
 {
 	/*
 	 * If the battery is discharging and low enough we'd shut down the
@@ -122,7 +122,7 @@ static void set_pwrbtn_to_pch(int high)
 	 */
 #ifdef CONFIG_CHARGER
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
-	   (charge_want_shutdown() || charge_prevent_power_on())) {
+	   (charge_want_shutdown() || charge_prevent_power_on(!init))) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}
@@ -137,7 +137,7 @@ void power_button_pch_press(void)
 
 	/* Assert power button signal to PCH */
 	if (!power_button_is_pressed())
-		set_pwrbtn_to_pch(0);
+		set_pwrbtn_to_pch(0, 0);
 }
 
 void power_button_pch_release(void)
@@ -145,7 +145,7 @@ void power_button_pch_release(void)
 	CPRINTS("PB PCH force release");
 
 	/* Deassert power button signal to PCH */
-	set_pwrbtn_to_pch(1);
+	set_pwrbtn_to_pch(1, 0);
 
 	/*
 	 * If power button is actually pressed, eat the next release so we
@@ -162,7 +162,7 @@ void power_button_pch_pulse(void)
 	CPRINTS("PB PCH pulse");
 
 	chipset_exit_hard_off();
-	set_pwrbtn_to_pch(0);
+	set_pwrbtn_to_pch(0, 0);
 	pwrbtn_state = PWRBTN_STATE_LID_OPEN;
 	tnext_state = get_time().val + PWRBTN_INITIAL_US;
 	task_wake(TASK_ID_POWERBTN);
@@ -203,7 +203,7 @@ static void set_initial_pwrbtn_state(void)
 		 */
 		if (power_button_is_pressed()) {
 			CPRINTS("PB init-jumped-held");
-			set_pwrbtn_to_pch(0);
+			set_pwrbtn_to_pch(0, 0);
 		} else {
 			CPRINTS("PB init-jumped");
 		}
@@ -270,12 +270,12 @@ static void state_machine(uint64_t tnow)
 			tnext_state = tnow + PWRBTN_DELAY_T0;
 			pwrbtn_state = PWRBTN_STATE_T0;
 		}
-		set_pwrbtn_to_pch(0);
+		set_pwrbtn_to_pch(0, 0);
 		break;
 	case PWRBTN_STATE_T0:
 		tnext_state = tnow + PWRBTN_DELAY_T1;
 		pwrbtn_state = PWRBTN_STATE_T1;
-		set_pwrbtn_to_pch(1);
+		set_pwrbtn_to_pch(1, 0);
 		break;
 	case PWRBTN_STATE_T1:
 		/*
@@ -286,12 +286,12 @@ static void state_machine(uint64_t tnow)
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			CPRINTS("PB chipset already off");
 		else
-			set_pwrbtn_to_pch(0);
+			set_pwrbtn_to_pch(0, 0);
 		pwrbtn_state = PWRBTN_STATE_HELD;
 		break;
 	case PWRBTN_STATE_RELEASED:
 	case PWRBTN_STATE_LID_OPEN:
-		set_pwrbtn_to_pch(1);
+		set_pwrbtn_to_pch(1, 0);
 		pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
 	case PWRBTN_STATE_INIT_ON:
@@ -310,7 +310,7 @@ static void state_machine(uint64_t tnow)
 		 * battery is handled inside set_pwrbtn_to_pch().
 		 */
 		chipset_exit_hard_off();
-		set_pwrbtn_to_pch(0);
+		set_pwrbtn_to_pch(0, 1);
 		tnext_state = get_time().val + PWRBTN_INITIAL_US;
 
 		if (power_button_is_pressed()) {
@@ -329,7 +329,7 @@ static void state_machine(uint64_t tnow)
 		 * button until it's released, so that holding down the
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
-		set_pwrbtn_to_pch(1);
+		set_pwrbtn_to_pch(1, 0);
 		if (power_button_is_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		else

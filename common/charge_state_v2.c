@@ -644,8 +644,6 @@ void charger_task(void)
 			charger_set_input_current(curr.desired_input_current);
 		}
 
-		curr.chg.flags |= CHG_FLAG_INITIALIZED;
-
 		/*
 		 * TODO(crosbug.com/p/27527). Sometimes the battery thinks its
 		 * temperature is 6280C, which seems a bit high. Let's ignore
@@ -916,14 +914,20 @@ int charge_want_shutdown(void)
 		(curr.batt.state_of_charge < BATTERY_LEVEL_SHUTDOWN);
 }
 
-int charge_prevent_power_on(void)
+int charge_prevent_power_on(int power_button_pressed)
 {
 	int prevent_power_on = 0;
 #ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 	struct batt_params params;
 	struct batt_params *current_batt_params = &curr.batt;
-	int charger_is_uninitialized =
-		!(curr.chg.flags & CHG_FLAG_INITIALIZED);
+	static int automatic_power_on = 1;
+
+	/*
+	 * Remember that a power button was pressed, and assume subsequent
+	 * power-ups are user-requested and non-automatic.
+	 */
+	if (power_button_pressed)
+		automatic_power_on = 0;
 
 	/* If battery params seem uninitialized then retrieve them */
 	if (current_batt_params->is_present == BP_NOT_SURE) {
@@ -951,9 +955,9 @@ int charge_prevent_power_on(void)
 
 	/*
 	 * Factory override: Always allow power on if WP is disabled,
-	 * except when EC is starting up, due to brown out potential.
+	 * except when auto-power-on at EC startup.
 	 */
-	prevent_power_on &= (system_is_locked() || charger_is_uninitialized);
+	prevent_power_on &= (system_is_locked() || automatic_power_on);
 #endif
 
 	return prevent_power_on;

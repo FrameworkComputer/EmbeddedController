@@ -96,8 +96,11 @@ int charge_want_shutdown(void);
 /**
  * Return non-zero if the battery level is too low to allow power on, even if
  * a charger is attached.
+ *
+ * @param power_button_pressed	True if the power-up attempt is caused by a
+ *				power button press.
  */
-int charge_prevent_power_on(void);
+int charge_prevent_power_on(int power_button_pressed);
 
 /**
  * Get the last polled battery/charger temperature.
