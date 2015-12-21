@@ -54,7 +54,6 @@ BOARDS_STM32=(
 	big
 	blaze
 	chell_pd
-	discovery
 	glados_pd
 	honeybuns
 	jerry
@@ -82,6 +81,9 @@ BOARDS_STM32_DFU=(
 	dingdong
 	hoho
 	twinkie
+	discovery
+	servo_v4
+	servo_micro
 )
 
 BOARDS_NPCX_5M5G_JTAG=(
