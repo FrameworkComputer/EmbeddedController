@@ -553,6 +553,7 @@
 #define CONFIG_CMD_SHMEM
 #undef CONFIG_CMD_SLEEP
 #undef CONFIG_CMD_SPI_FLASH
+#undef CONFIG_CMD_SPI_NOR
 #undef CONFIG_CMD_SPI_XFER
 #undef CONFIG_CMD_STACKOVERFLOW
 #undef CONFIG_CMD_TASKREADY
@@ -1581,6 +1582,23 @@
 
 /* SPI flash part supports SR2 register */
 #undef CONFIG_SPI_FLASH_HAS_SR2
+
+/* Support JEDEC SFDP based Serial NOR flash */
+#undef CONFIG_SPI_NOR
+
+/* Enable SPI_NOR debugging providing additional console output while
+ * initializing Serial NOR Flash devices including SFDP discovery. */
+#undef CONFIG_SPI_NOR_DEBUG
+
+/* Maximum Serial NOR flash command size, in Bytes */
+#undef CONFIG_SPI_NOR_MAX_MESSAGE_SIZE
+
+/* Maximum Serial NOR flash read size, in Bytes */
+#undef CONFIG_SPI_NOR_MAX_READ_SIZE
+
+/* Maximum Serial NOR flash write size, in Bytes. Note this must be a power of
+ * two. */
+#undef CONFIG_SPI_NOR_MAX_WRITE_SIZE
 
 /* SPI master feature */
 #undef CONFIG_SPI_MASTER
