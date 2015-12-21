@@ -11,7 +11,8 @@
 #define OAK_REV2 2
 #define OAK_REV3 3
 #define OAK_REV4 4
-#define OAK_REV_LAST    OAK_REV4
+#define OAK_REV5 5
+#define OAK_REV_LAST    OAK_REV5
 #define OAK_REV_DEFAULT OAK_REV3
 
 #if !defined(BOARD_REV)

@@ -11,14 +11,22 @@
 /* board revision */
 #include "board_revs.h"
 
+#if BOARD_REV >= OAK_REV5
+#define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_KX022
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+#endif
+
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
 
+#if BOARD_REV >= OAK_REV5
 /* Add for Ambient Light Sensor */
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
 #define CONFIG_CMD_ALS
+#endif
 
 /* Add for AC adaptor, charger, battery */
 #define CONFIG_BATTERY_CUT_OFF
@@ -68,6 +76,10 @@
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_LED_COMMON
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE 0
+#define CONFIG_LID_ANGLE_SENSOR_LID 2
+#define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_MKBP_EVENT
 #define CONFIG_PMIC_FW_LONG_PRESS_TIMER
@@ -90,10 +102,10 @@
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_TCPM_VBUS
 #define CONFIG_SPI
+#define CONFIG_SPI_MASTER
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_VBOOT_HASH
 #undef  CONFIG_WATCHDOG_HELP
-#define CONFIG_LID_SWITCH
 #define CONFIG_SWITCH
 #define CONFIG_BOARD_VERSION
 #undef  CONFIG_UART_CONSOLE
@@ -143,6 +155,9 @@
 #define I2C_PORT_PD_MCU  1
 #define I2C_PORT_USB_MUX 1
 #define I2C_PORT_TCPC    1
+
+/* Enable Accel over SPI */
+#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI master port (SPI2) */
 
 /* Ambient Light Sensor address */
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
