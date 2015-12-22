@@ -379,15 +379,22 @@ static void board_pmic_init(void)
 {
 	int ret;
 	int data;
+	int error_count = 0;
 
 	/* No need to re-init PMIC since settings are sticky across sysjump */
 	if (system_jumped_to_this_image())
 		return;
 
 	/* Read vendor ID */
-	ret = I2C_PMIC_READ(TPS650830_REG_VENDORID, &data);
-	if (ret || data != TPS650830_VENDOR_ID)
-		goto pmic_error;
+	while (1) {
+		ret = I2C_PMIC_READ(TPS650830_REG_VENDORID, &data);
+		if (!ret && data == TPS650830_VENDOR_ID) {
+			break;
+		} else if (error_count > 5)
+			goto pmic_error;
+
+		error_count++;
+	}
 
 	/*
 	 * VCCIOCNT register setting
