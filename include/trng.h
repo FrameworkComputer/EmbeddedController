@@ -5,6 +5,8 @@
 #ifndef __EC_INCLUDE_TRNG_H
 #define __EC_INCLUDE_TRNG_H
 
+#include <sys/types.h>
+
 /**
  * Initialize the true random number generator.
  *
@@ -18,5 +20,12 @@ void init_trng(void);
  * Not supported on all platforms.
  **/
 uint32_t rand(void);
+
+/**
+ * Output len random bytes into buffer.
+ *
+ * Not supported on all platforms.
+ **/
+void rand_bytes(void *buffer, size_t len);
 
 #endif /* __EC_INCLUDE_TRNG_H */
