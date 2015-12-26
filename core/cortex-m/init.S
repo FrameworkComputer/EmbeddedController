@@ -34,7 +34,7 @@ vector usage_fault    		  @ Usage fault handler
 .long 0               		  @ reserved
 .long 0               		  @ reserved
 .long 0               		  @ reserved
-vector svc            		  @ SWI
+.long svc_helper_handler	  @ SWI
 vector debug          		  @ Debug handler
 .long 0               		  @ reserved
 vector pendsv         		  @ PendSV handler
@@ -383,6 +383,30 @@ fini_loop:
 .thumb_func
 default_handler:
 	b exception_panic
+
+/*
+ * SVC handler helper
+ *
+ * Work around issue where a late exception can corrupt r0 to r3,
+ * see section 2.7 (svc) of Cortex-M3 Application Note 179:
+ * http://infocenter.arm.com/help/topic/com.arm.doc.dai0179b/AppsNote179.pdf
+ *
+ * This approach differs slightly from the one in the document,
+ * it only loads r0 (desched) and r1 (resched) for svc_handler.
+ */
+.thumb_func
+svc_helper_handler:
+	tst lr, #4		/* see if called from supervisor mode */
+	mrs r2, msp		/* get the correct stack pointer into r2 */
+	it ne
+	mrsne r2, psp
+	ldr r1, [r2, #4]	/* get regs from stack frame */
+	ldr r0, [r2]
+	b svc_handler		/* call svc_handler */
+
+/* Call default_handler if svc_handler is not found (task.c is not built) */
+.weak svc_handler
+.set svc_handler, default_handler
 
 .align 2
 _bss_start:

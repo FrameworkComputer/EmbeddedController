@@ -263,6 +263,7 @@ void svc_handler(int desched, task_id_t resched)
 		 */
 		tasks_ready &= ~(1 << (current - tasks));
 	}
+	ASSERT(resched <= TASK_ID_COUNT);
 	tasks_ready |= 1 << resched;
 
 	ASSERT(tasks_ready);
