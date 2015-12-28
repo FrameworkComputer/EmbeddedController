@@ -57,7 +57,7 @@ struct __packed fw_header_t {
 	uint32_t sig_fw_image;   /* The CRC or Checksum of the firmware image */
 } __aligned(1);
 
-__attribute__ ((section(".header")))
+__keep  __attribute__ ((section(".header")))
 const struct fw_header_t fw_header = {
 	/* 00 */ SIG_FW_EC,
 	/* 04 */ 0x54E1, /* Header CRC check Enable/Disable -> AB1Eh/54E1h    */
