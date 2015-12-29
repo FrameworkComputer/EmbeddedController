@@ -106,14 +106,7 @@ static void board_led_set_battery(void)
 		bat_led_set_color(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE:
-		/*
-		 * See crosbug.com/p/22159. There's a 3% difference
-		 * between the battery level seen by the kernel and what's
-		 * really going on, so if they want to see 12%, we use 15%.
-		 * Hard code this number here, because this only affects the
-		 * LED color, not the battery charge state.
-		 */
-		if (charge_get_percent() < 15)
+		if (charge_get_percent() < 12)
 			bat_led_set_color(
 				(battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
 		else
