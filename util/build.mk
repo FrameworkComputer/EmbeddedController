@@ -7,10 +7,10 @@
 #
 
 host-util-bin=ectool lbplay stm32mon ec_sb_firmware_update lbcc
-ifeq ($(CHIP),npcx)
-host-util-bin+=ecst
-endif
 build-util-bin=ec_uartd iteflash
+ifeq ($(CHIP),npcx)
+build-util-bin+=ecst
+endif
 
 comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 comm-objs+=comm-lpc.o comm-i2c.o misc_util.o
