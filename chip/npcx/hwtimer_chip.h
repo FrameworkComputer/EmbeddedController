@@ -21,7 +21,10 @@ enum ITIM_SOURCE_CLOCK_T {
 /* Initialize ITIM16 timer */
 void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source);
 
-/* Returns time delay cause of deep idle */
-uint32_t __hw_clock_get_sleep_time(void);
+/* Returns the counter value of event timer */
+uint32_t __hw_clock_event_count(void);
+
+/* Returns time delay because of deep idle */
+uint32_t __hw_clock_get_sleep_time(uint32_t pre_evt_cnt);
 
 #endif /* __CROS_EC_HWTIMER_CHIP_H */

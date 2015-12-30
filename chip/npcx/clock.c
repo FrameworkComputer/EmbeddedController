@@ -234,7 +234,7 @@ void __idle(void)
 #else
 
 	timestamp_t t0, t1;
-	uint32_t next_evt_us;
+	uint32_t next_evt_us, evt_count;
 
 	/*
 	 * Initialize console in use to true and specify the console expire
@@ -272,13 +272,17 @@ void __idle(void)
 			NPCX_PMCSR = IDLE_PARAMS;
 			/* UART-rx(console) become to GPIO (NONE INT mode) */
 			clock_uart2gpio();
+
+			/* Get current counter value of event timer */
+			evt_count = __hw_clock_event_count();
 			/* Enter deep idle */
 			asm("wfi");
+			/* Get time delay cause of deep idle */
+			next_evt_us = __hw_clock_get_sleep_time(evt_count);
+
 			/* GPIO back to UART-rx (console) */
 			clock_gpio2uart();
 
-			/* Get time delay cause of deep idle */
-			next_evt_us = __hw_clock_get_sleep_time();
 			/* Fast forward timer according to wake-up timer. */
 			t1.val = t0.val + next_evt_us;
 			/* Record time spent in deep sleep. */
