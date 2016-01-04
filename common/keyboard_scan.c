@@ -101,6 +101,9 @@ static volatile uint32_t __bss_slow disable_scanning_mask;
 /* Constantly incrementing counter of the number of times we polled */
 static volatile int kbd_polls;
 
+/* If true, we'll force a keyboard poll */
+static volatile int force_poll;
+
 static int keyboard_scan_is_enabled(void)
 {
 	/* NOTE: this is just an instantaneous glimpse of the variable. */
@@ -183,6 +186,9 @@ static void simulate_key(int row, int col, int pressed)
 	old_polls = kbd_polls;
 
 	print_state(simulated_key, "simulated ");
+
+	/* Force a poll even though no keys are pressed */
+	force_poll = 1;
 
 	/* Wake the task to handle changes in simulated keys */
 	task_wake(TASK_ID_KEYSCAN);
@@ -664,11 +670,15 @@ void keyboard_scan_task(void)
 			 * user pressing a key and enable_interrupt()
 			 * starting to pay attention to edges.
 			 */
-			if (!local_disable_scanning && keyboard_raw_read_rows())
+			if (!local_disable_scanning &&
+			    (keyboard_raw_read_rows() || force_poll))
 				break;
 			else
 				task_wait_event(-1);
 		}
+
+		/* We're about to poll, so any existing forces are fulfilled */
+		force_poll = 0;
 
 		/* Enter polling mode */
 		CPRINTS("KB poll");
