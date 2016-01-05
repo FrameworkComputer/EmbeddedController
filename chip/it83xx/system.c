@@ -9,6 +9,7 @@
 #include "cpu.h"
 #include "ec2i_chip.h"
 #include "flash.h"
+#include "host_command.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"

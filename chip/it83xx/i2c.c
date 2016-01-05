@@ -410,7 +410,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	}
 	/* Start transaction */
 	i2c_transaction(port);
-	events = task_wait_event(pd->timeout_us);
+	/* Wait for transfer complete or timeout */
+	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE, pd->timeout_us);
 	/* disable i2c interrupt */
 	task_disable_irq(i2c_ctrl_regs[port].irq);
 	pd->task_waiting = TASK_ID_INVALID;

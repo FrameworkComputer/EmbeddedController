@@ -450,6 +450,34 @@ uint32_t task_wait_event(int timeout_us)
 	return __wait_evt(timeout_us, TASK_ID_IDLE);
 }
 
+uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
+{
+	uint64_t deadline = get_time().val + timeout_us;
+	uint32_t events = 0;
+	int time_remaining_us = timeout_us;
+
+	/* Add the timer event to the mask so we can indicate a timeout */
+	event_mask |= TASK_EVENT_TIMER;
+
+	while (!(events & event_mask)) {
+		/* Collect events to re-post later */
+		events |= __wait_evt(time_remaining_us, TASK_ID_IDLE);
+
+		time_remaining_us = deadline - get_time().val;
+		if (timeout_us > 0 && time_remaining_us <= 0) {
+			/* Ensure we return a TIMER event if we timeout */
+			events |= TASK_EVENT_TIMER;
+			break;
+		}
+	}
+
+	/* Re-post any other events collected */
+	if (events & ~event_mask)
+		atomic_or(&current_task->events, events & ~event_mask);
+
+	return events & event_mask;
+}
+
 uint32_t get_int_mask(void)
 {
 	uint32_t ret;
@@ -577,9 +605,7 @@ void mutex_lock(struct mutex *mtx)
 			/* end of critical section : re-enable interrupts */
 			interrupt_enable();
 			/* Sleep waiting for our turn */
-			/* TODO(crbug.com/435612, crbug.com/435611)
-			 * This discards any pending events! */
-			task_wait_event(0);
+			task_wait_event_mask(TASK_EVENT_MUTEX, 0);
 			/* re-enter critical section */
 			interrupt_disable();
 		}
