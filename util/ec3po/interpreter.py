@@ -27,8 +27,6 @@ COMMAND_RETRIES = 3  # Number of attempts to retry a command.
 EC_MAX_READ = 1024  # Max bytes to read at a time from the EC.
 EC_SYN = '\xec'  # Byte indicating EC interrogation.
 EC_ACK = '\xc0'  # Byte representing correct EC response to interrogation.
-EC_INTERROGATION_TIMEOUT = 0.1  # Maximum number of seconds to wait for a
-                                # response to an interrogation.
 
 
 class Interpreter(object):

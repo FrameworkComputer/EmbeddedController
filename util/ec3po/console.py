@@ -29,6 +29,20 @@ PROMPT = '> '
 CONSOLE_INPUT_LINE_SIZE = 80  # Taken from the CONFIG_* with the same name.
 CONSOLE_MAX_READ = 100  # Max bytes to read at a time from the user.
 
+# The timeouts are really only useful for enhanced EC images, but otherwise just
+# serve as a delay for non-enhanced EC images.  Therefore, we can keep this
+# value small enough so that there's not too much of a delay, but long enough
+# that enhanced EC images can respond in time.  Once we've detected an enhanced
+# EC image, we can increase the timeout for stability just in case it takes a
+# bit longer to receive an ACK for some reason.
+NON_ENHANCED_EC_INTERROGATION_TIMEOUT = 0.3  # Maximum number of seconds to wait
+                                             # for a response to an
+                                             # interrogation of a non-enhanced
+                                             # EC image.
+ENHANCED_EC_INTERROGATION_TIMEOUT = 1.0  # Maximum number of seconds to wait for
+                                         # a response to an interrogation of an
+                                         # enhanced EC image.
+
 
 class EscState(object):
   """Class which contains an enumeration for states of ESC sequences."""
@@ -88,6 +102,8 @@ class Console(object):
       communicating with is enhanced or not.  Enhanced EC images will support
       packed commands and host commands over the UART.  This defaults to False
       until we perform some handshaking.
+    interrogation_timeout: A float representing the current maximum seconds to
+      wait for a response to an interrogation.
   """
 
   def __init__(self, master_pty, user_pty, cmd_pipe, dbg_pipe):
@@ -118,6 +134,7 @@ class Console(object):
     self.history_pos = 0
     self.prompt = PROMPT
     self.enhanced_ec = False
+    self.interrogation_timeout = NON_ENHANCED_EC_INTERROGATION_TIMEOUT
 
   def __str__(self):
     """Show internal state of Console object as a string."""
@@ -385,22 +402,35 @@ class Console(object):
     assume that the current EC image that we are talking to is not enhanced.
 
     Returns:
-      A boolean indicating whether the EC responded to the interrogation
-      correctly.
+      is_enhanced: A boolean indicating whether the EC responded to the
+        interrogation correctly.
     """
     # Send interrogation byte and wait for the response.
     self.logger.debug('Performing interrogation.')
     self.cmd_pipe.send(interpreter.EC_SYN)
 
     response = ''
-    if self.dbg_pipe.poll(interpreter.EC_INTERROGATION_TIMEOUT):
+    if self.dbg_pipe.poll(self.interrogation_timeout):
       response = self.dbg_pipe.recv()
       self.logger.debug('response: \'%s\'', binascii.hexlify(response))
     else:
       self.logger.debug('Timed out waiting for EC_ACK')
 
     # Verify the acknowledgment.
-    return response == interpreter.EC_ACK
+    is_enhanced = response == interpreter.EC_ACK
+
+    if is_enhanced:
+      # Increase the interrogation timeout for stability purposes.
+      self.interrogation_timeout = ENHANCED_EC_INTERROGATION_TIMEOUT
+      self.logger.debug('Increasing interrogation timeout to %rs.',
+                        self.interrogation_timeout)
+    else:
+      # Reduce the timeout in order to reduce the perceivable delay.
+      self.interrogation_timeout = NON_ENHANCED_EC_INTERROGATION_TIMEOUT
+      self.logger.debug('Reducing interrogation timeout to %rs.',
+                        self.interrogation_timeout)
+
+    return is_enhanced
 
   def HandleChar(self, byte):
     """HandleChar does a certain action when it receives a character.
