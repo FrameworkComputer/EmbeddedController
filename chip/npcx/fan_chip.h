@@ -28,8 +28,6 @@ enum npcx_mft_clk_src {
 struct mft_t {
 	/* MFT module ID */
 	enum npcx_mft_module module;
-	/* MFT TCNT default count */
-	uint32_t default_count;
 	/* MFT clock source */
 	enum npcx_mft_clk_src clk_src;
 	/* PWM id */

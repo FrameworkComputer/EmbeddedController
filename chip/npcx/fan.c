@@ -18,6 +18,8 @@
 #include "console.h"
 #include "timer.h"
 #include "task.h"
+#include "hooks.h"
+#include "math_util.h"
 
 #if !(DEBUG_FAN)
 #define CPRINTS(...)
@@ -38,26 +40,34 @@ enum npcx_mft_mdsel {
 
 /* Tacho measurement state */
 enum tacho_measure_state {
-	/* Tacho init state */
-	TACHO_IN_IDLE = 0,
-	/* Tacho first edge state */
-	TACHO_WAIT_FOR_1_EDGE,
-	/* Tacho second edge state */
-	TACHO_WAIT_FOR_2_EDGE,
+	/* Tacho normal state */
+	TACHO_NORMAL = 0,
 	/* Tacho underflow state */
 	TACHO_UNDERFLOW
+};
+
+/* Fan mode */
+enum tacho_fan_mode {
+	/* FAN rpm mode */
+	TACHO_FAN_RPM = 0,
+	/* FAN duty mode */
+	TACHO_FAN_DUTY = 0,
 };
 
 /* Fan status data structure */
 struct fan_status_t {
 	/* Current state of the measurement */
 	enum tacho_measure_state cur_state;
+	/* Fan mode */
+	enum tacho_fan_mode fan_mode;
 	/* MFT sampling freq*/
 	uint32_t mft_freq;
 	/* Actual rpm */
 	int rpm_actual;
 	/* Target rpm */
 	int rpm_target;
+	/* Automatic fan status */
+	enum fan_status auto_status;
 };
 
 /* Global variables */
@@ -79,56 +89,50 @@ static volatile struct fan_status_t fan_status[FAN_CH_COUNT];
 #define TACH_TO_RPM(ch, tach) \
 	((fan_status[ch].mft_freq * ROUNDS) / MAX((tach), 1))
 
+/* MFT TCNT default count */
+#define TACHO_MAX_CNT ((1<<16)-1)
 
+/* Smart fan control settings */
+#define RPM_MARGIN_PERCENT 3
+#define RPM_MARGIN_THRES(rpm_target) (((rpm_target)*RPM_MARGIN_PERCENT)/100)
 /**
- * MFT start measure.
- *
- * @param   ch      operation channel
- * @return  none
- */
-static void mft_start_measure(int ch)
-{
-	int mdl = mft_channels[ch].module;
-
-	/* Set the clock source type and start counting */
-	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD,
-			mft_channels[ch].clk_src);
-}
-
-/**
- * MFT stop measure.
- *
- * @param   ch      operation channel
- * @return  none
- */
-static void mft_stop_measure(int ch)
-{
-	int mdl = mft_channels[ch].module;
-
-	/* Clear all pending flag */
-	NPCX_TECLR(mdl) = NPCX_TECTRL(mdl);
-
-	/* Stop the timer and capture events for TCNT2 */
-	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD, TCKC_NOCLK);
-}
-
-/**
- * MFT final measure.
+ * MFT get fan rpm value
  *
  * @param   ch      operation channel
  * @return  actual  rpm
  */
-static int mft_final_measure(int ch)
+static int mft_fan_rpm(int ch)
 {
+	volatile struct fan_status_t *p_status = fan_status + ch;
 	int mdl = mft_channels[ch].module;
 	int tacho;
+
+	/* Check whether MFT underflow flag is occurred */
+	if (IS_BIT_SET(NPCX_TECTRL(mdl), NPCX_TECTRL_TCPND)) {
+		/* Clear pending flags */
+		SET_BIT(NPCX_TECLR(mdl), NPCX_TECLR_TCCLR);
+
+		/* Need to avoid underflow state happen */
+		p_status->rpm_actual = 0;
+		/*
+		 * Flag TDPND means mft underflow happen,
+		 * but let MFT still can re-measure actual rpm
+		 * when user change pwm/fan duty during
+		 * TACHO_UNDERFLOW state.
+		 */
+		p_status->cur_state = TACHO_UNDERFLOW;
+		p_status->auto_status = FAN_STATUS_STOPPED;
+		CPRINTS("Tacho is underflow !");
+
+		return 0;
+	}
+
+	p_status->cur_state = TACHO_NORMAL;
 	/*
 	 * Start of the last tacho cycle is detected -
 	 * calculated tacho cycle duration
 	 */
-	tacho = mft_channels[ch].default_count - NPCX_TCRA(mdl);
-	CPRINTS("tacho=%x", tacho);
-
+	tacho = TACHO_MAX_CNT - NPCX_TCRA(mdl);
 	/* Transfer tacho to actual rpm */
 	return (tacho > 0) ? (TACH_TO_RPM(ch, tacho)) : 0;
 }
@@ -168,6 +172,7 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 	int mdl = mft_channels[ch].module;
 	int pwm_id = mft_channels[ch].pwm_id;
 	enum npcx_mft_clk_src clk_src = mft_channels[ch].clk_src;
+
 	volatile struct fan_status_t *p_status = fan_status + ch;
 
 	/* Setup pwm with fan spec. */
@@ -184,7 +189,7 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 		else
 			p_status->mft_freq = 0;
 
-		/* Set mode 5 to MFT module*/
+		/* Set mode 5 to MFT module */
 		SET_FIELD(NPCX_TMCTRL(mdl), NPCX_TMCTRL_MDSEL_FIELD,
 				NPCX_MFT_MDSEL_5);
 
@@ -197,8 +202,8 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 				clk_src == TCKC_LFCLK);
 
 		/* Set the default count-down timer. */
-		NPCX_TCNT1(mdl) = mft_channels[ch].default_count;
-		NPCX_TCRA(mdl)  = mft_channels[ch].default_count;
+		NPCX_TCNT1(mdl) = TACHO_MAX_CNT;
+		NPCX_TCRA(mdl)  = TACHO_MAX_CNT;
 
 		/* Set the edge polarity to rising. */
 		SET_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEDG);
@@ -207,40 +212,103 @@ static void fan_config(int ch, int enable_mft_read_rpm)
 		/* Enable input debounce logic into TA. */
 		SET_BIT(NPCX_TCFG(mdl), NPCX_TCFG_TADBEN);
 
-		/* Set the no clock to TCNT1. */
-		SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD,
-				TCKC_NOCLK);
-		/* Set timer wake-up enable */
-		SET_BIT(NPCX_TWUEN(mdl), NPCX_TWUEN_TAWEN);
-		SET_BIT(NPCX_TWUEN(mdl), NPCX_TWUEN_TCWEN);
-
+		/* Set the clock source type and start capturing */
+		SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD, clk_src);
 	}
 
-	/* Back to Idle mode*/
-	p_status->cur_state = TACHO_IN_IDLE;
+	/* Set default fan states */
+	p_status->cur_state = TACHO_NORMAL;
+	p_status->fan_mode = TACHO_FAN_DUTY;
+	p_status->auto_status = FAN_STATUS_STOPPED;
 }
 
 /**
- * Get percentage of duty cycle from rpm
+ * Smart fan control function.
  *
- * @param   ch      operation channel
- * @param   rpm     target rpm
- * @return  none
+ * @param   ch         operation channel
+ * @param   rpm_actual actual operation rpm value
+ * @param   rpm_target target operation rpm value
+ * @return  current    fan control status
  */
-int fan_rpm_to_percent(int ch, int rpm)
+enum fan_status fan_smart_control(int ch, int rpm_actual, int rpm_target)
 {
-	int pct, max, min;
+	static int rpm_pre;
+	int duty, duty_diff, rpm_diff;
 
-	if (!rpm) {
-		pct = 0;
-	} else {
-		min = fans[ch].rpm_min;
-		max = fans[ch].rpm_max;
-		pct = (99*rpm + max - 100*min) / (max-min);
+	/* wait rpm is stable */
+	if (ABS(rpm_actual - rpm_pre) > RPM_MARGIN_THRES(rpm_target)/2) {
+		rpm_pre = rpm_actual;
+		return FAN_STATUS_CHANGING;
 	}
 
-	return pct;
+	/* Record previous rpm */
+	rpm_pre = rpm_actual;
+
+	/* Find suitable duty step */
+	rpm_diff = rpm_target - rpm_actual;
+	if (ABS(rpm_diff) >= 2000)
+		duty_diff = 20;
+	else if (ABS(rpm_diff) >= 1000)
+		duty_diff = 10;
+	else if (ABS(rpm_diff) >= 500)
+		duty_diff = 5;
+	else if (ABS(rpm_diff) >= 250)
+		duty_diff = 3;
+	else
+		duty_diff = 1;
+
+	/* Adjust PWM duty */
+	duty = fan_get_duty(ch);
+	if (duty == 0 && rpm_target == 0)
+		return FAN_STATUS_STOPPED;
+
+	/* Increase PWM duty */
+	if (rpm_diff > RPM_MARGIN_THRES(rpm_target)) {
+		if (duty == 100)
+			return FAN_STATUS_FRUSTRATED;
+
+		fan_set_duty(ch, duty + duty_diff);
+		CPRINTS("duty=%d, threshold %d, rpm target %d, actual %d", duty,
+			RPM_MARGIN_THRES(rpm_target), rpm_target, rpm_actual);
+		return FAN_STATUS_CHANGING;
+	/* Decrease PWM duty */
+	} else if (rpm_diff < -RPM_MARGIN_THRES(rpm_target)) {
+		if (duty == 1 && rpm_target != 0)
+			return FAN_STATUS_FRUSTRATED;
+
+		fan_set_duty(ch, duty - duty_diff);
+		CPRINTS("duty=%d, threshold %d, rpm target %d, actual %d", duty,
+			RPM_MARGIN_THRES(rpm_target), rpm_target, rpm_actual);
+		return FAN_STATUS_CHANGING;
+	}
+
+	return FAN_STATUS_LOCKED;
 }
+
+/**
+ * Tick function for fan control.
+ *
+ * @return  none
+ */
+void fan_tick_func(void)
+{
+	int ch;
+
+	for (ch = 0; ch < FAN_CH_COUNT ; ch++) {
+		volatile struct fan_status_t *p_status = fan_status + ch;
+		/* Make sure rpm mode is enabled */
+		if (p_status->fan_mode != TACHO_FAN_RPM) {
+			p_status->auto_status = FAN_STATUS_STOPPED;
+			return;
+		}
+		/* Get actual rpm */
+		p_status->rpm_actual = mft_fan_rpm(ch);
+		/* Do smart fan stuff */
+		p_status->auto_status = fan_smart_control(ch,
+				p_status->rpm_actual, p_status->rpm_target);
+	}
+}
+DECLARE_HOOK(HOOK_TICK, fan_tick_func, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* IC specific low-level driver */
@@ -256,13 +324,10 @@ void fan_set_duty(int ch, int percent)
 {
 	int pwm_id = mft_channels[ch].pwm_id;
 
-	CPRINTS("set duty percent=%d", percent);
+	if (!percent)
+		fan_status[ch].auto_status = FAN_STATUS_STOPPED;
 	/* Set the duty cycle of PWM */
 	pwm_set_duty(pwm_id, percent);
-
-	/* Start measurement again */
-	if (percent != 0 && fan_status[ch].cur_state == TACHO_UNDERFLOW)
-		fan_status[ch].cur_state = TACHO_IN_IDLE;
 }
 
 /**
@@ -283,12 +348,10 @@ int fan_get_duty(int ch)
  *
  * @param   ch  operation channel
  * @return  rpm operation mode or not
- * @notes   not support in npcx chip
  */
 int fan_get_rpm_mode(int ch)
 {
-	/* TODO: (Benson_TBD_4) not support rpm mode, return 0 always */
-	return 0;
+	return fan_status[ch].fan_mode == TACHO_FAN_RPM ? 1 : 0;
 }
 
 /**
@@ -297,11 +360,13 @@ int fan_get_rpm_mode(int ch)
  * @param   ch          operation channel
  * @param   rpm_mode    rpm operation mode flag
  * @return  none
- * @notes   not support in npcx chip
  */
 void fan_set_rpm_mode(int ch, int rpm_mode)
 {
-	/* TODO: (Benson_TBD_4) not support rpm mode */
+	if (rpm_mode)
+		fan_status[ch].fan_mode = TACHO_FAN_RPM;
+	else
+		fan_status[ch].fan_mode = TACHO_FAN_DUTY;
 }
 
 /**
@@ -312,82 +377,12 @@ void fan_set_rpm_mode(int ch, int rpm_mode)
  */
 int fan_get_rpm_actual(int ch)
 {
-	int mdl = mft_channels[ch].module;
-	volatile struct fan_status_t *p_status = fan_status + ch;
+	/* Check PWM is enabled first */
+	if (fan_get_duty(ch) == 0)
+		return 0;
 
-	/* Start measure and return previous value when fan is working */
-	if ((fan_get_enabled(ch)) && (fan_get_duty(ch))) {
-		if (p_status->cur_state == TACHO_IN_IDLE) {
-			CPRINTS("mft_startmeasure");
-			if (p_status->rpm_actual <= 0)
-				p_status->rpm_actual = fans[ch].rpm_min;
-			/* Clear all pending flags */
-			NPCX_TECLR(mdl) = NPCX_TECTRL(mdl);
-			/* Start from first edge state */
-			p_status->cur_state = TACHO_WAIT_FOR_1_EDGE;
-			/* Start measure */
-			mft_start_measure(ch);
-		}
-		/* Check whether MFT underflow flag is occurred */
-		else if (IS_BIT_SET(NPCX_TECTRL(mdl), NPCX_TECTRL_TCPND)) {
-			/* Measurement is active - stop the measurement */
-			mft_stop_measure(ch);
-			/* Need to avoid underflow state happen */
-			p_status->rpm_actual = 0;
-			/*
-			 * Flag TDPND means mft underflow happen,
-			 * but let MFT still can re-measure actual rpm
-			 * when user change pwm/fan duty during
-			 * TACHO_UNDERFLOW state.
-			 */
-			p_status->cur_state = TACHO_UNDERFLOW;
-			CPRINTS("TACHO_UNDERFLOW");
-
-			/* Clear pending flags */
-			SET_BIT(NPCX_TECLR(mdl), NPCX_TECLR_TCCLR);
-		}
-		/* Check whether MFT signal detection flag is occurred */
-		else if (IS_BIT_SET(NPCX_TECTRL(mdl), NPCX_TECTRL_TAPND)) {
-			/* Start of tacho cycle is detected */
-			switch (p_status->cur_state) {
-			case TACHO_WAIT_FOR_1_EDGE:
-				CPRINTS("TACHO_WAIT_FOR_1_EDGE");
-				/*
-				 * Start of the first tacho cycle is detected
-				 * and wait for the second tacho cycle
-				 * (second edge)
-				 */
-				p_status->cur_state = TACHO_WAIT_FOR_2_EDGE;
-				/* Send previous rpm before complete measure */
-				break;
-			case TACHO_WAIT_FOR_2_EDGE:
-				/* Complete measure tacho and get actual rpm */
-				p_status->rpm_actual = mft_final_measure(ch);
-				/* Stop the measurement */
-				mft_stop_measure(ch);
-
-				/* Back to Idle mode*/
-				p_status->cur_state = TACHO_IN_IDLE;
-				CPRINTS("TACHO_WAIT_FOR_2_EDGE");
-				CPRINTS("rpm_actual=%d", p_status->rpm_actual);
-				break;
-			default:
-				break;
-			}
-			/* Clear pending flags */
-			SET_BIT(NPCX_TECLR(mdl), NPCX_TECLR_TACLR);
-		}
-	} else {
-		CPRINTS("preset rpm");
-		/* Send preset rpm before fan is working */
-		if (fan_get_enabled(ch))
-			p_status->rpm_actual = fans[ch].rpm_min;
-		else
-			p_status->rpm_actual = 0;
-
-		p_status->cur_state = TACHO_IN_IDLE;
-	}
-	return p_status->rpm_actual;
+	CPRINTS("fan %d: get actual rpm = %d", ch, fan_status[ch].rpm_actual);
+	return fan_status[ch].rpm_actual;
 }
 
 /**
@@ -399,6 +394,7 @@ int fan_get_rpm_actual(int ch)
 int fan_get_enabled(int ch)
 {
 	int pwm_id = mft_channels[ch].pwm_id;
+
 	return pwm_get_enabled(pwm_id);
 }
 /**
@@ -411,6 +407,9 @@ int fan_get_enabled(int ch)
 void fan_set_enabled(int ch, int enabled)
 {
 	int pwm_id = mft_channels[ch].pwm_id;
+
+	if (!enabled)
+		fan_status[ch].auto_status = FAN_STATUS_STOPPED;
 	pwm_enable(pwm_id, enabled);
 }
 
@@ -434,18 +433,17 @@ int fan_get_rpm_target(int ch)
  */
 void fan_set_rpm_target(int ch, int rpm)
 {
-	int percent = 0;
+	/* If rpm = 0, disable PWM */
+	if (rpm == 0)
+		fan_set_duty(ch, 0);
+	else if (rpm > fans[ch].rpm_max)
+		rpm = fans[ch].rpm_max;
+	else if (rpm < fans[ch].rpm_min)
+		rpm = fans[ch].rpm_min;
 
+	/* Set target rpm */
 	fan_status[ch].rpm_target = rpm;
-	/* Transfer rpm to percentage of duty cycle */
-	percent = fan_rpm_to_percent(ch, rpm);
-
-	if (percent < 0)
-		percent = 0;
-	else if (percent > 100)
-		percent = 100;
-
-	fan_set_duty(ch, percent);
+	CPRINTS("fan %d: set target rpm = %d", ch, fan_status[ch].rpm_target);
 }
 
 /**
@@ -456,17 +454,7 @@ void fan_set_rpm_target(int ch, int rpm)
  */
 enum fan_status fan_get_status(int ch)
 {
-	int rpm_actual;
-
-	rpm_actual = fan_get_rpm_actual(ch);
-
-	if (((fan_get_duty(ch)) && (rpm_actual < fans[ch].rpm_min))
-			|| ((!fan_get_duty(ch)) && (rpm_actual)))
-		return FAN_STATUS_FRUSTRATED;
-	else if ((rpm_actual == 0) && (!fan_get_duty(ch)))
-		return FAN_STATUS_STOPPED;
-	else
-		return FAN_STATUS_LOCKED;
+	return fan_status[ch].auto_status;
 }
 
 /**
@@ -477,17 +465,11 @@ enum fan_status fan_get_status(int ch)
  */
 int fan_is_stalled(int ch)
 {
-	int rpm_actual;
-
-	rpm_actual = fan_get_rpm_actual(ch);
-
-	/* Check for normal condition, others are stall condition */
-	if ((!fan_get_enabled(ch)) || ((fan_get_duty(ch))
-			&& (rpm_actual >= fans[ch].rpm_min))
-			|| ((!fan_get_duty(ch)) && (!rpm_actual)))
+	/* if fan is enabled but we didn't detect any tacho */
+	if (fan_get_enabled(ch) && fan_status[ch].cur_state == TACHO_UNDERFLOW)
+		return 1;
+	else
 		return 0;
-
-	return 1;
 }
 
 /**
