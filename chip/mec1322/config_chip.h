@@ -70,6 +70,12 @@
 #define CONSOLE_TASK_STACK_SIZE		640
 #define HOST_CMD_TASK_STACK_SIZE	640
 
+/*
+ * TODO: Large stack consumption
+ * https://code.google.com/p/chrome-os-partner/issues/detail?id=49245
+ */
+#define PD_TASK_STACK_SIZE		800
+
 /* Default task stack size */
 #define TASK_STACK_SIZE			512
 
