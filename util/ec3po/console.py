@@ -120,7 +120,8 @@ class Console(object):
       read-only side of the debug pipe.  This must be a unidirectional pipe
       attached to the intepreter.  EC debug messages use this pipe.
     """
-    self.logger = logging.getLogger('EC3PO.Console')
+    logger = logging.getLogger('EC3PO.Console')
+    self.logger = interpreter.LoggerAdapter(logger, {'pty': user_pty})
     self.master_pty = master_pty
     self.user_pty = user_pty
     self.cmd_pipe = cmd_pipe

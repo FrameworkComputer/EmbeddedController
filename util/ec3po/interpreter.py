@@ -29,6 +29,14 @@ EC_SYN = '\xec'  # Byte indicating EC interrogation.
 EC_ACK = '\xc0'  # Byte representing correct EC response to interrogation.
 
 
+class LoggerAdapter(logging.LoggerAdapter):
+  """Class which provides a small adapter for the logger."""
+
+  def process(self, msg, kwargs):
+    """Prepends the served PTY to the beginning of the log message."""
+    return '%s - %s' % (self.extra['pty'], msg), kwargs
+
+
 class Interpreter(object):
   """Class which provides the interpretation layer between the EC and user.
 
@@ -78,7 +86,8 @@ class Interpreter(object):
       log_level: An optional integer representing the numeric value of the log
         level.  By default, the log level will be logging.INFO (20).
     """
-    self.logger = logging.getLogger('EC3PO.Interpreter')
+    logger = logging.getLogger('EC3PO.Interpreter')
+    self.logger = LoggerAdapter(logger, {'pty': ec_uart_pty})
     self.ec_uart_pty = open(ec_uart_pty, 'a+')
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
