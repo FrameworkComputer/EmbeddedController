@@ -70,10 +70,6 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 		return 3000;
 }
 
-void pd_send_host_event(int mask)
-{
-}
-
 /* Test utilities */
 
 static void plug_charger_with_ts(int supplier_type, int port, int min_current,

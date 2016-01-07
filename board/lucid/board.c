@@ -153,3 +153,7 @@ enum battery_present battery_is_present(void)
 {
 	return gpio_get_level(GPIO_BAT_PRESENT) ? BP_YES : BP_NO;
 }
+
+void pd_send_host_event(int mask)
+{
+}

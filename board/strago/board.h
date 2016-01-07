@@ -99,6 +99,8 @@
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_HOSTCMD
+#undef CONFIG_CMD_I2C_SCAN
+#undef CONFIG_CMD_IDLE_STATS
 #undef CONFIG_CMD_PD
 #undef CONFIG_CMD_SHMEM
 #undef CONFIG_CMD_TEMP_SENSOR

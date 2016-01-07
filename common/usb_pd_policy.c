@@ -953,9 +953,3 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 	}
 	return rsize;
 }
-
-static void stub_pd_send_host_event(int mask)
-{
-}
-void pd_send_host_event(int mask)
-	__attribute__((weak, alias("stub_pd_send_host_event")));

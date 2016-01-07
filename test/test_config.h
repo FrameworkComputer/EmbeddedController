@@ -149,5 +149,10 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_COUNT 2
 #endif
 
+#ifndef __ASSEMBLER__
+/* Callback function from charge_manager to send host event */
+static inline void pd_send_host_event(int mask) { }
+#endif
+
 #endif  /* TEST_BUILD */
 #endif  /* __TEST_TEST_CONFIG_H */
