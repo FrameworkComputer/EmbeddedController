@@ -20,7 +20,7 @@ if [[ -n "${changed}" ]]; then
   exit 1
 fi
 
-if [[ ! -e util/ec3po/.tests-passed ]]; then
+if [[ ! -e util/ec3po/.tests-passed ]] && [[ -n "${ec3po_files}" ]]; then
   echo 'Unit tests have not passed.  Please run "util/ec3po/run_tests.sh".'
   exit 1
 fi
