@@ -46,7 +46,8 @@ class Interpreter(object):
 
   Attributes:
     logger: A logger for this module.
-    ec_uart_pty: A string representing the EC UART to connect to.
+    ec_uart_pty: An opened file object to the raw EC UART PTY.
+    ec_uart_pty_name: A string containing the name of the raw EC UART PTY.
     cmd_pipe: A multiprocessing.Connection object which represents the
       Interpreter side of the command pipe.  This must be a bidirectional pipe.
       Commands and responses will utilize this pipe.
@@ -69,6 +70,8 @@ class Interpreter(object):
       and is changed depending on the result of an interrogation.
     interrogating: A boolean indicating if we are in the middle of interrogating
       the EC.
+    connected: A boolean indicating if the interpreter is actually connected to
+      the UART and listening.
   """
   def __init__(self, ec_uart_pty, cmd_pipe, dbg_pipe, log_level=logging.INFO):
     """Intializes an Interpreter object with the provided args.
@@ -89,6 +92,7 @@ class Interpreter(object):
     logger = logging.getLogger('EC3PO.Interpreter')
     self.logger = LoggerAdapter(logger, {'pty': ec_uart_pty})
     self.ec_uart_pty = open(ec_uart_pty, 'a+')
+    self.ec_uart_pty_name = ec_uart_pty
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
     self.cmd_retries = COMMAND_RETRIES
@@ -99,6 +103,7 @@ class Interpreter(object):
     self.last_cmd = ''
     self.enhanced_ec = False
     self.interrogating = False
+    self.connected = True
 
   def __str__(self):
     """Show internal state of the Interpreter object.
@@ -129,8 +134,10 @@ class Interpreter(object):
     """
     self.ec_cmd_queue.put(command)
     self.logger.debug('Commands now in queue: %d', self.ec_cmd_queue.qsize())
+
     # Add the EC UART as an output to be serviced.
-    self.outputs.append(self.ec_uart_pty)
+    if self.connected and self.ec_uart_pty not in self.outputs:
+      self.outputs.append(self.ec_uart_pty)
 
   def PackCommand(self, raw_cmd):
     r"""Packs a command for use with error checking.
@@ -176,6 +183,53 @@ class Interpreter(object):
     Args:
       command: A string representing the command sent by the user.
     """
+    if command == "disconnect":
+      if self.connected:
+        self.logger.debug('UART disconnect request.')
+        # Drop all pending commands if any.
+        while not self.ec_cmd_queue.empty():
+          c = self.ec_cmd_queue.get()
+          self.logger.debug('dropped: \'%s\'', c)
+        if self.enhanced_ec:
+          # Reset retry state.
+          self.cmd_retries = COMMAND_RETRIES
+          self.last_cmd = ''
+        # Get the UART that the interpreter is attached to.
+        fd = self.ec_uart_pty
+        self.logger.debug('fd: %r', fd)
+        # Remove the descriptor from the inputs and outputs.
+        self.inputs.remove(fd)
+        if fd in self.outputs:
+          self.outputs.remove(fd)
+        self.logger.debug('Removed fd. Remaining inputs: %r', self.inputs)
+        # Close the file.
+        fd.close()
+        # Mark the interpreter as disconnected now.
+        self.connected = False
+        self.logger.debug('Disconnected from %s.', self.ec_uart_pty_name)
+      return
+
+    elif command == "reconnect":
+      if not self.connected:
+        self.logger.debug('UART reconnect request.')
+        # Reopen the PTY.
+        fd = open(self.ec_uart_pty_name, 'a+')
+        self.logger.debug('fd: %r', fd)
+        self.ec_uart_pty = fd
+        # Add the descriptor to the inputs.
+        self.inputs.append(fd)
+        self.logger.debug('fd added. curr inputs: %r', self.inputs)
+        # Mark the interpreter as connected now.
+        self.connected = True
+        self.logger.debug('Connected to %s.', self.ec_uart_pty_name)
+      return
+
+    # Ignore any other commands while in the disconnected state.
+    self.logger.debug('command: \'%s\'', command)
+    if not self.connected:
+      self.logger.debug('Ignoring command because currently disconnected.')
+      return
+
     # Remove leading and trailing spaces only if this is an enhanced EC image.
     # For non-enhanced EC images, commands will be single characters at a time
     # and can be spaces.
@@ -199,7 +253,6 @@ class Interpreter(object):
       # TODO(aaboagye): Make a dict of commands and keys and eventually,
       # handle partial matching based on unique prefixes.
 
-    self.logger.debug('command: \'%s\'', command)
     self.EnqueueCmd(command)
 
   def HandleCmdRetries(self):
@@ -245,8 +298,13 @@ class Interpreter(object):
         self.last_cmd = cmd
         # Reset the retry count.
         self.cmd_retries = COMMAND_RETRIES
-    # Remove the EC UART from the writers while we wait for a response.
-    self.outputs.remove(self.ec_uart_pty)
+
+    # If no command is pending to be sent, then we can remove the EC UART from
+    # writers.  Might need better checking for command retry logic in here.
+    if self.ec_cmd_queue.empty():
+      # Remove the EC UART from the writers while we wait for a response.
+      self.logger.debug('Removing EC UART from writers.')
+      self.outputs.remove(self.ec_uart_pty)
 
   def HandleECData(self):
     """Handle any debug prints from the EC."""

@@ -251,6 +251,114 @@ class TestEnhancedECBehaviour(unittest.TestCase):
                      'enhanced_ec should still be False.')
 
 
+class TestUARTDisconnection(unittest.TestCase):
+  """Test case to verify interpreter disconnection/reconnection."""
+  def setUp(self):
+    """Setup the test harness."""
+    # Setup logging with a timestamp, the module, and the log level.
+    logging.basicConfig(level=logging.DEBUG,
+                        format=('%(asctime)s - %(module)s -'
+                                ' %(levelname)s - %(message)s'))
+
+    # Create a tempfile that would represent the EC UART PTY.
+    self.tempfile = tempfile.NamedTemporaryFile()
+
+    # Create the pipes that the interpreter will use.
+    self.cmd_pipe_user, self.cmd_pipe_itpr = multiprocessing.Pipe()
+    self.dbg_pipe_user, self.dbg_pipe_itpr = multiprocessing.Pipe(duplex=False)
+
+    # Mock the open() function so we can inspect reads/writes to the EC.
+    self.ec_uart_pty = mock.mock_open()
+    with mock.patch('__builtin__.open', self.ec_uart_pty):
+      # Create an interpreter.
+      self.itpr = interpreter.Interpreter(self.tempfile.name,
+                                          self.cmd_pipe_itpr,
+                                          self.dbg_pipe_itpr,
+                                          log_level=logging.DEBUG)
+
+    # First, check that interpreter is initialized to connected.
+    self.assertTrue(self.itpr.connected, ('The interpreter should be'
+                                          ' initialized in a connected state'))
+
+  def test_DisconnectStopsECTraffic(self):
+    """Verify that when in disconnected state, no debug prints are sent."""
+    # Let's send a disconnect command through the command pipe.
+    self.cmd_pipe_user.send('disconnect')
+    self.itpr.HandleUserData()
+
+    # Verify interpreter is disconnected from EC.
+    self.assertFalse(self.itpr.connected, ('The interpreter should be'
+                                           'disconnected.'))
+    # Verify that the EC UART is no longer a member of the inputs.  The
+    # interpreter will never pull data from the EC if it's not a member of the
+    # inputs list.
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.inputs)
+
+  def test_CommandsDroppedWhenDisconnected(self):
+    """Verify that when in disconnected state, commands are dropped."""
+    # Send a command, followed by 'disconnect'.
+    self.cmd_pipe_user.send('taskinfo')
+    self.itpr.HandleUserData()
+    self.cmd_pipe_user.send('disconnect')
+    self.itpr.HandleUserData()
+
+    # Verify interpreter is disconnected from EC.
+    self.assertFalse(self.itpr.connected, ('The interpreter should be'
+                                           'disconnected.'))
+    # Verify that the EC UART is no longer a member of the inputs nor outputs.
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.inputs)
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.outputs)
+
+    # Have the user send a few more commands in the disconnected state.
+    command = 'help\n'
+    for char in command:
+      self.cmd_pipe_user.send(char)
+      self.itpr.HandleUserData()
+
+    # The command queue should be empty.
+    self.assertEqual(0, self.itpr.ec_cmd_queue.qsize())
+
+    # Now send the reconnect command.
+    self.cmd_pipe_user.send('reconnect')
+    with mock.patch('__builtin__.open', mock.mock_open()):
+      self.itpr.HandleUserData()
+
+    # Verify interpreter is connected.
+    self.assertTrue(self.itpr.connected)
+    # Verify that EC UART is a member of the inputs.
+    self.assertTrue(self.itpr.ec_uart_pty in self.itpr.inputs)
+    # Since no command was sent after reconnection, verify that the EC UART is
+    # not a member of the outputs.
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.outputs)
+
+  def test_ReconnectAllowsECTraffic(self):
+    """Verify that when connected, EC UART traffic is allowed."""
+    # Let's send a disconnect command through the command pipe.
+    self.cmd_pipe_user.send('disconnect')
+    self.itpr.HandleUserData()
+
+    # Verify interpreter is disconnected.
+    self.assertFalse(self.itpr.connected, ('The interpreter should be'
+                                           'disconnected.'))
+    # Verify that the EC UART is no longer a member of the inputs nor outputs.
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.inputs)
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.outputs)
+
+    # Issue reconnect command through the command pipe.
+    self.cmd_pipe_user.send('reconnect')
+    with mock.patch('__builtin__.open', mock.mock_open()):
+      self.itpr.HandleUserData()
+
+    # Verify interpreter is connected.
+    self.assertTrue(self.itpr.connected, ('The interpreter should be'
+                                           'connected.'))
+    # Verify that the EC UART is now a member of the inputs.
+    self.assertTrue(self.itpr.ec_uart_pty in self.itpr.inputs)
+    # Since we have issued no commands during the disconnected state, no
+    # commands are pending and therefore the PTY should not be added to the
+    # outputs.
+    self.assertFalse(self.itpr.ec_uart_pty in self.itpr.outputs)
+
 
 if __name__ == '__main__':
   unittest.main()
