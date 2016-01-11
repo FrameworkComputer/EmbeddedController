@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Battery LED and Power LED control for LLAMA Board.
+ * Battery LED and Power LED control for Oak Board.
  */
 
 #include "battery.h"
@@ -32,28 +32,32 @@ enum led_color {
 
 static int bat_led_set(enum led_color color, int on)
 {
+	/* Before Rev5, it's active low; After that, it's active high */
+	if (system_get_board_version() < OAK_REV5)
+		on = !on;
+
 	switch (color) {
 	case BAT_LED_GREEN:
-		gpio_set_level(GPIO_BAT_LED0, on ? 0 : 1); /* BAT_LED_GREEN */
+		gpio_set_level(GPIO_BAT_LED0, on); /* BAT_LED_GREEN */
 		break;
 	case BAT_LED_ORANGE:
 		/* for rev2 or before */
-		gpio_set_level(GPIO_BAT_LED1, on ? 0 : 1); /* BAT_LED_ORANGE */
+		gpio_set_level(GPIO_BAT_LED1, on); /* BAT_LED_ORANGE */
 		break;
 	case BAT_LED_RED:
 		/* for rev3 or later */
-		gpio_set_level(GPIO_BAT_LED1, on ? 0 : 1); /* BAT_LED_RED */
+		gpio_set_level(GPIO_BAT_LED1, on); /* BAT_LED_RED */
 		break;
 	case BAT_LED_AMBER:
 		/* for rev3 or later */
-		gpio_set_level(GPIO_BAT_LED0, on ? 0 : 1); /* BAT_LED_AMBER */
-		gpio_set_level(GPIO_BAT_LED1, on ? 0 : 1);
+		gpio_set_level(GPIO_BAT_LED0, on); /* BAT_LED_AMBER */
+		gpio_set_level(GPIO_BAT_LED1, on);
 		break;
 	case PWR_LED_GREEN:
-		gpio_set_level(GPIO_PWR_LED0, on ? 0 : 1); /* PWR_LED_GREEN */
+		gpio_set_level(GPIO_PWR_LED0, on); /* PWR_LED_GREEN */
 		break;
 	case PWR_LED_ORANGE:
-		gpio_set_level(GPIO_PWR_LED1, on ? 0 : 1); /* PWR_LED_ORANGE */
+		gpio_set_level(GPIO_PWR_LED1, on); /* PWR_LED_ORANGE */
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -109,21 +113,11 @@ static void oak_led_set_power(int board_version)
 
 	power_second++;
 
-	if (board_version < 3) {
-		/* PWR LED behavior:
-		 * Power on: Green
-		 * Suspend: Green in breeze mode ( 1 sec on/ 3 sec off)
-		 * Power off: OFF
-		 */
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			bat_led_set(BAT_LED_GREEN, 0);
-		else if (chipset_in_state(CHIPSET_STATE_ON))
-			bat_led_set(BAT_LED_GREEN, 1);
-		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-			bat_led_set(BAT_LED_GREEN, (power_second & 3) ? 0 : 1);
-	} else {
+	switch(board_version) {
+	case OAK_REV3:
+	case OAK_REV4:
 		/*
-		 * For Rev3 or later version:
+		 * For Rev3 and Rev4 revision.
 		 * PWR LED behavior:
 		 * Power on: Green ON
 		 * Suspend: Orange in breeze mode ( 1 sec on/ 3 sec off)
@@ -137,8 +131,24 @@ static void oak_led_set_power(int board_version)
 			bat_led_set(PWR_LED_ORANGE, 0);
 		} else if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
 			bat_led_set(PWR_LED_GREEN, 0);
-			bat_led_set(PWR_LED_ORANGE, (power_second & 3) ? 0 : 1);
+			bat_led_set(PWR_LED_ORANGE,
+				    (power_second & 3) ? 0 : 1);
 		}
+		break;
+	default:
+		/* PWR LED behavior:
+		 * Power on: Green
+		 * Suspend: Green in breeze mode ( 1 sec on/ 3 sec off)
+		 * Power off: OFF
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			bat_led_set(BAT_LED_GREEN, 0);
+		else if (chipset_in_state(CHIPSET_STATE_ON))
+			bat_led_set(BAT_LED_GREEN, 1);
+		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+			bat_led_set(BAT_LED_GREEN,
+				    (power_second & 3) ? 0 : 1);
+		break;
 	}
 }
 
@@ -148,46 +158,11 @@ static void oak_led_set_battery(int board_version)
 
 	battery_second++;
 
-	if (board_version < 3) {
-		/* BAT LED behavior:
-		 * Fully charged / idle: Off
-		 * Under charging: Orange
-		 * Battery low (10%): Orange in breeze mode(1 sec on, 3 sec off)
-		 * Battery critical low (less than 3%) or abnormal battery
-		 *     situation: Orange in blinking mode (1 sec on, 1 sec off)
-		 * Using battery or not connected to AC power: OFF
-		 */
-		switch (charge_get_state()) {
-		case PWR_STATE_CHARGE:
-			bat_led_set(BAT_LED_ORANGE, 1);
-			break;
-		case PWR_STATE_CHARGE_NEAR_FULL:
-			bat_led_set(BAT_LED_ORANGE, 1);
-			break;
-		case PWR_STATE_DISCHARGE:
-			if (charge_get_percent() < 3)
-				bat_led_set(BAT_LED_ORANGE,
-					    (battery_second & 1) ? 0 : 1);
-			else if (charge_get_percent() < 10)
-				bat_led_set(BAT_LED_ORANGE,
-					    (battery_second & 3) ? 0 : 1);
-			else
-				bat_led_set(BAT_LED_ORANGE, 0);
-			break;
-		case PWR_STATE_ERROR:
-			bat_led_set(BAT_LED_ORANGE,
-				    (battery_second & 1) ? 0 : 1);
-			break;
-		case PWR_STATE_IDLE:	/* External power connected in IDLE. */
-			bat_led_set(BAT_LED_ORANGE, 0);
-			break;
-		default:
-			/* Other states don't alter LED behavior */
-			break;
-		}
-	} else {
+	switch(board_version) {
+	case OAK_REV3:
+	case OAK_REV4:
 		/*
-		 * For Rev3 or later version:
+		 * For Rev3 and Rev4 revision:
 		 * BAT LED behavior:
 		 * - Fully charged / idle: Green ON
 		 * - Charging: Amber ON (BAT_LED_RED && BAT_LED_GREEN)
@@ -206,17 +181,17 @@ static void oak_led_set_battery(int board_version)
 			bat_led_set(BAT_LED_GREEN, 0);
 			if (charge_get_percent() < 3)
 				bat_led_set(BAT_LED_RED,
-					    (battery_second & 1) ? 0 : 1);
+					  (battery_second & 1) ? 0 : 1);
 			else if (charge_get_percent() < 10)
 				bat_led_set(BAT_LED_RED,
-					    (battery_second & 3) ? 0 : 1);
+					  (battery_second & 3) ? 0 : 1);
 			else
 				bat_led_set(BAT_LED_RED, 0);
 			break;
 		case PWR_STATE_ERROR:
 			bat_led_set(BAT_LED_RED, 1);
 			break;
-		case PWR_STATE_IDLE:	/* External power connected in IDLE. */
+		case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
 			bat_led_set(BAT_LED_GREEN, 1);
 			bat_led_set(BAT_LED_RED, 0);
 			break;
@@ -224,6 +199,45 @@ static void oak_led_set_battery(int board_version)
 			/* Other states don't alter LED behavior */
 			break;
 		}
+		break; /* End of case OAK_REV3 & OAK_REV4 */
+	default:
+		/* BAT LED behavior:
+		 * Fully charged / idle: Off
+		 * Under charging: Orange
+		 * Bat. low (10%): Orange in breeze mode (1s on, 3s off)
+		 * Bat. critical low (less than 3%) or abnormal battery
+		 *   situation: Orange in blinking mode (1s on, 1s off)
+		 * Using battery or not connected to AC power: OFF
+		 */
+		switch (charge_get_state()) {
+		case PWR_STATE_CHARGE:
+			bat_led_set(BAT_LED_ORANGE, 1);
+			break;
+		case PWR_STATE_CHARGE_NEAR_FULL:
+			bat_led_set(BAT_LED_ORANGE, 1);
+			break;
+		case PWR_STATE_DISCHARGE:
+			if (charge_get_percent() < 3)
+				bat_led_set(BAT_LED_ORANGE,
+					  (battery_second & 1) ? 0 : 1);
+			else if (charge_get_percent() < 10)
+				bat_led_set(BAT_LED_ORANGE,
+					  (battery_second & 3) ? 0 : 1);
+			else
+				bat_led_set(BAT_LED_ORANGE, 0);
+			break;
+		case PWR_STATE_ERROR:
+			bat_led_set(BAT_LED_ORANGE,
+				    (battery_second & 1) ? 0 : 1);
+			break;
+		case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
+			bat_led_set(BAT_LED_ORANGE, 0);
+			break;
+		default:
+			/* Other states don't alter LED behavior */
+			break;
+		}
+		break; /* End of default */
 	}
 }
 

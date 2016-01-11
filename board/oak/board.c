@@ -174,10 +174,17 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.port_addr = 0x54 << 1,
 		.driver    = &pi3usb30532_usb_mux_driver,
 	},
+#if (BOARD_REV <= OAK_REV4)
 	{
 		.port_addr = 0x55 << 1,
 		.driver    = &pi3usb30532_usb_mux_driver,
 	},
+#else
+	{
+		.port_addr = 0x20,
+		.driver = &ps8740_usb_mux_driver,
+	},
+#endif
 };
 
 /**
@@ -352,9 +359,20 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 	}
 }
 
+static void board_typec_set_dp_hpd(int port, int level)
+{
+#if BOARD_REV >= OAK_REV5
+	if (1 == dp_hw_port)
+		gpio_set_level(GPIO_C1_DP_HPD, level);
+#endif
+
+	gpio_set_level(GPIO_USB_DP_HPD, level);
+
+}
+
 static void hpd_irq_deferred(void)
 {
-	gpio_set_level(GPIO_USB_DP_HPD, 1);
+	board_typec_set_dp_hpd(dp_hw_port, 1);
 }
 DECLARE_DEFERRED(hpd_irq_deferred);
 
@@ -368,13 +386,14 @@ void board_typec_dp_on(int port)
 	if (dp_hw_port != !port) {
 		/* Get control of DP hardware */
 		dp_hw_port = port;
-#if BOARD_REV == OAK_REV2
+#if BOARD_REV == OAK_REV2 || BOARD_REV >= OAK_REV5
+		/* Rev2 or Rev5 later board has DP switch */
 		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
 #endif
 		if (!gpio_get_level(GPIO_USB_DP_HPD)) {
-			gpio_set_level(GPIO_USB_DP_HPD, 1);
+			board_typec_set_dp_hpd(port, 1);
 		} else {
-			gpio_set_level(GPIO_USB_DP_HPD, 0);
+			board_typec_set_dp_hpd(port, 0);
 			hook_call_deferred(hpd_irq_deferred,
 					HPD_DSTREAM_DEBOUNCE_IRQ);
 		}
@@ -396,7 +415,8 @@ void board_typec_dp_off(int port, int *dp_flags)
 	}
 
 	dp_hw_port = PD_PORT_NONE;
-	gpio_set_level(GPIO_USB_DP_HPD, 0);
+	board_typec_set_dp_hpd(port, 0);
+
 	mutex_unlock(&dp_hw_lock);
 
 	/* Enable the other port if its dp flag is on */
@@ -413,13 +433,14 @@ void board_typec_dp_set(int port, int level)
 
 	if (dp_hw_port == PD_PORT_NONE) {
 		dp_hw_port = port;
-#if BOARD_REV == OAK_REV2
+#if BOARD_REV == OAK_REV2 || BOARD_REV >= OAK_REV5
+		/* Rev2 or Rev5 later board has DP switch */
 		gpio_set_level(GPIO_DP_SWITCH_CTL, port);
 #endif
 	}
 
 	if (dp_hw_port == port)
-		gpio_set_level(GPIO_USB_DP_HPD, level);
+		board_typec_set_dp_hpd(port, level);
 
 	mutex_unlock(&dp_hw_lock);
 }
@@ -562,6 +583,11 @@ static void board_chipset_pre_init(void)
 {
 	/* Enable level shift of AC_OK when power on */
 	board_extpower_buffer_to_soc();
+#if BOARD_REV >= OAK_REV5
+	/* Enable DP muxer */
+	gpio_set_level(GPIO_DP_MUX_EN_L , 0);
+	gpio_set_level(GPIO_PARADE_MUX_EN, 1);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
 
@@ -570,6 +596,11 @@ static void board_chipset_shutdown(void)
 {
 	/* Disable level shift to SoC when shutting down */
 	gpio_set_level(GPIO_LEVEL_SHIFT_EN_L, 1);
+#if BOARD_REV >= OAK_REV5
+	/* Disable DP muxer */
+	gpio_set_level(GPIO_DP_MUX_EN_L , 1);
+	gpio_set_level(GPIO_PARADE_MUX_EN, 0);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 

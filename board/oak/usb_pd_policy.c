@@ -140,6 +140,7 @@ int pd_check_vconn_swap(int port)
 
 void pd_execute_data_swap(int port, int data_role)
 {
+	/* Do nothing */
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
@@ -214,7 +215,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		CPRINTF("Current: %dmA\n", payload[1]);
 		break;
 	case VDO_CMD_FLIP:
-		/* board_flip_usb_mux(port); */
+		usb_mux_flip(port);
 		break;
 #ifdef CONFIG_USB_PD_LOGGING
 	case VDO_CMD_GET_LOG:
@@ -289,14 +290,13 @@ static int svdm_dp_config(int port, uint32_t *payload)
 		return 0;
 
 	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
-			  USB_SWITCH_CONNECT, pd_get_polarity(port));
+		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
-
 	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
 				1,             /* DPv1.3 signaling */
-				2);            /* UFP_U connected as UFP_D */
+				2);            /* UFP connected */
 	return 2;
 };
 
