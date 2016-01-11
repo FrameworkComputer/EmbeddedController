@@ -476,6 +476,16 @@ static void board_pmic_init(void)
 	if (ret)
 		goto pmic_error;
 
+	/*
+	 * Increase Voltage
+	 *  [7:0] : 0x2a default
+	 *  [5:4] : 10b default
+	 *  [5:4] : 01b 5.1V (0x1a)
+	 */
+	ret = I2C_PMIC_WRITE(TPS650830_REG_V5ADS3CNT, 0x1a);
+	if (ret)
+		goto pmic_error;
+
 	CPRINTS("PMIC initialization done");
 	return;
 
