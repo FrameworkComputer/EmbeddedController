@@ -478,6 +478,8 @@ static void board_handle_reboot(void)
 
 	/* Bring down all rails but RTC rail (including EC power). */
 	gpio_set_flags_by_mask(g->port, g->mask, GPIO_OUT_HIGH);
+	while (1)
+		; /* wait here */
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 

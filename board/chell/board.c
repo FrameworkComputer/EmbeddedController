@@ -406,5 +406,7 @@ static void board_handle_reboot(void)
 
 	/* Bring down all rails but RTC rail (including EC power). */
 	gpio_set_level(GPIO_PMIC_LDO_EN, 1);
+	while (1)
+		; /* wait here */
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
