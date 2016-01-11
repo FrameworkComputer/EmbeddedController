@@ -26,7 +26,7 @@ if [[ ! -e util/ec3po/.tests-passed ]] && [[ -n "${ec3po_files}" ]]; then
 fi
 
 changed_ec3po_files=$(find ${ec3po_files} -newer util/ec3po/.tests-passed)
-if [[ -n ${changed_ec3po_files} ]]; then
+if [[ -n "${changed_ec3po_files}" ]] && [[ -n "${ec3po_files}" ]]; then
   echo "Files have changed since last time EC-3PO unit tests passed:"
   echo "${changed_ec3po_files}" | sed -e 's/^/  /'
   echo 'Please run "util/ec3po/run_tests.sh".'
