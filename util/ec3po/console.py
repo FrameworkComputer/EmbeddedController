@@ -20,6 +20,7 @@ import multiprocessing
 import os
 import pty
 import select
+import stat
 import sys
 
 import interpreter
@@ -767,6 +768,10 @@ def main(argv):
 
   # Open a new pseudo-terminal pair
   (master_pty, user_pty) = pty.openpty()
+  # Set the permissions to 666.
+  os.chmod(os.ttyname(user_pty), (stat.S_IROTH | stat.S_IWOTH |
+                                  stat.S_IRGRP | stat.S_IWGRP |
+                                  stat.S_IRUSR | stat.S_IWUSR))
   # Create a console.
   console = Console(master_pty, os.ttyname(user_pty), cmd_pipe_interactive,
                     dbg_pipe_interactive)
