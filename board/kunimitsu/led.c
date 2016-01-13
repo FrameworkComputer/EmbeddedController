@@ -114,12 +114,14 @@ static void kunimitsu_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		/* Less than 3%, blink one second every two second */
-		if (charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+			charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
 			kunimitsu_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_2SECS_TICKS <
 				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
 		/* Less than 10%, blink one second every four seconds */
-		else if (charge_get_percent() < LOW_BATTERY_PERCENTAGE)
+		else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+			charge_get_percent() < LOW_BATTERY_PERCENTAGE)
 			kunimitsu_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_4SECS_TICKS <
 				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
