@@ -157,6 +157,7 @@ elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
 	CHIP="stm32"
 elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
 	CHIP="stm32_dfu"
+	NEED_SERVO="no"
 elif $(in_array "${BOARDS_NPCX_JTAG[@]}" "${BOARD}"); then
 	CHIP="npcx_jtag"
 elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
@@ -557,10 +558,12 @@ fi
 IMG="$(ec_image)"
 info "Using ${MCU} image : ${IMG}"
 
-EC_UART="$(ec_uart)"
-info "${MCU} UART pty : ${EC_UART}"
+if [ "${NEED_SERVO}" != "no" ] ; then
+  EC_UART="$(ec_uart)"
+  info "${MCU} UART pty : ${EC_UART}"
 
-save="$(servo_save)"
+  save="$(servo_save)"
+fi
 
 info "Flashing chip ${CHIP}."
 flash_${CHIP}
