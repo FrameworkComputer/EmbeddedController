@@ -312,6 +312,8 @@
 					 ((n) * 4L) + ((n) < 5 ? 0 : 0x10))
 #define NPCX_WKEN_ADDR(port, n)          (NPCX_MIWU_BASE_ADDR(port) + 0x1E + \
 					 ((n) * 2L) + ((n) < 5 ? 0 : 0x12))
+#define NPCX_WKINEN_ADDR(port, n)        (NPCX_MIWU_BASE_ADDR(port) + 0x1F + \
+					 ((n) * 2L) + ((n) < 5 ? 0 : 0x12))
 #define NPCX_WKMOD_ADDR(port, n)         (NPCX_MIWU_BASE_ADDR(port) + 0x70 + n)
 
 #define NPCX_WKEDG(port, n)               REG8(NPCX_WKEDG_ADDR(port, n))
@@ -319,6 +321,7 @@
 #define NPCX_WKPND(port, n)               REG8(NPCX_WKPND_ADDR(port, n))
 #define NPCX_WKPCL(port, n)               REG8(NPCX_WKPCL_ADDR(port, n))
 #define NPCX_WKEN(port, n)                REG8(NPCX_WKEN_ADDR(port, n))
+#define NPCX_WKINEN(port, n)              REG8(NPCX_WKINEN_ADDR(port, n))
 #define NPCX_WKMOD(port, n)               REG8(NPCX_WKMOD_ADDR(port, n))
 
 /* MIWU enumeration */
@@ -1389,4 +1392,15 @@ static inline void npcx_gpio2uart(void)
 	SET_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
 #endif
 }
+
+/* Wake pin definitions, defined at board-level */
+extern const enum gpio_signal hibernate_wake_pins[];
+extern const int hibernate_wake_pins_used;
+
+/*
+ * Optional board-level function to set GPIOs state in hibernate.
+ */
+void board_set_gpio_state_hibernate(void)
+	__attribute__((weak));
+
 #endif /* __CROS_EC_REGISTERS_H */

@@ -375,6 +375,12 @@ void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 
 		/* Enable wake-up input sources */
 		NPCX_WKEN(table, group) |= pmask;
+		NPCX_WKINEN(table, group) |= pmask;
+		/*
+		 * Clear pending bit since it might be set
+		 * if WKINEN bit is changed.
+		 */
+		NPCX_WKPCL(table, group) |= pmask;
 	}
 	/* Handle interrupt for edge trigger */
 	else if ((flags & GPIO_INT_F_RISING) ||
@@ -399,12 +405,18 @@ void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 			NPCX_WKAEDG(table, group) &= ~pmask;
 			NPCX_WKEDG(table, group) |= pmask;
 		}
+
 		/* Enable wake-up input sources */
 		NPCX_WKEN(table, group) |= pmask;
-	} else{
+		NPCX_WKINEN(table, group) |= pmask;
+		/*
+		 * Clear pending bit since it might be set
+		 * if WKINEN bit is changed.
+		 */
+		NPCX_WKPCL(table, group) |= pmask;
+	} else
 		/* Disable wake-up input sources */
 		NPCX_WKEN(table, group) &= ~pmask;
-	}
 
 	/* No support analog mode */
 }
@@ -511,7 +523,6 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
-	const struct gpio_wui_map *map;
 	int is_warm = system_is_reboot_warm();
 	int flags;
 	int i, j;
@@ -573,13 +584,6 @@ void gpio_pre_init(void)
 		/* Set up GPIO based on flags */
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
 	}
-
-	/* Put power button information in bbram */
-	g = gpio_list + GPIO_POWER_BUTTON_L;
-	map = gpio_find_wui_from_io(g->port, g->mask);
-	NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON) = map->wui_table;
-	NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 1) = map->wui_group;
-	NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 2) = map->wui_mask;
 }
 
 /* List of GPIO IRQs to enable. Don't automatically enable interrupts for

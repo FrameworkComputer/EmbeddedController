@@ -113,6 +113,12 @@ GPIO(PCH_RTCRST,             PIN(C,  1), GPIO_INPUT | GPIO_PULL_UP)       /* A58
 GPIO(PMIC_SLP_SUS_L,         PIN(E,  3), GPIO_OUT_LOW)                    /* B51 - GPIOE3 for SLP_SUS_L_PMIC */
 GPIO(USB_C1_CHARGE_EN_L,     PIN(C,  7), GPIO_OUT_LOW)                    /* A62 - GPIOC7 for EN_USB_C1_CHARGE_EC_L */
 
+/* NC pins - Set as input and pull them up for better power consumption */
+GPIO(NC_081,                 PIN(8,  1), GPIO_INPUT | GPIO_PULL_UP)       /* A40 - Unused pin */
+GPIO(NC_0B6,                 PIN(B,  6), GPIO_INPUT | GPIO_PULL_UP)       /* B60 - Unused pin */
+GPIO(NC_066,                 PIN(6,  6), GPIO_INPUT | GPIO_PULL_UP)       /* B35 - Unused pin */
+GPIO(NC_0D6,                 PIN(D,  6), GPIO_INPUT | GPIO_PULL_UP)       /* B09 - Unused pin */
+
 /* Alternate functions GPIO definitions */
 
 /* UART pins */

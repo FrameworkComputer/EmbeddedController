@@ -16,6 +16,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "gpio.h"
 #include "hwtimer_chip.h"
 #include "system_chip.h"
 #include "rom_chip.h"
@@ -251,7 +252,7 @@ void system_mpu_config(void)
 	CPU_MPU_RASR = 0x1308001D;
 }
 
-void __attribute__ ((section(".lowpower_ram")))
+void __keep __attribute__ ((section(".lowpower_ram")))
 __enter_hibernate_in_lpram(void)
 {
 
@@ -259,41 +260,22 @@ __enter_hibernate_in_lpram(void)
 	SET_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_MRFSH_DIS);
 	SET_BIT(NPCX_DISIDL_CTL, NPCX_DISIDL_CTL_RAM_DID);
 
-	while (1) {
-		/* Set deep idle mode*/
-		NPCX_PMCSR = 0x6;
-		/* Enter deep idle, wake-up by GPIOxx or RTC */
-		asm("wfi");
+	/* Set deep idle mode*/
+	NPCX_PMCSR = 0x6;
+	/* Enter deep idle, wake-up by GPIOxx or RTC */
+	asm("wfi");
 
-		/* POWER_BUTTON_L wake-up */
-		if (NPCX_WKPND(NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON),
-			       NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 1))
-			     & NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 2)) {
-			/* Clear WUI pending bit of POWER_BUTTON_L */
-			NPCX_WKPCL(NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON),
-				   NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 1))
-				=  NPCX_BBRAM(BBRM_DATA_INDEX_PBUTTON + 2);
-			/*
-			 * Mark wake-up reason for hibernate
-			 * Do not call bbram_data_write directly cause of
-			 * excuting in low-power ram
-			 */
-			NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
-			break;
-		}
-		/* RTC wake-up */
-		else if (IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO)) {
-			/* Clear WUI pending bit of MTC */
-			NPCX_WKPCL(MIWU_TABLE_0, MTC_WUI_GROUP) = MTC_WUI_MASK;
-			/* Clear interrupt & Disable alarm interrupt */
-			CLEAR_BIT(NPCX_WTC, NPCX_WTC_WIE);
-			SET_BIT(NPCX_WTC, NPCX_WTC_PTO);
-
-			/* Mark wake-up reason for hibernate */
-			NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_MTC;
-			break;
-		}
-	}
+	/* RTC wake-up */
+	if (IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO))
+		/*
+		 * Mark wake-up reason for hibernate
+		 * Do not call bbram_data_write directly cause of
+		 * executing in low-power ram
+		 */
+		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_MTC;
+	else
+		/* Otherwise, we treat it as GPIOs wake-up */
+		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
 
 	/* Start a watchdog reset */
 	NPCX_WDCNT = 0x01;
@@ -307,6 +289,74 @@ __enter_hibernate_in_lpram(void)
 	while (1)
 		;
 }
+
+/**
+ * Chip-level function to set GPIOs and wake-up inputs for hibernate.
+ */
+void system_set_gpios_and_wakeup_inputs_hibernate(void)
+{
+	int table, i;
+
+	/* Disable all MIWU inputs before entering hibernate */
+	for (table = MIWU_TABLE_0 ; table < MIWU_TABLE_2 ; table++) {
+		for (i = 0 ; i < 8 ; i++) {
+			/* Disable all wake-ups */
+			NPCX_WKEN(table, i)  = 0x00;
+			/* Clear all pending bits of wake-ups */
+			NPCX_WKPCL(table, i) = 0xFF;
+			/*
+			 * Disable all inputs of wake-ups to prevent leakage
+			 * caused by input floating.
+			 */
+			NPCX_WKINEN(table, i) = 0x00;
+		}
+	}
+
+	/*
+	 * Set all KBSOUTs to GPIOs and switch their mode to input and pull-up.
+	 * Otherwise pressing the keyboard matrix might cause some current
+	 * leakage during hibernating.
+	 */
+	NPCX_DEVALT(0x8) = 0xFF;
+	NPCX_DEVALT(0x9) |= 0x1F;
+	gpio_set_flags_by_mask(0x2, 0x03, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_set_flags_by_mask(0x1, 0xFF, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_set_flags_by_mask(0x0, 0xF0, GPIO_INPUT | GPIO_PULL_UP);
+
+	/* Enable wake-up inputs of hibernate_wake_pins array */
+	if (hibernate_wake_pins_used > 0) {
+		for (i = 0; i < hibernate_wake_pins_used; i++) {
+			const enum gpio_signal *pin = &hibernate_wake_pins[i];
+			/* Make sure switch to GPIOs */
+			gpio_set_alternate_function(gpio_list[*pin].port,
+						gpio_list[*pin].mask, -1);
+			/* Set wake-up settings for GPIOs */
+			gpio_set_flags_by_mask(gpio_list[*pin].port,
+					       gpio_list[*pin].mask,
+					       gpio_list[*pin].flags);
+		}
+	}
+
+#ifdef CONFIG_USB_PD_PORT_COUNT
+	/*
+	 * Leave USB-C charging enabled in hibernate, in order to
+	 * allow wake-on-plug. 5V enable must be pulled low.
+	 */
+#if CONFIG_USB_PD_PORT_COUNT > 0
+	gpio_set_flags(GPIO_USB_C0_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
+	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
+#endif
+#if CONFIG_USB_PD_PORT_COUNT > 1
+	gpio_set_flags(GPIO_USB_C1_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
+	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
+#endif
+#endif /* CONFIG_USB_PD_PORT_COUNT */
+
+	/* board-level function to set GPIOs state in hibernate */
+	if (board_set_gpio_state_hibernate)
+		return board_set_gpio_state_hibernate();
+}
+
 /**
  * Internal hibernate function.
  *
@@ -319,8 +369,19 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	void (*__hibernate_in_lpram)(void) =
 			(void(*)(void))(__lpram_fw_start | 0x01);
 
-	/* Set instant wake up mode */
-	SET_BIT(NPCX_ENIDL_CTL, NPCX_ENIDL_CTL_LP_WK_CTL);
+	/* Enable power for the Low Power RAM */
+	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6), 6);
+
+	/* Disable ADC */
+	NPCX_ADCCNF = 0;
+	usleep(1000);
+
+	/* Set SPI pins to be in Tri-State */
+	SET_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
+
+	/* Disable instant wake up mode for better power consumption */
+	CLEAR_BIT(NPCX_ENIDL_CTL, NPCX_ENIDL_CTL_LP_WK_CTL);
+
 	interrupt_disable();
 
 	/* ITIM event module disable */
@@ -329,13 +390,6 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_ITEN);
 	/* ITIM watchdog warn module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
-
-	/*
-	 * Set RTC interrupt in time to wake up before
-	 * next event.
-	 */
-	if (seconds || microseconds)
-		system_set_rtc_alarm(seconds, microseconds);
 
 	/* Unlock & stop watchdog */
 	NPCX_WDSDM = 0x87;
@@ -358,6 +412,23 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	/* Disable interrupt */
 	interrupt_disable();
+
+	/*
+	 * Set gpios and wake-up input for better power consumption before
+	 * entering hibernate.
+	 */
+	system_set_gpios_and_wakeup_inputs_hibernate();
+
+	/* Clear all pending IRQ otherwise wfi will have no affect */
+	for (i = NPCX_IRQ_0 ; i < NPCX_IRQ_COUNT ; i++)
+		task_clear_pending_irq(i);
+
+	/*
+	 * Set RTC interrupt in time to wake up before
+	 * next event.
+	 */
+	if (seconds || microseconds)
+		system_set_rtc_alarm(seconds, microseconds);
 
 	/* execute hibernate func in LPRAM */
 	__hibernate_in_lpram();
@@ -401,8 +472,10 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	/* Enable MTC interrupt */
 	task_enable_irq(NPCX_IRQ_MTC_WKINTAD_0);
 
-	/* Enable wake-up input sources */
-	NPCX_WKEN(MIWU_TABLE_0, MTC_WUI_GROUP) |= MTC_WUI_MASK;
+	/* Enable wake-up input sources & clear pending bit */
+	NPCX_WKPCL(MIWU_TABLE_0, MTC_WUI_GROUP)  |= MTC_WUI_MASK;
+	NPCX_WKINEN(MIWU_TABLE_0, MTC_WUI_GROUP) |= MTC_WUI_MASK;
+	NPCX_WKEN(MIWU_TABLE_0, MTC_WUI_GROUP)   |= MTC_WUI_MASK;
 }
 
 void system_reset_rtc_alarm(void)
@@ -450,7 +523,7 @@ void system_pre_init(void)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F; /* Skip GDMA */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = 0x85; /* Skip ITIM5_PD */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = 0xF5; /* Skip ITIM5_PD */
 
 	/* Power down the modules used internally */
 	NPCX_INTERNAL_CTRL1 = 0x03;

@@ -121,7 +121,6 @@ uint32_t __hw_clock_get_sleep_time(uint32_t pre_evt_cnt)
 	uint32_t sleep_time;
 	uint32_t cnt = NPCX_ITCNT16(ITIM_EVENT_NO);
 
-	interrupt_disable();
 	/* Event has been triggered but timer ISR dosen't handle it */
 	if (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_TO_STS))
 		sleep_time = FP_TO_INT((fp_inter_t)(pre_evt_cnt+1) * evt_tick);
@@ -129,7 +128,6 @@ uint32_t __hw_clock_get_sleep_time(uint32_t pre_evt_cnt)
 	else
 		sleep_time = FP_TO_INT((fp_inter_t)(pre_evt_cnt+1 - cnt) *
 				       evt_tick);
-	interrupt_enable();
 
 	return sleep_time;
 }

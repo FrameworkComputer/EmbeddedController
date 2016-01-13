@@ -13,7 +13,6 @@ enum bbram_data_index {
 	BBRM_DATA_INDEX_SCRATCHPAD = 0,        /* General-purpose scratchpad */
 	BBRM_DATA_INDEX_SAVED_RESET_FLAGS = 4, /* Saved reset flags */
 	BBRM_DATA_INDEX_WAKE = 8,	       /* Wake reasons for hibernate */
-	BBRM_DATA_INDEX_PBUTTON = 12,	       /* Power button for hibernate */
 	BBRM_DATA_INDEX_VBNVCNTXT = 16,	       /* VbNvContext for ARM arch */
 	BBRM_DATA_INDEX_RAMLOG = 32,	       /* RAM log for Booter */
 };

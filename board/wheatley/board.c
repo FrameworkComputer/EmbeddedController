@@ -379,27 +379,30 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
+void board_set_gpio_state_hibernate(void)
 {
 	int i;
-	const uint32_t out_low_gpios[][2] = {
+	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_1),
-		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_2),
+		{GPIO_CHARGE_LED_1, GPIO_OUTPUT | GPIO_LOW},
+		{GPIO_CHARGE_LED_2, GPIO_OUTPUT | GPIO_LOW},
 		/*
 		 * Set PD wake low so that it toggles high to generate a wake
 		 * event once we leave hibernate.
 		 */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_PD_WAKE),
+		{GPIO_USB_PD_WAKE, GPIO_OUTPUT | GPIO_LOW},
+		/*
+		 * In hibernate, this pin connected to GND. Set it to output
+		 * low to eliminate the current caused by internal pull-up.
+		 */
+		{GPIO_PLATFORM_EC_PROCHOT, GPIO_OUTPUT | GPIO_LOW}
 	};
 
-	/* LED GPIOs should be driven low to turn off LEDs */
-	for (i = 0; i < ARRAY_SIZE(out_low_gpios); ++i)
-		if (out_low_gpios[i][0] == port && out_low_gpios[i][1] == pin)
-			return GPIO_OUTPUT | GPIO_LOW;
-
-	/* Other GPIOs should be put in a low-power state */
-	return GPIO_INPUT | GPIO_PULL_UP;
+	/* Change GPIOs' state in hibernate for better power consumption */
+	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
+		gpio_set_flags_by_mask(gpio_list[hibernate_pins[i][0]].port,
+				       gpio_list[hibernate_pins[i][0]].mask,
+				       hibernate_pins[i][1]);
 }
 
 /* Any wheatley boards post version 2 should have ROP_LDO_EN stuffed. */
