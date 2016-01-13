@@ -439,7 +439,6 @@ static struct {
 
 static void siglog_deferred(void)
 {
-	const struct gpio_info *g = gpio_list;
 	unsigned int i;
 	timestamp_t tdiff = {.val = 0};
 
@@ -453,7 +452,7 @@ static void siglog_deferred(void)
 			tdiff.val = siglog[i].time.val - siglog[i-1].time.val;
 		CPRINTF("  %.6ld  +%.6ld  %s => %d\n",
 			siglog[i].time.val, tdiff.val,
-			g[siglog[i].signal].name,
+			gpio_get_name(siglog[i].signal),
 			siglog[i].level);
 	}
 	if (siglog_truncated)
