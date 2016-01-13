@@ -413,7 +413,6 @@ void board_set_gpio_state_hibernate(void)
 static void board_handle_reboot(void)
 {
 	int flags;
-	const struct gpio_info *g = &gpio_list[GPIO_BATLOW_L_PMIC_LDO_EN];
 
 	if (system_jumped_to_this_image())
 		return;
@@ -432,7 +431,7 @@ static void board_handle_reboot(void)
 	cflush();
 
 	/* Bring down all rails but RTC rail (including EC power). */
-	gpio_set_flags_by_mask(g->port, g->mask, GPIO_OUT_HIGH);
+	gpio_set_flags(GPIO_BATLOW_L_PMIC_LDO_EN, GPIO_OUT_HIGH);
 	while (1)
 		; /* wait here */
 }
