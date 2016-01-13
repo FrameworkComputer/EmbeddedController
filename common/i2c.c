@@ -303,7 +303,6 @@ void i2c_raw_set_sda(int port, int level)
 int i2c_raw_mode(int port, int enable)
 {
 	enum gpio_signal sda, scl;
-	static struct mutex raw_mode_mutex;
 
 	/* Get the SDA and SCL pins for this port. If none, then return. */
 	if (get_sda_from_i2c_port(port, &sda) != EC_SUCCESS)
@@ -312,15 +311,6 @@ int i2c_raw_mode(int port, int enable)
 		return EC_ERROR_INVAL;
 
 	if (enable) {
-		/*
-		 * Lock access to raw mode functionality. Note, this is
-		 * necessary because when we exit raw mode, we put all I2C
-		 * ports into normal mode. This means that if another port
-		 * is using the raw mode capabilities, that port will be
-		 * re-configured from underneath it.
-		 */
-		mutex_lock(&raw_mode_mutex);
-
 		/*
 		 * To enable raw mode, take out of alternate function mode and
 		 * set the flags to open drain output.
@@ -343,8 +333,6 @@ int i2c_raw_mode(int port, int enable)
 		ret_scl = gpio_config_pins(MODULE_I2C, gpio_list[scl].port,
 						gpio_list[scl].mask, 1);
 
-		/* Unlock mutex, allow other I2C busses to use raw mode. */
-		mutex_unlock(&raw_mode_mutex);
 		return ret_sda == EC_SUCCESS ? ret_scl : ret_sda;
 	}
 
