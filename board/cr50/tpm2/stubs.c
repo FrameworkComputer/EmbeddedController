@@ -22,17 +22,6 @@ CRYPT_RESULT _cpri__C_2_2_KeyExchange(
   return CRYPT_FAIL;
 }
 
-UINT16 _cpri__CompleteHMAC(
-  CPRI_HASH_STATE * hashState,  //   IN: the state of hash stack
-  TPM2B * oPadKey,              //   IN: the HMAC key in oPad format
-  UINT32 dOutSize,              //   IN: size of digest buffer
-  BYTE * dOut                   //   OUT: hash digest
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
 CRYPT_RESULT _cpri__DrbgGetPutState(
   GET_PUT direction,
   int bufferSize,
@@ -62,14 +51,6 @@ UINT32 _cpri__EccGetCurveCount(
 {
   ecprintf("%s called\n", __func__);
   return -1;
-}
-
-const ECC_CURVE *_cpri__EccGetParametersByCurveId(
-  TPM_ECC_CURVE curveId         // IN: the curveID
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return NULL;
 }
 
 BOOL _cpri__EccIsPointOnCurve(
@@ -128,27 +109,6 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
   return CRYPT_FAIL;
 }
 
-UINT16 _cpri__GenerateSeededRandom(
-  INT32 randomSize,             //   IN: the size of the request
-  BYTE * random,                //   OUT: receives the data
-  TPM_ALG_ID hashAlg,           //   IN: used by KDF version but not here
-  TPM2B * seed,                 //   IN: the seed value
-  const char *label,            //   IN: a label string (optional)
-  TPM2B * partyU,               //   IN: other data (oprtional)
-  TPM2B * partyV                //   IN: still more (optional)
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
-TPM_ECC_CURVE _cpri__GetCurveIdByIndex(
-  UINT16 i)
-{
-  ecprintf("%s called\n", __func__);
-  return TPM_ECC_NONE;
-}
-
 CRYPT_RESULT _cpri__GetEphemeralEcc(
   TPMS_ECC_POINT * Qout,        // OUT: the public point
   TPM2B_ECC_PARAMETER * dOut,   // OUT: the private scalar
@@ -157,48 +117,6 @@ CRYPT_RESULT _cpri__GetEphemeralEcc(
 {
   ecprintf("%s called\n", __func__);
   return CRYPT_FAIL;
-}
-
-INT16 _cpri__GetSymmetricBlockSize(
-  TPM_ALG_ID symmetricAlg,      // IN: the symmetric algorithm
-  UINT16 keySizeInBits          // IN: the key size
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
-UINT16 _cpri__KDFa(
-  TPM_ALG_ID hashAlg,           //   IN: hash algorithm used in HMAC
-  TPM2B * key,                  //   IN: HMAC key
-  const char *label,            //   IN: a 0-byte terminated label used in KDF
-  TPM2B * contextU,             //   IN: context U
-  TPM2B * contextV,             //   IN: context V
-  UINT32 sizeInBits,            //   IN: size of generated key in bit
-  BYTE * keyStream,             //   OUT: key buffer
-  UINT32 * counterInOut,        //   IN/OUT: caller may provide the iteration
-  //   counter for incremental operations to
-  //   avoid large intermediate buffers.
-  BOOL once                     //   IN: TRUE if only one iteration is
-  // performed FALSE if iteration count determined by "sizeInBits"
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
-UINT16 _cpri__KDFe(
-  TPM_ALG_ID hashAlg,           //   IN: hash algorithm used in HMAC
-  TPM2B * Z,                    //   IN: Z
-  const char *label,            //   IN: a 0 terminated label using in KDF
-  TPM2B * partyUInfo,           //   IN: PartyUInfo
-  TPM2B * partyVInfo,           //   IN: PartyVInfo
-  UINT32 sizeInBits,            //   IN: size of generated key in bit
-  BYTE * keyStream              //   OUT: key buffer
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
 }
 
 CRYPT_RESULT _cpri__SignEcc(
@@ -214,19 +132,6 @@ CRYPT_RESULT _cpri__SignEcc(
 {
   ecprintf("%s called\n", __func__);
   return CRYPT_FAIL;
-}
-
-UINT16 _cpri__StartHMAC(
-  TPM_ALG_ID hashAlg,           //   IN: the algorithm to use
-  BOOL sequence,                //   IN: indicates if the state should be saved
-  CPRI_HASH_STATE * state,      //   IN/OUT: the state buffer
-  UINT16 keySize,               //   IN: the size of the HMAC key
-  BYTE * key,                   //   IN: the HMAC key
-  TPM2B * oPadKey               //   OUT: the key prepared for the oPad round
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
 }
 
 BOOL _cpri__Startup(
