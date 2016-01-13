@@ -52,15 +52,16 @@ int flash_pre_op(void)
 
 int gpio_get_level(enum gpio_signal signal)
 {
-	const char *name = gpio_list[signal].name;
-
 	if (mock_wp == -1)
 		mock_wp = !!(test_get_state() & BOOT_WP_MASK);
 
-	if (strcasecmp(name, "WP_L") == 0)
-		return !mock_wp;
-	if (strcasecmp(name, "WP") == 0)
+#if defined(CONFIG_WP_ACTIVE_HIGH)
+	if (signal == GPIO_WP)
 		return mock_wp;
+#else
+	if (signal == GPIO_WP_L)
+		return !mock_wp;
+#endif
 
 	/* Signal other than write protect. Just return 0. */
 	return 0;
