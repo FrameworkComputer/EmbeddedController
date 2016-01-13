@@ -172,8 +172,6 @@ void uart_init(void)
 #ifdef CONFIG_LOW_POWER_IDLE
 void uart_enter_dsleep(void)
 {
-	const struct gpio_info g = gpio_list[GPIO_UART0_RX];
-
 	/* Disable the UART interrupt. */
 	task_disable_irq(MEC1322_IRQ_UART);  /* NVIC interrupt for UART=13 */
 
@@ -181,8 +179,7 @@ void uart_enter_dsleep(void)
 	 * Set the UART0 RX pin to be a GPIO-162(fixed pin) interrupt
 	 * with the flags defined in the gpio.inc file.
 	 */
-	gpio_set_flags_by_mask(g.port, g.mask, g.flags);
-	gpio_set_alternate_function(g.port, g.mask, -1);
+	gpio_reset(GPIO_UART0_RX);
 
 	/* power-down/de-activate UART0 */
 	MEC1322_UART_ACT &= ~(1 << 0);

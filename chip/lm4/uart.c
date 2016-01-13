@@ -243,8 +243,7 @@ void uart_enter_dsleep(void)
 	 * Set the UART0 RX pin to be a generic GPIO with the flags defined
 	 * in the board.c file.
 	 */
-	gpio_set_flags_by_mask(g.port, g.mask, g.flags);
-	gpio_set_alternate_function(g.port, g.mask, -1);
+	gpio_reset(GPIO_UART0_RX);
 
 	/* Clear any pending GPIO interrupts on the UART0 RX pin. */
 	LM4_GPIO_ICR(g.port) = g.mask;

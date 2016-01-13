@@ -192,6 +192,17 @@ void gpio_set_flags(enum gpio_signal signal, int flags);
 void gpio_set_level(enum gpio_signal signal, int value);
 
 /**
+ * Reset the GPIO flags and alternate function state
+ *
+ * This returns the GPIO to it's default state of being a GPIO (not
+ * configured as an alternate function) with its default flags (those
+ * specified in gpio.inc when it was defined).
+ *
+ * @param signal	Signal to reset
+ */
+void gpio_reset(enum gpio_signal signal);
+
+/**
  * Enable interrupts for the signal.
  *
  * The signal must have been defined with
