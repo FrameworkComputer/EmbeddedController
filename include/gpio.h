@@ -10,13 +10,6 @@
 
 #include "common.h"
 
-/*
- * GPIO_CONFIG_ALL_PORTS signifies a "don't care" for the GPIO port.  This is
- * used in gpio_config_pins().  When the port parameter is set to this, the
- * pin_mask parameter is ignored.
- */
-#define GPIO_CONFIG_ALL_PORTS 0xFFFFFFFF
-
 /* Flag definitions for gpio_info and gpio_alt_func */
 /* The following are valid for both gpio_info and gpio_alt_func: */
 #define GPIO_OPEN_DRAIN    (1 << 0)  /* Output type is open-drain */
@@ -130,23 +123,19 @@ void gpio_pre_init(void);
  *
  * @param id		Module ID to initialize
  * @param enable	Enable alternate functions if 1; high-Z pins if 0.
+ * @return EC_SUCCESS, or non-zero if module_id is not found.
  */
-void gpio_config_module(enum module_id id, int enable);
+int gpio_config_module(enum module_id id, int enable);
 
 /**
- * Enable/disable alternate function for pins
- *
- * Note, you can also configure an entire module by setting the port parameter
- * equal to GPIO_CONFIG_ALL_PORTS.
+ * Enable/disable alternate function for single pin
  *
  * @param id		module ID of pins
- * @param port		Port of pins
- * @param pin_mask	Bit mask of pins
- * @param enable	Enable alternate functions if 1; high-Z pins if 0
- * @return EC_SUCCESS, or non-zero if pins are not found.
+ * @param signal	Signal to configure
+ * @param enable	Enable alternate function if 1; GPIO if 0
+ * @return EC_SUCCESS, or non-zero if pin is not found.
  * */
-int gpio_config_pins(enum module_id id,
-		     uint32_t port, uint32_t pin_mask, int enable);
+int gpio_config_pin(enum module_id id, enum gpio_signal signal, int enable);
 
 /**
  * Get the current value of a signal.

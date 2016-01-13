@@ -58,17 +58,17 @@ static int last_val_changed(int i, int v)
 	}
 }
 
-/*****************************************************************************/
-/* GPIO API */
+/*
+ * GPIO_CONFIG_ALL_PORTS signifies a "don't care" for the GPIO port.  This is
+ * used in gpio_config_pins().  When the port parameter is set to this, the
+ * pin_mask parameter is ignored.
+ */
+#define GPIO_CONFIG_ALL_PORTS 0xFFFFFFFF
 
-void gpio_config_module(enum module_id id, int enable)
-{
-	/* Set all the alternate functions for this module. */
-	gpio_config_pins(id, GPIO_CONFIG_ALL_PORTS, 0, enable);
-}
-
-int gpio_config_pins(enum module_id id,
-		     uint32_t port, uint32_t pin_mask, int enable)
+static int gpio_config_pins(enum module_id id,
+			    uint32_t port,
+			    uint32_t pin_mask,
+			    int enable)
 {
 	const struct gpio_alt_func *af;
 	int rv = EC_ERROR_INVAL;
@@ -105,6 +105,23 @@ int gpio_config_pins(enum module_id id,
 	}
 
 	return rv;
+}
+
+/*****************************************************************************/
+/* GPIO API */
+
+int gpio_config_module(enum module_id id, int enable)
+{
+	/* Set all the alternate functions for this module. */
+	return gpio_config_pins(id, GPIO_CONFIG_ALL_PORTS, 0, enable);
+}
+
+int gpio_config_pin(enum module_id id, enum gpio_signal signal, int enable)
+{
+	return gpio_config_pins(id,
+				gpio_list[signal].port,
+				gpio_list[signal].mask,
+				enable);
 }
 
 void gpio_set_flags(enum gpio_signal signal, int flags)

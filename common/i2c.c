@@ -303,6 +303,7 @@ void i2c_raw_set_sda(int port, int level)
 int i2c_raw_mode(int port, int enable)
 {
 	enum gpio_signal sda, scl;
+	int ret_sda, ret_scl;
 
 	/* Get the SDA and SCL pins for this port. If none, then return. */
 	if (get_sda_from_i2c_port(port, &sda) != EC_SUCCESS)
@@ -315,10 +316,8 @@ int i2c_raw_mode(int port, int enable)
 		 * To enable raw mode, take out of alternate function mode and
 		 * set the flags to open drain output.
 		 */
-		gpio_set_alternate_function(gpio_list[sda].port,
-						gpio_list[sda].mask, -1);
-		gpio_set_alternate_function(gpio_list[scl].port,
-						gpio_list[scl].mask, -1);
+		ret_sda = gpio_config_pin(MODULE_I2C, sda, 0);
+		ret_scl = gpio_config_pin(MODULE_I2C, scl, 0);
 
 		gpio_set_flags(scl, GPIO_ODR_HIGH);
 		gpio_set_flags(sda, GPIO_ODR_HIGH);
@@ -327,16 +326,11 @@ int i2c_raw_mode(int port, int enable)
 		 * Configure the I2C pins to exit raw mode and return
 		 * to normal mode.
 		 */
-		int ret_sda, ret_scl;
-		ret_sda = gpio_config_pins(MODULE_I2C, gpio_list[sda].port,
-						gpio_list[sda].mask, 1);
-		ret_scl = gpio_config_pins(MODULE_I2C, gpio_list[scl].port,
-						gpio_list[scl].mask, 1);
-
-		return ret_sda == EC_SUCCESS ? ret_scl : ret_sda;
+		ret_sda = gpio_config_pin(MODULE_I2C, sda, 1);
+		ret_scl = gpio_config_pin(MODULE_I2C, scl, 1);
 	}
 
-	return EC_SUCCESS;
+	return ret_sda == EC_SUCCESS ? ret_scl : ret_sda;
 }
 
 
