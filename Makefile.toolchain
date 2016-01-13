@@ -9,16 +9,16 @@
 # Toolchain configuration
 HOST_CROSS_COMPILE ?= x86_64-pc-linux-gnu-
 
-CC=$(CROSS_COMPILE)gcc
-CPP=$(CROSS_COMPILE)cpp
+CC=ccache $(CROSS_COMPILE)gcc
+CPP=ccache $(CROSS_COMPILE)cpp
 LD=$(CROSS_COMPILE)ld
 NM=$(CROSS_COMPILE)nm
 OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
 PKG_CONFIG?=pkg-config
-BUILDCC?=gcc
-HOSTCC?=$(HOST_CROSS_COMPILE)gcc
-HOSTCXX?=$(HOST_CROSS_COMPILE)g++
+BUILDCC?=ccache gcc
+HOSTCC?=ccache $(HOST_CROSS_COMPILE)gcc
+HOSTCXX?=ccache $(HOST_CROSS_COMPILE)g++
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
