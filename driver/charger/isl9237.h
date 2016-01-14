@@ -26,7 +26,6 @@
 #define ISL9237_REG_OTG_CURRENT      0x4a
 #define ISL9237_REG_MANUFACTURER_ID  0xfe
 #define ISL9237_REG_DEVICE_ID        0xff
-#define ISL9237_REG_PROCHOT_TIME     0x39
 #define ISL9237_REG_CONTROL0         0x39
 
 /* Sense resistor default values in mOhm */

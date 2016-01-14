@@ -226,6 +226,19 @@ int charger_post_init(void)
 		return rv;
 #endif
 
+	/*
+	 * [10:9]: Prochot# Debounce time
+	 *         11b: 1ms
+	 */
+	rv = raw_read16(ISL9237_REG_CONTROL2, &reg);
+	if (rv)
+		return rv;
+
+	rv = raw_write16(ISL9237_REG_CONTROL2,
+			reg | ISL9237_C2_PROCHOT_DEBOUNCE_1000);
+	if (rv)
+		return rv;
+
 	rv = charger_get_option(&reg);
 	if (rv)
 		return rv;
