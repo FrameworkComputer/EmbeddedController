@@ -16,8 +16,9 @@
 /* magic value to unlock the watchdog registers */
 #define WATCHDOG_MAGIC_WORD  0x1ACCE551
 
-/* Watchdog expiration : assume 30 Mhz clock for now */
-#define WATCHDOG_PERIOD (CONFIG_WATCHDOG_PERIOD_MS * (30000000 / 1000))
+/* Watchdog expiration */
+#define WATCHDOG_PERIOD (CONFIG_WATCHDOG_PERIOD_MS * \
+			 ((GC_CONST_FPGA_JITTER_FIXED_FREQ * 1000000) / 1000))
 
 void trace_and_reset(uint32_t excep_lr, uint32_t excep_sp)
 {
