@@ -658,7 +658,7 @@ static void i2c_freq_changed(void)
 	for (i = 0; i < i2c_ports_used; i++) {
 		int bus_freq = i2c_ports[i].kbps;
 		int ctrl = i2c_port_to_controller(i2c_ports[i].port);
-		int scl_time;
+		int scl_freq;
 
 		/* SMB0/1 use core clock & SMB2/3 use apb2 clock */
 		if (ctrl < 2)
@@ -666,21 +666,78 @@ static void i2c_freq_changed(void)
 		else
 			freq = clock_get_apb2_freq();
 
-		/* use Fast Mode */
-		SET_BIT(NPCX_SMBCTL3(ctrl)  , NPCX_SMBCTL3_400K);
-
 		/*
-		 * Set SCLLT/SCLHT:
-		 * tSCLL = 2 * SCLLT7-0 * tCLK
-		 * tSCLH = 2 * SCLHT7-0 * tCLK
-		 * (tSCLL+tSCLH) = 4 * SCLH(L)T * tCLK if tSCLL == tSCLH
-		 * SCLH(L)T = T(SCL)/4/T(CLK) = FREQ(CLK)/4/FREQ(SCL)
+		 * Set SCL frequency by formula:
+		 * tSCL = 4 * SCLFRQ * tCLK
+		 * fSCL = fCLK / (4*SCLFRQ)
+		 * SCLFRQ = fSCL/(4*fSCL)
 		 */
-		scl_time = (freq/1000) / (bus_freq * 4);   /* bus_freq is KHz */
+		scl_freq = (freq/1000) / (bus_freq*4); /* bus_freq is KHz */
 
-		/* set SCL High/Low time */
-		NPCX_SMBSCLLT(ctrl) = scl_time;
-		NPCX_SMBSCLHT(ctrl) = scl_time;
+		/* Normal mode if i2c freq is under 100kHz */
+		if (bus_freq <= 100) {
+			/* Set divider value of SCL */
+			SET_FIELD(NPCX_SMBCTL2(ctrl), NPCX_SMBCTL2_SCLFRQ7_FIELD
+					, (scl_freq & 0x7F));
+			SET_FIELD(NPCX_SMBCTL3(ctrl), NPCX_SMBCTL3_SCLFRQ2_FIELD
+					, (scl_freq >> 7));
+		} else {
+			/* use Fast Mode */
+			SET_BIT(NPCX_SMBCTL3(ctrl)  , NPCX_SMBCTL3_400K);
+#if (OSC_CLK > 15000000)
+			/*
+			 * Set SCLLT/SCLHT:
+			 * tSCLL = 2 * SCLLT7-0 * tCLK
+			 * tSCLH = 2 * SCLHT7-0 * tCLK
+			 * (tSCLL+tSCLH) = 4 * SCLH(L)T * tCLK if tSCLL == tSCLH
+			 * SCLH(L)T = tSCL/(4*tCLK) = fCLK/(4*fSCL)
+			 * The same formula as SCLFRQ
+			 */
+			NPCX_SMBSCLLT(ctrl) = scl_freq;
+			NPCX_SMBSCLHT(ctrl) = scl_freq;
+#else
+			/*
+			 * Set SCLH(L)T and hold-time directly for best i2c
+			 * timing condition if core clock is low. Please refer
+			 * Section 7.5.9 "SMBus Timing - Fast Mode" for detail.
+			 */
+			if (bus_freq == 400) {
+				if (freq == 15000000) {
+					NPCX_SMBSCLLT(ctrl) = 12;
+					NPCX_SMBSCLHT(ctrl) = 9;
+					SET_FIELD(NPCX_SMBCTL4(ctrl),
+					NPCX_SMBCTL4_HLDT_FIELD, 7);
+				} else if (freq == 15000000/2) {
+					NPCX_SMBSCLLT(ctrl) = 7;
+					NPCX_SMBSCLHT(ctrl) = 5;
+					SET_FIELD(NPCX_SMBCTL4(ctrl),
+					NPCX_SMBCTL4_HLDT_FIELD, 7);
+				} else if (freq == 13000000) {
+					NPCX_SMBSCLLT(ctrl) = 11;
+					NPCX_SMBSCLHT(ctrl) = 8;
+					SET_FIELD(NPCX_SMBCTL4(ctrl),
+					NPCX_SMBCTL4_HLDT_FIELD, 7);
+				} else if (freq == 13000000/2) {
+					NPCX_SMBSCLLT(ctrl) = 7;
+					NPCX_SMBSCLHT(ctrl) = 4;
+					SET_FIELD(NPCX_SMBCTL4(ctrl),
+					NPCX_SMBCTL4_HLDT_FIELD, 7);
+				} else {
+					/* Set value from formula */
+					NPCX_SMBSCLLT(ctrl) = scl_freq;
+					NPCX_SMBSCLHT(ctrl) = scl_freq;
+					cprints(CC_I2C, "Warning: Not ",
+					"optimized timing for i2c %d", ctrl);
+				}
+			} else {
+				/* Set value from formula */
+				NPCX_SMBSCLLT(ctrl) = scl_freq;
+				NPCX_SMBSCLHT(ctrl) = scl_freq;
+				cprints(CC_I2C, "Warning: I2c %d don't support",
+				     " over 400kHz if src clock is low.", ctrl);
+			}
+#endif
+		}
 	}
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);

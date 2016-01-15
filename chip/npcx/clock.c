@@ -47,11 +47,14 @@
 #define HFCGMH   0x07
 #define HFCGML   0xDE
 #elif (OSC_CLK == 24000000)
-#define HFCGMH   0x05
-#define HFCGML   0xB8
-#elif (OSC_CLK == 16000000)
-#define HFCGMH   0x03
-#define HFCGML   0xDC
+#define HFCGMH   0x0B
+#define HFCGML   0x71
+#elif (OSC_CLK == 15000000)
+#define HFCGMH   0x07
+#define HFCGML   0x27
+#elif (OSC_CLK == 13000000)
+#define HFCGMH   0x06
+#define HFCGML   0x33
 #else
 #error "Unsupported FMCLK Clock Frequency"
 #endif
@@ -135,8 +138,14 @@ void clock_init(void)
 	while (IS_BIT_SET(NPCX_HFCGCTRL, NPCX_HFCGCTRL_CLK_CHNG))
 		;
 
+	/* Keep FMCLK in 33-50 MHz which is tested strictly. */
+#if (OSC_CLK >= 33000000)
 	/* Keep Core CLK & FMCLK are the same */
 	NPCX_HFCGP = 0x00;
+#else
+	/* Keep Core CLK = 0.5 * FMCLK */
+	NPCX_HFCGP = 0x10;
+#endif
 
 	freq = OSC_CLK;
 

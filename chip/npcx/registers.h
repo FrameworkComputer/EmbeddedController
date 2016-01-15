@@ -670,11 +670,14 @@ enum {
 #define NPCX_SMBCTL1_NMINTE              6
 #define NPCX_SMBCTL1_STASTRE             7
 #define NPCX_SMBCTL2_ENABLE              0
+#define NPCX_SMBCTL2_SCLFRQ7_FIELD       FIELD(1, 7)
 #define NPCX_SMBCTL3_ARPMEN              2
+#define NPCX_SMBCTL3_SCLFRQ2_FIELD       FIELD(0, 2)
 #define NPCX_SMBCTL3_IDL_START           3
 #define NPCX_SMBCTL3_400K                4
 #define NPCX_SMBCTL3_SDA_LVL             6
 #define NPCX_SMBCTL3_SCL_LVL             7
+#define NPCX_SMBCTL4_HLDT_FIELD          FIELD(0, 6)
 #define NPCX_SMBADDR1_SAEN               7
 #define NPCX_SMBADDR2_SAEN               7
 #define NPCX_SMBADDR3_SAEN               7

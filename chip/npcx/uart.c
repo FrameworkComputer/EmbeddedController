@@ -171,11 +171,14 @@ static void uart_config(void)
 #elif (OSC_CLK == 24000000)
 	NPCX_UPSR = 0x60;
 	NPCX_UBAUD = 0x00;
-#elif (OSC_CLK == 16000000)
-	NPCX_UPSR = 0x10;
-	NPCX_UBAUD = 0x02;
+#elif (OSC_CLK == 15000000)
+	NPCX_UPSR = 0x38;
+	NPCX_UBAUD = 0x00;
+#elif (OSC_CLK == 13000000)
+	NPCX_UPSR = 0x30;
+	NPCX_UBAUD = 0x00;
 #else
-#error "Unsupported FMCLK Clock Frequency"
+#error "Unsupported Core Clock Frequency"
 #endif
 
 
