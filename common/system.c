@@ -335,10 +335,14 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 #endif
 }
 
+/*
+ * TODO(crbug.com/577915): Store image used size at build time and simply
+ * read it back.
+ */
 int system_get_image_used(enum system_image_copy_t copy)
 {
 #ifndef CONFIG_MAPPED_STORAGE
-	uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
+	static uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
 #endif
 	int image_offset;
 	const uint8_t *image;
