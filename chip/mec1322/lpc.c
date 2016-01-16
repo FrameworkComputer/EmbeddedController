@@ -229,12 +229,15 @@ static void setup_lpc(void)
 	MEC1322_LPC_ACPI_EC0_BAR = 0x00628304;
 	MEC1322_INT_ENABLE(15) |= 1 << 6;
 	MEC1322_INT_BLK_EN |= 1 << 15;
+	/* Clear STATUS_PROCESSING bit in case it was set during sysjump */
+	MEC1322_ACPI_EC_STATUS(0) &= ~EC_LPC_STATUS_PROCESSING;
 	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);
 
 	/* Set up ACPI1 for 0x200/0x204 */
 	MEC1322_LPC_ACPI_EC1_BAR = 0x02008407;
 	MEC1322_INT_ENABLE(15) |= 1 << 8;
 	MEC1322_INT_BLK_EN |= 1 << 15;
+	MEC1322_ACPI_EC_STATUS(1) &= ~EC_LPC_STATUS_PROCESSING;
 	task_enable_irq(MEC1322_IRQ_ACPIEC1_IBF);
 
 	/* Set up 8042 interface at 0x60/0x64 */
