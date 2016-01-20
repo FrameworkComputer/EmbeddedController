@@ -117,6 +117,10 @@ static uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
  */
 static uint32_t get_size(enum system_image_copy_t copy)
 {
+	/* Ensure we return aligned sizes. */
+	BUILD_ASSERT(CONFIG_RO_SIZE % SPI_FLASH_MAX_WRITE_SIZE == 0);
+	BUILD_ASSERT(CONFIG_RW_SIZE % SPI_FLASH_MAX_WRITE_SIZE == 0);
+
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_RO_SIZE;
@@ -364,6 +368,10 @@ int system_get_image_used(enum system_image_copy_t copy)
 
 	do {
 		if (image == buf) {
+			/* No valid image found? */
+			if (size < SPI_FLASH_MAX_WRITE_SIZE)
+				return 0;
+
 			flash_read(image_offset + size -
 				SPI_FLASH_MAX_WRITE_SIZE,
 				SPI_FLASH_MAX_WRITE_SIZE, buf);

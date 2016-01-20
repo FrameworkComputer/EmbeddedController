@@ -72,6 +72,9 @@ static int read_and_hash_chunk(int offset, int size)
 	char *buf;
 	int rv;
 
+	if (size == 0)
+		return EC_SUCCESS;
+
 	rv = shared_mem_acquire(size, &buf);
 	if (rv == EC_ERROR_BUSY) {
 		/* Couldn't update hash right now; try again later */
@@ -190,8 +193,12 @@ int vboot_hash_invalidate(int offset, int size)
 	if (!hash)
 		return 0;
 
-	/* No overlap if passed region is off either end of hashed region */
-	if (offset + size <= data_offset || offset >= data_offset + data_size)
+	/*
+	 * Always invalidate zero-size hash. No overlap if passed region is off
+	 * either end of hashed region.
+	 */
+	if (data_size > 0 &&
+	    (offset + size <= data_offset || offset >= data_offset + data_size))
 		return 0;
 
 	/* Invalidate the hash */
