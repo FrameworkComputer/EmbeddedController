@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 /* Skylake Chrome Reference Design board-specific configuration */
-
+#include "adc.h"
 #include "adc_chip.h"
 #include "als.h"
+#include "battery.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -100,6 +101,8 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
+	/* read voltage in battery thermistor as battery present */
+	[ADC_BATT_PRESENT] = {"BATTPRES", 3300, 1024, 0, 0},
 	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30V. */
 	[ADC_VBUS] = {"VBUS", 30000, 1024, 0, 1},
 	/* Adapter current output or battery discharging current */
@@ -628,3 +631,23 @@ static void board_handle_reboot(void)
 		; /* wait here */
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
+
+#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
+/*
+ * Physical detection of battery via ADC.
+ *
+ * Uppper limit of valid voltage level(mV), when battery is attached to ADC port,
+ * is across the internal thermistor with external pullup resistor.
+ */
+#define BATT_PRESENT_MV  1500
+enum battery_present battery_is_present(void)
+{
+	/*
+	 * if voltage is below certain level(dependant on ratio of
+	 * internal thermistor and external pullup resister),
+	 * battery is attached.
+	 */
+	return (adc_read_channel(ADC_BATT_PRESENT) > BATT_PRESENT_MV) ?
+		BP_NO : BP_YES;
+}
+#endif
