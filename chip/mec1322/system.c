@@ -270,13 +270,10 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	if (hibernate_wake_pins_used > 0) {
 		for (i = 0; i < hibernate_wake_pins_used; ++i) {
-			const enum gpio_signal *pin = &hibernate_wake_pins[i];
-			gpio_set_flags_by_mask(gpio_list[*pin].port,
-					       gpio_list[*pin].mask,
-					       gpio_list[*pin].flags);
-			gpio_set_alternate_function(gpio_list[*pin].port,
-						gpio_list[*pin].mask, -1);
-			gpio_enable_interrupt(*pin);
+			const enum gpio_signal pin = hibernate_wake_pins[i];
+
+			gpio_reset(pin);
+			gpio_enable_interrupt(pin);
 		}
 
 		interrupt_enable();

@@ -324,18 +324,8 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 	gpio_set_flags_by_mask(0x0, 0xF0, GPIO_INPUT | GPIO_PULL_UP);
 
 	/* Enable wake-up inputs of hibernate_wake_pins array */
-	if (hibernate_wake_pins_used > 0) {
-		for (i = 0; i < hibernate_wake_pins_used; i++) {
-			const enum gpio_signal *pin = &hibernate_wake_pins[i];
-			/* Make sure switch to GPIOs */
-			gpio_set_alternate_function(gpio_list[*pin].port,
-						gpio_list[*pin].mask, -1);
-			/* Set wake-up settings for GPIOs */
-			gpio_set_flags_by_mask(gpio_list[*pin].port,
-					       gpio_list[*pin].mask,
-					       gpio_list[*pin].flags);
-		}
-	}
+	for (i = 0; i < hibernate_wake_pins_used; i++)
+		gpio_reset(hibernate_wake_pins[i]);
 
 #ifdef CONFIG_USB_PD_PORT_COUNT
 	/*
@@ -354,7 +344,7 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 
 	/* board-level function to set GPIOs state in hibernate */
 	if (board_set_gpio_hibernate_state)
-		return board_set_gpio_hibernate_state();
+		board_set_gpio_hibernate_state();
 }
 
 /**
