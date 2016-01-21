@@ -10,6 +10,7 @@
 #include "tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
 #include "util.h"
@@ -286,3 +287,60 @@ int tcpm_init(int port)
 		msleep(10);
 	}
 }
+
+#ifdef CONFIG_USB_PD_TCPM_MUX
+
+static int tcpm_mux_init(int i2c_addr)
+{
+	return EC_SUCCESS;
+}
+
+static int tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
+{
+	int reg = 0;
+	int rv;
+	int port = i2c_addr; /* use port index in port_addr field */
+
+	rv = tcpc_read(port, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	reg &= ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK;
+	if (mux_state & MUX_USB_ENABLED)
+		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB;
+	if (mux_state & MUX_DP_ENABLED)
+		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP;
+	/* MUX_POLARITY_INVERTED: polarity is handled by the TCPC */
+
+	return tcpc_write(port, TCPC_REG_CONFIG_STD_OUTPUT, reg);
+}
+
+/* Reads control register and updates mux_state accordingly */
+static int tcpm_mux_get(int i2c_addr, mux_state_t *mux_state)
+{
+	int reg = 0;
+	int rv;
+	int port = i2c_addr; /* use port index in port_addr field */
+
+	*mux_state = 0;
+	rv = tcpc_read(port, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB)
+		*mux_state |= MUX_USB_ENABLED;
+	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP)
+		*mux_state |= MUX_DP_ENABLED;
+	/* MUX_POLARITY_INVERTED is always omitted */
+
+	return EC_SUCCESS;
+}
+
+
+const struct usb_mux_driver tcpm_usb_mux_driver = {
+	.init = tcpm_mux_init,
+	.set = tcpm_mux_set,
+	.get = tcpm_mux_get,
+};
+
+#endif /* CONFIG_USB_PD_TCPM_MUX */
