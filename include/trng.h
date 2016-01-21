@@ -5,7 +5,7 @@
 #ifndef __EC_INCLUDE_TRNG_H
 #define __EC_INCLUDE_TRNG_H
 
-#include <sys/types.h>
+#include <stddef.h>
 
 /**
  * Initialize the true random number generator.

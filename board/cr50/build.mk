@@ -46,6 +46,13 @@ LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
 # For the benefit of the tpm2 library.
 INCLUDE_ROOT := $(abspath ./include)
 CFLAGS += -I$(INCLUDE_ROOT)
+CPPFLAGS += -I$(abspath ./builtin)
+CPPFLAGS += -I$(abspath ./chip/$(CHIP))
+# For core includes
+CPPFLAGS += -I$(abspath .)
+CPPFLAGS += -I$(abspath $(BDIR))
+CPPFLAGS += -I$(abspath ./test)
+
 # Make sure the context of the software sha256 implementation fits. If it ever
 # increases, a compile time assert will fire in tpm2/hash.c.
 CFLAGS += -DUSER_MIN_HASH_STATE_SIZE=210

@@ -6,7 +6,7 @@
 #ifndef __EC_CHIP_G_LOADER_KEY_LADDER_H
 #define __EC_CHIP_G_LOADER_KEY_LADDER_H
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <stddef.h>
 
 void key_ladder_step(uint32_t certificate, const uint32_t *input);

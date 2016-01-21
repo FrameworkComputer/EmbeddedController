@@ -6,7 +6,7 @@
 #ifndef __EC_CHIP_G_DCRYPTO_INTERNAL_H
 #define __EC_CHIP_G_DCRYPTO_INTERNAL_H
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #include "common.h"
 #include "sha1.h"

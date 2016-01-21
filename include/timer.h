@@ -8,8 +8,6 @@
 #ifndef __CROS_EC_TIMER_H
 #define __CROS_EC_TIMER_H
 
-#include <sys/types.h>
-
 #include "common.h"
 #include "task_id.h"
 
@@ -27,6 +25,9 @@ typedef union {
 		uint32_t hi;
 	} le /* little endian words */;
 } timestamp_t;
+
+/* Data type for POSIX style clock() implementation */
+typedef long clock_t;
 
 /**
  * Initialize the timer module.

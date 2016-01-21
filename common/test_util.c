@@ -5,8 +5,10 @@
  * Test utilities.
  */
 
+#ifdef TEST_COVERAGE
 #include <signal.h>
 #include <stdlib.h>
+#endif
 
 #include "console.h"
 #include "hooks.h"

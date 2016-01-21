@@ -8,8 +8,6 @@
 #ifndef __CROS_EC_PI3USB30532_H
 #define __CROS_EC_PI3USB30532_H
 
-#include <inttypes.h>
-
 #include "usb_pd.h"
 
 /* USB switch registers */
