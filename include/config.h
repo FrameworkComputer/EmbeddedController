@@ -257,6 +257,9 @@
 
 /*****************************************************************************/
 
+/* EC has GPIOs to allow board to reset RTC */
+#undef CONFIG_BOARD_HAS_RTC_RESET
+
 /*
  * Call board_config_post_gpio_init() after GPIOs are initialized.  See
  * include/board_config.h for more information.

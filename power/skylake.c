@@ -130,6 +130,69 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
+static void handle_rsmrst(enum power_state state)
+{
+	/*
+	 * Pass through RSMRST asynchronously, as PCH may not react
+	 * immediately to power changes.
+	 */
+	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
+
+	/* Nothing to do. */
+	if (rsmrst_in == rsmrst_out)
+		return;
+	/*
+	 * Wait at least 10ms between power signals going high
+	 * and deasserting RSMRST to PCH.
+	 */
+	if (rsmrst_in)
+		msleep(10);
+	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
+	CPRINTS("RSMRST: %d", rsmrst_in);
+}
+
+static void handle_slp_sus(enum power_state state)
+{
+	/* If we're down or going down don't do anythin with SLP_SUS_L. */
+	if (state == POWER_G3 || state == POWER_S5G3)
+		return;
+
+	/* Always mimic PCH SLP_SUS request for all other states. */
+	gpio_set_level(GPIO_PMIC_SLP_SUS_L, gpio_get_level(GPIO_PCH_SLP_SUS_L));
+}
+
+#ifdef CONFIG_BOARD_HAS_RTC_RESET
+static enum power_state power_wait_s5_rtc_reset(void)
+{
+	static int s5_exit_tries;
+
+	/* Wait for S5 exit and then attempt RTC reset */
+	while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
+		/* Handle RSMRST passthru event while waiting */
+		handle_rsmrst(POWER_S5);
+		if (task_wait_event(SECOND*4) == TASK_EVENT_TIMER) {
+			CPRINTS("timeout waiting for S5 exit");
+			chipset_force_g3();
+
+			/* Assert RTCRST# and retry 5 times */
+			board_rtc_reset();
+
+			if (++s5_exit_tries > 4) {
+				s5_exit_tries = 0;
+				return POWER_G3; /* Stay off */
+			}
+
+			udelay(10 * MSEC);
+			return POWER_G3S5; /* Power up again */
+		}
+	}
+
+	s5_exit_tries = 0;
+	return POWER_S5S3; /* Power up to next state */
+}
+#endif
+
 static enum power_state _power_handle_state(enum power_state state)
 {
 	int tries = 0;
@@ -143,8 +206,14 @@ static enum power_state _power_handle_state(enum power_state state)
 			power_button_pch_release();
 			forcing_shutdown = 0;
 		}
+
+#ifdef CONFIG_BOARD_HAS_RTC_RESET
+		/* Wait for S5 exit and attempt RTC reset it supported */
+		return power_wait_s5_rtc_reset();
+#else
 		if (gpio_get_level(GPIO_PCH_SLP_S4_L) == 1)
 			return POWER_S5S3; /* Power up to next state */
+#endif
 		break;
 
 	case POWER_S3:
@@ -323,38 +392,6 @@ static enum power_state _power_handle_state(enum power_state state)
 	}
 
 	return state;
-}
-
-static void handle_rsmrst(enum power_state state)
-{
-	/*
-	 * Pass through RSMRST asynchronously, as PCH may not react
-	 * immediately to power changes.
-	 */
-	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
-	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
-
-	/* Nothing to do. */
-	if (rsmrst_in == rsmrst_out)
-		return;
-	/*
-	 * Wait at least 10ms between power signals going high
-	 * and deasserting RSMRST to PCH.
-	 */
-	if (rsmrst_in)
-		msleep(10);
-	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
-	CPRINTS("RSMRST: %d", rsmrst_in);
-}
-
-static void handle_slp_sus(enum power_state state)
-{
-	/* If we're down or going down don't do anythin with SLP_SUS_L. */
-	if (state == POWER_G3 || state == POWER_S5G3)
-		return;
-
-	/* Always mimic PCH SLP_SUS request for all other states. */
-	gpio_set_level(GPIO_PMIC_SLP_SUS_L, gpio_get_level(GPIO_PCH_SLP_SUS_L));
 }
 
 enum power_state power_handle_state(enum power_state state)
