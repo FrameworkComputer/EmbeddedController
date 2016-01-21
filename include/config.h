@@ -1088,12 +1088,6 @@
 #undef CONFIG_HIBERNATE_BATT_PCT
 #undef CONFIG_HIBERNATE_BATT_SEC
 
-/*
- * Perform a system reset on wake from hibernate. This is the default behavior,
- * and the only chip-supported behavior for certain ECs.
- */
-#define CONFIG_HIBERNATE_RESET_ON_WAKE
-
 /* For ECs with multiple wakeup pins, define enabled wakeup pins */
 #undef CONFIG_HIBERNATE_WAKEUP_PINS
 

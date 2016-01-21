@@ -353,8 +353,8 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 #endif /* CONFIG_USB_PD_PORT_COUNT */
 
 	/* board-level function to set GPIOs state in hibernate */
-	if (board_set_gpio_state_hibernate)
-		return board_set_gpio_state_hibernate();
+	if (board_set_gpio_hibernate_state)
+		return board_set_gpio_hibernate_state();
 }
 
 /**

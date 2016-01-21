@@ -1400,10 +1400,4 @@ static inline void npcx_gpio2uart(void)
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
 
-/*
- * Optional board-level function to set GPIOs state in hibernate.
- */
-void board_set_gpio_state_hibernate(void)
-	__attribute__((weak));
-
 #endif /* __CROS_EC_REGISTERS_H */

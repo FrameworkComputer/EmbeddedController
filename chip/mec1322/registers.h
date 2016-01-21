@@ -65,7 +65,6 @@
 #define MEC1322_EC_WDT_CNT     REG32(MEC1322_EC_BASE + 0x28)
 #define MEC1322_EC_ADC_VREF_PD REG32(MEC1322_EC_BASE + 0x38)
 
-
 /* Interrupt aggregator */
 #define MEC1322_INT_BASE       0x4000c000
 #define MEC1322_INTx_BASE(x)   (MEC1322_INT_BASE + ((x) - 8) * 0x14)
@@ -497,12 +496,5 @@ typedef volatile struct mec1322_dma_regs mec1322_dma_regs_t;
 /* Wake pin definitions, defined at board-level */
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
-
-/*
- * Optional board-level function to get hibernate GPIO state.
- * Returns desired GPIO state in hibernate, or 0 to skip reconfiguration.
- */
-uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
-	__attribute__((weak));
 
 #endif /* __CROS_EC_REGISTERS_H */

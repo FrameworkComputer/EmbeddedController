@@ -419,31 +419,17 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-uint32_t board_get_gpio_hibernate_state(uint32_t port, uint32_t pin)
+void board_set_gpio_hibernate_state(void)
 {
-	int i;
-	const uint32_t out_low_gpios[][2] = {
-		/* Turn off LEDs in hibernate */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_1),
-		GPIO_TO_PORT_MASK_PAIR(GPIO_CHARGE_LED_2),
-		/*
-		 * Set PD wake low so that it toggles high to generate a wake
-		 * event once we leave hibernate.
-		 */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_USB_PD_WAKE),
-		/* The GPIO to control RTCRST is active high. */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RTCRST),
-		/* RSMRST to PCH should be low when rails are off */
-		GPIO_TO_PORT_MASK_PAIR(GPIO_PCH_RSMRST_L),
-	};
+	/* Turn off LEDs in hibernate */
+	gpio_set_level(GPIO_CHARGE_LED_1, 0);
+	gpio_set_level(GPIO_CHARGE_LED_2, 0);
 
-	/* LED GPIOs should be driven low to turn off LEDs */
-	for (i = 0; i < ARRAY_SIZE(out_low_gpios); ++i)
-		if (out_low_gpios[i][0] == port && out_low_gpios[i][1] == pin)
-			return GPIO_OUTPUT | GPIO_LOW;
-
-	/* Other GPIOs should be put in a low-power state */
-	return GPIO_INPUT | GPIO_PULL_UP;
+	/*
+	 * Set PD wake low so that it toggles high to generate a wake
+	 * event once we leave hibernate.
+	 */
+	gpio_set_level(GPIO_USB_PD_WAKE, 0);
 }
 
 /* Any glados boards post version 2 should have ROP_LDO_EN stuffed. */
