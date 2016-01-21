@@ -52,6 +52,7 @@
 
 static int throttle_cpu;      /* Throttle CPU? */
 static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int power_s5_up;       /* Chipset is sequencing up or down */
 
 void chipset_force_shutdown(void)
 {
@@ -209,7 +210,8 @@ static enum power_state _power_handle_state(enum power_state state)
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
 		/* Wait for S5 exit and attempt RTC reset it supported */
-		return power_wait_s5_rtc_reset();
+		if (power_s5_up)
+			return power_wait_s5_rtc_reset();
 #else
 		if (gpio_get_level(GPIO_PCH_SLP_S4_L) == 1)
 			return POWER_S5S3; /* Power up to next state */
@@ -285,6 +287,7 @@ static enum power_state _power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
+		power_s5_up = 1;
 		return POWER_S5;
 
 	case POWER_S5S3:
@@ -381,6 +384,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		/* Always enter into S5 state. The S5 state is required to
 		 * correctly handle global resets which have a bit of delay
 		 * while the SLP_Sx_L signals are asserted then deasserted. */
+		power_s5_up = 0;
 		return POWER_S5;
 
 	case POWER_S5G3:
