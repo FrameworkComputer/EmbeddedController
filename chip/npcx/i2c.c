@@ -116,6 +116,16 @@ static void i2c_select_port(int port)
 			(port == NPCX_I2C_PORT0_1));
 }
 
+static void i2c_init_bus(int controller)
+{
+	/* Enable module - before configuring CTL1 */
+	SET_BIT(NPCX_SMBCTL2(controller), NPCX_SMBCTL2_ENABLE);
+
+	/* Enable SMB interrupt and New Address Match interrupt source */
+	SET_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_NMINTE);
+	SET_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_INTEN);
+}
+
 int i2c_bus_busy(int controller)
 {
 	return IS_BIT_SET(NPCX_SMBCST(controller), NPCX_SMBCST_BB) ? 1 : 0;
@@ -140,18 +150,7 @@ static int i2c_wait_stop_completed(int controller, int timeout)
 		return EC_ERROR_TIMEOUT;
 }
 
-static void i2c_interrupt(int controller, int enable)
-{
-	if (enable) {
-		SET_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_NMINTE);
-		SET_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_INTEN);
-	} else {
-		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_NMINTE);
-		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_INTEN);
-	}
-}
-
-int i2c_abort_data(int controller)
+void i2c_abort_data(int controller)
 {
 	/* Clear NEGACK, STASTR and BER bits */
 	SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
@@ -164,15 +163,14 @@ int i2c_abort_data(int controller)
 		cprints(CC_I2C, "Abort i2c %02x fail!", controller);
 		/* Clear BB (BUS BUSY) bit */
 		SET_BIT(NPCX_SMBCST(controller), NPCX_SMBCST_BB);
-		return 0;
+		return;
 	}
 
 	/* Clear BB (BUS BUSY) bit */
 	SET_BIT(NPCX_SMBCST(controller), NPCX_SMBCST_BB);
-	return 1;
 }
 
-void i2c_reset(int controller)
+int i2c_reset(int controller)
 {
 	uint16_t timeout = I2C_MAX_TIMEOUT;
 	/* Disable the SMB module */
@@ -186,23 +184,30 @@ void i2c_reset(int controller)
 		msleep(1);
 	}
 
-	if (timeout == 0)
+	if (timeout == 0) {
 		cprints(CC_I2C, "Reset i2c %02x fail!", controller);
+		return 0;
+	}
 
-	/* Enable the SMB module */
-	SET_BIT(NPCX_SMBCTL2(controller), NPCX_SMBCTL2_ENABLE);
+	/* Init the SMB module again */
+	i2c_init_bus(controller);
+	return 1;
 }
 
-void i2c_recovery(int controller)
+void i2c_recovery(int controller, volatile struct i2c_status *p_status)
 {
-	CPUTS("RECOVERY\r\n");
-	/* Abort data, generating STOP condition */
-	if (i2c_abort_data(controller) == 1 &&
-		i2c_stsobjs[controller].err_code == SMB_MASTER_NO_ADDRESS_MATCH)
-		return;
+	CPRINTS("i2c %d recovery! error code is %d, current state is %d",
+			controller, p_status->err_code, p_status->oper_state);
+
+	/* Abort data, wait for STOP condition completed. */
+	i2c_abort_data(controller);
 
 	/* Reset i2c controller by re-enable i2c controller*/
-	i2c_reset(controller);
+	if (!i2c_reset(controller))
+		return;
+
+	/* Restore to idle status */
+	p_status->oper_state = SMB_IDLE;
 }
 
 enum smb_error i2c_master_transaction(int controller)
@@ -241,11 +246,13 @@ enum smb_error i2c_master_transaction(int controller)
 			 */
 			CPRINTS("I2C %d rxbuf size should exceed one byte in "
 					"2th transaction", controller);
-			p_status->err_code = SMB_BUS_ERROR;
-			i2c_recovery(controller);
+			p_status->err_code = SMB_NO_SUPPORT_PTL;
+			i2c_recovery(controller, p_status);
 			return EC_ERROR_UNKNOWN;
 		}
-	}
+	} else
+		cprints(CC_I2C, "Unexpected i2c state machine! %d",
+				p_status->oper_state);
 
 	/* Generate a START condition */
 	if (p_status->oper_state == SMB_MASTER_START ||
@@ -254,31 +261,27 @@ enum smb_error i2c_master_transaction(int controller)
 		CPUTS("ST");
 	}
 
-	/* Enable SMB interrupt and New Address Match interrupt source */
-	i2c_interrupt(controller, 1);
+	/* Enable event and error interrupts */
+	task_enable_irq(i2c_irqs[controller]);
 
 	/* Wait for transfer complete or timeout */
 	events = task_wait_event_mask(TASK_EVENT_I2C_IDLE,
 			p_status->timeout_us);
 
+	/* Disable event and error interrupts */
+	task_disable_irq(i2c_irqs[controller]);
+
 	/* Handle bus timeout */
 	if ((events & TASK_EVENT_I2C_IDLE) == 0) {
-		/* Recovery I2C controller */
-		i2c_recovery(controller);
 		p_status->err_code = SMB_TIMEOUT_ERROR;
-		/* Restore to idle status */
-		p_status->oper_state = SMB_IDLE;
+		/* Recovery I2C controller */
+		i2c_recovery(controller, p_status);
 	}
+	/* Recovery bus if we encounter bus error */
+	else if (p_status->err_code == SMB_BUS_ERROR)
+		i2c_recovery(controller, p_status);
 
-	/*
-	 * In slave write operation, NACK is OK, otherwise it is a problem
-	 */
-	else if (p_status->err_code == SMB_BUS_ERROR ||
-			p_status->err_code == SMB_MASTER_NO_ADDRESS_MATCH){
-		i2c_recovery(controller);
-	}
-
-	/* Wait till STOP condition is generated */
+	/* Wait till STOP condition is generated for normal transaction */
 	if (p_status->err_code == SMB_OK && i2c_wait_stop_completed(controller,
 			I2C_MIN_TIMEOUT) != EC_SUCCESS) {
 		cprints(CC_I2C, "STOP fail! scl %02x is held by slave device!",
@@ -345,7 +348,8 @@ inline void i2c_handle_sda_irq(int controller)
 				 * until common layer start other transactions
 				 */
 				if (p_status->oper_state == SMB_WRITE_SUSPEND)
-					i2c_interrupt(controller, 0);
+					task_disable_irq(i2c_irqs[controller]);
+
 				/* Notify upper layer */
 				task_set_event(p_status->task_waiting,
 						TASK_EVENT_I2C_IDLE, 0);
@@ -406,7 +410,7 @@ inline void i2c_handle_sda_irq(int controller)
 				 * reg (stall SCL) and forbid SDAST generate
 				 * interrupt until starting other transactions
 				 */
-				i2c_interrupt(controller, 0);
+				task_disable_irq(i2c_irqs[controller]);
 			}
 		}
 		/* Check if byte-before-last is about to be read */
@@ -478,8 +482,17 @@ void i2c_master_int_handler (int controller)
 	}
 
 	/* Condition 3: SDA status is set - transmit or receive */
-	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_SDAST))
+	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_SDAST)) {
 		i2c_handle_sda_irq(controller);
+#if DEBUG_I2C
+		/* SDAST still issued with unexpected state machine */
+		if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_SDAST) &&
+				p_status->oper_state != SMB_WRITE_SUSPEND) {
+			cprints(CC_I2C, "i2c %d unknown state %d, error %d\n",
+			  controller, p_status->oper_state, p_status->err_code);
+		}
+#endif
+	}
 }
 
 /**
@@ -559,8 +572,9 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 		/* Attempt to unwedge the i2c port. */
 		i2c_unwedge(port);
+		p_status->err_code = SMB_BUS_BUSY;
 		/* recovery i2c controller */
-		i2c_recovery(ctrl);
+		i2c_recovery(ctrl, p_status);
 		/* Select port again for recovery */
 		i2c_select_port(port);
 	}
@@ -572,9 +586,6 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	/* Reset task ID */
 	p_status->task_waiting = TASK_ID_INVALID;
-
-	/* Disable SMB interrupt and New Address Match interrupt source */
-	i2c_interrupt(ctrl, 0);
 
 	CPRINTS("-Err:0x%02x\n", p_status->err_code);
 
@@ -761,6 +772,7 @@ static void i2c_init(void)
 		int port = i2c_ports[i].port;
 		int ctrl = i2c_port_to_controller(port);
 		volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
+
 		/* Configure pull-up for SMB interface pins */
 
 		/* Enable 3.3V pull-up or turn to 1.8V support */
@@ -801,20 +813,17 @@ static void i2c_init(void)
 #endif
 		}
 
-		/* Enable module - before configuring CTL1 */
-		SET_BIT(NPCX_SMBCTL2(ctrl), NPCX_SMBCTL2_ENABLE);
-
 		/* status init */
 		p_status->oper_state = SMB_IDLE;
 
 		/* Reset task ID */
 		p_status->task_waiting = TASK_ID_INVALID;
 
-		/* Enable event and error interrupts */
-		task_enable_irq(i2c_irqs[ctrl]);
-
 		/* Use default timeout. */
 		i2c_set_timeout(port, 0);
+
+		/* Init the SMB module */
+		i2c_init_bus(ctrl);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
