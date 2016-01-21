@@ -21,13 +21,18 @@ uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 	uint32_t wrp01 = REG32(STM32_OPTB_BASE + STM32_OPTB_WRP01);
+#if CONFIG_FLASH_SIZE > 64 * 1024
 	uint32_t wrp23 = REG32(STM32_OPTB_BASE + STM32_OPTB_WRP23);
+#endif
 
 	if (STM32_FLASH_WRPR == 0)
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
 
-	if (wrp01 == 0xff00ff00 && wrp23 == 0xff00ff00)
-		flags |= EC_FLASH_PROTECT_ALL_AT_BOOT;
+	if (wrp01 == 0xff00ff00)
+#if CONFIG_FLASH_SIZE > 64 * 1024
+		if (wrp23 == 0xff00ff00)
+#endif
+			flags |= EC_FLASH_PROTECT_ALL_AT_BOOT;
 
 	return flags;
 }
