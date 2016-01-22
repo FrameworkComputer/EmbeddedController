@@ -212,10 +212,9 @@ static enum power_state _power_handle_state(enum power_state state)
 		/* Wait for S5 exit and attempt RTC reset it supported */
 		if (power_s5_up)
 			return power_wait_s5_rtc_reset();
-#else
+#endif
 		if (gpio_get_level(GPIO_PCH_SLP_S4_L) == 1)
 			return POWER_S5S3; /* Power up to next state */
-#endif
 		break;
 
 	case POWER_S3:
