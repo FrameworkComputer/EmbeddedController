@@ -46,13 +46,6 @@ CRYPT_RESULT _cpri__EccCommitCompute(
   return CRYPT_FAIL;
 }
 
-UINT32 _cpri__EccGetCurveCount(
-  void)
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
 BOOL _cpri__EccIsPointOnCurve(
   TPM_ECC_CURVE curveId,        // IN: the curve selector
   TPMS_ECC_POINT * Q            // IN: the point.
