@@ -87,7 +87,11 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 
 static void connect_pinmux(uint32_t signal, uint32_t dio, uint16_t flags)
 {
-	if (FIELD_IS_FUNC(signal)) {
+	if (flags & DIO_ENABLE_DIRECT_INPUT) {
+		/* enable digital input for direct wired peripheral */
+		REG_WRITE_MLV(DIO_CTL_REG(dio), DIO_CTL_IE_MASK,
+			      DIO_CTL_IE_LSB, 1);
+	} else if (FIELD_IS_FUNC(signal)) {
 		/* Connect peripheral function to DIO */
 		if (flags & DIO_OUTPUT) {
 			/* drive DIO from peripheral */

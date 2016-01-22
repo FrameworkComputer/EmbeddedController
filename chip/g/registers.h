@@ -185,6 +185,7 @@ static inline int x_uart_addr(int ch, int offset)
 /* Flags to indicate the direction of the signal-to-pin connection */
 #define DIO_INPUT 0x0001
 #define DIO_OUTPUT 0x0002
+#define DIO_ENABLE_DIRECT_INPUT 0x0004
 
 /*
  * To store a pinmux DIO in the struct gpio_alt_func's mask field, we use:
