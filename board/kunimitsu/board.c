@@ -308,7 +308,7 @@ struct motion_sensor_t motion_sensors[] = {
 			.ec_rate = 0,
 		},
 		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 0
+			.odr = 0,
 			.ec_rate = 0,
 		},
 		/* unused */
