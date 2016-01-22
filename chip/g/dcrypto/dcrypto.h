@@ -119,4 +119,22 @@ int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
 		const uint32_t sig_len,	enum padding_mode padding,
 		enum hashing_mode hashing);
 
+/*
+ *  EC.
+ */
+int DCRYPTO_p256_valid_point(const p256_int *x, const p256_int *y);
+int DCRYPTO_p256_base_point_mul(p256_int *out_x, p256_int *out_y,
+				const p256_int *n);
+int DCRYPTO_p256_points_mul(p256_int *out_x, p256_int *out_y,
+			const p256_int *n1, const p256_int *n2,
+			const p256_int *in_x, const p256_int *in_y);
+int DCRYPTO_p256_key_from_bytes(p256_int *x, p256_int *y, p256_int *d,
+				const uint8_t key_bytes[P256_NBYTES]);
+
+void DCRYPTO_p256_ecdsa_sign(const p256_int *d, const p256_int *digest,
+			p256_int *r, p256_int *s);
+int DCRYPTO_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
+			const p256_int *digest, const p256_int *r,
+			const p256_int *s);
+
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

@@ -46,45 +46,6 @@ CRYPT_RESULT _cpri__EccCommitCompute(
   return CRYPT_FAIL;
 }
 
-BOOL _cpri__EccIsPointOnCurve(
-  TPM_ECC_CURVE curveId,        // IN: the curve selector
-  TPMS_ECC_POINT * Q            // IN: the point.
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return 0;
-}
-
-CRYPT_RESULT _cpri__EccPointMultiply(
-  TPMS_ECC_POINT * Rout,        //   OUT: the product point R
-  TPM_ECC_CURVE curveId,        //   IN: the curve to use
-  TPM2B_ECC_PARAMETER * dIn,    //   IN: value to multiply against the
-  // curve generator
-  TPMS_ECC_POINT * Qin,         //   IN: point Q
-  TPM2B_ECC_PARAMETER * uIn     //   IN: scalar value for the multiplier of Q
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
-CRYPT_RESULT _cpri__GenerateKeyEcc(
-  TPMS_ECC_POINT * Qout,        //   OUT: the public point
-  TPM2B_ECC_PARAMETER * dOut,   //   OUT: the private scalar
-  TPM_ECC_CURVE curveId,        //   IN: the curve identifier
-  TPM_ALG_ID hashAlg,           //   IN: hash algorithm to use in the key
-  // generation process
-  TPM2B * seed,                 //   IN: the seed to use
-  const char *label,            //   IN: A label for the generation process.
-  TPM2B * extra,                //   IN: Party 1 data for the KDF
-  UINT32 * counter              //   IN/OUT: Counter value to allow KDF
-  // iteration to be propagated across multiple functions
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
 CRYPT_RESULT _cpri__GenerateKeyRSA(
   TPM2B * n,                    //   OUT: The public modulu
   TPM2B * p,                    //   OUT: One of the prime factors of n
@@ -96,31 +57,6 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
   TPM2B * extra,                //   IN: Party 1 data for the KDF
   UINT32 * counter              //   IN/OUT: Counter value to allow KFD iteration to be
   //   propagated across multiple routine
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
-CRYPT_RESULT _cpri__GetEphemeralEcc(
-  TPMS_ECC_POINT * Qout,        // OUT: the public point
-  TPM2B_ECC_PARAMETER * dOut,   // OUT: the private scalar
-  TPM_ECC_CURVE curveId         // IN: the curve for the key
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
-CRYPT_RESULT _cpri__SignEcc(
-  TPM2B_ECC_PARAMETER * rOut,   //   OUT: r component of the signature
-  TPM2B_ECC_PARAMETER * sOut,   //   OUT: s component of the signature
-  TPM_ALG_ID scheme,            //   IN: the scheme selector
-  TPM_ALG_ID hashAlg,           //   IN: the hash algorithm if need
-  TPM_ECC_CURVE curveId,        //   IN: the curve used in the signature process
-  TPM2B_ECC_PARAMETER * dIn,    //   IN: the private key
-  TPM2B * digest,               //   IN: the digest to sign
-  TPM2B_ECC_PARAMETER * kIn     //   IN: k for input
   )
 {
   ecprintf("%s called\n", __func__);
@@ -153,22 +89,6 @@ CRYPT_RESULT _cpri__TestKeyRSA(
   // provided. an output if both primes are provided
   TPM2B * prime1,               //   IN: a first prime
   TPM2B * prime2                //   IN: an optional second prime
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
-CRYPT_RESULT _cpri__ValidateSignatureEcc(
-  TPM2B_ECC_PARAMETER * rIn,    //   IN: r component of the signature
-  TPM2B_ECC_PARAMETER * sIn,    //   IN: s component of the signature
-  TPM_ALG_ID scheme,            //   IN: the scheme selector
-  TPM_ALG_ID hashAlg,           //   IN: the hash algorithm used (not used
-  // in all schemes)
-  TPM_ECC_CURVE curveId,        //   IN: the curve used in the
-  // signature process
-  TPMS_ECC_POINT * Qin,         //   IN: the public point of the key
-  TPM2B * digest                //   IN: the digest that was signed
   )
 {
   ecprintf("%s called\n", __func__);

@@ -19,6 +19,7 @@ root_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.append(os.path.join(root_dir, '..', '..', 'build', 'tpm_test'))
 
 import crypto_test
+import ecc_test
 import ftdi_spi_tpm
 import hash_test
 import rsa_test
@@ -135,6 +136,7 @@ if __name__ == '__main__':
     t = TPM(debug_mode=debug_needed)
 
     crypto_test.crypto_tests(t, os.path.join(root_dir, 'crypto_test.xml'))
+    ecc_test.ecc_test(t)
     hash_test.hash_test(t)
     rsa_test.rsa_test(t)
   except (TpmError, crypto_test.CryptoError, hash_test.HashError,

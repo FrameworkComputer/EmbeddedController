@@ -9,3 +9,4 @@
 AES = 0
 HASH = 1
 RSA = 2
+EC = 3

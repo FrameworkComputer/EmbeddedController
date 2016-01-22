@@ -83,6 +83,21 @@ void dcrypto_sha_update(struct HASH_CTX *unused,
 void dcrypto_sha_wait(enum sha_mode mode, uint32_t *digest);
 
 /*
+ * HMAC.
+ */
+struct HMAC_CTX {
+	struct HASH_CTX hash;
+	uint8_t opad[64];
+};
+
+#define HASH_update(ctx, data, len) \
+	((ctx)->vtab->update((ctx), (data), (len)))
+void dcrypto_HMAC_SHA256_init(struct HMAC_CTX *ctx, const void *key,
+			unsigned int len);
+#define dcrypto_HMAC_update(ctx, data, len) HASH_update(&(ctx)->hash, data, len)
+const uint8_t *dcrypto_HMAC_final(struct HMAC_CTX *ctx);
+
+/*
  * BIGNUM.
  */
 #define BN_BITS2        32
@@ -100,6 +115,53 @@ void bn_init(struct BIGNUM *bn, void *buf, size_t len);
 int bn_check_topbit(const struct BIGNUM *N);
 void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 		const struct BIGNUM *exp, const struct BIGNUM *N);
+
+/*
+ * EC.
+ */
+#define P256_BITSPERDIGIT 32
+#define P256_NDIGITS 8
+#define P256_NBYTES 32
+
+typedef uint32_t p256_digit;
+typedef int32_t p256_sdigit;
+typedef uint64_t p256_ddigit;
+typedef int64_t p256_sddigit;
+
+/* Define p256_int as a struct to leverage struct assignment. */
+typedef struct {
+	p256_digit a[P256_NDIGITS] __packed;
+} p256_int;
+
+#define P256_DIGITS(x) ((x)->a)
+#define P256_DIGIT(x, y) ((x)->a[y])
+
+#define P256_ZERO { {0} }
+#define P256_ONE { {1} }
+
+/* Curve constants. */
+extern const p256_int SECP256r1_n;
+extern const p256_int SECP256r1_p;
+extern const p256_int SECP256r1_b;
+
+void p256_init(p256_int *a);
+void p256_from_bin(const uint8_t src[P256_NBYTES], p256_int *dst);
+#define p256_clear(a) p256_init((a))
+int p256_is_zero(const p256_int *a);
+int p256_cmp(const p256_int *a, const p256_int *b);
+int p256_get_bit(const p256_int *scalar, int bit);
+p256_digit p256_shl(const p256_int *a, int n, p256_int *b);
+void p256_shr(const p256_int *a, int n, p256_int *b);
+int p256_add(const p256_int *a, const p256_int *b, p256_int *c);
+int p256_add_d(const p256_int *a, p256_digit d, p256_int *b);
+void p256_points_mul_vartime(
+	const p256_int *n1, const p256_int *n2, const p256_int *in_x,
+	const p256_int *in_y, p256_int *out_x, p256_int *out_y);
+void p256_mod(const p256_int *MOD, const p256_int *in, p256_int *out);
+void p256_modmul(const p256_int *MOD, const p256_int *a,
+		const p256_digit top_b,	const p256_int *b, p256_int *c);
+void p256_modinv(const p256_int *MOD, const p256_int *a, p256_int *b);
+void p256_modinv_vartime(const p256_int *MOD, const p256_int *a, p256_int *b);
 
 /*
  * Utility functions.

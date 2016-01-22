@@ -49,6 +49,7 @@ enum {
 	EXTENSION_AES = 0,
 	EXTENSION_HASH = 1,
 	EXTENSION_RSA = 2,
+	EXTENSION_EC = 3,
 };
 
 
