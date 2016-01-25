@@ -60,12 +60,6 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 		  gpio_list[signal].mask);
 }
 
-uint16_t *gpio_get_level_reg(enum gpio_signal signal, uint32_t *mask)
-{
-	*mask = gpio_list[signal].mask;
-	return (uint16_t *)&STM32_GPIO_IDR(gpio_list[signal].port);
-}
-
 void gpio_set_level(enum gpio_signal signal, int value)
 {
 	STM32_GPIO_BSRR(gpio_list[signal].port) =

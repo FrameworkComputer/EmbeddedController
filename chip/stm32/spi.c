@@ -153,12 +153,11 @@ enum spi_state {
  *
  * @param rxdma		RX DMA channel to watch
  * @param needed	Number of bytes that are needed
- * @param nss_regs	GPIO register for NSS control line
- * @param nss_mask	Bit to check in GPIO register (when high, we abort)
+ * @param nss		GPIO signal for NSS control line
  * @return 0 if bytes received, -1 if we hit a timeout or NSS went high
  */
 static int wait_for_bytes(stm32_dma_chan_t *rxdma, int needed,
-			  uint16_t *nss_reg, uint32_t nss_mask)
+			  enum gpio_signal nss)
 {
 	timestamp_t deadline;
 
@@ -167,7 +166,7 @@ static int wait_for_bytes(stm32_dma_chan_t *rxdma, int needed,
 	while (1) {
 		if (dma_bytes_done(rxdma, sizeof(in_msg)) >= needed)
 			return 0;
-		if (REG16(nss_reg) & nss_mask)
+		if (gpio_get_level(nss))
 			return -1;
 		if (!deadline.val) {
 			deadline = get_time();
@@ -438,8 +437,6 @@ static void spi_send_response_packet(struct host_packet *pkt)
 void spi_event(enum gpio_signal signal)
 {
 	stm32_dma_chan_t *rxdma;
-	uint16_t *nss_reg;
-	uint32_t nss_mask;
 	uint16_t i;
 
 	/* If not enabled, ignore glitches on NSS */
@@ -447,8 +444,7 @@ void spi_event(enum gpio_signal signal)
 		return;
 
 	/* Check chip select.  If it's high, the AP ended a transaction. */
-	nss_reg = gpio_get_level_reg(GPIO_SPI1_NSS, &nss_mask);
-	if (REG16(nss_reg) & nss_mask) {
+	if (gpio_get_level(GPIO_SPI1_NSS)) {
 		enable_sleep(SLEEP_MASK_SPI);
 
 		/*
@@ -484,7 +480,7 @@ void spi_event(enum gpio_signal signal)
 	rxdma = dma_get_channel(STM32_DMAC_SPI1_RX);
 
 	/* Wait for version, command, length bytes */
-	if (wait_for_bytes(rxdma, 3, nss_reg, nss_mask))
+	if (wait_for_bytes(rxdma, 3, GPIO_SPI1_NSS))
 		goto spi_event_error;
 
 	if (in_msg[0] == EC_HOST_REQUEST_VERSION) {
@@ -493,7 +489,7 @@ void spi_event(enum gpio_signal signal)
 		int pkt_size;
 
 		/* Wait for the rest of the command header */
-		if (wait_for_bytes(rxdma, sizeof(*r), nss_reg, nss_mask))
+		if (wait_for_bytes(rxdma, sizeof(*r), GPIO_SPI1_NSS))
 			goto spi_event_error;
 
 		/*
@@ -506,7 +502,7 @@ void spi_event(enum gpio_signal signal)
 			goto spi_event_error;
 
 		/* Wait for the packet data */
-		if (wait_for_bytes(rxdma, pkt_size, nss_reg, nss_mask))
+		if (wait_for_bytes(rxdma, pkt_size, GPIO_SPI1_NSS))
 			goto spi_event_error;
 
 		spi_packet.send_response = spi_send_response_packet;
@@ -552,8 +548,7 @@ void spi_event(enum gpio_signal signal)
 		args.params_size = in_msg[2];
 
 		/* Wait for parameters */
-		if (wait_for_bytes(rxdma, 3 + args.params_size,
-				   nss_reg, nss_mask))
+		if (wait_for_bytes(rxdma, 3 + args.params_size, GPIO_SPI1_NSS))
 			goto spi_event_error;
 
 		/*
