@@ -1178,9 +1178,6 @@
 /* Interrupt for PECI module. (IT839X series and IT838X DX only) */
 #undef CONFIG_IT83XX_PECI_WITH_INTERRUPT
 
-/* Allow the host access to the PNPCFG registers */
-#undef CONFIG_IT83XX_PNPCFG_HOST_ACCESS
-
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 

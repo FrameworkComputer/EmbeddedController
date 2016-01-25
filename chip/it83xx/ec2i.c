@@ -5,153 +5,146 @@
 
 /* EC2I control module for IT83xx. */
 
-#include "hooks.h"
+#include "common.h"
 #include "ec2i_chip.h"
+#include "hooks.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 
-#define EC2I_ACCESS_TIME_USEC 15
+/* EC2I access index/data port */
+enum ec2i_access {
+	/* index port */
+	EC2I_ACCESS_INDEX = 0,
+	/* data port */
+	EC2I_ACCESS_DATA = 1,
+};
 
-static int ec2i_check_status_bit(uint8_t status_bit)
+enum ec2i_status_mask {
+	/* 1: EC read-access is still processing. */
+	EC2I_STATUS_CRIB = (1 << 1),
+	/* 1: EC write-access is still processing with IHD register. */
+	EC2I_STATUS_CWIB = (1 << 2),
+	EC2I_STATUS_ALL  = (EC2I_STATUS_CRIB | EC2I_STATUS_CWIB),
+};
+
+static int ec2i_wait_status_bit_cleared(enum ec2i_status_mask mask)
 {
-	int num;
+	/* delay ~15.25us */
+	IT83XX_GCTRL_WNCKR = 0;
 
-	for (num = 0; num < 10; num++) {
-		udelay(EC2I_ACCESS_TIME_USEC);
-
-		if (!(IT83XX_EC2I_IBCTL & status_bit))
-			return 0;
-	}
-
-	/* Timeout */
-	return -1;
+	return (IT83XX_EC2I_IBCTL & mask);
 }
 
-static void ec2i_ec_access_enable(void)
+static enum ec2i_message ec2i_write_pnpcfg(enum ec2i_access sel, uint8_t data)
 {
-	/*
-	 * bit0: Host access to the PNPCFG registers is disabled.
-	 * bit1: Host access to the BRAM registers is disabled.
-	 */
-	IT83XX_EC2I_LSIOHA |= 0x03;
+	int rv = EC_ERROR_UNKNOWN;
 
-	/* bit0: EC to I-Bus access enabled. */
-	IT83XX_EC2I_IBCTL |= 0x01;
-
-	/*
-	 * Make sure that both CRIB and CWIB bits in IBCTL register
-	 * are cleared.
-	 * bit1: CRIB
-	 * bit2: CWIB
-	 */
-	if (ec2i_check_status_bit(0x06))
-		IT83XX_EC2I_IBCTL &= ~0x02;
-
-	/* Enable EC access to the PNPCFG registers */
-	IT83XX_EC2I_IBMAE |= 0x01;
-}
-
-static void ec2i_ec_access_disable(void)
-{
-	/* Disable EC access to the PNPCFG registers. */
-	IT83XX_EC2I_IBMAE &= ~0x01;
-
-	/* Diable EC to I-Bus access. */
-	IT83XX_EC2I_IBCTL &= ~0x01;
-
-#ifdef CONFIG_IT83XX_PNPCFG_HOST_ACCESS
-	/* Enable host access */
-	IT83XX_EC2I_LSIOHA &= ~0x03;
-#else
-	/* Host access is disabled */
-	IT83XX_EC2I_LSIOHA &= ~0x02;
-#endif
-}
-
-/* EC2I write */
-enum ec2i_message ec2i_write(enum host_pnpcfg_index index, uint8_t data)
-{
 	/* bit1 : VCC power on */
-	if (IT83XX_SWUC_SWCTL1 & 0x02) {
-		/* Enable EC2I EC access */
-		ec2i_ec_access_enable();
-
-		/* Set indirect host I/O offset. (index port) */
-		IT83XX_EC2I_IHIOA = 0;
-		IT83XX_EC2I_IHD = index;
-
-		/* Read the CWIB bit in IBCTL until it returns 0. */
-		if (ec2i_check_status_bit(0x04)) {
-			ec2i_ec_access_disable();
-			return EC2I_WRITE_ERROR;
+	if (IT83XX_SWUC_SWCTL1 & (1 << 1)) {
+		/*
+		 * Wait that both CRIB and CWIB bits in IBCTL register
+		 * are cleared.
+		 */
+		rv = ec2i_wait_status_bit_cleared(EC2I_STATUS_ALL);
+		if (!rv) {
+			/* Set indirect host I/O offset. */
+			IT83XX_EC2I_IHIOA = sel;
+			/* Write the data to IHD register */
+			IT83XX_EC2I_IHD = data;
+			/* Enable EC access to the PNPCFG registers */
+			IT83XX_EC2I_IBMAE |= (1 << 0);
+			/* bit0: EC to I-Bus access enabled. */
+			IT83XX_EC2I_IBCTL |= (1 << 0);
+			/* Wait the CWIB bit in IBCTL cleared. */
+			rv = ec2i_wait_status_bit_cleared(EC2I_STATUS_CWIB);
+			/* Disable EC access to the PNPCFG registers. */
+			IT83XX_EC2I_IBMAE &= ~(1 << 0);
+			/* Disable EC to I-Bus access. */
+			IT83XX_EC2I_IBCTL &= ~(1 << 0);
 		}
-
-		/* Set indirect host I/O offset. (data port) */
-		IT83XX_EC2I_IHIOA = 1;
-		IT83XX_EC2I_IHD = data;
-
-		/* Read the CWIB bit in IBCTL until it returns 0. */
-		if (ec2i_check_status_bit(0x04)) {
-			ec2i_ec_access_disable();
-			return EC2I_WRITE_ERROR;
-		}
-
-		/* Disable EC2I EC access */
-		ec2i_ec_access_disable();
-
-		return EC2I_WRITE_SUCCESS;
-	} else {
-		return EC2I_WRITE_ERROR;
 	}
+
+	return rv ? EC2I_WRITE_ERROR : EC2I_WRITE_SUCCESS;
+}
+
+static enum ec2i_message ec2i_read_pnpcfg(enum ec2i_access sel)
+{
+	int rv = EC_ERROR_UNKNOWN;
+	uint8_t ihd = 0;
+
+	/* bit1 : VCC power on */
+	if (IT83XX_SWUC_SWCTL1 & (1 << 1)) {
+		/*
+		 * Wait that both CRIB and CWIB bits in IBCTL register
+		 * are cleared.
+		 */
+		rv = ec2i_wait_status_bit_cleared(EC2I_STATUS_ALL);
+		if (!rv) {
+			/* Set indirect host I/O offset. */
+			IT83XX_EC2I_IHIOA = sel;
+			/* Enable EC access to the PNPCFG registers */
+			IT83XX_EC2I_IBMAE |= (1 << 0);
+			/* bit1: a read-action */
+			IT83XX_EC2I_IBCTL |= (1 << 1);
+			/* bit0: EC to I-Bus access enabled. */
+			IT83XX_EC2I_IBCTL |= (1 << 0);
+			/* Wait the CRIB bit in IBCTL cleared. */
+			rv = ec2i_wait_status_bit_cleared(EC2I_STATUS_CRIB);
+			/* Read the data from IHD register */
+			ihd = IT83XX_EC2I_IHD;
+			/* Disable EC access to the PNPCFG registers. */
+			IT83XX_EC2I_IBMAE &= ~(1 << 0);
+			/* Disable EC to I-Bus access. */
+			IT83XX_EC2I_IBCTL &= ~(1 << 0);
+		}
+	}
+
+	return rv ? EC2I_READ_ERROR : (EC2I_READ_SUCCESS + ihd);
 }
 
 /* EC2I read */
 enum ec2i_message ec2i_read(enum host_pnpcfg_index index)
 {
-	uint8_t data;
+	enum ec2i_message ret = EC2I_READ_ERROR;
+	uint32_t int_mask = get_int_mask();
 
-	/* bit1 : VCC power on */
-	if (IT83XX_SWUC_SWCTL1 & 0x02) {
-		/* Enable EC2I EC access */
-		ec2i_ec_access_enable();
+	/* critical section with interrupts off */
+	interrupt_disable();
+	/* Set index */
+	if (ec2i_write_pnpcfg(EC2I_ACCESS_INDEX, index) == EC2I_WRITE_SUCCESS)
+		/* read data port */
+		ret = ec2i_read_pnpcfg(EC2I_ACCESS_DATA);
+	/* restore interrupts */
+	set_int_mask(int_mask);
 
-		/* Set indirect host I/O offset. (index port) */
-		IT83XX_EC2I_IHIOA = 0;
-		IT83XX_EC2I_IHD = index;
+	return ret;
+}
 
-		/* Read the CWIB bit in IBCTL until it returns 0. */
-		if (ec2i_check_status_bit(0x04)) {
-			ec2i_ec_access_disable();
-			return EC2I_READ_ERROR;
-		}
+/* EC2I write */
+enum ec2i_message ec2i_write(enum host_pnpcfg_index index, uint8_t data)
+{
+	enum ec2i_message ret = EC2I_WRITE_ERROR;
+	uint32_t int_mask = get_int_mask();
 
-		/* Set indirect host I/O offset. (data port) */
-		IT83XX_EC2I_IHIOA = 1;
+	/* critical section with interrupts off */
+	interrupt_disable();
+	/* Set index */
+	if (ec2i_write_pnpcfg(EC2I_ACCESS_INDEX, index) == EC2I_WRITE_SUCCESS)
+		/* Set data */
+		ret = ec2i_write_pnpcfg(EC2I_ACCESS_DATA, data);
+	/* restore interrupts */
+	set_int_mask(int_mask);
 
-		/* This access is a read-action */
-		IT83XX_EC2I_IBCTL |= 0x02;
-
-		/* Read the CRIB bit in IBCTL until it returns 0. */
-		if (ec2i_check_status_bit(0x02)) {
-			ec2i_ec_access_disable();
-			return EC2I_READ_ERROR;
-		}
-
-		/* Read the data from IHD register */
-		data = IT83XX_EC2I_IHD;
-
-		/* Disable EC2I EC access */
-		ec2i_ec_access_disable();
-
-		return EC2I_READ_SUCCESS + data;
-	} else {
-		return EC2I_READ_ERROR;
-	}
+	return ret;
 }
 
 static void pnpcfg_init(void)
 {
 	int table;
+
+	/* Host access is disabled */
+	IT83XX_EC2I_LSIOHA |= 0x3;
 
 	for (table = 0x00; table < EC2I_SETTING_COUNT; table++) {
 		if (ec2i_write(pnpcfg_settings[table].index_port,
