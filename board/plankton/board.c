@@ -147,26 +147,18 @@ static void set_active_cc(int cc)
 {
 	active_cc = cc;
 
-	/* High Z for no pull-up or pull-down resistor on CC1 */
-	gpio_set_flags_by_mask(GPIO_A, (1 << 2) | (1 << 9), GPIO_INPUT);
-	/* High Z for no pull-up or pull-down resistor on CC2 */
-	gpio_set_flags_by_mask(GPIO_B, (1 << 6) | (1 << 7), GPIO_INPUT);
-
-	if (cc) {
-		if (host_mode)
-			/* Pull-up on CC2 */
-			gpio_set_flags_by_mask(GPIO_B, (1 << 6), GPIO_OUT_HIGH);
-		else
-			/* Pull-down on CC2 */
-			gpio_set_flags_by_mask(GPIO_B, (1 << 7), GPIO_OUT_LOW);
-	} else {
-		if (host_mode)
-			/* Pull-up on CC1 */
-			gpio_set_flags_by_mask(GPIO_A, (1 << 2), GPIO_OUT_HIGH);
-		else
-			/* Pull-down on CC1 */
-			gpio_set_flags_by_mask(GPIO_A, (1 << 9), GPIO_OUT_LOW);
-	}
+	/* Pull-up on CC2 */
+	gpio_set_flags(GPIO_USBC_CC2_HOST,
+		       (cc && host_mode) ? GPIO_OUT_HIGH : GPIO_INPUT);
+	/* Pull-down on CC2 */
+	gpio_set_flags(GPIO_USBC_CC2_DEVICE_ODL,
+		       (cc && !host_mode) ? GPIO_OUT_LOW : GPIO_INPUT);
+	/* Pull-up on CC1 */
+	gpio_set_flags(GPIO_USBC_CC1_HOST,
+		       (!cc && host_mode) ? GPIO_OUT_HIGH : GPIO_INPUT);
+	/* Pull-down on CC1 */
+	gpio_set_flags(GPIO_USBC_CC1_DEVICE_ODL,
+		       (!cc && !host_mode) ? GPIO_OUT_LOW : GPIO_INPUT);
 }
 
 /**
@@ -230,10 +222,11 @@ static void fake_disconnect_start(void)
 	gpio_set_level(GPIO_VBUS_CHARGER_EN, 0);
 	gpio_set_level(GPIO_USBC_VSEL_0, 0);
 	gpio_set_level(GPIO_USBC_VSEL_1, 0);
-	/* High Z for no pull-up or pull-down resistor on CC1 */
-	gpio_set_flags_by_mask(GPIO_A, (1 << 2) | (1 << 9), GPIO_INPUT);
-	/* High Z for no pull-up or pull-down resistor on CC2 */
-	gpio_set_flags_by_mask(GPIO_B, (1 << 6) | (1 << 7), GPIO_INPUT);
+	/* High Z for no pull-up or pull-down resistor on CC1 and CC2 */
+	gpio_set_flags(GPIO_USBC_CC2_HOST, GPIO_INPUT);
+	gpio_set_flags(GPIO_USBC_CC2_DEVICE_ODL, GPIO_INPUT);
+	gpio_set_flags(GPIO_USBC_CC1_HOST, GPIO_INPUT);
+	gpio_set_flags(GPIO_USBC_CC1_DEVICE_ODL, GPIO_INPUT);
 
 	fake_pd_disconnected = 1;
 

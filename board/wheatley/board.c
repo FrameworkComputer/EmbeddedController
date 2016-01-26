@@ -400,9 +400,7 @@ void board_set_gpio_hibernate_state(void)
 
 	/* Change GPIOs' state in hibernate for better power consumption */
 	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
-		gpio_set_flags_by_mask(gpio_list[hibernate_pins[i][0]].port,
-				       gpio_list[hibernate_pins[i][0]].mask,
-				       hibernate_pins[i][1]);
+		gpio_set_flags(hibernate_pins[i][0], hibernate_pins[i][1]);
 }
 
 /* Any wheatley boards post version 2 should have ROP_LDO_EN stuffed. */

@@ -44,22 +44,21 @@ static enum inj_pol inj_polarity = INJ_POL_CC1;
 static const struct res_cfg {
 	const char *name;
 	struct config {
-		uint32_t port;
-		uint32_t mask;
+		enum gpio_signal signal;
 		uint32_t flags;
 	} cfgs[2];
 } res_cfg[] = {
 	[INJ_RES_NONE]  = {"NONE"},
-	[INJ_RES_RA]    = {"RA", {{GPIO_A, 0x0100, GPIO_ODR_LOW},
-				  {GPIO_B, 0x8000, GPIO_ODR_LOW} } },
-	[INJ_RES_RD]    = {"RD", {{GPIO_B, 0x0020, GPIO_ODR_LOW},
-				  {GPIO_B, 0x0100, GPIO_ODR_LOW} } },
-	[INJ_RES_RPUSB] = {"RPUSB", {{GPIO_A, 0x2000, GPIO_OUT_HIGH},
-				     {GPIO_B, 0x0001, GPIO_OUT_HIGH} } },
-	[INJ_RES_RP1A5] = {"RP1A5", {{GPIO_A, 0x4000, GPIO_OUT_HIGH},
-				     {GPIO_C, 0x4000, GPIO_OUT_HIGH} } },
-	[INJ_RES_RP3A0] = {"RP3A0", {{GPIO_A, 0x8000, GPIO_OUT_HIGH},
-				     {GPIO_C, 0x8000, GPIO_OUT_HIGH} } },
+	[INJ_RES_RA]    = {"RA", {{GPIO_CC1_RA, GPIO_ODR_LOW},
+				  {GPIO_CC2_RA, GPIO_ODR_LOW} } },
+	[INJ_RES_RD]    = {"RD", {{GPIO_CC1_RD, GPIO_ODR_LOW},
+				  {GPIO_CC2_RD, GPIO_ODR_LOW} } },
+	[INJ_RES_RPUSB] = {"RPUSB", {{GPIO_CC1_RPUSB, GPIO_OUT_HIGH},
+				     {GPIO_CC2_RPUSB, GPIO_OUT_HIGH} } },
+	[INJ_RES_RP1A5] = {"RP1A5", {{GPIO_CC1_RP1A5, GPIO_OUT_HIGH},
+				     {GPIO_CC2_RP1A5, GPIO_OUT_HIGH} } },
+	[INJ_RES_RP3A0] = {"RP3A0", {{GPIO_CC1_RP3A0, GPIO_OUT_HIGH},
+				     {GPIO_CC2_RP3A0, GPIO_OUT_HIGH} } },
 };
 
 #define CC_RA(cc)  (cc < PD_SRC_RD_THRESHOLD)
@@ -124,14 +123,16 @@ static int send_hrst(int polarity)
 static void set_resistor(int pol, enum inj_res res)
 {
 	/* reset everything on one CC to high impedance */
-	gpio_set_flags_by_mask(GPIO_A, pol ? 0x0000 : 0xE100, GPIO_ODR_HIGH);
-	gpio_set_flags_by_mask(GPIO_B, pol ? 0x8101 : 0x0020, GPIO_ODR_HIGH);
-	gpio_set_flags_by_mask(GPIO_C, pol ? 0xC000 : 0x0000, GPIO_ODR_HIGH);
+	gpio_set_flags(res_cfg[INJ_RES_RA].cfgs[pol].signal, GPIO_ODR_HIGH);
+	gpio_set_flags(res_cfg[INJ_RES_RD].cfgs[pol].signal, GPIO_ODR_HIGH);
+	gpio_set_flags(res_cfg[INJ_RES_RPUSB].cfgs[pol].signal, GPIO_ODR_HIGH);
+	gpio_set_flags(res_cfg[INJ_RES_RP1A5].cfgs[pol].signal, GPIO_ODR_HIGH);
+	gpio_set_flags(res_cfg[INJ_RES_RP3A0].cfgs[pol].signal, GPIO_ODR_HIGH);
+
 	/* connect the resistor if needed */
-	if (res_cfg[res].cfgs[pol].mask)
-		gpio_set_flags_by_mask(res_cfg[res].cfgs[pol].port,
-					res_cfg[res].cfgs[pol].mask,
-					res_cfg[res].cfgs[pol].flags);
+	if (res != INJ_RES_NONE)
+		gpio_set_flags(res_cfg[res].cfgs[pol].signal,
+			       res_cfg[res].cfgs[pol].flags);
 }
 
 static enum inj_pol guess_polarity(enum inj_pol pol)
