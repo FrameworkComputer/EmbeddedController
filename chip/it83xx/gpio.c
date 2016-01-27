@@ -9,6 +9,7 @@
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "intc.h"
 #include "kmsc_chip.h"
 #include "registers.h"
 #include "switch.h"
@@ -463,7 +464,7 @@ static void gpio_interrupt(int port, uint8_t mask)
 static void __gpio_irq(void)
 {
 	/* Determine interrupt number. */
-	int irq = IT83XX_INTC_IVCT2 - 16;
+	int irq = intc_get_ec_int();
 
 #if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT)
 	if (irq == IT83XX_IRQ_WKINTC) {

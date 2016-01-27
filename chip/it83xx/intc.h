@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_INTC_H
 #define __CROS_EC_INTC_H
 
+int intc_get_ec_int(void);
 void lpc_kbc_ibf_interrupt(void);
 void lpc_kbc_obe_interrupt(void);
 void pm1_ibf_interrupt(void);

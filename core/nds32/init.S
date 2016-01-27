@@ -8,7 +8,7 @@
 #include "config.h"
 
 /* magic macro to implement IRQ prefix / exit */
-.macro vector name
+.macro vector name, entry_number
 .weak \name\()_handler
 .set \name\()_handler, unhandled_irq
 j __entry_\()\name
@@ -25,6 +25,9 @@ __entry_\()\name:
 	mov55 $fp, $sp
 	slt45 $r3, $sp /* if sp > end of system stack, then r15 = 1 and */
 	cmovn $sp, $r3, $r15 /* point sp to the top of the system stack */
+	/* save entry number of HW interrupt */
+	movi55  $r3, entry_number
+	swi.gp  $r3, [ + cpu_int_entry_number]
 	/* isr entry */
 	jal start_irq_handler
 	/* C routine handler */
@@ -58,23 +61,23 @@ j excep_handler	/* TLB VLPT miss */
 j excep_handler	/* Machine error */
 j excep_handler	/* Debug related */
 j excep_handler	/* General exception */
-vector syscall	/* Syscall */
-vector irq_0	/* HW  0 */
-vector irq_1	/* HW  1 */
-vector irq_2	/* HW  2 */
-vector irq_3	/* HW  3 */
-vector irq_4	/* HW  4 */
-vector irq_5	/* HW  5 */
-vector irq_6	/* HW  6 */
-vector irq_7	/* HW  7 */
-vector irq_8	/* HW  8 */
-vector irq_9	/* HW  9 */
-vector irq_10	/* HW 10 */
-vector irq_11	/* HW 11 */
-vector irq_12	/* HW 12 */
-vector irq_13	/* HW 13 */
-vector irq_14	/* HW 14 */
-vector irq_15	/* HW 15 */
+vector syscall, -1	/* Syscall */
+vector irq_0,    0	/* HW  0 */
+vector irq_1,    1	/* HW  1 */
+vector irq_2,    2	/* HW  2 */
+vector irq_3,    3	/* HW  3 */
+vector irq_4,    4	/* HW  4 */
+vector irq_5,    5	/* HW  5 */
+vector irq_6,    6	/* HW  6 */
+vector irq_7,    7	/* HW  7 */
+vector irq_8,    8	/* HW  8 */
+vector irq_9,    9	/* HW  9 */
+vector irq_10,   10	/* HW 10 */
+vector irq_11,   11	/* HW 11 */
+vector irq_12,   12	/* HW 12 */
+vector irq_13,   13	/* HW 13 */
+vector irq_14,   14	/* HW 14 */
+vector irq_15,   15	/* HW 15 */
 
 /* E-flash signature */
 .org 0x80

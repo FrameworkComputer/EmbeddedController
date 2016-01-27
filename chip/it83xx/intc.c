@@ -12,7 +12,7 @@
 void intc_cpu_int_group_5(void)
 {
 	/* Determine interrupt number. */
-	int intc_group_5 = IT83XX_INTC_IVCT5 - 16;
+	int intc_group_5 = intc_get_ec_int();
 
 	switch (intc_group_5) {
 #ifdef CONFIG_LPC
@@ -38,7 +38,7 @@ DECLARE_IRQ(CPU_INT_GROUP_5, intc_cpu_int_group_5, 2);
 void intc_cpu_int_group_4(void)
 {
 	/* Determine interrupt number. */
-	int intc_group_4 = IT83XX_INTC_IVCT4 - 16;
+	int intc_group_4 = intc_get_ec_int();
 
 	switch (intc_group_4) {
 #ifdef CONFIG_LPC
@@ -71,7 +71,7 @@ DECLARE_IRQ(CPU_INT_GROUP_4, intc_cpu_int_group_4, 2);
 void intc_cpu_int_group_12(void)
 {
 	/* Determine interrupt number. */
-	int intc_group_12 = IT83XX_INTC_IVCT12 - 16;
+	int intc_group_12 = intc_get_ec_int();
 
 	switch (intc_group_12) {
 #ifdef CONFIG_PECI
@@ -88,7 +88,7 @@ DECLARE_IRQ(CPU_INT_GROUP_12, intc_cpu_int_group_12, 2);
 void intc_cpu_int_group_6(void)
 {
 	/* Determine interrupt number. */
-	int intc_group_6 = IT83XX_INTC_IVCT6 - 16;
+	int intc_group_6 = intc_get_ec_int();
 
 	switch (intc_group_6) {
 

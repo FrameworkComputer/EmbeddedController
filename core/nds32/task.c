@@ -179,6 +179,9 @@ static int start_called;  /* Has task swapping started */
 /* interrupt number of sw interrupt */
 static int sw_int_num;
 
+/* Number of CPU hardware interrupts (HW0 ~ HW15) */
+int cpu_int_entry_number;
+
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
 	return tasks + id;
@@ -340,31 +343,55 @@ void update_exc_start_time(void)
 #endif
 }
 
+/* Interrupt number of EC modules */
+static volatile int ec_int;
+
+#ifdef CHIP_FAMILY_IT83XX
+int intc_get_ec_int(void)
+{
+	return ec_int;
+}
+#endif
+
 void start_irq_handler(void)
 {
-#ifdef CONFIG_TASK_PROFILING
-	int irq;
-#endif
 	/* save r0, r1, and r2 for syscall */
 	asm volatile ("smw.adm $r0, [$sp], $r2, 0");
+	/* If this is a SW interrupt */
+	if (get_itype() & 8) {
+		ec_int = get_sw_int();
+	} else {
+#ifdef CHIP_FAMILY_IT83XX
+		int i;
+
+		for (i = 0; i < IT83XX_IRQ_COUNT; i++) {
+			ec_int = IT83XX_INTC_IVCT(cpu_int_entry_number);
+			/*
+			 * WORKAROUND: when the interrupt vector register isn't
+			 * latched in a load operation,
+			 * we read it again to make sure the value we got
+			 * is the correct value.
+			 */
+			if (ec_int == IT83XX_INTC_IVCT(cpu_int_entry_number))
+				break;
+		}
+		/* Determine interrupt number */
+		ec_int -= 16;
+#endif
+	}
+
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CHIP_FAMILY_IT83XX)
 	clock_sleep_mode_wakeup_isr();
 #endif
 #ifdef CONFIG_TASK_PROFILING
 	update_exc_start_time();
 
-	irq = get_sw_int();
-#ifdef CHIP_FAMILY_IT83XX
-	if (!irq)
-		irq = IT83XX_INTC_AIVCT - 16;
-#endif
-
 	/*
 	 * Track IRQ distribution.  No need for atomic add, because an IRQ
 	 * can't pre-empt itself.
 	 */
-	if ((irq > 0) && (irq < ARRAY_SIZE(irq_dist)))
-		irq_dist[irq]++;
+	if ((ec_int > 0) && (ec_int < ARRAY_SIZE(irq_dist)))
+		irq_dist[ec_int]++;
 #endif
 	/* restore r0, r1, and r2 */
 	asm volatile ("lmw.bim $r0, [$sp], $r2, 0");

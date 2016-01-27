@@ -311,6 +311,9 @@
 #define CPU_INT_GROUP_6          250
 #define IT83XX_CPU_INT_IRQ_250     6
 
+#define CPU_INT_GROUP_9          249
+#define IT83XX_CPU_INT_IRQ_249     9
+
 #define CPU_INT(irq) CONCAT2(IT83XX_CPU_INT_IRQ_, irq)
 
 /* --- INTC --- */
@@ -393,6 +396,7 @@
 
 #define IT83XX_INTC_EXT_IER_OFF(n) (0x60 + (n))
 
+#define IT83XX_INTC_IVCT(i)     REG8(IT83XX_INTC_BASE+0x80+(i))
 #define IT83XX_INTC_IVCT0       REG8(IT83XX_INTC_BASE+0x80)
 #define IT83XX_INTC_IVCT1       REG8(IT83XX_INTC_BASE+0x81)
 #define IT83XX_INTC_IVCT2       REG8(IT83XX_INTC_BASE+0x82)

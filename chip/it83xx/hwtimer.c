@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
+#include "intc.h"
 #include "irq_chip.h"
 #include "registers.h"
 #include "task.h"
@@ -167,11 +168,10 @@ int __hw_clock_source_init(uint32_t start_t)
 static void __hw_clock_source_irq(void)
 {
 	/* Determine interrupt number. */
-	int irq = IT83XX_INTC_IVCT3 - 16;
+	int irq = intc_get_ec_int();
 
 	/* SW/HW interrupt of event timer. */
-	if ((get_sw_int() == et_ctrl_regs[EVENT_EXT_TIMER].irq) ||
-		(irq == et_ctrl_regs[EVENT_EXT_TIMER].irq)) {
+	if (irq == et_ctrl_regs[EVENT_EXT_TIMER].irq) {
 		IT83XX_ETWD_ETXCNTLR(EVENT_EXT_TIMER) = 0xffffffff;
 		IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) |= (1 << 1);
 		event_timer_clear_pending_isr();

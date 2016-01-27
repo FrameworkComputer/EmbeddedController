@@ -117,7 +117,21 @@ static void uart_ec_interrupt(void)
 	IT83XX_UART_IER(UART_PORT) = 0;
 	IT83XX_UART_IER(UART_PORT) = uart_ier;
 }
-DECLARE_IRQ(IT83XX_IRQ_UART1, uart_ec_interrupt, 1);
+
+static void intc_cpu_int_group_9(void)
+{
+	/* Determine interrupt number. */
+	int intc_group_9 = intc_get_ec_int();
+
+	switch (intc_group_9) {
+	case IT83XX_IRQ_UART1:
+		uart_ec_interrupt();
+		break;
+	default:
+		break;
+	}
+}
+DECLARE_IRQ(CPU_INT_GROUP_9, intc_cpu_int_group_9, 1);
 
 static void uart_config(void)
 {
