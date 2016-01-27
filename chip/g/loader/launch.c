@@ -9,10 +9,9 @@
 #include "registers.h"
 #include "rom_flash.h"
 #include "setup.h"
+#include "signed_header.h"
 #include "uart.h"
 #include "verify.h"
-
-#include "util/signer/common/signed_header.h"
 
 static int unlockedForExecution(void)
 {
@@ -44,7 +43,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 	int i;
 	uint32_t major;
 	const uint32_t FAKE_rom_hash[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-	const SignedHeader *hdr = (const SignedHeader *)(adr);
+	const struct SignedHeader *hdr = (const struct SignedHeader *)(adr);
 
 	memset(&hashes, 0, sizeof(hashes));
 
@@ -77,7 +76,7 @@ void tryLaunch(uint32_t adr, size_t max_size)
 	GWRITE_FIELD(GLOBALSEC, CPU0_I_STAGING_REGION1_CTRL, EN, 1);
 	GWRITE_FIELD(GLOBALSEC, CPU0_I_STAGING_REGION1_CTRL, RD_EN, 1);
 	DCRYPTO_SHA256_hash((uint8_t *) &hdr->tag,
-			hdr->image_size - offsetof(SignedHeader, tag),
+			hdr->image_size - offsetof(struct SignedHeader, tag),
 			(uint8_t *) hashes.img_hash);
 
 	VERBOSE("img_hash  : %.32h\n", hashes.img_hash);
