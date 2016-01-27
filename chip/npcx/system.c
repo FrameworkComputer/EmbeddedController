@@ -491,6 +491,9 @@ void system_enable_hib_interrupt(void)
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
+	if (board_hibernate)
+		board_hibernate();
+
 	/* Flush console before hibernating */
 	cflush();
 

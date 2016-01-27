@@ -154,6 +154,9 @@ test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	uint32_t i;
 
+	if (board_hibernate)
+		board_hibernate();
+
 	save_reset_flags(RESET_FLAG_HIBERNATE);
 
 	if (!seconds && !microseconds)
