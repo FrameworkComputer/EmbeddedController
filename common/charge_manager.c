@@ -810,6 +810,15 @@ int charge_manager_get_active_charge_port(void)
 }
 
 /**
+ * Return the charger current (mA) value.
+ */
+int charge_manager_get_charger_current(void)
+{
+	return (charge_current != CHARGE_CURRENT_UNINITIALIZED) ?
+		charge_current : 0;
+}
+
+/**
  * Return the power limit (uW) set by charge manager.
  */
 int charge_manager_get_power_limit_uw(void)

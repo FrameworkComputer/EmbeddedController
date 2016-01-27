@@ -631,23 +631,3 @@ static void board_handle_reboot(void)
 		; /* wait here */
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
-
-#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
-/*
- * Physical detection of battery via ADC.
- *
- * Uppper limit of valid voltage level(mV), when battery is attached to ADC port,
- * is across the internal thermistor with external pullup resistor.
- */
-#define BATT_PRESENT_MV  1500
-enum battery_present battery_is_present(void)
-{
-	/*
-	 * if voltage is below certain level(dependant on ratio of
-	 * internal thermistor and external pullup resister),
-	 * battery is attached.
-	 */
-	return (adc_read_channel(ADC_BATT_PRESENT) > BATT_PRESENT_MV) ?
-		BP_NO : BP_YES;
-}
-#endif

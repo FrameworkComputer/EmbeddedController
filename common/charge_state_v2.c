@@ -564,9 +564,14 @@ DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
 int get_desired_input_current(enum battery_present batt_present,
 			      const struct charger_info * const info)
 {
-	if (batt_present == BP_YES || system_is_locked())
+	if (batt_present == BP_YES || system_is_locked()) {
+#ifdef CONFIG_CHARGE_MANAGER
+		return MAX(CONFIG_CHARGER_INPUT_CURRENT,
+			charge_manager_get_charger_current());
+#else
 		return CONFIG_CHARGER_INPUT_CURRENT;
-	else
+#endif
+	} else
 		return info->input_current_max;
 }
 
