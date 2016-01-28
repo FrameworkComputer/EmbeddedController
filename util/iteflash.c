@@ -571,6 +571,7 @@ int command_read_pages(struct ftdi_context *ftdi, uint32_t address,
 		page = address / PAGE_SIZE;
 
 		draw_spinner(remaining, size);
+
 		/* Fast Read command */
 		if (spi_flash_command_short(ftdi, SPI_CMD_FAST_READ,
 			"fast read") < 0)
@@ -852,6 +853,52 @@ int write_flash(struct ftdi_context *ftdi, const char *filename,
 	return 0;
 }
 
+/* Return zero on success, a negative error value on failures. */
+int verify_flash(struct ftdi_context *ftdi, const char *filename,
+		uint32_t offset)
+{
+	int res;
+	int file_size;
+	FILE *hnd;
+	uint8_t *buffer  = malloc(flash_size);
+	uint8_t *buffer2 = malloc(flash_size);
+
+	if (!buffer || !buffer2) {
+		fprintf(stderr, "Cannot allocate %d bytes\n", flash_size);
+		return -ENOMEM;
+	}
+
+	hnd = fopen(filename, "r");
+	if (!hnd) {
+		fprintf(stderr, "Cannot open file %s for reading\n", filename);
+		res = -EIO;
+		goto exit;
+	}
+
+	file_size = fread(buffer, 1, flash_size, hnd);
+	if (file_size <= 0) {
+		fprintf(stderr, "Cannot read %s\n", filename);
+		goto exit;
+	}
+	fclose(hnd);
+
+	printf("Verify %d bytes at 0x%08x\n", file_size, offset);
+	res = command_read_pages(ftdi, offset, flash_size, buffer2);
+	draw_spinner(flash_size-res, flash_size);
+	res = memcmp(buffer, buffer2, file_size);
+	if (res != 0) {
+		fprintf(stderr, "Verify Error!! ");
+		goto exit;
+	}
+
+	printf("\n\rVerify Done.\n");
+exit:
+
+	free(buffer);
+	free(buffer2);
+	return res;
+}
+
 static struct ftdi_context *open_ftdi_device(int vid, int pid,
 					     int interface, char *serial)
 {
@@ -998,6 +1045,10 @@ int main(int argc, char **argv)
 
 	if (output_filename) {
 		ret = write_flash(hnd, output_filename, 0);
+		if (ret)
+			goto terminate;
+
+		ret = verify_flash(hnd, output_filename, 0);
 		if (ret)
 			goto terminate;
 	}
