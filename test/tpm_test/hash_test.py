@@ -37,6 +37,8 @@ test_inputs = (
   (MODE_SHA256, 'start',  1, 'some more text, this time for sha256'),
   (MODE_SHA256, 'cont',   1, 'some more text, this time for sha256'),
   (MODE_SHA256, 'start',  2, 'this could be anything, we just need to'),
+  (MODE_SHA1, 'single',  3, 'interleave a SHA1 single calculation'),
+  (MODE_SHA256, 'single',  3, 'interleave a SHA256 single calculation'),
   (MODE_SHA1, 'start',  3, 'let\'s interleave a sha1 calculation'),
   (MODE_SHA256, 'cont',   2, 'fill up a second context with something'),
   (MODE_SHA256, 'cont',   1, 'let\'s feed some more into context 1'),

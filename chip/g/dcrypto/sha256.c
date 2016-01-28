@@ -61,10 +61,7 @@ static const uint8_t *sha256_hash(const uint8_t *data, uint32_t len,
 
 	sha256_init(&ctx);
 	sha256_update(&ctx, data, len);
-	sha256_final(&ctx);
-
-	memcpy(digest, ctx.u.sw_sha256.buf, SHA256_DIGEST_WORDS);
-
+	memcpy(digest, sha256_final(&ctx), SHA256_DIGEST_BYTES);
 	return digest;
 }
 
