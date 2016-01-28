@@ -369,17 +369,25 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-void board_set_gpio_hibernate_state(void)
+void board_hibernate(void)
 {
-	/* Turn off LEDs in hibernate */
-	gpio_set_level(GPIO_CHARGE_LED_1, 0);
-	gpio_set_level(GPIO_CHARGE_LED_2, 0);
+	CPRINTS("Triggering PMIC shutdown.");
+	uart_flush_output();
 
-	/*
-	 * Set PD wake low so that it toggles high to generate a wake
-	 * event once we leave hibernate.
-	 */
-	gpio_set_level(GPIO_USB_PD_WAKE, 0);
+	/* Trigger PMIC shutdown. */
+	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x01)) {
+		/*
+		 * If we can't tell the PMIC to shutdown, instead reset
+		 * and don't start the AP. Hopefully we'll be able to
+		 * communicate with the PMIC next time.
+		 */
+		CPRINTS("PMIC i2c failed.");
+		system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+	}
+
+	/* Await shutdown. */
+	while (1)
+		;
 }
 
 /* Make the pmic re-sequence the power rails under these conditions. */
