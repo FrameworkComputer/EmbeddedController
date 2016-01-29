@@ -53,6 +53,7 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD 30
+#define CONFIG_POWER_S0IX
 #define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
 /* All data won't fit in data RAM.  So, moving boundary slightly. */
@@ -132,7 +133,7 @@
 #undef CONFIG_CONSOLE_CMDHELP
 
 #undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 13
+#define DEFERRABLE_MAX_COUNT 14
 
 #ifndef __ASSEMBLER__
 
