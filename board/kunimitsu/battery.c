@@ -15,7 +15,7 @@
 static const struct battery_info info = {
 	.voltage_max = 8700,/* mV */
 	.voltage_normal = 7600,
-	.voltage_min = 6000,
+	.voltage_min = 6100,
 	.precharge_current = 150,/* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
