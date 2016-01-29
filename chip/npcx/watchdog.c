@@ -38,7 +38,7 @@ void watchdog_init_warning_timer(void)
 							 SECOND) - 1;
 
 	/* ITIM count down : event expired*/
-	NPCX_ITCNT16(ITIM_WDG_NO) = CONFIG_WATCHDOG_PERIOD_MS-1;
+	NPCX_ITCNT16(ITIM_WDG_NO) = CONFIG_AUX_TIMER_PERIOD_MS - 1;
 	/* Event module enable */
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 	/* Enable interrupt of ITIM */
