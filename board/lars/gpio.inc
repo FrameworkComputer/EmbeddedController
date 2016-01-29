@@ -21,7 +21,7 @@ GPIO_INT(AC_PRESENT,		PIN(30), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(WP_L,			PIN(33), GPIO_INT_BOTH, switch_interrupt)
 /* Buffered power button input from PMIC / ROP_EC_PWR_BTN_L_R */
 GPIO_INT(POWER_BUTTON_L,	PIN(35), GPIO_INT_BOTH, power_button_interrupt)
-GPIO_INT(PCH_SLP_S0_L,		PIN(141), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S0_L,		PIN(141), GPIO_INT_BOTH, power_signal_interrupt_S0)
 GPIO_INT(PCH_SLP_S4_L,		PIN(200), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
 /* RSMRST from PMIC */
 GPIO_INT(PCH_SLP_S3_L,		PIN(206), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)

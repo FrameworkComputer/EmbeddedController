@@ -68,6 +68,8 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
+/* Enable S0IX */
+#define CONFIG_POWER_S0IX
 #define CONFIG_PWM
 #define CONFIG_PWM_KBLIGHT
 /* All data won't fit in data RAM.  So, moving boundary slightly. */
@@ -130,7 +132,7 @@
 #define I2C_PORT_THERMAL MEC1322_I2C3
 
 #undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 13
+#define DEFERRABLE_MAX_COUNT 14
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_ACCEL_INFO
