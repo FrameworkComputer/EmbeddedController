@@ -145,14 +145,6 @@ BOOL _cpri__Startup(
   return 1;
 }
 
-CRYPT_RESULT _cpri__StirRandom(
-  INT32 entropySize,
-  BYTE * entropy)
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
 CRYPT_RESULT _cpri__TestKeyRSA(
   TPM2B * d,                    //   OUT: the address to receive the
   // private exponent
