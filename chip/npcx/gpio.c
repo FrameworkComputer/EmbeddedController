@@ -656,9 +656,17 @@ void _irq_func(void)				\
 void __gpio_wk0efgh_interrupt(void)
 {
 #ifdef CONFIG_LPC
-	if (IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5),7))
-		lpc_lreset_pltrst_handler();
-	else
+	/* Pending bit 7 or 6 ? */
+	if (NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5) & 0xC0) {
+		if (IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5), 6)) {
+			/* Clear pending bit of WUI */
+			SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 6);
+			/* Disable host wake-up */
+			CLEAR_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
+		}
+		if (IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5), 7))
+			lpc_lreset_pltrst_handler();
+	} else
 #endif
 		gpio_interrupt(NPCX_IRQ_WKINTEFGH_0);
 }

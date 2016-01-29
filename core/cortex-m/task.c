@@ -80,6 +80,7 @@ void __idle(void)
 			"wfi\n"                 /* Wait for int to enter idle */
 			"ldm r0, {r0-r5}\n"     /* Add a delay after WFI */
 			"pop {r0-r5}\n" /* Restore regs before enabling ints */
+			"isb\n"                 /* Flush the cpu pipeline */
 			"cpsie i\n"             /* Enable interrupts */
 		);
 #else

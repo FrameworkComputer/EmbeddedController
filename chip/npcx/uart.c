@@ -66,6 +66,9 @@ void uart_tx_flush(void)
 	/* Wait for transmit FIFO empty */
 	while (!(NPCX_UICTRL & 0x01))
 		;
+	/* Wait for transmitting completed */
+	while (NPCX_USTAT & 0x40)
+		;
 }
 
 int uart_tx_ready(void)
@@ -101,9 +104,6 @@ void uart_write_char(char c)
 		;
 
 	NPCX_UTBUF = c;
-#ifdef CONFIG_LOW_POWER_IDLE
-	clock_refresh_console_in_use();
-#endif
 }
 
 int uart_read_char(void)

@@ -205,10 +205,14 @@ void clock_uart2gpio(void)
 {
 	/* Is pimux to UART? */
 	if (npcx_is_uart()) {
+		/* Flush tx before enter deep idle */
+		uart_tx_flush();
 		/* Change pinmux to GPIO and disable UART IRQ */
 		task_disable_irq(NPCX_IRQ_UART);
 		/* Set to GPIO */
 		npcx_uart2gpio();
+		/* Clear pending wakeup */
+		uart_clear_pending_wakeup();
 		/* Enable MIWU for GPIO (UARTRX) */
 		uart_enable_wakeup(1);
 	}
@@ -243,7 +247,8 @@ void __idle(void)
 #else
 
 	timestamp_t t0, t1;
-	uint32_t next_evt_us, evt_count;
+	uint32_t next_evt_us;
+	uint16_t evt_count;
 
 	/*
 	 * Initialize console in use to true and specify the console expire
@@ -274,13 +279,14 @@ void __idle(void)
 			CLEAR_BIT(NPCX_PDOUT(0), 0);
 #endif
 			idle_dsleep_cnt++;
-			/* Set instant wake up mode */
-			SET_BIT(NPCX_ENIDL_CTL, NPCX_ENIDL_CTL_LP_WK_CTL);
 
-			/* Set deep idle - instant wake-up mode */
-			NPCX_PMCSR = IDLE_PARAMS;
+			/* Enable Host access wakeup */
+			SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
+
 			/* UART-rx(console) become to GPIO (NONE INT mode) */
 			clock_uart2gpio();
+			/* Set deep idle - instant wake-up mode */
+			NPCX_PMCSR = IDLE_PARAMS;
 
 			/* Get current counter value of event timer */
 			evt_count = __hw_clock_event_count();
@@ -289,22 +295,40 @@ void __idle(void)
 			/* Get time delay cause of deep idle */
 			next_evt_us = __hw_clock_get_sleep_time(evt_count);
 
+			/*
+			 * Clear PMCSR manually in case there's wake-up between
+			 * setting it and wfi.
+			 */
+			NPCX_PMCSR = 0;
 			/* GPIO back to UART-rx (console) */
 			clock_gpio2uart();
 
-			/* Fast forward timer according to wake-up timer. */
-			t1.val = t0.val + next_evt_us;
 			/* Record time spent in deep sleep. */
 			idle_dsleep_time_us += next_evt_us;
-			force_time(t1);
+
+			/* Fast forward timer according to wake-up timer. */
+			t1.val = t0.val + next_evt_us;
+			/* Leave overflow situation for ITIM32 */
+			if (t1.le.hi == t0.le.hi)
+				force_time(t1);
 		} else {
 #if DEBUG_CLK
 			/* Use GPIO to indicate NORMAL mode */
 			SET_BIT(NPCX_PDOUT(0), 0);
 #endif
 			idle_sleep_cnt++;
-			/* normal idle : wait for interrupt */
-			asm("wfi");
+			/*
+			 * Normal idle : wait for interrupt
+			 * TODO (ML): Workaround method for wfi issue.
+			 * Please see task.c for more detail
+			 */
+			asm ("push {r0-r5}\n"
+			     "ldr r0, =0x100A8000\n"
+			     "wfi\n"
+			     "ldm r0, {r0-r5}\n"
+			     "pop {r0-r5}\n"
+			     "isb\n"
+			);
 		}
 
 		/*

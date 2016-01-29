@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "task.h"
 #include "hooks.h"
+#include "system.h"
 #include "math_util.h"
 
 #if !(DEBUG_FAN)
@@ -324,11 +325,19 @@ void fan_set_duty(int ch, int percent)
 {
 	int pwm_id = mft_channels[ch].pwm_id;
 
-	if (!percent)
+	/* duty is zero */
+	if (!percent) {
 		fan_status[ch].auto_status = FAN_STATUS_STOPPED;
+		enable_sleep(SLEEP_MASK_FAN);
+	} else
+		disable_sleep(SLEEP_MASK_FAN);
+
 	/* Set the duty cycle of PWM */
 	pwm_set_duty(pwm_id, percent);
 }
+/* ensure that only one fan used since ec enables sleep bit if duty is zero */
+BUILD_ASSERT(CONFIG_FANS <= 1);
+
 
 /**
  * Get fan duty cycle.

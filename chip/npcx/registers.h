@@ -1353,6 +1353,16 @@ static inline int uart_is_enable_wakeup(void)
 #endif
 }
 
+/* This routine clears the pending wake-up from GPIO on UART rx pin */
+static inline void uart_clear_pending_wakeup(void)
+{
+#if NPCX_UART_MODULE2
+	SET_BIT(NPCX_WKPCL(1, 6), 4);
+#else
+	SET_BIT(NPCX_WKPCL(1, 1), 0);
+#endif
+}
+
 /* This routine enables wake-up functionality from GPIO on UART rx pin */
 static inline void uart_enable_wakeup(int enable)
 {
