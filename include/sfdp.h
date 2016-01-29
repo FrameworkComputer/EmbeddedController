@@ -27,7 +27,7 @@
  * Helper macros to construct SFDP defined double words (32b). Note reserved or
  * unused fields must always be set to all 1's.
  */
-#define SFDP_BITFIELD(name, value) (((value) & name ## _MASK) << name ## _SHIFT)
+#define SFDP_BITFIELD(name, value) (((value) << name ## _SHIFT) & name ## _MASK)
 #define SFDP_UNUSED(hi, lo) (((1ULL << ((hi) - (lo) + 1)) - 1UL) << (lo))
 
 /******************************************************************************/
