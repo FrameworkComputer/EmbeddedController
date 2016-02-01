@@ -10,86 +10,117 @@
 #include "registers.h"
 
 enum {
-	PERIPH_AES              = 0x0,
-	PERIPH_AES0             = 0x0,
-	PERIPH_AES1             = 0x1,
+	/* RO */
+	PERIPH_CAMO             = 0x0,
+	PERIPH_CAMO0            = 0x0,
 
-	PERIPH_CAMO             = 0x2,
-	PERIPH_CAMO0            = 0x2,
+	PERIPH_CRYPTO           = 0x1,
+	PERIPH_CRYPTO0          = 0x1,
+
+	PERIPH_DMA              = 0x2,
+	PERIPH_DMA0             = 0x2,
 
 	PERIPH_FLASH            = 0x3,
 	PERIPH_FLASH0           = 0x3,
 
-	GLOBALSEC               = 0x4,
-	GLOBALSEC0              = 0x4,
+	PERIPH_FUSE             = 0x4,
+	PERIPH_FUSE0            = 0x4,
 
-	PERIPH_GPIO             = 0x5,
-	PERIPH_GPIO0            = 0x5,
-	PERIPH_GPIO1            = 0x6,
+	/* RO */
+	PERIPH_GLOBALSEC        = 0x5,
+	PERIPH_GLOBALSEC_TIMER  = 0x6,
+	PERIPH_GLOBALSEC_HS     = 0x7,
 
-	PERIPH_I2C              = 0x7,
-	PERIPH_I2C0             = 0x7,
-	PERIPH_I2C1             = 0x8,
+	PERIPH_GPIO             = 0x8,
+	PERIPH_GPIO0            = 0x8,
+	PERIPH_GPIO1            = 0x9,
 
-	PERIPH_I2CS             = 0x9,
-	PERIPH_I2CS0            = 0x9,
+	PERIPH_I2C              = 0xa,
+	PERIPH_I2C0             = 0xa,
+	PERIPH_I2C1             = 0xb,
 
-	PERIPH_MAU              = 0xa,
-	PERIPH_PAU              = 0xb,
-	PERIPH_PINMUX           = 0xc,
-	PERIPH_PMU              = 0xd,
+	PERIPH_I2CS             = 0xc,
+	PERIPH_I2CS0            = 0xc,
 
-	PERIPH_RBOX             = 0xe,
-	PERIPH_RBOX0            = 0xe,
+	PERIPH_KEYMGR           = 0xd,
+	PERIPH_KEYMGR0          = 0xd,
 
-	PERIPH_RTC              = 0xf,
-	PERIPH_RTC0             = 0xf,
+	/* RO */
+	PERIPH_APB0             = 0xe,
+	PERIPH_APB1             = 0xf,
+	PERIPH_APB2             = 0x10,
+	PERIPH_APB2_TIMER       = 0x11,
+	PERIPH_APB3             = 0x12,
+	PERIPH_APB3_HS          = 0x13,
 
-	PERIPH_SHA              = 0x10,
-	PERIPH_SHA0             = 0x10,
+	PERIPH_PINMUX           = 0x14,
 
-	PERIPH_SPI              = 0x11,
-	PERIPH_SPI0             = 0x11,
+	PERIPH_PMU              = 0x15,
 
-	PERIPH_SPS              = 0x12,
-	PERIPH_SPS0             = 0x12,
+	PERIPH_RBOX             = 0x16,
+	PERIPH_RBOX0            = 0x16,
 
-	PERIPH_SWDP             = 0x13,
-	PERIPH_SWDP0            = 0x13,
+	PERIPH_RDD              = 0x17,
+	PERIPH_RDD0             = 0x17,
 
-	PERIPH_TEMP             = 0x14,
-	PERIPH_TEMP0            = 0x14,
+	PERIPH_RTC              = 0x18,
+	PERIPH_RTC0             = 0x18,
+	PERIPH_RTC_TIMER        = 0x19,
+	PERIPH_RTC0_TIMER       = 0x19,
 
-	PERIPH_TIMEHS           = 0x15,
-	PERIPH_TIMEHS0          = 0x15,
-	PERIPH_TIMEHS1          = 0x16,
+	PERIPH_SPI              = 0x1a,
+	PERIPH_SPI0             = 0x1a,
+	PERIPH_SPI1             = 0x1b,
 
-	PERIPH_TIMELS           = 0x17,
-	PERIPH_TIMELS0          = 0x17,
+	PERIPH_SPS              = 0x1c,
+	PERIPH_SPS0             = 0x1c,
+	PERIPH_SPS0_TIMER       = 0x1d,
 
-	PERIPH_TRNG             = 0x18,
-	PERIPH_TRNG0            = 0x18,
+	PERIPH_SWDP             = 0x1e,
+	PERIPH_SWDP0            = 0x1e,
 
-	PERIPH_UART             = 0x19,
-	PERIPH_UART0            = 0x19,
-	PERIPH_UART1            = 0x1a,
-	PERIPH_UART2            = 0x1b,
+	/* RO */
+	PERIPH_TEMP             = 0x1f,
+	PERIPH_TEMP0            = 0x1f,
 
-	PERIPH_USB              = 0x1c,
-	PERIPH_USB0             = 0x1c,
-	PERIPH_USB0_USB_PHY     = 0x1d,
+	PERIPH_TIMEHS           = 0x20,
+	PERIPH_TIMEHS0          = 0x20,
+	PERIPH_TIMEHS1          = 0x21,
 
-	PERIPH_WATCHDOG         = 0x1e,
-	PERIPH_WATCHDOG0        = 0x1e,
+	PERIPH_TIMELS           = 0x22,
+	PERIPH_TIMELS0          = 0x22,
 
-	PERIPH_XO               = 0x1f,
-	PERIPH_XO0              = 0x1f,
+	PERIPH_TIMEUS           = 0x23,
+	PERIPH_TIMEUS0          = 0x23,
 
-	PERIPH_PERI             = 0x20,
-	PERIPH_PERI0            = 0x20,
-	PERIPH_PERI1            = 0x21,
+	PERIPH_TRNG             = 0x24,
+	PERIPH_TRNG0            = 0x24,
 
-	PERIPH_PERI_MATRIX      = 0x22,
+	PERIPH_UART             = 0x25,
+	PERIPH_UART0            = 0x25,
+	PERIPH_UART1            = 0x26,
+	PERIPH_UART2            = 0x27,
+
+	PERIPH_USB              = 0x28,
+	PERIPH_USB0             = 0x28,
+	PERIPH_USB0_USB_PHY     = 0x29,
+
+	/* RO */
+	PERIPH_VOLT             = 0x2a,
+	PERIPH_VOLT0            = 0x2a,
+
+	/* RO */
+	PERIPH_WATCHDOG         = 0x2b,
+	PERIPH_WATCHDOG0        = 0x2b,
+
+	PERIPH_XO               = 0x2c,
+	PERIPH_XO0              = 0x2c,
+	PERIPH_XO_TIMER         = 0x2d,
+	PERIPH_XO0_TIMER        = 0x2d,
+
+	/* RO */
+	PERIPH_MASTER_MATRIX    = 0x2e,
+	PERIPH_MATRIX           = 0x2f,
 };
 
 typedef void (*pmu_clock_func)(uint32_t periph);

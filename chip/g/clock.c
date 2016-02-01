@@ -9,9 +9,9 @@
 
 void clock_init(void)
 {
-	pmu_clock_en(PERIPH_PERI0);
 	pmu_clock_en(PERIPH_TIMEHS0);
 	pmu_clock_en(PERIPH_TIMEHS1);
+	pmu_clock_en(PERIPH_TIMELS0);
 	pmu_clock_switch_xo();
 }
 
