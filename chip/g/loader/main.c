@@ -83,13 +83,9 @@ int main(void)
 	const struct SignedHeader *a, *b, *first, *second;
 	init_trng();
 	uart_init();
-	debug_printf("\n\n%s bootloader, %8u_%u@%u, %sUSB, %s crypto\n",
+	debug_printf("\n\n%s bootloader, %8u_%u@%u\n",
 		     STRINGIFY(BOARD), GREG32(SWDP, BUILD_DATE),
-		     GREG32(SWDP, BUILD_TIME), GREG32(SWDP, P4_LAST_SYNC),
-		     (GREG32(SWDP, FPGA_CONFIG) &
-		      GC_CONST_SWDP_FPGA_CONFIG_USB_8X8CRYPTO) ? "" : "no ",
-		     (GREG32(SWDP, FPGA_CONFIG) &
-		      GC_CONST_SWDP_FPGA_CONFIG_NOUSB_CRYPTO) ? "full" : "8x8");
+		     GREG32(SWDP, BUILD_TIME), GREG32(SWDP, P4_LAST_SYNC));
 	unlockFlashForRW();
 
 	a = (const struct SignedHeader *)(CONFIG_PROGRAM_MEMORY_BASE +
