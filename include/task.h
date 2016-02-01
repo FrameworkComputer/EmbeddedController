@@ -49,7 +49,7 @@ void interrupt_enable(void);
 /**
  * Return true if we are in interrupt context.
  */
-inline int in_interrupt_context(void);
+int in_interrupt_context(void);
 
 /**
  * Return current interrupt mask. Meaning is chip-specific and

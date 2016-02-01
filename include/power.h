@@ -124,14 +124,14 @@ int chipset_get_ps_debounced_level(enum gpio_signal signal);
  *
  * @return Whether we should pause in S5 when shutting down.
  */
-inline int power_get_pause_in_s5(void);
+int power_get_pause_in_s5(void);
 
 /**
  * pause_in_s5 setter method.
  *
  * @param pause True if we should pause in S5 when shutting down.
  */
-inline void power_set_pause_in_s5(int pause);
+void power_set_pause_in_s5(int pause);
 
 #ifdef CONFIG_LOW_POWER_PSEUDO_G3
 void enter_pseudo_g3(void);
