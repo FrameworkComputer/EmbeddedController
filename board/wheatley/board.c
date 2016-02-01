@@ -395,7 +395,15 @@ void board_set_gpio_hibernate_state(void)
 		 * In hibernate, this pin connected to GND. Set it to output
 		 * low to eliminate the current caused by internal pull-up.
 		 */
-		{GPIO_PLATFORM_EC_PROCHOT, GPIO_OUTPUT | GPIO_LOW}
+		{GPIO_PLATFORM_EC_PROCHOT, GPIO_OUTPUT | GPIO_LOW},
+		/*
+		 * Leave USB-C charging enabled in hibernate, in order to
+		 * allow wake-on-plug. 5V enable must be pulled low.
+		 */
+		{GPIO_USB_C0_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
+		{GPIO_USB_C0_CHARGE_EN_L, GPIO_OUTPUT | GPIO_LOW},
+		{GPIO_USB_C1_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
+		{GPIO_USB_C1_CHARGE_EN_L, GPIO_OUTPUT | GPIO_LOW},
 	};
 
 	/* Change GPIOs' state in hibernate for better power consumption */
