@@ -117,6 +117,9 @@ uint16_t _cpri__StartHash(TPM_ALG_ID alg, BOOL sequence,
 		break;
 	}
 
+	if (result > 0)
+		state->hashAlg = alg;
+
 	return result;
 }
 
