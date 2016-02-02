@@ -240,6 +240,14 @@ class Interpreter(object):
     if len(command) == 0:
       return
 
+    # Handle log level change requests.
+    if command.startswith('loglevel'):
+      self.logger.debug('Log level change request.')
+      new_log_level = int(command.split(' ')[1])
+      self.logger.logger.setLevel(new_log_level)
+      self.logger.info('Log level changed to %d.', new_log_level)
+      return
+
     # Check for interrogation command.
     if command == EC_SYN:
       # User is requesting interrogation.  Send SYN as is.

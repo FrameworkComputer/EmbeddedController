@@ -86,6 +86,8 @@ class Console(object):
     dbg_pipe: A multiprocessing.Connection object which represents the console's
       read-only side of the debug pipe.  This must be a unidirectional pipe
       attached to the intepreter.  EC debug messages use this pipe.
+    oobm_queue: A multiprocessing.Queue which is used for out of band management
+      for the interactive console.
     input_buffer: A string representing the current input command.
     input_buffer_pos: An integer representing the current position in the buffer
       to insert a char.
@@ -127,6 +129,7 @@ class Console(object):
     self.user_pty = user_pty
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
+    self.oobm_queue = multiprocessing.Queue()
     self.input_buffer = ''
     self.input_buffer_pos = 0
     self.partial_cmd = ''
@@ -145,6 +148,7 @@ class Console(object):
     string.append('user_pty: %s' % self.user_pty)
     string.append('cmd_pipe: %s' % self.cmd_pipe)
     string.append('dbg_pipe: %s' % self.dbg_pipe)
+    string.append('oobm_queue: %s' % self.oobm_queue)
     string.append('input_buffer: %s' % self.input_buffer)
     string.append('input_buffer_pos: %d' % self.input_buffer_pos)
     string.append('esc_state: %d' % self.esc_state)
@@ -694,6 +698,19 @@ def StartLoop(console):
           # Write it to the user console.
           console.logger.debug('|DBG|->\'%s\'', data)
           os.write(console.master_pty, data)
+
+      while not console.oobm_queue.empty():
+          console.logger.debug('OOBM queue ready for reading.')
+          cmd = console.oobm_queue.get()
+          console.logger.debug('cmd: %s', cmd)
+          if cmd.startswith('loglevel'):
+            console.logger.debug('Log level change request.')
+            new_log_level = int(cmd.split(' ')[1])
+            console.logger.logger.setLevel(new_log_level)
+            console.logger.info('Log level changed to %d.', new_log_level)
+
+          # Forward the request to the interpreter as well.
+          console.cmd_pipe.send(cmd)
 
   finally:
     # Close pipes.
