@@ -1468,18 +1468,21 @@ void pd_task(void)
 			 * Otherwise, go to the default disconnected state
 			 * and force renegotiation.
 			 */
-			if (
+			if (pd[port].vdm_state == VDM_STATE_DONE && (
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 			    (PD_ROLE_DEFAULT == PD_ROLE_SINK &&
 			     pd[port].task_state == PD_STATE_SNK_READY) ||
 #endif
 			    (PD_ROLE_DEFAULT == PD_ROLE_SOURCE &&
-			     pd[port].task_state == PD_STATE_SRC_READY)) {
+			     pd[port].task_state == PD_STATE_SRC_READY))) {
 				tcpm_set_polarity(port, pd[port].polarity);
 				tcpm_set_msg_header(port, pd[port].power_role,
 						    pd[port].data_role);
 				tcpm_set_rx_enable(port, 1);
 			} else {
+				/* Ensure state variables are at default */
+				pd[port].power_role = PD_ROLE_DEFAULT;
+				pd[port].vdm_state = VDM_STATE_DONE;
 				set_state(port, PD_DEFAULT_STATE);
 			}
 		}
