@@ -17,6 +17,7 @@
 #include "task.h"
 #include "util.h"
 #include "wireless.h"
+#include "lpc.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -351,6 +352,8 @@ static enum power_state _power_handle_state(enum power_state state)
 		/* call hooks before standby */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 
+		lpc_enable_wake_mask_for_lid_open();
+
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
 		 * to go into deep sleep in S0ix.
@@ -361,6 +364,8 @@ static enum power_state _power_handle_state(enum power_state state)
 
 
 	case POWER_S0ixS0:
+		lpc_disable_wake_mask_for_lid_open();
+
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
