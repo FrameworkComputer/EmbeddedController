@@ -571,8 +571,13 @@ int get_desired_input_current(enum battery_present batt_present,
 #else
 		return CONFIG_CHARGER_INPUT_CURRENT;
 #endif
-	} else
+	} else {
+#ifdef CONFIG_USB_POWER_DELIVERY
+		return MIN(PD_MAX_CURRENT_MA, info->input_current_max);
+#else
 		return info->input_current_max;
+#endif
+	}
 }
 
 /* Main loop */
