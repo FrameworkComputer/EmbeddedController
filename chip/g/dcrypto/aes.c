@@ -102,17 +102,17 @@ int DCRYPTO_aes_block(const uint8_t *in, uint8_t *out)
 void DCRYPTO_aes_write_iv(const uint8_t *iv)
 {
 	int i;
-	const uint32_t *p = (const uint32_t *) iv;
+	const struct access_helper *p = (const struct access_helper *) iv;
 
 	for (i = 0; i < 4; i++)
-		GR_KEYMGR_AES_CTR(i) = p[i];
+		GR_KEYMGR_AES_CTR(i) = p[i].udata;
 }
 
 void DCRYPTO_aes_read_iv(uint8_t *iv)
 {
 	int i;
-	uint32_t *p = (uint32_t *) iv;
+	struct access_helper *p = (struct access_helper *) iv;
 
 	for (i = 0; i < 4; i++)
-		p[i] = GR_KEYMGR_AES_CTR(i);
+		p[i].udata = GR_KEYMGR_AES_CTR(i);
 }
