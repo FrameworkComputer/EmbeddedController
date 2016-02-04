@@ -20,6 +20,7 @@
 #include "ExecCommand_fp.h"
 #include "Platform.h"
 #include "_TPM_Init_fp.h"
+#include "Manufacture_fp.h"
 
 #define CPRINTS(format, args...) cprints(CC_TPM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_TPM, format, ## args)
@@ -407,6 +408,9 @@ static void tpm_init(void)
 
 	/* TPM2 library functions. */
 	_plat__Signal_PowerOn();
+	/* TODO(ngm): CRBUG/50115, initialize state expected by TPM2
+	 * compliance tests. */
+	TPM_Manufacture(1);
 	_TPM_Init();
 	_plat__SetNvAvail();
 }
