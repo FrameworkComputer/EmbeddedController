@@ -1489,9 +1489,6 @@ int cmd_thermal_get_threshold_v0(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
-	if (r.value < 0)
-		return -1;
-
 	printf("Threshold %d for sensor type %d is %d K.\n",
 			p.threshold_id, p.sensor_type, r.value);
 

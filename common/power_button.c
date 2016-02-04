@@ -77,7 +77,7 @@ int power_button_is_pressed(void)
  * @return EC_SUCCESS if ok, or
  *         EC_ERROR_TIMEOUT if power button failed to release
  */
-int power_button_wait_for_release(unsigned int timeout_us)
+int power_button_wait_for_release(int timeout_us)
 {
 	timestamp_t deadline;
 	timestamp_t now = get_time();
