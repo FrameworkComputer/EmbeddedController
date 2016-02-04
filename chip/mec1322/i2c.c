@@ -58,13 +58,22 @@ enum i2c_transaction_state {
 };
 
 /* I2C controller state data */
-struct {
+static struct {
 	/* Transaction timeout, or 0 to use default. */
 	uint32_t timeout_us;
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
 	volatile task_id_t task_waiting;
 	enum i2c_transaction_state transaction_state;
 } cdata[I2C_CONTROLLER_COUNT];
+
+/* Map port number to port name in datasheet, for debug prints. */
+static const char *i2c_port_names[MEC1322_I2C_PORT_COUNT] = {
+	[MEC1322_I2C0_0] = "0_0",
+	[MEC1322_I2C0_1] = "0_1",
+	[MEC1322_I2C1] = "1",
+	[MEC1322_I2C2] = "2",
+	[MEC1322_I2C3] = "3",
+};
 
 static void configure_controller_speed(int controller, int kbps)
 {
@@ -254,7 +263,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
 			    (get_line_level(controller)
 			    != I2C_LINE_IDLE))) {
-		CPRINTS("I2C%d bad status 0x%02x, SCL=%d, SDA=%d", port, reg,
+		CPRINTS("i2c%s bad status 0x%02x, SCL=%d, SDA=%d",
+			i2c_port_names[port], reg,
 			get_line_level(controller) & I2C_LINE_SCL_HIGH,
 			get_line_level(controller) & I2C_LINE_SDA_HIGH);
 
