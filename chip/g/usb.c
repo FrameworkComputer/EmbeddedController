@@ -1152,13 +1152,6 @@ void usb_init(void)
 {
 	int i;
 
-	/* TODO: Take this out if USB is known to always be present */
-	if (!(GREG32(SWDP, FPGA_CONFIG) &
-	      GC_CONST_SWDP_FPGA_CONFIG_USB_8X8CRYPTO)) {
-		CPRINTF("This FPGA image has no USB support\n");
-		return;
-	}
-
 	print_later("usb_init()", 0, 0, 0, 0, 0);
 
 	/* TODO(crosbug.com/p/46813): Clean this up. Do only what's needed, and
