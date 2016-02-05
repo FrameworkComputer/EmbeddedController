@@ -89,9 +89,11 @@ void dcrypto_sha_wait(enum sha_mode mode, uint32_t *digest);
 #define BN_BYTES        4
 
 struct BIGNUM {
-	uint32_t dmax;            /* Size of d, in 32-bit words. */
-	uint32_t *d;              /* Word array, little endian format ... */
+	uint32_t dmax;              /* Size of d, in 32-bit words. */
+	struct access_helper *d;  /* Word array, little endian format ... */
 };
+
+#define BN_DIGIT(b, i) ((b)->d[(i)].udata)
 
 void bn_init(struct BIGNUM *bn, void *buf, size_t len);
 #define bn_size(b) ((b)->dmax * BN_BYTES)

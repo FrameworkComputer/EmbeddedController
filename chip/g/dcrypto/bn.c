@@ -18,16 +18,14 @@ void bn_init(struct BIGNUM *b, void *buf, size_t len)
 {
 	/* Only word-multiple sized buffers accepted. */
 	assert((len & 0x3) == 0);
-	/* Only word-aligned buffers accepted. */
-	assert(((uintptr_t) buf & 0x3) == 0);
 	b->dmax = len / BN_BYTES;
 	dcrypto_memset(buf, 0x00, len);
-	b->d = (uint32_t *) buf;
+	b->d = (struct access_helper *) buf;
 }
 
 int bn_check_topbit(const struct BIGNUM *N)
 {
-	return N->d[N->dmax - 1] >> 31;
+	return BN_DIGIT(N, N->dmax - 1) >> 31;
 }
 
 /* a[n]. */
@@ -43,7 +41,7 @@ static int bn_is_bit_set(const struct BIGNUM *a, int n)
 	if (a->dmax <= i)
 		return 0;
 
-	return (a->d[i] >> j) & 1;
+	return (BN_DIGIT(a, i) >> j) & 1;
 }
 
 /* a[] >= b[]. */
@@ -52,9 +50,9 @@ static int bn_gte(const struct BIGNUM *a, const struct BIGNUM *b)
 {
 	int i;
 
-	for (i = a->dmax - 1; a->d[i] == b->d[i] && i > 0; --i)
+	for (i = a->dmax - 1; BN_DIGIT(a, i) == BN_DIGIT(b, i) && i > 0; --i)
 		;
-	return a->d[i] >= b->d[i];
+	return BN_DIGIT(a, i) >= BN_DIGIT(b, i);
 }
 
 /* c[] = c[] - a[], assumes c > a. */
@@ -64,8 +62,8 @@ static uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a)
 	int i;
 
 	for (i = 0; i < a->dmax; i++) {
-		A += (uint64_t) c->d[i] - a->d[i];
-		c->d[i] = (uint32_t) A;
+		A += (uint64_t) BN_DIGIT(c, i) - BN_DIGIT(a, i);
+		BN_DIGIT(c, i) = (uint32_t) A;
 		A >>= 32;
 	}
 	return (uint32_t) A;  /* 0 or -1. */
@@ -78,8 +76,8 @@ static uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a)
 	int i;
 
 	for (i = 0; i < a->dmax; ++i) {
-		A += (uint64_t) c->d[i] + a->d[i];
-		c->d[i] = (uint32_t) A;
+		A += (uint64_t) BN_DIGIT(c, i) + BN_DIGIT(a, i);
+		BN_DIGIT(c, i) = (uint32_t) A;
 		A >>= 32;
 	}
 
@@ -94,9 +92,9 @@ static uint32_t bn_lshift(struct BIGNUM *r)
 	uint32_t carry = 0;
 
 	for (i = 0; i < r->dmax; i++) {
-		w = (r->d[i] << 1) | carry;
-		carry = r->d[i] >> 31;
-		r->d[i] = w;
+		w = (BN_DIGIT(r, i) << 1) | carry;
+		carry = BN_DIGIT(r, i) >> 31;
+		BN_DIGIT(r, i) = w;
 	}
 	return carry;
 }
@@ -113,20 +111,21 @@ static void bn_mont_mul_add(struct BIGNUM *c, const uint32_t a,
 	{
 		register uint64_t tmp;
 
-		tmp = c->d[0] + (uint64_t) a * b->d[0];
+		tmp = BN_DIGIT(c, 0) + (uint64_t) a * BN_DIGIT(b, 0);
 		A = tmp >> 32;
 		d0 = (uint32_t) tmp * (uint32_t) nprime;
-		tmp = (uint32_t)tmp + (uint64_t) d0 * N->d[0];
+		tmp = (uint32_t)tmp + (uint64_t) d0 * BN_DIGIT(N, 0);
 		B = tmp >> 32;
 	}
 
 	for (i = 0; i < N->dmax - 1;) {
 		register uint64_t tmp;
 
-		tmp = A + (uint64_t) a * b->d[i + 1] + c->d[i + 1];
+		tmp = A + (uint64_t) a * BN_DIGIT(b, i + 1) +
+			BN_DIGIT(c, i + 1);
 		A = tmp >> 32;
-		tmp = B + (uint64_t) d0 * N->d[i + 1] + (uint32_t) tmp;
-		c->d[i] = (uint32_t) tmp;
+		tmp = B + (uint64_t) d0 * BN_DIGIT(N, i + 1) + (uint32_t) tmp;
+		BN_DIGIT(c, i) = (uint32_t) tmp;
 		B = tmp >> 32;
 		++i;
 	}
@@ -134,7 +133,7 @@ static void bn_mont_mul_add(struct BIGNUM *c, const uint32_t a,
 	{
 		uint64_t tmp = (uint64_t) A + B;
 
-		c->d[i] = (uint32_t) tmp;
+		BN_DIGIT(c, i) = (uint32_t) tmp;
 		A = tmp >> 32;  /* 0 or 1. */
 		if (A)
 			bn_sub(c, N);
@@ -149,11 +148,11 @@ static void bn_mont_mul(struct BIGNUM *c, const struct BIGNUM *a,
 	int i;
 
 	for (i = 0; i < N->dmax; i++)
-		c->d[i] = 0;
+		BN_DIGIT(c, i) = 0;
 
-	bn_mont_mul_add(c, a ? a->d[0] : 1, b, nprime, N);
+	bn_mont_mul_add(c, a ? BN_DIGIT(a, 0) : 1, b, nprime, N);
 	for (i = 1; i < N->dmax; i++)
-		bn_mont_mul_add(c, a ? a->d[i] : 0, b, nprime, N);
+		bn_mont_mul_add(c, a ? BN_DIGIT(a, i) : 0, b, nprime, N);
 }
 
 /* Mongomery R * R % N, R = 1 << (1 + log2N). */
@@ -206,11 +205,11 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	bn_init(&acc, acc_buf, bn_size(N));
 	bn_init(&aR, aR_buf, bn_size(N));
 
-	nprime = bn_compute_nprime(N->d[0]);
+	nprime = bn_compute_nprime(BN_DIGIT(N, 0));
 	bn_compute_RR(&RR, N);
 	bn_mont_mul(&acc, NULL, &RR, nprime, N);      /* R = 1 * RR / R % N */
 	bn_mont_mul(&aR, input, &RR, nprime, N);      /* aR = a * RR / R % N */
-	output->d[0] = 1;
+	BN_DIGIT(output, 0) = 1;
 
 	/* TODO(ngm): burn stack space and use windowing. */
 	for (i = exp->dmax * BN_BITS2 - 1; i >= 0; i--) {
@@ -232,7 +231,7 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 
 	bn_mont_mul(output, NULL, &acc, nprime, N);     /* Convert out. */
 	/* Copy to output buffer if necessary. */
-	if (acc.d != acc_buf) {
+	if (acc.d != (struct access_helper *) acc_buf) {
 		memcpy(acc.d, acc_buf, bn_size(output));
 		*output = acc;
 	}

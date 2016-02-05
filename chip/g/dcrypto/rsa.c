@@ -339,7 +339,7 @@ int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	bn_init(&padded, padded_buf, bn_size(&rsa->N));
 	bn_init(&encrypted, out, bn_size(&rsa->N));
 	bn_init(&e, e_buf, sizeof(e_buf));
-	*e.d = rsa->e;
+	BN_DIGIT(&e, 0) = rsa->e;
 
 	switch (padding) {
 	case PADDING_MODE_OAEP:
@@ -479,7 +479,7 @@ int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
 	memcpy(signature_buf, sig, bn_size(&rsa->N));
 	bn_init(&padded, padded_buf, bn_size(&rsa->N));
 	bn_init(&e, e_buf, sizeof(e_buf));
-	*e.d = rsa->e;
+	BN_DIGIT(&e, 0) = rsa->e;
 
 	/* Reverse from big-endian to little-endian notation. */
 	reverse((uint8_t *) signature.d, signature.dmax * BN_BYTES);
