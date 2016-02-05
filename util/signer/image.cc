@@ -163,8 +163,8 @@ bool Image::fromElf(const string& filename) {
     if (phdr.p_paddr < ro_base_) {
       ro_base_ = phdr.p_paddr;
     }
-    if (phdr.p_paddr + phdr.p_memsz > ro_max_) {
-      ro_max_ = phdr.p_paddr + phdr.p_memsz;
+    if (phdr.p_paddr + phdr.p_filesz > ro_max_) {
+      ro_max_ = phdr.p_paddr + phdr.p_filesz;
     }
 
     // Copy data into image
@@ -324,6 +324,21 @@ void Image::toIntelHex(FILE *fout) const {
     fprintf(fout, "%02X", (~(crc & 255) + 1) & 255);
     fprintf(fout, "\n");
   }
+}
+
+void Image::fillPattern(uint32_t pattern) {
+  for (int i = high_ - base_; i < 512*1024 - 2048; i += 4) {
+    *(uint32_t*)(mem_ + i) = pattern;
+  }
+  high_ = 512 * 1024 - 2048;
+}
+
+void Image::fillRandom() {
+  srand(time(NULL));
+  for (int i = high_ - base_; i < 512*1024 - 2048; i += 4) {
+    *(uint32_t*)(mem_ + i) = rand();
+  }
+  high_ = 512 * 1024 - 2048;
 }
 
 void Image::generate(const std::string& filename, bool hex_output) const {

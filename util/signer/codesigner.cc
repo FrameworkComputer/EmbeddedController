@@ -76,7 +76,7 @@ xmlChar* get_val(xmlNodePtr node, const char* key) {
 }
 
 static
-bool print_fuse(xmlNodePtr a_node,
+bool get_fuse(xmlNodePtr a_node,
                 map<string, uint32_t>* ids, map<string, uint32_t>* bits) {
   bool result = false;
 
@@ -123,7 +123,7 @@ bool find_fuses(xmlNodePtr a_node,
         (content = xmlNodeGetContent(cur_node)) != NULL) {
       if (!strcmp("FuseLogicalOffset", (const char*)content)) {
         // Found a likely fuse definition section; collect it.
-        done = print_fuse(a_node->parent->parent->parent, ids, bits);
+        done = get_fuse(a_node->parent->parent->parent, ids, bits);
       }
     }
 
@@ -195,6 +195,72 @@ bool readXML(const string& filename,
   return result;
 }
 
+// Write minified XML
+bool writeXML(const string& filename,
+              map<string, uint32_t>& ids,
+              map<string, uint32_t>& bits,
+              uint32_t p4cl) {
+  bool result = false;
+
+  // Get the names in order.
+  vector<string> names;
+  names.resize(ids.size());
+  for (map<string, uint32_t>::const_iterator it = ids.begin(); it != ids.end(); ++it) {
+      const string& name = it->first;
+      uint32_t offset = it->second;
+      names[offset] = name;
+  }
+
+  // Write out as nodes.
+  ofstream ofs(filename.c_str(), ofstream::out);
+  if (ofs) {
+    ofs << "<ArrayType>" << endl;
+    for (size_t i = 0; i < names.size(); ++i) {
+      const string& name = names[i];
+      ofs << "<ArrayItem>" << endl;
+      ofs << " <HashType>" << endl;
+      ofs << "  <HashItem>" << endl;
+      ofs << "   <Key>RegName</Key>" << endl;
+      ofs << "   <Value>" << name << "</Value>" << endl;
+      ofs << "  </HashItem>" << endl;
+      ofs << "  <HashItem>" << endl;
+      ofs << "   <Key>FuseLogicalOffset</Key>" << endl;
+      ofs << "   <Value>" << i << "</Value>" << endl;
+      ofs << "  </HashItem>" << endl;
+      ofs << "  <HashItem>" << endl;
+      ofs << "   <Key>Width</Key>" << endl;
+      ofs << "   <Value>" << bits[name] << "</Value>" << endl;
+      ofs << "  </HashItem>" << endl;
+      ofs << " </HashType>" << endl;
+      ofs << "</ArrayItem>" << endl;
+    }
+
+    // Write p4cl
+    ofs << "<ArrayItem>" << endl;
+    ofs << "<HashType>" << endl;
+    ofs << " <HashItem>" << endl;
+    ofs << "  <Key>RegName</Key>" << endl;
+    ofs << "  <Value>SWDP_P4_LAST_SYNC</Value>" << endl;
+    ofs << " </HashItem>" << endl;
+    ofs << " <HashItem>" << endl;
+    ofs << "  <Key>Default</Key>" << endl;
+    ofs << "  <Value>" << p4cl << "</Value>" << endl;
+    ofs << " </HashItem>" << endl;
+    // Write fake offset to make parser happy
+    ofs << " <HashItem>" << endl;
+    ofs << "  <Key>FuseLogicalOffset</Key>" << endl;
+    ofs << "  <Value>0</Value>" << endl;
+    ofs << " </HashItem>" << endl;
+    ofs << "</HashType>" << endl;
+    ofs << "</ArrayItem>" << endl;
+
+    ofs << "</ArrayType>" << endl;
+
+    result = true;
+  }
+
+  return result;
+}
 
 // Read JSON, populate map, name -> val
 bool readJSON(const string& filename,
@@ -233,19 +299,19 @@ bool readJSON(const string& filename,
 
 #define GETVALUE(x) do { \
     if (!d.HasMember(x)){FATAL("manifest is lacking field '%s'\n", x);}; \
-    values->insert(make_pair(x, d[x].GetInt())); \
+    (*values)[x] = d[x].GetInt(); \
   } while (0)
 
       CHECKVALUE("fuses");
       const rapidjson::Document::ValueType& fuses = d["fuses"];
       for (rapidjson::Value::ConstMemberIterator it = fuses.MemberBegin(); it != fuses.MemberEnd(); ++it) {
-        fusemap->insert(make_pair(it->name.GetString(), it->value.GetInt()));
+        (*fusemap)[it->name.GetString()] = it->value.GetInt();
       }
 
       CHECKVALUE("info");
       const rapidjson::Document::ValueType& infos = d["info"];
       for (rapidjson::Value::ConstMemberIterator it = infos.MemberBegin(); it != infos.MemberEnd(); ++it) {
-        infomap->insert(make_pair(it->name.GetString(), it->value.GetInt()));
+        (*infomap)[it->name.GetString()] = it->value.GetInt();
       }
 
       GETVALUE("keyid");
@@ -282,6 +348,10 @@ string jsonFilename;
 string outputFormat;
 string signatureFilename;
 string hashesFilename;
+bool fillPattern = false;
+uint32_t pattern = -1;
+bool fillRandom = false;
+string xmlOutputFilename;
 
 void usage(int argc, char* argv[]) {
   fprintf(stderr, "Usage: %s options\n"
@@ -293,6 +363,9 @@ void usage(int argc, char* argv[]) {
           "[--format=bin|hex] output file format, hex is default\n"
           "[--signature=$sig-filename] replace signature with file content\n"
           "[--hashes=$hashes-filename] destination file for intermediary hashes to be signed\n"
+          "[--randomfill] to pad image to 512K with random bits\n"
+          "[--patternfill=N] to pad image to 512K with pattern N\n"
+          "[--writefuses=$xml-filename] to write out shortened xml\n"
           "[--verbose]\n",
           argv[0]);
 }
@@ -310,11 +383,14 @@ int getOptions(int argc, char* argv[]) {
     {"xml", required_argument, NULL, 'x'},
     {"signature", required_argument, NULL, 's'},
     {"hashes", required_argument, NULL, 'H'},
+    {"randomfill", no_argument, NULL, 'r'},
+    {"patternfill", required_argument, NULL, 'p'},
+    {"writefuses", required_argument, NULL, 'w'},
     {0, 0, 0, 0}
   };
   int c, option_index = 0;
   outputFormat.assign("hex");
-  while ((c = getopt_long(argc, argv, "i:o:k:x:j:f:s:H:hv",
+  while ((c = getopt_long(argc, argv, "i:o:p:k:x:j:f:s:H:w:hvr",
                           long_options, &option_index)) != -1) {
     switch (c) {
       case 0:
@@ -334,6 +410,9 @@ int getOptions(int argc, char* argv[]) {
       case 'x':
         xmlFilename.assign(optarg);
         break;
+      case 'w':
+        xmlOutputFilename.assign(optarg);
+        break;
       case 's':
         signatureFilename.assign(optarg);
         break;
@@ -346,9 +425,17 @@ int getOptions(int argc, char* argv[]) {
       case 'H':
         hashesFilename.assign(optarg);
         break;
+      case 'r':
+        fillRandom = true;
+        break;
+      case 'p':
+        fillPattern = true;
+        pattern = strtoul(optarg, NULL, 0);
+        break;
       case 'h':
         usage(argc, argv);
         return 1;
+
       case 'v':
         FLAGS_verbose = true;
         break;
@@ -379,6 +466,9 @@ int main(int argc, char* argv[]) {
   Image image;
   if (!image.fromElf(inputFilename)) return -2;
 
+  if (fillPattern) image.fillPattern(pattern);
+  if (fillRandom) image.fillRandom();
+
   SignedHeader hdr;
 
   hdr.keyid = key.n0inv();
@@ -401,6 +491,9 @@ int main(int argc, char* argv[]) {
     values.insert(make_pair("keyid", key.n0inv()));
     values.insert(make_pair("epoch", 0x1337));
   }
+
+  // Hardcoded expectation. Can be overwritten in JSON w/ new explicit value.
+  fuses["FW_DEFINED_DATA_EXTRA_BLK6"] = 0;
 
   if (!jsonFilename.empty() &&
       !readJSON(jsonFilename, &tag, &values, &fuses, &infos)) {
@@ -457,11 +550,28 @@ int main(int argc, char* argv[]) {
   VERBOSE("found %lu fuse definitions\n", fuse_ids.size());
   assert(fuse_ids.size() < FUSE_MAX);
 
+  if (fuse_ids.size() != 0) {
+    // Make sure FW_DEFINED_DATA_EXTRA_BLK6 is still at 125, width 3.
+    assert(fuse_ids["FW_DEFINED_DATA_EXTRA_BLK6"] == 125);
+    assert(fuse_bits["FW_DEFINED_DATA_EXTRA_BLK6"] == 5);
+  }
+
+  // Whether we loaded xml or not, hardcode FW_DEFINED_DATA_EXTRA_BLK6
+  fuse_ids["FW_DEFINED_DATA_EXTRA_BLK6"] = 125;
+  fuse_bits["FW_DEFINED_DATA_EXTRA_BLK6"] = 5;
+
   for (map<string, uint32_t>::const_iterator it = fuse_ids.begin(); it != fuse_ids.end(); ++it) {
     VERBOSE("fuse '%s' at %u, width %u\n",
           it->first.c_str(), it->second, fuse_bits[it->first]);
   }
 
+  // Write condensed XML if asked to.
+  if (!xmlOutputFilename.empty()) {
+    writeXML(xmlOutputFilename,
+             fuse_ids,
+             fuse_bits,
+             xml_p4cl);
+  }
 
   // Compute fuse_values array, according to manifest and xml.
   uint32_t fuse_values[FUSE_MAX];

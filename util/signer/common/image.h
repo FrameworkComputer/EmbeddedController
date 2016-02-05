@@ -41,6 +41,9 @@ class Image {
   int ro_max() const { return ro_max_; }
   int rx_max() const { return rx_max_; }
 
+  void fillPattern(uint32_t);
+  void fillRandom();
+
  private:
   void toIntelHex(FILE *fout) const;
   int nibble(char n);
