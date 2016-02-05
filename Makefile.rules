@@ -41,9 +41,9 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
 # Allow the .roshared section to overlap other sections (itself)
 cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share \
 				-O binary $< $@
-cmd_elf_to_signed ?= $(out)/util/signer --key=util/signer/$(3).pem \
+cmd_elf_to_signed ?= sudo $(out)/util/signer --key=util/signer/$(3) \
 	--input=$< --format=bin --output=$@.signed \
-	&& mv $@.signed $@
+	&& sudo chown $(shell whoami) $@.signed && mv $@.signed $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
@@ -222,10 +222,10 @@ $(out)/RO/%.hex: $(out)/RO/%.elf $(out)/RO/%.smap
 	$(call quiet,elf_to_hex,OBJCOPY)
 else
 $(out)/RO/%.flat: $(out)/RO/%.elf  $(out)/RO/%.smap
-	$(call quiet,elf_to_signed,RO_SIGN,rom-testkey-A)
+	$(call quiet,elf_to_signed,RO_SIGN,$(CR50_RO_KEY))
 
 $(out)/RW/%.flat: $(out)/RW/%.elf  $(out)/RW/%.smap
-	$(call quiet,elf_to_signed,RW_SIGN,loader-testkey-A)
+	$(call quiet,elf_to_signed,RW_SIGN,loader-testkey-A.pem)
 
 $(out)/RO/%.hex: $(out)/RO/%.flat
 	$(call quiet,bin_to_hex,OBJCOPY)

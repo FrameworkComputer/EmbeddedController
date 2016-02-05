@@ -78,3 +78,5 @@ ifneq ($(CONFIG_RW_B),)
 $(out)/$(PROJECT).obj: $(out)/RW/ec.RW_B.flat
 $(out)/RW/ec.RW_B.flat: $(out)/util/signer
 endif
+
+CR50_RO_KEY ?= rom-testkey-A.pem
