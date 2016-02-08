@@ -33,6 +33,8 @@ enum hook_priority {
 	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 6,
 	/* Extpower inits before modules which might use it (battery, LEDs) */
 	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 7,
+	/* Init VBOOT hash later, since it depends on deferred functions */
+	HOOK_PRIO_INIT_VBOOT_HASH = HOOK_PRIO_FIRST + 8,
 
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,

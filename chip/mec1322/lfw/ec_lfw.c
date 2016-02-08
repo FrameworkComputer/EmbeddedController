@@ -235,6 +235,9 @@ void lfw_main()
 	/* install vector table */
 	*((uintptr_t *) 0xe000ed08) = (uintptr_t) &hdr_int_vect;
 
+	/* Use 48 MHz processor clock to power through boot */
+	MEC1322_PCR_PROC_CLK_CTL = 1;
+
 #ifdef CONFIG_WATCHDOG
 	/* Reload watchdog which may be running in case of sysjump */
 	MEC1322_WDG_KICK = 1;

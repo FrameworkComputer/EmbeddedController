@@ -9,6 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "hooks.h"
 #include "hwtimer.h"
 #include "registers.h"
 #include "shared_mem.h"
@@ -17,6 +18,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+#include "vboot_hash.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
@@ -73,6 +75,23 @@ void clock_init(void)
 		;
 #endif
 }
+
+/**
+ * Speed through boot + vboot hash calculation, dropping our processor clock
+ * only after vboot hashing is completed.
+ */
+static void clock_turbo_disable(void)
+{
+#ifdef CONFIG_VBOOT_HASH
+	if (vboot_hash_in_progress())
+		hook_call_deferred(clock_turbo_disable, 100 * MSEC);
+	else
+#endif
+		/* Use 12 MHz processor clock for power savings */
+		MEC1322_PCR_PROC_CLK_CTL = 4;
+}
+DECLARE_HOOK(HOOK_INIT, clock_turbo_disable, HOOK_PRIO_INIT_VBOOT_HASH + 1);
+DECLARE_DEFERRED(clock_turbo_disable);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 /**

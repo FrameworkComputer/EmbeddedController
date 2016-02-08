@@ -235,7 +235,7 @@ static void vboot_hash_init(void)
 				 NULL, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, vboot_hash_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, vboot_hash_init, HOOK_PRIO_INIT_VBOOT_HASH);
 
 #ifdef CONFIG_SAVE_VBOOT_HASH
 
