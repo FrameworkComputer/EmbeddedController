@@ -59,7 +59,7 @@
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
 
-#define PCLK_FREQ  (GC_CONST_FPGA_TIMER_FIXED_FREQ * 1000 * 1000)
+#define PCLK_FREQ  (24 * 1000 * 1000)
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT (GC_INTERRUPTS_COUNT - 16)

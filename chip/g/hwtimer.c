@@ -56,7 +56,7 @@ static void update_prescaler(void)
 	/*
 	 * Assume the clock rate is an integer multiple of MHz.
 	 */
-	clock_mul_factor = GC_CONST_FPGA_TIMER_FIXED_FREQ;
+	clock_mul_factor = PCLK_FREQ / 1000000;
 	clock_div_factor = 0xffffffff / clock_mul_factor;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
