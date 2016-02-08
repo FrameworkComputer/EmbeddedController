@@ -16,7 +16,7 @@
 void port_80_interrupt(void)
 {
 	int data;
-
+	MEC1322_TMR16_STS(1) = 1; /* Ack the interrupt */
 	if ((1 << 1) & MEC1322_INT_RESULT(23)) {
 		data = port_80_read();
 
