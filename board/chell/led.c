@@ -85,7 +85,7 @@ static void board_led_set_battery(void)
 	battery_ticks++;
 	power_ticks++;
 
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY)) {
 		/*
 		 * Reset ticks if entering suspend so LED turns white
 		 * as soon as possible.
