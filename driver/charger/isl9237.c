@@ -235,7 +235,9 @@ int charger_post_init(void)
 		return rv;
 
 	rv = raw_write16(ISL9237_REG_CONTROL2,
-			reg | ISL9237_C2_PROCHOT_DEBOUNCE_1000);
+			reg |
+			ISL9237_C2_PROCHOT_DEBOUNCE_1000 |
+			ISL9237_C2_ADAPTER_DEBOUNCE_150);
 	if (rv)
 		return rv;
 
