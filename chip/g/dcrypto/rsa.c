@@ -380,7 +380,7 @@ int DCRYPTO_rsa_decrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	struct BIGNUM padded;
 	int ret = 1;
 
-	if (!check_modulus_params(&rsa->N, out_len))
+	if (!check_modulus_params(&rsa->N, NULL))
 		return 0;
 	if (in_len != bn_size(&rsa->N))
 		return 0;                      /* Invalid input length. */
