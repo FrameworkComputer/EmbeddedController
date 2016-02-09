@@ -91,7 +91,7 @@ static int oaep_pad(uint8_t *output, uint32_t output_len,
 	else
 		DCRYPTO_SHA256_init(&ctx, 0);
 
-	DCRYPTO_HASH_update(&ctx, label, label ? strlen(label) : 0);
+	DCRYPTO_HASH_update(&ctx, label, label ? strlen(label) + 1 : 0);
 	memcpy(phash, DCRYPTO_HASH_final(&ctx), hash_size);
 	*one = 1;
 	memcpy(one + 1, msg, msg_len);
@@ -131,7 +131,7 @@ static int check_oaep_pad(uint8_t *out, uint32_t *out_len,
 		DCRYPTO_SHA1_init(&ctx, 0);
 	else
 		DCRYPTO_SHA256_init(&ctx, 0);
-	DCRYPTO_HASH_update(&ctx, label, label ? strlen(label) : 0);
+	DCRYPTO_HASH_update(&ctx, label, label ? strlen(label) + 1 : 0);
 
 	bad = memcmp(phash, DCRYPTO_HASH_final(&ctx), hash_size);
 	bad |= padded[0];
