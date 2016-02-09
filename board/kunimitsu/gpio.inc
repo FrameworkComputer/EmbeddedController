@@ -31,7 +31,7 @@ GPIO_INT(UART0_RX,          PIN(162), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, uart_
 GPIO(G3_SLEEP_EN,           PIN(55),  GPIO_OUT_LOW)
 
 GPIO(PD_RST_L,              PIN(130), GPIO_ODR_HIGH)
-GPIO(USB2_OTG_ID,           PIN(13),  GPIO_ODR_HIGH)
+GPIO(USB2_OTG_ID,           PIN(13),  GPIO_ODR_LOW)
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_0_SCL,            PIN(15),  GPIO_INPUT)
 GPIO(I2C0_0_SDA,            PIN(16),  GPIO_INPUT)
@@ -58,7 +58,7 @@ GPIO(USB_PD_WAKE,           PIN(60),  GPIO_OUT_LOW)
 /* When asserted, ME does not lock security descriptor */
 GPIO(PCH_SEC_DISABLE_L,     PIN(65),  GPIO_ODR_HIGH)
 GPIO(PCH_WAKE_L,            PIN(66),  GPIO_ODR_HIGH)
-GPIO(USB2_OTG_VBUSSENSE,    PIN(105), GPIO_ODR_HIGH)
+GPIO(USB2_OTG_VBUSSENSE,    PIN(105), GPIO_OUT_LOW)
 GPIO(PCH_ACOK,              PIN(110), GPIO_OUT_LOW)
 /* Interrupts from accelerometer / gyro -- not yet implemented */
 GPIO(LID_ACCEL_INT,         PIN(161), GPIO_INPUT | GPIO_PULL_DOWN)  /* Lid ACCEL sensor interrupt to EC */
