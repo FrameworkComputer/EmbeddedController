@@ -1314,5 +1314,179 @@ class TestConsoleCompatibility(unittest.TestCase):
     self.assertFalse(self.console.CheckForEnhancedECImage())
 
 
+class TestOOBMConsoleCommands(unittest.TestCase):
+  """Verify that OOBM console commands work correctly."""
+  def setUp(self):
+    """Setup the test harness."""
+    # Setup logging with a timestamp, the module, and the log level.
+    logging.basicConfig(level=logging.DEBUG,
+                        format=('%(asctime)s - %(module)s -'
+                                ' %(levelname)s - %(message)s'))
+    # Create a temp file and set both the master and slave PTYs to the file to
+    # create a loopback.
+    self.tempfile = tempfile.TemporaryFile()
+
+    # Mock out the pipes.
+    dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
+    self.console = console.Console(self.tempfile.fileno(), self.tempfile,
+                                   dummy_pipe_end_0, dummy_pipe_end_1)
+    self.console.oobm_queue = mock.MagicMock()
+
+  @mock.patch('console.Console.CheckForEnhancedECImage')
+  def test_InterrogateCommand(self, mock_check):
+    """Verify that 'interrogate' command works as expected.
+
+    Args:
+      mock_check: A MagicMock object replacing the CheckForEnhancedECIMage()
+        method.
+    """
+    input_stream = []
+    expected_calls = []
+    mock_check.side_effect = [False]
+
+    # 'interrogate never' should disable the interrogation from happening at
+    # all.
+    cmd = 'interrogate never'
+    # Enter the OOBM prompt.
+    input_stream.extend(StringToByteList('%'))
+    # Type the command
+    input_stream.extend(StringToByteList(cmd))
+    # Press enter.
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    input_stream = []
+
+    # The OOBM queue should have been called with the command being put.
+    expected_calls.append(mock.call.put(cmd))
+    self.console.oobm_queue.assert_has_calls(expected_calls)
+
+    # Process the OOBM queue.
+    self.console.oobm_queue.get.side_effect = [cmd]
+    self.console.ProcessOOBMQueue()
+
+    # Type out a few commands.
+    input_stream.extend(StringToByteList('version'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('flashinfo'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('sysinfo'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    # The Check function should NOT have been called at all.
+    mock_check.assert_not_called()
+
+    # The EC image should be assumed to be not enhanced.
+    self.assertFalse(self.console.enhanced_ec, 'The image should be assumed to'
+                     ' be NOT enhanced.')
+
+    # Reset the mocks.
+    mock_check.reset_mock()
+    self.console.oobm_queue.reset_mock()
+
+    # 'interrogate auto' should interrogate after each press of the enter key.
+    # TODO(aaboagye): Fix this test when you update auto to check after each
+    # reboot.  For now, it would behave the same as 'interrogate always'.
+    cmd = 'interrogate auto'
+    # Enter the OOBM prompt.
+    input_stream.extend(StringToByteList('%'))
+    # Type the command
+    input_stream.extend(StringToByteList(cmd))
+    # Press enter.
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    input_stream = []
+    expected_calls = []
+
+    # The OOBM queue should have been called with the command being put.
+    expected_calls.append(mock.call.put(cmd))
+    self.console.oobm_queue.assert_has_calls(expected_calls)
+
+    # Process the OOBM queue.
+    self.console.oobm_queue.get.side_effect = [cmd]
+    self.console.ProcessOOBMQueue()
+
+    # The Check method should be called 3 times here.
+    mock_check.side_effect = [False, False, False]
+
+    # Type out a few commands.
+    input_stream.extend(StringToByteList('help list'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('taskinfo'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('hibdelay'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    # The Check method should have been called 3 times here.
+    expected_calls = [mock.call(), mock.call(), mock.call()]
+    mock_check.assert_has_calls(expected_calls)
+
+    # The EC image should be assumed to be not enhanced.
+    self.assertFalse(self.console.enhanced_ec, 'The image should be assumed to'
+                     ' be NOT enhanced.')
+
+    # Now, let's try to assume that the image is enhanced while still disabling
+    # interrogation.
+    mock_check.reset_mock()
+    self.console.oobm_queue.reset_mock()
+    input_stream = []
+    cmd = 'interrogate never enhanced'
+    # Enter the OOBM prompt.
+    input_stream.extend(StringToByteList('%'))
+    # Type the command
+    input_stream.extend(StringToByteList(cmd))
+    # Press enter.
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    input_stream = []
+    expected_calls = []
+
+    # The OOBM queue should have been called with the command being put.
+    expected_calls.append(mock.call.put(cmd))
+    self.console.oobm_queue.assert_has_calls(expected_calls)
+
+    # Process the OOBM queue.
+    self.console.oobm_queue.get.side_effect = [cmd]
+    self.console.ProcessOOBMQueue()
+
+    # Type out a few commands.
+    input_stream.extend(StringToByteList('chgstate'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('hash'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('sysjump rw'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    # The check method should have never been called.
+    mock_check.assert_not_called()
+
+    # The EC image should be assumed to be enhanced.
+    self.assertTrue(self.console.enhanced_ec, 'The image should be'
+                    ' assumed to be enhanced.')
+
+
 if __name__ == '__main__':
   unittest.main()

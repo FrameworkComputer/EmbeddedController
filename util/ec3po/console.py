@@ -43,6 +43,9 @@ NON_ENHANCED_EC_INTERROGATION_TIMEOUT = 0.3  # Maximum number of seconds to wait
 ENHANCED_EC_INTERROGATION_TIMEOUT = 1.0  # Maximum number of seconds to wait for
                                          # a response to an interrogation of an
                                          # enhanced EC image.
+INTERROGATION_MODES = ['never', 'always', 'auto']  # List of modes which control
+                                                   # when interrogations are
+                                                   # performed with the EC.
 
 
 class EscState(object):
@@ -107,6 +110,11 @@ class Console(object):
       until we perform some handshaking.
     interrogation_timeout: A float representing the current maximum seconds to
       wait for a response to an interrogation.
+    receiving_oobm_cmd: A boolean indicating whether or not the console is in
+      the middle of receiving an out of band command.
+    pending_oobm_cmd: A string containing the pending OOBM command.
+    interrogation_mode: A string containing the current mode of whether
+      interrogations are performed with the EC or not and how often.
   """
 
   def __init__(self, master_pty, user_pty, cmd_pipe, dbg_pipe):
@@ -140,6 +148,9 @@ class Console(object):
     self.prompt = PROMPT
     self.enhanced_ec = False
     self.interrogation_timeout = NON_ENHANCED_EC_INTERROGATION_TIMEOUT
+    self.receiving_oobm_cmd = False
+    self.pending_oobm_cmd = ''
+    self.interrogation_mode = 'auto'
 
   def __str__(self):
     """Show internal state of Console object as a string."""
@@ -444,12 +455,49 @@ class Console(object):
     Args:
       byte: An integer representing the character received from the user.
     """
-    # Interrogate the EC every time we press the enter key.  This is necessary
-    # so that we know whether or not we should provide the console interface or
-    # simply behave as a pass-thru.
+    fd = self.master_pty
+
+    # Enter the OOBM prompt mode if the user presses '%'.
+    if byte == ord('%'):
+      self.logger.debug('Begin OOBM command.')
+      self.receiving_oobm_cmd = True
+      # Print a "prompt".
+      os.write(self.master_pty, '\r\n% ')
+      return
+
+    # Add chars to the pending OOBM command if we're currently receiving one.
+    if self.receiving_oobm_cmd and byte != ControlKey.CARRIAGE_RETURN:
+      self.pending_oobm_cmd += chr(byte)
+      self.logger.debug('%s', chr(byte))
+      os.write(self.master_pty, chr(byte))
+      return
+
     if byte == ControlKey.CARRIAGE_RETURN:
-      self.enhanced_ec = self.CheckForEnhancedECImage()
-      self.logger.debug('Enhanced EC image? %r', self.enhanced_ec)
+      if self.receiving_oobm_cmd:
+        # Terminate the command and place it in the OOBM queue.
+        self.logger.debug('End OOBM command.')
+        if self.pending_oobm_cmd:
+          self.oobm_queue.put(self.pending_oobm_cmd)
+          self.logger.debug('Placed \'%s\' into OOBM command queue.',
+                            self.pending_oobm_cmd)
+
+        # Reset the state.
+        os.write(self.master_pty, '\r\n' + self.prompt)
+        self.input_buffer = ''
+        self.input_buffer_pos = 0
+        self.receiving_oobm_cmd = False
+        self.pending_oobm_cmd = ''
+        return
+
+      if self.interrogation_mode == 'never':
+        self.logger.debug('Skipping interrogation because interrogation mode'
+                          ' is set to never.')
+      else:
+        # Only interrogate the EC if the interrogation mode is NOT set to
+        # 'never'.
+        # TODO(aaboagye): Implement the 'auto' mode.
+        self.enhanced_ec = self.CheckForEnhancedECImage()
+        self.logger.debug('Enhanced EC image? %r', self.enhanced_ec)
 
     if not self.enhanced_ec:
       # Send everything straight to the EC to handle.
@@ -477,7 +525,6 @@ class Console(object):
     # If the input buffer is full we can't accept new chars.
     buffer_full = len(self.input_buffer) >= self.line_limit
 
-    fd = self.master_pty
 
     # Carriage_Return/Enter
     if byte == ControlKey.CARRIAGE_RETURN:
@@ -650,6 +697,64 @@ class Console(object):
     """Backspace a character on the console."""
     os.write(self.master_pty, '\033[1D \033[1D')
 
+  def ProcessOOBMQueue(self):
+    """Retrieve an item from the OOBM queue and process it."""
+    item = self.oobm_queue.get()
+    self.logger.debug('OOBM cmd: %s', item)
+    cmd = item.split(' ')
+
+    if cmd[0] == 'loglevel':
+      # An integer is required in order to set the log level.
+      if len(cmd) < 2:
+        self.logger.debug('Insufficient args')
+        self.PrintOOBMHelp()
+        return
+      try:
+        self.logger.debug('Log level change request.')
+        new_log_level = int(cmd[1])
+        self.logger.logger.setLevel(new_log_level)
+        self.logger.info('Log level changed to %d.', new_log_level)
+
+        # Forward the request to the interpreter as well.
+        self.cmd_pipe.send(item)
+      except ValueError:
+        # Ignoring the request if an integer was not provided.
+        self.PrintOOBMHelp()
+
+    elif cmd[0] == 'interrogate' and len(cmd) >= 2:
+      enhanced = False
+      mode = cmd[1]
+      if len(cmd) >= 3 and cmd[2] == 'enhanced':
+        enhanced = True
+
+      # Set the mode if correct.
+      if mode in INTERROGATION_MODES:
+        self.interrogation_mode = mode
+        self.logger.debug('Updated interrogation mode to %s.', mode)
+        if mode == 'auto':
+          os.write(self.master_pty,
+                   'auto not implemented yet; treating it as always.\r\n')
+
+        # Update the assumptions of the EC image.
+        self.enhanced_ec = enhanced
+        self.logger.debug('Enhanced EC image is now %r', self.enhanced_ec)
+
+        # Send command to interpreter as well.
+        self.cmd_pipe.send('enhanced ' + str(self.enhanced_ec))
+      else:
+        self.PrintOOBMHelp()
+
+    else:
+      self.PrintOOBMHelp()
+
+  def PrintOOBMHelp(self):
+    """Prints out the OOBM help."""
+    # Print help syntax.
+    os.write(self.master_pty, '\r\n' + 'Known OOBM commands:\r\n')
+    os.write(self.master_pty, '  interrogate <never | always | auto> '
+             '[enhanced]\r\n')
+    os.write(self.master_pty, '  loglevel <int>\r\n')
+
 
 def IsPrintable(byte):
   """Determines if a byte is printable.
@@ -700,17 +805,8 @@ def StartLoop(console):
           os.write(console.master_pty, data)
 
       while not console.oobm_queue.empty():
-          console.logger.debug('OOBM queue ready for reading.')
-          cmd = console.oobm_queue.get()
-          console.logger.debug('cmd: %s', cmd)
-          if cmd.startswith('loglevel'):
-            console.logger.debug('Log level change request.')
-            new_log_level = int(cmd.split(' ')[1])
-            console.logger.logger.setLevel(new_log_level)
-            console.logger.info('Log level changed to %d.', new_log_level)
-
-          # Forward the request to the interpreter as well.
-          console.cmd_pipe.send(cmd)
+        console.logger.debug('OOBM queue ready for reading.')
+        console.ProcessOOBMQueue()
 
   finally:
     # Close pipes.

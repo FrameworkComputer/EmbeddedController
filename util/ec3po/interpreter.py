@@ -224,6 +224,10 @@ class Interpreter(object):
         self.logger.debug('Connected to %s.', self.ec_uart_pty_name)
       return
 
+    elif command.startswith('enhanced'):
+      self.enhanced_ec = command.split(' ')[1] == 'True'
+      return
+
     # Ignore any other commands while in the disconnected state.
     self.logger.debug('command: \'%s\'', command)
     if not self.connected:

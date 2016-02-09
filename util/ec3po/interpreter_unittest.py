@@ -351,7 +351,7 @@ class TestUARTDisconnection(unittest.TestCase):
 
     # Verify interpreter is connected.
     self.assertTrue(self.itpr.connected, ('The interpreter should be'
-                                           'connected.'))
+                                          'connected.'))
     # Verify that the EC UART is now a member of the inputs.
     self.assertTrue(self.itpr.ec_uart_pty in self.itpr.inputs)
     # Since we have issued no commands during the disconnected state, no
