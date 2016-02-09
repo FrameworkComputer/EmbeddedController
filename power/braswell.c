@@ -329,18 +329,3 @@ enum power_state power_handle_state(enum power_state state)
 	}
 	return state;
 }
-
-#ifdef CONFIG_LOW_POWER_PSEUDO_G3
-void enter_pseudo_g3(void)
-{
-	CPRINTS("Enter Psuedo G3");
-	cflush();
-
-	gpio_set_level(GPIO_EC_HIB_L, 1);
-	gpio_set_level(GPIO_SMC_SHUTDOWN, 1);
-
-	/* Power to EC should shut down now */
-	while (1)
-		;
-}
-#endif

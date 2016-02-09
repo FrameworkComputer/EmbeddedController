@@ -192,12 +192,8 @@ static enum power_state power_common_state(enum power_state state)
 				 * Time's up.  Hibernate until wake pin
 				 * asserted.
 				 */
-#ifdef CONFIG_LOW_POWER_PSEUDO_G3
-				enter_pseudo_g3();
-#else
 				CPRINTS("hibernating");
 				system_hibernate(0, 0);
-#endif
 			} else {
 				uint64_t wait = target_time - time_now;
 				if (wait > TASK_MAX_WAIT_US)

@@ -417,25 +417,6 @@ enum power_state power_handle_state(enum power_state state)
 	return new_state;
 }
 
-#ifdef CONFIG_LOW_POWER_PSEUDO_G3
-void enter_pseudo_g3(void)
-{
-	CPRINTS("Enter Psuedo G3");
-
-	/*
-	 * Clean up the UART buffer and prevent any unwanted garbage characters
-	 * before power off and also ensure above debug message is printed.
-	 */
-	cflush();
-
-	gpio_set_level(GPIO_G3_SLEEP_EN, 1);
-
-	/* Power to EC should shut down now */
-	while (1)
-		;
-}
-#endif
-
 #ifdef CONFIG_POWER_S0IX
 static struct {
 	int required; /* indicates de-bounce required. */

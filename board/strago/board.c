@@ -367,3 +367,21 @@ enum battery_present battery_is_present(void)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
+
+void board_hibernate(void)
+{
+	CPRINTS("Enter Pseudo G3");
+
+	/*
+	 * Clean up the UART buffer and prevent any unwanted garbage characters
+	 * before power off and also ensure above debug message is printed.
+	 */
+	cflush();
+
+	gpio_set_level(GPIO_EC_HIB_L, 1);
+	gpio_set_level(GPIO_SMC_SHUTDOWN, 1);
+
+	/* Power to EC should shut down now */
+	while (1)
+		;
+}

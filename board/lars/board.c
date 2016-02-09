@@ -545,3 +545,20 @@ static void board_handle_reboot(void)
 		; /* wait here */
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
+
+void board_hibernate(void)
+{
+	CPRINTS("Enter Pseudo G3");
+
+	/*
+	 * Clean up the UART buffer and prevent any unwanted garbage characters
+	 * before power off and also ensure above debug message is printed.
+	 */
+	cflush();
+
+	gpio_set_level(GPIO_G3_SLEEP_EN, 1);
+
+	/* Power to EC should shut down now */
+	while (1)
+		;
+}

@@ -1317,12 +1317,6 @@
 #undef CONFIG_LOW_POWER_USE_LFIOSC
 
 /*
- * Enable Pseudo G3 (power removed from EC)
- * This requires board specific implementation.
- */
-#undef CONFIG_LOW_POWER_PSEUDO_G3
-
-/*
  * Enable deep sleep during S0 (ignores SLEEP_MASK_AP_RUN).
  */
 #undef CONFIG_LOW_POWER_S0

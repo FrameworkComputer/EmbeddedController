@@ -133,8 +133,4 @@ int power_get_pause_in_s5(void);
  */
 void power_set_pause_in_s5(int pause);
 
-#ifdef CONFIG_LOW_POWER_PSEUDO_G3
-void enter_pseudo_g3(void);
-#endif
-
 #endif  /* __CROS_EC_POWER_H */

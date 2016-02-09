@@ -144,9 +144,6 @@
 #undef CONFIG_CONSOLE_HISTORY
 #undef CONFIG_PECI
 
-/* Enable Pseudo G3 */
-#define CONFIG_LOW_POWER_PSEUDO_G3
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
