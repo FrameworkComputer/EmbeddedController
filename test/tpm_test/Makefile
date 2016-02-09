@@ -40,7 +40,7 @@ $(obj)/%.o: $(src)/%.c
 $(obj)/_$(TARGET).so: $(OBJS) $(obj)/$(TARGET).py
 	@echo "  LD      $(notdir $@)"
 	$(Q)rm -f $@
-	$(Q)ld -shared $(OBJS) -lftdi1 -o $@
+	$(Q)gcc -shared $(OBJS) -lftdi1 -o $@
 
 $(obj)/%_wrap.c: $(src)/%.i
 	@echo "  SWIG    $(notdir $@)"
