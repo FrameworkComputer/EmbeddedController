@@ -42,17 +42,17 @@ void gpio_set_level(enum gpio_signal signal, int value)
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
-	/* Output must be enabled; input is always enabled */
-	if (flags & GPIO_OUTPUT)
-		GR_GPIO_SETDOUTEN(port) = mask;
-	else
-		GR_GPIO_CLRDOUTEN(port) = mask;
-
 	/* Only matters for outputs */
 	if (flags & GPIO_LOW)
 		set_one_gpio_bit(port, mask, 0);
 	else if (flags & GPIO_HIGH)
 		set_one_gpio_bit(port, mask, 1);
+
+	/* Output must be enabled; input is always enabled */
+	if (flags & GPIO_OUTPUT)
+		GR_GPIO_SETDOUTEN(port) = mask;
+	else
+		GR_GPIO_CLRDOUTEN(port) = mask;
 
 	/* Interrupt types */
 	if (flags & GPIO_INT_F_LOW) {
