@@ -548,10 +548,17 @@ DECLARE_IRQ(NPCX_IRQ_PM_CHAN_OBE, lpc_pmc_obe_interrupt, 2);
 
 void lpc_port80_interrupt(void)
 {
-	port_80_write(NPCX_DP80BUF);
+	/* Send port 80 data to UART continuously if FIFO is not empty */
+	while (IS_BIT_SET(NPCX_DP80STS, 6))
+		port_80_write(NPCX_DP80BUF);
 
-	/* No matter what , just clear error status bit */
-	SET_BIT(NPCX_DP80STS, 7);
+	/* If FIFO is overflow */
+	if (IS_BIT_SET(NPCX_DP80STS, 7)) {
+		SET_BIT(NPCX_DP80STS, 7);
+		CPRINTS("DP80 FIFO Overflow!");
+	}
+
+	/* Clear pending bit of host writing */
 	SET_BIT(NPCX_DP80STS, 5);
 }
 DECLARE_IRQ(NPCX_IRQ_PORT80, lpc_port80_interrupt, 2);
