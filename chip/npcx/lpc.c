@@ -756,6 +756,14 @@ void lpc_lreset_pltrst_handler(void)
 	/* Clear pending bit of WUI */
 	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 7);
 
+#ifdef GPIO_PCH_RSMRST_L
+	/* Ignore PLTRST# from SOC unless RSMRST# to soc is deasserted */
+	if (!gpio_get_level(GPIO_PCH_RSMRST_L))
+		return;
+#endif
+
+	ccprintf("[%T PLTRST deasserted]\n");
+
 	/*
 	 * Once LRESET is de-asserted (low -> high), we need to intialize lpc
 	 * settings once. If RSTCTL_LRESET_PLTRST_MODE is active, LPC registers
