@@ -10,6 +10,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <endian.h>
 
 #include "comm-host.h"
 #include "keyboard_config.h"
