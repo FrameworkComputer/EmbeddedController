@@ -5,6 +5,9 @@
 #include "config.h"
 #include "rsa.h"
 
+#define STRINGIFY0(name) #name
+#define STRINGIFY(name) STRINGIFY0(name)
+
 #ifdef RW_B_LDS
 #define FW_MEM_OFF_(section) CONFIG_##section##_B_MEM_OFF
 #else
@@ -74,7 +77,7 @@ SECTIONS
 #if defined(SECTION_IS_RW) && defined(CONFIG_RW_HEAD_ROOM)
 	. = . +  CONFIG_RW_HEAD_ROOM;
 #endif
-        OUTDIR/core/CORE/init.o (.text.vecttable)
+        STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable)
         . = ALIGN(4);
         __version_struct_offset = .;
         KEEP(*(.rodata.ver))
@@ -87,7 +90,7 @@ SECTIONS
 #else
         . = ALIGN(4);
 #endif
-        OUTDIR/core/CORE/init.o (.text)
+        STRINGIFY(OUTDIR/core/CORE/init.o) (.text)
         *(.text*)
 #ifdef CONFIG_EXTERNAL_STORAGE
         __flash_lpfw_start = .;

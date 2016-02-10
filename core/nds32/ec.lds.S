@@ -4,6 +4,9 @@
  */
 #include "config.h"
 
+#define STRINGIFY0(name) #name
+#define STRINGIFY(name) STRINGIFY0(name)
+
 #define FW_OFF_(section) CONFIG_##section##_MEM_OFF
 #define FW_OFF(section) (CONFIG_PROGRAM_MEMORY_BASE + FW_OFF_(section))
 
@@ -25,7 +28,7 @@ MEMORY
 SECTIONS
 {
     .text : {
-        KEEP(OUTDIR/core/CORE/init.o (.text.vecttable))
+        KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable))
         . = ALIGN(4);
         __version_struct_offset = .;
         KEEP(*(.rodata.ver))
@@ -34,8 +37,8 @@ SECTIONS
 #else
         . = ALIGN(4);
 #endif
-        KEEP(OUTDIR/core/CORE/init.o (.text.vectirq))
-        KEEP(OUTDIR/core/CORE/init.o (.text))
+        KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vectirq))
+        KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text))
         *(.text*)
 
         . = ALIGN(CONFIG_IT83XX_ILM_BLOCK_SIZE);
@@ -52,7 +55,7 @@ SECTIONS
 
         . = ALIGN(4);
         __irqhandler = .;
-        KEEP(OUTDIR/core/CORE/init.o (.rodata.vecthandlers))
+        KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.rodata.vecthandlers))
 
         . = ALIGN(4);
         __cmds = .;

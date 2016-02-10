@@ -5,6 +5,9 @@
 #include "config.h"
 #include "rsa.h"
 
+#define STRINGIFY0(name) #name
+#define STRINGIFY(name) STRINGIFY0(name)
+
 #define FW_OFF_(section) CONFIG_##section##_MEM_OFF
 #define FW_OFF(section) (CONFIG_PROGRAM_MEMORY_BASE + FW_OFF_(section))
 
@@ -36,7 +39,7 @@ SECTIONS
     } > SHARED_LIB
 #endif
     .text : {
-        OUTDIR/core/CORE/init.o (.text.vecttable)
+        STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable)
         . = ALIGN(4);
         __version_struct_offset = .;
         KEEP(*(.rodata.ver))
@@ -49,7 +52,7 @@ SECTIONS
 #else
         . = ALIGN(4);
 #endif
-        OUTDIR/core/CORE/init.o (.text)
+        STRINGIFY(OUTDIR/core/CORE/init.o) (.text)
         *(.text*)
     } > FLASH
     . = ALIGN(4);
