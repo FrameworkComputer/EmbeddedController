@@ -42,7 +42,6 @@ board-y += tpm2/trng.o
 # Build and link with an external library
 EXTLIB := $(realpath ../../third_party/tpm2)
 CFLAGS += -I$(EXTLIB)
-LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
 
 # For the benefit of the tpm2 library.
 INCLUDE_ROOT := $(abspath ./include)
@@ -61,9 +60,10 @@ CFLAGS += -DUSER_MIN_HASH_STATE_SIZE=210
 CFLAGS += -DEMBEDDED_MODE=1
 
 # Add dependencies on that library
-$(out)/RO/ec.RO.elf: $(out)/tpm2/libtpm2.a
-$(out)/RW/ec.RW.elf: $(out)/tpm2/libtpm2.a
-$(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a
+
+#$(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2
 
 # Force the external build each time, so it can look for changed sources.
 .PHONY: $(out)/tpm2/libtpm2.a
