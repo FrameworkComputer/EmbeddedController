@@ -165,18 +165,18 @@ static void uart_config(void)
 #elif (OSC_CLK == 40000000)
 	NPCX_UPSR = 0x30;
 	NPCX_UBAUD = 0x02;
-#elif (OSC_CLK == 33000000)
+#elif (OSC_CLK == 33000000) /* APB2 is the same as core clock */
 	NPCX_UPSR = 0x08;
-	NPCX_UBAUD = 0x08;
+	NPCX_UBAUD = 0x11;
 #elif (OSC_CLK == 24000000)
 	NPCX_UPSR = 0x60;
 	NPCX_UBAUD = 0x00;
-#elif (OSC_CLK == 15000000)
+#elif (OSC_CLK == 15000000) /* APB2 is the same as core clock */
 	NPCX_UPSR = 0x38;
-	NPCX_UBAUD = 0x00;
-#elif (OSC_CLK == 13000000)
+	NPCX_UBAUD = 0x01;
+#elif (OSC_CLK == 13000000) /* APB2 is the same as core clock */
 	NPCX_UPSR = 0x30;
-	NPCX_UBAUD = 0x00;
+	NPCX_UBAUD = 0x01;
 #else
 #error "Unsupported Core Clock Frequency"
 #endif

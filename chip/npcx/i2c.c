@@ -95,6 +95,36 @@ struct i2c_status {
 /* I2C controller state data array */
 static struct i2c_status i2c_stsobjs[I2C_CONTROLLER_COUNT];
 
+/* I2C timing setting */
+struct i2c_timing {
+	uint8_t clock; /* I2C source clock. (Unit: MHz)*/
+	uint8_t HLDT;  /* I2C hold-time. (Unit: clocks) */
+	uint8_t k1;    /* k1 = SCL low-time (Unit: clocks) */
+	uint8_t k2;    /* k2 = SCL high-time (Unit: clocks) */
+};
+
+/* I2C timing setting array of 400K & 1M Hz */
+static const struct i2c_timing i2c_400k_timings[] = {
+	{50, 22, 84, 56},
+	{48, 22, 80, 54},
+	{40, 19, 66, 46},
+	{33, 17, 52, 38},
+	{24, 15, 38, 28},
+	{15, 12, 24, 18},
+	{13, 11, 22, 16},
+	{12, 11, 20, 14},};
+const unsigned int i2c_400k_timing_used = ARRAY_SIZE(i2c_400k_timings);
+
+static const struct i2c_timing i2c_1m_timings[] = {
+	{50, 13, 32, 24},
+	{48, 13, 30, 24},
+	{40, 12, 26, 20},
+	{33, 11, 20, 16},
+	{24, 10, 16, 12},
+	{15,  9, 10,  8},};
+const unsigned int i2c_1m_timing_used = ARRAY_SIZE(i2c_1m_timings);
+
+
 int i2c_port_to_controller(int port)
 {
 	if (port < 0 || port >= I2C_PORT_COUNT)
@@ -664,7 +694,7 @@ int i2c_raw_get_sda(int port)
 /* Hooks */
 static void i2c_freq_changed(void)
 {
-	int freq, i;
+	int freq, i, j;
 
 	for (i = 0; i < i2c_ports_used; i++) {
 		int bus_freq = i2c_ports[i].kbps;
@@ -693,61 +723,44 @@ static void i2c_freq_changed(void)
 			SET_FIELD(NPCX_SMBCTL3(ctrl), NPCX_SMBCTL3_SCLFRQ2_FIELD
 					, (scl_freq >> 7));
 		} else {
+			const struct i2c_timing *pTiming;
+			int i2c_timing_used;
+
 			/* use Fast Mode */
 			SET_BIT(NPCX_SMBCTL3(ctrl)  , NPCX_SMBCTL3_400K);
-#if (OSC_CLK > 15000000)
-			/*
-			 * Set SCLLT/SCLHT:
-			 * tSCLL = 2 * SCLLT7-0 * tCLK
-			 * tSCLH = 2 * SCLHT7-0 * tCLK
-			 * (tSCLL+tSCLH) = 4 * SCLH(L)T * tCLK if tSCLL == tSCLH
-			 * SCLH(L)T = tSCL/(4*tCLK) = fCLK/(4*fSCL)
-			 * The same formula as SCLFRQ
-			 */
-			NPCX_SMBSCLLT(ctrl) = scl_freq;
-			NPCX_SMBSCLHT(ctrl) = scl_freq;
-#else
 			/*
 			 * Set SCLH(L)T and hold-time directly for best i2c
-			 * timing condition if core clock is low. Please refer
+			 * timing condition for all source clocks. Please refer
 			 * Section 7.5.9 "SMBus Timing - Fast Mode" for detail.
 			 */
 			if (bus_freq == 400) {
-				if (freq == 15000000) {
-					NPCX_SMBSCLLT(ctrl) = 12;
-					NPCX_SMBSCLHT(ctrl) = 9;
-					SET_FIELD(NPCX_SMBCTL4(ctrl),
-					NPCX_SMBCTL4_HLDT_FIELD, 7);
-				} else if (freq == 15000000/2) {
-					NPCX_SMBSCLLT(ctrl) = 7;
-					NPCX_SMBSCLHT(ctrl) = 5;
-					SET_FIELD(NPCX_SMBCTL4(ctrl),
-					NPCX_SMBCTL4_HLDT_FIELD, 7);
-				} else if (freq == 13000000) {
-					NPCX_SMBSCLLT(ctrl) = 11;
-					NPCX_SMBSCLHT(ctrl) = 8;
-					SET_FIELD(NPCX_SMBCTL4(ctrl),
-					NPCX_SMBCTL4_HLDT_FIELD, 7);
-				} else if (freq == 13000000/2) {
-					NPCX_SMBSCLLT(ctrl) = 7;
-					NPCX_SMBSCLHT(ctrl) = 4;
-					SET_FIELD(NPCX_SMBCTL4(ctrl),
-					NPCX_SMBCTL4_HLDT_FIELD, 7);
-				} else {
-					/* Set value from formula */
-					NPCX_SMBSCLLT(ctrl) = scl_freq;
-					NPCX_SMBSCLHT(ctrl) = scl_freq;
-					cprints(CC_I2C, "Warning: Not ",
-					"optimized timing for i2c %d", ctrl);
-				}
+				pTiming = i2c_400k_timings;
+				i2c_timing_used = i2c_400k_timing_used;
+			} else if (bus_freq == 1000) {
+				pTiming = i2c_1m_timings;
+				i2c_timing_used = i2c_1m_timing_used;
 			} else {
 				/* Set value from formula */
 				NPCX_SMBSCLLT(ctrl) = scl_freq;
 				NPCX_SMBSCLHT(ctrl) = scl_freq;
-				cprints(CC_I2C, "Warning: I2c %d don't support",
-				     " over 400kHz if src clock is low.", ctrl);
+				cprints(CC_I2C, "Warning: Use 400K or 1MHz",
+					"for better timing of I2c %d", ctrl);
+				continue;
 			}
-#endif
+
+			for (j = 0; j < i2c_timing_used; j++, pTiming++) {
+				if (pTiming->clock == (freq/SECOND)) {
+					/* Set SCLH(L)T and hold-time */
+					NPCX_SMBSCLLT(ctrl) = pTiming->k1/2;
+					NPCX_SMBSCLHT(ctrl) = pTiming->k2/2;
+					SET_FIELD(NPCX_SMBCTL4(ctrl),
+					NPCX_SMBCTL4_HLDT_FIELD, pTiming->HLDT);
+					break;
+				}
+			}
+			if (j == i2c_timing_used)
+				cprints(CC_I2C, "Error: Please make sure src ",
+					"clock of i2c %d is supported", ctrl);
 		}
 	}
 }

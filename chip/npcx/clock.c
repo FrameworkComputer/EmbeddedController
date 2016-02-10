@@ -147,6 +147,14 @@ void clock_init(void)
 	NPCX_HFCGP = 0x10;
 #endif
 
+	/*
+	 * Let APB2 and Core CLK are equal if default APB2 clock isn't
+	 * divisible by 1MHz
+	 */
+#if (OSC_CLK % 2000000)
+	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
+#endif
+
 	freq = OSC_CLK;
 
 	/* Notify modules of frequency change */
