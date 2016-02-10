@@ -23,10 +23,6 @@ CMD_SINGLE = 3
 MODE_SHA1 = 0
 MODE_SHA256 = 1
 
-
-class HashError(Exception):
-  pass
-
 # A standard empty response to HASH extended commands.
 EMPTY_RESPONSE = ''.join('%c' % x for x in (0x80, 0x01, 0x00, 0x00, 0x00, 0x0c,
                                             0xba, 0xcc, 0xd0, 0x0a, 0x00, 0x01))
@@ -64,7 +60,7 @@ def hash_test(tpm):
     tpm: a tpm object used to communicate with the device
 
   Raises:
-    HashError: on unexpected target responses
+    subcmd.TpmTestError: on unexpected target responses
   """
 
   contexts = {}
@@ -100,7 +96,7 @@ def hash_test(tpm):
       h = contexts[handle]
       h.update(text)
       if wrapped_response != EMPTY_RESPONSE:
-        raise HashError("Unexpected response to '%s': %s" %
+        raise subcmd.TpmTestError("Unexpected response to '%s': %s" %
                         (test_name, utils.hex_dump(wrapped_response)))
       continue
     if hash_cmd == CMD_FINISH:
@@ -108,12 +104,12 @@ def hash_test(tpm):
     elif hash_cmd == CMD_SINGLE:
       h = hash_func()
     else:
-      raise HashError('Unknown command %d' % hash_cmd)
+      raise subcmd.TpmTestError('Unknown command %d' % hash_cmd)
     h.update(text)
     digest = h.digest()
     result = wrapped_response[12:]
     if result != h.digest():
-      raise HashError('%s error:%s%s' % (test_name,
+      raise subcmd.TpmTestError('%s error:%s%s' % (test_name,
                                          utils.hex_dump(digest),
                                          utils.hex_dump(result)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))

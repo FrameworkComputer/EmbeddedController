@@ -10,3 +10,8 @@ AES = 0
 HASH = 1
 RSA = 2
 EC = 3
+
+
+# The same exception class used by all tpmtest modules.
+class TpmTestError(Exception):
+  pass

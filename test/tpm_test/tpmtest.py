@@ -29,9 +29,6 @@ import subcmd
 # Extension command for dcypto testing
 EXT_CMD = 0xbaccd00a
 
-class TpmError(Exception):
-  pass
-
 
 class TPM(object):
   """TPM accessor class.
@@ -55,11 +52,11 @@ class TPM(object):
     self._debug_enabled = debug_mode
     self._handle = ftdi_spi_tpm
     if not self._handle.FtdiSpiInit(freq, debug_mode):
-      raise TpmError()
+      raise subcmd.TpmTestError('Failed to connect')
     response = self.command(''.join('%c' % int('0x%s' % x, 16)
                                     for x in self.STARTUP_CMD.split()))
     if ' '.join('%2.2x' % ord(x) for x in response) not in self.STARTUP_RSP:
-      raise TpmError('init failed')
+      raise subcmd.TpmTestError('init failed')
 
   def validate(self, data_blob, response_mode=False):
     """Check if a data blob complies with TPM command/response header format."""
@@ -67,12 +64,12 @@ class TPM(object):
         self.HEADER_FMT, data_blob + '  ')
     prefix = 'Misformatted blob: '
     if tag not in (0x8001, 0x8002):
-      raise TpmError(prefix + 'bad tag value 0x%4.4x' % tag)
+      raise subcmd.TpmTestError(prefix + 'bad tag value 0x%4.4x' % tag)
     if size != len(data_blob):
-      raise TpmError(prefix + 'size mismatch: header %d, actual %d' %
-                     (size, len(data_blob)))
+      raise subcmd.TpmTestError(prefix + 'size mismatch: header %d, actual %d'
+                                % (size, len(data_blob)))
     if size > 4096:
-      raise TpmError(prefix + 'invalid size %d' % size)
+      raise subcmd.TpmTestError(prefix + 'invalid size %d' % size)
     if response_mode:
       return
     if cmd_code >= 0x11f and cmd_code <= 0x18f:
@@ -80,7 +77,7 @@ class TPM(object):
     if cmd_code == EXT_CMD:
       return  # This is an extension command
 
-    raise TpmError(prefix + 'invalid command code 0x%x' % cmd_code)
+    raise subcmd.TpmTestError(prefix + 'invalid command code 0x%x' % cmd_code)
 
   def command(self, cmd_data):
     # Verify command header
@@ -108,21 +105,22 @@ class TPM(object):
     Returns:
       the binary string of the response payload, if validation succeeded.
     Raises:
-      TpmError: in case there are any validation problems, the error message
-        describes the problem.
+      subcmd.TpmTestError: in case there are any validation problems, the
+        error message describes the problem.
     """
     header_size = struct.calcsize(self.HEADER_FMT)
     tag, size, cmd, subcmd = struct.unpack(self.HEADER_FMT,
                                            response[:header_size])
     if tag != 0x8001:
-      raise TpmError('Wrong response tag: %4.4x' % tag)
+      raise subcmd.TpmTestError('Wrong response tag: %4.4x' % tag)
     if cmd != EXT_CMD:
-      raise TpmError('Unexpected response command field: %8.8x' % cmd)
+      raise subcmd.TpmTestError('Unexpected response command field: %8.8x' %
+                                cmd)
     if subcmd != expected_subcmd:
-      raise TpmError('Unexpected response subcommand field: %2.2x' %
+      raise subcmd.TpmTestError('Unexpected response subcommand field: %2.2x' %
                      subcmd)
     if size != len(response):
-      raise TpmError('Size mismatch: header %d, actual %d' % (
+      raise subcmd.TpmTestError('Size mismatch: header %d, actual %d' % (
           size, len(response)))
     return response[header_size:]
 
@@ -139,10 +137,9 @@ if __name__ == '__main__':
     ecc_test.ecc_test(t)
     hash_test.hash_test(t)
     rsa_test.rsa_test(t)
-  except (TpmError, crypto_test.CryptoError, hash_test.HashError,
-          rsa_test.RSAError) as e:
-    print()
-    print('Error:', e)
+  except subcmd.TpmTestError as e:
+    exc_file, exc_line = traceback.extract_tb(sys.exc_traceback)[-1][:2]
+    print('\nError in %s:%s: ' % (os.path.basename(exc_file), exc_line), e)
     if debug_needed:
       traceback.print_exc()
     sys.exit(1)

@@ -108,10 +108,6 @@ _KEYDERIVE_INPUTS = (
 )
 
 
-class ECError(Exception):
-  pass
-
-
 def _sign_test(tpm):
   msg = 'Hello CR50'
 
@@ -129,7 +125,7 @@ def _sign_test(tpm):
     verified = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
     expected = '\x01'
     if verified != expected:
-      raise ECError('%s error:%s:%s' % (
+      raise subcmd.TpmTestError('%s error:%s:%s' % (
         test_name, utils.hex_dump(verified), utils.hex_dump(expected)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 
@@ -143,7 +139,7 @@ def _keygen_test(tpm):
     valid = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
     expected = '\x01'
     if valid != expected:
-      raise ECError('%s error:%s:%s' % (
+      raise subcmd.TpmTestError('%s error:%s:%s' % (
         test_name, utils.hex_dump(valid), utils.hex_dump(expected)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 
@@ -158,7 +154,7 @@ def _keyderive_test(tpm):
     valid = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
     expected = '\x01'
     if valid != expected:
-      raise ECError('%s error:%s:%s' % (
+      raise subcmd.TpmTestError('%s error:%s:%s' % (
         test_name, utils.hex_dump(valid), utils.hex_dump(expected)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 

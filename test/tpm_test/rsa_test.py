@@ -119,10 +119,6 @@ _SIGN_INPUTS = (
 )
 
 
-class RSAError(Exception):
-  pass
-
-
 def _encrypt_tests(tpm):
   msg = 'Hello CR50!'
 
@@ -138,7 +134,7 @@ def _encrypt_tests(tpm):
     wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
     plaintext = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
     if msg != plaintext:
-      raise RSAError('%s error:%s%s' % (
+      raise subcmd.TpmTestError('%s error:%s%s' % (
           test_name, utils.hex_dump(msg), utils.hex_dump(plaintext)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 
@@ -159,7 +155,7 @@ def _sign_tests(tpm):
     verified = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
     expected = '\x01'
     if verified != expected:
-      raise RSAError('%s error:%s%s' % (
+      raise subcmd.TpmTestError('%s error:%s%s' % (
           test_name, utils.hex_dump(verified), utils.hex_dump(expected)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 

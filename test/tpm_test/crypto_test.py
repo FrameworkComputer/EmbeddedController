@@ -17,9 +17,6 @@ import utils
 DECRYPT = 0
 ENCRYPT = 1
 
-class CryptoError(Exception):
-  pass
-
 def get_attribute(tdesc, attr_name, required=True):
   """Retrieve an attribute value from an XML node.
 
@@ -33,8 +30,8 @@ def get_attribute(tdesc, attr_name, required=True):
   Returns:
     The attribute value as a string (ascii or binary)
   Raises:
-    CryptoError: on various format errors, or in case a required attribute is
-      not found, the error message describes the problem.
+    subcmd.TpmTestError: on various format errors, or in case a required
+      attribute is not found, the error message describes the problem.
 
   """
   # Fields stored in hex format by default.
@@ -43,7 +40,7 @@ def get_attribute(tdesc, attr_name, required=True):
   data = tdesc.find(attr_name)
   if data is None:
     if required:
-      raise CryptoError('node "%s" does not have attribute "%s"' %
+      raise subcmd.TpmTestError('node "%s" does not have attribute "%s"' %
                         (tdesc.get('name'), attr_name))
     return ''
 
@@ -55,7 +52,7 @@ def get_attribute(tdesc, attr_name, required=True):
     else:
       cell_format = 'ascii'
   elif cell_format not in ('hex', 'ascii'):
-    raise CryptoError('%s:%s, unrecognizable format "%s"' %
+    raise subcmd.TpmTestError('%s:%s, unrecognizable format "%s"' %
                       (tdesc.get('name'), attr_name, cell_format))
 
   text = ' '.join(x.strip() for x in data.text.splitlines() if x)
@@ -65,7 +62,7 @@ def get_attribute(tdesc, attr_name, required=True):
   # Drop spaces from hex representation.
   text = text.replace(' ', '')
   if len(text) & 3:
-    raise CryptoError('%s:%s %swrong hex number size' %
+    raise subcmd.TpmTestError('%s:%s %swrong hex number size' %
                       (tdesc.get('name'), attr_name, utils.hex_dump(text)))
   # Convert text to binary
   value = ''
@@ -73,7 +70,7 @@ def get_attribute(tdesc, attr_name, required=True):
     try:
       value += struct.pack('<I', int('0x%s' % text[8*x:8*(x+1)], 16))
     except ValueError:
-      raise CryptoError('%s:%s %swrong hex value' %
+      raise subcmd.TpmTestError('%s:%s %swrong hex value' %
                         (tdesc.get('name'), attr_name, utils.hex_dump(text)))
   return value
 
@@ -134,15 +131,16 @@ def crypto_run(node_name, op_type, key, iv, in_text, out_text, tpm):
     comparison with the expected value was successful.
 
   Raises:
-    CryptoError: in case there were problems parsing the node name, or verifying
-      the operation results.
+    subcmd.TpmTestError: in case there were problems parsing the node name, or
+      verifying the operation results.
+
   """
   mode_name, submode_name = node_name.split(':')
   submode_name = submode_name[:3].upper()
 
   mode = SUPPORTED_MODES.get(mode_name.upper())
   if not mode:
-    raise CryptoError('unrecognizable mode in node "%s"' % node_name)
+    raise subcmd.TpmTestError('unrecognizable mode in node "%s"' % node_name)
 
   submode = mode.submodes.get(submode_name, 0)
   cmd = '%c' % op_type    # Encrypt or decrypt
@@ -166,12 +164,13 @@ def crypto_run(node_name, op_type, key, iv, in_text, out_text, tpm):
       if tpm.debug_enabled():
         print('Out text mismatch in node %s:\n' % node_name)
       else:
-        raise CryptoError('Out text mismatch in node %s, operation %d:\n'
-                          'In text:%sExpected out text:%sReal out text:%s' % (
-                              node_name, op_type,
-                              utils.hex_dump(in_text),
-                              utils.hex_dump(out_text),
-                              utils.hex_dump(real_out_text)))
+        raise subcmd.TpmTestError(
+          'Out text mismatch in node %s, operation %d:\n'
+          'In text:%sExpected out text:%sReal out text:%s' % (
+            node_name, op_type,
+            utils.hex_dump(in_text),
+            utils.hex_dump(out_text),
+            utils.hex_dump(real_out_text)))
   return real_out_text
 
 
@@ -187,18 +186,19 @@ def crypto_test(tdesc, tpm):
       session.
     tpm: a TPM object to send extended commands to an initialized TPM
   Raises:
-    CryptoError: on various execution errors, the details are included in the
-      error message.
+    subcmd.TpmTestError: on various execution errors, the details are included
+      in the error message.
+
   """
   node_name = tdesc.get('name')
   key = get_attribute(tdesc, 'key')
   if len(key) not in (16, 24, 32):
-    raise CryptoError('wrong key size "%s:%s"' % (
+    raise subcmd.TpmTestError('wrong key size "%s:%s"' % (
         node_name,
         ''.join('%2.2x' % ord(x) for x in key)))
   iv = get_attribute(tdesc, 'iv', required=False)
   if iv and len(iv) != 16:
-    raise CryptoError('wrong iv size "%s:%s"' % (
+    raise subcmd.TpmTestError('wrong iv size "%s:%s"' % (
         node_name,
         ''.join('%2.2x' % ord(x) for x in iv)))
   clear_text = get_attribute(tdesc, 'clear_text')
