@@ -221,11 +221,12 @@ void tryLaunch(uint32_t adr, size_t max_size)
 	GREG32(GLOBALSEC, FLASH_REGION1_SIZE) = hdr->image_size - 1;
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION1_CTRL, EN, 1);
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION1_CTRL, RD_EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION1_CTRL, WR_EN, 0);
 
 	/* TODO: lock FLASH_REGION 1? */
 	disarmRAMGuards();
 
-	debug_printf("Valid image found at 0x%08x, jumping\n", hdr);
+	debug_printf("Valid image found at 0x%08x, jumping", hdr);
 	uart_tx_flush();
 
 	_jump_to_address(&hdr[1]);
