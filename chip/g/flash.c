@@ -41,6 +41,7 @@
 #include "common.h"
 #include "console.h"
 #include "flash.h"
+#include "flash_config.h"
 #include "registers.h"
 #include "timer.h"
 #include "watchdog.h"
@@ -49,15 +50,33 @@
 
 int flash_pre_init(void)
 {
-	/* Enable access to the upper half of the flash */
-	uint32_t half = CONFIG_FLASH_SIZE / 2;
+	struct g_flash_region regions[4];
+	int i, num_regions;
 
-	GWRITE(GLOBALSEC, FLASH_REGION2_BASE_ADDR,
-	       CONFIG_MAPPED_STORAGE_BASE + half);
-	GWRITE(GLOBALSEC, FLASH_REGION2_SIZE, half - 1);
-	GWRITE_FIELD(GLOBALSEC, FLASH_REGION2_CTRL, WR_EN, 1);
-	GWRITE_FIELD(GLOBALSEC, FLASH_REGION2_CTRL, RD_EN, 1);
-	GWRITE_FIELD(GLOBALSEC, FLASH_REGION2_CTRL, EN, 1);
+	num_regions = flash_regions_to_enable(regions, ARRAY_SIZE(regions));
+
+	for (i = 0; i < num_regions; i++) {
+		int reg_base;
+
+		/* Region range */
+		reg_base = GBASE(GLOBALSEC) +
+			GOFFSET(GLOBALSEC, FLASH_REGION2_BASE_ADDR) +
+			i * 8;
+
+		REG32(reg_base) = regions[i].reg_base;
+
+		/*
+		 * The hardware requires a value which is 1 less than the
+		 * actual region size.
+		 */
+		REG32(reg_base + 4) = regions[i].reg_size - 1;
+
+		/* Region permissions. */
+		reg_base = GBASE(GLOBALSEC) +
+			GOFFSET(GLOBALSEC, FLASH_REGION2_CTRL) +
+			i * 4;
+		REG32(reg_base) = regions[i].reg_perms;
+	}
 
 	return EC_SUCCESS;
 }

@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_version.h"
+#include "flash_config.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -160,3 +161,37 @@ const void * const usb_strings[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #endif
+
+int flash_regions_to_enable(struct g_flash_region *regions,
+			    int max_regions)
+{
+	uint32_t half = CONFIG_FLASH_SIZE / 2;
+
+	if (max_regions < 1)
+		return 0;
+
+	if ((uint32_t)flash_regions_to_enable <
+	    (CONFIG_MAPPED_STORAGE_BASE + half))
+		/*
+		 * Running from RW_A. Need to enable writes into the top half,
+		 * which consists of NV_RAM and RW_B sections.
+		 */
+		regions->reg_base = CONFIG_MAPPED_STORAGE_BASE + half;
+	else
+		/*
+		 * Running from RW_B, need to enable access to both program
+		 * memory in the lower half and the NVRAM space in the top
+		 * half.
+		 *
+		 * NVRAM space in the top half by design is at the same offset
+		 * and of the same size as the RO section in the lower half.
+		 */
+		regions->reg_base = CONFIG_MAPPED_STORAGE_BASE +
+			CONFIG_RO_SIZE;
+
+	/* The size of the write enable area is the same in both cases. */
+	regions->reg_size = half;
+	regions->reg_perms =  FLASH_REGION_EN_ALL;
+
+	return 1; /* One region is enough. */
+}
