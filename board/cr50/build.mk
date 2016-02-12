@@ -38,6 +38,7 @@ board-y += tpm2/platform.o
 board-y += tpm2/rsa.o
 board-y += tpm2/stubs.o
 board-y += tpm2/trng.o
+board-y += tpm2/upgrade.o
 
 # Build and link with an external library
 EXTLIB := $(realpath ../../third_party/tpm2)
