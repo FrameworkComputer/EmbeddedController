@@ -24,7 +24,7 @@ import ftdi_spi_tpm
 import hash_test
 import rsa_test
 import subcmd
-
+import upgrade_test
 
 # Extension command for dcypto testing
 EXT_CMD = 0xbaccd00a
@@ -137,6 +137,7 @@ if __name__ == '__main__':
     ecc_test.ecc_test(t)
     hash_test.hash_test(t)
     rsa_test.rsa_test(t)
+    upgrade_test.upgrade(t)
   except subcmd.TpmTestError as e:
     exc_file, exc_line = traceback.extract_tb(sys.exc_traceback)[-1][:2]
     print('\nError in %s:%s: ' % (os.path.basename(exc_file), exc_line), e)
