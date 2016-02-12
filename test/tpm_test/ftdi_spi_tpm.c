@@ -369,7 +369,7 @@ struct swig_string_data FtdiSendCommandAndWait(char *tpm_command,
 		for (i = 0; i < command_size; i++) {
 			if (!(i % 16))
 				printf("\n");
-			printf(" %2.2x", tpm_command[i]);
+			printf(" %2.2x", (uint8_t)tpm_command[i]);
 		}
 		printf("\n");
 		return empty_string_data;

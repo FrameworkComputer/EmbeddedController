@@ -80,9 +80,11 @@ static struct vid_pid {
 	int vid;
 	int pid;
 	char *description;
+	int use_B;
 } supported_devices[] = {
 	{
-	0x0403, 0x6010, "FT2232 Future Technology Devices International, Ltd"},
+	0x0403, 0x6010, "FT2232 Future Technology Devices International, Ltd",
+	1},
 	{
 	0x0403, 0x6011, "FT4232 Future Technology Devices International, Ltd"},
 	{
@@ -405,7 +407,9 @@ struct mpsse_context *MPSSE(int freq, int endianness, const char *serial)
 	for (i = 0; supported_devices[i].vid != 0; i++) {
 		mpsse = OpenIndex(supported_devices[i].vid,
 				  supported_devices[i].pid, freq, endianness,
-				  IFACE_A, NULL, serial, 0);
+				  supported_devices[i].use_B ?
+					IFACE_B : IFACE_A,
+				  NULL, serial, 0);
 		if (!mpsse)
 			continue;
 
