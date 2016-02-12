@@ -131,7 +131,7 @@ static void lars_led_set_power(void)
 	static int previous_state_suspend;
 
 	power_ticks++;
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY)) {
 		/* Reset ticks if entering suspend so LED turns amber
 		 * as soon as possible. */
 		if (!previous_state_suspend)
