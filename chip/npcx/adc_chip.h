@@ -11,7 +11,7 @@
 /* Minimum and maximum values returned by raw ADC read. */
 #define ADC_READ_MIN 0
 #define ADC_READ_MAX 1023
-#define ADC_MAX_VOLT 3300
+#define ADC_MAX_VOLT 2816
 
 /* ADC input channel select */
 enum npcx_adc_input_channel {
