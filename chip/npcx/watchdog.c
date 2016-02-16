@@ -45,6 +45,17 @@ void watchdog_init_warning_timer(void)
 	task_enable_irq(ITIM16_INT(ITIM_WDG_NO));
 }
 
+static uint8_t watchdog_count(void)
+{
+	uint8_t cnt;
+	/* Wait for two consecutive equal values are read */
+	do {
+		cnt = NPCX_TWMWD;
+	} while (cnt != NPCX_TWMWD);
+
+	return cnt;
+}
+
 void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
@@ -52,7 +63,7 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_TO_STS);
 
 	/* Read watchdog counter from TWMWD */
-	wd_cnt = NPCX_TWMWD;
+	wd_cnt = watchdog_count();
 #if DEBUG_WDG
 	panic_printf("WD (%d)\r\n", wd_cnt);
 #endif

@@ -117,7 +117,13 @@ uint32_t __hw_clock_event_get(void)
 /* Get current counter value of event timer */
 uint16_t __hw_clock_event_count(void)
 {
-	return NPCX_ITCNT16(ITIM_EVENT_NO);
+	uint16_t cnt;
+	/* Wait for two consecutive equal values are read */
+	do {
+		cnt = NPCX_ITCNT16(ITIM_EVENT_NO);
+	} while (cnt != NPCX_ITCNT16(ITIM_EVENT_NO));
+
+	return cnt;
 }
 
 /* Returns time delay cause of deep idle */
@@ -125,7 +131,7 @@ uint32_t __hw_clock_get_sleep_time(uint16_t pre_evt_cnt)
 {
 	fp_t evt_tick = FLOAT_TO_FP(SECOND/(float)INT_32K_CLOCK);
 	uint32_t sleep_time;
-	uint16_t cnt = NPCX_ITCNT16(ITIM_EVENT_NO);
+	uint16_t cnt = __hw_clock_event_count();
 
 	/* Event has been triggered but timer ISR dosen't handle it */
 	if (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_TO_STS))

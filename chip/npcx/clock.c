@@ -298,8 +298,21 @@ void __idle(void)
 
 			/* Get current counter value of event timer */
 			evt_count = __hw_clock_event_count();
-			/* Enter deep idle */
-			asm("wfi");
+
+			/*
+			 * TODO (ML): We found the same symptom of idle occurs
+			 * after wake-up from deep idle. Please see task.c for
+			 * more detail.
+			 * Workaround: Apply the same bypass of idle.
+			 */
+			asm ("push {r0-r5}\n"
+			     "ldr r0, =0x100A8000\n"
+			     "wfi\n"
+			     "ldm r0, {r0-r5}\n"
+			     "pop {r0-r5}\n"
+			     "isb\n"
+			);
+
 			/* Get time delay cause of deep idle */
 			next_evt_us = __hw_clock_get_sleep_time(evt_count);
 
