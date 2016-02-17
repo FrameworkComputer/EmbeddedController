@@ -1241,6 +1241,8 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 			pd[i].power_role = PD_ROLE_SINK;
 			set_state(i, PD_STATE_SNK_DISCONNECTED);
 			tcpm_set_cc(i, TYPEC_CC_RD);
+			/* Make sure we're not sourcing VBUS. */
+			pd_power_supply_reset(i);
 			task_wake(PD_PORT_TO_TASK_ID(i));
 		}
 
