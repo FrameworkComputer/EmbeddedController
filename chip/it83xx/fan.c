@@ -33,11 +33,7 @@
  */
 /* pulse, the numbers of square pulses per revolution. */
 #define TACH0_TO_RPM(pulse, raw) (60 * TACH_EC_FREQ / 128 / pulse / raw)
-#ifdef CHIP_FAMILY_IT839X
 #define TACH1_TO_RPM(pulse, raw) (raw * 120 / (pulse * 2))
-#else
-#define TACH1_TO_RPM(pulse, raw) (60 * TACH_EC_FREQ / 128 / pulse / raw)
-#endif
 
 enum fan_output_s {
 	FAN_DUTY_I  = 0x01,

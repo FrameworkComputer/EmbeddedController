@@ -9,8 +9,6 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
-#define CHIP_FAMILY_IT839X
-
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION
 #define CONFIG_FANS 1

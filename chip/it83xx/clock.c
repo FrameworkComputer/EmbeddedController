@@ -206,10 +206,8 @@ static int clock_allow_low_power_idle(void)
 static void clock_ec_pll_ctrl(enum ec_pll_ctrl mode)
 {
 	IT83XX_ECPM_PLLCTRL = mode;
-#ifdef CHIP_FAMILY_IT839X
 	/* for deep doze / sleep mode */
 	IT83XX_ECPM_PLLCTRL = mode;
-#endif
 	asm volatile ("dsb");
 }
 
