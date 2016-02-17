@@ -33,11 +33,11 @@ const char *system_get_chip_revision(void)
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	if (board_hibernate)
-		board_hibernate();
-
 	/* Flush console before hibernating */
 	cflush();
+
+	if (board_hibernate)
+		board_hibernate();
 
 	/* chip specific standby mode */
 	CPRINTS("TODO: implement %s()", __func__);

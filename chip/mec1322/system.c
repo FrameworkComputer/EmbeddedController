@@ -190,9 +190,6 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	int i;
 
-	if (board_hibernate)
-		board_hibernate();
-
 #ifdef CONFIG_HOSTCMD_PD
 	/* Inform the PD MCU that we are going to hibernate. */
 	host_command_pd_request_hibernate();
@@ -201,6 +198,9 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 #endif
 
 	cflush();
+
+	if (board_hibernate)
+		board_hibernate();
 
 	/* Disable interrupts */
 	interrupt_disable();
