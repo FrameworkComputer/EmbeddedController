@@ -317,12 +317,6 @@ static int check_for_power_off_event(void)
 		return POWER_OFF_BY_POWER_REQ;
 	}
 
-#ifdef HAS_TASK_KEYSCAN
-	/* Dis/Enable keyboard scanning when the power button state changes */
-	if (!pressed || pressed != power_button_was_pressed)
-		keyboard_scan_enable(!pressed, KB_SCAN_DISABLE_POWER_BUTTON);
-#endif
-
 	now = get_time();
 	if (pressed) {
 #ifndef CONFIG_PMIC_FW_LONG_PRESS_TIMER
