@@ -132,9 +132,6 @@ void fan_set_enabled(int ch, int enabled)
 			fan_info_data[tach_ch].rpm_actual = 0;
 			fan_info_data[tach_ch].fan_sts = FAN_STATUS_STOPPED;
 		}
-		/* disable timer interrupt if all fan off. */
-		if (fan_all_disabled())
-			ext_timer_stop(FAN_CTRL_EXT_TIMER, 1);
 	}
 
 	/* on/off */
@@ -144,6 +141,12 @@ void fan_set_enabled(int ch, int enabled)
 	}
 
 	pwm_enable(ch, enabled);
+
+	if (!enabled) {
+		/* disable timer interrupt if all fan off. */
+		if (fan_all_disabled())
+			ext_timer_stop(FAN_CTRL_EXT_TIMER, 1);
+	}
 }
 
 int fan_get_enabled(int ch)
