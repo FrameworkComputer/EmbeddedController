@@ -185,7 +185,6 @@ static enum peci_status peci_transaction(uint8_t addr,
 		IT83XX_PECI_HOWRDR = w_buf[index];
 
 	peci_current_task = task_get_current();
-#ifdef CONFIG_IT83XX_PECI_WITH_INTERRUPT
 	task_clear_pending_irq(IT83XX_IRQ_PECI);
 	task_enable_irq(IT83XX_IRQ_PECI);
 
@@ -198,17 +197,7 @@ static enum peci_status peci_transaction(uint8_t addr,
 		index = 0;
 
 	task_disable_irq(IT83XX_IRQ_PECI);
-#else
-	/* start */
-	IT83XX_PECI_HOCTLR |= 0x01;
 
-	for (index = 0x00; index < timeout_us; index += 16) {
-		if (IT83XX_PECI_HOSTAR & PECI_STATUS_ANY_BIT)
-			break;
-
-		udelay(15);
-	}
-#endif
 	peci_current_task = TASK_ID_INVALID;
 
 	if (index < timeout_us) {
