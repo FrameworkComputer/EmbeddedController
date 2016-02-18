@@ -566,6 +566,8 @@ static void lpc_init(void)
 {
 	enum ec2i_message ec2i_r;
 
+	/* SPI slave interface is disabled */
+	IT83XX_GCTRL_SSCR = 0;
 	/*
 	 * DLM 52k~56k size select enable.
 	 * For mapping LPC I/O cycle 800h ~ 9FFh to DLM 8D800 ~ 8D9FF.
