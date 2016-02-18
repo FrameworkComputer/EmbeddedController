@@ -162,16 +162,16 @@ DECLARE_CONSOLE_COMMAND(usb, command_usb,
 
 /* When debugging, print errors as they occur */
 #define report_error(dummy)					\
-		print_later("USB ERROR at usb.c line %d",	\
-			    __LINE__, 0, 0, 0, 0)
+	print_later("USB ERROR at usb.c line %d: 0x%x",		\
+		    __LINE__, dummy, 0, 0, 0)
 
 #else  /* Not debugging */
 #define print_later(...)
 
 /* TODO: Something unexpected happened. Figure out how to report & fix it. */
 #define report_error(dummy)						\
-		CPRINTS("Unhandled USB error at %s line %d",		\
-			__FILE__, __LINE__)
+	CPRINTS("Unhandled USB error at %s line %d: 0x%x",		\
+		__FILE__, __LINE__, dummy)
 
 #endif	/* DEBUG_ME */
 
@@ -351,7 +351,7 @@ int load_in_fifo(const void *source, uint32_t len)
 
 	/* Copy the data into our FIFO buffer */
 	if (len >= IN_BUF_SIZE) {
-		report_error();
+		report_error(len);
 		return -1;
 	}
 	if (len)
@@ -384,7 +384,7 @@ int load_in_fifo(const void *source, uint32_t len)
 int accept_out_fifo(uint32_t len)
 {
 	/* TODO: This is not yet implemented */
-	report_error();
+	report_error(len);
 	return -1;
 }
 
@@ -482,7 +482,7 @@ static void expect_data_phase_out(enum table_case tc)
 {
 	print_later("expect_data_phase_out(%c)", "0ABCDE67"[tc], 0, 0, 0, 0);
 	/* TODO: This is not yet supported */
-	report_error();
+	report_error(tc);
 	expect_setup_packet();
 }
 
@@ -573,7 +573,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 			/* We're not high speed */
 			return -1;
 		default:
-			report_error();
+			report_error(type);
 			return -1;
 		}
 		break;
@@ -593,7 +593,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 		return -1;
 
 	default:
-		report_error();
+		report_error(req->bRequest);
 		return -1;
 	}
 
@@ -753,7 +753,7 @@ static void handle_setup(enum table_case tc)
 		}
 	} else {
 		/* Something we need to add support for? */
-		report_error();
+		report_error(-1);
 	}
 
 	print_later("data_phase_in %d data_phase_out %d bytes %d",
@@ -814,7 +814,7 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 			if (sr) {
 				handle_setup(tc);
 			} else {
-				report_error();
+				report_error(tc);
 				print_later("next_out_idx %d flags 0x%08x",
 					    next_out_idx, next_out_desc->flags,
 					    0, 0, 0);
@@ -921,7 +921,7 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 		}
 
 		/* Some other kind of OUT interrupt instead. */
-		report_error();
+		report_error(tc);
 		expect_setup_packet();
 		break;
 	}
