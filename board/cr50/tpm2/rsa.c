@@ -33,8 +33,10 @@ static int check_encrypt_params(TPM_ALG_ID padding_alg, TPM_ALG_ID hash_alg,
 			/* Unsupported hash algorithm. */
 			return 0;
 		*padding = PADDING_MODE_OAEP;
+	} else if (padding_alg == TPM_ALG_NULL) {
+		*padding = PADDING_MODE_NULL;
 	} else {
-		return 0;  /* NULL padding unsupported. */
+		return 0;  /* Unsupported padding mode. */
 	}
 	return 1;
 }

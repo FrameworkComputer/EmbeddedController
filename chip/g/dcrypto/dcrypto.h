@@ -94,12 +94,15 @@ struct RSA {
 enum padding_mode {
 	PADDING_MODE_PKCS1 = 0,
 	PADDING_MODE_OAEP  = 1,
-	PADDING_MODE_PSS = 2
+	PADDING_MODE_PSS = 2,
+	/* USE OF NULL PADDING IS NOT RECOMMENDED.
+	 * SUPPORT EXISTS AS A REQUIREMENT FOR TPM2 OPERATION. */
+	PADDING_MODE_NULL  = 3
 };
 
 /* Calculate r = m ^ e mod N */
 int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
-			const uint8_t *in, const uint32_t in_len,
+			const uint8_t *in, uint32_t in_len,
 			enum padding_mode padding, enum hashing_mode hashing,
 			const char *label);
 

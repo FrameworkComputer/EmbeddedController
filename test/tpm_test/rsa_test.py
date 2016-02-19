@@ -26,7 +26,8 @@ _RSA_PADDING = {
   'PKCS1-SSA': 0x14,
   'PKCS1-ES': 0x15,
   'PKCS1-PSS': 0x16,
-  'OAEP': 0x17
+  'OAEP': 0x17,
+  'NULL': 0x10,
 }
 
 
@@ -110,6 +111,7 @@ _ENCRYPT_INPUTS = (
   ('OAEP', 'SHA256', 768),
   ('PKCS1-ES', 'NONE', 768),
   ('PKCS1-ES', 'NONE', 2048),
+  ('NULL', 'NONE', 768),
 )
 
 
@@ -135,6 +137,14 @@ def _encrypt_tests(tpm):
                        key_len, ciphertext)
     wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
     plaintext = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
+    if padding == 'NULL':
+      # Check for leading zeros.
+      if reduce(lambda x, y: x | y,
+                map(ord, plaintext[:len(plaintext) - len(msg)])):
+        raise subcmd.TpmTestError('%s error:%s%s' % (
+          test_name, utils.hex_dump(msg), utils.hex_dump(plaintext)))
+      else:
+        plaintext = plaintext[len(plaintext) - len(msg):]
     if msg != plaintext:
       raise subcmd.TpmTestError('%s error:%s%s' % (
           test_name, utils.hex_dump(msg), utils.hex_dump(plaintext)))

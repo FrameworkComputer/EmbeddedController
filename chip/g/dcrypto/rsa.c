@@ -411,10 +411,11 @@ static int check_modulus_params(const struct BIGNUM *N, uint32_t *out_len)
 }
 
 int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
-			const uint8_t *in, const uint32_t in_len,
+			const uint8_t *in, uint32_t in_len,
 			enum padding_mode padding, enum hashing_mode hashing,
 			const char *label)
 {
+	uint8_t *p;
 	uint32_t padded_buf[RSA_MAX_WORDS];
 	uint32_t e_buf[BN_BYTES / sizeof(uint32_t)];
 
@@ -440,6 +441,19 @@ int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 		if (!pkcs1_type2_pad((uint8_t *) padded.d, bn_size(&padded),
 					(const uint8_t *) in, in_len))
 			return 0;
+		break;
+	case PADDING_MODE_NULL:
+		/* Input is allowed to have more bytes than N, in
+		 * which case the excess must be zero. */
+		for (; in_len > bn_size(&padded); in_len--)
+			if (*in++ != 0)
+				return 0;
+		p = (uint8_t *) padded.d;
+		/* If in_len < bn_size(&padded), padded will
+		 * have leading zero bytes. */
+		memcpy(&p[bn_size(&padded) - in_len], in, in_len);
+		/* TODO(ngm): in may be > N, bn_mont_mod_exp() should
+		 * handle this case. */
 		break;
 	default:
 		return 0;                       /* Unsupported padding mode. */
@@ -496,6 +510,14 @@ int DCRYPTO_rsa_decrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 				out, out_len, (const uint8_t *) padded.d,
 				bn_size(&padded)))
 			ret = 0;
+		break;
+	case PADDING_MODE_NULL:
+		if (*out_len < bn_size(&padded)) {
+			ret = 0;
+		} else {
+			*out_len = bn_size(&padded);
+			memcpy(out, padded.d, *out_len);
+		}
 		break;
 	default:
 		/* Unsupported padding mode. */
