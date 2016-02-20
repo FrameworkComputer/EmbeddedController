@@ -161,7 +161,8 @@ static void fw_upgrade_command_handler(void *body,
 		return;
 	}
 
-	CPRINTF("%s: programming at offset 0x%x\n", __func__, block_offset);
+	CPRINTF("%s: programming at address 0x%x\n", __func__,
+		block_offset + CONFIG_PROGRAM_MEMORY_BASE);
 	if (flash_physical_write(block_offset, body_size,
 				 cmd_body->block_body) != EC_SUCCESS) {
 		*rv = UPGRADE_WRITE_FAILURE;
