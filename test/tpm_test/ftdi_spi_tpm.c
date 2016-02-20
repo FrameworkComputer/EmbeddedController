@@ -207,10 +207,8 @@ int FtdiSpiInit(uint32_t freq, int enable_debug)
 	if (!mpsse_)
 		return false;
 
-	/* Reset the TPM using GPIOL0, issue a 100 ms long pulse. */
+	/* Just in case, make sure bootsrap is not triggered. */
 	PinLow(mpsse_, GPIOL0);
-	usleep(100000);
-	PinHigh(mpsse_, GPIOL0);
 
 	FtdiReadReg(TPM_DID_VID_REG, sizeof(did_vid), &did_vid);
 
