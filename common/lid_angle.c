@@ -164,3 +164,10 @@ static void enable_peripherals(void)
 	lid_angle_peripheral_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_peripherals, HOOK_PRIO_DEFAULT);
+
+/* Board level callback was not linked in test build, implement it here. */
+#ifdef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+}
+#endif

@@ -27,6 +27,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "math_util.h"
 #include "motion_lid.h"
@@ -748,4 +749,9 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+void lid_angle_peripheral_enable(int enable)
+{
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
 #endif /* defined(HAS_TASK_MOTIONSENSE) */
