@@ -84,9 +84,25 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 	/* This HW feature is not present in the Cr50 ARM core */
 }
 
+struct pinmux {
+	uint32_t signal;
+	uint32_t dio;
+	uint16_t flags;
+};
 
-static void connect_pinmux(uint32_t signal, uint32_t dio, uint16_t flags)
+#define GPIO_GPIO(name) GPIO_##name
+#define PINMUX(signal, dio, flags) {GPIO_##signal, DIO(dio), flags},
+
+static const struct pinmux pinmux_list[] = {
+	#include "gpio.wrap"
+};
+
+static void connect_pinmux(struct pinmux const *p)
 {
+	uint32_t signal = p->signal;
+	uint32_t dio    = p->dio;
+	uint16_t flags  = p->flags;
+
 	if (flags & DIO_ENABLE_DIRECT_INPUT) {
 		/* enable digital input for direct wired peripheral */
 		REG_WRITE_MLV(DIO_CTL_REG(dio), DIO_CTL_IE_MASK,
@@ -142,7 +158,6 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
-	const struct gpio_alt_func *af = gpio_alt_funcs;
 
 	int i;
 
@@ -155,8 +170,8 @@ void gpio_pre_init(void)
 		      GC_PMU_PERICLKSET0_DGPIO1_CLK_LSB, 1);
 
 	/* Set up the pinmux */
-	for (i = 0; i < gpio_alt_funcs_count; i++, af++)
-		connect_pinmux(af->port, af->mask, af->flags);
+	for (i = 0; i < ARRAY_SIZE(pinmux_list); i++)
+		connect_pinmux(pinmux_list + i);
 
 	/* Set up ARM core GPIOs */
 	for (i = 0; i < GPIO_COUNT; i++, g++)
