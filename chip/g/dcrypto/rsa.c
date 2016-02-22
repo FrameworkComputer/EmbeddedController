@@ -7,6 +7,7 @@
 #include "internal.h"
 
 #include "trng.h"
+#include "util.h"
 
 #include <assert.h>
 
@@ -297,6 +298,107 @@ static int check_pkcs1_type1_pad(const uint8_t *msg, uint32_t msg_len,
 	return memcmp(msg, &padded[i], hash_size) == 0;
 }
 
+/* sign */
+static int pkcs1_pss_pad(uint8_t *padded, uint32_t padded_len,
+			const uint8_t *in, uint32_t in_len,
+			enum hashing_mode hashing)
+{
+	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
+		: SHA256_DIGEST_BYTES;
+	const uint32_t salt_len = MIN(padded_len - hash_size - 2, hash_size);
+	uint32_t db_len;
+	uint32_t ps_len;
+	struct HASH_CTX ctx;
+
+	if (in_len != hash_size)
+		return 0;
+	if (padded_len < hash_size + 2)
+		return 0;
+	db_len = padded_len - hash_size - 1;
+
+	if (hashing == HASH_SHA1)
+		DCRYPTO_SHA1_init(&ctx, 0);
+	else
+		DCRYPTO_SHA256_init(&ctx, 0);
+
+	/* Pilfer bits of output for temporary use. */
+	memset(padded, 0, 8);
+	DCRYPTO_HASH_update(&ctx, padded, 8);
+	DCRYPTO_HASH_update(&ctx, in, in_len);
+	/* Pilfer bits of output for temporary use. */
+	rand_bytes(padded, salt_len);
+	DCRYPTO_HASH_update(&ctx, padded, salt_len);
+
+	/* Output hash. */
+	memcpy(padded + db_len, DCRYPTO_HASH_final(&ctx), hash_size);
+
+	/* Prepare DB. */
+	ps_len = db_len - salt_len - 1;
+	memmove(padded + ps_len + 1, padded, salt_len);
+	memset(padded, 0, ps_len);
+	padded[ps_len] = 0x01;
+	MGF1_xor(padded, db_len, padded + db_len, hash_size, hashing);
+
+	/* Clear most significant bit. */
+	padded[0] &= 0x7F;
+	/* Set trailing byte. */
+	padded[padded_len - 1] = 0xBC;
+	return 1;
+}
+
+/* verify */
+static int check_pkcs1_pss_pad(const uint8_t *in, uint32_t in_len,
+			uint8_t *padded, uint32_t padded_len,
+			enum hashing_mode hashing)
+{
+	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
+		: SHA256_DIGEST_BYTES;
+	const uint8_t zeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	uint32_t db_len;
+	uint32_t max_ps_len;
+	uint32_t salt_len;
+	struct HASH_CTX ctx;
+	int bad = 0;
+	int i;
+
+	if (in_len != hash_size)
+		return 0;
+	if (padded_len < hash_size + 2)
+		return 0;
+	db_len = padded_len - hash_size - 1;
+
+	/* Top bit should be zero. */
+	bad |= padded[0] & 0x80;
+	/* Check trailing byte. */
+	bad |= padded[padded_len - 1] ^ 0xBC;
+
+	/* Recover DB. */
+	MGF1_xor(padded, db_len, padded + db_len, hash_size, hashing);
+	/* Clear top bit. */
+	padded[0] &= 0x7F;
+	/* Verify padding2. */
+	max_ps_len = db_len - 1;
+	for (i = 0; i < max_ps_len; i++) {
+		if (padded[i] == 0x01)
+			break;
+		else
+			bad |= padded[i];
+	}
+	bad |= (padded[i] ^ 0x01);
+	/* Continue with zero-length salt if 0x01 was not found. */
+	salt_len = max_ps_len - i;
+
+	if (hashing == HASH_SHA1)
+		DCRYPTO_SHA1_init(&ctx, 0);
+	else
+		DCRYPTO_SHA256_init(&ctx, 0);
+	DCRYPTO_HASH_update(&ctx, zeros, sizeof(zeros));
+	DCRYPTO_HASH_update(&ctx, in, in_len);
+	DCRYPTO_HASH_update(&ctx, padded + db_len - salt_len, salt_len);
+	bad |= memcmp(padded + db_len, DCRYPTO_HASH_final(&ctx), hash_size);
+	return !bad;
+}
+
 static int check_modulus_params(const struct BIGNUM *N, uint32_t *out_len)
 {
 	if (bn_size(N) > RSA_MAX_BYTES)
@@ -421,10 +523,14 @@ int DCRYPTO_rsa_sign(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	bn_init(&padded, padded_buf, bn_size(&rsa->N));
 	bn_init(&signature, out, bn_size(&rsa->N));
 
-	/* TODO(ngm): add support for PSS. */
 	switch (padding) {
 	case PADDING_MODE_PKCS1:
 		if (!pkcs1_type1_pad((uint8_t *) padded.d, bn_size(&padded),
+					(const uint8_t *) in, in_len, hashing))
+			return 0;
+		break;
+	case PADDING_MODE_PSS:
+		if (!pkcs1_pss_pad((uint8_t *) padded.d, bn_size(&padded),
 					(const uint8_t *) in, in_len, hashing))
 			return 0;
 		break;
@@ -480,6 +586,12 @@ int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
 				digest, digest_len, (uint8_t *) padded.d,
 				bn_size(&padded), hashing))
 			ret = 0;
+		break;
+	case PADDING_MODE_PSS:
+		if (!check_pkcs1_pss_pad(
+				digest, digest_len, (uint8_t *) padded.d,
+				bn_size(&padded), hashing))
+			return 0;
 		break;
 	default:
 		/* Unsupported padding mode. */

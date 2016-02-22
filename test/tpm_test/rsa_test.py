@@ -25,6 +25,7 @@ _RSA_OPCODES = {
 _RSA_PADDING = {
   'PKCS1-SSA': 0x14,
   'PKCS1-ES': 0x15,
+  'PKCS1-PSS': 0x16,
   'OAEP': 0x17
 }
 
@@ -113,9 +114,10 @@ _ENCRYPT_INPUTS = (
 
 
 _SIGN_INPUTS = (
-  # TODO(ngm): add support for PSS.
   ('PKCS1-SSA', 'SHA1', 768),
   ('PKCS1-SSA', 'SHA256', 768),
+  ('PKCS1-PSS', 'SHA1', 768),
+  ('PKCS1-PSS', 'SHA256', 768),
 )
 
 

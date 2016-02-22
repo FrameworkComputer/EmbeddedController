@@ -43,15 +43,18 @@ static int check_sign_params(TPM_ALG_ID padding_alg, TPM_ALG_ID hash_alg,
 			enum padding_mode *padding,
 			enum hashing_mode *hashing)
 {
-	/* TODO: add support for PSS. */
-	if (padding_alg == TPM_ALG_RSASSA) {
+	if (padding_alg == TPM_ALG_RSASSA ||
+		padding_alg == TPM_ALG_RSAPSS) {
 		if (hash_alg == TPM_ALG_SHA1)
 			*hashing = HASH_SHA1;
 		else if (hash_alg == TPM_ALG_SHA256)
 			*hashing = HASH_SHA256;
 		else
 			return 0;
-		*padding = PADDING_MODE_PKCS1;
+		if (padding_alg == TPM_ALG_RSASSA)
+			*padding = PADDING_MODE_PKCS1;
+		else
+			*padding = PADDING_MODE_PSS;
 	} else {
 		return 0;
 	}

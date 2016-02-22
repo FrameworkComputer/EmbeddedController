@@ -93,7 +93,8 @@ struct RSA {
 
 enum padding_mode {
 	PADDING_MODE_PKCS1 = 0,
-	PADDING_MODE_OAEP  = 1
+	PADDING_MODE_OAEP  = 1,
+	PADDING_MODE_PSS = 2
 };
 
 /* Calculate r = m ^ e mod N */
