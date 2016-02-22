@@ -84,61 +84,103 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 	/* This HW feature is not present in the Cr50 ARM core */
 }
 
-struct pinmux {
-	uint32_t signal;
-	uint32_t dio;
-	uint16_t flags;
+/*
+ * A pinmux_config contains the selector offset and selector value for a
+ * particular pinmux entry.
+ */
+struct pinmux_config {
+	uint16_t offset;
+	uint16_t value;
 };
 
-#define GPIO_GPIO(name) GPIO_##name
-#define PINMUX(signal, dio, flags) {GPIO_##signal, DIO(dio), flags},
+#define PINMUX_CONFIG(name) {						\
+		.offset = CONCAT3(GC_PINMUX_, name, _SEL_OFFSET),	\
+		.value  = CONCAT3(GC_PINMUX_, name, _SEL),		\
+	}
+
+/*
+ * The pinmux struct contains a full description of the connection of a DIO to
+ * a GPIO, an internal peripheral, or as a direct input.  The flag
+ * DIO_TO_PERIPHERAL is used to select between the two union entries.  There
+ * is no union entry for direct input because it requires no parameters.
+ */
+struct pinmux {
+	union {
+		enum gpio_signal     signal;
+		struct pinmux_config peripheral;
+	};
+	struct pinmux_config dio;
+	uint16_t             flags;
+};
+
+/*
+ * These macros are used to add flags indicating the type of mapping requested.
+ * DIO_TO_PERIPHERAL for FUNC mappings.
+ * DIO_ENABLE_DIRECT_INPUT for DIRECT mappings.
+ */
+#define FLAGS_FUNC(name) DIO_TO_PERIPHERAL
+#define FLAGS_GPIO(name) 0
+#define FLAGS_DIRECT     DIO_ENABLE_DIRECT_INPUT
+
+/*
+ * These macros are used to selectively initialize the anonymous union based
+ * on the type of pinmux mapping requested (FUNC, GPIO, or DIRECT).
+ */
+#define PINMUX_FUNC(name) .peripheral = PINMUX_CONFIG(name),
+#define PINMUX_GPIO(name) .signal     = CONCAT2(GPIO_, name),
+#define PINMUX_DIRECT
+
+/*
+ * Initialize an entry for the pinmux list.  The first parameter can be either
+ * FUNC(name) or GPIO(name) depending on the type of mapping required.  The
+ * second argument is the DIO name to map to.  And the final argument is the
+ * flags set for this mapping, this macro adds the DIO_TO_PERIPHERAL flag for
+ * a FUNC mapping.
+ */
+#define PINMUX(name, dio_name, dio_flags) {		\
+		PINMUX_##name				\
+		.dio   = PINMUX_CONFIG(DIO##dio_name),	\
+		.flags = dio_flags | FLAGS_##name	\
+	},
 
 static const struct pinmux pinmux_list[] = {
 	#include "gpio.wrap"
 };
 
+static int connect_dio_to_peripheral(struct pinmux const *p)
+{
+	if (p->flags & DIO_OUTPUT)
+		DIO_SEL_REG(p->dio.offset) = p->peripheral.value;
+
+	if (p->flags & DIO_INPUT)
+		DIO_SEL_REG(p->peripheral.offset) = p->dio.value;
+
+	return p->flags & DIO_INPUT;
+}
+
+static int connect_dio_to_gpio(struct pinmux const *p)
+{
+	const struct gpio_info *g = gpio_list + p->signal;
+	int bitnum = GPIO_MASK_TO_NUM(g->mask);
+
+	if ((g->flags & GPIO_OUTPUT) || (p->flags & DIO_OUTPUT))
+		DIO_SEL_REG(p->dio.offset) = GET_GPIO_FUNC(g->port, bitnum);
+
+	if ((g->flags & GPIO_INPUT) || (p->flags & DIO_INPUT))
+		GET_GPIO_SEL_REG(g->port, bitnum) = p->dio.value;
+
+	return (g->flags & GPIO_INPUT) || (p->flags & DIO_INPUT);
+}
+
 static void connect_pinmux(struct pinmux const *p)
 {
-	uint32_t signal = p->signal;
-	uint32_t dio    = p->dio;
-	uint16_t flags  = p->flags;
-
-	if (flags & DIO_ENABLE_DIRECT_INPUT) {
-		/* enable digital input for direct wired peripheral */
-		REG_WRITE_MLV(DIO_CTL_REG(dio), DIO_CTL_IE_MASK,
+	if ((p->flags & DIO_ENABLE_DIRECT_INPUT) ||
+	    ((p->flags & DIO_TO_PERIPHERAL) ?
+	     connect_dio_to_peripheral(p) :
+	     connect_dio_to_gpio(p)))
+		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
+			      DIO_CTL_IE_MASK,
 			      DIO_CTL_IE_LSB, 1);
-	} else if (FIELD_IS_FUNC(signal)) {
-		/* Connect peripheral function to DIO */
-		if (flags & DIO_OUTPUT) {
-			/* drive DIO from peripheral */
-			DIO_SEL_REG(dio) = PERIPH_FUNC(signal);
-		}
-
-		if (flags & DIO_INPUT) {
-			/* drive peripheral from DIO */
-			PERIPH_SEL_REG(signal) = DIO_FUNC(dio);
-			/* enable digital input */
-			REG_WRITE_MLV(DIO_CTL_REG(dio), DIO_CTL_IE_MASK,
-				      DIO_CTL_IE_LSB, 1);
-		}
-	} else {
-		/* Connect GPIO to DIO */
-		const struct gpio_info *g = gpio_list + FIELD_GET_GPIO(signal);
-		int bitnum = GPIO_MASK_TO_NUM(g->mask);
-
-		if ((g->flags & GPIO_OUTPUT) || (flags & DIO_OUTPUT)) {
-			/* drive DIO output from GPIO */
-			DIO_SEL_REG(dio) = GET_GPIO_FUNC(g->port, bitnum);
-		}
-
-		if ((g->flags & GPIO_INPUT) || (flags & DIO_INPUT)) {
-			/* drive GPIO input from DIO */
-			GET_GPIO_SEL_REG(g->port, bitnum) = DIO_FUNC(dio);
-			/* enable digital input */
-			REG_WRITE_MLV(DIO_CTL_REG(dio), DIO_CTL_IE_MASK,
-				      DIO_CTL_IE_LSB, 1);
-		}
-	}
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)

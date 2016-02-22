@@ -176,67 +176,19 @@ static inline int x_uart_addr(int ch, int offset)
 /*
  * Our ARM core doesn't have GPIO alternate functions, but it does have a full
  * NxM crossbar called the pinmux, which connects internal peripherals
- * including GPIOs to external pins. We'll reuse the alternate function stuff
- * from other ECs to configure the pinmux. This requires some clever macros
- * that pack both a MUX selector offset (register address) and a MUX selector
- * value (which input to choose) into a single uint32_t.
+ * including GPIOs to external pins.
  */
 
-/* Flags to indicate the direction of the signal-to-pin connection */
+/* Flags to indicate the direction and type of the signal-to-pin connection */
 #define DIO_INPUT 0x0001
 #define DIO_OUTPUT 0x0002
 #define DIO_ENABLE_DIRECT_INPUT 0x0004
+#define DIO_TO_PERIPHERAL 0x0008
 
-/*
- * To store a pinmux DIO in the struct gpio_alt_func's mask field, we use:
- *
- *   bits 31-16: offset of the MUX selector register that drives this signal
- *   bits 15-0:  value to write to any pinmux selector to choose this source
- */
-#define DIO(name) (uint32_t)(CONCAT3(GC_PINMUX_DIO, name, _SEL) |	\
-			     (CONCAT3(GC_PINMUX_DIO, name, _SEL_OFFSET) << 16))
-/* Extract the MUX selector register addres for the DIO */
-#define DIO_SEL_REG(word) REG32(GC_PINMUX_BASE_ADDR +			\
-				(((uint32_t)(word) >> 16) & 0xffff))
-/* Extract the control register address for this MUX */
-#define DIO_CTL_REG(word) REG32(GC_PINMUX_BASE_ADDR + 0x4 +		\
-				(((uint32_t)(word) >> 16) & 0xffff))
-/* Extract the selector value to choose this DIO */
-#define DIO_FUNC(word) ((uint32_t)(word) & 0xffff)
-
-/*
- * The struct gpio_alt_func's port field will either contain an enum
- * gpio_signal from gpio_list[], or an internal peripheral function. If bit 31
- * is clear, then bits 30-0 are the gpio_signal. If bit 31 is set, the
- * peripheral function is packed like the DIO, above.
- *
- * gpio:
- *   bit 31:     0
- *   bit 30-0:   enum gpio_signal
- *
- * peripheral:
- *   bit 31:     1
- *   bits 30-16: offset of the MUX selector register that drives this signal
- *   bits 15-0:  value to write to any pinmux selector to choose this source
-*/
-
-/* Which is it? */
-#define FIELD_IS_FUNC(port) (0x80000000 & (port))
-/* Encode a pinmux identifier (both a MUX and a signal name) */
-#define GPIO_FUNC(name) (uint32_t)(CONCAT3(GC_PINMUX_, name, _SEL) |	\
-				   (CONCAT3(GC_PINMUX_, name, _SEL_OFFSET) << 16) | \
-		0x80000000)
-/* Extract the MUX selector register address to drive this signal */
-#define PERIPH_SEL_REG(word) REG32(GC_PINMUX_BASE_ADDR +	\
-				   (((uint32_t)(word) >> 16) & 0x7fff))
-/* Extract the control register address for this MUX */
-#define PERIPH_CTL_REG(word) REG32(GC_PINMUX_BASE_ADDR + 0x4 +	\
-				 (((uint32_t)(word) >> 16) & 0x7fff))
-/* Extract the selector value to choose this input source */
-#define PERIPH_FUNC(word) ((uint32_t)(word) & 0xffff)
-/* Extract the GPIO signal */
-#define FIELD_GET_GPIO(word) ((uint32_t)(word) & 0x7fffffff)
-
+/* Generate the MUX selector register address for the DIO */
+#define DIO_SEL_REG(offset) REG32(GC_PINMUX_BASE_ADDR + offset)
+/* Generate the control register address for this MUX */
+#define DIO_CTL_REG(offset) REG32(GC_PINMUX_BASE_ADDR + 0x4 + offset)
 
 /* Map a GPIO <port,bitnum> to a selector value or register */
 #define GET_GPIO_FUNC(port, bitnum) \
