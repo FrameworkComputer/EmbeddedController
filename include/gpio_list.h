@@ -21,19 +21,6 @@ const struct gpio_info gpio_list[] = {
 
 BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
-/*
- * Construct the gpio_alt_funcs array.  This array is used by gpio_config_module
- * to enable and disable GPIO alternate functions on a module by module basis.
- */
-#define ALTERNATE(pinmask, function, module, flags)	\
-	{GPIO_##pinmask, function, module, flags},
-
-const struct gpio_alt_func gpio_alt_funcs[] = {
-	#include "gpio.wrap"
-};
-
-const int gpio_alt_funcs_count = ARRAY_SIZE(gpio_alt_funcs);
-
 /* GPIO Interrupt Handlers */
 #define GPIO_INT(name, pin, flags, signal) signal,
 void (* const gpio_irq_handlers[])(enum gpio_signal signal) = {

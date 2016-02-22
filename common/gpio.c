@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "registers.h"
 #include "system.h"
 #include "util.h"
 
@@ -58,6 +59,35 @@ static int last_val_changed(int i, int v)
 	}
 }
 
+/* GPIO alternate function structure */
+struct gpio_alt_func {
+	/* Port base address */
+	uint32_t port;
+
+	/* Bitmask on that port (multiple bits allowed) */
+	uint32_t mask;
+
+	/* Alternate function number */
+	uint8_t func;
+
+	/* Module ID (as uint8_t, since enum would be 32-bit) */
+	uint8_t module_id;
+
+	/* Flags (GPIO_*; see above). */
+	uint16_t flags;
+};
+
+/*
+ * Construct the gpio_alt_funcs array.  This array is used by gpio_config_module
+ * to enable and disable GPIO alternate functions on a module by module basis.
+ */
+#define ALTERNATE(pinmask, function, module, flags)	\
+	{GPIO_##pinmask, function, module, flags},
+
+static const struct gpio_alt_func gpio_alt_funcs[] = {
+	#include "gpio.wrap"
+};
+
 /*
  * GPIO_CONFIG_ALL_PORTS signifies a "don't care" for the GPIO port.  This is
  * used in gpio_config_pins().  When the port parameter is set to this, the
@@ -74,7 +104,8 @@ static int gpio_config_pins(enum module_id id,
 	int rv = EC_ERROR_INVAL;
 
 	/* Find pins and set to alternate functions */
-	for (af = gpio_alt_funcs; af < gpio_alt_funcs + gpio_alt_funcs_count;
+	for (af = gpio_alt_funcs;
+	     af < gpio_alt_funcs + ARRAY_SIZE(gpio_alt_funcs);
 	     af++) {
 		if (af->module_id != id)
 			continue;  /* Pins for some other module */

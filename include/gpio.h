@@ -85,27 +85,6 @@ extern void (* const gpio_irq_handlers[])(enum gpio_signal signal);
 extern const int gpio_ih_count;
 #define GPIO_IH_COUNT gpio_ih_count
 
-/* GPIO alternate function structure, for use by board.c */
-struct gpio_alt_func {
-	/* Port base address */
-	uint32_t port;
-
-	/* Bitmask on that port (multiple bits allowed) */
-	uint32_t mask;
-
-	/* Alternate function number */
-	uint8_t func;
-
-	/* Module ID (as uint8_t, since enum would be 32-bit) */
-	uint8_t module_id;
-
-	/* Flags (GPIO_*; see above). */
-	uint16_t flags;
-};
-
-extern const struct gpio_alt_func gpio_alt_funcs[];
-extern const int gpio_alt_funcs_count;
-
 /**
  * Pre-initialize GPIOs.
  *
