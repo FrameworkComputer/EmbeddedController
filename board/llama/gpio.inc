@@ -13,6 +13,9 @@ GPIO_INT(LID_OPEN,         PIN(C, 13), GPIO_INT_BOTH,                lid_interru
 GPIO_INT(SUSPEND_L,        PIN(C, 7),  GPIO_INT_BOTH,                power_signal_interrupt) /* AP suspend/resume state */
 
 /* Keyboard inputs */
+#define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
+#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
+
 GPIO_INT(KB_IN00, PIN(C, 8),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN01, PIN(C, 9),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN02, PIN(C, 10), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)

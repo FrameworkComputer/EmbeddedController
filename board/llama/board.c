@@ -27,9 +27,6 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
-#define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
-
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */

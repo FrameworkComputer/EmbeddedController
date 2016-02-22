@@ -44,9 +44,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
-
 /* Dispaly port hardware can connect to port 0, 1 or neither. */
 #define PD_PORT_NONE -1
 

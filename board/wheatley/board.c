@@ -47,9 +47,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
-#define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
-
 #define I2C_ADDR_BD99992 0x60
 
 /* Exchange status with PD MCU. */

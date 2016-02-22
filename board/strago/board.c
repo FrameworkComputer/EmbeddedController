@@ -44,10 +44,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
-#define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
-#define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
-
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {

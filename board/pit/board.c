@@ -20,10 +20,6 @@
 #include "timer.h"
 #include "task.h"
 #include "util.h"
-
-#define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
-#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
-
 #include "gpio_list.h"
 
 /* Battery temperature ranges in degrees C */

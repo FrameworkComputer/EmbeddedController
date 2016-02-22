@@ -28,6 +28,10 @@ GPIO_INT(PCH_SLP_S3_L,      PIN(206), GPIO_INT_BOTH,                      power_
 UNIMPLEMENTED(BAT_PRESENT_L)
 UNIMPLEMENTED(USB_PD_WAKE)
 
+#define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
+#define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
+#define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
+
 GPIO(NC_GPIO0,          PIN(0),  GPIO_INPUT | GPIO_PULL_UP)     /* NC */
 GPIO(KBD_KSO2,          PIN(1),  GPIO_KB_OUTPUT_COL2)           /* Negative edge triggered irq. */
 

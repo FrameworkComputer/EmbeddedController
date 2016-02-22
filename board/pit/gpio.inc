@@ -16,6 +16,9 @@ GPIO_INT(SPI1_NSS,       PIN(A, 4),  GPIO_INT_BOTH | GPIO_PULL_UP, spi_event)
 GPIO_INT(AC_PRESENT,     PIN(A, 0),  GPIO_INT_BOTH,                extpower_interrupt)
 
 /* Keyboard inputs */
+#define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
+#define GPIO_KB_OUTPUT GPIO_ODR_HIGH
+
 GPIO_INT(KB_IN00,     PIN(C, 8),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN01,     PIN(C, 9),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN02,     PIN(C, 10), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
