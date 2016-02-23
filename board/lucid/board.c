@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "charger_detect.h"
 #include "common.h"
 #include "console.h"
 #include "extpower.h"
@@ -18,9 +19,11 @@
 #include "registers.h"
 #include "task.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define USB_CHG_DETECT_DELAY_US 5000
 
 void board_config_pre_init(void)
 {
@@ -40,6 +43,52 @@ void board_config_pre_init(void)
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);
 }
 
+static void reset_charge(int port)
+{
+	struct charge_port_info charge_none;
+
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_none.current = 0;
+	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+				     port,
+				     &charge_none);
+}
+
+static void usb_charger_bc12_detect(void)
+{
+	int type;
+	struct charge_port_info charge;
+
+	type = charger_detect_get_device_type();
+	if (gpio_get_level(GPIO_AC_PRESENT) && type) {
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		if (type == CHARGE_SUPPLIER_BC12_CDP)
+			charge.current = 1500;
+		else
+			charge.current = 500;
+
+		charge_manager_update_charge(type, 0, &charge);
+	} else
+		reset_charge(0);
+
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(usb_charger_bc12_detect);
+
 static void update_vbus_supplier(int vbus_level)
 {
 	struct charge_port_info charge;
@@ -56,6 +105,7 @@ void vbus_evt(enum gpio_signal signal)
 	 * lucid only has one port and charging is always enabled.
 	 */
 
+	hook_call_deferred(usb_charger_bc12_detect, USB_CHG_DETECT_DELAY_US);
 	update_vbus_supplier(gpio_get_level(signal));
 
 	task_wake(TASK_ID_PD_C0);
@@ -95,32 +145,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 static void board_init(void)
 {
 	int i;
-	struct charge_port_info charge_none;
 
 	/* Initialize all BC1.2 charge suppliers to 0 */
-	/*
-	 * TODO: use built-in USB peripheral to detect BC1.2 suppliers an
-	 * update charge manager.
-	 */
-	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_none.current = 0;
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-					     i,
-					     &charge_none);
-	}
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		reset_charge(i);
 
 	/* Enable charge status interrupt */
 	gpio_enable_interrupt(GPIO_CHARGE_STATUS);
