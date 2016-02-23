@@ -19,6 +19,7 @@ import logging
 import multiprocessing
 import os
 import pty
+import re
 import select
 import stat
 import sys
@@ -29,6 +30,16 @@ import interpreter
 PROMPT = '> '
 CONSOLE_INPUT_LINE_SIZE = 80  # Taken from the CONFIG_* with the same name.
 CONSOLE_MAX_READ = 100  # Max bytes to read at a time from the user.
+LOOK_BUFFER_SIZE = 256  # Size of search window when looking for the enhanced EC
+                        # image string.
+
+# In console_init(), the EC will print a string saying that the EC console is
+# enabled.  Enhanced images will print a slightly different string.  These
+# regular expressions are used to determine at reboot whether the EC image is
+# enhanced or not.
+ENHANCED_IMAGE_RE = re.compile(r'Enhanced Console is enabled '
+                               r'\(v([0-9]+\.[0-9]+\.[0-9]+)\)')
+NON_ENHANCED_IMAGE_RE = re.compile(r'Console is enabled; ')
 
 # The timeouts are really only useful for enhanced EC images, but otherwise just
 # serve as a delay for non-enhanced EC images.  Therefore, we can keep this
@@ -151,6 +162,7 @@ class Console(object):
     self.receiving_oobm_cmd = False
     self.pending_oobm_cmd = ''
     self.interrogation_mode = 'auto'
+    self.look_buffer = ''
 
   def __str__(self):
     """Show internal state of Console object as a string."""
@@ -168,6 +180,8 @@ class Console(object):
     string.append('history_pos: %d' % self.history_pos)
     string.append('prompt: \'%s\'' % self.prompt)
     string.append('partial_cmd: \'%s\''% self.partial_cmd)
+    string.append('interrogation_mode: \'%s\'' % self.interrogation_mode)
+    string.append('look_buffer: \'%s\'' % self.look_buffer)
     return '\n'.join(string)
 
   def PrintHistory(self):
@@ -492,10 +506,8 @@ class Console(object):
       if self.interrogation_mode == 'never':
         self.logger.debug('Skipping interrogation because interrogation mode'
                           ' is set to never.')
-      else:
-        # Only interrogate the EC if the interrogation mode is NOT set to
-        # 'never'.
-        # TODO(aaboagye): Implement the 'auto' mode.
+      elif self.interrogation_mode == 'always':
+        # Only interrogate the EC if the interrogation mode is set to 'always'.
         self.enhanced_ec = self.CheckForEnhancedECImage()
         self.logger.debug('Enhanced EC image? %r', self.enhanced_ec)
 
@@ -731,9 +743,6 @@ class Console(object):
       if mode in INTERROGATION_MODES:
         self.interrogation_mode = mode
         self.logger.debug('Updated interrogation mode to %s.', mode)
-        if mode == 'auto':
-          os.write(self.master_pty,
-                   'auto not implemented yet; treating it as always.\r\n')
 
         # Update the assumptions of the EC image.
         self.enhanced_ec = enhanced
@@ -754,6 +763,41 @@ class Console(object):
     os.write(self.master_pty, '  interrogate <never | always | auto> '
              '[enhanced]\r\n')
     os.write(self.master_pty, '  loglevel <int>\r\n')
+
+  def CheckBufferForEnhancedImage(self, data):
+    """Adds data to a look buffer and checks to see for enhanced EC image.
+
+    The EC's console task prints a string upon initialization which says that
+    "Console is enabled; type HELP for help.".  The enhanced EC images print a
+    different string as a part of their init.  This function searches through a
+    "look" buffer, scanning for the presence of either of those strings and
+    updating the enhanced_ec state accordingly.
+
+    Args:
+      data: A string containing the data sent from the interpreter.
+    """
+    self.look_buffer += data
+
+    # Search the buffer for any of the EC image strings.
+    enhanced_match = re.search(ENHANCED_IMAGE_RE, self.look_buffer)
+    non_enhanced_match = re.search(NON_ENHANCED_IMAGE_RE, self.look_buffer)
+
+    # Update the state if any matches were found.
+    if enhanced_match or non_enhanced_match:
+      if enhanced_match:
+        self.enhanced_ec = True
+      elif non_enhanced_match:
+        self.enhanced_ec = False
+
+      # Inform the interpreter of the result.
+      self.cmd_pipe.send('enhanced ' + str(self.enhanced_ec))
+      self.logger.debug('Enhanced EC image? %r', self.enhanced_ec)
+
+      # Clear look buffer since a match was found.
+      self.look_buffer = ''
+
+    # Move the sliding window.
+    self.look_buffer = self.look_buffer[-LOOK_BUFFER_SIZE:]
 
 
 def IsPrintable(byte):
@@ -800,6 +844,9 @@ def StartLoop(console):
 
         elif obj is console.dbg_pipe:
           data = console.dbg_pipe.recv()
+          if console.interrogation_mode == 'auto':
+            # Search look buffer for enhanced EC image string.
+            console.CheckBufferForEnhancedImage(data)
           # Write it to the user console.
           console.logger.debug('|DBG|->\'%s\'', data)
           os.write(console.master_pty, data)

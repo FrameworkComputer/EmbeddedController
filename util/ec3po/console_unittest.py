@@ -1156,6 +1156,9 @@ class TestConsoleCompatibility(unittest.TestCase):
       mock_check: A MagicMock object replacing the CheckForEnhancedECImage()
         method.
     """
+    # Set the interrogation mode to always so that we actually interrogate.
+    self.console.interrogation_mode = 'always'
+
     # Assume EC interrogations indicate that the image is non-enhanced.
     mock_check.return_value = False
 
@@ -1194,6 +1197,9 @@ class TestConsoleCompatibility(unittest.TestCase):
       mock_check: A MagicMock object replacing the CheckForEnhancedECImage()
         method.
     """
+    # Set the interrogation mode to always so that we actually interrogate.
+    self.console.interrogation_mode = 'always'
+
     # First, assume that the EC interrogations indicate an enhanced EC image.
     mock_check.return_value = True
     # But our current knowledge of the EC image (which was actually the
@@ -1249,6 +1255,9 @@ class TestConsoleCompatibility(unittest.TestCase):
       mock_check: A MagicMock object replacing the CheckForEnhancedECImage()
         method.
     """
+    # Set the interrogation mode to always so that we actually interrogate.
+    self.console.interrogation_mode = 'always'
+
     # First, assume that the EC interrogations indicate an non-enhanced EC
     # image.
     mock_check.return_value = False
@@ -1312,6 +1321,83 @@ class TestConsoleCompatibility(unittest.TestCase):
     self.console.dbg_pipe.poll.return_value = True
     self.console.dbg_pipe.recv.return_value = '\xff'
     self.assertFalse(self.console.CheckForEnhancedECImage())
+
+  def test_EnhancedCheckUsingBuffer(self):
+    """Verify that given reboot output, enhanced EC images are detected."""
+    enhanced_output_stream = """
+--- UART initialized after reboot ---
+[Reset cause: reset-pin soft]
+[Image: RO, jerry_v1.1.4363-2af8572-dirty 2016-02-23 13:26:20 aaboagye@lithium.mtv.corp.google.com]
+[0.001695 KB boot key 0]
+[0.001790 Inits done]
+[0.001923 not sysjump; forcing AP shutdown]
+[0.002047 EC triggered warm reboot]
+[0.002155 assert GPIO_PMIC_WARM_RESET_L for 4 ms]
+[0.006326 auto_power_on set due to reset_flag 0x22]
+[0.006477 Wait for battery stabilized during 1000000]
+[0.007368 battery responded with status c0]
+[0.009099 hash start 0x00010000 0x0000eb7c]
+[0.009307 KB init state: -- -- -- -- -- -- -- -- -- -- -- -- --]
+[0.009531 KB wait]
+Enhanced Console is enabled (v1.0.0); type HELP for help.
+> [0.009782 event set 0x00002000]
+[0.009903 hostcmd init 0x2000]
+[0.010031 power state 0 = G3, in 0x0000]
+[0.010173 power state 4 = G3->S5, in 0x0000]
+[0.010324 power state 1 = S5, in 0x0000]
+[0.010466 power on 2]
+[0.010566 power state 5 = S5->S3, in 0x0000]
+[0.037713 event set 0x00000080]
+[0.037836 event set 0x00400000]
+[0.038675 Battery 89% / 1092h:15 to empty]
+[0.224060 hash done 41dac382e3a6e3d2ea5b4d789c1bc46525cae7cc5ff6758f0de8d8369b506f57]
+[0.375150 POWER_GOOD seen]
+"""
+    for line in enhanced_output_stream.split('\n'):
+      self.console.CheckBufferForEnhancedImage(line)
+
+    # Since the enhanced console string was present in the output, the console
+    # should have caught it.
+    self.assertTrue(self.console.enhanced_ec)
+
+    # Also should check that the command was sent to the interpreter.
+    self.console.cmd_pipe.send.assert_called_once_with('enhanced True')
+
+    # Now test the non-enhanced EC image.
+    self.console.cmd_pipe.reset_mock()
+    non_enhanced_output_stream = """
+--- UART initialized after reboot ---
+[Reset cause: reset-pin soft]
+[Image: RO, jerry_v1.1.4363-2af8572-dirty 2016-02-23 13:03:15 aaboagye@lithium.mtv.corp.google.com]
+[0.001695 KB boot key 0]
+[0.001790 Inits done]
+[0.001923 not sysjump; forcing AP shutdown]
+[0.002047 EC triggered warm reboot]
+[0.002156 assert GPIO_PMIC_WARM_RESET_L for 4 ms]
+[0.006326 auto_power_on set due to reset_flag 0x22]
+[0.006477 Wait for battery stabilized during 1000000]
+[0.007368 battery responded with status c0]
+[0.008951 hash start 0x00010000 0x0000ed78]
+[0.009159 KB init state: -- -- -- -- -- -- -- -- -- -- -- -- --]
+[0.009383 KB wait]
+Console is enabled; type HELP for help.
+> [0.009602 event set 0x00002000]
+[0.009722 hostcmd init 0x2000]
+[0.009851 power state 0 = G3, in 0x0000]
+[0.009993 power state 4 = G3->S5, in 0x0000]
+[0.010144 power state 1 = S5, in 0x0000]
+[0.010285 power on 2]
+[0.010385 power state 5 = S5->S3, in 0x0000]
+"""
+    for line in non_enhanced_output_stream.split('\n'):
+      self.console.CheckBufferForEnhancedImage(line)
+
+    # Since the default console string is present in the output, it should be
+    # determined to be non enhanced now.
+    self.assertFalse(self.console.enhanced_ec)
+
+    # Check that command was also sent to the interpreter.
+    self.console.cmd_pipe.send.assert_called_once_with('enhanced False')
 
 
 class TestOOBMConsoleCommands(unittest.TestCase):
@@ -1391,10 +1477,58 @@ class TestOOBMConsoleCommands(unittest.TestCase):
     mock_check.reset_mock()
     self.console.oobm_queue.reset_mock()
 
-    # 'interrogate auto' should interrogate after each press of the enter key.
-    # TODO(aaboagye): Fix this test when you update auto to check after each
-    # reboot.  For now, it would behave the same as 'interrogate always'.
+    # 'interrogate auto' should not interrogate at all.  It should only be
+    # scanning the output stream for the 'console is enabled' strings.
     cmd = 'interrogate auto'
+    # Enter the OOBM prompt.
+    input_stream.extend(StringToByteList('%'))
+    # Type the command
+    input_stream.extend(StringToByteList(cmd))
+    # Press enter.
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    input_stream = []
+    expected_calls = []
+
+    # The OOBM queue should have been called with the command being put.
+    expected_calls.append(mock.call.put(cmd))
+    self.console.oobm_queue.assert_has_calls(expected_calls)
+
+    # Process the OOBM queue.
+    self.console.oobm_queue.get.side_effect = [cmd]
+    self.console.ProcessOOBMQueue()
+
+    # Type out a few commands.
+    input_stream.extend(StringToByteList('version'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('flashinfo'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+    input_stream.extend(StringToByteList('sysinfo'))
+    input_stream.append(console.ControlKey.CARRIAGE_RETURN)
+
+    # Send the sequence out.
+    for byte in input_stream:
+      self.console.HandleChar(byte)
+
+    # The Check function should NOT have been called at all.
+    mock_check.assert_not_called()
+
+    # The EC image should be assumed to be not enhanced.
+    self.assertFalse(self.console.enhanced_ec, 'The image should be assumed to'
+                     ' be NOT enhanced.')
+
+    # Reset the mocks.
+    mock_check.reset_mock()
+    self.console.oobm_queue.reset_mock()
+
+    # 'interrogate always' should, like its name implies, interrogate always
+    # after each press of the enter key.  This was the former way of doing
+    # interrogation.
+    cmd = 'interrogate always'
     # Enter the OOBM prompt.
     input_stream.extend(StringToByteList('%'))
     # Type the command
