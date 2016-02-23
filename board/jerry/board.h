@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/* Increase size of UART TX buffer. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 1024
+
 /* Optional features */
 #define CONFIG_AP_HANG_DETECT
 #define CONFIG_BATTERY_CUT_OFF
