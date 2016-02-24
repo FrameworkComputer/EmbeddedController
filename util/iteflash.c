@@ -283,6 +283,34 @@ static int check_chipid(struct ftdi_context *ftdi)
 	return 0;
 }
 
+/* DBGR Reset*/
+static int dbgr_reset(struct ftdi_context *ftdi)
+{
+	int ret = 0;
+
+	ret |= i2c_write_byte(ftdi, 0x27, 0x80);
+	if (ret < 0)
+		printf("DBGR RESET FAILED\n");
+
+	return 0;
+}
+
+/* Do WatchDog Reset*/
+static int do_watchdog_reset(struct ftdi_context *ftdi)
+{
+	int ret = 0;
+
+	ret |= i2c_write_byte(ftdi, 0x2f, 0x20);
+	ret |= i2c_write_byte(ftdi, 0x2e, 0x06);
+	ret |= i2c_write_byte(ftdi, 0x30, 0x44);
+	ret |= i2c_write_byte(ftdi, 0x27, 0x80);
+
+	if (ret < 0)
+		printf("WATCHDOG RESET FAILED\n");
+
+	return 0;
+}
+
 /* Enter follow mode and FSCE# high level */
 static int spi_flash_follow_mode(struct ftdi_context *ftdi, char *desc)
 {
@@ -1034,8 +1062,12 @@ int main(int argc, char **argv)
 	if (flags & FLAG_UNPROTECT)
 		command_write_unprotect(hnd);
 
-	if (flags & FLAG_ERASE || output_filename)
+	if (flags & FLAG_ERASE || output_filename) {
 		command_erase(hnd, flash_size, 0);
+
+		/* Call DBGR Rest to clear the EC lock status */
+		dbgr_reset(hnd);
+	}
 
 	if (input_filename) {
 		ret = read_flash(hnd, input_filename, 0, flash_size);
@@ -1056,6 +1088,10 @@ int main(int argc, char **argv)
 	/* Normal exit */
 	ret = 0;
 terminate:
+
+	/* DO EC WATCHDOG RESET */
+	do_watchdog_reset(hnd);
+
 	/* Close the FTDI USB handle */
 	ftdi_usb_close(hnd);
 	ftdi_free(hnd);
