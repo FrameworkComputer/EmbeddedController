@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -277,3 +278,153 @@ void _gpio1_interrupt(void)
 }
 DECLARE_IRQ(GC_IRQNUM_GPIO0_GPIOCOMBINT, _gpio0_interrupt, 1);
 DECLARE_IRQ(GC_IRQNUM_GPIO1_GPIOCOMBINT, _gpio1_interrupt, 1);
+
+static const char * const uart_str[] = {
+	"0_CTS", "0_RTS", "0_RX", "0_TX",
+	"1_CTS", "1_RTS", "1_RX", "1_TX",
+	"2_CTS", "2_RTS", "2_RX", "2_TX",
+};
+
+static void show_pinmux(const char *name, int i, int ofs)
+{
+	uint32_t sel = DIO_SEL_REG(i * 8 + ofs);
+	uint32_t ctl = DIO_CTL_REG(i * 8 + ofs);
+
+	/* skip empty ones (ignoring drive strength bits) */
+	if (sel == 0 && (ctl & (0xf << 2)) == 0)
+		return;
+
+	ccprintf("%08x: %s%d   %2d %s%s%s%s",
+		 GC_PINMUX_BASE_ADDR + i * 8 + ofs,
+		 name, i, sel,
+		 (ctl & (1<<2)) ? " IN" : "",
+		 (ctl & (1<<3)) ? " PD" : "",
+		 (ctl & (1<<4)) ? " PU" : "",
+		 (ctl & (1<<5)) ? " INV" : "");
+
+	if (sel >= 1 && sel <= 16)
+		ccprintf("  GPIO0_GPIO%d\n", sel - 1);
+	else if (sel >= 17 && sel <= 32)
+		ccprintf("  GPIO1_GPIO%d\n", sel - 17);
+	else if (sel >= 67 && sel <= 78)
+		ccprintf("  UART%s\n", uart_str[sel - 67]);
+	else
+		ccprintf("\n");
+}
+
+static void print_dio_str(uint32_t sel)
+{
+	if (sel >= 1 && sel <= 2)
+		ccprintf("  VIO%d\n", 2 - sel);
+	else if (sel >= 3 && sel <= 10)
+		ccprintf("  DIOB%d\n", 10 - sel);
+	else if (sel >= 11 && sel <= 25)
+		ccprintf("  DIOA%d\n", 25 - sel);
+	else if (sel >= 26 && sel <= 30)
+		ccprintf("  DIOM%d\n", 30 - sel);
+	else
+		ccprintf("\n");
+}
+
+static void show_pinmux_gpio(const char *name, int i, int ofs)
+{
+	uint32_t sel = DIO_SEL_REG(i * 4 + ofs);
+
+	if (sel == 0)
+		return;
+
+	ccprintf("%08x: %s%d   %2d",
+		 GC_PINMUX_BASE_ADDR + i * 4 + ofs,
+		 name, i, sel);
+	print_dio_str(sel);
+}
+
+static void show_pinmux_uart(int i)
+{
+
+	uint32_t ofs = GC_PINMUX_UART0_CTS_SEL_OFFSET + i * 4;
+	uint32_t sel = DIO_SEL_REG(ofs);
+
+	if (sel == 0)
+		return;
+
+	ccprintf("%08x: UART%s      %2d",
+		 GC_PINMUX_BASE_ADDR + ofs,
+		 uart_str[i], sel);
+
+	print_dio_str(sel);
+}
+
+static int command_pinmux(int argc, char **argv)
+{
+	int i;
+
+	/* Pad sources */
+	for (i = 0; i <= 4; i++)
+		show_pinmux("DIOM", i, 0x00);
+	for (i = 0; i <= 14; i++)
+		show_pinmux("DIOA", i, 0x28);
+	for (i = 0; i <= 7; i++)
+		show_pinmux("DIOB", i, 0xa0);
+
+	ccprintf("\n");
+
+	/* GPIO & Peripheral sources */
+	for (i = 0; i <= 15; i++)
+		show_pinmux_gpio("GPIO0_GPIO", i, 0xf8);
+	for (i = 0; i <= 15; i++)
+		show_pinmux_gpio("GPIO1_GPIO", i, 0x134);
+
+	for (i = 0; i <= 11; i++)
+		show_pinmux_uart(i);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(pinmux, command_pinmux,
+			"",
+			"Display pinmux info",
+			NULL);
+
+static const char * const int_str[] = {
+	"LOW", "FALLING", "HIGH", "RISING",
+};
+
+static void show_gpiocfg(int n)
+{
+	uint32_t din = GR_GPIO_DATAIN(n);
+	uint32_t dout = GR_GPIO_DOUT(n);
+	uint32_t outen = GR_GPIO_SETDOUTEN(n);
+	uint32_t inten = GR_GPIO_SETINTEN(n);
+	uint32_t intpol = GR_GPIO_SETINTPOL(n);
+	uint32_t inttype = GR_GPIO_SETINTTYPE(n);
+	uint32_t mask;
+	int i, j;
+
+	for (i = 0, mask = 0x1; i < 16; i++, mask <<= 1) {
+		/* Skip it unless it's an output or an interrupt */
+		if (!((outen & mask) || (inten & mask)))
+			continue;
+
+		ccprintf("GPIO%d_GPIO%d:\tread %d", n, i, !!(din & mask));
+		if (outen & mask)
+			ccprintf(" drive %d", !!(dout & mask));
+		if (inten & mask) {
+			j = ((intpol & mask) ? 2 : 0) +
+				((inttype & mask) ? 1 : 0);
+			ccprintf(" INT_%s", int_str[j]);
+		}
+		ccprintf("\n");
+	}
+}
+
+static int command_gpiocfg(int argc, char **argv)
+{
+	show_gpiocfg(0);
+	show_gpiocfg(1);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(gpiocfg, command_gpiocfg,
+			"",
+			"Display GPIO configs",
+			NULL);
