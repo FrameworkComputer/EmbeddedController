@@ -893,11 +893,9 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 
 	case NO_DATA_STAGE:
 		if (intr_on_in && (diepint & DIEPINT_XFERCOMPL)) {
-			print_later("Status phase complete", 0, 0, 0, 0, 0);
+			print_later("IN descriptor processed", 0, 0, 0, 0, 0);
 			/* Let the IN proceed */
 			GR_USB_DIEPCTL(0) = DXEPCTL_EPENA;
-			/* We've already prepared the OUT descriptor. */
-			what_am_i_doing = WAITING_FOR_SETUP_PACKET;
 		}
 
 		/* Done unless we got an OUT interrupt */
@@ -906,6 +904,8 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 
 		if (tc == TABLE_CASE_B) {
 			print_later("IN has been detected...", 0, 0, 0, 0, 0);
+			/* Let the IN proceed */
+			GR_USB_DIEPCTL(0) = DXEPCTL_CNAK | DXEPCTL_EPENA;
 			/* Reenable the previously prepared OUT descriptor. */
 			GR_USB_DOEPCTL(0) = DXEPCTL_CNAK | DXEPCTL_EPENA;
 			break;
@@ -920,8 +920,9 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 			}
 		}
 
-		/* Some other kind of OUT interrupt instead. */
-		report_error(tc);
+		/* Anything else means get ready for a Setup packet */
+		print_later("Status phase complete. Maybe.",
+			    0, 0, 0, 0, 0);
 		expect_setup_packet();
 		break;
 	}
