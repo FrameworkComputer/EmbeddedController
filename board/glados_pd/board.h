@@ -69,6 +69,12 @@
 #define CONFIG_WATCHDOG
 #undef  CONFIG_WATCHDOG_HELP
 
+/*
+ * TODO(crosbug.com/p/50519): Remove CONFIG_SYSTEM_UNLOCKED prior to building
+ * MP FW.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 #ifdef HAS_TASK_CONSOLE
 #undef  CONFIG_CONSOLE_HISTORY
 #define CONFIG_CONSOLE_HISTORY 2

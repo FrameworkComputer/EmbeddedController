@@ -14,6 +14,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "registers.h"
+#include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "usb_pd.h"
