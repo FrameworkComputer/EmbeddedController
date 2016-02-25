@@ -28,46 +28,6 @@
 	BUILD_ASSERT((flags & GPIO_INT_BOTH) != GPIO_INT_BOTH);
 #include "gpio.wrap"
 
-#ifdef CONFIG_USB_HID
-static void send_hid_event(void)
-{
-	uint64_t rpt = 0;
-	uint8_t *key_ptr = (void *)&rpt + 2;
-	/* Convert SW_N/SW_S/SW_W/SW_E to A,B,C,D keys */
-	if (gpio_get_level(GPIO_SW_N))
-		*key_ptr++ = 0x04; /* A keycode */
-	if (gpio_get_level(GPIO_SW_S))
-		*key_ptr++ = 0x05; /* B keycode */
-	if (gpio_get_level(GPIO_SW_W))
-		*key_ptr++ = 0x06; /* C keycode */
-	if (gpio_get_level(GPIO_SW_E))
-		*key_ptr++ = 0x07; /* D keycode */
-	/* send the keyboard state over USB HID */
-	set_keyboard_report(rpt);
-	/* check release in the future */
-	hook_call_deferred(send_hid_event, 40);
-}
-DECLARE_DEFERRED(send_hid_event);
-#endif
-
-/* Interrupt handler for button pushes */
-void button_event(enum gpio_signal signal)
-{
-	int v;
-
-	/* We have two GPIOs on the same input (one rising edge, one falling
-	 * edge), so de-alias them */
-	if (signal >= GPIO_SW_N_)
-		signal -= (GPIO_SW_N_ - GPIO_SW_N);
-
-	v = gpio_get_level(signal);
-#ifdef CONFIG_USB_HID
-	send_hid_event();
-#endif
-	ccprintf("Button %d = %d\n", signal, v);
-	gpio_set_level(signal - GPIO_SW_N + GPIO_LED_4, v);
-}
-
 static void init_pmu(void)
 {
 	/* This boot sequence may be a result of previous soft reset,
