@@ -164,6 +164,10 @@ struct usb_endpoint_descriptor {
 #define USB_SUBCLASS_GOOGLE_SPI    0x51
 #define USB_PROTOCOL_GOOGLE_SPI    0x01
 
+#define USB_SUBCLASS_GOOGLE_I2C    0x52
+#define USB_PROTOCOL_GOOGLE_I2C    0x01
+
+
 /* Control requests */
 
 /* bRequestType fields */

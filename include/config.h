@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -1994,6 +1994,10 @@
 /*****************************************************************************/
 /* USB SPI config */
 #undef CONFIG_USB_SPI
+
+/*****************************************************************************/
+/* USB I2C config */
+#undef CONFIG_USB_I2C
 
 /*****************************************************************************/
 
