@@ -218,18 +218,18 @@ void usb_charger_task(void)
 	while (1) {
 		/* Wait for interrupt */
 		evt = task_wait_event(-1);
-		/* Read interrupt register to clear on chip */
-		interrupt = pi3usb9281_get_interrupts(port);
 
-		/* Interrupt from the Pericom chip, determine interrupt type */
-		if (evt & USB_CHG_EVENT_INTR) {
+		/* Interrupt from the Pericom chip, determine charger type */
+		if (evt & USB_CHG_EVENT_BC12) {
+			/* Read interrupt register to clear on chip */
+			pi3usb9281_get_interrupts(port);
+			usb_charger_bc12_detect(port);
+		} else if (evt & USB_CHG_EVENT_INTR) {
+			/* Check the interrupt register, and clear on chip */
+			interrupt = pi3usb9281_get_interrupts(port);
 			if (interrupt & attach_mask)
 				usb_charger_bc12_detect(port);
 		}
-
-		/* Ignore interrupt status and determine charger type */
-		if (evt & USB_CHG_EVENT_BC12)
-			usb_charger_bc12_detect(port);
 
 		/*
 		 * Re-enable interrupts on pericom charger detector since the
