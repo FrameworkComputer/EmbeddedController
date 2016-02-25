@@ -56,8 +56,10 @@
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT 8
 
-#define GPIO_PIN(port, index) GPIO_##port, (1 << index)
-#define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
+/* Magic for gpio.inc */
+#define GPIO_PIN(port, index) (port), (1 << (index))
+#define GPIO_PIN_MASK(port, mask) (port), (mask)
+#define DUMMY_GPIO_BANK 0
 
 #define PCLK_FREQ  (24 * 1000 * 1000)
 

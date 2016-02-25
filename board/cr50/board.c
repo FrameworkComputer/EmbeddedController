@@ -16,15 +16,17 @@
 #include "usb_hid.h"
 #include "util.h"
 
+/* Define interrupt and gpio structs */
+#include "gpio_list.h"
+
 /*
  * There's no way to trigger on both rising and falling edges, so force a
  * compiler error if we try. The workaround is to use the pinmux to connect
  * two GPIOs to the same input and configure each one for a separate edge.
  */
-#undef GPIO_INT_BOTH
-#define GPIO_INT_BOTH NOT_SUPPORTED_ON_CR50
-
-#include "gpio_list.h"
+#define GPIO_INT(name, pin, flags, signal)	\
+	BUILD_ASSERT((flags & GPIO_INT_BOTH) != GPIO_INT_BOTH);
+#include "gpio.wrap"
 
 #ifdef CONFIG_USB_HID
 static void send_hid_event(void)
@@ -87,13 +89,11 @@ static void init_timers(void)
 static void init_interrupts(void)
 {
 	int i;
-	static const enum gpio_signal gpio_signals[] = {
-		GPIO_SW_N, GPIO_SW_S, GPIO_SW_W, GPIO_SW_E,
-		GPIO_SW_N_, GPIO_SW_S_, GPIO_SW_W_, GPIO_SW_E_
-	};
 
-	for (i = 0; i < ARRAY_SIZE(gpio_signals); i++)
-		gpio_enable_interrupt(gpio_signals[i]);
+	/* Enable all GPIO interrupts */
+	for (i = 0; i < gpio_ih_count; i++)
+		if (gpio_list[i].flags & GPIO_INT_ANY)
+			gpio_enable_interrupt(i);
 }
 
 enum permission_level {

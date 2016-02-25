@@ -168,11 +168,6 @@ static inline int x_uart_addr(int ch, int offset)
 #define GR_UART_FIFO(ch)              X_UARTREG(ch, GC_UART_FIFO_OFFSET)
 #define GR_UART_RFIFO(ch)             X_UARTREG(ch, GC_UART_RFIFO_OFFSET)
 
-/* GPIO port naming scheme left over from the LM4. Must maintain tradition! */
-#define GPIO_0 0
-#define GPIO_1 1
-#define DUMMY_GPIO_BANK 0
-
 /*
  * Our ARM core doesn't have GPIO alternate functions, but it does have a full
  * NxM crossbar called the pinmux, which connects internal peripherals

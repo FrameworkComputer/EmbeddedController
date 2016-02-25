@@ -257,11 +257,11 @@ static void gpio_interrupt(int port)
 
 void _gpio0_interrupt(void)
 {
-	gpio_interrupt(GPIO_0);
+	gpio_interrupt(0);
 }
 void _gpio1_interrupt(void)
 {
-	gpio_interrupt(GPIO_1);
+	gpio_interrupt(1);
 }
 DECLARE_IRQ(GC_IRQNUM_GPIO0_GPIOCOMBINT, _gpio0_interrupt, 1);
 DECLARE_IRQ(GC_IRQNUM_GPIO1_GPIOCOMBINT, _gpio1_interrupt, 1);
