@@ -5,10 +5,12 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
 
-/* Inputs with interrupt handlers are first for efficiency */
 GPIO_INT(POWER_BUTTON_L, PIN(B, 5),  GPIO_INT_BOTH,                power_button_interrupt)
 GPIO_INT(SOC1V8_XPSHOLD, PIN(A, 3),  GPIO_INT_BOTH,                power_signal_interrupt)
 GPIO_INT(LID_OPEN,       PIN(C, 13), GPIO_INT_BOTH,                lid_interrupt)

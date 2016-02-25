@@ -5,10 +5,11 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
-
-/* Inputs with interrupt handlers are first for efficiency */
 
 /* Keyboard inputs */
 /*

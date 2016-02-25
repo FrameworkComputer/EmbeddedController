@@ -5,7 +5,10 @@
  * found in the LICENSE file.
  */
 
-/********************** Inputs with interrupt handlers are first for efficiency **********************/
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
+/********************** Inputs with interrupt handlers  **********************/
 /* TODO: Redefine debug 2 inputs */
 GPIO_INT(RECOVERY_L,       PIN(0, 0), GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Recovery signal from servo */
 GPIO_INT(WP_L,             PIN(9, 3), GPIO_PULL_UP   | GPIO_INT_BOTH, switch_interrupt)       /* Write protect input */

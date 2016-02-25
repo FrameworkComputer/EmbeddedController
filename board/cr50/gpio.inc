@@ -4,9 +4,8 @@
  * found in the LICENSE file.
  */
 
-/* Declare symbolic names for all the GPIOs that we care about */
-/* Inputs with interrupt handlers are first for efficiency */
-
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
 
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */

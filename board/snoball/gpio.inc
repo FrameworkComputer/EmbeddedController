@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 /* TCPC alert / interrupt inputs */
 GPIO_INT(TCPC1_INT,	PIN(A, 11),	GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(TCPC2_INT,	PIN(A, 12),	GPIO_INT_FALLING, tcpc_alert_event)

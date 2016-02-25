@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 /* Interrupts */
 GPIO_INT(AC_PRESENT,         PIN(C, 13), GPIO_INT_BOTH, vbus_evt)       /* AC power present */
 GPIO_INT(CHARGE_STATUS,      PIN(F, 1),  GPIO_INT_BOTH, charge_state_interrupt)

@@ -4,6 +4,10 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(CC2_ALERT_L,  PIN(A, 7),  GPIO_INT_BOTH | GPIO_PULL_UP, cc2_event)
 GPIO_INT(VBUS_ALERT_L, PIN(B, 2),  GPIO_INT_BOTH | GPIO_PULL_UP, vbus_event)
 

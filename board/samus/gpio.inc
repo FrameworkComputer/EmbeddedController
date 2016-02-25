@@ -5,7 +5,9 @@
  * found in the LICENSE file.
  */
 
-/* Inputs with interrupt handlers are first for efficiency */
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(POWER_BUTTON_L, PIN(A, 2), GPIO_INT_BOTH_DSLEEP,                power_button_interrupt)   /* Power button */
 GPIO_INT(LID_OPEN,       PIN(A, 3), GPIO_INT_BOTH_DSLEEP,                lid_interrupt)            /* Lid switch */
 GPIO_INT(AC_PRESENT,     PIN(H, 3), GPIO_INT_BOTH_DSLEEP,                extpower_interrupt)       /* AC power present */

@@ -5,7 +5,9 @@
  * found in the LICENSE file.
  */
 
-/* Inputs with interrupt handlers are first for efficiency */
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(KB_PWR_ON_L,    PIN(B, 5),  GPIO_INT_BOTH,                power_signal_interrupt)
 GPIO_INT(PP1800_LDO2,    PIN(A, 1),  GPIO_INT_BOTH,                power_signal_interrupt)
 GPIO_INT(SOC1V8_XPSHOLD, PIN(A, 3),  GPIO_INT_RISING,              power_signal_interrupt)

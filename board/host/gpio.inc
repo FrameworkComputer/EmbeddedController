@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(LID_OPEN,             PIN(0, 0), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(POWER_BUTTON_L,       PIN(0, 0), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(AC_PRESENT,           PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)

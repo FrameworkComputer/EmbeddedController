@@ -7,6 +7,9 @@
  * Minimal set of GPIOs needed for LFW loader
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO(PVT_CS0,           PIN(146), GPIO_ODR_HIGH)                 /* SPI PVT Chip select */
 
 /* Alternate functions GPIO definition */

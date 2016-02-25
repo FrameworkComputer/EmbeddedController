@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(PCH_SLP_SUS_L,		PIN(12), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
 /* RSMRST from PMIC */
 GPIO_INT(RSMRST_L_PGOOD,	PIN(63), GPIO_INT_BOTH, power_signal_interrupt)

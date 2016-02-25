@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(DP_HPD,        PIN(A, 0),  GPIO_INT_BOTH, hpd_event)
 
 /* PD RX/TX */

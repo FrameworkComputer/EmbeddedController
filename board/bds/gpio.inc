@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 /* Recovery signal from DOWN button */
 GPIO(RECOVERY_L, PIN(D, 1), GPIO_PULL_UP)
 GPIO(DEBUG_LED,  PIN(A, 7), GPIO_OUT_LOW)

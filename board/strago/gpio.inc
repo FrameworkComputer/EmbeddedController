@@ -5,6 +5,9 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(PD_MCU_INT,        PIN(47),  GPIO_INT_FALLING | GPIO_INT_DSLEEP, pd_mcu_interrupt)
 GPIO_INT(USB_C0_VBUS_WAKE_L,PIN(12),  GPIO_INT_BOTH,                      vbus0_evt)
 GPIO_INT(USB_C0_BC12_INT_L, PIN(155), GPIO_INT_FALLING,                   usb0_evt)

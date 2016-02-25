@@ -5,7 +5,9 @@
  * found in the LICENSE file.
  */
 
-/* Inputs with interrupt handlers are first for efficiency */
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
 GPIO_INT(VBUS_WAKE,           PIN(B, 5),  GPIO_INT_BOTH,    vbus_event)
 GPIO_INT(DPSRC_HPD,           PIN(B, 13), GPIO_INT_BOTH,    hpd_event)
 GPIO_INT(DBG_12V_TO_DUT_L,    PIN(B, 14), GPIO_INT_FALLING, button_event)
