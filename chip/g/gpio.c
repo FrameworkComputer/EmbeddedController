@@ -147,6 +147,7 @@ static const struct pinmux pinmux_list[] = {
 	#include "gpio.wrap"
 };
 
+/* Return true if DIO should be a digital input */
 static int connect_dio_to_peripheral(struct pinmux const *p)
 {
 	if (p->flags & DIO_OUTPUT)
@@ -158,6 +159,7 @@ static int connect_dio_to_peripheral(struct pinmux const *p)
 	return p->flags & DIO_INPUT;
 }
 
+/* Return true if DIO should be a digital input */
 static int connect_dio_to_gpio(struct pinmux const *p)
 {
 	const struct gpio_info *g = gpio_list + p->signal;
@@ -168,6 +170,16 @@ static int connect_dio_to_gpio(struct pinmux const *p)
 
 	if ((g->flags & GPIO_INPUT) || (p->flags & DIO_INPUT))
 		GET_GPIO_SEL_REG(g->port, bitnum) = p->dio.value;
+
+	if (g->flags & GPIO_PULL_UP)
+		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
+			      DIO_CTL_PU_MASK,
+			      DIO_CTL_PU_LSB, 1);
+
+	if (g->flags & GPIO_PULL_DOWN)
+		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
+			      DIO_CTL_PD_MASK,
+			      DIO_CTL_PD_LSB, 1);
 
 	return (g->flags & GPIO_INPUT) || (p->flags & DIO_INPUT);
 }

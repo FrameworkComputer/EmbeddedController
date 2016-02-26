@@ -97,6 +97,12 @@ static void board_init(void)
 	init_interrupts();
 	init_trng();
 	init_runlevel(PERMISSION_MEDIUM);
+
+	/* TODO(crosbug.com/p/49959): For now, leave flash WP unlocked */
+	GREG32(RBOX, EC_WP_L) = 1;
+
+	/* Indication that firmware is running, for debug purposes. */
+	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
