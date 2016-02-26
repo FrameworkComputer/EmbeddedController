@@ -58,9 +58,6 @@
 
 #include "gpio_signal.h"
 
-/* user button interrupt handler */
-void button_event(enum gpio_signal signal);
-
 /* USB string indexes */
 enum usb_strings {
 	USB_STR_DESC = 0,

@@ -97,14 +97,6 @@ static void board_init(void)
 	init_interrupts();
 	init_trng();
 	init_runlevel(PERMISSION_MEDIUM);
-
-	/*
-	 * SPS is hardwired, all we need to do is enable input mode on the
-	 * appropriate pins.
-	 */
-	GWRITE_FIELD(PINMUX, DIOA2_CTL, IE, 1);   /* MOSI */
-	GWRITE_FIELD(PINMUX, DIOA6_CTL, IE, 1);   /* CLK */
-	GWRITE_FIELD(PINMUX, DIOA12_CTL, IE, 1);  /* CS */
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
