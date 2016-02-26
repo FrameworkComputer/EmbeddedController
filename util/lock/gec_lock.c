@@ -32,7 +32,7 @@
 #include "ipc_lock.h"
 #include "locks.h"
 
-static struct ipc_lock gec_lock = IPC_LOCK_INIT(GECLOCK);
+static struct ipc_lock gec_lock = LOCKFILE_INIT(CROS_EC_LOCKFILE_NAME);
 
 int acquire_gec_lock(int timeout_secs)
 {

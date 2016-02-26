@@ -31,20 +31,18 @@
 #ifndef __UTIL_IPC_LOCK_H
 #define __UTIL_IPC_LOCK_H
 
-#include <sys/ipc.h>
-
 struct ipc_lock {
-	key_t key;         /* provided by the developer */
-	int sem;           /* internal */
-	int is_held;       /* internal */
+	int is_held;	/* internal */
+	char *filename;	/* provided by the developer */
+	int fd;		/* internal */
 };
 
 /* don't use C99 initializers here, so this can be used in C++ code */
-#define IPC_LOCK_INIT(key) \
+#define LOCKFILE_INIT(lockfile) \
 	{ \
-		key,       /* name */ \
-		-1,        /* sem */ \
-		0,         /* is_held */ \
+		0,		/* is_held */	\
+		lockfile,	/* filename */	\
+		-1,		/* fd */	\
 	}
 
 /*

@@ -6,5 +6,5 @@
 # Lock library
 #
 
-util-lock-objs=csem.o ipc_lock.o gec_lock.o
+util-lock-objs=file_lock.o gec_lock.o
 util-lock-objs+=android.o
