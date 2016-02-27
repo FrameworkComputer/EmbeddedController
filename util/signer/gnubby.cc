@@ -294,8 +294,7 @@ void getPIN(uint8_t* out) {
 static
 std::string tokenFilename(const uint8_t* fp) {
   const char* home = getenv("HOME");
-  if (home == NULL)
-    home = getpwuid(getuid())->pw_dir;
+  if (home == NULL) getpwuid(getuid())->pw_dir;
   std::string s(home);
   s.append("/.tmp/");
   for (int i = 0; i < 32; ++i) {
@@ -568,10 +567,6 @@ int Gnubby::write_bn(uint8_t p1, BIGNUM* n, size_t length) {
   UCHAR resp[1024];
   DWORD resp_len = 0;
 
-  if (!handle_) {
-    open();
-  }
-
   memcpy(req, "\x00\x66\x00\x00\x00\x00\x00", 7);
   req[2] = p1;
   req[5] = length >> 8;
@@ -600,6 +595,11 @@ int Gnubby::write(RSA* rsa) {
   UCHAR resp[2048];
   DWORD resp_len = 0;
 
+  if (!handle_) {
+    result = (open() != 1);
+    if (result) goto __fail;
+  }
+
   // lock(100)
   result = gnubby_lock(handle_, (UCHAR)100);
   if (result != 0) goto __fail;
@@ -627,7 +627,7 @@ int Gnubby::write(RSA* rsa) {
 
 __fail:
   // (always try to) unlock
-  gnubby_lock(handle_, 0);
+  if (handle_) gnubby_lock(handle_, 0);
 
   return result;
 }

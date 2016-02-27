@@ -7,8 +7,8 @@
 #include <getopt.h>
 #include <inttypes.h>
 #include <stddef.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -19,12 +19,12 @@
 #include <rapidjson/document.h>
 #endif
 
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 #include <libxml/parser.h>
@@ -32,17 +32,24 @@
 
 using namespace std;
 
-#define VERBOSE(...)  do{if(FLAGS_verbose)fprintf(stderr,  __VA_ARGS__);}while(0)
-#define FATAL(...)  do{fprintf(stderr,  __VA_ARGS__);abort();}while(0)
+#define VERBOSE(...)                                 \
+  do {                                               \
+    if (FLAGS_verbose) fprintf(stderr, __VA_ARGS__); \
+  } while (0)
+#define FATAL(...)                \
+  do {                            \
+    fprintf(stderr, __VA_ARGS__); \
+    abort();                      \
+  } while (0)
 
 bool FLAGS_verbose = false;
+bool FLAGS_cros = false;
 int last_logical_offset = -1;
 int fuse_index = 0;
 
 // Brute xml parsing.
 // Find HashItem w/ key == name, return val field, recursively.
-static
-xmlChar* get_val(xmlNodePtr node, const char* key) {
+static xmlChar* get_val(xmlNodePtr node, const char* key) {
   xmlNode* cur_node = NULL;
   xmlChar* val = NULL;
 
@@ -75,9 +82,8 @@ xmlChar* get_val(xmlNodePtr node, const char* key) {
   return val;
 }
 
-static
-bool get_fuse(xmlNodePtr a_node,
-                map<string, uint32_t>* ids, map<string, uint32_t>* bits) {
+static bool get_fuse(xmlNodePtr a_node, map<string, uint32_t>* ids,
+                     map<string, uint32_t>* bits) {
   bool result = false;
 
   // Interested in <HashType>
@@ -110,9 +116,8 @@ bool get_fuse(xmlNodePtr a_node,
   return result;
 }
 
-static
-bool find_fuses(xmlNodePtr a_node,
-                map<string, uint32_t>* ids, map<string, uint32_t>* bits) {
+static bool find_fuses(xmlNodePtr a_node, map<string, uint32_t>* ids,
+                       map<string, uint32_t>* bits) {
   xmlNode* cur_node = NULL;
   bool done = false;
 
@@ -137,9 +142,8 @@ bool find_fuses(xmlNodePtr a_node,
   return done;
 }
 
-static
-bool find_default_reg_value(xmlNodePtr a_node,
-                            const string& regname, string* result) {
+static bool find_default_reg_value(xmlNodePtr a_node, const string& regname,
+                                   string* result) {
   xmlNode* cur_node = NULL;
   bool done = false;
 
@@ -168,12 +172,9 @@ bool find_default_reg_value(xmlNodePtr a_node,
   return done;
 }
 
-
 // Read XML, populate two maps, name -> val
-bool readXML(const string& filename,
-             map<string, uint32_t>* ids,
-             map<string, uint32_t>* bits,
-             uint32_t* p4cl) {
+bool readXML(const string& filename, map<string, uint32_t>* ids,
+             map<string, uint32_t>* bits, uint32_t* p4cl) {
   bool result = false;
   LIBXML_TEST_VERSION
 
@@ -182,7 +183,8 @@ bool readXML(const string& filename,
   if (doc) {
     result = find_fuses(xmlDocGetRootElement(doc), ids, bits);
     string p4clStr;
-    result &= find_default_reg_value(xmlDocGetRootElement(doc), "SWDP_P4_LAST_SYNC", &p4clStr);
+    result &= find_default_reg_value(xmlDocGetRootElement(doc),
+                                     "SWDP_P4_LAST_SYNC", &p4clStr);
     if (result) {
       *p4cl = atoi(p4clStr.c_str());
     }
@@ -195,84 +197,14 @@ bool readXML(const string& filename,
   return result;
 }
 
-// Write minified XML
-bool writeXML(const string& filename,
-              map<string, uint32_t>& ids,
-              map<string, uint32_t>& bits,
-              uint32_t p4cl) {
-  bool result = false;
-
-  // Get the names in order.
-  vector<string> names;
-  names.resize(ids.size());
-  for (map<string, uint32_t>::const_iterator it = ids.begin(); it != ids.end(); ++it) {
-      const string& name = it->first;
-      uint32_t offset = it->second;
-      names[offset] = name;
-  }
-
-  // Write out as nodes.
-  ofstream ofs(filename.c_str(), ofstream::out);
-  if (ofs) {
-    ofs << "<ArrayType>" << endl;
-    for (size_t i = 0; i < names.size(); ++i) {
-      const string& name = names[i];
-      ofs << "<ArrayItem>" << endl;
-      ofs << " <HashType>" << endl;
-      ofs << "  <HashItem>" << endl;
-      ofs << "   <Key>RegName</Key>" << endl;
-      ofs << "   <Value>" << name << "</Value>" << endl;
-      ofs << "  </HashItem>" << endl;
-      ofs << "  <HashItem>" << endl;
-      ofs << "   <Key>FuseLogicalOffset</Key>" << endl;
-      ofs << "   <Value>" << i << "</Value>" << endl;
-      ofs << "  </HashItem>" << endl;
-      ofs << "  <HashItem>" << endl;
-      ofs << "   <Key>Width</Key>" << endl;
-      ofs << "   <Value>" << bits[name] << "</Value>" << endl;
-      ofs << "  </HashItem>" << endl;
-      ofs << " </HashType>" << endl;
-      ofs << "</ArrayItem>" << endl;
-    }
-
-    // Write p4cl
-    ofs << "<ArrayItem>" << endl;
-    ofs << "<HashType>" << endl;
-    ofs << " <HashItem>" << endl;
-    ofs << "  <Key>RegName</Key>" << endl;
-    ofs << "  <Value>SWDP_P4_LAST_SYNC</Value>" << endl;
-    ofs << " </HashItem>" << endl;
-    ofs << " <HashItem>" << endl;
-    ofs << "  <Key>Default</Key>" << endl;
-    ofs << "  <Value>" << p4cl << "</Value>" << endl;
-    ofs << " </HashItem>" << endl;
-    // Write fake offset to make parser happy
-    ofs << " <HashItem>" << endl;
-    ofs << "  <Key>FuseLogicalOffset</Key>" << endl;
-    ofs << "  <Value>0</Value>" << endl;
-    ofs << " </HashItem>" << endl;
-    ofs << "</HashType>" << endl;
-    ofs << "</ArrayItem>" << endl;
-
-    ofs << "</ArrayType>" << endl;
-
-    result = true;
-  }
-
-  return result;
-}
-
 // Read JSON, populate map, name -> val
-bool readJSON(const string& filename,
-              string* tag,
-              map<string, uint32_t>* values,
-              map<string, uint32_t>* fusemap,
+bool readJSON(const string& filename, string* tag,
+              map<string, uint32_t>* values, map<string, uint32_t>* fusemap,
               map<string, uint32_t>* infomap) {
   bool result = false;
 #ifdef HAVE_JSON
   ifstream ifs(filename.c_str());
   if (ifs) {
-
     // Touch up a bit to allow for comments.
     // Beware: we drop everything past and including '//' from any line.
     //         Thus '//' cannot be substring of any value..
@@ -290,27 +222,35 @@ bool readJSON(const string& filename,
     // Try parse.
     rapidjson::Document d;
     if (d.Parse(s.c_str()).HasParseError()) {
-      FATAL("JSON %s[%lu]: parse error\n", filename.c_str(), d.GetErrorOffset());
+      FATAL("JSON %s[%lu]: parse error\n", filename.c_str(),
+            d.GetErrorOffset());
     } else {
-
-#define CHECKVALUE(x) do { \
-    if (!d.HasMember(x)){FATAL("manifest is lacking field '%s'\n", x);}; \
+#define CHECKVALUE(x)                               \
+  do {                                              \
+    if (!d.HasMember(x)) {                          \
+      FATAL("manifest is lacking field '%s'\n", x); \
+    };                                              \
   } while (0)
 
-#define GETVALUE(x) do { \
-    if (!d.HasMember(x)){FATAL("manifest is lacking field '%s'\n", x);}; \
-    (*values)[x] = d[x].GetInt(); \
+#define GETVALUE(x)                                 \
+  do {                                              \
+    if (!d.HasMember(x)) {                          \
+      FATAL("manifest is lacking field '%s'\n", x); \
+    };                                              \
+    (*values)[x] = d[x].GetInt();                   \
   } while (0)
 
       CHECKVALUE("fuses");
       const rapidjson::Document::ValueType& fuses = d["fuses"];
-      for (rapidjson::Value::ConstMemberIterator it = fuses.MemberBegin(); it != fuses.MemberEnd(); ++it) {
+      for (rapidjson::Value::ConstMemberIterator it = fuses.MemberBegin();
+           it != fuses.MemberEnd(); ++it) {
         (*fusemap)[it->name.GetString()] = it->value.GetInt();
       }
 
       CHECKVALUE("info");
       const rapidjson::Document::ValueType& infos = d["info"];
-      for (rapidjson::Value::ConstMemberIterator it = infos.MemberBegin(); it != infos.MemberEnd(); ++it) {
+      for (rapidjson::Value::ConstMemberIterator it = infos.MemberBegin();
+           it != infos.MemberEnd(); ++it) {
         (*infomap)[it->name.GetString()] = it->value.GetInt();
       }
 
@@ -333,7 +273,6 @@ bool readJSON(const string& filename,
 
 #undef GETVALUE
 #undef CHECKVALUE
-
     }
   }
 #endif  // HAVE_JSON
@@ -351,52 +290,56 @@ string hashesFilename;
 bool fillPattern = false;
 uint32_t pattern = -1;
 bool fillRandom = false;
-string xmlOutputFilename;
 
 void usage(int argc, char* argv[]) {
-  fprintf(stderr, "Usage: %s options\n"
+  fprintf(stderr,
+          "Usage: %s options\n"
           "--input=$elf-filename\n"
           "--output=output-filename\n"
           "--key=$pem-filename\n"
+          "[--cros] to sign for the ChromeOS realm w/o manifest\n"
           "[--xml=$xml-filename] typically 'havenTop.xml'\n"
           "[--json=$json-filename] the signing manifest\n"
           "[--format=bin|hex] output file format, hex is default\n"
           "[--signature=$sig-filename] replace signature with file content\n"
-          "[--hashes=$hashes-filename] destination file for intermediary hashes to be signed\n"
+          "[--hashes=$hashes-filename] destination file for intermediary "
+          "hashes to be signed\n"
           "[--randomfill] to pad image to 512K with random bits\n"
           "[--patternfill=N] to pad image to 512K with pattern N\n"
-          "[--writefuses=$xml-filename] to write out shortened xml\n"
           "[--verbose]\n",
           argv[0]);
 }
 
 int getOptions(int argc, char* argv[]) {
   static struct option long_options[] = {
-    // name, has_arg
-    {"format", required_argument, NULL, 'f'},
-    {"help", no_argument, NULL, 'h'},
-    {"input", required_argument, NULL, 'i'},
-    {"json", required_argument, NULL, 'j'},
-    {"key", required_argument, NULL, 'k'},
-    {"output", required_argument, NULL, 'o'},
-    {"verbose", no_argument, NULL, 'v'},
-    {"xml", required_argument, NULL, 'x'},
-    {"signature", required_argument, NULL, 's'},
-    {"hashes", required_argument, NULL, 'H'},
-    {"randomfill", no_argument, NULL, 'r'},
-    {"patternfill", required_argument, NULL, 'p'},
-    {"writefuses", required_argument, NULL, 'w'},
-    {0, 0, 0, 0}
-  };
+      // name, has_arg
+      {"cros", no_argument, NULL, 'c'},
+      {"format", required_argument, NULL, 'f'},
+      {"help", no_argument, NULL, 'h'},
+      {"input", required_argument, NULL, 'i'},
+      {"json", required_argument, NULL, 'j'},
+      {"key", required_argument, NULL, 'k'},
+      {"output", required_argument, NULL, 'o'},
+      {"verbose", no_argument, NULL, 'v'},
+      {"xml", required_argument, NULL, 'x'},
+      {"signature", required_argument, NULL, 's'},
+      {"hashes", required_argument, NULL, 'H'},
+      {"randomfill", no_argument, NULL, 'r'},
+      {"patternfill", required_argument, NULL, 'p'},
+      {"writefuses", required_argument, NULL, 'w'},
+      {0, 0, 0, 0}};
   int c, option_index = 0;
   outputFormat.assign("hex");
-  while ((c = getopt_long(argc, argv, "i:o:p:k:x:j:f:s:H:w:hvr",
-                          long_options, &option_index)) != -1) {
+  while ((c = getopt_long(argc, argv, "i:o:p:k:x:j:f:s:H:chvr", long_options,
+                          &option_index)) != -1) {
     switch (c) {
       case 0:
         fprintf(stderr, "option %s", long_options[option_index].name);
         if (optarg) fprintf(stderr, " with arg %s", optarg);
         fprintf(stderr, "\n");
+        break;
+      case 'c':
+        FLAGS_cros = true;
         break;
       case 'i':
         inputFilename.assign(optarg);
@@ -409,9 +352,6 @@ int getOptions(int argc, char* argv[]) {
         break;
       case 'x':
         xmlFilename.assign(optarg);
-        break;
-      case 'w':
-        xmlOutputFilename.assign(optarg);
         break;
       case 's':
         signatureFilename.assign(optarg);
@@ -444,9 +384,7 @@ int getOptions(int argc, char* argv[]) {
         return 1;
     }
   }
-  if (inputFilename.empty() ||
-      outputFilename.empty() ||
-      keyFilename.empty() ||
+  if (inputFilename.empty() || outputFilename.empty() || keyFilename.empty() ||
       ((outputFormat != "bin") && (outputFormat != "hex"))) {
     usage(argc, argv);
     return 1;
@@ -476,8 +414,10 @@ int main(int argc, char* argv[]) {
   hdr.ro_base = image.ro_base();
   hdr.ro_max = image.ro_max();
   hdr.rx_base = image.rx_base();
-  hdr.rx_max = image.rx_max() + 12;  // TODO: m3 I prefetch sets off GLOBALSEC when too tight
-                                     //       make sure these are nops or such?
+  hdr.rx_max =
+      image.rx_max() +
+      12;  // TODO: m3 instruction prefetch sets off GLOBALSEC when too tight
+           //       make sure these are nops or such?
   hdr.timestamp_ = time(NULL);
 
   // Parse signing manifest.
@@ -501,7 +441,8 @@ int main(int argc, char* argv[]) {
   }
 
   // Fill in more of hdr, per manifest values
-  for (map<string, uint32_t>::const_iterator it = values.begin(); it != values.end(); ++it) {
+  for (map<string, uint32_t>::const_iterator it = values.begin();
+       it != values.end(); ++it) {
     VERBOSE("%s : %u\n", it->first.c_str(), it->second);
   }
 
@@ -522,13 +463,21 @@ int main(int argc, char* argv[]) {
     FATAL("mismatched keyid JSON %d vs. key %d\n", values["keyid"], hdr.keyid);
   }
 
+  if (FLAGS_cros) {
+    if (!tag.empty()) {
+      FATAL("--cros whilst also specifying tag per manifest is a no go");
+    }
+    tag = "\x01\x00\x00\x00";  // cros realm identifier in rwr[0]
+  }
+
   // Fill in tag.
   VERBOSE("tag: \"%s\"\n", tag.c_str());
   strncpy((char*)(&hdr.tag), tag.c_str(), sizeof(hdr.tag));
 
   // List the specific fuses and values.
   VERBOSE("care about %lu fuses:\n", fuses.size());
-  for (map<string, uint32_t>::const_iterator it = fuses.begin(); it != fuses.end(); ++it) {
+  for (map<string, uint32_t>::const_iterator it = fuses.begin();
+       it != fuses.end(); ++it) {
     VERBOSE("fuse '%s' should have value %u\n", it->first.c_str(), it->second);
   }
 
@@ -543,8 +492,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (values["p4cl"] != xml_p4cl) {
-    FATAL("mismatching p4cl: xml %u vs. json %u\n",
-            xml_p4cl, values["p4cl"]);
+    FATAL("mismatching p4cl: xml %u vs. json %u\n", xml_p4cl, values["p4cl"]);
   }
 
   VERBOSE("found %lu fuse definitions\n", fuse_ids.size());
@@ -560,24 +508,18 @@ int main(int argc, char* argv[]) {
   fuse_ids["FW_DEFINED_DATA_EXTRA_BLK6"] = 125;
   fuse_bits["FW_DEFINED_DATA_EXTRA_BLK6"] = 5;
 
-  for (map<string, uint32_t>::const_iterator it = fuse_ids.begin(); it != fuse_ids.end(); ++it) {
-    VERBOSE("fuse '%s' at %u, width %u\n",
-          it->first.c_str(), it->second, fuse_bits[it->first]);
-  }
-
-  // Write condensed XML if asked to.
-  if (!xmlOutputFilename.empty()) {
-    writeXML(xmlOutputFilename,
-             fuse_ids,
-             fuse_bits,
-             xml_p4cl);
+  for (map<string, uint32_t>::const_iterator it = fuse_ids.begin();
+       it != fuse_ids.end(); ++it) {
+    VERBOSE("fuse '%s' at %u, width %u\n", it->first.c_str(), it->second,
+            fuse_bits[it->first]);
   }
 
   // Compute fuse_values array, according to manifest and xml.
   uint32_t fuse_values[FUSE_MAX];
   for (size_t i = 0; i < FUSE_MAX; ++i) fuse_values[i] = FUSE_IGNORE;
 
-  for (map<string, uint32_t>::const_iterator x = fuses.begin(); x != fuses.end(); ++x) {
+  for (map<string, uint32_t>::const_iterator x = fuses.begin();
+       x != fuses.end(); ++x) {
     map<string, uint32_t>::const_iterator it = fuse_ids.find(x->first);
     if (it == fuse_ids.end()) {
       FATAL("cannot find definition for fuse '%s'\n", x->first.c_str());
@@ -596,20 +538,18 @@ int main(int argc, char* argv[]) {
   }
 
   // Print out fuse hash input.
-  VERBOSE("expected fuse state:");
+  VERBOSE("expected fuse state:\n");
   for (size_t i = 0; i < FUSE_MAX; ++i) {
-    if (! (i % 8))
-      VERBOSE("\n");
     VERBOSE("%08x ", fuse_values[i]);
   }
   VERBOSE("\n");
-
 
   // Compute info_values array, according to manifest.
   uint32_t info_values[INFO_MAX];
   for (size_t i = 0; i < INFO_MAX; ++i) info_values[i] = INFO_IGNORE;
 
-  for (map<string, uint32_t>::const_iterator x = infos.begin(); x != infos.end(); ++x) {
+  for (map<string, uint32_t>::const_iterator x = infos.begin();
+       x != infos.end(); ++x) {
     uint32_t index = atoi(x->first.c_str());
     assert(index < INFO_MAX);
 
@@ -621,10 +561,8 @@ int main(int argc, char* argv[]) {
   // TODO: read values from JSON or implement version logic here.
 
   // Print out info hash input.
-  VERBOSE("expected info state:");
+  VERBOSE("expected info state:\n");
   for (size_t i = 0; i < INFO_MAX; ++i) {
-    if (! (i % 8))
-      VERBOSE("\n");
     VERBOSE("%08x ", info_values[i]);
   }
   VERBOSE("\n");
@@ -635,7 +573,8 @@ int main(int argc, char* argv[]) {
       int n = ::read(fd, hdr.signature, sizeof(hdr.signature));
       ::close(fd);
 
-      if (n != sizeof(hdr.signature)) FATAL("cannot read from '%s'\n", signatureFilename.c_str());
+      if (n != sizeof(hdr.signature))
+        FATAL("cannot read from '%s'\n", signatureFilename.c_str());
 
       VERBOSE("provided signature\n");
     } else {

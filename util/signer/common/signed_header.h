@@ -5,6 +5,10 @@
 #ifndef __EC_UTIL_SIGNER_COMMON_SIGNED_HEADER_H
 #define __EC_UTIL_SIGNER_COMMON_SIGNED_HEADER_H
 
+#include <assert.h>
+#include <string.h>
+#include <inttypes.h>
+
 #define FUSE_PADDING 0x55555555  // baked in hw!
 #define FUSE_IGNORE 0xa3badaac   // baked in rom!
 #define FUSE_MAX 128             // baked in rom!
@@ -32,6 +36,9 @@ typedef struct SignedHeader {
   void markInfo(uint32_t n) {
     assert(n < INFO_MAX);
     infomap[n / 32] |= 1 << (n & 31);
+  }
+
+  void print() const {
   }
 #endif  // __cplusplus
 
