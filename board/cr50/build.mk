@@ -16,6 +16,7 @@ CHIP_VARIANT ?= cr50_fpga
 # second time.
 ifeq ($(BOARD_MK_INCLUDED_ONCE),)
 BOARD_MK_INCLUDED_ONCE=1
+SIG_EXTRA = --cros
 else
 
 # Need to generate a .hex file

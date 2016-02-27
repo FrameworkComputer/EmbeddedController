@@ -42,7 +42,7 @@ cmd_flat_to_obj = $(CC) -T $(out)/firmware_image.lds -nostdlib $(CPPFLAGS) \
 cmd_ec_elf_to_flat ?= $(OBJCOPY) --set-section-flags .roshared=share \
 				-O binary $< $@
 cmd_elf_to_signed ?= sudo $(out)/util/signer --key=util/signer/$(3) \
-	--input=$< --format=bin --output=$@.signed \
+	--input=$< --format=bin --output=$@.signed $(SIG_EXTRA) \
 	&& sudo chown $(shell whoami) $@.signed && mv $@.signed $@
 cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
