@@ -18,6 +18,11 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Use variant specific configuration for flash / UART / IRQ */
+/* STM32F03X8 it itself a variant of STM32F03X with non-default flash sizes */
+#ifdef CHIP_VARIANT_STM32F03X8
+#define CHIP_VARIANT_STM32F03X
+#endif
+
 #if defined(CHIP_VARIANT_STM32L15X)
 #include "config-stm32l15x.h"
 #elif defined(CHIP_VARIANT_STM32L100)
