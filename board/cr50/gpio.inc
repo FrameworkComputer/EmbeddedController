@@ -8,24 +8,24 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* Pull this low to interrupt the AP */
-GPIO(INT_AP_L,        PIN(0, 0), GPIO_ODR_HIGH)
+GPIO(INT_AP_L,        PIN(0, 0), GPIO_INPUT)
 
 /* Use these to take over the AP & EC flash (only when AP & EC are off!) */
-GPIO(EC_FLASH_SELECT, PIN(0, 1), GPIO_OUT_LOW)
-GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_OUT_LOW)
+GPIO(EC_FLASH_SELECT, PIN(0, 1), GPIO_INPUT)
+GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_INPUT)
 
 /* As an input this mirrors EC_WP_L (which is controlled by RBOX, not a GPIO).
  * As an output it can override EC_WP_L, although why would we? */
 GPIO(AP_WP_L,         PIN(0, 3), GPIO_INPUT)
 
 /* Drive high to reset the EC & AP */
-GPIO(SYS_RST,         PIN(0, 4), GPIO_OUT_LOW)
+GPIO(SYS_RST,         PIN(0, 4), GPIO_INPUT)
 
 /* Indicate to EC when CCD is enabled */
-GPIO(CCD_MODE,        PIN(0, 5), GPIO_OUT_LOW)
+GPIO(CCD_MODE,        PIN(0, 5), GPIO_INPUT)
 
 /* Battery has a 10K pulldown on its side. We provide the pullup. */
-GPIO(BATT_PRES,       PIN(0, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(BATT_PRES,       PIN(0, 6), GPIO_INPUT)
 
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */
@@ -53,14 +53,14 @@ PINMUX(GPIO(BATT_PRES),       M2, 0)
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
 PINMUX(FUNC(UART0_RX),        A1, DIO_INPUT)
-PINMUX(FUNC(UART1_TX),        B3, DIO_OUTPUT)	/* AP console */
+PINMUX(FUNC(UART1_TX),        B3, DIO_INPUT)	/* AP console */
 PINMUX(FUNC(UART1_RX),        B2, DIO_INPUT)
-PINMUX(FUNC(UART2_TX),        B5, DIO_OUTPUT)	/* EC console */
+PINMUX(FUNC(UART2_TX),        B5, DIO_INPUT)	/* EC console */
 PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)
 
 /* I2C pins are bi-directional */
-PINMUX(FUNC(I2C0_SCL),        B0, DIO_OUTPUT|DIO_INPUT)
-PINMUX(FUNC(I2C0_SDA),        B1, DIO_OUTPUT|DIO_INPUT)
+PINMUX(FUNC(I2C0_SCL),        B0, DIO_INPUT)
+PINMUX(FUNC(I2C0_SDA),        B1, DIO_INPUT)
 
 /* Both SPI master and slave buses are wired directly to specific pads
  *
