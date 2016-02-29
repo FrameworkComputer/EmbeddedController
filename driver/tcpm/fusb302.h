@@ -10,6 +10,10 @@
 #ifndef __CROS_EC_DRIVER_TCPM_FUSB302_H
 #define __CROS_EC_DRIVER_TCPM_FUSB302_H
 
+/* Chip Device ID - 302A or 302B */
+#define FUSB302_DEVID_302A 0x08
+#define FUSB302_DEVID_302B 0x09
+
 /* I2C slave address varies by part number */
 /* FUSB302BUCX / FUSB302BMPX */
 #define FUSB302_I2C_SLAVE_ADDR 0x44
@@ -78,6 +82,7 @@
 
 #define TCPC_REG_CONTROL3	0x09
 #define TCPC_REG_CONTROL3_SEND_HARDRESET	(1<<6)
+#define TCPC_REG_CONTROL3_BIST_TMODE		(1<<5) /* 302B Only */
 #define TCPC_REG_CONTROL3_AUTO_HARDRESET	(1<<4)
 #define TCPC_REG_CONTROL3_AUTO_SOFTRESET	(1<<3)
 /* two-bit field */

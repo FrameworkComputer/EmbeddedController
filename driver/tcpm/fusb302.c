@@ -28,6 +28,7 @@ static struct fusb302_chip_state {
 	int togdone_pullup_cc1;
 	int togdone_pullup_cc2;
 	int tx_hard_reset_req;
+	int device_id;
 } state[CONFIG_USB_PD_PORT_COUNT];
 
 /* bring the FUSB302 out of reset after Hard Reset signaling */
@@ -104,10 +105,17 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 	if (state[port].togdone_pullup_cc1 == 1) {
 		/* Measure CC1 */
 
-		/* Enable CC1 measurement switch and pullup */
-		tcpc_write(port, TCPC_REG_SWITCHES0,
-			  TCPC_REG_SWITCHES0_CC1_PU_EN |
-			  TCPC_REG_SWITCHES0_MEAS_CC1);
+		/* Enable CC1 measurement switch and pullup(s) */
+		if (state[port].device_id == FUSB302_DEVID_302A) {
+			tcpc_write(port, TCPC_REG_SWITCHES0,
+				  TCPC_REG_SWITCHES0_CC1_PU_EN |
+				  TCPC_REG_SWITCHES0_MEAS_CC1);
+		} else {
+			tcpc_write(port, TCPC_REG_SWITCHES0,
+				  TCPC_REG_SWITCHES0_CC1_PU_EN |
+				  TCPC_REG_SWITCHES0_CC2_PU_EN |
+				  TCPC_REG_SWITCHES0_MEAS_CC1);
+		}
 
 		/* Set MDAC Value to High. MDAC Reg is 7:2 */
 		tcpc_write(port, TCPC_REG_MEASURE, 0x26 << 2);
@@ -142,9 +150,16 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 		/* Measure CC2 */
 
 		/* Enable CC2 measurement switch and pullup */
-		tcpc_write(port, TCPC_REG_SWITCHES0,
-			   TCPC_REG_SWITCHES0_CC2_PU_EN |
-			   TCPC_REG_SWITCHES0_MEAS_CC2);
+		if (state[port].device_id == FUSB302_DEVID_302A) {
+			tcpc_write(port, TCPC_REG_SWITCHES0,
+				  TCPC_REG_SWITCHES0_CC2_PU_EN |
+				  TCPC_REG_SWITCHES0_MEAS_CC2);
+		} else {
+			tcpc_write(port, TCPC_REG_SWITCHES0,
+				  TCPC_REG_SWITCHES0_CC1_PU_EN |
+				  TCPC_REG_SWITCHES0_CC2_PU_EN |
+				  TCPC_REG_SWITCHES0_MEAS_CC2);
+		}
 
 		/* Set MDAC Value to High. MDAC Reg is 7:2 */
 		tcpc_write(port, TCPC_REG_MEASURE, 0x26 << 2);
@@ -337,6 +352,10 @@ int tcpm_init(int port)
 
 	/* all other variables assumed to default to 0 */
 
+	/* Read the DeviceID register to get the chip version */
+	tcpc_read(port, TCPC_REG_DEVICE_ID, &reg);
+	state[port].device_id = (reg & 0xF0) >> 4;
+
 	/* Restore default settings */
 	tcpc_write(port, TCPC_REG_RESET, TCPC_REG_RESET_SW_RESET);
 
@@ -453,10 +472,15 @@ int tcpm_set_cc(int port, int pull)
 			reg &= ~TCPC_REG_SWITCHES0_CC1_PD_EN;
 			reg &= ~TCPC_REG_SWITCHES0_CC2_PD_EN;
 
-			if (state[port].togdone_pullup_cc1)
-				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
-			else
-				reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
+			if (state[port].device_id == FUSB302_DEVID_302A) {
+				if (state[port].togdone_pullup_cc1)
+					reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
+				else
+					reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
+			} else {
+				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN |
+				       TCPC_REG_SWITCHES0_CC2_PU_EN;
+			}
 
 			tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
@@ -877,10 +901,15 @@ void tcpc_alert(int port)
 		reg &= ~TCPC_REG_SWITCHES0_CC1_PD_EN;
 		reg &= ~TCPC_REG_SWITCHES0_CC2_PD_EN;
 
-		if (state[port].togdone_pullup_cc1)
-			reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
-		else
-			reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
+		if (state[port].device_id == FUSB302_DEVID_302A) {
+			if (state[port].togdone_pullup_cc1)
+				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
+			else
+				reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
+		} else {
+			reg |= TCPC_REG_SWITCHES0_CC1_PU_EN |
+			       TCPC_REG_SWITCHES0_CC2_PU_EN;
+		}
 
 		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 	}
@@ -926,3 +955,29 @@ void tcpc_alert(int port)
 	}
 
 }
+
+void tcpm_set_bist_test_data(int port)
+{
+	int reg;
+
+	/* 302B Only */
+	if (state[port].device_id == FUSB302_DEVID_302B) {
+		/* Read control3 register */
+		tcpc_read(port, TCPC_REG_CONTROL3, &reg);
+
+		/* Set the BIST_TMODE bit (Clears on Hard Reset) */
+		reg |= TCPC_REG_CONTROL3_BIST_TMODE;
+
+		/* Write the updated value */
+		tcpc_write(port, TCPC_REG_CONTROL3, reg);
+	} else {
+		/*
+		 * For the 302A, in this test mode, we want to disable
+		 * the protocol layer (don't respond to messages), and
+		 * repeatedly write the CONTROL1_RX_FLUSH bit to clear
+		 * the receive FIFO and allow the part to continue
+		 * sending GoodCRC messages automatically.
+		 */
+	}
+}
+
