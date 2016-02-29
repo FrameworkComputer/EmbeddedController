@@ -79,10 +79,17 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+/* VBUS_MUL */
+#define VBUS_MUL 30405
+/* VBUS_DIV 10bit ADC */
+#define VBUS_DIV 1024
+/* VBUS_SHIFT */
+#define VBUS_SHIFT 16
+
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30V. */
-	[ADC_VBUS] = {"VBUS", 30000, 1024, 0, 1},
+	[ADC_VBUS] = {"VBUS", VBUS_MUL, VBUS_DIV, VBUS_SHIFT, 1},
 	/* Adapter current output or battery discharging current */
 	[ADC_AMON_BMON] = {"AMON_BMON", 25000, 3072, 0, 3},
 	/*
