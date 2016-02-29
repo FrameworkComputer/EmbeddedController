@@ -46,9 +46,6 @@ GPIO(I2C3_SDA,      PIN(D, 0), GPIO_ODR_HIGH)
 GPIO(BOARD_VERSION1,       PIN(6, 4), GPIO_INPUT)    /* Board version stuffing resistor 1 */
 GPIO(BOARD_VERSION2,       PIN(6, 5), GPIO_INPUT)    /* Board version stuffing resistor 2 */
 GPIO(BOARD_VERSION3,       PIN(6, 6), GPIO_INPUT)    /* Board version stuffing resistor 3 */
-#ifdef CONFIG_KEYBOARD_COL2_INVERTED
-GPIO(KBD_KSO2,             PIN(1, 7), GPIO_OUT_LOW)  /* Negative edge triggered keyboard irq. */
-#endif
 
 /**************************** Alternate pins for UART/I2C/ADC/SPI/PWM/MFT ****************************/
 /* Alternate pins for UART/I2C/ADC/SPI/PWM/MFT */
@@ -75,3 +72,12 @@ ALTERNATE(PIN_MASK(9, 0x08), 3,  MODULE_PWM,         0)    /* MFT-1/TA1_TACH1 fo
 ALTERNATE(PIN_MASK(4, 0x01), 3,  MODULE_PWM,         0)    /* MFT-1/TA1_TACH1 for FAN Test GPIO40  */
 #endif
 #endif
+
+/* Keyboard Columns */
+ALTERNATE(PIN_MASK(0, 0xE0), 0,  MODULE_KEYBOARD_SCAN, 0)
+ALTERNATE(PIN_MASK(1, 0xFF), 0,  MODULE_KEYBOARD_SCAN, 0)
+ALTERNATE(PIN_MASK(2, 0x03), 0,  MODULE_KEYBOARD_SCAN, 0)
+
+/* Keyboard Rows */
+ALTERNATE(PIN_MASK(2, 0xFC), 0,  MODULE_KEYBOARD_SCAN, 0)
+ALTERNATE(PIN_MASK(3, 0x03), 0,  MODULE_KEYBOARD_SCAN, 0)

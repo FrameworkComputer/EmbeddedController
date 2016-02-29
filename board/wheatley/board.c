@@ -406,6 +406,17 @@ void board_set_gpio_hibernate_state(void)
 	/* Change GPIOs' state in hibernate for better power consumption */
 	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
 		gpio_set_flags(hibernate_pins[i][0], hibernate_pins[i][1]);
+
+	gpio_config_module(MODULE_KEYBOARD_SCAN, 0);
+
+	/*
+	 * Calling gpio_config_module sets disabled alternate function pins to
+	 * GPIO_INPUT.  But to prevent keypresses causing leakage currents
+	 * while hibernating we want to enable GPIO_PULL_UP as well.
+	 */
+	gpio_set_flags_by_mask(0x2, 0x03, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_set_flags_by_mask(0x1, 0xFF, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_set_flags_by_mask(0x0, 0xE0, GPIO_INPUT | GPIO_PULL_UP);
 }
 
 /* Any wheatley boards post version 2 should have ROP_LDO_EN stuffed. */

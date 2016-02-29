@@ -278,6 +278,34 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_TACH1_SL1)},/* TA1_TACH1 */
 	{ NPCX_GPIO(A, 4),  NPCX_ALT(3, TB1_TACH2_SL1)},/* TB1_TACH2 */
 #endif
+	/* Keyboard Scan Module (Inputs) */
+	{ NPCX_GPIO(3, 1),  NPCX_ALT_INV(7, NO_KSI0_SL)},/* KSI0 */
+	{ NPCX_GPIO(3, 0),  NPCX_ALT_INV(7, NO_KSI1_SL)},/* KSI1 */
+	{ NPCX_GPIO(2, 7),  NPCX_ALT_INV(7, NO_KSI2_SL)},/* KSI2 */
+	{ NPCX_GPIO(2, 6),  NPCX_ALT_INV(7, NO_KSI3_SL)},/* KSI3 */
+	{ NPCX_GPIO(2, 5),  NPCX_ALT_INV(7, NO_KSI4_SL)},/* KSI4 */
+	{ NPCX_GPIO(2, 4),  NPCX_ALT_INV(7, NO_KSI5_SL)},/* KSI5 */
+	{ NPCX_GPIO(2, 3),  NPCX_ALT_INV(7, NO_KSI6_SL)},/* KSI6 */
+	{ NPCX_GPIO(2, 2),  NPCX_ALT_INV(7, NO_KSI7_SL)},/* KSI7 */
+	/* Keyboard Scan Module (Outputs) */
+	{ NPCX_GPIO(2, 1),  NPCX_ALT_INV(8, NO_KSO00_SL)},/* KSO00 */
+	{ NPCX_GPIO(2, 0),  NPCX_ALT_INV(8, NO_KSO01_SL)},/* KSO01 */
+	{ NPCX_GPIO(1, 7),  NPCX_ALT_INV(8, NO_KSO02_SL)},/* KSO02 */
+	{ NPCX_GPIO(1, 6),  NPCX_ALT_INV(8, NO_KSO03_SL)},/* KSO03 */
+	{ NPCX_GPIO(1, 5),  NPCX_ALT_INV(8, NO_KSO04_SL)},/* KSO04 */
+	{ NPCX_GPIO(1, 4),  NPCX_ALT_INV(8, NO_KSO05_SL)},/* KSO05 */
+	{ NPCX_GPIO(1, 3),  NPCX_ALT_INV(8, NO_KSO06_SL)},/* KSO06 */
+	{ NPCX_GPIO(1, 2),  NPCX_ALT_INV(8, NO_KSO07_SL)},/* KSO07 */
+	{ NPCX_GPIO(1, 1),  NPCX_ALT_INV(9, NO_KSO08_SL)},/* KSO08 */
+	{ NPCX_GPIO(1, 0),  NPCX_ALT_INV(9, NO_KSO09_SL)},/* KSO09 */
+	{ NPCX_GPIO(0, 7),  NPCX_ALT_INV(9, NO_KSO10_SL)},/* KSO10 */
+	{ NPCX_GPIO(0, 6),  NPCX_ALT_INV(9, NO_KSO11_SL)},/* KSO11 */
+	{ NPCX_GPIO(0, 5),  NPCX_ALT_INV(9, NO_KSO12_SL)},/* KSO12 */
+	{ NPCX_GPIO(0, 4),  NPCX_ALT_INV(9, NO_KSO13_SL)},/* KSO13 */
+	{ NPCX_GPIO(8, 2),  NPCX_ALT_INV(9, NO_KSO14_SL)},/* KSO14 */
+	{ NPCX_GPIO(8, 3),  NPCX_ALT_INV(9, NO_KSO15_SL)},/* KSO15 */
+	{ NPCX_GPIO(0, 3),  NPCX_ALT_INV(A, NO_KSO16_SL)},/* KSO16 */
+	{ NPCX_GPIO(B, 1),  NPCX_ALT_INV(A, NO_KSO17_SL)},/* KSO17 */
 };
 
 /*****************************************************************************/
@@ -556,21 +584,6 @@ void gpio_pre_init(void)
 	int is_warm = system_is_reboot_warm();
 	int flags;
 	int i, j;
-
-	uint32_t ksi_mask = (~((1<<KEYBOARD_ROWS)-1)) & KB_ROW_MASK;
-	uint32_t kso_mask = ((~((1<<KEYBOARD_COLS)-1))
-			<< CONFIG_KEYBOARD_KSO_BASE) & KB_COL_MASK;
-
-#ifdef CONFIG_KEYBOARD_COL2_INVERTED
-	kso_mask |= 1 << (CONFIG_KEYBOARD_KSO_BASE + 2);
-#endif
-
-	/* Set necessary pin mux to GPIO first */
-	/* Pin_Mux for KSO0-17 & KSI0-7 */
-	NPCX_DEVALT(ALT_GROUP_7)  = (uint8_t)(ksi_mask);
-	NPCX_DEVALT(ALT_GROUP_8)  = (uint8_t)(kso_mask);
-	NPCX_DEVALT(ALT_GROUP_9)  = (uint8_t)(kso_mask >> 8);
-	NPCX_DEVALT(ALT_GROUP_A) |= (uint8_t)(kso_mask >> 16);
 
 	/* Pin_Mux for FIU/SPI (set to GPIO) */
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_GPIO_NO_SPIP);

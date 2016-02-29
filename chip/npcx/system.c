@@ -312,17 +312,6 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 		}
 	}
 
-	/*
-	 * Set all KBSOUTs to GPIOs and switch their mode to input and pull-up.
-	 * Otherwise pressing the keyboard matrix might cause some current
-	 * leakage during hibernating.
-	 */
-	NPCX_DEVALT(0x8) = 0xFF;
-	NPCX_DEVALT(0x9) |= 0x1F;
-	gpio_set_flags_by_mask(0x2, 0x03, GPIO_INPUT | GPIO_PULL_UP);
-	gpio_set_flags_by_mask(0x1, 0xFF, GPIO_INPUT | GPIO_PULL_UP);
-	gpio_set_flags_by_mask(0x0, 0xF0, GPIO_INPUT | GPIO_PULL_UP);
-
 	/* Enable wake-up inputs of hibernate_wake_pins array */
 	for (i = 0; i < hibernate_wake_pins_used; i++)
 		gpio_reset(hibernate_wake_pins[i]);

@@ -9,6 +9,7 @@
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "clock.h"
+#include "gpio.h"
 #include "registers.h"
 #include "task.h"
 
@@ -40,13 +41,7 @@ void keyboard_raw_init(void)
 	NPCX_KBSOUT0 = 0x00;
 	NPCX_KBSOUT1 = 0x00;
 
-#ifdef CONFIG_KEYBOARD_COL2_INVERTED
-	/*
-	 * When column 2 is inverted, Nuvoton EC KBS outputs only support
-	 * open-drain. So we should change this pin to GPIO
-	 */
-	SET_BIT(NPCX_DEVALT(ALT_GROUP_8), NPCX_DEVALT8_NO_KSO02_SL);
-#endif
+	gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
 
 	/*
 	 * Enable interrupts for the inputs.  The top-level interrupt is still
