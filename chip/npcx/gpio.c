@@ -19,203 +19,216 @@
 #include "system_chip.h"
 #include "lpc_chip.h"
 
-/* Marco functions for GPIO WUI/ALT table */
-#define NPCX_GPIO(grp, pin) \
-	GPIO_PORT_##grp, MASK_PIN##pin
-#define NPCX_GPIO_NONE \
-	GPIO_PORT_COUNT, 0xFF
-#define NPCX_WUI(tbl, grp, pin) \
-	MIWU_TABLE_##tbl, MIWU_GROUP_##grp, MASK_PIN##pin
-
-#define ALT_MASK(pin) \
-	CONCAT2(MASK_PIN, pin)
-#define ALT_PIN(grp, pin) \
-	ALT_MASK(NPCX_DEVALT##grp##_##pin)
-#define NPCX_ALT(grp, pin) \
-	ALT_GROUP_##grp, ALT_PIN(grp, pin)
-
 /* Flags for PWM IO type */
 #define PWM_IO_FUNC        (1 << 1)  /* PWM optional func bit */
 #define PWM_IO_OD          (1 << 2)  /* PWM IO open-drain bit */
 
-struct gpio_wui_map {
-	uint8_t gpio_port;
-	uint8_t gpio_mask;
-	uint8_t wui_table;
-	uint8_t wui_group;
-	uint8_t wui_mask;
+struct npcx_gpio {
+	uint8_t port  : 4;
+	uint8_t bit   : 3;
+	uint8_t valid : 1;
 };
+
+BUILD_ASSERT(sizeof(struct npcx_gpio) == 1);
 
 struct gpio_wui_item {
-	struct  gpio_wui_map wui_map[8];
-	uint8_t irq;
+	struct npcx_gpio gpio[8];
+	uint8_t          irq;
 };
 
-const struct gpio_wui_item gpio_wui_table[] = {
-	/* MIWU0 Group A */
-	{ {	{ NPCX_GPIO(8, 0), NPCX_WUI(0, 1, 0) },
-		{ NPCX_GPIO(8, 1), NPCX_WUI(0, 1, 1) },
-		{ NPCX_GPIO(8, 2), NPCX_WUI(0, 1, 2) },
-		{ NPCX_GPIO(8, 3), NPCX_WUI(0, 1, 3) },
-		{ NPCX_GPIO(8, 4), NPCX_WUI(0, 1, 4) },
-		{ NPCX_GPIO(8, 5), NPCX_WUI(0, 1, 5) },
-		{ NPCX_GPIO(8, 6), NPCX_WUI(0, 1, 6) },
-		{ NPCX_GPIO(8, 7), NPCX_WUI(0, 1, 7) },
-	  },  NPCX_IRQ_MTC_WKINTAD_0 },
-	/* MIWU0 Group B */
-	{ {	{ NPCX_GPIO(9, 0), NPCX_WUI(0, 2, 0) },
-		{ NPCX_GPIO(9, 1), NPCX_WUI(0, 2, 1) },
-		{ NPCX_GPIO(9, 2), NPCX_WUI(0, 2, 2) },
-		{ NPCX_GPIO(9, 3), NPCX_WUI(0, 2, 3) },
-		{ NPCX_GPIO(9, 4), NPCX_WUI(0, 2, 4) },
-		{ NPCX_GPIO(9, 5), NPCX_WUI(0, 2, 5) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 2, 6) }, /* MSWC Wake-Up	*/
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 2, 7) }, /* T0OUT Wake-Up */
-	  },  NPCX_IRQ_TWD_WKINTB_0 },
-	/* MIWU0 Group C */
-	{ {	{ NPCX_GPIO(9, 6), NPCX_WUI(0, 3, 0) },
-		{ NPCX_GPIO(9, 7), NPCX_WUI(0, 3, 1) },
-		{ NPCX_GPIO(A, 0), NPCX_WUI(0, 3, 2) },
-		{ NPCX_GPIO(A, 1), NPCX_WUI(0, 3, 3) },
-		{ NPCX_GPIO(A, 2), NPCX_WUI(0, 3, 4) },
-		{ NPCX_GPIO(A, 3), NPCX_WUI(0, 3, 5) },
-		{ NPCX_GPIO(A, 4), NPCX_WUI(0, 3, 6) },
-		{ NPCX_GPIO(A, 5), NPCX_WUI(0, 3, 7) },
-	  },  NPCX_IRQ_WKINTC_0 },
-	/* MIWU0 Group D */
-	{ {	{ NPCX_GPIO(A, 6), NPCX_WUI(0, 4, 0) },
-		{ NPCX_GPIO(A, 7), NPCX_WUI(0, 4, 1) },
-		{ NPCX_GPIO(B, 0), NPCX_WUI(0, 4, 2) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 4, 3) }, /* SMB0 Wake-Up */
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 4, 4) }, /* SMB1 Wake-Up */
-		{ NPCX_GPIO(B, 1), NPCX_WUI(0, 4, 5) },
-		{ NPCX_GPIO(B, 2), NPCX_WUI(0, 4, 6) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 4, 7) }, /* MTC Wake-Up */
-	  },  NPCX_IRQ_MTC_WKINTAD_0 },
+/* Macros to initialize the gpio_wui_table */
+#define NPCX_GPIO_NONE       {               0,   0, 0}
+#define NPCX_GPIO(port, pin) {GPIO_PORT_##port, pin, 1}
 
-	/* MIWU0 Group E */
-	{ {	{ NPCX_GPIO(B, 3), NPCX_WUI(0, 5 , 0) },
-		{ NPCX_GPIO(B, 4), NPCX_WUI(0, 5 , 1) },
-		{ NPCX_GPIO(B, 5), NPCX_WUI(0, 5 , 2) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 5 , 3) },
-		{ NPCX_GPIO(B, 7), NPCX_WUI(0, 5 , 4) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 5 , 5) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 5 , 6) }, /* Host Wake-Up */
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 5 , 7) }, /* LRESET Wake-Up */
-	  },  NPCX_IRQ_WKINTEFGH_0 },
+const struct gpio_wui_item gpio_wui_table[2][8] = {
+	/* MIWU0 */
+	{
+		/* Group A*/
+		{ { NPCX_GPIO(8, 0),
+		    NPCX_GPIO(8, 1),
+		    NPCX_GPIO(8, 2),
+		    NPCX_GPIO(8, 3),
+		    NPCX_GPIO(8, 4),
+		    NPCX_GPIO(8, 5),
+		    NPCX_GPIO(8, 6),
+		    NPCX_GPIO(8, 7), },
+		  NPCX_IRQ_MTC_WKINTAD_0 },
+		/* Group B */
+		{ { NPCX_GPIO(9, 0),
+		    NPCX_GPIO(9, 1),
+		    NPCX_GPIO(9, 2),
+		    NPCX_GPIO(9, 3),
+		    NPCX_GPIO(9, 4),
+		    NPCX_GPIO(9, 5),
+		    NPCX_GPIO_NONE, /* MSWC Wake-Up  */
+		    NPCX_GPIO_NONE, }, /* T0OUT Wake-Up */
+		  NPCX_IRQ_TWD_WKINTB_0 },
+		/* Group C */
+		{ { NPCX_GPIO(9, 6),
+		    NPCX_GPIO(9, 7),
+		    NPCX_GPIO(A, 0),
+		    NPCX_GPIO(A, 1),
+		    NPCX_GPIO(A, 2),
+		    NPCX_GPIO(A, 3),
+		    NPCX_GPIO(A, 4),
+		    NPCX_GPIO(A, 5), },
+		  NPCX_IRQ_WKINTC_0 },
+		/* Group D */
+		{ { NPCX_GPIO(A, 6),
+		    NPCX_GPIO(A, 7),
+		    NPCX_GPIO(B, 0),
+		    NPCX_GPIO_NONE, /* SMB0 Wake-Up */
+		    NPCX_GPIO_NONE, /* SMB1 Wake-Up */
+		    NPCX_GPIO(B, 1),
+		    NPCX_GPIO(B, 2),
+		    NPCX_GPIO_NONE, }, /* MTC Wake-Up */
+		  NPCX_IRQ_MTC_WKINTAD_0 },
+		/* Group E */
+		{ { NPCX_GPIO(B, 3),
+		    NPCX_GPIO(B, 4),
+		    NPCX_GPIO(B, 5),
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO(B, 7),
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE, /* Host Wake-Up  */
+		    NPCX_GPIO_NONE, }, /* LRESET Wake-Up */
+		  NPCX_IRQ_WKINTEFGH_0 },
+		/* Group F */
+		{ { NPCX_GPIO(C, 0),
+		    NPCX_GPIO(C, 1),
+		    NPCX_GPIO(C, 2),
+		    NPCX_GPIO(C, 3),
+		    NPCX_GPIO(C, 4),
+		    NPCX_GPIO(C, 5),
+		    NPCX_GPIO(C, 6),
+		    NPCX_GPIO(C, 7), },
+		  NPCX_IRQ_WKINTEFGH_0 },
+		/* Group G */
+		{ { NPCX_GPIO(D, 0),
+		    NPCX_GPIO(D, 1),
+		    NPCX_GPIO(D, 2),
+		    NPCX_GPIO(D, 3),
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE, },
+		  NPCX_IRQ_WKINTEFGH_0 },
+		/* Group H */
+		{ { NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO(E, 7), },
+		  NPCX_IRQ_WKINTEFGH_0 }, },
+	/* MIWU1 */
+	{
+		/* Group A */
+		{ { NPCX_GPIO(0, 0),
+		    NPCX_GPIO(0, 1),
+		    NPCX_GPIO(0, 2),
+		    NPCX_GPIO(0, 3),
+		    NPCX_GPIO(0, 4),
+		    NPCX_GPIO(0, 5),
+		    NPCX_GPIO(0, 6),
+		    NPCX_GPIO(0, 7), },
+		  NPCX_IRQ_WKINTA_1 },
+		/* Group B */
+		{ { NPCX_GPIO(1, 0),
+		    NPCX_GPIO(1, 1),
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO(1, 3),
+		    NPCX_GPIO(1, 4),
+		    NPCX_GPIO(1, 5),
+		    NPCX_GPIO(1, 6),
+		    NPCX_GPIO(1, 7), },
+		  NPCX_IRQ_WKINTB_1 },
+		/* Group C */
+		{ { NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO_NONE, },
+		  NPCX_IRQ_COUNT },
+		/* Group D */
+		{ { NPCX_GPIO(2, 0),
+		    NPCX_GPIO(2, 1),
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO(3, 3),
+		    NPCX_GPIO(3, 4),
+		    NPCX_GPIO_NONE,
+		    NPCX_GPIO(3, 6),
+		    NPCX_GPIO(3, 7), },
+		  NPCX_IRQ_WKINTD_1 },
+		/* Group E */
+		{ { NPCX_GPIO(4, 0),
+		    NPCX_GPIO(4, 1),
+		    NPCX_GPIO(4, 2),
+		    NPCX_GPIO(4, 3),
+		    NPCX_GPIO(4, 4),
+		    NPCX_GPIO(4, 5),
+		    NPCX_GPIO(4, 6),
+		    NPCX_GPIO(4, 7), },
+		  NPCX_IRQ_WKINTE_1 },
+		/* Group F */
+		{ { NPCX_GPIO(5, 0),
+		    NPCX_GPIO(5, 1),
+		    NPCX_GPIO(5, 2),
+		    NPCX_GPIO(5, 3),
+		    NPCX_GPIO(5, 4),
+		    NPCX_GPIO(5, 5),
+		    NPCX_GPIO(5, 6),
+		    NPCX_GPIO(5, 7), },
+		  NPCX_IRQ_WKINTF_1 },
+		/* Group G */
+		{ { NPCX_GPIO(6, 0),
+		    NPCX_GPIO(6, 1),
+		    NPCX_GPIO(6, 2),
+		    NPCX_GPIO(6, 3),
+		    NPCX_GPIO(6, 4),
+		    NPCX_GPIO(6, 5),
+		    NPCX_GPIO(6, 6),
+		    NPCX_GPIO(7, 1), },
+		  NPCX_IRQ_WKINTG_1 },
+		/* Group H */
+		{ { NPCX_GPIO(7, 0),
+		    NPCX_GPIO(6, 7),
+		    NPCX_GPIO(7, 2),
+		    NPCX_GPIO(7, 3),
+		    NPCX_GPIO(7, 4),
+		    NPCX_GPIO(7, 5),
+		    NPCX_GPIO(7, 6),
+		    NPCX_GPIO_NONE, },
+		  NPCX_IRQ_WKINTH_1 }, },
+};
 
-	/* MIWU0 Group F */
-	{ {	{ NPCX_GPIO(C, 0), NPCX_WUI(0, 6, 0) },
-		{ NPCX_GPIO(C, 1), NPCX_WUI(0, 6, 1) },
-		{ NPCX_GPIO(C, 2), NPCX_WUI(0, 6, 2) },
-		{ NPCX_GPIO(C, 3), NPCX_WUI(0, 6, 3) },
-		{ NPCX_GPIO(C, 4), NPCX_WUI(0, 6, 4) },
-		{ NPCX_GPIO(C, 5), NPCX_WUI(0, 6, 5) },
-		{ NPCX_GPIO(C, 6), NPCX_WUI(0, 6, 6) },
-		{ NPCX_GPIO(C, 7), NPCX_WUI(0, 6, 7) },
-	  },  NPCX_IRQ_WKINTEFGH_0 },
-	/* MIWU0 Group G */
-	{ {	{ NPCX_GPIO(D, 0), NPCX_WUI(0, 7, 0) },
-		{ NPCX_GPIO(D, 1), NPCX_WUI(0, 7, 1) },
-		{ NPCX_GPIO(D, 2), NPCX_WUI(0, 7, 2) },
-		{ NPCX_GPIO(D, 3), NPCX_WUI(0, 7, 3) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 7, 4) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 7, 5) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 7, 6) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 7, 7) },
-	  },  NPCX_IRQ_WKINTEFGH_0 },
-	/* MIWU0 Group H */
-	{ {	{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 0) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 1) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 2) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 3) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 4) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 5) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(0, 8, 6) },
-		{ NPCX_GPIO(E, 7), NPCX_WUI(0, 8, 7) },
-	  },  NPCX_IRQ_WKINTEFGH_0 },
+/*
+ * Only the first two MIWU tables are supported.
+ */
+BUILD_ASSERT(ARRAY_SIZE(gpio_wui_table)    == 2);
+BUILD_ASSERT(ARRAY_SIZE(gpio_wui_table[0]) == MIWU_GROUP_COUNT);
 
-	/* MIWU1 Group A */
-	{ {	{ NPCX_GPIO(0, 0), NPCX_WUI(1, 1, 0) },
-		{ NPCX_GPIO(0, 1), NPCX_WUI(1, 1, 1) },
-		{ NPCX_GPIO(0, 2), NPCX_WUI(1, 1, 2) },
-		{ NPCX_GPIO(0, 3), NPCX_WUI(1, 1, 3) },
-		{ NPCX_GPIO(0, 4), NPCX_WUI(1, 1, 4) },
-		{ NPCX_GPIO(0, 5), NPCX_WUI(1, 1, 5) },
-		{ NPCX_GPIO(0, 6), NPCX_WUI(1, 1, 6) },
-		{ NPCX_GPIO(0, 7), NPCX_WUI(1, 1, 7) },
-	  },  NPCX_IRQ_WKINTA_1 },
-	/* MIWU1 Group B */
-	{ {	{ NPCX_GPIO(1, 0), NPCX_WUI(1, 2, 0) },
-		{ NPCX_GPIO(1, 1), NPCX_WUI(1, 2, 1) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(1, 2, 2) },
-		{ NPCX_GPIO(1, 3), NPCX_WUI(1, 2, 3) },
-		{ NPCX_GPIO(1, 4), NPCX_WUI(1, 2, 4) },
-		{ NPCX_GPIO(1, 5), NPCX_WUI(1, 2, 5) },
-		{ NPCX_GPIO(1, 6), NPCX_WUI(1, 2, 6) },
-		{ NPCX_GPIO(1, 7), NPCX_WUI(1, 2, 7) },
-	  },  NPCX_IRQ_WKINTB_1 },
-	/* MIWU1 Group C -- Skipping */
-	/* MIWU1 Group D */
-	{ {	{ NPCX_GPIO(2, 0), NPCX_WUI(1, 4, 0) },
-		{ NPCX_GPIO(2, 1), NPCX_WUI(1, 4, 1) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(1, 4, 2) },
-		{ NPCX_GPIO(3, 3), NPCX_WUI(1, 4, 3) },
-		{ NPCX_GPIO(3, 4), NPCX_WUI(1, 4, 4) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(1, 4, 5) },
-		{ NPCX_GPIO(3, 6), NPCX_WUI(1, 4, 6) },
-		{ NPCX_GPIO(3, 7), NPCX_WUI(1, 4, 7) },
-	  },  NPCX_IRQ_WKINTD_1 },
-
-	/* MIWU1 Group E */
-	{ {	{ NPCX_GPIO(4, 0), NPCX_WUI(1, 5, 0) },
-		{ NPCX_GPIO(4, 1), NPCX_WUI(1, 5, 1) },
-		{ NPCX_GPIO(4, 2), NPCX_WUI(1, 5, 2) },
-		{ NPCX_GPIO(4, 3), NPCX_WUI(1, 5, 3) },
-		{ NPCX_GPIO(4, 4), NPCX_WUI(1, 5, 4) },
-		{ NPCX_GPIO(4, 5), NPCX_WUI(1, 5, 5) },
-		{ NPCX_GPIO(4, 6), NPCX_WUI(1, 5, 6) },
-		{ NPCX_GPIO(4, 7), NPCX_WUI(1, 5, 7) },
-	  },  NPCX_IRQ_WKINTE_1 },
-
-	/* MIWU1 Group F */
-	{ {	{ NPCX_GPIO(5, 0), NPCX_WUI(1, 6, 0) },
-		{ NPCX_GPIO(5, 1), NPCX_WUI(1, 6, 1) },
-		{ NPCX_GPIO(5, 2), NPCX_WUI(1, 6, 2) },
-		{ NPCX_GPIO(5, 3), NPCX_WUI(1, 6, 3) },
-		{ NPCX_GPIO(5, 4), NPCX_WUI(1, 6, 4) },
-		{ NPCX_GPIO(5, 5), NPCX_WUI(1, 6, 5) },
-		{ NPCX_GPIO(5, 6), NPCX_WUI(1, 6, 6) },
-		{ NPCX_GPIO(5, 7), NPCX_WUI(1, 6, 7) },
-	  },  NPCX_IRQ_WKINTF_1 },
-	/* MIWU1 Group G */
-	{ {	{ NPCX_GPIO(6, 0), NPCX_WUI(1, 7, 0) },
-		{ NPCX_GPIO(6, 1), NPCX_WUI(1, 7, 1) },
-		{ NPCX_GPIO(6, 2), NPCX_WUI(1, 7, 2) },
-		{ NPCX_GPIO(6, 3), NPCX_WUI(1, 7, 3) },
-		{ NPCX_GPIO(6, 4), NPCX_WUI(1, 7, 4) },
-		{ NPCX_GPIO(6, 5), NPCX_WUI(1, 7, 5) },
-		{ NPCX_GPIO(6, 6), NPCX_WUI(1, 7, 6) },
-		{ NPCX_GPIO(7, 1), NPCX_WUI(1, 7, 7) },
-	  },  NPCX_IRQ_WKINTG_1 },
-	/* MIWU1 Group H */
-	{ {	{ NPCX_GPIO(7, 0), NPCX_WUI(1, 8, 0) },
-		{ NPCX_GPIO(6, 7), NPCX_WUI(1, 8, 1) },
-		{ NPCX_GPIO(7, 2), NPCX_WUI(1, 8, 2) },
-		{ NPCX_GPIO(7, 3), NPCX_WUI(1, 8, 3) },
-		{ NPCX_GPIO(7, 4), NPCX_WUI(1, 8, 4) },
-		{ NPCX_GPIO(7, 5), NPCX_WUI(1, 8, 5) },
-		{ NPCX_GPIO(7, 6), NPCX_WUI(1, 8, 6) },
-		{ NPCX_GPIO_NONE,  NPCX_WUI(1, 8, 7) },
-	  },  NPCX_IRQ_WKINTH_1 },
+struct npcx_alt {
+	uint8_t group     : 4;
+	uint8_t bit       : 3;
+	uint8_t inverted  : 1;
 };
 
 struct gpio_alt_map {
-	uint8_t gpio_port;
-	uint8_t gpio_mask;
-	uint8_t alt_group;
-	uint8_t alt_mask;
+	struct npcx_gpio gpio;
+	struct npcx_alt  alt;
 };
+
+BUILD_ASSERT(sizeof(struct gpio_alt_map) == 2);
+
+/* Convenient macros to initialize the gpio_alt_table */
+#define NPCX_ALT(grp, pin)     { ALT_GROUP_##grp, NPCX_DEVALT##grp##_##pin, 0 }
+#define NPCX_ALT_INV(grp, pin) { ALT_GROUP_##grp, NPCX_DEVALT##grp##_##pin, 1 }
 
 const struct gpio_alt_map gpio_alt_table[] = {
 	/* I2C Module */
@@ -269,73 +282,97 @@ const struct gpio_alt_map gpio_alt_table[] = {
 
 /*****************************************************************************/
 /* Internal functions */
-const struct gpio_wui_map *gpio_find_wui_from_io(uint8_t port, uint8_t mask)
+
+struct gpio_wui_gpio_info {
+	uint8_t table : 1;
+	uint8_t group : 3;
+	uint8_t bit   : 3;
+	uint8_t valid : 1;
+};
+
+BUILD_ASSERT(sizeof(struct gpio_wui_gpio_info) == 1);
+
+static int gpio_match(uint8_t port, uint8_t mask, struct npcx_gpio gpio)
 {
-	int i, j;
-	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++) {
-		const struct gpio_wui_map *map = gpio_wui_table[i].wui_map;
-		for (j = 0; j < 8; j++, map++) {
-			if (map->gpio_port == port && map->gpio_mask == mask)
-				return map;
-		}
-	}
-	return NULL;
+	return (gpio.valid && (gpio.port == port) && ((1 << gpio.bit) == mask));
 }
 
-int gpio_find_irq_from_io(uint8_t port, uint8_t mask)
+static struct gpio_wui_gpio_info gpio_find_wui_from_io(uint8_t port,
+						       uint8_t mask)
 {
-	int i, j;
+	int i, j, k;
+
 	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++) {
-		const struct gpio_wui_map *map = gpio_wui_table[i].wui_map;
-		for (j = 0; j < 8; j++, map++) {
-			if (map->gpio_port == port && map->gpio_mask == mask)
-				return gpio_wui_table[i].irq;
+		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++) {
+			const struct npcx_gpio *gpio =
+				gpio_wui_table[i][j].gpio;
+
+			for (k = 0; k < 8; k++) {
+				if (gpio_match(port, mask, gpio[k]))
+					return ((struct gpio_wui_gpio_info) {
+						.table = i,
+						.group = j,
+						.bit   = k,
+						.valid = 1,
+					});
+			}
 		}
 	}
+
+	return ((struct gpio_wui_gpio_info) { .valid = 0 });
+}
+
+static int gpio_find_irq_from_io(uint8_t port, uint8_t mask)
+{
+	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(port, mask);
+
+	if (wui.valid)
+		return gpio_wui_table[wui.table][wui.group].irq;
+
 	return -1;
 }
 
-void gpio_pwm_io_type_sel(uint8_t alt_mask, uint8_t func)
+static void gpio_pwm_io_type_sel(uint8_t chan, uint8_t func)
 {
-	uint8_t chan = 0;
-	do {
-		alt_mask = (alt_mask >> 1);
-		if (alt_mask == 0)
-			break;
-		chan++;
-	} while (1);
-
-	/* Set PWM open drain output is open drain type*/
 	if (func & PWM_IO_OD)
+		/* Set PWM open drain output is open drain type*/
 		SET_BIT(NPCX_PWMCTLEX(chan), NPCX_PWMCTLEX_OD_OUT);
-	else /* Set PWM open drain output is push-pull type*/
+	else
+		/* Set PWM open drain output is push-pull type*/
 		CLEAR_BIT(NPCX_PWMCTLEX(chan), NPCX_PWMCTLEX_OD_OUT);
 }
 
-int gpio_alt_sel(uint8_t port, uint8_t mask, int8_t func)
+static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 {
-	int i;
-	const struct gpio_alt_map *map = gpio_alt_table;
-	for (i = 0; i < ARRAY_SIZE(gpio_alt_table); i++, map++) {
-		if (map->gpio_port == port &&
-			(map->gpio_mask == mask)) {
-			/* Enable alternative function if func >=0 */
-			if (func <= 0) /* GPIO functionality */
-				NPCX_DEVALT(map->alt_group) &= ~(map->alt_mask);
-			else {
-				NPCX_DEVALT(map->alt_group) |= (map->alt_mask);
-				/* PWM optional functionality */
-				if (func & PWM_IO_FUNC)
-					gpio_pwm_io_type_sel(map->alt_mask,
-							func);
-			}
+	struct gpio_alt_map const *map;
+
+	for (map = ARRAY_BEGIN(gpio_alt_table);
+	     map < ARRAY_END(gpio_alt_table);
+	     map++) {
+		if (gpio_match(port, 1 << bit, map->gpio)) {
+			uint8_t alt_mask = 1 << map->alt.bit;
+
+			/*
+			 * func < 0          -> GPIO functionality
+			 * map->alt.inverted -> Set DEVALT bit for GPIO
+			 */
+			if ((func < 0) ^ map->alt.inverted)
+				NPCX_DEVALT(map->alt.group) &= ~alt_mask;
+			else
+				NPCX_DEVALT(map->alt.group) |=  alt_mask;
+
+			/* PWM optional functionality */
+			if ((func >= 0) && (func & PWM_IO_FUNC))
+				gpio_pwm_io_type_sel(map->alt.bit, func);
+
 			return 1;
 		}
 	}
+
 	return -1;
 }
 
-void gpio_execute_isr(uint8_t port, uint8_t mask)
+static void gpio_execute_isr(uint8_t port, uint8_t mask)
 {
 	int i;
 	const struct gpio_info *g = gpio_list;
@@ -349,17 +386,15 @@ void gpio_execute_isr(uint8_t port, uint8_t mask)
 }
 
 /* Set interrupt type for GPIO input */
-void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
+static void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 {
-	const struct gpio_wui_map *map = gpio_find_wui_from_io(port, mask);
-	uint8_t table, group, pmask;
+	struct gpio_wui_gpio_info wui   = gpio_find_wui_from_io(port, mask);
+	uint8_t                   table = wui.table;
+	uint8_t                   group = wui.group;
+	uint8_t                   pmask = 1 << wui.bit;
 
-	if (map == NULL)
+	if (!wui.valid)
 		return;
-
-	table = map->wui_table;
-	group = map->wui_group;
-	pmask = map->wui_mask;
 
 	/* Handle interrupt for level trigger */
 	if ((flags & GPIO_INT_F_HIGH) ||
@@ -428,29 +463,24 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func)
 {
 	/* Enable alternative pins by func*/
 	int pin;
-	uint8_t pmask;
+
 	/* check each bit from mask  */
-	for (pin = 0; pin < 8; pin++) {
-		pmask = (mask & (1 << pin));
-		if (pmask)
-			gpio_alt_sel(port, pmask, func);
-	}
+	for (pin = 0; pin < 8; pin++)
+		if (mask & (1 << pin))
+			gpio_alt_sel(port, pin, func);
 }
 
 test_mockable int gpio_get_level(enum gpio_signal signal)
 {
-	return (NPCX_PDIN(gpio_list[signal].port) &
-			gpio_list[signal].mask) ? 1 : 0;
+	return !!(NPCX_PDIN(gpio_list[signal].port) & gpio_list[signal].mask);
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
 	if (value)
-		NPCX_PDOUT(gpio_list[signal].port) |=
-				 gpio_list[signal].mask;
+		NPCX_PDOUT(gpio_list[signal].port) |=  gpio_list[signal].mask;
 	else
-		NPCX_PDOUT(gpio_list[signal].port) &=
-				~gpio_list[signal].mask;
+		NPCX_PDOUT(gpio_list[signal].port) &= ~gpio_list[signal].mask;
 }
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
@@ -583,6 +613,13 @@ void gpio_pre_init(void)
 
 		/* Set up GPIO based on flags */
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
+
+		/*
+		 * Ensure that any GPIO defined in gpio.inc is actually
+		 * configured as a GPIO, and not left in its default state,
+		 * which may or may not be as a GPIO.
+		 */
+		gpio_set_alternate_function(g->port, g->mask, -1);
 	}
 }
 
@@ -591,10 +628,12 @@ void gpio_pre_init(void)
  * bank is different for different systems. */
 static void gpio_init(void)
 {
-	int i;
+	int i, j;
 	/* Enable IRQs now that pins are set up */
 	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++)
-		task_enable_irq(gpio_wui_table[i].irq);
+		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++)
+			if (gpio_wui_table[i][j].irq < NPCX_IRQ_COUNT)
+				task_enable_irq(gpio_wui_table[i][j].irq);
 
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
@@ -611,32 +650,34 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 static void gpio_interrupt(int int_no)
 {
 #if DEBUG_GPIO
-	static uint8_t i, pin, wui_mask;
+	static uint8_t i, j, pin, wui_mask;
 #else
-	uint8_t i, pin, wui_mask;
+	uint8_t i, j, pin, wui_mask;
 #endif
+
 	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++) {
-		/* If interrupt number is the same */
-		if (gpio_wui_table[i].irq == int_no) {
-			/* Mapping relationship between WUI and GPIO */
-			const struct gpio_wui_map *map =
-					gpio_wui_table[i].wui_map;
+		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++) {
+			const struct npcx_gpio *gpio =
+				gpio_wui_table[i][j].gpio;
+
+			if (gpio_wui_table[i][j].irq != int_no)
+				continue;
+
 			/* Get pending mask */
-			wui_mask = NPCX_WKPND(map->wui_table , map->wui_group);
+			wui_mask = NPCX_WKPND(i, j);
 
 			/* If pending bits is not zero */
-			if (wui_mask) {
-				/* Clear pending bits of WUI */
-				NPCX_WKPCL(map->wui_table , map->wui_group)
-						= wui_mask;
+			if (!wui_mask)
+				continue;
 
-				for (pin = 0; pin < 8; pin++, map++) {
-					/* If pending bit is high, execute ISR*/
-					if (wui_mask & (1<<pin))
-						gpio_execute_isr(map->gpio_port,
-								map->gpio_mask);
-				}
-			}
+			/* Clear pending bits of WUI */
+			NPCX_WKPCL(i, j) = wui_mask;
+
+			for (pin = 0; pin < 8; pin++, gpio++)
+				/* If pending bit is high, execute ISR*/
+				if (wui_mask & (1 << pin))
+					gpio_execute_isr(gpio->port,
+							 1 << gpio->bit);
 		}
 	}
 }

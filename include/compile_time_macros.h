@@ -18,6 +18,10 @@
 /* Number of elements in an array */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+/* Make for loops that iterate over pointers to array entries more readable */
+#define ARRAY_BEGIN(array) (array)
+#define ARRAY_END(array) ((array) + ARRAY_SIZE(array))
+
 /* Just in case - http://gcc.gnu.org/onlinedocs/gcc/Offsetof.html */
 #ifndef offsetof
 #define offsetof(type, member)  __builtin_offsetof(type, member)
