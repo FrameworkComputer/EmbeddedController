@@ -10,7 +10,7 @@
  */
 
 #include "common.h"
-#include "gpio.h"
+#include "gpio_chip.h"
 #include "registers.h"
 #include "util.h"
 

@@ -225,14 +225,6 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
  */
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func);
 
-/**
- * Enable GPIO peripheral clocks.
- *
- * This function is used by the GPIO implementation and should not be called
- * outside of that context.
- */
-void gpio_enable_clocks(void);
-
 /* Optional board-level function to set hibernate GPIO states. */
 void board_set_gpio_hibernate_state(void) __attribute__((weak));
 
