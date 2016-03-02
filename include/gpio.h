@@ -128,12 +128,31 @@ int gpio_get_level(enum gpio_signal signal);
 const char *gpio_get_name(enum gpio_signal signal);
 
 /**
+ * Determine if a GPIO is implemented.
+ *
+ * Some well known GPIO signal names may not be implemented on a particular
+ * board.  This function can be used to determine if a GPIO is implemented.
+ *
+ * @param signal	Signal to query
+ * @returns 0 if the GPIO is not implemented, 1 if it is.
+ */
+int gpio_is_implemented(enum gpio_signal signal);
+
+/**
  * Set the flags for a signal.
  *
  * @param signal	Signal to set flags for
  * @param flags		New flags for the signal
  */
 void gpio_set_flags(enum gpio_signal signal, int flags);
+
+/**
+ * Get the default flags for a signal.
+ *
+ * @param signal	Signal to set flags for
+ * @returns The flags that were originally defined for this signal
+ */
+int gpio_get_default_flags(enum gpio_signal signal);
 
 /**
  * Set the value of a signal.
