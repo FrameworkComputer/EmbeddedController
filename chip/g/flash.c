@@ -287,6 +287,12 @@ int flash_physical_write(int byte_offset, int num_bytes, const char *data)
 
 	while (num_bytes) {
 		num = MIN(num_bytes, CONFIG_FLASH_WRITE_IDEAL_SIZE);
+		/*
+		 * Make sure that the write operation will not go
+		 * past a CONFIG_FLASH_ERASE_SIZE boundary.
+		 */
+		num = MIN(num, CONFIG_FLASH_ERASE_SIZE -
+			  byte_offset % CONFIG_FLASH_ERASE_SIZE);
 		ret = write_batch(byte_offset,
 				  num / 4,	/* word count */
 				  (const uint8_t *)data);
