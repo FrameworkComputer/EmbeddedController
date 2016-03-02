@@ -230,6 +230,11 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes)
 
 			bytes -= 32 * 1024;
 			offset += 32 * 1024;
+			/*
+			 * Refresh watchdog since we may be erasing a large
+			 * number of blocks.
+			 */
+			watchdog_reload();
 		}
 	}
 
