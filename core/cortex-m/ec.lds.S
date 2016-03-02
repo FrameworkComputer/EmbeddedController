@@ -93,9 +93,11 @@ SECTIONS
         STRINGIFY(OUTDIR/core/CORE/init.o) (.text)
         *(.text*)
 #ifdef CONFIG_EXTERNAL_STORAGE
+	. = ALIGN(4);
         __flash_lpfw_start = .;
         /* Entering deep idle FW for better power consumption */
         KEEP(*(.lowpower_ram))
+	. = ALIGN(4);
         __flash_lpfw_end = .;
     } > CDRAM AT > FLASH
 #else
