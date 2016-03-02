@@ -9,6 +9,7 @@
 #include "spi.h"
 #include "usb_descriptor.h"
 #include "usb_spi.h"
+#include "util.h"
 
 static int16_t usb_spi_map_error(int error)
 {
@@ -20,16 +21,17 @@ static int16_t usb_spi_map_error(int error)
 	}
 }
 
-static uint8_t usb_spi_read_packet(struct usb_spi_config const *config)
+static uint16_t usb_spi_read_packet(struct usb_spi_config const *config)
 {
-	size_t  i;
-	uint8_t count = btable_ep[config->endpoint].rx_count & 0x3ff;
+	size_t   i;
+	uint16_t bytes = btable_ep[config->endpoint].rx_count & 0x3ff;
+	size_t   count = MAX((bytes + 1) / 2, USB_MAX_PACKET_SIZE / 2);
 
 	/*
 	 * The USB peripheral doesn't support DMA access to its packet
 	 * RAM so we have to copy messages out into a bounce buffer.
 	 */
-	for (i = 0; i < (count + 1) / 2; ++i)
+	for (i = 0; i < count; ++i)
 		config->buffer[i] = config->rx_ram[i];
 
 	/*
@@ -39,7 +41,7 @@ static uint8_t usb_spi_read_packet(struct usb_spi_config const *config)
 	 */
 	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
 
-	return count;
+	return bytes;
 }
 
 static void usb_spi_write_packet(struct usb_spi_config const *config,
@@ -85,9 +87,9 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	 * response.
 	 */
 	if (!rx_valid(config)) {
-		uint8_t count       = usb_spi_read_packet(config);
-		uint8_t write_count = (config->buffer[0] >> 0) & 0xff;
-		uint8_t read_count  = (config->buffer[0] >> 8) & 0xff;
+		uint16_t count       = usb_spi_read_packet(config);
+		uint8_t  write_count = (config->buffer[0] >> 0) & 0xff;
+		uint8_t  read_count  = (config->buffer[0] >> 8) & 0xff;
 
 		if (!config->state->enabled) {
 			config->buffer[0] = USB_SPI_DISABLED;
