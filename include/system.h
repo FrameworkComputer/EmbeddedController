@@ -268,11 +268,13 @@ int system_set_vbnvcontext(const uint8_t *block);
 void system_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /**
- * Optional board-level callback function called prior to initiating chip-level
- * hibernate sequence. This function may or may not return, depending if the
- * board implements an alternate hibernate method.
+ * Optional board-level callback functions called before and after initiating
+ * chip-level hibernate sequence. These function may or may not return,
+ * depending if the board implements an alternate hibernate method.  The _late
+ * version is called after interrupts are disabled.
  */
 void board_hibernate(void) __attribute__((weak));
+void board_hibernate_late(void) __attribute__((weak));
 
 /* Minimum duration to get proper hibernation */
 #define SYSTEM_HIB_MINIMUM_DURATION 0, 150000

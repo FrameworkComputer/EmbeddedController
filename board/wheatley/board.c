@@ -376,7 +376,7 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-void board_set_gpio_hibernate_state(void)
+void board_hibernate_late(void)
 {
 	int i;
 	const uint32_t hibernate_pins[][2] = {

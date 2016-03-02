@@ -225,7 +225,4 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
  */
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func);
 
-/* Optional board-level function to set hibernate GPIO states. */
-void board_set_gpio_hibernate_state(void) __attribute__((weak));
-
 #endif  /* __CROS_EC_GPIO_H */

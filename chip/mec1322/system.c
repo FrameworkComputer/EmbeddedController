@@ -253,8 +253,8 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	CPU_SCB_SYSCTRL |= 0x4;
 
 	/* Setup GPIOs for hibernate */
-	if (board_set_gpio_hibernate_state)
-		board_set_gpio_hibernate_state();
+	if (board_hibernate_late)
+		board_hibernate_late();
 
 #ifdef CONFIG_USB_PD_PORT_COUNT
 	/*

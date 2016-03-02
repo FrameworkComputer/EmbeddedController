@@ -315,10 +315,6 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 	/* Enable wake-up inputs of hibernate_wake_pins array */
 	for (i = 0; i < hibernate_wake_pins_used; i++)
 		gpio_reset(hibernate_wake_pins[i]);
-
-	/* board-level function to set GPIOs state in hibernate */
-	if (board_set_gpio_hibernate_state)
-		board_set_gpio_hibernate_state();
 }
 
 /**
@@ -382,6 +378,13 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	 * entering hibernate.
 	 */
 	system_set_gpios_and_wakeup_inputs_hibernate();
+
+	/*
+	 * Give the board a chance to do any late stage hibernation work.
+	 * This is likely going to configure GPIOs for hibernation.
+	 */
+	if (board_hibernate_late)
+		board_hibernate_late();
 
 	/* Clear all pending IRQ otherwise wfi will have no affect */
 	for (i = NPCX_IRQ_0 ; i < NPCX_IRQ_COUNT ; i++)
