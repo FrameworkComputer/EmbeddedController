@@ -6,6 +6,7 @@
 # Power management for application processor and peripherals
 #
 
+power-$(CONFIG_CHIPSET_APOLLOLAKE)+=apollolake.o
 power-$(CONFIG_CHIPSET_BAYTRAIL)+=baytrail.o
 power-$(CONFIG_CHIPSET_BRASWELL)+=braswell.o
 power-$(CONFIG_CHIPSET_ECDRIVEN)+=ec_driven.o
