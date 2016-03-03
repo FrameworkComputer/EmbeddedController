@@ -548,7 +548,21 @@ void vbus_task(void)
 		task_wait_event(-1);
 	}
 }
+#else
+void vbus_task(void)
+{
+	while (1)
+		task_wait_event(-1);
+}
 #endif /* BOARD_REV < OAK_REV4 */
+
+#ifndef CONFIG_ALS
+void als_task(void)
+{
+	while (1)
+		task_wait_event(-1);
+}
+#endif
 
 #ifdef CONFIG_TEMP_SENSOR_TMP432
 static void tmp432_set_power_deferred(void)
@@ -627,7 +641,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 #ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
 /* Mutexes */
+#ifdef CONFIG_ACCEL_KX022
 static struct mutex g_lid_mutex;
+#endif
 #ifdef CONFIG_ACCELGYRO_BMI160
 static struct mutex g_base_mutex;
 #endif
@@ -714,6 +730,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 },
 	},
 #endif
+#ifdef CONFIG_ACCEL_KX022
 	{.name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0,
 	 .chip = MOTIONSENSE_CHIP_KX022,
@@ -747,6 +764,7 @@ struct motion_sensor_t motion_sensors[] = {
 		},
 	 },
 	},
+#endif
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
