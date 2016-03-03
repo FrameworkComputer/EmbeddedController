@@ -37,7 +37,7 @@ PROJECT_EXTRA+=${npcx-flash-fw-bin}
 show_esct_cmd=$(if $(V),,echo '  ECST   ' $(subst $(out)/,,$@) ; )
 
 # ECST options for header
-bld_ecst=${out}/util/ecst -usearmrst -mode bt -ph -i $(1) -o $(2) -nohcrc \
+bld_ecst=${out}/util/ecst -chip $(CHIP_VARIANT) -usearmrst -mode bt -ph -i $(1) -o $(2) -nohcrc \
 -nofcrc -flashsize 8 -spimaxclk 50 -spireadmode dual 1> /dev/null
 
 # Replace original one with the flat file including header

@@ -47,9 +47,23 @@
 /* Memory mapping */
 #define CONFIG_RAM_BASE            0x200C0000 /* memory address of data ram */
 #define CONFIG_RAM_SIZE            (0x00008000 - 0x800) /* 30KB data ram */
-#define CONFIG_PROGRAM_MEMORY_BASE 0x100A8000 /* program memory base address */
 #define CONFIG_LPRAM_BASE          0x40001600 /* memory address of lpwr ram */
 #define CONFIG_LPRAM_SIZE	   0x00000620 /* 1568B low power ram */
+
+/* Use chip variant to specify the size and start address of program memory */
+#if defined(CHIP_VARIANT_NPCX5M5G)
+/* 96KB RAM for FW code */
+#define CONFIG_PROGRAM_MEMORY_SIZE (96 * 1024)
+/* program memory base address for 128KB RAM */
+#define CONFIG_PROGRAM_MEMORY_BASE 0x100A8000
+#elif defined(CHIP_VARIANT_NPCX5M6G)
+/* 224KB RAM for FW code */
+#define CONFIG_PROGRAM_MEMORY_SIZE (224 * 1024)
+/* program memory base address for 256KB RAM */
+#define CONFIG_PROGRAM_MEMORY_BASE 0x10088000
+#else
+#error "Unsupported chip variant"
+#endif
 
 /* System stack size */
 #define CONFIG_STACK_SIZE       4096
