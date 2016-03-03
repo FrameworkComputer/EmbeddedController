@@ -19,7 +19,11 @@ GPIO_INT(POWER_BUTTON_L,   PIN(0, 2), GPIO_PULL_UP   | GPIO_INT_BOTH, power_butt
 GPIO_INT(LID_OPEN,         PIN(3, 3), GPIO_PULL_DOWN | GPIO_INT_BOTH, lid_interrupt)          /* Lid switch */
 
 /**************************** Need a empty line between GPIO_INT and GPIO ****************************/
-GPIO(ENTERING_RW,          PIN(3, 6), GPIO_OUT_LOW)                                    /* Indicate when EC is entering RW code */
+#ifdef CONFIG_TEST_1P8V
+GPIO(ENTERING_RW,          PIN(3, 6), GPIO_ODR_LOW | GPIO_SEL_1P8V)                    /* Indicate when EC is entering RW code */
+#else
+GPIO(ENTERING_RW,          PIN(3, 6), GPIO_OUT_LOW )                                   /* Indicate when EC is entering RW code */
+#endif
 GPIO(PCH_WAKE_L,           PIN(5, 0), GPIO_OUT_HIGH)                                   /* Wake signal output to PCH */
 
 /* Used for module testing */
@@ -30,8 +34,13 @@ GPIO(SPI_CS_L,             PIN(A, 5), GPIO_OUT_HIGH)                            
  * I2C pins should be configured as inputs until I2C module is
  * initialized. This will avoid driving the lines unintentionally.
  */
+#ifdef CONFIG_TEST_1P8V
+GPIO(I2C0_SCL0,     PIN(B, 5), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
+GPIO(I2C0_SDA0,     PIN(B, 4), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
+#else
 GPIO(I2C0_SCL0,     PIN(B, 5), GPIO_ODR_HIGH)
 GPIO(I2C0_SDA0,     PIN(B, 4), GPIO_ODR_HIGH)
+#endif
 GPIO(I2C0_SCL1,     PIN(B, 3), GPIO_ODR_HIGH)
 GPIO(I2C0_SDA1,     PIN(B, 2), GPIO_ODR_HIGH)
 GPIO(I2C1_SCL,      PIN(9, 0), GPIO_ODR_HIGH)

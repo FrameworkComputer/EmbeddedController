@@ -786,46 +786,6 @@ static void i2c_init(void)
 		int ctrl = i2c_port_to_controller(port);
 		volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
 
-		/* Configure pull-up for SMB interface pins */
-
-		/* Enable 3.3V pull-up or turn to 1.8V support */
-		if (port == NPCX_I2C_PORT0_0) {
-#ifdef NPCX_I2C0_0_1P8V
-			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SC0_0_LV);
-			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SD0_0_LV);
-#else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
-#endif
-		} else if (port == NPCX_I2C_PORT0_1) {
-#ifdef NPCX_I2C0_1_1P8V
-			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL0_SC0_1_LV);
-			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL0_SD0_1_LV);
-#else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 1));
-#endif
-		} else if (port == NPCX_I2C_PORT1) {
-#ifdef NPCX_I2C1_1P8V
-			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SC1_0_LV);
-			SET_BIT(NPCX_LV_GPIO_CTL0, NPCX_LV_GPIO_CTL0_SD1_0_LV);
-#else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
-#endif
-		} else if (port == NPCX_I2C_PORT2) {
-#ifdef NPCX_I2C2_1P8V
-			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SC2_0_LV);
-			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SD2_0_LV);
-#else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
-#endif
-		} else if (port == NPCX_I2C_PORT3) {
-#ifdef NPCX_I2C3_1P8V
-			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SC3_0_LV);
-			SET_BIT(NPCX_LV_GPIO_CTL1, NPCX_LV_GPIO_CTL1_SD3_0_LV);
-#else
-			SET_BIT(NPCX_DEVPU0, NPCX_I2C_PUBIT(ctrl, 0));
-#endif
-		}
-
 		/* status init */
 		p_status->oper_state = SMB_IDLE;
 

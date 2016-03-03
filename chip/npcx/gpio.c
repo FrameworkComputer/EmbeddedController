@@ -308,6 +308,49 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(B, 1),  NPCX_ALT_INV(A, NO_KSO17_SL)},/* KSO17 */
 };
 
+struct gpio_lvol_item {
+	struct npcx_gpio lvol_gpio[8];
+};
+
+const struct gpio_lvol_item gpio_lvol_table[] = {
+	/* Low-Voltage GPIO Control 0 */
+	{ { NPCX_GPIO(B, 5),
+	    NPCX_GPIO(B, 4),
+	    NPCX_GPIO(B, 3),
+	    NPCX_GPIO(B, 2),
+	    NPCX_GPIO(9, 0),
+	    NPCX_GPIO(8, 7),
+	    NPCX_GPIO(0, 0),
+	    NPCX_GPIO(3, 3), }, },
+	/* Low-Voltage GPIO Control 1 */
+	{ { NPCX_GPIO(9, 2),
+	    NPCX_GPIO(9, 1),
+	    NPCX_GPIO(D, 1),
+	    NPCX_GPIO(D, 0),
+	    NPCX_GPIO(3, 6),
+	    NPCX_GPIO(6, 4),
+	    NPCX_GPIO(6, 5),
+	    NPCX_GPIO_NONE , }, },
+	/* Low-Voltage GPIO Control 2 */
+	{ { NPCX_GPIO(7, 4),
+	    NPCX_GPIO(8, 4),
+	    NPCX_GPIO(8, 5),
+	    NPCX_GPIO(7, 3),
+	    NPCX_GPIO(C, 1),
+	    NPCX_GPIO(C, 7),
+	    NPCX_GPIO(E, 7),
+	    NPCX_GPIO(3, 4), }, },
+	/* Low-Voltage GPIO Control 3 */
+	{ { NPCX_GPIO(C, 6),
+	    NPCX_GPIO(3, 7),
+	    NPCX_GPIO(4, 0),
+	    NPCX_GPIO(7, 1),
+	    NPCX_GPIO(8, 2),
+	    NPCX_GPIO(7, 5),
+	    NPCX_GPIO(8, 0),
+	    NPCX_GPIO(C, 5), }, },
+};
+
 /*****************************************************************************/
 /* Internal functions */
 
@@ -484,6 +527,32 @@ static void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 	/* No support analog mode */
 }
 
+/* Select low voltage detection level */
+void gpio_low_voltage_level_sel(uint8_t port, uint8_t mask, uint8_t low_voltage)
+{
+	int i, j;
+
+	for (i = 0; i < ARRAY_SIZE(gpio_lvol_table); i++) {
+		const struct npcx_gpio *gpio = gpio_lvol_table[i].lvol_gpio;
+
+		for (j = 0; j < ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio); j++)
+			if (gpio_match(port, mask, gpio[j])) {
+				if (low_voltage)
+					/* Select vol-detect level for 1.8V */
+					SET_BIT(NPCX_LV_GPIO_CTL(i), j);
+				else
+					/* Select vol-detect level for 3.3V */
+					CLEAR_BIT(NPCX_LV_GPIO_CTL(i), j);
+				return;
+			}
+
+	}
+}
+/*
+ * Make sure the bit depth of low voltage register.
+ */
+BUILD_ASSERT(ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio) == 8);
+
 /*****************************************************************************/
 /* IC specific low-level driver */
 
@@ -539,6 +608,18 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		/* No pull up/down */
 		NPCX_PPULL(port) &= ~mask; /* disable pull down/up */
 	}
+
+	/* 1.8V low voltage select */
+	if (flags & GPIO_SEL_1P8V) {
+		/*
+		 * Set IO type to open-drain & disable internal pulling
+		 * before selecting low-voltage level
+		 */
+		NPCX_PTYPE(port) |= mask;
+		NPCX_PPULL(port) &= ~mask;
+		gpio_low_voltage_level_sel(port, mask, 1);
+	} else
+		gpio_low_voltage_level_sel(port, mask, 0);
 
 	/* Set up interrupt type */
 	if (flags & GPIO_INPUT)

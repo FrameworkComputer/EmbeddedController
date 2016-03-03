@@ -432,12 +432,9 @@ enum {
 #define NPCX_DEV_CTL4                     REG8(NPCX_SCFG_BASE_ADDR + 0x006)
 #define NPCX_DEVALT(n)                    REG8(NPCX_SCFG_BASE_ADDR + 0x010 + n)
 #define NPCX_LFCGCALCNT                   REG8(NPCX_SCFG_BASE_ADDR + 0x021)
-#define NPCX_DEVPU0                       REG8(NPCX_SCFG_BASE_ADDR + 0x028)
-#define NPCX_DEVPU1                       REG8(NPCX_SCFG_BASE_ADDR + 0x029)
-#define NPCX_LV_GPIO_CTL0                 REG8(NPCX_SCFG_BASE_ADDR + 0x02A)
-#define NPCX_LV_GPIO_CTL1                 REG8(NPCX_SCFG_BASE_ADDR + 0x02B)
-#define NPCX_LV_GPIO_CTL2                 REG8(NPCX_SCFG_BASE_ADDR + 0x02C)
-#define NPCX_LV_GPIO_CTL3                 REG8(NPCX_SCFG_BASE_ADDR + 0x02D)
+#define NPCX_PUPD_EN0                     REG8(NPCX_SCFG_BASE_ADDR + 0x028)
+#define NPCX_PUPD_EN1                     REG8(NPCX_SCFG_BASE_ADDR + 0x029)
+#define NPCX_LV_GPIO_CTL(n)               REG8(NPCX_SCFG_BASE_ADDR + 0x02A + n)
 #define NPCX_SCFG_VER                     REG8(NPCX_SCFG_BASE_ADDR + 0x02F)
 
 #define TEST_BKSL                         REG8(NPCX_SCFG_BASE_ADDR + 0x037)
@@ -587,18 +584,6 @@ enum {
 
 /* Others bit definitions */
 #define NPCX_LFCGCALCNT_LPREG_CTL_EN     1
-
-#define NPCX_LV_GPIO_CTL0_SC0_0_LV       0
-#define NPCX_LV_GPIO_CTL0_SD0_0_LV       1
-#define NPCX_LV_GPIO_CTL0_SC0_1_LV       2
-#define NPCX_LV_GPIO_CTL0_SD0_1_LV       3
-#define NPCX_LV_GPIO_CTL0_SC1_0_LV       4
-#define NPCX_LV_GPIO_CTL0_SD1_0_LV       5
-
-#define NPCX_LV_GPIO_CTL1_SC2_0_LV       0
-#define NPCX_LV_GPIO_CTL1_SD2_0_LV       1
-#define NPCX_LV_GPIO_CTL1_SC3_0_LV       2
-#define NPCX_LV_GPIO_CTL1_SD3_0_LV       3
 
 /******************************************************************************/
 /* Development and Debug Support (DBG) Registers */
