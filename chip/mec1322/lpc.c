@@ -315,6 +315,12 @@ static void lpc_init(void)
 	/* Activate LPC interface */
 	MEC1322_LPC_ACT |= 1;
 
+	/*
+	* Ring Oscillator not permitted to shut down
+	* until LPC activate bit is cleared
+	*/
+	MEC1322_LPC_CLK_CTRL |= 3;
+
 	/* Initialize host args and memory map to all zero */
 	memset(lpc_host_args, 0, sizeof(*lpc_host_args));
 	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
@@ -323,8 +329,6 @@ static void lpc_init(void)
 
 	/* Restore event masks if needed */
 	lpc_post_sysjump();
-
-
 }
 /*
  * Set prio to higher than default; this way LPC memory mapped data is ready

@@ -201,9 +201,9 @@ static void prepare_for_deep_sleep(void)
 	MEC1322_PCR_HOST_SLP_EN |= MEC1322_PCR_HOST_SLP_EN_SLEEP;
 	MEC1322_PCR_EC_SLP_EN2 |= MEC1322_PCR_EC_SLP_EN2_SLEEP;
 
+#ifndef CONFIG_POWER_S0IX
 	MEC1322_LPC_ACT = 0x0;
-	MEC1322_LPC_CLK_CTRL |= 0x2;
-
+#endif
 	MEC1322_PCR_SLOW_CLK_CTL &= 0xFFFFFC00;
 
 	MEC1322_PCR_SYS_SLP_CTL = 0x2;  /* heavysleep 2 */
@@ -236,9 +236,10 @@ static void resume_from_deep_sleep(void)
 
 	MEC1322_PCR_SYS_SLP_CTL = 0xF8;  /* default */
 
+#ifndef CONFIG_POWER_S0IX
 	/* Enable LPC */
 	MEC1322_LPC_ACT |= 1;
-	MEC1322_LPC_CLK_CTRL &= ~0x2;
+#endif
 
 	MEC1322_PCR_SLOW_CLK_CTL = 0x1E0;
 }
