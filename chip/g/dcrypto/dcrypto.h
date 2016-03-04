@@ -80,6 +80,11 @@ const uint8_t *DCRYPTO_SHA256_hash(const uint8_t *data, uint32_t n,
 				uint8_t *digest);
 
 /*
+ * BIGNUM utility methods.
+ */
+void DCRYPTO_bn_wrap(struct BIGNUM *b, void *buf, size_t len);
+
+/*
  *  RSA.
  */
 
@@ -124,6 +129,10 @@ int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
 		uint32_t digest_len, const uint8_t *sig,
 		const uint32_t sig_len,	enum padding_mode padding,
 		enum hashing_mode hashing);
+
+/* Calculate n = p * q, d = e ^ -1 mod phi. */
+int DCRYPTO_rsa_key_compute(struct BIGNUM *N, struct BIGNUM *d,
+			struct BIGNUM *p, struct BIGNUM *q, uint32_t e);
 
 /*
  *  EC.

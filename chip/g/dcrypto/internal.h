@@ -115,6 +115,11 @@ void bn_init(struct BIGNUM *bn, void *buf, size_t len);
 int bn_check_topbit(const struct BIGNUM *N);
 void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 		const struct BIGNUM *exp, const struct BIGNUM *N);
+uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a);
+uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a);
+void bn_mul(struct BIGNUM *c, const struct BIGNUM *a, const struct BIGNUM *b);
+int bn_modinv_vartime(struct BIGNUM *r, const struct BIGNUM *e,
+		const struct BIGNUM *MOD);
 
 /*
  * EC.

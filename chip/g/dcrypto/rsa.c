@@ -625,3 +625,38 @@ int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
 	dcrypto_memset(signature_buf, 0, sizeof(signature_buf));
 	return ret;
 }
+
+int DCRYPTO_rsa_key_compute(struct BIGNUM *N, struct BIGNUM *d,
+			struct BIGNUM *p, struct BIGNUM *q, uint32_t e_buf)
+{
+	uint32_t ONE_buf = 1;
+	uint32_t phi_buf[RSA_MAX_WORDS];
+	uint32_t q_buf[RSA_MAX_WORDS / 2];
+
+	struct BIGNUM ONE;
+	struct BIGNUM e;
+	struct BIGNUM phi;
+	struct BIGNUM q_local;
+
+	DCRYPTO_bn_wrap(&ONE, &ONE_buf, sizeof(ONE_buf));
+	DCRYPTO_bn_wrap(&phi, phi_buf, bn_size(N));
+	if (!q) {
+		/* q not provided, calculate it. */
+		memcpy(phi_buf, N->d, bn_size(N));
+		bn_init(&q_local, q_buf, bn_size(p));
+		bn_sub(&phi, &ONE);
+		if (!bn_modinv_vartime(&q_local, p, &phi))
+			return 0;
+		q = &q_local;
+		bn_add(&phi, &ONE);
+	} else {
+		bn_mul(N, p, q);
+		memcpy(phi_buf, N->d, bn_size(N));
+	}
+
+	bn_sub(&phi, p);
+	bn_sub(&phi, q);
+	bn_add(&phi, &ONE);
+	DCRYPTO_bn_wrap(&e, &e_buf, sizeof(e_buf));
+	return bn_modinv_vartime(d, &e, &phi);
+}

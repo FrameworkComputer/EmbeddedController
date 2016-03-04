@@ -16,10 +16,15 @@ static inline void watchdog_reload(void) { }
 
 void bn_init(struct BIGNUM *b, void *buf, size_t len)
 {
+	DCRYPTO_bn_wrap(b, buf, len);
+	dcrypto_memset(buf, 0x00, len);
+}
+
+void DCRYPTO_bn_wrap(struct BIGNUM *b, void *buf, size_t len)
+{
 	/* Only word-multiple sized buffers accepted. */
 	assert((len & 0x3) == 0);
 	b->dmax = len / BN_BYTES;
-	dcrypto_memset(buf, 0x00, len);
 	b->d = (struct access_helper *) buf;
 }
 
@@ -49,14 +54,26 @@ static int bn_is_bit_set(const struct BIGNUM *a, int n)
 static int bn_gte(const struct BIGNUM *a, const struct BIGNUM *b)
 {
 	int i;
+	uint32_t top = 0;
 
-	for (i = a->dmax - 1; BN_DIGIT(a, i) == BN_DIGIT(b, i) && i > 0; --i)
+	for (i = a->dmax - 1; i > b->dmax - 1; --i)
+		top |= BN_DIGIT(a, i);
+	if (top)
+		return 1;
+
+	for (i = b->dmax - 1; i > a->dmax - 1; --i)
+		top |= BN_DIGIT(b, i);
+	if (top)
+		return 0;
+
+	for (i = MIN(a->dmax, b->dmax) - 1;
+	     BN_DIGIT(a, i) == BN_DIGIT(b, i) && i > 0; --i)
 		;
 	return BN_DIGIT(a, i) >= BN_DIGIT(b, i);
 }
 
 /* c[] = c[] - a[], assumes c > a. */
-static uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a)
+uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a)
 {
 	int64_t A = 0;
 	int i;
@@ -66,11 +83,45 @@ static uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a)
 		BN_DIGIT(c, i) = (uint32_t) A;
 		A >>= 32;
 	}
+
+	for (; A && i < c->dmax; i++) {
+		A += (uint64_t) BN_DIGIT(c, i);
+		BN_DIGIT(c, i) = (uint32_t) A;
+		A >>= 32;
+	}
+
 	return (uint32_t) A;  /* 0 or -1. */
 }
 
+/* c[] = c[] - a[], negative numbers in 2's complement representation. */
+/* Returns borrow bit. */
+static uint32_t bn_signed_sub(struct BIGNUM *c, int *c_neg,
+		const struct BIGNUM *a, int a_neg)
+{
+	uint32_t carry = 0;
+	uint64_t A = 1;
+	int i;
+
+	for (i = 0; i < a->dmax; ++i) {
+		A += (uint64_t) BN_DIGIT(c, i) + ~BN_DIGIT(a, i);
+		BN_DIGIT(c, i) = (uint32_t) A;
+		A >>= 32;
+	}
+
+	for (; i < c->dmax; ++i) {
+		A += (uint64_t) BN_DIGIT(c, i) + 0xFFFFFFFF;
+		BN_DIGIT(c, i) = (uint32_t) A;
+		A >>= 32;
+	}
+
+	A &= 0x01;
+	carry = (!*c_neg && a_neg && A) || (*c_neg && !a_neg && !A);
+	*c_neg = carry ? *c_neg : (*c_neg + !a_neg + A) & 0x01;
+	return carry;
+}
+
 /* c[] = c[] + a[]. */
-static uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a)
+uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a)
 {
 	uint64_t A = 0;
 	int i;
@@ -81,7 +132,26 @@ static uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a)
 		A >>= 32;
 	}
 
+	for (; A && i < c->dmax; ++i) {
+		A += (uint64_t) BN_DIGIT(c, i);
+		BN_DIGIT(c, i) = (uint32_t) A;
+		A >>= 32;
+	}
+
 	return (uint32_t) A;  /* 0 or 1. */
+}
+
+/* c[] = c[] + a[], negative numbers in 2's complement representation. */
+/* Returns carry bit. */
+static uint32_t bn_signed_add(struct BIGNUM *c, int *c_neg,
+			const struct BIGNUM *a, int a_neg)
+{
+	uint32_t A = bn_add(c, a);
+	uint32_t carry;
+
+	carry = (!*c_neg && !a_neg && A) || (*c_neg && a_neg && !A);
+	*c_neg = carry ? *c_neg : (*c_neg + a_neg + A) & 0x01;
+	return carry;
 }
 
 /* r[] <<= 1. */
@@ -97,6 +167,29 @@ static uint32_t bn_lshift(struct BIGNUM *r)
 		BN_DIGIT(r, i) = w;
 	}
 	return carry;
+}
+
+/* r[] >>= 1.  Handles 2's complement negative numbers. */
+static void bn_rshift(struct BIGNUM *r, uint32_t carry, uint32_t neg)
+{
+	int i;
+	uint32_t ones = ~0;
+	uint32_t highbit = (!carry && neg) || (carry && !neg);
+
+	for (i = 0; i < r->dmax - 1; ++i) {
+		uint32_t accu;
+
+		ones &= BN_DIGIT(r, i);
+		accu = (BN_DIGIT(r, i) >> 1);
+		accu |= (BN_DIGIT(r, i + 1) << (BN_BITS2 - 1));
+		BN_DIGIT(r, i) = accu;
+	}
+	ones &= BN_DIGIT(r, i);
+	BN_DIGIT(r, i) = (BN_DIGIT(r, i) >> 1) |
+		(highbit << (BN_BITS2 - 1));
+
+	if (ones == ~0 && highbit && neg)
+		memset(r->d, 0x00, bn_size(r));    /* -1 >> 1 = 0. */
 }
 
 /* Montgomery c[] += a * b[] / R % N. */
@@ -243,4 +336,152 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	dcrypto_memset(RR_buf, 0, sizeof(RR_buf));
 	dcrypto_memset(acc_buf, 0, sizeof(acc_buf));
 	dcrypto_memset(aR_buf, 0, sizeof(aR_buf));
+}
+
+/* c[] += a * b[] */
+static uint32_t bn_mul_add(struct BIGNUM *c, uint32_t a,
+			const struct BIGNUM *b, uint32_t offset)
+{
+	int i;
+	uint64_t carry = 0;
+
+	for (i = 0; i < b->dmax; i++) {
+		carry += BN_DIGIT(c, offset + i) +
+			(uint64_t) BN_DIGIT(b, i) * a;
+		BN_DIGIT(c, offset + i) = (uint32_t) carry;
+		carry >>= 32;
+	}
+
+	return carry;
+}
+
+/* c[] = a[] * b[] */
+void bn_mul(struct BIGNUM *c, const struct BIGNUM *a, const struct BIGNUM *b)
+{
+	int i;
+	uint32_t carry = 0;
+
+	memset(c->d, 0, bn_size(c));
+	for (i = 0; i < a->dmax; i++) {
+		BN_DIGIT(c, i + b->dmax - 1) = carry;
+		carry = bn_mul_add(c, BN_DIGIT(a, i), b, i);
+	}
+
+	BN_DIGIT(c, i + b->dmax - 1) = carry;
+}
+
+#define bn_is_even(b) !bn_is_bit_set((b), 0)
+#define bn_is_odd(b) bn_is_bit_set((b), 0)
+
+static int bn_is_zero(const struct BIGNUM *a)
+{
+	int i, result = 0;
+
+	for (i = 0; i < a->dmax; ++i)
+		result |= BN_DIGIT(a, i);
+	return !result;
+}
+
+/* d = (e ^ -1) mod MOD  */
+/* TODO(ngm): this method is used in place of division to calculate
+ * q = N/p, i.e.  q = p^-1 mod (N-1).  The buffer e may be
+ * resized to uint32_t once division is implemented. */
+int bn_modinv_vartime(struct BIGNUM *d, const struct BIGNUM *e,
+		const struct BIGNUM *MOD)
+{
+	/* Buffers for B, D, and U must be as large as e. */
+	uint32_t A_buf[RSA_MAX_WORDS];
+	uint32_t B_buf[RSA_MAX_WORDS / 2];
+	uint32_t C_buf[RSA_MAX_WORDS];
+	uint32_t D_buf[RSA_MAX_WORDS / 2];
+	uint32_t U_buf[RSA_MAX_WORDS / 2];
+	uint32_t V_buf[RSA_MAX_WORDS];
+	int a_neg = 0;
+	int b_neg = 0;
+	int c_neg = 0;
+	int d_neg = 0;
+	int carry1;
+	int carry2;
+	int i = 0;
+
+	struct BIGNUM A;
+	struct BIGNUM B;
+	struct BIGNUM C;
+	struct BIGNUM D;
+	struct BIGNUM U;
+	struct BIGNUM V;
+
+	if (bn_size(e) > sizeof(U_buf))
+		return 0;
+
+	bn_init(&A, A_buf, bn_size(MOD));
+	BN_DIGIT(&A, 0) = 1;
+	bn_init(&B, B_buf, bn_size(MOD) / 2);
+	bn_init(&C, C_buf, bn_size(MOD));
+	bn_init(&D, D_buf, bn_size(MOD) / 2);
+	BN_DIGIT(&D, 0) = 1;
+
+	bn_init(&U, U_buf, bn_size(e));
+	memcpy(U_buf, e->d, bn_size(e));
+
+	bn_init(&V, V_buf, bn_size(MOD));
+	memcpy(V_buf, MOD->d, bn_size(MOD));
+
+	/* Binary extended GCD, as per Handbook of Applied
+	 * Cryptography, 14.61. */
+	for (i = 0;; i++) {
+		carry1 = 0;
+		carry2 = 0;
+		if (bn_is_even(&U)) {
+			bn_rshift(&U, 0, 0);
+			if (bn_is_odd(&A) || bn_is_odd(&B)) {
+				carry1 = bn_signed_add(&A, &a_neg, MOD, 0);
+				carry2 = bn_signed_sub(&B, &b_neg, e, 0);
+			}
+			bn_rshift(&A, carry1, a_neg);
+			bn_rshift(&B, carry2, b_neg);
+		} else if (bn_is_even(&V)) {
+			bn_rshift(&V, 0, 0);
+			if (bn_is_odd(&C) || bn_is_odd(&D)) {
+				carry1 = bn_signed_add(&C, &c_neg, MOD, 0);
+				carry2 = bn_signed_sub(&D, &d_neg, e, 0);
+			}
+			bn_rshift(&C, carry1, c_neg);
+			bn_rshift(&D, carry2, d_neg);
+		} else {  /* U, V both odd. */
+			if (bn_gte(&U, &V)) {
+				assert(!bn_sub(&U, &V));
+				if (bn_signed_sub(&A, &a_neg, &C, c_neg))
+					bn_signed_add(&A, &a_neg, MOD, 0);
+				if (bn_signed_sub(&B, &b_neg, &D, d_neg))
+					bn_signed_add(&B, &b_neg, MOD, 0);
+				if (bn_is_zero(&U))
+					break;  /* done. */
+			} else {
+				assert(!bn_sub(&V, &U));
+				if (bn_signed_sub(&C, &c_neg, &A, a_neg))
+					bn_signed_add(&C, &c_neg, MOD, 0);
+				if (bn_signed_sub(&D, &d_neg, &B, b_neg))
+					bn_signed_add(&D, &d_neg, MOD, 0);
+			}
+		}
+		if ((i + 1) % 1000 == 0)
+			/* TODO(ngm): Poke the watchdog (only
+			 * necessary for q = N/p).  Remove once
+			 * division is implemented. */
+			watchdog_reload();
+	}
+
+	BN_DIGIT(&V, 0) ^= 0x01;
+	if (bn_is_zero(&V)) {
+		while (c_neg)
+			bn_signed_add(&C, &c_neg, MOD, 0);
+		while (bn_gte(&C, MOD))
+			bn_sub(&C, MOD);
+
+		memcpy(d->d, C.d, bn_size(d));
+		return 1;
+	} else {
+		return 0;  /* Inverse not found. */
+	}
 }

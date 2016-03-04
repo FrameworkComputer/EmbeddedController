@@ -17,7 +17,8 @@ _RSA_OPCODES = {
   'DECRYPT': 0x01,
   'SIGN': 0x02,
   'VERIFY': 0x03,
-  'KEYGEN': 0x04
+  'KEYGEN': 0x04,
+  'KEYTEST': 0x05,
 }
 
 
@@ -102,6 +103,13 @@ def _verify_cmd(padding, hashing, key_len, sig, msg):
                                 ml=struct.pack('>H', sig_len), msg=sig,
                                 dl=struct.pack('>H', digest_len), dig=digest)
 
+def _keytest_cmd(key_len):
+  op = _RSA_OPCODES['KEYTEST']
+  return _RSA_CMD_FORMAT.format(o=op, p=0, h=_HASH['NONE'],
+                                kl=struct.pack('>H', key_len),
+                                ml=struct.pack('>H', 0), msg='',
+                                dl='', dig='')
+
 
 #
 # TEST VECTORS.
@@ -122,6 +130,10 @@ _SIGN_INPUTS = (
   ('PKCS1-PSS', 'SHA256', 768),
 )
 
+_KEYTEST_INPUTS = (
+  (768,),
+  (2048,),
+)
 
 def _encrypt_tests(tpm):
   msg = 'Hello CR50!'
@@ -172,6 +184,21 @@ def _sign_tests(tpm):
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 
 
+def _keytest_tests(tpm):
+  for data in _KEYTEST_INPUTS:
+    key_len, = data
+    test_name = 'RSA-KEYTEST:%d' % data
+    cmd = _keytest_cmd(key_len)
+    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
+    valid = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
+    expected = '\x01'
+    if valid != expected:
+      raise subcmd.TpmTestError('%s error:%s%s' % (
+          test_name, utils.hex_dump(valid), utils.hex_dump(expected)))
+    print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
+
+
 def rsa_test(tpm):
   _encrypt_tests(tpm)
   _sign_tests(tpm)
+  _keytest_tests(tpm)
