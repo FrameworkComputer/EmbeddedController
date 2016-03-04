@@ -646,6 +646,13 @@ static struct mutex g_lid_mutex;
 #endif
 #ifdef CONFIG_ACCELGYRO_BMI160
 static struct mutex g_base_mutex;
+
+/* Matrix to rotate accelrator into standard reference frame */
+const matrix_3x3_t base_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0,  0},
+	{ 0, FLOAT_TO_FP(-1),  0},
+	{ 0,  0,  FLOAT_TO_FP(1)}
+};
 #endif
 
 /* KX022 private data */
@@ -669,7 +676,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .addr = 1,
-	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
 		 /* AP: by default use EC settings */
