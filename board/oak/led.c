@@ -136,18 +136,6 @@ static void oak_led_set_power(int board_version)
 		}
 		break;
 	default:
-		/* PWR LED behavior:
-		 * Power on: Green
-		 * Suspend: Green in breeze mode ( 1 sec on/ 3 sec off)
-		 * Power off: OFF
-		 */
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			bat_led_set(BAT_LED_GREEN, 0);
-		else if (chipset_in_state(CHIPSET_STATE_ON))
-			bat_led_set(BAT_LED_GREEN, 1);
-		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-			bat_led_set(BAT_LED_GREEN,
-				    (power_second & 3) ? 0 : 1);
 		break;
 	}
 }
@@ -201,6 +189,23 @@ static void oak_led_set_battery(int board_version)
 		}
 		break; /* End of case OAK_REV3 & OAK_REV4 */
 	default:
+		/*
+		 * Put power control here since we are using the "battery" LED.
+		 * This allows LED autocontrol to be turned off by cmd during factory test.
+		 *
+		 * PWR LED behavior:
+		 * Power on: Green
+		 * Suspend: Green in breeze mode ( 1 sec on/ 3 sec off)
+		 * Power off: OFF
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			bat_led_set(BAT_LED_GREEN, 0);
+		else if (chipset_in_state(CHIPSET_STATE_ON))
+			bat_led_set(BAT_LED_GREEN, 1);
+		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+			bat_led_set(BAT_LED_GREEN,
+				    (battery_second & 3) ? 0 : 1);
+
 		/* BAT LED behavior:
 		 * Fully charged / idle: Off
 		 * Under charging: Orange
