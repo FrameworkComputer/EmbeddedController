@@ -95,17 +95,6 @@ CRYPT_RESULT _cpri__TestKeyRSA(
   return CRYPT_FAIL;
 }
 
-int _math__Comp(
-  const UINT32 aSize,           //   IN:   size of a
-  const BYTE * a,               //   IN:   a buffer
-  const UINT32 bSize,           //   IN:   size of b
-  const BYTE * b                //   IN:   b buffer
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
-}
-
 CRYPT_RESULT _math__Div(
   const TPM2B * n,              //   IN: numerator
   const TPM2B * d,              //   IN: denominator
@@ -115,17 +104,6 @@ CRYPT_RESULT _math__Div(
 {
   ecprintf("%s called\n", __func__);
   return CRYPT_FAIL;
-}
-
-int _math__uComp(
-  const UINT32 aSize,           // IN: size of a
-  const BYTE * a,               // IN: a
-  const UINT32 bSize,           // IN: size of b
-  const BYTE * b                // IN: b
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return -1;
 }
 
 void __assert_func(
