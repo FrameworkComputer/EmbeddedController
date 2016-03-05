@@ -25,7 +25,7 @@
  * two GPIOs to the same input and configure each one for a separate edge.
  */
 #define GPIO_INT(name, pin, flags, signal)	\
-	BUILD_ASSERT((flags & GPIO_INT_BOTH) != GPIO_INT_BOTH);
+	BUILD_ASSERT(((flags) & GPIO_INT_BOTH) != GPIO_INT_BOTH);
 #include "gpio.wrap"
 
 static void init_pmu(void)
