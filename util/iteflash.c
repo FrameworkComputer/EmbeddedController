@@ -885,7 +885,7 @@ int write_flash(struct ftdi_context *ftdi, const char *filename,
 int verify_flash(struct ftdi_context *ftdi, const char *filename,
 		uint32_t offset)
 {
-	int res;
+	int res = 0;
 	int file_size;
 	FILE *hnd;
 	uint8_t *buffer  = malloc(flash_size);
