@@ -114,8 +114,12 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 		if (DCRYPTO_p256_key_from_bytes(
 				(p256_int *) q->x.b.buffer,
 				(p256_int *) q->y.b.buffer,
-				(p256_int *) d->b.buffer, key_bytes))
+				(p256_int *) d->b.buffer, key_bytes)) {
+			q->x.b.size = sizeof(p256_int);
+			q->y.b.size = sizeof(p256_int);
+			d->b.size = sizeof(p256_int);
 			break;
+		}
 	}
 
 	if (count == 0)
@@ -203,10 +207,14 @@ CRYPT_RESULT _cpri__GetEphemeralEcc(TPMS_ECC_POINT *q, TPM2B_ECC_PARAMETER *d,
 	if (DCRYPTO_p256_key_from_bytes((p256_int *) q->x.b.buffer,
 						(p256_int *) q->y.b.buffer,
 						(p256_int *) d->b.buffer,
-						key_bytes))
+						key_bytes)) {
+		q->x.b.size = sizeof(p256_int);
+		q->y.b.size = sizeof(p256_int);
+		d->b.size = sizeof(p256_int);
 		return CRYPT_SUCCESS;
-	else
+	} else {
 		return CRYPT_FAIL;
+	}
 }
 
 #ifdef CRYPTO_TEST_SETUP
