@@ -44,8 +44,8 @@ void mkbp_send_event(uint8_t event_type)
 	set_event(event_type);
 
 #ifdef CONFIG_MKBP_WAKEUP_MASK
-	/* checking the event if AP suspended */
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+	/* checking the event if AP is not in S0 */
+	if (!chipset_in_state(CHIPSET_STATE_ON)) {
 		uint32_t events;
 		events = *(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
 		/*
