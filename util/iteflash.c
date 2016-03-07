@@ -885,7 +885,7 @@ int write_flash(struct ftdi_context *ftdi, const char *filename,
 int verify_flash(struct ftdi_context *ftdi, const char *filename,
 		uint32_t offset)
 {
-	int res = 0;
+	int res;
 	int file_size;
 	FILE *hnd;
 	uint8_t *buffer  = malloc(flash_size);
@@ -906,6 +906,7 @@ int verify_flash(struct ftdi_context *ftdi, const char *filename,
 	file_size = fread(buffer, 1, flash_size, hnd);
 	if (file_size <= 0) {
 		fprintf(stderr, "Cannot read %s\n", filename);
+		res = -EIO;
 		goto exit;
 	}
 	fclose(hnd);
