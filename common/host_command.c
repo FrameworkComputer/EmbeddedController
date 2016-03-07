@@ -567,7 +567,7 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 	if (hcdebug)
 		host_command_debug_request(args);
 
-#ifdef HAS_TASK_PDCMD
+#ifdef CONFIG_HOSTCMD_PD
 	if (args->command >= EC_CMD_PASSTHRU_OFFSET(1) &&
 	    args->command <= EC_CMD_PASSTHRU_MAX(1)) {
 		rv = pd_host_command(args->command - EC_CMD_PASSTHRU_OFFSET(1),
@@ -738,7 +738,7 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef CONFIG_PMU_POWERINFO
 		| EC_FEATURE_MASK_0(EC_FEATURE_PMU)
 #endif
-#ifdef HAS_TASK_PDCMD
+#ifdef CONFIG_HOSTCMD_PD
 		| EC_FEATURE_MASK_0(EC_FEATURE_SUB_MCU)
 #endif
 #ifdef CONFIG_CHARGE_MANAGER
