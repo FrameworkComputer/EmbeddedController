@@ -10,8 +10,10 @@
 
 /* Optional modules */
 #define CONFIG_ADC
+#define CONFIG_CHIPSET_RK3399
+#define CONFIG_HOSTCMD_SPS
+#define CONFIG_POWER_COMMON
 #define CONFIG_PWM
-#define CONFIG_HOSTCMD_SPS /* Used in ARM-based platform for host interface */
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
@@ -103,6 +105,12 @@ enum pwm_channel {
 	PWM_CH_LED,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
+};
+
+/* power signal definitions */
+enum power_signal {
+	/* Number of signals */
+	POWER_SIGNAL_COUNT = 0
 };
 
 #include "gpio_signal.h"

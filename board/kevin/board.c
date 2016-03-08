@@ -132,3 +132,9 @@ void board_set_charge_limit(int charge_ma)
 {
 	/* TODO: Add support for BD99955 charger. */
 }
+
+int extpower_is_present(void)
+{
+	/* TODO: Add support for BD99955 charger. */
+	return 1;
+}
