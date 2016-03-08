@@ -649,6 +649,11 @@ void charger_task(void)
 
 		if (prev_bp != curr.batt.is_present) {
 			prev_bp = curr.batt.is_present;
+
+			/* Update battery info due to change of battery */
+			batt_info = battery_get_info();
+			need_static = 1;
+
 			curr.desired_input_current =
 				get_desired_input_current(prev_bp, info);
 			charger_set_input_current(curr.desired_input_current);
