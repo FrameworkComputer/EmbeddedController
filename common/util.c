@@ -305,6 +305,21 @@ void *memmove(void *dest, const void *src, size_t len)
 }
 
 
+void reverse(void *dest, size_t len)
+{
+	int i;
+	uint8_t *start = dest;
+	uint8_t *end = start + len;
+
+	for (i = 0; i < len / 2; ++i) {
+		uint8_t tmp = *start;
+
+		*start++ = *--end;
+		*end = tmp;
+	}
+}
+
+
 char *strzcpy(char *dest, const char *src, int len)
 {
 	char *d = dest;

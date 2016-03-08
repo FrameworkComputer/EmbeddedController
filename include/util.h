@@ -146,6 +146,11 @@ int uint64divmod(uint64_t *v, int by);
  */
 int get_next_bit(uint32_t *mask);
 
+/**
+ * Reverse's the byte-order of the provided buffer.
+ */
+void reverse(void *dest, size_t len);
+
 
 /****************************************************************************/
 /* Conditional stuff.

@@ -297,19 +297,6 @@ static int check_pkcs1_type1_pad(const uint8_t *msg, uint32_t msg_len,
 	return memcmp(msg, &padded[i], hash_size) == 0;
 }
 
-static void reverse(uint8_t *start, size_t len)
-{
-	int i;
-	uint8_t *end = start + len;
-
-	for (i = 0; i < len / 2; ++i) {
-		uint8_t tmp = *start;
-
-		*start++ = *--end;
-		*end = tmp;
-	}
-}
-
 static int check_modulus_params(const struct BIGNUM *N, uint32_t *out_len)
 {
 	if (bn_size(N) > RSA_MAX_BYTES)
