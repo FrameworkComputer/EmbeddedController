@@ -12,6 +12,11 @@
 #include "trng.h"
 #include "dcrypto.h"
 
+static void reverse_tpm2b(TPM2B *b)
+{
+	reverse(b->buffer, b->size);
+}
+
 TPM2B_BYTE_VALUE(4);
 
 static int check_p256_param(const TPM2B_ECC_PARAMETER *a)
@@ -27,13 +32,23 @@ static int check_p256_point(const TPMS_ECC_POINT *a)
 
 BOOL _cpri__EccIsPointOnCurve(TPM_ECC_CURVE curve_id, TPMS_ECC_POINT *q)
 {
+	int result;
+
 	switch (curve_id) {
 	case TPM_ECC_NIST_P256:
 		if (!check_p256_point(q))
 			return FALSE;
 
-		if (DCRYPTO_p256_valid_point((p256_int *) q->x.b.buffer,
-						(p256_int *) q->y.b.buffer))
+		reverse_tpm2b(&q->x.b);
+		reverse_tpm2b(&q->y.b);
+
+		result = DCRYPTO_p256_valid_point((p256_int *) q->x.b.buffer,
+						(p256_int *) q->y.b.buffer);
+
+		reverse_tpm2b(&q->x.b);
+		reverse_tpm2b(&q->y.b);
+
+		if (result)
 			return TRUE;
 		else
 			return FALSE;
@@ -58,12 +73,18 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 		if (n2 != NULL && !check_p256_param(n2))
 			return CRYPT_PARAMETER;
 
-		if (in == NULL || n2 == NULL)
+		reverse_tpm2b(&n1->b);
+
+		if (in == NULL || n2 == NULL) {
 			result = DCRYPTO_p256_base_point_mul(
 				(p256_int *) out->x.b.buffer,
 				(p256_int *) out->y.b.buffer,
 				(p256_int *) n1->b.buffer);
-		else
+		} else {
+			reverse_tpm2b(&n2->b);
+			reverse_tpm2b(&in->x.b);
+			reverse_tpm2b(&in->y.b);
+
 			result = DCRYPTO_p256_points_mul(
 				(p256_int *) out->x.b.buffer,
 				(p256_int *) out->y.b.buffer,
@@ -72,9 +93,19 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 				(p256_int *) in->x.b.buffer,
 				(p256_int *) in->y.b.buffer);
 
+			reverse_tpm2b(&n2->b);
+			reverse_tpm2b(&in->x.b);
+			reverse_tpm2b(&in->y.b);
+		}
+
+		reverse_tpm2b(&n1->b);
+
 		if (result) {
 			out->x.b.size = sizeof(p256_int);
 			out->y.b.size = sizeof(p256_int);
+			reverse_tpm2b(&out->x.b);
+			reverse_tpm2b(&out->y.b);
+
 			return CRYPT_SUCCESS;
 		} else {
 			return CRYPT_NO_RESULT;
@@ -117,7 +148,12 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 				(p256_int *) d->b.buffer, key_bytes)) {
 			q->x.b.size = sizeof(p256_int);
 			q->y.b.size = sizeof(p256_int);
+			reverse_tpm2b(&q->x.b);
+			reverse_tpm2b(&q->y.b);
+
 			d->b.size = sizeof(p256_int);
+			reverse_tpm2b(&d->b);
+
 			break;
 		}
 	}
@@ -126,6 +162,7 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 		FAIL(FATAL_ERROR_INTERNAL);
 	if (counter != NULL)
 		*counter = count;
+
 	return CRYPT_SUCCESS;
 }
 
@@ -150,12 +187,20 @@ CRYPT_RESULT _cpri__SignEcc(
 		memcpy(digest_local + sizeof(digest_local) - digest_len,
 			digest->buffer, digest_len);
 		p256_from_bin(digest_local, &p256_digest);
+
+		reverse_tpm2b(&d->b);
+
 		DCRYPTO_p256_ecdsa_sign((p256_int *) d->b.buffer,
 					&p256_digest,
 					(p256_int *) r->b.buffer,
 					(p256_int *) s->b.buffer);
+		reverse_tpm2b(&d->b);
+
 		r->b.size = sizeof(p256_int);
 		s->b.size = sizeof(p256_int);
+		reverse_tpm2b(&r->b);
+		reverse_tpm2b(&s->b);
+
 		return CRYPT_SUCCESS;
 	default:
 		return CRYPT_PARAMETER;
@@ -170,6 +215,7 @@ CRYPT_RESULT _cpri__ValidateSignatureEcc(
 	uint8_t digest_local[sizeof(p256_int)];
 	const size_t digest_len = MIN(digest->size, sizeof(digest_local));
 	p256_int p256_digest;
+	int result;
 
 	if (curve_id != TPM_ECC_NIST_P256)
 		return CRYPT_PARAMETER;
@@ -181,12 +227,27 @@ CRYPT_RESULT _cpri__ValidateSignatureEcc(
 		memcpy(digest_local + sizeof(digest_local) - digest_len,
 			digest->buffer, digest_len);
 		p256_from_bin(digest_local, &p256_digest);
-		if (DCRYPTO_p256_ecdsa_verify(
-				(p256_int *) q->x.b.buffer,
-				(p256_int *) q->y.b.buffer,
-				&p256_digest,
-				(p256_int *) r->b.buffer,
-				(p256_int *) s->b.buffer))
+
+		reverse_tpm2b(&q->x.b);
+		reverse_tpm2b(&q->y.b);
+
+		reverse_tpm2b(&r->b);
+		reverse_tpm2b(&s->b);
+
+		result = DCRYPTO_p256_ecdsa_verify(
+			(p256_int *) q->x.b.buffer,
+			(p256_int *) q->y.b.buffer,
+			&p256_digest,
+			(p256_int *) r->b.buffer,
+			(p256_int *) s->b.buffer);
+
+		reverse_tpm2b(&q->x.b);
+		reverse_tpm2b(&q->y.b);
+
+		reverse_tpm2b(&r->b);
+		reverse_tpm2b(&s->b);
+
+		if (result)
 			return CRYPT_SUCCESS;
 		else
 			return CRYPT_FAIL;
@@ -204,13 +265,19 @@ CRYPT_RESULT _cpri__GetEphemeralEcc(TPMS_ECC_POINT *q, TPM2B_ECC_PARAMETER *d,
 		return CRYPT_PARAMETER;
 
 	rand_bytes(key_bytes, sizeof(key_bytes));
+
 	if (DCRYPTO_p256_key_from_bytes((p256_int *) q->x.b.buffer,
 						(p256_int *) q->y.b.buffer,
 						(p256_int *) d->b.buffer,
 						key_bytes)) {
 		q->x.b.size = sizeof(p256_int);
 		q->y.b.size = sizeof(p256_int);
+		reverse_tpm2b(&q->x.b);
+		reverse_tpm2b(&q->y.b);
+
 		d->b.size = sizeof(p256_int);
+		reverse_tpm2b(&d->b);
+
 		return CRYPT_SUCCESS;
 	} else {
 		return CRYPT_FAIL;
@@ -241,10 +308,10 @@ struct TPM2B_MAX_BUFFER_aligned {
 static const struct TPM2B_ECC_PARAMETER_aligned NIST_P256_d = {
 	.d = {
 		.t = {32, {
-				0x0a, 0xd2, 0xa0, 0xfe, 0x89, 0xb2, 0x91, 0x09,
-				0x87, 0xd4, 0x7f, 0xa2, 0x1f, 0xc9, 0x3e, 0x7e,
-				0x7b, 0x2f, 0x48, 0x29, 0x6b, 0xe6, 0xb7, 0x09,
-				0xf1, 0x48, 0x4e, 0x74, 0x07, 0x1e, 0x44, 0xfc
+				0xfc, 0x44, 0x1e, 0x07, 0x74, 0x4e, 0x48, 0xf1,
+				0x09, 0xb7, 0xe6, 0x6b, 0x29, 0x48, 0x2f, 0x7b,
+				0x7e, 0x3e, 0xc9, 0x1f, 0xa2, 0x7f, 0xd4, 0x87,
+				0x09, 0x91, 0xb2, 0x89, 0xfe, 0xa0, 0xd2, 0x0a
 			}
 		}
 	}
@@ -253,10 +320,10 @@ static const struct TPM2B_ECC_PARAMETER_aligned NIST_P256_d = {
 static const struct TPM2B_ECC_PARAMETER_aligned NIST_P256_qx = {
 	.d = {
 		.t = {32, {
-				0xde, 0x81, 0x07, 0xe1, 0xe9, 0xb3, 0x6a, 0xa3,
-				0xb2, 0x02, 0xac, 0xb0, 0x04, 0x7a, 0x57, 0xb4,
-				0xbc, 0xd5, 0x4e, 0x20, 0x7f, 0x92, 0x4d, 0x3c,
-				0xee, 0xa8, 0x9c, 0x67, 0xa2, 0xd6, 0xc3, 0x12
+				0x12, 0xc3, 0xd6, 0xa2, 0x67, 0x9c, 0xa8, 0xee,
+				0x3c, 0x4d, 0x92, 0x7f, 0x20, 0x4e, 0xd5, 0xbc,
+				0xb4, 0x57, 0x7a, 0x04, 0xb0, 0xac, 0x02, 0xb2,
+				0xa3, 0x6a, 0xb3, 0xe9, 0xe1, 0x07, 0x81, 0xde
 			}
 		}
 	}
@@ -265,10 +332,10 @@ static const struct TPM2B_ECC_PARAMETER_aligned NIST_P256_qx = {
 static const struct TPM2B_ECC_PARAMETER_aligned NIST_P256_qy = {
 	.d = {
 		.t = {32, {
-				0x1d, 0x52, 0x65, 0x86, 0xb5, 0xa4, 0xcc, 0xc6,
-				0x9b, 0x68, 0x6d, 0x62, 0x8a, 0xfd, 0x9f, 0xc5,
-				0x7b, 0x0e, 0x9d, 0xee, 0x8f, 0x73, 0xa5, 0xfc,
-				0x72, 0x11, 0x97, 0x13, 0x74, 0xad, 0x85, 0x5c
+				0x5c, 0x85, 0xad, 0x74, 0x13, 0x97, 0x11, 0x72,
+				0xfc, 0xa5, 0x73, 0x8f, 0xee, 0x9d, 0x0e, 0x7b,
+				0xc5, 0x9f, 0xfd, 0x8a, 0x62, 0x6d, 0x68, 0x9b,
+				0xc6, 0xcc, 0xa4, 0xb5, 0x86, 0x65, 0x52, 0x1d
 			}
 		}
 	}
@@ -285,7 +352,7 @@ static int point_equals(const TPMS_ECC_POINT *a, const TPMS_ECC_POINT *b)
 
 }
 
-static void ec_command_handler(void *cmd_body, size_t cmd_size,
+static void ecc_command_handler(void *cmd_body, size_t cmd_size,
 			size_t *response_size_out)
 {
 	uint8_t *cmd;
@@ -301,9 +368,7 @@ static void ec_command_handler(void *cmd_body, size_t cmd_size,
 	uint32_t *response_size = (uint32_t *) response_size_out;
 
 	TPMS_ECC_POINT q;
-	TPM2B_ECC_PARAMETER *d;
-	TPM2B_ECC_PARAMETER *qx;
-	TPM2B_ECC_PARAMETER *qy;
+	TPM2B_ECC_PARAMETER d;
 	struct TPM2B_ECC_PARAMETER_aligned r;
 	struct TPM2B_ECC_PARAMETER_aligned s;
 
@@ -346,13 +411,12 @@ static void ec_command_handler(void *cmd_body, size_t cmd_size,
 	memcpy(digest.d.t.buffer, cmd, digest_len);
 	cmd += digest_len;
 
+	/* Make copies of d, and q, as const data is immutable. */
 	switch (curve_id) {
 	case TPM_ECC_NIST_P256:
-		d = (TPM2B_ECC_PARAMETER *) &NIST_P256_d.d;
-		qx = (TPM2B_ECC_PARAMETER *) &NIST_P256_qx.d;
-		qy = (TPM2B_ECC_PARAMETER *) &NIST_P256_qy.d;
-		q.x = *qx;
-		q.y = *qy;
+		d = NIST_P256_d.d;
+		q.x = NIST_P256_qx.d;
+		q.y = NIST_P256_qy.d;
 		break;
 	default:
 		*response_size = 0;
@@ -362,7 +426,7 @@ static void ec_command_handler(void *cmd_body, size_t cmd_size,
 	switch (op) {
 	case TEST_SIGN:
 		if (_cpri__SignEcc(&r.d, &s.d, sign_mode, hashing,
-					curve_id, d, &digest.d.b, NULL)
+					curve_id, &d, &digest.d.b, NULL)
 			!= CRYPT_SUCCESS) {
 			*response_size = 0;
 			return;
@@ -423,7 +487,7 @@ static void ec_command_handler(void *cmd_body, size_t cmd_size,
 		TPM2B_SEED seed;
 		struct TPM2B_ECC_PARAMETER_aligned d_local;
 		TPMS_ECC_POINT q_local;
-		const char *label = "ec_test";
+		const char *label = "ecc_test";
 
 
 		if (in_len > PRIMARY_SEED_SIZE) {
@@ -467,6 +531,6 @@ static void ec_command_handler(void *cmd_body, size_t cmd_size,
 	}
 }
 
-DECLARE_EXTENSION_COMMAND(EXTENSION_EC, ec_command_handler);
+DECLARE_EXTENSION_COMMAND(EXTENSION_EC, ecc_command_handler);
 
 #endif   /* CRYPTO_TEST_SETUP */
