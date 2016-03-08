@@ -5,12 +5,10 @@
 /* Skylake Chrome Reference Design board-specific configuration */
 
 #include "adc_chip.h"
-#include "als.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "console.h"
-#include "driver/als_isl29035.h"
 #include "driver/pmic_tps650830.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -71,12 +69,6 @@ void usb0_evt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-/* ALS instances. Must be in same order as enum als_id. */
-struct als_t als[] = {
-	{"ISL", isl29035_init, isl29035_read_lux, 5},
-};
-BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
-
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_RSMRST_L_PGOOD,    1, "RSMRST_N_PWRGD"},
@@ -112,8 +104,7 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"pmic",     MEC1322_I2C0_0, 400,  GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"muxes",    MEC1322_I2C0_1, 400,  GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
 	{"pd_mcu",   MEC1322_I2C1,   500,  GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"sensor",   MEC1322_I2C2,   400,  GPIO_I2C2_SCL,   GPIO_I2C2_SDA },
-	{"batt",     MEC1322_I2C3,   100,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA },
+	{"batt",     MEC1322_I2C3,   100,  GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

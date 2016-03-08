@@ -16,8 +16,6 @@
 
 /* Optional features */
 #define CONFIG_ADC
-#define CONFIG_ALS
-#define CONFIG_ALS_ISL29035
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 #define CONFIG_BATTERY_SMART
@@ -126,7 +124,6 @@
 #define I2C_PORT_USB_MUX MEC1322_I2C0_1
 #define I2C_PORT_PD_MCU MEC1322_I2C1
 #define I2C_PORT_TCPC MEC1322_I2C1
-#define I2C_PORT_ALS MEC1322_I2C2
 #define I2C_PORT_BATTERY MEC1322_I2C3
 #define I2C_PORT_CHARGER MEC1322_I2C3
 #define I2C_PORT_THERMAL MEC1322_I2C3
@@ -156,12 +153,6 @@ enum adc_channel {
 	ADC_PSYS,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
-};
-
-/* Light sensors */
-enum als_id {
-	ALS_ISL29035 = 0,
-	ALS_COUNT,
 };
 
 enum pwm_channel {
