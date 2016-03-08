@@ -127,8 +127,8 @@ const struct adc_t adc_channels[] = {
 	[ADC_C0_CC1_PD] = {"C0_CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
 	[ADC_C0_CC2_PD] = {"C0_CC2_PD", 3300, 4096, 0, STM32_AIN(3)},
 
-	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30.25V. */
-	[ADC_VBUS] = {"VBUS",  30250, 4096, 0, STM32_AIN(7)},
+	/* Vbus sensing. Converted to mV, full ADC is equivalent to 33.5V. */
+	[ADC_VBUS] = {"VBUS",  33550, 4096, 0, STM32_AIN(7)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
