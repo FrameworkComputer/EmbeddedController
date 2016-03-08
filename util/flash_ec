@@ -54,6 +54,7 @@ BOARDS_STM32=(
 	big
 	blaze
 	chell_pd
+	elm
 	glados_pd
 	honeybuns
 	jerry
