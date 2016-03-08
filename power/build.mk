@@ -12,6 +12,7 @@ power-$(CONFIG_CHIPSET_ECDRIVEN)+=ec_driven.o
 power-$(CONFIG_CHIPSET_GAIA)+=gaia.o
 power-$(CONFIG_CHIPSET_HASWELL)+=haswell.o
 power-$(CONFIG_CHIPSET_MEDIATEK)+=mediatek.o
+power-$(CONFIG_CHIPSET_RK3399)+=rk3399.o
 power-$(CONFIG_CHIPSET_ROCKCHIP)+=rockchip.o
 power-$(CONFIG_CHIPSET_SKYLAKE)+=skylake.o
 power-$(CONFIG_CHIPSET_TEGRA)+=tegra.o

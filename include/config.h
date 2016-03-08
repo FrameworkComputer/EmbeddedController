@@ -472,6 +472,8 @@
 #undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
 #undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_MEDIATEK  /* MediaTek MT81xx */
+#undef CONFIG_CHIPSET_RK3399    /* Rockchip rk3399 */
+/* TODO: Rename below config to CONFIG_CHIPSET_RK32XX */
 #undef CONFIG_CHIPSET_ROCKCHIP  /* Rockchip rk32xx */
 #undef CONFIG_CHIPSET_SKYLAKE   /* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
@@ -2109,6 +2111,7 @@
 #undef CONFIG_CHIPSET_GAIA
 #undef CONFIG_CHIPSET_HASWELL
 #undef CONFIG_CHIPSET_MEDIATEK
+#undef CONFIG_CHIPSET_RK3399
 #undef CONFIG_CHIPSET_ROCKCHIP
 #undef CONFIG_CHIPSET_SKYLAKE
 #undef CONFIG_CHIPSET_TEGRA
