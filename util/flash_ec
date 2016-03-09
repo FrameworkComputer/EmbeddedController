@@ -84,9 +84,12 @@ BOARDS_STM32_DFU=(
 	twinkie
 )
 
-BOARDS_NPCX_JTAG=(
+BOARDS_NPCX_5M5G_JTAG=(
 	npcx_evb
 	npcx_evb_arm
+)
+
+BOARDS_NPCX_5M6G_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
@@ -158,8 +161,10 @@ elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
 elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
 	CHIP="stm32_dfu"
 	NEED_SERVO="no"
-elif $(in_array "${BOARDS_NPCX_JTAG[@]}" "${BOARD}"); then
-	CHIP="npcx_jtag"
+elif $(in_array "${BOARDS_NPCX_5M5G_JTAG[@]}" "${BOARD}"); then
+	CHIP="npcx_5m5g_jtag"
+elif $(in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"); then
+	CHIP="npcx_5m6g_jtag"
 elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 	CHIP="npcx_spi"
 elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
@@ -539,16 +544,24 @@ function flash_npcx_jtag() {
 	OCD_CHIP_CFG="npcx_chip.cfg"
 	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 		# Program RO region only
-		OCD_CMDS="init; flash_npcx_ro ${IMG_PATH} ${FLAGS_offset}; shutdown;"
+		OCD_CMDS="init; flash_npcx_ro ${CHIP} ${IMG_PATH} ${FLAGS_offset}; shutdown;"
 	else
 		# Program all EC regions
-		OCD_CMDS="init; flash_npcx_all ${IMG_PATH} ${FLAGS_offset}; shutdown;"
+		OCD_CMDS="init; flash_npcx_all ${CHIP} ${IMG_PATH} ${FLAGS_offset}; shutdown;"
 	fi
 
 	# Reset the EC
 	ec_reset
 
 	flash_openocd
+}
+
+function flash_npcx_5m5g_jtag() {
+	flash_npcx_jtag
+}
+
+function flash_npcx_5m6g_jtag() {
+	flash_npcx_jtag
 }
 
 function flash_npcx_spi() {

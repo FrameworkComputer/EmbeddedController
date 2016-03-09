@@ -7,16 +7,16 @@
 # Program spi flash
 source [find mem_helper.tcl]
 
-proc flash_npcx {image_path image_offset image_size spifw_image} {
+proc flash_npcx {image_path cram_addr image_offset image_size spifw_image} {
 	set UPLOAD_FLAG 0x200C4000;
 
 	echo "*** NPCX Reset and halt CPU first ***"
 	reset halt
 
-	# Clear whole 96KB Code RAM
-	mwb 0x100A8000 0xFF 0x18000
+	# Clear whole Code RAM
+	mwb $cram_addr 0xFF $image_size
 	# Upload binary image to Code RAM
-	load_image $image_path 0x100A8000
+	load_image $image_path $cram_addr
 
 	# Upload program spi image FW to lower 16KB Data RAM
 	load_image $spifw_image 0x200C0000
@@ -49,14 +49,34 @@ proc flash_npcx {image_path image_offset image_size spifw_image} {
 	halt
 }
 
-proc flash_npcx_ro {image_dir image_offset} {
+proc flash_npcx5m5g {image_path image_offset spifw_image} {
+	# 96 KB for RO & RW regions
+	set fw_size   0x18000
+	# Code RAM start address
+	set cram_addr 0x100A8000
+
+	echo "*** Start to program npcx5m5g with $image_path ***"
+	flash_npcx $image_path $cram_addr $image_offset $fw_size $spifw_image
+	echo "*** Finish program npcx5m5g ***\r\n"
+}
+
+proc flash_npcx5m6g {image_path image_offset spifw_image} {
+	# 224 KB for RO & RW regions
+	set fw_size   0x38000
+	# Code RAM start address
+	set cram_addr 0x10088000
+
+	echo "*** Start to program npcx5m6g with $image_path ***"
+	flash_npcx $image_path $cram_addr $image_offset $fw_size $spifw_image
+	echo "*** Finish program npcx5m6g ***\r\n"
+}
+
+proc flash_npcx_ro {chip_name image_dir image_offset} {
 	set MPU_RNR  0xE000ED98;
 	set MPU_RASR 0xE000EDA0;
 
-	# 96 KB for RO& RW regions
-	set fw_size  0x18000
 	# images path
-	set ro_image_path $image_dir/ec.RO.flat
+	set ro_image_path $image_dir/RO/ec.RO.flat
 	set spifw_image	$image_dir/chip/npcx/spiflashfw/ec_npcxflash.bin
 
 	# Halt CPU first
@@ -66,30 +86,26 @@ proc flash_npcx_ro {image_dir image_offset} {
 	mww $MPU_RNR  0x1
 	mww $MPU_RASR 0x0
 
-	echo "*** Start to program RO region ***"
-	# Write to lower 96kB from offset
-	flash_npcx $ro_image_path $image_offset $fw_size $spifw_image
-	echo "*** Finish program RO region ***"
-
+	if {$chip_name == "npcx_5m5g_jtag"} {
+		# program RO region
+		flash_npcx5m5g $ro_image_path $image_offset $spifw_image
+	} elseif {$chip_name == "npcx_5m6g_jtag"} {
+		# program RO region
+		flash_npcx5m6g $ro_image_path $image_offset $spifw_image
+	} else {
+		echo $chip_name "no supported."
+	}
 }
 
-proc flash_npcx_all {image_dir image_offset} {
+proc flash_npcx_all {chip_name image_dir image_offset} {
 	set MPU_RNR  0xE000ED98;
 	set MPU_RASR 0xE000EDA0;
-
-	# 96 KB for RO& RW regions
-	set fw_size  0x18000
-	# 8M spi-flash
-	set flash_size 0x800000
 
 	# images path
 	set ro_image_path $image_dir/RO/ec.RO.flat
 	set rw_image_path $image_dir/RW/ec.RW.bin
 	set spifw_image	$image_dir/chip/npcx/spiflashfw/ec_npcxflash.bin
 
-	# images offset
-	set rw_image_offset  [expr ($image_offset + 0x20000)]
-
 	# Halt CPU first
 	halt
 
@@ -97,16 +113,23 @@ proc flash_npcx_all {image_dir image_offset} {
 	mww $MPU_RNR  0x1
 	mww $MPU_RASR 0x0
 
-	echo "*** Start to program RO region ***"
-	# Write to lower 96kB from offset
-	flash_npcx $ro_image_path $image_offset $fw_size $spifw_image
-	echo "*** Finish program RO region ***\r\n"
-
-	echo "*** Start to program RW region ***"
-	# Write to upper 96kB from offset
-	flash_npcx $rw_image_path $rw_image_offset $fw_size $spifw_image
-	echo "*** Finish program RW region ***\r\n"
-
+	if {$chip_name == "npcx_5m5g_jtag"} {
+		# RW images offset - 128 KB
+		set rw_image_offset  [expr ($image_offset + 0x20000)]
+		# program RO region
+		flash_npcx5m5g $ro_image_path $image_offset $spifw_image
+		# program RW region
+		flash_npcx5m5g $rw_image_path $rw_image_offset $spifw_image
+	} elseif {$chip_name == "npcx_5m6g_jtag"} {
+		# RW images offset - 512 KB
+		set rw_image_offset  [expr ($image_offset + 0x40000)]
+		# program RO region
+		flash_npcx5m6g $ro_image_path $image_offset $spifw_image
+		# program RW region
+		flash_npcx5m6g $rw_image_path $rw_image_offset $spifw_image
+	} else {
+		echo $chip_name "no supported."
+	}
 }
 
 proc reset_halt_cpu { } {
