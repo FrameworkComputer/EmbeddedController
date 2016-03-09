@@ -322,8 +322,8 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_CHARGE_LED_1, GPIO_OUTPUT | GPIO_LOW},
-		{GPIO_CHARGE_LED_2, GPIO_OUTPUT | GPIO_LOW},
+		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
 		/*
 		 * Set PD wake low so that it toggles high to generate a wake
 		 * event once we leave hibernate.

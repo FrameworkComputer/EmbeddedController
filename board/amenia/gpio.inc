@@ -53,8 +53,8 @@ GPIO(I2C3_SDA,               PIN(D,  0), GPIO_INPUT)                      /* B66
  * is functional.
  */
 /* LED */
-GPIO(CHARGE_LED_1,           PIN(B,  7), GPIO_OUT_LOW)                    /* A57 - PWM5 for CHARGE_LED1 */
-GPIO(CHARGE_LED_2,           PIN(C,  0), GPIO_OUT_LOW)                    /* B61 - PWM6 for CHARGE_LED2 */
+GPIO(BAT_LED_BLUE,           PIN(B,  7), GPIO_OUT_LOW)                    /* A57 - PWM5 for CHARGE_LED1 */
+GPIO(BAT_LED_AMBER,          PIN(C,  0), GPIO_OUT_LOW)                    /* B61 - PWM6 for CHARGE_LED2 */
 
 /* Power Control*/
 GPIO(V5A_EN,                 PIN(C,  4), GPIO_OUT_LOW)                    /* B64 - PWM2 for V5A_EN */
