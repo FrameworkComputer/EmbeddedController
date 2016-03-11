@@ -202,9 +202,16 @@ static void oak_led_set_battery(int board_version)
 			bat_led_set(BAT_LED_GREEN, 0);
 		else if (chipset_in_state(CHIPSET_STATE_ON))
 			bat_led_set(BAT_LED_GREEN, 1);
-		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+		else if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+			int cycle_time = 4;
+			/* Oak rev5 with GlaDOS ID has a extremely power
+			 * comsuming LED. Increase LED blink cycle time to reduce
+			 * S3 power comsuption. */
+			if (board_version >= OAK_REV5)
+				cycle_time = 10;
 			bat_led_set(BAT_LED_GREEN,
-				    (battery_second & 3) ? 0 : 1);
+				    (battery_second % cycle_time) ? 0 : 1);
+		}
 
 		/* BAT LED behavior:
 		 * Fully charged / idle: Off
