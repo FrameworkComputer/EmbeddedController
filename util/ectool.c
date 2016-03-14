@@ -121,6 +121,8 @@ const char help_str[] =
 	"      Set the delay before going into hibernation\n"
 	"  kbpress\n"
 	"      Simulate key press\n"
+	"  kbfactorytest\n"
+	"      Scan out keyboard if any pins are shorted\n"
 	"  i2cread\n"
 	"      Read I2C bus\n"
 	"  i2cwrite\n"
@@ -4208,6 +4210,24 @@ int cmd_kbpress(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_keyboard_factory_test(int argc, char *argv[])
+{
+	struct ec_response_keyboard_factory_test r;
+	int rv;
+
+	rv = ec_command(EC_CMD_KEYBOARD_FACTORY_TEST, 0,
+			NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	if (r.shorted != 0)
+		printf("Keyboard %d and %d pin are shorted.\n",
+				r.shorted & 0x00ff, r.shorted >> 8);
+	else
+		printf("Keyboard factory test passed.\n");
+
+	return 0;
+}
 
 static void print_panic_reg(int regnum, const uint32_t *regs, int index)
 {
@@ -6564,6 +6584,7 @@ const struct command commands[] = {
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
 	{"keyscan", cmd_keyscan},
+	{"kbfactorytest", cmd_keyboard_factory_test},
 	{"motionsense", cmd_motionsense},
 	{"nextevent", cmd_next_event},
 	{"panicinfo", cmd_panic_info},

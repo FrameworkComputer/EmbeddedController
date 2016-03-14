@@ -1209,6 +1209,9 @@
 /* Compile code for MKBP keyboard protocol */
 #undef CONFIG_KEYBOARD_PROTOCOL_MKBP
 
+/* Support keyboard factory test scanning */
+#undef CONFIG_KEYBOARD_FACTORY_TEST
+
 /*
  * Keyboard config (struct keyboard_scan_config) is in board.c.  If this is
  * not defined, default values from common/keyboard_scan.c will be used.

@@ -2481,6 +2481,13 @@ struct ec_response_get_next_event {
 	union ec_response_get_next_data data;
 } __packed;
 
+/* Run keyboard factory test scanning */
+#define EC_CMD_KEYBOARD_FACTORY_TEST 0x68
+
+struct ec_response_keyboard_factory_test {
+	uint16_t shorted;	/* Keyboard pins are shorted */
+} __packed;
+
 /*****************************************************************************/
 /* Temperature sensor commands */
 

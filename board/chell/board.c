@@ -133,6 +133,25 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * We have total 28 pins for keyboard connecter, {-1, -1} mean
+ * the N/A pin that don't consider it and reserve index 0 area
+ * that we don't have pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+		{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1},
+		{12, 6}, {4, 3}, {4, 2}, {0, 2}, {14, 2},
+		{4, 0}, {0, 0}, {-1, -1}, {3, 2}, {10, 3},
+		{10, 0}, {12, 5}, {-1, -1}, {10, 2}, {-1, -1},
+		{0, 1}, {10, 4}, {-1, -1}, {-1, -1}, {0, 4},
+		{10, 7}, {10, 6}, {0, 3}, {0, 5},
+};
+
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
+
 struct pi3usb9281_config pi3usb9281_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_CHARGER_1,

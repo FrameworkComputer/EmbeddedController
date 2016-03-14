@@ -748,6 +748,30 @@ DECLARE_HOST_COMMAND(EC_CMD_MKBP_SIMULATE_KEY,
 		     mkbp_command_simulate_key,
 		     EC_VER_MASK(0));
 
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+static int keyboard_factory_test(struct host_cmd_handler_args *args)
+{
+	struct ec_response_keyboard_factory_test *r = args->response;
+
+	/* Only available on unlocked systems */
+	if (system_is_locked())
+		return EC_RES_ACCESS_DENIED;
+
+	if (keyboard_factory_scan_pins_used == 0)
+		return EC_RES_INVALID_COMMAND;
+
+	r->shorted = keyboard_factory_test_scan();
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_KEYBOARD_FACTORY_TEST,
+		     keyboard_factory_test,
+		     EC_VER_MASK(0));
+#endif
+
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_KEYBOARD
