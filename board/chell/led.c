@@ -93,8 +93,13 @@ static void board_led_set_battery(void)
 		if (!previous_state_suspend)
 			power_ticks = 0;
 
-		/* Blink once every one second. */
-		bat_led_set_color((power_ticks & 0x4) ? LED_WHITE : LED_OFF);
+		if (charge_get_state() == PWR_STATE_CHARGE)
+			/* Always indicate when charging, even in suspend. */
+			bat_led_set_color(LED_AMBER);
+		else
+			/* Blink once every one second. */
+			bat_led_set_color((power_ticks & 0x4) ?
+					  LED_WHITE : LED_OFF);
 
 		previous_state_suspend = 1;
 		return;
