@@ -571,7 +571,11 @@ static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
 		pd_src_caps[port][i] = *src_caps++;
 }
 
-static void pd_send_request_msg(int port, int always_send_request)
+/*
+ * Request desired charge voltage from source.
+ * Returns EC_SUCCESS on success or non-zero on failure.
+ */
+static int pd_send_request_msg(int port, int always_send_request)
 {
 	uint32_t rdo, curr_limit, supply_voltage;
 	int res;
@@ -606,11 +610,11 @@ static void pd_send_request_msg(int port, int always_send_request)
 		 * If fail to choose voltage, do nothing, let source re-send
 		 * source cap
 		 */
-		return;
+		return -1;
 
 	/* Don't re-request the same voltage */
 	if (!always_send_request && pd[port].prev_request_mv == supply_voltage)
-		return;
+		return EC_SUCCESS;
 
 	CPRINTF("Req C%d [%d] %dmV %dmA", port, RDO_POS(rdo),
 		supply_voltage, curr_limit);
@@ -622,9 +626,10 @@ static void pd_send_request_msg(int port, int always_send_request)
 	pd[port].supply_voltage = supply_voltage;
 	pd[port].prev_request_mv = supply_voltage;
 	res = send_request(port, rdo);
-	if (res >= 0)
-		set_state(port, PD_STATE_SNK_REQUESTED);
-	/* If fail send request, do nothing, let source re-send source cap */
+	if (res < 0)
+		return res;
+	set_state(port, PD_STATE_SNK_REQUESTED);
+	return EC_SUCCESS;
 }
 #endif
 
@@ -708,6 +713,7 @@ static void handle_data_request(int port, uint16_t head,
 
 			pd_process_source_cap(port, pd_src_cap_cnt[port],
 					      pd_src_caps[port]);
+			/* Source will resend source cap on failure */
 			pd_send_request_msg(port, 1);
 		}
 		break;
@@ -2231,7 +2237,8 @@ void pd_task(void)
 
 			/* Check for new power to request */
 			if (pd[port].new_power_request) {
-				pd_send_request_msg(port, 0);
+				if (pd_send_request_msg(port, 0) != EC_SUCCESS)
+					set_state(port, PD_STATE_SOFT_RESET);
 				break;
 			}
 
