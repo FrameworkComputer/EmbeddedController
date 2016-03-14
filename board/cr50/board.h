@@ -27,7 +27,7 @@
 /* USB configuration */
 #define CONFIG_USB
 #define CONFIG_USB_HID
-#define CONFIG_USB_BLOB
+#define CONFIG_USB_CONSOLE
 
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USB
@@ -80,7 +80,7 @@ enum usb_strings {
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_BLOB    0
+#define USB_IFACE_CONSOLE 0
 #define USB_IFACE_HID     1
 #define USB_IFACE_AP      2
 #define USB_IFACE_EC      3
@@ -88,7 +88,7 @@ enum usb_strings {
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
-#define USB_EP_BLOB      1
+#define USB_EP_CONSOLE   1
 #define USB_EP_HID       2
 #define USB_EP_AP        3
 #define USB_EP_EC        4
