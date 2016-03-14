@@ -16,8 +16,14 @@ void init_trng(void)
 
 uint32_t rand(void)
 {
-	while (GREAD(TRNG, EMPTY))
-		;
+	while (GREAD(TRNG, EMPTY)) {
+		if (!GREAD_FIELD(TRNG, FSM_STATE, FSM_IDLE))
+			continue;
+
+		/* TRNG must have stopped, needs to be restarted. */
+		GWRITE(TRNG, STOP_WORK, 1);
+		init_trng();
+	}
 	return GREAD(TRNG, READ_DATA);
 }
 
