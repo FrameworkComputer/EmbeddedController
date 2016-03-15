@@ -104,6 +104,12 @@
 /* Wait for 5V power source stable */
 #define PMIC_WAIT_FOR_5V_POWER_GOOD (1 * MSEC)
 
+/*
+ * If POWER_GOOD is lost, wait for PMIC to turn off its power completely
+ * before we turn off VBAT by set_system_power(0)
+ */
+#define PMIC_POWER_OFF_DELAY (50 * MSEC)
+
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
@@ -470,6 +476,7 @@ static void chipset_turn_off_power_rails(void)
 	set_pmic_pwron(0);
 
 	/* system power off */
+	usleep(PMIC_POWER_OFF_DELAY);
 	set_system_power(0);
 }
 
