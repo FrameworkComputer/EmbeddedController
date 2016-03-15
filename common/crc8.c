@@ -5,9 +5,14 @@
 #include "common.h"
 #include "crc8.h"
 
-uint8_t crc8(const uint8_t *data, int len)
+inline uint8_t crc8(const uint8_t *data, int len)
 {
-	unsigned crc = 0;
+	return crc8_arg(data, len, 0);
+}
+
+uint8_t crc8_arg(const uint8_t *data, int len, uint8_t previous_crc)
+{
+	unsigned crc = previous_crc << 8;
 	int i, j;
 
 	for (j = len; j; j--, data++) {
