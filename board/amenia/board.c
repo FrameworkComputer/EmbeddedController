@@ -15,9 +15,11 @@
 #include "console.h"
 #include "driver/als_isl29035.h"
 #include "driver/accel_kionix.h"
-#include "driver/accel_kxcj9.h"
+#include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/temp_sensor/tmp432.h"
+#include "driver/charger/bd99955.h"
+#include "driver/tcpm/tcpci.h"
+#include "driver/temp_sensor/g78x.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -28,7 +30,6 @@
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
-#include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
 #include "spi.h"
@@ -47,37 +48,90 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-/* Exchange status with PD MCU. */
-static void pd_mcu_interrupt(enum gpio_signal signal)
+#if 1 /* TODO: CHARGER / BC1.2 */
+static void update_vbus_supplier(int port, int vbus_level)
 {
+	struct charge_port_info charge;
+
+	charge.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
+	charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &charge);
+}
+
+static void reset_charge(int port)
+{
+	struct charge_port_info charge_none;
+
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_none.current = 0;
+	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+				     port,
+				     &charge_none);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+				     port,
+				     &charge_none);
+
+	/* Initialize VBUS supplier based on whether VBUS is present */
+	update_vbus_supplier(port, pd_snk_is_vbus_provided(port));
+}
+#endif
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+#if 0 /* TODO: TCPC */
+	if (gpio_get_level(GPIO_USB_C0_PD_INT))
+		if (gpio_get_level(GPIO_USB_C0_RST_L))
+			status |= PD_STATUS_TCPC_ALERT_0;
+
+	if (!gpio_get_level(GPIO_USB_C1_PD_INT_L))
+		if (gpio_get_level(GPIO_USB_C1_RST_L))
+			status |= PD_STATUS_TCPC_ALERT_1;
+#endif
+
+	return status;
+}
+
+static void tcpc_alert_event(enum gpio_signal signal)
+{
+#if 0 /* TODO: TCPC */
 #ifdef HAS_TASK_PDCMD
 	/* Exchange status with PD MCU to determine interrupt cause */
 	host_command_pd_send_status(0);
+#endif
 #endif
 }
 
 void vbus0_evt(enum gpio_signal signal)
 {
+	if (!gpio_get_level(GPIO_USB_C0_RST_L))
+		return;
+
 	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(0, !gpio_get_level(signal));
+	update_vbus_supplier(0, !gpio_get_level(signal));
+
 	task_wake(TASK_ID_PD_C0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
 {
+	if (!gpio_get_level(GPIO_USB_C1_RST_L))
+		return;
+
 	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(1, !gpio_get_level(signal));
+	update_vbus_supplier(1, !gpio_get_level(signal));
+
 	task_wake(TASK_ID_PD_C1);
-}
-
-void usb0_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
-}
-
-void usb1_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
 }
 
 /*
@@ -114,21 +168,25 @@ const struct adc_t adc_channels[] = {
 	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4, 55000, 6144, 0},
 	/* System current consumption */
 	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3, 1, 1, 0},
+	/* Thermistor 0 */
+	[ADC_THERM_SYS0] = {"THERM_SYS0", NPCX_ADC_CH0, 1, 1, 0},
+	/* Thermistor 1 */
+	[ADC_THERM_SYS1] = {"THERM_SYS1", NPCX_ADC_CH2, 1, 1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"pmic",    NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"muxes",   NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"pd_mcu",  NPCX_I2C_PORT1,   400, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"sensors", NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
-	{"batt",    NPCX_I2C_PORT3,   100, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
+	{"unused",    NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
+	{"tcpc",      NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
+	{"lid sensor",  NPCX_I2C_PORT1, 400, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
+	{"base sensor", NPCX_I2C_PORT2, 400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
+	{"bat charger", NPCX_I2C_PORT3, 100, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
+	{I2C_PORT_TCPC0, TCPC0_I2C_ADDR, &tcpci_tcpm_drv},
+	{I2C_PORT_TCPC1, TCPC1_I2C_ADDR, &tcpci_tcpm_drv},
 };
 
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -139,39 +197,64 @@ const enum gpio_signal hibernate_wake_pins[] = {
 
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
-struct pi3usb9281_config pi3usb9281_chips[] = {
-	{
-		.i2c_port = I2C_PORT_USB_CHARGER_1,
-		.mux_lock = NULL,
-	},
-	{
-		.i2c_port = I2C_PORT_USB_CHARGER_2,
-		.mux_lock = NULL,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
-	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
-
+#if 1 /* TODO: TCPC */
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
-		.port_addr = 0xa8,
-		.driver = &pi3usb30532_usb_mux_driver,
+		.port_addr = 0,
+		.driver = &tcpci_tcpm_usb_mux_driver,
 	},
 	{
-		.port_addr = 0xaa,
-		.driver = &pi3usb30532_usb_mux_driver,
+		.port_addr = 0,
+		.driver = &tcpci_tcpm_usb_mux_driver,
 	}
 };
+#endif
 
 /**
  * Reset PD MCU
+ *
+ * TCPC0 minimum reset assertion time: TODO
+ * TCPC1 minimum reset assertion time: 1ms (must be less than 10ms)
  */
 void board_reset_pd_mcu(void)
 {
-	gpio_set_level(GPIO_PD_RST_L, 0);
-	usleep(100);
-	gpio_set_level(GPIO_PD_RST_L, 1);
+	/* Assert reset to TCPC1 */
+	gpio_set_level(GPIO_USB_C1_RST_L, 0);
+
+	/* Assert reset to TCPC0 */
+	gpio_set_level(GPIO_USB_C0_RST_L, 0);
+	msleep(1);
+	gpio_set_level(GPIO_USB_C0_PWR_EN, 0);
+
+	/* Deassert reset to TCPC1 */
+	gpio_set_level(GPIO_USB_C1_RST_L, 1);
+
+	/* TODO: Need confirmation from TCPC0 vendor */
+	msleep(10);
+
+	/* Deassert reset to TCPC0 */
+	gpio_set_level(GPIO_USB_C0_PWR_EN, 1);
+	msleep(10);
+	gpio_set_level(GPIO_USB_C0_RST_L, 1);
 }
+
+void board_tcpc_init(void)
+{
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_to_this_image())
+		board_reset_pd_mcu();
+
+#if 0 /* TODO: TCPC */
+	/* Enable TCPC0 interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT);
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+
+	/* Enable TCPC1 interrupt */
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+#endif
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.
@@ -179,12 +262,12 @@ void board_reset_pd_mcu(void)
  *     src/mainboard/google/${board}/acpi/dptf.asl
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_LOCAL, 4},
-	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE1, 4},
-	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE2, 4},
+	{"G782_Internal", TEMP_SENSOR_TYPE_BOARD, g78x_get_val,
+		G78X_IDX_INTERNAL, 4},
+	{"G782_Sensor_1", TEMP_SENSOR_TYPE_BOARD, g78x_get_val,
+		G78X_IDX_EXTERNAL1, 4},
+	{"G782_Sensor_2", TEMP_SENSOR_TYPE_BOARD, g78x_get_val,
+		G78X_IDX_EXTERNAL2, 4},
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val,
 		0, 4},
 };
@@ -196,9 +279,9 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  */
 struct ec_thermal_config thermal_params[] = {
 	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
-	{{0, 0, 0}, 0, 0},	/* TMP432_Internal */
-	{{0, 0, 0}, 0, 0},	/* TMP432_Sensor_1 */
-	{{0, 0, 0}, 0, 0},	/* TMP432_Sensor_2 */
+	{{0, 0, 0}, 0, 0},	/* G782_Internal */
+	{{0, 0, 0}, 0, 0},	/* G782_Sensor_1 */
+	{{0, 0, 0}, 0, 0},	/* G782_Sensor_2 */
 	{{0, 0, 0}, 0, 0},	/* Battery */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
@@ -219,16 +302,18 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 /* Initialize board. */
 static void board_init(void)
 {
-	/* Enable PD MCU interrupt */
-	gpio_enable_interrupt(GPIO_PD_MCU_INT);
+#if 1 /* TODO: CHARGER / BC1.2 */
+	int i;
 
-	/* Enable VBUS interrupt */
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
-	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+	/* Initialize all BC1.2 charge suppliers to 0 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		reset_charge(i);
+#endif
 
-	/* Enable pericom BC1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+#if 0 /* TODO: CHARGER */
+	/* Enable charger interrupt */
+	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
+#endif
 
 	/* Enable tablet mode interrupt for input device enable */
 	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
@@ -245,6 +330,8 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
  */
 int board_set_active_charge_port(int charge_port)
 {
+	enum bd99955_charge_port bd99955_port;
+
 	/* charge port is a realy physical port */
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
@@ -259,20 +346,22 @@ int board_set_active_charge_port(int charge_port)
 
 	CPRINTS("New chg p%d", charge_port);
 
-	if (charge_port == CHARGE_PORT_NONE) {
-		/* Disable both ports */
-		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
-		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
-	} else {
-		/* Make sure non-charging port is disabled */
-		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_EN_L :
-					     GPIO_USB_C1_CHARGE_EN_L, 1);
-		/* Enable charging port */
-		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_EN_L :
-					     GPIO_USB_C0_CHARGE_EN_L, 0);
+	switch (charge_port) {
+	case 0:
+		bd99955_port = BD99955_CHARGE_PORT_VBUS;
+		break;
+	case 1:
+		bd99955_port = BD99955_CHARGE_PORT_VCC;
+		break;
+	case CHARGE_PORT_NONE:
+		bd99955_port = BD99955_CHARGE_PORT_NONE;
+		break;
+	default:
+		panic("Invalid charge port\n");
+		break;
 	}
 
-	return EC_SUCCESS;
+	return bd99955_select_input_port(bd99955_port);
 }
 
 /**
@@ -324,11 +413,7 @@ void board_hibernate_late(void)
 		/* Turn off LEDs in hibernate */
 		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
 		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-		/*
-		 * Set PD wake low so that it toggles high to generate a wake
-		 * event once we leave hibernate.
-		 */
-		{GPIO_USB_PD_WAKE, GPIO_OUTPUT | GPIO_LOW},
+
 		/*
 		 * In hibernate, this pin connected to GND. Set it to output
 		 * low to eliminate the current caused by internal pull-up.
@@ -339,9 +424,7 @@ void board_hibernate_late(void)
 		 * allow wake-on-plug. 5V enable must be pulled low.
 		 */
 		{GPIO_USB_C0_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
-		{GPIO_USB_C0_CHARGE_EN_L, GPIO_OUTPUT | GPIO_LOW},
 		{GPIO_USB_C1_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
-		{GPIO_USB_C1_CHARGE_EN_L, GPIO_OUTPUT | GPIO_LOW},
 	};
 
 	/* Change GPIOs' state in hibernate for better power consumption */
@@ -367,14 +450,14 @@ static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t base_standard_ref = {
-	{ 0,  FLOAT_TO_FP(1),  0},
-	{ FLOAT_TO_FP(-1), 0,  0},
+	{ 0, FLOAT_TO_FP(-1),  0},
+	{ FLOAT_TO_FP(1),  0,  0},
 	{ 0,  0,  FLOAT_TO_FP(1)}
 };
 
-/* KXCJ9 private data */
-struct kionix_accel_data g_kxcj9_data = {
-	.variant = KXCJ9,
+/* KX022 private data */
+struct kionix_accel_data g_kx022_data = {
+	.variant = KX022,
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -392,7 +475,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_ACCEL,
+	 .port = I2C_PORT_ACCELGYRO,
 	 .addr = BMI160_ADDR0,
 	 .rot_standard_ref = NULL, /* Identity matrix. */
 	 .default_range = 2,  /* g, enough for laptop. */
@@ -429,7 +512,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_ACCEL,
+	 .port = I2C_PORT_ACCELGYRO,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = NULL, /* Identity Matrix. */
@@ -466,7 +549,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_ACCEL,
+	 .port = I2C_PORT_ACCELGYRO,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1 << 11, /* 16LSB / uT, fixed */
 	 .rot_standard_ref = NULL, /* Identity Matrix. */
@@ -497,14 +580,14 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
 	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_KXCJ9,
+	 .chip = MOTIONSENSE_CHIP_KX022,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &kionix_accel_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_kxcj9_data,
+	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_ACCEL,
-	 .addr = KXCJ9_ADDR1,
+	 .addr = KX022_ADDR1,
 	 .rot_standard_ref = &base_standard_ref, /* Identity matrix. */
 	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {
@@ -535,6 +618,9 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 void board_hibernate(void)
 {
 	CPRINTS("Enter Pseudo G3");
+
+	/* Enable both the VBUS & VCC ports before entering PG3 */
+	bd99955_select_input_port(BD99955_CHARGE_PORT_BOTH);
 
 	/*
 	 * Clean up the UART buffer and prevent any unwanted garbage characters

@@ -5,8 +5,10 @@
  * found in the LICENSE file.
  */
 
-/* Declare symbolic names for all the GPIOs that we care about.
- * Note: Those with interrupt handlers must be declared first. */
+/*
+ * Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first.
+ */
 
 GPIO_INT(AC_PRESENT,         PIN(7,  3), GPIO_INT_BOTH,                   extpower_interrupt)      /* B39 - PS2_CLK3/TA2for EC_ACIN */
 GPIO_INT(LID_OPEN,           PIN(9,  5), GPIO_INT_BOTH | GPIO_PULL_UP,    lid_interrupt)           /* A47 - SPIP_MISO for LID_OPEN_D */
@@ -24,11 +26,14 @@ GPIO_INT(PCH_SUSPWRDNACK,    PIN(B,  1), GPIO_INT_BOTH,                   power_
 GPIO_INT(ALL_SYS_PGOOD,      PIN(6,  2), GPIO_INT_BOTH,                   power_signal_interrupt)  /* A31 - PS2_CLK1 for ALL_SYS_PWRGD */
 GPIO_INT(RSMRST_L_PGOOD,     PIN(9,  3), GPIO_INT_BOTH,                   power_signal_interrupt)  /* A46 - TA1/F_DIO2 for PMIC_RSMRST_N */
 
-GPIO_INT(PD_MCU_INT,         PIN(0,  2), GPIO_INT_FALLING | GPIO_PULL_UP, pd_mcu_interrupt)        /* A01 - GPIO02 for USB_MCU_EC_INT_N */
 GPIO_INT(USB_C0_VBUS_WAKE_L, PIN(A,  7), GPIO_INT_BOTH | GPIO_PULL_UP,    vbus0_evt)               /* B56 - PS2_DAT3/TB2/F_DIO3 for USB_C0_VBUS_DET_N */
+GPIO_INT(USB_C0_PD_INT,      PIN(8,  5), GPIO_INT_RISING,                 tcpc_alert_event)        /* A43 - RXD for USB_C0_PHY_INT */
+
 GPIO_INT(USB_C1_VBUS_WAKE_L, PIN(6,  1), GPIO_INT_BOTH | GPIO_PULL_UP,    vbus1_evt)               /* B32 - GPIO61 for USB_C1_VBUS_DET_N */
-GPIO_INT(USB_C0_BC12_INT_L,  PIN(8,  5), GPIO_INT_FALLING,                usb0_evt)                /* A43 - RXD for USB_C0_BC12_INT_N */
-GPIO_INT(USB_C1_BC12_INT_L,  PIN(9,  4), GPIO_INT_FALLING,                usb1_evt)                /* B49 - GPIO94 for USB_C1_BC12_INT_N */
+GPIO_INT(USB_C1_PD_INT_L,    PIN(9,  4), GPIO_INT_FALLING,                tcpc_alert_event)        /* B49 - GPIO94 for USB_C1_PHY_INT_N */
+
+/* TODO: CHARGER */
+GPIO(CHARGER_INT_L,      PIN(0,  2), GPIO_INT_FALLING | GPIO_PULL_UP  )        /* A01 - GPIO02 for CHRGR_INT_N */
 
 /* Board ID */
 GPIO(BOARD_VERSION1,         PIN(0,  4), GPIO_INPUT)                      /* A02 - KSO13 for EC_BRD_ID1 */
@@ -58,7 +63,6 @@ GPIO(BAT_LED_AMBER,          PIN(C,  0), GPIO_OUT_LOW)                    /* B61
 
 /* Power Control*/
 GPIO(V5A_EN,                 PIN(C,  4), GPIO_OUT_LOW)                    /* B64 - PWM2 for V5A_EN */
-GPIO(PMIC_EN,                PIN(0,  3), GPIO_OUT_LOW)                    /* B02 - KSO16 for PMIC_EN */
 GPIO(G3_SLEEP_EN,            PIN(E,  3), GPIO_OUT_LOW)                    /* B51 - GPIOE3 for G3_SLEEP_ENA */
 GPIO(ENABLE_BACKLIGHT,       PIN(E,  2), GPIO_OUT_LOW)                    /* A41 - JTAG_TDI1 for EC_BL_DISABLE_N */
 GPIO(ENABLE_TOUCHPAD,        PIN(A,  6), GPIO_OUT_LOW)                    /* B55 - PS2_CLK3/TA2/F_CS1# for TRACKPAD_PWR_EN */
@@ -79,49 +83,53 @@ GPIO(CPU_PROCHOT,            PIN(D,  7), GPIO_OUT_LOW)                    /* A18
 GPIO(PCH_SEC_DISABLE_L,      PIN(6,  3), GPIO_OUT_HIGH)                   /* B33 - PS2_DAT1 for FLASH_DSC_OVERRIDE_N */
 GPIO(PCH_WAKE_L,             PIN(3,  5), GPIO_OUT_HIGH)                   /* A17 - GPIO35/TEST# for EC_SOC_WAKE_N */
 GPIO(PCH_RCIN_L,             PIN(E,  1), GPIO_OUT_HIGH)	                  /* B30 - GPIOE1 for EC_SOC_RST_OUT_N */
-GPIO(KBD_IRQ_L_DO_NOT_USE,   PIN(D,  5), GPIO_INPUT)                      /* A08 - JTAG_TCK1 for EC_KBD_IRQ_N_R */
+GPIO(KBD_IRQ_L_DO_NOT_USE,   PIN(D,  5), GPIO_INPUT | GPIO_PULL_UP)       /* A08 - JTAG_TCK1 for EC_KBD_IRQ_N_R */
 GPIO(PCH_SYS_PWROK,          PIN(7,  2), GPIO_OUT_LOW)                    /* A36 - PWRGD for SOC_PWROK_R */
 
 GPIO(PCH_RSMRST_L,           PIN(8,  4), GPIO_OUT_LOW)                    /* B45 - GPIO84 for EC_RSMRST_OUT_N */
 GPIO(PCH_RTCRST,             PIN(C,  1), GPIO_OUT_LOW)                    /* A58 - GPIOC1 for EC_RTCRST */
 
 /* USB-A Port */
-GPIO(USB1_ENABLE,            PIN(4,  5), GPIO_OUT_LOW)                    /* B24 - ADC0 for USBPD_MB_PWR_EN */
+GPIO(USB1_ENABLE,            PIN(6,  7), GPIO_OUT_LOW)                    /* A33 - PS2_CLK0 for USBPD_MB_PWR_EN */
 GPIO(USB2_ENABLE,            PIN(D,  4), GPIO_OUT_LOW)                    /* B08 - JTAG_TDO1 for USBPD_DB_PWR_EN */
 GPIO(USB1_ILIM_SEL,          PIN(A,  1), GPIO_ODR_HIGH)                   /* A49 - SPIP_SCLK for USBPD_MBILIMSEL_DBSTATUS_N */
 GPIO(USB2_ILIM_SEL,          PIN(C,  2), GPIO_ODR_HIGH)                   /* A59 - PWM1 for USBPD_MBSTATUS_N_DBILIMSEL */
 GPIO(USB_CTL1,               PIN(B,  6), GPIO_ODR_HIGH)                   /* B60 - PWM4/Eng_Strap# for EC_GPOB6 */
 
-/* USB-C Port */
-GPIO(PD_RST_L,               PIN(7,  4), GPIO_ODR_HIGH)                   /* A37 - GPIO74 for EC_USBPD_RST_N */
-GPIO(USB_PD_WAKE,            PIN(4,  3), GPIO_OUT_LOW)                    /* B23 - ADC2 for USBPD_WAKE */
-GPIO(USB_C0_DP_HPD,          PIN(6,  7), GPIO_OUT_LOW)                    /* A33 - PS2_CLK0 for DDI1_HPD */
-GPIO(USB_C1_DP_HPD,          PIN(3,  7), GPIO_OUT_LOW)                    /* B20 - PS2_CLK2 for DDI2_HPD */
+/* USB-C Port 0 */
 GPIO(USB_C0_5V_EN,           PIN(0,  1), GPIO_OUT_LOW)                    /* B01 - GPIO01 for EN_USB_C0_5V_OUT */
+GPIO(USB_C0_RST_L,           PIN(7,  4), GPIO_OUT_LOW)                    /* A37 - GPIO74 for USB_C0_RESET_ANX_N */
+GPIO(USB_C0_PWR_EN,          PIN(D,  3), GPIO_OUT_LOW)                    /* A64 - TB1 for USB_C0_ANX_PWR_EN */
+GPIO(USB_C0_CABLE_DET,       PIN(B,  0), GPIO_INPUT)                      /* B57 - GPIOB0 for USB_C0_CABLE_DET */
+
+/* USB-C Port 1 */
 GPIO(USB_C1_5V_EN,           PIN(E,  5), GPIO_OUT_LOW)                    /* B62 - JTAG_TMS1 for EN_USB_C1_5V_OUT */
-GPIO(USB_C0_CHARGE_EN_L,     PIN(D,  3), GPIO_OUT_LOW)                    /* A64 - TB1 for EN_USB_C0_CHARGE_N */
-GPIO(USB_C1_CHARGE_EN_L,     PIN(C,  7), GPIO_OUT_LOW)                    /* A62 - GPIOC7 for EN_USB_C1_CHARGE_N */
+GPIO(USB_C1_RST_L,           PIN(C,  7), GPIO_OUT_LOW)                    /* A62 - GPIOC7 for USC_C1_RESET_PAR_N */
 
 /* Other EC Pins */
 GPIO(ENTERING_RW,            PIN(6,  0), GPIO_OUT_LOW)                    /* A30 - PWM7 for EC_ENTERING_RW */
 GPIO(BAT_PRESENT_L,          PIN(C,  3), GPIO_INPUT | GPIO_PULL_UP)       /* A60 - PWM0 for BC_BATPRES_N */
-GPIO(PLATFORM_EC_PROCHOT,    PIN(3,  6), GPIO_INPUT)                      /* B19 - GPIO36 for PLATFORM_EC_PROCHOT */
+GPIO(PLATFORM_EC_PROCHOT,    PIN(3,  6), GPIO_INPUT)                      /* B19 - GPIO36 for SOURCE_EC_PROCHOT_R */
 GPIO(THERM_OVERTEMP_L,       PIN(8,  0), GPIO_INPUT | GPIO_PULL_UP)       /* A39 - PWM3 for THERM_OVERTEMP_N */
-GPIO(EC_STM_BOOT0,           PIN(B,  0), GPIO_INPUT)                      /* B57 - GPIOB0 for EC_STM_BOOT0 */
 GPIO(USB2_OTG_ID,            PIN(7,  5), GPIO_ODR_LOW)                    /* B40 - 32KHZ_OUT for USB2_OTG_ID */
 GPIO(USB2_OTG_VBUSSENSE,     PIN(D,  2), GPIO_ODR_LOW)                    /* B67 - GPIOD2 for USB_VBUSSNS */
 
 /* NC pins - Set as input and pull them up for better power consumption */
+GPIO(NC_003,                 PIN(0,  3), GPIO_INPUT | GPIO_PULL_UP)       /* B02 - KSO16 for TP_PMIC_EN */
 GPIO(NC_032,                 PIN(3,  2), GPIO_INPUT | GPIO_PULL_UP)       /* A16 - TRIS# for TP_EC_GPO32 */
+GPIO(NC_037,                 PIN(3,  7), GPIO_INPUT | GPIO_PULL_UP)       /* B20 - PS2_CLK2 for DDI2_HPD */
+GPIO(NC_066,                 PIN(6,  6), GPIO_INPUT | GPIO_PULL_UP)       /* B35 - ARM#_x86 for DDI1_HPD */
 GPIO(NC_081,                 PIN(8,  1), GPIO_INPUT | GPIO_PULL_UP)       /* A40 - Unused pin */
-GPIO(NC_066,                 PIN(6,  6), GPIO_INPUT | GPIO_PULL_UP)       /* B35 - Unused pin */
 GPIO(NC_0D6,                 PIN(D,  6), GPIO_INPUT | GPIO_PULL_UP)       /* B09 - Unused pin */
+
+/* Keyboard inverted COL2 */
+GPIO(KBD_KSO2,               PIN(1,  7), GPIO_OUT_LOW)                    /* B11 - KSO02 for KB_ROW_2 */
 
 UNIMPLEMENTED(UNIMPLEMENTED)
 
 /* Alternate functions GPIO definitions */
 /* ADC pins */
-ALTERNATE(PIN_MASK(4, 0x16), 1,  MODULE_ADC,       0)   /* ADC1/ADC3/ADC4 for ADC GPIO44/42/41 */
+ALTERNATE(PIN_MASK(4, 0x3E), 1,  MODULE_ADC,       0)   /* ADC0/ADC1/ADC2/ADC3/ADC4 for ADC GPIO45/44/43/42/41 */
 
 /* I2C pins */
 ALTERNATE(PIN_MASK(B, 0x0C), 1,  MODULE_I2C,       0)   /* I2C0SDA1/I2C0SCL1 for I2C GPIOB2/B3	   */
@@ -130,9 +138,9 @@ ALTERNATE(PIN_MASK(8, 0x80), 1,  MODULE_I2C,       0)   /* I2C1SDA for I2C GPIO8
 ALTERNATE(PIN_MASK(9, 0x07), 1,  MODULE_I2C,       0)   /* I2C1SCL/I2C2SDA/I2C2SCL for I2C GPIO90/91/92 */
 ALTERNATE(PIN_MASK(D, 0x03), 1,  MODULE_I2C,       0)   /* I2C3SDA/I2C3SCL for I2C GPIOD0/D1    */
 
-/* Keyboard Columns */
+/* Keyboard Columns (except inverted COL2/GP17) */
 ALTERNATE(PIN_MASK(0, 0xE0), 0,  MODULE_KEYBOARD_SCAN, 0)
-ALTERNATE(PIN_MASK(1, 0xFF), 0,  MODULE_KEYBOARD_SCAN, 0)
+ALTERNATE(PIN_MASK(1, 0x7F), 0,  MODULE_KEYBOARD_SCAN, 0)
 ALTERNATE(PIN_MASK(2, 0x03), 0,  MODULE_KEYBOARD_SCAN, 0)
 
 /* Keyboard Rows */

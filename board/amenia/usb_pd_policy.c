@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
+#include "driver/charger/bd99955.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -49,12 +50,16 @@ void pd_transition_voltage(int idx)
 
 int pd_set_power_supply_ready(int port)
 {
-	/* Disable charging */
-	gpio_set_level(port ? GPIO_USB_C1_CHARGE_EN_L :
-			      GPIO_USB_C0_CHARGE_EN_L, 1);
+	/* Ensure we're not charging from this port */
+	if (charge_manager_get_active_charge_port() == port)
+		bd99955_select_input_port(BD99955_CHARGE_PORT_NONE);
+
 	/* Provide VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 1);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
 	return EC_SUCCESS; /* we are ready */
 }
@@ -80,6 +85,7 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
 #endif
 	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void typec_set_input_current_limit(int port, uint32_t max_ma,
@@ -94,6 +100,7 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 #endif
 
 	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -288,9 +295,14 @@ static void svdm_dp_post_config(int port)
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
+/* TODO: TCPC HPD */
+#if 0
 	gpio_set_level(PORT_TO_HPD(port), 1);
+#endif
 }
 
+/* TODO: TCPC HPD */
+#if 0
 static void hpd0_irq_deferred(void)
 {
 	gpio_set_level(GPIO_USB_C0_DP_HPD, 1);
@@ -306,9 +318,12 @@ DECLARE_DEFERRED(hpd1_irq_deferred);
 #define PORT_TO_HPD_IRQ_DEFERRED(port) ((port) ?			\
 					&hpd1_irq_deferred_data :	\
 					&hpd0_irq_deferred_data)
+#endif
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
+/* TODO: TCPC HPD */
+#if 0
 	int cur_lvl;
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
@@ -335,6 +350,8 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 	} else {
 		gpio_set_level(hpd, lvl);
 	}
+#endif
+
 	/* ack */
 	return 1;
 }
@@ -342,7 +359,11 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
+
+/* TODO: TCPC HPD */
+#if 0
 	gpio_set_level(PORT_TO_HPD(port), 0);
+#endif
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)
@@ -396,4 +417,3 @@ const struct svdm_amode_fx supported_modes[] = {
 };
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
-
