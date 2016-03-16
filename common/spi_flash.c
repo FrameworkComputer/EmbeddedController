@@ -483,7 +483,7 @@ static int command_spi_flashinfo(int argc, char **argv)
 		((uint8_t *)&unique)[2], ((uint8_t *)&unique)[3],
 		((uint8_t *)&unique)[4], ((uint8_t *)&unique)[5],
 		((uint8_t *)&unique)[6], ((uint8_t *)&unique)[7]);
-	ccprintf("Capacity: %4d MB\n",
+	ccprintf("Capacity: %4d kB\n",
 		SPI_FLASH_SIZE(((uint8_t *)&jedec)[2]) / 1024);
 
 	return rv;
