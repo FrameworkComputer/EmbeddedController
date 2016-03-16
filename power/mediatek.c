@@ -325,23 +325,12 @@ static int check_for_power_off_event(void)
 
 	now = get_time();
 	if (pressed) {
-#ifndef CONFIG_PMIC_FW_LONG_PRESS_TIMER
-		/*
-		 * Only assert PMIC_PWRON if PMIC supports long-press
-		 * power off.
-		 */
-		CPRINTS("PMIC long-press power off\n");
-		set_pmic_pwron(1);
-#endif
-
 		if (!power_button_was_pressed) {
 			power_off_deadline.val = now.val + DELAY_FORCE_SHUTDOWN;
 			CPRINTS("power waiting for long press %u",
 				power_off_deadline.le.lo);
-#ifdef CONFIG_PMIC_FW_LONG_PRESS_TIMER
 			/* Ensure we will wake up to check the power key */
 			timer_arm(power_off_deadline, TASK_ID_CHIPSET);
-#endif
 		} else if (timestamp_expired(power_off_deadline, &now)) {
 			power_off_deadline.val = 0;
 			CPRINTS("power off after long press now=%u, %u",
@@ -350,10 +339,7 @@ static int check_for_power_off_event(void)
 		}
 	} else if (power_button_was_pressed) {
 		CPRINTS("power off cancel");
-		set_pmic_pwron(0);
-#ifdef CONFIG_PMIC_FW_LONG_PRESS_TIMER
 		timer_cancel(TASK_ID_CHIPSET);
-#endif
 	}
 
 	power_button_was_pressed = pressed;
