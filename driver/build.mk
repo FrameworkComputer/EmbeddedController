@@ -30,6 +30,7 @@ driver-$(CONFIG_BATTERY_SAMUS)+=battery/samus.o
 driver-$(CONFIG_BATTERY_SMART)+=battery/smart.o
 
 # Battery charger ICs
+driver-$(CONFIG_CHARGER_BD99955)+=charger/bd99955.o
 driver-$(CONFIG_CHARGER_BQ24192)+=charger/bq24192.o
 driver-$(CONFIG_CHARGER_BQ24707A)+=charger/bq24707a.o
 driver-$(CONFIG_CHARGER_BQ24715)+=charger/bq24715.o
