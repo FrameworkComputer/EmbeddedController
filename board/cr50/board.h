@@ -85,6 +85,13 @@ enum usb_strings {
 #define USB_EP_HID       2
 #define USB_EP_COUNT     3
 
+/* UART indexes (use define rather than enum to expand them) */
+#define UART_CR50	0
+#define UART_AP		1
+#define UART_EC		2
+
+#define UARTN UART_CR50
+
 /*
  * This would be a low hanging fruit if there is a need to reduce memory
  * footprint. Having a large buffer helps not to drop debug outputs generated

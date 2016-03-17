@@ -23,6 +23,7 @@ ifeq ($(CONFIG_POLLING_UART),y)
 chip-y += polling_uart.o
 else
 chip-y += uart.o
+chip-y += uartn.o
 endif
 
 chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
@@ -66,6 +67,7 @@ custom-ro_objs-y += chip/g/pmu.o
 custom-ro_objs-y += chip/g/system.o
 custom-ro_objs-y += chip/g/trng.o
 custom-ro_objs-y += chip/g/uart.o
+custom-ro_objs-y += chip/g/uartn.o
 custom-ro_objs-y += common/printf.o
 custom-ro_objs-y += common/util.o
 custom-ro_objs-y += core/cortex-m/init.o

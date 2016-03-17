@@ -23,6 +23,8 @@ void clock_enable_module(enum module_id module, int enable)
 	switch (module) {
 	case MODULE_UART:
 		clock_func(PERIPH_UART0);
+		clock_func(PERIPH_UART1);
+		clock_func(PERIPH_UART2);
 		break;
 	case MODULE_I2C:
 		clock_func(PERIPH_I2C0);

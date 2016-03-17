@@ -10,12 +10,17 @@
 #include "system.h"
 #include "task.h"
 #include "uart.h"
+#include "uartn.h"
 #include "util.h"
 
 static int done_uart_init_yet;
 
 #define USE_UART_INTERRUPTS (!(defined(CONFIG_CUSTOMIZED_RO) && \
 			       defined(SECTION_IS_RO)))
+#ifndef UARTN
+#define UARTN 0
+#endif
+
 int uart_init_done(void)
 {
 	return done_uart_init_yet;
@@ -23,89 +28,56 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
-	if (!uart_init_done())
-		return;
-
-	/* If interrupt is already enabled, nothing to do */
-	if (GR_UART_ICTRL(0) & GC_UART_ICTRL_TX_MASK)
-		return;
-
-	/* Do not allow deep sleep while transmit in progress */
-	disable_sleep(SLEEP_MASK_UART);
-
-	/*
-	 * Re-enable the transmit interrupt, then forcibly trigger the
-	 * interrupt.  This works around a hardware problem with the
-	 * UART where the FIFO only triggers the interrupt when its
-	 * threshold is _crossed_, not just met.
-	 */
-	/* TODO(crosbug.com/p/33819): Do we need this hack here? Find out. */
-	REG_WRITE_MLV(GR_UART_ICTRL(0), GC_UART_ICTRL_TX_MASK,
-		      GC_UART_ICTRL_TX_LSB, 1);
-	task_trigger_irq(GC_IRQNUM_UART0_TXINT);
+	uartn_tx_start(UARTN);
 }
 
 void uart_tx_stop(void)
 {
-	/* Disable the TX interrupt */
-	REG_WRITE_MLV(GR_UART_ICTRL(0), GC_UART_ICTRL_TX_MASK,
-		      GC_UART_ICTRL_TX_LSB, 0);
+	uartn_tx_stop(UARTN);
 
-	/* Re-allow deep sleep */
-	enable_sleep(SLEEP_MASK_UART);
 }
 
 int uart_tx_in_progress(void)
 {
-	/* Transmit is in progress unless the TX FIFO is empty and idle. */
-	return !(GR_UART_STATE(0) & (GC_UART_STATE_TXIDLE_MASK |
-				     GC_UART_STATE_TXEMPTY_MASK));
+	return uartn_tx_in_progress(UARTN);
 }
 
 void uart_tx_flush(void)
 {
-	/* Wait until TX FIFO is idle. */
-	while (uart_tx_in_progress())
-		;
+	uartn_tx_flush(UARTN);
 }
 
 int uart_tx_ready(void)
 {
 	/* True if the TX buffer is not completely full */
-	return !(GR_UART_STATE(0) & GC_UART_STATE_TX_MASK);
+	return uartn_tx_ready(UARTN);
 }
 
 int uart_rx_available(void)
 {
 	/* True if the RX buffer is not completely empty. */
-	return !(GR_UART_STATE(0) & GC_UART_STATE_RXEMPTY_MASK);
+	return uartn_rx_available(UARTN);
 }
 
 void uart_write_char(char c)
 {
-	/* Wait for space in transmit FIFO. */
-	while (!uart_tx_ready())
-		;
-
-	GR_UART_WDATA(0) = c;
+	uartn_write_char(UARTN, c);
 }
 
 int uart_read_char(void)
 {
-	return GR_UART_RDATA(0);
+	return uartn_read_char(UARTN);
 }
 
 #if USE_UART_INTERRUPTS
 void uart_disable_interrupt(void)
 {
-	task_disable_irq(GC_IRQNUM_UART0_TXINT);
-	task_disable_irq(GC_IRQNUM_UART0_RXINT);
+	uartn_disable_interrupt(UARTN);
 }
 
 void uart_enable_interrupt(void)
 {
-	task_enable_irq(GC_IRQNUM_UART0_TXINT);
-	task_enable_irq(GC_IRQNUM_UART0_RXINT);
+	uartn_enable_interrupt(UARTN);
 }
 
 /**
@@ -114,7 +86,7 @@ void uart_enable_interrupt(void)
 void uart_ec_tx_interrupt(void)
 {
 	/* Clear transmit interrupt status */
-	GR_UART_ISTATECLR(0) = GC_UART_ISTATECLR_TX_MASK;
+	GR_UART_ISTATECLR(UARTN) = GC_UART_ISTATECLR_TX_MASK;
 
 	/* Fill output FIFO */
 	uart_process_output();
@@ -124,7 +96,7 @@ DECLARE_IRQ(GC_IRQNUM_UART0_TXINT, uart_ec_tx_interrupt, 1);
 void uart_ec_rx_interrupt(void)
 {
 	/* Clear receive interrupt status */
-	GR_UART_ISTATECLR(0) = GC_UART_ISTATECLR_RX_MASK;
+	GR_UART_ISTATECLR(UARTN) = GC_UART_ISTATECLR_RX_MASK;
 
 	/* Read input FIFO until empty */
 	uart_process_input();
@@ -134,25 +106,10 @@ DECLARE_IRQ(GC_IRQNUM_UART0_RXINT, uart_ec_rx_interrupt, 1);
 
 void uart_init(void)
 {
-	long long setting = (16 * (1 << UART_NCO_WIDTH) *
-			     (long long)CONFIG_UART_BAUD_RATE / PCLK_FREQ);
-
-	/* turn on uart clock */
 	clock_enable_module(MODULE_UART, 1);
 
-	/* set frequency */
-	GR_UART_NCO(0) = setting;
-
-	/* Interrupt when RX fifo has anything, when TX fifo <= half empty */
-	/* Also reset (clear) both FIFOs */
-	GR_UART_FIFO(0) = 0x63;
-
-	/* TX enable, RX enable, HW flow control disabled, no loopback */
-	GR_UART_CTRL(0) = 0x03;
-
-	/* enable RX interrupts in block */
-	/* Note: doesn't do anything unless turned on in NVIC */
-	GR_UART_ICTRL(0) = 0x02;
+	/* Initialize the Cr50 UART */
+	uartn_init(UARTN);
 
 #if USE_UART_INTERRUPTS
 	/* Enable interrupts for UART0 only */
