@@ -1958,6 +1958,9 @@
  */
 #undef CONFIG_USB_PORT_POWER_SMART_SIMPLE
 
+/*  Number of smart USB power ports. */
+#define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT 2
+
 /*
  * Smart USB power control current limit pins may be inverted.  In this case
  * they are active low and the GPIO names will be GPIO_USBn_ILIM_SEL_L.
