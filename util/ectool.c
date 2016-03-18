@@ -1431,6 +1431,9 @@ int cmd_temp_sensor_info(int argc, char *argv[])
 		for (p.id = 0;
 		     p.id < EC_TEMP_SENSOR_ENTRIES + EC_TEMP_SENSOR_B_ENTRIES;
 		     p.id++) {
+			if (read_mapped_temperature(p.id) ==
+			    EC_TEMP_SENSOR_NOT_PRESENT)
+				continue;
 			rv = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0,
 					&p, sizeof(p), &r, sizeof(r));
 			if (rv < 0)
