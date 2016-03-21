@@ -24,11 +24,6 @@ void intc_cpu_int_group_5(void)
 		lpc_kbc_ibf_interrupt();
 		break;
 #endif
-#if defined(HAS_TASK_KEYSCAN) && !defined(CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT)
-	case IT83XX_IRQ_KB_MATRIX:
-		keyboard_raw_interrupt();
-		break;
-#endif
 	default:
 		break;
 	}

@@ -1173,9 +1173,6 @@
  */
 #undef CONFIG_IT83XX_ILM_BLOCK_SIZE
 
-/* Enable Wake-up control interrupt from KSI */
-#undef CONFIG_IT83XX_KEYBOARD_KSI_WUC_INT
-
 /* LPC cycle can wake-up EC from doze / deep doze mode if define it. */
 #undef CONFIG_IT83XX_LPC_ACCESS_INT
 
