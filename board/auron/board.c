@@ -9,7 +9,7 @@
 #include "backlight.h"
 #include "chipset.h"
 #include "common.h"
-#include "driver/temp_sensor/g781.h"
+#include "driver/temp_sensor/g78x.h"
 #include "extpower.h"
 #include "fan.h"
 #include "gpio.h"
@@ -89,10 +89,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 const struct temp_sensor_t temp_sensors[] = {
 	{"PECI", TEMP_SENSOR_TYPE_CPU, peci_temp_sensor_get_val, 0, 2},
 	{"ECInternal", TEMP_SENSOR_TYPE_BOARD, chip_temp_sensor_get_val, 0, 4},
-	{"G781Internal", TEMP_SENSOR_TYPE_BOARD, g781_get_val,
-		G781_IDX_INTERNAL, 4},
-	{"G781External", TEMP_SENSOR_TYPE_BOARD, g781_get_val,
-		G781_IDX_EXTERNAL, 4},
+	{"G781Internal", TEMP_SENSOR_TYPE_BOARD, g78x_get_val,
+		G78X_IDX_INTERNAL, 4},
+	{"G781External", TEMP_SENSOR_TYPE_BOARD, g78x_get_val,
+		G78X_IDX_EXTERNAL1, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
