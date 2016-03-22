@@ -17,6 +17,12 @@
 #define CHARGE_CURRENT_UNINITIALIZED -1
 #define CHARGE_VOLTAGE_UNINITIALIZED -1
 
+/*
+ * Time to delay for detecting the charger type (must be long enough for BC1.2
+ * driver to get supplier information and notify charge manager).
+ */
+#define CHARGE_DETECT_DELAY (2*SECOND)
+
 /* Commonly-used charge suppliers listed in no particular order */
 enum charge_supplier {
 	CHARGE_SUPPLIER_PD,

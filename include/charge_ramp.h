@@ -10,12 +10,6 @@
 
 #include "timer.h"
 
-/*
- * Time to delay for detecting the charger type (must be long enough for BC1.2
- * driver to get supplier information and notify charge manager).
- */
-#define CHARGE_DETECT_DELAY (2*SECOND)
-
 /* Charge ramp state used for checking VBUS */
 enum chg_ramp_vbus_state {
 	CHG_RAMP_VBUS_RAMPING,

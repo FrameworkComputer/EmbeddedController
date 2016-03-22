@@ -119,7 +119,7 @@
 #undef CONFIG_UART_RX_DMA
 
 #undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 12
+#define DEFERRABLE_MAX_COUNT 13
 
 /*
  * Allow dangerous commands.

@@ -88,7 +88,7 @@
 #undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
 
 #undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 9
+#define DEFERRABLE_MAX_COUNT 10
 
 #define I2C_PORT_TCPC0    NPCX_I2C_PORT0_0
 #define I2C_PORT_TCPC1    NPCX_I2C_PORT0_1

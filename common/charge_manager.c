@@ -225,14 +225,15 @@ static void charge_manager_fill_power_info(int port,
 		}
 		r->meas.voltage_max = available_charge[sup][port].voltage;
 
-		if (use_ramp_current) {
-			/*
-			 * If charge_ramp has not detected charger yet,
-			 * then charger type is unknown.
-			 */
-			if (!chg_ramp_is_detected())
-				r->type = USB_CHG_TYPE_UNKNOWN;
+		/*
+		 * Report unknown charger CHARGE_DETECT_DELAY after supplier
+		 * change since PD negotiation may take time.
+		 */
+		if (get_time().val < registration_time[port].val +
+				     CHARGE_DETECT_DELAY)
+			r->type = USB_CHG_TYPE_UNKNOWN;
 
+		if (use_ramp_current) {
 			/* Current limit is output of ramp module */
 			r->meas.current_lim = chg_ramp_get_current_limit();
 
@@ -593,6 +594,16 @@ static void charge_override_timeout(void)
 }
 DECLARE_DEFERRED(charge_override_timeout);
 
+/**
+ * Called CHARGE_DETECT_DELAY after the most recent charge change on a port.
+ */
+static void charger_detect_debounced(void)
+{
+	/* Inform host that charger detection is debounced. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+DECLARE_DEFERRED(charger_detect_debounced);
+
 static void charge_manager_make_change(enum charge_manager_change_type change,
 				       int supplier,
 				       int port,
@@ -661,6 +672,18 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		available_charge[supplier][port].current = charge->current;
 		available_charge[supplier][port].voltage = charge->voltage;
 		registration_time[port] = get_time();
+
+		/*
+		 * After CHARGE_DETECT_DELAY, inform the host that charger
+		 * detection has been debounced. Since only one deferred
+		 * routine exists for all ports, the deferred call for a given
+		 * port may potentially be cancelled. This is mostly harmless
+		 * since cancellation implies that PD_EVENT_POWER_CHANGE was
+		 * just sent due to the power change on another port.
+		 */
+		if (charge->current > 0)
+			hook_call_deferred(charger_detect_debounced,
+					   CHARGE_DETECT_DELAY);
 
 		/*
 		 * If we have a charge on our delayed override port within
