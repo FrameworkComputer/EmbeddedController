@@ -19,8 +19,9 @@
  * many to choose from.
  *
  * ANYWAY, The goal of the TPM protocol is to provide read and write access to
- * device registers over the SPI bus. It is defined as follows (note that
- * master clocks the bus and master and slave tramsmit data simultaneously).
+ * device registers over the SPI bus. It is defined as follows (note that the
+ * master clocks the bus, but both master and slave transmit data
+ * simultaneously).
  *
  * Each transaction starts with the master clocking the bus to transfer 4
  * bytes:
@@ -35,14 +36,14 @@
  * slave needs some extra time. If that bit is 1, the master can IMMEDIATELY
  * clock in (or out) the number of bytes it specified with the header byte 0.
  *
- * If the final bit of the 4th response byte is 0, the master clocks eight
- * more bits and looks again at the new received byte. It repeats this (clock
- * 8 bits, look at last bit) as long as every eighth bit is 0.
+ * If the final bit of the 4th response byte is 0, the master clocks eight more
+ * bits and looks again at the new received byte. It repeats this process
+ * (clock 8 bits, look at last bit) as long as every eighth bit is 0.
  *
  * When the slave is ready to proceed with the data transfer, it returns a 1
  * for the final bit of the response byte, at which point the master has to
- * resume transferring valid data for write transactions or to start deading
- * bytes sent by the slave in case of read transactions.
+ * resume transferring valid data for write transactions or to start reading
+ * bytes sent by the slave for read transactions.
  *
  * So here's what a 4-byte write of value of 0x11223344 to register 0xAABBCC
  * might look like:
@@ -144,6 +145,9 @@ static void process_rx_data(uint8_t *data, size_t data_size)
 			rxbuf_count, data_size, RXBUF_MAX, sps_tpm_state);
 		sps_tx_status(TPM_STALL_DEASSERT);
 		sps_tpm_state = SPS_TPM_STATE_RX_BAD;
+		/* In this state, this function won't be called again until
+		 * after the CS deasserts and we've prepared for a new
+		 * transaction. */
 		return;
 	}
 	memcpy(rxbuf + rxbuf_count, data, data_size);

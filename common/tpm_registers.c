@@ -324,6 +324,9 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 	tpm_.regs.sts &= ~expect;
 }
 
+/* TODO: data_size is between 1 and 64, but is not trustworthy! Don't write
+ * past the end of any actual registers if data_size is larger than the spec
+ * allows. */
 void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 {
 	uint32_t i;
@@ -368,6 +371,10 @@ void fifo_reg_read(uint8_t *dest, uint32_t data_size)
 		tpm_.regs.sts &= ~(data_avail | command_ready);
 }
 
+
+/* TODO: data_size is between 1 and 64, but is not trustworthy! We must return
+ * that many bytes, but not leak any secrets if data_size is larger than
+ * it should be. Return 0x00 or 0xff or whatever the spec says instead. */
 void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 {
 	CPRINTF("%s(0x%06x, %d)", __func__, regaddr, data_size);
