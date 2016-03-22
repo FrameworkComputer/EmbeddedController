@@ -18,62 +18,18 @@ static uint32_t channel_mask = CC_DEFAULT;
 static uint32_t channel_mask_saved = CC_DEFAULT;
 
 /*
- * List of channel names; must match enum console_channel.
+ * List of channel names;
  *
- * We could do something fancy and macro-y with this like ec.tasklist, so that
- * the channel name list and console_channel enum come from the same header
- * file.  That's clever, but I'm not convinced it's more readable or
- * maintainable than the two simple lists we have now.
- *
- * We could also try to get clever with #ifdefs or board-specific lists of
- * channel names, so that for example boards without port80 support don't waste
- * binary size on the channel name string for "port80".  Pruning the channel
- * list might also become more important if we have >32 channels - for example,
- * if we decide to replace enum console_channel with enum module_id.
+ * We could try to get clever with #ifdefs or board-specific lists of channel
+ * names, so that for example boards without port80 support don't waste binary
+ * size on the channel name string for "port80".  Pruning the channel list
+ * might also become more important if we have >32 channels - for example, if
+ * we decide to replace enum console_channel with enum module_id.
  */
 static const char * const channel_names[] = {
-	"command",
-	"accel",
-	"charger",
-	"chipset",
-	"clock",
-	"dma",
-	"events",
-#ifdef CONFIG_EXTENSION_COMMAND
-	"extension",
-#endif
-	"gesture",
-	"gpio",
-	"hostcmd",
-	"i2c",
-	"keyboard",
-	"keyscan",
-	"lidangle",
-#ifdef HAS_TASK_LIGHTBAR
-	"lightbar",
-#endif
-	"lpc",
-	"motionlid",
-	"motionsense",
-#ifdef HAS_TASK_PDCMD
-	"pdhostcmd",
-#endif
-	"port80",
-	"pwm",
-	"spi",
-#ifdef CONFIG_SPS
-	"sps",
-#endif
-	"switch",
-	"system",
-	"task",
-	"thermal",
-	"tpm",
-	"usb",
-	"usbcharge",
-	"usbpd",
-	"vboot",
-	"hook",
+	#define CONSOLE_CHANNEL(enumeration, string) string,
+	#include "include/console_channel.inc"
+	#undef CONSOLE_CHANNEL
 };
 BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);
 /* ensure that we are not silently masking additional channels */
