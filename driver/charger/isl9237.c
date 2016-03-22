@@ -313,8 +313,15 @@ int chg_ramp_is_detected(void)
 
 int chg_ramp_get_current_limit(void)
 {
-	/* ISL doesn't have a way to get this info */
-	return 0;
+	/*
+	 * ISL doesn't have a way to get this info, so return the nominal
+	 * current limit as an estimate.
+	 */
+	int input_current;
+
+	if (charger_get_input_current(&input_current) != EC_SUCCESS)
+		return 0;
+	return input_current;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
 
