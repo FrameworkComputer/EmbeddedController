@@ -10,29 +10,36 @@
 
 static void check_reset_cause(void)
 {
-	uint32_t reset_source = GR_PMU_RSTSRC;
+	uint32_t g_rstsrc = GR_PMU_RSTSRC;
 	uint32_t flags = 0;
 
 	/* Clear the reset source now we have recorded it */
 	GR_PMU_CLRRST = 1;
 
-	if (reset_source & (1 << GC_PMU_RSTSRC_POR_LSB))
-		flags |= RESET_FLAG_POWER_ON;
-	else if (reset_source & (1 << GC_PMU_RSTSRC_EXIT_LSB))
+	if (g_rstsrc & GC_PMU_RSTSRC_POR_MASK) {
+		/* If power-on reset is true, that's the only thing */
+		system_set_reset_flags(RESET_FLAG_POWER_ON);
+		return;
+	}
+
+	/* Low-power exit (ie, wake from deep sleep) */
+	if (g_rstsrc & GC_PMU_RSTSRC_EXIT_MASK)
 		flags |= RESET_FLAG_WAKE_PIN;
 
-	if (reset_source & (1 << GC_PMU_RSTSRC_WDOG_LSB))
+	/* TODO(crosbug.com/p/47289): This bit doesn't work */
+	if (g_rstsrc & GC_PMU_RSTSRC_WDOG_MASK)
 		flags |= RESET_FLAG_WATCHDOG;
 
-	if (reset_source & (1 << GC_PMU_RSTSRC_SOFTWARE_LSB))
+	if (g_rstsrc & GC_PMU_RSTSRC_SOFTWARE_MASK)
 		flags |= RESET_FLAG_HARD;
-	if (reset_source & (1 << GC_PMU_RSTSRC_SYSRESET_LSB))
+
+	if (g_rstsrc & GC_PMU_RSTSRC_SYSRESET_MASK)
 		flags |= RESET_FLAG_SOFT;
 
-	if (reset_source & (1 << GC_PMU_RSTSRC_FST_BRNOUT_LSB))
+	if (g_rstsrc & GC_PMU_RSTSRC_FST_BRNOUT_MASK)
 		flags |= RESET_FLAG_BROWNOUT;
 
-	if (reset_source && !flags)
+	if (g_rstsrc && !flags)
 		flags |= RESET_FLAG_OTHER;
 
 	system_set_reset_flags(flags);
@@ -45,7 +52,8 @@ void system_pre_init(void)
 
 void system_reset(int flags)
 {
-	/* TODO: if (flags & SYSTEM_RESET_PRESERVE_FLAGS), do so. */
+	/* TODO: Do we need to handle SYSTEM_RESET_PRESERVE_FLAGS? Doubtful. */
+	/* TODO(crosbug.com/p/47289): handle RESET_FLAG_WATCHDOG */
 
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
