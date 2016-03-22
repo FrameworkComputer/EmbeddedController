@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* Features that we don't want just yet */
+/* Features that we don't want */
 #undef CONFIG_CMD_LID_ANGLE
 #undef CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_DMA_DEFAULT_HANDLERS
@@ -31,7 +31,6 @@
 
 /* Enable SPI Slave (SPS) module */
 #define CONFIG_SPS
-#define CONFIG_HOSTCMD_SPS
 #define CONFIG_TPM_SPS
 
 /* We don't need to send events to the AP */

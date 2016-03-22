@@ -40,7 +40,6 @@ chip-$(CONFIG_SPI_MASTER)+=spi_master.o
 chip-y+= pmu.o
 chip-y+= trng.o
 chip-$(CONFIG_SPS)+= sps.o
-chip-$(CONFIG_HOSTCMD_SPS)+=sps_hc.o
 chip-$(CONFIG_TPM_SPS)+=sps_tpm.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 
