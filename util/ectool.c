@@ -221,12 +221,14 @@ const char help_str[] =
 static const char * const image_names[] = {"unknown", "RO", "RW"};
 
 /* Note: depends on enum ec_led_colors */
-static const char * const led_color_names[EC_LED_COLOR_COUNT] = {
+static const char * const led_color_names[] = {
 	"red", "green", "blue", "yellow", "white", "amber"};
+BUILD_ASSERT(ARRAY_SIZE(led_color_names) == EC_LED_COLOR_COUNT);
 
 /* Note: depends on enum ec_led_id */
-static const char * const led_names[EC_LED_ID_COUNT] = {
+static const char * const led_names[] = {
 	"battery", "power", "adapter"};
+BUILD_ASSERT(ARRAY_SIZE(led_names) == EC_LED_ID_COUNT);
 
 /* Check SBS numerical value range */
 int is_battery_range(int val)
