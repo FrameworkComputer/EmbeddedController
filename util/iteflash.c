@@ -302,7 +302,7 @@ static int do_watchdog_reset(struct ftdi_context *ftdi)
 
 	ret |= i2c_write_byte(ftdi, 0x2f, 0x20);
 	ret |= i2c_write_byte(ftdi, 0x2e, 0x06);
-	ret |= i2c_write_byte(ftdi, 0x30, 0x44);
+	ret |= i2c_write_byte(ftdi, 0x30, 0x4C);
 	ret |= i2c_write_byte(ftdi, 0x27, 0x80);
 
 	if (ret < 0)
