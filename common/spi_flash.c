@@ -272,6 +272,7 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 		return EC_ERROR_INVAL;
 
 	while (bytes > 0) {
+		watchdog_reload();
 		/* Write length can not go beyond the end of the flash page */
 		write_size = MIN(bytes, SPI_FLASH_MAX_WRITE_SIZE -
 		(offset & (SPI_FLASH_MAX_WRITE_SIZE - 1)));
@@ -540,8 +541,6 @@ static int command_spi_flashwrite(int argc, char **argv)
 
 	ccprintf("Writing %d bytes to 0x%x...\n", bytes, offset);
 	while (bytes > 0) {
-		watchdog_reload();
-
 		/* First write multiples of 256, then (bytes % 256) last */
 		write_len = ((bytes % SPI_FLASH_MAX_WRITE_SIZE) == bytes) ?
 					bytes : SPI_FLASH_MAX_WRITE_SIZE;
