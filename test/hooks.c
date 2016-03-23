@@ -62,6 +62,10 @@ static void non_deferred_func(void)
 	deferred_call_count++;
 }
 
+static const struct deferred_data non_deferred_func_data = {
+	non_deferred_func
+};
+
 static int test_init_hook(void)
 {
 	TEST_ASSERT(init_hook_count == 1);
@@ -104,25 +108,25 @@ static int test_priority(void)
 static int test_deferred(void)
 {
 	deferred_call_count = 0;
-	hook_call_deferred(deferred_func, 50 * MSEC);
+	hook_call_deferred(&deferred_func_data, 50 * MSEC);
 	usleep(100 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
-	hook_call_deferred(deferred_func, 50 * MSEC);
+	hook_call_deferred(&deferred_func_data, 50 * MSEC);
 	usleep(25 * MSEC);
-	hook_call_deferred(deferred_func, -1);
+	hook_call_deferred(&deferred_func_data, -1);
 	usleep(75 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
-	hook_call_deferred(deferred_func, 50 * MSEC);
+	hook_call_deferred(&deferred_func_data, 50 * MSEC);
 	usleep(25 * MSEC);
-	hook_call_deferred(deferred_func, -1);
+	hook_call_deferred(&deferred_func_data, -1);
 	usleep(15 * MSEC);
-	hook_call_deferred(deferred_func, 25 * MSEC);
+	hook_call_deferred(&deferred_func_data, 25 * MSEC);
 	usleep(50 * MSEC);
 	TEST_ASSERT(deferred_call_count == 2);
 
-	TEST_ASSERT(hook_call_deferred(non_deferred_func, 50 * MSEC) !=
+	TEST_ASSERT(hook_call_deferred(&non_deferred_func_data, 50 * MSEC) !=
 		    EC_SUCCESS);
 	usleep(100 * MSEC);
 	TEST_ASSERT(deferred_call_count == 2);

@@ -88,10 +88,11 @@ void usb1_evt(enum gpio_signal signal)
  * state of GPIOs, so its definition must reside after including gpio_list.
  */
 static void enable_input_devices(void);
+DECLARE_DEFERRED(enable_input_devices);
 
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(enable_input_devices, 0);
+	hook_call_deferred(&enable_input_devices_data, 0);
 }
 
 #include "gpio_list.h"
@@ -380,14 +381,13 @@ static void enable_input_devices(void)
 	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_ANGLE);
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
 }
-DECLARE_DEFERRED(enable_input_devices);
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 	gpio_set_level(GPIO_USB2_ENABLE, 1);
-	hook_call_deferred(enable_input_devices, 0);
+	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -396,7 +396,7 @@ static void board_chipset_shutdown(void)
 {
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 	gpio_set_level(GPIO_USB2_ENABLE, 0);
-	hook_call_deferred(enable_input_devices, 0);
+	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 

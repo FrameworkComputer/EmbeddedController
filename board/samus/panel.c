@@ -163,7 +163,7 @@ void backlight_interrupt(enum gpio_signal signal)
 	 * PCH indicates it is turning on backlight so we should
 	 * attempt to put the backlight controller into PWM mode.
 	 */
-	hook_call_deferred(lp8555_enable_pwm_mode, 0);
+	hook_call_deferred(&lp8555_enable_pwm_mode_data, 0);
 }
 
 /**
@@ -177,7 +177,7 @@ static void update_backlight(void)
 	 */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, lid_is_open());
 	if (lid_is_open())
-		hook_call_deferred(lp8555_enable_pwm_mode, 0);
+		hook_call_deferred(&lp8555_enable_pwm_mode_data, 0);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, update_backlight, HOOK_PRIO_DEFAULT);
 

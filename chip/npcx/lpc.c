@@ -774,7 +774,7 @@ void lpc_lreset_pltrst_handler(void)
 #ifdef CONFIG_CHIPSET_RESET_HOOK
 	if (lpc_get_pltrst_asserted()) {
 		/* Notify HOOK_CHIPSET_RESET */
-		hook_call_deferred(lpc_chipset_reset, MSEC);
+		hook_call_deferred(&lpc_chipset_reset_data, MSEC);
 	}
 #endif
 }

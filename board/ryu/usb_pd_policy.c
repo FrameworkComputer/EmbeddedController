@@ -331,7 +331,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 	if (irq & cur_lvl) {
 		gpio_set_level(GPIO_USBC_DP_HPD, 0);
-		hook_call_deferred(hpd_irq_deferred,
+		hook_call_deferred(&hpd_irq_deferred_data,
 				   HPD_DSTREAM_DEBOUNCE_IRQ);
 	} else if (irq & !cur_lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");

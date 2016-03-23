@@ -132,20 +132,12 @@ void hook_notify(enum hook_type type)
 #endif
 }
 
-int hook_call_deferred(void (*routine)(void), int us)
+int hook_call_deferred(const struct deferred_data *data, int us)
 {
-	const struct deferred_data *p;
-	int i;
+	int i = data - __deferred_funcs;
 
-	/* Find the index of the routine */
-	for (p = __deferred_funcs; p < __deferred_funcs_end; p++) {
-		if (p->routine == routine)
-			break;
-	}
-	if (p >= __deferred_funcs_end)
+	if (data < __deferred_funcs || data >= __deferred_funcs_end)
 		return EC_ERROR_INVAL;  /* Routine not registered */
-
-	i = p - __deferred_funcs;
 
 	if (us == -1) {
 		/* Cancel */

@@ -171,23 +171,25 @@ static struct mutex dp_hw_lock;
  * Reset PD MCU
  *   ANX7688 needs a reset pulse of 50ms after power enable.
  */
+void deferred_reset_pd_mcu(void);
+DECLARE_DEFERRED(deferred_reset_pd_mcu);
+
 void deferred_reset_pd_mcu(void)
 {
 	if (!gpio_get_level(GPIO_USB_C0_RST)) {
 		gpio_set_level(GPIO_USB_C0_RST, 1);
-		hook_call_deferred(deferred_reset_pd_mcu, 50 * MSEC);
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 50 * MSEC);
 	} else {
 		gpio_set_level(GPIO_USB_C0_RST, 0);
 	}
 }
-DECLARE_DEFERRED(deferred_reset_pd_mcu);
 
 void board_reset_pd_mcu(void)
 {
 	/* Perform ANX7688 startup sequence */
 	gpio_set_level(GPIO_USB_C0_PWR_EN_L, 0);
 	gpio_set_level(GPIO_USB_C0_RST, 0);
-	hook_call_deferred(deferred_reset_pd_mcu, 0);
+	hook_call_deferred(&deferred_reset_pd_mcu_data, 0);
 }
 
 /**
@@ -357,7 +359,7 @@ void board_typec_dp_on(int port)
 			board_typec_set_dp_hpd(port, 1);
 		} else {
 			board_typec_set_dp_hpd(port, 0);
-			hook_call_deferred(hpd_irq_deferred,
+			hook_call_deferred(&hpd_irq_deferred_data,
 					   HPD_DSTREAM_DEBOUNCE_IRQ);
 		}
 	}
@@ -431,7 +433,7 @@ DECLARE_DEFERRED(tmp432_set_power_deferred);
 static void board_extpower(void)
 {
 	board_extpower_buffer_to_soc();
-	hook_call_deferred(tmp432_set_power_deferred, 0);
+	hook_call_deferred(&tmp432_set_power_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
@@ -454,14 +456,14 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
-	hook_call_deferred(tmp432_set_power_deferred, 0);
+	hook_call_deferred(&tmp432_set_power_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
-	hook_call_deferred(tmp432_set_power_deferred, 0);
+	hook_call_deferred(&tmp432_set_power_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 

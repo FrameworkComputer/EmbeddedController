@@ -465,7 +465,7 @@ void power_signal_interrupt_S0(enum gpio_signal signal)
 {
 	if (gpio_get_level(GPIO_PCH_SLP_S0_L)) {
 		slp_s0_debounce.required = 1;
-		hook_call_deferred(slp_s0_assertion_deferred, 3 * MSEC);
+		hook_call_deferred(&slp_s0_assertion_deferred_data, 3 * MSEC);
 	}
 	else if (slp_s0_debounce.required == 0) {
 		slp_s0_debounce.done = 0;

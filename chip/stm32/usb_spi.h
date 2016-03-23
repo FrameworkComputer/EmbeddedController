@@ -111,7 +111,7 @@ struct usb_spi_config {
 	/*
 	 * Deferred function to call to handle SPI request.
 	 */
-	void (*deferred)(void);
+	const struct deferred_data *deferred;
 
 	/*
 	 * Pointers to USB packet RAM and bounce buffer.
@@ -140,6 +140,7 @@ struct usb_spi_config {
 	static usb_uint CONCAT2(NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
 	static void CONCAT2(NAME, _deferred_)(void);			\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
 	struct usb_spi_state CONCAT2(NAME, _state_) = {			\
 		.enabled_host   = 0,					\
 		.enabled_device = 0,					\
@@ -149,7 +150,7 @@ struct usb_spi_config {
 		.state     = &CONCAT2(NAME, _state_),			\
 		.interface = INTERFACE,					\
 		.endpoint  = ENDPOINT,					\
-		.deferred  = CONCAT2(NAME, _deferred_),			\
+		.deferred  = &CONCAT2(NAME, _deferred__data),		\
 		.buffer    = CONCAT2(NAME, _buffer_),			\
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer_),		\
 		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer_),		\
@@ -197,8 +198,7 @@ struct usb_spi_config {
 	USB_DECLARE_IFACE(INTERFACE,					\
 			  CONCAT2(NAME, _interface_));			\
 	static void CONCAT2(NAME, _deferred_)(void)			\
-	{ usb_spi_deferred(&NAME); }					\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));
+	{ usb_spi_deferred(&NAME); }
 
 /*
  * Handle SPI request in a deferred callback.

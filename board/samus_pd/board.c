@@ -178,7 +178,7 @@ DECLARE_DEFERRED(pch_evt_deferred);
 
 void pch_evt(enum gpio_signal signal)
 {
-	hook_call_deferred(pch_evt_deferred, 0);
+	hook_call_deferred(&pch_evt_deferred_data, 0);
 }
 
 void board_config_pre_init(void)

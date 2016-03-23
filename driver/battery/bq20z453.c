@@ -27,7 +27,7 @@ int battery_command_cut_off(struct host_cmd_handler_args *args)
 	 * transaction and release the I2C bus before we'll be abl eto send the
 	 * cutoff command.
 	 */
-	hook_call_deferred(cutoff, 1000);
+	hook_call_deferred(&cutoff_data, 1000);
 
 	return EC_RES_SUCCESS;
 }

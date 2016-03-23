@@ -113,7 +113,7 @@ DECLARE_DEFERRED(lid_change_deferred);
 void lid_interrupt(enum gpio_signal signal)
 {
 	/* Reset lid debounce time */
-	hook_call_deferred(lid_change_deferred, LID_DEBOUNCE_US);
+	hook_call_deferred(&lid_change_deferred_data, LID_DEBOUNCE_US);
 }
 
 static int command_lidopen(int argc, char **argv)
@@ -147,7 +147,7 @@ static int hc_force_lid_open(struct host_cmd_handler_args *args)
 	forced_lid_open = p->enabled ? 1 : 0;
 
 	/* Make this take effect immediately; no debounce time */
-	hook_call_deferred(lid_change_deferred, 0);
+	hook_call_deferred(&lid_change_deferred_data, 0);
 
 	return EC_RES_SUCCESS;
 }

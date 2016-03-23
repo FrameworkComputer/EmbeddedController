@@ -294,7 +294,7 @@ static void clear_pending_cutoff(void)
 {
 	if (extpower_is_present()) {
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
-		hook_call_deferred(pending_cutoff_deferred, -1);
+		hook_call_deferred(&pending_cutoff_deferred_data, -1);
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, clear_pending_cutoff, HOOK_PRIO_DEFAULT);
@@ -331,7 +331,7 @@ static void check_pending_cutoff(void)
 	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_PENDING) {
 		CPRINTF("[%T Cutting off battery in %d second(s)]\n",
 			CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
-		hook_call_deferred(pending_cutoff_deferred,
+		hook_call_deferred(&pending_cutoff_deferred_data,
 				   CONFIG_BATTERY_CUTOFF_DELAY_US);
 	}
 }

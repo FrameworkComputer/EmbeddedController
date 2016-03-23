@@ -105,7 +105,8 @@ void vbus_evt(enum gpio_signal signal)
 	 * lucid only has one port and charging is always enabled.
 	 */
 
-	hook_call_deferred(usb_charger_bc12_detect, USB_CHG_DETECT_DELAY_US);
+	hook_call_deferred(&usb_charger_bc12_detect_data,
+			   USB_CHG_DETECT_DELAY_US);
 	update_vbus_supplier(gpio_get_level(signal));
 
 	task_wake(TASK_ID_PD_C0);

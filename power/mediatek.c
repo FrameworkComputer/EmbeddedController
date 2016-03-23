@@ -613,7 +613,8 @@ static void power_on(void)
 
 	/* Push the power button */
 	set_pmic_pwron(1);
-	hook_call_deferred(release_pmic_pwron_deferred, PMIC_PWRON_PRESS_TIME);
+	hook_call_deferred(&release_pmic_pwron_deferred_data,
+			   PMIC_PWRON_PRESS_TIME);
 
 	/* enable interrupt */
 	gpio_set_flags(GPIO_SUSPEND_L, INT_BOTH_PULL_UP);
@@ -645,7 +646,7 @@ void chipset_reset(int is_cold)
 		usleep(PMIC_COLD_RESET_L_HOLD_TIME);
 		/* Press the PMIC power button */
 		set_pmic_pwron(1);
-		hook_call_deferred(release_pmic_pwron_deferred,
+		hook_call_deferred(&release_pmic_pwron_deferred_data,
 				   PMIC_PWRON_PRESS_TIME);
 	} else {
 		CPRINTS("EC triggered warm reboot");

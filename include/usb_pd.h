@@ -1238,7 +1238,7 @@ void pd_send_hpd(int port, enum hpd_event hpd);
 /**
  * Enable USB Billboard Device.
  */
-void pd_usb_billboard_deferred(void);
+extern const struct deferred_data pd_usb_billboard_deferred_data;
 /* --- Physical layer functions : chip specific --- */
 
 /* Packet preparation/retrieval */

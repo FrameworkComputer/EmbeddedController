@@ -473,7 +473,7 @@ static void siglog_add(enum gpio_signal signal)
 	siglog[siglog_entries].level = gpio_get_level(signal);
 	siglog_entries++;
 
-	hook_call_deferred(siglog_deferred, SECOND);
+	hook_call_deferred(&siglog_deferred_data, SECOND);
 }
 
 #define SIGLOG(S) siglog_add(S)

@@ -167,6 +167,9 @@ void uart_process_output(void)
 
 #ifdef CONFIG_UART_RX_DMA
 
+void uart_process_input(void);
+DECLARE_DEFERRED(uart_process_input);
+
 void uart_process_input(void)
 {
 	static int fast_rechecks;
@@ -208,11 +211,11 @@ void uart_process_input(void)
 	 */
 	if (fast_rechecks) {
 		fast_rechecks--;
-		hook_call_deferred(uart_process_input, RX_DMA_RECHECK_INTERVAL);
+		hook_call_deferred(&uart_process_input_data,
+				   RX_DMA_RECHECK_INTERVAL);
 	}
 }
 DECLARE_HOOK(HOOK_TICK, uart_process_input, HOOK_PRIO_DEFAULT);
-DECLARE_DEFERRED(uart_process_input);
 
 #else /* !CONFIG_UART_RX_DMA */
 

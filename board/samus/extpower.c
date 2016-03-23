@@ -177,7 +177,7 @@ DECLARE_DEFERRED(allow_min_charging);
 static void extpower_board_hacks(int extpower, int extpower_prev)
 {
 	/* Cancel deferred attempt to enable max charge request */
-	hook_call_deferred(allow_max_request, -1);
+	hook_call_deferred(&allow_max_request_data, -1);
 
 	/*
 	 * When AC is detected, delay briefly before allowing PD
@@ -197,7 +197,7 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 	if (extpower && !extpower_prev) {
 		/* AC connected */
 		charger_disable(0);
-		hook_call_deferred(allow_max_request, 500*MSEC);
+		hook_call_deferred(&allow_max_request_data, 500*MSEC);
 		set_pp5000_in_g3(PP5000_IN_G3_AC, 1);
 	} else if (extpower && extpower_prev) {
 		/*
@@ -213,7 +213,7 @@ static void extpower_board_hacks(int extpower, int extpower_prev)
 
 		charger_disable(1);
 
-		hook_call_deferred(allow_min_charging, 100*MSEC);
+		hook_call_deferred(&allow_min_charging_data, 100*MSEC);
 		set_pp5000_in_g3(PP5000_IN_G3_AC, 0);
 	}
 	extpower_prev = extpower;

@@ -98,7 +98,7 @@ DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
 
 void switch_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(switch_update, 0);
+	hook_call_deferred(&switch_update_data, 0);
 }
 
 static int command_mmapinfo(int argc, char **argv)

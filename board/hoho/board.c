@@ -76,7 +76,7 @@ void hpd_event(enum gpio_signal signal)
 	hpd_prev_ts = now.val;
 
 	/* All previous hpd level events need to be re-triggered */
-	hook_call_deferred(hpd_lvl_deferred, -1);
+	hook_call_deferred(&hpd_lvl_deferred_data, -1);
 
 	/* It's a glitch.  Previous time moves but level is the same. */
 	if (cur_delta < HPD_USTREAM_DEBOUNCE_IRQ)
@@ -85,9 +85,10 @@ void hpd_event(enum gpio_signal signal)
 	if ((!hpd_prev_level && level) &&
 	    (cur_delta < HPD_USTREAM_DEBOUNCE_LVL))
 		/* It's an irq */
-		hook_call_deferred(hpd_irq_deferred, 0);
+		hook_call_deferred(&hpd_irq_deferred_data, 0);
 	else if (cur_delta >= HPD_USTREAM_DEBOUNCE_LVL)
-		hook_call_deferred(hpd_lvl_deferred, HPD_USTREAM_DEBOUNCE_LVL);
+		hook_call_deferred(&hpd_lvl_deferred_data,
+				   HPD_USTREAM_DEBOUNCE_LVL);
 
 	hpd_prev_level = level;
 }
@@ -167,7 +168,7 @@ static void board_init(void)
 
 	gpio_set_level(GPIO_STM_READY, 1); /* factory test only */
 	/* Delay needed to allow HDMI MCU to boot. */
-	hook_call_deferred(factory_validation_deferred, 200*MSEC);
+	hook_call_deferred(&factory_validation_deferred_data, 200*MSEC);
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

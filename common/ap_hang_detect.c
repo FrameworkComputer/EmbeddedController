@@ -28,6 +28,9 @@ static int timeout_will_reboot;  /* Will the deferred call reboot the AP? */
 /**
  * Handle the hang detect timer expiring.
  */
+static void hang_detect_deferred(void);
+DECLARE_DEFERRED(hang_detect_deferred);
+
 static void hang_detect_deferred(void)
 {
 	/* If we're no longer active, nothing to do */
@@ -51,7 +54,7 @@ static void hang_detect_deferred(void)
 	if (hdparams.warm_reboot_timeout_msec) {
 		CPRINTS("hang detect continuing (for reboot)");
 		timeout_will_reboot = 1;
-		hook_call_deferred(hang_detect_deferred,
+		hook_call_deferred(&hang_detect_deferred_data,
 				   (hdparams.warm_reboot_timeout_msec -
 				    hdparams.host_event_timeout_msec) * MSEC);
 	} else {
@@ -59,7 +62,6 @@ static void hang_detect_deferred(void)
 		active = 0;
 	}
 }
-DECLARE_DEFERRED(hang_detect_deferred);
 
 /**
  * Start the hang detect timers.
@@ -74,13 +76,13 @@ static void hang_detect_start(const char *why)
 		CPRINTS("hang detect started on %s (for event)", why);
 		timeout_will_reboot = 0;
 		active = 1;
-		hook_call_deferred(hang_detect_deferred,
+		hook_call_deferred(&hang_detect_deferred_data,
 				   hdparams.host_event_timeout_msec * MSEC);
 	} else if (hdparams.warm_reboot_timeout_msec) {
 		CPRINTS("hang detect started on %s (for reboot)", why);
 		timeout_will_reboot = 1;
 		active = 1;
-		hook_call_deferred(hang_detect_deferred,
+		hook_call_deferred(&hang_detect_deferred_data,
 				   hdparams.warm_reboot_timeout_msec * MSEC);
 	}
 }

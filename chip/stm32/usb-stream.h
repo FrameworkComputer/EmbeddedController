@@ -57,7 +57,7 @@ struct usb_stream_config {
 	/*
 	 * Deferred function to call to handle USB and Queue request.
 	 */
-	void (*deferred)(void);
+	const struct deferred_data *deferred;
 
 	size_t rx_size;
 	size_t tx_size;
@@ -130,10 +130,11 @@ extern struct producer_ops const usb_stream_producer_ops;
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[TX_SIZE / 2] __usb_ram; \
 	static struct usb_stream_state CONCAT2(NAME, _state);		\
 	static void CONCAT2(NAME, _deferred_)(void);			\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
 	struct usb_stream_config const NAME = {				\
 		.state     = &CONCAT2(NAME, _state),			\
 		.endpoint  = ENDPOINT,					\
-		.deferred  = CONCAT2(NAME, _deferred_),			\
+		.deferred  = &CONCAT2(NAME, _deferred__data),		\
 		.rx_size   = RX_SIZE,					\
 		.tx_size   = TX_SIZE,					\
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer),		\
@@ -194,8 +195,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 		       CONCAT2(NAME, _ep_rx),				\
 		       CONCAT2(NAME, _ep_reset));			\
 	static void CONCAT2(NAME, _deferred_)(void)			\
-	{ usb_stream_deferred(&NAME); }					\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));
+	{ usb_stream_deferred(&NAME); }
 
 /*
  * Handle USB and Queue request in a deferred callback.

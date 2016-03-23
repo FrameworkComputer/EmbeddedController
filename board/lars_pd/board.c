@@ -135,7 +135,7 @@ static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 
 	/* Have the PD follow the EC into hibernate. */
 	if (p->status & EC_STATUS_HIBERNATING)
-		hook_call_deferred(system_hibernate_deferred, 0);
+		hook_call_deferred(&system_hibernate_deferred_data, 0);
 
 	/*
 	 * If the source of the EC int line was HOST_EVENT, it has

@@ -156,7 +156,8 @@ void power_button_interrupt(enum gpio_signal signal)
 
 	/* Reset power button debounce time */
 	power_button_is_stable = 0;
-	hook_call_deferred(power_button_change_deferred, PWRBTN_DEBOUNCE_US);
+	hook_call_deferred(&power_button_change_deferred_data,
+			   PWRBTN_DEBOUNCE_US);
 }
 
 /*****************************************************************************/
@@ -176,14 +177,14 @@ static int command_powerbtn(int argc, char **argv)
 	ccprintf("Simulating %d ms power button press.\n", ms);
 	simulate_power_pressed = 1;
 	power_button_is_stable = 0;
-	hook_call_deferred(power_button_change_deferred, 0);
+	hook_call_deferred(&power_button_change_deferred_data, 0);
 
 	msleep(ms);
 
 	ccprintf("Simulating power button release.\n");
 	simulate_power_pressed = 0;
 	power_button_is_stable = 0;
-	hook_call_deferred(power_button_change_deferred, 0);
+	hook_call_deferred(&power_button_change_deferred_data, 0);
 
 	return EC_SUCCESS;
 }

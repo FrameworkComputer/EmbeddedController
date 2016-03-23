@@ -156,7 +156,7 @@ DECLARE_DEFERRED(rx_fifo_handler);
 static void con_ep_rx(void)
 {
 	/* Wake up the Rx FIFO handler */
-	hook_call_deferred(rx_fifo_handler, 0);
+	hook_call_deferred(&rx_fifo_handler_data, 0);
 
 	/* clear the RX/OUT interrupts */
 	GR_USB_DOEPINT(USB_EP_CONSOLE) = 0xffffffff;
@@ -189,14 +189,14 @@ DECLARE_DEFERRED(tx_fifo_handler);
 static void handle_output(void)
 {
 	/* Wake up the Tx FIFO handler */
-	hook_call_deferred(tx_fifo_handler, 0);
+	hook_call_deferred(&tx_fifo_handler_data, 0);
 }
 
 /* Tx/IN interrupt handler */
 static void con_ep_tx(void)
 {
 	/* Wake up the Tx FIFO handler */
-	hook_call_deferred(tx_fifo_handler, 0);
+	hook_call_deferred(&tx_fifo_handler_data, 0);
 
 	/* clear the Tx/IN interrupts */
 	GR_USB_DIEPINT(USB_EP_CONSOLE) = 0xffffffff;
@@ -223,8 +223,8 @@ static void ep_reset(void)
 	is_reset = 1;
 
 	/* Flush any queued data */
-	hook_call_deferred(tx_fifo_handler, 0);
-	hook_call_deferred(rx_fifo_handler, 0);
+	hook_call_deferred(&tx_fifo_handler_data, 0);
+	hook_call_deferred(&rx_fifo_handler_data, 0);
 }
 
 

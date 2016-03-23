@@ -396,8 +396,8 @@ void board_typec_dp_on(int port)
 			board_typec_set_dp_hpd(port, 1);
 		} else {
 			board_typec_set_dp_hpd(port, 0);
-			hook_call_deferred(hpd_irq_deferred,
-					HPD_DSTREAM_DEBOUNCE_IRQ);
+			hook_call_deferred(&hpd_irq_deferred_data,
+					   HPD_DSTREAM_DEBOUNCE_IRQ);
 		}
 	}
 
@@ -589,7 +589,7 @@ static void board_extpower(void)
 {
 	board_extpower_buffer_to_soc();
 #ifdef CONFIG_TEMP_SENSOR_TMP432
-	hook_call_deferred(tmp432_set_power_deferred, 0);
+	hook_call_deferred(&tmp432_set_power_deferred_data, 0);
 #endif
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
@@ -625,7 +625,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 static void board_chipset_resume(void)
 {
 #ifdef CONFIG_TEMP_SENSOR_TMP432
-	hook_call_deferred(tmp432_set_power_deferred, 0);
+	hook_call_deferred(&tmp432_set_power_deferred_data, 0);
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -634,7 +634,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 #ifdef CONFIG_TEMP_SENSOR_TMP432
-	hook_call_deferred(tmp432_set_power_deferred, 0);
+	hook_call_deferred(&tmp432_set_power_deferred_data, 0);
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);

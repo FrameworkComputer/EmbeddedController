@@ -45,7 +45,7 @@ DECLARE_DEFERRED(extpower_deferred);
 void extpower_interrupt(enum gpio_signal signal)
 {
 	/* Trigger deferred notification of external power change */
-	hook_call_deferred(extpower_deferred, EXTPOWER_DEBOUNCE_US);
+	hook_call_deferred(&extpower_deferred_data, EXTPOWER_DEBOUNCE_US);
 }
 
 static void extpower_init(void)

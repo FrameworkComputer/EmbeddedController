@@ -73,7 +73,7 @@ static void capsense_change_deferred(void)
 	}
 
 	if (cur_val)
-		hook_call_deferred(capsense_change_deferred,
+		hook_call_deferred(&capsense_change_deferred_data,
 				   CAPSENSE_POLL_INTERVAL);
 }
 DECLARE_DEFERRED(capsense_change_deferred);
@@ -83,5 +83,5 @@ DECLARE_DEFERRED(capsense_change_deferred);
  */
 void capsense_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(capsense_change_deferred, 0);
+	hook_call_deferred(&capsense_change_deferred_data, 0);
 }

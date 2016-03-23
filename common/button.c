@@ -57,6 +57,10 @@ DECLARE_HOOK(HOOK_INIT, button_init, HOOK_PRIO_DEFAULT);
 /*
  * Handle debounced button changing state.
  */
+
+static void button_change_deferred(void);
+DECLARE_DEFERRED(button_change_deferred);
+
 static void button_change_deferred(void)
 {
 	int i;
@@ -99,11 +103,10 @@ static void button_change_deferred(void)
 
 	if (soonest_debounce_time != 0) {
 		next_deferred_time = soonest_debounce_time;
-		hook_call_deferred(button_change_deferred,
+		hook_call_deferred(&button_change_deferred_data,
 				   next_deferred_time - time_now);
 	}
 }
-DECLARE_DEFERRED(button_change_deferred);
 
 /*
  * Handle a button interrupt.
@@ -121,7 +124,7 @@ void button_interrupt(enum gpio_signal signal)
 		if (next_deferred_time <= time_now ||
 		    next_deferred_time > state[i].debounce_time) {
 			next_deferred_time = state[i].debounce_time;
-			hook_call_deferred(button_change_deferred,
+			hook_call_deferred(&button_change_deferred_data,
 					   next_deferred_time - time_now);
 		}
 		break;

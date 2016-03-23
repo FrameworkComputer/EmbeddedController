@@ -783,7 +783,7 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 }
 #endif /* !CONFIG_USB_PD_CUSTOM_VDM */
 
-void pd_usb_billboard_deferred(void)
+static void pd_usb_billboard_deferred(void)
 {
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP) \
 	&& !defined(CONFIG_USB_PD_SIMPLE_DFP) && defined(CONFIG_USB_BOS)

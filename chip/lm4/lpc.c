@@ -657,7 +657,7 @@ void lpc_interrupt(void)
 
 #ifdef CONFIG_CHIPSET_RESET_HOOK
 			/* Notify HOOK_CHIPSET_RESET */
-			hook_call_deferred(lpc_chipset_reset, MSEC);
+			hook_call_deferred(&lpc_chipset_reset_data, MSEC);
 #endif
 		}
 

@@ -73,8 +73,9 @@ void inductive_charging_interrupt(enum gpio_signal signal)
 		 * looking at CHARGE_DONE.
 		 */
 		if (!monitor_charge_done)
-			hook_call_deferred(inductive_charging_monitor_charge,
-					   SECOND);
+			hook_call_deferred(
+				&inductive_charging_monitor_charge_data,
+				SECOND);
 	}
 }
 
@@ -93,7 +94,8 @@ static void inductive_charging_lid_update(void)
 	 * unaligned. Delay here to give the coils time to align before
 	 * we try to clear CHARGE_DONE.
 	 */
-	hook_call_deferred(inductive_charging_deferred_update, 5 * SECOND);
+	hook_call_deferred(&inductive_charging_deferred_update_data,
+			   5 * SECOND);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, inductive_charging_lid_update, HOOK_PRIO_DEFAULT);
 

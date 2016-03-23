@@ -281,7 +281,7 @@ void power_signal_interrupt(enum gpio_signal signal)
 {
 	if (signal == GPIO_SUSPEND_L) {
 		/* Handle suspend events in the hook task */
-		hook_call_deferred(gaia_suspend_deferred, 0);
+		hook_call_deferred(&gaia_suspend_deferred_data, 0);
 	} else {
 		/* All other events are handled in the chipset task */
 		task_wake(TASK_ID_CHIPSET);

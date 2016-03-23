@@ -31,8 +31,8 @@ struct usb_stream_config {
 	/*
 	 * Deferred function to call to handle USB and Queue request.
 	 */
-	void (*deferred_tx)(void);
-	void (*deferred_rx)(void);
+	const struct deferred_data *deferred_tx;
+	const struct deferred_data *deferred_rx;
 
 	int tx_size;
 	int rx_size;
@@ -109,14 +109,16 @@ extern struct producer_ops const usb_stream_producer_ops;
 	static uint8_t CONCAT2(NAME, _buf_tx_)[TX_SIZE];		\
 	static int CONCAT2(NAME, _is_reset_);				\
 	static void CONCAT2(NAME, _deferred_tx_)(void);			\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_tx_));			\
 	static void CONCAT2(NAME, _deferred_rx_)(void);			\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));			\
 	struct usb_stream_config const NAME = {				\
 		.endpoint     = ENDPOINT,				\
 		.is_reset     = &CONCAT2(NAME, _is_reset_),		\
 		.in_desc      = &CONCAT2(NAME, _in_desc_),		\
 		.out_desc     = &CONCAT2(NAME, _out_desc_),		\
-		.deferred_tx  = CONCAT2(NAME, _deferred_tx_),		\
-		.deferred_rx  = CONCAT2(NAME, _deferred_rx_),		\
+		.deferred_tx  = &CONCAT2(NAME, _deferred_tx__data),	\
+		.deferred_rx  = &CONCAT2(NAME, _deferred_rx__data),	\
 		.tx_size      = TX_SIZE,				\
 		.rx_size      = RX_SIZE,				\
 		.tx_ram       = CONCAT2(NAME, _buf_tx_),		\
@@ -162,10 +164,8 @@ extern struct producer_ops const usb_stream_producer_ops;
 	};								\
 	static void CONCAT2(NAME, _deferred_tx_)(void)			\
 	{ tx_stream_handler(&NAME); }					\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_tx_));			\
 	static void CONCAT2(NAME, _deferred_rx_)(void)			\
 	{ rx_stream_handler(&NAME); }					\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));			\
 	static void CONCAT2(NAME, _ep_tx)(void)				\
 	{								\
 		usb_stream_tx(&NAME);					\

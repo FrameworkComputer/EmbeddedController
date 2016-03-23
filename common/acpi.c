@@ -254,7 +254,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		 * Disable from deferred function in case burst mode is enabled
 		 * for an extremely long time  (ex. kernel bug / crash).
 		 */
-		hook_call_deferred(acpi_disable_burst_deferred, 1*SECOND);
+		hook_call_deferred(&acpi_disable_burst_deferred_data, 1*SECOND);
 
 		/* ACPI 5.0-12.3.3: Burst ACK */
 		*resultptr = 0x90;
@@ -263,7 +263,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		acpi_read_cache.enabled = 0;
 
 		/* Leave burst mode */
-		hook_call_deferred(acpi_disable_burst_deferred, -1);
+		hook_call_deferred(&acpi_disable_burst_deferred_data, -1);
 		lpc_clear_acpi_status_mask(EC_LPC_STATUS_BURST_MODE);
 	}
 

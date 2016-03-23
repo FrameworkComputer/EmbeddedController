@@ -82,7 +82,7 @@ struct usb_i2c_config {
 	/*
 	 * Deferred function to call to handle I2C request.
 	 */
-	void (*deferred)(void);
+	const struct deferred_data *deferred;
 
 	/*
 	 * Pointers to USB packet RAM and bounce buffer.
@@ -114,10 +114,11 @@ struct usb_i2c_config {
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)			\
 		[USB_MAX_PACKET_SIZE / 2] __usb_ram;			\
 	static void CONCAT2(NAME, _deferred_)(void);			\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
 	struct usb_i2c_config const NAME = {				\
 		.interface = INTERFACE,					\
 		.endpoint  = ENDPOINT,					\
-		.deferred  = CONCAT2(NAME, _deferred_),			\
+		.deferred  = &CONCAT2(NAME, _deferred__data),		\
 		.buffer    = CONCAT2(NAME, _buffer_),			\
 		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer_),		\
 		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer_),		\
@@ -163,8 +164,7 @@ struct usb_i2c_config {
 		       CONCAT2(NAME, _ep_rx_),				\
 		       CONCAT2(NAME, _ep_reset_));			\
 	static void CONCAT2(NAME, _deferred_)(void)			\
-	{ usb_i2c_deferred(&NAME); }					\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));
+	{ usb_i2c_deferred(&NAME); }
 
 /*
  * Handle I2C request in a deferred callback.

@@ -63,9 +63,10 @@ void vboot_hash_abort(void)
 	}
 }
 
-#ifndef CONFIG_MAPPED_STORAGE
-
 static void vboot_hash_next_chunk(void);
+DECLARE_DEFERRED(vboot_hash_next_chunk);
+
+#ifndef CONFIG_MAPPED_STORAGE
 
 static int read_and_hash_chunk(int offset, int size)
 {
@@ -78,7 +79,8 @@ static int read_and_hash_chunk(int offset, int size)
 	rv = shared_mem_acquire(size, &buf);
 	if (rv == EC_ERROR_BUSY) {
 		/* Couldn't update hash right now; try again later */
-		hook_call_deferred(vboot_hash_next_chunk, WORK_INTERVAL_US);
+		hook_call_deferred(&vboot_hash_next_chunk_data,
+				   WORK_INTERVAL_US);
 		return rv;
 	} else if (rv != EC_SUCCESS) {
 		vboot_hash_abort();
@@ -138,9 +140,8 @@ static void vboot_hash_next_chunk(void)
 	}
 
 	/* If we're still here, more work to do; come back later */
-	hook_call_deferred(vboot_hash_next_chunk, WORK_INTERVAL_US);
+	hook_call_deferred(&vboot_hash_next_chunk_data, WORK_INTERVAL_US);
 }
-DECLARE_DEFERRED(vboot_hash_next_chunk);
 
 /**
  * Start computing a hash of <size> bytes of data at flash offset <offset>.
@@ -178,7 +179,7 @@ static int vboot_hash_start(uint32_t offset, uint32_t size,
 	if (nonce_size)
 		SHA256_update(&ctx, nonce, nonce_size);
 
-	hook_call_deferred(vboot_hash_next_chunk, 0);
+	hook_call_deferred(&vboot_hash_next_chunk_data, 0);
 
 	return EC_SUCCESS;
 }
