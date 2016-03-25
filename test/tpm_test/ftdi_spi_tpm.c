@@ -272,8 +272,8 @@ int FtdiSpiInit(uint32_t freq, int enable_debug)
 	return true;
 }
 
-/* This is in seconds. */
-#define MAX_STATUS_TIMEOUT 120
+/* This is in seconds (prime generation may take several minutes). */
+#define MAX_STATUS_TIMEOUT 900
 static int WaitForStatus(uint32_t statusMask, uint32_t statusExpected)
 {
 	uint32_t status;

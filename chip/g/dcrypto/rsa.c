@@ -650,7 +650,7 @@ int DCRYPTO_rsa_key_compute(struct BIGNUM *N, struct BIGNUM *d,
 		q = &q_local;
 		bn_add(&phi, &ONE);
 	} else {
-		bn_mul(N, p, q);
+		DCRYPTO_bn_mul(N, p, q);
 		memcpy(phi_buf, N->d, bn_size(N));
 	}
 

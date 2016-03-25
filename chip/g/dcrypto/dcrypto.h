@@ -176,4 +176,12 @@ int DCRYPTO_hkdf(uint8_t *OKM, size_t OKM_len,
 		const uint8_t *IKM, size_t IKM_len,
 		const uint8_t *info, size_t info_len);
 
+/*
+ *  BN.
+ */
+int DCRYPTO_bn_generate_prime(struct BIGNUM *p);
+void DCRYPTO_bn_wrap(struct BIGNUM *b, void *buf, size_t len);
+void DCRYPTO_bn_mul(struct BIGNUM *c, const struct BIGNUM *a,
+		const struct BIGNUM *b);
+
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

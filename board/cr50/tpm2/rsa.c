@@ -6,6 +6,7 @@
 #include "CryptoEngine.h"
 
 #include "dcrypto.h"
+#include "trng.h"
 
 #include <assert.h>
 
@@ -13,6 +14,9 @@ static void reverse_tpm2b(TPM2B *b)
 {
 	reverse(b->buffer, b->size);
 }
+TPM2B_BYTE_VALUE(4);
+
+#define RSA_F4 65537
 
 static int check_key(const RSA_KEY *key)
 {
@@ -251,6 +255,109 @@ CRYPT_RESULT _cpri__TestKeyRSA(TPM2B *d_buf, uint32_t e,
 	}
 }
 
+/* Each 1024-bit prime generation attempt fails with probability
+ * ~0.5%.  Setting an upper limit on the attempts allows for an
+ * application to display a message and then reattempt.
+ * TODO(ngm): tweak this value along with performance improvements. */
+#define MAX_GENERATE_ATTEMPTS 3
+
+static int generate_prime(struct BIGNUM *b, TPM_ALG_ID hashing, TPM2B *seed,
+			const char *label, TPM2B *extra, uint32_t *counter)
+{
+	TPM2B_4_BYTE_VALUE marshaled_counter = { .t = {4} };
+	uint32_t initial_counter;
+
+	initial_counter = *counter;
+	for (; *counter - initial_counter < MAX_GENERATE_ATTEMPTS;
+	     *counter += 1) {
+		UINT32_TO_BYTE_ARRAY(*counter, marshaled_counter.t.buffer);
+		_cpri__KDFa(hashing, seed, label, extra, &marshaled_counter.b,
+			bn_bits(b), (uint8_t *) b->d, NULL, FALSE);
+
+		if (DCRYPTO_bn_generate_prime(b))
+			return 1;
+	}
+
+	return 0;
+}
+
+CRYPT_RESULT _cpri__GenerateKeyRSA(
+	TPM2B *N_buf, TPM2B *p_buf, uint16_t num_bits,
+	uint32_t e_buf, TPM_ALG_ID hashing, TPM2B *seed,
+	const char *label, TPM2B *extra, uint32_t *counter_in)
+{
+	const char *label_p = "RSA p!";
+	const char *label_q = "RSA q!";
+	/* Numbers from NIST SP800-57.
+	 * Fallback conservatively for keys larger than 2048 bits. */
+	const uint32_t security_strength =
+		num_bits <= 1024 ? 80 :
+		num_bits <= 2048 ? 112 :
+		256;
+
+	const uint16_t num_bytes = num_bits / 8;
+	uint8_t q_buf[RSA_MAX_BYTES / 2];
+
+	struct BIGNUM e;
+	struct BIGNUM p;
+	struct BIGNUM q;
+	struct BIGNUM N;
+
+	uint32_t counter;
+
+	if (num_bits & 0xF)
+		return CRYPT_FAIL;
+	if (num_bytes / 2 > p_buf->size)
+		return CRYPT_FAIL;
+	if (N_buf->size > 0 && num_bytes > N_buf->size)
+		return CRYPT_FAIL;
+	if (num_bytes > RSA_MAX_BYTES)
+		return CRYPT_FAIL;
+	/* Seed size must be at least 2*security_strength per TPM 2.0 spec. */
+	if (seed == NULL || seed->size * 8 < 2 * security_strength)
+		return CRYPT_FAIL;
+
+	if (e_buf == 0)
+		e_buf = RSA_F4;
+
+	N_buf->size = num_bytes;
+	DCRYPTO_bn_wrap(&e, &e_buf, sizeof(e_buf));
+	DCRYPTO_bn_wrap(&p, p_buf->buffer, num_bytes / 2);
+	DCRYPTO_bn_wrap(&q, q_buf, num_bytes / 2);
+
+	if (label == NULL)
+		label = label_p;
+	if (counter_in != NULL)
+		counter = *counter_in;
+	else
+		counter = 1;
+	if (!generate_prime(&p, hashing, seed, label, extra, &counter)) {
+		if (counter_in != NULL)
+			*counter_in = counter;
+		return CRYPT_FAIL;
+	}
+
+	if (label == label_p)
+		label = label_q;
+	if (!generate_prime(&q, hashing, seed, label, extra, &counter)) {
+		if (counter_in != NULL)
+			*counter_in = counter;
+		return CRYPT_FAIL;
+	}
+
+	if (counter_in != NULL)
+		*counter_in = counter;
+	N_buf->size = num_bytes;
+	p_buf->size = num_bytes / 2;
+	DCRYPTO_bn_wrap(&N, N_buf->buffer, num_bytes);
+	DCRYPTO_bn_mul(&N, &p, &q);
+	reverse_tpm2b(N_buf);
+	reverse_tpm2b(p_buf);
+	/* TODO(ngm): replace with secure memset. */
+	memset(q_buf, 0, sizeof(q_buf));
+	return CRYPT_SUCCESS;
+}
+
 #ifdef CRYPTO_TEST_SETUP
 
 #include "extension.h"
@@ -261,7 +368,8 @@ enum {
 	TEST_RSA_SIGN = 2,
 	TEST_RSA_VERIFY = 3,
 	TEST_RSA_KEYGEN = 4,
-	TEST_RSA_KEYTEST = 5
+	TEST_RSA_KEYTEST = 5,
+	TEST_BN_PRIMEGEN = 6,
 };
 
 static const TPM2B_PUBLIC_KEY_RSA RSA_768_N = {
@@ -454,6 +562,11 @@ static const RSA_KEY RSA_2048 = {
 
 #define MAX_MSG_BYTES RSA_MAX_BYTES
 
+/* 128-byte buffer to hold entropy for generating a
+ * 2048-bit RSA key (assuming ~112 bits of security strength,
+ * the TPM spec requires a seed of minimum size 28-bytes). */
+TPM2B_BYTE_VALUE(128);
+
 static void rsa_command_handler(void *cmd_body,
 				size_t cmd_size,
 				size_t *response_size_out)
@@ -476,6 +589,10 @@ static void rsa_command_handler(void *cmd_body,
 	uint32_t *response_size = (uint32_t *) response_size_out;
 	TPM2B_PUBLIC_KEY_RSA rsa_d;
 	TPM2B_PUBLIC_KEY_RSA rsa_n;
+
+	TPM2B_128_BYTE_VALUE seed;
+	uint8_t bn_buf[RSA_MAX_BYTES];
+	struct BIGNUM bn;
 
 	assert(sizeof(size_t) == sizeof(uint32_t));
 
@@ -577,9 +694,6 @@ static void rsa_command_handler(void *cmd_body,
 			*response_size = 1;
 		}
 		return;
-	case TEST_RSA_KEYGEN:
-		*response_size = 0;
-		break;
 	case TEST_RSA_KEYTEST:
 		if (_cpri__TestKeyRSA(&rsa_d.b, 65537, &rsa_n.b, &p.b, &q.b)
 			!= CRYPT_SUCCESS) {
@@ -607,6 +721,34 @@ static void rsa_command_handler(void *cmd_body,
 		*out = 1;
 		*response_size = 1;
 		return;
+	case TEST_RSA_KEYGEN:
+		N.b.size = sizeof(N.t.buffer);
+		p.b.size = sizeof(p.t.buffer);
+		seed.b.size = sizeof(seed.t.buffer);
+		rand_bytes(seed.b.buffer, seed.b.size);
+		if (_cpri__GenerateKeyRSA(
+				&N.b, &p.b, key_len, RSA_F4, TPM_ALG_SHA256,
+				&seed.b, NULL, NULL, NULL) != CRYPT_SUCCESS) {
+			*response_size = 0;
+		} else {
+			memcpy(out, N.b.buffer, N.b.size);
+			memcpy(out + N.b.size, p.b.buffer, p.b.size);
+			*response_size = N.b.size + p.b.size;
+		}
+		return;
+	case TEST_BN_PRIMEGEN:
+		if (in_len > sizeof(bn_buf)) {
+			*response_size = 0;
+			return;
+		}
+		DCRYPTO_bn_wrap(&bn, bn_buf, in_len);
+		memcpy(bn_buf, in, in_len);
+		if (DCRYPTO_bn_generate_prime(&bn)) {
+			memcpy(out, bn.d, bn_size(&bn));
+			*response_size = bn_size(&bn);
+		} else {
+			*response_size = 0;
+		}
 	}
 }
 

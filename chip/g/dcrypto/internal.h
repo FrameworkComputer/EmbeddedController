@@ -112,6 +112,7 @@ struct BIGNUM {
 
 void bn_init(struct BIGNUM *bn, void *buf, size_t len);
 #define bn_size(b) ((b)->dmax * BN_BYTES)
+#define bn_bits(b) ((b)->dmax * BN_BITS2)
 int bn_check_topbit(const struct BIGNUM *N);
 void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 		const struct BIGNUM *exp, const struct BIGNUM *N);

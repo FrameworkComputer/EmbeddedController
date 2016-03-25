@@ -46,23 +46,6 @@ CRYPT_RESULT _cpri__EccCommitCompute(
   return CRYPT_FAIL;
 }
 
-CRYPT_RESULT _cpri__GenerateKeyRSA(
-  TPM2B * n,                    //   OUT: The public modulu
-  TPM2B * p,                    //   OUT: One of the prime factors of n
-  UINT16 keySizeInBits,         //   IN: Size of the public modulus in bit
-  UINT32 e,                     //   IN: The public exponent
-  TPM_ALG_ID hashAlg,           //   IN: hash algorithm to use in the key generation proce
-  TPM2B * seed,                 //   IN: the seed to use
-  const char *label,            //   IN: A label for the generation process.
-  TPM2B * extra,                //   IN: Party 1 data for the KDF
-  UINT32 * counter              //   IN/OUT: Counter value to allow KFD iteration to be
-  //   propagated across multiple routine
-  )
-{
-  ecprintf("%s called\n", __func__);
-  return CRYPT_FAIL;
-}
-
 BOOL _cpri__Startup(
   void)
 {
