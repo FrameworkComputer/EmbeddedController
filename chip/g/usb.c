@@ -161,17 +161,17 @@ DECLARE_CONSOLE_COMMAND(usb, command_usb,
 			NULL);
 
 /* When debugging, print errors as they occur */
-#define report_error(dummy)					\
-	print_later("USB ERROR at usb.c line %d: 0x%x",		\
-		    __LINE__, dummy, 0, 0, 0)
+#define report_error(val)						\
+	print_later("Unhandled USB event at usb.c line %d: 0x%x",	\
+		    __LINE__, val, 0, 0, 0)
 
 #else  /* Not debugging */
 #define print_later(...)
 
 /* TODO: Something unexpected happened. Figure out how to report & fix it. */
-#define report_error(dummy)						\
-	CPRINTS("Unhandled USB error at %s line %d: 0x%x",		\
-		__FILE__, __LINE__, dummy)
+#define report_error(val)						\
+	CPRINTS("Unhandled USB event at %s line %d: 0x%x",		\
+		__FILE__, __LINE__, val)
 
 #endif	/* DEBUG_ME */
 
