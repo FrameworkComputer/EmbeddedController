@@ -1103,10 +1103,10 @@ void usb_interrupt(void)
 	}
 
 	if (status & GINTSTS(GOUTNAKEFF))
-		GR_USB_DCTL = DCTL_CGOUTNAK;
+		GR_USB_DCTL |= DCTL_CGOUTNAK;
 
 	if (status & GINTSTS(GINNAKEFF))
-		GR_USB_DCTL = DCTL_CGNPINNAK;
+		GR_USB_DCTL |= DCTL_CGNPINNAK;
 
 	GR_USB_GINTSTS = status;
 
