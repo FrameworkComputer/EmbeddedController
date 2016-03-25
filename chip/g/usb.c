@@ -217,7 +217,7 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bDescriptorType = USB_DT_CONFIGURATION,
 	.wTotalLength = 0x0BAD,	 /* number of returned bytes, set at runtime */
 	.bNumInterfaces = USB_IFACE_COUNT,
-	.bConfigurationValue = 1,
+	.bConfigurationValue = 1,		/* Caution: hard-coded value */
 	.iConfiguration = USB_STR_VERSION,
 	.bmAttributes = 0x80,			/* bus powered */
 	.bMaxPower = 250,			/* MaxPower 500 mA */
@@ -305,6 +305,15 @@ static struct g_usb_desc *next_out_desc;
 static uint8_t ep0_in_buf[IN_BUF_SIZE];
 static struct g_usb_desc ep0_in_desc[NUM_IN_PACKETS_AT_ONCE];
 static struct g_usb_desc *cur_in_desc;
+
+/* Overall device state (USB 2.0 spec, section 9.1.1).
+ * We only need a few, though. */
+static enum {
+	DS_DEFAULT,
+	DS_ADDRESS,
+	DS_CONFIGURED,
+} device_state;
+static uint8_t configuration_value;
 
 /* Reset all this to a good starting state. */
 static void initialize_dma_buffers(void)
@@ -585,8 +594,9 @@ static int handle_setup_with_in_stage(enum table_case tc,
 		break;
 	}
 	case USB_REQ_GET_CONFIGURATION:
-		/* TODO: We might need this to handle USB suspend properly */
-		return -1;
+		data = &configuration_value;
+		len = sizeof(configuration_value);
+		break;
 
 	case USB_REQ_SYNCH_FRAME:
 		/* Unimplemented */
@@ -697,11 +707,25 @@ static int handle_setup_with_no_data_stage(enum table_case tc,
 		 */
 		GWRITE_FIELD(USB, DCFG, DEVADDR, set_addr);
 		print_later("SETAD 0x%02x (%d)", set_addr, set_addr, 0, 0, 0);
+		device_state = DS_ADDRESS;
 		break;
 
 	case USB_REQ_SET_CONFIGURATION:
-		/* TODO: Sanity-check this? We only have one config, right? */
 		print_later("SETCFG 0x%x", req->wValue, 0, 0, 0, 0);
+		switch (req->wValue) {
+		case 0:
+			configuration_value = req->wValue;
+			device_state = DS_ADDRESS;
+			break;
+		case 1:	    /* Caution: Only one config descriptor TODAY */
+			/* TODO: All endpoints set to DATA0 toggle state */
+			configuration_value = req->wValue;
+			device_state = DS_CONFIGURED;
+			break;
+		default:
+			/* Nope. That's a paddlin. */
+			return -1;
+		}
 		break;
 
 	case USB_REQ_CLEAR_FEATURE:
@@ -836,7 +860,7 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 			/* I don't *think* we need to do this, unless we need
 			 * to transfer more data. Customer support agrees and
 			 * it shouldn't matter if the host is well-behaved, but
-			 * seems like we had issues without it.
+			 * it seems like we had issues without it.
 			 * TODO: Test this case until we know for sure. */
 			GR_USB_DIEPCTL(0) = DXEPCTL_EPENA;
 
@@ -935,6 +959,10 @@ static void ep0_reset(void)
 	GWRITE_FIELD(USB, DCFG, DEVADDR, 0);
 	initialize_dma_buffers();
 	expect_setup_packet();
+	/* Clear our internal state */
+	device_state = DS_DEFAULT;
+	configuration_value = 0;
+
 }
 
 /****************************************************************************/
@@ -1040,6 +1068,7 @@ static void usb_early_suspend(void)
 {
 	print_later("usb_early_suspend()", 0, 0, 0, 0, 0);
 }
+
 static void usb_suspend(void)
 {
 	print_later("usb_suspend()", 0, 0, 0, 0, 0);
@@ -1147,6 +1176,9 @@ void usb_disconnect(void)
 {
 	print_later("usb_disconnect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL |= DCTL_SFTDISCON;
+
+	device_state = DS_DEFAULT;
+	configuration_value = 0;
 }
 
 void usb_init(void)
@@ -1198,7 +1230,7 @@ void usb_init(void)
 	/* Global + DMA configuration */
 	/* TODO: What about the AHB Burst Length Field? It's 0 now. */
 	GR_USB_GAHBCFG = GAHBCFG_DMA_EN | GAHBCFG_GLB_INTR_EN |
-			 GAHBCFG_NP_TXF_EMP_LVL;
+		GAHBCFG_NP_TXF_EMP_LVL;
 
 	/* Be in disconnected state until we are ready */
 	usb_disconnect();
