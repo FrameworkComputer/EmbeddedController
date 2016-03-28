@@ -11,8 +11,8 @@
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_INPUT)
 
 /* Use these to take over the AP & EC flash (only when AP & EC are off!) */
-GPIO(EC_FLASH_SELECT, PIN(0, 1), GPIO_INPUT)
-GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_INPUT)
+GPIO(EC_FLASH_SELECT, PIN(0, 1), GPIO_OUT_LOW)
+GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_OUT_LOW)
 
 /* As an input this mirrors EC_WP_L (which is controlled by RBOX, not a GPIO).
  * As an output it can override EC_WP_L, although why would we? */
@@ -41,11 +41,11 @@ UNIMPLEMENTED(ENTERING_RW)
 #endif
 
 /* GPIOs - mark outputs as inputs too, to read back from the driven pad */
-PINMUX(GPIO(INT_AP_L),        B7, DIO_INPUT)	/* DIOB7 is p_digitial_od */
+PINMUX(GPIO(INT_AP_L),        A5, DIO_INPUT)	/* DIOB7 is p_digitial_od */
                                                 /* We can't pull it up */
-PINMUX(GPIO(EC_FLASH_SELECT), A3, DIO_INPUT)
-PINMUX(GPIO(AP_FLASH_SELECT), A7, DIO_INPUT)
-PINMUX(GPIO(AP_WP_L),         A5, 0)
+PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
+PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
+PINMUX(GPIO(AP_WP_L),         M3, 0)
 PINMUX(GPIO(SYS_RST),         M0, DIO_INPUT)
 PINMUX(GPIO(CCD_MODE),        M1, DIO_INPUT)
 PINMUX(GPIO(BATT_PRES),       M2, 0)
@@ -53,8 +53,8 @@ PINMUX(GPIO(BATT_PRES),       M2, 0)
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
 PINMUX(FUNC(UART0_RX),        A1, DIO_INPUT)
-PINMUX(FUNC(UART1_TX),        B3, DIO_INPUT)	/* AP console */
-PINMUX(FUNC(UART1_RX),        B2, DIO_INPUT)
+PINMUX(FUNC(UART1_TX),        A3, DIO_INPUT)	/* AP console */
+PINMUX(FUNC(UART1_RX),        A7, DIO_INPUT)
 PINMUX(FUNC(UART2_TX),        B5, DIO_INPUT)	/* EC console */
 PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)
 
