@@ -95,6 +95,7 @@ BOARDS_NPCX_5M6G_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
+	kevin
 	wheatley
 )
 
@@ -108,6 +109,10 @@ BOARDS_MEC1322=(
 	kunimitsu
 	lars
 	strago
+)
+
+BOARDS_SPI_1800MV=(
+	kevin
 )
 
 # Flags
@@ -401,6 +406,7 @@ function flash_openocd() {
 function flash_flashrom() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:/usr/sbin/:$PATH"
 	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
+
 	if on_servov3; then
 		FLASHROM_PARAM="-p linux_spi"
 	else
@@ -418,10 +424,16 @@ function flash_flashrom() {
 		fi
 	fi
 
+	if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
+		SPI_VOLTAGE="pp1800"
+	else
+		SPI_VOLTAGE="pp3300"
+	fi
+
 	dut_control cold_reset:on
 
-	# Turn on SPI1 interface on servo for 3.3V SPI Flash Chip
-	dut_control spi1_vref:pp3300 spi1_buf_en:on spi1_buf_on_flex_en:on
+	# Turn on SPI1 interface on servo for SPI Flash Chip
+	dut_control spi1_vref:${SPI_VOLTAGE} spi1_buf_en:on spi1_buf_on_flex_en:on
 
 	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | tail -n 1)
 	IMG_SIZE=$(stat -c%s "$IMG")
