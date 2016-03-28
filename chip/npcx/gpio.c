@@ -583,19 +583,18 @@ void gpio_set_level(enum gpio_signal signal, int value)
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	/*
-	 * Select open drain first, so that we don't glitch the signal
-	 * when changing the line to an output. 0:push-pull 1:open-drain
+	 * Configure pin as input, if requested. Output is configured only
+	 * after setting all other attributes, so as not to create a
+	 * temporary incorrect logic state 0:input 1:output
 	 */
+	if (!(flags & GPIO_OUTPUT))
+		NPCX_PDIR(port) &= ~mask;
+
+	/* Select open drain 0:push-pull 1:open-drain */
 	if (flags & GPIO_OPEN_DRAIN)
 		NPCX_PTYPE(port) |= mask;
 	else
 		NPCX_PTYPE(port) &= ~mask;
-
-	/* Select direction of GPIO 0:input 1:output */
-	if (flags & GPIO_OUTPUT)
-		NPCX_PDIR(port) |= mask;
-	else
-		NPCX_PDIR(port) &= ~mask;
 
 	/* Select pull-up/down of GPIO 0:pull-up 1:pull-down */
 	if (flags & GPIO_PULL_UP) {
@@ -631,6 +630,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	else if (flags & GPIO_LOW)
 		NPCX_PDOUT(port) &= ~mask;
 
+	/* Configure pin as output, if requested 0:input 1:output */
+	if (flags & GPIO_OUTPUT)
+		NPCX_PDIR(port) |= mask;
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)
