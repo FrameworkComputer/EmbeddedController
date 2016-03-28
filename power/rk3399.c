@@ -15,6 +15,7 @@
 #include "power.h"
 #include "power_button.h"
 #include "system.h"
+#include "task.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "util.h"
@@ -56,10 +57,10 @@ static const struct power_signal_info power_control_outputs[] = {
 
 	{ GPIO_PP5000_EN, 1 },
 
-	{ GPIO_SYS_RST, 1 },
+	{ GPIO_SYS_RST_L, 0 },
 };
 
-
+static int want_s0_exit;
 
 void chipset_force_shutdown(void)
 {
@@ -102,14 +103,20 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		/* Power up to next state */
-		return POWER_S5S3;
+		if (want_s0_exit)
+			return POWER_S5G3;
+		else
+			return POWER_S5S3;
 
 	case POWER_S3:
-		/* Power up to next state */
-		return POWER_S3S0;
+		if (want_s0_exit)
+			return POWER_S3S5;
+		else
+			return POWER_S3S0;
 
 	case POWER_S0:
+		if (want_s0_exit)
+			return POWER_S0S3;
 		break;
 
 	case POWER_G3S5:
@@ -157,9 +164,9 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(10); /* TBD */
 
 		/* Pulse SYS_RST */
-		gpio_set_level(GPIO_SYS_RST, 1);
+		gpio_set_level(GPIO_SYS_RST_L, 0);
 		msleep(10);
-		gpio_set_level(GPIO_SYS_RST, 0);
+		gpio_set_level(GPIO_SYS_RST_L, 1);
 
 		gpio_set_level(GPIO_PP1800_LID_EN_L, 0);
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 0);
@@ -205,8 +212,26 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5G3:
-		return POWER_G3;
+		want_s0_exit = 0;
+		/* Initialize power signal outputs to default. */
+		return power_chipset_init();
 	}
 
 	return state;
 }
+
+static void power_button_changed(void)
+{
+	/* Only pay attention to power button presses, not releases */
+	if (!power_button_is_pressed())
+		return;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		/* Power up */
+		chipset_exit_hard_off();
+	else
+		want_s0_exit = 1;
+
+	task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
