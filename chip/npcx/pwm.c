@@ -101,6 +101,7 @@ void pwm_set_freq(enum pwm_channel ch, uint32_t freq, uint32_t res)
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
 	int mdl = pwm_channels[ch].channel;
+
 	/* Start or close PWM module */
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_PWR, enabled);
 }
@@ -189,7 +190,7 @@ void pwm_config(enum pwm_channel ch)
 	int mdl = pwm_channels[ch].channel;
 
 	/* Disable PWM for module configuration */
-	pwm_enable(mdl, 0);
+	pwm_enable(ch, 0);
 
 	/* Set PWM heartbeat mode is no heartbeat */
 	SET_FIELD(NPCX_PWMCTL(mdl), NPCX_PWMCTL_HB_DC_CTL_FIELD,
@@ -220,9 +221,12 @@ void pwm_config(enum pwm_channel ch)
 static void pwm_init(void)
 {
 	int i;
+	uint8_t pd_mask = 0;
 
-	/* Enable the PWM module and delay a few clocks */
-	clock_enable_peripheral(CGC_OFFSET_PWM, CGC_PWM_MASK, CGC_MODE_ALL);
+	/* Take enabled PWMs out of power-down state */
+	for (i = 0; i < PWM_CH_COUNT; i++)
+		pd_mask |= (1 << pwm_channels[i].channel);
+	clock_enable_peripheral(CGC_OFFSET_PWM, pd_mask, CGC_MODE_ALL);
 
 	for (i = 0; i < PWM_CH_COUNT; i++)
 		pwm_config(i);

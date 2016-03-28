@@ -774,12 +774,11 @@ enum NPCX_PMC_PWDWN_CTL_T {
 	NPCX_PMC_PWDWN_6    = 5,
 };
 
+/* TODO: set PD masks based upon actual peripheral usage */
 #define CGC_KBS_MASK     (1 << NPCX_PWDWN_CTL1_KBS_PD)
 #define CGC_UART_MASK    (1 << NPCX_PWDWN_CTL1_UART_PD)
 #define CGC_FAN_MASK     (1 << NPCX_PWDWN_CTL1_MFT1_PD)
 #define CGC_FIU_MASK     (1 << NPCX_PWDWN_CTL1_FIU_PD)
-#define CGC_PWM_MASK     ((1 << NPCX_PWDWN_CTL2_PWM0_PD) | \
-			  (1 << NPCX_PWDWN_CTL2_PWM1_PD))
 #define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB2_PD) | \
