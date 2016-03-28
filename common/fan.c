@@ -512,7 +512,7 @@ static void pwm_fan_resume(void)
 {
 	int fan;
 	for (fan = 0; fan < CONFIG_FANS; fan++)
-		fan_set_enabled(fans[fan].ch, 1);
+		set_enabled(fan, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_resume, HOOK_PRIO_DEFAULT);
 
