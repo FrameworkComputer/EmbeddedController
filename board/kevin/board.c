@@ -7,10 +7,17 @@
 #include "adc_chip.h"
 #include "backlight.h"
 #include "button.h"
+#include "charge_manager.h"
+#include "charge_state.h"
+#include "charger.h"
+#include "chipset.h"
 #include "common.h"
+#include "console.h"
+#include "driver/charger/bd99955.h"
 #include "driver/tcpm/fusb302.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
@@ -24,8 +31,12 @@
 #include "switch.h"
 #include "timer.h"
 #include "thermal.h"
+#include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -123,18 +134,67 @@ uint16_t tcpc_get_alert_status(void)
 
 int board_set_active_charge_port(int charge_port)
 {
-	/* TODO: Select proper charge port through BD99955 regs. */
-	ASSERT(charge_port != 1);
-	return EC_SUCCESS;
+	enum bd99955_charge_port bd99955_port;
+
+	CPRINTS("New chg p%d", charge_port);
+
+	switch (charge_port) {
+	case 0:
+		bd99955_port = BD99955_CHARGE_PORT_VBUS;
+		break;
+	case 1:
+		bd99955_port = BD99955_CHARGE_PORT_VCC;
+		break;
+	case CHARGE_PORT_NONE:
+		bd99955_port = BD99955_CHARGE_PORT_NONE;
+		break;
+	default:
+		panic("Invalid charge port\n");
+		break;
+	}
+
+	return bd99955_select_input_port(bd99955_port);
 }
 
 void board_set_charge_limit(int charge_ma)
 {
-	/* TODO: Add support for BD99955 charger. */
+	charge_set_input_current_limit(MAX(charge_ma,
+				       CONFIG_CHARGER_INPUT_CURRENT));
 }
 
 int extpower_is_present(void)
 {
-	/* TODO: Add support for BD99955 charger. */
-	return 1;
+	return bd99955_extpower_is_present();
 }
+
+static void board_init(void)
+{
+	struct charge_port_info charge_none;
+	int i;
+
+	/* Initialize all pericom charge suppliers to 0 */
+	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge_none.current = 0;
+	/* TODO: Implement BC1.2 + VBUS detection */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
+					     i,
+					     &charge_none);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

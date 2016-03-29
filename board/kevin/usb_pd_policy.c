@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
+#include "driver/charger/bd99955.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -50,11 +51,11 @@ void pd_transition_voltage(int idx)
 int pd_set_power_supply_ready(int port)
 {
 	/* Disable charging */
-	/* TODO: Add support for BD99955 */
+	bd99955_select_input_port(BD99955_CHARGE_PORT_NONE);
 
 	/* Provide VBUS */
 	gpio_set_level(port ? GPIO_C1_VOUT_EN_L :
-			      GPIO_C0_VOUT_EN_L, 1);
+			      GPIO_C0_VOUT_EN_L, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -66,7 +67,7 @@ void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
 	gpio_set_level(port ? GPIO_C1_VOUT_EN_L :
-			      GPIO_C0_VOUT_EN_L, 0);
+			      GPIO_C0_VOUT_EN_L, 1);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);

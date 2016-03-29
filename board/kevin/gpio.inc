@@ -23,8 +23,8 @@ GPIO_INT(VOLUME_DOWN_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP,
          button_interrupt)
 GPIO_INT(POWER_BUTTON_L,   PIN(0, 4), GPIO_INT_BOTH | GPIO_INPUT,
          power_button_interrupt)
-GPIO_INT(LID_OPEN,         PIN(9, 7), GPIO_INT_BOTH | GPIO_INPUT | GPIO_SEL_1P8V,
-         lid_interrupt)
+GPIO_INT(LID_OPEN,         PIN(9, 7),
+         GPIO_INT_BOTH | GPIO_INPUT | GPIO_SEL_1P8V, lid_interrupt)
 
 /* TODO: Add power sequencing interrupt pins */
 
@@ -98,7 +98,7 @@ GPIO(USB_DP_HPD,           PIN(6, 6), GPIO_OUT_LOW)
 GPIO(CHARGER_RESET_L,      PIN(0, 1), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(CR50_RESET_L,         PIN(0, 2), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(CHARGER_INT_L,        PIN(3, 3), GPIO_INPUT)
-GPIO(EC_BATT_PRES_L,       PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_BATT_PRES_L,       PIN(3, 4), GPIO_INPUT)
 GPIO(LID_360_L,            PIN(3, 6), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(BASE_SIXAXIS_INT_L,   PIN(4, 0), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(CCD_MODE,             PIN(6, 3), GPIO_INPUT)
