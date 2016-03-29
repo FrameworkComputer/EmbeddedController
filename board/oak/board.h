@@ -118,9 +118,6 @@
 #undef CONFIG_UART_TX_DMA
 #undef CONFIG_UART_RX_DMA
 
-#undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 13
-
 /*
  * Allow dangerous commands.
  * TODO: Remove this config before production.

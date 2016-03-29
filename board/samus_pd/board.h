@@ -88,10 +88,6 @@
 #define CONFIG_HOSTCMD_I2C_SLAVE_ADDR CONFIG_USB_PD_I2C_SLAVE_ADDR
 #endif
 
-/* Maximum number of deferrable functions */
-#undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 10
-
 #ifndef __ASSEMBLER__
 
 /* Timer selection */

@@ -52,9 +52,6 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-#undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 9
-
 #ifndef __ASSEMBLER__
 
 /* Timer selection */

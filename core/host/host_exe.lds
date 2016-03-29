@@ -98,3 +98,14 @@ SECTIONS {
   }
 }
 INSERT BEFORE .rodata;
+
+SECTIONS {
+  .bss.ec_sections : {
+    /* Symbols defined here are declared in link_defs.h */
+    . = ALIGN(8);
+    __deferred_until = .;
+    . += (__deferred_funcs_end - __deferred_funcs) * (8 / 4);
+    __deferred_until_end = .;
+  }
+}
+INSERT BEFORE .bss;

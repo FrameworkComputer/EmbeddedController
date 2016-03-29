@@ -246,9 +246,6 @@ int hook_call_deferred(const struct deferred_data *data, int us);
 /**
  * Register a deferred function call.
  *
- * Note that if you declare a bunch of these, you may need to override
- * DEFERRABLE_MAX_COUNT in your board.h.
- *
  * DECLARE_DEFERRED creates a new deferred_data struct with a name constructed
  * by concatenating _data to the name of the routine passed.
  *

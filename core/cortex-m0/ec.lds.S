@@ -174,11 +174,6 @@ SECTIONS
     } > FLASH
     __ro_end = . ;
 
-    __deferred_funcs_count =
-		(__deferred_funcs_end - __deferred_funcs) / 4;
-    ASSERT(__deferred_funcs_count <= DEFERRABLE_MAX_COUNT,
-           "Increase DEFERRABLE_MAX_COUNT")
-
     .bss : {
 	/*
 	 * Vector table must be at the beginning of bss section. The vector
@@ -194,6 +189,17 @@ SECTIONS
 	/* Rest of .bss takes care of its own alignment */
         *(.bss)
         *(.bss.slow)
+
+	/*
+	 * Reserve space for deferred function firing times.  Each time is a
+	 * uint64_t, each func is a 32-bit pointer, thus the scaling factor of
+	 * two.  The 8 byte alignment of uint64_t is required by the ARM ABI.
+	 */
+        . = ALIGN(8);
+        __deferred_until = .;
+	. += (__deferred_funcs_end - __deferred_funcs) * (8 / 4);
+        __deferred_until_end = .;
+
         . = ALIGN(4);
         __bss_end = .;
     } > IRAM

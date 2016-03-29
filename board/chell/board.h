@@ -136,9 +136,6 @@
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
 
-#undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 16
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

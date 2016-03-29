@@ -57,9 +57,6 @@
 /* Larger task stack size, for hook task */
 #define LARGER_TASK_STACK_SIZE 640
 
-/* Maximum number of deferrable functions */
-#define DEFERRABLE_MAX_COUNT 8
-
 /* Magic for gpio.inc */
 #define GPIO_PIN(port, index) (port), (1 << (index))
 #define GPIO_PIN_MASK(port, mask) (port), (mask)

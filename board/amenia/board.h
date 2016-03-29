@@ -141,9 +141,6 @@
 /* Modules we want to exclude */
 #undef CONFIG_PECI
 
-#undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 15
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

@@ -194,10 +194,6 @@
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
-/* Maximum number of deferrable functions */
-#undef  DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 16
-
 #ifndef __ASSEMBLER__
 
 int board_get_version(void);

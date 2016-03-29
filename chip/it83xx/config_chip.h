@@ -16,9 +16,6 @@
 #define HOOK_TICK_INTERVAL_MS 500
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
 
-/* Maximum number of deferrable functions */
-#define DEFERRABLE_MAX_COUNT 8
-
 /* Default PLL frequency. */
 #define PLL_CLOCK 48000000
 

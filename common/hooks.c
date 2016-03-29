@@ -52,7 +52,6 @@ static const struct hook_ptrs hook_list[] = {
 };
 
 /* Times for deferrable functions */
-static uint64_t defer_until[DEFERRABLE_MAX_COUNT];
 static int defer_new_call;
 static int hook_task_started;
 
@@ -141,10 +140,10 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 
 	if (us == -1) {
 		/* Cancel */
-		defer_until[i] = 0;
+		__deferred_until[i] = 0;
 	} else {
 		/* Set alarm */
-		defer_until[i] = get_time().val + us;
+		__deferred_until[i] = get_time().val + us;
 		/*
 		 * Flag that hook_call_deferred() has been called.  If the hook
 		 * task is already active, this will allow it to go through the
@@ -181,14 +180,14 @@ void hook_task(void)
 
 		/* Handle deferred routines */
 		for (i = 0; i < DEFERRED_FUNCS_COUNT; i++) {
-			if (defer_until[i] && defer_until[i] < t) {
+			if (__deferred_until[i] && __deferred_until[i] < t) {
 				CPRINTS("hook call deferred 0x%p",
 					__deferred_funcs[i].routine);
 				/*
 				 * Call deferred function.  Clear timer first,
 				 * so it can request itself be called later.
 				 */
-				defer_until[i] = 0;
+				__deferred_until[i] = 0;
 				__deferred_funcs[i].routine();
 			}
 		}
@@ -220,14 +219,15 @@ void hook_task(void)
 
 		/* Wake earlier if needed by a deferred routine */
 		defer_new_call = 0;
+
 		for (i = 0; i < DEFERRED_FUNCS_COUNT && next > 0; i++) {
-			if (!defer_until[i])
+			if (!__deferred_until[i])
 				continue;
 
-			if (defer_until[i] < t)
+			if (__deferred_until[i] < t)
 				next = 0;
-			else if (defer_until[i] - t < next)
-				next = defer_until[i] - t;
+			else if (__deferred_until[i] - t < next)
+				next = __deferred_until[i] - t;
 		}
 
 		/*
