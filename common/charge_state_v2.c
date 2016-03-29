@@ -657,6 +657,7 @@ void charger_task(void)
 			curr.desired_input_current =
 				get_desired_input_current(prev_bp, info);
 			charger_set_input_current(curr.desired_input_current);
+			hook_notify(HOOK_BATTERY_SOC_CHANGE);
 		}
 
 		/*

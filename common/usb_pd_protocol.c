@@ -1214,6 +1214,15 @@ static void pd_update_try_source(void)
 	 */
 	pd_try_src_enable = drp_state == PD_DRP_TOGGLE_ON &&
 			    batt_soc >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC;
+#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
+	defined(CONFIG_BATTERY_PRESENT_GPIO)
+	/*
+	 * When battery is cutoff in ship mode it may not be reliable to
+	 * check if battery is present with its state of charge.
+	 * Also check if battery is initialized and ready to provide power.
+	 */
+	pd_try_src_enable &= (battery_is_present() == BP_YES);
+#endif
 
 	/*
 	 * Clear this flag to cover case where a TrySrc
