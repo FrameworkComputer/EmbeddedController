@@ -32,12 +32,12 @@ static const struct charger_info bd99955_charger_info = {
 };
 
 /* Charge command code map */
-static enum BD99955_COMMANDS charger_map_cmd = BD99955_INVALID_COMMAND;
+static enum bd99955_command charger_map_cmd = BD99955_INVALID_COMMAND;
 
 static struct mutex bd99955_map_mutex;
 
 static inline int ch_raw_read16(int cmd, int *param,
-				enum BD99955_COMMANDS map_cmd)
+				enum bd99955_command map_cmd)
 {
 	int rv;
 
@@ -61,7 +61,7 @@ bd99955_read_cleanup:
 }
 
 static inline int ch_raw_write16(int cmd, int param,
-					enum BD99955_COMMANDS map_cmd)
+					enum bd99955_command map_cmd)
 {
 	int rv;
 
@@ -104,15 +104,8 @@ int charger_set_input_current(int input_current)
 
 int charger_get_input_current(int *input_current)
 {
-	int rv;
-
-	rv = ch_raw_read16(BD99955_CMD_IBUS_LIM_SET, input_current,
-				BD99955_BAT_CHG_COMMAND);
-	if (rv)
-		return rv;
-
-	return ch_raw_read16(BD99955_CMD_ICC_LIM_SET, input_current,
-				BD99955_BAT_CHG_COMMAND);
+	return ch_raw_read16(BD99955_CMD_CUR_ILIM_VAL, input_current,
+			     BD99955_EXTENDED_COMMAND);
 }
 
 int charger_manufacturer_id(int *id)
@@ -232,3 +225,132 @@ int charger_discharge_on_ac(int enable)
 	return ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
 				BD99955_EXTENDED_COMMAND);
 }
+
+/*** Non-standard interface functions ***/
+
+int bd99955_extpower_is_present(void)
+{
+	int reg;
+
+	if (ch_raw_read16(BD99955_CMD_VBUS_VCC_STATUS, &reg,
+			  BD99955_EXTENDED_COMMAND))
+		return 0;
+
+	reg &= (BD99955_CMD_VBUS_VCC_STATUS_VCC_DETECT |
+		BD99955_CMD_VBUS_VCC_STATUS_VBUS_DETECT);
+	return !!reg;
+}
+
+int bd99955_select_input_port(enum bd99955_charge_port port)
+{
+	int rv;
+	int reg;
+
+	rv = ch_raw_read16(BD99955_CMD_VIN_CTRL_SET, &reg,
+			   BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	if (port == BD99955_CHARGE_PORT_NONE) {
+		reg &= ~(BD99955_CMD_VIN_CTRL_SET_VBUS_EN |
+			 BD99955_CMD_VIN_CTRL_SET_VBUS_EN);
+	} else if (port == BD99955_CHARGE_PORT_VBUS) {
+		reg |= BD99955_CMD_VIN_CTRL_SET_VBUS_EN;
+		reg &= ~BD99955_CMD_VIN_CTRL_SET_VCC_EN;
+	} else if (port == BD99955_CHARGE_PORT_VCC) {
+		reg |= BD99955_CMD_VIN_CTRL_SET_VCC_EN;
+		reg &= ~BD99955_CMD_VIN_CTRL_SET_VBUS_EN;
+	} else {
+		/* Invalid charge port */
+		panic("Invalid charge port");
+	}
+
+	return ch_raw_write16(BD99955_CMD_VIN_CTRL_SET, reg,
+			      BD99955_EXTENDED_COMMAND);
+}
+
+#ifdef CONFIG_CMD_CHARGER
+static int read_bat(uint8_t cmd)
+{
+	int read = 0;
+
+	ch_raw_read16(cmd, &read, BD99955_BAT_CHG_COMMAND);
+	return read;
+}
+
+static int read_ext(uint8_t cmd)
+{
+	int read = 0;
+
+	ch_raw_read16(cmd, &read, BD99955_EXTENDED_COMMAND);
+	return read;
+}
+
+/* Dump all readable registers on bd99955 */
+static int console_bd99955_dump_regs(int argc, char **argv)
+{
+	int i;
+	uint8_t regs[] = { 0x14, 0x15, 0x3c, 0x3d, 0x3e, 0x3f };
+
+	/* Battery group registers */
+	for (i = 0; i < ARRAY_SIZE(regs); ++i)
+		ccprintf("BAT REG %4x:  %4x\n", regs[i], read_bat(regs[i]));
+
+	/* Extended group registers */
+	for (i = 0; i < 0x7f; ++i)
+		ccprintf("EXT REG %4x:  %4x\n", i, read_ext(i));
+
+	return 0;
+}
+DECLARE_CONSOLE_COMMAND(bd99955_dump, console_bd99955_dump_regs,
+			NULL,
+			"Dump all charger registers",
+			NULL);
+
+static int console_command_bd99955(int argc, char **argv)
+{
+	int rv, reg, data, val;
+	char rw, *e;
+	enum bd99955_command cmd;
+
+	rw = argv[1][0];
+	if (rw == 'r') {
+		if (argc < 4)
+			return EC_ERROR_PARAM_COUNT;
+	} else if (rw == 'w') {
+		if (argc < 5)
+			return EC_ERROR_PARAM_COUNT;
+	} else
+		return EC_ERROR_PARAM_COUNT;
+
+	reg = strtoi(argv[2], &e, 16);
+	if (*e || reg < 0)
+		return EC_ERROR_PARAM2;
+
+	cmd = strtoi(argv[3], &e, 0);
+	if (*e || cmd < 0)
+		return EC_ERROR_INVAL;
+
+	if (argc == 5) {
+		val = strtoi(argv[4], &e, 16);
+		if (*e || val < 0)
+			return EC_ERROR_INVAL;
+	}
+
+	if (rw == 'r')
+		rv = ch_raw_read16(reg, &data, cmd);
+	else {
+		rv = ch_raw_write16(reg, val, cmd);
+		if (rv == EC_SUCCESS)
+			rv = ch_raw_read16(reg, &data, cmd);
+	}
+
+	CPRINTS("register 0x%x [%d] = 0x%x [%d]", reg, reg, data, data);
+
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(bd99955, console_command_bd99955,
+			"bd99955 <r/w> <reg_hex> <cmd_type> | <val_hex>",
+			"Read or write a charger register",
+			NULL);
+#endif /* CONFIG_CMD_CHARGER */

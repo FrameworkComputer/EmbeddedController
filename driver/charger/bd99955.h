@@ -12,11 +12,17 @@
 #define I2C_ADDR_CHARGER	BD99955_ADDR
 
 /* BD99955 commands to change the command code map */
-enum BD99955_COMMANDS {
+enum bd99955_command {
 	BD99955_BAT_CHG_COMMAND,
 	BD99955_EXTENDED_COMMAND,
 	BD99955_DEBUG_COMMAND,
 	BD99955_INVALID_COMMAND
+};
+
+enum bd99955_charge_port {
+	BD99955_CHARGE_PORT_VBUS,
+	BD99955_CHARGE_PORT_VCC,
+	BD99955_CHARGE_PORT_NONE,
 };
 
 /* Charger parameters */
@@ -44,6 +50,8 @@ enum BD99955_COMMANDS {
 #define BD99955_CMD_CHGSTM_STATUS	0x00
 #define BD99955_CMD_VBAT_VSYS_STATUS	0x01
 #define BD99955_CMD_VBUS_VCC_STATUS	0x02
+#define BD99955_CMD_VBUS_VCC_STATUS_VCC_DETECT  (1 << 8)
+#define BD99955_CMD_VBUS_VCC_STATUS_VBUS_DETECT (1 << 0)
 #define BD99955_CMD_CHGOP_STATUS	0x03
 #define BD99955_CMD_WDT_STATUS		0x04
 #define BD99955_CMD_CUR_ILIM_VAL	0x05
@@ -52,6 +60,10 @@ enum BD99955_COMMANDS {
 #define BD99955_CMD_EXT_ICC_LIM_SET	0x08
 #define BD99955_CMD_IOTG_LIM_SET	0x09
 #define BD99955_CMD_VIN_CTRL_SET	0x0A
+#define BD99955_CMD_VIN_CTRL_SET_PP_BOTH_THRU  (1 << 11)
+#define BD99955_CMD_VIN_CTRL_SET_VBUS_PRIORITY (1 << 7)
+#define BD99955_CMD_VIN_CTRL_SET_VBUS_EN       (1 << 6)
+#define BD99955_CMD_VIN_CTRL_SET_VCC_EN        (1 << 5)
 #define BD99955_CMD_CHGOP_SET1		0x0B
 #define BD99955_CMD_CHGOP_SET2		0x0C
 #define BD99955_CMD_VBUSCLPS_TH_SET	0x0D
@@ -162,5 +174,15 @@ enum BD99955_COMMANDS {
 /* Charger operation control setting 2 */
 #define BD99955_CHGOP_SET2_CHG_EN	(1 << 7)
 #define BD99955_CHGOP_SET2_BATT_LEARN	(1 << 8)
+
+/*
+ * Non-standard interface functions - bd99955 integrates additional
+ * functionality not part of the standard charger interface.
+ */
+
+/* Return true if extpower is present on their input port. */
+int bd99955_extpower_is_present(void);
+/* Select input port from {VCC, VBUS, NONE}. */
+int bd99955_select_input_port(enum bd99955_charge_port port);
 
 #endif /* __CROS_EC_BD99955_H */
