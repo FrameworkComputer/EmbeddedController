@@ -84,6 +84,53 @@ bd99955_write_cleanup:
 	return rv;
 }
 
+/* BD99955 local interfaces */
+
+static int bd99955_charger_enable(int enable)
+{
+	int rv;
+	int reg;
+
+	rv = ch_raw_read16(BD99955_CMD_CHGOP_SET2, &reg,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	if (enable)
+		reg |= BD99955_CMD_CHGOP_SET2_CHG_EN;
+	else
+		reg &= ~BD99955_CMD_CHGOP_SET2_CHG_EN;
+
+	return ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
+				BD99955_EXTENDED_COMMAND);
+}
+
+static int bd99955_por_reset(void)
+{
+	return ch_raw_write16(BD99955_CMD_SYSTEM_CTRL_SET,
+				BD99955_CMD_SYSTEM_CTRL_SET_OTPLD |
+				BD99955_CMD_SYSTEM_CTRL_SET_ALLRST,
+				BD99955_EXTENDED_COMMAND);
+}
+
+static int bd99955_reset_to_zero(void)
+{
+	int rv;
+
+	rv = charger_set_current(0);
+	if (rv)
+		return rv;
+
+	return charger_set_voltage(0);
+}
+
+static int bd99955_get_charger_op_status(int *status)
+{
+	return ch_raw_read16(BD99955_CMD_CHGOP_STATUS, status,
+				BD99955_EXTENDED_COMMAND);
+}
+
+
 /* chip specific interfaces */
 
 int charger_set_input_current(int input_current)
@@ -120,12 +167,36 @@ int charger_device_id(int *id)
 
 int charger_get_option(int *option)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int rv;
+	int reg;
+
+	rv = ch_raw_read16(BD99955_CMD_CHGOP_SET1, &reg,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	*option = reg;
+	rv = ch_raw_read16(BD99955_CMD_CHGOP_SET2, &reg,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	*option |= reg << 16;
+
+	return EC_SUCCESS;
 }
 
 int charger_set_option(int option)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int rv;
+
+	rv = ch_raw_write16(BD99955_CMD_CHGOP_SET1, option & 0xFFFF,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	return ch_raw_write16(BD99955_CMD_CHGOP_SET2, (option >> 16) & 0xFFFF,
+				BD99955_EXTENDED_COMMAND);
 }
 
 /* Charger interfaces */
@@ -137,14 +208,105 @@ const struct charger_info *charger_get_info(void)
 
 int charger_get_status(int *status)
 {
+	int rv;
+	int reg;
+	int ch_status;
+
+	/* charger level */
 	*status = CHARGER_LEVEL_2;
+
+	/* charger enable/inhibit */
+	rv = ch_raw_read16(BD99955_CMD_CHGOP_SET2, &reg,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	if (!(reg & BD99955_CMD_CHGOP_SET2_CHG_EN))
+		*status |= CHARGER_CHARGE_INHIBITED;
+
+	/* charger alarm enable/inhibit */
+	rv = ch_raw_read16(BD99955_CMD_PROCHOT_CTRL_SET, &reg,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	if (!(reg & (BD99955_CMD_PROCHOT_CTRL_SET_PROCHOT_EN4 |
+			BD99955_CMD_PROCHOT_CTRL_SET_PROCHOT_EN3 |
+			BD99955_CMD_PROCHOT_CTRL_SET_PROCHOT_EN2 |
+			BD99955_CMD_PROCHOT_CTRL_SET_PROCHOT_EN1 |
+			BD99955_CMD_PROCHOT_CTRL_SET_PROCHOT_EN0)))
+		*status |= CHARGER_ALARM_INHIBITED;
+
+	rv = bd99955_get_charger_op_status(&reg);
+	if (rv)
+		return rv;
+
+	/* power fail */
+	if (!(reg & BD99955_CMD_CHGOP_STATUS_RBOOST_UV))
+		*status |= CHARGER_POWER_FAIL;
+
+	/* Safety signal ranges & battery presence */
+	ch_status = (reg & BD99955_CMD_CHGOP_STATUS_BATTEMP0) |
+			((reg & BD99955_CMD_CHGOP_STATUS_BATTEMP1) << 1) |
+			((reg & BD99955_CMD_CHGOP_STATUS_BATTEMP2) << 2);
+
+	*status |= CHARGER_BATTERY_PRESENT;
+
+	switch (ch_status) {
+	case BD99955_CMD_CHGOP_STATUS_BATTEMP_COLD1:
+		*status |= CHARGER_RES_COLD;
+		break;
+	case BD99955_CMD_CHGOP_STATUS_BATTEMP_COLD2:
+		*status |= CHARGER_RES_COLD;
+		*status |= CHARGER_RES_UR;
+		break;
+	case BD99955_CMD_CHGOP_STATUS_BATTEMP_HOT1:
+	case BD99955_CMD_CHGOP_STATUS_BATTEMP_HOT2:
+		*status |= CHARGER_RES_HOT;
+		break;
+	case BD99955_CMD_CHGOP_STATUS_BATTEMP_HOT3:
+		*status |= CHARGER_RES_HOT;
+		*status |= CHARGER_RES_OR;
+		break;
+	case BD99955_CMD_CHGOP_STATUS_BATTEMP_BATOPEN:
+		*status &= ~CHARGER_BATTERY_PRESENT;
+	default:
+		break;
+	}
+
+	/* source of power */
+	if (bd99955_extpower_is_present())
+		*status |= CHARGER_AC_PRESENT;
 
 	return EC_SUCCESS;
 }
 
 int charger_set_mode(int mode)
 {
-	/* BD99955 does not support inhibit mode setting. */
+	int rv;
+	int enable;
+
+	if (mode & CHARGE_FLAG_INHIBIT_CHARGE)
+		enable = 0;
+	else
+		enable = 1;
+
+	rv = bd99955_charger_enable(enable);
+	if (rv)
+		return rv;
+
+	if (mode & CHARGE_FLAG_POR_RESET) {
+		rv = bd99955_por_reset();
+		if (rv)
+			return rv;
+	}
+
+	if (mode & CHARGE_FLAG_RESET_TO_ZERO) {
+		rv = bd99955_reset_to_zero();
+		if (rv)
+			return rv;
+	}
+
 	return EC_SUCCESS;
 }
 
@@ -214,13 +376,10 @@ int charger_discharge_on_ac(int enable)
 	if (rv)
 		return rv;
 
-	if (enable) {
-		reg |= BD99955_CHGOP_SET2_BATT_LEARN;
-		reg &= ~BD99955_CHGOP_SET2_CHG_EN;
-	} else {
-		reg &= ~BD99955_CHGOP_SET2_BATT_LEARN;
-		reg |= BD99955_CHGOP_SET2_CHG_EN;
-	}
+	if (enable)
+		reg |= BD99955_CMD_CHGOP_SET2_BATT_LEARN;
+	else
+		reg &= ~BD99955_CMD_CHGOP_SET2_BATT_LEARN;
 
 	return ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
 				BD99955_EXTENDED_COMMAND);
