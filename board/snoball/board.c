@@ -37,10 +37,10 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{STM32_I2C1_PORT, FUSB302_I2C_SLAVE_ADDR},
-	{STM32_I2C2_PORT, FUSB302_I2C_SLAVE_ADDR},
+	{STM32_I2C1_PORT, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
+	{STM32_I2C2_PORT, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
 	/* TODO: Verify secondary slave addr, or use i2c mux */
-	{STM32_I2C2_PORT, FUSB302_I2C_SLAVE_ADDR + 2},
+	{STM32_I2C2_PORT, FUSB302_I2C_SLAVE_ADDR + 2, &fusb302_tcpm_drv},
 };
 
 uint16_t tcpc_get_alert_status(void)

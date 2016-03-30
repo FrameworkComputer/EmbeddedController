@@ -12,6 +12,7 @@
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
+#include "tcpci.h"
 #include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -56,9 +57,9 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, TCPC1_I2C_ADDR},
+	{I2C_PORT_TCPC, TCPC1_I2C_ADDR, &tcpci_tcpm_drv},
 #if CONFIG_USB_PD_PORT_COUNT >= 2
-	{I2C_PORT_TCPC, TCPC2_I2C_ADDR},
+	{I2C_PORT_TCPC, TCPC2_I2C_ADDR, &tcpci_tcpm_drv},
 #endif
 };
 

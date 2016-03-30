@@ -7,6 +7,7 @@
 
 #include "task.h"
 #include "tcpci.h"
+#include "tcpm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
@@ -38,14 +39,14 @@ static int init_alert_mask(int port)
 		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
 		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
 	/* Set the alert mask in TCPC */
-	rv = tcpm_alert_mask_set(port, mask);
+	rv = tcpc_alert_mask_set(port, mask);
 
 	return rv;
 }
 
 static int init_power_status_mask(int port)
 {
-	return tcpm_set_power_status_mask(port, 0);
+	return tcpc_set_power_status_mask(port, 0);
 }
 
 int tcpm_init(int port)
@@ -75,11 +76,6 @@ int tcpm_set_polarity(int port, int polarity)
 	return tcpc_set_polarity(port, polarity);
 }
 
-int tcpm_set_power_status_mask(int port, uint8_t mask)
-{
-	return tcpc_set_power_status_mask(port, mask);
-}
-
 int tcpm_set_vconn(int port, int enable)
 {
 	return tcpc_set_vconn(port, enable);
@@ -90,7 +86,7 @@ int tcpm_set_msg_header(int port, int power_role, int data_role)
 	return tcpc_set_msg_header(port, power_role, data_role);
 }
 
-int tcpm_alert_status(int port, int *alert)
+static int tcpm_alert_status(int port, int *alert)
 {
 	/* Read TCPC Alert register */
 	return tcpc_alert_status(port, alert);
@@ -99,11 +95,6 @@ int tcpm_alert_status(int port, int *alert)
 int tcpm_set_rx_enable(int port, int enable)
 {
 	return tcpc_set_rx_enable(port, enable);
-}
-
-int tcpm_alert_mask_set(int port, uint16_t mask)
-{
-	return tcpc_alert_mask_set(port, mask);
 }
 
 int tcpm_get_message(int port, uint32_t *payload, int *head)

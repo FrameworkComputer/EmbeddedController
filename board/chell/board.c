@@ -29,6 +29,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "tcpci.h"
 #include "temp_sensor.h"
 #include "timer.h"
 #include "uart.h"
@@ -116,8 +117,8 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &tcpci_tcpm_drv},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2, &tcpci_tcpm_drv},
 };
 
 /* SPI devices */

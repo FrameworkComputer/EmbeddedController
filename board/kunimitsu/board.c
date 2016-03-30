@@ -17,6 +17,7 @@
 #include "driver/als_opt3001.h"
 #include "driver/gyro_l3gd20h.h"
 #include "driver/pmic_tps650830.h"
+#include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "fan.h"
@@ -130,8 +131,8 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &tcpci_tcpm_drv},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2, &tcpci_tcpm_drv},
 };
 
 /* Physical fans. These are logically separate from pwm_channels. */

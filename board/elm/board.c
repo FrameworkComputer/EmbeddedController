@@ -17,6 +17,7 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -111,7 +112,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /* TCPC */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &tcpci_tcpm_drv},
 };
 
 struct pi3usb9281_config pi3usb9281_chips[] = {
@@ -156,7 +157,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	/* TODO: 7688 support MUX Control 00b and 10b? */
 	{
 		.port_addr = 0, /* port idx */
-		.driver    = &tcpm_usb_mux_driver,
+		.driver    = &tcpci_tcpm_usb_mux_driver,
 	},
 };
 

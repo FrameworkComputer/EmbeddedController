@@ -20,6 +20,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/als_opt3001.h"
+#include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -112,8 +113,8 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 #endif
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR},
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &tcpci_tcpm_drv},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR + 2, &tcpci_tcpm_drv},
 };
 
 struct mutex pericom_mux_lock;

@@ -14,6 +14,7 @@
 #include "panic.h"
 #include "system.h"
 #include "task.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"

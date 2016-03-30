@@ -112,8 +112,8 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC0, FUSB302_I2C_SLAVE_ADDR},
-	{I2C_PORT_TCPC1, FUSB302_I2C_SLAVE_ADDR},
+	{I2C_PORT_TCPC0, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
+	{I2C_PORT_TCPC1, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
 };
 
 void board_reset_pd_mcu(void)

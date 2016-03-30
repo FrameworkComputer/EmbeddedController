@@ -24,6 +24,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "tcpm.h"
 #include "version.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
