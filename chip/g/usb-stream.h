@@ -1,0 +1,192 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#ifndef __CROS_EC_USB_STREAM_H
+#define __CROS_EC_USB_STREAM_H
+
+/* USB STREAM driver for Chrome EC */
+
+#include "compile_time_macros.h"
+#include "consumer.h"
+#include "hooks.h"
+#include "registers.h"
+#include "producer.h"
+#include "queue.h"
+#include "usb_descriptor.h"
+
+/*
+ * Compile time Per-USB stream configuration stored in flash.  Instances of this
+ * structure are provided by the user of the USB stream.  This structure binds
+ * together all information required to operate a USB stream.
+ */
+struct usb_stream_config {
+	/*
+	 * Endpoint index, and pointers to the USB packet RAM buffers.
+	 */
+	int endpoint;
+
+	int *is_reset;
+
+	/*
+	 * Deferred function to call to handle USB and Queue request.
+	 */
+	void (*deferred_tx)(void);
+	void (*deferred_rx)(void);
+
+	int tx_size;
+	int rx_size;
+
+	uint8_t *tx_ram;
+	uint8_t *rx_ram;
+
+	struct consumer consumer;
+	struct producer producer;
+
+	struct g_usb_desc *out_desc;
+	struct g_usb_desc *in_desc;
+};
+
+/*
+ * These function tables are defined by the USB Stream driver and are used to
+ * initialize the consumer and producer in the usb_stream_config.
+ */
+extern struct consumer_ops const usb_stream_consumer_ops;
+extern struct producer_ops const usb_stream_producer_ops;
+
+
+/*
+ * Convenience macro for defining USB streams and their associated state and
+ * buffers.
+ *
+ * NAME is used to construct the names of the packet RAM buffers, trampoline
+ * functions, usb_stream_state struct, and usb_stream_config struct, the
+ * latter is just called NAME.
+ *
+ * INTERFACE is the index of the USB interface to associate with this
+ * stream.
+ *
+ * INTERFACE_NAME is the index of the USB string descriptor (iInterface).
+ *
+ * ENDPOINT is the index of the USB bulk endpoint used for receiving and
+ * transmitting bytes.
+ *
+ * RX_SIZE and TX_SIZE are the number of bytes of USB packet RAM to allocate
+ * for the RX and TX packets respectively.  The valid values for these
+ * parameters are dictated by the USB peripheral.
+ *
+ * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this driver
+ * should write to and read from respectively.
+ */
+/*
+ * The following assertions can not be made because they require access to
+ * non-const fields, but should be kept in mind.
+ *
+ * BUILD_ASSERT(RX_QUEUE.buffer_units >= RX_SIZE);
+ * BUILD_ASSERT(TX_QUEUE.buffer_units >= TX_SIZE);
+ * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
+ * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
+ */
+#define USB_STREAM_CONFIG(NAME,						\
+			  INTERFACE,					\
+			  INTERFACE_NAME,				\
+			  ENDPOINT,					\
+			  RX_SIZE,					\
+			  TX_SIZE,					\
+			  RX_QUEUE,					\
+			  TX_QUEUE)					\
+									\
+	static struct g_usb_desc CONCAT2(NAME, _out_desc_);		\
+	static struct g_usb_desc CONCAT2(NAME, _in_desc_);		\
+	static uint8_t CONCAT2(NAME, _buf_rx_)[RX_SIZE];		\
+	static uint8_t CONCAT2(NAME, _buf_tx_)[TX_SIZE];		\
+	static int CONCAT2(NAME, _is_reset_);				\
+	static void CONCAT2(NAME, _deferred_tx_)(void);			\
+	static void CONCAT2(NAME, _deferred_rx_)(void);			\
+	struct usb_stream_config const NAME = {				\
+		.endpoint     = ENDPOINT,				\
+		.is_reset     = &CONCAT2(NAME, _is_reset_),		\
+		.in_desc      = &CONCAT2(NAME, _in_desc_),		\
+		.out_desc     = &CONCAT2(NAME, _out_desc_),		\
+		.deferred_tx  = CONCAT2(NAME, _deferred_tx_),		\
+		.deferred_rx  = CONCAT2(NAME, _deferred_rx_),		\
+		.tx_size      = TX_SIZE,				\
+		.rx_size      = RX_SIZE,				\
+		.tx_ram       = CONCAT2(NAME, _buf_tx_),		\
+		.rx_ram       = CONCAT2(NAME, _buf_rx_),		\
+		.consumer  = {						\
+			.queue = &TX_QUEUE,				\
+			.ops   = &usb_stream_consumer_ops,		\
+		},							\
+		.producer  = {						\
+			.queue = &RX_QUEUE,				\
+			.ops   = &usb_stream_producer_ops,		\
+		},							\
+	};								\
+	const struct usb_interface_descriptor				\
+	USB_IFACE_DESC(INTERFACE) = {					\
+		.bLength            = USB_DT_INTERFACE_SIZE,		\
+		.bDescriptorType    = USB_DT_INTERFACE,			\
+		.bInterfaceNumber   = INTERFACE,			\
+		.bAlternateSetting  = 0,				\
+		.bNumEndpoints      = 2,				\
+		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
+		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,	\
+		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,	\
+		.iInterface         = INTERFACE_NAME,			\
+	};								\
+	const struct usb_endpoint_descriptor				\
+	USB_EP_DESC(INTERFACE, 0) = {					\
+		.bLength          = USB_DT_ENDPOINT_SIZE,		\
+		.bDescriptorType  = USB_DT_ENDPOINT,			\
+		.bEndpointAddress = 0x80 | ENDPOINT,			\
+		.bmAttributes     = 0x02 /* Bulk IN */,			\
+		.wMaxPacketSize   = TX_SIZE,				\
+		.bInterval        = 10,					\
+	};								\
+	const struct usb_endpoint_descriptor				\
+	USB_EP_DESC(INTERFACE, 1) = {					\
+		.bLength          = USB_DT_ENDPOINT_SIZE,		\
+		.bDescriptorType  = USB_DT_ENDPOINT,			\
+		.bEndpointAddress = ENDPOINT,				\
+		.bmAttributes     = 0x02 /* Bulk OUT */,		\
+		.wMaxPacketSize   = RX_SIZE,				\
+		.bInterval        = 0,					\
+	};								\
+	static void CONCAT2(NAME, _deferred_tx_)(void)			\
+	{ tx_stream_handler(&NAME); }					\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_tx_));			\
+	static void CONCAT2(NAME, _deferred_rx_)(void)			\
+	{ rx_stream_handler(&NAME); }					\
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));			\
+	static void CONCAT2(NAME, _ep_tx)(void)				\
+	{								\
+		usb_stream_tx(&NAME);					\
+	}								\
+	static void CONCAT2(NAME, _ep_rx)(void)				\
+	{								\
+		usb_stream_rx(&NAME);					\
+	}								\
+	static void CONCAT2(NAME, _ep_reset)(void)			\
+	{								\
+		usb_stream_reset(&NAME);				\
+	}								\
+	USB_DECLARE_EP(ENDPOINT,					\
+		       CONCAT2(NAME, _ep_tx),				\
+		       CONCAT2(NAME, _ep_rx),				\
+		       CONCAT2(NAME, _ep_reset));			\
+/*
+ * Handle USB and Queue request in a deferred callback.
+ */
+int rx_stream_handler(struct usb_stream_config const *config);
+int tx_stream_handler(struct usb_stream_config const *config);
+
+/*
+ * These functions are used by the trampoline functions defined above to
+ * connect USB endpoint events with the generic USB stream driver.
+ */
+void usb_stream_tx(struct usb_stream_config const *config);
+void usb_stream_rx(struct usb_stream_config const *config);
+void usb_stream_reset(struct usb_stream_config const *config);
+
+#endif /* __CROS_EC_USB_STREAM_H */

@@ -29,6 +29,8 @@
 #define CONFIG_USB_HID
 #define CONFIG_USB_BLOB
 
+#define CONFIG_STREAM_USB
+
 #define CONFIG_USB_PID 0x5014
 
 /* Enable SPI Slave (SPS) module */
