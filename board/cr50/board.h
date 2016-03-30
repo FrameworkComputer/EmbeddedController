@@ -70,6 +70,8 @@ enum usb_strings {
 	USB_STR_CONSOLE_NAME,
 	USB_STR_BLOB_NAME,
 	USB_STR_HID_NAME,
+	USB_STR_AP_NAME,
+	USB_STR_EC_NAME,
 
 	USB_STR_COUNT
 };
@@ -89,8 +91,6 @@ enum usb_strings {
 
 /* UART indexes (use define rather than enum to expand them) */
 #define UART_CR50	0
-#define UART_AP		1
-#define UART_EC		2
 
 #define UARTN UART_CR50
 

@@ -12,6 +12,9 @@
 #include "uart.h"
 #include "util.h"
 
+#define USE_UART_INTERRUPTS (!(defined(CONFIG_CUSTOMIZED_RO) && \
+			       defined(SECTION_IS_RO)))
+
 struct uartn_interrupts {
 	int tx_int;
 	int rx_int;
@@ -133,5 +136,10 @@ void uartn_init(int uart)
 	/* enable RX interrupts in block */
 	/* Note: doesn't do anything unless turned on in NVIC */
 	GR_UART_ICTRL(uart) = 0x02;
+
+#if USE_UART_INTERRUPTS
+	/* Enable interrupts for UART */
+	uartn_enable_interrupt(uart);
+#endif
 
 }

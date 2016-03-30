@@ -111,9 +111,11 @@ void uart_init(void)
 	/* Initialize the Cr50 UART */
 	uartn_init(UARTN);
 
-#if USE_UART_INTERRUPTS
-	/* Enable interrupts for UART0 only */
-	uart_enable_interrupt();
+#ifdef UART_AP
+	uartn_init(UART_AP);
+#endif
+#ifdef UART_EC
+	uartn_init(UART_EC);
 #endif
 
 	done_uart_init_yet = 1;

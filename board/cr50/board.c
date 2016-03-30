@@ -116,6 +116,8 @@ const void * const usb_strings[] = {
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Shell"),
 	[USB_STR_BLOB_NAME] = USB_STRING_DESC("Blob"),
 	[USB_STR_HID_NAME] = USB_STRING_DESC("PokeyPokey"),
+	[USB_STR_AP_NAME] = USB_STRING_DESC("AP"),
+	[USB_STR_EC_NAME] = USB_STRING_DESC("EC"),
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #endif
