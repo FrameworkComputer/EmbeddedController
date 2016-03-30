@@ -118,17 +118,19 @@ static int get_engineering_val(const int reg_val,
 /**
  * Read register from Gyrometer.
  */
-static inline int raw_read8(const int addr, const int reg, int *data_ptr)
+static inline int raw_read8(const int port, const int addr, const int reg,
+							int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_GYRO, addr, reg, data_ptr);
+	return i2c_read8(port, addr, reg, data_ptr);
 }
 
 /**
  * Write register from Gyrometer.
  */
-static inline int raw_write8(const int addr, const int reg, int data)
+static inline int raw_write8(const int port, const int addr, const int reg,
+							 int data)
 {
-	return i2c_write8(I2C_PORT_GYRO, addr, reg, data);
+	return i2c_write8(port, addr, reg, data);
 }
 
 static int set_range(const struct motion_sensor_t *s,
@@ -151,12 +153,12 @@ static int set_range(const struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = raw_read8(s->addr, ctrl_reg, &ctrl_val);
+	ret = raw_read8(s->port, s->addr, ctrl_reg, &ctrl_val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
 	ctrl_val = (ctrl_val & ~L3GD20_RANGE_MASK) | reg_val;
-	ret = raw_write8(s->addr, ctrl_reg, ctrl_val);
+	ret = raw_write8(s->port, s->addr, ctrl_reg, ctrl_val);
 
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
@@ -207,20 +209,20 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = raw_read8(s->addr, ctrl_reg, &val);
+	ret = raw_read8(s->port, s->addr, ctrl_reg, &val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
 	val = (val & ~(L3GD20_ODR_MASK | L3GD20_ODR_PD_MASK)) |
 		(reg_val & ~L3GD20_LOW_ODR_MASK);
-	ret = raw_write8(s->addr, ctrl_reg, val);
+	ret = raw_write8(s->port, s->addr, ctrl_reg, val);
 
 	/* Now that we have set the odr, update the driver's value. */
 	if (ret == EC_SUCCESS)
 		data->base.odr = get_engineering_val(reg_val, data_rates,
 						       odr_tbl_size);
 
-	ret = raw_read8(s->addr, L3GD20_LOW_ODR, &val);
+	ret = raw_read8(s->port, s->addr, L3GD20_LOW_ODR, &val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
@@ -230,7 +232,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	else
 		val &= ~1;
 
-	ret = raw_write8(s->addr, L3GD20_LOW_ODR, val);
+	ret = raw_write8(s->port, s->addr, L3GD20_LOW_ODR, val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
@@ -242,17 +244,17 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 * [3:2] int1_sel = 0;
 	 * [1:0] out_sel = 1;
 	 */
-	ret = raw_read8(s->addr, L3GD20_CTRL_REG5, &val);
+	ret = raw_read8(s->port, s->addr, L3GD20_CTRL_REG5, &val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
 	val |= (1 << 4); /* high-pass filter enabled */
 	val |= (1 << 0); /* data in data reg are high-pass filtered */
-	ret = raw_write8(s->addr, L3GD20_CTRL_REG5, val);
+	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG5, val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
-	ret = raw_read8(s->addr, L3GD20_CTRL_REG2, &val);
+	ret = raw_read8(s->port, s->addr, L3GD20_CTRL_REG2, &val);
 	if (ret != EC_SUCCESS)
 		goto gyro_cleanup;
 
@@ -262,7 +264,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 */
 	val &= 0xf0;
 	val |= 0x04;
-	ret = raw_write8(s->addr, L3GD20_CTRL_REG2, val);
+	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG2, val);
 
 gyro_cleanup:
 	mutex_unlock(s->mutex);
@@ -313,7 +315,7 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = raw_read8(s->addr, L3GD20_STATUS_REG, &tmp);
+	ret = raw_read8(s->port, s->addr, L3GD20_STATUS_REG, &tmp);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RS Error]", s->name, s->type);
@@ -350,10 +352,10 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read 6 bytes starting at xyz_reg */
-	i2c_lock(I2C_PORT_GYRO, 1);
-	ret = i2c_xfer(I2C_PORT_GYRO, s->addr,
+	i2c_lock(s->port, 1);
+	ret = i2c_xfer(s->port, s->addr,
 			&xyz_reg, 1, raw, 6, I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_GYRO, 0);
+	i2c_lock(s->port, 0);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RD XYZ Error]",
@@ -379,7 +381,7 @@ static int init(const struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 
-	ret = raw_read8(s->addr, L3GD20_WHO_AM_I_REG, &tmp);
+	ret = raw_read8(s->port, s->addr, L3GD20_WHO_AM_I_REG, &tmp);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
@@ -387,19 +389,19 @@ static int init(const struct motion_sensor_t *s)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* All axes are enabled */
-	ret = raw_write8(s->addr, L3GD20_CTRL_REG1, 0x0f);
+	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG1, 0x0f);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
 	mutex_lock(s->mutex);
-	ret = raw_read8(s->addr, L3GD20_CTRL_REG4, &tmp);
+	ret = raw_read8(s->port, s->addr, L3GD20_CTRL_REG4, &tmp);
 	if (ret) {
 		mutex_unlock(s->mutex);
 		return EC_ERROR_UNKNOWN;
 	}
 
 	tmp |= L3GD20_BDU_ENABLE;
-	ret = raw_write8(s->addr, L3GD20_CTRL_REG4, tmp);
+	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG4, tmp);
 	mutex_unlock(s->mutex);
 	if (ret)
 		return EC_ERROR_UNKNOWN;

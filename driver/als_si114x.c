@@ -26,25 +26,28 @@ static int init(const struct motion_sensor_t *s);
 /**
  * Read 8bit register from device.
  */
-static inline int raw_read8(const int addr, const int reg, int *data_ptr)
+static inline int raw_read8(const int port, const int addr, const int reg,
+			    int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_ALS, addr, reg, data_ptr);
+	return i2c_read8(port, addr, reg, data_ptr);
 }
 
 /**
  * Write 8bit register from device.
  */
-static inline int raw_write8(const int addr, const int reg, int data)
+static inline int raw_write8(const int port, const int addr, const int reg,
+			     int data)
 {
-	return i2c_write8(I2C_PORT_ALS, addr, reg, data);
+	return i2c_write8(port, addr, reg, data);
 }
 
 /**
  * Read 16bit register from device.
  */
-static inline int raw_read16(const int addr, const int reg, int *data_ptr)
+static inline int raw_read16(const int port, const int addr, const int reg,
+			     int *data_ptr)
 {
-	return i2c_read16(I2C_PORT_ALS, addr, reg, data_ptr);
+	return i2c_read16(port, addr, reg, data_ptr);
 }
 
 /* helper function to operate on parameter values: op can be query/set/or/and */
@@ -58,16 +61,17 @@ static int si114x_param_op(const struct motion_sensor_t *s,
 	mutex_lock(s->mutex);
 
 	if (op != SI114X_CMD_PARAM_QUERY) {
-		ret = raw_write8(s->addr, SI114X_REG_PARAM_WR, *value);
+		ret = raw_write8(s->port, s->addr, SI114X_REG_PARAM_WR, *value);
 		if (ret != EC_SUCCESS)
 			goto error;
 	}
 
-	ret = raw_write8(s->addr, SI114X_REG_COMMAND, op | (param & 0x1F));
+	ret = raw_write8(s->port, s->addr, SI114X_REG_COMMAND,
+			 op | (param & 0x1F));
 	if (ret != EC_SUCCESS)
 		goto error;
 
-	ret = raw_read8(s->addr, SI114X_REG_PARAM_RD, value);
+	ret = raw_read8(s->port, s->addr, SI114X_REG_PARAM_RD, value);
 	if (ret != EC_SUCCESS)
 		goto error;
 
@@ -91,7 +95,8 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 
 	/* Read ALX result */
 	for (i = 0; i < nb; i++) {
-		ret = raw_read16(s->addr, type_data->base_data_reg + i * 2,
+		ret = raw_read16(s->port, s->addr,
+				 type_data->base_data_reg + i * 2,
 				 &val);
 		if (ret)
 			break;
@@ -170,7 +175,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	if (!(*event & CONFIG_ALS_SI114X_INT_EVENT))
 		return EC_ERROR_NOT_HANDLED;
 
-	ret = raw_read8(s->addr, SI114X_REG_IRQ_STATUS, &val);
+	ret = raw_read8(s->port, s->addr, SI114X_REG_IRQ_STATUS, &val);
 	if (ret)
 		return ret;
 
@@ -178,7 +183,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return EC_ERROR_INVAL;
 
 	/* clearing IRQ */
-	ret = raw_write8(s->addr, SI114X_REG_IRQ_STATUS,
+	ret = raw_write8(s->port, s->addr, SI114X_REG_IRQ_STATUS,
 			 val & type_data->irq_flags);
 	if (ret != EC_SUCCESS)
 		CPRINTS("clearing irq failed");
@@ -190,7 +195,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		ret = si114x_read_results(s, 1);
 		/* Fire pending requests */
 		if (data->state == SI114X_ALS_IN_PROGRESS_PS_PENDING) {
-			ret = raw_write8(s->addr, SI114X_REG_COMMAND,
+			ret = raw_write8(s->port, s->addr, SI114X_REG_COMMAND,
 					SI114X_CMD_PS_FORCE);
 			data->state = SI114X_PS_IN_PROGRESS;
 		} else {
@@ -202,7 +207,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		/* Read PS results */
 		ret = si114x_read_results(s, SI114X_NUM_LEDS);
 		if (data->state == SI114X_PS_IN_PROGRESS_ALS_PENDING) {
-			ret = raw_write8(s->addr, SI114X_REG_COMMAND,
+			ret = raw_write8(s->port, s->addr, SI114X_REG_COMMAND,
 					SI114X_CMD_ALS_FORCE);
 			data->state = SI114X_ALS_IN_PROGRESS;
 		} else {
@@ -256,7 +261,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 			CPRINTS("Invalid sensor type");
 			return EC_ERROR_INVAL;
 		}
-		ret = raw_write8(s->addr, SI114X_REG_COMMAND, cmd);
+		ret = raw_write8(s->port, s->addr, SI114X_REG_COMMAND, cmd);
 		ret = EC_RES_IN_PROGRESS;
 		break;
 	case SI114X_ALS_IN_PROGRESS_PS_PENDING:
@@ -279,7 +284,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 			       s->last_collection + SI114X_DENIED_THRESHOLD)) {
 			int ret, val;
 
-			ret = raw_read8(s->addr, SI114X_REG_IRQ_STATUS, &val);
+			ret = raw_read8(s->port, s->addr,
+					SI114X_REG_IRQ_STATUS, &val);
 			CPRINTS("%d stuck IRQ_STATUS 0x%02x - ret %d",
 				s->name, val, ret);
 			init(s);
@@ -312,7 +318,7 @@ static int si114x_set_chlist(const struct motion_sensor_t *s)
 static int si114x_revisions(const struct motion_sensor_t *s)
 {
 	int val;
-	int ret = raw_read8(s->addr, SI114X_REG_PART_ID, &val);
+	int ret = raw_read8(s->port, s->addr, SI114X_REG_PART_ID, &val);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -321,7 +327,7 @@ static int si114x_revisions(const struct motion_sensor_t *s)
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
-	ret = raw_read8(s->addr, SI114X_REG_SEQ_ID, &val);
+	ret = raw_read8(s->port, s->port, s->addr, SI114X_REG_SEQ_ID, &val);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -337,60 +343,62 @@ static int si114x_initialize(const struct motion_sensor_t *s)
 	int ret, val;
 
 	/* send reset command */
-	ret = raw_write8(s->addr, SI114X_REG_COMMAND, SI114X_CMD_RESET);
+	ret = raw_write8(s->port, s->addr, SI114X_REG_COMMAND,
+			 SI114X_CMD_RESET);
 	if (ret != EC_SUCCESS)
 		return ret;
 	msleep(20);
 
 	/* hardware key, magic value */
-	ret = raw_write8(s->addr, SI114X_REG_HW_KEY, 0x17);
+	ret = raw_write8(s->port, s->addr, SI114X_REG_HW_KEY, 0x17);
 	if (ret != EC_SUCCESS)
 		return ret;
 	msleep(20);
 
 	/* interrupt configuration, interrupt output enable */
-	ret = raw_write8(s->addr, SI114X_REG_INT_CFG, SI114X_INT_CFG_OE);
+	ret = raw_write8(s->port, s->addr, SI114X_REG_INT_CFG,
+			 SI114X_INT_CFG_OE);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* enable interrupt for certain activities */
-	ret = raw_write8(s->addr, SI114X_REG_IRQ_ENABLE,
+	ret = raw_write8(s->port, s->addr, SI114X_REG_IRQ_ENABLE,
 		SI114X_PS3_IE | SI114X_PS2_IE | SI114X_PS1_IE |
 		SI114X_ALS_INT0_IE);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* Only forced mode */
-	ret = raw_write8(s->addr, SI114X_REG_MEAS_RATE, 0);
+	ret = raw_write8(s->port, s->addr, SI114X_REG_MEAS_RATE, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* measure ALS every time device wakes up */
-	ret = raw_write8(s->addr, SI114X_REG_ALS_RATE, 0);
+	ret = raw_write8(s->port, s->addr, SI114X_REG_ALS_RATE, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* measure proximity every time device wakes up */
-	ret = raw_write8(s->addr, SI114X_REG_PS_RATE, 0);
+	ret = raw_write8(s->port, s->addr, SI114X_REG_PS_RATE, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* set LED currents to maximum */
 	switch (SI114X_NUM_LEDS) {
 	case 3:
-		ret = raw_write8(s->addr,
+		ret = raw_write8(s->port, s->addr,
 			SI114X_REG_PS_LED3, 0x0f);
 		if (ret != EC_SUCCESS)
 			return ret;
-		ret = raw_write8(s->addr,
+		ret = raw_write8(s->port, s->addr,
 			SI114X_REG_PS_LED21, 0xff);
 		break;
 	case 2:
-		ret = raw_write8(s->addr,
+		ret = raw_write8(s->port, s->addr,
 			SI114X_REG_PS_LED21, 0xff);
 		break;
 	case 1:
-		ret = raw_write8(s->addr,
+		ret = raw_write8(s->port, s->addr,
 			SI114X_REG_PS_LED21, 0x0f);
 		break;
 	}

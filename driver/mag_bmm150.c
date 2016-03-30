@@ -67,9 +67,9 @@
 
 #define BMI150_READ_16BIT_COM_REG(store_, addr_) do { \
 	int val; \
-	raw_mag_read8(s->addr, (addr_), &val); \
+	raw_mag_read8(s->port, s->addr, (addr_), &val); \
 	store_ = val; \
-	raw_mag_read8(s->addr, (addr_) + 1, &val); \
+	raw_mag_read8(s->port, s->addr, (addr_) + 1, &val); \
 	store_ |= (val << 8); \
 } while (0)
 
@@ -82,10 +82,10 @@ int bmm150_init(const struct motion_sensor_t *s)
 	struct mag_cal_t             *moc = BMM150_CAL(s);
 
 	/* Set the compass from Suspend to Sleep */
-	ret = raw_mag_write8(s->addr, BMM150_PWR_CTRL, BMM150_PWR_ON);
+	ret = raw_mag_write8(s->port, s->addr, BMM150_PWR_CTRL, BMM150_PWR_ON);
 	msleep(4);
 	/* Now we can read the device id */
-	ret = raw_mag_read8(s->addr, BMM150_CHIP_ID, &val);
+	ret = raw_mag_read8(s->port, s->addr, BMM150_CHIP_ID, &val);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
@@ -93,21 +93,21 @@ int bmm150_init(const struct motion_sensor_t *s)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Read the private registers for compensation */
-	ret = raw_mag_read8(s->addr, BMM150_REGA_DIG_X1, &val);
+	ret = raw_mag_read8(s->port, s->addr, BMM150_REGA_DIG_X1, &val);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 	regs->dig1[X] = val;
-	raw_mag_read8(s->addr, BMM150_REGA_DIG_Y1, &val);
+	raw_mag_read8(s->port, s->addr, BMM150_REGA_DIG_Y1, &val);
 	regs->dig1[Y] = val;
-	raw_mag_read8(s->addr, BMM150_REGA_DIG_X2, &val);
+	raw_mag_read8(s->port, s->addr, BMM150_REGA_DIG_X2, &val);
 	regs->dig2[X] = val;
-	raw_mag_read8(s->addr, BMM150_REGA_DIG_Y2, &val);
+	raw_mag_read8(s->port, s->addr, BMM150_REGA_DIG_Y2, &val);
 	regs->dig2[Y] = val;
 
-	raw_mag_read8(s->addr, BMM150_REGA_DIG_XY1, &val);
+	raw_mag_read8(s->port, s->addr, BMM150_REGA_DIG_XY1, &val);
 	regs->dig_xy1 = val;
 
-	raw_mag_read8(s->addr, BMM150_REGA_DIG_XY2, &val);
+	raw_mag_read8(s->port, s->addr, BMM150_REGA_DIG_XY2, &val);
 	regs->dig_xy2 = val;
 
 	BMI150_READ_16BIT_COM_REG(regs->dig_z1, BMM150_REGA_DIG_Z1_LSB);
@@ -118,16 +118,16 @@ int bmm150_init(const struct motion_sensor_t *s)
 
 
 	/* Set the repetition in "Regular Preset" */
-	raw_mag_write8(s->addr, BMM150_REPXY, BMM150_REP(SPECIAL, XY));
-	raw_mag_write8(s->addr, BMM150_REPZ, BMM150_REP(SPECIAL, Z));
-	ret = raw_mag_read8(s->addr, BMM150_REPXY, &val);
+	raw_mag_write8(s->port, s->addr, BMM150_REPXY, BMM150_REP(SPECIAL, XY));
+	raw_mag_write8(s->port, s->addr, BMM150_REPZ, BMM150_REP(SPECIAL, Z));
+	ret = raw_mag_read8(s->port, s->addr, BMM150_REPXY, &val);
 	CPRINTS("repxy: 0x%02x", val);
-	ret = raw_mag_read8(s->addr, BMM150_REPZ, &val);
+	ret = raw_mag_read8(s->port, s->addr, BMM150_REPZ, &val);
 	CPRINTS("repz: 0x%02x", val);
 	/*
 	 * Set the compass forced mode, to sleep after each measure.
 	 */
-	ret = raw_mag_write8(s->addr, BMM150_OP_CTRL,
+	ret = raw_mag_write8(s->port, s->addr, BMM150_OP_CTRL,
 			BMM150_OP_MODE_FORCED << BMM150_OP_MODE_OFFSET);
 
 	init_mag_cal(moc);

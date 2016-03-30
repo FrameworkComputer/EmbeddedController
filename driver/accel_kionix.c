@@ -125,17 +125,18 @@ static int find_param_index(const int eng_val, const int round_up,
 /**
  * Read register from accelerometer.
  */
-static int raw_read8(const int addr, const int reg, int *data_ptr)
+static int raw_read8(const int port, const int addr, const int reg,
+					 int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_ACCEL, addr, reg, data_ptr);
+	return i2c_read8(port, addr, reg, data_ptr);
 }
 
 /**
  * Write register from accelerometer.
  */
-static int raw_write8(const int addr, const int reg, int data)
+static int raw_write8(const int port, const int addr, const int reg, int data)
 {
-	return i2c_write8(I2C_PORT_ACCEL, addr, reg, data);
+	return i2c_write8(port, addr, reg, data);
 }
 
 /**
@@ -162,13 +163,13 @@ static int disable_sensor(const struct motion_sensor_t *s, int *reg_val)
 	 * so that we can restore it later.
 	 */
 	for (i = 0; i < SENSOR_ENABLE_ATTEMPTS; i++) {
-		ret = raw_read8(s->addr, reg, reg_val);
+		ret = raw_read8(s->port, s->addr, reg, reg_val);
 		if (ret != EC_SUCCESS)
 			continue;
 
 		*reg_val &= ~pc1_field;
 
-		ret = raw_write8(s->addr, reg, *reg_val);
+		ret = raw_write8(s->port, s->addr, reg, *reg_val);
 		if (ret == EC_SUCCESS)
 			return EC_SUCCESS;
 	}
@@ -194,12 +195,12 @@ static int enable_sensor(const struct motion_sensor_t *s, int reg_val)
 	pc1_field = KIONIX_PC1_FIELD(data->variant);
 
 	for (i = 0; i < SENSOR_ENABLE_ATTEMPTS; i++) {
-		ret = raw_read8(s->addr, reg, &reg_val);
+		ret = raw_read8(s->port, s->addr, reg, &reg_val);
 		if (ret != EC_SUCCESS)
 			continue;
 
 		/* Enable accelerometer based on reg_val value. */
-		ret = raw_write8(s->addr, reg,
+		ret = raw_write8(s->port, s->addr, reg,
 				reg_val | pc1_field);
 
 		/* On first success, we are done. */
@@ -230,7 +231,7 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	/* Determine new value of control reg and attempt to write it. */
 	reg_val_new = (reg_val & ~range_field) | range_val;
-	ret = raw_write8(s->addr, reg, reg_val_new);
+	ret = raw_write8(s->port, s->addr, reg, reg_val_new);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS) {
@@ -274,7 +275,7 @@ static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
 
 	/* Determine new value of the control reg and attempt to write it. */
 	reg_val_new = (reg_val & ~res_field) | res_val;
-	ret = raw_write8(s->addr, reg, reg_val_new);
+	ret = raw_write8(s->port, s->addr, reg, reg_val_new);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS) {
@@ -318,14 +319,14 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	}
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = raw_read8(s->addr, reg, &odr_reg_val);
+	ret = raw_read8(s->port, s->addr, reg, &odr_reg_val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
 	}
 	odr_val_new = (odr_reg_val & ~odr_field) | odr_val;
 	/* Set output data rate. */
-	ret = raw_write8(s->addr, reg, odr_val_new);
+	ret = raw_write8(s->port, s->addr, reg, odr_val_new);
 
 	/* If successfully written, then save the new data rate. */
 	if (ret == EC_SUCCESS)
@@ -377,10 +378,10 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	/* Read 6 bytes starting at XOUT_L. */
 	reg = KIONIX_XOUT_L(data->variant);
 	mutex_lock(s->mutex);
-	i2c_lock(I2C_PORT_ACCEL, 1);
-	ret = i2c_xfer(I2C_PORT_ACCEL, s->addr, &reg, 1, acc, 6,
+	i2c_lock(s->port, 1);
+	ret = i2c_xfer(s->port, s->addr, &reg, 1, acc, 6,
 		       I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_ACCEL, 0);
+	i2c_lock(s->port, 0);
 	mutex_unlock(s->mutex);
 
 	if (ret != EC_SUCCESS)
@@ -439,13 +440,13 @@ static int init(const struct motion_sensor_t *s)
 		mutex_unlock(s->mutex);
 		return ret;
 	}
-	ret = raw_read8(s->addr, reg, &val);
+	ret = raw_read8(s->port, s->addr, reg, &val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
 	}
 	val |= reset_field;
-	ret = raw_write8(s->addr, reg, val);
+	ret = raw_write8(s->port, s->addr, reg, val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
@@ -456,7 +457,7 @@ static int init(const struct motion_sensor_t *s)
 	do {
 		msleep(1);
 
-		ret = raw_read8(s->addr, reg, &val);
+		ret = raw_read8(s->port, s->addr, reg, &val);
 		if (ret != EC_SUCCESS) {
 			mutex_unlock(s->mutex);
 			return ret;
