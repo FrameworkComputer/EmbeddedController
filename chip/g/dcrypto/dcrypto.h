@@ -141,4 +141,12 @@ int DCRYPTO_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
 			const p256_int *digest, const p256_int *r,
 			const p256_int *s);
 
+/*
+ *  HKDF.
+ */
+int DCRYPTO_hkdf(uint8_t *OKM, size_t OKM_len,
+		const uint8_t *salt, size_t salt_len,
+		const uint8_t *IKM, size_t IKM_len,
+		const uint8_t *info, size_t info_len);
+
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

@@ -29,6 +29,7 @@ endif
 chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/bn.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/hmac.o
+chip-$(CONFIG_DCRYPTO)+= dcrypto/hkdf.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/p256.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/p256_ec.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/p256_ecdsa.o

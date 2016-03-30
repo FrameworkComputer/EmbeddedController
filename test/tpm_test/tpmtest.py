@@ -22,6 +22,7 @@ import crypto_test
 import ecc_test
 import ftdi_spi_tpm
 import hash_test
+import hkdf_test
 import rsa_test
 import subcmd
 import upgrade_test
@@ -136,6 +137,7 @@ if __name__ == '__main__':
     crypto_test.crypto_tests(t, os.path.join(root_dir, 'crypto_test.xml'))
     ecc_test.ecc_test(t)
     hash_test.hash_test(t)
+    hkdf_test.hkdf_test(t)
     rsa_test.rsa_test(t)
     upgrade_test.upgrade(t)
   except subcmd.TpmTestError as e:
