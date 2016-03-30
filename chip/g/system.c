@@ -23,8 +23,22 @@ static void check_reset_cause(void)
 	}
 
 	/* Low-power exit (ie, wake from deep sleep) */
-	if (g_rstsrc & GC_PMU_RSTSRC_EXIT_MASK)
-		flags |= RESET_FLAG_WAKE_PIN;
+	if (g_rstsrc & GC_PMU_RSTSRC_EXIT_MASK) {
+		/* This register is cleared by reading it */
+		uint32_t g_exitpd = GR_PMU_EXITPD_SRC;
+
+		if (g_exitpd & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK)
+			flags |= RESET_FLAG_WAKE_PIN;
+		if (g_exitpd & GC_PMU_EXITPD_SRC_UTMI_SUSPEND_N_MASK)
+			flags |= RESET_FLAG_USB_RESUME;
+		if (g_exitpd & (GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER0_MASK |
+				GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER1_MASK))
+			flags |= RESET_FLAG_RTC_ALARM;
+		/* Not yet sure what to do with these */
+		if (g_exitpd & (GC_PMU_EXITPD_SRC_RDD0_PD_EXIT_TIMER_MASK |
+				GC_PMU_EXITPD_SRC_RBOX_WAKEUP_MASK))
+			flags |= RESET_FLAG_OTHER;
+	}
 
 	/* TODO(crosbug.com/p/47289): This bit doesn't work */
 	if (g_rstsrc & GC_PMU_RSTSRC_WDOG_MASK)

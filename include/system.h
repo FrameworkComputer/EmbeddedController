@@ -28,6 +28,7 @@
 #define RESET_FLAG_AP_OFF      (1 << 12)  /* Do not power on AP */
 #define RESET_FLAG_PRESERVED   (1 << 13)  /* Some reset flags preserved from
 					   * previous boot */
+#define RESET_FLAG_USB_RESUME  (1 << 14)  /* USB resume triggered wake */
 
 /* Per chip implementation to save raw RESET_FLAG_ flags. */
 void chip_save_reset_flags(int flags);
