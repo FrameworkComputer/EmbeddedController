@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "link_defs.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -952,19 +953,6 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 	}
 }
 
-/* Endpoint-specific callback for when the USB device recognizes a reset */
-static void ep0_reset(void)
-{
-	/* Reset EP0 address */
-	GWRITE_FIELD(USB, DCFG, DEVADDR, 0);
-	initialize_dma_buffers();
-	expect_setup_packet();
-	/* Clear our internal state */
-	device_state = DS_DEFAULT;
-	configuration_value = 0;
-
-}
-
 /****************************************************************************/
 /* USB device initialization and shutdown routines */
 
@@ -1043,35 +1031,42 @@ static void setup_data_fifos(void)
 		;				/* TODO: timeout 100ms */
 }
 
-static void usb_reset(void)
+static void usb_init_endpoints(void)
 {
 	int ep;
 
-	print_later("usb_reset()", 0, 0, 0, 0, 0);
+	print_later("usb_init_endpoints()", 0, 0, 0, 0, 0);
 
-	ep0_reset();
+	/* Prepare to receive packets on EP0 */
+	initialize_dma_buffers();
+	expect_setup_packet();
+
+	/* Reset the other endpoints */
 	for (ep = 1; ep < USB_EP_COUNT; ep++)
 		usb_ep_reset[ep]();
 }
 
-static void usb_enumdone(void)
+static void usb_reset(void)
 {
-	print_later("usb_enumdone()", 0, 0, 0, 0, 0);
+	print_later("usb_reset()", 0, 0, 0, 0, 0);
+
+	/* Clear our internal state */
+	device_state = DS_DEFAULT;
+	configuration_value = 0;
+
+	/* Clear the device address */
+	GWRITE_FIELD(USB, DCFG, DEVADDR, 0);
+
+	/* Reinitialize all the endpoints */
+	usb_init_endpoints();
 }
 
-static void usb_wakeup(void)
+static void usb_resetdet(void)
 {
-	print_later("usb_wakeup()", 0, 0, 0, 0, 0);
-}
-
-static void usb_early_suspend(void)
-{
-	print_later("usb_early_suspend()", 0, 0, 0, 0, 0);
-}
-
-static void usb_suspend(void)
-{
-	print_later("usb_suspend()", 0, 0, 0, 0, 0);
+	/* TODO: Same as normal reset, right? I think we only get this if we're
+	 * suspended (sleeping) and the host resets us. Try it and see. */
+	print_later("usb_resetdet()", 0, 0, 0, 0, 0);
+	usb_reset();
 }
 
 void usb_interrupt(void)
@@ -1084,20 +1079,31 @@ void usb_interrupt(void)
 
 	print_later("interrupt: GINTSTS 0x%08x", status, 0, 0, 0, 0);
 
-	if (status & GINTSTS(RESETDET))
-		usb_wakeup();
+	/* We can suspend if the host stops talking to us. But if anything else
+	 * comes along (even ERLYSUSP), we should NOT suspend. */
+	if (status & GINTSTS(USBSUSP)) {
+		print_later("usb_suspend()", 0, 0, 0, 0, 0);
+		enable_sleep(SLEEP_MASK_USB_DEVICE);
+	} else {
+		disable_sleep(SLEEP_MASK_USB_DEVICE);
+	}
 
+#ifdef DEBUG_ME
 	if (status & GINTSTS(ERLYSUSP))
-		usb_early_suspend();
+		print_later("usb_early_suspend()", 0, 0, 0, 0, 0);
 
-	if (status & GINTSTS(USBSUSP))
-		usb_suspend();
+	if (status & GINTSTS(WKUPINT))
+		print_later("usb_wakeup()", 0, 0, 0, 0, 0);
+
+	if (status & GINTSTS(ENUMDONE))
+		print_later("usb_enumdone()", 0, 0, 0, 0, 0);
+#endif
+
+	if (status & GINTSTS(RESETDET))
+		usb_resetdet();
 
 	if (status & GINTSTS(USBRST))
 		usb_reset();
-
-	if (status & GINTSTS(ENUMDONE))
-		usb_enumdone();
 
 	/* Endpoint interrupts */
 	if (oepint || iepint) {
@@ -1183,9 +1189,20 @@ void usb_disconnect(void)
 
 void usb_init(void)
 {
-	int i;
+	int i, resume;
 
-	print_later("usb_init()", 0, 0, 0, 0, 0);
+	/* USB is in use */
+	disable_sleep(SLEEP_MASK_USB_DEVICE);
+
+	/*
+	 * Resuming from a deep sleep is a lot like a cold boot, but there are
+	 * few things that we need to do slightly differently. However, we ONLY
+	 * do them if we're really resuming due to a USB wakeup. If we're woken
+	 * for some other reason, we just do a normal USB reset. The host
+	 * doesn't mind.
+	 */
+	resume = ((system_get_reset_flags() & RESET_FLAG_USB_RESUME) &&
+		   (GR_USB_GINTSTS & GC_USB_GINTSTS_WKUPINT_MASK));
 
 	/* TODO(crosbug.com/p/46813): Clean this up. Do only what's needed, and
 	 * use meaningful constants instead of magic numbers. */
@@ -1220,7 +1237,10 @@ void usb_init(void)
 		/* FIXME: Magic number! 14 is for 15MHz! Use 9 for 30MHz */
 		| GUSBCFG_USBTRDTIM(14);
 
-	usb_softreset();
+	if (!resume)
+		/* Don't reset on resume, because some preserved internal state
+		 * will be lost and there's no way to restore it. */
+		usb_softreset();
 
 	GR_USB_GUSBCFG = GUSBCFG_PHYSEL_FS | GUSBCFG_FSINTF_6PIN
 		| GUSBCFG_TOUTCAL(7)
@@ -1233,21 +1253,36 @@ void usb_init(void)
 		GAHBCFG_NP_TXF_EMP_LVL;
 
 	/* Be in disconnected state until we are ready */
-	usb_disconnect();
+	if (!resume)
+		usb_disconnect();
 
-	/* Max speed: USB2 FS */
-	GR_USB_DCFG = DCFG_DEVSPD_FS48 | DCFG_DESCDMA;
+	if (resume)
+		/* DEVADDR is preserved in the USB module during deep sleep,
+		 * but it doesn't show up in USB_DCFG on resume. If we don't
+		 * restore it manually too, it doesn't work. */
+		GR_USB_DCFG = GREG32(PMU, PWRDN_SCRATCH18);
+	else
+		/* Init: USB2 FS, Scatter/Gather DMA, DEVADDR = 0x00 */
+		GR_USB_DCFG |= DCFG_DEVSPD_FS48 | DCFG_DESCDMA;
 
-	/* Setup FIFO configuration */
-	 setup_data_fifos();
+	/* If we've restored a nonzero device address, update our state. */
+	if (GR_USB_DCFG & GC_USB_DCFG_DEVADDR_MASK) {
+		/* Caution: We only have one config TODAY, so there's no real
+		 * difference between DS_CONFIGURED and DS_ADDRESS. */
+		device_state = DS_CONFIGURED;
+		configuration_value = 1;
+	} else {
+		device_state = DS_DEFAULT;
+		configuration_value = 0;
+	}
 
-	/* Device registers have been setup */
-	GR_USB_DCTL |= DCTL_PWRONPRGDONE;
-	udelay(10);
-	GR_USB_DCTL &= ~DCTL_PWRONPRGDONE;
+	/* Now that DCFG.DesDMA is accurate, prepare the FIFOs */
+	setup_data_fifos();
 
-	/* Clear global NAKs */
-	GR_USB_DCTL |= DCTL_CGOUTNAK | DCTL_CGNPINNAK;
+	/* If resuming, reinitialize the endpoints now. For a cold boot we'll
+	 * do this as part of handling the host-driven reset. */
+	if (resume)
+		usb_init_endpoints();
 
 	/* Clear any pending interrupts */
 	for (i = 0; i < 16; i++) {
@@ -1273,16 +1308,23 @@ void usb_init(void)
 		/* Endpoint activity, cleared by the DOEPINT/DIEPINT regs */
 		GINTMSK(OEPINT) | GINTMSK(IEPINT) |
 		/* Reset detected while suspended. Need to wake up. */
-		GINTMSK(RESETDET) |
+		GINTMSK(RESETDET) |		/* TODO: Do we need this? */
 		/* Idle, Suspend detected. Should go to sleep. */
 		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP);
 
+	/* Device registers have been setup */
+	GR_USB_DCTL |= DCTL_PWRONPRGDONE;
+	udelay(10);
+	GR_USB_DCTL &= ~DCTL_PWRONPRGDONE;
+
+	/* Clear global NAKs */
+	GR_USB_DCTL |= DCTL_CGOUTNAK | DCTL_CGNPINNAK;
+
 #ifndef CONFIG_USB_INHIBIT_CONNECT
 	/* Indicate our presence to the USB host */
-	usb_connect();
+	if (!resume)
+		usb_connect();
 #endif
-
-	print_later("usb_init() done", 0, 0, 0, 0, 0);
 }
 #ifndef CONFIG_USB_INHIBIT_INIT
 DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
@@ -1299,4 +1341,7 @@ void usb_release(void)
 	/* disable clocks */
 	clock_enable_module(MODULE_USB, 0);
 	/* TODO: pin-mux */
+
+	/* USB is off, so sleep whenever */
+	enable_sleep(SLEEP_MASK_USB_DEVICE);
 }

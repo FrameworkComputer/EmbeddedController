@@ -5,6 +5,9 @@
 
 #include "common.h"
 #include "console.h"
+#include "pmu.h"
+#include "system.h"
+#include "task.h"
 #include "util.h"
 
 /* This function is assumed to exist, but we don't use it */
@@ -49,16 +52,61 @@ DECLARE_CONSOLE_COMMAND(idle, command_idle,
 			"Set or show the idle action: wfi, sleep, deep sleep",
 			NULL);
 
+static void prepare_to_deep_sleep(void)
+{
+	/* No task switching! */
+	interrupt_disable();
+
+	/*
+	 * Preserve some state prior to deep sleep. Pretty much all we need is
+	 * the device address, since everything else can be reinitialized on
+	 * resume.
+	 */
+	GREG32(PMU, PWRDN_SCRATCH18) = GR_USB_DCFG;
+
+	/* Latch the pinmux values */
+	GREG32(PINMUX, HOLD) = 1;
+
+	/* Wake only from USB for now */
+	GR_PMU_EXITPD_MASK =
+		GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK;
+
+	/* Clamp the USB pins and shut the PHY down. We have to do this in
+	 * three separate steps, or Bad Things happen. */
+	GWRITE_FIELD(USB, PCGCCTL, PWRCLMP, 1);
+	GWRITE_FIELD(USB, PCGCCTL, RSTPDWNMODULE, 1);
+	GWRITE_FIELD(USB, PCGCCTL, STOPPCLK, 1);
+
+	/* Get ready... */
+	GR_PMU_LOW_POWER_DIS =
+		/* The next "wfi" will trigger it */
+		GC_PMU_LOW_POWER_DIS_START_MASK |
+		/* ... with these rails off */
+		GC_PMU_LOW_POWER_DIS_VDDL_MASK | /* <= this means deep sleep */
+		GC_PMU_LOW_POWER_DIS_VDDIOF_MASK |
+		GC_PMU_LOW_POWER_DIS_VDDXO_MASK |
+		GC_PMU_LOW_POWER_DIS_JTR_RC_MASK;
+}
+
 /* Custom idle task, executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
+	int sleep_ok;
+
 	while (1) {
 
 		/* Don't even bother unless we've enabled it */
 		if (idle_action == IDLE_WFI)
 			goto wfi;
 
-		/* TODO(wfrichar): sleep/deep-sleep stuff goes here... */
+		/* Anyone still busy? */
+		sleep_ok = DEEP_SLEEP_ALLOWED;
+
+		/* We're allowed to sleep now, so set it up. */
+		if (sleep_ok)
+			if (idle_action == IDLE_DEEP_SLEEP)
+				prepare_to_deep_sleep();
+		/* Normal sleep is not yet implemented */
 
 wfi:
 		/* Wait for the next irq event. This stops the CPU clock and
