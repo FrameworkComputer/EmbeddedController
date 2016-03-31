@@ -10,11 +10,6 @@
 #include "task.h"
 #include "util.h"
 
-/* This function is assumed to exist, but we don't use it */
-void clock_refresh_console_in_use(void)
-{
-}
-
 /* What to do when we're just waiting */
 static enum {
 	IDLE_WFI,				/* default */
@@ -123,10 +118,16 @@ void delay_sleep_by(uint32_t us)
 		next_sleep_time = tmp;
 }
 
+/* Wait a good long time after any console input, in case there's more. */
+void clock_refresh_console_in_use(void)
+{
+	delay_sleep_by(10 * SECOND);
+}
+
 /* Custom idle task, executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-	int sleep_ok, sleep_delay_passed, prev_ok = 0;
+	int sleep_ok, sleep_delay_passed;
 
 	/* Preserved across soft reboots, but not hard */
 	idle_action = GREG32(PMU, PWRDN_SCRATCH17);
@@ -138,18 +139,7 @@ void __idle(void)
 		/* Anyone still busy? */
 		sleep_ok = DEEP_SLEEP_ALLOWED;
 
-		/*
-		 * We'll always wait a little bit before sleeping no matter
-		 * what. This is more likely to let any console output finish
-		 * than calling clock_refresh_console_in_use(), because that
-		 * function is called BEFORE waking the console task, not after
-		 * it runs. We can't call cflush() here because that wakes a
-		 * task to do it and so we're not idle any more.
-		 */
-		if (sleep_ok && !prev_ok)
-			delay_sleep_by(200 * MSEC);
-
-		prev_ok = sleep_ok;
+		/* Wait a bit, just in case */
 		sleep_delay_passed = timestamp_expired(next_sleep_time, 0);
 
 		/* If it hasn't yet been long enough, check again when it is */
