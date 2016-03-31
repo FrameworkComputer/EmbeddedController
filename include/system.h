@@ -369,6 +369,13 @@ static inline void disable_sleep(uint32_t mask)
 }
 
 /**
+ * Postpone sleeping for at least this long, regardless of sleep_mask.
+ *
+ * @param Amount of time to postpone sleeping
+ */
+void delay_sleep_by(uint32_t us);
+
+/**
  * Use hibernate module to set up an RTC interrupt at a given
  * time from now
  *

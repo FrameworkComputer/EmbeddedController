@@ -67,9 +67,29 @@ static void prepare_to_deep_sleep(void)
 	/* Latch the pinmux values */
 	GREG32(PINMUX, HOLD) = 1;
 
-	/* Wake only from USB for now */
+	/*
+	 * Specify the PINMUX pads that can wake us.
+	 * A1 is UART RX. Idle is high, so wake on low level
+	 * A12 is SPS_CS_L. Also wake on low.
+	 * HEY: Use something in gpio.inc to identify these!
+	 */
+	GREG32(PINMUX, EXITEN0) =
+		GC_PINMUX_EXITEN0_DIOA1_MASK |
+		GC_PINMUX_EXITEN0_DIOA12_MASK;
+
+	GREG32(PINMUX, EXITEDGE0) = 0;		/* level sensitive */
+
+	GREG32(PINMUX, EXITINV0) =		/* low or falling */
+		GC_PINMUX_EXITINV0_DIOA1_MASK |
+		GC_PINMUX_EXITINV0_DIOA12_MASK;
+
+	/* Enable all possible internal wake sources */
 	GR_PMU_EXITPD_MASK =
-		GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK;
+		GC_PMU_EXITPD_MASK_PIN_PD_EXIT_MASK |
+		GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK |
+		GC_PMU_EXITPD_MASK_RDD0_PD_EXIT_TIMER_MASK |
+		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER0_MASK |
+		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER1_MASK;
 
 	/* Clamp the USB pins and shut the PHY down. We have to do this in
 	 * three separate steps, or Bad Things happen. */
@@ -88,10 +108,23 @@ static void prepare_to_deep_sleep(void)
 		GC_PMU_LOW_POWER_DIS_JTR_RC_MASK;
 }
 
+/* The time in the future at which sleeping will be allowed. */
+static timestamp_t next_sleep_time;
+
+/* Update the future sleep time. */
+void delay_sleep_by(uint32_t us)
+{
+	timestamp_t tmp = get_time();
+
+	tmp.val += us;
+	if (tmp.val > next_sleep_time.val)
+		next_sleep_time = tmp;
+}
+
 /* Custom idle task, executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-	int sleep_ok;
+	int sleep_ok, sleep_delay_passed, prev_ok = 0;
 
 	while (1) {
 
@@ -102,8 +135,26 @@ void __idle(void)
 		/* Anyone still busy? */
 		sleep_ok = DEEP_SLEEP_ALLOWED;
 
-		/* We're allowed to sleep now, so set it up. */
-		if (sleep_ok)
+		/*
+		 * We'll always wait a little bit before sleeping no matter
+		 * what. This is more likely to let any console output finish
+		 * than calling clock_refresh_console_in_use(), because that
+		 * function is called BEFORE waking the console task, not after
+		 * it runs. We can't call cflush() here because that wakes a
+		 * task to do it and so we're not idle any more.
+		 */
+		if (sleep_ok && !prev_ok)
+			delay_sleep_by(200 * MSEC);
+
+		prev_ok = sleep_ok;
+		sleep_delay_passed = timestamp_expired(next_sleep_time, 0);
+
+		/* If it hasn't yet been long enough, check again when it is */
+		if (!sleep_delay_passed)
+			timer_arm(next_sleep_time, TASK_ID_IDLE);
+
+		/* We're allowed to deep sleep, so set it up. */
+		if (sleep_ok && sleep_delay_passed)
 			if (idle_action == IDLE_DEEP_SLEEP)
 				prepare_to_deep_sleep();
 		/* Normal sleep is not yet implemented */

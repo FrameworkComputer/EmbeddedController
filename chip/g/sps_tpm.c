@@ -7,6 +7,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "sps.h"
+#include "system.h"
 #include "tpm_registers.h"
 #include "util.h"
 
@@ -123,6 +124,9 @@ static void init_new_cycle(void)
 	sps_tpm_state = SPS_TPM_STATE_RECEIVING_HEADER;
 	rx_fifo_base = sps_rx_fifo_wrptr();
 	sps_tx_status(TPM_STALL_ASSERT);
+	/* We're just waiting for a new command, so we could sleep. */
+	delay_sleep_by(1 * SECOND);
+	enable_sleep(SLEEP_MASK_SPI);
 }
 
 /* Extract R/W bit, register addresss, and data count from 4-byte header */
@@ -139,7 +143,9 @@ static int header_says_to_read(uint8_t *data, uint32_t *reg, uint32_t *count)
 /* actual RX FIFO handler (runs in interrupt context) */
 static void process_rx_data(uint8_t *data, size_t data_size)
 {
-	/* We're collecting incoming bytes ... */
+	/* We're receiving some bytes, so don't sleep */
+	disable_sleep(SLEEP_MASK_SPI);
+
 	if ((rxbuf_count + data_size) > RXBUF_MAX) {
 		CPRINTS("TPM SPI input overflow: %d + %d > %d in state %d",
 			rxbuf_count, data_size, RXBUF_MAX, sps_tpm_state);
@@ -266,6 +272,9 @@ static void sps_tpm_disable(void)
 {
 	sps_tpm_state = SPS_TPM_STATE_PONDERING;
 	sps_unregister_rx_handler();
+	/* We don't care anymore, so we can sleep whenever */
+	delay_sleep_by(0);
+	enable_sleep(SLEEP_MASK_SPI);
 }
 
 static int command_sps_tpm(int argc, char **argv)
