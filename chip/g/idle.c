@@ -63,6 +63,8 @@ static void prepare_to_deep_sleep(void)
 	 * resume.
 	 */
 	GREG32(PMU, PWRDN_SCRATCH18) = GR_USB_DCFG;
+	/* And the idle action */
+	GREG32(PMU, PWRDN_SCRATCH17) = idle_action;
 
 	/* Latch the pinmux values */
 	GREG32(PINMUX, HOLD) = 1;
@@ -126,11 +128,12 @@ void __idle(void)
 {
 	int sleep_ok, sleep_delay_passed, prev_ok = 0;
 
-	while (1) {
+	/* Preserved across soft reboots, but not hard */
+	idle_action = GREG32(PMU, PWRDN_SCRATCH17);
+	if (idle_action >= NUM_CHOICES)
+		idle_action = IDLE_WFI;
 
-		/* Don't even bother unless we've enabled it */
-		if (idle_action == IDLE_WFI)
-			goto wfi;
+	while (1) {
 
 		/* Anyone still busy? */
 		sleep_ok = DEEP_SLEEP_ALLOWED;
@@ -159,7 +162,6 @@ void __idle(void)
 				prepare_to_deep_sleep();
 		/* Normal sleep is not yet implemented */
 
-wfi:
 		/* Wait for the next irq event. This stops the CPU clock and
 		 * may trigger sleep or deep sleep if enabled. */
 		asm("wfi");
