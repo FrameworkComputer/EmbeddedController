@@ -47,22 +47,10 @@ DECLARE_CONSOLE_COMMAND(idle, command_idle,
 			"Set or show the idle action: wfi, sleep, deep sleep",
 			NULL);
 
-static void prepare_to_deep_sleep(void)
+static void prepare_to_sleep(void)
 {
 	/* No task switching! */
 	interrupt_disable();
-
-	/*
-	 * Preserve some state prior to deep sleep. Pretty much all we need is
-	 * the device address, since everything else can be reinitialized on
-	 * resume.
-	 */
-	GREG32(PMU, PWRDN_SCRATCH18) = GR_USB_DCFG;
-	/* And the idle action */
-	GREG32(PMU, PWRDN_SCRATCH17) = idle_action;
-
-	/* Latch the pinmux values */
-	GREG32(PINMUX, HOLD) = 1;
 
 	/*
 	 * Specify the PINMUX pads that can wake us.
@@ -88,22 +76,50 @@ static void prepare_to_deep_sleep(void)
 		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER0_MASK |
 		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER1_MASK;
 
-	/* Clamp the USB pins and shut the PHY down. We have to do this in
-	 * three separate steps, or Bad Things happen. */
-	GWRITE_FIELD(USB, PCGCCTL, PWRCLMP, 1);
-	GWRITE_FIELD(USB, PCGCCTL, RSTPDWNMODULE, 1);
-	GWRITE_FIELD(USB, PCGCCTL, STOPPCLK, 1);
-
-	/* Get ready... */
+	/* Which rails should we turn off? */
 	GR_PMU_LOW_POWER_DIS =
-		/* The next "wfi" will trigger it */
-		GC_PMU_LOW_POWER_DIS_START_MASK |
-		/* ... with these rails off */
-		GC_PMU_LOW_POWER_DIS_VDDL_MASK | /* <= this means deep sleep */
 		GC_PMU_LOW_POWER_DIS_VDDIOF_MASK |
 		GC_PMU_LOW_POWER_DIS_VDDXO_MASK |
 		GC_PMU_LOW_POWER_DIS_JTR_RC_MASK;
+
+	if (idle_action == IDLE_DEEP_SLEEP) {
+		/*
+		 * Preserve some state prior to deep sleep. Pretty much all we
+		 * need is the device address, since everything else can be
+		 * reinitialized on resume.
+		 */
+		GREG32(PMU, PWRDN_SCRATCH18) = GR_USB_DCFG;
+		/* And the idle action */
+		GREG32(PMU, PWRDN_SCRATCH17) = idle_action;
+
+		/* Latch the pinmux values */
+		GREG32(PINMUX, HOLD) = 1;
+
+		/* Clamp the USB pins and shut the PHY down. We have to do this
+		 * in three separate steps, or Bad Things happen. */
+		GWRITE_FIELD(USB, PCGCCTL, PWRCLMP, 1);
+		GWRITE_FIELD(USB, PCGCCTL, RSTPDWNMODULE, 1);
+		GWRITE_FIELD(USB, PCGCCTL, STOPPCLK, 1);
+
+		/* Shut down one more power rail for deep sleep */
+		GR_PMU_LOW_POWER_DIS |=
+			GC_PMU_LOW_POWER_DIS_VDDL_MASK;
+	}
+
+	/* The next "wfi" will trigger it */
+	GR_PMU_LOW_POWER_DIS |= GC_PMU_LOW_POWER_DIS_START_MASK;
 }
+
+/* This is for normal sleep only. Deep sleep resumes with a warm boot. */
+static void resume_from_sleep(void)
+{
+	/* Prevent accidental reentry */
+	GR_PMU_LOW_POWER_DIS = 0;
+
+	/* Allow task switching again */
+	interrupt_enable();
+}
+
 
 /* The time in the future at which sleeping will be allowed. */
 static timestamp_t next_sleep_time;
@@ -146,23 +162,24 @@ void __idle(void)
 		if (!sleep_delay_passed)
 			timer_arm(next_sleep_time, TASK_ID_IDLE);
 
-		/* We're allowed to deep sleep, so set it up. */
+		/* We're allowed to sleep now, so set it up. */
 		if (sleep_ok && sleep_delay_passed)
-			if (idle_action == IDLE_DEEP_SLEEP)
-				prepare_to_deep_sleep();
-		/* Normal sleep is not yet implemented */
+			if (idle_action != IDLE_WFI)
+				prepare_to_sleep();
 
 		/* Wait for the next irq event. This stops the CPU clock and
 		 * may trigger sleep or deep sleep if enabled. */
 		asm("wfi");
 
 		/*
-		 * TODO: Normal sleep resumes by handling the interrupt, but we
-		 * need to clear PMU_LOW_POWER_DIS right away or we might sleep
-		 * again by accident. We can't do that here because we don't
-		 * get here until the next idle, so we'll have to do it in the
-		 * interrupt handler or when task switching. Deep sleep resumes
-		 * with a warm boot, which handles it differently.
+		 * Note: After resuming from normal sleep we should clear
+		 * PMU_LOW_POWER_DIS to prevent sleeping again by accident.
+		 * Normal sleep eventually resumes here after the waking
+		 * interrupt has been handled, but since all the other tasks
+		 * will get a chance to run first it might be some time before
+		 * that happens. If we find ourselves going back into sleep
+		 * unexpectedly, that might be why.
 		 */
+		resume_from_sleep();
 	}
 }
