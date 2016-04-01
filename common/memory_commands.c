@@ -18,6 +18,7 @@ enum format {
 	FMT_STRING,
 };
 
+#ifdef CONFIG_CMD_MD
 static void show_val(uint32_t address, uint32_t index, enum format fmt)
 {
 	uint32_t val;
@@ -54,7 +55,6 @@ static void show_val(uint32_t address, uint32_t index, enum format fmt)
 	}
 	cflush();
 }
-
 
 static int command_mem_dump(int argc, char **argv)
 {
@@ -110,6 +110,7 @@ DECLARE_CONSOLE_COMMAND(md, command_mem_dump,
 			"[.b|.h|.s] addr [count]",
 			"dump memory values, optionally specifying the format",
 			NULL);
+#endif /* CONFIG_CMD_MD */
 
 static int command_read_word(int argc, char **argv)
 {

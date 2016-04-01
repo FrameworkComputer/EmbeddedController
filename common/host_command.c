@@ -868,6 +868,7 @@ DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
 			NULL);
 #endif /* CONFIG_CMD_HOSTCMD */
 
+#ifdef CONFIG_CMD_HCDEBUG
 static int command_hcdebug(int argc, char **argv)
 {
 	if (argc > 1) {
@@ -892,3 +893,4 @@ DECLARE_CONSOLE_COMMAND(hcdebug, command_hcdebug,
 			"hcdebug [off | normal | every | params]",
 			"Set host command debug output mode",
 			NULL);
+#endif /* CONFIG_CMD_HCDEBUG */
