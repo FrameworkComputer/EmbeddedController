@@ -191,7 +191,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	case VDO_CMD_VERSION:
 		/* guarantee last byte of payload is null character */
 		*(payload + cnt - 1) = 0;
-		CPRINTF("version: %s\n", (char *)(payload+1));
+		CPRINTF("ver: %s\n", (char *)(payload+1));
 		break;
 	case VDO_CMD_READ_INFO:
 	case VDO_CMD_SEND_INFO:
