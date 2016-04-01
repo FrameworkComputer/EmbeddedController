@@ -75,6 +75,19 @@ void FtdiStop(void)
 	mpsse_ = NULL;
 }
 
+/*
+ * If the TPM is asleep we may need to poke it once to wake it up. Just assert
+ * the CS briefly without sending any data, then wait a bit to be sure it's
+ * awake.
+ */
+static void FtdiSpiPoke(void)
+{
+	Start(mpsse_);
+	usleep(1000);
+	Stop(mpsse_);
+	usleep(60000);
+}
+
 static void StartTransaction(int read_write, size_t bytes, unsigned addr)
 {
 	struct SpiFrameHeader header;
@@ -209,6 +222,8 @@ int FtdiSpiInit(uint32_t freq, int enable_debug)
 
 	/* Just in case, make sure bootsrap is not triggered. */
 	PinLow(mpsse_, GPIOL0);
+
+	FtdiSpiPoke();
 
 	FtdiReadReg(TPM_DID_VID_REG, sizeof(did_vid), &did_vid);
 
