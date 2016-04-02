@@ -27,6 +27,5 @@ void jtag_pre_init(void)
 	GWRITE_FIELD(USB, PCGCCTL, PWRCLMP, 0);
 
 	/* Unfreeze the PINMUX */
-	GREG32(PINMUX, EXITEN0) = 0;
 	GREG32(PINMUX, HOLD) = 0;
 }

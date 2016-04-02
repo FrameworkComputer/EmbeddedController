@@ -240,11 +240,16 @@ static void sps_init(void)
 {
 	pmu_clock_en(PERIPH_SPS);
 
-	GWRITE_FIELD(PINMUX, DIOA2_CTL, IE, 1);
-	GWRITE_FIELD(PINMUX, DIOA6_CTL, IE, 1);
-	GWRITE_FIELD(PINMUX, DIOA12_CTL, IE, 1);
-	GWRITE_FIELD(PINMUX, DIOA10_CTL, IE, 0);
+	/* The pinmux connections are preset, but we have to set IN/OUT */
+	GWRITE_FIELD(PINMUX, DIOA2_CTL, IE, 1);	 /* SPS_MOSI */
+	GWRITE_FIELD(PINMUX, DIOA6_CTL, IE, 1);	 /* SPS_CLK */
+	GWRITE_FIELD(PINMUX, DIOA10_CTL, IE, 0); /* SPS_MISO */
+	GWRITE_FIELD(PINMUX, DIOA12_CTL, IE, 1); /* SPS_CS_L */
 
+	/* Allow SPS_CS_L to wake from sleep */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA12, 1);   /* enable powerdown exit */
+	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA12, 0); /* level sensitive */
+	GWRITE_FIELD(PINMUX, EXITINV0, DIOA12, 1);  /* wake on low */
 }
 DECLARE_HOOK(HOOK_INIT, sps_init, HOOK_PRIO_DEFAULT);
 

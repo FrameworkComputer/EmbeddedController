@@ -187,13 +187,38 @@ static int connect_dio_to_gpio(struct pinmux const *p)
 
 static void connect_pinmux(struct pinmux const *p)
 {
+	uint32_t bitmask;
+
+	/* Connect the pinmux DIO to the right thing */
 	if ((p->flags & DIO_ENABLE_DIRECT_INPUT) ||
 	    ((p->flags & DIO_TO_PERIPHERAL) ?
 	     connect_dio_to_peripheral(p) :
 	     connect_dio_to_gpio(p)))
+		/* and maybe enable the pin as an input */
 		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
 			      DIO_CTL_IE_MASK,
 			      DIO_CTL_IE_LSB, 1);
+
+	/* Enable any wake pins needed to exit low-power modes */
+	if ((p->flags & DIO_WAKE_EN0) &&
+	    (p->dio.offset <= GC_PINMUX_DIOB7_SEL_OFFSET)) { /* not VIOn ! */
+		bitmask = (1 << (p->dio.offset / 8));
+
+		/* enable pad as wake source */
+		GREG32(PINMUX, EXITEN0) |= bitmask;
+
+		/* level (0) or edge sensitive (1) */
+		if (p->flags & DIO_WAKE_EDGE0)
+			GREG32(PINMUX, EXITEDGE0) |= bitmask;
+		else
+			GREG32(PINMUX, EXITEDGE0) &= ~bitmask;
+
+		/* high/rising (0) or low/falling (1) */
+		if (p->flags & DIO_WAKE_INV0)
+			GREG32(PINMUX, EXITINV0) |= bitmask;
+		else
+			GREG32(PINMUX, EXITINV0) &= ~bitmask;
+	}
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)
@@ -294,7 +319,7 @@ static void show_pinmux(const char *name, int i, int ofs)
 	if (sel == 0 && (ctl & (0xf << 2)) == 0)
 		return;
 
-	ccprintf("%08x: %s%d   %2d %s%s%s%s",
+	ccprintf("%08x: %s%-2d  %2d %s%s%s%s",
 		 GC_PINMUX_BASE_ADDR + i * 8 + ofs,
 		 name, i, sel,
 		 (ctl & (1<<2)) ? " IN" : "",
@@ -333,7 +358,7 @@ static void show_pinmux_gpio(const char *name, int i, int ofs)
 	if (sel == 0)
 		return;
 
-	ccprintf("%08x: %s%d   %2d",
+	ccprintf("%08x: %s%-2d  %2d",
 		 GC_PINMUX_BASE_ADDR + i * 4 + ofs,
 		 name, i, sel);
 	print_dio_str(sel);

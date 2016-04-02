@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "pmu.h"
+#include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
@@ -51,22 +51,6 @@ static void prepare_to_sleep(void)
 {
 	/* No task switching! */
 	interrupt_disable();
-
-	/*
-	 * Specify the PINMUX pads that can wake us.
-	 * A1 is UART RX. Idle is high, so wake on low level
-	 * A12 is SPS_CS_L. Also wake on low.
-	 * HEY: Use something in gpio.inc to identify these!
-	 */
-	GREG32(PINMUX, EXITEN0) =
-		GC_PINMUX_EXITEN0_DIOA1_MASK |
-		GC_PINMUX_EXITEN0_DIOA12_MASK;
-
-	GREG32(PINMUX, EXITEDGE0) = 0;		/* level sensitive */
-
-	GREG32(PINMUX, EXITINV0) =		/* low or falling */
-		GC_PINMUX_EXITINV0_DIOA1_MASK |
-		GC_PINMUX_EXITINV0_DIOA12_MASK;
 
 	/* Enable all possible internal wake sources */
 	GR_PMU_EXITPD_MASK =
