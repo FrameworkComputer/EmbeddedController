@@ -31,7 +31,7 @@ enum bd99955_charge_port {
 #define CHARGE_V_MIN	3072
 #define CHARGE_V_STEP	16
 #define CHARGE_I_MAX	16320
-#define CHARGE_I_MIN	0
+#define CHARGE_I_MIN	64
 #define CHARGE_I_OFF	0
 #define CHARGE_I_STEP	64
 #define INPUT_I_MAX	16352
