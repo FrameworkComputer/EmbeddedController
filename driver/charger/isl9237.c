@@ -29,6 +29,8 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
+static int learn_mode;
+
 /* Charger parameters */
 static const struct charger_info isl9237_charger_info = {
 	.name         = CHARGER_NAME,
@@ -172,8 +174,17 @@ int charger_get_status(int *status)
 
 int charger_set_mode(int mode)
 {
+	int rv = EC_SUCCESS;
+
+	/*
+	 * See crosbug.com/p/51196.  Always disable learn mode unless it was set
+	 * explicitly.
+	 */
+	if (!learn_mode)
+		rv = charger_discharge_on_ac(0);
+
 	/* ISL9237 does not support inhibit mode setting. */
-	return EC_SUCCESS;
+	return rv;
 }
 
 int charger_get_current(int *current)
@@ -272,7 +283,10 @@ int charger_discharge_on_ac(int enable)
 	else
 		control1 &= ~ISL9237_C1_LEARN_MODE_ENABLE;
 
-	return raw_write16(ISL9237_REG_CONTROL1, control1);
+	rv = raw_write16(ISL9237_REG_CONTROL1, control1);
+
+	learn_mode = !rv && enable;
+	return rv;
 }
 
 /*****************************************************************************/
