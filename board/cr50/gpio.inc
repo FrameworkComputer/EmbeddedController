@@ -53,9 +53,9 @@ PINMUX(GPIO(BATT_PRES),       M2, 0)
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
 PINMUX(FUNC(UART0_RX),        A1, DIO_INPUT | DIO_WAKE_LOW)
-PINMUX(FUNC(UART1_TX),        A3, DIO_INPUT)	/* AP console */
+PINMUX(FUNC(UART1_TX),        A3, DIO_OUTPUT)	/* AP console */
 PINMUX(FUNC(UART1_RX),        A7, DIO_INPUT)
-PINMUX(FUNC(UART2_TX),        B5, DIO_INPUT)	/* EC console */
+PINMUX(FUNC(UART2_TX),        B5, DIO_OUTPUT)	/* EC console */
 PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)
 
 /* I2C pins are bi-directional */

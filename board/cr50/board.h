@@ -29,6 +29,7 @@
 #define CONFIG_USB_HID
 #define CONFIG_USB_BLOB
 
+#define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USB
 
 #define CONFIG_USB_PID 0x5014
@@ -81,16 +82,22 @@ enum usb_strings {
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_BLOB    0
 #define USB_IFACE_HID     1
-#define USB_IFACE_COUNT   2
+#define USB_IFACE_AP      2
+#define USB_IFACE_EC      3
+#define USB_IFACE_COUNT   4
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
 #define USB_EP_BLOB      1
 #define USB_EP_HID       2
-#define USB_EP_COUNT     3
+#define USB_EP_AP        3
+#define USB_EP_EC        4
+#define USB_EP_COUNT     5
 
 /* UART indexes (use define rather than enum to expand them) */
 #define UART_CR50	0
+#define UART_AP		1
+#define UART_EC		2
 
 #define UARTN UART_CR50
 
