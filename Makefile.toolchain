@@ -7,18 +7,23 @@
 #
 
 # Toolchain configuration
-HOST_CROSS_COMPILE ?= x86_64-pc-linux-gnu-
 
-CC=ccache $(CROSS_COMPILE)gcc
-CPP=ccache $(CROSS_COMPILE)cpp
+# Try not to assume too much about optional tools and prefixes
+CCACHE:=$(shell which ccache 2>/dev/null)
+ifeq ($(origin HOST_CROSS_COMPILE),undefined)
+HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-gcc 2>/dev/null),x86_64-pc-linux-gnu-,)
+endif
+
+CC=$(CCACHE) $(CROSS_COMPILE)gcc
+CPP=$(CCACHE) $(CROSS_COMPILE)cpp
 LD=$(CROSS_COMPILE)ld
 NM=$(CROSS_COMPILE)nm
 OBJCOPY=$(CROSS_COMPILE)objcopy
 OBJDUMP=$(CROSS_COMPILE)objdump
 PKG_CONFIG?=pkg-config
-BUILDCC?=ccache gcc
-HOSTCC?=ccache $(HOST_CROSS_COMPILE)gcc
-HOSTCXX?=ccache $(HOST_CROSS_COMPILE)g++
+BUILDCC?=$(CCACHE) gcc
+HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)gcc
+HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)g++
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
