@@ -237,7 +237,13 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 static void board_pmic_init(void)
 {
-	/* No need to re-init PMIC since settings are sticky across sysjump */
+	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x04);
+
+	/*
+	 * No need to re-init below settings since they are present on all MP
+	 * ROs and PMIC settings are sticky across sysjump
+	 */
 	if (system_jumped_to_this_image())
 		return;
 
