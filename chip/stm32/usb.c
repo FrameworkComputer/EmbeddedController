@@ -7,6 +7,7 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "link_defs.h"
@@ -34,6 +35,12 @@
 #define CONFIG_USB_BCD_DEV 0x0100 /* 1.00 */
 #endif
 
+#ifndef CONFIG_USB_SERIALNO
+#define USB_STR_SERIALNO 0
+#else
+static int usb_load_serial(void);
+#endif
+
 /* USB Standard Device Descriptor */
 static const struct usb_device_descriptor dev_desc = {
 	.bLength = USB_DT_DEVICE_SIZE,
@@ -48,7 +55,7 @@ static const struct usb_device_descriptor dev_desc = {
 	.bcdDevice = CONFIG_USB_BCD_DEV,
 	.iManufacturer = USB_STR_VENDOR,
 	.iProduct = USB_STR_PRODUCT,
-	.iSerialNumber = 0,
+	.iSerialNumber = USB_STR_SERIALNO,
 	.bNumConfigurations = 1
 };
 
@@ -84,6 +91,8 @@ static int set_addr;
 static int desc_left;
 /* pointer to descriptor data if any */
 static const uint8_t *desc_ptr;
+
+
 
 void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet)
 {
@@ -137,7 +146,12 @@ static void ep0_rx(void)
 			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
 				goto unknown_req;
-			desc = usb_strings[idx];
+#ifdef CONFIG_USB_SERIALNO
+			if (idx == USB_STR_SERIALNO)
+				desc = (uint8_t *)usb_serialno_desc;
+			else
+#endif
+				desc = usb_strings[idx];
 			len = desc[0];
 			break;
 		case USB_DT_DEVICE_QUALIFIER: /* Get device qualifier desc */
@@ -307,6 +321,9 @@ void usb_init(void)
 	/* set interrupts mask : reset/correct tranfer/errors */
 	STM32_USB_CNTR = 0xe400;
 
+#ifdef CONFIG_USB_SERIALNO
+	usb_load_serial();
+#endif
 #ifndef CONFIG_USB_INHIBIT_CONNECT
 	usb_connect();
 #endif
@@ -402,3 +419,94 @@ void *memcpy_from_usbram(void *dest, const void *src, size_t n)
 
 	return dest;
 }
+
+#ifdef CONFIG_USB_SERIALNO
+/* This will be subbed into USB_STR_SERIALNO. */
+struct usb_string_desc *usb_serialno_desc =
+	USB_WR_STRING_DESC(DEFAULT_SERIALNO);
+
+/* Update serial number */
+static int usb_set_serial(const char *serialno)
+{
+	struct usb_string_desc *sd = usb_serialno_desc;
+	int i;
+
+	if (!serialno)
+		return EC_ERROR_INVAL;
+
+	/* Convert into unicode usb string desc. */
+	for (i = 0; i < USB_STRING_LEN; i++) {
+		sd->_data[i] = serialno[i];
+		if (serialno[i] == 0)
+			break;
+	}
+	/* Count wchars (w/o null terminator) plus size & type bytes. */
+	sd->_len = (i * 2) + 2;
+	sd->_type = USB_DT_STRING;
+
+	return EC_SUCCESS;
+}
+
+/* Retrieve serial number from pstate flash. */
+static int usb_load_serial(void)
+{
+	const char *serialno;
+	int rv;
+
+	serialno = flash_read_serial();
+	if (!serialno)
+		return EC_ERROR_ACCESS_DENIED;
+
+	rv = usb_set_serial(serialno);
+	return rv;
+}
+
+/* Save serial number into pstate region. */
+static int usb_save_serial(const char *serialno)
+{
+	int rv;
+
+	if (!serialno)
+		return EC_ERROR_INVAL;
+
+	/* Save this new serial number to flash. */
+	rv = flash_write_serial(serialno);
+	if (rv)
+		return rv;
+
+	/* Load this new serial number to memory. */
+	rv = usb_load_serial();
+	return rv;
+}
+
+static int command_serialno(int argc, char **argv)
+{
+	struct usb_string_desc *sd = usb_serialno_desc;
+	char buf[USB_STRING_LEN];
+	int rv = EC_SUCCESS;
+	int i;
+
+	if (argc != 1) {
+		if ((strcasecmp(argv[1], "set") == 0) &&
+		    (argc == 3)) {
+			ccprintf("Saving serial number\n");
+			rv = usb_save_serial(argv[2]);
+		} else if ((strcasecmp(argv[1], "load") == 0) &&
+			   (argc == 2)) {
+			ccprintf("Loading serial number\n");
+			rv = usb_load_serial();
+		} else
+			return EC_ERROR_INVAL;
+	}
+
+	for (i = 0; i < USB_STRING_LEN; i++)
+		buf[i] = sd->_data[i];
+	ccprintf("Serial number: %s\n", buf);
+	return rv;
+}
+
+DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
+	"load/set [value]",
+	"Read and write USB serial number",
+	NULL);
+#endif

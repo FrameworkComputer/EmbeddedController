@@ -245,4 +245,20 @@ uint32_t flash_get_protect(void);
  */
 int flash_set_protect(uint32_t mask, uint32_t flags);
 
+/**
+ * Get the serial number from flash.
+ *
+ * @return char * ascii serial number string.
+ */
+const char *flash_read_serial(void);
+
+/**
+ * Set the serial number in flash.
+ *
+ * @param serialno	ascii serial number string < 30 char.
+ *
+ * @return success status.
+ */
+int flash_write_serial(const char *serialno);
+
 #endif  /* __CROS_EC_FLASH_H */

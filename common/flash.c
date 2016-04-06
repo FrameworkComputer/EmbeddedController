@@ -35,17 +35,24 @@
 
 #ifdef CONFIG_FLASH_PSTATE_BANK
 /* Persistent protection state - emulates a SPI status register for flashrom */
-struct persist_state {
-	uint8_t version;            /* Version of this struct */
-	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
-	uint8_t reserved[2];        /* Reserved; set 0 */
-};
-
-#define PERSIST_STATE_VERSION 2  /* Expected persist_state.version */
+/* NOTE: It's not expected that RO and RW will support
+ * differing PSTATE versions. */
+#define PERSIST_STATE_VERSION 3  /* Expected persist_state.version */
+#define SERIALNO_MAX 30
 
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
 #define PERSIST_FLAG_PROTECT_RO 0x02
+#define PSTATE_VALID_FLAGS	(1 << 0)
+#define PSTATE_VALID_SERIALNO	(1 << 1)
+
+struct persist_state {
+	uint8_t version;            /* Version of this struct */
+	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
+	uint8_t valid_fields;       /* Flags for valid data. */
+	uint8_t reserved;           /* Reserved; set 0 */
+	uint8_t serialno[SERIALNO_MAX]; /* Serial number. */
+};
 
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 
@@ -142,6 +149,7 @@ static uint32_t flash_read_pstate(void)
 		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
 
 	if ((pstate->version == PERSIST_STATE_VERSION) &&
+	    (pstate->valid_fields & PSTATE_VALID_FLAGS) &&
 	    (pstate->flags & PERSIST_FLAG_PROTECT_RO)) {
 		/* Lock flag is known to be set */
 		return EC_FLASH_PROTECT_RO_AT_BOOT;
@@ -155,22 +163,32 @@ static uint32_t flash_read_pstate(void)
 }
 
 /**
- * Write persistent state from pstate, erasing if necessary.
+ * Read and return persistent serial number.
+ */
+static const char *flash_read_pstate_serial(void)
+{
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+
+	if ((pstate->version == PERSIST_STATE_VERSION) &&
+	    (pstate->valid_fields & PSTATE_VALID_SERIALNO)) {
+		return (const char *)(pstate->serialno);
+	}
+
+	return 0;
+}
+
+/**
+ * Write persistent state after erasing.
  *
- * @param flags		New flash write protect flags to set in pstate.
+ * @param pstate	New data to set in pstate. NOT memory mapped
+ *                      old pstate as it will be erased.
  * @return EC_SUCCESS, or nonzero if error.
  */
-static int flash_write_pstate(uint32_t flags)
+static int flash_write_pstate_data(struct persist_state *newpstate)
 {
-	struct persist_state pstate;
 	int rv;
-
-	/* Only check the flags we write to pstate */
-	flags &= EC_FLASH_PROTECT_RO_AT_BOOT;
-
-	/* Check if pstate has actually changed */
-	if (flags == flash_read_pstate())
-		return EC_SUCCESS;
 
 	/* Erase pstate */
 	rv = flash_physical_erase(CONFIG_FW_PSTATE_OFF,
@@ -184,14 +202,100 @@ static int flash_write_pstate(uint32_t flags)
 	 * it's protected.
 	 */
 
-	/* Write a new pstate */
-	memset(&pstate, 0, sizeof(pstate));
-	pstate.version = PERSIST_STATE_VERSION;
-	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
-		pstate.flags |= PERSIST_FLAG_PROTECT_RO;
-	return flash_physical_write(CONFIG_FW_PSTATE_OFF, sizeof(pstate),
-				    (const char *)&pstate);
+	/* Write the updated pstate */
+	return flash_physical_write(CONFIG_FW_PSTATE_OFF, sizeof(*newpstate),
+				    (const char *)newpstate);
 }
+
+
+
+/**
+ * Validate and Init persistent state datastructure.
+ *
+ * @param pstate	A pstate data structure. Will be valid at complete.
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+static int validate_pstate_struct(struct persist_state *pstate)
+{
+	if (pstate->version != PERSIST_STATE_VERSION) {
+		memset(pstate, 0, sizeof(*pstate));
+		pstate->version = PERSIST_STATE_VERSION;
+		pstate->valid_fields = 0;
+	}
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Write persistent state from pstate, erasing if necessary.
+ *
+ * @param flags		New flash write protect flags to set in pstate.
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+static int flash_write_pstate(uint32_t flags)
+{
+	struct persist_state newpstate;
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+
+	/* Only check the flags we write to pstate */
+	flags &= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/* Check if pstate has actually changed */
+	if (flags == flash_read_pstate())
+		return EC_SUCCESS;
+
+	/* Cache the old copy for read/modify/write. */
+	memcpy(&newpstate, pstate, sizeof(newpstate));
+	validate_pstate_struct(&newpstate);
+
+	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
+		newpstate.flags |= PERSIST_FLAG_PROTECT_RO;
+	else
+		newpstate.flags &= ~PERSIST_FLAG_PROTECT_RO;
+	newpstate.valid_fields |= PSTATE_VALID_FLAGS;
+
+	return flash_write_pstate_data(&newpstate);
+}
+
+/**
+ * Write persistent serial number to pstate, erasing if necessary.
+ *
+ * @param serialno		New iascii serial number to set in pstate.
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+static int flash_write_pstate_serial(const char *serialno)
+{
+	int i;
+	struct persist_state newpstate;
+	const struct persist_state *pstate =
+		(const struct persist_state *)
+		flash_physical_dataptr(CONFIG_FW_PSTATE_OFF);
+
+	/* Check that this is OK */
+	if (!serialno)
+		return EC_ERROR_INVAL;
+
+	/* Cache the old copy for read/modify/write. */
+	memcpy(&newpstate, pstate, sizeof(newpstate));
+	validate_pstate_struct(&newpstate);
+
+	/* Copy in serialno. */
+	for (i = 0; i < SERIALNO_MAX - 1; i++) {
+		newpstate.serialno[i] = serialno[i];
+		if (serialno[i] == 0)
+			break;
+	}
+	for (; i < SERIALNO_MAX; i++)
+		newpstate.serialno[i] = 0;
+	newpstate.valid_fields |= PSTATE_VALID_SERIALNO;
+
+	return flash_write_pstate_data(&newpstate);
+}
+
+
+
 
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 
@@ -347,6 +451,24 @@ int flash_erase(int offset, int size)
 #endif
 
 	return flash_physical_erase(offset, size);
+}
+
+const char *flash_read_serial(void)
+{
+#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
+	return flash_read_pstate_serial();
+#else
+	return 0;
+#endif
+}
+
+int flash_write_serial(const char *serialno)
+{
+#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
+	return flash_write_pstate_serial(serialno);
+#else
+	return EC_ERROR_UNIMPLEMENTED;
+#endif
 }
 
 int flash_protect_at_boot(enum flash_wp_range range)

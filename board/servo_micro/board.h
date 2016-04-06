@@ -87,6 +87,9 @@
 
 #include "gpio_signal.h"
 
+#define CONFIG_USB_SERIALNO
+#define DEFAULT_SERIALNO "Uninitialized"
+
 /* USB string indexes */
 enum usb_strings {
 	USB_STR_DESC = 0,
