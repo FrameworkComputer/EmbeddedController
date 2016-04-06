@@ -72,11 +72,16 @@ void chipset_force_shutdown(void)
 	}
 }
 
+__attribute__((weak)) void chipset_set_pmic_slp_sus_l(int level)
+{
+	gpio_set_level(GPIO_PMIC_SLP_SUS_L, level);
+}
+
 static void chipset_force_g3(void)
 {
 	CPRINTS("Forcing fake G3.");
 
-	gpio_set_level(GPIO_PMIC_SLP_SUS_L, 0);
+	chipset_set_pmic_slp_sus_l(0);
 }
 
 void chipset_reset(int cold_reset)
@@ -161,7 +166,7 @@ static void handle_slp_sus(enum power_state state)
 		return;
 
 	/* Always mimic PCH SLP_SUS request for all other states. */
-	gpio_set_level(GPIO_PMIC_SLP_SUS_L, gpio_get_level(GPIO_PCH_SLP_SUS_L));
+	chipset_set_pmic_slp_sus_l(gpio_get_level(GPIO_PCH_SLP_SUS_L));
 }
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
