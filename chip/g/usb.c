@@ -137,7 +137,7 @@ static void showbits(uint32_t b)
 	ccprintf("\n");
 }
 
-static int command_usb(int argc, char **argv)
+static void showregs(void)
 {
 	ccprintf("GINTSTS:   0x%08x\n", GR_USB_GINTSTS);
 	showbits(GR_USB_GINTSTS);
@@ -154,12 +154,7 @@ static int command_usb(int argc, char **argv)
 	ccprintf("DIEPCTL1:  0x%08x\n", GR_USB_DIEPCTL(1));
 	ccprintf("DOEPCTL2:  0x%08x\n", GR_USB_DOEPCTL(2));
 	ccprintf("DIEPCTL2:  0x%08x\n", GR_USB_DIEPCTL(2));
-	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(usb, command_usb,
-			"",
-			"Show some USB regs",
-			NULL);
 
 /* When debugging, print errors as they occur */
 #define report_error(val)						\
@@ -168,6 +163,7 @@ DECLARE_CONSOLE_COMMAND(usb, command_usb,
 
 #else  /* Not debugging */
 #define print_later(...)
+#define showregs(...)
 
 /* TODO: Something unexpected happened. Figure out how to report & fix it. */
 #define report_error(val)						\
@@ -315,6 +311,15 @@ static enum {
 	DS_CONFIGURED,
 } device_state;
 static uint8_t configuration_value;
+
+/* Default PHY to use */
+static uint32_t which_phy = USB_SEL_PHY0;
+static inline void select_phy(uint32_t phy)
+{
+	which_phy = phy;
+	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG,
+				   (USB_PHY_ACTIVE | which_phy));
+}
 
 /* Reset all this to a good starting state. */
 static void initialize_dma_buffers(void)
@@ -707,6 +712,7 @@ static int handle_setup_with_no_data_stage(enum table_case tc,
 		 * doesn't respond to anything.
 		 */
 		GWRITE_FIELD(USB, DCFG, DEVADDR, set_addr);
+		CPRINTS("SETAD 0x%02x (%d)", set_addr, set_addr);
 		print_later("SETAD 0x%02x (%d)", set_addr, set_addr, 0, 0, 0);
 		device_state = DS_ADDRESS;
 		break;
@@ -1048,6 +1054,7 @@ static void usb_init_endpoints(void)
 
 static void usb_reset(void)
 {
+	CPRINTS("%s", __func__);
 	print_later("usb_reset()", 0, 0, 0, 0, 0);
 
 	/* Clear our internal state */
@@ -1174,12 +1181,14 @@ static void usb_softreset(void)
 
 void usb_connect(void)
 {
+	CPRINTS("%s", __func__);
 	print_later("usb_connect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL &= ~DCTL_SFTDISCON;
 }
 
 void usb_disconnect(void)
 {
+	CPRINTS("%s", __func__);
 	print_later("usb_disconnect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL |= DCTL_SFTDISCON;
 
@@ -1228,8 +1237,7 @@ void usb_init(void)
 	GR_USB_DOEPMSK = 0;
 
 	/* Select the correct PHY */
-	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG,
-				   (USB_PHY_ACTIVE | USB_SEL_PHY0));
+	select_phy(which_phy);
 
 	/* Full-Speed Serial PHY */
 	GR_USB_GUSBCFG = GUSBCFG_PHYSEL_FS | GUSBCFG_FSINTF_6PIN
@@ -1345,3 +1353,26 @@ void usb_release(void)
 	/* USB is off, so sleep whenever */
 	enable_sleep(SLEEP_MASK_USB_DEVICE);
 }
+
+static int command_usb(int argc, char **argv)
+{
+	if (argc > 1) {
+		if (!strcasecmp("on", argv[1]))
+			usb_init();
+		else if (!strcasecmp("off", argv[1]))
+			usb_release();
+		else if (!strcasecmp("a", argv[1]))
+			select_phy(USB_SEL_PHY0);
+		else if (!strcasecmp("b", argv[1]))
+			select_phy(USB_SEL_PHY1);
+	}
+
+	showregs();
+	ccprintf("PHY %c\n", (which_phy == USB_SEL_PHY0 ? 'A' : 'B'));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(usb, command_usb,
+			"[on|off|a|b]",
+			"Get/set the USB connection state and PHY selection",
+			NULL);

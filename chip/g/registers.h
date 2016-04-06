@@ -357,12 +357,12 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
  *
  * The GP_OUT bit fields aren't defined elsewhere, so we'll define them here
  */
-#define GP_OUT(v) ((v << GC_USB_GGPIO_GPO_LSB) & GC_USB_GGPIO_GPO_MASK)
-#define GP_IN(v) ((v << GC_USB_GGPIO_GPI_LSB) & GC_USB_GGPIO_GPI_MASK)
+#define GP_OUT(v) (GC_USB_GGPIO_GPO_MASK & ((v) << GC_USB_GGPIO_GPO_LSB))
+#define GP_IN(v) (GC_USB_GGPIO_GPI_MASK & ((v) << GC_USB_GGPIO_GPI_LSB))
 #define GGPIO_WRITE(reg, val) GP_OUT(((1 << 15) |	      /* write bit */ \
-				      ((val & 0xFF) << 4) |   /* value */ \
-				      (reg & 0x0F)))	      /* register */
-#define GGPIO_READ(reg) (v & 0x0F)
+				      (((val) & 0xFF) << 4) | /* value */ \
+				      ((reg) & 0x0F)))	      /* register */
+#define GGPIO_READ(reg) GP_OUT((reg) & 0x0F)		      /* register */
 
 /* Further, the custom config registers for the USB module are: */
 #define USB_CUSTOM_CFG_REG    0			/* register number */
