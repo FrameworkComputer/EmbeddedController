@@ -37,7 +37,10 @@ void chip_save_reset_flags(int flags);
 enum system_image_copy_t {
 	SYSTEM_IMAGE_UNKNOWN = 0,
 	SYSTEM_IMAGE_RO,
-	SYSTEM_IMAGE_RW
+	SYSTEM_IMAGE_RW,
+#ifdef CONFIG_RW_B
+	SYSTEM_IMAGE_RW_B,
+#endif
 };
 
 /**

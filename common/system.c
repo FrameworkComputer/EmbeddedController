@@ -107,6 +107,10 @@ static uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF;
 	case SYSTEM_IMAGE_RW:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF;
+#ifdef CONFIG_RW_B
+	case SYSTEM_IMAGE_RW_B:
+		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_B_MEM_OFF;
+#endif
 	default:
 		return 0xffffffff;
 	}
@@ -126,6 +130,10 @@ static uint32_t get_size(enum system_image_copy_t copy)
 		return CONFIG_RO_SIZE;
 	case SYSTEM_IMAGE_RW:
 		return CONFIG_RW_SIZE;
+#ifdef CONFIG_RW_B
+	case SYSTEM_IMAGE_RW_B:
+		return CONFIG_RW_SIZE;
+#endif
 	default:
 		return 0;
 	}
@@ -335,6 +343,12 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 	    my_addr < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE))
 		return SYSTEM_IMAGE_RW;
 
+#ifdef CONFIG_RW_B
+	if (my_addr >= CONFIG_RW_B_MEM_OFF &&
+	    my_addr < (CONFIG_RW_B_MEM_OFF + CONFIG_RW_SIZE))
+		return SYSTEM_IMAGE_RW_B;
+#endif
+
 	return SYSTEM_IMAGE_UNKNOWN;
 #endif
 }
@@ -424,7 +438,11 @@ const char *system_get_image_copy_string(void)
 
 const char *system_image_copy_t_to_string(enum system_image_copy_t copy)
 {
-	static const char * const image_names[] = {"unknown", "RO", "RW"};
+	static const char * const image_names[] = {"unknown", "RO", "RW",
+#ifdef CONFIG_RW_B
+		"RW_B",
+#endif
+		};
 	return image_names[copy < ARRAY_SIZE(image_names) ? copy : 0];
 }
 
