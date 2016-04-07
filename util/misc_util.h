@@ -8,6 +8,7 @@
 
 /* Don't use a macro where an inline will do... */
 static inline int MIN(int a, int b) { return a < b ? a : b; }
+static inline int MAX(int a, int b) { return a > b ? a : b; }
 
 /**
  * Write a buffer to the file.
