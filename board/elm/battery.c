@@ -16,12 +16,7 @@
 static const struct battery_info info = {
 	.voltage_max = 13050,
 	.voltage_normal = 11400,
-	/*
-	 * TODO(crosbug.com/p/44428):
-	 * Support 2S battery for dev board.
-	 * Should set voltage_min to 9V, when 2S battery phased out.
-	 */
-	.voltage_min = 6000,
+	.voltage_min = 9000,
 	/* Pre-charge values. */
 	.precharge_current = 256, /* mA */
 

@@ -74,7 +74,6 @@
 #undef  CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 #define CONFIG_TEMP_SENSOR
-#define CONFIG_TEMP_SENSOR_TMP432
 
 /* Type-C */
 #define CONFIG_USBC_SS_MUX
@@ -169,11 +168,12 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
+#ifdef CONFIG_TEMP_SENSOR_TMP432
 	/* TMP432 local and remote sensors */
 	TEMP_SENSOR_I2C_TMP432_LOCAL,
 	TEMP_SENSOR_I2C_TMP432_REMOTE1,
 	TEMP_SENSOR_I2C_TMP432_REMOTE2,
-
+#endif
 	/* Battery temperature sensor */
 	TEMP_SENSOR_BATTERY,
 

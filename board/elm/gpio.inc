@@ -81,6 +81,7 @@ GPIO(USB_C0_5V_EN,      PIN(D, 8),  GPIO_OUT_LOW)    /* USBC port 0 5V */
 GPIO(USB_C0_CHARGE_L,   PIN(D, 9),  GPIO_OUT_LOW)    /* USBC port 0 charge */
 GPIO(USB_C0_RST,        PIN(D, 10), GPIO_OUT_LOW)    /* ANX7688 reset */
 GPIO(USB_C0_PWR_EN_L,   PIN(B, 15), GPIO_OUT_LOW)    /* ANX7688 power enable */
+GPIO(USB_C0_EXTPWR_EN,  PIN(F, 2),  GPIO_OUT_HIGH)   /* ANX7688 3.3V ext power enable */
 GPIO(USB_DP_HPD,        PIN(F, 3),  GPIO_OUT_LOW)
 GPIO(EN_TP_INT_L,       PIN(E, 14), GPIO_OUT_LOW)    /* touchpad interrupt enable */
 
@@ -99,7 +100,8 @@ GPIO(I2C1_SCL, PIN(B, 13), GPIO_INPUT) /* PD I2C */
 GPIO(I2C1_SDA, PIN(B, 14), GPIO_INPUT)
 
 /* SPI MASTER. For SPI sensor */
-GPIO(SPI2_NSS, PIN(D, 0),  GPIO_OUT_HIGH)
+GPIO(SPI2_NSS,    PIN(D, 0),  GPIO_OUT_HIGH) /* mainboard */
+GPIO(SPI2_NSS_DB, PIN(F, 6),  GPIO_OUT_HIGH) /* daughterboard */
 
 ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART,       0) /* USART1: PA9/PA10 */
 ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C,        0) /* I2C MASTER:PB6/7 */
