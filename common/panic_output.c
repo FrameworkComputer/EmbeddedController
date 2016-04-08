@@ -154,7 +154,7 @@ static void stack_overflow_recurse(int n)
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_CRASH
 static int command_crash(int argc, char **argv)
 {
 	if (argc < 2)
@@ -191,6 +191,7 @@ DECLARE_CONSOLE_COMMAND(crash, command_crash,
 		"[assert | divzero | stack | unaligned | watchdog] [options]",
 		"Crash the system (for testing)",
 		NULL);
+#endif
 
 static int command_panicinfo(int argc, char **argv)
 {

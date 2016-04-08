@@ -72,7 +72,7 @@ void throttle_ap(enum throttle_level level,
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_APTHROTTLE
 static int command_apthrottle(int argc, char **argv)
 {
 	int i;
@@ -93,4 +93,4 @@ DECLARE_CONSOLE_COMMAND(apthrottle, command_apthrottle,
 			NULL,
 			"Display the AP throttling state",
 			NULL);
-
+#endif
