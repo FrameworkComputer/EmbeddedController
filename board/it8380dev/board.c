@@ -181,23 +181,6 @@ static void board_init(void)
 	 * use console command "sleepmask" to enable it if necessary.
 	 */
 	disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
-	/*
-	 * The GPIOH.5/6 may be used for flashing purposes if WP pin
-	 * is deasserted. The clock of this module needs to be enabled.
-	 * So we disable the clock when WP pin is asserted,
-	 * this can help to reduce power consumption.
-	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	if (gpio_get_level(GPIO_WP))
-		clock_disable_peripheral(CGC_OFFSET_USB, 0, 0);
-	else
-		clock_enable_peripheral(CGC_OFFSET_USB, 0, 0);
-#else
-	if (!gpio_get_level(GPIO_WP_L))
-		clock_disable_peripheral(CGC_OFFSET_USB, 0, 0);
-	else
-		clock_enable_peripheral(CGC_OFFSET_USB, 0, 0);
-#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

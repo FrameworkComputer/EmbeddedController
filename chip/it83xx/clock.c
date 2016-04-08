@@ -61,7 +61,8 @@ static void clock_module_disable(void)
 	clock_disable_peripheral((CGC_OFFSET_SMBA | CGC_OFFSET_SMBB |
 		CGC_OFFSET_SMBC | CGC_OFFSET_SMBD | CGC_OFFSET_SMBE |
 		CGC_OFFSET_SMBF), 0, 0);
-	clock_disable_peripheral((CGC_OFFSET_SSPI | CGC_OFFSET_PECI), 0, 0);
+	clock_disable_peripheral((CGC_OFFSET_SSPI | CGC_OFFSET_PECI |
+		CGC_OFFSET_USB), 0, 0);
 }
 
 void clock_init(void)
