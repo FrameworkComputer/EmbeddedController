@@ -102,6 +102,7 @@ BOARDS_NPCX_SPI=(
 	amenia
 	gru
 	kevin
+	reef
 	wheatley
 )
 
@@ -118,6 +119,7 @@ BOARDS_MEC1322=(
 BOARDS_SPI_1800MV=(
 	gru
 	kevin
+	reef
 )
 
 # Flags

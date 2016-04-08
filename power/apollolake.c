@@ -51,15 +51,20 @@ static int throttle_cpu;      /* Throttle CPU? */
 static int forcing_coldreset; /* Forced coldreset in progress? */
 static int power_s5_up;       /* Chipset is sequencing up or down */
 
+__attribute__((weak)) void chipset_do_shutdown(void)
+{
+	/*
+	 * Disable V5A which de-assert PMIC_EN and causes PMIC to shutdown.
+	 */
+	gpio_set_level(GPIO_V5A_EN, 0);
+}
+
 void chipset_force_shutdown(void)
 {
 	if (!forcing_coldreset)
 		CPRINTS("%s()", __func__);
 
-	/*
-	 * Disable V5A which de-assert PMIC_EN and causes PMIC to shutdown.
-	 */
-	gpio_set_level(GPIO_V5A_EN, 0);
+	chipset_do_shutdown();
 }
 
 void chipset_reset(int cold_reset)
@@ -256,6 +261,7 @@ static enum power_state _power_handle_state(enum power_state state)
 
 		/* Enable V5A */
 		gpio_set_level(GPIO_V5A_EN, 1);
+		msleep(10);
 
 		if (power_wait_signals(IN_PGOOD_ALL_CORE)) {
 			chipset_force_shutdown();
