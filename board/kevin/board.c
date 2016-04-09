@@ -68,8 +68,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_BKLIGHT] = { 2, 0, 10000 },
-	[PWM_CH_LED] =     { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_FULL_LED] = { 0, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_BKLIGHT] =  { 2, 0, 10000 },
+	[PWM_CH_CHG_LED] =  { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_PWR_LED] =  { 4, PWM_CONFIG_DSLEEP, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -78,7 +80,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 const struct i2c_port_t i2c_ports[] = {
 	{"tcpc0",   NPCX_I2C_PORT0_0, 1000, GPIO_I2C0_SCL0, GPIO_I2C0_SDA0},
 	{"tcpc1",   NPCX_I2C_PORT0_1, 1000, GPIO_I2C0_SCL1, GPIO_I2C0_SDA1},
-	{"sensors", NPCX_I2C_PORT1,   1000, GPIO_I2C1_SCL,  GPIO_I2C1_SDA},
+	{"sensors", NPCX_I2C_PORT1,    400, GPIO_I2C1_SCL,  GPIO_I2C1_SDA},
 	{"charger", NPCX_I2C_PORT2,    400, GPIO_I2C2_SCL,  GPIO_I2C2_SDA},
 	{"battery", NPCX_I2C_PORT3,    100, GPIO_I2C3_SCL,  GPIO_I2C3_SDA},
 };

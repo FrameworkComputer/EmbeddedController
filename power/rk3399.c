@@ -41,8 +41,6 @@ static const struct power_signal_info power_control_outputs[] = {
 	{ GPIO_PP900_USB_EN, 1 },
 	{ GPIO_PP900_PCIE_EN, 1 },
 
-	{ GPIO_PP1200_HSIC_EN, 1 },
-
 	{ GPIO_PP1800_SENSOR_EN_L, 0 },
 	{ GPIO_PP1800_LID_EN_L, 0 },
 	{ GPIO_PP1800_PMU_EN_L, 0 },
@@ -152,8 +150,8 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(2);
 
 		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 0);
+		msleep(2);
 		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 0);
-		gpio_set_level(GPIO_PP1200_HSIC_EN, 1);
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
@@ -163,13 +161,12 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S0:
 		gpio_set_level(GPIO_AP_CORE_EN, 1);
 		msleep(2);
-		gpio_set_level(GPIO_PP3300_USB_EN_L, 0);
-		msleep(2);
 		gpio_set_level(GPIO_PP1800_S0_EN_L, 0);
 		msleep(2);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 0);
 		msleep(2);
-		msleep(10); /* TBD */
+		gpio_set_level(GPIO_PP3300_USB_EN_L, 0);
+		msleep(2);
 
 		/* Pulse SYS_RST */
 		gpio_set_level(GPIO_SYS_RST_L, 0);
