@@ -6,8 +6,10 @@
 #ifndef __CROS_EC_CONFIG_CHIP_H
 #define __CROS_EC_CONFIG_CHIP_H
 
+#if defined(BOARD)
 #include "core/cortex-m/config_core.h"
 #include "hw_regdefs.h"
+#endif
 
 /* Describe the RAM layout */
 #define CONFIG_RAM_BASE         0x10000
@@ -34,8 +36,10 @@
 /* Program is run directly from storage */
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
+#if defined(BOARD)
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
+#endif
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
