@@ -2085,6 +2085,10 @@
 #undef CONFIG_RO_HEAD_ROOM
 #undef CONFIG_RW_HEAD_ROOM
 
+/* Firmware upgrade options. */
+/* Firmware updates using other than HC channel(s). */
+#undef CONFIG_NON_HC_FW_UPDATE
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

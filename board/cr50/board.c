@@ -118,6 +118,7 @@ const void * const usb_strings[] = {
 	[USB_STR_HID_NAME] = USB_STRING_DESC("PokeyPokey"),
 	[USB_STR_AP_NAME] = USB_STRING_DESC("AP"),
 	[USB_STR_EC_NAME] = USB_STRING_DESC("EC"),
+	[USB_STR_UPGRADE_NAME] = USB_STRING_DESC("Firmware upgrade"),
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #endif

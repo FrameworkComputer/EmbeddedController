@@ -73,6 +73,7 @@ enum usb_strings {
 	USB_STR_HID_NAME,
 	USB_STR_AP_NAME,
 	USB_STR_EC_NAME,
+	USB_STR_UPGRADE_NAME,
 
 	USB_STR_COUNT
 };
@@ -119,4 +120,8 @@ enum usb_strings {
  */
 #define CONFIG_DEBUG_STACK_OVERFLOW
 #define CONFIG_RW_B
+
+/* Firmware upgrade options. */
+#define CONFIG_NON_HC_FW_UPDATE
+
 #endif /* __CROS_EC_BOARD_H */
