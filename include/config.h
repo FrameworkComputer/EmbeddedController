@@ -2088,6 +2088,7 @@
 /* Firmware upgrade options. */
 /* Firmware updates using other than HC channel(s). */
 #undef CONFIG_NON_HC_FW_UPDATE
+#undef CONFIG_USB_FW_UPDATE
 
 /*****************************************************************************/
 /*

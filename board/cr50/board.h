@@ -85,7 +85,8 @@ enum usb_strings {
 #define USB_IFACE_HID     1
 #define USB_IFACE_AP      2
 #define USB_IFACE_EC      3
-#define USB_IFACE_COUNT   4
+#define USB_IFACE_UPGRADE 4
+#define USB_IFACE_COUNT   5
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
@@ -93,7 +94,8 @@ enum usb_strings {
 #define USB_EP_HID       2
 #define USB_EP_AP        3
 #define USB_EP_EC        4
-#define USB_EP_COUNT     5
+#define USB_EP_UPGRADE   5
+#define USB_EP_COUNT     6
 
 /* UART indexes (use define rather than enum to expand them) */
 #define UART_CR50	0
@@ -123,5 +125,6 @@ enum usb_strings {
 
 /* Firmware upgrade options. */
 #define CONFIG_NON_HC_FW_UPDATE
+#define CONFIG_USB_FW_UPDATE
 
 #endif /* __CROS_EC_BOARD_H */
