@@ -207,7 +207,6 @@ void board_config_pre_init(void)
 /* Initialize board. */
 static void board_init(void)
 {
-	int pd_enable;
 	int slp_s5 = gpio_get_level(GPIO_PCH_SLP_S5_L);
 	int slp_s3 = gpio_get_level(GPIO_PCH_SLP_S3_L);
 
@@ -253,22 +252,6 @@ static void board_init(void)
 		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
 		pd_status_flags |= PD_STATUS_IN_RW;
-
-	/*
-	 * Do not enable PD communication in RO as a security measure.
-	 * We don't want to allow communication to outside world until
-	 * we jump to RW. This can by overridden with the removal of
-	 * the write protect screw to allow for easier testing, and for
-	 * booting without a battery.
-	 */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-	    && system_is_locked()) {
-		ccprintf("[%T PD comm disabled]\n");
-		pd_enable = 0;
-	} else {
-		pd_enable = 1;
-	}
-	pd_comm_enable(pd_enable);
 
 #ifdef CONFIG_PWM
 	/* Enable ILIM PWM: initial duty cycle 0% = 500mA limit. */

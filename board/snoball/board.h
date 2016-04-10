@@ -20,7 +20,6 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 /* TODO: Consider disabling PD communication in RO */
-#define CONFIG_USB_PD_COMM_ENABLED 1
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DYNAMIC_SRC_CAP
 #define CONFIG_USB_PD_LOGGING

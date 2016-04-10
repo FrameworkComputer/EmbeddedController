@@ -46,8 +46,12 @@ static int debug_level;
  * detects source/sink connection and disconnection, and will still
  * provide VBUS, but never sends any PD communication.
  */
-static uint8_t pd_comm_enabled = CONFIG_USB_PD_COMM_ENABLED;
+#if !defined(CONFIG_USB_PD_COMM_ENABLED) || defined(CONFIG_USB_PD_COMM_LOCKED)
+static uint8_t pd_comm_enabled;
 #else
+static uint8_t pd_comm_enabled = 1;
+#endif
+#else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 static const int debug_level;
 static const uint8_t pd_comm_enabled = 1;
@@ -3335,4 +3339,20 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
 
 #endif /* HAS_TASK_HOSTCMD */
 
+#ifdef CONFIG_USB_PD_COMM_LOCKED
+/* Enable PD communication at init if we're in RO or unlocked. */
+static void pd_comm_init(void)
+{
+	int pd_enable = 1;
+
+	if (system_get_image_copy() != SYSTEM_IMAGE_RW
+	    && system_is_locked()) {
+		ccprintf("[%T PD comm disabled]\n");
+		pd_enable = 0;
+	}
+
+	pd_comm_enable(pd_enable);
+}
+DECLARE_HOOK(HOOK_INIT, pd_comm_init, HOOK_PRIO_LAST);
+#endif /* CONFIG_USB_PD_COMM_LOCKED */
 #endif /* CONFIG_COMMON_RUNTIME */

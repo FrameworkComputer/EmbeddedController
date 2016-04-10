@@ -1775,7 +1775,15 @@
 #undef CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
 
 /* Default state of PD communication enabled flag */
-#define CONFIG_USB_PD_COMM_ENABLED 1
+#define CONFIG_USB_PD_COMM_ENABLED
+
+/*
+ * Do not enable PD communication in RO as a security measure.
+ * We don't want to allow communication to outside world until
+ * we jump to RW. This can by overridden with the removal of
+ * the write protect screw to allow for easier testing.
+ */
+#undef CONFIG_USB_PD_COMM_LOCKED
 
 /* Respond to custom vendor-defined messages over PD */
 #undef CONFIG_USB_PD_CUSTOM_VDM
