@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "compile_time_macros.h"
+#include "gpio.h"
 #include "gpio_signal.h"
 
 #ifdef CONFIG_COMMON_GPIO_SHORTNAMES
