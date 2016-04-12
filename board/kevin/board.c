@@ -66,7 +66,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = { 2, 0, 10000 },
+	[PWM_CH_BKLIGHT] = { 2, 0, 10000 },
 	[PWM_CH_LED] =     { 3, PWM_CONFIG_DSLEEP_CLK, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

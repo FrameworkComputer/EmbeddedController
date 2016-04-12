@@ -25,7 +25,6 @@
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP /* Instead of 8042 protocol of keyboard */
 #define CONFIG_POWER_BUTTON
-#define CONFIG_PWM_KBLIGHT
 /* TODO: Verify W25Q40 protect regs are compatible with W25X40 */
 #define CONFIG_SPI_FLASH_W25X40
 #define CONFIG_VBOOT_HASH
@@ -110,7 +109,7 @@ enum adc_channel {
 };
 
 enum pwm_channel {
-	PWM_CH_KBLIGHT,
+	PWM_CH_BKLIGHT,
 	PWM_CH_LED,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
