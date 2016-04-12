@@ -313,7 +313,7 @@ static enum {
 static uint8_t configuration_value;
 
 /* Default PHY to use */
-static uint32_t which_phy = USB_SEL_PHY0;
+static uint32_t which_phy = USB_SEL_PHY1;
 static inline void select_phy(uint32_t phy)
 {
 	which_phy = phy;
@@ -1238,6 +1238,7 @@ void usb_init(void)
 
 	/* Select the correct PHY */
 	select_phy(which_phy);
+	gpio_set_level(GPIO_CCD_MODE_L, !(which_phy == USB_SEL_PHY1));
 
 	/* Full-Speed Serial PHY */
 	GR_USB_GUSBCFG = GUSBCFG_PHYSEL_FS | GUSBCFG_FSINTF_6PIN

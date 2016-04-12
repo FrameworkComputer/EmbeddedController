@@ -21,8 +21,9 @@ GPIO(AP_WP_L,         PIN(0, 3), GPIO_INPUT)
 /* Drive high to reset the EC & AP */
 GPIO(SYS_RST,         PIN(0, 4), GPIO_INPUT)
 
-/* Indicate to EC when CCD is enabled */
-GPIO(CCD_MODE,        PIN(0, 5), GPIO_INPUT)
+/* Indicate to EC when CCD is enabled. EC can pull this down too, to tell us if
+ * it decided instead. The pullup is on the EC's side. */
+GPIO(CCD_MODE_L,      PIN(0, 5), GPIO_ODR_HIGH)
 
 /* Battery has a 10K pulldown on its side. We provide the pullup. */
 GPIO(BATT_PRES,       PIN(0, 6), GPIO_INPUT)
@@ -47,15 +48,19 @@ PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
 PINMUX(GPIO(AP_WP_L),         M3, 0)
 PINMUX(GPIO(SYS_RST),         M0, DIO_INPUT)
-PINMUX(GPIO(CCD_MODE),        M1, DIO_INPUT)
+PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
 PINMUX(GPIO(BATT_PRES),       M2, 0)
 
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
 PINMUX(FUNC(UART0_RX),        A1, DIO_INPUT | DIO_WAKE_LOW)
-PINMUX(FUNC(UART1_TX),        A3, DIO_OUTPUT)	/* AP console */
+/* AP console */
+/* TODO(crosbug.com/p/52281, crosbug.com/p/50700). Don't fight servo */
+/* PINMUX(FUNC(UART1_TX),        A3, DIO_OUTPUT) */
 PINMUX(FUNC(UART1_RX),        A7, DIO_INPUT)
-PINMUX(FUNC(UART2_TX),        B5, DIO_OUTPUT)	/* EC console */
+/* EC console */
+/* TODO(crosbug.com/p/52281, crosbug.com/p/50700). Don't fight servo */
+/* PINMUX(FUNC(UART2_TX),        B5, DIO_OUTPUT) */
 PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)
 
 /* I2C pins are bi-directional */
