@@ -42,4 +42,11 @@ void usb_disconnect(void);
  */
 void usb_release(void);
 
+#ifdef CONFIG_USB_SELECT_PHY
+/* Select which PHY to use. */
+void usb_select_phy(uint32_t phy);
+
+/* Get the current PHY */
+uint32_t usb_get_phy(void);
+#endif
 #endif /* __CROS_EC_USB_API_H */

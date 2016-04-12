@@ -314,11 +314,17 @@ static uint8_t configuration_value;
 
 /* Default PHY to use */
 static uint32_t which_phy = USB_SEL_PHY1;
-static inline void select_phy(uint32_t phy)
+
+void usb_select_phy(uint32_t phy)
 {
 	which_phy = phy;
 	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG,
 				   (USB_PHY_ACTIVE | which_phy));
+}
+
+uint32_t usb_get_phy(void)
+{
+	return which_phy;
 }
 
 /* Reset all this to a good starting state. */
@@ -1237,7 +1243,7 @@ void usb_init(void)
 	GR_USB_DOEPMSK = 0;
 
 	/* Select the correct PHY */
-	select_phy(which_phy);
+	usb_select_phy(which_phy);
 	gpio_set_level(GPIO_CCD_MODE_L, !(which_phy == USB_SEL_PHY1));
 
 	/* Full-Speed Serial PHY */
@@ -1363,9 +1369,9 @@ static int command_usb(int argc, char **argv)
 		else if (!strcasecmp("off", argv[1]))
 			usb_release();
 		else if (!strcasecmp("a", argv[1]))
-			select_phy(USB_SEL_PHY0);
+			usb_select_phy(USB_SEL_PHY0);
 		else if (!strcasecmp("b", argv[1]))
-			select_phy(USB_SEL_PHY1);
+			usb_select_phy(USB_SEL_PHY1);
 	}
 
 	showregs();

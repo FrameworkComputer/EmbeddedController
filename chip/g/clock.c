@@ -30,6 +30,9 @@ void clock_enable_module(enum module_id module, int enable)
 		clock_func(PERIPH_I2C0);
 		clock_func(PERIPH_I2C1);
 		break;
+	case MODULE_RDD:
+		clock_func(PERIPH_RDD0);
+		break;
 	case MODULE_SPI_FLASH:
 	case MODULE_SPI_MASTER:
 		clock_func(PERIPH_SPI);

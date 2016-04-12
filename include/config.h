@@ -1480,6 +1480,9 @@
 /* Size of RAM available on the chip, in bytes */
 #undef CONFIG_RAM_SIZE
 
+/* Enable RDD peripheral */
+#undef CONFIG_RDD
+
 /* Support IR357x Link voltage regulator debugging / reprogramming */
 #undef CONFIG_REGULATOR_IR357X
 
@@ -1944,6 +1947,9 @@
 
 /* Disable automatic initialization of USB peripheral */
 #undef CONFIG_USB_INHIBIT_INIT
+
+/* Support control of multiple PHY */
+#undef CONFIG_USB_SELECT_PHY
 
 /* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB
