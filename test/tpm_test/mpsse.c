@@ -99,6 +99,7 @@ static struct vid_pid {
 	0x0403, 0x8A98, "TIAO Multi Protocol Adapter"}, {
 	0x15BA, 0x0003, "Olimex Ltd. OpenOCD JTAG"}, {
 	0x15BA, 0x0004, "Olimex Ltd. OpenOCD JTAG TINY"}, {
+	0x18d1, 0x0304, "Google UltraDebug", 1}, {
 	0, 0, NULL}
 };
 
