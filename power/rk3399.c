@@ -60,7 +60,7 @@ static const struct power_signal_info power_control_outputs[] = {
 	{ GPIO_SYS_RST_L, 0 },
 };
 
-static int want_s0_exit;
+static int forcing_shutdown;
 
 void chipset_force_shutdown(void)
 {
@@ -70,13 +70,19 @@ void chipset_force_shutdown(void)
 	 * Force power off. This condition will reset once the state machine
 	 * transitions to G3.
 	 */
-	/* TODO: Implement */
+	forcing_shutdown = 1;
+	task_wake(TASK_ID_CHIPSET);
 }
 
 void chipset_reset(int cold_reset)
 {
-	/* TODO: implement */
+	/* TODO: handle cold_reset */
 	CPRINTS("%s(%d)", __func__, cold_reset);
+
+	/* Pulse SYS_RST */
+	gpio_set_level(GPIO_SYS_RST_L, 0);
+	udelay(10);
+	gpio_set_level(GPIO_SYS_RST_L, 1);
 }
 
 enum power_state power_chipset_init(void)
@@ -103,23 +109,25 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		if (want_s0_exit)
+		if (forcing_shutdown)
 			return POWER_S5G3;
 		else
 			return POWER_S5S3;
 
 	case POWER_S3:
-		if (want_s0_exit)
+		if (forcing_shutdown)
 			return POWER_S3S5;
 		else
 			return POWER_S3S0;
 
 	case POWER_S0:
-		if (want_s0_exit)
+		if (forcing_shutdown)
 			return POWER_S0S3;
 		break;
 
 	case POWER_G3S5:
+		forcing_shutdown = 0;
+
 		/* Power up to next state */
 		return POWER_S5;
 
@@ -212,7 +220,6 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5G3:
-		want_s0_exit = 0;
 		/* Initialize power signal outputs to default. */
 		return power_chipset_init();
 	}
@@ -230,7 +237,7 @@ static void power_button_changed(void)
 		/* Power up */
 		chipset_exit_hard_off();
 	else
-		want_s0_exit = 1;
+		forcing_shutdown = 1;
 
 	task_wake(TASK_ID_CHIPSET);
 }
