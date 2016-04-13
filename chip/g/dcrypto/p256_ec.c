@@ -1356,48 +1356,17 @@ void p256_points_mul_vartime(
 	from_montgomery(out_y, py);
 }
 
-/* p256_points_mul sets {out_x,out_y} = n1*G + n2*{in_x,in_y}, where
- * n1 and n2 are < the order of the group.
- *
- * As indicated by the name, this function operates in variable time. This
- * is safe because it's used for signature validation which doesn't deal
- * with secrets. */
-int DCRYPTO_p256_points_mul(p256_int *out_x, p256_int *out_y,
-			const p256_int *n1, const p256_int *n2,
-			const p256_int *in_x, const p256_int *in_y)
+/* DCRYPTO_p256_point_mul sets {out_x,out_y} = n*{in_x,in_y}, where n is <
+ * the order of the group. */
+int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
+			const p256_int *n, const p256_int *in_x,
+			const p256_int *in_y)
 {
-	felem x1, y1, z1, x2, y2, z2, px, py;
-
-	/* If both scalars are zero, then the result is the point at
-	 * infinity. */
-	if (p256_is_zero(n1) != 0 && p256_is_zero(n2) != 0) {
+	if (p256_is_zero(n) != 0) {
 		p256_clear(out_x);
 		p256_clear(out_y);
 		return 0;
 	}
-
-	to_montgomery(px, in_x);
-	to_montgomery(py, in_y);
-	scalar_base_mult(x1, y1, z1, n1);
-	scalar_mult(x2, y2, z2, px, py, n2);
-
-	if (p256_is_zero(n2) != 0) {
-		/* If n2 == 0, then {x2,y2,z2} is zero and the result is just
-		 * {x1,y1,z1}. */
-	} else if (p256_is_zero(n1) != 0) {
-		/* If n1 == 0, then {x1,y1,z1} is zero and the result is just
-		 * {x2,y2,z2}. */
-		memcpy(x1, x2, sizeof(x2));
-		memcpy(y1, y2, sizeof(y2));
-		memcpy(z1, z2, sizeof(z2));
-	} else {
-		/* This function handles the case where
-		 * {x1,y1,z1} == {x2,y2,z2}. */
-		point_add_or_double_vartime(x1, y1, z1, x1, y1, z1, x2, y2, z2);
-	}
-
-	point_to_affine(px, py, x1, y1, z1);
-	from_montgomery(out_x, px);
-	from_montgomery(out_y, py);
+	p256_point_mul(n, in_x, in_y, out_x, out_y);
 	return 1;
 }

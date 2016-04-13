@@ -57,7 +57,7 @@ BOOL _cpri__EccIsPointOnCurve(TPM_ECC_CURVE curve_id, TPMS_ECC_POINT *q)
 	}
 }
 
-/* out = n1*G + n2*in */
+/* out = n1*G, or out = n2*in */
 CRYPT_RESULT _cpri__EccPointMultiply(
 	TPMS_ECC_POINT *out, TPM_ECC_CURVE curve_id,
 	TPM2B_ECC_PARAMETER *n1, TPMS_ECC_POINT *in, TPM2B_ECC_PARAMETER *n2)
@@ -66,16 +66,23 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 
 	switch (curve_id) {
 	case TPM_ECC_NIST_P256:
-		if (!check_p256_param(n1))
+		if ((n1 != NULL && n2 != NULL) ||
+			(n1 == NULL && n2 == NULL))
+			/* Only one of n1 or n2 must be specified. */
+			return CRYPT_PARAMETER;
+		if ((n2 != NULL && in == NULL) ||
+			(n2 == NULL && in != NULL))
+			return CRYPT_PARAMETER;
+		if (n1 != NULL && !check_p256_param(n1))
 			return CRYPT_PARAMETER;
 		if (in != NULL && !check_p256_point(in))
-			return CRYPT_PARAMETER;
+			return CRYPT_POINT;
 		if (n2 != NULL && !check_p256_param(n2))
 			return CRYPT_PARAMETER;
 
 		reverse_tpm2b(&n1->b);
 
-		if (in == NULL || n2 == NULL) {
+		if (n1 != NULL) {
 			result = DCRYPTO_p256_base_point_mul(
 				(p256_int *) out->x.b.buffer,
 				(p256_int *) out->y.b.buffer,
@@ -85,10 +92,9 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 			reverse_tpm2b(&in->x.b);
 			reverse_tpm2b(&in->y.b);
 
-			result = DCRYPTO_p256_points_mul(
+			result = DCRYPTO_p256_point_mul(
 				(p256_int *) out->x.b.buffer,
 				(p256_int *) out->y.b.buffer,
-				(p256_int *) n1->b.buffer,
 				(p256_int *) n2->b.buffer,
 				(p256_int *) in->x.b.buffer,
 				(p256_int *) in->y.b.buffer);
@@ -111,7 +117,7 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 			return CRYPT_NO_RESULT;
 		}
 	default:
-		return CRYPT_FAIL;
+		return CRYPT_PARAMETER;
 	}
 }
 

@@ -140,9 +140,9 @@ int DCRYPTO_rsa_key_compute(struct BIGNUM *N, struct BIGNUM *d,
 int DCRYPTO_p256_valid_point(const p256_int *x, const p256_int *y);
 int DCRYPTO_p256_base_point_mul(p256_int *out_x, p256_int *out_y,
 				const p256_int *n);
-int DCRYPTO_p256_points_mul(p256_int *out_x, p256_int *out_y,
-			const p256_int *n1, const p256_int *n2,
-			const p256_int *in_x, const p256_int *in_y);
+int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
+			const p256_int *n, const p256_int *in_x,
+			const p256_int *in_y);
 int DCRYPTO_p256_key_from_bytes(p256_int *x, p256_int *y, p256_int *d,
 				const uint8_t key_bytes[P256_NBYTES]);
 
