@@ -246,7 +246,7 @@ static int ec_readmem_lpc(int offset, int bytes, void *dest)
 	return cnt;
 }
 
-int comm_init_lpc(void)
+int comm_init_lpc(int init_readmem_only)
 {
 	int i;
 	int byte = 0xff;
@@ -255,6 +255,13 @@ int comm_init_lpc(void)
 	if (iopl(3) < 0) {
 		perror("Error getting I/O privilege");
 		return -3;
+	}
+
+	ec_readmem = ec_readmem_lpc;
+
+	if (init_readmem_only) {
+		/* Function to send commands already defined. */
+		return 0;
 	}
 
 	/*
@@ -308,9 +315,13 @@ int comm_init_lpc(void)
 		return -5;
 	}
 
-	/* Either one supports reading mapped memory directly. */
-	ec_readmem = ec_readmem_lpc;
 	return 0;
 }
 
-#endif
+#else  /* defined(__i386__) || defined(__x86_64__) */
+#include <errno.h>
+int comm_init_lpc(int unused)
+{
+	return -EOPNOTSUPP;
+}
+#endif  /* defined(__i386__) || defined(__x86_64__) */
