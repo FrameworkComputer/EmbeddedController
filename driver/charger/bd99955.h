@@ -22,6 +22,7 @@ enum bd99955_command {
 enum bd99955_charge_port {
 	BD99955_CHARGE_PORT_VBUS,
 	BD99955_CHARGE_PORT_VCC,
+	BD99955_CHARGE_PORT_BOTH,
 	BD99955_CHARGE_PORT_NONE,
 };
 
@@ -210,7 +211,7 @@ enum bd99955_charge_port {
 
 /* Return true if extpower is present on their input port. */
 int bd99955_extpower_is_present(void);
-/* Select input port from {VCC, VBUS, NONE}. */
+/* Select input port from {VCC, VBUS, VCC&VBUS, NONE}. */
 int bd99955_select_input_port(enum bd99955_charge_port port);
 
 #endif /* __CROS_EC_BD99955_H */

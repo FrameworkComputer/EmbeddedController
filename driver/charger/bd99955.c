@@ -285,14 +285,8 @@ int charger_get_status(int *status)
 int charger_set_mode(int mode)
 {
 	int rv;
-	int enable;
 
-	if (mode & CHARGE_FLAG_INHIBIT_CHARGE)
-		enable = 0;
-	else
-		enable = 1;
-
-	rv = bd99955_charger_enable(enable);
+	rv = bd99955_charger_enable(mode & CHARGE_FLAG_INHIBIT_CHARGE ? 0 : 1);
 	if (rv)
 		return rv;
 
@@ -435,13 +429,17 @@ int bd99955_select_input_port(enum bd99955_charge_port port)
 
 	if (port == BD99955_CHARGE_PORT_NONE) {
 		reg &= ~(BD99955_CMD_VIN_CTRL_SET_VBUS_EN |
-			 BD99955_CMD_VIN_CTRL_SET_VBUS_EN);
+			 BD99955_CMD_VIN_CTRL_SET_VCC_EN);
 	} else if (port == BD99955_CHARGE_PORT_VBUS) {
 		reg |= BD99955_CMD_VIN_CTRL_SET_VBUS_EN;
 		reg &= ~BD99955_CMD_VIN_CTRL_SET_VCC_EN;
 	} else if (port == BD99955_CHARGE_PORT_VCC) {
 		reg |= BD99955_CMD_VIN_CTRL_SET_VCC_EN;
 		reg &= ~BD99955_CMD_VIN_CTRL_SET_VBUS_EN;
+	} else if (port == BD99955_CHARGE_PORT_BOTH) {
+		/* Enable both the ports for PG3 */
+		reg |= BD99955_CMD_VIN_CTRL_SET_VBUS_EN |
+			BD99955_CMD_VIN_CTRL_SET_VCC_EN;
 	} else {
 		/* Invalid charge port */
 		panic("Invalid charge port");
@@ -500,7 +498,7 @@ static int console_command_bd99955(int argc, char **argv)
 
 	rw = argv[1][0];
 	if (rw == 'w' && argc < 5)
-			return EC_ERROR_PARAM_COUNT;
+		return EC_ERROR_PARAM_COUNT;
 	else if (rw != 'w' && rw != 'r')
 		return EC_ERROR_PARAM1;
 
