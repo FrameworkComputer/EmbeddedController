@@ -176,11 +176,6 @@ BUILD_ASSERT(ARRAY_SIZE(pnpcfg_settings) == EC2I_SETTING_COUNT);
 /* Initialize board. */
 static void board_init(void)
 {
-	/*
-	 * Default no low power idle for EVB,
-	 * use console command "sleepmask" to enable it if necessary.
-	 */
-	disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

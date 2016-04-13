@@ -9,13 +9,14 @@
 #include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "registers.h"
-#include "util.h"
-#include "pwm.h"
-#include "task.h"
-#include "math_util.h"
 #include "hwtimer_chip.h"
+#include "math_util.h"
+#include "pwm.h"
 #include "pwm_chip.h"
+#include "registers.h"
+#include "system.h"
+#include "task.h"
+#include "util.h"
 
 #define TACH_EC_FREQ                8000000
 #define FAN_CTRL_BASED_MS           10
@@ -118,6 +119,7 @@ void fan_set_enabled(int ch, int enabled)
 		if (tach_ch < TACH_CH_COUNT)
 			fan_info_data[tach_ch].fan_sts = FAN_STATUS_CHANGING;
 
+		disable_sleep(SLEEP_MASK_FAN);
 		/* enable timer interrupt for fan control */
 		ext_timer_start(FAN_CTRL_EXT_TIMER, 1);
 	/* disable */
@@ -140,8 +142,10 @@ void fan_set_enabled(int ch, int enabled)
 
 	if (!enabled) {
 		/* disable timer interrupt if all fan off. */
-		if (fan_all_disabled())
+		if (fan_all_disabled()) {
 			ext_timer_stop(FAN_CTRL_EXT_TIMER, 1);
+			enable_sleep(SLEEP_MASK_FAN);
+		}
 	}
 }
 
