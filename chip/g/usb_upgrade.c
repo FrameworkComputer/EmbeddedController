@@ -12,7 +12,6 @@
 #include "system.h"
 #include "upgrade_fw.h"
 #include "usb-stream.h"
-#include "usb_upgrade.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
@@ -49,8 +48,8 @@ static struct queue const usb_to_upgrade = QUEUE_DIRECT(64, uint8_t,
 USB_STREAM_CONFIG_FULL(usb_upgrade,
 		       USB_IFACE_UPGRADE,
 		       USB_CLASS_VENDOR_SPEC,
-		       UNOFFICIAL_USB_SUBCLASS_GOOGLE_CR50,
-		       0xff,			/* vendor-specific protocol */
+		       USB_SUBCLASS_GOOGLE_CR50,
+		       USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE,
 		       USB_STR_UPGRADE_NAME,
 		       USB_EP_UPGRADE,
 		       USB_MAX_PACKET_SIZE,

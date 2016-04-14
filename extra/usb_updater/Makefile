@@ -25,7 +25,9 @@ CFLAGS  := -std=gnu99 \
 LIBS    += $(shell pkg-config --libs   libusb-1.0)  -lcrypto
 CFLAGS  += $(shell pkg-config --cflags libusb-1.0)
 
-CFLAGS  += -I../../board/cr50 -I ../../chip/g -I../../util
+# NOTE: This may be board-specific
+BOARD ?= cr50
+CFLAGS  += -I../../include -I../../board/$(BOARD) -I ../../chip/g -I../../util
 
 $(PROGRAM): $(SOURCE) Makefile
 	gcc $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) -o $@

@@ -167,6 +167,10 @@ struct usb_endpoint_descriptor {
 #define USB_SUBCLASS_GOOGLE_I2C    0x52
 #define USB_PROTOCOL_GOOGLE_I2C    0x01
 
+#define USB_SUBCLASS_GOOGLE_CR50   0x53
+/* We can use any protocol we want */
+#define USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE 0xff
+
 
 /* Control requests */
 

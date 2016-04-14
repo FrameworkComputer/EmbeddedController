@@ -15,15 +15,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "misc_util.h"
-#include "usb_upgrade.h"
-#include "config_chip.h"
 
-/* Google Cr50 */
-#define VID 0x18d1
-#define PID 0x5014
-#define SUBCLASS UNOFFICIAL_USB_SUBCLASS_GOOGLE_CR50
-#define PROTOCOL 0xff
+#ifndef __packed
+#define __packed __attribute__((packed))
+#endif
+
+#include "misc_util.h"
+#include "usb_descriptor.h"
+#include "upgrade_fw.h"
+#include "config_chip.h"
+#include "board.h"
+
+/* Look for Cr50 FW update interface */
+#define VID USB_VID_GOOGLE
+#define PID CONFIG_USB_PID
+#define SUBCLASS USB_SUBCLASS_GOOGLE_CR50
+#define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
 
 /* Globals */
 static char *progname;
@@ -211,8 +218,8 @@ static int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 }
 
 
-static struct libusb_device_handle *usb_connect(uint16_t vid, uint16_t pid,
-						uint8_t *ep_num, int *chunk_len)
+static struct libusb_device_handle *usb_findit(uint16_t vid, uint16_t pid,
+					       uint8_t *ep_num, int *chunk_len)
 {
 	struct libusb_device_handle *devh;
 	int iface_num, r;
@@ -442,7 +449,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	devh = usb_connect(vid, pid, &ep_num, &chunk_len);
+	devh = usb_findit(vid, pid, &ep_num, &chunk_len);
 
 	transfer_and_reboot(devh, data, data_len, ep_num, chunk_len);
 
