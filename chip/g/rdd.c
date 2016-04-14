@@ -7,16 +7,14 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "rdd.h"
 #include "registers.h"
 #include "task.h"
 #include "usb_api.h"
 
-#define CCD_PHY USB_SEL_PHY1
-#define AP_PHY USB_SEL_PHY0
+static uint16_t debug_detect;
 
-uint16_t ccd_detect;
-
-static int debug_cable_is_detected(void)
+int debug_cable_is_attached(void)
 {
 	uint8_t cc1 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC1);
 	uint8_t cc2 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC2);
@@ -26,24 +24,17 @@ static int debug_cable_is_detected(void)
 
 void rdd_interrupt(void)
 {
-	if (debug_cable_is_detected()) {
+	if (debug_cable_is_attached()) {
 		ccprintf("Debug Accessory connected\n");
 		/* Detect when debug cable is disconnected */
-		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ~ccd_detect);
-
-		/* Select the CCD PHY */
-		usb_select_phy(CCD_PHY);
+		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ~debug_detect);
+		rdd_attached();
 	} else {
 		ccprintf("Debug Accessory disconnected\n");
 		/* Detect when debug cable is connected */
-		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ccd_detect);
-
-		/* Select the AP PHY */
-		usb_select_phy(AP_PHY);
+		GWRITE(RDD, PROG_DEBUG_STATE_MAP, debug_detect);
+		rdd_detached();
 	}
-
-	/* Connect to selected phy */
-	usb_init();
 
 	/* Clear interrupt */
 	GWRITE_FIELD(RDD, INT_STATE, INTR_DEBUG_STATE_DETECTED, 1);
@@ -56,10 +47,13 @@ void rdd_init(void)
 	clock_enable_module(MODULE_RDD, 1);
 	GWRITE(RDD, POWER_DOWN_B, 1);
 
-	ccd_detect = GREAD(RDD, PROG_DEBUG_STATE_MAP);
-	/* Detect cable disconnect if CCD is enabled */
-	if (usb_get_phy() == CCD_PHY)
-		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ~ccd_detect);
+	debug_detect = GREAD(RDD, PROG_DEBUG_STATE_MAP);
+
+	/* If cable is attached, detect when it is disconnected */
+	if (debug_cable_is_attached()) {
+		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ~debug_detect);
+		rdd_attached();
+	}
 
 	/* Enable RDD interrupts */
 	task_enable_irq(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT);
