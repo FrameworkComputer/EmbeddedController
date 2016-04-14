@@ -290,7 +290,7 @@ static void set_pmic_pwron(int asserted)
 		while (asserted && !gpio_get_level(GPIO_5V_POWER_GOOD) &&
 		       get_time().val < poll_deadline.val)
 			usleep(PMIC_WAIT_FOR_5V_POWER_GOOD);
-		if (gpio_get_level(GPIO_5V_POWER_GOOD))
+		if (!gpio_get_level(GPIO_5V_POWER_GOOD))
 			CPRINTS("5V power not ready");
 	}
 
