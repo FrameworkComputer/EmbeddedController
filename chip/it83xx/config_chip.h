@@ -23,7 +23,13 @@
 #define PLL_CLOCK 48000000
 
 /* Number of I2C ports */
-#define I2C_PORT_COUNT 3
+#define I2C_PORT_COUNT 6
+
+/* I2C ports on chip
+ * IT83xx - There are three i2c standard ports.
+ *          There are three i2c enhanced ports.
+ */
+#define I2C_STANDARD_PORT_COUNT 3
 
 /****************************************************************************/
 /* Memory mapping */

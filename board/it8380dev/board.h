@@ -39,8 +39,10 @@
 
 #ifndef __ASSEMBLER__
 
-#define I2C_PORT_CHARGER 2
-#define I2C_PORT_BATTERY 2
+#include "registers.h"
+
+#define I2C_PORT_CHARGER IT83XX_I2C_CH_C
+#define I2C_PORT_BATTERY IT83XX_I2C_CH_C
 
 #include "gpio_signal.h"
 

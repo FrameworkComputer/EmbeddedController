@@ -213,13 +213,28 @@ struct keyboard_scan_config keyscan_config = {
  * In order to set frequency independently for each channels,
  * We use timing registers 09h~0Bh, and the supported frequency will be:
  * 50KHz, 100KHz, 400KHz, or 1MHz.
+ * I2C channels (D, E and F) can be set different frequency on different ports.
+ * The I2C(D/E/F) frequency depend on the frequency of SMBus Module and
+ * the individual prescale register.
+ * The frequency of SMBus module is 24MHz on default.
+ * The allowed range of I2C(D/E/F) frequency is as following setting.
+ * SMBus Module Freq = PLL_CLOCK / ((IT83XX_ECPM_SCDCR2 & 0x0F) + 1)
+ * (SMBus Module Freq / 510) <=  I2C Freq <= (SMBus Module Freq / 8)
+ * Channel D has multi-function and can be used as UART interface.
+ * Channel F is reserved for EC debug.
  */
+
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"battery", 2, 100, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
-	{"evb-1",   0, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
-	{"evb-2",   1, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
+	{"battery", IT83XX_I2C_CH_C, 100, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
+	{"evb-1",   IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
+	{"evb-2",   IT83XX_I2C_CH_B, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
+#ifndef CONFIG_UART_HOST
+	{"opt-3",   IT83XX_I2C_CH_D, 100, GPIO_I2C_D_SCL, GPIO_I2C_D_SDA},
+#endif
+	{"opt-4",   IT83XX_I2C_CH_E, 100, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
 };
+
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* SPI devices */

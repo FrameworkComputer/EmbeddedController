@@ -88,15 +88,27 @@ void intc_cpu_int_group_6(void)
 	switch (intc_group_6) {
 
 	case IT83XX_IRQ_SMB_A:
-		i2c_interrupt(0);
+		i2c_interrupt(IT83XX_I2C_CH_A);
 		break;
 
 	case IT83XX_IRQ_SMB_B:
-		i2c_interrupt(1);
+		i2c_interrupt(IT83XX_I2C_CH_B);
 		break;
 
 	case IT83XX_IRQ_SMB_C:
-		i2c_interrupt(2);
+		i2c_interrupt(IT83XX_I2C_CH_C);
+		break;
+
+	case IT83XX_IRQ_SMB_D:
+		i2c_interrupt(IT83XX_I2C_CH_D);
+		break;
+
+	case IT83XX_IRQ_SMB_E:
+		i2c_interrupt(IT83XX_I2C_CH_E);
+		break;
+
+	case IT83XX_IRQ_SMB_F:
+		i2c_interrupt(IT83XX_I2C_CH_F);
 		break;
 
 	default:
