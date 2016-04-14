@@ -82,6 +82,7 @@ cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
+FAILED_BOARDS_DIR = .failedboards
 # When building with -j, it's easy to miss errors. If you don't have your shell
 # configured to warn you about nonzero exit, you may not even notice that "make
 # buildall -j" failed. To make it more obvious, we'll do one level of recursion
@@ -91,6 +92,9 @@ try_buildall: $(foreach b, $(boards), proj-$(b))
 
 .PHONY: buildall
 buildall:
+	@rm -rf $(FAILED_BOARDS_DIR)
+	@mkdir $(FAILED_BOARDS_DIR)
+	@for b in $(boards); do echo 'starting' > $(FAILED_BOARDS_DIR)/$$b; done
 	$(MAKE) try_buildall
 	$(MAKE) runtests
 	@touch .tests-passed
@@ -108,8 +112,10 @@ endif # not a TEST_BUILD
 endif # CONFIG_EXPERIMENTAL_CONSOLE=y
 
 proj-%:
-	@echo "======= building $*"; \
+	@echo 'building' > $(FAILED_BOARDS_DIR)/$*
+	@echo "======= building $*"
 	$(MAKE) --no-print-directory BOARD=$* V=$(V)
+	@rm $(FAILED_BOARDS_DIR)/$*
 
 dis-y := $(out)/RW/$(PROJECT).RW.dis
 dis-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/$(PROJECT).RO.dis
