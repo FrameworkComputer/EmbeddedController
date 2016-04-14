@@ -113,8 +113,7 @@ enum power_state power_chipset_init(void)
 
 static void handle_pass_through(enum power_state state,
 				enum gpio_signal pin_in,
-				enum gpio_signal pin_out,
-				int pass_through_delay)
+				enum gpio_signal pin_out)
 {
 	/*
 	 * Pass through asynchronously, as SOC may not react
@@ -126,12 +125,6 @@ static void handle_pass_through(enum power_state state,
 	/* Nothing to do. */
 	if (in_level == out_level)
 		return;
-	/*
-	 * Wait at least 10ms between power signals going high
-	 * and pass through to SOC.
-	 */
-	if (in_level)
-		msleep(MAX(10, pass_through_delay));
 
 	gpio_set_level(pin_out, in_level);
 
@@ -396,10 +389,10 @@ enum power_state power_handle_state(enum power_state state)
 	enum power_state new_state;
 
 	/* Process RSMRST_L state changes. */
-	handle_pass_through(state, GPIO_RSMRST_L_PGOOD, GPIO_PCH_RSMRST_L, 0);
+	handle_pass_through(state, GPIO_RSMRST_L_PGOOD, GPIO_PCH_RSMRST_L);
 
 	/* Process ALL_SYS_PGOOD state changes. */
-	handle_pass_through(state, GPIO_ALL_SYS_PGOOD, GPIO_PCH_SYS_PWROK, 0);
+	handle_pass_through(state, GPIO_ALL_SYS_PGOOD, GPIO_PCH_SYS_PWROK);
 
 	new_state = _power_handle_state(state);
 
