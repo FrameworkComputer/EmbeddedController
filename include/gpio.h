@@ -30,6 +30,7 @@
 #define GPIO_INT_DSLEEP    (1 << 14) /* Interrupt in deep sleep */
 #define GPIO_INT_SHARED    (1 << 15) /* Shared among multiple pins */
 #define GPIO_SEL_1P8V      (1 << 16) /* Support 1.8v */
+#define GPIO_ALTERNATE     (1 << 17) /* GPIO used for alternate function. */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)
@@ -146,6 +147,24 @@ int gpio_is_implemented(enum gpio_signal signal);
  */
 void gpio_set_flags(enum gpio_signal signal, int flags);
 
+#ifdef CONFIG_CMD_GPIO_EXTENDED
+/**
+ * Get the current flags for a signal.
+ *
+ * @param signal	Signal to get flags for
+ * @returns The flags that are currently defined for this signal
+ */
+int gpio_get_flags(enum gpio_signal signal);
+
+/**
+ * Get flags for GPIO by port and mask.
+ *
+ * @param port		GPIO port to set (GPIO_*)
+ * @param mask		Bitmask of pins on that port to check: one only.
+ */
+int gpio_get_flags_by_mask(uint32_t port, uint32_t mask);
+#endif
+
 /**
  * Get the default flags for a signal.
  *
@@ -210,6 +229,7 @@ int gpio_disable_interrupt(enum gpio_signal signal);
  * @param flags		Flags (GPIO_*; see above)
  */
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
+
 
 /**
  * Set alternate function for GPIO(s).

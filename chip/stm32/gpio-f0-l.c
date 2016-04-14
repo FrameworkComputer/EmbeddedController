@@ -24,6 +24,53 @@ static uint32_t expand_to_2bit_mask(uint32_t mask)
 	return mask_out;
 }
 
+int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
+{
+	uint32_t flags = 0;
+	uint32_t val = 0;
+	const uint32_t mask2 = expand_to_2bit_mask(mask);
+
+	/* Only one bit must be set. */
+	if ((mask != (mask & -mask)) || (mask == 0))
+		return 0;
+
+	/* Check output type. */
+	val = STM32_GPIO_PUPDR(port) & mask2;
+	if (val == (0x55555555 & mask2))
+		flags |= GPIO_PULL_UP;
+	if (val == (0xaaaaaaaa & mask2))
+		flags |= GPIO_PULL_DOWN;
+
+	if (STM32_GPIO_OTYPER(port) & mask)
+		flags |= GPIO_OPEN_DRAIN;
+
+	/* Check mode. */
+	val = STM32_GPIO_MODER(port) & mask2;
+	if (val == (0x55555555 & mask2))
+		flags |= GPIO_OUTPUT;
+	if (val == (0xFFFFFFFF & mask2))
+		flags |= GPIO_ANALOG;
+	if (val == (0x0 & mask2))
+		flags |= GPIO_INPUT;
+	if (val == (0xaaaaaaaa & mask2))
+		flags |= GPIO_ALTERNATE;
+
+	if (flags & GPIO_OUTPUT) {
+		if (STM32_GPIO_ODR(port) & mask)
+			flags |= GPIO_HIGH;
+		else
+			flags |= GPIO_LOW;
+	}
+
+
+	if (STM32_EXTI_RTSR & mask)
+		flags |= GPIO_INT_F_RISING;
+	if (STM32_EXTI_RTSR & mask)
+		flags |= GPIO_INT_F_RISING;
+
+	return flags;
+}
+
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	/* Bitmask for registers with 2 bits per GPIO pin */
@@ -69,6 +116,10 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		STM32_GPIO_MODER(port) = val;
 	} else if (flags & GPIO_INPUT) {
 		/* Input, MODE=00 */
+		STM32_GPIO_MODER(port) = val;
+	} else if (flags & GPIO_ALTERNATE) {
+		/* Alternate, MODE=10 */
+		val |= 0xaaaaaaaa & mask2;
 		STM32_GPIO_MODER(port) = val;
 	}
 
