@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Chromium OS Authors. All rights reserved.
+ * Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -758,14 +758,38 @@ static void shi_reset_prepare(void)
 
 	/* Ready to receive */
 	state = SHI_STATE_READY_TO_RECV;
+
 	CPRINTF("RDY-");
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_reset_prepare, HOOK_PRIO_DEFAULT);
+
+static void shi_enable(void)
+{
+	int gpio_flags;
+
+	shi_reset_prepare();
+
+	/* Ensure SHI_CS_L interrupt is disabled */
+	gpio_disable_interrupt(GPIO_SHI_CS_L);
+
+	/* Enable PU, if requested */
+	gpio_flags = GPIO_INPUT | GPIO_INT_F_FALLING;
+#ifdef NPCX_SHI_CS_PU
+	gpio_flags |= GPIO_PULL_UP;
+#endif
+	gpio_set_flags(GPIO_SHI_CS_L, gpio_flags);
+
+	/* Enable SHI_CS_L interrupt */
+	gpio_enable_interrupt(GPIO_SHI_CS_L);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_enable, HOOK_PRIO_DEFAULT);
 
 /* Disable SHI bus */
 static void shi_disable(void)
 {
 	state = SHI_STATE_DISABLED;
+
+	/* Disable SHI_CS_L interrupt */
+	gpio_disable_interrupt(GPIO_SHI_CS_L);
 
 	/* Disable pullup and interrupts on SHI_CS_L */
 	gpio_set_flags(GPIO_SHI_CS_L, GPIO_INPUT);
@@ -826,9 +850,6 @@ static void shi_init(void)
 
 	/* Clear SHI events status register */
 	NPCX_EVSTAT = 0XFF;
-
-	/* Enable SHI_CS_L interrupt */
-	gpio_enable_interrupt(GPIO_SHI_CS_L);
 
 	/* If chipset is already on, prepare for transactions */
 #if !(DEBUG_SHI)
