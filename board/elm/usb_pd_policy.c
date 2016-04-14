@@ -292,7 +292,6 @@ static void svdm_dp_post_config(int port)
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
-	board_typec_dp_set(port, 1);
 }
 
 static int svdm_dp_attention(int port, uint32_t *payload)
@@ -312,13 +311,9 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		return ack;
 	}
 
-	if (irq & cur_lvl) {
-		board_typec_dp_on(port);
-	} else if (irq & !cur_lvl) {
+	if (!(irq & cur_lvl) && irq & !cur_lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		ack = 0; /* nak */
-	} else {
-		board_typec_dp_set(port, lvl);
 	}
 	/* ack */
 	return ack;
@@ -327,7 +322,6 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
-	board_typec_dp_off(port, dp_flags);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)

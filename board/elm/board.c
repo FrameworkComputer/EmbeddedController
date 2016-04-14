@@ -167,12 +167,6 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 };
 
 /**
- * Store the current DP hardware route.
- */
-static int dp_hw_port = PD_PORT_NONE;
-static struct mutex dp_hw_lock;
-
-/**
  * Reset PD MCU
  *   ANX7688 needs a reset pulse of 50ms after power enable.
  */
@@ -336,73 +330,6 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 	default:
 		return 500;
 	}
-}
-
-static void board_typec_set_dp_hpd(int port, int level)
-{
-	gpio_set_level(GPIO_USB_DP_HPD, level);
-}
-
-static void hpd_irq_deferred(void)
-{
-	board_typec_set_dp_hpd(dp_hw_port, 1);
-}
-DECLARE_DEFERRED(hpd_irq_deferred);
-
-/**
- * Turn on DP hardware on type-C port.
- */
-void board_typec_dp_on(int port)
-{
-	mutex_lock(&dp_hw_lock);
-
-	if (dp_hw_port != !port) {
-		/* Get control of DP hardware */
-		dp_hw_port = port;
-		if (!gpio_get_level(GPIO_USB_DP_HPD)) {
-			board_typec_set_dp_hpd(port, 1);
-		} else {
-			board_typec_set_dp_hpd(port, 0);
-			hook_call_deferred(&hpd_irq_deferred_data,
-					   HPD_DSTREAM_DEBOUNCE_IRQ);
-		}
-	}
-
-	mutex_unlock(&dp_hw_lock);
-}
-
-/**
- * Turn off a PD port's DP output.
- */
-void board_typec_dp_off(int port, int *dp_flags)
-{
-	mutex_lock(&dp_hw_lock);
-
-	if (dp_hw_port == !port) {
-		mutex_unlock(&dp_hw_lock);
-		return;
-	}
-
-	dp_hw_port = PD_PORT_NONE;
-	board_typec_set_dp_hpd(port, 0);
-
-	mutex_unlock(&dp_hw_lock);
-}
-
-/**
- * Set DP hotplug detect level.
- */
-void board_typec_dp_set(int port, int level)
-{
-	mutex_lock(&dp_hw_lock);
-
-	if (dp_hw_port == PD_PORT_NONE)
-		dp_hw_port = port;
-
-	if (dp_hw_port == port)
-		board_typec_set_dp_hpd(port, level);
-
-	mutex_unlock(&dp_hw_lock);
 }
 
 /**
