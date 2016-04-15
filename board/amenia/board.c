@@ -18,6 +18,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/bd99955.h"
+#include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/g78x.h"
 #include "extpower.h"
@@ -45,8 +46,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 #if 1 /* TODO: CHARGER / BC1.2 */
 static void update_vbus_supplier(int port, int vbus_level)
@@ -89,7 +90,6 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-#if 0 /* TODO: TCPC */
 	if (gpio_get_level(GPIO_USB_C0_PD_INT))
 		if (gpio_get_level(GPIO_USB_C0_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_0;
@@ -97,18 +97,23 @@ uint16_t tcpc_get_alert_status(void)
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_L))
 		if (gpio_get_level(GPIO_USB_C1_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_1;
-#endif
 
 	return status;
 }
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
-#if 0 /* TODO: TCPC */
+	if ((signal == GPIO_USB_C0_PD_INT) &&
+	    (!gpio_get_level(GPIO_USB_C0_RST_L)))
+		return;
+
+	if ((signal == GPIO_USB_C1_PD_INT_L) &&
+	    (!gpio_get_level(GPIO_USB_C1_RST_L)))
+		return;
+
 #ifdef HAS_TASK_PDCMD
 	/* Exchange status with PD MCU to determine interrupt cause */
 	host_command_pd_send_status(0);
-#endif
 #endif
 }
 
@@ -132,6 +137,10 @@ void vbus1_evt(enum gpio_signal signal)
 	update_vbus_supplier(1, !gpio_get_level(signal));
 
 	task_wake(TASK_ID_PD_C1);
+}
+
+void board_set_tcpc_power_mode(int port, int normal_mode)
+{
 }
 
 /*
@@ -185,7 +194,7 @@ const struct i2c_port_t i2c_ports[]  = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC0, TCPC0_I2C_ADDR, &tcpci_tcpm_drv},
+	{I2C_PORT_TCPC0, TCPC0_I2C_ADDR, &anx74xx_tcpm_drv},
 	{I2C_PORT_TCPC1, TCPC1_I2C_ADDR, &tcpci_tcpm_drv},
 };
 
@@ -201,10 +210,10 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
-		.driver = &tcpci_tcpm_usb_mux_driver,
+		.driver = &anx74xx_tcpm_usb_mux_driver,
 	},
 	{
-		.port_addr = 0,
+		.port_addr = 1,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 	}
 };
@@ -244,7 +253,6 @@ void board_tcpc_init(void)
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
 
-#if 0 /* TODO: TCPC */
 	/* Enable TCPC0 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT);
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
@@ -252,7 +260,6 @@ void board_tcpc_init(void)
 	/* Enable TCPC1 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
-#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
@@ -413,7 +420,6 @@ void board_hibernate_late(void)
 		/* Turn off LEDs in hibernate */
 		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
 		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-
 		/*
 		 * In hibernate, this pin connected to GND. Set it to output
 		 * low to eliminate the current caused by internal pull-up.

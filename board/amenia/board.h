@@ -78,9 +78,11 @@
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_LOG_SIZE 512
 #define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_TCPM_ANX74XX
+#define  TCPC0_I2C_ADDR 0x50
+#define  ANX74XX_INT_ACTIVE_POLARITY ANX74XX_REG_IRQ_POL_HIGH
 #define CONFIG_USB_PD_TCPM_TCPCI
-#define  TCPC0_I2C_ADDR CONFIG_TCPC_I2C_BASE_ADDR
-#define  TCPC1_I2C_ADDR (CONFIG_TCPC_I2C_BASE_ADDR + 2)
+#define  TCPC1_I2C_ADDR 0x16
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PORT_POWER_SMART
@@ -214,6 +216,8 @@ enum sensor_id {
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
+
+void board_set_tcpc_power_mode(int port, int normal_mode);
 
 #endif /* !__ASSEMBLER__ */
 
