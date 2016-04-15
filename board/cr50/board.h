@@ -24,6 +24,9 @@
 /* Go to sleep when nothing else is happening */
 #define CONFIG_LOW_POWER_IDLE
 
+/* Enable debug cable detection */
+#define CONFIG_RDD
+
 /* USB configuration */
 #define CONFIG_USB
 #define CONFIG_USB_HID
