@@ -188,16 +188,37 @@ static int connect_dio_to_gpio(struct pinmux const *p)
 static void connect_pinmux(struct pinmux const *p)
 {
 	uint32_t bitmask;
+	int is_input;
 
-	/* Connect the pinmux DIO to the right thing */
-	if ((p->flags & DIO_ENABLE_DIRECT_INPUT) ||
-	    ((p->flags & DIO_TO_PERIPHERAL) ?
-	     connect_dio_to_peripheral(p) :
-	     connect_dio_to_gpio(p)))
-		/* and maybe enable the pin as an input */
+	if (p->flags & DIO_ENABLE_DIRECT_INPUT) {
+		/* We don't have to setup any muxes for directly connected
+		 * pads. The only ones that we are likely to ever care about
+		 * are tied to the SPS and SPI peripherals, and they're all
+		 * inouts, so we can just enable the digital input for them
+		 * regardless. */
+		is_input = 1;
+	} else {
+		/* Pads that must be muxed to specific GPIOs or peripherals may
+		 * or may not be inputs. We'll check those individually. */
+		if (p->flags & DIO_TO_PERIPHERAL)
+			is_input = connect_dio_to_peripheral(p);
+		else
+			is_input = connect_dio_to_gpio(p);
+	}
+
+	/* Configure the DIO pad controls */
+	if (is_input)
 		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
 			      DIO_CTL_IE_MASK,
 			      DIO_CTL_IE_LSB, 1);
+	if (p->flags & DIO_PULL_UP)
+		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
+			      DIO_CTL_PU_MASK,
+			      DIO_CTL_PU_LSB, 1);
+	if (p->flags & DIO_PULL_DOWN)
+		REG_WRITE_MLV(DIO_CTL_REG(p->dio.offset),
+			      DIO_CTL_PD_MASK,
+			      DIO_CTL_PD_LSB, 1);
 
 	/* Enable any wake pins needed to exit low-power modes */
 	if ((p->flags & DIO_WAKE_EN0) &&

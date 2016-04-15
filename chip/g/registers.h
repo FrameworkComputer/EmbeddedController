@@ -181,14 +181,17 @@ static inline int x_uart_addr(int ch, int offset)
 #define DIO_ENABLE_DIRECT_INPUT 0x0004
 #define DIO_TO_PERIPHERAL       0x0008
 /* Bits to indicate pinmux wake-from-sleep controls */
-#define DIO_WAKE_EN0            0x0040
-#define DIO_WAKE_EDGE0          0x0020
 #define DIO_WAKE_INV0           0x0010
+#define DIO_WAKE_EDGE0          0x0020
+#define DIO_WAKE_EN0            0x0040
 /* Use these combinations in gpio.inc for clarity */
 #define DIO_WAKE_HIGH           (DIO_WAKE_EN0)
 #define DIO_WAKE_LOW            (DIO_WAKE_EN0 | DIO_WAKE_INV0)
 #define DIO_WAKE_RISING         (DIO_WAKE_EN0 | DIO_WAKE_EDG0)
 #define DIO_WAKE_FALLING        (DIO_WAKE_EN0 | DIO_WAKE_EDG0 | DIO_WAKE_INV0)
+/* Flags for pullup/pulldowns */
+#define DIO_PULL_UP             0x0080
+#define DIO_PULL_DOWN           0x0100
 
 /* Generate the MUX selector register address for the DIO */
 #define DIO_SEL_REG(offset) REG32(GC_PINMUX_BASE_ADDR + offset)
