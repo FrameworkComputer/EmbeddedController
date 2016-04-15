@@ -156,3 +156,11 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 
 	return 1; /* One region is enough. */
 }
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
+void sys_rst_asserted(enum gpio_signal signal)
+{
+	/* TODO(crosbug.com/p/52366): Do something useful here. */
+	CPRINTS("%s(%d)", __func__, signal);
+}

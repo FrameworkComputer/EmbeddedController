@@ -82,6 +82,9 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
+/* Interrupt handler */
+void sys_rst_asserted(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */

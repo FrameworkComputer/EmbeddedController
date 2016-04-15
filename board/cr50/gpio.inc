@@ -7,6 +7,16 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/*
+ * We can assert SYS_RST_L but so can the EC, so we need react if it's pulled
+ * low. The ARM core can't trigger an interrupt if it's driving it as an output
+ * so we attach two internal GPIOs to the same pad.
+ * TODO: Remove this internal pullup at some point. It's only here so that
+ * boards that don't have an external pullup don't trigger due to noise.
+ */
+GPIO_INT(SYS_RST_L_IN, PIN(1, 0),  GPIO_INT_FALLING | GPIO_PULL_UP,
+	 sys_rst_asserted)
+
 /* Pull this low to interrupt the AP */
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_INPUT)
 
@@ -18,8 +28,8 @@ GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_OUT_LOW)
  * As an output it can override EC_WP_L, although why would we? */
 GPIO(AP_WP_L,         PIN(0, 3), GPIO_INPUT)
 
-/* Drive high to reset the EC & AP */
-GPIO(SYS_RST,         PIN(0, 4), GPIO_INPUT)
+/* Pull this low to reset the AP. (We reset the EC with the RBOX.) */
+GPIO(SYS_RST_L_OUT,   PIN(0, 4), GPIO_OUT_HIGH)
 
 /* Indicate to EC when CCD is enabled. EC can pull this down too, to tell us if
  * it decided instead. The pullup is on the EC's side. */
@@ -47,7 +57,8 @@ PINMUX(GPIO(INT_AP_L),        A5, DIO_INPUT)	/* DIOB7 is p_digitial_od */
 PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
 PINMUX(GPIO(AP_WP_L),         M3, 0)
-PINMUX(GPIO(SYS_RST),         M0, DIO_INPUT)
+PINMUX(GPIO(SYS_RST_L_IN),    M0, 0)
+PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
 PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
 PINMUX(GPIO(BATT_PRES),       M2, 0)
 
