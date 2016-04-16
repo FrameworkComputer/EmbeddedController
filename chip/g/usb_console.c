@@ -294,19 +294,6 @@ int usb_getc(void)
 	return -1;
 }
 
-int usb_putc(int c)
-{
-	int ret = usb_wait_console();
-
-	if (ret)
-		return ret;
-
-	ret = QUEUE_ADD_UNITS(&tx_q, &c, 1);
-	if (ret)
-		handle_output();
-	return ret ? EC_SUCCESS : EC_ERROR_OVERFLOW;
-}
-
 int usb_puts(const char *outstr)
 {
 	int ret;
@@ -328,6 +315,15 @@ int usb_puts(const char *outstr)
 		handle_output();
 
 	return *outstr ? EC_ERROR_OVERFLOW : EC_SUCCESS;
+}
+
+int usb_putc(int c)
+{
+	char string[2];
+
+	string[0] = c;
+	string[1] = '\0';
+	return usb_puts(string);
 }
 
 int usb_vprintf(const char *format, va_list args)
