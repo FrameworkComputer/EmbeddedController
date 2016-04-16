@@ -100,6 +100,6 @@ void charge_manager_save_log(int port);
 int board_set_active_charge_port(int charge_port);
 
 /* Set the charge current limit. */
-void board_set_charge_limit(int charge_ma);
+void board_set_charge_limit(int port, int supplier, int charge_ma);
 
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

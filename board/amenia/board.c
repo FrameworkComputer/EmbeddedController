@@ -49,43 +49,6 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-#if 1 /* TODO: CHARGER / BC1.2 */
-static void update_vbus_supplier(int port, int vbus_level)
-{
-	struct charge_port_info charge;
-
-	charge.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
-	charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &charge);
-}
-
-static void reset_charge(int port)
-{
-	struct charge_port_info charge_none;
-
-	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_none.current = 0;
-	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-				     port,
-				     &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-				     port,
-				     &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-				     port,
-				     &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-				     port,
-				     &charge_none);
-	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-				     port,
-				     &charge_none);
-
-	/* Initialize VBUS supplier based on whether VBUS is present */
-	update_vbus_supplier(port, pd_snk_is_vbus_provided(port));
-}
-#endif
-
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
@@ -123,8 +86,7 @@ void vbus0_evt(enum gpio_signal signal)
 		return;
 
 	/* VBUS present GPIO is inverted */
-	update_vbus_supplier(0, !gpio_get_level(signal));
-
+	usb_charger_vbus_change(0, !gpio_get_level(signal));
 	task_wake(TASK_ID_PD_C0);
 }
 
@@ -134,8 +96,7 @@ void vbus1_evt(enum gpio_signal signal)
 		return;
 
 	/* VBUS present GPIO is inverted */
-	update_vbus_supplier(1, !gpio_get_level(signal));
-
+	usb_charger_vbus_change(1, !gpio_get_level(signal));
 	task_wake(TASK_ID_PD_C1);
 }
 
@@ -309,14 +270,6 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 /* Initialize board. */
 static void board_init(void)
 {
-#if 1 /* TODO: CHARGER / BC1.2 */
-	int i;
-
-	/* Initialize all BC1.2 charge suppliers to 0 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
-		reset_charge(i);
-#endif
-
 #if 0 /* TODO: CHARGER */
 	/* Enable charger interrupt */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
@@ -343,8 +296,7 @@ int board_set_active_charge_port(int charge_port)
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
 	/* check if we are source vbus on that port */
-	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
-						       GPIO_USB_C1_5V_EN);
+	int source = usb_charger_port_is_sourcing_vbus(charge_port);
 
 	if (is_real_port && source) {
 		CPRINTS("Skip enable p%d", charge_port);
@@ -374,10 +326,20 @@ int board_set_active_charge_port(int charge_port)
 /**
  * Set the charge limit based upon desired maximum.
  *
+ * @param port          Port number.
+ * @param supplier      Charge supplier type.
  * @param charge_ma     Desired charge limit (mA).
  */
-void board_set_charge_limit(int charge_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma)
 {
+	/* Enable charging trigger by BC1.2 detection */
+	if (supplier == CHARGE_SUPPLIER_BC12_CDP ||
+		supplier == CHARGE_SUPPLIER_BC12_DCP ||
+		supplier == CHARGE_SUPPLIER_BC12_SDP) {
+		if (bd99955_bc12_enable_charging(port, 1))
+			return;
+	}
+
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT));
 }

@@ -8,15 +8,27 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "bd99955.h"
+#include "charge_manager.h"
 #include "charger.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
+#include "time.h"
 #include "util.h"
+#include "usb_charge.h"
+#include "usb_pd.h"
+
+#define OTPROM_LOAD_WAIT_RETRY	3
+
+#define BD99955_CHARGE_PORT_COUNT 2
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+
+/* TODO: Add accurate timeout for detecting BC1.2 */
+#define BC12_DETECT_RETRY	10
 
 /* Charger parameters */
 static const struct charger_info bd99955_charger_info = {
@@ -36,6 +48,14 @@ static const struct charger_info bd99955_charger_info = {
 static enum bd99955_command charger_map_cmd = BD99955_INVALID_COMMAND;
 
 static struct mutex bd99955_map_mutex;
+
+#if defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG_P1)
+/* USB switch */
+static enum usb_switch usb_switch_state[BD99955_CHARGE_PORT_COUNT] = {
+	USB_SWITCH_DISCONNECT,
+	USB_SWITCH_DISCONNECT,
+};
+#endif
 
 static inline int ch_raw_read16(int cmd, int *param,
 				enum bd99955_command map_cmd)
@@ -108,9 +128,34 @@ static int bd99955_charger_enable(int enable)
 
 static int bd99955_por_reset(void)
 {
-	return ch_raw_write16(BD99955_CMD_SYSTEM_CTRL_SET,
-				BD99955_CMD_SYSTEM_CTRL_SET_OTPLD |
-				BD99955_CMD_SYSTEM_CTRL_SET_ALLRST,
+	int rv;
+	int reg;
+	int i;
+
+	rv = ch_raw_write16(BD99955_CMD_SYSTEM_CTRL_SET,
+			BD99955_CMD_SYSTEM_CTRL_SET_OTPLD |
+			BD99955_CMD_SYSTEM_CTRL_SET_ALLRST,
+			BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	/* Wait until OTPROM loading is finished */
+	for (i = 0; i < OTPROM_LOAD_WAIT_RETRY; i++) {
+		msleep(10);
+		rv = ch_raw_read16(BD99955_CMD_SYSTEM_STATUS, &reg,
+				BD99955_EXTENDED_COMMAND);
+
+		if (!rv && (reg & BD99955_CMD_SYSTEM_STATUS_OTPLD_STATE) &&
+			(reg & BD99955_CMD_SYSTEM_STATUS_ALLRST_STATE))
+			break;
+	}
+
+	if (rv)
+		return rv;
+	if (i == OTPROM_LOAD_WAIT_RETRY)
+		return EC_ERROR_TIMEOUT;
+
+	return ch_raw_write16(BD99955_CMD_SYSTEM_CTRL_SET, 0,
 				BD99955_EXTENDED_COMMAND);
 }
 
@@ -131,6 +176,125 @@ static int bd99955_get_charger_op_status(int *status)
 				BD99955_EXTENDED_COMMAND);
 }
 
+#if defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG_P1)
+static int bd99955_get_bc12_device_type(enum bd99955_charge_port port)
+{
+	int rv;
+	int reg;
+
+	rv = ch_raw_read16((port == BD99955_CHARGE_PORT_VBUS) ?
+				BD99955_CMD_VBUS_UCD_STATUS :
+				BD99955_CMD_VCC_UCD_STATUS,
+				&reg, BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return CHARGE_SUPPLIER_NONE;
+
+	switch (reg & BD99955_TYPE_MASK) {
+	case BD99955_TYPE_CDP:
+		return CHARGE_SUPPLIER_BC12_CDP;
+	case BD99955_TYPE_DCP:
+		return CHARGE_SUPPLIER_BC12_DCP;
+	case BD99955_TYPE_SDP:
+		return CHARGE_SUPPLIER_BC12_SDP;
+	case BD99955_TYPE_VBUS_OPEN:
+	case BD99955_TYPE_PUP_PORT:
+	case BD99955_TYPE_OPEN_PORT:
+	default:
+		return CHARGE_SUPPLIER_NONE;
+	}
+}
+
+static int bd99955_get_bc12_ilim(int charge_supplier)
+{
+	switch (charge_supplier) {
+	case CHARGE_SUPPLIER_BC12_CDP:
+		return 1500;
+	case CHARGE_SUPPLIER_BC12_DCP:
+		return 2000;
+	case CHARGE_SUPPLIER_BC12_SDP:
+		return 900;
+	default:
+		return 500;
+	}
+}
+
+static int bd99955_enable_usb_switch(enum bd99955_charge_port port,
+					enum usb_switch setting)
+{
+	int rv;
+	int reg;
+	int port_reg;
+
+	port_reg = (port == BD99955_CHARGE_PORT_VBUS) ?
+		BD99955_CMD_VBUS_UCD_SET : BD99955_CMD_VCC_UCD_SET;
+
+	rv = ch_raw_read16(port_reg, &reg, BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	if (setting == USB_SWITCH_CONNECT)
+		reg |= BD99955_CMD_UCD_SET_USB_SW_EN;
+	else
+		reg &= ~BD99955_CMD_UCD_SET_USB_SW_EN;
+
+	return ch_raw_write16(port_reg, reg, BD99955_EXTENDED_COMMAND);
+}
+
+static int bd99955_bc12_detect(int port)
+{
+	int i;
+	int bc12_type;
+	struct charge_port_info charge;
+
+	/*
+	 * BC1.2 detection starts 100ms after VBUS/VCC attach and typically
+	 * completes 312ms after VBUS/VCC attach.
+	 */
+	msleep(312);
+	for (i = 0; i < BC12_DETECT_RETRY; i++) {
+		/* get device type */
+		bc12_type = bd99955_get_bc12_device_type(port);
+
+		/* Detected BC1.2 */
+		if (bc12_type != CHARGE_SUPPLIER_NONE)
+			break;
+
+		/* TODO: Add accurate timeout for detecting BC1.2 */
+		msleep(100);
+	}
+
+	/* BC1.2 device attached */
+	if (bc12_type != CHARGE_SUPPLIER_NONE) {
+		/* Update charge manager */
+		charge.voltage = USB_CHARGER_VOLTAGE_MV;
+		charge.current = bd99955_get_bc12_ilim(bc12_type);
+		charge_manager_update_charge(bc12_type, port, &charge);
+
+		/* notify host of power info change */
+		pd_send_host_event(PD_EVENT_POWER_CHANGE);
+	}
+
+	return bc12_type;
+}
+
+static void bd99955_bc12_detach(int port, int type)
+{
+	struct charge_port_info charge = {
+		.voltage = USB_CHARGER_VOLTAGE_MV,
+		.current = 0,
+	};
+
+	/* Update charge manager */
+	charge_manager_update_charge(type, port, &charge);
+
+	/* Disable charging trigger by BC1.2 detection */
+	bd99955_bc12_enable_charging(port, 0);
+
+	/* notify host of power info change */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+#endif /* defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG_P1) */
+
 
 /* chip specific interfaces */
 
@@ -140,7 +304,6 @@ int charger_set_input_current(int input_current)
 
 	/* Input current step 32 mA */
 	input_current &= ~0x1F;
-
 	rv = ch_raw_write16(BD99955_CMD_IBUS_LIM_SET, input_current,
 				BD99955_BAT_CHG_COMMAND);
 	if (rv)
@@ -247,9 +410,7 @@ int charger_get_status(int *status)
 		*status |= CHARGER_POWER_FAIL;
 
 	/* Safety signal ranges & battery presence */
-	ch_status = (reg & BD99955_CMD_CHGOP_STATUS_BATTEMP0) |
-			((reg & BD99955_CMD_CHGOP_STATUS_BATTEMP1) << 1) |
-			((reg & BD99955_CMD_CHGOP_STATUS_BATTEMP2) << 2);
+	ch_status = (reg & BD99955_BATTTEMP_MASK) >> 8;
 
 	*status |= CHARGER_BATTERY_PRESENT;
 
@@ -346,29 +507,42 @@ static void bd99995_init(void)
 	int reg;
 	const struct battery_info *bi = battery_get_info();
 
-	/* Disable BC1.2 detection on VCC */
+	/* Enable BC1.2 detection on VCC */
 	if (ch_raw_read16(BD99955_CMD_VCC_UCD_SET, &reg,
 			  BD99955_EXTENDED_COMMAND))
 		return;
-	reg &= ~BD99955_CMD_UCD_SET_USBDETEN;
+	reg |= BD99955_CMD_UCD_SET_USBDETEN;
+	reg &= ~BD99955_CMD_UCD_SET_USB_SW_EN;
 	ch_raw_write16(BD99955_CMD_VCC_UCD_SET, reg,
 		       BD99955_EXTENDED_COMMAND);
 
-	/* Disable BC1.2 detection on VBUS */
+	/* Enable BC1.2 detection on VBUS */
 	if (ch_raw_read16(BD99955_CMD_VBUS_UCD_SET, &reg,
 			  BD99955_EXTENDED_COMMAND))
 		return;
-	reg &= ~BD99955_CMD_UCD_SET_USBDETEN;
+	reg |= BD99955_CMD_UCD_SET_USBDETEN;
+	reg &= ~BD99955_CMD_UCD_SET_USB_SW_EN;
 	ch_raw_write16(BD99955_CMD_VBUS_UCD_SET, reg,
 		       BD99955_EXTENDED_COMMAND);
 
-	/* Disable BC1.2 charge enable trigger */
+	/* Disable charging trigger by BC1.2 on VCC & VBUS. */
 	if (ch_raw_read16(BD99955_CMD_CHGOP_SET1, &reg,
 			  BD99955_EXTENDED_COMMAND))
 		return;
-	reg |= (BD99955_CMD_CHGOP_SET1_VCC_BC_DISEN |
-		BD99955_CMD_CHGOP_SET1_VBUS_BC_DISEN);
+	reg |= (BD99955_CMD_CHGOP_SET1_SDP_CHG_TRIG_EN |
+		BD99955_CMD_CHGOP_SET1_SDP_CHG_TRIG |
+		BD99955_CMD_CHGOP_SET1_VBUS_BC_DISEN |
+		BD99955_CMD_CHGOP_SET1_VCC_BC_DISEN |
+		BD99955_CMD_CHGOP_SET1_ILIM_AUTO_DISEN);
 	ch_raw_write16(BD99955_CMD_CHGOP_SET1, reg,
+		       BD99955_EXTENDED_COMMAND);
+
+	/* Enable BC1.2 USB charging and DC/DC converter */
+	if (ch_raw_read16(BD99955_CMD_CHGOP_SET2, &reg,
+			  BD99955_EXTENDED_COMMAND))
+		return;
+	reg &= ~(BD99955_CMD_CHGOP_SET2_USB_SUS);
+	ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
 		       BD99955_EXTENDED_COMMAND);
 
 	/* Set battery OVP to 500 + maximum battery voltage */
@@ -448,6 +622,78 @@ int bd99955_select_input_port(enum bd99955_charge_port port)
 	return ch_raw_write16(BD99955_CMD_VIN_CTRL_SET, reg,
 			      BD99955_EXTENDED_COMMAND);
 }
+
+#if defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG_P1)
+int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable)
+{
+	int rv;
+	int reg;
+	int mask_val;
+
+	/*
+	 * For BC1.2, enable VBUS/VCC_BC_DISEN charging trigger by BC1.2
+	 * detection and disable SDP_CHG_TRIG, SDP_CHG_TRIG_EN. Vice versa
+	 * for USB-C.
+	 */
+	rv = ch_raw_read16(BD99955_CMD_CHGOP_SET1, &reg,
+			BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	mask_val = (BD99955_CMD_CHGOP_SET1_SDP_CHG_TRIG_EN |
+		BD99955_CMD_CHGOP_SET1_SDP_CHG_TRIG |
+		((port == BD99955_CHARGE_PORT_VBUS) ?
+		BD99955_CMD_CHGOP_SET1_VBUS_BC_DISEN :
+		BD99955_CMD_CHGOP_SET1_VCC_BC_DISEN));
+
+	if (enable)
+		reg &= ~mask_val;
+	else
+		reg |= mask_val;
+
+	return ch_raw_write16(BD99955_CMD_CHGOP_SET1, reg,
+			BD99955_EXTENDED_COMMAND);
+}
+
+void usb_charger_set_switches(int port, enum usb_switch setting)
+{
+	/* If switch is not changing then return */
+	if (setting == usb_switch_state[port] ||
+		pd_snk_is_vbus_provided(port))
+		return;
+
+	if (setting != USB_SWITCH_RESTORE)
+		usb_switch_state[port] = setting;
+	bd99955_enable_usb_switch(port, usb_switch_state[port]);
+}
+
+void usb_charger_task(void)
+{
+	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);
+	int bc12_type = CHARGE_SUPPLIER_NONE;
+	int vbus_provided;
+
+	while (1) {
+		vbus_provided = pd_snk_is_vbus_provided(port);
+
+		if (vbus_provided) {
+			/* Charger/sync attached */
+			bc12_type = bd99955_bc12_detect(port);
+		} else if (bc12_type != CHARGE_SUPPLIER_NONE &&
+				!vbus_provided) {
+			/* Charger/sync detached */
+			bd99955_bc12_detach(port, bc12_type);
+			bc12_type = CHARGE_SUPPLIER_NONE;
+		}
+
+		/* Wait for interrupt */
+		task_wait_event(-1);
+	}
+}
+#endif /* defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG_P1) */
+
+
+/*** Console commands ***/
 
 #ifdef CONFIG_CMD_CHARGER
 static int read_bat(uint8_t cmd)

@@ -495,9 +495,11 @@ static int board_update_charge_limit(int charge_ma)
 /**
  * Set the charge limit based upon desired maximum.
  *
+ * @param port          Port number.
+ * @param supplier      Charge supplier type.
  * @param charge_ma     Desired charge limit (mA).
  */
-void board_set_charge_limit(int charge_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma)
 {
 	/* Update current limit and notify EC if it changed */
 	if (board_update_charge_limit(charge_ma))

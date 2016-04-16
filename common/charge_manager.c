@@ -527,8 +527,9 @@ static void charge_manager_refresh(void)
 		/* Enable or disable charge ramp */
 		charger_set_hw_ramp(board_is_ramp_allowed(new_supplier));
 #endif
-		board_set_charge_limit(new_charge_current);
-#endif
+		board_set_charge_limit(new_port, new_supplier,
+					new_charge_current);
+#endif /* HAS_TASK_CHG_RAMP */
 		CPRINTS("CL: p%d s%d i%d v%d", new_port, new_supplier,
 			new_charge_current, new_charge_voltage);
 	}
@@ -996,3 +997,18 @@ DECLARE_CONSOLE_COMMAND(chglim, command_external_power_limit,
 	"Set max charger current / voltage",
 	NULL);
 #endif /* CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT */
+
+#ifdef CONFIG_CMD_CHARGE_SUPPLIER_INFO
+static int charge_supplier_info(int argc, char **argv)
+{
+	ccprintf("port=%d, type=%d, cur=%dmA, vtg=%dmV\n",
+			charge_manager_get_active_charge_port(),
+			charge_supplier,
+			charge_current,
+			charge_voltage);
+
+	return 0;
+}
+DECLARE_CONSOLE_COMMAND(chgsup, charge_supplier_info,
+			NULL, "print chg supplier info", NULL);
+#endif
