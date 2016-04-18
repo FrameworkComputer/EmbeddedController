@@ -4,10 +4,42 @@
  */
 
 #include "common.h"
+#include "intc.h"
+#include "it83xx_pd.h"
+#include "kmsc_chip.h"
 #include "registers.h"
 #include "task.h"
-#include "kmsc_chip.h"
-#include "intc.h"
+#include "usb_pd.h"
+
+#ifdef CONFIG_USB_PD_TCPM_ITE83XX
+static void chip_pd_irq(enum usbpd_port port)
+{
+	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
+
+	/* check status */
+	if (USBPD_IS_HARD_RESET_DETECT(port)) {
+		/* clear interrupt */
+		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_HARD_RESET_DETECT;
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			PD_EVENT_TCPC_RESET, 0);
+	} else {
+		if (USBPD_IS_RX_DONE(port)) {
+			/* mask RX done interrupt */
+			IT83XX_USBPD_IMR(port) |= USBPD_REG_MASK_MSG_RX_DONE;
+			/* clear RX done interrupt */
+			IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_RX_DONE;
+			task_set_event(PD_PORT_TO_TASK_ID(port),
+				PD_EVENT_RX, 0);
+		}
+		if (USBPD_IS_TX_DONE(port)) {
+			/* clear TX done interrupt */
+			IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_MSG_TX_DONE;
+			task_set_event(PD_PORT_TO_TASK_ID(port),
+				TASK_EVENT_PHY_TX_DONE, 0);
+		}
+	}
+}
+#endif
 
 void intc_cpu_int_group_5(void)
 {
@@ -74,6 +106,15 @@ void intc_cpu_int_group_12(void)
 		peci_interrupt();
 		break;
 #endif
+#ifdef CONFIG_USB_PD_TCPM_ITE83XX
+	case IT83XX_IRQ_USBPD0:
+		chip_pd_irq(USBPD_PORT_A);
+		break;
+
+	case IT83XX_IRQ_USBPD1:
+		chip_pd_irq(USBPD_PORT_B);
+		break;
+#endif /* CONFIG_USB_PD_TCPM_ITE83XX */
 	default:
 		break;
 	}
@@ -86,7 +127,7 @@ void intc_cpu_int_group_6(void)
 	int intc_group_6 = intc_get_ec_int();
 
 	switch (intc_group_6) {
-
+#ifdef CONFIG_I2C
 	case IT83XX_IRQ_SMB_A:
 		i2c_interrupt(IT83XX_I2C_CH_A);
 		break;
@@ -110,7 +151,7 @@ void intc_cpu_int_group_6(void)
 	case IT83XX_IRQ_SMB_F:
 		i2c_interrupt(IT83XX_I2C_CH_F);
 		break;
-
+#endif
 	default:
 		break;
 	}

@@ -146,7 +146,13 @@
 #define IT83XX_IRQ_EXT_TIMER7     159
 #define IT83XX_IRQ_PECI           160
 #define IT83XX_IRQ_SOFTWARE       161
-#define IT83XX_IRQ_COUNT          162
+#define IT83XX_IRQ_WKO162         162
+#define IT83XX_IRQ_WKO163         163
+#define IT83XX_IRQ_WKO164         164
+#define IT83XX_IRQ_USBPD0         165
+#define IT83XX_IRQ_USBPD1         166
+#define IT83XX_IRQ_WKO167         167
+#define IT83XX_IRQ_COUNT          168
 
 /* IRQ dispatching to CPU INT vectors */
 #define IT83XX_CPU_INT_IRQ_1       2
@@ -291,6 +297,12 @@
 #define IT83XX_CPU_INT_IRQ_159     3
 #define IT83XX_CPU_INT_IRQ_160    12
 #define IT83XX_CPU_INT_IRQ_161    12
+#define IT83XX_CPU_INT_IRQ_162    12
+#define IT83XX_CPU_INT_IRQ_163    12
+#define IT83XX_CPU_INT_IRQ_164    12
+#define IT83XX_CPU_INT_IRQ_165    12
+#define IT83XX_CPU_INT_IRQ_166    12
+#define IT83XX_CPU_INT_IRQ_167    12
 
 /* "Fake" IRQ to declare in readable fashion all WKO IRQ routed to INT#2 */
 #define CPU_INT_2_ALL_GPIOS      255
@@ -622,6 +634,7 @@ enum ec_pll_ctrl {
 #define IT83XX_ECPM_SCDCR1	REG8(IT83XX_ECPM_BASE+0x0d)
 #define IT83XX_ECPM_SCDCR2	REG8(IT83XX_ECPM_BASE+0x0e)
 #define IT83XX_ECPM_SCDCR3	REG8(IT83XX_ECPM_BASE+0x0f)
+#define IT83XX_ECPM_SCDCR4	REG8(IT83XX_ECPM_BASE+0x10)
 
 /*
  * The clock gate offsets combine the register offset from ECPM_BASE and the
@@ -1085,6 +1098,75 @@ enum i2c_channels {
 	IT83XX_I2C_CH_E,  /* GPIO.E0/E7 */
 	IT83XX_I2C_CH_F,  /* GPIO.A4/A5 (for util/iteflash) */
 	IT83XX_I2C_PORT_COUNT,
+};
+
+/* USBPD Controller */
+#define IT83XX_USBPD_BASE(port)   (0x00F03700 + (0x100 * (port)))
+
+#define IT83XX_USBPD_GCR(p)       REG8(IT83XX_USBPD_BASE(p)+0x0)
+#define USBPD_REG_MASK_SW_RESET_BIT           (1 << 7)
+#define USBPD_REG_MASK_TYPE_C_DETECT_RESET    (1 << 6)
+#define USBPD_REG_MASK_BMC_PHY                (1 << 4)
+#define USBPD_REG_MASK_AUTO_SEND_SW_RESET     (1 << 3)
+#define USBPD_REG_MASK_AUTO_SEND_HW_RESET     (1 << 2)
+#define USBPD_REG_MASK_SNIFFER_MODE           (1 << 1)
+#define USBPD_REG_MASK_GLOBAL_ENABLE          (1 << 0)
+#define IT83XX_USBPD_PDMSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x01)
+#define USBPD_REG_MASK_SOPPP_ENABLE           (1 << 7)
+#define USBPD_REG_MASK_SOPP_ENABLE            (1 << 6)
+#define USBPD_REG_MASK_SOP_ENABLE             (1 << 5)
+#define IT83XX_USBPD_CCGCR(p)     REG8(IT83XX_USBPD_BASE(p)+0x04)
+#define USBPD_REG_MASK_DISABLE_CC             (1 << 4)
+#define IT83XX_USBPD_CCCSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x05)
+#define IT83XX_USBPD_CCPSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x06)
+#define USBPD_REG_MASK_DISCONNECT_POWER_CC2   (1 << 5)
+#define USBPD_REG_MASK_DISCONNECT_POWER_CC1   (1 << 1)
+#define IT83XX_USBPD_DFPVDR(p)    REG8(IT83XX_USBPD_BASE(p)+0x08)
+#define IT83XX_USBPD_UFPVDR(p)    REG8(IT83XX_USBPD_BASE(p)+0x09)
+#define IT83XX_USBPD_CCADCR(p)    REG8(IT83XX_USBPD_BASE(p)+0x0C)
+#define IT83XX_USBPD_ISR(p)       REG8(IT83XX_USBPD_BASE(p)+0x14)
+#define USBPD_REG_MASK_TYPE_C_DETECT           (1 << 7)
+#define USBPD_REG_MASK_CABLE_RESET_DETECT      (1 << 6)
+#define USBPD_REG_MASK_HARD_RESET_DETECT       (1 << 5)
+#define USBPD_REG_MASK_MSG_RX_DONE             (1 << 4)
+#define USBPD_REG_MASK_AUTO_SOFT_RESET_TX_DONE (1 << 3)
+#define USBPD_REG_MASK_HARD_RESET_TX_DONE      (1 << 2)
+#define USBPD_REG_MASK_MSG_TX_DONE             (1 << 1)
+#define USBPD_REG_MASK_TIMER_TIMEOUT           (1 << 0)
+#define IT83XX_USBPD_IMR(p)       REG8(IT83XX_USBPD_BASE(p)+0x15)
+#define IT83XX_USBPD_MTCR(p)      REG8(IT83XX_USBPD_BASE(p)+0x18)
+#define USBPD_REG_MASK_SW_RESET_TX_STAT        (1 << 3)
+#define USBPD_REG_MASK_TX_BUSY_STAT            (1 << 2)
+#define USBPD_REG_MASK_TX_DISCARD_STAT         (1 << 2)
+#define USBPD_REG_MASK_TX_ERR_STAT             (1 << 1)
+#define USBPD_REG_MASK_TX_START                (1 << 0)
+#define IT83XX_USBPD_MTSR0(p)     REG8(IT83XX_USBPD_BASE(p)+0x19)
+#define USBPD_REG_MASK_CABLE_ENABLE            (1 << 7)
+#define USBPD_REG_MASK_SEND_HW_RESET           (1 << 6)
+#define USBPD_REG_MASK_SEND_BIST_MODE_2        (1 << 5)
+#define IT83XX_USBPD_MTSR1(p)     REG8(IT83XX_USBPD_BASE(p)+0x1A)
+#define IT83XX_USBPD_VDMMCSR(p)   REG8(IT83XX_USBPD_BASE(p)+0x1B)
+#define IT83XX_USBPD_MRSR(p)      REG8(IT83XX_USBPD_BASE(p)+0x1C)
+#define USBPD_REG_MASK_RX_MSG_VALID            (1 << 0)
+#define IT83XX_USBPD_PEFSMR(p)    REG8(IT83XX_USBPD_BASE(p)+0x1D)
+#define IT83XX_USBPD_PES0R(p)     REG8(IT83XX_USBPD_BASE(p)+0x1E)
+#define IT83XX_USBPD_PES1R(p)     REG8(IT83XX_USBPD_BASE(p)+0x1F)
+#define IT83XX_USBPD_TDO_BASE(p)  (IT83XX_USBPD_BASE(p)+0x20)
+#define IT83XX_USBPD_AGTMHLR(p)   REG8(IT83XX_USBPD_BASE(p)+0x3C)
+#define IT83XX_USBPD_AGTMHHR(p)   REG8(IT83XX_USBPD_BASE(p)+0x3D)
+#define IT83XX_USBPD_TMHLR(p)     REG8(IT83XX_USBPD_BASE(p)+0x3E)
+#define IT83XX_USBPD_TMHHR(p)     REG8(IT83XX_USBPD_BASE(p)+0x3F)
+#define IT83XX_USBPD_RDO_BASE(p)  (IT83XX_USBPD_BASE(p)+0x40)
+#define IT83XX_USBPD_RMH_BASE(p)  (IT83XX_USBPD_BASE(p)+0x5E)
+#define IT83XX_USBPD_RMHLR(p)     REG8(IT83XX_USBPD_BASE(p)+0x5E)
+#define IT83XX_USBPD_RMHHR(p)     REG8(IT83XX_USBPD_BASE(p)+0x5F)
+#define IT83XX_USBPD_BMCSR(p)     REG8(IT83XX_USBPD_BASE(p)+0x64)
+#define IT83XX_USBPD_PDMHSR(p)    REG8(IT83XX_USBPD_BASE(p)+0x65)
+
+enum usbpd_port {
+	USBPD_PORT_A,
+	USBPD_PORT_B,
+	USBPD_PORT_COUNT,
 };
 
 /* --- MISC (not implemented yet) --- */

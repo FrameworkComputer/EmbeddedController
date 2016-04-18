@@ -414,6 +414,14 @@ void gpio_pre_init(void)
 
 	IT83XX_GPIO_GCR = 0x06;
 
+#ifndef CONFIG_USB_PD_TCPM_ITE83XX
+	/* To prevent cc pins leakage if we don't use pd module */
+	for (i = 0; i < USBPD_PORT_COUNT; i++) {
+		IT83XX_USBPD_CCGCR(i) = 0x1f;
+		IT83XX_USBPD_CCPSR(i) = 0x66;
+	}
+#endif
+
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		flags = g->flags;
 
