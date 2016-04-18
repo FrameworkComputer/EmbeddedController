@@ -23,14 +23,18 @@
 #include "timer.h"
 #include "util.h"
 
-#if !(DEBUG_SHI)
-#define CPUTS(...)
-#define CPRINTS(...)
-#define CPRINTF(...)
-#else
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+
+#if !(DEBUG_SHI)
+#define DEBUG_CPUTS(...)
+#define DEBUG_CPRINTS(...)
+#define DEBUG_CPRINTF(...)
+#else
+#define DEBUG_CPUTS(outstr) cputs(CC_SPI, outstr)
+#define DEBUG_CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define DEBUG_CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
 #endif
 
 /* SHI Bus definition */
@@ -182,7 +186,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		task_disable_irq(NPCX_IRQ_SHI);
 		/* Transmit the reply */
 		state = SHI_STATE_SENDING;
-		CPRINTF("SND-");
+		DEBUG_CPRINTF("SND-");
 		/* Start to fill output buffer with msg buffer */
 		shi_write_outbuf_wait(shi_params.sz_response);
 		/* Enable SHI interrupt */
@@ -195,7 +199,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 	else {
 		/* Reset SHI and prepare to next transaction again */
 		shi_reset_prepare();
-		CPRINTF("END\n");
+		DEBUG_CPRINTF("END\n");
 		return;
 	}
 }
@@ -212,7 +216,7 @@ void shi_handle_host_package(void)
 					- shi_params.sz_received;
 		/* Move to processing state immediately */
 		state = SHI_STATE_PROCESSING;
-		CPRINTF("PRC-");
+		DEBUG_CPRINTF("PRC-");
 		/* Read remaining bytes from input buffer directly */
 		if (!shi_read_inbuf_wait(remain_bytes))
 			return shi_error(1);
@@ -433,7 +437,7 @@ void shi_int_handler(void)
 			 * transaction immediately
 			 */
 			NPCX_OBUF(0) = EC_SPI_NOT_READY;
-		CPRINTF("CSH-");
+		DEBUG_CPRINTF("CSH-");
 		/*
 		 * If the buffer is still used by the host command.
 		 * Change tx buffer to NOT_READY
@@ -444,12 +448,12 @@ void shi_int_handler(void)
 			 * response function
 			 */
 			state = SHI_STATE_NOT_READY;
-			CPRINTF("WAIT-");
+			DEBUG_CPRINTF("WAIT-");
 			return;
 		}
 		/* reset SHI and prepare to next transaction again */
 		shi_reset_prepare();
-		CPRINTF("END\n");
+		DEBUG_CPRINTF("END\n");
 		return;
 	}
 
@@ -550,7 +554,7 @@ void shi_cs_event(enum gpio_signal signal)
 
 	/* We're now inside a transaction */
 	state = SHI_STATE_RECEIVING;
-	CPRINTF("CSL-RV-");
+	DEBUG_CPRINTF("CSL-RV-");
 
 	/* Setup deadline time for receiving */
 	shi_params.rx_deadline = get_time();
@@ -595,7 +599,7 @@ static void shi_reset_prepare(void)
 	/* Ready to receive */
 	state = SHI_STATE_READY_TO_RECV;
 
-	CPRINTF("RDY-");
+	DEBUG_CPRINTF("RDY-");
 }
 
 static void shi_enable(void)

@@ -60,7 +60,7 @@
 #define DEBUG_SPI                        0
 #define DEBUG_FLH                        0
 #define DEBUG_PECI                       0
-#define DEBUG_SHI                        1
+#define DEBUG_SHI                        0
 #define DEBUG_CLK                        0
 #define DEBUG_LPC                        0
 
