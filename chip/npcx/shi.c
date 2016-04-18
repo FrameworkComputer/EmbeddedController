@@ -101,9 +101,6 @@
  * one last past-end byte at the end so any additional bytes clocked out by
  * the AP will have a known and identifiable value.
  */
-#define SHI_PROTO2_OFFSET (EC_PROTO2_RESPONSE_HEADER_BYTES + 1)
-#define SHI_PROTO2_OVERHEAD (SHI_PROTO2_OFFSET +		\
-	EC_PROTO2_RESPONSE_TRAILER_BYTES + 1)
 #define SHI_PROTO3_OVERHEAD (EC_SPI_PAST_END_LENGTH + EC_SPI_FRAME_START_LENGTH)
 
 /*
@@ -114,11 +111,7 @@ static uint8_t out_msg[SHI_MAX_RESPONSE_SIZE];
 static uint8_t in_msg[SHI_MAX_REQUEST_SIZE];
 
 /* Parameters used by host protocols */
-static struct host_cmd_handler_args args;
 static struct host_packet shi_packet;
-
-/* Function pointer for handler of host request */
-void (*request_handler)(void);
 
 enum shi_state {
 	/* SHI not enabled (initial state, and when chipset is off) */
@@ -158,144 +151,6 @@ static void shi_fill_out_status(uint8_t status);
 static void shi_write_half_outbuf(void);
 static void shi_write_outbuf_wait(uint16_t szbytes);
 static int shi_read_inbuf_wait(uint16_t szbytes);
-
-/*****************************************************************************/
-/* V2 protocol layer functions */
-
-/**
- * The format of a reply is as per the command interface, with a number of
- * preamble bytes before it.
- *
- * The format of a reply is a sequence of bytes:
- *
- * <hdr> <status> <len> <msg bytes> <sum> [<postamble byte>...]
- *
- * The hdr byte is just a tag to indicate that the real message follows. It
- * signals the end of any preamble required by the interface.
- *
- * The length is the entire packet size, including the header, length bytes,
- * message payload, checksum, and postamble byte.
- *
- * We keep an eye on the SHI_CS_L line - if this goes high then the transaction
- * is over so there is no point in trying to send the reply.
- */
-static void shi_reply_response(enum ec_status status, uint8_t *msg_ptr,
-	int msg_len)
-{
-	int need_copy = msg_ptr != out_msg + SHI_PROTO2_OFFSET;
-	int sum, i;
-
-	ASSERT(msg_len + SHI_PROTO2_OVERHEAD <= sizeof(out_msg));
-
-	/* Add our header bytes - the first one might not actually be sent */
-	out_msg[0] = EC_SPI_FRAME_START;
-	out_msg[1] = status;
-	out_msg[2] = msg_len & 0xff;
-
-	/*
-	 * Calculate the checksum; includes the status and message length bytes
-	 * but not the pad and framing bytes since those are stripped by the AP
-	 * driver.
-	 */
-	sum = status + msg_len;
-	for (i = 0; i < msg_len; i++) {
-		int ch = msg_ptr[i];
-		sum += ch;
-		if (need_copy)
-			out_msg[i + SHI_PROTO2_OFFSET] = ch;
-	}
-
-	/* Add the checksum and get ready to send */
-	out_msg[SHI_PROTO2_OFFSET + msg_len] = sum & 0xff;
-	out_msg[SHI_PROTO2_OFFSET + msg_len + 1] = EC_SPI_PAST_END;
-
-	/* Computing sending bytes of response */
-	shi_params.sz_response = msg_len + SHI_PROTO2_OVERHEAD;
-
-	/*
-	 * Before the state is set to SENDING, any CS de-assertion would
-	 * give up sending.
-	 */
-	if (state == SHI_STATE_PROCESSING) {
-		/*
-		 * Disable SHI interrupt until we have prepared
-		 * the first package to output
-		 */
-		task_disable_irq(NPCX_IRQ_SHI);
-		/* Transmit the reply */
-		state = SHI_STATE_SENDING;
-		CPRINTF("SND-");
-		/* Start to fill output buffer with msg buffer */
-		shi_write_outbuf_wait(shi_params.sz_response);
-		/* Enable SHI interrupt */
-		task_enable_irq(NPCX_IRQ_SHI);
-	}
-	/*
-	 * If we're not processing, then the AP has already terminated the
-	 * transaction, and won't be listening for a response.
-	 */
-	else {
-		/* Reset SHI and prepare to next transaction again */
-		shi_reset_prepare();
-		CPRINTF("END\n");
-		return;
-	}
-}
-
-/**
- * Called for V2 protocol to indicate that a command has completed
- *
- * Some commands can continue for a while. This function is called by
- * host_command when it completes.
- *
- */
-static void shi_send_response(struct host_cmd_handler_args *args)
-{
-	enum ec_status result = args->result;
-
-	if (args->response_size > args->response_max)
-		result = EC_RES_INVALID_RESPONSE;
-
-	/* Transmit the reply */
-	args->response_size += (EC_SPI_PAST_END_LENGTH +
-	EC_SPI_FRAME_START_LENGTH);
-	shi_reply_response(result, args->response, args->response_size);
-}
-
-void shi_handle_host_command(void)
-{
-	uint16_t sz_inbuf_int = shi_params.sz_request / SHI_IBUF_HALF_SIZE;
-	uint16_t cnt_inbuf_int = shi_params.sz_received / SHI_IBUF_HALF_SIZE;
-	if (sz_inbuf_int - cnt_inbuf_int)
-		/* Need to receive data from buffer */
-		return;
-	else {
-		uint16_t remain_bytes = shi_params.sz_request
-					- shi_params.sz_received;
-		/* Move to processing state immediately */
-		state = SHI_STATE_PROCESSING;
-		CPRINTF("PRC-");
-		/* Read remaining bytes from input buffer directly */
-		if (!shi_read_inbuf_wait(remain_bytes))
-			return shi_error(1);
-	}
-
-	/* Fill output buffer to indicate we`re processing request */
-	shi_fill_out_status(EC_SPI_PROCESSING);
-
-	/* Set up parameters for host request */
-	args.params = in_msg + 3;
-	args.send_response = shi_send_response;
-
-	/* Allow room for the header bytes */
-	args.response = out_msg + SHI_PROTO2_OFFSET;
-	args.response_max = sizeof(out_msg) - SHI_PROTO2_OVERHEAD;
-	args.response_size = 0;
-	args.result = EC_RES_SUCCESS;
-
-	/* Go to common-layer to handle request */
-	host_command_received(&args);
-}
 
 /*****************************************************************************/
 /* V3 protocol layer functions */
@@ -415,30 +270,11 @@ static void shi_parse_header(void)
 		/* Computing total bytes need to receive */
 		shi_params.sz_request = pkt_size;
 
-		/* Set handler for host_package */
-		request_handler = shi_handle_host_package;
-
-	} else if (in_msg[0] >= EC_CMD_VERSION0) {
-		/*
-		 * Protocol version 2
-		 * TODO(crosbug.com/p/20257): Remove once kernel supports
-		 * version 3.
-		 */
-		args.version = in_msg[0] - EC_CMD_VERSION0;
-		args.command = in_msg[1];
-		args.params_size = in_msg[2];
-
-		/* Computing remaining received bytes */
-		shi_params.sz_request = args.params_size + 3;
-
-		/* Set handler for host_command */
-		request_handler = shi_handle_host_command;
+		shi_handle_host_package();
 	} else {
 		/* Invalid version number */
 		return shi_error(0);
 	}
-	/* run receiving handler */
-	request_handler();
 }
 
 /*****************************************************************************/
@@ -625,7 +461,7 @@ void shi_int_handler(void)
 		if (state == SHI_STATE_RECEIVING) {
 			/* Read data from input to msg buffer */
 			shi_read_half_inbuf();
-			return request_handler();
+			return shi_handle_host_package();
 		} else if (state == SHI_STATE_SENDING) {
 			/* Write data from bottom address again */
 			shi_params.tx_buf = SHI_OBUF_START_ADDR;
@@ -649,7 +485,7 @@ void shi_int_handler(void)
 			shi_read_half_inbuf();
 			/* Read to bottom address again */
 			shi_params.rx_buf = SHI_IBUF_START_ADDR;
-			return request_handler();
+			return shi_handle_host_package();
 		} else if (state == SHI_STATE_SENDING)
 			/* Write data from msg buffer to output buffer */
 			return shi_write_half_outbuf();
@@ -867,7 +703,7 @@ static int shi_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 2) | (1 << 3);
+	r->protocol_versions = (1 << 3);
 	r->max_request_packet_size = SHI_MAX_REQUEST_SIZE;
 	r->max_response_packet_size = SHI_MAX_RESPONSE_SIZE;
 	r->flags = EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED;
