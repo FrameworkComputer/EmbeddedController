@@ -221,6 +221,23 @@ void p256_from_bin(const uint8_t src[P256_NBYTES], p256_int *dst)
 	}
 }
 
+/* Convert out. */
+void p256_to_bin(const p256_int *src, uint8_t dst[P256_NBYTES])
+{
+	int i;
+	uint8_t *p = &dst[0];
+
+	for (i = P256_NDIGITS - 1; i >= 0; --i) {
+		p256_digit d = P256_DIGIT(src, i);
+
+		p[0] = (d >> 24) & 0xFF;
+		p[1] = (d >> 16) & 0xFF;
+		p[2] = (d >> 8) & 0xFF;
+		p[3] = d & 0xFF;
+		p += 4;
+	}
+}
+
 void p256_mod(const p256_int *MOD, const p256_int *in, p256_int *out)
 {
 	if (out != in)

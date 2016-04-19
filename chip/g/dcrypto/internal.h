@@ -151,6 +151,7 @@ extern const p256_int SECP256r1_b;
 
 void p256_init(p256_int *a);
 void p256_from_bin(const uint8_t src[P256_NBYTES], p256_int *dst);
+void p256_to_bin(const p256_int *src, uint8_t dst[P256_NBYTES]);
 #define p256_clear(a) p256_init((a))
 int p256_is_zero(const p256_int *a);
 int p256_cmp(const p256_int *a, const p256_int *b);

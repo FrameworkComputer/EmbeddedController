@@ -151,6 +151,22 @@ void DCRYPTO_p256_ecdsa_sign(const p256_int *d, const p256_int *digest,
 int DCRYPTO_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
 			const p256_int *digest, const p256_int *r,
 			const p256_int *s);
+/* P256 based integration encryption (DH+AES128+SHA256). */
+/* Authenticated data may be provided, where the first auth_data_len
+ * bytes of in will be authenticated but not encrypted. */
+/* Supports in-place encryption / decryption. */
+size_t DCRYPTO_ecies_encrypt(
+	void *out, size_t out_len, const void *in, size_t in_len,
+	size_t auth_data_len, const uint8_t *iv,
+	const p256_int *pub_x, const p256_int *pub_y,
+	const uint8_t *salt, size_t salt_len,
+	const uint8_t *info, size_t info_len);
+size_t DCRYPTO_ecies_decrypt(
+	void *out, size_t out_len, const void *in, size_t in_len,
+	size_t auth_data_len, const uint8_t *iv,
+	const p256_int *d,
+	const uint8_t *salt, size_t salt_len,
+	const uint8_t *info, size_t info_len);
 
 /*
  *  HKDF.

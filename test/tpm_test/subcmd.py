@@ -12,6 +12,7 @@ RSA = 2
 EC = 3
 FW_UPGRADE = 4
 HKDF = 5
+ECIES = 6
 
 # The same exception class used by all tpmtest modules.
 class TpmTestError(Exception):
