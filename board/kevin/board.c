@@ -40,8 +40,10 @@
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
+#ifdef HAS_TASK_PDCMD
 	/* Exchange status with TCPCs */
 	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
+#endif
 }
 
 #include "gpio_list.h"
