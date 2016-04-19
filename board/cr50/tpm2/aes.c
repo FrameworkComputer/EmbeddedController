@@ -154,41 +154,16 @@ CRYPT_RESULT _cpri__AESEncryptCTR(
 	uint8_t *out, uint32_t num_bits, uint8_t *key, uint8_t *iv,
 	uint32_t len, uint8_t *in)
 {
-	int32_t slen;
-
 	if (len == 0)
 		return CRYPT_SUCCESS;
 
 	assert(out != NULL && key != NULL && iv != NULL && in != NULL);
 	assert(len <= INT32_MAX);
-	slen = (int32_t) len;
-	/* Initialize AES hardware. */
-	if (!DCRYPTO_aes_init(key, num_bits, iv,
-				CIPHER_MODE_CTR, ENCRYPT_MODE))
+
+	if (!DCRYPTO_aes_ctr(out, key, num_bits, iv, in, len))
 		return CRYPT_PARAMETER;
-
-	for (; slen > 0; slen -= 16) {
-		uint8_t tmpin[16];
-		uint8_t tmpout[16];
-		uint8_t *inp;
-		uint8_t *outp;
-
-		if (slen < 16) {
-			memcpy(tmpin, in, slen);
-			inp = tmpin;
-			outp = tmpout;
-		} else {
-			inp = in;
-			outp = out;
-		}
-		DCRYPTO_aes_block(inp, outp);
-		if (outp != out)
-			memcpy(out, outp, (slen < 16) ? slen : 16);
-
-		in += 16;
-		out += 16;
-	}
-	return CRYPT_SUCCESS;
+	else
+		return CRYPT_SUCCESS;
 }
 
 CRYPT_RESULT _cpri__AESEncryptECB(

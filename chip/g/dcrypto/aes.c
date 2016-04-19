@@ -116,3 +116,37 @@ void DCRYPTO_aes_read_iv(uint8_t *iv)
 	for (i = 0; i < 4; i++)
 		p[i].udata = GR_KEYMGR_AES_CTR(i);
 }
+
+int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
+		const uint8_t *iv, const uint8_t *in, size_t in_len)
+{
+	/* Initialize AES hardware. */
+	if (!DCRYPTO_aes_init(key, key_bits, iv,
+				CIPHER_MODE_CTR, ENCRYPT_MODE))
+		return 0;
+
+	while (in_len > 0) {
+		uint8_t tmpin[16];
+		uint8_t tmpout[16];
+		const uint8_t *inp;
+		uint8_t *outp;
+		const size_t count = MIN(in_len, 16);
+
+		if (count < 16) {
+			memcpy(tmpin, in, count);
+			inp = tmpin;
+			outp = tmpout;
+		} else {
+			inp = in;
+			outp = out;
+		}
+		DCRYPTO_aes_block(inp, outp);
+		if (outp != out)
+			memcpy(out, outp, count);
+
+		in += count;
+		out += count;
+		in_len -= count;
+	}
+	return 1;
+}

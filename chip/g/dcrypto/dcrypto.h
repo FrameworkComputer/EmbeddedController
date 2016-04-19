@@ -56,6 +56,8 @@ int DCRYPTO_aes_block(const uint8_t *in, uint8_t *out);
 
 void DCRYPTO_aes_write_iv(const uint8_t *iv);
 void DCRYPTO_aes_read_iv(uint8_t *iv);
+int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
+		const uint8_t *iv, const uint8_t *in, size_t in_len);
 
 /*
  * SHA implementation.  This abstraction is backed by either a
