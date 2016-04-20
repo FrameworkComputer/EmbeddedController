@@ -132,6 +132,10 @@
 #define STM32_IRQ_SDADC1          61 /* STM32F373 only */
 #define STM32_IRQ_SDADC2          62 /* STM32F373 only */
 #define STM32_IRQ_SDADC3          63 /* STM32F373 only */
+#define STM32_IRQ_DMA2_CHANNEL6   68 /* STM32L4 only */
+#define STM32_IRQ_DMA2_CHANNEL7   69 /* STM32L4 only */
+#define STM32_IRQ_LPUART          70 /* STM32L4 only */
+#define STM32_IRQ_USART9          70 /* STM32L4 only */
 #define STM32_IRQ_USB_WAKEUP      76 /* STM32F373 only */
 #define STM32_IRQ_TIM19           78 /* STM32F373 only */
 #define STM32_IRQ_FPU             81 /* STM32F373 only */
@@ -139,6 +143,8 @@
 /* To simplify code generation, define DMA channel 9..10 */
 #define STM32_IRQ_DMA_CHANNEL_9    STM32_IRQ_DMA2_CHANNEL1
 #define STM32_IRQ_DMA_CHANNEL_10   STM32_IRQ_DMA2_CHANNEL2
+#define STM32_IRQ_DMA_CHANNEL_13   STM32_IRQ_DMA2_CHANNEL6
+#define STM32_IRQ_DMA_CHANNEL_14   STM32_IRQ_DMA2_CHANNEL7
 
 /* aliases for easier code sharing */
 #define STM32_IRQ_I2C1 STM32_IRQ_I2C1_EV
@@ -152,6 +158,7 @@
 #define STM32_USART2_BASE          0x40004400
 #define STM32_USART3_BASE          0x40004800
 #define STM32_USART4_BASE          0x40004c00
+#define STM32_USART9_BASE          0x40008000	/* LPUART */
 
 #define STM32_USART_BASE(n)           CONCAT3(STM32_USART, n, _BASE)
 #define STM32_USART_REG(base, offset) REG32((base) + (offset))
@@ -493,7 +500,12 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #define STM32_PWR_CR                REG32(STM32_PWR_BASE + 0x00)
 #define STM32_PWR_CR_LPSDSR		(1 << 0)
+#if defined(CHIP_FAMILY_STM32L4)
+#define STM32_PWR_CR2               REG32(STM32_PWR_BASE + 0x04)
+#define STM32_PWR_CSR               REG32(STM32_PWR_BASE + 0x10)
+#else
 #define STM32_PWR_CSR               REG32(STM32_PWR_BASE + 0x04)
+#endif
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #define STM32_PWR_CSR_EWUP1         (1 << 8)
 #define STM32_PWR_CSR_EWUP2         (1 << 9)
@@ -1229,6 +1241,10 @@ enum dma_channel {
 	 */
 	STM32_DMAC_CH9 = 8,
 	STM32_DMAC_CH10 = 9,
+	STM32_DMAC_CH11 = 10,
+	STM32_DMAC_CH12 = 11,
+	STM32_DMAC_CH13 = 12,
+	STM32_DMAC_CH14 = 13,
 
 	/* Channel functions */
 	STM32_DMAC_ADC = STM32_DMAC_CH1,
@@ -1247,7 +1263,9 @@ enum dma_channel {
 	STM32_DMAC_I2C1_RX = STM32_DMAC_CH7,
 	STM32_DMAC_PMSE_ROW = STM32_DMAC_CH6,
 	STM32_DMAC_PMSE_COL = STM32_DMAC_CH7,
-#ifdef CHIP_VARIANT_STM32F373
+#ifdef CHIP_FAMILY_STM32L4
+	STM32_DMAC_COUNT = 14,
+#elif defined(CHIP_VARIANT_STM32F373)
 	STM32_DMAC_SPI2_RX = STM32_DMAC_CH4,
 	STM32_DMAC_SPI2_TX = STM32_DMAC_CH5,
 	STM32_DMAC_SPI3_RX = STM32_DMAC_CH9,

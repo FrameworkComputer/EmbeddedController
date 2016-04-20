@@ -236,7 +236,12 @@ static void uart_freq_change(void)
 	/* UART clocked from the main clock */
 	freq = clock_get_freq();
 #endif
+
+#if (UARTN == 9)	/* LPUART */
+	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE) * 256;
+#else
 	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE);
+#endif
 
 #if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) || \
 	defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4)
@@ -274,11 +279,14 @@ void uart_init(void)
 #endif /* UARTN */
 #elif defined(CHIP_FAMILY_STM32L4)
 	STM32_RCC_CCIPR |= (0x2 << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+	STM32_RCC_CCIPR |= (0x2 << STM32_RCC_CCIPR_LPUART1SEL_SHIFT);
 #endif /* CHIP_FAMILY_STM32F0 || CHIP_FAMILY_STM32F3 */
 
 	/* Enable USART clock */
 #if (UARTN == 1)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART1;
+#elif (UARTN == 9)
+	STM32_RCC_APB1ENR2 |= STM32_RCC_APB1ENR2_LPUART1EN;
 #else
 	STM32_RCC_APB1ENR |= CONCAT2(STM32_RCC_PB1_USART, UARTN);
 #endif
