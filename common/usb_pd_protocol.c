@@ -34,13 +34,20 @@
 /*
  * Debug log level - higher number == more log
  *   Level 0: Log state transitions
- *   Level 1: Level 0, plus packet info
- *   Level 2: Level 1, plus ping packet and packet dump on error
+ *   Level 1: Level 0, plus state name
+ *   Level 2: Level 1, plus packet info
+ *   Level 3: Level 2, plus ping packet and packet dump on error
  *
  * Note that higher log level causes timing changes and thus may affect
  * performance.
+ *
+ * Can be limited to constant debug_level by CONFIG_USB_PD_DEBUG_LEVEL
  */
+#ifdef CONFIG_USB_PD_DEBUG_LEVEL
+static const int debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#else
 static int debug_level;
+#endif
 
 /*
  * PD communication enabled flag. When false, PD state machine still
@@ -345,7 +352,11 @@ static inline void set_state(int port, enum pd_states next_state)
 		disable_sleep(SLEEP_MASK_USB_PD);
 #endif
 
-	CPRINTF("C%d st%d\n", port, next_state);
+	if (debug_level >= 1)
+		CPRINTF("C%d st%d %s\n", port, next_state,
+					 pd_state_names[next_state]);
+	else
+		CPRINTF("C%d st%d\n", port, next_state);
 }
 
 /* increment message ID counter */
@@ -397,8 +408,7 @@ static int send_control(int port, int type)
 			pd[port].data_role, pd[port].msg_id, 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, NULL);
-
-	if (debug_level >= 1)
+	if (debug_level >= 2)
 		CPRINTF("CTRL[%d]>%d\n", type, bit_len);
 
 	return bit_len;
@@ -426,7 +436,7 @@ static int send_source_cap(int port)
 			pd[port].data_role, pd[port].msg_id, src_pdo_cnt);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, src_pdo);
-	if (debug_level >= 1)
+	if (debug_level >= 2)
 		CPRINTF("srcCAP>%d\n", bit_len);
 
 	return bit_len;
@@ -440,7 +450,7 @@ static void send_sink_cap(int port)
 			pd[port].data_role, pd[port].msg_id, pd_snk_pdo_cnt);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, pd_snk_pdo);
-	if (debug_level >= 1)
+	if (debug_level >= 2)
 		CPRINTF("snkCAP>%d\n", bit_len);
 }
 
@@ -451,7 +461,7 @@ static int send_request(int port, uint32_t rdo)
 			pd[port].data_role, pd[port].msg_id, 1);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &rdo);
-	if (debug_level >= 1)
+	if (debug_level >= 2)
 		CPRINTF("REQ%d>\n", bit_len);
 
 	return bit_len;
@@ -512,7 +522,7 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 		queue_vdm(port, rdata, &rdata[1], rlen - 1);
 		return;
 	}
-	if (debug_level >= 1)
+	if (debug_level >= 2)
 		CPRINTF("Unhandled VDM VID %04x CMD %04x\n",
 			PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
@@ -1039,9 +1049,9 @@ static void handle_request(int port, uint16_t head,
 	int cnt = PD_HEADER_CNT(head);
 	int p;
 
-	/* dump received packet content (only dump ping at debug level 2) */
-	if ((debug_level == 1 && PD_HEADER_TYPE(head) != PD_CTRL_PING) ||
-	    debug_level >= 2) {
+	/* dump received packet content (only dump ping at debug level 3) */
+	if ((debug_level == 2 && PD_HEADER_TYPE(head) != PD_CTRL_PING) ||
+	    debug_level >= 3) {
 		CPRINTF("RECV %04x/%d ", head, cnt);
 		for (p = 0; p < cnt; p++)
 			CPRINTF("[%d]%08x ", p, payload[p]);
@@ -1195,7 +1205,7 @@ int pd_dev_store_rw_hash(int port, uint16_t dev_id, uint32_t *rw_hash,
 	pd[port].dev_id = dev_id;
 	memcpy(pd[port].dev_rw_hash, rw_hash, PD_RW_HASH_SIZE);
 #ifdef CONFIG_CMD_PD_DEV_DUMP_INFO
-	if (debug_level >= 1)
+	if (debug_level >= 2)
 		pd_dev_dump_info(dev_id, (uint8_t *)rw_hash);
 #endif
 	pd[port].current_image = current_image;
@@ -1942,7 +1952,7 @@ void pd_task(void)
 					send_control(port, PD_CTRL_GET_SINK_CAP);
 					set_state(port, PD_STATE_SRC_GET_SINK_CAP);
 					break;
-				} else if (debug_level >= 1 &&
+				} else if (debug_level >= 2 &&
 					   snk_cap_count == PD_SNK_CAP_RETRIES+1) {
 					CPRINTF("ERR SNK_CAP\n");
 				}
@@ -3038,16 +3048,18 @@ static int command_pd(int argc, char **argv)
 	} else
 #endif
 	if (!strcasecmp(argv[1], "dump")) {
+#ifndef CONFIG_USB_PD_DEBUG_LEVEL
 		int level;
 
-		if (argc < 3)
-			ccprintf("dump level: %d\n", debug_level);
-		else {
+		if (argc >= 3) {
 			level = strtoi(argv[2], &e, 10);
 			if (*e)
 				return EC_ERROR_PARAM2;
 			debug_level = level;
-		}
+		} else
+#endif
+			ccprintf("dump level: %d\n", debug_level);
+
 		return EC_SUCCESS;
 	}
 #ifdef CONFIG_CMD_PD

@@ -1991,6 +1991,12 @@
 #define CONFIG_USB_PD_DEBUG_DR PD_ROLE_DFP
 
 /*
+ * Define to have a fixed PD Task debug level.
+ * Undef to allow runtime change via console command.
+ */
+#undef CONFIG_USB_PD_DEBUG_LEVEL
+
+/*
  * Define if this board can enable VBUS discharge (eg. through a GPIO-controlled
  * discharge circuit, or through port controller registers) to discharge VBUS
  * rapidly on disconnect.
