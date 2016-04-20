@@ -11,8 +11,8 @@ ifeq ($(CHIP_FAMILY),stm32f0)
 CORE:=cortex-m0
 # Force ARMv6-M ISA used by the Cortex-M0
 CFLAGS_CPU+=-march=armv6-m -mcpu=cortex-m0
-else ifeq ($(CHIP_FAMILY),stm32f3)
-# STM32F3xx sub-family has a Cortex-M4 ARM core
+else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f3 stm32l4))
+# STM32F3xx and STM32L4xx sub-family has a Cortex-M4 ARM core
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
 CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4

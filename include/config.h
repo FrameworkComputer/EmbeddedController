@@ -1765,6 +1765,9 @@
 #undef CONFIG_UART_TX_DMA_CH
 #undef CONFIG_UART_RX_DMA_CH
 
+/* The DMA peripheral request signal for UART TX. STM32 only. */
+#undef CONFIG_UART_TX_DMA_PH
+
 /*****************************************************************************/
 /* USB PD config */
 

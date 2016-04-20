@@ -207,7 +207,8 @@ void system_pre_init(void)
 		/* Enable RTC and use LSI as clock source */
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
-#elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+#elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
+	defined(CHIP_FAMILY_STM32L4)
 	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_BDCR |= 0x00010000;
@@ -396,5 +397,8 @@ int system_is_reboot_warm(void)
 	return ((STM32_RCC_AHBENR & 0x7e0000) == 0x7e0000);
 #elif defined(CHIP_FAMILY_STM32L)
 	return ((STM32_RCC_AHBENR & 0x3f) == 0x3f);
+#elif defined(CHIP_FAMILY_STM32L4)
+	return ((STM32_RCC_AHB2ENR & STM32_RCC_AHB2ENR_GPIOMASK)
+			== STM32_RCC_AHB2ENR_GPIOMASK);
 #endif
 }
