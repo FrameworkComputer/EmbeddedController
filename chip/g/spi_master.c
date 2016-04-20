@@ -211,6 +211,13 @@ static void spi_init(void)
 {
 	size_t i;
 
+#ifdef CONFIG_SPI_MASTER_CONFIGURE_GPIOS
+	/* Set SPI_MISO as an input */
+	GWRITE_FIELD(PINMUX, DIOA11_CTL, IE, 1); /* SPS_MISO */
+	/* Set SPI_CS to be an internal pull up */
+	GWRITE_FIELD(PINMUX, DIOA14_CTL, PU, 1);
+#endif
+
 	for (i = 0; i < SPI_NUM_PORTS; i++) {
 		/* Configure the SPI ports to default to mode0. */
 		set_spi_clock_mode(i, SPI_CLOCK_MODE0);

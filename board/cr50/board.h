@@ -38,6 +38,12 @@
 
 #define CONFIG_USB_PID 0x5014
 
+/* Enable SPI Master (SPI) module */
+#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_MASTER_NO_CS_GPIOS
+#define CONFIG_SPI_MASTER_CONFIGURE_GPIOS
+#define CONFIG_SPI_FLASH_PORT 0
+
 /* Enable SPI Slave (SPS) module */
 #define CONFIG_SPS
 #define CONFIG_TPM_SPS

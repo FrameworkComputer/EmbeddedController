@@ -15,6 +15,7 @@
 #include "usb_descriptor.h"
 #include "usb_hid.h"
 #include "util.h"
+#include "spi.h"
 
 /* Define interrupt and gpio structs */
 #include "gpio_list.h"
@@ -122,6 +123,12 @@ const void * const usb_strings[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #endif
+
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	[CONFIG_SPI_FLASH_PORT] = {0, 4, GPIO_COUNT}
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 int flash_regions_to_enable(struct g_flash_region *regions,
 			    int max_regions)
