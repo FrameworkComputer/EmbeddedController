@@ -18,6 +18,8 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
 /* Optional features */
+#define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BUTTON_COUNT        2
 #define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_I2C
@@ -126,6 +128,7 @@ enum power_signal {
 #include "registers.h"
 
 void board_reset_pd_mcu(void);
+int board_get_version(void);
 
 #endif /* !__ASSEMBLER__ */
 
