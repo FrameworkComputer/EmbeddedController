@@ -53,6 +53,7 @@ chip-$(CONFIG_USB_CONSOLE)+=usb_console.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_BLOB)+=blob.o
 chip-$(CONFIG_RDD)+=rdd.o
+chip-$(CONFIG_RBOX)+=rbox.o
 chip-$(CONFIG_STREAM_USB)+=usb-stream.o
 chip-$(CONFIG_STREAM_USART)+=usart.o
 

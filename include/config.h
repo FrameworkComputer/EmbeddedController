@@ -1484,6 +1484,12 @@
 /* Size of RAM available on the chip, in bytes */
 #undef CONFIG_RAM_SIZE
 
+/* Enable rbox peripheral */
+#undef CONFIG_RBOX
+
+/* Enable rbox debug interrupts */
+#undef CONFIG_RBOX_DEBUG
+
 /* Enable RDD peripheral */
 #undef CONFIG_RDD
 

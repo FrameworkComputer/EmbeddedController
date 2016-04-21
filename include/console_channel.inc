@@ -15,7 +15,9 @@ CONSOLE_CHANNEL(CC_CHIPSET,      "chipset")
 CONSOLE_CHANNEL(CC_CLOCK,        "clock")
 CONSOLE_CHANNEL(CC_DMA,          "dma")
 CONSOLE_CHANNEL(CC_EVENTS,       "events")
+#ifdef CONFIG_GESTURE_SW_DETECTION
 CONSOLE_CHANNEL(CC_GESTURE,      "gesture")
+#endif
 CONSOLE_CHANNEL(CC_GPIO,         "gpio")
 CONSOLE_CHANNEL(CC_HOSTCMD,      "hostcmd")
 CONSOLE_CHANNEL(CC_I2C,          "i2c")
@@ -34,6 +36,9 @@ CONSOLE_CHANNEL(CC_PD_HOST_CMD,  "pdhostcm")
 CONSOLE_CHANNEL(CC_PORT80,       "port80")
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
 CONSOLE_CHANNEL(CC_SPI,          "spi")
+#ifdef CONFIG_RBOX
+CONSOLE_CHANNEL(CC_RBOX,         "rbox")
+#endif
 #ifdef CONFIG_SPS
 CONSOLE_CHANNEL(CC_SPS,          "sps")
 #endif

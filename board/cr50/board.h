@@ -48,6 +48,8 @@
 #define CONFIG_SPS
 #define CONFIG_TPM_SPS
 
+#define CONFIG_RBOX
+
 /* We don't need to send events to the AP */
 #undef  CONFIG_HOSTCMD_EVENTS
 
