@@ -59,6 +59,22 @@ stm32_dma_chan_t *dma_get_channel(enum dma_channel channel)
 	return &dma->chan[channel % STM32_DMAC_PER_CTLR];
 }
 
+#ifdef STM32_DMA_CSELR
+void dma_select_channel(enum dma_channel channel, unsigned char stream)
+{
+	/* Local channel # starting from 0 on each DMA controller */
+	const unsigned char ch = channel % STM32_DMAC_PER_CTLR;
+	const unsigned char shift = STM32_DMA_PERIPHERALS_PER_CHANNEL;
+	const unsigned char mask = (1 << shift) - 1;
+	uint32_t val;
+
+	ASSERT(ch < STM32_DMAC_PER_CTLR);
+	ASSERT(stream <= mask);
+	val = STM32_DMA_CSELR(channel) & ~(mask << ch * shift);
+	STM32_DMA_CSELR(channel) = val | (stream << ch * shift);
+}
+#endif
+
 void dma_disable(enum dma_channel channel)
 {
 	stm32_dma_chan_t *chan = dma_get_channel(channel);

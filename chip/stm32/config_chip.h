@@ -96,6 +96,9 @@
 /* Use DMA */
 #define CONFIG_DMA
 
+/* Number of peripheral request signals per DMA channel */
+#define STM32_DMA_PERIPHERALS_PER_CHANNEL	4
+
 /*
  * Use DMA for UART transmit for all platforms.  DMA for UART receive is
  * enabled on a per-chip basis because it doesn't seem to work reliably on

@@ -1233,6 +1233,9 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 
 #define STM32_DMA_REGS(channel) \
 	((channel) < STM32_DMAC_PER_CTLR ? STM32_DMA1_REGS : STM32_DMA2_REGS)
+#define STM32_DMA_CSELR(channel) \
+	REG32(((channel) < STM32_DMAC_PER_CTLR ? \
+			STM32_DMA1_BASE : STM32_DMA2_BASE)  + 0xA8)
 #else
 #define STM32_DMA_REGS(channel) STM32_DMA1_REGS
 #endif
