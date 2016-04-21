@@ -7,12 +7,11 @@
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "i2c.h"
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define PARAM_CUT_OFF_LOW  0x10
-#define PARAM_CUT_OFF_HIGH 0x00
+#define SB_SHIP_MODE_REG	0x3a
+#define SB_SHUTDOWN_DATA	0xC574
 
 static const struct battery_info info = {
 	.voltage_max = 13050,
@@ -39,27 +38,15 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
-static int cutoff(void)
-{
-	int rv;
-	uint8_t buf[3];
-
-	/* Ship mode command must be sent twice to take effect */
-	buf[0] = SB_MANUFACTURER_ACCESS & 0xff;
-	buf[1] = PARAM_CUT_OFF_LOW;
-	buf[2] = PARAM_CUT_OFF_HIGH;
-
-	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
-		      I2C_XFER_SINGLE);
-	rv |= i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
-		       I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_BATTERY, 0);
-
-	return rv;
-}
-
 int board_cut_off_battery(void)
 {
-	return cutoff();
+	int rv;
+
+	/* Ship mode command must be sent twice to take effect */
+	rv = sb_write(SB_SHIP_MODE_REG, SB_SHUTDOWN_DATA);
+
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	return sb_write(SB_SHIP_MODE_REG, SB_SHUTDOWN_DATA);
 }
