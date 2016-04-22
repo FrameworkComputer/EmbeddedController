@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
+#include "driver/tcpm/anx7688.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "gpio.h"
@@ -24,7 +25,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
-			 PDO_FIXED_COMM_CAP | PDO_FIXED_EXTERNAL)
+			 PDO_FIXED_COMM_CAP)
 
 /* TODO: fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
@@ -56,10 +57,10 @@ int pd_set_power_supply_ready(int port)
 	/* Provide VBUS */
 	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
 
+	anx7688_set_power_supply_ready(port);
+
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-
-	tcpc_write(port, TCPC_REG_COMMAND, 0x77);
 
 	return EC_SUCCESS;
 }
@@ -69,10 +70,10 @@ void pd_power_supply_reset(int port)
 	/* Disable VBUS */
 	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 
+	anx7688_power_supply_reset(port);
+
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-
-	tcpc_write(port, TCPC_REG_COMMAND, 0x66);
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
@@ -306,6 +307,8 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	int ack = 1;
 
+	anx7688_update_hpd(port, lvl, irq);
+
 	dp_status[port] = payload[1];
 	cur_lvl = gpio_get_level(GPIO_USB_DP_HPD);
 
@@ -327,6 +330,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 static void svdm_exit_dp_mode(int port)
 {
 	svdm_safe_dp_mode(port);
+	anx7688_hpd_disable(port);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)

@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_USB_PD_TCPM_TCPCI_H
 #define __CROS_EC_USB_PD_TCPM_TCPCI_H
 
+#include "tcpm.h"
+#include "usb_mux.h"
+
 #define TCPC_REG_VENDOR_ID         0x0
 #define TCPC_REG_PRODUCT_ID        0x2
 #define TCPC_REG_BCD_DEV           0x4
@@ -110,5 +113,20 @@
 
 extern const struct tcpm_drv tcpci_tcpm_drv;
 extern const struct usb_mux_driver tcpci_tcpm_usb_mux_driver;
+
+int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2);
+int tcpci_tcpm_get_vbus_level(int port);
+int tcpci_tcpm_set_cc(int port, int pull);
+int tcpci_tcpm_set_polarity(int port, int polarity);
+int tcpci_tcpm_set_vconn(int port, int enable);
+int tcpci_tcpm_set_msg_header(int port, int power_role, int data_role);
+int tcpci_tcpm_set_rx_enable(int port, int enable);
+int tcpci_tcpm_get_message(int port, uint32_t *payload, int *head);
+int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
+			uint16_t header, const uint32_t *data);
+
+int tcpci_tcpm_mux_init(int i2c_addr);
+int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);
+int tcpci_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state);
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */

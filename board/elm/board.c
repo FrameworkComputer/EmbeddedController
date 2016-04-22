@@ -17,6 +17,7 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/tcpm/anx7688.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -62,15 +63,24 @@ void pd_mcu_interrupt(enum gpio_signal signal)
 #endif
 }
 
+void deferred_reset_pd_mcu(void);
+DECLARE_DEFERRED(deferred_reset_pd_mcu);
+
 void usb_evt(enum gpio_signal signal)
 {
 	/*
 	 * check if this is from BC12 or ANX7688 CABLE_DET
 	 * note that CABLE_DET can only trigger irq when 0 -> 1 (plug in)
-	 * since we use polling for CABLE_DET, just ignore this one for now
 	 */
 	if (!gpio_get_level(GPIO_BC12_WAKE_L))
 		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+
+	if (!gpio_get_level(GPIO_USB_C0_CABLE_DET_L) &&
+	    gpio_get_level(GPIO_USB_C0_PWR_EN_L)) {
+		hook_call_deferred(&deferred_reset_pd_mcu_data, -1);
+		/* pull PWR_EN after 10ms */
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
+	}
 }
 
 #include "gpio_list.h"
@@ -125,7 +135,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /* TCPC */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &tcpci_tcpm_drv},
+	{I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR, &anx7688_tcpm_drv},
 };
 
 struct pi3usb9281_config pi3usb9281_chips[] = {
@@ -171,10 +181,9 @@ struct ec_thermal_config thermal_params[] = {
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
-	/* TODO: 7688 support MUX Control 00b and 10b? */
 	{
 		.port_addr = 0, /* port idx */
-		.driver    = &tcpci_tcpm_usb_mux_driver,
+		.driver    = &anx7688_usb_mux_driver,
 	},
 };
 
@@ -182,26 +191,72 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
  * Reset PD MCU
  *   ANX7688 needs a reset pulse of 50ms after power enable.
  */
-void deferred_reset_pd_mcu(void);
-DECLARE_DEFERRED(deferred_reset_pd_mcu);
-
 void deferred_reset_pd_mcu(void)
 {
-	if (!gpio_get_level(GPIO_USB_C0_RST)) {
+	uint8_t state = gpio_get_level(GPIO_USB_C0_PWR_EN_L) |
+			(gpio_get_level(GPIO_USB_C0_RST) << 1);
+
+	CPRINTS("%s %d", __func__, state);
+	switch (state) {
+	case 0:
+		/*
+		 * PWR_EN_L low, RST low
+		 * start reset sequence by turning off power enable
+		 * and wait for 1ms.
+		 */
+		gpio_set_level(GPIO_USB_C0_PWR_EN_L, 1);
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
+		break;
+	case 1:
+		/*
+		 * PWR_EN_L high, RST low
+		 * pull PD reset pin and wait for another 1ms
+		 */
 		gpio_set_level(GPIO_USB_C0_RST, 1);
-		hook_call_deferred(&deferred_reset_pd_mcu_data, 50 * MSEC);
-	} else {
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
+		/* on PD reset, trigger PD task to reset state */
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+		break;
+	case 3:
+		/*
+		 * PWR_EN_L high, RST high
+		 * cable detected - enable power
+		 * cable not detected - do nothing
+		 */
+		if (gpio_get_level(GPIO_USB_C0_CABLE_DET_L))
+			return;
+		/* enable power and wait for 10ms then pull RESET_N */
+		gpio_set_level(GPIO_USB_C0_PWR_EN_L, 0);
+		hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
+		break;
+	case 2:
+		/*
+		 * PWR_EN_L low, RST high
+		 * leave reset state
+		 */
 		gpio_set_level(GPIO_USB_C0_RST, 0);
+		break;
 	}
 }
 
 void board_reset_pd_mcu(void)
 {
-	/* Perform ANX7688 startup sequence */
-	gpio_set_level(GPIO_USB_C0_PWR_EN_L, 0);
-	gpio_set_level(GPIO_USB_C0_RST, 0);
-	hook_call_deferred(&deferred_reset_pd_mcu_data, 0);
+	/* enable port controller's cable detection before reset */
+	anx7688_enable_cable_detection(0);
+
+	/* wait for 10ms, then start port controller's reset sequence */
+	hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
 }
+
+int command_pd_reset(int argc, char **argv)
+{
+	board_reset_pd_mcu();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(resetpd, command_pd_reset,
+			"",
+			"Reset PD IC",
+			NULL);
 
 /**
  * There is a level shift for AC_OK & LID_OPEN signal between AP & EC,
@@ -217,13 +272,6 @@ static void board_extpower_buffer_to_soc(void)
 /* Initialize board. */
 static void board_init(void)
 {
-	/*
-	 * Assert wake GPIO to PD MCU to wake it from hibernate.
-	 * This cannot be done from board_pre_init() (or from any function
-	 * called before system_pre_init()), otherwise a spurious wake will
-	 * occur -- see stm32 check_reset_cause() WORKAROUND comment.
-	 */
-
 	/* Enable Level shift of AC_OK & LID_OPEN signals */
 	board_extpower_buffer_to_soc();
 	/* Enable rev1 testing GPIOs */
@@ -234,8 +282,8 @@ static void board_init(void)
 	/* Enable BC 1.2 */
 	gpio_enable_interrupt(GPIO_BC12_CABLE_INT);
 
-	/* Turn on PD */
-	board_reset_pd_mcu();
+	/* Check if typeC is already connected, and do 7688 power on flow */
+	usb_evt(0);
 
 	/* Update VBUS supplier */
 	usb_charger_vbus_change(0, pd_snk_is_vbus_provided(0));
