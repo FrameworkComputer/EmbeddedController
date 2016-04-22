@@ -12,6 +12,7 @@
 
 int memcmp(const void *s1, const void *s2, size_t len);
 void *memcpy(void *dest, const void *src, size_t len);
+void *memmove(void *dest, const void *src, size_t n);
 void *memset(void *dest, int c, size_t len);
 
 #endif /* __CROS_EC_STRINGS_H__ */
