@@ -91,6 +91,31 @@ static int ec_command_dev(int command, int version,
 	return r;
 }
 
+static int ec_readmem_dev(int offset, int bytes, void *dest)
+{
+	struct cros_ec_readmem s_mem;
+	struct ec_params_read_memmap r_mem;
+	int r;
+	static int fake_it;
+
+	if (!fake_it) {
+		s_mem.offset = offset;
+		s_mem.bytes = bytes;
+		s_mem.buffer = dest;
+		r = ioctl(fd, CROS_EC_DEV_IOCRDMEM, &s_mem);
+		if (r < 0 && errno == ENOTTY)
+			fake_it = 1;
+		else
+			return r;
+	}
+
+	r_mem.offset = offset;
+	r_mem.size = bytes;
+	return ec_command_dev(EC_CMD_READ_MEMMAP, 0,
+			      &r_mem, sizeof(r_mem),
+			      dest, bytes);
+}
+
 /* New ioctl format, used by Chrome OS 4.4 and later as well as upstream 4.0+ */
 
 static int ec_command_dev_v2(int command, int version,
@@ -131,6 +156,8 @@ static int ec_command_dev_v2(int command, int version,
 	} else {
 		memcpy(indata, s_cmd->data, MIN(r, insize));
 		if (s_cmd->result != EC_RES_SUCCESS) {
+			fprintf(stderr, "EC result %d (%s)\n", s_cmd->result,
+				strresult(s_cmd->result));
 			r =  -EECRESULT - s_cmd->result;
 		}
 	}
@@ -139,6 +166,31 @@ static int ec_command_dev_v2(int command, int version,
 	return r;
 }
 
+static int ec_readmem_dev_v2(int offset, int bytes, void *dest)
+{
+	struct cros_ec_readmem_v2 s_mem;
+	struct ec_params_read_memmap r_mem;
+	int r;
+	static int fake_it;
+
+	if (!fake_it) {
+		s_mem.offset = offset;
+		s_mem.bytes = bytes;
+		r = ioctl(fd, CROS_EC_DEV_IOCRDMEM_V2, &s_mem);
+		if (r < 0 && errno == ENOTTY) {
+			fake_it = 1;
+		} else {
+			memcpy(dest, s_mem.buffer, bytes);
+			return r;
+		}
+	}
+
+	r_mem.offset = offset;
+	r_mem.size = bytes;
+	return ec_command_dev(EC_CMD_READ_MEMMAP, 0,
+			      &r_mem, sizeof(r_mem),
+			      dest, bytes);
+}
 
 /*
  * Attempt to communicate with kernel using old ioctl format.
@@ -169,6 +221,7 @@ static int ec_dev_is_v2(void)
 
 int comm_init_dev(const char *device_name)
 {
+	int (*ec_cmd_readmem)(int offset, int bytes, void *dest);
 	char version[80];
 	char device[80] = "/dev/";
 	int r;
@@ -195,20 +248,15 @@ int comm_init_dev(const char *device_name)
 
 	if (ec_dev_is_v2()) {
 		ec_command_proto = ec_command_dev_v2;
+		ec_cmd_readmem = ec_readmem_dev_v2;
 	} else {
 		ec_command_proto = ec_command_dev;
+		ec_cmd_readmem = ec_readmem_dev;
 	}
 
-	if (ec_readmem(EC_MEMMAP_ID, 2, version) < 0) {
-		/*
-		 * Unable to read memory map through command protocol,
-		 * assume LPC transport underneath.
-		 */
-		comm_init_lpc(1);
-		if (ec_readmem(EC_MEMMAP_ID, 2, version) < 0)
-			fprintf(stderr,
-				"Unable to read memory mapped registers.\n");
-	}
+	if (ec_cmd_readmem(EC_MEMMAP_ID, 2, version) == 2 &&
+	    version[0] == 'E' && version[1] == 'C')
+		ec_readmem = ec_cmd_readmem;
 
 	/*
 	 * Set temporary size, will be updated later.

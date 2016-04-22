@@ -25,6 +25,10 @@ void *ec_outbuf;
 void *ec_inbuf;
 static int command_offset;
 
+int comm_init_dev(const char *device_name) __attribute__((weak));
+int comm_init_lpc(void) __attribute__((weak));
+int comm_init_i2c(void) __attribute__((weak));
+
 static int fake_readmem(int offset, int bytes, void *dest)
 {
 	struct ec_params_read_memmap p;
@@ -88,15 +92,16 @@ int comm_init(int interfaces, const char *device_name)
 	}
 
 	/* Prefer new /dev method */
-	if ((interfaces & COMM_DEV) && !comm_init_dev(device_name))
+	if ((interfaces & COMM_DEV) && comm_init_dev &&
+	    !comm_init_dev(device_name))
 		goto init_ok;
 
 	/* Fallback to direct LPC on x86 */
-	if ((interfaces & COMM_LPC) && !comm_init_lpc(0))
+	if ((interfaces & COMM_LPC) && comm_init_lpc && !comm_init_lpc())
 		goto init_ok;
 
 	/* Fallback to direct i2c on ARM */
-	if ((interfaces & COMM_I2C) && !comm_init_i2c())
+	if ((interfaces & COMM_I2C) && comm_init_i2c && !comm_init_i2c())
 		goto init_ok;
 
 	/* Give up */
