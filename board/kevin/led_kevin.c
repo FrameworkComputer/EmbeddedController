@@ -93,8 +93,8 @@ static void kevin_led_set_power_battery(void)
 		break;
 	case PWR_STATE_ERROR:
 		power_ticks++;
-		set_color((power_ticks % LED_TOTAL_TICKS) \
-					< (LED_ON_TICKS) ? LED_RED : LED_GREEN);
+		set_color(((power_ticks % LED_TOTAL_TICKS)
+			  < LED_ON_TICKS) ? LED_RED : LED_GREEN);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */

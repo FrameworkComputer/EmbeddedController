@@ -120,6 +120,11 @@ enum power_state power_chipset_init(void)
 
 		chipset_force_g3();
 		wireless_set_state(WIRELESS_OFF);
+#ifdef BOARD_GRU
+		/* TODO: Enable CONFIG_USB_PORT_POWER_SMART */
+		gpio_set_level(GPIO_USB_A_EN, 0);
+		gpio_set_level(GPIO_USB_A_CHARGE_EN, 0);
+#endif
 	}
 
 	return POWER_G3;
@@ -218,6 +223,11 @@ enum power_state power_handle_state(enum power_state state)
 		/* Enable wireless */
 		wireless_set_state(WIRELESS_ON);
 
+#ifdef BOARD_GRU
+		gpio_set_level(GPIO_USB_A_EN, 1);
+		gpio_set_level(GPIO_USB_A_CHARGE_EN, 1);
+#endif
+
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
@@ -236,6 +246,11 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Suspend wireless */
 		wireless_set_state(WIRELESS_SUSPEND);
+
+#ifdef BOARD_GRU
+		gpio_set_level(GPIO_USB_A_EN, 0);
+		gpio_set_level(GPIO_USB_A_CHARGE_EN, 0);
+#endif
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task

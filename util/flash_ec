@@ -97,6 +97,7 @@ BOARDS_NPCX_5M6G_JTAG=(
 
 BOARDS_NPCX_SPI=(
 	amenia
+	gru
 	kevin
 	wheatley
 )
@@ -114,6 +115,7 @@ BOARDS_MEC1322=(
 )
 
 BOARDS_SPI_1800MV=(
+	gru
 	kevin
 )
 
