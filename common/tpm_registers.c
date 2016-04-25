@@ -177,8 +177,8 @@ static void access_reg_write(uint8_t data)
 		break;
 
 	default:
-		CPRINTF("%s: attempt to set access reg to 0x%02x\n",
-			__func__, data);
+		CPRINTF("%s: attempt to set access reg to an unsupported value"
+			" of 0x%02x\n", __func__, data);
 		break;
 	}
 }
@@ -251,8 +251,8 @@ static void sts_reg_write(const uint8_t *data, uint32_t data_size)
 
 	/* By definition only one bit can be set at a time. */
 	if (!single_bit_set(value)) {
-		CPRINTF("%s: attempt to set acces reg to %02x\n",
-			__func__, data);
+		CPRINTF("%s: attempt to set status reg to %02x\n",
+			__func__, value);
 		return;
 	}
 
@@ -333,7 +333,7 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 	uint32_t idata;
 
 	memcpy(&idata, data, 4);
-	CPRINTF("%s(0x%06x, %d %x)\n", __func__, regaddr, data_size, idata);
+	CPRINTF("%s(0x%03x, %d %x)\n", __func__, regaddr, data_size, idata);
 
 	switch (regaddr) {
 	case TPM_ACCESS:
