@@ -385,7 +385,7 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 
 	/* If any PD port is connected, then disable deep sleep */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
-		if (IT83XX_USBPD_GCR(port) | USBPD_REG_MASK_BMC_PHY)
+		if (IT83XX_USBPD_GCR(i) | USBPD_REG_MASK_BMC_PHY)
 			break;
 
 	if (i == CONFIG_USB_PD_PORT_COUNT)
