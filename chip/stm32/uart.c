@@ -154,16 +154,6 @@ int uart_read_char(void)
 	return STM32_USART_RDR(UARTN_BASE);
 }
 
-void uart_disable_interrupt(void)
-{
-	task_disable_irq(STM32_IRQ_USART(UARTN));
-}
-
-void uart_enable_interrupt(void)
-{
-	task_enable_irq(STM32_IRQ_USART(UARTN));
-}
-
 /* Interrupt handler for console USART */
 void uart_interrupt(void)
 {

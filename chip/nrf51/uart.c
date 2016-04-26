@@ -80,17 +80,6 @@ int uart_read_char(void)
 	return NRF51_UART_RXD;
 }
 
-void uart_disable_interrupt(void)
-{
-	task_disable_irq(NRF51_PERID_USART);
-}
-
-void uart_enable_interrupt(void)
-{
-	task_enable_irq(NRF51_PERID_USART);
-}
-
-
 /* Interrupt handler for console USART */
 void uart_interrupt(void)
 {
@@ -122,7 +111,8 @@ void uart_init(void)
 	NRF51_UART_BAUDRATE = 0x01d7e000;  /* 115200 */
 	NRF51_UART_ENABLE = 0x4;  /* Enable UART */
 
-	uart_enable_interrupt();
+	task_enable_irq(NRF51_PERID_USART);
+
 	NRF51_UART_INTENSET = (1 << NRF55_UART_RXDRDY_BIT);
 	NRF51_UART_STARTRX = 1;
 

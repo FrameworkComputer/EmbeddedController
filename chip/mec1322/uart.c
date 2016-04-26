@@ -100,16 +100,6 @@ static void uart_clear_rx_fifo(int channel)
 	MEC1322_UART_FCR = (1 << 0) | (1 << 1);
 }
 
-void uart_disable_interrupt(void)
-{
-	task_disable_irq(MEC1322_IRQ_UART);
-}
-
-void uart_enable_interrupt(void)
-{
-	task_enable_irq(MEC1322_IRQ_UART);
-}
-
 /**
  * Interrupt handler for UART
  */

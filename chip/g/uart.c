@@ -70,15 +70,6 @@ int uart_read_char(void)
 }
 
 #if USE_UART_INTERRUPTS
-void uart_disable_interrupt(void)
-{
-	uartn_disable_interrupt(UARTN);
-}
-
-void uart_enable_interrupt(void)
-{
-	uartn_enable_interrupt(UARTN);
-}
 
 /**
  * Interrupt handlers for UART0

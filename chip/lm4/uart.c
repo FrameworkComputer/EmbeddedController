@@ -98,16 +98,6 @@ static void uart_clear_rx_fifo(int channel)
 		scratch = LM4_UART_DR(channel);
 }
 
-void uart_disable_interrupt(void)
-{
-	task_disable_irq(LM4_IRQ_UART0);
-}
-
-void uart_enable_interrupt(void)
-{
-	task_enable_irq(LM4_IRQ_UART0);
-}
-
 /**
  * Interrupt handler for UART0
  */

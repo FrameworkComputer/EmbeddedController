@@ -161,18 +161,6 @@ void uart_write_char(char c);
 int uart_read_char(void);
 
 /**
- * Disable all UART related IRQs.
- *
- * Used to avoid concurrent accesses on UART management variables.
- */
-void uart_disable_interrupt(void);
-
-/**
- * Re-enable UART IRQs.
- */
-void uart_enable_interrupt(void);
-
-/**
  * Re-enable the UART transmit interrupt.
  *
  * This also forces triggering a UART interrupt, if the transmit interrupt was

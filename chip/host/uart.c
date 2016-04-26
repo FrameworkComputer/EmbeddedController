@@ -18,7 +18,6 @@
 #include "util.h"
 
 static int stopped = 1;
-static int int_disabled;
 static int init_done;
 
 static pthread_t input_thread;
@@ -65,13 +64,6 @@ static void uart_interrupt(void)
 	uart_process_output();
 }
 
-static void trigger_interrupt(void)
-{
-	if (int_disabled)
-		return;
-	task_trigger_test_interrupt(uart_interrupt);
-}
-
 int uart_init_done(void)
 {
 	return init_done;
@@ -80,7 +72,7 @@ int uart_init_done(void)
 void uart_tx_start(void)
 {
 	stopped = 0;
-	trigger_interrupt();
+	task_trigger_test_interrupt(uart_interrupt);
 }
 
 void uart_tx_stop(void)
@@ -125,16 +117,6 @@ int uart_read_char(void)
 	return ret;
 }
 
-void uart_disable_interrupt(void)
-{
-	int_disabled = 1;
-}
-
-void uart_enable_interrupt(void)
-{
-	int_disabled = 0;
-}
-
 void uart_inject_char(char *s, int sz)
 {
 	int i;
@@ -146,7 +128,7 @@ void uart_inject_char(char *s, int sz)
 			return;
 		queue_add_units(&cached_char, s + i, num_char);
 		char_available = num_char;
-		trigger_interrupt();
+		task_trigger_test_interrupt(uart_interrupt);
 	}
 }
 
@@ -176,7 +158,7 @@ void *uart_monitor_stdin(void *d)
 		 * input while interrupt handler runs is queued by the
 		 * system.
 		 */
-		trigger_interrupt();
+		task_trigger_test_interrupt(uart_interrupt);
 	}
 
 	return 0;

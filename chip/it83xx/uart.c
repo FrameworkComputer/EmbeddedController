@@ -92,16 +92,6 @@ int uart_read_char(void)
 	return IT83XX_UART_RBR(UART_PORT);
 }
 
-void uart_disable_interrupt(void)
-{
-	task_disable_irq(IT83XX_IRQ_UART1);
-}
-
-void uart_enable_interrupt(void)
-{
-	task_enable_irq(IT83XX_IRQ_UART1);
-}
-
 static void uart_ec_interrupt(void)
 {
 	uint8_t uart_ier;
