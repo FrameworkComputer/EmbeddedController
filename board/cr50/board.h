@@ -57,10 +57,9 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-/* Not using software sync, so verify RW signature instead */
-#define CONFIG_RSA
-#define CONFIG_SHA256
-
+/*
+ * Enable the spstest console command & corresponding handler.
+ */
 #define CONFIG_SPS_TEST
 
 /* Include crypto stuff, both software and hardware. */
