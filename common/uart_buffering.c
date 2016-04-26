@@ -27,9 +27,6 @@
 #define TX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_TX_BUF_SIZE - 1))
 #define RX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_RX_BUF_SIZE - 1))
 
-/* ASCII control character; for example, CTRL('C') = ^C */
-#define CTRL(c) ((c) - '@')
-
 /*
  * Interval between rechecking the receive DMA head pointer, after a character
  * of input has been detected by the normal tick task.  There will be
@@ -49,7 +46,6 @@ static int tx_snapshot_head;
 static int tx_snapshot_tail;
 static int tx_last_snapshot_head;
 static int tx_next_snapshot_head;
-static int uart_suspended;
 
 /**
  * Put a single character into the transmit buffer.
@@ -115,9 +111,6 @@ void uart_process_output(void)
 	 */
 	int head = tx_buf_head;
 
-	if (uart_suspended)
-		return;
-
 	/* If DMA is still busy, nothing to do. */
 	if (!uart_tx_dma_ready())
 		return;
@@ -149,9 +142,6 @@ void uart_process_output(void)
 
 void uart_process_output(void)
 {
-	if (uart_suspended)
-		return;
-
 	/* Copy output from buffer until TX fifo full or output buffer empty */
 	while (uart_tx_ready() && (tx_buf_head != tx_buf_tail)) {
 		uart_write_char(tx_buf[tx_buf_tail]);
@@ -166,6 +156,9 @@ void uart_process_output(void)
 #endif /* !CONFIG_UART_TX_DMA */
 
 #ifdef CONFIG_UART_RX_DMA
+#ifdef CONFIG_UART_INPUT_FILTER  /* TODO(crosbug.com/p/36745): */
+#error "Filtering the UART input with DMA enabled is NOT SUPPORTED!"
+#endif
 
 void uart_process_input(void);
 DECLARE_DEFERRED(uart_process_input);
@@ -175,29 +168,8 @@ void uart_process_input(void)
 	static int fast_rechecks;
 	int cur_head = rx_buf_head;
 
-	int i;
-
 	/* Update receive buffer head from current DMA receive pointer */
 	rx_buf_head = uart_rx_dma_head();
-
-	/* Handle software flow control characters */
-	for (i = cur_head; i != rx_buf_head; i = RX_BUF_NEXT(i)) {
-		int c = rx_buf[i];
-
-#ifdef CONFIG_UART_INPUT_FILTER  /* TODO(crosbug.com/p/36745): */
-#error "Filtering the UART input with DMA enabled is NOT SUPPORTED!"
-#endif
-
-		if (c == CTRL('S')) {
-			/* Software flow control - XOFF */
-			uart_suspended = 1;
-			uart_tx_stop();
-		} else if (c == CTRL('Q')) {
-			/* Software flow control - XON */
-			uart_suspended = 0;
-			uart_tx_start();
-		}
-	}
 
 	if (rx_buf_head != cur_head) {
 		console_has_input();
@@ -234,15 +206,7 @@ void uart_process_input(void)
 			continue;
 #endif
 
-		if (c == CTRL('S')) {
-			/* Software flow control - XOFF */
-			uart_suspended = 1;
-			uart_tx_stop();
-		} else if (c == CTRL('Q')) {
-			/* Software flow control - XON */
-			uart_suspended = 0;
-			uart_tx_start();
-		} else if (rx_buf_next != rx_buf_tail) {
+		if (rx_buf_next != rx_buf_tail) {
 			/* Buffer all other input */
 			rx_buf[rx_buf_head] = c;
 			rx_buf_head = rx_buf_next;
@@ -260,8 +224,7 @@ int uart_putc(int c)
 {
 	int rv = __tx_char(NULL, c);
 
-	if (!uart_suspended)
-		uart_tx_start();
+	uart_tx_start();
 
 	return rv ? EC_ERROR_OVERFLOW : EC_SUCCESS;
 }
@@ -274,8 +237,7 @@ int uart_puts(const char *outstr)
 			break;
 	}
 
-	if (!uart_suspended)
-		uart_tx_start();
+	uart_tx_start();
 
 	/* Successful if we consumed all output */
 	return *outstr ? EC_ERROR_OVERFLOW : EC_SUCCESS;
@@ -285,8 +247,7 @@ int uart_vprintf(const char *format, va_list args)
 {
 	int rv = vfnprintf(__tx_char, NULL, format, args);
 
-	if (!uart_suspended)
-		uart_tx_start();
+	uart_tx_start();
 
 	return rv;
 }
@@ -304,8 +265,8 @@ int uart_printf(const char *format, ...)
 
 void uart_flush_output(void)
 {
-	/* If UART not initialized or is suspended, ignore flush request. */
-	if (!uart_init_done() || uart_suspended)
+	/* If UART not initialized ignore flush request. */
+	if (!uart_init_done())
 		return;
 
 	/* Loop until buffer is empty */
@@ -342,8 +303,7 @@ int uart_getc(void)
 		int c = rx_buf[rx_buf_tail];
 		rx_buf_tail = RX_BUF_NEXT(rx_buf_tail);
 
-		if (c != CTRL('Q') && c != CTRL('S'))
-			return c;
+		return c;
 	}
 
 	/* If we're still here, no input */
