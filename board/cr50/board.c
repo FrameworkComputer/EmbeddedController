@@ -130,7 +130,8 @@ static void board_init(void)
 	init_timers();
 	init_interrupts();
 	init_trng();
-	init_jittery_clock(1);			/* high-security mode */
+	/* TODO(crosbug.com/p/53952): enable jittery clock */
+	/* init_jittery_clock(1); */
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
 	nvmem_init();
@@ -156,13 +157,14 @@ const void * const usb_strings[] = {
 	[USB_STR_AP_NAME] = USB_STRING_DESC("AP"),
 	[USB_STR_EC_NAME] = USB_STRING_DESC("EC"),
 	[USB_STR_UPGRADE_NAME] = USB_STRING_DESC("Firmware upgrade"),
+	[USB_STR_SPI_NAME] = USB_STRING_DESC("AP EC upgrade"),
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #endif
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	[CONFIG_SPI_FLASH_PORT] = {0, 4, GPIO_COUNT}
+	[CONFIG_SPI_FLASH_PORT] = {0, 2, GPIO_COUNT}
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 

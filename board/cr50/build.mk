@@ -31,6 +31,7 @@ dirs-y += $(BDIR)/tpm2
 # Objects that we need to build
 board-y =  board.o
 board-${CONFIG_RDD} += rdd.o
+board-${CONFIG_USB_SPI} += usb_spi.o
 board-y += tpm2/NVMem.o
 board-y += tpm2/aes.o
 board-y += tpm2/ecc.o
