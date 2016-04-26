@@ -40,7 +40,18 @@
 #undef CONFIG_FLASH
 
 /* Timer selection */
-#define TIM_CLOCK32 5
+#define TIM_CLOCK32	5
+
+/* External clock speeds (8 MHz) */
+#define STM32_HSE_CLOCK 8000000
+
+/* PLL configuration. Freq = STM32_HSE_CLOCK * n/m/r */
+#undef STM32_PLLM
+#define STM32_PLLM	1
+#undef STM32_PLLN
+#define STM32_PLLN	10
+#undef STM32_PLLR
+#define STM32_PLLR	2
 
 #include "gpio_signal.h"
 

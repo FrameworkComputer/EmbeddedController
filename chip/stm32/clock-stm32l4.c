@@ -15,19 +15,18 @@
 #include "util.h"
 
 /* High-speed oscillator is 16 MHz */
-#define HSI_CLOCK 16000000
-/*
- * MSI is 2 MHz (default) 1 MHz, depending on ICSCR setting.  We use 1 MHz
- * because it's the lowest clock rate we can still run 115200 baud serial
- * for the debug console.
- */
-#define MSI_2MHZ_CLOCK (1 << 21)
-#define MSI_1MHZ_CLOCK (1 << 20)
+#define STM32_HSI_CLOCK 16000000
+/* Multi-speed oscillator is 4 MHz by default */
+#define STM32_MSI_CLOCK 4000000
 
 enum clock_osc {
 	OSC_INIT = 0,	/* Uninitialized */
-	OSC_HSI,	/* High-speed oscillator */
-	OSC_MSI,	/* Med-speed oscillator @ 1 MHz */
+	OSC_HSI,	/* High-speed internal oscillator */
+	OSC_MSI,	/* Multi-speed internal oscillator */
+#ifdef STM32_HSE_CLOCK	/* Allows us to catch absence of HSE at comiple time */
+	OSC_HSE,	/* High-speed external oscillator */
+#endif
+	OSC_PLL,	/* PLL */
 };
 
 static int freq;
@@ -51,13 +50,174 @@ void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
 	}
 }
 
+static void clock_enable_osc(enum clock_osc osc)
+{
+	uint32_t ready;
+	uint32_t on;
+
+	switch (osc) {
+	case OSC_HSI:
+		ready = STM32_RCC_CR_HSIRDY;
+		on = STM32_RCC_CR_HSION;
+		break;
+	case OSC_MSI:
+		ready = STM32_RCC_CR_MSIRDY;
+		on = STM32_RCC_CR_MSION;
+		break;
+#ifdef STM32_HSE_CLOCK
+	case OSC_HSE:
+		ready = STM32_RCC_CR_HSERDY;
+		on = STM32_RCC_CR_HSEON;
+		break;
+#endif
+	case OSC_PLL:
+		ready = STM32_RCC_CR_PLLRDY;
+		on = STM32_RCC_CR_PLLON;
+		break;
+	default:
+		return;
+	}
+
+	if (!(STM32_RCC_CR & ready)) {
+		/* Enable HSI */
+		STM32_RCC_CR |= on;
+		/* Wait for HSI to be ready */
+		while (!(STM32_RCC_CR & ready))
+			;
+	}
+}
+
+/* Switch system clock oscillator */
+static void clock_switch_osc(enum clock_osc osc)
+{
+	uint32_t sw;
+	uint32_t sws;
+
+	switch (osc) {
+	case OSC_HSI:
+		sw = STM32_RCC_CFGR_SW_HSI;
+		sws = STM32_RCC_CFGR_SWS_HSI;
+		break;
+	case OSC_MSI:
+		sw = STM32_RCC_CFGR_SW_MSI;
+		sws = STM32_RCC_CFGR_SWS_MSI;
+		break;
+#ifdef STM32_HSE_CLOCK
+	case OSC_HSE:
+		sw = STM32_RCC_CFGR_SW_HSE;
+		sws = STM32_RCC_CFGR_SWS_HSE;
+		break;
+#endif
+	case OSC_PLL:
+		sw = STM32_RCC_CFGR_SW_PLL;
+		sws = STM32_RCC_CFGR_SWS_PLL;
+		break;
+	default:
+		return;
+	}
+
+	STM32_RCC_CFGR = sw;
+	while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) != sws)
+		;
+}
+
+/*
+ * Configure PLL for HSE
+ *
+ * 1. Disable the PLL by setting PLLON to 0 in RCC_CR.
+ * 2. Wait until PLLRDY is cleared. The PLL is now fully stopped.
+ * 3. Change the desired parameter.
+ * 4. Enable the PLL again by setting PLLON to 1.
+ * 5. Enable the desired PLL outputs by configuring PLLPEN, PLLQEN, PLLREN
+ *    in RCC_PLLCFGR.
+ */
+static int stm32_configure_pll(enum clock_osc osc,
+			       uint8_t m, uint8_t n, uint8_t r)
+{
+	uint32_t val;
+	int f;
+
+	/* 1 */
+	STM32_RCC_CR &= ~STM32_RCC_CR_PLLON;
+
+	/* 2 */
+	while (STM32_RCC_CR & STM32_RCC_CR_PLLRDY)
+		;
+
+	/* 3 */
+	val = STM32_RCC_PLLCFGR;
+
+	val &= ~STM32_RCC_PLLCFGR_PLLSRC_MASK;
+	switch (osc) {
+	case OSC_HSI:
+		val |= STM32_RCC_PLLCFGR_PLLSRC_HSI;
+		f = STM32_HSI_CLOCK;
+		break;
+	case OSC_MSI:
+		val |= STM32_RCC_PLLCFGR_PLLSRC_MSI;
+		f = STM32_MSI_CLOCK;
+		break;
+#ifdef STM32_HSE_CLOCK
+	case OSC_HSE:
+		val |= STM32_RCC_PLLCFGR_PLLSRC_HSE;
+		f = STM32_HSE_CLOCK;
+		break;
+#endif
+	default:
+		return -1;
+	}
+
+	ASSERT(m > 0 && m < 9);
+	val &= ~STM32_RCC_PLLCFGR_PLLM_MASK;
+	val |= (m  - 1) << STM32_RCC_PLLCFGR_PLLM_SHIFT;
+
+	/* Max and min values are from TRM */
+	ASSERT(n > 7 && n < 87);
+	val &= ~STM32_RCC_PLLCFGR_PLLN_MASK;
+	val |= n << STM32_RCC_PLLCFGR_PLLN_SHIFT;
+
+	val &= ~STM32_RCC_PLLCFGR_PLLR_MASK;
+	switch (r) {
+	case 2:
+		val |= 0 << STM32_RCC_PLLCFGR_PLLR_SHIFT;
+		break;
+	case 4:
+		val |= 1 << STM32_RCC_PLLCFGR_PLLR_SHIFT;
+		break;
+	case 6:
+		val |= 2 << STM32_RCC_PLLCFGR_PLLR_SHIFT;
+		break;
+	case 8:
+		val |= 3 << STM32_RCC_PLLCFGR_PLLR_SHIFT;
+		break;
+	default:
+		return -1;
+	}
+
+	STM32_RCC_PLLCFGR = val;
+
+	/* 4 */
+	clock_enable_osc(OSC_PLL);
+
+	/* 5 */
+	val = STM32_RCC_PLLCFGR;
+	val |= 1 << STM32_RCC_PLLCFGR_PLLREN_SHIFT;
+	STM32_RCC_PLLCFGR = val;
+
+	/* (f * n) shouldn't overflow based on their max values */
+	return (f * n / m / r);
+}
+
 /**
- * Set which oscillator is used for the clock
+ * Set system clock oscillator
  *
  * @param osc		Oscillator to use
+ * @param pll_osc	Source oscillator for PLL. Ignored if osc is not PLL.
  */
-static void clock_set_osc(enum clock_osc osc)
+static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 {
+	uint32_t val;
+
 	if (osc == current_osc)
 		return;
 
@@ -67,28 +227,18 @@ static void clock_set_osc(enum clock_osc osc)
 	switch (osc) {
 	case OSC_HSI:
 		/* Ensure that HSI is ON */
-		if (!(STM32_RCC_CR & STM32_RCC_CR_HSIRDY)) {
-			/* Enable HSI */
-			STM32_RCC_CR |= STM32_RCC_CR_HSION;
-			/* Wait for HSI to be ready */
-			while (!(STM32_RCC_CR & STM32_RCC_CR_HSIRDY))
-				;
-		}
+		clock_enable_osc(osc);
 
 		/* Disable LPSDSR */
 		STM32_PWR_CR &= ~STM32_PWR_CR_LPSDSR;
 
 		/* Switch to HSI */
-		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_HSI;
-		/* RM says to check SWS bits to make sure HSI is the sysclock */
-		while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) !=
-			STM32_RCC_CFGR_SWS_HSI)
-			;
+		clock_switch_osc(osc);
 
 		/* Disable MSI */
 		STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
 
-		freq = HSI_CLOCK;
+		freq = STM32_HSI_CLOCK;
 		break;
 
 	case OSC_MSI:
@@ -97,20 +247,10 @@ static void clock_set_osc(enum clock_osc osc)
 			(STM32_RCC_ICSCR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
 			STM32_RCC_ICSCR_MSIRANGE_1MHZ;
 		/* Ensure that MSI is ON */
-		if (!(STM32_RCC_CR & STM32_RCC_CR_MSIRDY)) {
-			/* Enable MSI */
-			STM32_RCC_CR |= STM32_RCC_CR_MSION;
-			/* Wait for MSI to be ready */
-			while (!(STM32_RCC_CR & STM32_RCC_CR_MSIRDY))
-				;
-		}
+		clock_enable_osc(osc);
 
 		/* Switch to MSI */
-		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_MSI;
-		/* RM says to check SWS bits to make sure MSI is the sysclock */
-		while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) !=
-			STM32_RCC_CFGR_SWS_MSI)
-			;
+		clock_switch_osc(osc);
 
 		/* Disable HSI */
 		STM32_RCC_CR &= ~STM32_RCC_CR_HSION;
@@ -118,9 +258,48 @@ static void clock_set_osc(enum clock_osc osc)
 		/* Enable LPSDSR */
 		STM32_PWR_CR |= STM32_PWR_CR_LPSDSR;
 
-		freq = MSI_1MHZ_CLOCK;
+		freq = STM32_MSI_CLOCK;
 		break;
 
+#ifdef STM32_HSE_CLOCK
+	case OSC_HSE:
+		/* Ensure that HSE is stable */
+		clock_enable_osc(osc);
+
+		/* Switch to HSE */
+		clock_switch_osc(osc);
+
+		/* Disable other clock sources */
+		STM32_RCC_CR &= ~(STM32_RCC_CR_MSION | STM32_RCC_CR_HSION |
+				STM32_RCC_CR_PLLON);
+
+		freq = STM32_HSE_CLOCK;
+
+		break;
+#endif
+	case OSC_PLL:
+		/* Ensure that source clock is stable */
+		clock_enable_osc(pll_osc);
+
+		/* Configure PLLCFGR */
+		freq = stm32_configure_pll(pll_osc, STM32_PLLM,
+					   STM32_PLLN, STM32_PLLR);
+		ASSERT(freq > 0);
+
+		/* Adjust flash latency as instructed in TRM */
+		val = STM32_FLASH_ACR;
+		val &= ~STM32_FLASH_ACR_LATENCY_MASK;
+		/* Flash 4 wait state. TODO: Should depend on freq. */
+		val |= 4 << STM32_FLASH_ACR_LATENCY_SHIFT;
+		STM32_FLASH_ACR = val;
+		while (STM32_FLASH_ACR != val)
+			;
+
+		/* Switch to PLL */
+		clock_switch_osc(osc);
+
+		/* TODO: Disable other sources */
+		break;
 	default:
 		break;
 	}
@@ -150,7 +329,7 @@ void clock_enable_module(enum module_id module, int enable)
 		/* Flush UART before switching clock speed */
 		cflush();
 
-		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI);
+		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI, OSC_INIT);
 	}
 
 	clock_mask = new_mask;
@@ -158,14 +337,11 @@ void clock_enable_module(enum module_id module, int enable)
 
 void clock_init(void)
 {
-	/*
-	 * The initial state :
-	 *  SYSCLK from MSI (=2MHz), no divider on AHB, APB1, APB2
-	 *  PLL unlocked, RTC enabled on LSE
-	 */
-
-	/* Switch to high-speed oscillator */
-	clock_set_osc(OSC_HSI);
+#ifdef STM32_HSE_CLOCK
+	clock_set_osc(OSC_PLL, OSC_HSE);
+#else
+	clock_set_osc(OSC_HSI, OSC_INIT);
+#endif
 }
 
 static void clock_chipset_startup(void)
@@ -188,9 +364,15 @@ static int command_clock(int argc, char **argv)
 {
 	if (argc >= 2) {
 		if (!strcasecmp(argv[1], "hsi"))
-			clock_set_osc(OSC_HSI);
+			clock_set_osc(OSC_HSI, OSC_INIT);
 		else if (!strcasecmp(argv[1], "msi"))
-			clock_set_osc(OSC_MSI);
+			clock_set_osc(OSC_MSI, OSC_INIT);
+#ifdef STM32_HSE_CLOCK
+		else if (!strcasecmp(argv[1], "hse"))
+			clock_set_osc(OSC_HSE, OSC_INIT);
+		else if (!strcasecmp(argv[1], "pll"))
+			clock_set_osc(OSC_PLL, OSC_HSE);
+#endif
 		else
 			return EC_ERROR_PARAM1;
 	}
@@ -199,6 +381,10 @@ static int command_clock(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(clock, command_clock,
-			"hsi | msi",
+			"hsi | msi"
+#ifdef STM32_HSE_CLOCK
+			" | hse | pll"
+#endif
+			,
 			"Set clock frequency",
 			NULL);
