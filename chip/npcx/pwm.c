@@ -63,8 +63,12 @@ void pwm_set_freq(enum pwm_channel ch, uint32_t freq, uint32_t res)
 	/* Disable PWM for module configuration */
 	pwm_enable(ch, 0);
 
-	/* Get PWM clock frequency */
-	if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP_CLK)
+	/*
+	 * Get PWM clock frequency. Use internal 32K as PWM clock source if
+	 * the PWM must be active during low-power idle.
+	 */
+
+	if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
 		clock = INT_32K_CLOCK;
 	else
 		clock = clock_get_apb2_freq();
@@ -205,7 +209,7 @@ void pwm_config(enum pwm_channel ch)
 
 	/* Select PWM clock source */
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_CKSEL,
-			(pwm_channels[ch].flags & PWM_CONFIG_DSLEEP_CLK));
+			(pwm_channels[ch].flags & PWM_CONFIG_DSLEEP));
 
 	/* Set PWM operation frequency */
 	pwm_set_freq(ch, pwm_channels[ch].freq, DUTY_CYCLE_RESOLUTION);

@@ -177,13 +177,10 @@ void fan_channel_setup(int ch, unsigned int flags)
 static void fan_init(void)
 {
 
-#ifdef CONFIG_PWM_DSLEEP
-
+#ifdef CONFIG_FAN_DSLEEP
 	/* Enable the fan module and delay a few clocks */
 	clock_enable_peripheral(CGC_OFFSET_FAN, 0x1, CGC_MODE_ALL);
-
 #else
-
 	/* Enable the fan module and delay a few clocks */
 	clock_enable_peripheral(CGC_OFFSET_FAN, 0x1,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);

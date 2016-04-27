@@ -18,4 +18,9 @@ struct pwm_t {
 
 extern const struct pwm_t pwm_channels[];
 
+/*
+ * Returns PWMs that must remain active in low-power idle -
+ * MEC1322_PCR_EC_SLP_EN bit mask.
+ */
+inline uint32_t pwm_get_keep_awake_mask(void);
 #endif  /* __CROS_EC_PWM_CHIP_H */

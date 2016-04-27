@@ -27,6 +27,11 @@
 #define MEC1322_PCR_EC_SLP_EN    REG32(MEC1322_PCR_BASE + 0x8)
 /* Command all blocks to sleep */
 #define  MEC1322_PCR_EC_SLP_EN_SLEEP	0xe0700ff7
+#define  MEC1322_PCR_EC_SLP_EN_PWM(n)	(1 << ((n) ? (19 + (n)) : 4))
+#define  MEC1322_PCR_EC_SLP_EN_PWM3	(1 << 22)
+#define  MEC1322_PCR_EC_SLP_EN_PWM2	(1 << 21)
+#define  MEC1322_PCR_EC_SLP_EN_PWM1	(1 << 20)
+#define  MEC1322_PCR_EC_SLP_EN_PWM0	(1 << 4)
 /* Allow all blocks to request clocks */
 #define  MEC1322_PCR_EC_SLP_EN_WAKE	(~0xe0700ff7)
 #define MEC1322_PCR_EC_CLK_REQ   REG32(MEC1322_PCR_BASE + 0xc)

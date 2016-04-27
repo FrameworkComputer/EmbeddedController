@@ -11,6 +11,8 @@
 #include "cpu.h"
 #include "hooks.h"
 #include "hwtimer.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -181,6 +183,9 @@ static void system_reset_htimer_alarm(void)
  */
 static void prepare_for_deep_sleep(void)
 {
+	uint32_t ec_slp_en = MEC1322_PCR_EC_SLP_EN |
+			     MEC1322_PCR_EC_SLP_EN_SLEEP;
+
 	/* sysTick timer */
 	CPU_NVIC_ST_CTRL &= ~ST_ENABLE;
 	CPU_NVIC_ST_CTRL &= ~ST_COUNTFLAG;
@@ -199,14 +204,21 @@ static void prepare_for_deep_sleep(void)
 	MEC1322_TMR16_CTL(0) &= ~1;
 
 	MEC1322_PCR_CHIP_SLP_EN |= 0x3;
-	MEC1322_PCR_EC_SLP_EN |= MEC1322_PCR_EC_SLP_EN_SLEEP;
+#ifdef CONFIG_PWM
+	if (pwm_get_keep_awake_mask())
+		ec_slp_en &= ~pwm_get_keep_awake_mask();
+	else
+#endif
+		/* Disable 100 Khz clock */
+		MEC1322_PCR_SLOW_CLK_CTL &= 0xFFFFFC00;
+
+	MEC1322_PCR_EC_SLP_EN = ec_slp_en;
 	MEC1322_PCR_HOST_SLP_EN |= MEC1322_PCR_HOST_SLP_EN_SLEEP;
 	MEC1322_PCR_EC_SLP_EN2 |= MEC1322_PCR_EC_SLP_EN2_SLEEP;
 
 #ifndef CONFIG_POWER_S0IX
 	MEC1322_LPC_ACT = 0x0;
 #endif
-	MEC1322_PCR_SLOW_CLK_CTL &= 0xFFFFFC00;
 
 	MEC1322_PCR_SYS_SLP_CTL = 0x2;  /* heavysleep 2 */
 
@@ -242,8 +254,6 @@ static void resume_from_deep_sleep(void)
 	/* Enable LPC */
 	MEC1322_LPC_ACT |= 1;
 #endif
-
-	MEC1322_PCR_SLOW_CLK_CTL = 0x1E0;
 }
 
 

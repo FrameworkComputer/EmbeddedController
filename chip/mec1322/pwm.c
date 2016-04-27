@@ -11,14 +11,25 @@
 #include "registers.h"
 #include "util.h"
 
+/*
+ * PWMs that must remain active in low-power idle - MEC1322_PCR_EC_SLP_EN
+ * bit mask.
+ */
+static uint32_t pwm_keep_awake_mask;
+
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
 	int id = pwm_channels[ch].channel;
 
-	if (enabled)
+	if (enabled) {
 		MEC1322_PWM_CFG(id) |= 0x1;
-	else
+		if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
+			pwm_keep_awake_mask |=
+				MEC1322_PCR_EC_SLP_EN_PWM(id);
+	} else {
 		MEC1322_PWM_CFG(id) &= ~0x1;
+		pwm_keep_awake_mask &= ~MEC1322_PCR_EC_SLP_EN_PWM(id);
+	}
 }
 
 int pwm_get_enabled(enum pwm_channel ch)
@@ -42,6 +53,11 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 int pwm_get_duty(enum pwm_channel ch)
 {
 	return MEC1322_PWM_ON(pwm_channels[ch].channel);
+}
+
+inline uint32_t pwm_get_keep_awake_mask(void)
+{
+	return pwm_keep_awake_mask;
 }
 
 static void pwm_configure(int ch, int active_low, int clock_low)

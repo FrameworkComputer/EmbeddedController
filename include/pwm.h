@@ -51,5 +51,8 @@ int pwm_get_duty(enum pwm_channel ch);
  * addition to the primary output.
  */
 #define PWM_CONFIG_COMPLEMENTARY_OUTPUT	(1 << 3)
-
+/**
+ * PWM channel must stay active in low-power idle, if enabled.
+ */
+#define PWM_CONFIG_DSLEEP		(1 << 4)
 #endif  /* __CROS_EC_PWM_H */
