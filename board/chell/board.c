@@ -104,7 +104,8 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	{2, PWM_CONFIG_ALT_CLOCK}, /* Use alternate 100kHz clock source */
+	/* Use alternate 100kHz clock source, keep active in low-power idle */
+	{2, PWM_CONFIG_ALT_CLOCK | PWM_CONFIG_DSLEEP},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
