@@ -225,9 +225,11 @@ static void detect_cc_pin_sink(int port, int *cc1, int *cc2)
 
 	tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
-	/*
-	 * CC1 is now being measured by FUSB302.
-	 */
+	/* CC1 is now being measured by FUSB302. */
+
+	/* Wait on measurement */
+	usleep(250);
+
 	tcpc_read(port, TCPC_REG_STATUS0, &bc_lvl_cc1);
 
 	/* mask away unwanted bits */
@@ -245,9 +247,11 @@ static void detect_cc_pin_sink(int port, int *cc1, int *cc2)
 
 	tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
-	/*
-	 * CC2 is now being measured by FUSB302.
-	 */
+	/* CC2 is now being measured by FUSB302. */
+
+	/* Wait on measurement */
+	usleep(250);
+
 	tcpc_read(port, TCPC_REG_STATUS0, &bc_lvl_cc2);
 
 	/* mask away unwanted bits */
