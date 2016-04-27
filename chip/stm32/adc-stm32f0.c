@@ -284,67 +284,6 @@ int adc_read_channel(enum adc_channel ch)
 	return value * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
-int adc_read_all_channels(int *data)
-{
-	int i;
-	uint32_t channels = 0;
-	const struct adc_t *adc;
-	int restore_watchdog = 0;
-	int ret = EC_SUCCESS;
-	int blocking_read = !profile.ier_reg;
-
-	mutex_lock(&adc_lock);
-
-	if (adc_watchdog_enabled()) {
-		ASSERT(blocking_read);
-		restore_watchdog = 1;
-		adc_disable_watchdog_no_lock();
-	}
-
-	/* Select all used channels */
-	for (i = 0; i < ADC_CH_COUNT; ++i)
-		channels |= 1 << adc_channels[i].channel;
-	STM32_ADC_CHSELR = channels;
-
-	/* Enable DMA */
-	STM32_ADC_CFGR1 |= STM32_ADC_CFGR1_DMAEN;
-
-	dma_clear_isr(STM32_DMAC_ADC);
-	dma_start_rx(profile.dma_option,
-		     profile.dma_buffer_size * ADC_CH_COUNT,
-		     data);
-
-	/* Clear flags */
-	STM32_ADC_ISR = 0xe;
-	/* Enable requested interrupt(s) */
-	STM32_ADC_IER |= profile.ier_reg;
-	if (!blocking_read)
-		task_enable_irq(STM32_IRQ_ADC_COMP);
-
-	STM32_ADC_CR |= 1 << 2; /* ADSTART */
-
-	if (blocking_read) {
-		if (dma_wait(STM32_DMAC_ADC)) {
-			ret = EC_ERROR_UNKNOWN;
-			goto fail;
-		}
-
-		for (i = 0; i < ADC_CH_COUNT; ++i) {
-			adc = adc_channels + i;
-			data[i] = (data[i] & 0xffff) *
-				   adc->factor_mul / adc->factor_div +
-				   adc->shift;
-		}
-	}
-
-fail:
-	if (restore_watchdog)
-		adc_enable_watchdog_no_lock();
-	if (blocking_read)
-		mutex_unlock(&adc_lock);
-	return ret;
-}
-
 static void adc_init(void)
 {
 	/*

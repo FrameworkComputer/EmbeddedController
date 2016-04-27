@@ -57,34 +57,6 @@ int adc_read_channel(enum adc_channel ch)
 	return value;
 }
 
-int adc_read_all_channels(int *data)
-{
-	int i;
-	int ret = EC_SUCCESS;
-	const struct adc_t *adc;
-
-	mutex_lock(&adc_lock);
-
-	MEC1322_ADC_SINGLE = 0;
-	for (i = 0; i < ADC_CH_COUNT; ++i)
-		MEC1322_ADC_SINGLE |= 1 << adc_channels[i].channel;
-
-	if (!start_single_and_wait(ADC_SINGLE_READ_TIME * ADC_CH_COUNT)) {
-		ret = EC_ERROR_TIMEOUT;
-		goto exit_all_channels;
-	}
-
-	for (i = 0; i < ADC_CH_COUNT; ++i) {
-		adc = adc_channels + i;
-		data[i] = MEC1322_ADC_READ(adc->channel) * adc->factor_mul /
-			  adc->factor_div + adc->shift;
-	}
-
-exit_all_channels:
-	mutex_unlock(&adc_lock);
-	return ret;
-}
-
 static void adc_init(void)
 {
 	/* Activate ADC module */

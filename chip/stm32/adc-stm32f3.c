@@ -220,53 +220,6 @@ int adc_read_channel(enum adc_channel ch)
 	       value * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
-int adc_read_all_channels(int *data)
-{
-	int i;
-	int16_t raw_data[ADC_CH_COUNT];
-	const struct adc_t *adc;
-	int restore_watchdog = 0;
-	int ret = EC_SUCCESS;
-
-	if (!adc_powered())
-		return EC_ERROR_UNKNOWN;
-
-	mutex_lock(&adc_lock);
-
-	if (adc_watchdog_enabled()) {
-		restore_watchdog = 1;
-		adc_disable_watchdog_no_lock();
-	}
-
-	adc_configure_all();
-
-	dma_clear_isr(STM32_DMAC_ADC);
-	dma_start_rx(&dma_adc_option, ADC_CH_COUNT, raw_data);
-
-	/* Start conversion */
-	STM32_ADC_CR2 |= (1 << 0); /* ADON */
-
-	if (dma_wait(STM32_DMAC_ADC)) {
-		ret = EC_ERROR_UNKNOWN;
-		goto exit_all_channels;
-	}
-
-	for (i = 0; i < ADC_CH_COUNT; ++i) {
-		adc = adc_channels + i;
-		data[i] = raw_data[i] * adc->factor_mul / adc->factor_div +
-			  adc->shift;
-	}
-
-exit_all_channels:
-	dma_disable(STM32_DMAC_ADC);
-
-	if (restore_watchdog)
-		adc_enable_watchdog_no_lock();
-
-	mutex_unlock(&adc_lock);
-	return ret;
-}
-
 static void adc_init(void)
 {
 	/*

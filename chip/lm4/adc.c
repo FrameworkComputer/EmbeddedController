@@ -174,18 +174,6 @@ int adc_read_channel(enum adc_channel ch)
 	return rv * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
-int adc_read_all_channels(int *data)
-{
-	int i;
-
-	for (i = 0; i < ADC_CH_COUNT; ++i) {
-		data[i] = adc_read_channel(i);
-		if (data[i] == ADC_READ_ERROR)
-			return EC_ERROR_UNKNOWN;
-	}
-	return EC_SUCCESS;
-}
-
 /*****************************************************************************/
 /* Interrupt handlers */
 

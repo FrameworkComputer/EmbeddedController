@@ -30,18 +30,6 @@
 int adc_read_channel(enum adc_channel ch);
 
 /**
- * Read all ADC channels.
- *
- * @param data		Destination array for channel data; must be
- *			ADC_CH_COUNT elements long for single-read profile,
- *			or sized according to dma_buffer_size in
- *			continuous profiles.
- *
- * @return EC_SUCCESS, or non-zero on error.
- */
-int adc_read_all_channels(int *data);
-
-/**
  * Enable ADC watchdog. Note that interrupts might come in repeatedly very
  * quickly when ADC output goes out of the accepted range.
  *

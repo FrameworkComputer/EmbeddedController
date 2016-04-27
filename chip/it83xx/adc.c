@@ -117,18 +117,6 @@ int adc_read_channel(enum adc_channel ch)
 	return ADC_READ_ERROR;
 }
 
-int adc_read_all_channels(int *data)
-{
-	int index;
-
-	for (index = 0; index < ADC_CH_COUNT; index++) {
-		data[index] = adc_read_channel(index);
-		if (data[index] == ADC_READ_ERROR)
-			return EC_ERROR_UNKNOWN;
-	}
-	return EC_SUCCESS;
-}
-
 /*
  * ADC analog accuracy initialization (only once after VSTBY power on)
  *
