@@ -307,10 +307,6 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 
 	if (num_bits & 0xF)
 		return CRYPT_FAIL;
-	if (num_bytes / 2 > p_buf->size)
-		return CRYPT_FAIL;
-	if (N_buf->size > 0 && num_bytes > N_buf->size)
-		return CRYPT_FAIL;
 	if (num_bytes > RSA_MAX_BYTES)
 		return CRYPT_FAIL;
 	/* Seed size must be at least 2*security_strength per TPM 2.0 spec. */
@@ -320,7 +316,6 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	if (e_buf == 0)
 		e_buf = RSA_F4;
 
-	N_buf->size = num_bytes;
 	DCRYPTO_bn_wrap(&e, &e_buf, sizeof(e_buf));
 	DCRYPTO_bn_wrap(&p, p_buf->buffer, num_bytes / 2);
 	DCRYPTO_bn_wrap(&q, q_buf, num_bytes / 2);
