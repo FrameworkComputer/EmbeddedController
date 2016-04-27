@@ -7,6 +7,10 @@
 #include "dcrypto.h"
 
 #include "trng.h"
+#include "util.h"
+
+#include "cryptoc/p256.h"
+#include "cryptoc/sha256.h"
 
 #define AES_KEY_BYTES  16
 #define HMAC_KEY_BYTES 32
@@ -35,14 +39,14 @@ size_t DCRYPTO_ecies_encrypt(
 	uint8_t key[AES_KEY_BYTES + HMAC_KEY_BYTES];
 	const uint8_t *aes_key;
 	const uint8_t *hmac_key;
-	struct HMAC_CTX ctx;
+	LITE_HMAC_CTX ctx;
 	uint8_t *outp = out;
 	uint8_t *ciphertext;
 
 	if (auth_data_len > in_len)
 		return 0;
 	if (out_len < 1 + P256_NBYTES + P256_NBYTES +
-		in_len + SHA256_DIGEST_BYTES)
+		in_len + SHA256_DIGEST_SIZE)
 		return 0;
 
 	/* Generate emphemeral EC key. */
@@ -54,7 +58,7 @@ size_t DCRYPTO_ecies_encrypt(
 					&eph_d, pub_x, pub_y))
 		return 0;
 	/* Check for computational errors. */
-	if (!DCRYPTO_p256_valid_point(&secret_x, &secret_y))
+	if (!p256_is_valid_point(&secret_x, &secret_y))
 		return 0;
 	/* Convert secret to big-endian. */
 	reverse(&secret_x, sizeof(secret_x));
@@ -94,11 +98,11 @@ size_t DCRYPTO_ecies_encrypt(
 	outp += P256_NBYTES;
 
 	/* Calculate HMAC(auth_data || ciphertext). */
-	dcrypto_HMAC_SHA256_init(&ctx, hmac_key, HMAC_KEY_BYTES);
-	dcrypto_HMAC_update(&ctx, outp, in_len);
+	DCRYPTO_HMAC_SHA256_init(&ctx, hmac_key, HMAC_KEY_BYTES);
+	HASH_update(&ctx.hash, outp, in_len);
 	outp += in_len;
-	memcpy(outp, dcrypto_HMAC_final(&ctx), SHA256_DIGEST_BYTES);
-	outp += SHA256_DIGEST_BYTES;
+	memcpy(outp, DCRYPTO_HMAC_final(&ctx), SHA256_DIGEST_SIZE);
+	outp += SHA256_DIGEST_SIZE;
 
 	return outp - (uint8_t *) out;
 }
@@ -117,17 +121,17 @@ size_t DCRYPTO_ecies_decrypt(
 	uint8_t key[AES_KEY_BYTES + HMAC_KEY_BYTES];
 	const uint8_t *aes_key;
 	const uint8_t *hmac_key;
-	struct HMAC_CTX ctx;
+	LITE_HMAC_CTX ctx;
 	const uint8_t *inp = in;
 	uint8_t *outp = out;
 
 	if (in_len < 1 + P256_NBYTES + P256_NBYTES + auth_data_len +
-		SHA256_DIGEST_BYTES)
+		SHA256_DIGEST_SIZE)
 		return 0;
 	if (inp[0] != 0x04)
 		return 0;
 
-	in_len -= 1 + P256_NBYTES + P256_NBYTES + SHA256_DIGEST_BYTES;
+	in_len -= 1 + P256_NBYTES + P256_NBYTES + SHA256_DIGEST_SIZE;
 
 	inp++;
 	p256_from_bin(inp, &eph_x);
@@ -136,14 +140,14 @@ size_t DCRYPTO_ecies_decrypt(
 	inp += P256_NBYTES;
 
 	/* Verify that the public point is on the curve. */
-	if (!DCRYPTO_p256_valid_point(&eph_x, &eph_y))
+	if (!p256_is_valid_point(&eph_x, &eph_y))
 		return 0;
 	/* Compute the DH point. */
 	if (!DCRYPTO_p256_point_mul(&secret_x, &secret_y,
 					d, &eph_x, &eph_y))
 		return 0;
 	/* Check for computational errors. */
-	if (!DCRYPTO_p256_valid_point(&secret_x, &secret_y))
+	if (!p256_is_valid_point(&secret_x, &secret_y))
 		return 0;
 	/* Convert secret to big-endian. */
 	reverse(&secret_x, sizeof(secret_x));
@@ -155,11 +159,11 @@ size_t DCRYPTO_ecies_decrypt(
 
 	aes_key = &key[0];
 	hmac_key = &key[AES_KEY_BYTES];
-	dcrypto_HMAC_SHA256_init(&ctx, hmac_key, HMAC_KEY_BYTES);
-	dcrypto_HMAC_update(&ctx, inp, in_len);
+	DCRYPTO_HMAC_SHA256_init(&ctx, hmac_key, HMAC_KEY_BYTES);
+	HASH_update(&ctx.hash, inp, in_len);
 	/* TODO(ngm): replace with constant time verify. */
-	if (memcmp(inp + in_len, dcrypto_HMAC_final(&ctx),
-			SHA256_DIGEST_BYTES) != 0)
+	if (memcmp(inp + in_len, DCRYPTO_HMAC_final(&ctx),
+			SHA256_DIGEST_SIZE) != 0)
 		return 0;
 
 	memmove(outp, inp, auth_data_len);

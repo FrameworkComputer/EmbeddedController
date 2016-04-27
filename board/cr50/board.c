@@ -25,6 +25,8 @@
 /* Define interrupt and gpio structs */
 #include "gpio_list.h"
 
+#include "cryptoc/sha.h"
+
 /*
  * TODO: NV_MEMORY_SIZE is defined in 2 places. Here and in
  * /src/third_party/tmp2/Implementation.h. This needs to be
@@ -209,7 +211,7 @@ void sys_rst_asserted(enum gpio_signal signal)
 void nvmem_compute_sha(uint8_t *p_buf, int num_bytes,
 		       uint8_t *p_sha, int sha_len)
 {
-	uint8_t sha1_digest[SHA1_DIGEST_SIZE];
+	uint8_t sha1_digest[SHA_DIGEST_SIZE];
 	/*
 	 * Taking advantage of the built in dcrypto engine to generate
 	 * a CRC-like value that can be used to validate contents of an

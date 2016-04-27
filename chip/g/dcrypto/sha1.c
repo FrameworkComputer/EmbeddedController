@@ -7,58 +7,28 @@
 #include "internal.h"
 #include "registers.h"
 
-static void sw_sha1_init(SHA1_CTX *ctx);
-static void sw_sha1_update(SHA1_CTX *ctx, const uint8_t *data, uint32_t len);
-static const uint8_t *sw_sha1_final(SHA1_CTX *ctx);
-static const uint8_t *sha1_hash(const uint8_t *data, uint32_t len,
-				uint8_t *digest);
-static const uint8_t *dcrypto_sha1_final(SHA1_CTX *unused);
+#include "cryptoc/sha.h"
 
-/* Software SHA1 implementation. */
-static const struct HASH_VTAB SW_SHA1_VTAB = {
-	sw_sha1_update,
-	sw_sha1_final,
-	sha1_hash,
-	SHA1_DIGEST_BYTES
-};
-
-static void sw_sha1_init(SHA1_CTX *ctx)
-{
-	ctx->vtab = &SW_SHA1_VTAB;
-	sha1_init(&ctx->u.sw_sha1);
-}
-
-static void sw_sha1_update(SHA1_CTX *ctx, const uint8_t *data, uint32_t len)
-{
-	sha1_update(&ctx->u.sw_sha1, data, len);
-}
-
-static const uint8_t *sw_sha1_final(SHA1_CTX *ctx)
-{
-	return sha1_final(&ctx->u.sw_sha1);
-}
-
-static const uint8_t *sha1_hash(const uint8_t *data, uint32_t len,
-				uint8_t *digest)
-{
-	SHA1_CTX ctx;
-
-	sw_sha1_init(&ctx);
-	sw_sha1_update(&ctx, data, len);
-	memcpy(digest, sw_sha1_final(&ctx), SHA1_DIGEST_BYTES);
-	return digest;
-}
-
+static void dcrypto_sha1_init(SHA_CTX *ctx);
+static const uint8_t *dcrypto_sha1_final(SHA_CTX *unused);
 
 /*
  * Hardware SHA implementation.
  */
-static const struct HASH_VTAB HW_SHA1_VTAB = {
+static const HASH_VTAB HW_SHA1_VTAB = {
+	dcrypto_sha1_init,
 	dcrypto_sha_update,
 	dcrypto_sha1_final,
 	DCRYPTO_SHA1_hash,
-	SHA1_DIGEST_BYTES
+	SHA_DIGEST_SIZE
 };
+
+/* Requires dcrypto_grab_sha_hw() to be called first. */
+static void dcrypto_sha1_init(SHA_CTX *ctx)
+{
+	ctx->f = &HW_SHA1_VTAB;
+	dcrypto_sha_init(SHA1_MODE);
+}
 
 /* Select and initialize either the software or hardware
  * implementation.  If "multi-threaded" behaviour is required, then
@@ -69,30 +39,27 @@ static const struct HASH_VTAB HW_SHA1_VTAB = {
  * If the caller has no preference as to implementation, then hardware
  * is preferred based on availability.  Hardware is considered to be
  * in use between init() and finished() calls. */
-void DCRYPTO_SHA1_init(SHA1_CTX *ctx, uint32_t sw_required)
+void DCRYPTO_SHA1_init(SHA_CTX *ctx, uint32_t sw_required)
 {
-	if (!sw_required && dcrypto_grab_sha_hw()) {
-		ctx->vtab = &HW_SHA1_VTAB;
-		dcrypto_sha_init(SHA1_MODE);
-	} else {
-		sw_sha1_init(ctx);
-	}
+	if (!sw_required && dcrypto_grab_sha_hw())
+		dcrypto_sha1_init(ctx);
+	else
+		SHA_init(ctx);
 }
 
-static const uint8_t *dcrypto_sha1_final(SHA1_CTX *ctx)
+static const uint8_t *dcrypto_sha1_final(SHA_CTX *ctx)
 {
-	dcrypto_sha_wait(SHA1_MODE, (uint32_t *) ctx->u.buf);
-	return ctx->u.buf;
+	dcrypto_sha_wait(SHA1_MODE, (uint32_t *) ctx->buf);
+	return ctx->buf;
 }
 
-const uint8_t *DCRYPTO_SHA1_hash(const uint8_t *data, uint32_t n,
+const uint8_t *DCRYPTO_SHA1_hash(const void *data, uint32_t n,
 				uint8_t *digest)
 {
 	if (dcrypto_grab_sha_hw())
 		/* dcrypto_sha_wait() will release the hw. */
 		dcrypto_sha_hash(SHA1_MODE, data, n, digest);
 	else
-		sha1_hash(data, n, digest);
+		SHA_hash(data, n, digest);
 	return digest;
 }
-

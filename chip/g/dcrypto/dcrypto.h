@@ -14,6 +14,10 @@
 
 #include "internal.h"
 
+#include <stddef.h>
+
+#include "cryptoc/hmac.h"
+
 enum cipher_mode {
 	CIPHER_MODE_ECB = 0,
 	CIPHER_MODE_CTR = 1,
@@ -26,26 +30,10 @@ enum encrypt_mode {
 	ENCRYPT_MODE = 1
 };
 
-struct HASH_CTX;   /* Forward declaration. */
-
-typedef struct HASH_CTX SHA1_CTX;
-typedef struct HASH_CTX SHA256_CTX;
-
 enum hashing_mode {
 	HASH_SHA1 = 0,
 	HASH_SHA256 = 1
 };
-
-#define DCRYPTO_HASH_update(ctx, data, len) \
-	((ctx)->vtab->update((ctx), (data), (len)))
-#define DCRYPTO_HASH_final(ctx) \
-	((ctx)->vtab->final((ctx)))
-#define DCRYPTO_HASH_size(ctx) \
-	((ctx)->vtab->size)
-
-#define DCRYPTO_SHA1_update(ctx, data, n) \
-	DCRYPTO_HASH_update((ctx), (data), (n))
-#define DCRYPTO_SHA1_final(ctx) DCRYPTO_HASH_final((ctx))
 
 /*
  * AES implementation, based on a hardware AES block.
@@ -68,16 +56,19 @@ int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
  * is TRUE, in which case there will be no attempt to use the hardware for
  * this particular hashing session.
  */
-void DCRYPTO_SHA1_init(SHA1_CTX *ctx, uint32_t sw_required);
-void DCRYPTO_SHA256_init(SHA256_CTX *ctx, uint32_t sw_required);
-const uint8_t *DCRYPTO_SHA1_hash(const uint8_t *data, uint32_t n,
+void DCRYPTO_SHA1_init(SHA_CTX *ctx, uint32_t sw_required);
+void DCRYPTO_SHA256_init(LITE_SHA256_CTX *ctx, uint32_t sw_required);
+const uint8_t *DCRYPTO_SHA1_hash(const void *data, uint32_t n,
+				uint8_t *digest);
+const uint8_t *DCRYPTO_SHA256_hash(const void *data, uint32_t n,
 				uint8_t *digest);
 
-#define DCRYPTO_SHA256_update(ctx, data, n) \
-	DCRYPTO_HASH_update((ctx), (data), (n))
-#define DCRYPTO_SHA256_final(ctx) DCRYPTO_HASH_final((ctx))
-const uint8_t *DCRYPTO_SHA256_hash(const uint8_t *data, uint32_t n,
-				uint8_t *digest);
+/*
+ *  HMAC.
+ */
+void DCRYPTO_HMAC_SHA256_init(LITE_HMAC_CTX *ctx, const void *key,
+			unsigned int len);
+const uint8_t *DCRYPTO_HMAC_final(LITE_HMAC_CTX *ctx);
 
 /*
  * BIGNUM utility methods.
@@ -137,7 +128,6 @@ int DCRYPTO_rsa_key_compute(struct BIGNUM *N, struct BIGNUM *d,
 /*
  *  EC.
  */
-int DCRYPTO_p256_valid_point(const p256_int *x, const p256_int *y);
 int DCRYPTO_p256_base_point_mul(p256_int *out_x, p256_int *out_y,
 				const p256_int *n);
 int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
@@ -145,12 +135,6 @@ int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
 			const p256_int *in_y);
 int DCRYPTO_p256_key_from_bytes(p256_int *x, p256_int *y, p256_int *d,
 				const uint8_t key_bytes[P256_NBYTES]);
-
-void DCRYPTO_p256_ecdsa_sign(const p256_int *d, const p256_int *digest,
-			p256_int *r, p256_int *s);
-int DCRYPTO_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
-			const p256_int *digest, const p256_int *r,
-			const p256_int *s);
 /* P256 based integration encryption (DH+AES128+SHA256). */
 /* Authenticated data may be provided, where the first auth_data_len
  * bytes of in will be authenticated but not encrypted. */

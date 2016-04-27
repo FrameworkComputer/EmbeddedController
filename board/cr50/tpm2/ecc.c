@@ -10,7 +10,11 @@
 #include "TPMB.h"
 
 #include "trng.h"
+#include "util.h"
 #include "dcrypto.h"
+
+#include "cryptoc/p256.h"
+#include "cryptoc/p256_ecdsa.h"
 
 static void reverse_tpm2b(TPM2B *b)
 {
@@ -42,8 +46,8 @@ BOOL _cpri__EccIsPointOnCurve(TPM_ECC_CURVE curve_id, TPMS_ECC_POINT *q)
 		reverse_tpm2b(&q->x.b);
 		reverse_tpm2b(&q->y.b);
 
-		result = DCRYPTO_p256_valid_point((p256_int *) q->x.b.buffer,
-						(p256_int *) q->y.b.buffer);
+		result = p256_is_valid_point((p256_int *) q->x.b.buffer,
+					(p256_int *) q->y.b.buffer);
 
 		reverse_tpm2b(&q->x.b);
 		reverse_tpm2b(&q->y.b);
@@ -198,10 +202,10 @@ CRYPT_RESULT _cpri__SignEcc(
 
 		reverse_tpm2b(&d->b);
 
-		DCRYPTO_p256_ecdsa_sign((p256_int *) d->b.buffer,
-					&p256_digest,
-					(p256_int *) r->b.buffer,
-					(p256_int *) s->b.buffer);
+		p256_ecdsa_sign((p256_int *) d->b.buffer,
+				&p256_digest,
+				(p256_int *) r->b.buffer,
+				(p256_int *) s->b.buffer);
 		reverse_tpm2b(&d->b);
 
 		r->b.size = sizeof(p256_int);
@@ -242,7 +246,7 @@ CRYPT_RESULT _cpri__ValidateSignatureEcc(
 		reverse_tpm2b(&r->b);
 		reverse_tpm2b(&s->b);
 
-		result = DCRYPTO_p256_ecdsa_verify(
+		result = p256_ecdsa_verify(
 			(p256_int *) q->x.b.buffer,
 			(p256_int *) q->y.b.buffer,
 			&p256_digest,

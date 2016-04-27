@@ -80,8 +80,6 @@
 
 /* Include crypto stuff, both software and hardware. */
 #define CONFIG_DCRYPTO
-#define CONFIG_SHA1
-#define CONFIG_SHA256
 
 #ifndef __ASSEMBLER__
 

@@ -7,10 +7,12 @@
 #include "dcrypto.h"
 #include "internal.h"
 
+#include "cryptoc/sha256.h"
+
 static int hkdf_extract(uint8_t *PRK, const uint8_t *salt, size_t salt_len,
 			const uint8_t *IKM, size_t IKM_len)
 {
-	struct HMAC_CTX ctx;
+	LITE_HMAC_CTX ctx;
 
 	if (PRK == NULL)
 		return 0;
@@ -19,9 +21,9 @@ static int hkdf_extract(uint8_t *PRK, const uint8_t *salt, size_t salt_len,
 	if (IKM == NULL && IKM_len > 0)
 		return 0;
 
-	dcrypto_HMAC_SHA256_init(&ctx, salt, salt_len);
-	dcrypto_HMAC_update(&ctx, IKM, IKM_len);
-	memcpy(PRK, dcrypto_HMAC_final(&ctx), SHA256_DIGEST_BYTES);
+	DCRYPTO_HMAC_SHA256_init(&ctx, salt, salt_len);
+	HASH_update(&ctx.hash, IKM, IKM_len);
+	memcpy(PRK, DCRYPTO_HMAC_final(&ctx), SHA256_DIGEST_SIZE);
 	return 1;
 }
 
@@ -31,8 +33,8 @@ static int hkdf_expand(uint8_t *OKM, size_t OKM_len, const uint8_t *PRK,
 	uint8_t count = 1;
 	const uint8_t *T = OKM;
 	size_t T_len = 0;
-	uint32_t num_blocks = (OKM_len / SHA256_DIGEST_BYTES) +
-		(OKM_len % SHA256_DIGEST_BYTES ? 1 : 0);
+	uint32_t num_blocks = (OKM_len / SHA256_DIGEST_SIZE) +
+		(OKM_len % SHA256_DIGEST_SIZE ? 1 : 0);
 
 	if (OKM == NULL || OKM_len == 0)
 		return 0;
@@ -44,17 +46,18 @@ static int hkdf_expand(uint8_t *OKM, size_t OKM_len, const uint8_t *PRK,
 		return 0;
 
 	while (OKM_len > 0) {
-		struct HMAC_CTX ctx;
-		const size_t block_size = MIN(OKM_len, SHA256_DIGEST_BYTES);
+		LITE_HMAC_CTX ctx;
+		const size_t block_size = OKM_len < SHA256_DIGEST_SIZE ?
+			OKM_len : SHA256_DIGEST_SIZE;
 
-		dcrypto_HMAC_SHA256_init(&ctx, PRK, SHA256_DIGEST_BYTES);
-		dcrypto_HMAC_update(&ctx, T, T_len);
-		dcrypto_HMAC_update(&ctx, info, info_len);
-		dcrypto_HMAC_update(&ctx, &count, sizeof(count));
-		memcpy(OKM, dcrypto_HMAC_final(&ctx), block_size);
+		DCRYPTO_HMAC_SHA256_init(&ctx, PRK, SHA256_DIGEST_SIZE);
+		HASH_update(&ctx.hash, T, T_len);
+		HASH_update(&ctx.hash, info, info_len);
+		HASH_update(&ctx.hash, &count, sizeof(count));
+		memcpy(OKM, DCRYPTO_HMAC_final(&ctx), block_size);
 
 		T += T_len;
-		T_len = SHA256_DIGEST_BYTES;
+		T_len = SHA256_DIGEST_SIZE;
 		count += 1;
 		OKM += block_size;
 		OKM_len -= block_size;
@@ -68,7 +71,7 @@ int DCRYPTO_hkdf(uint8_t *OKM, size_t OKM_len,
 		const uint8_t *info, size_t info_len)
 {
 	int result;
-	uint8_t PRK[SHA256_DIGEST_BYTES];
+	uint8_t PRK[SHA256_DIGEST_SIZE];
 
 	if (!hkdf_extract(PRK, salt, salt_len, IKM, IKM_len))
 		return 0;

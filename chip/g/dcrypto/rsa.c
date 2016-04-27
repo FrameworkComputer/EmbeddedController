@@ -11,11 +11,14 @@
 
 #include <assert.h>
 
+#include "cryptoc/sha.h"
+#include "cryptoc/sha256.h"
+
 static void MGF1_xor(uint8_t *dst, uint32_t dst_len,
 		const uint8_t *seed, uint32_t seed_len,
 		enum hashing_mode hashing)
 {
-	struct HASH_CTX ctx;
+	HASH_CTX ctx;
 	struct {
 		uint8_t b3;
 		uint8_t b2;
@@ -23,8 +26,8 @@ static void MGF1_xor(uint8_t *dst, uint32_t dst_len,
 		uint8_t b0;
 	} cnt;
 	const uint8_t *digest;
-	const size_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const size_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 
 	cnt.b0 = cnt.b1 = cnt.b2 = cnt.b3 = 0;
 	while (dst_len) {
@@ -35,9 +38,9 @@ static void MGF1_xor(uint8_t *dst, uint32_t dst_len,
 		else
 			DCRYPTO_SHA256_init(&ctx, 0);
 
-		DCRYPTO_HASH_update(&ctx, seed, seed_len);
-		DCRYPTO_HASH_update(&ctx, (uint8_t *) &cnt, sizeof(cnt));
-		digest = DCRYPTO_HASH_final(&ctx);
+		HASH_update(&ctx, seed, seed_len);
+		HASH_update(&ctx, (uint8_t *) &cnt, sizeof(cnt));
+		digest = HASH_final(&ctx);
 		for (i = 0; i < dst_len && i < hash_size; ++i)
 			*dst++ ^= *digest++;
 		dst_len -= i;
@@ -62,8 +65,8 @@ static int oaep_pad(uint8_t *output, uint32_t output_len,
 		enum hashing_mode hashing, const char *label)
 {
 	int i;
-	const size_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const size_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 	uint8_t *const seed = output + 1;
 	uint8_t *const phash = seed + hash_size;
 	uint8_t *const PS = phash + hash_size;
@@ -92,8 +95,8 @@ static int oaep_pad(uint8_t *output, uint32_t output_len,
 	else
 		DCRYPTO_SHA256_init(&ctx, 0);
 
-	DCRYPTO_HASH_update(&ctx, label, label ? strlen(label) + 1 : 0);
-	memcpy(phash, DCRYPTO_HASH_final(&ctx), hash_size);
+	HASH_update(&ctx, label, label ? strlen(label) + 1 : 0);
+	memcpy(phash, HASH_final(&ctx), hash_size);
 	*one = 1;
 	memcpy(one + 1, msg, msg_len);
 	MGF1_xor(phash, hash_size + 1 + max_msg_len,
@@ -109,8 +112,8 @@ static int check_oaep_pad(uint8_t *out, uint32_t *out_len,
 			uint8_t *padded, uint32_t padded_len,
 			enum hashing_mode hashing, const char *label)
 {
-	const size_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const size_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 	uint8_t *seed = padded + 1;
 	uint8_t *phash = seed + hash_size;
 	uint8_t *PS = phash + hash_size;
@@ -132,9 +135,9 @@ static int check_oaep_pad(uint8_t *out, uint32_t *out_len,
 		DCRYPTO_SHA1_init(&ctx, 0);
 	else
 		DCRYPTO_SHA256_init(&ctx, 0);
-	DCRYPTO_HASH_update(&ctx, label, label ? strlen(label) + 1 : 0);
+	HASH_update(&ctx, label, label ? strlen(label) + 1 : 0);
 
-	bad = memcmp(phash, DCRYPTO_HASH_final(&ctx), hash_size);
+	bad = memcmp(phash, HASH_final(&ctx), hash_size);
 	bad |= padded[0];
 
 	for (i = PS - padded; i <  padded_len; i++) {
@@ -239,8 +242,8 @@ static int pkcs1_type1_pad(uint8_t *padded, uint32_t padded_len,
 		: &SHA256_DER[0];
 	const uint32_t der_size = (hashing == HASH_SHA1) ? sizeof(SHA1_DER)
 		: sizeof(SHA256_DER);
-	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 	uint32_t ps_len;
 
 	if (padded_len < RSA_PKCS1_PADDING_SIZE + der_size)
@@ -273,8 +276,8 @@ static int check_pkcs1_type1_pad(const uint8_t *msg, uint32_t msg_len,
 		: &SHA256_DER[0];
 	const uint32_t der_size = (hashing == HASH_SHA1) ? sizeof(SHA1_DER)
 		: sizeof(SHA256_DER);
-	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 	uint32_t ps_len;
 
 	if (msg_len != hash_size)
@@ -303,8 +306,8 @@ static int pkcs1_pss_pad(uint8_t *padded, uint32_t padded_len,
 			const uint8_t *in, uint32_t in_len,
 			enum hashing_mode hashing)
 {
-	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 	const uint32_t salt_len = MIN(padded_len - hash_size - 2, hash_size);
 	uint32_t db_len;
 	uint32_t ps_len;
@@ -323,14 +326,14 @@ static int pkcs1_pss_pad(uint8_t *padded, uint32_t padded_len,
 
 	/* Pilfer bits of output for temporary use. */
 	memset(padded, 0, 8);
-	DCRYPTO_HASH_update(&ctx, padded, 8);
-	DCRYPTO_HASH_update(&ctx, in, in_len);
+	HASH_update(&ctx, padded, 8);
+	HASH_update(&ctx, in, in_len);
 	/* Pilfer bits of output for temporary use. */
 	rand_bytes(padded, salt_len);
-	DCRYPTO_HASH_update(&ctx, padded, salt_len);
+	HASH_update(&ctx, padded, salt_len);
 
 	/* Output hash. */
-	memcpy(padded + db_len, DCRYPTO_HASH_final(&ctx), hash_size);
+	memcpy(padded + db_len, HASH_final(&ctx), hash_size);
 
 	/* Prepare DB. */
 	ps_len = db_len - salt_len - 1;
@@ -351,13 +354,13 @@ static int check_pkcs1_pss_pad(const uint8_t *in, uint32_t in_len,
 			uint8_t *padded, uint32_t padded_len,
 			enum hashing_mode hashing)
 {
-	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA1_DIGEST_BYTES
-		: SHA256_DIGEST_BYTES;
+	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
+		: SHA256_DIGEST_SIZE;
 	const uint8_t zeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 	uint32_t db_len;
 	uint32_t max_ps_len;
 	uint32_t salt_len;
-	struct HASH_CTX ctx;
+	HASH_CTX ctx;
 	int bad = 0;
 	int i;
 
@@ -392,10 +395,10 @@ static int check_pkcs1_pss_pad(const uint8_t *in, uint32_t in_len,
 		DCRYPTO_SHA1_init(&ctx, 0);
 	else
 		DCRYPTO_SHA256_init(&ctx, 0);
-	DCRYPTO_HASH_update(&ctx, zeros, sizeof(zeros));
-	DCRYPTO_HASH_update(&ctx, in, in_len);
-	DCRYPTO_HASH_update(&ctx, padded + db_len - salt_len, salt_len);
-	bad |= memcmp(padded + db_len, DCRYPTO_HASH_final(&ctx), hash_size);
+	HASH_update(&ctx, zeros, sizeof(zeros));
+	HASH_update(&ctx, in, in_len);
+	HASH_update(&ctx, padded + db_len - salt_len, salt_len);
+	bad |= memcmp(padded + db_len, HASH_final(&ctx), hash_size);
 	return !bad;
 }
 

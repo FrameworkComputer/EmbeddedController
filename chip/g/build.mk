@@ -17,6 +17,16 @@ ver_params := $(shell echo "$(ver_defs) $(bld_defs)" | $(CPP) $(CPPFLAGS) -P \
 ver_str := $(shell printf "%s%s %d_%d" $(ver_params))
 CPPFLAGS+= -DGC_REVISION="$(ver_str)"
 
+ifeq ($(CONFIG_DCRYPTO),y)
+INCLUDE_ROOT := $(abspath ./include)
+CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
+CPPFLAGS += -I$(abspath .)
+CPPFLAGS += -I$(abspath ./builtin)
+CPPFLAGS += -I$(abspath ./chip/$(CHIP))
+CPPFLAGS += -I$(INCLUDE_ROOT)
+CPPFLAGS += -I$(CRYPTOCLIB)/include
+endif
+
 # Required chip modules
 chip-y=clock.o gpio.o hwtimer.o jtag.o system.o
 ifeq ($(CONFIG_POLLING_UART),y)
@@ -32,7 +42,6 @@ chip-$(CONFIG_DCRYPTO)+= dcrypto/hmac.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/hkdf.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/p256.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/p256_ec.o
-chip-$(CONFIG_DCRYPTO)+= dcrypto/p256_ecdsa.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/p256_ecies.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/rsa.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/sha1.o
@@ -96,3 +105,25 @@ $(out)/RW/ec.RW_B.flat: $(out)/util/signer
 endif
 
 CR50_RO_KEY ?= rom-testkey-A.pem
+
+# This file is included twice by the Makefile, once to determine the CHIP info
+# # and then again after defining all the CONFIG_ and HAS_TASK variables. We use
+# # a guard so that recipe definitions and variable extensions only happen the
+# # second time.
+ifeq ($(CHIP_MK_INCLUDED_ONCE),)
+CHIP_MK_INCLUDED_ONCE=1
+else
+
+ifeq ($(CONFIG_DCRYPTO),y)
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += -L$(out)/cryptoc \
+						-lcryptoc
+$(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/cryptoc/libcryptoc.a
+
+# Force the external build each time, so it can look for changed sources.
+.PHONY: $(out)/cryptoc/libcryptoc.a
+$(out)/cryptoc/libcryptoc.a:
+	$(MAKE) obj=$(realpath $(out))/cryptoc SUPPORT_UNALIGNED=1 \
+		-C $(CRYPTOCLIB)
+endif   # end CONFIG_DCRYPTO
+
+endif   # CHIP_MK_INCLUDED_ONCE is nonempty

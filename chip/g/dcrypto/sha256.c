@@ -8,7 +8,10 @@
 #include "registers.h"
 #include "util.h"
 
-static const uint8_t *dcrypto_sha256_final(SHA256_CTX *ctx);
+#include "cryptoc/sha256.h"
+
+static void dcrypto_sha256_init(LITE_SHA256_CTX *ctx);
+static const uint8_t *dcrypto_sha256_final(LITE_SHA256_CTX *ctx);
 
 #ifdef SECTION_IS_RO
 /* RO is single threaded. */
@@ -24,46 +27,6 @@ static inline void dcrypto_release_sha_hw(void)
 #else
 #include "task.h"
 static struct mutex hw_busy_mutex;
-
-static void sha256_init(SHA256_CTX *ctx);
-static void sha256_update(SHA256_CTX *ctx, const uint8_t *data, uint32_t len);
-static const uint8_t *sha256_final(SHA256_CTX *ctx);
-static const uint8_t *sha256_hash(const uint8_t *data, uint32_t len,
-				uint8_t *digest);
-
-static const struct HASH_VTAB SW_SHA256_VTAB = {
-	sha256_update,
-	sha256_final,
-	sha256_hash,
-	SHA256_DIGEST_BYTES
-};
-
-static void sha256_init(SHA256_CTX *ctx)
-{
-	ctx->vtab = &SW_SHA256_VTAB;
-	SHA256_init(&ctx->u.sw_sha256);
-}
-
-static void sha256_update(SHA256_CTX *ctx, const uint8_t *data, uint32_t len)
-{
-	SHA256_update(&ctx->u.sw_sha256, data, len);
-}
-
-static const uint8_t *sha256_final(SHA256_CTX *ctx)
-{
-	return SHA256_final(&ctx->u.sw_sha256);
-}
-
-static const uint8_t *sha256_hash(const uint8_t *data, uint32_t len,
-				uint8_t *digest)
-{
-	SHA256_CTX ctx;
-
-	sha256_init(&ctx);
-	sha256_update(&ctx, data, len);
-	memcpy(digest, sha256_final(&ctx), SHA256_DIGEST_BYTES);
-	return digest;
-}
 
 static int hw_busy;
 
@@ -94,8 +57,8 @@ void dcrypto_sha_wait(enum sha_mode mode, uint32_t *digest)
 {
 	int i;
 	const int digest_len = (mode == SHA1_MODE) ?
-		SHA1_DIGEST_BYTES :
-		SHA256_DIGEST_BYTES;
+		SHA_DIGEST_SIZE :
+		SHA256_DIGEST_SIZE;
 
 	/* Stop LIVESTREAM mode. */
 	GWRITE_FIELD(KEYMGR, SHA_TRIG, TRIG_STOP, 1);
@@ -110,11 +73,12 @@ void dcrypto_sha_wait(enum sha_mode mode, uint32_t *digest)
 }
 
 /* Hardware SHA implementation. */
-static const struct HASH_VTAB HW_SHA256_VTAB = {
+static const HASH_VTAB HW_SHA256_VTAB = {
+	dcrypto_sha256_init,
 	dcrypto_sha_update,
 	dcrypto_sha256_final,
 	DCRYPTO_SHA256_hash,
-	SHA256_DIGEST_BYTES
+	SHA256_DIGEST_SIZE
 };
 
 void dcrypto_sha_hash(enum sha_mode mode, const uint8_t *data, uint32_t n,
@@ -126,7 +90,7 @@ void dcrypto_sha_hash(enum sha_mode mode, const uint8_t *data, uint32_t n,
 }
 
 void dcrypto_sha_update(struct HASH_CTX *unused,
-			const uint8_t *data, uint32_t n)
+			const void *data, uint32_t n)
 {
 	const uint8_t *bp = (const uint8_t *) data;
 	const uint32_t *wp;
@@ -180,25 +144,30 @@ void dcrypto_sha_init(enum sha_mode mode)
 	GWRITE_FIELD(KEYMGR, SHA_TRIG, TRIG_GO, 1);
 }
 
-void DCRYPTO_SHA256_init(SHA256_CTX *ctx, uint32_t sw_required)
+static void dcrypto_sha256_init(LITE_SHA256_CTX *ctx)
 {
-	if (!sw_required && dcrypto_grab_sha_hw()) {
-		ctx->vtab = &HW_SHA256_VTAB;
-		dcrypto_sha_init(SHA256_MODE);
-	}
+	ctx->f = &HW_SHA256_VTAB;
+	dcrypto_sha_init(SHA256_MODE);
+}
+
+/* Requires dcrypto_grab_sha_hw() to be called first. */
+void DCRYPTO_SHA256_init(LITE_SHA256_CTX *ctx, uint32_t sw_required)
+{
+	if (!sw_required && dcrypto_grab_sha_hw())
+		dcrypto_sha256_init(ctx);
 #ifndef SECTION_IS_RO
 	else
-		sha256_init(ctx);
+		SHA256_init(ctx);
 #endif
 }
 
-static const uint8_t *dcrypto_sha256_final(SHA256_CTX *ctx)
+static const uint8_t *dcrypto_sha256_final(LITE_SHA256_CTX *ctx)
 {
-	dcrypto_sha_wait(SHA256_MODE, (uint32_t *) ctx->u.buf);
-	return ctx->u.buf;
+	dcrypto_sha_wait(SHA256_MODE, (uint32_t *) ctx->buf);
+	return ctx->buf;
 }
 
-const uint8_t *DCRYPTO_SHA256_hash(const uint8_t *data, uint32_t n,
+const uint8_t *DCRYPTO_SHA256_hash(const void *data, uint32_t n,
 				uint8_t *digest)
 {
 	if (dcrypto_grab_sha_hw())
@@ -206,7 +175,7 @@ const uint8_t *DCRYPTO_SHA256_hash(const uint8_t *data, uint32_t n,
 		dcrypto_sha_hash(SHA256_MODE, data, n, digest);
 #ifndef SECTION_IS_RO
 	else
-		sha256_hash(data, n, digest);
+		SHA256_hash(data, n, digest);
 #endif
 	return digest;
 }
