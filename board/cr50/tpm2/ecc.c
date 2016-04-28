@@ -75,7 +75,9 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 			return CRYPT_PARAMETER;
 		if (n1 != NULL && !check_p256_param(n1))
 			return CRYPT_PARAMETER;
-		if (in != NULL && !check_p256_point(in))
+		if (in != NULL &&
+			(!check_p256_point(in) ||
+				!_cpri__EccIsPointOnCurve(curve_id, in)))
 			return CRYPT_POINT;
 		if (n2 != NULL && !check_p256_param(n2))
 			return CRYPT_PARAMETER;
