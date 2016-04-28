@@ -440,6 +440,8 @@ static void charge_manager_get_best_charge_port(int *new_port,
  */
 static void charge_manager_refresh(void)
 {
+	/* Always initialize charge port on first pass */
+	static int active_charge_port_initialized;
 	int new_supplier, new_port;
 	int new_charge_current, new_charge_current_uncapped;
 	int new_charge_voltage, i;
@@ -458,9 +460,10 @@ static void charge_manager_refresh(void)
 		 * the port, for example, if the port has become a charge
 		 * source.
 		 */
-		if ((new_port == charge_port &&
-		    new_supplier == charge_supplier) ||
-		    board_set_active_charge_port(new_port) == EC_SUCCESS)
+		if ((active_charge_port_initialized &&
+		     new_port == charge_port &&
+		     new_supplier == charge_supplier) ||
+		     board_set_active_charge_port(new_port) == EC_SUCCESS)
 			break;
 
 		/* 'Dont charge' request must be accepted */
@@ -473,6 +476,8 @@ static void charge_manager_refresh(void)
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
 			available_charge[i][new_port].current = 0;
 	}
+
+	active_charge_port_initialized = 1;
 
 	/*
 	 * Clear override if it wasn't selected as the 'best' port -- it means
