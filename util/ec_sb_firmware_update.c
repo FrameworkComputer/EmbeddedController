@@ -769,9 +769,26 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	if (val & EC_BATT_FLAG_AC_PRESENT) {
+	rv = get_status(&fw_update.status);
+	if (rv) {
+		fw_update.rv = -1;
+		log_msg(&fw_update, S1_READ_INFO, "Interface Error");
+		return S10_TERMINAL;
+	}
+
+	if (fw_update.status.fw_update_mode) {
+		/*
+		 * Previous battery firmware update was interrupted,
+		 * and we may not detect the presence of AC correctly.
+		 * Therefore, lie about our AC status.
+		 */
 		fw_update.flags |= F_AC_PRESENT;
-		printf("AC_PRESENT\n");
+		printf("Assuming AC_PRESENT due to interrupted FW update\n");
+	} else {
+		if (val & EC_BATT_FLAG_AC_PRESENT) {
+			fw_update.flags |= F_AC_PRESENT;
+			printf("AC_PRESENT\n");
+		}
 	}
 	rv = ec_readmem(EC_MEMMAP_BATT_LFCC, sizeof(val), &val);
 	if (rv <= 0) {
