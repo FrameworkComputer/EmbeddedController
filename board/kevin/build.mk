@@ -11,5 +11,5 @@ CHIP:=npcx
 CHIP_VARIANT:=npcx5m5g
 
 board-y=battery.o
-board-y+=board.o
+board-y+=board.o led.o
 board-y+=usb_pd_policy.o

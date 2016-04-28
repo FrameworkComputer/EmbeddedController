@@ -14,6 +14,7 @@
 #define CONFIG_HOSTCMD_SPS
 #define CONFIG_POWER_COMMON
 #define CONFIG_PWM
+#define CONFIG_LED_COMMON
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
@@ -111,10 +112,10 @@ enum adc_channel {
 };
 
 enum pwm_channel {
-	PWM_CH_FULL_LED,
+	PWM_CH_LED_GREEN,
 	PWM_CH_BKLIGHT,
-	PWM_CH_CHG_LED,
-	PWM_CH_PWR_LED,
+	PWM_CH_LED_RED,
+	PWM_CH_LED_BLUE,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
