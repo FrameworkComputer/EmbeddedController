@@ -4,6 +4,7 @@
  */
 
 #include "console.h"
+#include "gpio.h"
 #include "rdd.h"
 #include "registers.h"
 #include "usb_api.h"
@@ -22,11 +23,11 @@ static void usart_tx_disconnect(void)
 
 void rdd_attached(void)
 {
+	/* Indicate case-closed debug mode (active low) */
+	gpio_set_level(GPIO_CCD_MODE_L, 0);
+
 	/* Select the CCD PHY */
 	usb_select_phy(USB_SEL_PHY1);
-
-	/* Connect to selected phy */
-	usb_init();
 }
 
 void rdd_detached(void)
@@ -34,11 +35,11 @@ void rdd_detached(void)
 	/* Disconnect from AP and EC UART TX */
 	usart_tx_disconnect();
 
+	/* Done with case-closed debug mode */
+	gpio_set_level(GPIO_CCD_MODE_L, 1);
+
 	/* Select the AP PHY */
 	usb_select_phy(USB_SEL_PHY0);
-
-	/* Connect to selected phy */
-	usb_init();
 }
 
 static int command_uart(int argc, char **argv)

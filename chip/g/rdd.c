@@ -5,7 +5,6 @@
 
 #include "clock.h"
 #include "console.h"
-#include "gpio.h"
 #include "hooks.h"
 #include "rdd.h"
 #include "registers.h"
@@ -49,11 +48,9 @@ void rdd_init(void)
 
 	debug_detect = GREAD(RDD, PROG_DEBUG_STATE_MAP);
 
-	/* If cable is attached, detect when it is disconnected */
-	if (debug_cable_is_attached()) {
-		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ~debug_detect);
-		rdd_attached();
-	}
+	/* Invoke the interrupt handler manually so that the board-specific
+	 * callbacks can process the initial state. */
+	rdd_interrupt();
 
 	/* Enable RDD interrupts */
 	task_enable_irq(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT);

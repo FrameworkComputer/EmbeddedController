@@ -320,6 +320,7 @@ void usb_select_phy(uint32_t phy)
 	which_phy = phy;
 	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG,
 				   (USB_PHY_ACTIVE | which_phy));
+	CPRINTS("USB PHY %c", which_phy == USB_SEL_PHY0 ? 'A' : 'B');
 }
 
 uint32_t usb_get_phy(void)
@@ -1244,7 +1245,6 @@ void usb_init(void)
 
 	/* Select the correct PHY */
 	usb_select_phy(which_phy);
-	gpio_set_level(GPIO_CCD_MODE_L, !(which_phy == USB_SEL_PHY1));
 
 	/* Full-Speed Serial PHY */
 	GR_USB_GUSBCFG = GUSBCFG_PHYSEL_FS | GUSBCFG_FSINTF_6PIN
