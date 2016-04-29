@@ -29,7 +29,7 @@ GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_OUT_LOW)
 GPIO(AP_WP_L,         PIN(0, 3), GPIO_INPUT)
 
 /* Pull this low to reset the AP. (We reset the EC with the RBOX.) */
-GPIO(SYS_RST_L_OUT,   PIN(0, 4), GPIO_OUT_HIGH)
+GPIO(SYS_RST_L_OUT,   PIN(0, 4), GPIO_INPUT)
 
 /* Indicate to EC when CCD is enabled. EC can pull this down too, to tell us if
  * it decided instead. The pullup is on the EC's side. */
