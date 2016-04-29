@@ -72,15 +72,7 @@
 #define SHI_CMD_RX_TIMEOUT_US 8192
 
 /* Timeout for glitch case. Make sure it will exceed 8 SPI clocks */
-#define SHI_GLITCH_TIMEOUT_US 10
-
-/*
- * Max data size for a version 3 request/response packet.  This is big enough
- * to handle a request/response header, flash write offset/size, and 512 bytes
- * of flash data.
- */
-#define SHI_MAX_REQUEST_SIZE 0x220
-#define SHI_MAX_RESPONSE_SIZE 0x220
+#define SHI_GLITCH_TIMEOUT_US 500
 
 /*
  * The AP blindly clocks back bytes over the SPI interface looking for a
@@ -107,6 +99,31 @@
  */
 #define SHI_PROTO3_OVERHEAD (EC_SPI_PAST_END_LENGTH + EC_SPI_FRAME_START_LENGTH)
 
+
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+/* The boundary which SHI will output invalid data on MISO. */
+#define SHI_BYPASS_BOUNDARY 256
+/* Increase FRAME_START_LENGTH in case shi outputs invalid FRAME_START byte */
+#undef  EC_SPI_FRAME_START_LENGTH
+#define EC_SPI_FRAME_START_LENGTH 2
+#endif
+
+/*
+ * Max data size for a version 3 request/response packet.  This is big enough
+ * to handle a request/response header, flash write offset/size, and 512 bytes
+ * of flash data.
+ */
+#define SHI_MAX_REQUEST_SIZE 0x220
+
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+/* Make sure SHI_MAX_RESPONSE_SIZE won't exceed 256 bytes */
+#define SHI_MAX_RESPONSE_SIZE (160 + EC_SPI_PAST_END_LENGTH + \
+		EC_SPI_FRAME_START_LENGTH + sizeof(struct ec_host_response))
+BUILD_ASSERT(SHI_MAX_RESPONSE_SIZE <= SHI_BYPASS_BOUNDARY);
+#else
+#define SHI_MAX_RESPONSE_SIZE 0x220
+#endif
+
 /*
  * Our input and output msg buffers. These must be large enough for our largest
  * message, including protocol overhead, and must be 32-bit aligned.
@@ -122,17 +139,23 @@ enum shi_state {
 	SHI_STATE_DISABLED = 0,
 	/* Ready to receive next request */
 	SHI_STATE_READY_TO_RECV,
-	/* Complete transaction but need to initialize */
-	SHI_STATE_NOT_READY,
 	/* Receiving request */
 	SHI_STATE_RECEIVING,
 	/* Processing request */
 	SHI_STATE_PROCESSING,
+	/* Canceling response since CS deasserted and output NOT_READY byte */
+	SHI_STATE_CNL_RESP_NOT_RDY,
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+	/* Keep output buffer as PROCESSING byte until reaching 256B boundary */
+	SHI_STATE_WAIT_ALIGNMENT,
+#endif
 	/* Sending response */
 	SHI_STATE_SENDING,
-	/* State machine mismatch, timeout, or protocol we can't handle. */
-	SHI_STATE_ERROR,
-} state;
+	/* Received data is valid. */
+	SHI_STATE_BAD_RECEIVED_DATA,
+};
+
+volatile enum shi_state state;
 
 /* SHI bus parameters */
 struct shi_bus_parameters {
@@ -146,14 +169,17 @@ struct shi_bus_parameters {
 	uint16_t sz_response;     /* response bytes need to receive   */
 	timestamp_t rx_deadline;  /* deadline of receiving            */
 	uint8_t  pre_ibufstat;    /* Previous IBUFSTAT value          */
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+	uint16_t bytes_in_256b;   /* Sent bytes in 256 bytes boundary */
+#endif
 } shi_params;
 
 /* Forward declaraction */
 static void shi_reset_prepare(void);
-static void shi_error(int need_reset);
+static void shi_bad_received_data(void);
 static void shi_fill_out_status(uint8_t status);
 static void shi_write_half_outbuf(void);
-static void shi_write_outbuf_wait(uint16_t szbytes);
+static void shi_write_first_pkg_outbuf(uint16_t szbytes);
 static int shi_read_inbuf_wait(uint16_t szbytes);
 
 /*****************************************************************************/
@@ -180,28 +206,47 @@ static void shi_send_response_packet(struct host_packet *pkt)
 	 */
 	if (state == SHI_STATE_PROCESSING) {
 		/*
+		* Disable interrupts. This routine is not called from interrupt
+		* context and buffer underrun will likely occur if it is
+		* preempted after writing its initial reply byte.
+		*/
+		interrupt_disable();
+		/*
 		 * Disable SHI interrupt until we have prepared
 		 * the first package to output
 		 */
 		task_disable_irq(NPCX_IRQ_SHI);
-		/* Transmit the reply */
-		state = SHI_STATE_SENDING;
-		DEBUG_CPRINTF("SND-");
+
 		/* Start to fill output buffer with msg buffer */
-		shi_write_outbuf_wait(shi_params.sz_response);
+		shi_write_first_pkg_outbuf(shi_params.sz_response);
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+		/*
+		 * If response package is over 256B boundary,
+		 * keep sending PROCESSING byte
+		 */
+		if (state != SHI_STATE_WAIT_ALIGNMENT) {
+#endif
+			/* Transmit the reply */
+			state = SHI_STATE_SENDING;
+			DEBUG_CPRINTF("SND-");
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+		}
+#endif
+
 		/* Enable SHI interrupt */
 		task_enable_irq(NPCX_IRQ_SHI);
+		interrupt_enable();
 	}
 	/*
 	 * If we're not processing, then the AP has already terminated the
 	 * transaction, and won't be listening for a response.
+	 * Reset state machine for next transaction.
 	 */
-	else {
-		/* Reset SHI and prepare to next transaction again */
+	else if (state == SHI_STATE_CNL_RESP_NOT_RDY) {
 		shi_reset_prepare();
 		DEBUG_CPRINTF("END\n");
-		return;
-	}
+	} else
+		CPRINTS("Unexpected state %d in response handler\n", state);
 }
 
 void shi_handle_host_package(void)
@@ -214,12 +259,13 @@ void shi_handle_host_package(void)
 	else {
 		uint16_t remain_bytes = shi_params.sz_request
 					- shi_params.sz_received;
+
+		/* Read remaining bytes from input buffer directly */
+		if (!shi_read_inbuf_wait(remain_bytes))
+			return shi_bad_received_data();
 		/* Move to processing state immediately */
 		state = SHI_STATE_PROCESSING;
 		DEBUG_CPRINTF("PRC-");
-		/* Read remaining bytes from input buffer directly */
-		if (!shi_read_inbuf_wait(remain_bytes))
-			return shi_error(1);
 	}
 	/* Fill output buffer to indicate we`re processing request */
 	shi_fill_out_status(EC_SPI_PROCESSING);
@@ -232,9 +278,16 @@ void shi_handle_host_package(void)
 	shi_packet.request_max = sizeof(in_msg);
 	shi_packet.request_size = shi_params.sz_request;
 
+
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+	/* Move FRAME_START to second byte */
+	out_msg[0] = EC_SPI_PROCESSING;
+	out_msg[1] = EC_SPI_FRAME_START;
+#else
 	/* Put FRAME_START in first byte */
 	out_msg[0] = EC_SPI_FRAME_START;
-	shi_packet.response = out_msg + 1;
+#endif
+	shi_packet.response = out_msg + EC_SPI_FRAME_START_LENGTH;
 
 	/* Reserve space for frame start and trailing past-end byte */
 	shi_packet.response_max = sizeof(out_msg) - SHI_PROTO3_OVERHEAD;
@@ -248,9 +301,20 @@ void shi_handle_host_package(void)
 /* Parse header for version of spi-protocol */
 static void shi_parse_header(void)
 {
+	/* Disable SHI interrupt until we're sure the size of request package.*/
+	task_disable_irq(NPCX_IRQ_SHI);
+
+	/* We're now inside a transaction */
+	state = SHI_STATE_RECEIVING;
+	DEBUG_CPRINTF("RV-");
+
+	/* Setup deadline time for receiving */
+	shi_params.rx_deadline = get_time();
+	shi_params.rx_deadline.val += SHI_CMD_RX_TIMEOUT_US;
+
 	/* Wait for version, command, length bytes */
 	if (!shi_read_inbuf_wait(3))
-		return shi_error(1);
+		return shi_bad_received_data();
 
 	if (in_msg[0] == EC_HOST_REQUEST_VERSION) {
 		/* Protocol version 3 */
@@ -264,20 +328,23 @@ static void shi_parse_header(void)
 
 		/* Wait for the rest of the command header */
 		if (!shi_read_inbuf_wait(sizeof(*r) - 3))
-			return shi_error(1);
+			return shi_bad_received_data();
 
 		/* Check how big the packet should be */
 		pkt_size = host_request_expected_size(r);
 		if (pkt_size == 0 || pkt_size > sizeof(in_msg))
-			return shi_error(0);
+			return shi_bad_received_data();
 
 		/* Computing total bytes need to receive */
 		shi_params.sz_request = pkt_size;
 
+		/* Enable SHI interrupt & handle request package */
+		task_enable_irq(NPCX_IRQ_SHI);
+
 		shi_handle_host_package();
 	} else {
 		/* Invalid version number */
-		return shi_error(0);
+		return shi_bad_received_data();
 	}
 }
 
@@ -288,13 +355,38 @@ static void shi_parse_header(void)
 static void shi_fill_out_status(uint8_t status)
 {
 	uint16_t i;
-	uint16_t offset = SHI_OBUF_VALID_OFFSET;
+	uint16_t offset = NPCX_IBUFSTAT + SHI_OUT_PREAMBLE_LENGTH;
+
+	/* Disable interrupts in case the interfere by the other interrupts */
+	interrupt_disable();
 
 	/* Fill out all output buffer with status byte */
 	for (i = offset; i < SHI_OBUF_FULL_SIZE; i++)
 		NPCX_OBUF(i) = status;
 	for (i = 0; i < offset; i++)
 		NPCX_OBUF(i) = status;
+
+	/* End of critical section */
+	interrupt_enable();
+}
+
+/*
+ * This routine makes sure it's valid transaction or glitch on CS bus.
+ */
+static int shi_is_cs_glitch(void)
+{
+	timestamp_t deadline;
+
+	deadline.val = get_time().val + SHI_GLITCH_TIMEOUT_US;
+	/*
+	 * If input buffer pointer is no changed after timeout, it will
+	 * return true
+	 */
+	while (shi_params.pre_ibufstat == NPCX_IBUFSTAT)
+		if (timestamp_expired(deadline, NULL))
+			return 1;
+	/* valid package */
+	return 0;
 }
 
 /*
@@ -311,16 +403,31 @@ static void shi_write_half_outbuf(void)
 }
 
 /*
- * This routine write SHI output buffer from msg buffer until
- * we have sent a certain number of bytes or output buffer is full
+ * This routine write SHI output buffer from msg buffer over halt of it.
+ * It make sure we have enought time to handle next operations.
  */
-static void shi_write_outbuf_wait(uint16_t szbytes)
+static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 {
 	uint16_t i;
-	static uint16_t offset, size;
-	offset = SHI_OBUF_VALID_OFFSET;
-	shi_params.tx_buf = SHI_OBUF_START_ADDR + offset;
+	uint16_t offset, size;
 
+	offset = SHI_OBUF_VALID_OFFSET;
+
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+	/*
+	 * If response package is across 256 bytes boundary,
+	 * bypass needs to extend PROCESSING bytes after reaching the boundary.
+	 */
+	if (shi_params.bytes_in_256b + offset + szbytes > SHI_BYPASS_BOUNDARY) {
+		state = SHI_STATE_WAIT_ALIGNMENT;
+		/* Set pointer of output buffer to the start address */
+		shi_params.tx_buf = SHI_OBUF_START_ADDR;
+		DEBUG_CPRINTF("WAT-");
+		return;
+	}
+#endif
+
+	shi_params.tx_buf = SHI_OBUF_START_ADDR + offset;
 	/* Fill half output buffer */
 	size = MIN(SHI_OBUF_HALF_SIZE - (offset % SHI_OBUF_HALF_SIZE),
 					szbytes - shi_params.sz_sending);
@@ -353,25 +460,6 @@ static void shi_read_half_inbuf(void)
 }
 
 /*
- * This routine make sure input buffer status register is valid or it will
- * return flase after timeout
- */
-static int shi_check_inbuf_valid(void)
-{
-	timestamp_t deadline = get_time();
-	deadline.val += SHI_GLITCH_TIMEOUT_US;
-	/*
-	 * If input buffer pointer is no changed after timeout, it will
-	 * return false
-	 */
-	while (NPCX_IBUFSTAT == shi_params.pre_ibufstat)
-		if (timestamp_expired(deadline, NULL))
-			return 0;
-	/* valid package */
-	return 1;
-}
-
-/*
  * This routine read SHI input buffer to msg buffer until
  * we have received a certain number of bytes
  */
@@ -394,26 +482,26 @@ static int shi_read_inbuf_wait(uint16_t szbytes)
 	return 1;
 }
 
-/* This routine handles bus error condition */
-static void shi_error(int need_reset)
+/* This routine handles shi recevied unexcepted data */
+static void shi_bad_received_data(void)
 {
 	uint16_t i;
+
 	/* State machine mismatch, timeout, or protocol we can't handle. */
 	shi_fill_out_status(EC_SPI_RX_BAD_DATA);
-	state = SHI_STATE_ERROR;
+	state = SHI_STATE_BAD_RECEIVED_DATA;
 
-	CPRINTS("ERR-[");
+	CPRINTS("BAD-");
 	CPRINTF("in_msg=[");
 	for (i = 0; i < shi_params.sz_received; i++)
 		CPRINTF("%02x ", in_msg[i]);
 	CPRINTF("]\n");
 
 	/*
-	 * If glitch occurred or losing clocks, EVSTAT_EOR/W
-	 * will not generate. We need to reset SHI bus here.
+	 * Enable SHI interrupt again since we disable it
+	 * at the begin of SHI_STATE_RECEIVING state
 	 */
-	if (need_reset)
-		shi_reset_prepare();
+	task_enable_irq(NPCX_IRQ_SHI);
 }
 
 /* This routine handles all interrupts of this module */
@@ -430,27 +518,33 @@ void shi_int_handler(void)
 	 * Host completed or aborted transaction
 	 */
 	if (IS_BIT_SET(stat_reg, NPCX_EVSTAT_EOR)) {
-		/* Already reset in shi_error or not */
-		if (state != SHI_STATE_READY_TO_RECV)
+		/*
+		 * We're not in proper state.
+		 * Mark not ready to abort next transaction
+		 */
+		DEBUG_CPRINTF("CSH-");
+		/*
+		 * If the buffer is still used by the host command.
+		 * Change state machine for response handler.
+		 */
+		if (state == SHI_STATE_PROCESSING) {
 			/*
 			 * Mark not ready to prevent the other
 			 * transaction immediately
 			 */
-			NPCX_OBUF(0) = EC_SPI_NOT_READY;
-		DEBUG_CPRINTF("CSH-");
-		/*
-		 * If the buffer is still used by the host command.
-		 * Change tx buffer to NOT_READY
-		 */
-		if (state == SHI_STATE_PROCESSING) {
-			/*
-			 * Mark state to NOT_READY for waiting host executes
-			 * response function
-			 */
-			state = SHI_STATE_NOT_READY;
-			DEBUG_CPRINTF("WAIT-");
+			shi_fill_out_status(EC_SPI_NOT_READY);
+
+			state = SHI_STATE_CNL_RESP_NOT_RDY;
+			DEBUG_CPRINTF("CNL-");
 			return;
-		}
+		/* Next transaction but we're not ready */
+		} else if (state == SHI_STATE_CNL_RESP_NOT_RDY)
+			return;
+
+		/* Error state for checking*/
+		if (state != SHI_STATE_SENDING)
+			CPRINTS("Unexpected state %d in IBEOR ISR\n", state);
+
 		/* reset SHI and prepare to next transaction again */
 		shi_reset_prepare();
 		DEBUG_CPRINTF("END\n");
@@ -467,16 +561,34 @@ void shi_int_handler(void)
 			shi_read_half_inbuf();
 			return shi_handle_host_package();
 		} else if (state == SHI_STATE_SENDING) {
-			/* Write data from bottom address again */
-			shi_params.tx_buf = SHI_OBUF_START_ADDR;
 			/* Write data from msg buffer to output buffer */
-			return shi_write_half_outbuf();
+			if (shi_params.tx_buf == SHI_OBUF_START_ADDR +
+					SHI_OBUF_FULL_SIZE) {
+				/* Write data from bottom address again */
+				shi_params.tx_buf = SHI_OBUF_START_ADDR;
+				return shi_write_half_outbuf();
+			} else /* ignore it */
+				return;
 		} else if (state == SHI_STATE_PROCESSING)
 			/* Wait for host handles request */
 			return;
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+		else if (state == SHI_STATE_WAIT_ALIGNMENT) {
+			/*
+			 * If pointer of output buffer will reach 256 bytes
+			 * boundary soon, start to fill response data.
+			 */
+			if (shi_params.bytes_in_256b == SHI_BYPASS_BOUNDARY -
+					SHI_OBUF_FULL_SIZE) {
+				state = SHI_STATE_SENDING;
+				DEBUG_CPRINTF("SND-");
+				return shi_write_half_outbuf();
+			}
+		}
+#endif
 		else
 			/* Unexpected status */
-			return shi_error(1);
+			CPRINTS("Unexpected state %d in IBHF ISR\n", state);
 	}
 
 	/*
@@ -484,6 +596,11 @@ void shi_int_handler(void)
 	 * Transaction is processing.
 	 */
 	if (IS_BIT_SET(stat_reg, NPCX_EVSTAT_IBF)) {
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+		/* Record the sent bytes within 256B boundary */
+		shi_params.bytes_in_256b = (shi_params.bytes_in_256b +
+				SHI_OBUF_FULL_SIZE) % SHI_BYPASS_BOUNDARY;
+#endif
 		if (state == SHI_STATE_RECEIVING) {
 			/* read data from input to msg buffer */
 			shi_read_half_inbuf();
@@ -492,13 +609,21 @@ void shi_int_handler(void)
 			return shi_handle_host_package();
 		} else if (state == SHI_STATE_SENDING)
 			/* Write data from msg buffer to output buffer */
-			return shi_write_half_outbuf();
-		else if (state == SHI_STATE_PROCESSING)
+			if (shi_params.tx_buf == SHI_OBUF_START_ADDR +
+					SHI_OBUF_HALF_SIZE)
+				return shi_write_half_outbuf();
+			else /* ignore it */
+				return;
+		else if (state == SHI_STATE_PROCESSING
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+				|| state == SHI_STATE_WAIT_ALIGNMENT
+#endif
+				)
 			/* Wait for host handles request */
 			return;
 		else
 			/* Unexpected status */
-			return shi_error(1);
+			CPRINTS("Unexpected state %d in IBF ISR\n", state);
 	}
 }
 /*
@@ -515,50 +640,29 @@ void shi_cs_event(enum gpio_signal signal)
 		return;
 
 	/*
-	 * TODO (ML): Glitches on SHI_CS_L will cause SHI doesn`t generate
-	 * 'End of data for read/write transaction interrupt' and IBUFSTAT will
-	 * keep previous value without clocks. (Workaround) Need to reset it
-	 * manually in CS assert ISR.
+	 * IBUFSTAT resets on the 7th clock cycle after CS assertion, which
+	 * may not have happened yet. We use NPCX_IBUFSTAT for calculating
+	 * buffer fill depth, so make sure it's valid before proceeding.
 	 */
-	if (NPCX_IBUFSTAT == shi_params.pre_ibufstat) {
-		if (!shi_check_inbuf_valid()) {
-			CPRINTS("ERR-GTH");
-			shi_reset_prepare();
-			CPRINTS("END\n");
-			return;
-		}
-	}
-
-	/* Chip select is low = asserted */
-	if (state != SHI_STATE_READY_TO_RECV) {
-		/*
-		 * AP started a transaction but we weren't ready for it.
-		 * Tell AP we weren't ready, and ignore the received data.
-		 * The driver should change status later when complete handling
-		 * response from host
-		 */
-		NPCX_OBUF(0) = EC_SPI_NOT_READY;
-		CPRINTS("CSL-NRDY");
-		/*
-		 * If status still is error, reset SHI Bus and
-		 * abort this transaction.
-		 */
-		if (state == SHI_STATE_ERROR) {
-			CPRINTS("ERR-");
-			shi_reset_prepare();
-			CPRINTS("END\n");
-			return;
-		}
+	if (shi_is_cs_glitch()) {
+		CPRINTS("ERR-GTH");
+		shi_reset_prepare();
+		DEBUG_CPRINTF("END\n");
 		return;
 	}
 
-	/* We're now inside a transaction */
-	state = SHI_STATE_RECEIVING;
-	DEBUG_CPRINTF("CSL-RV-");
+	/* NOT_READY should be sent and there're no spi transaction now. */
+	if (state == SHI_STATE_CNL_RESP_NOT_RDY)
+		return;
 
-	/* Setup deadline time for receiving */
-	shi_params.rx_deadline = get_time();
-	shi_params.rx_deadline.val += SHI_CMD_RX_TIMEOUT_US;
+	/* Chip select is low = asserted */
+	if (state != SHI_STATE_READY_TO_RECV) {
+		/* State machine should be reset in EVSTAT_EOR ISR */
+		CPRINTS("Unexpected state %d in CS ISR\n", state);
+		return;
+	}
+
+	DEBUG_CPRINTF("CSL-");
 
 	/* Read first three bytes to parse which protocol is receiving */
 	shi_parse_header();
@@ -567,11 +671,13 @@ void shi_cs_event(enum gpio_signal signal)
 /*****************************************************************************/
 /* Hook functions for chipset and initialization */
 
-/* Reset SHI bus and prepare next transaction */
+/*
+ * Reset SHI bus and prepare next transaction
+ * Please make sure it is executed when there're no spi transactions
+ */
 static void shi_reset_prepare(void)
 {
 	uint16_t i;
-	state = SHI_STATE_NOT_READY;
 
 	/* Initialize parameters of next transaction */
 	shi_params.rx_msg = in_msg;
@@ -582,12 +688,15 @@ static void shi_reset_prepare(void)
 	shi_params.sz_sending = 0;
 	shi_params.sz_request = 0;
 	shi_params.sz_response = 0;
+#ifdef NPCX_SHI_BYPASS_OVER_256B
+	shi_params.bytes_in_256b = 0;
+#endif
 	/* Record last IBUFSTAT for glitch case */
 	shi_params.pre_ibufstat = NPCX_IBUFSTAT;
 
 	/*
 	 * Fill output buffer to indicate we`re
-	 * ready to receive next transaction
+	 * ready to receive next transaction.
 	 */
 	for (i = 1; i < SHI_OBUF_FULL_SIZE; i++)
 		NPCX_OBUF(i) = EC_SPI_RECEIVING;
@@ -695,7 +804,8 @@ static void shi_init(void)
 #if !(DEBUG_SHI)
 	if (chipset_in_state(CHIPSET_STATE_ON))
 #endif
-		shi_reset_prepare();
+		shi_enable();
+
 }
 DECLARE_HOOK(HOOK_INIT, shi_init, HOOK_PRIO_DEFAULT);
 

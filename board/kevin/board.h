@@ -88,6 +88,7 @@
 #define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
 /* Enable SHI PU on transition to S0. Disable the PU otherwise for leakage. */
 #define NPCX_SHI_CS_PU
+#define NPCX_SHI_BYPASS_OVER_256B
 
 /* Optional for testing */
 #undef  CONFIG_PECI
