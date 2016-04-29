@@ -91,12 +91,37 @@ static uint8_t *block_buffer;
 static uint32_t block_size;
 static uint32_t block_index;
 
+/*
+ * When was last time a USB callback was called, in microseconds, free running
+ * timer.
+ */
+static uint64_t prev_activity_timestamp;
+
 /* Called to deal with data from the host */
 static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 {
 	struct update_pdu_header updu;
 	size_t resp_size;
 	uint32_t resp_value;
+	uint64_t delta_time;
+
+	/* How much time since the previous USB callback? */
+	delta_time = get_time().val - prev_activity_timestamp;
+	prev_activity_timestamp += delta_time;
+
+	/* If timeout exceeds 5 seconds - let's start over. */
+	if ((delta_time > 5000000) && (rx_state_ != rx_idle)) {
+		if (block_buffer) {
+			/*
+			 * Previous transfer could have been aborted mid
+			 * block.
+			 */
+			shared_mem_release(block_buffer);
+			block_buffer = NULL;
+		}
+		rx_state_ = rx_idle;
+		CPRINTS("FW update: recovering after timeout\n");
+	}
 
 	if (rx_state_ == rx_idle) {
 		/* This better be the first block, of zero size. */
@@ -210,10 +235,11 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	 */
 	fw_upgrade_command_handler(block_buffer, block_index, &resp_size);
 
-	shared_mem_release(block_buffer);
 	resp_value = block_buffer[0];
 	QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, sizeof(resp_value));
 	rx_state_ = rx_outside_block;
+	shared_mem_release(block_buffer);
+	block_buffer = NULL;
 }
 
 static void upgrade_flush(struct consumer const *consumer)
