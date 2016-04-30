@@ -131,7 +131,7 @@ static int valid_transfer_start(struct consumer const *consumer, size_t count,
  */
 static uint64_t prev_activity_timestamp;
 
-#define UPGRADE_PROTOCOL_VERSION 1
+#define UPGRADE_PROTOCOL_VERSION 2
 
 /* Called to deal with data from the host */
 static void upgrade_out_handler(struct consumer const *consumer, size_t count)
@@ -286,11 +286,46 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	block_index += count;
 	block_size -= count;
 
-	if (block_size)
+	if (block_size) {
+		if (count == sizeof(updu)) {
+			/*
+			 * A block header size instead of chunk size message
+			 * has been received. There must have been some packet
+			 * loss and the host is restarting this block.
+			 *
+			 * Let's copy its contents into the header structure.
+			 */
+			memcpy(&updu, block_buffer + block_index - count,
+			       count);
+
+
+			/* And re-allocate a large enough buffer. */
+			shared_mem_release(block_buffer);
+			block_size = be32toh(updu.block_size) -
+				offsetof(struct update_pdu_header, cmd);
+			if (shared_mem_acquire(block_size,
+					       (char **)&block_buffer)
+			    != EC_SUCCESS) {
+				/* TODO:(vbendeb) report out of memory here. */
+				CPRINTS("FW update: error: failed to alloc "
+					"%d bytes.", block_size);
+				return;
+			}
+
+			/*
+			 * Copy the rest of the message into the block buffer
+			 * to pass to the upgrader.
+			 */
+			block_index = sizeof(updu) -
+				offsetof(struct update_pdu_header, cmd);
+			memcpy(block_buffer, &updu.cmd, block_index);
+			block_size -= block_index;
+		}
 		return;	/* More to come. */
+	}
 
 	/*
-	 * Ok, the enter block has been received and reassembled, pass it to
+	 * Ok, the entire block has been received and reassembled, pass it to
 	 * the updater for verification and programming.
 	 */
 	fw_upgrade_command_handler(block_buffer, block_index, &resp_size);
