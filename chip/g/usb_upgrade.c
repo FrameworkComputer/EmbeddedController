@@ -243,14 +243,20 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			}
 		}
 
-		if (count < sizeof(updu)) {
-			CPRINTS("FW update: error: first chunk of %d bytes",
-				count);
-			rx_state_ = rx_idle;
+		/*
+		 * At this point we expect a block start message. It is
+		 * sizeof(updu) bytes in size, but is not the transfer start
+		 * message, which also is of that size AND has the command
+		 * field of all zeros.
+		 */
+		if (valid_transfer_start(consumer, count, &updu) ||
+		    (count != sizeof(updu)))
+			/*
+			 * Instead of a block start message we received either
+			 * a transfer start message or a chunk. We must have
+			 * gotten out of sync with the host.
+			 */
 			return;
-		}
-
-		QUEUE_REMOVE_UNITS(consumer->queue, &updu, sizeof(updu));
 
 		/* Let's allocate a large enough buffer. */
 		block_size = be32toh(updu.block_size) -
@@ -270,10 +276,6 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		block_index = sizeof(updu) -
 			offsetof(struct update_pdu_header, cmd);
 		memcpy(block_buffer, &updu.cmd, block_index);
-		QUEUE_REMOVE_UNITS(consumer->queue,
-				   block_buffer + block_index,
-				   count - sizeof(updu));
-		block_index += count - sizeof(updu);
 		block_size -= block_index;
 		rx_state_ = rx_inside_block;
 		return;
