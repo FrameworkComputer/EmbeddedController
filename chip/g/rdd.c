@@ -48,9 +48,14 @@ void rdd_init(void)
 
 	debug_detect = GREAD(RDD, PROG_DEBUG_STATE_MAP);
 
-	/* Invoke the interrupt handler manually so that the board-specific
-	 * callbacks can process the initial state. */
-	rdd_interrupt();
+	/*
+	 * Unitl the system is robust enough always start with the phy facing
+	 * the USB-C connector.
+	 */
+	rdd_attached();
+
+	/* Make sure the interrupt fires next time debug cable is connected. */
+	GWRITE(RDD, PROG_DEBUG_STATE_MAP, debug_detect);
 
 	/* Enable RDD interrupts */
 	task_enable_irq(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT);
