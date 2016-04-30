@@ -39,6 +39,7 @@ struct usb_endpoint {
 };
 
 /* Globals */
+static uint32_t protocol_version;
 static char *progname;
 static char *short_opts = ":d:h";
 static const struct option long_opts[] = {
@@ -323,6 +324,48 @@ struct startup_resp {
 	uint32_t version;
 };
 
+static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
+			  uint8_t *transfer_data_ptr, size_t payload_size)
+{
+	size_t transfer_size;
+	uint32_t reply;
+	int actual;
+	int r;
+
+	/* First send the header. */
+	xfer(uep, updu, sizeof(*updu), NULL, 0);
+
+	/* Now send the block, chunk by chunk. */
+	for (transfer_size = 0; transfer_size < payload_size;) {
+		int chunk_size;
+
+		chunk_size = MIN(uep->chunk_len, payload_size - transfer_size);
+		xfer(uep, transfer_data_ptr, chunk_size, NULL, 0);
+		transfer_data_ptr += chunk_size;
+		transfer_size += chunk_size;
+	}
+
+	/* Now get the reply. */
+	r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
+				 (void *) &reply, sizeof(reply),
+				 &actual, 1000);
+	if (r) {
+		if ((r == -7) && (protocol_version >= 2)) {
+			fprintf(stderr, "Timeout!\n");
+			return r;
+		}
+		USB_ERROR("libusb_bulk_transfer", r);
+		shut_down(uep);
+	}
+
+	if (reply) {
+		fprintf(stderr, "error: status %#08x\n", be32toh(reply));
+		exit(1);
+	}
+
+	return 0;
+}
+
 static void transfer_and_reboot(struct usb_endpoint *uep,
 				uint8_t *data, uint32_t data_len)
 {
@@ -333,7 +376,6 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	struct update_pdu updu;
 	struct startup_resp first_resp;
 	int rxed_size;
-	uint32_t protocol_version;
 
 	/* Send start/erase request */
 	printf("erase\n");
@@ -369,14 +411,11 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 		data_len--;
 
 	printf("sending 0x%x/0x%x bytes\n", data_len, CONFIG_RW_SIZE);
-
 	while (data_len) {
 		size_t payload_size;
 		SHA_CTX ctx;
 		uint8_t digest[SHA_DIGEST_LENGTH];
-
-		uint8_t *transfer_data_ptr;
-		size_t transfer_size;
+		int max_retries;
 
 		/* prepare the header to prepend to the block. */
 		payload_size = MIN(data_len, SIGNED_TRANSFER_SIZE);
@@ -396,29 +435,15 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 		memcpy(&updu.cmd.block_digest, digest,
 		       sizeof(updu.cmd.block_digest));
 
-		/* Now send the header. */
-		xfer(uep, &updu, sizeof(updu), NULL, 0);
-		/* Now send the block, chunk by chunk. */
-		transfer_data_ptr = data_ptr;
-		for (transfer_size = 0; transfer_size < payload_size;) {
-			int chunk_size;
+		for (max_retries = 10; max_retries; max_retries--)
+			if (!transfer_block(uep, &updu, data_ptr, payload_size))
+				break;
 
-			chunk_size = MIN(uep->chunk_len,
-					 payload_size - transfer_size);
-			xfer(uep, transfer_data_ptr, chunk_size,
-			     NULL, 0);
-			transfer_data_ptr += chunk_size;
-			transfer_size += chunk_size;
-		}
-
-		/* Now get the reply. */
-		xfer(uep, NULL, 0, &reply, sizeof(reply));
-		if (reply) {
-			fprintf(stderr, "error: status %#08x remaining %#08x\n",
-				be32toh(reply), data_len);
+		if (!max_retries) {
+			fprintf(stderr, "Failed to trasfer block, %d to go\n",
+				data_len);
 			exit(1);
 		}
-
 		data_len -= payload_size;
 		data_ptr += payload_size;
 		next_offset += payload_size;
