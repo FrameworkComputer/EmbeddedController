@@ -32,6 +32,12 @@
 #define SUBCLASS USB_SUBCLASS_GOOGLE_CR50
 #define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
 
+struct usb_endpoint {
+	struct libusb_device_handle *devh;
+	uint8_t ep_num;
+	int     chunk_len;
+};
+
 /* Globals */
 static char *progname;
 static char *short_opts = ":d:h";
@@ -41,6 +47,14 @@ static const struct option long_opts[] = {
 	{"help",     0,   NULL, 'h'},
 	{NULL,       0,   NULL, 0},
 };
+
+/* Release USB device and return error to the OS. */
+static void shut_down(struct usb_endpoint *uep)
+{
+	libusb_close(uep->devh);
+	libusb_exit(NULL);
+	exit(1);
+}
 
 static void usage(int errs)
 {
@@ -99,15 +113,16 @@ static uint8_t *get_file_or_die(const char *filename, uint32_t *len_ptr)
 	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, \
 		m, r, libusb_strerror(r))
 
-static void xfer(struct libusb_device_handle *devh, uint8_t ep_num,
-		 void *outbuf, int outlen, void *inbuf, int inlen) {
+static void xfer(struct usb_endpoint *uep, void *outbuf,
+		 int outlen, void *inbuf, int inlen)
+{
 
 	int r, actual;
 
 	/* Send data out */
 	if (outbuf && outlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(devh, ep_num,
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num,
 					 outbuf, outlen,
 					 &actual, 1000);
 		if (r < 0) {
@@ -117,7 +132,7 @@ static void xfer(struct libusb_device_handle *devh, uint8_t ep_num,
 		if (actual != outlen) {
 			fprintf(stderr, "%s:%d, only sent %d/%d bytes\n",
 				__FILE__, __LINE__, actual, outlen);
-			exit(1);
+			shut_down(uep);
 		}
 	}
 
@@ -125,7 +140,7 @@ static void xfer(struct libusb_device_handle *devh, uint8_t ep_num,
 	if (inbuf && inlen) {
 
 		actual = 0;
-		r = libusb_bulk_transfer(devh, ep_num | 0x80,
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
 					 inbuf, inlen,
 					 &actual, 1000);
 		if (r < 0) {
@@ -135,7 +150,7 @@ static void xfer(struct libusb_device_handle *devh, uint8_t ep_num,
 		if (actual != inlen) {
 			fprintf(stderr, "%s:%d, only received %d/%d bytes\n",
 				__FILE__, __LINE__, actual, inlen);
-			exit(1);
+			shut_down(uep);
 		}
 	}
 }
@@ -143,7 +158,7 @@ static void xfer(struct libusb_device_handle *devh, uint8_t ep_num,
 
 /* Return 0 on error, since it's never gonna be EP 0 */
 static int find_endpoint(const struct libusb_interface_descriptor *iface,
-			 uint8_t *ep_num_ptr, int *chunk_len_ptr)
+			 struct usb_endpoint *uep)
 {
 	const struct libusb_endpoint_descriptor *ep;
 
@@ -152,8 +167,8 @@ static int find_endpoint(const struct libusb_interface_descriptor *iface,
 	    iface->bInterfaceProtocol == PROTOCOL &&
 	    iface->bNumEndpoints) {
 		ep = &iface->endpoint[0];
-		*ep_num_ptr = (ep->bEndpointAddress & 0x7f);
-		*chunk_len_ptr = ep->wMaxPacketSize;
+		uep->ep_num = ep->bEndpointAddress & 0x7f;
+		uep->chunk_len = ep->wMaxPacketSize;
 		return 1;
 	}
 
@@ -161,8 +176,7 @@ static int find_endpoint(const struct libusb_interface_descriptor *iface,
 }
 
 /* Return -1 on error */
-static int find_interface(struct libusb_device_handle *devh,
-			  uint8_t *ep_num_ptr, int *chunk_len_ptr)
+static int find_interface(struct usb_endpoint *uep)
 {
 	int iface_num = -1;
 	int r, i, j;
@@ -171,7 +185,7 @@ static int find_interface(struct libusb_device_handle *devh,
 	const struct libusb_interface *iface0;
 	const struct libusb_interface_descriptor *iface;
 
-	dev = libusb_get_device(devh);
+	dev = libusb_get_device(uep->devh);
 	r = libusb_get_active_config_descriptor(dev, &conf);
 	if (r < 0) {
 		USB_ERROR("libusb_get_active_config_descriptor", r);
@@ -182,7 +196,7 @@ static int find_interface(struct libusb_device_handle *devh,
 		iface0 = &conf->interface[i];
 		for (j = 0; j < iface0->num_altsetting; j++) {
 			iface = &iface0->altsetting[j];
-			if (find_endpoint(iface, ep_num_ptr, chunk_len_ptr)) {
+			if (find_endpoint(iface, uep)) {
 				iface_num = i;
 				goto out;
 			}
@@ -218,11 +232,11 @@ static int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 }
 
 
-static struct libusb_device_handle *usb_findit(uint16_t vid, uint16_t pid,
-					       uint8_t *ep_num, int *chunk_len)
+static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
 {
-	struct libusb_device_handle *devh;
 	int iface_num, r;
+
+	memset(uep, 0, sizeof(*uep));
 
 	r = libusb_init(NULL);
 	if (r < 0) {
@@ -232,34 +246,33 @@ static struct libusb_device_handle *usb_findit(uint16_t vid, uint16_t pid,
 
 	printf("open_device %04x:%04x\n", vid, pid);
 	/* NOTE: This doesn't handle multiple matches! */
-	devh = libusb_open_device_with_vid_pid(NULL, vid, pid);
-	if (!devh) {
+	uep->devh = libusb_open_device_with_vid_pid(NULL, vid, pid);
+	if (!uep->devh) {
 		fprintf(stderr, "can't find device\n");
 		exit(1);
 	}
 
-	iface_num = find_interface(devh, ep_num, chunk_len);
+	iface_num = find_interface(uep);
 	if (iface_num < 0) {
 		fprintf(stderr, "USB FW update not supported by that device\n");
-		exit(1);
+		shut_down(uep);
 	}
-	if (!chunk_len) {
+	if (!uep->chunk_len) {
 		fprintf(stderr, "wMaxPacketSize isn't valid\n");
-		exit(1);
+		shut_down(uep);
 	}
 
 	printf("found interface %d endpoint %d, chunk_len %d\n",
-	       iface_num, *ep_num, *chunk_len);
+	       iface_num, uep->ep_num, uep->chunk_len);
 
-	libusb_set_auto_detach_kernel_driver(devh, 1);
-	r = libusb_claim_interface(devh, iface_num);
+	libusb_set_auto_detach_kernel_driver(uep->devh, 1);
+	r = libusb_claim_interface(uep->devh, iface_num);
 	if (r < 0) {
 		USB_ERROR("libusb_claim_interface", r);
-		exit(1);
+		shut_down(uep);
 	}
 
 	printf("READY\n-------\n");
-	return devh;
 }
 
 #define SIGNED_TRANSFER_SIZE 1024
@@ -276,9 +289,8 @@ struct update_pdu {
 
 #define FLASH_BASE 0x40000
 
-static void transfer_and_reboot(struct libusb_device_handle *devh,
-				uint8_t *data, uint32_t data_len,
-				uint8_t ep_num, int chunk_len)
+static void transfer_and_reboot(struct usb_endpoint *uep,
+				uint8_t *data, uint32_t data_len)
 {
 	uint32_t out;
 	uint32_t reply;
@@ -291,7 +303,7 @@ static void transfer_and_reboot(struct libusb_device_handle *devh,
 
 	memset(&updu, 0, sizeof(updu));
 	updu.block_size = htobe32(sizeof(updu));
-	xfer(devh, ep_num, &updu, sizeof(updu), &reply, sizeof(reply));
+	xfer(uep, &updu, sizeof(updu), &reply, sizeof(reply));
 /* check the offset here. */
 	next_offset = be32toh(reply) - FLASH_BASE;
 	printf("Updating at offset 0x%08x\n", next_offset);
@@ -332,39 +344,27 @@ static void transfer_and_reboot(struct libusb_device_handle *devh,
 		       sizeof(updu.cmd.block_digest));
 
 		/* Now send the header. */
-		xfer(devh, ep_num, &updu, sizeof(updu), NULL, 0);
+		xfer(uep, &updu, sizeof(updu), NULL, 0);
 		/* Now send the block, chunk by chunk. */
 		transfer_data_ptr = data_ptr;
 		for (transfer_size = 0; transfer_size < payload_size;) {
 			int chunk_size;
 
-			chunk_size = MIN(chunk_len,
+			chunk_size = MIN(uep->chunk_len,
 					 payload_size - transfer_size);
-			xfer(devh, ep_num, transfer_data_ptr, chunk_size,
+			xfer(uep, transfer_data_ptr, chunk_size,
 			     NULL, 0);
 			transfer_data_ptr += chunk_size;
 			transfer_size += chunk_size;
 		}
 
 		/* Now get the reply. */
-		xfer(devh, ep_num, NULL, 0, &reply, sizeof(reply));
+		xfer(uep, NULL, 0, &reply, sizeof(reply));
 		if (reply) {
 			fprintf(stderr, "error: status %#08x remaining %#08x\n",
 				be32toh(reply), data_len);
 			exit(1);
 		}
-		/*
-		if (!IS_EXPECT_RW(in.status)) {
-			fprintf(stderr, "error: status 0x%08x offset 0x%08x\n",
-				in.status, in.offset);
-			exit(1);
-		}
-		*/
-		/* Block transferred and programmed successfully. */
-		/* Show status occasionally
-		if (!(in.offset & 0x00003FFF))
-			printf("offset 0x%x\n", in.offset);
-		*/
 
 		data_len -= payload_size;
 		data_ptr += payload_size;
@@ -375,22 +375,20 @@ static void transfer_and_reboot(struct libusb_device_handle *devh,
 
 	/* Send stop request, ignorign reply. */
 	out = htobe32(UPGRADE_DONE);
-	xfer(devh, ep_num, &out, sizeof(out), &reply, sizeof(reply));
+	xfer(uep, &out, sizeof(out), &reply, sizeof(reply));
 
 	printf("reboot\n");
 
 	/* Send a second stop request, which should reboot without replying */
-	xfer(devh, ep_num, &out, sizeof(out), 0, 0);
+	xfer(uep, &out, sizeof(out), 0, 0);
 }
 
 int main(int argc, char *argv[])
 {
-	struct libusb_device_handle *devh;
+	struct usb_endpoint uep;
 	int errorcnt;
 	uint8_t *data = 0;
 	uint32_t data_len = 0;
-	uint8_t ep_num = 0;
-	int chunk_len = 0;
 	uint16_t vid = VID, pid = PID;
 	int i;
 
@@ -449,13 +447,13 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	devh = usb_findit(vid, pid, &ep_num, &chunk_len);
+	usb_findit(vid, pid, &uep);
 
-	transfer_and_reboot(devh, data, data_len, ep_num, chunk_len);
+	transfer_and_reboot(&uep, data, data_len);
 
 	printf("bye\n");
 	free(data);
-	libusb_close(devh);
+	libusb_close(uep.devh);
 	libusb_exit(NULL);
 
 	return 0;
