@@ -28,6 +28,7 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "shi_chip.h"
+#include "spi.h"
 #include "switch.h"
 #include "timer.h"
 #include "thermal.h"
@@ -98,6 +99,13 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_AP_EC_S3_S0_L,     0, "SUSPEND_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+/******************************************************************************/
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI_SENSOR_CS_L }
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* Wake-up pins for hibernate */
@@ -213,6 +221,11 @@ static void board_init(void)
 					     i,
 					     &charge_none);
 	}
+
+	/* Sensor Init */
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	CPRINTS("Board using SPI sensors");
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
