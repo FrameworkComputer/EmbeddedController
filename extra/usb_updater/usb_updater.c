@@ -113,8 +113,15 @@ static uint8_t *get_file_or_die(const char *filename, uint32_t *len_ptr)
 	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, \
 		m, r, libusb_strerror(r))
 
-static void xfer(struct usb_endpoint *uep, void *outbuf,
-		 int outlen, void *inbuf, int inlen)
+/*
+ * Actual USB transfer function, the 'allow_less' flag indicates that the
+ * valid response could be shortef than allotted memory, the 'rxed_count'
+ * pointer, if provided along with 'allow_less' lets the caller know how mavy
+ * bytes were received.
+ */
+static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
+		    void *inbuf, int inlen, int allow_less,
+		    int *rxed_count)
 {
 
 	int r, actual;
@@ -147,14 +154,22 @@ static void xfer(struct usb_endpoint *uep, void *outbuf,
 			USB_ERROR("libusb_bulk_transfer", r);
 			exit(1);
 		}
-		if (actual != inlen) {
+		if ((actual != inlen) && !allow_less) {
 			fprintf(stderr, "%s:%d, only received %d/%d bytes\n",
 				__FILE__, __LINE__, actual, inlen);
 			shut_down(uep);
 		}
+
+		if (rxed_count)
+			*rxed_count = actual;
 	}
 }
 
+static void xfer(struct usb_endpoint *uep, void *outbuf,
+		 int outlen, void *inbuf, int inlen)
+{
+	do_xfer(uep, outbuf, outlen, inbuf, inlen, 0, NULL);
+}
 
 /* Return 0 on error, since it's never gonna be EP 0 */
 static int find_endpoint(const struct libusb_interface_descriptor *iface,
@@ -288,6 +303,25 @@ struct update_pdu {
 };
 
 #define FLASH_BASE 0x40000
+/*
+ * When responding to the very first packet of the upgrade sequence, the
+ * original implementation was responding with a four byte value, just as to
+ * any other block of the transfer sequence.
+ *
+ * It became clear that there is a need to be able to enhance the upgrade
+ * protocol, while stayng backwards compatible. To achieve that a new startup
+ * response option was introduced, 8 bytes in size. The first 4 bytes the same
+ * as before, the second 4 bytes - the protocol version number.
+ *
+ * So, receiving of a four byte value in response to the startup packet is an
+ * indication of the 'legacy' protocol, version 0. Receiving of an 8 byte
+ * value communicates the protocol version in the second 4 bytes.
+ */
+
+struct startup_resp {
+	uint32_t value;
+	uint32_t version;
+};
 
 static void transfer_and_reboot(struct usb_endpoint *uep,
 				uint8_t *data, uint32_t data_len)
@@ -297,15 +331,34 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	uint8_t *data_ptr;
 	uint32_t next_offset;
 	struct update_pdu updu;
+	struct startup_resp first_resp;
+	int rxed_size;
+	uint32_t protocol_version;
 
 	/* Send start/erase request */
 	printf("erase\n");
 
 	memset(&updu, 0, sizeof(updu));
 	updu.block_size = htobe32(sizeof(updu));
-	xfer(uep, &updu, sizeof(updu), &reply, sizeof(reply));
-/* check the offset here. */
-	next_offset = be32toh(reply) - FLASH_BASE;
+
+	do_xfer(uep, &updu, sizeof(updu), &first_resp, sizeof(first_resp),
+		1, &rxed_size);
+
+	if (rxed_size == sizeof(uint32_t))
+		protocol_version = 0;
+	else
+		protocol_version = be32toh(first_resp.version);
+
+	printf("Target running protocol version %d\n", protocol_version);
+
+	reply = be32toh(first_resp.value);
+
+	if (reply < 256) {
+		fprintf(stderr, "Target reports error %d\n", reply);
+		shut_down(uep);
+	}
+
+	next_offset = reply - FLASH_BASE;
 	printf("Updating at offset 0x%08x\n", next_offset);
 
 	data_ptr = data + next_offset;

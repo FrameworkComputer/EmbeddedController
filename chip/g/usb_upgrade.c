@@ -97,6 +97,8 @@ static uint32_t block_index;
  */
 static uint64_t prev_activity_timestamp;
 
+#define UPGRADE_PROTOCOL_VERSION 1
+
 /* Called to deal with data from the host */
 static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 {
@@ -124,6 +126,29 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	}
 
 	if (rx_state_ == rx_idle) {
+		/*
+		 * When responding to the very first packet of the upgrade
+		 * sequence, the original implementation was responding with a
+		 * four byte value, just as to any other block of the transfer
+		 * sequence.
+		 *
+		 * It became clear that there is a need to be able to enhance
+		 * the upgrade protocol, while stayng backwards compatible. To
+		 * achieve that we respond to the very first packet with an 8
+		 * byte value, the first 4 bytes the same as before, the
+		 * second 4 bytes - the protocol version number.
+		 *
+		 * This way if on the host side receiving of a four byte value
+		 * in response to the first packet is an indication of the
+		 * 'legacy' protocol, version 0. Receiving of an 8 byte
+		 * response would communicate the protocol version in the
+		 * second 4 bytes.
+		 */
+		struct {
+			uint32_t value;
+			uint32_t version;
+		} startup_resp;
+
 		/* This better be the first block, of zero size. */
 		if (count != sizeof(struct update_pdu_header)) {
 			CPRINTS("FW update: wrong first block size %d",
@@ -140,15 +165,19 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 					   &resp_size);
 
 		if (resp_size == 4) {
-			resp_value = updu.resp; /* Already in network order. */
+			/* Already in network order. */
+			startup_resp.value = updu.resp;
 			rx_state_ = rx_outside_block;
 		} else {
 			/* This must be a single byte error code. */
-			resp_value = htobe32(*((uint8_t *)&updu.resp));
+			startup_resp.value = htobe32(*((uint8_t *)&updu.resp));
 		}
+
+		startup_resp.version = htobe32(UPGRADE_PROTOCOL_VERSION);
+
 		/* Let the host know what upgrader had to say. */
-		QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value,
-				sizeof(resp_value));
+		QUEUE_ADD_UNITS(&upgrade_to_usb, &startup_resp,
+				sizeof(startup_resp));
 		return;
 	}
 
