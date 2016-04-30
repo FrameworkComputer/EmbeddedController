@@ -186,12 +186,14 @@ int spi_transaction(const struct spi_device_t *spi_device,
  */
 static void spi_init(void)
 {
+	int i;
 	/* Enable clock for SPI peripheral */
 	clock_enable_peripheral(CGC_OFFSET_SPI, CGC_SPI_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Disabling spi module */
-	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
+	for (i = 0; i < spi_devices_used; i++)
+		spi_enable(spi_devices[i].port, 0);
 
 	/* Disabling spi irq */
 	CLEAR_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_EIR);
@@ -217,7 +219,7 @@ DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
 /*****************************************************************************/
 /* Console commands */
-
+#ifdef CONFIG_CMD_SPI_FLASH
 static int printrx(const char *desc, const uint8_t *txdata, int txlen,
 		int rxlen)
 {
@@ -235,7 +237,6 @@ static int printrx(const char *desc, const uint8_t *txdata, int txlen,
 	CPUTS("\n");
 	return EC_SUCCESS;
 }
-
 
 static int command_spirom(int argc, char **argv)
 {
@@ -261,3 +262,4 @@ DECLARE_CONSOLE_COMMAND(spirom, command_spirom,
 		NULL,
 		"Test reading SPI EEPROM",
 		NULL);
+#endif
