@@ -120,19 +120,19 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			block_buffer = NULL;
 		}
 		rx_state_ = rx_idle;
-		CPRINTS("FW update: recovering after timeout\n");
+		CPRINTS("FW update: recovering after timeout");
 	}
 
 	if (rx_state_ == rx_idle) {
 		/* This better be the first block, of zero size. */
 		if (count != sizeof(struct update_pdu_header)) {
-			CPRINTS("FW update: wrong first block size %d\n",
+			CPRINTS("FW update: wrong first block size %d",
 				count);
 			return;
 		}
 		QUEUE_REMOVE_UNITS(consumer->queue, &updu, count);
 
-		CPRINTS("FW update: starting...\n");
+		CPRINTS("FW update: starting...");
 
 		fw_upgrade_command_handler(&updu.cmd, count -
 					   offsetof(struct update_pdu_header,
@@ -176,7 +176,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 					   sizeof(command));
 			command = be32toh(command);
 			if (command == UPGRADE_DONE) {
-				CPRINTS("FW update: done\n");
+				CPRINTS("FW update: done");
 				resp_value = 0;
 				QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value,
 						sizeof(resp_value));
@@ -186,7 +186,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		}
 
 		if (count < sizeof(updu)) {
-			CPRINTS("FW update: error: first chunk of %d bytes\n",
+			CPRINTS("FW update: error: first chunk of %d bytes",
 				count);
 			rx_state_ = rx_idle;
 			return;
@@ -200,7 +200,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		if (shared_mem_acquire(block_size, (char **)&block_buffer)
 		    != EC_SUCCESS) {
 			/* TODO:(vbendeb) report out of memory here. */
-			CPRINTS("FW update: error: failed to alloc %d bytes.\n",
+			CPRINTS("FW update: error: failed to alloc %d bytes.",
 				block_size);
 			return;
 		}
