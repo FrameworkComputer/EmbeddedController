@@ -92,6 +92,40 @@ static uint32_t block_size;
 static uint32_t block_index;
 
 /*
+ * Verify that the contens of the USB rx queue is a valid transfer start
+ * message from host, and if so - save its contents in the passed in
+ * update_pdu_header structure.
+ */
+static int valid_transfer_start(struct consumer const *consumer, size_t count,
+				struct update_pdu_header *pupdu)
+{
+	int i;
+
+	/*
+	 * Let's just make sure we drain the queue no matter what the contents
+	 * are. This way they won't be in the way during next callback, even
+	 * if these contents are not what's expected.
+	 */
+	i = count;
+	while (i > 0) {
+		QUEUE_REMOVE_UNITS(consumer->queue, pupdu,
+				   MIN(i, sizeof(*pupdu)));
+		i -= sizeof(*pupdu);
+	}
+
+	if (count != sizeof(struct update_pdu_header)) {
+		CPRINTS("FW update: wrong first block, size %d", count);
+		return 0;
+	}
+
+	/* In the first block the payload (updu.cmd) must be all zeros. */
+	for (i = 0; i < sizeof(pupdu->cmd); i++)
+		if (((uint8_t *)&pupdu->cmd)[i])
+			return 0;
+	return 1;
+}
+
+/*
  * When was last time a USB callback was called, in microseconds, free running
  * timer.
  */
@@ -149,13 +183,8 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			uint32_t version;
 		} startup_resp;
 
-		/* This better be the first block, of zero size. */
-		if (count != sizeof(struct update_pdu_header)) {
-			CPRINTS("FW update: wrong first block size %d",
-				count);
+		if (!valid_transfer_start(consumer, count, &updu))
 			return;
-		}
-		QUEUE_REMOVE_UNITS(consumer->queue, &updu, count);
 
 		CPRINTS("FW update: starting...");
 
