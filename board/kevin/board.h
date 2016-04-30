@@ -25,6 +25,7 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP /* Instead of 8042 protocol of keyboard */
 #define CONFIG_POWER_BUTTON
 /* TODO: Verify W25Q40 protect regs are compatible with W25X40 */
