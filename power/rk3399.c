@@ -26,7 +26,19 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
-/* TODO: Monitor input signals to determine AP power state */
+#define IN_PGOOD_PP5000        POWER_SIGNAL_MASK(PP5000_PWR_GOOD)
+#define IN_PGOOD_SYS           POWER_SIGNAL_MASK(SYS_PWR_GOOD)
+#define IN_PGOOD_AP            POWER_SIGNAL_MASK(AP_PWR_GOOD)
+#define IN_SUSPEND_DEASSERTED  POWER_SIGNAL_MASK(SUSPEND_DEASSERTED)
+
+/* All always-on supplies */
+#define IN_PGOOD_ALWAYS_ON     (IN_PGOOD_SYS)
+/* Rails requires for S3 */
+#define IN_PGOOD_S3            (IN_PGOOD_ALWAYS_ON | IN_PGOOD_PP5000)
+/* Rails required for S0 */
+#define IN_PGOOD_S0            (IN_PGOOD_S3 | IN_PGOOD_AP)
+/* All inputs in the right state for S0 */
+#define IN_ALL_S0              (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
 static const struct power_signal_info power_control_outputs[] = {
 	{ GPIO_AP_CORE_EN, 1 },
@@ -83,20 +95,33 @@ void chipset_reset(int cold_reset)
 	gpio_set_level(GPIO_SYS_RST_L, 1);
 }
 
-enum power_state power_chipset_init(void)
+static void chipset_force_g3(void)
 {
 	int i;
 	const struct power_signal_info *output_signal;
 
-	/* TODO: decode state after sysjump */
 	/* Force all signals to their G3 states */
 	CPRINTS("forcing G3");
 	for (i = 0; i < ARRAY_SIZE(power_control_outputs); ++i) {
 		output_signal = &power_control_outputs[i];
-		gpio_set_level(output_signal->gpio, !output_signal->level);
+		gpio_set_level(output_signal->gpio,
+			       !output_signal->level);
+	}
+}
+
+enum power_state power_chipset_init(void)
+{
+	if (system_jumped_to_this_image()) {
+		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
+			disable_sleep(SLEEP_MASK_AP_RUN);
+			CPRINTS("already in S0");
+			return POWER_S0;
+		}
+
+		chipset_force_g3();
+		wireless_set_state(WIRELESS_OFF);
 	}
 
-	wireless_set_state(WIRELESS_OFF);
 	return POWER_G3;
 }
 
@@ -113,13 +138,13 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5S3;
 
 	case POWER_S3:
-		if (forcing_shutdown)
+		if (!power_has_signals(IN_PGOOD_S3) || forcing_shutdown)
 			return POWER_S3S5;
-		else
+		else if (power_has_signals(IN_SUSPEND_DEASSERTED))
 			return POWER_S3S0;
 
 	case POWER_S0:
-		if (forcing_shutdown)
+		if (!power_has_signals(IN_PGOOD_S0) || forcing_shutdown)
 			return POWER_S0S3;
 		break;
 
@@ -153,6 +178,15 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(2);
 		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 0);
 
+		/*
+		 * TODO: Consider ADC_PP900_AP / ADC_PP1200_LPDDR analog
+		 * voltage levels for state transition.
+		 */
+		if (power_wait_signals(IN_PGOOD_S3)) {
+			chipset_force_shutdown();
+			return POWER_S5;
+		}
+
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		/* Power up to next state */
@@ -175,6 +209,11 @@ enum power_state power_handle_state(enum power_state state)
 
 		gpio_set_level(GPIO_PP1800_LID_EN_L, 0);
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 0);
+
+		if (power_wait_signals(IN_PGOOD_S0)) {
+			chipset_force_shutdown();
+			return POWER_S3;
+		}
 
 		/* Enable wireless */
 		wireless_set_state(WIRELESS_ON);
@@ -218,7 +257,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		/* Initialize power signal outputs to default. */
-		return power_chipset_init();
+		chipset_force_g3();
+		return POWER_G3;
 	}
 
 	return state;

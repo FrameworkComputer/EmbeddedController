@@ -86,6 +86,15 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* power signal list.  Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	{GPIO_PP5000_PG,         1, "PP5000_PWR_GOOD"},
+	{GPIO_TPS65261_PG,       1, "SYS_PWR_GOOD"},
+	{GPIO_AP_CORE_PG,        1, "AP_PWR_GOOD"},
+	{GPIO_AP_EC_S3_S0_L,     0, "SUSPEND_DEASSERTED"},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
 /******************************************************************************/
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {

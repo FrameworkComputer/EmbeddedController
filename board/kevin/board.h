@@ -122,8 +122,13 @@ enum pwm_channel {
 
 /* power signal definitions */
 enum power_signal {
+	PP5000_PWR_GOOD = 0,
+	SYS_PWR_GOOD,
+	AP_PWR_GOOD,
+	SUSPEND_DEASSERTED,
+
 	/* Number of signals */
-	POWER_SIGNAL_COUNT = 0
+	POWER_SIGNAL_COUNT,
 };
 
 #include "gpio_signal.h"
