@@ -69,8 +69,16 @@ enum permission_level {
 static void init_runlevel(const enum permission_level desired_level)
 {
 	volatile uint32_t *const reg_addrs[] = {
+		/* CPU's use of the system peripheral bus */
 		GREG32_ADDR(GLOBALSEC, CPU0_S_PERMISSION),
+		/* CPU's use of the system bus via the debug access port */
+		GREG32_ADDR(GLOBALSEC, CPU0_S_DAP_PERMISSION),
+		/* DMA's use of the system peripheral bus */
 		GREG32_ADDR(GLOBALSEC, DDMA0_PERMISSION),
+		/* Current software level affects which (if any) scratch
+		 * registers can be used for a warm boot hardware-verified
+		 * jump. */
+		GREG32_ADDR(GLOBALSEC, SOFTWARE_LVL),
 	};
 	int i;
 
