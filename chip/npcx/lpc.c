@@ -6,6 +6,7 @@
 /* LPC module for Chrome EC */
 
 #include "acpi.h"
+#include "chipset.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -756,11 +757,9 @@ void lpc_lreset_pltrst_handler(void)
 	/* Clear pending bit of WUI */
 	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 7);
 
-#ifdef GPIO_PCH_RSMRST_L
-	/* Ignore PLTRST# from SOC unless RSMRST# to soc is deasserted */
-	if (!gpio_get_level(GPIO_PCH_RSMRST_L))
+	/* Ignore PLTRST# from SOC if it is not valid */
+	if (chipset_pltrst_is_valid && !chipset_pltrst_is_valid())
 		return;
-#endif
 
 	ccprintf("[%T PLTRST deasserted]\n");
 

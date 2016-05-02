@@ -101,4 +101,11 @@ static inline void power_interrupt(enum gpio_signal signal) { }
 
 #endif /* !HAS_TASK_CHIPSET */
 
+/**
+ * Optional chipset check if PLTRST# is valid.
+ *
+ * @return non-zero if PLTRST# is valid, 0 if invalid.
+ */
+int chipset_pltrst_is_valid(void) __attribute__((weak));
+
 #endif  /* __CROS_EC_CHIPSET_H */
