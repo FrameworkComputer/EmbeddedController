@@ -33,6 +33,7 @@
 
 #define BMI160_CHIP_ID           0x00
 #define BMI160_CHIP_ID_MAJOR     0xd1
+#define BMI168_CHIP_ID_MAJOR     0xd2
 
 #define BMI160_SPEC_ACC_STARTUP_TIME_MS     10
 #define BMI160_SPEC_GYR_STARTUP_TIME_MS     80
