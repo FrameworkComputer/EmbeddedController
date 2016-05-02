@@ -437,6 +437,9 @@ enum host_event_code {
 	/* EC RTC event occurred */
 	EC_HOST_EVENT_RTC = 26,
 
+	/* Emulate MKBP event */
+	EC_HOST_EVENT_MKBP = 27,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
@@ -3198,8 +3201,10 @@ struct ec_params_entering_mode {
 #define VBOOT_MODE_RECOVERY  2
 
 /*****************************************************************************/
-/* I2C passthru protection command: Protects I2C tunnels against access on
- * certain addresses (board-specific). */
+/*
+ * I2C passthru protection command: Protects I2C tunnels against access on
+ * certain addresses (board-specific).
+ */
 #define EC_CMD_I2C_PASSTHRU_PROTECT 0xb7
 
 enum ec_i2c_passthru_protect_subcmd {

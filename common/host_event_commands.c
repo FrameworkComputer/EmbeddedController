@@ -51,11 +51,13 @@ void host_set_events(uint32_t mask)
 	lpc_set_host_event_state(events);
 #else
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
-#endif
-
 #ifdef CONFIG_MKBP_EVENT
-	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+#ifdef CONFIG_MKBP_USE_HOST_EVENT
+#error "Config error: MKBP must not be on top of host event"
 #endif
+	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+#endif  /* CONFIG_MKBP_EVENT */
+#endif  /* !CONFIG_LPC */
 }
 
 void host_clear_events(uint32_t mask)
@@ -70,11 +72,10 @@ void host_clear_events(uint32_t mask)
 	lpc_set_host_event_state(events);
 #else
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
-#endif
-
 #ifdef CONFIG_MKBP_EVENT
 	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
 #endif
+#endif  /* !CONFIG_LPC */
 }
 
 static int host_get_next_event(uint8_t *out)
