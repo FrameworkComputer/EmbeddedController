@@ -257,4 +257,4 @@ static void pwm_init(void)
 }
 
 /* The chip PWM module initialization. */
-DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_INIT_PWM);

@@ -138,7 +138,7 @@ static int spi_init(void)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
 /*****************************************************************************/
 /* Console commands */

@@ -237,4 +237,4 @@ static void pwm_init(void)
 }
 
 /* The chip-specific fan module initializes before this. */
-DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, pwm_init, HOOK_PRIO_INIT_PWM);

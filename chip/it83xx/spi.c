@@ -168,4 +168,4 @@ static void sspi_init(void)
 		/* Disabling spi module */
 		spi_enable(spi_devices[i].port, 0);
 }
-DECLARE_HOOK(HOOK_INIT, sspi_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, sspi_init, HOOK_PRIO_INIT_SPI);

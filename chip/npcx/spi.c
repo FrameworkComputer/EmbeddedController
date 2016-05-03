@@ -213,7 +213,7 @@ static void spi_init(void)
 	/* Cleaning junk data in the buffer */
 	clear_databuf();
 }
-DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
 /*****************************************************************************/
 /* Console commands */

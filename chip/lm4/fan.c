@@ -188,4 +188,5 @@ static void fan_init(void)
 	/* Disable all fans */
 	LM4_FAN_FANCTL = 0;
 }
-DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_PWM);
+/* Init before PWM */
+DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_FAN);

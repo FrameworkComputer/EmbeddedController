@@ -663,7 +663,7 @@ static void spi_init(void)
 	if (was_enabled || chipset_in_state(CHIPSET_STATE_ON))
 		spi_chipset_startup();
 }
-DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
 /**
  * Get protocol information

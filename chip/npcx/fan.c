@@ -504,4 +504,4 @@ static void fan_init(void)
 	/* Enable the fan module and delay a few clocks */
 	clock_enable_peripheral(CGC_OFFSET_FAN, CGC_FAN_MASK, CGC_MODE_ALL);
 }
-DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_PWM);
+DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_FAN);

@@ -121,7 +121,7 @@ static void led_init(void)
 	set_color(LED_OFF);
 }
 /* After pwm_pin_init() */
-DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_INIT_PWM + 2);
+DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
 
 /**
  * Called by hook task every 250 ms

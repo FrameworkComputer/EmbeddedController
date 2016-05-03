@@ -475,4 +475,4 @@ static void fan_init(void)
 	ext_timer_ms(FAN_CTRL_EXT_TIMER, EXT_PSR_32P768K_HZ, 0, 0,
 			FAN_CTRL_BASED_MS, 1, 0);
 }
-DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_PWM);
+DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_INIT_FAN);

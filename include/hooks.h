@@ -29,12 +29,16 @@ enum hook_priority {
 	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 4,
 	/* Power button inits before chipset and switch */
 	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 5,
-	/* PWM inits before modules which might use it (fans, LEDs) */
-	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 6,
+	/* Init fan before PWM */
+	HOOK_PRIO_INIT_FAN = HOOK_PRIO_FIRST + 6,
+	/* PWM inits before modules which might use it (LEDs) */
+	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 7,
+	/* SPI inits before modules which might use it (sensors) */
+	HOOK_PRIO_INIT_SPI = HOOK_PRIO_FIRST + 8,
 	/* Extpower inits before modules which might use it (battery, LEDs) */
-	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 7,
+	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 9,
 	/* Init VBOOT hash later, since it depends on deferred functions */
-	HOOK_PRIO_INIT_VBOOT_HASH = HOOK_PRIO_FIRST + 8,
+	HOOK_PRIO_INIT_VBOOT_HASH = HOOK_PRIO_FIRST + 10,
 
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,
