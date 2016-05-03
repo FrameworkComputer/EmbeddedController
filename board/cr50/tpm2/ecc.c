@@ -82,13 +82,15 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 		if (n2 != NULL && !check_p256_param(n2))
 			return CRYPT_PARAMETER;
 
-		reverse_tpm2b(&n1->b);
-
 		if (n1 != NULL) {
+			reverse_tpm2b(&n1->b);
+
 			result = DCRYPTO_p256_base_point_mul(
 				(p256_int *) out->x.b.buffer,
 				(p256_int *) out->y.b.buffer,
 				(p256_int *) n1->b.buffer);
+
+			reverse_tpm2b(&n1->b);
 		} else {
 			reverse_tpm2b(&n2->b);
 			reverse_tpm2b(&in->x.b);
@@ -105,8 +107,6 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 			reverse_tpm2b(&in->x.b);
 			reverse_tpm2b(&in->y.b);
 		}
-
-		reverse_tpm2b(&n1->b);
 
 		if (result) {
 			out->x.b.size = sizeof(p256_int);
