@@ -9,6 +9,7 @@
 #include "flash_config.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "init_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "trng.h"
@@ -97,6 +98,7 @@ static void board_init(void)
 	init_timers();
 	init_interrupts();
 	init_trng();
+	init_jittery_clock(1);			/* high-security mode */
 	init_runlevel(PERMISSION_MEDIUM);
 
 	/* TODO(crosbug.com/p/49959): For now, leave flash WP unlocked */

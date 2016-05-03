@@ -266,6 +266,9 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GR_WATCHDOG_ITOP              GR_WDOG_REG(GC_WATCHDOG_WDOGITOP_OFFSET)
 
 /* Oscillator */
+#define GR_XO_REG(off)               REG32(GC_XO0_BASE_ADDR + (off))
+#define GR_XO_JTR_JITTERY_TRIM_BANK(n)					\
+	GR_XO_REG(GC_XO_CLK_JTR_JITTERY_TRIM_BANK0_OFFSET + (n) * 4)
 #define GR_XO_OSC_CLKOUT              REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_CLKOUT_OFFSET)
 #define GR_XO_OSC_ADC_CAL_FREQ2X      REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_ADC_CAL_FREQ2X_OFFSET)
 #define GR_XO_OSC_ADC_CAL_FREQ2X_STAT REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_ADC_CAL_FREQ2X_STAT_OFFSET)
@@ -291,6 +294,9 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GR_XO_OSC_XTL_FSM_CFG         REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_XTL_FSM_CFG_OFFSET)
 #define GR_XO_OSC_SETHOLD             REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_SETHOLD_OFFSET)
 #define GR_XO_OSC_CLRHOLD             REG32(GC_XO0_BASE_ADDR + GC_XO_OSC_CLRHOLD_OFFSET)
+
+/* Fuses (shadowed) */
+#define GR_FUSE(rname) (GREG32(FUSE, rname) & GFIELD_MASK(FUSE, rname, VAL))
 
 /* Key manager */
 #define GR_KEYMGR_AES_KEY(n)          REG32(GREG32_ADDR(KEYMGR, AES_KEY0) + (n))

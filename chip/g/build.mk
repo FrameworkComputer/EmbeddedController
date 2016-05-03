@@ -40,6 +40,7 @@ chip-$(CONFIG_DCRYPTO)+= dcrypto/sha256.o
 
 chip-$(CONFIG_SPI_MASTER)+=spi_master.o
 
+chip-y+= jitter.o
 chip-y+= pmu.o
 chip-y+= trng.o
 chip-$(CONFIG_USB_FW_UPDATE)+= usb_upgrade.o
