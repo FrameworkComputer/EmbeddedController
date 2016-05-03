@@ -63,7 +63,7 @@
 #endif
 
 /* System stack size */
-#define CONFIG_STACK_SIZE       4096
+#define CONFIG_STACK_SIZE       1024
 
 /* non-standard task stack sizes */
 #define IDLE_TASK_STACK_SIZE		512
