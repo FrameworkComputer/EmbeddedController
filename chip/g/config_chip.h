@@ -65,7 +65,7 @@
 #define PCLK_FREQ  (24 * 1000 * 1000)
 
 /* Number of IRQ vectors on the NVIC */
-#define CONFIG_IRQ_COUNT (GC_INTERRUPTS_COUNT - 16)
+#define CONFIG_IRQ_COUNT (GC_INTERRUPTS_COUNT - 15)
 
 #undef CONFIG_RW_MEM_OFF
 #undef CONFIG_RW_SIZE

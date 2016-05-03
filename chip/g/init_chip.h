@@ -7,5 +7,6 @@
 #define __CROS_EC_INIT_CHIP_H
 
 void init_jittery_clock(int highsec);
+void init_sof_clock(void);
 
 #endif	/* __CROS_EC_INIT_CHIP_H */

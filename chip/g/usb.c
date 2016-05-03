@@ -9,6 +9,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "init_chip.h"
 #include "link_defs.h"
 #include "registers.h"
 #include "system.h"
@@ -1073,6 +1074,9 @@ static void usb_reset(void)
 
 	/* Reinitialize all the endpoints */
 	usb_init_endpoints();
+
+	/* Init the clock calibrator */
+	init_sof_clock();
 }
 
 static void usb_resetdet(void)
@@ -1188,14 +1192,12 @@ static void usb_softreset(void)
 
 void usb_connect(void)
 {
-	CPRINTS("%s", __func__);
 	print_later("usb_connect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL &= ~DCTL_SFTDISCON;
 }
 
 void usb_disconnect(void)
 {
-	CPRINTS("%s", __func__);
 	print_later("usb_disconnect()", 0, 0, 0, 0, 0);
 	GR_USB_DCTL |= DCTL_SFTDISCON;
 
