@@ -576,6 +576,10 @@ const char *system_get_chip_name(void)
 		return "NPCX585G";
 	case 0x13:
 		return "NPCX575G";
+	case 0x16:
+		return "NPCX586G";
+	case 0x17:
+		return "NPCX576G";
 	default:
 		*p       = system_to_hex((chip_id & 0xF0) >> 4);
 		*(p + 1) = system_to_hex(chip_id & 0x0F);
