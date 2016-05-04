@@ -393,16 +393,6 @@ static struct gpio_wui_gpio_info gpio_find_wui_from_io(uint8_t port,
 	return ((struct gpio_wui_gpio_info) { .valid = 0 });
 }
 
-static int gpio_find_irq_from_io(uint8_t port, uint8_t mask)
-{
-	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(port, mask);
-
-	if (wui.valid)
-		return gpio_wui_table[wui.table][wui.group].irq;
-
-	return -1;
-}
-
 static void gpio_pwm_io_type_sel(uint8_t chan, uint8_t func)
 {
 	if (func & PWM_IO_OD)
@@ -637,27 +627,29 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
-	const struct gpio_info *g = gpio_list + signal;
-	int irq = gpio_find_irq_from_io(g->port, g->mask);
+	const struct gpio_info *g     = gpio_list + signal;
+	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(g->port, g->mask);
 
-	/* Fail if no interrupt handler */
-	if (irq < 0)
-		return EC_ERROR_UNKNOWN;
+	/* Set MIWU enable bit */
+	if (wui.valid)
+		NPCX_WKEN(wui.table, wui.group) |= (1 << wui.bit);
+	else
+		return EC_ERROR_PARAM1;
 
-	task_enable_irq(irq);
 	return EC_SUCCESS;
 }
 
 int gpio_disable_interrupt(enum gpio_signal signal)
 {
-	const struct gpio_info *g = gpio_list + signal;
-	int irq = gpio_find_irq_from_io(g->port, g->mask);
+	const struct gpio_info *g     = gpio_list + signal;
+	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(g->port, g->mask);
 
-	/* Fail if no interrupt handler */
-	if (irq < 0)
-		return EC_ERROR_UNKNOWN;
+	/* Clear MIWU enable bit */
+	if (wui.valid)
+		NPCX_WKEN(wui.table, wui.group) &= ~(1 << wui.bit);
+	else
+		return EC_ERROR_PARAM1;
 
-	task_disable_irq(irq);
 	return EC_SUCCESS;
 }
 
