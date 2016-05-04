@@ -5,16 +5,12 @@
 
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "registers.h"
 #include "spi.h"
 #include "usb_spi.h"
-#include "hooks.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-
-USB_SPI_CONFIG(usb_spi,
-	       USB_IFACE_SPI,
-	       USB_EP_SPI)
 
 void disable_spi(void)
 {
@@ -120,26 +116,3 @@ int usb_spi_interface(struct usb_spi_config const *config,
 	hook_call_deferred(config->deferred, 0);
 	return 0;
 }
-
-static int command_usb_spi(int argc, char **argv)
-{
-	if (argc > 1) {
-		if (!strcasecmp("enable", argv[1]))
-			usb_spi_enable(&usb_spi, 1);
-		else if (!strcasecmp("disable", argv[1])) {
-			usb_spi_enable(&usb_spi, 0);
-			disable_spi();
-		}
-	}
-
-	ccprintf("%sSPI %s\n",
-		usb_spi.state->enabled_host == USB_SPI_AP ? "AP " :
-		usb_spi.state->enabled_host == USB_SPI_EC ? "EC" : "",
-		usb_spi.state->enabled_device ? "enabled" : "disabled");
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(usb_spi, command_usb_spi,
-	"[enable|disable]",
-	"Get/set the usb spi state",
-	NULL);

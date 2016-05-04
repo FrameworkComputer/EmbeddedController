@@ -87,7 +87,7 @@ test_mockable __keep int main(void)
 	flash_pre_init();
 #endif
 
-#if defined(CONFIG_CASE_CLOSED_DEBUG)
+#if defined(CONFIG_CASE_CLOSED_DEBUG) && defined(CONFIG_USB_POWER_DELIVERY)
 	/*
 	 * If the device is locked we assert PD_NO_DEBUG, preventing the EC
 	 * from interfering with the AP's access to the SPI flash.

@@ -45,11 +45,15 @@
 #define CONFIG_USB
 #define CONFIG_USB_HID
 #define CONFIG_USB_CONSOLE
+#define CONFIG_USB_INHIBIT_INIT
 #define CONFIG_USB_SELECT_PHY
 #define CONFIG_USB_SPI
 
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USB
+
+/* Enable Case Closed Debugging */
+#define CONFIG_CASE_CLOSED_DEBUG
 
 #define CONFIG_USB_PID 0x5014
 

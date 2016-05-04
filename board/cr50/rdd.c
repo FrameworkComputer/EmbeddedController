@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "case_closed_debug.h"
 #include "console.h"
 #include "device_state.h"
 #include "gpio.h"
@@ -13,7 +14,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-static int enable;
+static int uart_enabled;
 
 struct uart_config {
 	const char *name;
@@ -50,7 +51,7 @@ static int servo_is_connected(void)
 
 void uartn_tx_connect(int uart)
 {
-	if (!enable)
+	if (!uart_enabled)
 		return;
 
 	if (servo_is_connected()) {
@@ -69,7 +70,7 @@ void uartn_tx_disconnect(int uart)
 {
 	/* If servo is connected disable UART */
 	if (servo_is_connected())
-		enable = 0;
+		uart_enabled = 0;
 
 	/* Disconnect the TX pin from UART peripheral */
 	uart_select_tx(uart, 0);
@@ -82,6 +83,8 @@ void rdd_attached(void)
 
 	/* Select the CCD PHY */
 	usb_select_phy(USB_SEL_PHY1);
+
+	ccd_set_mode(CCD_MODE_ENABLED);
 }
 
 void rdd_detached(void)
@@ -95,28 +98,40 @@ void rdd_detached(void)
 
 	/* Select the AP PHY */
 	usb_select_phy(USB_SEL_PHY0);
+
+	ccd_set_mode(CCD_MODE_DISABLED);
 }
 
-static int command_uart(int argc, char **argv)
+static int command_ccd(int argc, char **argv)
 {
 	if (argc > 1) {
-		if (!strcasecmp("enable", argv[1])) {
-			enable = 1;
-			uartn_tx_connect(UART_EC);
-			uartn_tx_connect(UART_AP);
-		} else if (!strcasecmp("disable", argv[1])) {
-			enable = 0;
-			uartn_tx_disconnect(UART_EC);
-			uartn_tx_disconnect(UART_AP);
-		}
+		if (!strcasecmp("uart", argv[1]) && argc > 2) {
+			if (!strcasecmp("enable", argv[2])) {
+				uart_enabled = 1;
+				uartn_tx_connect(UART_EC);
+				uartn_tx_connect(UART_AP);
+			} else if (!strcasecmp("disable", argv[2])) {
+				uart_enabled = 0;
+				uartn_tx_disconnect(UART_EC);
+				uartn_tx_disconnect(UART_AP);
+			}
+		} else if (argc == 2) {
+			if (!strcasecmp("enable", argv[1]))
+				rdd_attached();
+			else if (!strcasecmp("disable", argv[1]))
+				rdd_detached();
+		} else
+			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("AP UART %s\nEC UART %s\n",
-		uartn_enabled(UART_AP) ? "enabled" : "disabled",
-		uartn_enabled(UART_EC) ? "enabled" : "disabled");
+	ccprintf("CCD:     %s\n", usb_get_phy() == USB_SEL_PHY1 ? " enabled" :
+		"disabled");
+	ccprintf("AP UART: %s\nEC UART: %s\n",
+		uartn_enabled(UART_AP) ? " enabled" : "disabled",
+		uartn_enabled(UART_EC) ? " enabled" : "disabled");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(uart, command_uart,
-	"[enable|disable]",
-	"Get/set the UART TX connection state",
+DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
+	"[uart] [enable|disable]",
+	"Get/set the case closed debug state",
 	NULL);
