@@ -20,6 +20,7 @@
 #include "driver/charger/bd99955.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/ps8751.h"
 #include "driver/temp_sensor/g78x.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -152,10 +153,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
 		.driver = &anx74xx_tcpm_usb_mux_driver,
+		.hpd_update = &anx74xx_tcpc_update_hpd_status,
 	},
 	{
 		.port_addr = 1,
 		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8751_tcpc_update_hpd_status,
 	}
 };
 #endif

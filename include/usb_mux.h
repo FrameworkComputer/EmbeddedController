@@ -75,6 +75,12 @@ struct usb_mux {
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
 	int (*board_init)(const struct usb_mux *mux);
+
+	/*
+	 * USB Type-C DP alt mode support. Notify Type-C controller
+	 * there is DP dongle hot-plug.
+	 */
+	void (*hpd_update)(int port, int hpd_lvl, int hpd_irq);
 };
 
 /* Supported USB mux drivers */
