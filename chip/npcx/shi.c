@@ -194,16 +194,6 @@ static int shi_read_inbuf_wait(uint16_t szbytes);
  */
 static void shi_send_response_packet(struct host_packet *pkt)
 {
-	/* Append our past-end byte, which we reserved space for. */
-	((uint8_t *) pkt->response)[pkt->response_size + 0] = EC_SPI_PAST_END;
-
-	/* Computing sending bytes of response */
-	shi_params.sz_response = pkt->response_size + SHI_PROTO3_OVERHEAD;
-
-	/*
-	 * Before the state is set to SENDING, any CS de-assertion would
-	 * give up sending.
-	 */
 	if (state == SHI_STATE_PROCESSING) {
 		/*
 		* Disable interrupts. This routine is not called from interrupt
@@ -211,6 +201,15 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		* preempted after writing its initial reply byte.
 		*/
 		interrupt_disable();
+
+		/* Append our past-end byte, which we reserved space for. */
+		((uint8_t *) pkt->response)[pkt->response_size + 0] =
+			EC_SPI_PAST_END;
+
+		/* Computing sending bytes of response */
+		shi_params.sz_response =
+			pkt->response_size + SHI_PROTO3_OVERHEAD;
+
 		/*
 		 * Disable SHI interrupt until we have prepared
 		 * the first package to output
@@ -246,7 +245,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		shi_reset_prepare();
 		DEBUG_CPRINTF("END\n");
 	} else
-		CPRINTS("Unexpected state %d in response handler\n", state);
+		DEBUG_CPRINTS("Unexpected state %d in response handler", state);
 }
 
 void shi_handle_host_package(void)
@@ -747,6 +746,7 @@ static void shi_disable(void)
 	gpio_config_module(MODULE_SPI, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, shi_disable, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SYSJUMP, shi_disable, HOOK_PRIO_DEFAULT);
 
 static void shi_init(void)
 {
