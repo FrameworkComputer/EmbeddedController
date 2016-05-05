@@ -17,7 +17,7 @@ static uint16_t mock_smart_battery[SB_MANUFACTURER_DATA + 1];
 int sb_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		uint8_t *in, int in_size, int flags)
 {
-	if (out_size == 0 && in_size == 0)
+	if (out_size == 0)
 		return EC_SUCCESS;
 
 	if (port != I2C_PORT_BATTERY || slave_addr != BATTERY_ADDR)
