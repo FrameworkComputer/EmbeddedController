@@ -88,15 +88,35 @@ DECLARE_HOOK(HOOK_INIT, twinkie_init, HOOK_PRIO_DEFAULT);
 
 /* ------ Helper functions ------ */
 
+static inline int disable_tracing_save(void)
+{
+	int tr_enabled = STM32_EXTI_IMR & EXTI_COMP_MASK(0);
+
+	if (tr_enabled)
+		pd_rx_disable_monitoring(0);
+	return tr_enabled;
+}
+
+static inline void enable_tracing_ifneeded(int flag)
+{
+	if (flag)
+		pd_rx_enable_monitoring(0);
+}
+
 static int send_message(int polarity, uint16_t header,
 			uint8_t cnt, const uint32_t *data)
 {
 	int bit_len;
 
+	/* Don't get preempted by the tracing */
+	int flag = disable_tracing_save();
+
 	bit_len = prepare_message(0, header, cnt, data);
 	/* Transmit the packet */
 	pd_start_tx(0, polarity, bit_len);
 	pd_tx_done(0, polarity);
+
+	enable_tracing_ifneeded(flag);
 
 	return bit_len;
 }
@@ -104,6 +124,7 @@ static int send_message(int polarity, uint16_t header,
 static int send_hrst(int polarity)
 {
 	int off;
+	int flag = disable_tracing_save();
 	/* 64-bit preamble */
 	off = pd_write_preamble(0);
 	/* Hard-Reset: 3x RST-1 + 1x RST-2 */
@@ -116,6 +137,7 @@ static int send_hrst(int polarity)
 	/* Transmit the packet */
 	pd_start_tx(0, polarity, off);
 	pd_tx_done(0, polarity);
+	enable_tracing_ifneeded(flag);
 
 	return off;
 }
@@ -169,10 +191,13 @@ static void fsm_wave(uint32_t w)
 	int off = 0;
 	int nbwords = DIV_ROUND_UP(bit_len, 32);
 	int i;
+	int flag;
 
 	/* Buffer overflow */
 	if (idx + nbwords > INJ_CMD_COUNT)
 		return;
+
+	flag = disable_tracing_save();
 
 	for (i = idx; i < idx + nbwords; i++)
 		off = encode_word(0, off, inj_cmds[i]);
@@ -181,6 +206,7 @@ static void fsm_wave(uint32_t w)
 	/* Transmit the packet */
 	pd_start_tx(0, inj_polarity, off);
 	pd_tx_done(0, inj_polarity);
+	enable_tracing_ifneeded(flag);
 }
 
 static void fsm_wait(uint32_t w)
