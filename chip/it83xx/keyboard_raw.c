@@ -29,8 +29,13 @@ void keyboard_raw_init(void)
 	/* bit2, 1 enables the internal pull-up of the KSI[7:0] pins. */
 	IT83XX_KBS_KSICTRL = 0x04;
 
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+	/* KSO[2] is high, others are low. */
+	IT83XX_KBS_KSOL = (1 << 2);
+#else
 	/* KSO[7:0] pins low. */
 	IT83XX_KBS_KSOL = 0x00;
+#endif
 
 	/* KSO[15:8] pins low. */
 	IT83XX_KBS_KSOH1 = 0x00;
@@ -74,6 +79,10 @@ test_mockable void keyboard_raw_drive_column(int col)
 	else
 		mask = 0xffff ^ (1 << col);
 
+#ifdef CONFIG_KEYBOARD_COL2_INVERTED
+	/* KSO[2] is inverted. */
+	mask ^= (1 << 2);
+#endif
 	IT83XX_KBS_KSOL = mask & 0xff;
 	IT83XX_KBS_KSOH1 = (mask >> 8) & 0xff;
 }
