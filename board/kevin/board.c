@@ -47,6 +47,12 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
+static void overtemp_interrupt(enum gpio_signal signal)
+{
+	CPRINTS("AP_OVERTEMP asserted.  Shutting down AP!");
+	chipset_force_shutdown();
+}
+
 #include "gpio_list.h"
 
 /******************************************************************************/
@@ -271,3 +277,16 @@ int board_get_version(void)
 
 	return version;
 }
+
+static void overtemp_interrupt_enable(void)
+{
+	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, overtemp_interrupt_enable,
+	     HOOK_PRIO_DEFAULT);
+static void overtemp_interrupt_disable(void)
+{
+	gpio_disable_interrupt(GPIO_AP_OVERTEMP);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, overtemp_interrupt_disable,
+	     HOOK_PRIO_DEFAULT);
