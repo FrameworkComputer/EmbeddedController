@@ -33,6 +33,9 @@ test-list-$(BOARD_SAMUS_PD)=
 test-list-$(BOARD_LARS_PD)=
 
 # Emulator tests
+ifneq ($(TEST_LIST_HOST),)
+test-list-host=$(TEST_LIST_HOST)
+else
 test-list-host=mutex pingpong utils kb_scan kb_mkbp lid_sw power_button hooks
 test-list-host+=thermal flash queue kb_8042 extpwr_gpio console_edit system
 test-list-host+=sbs_charging host_command
@@ -40,6 +43,7 @@ test-list-host+=bklight_lid bklight_passthru interrupt timer_dos button
 test-list-host+=math_util motion_lid sbs_charging_v2 battery_get_params_smart
 test-list-host+=lightbar inductive_charging usb_pd fan charge_manager
 test-list-host+=charge_manager_drp_charging charge_ramp
+endif
 
 battery_get_params_smart-y=battery_get_params_smart.o
 bklight_lid-y=bklight_lid.o
