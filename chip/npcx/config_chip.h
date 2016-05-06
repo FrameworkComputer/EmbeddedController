@@ -50,12 +50,12 @@
 /* Use chip variant to specify the size and start address of program memory */
 #if defined(CHIP_VARIANT_NPCX5M5G)
 /* 96KB RAM for FW code */
-#define CONFIG_PROGRAM_MEMORY_SIZE (96 * 1024)
+#define NPCX_PROGRAM_MEMORY_SIZE (96 * 1024)
 /* program memory base address for 128KB RAM */
 #define CONFIG_PROGRAM_MEMORY_BASE 0x100A8000
 #elif defined(CHIP_VARIANT_NPCX5M6G)
 /* 224KB RAM for FW code */
-#define CONFIG_PROGRAM_MEMORY_SIZE (224 * 1024)
+#define NPCX_PROGRAM_MEMORY_SIZE (224 * 1024)
 /* program memory base address for 256KB RAM */
 #define CONFIG_PROGRAM_MEMORY_BASE 0x10088000
 #else

@@ -44,7 +44,7 @@
 
 /* RO firmware offset in flash */
 #define CONFIG_RO_MEM_OFF	0
-#define CONFIG_RO_SIZE		CONFIG_PROGRAM_MEMORY_SIZE
+#define CONFIG_RO_SIZE		NPCX_PROGRAM_MEMORY_SIZE
 
 /* RW firmware offset in flash */
 #define CONFIG_RW_MEM_OFF	CONFIG_RW_STORAGE_OFF
