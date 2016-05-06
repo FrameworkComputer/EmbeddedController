@@ -19,9 +19,6 @@ test-list-$(BOARD_SAMUS)=
 # Ryu has issues when building tests
 test-list-$(BOARD_RYU)=
 
-# Kunimitsu PD has issues when building tests
-test-list-$(BOARD_KUNIMITSU_PD)=
-
 # llama has issues when building tests
 test-list-$(BOARD_LLAMA)=
 
@@ -30,7 +27,6 @@ test-list-$(BOARD_GLADOS_PD)=
 test-list-$(BOARD_CHELL_PD)=
 test-list-$(BOARD_OAK_PD)=
 test-list-$(BOARD_SAMUS_PD)=
-test-list-$(BOARD_LARS_PD)=
 
 # Emulator tests
 ifneq ($(TEST_LIST_HOST),)
