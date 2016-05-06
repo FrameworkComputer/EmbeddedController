@@ -3,10 +3,13 @@
  * found in the LICENSE file.
  */
 
-/* IT8380 development board configuration */
+/* IT83xx development board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
+
+/* NOTE: 0->ec evb, non-zero->pd evb */
+#define IT83XX_PD_EVB  0
 
 /* Optional features */
 #define CONFIG_BATTERY_SMART
@@ -24,6 +27,22 @@
 /* Use CS0 of SSPI */
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_UART_HOST
+
+#if IT83XX_PD_EVB
+/* PD */
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
+#define CONFIG_USB_PD_CUSTOM_VDM
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_PORT_COUNT    2
+#define CONFIG_USB_PD_TCPM_ITE83XX
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+#undef CONFIG_UART_HOST
+#endif
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
@@ -48,27 +67,13 @@
 
 enum pwm_channel {
 	PWM_CH_FAN,
-	PWM_CH_1,
-	PWM_CH_2,
-	PWM_CH_3,
-	PWM_CH_4,
-	PWM_CH_5,
-	PWM_CH_7,
-
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
 
 enum adc_channel {
-	ADC_CH_0,
-	ADC_CH_1,
-	ADC_CH_2,
-	ADC_CH_3,
-	ADC_CH_4,
-	ADC_CH_5,
-	ADC_CH_6,
-	ADC_CH_7,
-
+	ADC_VBUSSA,
+	ADC_VBUSSB,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -116,6 +121,31 @@ enum ec2i_setting {
 	/* Number of EC2I settings */
 	EC2I_SETTING_COUNT
 };
+
+#if IT83XX_PD_EVB
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+/* Try to negotiate to 20V since i2c noise problems should be fixed. */
+#define PD_MAX_VOLTAGE_MV     20000
+/* start as a sink in case we have no other power supply/battery */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+/* TODO: determine the following board specific type-C power constants */
+/*
+ * delay to turn on the power supply max is ~16ms.
+ * delay to turn off the power supply max is about ~180ms.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+
+int board_get_battery_soc(void);
+void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
+void board_pd_vbus_ctrl(int port, int enabled);
+#endif
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

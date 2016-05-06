@@ -5,7 +5,8 @@
 #
 # Board specific files build
 
-# the IC is ITE 8380
+# the IC is ITE IT8390/IT8320
 CHIP:=it83xx
 
 board-y=board.o
+board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o

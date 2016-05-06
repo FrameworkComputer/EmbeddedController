@@ -2,13 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/* IT8380 development board configuration */
+/* IT83xx development board configuration */
 
 #include "adc.h"
 #include "adc_chip.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "it83xx_pd.h"
 #include "ec2i_chip.h"
 #include "fan.h"
 #include "gpio.h"
@@ -28,7 +29,71 @@
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
+#include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
+
+#if IT83XX_PD_EVB
+int board_get_battery_soc(void)
+{
+	return 100;
+}
+
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+	{-1, -1, &it83xx_tcpm_drv},
+	{-1, -1, &it83xx_tcpm_drv},
+};
+
+void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)
+{
+	int cc1_enabled = 0, cc2_enabled = 0;
+
+	if (cc_pin)
+		cc2_enabled = enabled;
+	else
+		cc1_enabled = enabled;
+
+	if (port) {
+		gpio_set_level(GPIO_USBPD_PORTB_CC2_VCONN, cc2_enabled);
+		gpio_set_level(GPIO_USBPD_PORTB_CC1_VCONN, cc1_enabled);
+	} else {
+		gpio_set_level(GPIO_USBPD_PORTA_CC2_VCONN, cc2_enabled);
+		gpio_set_level(GPIO_USBPD_PORTA_CC1_VCONN, cc1_enabled);
+	}
+}
+
+void board_pd_vbus_ctrl(int port, int enabled)
+{
+	if (port) {
+		gpio_set_level(GPIO_USBPD_PORTB_VBUS_INPUT, !enabled);
+		gpio_set_level(GPIO_USBPD_PORTB_VBUS_OUTPUT, enabled);
+		if (!enabled) {
+			gpio_set_level(GPIO_USBPD_PORTB_VBUS_DROP, 1);
+			udelay(MSEC);
+		}
+		gpio_set_level(GPIO_USBPD_PORTB_VBUS_DROP, 0);
+	} else {
+		gpio_set_level(GPIO_USBPD_PORTA_VBUS_INPUT, !enabled);
+		gpio_set_level(GPIO_USBPD_PORTA_VBUS_OUTPUT, enabled);
+		if (!enabled) {
+			gpio_set_level(GPIO_USBPD_PORTA_VBUS_DROP, 1);
+			udelay(MSEC);
+		}
+		gpio_set_level(GPIO_USBPD_PORTA_VBUS_DROP, 0);
+	}
+}
+#else
+/* EC EVB */
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+void pd_task(void)
+{
+	CPRINTF("EC EVB so PD task (ID%x) is suspended all the time.\n",
+		task_get_current());
+
+	while (1)
+		task_wait_event(-1);
+}
+#endif
 
 #include "gpio_list.h"
 
@@ -40,12 +105,6 @@
  */
 const struct pwm_t pwm_channels[] = {
 	{7, 0,                     30000, PWM_PRESCALER_C4},
-	{1, PWM_CONFIG_ACTIVE_LOW, 1000,  PWM_PRESCALER_C6},
-	{2, 0,                     200,   PWM_PRESCALER_C7},
-	{3, PWM_CONFIG_ACTIVE_LOW, 1000,  PWM_PRESCALER_C6},
-	{4, 0,                     30000, PWM_PRESCALER_C4},
-	{5, PWM_CONFIG_ACTIVE_LOW, 200,   PWM_PRESCALER_C7},
-	{0, PWM_CONFIG_ACTIVE_LOW, 1000,  PWM_PRESCALER_C6},
 };
 
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
@@ -182,14 +241,8 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"adc_ch0", 3000, 1024, 0, 0},
-	{"adc_ch1", 3000, 1024, 0, 1},
-	{"adc_ch2", 3000, 1024, 0, 2},
-	{"adc_ch3", 3000, 1024, 0, 3},
-	{"adc_ch4", 3000, 1024, 0, 4},
-	{"adc_ch5", 3000, 1024, 0, 5},
-	{"adc_ch6", 3000, 1024, 0, 6},
-	{"adc_ch7", 3000, 1024, 0, 7},
+	{"ADC_VBUSSA", 3000, 1024, 0, 0}, /*GPI0*/
+	{"ADC_VBUSSB", 3000, 1024, 0, 1}, /*GPI1*/
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -229,9 +282,6 @@ const struct i2c_port_t i2c_ports[] = {
 	{"battery", IT83XX_I2C_CH_C, 100, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
 	{"evb-1",   IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
 	{"evb-2",   IT83XX_I2C_CH_B, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
-#ifndef CONFIG_UART_HOST
-	{"opt-3",   IT83XX_I2C_CH_D, 100, GPIO_I2C_D_SCL, GPIO_I2C_D_SDA},
-#endif
 	{"opt-4",   IT83XX_I2C_CH_E, 100, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
 };
 
