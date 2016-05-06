@@ -1072,7 +1072,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	}
 
 	/* Read 6 bytes starting at xyz_reg */
-	raw_read_n(s->port, s->addr, get_xyz_reg(s->type), data, 6);
+	ret = raw_read_n(s->port, s->addr, get_xyz_reg(s->type), data, 6);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RD XYZ Error %d]",
