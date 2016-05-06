@@ -109,6 +109,7 @@ enum device_type {
 	DEVICE_SERVO_EC,
 	DEVICE_AP,
 	DEVICE_EC,
+	DEVICE_SERVO,
 
 	DEVICE_COUNT
 };

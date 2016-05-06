@@ -81,7 +81,16 @@ PINMUX(FUNC(UART0_RX),        A1, DIO_INPUT | DIO_WAKE_LOW)
  */
 PINMUX(FUNC(UART1_RX),        A3, DIO_INPUT)	/* AP console */
 PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)	/* EC console */
-
+/*
+ * Monitor UART RX/TX signals to detect state changes on the EC, AP, and servo.
+ *
+ * The idle state of the RX signals when the AP or EC are powered on is high.
+ * When they are not powered, the signals will remain low. When servo is
+ * connected it drives the TX signals high. The servo TX signals are wired
+ * to cr50's. Because the two device TX signals are directly wired together,
+ * driving the cr50 uart TX at the same time as servo is driving those pins may
+ * damage both servo and cr50.
+ */
 PINMUX(GPIO(AP_ON),           A3, DIO_INPUT)
 PINMUX(GPIO(AP_OFF),          A3, DIO_INPUT)
 PINMUX(GPIO(EC_ON),           B6, DIO_INPUT)

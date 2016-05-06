@@ -7,7 +7,6 @@
 #define __CROS_EC_UARTN_H
 
 #include "common.h"
-#include "gpio.h"
 
 /**
  * Initialize the UART module.
@@ -77,4 +76,10 @@ void uartn_tx_stop(int uart);
 
 /* Get UART output status */
 int uartn_enabled(int uart);
+
+/* Enable UART output */
+void uartn_tx_connect(int uart);
+
+/* Disable UART output */
+void uartn_tx_disconnect(int uart);
 #endif  /* __CROS_EC_UARTN_H */
