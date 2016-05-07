@@ -55,7 +55,7 @@ int pwm_get_duty(enum pwm_channel ch)
 	return MEC1322_PWM_ON(pwm_channels[ch].channel);
 }
 
-inline uint32_t pwm_get_keep_awake_mask(void)
+uint32_t pwm_get_keep_awake_mask(void)
 {
 	return pwm_keep_awake_mask;
 }
