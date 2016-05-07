@@ -129,7 +129,7 @@ static int find_param_index(const int eng_val, const int round_up,
 static int raw_read8(const int port, const int addr, const int reg,
 					 int *data_ptr)
 {
-	int rv;
+	int rv = EC_ERROR_INVAL;
 
 	if (KIONIX_IS_SPI(addr)) {
 #ifdef CONFIG_SPI_ACCEL_PORT
@@ -153,7 +153,7 @@ static int raw_read8(const int port, const int addr, const int reg,
  */
 static int raw_write8(const int port, const int addr, const int reg, int data)
 {
-	int rv;
+	int rv = EC_ERROR_INVAL;
 
 	if (KIONIX_IS_SPI(addr)) {
 #ifdef CONFIG_SPI_ACCEL_PORT
@@ -171,7 +171,7 @@ static int raw_write8(const int port, const int addr, const int reg, int data)
 static int raw_read_multi(const int port, int addr, uint8_t reg,
 			  uint8_t *rxdata, int rxlen)
 {
-	int rv;
+	int rv = EC_ERROR_INVAL;
 
 	if (KIONIX_IS_SPI(addr)) {
 #ifdef CONFIG_SPI_ACCEL_PORT
