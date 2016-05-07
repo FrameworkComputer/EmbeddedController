@@ -49,8 +49,10 @@ static enum {
 	HCDEBUG_MODES
 } hcdebug = HCDEBUG_NORMAL;
 
+#ifdef CONFIG_CMD_HCDEBUG
 static const char * const hcdebug_mode_names[HCDEBUG_MODES] = {
 	"off", "normal", "every", "params"};
+#endif
 
 #ifdef CONFIG_HOST_COMMAND_STATUS
 /*
