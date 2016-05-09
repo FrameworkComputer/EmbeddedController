@@ -411,12 +411,17 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 /* Mutexes */
 static struct mutex g_kx022_mutex[2];
 
-/* TODO: check if we need this rotation or not */
-/* Matrix to rotate accelrator into standard reference frame */
+/* Matrix to rotate accelerometer into standard reference frame */
 const matrix_3x3_t base_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0,  0},
+	{ 0,  FLOAT_TO_FP(1),  0},
+	{ 0,  0, FLOAT_TO_FP(-1)}
+};
+
+const matrix_3x3_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1),  0,  0},
 	{ 0, FLOAT_TO_FP(-1),  0},
-	{ 0,  0,  FLOAT_TO_FP(1)}
+	{ 0,  0, FLOAT_TO_FP(-1)}
 };
 
 /* KX022 private data */
@@ -435,7 +440,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_kx022_mutex[0],
 	 .drv_data = &g_kx022_data[0],
 	 .addr = 1, /* SPI, device ID 0 */
-	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {
 		/* AP: by default use EC settings */
@@ -469,7 +474,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .mutex = &g_kx022_mutex[1],
 	 .drv_data = &g_kx022_data[1],
 	 .addr = 3, /* SPI, device ID 1 */
-	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {
 		/* AP: by default use EC settings */
