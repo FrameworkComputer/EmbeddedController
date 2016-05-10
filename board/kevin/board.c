@@ -243,21 +243,49 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 enum kevin_board_version {
 	BOARD_VERSION_UNKNOWN = -1,
-	BOARD_VERSION_PROTO1 = 0,
-	BOARD_VERSION_PROTO2 = 1,
-	BOARD_VERSION_FUTURE = 2,
+	BOARD_VERSION_REV0 = 0,
+	BOARD_VERSION_REV1 = 1,
+	BOARD_VERSION_REV2 = 2,
+	BOARD_VERSION_REV3 = 3,
+	BOARD_VERSION_REV4 = 4,
+	BOARD_VERSION_REV5 = 5,
+	BOARD_VERSION_REV6 = 6,
+	BOARD_VERSION_REV7 = 7,
+	BOARD_VERSION_REV8 = 8,
+	BOARD_VERSION_REV9 = 9,
+	BOARD_VERSION_REV10 = 10,
+	BOARD_VERSION_REV11 = 11,
+	BOARD_VERSION_REV12 = 12,
+	BOARD_VERSION_REV13 = 13,
+	BOARD_VERSION_REV14 = 14,
+	BOARD_VERSION_REV15 = 15,
 	BOARD_VERSION_COUNT,
 };
 
 struct {
 	enum kevin_board_version version;
-	int thresh_mv;
-} const kevin_board_versions[] = {
-	{ BOARD_VERSION_PROTO1, 150 },  /* 2.2 - 3.3  ohm */
-	{ BOARD_VERSION_PROTO2, 250 },  /* 6.8 - 7.32 ohm */
-	{ BOARD_VERSION_FUTURE, 3300 }, /* ??? ohm        */
+	int expect_mv;
+} const kevin_boards[] = {
+	{ BOARD_VERSION_REV0, 109 },   /* 51.1K , 2.2K(gru 3.3K) ohm */
+	{ BOARD_VERSION_REV1, 211 },   /* 51.1k , 6.8K ohm */
+	{ BOARD_VERSION_REV2, 319 },   /* 51.1K , 11K ohm */
+	{ BOARD_VERSION_REV3, 427 },   /* 56K   , 17.4K ohm */
+	{ BOARD_VERSION_REV4, 542 },   /* 51.1K , 22K ohm */
+	{ BOARD_VERSION_REV5, 666 },   /* 51.1K , 30K ohm */
+	{ BOARD_VERSION_REV6, 781 },   /* 51.1K , 39.2K ohm */
+	{ BOARD_VERSION_REV7, 900 },   /* 56K   , 56K ohm */
+	{ BOARD_VERSION_REV8, 1023 },  /* 47K   , 61.9K ohm */
+	{ BOARD_VERSION_REV9, 1137 },  /* 47K   , 80.6K ohm */
+	{ BOARD_VERSION_REV10, 1240 }, /* 56K   , 124K ohm */
+	{ BOARD_VERSION_REV11, 1343 }, /* 51.1K , 150K ohm */
+	{ BOARD_VERSION_REV12, 1457 }, /* 47K   , 200K ohm */
+	{ BOARD_VERSION_REV13, 1576 }, /* 47K   , 330K ohm */
+	{ BOARD_VERSION_REV14, 1684 }, /* 47K   , 680K ohm */
+	{ BOARD_VERSION_REV15, 1800 }, /* 56K   , NC */
 };
-BUILD_ASSERT(ARRAY_SIZE(kevin_board_versions) == BOARD_VERSION_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(kevin_boards) == BOARD_VERSION_COUNT);
+
+#define THRESHHOLD_MV 56 /* Simply assume 1800/16/2 */
 
 int board_get_version(void)
 {
@@ -275,8 +303,8 @@ int board_get_version(void)
 	gpio_set_level(GPIO_EC_BOARD_ID_EN_L, 1);
 
 	for (i = 0; i < BOARD_VERSION_COUNT; ++i) {
-		if (mv < kevin_board_versions[i].thresh_mv) {
-			version = kevin_board_versions[i].version;
+		if (mv < kevin_boards[i].expect_mv + THRESHHOLD_MV) {
+			version = kevin_boards[i].version;
 			break;
 		}
 	}
