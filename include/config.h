@@ -1475,6 +1475,9 @@
 #undef CONFIG_PWM_INPUT_LFCLK
 
 /*****************************************************************************/
+/* Support PWM output to display backlight */
+#undef CONFIG_PWM_DISPLIGHT
+
 /* Support PWM output to keyboard backlight */
 #undef CONFIG_PWM_KBLIGHT
 

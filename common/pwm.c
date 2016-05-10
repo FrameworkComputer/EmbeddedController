@@ -7,10 +7,78 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "pwm.h"
 #include "util.h"
 
 #ifdef CONFIG_PWM
+
+/*
+ * Get target channel based on type / index host command parameters.
+ * Returns 0 if a valid channel is selected, -1 on error.
+ */
+static int get_target_channel(enum pwm_channel *channel, int type, int index)
+{
+	switch (type) {
+	case EC_PWM_TYPE_GENERIC:
+		*channel = index;
+		break;
+#ifdef CONFIG_PWM_KBLIGHT
+	case EC_PWM_TYPE_KB_LIGHT:
+		*channel = PWM_CH_KBLIGHT;
+		break;
+#endif
+#ifdef CONFIG_PWM_DISPLIGHT
+	case EC_PWM_TYPE_DISPLAY_LIGHT:
+		*channel = PWM_CH_DISPLIGHT;
+		break;
+#endif
+	default:
+		return -1;
+	}
+
+	return *channel >= PWM_CH_COUNT;
+}
+
+static int host_command_pwm_set_duty(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pwm_set_duty *p = args->params;
+	enum pwm_channel channel;
+
+	if (p->percent > 100)
+		return EC_RES_INVALID_PARAM;
+
+	if (get_target_channel(&channel, p->pwm_type, p->index))
+		return EC_RES_INVALID_PARAM;
+
+	pwm_set_duty(channel, p->percent);
+	pwm_enable(channel, p->percent > 0);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
+		     host_command_pwm_set_duty,
+		     EC_VER_MASK(0));
+
+static int host_command_pwm_get_duty(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pwm_get_duty *p = args->params;
+	struct ec_response_pwm_get_duty *r = args->response;
+
+	enum pwm_channel channel;
+
+	if (get_target_channel(&channel, p->pwm_type, p->index))
+		return EC_RES_INVALID_PARAM;
+
+	r->percent = pwm_get_duty(channel);
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
+		     host_command_pwm_get_duty,
+		     EC_VER_MASK(0));
+
 /**
  * Print status of a PWM channel.
  *

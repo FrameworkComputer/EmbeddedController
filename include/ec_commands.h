@@ -1173,6 +1173,7 @@ struct ec_params_pwm_set_fan_target_rpm_v1 {
 } __packed;
 
 /* Get keyboard backlight */
+/* OBSOLETE - Use EC_CMD_PWM_SET_DUTY */
 #define EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT 0x22
 
 struct ec_response_pwm_get_keyboard_backlight {
@@ -1181,6 +1182,7 @@ struct ec_response_pwm_get_keyboard_backlight {
 } __packed;
 
 /* Set keyboard backlight */
+/* OBSOLETE - Use EC_CMD_PWM_SET_DUTY */
 #define EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT 0x23
 
 struct ec_params_pwm_set_keyboard_backlight {
@@ -1199,6 +1201,35 @@ struct ec_params_pwm_set_fan_duty_v0 {
 struct ec_params_pwm_set_fan_duty_v1 {
 	uint32_t percent;
 	uint8_t fan_idx;
+} __packed;
+
+#define EC_CMD_PWM_SET_DUTY 0x25
+
+enum ec_pwm_type {
+	/* All types, indexed by board-specific enum pwm_channel */
+	EC_PWM_TYPE_GENERIC = 0,
+	/* Keyboard backlight */
+	EC_PWM_TYPE_KB_LIGHT,
+	/* Display backlight */
+	EC_PWM_TYPE_DISPLAY_LIGHT,
+	EC_PWM_TYPE_COUNT,
+};
+
+struct ec_params_pwm_set_duty {
+	uint8_t percent;   /* Duty cycle percent on [0, 100] */
+	uint8_t pwm_type;  /* ec_pwm_type */
+	uint8_t index;     /* Type-specific index, or 0 if unique */
+} __packed;
+
+#define EC_CMD_PWM_GET_DUTY 0x26
+
+struct ec_params_pwm_get_duty {
+	uint8_t pwm_type;  /* ec_pwm_type */
+	uint8_t index;     /* Type-specific index, or 0 if unique */
+} __packed;
+
+struct ec_response_pwm_get_duty {
+	uint8_t percent;
 } __packed;
 
 /*****************************************************************************/

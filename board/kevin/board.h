@@ -14,6 +14,7 @@
 #define CONFIG_HOSTCMD_SPS
 #define CONFIG_POWER_COMMON
 #define CONFIG_PWM
+#define CONFIG_PWM_DISPLIGHT
 #ifdef BOARD_KEVIN
 #define CONFIG_LED_COMMON
 #endif
@@ -132,7 +133,7 @@ enum pwm_channel {
 #ifdef BOARD_KEVIN
 	PWM_CH_LED_GREEN,
 #endif
-	PWM_CH_BKLIGHT,
+	PWM_CH_DISPLIGHT,
 	PWM_CH_LED_RED,
 #ifdef BOARD_KEVIN
 	PWM_CH_LED_BLUE,

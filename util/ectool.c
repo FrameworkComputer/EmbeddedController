@@ -173,10 +173,14 @@ const char help_str[] =
 	"      Prints current keyboard backlight percent\n"
 	"  pwmgetnumfans\n"
 	"      Prints the number of fans present\n"
+	"  pwmgetduty\n"
+	"      Prints the current duty cycle for given PWM\n"
 	"  pwmsetfanrpm <targetrpm>\n"
 	"      Set target fan RPM\n"
 	"  pwmsetkblight <percent>\n"
 	"      Set keyboard backlight in percent\n"
+	"  pwmsetduty\n"
+	"      Set duty cycle of given PWM in percent\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> [at-shutdown]\n"
@@ -1858,7 +1862,6 @@ int cmd_pwm_set_fan_rpm(int argc, char *argv[])
 	return 0;
 }
 
-
 int cmd_pwm_get_keyboard_backlight(int argc, char *argv[])
 {
 	struct ec_response_pwm_get_keyboard_backlight r;
@@ -1900,6 +1903,84 @@ int cmd_pwm_set_keyboard_backlight(int argc, char *argv[])
 		return rv;
 
 	printf("Keyboard backlight set.\n");
+	return 0;
+}
+
+int cmd_pwm_get_duty(int argc, char *argv[])
+{
+	struct ec_params_pwm_get_duty p;
+	struct ec_response_pwm_get_duty r;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <pwm_idx> | kb | disp\n", argv[0]);
+		return -1;
+	}
+
+	if (!strcmp(argv[1], "kb")) {
+		p.pwm_type = EC_PWM_TYPE_KB_LIGHT;
+		p.index = 0;
+	} else if (!strcmp(argv[1], "disp")) {
+		p.pwm_type = EC_PWM_TYPE_DISPLAY_LIGHT;
+		p.index = 0;
+	} else {
+		p.pwm_type = EC_PWM_TYPE_GENERIC;
+		p.index = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad pwm_idx\n");
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_PWM_GET_DUTY, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("Current PWM duty: %d\n", r.percent);
+	return 0;
+}
+
+
+int cmd_pwm_set_duty(int argc, char *argv[])
+{
+	struct ec_params_pwm_set_duty p;
+	char *e;
+	int rv;
+
+	if (argc != 3) {
+		fprintf(stderr, "Usage: %s <pwm_idx> | kb | disp <percent>\n",
+			argv[0]);
+		return -1;
+	}
+
+	if (!strcmp(argv[1], "kb")) {
+		p.pwm_type = EC_PWM_TYPE_KB_LIGHT;
+		p.index = 0;
+	} else if (!strcmp(argv[1], "disp")) {
+		p.pwm_type = EC_PWM_TYPE_DISPLAY_LIGHT;
+		p.index = 0;
+	} else {
+		p.pwm_type = EC_PWM_TYPE_GENERIC;
+		p.index = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad pwm_idx\n");
+			return -1;
+		}
+	}
+
+	p.percent = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad percent.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_PWM_SET_DUTY, 0,
+			&p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("PWM set.\n");
 	return 0;
 }
 
@@ -6602,8 +6683,10 @@ const struct command commands[] = {
 	{"pwmgetfanrpm", cmd_pwm_get_fan_rpm},
 	{"pwmgetkblight", cmd_pwm_get_keyboard_backlight},
 	{"pwmgetnumfans", cmd_pwm_get_num_fans},
+	{"pwmgetduty", cmd_pwm_get_duty},
 	{"pwmsetfanrpm", cmd_pwm_set_fan_rpm},
 	{"pwmsetkblight", cmd_pwm_set_keyboard_backlight},
+	{"pwmsetduty", cmd_pwm_set_duty},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
 	{"rtcget", cmd_rtc_get},
