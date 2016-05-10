@@ -80,26 +80,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
-void vbus0_evt(enum gpio_signal signal)
-{
-	if (!gpio_get_level(GPIO_USB_C0_RST_L))
-		return;
-
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(0, !gpio_get_level(signal));
-	task_wake(TASK_ID_PD_C0);
-}
-
-void vbus1_evt(enum gpio_signal signal)
-{
-	if (!gpio_get_level(GPIO_USB_C1_RST_L))
-		return;
-
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(1, !gpio_get_level(signal));
-	task_wake(TASK_ID_PD_C1);
-}
-
 void board_set_tcpc_power_mode(int port, int normal_mode)
 {
 }
@@ -216,11 +196,9 @@ void board_tcpc_init(void)
 
 	/* Enable TCPC0 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT);
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
 
 	/* Enable TCPC1 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
@@ -284,10 +262,8 @@ void chipset_do_shutdown(void)
 /* Initialize board. */
 static void board_init(void)
 {
-#if 0 /* TODO: CHARGER */
 	/* Enable charger interrupt */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
-#endif
 
 	/* Enable tablet mode interrupt for input device enable */
 	gpio_enable_interrupt(GPIO_TABLET_MODE_L);

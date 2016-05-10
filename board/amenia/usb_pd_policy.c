@@ -105,8 +105,7 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
-				      GPIO_USB_C0_VBUS_WAKE_L);
+	return bd99955_is_vbus_provided(port);
 }
 
 int pd_board_checks(void)
