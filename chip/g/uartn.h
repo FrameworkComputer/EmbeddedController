@@ -74,4 +74,7 @@ void uartn_tx_start(int uart);
  * Disable the UART transmit interrupt.
  */
 void uartn_tx_stop(int uart);
+
+/* Get UART output status */
+int uartn_enabled(int uart);
 #endif  /* __CROS_EC_UARTN_H */

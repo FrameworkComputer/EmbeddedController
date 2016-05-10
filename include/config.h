@@ -738,6 +738,9 @@
 
 /*****************************************************************************/
 
+/* Monitor the states of other devices */
+#undef CONFIG_DEVICE_STATE
+
 /* Support DMA transfers inside the EC */
 #undef CONFIG_DMA
 

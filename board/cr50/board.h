@@ -35,6 +35,9 @@
 /* Go to sleep when nothing else is happening */
 #define CONFIG_LOW_POWER_IDLE
 
+/* Detect the states of other devices */
+#define CONFIG_DEVICE_STATE
+
 /* Enable debug cable detection */
 #define CONFIG_RDD
 
@@ -100,8 +103,20 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
+/* Device indexes */
+enum device_type {
+	DEVICE_SERVO_AP = 0,
+	DEVICE_SERVO_EC,
+	DEVICE_AP,
+	DEVICE_EC,
+
+	DEVICE_COUNT
+};
+
 /* Interrupt handler */
 void sys_rst_asserted(enum gpio_signal signal);
+void device_state_on(enum gpio_signal signal);
+void device_state_off(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

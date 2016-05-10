@@ -7,7 +7,16 @@
 #include "gpio.h"
 #include "rdd.h"
 #include "registers.h"
+#include "uartn.h"
 #include "usb_api.h"
+
+/* If the UART TX is enabled the pinmux select will have a non-zero value */
+int uartn_enabled(int uart)
+{
+	if (uart == UART_AP)
+		return GREAD(PINMUX, DIOA7_SEL);
+	return GREAD(PINMUX, DIOB5_SEL);
+}
 
 static void usart_tx_connect(void)
 {
@@ -17,7 +26,7 @@ static void usart_tx_connect(void)
 
 static void usart_tx_disconnect(void)
 {
-	GWRITE(PINMUX, DIOA7_SEL, GC_PINMUX_DIOA3_SEL_DEFAULT);
+	GWRITE(PINMUX, DIOA7_SEL, GC_PINMUX_DIOA7_SEL_DEFAULT);
 	GWRITE(PINMUX, DIOB5_SEL, GC_PINMUX_DIOB5_SEL_DEFAULT);
 }
 
@@ -44,19 +53,17 @@ void rdd_detached(void)
 
 static int command_uart(int argc, char **argv)
 {
-	static int enabled;
-
 	if (argc > 1) {
 		if (!strcasecmp("enable", argv[1])) {
-			enabled = 1;
 			usart_tx_connect();
 		} else if (!strcasecmp("disable", argv[1])) {
-			enabled = 0;
 			usart_tx_disconnect();
 		}
 	}
 
-	ccprintf("UART %s\n", enabled ? "enabled" : "disabled");
+	ccprintf("EC UART %s\nAP UART %s\n",
+		uartn_enabled(UART_EC) ? "enabled" : "disabled",
+		uartn_enabled(UART_AP) ? "enabled" : "disabled");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(uart, command_uart,
