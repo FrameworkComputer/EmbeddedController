@@ -72,7 +72,7 @@
 #define SHI_CMD_RX_TIMEOUT_US 8192
 
 /* Timeout for glitch case. Make sure it will exceed 8 SPI clocks */
-#define SHI_GLITCH_TIMEOUT_US 500
+#define SHI_GLITCH_TIMEOUT_US 10000
 
 /*
  * The AP blindly clocks back bytes over the SPI interface looking for a
