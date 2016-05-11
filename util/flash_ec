@@ -44,6 +44,11 @@ die() {
 	exit 1
 }
 
+
+BOARDS_IT83XX=(
+	it83xx_evb
+)
+
 BOARDS_LM4=(
 	auron
 	rambi
@@ -182,6 +187,9 @@ elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
 	CHIP="nrf51"
 elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
 	CHIP="mec1322"
+elif $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
+	CHIP="it83xx"
+	NEED_SERVO="no"
 elif [ -n "${FLAGS_chip}" ]; then
 	CHIP="${FLAGS_chip}"
 else
@@ -537,6 +545,16 @@ function flash_stm32_dfu() {
 	# Actual image flashing
 	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
 		$DFU_UTIL -a 0 -s ${ADDR}:${SIZE} -D "${IMG}"
+}
+
+function flash_it83xx() {
+
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	ITEFLASH=$(PATH="${TOOL_PATH}" which iteflash)
+	if [ ! -x "$ITEFLASH" ]; then
+		die "no iteflash util found."
+	fi
+	sudo ${ITEFLASH} -w ${IMG}
 }
 
 function flash_lm4() {
