@@ -25,13 +25,16 @@ else
 BOARD ?= bds
 
 # Directory where the board is configured (includes /$(BOARD) at the end)
-BDIR:=$(wildcard board/$(BOARD) private*/board/$(BOARD))
+BDIR:=$(wildcard board/$(BOARD) private-*/board/$(BOARD))
 # There can be only one <insert exploding windows here>
 ifeq (,$(BDIR))
 $(error unable to locate BOARD $(BOARD))
 endif
 ifneq (1,$(words $(BDIR)))
 $(error multiple definitions for BOARD $(BOARD): $(BDIR))
+endif
+ifneq ($(filter private-%,$(BDIR)),)
+PDIR=$(subst /board/$(BOARD),,$(BDIR))
 endif
 
 PROJECT?=ec
@@ -119,6 +122,8 @@ $(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)
 $(eval CHIP_FAMILY_$(UC_CHIP_FAMILY)=y)
 
 # Private subdirectories may call this from their build.mk
+# First arg is the path to be prepended to configured *.o files.
+# Second arg is the config variable (ie, "FOO" to select with $(FOO-y)).
 objs_from_dir=$(foreach obj, $($(2)-y), $(1)/$(obj))
 
 # Get build configuration from sub-directories
@@ -126,12 +131,13 @@ objs_from_dir=$(foreach obj, $($(2)-y), $(1)/$(obj))
 include $(BDIR)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
-
 include common/build.mk
 include driver/build.mk
 include power/build.mk
 -include private/build.mk
--include private-cr51/build.mk
+ifneq ($(PDIR),)
+include $(PDIR)/build.mk
+endif
 include test/build.mk
 include util/build.mk
 include util/lock/build.mk
@@ -144,13 +150,15 @@ all-obj-y+=$(call objs_from_dir,core/$(CORE),core)
 all-obj-y+=$(call objs_from_dir,chip/$(CHIP),chip)
 all-obj-y+=$(call objs_from_dir,$(BDIR),board)
 all-obj-y+=$(call objs_from_dir,private,private)
-all-obj-y+=$(call objs_from_dir,private-cr51,private-cr51)
+ifneq ($(PDIR),)
+all-obj-y+=$(call objs_from_dir,$(PDIR),$(PDIR))
+endif
 all-obj-y+=$(call objs_from_dir,common,common)
 all-obj-y+=$(call objs_from_dir,driver,driver)
 all-obj-y+=$(call objs_from_dir,power,power)
 all-obj-y+=$(call objs_from_dir,test,$(PROJECT))
 dirs=core/$(CORE) chip/$(CHIP) $(BDIR) common power test
-dirs+= private private-cr51
+dirs+= private $(PDIR)
 dirs+=$(shell find driver -type d)
 common_dirs=util
 
