@@ -1947,7 +1947,7 @@
 /* Support USB blob handler. */
 #undef CONFIG_USB_BLOB
 
-/* Common USB / BC1.2 charger task */
+/* Common USB / BC1.2 charger detection routines */
 #undef CONFIG_USB_CHARGER
 
 /* Enable USB serial console module. */
