@@ -53,6 +53,12 @@ static void overtemp_interrupt(enum gpio_signal signal)
 	chipset_force_shutdown();
 }
 
+static void warm_reset_request_interrupt(enum gpio_signal signal)
+{
+	CPRINTS("WARM_RESET_REQ asserted.");
+	chipset_reset(0);
+}
+
 #include "gpio_list.h"
 
 /******************************************************************************/

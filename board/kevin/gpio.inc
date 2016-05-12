@@ -17,26 +17,28 @@ GPIO_INT(USB_C0_PD_INT_L,  PIN(6, 0), GPIO_INT_FALLING | GPIO_PULL_UP,
          tcpc_alert_event)
 GPIO_INT(USB_C1_PD_INT_L,  PIN(6, 2), GPIO_INT_FALLING | GPIO_PULL_UP,
          tcpc_alert_event)
-GPIO_INT(VOLUME_UP_L,      PIN(8, 2), GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP,
+GPIO_INT(VOLUME_UP_L,      PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt)
-GPIO_INT(VOLUME_DOWN_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP,
+GPIO_INT(VOLUME_DOWN_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt)
-GPIO_INT(POWER_BUTTON_L,   PIN(0, 4), GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP,
+GPIO_INT(POWER_BUTTON_L,   PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,
          power_button_interrupt)
-GPIO_INT(LID_OPEN,         PIN(9, 7),
-         GPIO_INT_BOTH | GPIO_INPUT | GPIO_SEL_1P8V, lid_interrupt)
+GPIO_INT(LID_OPEN,         PIN(9, 7), GPIO_INT_BOTH | GPIO_SEL_1P8V,
+         lid_interrupt)
 
-GPIO_INT(PP5000_PG,        PIN(7, 1),
-         GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP, power_signal_interrupt)
-GPIO_INT(TPS65261_PG,      PIN(7, 5),
-         GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(PP5000_PG,        PIN(7, 1), GPIO_INT_BOTH | GPIO_PULL_UP,
+         power_signal_interrupt)
+GPIO_INT(TPS65261_PG,      PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,
+         power_signal_interrupt)
 /* TODO: Remove PD in S3 for power savings */
-GPIO_INT(AP_EC_S3_S0_L,    PIN(5, 4),
-         GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_DOWN, power_signal_interrupt)
-GPIO_INT(AP_CORE_PG,       PIN(6, 7),
-         GPIO_INT_BOTH | GPIO_INPUT | GPIO_PULL_UP, power_signal_interrupt)
-GPIO_INT(AP_OVERTEMP,      PIN(7, 4), GPIO_INT_RISING,
-	 overtemp_interrupt)
+GPIO_INT(AP_EC_S3_S0_L,    PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN,
+         power_signal_interrupt)
+GPIO_INT(AP_CORE_PG,       PIN(6, 7), GPIO_INT_BOTH | GPIO_PULL_UP,
+         power_signal_interrupt)
+GPIO_INT(WARM_RESET_REQ,   PIN(7, 3), GPIO_INT_RISING | GPIO_PULL_DOWN,
+         warm_reset_request_interrupt)
+GPIO_INT(AP_OVERTEMP,      PIN(7, 4), GPIO_INT_RISING | GPIO_PULL_DOWN,
+         overtemp_interrupt)
 
 /* VR EN */
 GPIO(AP_CORE_EN,           PIN(7, 2), GPIO_OUT_LOW)
@@ -108,7 +110,6 @@ GPIO(LID_360_L,            PIN(3, 6), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(BASE_SIXAXIS_INT_L,   PIN(4, 0), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(CCD_MODE_ODL,         PIN(6, 3), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(PP3300_S0_EN_L,       PIN(7, 0), GPIO_OUT_HIGH)
-GPIO(WARM_RESET_REQ,       PIN(7, 3), GPIO_INPUT)
 GPIO(SPI_SENSOR_CS_L,      PIN(9, 4), GPIO_OUT_HIGH)
 
 GPIO(USB_C0_DISCHARGE,     PIN(0, 3), GPIO_OUT_LOW)
