@@ -122,6 +122,12 @@ BOARDS_SPI_1800MV=(
 	reef
 )
 
+BOARDS_RAIDEN=(
+	gru
+	kevin
+	reef
+)
+
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
 	"The board to run debugger on."
@@ -135,6 +141,8 @@ DEFINE_string offset "0" \
 	"Offset where to program the image from."
 DEFINE_integer port 9999 \
 	"Port to communicate to servo on."
+DEFINE_boolean raiden "${FLAGS_FALSE}" \
+	"Use raiden_debug_spi programmer"
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
 
@@ -260,6 +268,15 @@ on_servov3() {
 	grep -qs '^CHROMEOS_RELEASE_BOARD=beaglebone_servo' /etc/lsb-release
 }
 
+# Returns 0 on success (if raiden should be used instead of servo)
+on_raiden() {
+	if $(in_array "${BOARDS_RAIDEN[@]}" "${BOARD}") && \
+	   [ "${FLAGS_raiden}" = ${FLAGS_TRUE} ] ; then
+		return 0
+	fi
+	return 1
+}
+
 # Put back the servo and the system in a clean state at exit
 FROZEN_PIDS=""
 cleanup() {
@@ -273,7 +290,9 @@ cleanup() {
 		kill -CONT ${pid}
 	done
 
-	ec_reset
+	if ! on_raiden; then
+		ec_reset
+	fi
 }
 trap cleanup EXIT
 
@@ -419,6 +438,9 @@ function flash_flashrom() {
 
 	if on_servov3; then
 		FLASHROM_PARAM="-p linux_spi"
+	elif on_raiden; then
+		info "Using raiden debug cable."
+		FLASHROM_PARAM="-p raiden_debug_spi:target=EC"
 	else
 		FLASHROM_PARAM="-p ft2232_spi:type=servo-v2,port=B"
 	fi
@@ -427,25 +449,38 @@ function flash_flashrom() {
 		die "no flashrom util found."
 	fi
 
-	if ! on_servov3; then
-		SERIALNAME=$(${DUT_CONTROL_CMD} serialname | cut -d: -f2)
-		if [[ "$SERIALNAME" != "" ]] ; then
-			FLASHROM_PARAM="${FLASHROM_PARAM},serial=${SERIALNAME}"
+	if ! on_raiden; then
+		if ! on_servov3; then
+			SERIALNAME=$(${DUT_CONTROL_CMD} serialname | \
+				cut -d: -f2)
+			if [[ "$SERIALNAME" != "" ]] ; then
+				FLASHROM_PARAM+=",serial=${SERIALNAME}"
+			fi
 		fi
-	fi
 
-	if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
-		SPI_VOLTAGE="pp1800"
+		if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
+			SPI_VOLTAGE="pp1800"
+		else
+			SPI_VOLTAGE="pp3300"
+		fi
+
+		dut_control cold_reset:on
+
+		# Turn on SPI1 interface on servo for SPI Flash Chip
+		dut_control spi1_vref:${SPI_VOLTAGE} spi1_buf_en:on \
+			spi1_buf_on_flex_en:on
 	else
-		SPI_VOLTAGE="pp3300"
+		# Temp layout
+		L=/tmp/flash_spi_layout_$$
+
+		dump_fmap -F "${IMG}" > "${L}"
+
+		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --ignore-fmap \
+			--fast-verify"
 	fi
 
-	dut_control cold_reset:on
-
-	# Turn on SPI1 interface on servo for SPI Flash Chip
-	dut_control spi1_vref:${SPI_VOLTAGE} spi1_buf_en:on spi1_buf_on_flex_en:on
-
-	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | tail -n 1)
+	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null | \
+		tail -n 1)
 	IMG_SIZE=$(stat -c%s "$IMG")
 	PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
 
@@ -456,26 +491,31 @@ if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 	{	# Patch temp image up to SPI_SIZE
 		cat $IMG
 		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | tr '\0' '\377'
+			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
+				tr '\0' '\377'
 		fi
 	} > $T
 else
 	{	# Patch temp image up to SPI_SIZE
 		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
-			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | tr '\0' '\377'
+			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
+				tr '\0' '\377'
 		fi
 		cat $IMG
 	} > $T
 fi
-
-
 	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-		${FLASHROM} ${FLASHROM_PARAM} -w "${T}"
+		${FLASHROM} ${FLASHROM_PARAM} ${FLASHROM_OPTIONS} -w "${T}"
 
 	rm $T
 
-	# Turn off SPI1 interface on servo
-	dut_control spi1_vref:off spi1_buf_en:off spi1_buf_on_flex_en:off
+	if ! on_raiden; then
+		# Turn off SPI1 interface on servo
+		dut_control spi1_vref:off spi1_buf_en:off \
+			spi1_buf_on_flex_en:off
+	else
+		rm $L
+	fi
 
 	# Do not save/restore servo settings
 	save=
@@ -617,7 +657,7 @@ fi
 IMG="$(ec_image)"
 info "Using ${MCU} image : ${IMG}"
 
-if [ "${NEED_SERVO}" != "no" ] ; then
+if ! on_raiden && [ "${NEED_SERVO}" != "no" ] ; then
   EC_UART="$(ec_uart)"
   info "${MCU} UART pty : ${EC_UART}"
 
