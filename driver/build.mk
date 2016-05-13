@@ -81,7 +81,6 @@ driver-$(CONFIG_USB_PD_TCPM_ITE83XX)+=tcpm/it83xx.o
 
 # USB switches
 driver-$(CONFIG_USB_SWITCH_PI3USB9281)+=usb_switch_pi3usb9281.o
-driver-$(CONFIG_USB_SWITCH_TSU6721)+=usb_switch_tsu6721.o
 
 # USB mux high-level driver
 driver-$(CONFIG_USBC_SS_MUX)+=usb_mux.o
