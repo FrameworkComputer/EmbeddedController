@@ -1183,9 +1183,6 @@
  */
 #undef CONFIG_IT83XX_ILM_BLOCK_SIZE
 
-/* LPC cycle can wake-up EC from doze / deep doze mode if define it. */
-#undef CONFIG_IT83XX_LPC_ACCESS_INT
-
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 

@@ -76,11 +76,6 @@ void __idle(void)
 	cprints(CC_TASK, "idle task started");
 
 	while (1) {
-#if defined(CHIP_FAMILY_IT83XX) && defined(CONFIG_LPC) \
-	&& defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-		task_enable_irq(IT83XX_IRQ_WKINTAD);
-#endif
-
 #ifdef CHIP_FAMILY_IT83XX
 		/* doze mode */
 		IT83XX_ECPM_PLLCTRL = EC_PLL_DOZE;
@@ -91,11 +86,6 @@ void __idle(void)
 		 * (sleep / deep sleep, depending on chip config).
 		 */
 		asm("standby wake_grant");
-
-#if defined(CHIP_FAMILY_IT83XX) && defined(CONFIG_LPC) \
-	&& defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-		task_disable_irq(IT83XX_IRQ_WKINTAD);
-#endif
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */

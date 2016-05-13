@@ -96,8 +96,8 @@ void clock_init(void)
 
 	clock_module_disable();
 
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-	IT83XX_WUC_WUESR4 = 0xff;
+#ifdef CONFIG_LPC
+	IT83XX_WUC_WUESR4 = (1 << 2);
 	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
 	/* bit2, wake-up enable for LPC access */
 	IT83XX_WUC_WUENR4 |= (1 << 2);
@@ -229,6 +229,12 @@ void clock_sleep_mode_wakeup_isr(void)
 		clock_event_timer_clock_change(EXT_PSR_8M_HZ, 0xffffffff);
 		task_clear_pending_irq(et_ctrl_regs[EVENT_EXT_TIMER].irq);
 		process_timers(0);
+#ifdef CONFIG_LPC
+		/* disable lpc access wui */
+		task_disable_irq(IT83XX_IRQ_WKINTAD);
+		IT83XX_WUC_WUESR4 = (1 << 2);
+		task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
+#endif
 		/* disable uart wui */
 		uart_exit_dsleep();
 		/* Record time spent in sleep. */
@@ -258,14 +264,15 @@ void __idle(void)
 		if (DEEP_SLEEP_ALLOWED)
 			allow_sleep = clock_allow_low_power_idle();
 
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-		task_enable_irq(IT83XX_IRQ_WKINTAD);
-#endif
 		if (allow_sleep) {
 			interrupt_disable();
 			/* reset low power mode hw timer */
 			IT83XX_ETWD_ETXCTRL(LOW_POWER_EXT_TIMER) |= (1 << 1);
 			sleep_mode_t0 = get_time();
+#ifdef CONFIG_LPC
+			/* enable lpc access wui */
+			task_enable_irq(IT83XX_IRQ_WKINTAD);
+#endif
 			/* enable uart wui */
 			uart_enter_dsleep();
 			/* enable hw timer for deep doze / sleep mode wake-up */
@@ -283,9 +290,6 @@ void __idle(void)
 			asm("standby wake_grant");
 			idle_doze_cnt++;
 		}
-#if defined(CONFIG_LPC) && defined(CONFIG_IT83XX_LPC_ACCESS_INT)
-			task_disable_irq(IT83XX_IRQ_WKINTAD);
-#endif
 	}
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
