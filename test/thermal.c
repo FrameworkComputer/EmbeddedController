@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -532,6 +533,114 @@ static int test_ncp15wb_adc_to_temp(void)
 	return EC_SUCCESS;
 }
 
+#define THERMISTOR_SCALING_FACTOR 13
+static int test_thermistor_linear_interpolate(void)
+{
+	int i, t, t0;
+	uint16_t mv;
+	/* Simple test case - a straight line. */
+	struct thermistor_data_pair line_data[] = {
+		{ 0, 0 }, { 100, 100 }
+	};
+	struct thermistor_info line_info = {
+		.scaling_factor = 1,
+		.num_pairs = ARRAY_SIZE(line_data),
+		.data = line_data,
+	};
+	/*
+	 * Modelled test case - Data derived from Seinhart-Hart equation in a
+	 * resistor divider circuit with Vdd=3300mV, R = 51.1Kohm, and Murata
+	 * NCP15WB-series thermistor (B = 4050, T0 = 298.15, nominal
+	 * resistance (R0) = 47Kohm).
+	 */
+	struct thermistor_data_pair data[] = {
+		{ 787 / THERMISTOR_SCALING_FACTOR, 0 },
+		{ 1142 / THERMISTOR_SCALING_FACTOR, 10 },
+		{ 1528 / THERMISTOR_SCALING_FACTOR, 20 },
+		{ 1901 / THERMISTOR_SCALING_FACTOR, 30 },
+		{ 2229 / THERMISTOR_SCALING_FACTOR, 40 },
+		{ 2497 / THERMISTOR_SCALING_FACTOR, 50 },
+		{ 2703 / THERMISTOR_SCALING_FACTOR, 60 },
+		{ 2857 / THERMISTOR_SCALING_FACTOR, 70 },
+		{ 2970 / THERMISTOR_SCALING_FACTOR, 80 },
+		{ 3053 / THERMISTOR_SCALING_FACTOR, 90 },
+		{ 3113 / THERMISTOR_SCALING_FACTOR, 100 },
+	};
+	struct thermistor_info info = {
+		.scaling_factor = THERMISTOR_SCALING_FACTOR,
+		.num_pairs = ARRAY_SIZE(data),
+		.data = data,
+	};
+	/*
+	 * Reference data points to compare accuracy, taken from same set
+	 * of derived values but at temp - 1, temp + 1, and in between.
+	 */
+	struct {
+		uint16_t mv;	/* not scaled */
+		int temp;
+	} cmp[] = {
+		{ 820, 1 },  { 958, 5 }, { 1104, 9 },
+		{ 1180, 11 }, { 1334, 15 }, { 1489, 19 },
+		{ 1566, 21 }, { 1718, 25 }, { 1866, 29 },
+		{ 1937, 31 }, { 2073, 35 }, { 2199, 39 },
+		{ 2259, 41 }, { 2371, 45 }, { 2473, 49 },
+		{ 2520, 51 }, { 2607, 55 }, { 2685, 59 },
+		{ 2720, 61 }, { 2786, 65 }, { 2844, 69 },
+		{ 2870, 71 }, { 2918, 75 }, { 2960, 79 },
+		{ 2980, 81 }, { 3015, 85 }, { 3045, 89 },
+		{ 3060, 91 }, { 3085, 95 }, { 3107, 99 },
+	};
+
+	/* Return lowest temperature in data set if voltage is too low. */
+	mv = (data[0].mv * info.scaling_factor) - 1;
+	t = thermistor_linear_interpolate(mv, &info);
+	TEST_ASSERT(t == data[0].temp);
+
+	/* Return highest temperature in data set if voltage is too high. */
+	mv = (data[info.num_pairs - 1].mv * info.scaling_factor) + 1;
+	t = thermistor_linear_interpolate(mv, &info);
+	TEST_ASSERT(t == data[info.num_pairs - 1].temp);
+
+	/* Simple line test */
+	for (mv = line_data[0].mv;
+		mv < line_data[line_info.num_pairs - 1].mv;
+		mv++) {
+		t = thermistor_linear_interpolate(mv, &line_info);
+		TEST_ASSERT(mv == t);
+	}
+
+	/*
+	 * Verify that calculated temperature monotonically
+	 * increases with voltage (0-5V, 10mV steps).
+	 */
+	for (mv = data[0].mv * info.scaling_factor, t0 = data[0].temp;
+		mv < data[info.num_pairs - 1].mv;
+		mv += 10) {
+		int t1 = thermistor_linear_interpolate(mv, &info);
+
+		TEST_ASSERT(t1 >= t0);
+		t0 = t1;
+	}
+
+	/* Verify against modelled data, +/- 1C due to scaling. */
+	for (i = 0; i < info.num_pairs; i++) {
+		mv = data[i].mv * info.scaling_factor;
+
+		t = thermistor_linear_interpolate(mv, &info);
+		TEST_ASSERT(t >= data[i].temp - 1 && t <= data[i].temp + 1);
+	}
+
+	/*
+	 * Verify data points that are interpolated by algorithm, allowing
+	 * 1C of inaccuracy.
+	 */
+	for (i = 0; i < ARRAY_SIZE(cmp); i++) {
+		t = thermistor_linear_interpolate(cmp[i].mv, &info);
+		TEST_ASSERT(t >= cmp[i].temp - 1 && t <= cmp[i].temp + 1);
+	}
+
+	return EC_SUCCESS;
+}
 
 void run_test(void)
 {
@@ -545,5 +654,6 @@ void run_test(void)
 	RUN_TEST(test_several_limits);
 
 	RUN_TEST(test_ncp15wb_adc_to_temp);
+	RUN_TEST(test_thermistor_linear_interpolate);
 	test_print_result();
 }
