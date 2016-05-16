@@ -11,6 +11,7 @@
 #include "common.h"
 
 /* IRQ numbers */
+/* Group 0 */
 #define IT83XX_IRQ_WKO20           1
 #define IT83XX_IRQ_KBC_OUT         2
 #define IT83XX_IRQ_PMC_OUT         3
@@ -18,6 +19,7 @@
 #define IT83XX_IRQ_WKINTAD         5
 #define IT83XX_IRQ_WKO23           6
 #define IT83XX_IRQ_PWM             7
+/* Group 1 */
 #define IT83XX_IRQ_ADC             8
 #define IT83XX_IRQ_SMB_A           9
 #define IT83XX_IRQ_SMB_B          10
@@ -26,6 +28,7 @@
 #define IT83XX_IRQ_WKINTC         13
 #define IT83XX_IRQ_WKO25          14
 #define IT83XX_IRQ_CIR            15
+/* Group 2 */
 #define IT83XX_IRQ_SMB_C          16
 #define IT83XX_IRQ_WKO24          17
 #define IT83XX_IRQ_PS2_2          18
@@ -33,6 +36,8 @@
 #define IT83XX_IRQ_PS2_0          20
 #define IT83XX_IRQ_WKO22          21
 #define IT83XX_IRQ_SMFI           22
+#define IT83XX_IRQ_USB            23
+/* Group 3 */
 #define IT83XX_IRQ_KBC_IN         24
 #define IT83XX_IRQ_PMC_IN         25
 #define IT83XX_IRQ_PMC2_OUT       26
@@ -41,6 +46,7 @@
 #define IT83XX_IRQ_EGPC           29
 #define IT83XX_IRQ_EXT_TIMER1     30
 #define IT83XX_IRQ_WKO21          31
+/* Group 4 */
 #define IT83XX_IRQ_GPINT0         32
 #define IT83XX_IRQ_GPINT1         33
 #define IT83XX_IRQ_GPINT2         34
@@ -49,6 +55,16 @@
 #define IT83XX_IRQ_SSPI           37
 #define IT83XX_IRQ_UART1          38
 #define IT83XX_IRQ_UART2          39
+/* Group 5 */
+#define IT83XX_IRQ_WKO50          40
+#define IT83XX_IRQ_WKO51          41
+#define IT83XX_IRQ_WKO52          42
+#define IT83XX_IRQ_WKO53          43
+#define IT83XX_IRQ_WKO54          44
+#define IT83XX_IRQ_WKO55          45
+#define IT83XX_IRQ_WKO56          46
+#define IT83XX_IRQ_WKO57          47
+/* Group 6 */
 #define IT83XX_IRQ_WKO60          48
 #define IT83XX_IRQ_WKO61          49
 #define IT83XX_IRQ_WKO62          50
@@ -57,6 +73,7 @@
 #define IT83XX_IRQ_WKO65          53
 #define IT83XX_IRQ_WKO66          54
 #define IT83XX_IRQ_WKO67          55
+/* Group 7 */
 #define IT83XX_IRQ_RTCT_ALARM1    56
 #define IT83XX_IRQ_RTCT_ALARM2    57
 #define IT83XX_IRQ_EXT_TIMER2     58
@@ -64,6 +81,7 @@
 #define IT83XX_IRQ_TMR_A1         61
 #define IT83XX_IRQ_TMR_B0         62
 #define IT83XX_IRQ_TMR_B1         63
+/* Group 8 */
 #define IT83XX_IRQ_PMC2EX_OUT     64
 #define IT83XX_IRQ_PMC2EX_IN      65
 #define IT83XX_IRQ_PMC3_OUT       66
@@ -71,6 +89,7 @@
 #define IT83XX_IRQ_PMC4_OUT       68
 #define IT83XX_IRQ_PMC4_IN        69
 #define IT83XX_IRQ_I2BRAM         71
+/* Group 9 */
 #define IT83XX_IRQ_WKO70          72
 #define IT83XX_IRQ_WKO71          73
 #define IT83XX_IRQ_WKO72          74
@@ -79,13 +98,16 @@
 #define IT83XX_IRQ_WKO75          77
 #define IT83XX_IRQ_WKO76          78
 #define IT83XX_IRQ_WKO77          79
+/* Group 10 */
 #define IT83XX_IRQ_EXT_TMR8       80
 #define IT83XX_IRQ_SMB_CLOCK_HELD 81
 #define IT83XX_IRQ_CEC            82
 #define IT83XX_IRQ_H2RAM_LPC      83
+#define IT83XX_IRQ_HW_KB_SCAN     84
 #define IT83XX_IRQ_WKO88          85
 #define IT83XX_IRQ_WKO89          86
 #define IT83XX_IRQ_WKO90          87
+/* Group 11 */
 #define IT83XX_IRQ_WKO80          88
 #define IT83XX_IRQ_WKO81          89
 #define IT83XX_IRQ_WKO82          90
@@ -94,6 +116,7 @@
 #define IT83XX_IRQ_WKO85          93
 #define IT83XX_IRQ_WKO86          94
 #define IT83XX_IRQ_WKO87          95
+/* Group 12 */
 #define IT83XX_IRQ_WKO91          96
 #define IT83XX_IRQ_WKO92          97
 #define IT83XX_IRQ_WKO93          98
@@ -102,6 +125,7 @@
 #define IT83XX_IRQ_WKO96          101
 #define IT83XX_IRQ_WKO97          102
 #define IT83XX_IRQ_WKO98          103
+/* Group 13 */
 #define IT83XX_IRQ_WKO99          104
 #define IT83XX_IRQ_WKO100         105
 #define IT83XX_IRQ_WKO101         106
@@ -110,6 +134,7 @@
 #define IT83XX_IRQ_WKO104         109
 #define IT83XX_IRQ_WKO105         110
 #define IT83XX_IRQ_WKO106         111
+/* Group 14 */
 #define IT83XX_IRQ_WKO107         112
 #define IT83XX_IRQ_WKO108         113
 #define IT83XX_IRQ_WKO109         114
@@ -118,6 +143,7 @@
 #define IT83XX_IRQ_WKO112         117
 #define IT83XX_IRQ_WKO113         118
 #define IT83XX_IRQ_WKO114         119
+/* Group 15 */
 #define IT83XX_IRQ_WKO115         120
 #define IT83XX_IRQ_WKO116         121
 #define IT83XX_IRQ_WKO117         122
@@ -126,6 +152,7 @@
 #define IT83XX_IRQ_WKO120         125
 #define IT83XX_IRQ_WKO121         126
 #define IT83XX_IRQ_WKO122         127
+/* Group 16 */
 #define IT83XX_IRQ_WKO128         128
 #define IT83XX_IRQ_WKO129         129
 #define IT83XX_IRQ_WKO130         130
@@ -133,9 +160,20 @@
 #define IT83XX_IRQ_WKO132         132
 #define IT83XX_IRQ_WKO133         133
 #define IT83XX_IRQ_WKO134         134
+/* Group 17 */
+#define IT83XX_IRQ_WKO136         136
+#define IT83XX_IRQ_WKO137         137
+#define IT83XX_IRQ_WKO138         138
+#define IT83XX_IRQ_WKO139         139
+#define IT83XX_IRQ_WKO140         140
+#define IT83XX_IRQ_WKO141         141
+#define IT83XX_IRQ_WKO142         142
+#define IT83XX_IRQ_WKO143         143
+/* Group 18 */
 #define IT83XX_IRQ_PMC5_OUT       149
 #define IT83XX_IRQ_PMC5_IN        150
 #define IT83XX_IRQ_V_COMP         151
+/* Group 19 */
 #define IT83XX_IRQ_SMB_E          152
 #define IT83XX_IRQ_SMB_F          153
 #define IT83XX_IRQ_OSC_DMA        154
@@ -144,14 +182,16 @@
 #define IT83XX_IRQ_EXT_TIMER5     157
 #define IT83XX_IRQ_EXT_TIMER6     158
 #define IT83XX_IRQ_EXT_TIMER7     159
+/* Group 20 */
 #define IT83XX_IRQ_PECI           160
 #define IT83XX_IRQ_SOFTWARE       161
-#define IT83XX_IRQ_WKO162         162
-#define IT83XX_IRQ_WKO163         163
-#define IT83XX_IRQ_WKO164         164
+#define IT83XX_IRQ_ESPI           162
+#define IT83XX_IRQ_ESPI_VW        163
+#define IT83XX_IRQ_PCH_P80        164
 #define IT83XX_IRQ_USBPD0         165
 #define IT83XX_IRQ_USBPD1         166
-#define IT83XX_IRQ_WKO167         167
+#define IT83XX_IRQ_ESPI_SLAVE     167
+
 #define IT83XX_IRQ_COUNT          168
 
 /* IRQ dispatching to CPU INT vectors */
@@ -177,6 +217,7 @@
 #define IT83XX_CPU_INT_IRQ_20      8
 #define IT83XX_CPU_INT_IRQ_21      2
 #define IT83XX_CPU_INT_IRQ_22     12
+#define IT83XX_CPU_INT_IRQ_23     12
 #define IT83XX_CPU_INT_IRQ_24      5
 #define IT83XX_CPU_INT_IRQ_25      4
 #define IT83XX_CPU_INT_IRQ_26      4
@@ -193,6 +234,14 @@
 #define IT83XX_CPU_INT_IRQ_37      9
 #define IT83XX_CPU_INT_IRQ_38      9
 #define IT83XX_CPU_INT_IRQ_39      9
+#define IT83XX_CPU_INT_IRQ_40      2
+#define IT83XX_CPU_INT_IRQ_41      2
+#define IT83XX_CPU_INT_IRQ_42      2
+#define IT83XX_CPU_INT_IRQ_43      2
+#define IT83XX_CPU_INT_IRQ_44      2
+#define IT83XX_CPU_INT_IRQ_45      2
+#define IT83XX_CPU_INT_IRQ_46      2
+#define IT83XX_CPU_INT_IRQ_47      2
 #define IT83XX_CPU_INT_IRQ_48      2
 #define IT83XX_CPU_INT_IRQ_49      2
 #define IT83XX_CPU_INT_IRQ_50      2
@@ -214,7 +263,6 @@
 #define IT83XX_CPU_INT_IRQ_67      4
 #define IT83XX_CPU_INT_IRQ_68      4
 #define IT83XX_CPU_INT_IRQ_69      4
-#define IT83XX_CPU_INT_IRQ_70     12
 #define IT83XX_CPU_INT_IRQ_71     12
 #define IT83XX_CPU_INT_IRQ_72      2
 #define IT83XX_CPU_INT_IRQ_73      2
@@ -279,11 +327,14 @@
 #define IT83XX_CPU_INT_IRQ_132     2
 #define IT83XX_CPU_INT_IRQ_133     2
 #define IT83XX_CPU_INT_IRQ_134     2
-#define IT83XX_CPU_INT_IRQ_144     2
-#define IT83XX_CPU_INT_IRQ_145     2
-#define IT83XX_CPU_INT_IRQ_146     2
-#define IT83XX_CPU_INT_IRQ_147     2
-#define IT83XX_CPU_INT_IRQ_148     2
+#define IT83XX_CPU_INT_IRQ_136     2
+#define IT83XX_CPU_INT_IRQ_137     2
+#define IT83XX_CPU_INT_IRQ_138     2
+#define IT83XX_CPU_INT_IRQ_139     2
+#define IT83XX_CPU_INT_IRQ_140     2
+#define IT83XX_CPU_INT_IRQ_141     2
+#define IT83XX_CPU_INT_IRQ_142     2
+#define IT83XX_CPU_INT_IRQ_143     2
 #define IT83XX_CPU_INT_IRQ_149     4
 #define IT83XX_CPU_INT_IRQ_150     4
 #define IT83XX_CPU_INT_IRQ_151     7
