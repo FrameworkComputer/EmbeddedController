@@ -38,6 +38,7 @@
 #define I2C_START(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_START)
 #define I2C_STOP(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STOP)
 #define I2C_NACK(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_ACK)
+#define I2C_STALL(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STASTRE)
 #define I2C_WRITE_BYTE(ctrl, data) (NPCX_SMBSDA(ctrl) = data)
 #define I2C_READ_BYTE(ctrl, data)  (data = NPCX_SMBSDA(ctrl))
 
@@ -301,6 +302,13 @@ enum smb_error i2c_master_transaction(int controller)
 	/* Disable event and error interrupts */
 	task_disable_irq(i2c_irqs[controller]);
 
+	/*
+	 * If Stall-After-Start mode is still enabled since NACK or BUS error
+	 * occurs, disable it.
+	 */
+	if (IS_BIT_SET(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STASTRE))
+		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STASTRE);
+
 	/* Handle bus timeout */
 	if ((events & TASK_EVENT_I2C_IDLE) == 0) {
 		p_status->err_code = SMB_TIMEOUT_ERROR;
@@ -333,11 +341,12 @@ inline void i2c_handle_sda_irq(int controller)
 		if (p_status->sz_txbuf == 0) {/* Receive mode */
 			p_status->oper_state = SMB_READ_OPER;
 			/*
-			 * Receiving one byte only - set nack just
-			 * before writing address byte
+			 * Receiving one byte only - stall bus after START
+			 * condition. If there's no slave devices on bus, FW
+			 * needn't to set ACK bit.
 			 */
 			if (p_status->sz_rxbuf == 1)
-				I2C_NACK(controller);
+				I2C_STALL(controller);
 
 			/* Write the address to the bus R bit*/
 			I2C_WRITE_BYTE(controller, (addr | 0x1));
@@ -511,7 +520,22 @@ void i2c_master_int_handler (int controller)
 		CPUTS("-NA");
 	}
 
-	/* Condition 3: SDA status is set - transmit or receive */
+	/* Condition 3: A Stall after START has occurred for READ-BYTE */
+	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_STASTR)) {
+		CPUTS("-STL");
+		/* Clear STASTR Bit */
+		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
+		/* Disable Stall-After-Start mode */
+		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STASTRE);
+		/*
+		 * Continue to handle protocol - release SCL bus & set ACK bit
+		 * if necessary
+		 */
+		if (p_status->flags & I2C_XFER_STOP)
+			I2C_NACK(controller);
+	}
+
+	/* Condition 4: SDA status is set - transmit or receive */
 	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_SDAST)) {
 		i2c_handle_sda_irq(controller);
 #if DEBUG_I2C
