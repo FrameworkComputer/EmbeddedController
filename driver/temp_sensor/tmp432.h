@@ -67,6 +67,7 @@
 
 /* Config register bits */
 #define TMP432_CONFIG1_TEMP_RANGE	(1 << 2)
+/* TMP432_CONFIG1_MODE bit is use to enable THERM mode */
 #define TMP432_CONFIG1_MODE		(1 << 5)
 #define TMP432_CONFIG1_RUN_L		(1 << 6)
 #define TMP432_CONFIG1_ALERT_MASK_L	(1 << 7)
@@ -82,10 +83,22 @@
 #define TMP432_STATUS_TEMP_HIGH_ALARM	(1 << 4)
 #define TMP432_STATUS_BUSY		(1 << 7)
 
+/* Limintaions */
+#define TMP432_HYSTERESIS_HIGH_LIMIT	255
+#define TMP432_HYSTERESIS_LOW_LIMIT	0
+
 enum tmp432_power_state {
 	TMP432_POWER_OFF = 0,
 	TMP432_POWER_ON,
 	TMP432_POWER_COUNT
+};
+
+enum tmp432_channel_id {
+	TMP432_CHANNEL_LOCAL,
+	TMP432_CHANNEL_REMOTE1,
+	TMP432_CHANNEL_REMOTE2,
+
+	TMP432_CHANNEL_COUNT
 };
 
 /**
@@ -108,4 +121,22 @@ int tmp432_get_val(int idx, int *temp_ptr);
  * @return EC_SUCCESS if successful, non-zero if error.
  */
 int tmp432_set_power(enum tmp432_power_state power_on);
+
+/*
+ * Set TMP432 ALERT#/THERM2# pin to THERM mode, and give a limit
+ * for a specific channel.
+ *
+ * @param channel	specific a channel
+ *
+ * @param limit_c	High limit temperature, default: 85C
+ *
+ * @param hysteresis	Hysteresis temperature, default: 10C
+ *			All channels share the same hysteresis
+ *
+ * In THERM mode, ALERT# pin will trigger(Low) by itself when any
+ * channel's temperature is greater( >= )than channel's limit_c,
+ * and release(High) by itself when channel's temperature is lower
+ * than (limit_c - hysteresis)
+ */
+int tmp432_set_therm_limit(int channel, int limit_c, int hysteresis);
 #endif /* __CROS_EC_TMP432_H */
