@@ -108,6 +108,7 @@
 
 /* Optional features */
 #define CONFIG_CMD_HOSTCMD
+#define CONFIG_CMD_I2C_PROTECT
 
 /* Drivers */
 #ifndef __ASSEMBLER__
