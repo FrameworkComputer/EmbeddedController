@@ -109,12 +109,16 @@ void console_has_input(void);
 #elif defined(CONFIG_CONSOLE_CMDHELP)
 #define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
 	static const char __con_cmd_label_##name[] = #name;		\
+	struct size_check##name { \
+		int field[2 * (sizeof(__con_cmd_label_##name) < 16) - 1]; }; \
 	const struct console_command __keep __con_cmd_##name		\
 	__attribute__((section(".rodata.cmds." #name)))			\
 	     = {__con_cmd_label_##name, routine, argdesc, shorthelp}
 #else
 #define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
 	static const char __con_cmd_label_##name[] = #name;		\
+	struct size_check##name { \
+		int field[2 * (sizeof(__con_cmd_label_##name) < 16) - 1]; }; \
 	const struct console_command __keep __con_cmd_##name		\
 	__attribute__((section(".rodata.cmds." #name)))			\
 	     = {__con_cmd_label_##name, routine}
