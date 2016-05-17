@@ -16,7 +16,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define SHARED_MEM_SIZE 512 /* bytes */
+#define SHARED_MEM_SIZE 0x2000 /* bytes */
 uint8_t __shared_mem_buf[SHARED_MEM_SIZE];
 
 #define RAM_DATA_SIZE (sizeof(struct panic_data) + 512) /* bytes */

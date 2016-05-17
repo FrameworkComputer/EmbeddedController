@@ -850,6 +850,17 @@
 #undef CONFIG_EC_WRITABLE_STORAGE_SIZE
 
 /*****************************************************************************/
+/* NvMem Configuration */
+/* Enable NV Memory module within flash */
+#undef CONFIG_FLASH_NVMEM
+/* Offset to start of NvMem area from base of flash */
+#undef CONFIG_FLASH_NVMEM_OFFSET
+/* Address of start of Nvmem area */
+#undef CONFIG_FLASH_NVMEM_BASE
+/* Size in bytes of NvMem area */
+#undef CONFIG_FLASH_NVMEM_SIZE
+
+/*****************************************************************************/
 
 /* Include a flashmap in the compiled firmware image */
 #define CONFIG_FMAP
