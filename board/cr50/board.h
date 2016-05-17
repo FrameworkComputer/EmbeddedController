@@ -21,6 +21,17 @@
 /* TODO(crosbug.com/p/44745): For debugging only */
 #define CONFIG_CMD_FLASH
 
+#define CONFIG_FLASH_NVMEM
+/* Offset to start of NvMem area from base of flash */
+#define CONFIG_FLASH_NVMEM_OFFSET (CONFIG_FLASH_SIZE>>1)
+/* Address of start of Nvmem area */
+#define CONFIG_FLASH_NVMEM_BASE (CONFIG_PROGRAM_MEMORY_BASE + \
+				 CONFIG_FLASH_NVMEM_OFFSET)
+/* Size in bytes of NvMem area */
+#define CONFIG_FLASH_NVMEM_SIZE CONFIG_RW_MEM_OFF
+/* Size partition in NvMem */
+#define NVMEM_PARTITION_SIZE (CONFIG_FLASH_NVMEM_SIZE / NVMEM_NUM_PARTITIONS)
+
 /* Go to sleep when nothing else is happening */
 #define CONFIG_LOW_POWER_IDLE
 
@@ -128,6 +139,15 @@ void sys_rst_asserted(enum gpio_signal signal);
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
 #define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_TPM))
+
+/* Nv Memory users */
+#ifndef __ASSEMBLER__
+enum nvmem_users {
+	NVMEM_TPM = 0,
+	NVMEM_CR50,
+	NVMEM_NUM_USERS
+};
+#endif
 
 /*
  * Let's be on the lookout for stack overflow, while debugging.
