@@ -15,20 +15,33 @@
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
 
-/* Battery info for proto - copied from celes */
-/* TODO: Update once real battery is available */
+#ifdef BOARD_KEVIN
 static const struct battery_info info = {
 	.voltage_max		= 8700,
 	.voltage_normal		= 7600,
 	.voltage_min		= 6000,
-	.precharge_current	= 150,
+	.precharge_current	= 200,
 	.start_charging_min_c	= 0,
 	.start_charging_max_c	= 45,
 	.charging_min_c		= 0,
 	.charging_max_c		= 60,
 	.discharging_min_c	= -20,
+	.discharging_max_c	= 70,
+};
+#elif defined(BOARD_GRU)
+static const struct battery_info info = {
+	.voltage_max		= 8700,
+	.voltage_normal		= 7600,
+	.voltage_min		= 5800,
+	.precharge_current	= 256,
+	.start_charging_min_c	= 0,
+	.start_charging_max_c	= 50,
+	.charging_min_c		= 0,
+	.charging_max_c		= 50,
+	.discharging_min_c	= -20,
 	.discharging_max_c	= 60,
 };
+#endif
 
 const struct battery_info *battery_get_info(void)
 {
