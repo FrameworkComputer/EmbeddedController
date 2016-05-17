@@ -792,7 +792,7 @@ static int command_flash_spi_sel_lock(int argc, char **argv)
 	ccprintf("Enabled: %d\n", ena);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(flash_spi_sel_lock, command_flash_spi_sel_lock,
+DECLARE_CONSOLE_COMMAND(flash_spi_lock, command_flash_spi_sel_lock,
 			"[0 | 1]",
 			"Lock spi flash interface selection",
 			NULL);

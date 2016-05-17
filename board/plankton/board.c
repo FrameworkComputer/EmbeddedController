@@ -770,7 +770,7 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(fake_disconnect, cmd_fake_disconnect,
+DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
 			"<delay_ms> <duration_ms>", NULL, NULL);
 
 static void trigger_dfu_release(void)
