@@ -116,13 +116,13 @@ def _keytest_cmd(key_len):
                                 dl='', dig='')
 
 
-def _keygen_cmd(key_len, e):
+def _keygen_cmd(key_len, e, label):
   op = _RSA_OPCODES['KEYGEN']
   padding = _RSA_PADDING['NONE']
   hashing = _HASH['NONE']
   return _RSA_CMD_FORMAT.format(o=op, p=padding, h=hashing,
                                 kl=struct.pack('>H', key_len),
-                                ml=struct.pack('>H', 0), msg='',
+                                ml=struct.pack('>H', len(label)), msg=label,
                                 dl=struct.pack('>H', 0), dig='')
 
 
@@ -582,7 +582,8 @@ _KEYTEST_INPUTS = (
 )
 
 _KEYGEN_INPUTS = (
-  (768, 65537),
+  (768, 65537, "rsa_test"),
+  (768, 65537, ''),
 )
 
 
@@ -659,9 +660,9 @@ def _keytest_tests(tpm):
 
 def _keygen_tests(tpm):
   for data in _KEYGEN_INPUTS:
-    key_len, e = data
-    test_name = 'RSA-KEYGEN:%d:%d' % data
-    cmd = _keygen_cmd(key_len, e)
+    key_len, e, label = data
+    test_name = 'RSA-KEYGEN:%d:%d:%s' % data
+    cmd = _keygen_cmd(key_len, e, label)
 
     wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
     result = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
@@ -677,6 +678,9 @@ def _keygen_tests(tpm):
       raise subcmd.TpmTestError('%s error:%s' % (
           test_name, utils.hex_dump(result)))
     if not rsa.prime.is_prime(q):
+      raise subcmd.TpmTestError('%s error:%s' % (
+          test_name, utils.hex_dump(result)))
+    if p == q:
       raise subcmd.TpmTestError('%s error:%s' % (
           test_name, utils.hex_dump(result)))
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))

@@ -265,15 +265,14 @@ static int generate_prime(struct BIGNUM *b, TPM_ALG_ID hashing, TPM2B *seed,
 			const char *label, TPM2B *extra, uint32_t *counter)
 {
 	TPM2B_4_BYTE_VALUE marshaled_counter = { .t = {4} };
-	uint32_t initial_counter;
+	uint32_t i;
 
-	initial_counter = *counter;
-	for (; *counter - initial_counter < MAX_GENERATE_ATTEMPTS;
-	     *counter += 1) {
+	for (i = 0; i < MAX_GENERATE_ATTEMPTS; i++) {
 		UINT32_TO_BYTE_ARRAY(*counter, marshaled_counter.t.buffer);
 		_cpri__KDFa(hashing, seed, label, extra, &marshaled_counter.b,
 			bn_bits(b), (uint8_t *) b->d, NULL, FALSE);
 
+		(*counter)++;           /* Mark as used. */
 		if (DCRYPTO_bn_generate_prime(b))
 			return 1;
 	}
@@ -556,6 +555,7 @@ static const RSA_KEY RSA_2048 = {
 };
 
 #define MAX_MSG_BYTES RSA_MAX_BYTES
+#define MAX_LABEL_LEN 32
 
 /* 128-byte buffer to hold entropy for generating a
  * 2048-bit RSA key (assuming ~112 bits of security strength,
@@ -588,6 +588,7 @@ static void rsa_command_handler(void *cmd_body,
 	TPM2B_128_BYTE_VALUE seed;
 	uint8_t bn_buf[RSA_MAX_BYTES];
 	struct BIGNUM bn;
+	char label[MAX_LABEL_LEN];
 
 	assert(sizeof(size_t) == sizeof(uint32_t));
 
@@ -717,13 +718,22 @@ static void rsa_command_handler(void *cmd_body,
 		*response_size = 1;
 		return;
 	case TEST_RSA_KEYGEN:
+		if (in_len > MAX_LABEL_LEN - 1) {
+			*response_size = 0;
+			return;
+		}
 		N.b.size = sizeof(N.t.buffer);
 		p.b.size = sizeof(p.t.buffer);
 		seed.b.size = sizeof(seed.t.buffer);
 		rand_bytes(seed.b.buffer, seed.b.size);
+		if (in_len > 0) {
+			memcpy(label, in, in_len);
+			label[in_len] = '\0';
+		}
 		if (_cpri__GenerateKeyRSA(
 				&N.b, &p.b, key_len, RSA_F4, TPM_ALG_SHA256,
-				&seed.b, NULL, NULL, NULL) != CRYPT_SUCCESS) {
+				&seed.b, in_len ? label : NULL, NULL, NULL)
+			!= CRYPT_SUCCESS) {
 			*response_size = 0;
 		} else {
 			memcpy(out, N.b.buffer, N.b.size);
