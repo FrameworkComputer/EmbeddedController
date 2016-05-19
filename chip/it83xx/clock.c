@@ -75,9 +75,6 @@ void clock_init(void)
 #error "Support only for PLL clock speed of 48MHz."
 #endif
 
-	/* Set EC Clock Frequency to PLL frequency. */
-	IT83XX_ECPM_SCDCR3 &= 0xf0;
-
 	/*
 	 * The VCC power status is treated as power-on.
 	 * The VCC supply of LPC and related functions (EC2I,
