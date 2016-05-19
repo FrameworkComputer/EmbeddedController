@@ -18,6 +18,8 @@
 #include "system.h"
 #include "system_chip.h"
 #include "lpc_chip.h"
+#include "ec_commands.h"
+#include "host_command.h"
 
 /* Flags for PWM IO type */
 #define PWM_IO_FUNC        (1 << 1)  /* PWM optional func bit */
@@ -800,6 +802,17 @@ void __gpio_wk0efgh_interrupt(void)
 		gpio_interrupt(NPCX_IRQ_WKINTEFGH_0);
 }
 
+void __gpio_rtc_interrupt(void)
+{
+	/* Check pending bit 7 */
+	if (NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_4) & 0x80) {
+		/* Clear pending bit for WUI */
+		SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_4), 7);
+		host_set_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC));
+	} else
+		gpio_interrupt(NPCX_IRQ_MTC_WKINTAD_0);
+}
+
 GPIO_IRQ_FUNC(__gpio_wk0ad_interrupt  , NPCX_IRQ_MTC_WKINTAD_0);
 GPIO_IRQ_FUNC(__gpio_wk0b_interrupt   , NPCX_IRQ_TWD_WKINTB_0);
 GPIO_IRQ_FUNC(__gpio_wk0c_interrupt   , NPCX_IRQ_WKINTC_0);
@@ -811,7 +824,7 @@ GPIO_IRQ_FUNC(__gpio_wk1f_interrupt   , NPCX_IRQ_WKINTF_1);
 GPIO_IRQ_FUNC(__gpio_wk1g_interrupt   , NPCX_IRQ_WKINTG_1);
 GPIO_IRQ_FUNC(__gpio_wk1h_interrupt   , NPCX_IRQ_WKINTH_1);
 
-DECLARE_IRQ(NPCX_IRQ_MTC_WKINTAD_0, __gpio_wk0ad_interrupt, 1);
+DECLARE_IRQ(NPCX_IRQ_MTC_WKINTAD_0, __gpio_rtc_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0,  __gpio_wk0b_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_WKINTC_0,      __gpio_wk0c_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_WKINTEFGH_0,   __gpio_wk0efgh_interrupt, 1);

@@ -125,6 +125,16 @@
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* SPI master port (SPIP) form BMI160 */
 
+#define CONFIG_MKBP_EVENT
+/* Define the MKBP events which are allowed to wakeup AP in S3. */
+#define CONFIG_MKBP_WAKEUP_MASK \
+		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_CLOSED) |\
+		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
+		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
+		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |\
+		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
+
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel {
