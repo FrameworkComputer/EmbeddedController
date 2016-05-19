@@ -3195,6 +3195,25 @@ struct ec_params_entering_mode {
 #define VBOOT_MODE_RECOVERY  2
 
 /*****************************************************************************/
+/* I2C passthru protection command: Protects I2C tunnels against access on
+ * certain addresses (board-specific). */
+#define EC_CMD_I2C_PASSTHRU_PROTECT 0xb7
+
+enum ec_i2c_passthru_protect_subcmd {
+	EC_CMD_I2C_PASSTHRU_PROTECT_STATUS = 0x0,
+	EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE = 0x1,
+};
+
+struct ec_params_i2c_passthru_protect {
+	uint8_t subcmd;
+	uint8_t port;		/* I2C port number */
+} __packed;
+
+struct ec_response_i2c_passthru_protect {
+	uint8_t status;		/* Status flags (0: unlocked, 1: locked) */
+} __packed;
+
+/*****************************************************************************/
 /* System commands */
 
 /*

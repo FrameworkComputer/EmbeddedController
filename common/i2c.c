@@ -34,6 +34,7 @@
 
 static struct mutex port_mutex[I2C_CONTROLLER_COUNT];
 static uint32_t i2c_port_active_count;
+static uint8_t port_protected[I2C_CONTROLLER_COUNT];
 
 const struct i2c_port_t *get_i2c_port(int port)
 {
@@ -469,6 +470,7 @@ static int i2c_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_read *p = args->params;
 	struct ec_response_i2c_read *r = args->response;
+	const struct i2c_port_t *i2c_port;
 	int data, rv = -1;
 
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
@@ -476,8 +478,14 @@ static int i2c_command_read(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if (!get_i2c_port(p->port))
+	i2c_port = get_i2c_port(p->port);
+	if (!i2c_port)
 		return EC_RES_INVALID_PARAM;
+
+	if (port_protected[p->port] && i2c_port->passthru_allowed) {
+		if (!i2c_port->passthru_allowed(i2c_port, p->addr))
+			return EC_RES_ACCESS_DENIED;
+	}
 
 	if (p->read_size == 16)
 		rv = i2c_read16(p->port, p->addr, p->offset, &data);
@@ -496,6 +504,7 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_READ, i2c_command_read, EC_VER_MASK(0));
 static int i2c_command_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_write *p = args->params;
+	const struct i2c_port_t *i2c_port;
 	int rv = -1;
 
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
@@ -503,8 +512,14 @@ static int i2c_command_write(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if (!get_i2c_port(p->port))
+	i2c_port = get_i2c_port(p->port);
+	if (!i2c_port)
 		return EC_RES_INVALID_PARAM;
+
+	if (port_protected[p->port] && i2c_port->passthru_allowed) {
+		if (!i2c_port->passthru_allowed(i2c_port, p->addr))
+			return EC_RES_ACCESS_DENIED;
+	}
 
 	if (p->write_size == 16)
 		rv = i2c_write16(p->port, p->addr, p->offset, p->data);
@@ -591,9 +606,10 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	const struct ec_params_i2c_passthru *params = args->params;
 	const struct ec_params_i2c_passthru_msg *msg;
 	struct ec_response_i2c_passthru *resp = args->response;
+	const struct i2c_port_t *i2c_port;
 	const uint8_t *out;
 	int in_len;
-	int ret;
+	int ret, i;
 #if defined(VIRTUAL_BATTERY_ADDR) && defined(I2C_PORT_VIRTUAL_BATTERY)
 	uint8_t batt_param = 0;
 #endif
@@ -611,12 +627,21 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if (!get_i2c_port(params->port))
+	i2c_port = get_i2c_port(params->port);
+	if (!i2c_port)
 		return EC_RES_INVALID_PARAM;
 
 	ret = check_i2c_params(args);
 	if (ret)
 		return ret;
+
+	if (port_protected[params->port] && i2c_port->passthru_allowed) {
+		for (i = 0; i < params->num_msgs; i++) {
+			if (!i2c_port->passthru_allowed(i2c_port,
+				  params->msg[i].addr_flags & EC_I2C_ADDR_MASK))
+				return EC_RES_ACCESS_DENIED;
+		}
+	}
 
 	/* Loop and process messages */
 	resp->i2c_status = 0;
@@ -688,8 +713,85 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU, i2c_command_passthru, EC_VER_MASK(0));
 
+static int i2c_command_passthru_protect(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_i2c_passthru_protect *params = args->params;
+	struct ec_response_i2c_passthru_protect *resp = args->response;
+
+	if (args->params_size < sizeof(*params)) {
+		PTHRUPRINTF("i2c passthru protect no params, params_size=%d, "
+			    "need at least %d",
+			    args->params_size, sizeof(*params));
+		return EC_RES_INVALID_PARAM;
+	}
+
+	if (!get_i2c_port(params->port)) {
+		PTHRUPRINTF("i2c passthru protect invalid port %d",
+			    params->port);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_STATUS) {
+		if (args->response_max < sizeof(*resp)) {
+			PTHRUPRINTF("i2c passthru protect no response, "
+				"response_max=%d, need at least %d",
+				args->response_max, sizeof(*resp));
+			return EC_RES_INVALID_PARAM;
+		}
+
+		resp->status = port_protected[params->port];
+		args->response_size = sizeof(*resp);
+	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE) {
+		port_protected[params->port] = 1;
+	} else {
+		return EC_RES_INVALID_COMMAND;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU_PROTECT, i2c_command_passthru_protect,
+		     EC_VER_MASK(0));
+
 /*****************************************************************************/
 /* Console commands */
+
+#ifdef CONFIG_CMD_I2C_PROTECT
+static int command_i2cprotect(int argc, char **argv)
+{
+	if (argc == 1) {
+		int i, port;
+
+		for (i = 0; i < i2c_ports_used; i++) {
+			port = i2c_ports[i].port;
+			ccprintf("Port %d: %s\n", port,
+			   port_protected[port] ? "Protected" : "Unprotected");
+		}
+	} else if (argc == 2) {
+		int port;
+		char *e;
+
+		port = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		if (!get_i2c_port(port)) {
+			ccprintf("i2c passthru protect invalid port %d\n",
+				port);
+			return EC_RES_INVALID_PARAM;
+		}
+
+		port_protected[port] = 1;
+	} else {
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(i2cprotect, command_i2cprotect,
+			"[port]",
+			"Protect I2C bus",
+			NULL);
+#endif
 
 #ifdef CONFIG_CMD_I2C_SCAN
 static void scan_bus(int port, const char *desc)

@@ -31,6 +31,10 @@ struct i2c_port_t {
 	int kbps;             /* Speed in kbps */
 	enum gpio_signal scl; /* Port SCL GPIO line */
 	enum gpio_signal sda; /* Port SDA GPIO line */
+	/* When bus is protected, returns true if passthru allowed for address.
+	 * If the function is not defined, the default value is true. */
+	int (*passthru_allowed)(const struct i2c_port_t *port,
+				uint16_t address);
 };
 
 extern const struct i2c_port_t i2c_ports[];

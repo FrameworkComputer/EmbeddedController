@@ -123,6 +123,8 @@ const char help_str[] =
 	"      Simulate key press\n"
 	"  kbfactorytest\n"
 	"      Scan out keyboard if any pins are shorted\n"
+	"  i2cprotect <port> [status]\n"
+	"      Protect EC's I2C bus\n"
 	"  i2cread\n"
 	"      Read I2C bus\n"
 	"  i2cwrite\n"
@@ -4880,6 +4882,50 @@ int cmd_wireless(int argc, char *argv[])
 }
 
 
+int cmd_i2c_protect(int argc, char *argv[])
+{
+	struct ec_params_i2c_passthru_protect p;
+	char *e;
+	int rv;
+
+	if (argc != 2 && (argc != 3 || strcmp(argv[2], "status"))) {
+		fprintf(stderr, "Usage: %s <port> [status]\n",
+				argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	if (argc == 3) {
+		struct ec_response_i2c_passthru_protect r;
+
+		p.subcmd = EC_CMD_I2C_PASSTHRU_PROTECT_STATUS;
+
+		rv = ec_command(EC_CMD_I2C_PASSTHRU_PROTECT, 0, &p, sizeof(p),
+				&r, sizeof(r));
+
+		if (rv < 0)
+			return rv;
+
+		printf("I2C port %d: %s (%d)\n", p.port,
+			r.status ? "Protected" : "Unprotected", r.status);
+	} else {
+		p.subcmd = EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE;
+
+		rv = ec_command(EC_CMD_I2C_PASSTHRU_PROTECT, 0, &p, sizeof(p),
+				NULL, 0);
+
+		if (rv < 0)
+			return rv;
+	}
+	return 0;
+}
+
+
 int cmd_i2c_read(int argc, char *argv[])
 {
 	struct ec_params_i2c_read p;
@@ -6656,6 +6702,7 @@ const struct command commands[] = {
 	{"hello", cmd_hello},
 	{"hibdelay", cmd_hibdelay},
 	{"kbpress", cmd_kbpress},
+	{"i2cprotect", cmd_i2c_protect},
 	{"i2cread", cmd_i2c_read},
 	{"i2cwrite", cmd_i2c_write},
 	{"i2cxfer", cmd_i2c_xfer},
