@@ -3369,4 +3369,46 @@ static void pd_comm_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, pd_comm_init, HOOK_PRIO_LAST);
 #endif /* CONFIG_USB_PD_COMM_LOCKED */
+
+#ifdef CONFIG_CMD_PD_CONTROL
+static int pd_control_disabled;
+
+static int pd_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pd_control *cmd = args->params;
+
+	if (cmd->chip != 0)
+		return EC_RES_INVALID_PARAM;
+
+	/* Always allow disable command */
+	if (cmd->subcmd == PD_CONTROL_DISABLE) {
+		pd_control_disabled = 1;
+		return EC_RES_SUCCESS;
+	}
+
+	if (pd_control_disabled)
+		return EC_RES_ACCESS_DENIED;
+
+	if (cmd->subcmd == PD_SUSPEND) {
+		pd_comm_enable(0);
+		pd_set_suspend(0, 1);
+	} else if (cmd->subcmd == PD_RESUME) {
+		pd_comm_enable(1);
+		pd_set_suspend(0, 0);
+	} else if (cmd->subcmd == PD_RESET) {
+#ifdef HAS_TASK_PDCMD
+		board_reset_pd_mcu();
+#else
+		return EC_RES_INVALID_COMMAND;
+#endif
+	} else {
+		return EC_RES_INVALID_COMMAND;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
+#endif /* CONFIG_CMD_PD_CONTROL */
+
 #endif /* CONFIG_COMMON_RUNTIME */
