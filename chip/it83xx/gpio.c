@@ -22,7 +22,7 @@
  * Converts port (ie GPIO A) to base address offset of the control register
  * (GPCRx0) for that port.
  */
-#define CTRL_BASE(port) ((port)*8 + 8)
+#define CTRL_BASE(port) ((port)*8 + ((port) < GPIO_K ? 8 : 56))
 
 /**
  * Convert wake-up controller (WUC) group to the corresponding wake-up edge
@@ -35,12 +35,12 @@
 static volatile uint8_t *wuesr(uint8_t grp)
 {
 	/*
-	 * From WUESR1-WUESR4, the address increases by ones. From WUESR6 on
+	 * From WUESR1-WUESR4, the address increases by ones. From WUESR5 on
 	 * the address increases by fours.
 	 */
 	return (grp <= 4) ?
 			(volatile uint8_t *)(IT83XX_WUC_WUESR1 + grp-1) :
-			(volatile uint8_t *)(IT83XX_WUC_WUESR6 + 4*(grp-6));
+			(volatile uint8_t *)(IT83XX_WUC_WUESR5 + 4*(grp-5));
 }
 
 /**
@@ -54,12 +54,12 @@ static volatile uint8_t *wuesr(uint8_t grp)
 static volatile uint8_t *wuemr(uint8_t grp)
 {
 	/*
-	 * From WUEMR1-WUEMR4, the address increases by ones. From WUEMR6 on
+	 * From WUEMR1-WUEMR4, the address increases by ones. From WUEMR5 on
 	 * the address increases by fours.
 	 */
 	return (grp <= 4) ?
 			(volatile uint8_t *)(IT83XX_WUC_WUEMR1 + grp-1) :
-			(volatile uint8_t *)(IT83XX_WUC_WUEMR6 + 4*(grp-6));
+			(volatile uint8_t *)(IT83XX_WUC_WUEMR5 + 4*(grp-5));
 }
 
 /*
@@ -84,6 +84,14 @@ static const struct {
 	[IT83XX_IRQ_WKO22] =    {GPIO_C, (1<<4),        2, (1<<2)},
 	[IT83XX_IRQ_WKO23] =    {GPIO_C, (1<<6),        2, (1<<3)},
 	[IT83XX_IRQ_WKO24] =    {GPIO_D, (1<<2),        2, (1<<4)},
+	[IT83XX_IRQ_WKO50] =    {GPIO_K, (1<<0),        5, (1<<0)},
+	[IT83XX_IRQ_WKO51] =    {GPIO_K, (1<<1),        5, (1<<1)},
+	[IT83XX_IRQ_WKO52] =    {GPIO_K, (1<<2),        5, (1<<2)},
+	[IT83XX_IRQ_WKO53] =    {GPIO_K, (1<<3),        5, (1<<3)},
+	[IT83XX_IRQ_WKO54] =    {GPIO_K, (1<<4),        5, (1<<4)},
+	[IT83XX_IRQ_WKO55] =    {GPIO_K, (1<<5),        5, (1<<5)},
+	[IT83XX_IRQ_WKO56] =    {GPIO_K, (1<<6),        5, (1<<6)},
+	[IT83XX_IRQ_WKO57] =    {GPIO_K, (1<<7),        5, (1<<7)},
 	[IT83XX_IRQ_WKO60] =    {GPIO_H, (1<<0),        6, (1<<0)},
 	[IT83XX_IRQ_WKO61] =    {GPIO_H, (1<<1),        6, (1<<1)},
 	[IT83XX_IRQ_WKO62] =    {GPIO_H, (1<<2),        6, (1<<2)},
@@ -149,6 +157,14 @@ static const struct {
 	[IT83XX_IRQ_WKO131] =   {GPIO_J, (1<<3),        14, (1<<3)},
 	[IT83XX_IRQ_WKO132] =   {GPIO_J, (1<<4),        14, (1<<4)},
 	[IT83XX_IRQ_WKO133] =   {GPIO_J, (1<<5),        14, (1<<5)},
+	[IT83XX_IRQ_WKO136] =   {GPIO_L, (1<<0),        15, (1<<0)},
+	[IT83XX_IRQ_WKO137] =   {GPIO_L, (1<<1),        15, (1<<1)},
+	[IT83XX_IRQ_WKO138] =   {GPIO_L, (1<<2),        15, (1<<2)},
+	[IT83XX_IRQ_WKO139] =   {GPIO_L, (1<<3),        15, (1<<3)},
+	[IT83XX_IRQ_WKO140] =   {GPIO_L, (1<<4),        15, (1<<4)},
+	[IT83XX_IRQ_WKO141] =   {GPIO_L, (1<<5),        15, (1<<5)},
+	[IT83XX_IRQ_WKO142] =   {GPIO_L, (1<<6),        15, (1<<6)},
+	[IT83XX_IRQ_WKO143] =   {GPIO_L, (1<<7),        15, (1<<7)},
 	[IT83XX_IRQ_COUNT-1] =  {0,           0,         0,      0},
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_irqs) == IT83XX_IRQ_COUNT);
