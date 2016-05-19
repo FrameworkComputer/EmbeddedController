@@ -13,7 +13,7 @@ GPIO_INT(LID_OPEN,       PIN(C, 13), GPIO_INT_BOTH,    lid_interrupt)          /
 GPIO_INT(SUSPEND_L,      PIN(C, 7),  GPIO_INT_BOTH,    power_signal_interrupt) /* AP suspend/resume state */
 GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH,    power_signal_interrupt)
 GPIO_INT(PD_MCU_INT,     PIN(E, 0),  GPIO_INT_RISING,  pd_mcu_interrupt)       /* Signal from PD MCU, external pull-up */
-GPIO_INT(BC12_CABLE_INT, PIN(E, 1),  GPIO_INT_FALLING, usb_evt)    /* interrupt from BC12 and CABLE_DET */
+GPIO_INT(BC12_CABLE_INT, PIN(E, 1),  GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt)    /* interrupt from BC12 and CABLE_DET */
 GPIO_INT(POWER_BUTTON_L, PIN(B, 5),  GPIO_INT_BOTH | GPIO_PULL_UP,  power_button_interrupt)
 GPIO_INT(SPI1_NSS,       PIN(A, 4),  GPIO_INT_BOTH | GPIO_PULL_UP,  spi_event)              /* SPI Chip Select */
 
@@ -47,9 +47,9 @@ GPIO(KB_OUT12,          PIN(D, 5),  GPIO_KB_OUTPUT)
 
 /* Inputs without interrupt handlers */
 GPIO(5V_POWER_GOOD,      PIN(A, 1), GPIO_INPUT)
-GPIO(EC_WAKE,            PIN(A, 0), GPIO_INPUT|GPIO_PULL_DOWN)
+GPIO(EC_WAKE,            PIN(A, 0), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(WP_L,               PIN(B, 4), GPIO_INPUT)      /* Write protect input */
-GPIO(BAT_PRESENT_L,      PIN(E, 3), GPIO_INPUT|GPIO_PULL_UP)
+GPIO(BAT_PRESENT_L,      PIN(E, 3), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(USB_C0_VBUS_WAKE_L, PIN(D, 12), GPIO_INPUT)
 GPIO(EC_INT_L,           PIN(B, 9),  GPIO_ODR_HIGH)
 
@@ -70,7 +70,7 @@ GPIO(ENTERING_RW,       PIN(F, 0),  GPIO_OUT_LOW)
 
 GPIO(AP_RESET_L,        PIN(C, 3),  GPIO_ODR_HIGH) /* Connect to the PMU_SYSRSTB */
 GPIO(BC12_WAKE_L,       PIN(D, 7),  GPIO_INPUT)
-GPIO(USB_C0_CABLE_DET_L,PIN(E, 7),  GPIO_INPUT)
+GPIO(USB_C0_CABLE_DET_L,PIN(E, 7),  GPIO_INPUT | GPIO_PULL_UP)
 
 GPIO(SYSTEM_POWER_H,    PIN(B, 10), GPIO_OUT_LOW)
 GPIO(PMIC_PWRON_H,      PIN(A, 12), GPIO_OUT_LOW)
