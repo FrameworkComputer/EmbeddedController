@@ -238,7 +238,7 @@ static void board_init(void)
 	board_reset_pd_mcu();
 
 	/* Update VBUS supplier */
-	usb_charger_vbus_change(0, !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+	usb_charger_vbus_change(0, pd_snk_is_vbus_provided(0));
 
 	/* Remap SPI2 to DMA channels 6 and 7 */
 	REG32(STM32_DMA1_BASE + 0xa8) |= (1 << 20) | (1 << 21) |
