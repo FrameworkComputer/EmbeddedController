@@ -325,6 +325,125 @@ static int test_buffer_overflow(void)
 	return EC_SUCCESS;
 }
 
+static int test_move(void)
+{
+	uint32_t len = 0x100;
+	uint32_t nv1_offset;
+	uint32_t nv2_offset;
+	int user = 0;
+	int n;
+	int ret;
+
+	/*
+	 * The purpose of this test is to check that nvmem_move() behaves
+	 * properly. This test only uses one user buffer as accessing multiple
+	 * user buffers is tested separately. This test uses writes a set of
+	 * test data then test move operations with full overlap, half overlap
+	 * and no overlap. Folliwng these tests, the boundary conditions for
+	 * move operations are checked for the giver user buffer.
+	 */
+
+	nv1_offset = 0;
+	for (n = 0; n < 3; n++) {
+		/* Generate Test data */
+		generate_random_data(nv1_offset, len);
+		nv2_offset = nv1_offset + (len / 2) * n;
+		/* Write data to Nvmem cache memory */
+		nvmem_write(nv1_offset, len, &write_buffer[nv1_offset], user);
+		nvmem_commit();
+		/* Test move while data is in cache area */
+		nvmem_move(nv1_offset, nv2_offset, len, user);
+		nvmem_read(nv2_offset, len, read_buffer, user);
+		if (memcmp(write_buffer, read_buffer, len))
+			return EC_ERROR_UNKNOWN;
+		ccprintf("Memmove nv1 = 0x%x, nv2 = 0x%x\n",
+			 nv1_offset, nv2_offset);
+	}
+	/* Test invalid buffer offsets */
+	/* Destination offset is equal to length of buffer */
+	nv1_offset = 0;
+	nv2_offset = nvmem_user_sizes[user];
+	/* Attempt to move just 1 byte */
+	ret = nvmem_move(nv1_offset, nv2_offset, 1, user);
+	if (!ret)
+		return EC_ERROR_UNKNOWN;
+
+	/* Source offset is equal to length of buffer */
+	nv1_offset = nvmem_user_sizes[user];
+	nv2_offset = 0;
+	/* Attempt to move just 1 byte */
+	ret = nvmem_move(nv1_offset, nv2_offset, 1, user);
+	if (!ret)
+		return EC_ERROR_UNKNOWN;
+
+	nv1_offset = 0;
+	nv2_offset = nvmem_user_sizes[user] - len;
+	/* Move data chunk from start to end of buffer */
+	ret = nvmem_move(nv1_offset, nv2_offset,
+			 len, user);
+	if (ret)
+		return ret;
+
+	/* Attempt to move data chunk 1 byte beyond end of user buffer */
+	nv1_offset = 0;
+	nv2_offset = nvmem_user_sizes[user] - len + 1;
+	ret = nvmem_move(nv1_offset, nv2_offset,
+			 len, user);
+	if (!ret)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
+static int test_is_different(void)
+{
+	uint32_t len = 0x41;
+	uint32_t nv1_offset = 0;
+	int user = 1;
+	int ret;
+
+	/*
+	 * The purpose of this test is to verify nv_is_different(). Test data is
+	 * written to a location in user buffer 1, then a case that's expected
+	 * to pass along with a case that is expected to fail are checked. Next
+	 * the same tests are repeated when the NvMem write is followed by a
+	 * commit operation.
+	 */
+
+	/* Generate test data */
+	generate_random_data(nv1_offset, len);
+	/* Write to NvMem cache buffer */
+	nvmem_write(nv1_offset, len, &write_buffer[nv1_offset], user);
+	/* Expected to be the same */
+	ret = nvmem_is_different(nv1_offset, len,
+				 &write_buffer[nv1_offset], user);
+	if (ret)
+		return EC_ERROR_UNKNOWN;
+
+	/* Expected to be different */
+	ret = nvmem_is_different(nv1_offset + 1, len,
+				 &write_buffer[nv1_offset], user);
+	if (!ret)
+		return EC_ERROR_UNKNOWN;
+
+	/* Commit cache buffer and retest */
+	nvmem_commit();
+	/* Expected to be the same */
+	ret = nvmem_is_different(nv1_offset, len,
+				 &write_buffer[nv1_offset], user);
+	if (ret)
+		return EC_ERROR_UNKNOWN;
+
+	/* Expected to be different */
+	write_buffer[nv1_offset] ^= 0xff;
+	ret = nvmem_is_different(nv1_offset, len,
+				 &write_buffer[nv1_offset], user);
+	if (!ret)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
 static void run_test_setup(void)
 {
 	/* Allow Flash erase/writes */
@@ -348,5 +467,9 @@ void run_test(void)
 	RUN_TEST(test_cache_not_available);
 	/* Test buffer overflow logic */
 	RUN_TEST(test_buffer_overflow);
+	/* Test NvMem Move function */
+	RUN_TEST(test_move);
+	/* Test NvMem IsDifferent function */
+	RUN_TEST(test_is_different);
 	test_print_result();
 }

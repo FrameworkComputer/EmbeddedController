@@ -33,6 +33,9 @@ static int nvmem_act_partition;
 /* NvMem Cache Memory pointer */
 static uint8_t *cache_base_ptr;
 
+/* NvMem error state */
+static int nvmem_error_state;
+
 static int nvmem_verify_partition_sha(int index)
 {
 	uint8_t sha_comp[NVMEM_SHA_SIZE];
@@ -319,10 +322,14 @@ int nvmem_init(void)
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		return ret;
 	}
+	/* Initialize error state, assume everything is good */
+	nvmem_error_state = EC_SUCCESS;
 	/* Default state for cache_base_ptr */
 	cache_base_ptr = NULL;
 	ret = nvmem_find_partition();
 	if (ret != EC_SUCCESS) {
+		/* Change error state to non-zero */
+		nvmem_error_state = EC_ERROR_UNKNOWN;
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		return ret;
 	}
@@ -330,7 +337,40 @@ int nvmem_init(void)
 	return EC_SUCCESS;
 }
 
-int nvmem_read(unsigned int offset, unsigned int size,
+int nvmem_get_error_state(void)
+{
+	return nvmem_error_state;
+}
+
+int nvmem_is_different(uint32_t offset, uint32_t size, void *data,
+		       enum nvmem_users user)
+{
+	int ret;
+	uint8_t *p_src;
+	uintptr_t src_addr;
+	uint32_t src_offset;
+
+	/* Point to either NvMem flash or ram if that's active */
+	if (cache_base_ptr == NULL)
+		src_addr = CONFIG_FLASH_NVMEM_BASE + nvmem_act_partition *
+			NVMEM_PARTITION_SIZE;
+
+	else
+		src_addr = (uintptr_t)cache_base_ptr;
+
+	/* Get partition offset for this read operation */
+	ret = nvmem_get_partition_off(user, offset, size, &src_offset);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Advance to the correct byte within the data buffer */
+	src_addr += src_offset;
+	p_src = (uint8_t *)src_addr;
+	/* Compare NvMem with data */
+	return memcmp(p_src, data, size);
+}
+
+int nvmem_read(uint32_t offset, uint32_t size,
 		    void *data, enum nvmem_users user)
 {
 	int ret;
@@ -359,7 +399,7 @@ int nvmem_read(unsigned int offset, unsigned int size,
 	return EC_SUCCESS;
 }
 
-int nvmem_write(unsigned int offset, unsigned int size,
+int nvmem_write(uint32_t offset, uint32_t size,
 		 void *data, enum nvmem_users user)
 {
 	int ret;
@@ -384,6 +424,41 @@ int nvmem_write(unsigned int offset, unsigned int size,
 	p_dest = (uint8_t *)dest_addr;
 	/* Copy data from caller into destination buffer */
 	memcpy(p_dest, data, size);
+
+	return EC_SUCCESS;
+}
+
+int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
+		enum nvmem_users user)
+{
+	int ret;
+	uint8_t *p_src, *p_dest;
+	uintptr_t base_addr;
+	uint32_t s_buff_offset, d_buff_offset;
+
+	/* Make sure that the cache buffer is active */
+	ret = nvmem_update_cache_ptr();
+	if (ret)
+		/* TODO: What to do when can't access cache buffer? */
+		return ret;
+
+	/* Compute partition offset for source */
+	ret = nvmem_get_partition_off(user, src_offset, size, &s_buff_offset);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Compute partition offset for destination */
+	ret = nvmem_get_partition_off(user, dest_offset, size, &d_buff_offset);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	base_addr = (uintptr_t)cache_base_ptr;
+	/* Create pointer to src location within partition */
+	p_src = (uint8_t *)(base_addr + s_buff_offset);
+	/* Create pointer to dest location within partition */
+	p_dest = (uint8_t *)(base_addr + d_buff_offset);
+	/* Move the data block in NvMem */
+	memmove(p_dest, p_src, size);
 
 	return EC_SUCCESS;
 }

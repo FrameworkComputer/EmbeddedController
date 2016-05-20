@@ -15,9 +15,12 @@
 #include "PlatformData.h"
 #include "TpmError.h"
 #include "assert.h"
+#include "nvmem.h"
 
 /* Local state */
+#ifndef CONFIG_FLASH_NVMEM
 static unsigned char s_NV[NV_MEMORY_SIZE];
+#endif
 static BOOL s_NvIsAvailable;
 static BOOL s_NV_unrecoverable;
 static BOOL s_NV_recoverable;
@@ -52,9 +55,24 @@ int _plat__NVEnable(void *platParameter)
 	s_NV_unrecoverable = FALSE;
 	s_NV_recoverable = FALSE;
 
+#ifdef CONFIG_FLASH_NVMEM
+	/* TODO: Need to define what is recoverable and unrecoverable
+	 * conditions with regards to NvMem module. For now, the only
+	 * requirement is that at Cr50 board initialization time, the
+	 * nvmem_init() function either detects a valid partition, or
+	 * determines that NvMem is fully erased and configures  a valid
+	 * partition. Setting both variables TRUE if NvMem is not available
+	 */
+	s_NV_recoverable = nvmem_get_error_state() != 0;
+	s_NV_unrecoverable = s_NV_recoverable;
 	if (s_NV_unrecoverable)
 		return -1;
 	return s_NV_recoverable;
+#else
+	if (s_NV_unrecoverable)
+		return -1;
+	return s_NV_recoverable;
+#endif
 }
 
 void _plat__NVDisable(void)
@@ -73,10 +91,23 @@ void _plat__NVDisable(void)
  */
 int _plat__IsNvAvailable(void)
 {
+
+#ifdef CONFIG_FLASH_NVMEM
+	int rv;
+	/*
+	 * sNv_IsAvailable is a state variable that can be accesed by the
+	 * simmulator to control access to NvMemory. This variable and
+	 * the on chip NvMem area must be in the correct state for NvMem
+	 * to be in 'NV is available' state.
+	 */
+	rv = !s_NvIsAvailable || nvmem_get_error_state();
+	return rv;
+#else
 	if (!s_NvIsAvailable)
 		return 1;
 
 	return 0;
+#endif
 }
 
 /*
@@ -88,7 +119,11 @@ void _plat__NvMemoryRead(unsigned int startOffset,
 {
 	assert(startOffset + size <= NV_MEMORY_SIZE);
 	/* Copy the data from the NV image */
+#ifdef CONFIG_FLASH_NVMEM
+	nvmem_read(startOffset, size, data, NVMEM_TPM);
+#else
 	memcpy(data, &s_NV[startOffset], size);
+#endif
 	return;
 }
 
@@ -101,8 +136,12 @@ _plat__NvIsDifferent(unsigned int startOffset,
 		     unsigned int size,
 		     void *data)
 {
+#ifdef CONFIG_FLASH_NVMEM
+	return (nvmem_is_different(startOffset, size, data, NVMEM_TPM) != 0);
+#else
 	/* Do we need a safe memcmp here? */
 	return (memcmp(&s_NV[startOffset], data, size) != 0);
+#endif
 }
 
 /*
@@ -116,7 +155,11 @@ void _plat__NvMemoryWrite(unsigned int startOffset,
 {
 	assert(startOffset + size <= NV_MEMORY_SIZE);
 	/* Copy the data to the NV image */
+#ifdef CONFIG_FLASH_NVMEM
+	nvmem_write(startOffset, size, data, NVMEM_TPM);
+#else
 	memcpy(&s_NV[startOffset], data, size);
+#endif
 }
 
 /*
@@ -129,8 +172,12 @@ void _plat__NvMemoryMove(unsigned int sourceOffset,
 {
 	assert(sourceOffset + size <= NV_MEMORY_SIZE);
 	assert(destOffset + size <= NV_MEMORY_SIZE);
+#ifdef CONFIG_FLASH_NVMEM
+	nvmem_move(sourceOffset, destOffset, size, NVMEM_TPM);
+#else
 	/* Move data in RAM */
 	memmove(&s_NV[destOffset], &s_NV[sourceOffset], size);
+#endif
 	return;
 }
 
@@ -144,7 +191,11 @@ void _plat__NvMemoryMove(unsigned int sourceOffset,
  */
 int _plat__NvCommit(void)
 {
+#ifdef CONFIG_FLASH_NVMEM
+	return nvmem_commit();
+#else
 	return 0;
+#endif
 }
 
 /*

@@ -79,6 +79,25 @@ struct nvmem_tag {
 int nvmem_init(void);
 
 /**
+ * Get Nvmem internal error state
+ *
+ * @return nvmem_error_state variable.
+ */
+int nvmem_get_error_state(void);
+
+/**
+ * Compare 'size' amount of bytes in NvMem
+ *
+ * @param offset: Offset (in bytes) into NVmem logical space
+ * @param size: Number of bytes to compare
+ * @param data: Pointer to data to be compared with
+ * @param user: Data section within NvMem space
+ * @return 0 if the data is same, non-zero if data is different
+ */
+int nvmem_is_different(uint32_t offset, uint32_t size,
+		       void *data, enum nvmem_users user);
+
+/**
  * Read 'size' amount of bytes from NvMem
  *
  * @param startOffset: Offset (in bytes) into NVmem logical space
@@ -88,7 +107,7 @@ int nvmem_init(void);
  * @return EC_ERROR_OVERFLOW (non-zero) if the read operation would exceed the
  *         buffer length of the given user, otherwise EC_SUCCESS.
  */
-int nvmem_read(unsigned int startOffset, unsigned int size,
+int nvmem_read(uint32_t startOffset, uint32_t size,
 		void *data, enum nvmem_users user);
 
 /**
@@ -102,10 +121,22 @@ int nvmem_read(unsigned int startOffset, unsigned int size,
  *         EC_ERROR_TIMEOUT if nvmem cache buffer is not available
  *         EC_SUCCESS if no errors.
  */
-int nvmem_write(unsigned int startOffset, unsigned int size,
+int nvmem_write(uint32_t startOffset, uint32_t size,
 		 void *data, enum nvmem_users user);
 
-
+/**
+ * Move 'size' amount of bytes within NvMem
+ *
+ * @param src_offset: source offset within NvMem logical space
+ * @param dest_offset: destination offset within NvMem logical space
+ * @param size: Number of bytes to move
+ * @param user: Data section within NvMem space
+ * @return EC_ERROR_OVERFLOW if write exceeds buffer length
+ *         EC_ERROR_TIMEOUT if nvmem cache buffer is not available
+ *         EC_SUCCESS if no errors.
+ */
+int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
+	       enum nvmem_users user);
 /**
  * Commit all previous NvMem writes to flash
  *
