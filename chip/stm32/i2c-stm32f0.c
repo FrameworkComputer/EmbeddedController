@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "hwtimer.h"
 #include "i2c.h"
 #include "registers.h"
 #include "system.h"
@@ -44,6 +45,7 @@
 /* I2C port state data */
 struct i2c_port_data {
 	uint32_t timeout_us;    /* Transaction timeout, or 0 to use default */
+	enum i2c_freq freq;	/* Port clock speed */
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
@@ -51,6 +53,13 @@ void i2c_set_timeout(int port, uint32_t timeout)
 {
 	pdata[port].timeout_us = timeout ? timeout : I2C_TX_TIMEOUT_MASTER;
 }
+
+/* timingr register values for supported input clks / i2c clk rates */
+static const uint32_t busyloop_us[I2C_FREQ_COUNT] = {
+	[I2C_FREQ_1000KHZ] = 16, /* Enough for 2 bytes */
+	[I2C_FREQ_400KHZ] = 40,  /* Enough for 2 bytes */
+	[I2C_FREQ_100KHZ] = 0,   /* No busy looping at 100kHz (bus is slow) */
+};
 
 /**
  * Wait for ISR register to contain the specified mask.
@@ -60,9 +69,10 @@ void i2c_set_timeout(int port, uint32_t timeout)
  */
 static int wait_isr(int port, int mask)
 {
-	uint64_t timeout = get_time().val + pdata[port].timeout_us;
+	uint32_t start = __hw_clock_source_read();
+	uint32_t delta = 0;
 
-	while (get_time().val < timeout) {
+	do {
 		int isr = STM32_I2C_ISR(port);
 
 		/* Check for errors */
@@ -74,9 +84,15 @@ static int wait_isr(int port, int mask)
 		if ((isr & mask) == mask)
 			return EC_SUCCESS;
 
-		/* I2C is slow, so let other things run while we wait */
-		usleep(100);
-	}
+		delta = __hw_clock_source_read() - start;
+
+		/**
+		 * Depending on the bus speed, busy loop for a while before
+		 * sleeping and letting other things run.
+		 */
+		if (delta >= busyloop_us[pdata[port].freq])
+			usleep(100);
+	} while (delta < pdata[port].timeout_us);
 
 	return EC_ERROR_TIMEOUT;
 }
@@ -116,6 +132,8 @@ static void i2c_set_freq_port(const struct i2c_port_t *p,
 	STM32_I2C_TIMINGR(port) = regs[freq];
 	/* Enable port */
 	STM32_I2C_CR1(port) = STM32_I2C_CR1_PE;
+
+	pdata[port].freq = freq;
 }
 
 /**
