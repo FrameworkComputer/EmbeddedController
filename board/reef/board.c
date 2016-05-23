@@ -282,23 +282,7 @@ static void chipset_pre_init(void)
 		return;
 #endif
 
-	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
-	gpio_set_level(GPIO_EN_PP5000, 1);
-	udelay(6);	/* Double the PG low to high delay for power supply. */
 
-	/* Enable 3.3V rail */
-	gpio_set_level(GPIO_EN_PP3300, 1);
-	udelay(1500);	/* Double the PG low to high delay for converter. */
-
-	/* Enable PMIC */
-	gpio_set_level(GPIO_V5A_EN, 1);
-
-	/* FIXME: for debugging */
-	cprintf(CC_HOOK, "PP3300_PG: %d", gpio_get_level(GPIO_PP3300_PG));
-	cprintf(CC_HOOK, "PP5000_PG: %d", gpio_get_level(GPIO_PP5000_PG));
-
-	/* (Re-)Enable I2C */
-	gpio_config_module(MODULE_I2C, 1);
 #if 0
 	/* Enable PD interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT);
@@ -344,8 +328,30 @@ static void board_init(void)
 					     i,
 					     &charge_none);
 	}
+
+	/*
+	 * There are dependencies in Reef's power topology:
+	 * 1. PP5000 must be enabled before PP3300 (chrome-os-partner:50807).
+	 * 2. TCPC chips must be powered until we can re-factor the PD handling
+	 *    code to be aware of TCPCs being off (chrome-os-partner:53644).
+	 * 3. To prevent SLP glitches, PMIC_EN (V5A_EN) should be enabled
+	 *    at the same time as PP3300 (chrome-os-partner:51323).
+	 */
+	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
+	gpio_set_level(GPIO_EN_PP5000, 1);
+
+	/* Enable 3.3V rail */
+	gpio_set_level(GPIO_EN_PP3300, 1);
+
+	while (!gpio_get_level(GPIO_PP3300_PG) ||
+		!gpio_get_level(GPIO_PP5000_PG))
+		;
+
+	/* Enable PMIC */
+	gpio_set_level(GPIO_V5A_EN, 1);
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+/* PP3300 needs to be enabled before TCPC init hooks */
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_FIRST);
 
 /**
  * Set active charge port -- only one port can be active at a time.
@@ -429,20 +435,6 @@ static void enable_input_devices(void)
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
-	static int need_to_enable_sleep_interrupt = 1;
-
-	/*
-	 * SLP_Sn signals may be glitchy before V5A and PMIC are both on
-	 * so wait until we're exiting S5 to enable SLP_Sn interrupts.
-	 * See chrome-os-partner:51323 for details.
-	 */
-	if (need_to_enable_sleep_interrupt) {
-		gpio_enable_interrupt(GPIO_PCH_SLP_S4_L);
-		gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
-		gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
-		need_to_enable_sleep_interrupt = 0;
-	}
-
 	/* Enable USB-A port. */
 	gpio_set_level(GPIO_EN_USB_A_5V, 1);
 
@@ -471,16 +463,12 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
  */
 void chipset_do_shutdown(void)
 {
-	cprintf(CC_CHIPSET, "Doing custom shutdown for Reef\n");
-
-	/* Disable I2C module */
-	gpio_config_module(MODULE_I2C, 0);
-
-	gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
-	/* Disable V5A which de-assert PMIC_EN and causes PMIC to shutdown. */
-	gpio_set_level(GPIO_V5A_EN, 0);
-	gpio_set_level(GPIO_EN_PP3300, 0);
-	gpio_set_level(GPIO_EN_PP5000, 0);
+	/*
+	 * If we shut off TCPCs the TCPC tasks will fail and spam the
+	 * EC console with I2C errors. So for now we'll leave the TCPCs
+	 * on which means leaving V5A_EN, PP3300, and PP5000 enabled.
+	 */
+	cprintf(CC_CHIPSET, "%s called, but not doing anything.\n", __func__);
 }
 
 void board_set_gpio_hibernate_state(void)
