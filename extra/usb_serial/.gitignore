@@ -1,0 +1,12 @@
+.built-in.o.cmd
+.raiden.ko.cmd
+.raiden.mod.o.cmd
+.raiden.o.cmd
+.tmp_versions/
+Module.symvers
+built-in.o
+modules.order
+raiden.ko
+raiden.mod.c
+raiden.mod.o
+raiden.o
