@@ -181,7 +181,9 @@ void board_set_tcpc_power_mode(int port, int mode)
 }
 
 /**
- * Reset PD MCU
+ * Reset PD MCU -- currently only called from handle_pending_reboot() in
+ * common/power.c just before hard resetting the system. This logic is likely
+ * not needed as the PP3300_A rail should be dropped on EC reset.
  */
 void board_reset_pd_mcu(void)
 {
@@ -287,9 +289,6 @@ static void chipset_pre_init(void)
 	/* Enable 3.3V rail */
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	udelay(1500);	/* Double the PG low to high delay for converter. */
-
-	/* Make sure TCPCs are on and taken out of reset */
-	board_reset_pd_mcu();
 
 	/* FIXME: for debugging */
 	cprintf(CC_HOOK, "PP3300_PG: %d", gpio_get_level(GPIO_PP3300_PG));
