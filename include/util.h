@@ -12,36 +12,8 @@
 #include "compile_time_macros.h"
 #include "panic.h"
 
+#include "builtin/assert.h"         /* For ASSERT(). */
 #include <stddef.h>
-
-/**
- * Trigger a debug exception if the condition
- * is not verified at runtime.
- */
-#ifdef CONFIG_DEBUG_ASSERT
-#ifdef CONFIG_DEBUG_ASSERT_REBOOTS
-
-#ifdef CONFIG_DEBUG_ASSERT_BRIEF
-#define ASSERT(cond) do {			\
-		if (!(cond))			\
-			panic_assert_fail(__FILE__, __LINE__);	\
-	} while (0)
-#else
-#define ASSERT(cond) do {			\
-		if (!(cond))			\
-			panic_assert_fail(#cond, __func__, __FILE__, \
-				__LINE__);	\
-	} while (0)
-#endif
-#else
-#define ASSERT(cond) do {			\
-		if (!(cond))			\
-			__asm("bkpt");		\
-	} while (0)
-#endif
-#else
-#define ASSERT(cond)
-#endif
 
 /* Standard macros / definitions */
 #ifndef MAX
