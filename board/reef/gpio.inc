@@ -9,7 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 GPIO_INT(PD_MCU_INT,		PIN(3, 3), GPIO_INT_LOW, pd_mcu_interrupt)			/* CHARGER_EC_INT_ODL from BD99955 */
-GPIO_INT(USB_C0_PD_INT,		PIN(3, 7), GPIO_INT_RISING | GPIO_SEL_1P8V, tcpc_alert_event)	/* from Analogix TCPC */
+GPIO_INT(USB_C0_PD_INT,		PIN(3, 7), GPIO_INT_RISING, tcpc_alert_event)	/* from Analogix TCPC */
 GPIO_INT(USB_C1_PD_INT_ODL,	PIN(D, 2), GPIO_INT_FALLING, tcpc_alert_event)			/* from Parade TCPC */
 
 GPIO_INT(PCH_SLP_S4_L, 		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S4_L */
