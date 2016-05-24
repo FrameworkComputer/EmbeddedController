@@ -187,9 +187,9 @@ static int ec_readmem_dev_v2(int offset, int bytes, void *dest)
 
 	r_mem.offset = offset;
 	r_mem.size = bytes;
-	return ec_command_dev(EC_CMD_READ_MEMMAP, 0,
-			      &r_mem, sizeof(r_mem),
-			      dest, bytes);
+	return ec_command_dev_v2(EC_CMD_READ_MEMMAP, 0,
+				 &r_mem, sizeof(r_mem),
+				 dest, bytes);
 }
 
 /*
