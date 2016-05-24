@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+make modules
+
+# Install the new module and update dependency and alias information
+sudo make modules_install
+sudo depmod -a
+
+# Install the udev rule for creating /dev/google symlinks.
+sudo cp 51-google-serial.rules /etc/udev/rules.d
+
+# Trigger udev to create the symlinks for any attached devices that have the
+# Google Vendor ID.  Limiting triggering like this prevents unwanted resetting
+# of some device state, even with the change action specified.
+for syspath in $(dirname $(grep -rxl --include=idVendor 18d1 /sys/devices)); do
+    sudo udevadm trigger --action=change --parent-match=${syspath}
+done
