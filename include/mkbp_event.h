@@ -29,9 +29,9 @@ struct mkbp_event_source {
 	int (*get_data)(uint8_t *data);
 };
 
-#define DECLARE_EVENT_SOURCE(type, func)                   \
-	const struct mkbp_event_source __evt_src_##type \
-	__attribute__((section(".rodata.evtsrcs")))        \
+#define DECLARE_EVENT_SOURCE(type, func)                       \
+	const struct mkbp_event_source __keep __evt_src_##type \
+	__attribute__((section(".rodata.evtsrcs")))            \
 		 = {type, func}
 
 #endif  /* __CROS_EC_MKBP_EVENT_H */
