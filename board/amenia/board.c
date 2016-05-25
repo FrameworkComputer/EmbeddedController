@@ -267,6 +267,20 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	 30 * MSEC, 0},
 };
 
+/* Called by APL power state machine when transitioning from G3 to S5 */
+static void chipset_pre_init(void)
+{
+	/* Enable V5A / PMIC */
+	gpio_set_level(GPIO_V5A_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
+
+void chipset_do_shutdown(void)
+{
+	/* Disable V5A / PMIC */
+	gpio_set_level(GPIO_V5A_EN, 0);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {

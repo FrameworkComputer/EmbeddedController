@@ -53,10 +53,7 @@ static int power_s5_up;       /* Chipset is sequencing up or down */
 
 __attribute__((weak)) void chipset_do_shutdown(void)
 {
-	/*
-	 * Disable V5A which de-assert PMIC_EN and causes PMIC to shutdown.
-	 */
-	gpio_set_level(GPIO_V5A_EN, 0);
+	/* Need to implement board specific shutdown */
 }
 
 void chipset_force_shutdown(void)
@@ -116,24 +113,44 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-static void handle_pass_through(enum power_state state,
-				enum gpio_signal pin_in,
-				enum gpio_signal pin_out)
+static void handle_rsmrst_l_pgood(enum power_state state)
 {
 	/*
 	 * Pass through asynchronously, as SOC may not react
 	 * immediately to power changes.
 	 */
-	int in_level = gpio_get_level(pin_in);
-	int out_level = gpio_get_level(pin_out);
+	int in_level = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int out_level = gpio_get_level(GPIO_PCH_RSMRST_L);
 
 	/* Nothing to do. */
 	if (in_level == out_level)
 		return;
 
-	gpio_set_level(pin_out, in_level);
+	/* Only passthrough RSMRST_L de-assertion on power up */
+	if (in_level && !power_s5_up)
+		return;
 
-	CPRINTS("Pass through %s: %d", gpio_get_name(pin_in), in_level);
+	gpio_set_level(GPIO_PCH_RSMRST_L, in_level);
+
+	CPRINTS("Pass through GPIO_RSMRST_L_PGOOD: %d", in_level);
+}
+
+static void handle_all_sys_pgood(enum power_state state)
+{
+	/*
+	 * Pass through asynchronously, as SOC may not react
+	 * immediately to power changes.
+	 */
+	int in_level = gpio_get_level(GPIO_ALL_SYS_PGOOD);
+	int out_level = gpio_get_level(GPIO_PCH_SYS_PWROK);
+
+	/* Nothing to do. */
+	if (in_level == out_level)
+		return;
+
+	gpio_set_level(GPIO_PCH_SYS_PWROK, in_level);
+
+	CPRINTS("Pass through GPIO_ALL_SYS_PGOOD: %d", in_level);
 }
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
@@ -259,10 +276,7 @@ static enum power_state _power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
-		/* Enable V5A */
-		gpio_set_level(GPIO_V5A_EN, 1);
-		msleep(10);
-
+		/* Wait for RSMRST_L de-assert */
 		if (power_wait_signals(IN_PGOOD_ALL_CORE)) {
 			chipset_force_shutdown();
 			return POWER_G3;
@@ -394,13 +408,18 @@ enum power_state power_handle_state(enum power_state state)
 {
 	enum power_state new_state;
 
-	/* Process RSMRST_L state changes. */
-	handle_pass_through(state, GPIO_RSMRST_L_PGOOD, GPIO_PCH_RSMRST_L);
-
 	/* Process ALL_SYS_PGOOD state changes. */
-	handle_pass_through(state, GPIO_ALL_SYS_PGOOD, GPIO_PCH_SYS_PWROK);
+	handle_all_sys_pgood(state);
 
 	new_state = _power_handle_state(state);
+
+	/*
+	 * Process RSMRST_L state changes:
+	 * RSMRST_L de-assertion is passed to SoC only on G3S5 to S5 transition.
+	 * RSMRST_L is also checked in some states and, if asserted, will
+	 * force shutdown.
+	 */
+	handle_rsmrst_l_pgood(new_state);
 
 	return new_state;
 }

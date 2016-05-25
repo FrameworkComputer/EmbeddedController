@@ -290,6 +290,9 @@ static void chipset_pre_init(void)
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	udelay(1500);	/* Double the PG low to high delay for converter. */
 
+	/* Enable PMIC */
+	gpio_set_level(GPIO_V5A_EN, 1);
+
 	/* FIXME: for debugging */
 	cprintf(CC_HOOK, "PP3300_PG: %d", gpio_get_level(GPIO_PP3300_PG));
 	cprintf(CC_HOOK, "PP5000_PG: %d", gpio_get_level(GPIO_PP5000_PG));
