@@ -183,7 +183,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 /**
  * Reset PD MCU
  *
- * TCPC0 minimum reset assertion time: TODO
+ * TCPC0 minimum reset assertion time: 10ms
  * TCPC1 minimum reset assertion time: 1ms (must be less than 10ms)
  */
 void board_reset_pd_mcu(void)
@@ -199,7 +199,7 @@ void board_reset_pd_mcu(void)
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_RST_L, 1);
 
-	/* TODO: Need confirmation from TCPC0 vendor */
+	/* TCPC0 requires 10ms reset/power down assertion */
 	msleep(10);
 
 	/* Deassert reset to TCPC0 */
