@@ -49,8 +49,13 @@ static void wireless_enable(int flags)
 #endif
 
 #ifdef WIRELESS_GPIO_WLAN_POWER
+#ifndef CONFIG_WLAN_POWER_ACTIVE_LOW
 	gpio_set_level(WIRELESS_GPIO_WLAN_POWER,
 		       flags & EC_WIRELESS_SWITCH_WLAN_POWER);
+#else
+	gpio_set_level(WIRELESS_GPIO_WLAN_POWER,
+		       !(flags & EC_WIRELESS_SWITCH_WLAN_POWER));
+#endif /* CONFIG_WLAN_POWER_ACTIVE_LOW */
 #endif
 
 }
@@ -75,7 +80,11 @@ static int wireless_get(void)
 #endif
 
 #ifdef WIRELESS_GPIO_WLAN_POWER
+#ifndef CONFIG_WLAN_POWER_ACTIVE_LOW
 	if (gpio_get_level(WIRELESS_GPIO_WLAN_POWER))
+#else
+	if (!gpio_get_level(WIRELESS_GPIO_WLAN_POWER))
+#endif /* CONFIG_WLAN_POWER_ACTIVE_LOW */
 		flags |= EC_WIRELESS_SWITCH_WLAN_POWER;
 #endif
 
