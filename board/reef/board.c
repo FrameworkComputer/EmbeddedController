@@ -171,7 +171,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 void board_set_tcpc_power_mode(int port, int mode)
 {
 	gpio_set_level(GPIO_EN_USB_TCPC_PWR, mode);
-	msleep(1);
+	msleep(mode ? 10 : 1);
 
 	/* FIXME(dhendrix): This is also connected to the PS8751 which
 	 * we might not want to reset just because something happened
@@ -193,7 +193,7 @@ void board_reset_pd_mcu(void)
 	msleep(10);
 
 	gpio_set_level(GPIO_EN_USB_TCPC_PWR, 1);
-	msleep(1);
+	msleep(10);
 	gpio_set_level(GPIO_USB_PD_RST_ODL, 1);
 	/*
 	 * ANX7688 needed 50ms to release RESET_N, but the ANX7428 datasheet
