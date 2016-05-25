@@ -113,6 +113,19 @@ void uartn_enable_interrupt(int uart)
 }
 
 
+/* Enable TX and RX. Disable HW flow control and loopback */
+void uartn_enable(int uart)
+{
+	/* TX and RX enable */
+	GR_UART_CTRL(uart) = 0x03;
+}
+
+/* Disable TX, RX, HW flow control, and loopback */
+void uartn_disable(int uart)
+{
+	GR_UART_CTRL(uart) = 0;
+}
+
 void uartn_init(int uart)
 {
 	long long setting = (16 * (1 << UART_NCO_WIDTH) *
@@ -131,7 +144,7 @@ void uartn_init(int uart)
 	 * TX enable, RX enable, HW flow control disabled, no
 	 * loopback
 	 */
-	GR_UART_CTRL(uart) = 0x03;
+	uartn_enable(uart);
 
 	/* enable RX interrupts in block */
 	/* Note: doesn't do anything unless turned on in NVIC */

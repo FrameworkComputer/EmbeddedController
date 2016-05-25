@@ -82,4 +82,10 @@ void uartn_tx_connect(int uart);
 
 /* Disable UART output */
 void uartn_tx_disconnect(int uart);
+
+/* Enable TX and RX. Disable HW flow control and loopback */
+void uartn_enable(int uart);
+
+/* Disable TX, RX, HW flow control, and loopback */
+void uartn_disable(int uart);
 #endif  /* __CROS_EC_UARTN_H */
