@@ -68,19 +68,8 @@ DECLARE_DEFERRED(deferred_reset_pd_mcu);
 
 void usb_evt(enum gpio_signal signal)
 {
-	/*
-	 * check if this is from BC12 or ANX7688 CABLE_DET
-	 * note that CABLE_DET can only trigger irq when 0 -> 1 (plug in)
-	 */
 	if (!gpio_get_level(GPIO_BC12_WAKE_L))
 		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
-
-	if (!gpio_get_level(GPIO_USB_C0_CABLE_DET_L) &&
-	    gpio_get_level(GPIO_USB_C0_PWR_EN_L)) {
-		hook_call_deferred(&deferred_reset_pd_mcu_data, -1);
-		/* pull PWR_EN after 10ms */
-		hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
-	}
 }
 
 #include "gpio_list.h"
@@ -220,12 +209,8 @@ void deferred_reset_pd_mcu(void)
 	case 3:
 		/*
 		 * PWR_EN_L high, RST high
-		 * cable detected - enable power
-		 * cable not detected - do nothing
+		 * enable power and wait for 10ms then pull RESET_N
 		 */
-		if (gpio_get_level(GPIO_USB_C0_CABLE_DET_L))
-			return;
-		/* enable power and wait for 10ms then pull RESET_N */
 		gpio_set_level(GPIO_USB_C0_PWR_EN_L, 0);
 		hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
 		break;
@@ -237,6 +222,14 @@ void deferred_reset_pd_mcu(void)
 		gpio_set_level(GPIO_USB_C0_RST, 0);
 		break;
 	}
+}
+
+static void board_power_on_pd_mcu(void)
+{
+	/* check if power is already on */
+	if (!gpio_get_level(GPIO_USB_C0_PWR_EN_L))
+		return;
+	hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
 }
 
 void board_reset_pd_mcu(void)
@@ -283,7 +276,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_BC12_CABLE_INT);
 
 	/* Check if typeC is already connected, and do 7688 power on flow */
-	usb_evt(0);
+	board_power_on_pd_mcu();
 
 	/* Update VBUS supplier */
 	usb_charger_vbus_change(0, pd_snk_is_vbus_provided(0));
