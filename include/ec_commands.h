@@ -1207,6 +1207,8 @@ struct ec_params_pwm_set_fan_duty_v1 {
 } __packed;
 
 #define EC_CMD_PWM_SET_DUTY 0x25
+/* 16 bit duty cycle, 65535 = 100% */
+#define EC_PWM_MAX_DUTY 65535
 
 enum ec_pwm_type {
 	/* All types, indexed by board-specific enum pwm_channel */
@@ -1219,7 +1221,7 @@ enum ec_pwm_type {
 };
 
 struct ec_params_pwm_set_duty {
-	uint8_t percent;   /* Duty cycle percent on [0, 100] */
+	uint16_t duty;     /* Duty cycle, EC_PWM_MAX_DUTY = 100% */
 	uint8_t pwm_type;  /* ec_pwm_type */
 	uint8_t index;     /* Type-specific index, or 0 if unique */
 } __packed;
@@ -1232,7 +1234,7 @@ struct ec_params_pwm_get_duty {
 } __packed;
 
 struct ec_response_pwm_get_duty {
-	uint8_t percent;
+	uint16_t duty;     /* Duty cycle, EC_PWM_MAX_DUTY = 100% */
 } __packed;
 
 /*****************************************************************************/

@@ -176,13 +176,13 @@ const char help_str[] =
 	"  pwmgetnumfans\n"
 	"      Prints the number of fans present\n"
 	"  pwmgetduty\n"
-	"      Prints the current duty cycle for given PWM\n"
+	"      Prints the current 16 bit duty cycle for given PWM\n"
 	"  pwmsetfanrpm <targetrpm>\n"
 	"      Set target fan RPM\n"
 	"  pwmsetkblight <percent>\n"
 	"      Set keyboard backlight in percent\n"
 	"  pwmsetduty\n"
-	"      Set duty cycle of given PWM in percent\n"
+	"      Set 16 bit duty cycle of given PWM\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> [at-shutdown]\n"
@@ -1941,7 +1941,7 @@ int cmd_pwm_get_duty(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
-	printf("Current PWM duty: %d\n", r.percent);
+	printf("Current PWM duty: %d\n", r.duty);
 	return 0;
 }
 
@@ -1953,7 +1953,7 @@ int cmd_pwm_set_duty(int argc, char *argv[])
 	int rv;
 
 	if (argc != 3) {
-		fprintf(stderr, "Usage: %s <pwm_idx> | kb | disp <percent>\n",
+		fprintf(stderr, "Usage: %s <pwm_idx> | kb | disp <duty>\n",
 			argv[0]);
 		return -1;
 	}
@@ -1973,9 +1973,9 @@ int cmd_pwm_set_duty(int argc, char *argv[])
 		}
 	}
 
-	p.percent = strtol(argv[2], &e, 0);
+	p.duty = strtol(argv[2], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad percent.\n");
+		fprintf(stderr, "Bad duty.\n");
 		return -1;
 	}
 
