@@ -7,6 +7,7 @@
 #
 
 # Accelerometers
+driver-$(CONFIG_ACCEL_BMA255)+=accel_bma2x2.o
 driver-$(CONFIG_ACCEL_KXCJ9)+=accel_kionix.o
 driver-$(CONFIG_ACCEL_KX022)+=accel_kionix.o
 driver-$(CONFIG_ACCELGYRO_LSM6DS0)+=accelgyro_lsm6ds0.o

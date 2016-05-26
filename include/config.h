@@ -51,6 +51,7 @@
 #undef CONFIG_ACCEL_FORCE_MODE_MASK
 
 /* Specify type of accelerometers attached. */
+#undef CONFIG_ACCEL_BMA255
 #undef CONFIG_ACCEL_KXCJ9
 #undef CONFIG_ACCEL_KX022
 #undef CONFIG_ACCELGYRO_LSM6DS0
