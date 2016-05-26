@@ -1965,21 +1965,19 @@ void pd_task(void)
 			}
 			break;
 		case PD_STATE_SUSPENDED:
-			/*
-			 * TODO: Suspend state only supported if we are also
-			 * the TCPC.
-			 */
+			CPRINTS("TCPC p%d suspended!", port);
 #ifdef CONFIG_USB_PD_TCPC
 			pd_rx_disable_monitoring(port);
 			pd_hw_release(port);
 			pd_power_supply_reset(port);
-
+#endif
 			/* Wait for resume */
 			while (pd[port].task_state == PD_STATE_SUSPENDED)
 				task_wait_event(-1);
-
+#ifdef CONFIG_USB_PD_TCPC
 			pd_hw_init(port, PD_ROLE_DEFAULT);
 #endif
+			CPRINTS("TCPC p%d resumed!", port);
 			break;
 		case PD_STATE_SNK_DISCONNECTED:
 #ifdef CONFIG_USB_PD_LOW_POWER
@@ -2667,9 +2665,16 @@ DECLARE_HOOK(HOOK_INIT, dual_role_init, HOOK_PRIO_DEFAULT);
 #ifdef CONFIG_COMMON_RUNTIME
 void pd_set_suspend(int port, int enable)
 {
-	set_state(port, enable ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE);
+	int tries = 3;
 
-	task_wake(PD_PORT_TO_TASK_ID(port));
+	do {
+		set_state(port, enable ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE);
+		task_wake(PD_PORT_TO_TASK_ID(port));
+	} while (enable && pd[port].task_state != PD_STATE_SUSPENDED
+			&& --tries);
+
+	if (!tries)
+		CPRINTS("TCPC p%d set_suspend failed!", port);
 }
 
 #if defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH)
