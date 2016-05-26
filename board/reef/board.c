@@ -445,12 +445,17 @@ int usb_charger_port_is_sourcing_vbus(int port)
 static void enable_input_devices(void)
 {
 	int kb_enable = 1;
+	int tp_enable = 1;
 
-	/* Disable KB if chipset is off */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	/* Disable KB & TP if chipset is off */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		kb_enable = 0;
+		tp_enable = 0;
+	}
 
 	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_ANGLE);
+
+	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, !tp_enable);
 }
 
 /* Called on AP S5 -> S3 transition */
