@@ -55,11 +55,12 @@
 #define CONFIG_CHARGER_V2
 
 /* Motion Sensors */
+#define CONFIG_ACCEL_BMA255
 #define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCEL_INTRRUPTS
+#undef CONFIG_ACCEL_INTRRUPTS
 #define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_SENSOR_BASE    0
-#define CONFIG_LID_ANGLE_SENSOR_LID     2
+#define CONFIG_LID_ANGLE_SENSOR_BASE    BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID     LID_ACCEL
 
 /* USB PD config */
 #define CONFIG_CHARGE_MANAGER
@@ -171,6 +172,13 @@ enum power_signal {
 
 	/* Number of signals */
 	POWER_SIGNAL_COUNT,
+};
+
+/* Motion sensors */
+enum sensor_id {
+	BASE_ACCEL = 0,
+	BASE_GYRO,
+	LID_ACCEL,
 };
 
 #include "gpio_signal.h"

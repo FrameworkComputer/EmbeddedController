@@ -14,6 +14,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/bd99955.h"
 #include "driver/tcpm/fusb302.h"
@@ -333,13 +334,14 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, overtemp_interrupt_disable,
 #ifdef HAS_TASK_MOTIONSENSE
 /* Mutexes */
 static struct mutex g_base_mutex;
+#ifdef BOARD_KEVIN
+static struct mutex g_lid_mutex;
 
-/* Matrix to rotate accelrator into standard reference frame */
-const matrix_3x3_t base_standard_ref = {
-	{ 0,  FLOAT_TO_FP(1),  0},
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0,  0,  FLOAT_TO_FP(1)}
+/* BMA255 private data */
+struct bma2x2_accel_data g_bma255_data = {
+	.variant = BMA255,
 };
+#endif
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -402,7 +404,6 @@ struct motion_sensor_t motion_sensors[] = {
 			 .ec_rate = 0,
 		 },
 		 /* EC does not need in S0 */
-		 /* TODO : Interrupt driven? */
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 0,
 			 .ec_rate = 0,
@@ -419,6 +420,43 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 	 },
 	},
+
+#ifdef BOARD_KEVIN
+	{.name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_BMA255,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bma2x2_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_bma255_data,
+	 .port = I2C_PORT_ACCEL,
+	 .addr = BMA2x2_I2C_ADDR1,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 2, /* g, enough for laptop. */
+	 .config = {
+		/* AP: by default use EC settings */
+		[SENSOR_CONFIG_AP] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* unused */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		[SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+	 },
+	},
+#endif
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif /* defined(HAS_TASK_MOTIONSENSE) */
