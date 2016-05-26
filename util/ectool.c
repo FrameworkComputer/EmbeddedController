@@ -187,6 +187,8 @@ const char help_str[] =
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> [at-shutdown]\n"
 	"      Reboot EC to RO or RW\n"
+	"  rtcalarm <sec>\n"
+	"      Set real-time clock alarm to go off in <sec> seconds\n"
 	"  rtcget\n"
 	"      Print real-time clock\n"
 	"  rtcset <time>\n"
@@ -5962,6 +5964,30 @@ int cmd_rtc_set(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_rtc_set_alarm(int argc, char *argv[])
+{
+	struct ec_params_rtc p;
+	char *e;
+	int rv;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <sec>\n", argv[0]);
+		return -1;
+	}
+	p.time = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad time.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_RTC_SET_ALARM, 0, &p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Alarm Set to go off in %d secs.\n", p.time);
+	return 0;
+}
+
 int cmd_console(int argc, char *argv[])
 {
 	char *out = (char *)ec_inbuf;
@@ -6736,6 +6762,7 @@ const struct command commands[] = {
 	{"pwmsetduty", cmd_pwm_set_duty},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
+	{"rtcalarm", cmd_rtc_set_alarm},
 	{"rtcget", cmd_rtc_get},
 	{"rtcset", cmd_rtc_set},
 	{"rwhashpd", cmd_rw_hash_pd},

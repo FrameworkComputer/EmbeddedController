@@ -762,6 +762,17 @@ DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
 		system_rtc_set_value,
 		EC_VER_MASK(0));
 
+static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rtc *p = args->params;
+
+	system_set_rtc_alarm(p->time, 0);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM,
+		system_rtc_set_alarm,
+		EC_VER_MASK(0));
+
 #ifdef CONFIG_EXTERNAL_STORAGE
 void system_jump_to_booter(void)
 {
