@@ -22,21 +22,12 @@
  * this file.
  */
 static uint32_t clock_mul_factor;
-static uint32_t clock_div_factor;
 static uint32_t hw_rollover_count;
 
 static inline uint32_t ticks_to_usecs(uint32_t ticks)
 {
-	return hw_rollover_count * clock_div_factor + ticks / clock_mul_factor;
-}
-
-static inline uint32_t usecs_to_ticks(uint32_t usecs)
-{
-	/* Really large counts will just be scheduled more than once */
-	if (usecs >= clock_div_factor)
-		return 0xffffffff;
-
-	return usecs * clock_mul_factor;
+	return ((uint64_t)hw_rollover_count * 0xffffffff + ticks)
+			/ clock_mul_factor;
 }
 
 static void update_prescaler(void)
@@ -57,7 +48,6 @@ static void update_prescaler(void)
 	 * Assume the clock rate is an integer multiple of MHz.
 	 */
 	clock_mul_factor = PCLK_FREQ / 1000000;
-	clock_div_factor = 0xffffffff / clock_mul_factor;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
@@ -93,15 +83,16 @@ void __hw_clock_event_set(uint32_t deadline)
 }
 
 /*
- * Handle event matches. It's lower priority than the HW rollover irq, so it
- * will always be either before or after a rollover exception.
+ * Handle event matches. It's priority matches the HW rollover irq to prevent
+ * a race condition that could lead to a watchdog timeout if preempted after
+ * the get_time() call in process_timers().
  */
 void __hw_clock_event_irq(void)
 {
 	__hw_clock_event_clear();
 	process_timers(0);
 }
-DECLARE_IRQ(GC_IRQNUM_TIMEHS0_TIMINT2, __hw_clock_event_irq, 2);
+DECLARE_IRQ(GC_IRQNUM_TIMEHS0_TIMINT2, __hw_clock_event_irq, 1);
 
 uint32_t __hw_clock_source_read(void)
 {
@@ -114,7 +105,9 @@ uint32_t __hw_clock_source_read(void)
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	GR_TIMEHS_LOAD(0, 1) = 0xffffffff - usecs_to_ticks(ts);
+	hw_rollover_count = ((uint64_t)ts * clock_mul_factor) >> 32;
+	GR_TIMEHS_LOAD(0, 1) = 0xffffffff - ts * clock_mul_factor;
+	GR_TIMEHS_BGLOAD(0, 1) = 0xffffffff;
 }
 
 /* This handles rollover in the HW timer */
