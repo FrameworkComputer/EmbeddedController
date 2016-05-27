@@ -141,12 +141,9 @@ enum bd99955_charge_port {
 #define BD99955_CMD_UCD_STATUS_CHGDET	(1 << 6)
 #define BD99955_TYPE_VBUS_OPEN		0
 #define BD99955_TYPE_SDP		BD99955_CMD_UCD_STATUS_CHGPORT0
-/*
- * TODO: For CDP detection, from the datasheet CHGDET & CHGPORT[1] bits need
- * to be high and rest need to be low. However following bits are high CHGDET,
- * DCDFAIL, CHGPORT[1], CHGPORT[0] and rest low.
- */
 #define BD99955_TYPE_CDP		(BD99955_CMD_UCD_STATUS_CHGDET | \
+					 BD99955_CMD_UCD_STATUS_CHGPORT1)
+#define BD99955_TYPE_OTHER		(BD99955_CMD_UCD_STATUS_CHGDET | \
 					 BD99955_CMD_UCD_STATUS_CHGPORT1 | \
 					 BD99955_CMD_UCD_STATUS_CHGPORT0 | \
 					 BD99955_CMD_UCD_STATUS_DCDFAIL)

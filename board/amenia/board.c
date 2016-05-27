@@ -347,12 +347,13 @@ int board_set_active_charge_port(int charge_port)
 void board_set_charge_limit(int port, int supplier, int charge_ma)
 {
 	/* Enable charging trigger by BC1.2 detection */
-	if (supplier == CHARGE_SUPPLIER_BC12_CDP ||
-		supplier == CHARGE_SUPPLIER_BC12_DCP ||
-		supplier == CHARGE_SUPPLIER_BC12_SDP) {
-		if (bd99955_bc12_enable_charging(port, 1))
-			return;
-	}
+	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
+			   supplier == CHARGE_SUPPLIER_BC12_DCP ||
+			   supplier == CHARGE_SUPPLIER_BC12_SDP ||
+			   supplier == CHARGE_SUPPLIER_OTHER);
+
+	if (bd99955_bc12_enable_charging(port, bc12_enable))
+		return;
 
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT));

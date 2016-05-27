@@ -196,6 +196,8 @@ static int bd99955_get_bc12_device_type(enum bd99955_charge_port port)
 		return CHARGE_SUPPLIER_BC12_DCP;
 	case BD99955_TYPE_SDP:
 		return CHARGE_SUPPLIER_BC12_SDP;
+	case BD99955_TYPE_OTHER:
+		return CHARGE_SUPPLIER_OTHER;
 	case BD99955_TYPE_VBUS_OPEN:
 	case BD99955_TYPE_PUP_PORT:
 	case BD99955_TYPE_OPEN_PORT:
@@ -213,6 +215,17 @@ static int bd99955_get_bc12_ilim(int charge_supplier)
 		return 2000;
 	case CHARGE_SUPPLIER_BC12_SDP:
 		return 900;
+	case CHARGE_SUPPLIER_OTHER:
+		/*
+		 * TODO: Setting the higher limit of current may result in an
+		 * anti-collapse hence limiting the current to 1A. (If the
+		 * charger response is slow or BD99955 cannot detect the type
+		 * of the charger, anti-collapse status is not updated in the
+		 * VBUS/VCC_STATUS register. Hence it is not possible to decide
+		 * whether to overwrite the ILIM values to come out of the
+		 * anti-collapse).
+		 */
+		return 1000;
 	default:
 		return 500;
 	}
