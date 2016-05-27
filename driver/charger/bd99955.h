@@ -247,8 +247,8 @@ enum bd99955_charge_port {
  * functionality not part of the standard charger interface.
  */
 
-/* Return true if extpower is present on their input port. */
-int bd99955_extpower_is_present(void);
+/* Is VBUS provided or external power present */
+int bd99955_is_vbus_provided(int port);
 /* Select input port from {VCC, VBUS, VCC&VBUS, NONE}. */
 int bd99955_select_input_port(enum bd99955_charge_port port);
 /* Enable/Disable charging triggered by BC1.2 */

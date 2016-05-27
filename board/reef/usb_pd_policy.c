@@ -106,7 +106,25 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return extpower_is_present();
+	enum bd99955_charge_port bd99955_port;
+
+	/*
+	 * TODO: Add a compile-time mapping to prevent
+	 * duplication of this code.
+	 */
+	switch (port) {
+	case 0:
+		bd99955_port = BD99955_CHARGE_PORT_VBUS;
+		break;
+	case 1:
+		bd99955_port = BD99955_CHARGE_PORT_VCC;
+		break;
+	default:
+		panic("Invalid charge port\n");
+		break;
+	}
+
+	return bd99955_is_vbus_provided(bd99955_port);
 }
 
 int pd_board_checks(void)
