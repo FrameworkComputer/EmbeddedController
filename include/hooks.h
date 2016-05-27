@@ -39,6 +39,8 @@ enum hook_priority {
 	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 9,
 	/* Init VBOOT hash later, since it depends on deferred functions */
 	HOOK_PRIO_INIT_VBOOT_HASH = HOOK_PRIO_FIRST + 10,
+	/* Init charge manager before usage in board init */
+	HOOK_PRIO_CHARGE_MANAGER_INIT = HOOK_PRIO_FIRST + 11,
 
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,

@@ -114,7 +114,7 @@ static void charge_manager_init(void)
 							    CAP_UNKNOWN;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_DEFAULT-1);
+DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_CHARGE_MANAGER_INIT);
 
 /**
  * Returns 1 if all ports + suppliers have reported in with some initial charge,

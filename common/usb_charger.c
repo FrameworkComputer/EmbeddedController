@@ -69,7 +69,7 @@ static void usb_charger_init(void)
 	int i;
 	struct charge_port_info charge_none;
 
-	/* Initialize all pericom charge suppliers to 0 */
+	/* Initialize all charge suppliers to 0 */
 	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
@@ -95,4 +95,4 @@ static void usb_charger_init(void)
 #endif
 	}
 }
-DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
