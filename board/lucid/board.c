@@ -18,6 +18,7 @@
 #include "led_common.h"
 #include "registers.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -141,6 +142,21 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_SLAVE_I2C_SCL, GPIO_SLAVE_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct temp_sensor_t temp_sensors[] = {
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/*
+ * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
+ * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
+	{{0, 0, 0}, 0, 0},	/* Battery */
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /* Initialize board. */
 static void board_init(void)
