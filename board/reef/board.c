@@ -512,16 +512,16 @@ struct motion_sensor_t motion_sensors[] = {
 	 * Requirement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
-	[LID_ACCEL] = {
-	 .name = "Lid Accel",
+	[BASE_ACCEL] = {
+	 .name = "Base Accel",
 	 .active_mask = SENSOR_ACTIVE_S0,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &bmi160_drv,
-	 .mutex = &g_lid_mutex,
+	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_ACCEL,
+	 .port = I2C_PORT_GYRO,
 	 .addr = BMI160_ADDR0,
 	 .rot_standard_ref = NULL, /* Identity matrix. */
 	 .default_range = 2,  /* g, enough for laptop. */
@@ -549,14 +549,14 @@ struct motion_sensor_t motion_sensors[] = {
 	 },
 	},
 
-	[LID_GYRO] = {
-	 .name = "Lid Gyro",
+	[BASE_GYRO] = {
+	 .name = "Base Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &bmi160_drv,
-	 .mutex = &g_lid_mutex,
+	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_GYRO,
 	 .addr = BMI160_ADDR0,
@@ -586,16 +586,16 @@ struct motion_sensor_t motion_sensors[] = {
 	 },
 	},
 
-	[LID_MAG] = {
-	 .name = "Lid Mag",
+	[BASE_MAG] = {
+	 .name = "Base Mag",
 	 .active_mask = SENSOR_ACTIVE_S0,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_MAG,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &bmi160_drv,
-	 .mutex = &g_lid_mutex,
+	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_ACCEL,
+	 .port = I2C_PORT_GYRO,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1 << 11, /* 16LSB / uT, fixed */
 	 .rot_standard_ref = NULL, /* Identity Matrix. */
@@ -623,17 +623,17 @@ struct motion_sensor_t motion_sensors[] = {
 	 },
 	},
 
-	[BASE_ACCEL] = {
-	 .name = "Base Accel",
+	[LID_ACCEL] = {
+	 .name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_KXCJ9,
+	 .chip = MOTIONSENSE_CHIP_KX022,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
+	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &kionix_accel_drv,
-	 .mutex = &g_base_mutex,
+	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_kx022_data,
-	 .port = I2C_PORT_ACCEL,
-	 .addr = KXCJ9_ADDR1,
+	 .port = I2C_PORT_LID_ACCEL,
+	 .addr = KX022_ADDR1,
 	 .rot_standard_ref = &base_standard_ref, /* Identity matrix. */
 	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {

@@ -71,9 +71,6 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
 /* #define CONFIG_LED_COMMON */
-/* #define CONFIG_LID_ANGLE */	/* FIXME(dhendrix): maybe? */
-/* #define CONFIG_LID_ANGLE_SENSOR_BASE 0 */	/* FIXME(dhendrix): maybe? */
-/* #define CONFIG_LID_ANGLE_SENSOR_LID 2 */	/* FIXME(dhendrix): maybe? */
 #define CONFIG_LID_SWITCH
 /* #define CONFIG_LOW_POWER_IDLE */
 #define CONFIG_LTO
@@ -110,26 +107,24 @@
 
 /* I2C ports */
 #define I2C_PORT_GYRO                   NPCX_I2C_PORT1
+#define I2C_PORT_LID_ACCEL              NPCX_I2C_PORT2
 #define I2C_PORT_ALS                    NPCX_I2C_PORT2
-#define I2C_PORT_ACCEL                  NPCX_I2C_PORT2
 #define I2C_PORT_BATTERY                NPCX_I2C_PORT3
 #define I2C_PORT_CHARGER                NPCX_I2C_PORT3
-#define I2C_PORT_PD_MCU                 NPCX_I2C_PORT3
 
+/* Sensors */
 #define CONFIG_ACCELGYRO_BMI160
+#define   CONFIG_MAG_BMI160_BMM150
+#define   BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
+#define   CONFIG_MAG_CALIBRATE
 #define CONFIG_ACCEL_KX022
-/* FIXME: Need to add BMP280 barometer */
-
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
-
-#define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
-#define CONFIG_MAG_BMI160_BMM150
-#define   BMM150_I2C_ADDRESS BMM150_ADDR0
-#define CONFIG_MAG_CALIBRATE
-
-/* Ambient Light Sensor address */
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
+/* FIXME: Need to add BMP280 barometer */
+/* #define CONFIG_LID_ANGLE */	/* FIXME(dhendrix): maybe? */
+/* #define CONFIG_LID_ANGLE_SENSOR_BASE 0 */	/* FIXME(dhendrix): maybe? */
+/* #define CONFIG_LID_ANGLE_SENSOR_LID 2 */	/* FIXME(dhendrix): maybe? */
 
 #undef DEFERRABLE_MAX_COUNT
 #define DEFERRABLE_MAX_COUNT 15
@@ -184,10 +179,10 @@ enum als_id {
 
 /* Motion sensors */
 enum sensor_id {
-	LID_ACCEL = 0,
-	LID_GYRO,
-	LID_MAG,
-	BASE_ACCEL,
+	BASE_ACCEL = 0,
+	BASE_GYRO,
+	BASE_MAG,
+	LID_ACCEL,
 };
 
 /* start as a sink in case we have no other power supply/battery */
