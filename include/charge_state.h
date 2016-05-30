@@ -11,7 +11,7 @@
 /* Stuff that's common to all charger implementations can go here. */
 
 /* Seconds to spend trying to wake a non-responsive battery */
-#define PRECHARGE_TIMEOUT 30
+#define PRECHARGE_TIMEOUT CONFIG_BATTERY_PRECHARGE_TIMEOUT
 
 /* Power state task polling periods in usec */
 #define CHARGE_POLL_PERIOD_VERY_LONG   MINUTE

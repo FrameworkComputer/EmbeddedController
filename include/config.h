@@ -174,6 +174,9 @@
  */
 #undef CONFIG_BATTERY_OVERRIDE_PARAMS
 
+/* Maximum time to wake a non-responsive battery, in second */
+#define CONFIG_BATTERY_PRECHARGE_TIMEOUT 30
+
 /*
  * If defined, the charger will check for battery presence before attempting
  * to communicate with it. This avoids the 30 second delay when booting
