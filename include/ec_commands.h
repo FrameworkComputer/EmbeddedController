@@ -475,7 +475,7 @@ struct ec_lpc_host_args {
  * If EC gets a command and this flag is not set, this is an old-style command.
  * Command version is 0 and params from host are at EC_LPC_ADDR_OLD_PARAM with
  * unknown length.  EC must respond with an old-style response (that is,
- * withouth setting EC_HOST_ARGS_FLAG_TO_HOST).
+ * without setting EC_HOST_ARGS_FLAG_TO_HOST).
  */
 #define EC_HOST_ARGS_FLAG_FROM_HOST 0x01
 /*
@@ -795,7 +795,7 @@ struct ec_response_get_cmd_versions {
 } __packed;
 
 /*
- * Check EC communcations status (busy). This is needed on i2c/spi but not
+ * Check EC communications status (busy). This is needed on i2c/spi but not
  * on lpc since it has its own out-of-band busy indicator.
  *
  * lpc must read the status from the command register. Attempting this on
@@ -827,7 +827,7 @@ struct ec_response_test_protocol {
 	uint8_t buf[32];
 } __packed;
 
-/* Get prococol information */
+/* Get protocol information */
 #define EC_CMD_GET_PROTOCOL_INFO	0x0b
 
 /* Flags for ec_response_get_protocol_info.flags */
@@ -939,7 +939,7 @@ enum ec_feature_code {
 	 * (Common Smart Battery System Interface Specification)
 	 */
 	EC_FEATURE_SMART_BATTERY = 18,
-	/* EC can dectect when the host hangs. */
+	/* EC can detect when the host hangs. */
 	EC_FEATURE_HANG_DETECT = 19,
 	/* Report power information, for pit only */
 	EC_FEATURE_PMU = 20,
@@ -1764,6 +1764,13 @@ enum motionsense_command {
 	 */
 	MOTIONSENSE_CMD_LID_ANGLE = 14,
 
+	/*
+	 * Allow the FIFO to trigger interrupt via MKBP events.
+	 * By default the FIFO does not send interrupt to process the FIFO
+	 * until the AP is ready or it is coming from a wakeup sensor.
+	 */
+	MOTIONSENSE_CMD_FIFO_INT_ENABLE = 15,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -1824,7 +1831,7 @@ struct ec_response_motion_sense_fifo_info {
 	uint16_t size;
 	/* Amount of space used in the fifo */
 	uint16_t count;
-	/* TImestamp recorded in us */
+	/* Timestamp recorded in us */
 	uint32_t timestamp;
 	/* Total amount of vector lost */
 	uint16_t total_lost;
@@ -1859,7 +1866,7 @@ struct ec_motion_sense_activity {
 #define MOTIONSENSE_SENSOR_FLAG_PRESENT (1<<0)
 
 /*
- * Flush entry for synchronisation.
+ * Flush entry for synchronization.
  * data contains time stamp
  */
 #define MOTIONSENSE_SENSOR_FLAG_FLUSH (1<<0)
@@ -1973,6 +1980,15 @@ struct ec_params_motion_sense {
 		/* Used for MOTIONSENSE_CMD_LID_ANGLE */
 		struct {
 		} lid_angle;
+
+		/* Used for MOTIONSENSE_CMD_FIFO_INT_ENABLE */
+		struct {
+			/*
+			 * 1: enable, 0 disable fifo,
+			 * EC_MOTION_SENSE_NO_VALUE return value.
+			 */
+			int8_t enable;
+		} fifo_int_enable;
 	};
 } __packed;
 
@@ -2010,13 +2026,15 @@ struct ec_response_motion_sense {
 
 		/*
 		 * Used for MOTIONSENSE_CMD_EC_RATE, MOTIONSENSE_CMD_SENSOR_ODR,
-		 * MOTIONSENSE_CMD_SENSOR_RANGE, and
-		 * MOTIONSENSE_CMD_KB_WAKE_ANGLE.
+		 * MOTIONSENSE_CMD_SENSOR_RANGE,
+		 * MOTIONSENSE_CMD_KB_WAKE_ANGLE and
+		 * MOTIONSENSE_CMD_FIFO_INT_ENABLE.
 		 */
 		struct {
 			/* Current value of the parameter queried. */
 			int32_t ret;
-		} ec_rate, sensor_odr, sensor_range, kb_wake_angle;
+		} ec_rate, sensor_odr, sensor_range, kb_wake_angle,
+		  fifo_int_enable;
 
 		/* Used for MOTIONSENSE_CMD_SENSOR_OFFSET */
 		struct {

@@ -54,7 +54,7 @@ static int accel_disp;
 /*
  * Adjustment in us to ec rate when calculating interrupt interval:
  * To be sure the EC will send an interrupt even if it finishes processing
- * events slighly ealier than the previous period.
+ * events slightly earlier than the previous period.
  */
 #define MOTION_SENSOR_INT_ADJUSTMENT_US 10
 
@@ -79,6 +79,7 @@ static int wake_up_needed;
 static int fifo_flush_needed;
 /* Number of element the AP should collect */
 static int fifo_queue_count;
+static int fifo_int_enabled;
 
 struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
@@ -268,7 +269,7 @@ static int motion_sense_set_ec_rate_from_ap(
 	 * 2 measurements.
 	 * To prevent that, increase the EC period by 5% to be sure to get at
 	 * least one measurement at every collection time.
-	 * We wll apply that correction only if the ec rate is within 10% of
+	 * We will apply that correction only if the ec rate is within 10% of
 	 * the data rate.
 	 */
 	if (SECOND * 1100 / odr_mhz > new_rate_us)
@@ -284,7 +285,7 @@ end_set_ec_rate_from_ap:
  *
  * Calculate the ec_rate for a given sensor.
  * - sensor: sensor to use
- * - config_id: determine the requestor (AP or EC).
+ * - config_id: determine the requester (AP or EC).
  * - interrupt:
  * If interrupt is set: return the sampling rate requested by AP or EC.
  * If interrupt is not set and the sensor is in forced mode,
@@ -472,7 +473,7 @@ static void motion_sense_shutdown(void)
 			int activity = get_next_bit(&enabled);
 			sensor->drv->manage_activity(sensor, activity, 0, NULL);
 		}
-		/* Renable double tap in case AP disabled it */
+		/* Re-enable double tap in case AP disabled it */
 		sensor->drv->manage_activity(sensor,
 				MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1, NULL);
 	}
@@ -804,11 +805,13 @@ void motion_sense_task(void)
 			mutex_unlock(&g_sensor_mutex);
 #ifdef CONFIG_MKBP_EVENT
 			/*
-			 * We don't currently support wake up sensor.
-			 * When we do, add per sensor test to know
-			 * when sending the event.
+			 * Send an event if we know we are in S0 and the kernel
+			 * driver is listening, or the AP needs to be waken up.
+			 * In the latter case, the driver pulls the event and
+			 * will resume listening until it is suspended again.
 			 */
-			if (sensor_active == SENSOR_ACTIVE_S0 ||
+			if ((fifo_int_enabled &&
+			     sensor_active == SENSOR_ACTIVE_S0) ||
 			    wake_up_needed) {
 				mkbp_send_event(EC_MKBP_EVENT_SENSOR_FIFO);
 				wake_up_needed = 0;
@@ -1125,6 +1128,19 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		out->fifo_read.number_data = reported;
 		args->response_size = sizeof(out->fifo_read) + reported *
 			motion_sense_fifo.unit_bytes;
+		break;
+	case MOTIONSENSE_CMD_FIFO_INT_ENABLE:
+		switch (in->fifo_int_enable.enable) {
+		case 0:
+		case 1:
+			fifo_int_enabled = in->fifo_int_enable.enable;
+		case EC_MOTION_SENSE_NO_VALUE:
+			out->fifo_int_enable.ret = fifo_int_enabled;
+			args->response_size = sizeof(out->fifo_int_enable);
+			break;
+		default:
+			return EC_RES_INVALID_PARAM;
+		}
 		break;
 #else
 	case MOTIONSENSE_CMD_FIFO_INFO:

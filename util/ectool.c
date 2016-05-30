@@ -3366,6 +3366,7 @@ static const struct {
 	MS_SIZES(list_activities),
 	MS_SIZES(set_activity),
 	MS_SIZES(lid_angle),
+	MS_SIZES(fifo_int_enable),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -3384,6 +3385,8 @@ static int ms_help(const char *cmd)
 	printf("  %s data NUM                   - read sensor latest data\n",
 			cmd);
 	printf("  %s fifo_info                  - print fifo info\n", cmd);
+	printf("  %s fifo_int enable [0/1]      - enable/disable/get fifo "
+	       "interrupt status\n", cmd);
 	printf("  %s fifo_read MAX_DATA         - read fifo data\n", cmd);
 	printf("  %s fifo_flush NUM             - trigger fifo interrupt\n",
 			cmd);
@@ -3689,6 +3692,22 @@ static int cmd_motionsense(int argc, char **argv)
 			if (lost != 0)
 				printf("Lost %d:     %d\n", i, lost);
 		}
+		return 0;
+	}
+
+	if (argc >= 2 && !strcasecmp(argv[1], "fifo_int_enable")) {
+		param.cmd = MOTIONSENSE_CMD_FIFO_INT_ENABLE;
+		if (argc == 3)
+			param.fifo_int_enable.enable = strtol(argv[2], &e, 0);
+		else
+			param.fifo_int_enable.enable = EC_MOTION_SENSE_NO_VALUE;
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+
+		printf("%d\n", resp->fifo_int_enable.ret);
 		return 0;
 	}
 
