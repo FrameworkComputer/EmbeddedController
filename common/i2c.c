@@ -483,7 +483,7 @@ static int i2c_command_read(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	if (port_protected[p->port] && i2c_port->passthru_allowed) {
-		if (!i2c_port->passthru_allowed(i2c_port, p->addr))
+		if (!i2c_port->passthru_allowed(i2c_port, p->addr >> 1))
 			return EC_RES_ACCESS_DENIED;
 	}
 
@@ -517,7 +517,7 @@ static int i2c_command_write(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	if (port_protected[p->port] && i2c_port->passthru_allowed) {
-		if (!i2c_port->passthru_allowed(i2c_port, p->addr))
+		if (!i2c_port->passthru_allowed(i2c_port, p->addr >> 1))
 			return EC_RES_ACCESS_DENIED;
 	}
 
