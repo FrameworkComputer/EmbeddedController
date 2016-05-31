@@ -28,6 +28,9 @@
 #define CONFIG_USB_PID 0x501b
 #define CONFIG_USB_CONSOLE
 
+#define CONFIG_USB_SERIALNO
+#define DEFAULT_SERIALNO "Uninitialized"
+
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0
 #define USB_IFACE_GPIO    1
@@ -47,6 +50,8 @@
 
 /* Enable control of GPIOs over USB */
 #define CONFIG_USB_GPIO
+/* Enable console recasting of GPIO type. */
+#define CONFIG_CMD_GPIO_EXTENDED
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
