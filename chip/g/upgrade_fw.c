@@ -10,6 +10,7 @@
 #include "flash.h"
 #include "hooks.h"
 #include "include/compile_time_macros.h"
+#include "memory.h"
 #include "sha1.h"
 #include "uart.h"
 
@@ -125,6 +126,9 @@ void fw_upgrade_command_handler(void *body,
 			*rv = UPGRADE_ERASE_FAILURE;
 			return;
 		}
+
+		wipe_nvram(); /* Do not keep any state around. */
+
 		/*
 		 * Successful erase means that we need to return the base
 		 * address of the section to be programmed with the upgrade.
