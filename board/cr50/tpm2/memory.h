@@ -6,6 +6,7 @@
 #ifndef __EC_BOARD_CR50_TPM2_MEMORY_H
 #define __EC_BOARD_CR50_TPM2_MEMORY_H
 
-/* An empty file to meet expectations of the tpm2 library. */
+/* A function to reinitialize the TPM NVram. */
+void wipe_nvram(void);
 
 #endif /* __EC_BOARD_CR50_TPM2_MEMORY_H */

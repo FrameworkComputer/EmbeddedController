@@ -12,6 +12,7 @@
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
 
 #define NVMEM_ACQUIRE_CACHE_SLEEP_MS 25
 #define NVMEM_ACQUIRE_CACHE_MAX_ATTEMPTS (250 / NVMEM_ACQUIRE_CACHE_SLEEP_MS)
@@ -273,7 +274,7 @@ int nvmem_setup(uint8_t starting_version)
 	int part;
 	int ret;
 
-	CPRINTF("Configuring NVMEM FLash Partition\n");
+	CPRINTS("Configuring NVMEM FLash Partition");
 	/*
 	 * Initialize NVmem partition. This function will only be called
 	 * if during nvmem_init() fails which implies that NvMem is not fully
@@ -334,6 +335,7 @@ int nvmem_init(void)
 		return ret;
 	}
 
+	CPRINTS("Active NVram partition set to %d", nvmem_act_partition);
 	return EC_SUCCESS;
 }
 

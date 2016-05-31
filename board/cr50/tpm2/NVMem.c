@@ -65,14 +65,10 @@ int _plat__NVEnable(void *platParameter)
 	 */
 	s_NV_recoverable = nvmem_get_error_state() != 0;
 	s_NV_unrecoverable = s_NV_recoverable;
-	if (s_NV_unrecoverable)
-		return -1;
-	return s_NV_recoverable;
-#else
-	if (s_NV_unrecoverable)
-		return -1;
-	return s_NV_recoverable;
 #endif
+	if (s_NV_unrecoverable)
+		return -1;
+	return s_NV_recoverable;
 }
 
 void _plat__NVDisable(void)
@@ -216,4 +212,13 @@ void _plat__ClearNvAvail(void)
 {
 	s_NvIsAvailable = FALSE;
 	return;
+}
+
+void wipe_nvram(void)
+{
+#ifdef CONFIG_FLASH_NVMEM
+	nvmem_setup(0);
+#else
+	memset(s_NV, 0xff, sizeof(s_NV));
+#endif
 }
