@@ -4928,161 +4928,19 @@ int cmd_i2c_protect(int argc, char *argv[])
 }
 
 
-int cmd_i2c_read(int argc, char *argv[])
-{
-	struct ec_params_i2c_read p;
-	struct ec_response_i2c_read r;
-	char *e;
-	int rv;
-
-	if (argc != 5) {
-		fprintf(stderr, "Usage: %s <8 | 16> <port> <addr> <offset>\n",
-				argv[0]);
-		return -1;
-	}
-
-	p.read_size = strtol(argv[1], &e, 0);
-	if ((e && *e) || (p.read_size != 8 && p.read_size != 16)) {
-		fprintf(stderr, "Bad read size.\n");
-		return -1;
-	}
-
-	p.port = strtol(argv[2], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad port.\n");
-		return -1;
-	}
-
-	p.addr = strtol(argv[3], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad address.\n");
-		return -1;
-	}
-
-	p.offset = strtol(argv[4], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad offset.\n");
-		return -1;
-	}
-
-	/*
-	 * TODO(crosbug.com/p/23570): use I2C_XFER command if supported, then
-	 * fall back to I2C_READ.
-	 */
-
-	rv = ec_command(EC_CMD_I2C_READ, 0, &p, sizeof(p), &r, sizeof(r));
-
-	if (rv < 0)
-		return rv;
-
-	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n",
-	       p.port, p.addr, p.offset, r.data);
-	return 0;
-}
-
-
-int cmd_i2c_write(int argc, char *argv[])
-{
-	struct ec_params_i2c_write p;
-	char *e;
-	int rv;
-
-	if (argc != 6) {
-		fprintf(stderr,
-			"Usage: %s <8 | 16> <port> <addr> <offset> <data>\n",
-			argv[0]);
-		return -1;
-	}
-
-	p.write_size = strtol(argv[1], &e, 0);
-	if ((e && *e) || (p.write_size != 8 && p.write_size != 16)) {
-		fprintf(stderr, "Bad write size.\n");
-		return -1;
-	}
-
-	p.port = strtol(argv[2], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad port.\n");
-		return -1;
-	}
-
-	p.addr = strtol(argv[3], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad address.\n");
-		return -1;
-	}
-
-	p.offset = strtol(argv[4], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad offset.\n");
-		return -1;
-	}
-
-	p.data = strtol(argv[5], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad data.\n");
-		return -1;
-	}
-
-	/*
-	 * TODO(crosbug.com/p/23570): use I2C_XFER command if supported, then
-	 * fall back to I2C_WRITE.
-	 */
-
-	rv = ec_command(EC_CMD_I2C_WRITE, 0, &p, sizeof(p), NULL, 0);
-
-	if (rv < 0)
-		return rv;
-
-	printf("Wrote 0x%x to I2C port %d at 0x%x offset 0x%x.\n",
-	       p.data, p.port, p.addr, p.offset);
-	return 0;
-}
-
-
-int cmd_i2c_xfer(int argc, char *argv[])
-{
+int do_i2c_xfer(unsigned int port, unsigned int addr,
+		uint8_t *write_buf, int write_len,
+		uint8_t **read_buf, int read_len) {
 	struct ec_params_i2c_passthru *p =
 		(struct ec_params_i2c_passthru *)ec_outbuf;
 	struct ec_response_i2c_passthru *r =
 		(struct ec_response_i2c_passthru *)ec_inbuf;
 	struct ec_params_i2c_passthru_msg *msg = p->msg;
-	unsigned int addr;
 	uint8_t *pdata;
-	char *e;
-	int read_len, write_len;
 	int size;
-	int rv, i;
+	int rv;
 
-	if (argc < 4) {
-		fprintf(stderr,
-			"Usage: %s <port> <slave_addr> <read_count> "
-			"[write bytes...]\n", argv[0]);
-		return -1;
-	}
-
-	p->port = strtol(argv[1], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad port.\n");
-		return -1;
-	}
-
-	addr = strtol(argv[2], &e, 0) & 0x7f;
-	if (e && *e) {
-		fprintf(stderr, "Bad slave address.\n");
-		return -1;
-	}
-
-	read_len = strtol(argv[3], &e, 0);
-	if (e && *e) {
-		fprintf(stderr, "Bad read length.\n");
-		return -1;
-	}
-
-	/* Skip over params to bytes to write */
-	argc -= 4;
-	argv += 4;
-	write_len = argc;
+	p->port = port;
 	p->num_msgs = (read_len != 0) + (write_len != 0);
 
 	size = sizeof(*p) + p->num_msgs * sizeof(*msg);
@@ -5100,13 +4958,7 @@ int cmd_i2c_xfer(int argc, char *argv[])
 		msg->addr_flags = addr;
 		msg->len = write_len;
 
-		for (i = 0; i < write_len; i++) {
-			pdata[i] = strtol(argv[i], &e, 0);
-			if (e && *e) {
-				fprintf(stderr, "Bad write byte %d\n", i);
-				return -1;
-			}
-		}
+		memcpy(pdata, write_buf, write_len);
 		msg++;
 	}
 
@@ -5132,10 +4984,189 @@ int cmd_i2c_xfer(int argc, char *argv[])
 		return -1;
 	}
 
+	if (read_len)
+		*read_buf = r->data;
+
+	return 0;
+}
+
+
+int cmd_i2c_read(int argc, char *argv[])
+{
+	unsigned int port, addr;
+	int read_len, write_len;
+	uint8_t write_buf[1];
+	uint8_t *read_buf;
+	char *e;
+	int rv;
+
+	if (argc != 5) {
+		fprintf(stderr, "Usage: %s <8 | 16> <port> <addr> <offset>\n",
+				argv[0]);
+		return -1;
+	}
+
+	read_len = strtol(argv[1], &e, 0);
+	if ((e && *e) || (read_len != 8 && read_len != 16)) {
+		fprintf(stderr, "Bad read size.\n");
+		return -1;
+	}
+	read_len = read_len / 8;
+
+	port = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	addr = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad address.\n");
+		return -1;
+	}
+	/* Convert from 8-bit to 7-bit address */
+	addr = addr >> 1;
+
+	write_buf[0] = strtol(argv[4], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+	write_len = 1;
+
+	rv = do_i2c_xfer(port, addr, write_buf, write_len, &read_buf, read_len);
+
+	if (rv < 0)
+		return rv;
+
+	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n",
+		port, addr, write_buf[0], *(uint16_t *)read_buf);
+	return 0;
+}
+
+
+int cmd_i2c_write(int argc, char *argv[])
+{
+	unsigned int port, addr;
+	int write_len;
+	uint8_t write_buf[3];
+	char *e;
+	int rv;
+
+	if (argc != 6) {
+		fprintf(stderr,
+			"Usage: %s <8 | 16> <port> <addr> <offset> <data>\n",
+			argv[0]);
+		return -1;
+	}
+
+	write_len = strtol(argv[1], &e, 0);
+	if ((e && *e) || (write_len != 8 && write_len != 16)) {
+		fprintf(stderr, "Bad write size.\n");
+		return -1;
+	}
+	/* Include offset (length 1) */
+	write_len = 1 + write_len / 8;
+
+	port = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	addr = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad address.\n");
+		return -1;
+	}
+	/* Convert from 8-bit to 7-bit address */
+	addr = addr >> 1;
+
+	write_buf[0] = strtol(argv[4], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad offset.\n");
+		return -1;
+	}
+
+	*((uint16_t *)&write_buf[1]) = strtol(argv[5], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad data.\n");
+		return -1;
+	}
+
+	rv = do_i2c_xfer(port, addr, write_buf, write_len, NULL, 0);
+
+	if (rv < 0)
+		return rv;
+
+	printf("Wrote 0x%x to I2C port %d at 0x%x offset 0x%x.\n",
+	       *((uint16_t *)&write_buf[1]), port, addr, write_buf[0]);
+	return 0;
+}
+
+
+int cmd_i2c_xfer(int argc, char *argv[])
+{
+	unsigned int port, addr;
+	int read_len, write_len;
+	uint8_t *write_buf = NULL;
+	uint8_t *read_buf;
+	char *e;
+	int rv, i;
+
+	if (argc < 4) {
+		fprintf(stderr,
+			"Usage: %s <port> <slave_addr> <read_count> "
+			"[write bytes...]\n", argv[0]);
+		return -1;
+	}
+
+	port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	addr = strtol(argv[2], &e, 0) & 0x7f;
+	if (e && *e) {
+		fprintf(stderr, "Bad slave address.\n");
+		return -1;
+	}
+
+	read_len = strtol(argv[3], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad read length.\n");
+		return -1;
+	}
+
+	/* Skip over params to bytes to write */
+	argc -= 4;
+	argv += 4;
+	write_len = argc;
+
+	if (write_len) {
+		write_buf = malloc(write_len);
+		for (i = 0; i < write_len; i++) {
+			write_buf[i] = strtol(argv[i], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad write byte %d\n", i);
+				return -1;
+			}
+		}
+	}
+
+	rv = do_i2c_xfer(port, addr, write_buf, write_len, &read_buf, read_len);
+
+	if (write_len)
+		free(write_buf);
+
+	if (rv)
+		return rv;
+
 	if (read_len) {
 		printf("Read bytes:");
 		for (i = 0; i < read_len; i++)
-			printf(" %#02x", r->data[i]);
+			printf(" %#02x", read_buf[i]);
 		printf("\n");
 	} else {
 		printf("Write successful.\n");
