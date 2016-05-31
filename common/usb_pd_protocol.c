@@ -2135,6 +2135,16 @@ void pd_task(void)
 			}
 			if (pd_is_vbus_present(port) &&
 			    snk_hard_reset_vbus_off) {
+#ifdef CONFIG_USB_PD_TCPM_TCPCI
+				/*
+				 * After transmitting hard reset, TCPM writes
+				 * to RECEIVE_MESSAGE register to enable
+				 * PD message passing.
+				 */
+				if (pd_comm_enabled)
+					tcpm_set_rx_enable(port, 1);
+#endif /* CONFIG_USB_PD_TCPM_TCPCI */
+
 				/* VBUS went high again */
 				set_state(port, PD_STATE_SNK_DISCOVERY);
 				timeout = 10*MSEC;
