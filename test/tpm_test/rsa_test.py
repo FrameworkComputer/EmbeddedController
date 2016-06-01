@@ -563,6 +563,7 @@ def _prime_from_seed(seed):
 _ENCRYPT_INPUTS = (
   ('OAEP', 'SHA1', 768),
   ('OAEP', 'SHA256', 768),
+  ('OAEP', 'SHA256', 1024),
   ('PKCS1-ES', 'NONE', 768),
   ('PKCS1-ES', 'NONE', 2048),
   ('NULL', 'NONE', 768),
@@ -572,27 +573,36 @@ _ENCRYPT_INPUTS = (
 _SIGN_INPUTS = (
   ('PKCS1-SSA', 'SHA1', 768),
   ('PKCS1-SSA', 'SHA256', 768),
+  ('PKCS1-SSA', 'SHA256', 1024),
   ('PKCS1-PSS', 'SHA1', 768),
   ('PKCS1-PSS', 'SHA256', 768),
+  ('PKCS1-PSS', 'SHA256', 2048),
 )
 
 _KEYTEST_INPUTS = (
   (768,),
+# TODO(ngm): 1024-bit modinv is broken, see partner CRBUG/53893.
+#  (1024,),
   (2048,),
 )
 
 _KEYGEN_INPUTS = (
-  (768, 65537, "rsa_test"),
   (768, 65537, ''),
+  (1024, 65537, 'rsa_test'),
+  (2048, 65537, 'rsa_test'),
+  (2048, 65537, ''),
 )
 
-
+# 2048-bit will be done in hardware (i.e. fast), rest are in software.
+# Sizes below correspond to RSA key size.
 _PRIMEGEN_INPUTS = (
   768,
-  768,
-  768,
-  768,
-  768
+  1024,
+  2048,
+  2048,
+  2048,
+  2048,
+  2048
 )
 
 def _encrypt_tests(tpm):
