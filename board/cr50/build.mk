@@ -28,6 +28,9 @@ CFLAGS += -I$(realpath $(BDIR)/tpm2)
 dirs-y += chip/$(CHIP)/dcrypto
 dirs-y += $(BDIR)/tpm2
 
+# Add hardware crypto support.
+PDIR=private-cr51
+
 # Objects that we need to build
 board-y =  board.o
 board-${CONFIG_RDD} += rdd.o

@@ -68,15 +68,28 @@ struct BIGNUM {
 
 void bn_init(struct BIGNUM *bn, void *buf, size_t len);
 #define bn_size(b) ((b)->dmax * BN_BYTES)
+#define bn_words(b) ((b)->dmax)
 #define bn_bits(b) ((b)->dmax * BN_BITS2)
 int bn_check_topbit(const struct BIGNUM *N);
 void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 		const struct BIGNUM *exp, const struct BIGNUM *N);
+void bn_mont_modexp_asm(struct BIGNUM *output, const struct BIGNUM *input,
+			const struct BIGNUM *exp, const struct BIGNUM *N);
 uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a);
 uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a);
 void bn_mul(struct BIGNUM *c, const struct BIGNUM *a, const struct BIGNUM *b);
 int bn_modinv_vartime(struct BIGNUM *r, const struct BIGNUM *e,
 		const struct BIGNUM *MOD);
+int bn_is_bit_set(const struct BIGNUM *a, int n);
+
+/*
+ * Runtime.
+ */
+void dcrypto_init(void);
+uint32_t dcrypto_call(uint32_t adr);
+void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
+		       size_t n_opcodes);
+void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words);
 
 /*
  * Utility functions.

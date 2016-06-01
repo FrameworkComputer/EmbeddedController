@@ -64,7 +64,7 @@ int bn_check_topbit(const struct BIGNUM *N)
 }
 
 /* a[n]. */
-static int bn_is_bit_set(const struct BIGNUM *a, int n)
+int bn_is_bit_set(const struct BIGNUM *a, int n)
 {
 	int i, j;
 
@@ -340,6 +340,12 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	struct BIGNUM acc;
 	struct BIGNUM aR;
 
+	if (bn_bits(N) == 2048 || bn_bits(N) == 1024) {
+		/* TODO(ngm): add hardware support for standard key sizes. */
+		bn_mont_modexp_asm(output, input, exp, N);
+		return;
+	}
+
 	bn_init(&RR, RR_buf, bn_size(N));
 	bn_init(&acc, acc_buf, bn_size(N));
 	bn_init(&aR, aR_buf, bn_size(N));
@@ -348,7 +354,6 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	bn_compute_RR(&RR, N);
 	bn_mont_mul(&acc, NULL, &RR, nprime, N);      /* R = 1 * RR / R % N */
 	bn_mont_mul(&aR, input, &RR, nprime, N);      /* aR = a * RR / R % N */
-	BN_DIGIT(output, 0) = 1;
 
 	/* TODO(ngm): burn stack space and use windowing. */
 	for (i = exp->dmax * BN_BITS2 - 1; i >= 0; i--) {
