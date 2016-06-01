@@ -549,6 +549,14 @@ static void bd99995_init(void)
 	ch_raw_write16(BD99955_CMD_VBATOVP_SET,
 		       (bi->voltage_max + 500) & 0x7ff0,
 		       BD99955_EXTENDED_COMMAND);
+
+	/* Disable IADP pin current limit */
+	if (ch_raw_read16(BD99955_CMD_VM_CTRL_SET, &reg,
+			  BD99955_EXTENDED_COMMAND))
+		return;
+	reg &= ~BD99955_CMD_VM_CTRL_SET_EXTIADPEN;
+	ch_raw_write16(BD99955_CMD_VM_CTRL_SET, reg,
+		       BD99955_EXTENDED_COMMAND);
 }
 DECLARE_HOOK(HOOK_INIT, bd99995_init, HOOK_PRIO_INIT_EXTPOWER);
 
