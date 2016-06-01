@@ -89,8 +89,12 @@ static void usb_charger_init(void)
 					     i,
 					     &charge_none);
 
-#ifndef CONFIG_USB_PD_TCPM_VBUS
-		/* Initialize VBUS supplier based on whether VBUS is present */
+#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
+		/*
+		 * Initialize VBUS supplier based on whether VBUS is present.
+		 * For CONFIG_USB_PD_VBUS_DETECT_TCPC, usb_charger_vbus_change()
+		 * will be called directly from TCPC alert.
+		 */
 		update_vbus_supplier(i, pd_snk_is_vbus_provided(i));
 #endif
 	}

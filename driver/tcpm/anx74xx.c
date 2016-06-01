@@ -592,7 +592,7 @@ static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 	return rv;
 }
 
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 static int anx74xx_tcpm_get_vbus_level(int port)
 {
 	int reg = 0;
@@ -785,7 +785,7 @@ int anx74xx_tcpm_init(int port)
 const struct tcpm_drv anx74xx_tcpm_drv = {
 	.init			= &anx74xx_tcpm_init,
 	.get_cc			= &anx74xx_tcpm_get_cc,
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &anx74xx_tcpm_get_vbus_level,
 #endif
 	.set_cc			= &anx74xx_tcpm_set_cc,

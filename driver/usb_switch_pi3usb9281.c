@@ -383,7 +383,7 @@ void usb_charger_task(void)
 		 */
 		if (evt & USB_CHG_EVENT_VBUS) {
 			pi3usb9281_enable_interrupts(port);
-#ifndef CONFIG_USB_PD_TCPM_VBUS
+#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
 			CPRINTS("VBUS p%d %d", port,
 				pd_snk_is_vbus_provided(port));
 #endif

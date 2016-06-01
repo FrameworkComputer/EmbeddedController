@@ -442,7 +442,7 @@ static int it83xx_tcpm_transmit(int port,
 const struct tcpm_drv it83xx_tcpm_drv = {
 	.init			= &it83xx_tcpm_init,
 	.get_cc			= &it83xx_tcpm_get_cc,
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= NULL,
 #endif
 	.set_cc			= &it83xx_tcpm_set_cc,

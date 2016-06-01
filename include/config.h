@@ -1869,9 +1869,6 @@
 /* Allow chip to go into low power idle even when a PD device is attached */
 #undef CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED
 
-/* Define if USB-PD device has no way of detecting USB VBUS */
-#undef CONFIG_USB_PD_NO_VBUS_DETECT
-
 /* Number of USB PD ports */
 #undef CONFIG_USB_PD_PORT_COUNT
 
@@ -1883,6 +1880,12 @@
 
 /* Use TCPC module (type-C port controller) */
 #undef CONFIG_USB_PD_TCPC
+
+/*
+ * Track VBUS level in TCPC module. This will only be needed if we're acting
+ * as an external TCPC.
+ */
+#undef CONFIG_USB_PD_TCPC_TRACK_VBUS
 
 /*
  * Choose one of the following TCPMs (type-C port manager) to manage TCPC. The
@@ -1902,11 +1905,22 @@
 #undef CONFIG_USB_PD_TCPM_MUX
 
 /*
- * Use this option if the TCPC port controller is on a seperate chip from
- * the TCPM layer and if VUBS detect GPIO is not available on the TCPM
- * mcu.
+ * The TCPM must know whether VBUS is present in order to make proper state
+ * transitions. In addition, charge_manager must know about VBUS presence in
+ * order to make charging decisions. VBUS state can be determined by various
+ * methods:
+ * - Some TCPCs can detect and report the presence of VBUS.
+ * - In some configurations, charger ICs can report the presence of VBUS.
+ * - On some boards, dedicated VBUS interrupt pins are available.
+ *
+ * Exactly one of these should be defined for all boards that run the PD
+ * state machine.
  */
-#undef CONFIG_USB_PD_TCPM_VBUS
+#undef CONFIG_USB_PD_VBUS_DETECT_TCPC
+#undef CONFIG_USB_PD_VBUS_DETECT_CHARGER
+#undef CONFIG_USB_PD_VBUS_DETECT_GPIO
+#undef CONFIG_USB_PD_VBUS_DETECT_NONE
+
 
 /* Define the type-c port controller I2C base address. */
 #define CONFIG_TCPC_I2C_BASE_ADDR 0x9c

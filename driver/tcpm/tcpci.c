@@ -29,7 +29,7 @@ static int init_alert_mask(int port)
 	mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
 		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
 		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 		| TCPC_REG_ALERT_POWER_STATUS
 #endif
 		;
@@ -44,7 +44,7 @@ static int init_power_status_mask(int port)
 	uint8_t mask;
 	int rv;
 
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	mask = TCPC_REG_POWER_STATUS_VBUS_PRES;
 #else
 	mask = 0;
@@ -127,7 +127,7 @@ static int tcpci_tcpm_set_rx_enable(int port, int enable)
 			  enable ? TCPC_REG_RX_DETECT_SOP_HRST_MASK : 0);
 }
 
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 static int tcpci_tcpm_get_vbus_level(int port)
 {
 	return tcpc_vbus[port];
@@ -226,11 +226,11 @@ void tcpci_tcpc_alert(int port)
 			/* Update VBUS status */
 			tcpc_vbus[port] = reg &
 				TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
-#if defined(CONFIG_USB_PD_TCPM_VBUS) && defined(CONFIG_USB_CHARGER)
+#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 			/* Update charge manager with new VBUS state */
 			usb_charger_vbus_change(port, tcpc_vbus[port]);
 			task_wake(PD_PORT_TO_TASK_ID(port));
-#endif /* CONFIG_USB_PD_TCPM_VBUS && CONFIG_USB_CHARGER */
+#endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
 		}
 	}
 	if (status & TCPC_REG_ALERT_RX_STATUS) {
@@ -336,7 +336,7 @@ const struct usb_mux_driver tcpci_tcpm_usb_mux_driver = {
 const struct tcpm_drv tcpci_tcpm_drv = {
 	.init			= &tcpci_tcpm_init,
 	.get_cc			= &tcpci_tcpm_get_cc,
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
 	.set_cc			= &tcpci_tcpm_set_cc,

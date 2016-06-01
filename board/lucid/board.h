@@ -61,6 +61,7 @@
 #define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
+#define CONFIG_USB_PD_VBUS_DETECT_GPIO
 #undef  CONFIG_WATCHDOG_HELP
 
 /* Use PSTATE embedded in the RO image, not in its own erase block */

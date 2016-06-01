@@ -224,7 +224,7 @@ void pd_vbus_low(int port)
 
 static inline int pd_is_vbus_present(int port)
 {
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	return tcpm_get_vbus_level(port);
 #else
 	return pd_snk_is_vbus_provided(port);
@@ -704,7 +704,7 @@ static void handle_data_request(int port, uint16_t head,
 	case PD_DATA_SOURCE_CAP:
 		if ((pd[port].task_state == PD_STATE_SNK_DISCOVERY)
 			|| (pd[port].task_state == PD_STATE_SNK_TRANSITION)
-#ifdef CONFIG_USB_PD_NO_VBUS_DETECT
+#ifdef CONFIG_USB_PD_VBUS_DETECT_NONE
 			|| (pd[port].task_state ==
 			    PD_STATE_SNK_HARD_RESET_RECOVER)
 #endif
@@ -1393,7 +1393,7 @@ void pd_task(void)
 	int hard_reset_count = 0;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	uint64_t next_role_swap = PD_T_DRP_SNK;
-#ifndef CONFIG_USB_PD_NO_VBUS_DETECT
+#ifndef CONFIG_USB_PD_VBUS_DETECT_NONE
 	int snk_hard_reset_vbus_off = 0;
 #endif
 #ifdef CONFIG_CHARGE_MANAGER
@@ -2101,7 +2101,7 @@ void pd_task(void)
 		case PD_STATE_SNK_HARD_RESET_RECOVER:
 			if (pd[port].last_state != pd[port].task_state)
 				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
-#ifdef CONFIG_USB_PD_NO_VBUS_DETECT
+#ifdef CONFIG_USB_PD_VBUS_DETECT_NONE
 			/*
 			 * Can't measure vbus state so this is the maximum
 			 * recovery time for the source.

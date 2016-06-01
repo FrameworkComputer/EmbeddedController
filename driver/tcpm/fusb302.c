@@ -807,7 +807,7 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_transmit_type type,
 	return 0;
 }
 
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 static int fusb302_tcpm_get_vbus_level(int port)
 {
 	int reg;
@@ -990,7 +990,7 @@ void tcpm_set_bist_test_data(int port)
 const struct tcpm_drv fusb302_tcpm_drv = {
 	.init			= &fusb302_tcpm_init,
 	.get_cc			= &fusb302_tcpm_get_cc,
-#ifdef CONFIG_USB_PD_TCPM_VBUS
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &fusb302_tcpm_get_vbus_level,
 #endif
 	.set_cc			= &fusb302_tcpm_set_cc,

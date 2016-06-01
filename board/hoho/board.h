@@ -46,7 +46,7 @@
 #define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_USB_PD_NO_VBUS_DETECT
+#define CONFIG_USB_PD_VBUS_DETECT_NONE
 /* mcdp2850 serial interface */
 #define CONFIG_MCDP28X0 usart3_hw
 #define CONFIG_STREAM_USART
