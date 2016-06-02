@@ -32,11 +32,7 @@ SECTIONS
         . = ALIGN(4);
         __version_struct_offset = .;
         KEEP(*(.rodata.ver))
-#ifdef SHIFT_CODE_FOR_TEST
-        . = ALIGN(256);
-#else
         . = ALIGN(4);
-#endif
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vectirq))
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text))
         *(.text*)

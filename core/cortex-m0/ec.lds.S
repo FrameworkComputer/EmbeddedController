@@ -47,11 +47,7 @@ SECTIONS
         . = ALIGN(4);
         KEEP(*(.rodata.pstate))
 
-#ifdef SHIFT_CODE_FOR_TEST
-        . = ALIGN(256);
-#else
         . = ALIGN(4);
-#endif
         STRINGIFY(OUTDIR/core/CORE/init.o) (.text)
         *(.text*)
     } > FLASH
