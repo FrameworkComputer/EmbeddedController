@@ -34,6 +34,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "task.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "thermal.h"
 #include "usb_charge.h"
@@ -157,6 +158,12 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC1, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
 };
 
+static const enum bd99955_charge_port
+	pd_port_to_bd99955_port[CONFIG_USB_PD_PORT_COUNT] = {
+	[0] = BD99955_CHARGE_PORT_VBUS,
+	[1] = BD99955_CHARGE_PORT_VCC,
+};
+
 void board_reset_pd_mcu(void)
 {
 }
@@ -180,11 +187,8 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("New chg p%d", charge_port);
 
 	switch (charge_port) {
-	case 0:
-		bd99955_port = BD99955_CHARGE_PORT_VBUS;
-		break;
-	case 1:
-		bd99955_port = BD99955_CHARGE_PORT_VCC;
+	case 0: case 1:
+		bd99955_port = pd_port_to_bd99955_port[charge_port];
 		break;
 	case CHARGE_PORT_NONE:
 		bd99955_port = BD99955_CHARGE_PORT_NONE;
@@ -209,36 +213,13 @@ int extpower_is_present(void)
 	return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_BOTH);
 }
 
+int pd_snk_is_vbus_provided(int port)
+{
+	return bd99955_is_vbus_provided(pd_port_to_bd99955_port[port]);
+}
+
 static void board_init(void)
 {
-	struct charge_port_info charge_none;
-	int i;
-
-	/* Initialize all pericom charge suppliers to 0 */
-	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_none.current = 0;
-	/* TODO: Implement BC1.2 + VBUS detection */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
-					     i,
-					     &charge_none);
-	}
-
 	/* Sensor Init */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
