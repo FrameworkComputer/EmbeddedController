@@ -359,16 +359,16 @@ static void board_init(void)
 	 */
 	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
 	gpio_set_level(GPIO_EN_PP5000, 1);
-
-	/* Enable 3.3V rail */
-	gpio_set_level(GPIO_EN_PP3300, 1);
-
-	while (!gpio_get_level(GPIO_PP3300_PG) ||
-		!gpio_get_level(GPIO_PP5000_PG))
+	while (!gpio_get_level(GPIO_PP5000_PG))
 		;
 
 	/* Enable PMIC */
 	gpio_set_level(GPIO_V5A_EN, 1);
+
+	/* Enable 3.3V rail */
+	gpio_set_level(GPIO_EN_PP3300, 1);
+	while (!gpio_get_level(GPIO_PP3300_PG))
+		;
 }
 /* PP3300 needs to be enabled before TCPC init hooks */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_FIRST);
