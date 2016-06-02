@@ -38,13 +38,19 @@ static void update_vbus_supplier(int port, int vbus_level)
 	}
 }
 
+#ifdef CONFIG_USB_PD_5V_EN_ACTIVE_LOW
+#define USB_5V_EN(port) !gpio_get_level(GPIO_USB_C##port##_5V_EN_L)
+#else
+#define USB_5V_EN(port) gpio_get_level(GPIO_USB_C##port##_5V_EN)
+#endif
+
 int usb_charger_port_is_sourcing_vbus(int port)
 {
 	if (port == 0)
-		return gpio_get_level(GPIO_USB_C0_5V_EN);
+		return USB_5V_EN(0);
 #if CONFIG_USB_PD_PORT_COUNT >= 2
 	else if (port == 1)
-		return gpio_get_level(GPIO_USB_C1_5V_EN);
+		return USB_5V_EN(1);
 #endif
 	/* Not a valid port */
 	return 0;
