@@ -66,16 +66,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
-
-/* Exchange status with PD MCU. */
-static void pd_mcu_interrupt(enum gpio_signal signal)
-{
-#ifdef HAS_TASK_PDCMD
-	/* Exchange status with PD MCU to determine interrupt cause */
-	host_command_pd_send_status(0);
-#endif
-}
-
 /*
  * enable_input_devices() is called by the tablet_mode ISR, but changes the
  * state of GPIOs, so its definition must reside after including gpio_list.
@@ -287,67 +277,18 @@ static void chipset_pre_init(void)
 	/* Enable PD interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
-
-	/* Enable charger interrupts */
-	gpio_enable_interrupt(GPIO_PD_MCU_INT);
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
-
-static void update_vbus_supplier(int port, int vbus_level)
-{
-	struct charge_port_info charge;
-
-	/*
-	 * If VBUS is low, or VBUS is high and we are not outputting VBUS
-	 * ourselves, then update the VBUS supplier.
-	 */
-	if (!vbus_level || !usb_charger_port_is_sourcing_vbus(port)) {
-		charge.voltage = USB_CHARGER_VOLTAGE_MV;
-		charge.current = vbus_level ? USB_CHARGER_MIN_CURR_MA : 0;
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
-					     port,
-					     &charge);
-	}
-}
-
-/* TODO: Implement BC1.2 + VBUS detection */
-static void usb_charger_init(void)
-{
-	int i;
-	struct charge_port_info charge_none;
-
-	/* Initialize all charge suppliers to 0 */
-	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
-	charge_none.current = 0;
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-					     i,
-					     &charge_none);
-		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-					     i,
-					     &charge_none);
-
-		/* Initialize VBUS supplier based on whether VBUS is present */
-		update_vbus_supplier(i, pd_snk_is_vbus_provided(i));
-	}
-}
-DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
 
 /* Initialize board. */
 static void board_init(void)
 {
 	/* FIXME: Handle tablet mode */
 	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); */
+
+	/* Enable charger interrupts */
+	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
 
 	/*
 	 * There are dependencies in Reef's power topology:
@@ -426,6 +367,15 @@ int board_set_active_charge_port(int charge_port)
  */
 void board_set_charge_limit(int port, int supplier, int charge_ma)
 {
+	/* Enable charging trigger by BC1.2 detection */
+	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
+			   supplier == CHARGE_SUPPLIER_BC12_DCP ||
+			   supplier == CHARGE_SUPPLIER_BC12_SDP ||
+			   supplier == CHARGE_SUPPLIER_OTHER);
+
+	if (bd99955_bc12_enable_charging(port, bc12_enable))
+		return;
+
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT));
 }
@@ -434,11 +384,6 @@ int extpower_is_present(void)
 {
 	/* Check VBUS on either port */
 	return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_BOTH);
-}
-
-int usb_charger_port_is_sourcing_vbus(int port)
-{
-	return gpio_get_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN);
 }
 
 /* Enable or disable input devices, based upon chipset state and tablet mode */
