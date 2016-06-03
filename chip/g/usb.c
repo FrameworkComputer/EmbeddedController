@@ -1074,9 +1074,6 @@ static void usb_reset(void)
 
 	/* Reinitialize all the endpoints */
 	usb_init_endpoints();
-
-	/* Init the clock calibrator */
-	init_sof_clock();
 }
 
 static void usb_resetdet(void)
@@ -1122,6 +1119,12 @@ void usb_interrupt(void)
 
 	if (status & GINTSTS(USBRST))
 		usb_reset();
+
+	/* Initialize the SOF clock calibrator only on the first SOF */
+	if (GR_USB_GINTMSK & GINTMSK(SOF) && status & GINTSTS(SOF)) {
+		init_sof_clock();
+		GR_USB_GINTMSK &= ~GINTMSK(SOF);
+	}
 
 	/* Endpoint interrupts */
 	if (oepint || iepint) {
@@ -1327,7 +1330,9 @@ void usb_init(void)
 		/* Reset detected while suspended. Need to wake up. */
 		GINTMSK(RESETDET) |		/* TODO: Do we need this? */
 		/* Idle, Suspend detected. Should go to sleep. */
-		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP);
+		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP) |
+		/* Watch for first SOF */
+		GINTMSK(SOF);
 
 	/* Device registers have been setup */
 	GR_USB_DCTL |= DCTL_PWRONPRGDONE;
