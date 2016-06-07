@@ -31,7 +31,11 @@
 
 /* Timeout for device should be available after reset (SMBus spec. unit:ms) */
 #define I2C_MAX_TIMEOUT 35
-/* Timeout for SCL held to low by slave device . (SMBus spec. unit:ms) */
+/*
+ * Timeout for SCL held to low by slave device . (SMBus spec. unit:ms).
+ * Some I2C devices may violate this timing and clock stretch for longer.
+ * TODO: Consider increasing this timeout.
+ */
 #define I2C_MIN_TIMEOUT 25
 
 /* Marco functions of I2C */
@@ -330,6 +334,39 @@ enum smb_error i2c_master_transaction(int controller)
 	return p_status->err_code;
 }
 
+/* Issue stop condition if necessary and end transaction */
+static void i2c_done(int controller)
+{
+	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
+
+	/* need to STOP or not */
+	if (p_status->flags & I2C_XFER_STOP) {
+		/* Issue a STOP condition on the bus */
+		I2C_STOP(controller);
+		CPUTS("-SP");
+		/* Clear SDAST by writing dummy byte */
+		I2C_WRITE_BYTE(controller, 0xFF);
+	}
+
+	/* Set error code */
+	p_status->err_code = SMB_OK;
+	/* Set SMB status if we need stall bus */
+	p_status->oper_state = (p_status->flags & I2C_XFER_STOP)
+				? SMB_IDLE : SMB_WRITE_SUSPEND;
+	/*
+	 * Disable interrupt for i2c master stall SCL
+	 * and forbid SDAST generate interrupt
+	 * until common layer start other transactions
+	 */
+	if (p_status->oper_state == SMB_WRITE_SUSPEND)
+		task_disable_irq(i2c_irqs[controller]);
+
+	/* Notify upper layer */
+	task_set_event(p_status->task_waiting,
+		       TASK_EVENT_I2C_IDLE, 0);
+	CPUTS("-END");
+}
+
 inline void i2c_handle_sda_irq(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
@@ -341,11 +378,11 @@ inline void i2c_handle_sda_irq(int controller)
 		if (p_status->sz_txbuf == 0) {/* Receive mode */
 			p_status->oper_state = SMB_READ_OPER;
 			/*
-			 * Receiving one byte only - stall bus after START
+			 * Receiving one or zero bytes - stall bus after START
 			 * condition. If there's no slave devices on bus, FW
 			 * needn't to set ACK bit.
 			 */
-			if (p_status->sz_rxbuf == 1)
+			if (p_status->sz_rxbuf < 2)
 				I2C_STALL(controller);
 
 			/* Write the address to the bus R bit*/
@@ -365,35 +402,8 @@ inline void i2c_handle_sda_irq(int controller)
 		/* all bytes have been written, in a pure write operation */
 		if (p_status->idx_buf == p_status->sz_txbuf) {
 			/*  no more message */
-			if (p_status->sz_rxbuf == 0) {
-				/* need to STOP or not */
-				if (p_status->flags & I2C_XFER_STOP) {
-					/* Issue a STOP condition on the bus */
-					I2C_STOP(controller);
-					CPUTS("-SP");
-					/* Clear SDAST by writing dummy byte */
-					I2C_WRITE_BYTE(controller, 0xFF);
-				}
-
-				/* Set error code */
-				p_status->err_code = SMB_OK;
-				/* Set SMB status if we need stall bus */
-				p_status->oper_state
-				= (p_status->flags & I2C_XFER_STOP)
-					? SMB_IDLE : SMB_WRITE_SUSPEND;
-				/*
-				 * Disable interrupt for i2c master stall SCL
-				 * and forbid SDAST generate interrupt
-				 * until common layer start other transactions
-				 */
-				if (p_status->oper_state == SMB_WRITE_SUSPEND)
-					task_disable_irq(i2c_irqs[controller]);
-
-				/* Notify upper layer */
-				task_set_event(p_status->task_waiting,
-						TASK_EVENT_I2C_IDLE, 0);
-				CPUTS("-END");
-			}
+			if (p_status->sz_rxbuf == 0)
+				i2c_done(controller);
 			/* need to restart & send slave address immediately */
 			else {
 				uint8_t addr_byte = p_status->slave_addr;
@@ -527,11 +537,18 @@ void i2c_master_int_handler (int controller)
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
 		/* Disable Stall-After-Start mode */
 		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STASTRE);
+
 		/*
-		 * Continue to handle protocol - release SCL bus & set ACK bit
-		 * if necessary
+		 * Generate stop condition and return success status since
+		 * ACK received on zero-byte transaction.
 		 */
-		if (p_status->flags & I2C_XFER_STOP)
+		if (p_status->sz_rxbuf == 0)
+			i2c_done(controller);
+		/*
+		 * Otherwise we have a one-byte transaction, so nack after
+		 * receiving next byte, if requested.
+		 */
+		else if (p_status->flags & I2C_XFER_STOP)
 			I2C_NACK(controller);
 	}
 
@@ -585,9 +602,6 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 {
 	int ctrl = i2c_port_to_controller(port);
 	volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
-
-	if (out_size == 0 && in_size == 0)
-		return EC_SUCCESS;
 
 	interrupt_disable();
 	/* make sure bus is not occupied by the other task */
