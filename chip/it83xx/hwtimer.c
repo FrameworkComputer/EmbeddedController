@@ -203,6 +203,15 @@ static void __hw_clock_source_irq(void)
 		free_run_timer_overflow();
 		return;
 	}
+
+	/*
+	 * This interrupt is used to wakeup EC from sleep mode
+	 * to complete PLL frequency change.
+	 */
+	if (irq == et_ctrl_regs[LOW_POWER_EXT_TIMER].irq) {
+		ext_timer_stop(LOW_POWER_EXT_TIMER, 1);
+		return;
+	}
 }
 DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 1);
 

@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+#define __ram_code __attribute__((section(".ram_code")))
+
 /* IRQ numbers */
 /* Group 0 */
 #define IT83XX_IRQ_WKO20           1

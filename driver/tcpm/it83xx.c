@@ -262,8 +262,6 @@ static void it83xx_set_data_role(enum usbpd_port port, int pd_role)
 
 static void it83xx_init(enum usbpd_port port, int role)
 {
-	/* defalut PD Clock = PLL 48 / 6 = 8M. */
-	IT83XX_ECPM_SCDCR4 = (IT83XX_ECPM_SCDCR4 & 0xf0) | 5;
 	/* reset */
 	IT83XX_USBPD_GCR(port) = 0;
 	USBPD_SW_RESET(port);

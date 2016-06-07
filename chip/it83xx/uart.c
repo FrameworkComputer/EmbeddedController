@@ -125,18 +125,11 @@ DECLARE_IRQ(CPU_INT_GROUP_9, intc_cpu_int_group_9, 1);
 
 static void uart_config(void)
 {
-#if PLL_CLOCK == 48000000
-	/* Set CLK_UART_DIV_SEL to /2. Assumes PLL is 48 MHz. */
-	IT83XX_ECPM_SCDCR1 |= 0x01;
-
 	/*
 	 * Specify clock source of the UART is 24MHz,
 	 * must match CLK_UART_DIV_SEL.
 	 */
 	IT83XX_UART_CSSR(UART_PORT) = 0x01;
-#else
-#error "Support only for PLL clock speed of 48MHz."
-#endif
 
 	/* 8-N-1 and DLAB set to allow access to DLL and DLM registers. */
 	IT83XX_UART_LCR(UART_PORT) = 0x83;

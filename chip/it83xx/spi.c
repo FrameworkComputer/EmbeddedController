@@ -37,9 +37,6 @@ enum sspi_ch_sel {
 
 static void sspi_frequency(enum sspi_clk_sel freq)
 {
-	/* SSPI clock frequency select 48MHz (clk_sspi) */
-	IT83XX_ECPM_SCDCR2 &= ~0xF0;
-
 	/*
 	 * bit[6:5]
 	 * Bit 6:Clock Polarity (CLPOL)
