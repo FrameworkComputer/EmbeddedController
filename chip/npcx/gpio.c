@@ -832,12 +832,16 @@ DECLARE_IRQ(NPCX_IRQ_WKINTA_1,      __gpio_wk1a_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_WKINTB_1,      __gpio_wk1b_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_WKINTD_1,      __gpio_wk1d_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_WKINTE_1,      __gpio_wk1e_interrupt, 1);
+#ifdef CONFIG_HOSTCMD_SPS
 /*
  * HACK: Make CS GPIO P0 to improve SHI reliability.
  * TODO: Increase CS-assertion-to-transaction-start delay on host to
  * accommodate P1 CS interrupt.
  */
 DECLARE_IRQ(NPCX_IRQ_WKINTF_1,      __gpio_wk1f_interrupt, 0);
+#else
+DECLARE_IRQ(NPCX_IRQ_WKINTF_1,      __gpio_wk1f_interrupt, 1);
+#endif
 DECLARE_IRQ(NPCX_IRQ_WKINTG_1,      __gpio_wk1g_interrupt, 1);
 DECLARE_IRQ(NPCX_IRQ_WKINTH_1,      __gpio_wk1h_interrupt, 1);
 
