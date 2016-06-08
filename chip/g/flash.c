@@ -42,6 +42,7 @@
 #include "console.h"
 #include "flash.h"
 #include "flash_config.h"
+#include "flash_info.h"
 #include "registers.h"
 #include "timer.h"
 #include "watchdog.h"
@@ -120,7 +121,8 @@ enum flash_op {
 	OP_WRITE_BLOCK,
 };
 
-static int do_flash_op(enum flash_op op, int byte_offset, int words)
+static int do_flash_op(enum flash_op op, int is_info_bank,
+		       int byte_offset, int words)
 {
 	volatile uint32_t *fsh_pe_control;
 	uint32_t opcode, tmp, errors;
@@ -150,7 +152,10 @@ static int do_flash_op(enum flash_op op, int byte_offset, int words)
 	}
 
 	/* We have two flash banks. Adjust offset and registers accordingly. */
-	if (byte_offset >= CONFIG_FLASH_SIZE / 2) {
+	if (is_info_bank) {
+		/* Only INFO bank operations are supported. */
+		fsh_pe_control = GREG32_ADDR(FLASH, FSH_PE_CONTROL1);
+	} else if (byte_offset >= CONFIG_FLASH_SIZE / 2) {
 		byte_offset -= CONFIG_FLASH_SIZE / 2;
 		fsh_pe_control = GREG32_ADDR(FLASH, FSH_PE_CONTROL1);
 	} else {
@@ -160,6 +165,10 @@ static int do_flash_op(enum flash_op op, int byte_offset, int words)
 	/* What are we doing? */
 	switch (op) {
 	case OP_ERASE_BLOCK:
+		if (is_info_bank)
+			/* Erasing the INFO bank from the RW section is
+			 * unsupported. */
+			return EC_ERROR_INVAL;
 		opcode = 0x31415927;
 		words = 0;			/* don't care, really */
 		/* This number is based on the TSMC spec Nme=Terase/Tsme */
@@ -179,7 +188,7 @@ static int do_flash_op(enum flash_op op, int byte_offset, int words)
 	 */
 	GWRITE_FIELD(FLASH, FSH_TRANS, OFFSET,
 		     byte_offset / 4);		  /* word offset */
-	GWRITE_FIELD(FLASH, FSH_TRANS, MAINB, 0); /* NOT the info bank */
+	GWRITE_FIELD(FLASH, FSH_TRANS, MAINB, is_info_bank ? 1 : 0);
 	GWRITE_FIELD(FLASH, FSH_TRANS, SIZE, words);
 
 	/* TODO: Make sure this function isn't getting called "too often" in
@@ -251,7 +260,8 @@ static int do_flash_op(enum flash_op op, int byte_offset, int words)
 }
 
 /* Write up to CONFIG_FLASH_WRITE_IDEAL_SIZE bytes at once */
-static int write_batch(int byte_offset, int words, const uint8_t *data)
+static int write_batch(int byte_offset, int is_info_bank,
+		       int words, const uint8_t *data)
 {
 	volatile uint32_t *fsh_wr_data = GREG32_ADDR(FLASH, FSH_WR_DATA0);
 	uint32_t val;
@@ -273,10 +283,11 @@ static int write_batch(int byte_offset, int words, const uint8_t *data)
 		fsh_wr_data++;
 	}
 
-	return do_flash_op(OP_WRITE_BLOCK, byte_offset, words);
+	return do_flash_op(OP_WRITE_BLOCK, is_info_bank, byte_offset, words);
 }
 
-int flash_physical_write(int byte_offset, int num_bytes, const char *data)
+static int flash_physical_write_internal(int byte_offset, int is_info_bank,
+				int num_bytes, const char *data)
 {
 	int num, ret;
 
@@ -294,6 +305,7 @@ int flash_physical_write(int byte_offset, int num_bytes, const char *data)
 		num = MIN(num, CONFIG_FLASH_ERASE_SIZE -
 			  byte_offset % CONFIG_FLASH_ERASE_SIZE);
 		ret = write_batch(byte_offset,
+				  is_info_bank,
 				  num / 4,	/* word count */
 				  (const uint8_t *)data);
 		if (ret)
@@ -305,6 +317,39 @@ int flash_physical_write(int byte_offset, int num_bytes, const char *data)
 	}
 
 	return EC_SUCCESS;
+}
+
+int flash_physical_write(int byte_offset, int num_bytes, const char *data)
+{
+	return flash_physical_write_internal(byte_offset, 0, num_bytes, data);
+}
+
+void flash_info_write_enable(void)
+{
+	/* Enable R/W access to INFO. */
+	GREG32(GLOBALSEC, FLASH_REGION3_BASE_ADDR) = FLASH_INFO_MEMORY_BASE +
+		FLASH_INFO_MANUFACTURE_STATE_OFFSET;
+	GREG32(GLOBALSEC, FLASH_REGION3_SIZE) =
+		FLASH_INFO_MANUFACTURE_STATE_SIZE - 1;
+	GREG32(GLOBALSEC, FLASH_REGION3_CTRL) =
+		GC_GLOBALSEC_FLASH_REGION3_CTRL_EN_MASK |
+		GC_GLOBALSEC_FLASH_REGION3_CTRL_WR_EN_MASK |
+		GC_GLOBALSEC_FLASH_REGION3_CTRL_RD_EN_MASK;
+}
+
+void flash_info_write_disable(void)
+{
+	GREG32(GLOBALSEC, FLASH_REGION3_CTRL) = 0;
+}
+
+int flash_info_physical_write(int byte_offset, int num_bytes, const char *data)
+{
+	if (byte_offset < 0 || num_bytes < 0 ||
+		byte_offset + num_bytes > FLASH_INFO_SIZE ||
+		(byte_offset | num_bytes) & (CONFIG_FLASH_WRITE_SIZE - 1))
+		return EC_ERROR_INVAL;
+
+	return flash_physical_write_internal(byte_offset, 1, num_bytes, data);
 }
 
 int flash_physical_erase(int byte_offset, int num_bytes)
@@ -319,6 +364,7 @@ int flash_physical_erase(int byte_offset, int num_bytes)
 	while (num_bytes) {
 		/* We may be asked to erase multiple banks */
 		ret = do_flash_op(OP_ERASE_BLOCK,
+				  0,              /* not the INFO bank */
 				  byte_offset,
 				  num_bytes / 4); /* word count */
 		if (ret) {
