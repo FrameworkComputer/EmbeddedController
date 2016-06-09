@@ -183,6 +183,19 @@ uint16_t tcpc_get_alert_status(void)
 int board_set_active_charge_port(int charge_port)
 {
 	enum bd99955_charge_port bd99955_port;
+	static int initialized;
+
+	/*
+	 * Reject charge port disable if our battery is critical and we
+	 * have yet to initialize a charge port - continue to charge using
+	 * charger ROM / POR settings.
+	 */
+	if (!initialized &&
+	    charge_port == CHARGE_PORT_NONE &&
+	    charge_get_percent() < 2) {
+		CPRINTS("Battery critical, don't disable charging");
+		return -1;
+	}
 
 	CPRINTS("New chg p%d", charge_port);
 
@@ -198,6 +211,7 @@ int board_set_active_charge_port(int charge_port)
 		break;
 	}
 
+	initialized = 1;
 	return bd99955_select_input_port(bd99955_port);
 }
 

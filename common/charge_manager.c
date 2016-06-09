@@ -466,8 +466,14 @@ static void charge_manager_refresh(void)
 		     board_set_active_charge_port(new_port) == EC_SUCCESS)
 			break;
 
-		/* 'Dont charge' request must be accepted */
-		ASSERT(new_port != CHARGE_PORT_NONE);
+		/*
+		 * Allow 'Dont charge' request to be rejected only if it
+		 * is our initial selection.
+		 */
+		if (new_port == CHARGE_PORT_NONE) {
+			ASSERT(!active_charge_port_initialized);
+			return;
+		}
 
 		/*
 		 * Zero the available charge on the rejected port so that
