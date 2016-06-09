@@ -21,7 +21,8 @@ _RSA_OPCODES = {
   'VERIFY': 0x03,
   'KEYGEN': 0x04,
   'KEYTEST': 0x05,
-  'PRIMEGEN': 0x06
+  'PRIMEGEN': 0x06,
+  'X509_VERIFY': 0x07
 }
 
 
@@ -134,6 +135,16 @@ def _primegen_cmd(seed):
                                 kl=struct.pack('>H', len(seed) * 8 * 2),
                                 ml=struct.pack('>H', len(seed)), msg=seed,
                                 dl=struct.pack('>H', 0), dig='')
+
+def _x509_verify_cmd(key_len):
+  op = _RSA_OPCODES['X509_VERIFY']
+  padding = _RSA_PADDING['NONE']
+  hashing = _HASH['NONE']
+  return _RSA_CMD_FORMAT.format(o=op, p=padding, h=hashing,
+                                kl=struct.pack('>H', key_len),
+                                ml=struct.pack('>H', 0), msg='',
+                                dl=struct.pack('>H', 0), dig='')
+
 
 _PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
            59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
@@ -723,9 +734,22 @@ def _primegen_tests(tpm):
     print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
 
 
+def _x509_verify_tests(tpm):
+  test_name = 'RSA-X509-2048-VERIFY'
+  cmd = _x509_verify_cmd(2048)
+  wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
+  valid = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
+  expected = '\x01'
+  if valid != expected:
+    raise subcmd.TpmTestError('%s error:%s%s' % (
+      test_name, utils.hex_dump(valid), utils.hex_dump(expected)))
+  print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
+
+
 def rsa_test(tpm):
   _encrypt_tests(tpm)
   _sign_tests(tpm)
   _keytest_tests(tpm)
   _keygen_tests(tpm)
   _primegen_tests(tpm)
+  _x509_verify_tests(tpm)

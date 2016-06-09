@@ -82,6 +82,7 @@ void DCRYPTO_bn_wrap(struct BIGNUM *b, void *buf, size_t len);
 /* Largest supported key size, 2048-bits. */
 #define RSA_MAX_BYTES   256
 #define RSA_MAX_WORDS   (RSA_MAX_BYTES / sizeof(uint32_t))
+#define RSA_F4          65537
 
 struct RSA {
 	uint32_t e;
@@ -116,7 +117,7 @@ int DCRYPTO_rsa_sign(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 		enum padding_mode padding, enum hashing_mode hashing);
 
 /* Calculate r = m ^ e mod N */
-int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
+int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 		uint32_t digest_len, const uint8_t *sig,
 		const uint32_t sig_len,	enum padding_mode padding,
 		enum hashing_mode hashing);
@@ -167,5 +168,11 @@ int DCRYPTO_bn_generate_prime(struct BIGNUM *p);
 void DCRYPTO_bn_wrap(struct BIGNUM *b, void *buf, size_t len);
 void DCRYPTO_bn_mul(struct BIGNUM *c, const struct BIGNUM *a,
 		const struct BIGNUM *b);
+
+/*
+ *  X509.
+ */
+int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
+			const struct RSA *ca_pub_key);
 
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

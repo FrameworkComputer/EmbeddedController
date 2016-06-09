@@ -574,7 +574,7 @@ int DCRYPTO_rsa_sign(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	return 1;
 }
 
-int DCRYPTO_rsa_verify(struct RSA *rsa, const uint8_t *digest,
+int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 		uint32_t digest_len, const uint8_t *sig,
 		const uint32_t sig_len,	enum padding_mode padding,
 		enum hashing_mode hashing)
