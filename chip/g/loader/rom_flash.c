@@ -14,9 +14,10 @@ static int _flash_error(void)
 	if (!retval)
 		return 0;
 
-	debug_printf("Register FLASH_FSH_ERROR is not zero (found %x).\n");
+	debug_printf("Register FLASH_FSH_ERROR is not zero (found %x).\n",
+		retval);
 	debug_printf("Will read again to verify FSH_ERROR was cleared ");
-	debug_printf("and then continue...\n", retval);
+	debug_printf("and then continue...\n");
 
 	retval = GREG32(FLASH, FSH_ERROR);
 	if (retval) {
