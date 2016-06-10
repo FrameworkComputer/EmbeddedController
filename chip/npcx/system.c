@@ -412,13 +412,20 @@ static char system_to_hex(uint8_t x)
 /*****************************************************************************/
 /* IC specific low-level driver */
 
-/* Microsecond will be ignore for hardware limitation */
+/*
+ * Microseconds will be ignored.  The WTC register only
+ * stores wakeup time in seconds.
+ * Set seconds = 0 to disable the alarm
+ */
+#define EC_RTC_ALARM_CLEAR 0
 void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 {
 	uint32_t cur_secs, alarm_secs;
 
-	if (seconds == 0)
+	if (seconds == EC_RTC_ALARM_CLEAR) {
+		system_reset_rtc_alarm();
 		return;
+	}
 
 	/* Get current clock */
 	cur_secs = NPCX_TTC;
@@ -456,6 +463,25 @@ void system_reset_rtc_alarm(void)
 
 	/* Disable MTC interrupt */
 	task_disable_irq(NPCX_IRQ_MTC_WKINTAD_0);
+}
+
+/*
+ * Return the seconds remaining before the RTC alarm goes off.
+ * Returns 0 if alarm is not set.
+ */
+uint32_t system_get_rtc_alarm(void)
+{
+	/*
+	 * Return 0:
+	 * 1. If alarm is not set to go off, OR
+	 * 2. If alarm is set and has already gone off
+	 */
+	if (!IS_BIT_SET(NPCX_WTC, NPCX_WTC_WIE) ||
+	    IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO)) {
+		return 0;
+	}
+	/* Get seconds before alarm goes off */
+	return (NPCX_WTC - NPCX_TTC) & MTC_ALARM_MASK;
 }
 
 /**
@@ -778,6 +804,19 @@ static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM,
 		system_rtc_set_alarm,
+		EC_VER_MASK(0));
+
+static int system_rtc_get_alarm(struct host_cmd_handler_args *args)
+{
+	struct ec_response_rtc *r = args->response;
+
+	r->time = system_get_rtc_alarm();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM,
+		system_rtc_get_alarm,
 		EC_VER_MASK(0));
 
 #ifdef CONFIG_EXTERNAL_STORAGE

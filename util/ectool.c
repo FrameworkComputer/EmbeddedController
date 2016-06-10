@@ -189,12 +189,14 @@ const char help_str[] =
 	"      Reads a pattern from the EC via LPC\n"
 	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> [at-shutdown]\n"
 	"      Reboot EC to RO or RW\n"
-	"  rtcalarm <sec>\n"
-	"      Set real-time clock alarm to go off in <sec> seconds\n"
 	"  rtcget\n"
 	"      Print real-time clock\n"
+	"  rtcgetalarm\n"
+	"      Print # of seconds before real-time clock alarm goes off.\n"
 	"  rtcset <time>\n"
 	"      Set real-time clock\n"
+	"  rtcsetalarm <sec>\n"
+	"      Set real-time clock alarm to go off in <sec> seconds\n"
 	"  rwhashpd <dev_id> <HASH[0] ... <HASH[4]>\n"
 	"      Set entry in PD MCU's device rw_hash table.\n"
 	"  sertest\n"
@@ -6017,7 +6019,26 @@ int cmd_rtc_set_alarm(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
-	printf("Alarm Set to go off in %d secs.\n", p.time);
+	if (p.time == 0)
+		printf("Disabling alarm.\n");
+	else
+		printf("Alarm set to go off in %d secs.\n", p.time);
+	return 0;
+}
+
+int cmd_rtc_get_alarm(int argc, char *argv[])
+{
+	struct ec_response_rtc r;
+	int rv;
+
+	rv = ec_command(EC_CMD_RTC_GET_ALARM, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	if (r.time == 0)
+		printf("Alarm not set\n");
+	else
+		printf("Alarm to go off in %d secs\n", r.time);
 	return 0;
 }
 
@@ -6826,9 +6847,10 @@ const struct command commands[] = {
 	{"pwmsetduty", cmd_pwm_set_duty},
 	{"readtest", cmd_read_test},
 	{"reboot_ec", cmd_reboot_ec},
-	{"rtcalarm", cmd_rtc_set_alarm},
 	{"rtcget", cmd_rtc_get},
+	{"rtcgetalarm", cmd_rtc_get_alarm},
 	{"rtcset", cmd_rtc_set},
+	{"rtcsetalarm", cmd_rtc_set_alarm},
 	{"rwhashpd", cmd_rw_hash_pd},
 	{"sertest", cmd_serial_test},
 	{"port80flood", cmd_port_80_flood},
