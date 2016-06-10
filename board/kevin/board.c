@@ -455,3 +455,21 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif /* defined(HAS_TASK_MOTIONSENSE) */
+
+#ifdef BOARD_GRU
+static void usb_charge_resume(void)
+{
+	/* Turn on USB-A ports on as we go into S0 from S3. */
+	gpio_set_level(GPIO_USB_A_EN, 1);
+	gpio_set_level(GPIO_USB_A_CHARGE_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, usb_charge_resume, HOOK_PRIO_DEFAULT);
+
+static void usb_charge_shutdown(void)
+{
+	/* Turn off USB-A ports as we go back to S5. */
+	gpio_set_level(GPIO_USB_A_CHARGE_EN, 0);
+	gpio_set_level(GPIO_USB_A_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_charge_shutdown, HOOK_PRIO_DEFAULT);
+#endif
