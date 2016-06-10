@@ -40,36 +40,6 @@
 /* All inputs in the right state for S0 */
 #define IN_ALL_S0              (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
-static const struct power_signal_info power_control_outputs[] = {
-	{ GPIO_AP_CORE_EN, 1 },
-	{ GPIO_LPDDR_PWR_EN, 1 },
-	{ GPIO_PPVAR_CLOGIC_EN, 1 },
-	{ GPIO_PPVAR_LOGIC_EN, 1 },
-
-	{ GPIO_PP900_AP_EN, 1 },
-	{ GPIO_PP900_DDRPLL_EN, 1 },
-	{ GPIO_PP900_PLL_EN, 1 },
-	{ GPIO_PP900_PMU_EN, 1 },
-	{ GPIO_PP900_USB_EN, 1 },
-	{ GPIO_PP900_PCIE_EN, 1 },
-
-	{ GPIO_PP1800_SENSOR_EN_L, 0 },
-	{ GPIO_PP1800_LID_EN_L, 0 },
-	{ GPIO_PP1800_PMU_EN_L, 0 },
-	{ GPIO_PP1800_AP_AVDD_EN_L, 0 },
-	{ GPIO_PP1800_USB_EN_L, 0 },
-	{ GPIO_PP1800_S0_EN_L, 0 },
-	{ GPIO_PP1800_SIXAXIS_EN_L, 0 },
-
-	{ GPIO_PP3300_TRACKPAD_EN_L, 0 },
-	{ GPIO_PP3300_USB_EN_L, 0 },
-	{ GPIO_PP3300_S0_EN_L, 0 },
-
-	{ GPIO_PP5000_EN, 1 },
-
-	{ GPIO_SYS_RST_L, 0 },
-};
-
 static int forcing_shutdown;
 
 void chipset_force_shutdown(void)
@@ -95,20 +65,6 @@ void chipset_reset(int cold_reset)
 	gpio_set_level(GPIO_SYS_RST_L, 1);
 }
 
-static void chipset_force_g3(void)
-{
-	int i;
-	const struct power_signal_info *output_signal;
-
-	/* Force all signals to their G3 states */
-	CPRINTS("forcing G3");
-	for (i = 0; i < ARRAY_SIZE(power_control_outputs); ++i) {
-		output_signal = &power_control_outputs[i];
-		gpio_set_level(output_signal->gpio,
-			       !output_signal->level);
-	}
-}
-
 enum power_state power_chipset_init(void)
 {
 	if (system_jumped_to_this_image()) {
@@ -118,7 +74,6 @@ enum power_state power_chipset_init(void)
 			return POWER_S0;
 		}
 
-		chipset_force_g3();
 		wireless_set_state(WIRELESS_OFF);
 #ifdef BOARD_GRU
 		/* TODO: Enable CONFIG_USB_PORT_POWER_SMART */
@@ -244,13 +199,24 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 
+#ifdef BOARD_GRU
+		gpio_set_level(GPIO_USB_A_CHARGE_EN, 0);
+		gpio_set_level(GPIO_USB_A_EN, 0);
+#endif
+
 		/* Suspend wireless */
 		wireless_set_state(WIRELESS_SUSPEND);
 
-#ifdef BOARD_GRU
-		gpio_set_level(GPIO_USB_A_EN, 0);
-		gpio_set_level(GPIO_USB_A_CHARGE_EN, 0);
-#endif
+		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
+		gpio_set_level(GPIO_PP1800_LID_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PP3300_USB_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PP3300_S0_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PP1800_S0_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_AP_CORE_EN, 0);
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
@@ -267,12 +233,32 @@ enum power_state power_handle_state(enum power_state state)
 		/* Disable wireless */
 		wireless_set_state(WIRELESS_OFF);
 
+		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PP5000_EN, 0);
+		gpio_set_level(GPIO_LPDDR_PWR_EN, 0);
+		msleep(10);
+		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 1);
+		gpio_set_level(GPIO_PP1800_USB_EN_L, 1);
+		gpio_set_level(GPIO_PP1800_PMU_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PPVAR_CLOGIC_EN, 0);
+		msleep(10);
+		gpio_set_level(GPIO_PP900_PCIE_EN, 0);
+		gpio_set_level(GPIO_PP900_DDRPLL_EN, 0);
+		gpio_set_level(GPIO_PP900_USB_EN, 0);
+		gpio_set_level(GPIO_PP900_PLL_EN, 0);
+		gpio_set_level(GPIO_PP900_PMU_EN, 0);
+		msleep(10);
+		gpio_set_level(GPIO_PP900_AP_EN, 0);
+		gpio_set_level(GPIO_PPVAR_LOGIC_EN, 0);
+
 		/* Start shutting down */
 		return POWER_S5;
 
 	case POWER_S5G3:
-		/* Initialize power signal outputs to default. */
-		chipset_force_g3();
 		return POWER_G3;
 	}
 
