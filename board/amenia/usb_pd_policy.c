@@ -103,11 +103,6 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
-int pd_snk_is_vbus_provided(int port)
-{
-	return bd99955_is_vbus_provided(port);
-}
-
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;

@@ -72,7 +72,7 @@ int board_cut_off_battery(void)
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;
-	const struct batt_params *batt = charger_current_battery_params();
+	int batt_status;
 
 	/* The GPIO is low when the battery is physically present */
 	batt_pres = gpio_get_level(GPIO_BAT_PRESENT_L) ? BP_NO : BP_YES;
@@ -86,8 +86,8 @@ enum battery_present battery_is_present(void)
 	 * The device will wake up when a voltage is applied to PACK.
 	 * Battery status will be inactive until it is initialized.
 	 */
-	if (batt_pres == BP_YES && !(batt->flags & BATT_FLAG_BAD_STATUS))
-		if (!(batt->status & STATUS_INITIALIZED))
+	if (batt_pres == BP_YES && !battery_status(&batt_status))
+		if (!(batt_status & STATUS_INITIALIZED))
 			batt_pres = BP_NO;
 
 	return batt_pres;

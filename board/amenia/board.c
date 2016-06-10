@@ -245,6 +245,12 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	 30 * MSEC, 0},
 };
 
+static const enum bd99955_charge_port
+	pd_port_to_bd99955_port[CONFIG_USB_PD_PORT_COUNT] = {
+	[0] = BD99955_CHARGE_PORT_VBUS,
+	[1] = BD99955_CHARGE_PORT_VCC,
+};
+
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
 {
@@ -270,6 +276,23 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+int pd_snk_is_vbus_provided(int port)
+{
+	enum bd99955_charge_port bd99955_port;
+
+	switch (port) {
+	case 0:
+	case 1:
+		bd99955_port = pd_port_to_bd99955_port[port];
+		break;
+	default:
+		panic("Invalid charge port\n");
+		break;
+	}
+
+	return bd99955_is_vbus_provided(bd99955_port);
+}
+
 /**
  * Set active charge port -- only one port can be active at a time.
  *
@@ -281,6 +304,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 int board_set_active_charge_port(int charge_port)
 {
 	enum bd99955_charge_port bd99955_port;
+	static int initialized;
 
 	/* charge port is a realy physical port */
 	int is_real_port = (charge_port >= 0 &&
@@ -293,14 +317,24 @@ int board_set_active_charge_port(int charge_port)
 		return EC_ERROR_INVAL;
 	}
 
+	/*
+	 * Reject charge port disable if our battery is critical and we
+	 * have yet to initialize a charge port - continue to charge using
+	 * charger ROM / POR settings.
+	 */
+	if (!initialized &&
+	    charge_port == CHARGE_PORT_NONE &&
+	    charge_get_percent() < 2) {
+		CPRINTS("Battery critical, don't disable charging");
+		return -1;
+	}
+
 	CPRINTS("New chg p%d", charge_port);
 
 	switch (charge_port) {
 	case 0:
-		bd99955_port = BD99955_CHARGE_PORT_VBUS;
-		break;
 	case 1:
-		bd99955_port = BD99955_CHARGE_PORT_VCC;
+		bd99955_port = pd_port_to_bd99955_port[charge_port];
 		break;
 	case CHARGE_PORT_NONE:
 		bd99955_port = BD99955_CHARGE_PORT_NONE;
@@ -309,6 +343,8 @@ int board_set_active_charge_port(int charge_port)
 		panic("Invalid charge port\n");
 		break;
 	}
+
+	initialized = 1;
 
 	return bd99955_select_input_port(bd99955_port);
 }
