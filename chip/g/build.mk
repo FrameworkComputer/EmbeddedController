@@ -78,6 +78,7 @@ ifneq ($(CONFIG_CUSTOMIZED_RO),)
 custom-ro_objs-y  = chip/g/clock.o
 custom-ro_objs-y += chip/g/dcrypto/sha256.o
 custom-ro_objs-y += chip/g/loader/key_ladder.o
+custom-ro_objs-y += chip/g/loader/debug_printf.o
 custom-ro_objs-y += chip/g/loader/launch.o
 custom-ro_objs-y += chip/g/loader/main.o
 custom-ro_objs-y += chip/g/loader/rom_flash.o
