@@ -22,6 +22,7 @@ static void reverse_tpm2b(TPM2B *b)
 }
 
 TPM2B_BYTE_VALUE(4);
+TPM2B_BYTE_VALUE(32);
 
 static int check_p256_param(const TPM2B_ECC_PARAMETER *a)
 {
@@ -135,8 +136,10 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 	TPM2B *seed, const char *label,	TPM2B *extra, UINT32 *counter)
 {
 	TPM2B_4_BYTE_VALUE marshaled_counter = { .t = {4} };
+	TPM2B_32_BYTE_VALUE local_seed = { .t = {32} };
 	uint32_t count = 0;
 	uint8_t key_bytes[P256_NBYTES];
+	LITE_HMAC_CTX hmac;
 
 	if (curve_id != TPM_ECC_NIST_P256)
 		return CRYPT_PARAMETER;
@@ -150,10 +153,18 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 	if (count == 0)
 		count++;
 
+	/* Hash down the primary seed for ECC key generation, so that
+	 * the derivation tree is distinct from RSA key derivation. */
+	DCRYPTO_HMAC_SHA256_init(&hmac, seed->buffer, seed->size);
+	HASH_update(&hmac.hash, "ECC", 4);
+	memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
+	       local_seed.t.size);
+
 	for (; count != 0; count++) {
 		memcpy(marshaled_counter.t.buffer, &count, sizeof(count));
-		_cpri__KDFa(hash_alg, seed, label, extra, &marshaled_counter.b,
-			sizeof(key_bytes) * 8, key_bytes, NULL, FALSE);
+		_cpri__KDFa(hash_alg, &local_seed.b, label, extra,
+			&marshaled_counter.b, sizeof(key_bytes) * 8, key_bytes,
+			NULL, FALSE);
 		if (DCRYPTO_p256_key_from_bytes(
 				(p256_int *) q->x.b.buffer,
 				(p256_int *) q->y.b.buffer,
@@ -169,6 +180,8 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 			break;
 		}
 	}
+	/* TODO(ngm): implement secure memset. */
+	memset(local_seed.t.buffer, 0, local_seed.t.size);
 
 	if (count == 0)
 		FAIL(FATAL_ERROR_INTERNAL);

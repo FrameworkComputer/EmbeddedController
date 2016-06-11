@@ -278,6 +278,8 @@ static int generate_prime(struct BIGNUM *b, TPM_ALG_ID hashing, TPM2B *seed,
 	return 0;
 }
 
+TPM2B_BYTE_VALUE(32);
+
 CRYPT_RESULT _cpri__GenerateKeyRSA(
 	TPM2B *N_buf, TPM2B *p_buf, uint16_t num_bits,
 	uint32_t e_buf, TPM_ALG_ID hashing, TPM2B *seed,
@@ -301,6 +303,8 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	struct BIGNUM N;
 
 	uint32_t counter;
+	TPM2B_32_BYTE_VALUE local_seed = { .t = {32} };
+	LITE_HMAC_CTX hmac;
 
 	if (num_bits & 0xF)
 		return CRYPT_FAIL;
@@ -309,6 +313,13 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	/* Seed size must be at least 2*security_strength per TPM 2.0 spec. */
 	if (seed == NULL || seed->size * 8 < 2 * security_strength)
 		return CRYPT_FAIL;
+
+	/* Hash down the primary seed for RSA key generation, so that
+	 * the derivation tree is distinct from ECC key derivation. */
+	DCRYPTO_HMAC_SHA256_init(&hmac, seed->buffer, seed->size);
+	HASH_update(&hmac.hash, "RSA", 4);
+	memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
+	       local_seed.t.size);
 
 	if (e_buf == 0)
 		e_buf = RSA_F4;
@@ -323,17 +334,23 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 		counter = *counter_in;
 	else
 		counter = 1;
-	if (!generate_prime(&p, hashing, seed, label, extra, &counter)) {
+	if (!generate_prime(&p, hashing, &local_seed.b, label, extra,
+			    &counter)) {
 		if (counter_in != NULL)
 			*counter_in = counter;
+		/* TODO(ngm): implement secure memset. */
+		memset(local_seed.t.buffer, 0, local_seed.t.size);
 		return CRYPT_FAIL;
 	}
 
 	if (label == label_p)
 		label = label_q;
-	if (!generate_prime(&q, hashing, seed, label, extra, &counter)) {
+	if (!generate_prime(&q, hashing, &local_seed.b, label, extra,
+			    &counter)) {
 		if (counter_in != NULL)
 			*counter_in = counter;
+		/* TODO(ngm): implement secure memset. */
+		memset(local_seed.t.buffer, 0, local_seed.t.size);
 		return CRYPT_FAIL;
 	}
 
@@ -347,6 +364,7 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	reverse_tpm2b(p_buf);
 	/* TODO(ngm): replace with secure memset. */
 	memset(q_buf, 0, sizeof(q_buf));
+	memset(local_seed.t.buffer, 0, local_seed.t.size);
 	return CRYPT_SUCCESS;
 }
 
