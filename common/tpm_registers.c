@@ -244,7 +244,7 @@ static void sts_reg_write_rr(void)
  */
 static void sts_reg_write(const uint8_t *data, uint32_t data_size)
 {
-	uint32_t value;
+	uint32_t value = 0;
 
 	data_size = MIN(data_size, 4);
 	memcpy(&value, data, data_size);
