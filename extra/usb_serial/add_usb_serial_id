@@ -1,0 +1,32 @@
+#!/bin/sh -e
+#
+# Copyright 2016 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Add a USB VID:PID device ID to the usbserial list of handled devices
+
+if [ $# -ne 2 ]; then
+    echo ""
+    echo "Usage: $0 <VID> <PID>"
+    echo ""
+    echo "Add a USB VID:PID device identification pair to the list of devices"
+    echo "that usbserial will recognize.  This script ensures that a device is"
+    echo "not added more than once."
+    echo ""
+    exit 1
+fi
+
+#
+# Firts ensure that the usbserial module is loaded.  This is required as there
+# may be no other USB serial adaptor connected yet.
+#
+modprobe usbserial
+
+device_id="$1 $2"
+file="/sys/bus/usb-serial/drivers/generic/new_id"
+
+#
+# Only add the device ID pair if it isn't already in the ID list.
+#
+grep -q "$device_id" $file || echo $device_id > $file

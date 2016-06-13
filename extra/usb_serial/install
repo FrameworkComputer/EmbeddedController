@@ -1,19 +1,88 @@
-#!/bin/sh
+#!/bin/sh -e
+#
+# Copyright 2016 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Build and install raiden module and udev rules
 
-set -e
+bold=$(tput bold)
+normal=$(tput sgr0)
 
-make modules
+error() {
+    echo "${bold}Install failed${normal}"
+}
 
-# Install the new module and update dependency and alias information
-sudo make modules_install
-sudo depmod -a
+trap "error $LINENO" ERR
 
+fallback=false
+
+if [ "$1" = "--fallback" ]; then
+    fallback=true
+    shift
+fi
+
+if [ $# -ne 0 ]; then
+    echo ""
+    echo "Usage: ${bold}$0${normal} [--fallback]"
+    echo ""
+    echo "Install Raiden kernel module and udev rules for working with Case"
+    echo "Closed Debug enabled devices."
+    echo ""
+    echo "${bold}--fallback${normal}"
+    echo "    Install udev rules to use usbserial directly without installing"
+    echo "    the raiden module.  This can be used when the raiden module fails"
+    echo "    to build, or can not be used for other reasons."
+    echo ""
+    echo "    The fallback solution will generate extra /dev/ttyUSB? entries"
+    echo "    for the SPI and possibly other CCD bridges.  These should be"
+    echo "    ignored by you.  Flashrom is smart enough to detach the kernel"
+    echo "    driver from the SPI bridge, so they will not interfere with"
+    echo "    flashing new firmware images over CCD."
+    echo ""
+    exit 1
+fi
+
+if [ "$fallback" = "false" ]; then
+    #
+    # The normal path builds and installs the raiden module
+    #
+    {
+	#
+	# Don't build the module as root so it's easier to clean up after
+	#
+	make modules &&
+
+	#
+	# Install the new module and update dependency and alias information
+	#
+	sudo make modules_install &&
+	sudo depmod -a
+    } || {
+	echo $bold
+	echo "Building and/or installing the raiden module failed, you may"
+	echo "want to use the --fallback option."
+	echo $normal
+	exit 1;
+    }
+else
+    #
+    # The fallback path installs the fallback udev rule and its helper script.
+    #
+    sudo install -m644 51-google-serial-fallback.rules /etc/udev/rules.d
+    sudo install add_usb_serial_id /lib/udev
+fi
+
+#
 # Install the udev rule for creating /dev/google symlinks.
-sudo cp 51-google-serial.rules /etc/udev/rules.d
+#
+sudo install -m644  51-google-serial.rules /etc/udev/rules.d
 
+#
 # Trigger udev to create the symlinks for any attached devices that have the
 # Google Vendor ID.  Limiting triggering like this prevents unwanted resetting
 # of some device state, even with the change action specified.
+#
 for syspath in $(dirname $(grep -rxl --include=idVendor 18d1 /sys/devices)); do
     sudo udevadm trigger --action=change --parent-match=${syspath}
 done

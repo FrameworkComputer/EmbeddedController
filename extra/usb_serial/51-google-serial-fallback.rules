@@ -1,0 +1,6 @@
+#
+# Add USB VID/PID for usb-serial compatible CCD devices.  This is a fallback
+# rule that can be used if the raiden module can't be built, or used for some
+# reason.
+#
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="18d1", ENV{ID_USB_INTERFACES}=="*:ff5001:*", RUN+="add_usb_serial_id $attr{idVendor} $attr{idProduct}"
