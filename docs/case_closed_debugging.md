@@ -29,11 +29,13 @@ ChromiumOS SDK.
 ### Udev rules file
 There is a udev rules file, `extra/usb_serial/51-google-serial.rules` that
 should be installed in `/etc/udev/rules.d/` and udev should be told to reread
-its rules.
+its rules.  This rules file can be installed using the
+`extra/usb_serial/install` script.
 
 ### Kernel module
 A trivial Linux kernel module that identifies case closed debug capable USB
-interfaces can be found in `extra/usb_serial`.
+interfaces can be found in `extra/usb_serial`.  This module is also built and
+installed using the `extra/usb_serial/install` script.
 
 ### ChromiumOS chroot
 This is really only a requirement for using flashrom.  If you only need access
@@ -70,16 +72,21 @@ running kernel.  It just adds an entry into the `usbserial` module's driver
 table that causes `usbserial` to recognize any case closed debugging serial
 console as a simple USB serial device.  This addition has already made its way
 into the upstream kernel (v3.19), so eventually this module can be removed.
-The `Makefile` in the `extra/usb_serial` directory will build the kernel module
-against the current running kernel, and `insmod raiden.ko` will install it.
-If installation fails due to missing dependencies you need to
-`modprobe usbserial` first.
+The `extra/usb_serial/install` script will build and install the kernel module
+as well as install the udev rules file.
 
-An alternative to using this module is to install `usbserial` with
-`modprobe usbserial vendor=<VID> product=<PID>`.  The disadvantage of this method
-is that it only works for an exact VID:PID match, and the module above does a
-more detailed match of the USB descriptors to find interfaces that export the
-Google simple serial vendor specific subclass.
+If for some reason you can't or don't want to use the kernel module the install
+script provides a --fallback option that will install a udev rules file and
+helper script instead that will add each new CCD capable device that is
+attached to the host to the list of devices that usbserial will handle.  The
+disadvantage of this method is that it will generate `/dev/ttyUSB*` entries for
+any USB interface on the device that has an IN/OUT pair of bulk endpoints.
+This results in extra `/dev/ttyUSB*` entries that should not be used because
+they are actually I2C or SPI bridges.
+
+The raiden module solves this by identifying a CCD serial port by the subclass
+and protocol numbers of the USB device interface.  This means that there does
+not need to be a list of CCD capable device IDs anywhere.
 
 Use
 ---
