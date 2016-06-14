@@ -98,6 +98,7 @@ DECLARE_DEFERRED(force_shutdown);
 
 enum power_state power_handle_state(enum power_state state)
 {
+	static int sys_reset_needed;
 	int tries = 0;
 
 	switch (state) {
@@ -109,15 +110,19 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5G3;
 		else
 			return POWER_S5S3;
+		break;
 
 	case POWER_S3:
 		if (!power_has_signals(IN_PGOOD_S3) || forcing_shutdown)
 			return POWER_S3S5;
-		else if (power_has_signals(IN_SUSPEND_DEASSERTED))
+		else if (!gpio_get_level(GPIO_AP_EC_S3_S0_L))
 			return POWER_S3S0;
+		break;
 
 	case POWER_S0:
 		if (!power_has_signals(IN_PGOOD_S0) || forcing_shutdown)
+			return POWER_S0S3;
+		else if (gpio_get_level(GPIO_AP_EC_S3_S0_L))
 			return POWER_S0S3;
 		break;
 
@@ -179,6 +184,10 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
+
+		/* We came from S5, so be sure to pulse sys_rst later */
+		sys_reset_needed = 1;
+
 		/* Power up to next state */
 		return POWER_S3;
 
@@ -192,10 +201,14 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PP3300_USB_EN_L, 0);
 		msleep(2);
 
-		/* Pulse SYS_RST */
-		gpio_set_level(GPIO_SYS_RST_L, 0);
-		msleep(10);
-		gpio_set_level(GPIO_SYS_RST_L, 1);
+		if (sys_reset_needed) {
+			/* Pulse SYS_RST if we came from S5 */
+			gpio_set_level(GPIO_SYS_RST_L, 0);
+			msleep(10);
+			gpio_set_level(GPIO_SYS_RST_L, 1);
+
+			sys_reset_needed = 0;
+		}
 
 		gpio_set_level(GPIO_PP1800_LID_EN_L, 0);
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 0);
