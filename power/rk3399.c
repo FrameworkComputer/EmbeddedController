@@ -119,9 +119,9 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PP900_DDRPLL_EN, 1);
 		gpio_set_level(GPIO_PP900_PCIE_EN, 1);
 		msleep(2);
+		gpio_set_level(GPIO_PP1800_PMU_EN_L, 0);
 		gpio_set_level(GPIO_PPVAR_CLOGIC_EN, 1);
 		msleep(2);
-		gpio_set_level(GPIO_PP1800_PMU_EN_L, 0);
 		gpio_set_level(GPIO_PP1800_USB_EN_L, 0);
 		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 0);
 		msleep(2);
@@ -227,9 +227,9 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(10);
 		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 1);
 		gpio_set_level(GPIO_PP1800_USB_EN_L, 1);
-		gpio_set_level(GPIO_PP1800_PMU_EN_L, 1);
 		msleep(10);
 		gpio_set_level(GPIO_PPVAR_CLOGIC_EN, 0);
+		gpio_set_level(GPIO_PP1800_PMU_EN_L, 1);
 		msleep(10);
 		gpio_set_level(GPIO_PP900_PCIE_EN, 0);
 		gpio_set_level(GPIO_PP900_DDRPLL_EN, 0);
