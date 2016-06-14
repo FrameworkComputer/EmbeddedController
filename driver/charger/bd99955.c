@@ -911,3 +911,162 @@ DECLARE_CONSOLE_COMMAND(bd99955, console_command_bd99955,
 			"Read or write a charger register",
 			NULL);
 #endif /* CONFIG_CMD_CHARGER */
+
+#ifdef CONFIG_CMD_CHARGER_PSYS
+static int bd99955_psys_charger_adc(void)
+{
+	int i;
+	int reg;
+	uint64_t ipmon = 0;
+
+	for (i = 0; i < BD99955_PMON_IOUT_ADC_READ_COUNT; i++) {
+		if (ch_raw_read16(BD99955_CMD_PMON_DACIN_VAL, &reg,
+				BD99955_EXTENDED_COMMAND))
+			return 0;
+
+		/* Conversion Interval is 200us */
+		usleep(200);
+		ipmon += reg;
+	}
+
+	/*
+	 * Calculate power in mW
+	 * PSYS = VACP×IACP+VBAT×IBAT = IPMON / GPMON
+	 */
+	return (int) ((ipmon * 1000) / ((1 << BD99955_PSYS_GAIN_SELECT) *
+		BD99955_PMON_IOUT_ADC_READ_COUNT));
+}
+
+static int bd99955_enable_psys(void)
+{
+	int rv;
+	int reg;
+
+	rv = ch_raw_read16(BD99955_CMD_PMON_IOUT_CTRL_SET, &reg,
+			BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	/* Enable PSYS & Select PSYS Gain */
+	reg &= ~BD99955_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_MASK;
+	reg |= (BD99955_CMD_PMON_IOUT_CTRL_SET_PMON_INSEL |
+		BD99955_CMD_PMON_IOUT_CTRL_SET_PMON_OUT_EN |
+		BD99955_PSYS_GAIN_SELECT);
+
+	return ch_raw_write16(BD99955_CMD_PMON_IOUT_CTRL_SET, reg,
+			BD99955_EXTENDED_COMMAND);
+}
+
+/**
+ * Get system power.
+ */
+static int console_command_psys(int argc, char **argv)
+{
+	int rv;
+
+	rv = bd99955_enable_psys();
+	if (rv)
+		return rv;
+
+	CPRINTS("PSYS from chg_adc: %d mW",
+			bd99955_psys_charger_adc());
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
+			NULL,
+			"Get the system power in mW",
+			NULL);
+#endif /* CONFIG_CMD_CHARGER_PSYS */
+
+#ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
+static int bd99955_amon_bmon_chg_adc(void)
+{
+	int i;
+	int reg;
+	int iout = 0;
+
+	for (i = 0; i < BD99955_PMON_IOUT_ADC_READ_COUNT; i++) {
+		ch_raw_read16(BD99955_CMD_IOUT_DACIN_VAL, &reg,
+				BD99955_EXTENDED_COMMAND);
+		iout += reg;
+
+		/* Conversion Interval is 200us */
+		usleep(200);
+	}
+
+	/*
+	 * Discharge current in mA
+	 * IDCHG = iout * GIDCHG
+	 * IADP = iout * GIADP
+	 *
+	 * VIDCHG = GIDCHG * (VSRN- VSRP) = GIDCHG * IDCHG / IDCHG_RES
+	 * VIADP = GIADP * (VACP- VACN) = GIADP * IADP / IADP_RES
+	 */
+	return (iout * (5 << BD99955_IOUT_GAIN_SELECT)) /
+		(10 * BD99955_PMON_IOUT_ADC_READ_COUNT);
+}
+
+static int bd99955_amon_bmon(int amon_bmon)
+{
+	int rv;
+	int reg;
+	int imon;
+	int sns_res;
+
+	rv = ch_raw_read16(BD99955_CMD_PMON_IOUT_CTRL_SET, &reg,
+			BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	/* Enable monitor */
+	reg &= ~BD99955_CMD_PMON_IOUT_CTRL_SET_IOUT_GAIN_SET_MASK;
+	reg |= (BD99955_CMD_PMON_IOUT_CTRL_SET_IMON_INSEL |
+		BD99955_CMD_PMON_IOUT_CTRL_SET_IOUT_OUT_EN |
+		(BD99955_IOUT_GAIN_SELECT << 4));
+
+	if (amon_bmon) {
+		reg |= BD99955_CMD_PMON_IOUT_CTRL_SET_IOUT_SOURCE_SEL;
+		sns_res = CONFIG_CHARGER_SENSE_RESISTOR_AC;
+	} else {
+		reg &= ~BD99955_CMD_PMON_IOUT_CTRL_SET_IOUT_SOURCE_SEL;
+		sns_res = CONFIG_CHARGER_SENSE_RESISTOR;
+	}
+
+	rv = ch_raw_write16(BD99955_CMD_PMON_IOUT_CTRL_SET, reg,
+			BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	imon = bd99955_amon_bmon_chg_adc();
+
+	CPRINTS("%cMON from chg_adc: %d uV, %d mA]",
+		amon_bmon ? 'A' : 'B',
+		imon * sns_res,
+		imon);
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Get charger AMON and BMON current.
+ */
+static int console_command_amon_bmon(int argc, char **argv)
+{
+	int rv = EC_ERROR_PARAM1;
+
+	/* Switch to AMON */
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'a'))
+		rv = bd99955_amon_bmon(1);
+
+	/* Switch to BMON */
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b'))
+		rv = bd99955_amon_bmon(0);
+
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
+			"amonbmon [a|b]",
+			"Get charger AMON/BMON voltage diff, current",
+			NULL);
+#endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */

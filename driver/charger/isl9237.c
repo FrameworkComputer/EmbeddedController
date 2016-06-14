@@ -355,7 +355,7 @@ static void charger_disable_psys(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
 
-#ifdef CONFIG_CMD_PSYS
+#ifdef CONFIG_CMD_CHARGER_PSYS
 #define PSYS_ADC_READ_COUNT 100
 static int charger_get_system_power(void)
 {
@@ -400,10 +400,10 @@ DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 			NULL,
 			"Get the system power in mW",
 			NULL);
-#endif /* CONFIG_CMD_PSYS */
+#endif /* CONFIG_CMD_CHARGER_PSYS */
 #endif /* CONFIG_CHARGER_PSYS */
 
-#ifdef CONFIG_CHARGER_ADC_AMON_BMON
+#ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
 /**
  * Get charger AMON and BMON current.
  */
@@ -450,4 +450,4 @@ DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
 			"amonbmon [a|b]",
 			"Get charger AMON/BMON voltage diff, current",
 			NULL);
-#endif /* CONFIG_CHARGER_ADC_AMON_BMON */
+#endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */

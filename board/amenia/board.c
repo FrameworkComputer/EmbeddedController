@@ -116,9 +116,12 @@ const struct adc_t adc_channels[] = {
 	/* Vbus sensing. Converted to mV, full ADC is equivalent to 28.16V. */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH1, 28160, ADC_READ_MAX+1, 0},
 	/* Adapter current output or battery discharging current */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4, 55000, 6144, 0},
+	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4,
+				(5 << BD99955_IOUT_GAIN_SELECT) * 10000,
+				ADC_READ_MAX+1, 0},
 	/* System current consumption */
-	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3, 1, 1, 0},
+	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3, ADC_MAX_VOLT * 10,
+			ADC_READ_MAX+1, 3},
 	/* Thermistor 0 */
 	[ADC_THERM_SYS0] = {"THERM_SYS0", NPCX_ADC_CH0, 1, 1, 0},
 	/* Thermistor 1 */
