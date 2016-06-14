@@ -250,10 +250,17 @@ void tcpci_tcpc_alert(int port)
 	}
 }
 
+/*
+ * On TCPC i2c failure, make 30 tries (at least 300ms) before giving up
+ * in order to allow the TCPC time to boot / reset.
+ */
+#define TCPM_INIT_TRIES 30
+
 int tcpci_tcpm_init(int port)
 {
 	int rv;
 	int power_status;
+	int tries = TCPM_INIT_TRIES;
 
 	while (1) {
 		rv = tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status);
@@ -271,7 +278,8 @@ int tcpci_tcpm_init(int port)
 			tcpc_vbus[port] = power_status &
 				TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 			return init_alert_mask(port);
-		}
+		} else if (rv != EC_SUCCESS && --tries == 0)
+			return rv;
 		msleep(10);
 	}
 }

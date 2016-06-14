@@ -54,6 +54,7 @@ static uint8_t pd_comm_enabled = 1;
 #endif
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
+#define CPRINTS(format, args...)
 static const int debug_level;
 static const uint8_t pd_comm_enabled = 1;
 #endif
@@ -1420,8 +1421,8 @@ void pd_task(void)
 #endif
 
 	/* Initialize TCPM driver and wait for TCPC to be ready */
-	tcpm_init(port);
-	CPRINTF("[%T TCPC p%d ready]\n", port);
+	res = tcpm_init(port);
+	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
@@ -1475,8 +1476,9 @@ void pd_task(void)
 #else
 		/* if TCPC has reset, then need to initialize it again */
 		if (evt & PD_EVENT_TCPC_RESET) {
-			CPRINTF("[%T TCPC p%d reset!]\n", port);
-			tcpm_init(port);
+			CPRINTS("TCPC p%d reset!", port);
+			if (tcpm_init(port) != EC_SUCCESS)
+				CPRINTS("TCPC p%d init failed", port);
 
 			/* Ensure CC termination is default */
 			tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ?
