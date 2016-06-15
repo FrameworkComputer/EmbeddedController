@@ -39,6 +39,8 @@ GPIO_INT(WARM_RESET_REQ,   PIN(7, 3), GPIO_INT_RISING | GPIO_PULL_DOWN,
          warm_reset_request_interrupt)
 GPIO_INT(AP_OVERTEMP,      PIN(7, 4), GPIO_INT_RISING | GPIO_PULL_DOWN,
          overtemp_interrupt)
+GPIO_INT(CHARGER_INT_L,    PIN(3, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
+         bd99955_vbus_interrupt)
 
 /* VR EN */
 GPIO(AP_CORE_EN,           PIN(7, 2), GPIO_OUT_LOW)
@@ -104,8 +106,6 @@ GPIO(EC_BOARD_ID_EN_L,     PIN(3, 5), GPIO_OUT_HIGH)
 GPIO(USB_DP_HPD,           PIN(6, 6), GPIO_OUT_LOW)
 GPIO(CHARGER_RESET_L,      PIN(0, 1), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(CR50_RESET_L,         PIN(0, 2), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-/* TODO: Detect VBUS changes from charger interrupt and wake charger task. */
-GPIO(CHARGER_INT_L,        PIN(3, 3), GPIO_INPUT)
 GPIO(EC_BATT_PRES_L,       PIN(3, 4), GPIO_INPUT)
 GPIO(LID_360_L,            PIN(3, 6), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(BASE_SIXAXIS_INT_L,   PIN(4, 0), GPIO_INPUT | GPIO_SEL_1P8V)

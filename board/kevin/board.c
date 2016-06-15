@@ -234,6 +234,19 @@ int pd_snk_is_vbus_provided(int port)
 
 static void board_init(void)
 {
+	int i;
+
+	/*
+	 * Connect USB data switches.
+	 * TODO(crosbug.com/p/52639): Synchronize switch open / close with
+	 * USB mux control.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
+		usb_charger_set_switches(i, USB_SWITCH_CONNECT);
+
+	/* Enable charger interrupt for BC1.2 detection on attach / detach */
+	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
+
 	/* Sensor Init */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
