@@ -1411,6 +1411,10 @@ void pd_task(void)
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
 
+	/* Initialize TCPM driver and wait for TCPC to be ready */
+	res = tcpm_init(port);
+	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
 	 * If VBUS is high, then initialize flag for VBUS has always been
@@ -1419,10 +1423,6 @@ void pd_task(void)
 	 */
 	pd[port].flags = pd_is_vbus_present(port) ? PD_FLAGS_VBUS_NEVER_LOW : 0;
 #endif
-
-	/* Initialize TCPM driver and wait for TCPC to be ready */
-	res = tcpm_init(port);
-	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
 
 	/* Disable TCPC RX until connection is established */
 	tcpm_set_rx_enable(port, 0);
