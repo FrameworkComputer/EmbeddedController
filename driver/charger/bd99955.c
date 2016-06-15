@@ -177,6 +177,8 @@ static int bd99955_get_charger_op_status(int *status)
 }
 
 #ifdef HAS_TASK_USB_CHG
+static int bc12_detected_type[CONFIG_USB_PD_PORT_COUNT];
+
 static int bd99955_get_bc12_device_type(enum bd99955_charge_port port)
 {
 	int rv;
@@ -307,7 +309,6 @@ static void bd99955_bc12_detach(int port, int type)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_CHARGER
 static int bd99955_enable_vbus_detect_interrupts(int port, int enable)
 {
 	int reg;
@@ -350,7 +351,8 @@ static int bd99955_enable_vbus_detect_interrupts(int port, int enable)
 	return ch_raw_write16(port_reg, reg, BD99955_EXTENDED_COMMAND);
 }
 
-static int bd99955_get_vbus_detect_interrupts(int port, int get)
+/* Read + clear active interrupt bits for a given port */
+static int bd99955_get_vbus_detect_interrupts(int port)
 {
 	int rv;
 	int reg;
@@ -358,44 +360,35 @@ static int bd99955_get_vbus_detect_interrupts(int port, int get)
 
 	port_reg = (port == BD99955_CHARGE_PORT_VBUS) ?
 			BD99955_CMD_INT1_STATUS : BD99955_CMD_INT2_STATUS;
-	if (get) {
-		rv = ch_raw_read16(port_reg, &reg, BD99955_EXTENDED_COMMAND);
 
-		return rv ? 0 : reg &
-			(BD99955_CMD_INT_SET_RES | BD99955_CMD_INT_SET_DET);
-	} else
-		return ch_raw_write16(port_reg,
-			(BD99955_CMD_INT_SET_RES | BD99955_CMD_INT_SET_DET),
-			BD99955_EXTENDED_COMMAND);
-}
-#endif /* CONFIG_USB_PD_VBUS_DETECT_CHARGER */
+	rv = ch_raw_read16(port_reg, &reg, BD99955_EXTENDED_COMMAND);
 
-static void usb_charger_task_init(int *bc12_type)
-{
-	int port;
+	if (rv)
+		return 0;
 
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-		bc12_type[port] = CHARGE_SUPPLIER_NONE;
+	/* Clear the interrupt status bits we just read */
+	ch_raw_write16(port_reg, reg, BD99955_EXTENDED_COMMAND);
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_CHARGER
-		/* Clear any pending VBUS interrupts */
-		bd99955_get_vbus_detect_interrupts(port, 0);
-#endif
-	}
+	return reg;
 }
 
-static void usb_charger_process(enum bd99955_charge_port port, int *bc12_type)
+static void usb_charger_process(enum bd99955_charge_port port)
 {
-	int vbus_provided = pd_snk_is_vbus_provided(port);
+	int vbus_provided = bd99955_is_vbus_provided(port);
 
+	/* Inform other modules about VBUS level */
+	/* TODO: map charger port num to board port num, they may differ. */
+	usb_charger_vbus_change(port, vbus_provided);
+
+	/* Do BC1.2 detection */
 	if (vbus_provided) {
 		/* Charger/sync attached */
-		bc12_type[port] = bd99955_bc12_detect(port);
-	} else if (bc12_type[port] != CHARGE_SUPPLIER_NONE &&
+		bc12_detected_type[port] = bd99955_bc12_detect(port);
+	} else if (bc12_detected_type[port] != CHARGE_SUPPLIER_NONE &&
 		!vbus_provided) {
 		/* Charger/sync detached */
-		bd99955_bc12_detach(port, bc12_type[port]);
-		bc12_type[port] = CHARGE_SUPPLIER_NONE;
+		bd99955_bc12_detach(port, bc12_detected_type[port]);
+		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
 	}
 }
 #endif /* HAS_TASK_USB_CHG */
@@ -661,11 +654,6 @@ static void bd99995_init(void)
 	reg &= ~BD99955_CMD_VM_CTRL_SET_EXTIADPEN;
 	ch_raw_write16(BD99955_CMD_VM_CTRL_SET, reg,
 		       BD99955_EXTENDED_COMMAND);
-
-#if defined(HAS_TASK_USB_CHG) && defined(CONFIG_USB_PD_VBUS_DETECT_CHARGER)
-	bd99955_enable_vbus_detect_interrupts(BD99955_CHARGE_PORT_VBUS, 1);
-	bd99955_enable_vbus_detect_interrupts(BD99955_CHARGE_PORT_VCC, 1);
-#endif
 }
 DECLARE_HOOK(HOOK_INIT, bd99995_init, HOOK_PRIO_INIT_EXTPOWER);
 
@@ -792,54 +780,46 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 	bd99955_enable_usb_switch(port, usb_switch_state[port]);
 }
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_CHARGER
-void bd99955_vbus_interrupt_deferred(void)
-{
-	int port;
-	int intr;
-
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-		/* Get the VBUS interrupt */
-		intr = bd99955_get_vbus_detect_interrupts(port, 1);
-		if (!intr)
-			continue;
-
-		if (intr & BD99955_CMD_INT_SET_RES)
-			usb_charger_vbus_change(port, 0);
-
-		if (intr & BD99955_CMD_INT_SET_DET)
-			usb_charger_vbus_change(port, 1);
-
-		/* Clear the VBUS interrupt */
-		bd99955_get_vbus_detect_interrupts(port, 0);
-	}
-}
-DECLARE_DEFERRED(bd99955_vbus_interrupt_deferred);
-
 void bd99955_vbus_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&bd99955_vbus_interrupt_deferred_data, 0);
+	task_wake(TASK_ID_USB_CHG);
 }
-#endif /* CONFIG_USB_PD_VBUS_DETECT_CHARGER */
 
 void usb_charger_task(void)
 {
-	int evt = USB_CHG_EVENT_VBUS_P0 | USB_CHG_EVENT_VBUS_P1;
-	int bc12_type[CONFIG_USB_PD_PORT_COUNT];
+	static int initialized;
+	int changed, port;
 
-	usb_charger_task_init(bc12_type);
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
+		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
+
+	bd99955_enable_vbus_detect_interrupts(BD99955_CHARGE_PORT_VBUS, 1);
+	bd99955_enable_vbus_detect_interrupts(BD99955_CHARGE_PORT_VCC, 1);
 
 	while (1) {
-		if (evt & USB_CHG_EVENT_VBUS_P0)
-			usb_charger_process(BD99955_CHARGE_PORT_VBUS,
-					&bc12_type[BD99955_CHARGE_PORT_VBUS]);
+		changed = 0;
+		for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+			/* Get the VBUS interrupt */
+			if (bd99955_get_vbus_detect_interrupts(port) ||
+			    !initialized) {
+				/* Detect based on current state of VBUS */
+				usb_charger_process(port);
+				changed = 1;
+			}
+		}
 
-		if (evt & USB_CHG_EVENT_VBUS_P1)
-			usb_charger_process(BD99955_CHARGE_PORT_VCC,
-					&bc12_type[BD99955_CHARGE_PORT_VCC]);
+		initialized = 1;
 
-		/* Wait for interrupt */
-		evt = task_wait_event(-1);
+		/*
+		 * Re-read interrupt registers immediately if we got an
+		 * interrupt. We're dealing with multiple independent
+		 * interrupt sources and the interrupt pin may have
+		 * never deasserted if both sources were not in clear
+		 * state simultaneously.
+		 */
+		if (!changed)
+			/* Wait for task wake */
+			task_wait_event(-1);
 	}
 }
 #endif /* HAS_TASK_USB_CHG */

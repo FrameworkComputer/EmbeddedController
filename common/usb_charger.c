@@ -59,14 +59,13 @@ int usb_charger_port_is_sourcing_vbus(int port)
 void usb_charger_vbus_change(int port, int vbus_level)
 {
 	/* If VBUS has transitioned low, notify PD module directly */
-	pd_vbus_low(port);
+	if (!vbus_level)
+		pd_vbus_low(port);
+
 	/* Update VBUS supplier and signal VBUS change to USB_CHG task */
 	update_vbus_supplier(port, vbus_level);
 
-#ifdef HAS_TASK_USB_CHG
-	/* USB Charger task */
-	task_set_event(TASK_ID_USB_CHG, (1 << port), 0);
-#else
+#ifdef HAS_TASK_USB_CHG_P0
 	/* USB Charger task(s) */
 	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_VBUS, 0);
 #endif
