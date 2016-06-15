@@ -96,11 +96,6 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
 }
 
-int pd_snk_is_vbus_provided(int port)
-{
-	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
-}
-
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;
