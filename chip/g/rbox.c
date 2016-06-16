@@ -67,20 +67,6 @@ void rbox_init(void)
 	GWRITE(RBOX, WAKEUP_CLEAR, 1);
 	GWRITE(RBOX, INT_STATE, 1);
 
-	/* Make sure fuse override is not already enabled */
-	GWRITE(RBOX, FUSE_CTRL, 0);
-
-	/* Block output from key0 and 1 when power button is pressed */
-	GWRITE_FIELD(RBOX, DEBUG_BLOCK_OUTPUT, KEY0_SEL, 1);
-	GWRITE_FIELD(RBOX, DEBUG_BLOCK_OUTPUT, KEY1_SEL, 1);
-
-	/* Increase debounce */
-	GWRITE_FIELD(RBOX, DEBUG_DEBOUNCE, PERIOD, 15);
-
-	/* Enable debug override */
-	GWRITE_FIELD(RBOX, FUSE_CTRL, OVERRIDE_FUSE, 1);
-	GWRITE_FIELD(RBOX, FUSE_CTRL, OVERRIDE_FUSE_READY, 1);
-
 #ifdef CONFIG_RBOX_DEBUG
 	enable_interrupts();
 #endif

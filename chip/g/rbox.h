@@ -32,4 +32,4 @@
 	}
 
 #endif  /* DEBUG_RBOX */
-#endif  /* __CROS_RDD_H */
+#endif  /* __CROS_RBOX_H */
