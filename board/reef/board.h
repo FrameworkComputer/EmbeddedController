@@ -91,8 +91,8 @@
  * Enable 1 slot of secure temporary storage to support
  * suspend/resume with read/write memory training.
  */
-/* #define CONFIG_VSTORE */
-/* #define CONFIG_VSTORE_SLOT_COUNT 1 */
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
 
 /* Optional feature - used by nuvoton */
 #define NPCX_UART_MODULE2    1 /* 0:GPIO10/11 1:GPIO64/65 as UART */
