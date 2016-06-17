@@ -1207,8 +1207,8 @@ struct ec_params_pwm_set_fan_duty_v1 {
 } __packed;
 
 #define EC_CMD_PWM_SET_DUTY 0x25
-/* 16 bit duty cycle, 65535 = 100% */
-#define EC_PWM_MAX_DUTY 65535
+/* 16 bit duty cycle, 0xffff = 100% */
+#define EC_PWM_MAX_DUTY 0xffff
 
 enum ec_pwm_type {
 	/* All types, indexed by board-specific enum pwm_channel */
