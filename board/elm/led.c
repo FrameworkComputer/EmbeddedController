@@ -10,9 +10,14 @@
 #include "chipset.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "led_common.h"
 #include "util.h"
 #include "system.h"
+
+#define CRITICAL_LOW_BATTERY_PERMILLAGE 71
+#define LOW_BATTERY_PERMILLAGE 137
+#define FULL_BATTERY_PERMILLAGE 937
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
@@ -115,15 +120,33 @@ static void elm_led_set_battery(void)
 {
 	/*
 	 * BAT LED behavior:
-	 * - Fully charged / idle: Blue ON
+	 * - Fully charged / normal idle: Blue ON
 	 * - Charging: Orange ON
-	 * - Battery discharging capacity<10%, Orange blink
-	 * - Battery error: Orange blink
+	 * - Battery discharging capacity<10%, Orange blink(1:3)
+	 *				 < 3%, Orange blink(1:1)
+	 * - Battery error: Orange blink(1:1)
+	 * - Factory force idle: Blue 2 sec, Orange 2 sec
 	 */
+	uint32_t charge_flags = charge_get_flags();
+	int remaining_capacity;
+	int full_charge_capacity;
+	int permillage;
+
+	/* Make the percentage approximate to UI shown */
+	remaining_capacity = *(int *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	full_charge_capacity = *(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	permillage = !full_charge_capacity ? 0 :
+		(1000 * remaining_capacity) / full_charge_capacity;
+
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		bat_led_set(BAT_LED_BLUE, 0);
-		bat_led_set(BAT_LED_ORANGE, 1);
+		if (permillage < FULL_BATTERY_PERMILLAGE) {
+			bat_led_set(BAT_LED_BLUE, 0);
+			bat_led_set(BAT_LED_ORANGE, 1);
+		} else {
+			bat_led_set(BAT_LED_BLUE, 1);
+			bat_led_set(BAT_LED_ORANGE, 0);
+		}
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		bat_led_set(BAT_LED_BLUE, 1);
@@ -131,10 +154,12 @@ static void elm_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		bat_led_set(BAT_LED_BLUE, 0);
-		if (charge_get_percent() < 3)
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+		    permillage <= CRITICAL_LOW_BATTERY_PERMILLAGE)
 			bat_led_set(BAT_LED_ORANGE,
 				    (blink_second & 1) ? 0 : 1);
-		else if (charge_get_percent() < 10)
+		else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+			 permillage <= LOW_BATTERY_PERMILLAGE)
 			bat_led_set(BAT_LED_ORANGE,
 				    (blink_second & 3) ? 0 : 1);
 		else
@@ -145,8 +170,13 @@ static void elm_led_set_battery(void)
 		bat_led_set(BAT_LED_ORANGE, (blink_second & 1) ? 0 : 1);
 		break;
 	case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
-		bat_led_set(BAT_LED_BLUE, 1);
-		bat_led_set(BAT_LED_ORANGE, 0);
+		if (charge_flags & CHARGE_FLAG_FORCE_IDLE) {
+			bat_led_set(BAT_LED_BLUE, (blink_second & 2) ? 0 : 1);
+			bat_led_set(BAT_LED_ORANGE, (blink_second & 2) ? 1 : 0);
+		} else {
+			bat_led_set(BAT_LED_BLUE, 1);
+			bat_led_set(BAT_LED_ORANGE, 0);
+		}
 		break;
 	default:
 		/* Other states don't alter LED behavior */
