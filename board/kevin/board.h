@@ -81,11 +81,10 @@
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
 #define CONFIG_BATTERY_SMART
 
-/* TODO: Allow higher voltage charging */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       15000
+#define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     5000
+#define PD_MAX_VOLTAGE_MV     20000
 
 /* TODO: determine the following board specific type-C power constants */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
