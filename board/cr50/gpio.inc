@@ -15,15 +15,19 @@
  * boards that don't have an external pullup don't trigger due to noise.
  */
 GPIO_INT(SYS_RST_L_IN,    PIN(1, 0),  GPIO_INT_FALLING | GPIO_PULL_UP,
-	 sys_rst_asserted)
+	sys_rst_asserted)
 GPIO_INT(AP_ON,           PIN(1, 1),  GPIO_INT_RISING, device_state_on)
 GPIO_INT(EC_ON,           PIN(1, 2),  GPIO_INT_RISING, device_state_on)
-GPIO_INT(SERVO_UART1_ON,  PIN(1, 3),  GPIO_INT_RISING, device_state_on)
-GPIO_INT(SERVO_UART2_ON,  PIN(1, 4),  GPIO_INT_RISING, device_state_on)
+GPIO_INT(SERVO_UART1_ON,  PIN(1, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
+	device_state_on)
+GPIO_INT(SERVO_UART2_ON,  PIN(1, 4),  GPIO_INT_RISING | GPIO_PULL_DOWN,
+	device_state_on)
 GPIO_INT(AP_OFF,          PIN(1, 5),  GPIO_INT_FALLING,  device_state_off)
 GPIO_INT(EC_OFF,          PIN(1, 6),  GPIO_INT_FALLING,  device_state_off)
-GPIO_INT(SERVO_UART1_OFF, PIN(1, 7),  GPIO_INT_FALLING,  device_state_off)
-GPIO_INT(SERVO_UART2_OFF, PIN(1, 8),  GPIO_INT_FALLING,  device_state_off)
+GPIO_INT(SERVO_UART1_OFF, PIN(1, 7),  GPIO_INT_FALLING | GPIO_PULL_DOWN,
+	device_state_off)
+GPIO_INT(SERVO_UART2_OFF, PIN(1, 8),  GPIO_INT_FALLING | GPIO_PULL_DOWN,
+	device_state_off)
 
 /* Pull this low to interrupt the AP */
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_INPUT)
