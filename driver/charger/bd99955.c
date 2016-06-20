@@ -358,10 +358,10 @@ static void usb_charger_process(enum bd99955_charge_port port)
 
 	/* Do BC1.2 detection */
 	if (vbus_provided) {
-		/* Charger/sync attached */
+		/* Charger/sink attached */
 		bc12_detected_type[port] = bd99955_bc12_detect(port);
 	} else if (bc12_detected_type[port] != CHARGE_SUPPLIER_NONE) {
-		/* Charger/sync detached */
+		/* Charger/sink detached */
 		bd99955_bc12_detach(port, bc12_detected_type[port]);
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
 	}

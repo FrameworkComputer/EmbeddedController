@@ -125,6 +125,11 @@ static inline void tcpc_alert(int port)
 	tcpc_config[port].drv->tcpc_alert(port);
 }
 
+static inline void tcpc_discharge_vbus(int port, int enable)
+{
+	tcpc_config[port].drv->tcpc_discharge_vbus(port, enable);
+}
+
 #else
 
 /**

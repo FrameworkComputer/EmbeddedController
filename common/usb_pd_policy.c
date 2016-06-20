@@ -16,6 +16,7 @@
 #include "sha256.h"
 #include "system.h"
 #include "task.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_api.h"
@@ -959,14 +960,14 @@ void pd_set_vbus_discharge(int port, int enable)
 	static struct mutex discharge_lock[CONFIG_USB_PD_PORT_COUNT];
 
 	mutex_lock(&discharge_lock[port]);
-#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
 	enable &= !gpio_get_level(port ? GPIO_USB_C1_5V_EN :
 					 GPIO_USB_C0_5V_EN);
-
+#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
 	gpio_set_level(port ? GPIO_USB_C1_DISCHARGE :
 			      GPIO_USB_C0_DISCHARGE, enable);
+#elif defined(CONFIG_USB_PD_DISCHARGE_TCPC)
+	tcpc_discharge_vbus(port, enable);
 #else
-/* TODO: Add support for TCPC-controlled discharge */
 #error "PD discharge implementation not defined"
 #endif
 	mutex_unlock(&discharge_lock[port]);

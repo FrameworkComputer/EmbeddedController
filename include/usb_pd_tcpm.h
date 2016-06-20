@@ -176,6 +176,14 @@ struct tcpm_drv {
 	 * @param port Type-C port number
 	 */
 	void (*tcpc_alert)(int port);
+
+	/**
+	 * Discharge PD VBUS on src/sink disconnect & power role swap
+	 *
+	 * @param port Type-C port number
+	 * @param enable Discharge enable or disable
+	 */
+	void (*tcpc_discharge_vbus)(int port, int enable);
 };
 
 enum tcpc_alert_polarity {

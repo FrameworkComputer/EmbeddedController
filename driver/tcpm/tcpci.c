@@ -98,6 +98,23 @@ int tcpci_tcpm_select_rp_value(int port, int rp)
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL, reg);
 }
 
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+static void tcpci_tcpc_discharge_vbus(int port, int enable)
+{
+	int reg;
+
+	if (tcpc_read(port, TCPC_REG_POWER_CTRL, &reg))
+		return;
+
+	if (enable)
+		reg |= TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
+	else
+		reg &= ~TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
+
+	tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
+}
+#endif
+
 int tcpci_tcpm_set_cc(int port, int pull)
 {
 	int reg, rv;
@@ -384,4 +401,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.get_message		= &tcpci_tcpm_get_message,
 	.transmit		= &tcpci_tcpm_transmit,
 	.tcpc_alert		= &tcpci_tcpc_alert,
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+#endif
 };

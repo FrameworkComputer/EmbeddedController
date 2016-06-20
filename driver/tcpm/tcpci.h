@@ -61,6 +61,7 @@
 
 #define TCPC_REG_FAULT_CTRL        0x1b
 #define TCPC_REG_POWER_CTRL        0x1c
+#define TCPC_REG_POWER_CTRL_FORCE_DISCHARGE  (1 << 2)
 #define TCPC_REG_POWER_CTRL_SET(vconn) (vconn)
 #define TCPC_REG_POWER_CTRL_VCONN(reg)    ((reg) & 0x1)
 

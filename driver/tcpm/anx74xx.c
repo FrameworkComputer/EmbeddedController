@@ -82,7 +82,8 @@ void anx74xx_tcpc_set_vbus(int port, int enable)
 	tcpc_write(port, ANX74XX_REG_GPIO_CTRL_4_5, reg);
 }
 
-void anx74xx_tcpc_discharge_vbus(int port, int enable)
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+static void anx74xx_tcpc_discharge_vbus(int port, int enable)
 {
 	int reg;
 
@@ -93,6 +94,7 @@ void anx74xx_tcpc_discharge_vbus(int port, int enable)
 		reg &= ~ANX74XX_REG_DISCHARGE_CTRL;
 	tcpc_write(port, ANX74XX_REG_HPD_CTRL_0, reg);
 }
+#endif
 
 void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {
@@ -850,4 +852,7 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 	.get_message		= &anx74xx_tcpm_get_message,
 	.transmit		= &anx74xx_tcpm_transmit,
 	.tcpc_alert		= &anx74xx_tcpc_alert,
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+	.tcpc_discharge_vbus	= &anx74xx_tcpc_discharge_vbus,
+#endif
 };
