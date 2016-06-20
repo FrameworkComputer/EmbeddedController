@@ -603,6 +603,8 @@ const char *system_get_chip_revision(void)
 	return rev;
 }
 
+BUILD_ASSERT(BBRM_DATA_INDEX_VBNVCNTXT + EC_VBNV_BLOCK_SIZE <= NPCX_BBRAM_SIZE);
+
 /**
  * Get/Set VbNvContext in non-volatile storage.  The block should be 16 bytes
  * long, which is the current size of VbNvContext block.
@@ -613,23 +615,28 @@ const char *system_get_chip_revision(void)
 int system_get_vbnvcontext(uint8_t *block)
 {
 	int i;
-	uint32_t *pblock = (uint32_t *) block;
-	for (i = 0; i < 4; i++)
-		pblock[i] = bbram_data_read(BBRM_DATA_INDEX_VBNVCNTXT + i*4);
+
+	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR)) {
+		memset(block, 0, EC_VBNV_BLOCK_SIZE);
+		return EC_SUCCESS;
+	}
+
+	for (i = 0; i < EC_VBNV_BLOCK_SIZE; ++i)
+		block[i] = NPCX_BBRAM(BBRM_DATA_INDEX_VBNVCNTXT + i);
 
 	return EC_SUCCESS;
 }
 
 int system_set_vbnvcontext(const uint8_t *block)
 {
-	int i, result;
-	uint32_t *pblock = (uint32_t *) block;
-	for (i = 0; i < 4; i++) {
-		result = bbram_data_write(BBRM_DATA_INDEX_VBNVCNTXT + i*4,
-				pblock[i]);
-		if (result != EC_SUCCESS)
-			return result;
-	}
+	int i;
+
+	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR))
+		return EC_ERROR_INVAL;
+
+	for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++)
+		NPCX_BBRAM(BBRM_DATA_INDEX_VBNVCNTXT + i) = block[i];
+
 	return EC_SUCCESS;
 }
 
