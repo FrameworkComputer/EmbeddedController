@@ -14,6 +14,10 @@ host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/
 
 # Don't do a build test on the following boards:
 skip_boards = OWNERS host it83xx_evb
+# Skip building cr50 if private folder is not present
+ifeq ("$(wildcard ./private-cr51)","")
+skip_boards += cr50
+endif
 boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
 
 # Create output directories if necessary
