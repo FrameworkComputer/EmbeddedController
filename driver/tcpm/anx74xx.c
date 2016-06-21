@@ -133,6 +133,23 @@ static int anx74xx_tcpm_mux_init(int i2c_addr)
 	return EC_SUCCESS;
 }
 
+static int anx74xx_tcpm_mux_exit(int port)
+{
+	int  rv = EC_SUCCESS;
+
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2,
+			 ANX74XX_REG_MODE_TRANS);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1,
+			 0x0);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_5,
+			 0x04);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2,
+			 0x0);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+	return rv;
+}
+
 static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 {
 	int reg = 0, val = 0;
@@ -162,6 +179,8 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 			val = ANX74XX_REG_MUX_DP_MODE_ACE_CC1;
 			reg |= ANX74XX_REG_MUX_ML2_A;
 		}
+	} else if (!mux_state) {
+		return anx74xx_tcpm_mux_exit(port);
 	} else {
 		return  EC_ERROR_UNIMPLEMENTED;
 	 }
@@ -181,23 +200,6 @@ static int anx74xx_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state)
 	*mux_state = anx[port].mux_state;
 
 	return EC_SUCCESS;
-}
-
-static int anx74xx_tcpm_mux_exit(int port)
-{
-	int  rv = EC_SUCCESS;
-
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2,
-			 ANX74XX_REG_MODE_TRANS);
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1,
-			 0x0);
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_5,
-			 0x04);
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2,
-			 0x0);
-	if (rv)
-		return EC_ERROR_UNKNOWN;
-	return rv;
 }
 
 const struct usb_mux_driver anx74xx_tcpm_usb_mux_driver = {
