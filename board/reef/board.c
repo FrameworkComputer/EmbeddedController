@@ -140,6 +140,7 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_AC_PRESENT,
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
 };
@@ -378,12 +379,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma)
 
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT));
-}
-
-int extpower_is_present(void)
-{
-	/* Check VBUS on either port */
-	return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_BOTH);
 }
 
 /* Enable or disable input devices, based upon chipset state and tablet mode */
@@ -664,6 +659,9 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 void board_hibernate(void)
 {
 	CPRINTS("Enter Pseudo G3");
+
+	/* Enable both the VBUS & VCC ports before entering PG3 */
+	bd99955_select_input_port(BD99955_CHARGE_PORT_BOTH);
 
 	/*
 	 * Clean up the UART buffer and prevent any unwanted garbage characters

@@ -19,8 +19,7 @@ GPIO_INT(SUSPWRNACK,		PIN(7, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,	PIN(6, 0), GPIO_INT_BOTH, power_signal_interrupt)		/* PMIC_EC_RSMRST_ODL */
 GPIO_INT(ALL_SYS_PGOOD,		PIN(5, 0), GPIO_INT_BOTH, power_signal_interrupt)		/* PMIC_EC_PWROK_OD */
 
-/* FIXME(dhendrix): What to do with ACOK_OD? */
-//GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH | GPIO_INPUT, extpower_interrupt)	/* ACOK_OD from BD99955 */
+GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD from BD99955 */
 /* TODO: We might remove external pull-up for POWER_BUTTON_L in EVT */
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* MECH_PWR_BTN_ODL */
 /* FIXME(furquan): GPIO_PULL_UP is not required for LID_OPEN on EVT. */
