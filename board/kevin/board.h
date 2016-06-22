@@ -97,10 +97,6 @@
 /* Optional features for test commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
-#define CONFIG_CMD_TASKREADY
-#define CONFIG_CMD_STACKOVERFLOW
-#define CONFIG_CMD_JUMPTAGS
-#define CONFIG_CMD_SPI_XFER
 
 #define CONFIG_UART_HOST                0
 
@@ -116,6 +112,11 @@
 #undef  CONFIG_PECI
 #undef  CONFIG_PSTORE
 #undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
+
+/* Modules we want to exclude */
+#undef CONFIG_CMD_HASH
+#undef CONFIG_CMD_TIMERINFO
+#undef CONFIG_CONSOLE_CMDHELP
 
 #define I2C_PORT_TCPC0    NPCX_I2C_PORT0_0
 #define I2C_PORT_TCPC1    NPCX_I2C_PORT0_1
