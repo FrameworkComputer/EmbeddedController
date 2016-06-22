@@ -285,6 +285,23 @@ DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * FIXME: Not required for EVT which PMIC will reset properly
+	 *
+	 * By removing the power rail while PMIC is enabled,
+	 * PMIC will sense a power fault and reset itself.
+	 */
+	if (!system_jumped_to_this_image()) {
+		/* Disable all power rail */
+		gpio_set_level(GPIO_EN_PP3300, 0);
+		gpio_set_level(GPIO_EN_PP5000, 0);
+
+		/* Toggle PMIC_EN */
+		gpio_set_level(GPIO_V5A_EN, 1);
+		msleep(500);
+		gpio_set_level(GPIO_V5A_EN, 0);
+	}
+
 	/* FIXME: Handle tablet mode */
 	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); */
 
