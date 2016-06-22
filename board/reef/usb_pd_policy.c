@@ -153,7 +153,7 @@ int pd_check_data_swap(int port, int data_role)
 int pd_check_vconn_swap(int port)
 {
 	/* in G3, do not allow vconn swap since pp5000_A rail is off */
-	return gpio_get_level(GPIO_V5A_EN);
+	return gpio_get_level(GPIO_EN_PP5000);
 }
 
 void pd_execute_data_swap(int port, int data_role)

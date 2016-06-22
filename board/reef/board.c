@@ -300,9 +300,9 @@ static void board_init(void)
 		gpio_set_level(GPIO_EN_PP5000, 0);
 
 		/* Toggle PMIC_EN */
-		gpio_set_level(GPIO_V5A_EN, 1);
+		gpio_set_level(GPIO_PMIC_EN, 1);
 		msleep(500);
-		gpio_set_level(GPIO_V5A_EN, 0);
+		gpio_set_level(GPIO_PMIC_EN, 0);
 	}
 
 	/* FIXME: Handle tablet mode */
@@ -316,7 +316,7 @@ static void board_init(void)
 	 * 1. PP5000 must be enabled before PP3300 (chrome-os-partner:50807).
 	 * 2. TCPC chips must be powered until we can re-factor the PD handling
 	 *    code to be aware of TCPCs being off (chrome-os-partner:53644).
-	 * 3. To prevent SLP glitches, PMIC_EN (V5A_EN) should be enabled
+	 * 3. To prevent SLP glitches, PMIC_EN should be enabled
 	 *    at the same time as PP3300 (chrome-os-partner:51323).
 	 */
 	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
@@ -325,7 +325,7 @@ static void board_init(void)
 		;
 
 	/* Enable PMIC */
-	gpio_set_level(GPIO_V5A_EN, 1);
+	gpio_set_level(GPIO_PMIC_EN, 1);
 
 	/* Enable 3.3V rail */
 	gpio_set_level(GPIO_EN_PP3300, 1);
@@ -452,7 +452,7 @@ void chipset_do_shutdown(void)
 	/*
 	 * If we shut off TCPCs the TCPC tasks will fail and spam the
 	 * EC console with I2C errors. So for now we'll leave the TCPCs
-	 * on which means leaving V5A_EN, PP3300, and PP5000 enabled.
+	 * on which means leaving PMIC_EN, PP3300, and PP5000 enabled.
 	 */
 	cprintf(CC_CHIPSET, "%s called, but not doing anything.\n", __func__);
 }
