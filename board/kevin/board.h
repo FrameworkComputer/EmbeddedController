@@ -18,6 +18,7 @@
 #define CONFIG_I2C_MASTER
 #define CONFIG_I2C_VIRTUAL_BATTERY
 #define CONFIG_LED_COMMON
+#define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_COMMON
 #define CONFIG_PWM
 #define CONFIG_PWM_DISPLIGHT
@@ -126,7 +127,6 @@
 /* Optional for testing */
 #undef  CONFIG_PECI
 #undef  CONFIG_PSTORE
-#undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH
