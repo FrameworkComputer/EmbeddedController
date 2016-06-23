@@ -40,6 +40,9 @@
 /* All inputs in the right state for S0 */
 #define IN_ALL_S0              (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
+/* Long power key press to force shutdown in S0 */
+#define FORCED_SHUTDOWN_DELAY  (8 * SECOND)
+
 static int forcing_shutdown;
 
 void chipset_force_shutdown(void)
@@ -75,10 +78,19 @@ enum power_state power_chipset_init(void)
 		}
 
 		wireless_set_state(WIRELESS_OFF);
-	}
+	} else if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF))
+		/* Auto-power on */
+		chipset_exit_hard_off();
 
 	return POWER_G3;
 }
+
+static void force_shutdown(void)
+{
+	forcing_shutdown = 1;
+	task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_DEFERRED(force_shutdown);
 
 enum power_state power_handle_state(enum power_state state)
 {
@@ -209,6 +221,15 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		enable_sleep(SLEEP_MASK_AP_RUN);
 
+		/*
+		 * In case the power button is held awaiting power-off timeout,
+		 * power off immediately now that we're entering S3.
+		 */
+		if (power_button_is_pressed()) {
+			forcing_shutdown = 1;
+			hook_call_deferred(&force_shutdown_data, -1);
+		}
+
 		return POWER_S3;
 
 	case POWER_S3S5:
@@ -252,16 +273,30 @@ enum power_state power_handle_state(enum power_state state)
 
 static void power_button_changed(void)
 {
-	/* Only pay attention to power button presses, not releases */
-	if (!power_button_is_pressed())
-		return;
+	if (power_button_is_pressed()) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			/* Power up from off */
+			chipset_exit_hard_off();
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		/* Power up */
-		chipset_exit_hard_off();
-	else
-		forcing_shutdown = 1;
+		else if (!chipset_in_state(CHIPSET_STATE_ON))
+			/* Power down immediately from S3 */
+			force_shutdown();
 
-	task_wake(TASK_ID_CHIPSET);
+		else
+			/* Delayed power down from S0 */
+			hook_call_deferred(&force_shutdown_data,
+					   FORCED_SHUTDOWN_DELAY);
+	} else {
+		/* Power button released, cancel deferred shutdown */
+		hook_call_deferred(&force_shutdown_data, -1);
+	}
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
+
+static void lid_changed(void)
+{
+	/* Power-up from off on lid open */
+	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		chipset_exit_hard_off();
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, lid_changed, HOOK_PRIO_DEFAULT);
