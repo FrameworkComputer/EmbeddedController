@@ -3649,8 +3649,6 @@ struct ec_params_pd_write_log_entry {
 	uint8_t port; /* port#, or 0 for events unrelated to a given port */
 } __packed;
 
-#endif  /* !__ACPI__ */
-
 
 /* Control USB-PD chip */
 #define EC_CMD_PD_CONTROL 0x119
@@ -3666,6 +3664,8 @@ struct ec_params_pd_control {
 	uint8_t chip;         /* chip id (should be 0) */
 	uint8_t subcmd;
 } __packed;
+
+#endif  /* !__ACPI__ */
 
 /*****************************************************************************/
 /*
