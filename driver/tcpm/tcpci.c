@@ -301,12 +301,14 @@ int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	reg &= ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK;
+	reg &= ~(TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK |
+		 TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED);
 	if (mux_state & MUX_USB_ENABLED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB;
 	if (mux_state & MUX_DP_ENABLED)
 		reg |= TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP;
-	/* MUX_POLARITY_INVERTED: polarity is handled by the TCPC */
+	if (mux_state & MUX_POLARITY_INVERTED)
+		reg |= TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
 
 	return tcpc_write(port, TCPC_REG_CONFIG_STD_OUTPUT, reg);
 }
@@ -327,7 +329,8 @@ int tcpci_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state)
 		*mux_state |= MUX_USB_ENABLED;
 	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP)
 		*mux_state |= MUX_DP_ENABLED;
-	/* MUX_POLARITY_INVERTED is always omitted */
+	if (reg & TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED)
+		*mux_state |= MUX_POLARITY_INVERTED;
 
 	return EC_SUCCESS;
 }
