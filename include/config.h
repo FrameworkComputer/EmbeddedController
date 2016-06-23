@@ -2072,6 +2072,9 @@
 /* Support the Parade PS8740 Type-C Redriving Switch */
 #undef CONFIG_USB_MUX_PS8740
 
+/* 'Virtual' USB mux under host (not EC) control */
+#undef CONFIG_USB_MUX_VIRTUAL
+
 /*****************************************************************************/
 /* USB GPIO config */
 #undef CONFIG_USB_GPIO

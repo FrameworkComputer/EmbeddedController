@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "host_command.h"
 #include "usb_mux.h"
 #include "util.h"
 
@@ -154,3 +155,24 @@ DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			"Control type-C connector muxing",
 			NULL);
 #endif
+
+static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_mux_info *p = args->params;
+	struct ec_response_usb_pd_mux_info *r = args->response;
+	int port = p->port;
+	const struct usb_mux *mux;
+
+	if (port >= CONFIG_USB_PD_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	mux = &usb_muxes[port];
+	if (mux->driver->get(mux->port_addr, &r->flags) != EC_SUCCESS)
+		return EC_RES_ERROR;
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO,
+		     hc_usb_pd_mux_info,
+		     EC_VER_MASK(0));

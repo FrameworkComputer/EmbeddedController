@@ -162,7 +162,7 @@ const char help_str[] =
 	"  port80read\n"
 	"      Print history of port 80 write\n"
 	"  powerinfo\n"
-	"	Prints power-related information\n"
+	"      Prints power-related information\n"
 	"  protoinfo\n"
 	"       Prints EC host protocol information\n"
 	"  pstoreinfo\n"
@@ -223,6 +223,8 @@ const char help_str[] =
 			"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
 			"[dr_swap|pr_swap|vconn_swap]>\n"
 	"      Control USB PD/type-C\n"
+	"  usbpdmuxinfo\n"
+	"      Get USB-C SS mux info\n"
 	"  usbpdpower\n"
 	"      Get USB PD power information\n"
 	"  version\n"
@@ -469,6 +471,8 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_USB_PD] = "USB Cros Power Delievery",
 	[EC_FEATURE_USB_MUX] = "USB Multiplexer",
 	[EC_FEATURE_MOTION_SENSE_FIFO] = "FIFO for Motion Sensors events",
+	[EC_FEATURE_VSTORE] = "Temporary secure vstore",
+	[EC_FEATURE_USBC_SS_MUX_VIRTUAL] = "Host-controlled USB-C SS mux",
 };
 
 int cmd_inventory(int argc, char *argv[])
@@ -4232,6 +4236,42 @@ static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 	printf("\n");
 }
 
+int cmd_usb_pd_mux_info(int argc, char *argv[])
+{
+	struct ec_params_usb_pd_mux_info p;
+	struct ec_response_usb_pd_mux_info r;
+	int num_ports, rv, i;
+
+	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0,
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return rv;
+	num_ports = ((struct ec_response_usb_pd_ports *)ec_inbuf)->num_ports;
+
+	for (i = 0; i < num_ports; i++) {
+		p.port = i;
+		rv = ec_command(EC_CMD_USB_PD_MUX_INFO, 0,
+				&p, sizeof(p),
+				&r, sizeof(r));
+		if (rv < 0)
+			return rv;
+
+		printf("Port %d: ", i);
+		if (r.flags & USB_PD_MUX_USB_ENABLED)
+			printf("USB ");
+		if (r.flags & USB_PD_MUX_DP_ENABLED)
+			printf("DP ");
+		if (!(r.flags & (USB_PD_MUX_DP_ENABLED |
+				 USB_PD_MUX_USB_ENABLED)))
+			printf("OPEN ");
+		if (r.flags & USB_PD_MUX_POLARITY_INVERTED)
+			printf("INV ");
+		printf("\n");
+	}
+
+	return 0;
+}
+
 int cmd_usb_pd_power(int argc, char *argv[])
 {
 	struct ec_params_usb_pd_power_info p;
@@ -6865,6 +6905,7 @@ const struct command commands[] = {
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},
 	{"usbpd", cmd_usb_pd},
+	{"usbpdmuxinfo", cmd_usb_pd_mux_info},
 	{"usbpdpower", cmd_usb_pd_power},
 	{"version", cmd_version},
 	{"wireless", cmd_wireless},

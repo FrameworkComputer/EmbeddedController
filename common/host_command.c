@@ -752,6 +752,9 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef CONFIG_VSTORE
 		| EC_FEATURE_MASK_0(EC_FEATURE_VSTORE)
 #endif
+#ifdef CONFIG_USB_MUX_VIRTUAL
+		| EC_FEATURE_MASK_0(EC_FEATURE_USBC_SS_MUX_VIRTUAL)
+#endif
 		;
 	return EC_RES_SUCCESS;
 }

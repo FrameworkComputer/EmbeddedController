@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_USB_MUX_H
 #define __CROS_EC_USB_MUX_H
 
+#include "ec_commands.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 
@@ -15,9 +16,10 @@
 typedef uint8_t mux_state_t;
 
 /* Mux state attributes */
-#define MUX_USB_ENABLED        (1 << 0) /* USB is enabled */
-#define MUX_DP_ENABLED         (1 << 1) /* DP is enabled */
-#define MUX_POLARITY_INVERTED  (1 << 2) /* Polarity is inverted */
+/* TODO: Directly use USB_PD_MUX_* everywhere and remove these 3 defines */
+#define MUX_USB_ENABLED        USB_PD_MUX_USB_ENABLED
+#define MUX_DP_ENABLED         USB_PD_MUX_DP_ENABLED
+#define MUX_POLARITY_INVERTED  USB_PD_MUX_POLARITY_INVERTED
 
 /* Mux modes, decoded to attributes */
 enum typec_mux {
@@ -87,6 +89,7 @@ struct usb_mux {
 extern const struct usb_mux_driver pi3usb30532_usb_mux_driver;
 extern const struct usb_mux_driver ps8740_usb_mux_driver;
 extern const struct usb_mux_driver tcpm_usb_mux_driver;
+extern const struct usb_mux_driver virtual_usb_mux_driver;
 
 /* USB muxes present in system, ordered by PD port #, defined at board-level */
 extern struct usb_mux usb_muxes[];

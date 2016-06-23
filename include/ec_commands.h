@@ -440,6 +440,9 @@ enum host_event_code {
 	/* Emulate MKBP event */
 	EC_HOST_EVENT_MKBP = 27,
 
+	/* EC desires to change state of host-controlled USB mux */
+	EC_HOST_EVENT_USB_MUX = 28,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
@@ -950,6 +953,8 @@ enum ec_feature_code {
 	EC_FEATURE_MOTION_SENSE_FIFO = 24,
 	/* Support temporary secure vstore */
 	EC_FEATURE_VSTORE = 25,
+	/* EC decides on USB-C SS mux state, muxes configured by host */
+	EC_FEATURE_USBC_SS_MUX_VIRTUAL = 26,
 };
 
 #define EC_FEATURE_MASK_0(event_code) (1UL << (event_code % 32))
@@ -3663,6 +3668,22 @@ enum ec_pd_control_cmd {
 struct ec_params_pd_control {
 	uint8_t chip;         /* chip id (should be 0) */
 	uint8_t subcmd;
+} __packed;
+
+/* Get info about USB-C SS muxes */
+#define EC_CMD_USB_PD_MUX_INFO 0x11a
+
+struct ec_params_usb_pd_mux_info {
+	uint8_t port; /* USB-C port number */
+} __packed;
+
+/* Flags representing mux state */
+#define USB_PD_MUX_USB_ENABLED       (1 << 0)
+#define USB_PD_MUX_DP_ENABLED        (1 << 1)
+#define USB_PD_MUX_POLARITY_INVERTED (1 << 2)
+
+struct ec_response_usb_pd_mux_info {
+	uint8_t flags; /* USB_PD_MUX_*-encoded USB mux state */
 } __packed;
 
 #endif  /* !__ACPI__ */
