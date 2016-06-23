@@ -65,6 +65,7 @@ void rbox_init(void)
 
 	/* Clear existing interrupts */
 	GWRITE(RBOX, WAKEUP_CLEAR, 1);
+	GWRITE(RBOX, WAKEUP_CLEAR, 0);
 	GWRITE(RBOX, INT_STATE, 1);
 
 #ifdef CONFIG_RBOX_DEBUG
