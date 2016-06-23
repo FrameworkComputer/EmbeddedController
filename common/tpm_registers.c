@@ -25,18 +25,19 @@
 #define CPRINTS(format, args...) cprints(CC_TPM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_TPM, format, ## args)
 
+#define TPM_LOCALITY_0_SPI_BASE 0x00d40000
 
 /* Register addresses for FIFO mode. */
-#define TPM_ACCESS		0
-#define TPM_INT_ENABLE		8
-#define TPM_INT_VECTOR	      0xC
-#define TPM_INT_STATUS	     0x10
-#define TPM_INTF_CAPABILITY  0x14
-#define TPM_STS		     0x18
-#define TPM_DATA_FIFO	     0x24
-#define TPM_INTERFACE_ID     0x30
-#define TPM_DID_VID	    0xf00
-#define TPM_RID		    0xf04
+#define TPM_ACCESS	    (TPM_LOCALITY_0_SPI_BASE + 0)
+#define TPM_INT_ENABLE	    (TPM_LOCALITY_0_SPI_BASE + 8)
+#define TPM_INT_VECTOR	    (TPM_LOCALITY_0_SPI_BASE + 0xC)
+#define TPM_INT_STATUS	    (TPM_LOCALITY_0_SPI_BASE + 0x10)
+#define TPM_INTF_CAPABILITY (TPM_LOCALITY_0_SPI_BASE + 0x14)
+#define TPM_STS		    (TPM_LOCALITY_0_SPI_BASE + 0x18)
+#define TPM_DATA_FIFO	    (TPM_LOCALITY_0_SPI_BASE + 0x24)
+#define TPM_INTERFACE_ID    (TPM_LOCALITY_0_SPI_BASE + 0x30)
+#define TPM_DID_VID	    (TPM_LOCALITY_0_SPI_BASE + 0xf00)
+#define TPM_RID		    (TPM_LOCALITY_0_SPI_BASE + 0xf04)
 
 #define GOOGLE_VID 0x1ae0
 #define GOOGLE_DID 0x0028
