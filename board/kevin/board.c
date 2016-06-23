@@ -38,6 +38,7 @@
 #include "timer.h"
 #include "thermal.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
@@ -164,6 +165,17 @@ static const enum bd99955_charge_port
 	[1] = BD99955_CHARGE_PORT_VCC,
 };
 
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.port_addr = 0,
+		.driver = &virtual_usb_mux_driver,
+	},
+	{
+		.port_addr = 1,
+		.driver = &virtual_usb_mux_driver,
+	},
+};
+
 void board_reset_pd_mcu(void)
 {
 }
@@ -234,16 +246,6 @@ int pd_snk_is_vbus_provided(int port)
 
 static void board_init(void)
 {
-	int i;
-
-	/*
-	 * Connect USB data switches.
-	 * TODO(crosbug.com/p/52639): Synchronize switch open / close with
-	 * USB mux control.
-	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; ++i)
-		usb_charger_set_switches(i, USB_SWITCH_CONNECT);
-
 	/* Enable charger interrupt for BC1.2 detection on attach / detach */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
 

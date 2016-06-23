@@ -208,7 +208,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 		CPRINTF("Current: %dmA\n", payload[1]);
 		break;
 	case VDO_CMD_FLIP:
-		/* usb_mux_flip(port); */
+		usb_mux_flip(port);
 		break;
 #ifdef CONFIG_USB_PD_LOGGING
 	case VDO_CMD_GET_LOG:
@@ -230,8 +230,8 @@ static void svdm_safe_dp_mode(int port)
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
-	/* usb_mux_set(port, TYPEC_MUX_NONE,
-		    USB_SWITCH_CONNECT, pd_get_polarity(port)); */
+	usb_mux_set(port, TYPEC_MUX_NONE,
+		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 }
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
@@ -265,14 +265,14 @@ static int svdm_dp_status(int port, uint32_t *payload)
 static int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, USB_SID_DISPLAYPORT);
-	/* int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]); */
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
 
 	if (!pin_mode)
 		return 0;
 
-	/* usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
-		    USB_SWITCH_CONNECT, pd_get_polarity(port)); */
+	usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
+		    USB_SWITCH_CONNECT, pd_get_polarity(port));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
@@ -285,6 +285,9 @@ static int svdm_dp_config(int port, uint32_t *payload)
 static void svdm_dp_post_config(int port)
 {
 	/* TODO: Figure out HPD */
+	dp_flags[port] |= DP_FLAGS_DP_ON;
+	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
+		return;
 }
 
 static int svdm_dp_attention(int port, uint32_t *payload)

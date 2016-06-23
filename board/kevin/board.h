@@ -53,6 +53,7 @@
 #define CONFIG_CHARGER_NARROW_VDC
 #define CONFIG_CHARGER_V2
 #define CONFIG_USB_CHARGER
+#define CONFIG_USB_MUX_VIRTUAL
 
 /* Motion Sensors */
 #define CONFIG_ACCEL_BMA255
@@ -77,6 +78,9 @@
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 /* TODO: Enable TRY_SRC */
 #undef CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USBC_SS_MUX
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
 
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
@@ -90,6 +94,7 @@
 /* TODO: determine the following board specific type-C power constants */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
