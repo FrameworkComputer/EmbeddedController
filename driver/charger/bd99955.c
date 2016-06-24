@@ -401,6 +401,10 @@ int charger_set_input_current(int input_current)
 
 	/* Input current step 32 mA */
 	input_current &= ~0x1F;
+
+	if (input_current < bd99955_charger_info.input_current_min)
+		input_current = bd99955_charger_info.input_current_min;
+
 	rv = ch_raw_write16(BD99955_CMD_IBUS_LIM_SET, input_current,
 				BD99955_BAT_CHG_COMMAND);
 	if (rv)

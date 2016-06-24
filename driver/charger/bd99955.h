@@ -36,7 +36,7 @@ enum bd99955_charge_port {
 #define CHARGE_I_OFF	0
 #define CHARGE_I_STEP	64
 #define INPUT_I_MAX	16352
-#define INPUT_I_MIN	0
+#define INPUT_I_MIN	512
 #define INPUT_I_STEP	32
 
 /* Battery Charger Commands */
