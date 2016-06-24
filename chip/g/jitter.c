@@ -27,7 +27,7 @@ void init_jittery_clock(int highsec)
 	int bank;
 
 	if (highsec)
-		stepx16 = 0xff - trimfast;
+		stepx16 = (delta * 7) >> 1;
 	else
 		stepx16 = 2 * (trim48 - trimfast);
 

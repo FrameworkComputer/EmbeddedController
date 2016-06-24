@@ -130,8 +130,7 @@ static void board_init(void)
 	init_timers();
 	init_interrupts();
 	init_trng();
-	/* TODO(crosbug.com/p/53952): enable jittery clock */
-	/* init_jittery_clock(1); */
+	init_jittery_clock(1);
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
 	nvmem_init();
