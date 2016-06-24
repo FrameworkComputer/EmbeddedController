@@ -109,11 +109,11 @@ enum usb_strings {
 
 /* Device indexes */
 enum device_type {
-	DEVICE_SERVO_AP = 0,
-	DEVICE_SERVO_EC,
-	DEVICE_AP,
+	DEVICE_AP = 0,
 	DEVICE_EC,
 	DEVICE_SERVO,
+	DEVICE_SERVO_AP,
+	DEVICE_SERVO_EC,
 
 	DEVICE_COUNT
 };

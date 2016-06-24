@@ -322,24 +322,32 @@ struct device_config device_states[] = {
 	[DEVICE_SERVO_AP] = {
 		.deferred = &servo_ap_deferred_data,
 		.detect_on = GPIO_SERVO_UART1_ON,
-		.detect_off = GPIO_SERVO_UART1_OFF
+		.detect_off = GPIO_SERVO_UART1_OFF,
+		.name = "Servo AP"
 	},
 	[DEVICE_SERVO_EC] = {
 		.deferred = &servo_ec_deferred_data,
 		.detect_on = GPIO_SERVO_UART2_ON,
-		.detect_off = GPIO_SERVO_UART2_OFF
+		.detect_off = GPIO_SERVO_UART2_OFF,
+		.name = "Servo EC"
 	},
 	[DEVICE_AP] = {
 		.deferred = &ap_deferred_data,
 		.detect_on = GPIO_AP_ON,
-		.detect_off = GPIO_AP_OFF
+		.detect_off = GPIO_AP_OFF,
+		.name = "AP"
 	},
 	[DEVICE_EC] = {
 		.deferred = &ec_deferred_data,
 		.detect_on = GPIO_EC_ON,
-		.detect_off = GPIO_EC_OFF
+		.detect_off = GPIO_EC_OFF,
+		.name = "EC"
 	},
-	[DEVICE_SERVO] = {},
+	[DEVICE_SERVO] = {
+		.detect_on = GPIO_COUNT,
+		.detect_off = GPIO_COUNT,
+		.name = "Servo"
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
 
@@ -448,23 +456,3 @@ void board_update_device_state(enum device_type device)
 		hook_call_deferred(device_states[device].deferred, 50);
 	}
 }
-
-static void print_state(const char *name, enum device_state state)
-{
-	ccprintf("%s %s\n", name, state == DEVICE_STATE_ON ? "on" :
-		 state == DEVICE_STATE_OFF ? "off" : "unknown");
-}
-static int command_devices(int argc, char **argv)
-{
-
-	print_state("AP", device_get_state(DEVICE_AP));
-	print_state("EC", device_get_state(DEVICE_EC));
-	print_state("Servo", device_get_state(DEVICE_SERVO));
-	print_state("   AP", device_get_state(DEVICE_SERVO_AP));
-	print_state("   EC", device_get_state(DEVICE_SERVO_EC));
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(devices, command_devices,
-	"",
-	"Get the AP, EC, and servo device states",
-	NULL);
