@@ -111,6 +111,7 @@
  * specific drivers for each module.
  */
 #undef CONFIG_ALS
+#undef CONFIG_ALS_AL3010
 #undef CONFIG_ALS_ISL29035
 #undef CONFIG_ALS_OPT3001
 /* Define the exact model ID present on the board: SI1141 = 41, SI1142 = 42, */
