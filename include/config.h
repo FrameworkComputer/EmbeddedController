@@ -550,6 +550,7 @@
 #undef CONFIG_CMD_ILIM
 #define CONFIG_CMD_INA
 #define CONFIG_CMD_REGULATOR
+#undef CONFIG_CMD_RTC
 #undef CONFIG_CMD_JUMPTAGS
 #undef CONFIG_CMD_LID_ANGLE
 #undef CONFIG_CMD_MCDP
@@ -1092,6 +1093,9 @@
 
 /* Panic when status of PD MCU reflects that it has crashed */
 #undef CONFIG_HOSTCMD_PD_PANIC
+
+/* Board supports RTC host commands*/
+#undef CONFIG_HOSTCMD_RTC
 
 /*****************************************************************************/
 

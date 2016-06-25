@@ -625,6 +625,7 @@ const char *system_get_chip_revision(void)
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_RTC
 static int command_system_rtc(int argc, char **argv)
 {
 	uint32_t rtc;
@@ -686,10 +687,12 @@ DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
 			"Test alarm",
 			NULL);
 #endif /* CONFIG_CMD_RTC_ALARM */
+#endif /* CONFIG_CMD_RTC */
 
 /*****************************************************************************/
 /* Host commands */
 
+#ifdef CONFIG_HOSTCMD_RTC
 static int system_rtc_get_value(struct host_cmd_handler_args *args)
 {
 	struct ec_response_rtc *r = args->response;
@@ -713,3 +716,4 @@ static int system_rtc_set_value(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
 		     system_rtc_set_value,
 		     EC_VER_MASK(0));
+#endif /* CONFIG_HOSTCMD_RTC */
