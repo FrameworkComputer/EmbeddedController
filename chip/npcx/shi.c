@@ -731,6 +731,18 @@ static void shi_enable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_enable, HOOK_PRIO_DEFAULT);
 
+static void shi_reenable_on_sysjump(void)
+{
+#if !(DEBUG_SHI)
+	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
+#endif
+		shi_enable();
+}
+/* Call hook after chipset sets initial power state */
+DECLARE_HOOK(HOOK_INIT,
+	     shi_reenable_on_sysjump,
+	     HOOK_PRIO_INIT_CHIPSET + 1);
+
 /* Disable SHI bus */
 static void shi_disable(void)
 {
@@ -799,15 +811,9 @@ static void shi_init(void)
 
 	/* Clear SHI events status register */
 	NPCX_EVSTAT = 0XFF;
-
-	/* If chipset is already on, prepare for transactions */
-#if !(DEBUG_SHI)
-	if (chipset_in_state(CHIPSET_STATE_ON))
-#endif
-		shi_enable();
-
 }
-DECLARE_HOOK(HOOK_INIT, shi_init, HOOK_PRIO_DEFAULT);
+/* Call hook before chipset sets initial power state and calls resume hooks */
+DECLARE_HOOK(HOOK_INIT, shi_init, HOOK_PRIO_INIT_CHIPSET - 1);
 
 /**
  * Get protocol information
