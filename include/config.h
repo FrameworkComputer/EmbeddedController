@@ -1730,6 +1730,9 @@
  */
 #undef CONFIG_TEMP_SENSOR_POWER_GPIO
 
+/* Compile common code for throttling the CPU based on the temp sensors */
+#undef CONFIG_THROTTLE_AP
+
 /*****************************************************************************/
 /* TPM-like configuration */
 
@@ -2194,6 +2197,15 @@
 #undef CONFIG_CONSOLE_HISTORY
 #define CONFIG_CRC8
 #endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
+
+/******************************************************************************/
+/*
+ * Throttle AP must have temperature sensor enabled to get the readings for
+ * thermal throttling.
+ */
+#if defined(CONFIG_THROTTLE_AP) && !defined(CONFIG_TEMP_SENSOR)
+#define CONFIG_TEMP_SENSOR
+#endif
 
 /*****************************************************************************/
 /*

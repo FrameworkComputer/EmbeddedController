@@ -87,6 +87,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_THROTTLE_AP
 #define CONFIG_THERMISTOR_NCP15WB
 #define I2C_PORT_THERMAL 0
 int ncp15wb_calculate_temp(uint16_t adc);
