@@ -635,8 +635,11 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	p_status->err_code    = SMB_OK;
 
 	/* Make sure we're in a good state to start */
-	if ((flags & I2C_XFER_START) && (i2c_bus_busy(ctrl)
-			|| (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
+	if ((flags & I2C_XFER_START) &&
+	     /* Ignore busy bus for repeated start */
+	     p_status->oper_state != SMB_WRITE_SUSPEND &&
+	     (i2c_bus_busy(ctrl)
+	     || (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
 
 		/* Attempt to unwedge the i2c port. */
 		i2c_unwedge(port);
