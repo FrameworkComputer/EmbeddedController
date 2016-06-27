@@ -490,7 +490,7 @@ static void shi_bad_received_data(void)
 	shi_fill_out_status(EC_SPI_RX_BAD_DATA);
 	state = SHI_STATE_BAD_RECEIVED_DATA;
 
-	CPRINTS("BAD-");
+	CPRINTF("BAD-");
 	CPRINTF("in_msg=[");
 	for (i = 0; i < shi_params.sz_received; i++)
 		CPRINTF("%02x ", in_msg[i]);
@@ -501,6 +501,21 @@ static void shi_bad_received_data(void)
 	 * at the begin of SHI_STATE_RECEIVING state
 	 */
 	task_enable_irq(NPCX_IRQ_SHI);
+}
+
+/*
+ * Avoid spamming the console with prints every IBF / IBHF interrupt, if
+ * we find ourselves in an unexpected state.
+ */
+static int last_error_state = -1;
+
+static void log_unexpected_state(char *isr_name)
+{
+#if !(DEBUG_SHI)
+	if (state != last_error_state)
+		CPRINTS("Unexpected state %d in %s ISR", state, isr_name);
+#endif
+	last_error_state = state;
 }
 
 /* This routine handles all interrupts of this module */
@@ -542,7 +557,7 @@ void shi_int_handler(void)
 
 		/* Error state for checking*/
 		if (state != SHI_STATE_SENDING)
-			CPRINTS("Unexpected state %d in IBEOR ISR\n", state);
+			log_unexpected_state("IBEOR");
 
 		/* reset SHI and prepare to next transaction again */
 		shi_reset_prepare();
@@ -587,7 +602,7 @@ void shi_int_handler(void)
 #endif
 		else
 			/* Unexpected status */
-			CPRINTS("Unexpected state %d in IBHF ISR\n", state);
+			log_unexpected_state("IBHF");
 	}
 
 	/*
@@ -622,7 +637,7 @@ void shi_int_handler(void)
 			return;
 		else
 			/* Unexpected status */
-			CPRINTS("Unexpected state %d in IBF ISR\n", state);
+			log_unexpected_state("IBF");
 	}
 }
 /*
@@ -657,7 +672,7 @@ void shi_cs_event(enum gpio_signal signal)
 	/* Chip select is low = asserted */
 	if (state != SHI_STATE_READY_TO_RECV) {
 		/* State machine should be reset in EVSTAT_EOR ISR */
-		CPRINTS("Unexpected state %d in CS ISR\n", state);
+		CPRINTS("Unexpected state %d in CS ISR", state);
 		return;
 	}
 
@@ -706,6 +721,7 @@ static void shi_reset_prepare(void)
 
 	/* Ready to receive */
 	state = SHI_STATE_READY_TO_RECV;
+	last_error_state = -1;
 
 	DEBUG_CPRINTF("RDY-");
 }
