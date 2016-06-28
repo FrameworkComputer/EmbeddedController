@@ -18,11 +18,13 @@ static unsigned locality_;	/* Set at initialization. */
 static int ftdi_trace_enabled;
 
 /* Assorted TPM2 registers for interface type FIFO. */
-#define TPM_ACCESS_REG       0
-#define TPM_STS_REG       0x18
-#define TPM_DATA_FIFO_REG 0x24
-#define TPM_DID_VID_REG  0xf00
-#define TPM_RID_REG      0xf04
+#define TPM_LOCALITY_0_SPI_BASE 0x00d40000
+
+#define TPM_ACCESS_REG    (TPM_LOCALITY_0_SPI_BASE + 0)
+#define TPM_STS_REG       (TPM_LOCALITY_0_SPI_BASE + 0x18)
+#define TPM_DATA_FIFO_REG (TPM_LOCALITY_0_SPI_BASE + 0x24)
+#define TPM_DID_VID_REG   (TPM_LOCALITY_0_SPI_BASE + 0xf00)
+#define TPM_RID_REG       (TPM_LOCALITY_0_SPI_BASE + 0xf04)
 
 static struct swig_string_data empty_string_data = (struct swig_string_data){
 	.size = 0, .data = NULL
