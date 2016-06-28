@@ -29,6 +29,7 @@ static struct fusb302_chip_state {
 	int togdone_pullup_cc2;
 	int tx_hard_reset_req;
 	int device_id;
+	struct mutex set_cc_lock;
 } state[CONFIG_USB_PD_PORT_COUNT];
 
 /* bring the FUSB302 out of reset after Hard Reset signaling */
@@ -444,6 +445,14 @@ static int fusb302_tcpm_set_cc(int port, int pull)
 {
 	int reg;
 
+	/*
+	 * Ensure we aren't in the process of changing CC from the alert
+	 * handler, then cancel any pending toggle-triggered CC change.
+	 */
+	mutex_lock(&state[port].set_cc_lock);
+	state[port].dfp_toggling_on = 0;
+	mutex_unlock(&state[port].set_cc_lock);
+
 	state[port].previous_pull = pull;
 
 	/* NOTE: FUSB302 toggles a single pull-up between CC1 and CC2 */
@@ -858,66 +867,67 @@ void fusb302_tcpc_alert(int port)
 	}
 
 	if (interrupta & TCPC_REG_INTERRUPTA_TOGDONE) {
-		/* toggle done */
-		state[port].dfp_toggling_on = 0;
+		/* Don't allow other tasks to change CC PUs */
+		mutex_lock(&state[port].set_cc_lock);
+		/* If our toggle request is obsolete then we're done */
+		if (state[port].dfp_toggling_on) {
+			/* read what 302 settled on for an answer...*/
+			tcpc_read(port, TCPC_REG_STATUS1A, &reg);
+			reg = reg >> TCPC_REG_STATUS1A_TOGSS_POS;
+			reg = reg & TCPC_REG_STATUS1A_TOGSS_MASK;
 
-		/* read what 302 settled on for an answer...*/
-		tcpc_read(port, TCPC_REG_STATUS1A, &reg);
-		reg = reg >> TCPC_REG_STATUS1A_TOGSS_POS;
-		reg = reg & TCPC_REG_STATUS1A_TOGSS_MASK;
+			toggle_answer = reg;
 
-		toggle_answer = reg;
+			/* Turn off toggle so we can take over the switches */
+			tcpc_read(port, TCPC_REG_CONTROL2, &reg);
+			reg &= ~TCPC_REG_CONTROL2_TOGGLE;
+			tcpc_write(port, TCPC_REG_CONTROL2, reg);
 
-		/* Turn off toggle so we can take over the switches again */
-		tcpc_read(port, TCPC_REG_CONTROL2, &reg);
-		reg &= ~TCPC_REG_CONTROL2_TOGGLE;
-		tcpc_write(port, TCPC_REG_CONTROL2, reg);
+			switch (toggle_answer) {
+			case TCPC_REG_STATUS1A_TOGSS_SRC1:
+				state[port].togdone_pullup_cc1 = 1;
+				state[port].togdone_pullup_cc2 = 0;
+				break;
+			case TCPC_REG_STATUS1A_TOGSS_SRC2:
+				state[port].togdone_pullup_cc1 = 0;
+				state[port].togdone_pullup_cc2 = 1;
+				break;
+			case TCPC_REG_STATUS1A_TOGSS_SNK1:
+			case TCPC_REG_STATUS1A_TOGSS_SNK2:
+			case TCPC_REG_STATUS1A_TOGSS_AA:
+				state[port].togdone_pullup_cc1 = 0;
+				state[port].togdone_pullup_cc2 = 0;
+				break;
+			default:
+				/* TODO: should never get here, but? */
+				ASSERT(0);
+				break;
+			}
 
-		switch (toggle_answer) {
-		case TCPC_REG_STATUS1A_TOGSS_SRC1:
-			state[port].togdone_pullup_cc1 = 1;
-			state[port].togdone_pullup_cc2 = 0;
-			break;
-		case TCPC_REG_STATUS1A_TOGSS_SRC2:
-			state[port].togdone_pullup_cc1 = 0;
-			state[port].togdone_pullup_cc2 = 1;
-			break;
-		case TCPC_REG_STATUS1A_TOGSS_SNK1:
-			state[port].togdone_pullup_cc1 = 0;
-			state[port].togdone_pullup_cc2 = 0;
-			break;
-		case TCPC_REG_STATUS1A_TOGSS_SNK2:
-			state[port].togdone_pullup_cc1 = 0;
-			state[port].togdone_pullup_cc2 = 0;
-			break;
-		case TCPC_REG_STATUS1A_TOGSS_AA:
-			state[port].togdone_pullup_cc1 = 0;
-			state[port].togdone_pullup_cc2 = 0;
-			break;
-		default:
-			/* TODO: should never get here, but? */
-			break;
+			/* enable the pull-up we know to be necessary */
+			tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
+
+			reg &= ~(TCPC_REG_SWITCHES0_CC2_PU_EN |
+				 TCPC_REG_SWITCHES0_CC1_PU_EN |
+				 TCPC_REG_SWITCHES0_CC1_PD_EN |
+				 TCPC_REG_SWITCHES0_CC2_PD_EN);
+
+			if (state[port].device_id == FUSB302_DEVID_302A) {
+				if (state[port].togdone_pullup_cc1)
+					reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
+				else
+					reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
+			} else {
+				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN |
+				       TCPC_REG_SWITCHES0_CC2_PU_EN;
+			}
+
+			tcpc_write(port, TCPC_REG_SWITCHES0, reg);
+			/* toggle done */
+			state[port].dfp_toggling_on = 0;
 		}
 
-		/* enable the pull-up we know to be necessary */
-		tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
-
-		reg &= ~(TCPC_REG_SWITCHES0_CC2_PU_EN);
-		reg &= ~(TCPC_REG_SWITCHES0_CC1_PU_EN);
-		reg &= ~TCPC_REG_SWITCHES0_CC1_PD_EN;
-		reg &= ~TCPC_REG_SWITCHES0_CC2_PD_EN;
-
-		if (state[port].device_id == FUSB302_DEVID_302A) {
-			if (state[port].togdone_pullup_cc1)
-				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
-			else
-				reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
-		} else {
-			reg |= TCPC_REG_SWITCHES0_CC1_PU_EN |
-			       TCPC_REG_SWITCHES0_CC2_PU_EN;
-		}
-
-		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
+		mutex_unlock(&state[port].set_cc_lock);
 	}
 
 	if (interrupta & TCPC_REG_INTERRUPTA_RETRYFAIL) {
