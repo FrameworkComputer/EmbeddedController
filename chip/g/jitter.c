@@ -49,8 +49,10 @@ void init_jittery_clock(int highsec)
 	GREG32(XO, CLK_JTR_SYNC_CONTENTS) = 0;
 
 	/* Writing any value locks things until the next hard reboot */
-	GREG32(XO, CFG_WR_EN) = 0;
-	GREG32(XO, JTR_CTRL_EN) = 0;
+	/* crosbug.com/p/54916
+	   GREG32(XO, CFG_WR_EN) = 0;
+	   GREG32(XO, JTR_CTRL_EN) = 0;
+	*/
 }
 
 void init_sof_clock(void)
