@@ -35,19 +35,17 @@
 
 static enum gpio_signal const usb_gpio_list[] = {
 /* Outputs */
-GPIO_DUT_CHG_EN,
+GPIO_DUT_CHG_EN,		/* 0 */
 GPIO_HOST_OR_CHG_CTL,
 GPIO_DP_HPD,
 GPIO_SBU_UART_SEL,
 GPIO_HOST_USB_HUB_RESET_L,
-GPIO_FASTBOOT_DUTHUB_MUX_SEL,
+GPIO_FASTBOOT_DUTHUB_MUX_SEL,	/* 5 */
 GPIO_SBU_MUX_EN,
 GPIO_FASTBOOT_DUTHUB_MUX_EN_L,
 GPIO_DUT_HUB_USB_RESET_L,
 GPIO_ATMEL_HWB_L,
-GPIO_ATMEL_RESET_L,
-GPIO_EMMC_MUX_SEL,
-GPIO_CMUX_EN,
+GPIO_CMUX_EN,			/* 10 */
 GPIO_EMMC_MUX_EN_L,
 GPIO_EMMC_PWR_EN,
 
@@ -55,15 +53,19 @@ GPIO_EMMC_PWR_EN,
 /* Inputs */
 GPIO_USERVO_FAULT_L,
 GPIO_USB_FAULT_L,
+GPIO_DONGLE_DET,		/* 15 */
+
+GPIO_USB_DET_PP_DUT,
+GPIO_USB_DET_PP_CHG,
+
 GPIO_USB_DUT_CC2_RPUSB,
 GPIO_USB_DUT_CC2_RD,
-GPIO_USB_DUT_CC2_RA,
-GPIO_TP17,
+GPIO_USB_DUT_CC2_RA,		/* 20 */
 GPIO_USB_DUT_CC1_PR3A0,
 GPIO_USB_DUT_CC1_RP1A5,
 GPIO_USB_DUT_CC1_RPUSB,
 GPIO_USB_DUT_CC1_RD,
-GPIO_USB_DUT_CC1_RA,
+GPIO_USB_DUT_CC1_RA,		/* 25 */
 GPIO_USB_DUT_CC2_PR3A0,
 GPIO_USB_DUT_CC2_RP1A5,
 
@@ -200,6 +202,8 @@ USB_I2C_CONFIG(usb_i2c, USB_IFACE_I2C, USB_EP_I2C);
  */
 static void board_init(void)
 {
+	int tmp;
+
 	/* USB to serial queues */
 	queue_init(&usart3_to_usb);
 	queue_init(&usb_to_usart3);
@@ -216,5 +220,15 @@ static void board_init(void)
 
 	/* Write USB3 Mode Enable to PS8742 USB/DP Mux. */
 	i2c_write8(1, 0x20, 0x0, 0x20);
+
+	/* Enable uservo USB by default. */
+	/* Write USERVO_POWER_EN */
+	i2c_write8(1, 0x40, 0x1, 0xff | (1 << 7));
+	i2c_read8(1, 0x40, 0x3, &tmp);
+	i2c_write8(1, 0x40, 0x3, tmp & ~(1 << 7));
+	/* Write USERVO_FASTBOOT_MUX_SEL */
+	i2c_write8(1, 0x40, 0x0, 0xff & ~(1 << 0));
+	i2c_read8(1, 0x40, 0x2, &tmp);
+	i2c_write8(1, 0x40, 0x2, tmp & ~(1 << 0));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
