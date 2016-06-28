@@ -206,6 +206,9 @@ enum temp_sensor_id {
 #define PD_MAX_CURRENT_MA     CONFIG_CHARGER_MAX_INPUT_CURRENT
 #define PD_MAX_VOLTAGE_MV     20000
 
+/* The lower the input voltage, the higher the power efficiency. */
+#define PD_PREFER_LOW_VOLTAGE
+
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
 /* Set AP reset pin according to parameter */
