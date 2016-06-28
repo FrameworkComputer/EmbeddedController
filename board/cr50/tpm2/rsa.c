@@ -10,11 +10,13 @@
 
 #include <assert.h>
 
+TPM2B_BYTE_VALUE(4);
+TPM2B_BYTE_VALUE(32);
+
 static void reverse_tpm2b(TPM2B *b)
 {
 	reverse(b->buffer, b->size);
 }
-TPM2B_BYTE_VALUE(4);
 
 static int check_key(const RSA_KEY *key)
 {
@@ -278,8 +280,6 @@ static int generate_prime(struct BIGNUM *b, TPM_ALG_ID hashing, TPM2B *seed,
 	return 0;
 }
 
-TPM2B_BYTE_VALUE(32);
-
 CRYPT_RESULT _cpri__GenerateKeyRSA(
 	TPM2B *N_buf, TPM2B *p_buf, uint16_t num_bits,
 	uint32_t e_buf, TPM_ALG_ID hashing, TPM2B *seed,
@@ -304,7 +304,6 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 
 	uint32_t counter;
 	TPM2B_32_BYTE_VALUE local_seed = { .t = {32} };
-	LITE_HMAC_CTX hmac;
 
 	if (num_bits & 0xF)
 		return CRYPT_FAIL;
@@ -316,10 +315,19 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 
 	/* Hash down the primary seed for RSA key generation, so that
 	 * the derivation tree is distinct from ECC key derivation. */
-	DCRYPTO_HMAC_SHA256_init(&hmac, seed->buffer, seed->size);
-	HASH_update(&hmac.hash, "RSA", 4);
-	memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
-	       local_seed.t.size);
+#ifdef CRYPTO_TEST_SETUP
+	/* Test seed has already been hashed down. */
+	memcpy(local_seed.t.buffer, seed->buffer, seed->size);
+#else
+	{
+		LITE_HMAC_CTX hmac;
+
+		DCRYPTO_HMAC_SHA256_init(&hmac, seed->buffer, seed->size);
+		HASH_update(&hmac.hash, "RSA", 4);
+		memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
+			local_seed.t.size);
+	}
+#endif
 
 	if (e_buf == 0)
 		e_buf = RSA_F4;
@@ -747,6 +755,12 @@ static const TPM2B_PUBLIC_KEY_RSA RSA_2048_Q = {
 	}
 };
 
+static const uint8_t VERIFY_SEED[32] = {
+	0x54, 0xef, 0xe3, 0xe9, 0x1e, 0xfa, 0xad, 0x9b,
+	0x18, 0x3f, 0x27, 0x12, 0xfd, 0xe7, 0xfb, 0xc6,
+	0x60, 0xcc, 0x34, 0x05, 0x00, 0x7d, 0x21, 0x6e,
+	0xc2, 0x1e, 0x78, 0xbe, 0x61, 0xc8, 0x41, 0x99
+};
 
 #define MAX_MSG_BYTES RSA_MAX_BYTES
 #define MAX_LABEL_LEN 32
@@ -783,6 +797,19 @@ static void rsa_command_handler(void *cmd_body,
 	uint8_t bn_buf[RSA_MAX_BYTES];
 	struct BIGNUM bn;
 	char label[MAX_LABEL_LEN];
+
+	/* This is the SHA-256 hash of the RSA template from the TCG
+	 * EK Credential Profile spec.
+	 */
+	TPM2B_32_BYTE_VALUE RSA_TEMPLATE_EK_EXTRA = {
+		.t = {32, {
+				0x68, 0xd1, 0xa2, 0x41, 0xfb, 0x27, 0x2f, 0x03,
+				0x90, 0xbf, 0xd0, 0x42, 0x8d, 0xad, 0xee, 0xb0,
+				0x2b, 0xf4, 0xa1, 0xcd, 0x46, 0xab, 0x6c, 0x39,
+				0x1b, 0xa3, 0x1f, 0x51, 0x87, 0x06, 0x8e, 0x6a
+			}
+		}
+	};
 
 	assert(sizeof(size_t) == sizeof(uint32_t));
 
@@ -926,15 +953,16 @@ static void rsa_command_handler(void *cmd_body,
 		}
 		N.b.size = sizeof(N.t.buffer);
 		p.b.size = sizeof(p.t.buffer);
-		seed.b.size = sizeof(seed.t.buffer);
-		rand_bytes(seed.b.buffer, seed.b.size);
+		seed.b.size = sizeof(VERIFY_SEED);
+		memcpy(seed.b.buffer, VERIFY_SEED, sizeof(VERIFY_SEED));
 		if (in_len > 0) {
 			memcpy(label, in, in_len);
 			label[in_len] = '\0';
 		}
 		if (_cpri__GenerateKeyRSA(
 				&N.b, &p.b, key_len, RSA_F4, TPM_ALG_SHA256,
-				&seed.b, in_len ? label : NULL, NULL, NULL)
+				&seed.b, in_len ? label : NULL,
+				&RSA_TEMPLATE_EK_EXTRA.b, NULL)
 			!= CRYPT_SUCCESS) {
 			*response_size = 0;
 		} else {

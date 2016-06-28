@@ -598,10 +598,10 @@ _KEYTEST_INPUTS = (
 )
 
 _KEYGEN_INPUTS = (
-  (768, 65537, ''),
-  (1024, 65537, 'rsa_test'),
-  (2048, 65537, 'rsa_test'),
-  (2048, 65537, ''),
+  (768, 65537, '', None),
+  (1024, 65537, 'rsa_test', None),
+  (2048, 65537, 'RSA key by vendor', 20811475686431332186511278472307159547870512766846593830860105577496044159545322178313772755518365593670114793803805067608811418757734989708137784444223785391864604211835387393923163468734914392307047296990698533218399115126417934050463597455237478939601236799120239663591264311485133747167378663829046579164891864068853210530642835833947569643788911200934265596274935082689832626616967124524353322373059893974744194447740045242468136414689225322177212281193879756355471091445748150740871146034049776312457888356154834233819876846764944450478069436248506560967902863015152471662817623176815923756421011384149834497587L),
+  (2048, 65537, '', None),
 )
 
 # 2048-bit will be done in hardware (i.e. fast), rest are in software.
@@ -681,8 +681,8 @@ def _keytest_tests(tpm):
 
 def _keygen_tests(tpm):
   for data in _KEYGEN_INPUTS:
-    key_len, e, label = data
-    test_name = 'RSA-KEYGEN:%d:%d:%s' % data
+    key_len, e, label, expected_N = data
+    test_name = 'RSA-KEYGEN:%d:%d:%s' % data[:-1]
     cmd = _keygen_cmd(key_len, e, label)
 
     wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
@@ -693,6 +693,9 @@ def _keygen_tests(tpm):
         test_name, utils.hex_dump(result)))
 
     N = int(binascii.b2a_hex(result[0:result_len * 2 / 3]), 16)
+    if expected_N and N != expected_N:
+      raise subcmd.TpmTestError('%s error:%s' % (
+          test_name, utils.hex_dump(result)))
     p = int(binascii.b2a_hex(result[result_len * 2 / 3:]), 16)
     q = N / p
     if not rsa.prime.is_prime(p):
