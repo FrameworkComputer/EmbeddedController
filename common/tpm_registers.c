@@ -12,6 +12,8 @@
 #include "byteorder.h"
 #include "console.h"
 #include "extension.h"
+#include "printf.h"
+#include "signed_header.h"
 #include "system.h"
 #include "task.h"
 #include "tpm_registers.h"
@@ -106,8 +108,8 @@ enum tpm_sts_bits {
 #define TPM_FW_VER_MAX_SIZE 64
 /* Used to count bytes read in version string */
 static int tpm_fw_ver_index;
-/* Pointer to version string */
-static const uint8_t *tpm_fw_ver_ptr;
+ /* 50 bytes should be enough for the version strings. */
+static uint8_t tpm_fw_ver[50];
 
 static void set_tpm_state(enum tpm_states state)
 {
@@ -422,14 +424,14 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 			 * maximum allowed version string size.
 			 */
 			if (tpm_fw_ver_index < TPM_FW_VER_MAX_SIZE) {
-				*dest++ = tpm_fw_ver_ptr[tpm_fw_ver_index];
+				*dest++ = tpm_fw_ver[tpm_fw_ver_index];
 				/*
 				 * If reached end of string, then don't update
 				 * the index so that it will keep pointing at
 				 * the end of string character and continue to
 				 * fill *dest with 0s.
 				 */
-				if (tpm_fw_ver_ptr[tpm_fw_ver_index] != '\0')
+				if (tpm_fw_ver[tpm_fw_ver_index] != '\0')
 					tpm_fw_ver_index++;
 			} else
 				/* Not in a valid state, just stuff 0s */
@@ -450,8 +452,6 @@ static void tpm_init(void)
 	tpm_.regs.access = tpm_reg_valid_sts;
 	tpm_.regs.sts = (tpm_family_tpm2 << tpm_family_shift) |
 		(64 << burst_count_shift) | sts_valid;
-	/* Set FW version pointer to start of version string */
-	tpm_fw_ver_ptr = system_get_version(SYSTEM_IMAGE_RW);
 
 	/* TPM2 library functions. */
 	_plat__Signal_PowerOn();
@@ -491,8 +491,23 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 }
 #endif
 
+/*
+ * We need to be able to report firmware version to the host, both RO and RW
+ * sections. The first four bytes of the RO seciton's SHA are saved in the RO
+ * header, which is mapped into the beginning of flash memory.
+ */
+static void set_version_string(void)
+{
+	const struct SignedHeader *sh = (const struct SignedHeader *)
+		CONFIG_PROGRAM_MEMORY_BASE;
+
+	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver), "RO: %08x RW: %s",
+		 sh->img_chk_, system_get_version(SYSTEM_IMAGE_RW));
+}
+
 void tpm_task(void)
 {
+	set_version_string();
 	tpm_init();
 	sps_tpm_enable();
 	while (1) {
