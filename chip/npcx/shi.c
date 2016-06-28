@@ -410,14 +410,13 @@ static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 	uint16_t i;
 	uint16_t offset, size;
 
-	offset = SHI_OBUF_VALID_OFFSET;
-
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 	/*
 	 * If response package is across 256 bytes boundary,
 	 * bypass needs to extend PROCESSING bytes after reaching the boundary.
 	 */
-	if (shi_params.bytes_in_256b + offset + szbytes > SHI_BYPASS_BOUNDARY) {
+	if (shi_params.bytes_in_256b + SHI_OBUF_FULL_SIZE + szbytes
+	    > SHI_BYPASS_BOUNDARY) {
 		state = SHI_STATE_WAIT_ALIGNMENT;
 		/* Set pointer of output buffer to the start address */
 		shi_params.tx_buf = SHI_OBUF_START_ADDR;
@@ -426,6 +425,7 @@ static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 	}
 #endif
 
+	offset = SHI_OBUF_VALID_OFFSET;
 	shi_params.tx_buf = SHI_OBUF_START_ADDR + offset;
 	/* Fill half output buffer */
 	size = MIN(SHI_OBUF_HALF_SIZE - (offset % SHI_OBUF_HALF_SIZE),
