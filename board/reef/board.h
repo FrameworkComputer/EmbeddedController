@@ -125,6 +125,13 @@
 #define I2C_PORT_BATTERY                NPCX_I2C_PORT3
 #define I2C_PORT_CHARGER                NPCX_I2C_PORT3
 
+/*
+ * FIXME: This #define is necessary for the BMI160 driver. The driver doesn't
+ * actually use the value, so we should eventually re-factor the driver to
+ * be less confusing.
+ */
+#define I2C_PORT_ACCEL			I2C_PORT_GYRO
+
 /* Sensors */
 #define CONFIG_ACCELGYRO_BMI160
 #define   CONFIG_MAG_BMI160_BMM150
