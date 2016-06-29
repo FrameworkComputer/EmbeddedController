@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lpc.h"
+#include "rsa.h"
 #include "spi_flash.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"
@@ -419,6 +420,10 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 		r_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
 			   CONFIG_RW_STORAGE_OFF;
 		r_size = CONFIG_RW_SIZE;
+#ifdef CONFIG_RWSIG
+		/* Allow RW sig to be overwritten */
+		r_size -= CONFIG_RW_SIG_SIZE;
+#endif
 		break;
 	default:
 		return 0;
