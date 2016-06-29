@@ -343,6 +343,10 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	if (bn_bits(N) == 2048 || bn_bits(N) == 1024) {
 		/* TODO(ngm): add hardware support for standard key sizes. */
 		bn_mont_modexp_asm(output, input, exp, N);
+		/* Final reduce. */
+		/* TODO(ngm): constant time. */
+		if (bn_sub(output, N))
+			bn_add(output, N);
 		return;
 	}
 
@@ -380,6 +384,7 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 		*output = acc;
 	}
 
+	/* TODO(ngm): constant time. */
 	if (bn_sub(output, N))
 		bn_add(output, N);                      /* Final reduce. */
 	output->dmax = N->dmax;
