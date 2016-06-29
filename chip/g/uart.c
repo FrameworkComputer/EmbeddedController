@@ -101,6 +101,7 @@ void uart_init(void)
 
 	/* Initialize the Cr50 UART */
 	uartn_init(UARTN);
+	uartn_enable(UARTN);
 
 #ifdef UART_AP
 	uartn_init(UART_AP);

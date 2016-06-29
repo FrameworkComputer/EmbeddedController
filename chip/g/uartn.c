@@ -25,7 +25,6 @@ static struct uartn_interrupts interrupt[] = {
 	{GC_IRQNUM_UART2_TXINT, GC_IRQNUM_UART2_RXINT},
 };
 
-
 void uartn_tx_start(int uart)
 {
 	if (!uart_init_done())
@@ -144,12 +143,6 @@ void uartn_init(int uart)
 	 */
 	GR_UART_FIFO(uart) = 0x63;
 
-	/*
-	 * TX enable, RX enable, HW flow control disabled, no
-	 * loopback
-	 */
-	uartn_enable(uart);
-
 	/* enable RX interrupts in block */
 	/* Note: doesn't do anything unless turned on in NVIC */
 	GR_UART_ICTRL(uart) = 0x02;
@@ -158,5 +151,4 @@ void uartn_init(int uart)
 	/* Enable interrupts for UART */
 	uartn_enable_interrupt(uart);
 #endif
-
 }
