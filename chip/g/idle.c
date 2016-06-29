@@ -12,17 +12,13 @@
 
 /* What to do when we're just waiting */
 static enum {
-	DONT_KNOW,
-	IDLE_WFI,
+	IDLE_WFI,				/* default */
 	IDLE_SLEEP,
 	IDLE_DEEP_SLEEP,
 	NUM_CHOICES
 } idle_action;
 
-#define IDLE_DEFAULT IDLE_SLEEP
-
 static const char const *idle_name[] = {
-	"invalid",
 	"wfi",
 	"sleep",
 	"deep sleep",
@@ -35,7 +31,7 @@ static int command_idle(int argc, char **argv)
 
 	if (argc > 1) {
 		c = tolower(argv[1][0]);
-		for (i = 1; i < ARRAY_SIZE(idle_name); i++)
+		for (i = 0; i < ARRAY_SIZE(idle_name); i++)
 			if (idle_name[i][0] == c) {
 				idle_action = i;
 				break;
@@ -133,17 +129,10 @@ void __idle(void)
 {
 	int sleep_ok, sleep_delay_passed;
 
-	/*
-	 * This register is preserved across soft reboots, but not hard. It
-	 * defaults to zero, which is how we can tell whether this is the
-	 * preserved value or not. We only need to remember it because we might
-	 * change it with the console command.
-	 */
+	/* Preserved across soft reboots, but not hard */
 	idle_action = GREG32(PMU, PWRDN_SCRATCH17);
-	if (idle_action == DONT_KNOW || idle_action >= NUM_CHOICES) {
-		idle_action = IDLE_DEFAULT;
-		GREG32(PMU, PWRDN_SCRATCH17) = idle_action;
-	}
+	if (idle_action >= NUM_CHOICES)
+		idle_action = IDLE_WFI;
 
 	while (1) {
 
