@@ -50,6 +50,11 @@ GPIO(CCD_MODE_L,      PIN(0, 5), GPIO_ODR_HIGH)
 /* Battery has a 10K pulldown on its side. We provide the pullup. */
 GPIO(BATT_PRES,       PIN(0, 6), GPIO_INPUT)
 
+/* GPIOs used to tristate the SPI bus */
+GPIO(SPI_MOSI,        PIN(0, 7), GPIO_INPUT)
+GPIO(SPI_CLK,         PIN(0, 8), GPIO_INPUT)
+GPIO(SPI_CS_L,        PIN(0, 9), GPIO_INPUT)
+
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */
 UNIMPLEMENTED(ENTERING_RW)
@@ -128,7 +133,11 @@ PINMUX(FUNC(I2C0_SDA),        B1, DIO_INPUT)
  *   DIOA8  = SPI_CLK   (output)
  *   DIOA11 = SPI_MISO  (input)
  *   DIOA14 = SPI_CS_L  (output)
+ * The pads are only connected to the peripheral outputs when SPI is enabled to
+ * avoid interfering with other things on the board.
  * Note: Double-check to be sure these are configured in spi_master.c
  */
-
+PINMUX(GPIO(SPI_MOSI),           A4, DIO_OUTPUT)
+PINMUX(GPIO(SPI_CLK),            A8, DIO_OUTPUT)
+PINMUX(GPIO(SPI_CS_L),          A14, DIO_OUTPUT)
 #undef PINMUX

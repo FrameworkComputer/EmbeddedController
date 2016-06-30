@@ -72,6 +72,13 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 		return;
 	}
 
+	/* Connect DIO A4, A8, and A14 to the SPI peripheral */
+	GWRITE(PINMUX, DIOA4_SEL, 0); /* SPI_MOSI */
+	GWRITE(PINMUX, DIOA8_SEL, 0); /* SPI_CS_L */
+	GWRITE(PINMUX, DIOA14_SEL, 0); /* SPI_CLK */
+	/* Set SPI_CS to be an internal pull up */
+	GWRITE_FIELD(PINMUX, DIOA14_CTL, PU, 1);
+
 	CPRINTS("usb_spi enable %s",
 		gpio_get_level(GPIO_AP_FLASH_SELECT) ? "AP" : "EC");
 
@@ -83,6 +90,19 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	CPRINTS("usb_spi disable");
 	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
 	disable_spi();
+
+	/* Disconnect SPI peripheral to tri-state pads */
+	/* Disable internal pull up */
+	GWRITE_FIELD(PINMUX, DIOA14_CTL, PU, 0);
+	/* TODO: Implement way to get the gpio */
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO7_SEL) == GC_PINMUX_DIOA4_SEL);
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO8_SEL) == GC_PINMUX_DIOA8_SEL);
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO9_SEL) == GC_PINMUX_DIOA14_SEL);
+
+	/* Set SPI MOSI, CLK, and CS_L as inputs */
+	GWRITE(PINMUX, DIOA4_SEL, GC_PINMUX_GPIO0_GPIO7_SEL);
+	GWRITE(PINMUX, DIOA8_SEL, GC_PINMUX_GPIO0_GPIO8_SEL);
+	GWRITE(PINMUX, DIOA14_SEL, GC_PINMUX_GPIO0_GPIO9_SEL);
 }
 
 int usb_spi_interface(struct usb_spi_config const *config,
