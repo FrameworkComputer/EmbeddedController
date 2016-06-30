@@ -524,6 +524,21 @@ static int check_key(const uint8_t *state, int index, int mask)
 	allowed_mask[index] |= mask;
 	allowed_mask[KEYBOARD_COL_REFRESH] |= KEYBOARD_MASK_REFRESH;
 
+#ifdef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
+	/*
+	 * Check if KSI2 is asserted for all columns due to power button hold,
+	 * and ignore it if so.
+	 */
+	for (c = 0; c < KEYBOARD_COLS; c++)
+		if ((keyscan_config.actual_key_mask[c] & KEYBOARD_MASK_KSI2) &&
+		   !(state[c] & KEYBOARD_MASK_KSI2))
+			break;
+
+	if (c == KEYBOARD_COLS)
+		for (c = 0; c < KEYBOARD_COLS; c++)
+			allowed_mask[c] |= KEYBOARD_MASK_KSI2;
+#endif
+
 	for (c = 0; c < KEYBOARD_COLS; c++) {
 		if (state[c] & ~allowed_mask[c])
 			return 0;  /* Disallowed key pressed */

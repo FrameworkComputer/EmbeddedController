@@ -1227,6 +1227,13 @@
  */
 #define CONFIG_KEYBOARD_KSO_BASE 0
 
+/*
+ * For certain board configurations, KSI2 will be stuck asserted for all
+ * scan columns if the power button is held. We must be aware of this case
+ * in order to correctly handle recovery mode key combinations.
+ */
+#undef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
+
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
 
