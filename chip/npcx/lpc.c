@@ -840,14 +840,18 @@ static void lpc_init(void)
 
 	/*
 	 * Init KBC
-	 * Clear OBF status flag, PM1 IBF/OBE INT enable, IRQ11 enable,
+	 * Clear OBF status flag,
 	 * IBF(K&M) INT enable, OBE(K&M) empty INT enable ,
 	 * OBF Mouse Full INT enable and OBF KB Full INT enable
 	 */
-	NPCX_HICTRL = 0xFF;
-
-	/* Normally Polarity IRQ1,12,11 type (level + high) setting */
-	NPCX_HIIRQC = 0x00;	/* Make sure to default */
+	NPCX_HICTRL = 0x8F;
+	/*
+	 * Turn on enhance mode on PM channel-1,
+	 * enable OBE/IBF core interrupt
+	 */
+	NPCX_HIPMCTL(PMC_ACPI) |= 0x83;
+	/* Normally Polarity IRQ1,12 type (level + high) setting */
+	NPCX_HIIRQC = 0x04;
 
 	/*
 	 * Init PORT80
