@@ -116,8 +116,12 @@ void uartn_enable_interrupt(int uart)
 /* Enable TX and RX. Disable HW flow control and loopback */
 void uartn_enable(int uart)
 {
-	/* TX and RX enable */
-	GR_UART_CTRL(uart) = 0x03;
+	/* Enable UART TX */
+	GR_UART_CTRL(uart) = 0x01;
+
+	/* Enable UART RX if it is connected to an external pad */
+	if (DIO_SEL_REG(GC_PINMUX_UART0_RX_SEL_OFFSET + (uart * 16)))
+		GR_UART_CTRL(uart) |= 0x02;
 }
 
 /* Disable TX, RX, HW flow control, and loopback */
