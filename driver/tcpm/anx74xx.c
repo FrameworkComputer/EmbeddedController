@@ -781,6 +781,14 @@ int anx74xx_tcpm_init(int port)
 	if (rv)
 		return EC_ERROR_UNKNOWN;
 
+	/* Decrease BMC TX lowest swing voltage */
+	rv |= tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_11, &reg);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+	rv = tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_11, (reg & 0x3f) | 0x40);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
 	return EC_SUCCESS;
 }
 
