@@ -14,6 +14,7 @@
 #include "init_chip.h"
 #include "registers.h"
 #include "nvmem.h"
+#include "system.h"
 #include "task.h"
 #include "trng.h"
 #include "uartn.h"
@@ -21,6 +22,7 @@
 #include "usb_hid.h"
 #include "util.h"
 #include "spi.h"
+#include "usb_spi.h"
 
 /* Define interrupt and gpio structs */
 #include "gpio_list.h"
@@ -205,8 +207,16 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 
 void sys_rst_asserted(enum gpio_signal signal)
 {
-	/* TODO(crosbug.com/p/52366): Do something useful here. */
-	CPRINTS("%s(%d)", __func__, signal);
+	/*
+	 * Cr50 drives SYS_RST_L in certain scenarios, in those cases
+	 * asserting this signal should not cause a system reset.
+	 */
+	CPRINTS("%s resceived signal %d)", __func__, signal);
+	if (ap_spi_update_in_progress())
+		return;
+
+	cflush();
+	system_reset(SYSTEM_RESET_HARD);
 }
 
 void nvmem_compute_sha(uint8_t *p_buf, int num_bytes,

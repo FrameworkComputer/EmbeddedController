@@ -12,6 +12,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
+static uint8_t sys_rst_l_state = 1;
+
 void disable_spi(void)
 {
 	/* Configure SPI GPIOs */
@@ -20,6 +22,7 @@ void disable_spi(void)
 
 	/* Release AP and EC */
 	GWRITE(RBOX, ASSERT_EC_RST, 0);
+	sys_rst_l_state = 1;
 	gpio_set_level(GPIO_SYS_RST_L_OUT, 1);
 
 	/* Set SYS_RST_L as an input otherwise cr50 will hold the AP in reset */
@@ -48,7 +51,13 @@ void enable_ap_spi(void)
 	gpio_set_flags(GPIO_SYS_RST_L_OUT, GPIO_OUT_HIGH);
 
 	/* hold EC in reset */
+	sys_rst_l_state = 0;
 	gpio_set_level(GPIO_SYS_RST_L_OUT, 0);
+}
+
+int ap_spi_update_in_progress(void)
+{
+	return !sys_rst_l_state;
 }
 
 void usb_spi_board_enable(struct usb_spi_config const *config)
