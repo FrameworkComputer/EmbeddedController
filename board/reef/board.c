@@ -353,12 +353,6 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	 30 * MSEC, 0},
 };
 
-static const enum bd99955_charge_port
-	pd_port_to_bd99955_port[CONFIG_USB_PD_PORT_COUNT] = {
-	[0] = BD99955_CHARGE_PORT_VBUS,
-	[1] = BD99955_CHARGE_PORT_VCC,
-};
-
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
 {
@@ -446,7 +440,7 @@ int pd_snk_is_vbus_provided(int port)
 	switch (port) {
 	case 0:
 	case 1:
-		bd99955_port = pd_port_to_bd99955_port[port];
+		bd99955_port = bd99955_pd_port_to_chg_port(port);
 		break;
 	default:
 		panic("Invalid charge port\n");
@@ -498,7 +492,7 @@ int board_set_active_charge_port(int charge_port)
 	switch (charge_port) {
 	case 0:
 	case 1:
-		bd99955_port = pd_port_to_bd99955_port[charge_port];
+		bd99955_port = bd99955_pd_port_to_chg_port(charge_port);
 		break;
 	case CHARGE_PORT_NONE:
 		bd99955_port = BD99955_CHARGE_PORT_NONE;

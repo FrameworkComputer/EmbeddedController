@@ -377,8 +377,8 @@ static void usb_charger_process(enum bd99955_charge_port port)
 	int vbus_provided = bd99955_is_vbus_provided(port);
 
 	/* Inform other modules about VBUS level */
-	/* TODO: map charger port num to board port num, they may differ. */
-	usb_charger_vbus_change(port, vbus_provided);
+	usb_charger_vbus_change(bd99955_pd_port_to_chg_port(port),
+				vbus_provided);
 
 	/* Do BC1.2 detection */
 	if (vbus_provided) {
