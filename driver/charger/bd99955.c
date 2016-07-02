@@ -208,31 +208,6 @@ static int bd99955_get_bc12_device_type(enum bd99955_charge_port port)
 	}
 }
 
-static int bd99955_get_bc12_ilim(int charge_supplier)
-{
-	switch (charge_supplier) {
-	case CHARGE_SUPPLIER_BC12_CDP:
-		return 1500;
-	case CHARGE_SUPPLIER_BC12_DCP:
-		return 2000;
-	case CHARGE_SUPPLIER_BC12_SDP:
-		return 900;
-	case CHARGE_SUPPLIER_OTHER:
-		/*
-		 * TODO: Setting the higher limit of current may result in an
-		 * anti-collapse hence limiting the current to 1A. (If the
-		 * charger response is slow or BD99955 cannot detect the type
-		 * of the charger, anti-collapse status is not updated in the
-		 * VBUS/VCC_STATUS register. Hence it is not possible to decide
-		 * whether to overwrite the ILIM values to come out of the
-		 * anti-collapse).
-		 */
-		return 1000;
-	default:
-		return 500;
-	}
-}
-
 static int bd99955_enable_usb_switch(enum bd99955_charge_port port,
 					enum usb_switch setting)
 {
@@ -824,6 +799,30 @@ int bd99955_get_battery_temp(int *temp_ptr)
 #endif
 
 #ifdef HAS_TASK_USB_CHG
+int bd99955_get_bc12_ilim(int charge_supplier)
+{
+	switch (charge_supplier) {
+	case CHARGE_SUPPLIER_BC12_CDP:
+		return 1500;
+	case CHARGE_SUPPLIER_BC12_DCP:
+		return 2000;
+	case CHARGE_SUPPLIER_BC12_SDP:
+		return 900;
+	case CHARGE_SUPPLIER_OTHER:
+#ifdef CONFIG_CHARGE_RAMP
+		return 2400;
+#else
+		/*
+		 * Setting the higher limit of current may result in an
+		 * anti-collapse hence limiting the current to 1A.
+		 */
+		return 1000;
+#endif
+	default:
+		return 500;
+	}
+}
+
 int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable)
 {
 	int rv;

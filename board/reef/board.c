@@ -10,6 +10,7 @@
 #include "als.h"
 #include "button.h"
 #include "charge_manager.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -531,6 +532,48 @@ void board_set_charge_limit(int port, int supplier, int charge_ma)
 
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT));
+}
+
+/**
+ * Return whether ramping is allowed for given supplier
+ */
+int board_is_ramp_allowed(int supplier)
+{
+	/* Don't allow ramping in RO when write protected */
+	if (system_get_image_copy() != SYSTEM_IMAGE_RW
+		&& system_is_locked())
+		return 0;
+	else
+		return (supplier == CHARGE_SUPPLIER_BC12_DCP ||
+			supplier == CHARGE_SUPPLIER_BC12_SDP ||
+			supplier == CHARGE_SUPPLIER_BC12_CDP ||
+			supplier == CHARGE_SUPPLIER_OTHER);
+}
+
+/**
+ * Return the maximum allowed input current
+ */
+int board_get_ramp_current_limit(int supplier, int sup_curr)
+{
+	return bd99955_get_bc12_ilim(supplier);
+}
+
+/**
+ * Return if board is consuming full amount of input current
+ */
+int board_is_consuming_full_charge(void)
+{
+	int chg_perc = charge_get_percent();
+
+	return chg_perc > 2 && chg_perc < 95;
+}
+
+/**
+ * Return if VBUS is sagging too low
+ */
+int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
+{
+	return charger_get_vbus_level() < BD99955_BC12_MIN_VOLTAGE;
 }
 
 /* Enable or disable input devices, based upon chipset state and tablet mode */

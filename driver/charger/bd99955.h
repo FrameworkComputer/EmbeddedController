@@ -46,6 +46,14 @@ enum bd99955_charge_port {
 #define DISCHARGE_VSYSREG	8960
 #define CHARGE_VSYSREG		6144
 
+/*
+ * BC1.2 minimum voltage threshold.
+ * BC1.2 charging port output voltage range is 4.75V to 5.25V,
+ * BD99955 Anti-Collapse Threshold Voltage Accuracy is -100mV to +100mV,
+ * and Delta of 50mV.
+ */
+#define BD99955_BC12_MIN_VOLTAGE	4600
+
 /* Battery Charger Commands */
 #define BD99955_CMD_CHG_CURRENT		0x14
 #define BD99955_CMD_CHG_VOLTAGE		0x15
@@ -301,6 +309,8 @@ static inline enum bd99955_charge_port bd99955_pd_port_to_chg_port(int port)
 int bd99955_is_vbus_provided(int port);
 /* Select input port from {VCC, VBUS, VCC&VBUS, NONE}. */
 int bd99955_select_input_port(enum bd99955_charge_port port);
+/* Get input current limit for BC1.2 suppliers */
+int bd99955_get_bc12_ilim(int charge_supplier);
 /* Enable/Disable charging triggered by BC1.2 */
 int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable);
 /* Interrupt handler for USB charger VBUS */
