@@ -72,4 +72,4 @@ void rbox_init(void)
 	enable_interrupts();
 #endif
 }
-DECLARE_HOOK(HOOK_INIT, rbox_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, rbox_init, HOOK_PRIO_DEFAULT - 1);
