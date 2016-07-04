@@ -47,6 +47,10 @@
 #define CONFIG_CMD_TYPEC
 #define CONFIG_EXTPOWER_GPIO
 
+/* Increase tx buffer size, as we'd like to stream EC log to AP. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 8192
+
 /* Wakeup pin: EC_WAKE(PA0) - WKUP1 */
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_HIBERNATE
