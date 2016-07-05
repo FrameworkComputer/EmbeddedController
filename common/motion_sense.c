@@ -827,6 +827,9 @@ void motion_sense_task(void)
 			wait_us = motion_interval -
 				(ts_end_task.val - ts_begin_task.val);
 
+			/* and it cannnot be negative */
+			wait_us = MAX(wait_us, 0);
+
 			/*
 			 * Guarantee some minimum delay to allow other lower
 			 * priority tasks to run.
