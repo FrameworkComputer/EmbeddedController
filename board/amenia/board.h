@@ -109,6 +109,13 @@
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_VBOOT_HASH
 
+/*
+ * Enable 1 slot of secure temporary storage to support
+ * suspend/resume with read/write memory training.
+ */
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 #define CONFIG_FLASH_SIZE 0x80000 /* 512 KB Flash used for EC */
 #define CONFIG_SPI_FLASH_W25X40
 
