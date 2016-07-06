@@ -98,7 +98,9 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {"BOARD_ID", NPCX_ADC_CH2, 1, 1, 0},
+	/* Vfs = Vref = 2.816V, 10-bit unsigned reading */
+	[ADC_BOARD_ID] = {"BRD_ID", NPCX_ADC_CH2,
+				ADC_MAX_VOLT, ADC_READ_MAX + 1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
