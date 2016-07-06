@@ -65,10 +65,16 @@ ifeq "$(TEST_BUILD)" "y"
 		    -D"TASK_NOTEST(n, r, d, s)=" -D"TASK_ALWAYS(n, r, d, s)=n" \
 		    -D"TASK_TEST(n, r, d, s)=n" -imacros $(_tsk_lst_file) \
 		    -imacros $(PROJECT).tasklist)
+else ifdef CTS_MODULE
+	_tsk_lst_file:=$(PROJECT).tasklist
+	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
+		    -I$(BDIR) -D"TASK_NOTEST(n, r, d, s)=n" -D"TASK_CTS(n, r, d, s)=n" \
+		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros $(_tsk_lst_file))
 else
 	_tsk_lst_file:=$(PROJECT).tasklist
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
 		    -I$(BDIR) -D"TASK_NOTEST(n, r, d, s)=n" \
+			-D"TASK_CTS(n, r, d, s)=" \
 		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros $(_tsk_lst_file))
 endif
 _tsk_cfg:=$(foreach t,$(_tsk_lst) ,HAS_TASK_$(t))
@@ -111,6 +117,10 @@ objs_from_dir=$(foreach obj, $($(2)-y), $(1)/$(obj))
 
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
+
+ifdef CTS_MODULE
+include cts/build.mk
+endif
 include $(BDIR)/build.mk
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
@@ -139,8 +149,11 @@ endif
 all-obj-y+=$(call objs_from_dir,common,common)
 all-obj-y+=$(call objs_from_dir,driver,driver)
 all-obj-y+=$(call objs_from_dir,power,power)
+ifdef CTS_MODULE
+all-obj-y+=$(call objs_from_dir,cts,cts)
+endif
 all-obj-y+=$(call objs_from_dir,test,$(PROJECT))
-dirs=core/$(CORE) chip/$(CHIP) $(BDIR) common power test
+dirs=core/$(CORE) chip/$(CHIP) $(BDIR) common power test cts/common cts/$(CTS_MODULE)
 dirs+= private $(PDIR)
 dirs+=$(shell find driver -type d)
 common_dirs=util

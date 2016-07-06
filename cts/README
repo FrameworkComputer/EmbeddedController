@@ -1,0 +1,6 @@
+The first time you use this with a particular th,
+connect only th and run ./cts/cts.py --th from
+the ec directory.
+
+Then connect both boards and you can run
+./cts/cts to flash both boards.

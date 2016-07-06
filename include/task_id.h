@@ -17,6 +17,12 @@
 #define CONFIG_TEST_TASK_LIST
 #endif
 
+#ifdef CTS_MODULE
+#define TASK_CTS TASK
+#else
+#define TASK_CTS(n, r, d, s)
+#endif
+
 #define TASK_ALWAYS TASK
 
 /* define the name of the header containing the list of tasks */
