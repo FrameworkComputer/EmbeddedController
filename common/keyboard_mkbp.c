@@ -6,6 +6,7 @@
  */
 
 #include "atomic.h"
+#include "button.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -212,6 +213,49 @@ static void lid_change(void)
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, lid_change, HOOK_PRIO_LAST);
 DECLARE_HOOK(HOOK_INIT, lid_change, HOOK_PRIO_INIT_LID+1);
+
+void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
+{
+	switch (button) {
+	case KEYBOARD_BUTTON_POWER:
+		mkbp_button_state &= ~(1 << EC_MKBP_POWER_BUTTON);
+		mkbp_button_state |= (is_pressed << EC_MKBP_POWER_BUTTON);
+		break;
+
+	case KEYBOARD_BUTTON_VOLUME_UP:
+		mkbp_button_state &= ~(1 << EC_MKBP_VOL_UP);
+		mkbp_button_state |= (is_pressed << EC_MKBP_VOL_UP);
+		break;
+
+	case KEYBOARD_BUTTON_VOLUME_DOWN:
+		mkbp_button_state &= ~(1 << EC_MKBP_VOL_DOWN);
+		mkbp_button_state |= (is_pressed << EC_MKBP_VOL_DOWN);
+		break;
+
+	default:
+		/* ignored. */
+		return;
+	}
+
+	CPRINTS("buttons: %x", mkbp_button_state);
+
+	/* Add the new state to the FIFO. */
+	mkbp_fifo_add(EC_MKBP_EVENT_BUTTON,
+		      (const uint8_t *)&mkbp_button_state);
+}
+
+#ifdef CONFIG_POWER_BUTTON
+/**
+ * Handle power button changing state.
+ */
+static void keyboard_power_button(void)
+{
+	keyboard_update_button(KEYBOARD_BUTTON_POWER,
+			       power_button_is_pressed());
+}
+DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
+	     HOOK_PRIO_DEFAULT);
+#endif /* defined(CONFIG_POWER_BUTTON) */
 
 static int get_next_event(uint8_t *out, enum ec_mkbp_event evt)
 {

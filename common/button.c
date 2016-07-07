@@ -81,7 +81,7 @@ static void button_change_deferred(void)
 				CPRINTS("Button '%s' was %s",
 					buttons[i].name, new_pressed ?
 					"pressed" : "released");
-#ifdef HAS_TASK_KEYPROTO
+#if defined(HAS_TASK_KEYPROTO) || defined(CONFIG_KEYBOARD_PROTOCOL_MKBP)
 				keyboard_update_button(buttons[i].type,
 					new_pressed);
 #endif
