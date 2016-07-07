@@ -851,7 +851,7 @@ static void lpc_init(void)
 	 */
 	NPCX_HIPMCTL(PMC_ACPI) |= 0x83;
 	/* Normally Polarity IRQ1,12 type (level + high) setting */
-	NPCX_HIIRQC = 0x04;
+	NPCX_HIIRQC = 0x00;
 
 	/*
 	 * Init PORT80
