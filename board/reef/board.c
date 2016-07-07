@@ -347,28 +347,37 @@ static const enum bd99955_charge_port
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
 {
-#if 0
 	/* No need to re-init PMIC since settings are sticky across sysjump */
-	/* TODO(dhendrix): Handle sysjump case appropriately */
 	if (system_jumped_to_this_image())
 		return;
-#endif
 
+#if IS_PROTO == 0
+	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
+	gpio_set_level(GPIO_EN_PP5000, 1);
+	while (!gpio_get_level(GPIO_PP5000_PG))
+		;
 
-#if 0
-	/* Enable PD interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+	/*
+	 * To prevent SLP glitches, PMIC_EN (V5A_EN) should be enabled
+	 * at the same time as PP3300 (chrome-os-partner:51323).
+	 */
+
+	/* Enable PMIC */
+	gpio_set_level(GPIO_PMIC_EN, 1);
+
+	/* Enable 3.3V rail */
+	gpio_set_level(GPIO_EN_PP3300, 1);
+	while (!gpio_get_level(GPIO_PP3300_PG))
+		;
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
-/* Initialize board. */
-static void board_init(void)
+#if IS_PROTO == 1
+/* FIXME: Remove this hack once proto boards are obsolete. */
+static void board_init_proto(void)
 {
 	/*
-	 * FIXME: Not required for EVT which PMIC will reset properly
-	 *
 	 * By removing the power rail while PMIC is enabled,
 	 * PMIC will sense a power fault and reset itself.
 	 */
@@ -383,32 +392,34 @@ static void board_init(void)
 		gpio_set_level(GPIO_PMIC_EN, 0);
 	}
 
-	/* FIXME: Handle tablet mode */
-	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); */
-
-	/* Enable charger interrupts */
-	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
-
-	/*
-	 * There are dependencies in Reef's power topology:
-	 * 1. PP5000 must be enabled before PP3300 (chrome-os-partner:50807).
-	 * 2. TCPC chips must be powered until we can re-factor the PD handling
-	 *    code to be aware of TCPCs being off (chrome-os-partner:53644).
-	 * 3. To prevent SLP glitches, PMIC_EN should be enabled
-	 *    at the same time as PP3300 (chrome-os-partner:51323).
-	 */
 	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
 	gpio_set_level(GPIO_EN_PP5000, 1);
 	while (!gpio_get_level(GPIO_PP5000_PG))
 		;
 
-	/* Enable PMIC */
-	gpio_set_level(GPIO_PMIC_EN, 1);
-
 	/* Enable 3.3V rail */
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	while (!gpio_get_level(GPIO_PP3300_PG))
 		;
+
+	/* Enable PMIC */
+	gpio_set_level(GPIO_PMIC_EN, 1);
+
+}
+#endif
+
+/* Initialize board. */
+static void board_init(void)
+{
+#if IS_PROTO == 1
+	board_init_proto();
+#endif
+
+	/* FIXME: Handle tablet mode */
+	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); */
+
+	/* Enable charger interrupts */
+	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
 }
 /* PP3300 needs to be enabled before TCPC init hooks */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_FIRST);
