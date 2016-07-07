@@ -473,6 +473,7 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_MOTION_SENSE_FIFO] = "FIFO for Motion Sensors events",
 	[EC_FEATURE_VSTORE] = "Temporary secure vstore",
 	[EC_FEATURE_USBC_SS_MUX_VIRTUAL] = "Host-controlled USB-C SS mux",
+	[EC_FEATURE_RTC] = "Real-time clock",
 };
 
 int cmd_inventory(int argc, char *argv[])
