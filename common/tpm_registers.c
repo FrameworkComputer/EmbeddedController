@@ -12,6 +12,7 @@
 #include "byteorder.h"
 #include "console.h"
 #include "extension.h"
+#include "nvmem.h"
 #include "printf.h"
 #include "signed_header.h"
 #include "system.h"
@@ -448,6 +449,9 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 
 static void tpm_init(void)
 {
+	uint32_t saved_value;
+	const uint32_t manufacturing_done = 0x12344321;
+
 	set_tpm_state(tpm_state_idle);
 	tpm_.regs.access = tpm_reg_valid_sts;
 	tpm_.regs.sts = (tpm_family_tpm2 << tpm_family_shift) |
@@ -455,9 +459,24 @@ static void tpm_init(void)
 
 	/* TPM2 library functions. */
 	_plat__Signal_PowerOn();
-	/* TODO(ngm): CRBUG/50115, initialize state expected by TPM2
-	 * compliance tests. */
-	TPM_Manufacture(1);
+
+
+	/*
+	 * TODO(ngm): CRBUG/50115, initialize state expected by TPM2
+	 * compliance tests.
+	 *
+	 * Until it is done properly, use location at offset 0 in the generic
+	 * section of NVRAM to store the manufacturing status. Otherwise the
+	 * NV RAM is wiped out on every reboot.
+	 */
+	nvmem_read(0, sizeof(saved_value), &saved_value, NVMEM_CR50);
+	if (saved_value != manufacturing_done) {
+		TPM_Manufacture(1);
+		saved_value = manufacturing_done;
+		nvmem_write(0, sizeof(saved_value), &saved_value, NVMEM_CR50);
+		nvmem_commit();
+	}
+
 	_TPM_Init();
 	_plat__SetNvAvail();
 }
