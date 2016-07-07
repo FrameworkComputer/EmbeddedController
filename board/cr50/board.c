@@ -48,6 +48,14 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 };
 
 /*
+ * When the EC is initialized it asserts SYS_RST_L and when Cr50 is initialized
+ * it resets the EC.  This variable is used to disable the hard reset while Cr50
+ * and the EC are booting to avoid the EC and Cr50 endlessly resetting each
+ * other.
+ */
+static int sys_rst_enabled;
+
+/*
  * There's no way to trigger on both rising and falling edges, so force a
  * compiler error if we try. The workaround is to use the pinmux to connect
  * two GPIOs to the same input and configure each one for a separate edge.
@@ -125,6 +133,13 @@ static void init_runlevel(const enum permission_level desired_level)
 	}
 }
 
+/* Enable HARD RESET when the SYS_RST_L is asserted */
+static void enable_sys_rst(void)
+{
+	sys_rst_enabled = 1;
+}
+DECLARE_DEFERRED(enable_sys_rst);
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -142,8 +157,15 @@ static void board_init(void)
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
-}
 
+	/*
+	 * If Cr50 has not already detected a system reset from the EC, then
+	 * enable the HARD RESET after we know the EC is done booting. It will
+	 * be enabled 2 seconds from this call.
+	 */
+	if (!sys_rst_enabled)
+		hook_call_deferred(&enable_sys_rst_data, 2000);
+}
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 #if defined(CONFIG_USB)
@@ -214,6 +236,12 @@ void sys_rst_asserted(enum gpio_signal signal)
 	CPRINTS("%s resceived signal %d)", __func__, signal);
 	if (ap_spi_update_in_progress())
 		return;
+
+	/* Cr50 should ignore this first sys_rst when the system just reset */
+	if (!sys_rst_enabled) {
+		sys_rst_enabled = 1;
+		return;
+	}
 
 	cflush();
 	system_reset(SYSTEM_RESET_HARD);
