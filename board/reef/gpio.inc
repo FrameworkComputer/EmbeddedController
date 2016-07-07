@@ -92,8 +92,12 @@ GPIO(ENABLE_BACKLIGHT,		PIN(9, 7), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* EC_BL_EN_OD
 
 GPIO(WIRELESS_GPIO_WLAN_POWER,	PIN(6, 6), GPIO_ODR_HIGH)		/* EN_PP3300_WLAN_ODL */
 
-GPIO(CPU_PROCHOT,		PIN(7, 4), GPIO_INPUT | GPIO_SEL_1P8V)	/* PCH_PROCHOT_ODL */
-GPIO(EC_PCH_PROCHOT_OVERRIDE_ODL,PIN(A, 3), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
+/*
+ * PCH_PROCHOT_ODL is primarily for monitoring the PROCHOT# signal which is
+ * normally driven by the PMIC. The EC can also drive this signal in the event
+ * that the ambient or charger temperature sensors exceeds their thresholds.
+ */
+GPIO(CPU_PROCHOT,		PIN(A, 3), GPIO_INPUT | GPIO_SEL_1P8V)	/* PCH_PROCHOT_ODL */
 
 GPIO(PCH_PWRBTN_L,		PIN(0, 1), GPIO_ODR_HIGH)		/* EC_PCH_PWR_BTN_ODL */
 GPIO(PCH_WAKE_L,		PIN(8, 1), GPIO_ODR_HIGH)		/* EC_PCH_WAKE_ODL */
