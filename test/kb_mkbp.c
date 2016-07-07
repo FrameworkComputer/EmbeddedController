@@ -71,30 +71,32 @@ int press_key(int c, int r, int pressed)
 int verify_key(int c, int r, int pressed)
 {
 	struct host_cmd_handler_args args;
-	uint8_t mkbp_out[KEYBOARD_COLS];
+	struct  ec_response_get_next_event event;
 	int i;
+
+	args.version = 0;
+	args.command = EC_CMD_GET_NEXT_EVENT;
+	args.params = NULL;
+	args.params_size = 0;
+	args.response = &event;
+	args.response_max = sizeof(event);
+	args.response_size = 0;
 
 	if (c >= 0 && r >= 0) {
 		ccprintf("Verify %s (%d, %d)\n", action[pressed], c, r);
 		set_state(c, r, pressed);
-	} else {
-		ccprintf("Verify last state\n");
-	}
 
-	args.version = 0;
-	args.command = EC_CMD_MKBP_STATE;
-	args.params = NULL;
-	args.params_size = 0;
-	args.response = mkbp_out;
-	args.response_max = sizeof(mkbp_out);
-	args.response_size = 0;
-
-	if (host_command_process(&args) != EC_RES_SUCCESS)
-		return 0;
-
-	for (i = 0; i < KEYBOARD_COLS; ++i)
-		if (mkbp_out[i] != state[i])
+		if (host_command_process(&args) != EC_RES_SUCCESS)
 			return 0;
+
+		for (i = 0; i < KEYBOARD_COLS; ++i)
+			if (event.data.key_matrix[i] != state[i])
+				return 0;
+	} else {
+		ccprintf("Verify no events available\n");
+		if (host_command_process(&args) != EC_RES_UNAVAILABLE)
+			return 0;
+	}
 
 	return 1;
 }
@@ -134,6 +136,26 @@ int set_kb_scan_enabled(int enabled)
 	params.config.flags = (enabled ? EC_MKBP_FLAGS_ENABLE : 0);
 
 	return mkbp_config(params);
+}
+
+void clear_mkbp_events(void)
+{
+	struct host_cmd_handler_args args;
+	struct ec_response_get_next_event event;
+
+	args.version = 0;
+	args.command = EC_CMD_GET_NEXT_EVENT;
+	args.params = NULL;
+	args.params_size = 0;
+	args.response = &event;
+	args.response_max = sizeof(event);
+	args.response_size = 0;
+
+	/*
+	 * We should return EC_RES_UNAVAILABLE if there are no MKBP events left.
+	 */
+	while (host_command_process(&args) != EC_RES_UNAVAILABLE)
+		;
 }
 
 /*****************************************************************************/
@@ -211,6 +233,8 @@ void run_test(void)
 	ec_int_level = 1;
 	test_reset();
 
+	/* Clear any pending events such as lid open. */
+	clear_mkbp_events();
 	RUN_TEST(single_key_press);
 	RUN_TEST(test_fifo_size);
 	RUN_TEST(test_enable);

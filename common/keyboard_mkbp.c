@@ -7,15 +7,21 @@
 
 #include "atomic.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "keyboard_config.h"
+#include "keyboard_mkbp.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "keyboard_test.h"
+#include "lid_switch.h"
 #include "mkbp_event.h"
+#include "power_button.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -26,14 +32,15 @@
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 
 /*
- * Keyboard FIFO depth.  This needs to be big enough not to overflow if a
+ * Common FIFO depth.  This needs to be big enough not to overflow if a
  * series of keys is pressed in rapid succession and the kernel is too busy
  * to read them out right away.
  *
- * RAM usage is (depth * #cols); see kb_fifo[][] below.  A 16-entry FIFO will
- * consume 16x13=208 bytes, which is non-trivial but not horrible.
+ * RAM usage is (depth * #cols); A 16-entry FIFO will consume 16x13=208 bytes,
+ * which is non-trivial but not horrible.
  */
-#define KB_FIFO_DEPTH 16
+
+#define FIFO_DEPTH 16
 
 /* Changes to col,row here need to also be reflected in kernel.
  * drivers/input/mkbp.c ... see KEY_BATTERY.
@@ -42,11 +49,15 @@
 #define BATTERY_KEY_ROW 7
 #define BATTERY_KEY_ROW_MASK (1 << BATTERY_KEY_ROW)
 
-static uint32_t kb_fifo_start;		/* first entry */
-static uint32_t kb_fifo_end;		/* last entry */
-static uint32_t kb_fifo_entries;	/* number of existing entries */
-static uint8_t kb_fifo[KB_FIFO_DEPTH][KEYBOARD_COLS];
+static uint32_t fifo_start;	/* first entry */
+static uint32_t fifo_end;	/* last entry */
+static uint32_t fifo_entries;	/* number of existing entries */
+static struct ec_response_get_next_event fifo[FIFO_DEPTH];
 static struct mutex fifo_mutex;
+
+/* Button and switch state. */
+static uint32_t mkbp_button_state;
+static uint32_t mkbp_switch_state;
 
 /* Config for mkbp protocol; does not include fields from scan config */
 struct ec_mkbp_protocol_config {
@@ -65,20 +76,41 @@ static struct ec_mkbp_protocol_config config = {
 		EC_MKBP_VALID_DEBOUNCE_UP | EC_MKBP_VALID_FIFO_MAX_DEPTH,
 	.valid_flags = EC_MKBP_FLAGS_ENABLE,
 	.flags = EC_MKBP_FLAGS_ENABLE,
-	.fifo_max_depth = KB_FIFO_DEPTH,
+	.fifo_max_depth = FIFO_DEPTH,
 };
 
+static int get_data_size(enum ec_mkbp_event e)
+{
+	switch (e) {
+	case EC_MKBP_EVENT_KEY_MATRIX:
+		return KEYBOARD_COLS;
+
+	case EC_MKBP_EVENT_HOST_EVENT:
+	case EC_MKBP_EVENT_BUTTON:
+	case EC_MKBP_EVENT_SWITCH:
+		return sizeof(uint32_t);
+	default:
+		/* For unknown types, say it's 0. */
+		return 0;
+	}
+}
+
 /**
- * Pop keyboard state from FIFO
+ * Pop MKBP event data from FIFO
  *
  * @return EC_SUCCESS if entry popped, EC_ERROR_UNKNOWN if FIFO is empty
  */
-static int kb_fifo_remove(uint8_t *buffp)
+static int fifo_remove(uint8_t *buffp)
 {
-	if (!kb_fifo_entries) {
+	int size;
+
+	if (!fifo_entries) {
 		/* no entry remaining in FIFO : return last known state */
-		int last = (kb_fifo_start + KB_FIFO_DEPTH - 1) % KB_FIFO_DEPTH;
-		memcpy(buffp, kb_fifo[last], KEYBOARD_COLS);
+		int last = (fifo_start + FIFO_DEPTH - 1) % FIFO_DEPTH;
+
+		size = get_data_size(fifo[last].event_type);
+
+		memcpy(buffp, &fifo[last].data, size);
 
 		/*
 		 * Bail out without changing any FIFO indices and let the
@@ -87,22 +119,16 @@ static int kb_fifo_remove(uint8_t *buffp)
 		 */
 		return EC_ERROR_UNKNOWN;
 	}
-	memcpy(buffp, kb_fifo[kb_fifo_start], KEYBOARD_COLS);
 
-	kb_fifo_start = (kb_fifo_start + 1) % KB_FIFO_DEPTH;
+	/* Return just the event data. */
+	size = get_data_size(fifo[fifo_start].event_type);
+	memcpy(buffp, &fifo[fifo_start].data, size); /* skip over event_type. */
 
-	atomic_sub(&kb_fifo_entries, 1);
+	fifo_start = (fifo_start + 1) % FIFO_DEPTH;
+
+	atomic_sub(&fifo_entries, 1);
 
 	return EC_SUCCESS;
-}
-
-/**
- * Assert host keyboard interrupt line.
- */
-static void set_host_interrupt(int active)
-{
-	/* interrupt host by using active low EC_INT signal */
-	gpio_set_level(GPIO_EC_INT_L, !active);
 }
 
 /*****************************************************************************/
@@ -110,70 +136,136 @@ static void set_host_interrupt(int active)
 
 void keyboard_clear_buffer(void)
 {
+	mkbp_clear_fifo();
+}
+
+void mkbp_clear_fifo(void)
+{
 	int i;
 
-	CPRINTS("clearing keyboard fifo");
+	CPRINTS("clearing MKBP common fifo");
 
-	kb_fifo_start = 0;
-	kb_fifo_end = 0;
-	kb_fifo_entries = 0;
-	for (i = 0; i < KB_FIFO_DEPTH; i++)
-		memset(kb_fifo[i], 0, KEYBOARD_COLS);
+	fifo_start = 0;
+	fifo_end = 0;
+	fifo_entries = 0;
+	for (i = 0; i < FIFO_DEPTH; i++)
+		memset(&fifo[i], 0, sizeof(struct ec_response_get_next_event));
 }
 
 test_mockable int keyboard_fifo_add(const uint8_t *buffp)
 {
+	return mkbp_fifo_add((uint8_t)EC_MKBP_EVENT_KEY_MATRIX, buffp);
+}
+
+test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
+{
 	int ret = EC_SUCCESS;
+	uint8_t size;
 
 	/*
-	 * If keyboard protocol is not enabled, don't save the state to the
-	 * FIFO or trigger an interrupt.
+	 * If the data is a keyboard matrix and the keyboard protocol is not
+	 * enabled, don't save the state to the FIFO or trigger an interrupt.
 	 */
-	if (!(config.flags & EC_MKBP_FLAGS_ENABLE))
+	if (!(config.flags & EC_MKBP_FLAGS_ENABLE) &&
+	    (event_type == EC_MKBP_EVENT_KEY_MATRIX))
 		return EC_SUCCESS;
 
-	if (kb_fifo_entries >= config.fifo_max_depth) {
-		CPRINTS("KB FIFO depth %d reached",
+	if (fifo_entries >= config.fifo_max_depth) {
+		CPRINTS("MKBP common FIFO depth %d reached",
 			config.fifo_max_depth);
 		ret = EC_ERROR_OVERFLOW;
-		goto kb_fifo_push_done;
+		goto fifo_push_done;
 	}
 
+	size = get_data_size(event_type);
 	mutex_lock(&fifo_mutex);
-	memcpy(kb_fifo[kb_fifo_end], buffp, KEYBOARD_COLS);
-	kb_fifo_end = (kb_fifo_end + 1) % KB_FIFO_DEPTH;
-	atomic_add(&kb_fifo_entries, 1);
+	fifo[fifo_end].event_type = event_type;
+	memcpy(&fifo[fifo_end].data, buffp, size);
+	fifo_end = (fifo_end + 1) % FIFO_DEPTH;
+	atomic_add(&fifo_entries, 1);
 	mutex_unlock(&fifo_mutex);
 
-kb_fifo_push_done:
+fifo_push_done:
 
-	if (ret == EC_SUCCESS) {
-#ifdef CONFIG_MKBP_EVENT
-		mkbp_send_event(EC_MKBP_EVENT_KEY_MATRIX);
-#else
-		set_host_interrupt(1);
-#endif
-	}
+	if (ret == EC_SUCCESS)
+		mkbp_send_event(event_type);
 
 	return ret;
 }
 
-#ifdef CONFIG_MKBP_EVENT
-static int keyboard_get_next_event(uint8_t *out)
+void mkbp_update_switches(uint32_t sw, int state)
 {
-	if (!kb_fifo_entries)
+
+	mkbp_switch_state &= ~(1 << sw);
+	mkbp_switch_state |= (!!state << sw);
+
+	mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
+		      (const uint8_t *)&mkbp_switch_state);
+}
+
+/**
+ * Handle lid changing state.
+ */
+static void lid_change(void)
+{
+	mkbp_update_switches(EC_MKBP_LID_OPEN, lid_is_open());
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, lid_change, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, lid_change, HOOK_PRIO_INIT_LID+1);
+
+static int get_next_event(uint8_t *out, enum ec_mkbp_event evt)
+{
+	uint8_t t = fifo[fifo_start].event_type;
+	uint8_t size;
+
+	if (!fifo_entries)
 		return -1;
 
-	kb_fifo_remove(out);
+	/*
+	 * We need to peek at the next event to check that we were called with
+	 * the correct event.
+	 */
+	if (t != (uint8_t)evt) {
+		/*
+		 * We were called with the wrong event.  The next element in the
+		 * FIFO's event type doesn't match with what we were called
+		 * with.  Return an error that we're busy.  The caller will need
+		 * to call us with the correct event first.
+		 */
+		return -EC_ERROR_BUSY;
+	}
+
+	fifo_remove(out);
 
 	/* Keep sending events if FIFO is not empty */
-	if (kb_fifo_entries)
-		mkbp_send_event(EC_MKBP_EVENT_KEY_MATRIX);
+	if (fifo_entries)
+		mkbp_send_event(fifo[fifo_start].event_type);
 
-	return KEYBOARD_COLS;
+	/* Return the correct size of the data. */
+	size = get_data_size(t);
+	if (size)
+		return size;
+	else
+		return -EC_ERROR_UNKNOWN;
+}
+
+static int keyboard_get_next_event(uint8_t *out)
+{
+	return get_next_event(out, EC_MKBP_EVENT_KEY_MATRIX);
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_KEY_MATRIX, keyboard_get_next_event);
-#endif
+
+static int button_get_next_event(uint8_t *out)
+{
+	return get_next_event(out, EC_MKBP_EVENT_BUTTON);
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_BUTTON, button_get_next_event);
+
+static int switch_get_next_event(uint8_t *out)
+{
+	return get_next_event(out, EC_MKBP_EVENT_SWITCH);
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SWITCH, switch_get_next_event);
 
 void keyboard_send_battery_key(void)
 {
@@ -190,27 +282,6 @@ void keyboard_send_battery_key(void)
 
 /*****************************************************************************/
 /* Host commands */
-
-static int keyboard_get_scan(struct host_cmd_handler_args *args)
-{
-	kb_fifo_remove(args->response);
-	/* if CONFIG_MKBP_EVENT is enabled, we still reset the interrupt
-	 * (even if there is an another pending event)
-	 * to be backward compatible with firmware using the old API to poll
-	 * the keyboard, other software should use EC_CMD_GET_NEXT_EVENT
-	 * instead of this command
-	 */
-	if (!kb_fifo_entries)
-		set_host_interrupt(0);
-
-	args->response_size = KEYBOARD_COLS;
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_STATE,
-		     keyboard_get_scan,
-		     EC_VER_MASK(0));
-
 static int keyboard_get_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_mkbp_info *r = args->response;
@@ -303,7 +374,7 @@ static void keyscan_copy_config(const struct ec_mkbp_config *src,
 	if (valid_mask & EC_MKBP_VALID_FIFO_MAX_DEPTH) {
 		/* Sanity check for fifo depth */
 		dst->fifo_max_depth = MIN(src->fifo_max_depth,
-					  KB_FIFO_DEPTH);
+					  FIFO_DEPTH);
 	}
 
 	new_flags = dst->flags & ~valid_flags;

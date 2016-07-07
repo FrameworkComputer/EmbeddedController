@@ -2526,6 +2526,12 @@ enum ec_mkbp_event {
 	/* New Sensor FIFO data. The event data is fifo_info structure. */
 	EC_MKBP_EVENT_SENSOR_FIFO = 2,
 
+	/* The state of the non-matrixed buttons have changed. */
+	EC_MKBP_EVENT_BUTTON = 3,
+
+	/* The state of the switches have changed. */
+	EC_MKBP_EVENT_SWITCH = 4,
+
 	/* Number of MKBP events */
 	EC_MKBP_EVENT_COUNT,
 };
@@ -2541,6 +2547,10 @@ union ec_response_get_next_data {
 		uint8_t rsvd[3];
 		struct ec_response_motion_sense_fifo_info info;
 	}        sensor_fifo;
+
+	uint32_t   buttons;
+
+	uint32_t   switches;
 } __packed;
 
 struct ec_response_get_next_event {
@@ -2548,6 +2558,15 @@ struct ec_response_get_next_event {
 	/* Followed by event data if any */
 	union ec_response_get_next_data data;
 } __packed;
+
+/* Bit definitions for buttons and switches.*/
+/* Buttons */
+#define EC_MKBP_POWER_BUTTON	0
+#define EC_MKBP_VOL_UP		1
+#define EC_MKBP_VOL_DOWN	2
+
+/* Switches */
+#define EC_MKBP_LID_OPEN	0
 
 /* Run keyboard factory test scanning */
 #define EC_CMD_KEYBOARD_FACTORY_TEST 0x68

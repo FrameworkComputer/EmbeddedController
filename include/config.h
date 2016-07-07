@@ -2232,6 +2232,12 @@
 #define CONFIG_TEMP_SENSOR
 #endif
 
+/******************************************************************************/
+/* The Matrix Keyboard Protocol depends on MKBP events. */
+#ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_MKBP_EVENT
+#endif
+
 /*****************************************************************************/
 /*
  * Handle task-dependent configs.
