@@ -112,6 +112,9 @@
 /* Optional features */
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #define CONFIG_CMD_HOSTCMD
+/* By default, set hcdebug to off */
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 #define CONFIG_CMD_I2C_PROTECT
 #define CONFIG_CMD_PD_CONTROL
 
