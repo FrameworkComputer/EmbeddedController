@@ -1715,6 +1715,17 @@
 #undef CONFIG_TEST_TASK_LIST
 
 /*
+ * List of tasks used by CTS
+ *
+ * cts.tasklist contains tasks run only for CTS. These tasks are added to the
+ * tasks registered in ec.tasklist with higher priority.
+ *
+ * If a CTS suite does not define its own cts.tasklist, the common list is used
+ * (i.e. cts/cts.tasklist).
+ */
+#undef CONFIG_CTS_TASK_LIST
+
+/*
  * Enable task profiling.
  *
  * Boards may #undef this to reduce image size and RAM usage.

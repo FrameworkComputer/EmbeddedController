@@ -36,6 +36,7 @@ typedef union {
 void __idle(void);
 CONFIG_TASK_LIST
 CONFIG_TEST_TASK_LIST
+CONFIG_CTS_TASK_LIST
 #undef TASK
 
 /* Task names for easier debugging */
@@ -44,6 +45,7 @@ static const char * const task_names[] = {
 	"<< idle >>",
 	CONFIG_TASK_LIST
 	CONFIG_TEST_TASK_LIST
+	CONFIG_CTS_TASK_LIST
 };
 #undef TASK
 
@@ -117,6 +119,7 @@ static const struct {
 	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
 	CONFIG_TASK_LIST
 	CONFIG_TEST_TASK_LIST
+	CONFIG_CTS_TASK_LIST
 };
 #undef TASK
 
@@ -133,6 +136,7 @@ uint8_t task_stacks[0
 		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
 		    CONFIG_TASK_LIST
 		    CONFIG_TEST_TASK_LIST
+		    CONFIG_CTS_TASK_LIST
 ] __aligned(8);
 
 #undef TASK

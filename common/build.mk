@@ -101,4 +101,9 @@ common-$(HAS_TASK_PDCMD)+=host_command_pd.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
 common-$(HAS_TASK_LIGHTBAR)+=lb_common.o lightbar.o
 common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o
+
+ifeq ($(CTS_MODULE),)
 common-$(TEST_BUILD)+=test_util.o
+else
+common-y+=test_util.o
+endif

@@ -58,6 +58,9 @@ UC_PROJECT:=$(call uppercase,$(PROJECT))
 # the board/project/chip/core variables are defined, since some of the configs
 # are dependent on particular configurations.
 includes=include core/$(CORE)/include $(dirs) $(out) test
+ifdef CTS_MODULE
+includes+=cts/$(CTS_MODULE) cts
+endif
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst_file:=ec.tasklist
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST" | \
@@ -66,17 +69,20 @@ ifeq "$(TEST_BUILD)" "y"
 		    -D"TASK_TEST(n, r, d, s)=n" -imacros $(_tsk_lst_file) \
 		    -imacros $(PROJECT).tasklist)
 else ifdef CTS_MODULE
-	_tsk_lst_file:=$(PROJECT).tasklist
-	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
-		    -I$(BDIR) -D"TASK_NOTEST(n, r, d, s)=n" -D"TASK_CTS(n, r, d, s)=n" \
-		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros $(_tsk_lst_file))
+	_tsk_lst_file:=ec.tasklist
+	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_CTS_TASK_LIST" | \
+		    $(CPP) -P -I cts/$(CTS_MODULE) -Icts -I$(BDIR) \
+		    -D"TASK_NOTEST(n, r, d, s)=n" \
+		    -D"TASK_ALWAYS(n, r, d, s)=n" \
+		    -imacros $(_tsk_lst_file) \
+		    -imacros cts.tasklist)
 else
 	_tsk_lst_file:=$(PROJECT).tasklist
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
 		    -I$(BDIR) -D"TASK_NOTEST(n, r, d, s)=n" \
-			-D"TASK_CTS(n, r, d, s)=" \
 		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros $(_tsk_lst_file))
 endif
+
 _tsk_cfg:=$(foreach t,$(_tsk_lst) ,HAS_TASK_$(t))
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
 _flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BDIR) \

@@ -16,6 +16,7 @@
  * 'd' in an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
-#define CONFIG_TASK_LIST \
-	TASK_ALWAYS(HOOKS,   hook_task,    NULL, TASK_STACK_SIZE) \
-	TASK_ALWAYS(CONSOLE, console_task, NULL, TASK_STACK_SIZE)
+
+/* Default task list for suites which don't define its own */
+#define CONFIG_CTS_TASK_LIST \
+	TASK_ALWAYS(CTS, cts_task, NULL, TASK_STACK_SIZE)

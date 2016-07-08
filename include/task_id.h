@@ -17,10 +17,8 @@
 #define CONFIG_TEST_TASK_LIST
 #endif
 
-#ifdef CTS_MODULE
-#define TASK_CTS TASK
-#else
-#define TASK_CTS(n, r, d, s)
+#ifndef CTS_MODULE
+#define CONFIG_CTS_TASK_LIST
 #endif
 
 #define TASK_ALWAYS TASK
@@ -28,10 +26,14 @@
 /* define the name of the header containing the list of tasks */
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
+#define CTS_TASK_LIST STRINGIFY(CTS_TASKFILE)
 #define TEST_TASK_LIST STRINGIFY(TEST_TASKFILE)
 #define BOARD_TASK_LIST STRINGIFY(BOARD_TASKFILE)
 
 #include BOARD_TASK_LIST
+#ifdef CTS_MODULE
+#include CTS_TASK_LIST
+#endif
 #ifdef TEST_BUILD
 #include TEST_TASK_LIST
 #endif
@@ -53,6 +55,8 @@ enum {
 	CONFIG_TASK_LIST
 	/* CONFIG_TEST_TASK_LIST is a macro from the TEST_TASK_LIST file */
 	CONFIG_TEST_TASK_LIST
+	/* For CTS tasks */
+	CONFIG_CTS_TASK_LIST
 #ifdef EMU_BUILD
 	TASK_ID_TEST_RUNNER,
 #endif
