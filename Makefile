@@ -5,23 +5,6 @@
 # Embedded Controller firmware build system
 #
 
-# If we came here via a symlink we restart make and deduce the correct BOARD
-# value from the current directory.
-SYMLINK := $(shell readlink $(lastword $(MAKEFILE_LIST)))
-
-ifneq (,$(SYMLINK))
-
-.PHONY: restart
-restart: .DEFAULT
-	@true
-
-.DEFAULT:
-	@$(MAKE) -C $(dir $(SYMLINK)) \
-		--no-print-directory \
-		$(MAKECMDGOALS) \
-		BOARD=$(notdir $(shell pwd))
-else
-
 BOARD ?= bds
 
 # Directory where the board is configured (includes /$(BOARD) at the end)
@@ -209,4 +192,3 @@ libsharedobjs: $(libsharedobjs-y)
 
 include Makefile.rules
 export CROSS_COMPILE CFLAGS CC CPP LD  NM AR OBJCOPY OBJDUMP
-endif # SYMLINK
