@@ -47,7 +47,7 @@ static enum {
 
 	/* Number of host command debug modes */
 	HCDEBUG_MODES
-} hcdebug = HCDEBUG_NORMAL;
+} hcdebug = CONFIG_HOSTCMD_DEBUG_MODE;
 
 #ifdef CONFIG_CMD_HCDEBUG
 static const char * const hcdebug_mode_names[HCDEBUG_MODES] = {
