@@ -5059,7 +5059,7 @@ int cmd_i2c_read(int argc, char *argv[])
 	unsigned int port, addr;
 	int read_len, write_len;
 	uint8_t write_buf[1];
-	uint8_t *read_buf;
+	uint8_t *read_buf = NULL;
 	char *e;
 	int rv;
 
