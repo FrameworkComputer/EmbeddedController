@@ -61,7 +61,8 @@ void dcrypto_sha_wait(enum sha_mode mode, uint32_t *digest)
 		SHA256_DIGEST_SIZE;
 
 	/* Stop LIVESTREAM mode. */
-	GWRITE_FIELD(KEYMGR, SHA_TRIG, TRIG_STOP, 1);
+	GREG32(KEYMGR, SHA_TRIG) = GC_KEYMGR_SHA_TRIG_TRIG_STOP_MASK;
+
 	/* Wait for SHA DONE interrupt. */
 	while (!GREG32(KEYMGR, SHA_ITOP))
 		;
@@ -130,18 +131,24 @@ void dcrypto_sha_update(struct HASH_CTX *unused,
 
 void dcrypto_sha_init(enum sha_mode mode)
 {
+	int val;
+
 	/* Stop LIVESTREAM mode, in case final() was not called. */
-	GWRITE_FIELD(KEYMGR, SHA_TRIG, TRIG_STOP, 1);
+	GREG32(KEYMGR, SHA_TRIG) = GC_KEYMGR_SHA_TRIG_TRIG_STOP_MASK;
 	/* Clear interrupt status. */
 	GREG32(KEYMGR, SHA_ITOP) = 0;
-	/* SHA1 or SHA256 mode */
-	GWRITE_FIELD(KEYMGR, SHA_CFG_EN, SHA1, mode == SHA1_MODE ? 1 : 0);
+
 	/* Enable streaming mode. */
-	GWRITE_FIELD(KEYMGR, SHA_CFG_EN, LIVESTREAM, 1);
-	/* Enable the SHA DONE interrupt. */
-	GWRITE_FIELD(KEYMGR, SHA_CFG_EN, INT_EN_DONE, 1);
+	val = GC_KEYMGR_SHA_CFG_EN_LIVESTREAM_MASK;
+	/* Enable SHA DONE interrupt. */
+	val |= GC_KEYMGR_SHA_CFG_EN_INT_EN_DONE_MASK;
+	/* Select SHA mode. */
+	if (mode == SHA1_MODE)
+		val |= GC_KEYMGR_SHA_CFG_EN_SHA1_MASK;
+	GREG32(KEYMGR, SHA_CFG_EN) = val;
+
 	/* Start SHA engine. */
-	GWRITE_FIELD(KEYMGR, SHA_TRIG, TRIG_GO, 1);
+	GREG32(KEYMGR, SHA_TRIG) = GC_KEYMGR_SHA_TRIG_TRIG_GO_MASK;
 }
 
 static void dcrypto_sha256_init(LITE_SHA256_CTX *ctx)
