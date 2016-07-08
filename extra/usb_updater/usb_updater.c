@@ -4,7 +4,9 @@
  * found in the LICENSE file.
  */
 
+#include <asm/byteorder.h>
 #include <endian.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <libusb.h>
 #include <openssl/sha.h>
@@ -25,6 +27,13 @@
 #include "upgrade_fw.h"
 #include "config_chip.h"
 #include "board.h"
+#include "compile_time_macros.h"
+
+#ifdef DEBUG
+#define debug printf
+#else
+#define debug(fmt, args...)
+#endif
 
 /* Look for Cr50 FW update interface */
 #define VID USB_VID_GOOGLE
@@ -32,22 +41,113 @@
 #define SUBCLASS USB_SUBCLASS_GOOGLE_CR50
 #define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
 
+
+/*
+ * Need to create an entire TPM PDU when upgrading over /dev/tpm0 and need to
+ * have space to prepare the entire PDU.
+ */
+struct upgrade_pkt {
+	__be16	tag;
+	__be32	length;
+	__be32	ordinal;
+	__be16	subcmd;
+	__be32	digest;
+	__be32	address;
+	char data[0];
+} __packed;
+
+#define SIGNED_TRANSFER_SIZE 1024
+#define MAX_BUF_SIZE	(SIGNED_TRANSFER_SIZE + sizeof(struct upgrade_pkt))
+#define EXT_CMD		0xbaccd00a
+#define FW_UPGRADE	4
+
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
 	uint8_t ep_num;
 	int     chunk_len;
 };
 
-/* Globals */
+struct transfer_endpoint {
+	enum transfer_type {
+		usb_xfer = 0,
+		spi_xfer = 1
+	} ep_type;
+	union {
+		struct usb_endpoint uep;
+		int tpm_fd;
+	};
+};
+
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":d:h";
+static char *short_opts = ":d:hs";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"device",   1,   NULL, 'd'},
 	{"help",     0,   NULL, 'h'},
-	{NULL,       0,   NULL, 0},
+	{"spi",      0,   NULL, 's'},
+	{NULL,       0,   NULL,  0},
 };
+
+/* Prepare and transfer a block to /dev/tpm0, get a reply. */
+static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
+			const void *data, int size,
+			void *response, int *response_size)
+{
+	/* Used by transfer to /dev/tpm0 */
+	static uint8_t outbuf[MAX_BUF_SIZE];
+
+	struct upgrade_pkt *out = (struct upgrade_pkt *)outbuf;
+	/* Use the same structure, it will not be filled completely. */
+	struct upgrade_pkt reply;
+	int len, done;
+	int response_offset = offsetof(struct upgrade_pkt, digest);
+
+	debug("%s: sending to %#x %d bytes\n", __func__, addr, size);
+
+	len = size + sizeof(struct upgrade_pkt);
+
+	out->tag = __cpu_to_be16(0x8001);
+	out->length = __cpu_to_be32(len);
+	out->ordinal = __cpu_to_be32(EXT_CMD);
+	out->subcmd = __cpu_to_be16(FW_UPGRADE);
+	out->digest = digest;
+	out->address = __cpu_to_be32(addr);
+	memcpy(out->data, data, size);
+#ifdef DEBUG
+	{
+		int i;
+
+		debug("Writing %d bytes to TPM at %x\n", len, addr);
+		for (i = 0; i < 20; i++)
+			debug("%2.2x ", outbuf[i]);
+		debug("\n");
+	}
+#endif
+	done = write(fd, out, len);
+	if (done < 0) {
+		perror("Could not write to TPM");
+		return -1;
+	} else if (done != len) {
+		fprintf(stderr, "Error: Wrote %x bytes, expected to write %x\n",
+			done, len);
+		return -1;
+	}
+
+	len = read(fd, &reply, sizeof(reply));
+	if ((len < response_offset) ||
+	    (len > ((int)(response_offset + sizeof(uint32_t))))) {
+		fprintf(stderr, "Problems reading from TPM, got %d bytes\n",
+			len);
+		return -1;
+	}
+
+	debug("Read %x bytes from TPM\n", len);
+	len = len - response_offset;
+	memcpy(response, &reply.digest, len);
+	*response_size = len;
+	return 0;
+}
 
 /* Release USB device and return error to the OS. */
 static void shut_down(struct usb_endpoint *uep)
@@ -68,6 +168,7 @@ static void usage(int errs)
 	       "\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -h,--help                Show this message\n"
+	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
 	       "\n", progname, VID, PID);
 
 	exit(!!errs);
@@ -291,7 +392,6 @@ static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
 	printf("READY\n-------\n");
 }
 
-#define SIGNED_TRANSFER_SIZE 1024
 struct upgrade_command {
 	uint32_t  block_digest;
 	uint32_t  block_base;
@@ -366,7 +466,7 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 	return 0;
 }
 
-static void transfer_and_reboot(struct usb_endpoint *uep,
+static void transfer_and_reboot(struct transfer_endpoint *tep,
 				uint8_t *data, uint32_t data_len)
 {
 	uint32_t out;
@@ -376,6 +476,7 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	struct update_pdu updu;
 	struct startup_resp first_resp;
 	int rxed_size;
+	struct usb_endpoint *uep = &tep->uep;
 
 	/* Send start/erase request */
 	printf("erase\n");
@@ -383,8 +484,17 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	memset(&updu, 0, sizeof(updu));
 	updu.block_size = htobe32(sizeof(updu));
 
-	do_xfer(uep, &updu, sizeof(updu), &first_resp, sizeof(first_resp),
-		1, &rxed_size);
+	if (tep->ep_type == usb_xfer) {
+		do_xfer(uep, &updu, sizeof(updu), &first_resp,
+			sizeof(first_resp), 1, &rxed_size);
+	} else {
+		rxed_size = sizeof(first_resp);
+		if (tpm_send_pkt(tep->tpm_fd, 0, 0, NULL, 0,
+				 &first_resp, &rxed_size) < 0) {
+			perror("Failed to start transfer");
+			return;
+		}
+	}
 
 	if (rxed_size == sizeof(uint32_t))
 		protocol_version = 0;
@@ -401,8 +511,6 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	}
 
 	next_offset = reply - FLASH_BASE;
-	printf("Updating at offset 0x%08x\n", next_offset);
-
 	data_ptr = data + next_offset;
 	data_len = CONFIG_RW_SIZE;
 
@@ -410,7 +518,8 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	while (data_len && (data_ptr[data_len - 1] == 0xff))
 		data_len--;
 
-	printf("sending 0x%x/0x%x bytes\n", data_len, CONFIG_RW_SIZE);
+	printf("sending 0x%x/0x%x bytes to %#x\n", data_len, CONFIG_RW_SIZE,
+	       next_offset);
 	while (data_len) {
 		size_t payload_size;
 		SHA_CTX ctx;
@@ -434,15 +543,38 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 		/* Copy the first few bytes. */
 		memcpy(&updu.cmd.block_digest, digest,
 		       sizeof(updu.cmd.block_digest));
+		if (tep->ep_type == usb_xfer) {
+			for (max_retries = 10; max_retries; max_retries--)
+				if (!transfer_block(uep, &updu,
+						    data_ptr, payload_size))
+					break;
 
-		for (max_retries = 10; max_retries; max_retries--)
-			if (!transfer_block(uep, &updu, data_ptr, payload_size))
-				break;
+			if (!max_retries) {
+				fprintf(stderr,
+					"Failed to trasfer block, %d to go\n",
+					data_len);
+				exit(1);
+			}
+		} else {
+			rxed_size = sizeof(first_resp);
+			if (tpm_send_pkt(tep->tpm_fd,
+					 updu.cmd.block_digest,
+					 next_offset + FLASH_BASE,
+			  data_ptr,
+					 payload_size, &first_resp,
+					 &rxed_size) < 0) {
+				fprintf(stderr,
+					"Failed to trasfer block, %d to go\n",
+					data_len);
+				exit(1);
+			}
+			if ((rxed_size != 1) || *((uint8_t *)&first_resp)) {
+				fprintf(stderr,
+					"got response of size %d, value %#x\n",
+					rxed_size, first_resp.value);
 
-		if (!max_retries) {
-			fprintf(stderr, "Failed to trasfer block, %d to go\n",
-				data_len);
-			exit(1);
+				exit(1);
+			}
 		}
 		data_len -= payload_size;
 		data_ptr += payload_size;
@@ -450,6 +582,8 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 	}
 
 	printf("-------\nupdate complete\n");
+	if (tep->ep_type != usb_xfer)
+		return;
 
 	/* Send stop request, ignorign reply. */
 	out = htobe32(UPGRADE_DONE);
@@ -463,7 +597,7 @@ static void transfer_and_reboot(struct usb_endpoint *uep,
 
 int main(int argc, char *argv[])
 {
-	struct usb_endpoint uep;
+	struct transfer_endpoint tep;
 	int errorcnt;
 	uint8_t *data = 0;
 	uint32_t data_len = 0;
@@ -475,6 +609,10 @@ int main(int argc, char *argv[])
 		progname++;
 	else
 		progname = argv[0];
+
+	/* Usb transfer - default mode. */
+	memset(&tep, 0, sizeof(tep));
+	tep.ep_type = usb_xfer;
 
 	errorcnt = 0;
 	opterr = 0;				/* quiet, you */
@@ -488,6 +626,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage(errorcnt);
+			break;
+		case 's':
+			tep.ep_type = spi_xfer;
 			break;
 		case 0:				/* auto-handled option */
 			break;
@@ -525,14 +666,24 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	usb_findit(vid, pid, &uep);
+	if (tep.ep_type == usb_xfer) {
+		usb_findit(vid, pid, &tep.uep);
+	} else {
+		tep.tpm_fd = open("/dev/tpm0", O_RDWR);
+		if (tep.tpm_fd < 0) {
+			perror("Could not open TPM");
+			exit(1);
+		}
+	}
 
-	transfer_and_reboot(&uep, data, data_len);
+	transfer_and_reboot(&tep, data, data_len);
 
 	printf("bye\n");
 	free(data);
-	libusb_close(uep.devh);
-	libusb_exit(NULL);
+	if (tep.ep_type == usb_xfer) {
+		libusb_close(tep.uep.devh);
+		libusb_exit(NULL);
+	}
 
 	return 0;
 }
