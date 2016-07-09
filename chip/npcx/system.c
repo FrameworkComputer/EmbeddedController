@@ -417,7 +417,6 @@ static char system_to_hex(uint8_t x)
  * stores wakeup time in seconds.
  * Set seconds = 0 to disable the alarm
  */
-#define EC_RTC_ALARM_CLEAR 0
 void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 {
 	uint32_t cur_secs, alarm_secs;
