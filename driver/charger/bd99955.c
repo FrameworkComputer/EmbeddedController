@@ -685,6 +685,22 @@ int charger_discharge_on_ac(int enable)
 				BD99955_EXTENDED_COMMAND);
 }
 
+int charger_get_vbus_level(void)
+{
+	int vbus_val;
+	int vcc_val;
+	int rv;
+
+	rv = ch_raw_read16(BD99955_CMD_VBUS_VAL, &vbus_val,
+				BD99955_EXTENDED_COMMAND);
+
+	rv += ch_raw_read16(BD99955_CMD_VCC_VAL, &vcc_val,
+				BD99955_EXTENDED_COMMAND);
+
+	return rv ? 0 : MAX(vbus_val, vcc_val);
+}
+
+
 /*** Non-standard interface functions ***/
 
 int bd99955_is_vbus_provided(int port)
