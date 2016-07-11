@@ -3,11 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __TH_COMMON_H
-#define __TH_COMMON_H
-
-#include "cts_common.h"
-
-enum cts_rc sync(void);
-
-#endif
+/* This file is included by cts_common.h as an enumeration of error codes. */
+CTS_RC_SUCCESS,
+CTS_RC_FAILURE,
+CTS_RC_BAD_SYNC,
+CTS_RC_UNKNOWN

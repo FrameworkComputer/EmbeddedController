@@ -4,7 +4,7 @@
  */
 
 struct cts_test {
-	enum cts_error_code (*run)(void);
+	enum cts_rc (*run)(void);
 	char *name;
 };
 

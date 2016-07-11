@@ -8,6 +8,6 @@
 
 #include "cts_common.h"
 
-enum cts_error_code sync(void);
+enum cts_rc sync(void);
 
 #endif

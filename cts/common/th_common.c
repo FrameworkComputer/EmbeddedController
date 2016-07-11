@@ -12,7 +12,7 @@
 /* Return SUCCESS if and only if we reach end of function
  * Returning success here means sync was successful
  */
-enum cts_error_code sync(void)
+enum cts_rc sync(void)
 {
 	int input_level;
 
@@ -32,5 +32,5 @@ enum cts_error_code sync(void)
 		input_level = gpio_get_level(GPIO_HANDSHAKE_INPUT);
 	} while (input_level);
 
-	return CTS_SUCCESS;
+	return CTS_RC_SUCCESS;
 }

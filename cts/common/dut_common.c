@@ -12,7 +12,7 @@
 /* Returns unknown because TH could potentially still get stuck
  * even if the DUT completes the sync
  */
-enum cts_error_code sync(void)
+enum cts_rc sync(void)
 {
 	int input_level;
 
@@ -28,5 +28,5 @@ enum cts_error_code sync(void)
 	} while (input_level);
 	gpio_set_level(GPIO_HANDSHAKE_OUTPUT, 0);
 
-	return CTS_ERROR_UNKNOWN;
+	return CTS_RC_UNKNOWN;
 }

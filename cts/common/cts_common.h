@@ -18,11 +18,9 @@
 /* In a single test, only one board can return unknown, the other must
  * return a useful result (i.e. success, failure, etc)
  */
-enum cts_error_code {
-	CTS_SUCCESS,
-	CTS_ERROR_FAILURE,
-	CTS_ERROR_BAD_SYNC,
-	CTS_ERROR_UNKNOWN
+
+enum cts_rc {
+	#include "cts.rc"
 };
 
 #endif
