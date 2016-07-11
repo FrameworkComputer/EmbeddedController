@@ -5,6 +5,8 @@
 
 ifeq ($(BOARD),stm32l476g-eval)
 	cts-y+=$(CTS_MODULE)/th.o
+	cts-y+=common/th_common.o
 else
 	cts-y+=$(CTS_MODULE)/dut.o
+	cts-y+=common/dut_common.o
 endif
