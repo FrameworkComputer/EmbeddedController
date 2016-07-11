@@ -81,9 +81,6 @@ void rdd_attached(void)
 	/* Indicate case-closed debug mode (active low) */
 	gpio_set_level(GPIO_CCD_MODE_L, 0);
 
-	/* Select the CCD PHY */
-	usb_select_phy(USB_SEL_PHY1);
-
 	ccd_set_mode(CCD_MODE_ENABLED);
 }
 
@@ -95,9 +92,6 @@ void rdd_detached(void)
 
 	/* Done with case-closed debug mode */
 	gpio_set_level(GPIO_CCD_MODE_L, 1);
-
-	/* Select the AP PHY */
-	usb_select_phy(USB_SEL_PHY0);
 
 	ccd_set_mode(CCD_MODE_DISABLED);
 }
@@ -124,8 +118,8 @@ static int command_ccd(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("CCD:     %s\n", usb_get_phy() == USB_SEL_PHY1 ? " enabled" :
-		"disabled");
+	ccprintf("CCD:     %s\n", !gpio_get_level(GPIO_CCD_MODE_L) ?
+		" enabled" : "disabled");
 	ccprintf("AP UART: %s\nEC UART: %s\n",
 		uartn_enabled(UART_AP) ? " enabled" : "disabled",
 		uartn_enabled(UART_EC) ? " enabled" : "disabled");

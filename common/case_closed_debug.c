@@ -51,13 +51,6 @@ void ccd_set_mode(enum ccd_mode new_mode)
 	usb_spi_enable(&ccd_usb_spi, new_mode == CCD_MODE_ENABLED);
 #endif
 
-#if defined(CONFIG_USB_SELECT_PHY)
-	/*
-	 * TODO(crosbug.com/p/52281): when rdd is working reliably on cr50, make
-	 * a call to select the PHY here.
-	 */
-#else
 	if (new_mode != CCD_MODE_DISABLED)
-#endif
 		usb_init();
 }
