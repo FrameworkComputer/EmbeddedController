@@ -96,13 +96,47 @@ static void event_timer_clear_pending_isr(void)
 	task_clear_pending_irq(et_ctrl_regs[EVENT_EXT_TIMER].irq);
 }
 
-uint32_t __hw_clock_source_read(void)
+uint32_t __ram_code __hw_clock_source_read(void)
 {
+#if 0
 	/*
 	 * In combinational mode, the counter observation register of
 	 * timer 4(TIMER_H) will increment.
 	 */
 	return IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
+#else
+/* Number of CPU cycles in 125 us */
+#define CYCLES_125NS (125*(PLL_CLOCK/SECOND) / 1000)
+	/*
+	 * TODO(crosbug.com/p/55044):
+	 * observation register of external timer latch issue.
+	 * we can remove this workaround after version change.
+	 */
+	uint32_t prev_mask = get_int_mask();
+	uint32_t val;
+
+	interrupt_disable();
+	asm volatile(
+		/* read observation register for the first time */
+		"lwi %0,[%1]\n\t"
+		/*
+		 * the delay time between reading the first and second
+		 * observation registers need to be greater than 0.125us and
+		 * smaller than 0.250us.
+		 */
+		".rept %2\n\t"
+		"nop\n\t"
+		".endr\n\t"
+		/* read for the second time */
+		"lwi %0,[%1]\n\t"
+		: "=&r"(val)
+		: "r"((uintptr_t) &IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H)),
+			"i"(CYCLES_125NS));
+	/* restore interrupts */
+	set_int_mask(prev_mask);
+
+	return val;
+#endif
 }
 
 void __hw_clock_source_set(uint32_t ts)
