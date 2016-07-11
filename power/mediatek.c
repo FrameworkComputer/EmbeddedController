@@ -690,19 +690,8 @@ enum power_state power_handle_state(enum power_state state)
 		power_on();
 		if (power_wait_signals(IN_POWER_GOOD) == EC_SUCCESS) {
 			CPRINTS("POWER_GOOD seen");
-			if (power_button_wait_for_release
-			    (DELAY_SHUTDOWN_ON_POWER_HOLD) == EC_SUCCESS) {
-				power_button_was_pressed = 0;
-				return POWER_S3;
-			} else {
-				CPRINTS("long-press button, shutdown");
-				power_off();
-				/*
-				 * Since the AP may be up already, return S0S3
-				 * state to go through the suspend hook.
-				 */
-				return POWER_S0S3;
-			}
+			power_button_was_pressed = 0;
+			return POWER_S3;
 		} else {
 			CPRINTS("POWER_GOOD not seen in time");
 		}
