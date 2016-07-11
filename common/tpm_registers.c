@@ -517,11 +517,13 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
  */
 static void set_version_string(void)
 {
+	enum system_image_copy_t current_image = system_get_image_copy();
 	const struct SignedHeader *sh = (const struct SignedHeader *)
 		CONFIG_PROGRAM_MEMORY_BASE;
 
-	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver), "RO: %08x RW: %s",
-		 sh->img_chk_, system_get_version(SYSTEM_IMAGE_RW));
+	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver), "RO: %08x RW%s: %s",
+		 sh->img_chk_, current_image == SYSTEM_IMAGE_RW_B ? "_B" : "",
+		 system_get_version(current_image));
 }
 
 void tpm_task(void)
