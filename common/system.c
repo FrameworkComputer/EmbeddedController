@@ -894,7 +894,38 @@ static int command_version(int argc, char **argv)
 		 system_get_chip_name(), system_get_chip_revision());
 	ccprintf("Board:   %d\n", system_get_board_version());
 	ccprintf("RO:      %s\n", system_get_version(SYSTEM_IMAGE_RO));
+#ifdef CONFIG_RW_B
+
+	/*
+	 * Code reporting the RW version fails to properly retrieve the
+	 * version of the non actively running RW image. The code always uses a
+	 * fixed offset into the flash memory, which is correct for RW, but
+	 * incorrect for RW_B.
+	 *
+	 * The RW and RW_B versions end up at different offsets into their
+	 * respective image halves, so it is impossible to find the RW_B
+	 * versoin offset by just adding another offset the the RW version
+	 * offset.
+	 *
+	 * To address this issue, when running an RW image, report the version
+	 * of the running part of the image explicitly.
+	 */
+
+	{
+		enum system_image_copy_t active_copy = system_get_image_copy();
+
+		if (active_copy == SYSTEM_IMAGE_RO) {
+			ccprintf("RW:      %s\n",
+				 system_get_version(SYSTEM_IMAGE_RW));
+		} else {
+			ccprintf("RW%s  %s\n",
+				 active_copy == SYSTEM_IMAGE_RW ? ":  " : "_B:",
+				 system_get_version(active_copy));
+		}
+	}
+#else
 	ccprintf("RW:      %s\n", system_get_version(SYSTEM_IMAGE_RW));
+#endif
 	ccprintf("Build: %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
