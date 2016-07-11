@@ -7,6 +7,7 @@
 #include "timer.h"
 #include "watchdog.h"
 #include "cts_common.h"
+#include "dut_common.h"
 
 /* Returns unknown because TH could potentially still get stuck
  * even if the DUT completes the sync

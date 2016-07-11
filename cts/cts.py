@@ -106,19 +106,17 @@ def flash_boards(dut_board, th_serial_loc):
                      'flash write_image erase build/' + th_board + '/ec.bin 0x08000000',
                      'reset halt']
 
-    dut_flash_cmds = ['reset_config connect_assert_srst',
+    dut_flash_cmds = ['hla_serial ' + dut_hla,
+                      'reset_config connect_assert_srst',
                       'init',
                       'reset init',
                       'flash write_image erase build/' + dut_board + '/ec.bin 0x08000000',
                       'reset halt']
 
-    if dut_hla != None:
-        dut_flash_cmds.insert(0, 'hla_serial ' + dut_hla)
-
     openocd_cmd(th_flash_cmds, th_cfg)
     openocd_cmd(dut_flash_cmds, dut_cfg)
-    openocd_cmd(['init', 'reset init', 'resume'], th_cfg)
-    openocd_cmd(['init', 'reset init', 'resume'], dut_cfg)
+    openocd_cmd(['hla_serial ' + th_hla, 'init', 'reset init', 'resume'], th_cfg)
+    openocd_cmd(['hla_serial ' + dut_hla, 'init', 'reset init', 'resume'], dut_cfg)
 
 def main():
     global ocd_script_dir
