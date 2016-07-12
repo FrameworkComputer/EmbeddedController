@@ -3,8 +3,14 @@
  * found in the LICENSE file.
  */
 
-/* This file is included by cts_common.h as an enumeration of error codes. */
+/*
+ * This file is included by cts_common.h as an enumeration of error codes,
+ * as well as being processed by cts.py to get error code names.
+ * cts.py depends on CTS_RC_SUCCESS being the first error code listed so
+ * that its value
+ * is 0 when enumerated
+ */
+
 CTS_RC_SUCCESS,
 CTS_RC_FAILURE,
 CTS_RC_BAD_SYNC,
-CTS_RC_UNKNOWN

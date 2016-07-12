@@ -28,5 +28,5 @@ enum cts_rc sync(void)
 	} while (input_level);
 	gpio_set_level(GPIO_HANDSHAKE_OUTPUT, 0);
 
-	return CTS_RC_UNKNOWN;
+	return CTS_RC_SUCCESS;
 }
