@@ -13,6 +13,8 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
+#define READ_WAIT_TIME_MS 100
+
 /* In a single test, only one board can return unknown, the other must
  * return a useful result (i.e. success, failure, etc)
  */

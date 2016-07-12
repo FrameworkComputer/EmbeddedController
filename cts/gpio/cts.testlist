@@ -1,0 +1,18 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Test whether sync completes successfully */
+CTS_TEST(sync_test)
+/* Check if the dut can set a line low */
+CTS_TEST(set_low_test)
+/* Check if the dut can set a line high */
+CTS_TEST(set_high_test)
+/* Check if the dut can read a line that is low */
+CTS_TEST(read_high_test)
+/* Check if the dut can read a line that is high */
+CTS_TEST(read_low_test)
+/* Check if the dut reads its true pin level (success)
+   or its register level when configured as a low open drain output pin */
+CTS_TEST(od_read_high_test)
