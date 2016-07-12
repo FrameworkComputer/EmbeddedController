@@ -128,7 +128,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /******************************************************************************/
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_POWER_BUTTON_L,
+	GPIO_POWER_BUTTON_L, GPIO_CHARGER_INT_L, GPIO_LID_OPEN
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
