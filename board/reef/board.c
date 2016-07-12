@@ -154,13 +154,20 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 #if IS_PROTO == 0
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
+	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
 #else
-	if (gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
+	if (gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
 #endif
-		status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_1;
+		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+#if IS_PROTO == 0
+		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+#endif
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
 
 	return status;
 }
