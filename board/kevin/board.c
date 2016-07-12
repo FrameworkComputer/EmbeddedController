@@ -90,7 +90,7 @@ const struct pwm_t pwm_channels[] = {
 #ifdef BOARD_KEVIN
 	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 100 },
 #endif
-	[PWM_CH_DISPLIGHT] = { 2, 0, 10000 },
+	[PWM_CH_DISPLIGHT] = { 2, 0, 210 },
 	[PWM_CH_LED_RED] =   { 3, PWM_CONFIG_DSLEEP, 100 },
 #ifdef BOARD_KEVIN
 	[PWM_CH_LED_BLUE] =  { 4, PWM_CONFIG_DSLEEP, 100 },
