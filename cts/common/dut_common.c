@@ -28,5 +28,5 @@ enum cts_error_code sync(void)
 	} while (input_level);
 	gpio_set_level(GPIO_HANDSHAKE_OUTPUT, 0);
 
-	return UNKNOWN;
+	return CTS_ERROR_UNKNOWN;
 }

@@ -13,7 +13,7 @@
 
 enum cts_error_code sync_test(void)
 {
-	return SUCCESS;
+	return CTS_SUCCESS;
 }
 
 enum cts_error_code set_high_test(void)
@@ -21,7 +21,7 @@ enum cts_error_code set_high_test(void)
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_LOW);
 	gpio_set_level(GPIO_OUTPUT_TEST, 1);
 	msleep(READ_WAIT_TIME_MS*2);
-	return UNKNOWN;
+	return CTS_ERROR_UNKNOWN;
 }
 
 enum cts_error_code set_low_test(void)
@@ -29,7 +29,7 @@ enum cts_error_code set_low_test(void)
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_LOW);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
 	msleep(READ_WAIT_TIME_MS*2);
-	return UNKNOWN;
+	return CTS_ERROR_UNKNOWN;
 }
 
 enum cts_error_code read_high_test(void)
@@ -40,9 +40,9 @@ enum cts_error_code read_high_test(void)
 	msleep(READ_WAIT_TIME_MS);
 	level = gpio_get_level(GPIO_INPUT_TEST);
 	if (level)
-		return SUCCESS;
+		return CTS_SUCCESS;
 	else
-		return FAILURE;
+		return CTS_ERROR_FAILURE;
 }
 
 enum cts_error_code read_low_test(void)
@@ -53,9 +53,9 @@ enum cts_error_code read_low_test(void)
 	msleep(READ_WAIT_TIME_MS);
 	level = gpio_get_level(GPIO_INPUT_TEST);
 	if (!level)
-		return SUCCESS;
+		return CTS_SUCCESS;
 	else
-		return FAILURE;
+		return CTS_ERROR_FAILURE;
 }
 
 enum cts_error_code od_read_high_test(void)
@@ -66,9 +66,9 @@ enum cts_error_code od_read_high_test(void)
 	msleep(READ_WAIT_TIME_MS);
 	level = gpio_get_level(GPIO_OUTPUT_TEST);
 	if (!level)
-		return SUCCESS;
+		return CTS_SUCCESS;
 	else
-		return FAILURE;
+		return CTS_ERROR_FAILURE;
 }
 
 #include "cts_testlist.h"
@@ -88,16 +88,16 @@ void cts_task(void)
 	CPRINTS("Results:");
 	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
 		switch (results[i]) {
-		case SUCCESS:
+		case CTS_SUCCESS:
 			CPRINTS("%s) Passed", tests[i].name);
 			break;
-		case FAILURE:
+		case CTS_ERROR_FAILURE:
 			CPRINTS("%s) Failed", tests[i].name);
 			break;
-		case BAD_SYNC:
+		case CTS_ERROR_BAD_SYNC:
 			CPRINTS("%s) Bad sync", tests[i].name);
 			break;
-		case UNKNOWN:
+		case CTS_ERROR_UNKNOWN:
 			CPRINTS("%s) Test result unknown", tests[i].name);
 			break;
 		default:

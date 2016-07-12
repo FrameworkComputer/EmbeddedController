@@ -19,10 +19,10 @@
  * return a useful result (i.e. success, failure, etc)
  */
 enum cts_error_code {
-	SUCCESS,
-	FAILURE,
-	BAD_SYNC,
-	UNKNOWN
+	CTS_SUCCESS,
+	CTS_ERROR_FAILURE,
+	CTS_ERROR_BAD_SYNC,
+	CTS_ERROR_UNKNOWN
 };
 
 #endif
