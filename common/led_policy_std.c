@@ -134,7 +134,8 @@ static void std_led_set_power(void)
 		pwr_led_set_color(LED_OFF);
 	else if (chipset_in_state(CHIPSET_STATE_ON))
 		pwr_led_set_color(LED_WHITE);
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
+			CHIPSET_STATE_STANDBY))
 		pwr_led_set_color((power_second & 3) ? LED_OFF : LED_WHITE);
 }
 
