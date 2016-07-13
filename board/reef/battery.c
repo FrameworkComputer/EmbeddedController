@@ -10,6 +10,7 @@
 #include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "util.h"
 
@@ -230,3 +231,32 @@ DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge,
 			NULL);
 
 #endif	/* CONFIG_CHARGER_PROFILE_OVERRIDE */
+
+#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
+/*
+ * Physical detection of battery.
+ */
+enum battery_present battery_is_present(void)
+{
+	enum battery_present batt_pres;
+	int batt_status;
+
+	/* The GPIO is low when the battery is physically present */
+	batt_pres = gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;
+
+	/*
+	 * Make sure battery status is implemented, I2C transactions are
+	 * success & the battery status is Initialized to find out if it
+	 * is a working battery and it is not in the cut-off mode.
+	 *
+	 * FETs are turned off after Power Shutdown time.
+	 * The device will wake up when a voltage is applied to PACK.
+	 * Battery status will be inactive until it is initialized.
+	 */
+	if (batt_pres == BP_YES && !battery_status(&batt_status))
+		if (!(batt_status & STATUS_INITIALIZED))
+			batt_pres = BP_NO;
+
+	return batt_pres;
+}
+#endif
