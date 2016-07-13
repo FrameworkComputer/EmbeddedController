@@ -317,6 +317,7 @@ enum {
 	SLEEP_MASK_I2C_SLAVE  = (1 << 7), /* I2C slave communication ongoing */
 	SLEEP_MASK_FAN        = (1 << 8), /* Fan control loop ongoing */
 	SLEEP_MASK_USB_DEVICE = (1 << 9), /* Generic USB device in use */
+	SLEEP_MASK_RDD        = (1 << 10),/* RDD ongoing */
 
 	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
 

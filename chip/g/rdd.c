@@ -8,8 +8,11 @@
 #include "hooks.h"
 #include "rdd.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "usb_api.h"
+
+#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
 static uint16_t debug_detect;
 
@@ -24,15 +27,17 @@ int debug_cable_is_attached(void)
 void rdd_interrupt(void)
 {
 	if (debug_cable_is_attached()) {
-		ccprintf("Debug Accessory connected\n");
+		CPRINTS("Debug Accessory connected");
+		disable_sleep(SLEEP_MASK_RDD);
 		/* Detect when debug cable is disconnected */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, ~debug_detect);
 		rdd_attached();
 	} else {
-		ccprintf("Debug Accessory disconnected\n");
+		CPRINTS("Debug Accessory disconnected");
 		/* Detect when debug cable is connected */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, debug_detect);
 		rdd_detached();
+		enable_sleep(SLEEP_MASK_RDD);
 	}
 
 	/* Clear interrupt */
