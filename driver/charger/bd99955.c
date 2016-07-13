@@ -393,6 +393,15 @@ static void usb_charger_process(enum bd99955_charge_port port)
 }
 #endif /* HAS_TASK_USB_CHG */
 
+static int bd99955_set_vsysreg(int voltage)
+{
+	/* VSYS Regulation voltage is in 64mV steps. */
+	voltage &= ~0x3F;
+
+	return ch_raw_write16(BD99955_CMD_VSYSREG_SETa, voltage,
+			      BD99955_EXTENDED_COMMAND);
+}
+
 /* chip specific interfaces */
 
 int charger_set_input_current(int input_current)
@@ -548,7 +557,15 @@ int charger_set_mode(int mode)
 {
 	int rv;
 
-	rv = bd99955_charger_enable(mode & CHARGE_FLAG_INHIBIT_CHARGE ? 0 : 1);
+	if (mode & CHARGE_FLAG_INHIBIT_CHARGE) {
+		rv = bd99955_set_vsysreg(DISCHARGE_VSYSREG);
+		msleep(50);
+		rv |= bd99955_charger_enable(0);
+	} else {
+		rv = bd99955_charger_enable(1);
+		msleep(1);
+		rv |= bd99955_set_vsysreg(CHARGE_VSYSREG);
+	}
 	if (rv)
 		return rv;
 

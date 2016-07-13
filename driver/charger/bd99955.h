@@ -39,6 +39,10 @@ enum bd99955_charge_port {
 #define INPUT_I_MIN	512
 #define INPUT_I_STEP	32
 
+/* VSYSREG settings */
+#define DISCHARGE_VSYSREG	8960
+#define CHARGE_VSYSREG		6144
+
 /* Battery Charger Commands */
 #define BD99955_CMD_CHG_CURRENT		0x14
 #define BD99955_CMD_CHG_VOLTAGE		0x15
