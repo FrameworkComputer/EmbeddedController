@@ -283,6 +283,15 @@ static int generate_prime(struct LITE_BIGNUM *b, TPM_ALG_ID hashing,
 	return 0;
 }
 
+#ifdef CRYPTO_TEST_SETUP
+static const uint8_t VERIFY_SEED[32] = {
+	0x54, 0xef, 0xe3, 0xe9, 0x1e, 0xfa, 0xad, 0x9b,
+	0x18, 0x3f, 0x27, 0x12, 0xfd, 0xe7, 0xfb, 0xc6,
+	0x60, 0xcc, 0x34, 0x05, 0x00, 0x7d, 0x21, 0x6e,
+	0xc2, 0x1e, 0x78, 0xbe, 0x61, 0xc8, 0x41, 0x99
+};
+#endif
+
 CRYPT_RESULT _cpri__GenerateKeyRSA(
 	TPM2B *N_buf, TPM2B *p_buf, uint16_t num_bits,
 	uint32_t e_buf, TPM_ALG_ID hashing, TPM2B *seed,
@@ -317,11 +326,15 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 		return CRYPT_FAIL;
 
 	/* Hash down the primary seed for RSA key generation, so that
-	 * the derivation tree is distinct from ECC key derivation. */
+	 * the derivation tree is distinct from ECC key derivation.
+	 */
 #ifdef CRYPTO_TEST_SETUP
-	/* Test seed has already been hashed down. */
-	memcpy(local_seed.t.buffer, seed->buffer, seed->size);
-#else
+	if (seed->size == sizeof(VERIFY_SEED) &&
+	    memcmp(seed->buffer, VERIFY_SEED, seed->size) == 0) {
+		/* Test seed has already been hashed down. */
+		memcpy(local_seed.t.buffer, seed->buffer, seed->size);
+	} else
+#endif
 	{
 		LITE_HMAC_CTX hmac;
 
@@ -330,7 +343,6 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 		memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
 			local_seed.t.size);
 	}
-#endif
 
 	if (e_buf == 0)
 		e_buf = RSA_F4;
@@ -756,13 +768,6 @@ static const TPM2B_PUBLIC_KEY_RSA RSA_2048_Q = {
 			0x9b, 0x27, 0xc8, 0xb2, 0xb1, 0x3d, 0x8a, 0xd7
 		}
 	}
-};
-
-static const uint8_t VERIFY_SEED[32] = {
-	0x54, 0xef, 0xe3, 0xe9, 0x1e, 0xfa, 0xad, 0x9b,
-	0x18, 0x3f, 0x27, 0x12, 0xfd, 0xe7, 0xfb, 0xc6,
-	0x60, 0xcc, 0x34, 0x05, 0x00, 0x7d, 0x21, 0x6e,
-	0xc2, 0x1e, 0x78, 0xbe, 0x61, 0xc8, 0x41, 0x99
 };
 
 #define MAX_MSG_BYTES RSA_MAX_BYTES

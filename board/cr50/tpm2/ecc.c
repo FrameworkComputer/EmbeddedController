@@ -128,6 +128,16 @@ CRYPT_RESULT _cpri__EccPointMultiply(
 	}
 }
 
+static const TPM2B_32_BYTE_VALUE ECC_TEMPLATE_EK_EXTRA = {
+	.t = {32, {
+			0xC2, 0xE0, 0x31, 0x93, 0x40, 0xFB, 0x48, 0xF1,
+			0x02, 0x53, 0x9E, 0xA9, 0x83, 0x63, 0xF8, 0x1E,
+			0x2D, 0x30, 0x6E, 0x91, 0x8D, 0xD7, 0x78, 0xAB,
+			0xF0, 0x54, 0x73, 0xA2, 0xA6, 0x0D, 0xAE, 0x09,
+		}
+	}
+};
+
 /* Key generation based on FIPS-186.4 section B.1.2 (Key Generation by
  * Testing Candidates) */
 CRYPT_RESULT _cpri__GenerateKeyEcc(
@@ -137,6 +147,8 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 {
 	TPM2B_4_BYTE_VALUE marshaled_counter = { .t = {4} };
 	TPM2B_32_BYTE_VALUE local_seed = { .t = {32} };
+	TPM2B_4_BYTE_VALUE truncated_extra = { .t = {4} };
+	TPM2B *local_extra;
 	uint32_t count = 0;
 	uint8_t key_bytes[P256_NBYTES];
 	LITE_HMAC_CTX hmac;
@@ -159,10 +171,22 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 	HASH_update(&hmac.hash, "ECC", 4);
 	memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
 	       local_seed.t.size);
+	/* TODO(ngm): CRBUG/P/55260: the personalize code uses only
+	 * the first 4 bytes of extra.
+	 */
+	if (extra && extra->size == ECC_TEMPLATE_EK_EXTRA.b.size &&
+		memcmp(extra->buffer,
+		       ECC_TEMPLATE_EK_EXTRA.b.buffer,
+		       ECC_TEMPLATE_EK_EXTRA.b.size) == 0) {
+		memcpy(truncated_extra.b.buffer, extra->buffer, 4);
+		local_extra = &truncated_extra.b;
+	} else {
+		local_extra = extra;
+	}
 
 	for (; count != 0; count++) {
 		memcpy(marshaled_counter.t.buffer, &count, sizeof(count));
-		_cpri__KDFa(hash_alg, &local_seed.b, label, extra,
+		_cpri__KDFa(hash_alg, &local_seed.b, label, local_extra,
 			&marshaled_counter.b, sizeof(key_bytes) * 8, key_bytes,
 			NULL, FALSE);
 		if (DCRYPTO_p256_key_from_bytes(
