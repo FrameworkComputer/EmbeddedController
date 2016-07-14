@@ -19,6 +19,7 @@
 #include "task.h"
 #include "tpm_registers.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* TPM2 library includes. */
 #include "ExecCommand_fp.h"
@@ -541,6 +542,8 @@ void tpm_task(void)
 		command_code = be32toh(tpmh->command_code);
 		CPRINTF("%s: received fifo command 0x%04x\n",
 			__func__, command_code);
+
+		watchdog_reload();
 
 #ifdef CONFIG_EXTENSION_COMMAND
 		if (command_code == CONFIG_EXTENSION_COMMAND) {
