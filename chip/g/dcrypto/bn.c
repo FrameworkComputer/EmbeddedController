@@ -822,6 +822,28 @@ static uint32_t bn_mod_word16(const struct LITE_BIGNUM *p, uint16_t word)
 	return rem;
 }
 
+static uint32_t bn_mod_f4(const struct LITE_BIGNUM *d)
+{
+	int i = bn_size(d) - 1;
+	const uint8_t *p = (const uint8_t *) (d->d);
+	uint32_t rem = 0;
+
+	for (; i >= 0; --i) {
+		uint32_t q = RSA_F4 * (rem >> 8);
+
+		if (rem < q)
+			q -= RSA_F4;
+		rem <<= 8;
+		rem |= p[i];
+		rem -= q;
+	}
+
+	if (rem >= RSA_F4)
+		rem -= RSA_F4;
+
+	return rem;
+}
+
 #define bn_is_even(b) !bn_is_bit_set((b), 0)
 /* From HAC Fact 4.48 (ii), the following number of
  * rounds suffice for ~2^145 confidence.  Each additional
@@ -963,8 +985,11 @@ int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p)
 		j = (i << 1);
 		DCRYPTO_bn_wrap(&diff, &diff_buf, sizeof(diff_buf));
 		bn_add(p, &diff);
-		if (bn_probable_prime(p))
-			return 1;
+		/* Make sure prime will work with F4 public exponent. */
+		if (bn_mod_f4(p) >= 2) {
+			if (bn_probable_prime(p))
+				return 1;
+		}
 	}
 
 	memset(composites_buf, 0, sizeof(composites_buf));
