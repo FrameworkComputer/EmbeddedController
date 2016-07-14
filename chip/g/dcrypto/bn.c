@@ -449,11 +449,11 @@ int bn_modinv_vartime(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *e,
 		const struct LITE_BIGNUM *MOD)
 {
 	/* Buffers for B, D, and U must be as large as e. */
-	uint32_t A_buf[RSA_MAX_WORDS];
-	uint32_t B_buf[RSA_MAX_WORDS / 2];
-	uint32_t C_buf[RSA_MAX_WORDS];
-	uint32_t D_buf[RSA_MAX_WORDS / 2];
-	uint32_t U_buf[RSA_MAX_WORDS / 2];
+	uint32_t A_buf[RSA_MAX_WORDS + 1];
+	uint32_t B_buf[RSA_MAX_WORDS + 1];
+	uint32_t C_buf[RSA_MAX_WORDS + 1];
+	uint32_t D_buf[RSA_MAX_WORDS + 1];
+	uint32_t U_buf[RSA_MAX_WORDS];
 	uint32_t V_buf[RSA_MAX_WORDS];
 	int a_neg = 0;
 	int b_neg = 0;
@@ -473,17 +473,16 @@ int bn_modinv_vartime(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *e,
 	if (bn_size(e) > sizeof(U_buf))
 		return 0;
 
-	bn_init(&A, A_buf, bn_size(MOD));
-	BN_DIGIT(&A, 0) = 1;
-	bn_init(&B, B_buf, bn_size(MOD) / 2);
-	bn_init(&C, C_buf, bn_size(MOD));
-	bn_init(&D, D_buf, bn_size(MOD) / 2);
-	BN_DIGIT(&D, 0) = 1;
-
-	bn_init(&U, U_buf, bn_size(e));
-	memcpy(U_buf, e->d, bn_size(e));
-
+	bn_init(&A, A_buf, bn_size(MOD) + sizeof(uint32_t));
+	bn_init(&B, B_buf, bn_size(MOD) + sizeof(uint32_t));
+	bn_init(&C, C_buf, bn_size(MOD) + sizeof(uint32_t));
+	bn_init(&D, D_buf, bn_size(MOD) + sizeof(uint32_t));
+	bn_init(&U, U_buf, bn_size(MOD));
 	bn_init(&V, V_buf, bn_size(MOD));
+
+	BN_DIGIT(&A, 0) = 1;
+	BN_DIGIT(&D, 0) = 1;
+	memcpy(U_buf, e->d, bn_size(e));
 	memcpy(V_buf, MOD->d, bn_size(MOD));
 
 	/* Binary extended GCD, as per Handbook of Applied
@@ -510,18 +509,14 @@ int bn_modinv_vartime(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *e,
 		} else {  /* U, V both odd. */
 			if (bn_gte(&U, &V)) {
 				assert(!bn_sub(&U, &V));
-				if (bn_signed_sub(&A, &a_neg, &C, c_neg))
-					bn_signed_add(&A, &a_neg, MOD, 0);
-				if (bn_signed_sub(&B, &b_neg, &D, d_neg))
-					bn_signed_add(&B, &b_neg, MOD, 0);
+				bn_signed_sub(&A, &a_neg, &C, c_neg);
+				bn_signed_sub(&B, &b_neg, &D, d_neg);
 				if (bn_is_zero(&U))
 					break;  /* done. */
 			} else {
 				assert(!bn_sub(&V, &U));
-				if (bn_signed_sub(&C, &c_neg, &A, a_neg))
-					bn_signed_add(&C, &c_neg, MOD, 0);
-				if (bn_signed_sub(&D, &d_neg, &B, b_neg))
-					bn_signed_add(&D, &d_neg, MOD, 0);
+				bn_signed_sub(&C, &c_neg, &A, a_neg);
+				bn_signed_sub(&D, &d_neg, &B, b_neg);
 			}
 		}
 		if ((i + 1) % 1000 == 0)
