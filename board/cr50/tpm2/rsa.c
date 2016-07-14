@@ -213,10 +213,10 @@ CRYPT_RESULT _cpri__ValidateSignatureRSA(
 CRYPT_RESULT _cpri__TestKeyRSA(TPM2B *d_buf, uint32_t e,
 			TPM2B *N_buf, TPM2B *p_buf, TPM2B *q_buf)
 {
-	struct BIGNUM N;
-	struct BIGNUM p;
-	struct BIGNUM q;
-	struct BIGNUM d;
+	struct LITE_BIGNUM N;
+	struct LITE_BIGNUM p;
+	struct LITE_BIGNUM q;
+	struct LITE_BIGNUM d;
 	int result;
 
 	if (!p_buf)
@@ -261,8 +261,9 @@ CRYPT_RESULT _cpri__TestKeyRSA(TPM2B *d_buf, uint32_t e,
  * TODO(ngm): tweak this value along with performance improvements. */
 #define MAX_GENERATE_ATTEMPTS 3
 
-static int generate_prime(struct BIGNUM *b, TPM_ALG_ID hashing, TPM2B *seed,
-			const char *label, TPM2B *extra, uint32_t *counter)
+static int generate_prime(struct LITE_BIGNUM *b, TPM_ALG_ID hashing,
+			TPM2B *seed, const char *label, TPM2B *extra,
+			uint32_t *counter)
 {
 	TPM2B_4_BYTE_VALUE marshaled_counter = { .t = {4} };
 	uint32_t i;
@@ -297,10 +298,10 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	const uint16_t num_bytes = num_bits / 8;
 	uint8_t q_buf[RSA_MAX_BYTES / 2];
 
-	struct BIGNUM e;
-	struct BIGNUM p;
-	struct BIGNUM q;
-	struct BIGNUM N;
+	struct LITE_BIGNUM e;
+	struct LITE_BIGNUM p;
+	struct LITE_BIGNUM q;
+	struct LITE_BIGNUM N;
 
 	uint32_t counter;
 	TPM2B_32_BYTE_VALUE local_seed = { .t = {32} };
@@ -795,7 +796,7 @@ static void rsa_command_handler(void *cmd_body,
 
 	TPM2B_128_BYTE_VALUE seed;
 	uint8_t bn_buf[RSA_MAX_BYTES];
-	struct BIGNUM bn;
+	struct LITE_BIGNUM bn;
 	char label[MAX_LABEL_LEN];
 
 	/* This is the SHA-256 hash of the RSA template from the TCG

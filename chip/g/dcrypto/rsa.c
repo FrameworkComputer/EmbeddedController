@@ -402,7 +402,7 @@ static int check_pkcs1_pss_pad(const uint8_t *in, uint32_t in_len,
 	return !bad;
 }
 
-static int check_modulus_params(const struct BIGNUM *N, uint32_t *out_len)
+static int check_modulus_params(const struct LITE_BIGNUM *N, uint32_t *out_len)
 {
 	if (bn_size(N) > RSA_MAX_BYTES)
 		return 0;                      /* Unsupported key size. */
@@ -420,11 +420,11 @@ int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 {
 	uint8_t *p;
 	uint32_t padded_buf[RSA_MAX_WORDS];
-	uint32_t e_buf[BN_BYTES / sizeof(uint32_t)];
+	uint32_t e_buf[LITE_BN_BYTES / sizeof(uint32_t)];
 
-	struct BIGNUM padded;
-	struct BIGNUM e;
-	struct BIGNUM encrypted;
+	struct LITE_BIGNUM padded;
+	struct LITE_BIGNUM e;
+	struct LITE_BIGNUM encrypted;
 
 	if (!check_modulus_params(&rsa->N, out_len))
 		return 0;
@@ -482,8 +482,8 @@ int DCRYPTO_rsa_decrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	uint32_t encrypted_buf[RSA_MAX_WORDS];
 	uint32_t padded_buf[RSA_MAX_WORDS];
 
-	struct BIGNUM encrypted;
-	struct BIGNUM padded;
+	struct LITE_BIGNUM encrypted;
+	struct LITE_BIGNUM padded;
 	int ret = 1;
 
 	if (!check_modulus_params(&rsa->N, NULL))
@@ -497,10 +497,10 @@ int DCRYPTO_rsa_decrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	bn_init(&padded, padded_buf, in_len);
 
 	/* Reverse from big-endian to little-endian notation. */
-	reverse((uint8_t *) encrypted.d, encrypted.dmax * BN_BYTES);
+	reverse((uint8_t *) encrypted.d, encrypted.dmax * LITE_BN_BYTES);
 	bn_mont_modexp(&padded, &encrypted, &rsa->d, &rsa->N);
 	/* Back to big-endian notation. */
-	reverse((uint8_t *) padded.d, padded.dmax * BN_BYTES);
+	reverse((uint8_t *) padded.d, padded.dmax * LITE_BN_BYTES);
 
 	switch (padding) {
 	case PADDING_MODE_OAEP:
@@ -539,8 +539,8 @@ int DCRYPTO_rsa_sign(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 {
 	uint32_t padded_buf[RSA_MAX_WORDS];
 
-	struct BIGNUM padded;
-	struct BIGNUM signature;
+	struct LITE_BIGNUM padded;
+	struct LITE_BIGNUM signature;
 
 	if (!check_modulus_params(&rsa->N, out_len))
 		return 0;
@@ -581,11 +581,11 @@ int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 {
 	uint32_t padded_buf[RSA_MAX_WORDS];
 	uint32_t signature_buf[RSA_MAX_WORDS];
-	uint32_t e_buf[BN_BYTES / sizeof(uint32_t)];
+	uint32_t e_buf[LITE_BN_BYTES / sizeof(uint32_t)];
 
-	struct BIGNUM padded;
-	struct BIGNUM signature;
-	struct BIGNUM e;
+	struct LITE_BIGNUM padded;
+	struct LITE_BIGNUM signature;
+	struct LITE_BIGNUM e;
 	int ret = 1;
 
 	if (!check_modulus_params(&rsa->N, NULL))
@@ -600,10 +600,10 @@ int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 	BN_DIGIT(&e, 0) = rsa->e;
 
 	/* Reverse from big-endian to little-endian notation. */
-	reverse((uint8_t *) signature.d, signature.dmax * BN_BYTES);
+	reverse((uint8_t *) signature.d, signature.dmax * LITE_BN_BYTES);
 	bn_mont_modexp(&padded, &signature, &e, &rsa->N);
 	/* Back to big-endian notation. */
-	reverse((uint8_t *) padded.d, padded.dmax * BN_BYTES);
+	reverse((uint8_t *) padded.d, padded.dmax * LITE_BN_BYTES);
 
 	switch (padding) {
 	case PADDING_MODE_PKCS1:
@@ -629,17 +629,18 @@ int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 	return ret;
 }
 
-int DCRYPTO_rsa_key_compute(struct BIGNUM *N, struct BIGNUM *d,
-			struct BIGNUM *p, struct BIGNUM *q, uint32_t e_buf)
+int DCRYPTO_rsa_key_compute(struct LITE_BIGNUM *N, struct LITE_BIGNUM *d,
+			struct LITE_BIGNUM *p, struct LITE_BIGNUM *q,
+			uint32_t e_buf)
 {
 	uint32_t ONE_buf = 1;
 	uint32_t phi_buf[RSA_MAX_WORDS];
 	uint32_t q_buf[RSA_MAX_WORDS / 2];
 
-	struct BIGNUM ONE;
-	struct BIGNUM e;
-	struct BIGNUM phi;
-	struct BIGNUM q_local;
+	struct LITE_BIGNUM ONE;
+	struct LITE_BIGNUM e;
+	struct LITE_BIGNUM phi;
+	struct LITE_BIGNUM q_local;
 
 	DCRYPTO_bn_wrap(&ONE, &ONE_buf, sizeof(ONE_buf));
 	DCRYPTO_bn_wrap(&phi, phi_buf, bn_size(N));

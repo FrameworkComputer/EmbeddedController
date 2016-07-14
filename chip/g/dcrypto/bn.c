@@ -16,21 +16,21 @@ extern void watchdog_reload(void);
 static inline void watchdog_reload(void) { }
 #endif
 
-void bn_init(struct BIGNUM *b, void *buf, size_t len)
+void bn_init(struct LITE_BIGNUM *b, void *buf, size_t len)
 {
 	DCRYPTO_bn_wrap(b, buf, len);
 	dcrypto_memset(buf, 0x00, len);
 }
 
-void DCRYPTO_bn_wrap(struct BIGNUM *b, void *buf, size_t len)
+void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len)
 {
 	/* Only word-multiple sized buffers accepted. */
 	assert((len & 0x3) == 0);
-	b->dmax = len / BN_BYTES;
+	b->dmax = len / LITE_BN_BYTES;
 	b->d = (struct access_helper *) buf;
 }
 
-static int bn_eq(const struct BIGNUM *a, const struct BIGNUM *b)
+static int bn_eq(const struct LITE_BIGNUM *a, const struct LITE_BIGNUM *b)
 {
 	int i;
 	uint32_t top = 0;
@@ -52,42 +52,42 @@ static int bn_eq(const struct BIGNUM *a, const struct BIGNUM *b)
 	return 1;
 }
 
-static void bn_copy(struct BIGNUM *dst, const struct BIGNUM *src)
+static void bn_copy(struct LITE_BIGNUM *dst, const struct LITE_BIGNUM *src)
 {
 	dst->dmax = src->dmax;
 	memcpy(dst->d, src->d, bn_size(dst));
 }
 
-int bn_check_topbit(const struct BIGNUM *N)
+int bn_check_topbit(const struct LITE_BIGNUM *N)
 {
 	return BN_DIGIT(N, N->dmax - 1) >> 31;
 }
 
 /* a[n]. */
-int bn_is_bit_set(const struct BIGNUM *a, int n)
+int bn_is_bit_set(const struct LITE_BIGNUM *a, int n)
 {
 	int i, j;
 
 	if (n < 0)
 		return 0;
 
-	i = n / BN_BITS2;
-	j = n % BN_BITS2;
+	i = n / LITE_BN_BITS2;
+	j = n % LITE_BN_BITS2;
 	if (a->dmax <= i)
 		return 0;
 
 	return (BN_DIGIT(a, i) >> j) & 1;
 }
 
-static int bn_set_bit(const struct BIGNUM *a, int n)
+static int bn_set_bit(const struct LITE_BIGNUM *a, int n)
 {
 	int i, j;
 
 	if (n < 0)
 		return 0;
 
-	i = n / BN_BITS2;
-	j = n % BN_BITS2;
+	i = n / LITE_BN_BITS2;
+	j = n % LITE_BN_BITS2;
 	if (a->dmax <= i)
 		return 0;
 
@@ -97,7 +97,7 @@ static int bn_set_bit(const struct BIGNUM *a, int n)
 
 /* a[] >= b[]. */
 /* TODO(ngm): constant time. */
-static int bn_gte(const struct BIGNUM *a, const struct BIGNUM *b)
+static int bn_gte(const struct LITE_BIGNUM *a, const struct LITE_BIGNUM *b)
 {
 	int i;
 	uint32_t top = 0;
@@ -119,7 +119,7 @@ static int bn_gte(const struct BIGNUM *a, const struct BIGNUM *b)
 }
 
 /* c[] = c[] - a[], assumes c > a. */
-uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a)
+uint32_t bn_sub(struct LITE_BIGNUM *c, const struct LITE_BIGNUM *a)
 {
 	int64_t A = 0;
 	int i;
@@ -141,8 +141,8 @@ uint32_t bn_sub(struct BIGNUM *c, const struct BIGNUM *a)
 
 /* c[] = c[] - a[], negative numbers in 2's complement representation. */
 /* Returns borrow bit. */
-static uint32_t bn_signed_sub(struct BIGNUM *c, int *c_neg,
-		const struct BIGNUM *a, int a_neg)
+static uint32_t bn_signed_sub(struct LITE_BIGNUM *c, int *c_neg,
+		const struct LITE_BIGNUM *a, int a_neg)
 {
 	uint32_t carry = 0;
 	uint64_t A = 1;
@@ -167,7 +167,7 @@ static uint32_t bn_signed_sub(struct BIGNUM *c, int *c_neg,
 }
 
 /* c[] = c[] + a[]. */
-uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a)
+uint32_t bn_add(struct LITE_BIGNUM *c, const struct LITE_BIGNUM *a)
 {
 	uint64_t A = 0;
 	int i;
@@ -189,8 +189,8 @@ uint32_t bn_add(struct BIGNUM *c, const struct BIGNUM *a)
 
 /* c[] = c[] + a[], negative numbers in 2's complement representation. */
 /* Returns carry bit. */
-static uint32_t bn_signed_add(struct BIGNUM *c, int *c_neg,
-			const struct BIGNUM *a, int a_neg)
+static uint32_t bn_signed_add(struct LITE_BIGNUM *c, int *c_neg,
+			const struct LITE_BIGNUM *a, int a_neg)
 {
 	uint32_t A = bn_add(c, a);
 	uint32_t carry;
@@ -201,7 +201,7 @@ static uint32_t bn_signed_add(struct BIGNUM *c, int *c_neg,
 }
 
 /* r[] <<= 1. */
-static uint32_t bn_lshift(struct BIGNUM *r)
+static uint32_t bn_lshift(struct LITE_BIGNUM *r)
 {
 	int i;
 	uint32_t w;
@@ -216,7 +216,7 @@ static uint32_t bn_lshift(struct BIGNUM *r)
 }
 
 /* r[] >>= 1.  Handles 2's complement negative numbers. */
-static void bn_rshift(struct BIGNUM *r, uint32_t carry, uint32_t neg)
+static void bn_rshift(struct LITE_BIGNUM *r, uint32_t carry, uint32_t neg)
 {
 	int i;
 	uint32_t ones = ~0;
@@ -227,12 +227,12 @@ static void bn_rshift(struct BIGNUM *r, uint32_t carry, uint32_t neg)
 
 		ones &= BN_DIGIT(r, i);
 		accu = (BN_DIGIT(r, i) >> 1);
-		accu |= (BN_DIGIT(r, i + 1) << (BN_BITS2 - 1));
+		accu |= (BN_DIGIT(r, i + 1) << (LITE_BN_BITS2 - 1));
 		BN_DIGIT(r, i) = accu;
 	}
 	ones &= BN_DIGIT(r, i);
 	BN_DIGIT(r, i) = (BN_DIGIT(r, i) >> 1) |
-		(highbit << (BN_BITS2 - 1));
+		(highbit << (LITE_BN_BITS2 - 1));
 
 	if (ones == ~0 && highbit && neg)
 		memset(r->d, 0x00, bn_size(r));    /* -1 >> 1 = 0. */
@@ -240,9 +240,9 @@ static void bn_rshift(struct BIGNUM *r, uint32_t carry, uint32_t neg)
 
 /* Montgomery c[] += a * b[] / R % N. */
 /* TODO(ngm): constant time. */
-static void bn_mont_mul_add(struct BIGNUM *c, const uint32_t a,
-			const struct BIGNUM *b,	const uint32_t nprime,
-			const struct BIGNUM *N)
+static void bn_mont_mul_add(struct LITE_BIGNUM *c, const uint32_t a,
+			const struct LITE_BIGNUM *b,	const uint32_t nprime,
+			const struct LITE_BIGNUM *N)
 {
 	uint32_t A, B, d0;
 	int i;
@@ -280,9 +280,9 @@ static void bn_mont_mul_add(struct BIGNUM *c, const uint32_t a,
 }
 
 /* Montgomery c[] = a[] * b[] / R % N. */
-static void bn_mont_mul(struct BIGNUM *c, const struct BIGNUM *a,
-			const struct BIGNUM *b, const uint32_t nprime,
-			const struct BIGNUM *N)
+static void bn_mont_mul(struct LITE_BIGNUM *c, const struct LITE_BIGNUM *a,
+			const struct LITE_BIGNUM *b, const uint32_t nprime,
+			const struct LITE_BIGNUM *N)
 {
 	int i;
 
@@ -296,14 +296,14 @@ static void bn_mont_mul(struct BIGNUM *c, const struct BIGNUM *a,
 
 /* Mongomery R * R % N, R = 1 << (1 + log2N). */
 /* TODO(ngm): constant time. */
-static void bn_compute_RR(struct BIGNUM *RR, const struct BIGNUM *N)
+static void bn_compute_RR(struct LITE_BIGNUM *RR, const struct LITE_BIGNUM *N)
 {
 	int i;
 
 	bn_sub(RR, N);         /* R - N = R % N since R < 2N */
 
 	/* Repeat 2 * R % N, log2(R) times. */
-	for (i = 0; i < N->dmax * BN_BITS2; i++) {
+	for (i = 0; i < N->dmax * LITE_BN_BITS2; i++) {
 		if (bn_lshift(RR))
 			assert(bn_sub(RR, N) == -1);
 		if (bn_gte(RR, N))
@@ -327,8 +327,8 @@ static uint32_t bn_compute_nprime(const uint32_t n0)
 /* Montgomery output = input ^ exp % N. */
 /* TODO(ngm): this implementation not timing or side-channel safe by
  * any measure. */
-void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
-		const struct BIGNUM *exp, const struct BIGNUM *N)
+void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
+		const struct LITE_BIGNUM *exp, const struct LITE_BIGNUM *N)
 {
 	int i;
 	uint32_t nprime;
@@ -336,9 +336,9 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	uint32_t acc_buf[RSA_MAX_WORDS];
 	uint32_t aR_buf[RSA_MAX_WORDS];
 
-	struct BIGNUM RR;
-	struct BIGNUM acc;
-	struct BIGNUM aR;
+	struct LITE_BIGNUM RR;
+	struct LITE_BIGNUM acc;
+	struct LITE_BIGNUM aR;
 
 #ifndef CR50_NO_BN_ASM
 	if (bn_bits(N) == 2048 || bn_bits(N) == 1024) {
@@ -362,12 +362,12 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 	bn_mont_mul(&aR, input, &RR, nprime, N);      /* aR = a * RR / R % N */
 
 	/* TODO(ngm): burn stack space and use windowing. */
-	for (i = exp->dmax * BN_BITS2 - 1; i >= 0; i--) {
+	for (i = exp->dmax * LITE_BN_BITS2 - 1; i >= 0; i--) {
 		bn_mont_mul(output, &acc, &acc, nprime, N);
 		if (bn_is_bit_set(exp, i)) {
 			bn_mont_mul(&acc, output, &aR, nprime, N);
 		} else {
-			struct BIGNUM tmp = *output;
+			struct LITE_BIGNUM tmp = *output;
 
 			*output = acc;
 			acc = tmp;
@@ -397,8 +397,8 @@ void bn_mont_modexp(struct BIGNUM *output, const struct BIGNUM *input,
 }
 
 /* c[] += a * b[] */
-static uint32_t bn_mul_add(struct BIGNUM *c, uint32_t a,
-			const struct BIGNUM *b, uint32_t offset)
+static uint32_t bn_mul_add(struct LITE_BIGNUM *c, uint32_t a,
+			const struct LITE_BIGNUM *b, uint32_t offset)
 {
 	int i;
 	uint64_t carry = 0;
@@ -414,8 +414,8 @@ static uint32_t bn_mul_add(struct BIGNUM *c, uint32_t a,
 }
 
 /* c[] = a[] * b[] */
-void DCRYPTO_bn_mul(struct BIGNUM *c, const struct BIGNUM *a,
-		const struct BIGNUM *b)
+void DCRYPTO_bn_mul(struct LITE_BIGNUM *c, const struct LITE_BIGNUM *a,
+		const struct LITE_BIGNUM *b)
 {
 	int i;
 	uint32_t carry = 0;
@@ -432,7 +432,7 @@ void DCRYPTO_bn_mul(struct BIGNUM *c, const struct BIGNUM *a,
 #define bn_is_even(b) !bn_is_bit_set((b), 0)
 #define bn_is_odd(b) bn_is_bit_set((b), 0)
 
-static int bn_is_zero(const struct BIGNUM *a)
+static int bn_is_zero(const struct LITE_BIGNUM *a)
 {
 	int i, result = 0;
 
@@ -445,8 +445,8 @@ static int bn_is_zero(const struct BIGNUM *a)
 /* TODO(ngm): this method is used in place of division to calculate
  * q = N/p, i.e.  q = p^-1 mod (N-1).  The buffer e may be
  * resized to uint32_t once division is implemented. */
-int bn_modinv_vartime(struct BIGNUM *d, const struct BIGNUM *e,
-		const struct BIGNUM *MOD)
+int bn_modinv_vartime(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *e,
+		const struct LITE_BIGNUM *MOD)
 {
 	/* Buffers for B, D, and U must be as large as e. */
 	uint32_t A_buf[RSA_MAX_WORDS];
@@ -463,12 +463,12 @@ int bn_modinv_vartime(struct BIGNUM *d, const struct BIGNUM *e,
 	int carry2;
 	int i = 0;
 
-	struct BIGNUM A;
-	struct BIGNUM B;
-	struct BIGNUM C;
-	struct BIGNUM D;
-	struct BIGNUM U;
-	struct BIGNUM V;
+	struct LITE_BIGNUM A;
+	struct LITE_BIGNUM B;
+	struct LITE_BIGNUM C;
+	struct LITE_BIGNUM D;
+	struct LITE_BIGNUM U;
+	struct LITE_BIGNUM V;
 
 	if (bn_size(e) > sizeof(U_buf))
 		return 0;
@@ -813,7 +813,7 @@ const uint8_t PRIME_DELTAS[NUM_PRIMES] = {
 	5,  3,  4,  5,  1,  9,  8,  4,  6,  9,  6,  3,  6,  5,  3,  3
 };
 
-static uint32_t bn_mod_word16(const struct BIGNUM *p, uint16_t word)
+static uint32_t bn_mod_word16(const struct LITE_BIGNUM *p, uint16_t word)
 {
 	int i;
 	uint32_t rem = 0;
@@ -836,7 +836,7 @@ static uint32_t bn_mod_word16(const struct BIGNUM *p, uint16_t word)
 #define ROUNDS_384  22
 
 /* Miller-Rabin from HAC, algorithm 4.24. */
-static int bn_probable_prime(const struct BIGNUM *p)
+static int bn_probable_prime(const struct LITE_BIGNUM *p)
 {
 	int j;
 	int s = 0;
@@ -847,11 +847,11 @@ static int bn_probable_prime(const struct BIGNUM *p)
 	uint8_t A_buf[RSA_MAX_BYTES / 2];
 	uint8_t y_buf[RSA_MAX_BYTES / 2];
 
-	struct BIGNUM ONE;
-	struct BIGNUM TWO;
-	struct BIGNUM r;
-	struct BIGNUM A;
-	struct BIGNUM y;
+	struct LITE_BIGNUM ONE;
+	struct LITE_BIGNUM TWO;
+	struct LITE_BIGNUM r;
+	struct LITE_BIGNUM A;
+	struct LITE_BIGNUM y;
 
 	const int rounds = bn_bits(p) >= 1024 ? ROUNDS_1024 :
 			bn_bits(p) >= 512 ? ROUNDS_512 :
@@ -922,7 +922,7 @@ static int bn_probable_prime(const struct BIGNUM *p)
 	return 1;
 }
 
-int DCRYPTO_bn_generate_prime(struct BIGNUM *p)
+int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p)
 {
 	int i;
 	int j;
@@ -930,7 +930,7 @@ int DCRYPTO_bn_generate_prime(struct BIGNUM *p)
 	 * of ~0.5% @ 1024-bit candidates.  The failure rate rises to ~6%
 	 * if the sieve size is halved. */
 	uint8_t composites_buf[256];
-	struct BIGNUM composites;
+	struct LITE_BIGNUM composites;
 	uint16_t prime = PRIME1;
 
 	/* Set top two bits, as well as LSB. */
@@ -958,7 +958,7 @@ int DCRYPTO_bn_generate_prime(struct BIGNUM *p)
 	j = 0;
 	for (i = 0; i < bn_bits(&composites); i++) {
 		uint32_t diff_buf;
-		struct BIGNUM diff;
+		struct LITE_BIGNUM diff;
 
 		if (bn_is_bit_set(&composites, i))
 			continue;
