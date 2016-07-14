@@ -152,6 +152,25 @@ static int anx74xx_tcpm_mux_exit(int port)
 	return rv;
 }
 
+static int anx74xx_set_mux(int port, int polarity)
+{
+	int reg, rv = EC_SUCCESS;
+
+	rv = tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_2, &reg);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+	if (polarity) {
+		reg |= ANX74XX_REG_AUX_SWAP_SET_CC2;
+		reg &= ~ANX74XX_REG_AUX_SWAP_SET_CC1;
+	} else {
+		reg |= ANX74XX_REG_AUX_SWAP_SET_CC1;
+		reg &= ~ANX74XX_REG_AUX_SWAP_SET_CC2;
+	}
+	rv = tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2, reg);
+
+	return rv;
+}
+
 static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 {
 	int reg = 0, val = 0;
@@ -186,10 +205,15 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 			val = ANX74XX_REG_MUX_DP_MODE_ACE_CC1;
 			reg |= ANX74XX_REG_MUX_ML2_A;
 		}
-	} else
-		return EC_ERROR_UNIMPLEMENTED;
+		/* FIXME: disabling DP mode should disable SBU muxes */
+		rv |= anx74xx_set_mux(port, mux_state & MUX_POLARITY_INVERTED);
+	} else if (!mux_state) {
+		return anx74xx_tcpm_mux_exit(port);
+	} else {
+		return  EC_ERROR_UNIMPLEMENTED;
+	}
 
-	rv = tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1, val);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1, val);
 	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_5, reg);
 
 	anx74xx_set_mux(port, mux_state & MUX_POLARITY_INVERTED ? 1 : 0);
@@ -240,25 +264,6 @@ static int anx74xx_init_analog(int port)
 		return rv;
 	reg |= ANX74XX_REG_TX_MODE_ENABLE;
 	rv = tcpc_write(port, ANX74XX_REG_CC_SOFTWARE_CTRL, reg);
-
-	return rv;
-}
-
-static int anx74xx_set_mux(int port, int polarity)
-{
-	int reg, rv = EC_SUCCESS;
-
-	rv = tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_2, &reg);
-	if (rv)
-		return EC_ERROR_UNKNOWN;
-	if (polarity) {
-		reg |= ANX74XX_REG_AUX_SWAP_SET_CC2;
-		reg &= ~ANX74XX_REG_AUX_SWAP_SET_CC1;
-	} else {
-		reg |= ANX74XX_REG_AUX_SWAP_SET_CC1;
-		reg &= ~ANX74XX_REG_AUX_SWAP_SET_CC2;
-	}
-	rv = tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2, reg);
 
 	return rv;
 }
@@ -472,7 +477,7 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 
 static int anx74xx_tcpm_set_polarity(int port, int polarity)
 {
-	int reg, rv = EC_SUCCESS;
+	int reg, mux_state, rv = EC_SUCCESS;
 
 	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
 	if (polarity) /* Inform ANX to use CC2 */
@@ -482,11 +487,13 @@ static int anx74xx_tcpm_set_polarity(int port, int polarity)
 	rv |= tcpc_write(port, ANX74XX_REG_CC_SOFTWARE_CTRL, reg);
 
 	anx[port].polarity = polarity;
-	rv |= anx74xx_set_mux(port, polarity);
 
-	/* Default DP pin mux D */
+	/* Update mux polarity */
 #ifdef CONFIG_USB_PD_TCPM_MUX
-	anx74xx_tcpm_mux_set(port, TYPEC_MUX_DOCK);
+	mux_state = anx[port].mux_state & ~MUX_POLARITY_INVERTED;
+	if (polarity)
+		mux_state |= MUX_POLARITY_INVERTED;
+	anx74xx_tcpm_mux_set(port, mux_state);
 #endif
 	return rv;
 }
