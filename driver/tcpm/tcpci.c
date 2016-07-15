@@ -104,8 +104,14 @@ int tcpci_tcpm_set_polarity(int port, int polarity)
 
 int tcpci_tcpm_set_vconn(int port, int enable)
 {
-	return tcpc_write(port, TCPC_REG_POWER_CTRL,
-			  TCPC_REG_POWER_CTRL_SET(enable));
+	int reg, rv;
+
+	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
+	if (rv)
+		return rv;
+	reg &= ~TCPC_REG_POWER_CTRL_VCONN(1);
+	reg |= TCPC_REG_POWER_CTRL_VCONN(enable);
+	return tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
 }
 
 int tcpci_tcpm_set_msg_header(int port, int power_role, int data_role)
