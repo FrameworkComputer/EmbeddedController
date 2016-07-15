@@ -819,6 +819,20 @@ int bd99955_select_input_port(enum bd99955_charge_port port)
 			      BD99955_EXTENDED_COMMAND);
 }
 
+int bd99955_get_temp(int *temp_ptr)
+{
+	int rv;
+
+	rv = ch_raw_read16(BD99955_CMD_THERM_VAL, temp_ptr,
+			BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	/* Degrees C = 200 - THERM_VAL, range is -55C-200C, 1C steps */
+	*temp_ptr = 200 - *temp_ptr;
+	return EC_SUCCESS;
+}
+
 #ifdef HAS_TASK_USB_CHG
 int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable)
 {
