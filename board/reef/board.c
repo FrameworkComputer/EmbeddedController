@@ -41,6 +41,7 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "thermistor.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -106,8 +107,15 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vfs = Vref = 2.816V, 10-bit unsigned reading */
-	[ADC_BOARD_ID] = {"BRD_ID", NPCX_ADC_CH2,
-				ADC_MAX_VOLT, ADC_READ_MAX + 1, 0},
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		"CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
+	[ADC_TEMP_SENSOR_AMB] = {
+		"AMBIENT", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
+	[ADC_BOARD_ID] = {
+		"BRD_ID", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -236,34 +244,74 @@ DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
 int board_get_battery_temp(int idx, int *temp_ptr)
 {
-	/* FIXME(dhendrix): Read THERM_VAL from BD99956 and convert
-	   Celsius to Kelvin */
-	*temp_ptr = 0;
-	return 0;
+	if (bd99955_get_temp(temp_ptr) < 0)
+		return -1;
 
+	*temp_ptr = C_TO_K(*temp_ptr);
+	return 0;
 }
+
+/*
+ * Data derived from Seinhart-Hart equation in a resistor divider circuit with
+ * Vdd=3300mV, R = 13.7Kohm, and Murata NCP15WB-series thermistor (B = 4050,
+ * T0 = 298.15, nominal resistance (R0) = 47Kohm).
+ */
+#define CHARGER_THERMISTOR_SCALING_FACTOR 11
+static const struct thermistor_data_pair charger_thermistor_data[] = {
+	{ 1500 / CHARGER_THERMISTOR_SCALING_FACTOR, 50 },
+	{ 1810 / CHARGER_THERMISTOR_SCALING_FACTOR, 60 },
+	{ 2092 / CHARGER_THERMISTOR_SCALING_FACTOR, 70 },
+	{ 2334 / CHARGER_THERMISTOR_SCALING_FACTOR, 80 },
+	{ 2697 / CHARGER_THERMISTOR_SCALING_FACTOR, 100 },
+};
+
+static const struct thermistor_info charger_thermistor_info = {
+	.scaling_factor = CHARGER_THERMISTOR_SCALING_FACTOR,
+	.num_pairs = ARRAY_SIZE(charger_thermistor_data),
+	.data = charger_thermistor_data,
+};
 
 int board_get_charger_temp(int idx, int *temp_ptr)
 {
-	int raw_val = adc_read_channel(NPCX_ADC_CH0);
+	int mv = adc_read_channel(NPCX_ADC_CH0);
 
-	if (raw_val < 0)
+	if (mv < 0)
 		return -1;
 
-	/* FIXME(dhendrix): Add data points and calculate using CL:344781 */
-	*temp_ptr = 0;
+	*temp_ptr = thermistor_linear_interpolate(mv, &charger_thermistor_info);
+	*temp_ptr = C_TO_K(*temp_ptr);
 	return 0;
 }
 
+/*
+ * Data derived from Seinhart-Hart equation in a resistor divider circuit with
+ * Vdd=3300mV, R = 51.1Kohm, and Murata NCP15WB-series thermistor (B = 4050,
+ * T0 = 298.15, nominal resistance (R0) = 47Kohm).
+ */
+#define AMB_THERMISTOR_SCALING_FACTOR 13
+static const struct thermistor_data_pair amb_thermistor_data[] = {
+	{ 2497 / AMB_THERMISTOR_SCALING_FACTOR, 50 },
+	{ 2703 / AMB_THERMISTOR_SCALING_FACTOR, 60 },
+	{ 2857 / AMB_THERMISTOR_SCALING_FACTOR, 70 },
+	{ 2970 / AMB_THERMISTOR_SCALING_FACTOR, 80 },
+	{ 3113 / AMB_THERMISTOR_SCALING_FACTOR, 100 },
+};
+
+static const struct thermistor_info amb_thermistor_info = {
+	.scaling_factor = AMB_THERMISTOR_SCALING_FACTOR,
+	.num_pairs = ARRAY_SIZE(amb_thermistor_data),
+	.data = amb_thermistor_data,
+};
+
 int board_get_ambient_temp(int idx, int *temp_ptr)
 {
-	int raw_val = adc_read_channel(NPCX_ADC_CH1);
+	int mv = adc_read_channel(NPCX_ADC_CH1);
 
-	if (raw_val < 0)
+	if (mv < 0)
 		return -1;
 
-	/* FIXME(dhendrix): Add data points and calculate using CL:344781 */
-	*temp_ptr = 0;
+	*temp_ptr = thermistor_linear_interpolate(mv, &amb_thermistor_info);
+	*temp_ptr = C_TO_K(*temp_ptr);
 	return 0;
 }
 
@@ -272,22 +320,9 @@ const struct temp_sensor_t temp_sensors[] = {
 	/* FIXME(dhendrix): tweak action_delay_sec */
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, board_get_battery_temp, 0, 1},
 	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0, 5},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 0, 1},
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/*
- * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
- * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
-	/* FIXME(dhendrix): Implement this... */
-	{{0, 0, 0}, 0, 0},	/* Battery */
-	{{0, 0, 0}, 0, 0},	/* Ambient */
-	{{0, 0, 0}, 0, 0},	/* Charger */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /* ALS instances. Must be in same order as enum als_id. */
 struct als_t als[] = {
