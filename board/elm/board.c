@@ -302,6 +302,19 @@ int board_set_active_charge_port(int charge_port)
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
 	/* check if we are source VBUS on the port */
 	int source = gpio_get_level(GPIO_USB_C0_5V_EN);
+	static int initialized;
+
+	/*
+	 * Reject charge port disable if our battery is critical and we
+	 * have yet to initialize a charge port - continue to charge using
+	 * charger ROM / POR settings.
+	 */
+	if (!initialized &&
+	    charge_port == CHARGE_PORT_NONE &&
+	    charge_get_percent() < 2) {
+		CPRINTS("Battery critical, don't disable charging");
+		return -1;
+	}
 
 	if (is_real_port && source) {
 		CPRINTF("Skip enable p%d", charge_port);
@@ -318,6 +331,7 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
 	}
 
+	initialized = 1;
 	return EC_SUCCESS;
 }
 
