@@ -593,6 +593,24 @@ int charger_get_voltage(int *voltage)
 
 int charger_set_voltage(int voltage)
 {
+	int rv;
+	int reg;
+	const struct battery_info *bi = battery_get_info();
+
+	/*
+	 * Regulate the system voltage to battery max if the battery
+	 * is not present or the battery is discharging on AC.
+	 */
+	rv = ch_raw_read16(BD99955_CMD_CHGOP_SET2, &reg,
+				BD99955_EXTENDED_COMMAND);
+	if (rv)
+		return rv;
+
+	if (reg & BD99955_CMD_CHGOP_SET2_BATT_LEARN ||
+		battery_is_present() != BP_YES ||
+		battery_is_cut_off())
+		voltage = bi->voltage_max;
+
 	/* Charge voltage step 16 mV */
 	voltage &= ~0x0F;
 
@@ -644,6 +662,14 @@ static void bd99995_init(void)
 		return;
 	reg &= ~(BD99955_CMD_CHGOP_SET2_USB_SUS);
 	ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
+		       BD99955_EXTENDED_COMMAND);
+
+	/* VSYS Valid Threshold High & Low Settings */
+	ch_raw_write16(BD99955_CMD_VSYSVAL_THH_SET,
+		       bi->voltage_max & 0x7fe0,
+		       BD99955_EXTENDED_COMMAND);
+	ch_raw_write16(BD99955_CMD_VSYSVAL_THL_SET,
+		       bi->voltage_min & 0x7fe0,
 		       BD99955_EXTENDED_COMMAND);
 
 	/* Set battery OVP to 500 + maximum battery voltage */
