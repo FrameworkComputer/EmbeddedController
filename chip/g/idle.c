@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "rdd.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -47,6 +48,14 @@ DECLARE_CONSOLE_COMMAND(idle, command_idle,
 			"Set or show the idle action: wfi, sleep, deep sleep",
 			NULL);
 
+static int utmi_wakeup_is_enabled(void)
+{
+#ifdef CONFIG_RDD
+	return is_utmi_wakeup_allowed();
+#endif
+	return 1;
+}
+
 static void prepare_to_sleep(void)
 {
 	/* No task switching! */
@@ -55,10 +64,13 @@ static void prepare_to_sleep(void)
 	/* Enable all possible internal wake sources */
 	GR_PMU_EXITPD_MASK =
 		GC_PMU_EXITPD_MASK_PIN_PD_EXIT_MASK |
-		GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK |
 		GC_PMU_EXITPD_MASK_RDD0_PD_EXIT_TIMER_MASK |
 		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER0_MASK |
 		GC_PMU_EXITPD_MASK_TIMELS0_PD_EXIT_TIMER1_MASK;
+
+	if (utmi_wakeup_is_enabled())
+		GR_PMU_EXITPD_MASK |=
+			GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK;
 
 	/* Which rails should we turn off? */
 	GR_PMU_LOW_POWER_DIS =

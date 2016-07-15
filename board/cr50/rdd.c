@@ -14,7 +14,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-static int uart_enabled;
+static int uart_enabled, enable_usb_wakeup;
 
 struct uart_config {
 	const char *name;
@@ -31,6 +31,12 @@ static int ccd_is_enabled(void)
 {
 	return !gpio_get_level(GPIO_CCD_MODE_L);
 }
+
+int is_utmi_wakeup_allowed(void)
+{
+	return enable_usb_wakeup;
+}
+
 
 /* If the UART TX is enabled the pinmux select will have a non-zero value */
 int uartn_enabled(int uart)
@@ -89,6 +95,8 @@ void rdd_attached(void)
 	/* Enable CCD */
 	ccd_set_mode(CCD_MODE_ENABLED);
 
+	enable_usb_wakeup = 1;
+
 	/* Enable device state monitoring */
 	device_detect_state_enable(1);
 }
@@ -108,6 +116,8 @@ void rdd_detached(void)
 
 	/* Done with case-closed debug mode */
 	gpio_set_level(GPIO_CCD_MODE_L, 1);
+
+	enable_usb_wakeup = 0;
 
 	/* Disable CCD */
 	ccd_set_mode(CCD_MODE_DISABLED);
