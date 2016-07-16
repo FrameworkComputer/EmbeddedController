@@ -166,14 +166,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 /* called from anx74xx_set_power_mode() */
 void board_set_tcpc_power_mode(int port, int mode)
 {
-	gpio_set_level(GPIO_EN_USB_TCPC_PWR, mode);
-	msleep(mode ? 10 : 1);
-
-	/* FIXME(dhendrix): This is also connected to the PS8751 which
-	 * we might not want to reset just because something happened
-	 * on the ANX3429. */
-	gpio_set_level(GPIO_USB_PD_RST_ODL, mode);
-	msleep(10);
+	/*
+	 * This is called during init by the ANX driver to take the TCPC out
+	 * of reset and enable power. Since we have two TCPC chips and one
+	 * power enable on Reef, we take both chips out of reset in a
+	 * separate function.
+	 */
 }
 
 /**
@@ -198,6 +196,20 @@ void board_reset_pd_mcu(void)
 	 */
 	msleep(50);
 }
+
+void board_tcpc_init(void)
+{
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_to_this_image())
+		board_reset_pd_mcu();
+
+	/* Enable TCPC0 interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+
+	/* Enable TCPC1 interrupt */
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
 int board_get_battery_temp(int idx, int *temp_ptr)
 {
