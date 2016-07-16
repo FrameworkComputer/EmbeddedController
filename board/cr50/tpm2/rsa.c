@@ -164,6 +164,8 @@ CRYPT_RESULT _cpri__SignRSA(uint32_t *out_len, uint8_t *out,
 	rsa.d.dmax = key->privateKey->size / sizeof(uint32_t);
 	rsa.d.d = (struct access_helper *) &key->privateKey->buffer;
 
+	/* TPM2 wrapper function fails to initialize out_len! */
+	*out_len = key->publicKey->size;
 	result = DCRYPTO_rsa_sign(&rsa, out, out_len, in, in_len,
 				padding, hashing);
 
