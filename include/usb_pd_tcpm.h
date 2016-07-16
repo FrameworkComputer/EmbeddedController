@@ -161,10 +161,16 @@ struct tcpm_drv {
 	void (*tcpc_alert)(int port);
 };
 
+enum tcpc_alert_polarity {
+	TCPC_ALERT_ACTIVE_LOW,
+	TCPC_ALERT_ACTIVE_HIGH,
+};
+
 struct tcpc_config_t {
 	int i2c_host_port;
 	int i2c_slave_addr;
 	const struct tcpm_drv *drv;
+	enum tcpc_alert_polarity pol;
 };
 
 /**

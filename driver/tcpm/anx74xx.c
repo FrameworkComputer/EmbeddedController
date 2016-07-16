@@ -762,7 +762,9 @@ int anx74xx_tcpm_init(int port)
 
 	/* Initialize interrupt polarity */
 	rv |= tcpc_write(port, ANX74XX_REG_IRQ_STATUS,
-			ANX74XX_INT_ACTIVE_POLARITY);
+			tcpc_config[port].pol == TCPC_ALERT_ACTIVE_LOW ?
+			ANX74XX_REG_IRQ_POL_LOW :
+			ANX74XX_REG_IRQ_POL_HIGH);
 
 	/* unmask interrupts */
 	rv |= tcpc_read(port, ANX74XX_REG_IRQ_EXT_MASK_1, &reg);
