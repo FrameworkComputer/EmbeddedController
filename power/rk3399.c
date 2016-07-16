@@ -5,6 +5,7 @@
 
 /* rk3399 chipset power control module for Chrome EC */
 
+#include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -42,6 +43,9 @@
 
 /* Long power key press to force shutdown in S0 */
 #define FORCED_SHUTDOWN_DELAY  (8 * SECOND)
+
+#define CHARGER_INITIALIZED_DELAY_MS 100
+#define CHARGER_INITIALIZED_TRIES 40
 
 static int forcing_shutdown;
 
@@ -94,6 +98,8 @@ DECLARE_DEFERRED(force_shutdown);
 
 enum power_state power_handle_state(enum power_state state)
 {
+	int tries = 0;
+
 	switch (state) {
 	case POWER_G3:
 		break;
@@ -117,6 +123,23 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_G3S5:
 		forcing_shutdown = 0;
+
+		/*
+		 * Allow time for charger to be initialized, in case we're
+		 * trying to boot the AP with no battery.
+		 */
+		while (charge_prevent_power_on(0) &&
+		       tries++ < CHARGER_INITIALIZED_TRIES) {
+			msleep(CHARGER_INITIALIZED_DELAY_MS);
+		}
+
+		/* Return to G3 if battery level is too low. */
+		if (charge_want_shutdown() ||
+		    tries > CHARGER_INITIALIZED_TRIES) {
+			CPRINTS("power-up inhibited");
+			chipset_force_shutdown();
+			return POWER_G3;
+		}
 
 		/* Power up to next state */
 		return POWER_S5;
