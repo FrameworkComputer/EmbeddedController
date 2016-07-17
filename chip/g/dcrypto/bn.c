@@ -30,7 +30,7 @@ void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len)
 	b->d = (struct access_helper *) buf;
 }
 
-static int bn_eq(const struct LITE_BIGNUM *a, const struct LITE_BIGNUM *b)
+int bn_eq(const struct LITE_BIGNUM *a, const struct LITE_BIGNUM *b)
 {
 	int i;
 	uint32_t top = 0;

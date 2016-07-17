@@ -651,8 +651,11 @@ int DCRYPTO_rsa_key_compute(struct LITE_BIGNUM *N, struct LITE_BIGNUM *d,
 		bn_sub(&phi, &ONE);
 		if (!bn_modinv_vartime(&q_local, p, &phi))
 			return 0;
+		/* Check that p * q == N */
+		DCRYPTO_bn_mul(&phi, p, &q_local);
+		if (!bn_eq(N, &phi))
+			return 0;
 		q = &q_local;
-		bn_add(&phi, &ONE);
 	} else {
 		DCRYPTO_bn_mul(N, p, q);
 		memcpy(phi_buf, N->d, bn_size(N));
