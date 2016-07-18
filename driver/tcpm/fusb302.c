@@ -105,18 +105,16 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 
 	if (state[port].togdone_pullup_cc1 == 1) {
 		/* Measure CC1 */
+		reg = TCPC_REG_SWITCHES0_CC1_PU_EN |
+		      TCPC_REG_SWITCHES0_MEAS_CC1;
+
+		reg |= state[port].vconn_enabled ?
+			TCPC_REG_SWITCHES0_VCONN_CC2 : 0;
+		reg |= state[port].device_id != FUSB302_DEVID_302A ?
+			TCPC_REG_SWITCHES0_CC2_PU_EN : 0;
 
 		/* Enable CC1 measurement switch and pullup(s) */
-		if (state[port].device_id == FUSB302_DEVID_302A) {
-			tcpc_write(port, TCPC_REG_SWITCHES0,
-				  TCPC_REG_SWITCHES0_CC1_PU_EN |
-				  TCPC_REG_SWITCHES0_MEAS_CC1);
-		} else {
-			tcpc_write(port, TCPC_REG_SWITCHES0,
-				  TCPC_REG_SWITCHES0_CC1_PU_EN |
-				  TCPC_REG_SWITCHES0_CC2_PU_EN |
-				  TCPC_REG_SWITCHES0_MEAS_CC1);
-		}
+		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
 		/* Set MDAC Value to High (1.6V). MDAC Reg is 5:0 */
 		tcpc_write(port, TCPC_REG_MEASURE, 0x26);
@@ -149,18 +147,16 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 		}
 	} else if (state[port].togdone_pullup_cc2 == 1) {
 		/* Measure CC2 */
+		reg = TCPC_REG_SWITCHES0_CC2_PU_EN |
+		      TCPC_REG_SWITCHES0_MEAS_CC2;
+
+		reg |= state[port].vconn_enabled ?
+			TCPC_REG_SWITCHES0_VCONN_CC1 : 0;
+		reg |= state[port].device_id != FUSB302_DEVID_302A ?
+			TCPC_REG_SWITCHES0_CC1_PU_EN : 0;
 
 		/* Enable CC2 measurement switch and pullup */
-		if (state[port].device_id == FUSB302_DEVID_302A) {
-			tcpc_write(port, TCPC_REG_SWITCHES0,
-				  TCPC_REG_SWITCHES0_CC2_PU_EN |
-				  TCPC_REG_SWITCHES0_MEAS_CC2);
-		} else {
-			tcpc_write(port, TCPC_REG_SWITCHES0,
-				  TCPC_REG_SWITCHES0_CC1_PU_EN |
-				  TCPC_REG_SWITCHES0_CC2_PU_EN |
-				  TCPC_REG_SWITCHES0_MEAS_CC2);
-		}
+		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
 		/* Set MDAC Value to High (~1.6V). MDAC Reg is 5:0 */
 		tcpc_write(port, TCPC_REG_MEASURE, 0x26);
@@ -480,10 +476,12 @@ static int fusb302_tcpm_set_cc(int port, int pull)
 			/* enable the pull-up we know to be necessary */
 			tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
 
-			reg &= ~(TCPC_REG_SWITCHES0_CC2_PU_EN);
-			reg &= ~(TCPC_REG_SWITCHES0_CC1_PU_EN);
-			reg &= ~TCPC_REG_SWITCHES0_CC1_PD_EN;
-			reg &= ~TCPC_REG_SWITCHES0_CC2_PD_EN;
+			reg &= ~(TCPC_REG_SWITCHES0_CC2_PU_EN |
+				 TCPC_REG_SWITCHES0_CC1_PU_EN |
+				 TCPC_REG_SWITCHES0_CC1_PD_EN |
+				 TCPC_REG_SWITCHES0_CC2_PD_EN |
+				 TCPC_REG_SWITCHES0_VCONN_CC1 |
+				 TCPC_REG_SWITCHES0_VCONN_CC2);
 
 			if (state[port].device_id == FUSB302_DEVID_302A) {
 				if (state[port].togdone_pullup_cc1)
@@ -494,6 +492,10 @@ static int fusb302_tcpm_set_cc(int port, int pull)
 				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN |
 				       TCPC_REG_SWITCHES0_CC2_PU_EN;
 			}
+			if (state[port].vconn_enabled)
+				reg |= state[port].togdone_pullup_cc1 ?
+				       TCPC_REG_SWITCHES0_VCONN_CC2 :
+				       TCPC_REG_SWITCHES0_VCONN_CC1;
 
 			tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
@@ -609,6 +611,9 @@ static int fusb302_tcpm_set_vconn(int port, int enable)
 	 */
 	int reg;
 
+	/* save enable state for later use */
+	state[port].vconn_enabled = enable;
+
 	if (enable) {
 		/* set to saved polarity */
 		tcpm_set_polarity(port, state[port].cc_polarity);
@@ -623,8 +628,6 @@ static int fusb302_tcpm_set_vconn(int port, int enable)
 		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 	}
 
-	/* save enable state for later use */
-	state[port].vconn_enabled = enable;
 	return 0;
 }
 
@@ -910,7 +913,9 @@ void fusb302_tcpc_alert(int port)
 			reg &= ~(TCPC_REG_SWITCHES0_CC2_PU_EN |
 				 TCPC_REG_SWITCHES0_CC1_PU_EN |
 				 TCPC_REG_SWITCHES0_CC1_PD_EN |
-				 TCPC_REG_SWITCHES0_CC2_PD_EN);
+				 TCPC_REG_SWITCHES0_CC2_PD_EN |
+				 TCPC_REG_SWITCHES0_VCONN_CC1 |
+				 TCPC_REG_SWITCHES0_VCONN_CC2);
 
 			if (state[port].device_id == FUSB302_DEVID_302A) {
 				if (state[port].togdone_pullup_cc1)
@@ -921,6 +926,11 @@ void fusb302_tcpc_alert(int port)
 				reg |= TCPC_REG_SWITCHES0_CC1_PU_EN |
 				       TCPC_REG_SWITCHES0_CC2_PU_EN;
 			}
+
+			if (state[port].vconn_enabled)
+				reg |= state[port].togdone_pullup_cc1 ?
+				       TCPC_REG_SWITCHES0_VCONN_CC2 :
+				       TCPC_REG_SWITCHES0_VCONN_CC1;
 
 			tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 			/* toggle done */
