@@ -16,42 +16,12 @@
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
-#include "usb_gpio.h"
 #include "usb_i2c.h"
 #include "usb_spi.h"
 #include "usb-stream.h"
 #include "util.h"
 
-
-/******************************************************************************
- * Build GPIO tables and expose a subset of the GPIOs over USB.
- */
-
 #include "gpio_list.h"
-
-static enum gpio_signal const usb_gpio_list[] = {
-GPIO_UART1_EN_L,
-GPIO_SERVO_JTAG_TRST_L,
-GPIO_SPI1_BUF_EN_L,
-GPIO_SPI2_BUF_EN_L,
-GPIO_UART2_EN_L,
-GPIO_SPI1_VREF_33,
-GPIO_SPI1_VREF_18,
-GPIO_SPI2_VREF_33,
-GPIO_SPI2_VREF_18,
-GPIO_SERVO_JTAG_TRST_DIR,
-GPIO_SERVO_JTAG_TDI_DIR,
-GPIO_TCA6416_RESET_L
-};
-
-/*
- * This instantiates struct usb_gpio_config const usb_gpio, plus several other
- * variables, all named something beginning with usb_gpio_
- */
-USB_GPIO_CONFIG(usb_gpio,
-		usb_gpio_list,
-		USB_IFACE_GPIO,
-		USB_EP_GPIO);
 
 
 /******************************************************************************
