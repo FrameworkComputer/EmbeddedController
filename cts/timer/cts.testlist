@@ -1,0 +1,19 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Test timer accuracy
+ *
+ * After sync, DUT and TH start counting down one second. After one second,
+ * DUT raises GPIO level, which triggers an interrupt on TH. TH determines
+ * whether the test passes or not based on how much more or less time elapsed
+ * than one second.
+ *
+ * Requirements:
+ * - Sync connection
+ * - GPIO_OUTPUT connection for sending notification from DUT
+ * - Calibrated TH timer
+ */
+CTS_TEST(timer_calibration_test)

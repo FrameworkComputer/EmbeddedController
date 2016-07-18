@@ -7,6 +7,13 @@
 
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
+#ifdef CTS_MODULE
+#ifndef CTS_MODULE_GPIO
+/* Overload C10 for notification. Enabled only for non-GPIO suites as
+ * GPIO tests don't require a separate notification line. */
+GPIO_INT(CTS_NOTIFY, PIN(C, 10), GPIO_INT_FALLING | GPIO_PULL_UP , cts_irq)
+#endif
+#endif
 
 /* Outputs */
 GPIO(LED_GREEN,   PIN(B, 2), GPIO_OUT_LOW)
@@ -24,5 +31,7 @@ ALTERNATE(PIN_MASK(G, 0x0180), GPIO_ALT_F8, MODULE_UART,  0) /* LPUART: PG7/8 */
 GPIO(HANDSHAKE_OUTPUT, PIN(D, 2), GPIO_ODR_LOW)
 GPIO(HANDSHAKE_INPUT, PIN(C, 12), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(OUTPUT_TEST, PIN(C, 11), GPIO_ODR_LOW)
+#ifdef CTS_MODULE_GPIO
 GPIO(INPUT_TEST, PIN(C, 10), GPIO_INPUT | GPIO_PULL_UP)
+#endif
 #endif

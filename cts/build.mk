@@ -5,6 +5,10 @@
 
 CFLAGS_CTS=-DCTS_MODULE -DCTS_TASKFILE=cts.tasklist
 
+ifeq "$(CTS_MODULE)" "gpio"
+CFLAGS_CTS+=-DCTS_MODULE_GPIO
+endif
+
 ifeq ($(BOARD),stm32l476g-eval)
 	cts-y+=$(CTS_MODULE)/th.o
 	cts-y+=common/th_common.o
