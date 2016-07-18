@@ -150,9 +150,8 @@ static inline unsigned time_since32(timestamp_t start)
 }
 
 /**
- * Returns a free running high resolution (ten us or better) clock.
- *
- * Used by third party libraries requiring MSDN services.
+ * Returns a free running millisecond clock counter, which matches tpm2
+ * library expectations.
  */
 clock_t clock(void);
 
