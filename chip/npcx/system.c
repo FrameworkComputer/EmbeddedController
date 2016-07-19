@@ -422,7 +422,9 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	uint32_t cur_secs, alarm_secs;
 
 	if (seconds == EC_RTC_ALARM_CLEAR) {
-		system_reset_rtc_alarm();
+		CLEAR_BIT(NPCX_WTC, NPCX_WTC_WIE);
+		SET_BIT(NPCX_WTC, NPCX_WTC_PTO);
+
 		return;
 	}
 
