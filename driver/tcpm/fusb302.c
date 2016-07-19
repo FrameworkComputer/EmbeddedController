@@ -95,98 +95,95 @@ static int convert_bc_lvl(int port, int bc_lvl)
 	return ret;
 }
 
-/* Determine cc pin state for source */
-static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
+static int measure_cc_pin_source(int port, int cc_measure)
 {
+	int switches0_reg;
 	int reg;
+	int cc_lvl;
+	int bc_lvl;
 
+	/* Read status register */
+	tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
+	/* Save current value */
+	switches0_reg = reg;
+	/* Clear pull-up register settings and measure bits */
+	reg &= ~(TCPC_REG_SWITCHES0_MEAS_CC1 | TCPC_REG_SWITCHES0_MEAS_CC2);
+	/* Set desired pullup register bit */
+	if (cc_measure == TCPC_REG_SWITCHES0_MEAS_CC1)
+		reg |= TCPC_REG_SWITCHES0_CC1_PU_EN;
+	else
+		reg |= TCPC_REG_SWITCHES0_CC2_PU_EN;
+	/* Set CC measure bit */
+	reg |= cc_measure;
+
+	/* Set measurement switch */
+	tcpc_write(port, TCPC_REG_SWITCHES0, reg);
+
+	/* Set MDAC for Open vs Rd/Ra comparison (~1.6V) */
+	tcpc_write(port, TCPC_REG_MEASURE, 0x26);
+
+	/* Wait on measurement */
+	usleep(250);
+
+	/* Read status register */
+	tcpc_read(port, TCPC_REG_STATUS0, &reg);
+
+	/* Assume open */
+	cc_lvl = TYPEC_CC_VOLT_OPEN;
+
+	if ((reg & TCPC_REG_STATUS0_COMP) == 0) {
+		/*
+		 * CC line is < 1.6V, now need to determine if Rd or Ra is
+		 * attached. The Ra threshold is < 200 mV and so can use the
+		 * bc_lvl field of STATUS0 register.
+		 */
+		bc_lvl = reg & (TCPC_REG_STATUS0_BC_LVL1 |
+				TCPC_REG_STATUS0_BC_LVL0);
+
+		cc_lvl = bc_lvl ? TYPEC_CC_VOLT_RD : TYPEC_CC_VOLT_RA;
+	}
+
+	/* Restore SWITCHES0 register to its value prior */
+	tcpc_write(port, TCPC_REG_SWITCHES0, switches0_reg);
+
+	return cc_lvl;
+}
+
+/* Determine cc pin state for source when in manual detect mode */
+static void detect_cc_pin_source_manual(int port, int *cc1_lvl, int *cc2_lvl)
+{
+	int cc1_measure = TCPC_REG_SWITCHES0_MEAS_CC1;
+	int cc2_measure = TCPC_REG_SWITCHES0_MEAS_CC2;
+
+	if (state[port].vconn_enabled) {
+		/* If VCONN enabled, measure cc_pin that matches polarity */
+		if (state[port].cc_polarity)
+			*cc2_lvl = measure_cc_pin_source(port, cc2_measure);
+		else
+			*cc1_lvl = measure_cc_pin_source(port, cc1_measure);
+	} else {
+		/* If VCONN not enabled, measure both cc1 and cc2 */
+		*cc1_lvl = measure_cc_pin_source(port, cc1_measure);
+		*cc2_lvl = measure_cc_pin_source(port, cc2_measure);
+	}
+
+}
+
+/* Determine cc pin state for source when autotoggle feature is enabled */
+static void detect_cc_pin_source_auto(int port, int *cc1_lvl, int *cc2_lvl)
+{
 	*cc1_lvl = TYPEC_CC_VOLT_OPEN;
 	*cc2_lvl = TYPEC_CC_VOLT_OPEN;
 
 	if (state[port].togdone_pullup_cc1 == 1) {
 		/* Measure CC1 */
-		reg = TCPC_REG_SWITCHES0_CC1_PU_EN |
-		      TCPC_REG_SWITCHES0_MEAS_CC1;
+		*cc1_lvl = measure_cc_pin_source(port,
+						 TCPC_REG_SWITCHES0_MEAS_CC1);
 
-		reg |= state[port].vconn_enabled ?
-			TCPC_REG_SWITCHES0_VCONN_CC2 : 0;
-		reg |= state[port].device_id != FUSB302_DEVID_302A ?
-			TCPC_REG_SWITCHES0_CC2_PU_EN : 0;
-
-		/* Enable CC1 measurement switch and pullup(s) */
-		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
-
-		/* Set MDAC Value to High (1.6V). MDAC Reg is 5:0 */
-		tcpc_write(port, TCPC_REG_MEASURE, 0x26);
-
-		/* CC1 is now being measured by FUSB302. */
-
-		/* Wait on measurement */
-		usleep(250);
-
-		/* Read status register */
-		tcpc_read(port, TCPC_REG_STATUS0, &reg);
-
-		if (reg & TCPC_REG_STATUS0_COMP) {
-			*cc1_lvl = TYPEC_CC_VOLT_OPEN;
-		} else {
-
-			/* Set MDAC Value to Low (200 mV). MDAC Reg is 5:0 */
-			tcpc_write(port, TCPC_REG_MEASURE, 0x05);
-
-			/* Wait on measurement */
-			usleep(250);
-
-			/* Read status register */
-			tcpc_read(port, TCPC_REG_STATUS0, &reg);
-
-			if (reg & TCPC_REG_STATUS0_COMP)
-				*cc1_lvl = TYPEC_CC_VOLT_RD;
-			else
-				*cc1_lvl = TYPEC_CC_VOLT_RA;
-		}
 	} else if (state[port].togdone_pullup_cc2 == 1) {
 		/* Measure CC2 */
-		reg = TCPC_REG_SWITCHES0_CC2_PU_EN |
-		      TCPC_REG_SWITCHES0_MEAS_CC2;
-
-		reg |= state[port].vconn_enabled ?
-			TCPC_REG_SWITCHES0_VCONN_CC1 : 0;
-		reg |= state[port].device_id != FUSB302_DEVID_302A ?
-			TCPC_REG_SWITCHES0_CC1_PU_EN : 0;
-
-		/* Enable CC2 measurement switch and pullup */
-		tcpc_write(port, TCPC_REG_SWITCHES0, reg);
-
-		/* Set MDAC Value to High (~1.6V). MDAC Reg is 5:0 */
-		tcpc_write(port, TCPC_REG_MEASURE, 0x26);
-
-		/* CC2 is now being measured by FUSB302. */
-
-		/* Wait on measurement */
-		usleep(250);
-
-		/* Read status register */
-		tcpc_read(port, TCPC_REG_STATUS0, &reg);
-
-		if (reg & TCPC_REG_STATUS0_COMP) {
-			*cc2_lvl = TYPEC_CC_VOLT_OPEN;
-		} else {
-
-			/* Set MDAC Value to Low (~200mV). MDAC Reg is 5:0 */
-			tcpc_write(port, TCPC_REG_MEASURE, 0x05);
-
-			/* Wait on measurement */
-			usleep(250);
-
-			/* Read status register */
-			tcpc_read(port, TCPC_REG_STATUS0, &reg);
-
-			if (reg & TCPC_REG_STATUS0_COMP)
-				*cc2_lvl = TYPEC_CC_VOLT_RD;
-			else
-				*cc2_lvl = TYPEC_CC_VOLT_RA;
-		}
+		*cc2_lvl = measure_cc_pin_source(port,
+						 TCPC_REG_SWITCHES0_MEAS_CC2);
 	}
 }
 
@@ -378,8 +375,10 @@ static int fusb302_tcpm_init(int port)
 	tcpc_write(port, TCPC_REG_MASK, reg);
 
 	reg = 0xFF;
-	/* informs of attaches */
-	reg &= ~TCPC_REG_MASKA_TOGDONE;
+	/* Only use autodetect feature for revA silicon */
+	if (state[port].device_id == FUSB302_DEVID_302A)
+		/* informs of attaches */
+		reg &= ~TCPC_REG_MASKA_TOGDONE;
 	/* when all pd message retries fail... */
 	reg &= ~TCPC_REG_MASKA_RETRYFAIL;
 	/* when fusb302 send a hard reset. */
@@ -428,7 +427,10 @@ static int fusb302_tcpm_get_cc(int port, int *cc1, int *cc2)
 
 	if (state[port].pulling_up) {
 		/* Source mode? */
-		detect_cc_pin_source(port, cc1, cc2);
+		if (state[port].device_id == FUSB302_DEVID_302A)
+			detect_cc_pin_source_auto(port, cc1, cc2);
+		else
+			detect_cc_pin_source_manual(port, cc1, cc2);
 	} else {
 		/* Sink mode? */
 		detect_cc_pin_sink(port, cc1, cc2);
@@ -456,8 +458,10 @@ static int fusb302_tcpm_set_cc(int port, int pull)
 	switch (pull) {
 	case TYPEC_CC_RP:
 
+		/* Only use autodetect feature for revA silicon */
 		/* if fusb302 hasn't figured anything out yet */
-		if (!state[port].togdone_pullup_cc1 &&
+		if ((state[port].device_id == FUSB302_DEVID_302A) &&
+		    !state[port].togdone_pullup_cc1 &&
 		    !state[port].togdone_pullup_cc2) {
 
 			/* Enable DFP Toggle Mode */
