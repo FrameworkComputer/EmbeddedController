@@ -17,6 +17,7 @@
 #include "spi.h"
 #include "task.h"
 #include "timer.h"
+#include "update_fw.h"
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
@@ -176,6 +177,7 @@ const void *const usb_strings[] = {
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Servo EC Shell"),
 	[USB_STR_USART3_STREAM_NAME]  = USB_STRING_DESC("DUT UART"),
 	[USB_STR_USART4_STREAM_NAME]  = USB_STRING_DESC("Atmega UART"),
+	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
@@ -195,6 +197,27 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 USB_I2C_CONFIG(usb_i2c, USB_IFACE_I2C, USB_EP_I2C);
+
+
+
+/******************************************************************************
+ * Support firmware upgrade over USB. We can update whichever section is not
+ * the current section.
+ */
+
+/*
+ * This array defines possible sections available for the firmware update.
+ * The section which does not map the current executing code is picked as the
+ * valid update area. The values are offsets into the flash space.
+ */
+const struct section_descriptor board_rw_sections[] = {
+	{CONFIG_RO_MEM_OFF,
+	 CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE},
+	{CONFIG_RW_MEM_OFF,
+	 CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE},
+};
+const struct section_descriptor * const rw_sections = board_rw_sections;
+const int num_rw_sections = ARRAY_SIZE(board_rw_sections);
 
 
 /******************************************************************************
