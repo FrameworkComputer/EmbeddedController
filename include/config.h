@@ -2199,6 +2199,8 @@
 /* Firmware updates using other than HC channel(s). */
 #undef CONFIG_NON_HC_FW_UPDATE
 #undef CONFIG_USB_FW_UPDATE
+/* A different config for the same update. TODO(vbendeb): dedup these */
+#undef CONFIG_USB_UPDATE
 
 /*****************************************************************************/
 /*

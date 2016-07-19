@@ -90,6 +90,7 @@ common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
 common-$(CONFIG_USB_PD_LOGGING)+=pd_log.o
 common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
+common-$(CONFIG_USB_UPDATE)+= usb_update.o update_fw.o
 common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_VSTORE)+=vstore.o
 common-$(CONFIG_WIRELESS)+=wireless.o
