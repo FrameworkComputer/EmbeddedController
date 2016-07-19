@@ -53,11 +53,8 @@ void rdd_init(void)
 
 	debug_detect = GREAD(RDD, PROG_DEBUG_STATE_MAP);
 
-	/* Initialize the detached debug state */
-	rdd_detached();
-
-	/* Make sure the interrupt fires next time debug cable is connected. */
-	GWRITE(RDD, PROG_DEBUG_STATE_MAP, debug_detect);
+	/* Initialize the debug state based on the current cc values */
+	rdd_interrupt();
 
 	/* Enable RDD interrupts */
 	task_enable_irq(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT);
