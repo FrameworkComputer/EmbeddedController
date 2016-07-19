@@ -87,6 +87,10 @@ extern struct producer_ops const usb_stream_producer_ops;
  * INTERFACE is the index of the USB interface to associate with this
  * stream.
  *
+ * INTERFACE_CLASS, INTERFACE_SUBCLASS, INTERFACE_PROTOCOL are the
+ * .bInterfaceClass, .bInterfaceSubClass, and .bInterfaceProtocol fields
+ * respectively in the USB interface descriptor.
+ *
  * INTERFACE_NAME is the index of the USB string descriptor (iInterface).
  *
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
@@ -108,14 +112,17 @@ extern struct producer_ops const usb_stream_producer_ops;
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
  */
-#define USB_STREAM_CONFIG(NAME,						\
-			  INTERFACE,					\
-			  INTERFACE_NAME,				\
-			  ENDPOINT,					\
-			  RX_SIZE,					\
-			  TX_SIZE,					\
-			  RX_QUEUE,					\
-			  TX_QUEUE)					\
+#define USB_STREAM_CONFIG_FULL(NAME,					\
+			       INTERFACE,				\
+			       INTERFACE_CLASS,				\
+			       INTERFACE_SUBCLASS,			\
+			       INTERFACE_PROTOCOL,			\
+			       INTERFACE_NAME,				\
+			       ENDPOINT,				\
+			       RX_SIZE,					\
+			       TX_SIZE,					\
+			       RX_QUEUE,				\
+			       TX_QUEUE)				\
 									\
 	BUILD_ASSERT(RX_SIZE <= USB_MAX_PACKET_SIZE);			\
 	BUILD_ASSERT(TX_SIZE <= USB_MAX_PACKET_SIZE);			\
@@ -155,9 +162,9 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.bInterfaceNumber   = INTERFACE,			\
 		.bAlternateSetting  = 0,				\
 		.bNumEndpoints      = 2,				\
-		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
-		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,	\
-		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,	\
+		.bInterfaceClass    = INTERFACE_CLASS,			\
+		.bInterfaceSubClass = INTERFACE_SUBCLASS,		\
+		.bInterfaceProtocol = INTERFACE_PROTOCOL,		\
 		.iInterface         = INTERFACE_NAME,			\
 	};								\
 	const struct usb_endpoint_descriptor				\
@@ -196,6 +203,27 @@ extern struct producer_ops const usb_stream_producer_ops;
 		       CONCAT2(NAME, _ep_reset));			\
 	static void CONCAT2(NAME, _deferred_)(void)			\
 	{ usb_stream_deferred(&NAME); }
+
+/* This is a short version for declaring Google serial endpoints */
+#define USB_STREAM_CONFIG(NAME,						\
+			  INTERFACE,					\
+			  INTERFACE_NAME,				\
+			  ENDPOINT,					\
+			  RX_SIZE,					\
+			  TX_SIZE,					\
+			  RX_QUEUE,					\
+			  TX_QUEUE)					\
+	USB_STREAM_CONFIG_FULL(NAME,					\
+			       INTERFACE,				\
+			       USB_CLASS_VENDOR_SPEC,			\
+			       USB_SUBCLASS_GOOGLE_SERIAL,		\
+			       USB_PROTOCOL_GOOGLE_SERIAL,		\
+			       INTERFACE_NAME,				\
+			       ENDPOINT,				\
+			       RX_SIZE,					\
+			       TX_SIZE,					\
+			       RX_QUEUE,				\
+			       TX_QUEUE)
 
 /*
  * Handle USB and Queue request in a deferred callback.
