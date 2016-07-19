@@ -118,8 +118,8 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 				  TCPC_REG_SWITCHES0_MEAS_CC1);
 		}
 
-		/* Set MDAC Value to High. MDAC Reg is 7:2 */
-		tcpc_write(port, TCPC_REG_MEASURE, 0x26 << 2);
+		/* Set MDAC Value to High (1.6V). MDAC Reg is 5:0 */
+		tcpc_write(port, TCPC_REG_MEASURE, 0x26);
 
 		/* CC1 is now being measured by FUSB302. */
 
@@ -133,8 +133,8 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 			*cc1_lvl = TYPEC_CC_VOLT_OPEN;
 		} else {
 
-			/* Set MDAC Value to Low. MDAC Reg is 7:2 */
-			tcpc_write(port, TCPC_REG_MEASURE, 0x05 << 2);
+			/* Set MDAC Value to Low (200 mV). MDAC Reg is 5:0 */
+			tcpc_write(port, TCPC_REG_MEASURE, 0x05);
 
 			/* Wait on measurement */
 			usleep(250);
@@ -143,9 +143,9 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 			tcpc_read(port, TCPC_REG_STATUS0, &reg);
 
 			if (reg & TCPC_REG_STATUS0_COMP)
-				*cc1_lvl = TYPEC_CC_VOLT_RA;
-			else
 				*cc1_lvl = TYPEC_CC_VOLT_RD;
+			else
+				*cc1_lvl = TYPEC_CC_VOLT_RA;
 		}
 	} else if (state[port].togdone_pullup_cc2 == 1) {
 		/* Measure CC2 */
@@ -162,8 +162,8 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 				  TCPC_REG_SWITCHES0_MEAS_CC2);
 		}
 
-		/* Set MDAC Value to High. MDAC Reg is 7:2 */
-		tcpc_write(port, TCPC_REG_MEASURE, 0x26 << 2);
+		/* Set MDAC Value to High (~1.6V). MDAC Reg is 5:0 */
+		tcpc_write(port, TCPC_REG_MEASURE, 0x26);
 
 		/* CC2 is now being measured by FUSB302. */
 
@@ -177,8 +177,8 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 			*cc2_lvl = TYPEC_CC_VOLT_OPEN;
 		} else {
 
-			/* Set MDAC Value to Low. MDAC Reg is 7:2 */
-			tcpc_write(port, TCPC_REG_MEASURE, 0x05 << 2);
+			/* Set MDAC Value to Low (~200mV). MDAC Reg is 5:0 */
+			tcpc_write(port, TCPC_REG_MEASURE, 0x05);
 
 			/* Wait on measurement */
 			usleep(250);
@@ -187,9 +187,9 @@ static void detect_cc_pin_source(int port, int *cc1_lvl, int *cc2_lvl)
 			tcpc_read(port, TCPC_REG_STATUS0, &reg);
 
 			if (reg & TCPC_REG_STATUS0_COMP)
-				*cc2_lvl = TYPEC_CC_VOLT_RA;
-			else
 				*cc2_lvl = TYPEC_CC_VOLT_RD;
+			else
+				*cc2_lvl = TYPEC_CC_VOLT_RA;
 		}
 	}
 }
