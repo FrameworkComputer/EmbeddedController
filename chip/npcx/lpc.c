@@ -754,6 +754,8 @@ int lpc_get_pltrst_asserted(void)
 /* Initialize host settings by interrupt */
 void lpc_lreset_pltrst_handler(void)
 {
+	int pltrst_asserted;
+
 	/* Clear pending bit of WUI */
 	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 7);
 
@@ -761,21 +763,24 @@ void lpc_lreset_pltrst_handler(void)
 	if (chipset_pltrst_is_valid && !chipset_pltrst_is_valid())
 		return;
 
-	ccprintf("[%T PLTRST deasserted]\n");
+	pltrst_asserted = lpc_get_pltrst_asserted();
+
+	ccprintf("LPC RESET# %sasserted",
+		pltrst_asserted ? "" : "de");
 
 	/*
 	 * Once LRESET is de-asserted (low -> high), we need to intialize lpc
 	 * settings once. If RSTCTL_LRESET_PLTRST_MODE is active, LPC registers
 	 * won't be reset by Host domain reset but Core domain does.
 	 */
-	lpc_host_register_init();
-
+	if (!pltrst_asserted)
+		lpc_host_register_init();
+	else {
 #ifdef CONFIG_CHIPSET_RESET_HOOK
-	if (lpc_get_pltrst_asserted()) {
 		/* Notify HOOK_CHIPSET_RESET */
 		hook_call_deferred(&lpc_chipset_reset_data, MSEC);
-	}
 #endif
+	}
 }
 
 static void lpc_init(void)
@@ -897,9 +902,8 @@ static void lpc_init(void)
 	/* Initialize LRESET# interrupt */
 	/* Set detection mode to edge */
 	CLEAR_BIT(NPCX_WKMOD(MIWU_TABLE_0, MIWU_GROUP_5), 7);
-	/* Handle interrupting on rising edge */
-	CLEAR_BIT(NPCX_WKAEDG(MIWU_TABLE_0, MIWU_GROUP_5), 7);
-	SET_BIT(NPCX_WKEDG(MIWU_TABLE_0, MIWU_GROUP_5), 7);
+	/* Handle interrupting on any edge */
+	SET_BIT(NPCX_WKAEDG(MIWU_TABLE_0, MIWU_GROUP_5), 7);
 	/* Enable wake-up input sources */
 	SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 7);
 #endif
