@@ -102,12 +102,12 @@ void fw_upgrade_command_handler(void *body,
 	 */
 	*response_size = sizeof(*rv);
 
-	body_size = cmd_size - offsetof(struct upgrade_command, block_body);
-	if (body_size < 0) {
+	if (cmd_size < offsetof(struct upgrade_command, block_body)) {
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		*rv = UPGRADE_GEN_ERROR;
 		return;
 	}
+	body_size = cmd_size - offsetof(struct upgrade_command, block_body);
 
 	if (!cmd_body->block_base && !body_size) {
 		/*
