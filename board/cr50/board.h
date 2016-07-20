@@ -157,6 +157,7 @@ void device_state_off(enum gpio_signal signal);
 #define UART_EC		2
 
 #define UARTN UART_CR50
+#define GC_UART0_RX_DISABLE
 
 /*
  * This would be a low hanging fruit if there is a need to reduce memory
