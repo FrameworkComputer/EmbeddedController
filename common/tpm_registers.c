@@ -67,7 +67,6 @@ enum tpm_states {
 /* Volatile registers for FIFO mode */
 struct tpm_register_file {
 	uint8_t access;
-	uint32_t int_status;
 	uint32_t sts;
 	uint8_t data_fifo[2048]; /* this might have to be even deeper. */
 };
