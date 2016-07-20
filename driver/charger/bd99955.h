@@ -32,12 +32,15 @@ enum bd99955_charge_port {
 #define CHARGE_V_MIN	3072
 #define CHARGE_V_STEP	16
 #define CHARGE_I_MAX	16320
-#define CHARGE_I_MIN	512
+#define CHARGE_I_MIN	128
 #define CHARGE_I_OFF	0
 #define CHARGE_I_STEP	64
 #define INPUT_I_MAX	16352
 #define INPUT_I_MIN	512
 #define INPUT_I_STEP	32
+
+/* Min. charge current w/ no battery to prevent collapse */
+#define BD99955_NO_BATTERY_CHARGE_I_MIN	512
 
 /* VSYSREG settings */
 #define DISCHARGE_VSYSREG	8960

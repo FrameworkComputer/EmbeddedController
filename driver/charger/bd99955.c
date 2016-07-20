@@ -595,7 +595,10 @@ int charger_set_current(int current)
 	/* Charge current step 64 mA */
 	current &= ~0x3F;
 
-	if (current < bd99955_charger_info.current_min)
+	if (current < BD99955_NO_BATTERY_CHARGE_I_MIN &&
+	    (battery_is_present() != BP_YES || battery_is_cut_off()))
+		current = BD99955_NO_BATTERY_CHARGE_I_MIN;
+	else if (current < bd99955_charger_info.current_min)
 		current = bd99955_charger_info.current_min;
 
 	return ch_raw_write16(BD99955_CMD_CHG_CURRENT, current,
