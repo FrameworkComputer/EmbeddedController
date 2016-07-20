@@ -592,6 +592,8 @@ int charger_get_current(int *current)
 
 int charger_set_current(int current)
 {
+	int rv;
+
 	/* Charge current step 64 mA */
 	current &= ~0x3F;
 
@@ -601,8 +603,14 @@ int charger_set_current(int current)
 	else if (current < bd99955_charger_info.current_min)
 		current = bd99955_charger_info.current_min;
 
-	return ch_raw_write16(BD99955_CMD_CHG_CURRENT, current,
-				BD99955_BAT_CHG_COMMAND);
+	rv = ch_raw_write16(BD99955_CMD_CHG_CURRENT, current,
+			    BD99955_BAT_CHG_COMMAND);
+	if (rv)
+		return rv;
+
+	return ch_raw_write16(BD99955_CMD_IPRECH_SET,
+			      MIN(current, BD99955_IPRECH_MAX),
+			      BD99955_EXTENDED_COMMAND);
 }
 
 int charger_get_voltage(int *voltage)
