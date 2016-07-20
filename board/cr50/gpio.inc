@@ -55,6 +55,9 @@ GPIO(SPI_MOSI,        PIN(0, 7), GPIO_INPUT)
 GPIO(SPI_CLK,         PIN(0, 8), GPIO_INPUT)
 GPIO(SPI_CS_L,        PIN(0, 9), GPIO_INPUT)
 
+/* Control the load switch powering the INA 3.3V rail */
+GPIO(EN_PP3300_INA_L, PIN(1, 9), GPIO_ODR_HIGH)
+
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */
 UNIMPLEMENTED(ENTERING_RW)
@@ -73,6 +76,7 @@ PINMUX(GPIO(INT_AP_L),        A5, DIO_INPUT)	/* DIOB7 is p_digitial_od */
                                                 /* We can't pull it up */
 PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
+PINMUX(GPIO(EN_PP3300_INA_L), B7, DIO_INPUT)
 PINMUX(GPIO(AP_WP_L),         M3, 0)
 PINMUX(GPIO(SYS_RST_L_IN),    M0, 0)
 PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
