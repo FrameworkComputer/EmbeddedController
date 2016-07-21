@@ -742,6 +742,12 @@ static void shi_enable(void)
 #endif
 	gpio_set_flags(GPIO_SHI_CS_L, gpio_flags);
 
+	/*
+	 * Mux SHI related pins
+	 * SHI_SDI SHI_SDO SHI_CS# SHI_SCLK are selected to device pins
+	 */
+	SET_BIT(NPCX_DEVALT(ALT_GROUP_C), NPCX_DEVALTC_SHI_SL);
+
 	/* Enable SHI_CS_L interrupt */
 	gpio_enable_interrupt(GPIO_SHI_CS_L);
 }
@@ -770,8 +776,12 @@ static void shi_disable(void)
 	/* Disable pullup and interrupts on SHI_CS_L */
 	gpio_set_flags(GPIO_SHI_CS_L, GPIO_INPUT);
 
-	/* Set SPI pins to inputs so we don't leak power when AP is off */
-	gpio_config_module(MODULE_SPI, 0);
+	/*
+	 * Mux SHI related pins
+	 * SHI_SDI SHI_SDO SHI_CS# SHI_SCLK are selected to GPIO
+	 * (Default GPIO config = input)
+	 */
+	CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_C), NPCX_DEVALTC_SHI_SL);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, shi_disable, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_SYSJUMP, shi_disable, HOOK_PRIO_DEFAULT);
@@ -780,11 +790,6 @@ static void shi_init(void)
 {
 	/* Power on SHI module first */
 	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_SHI_PD);
-	/*
-	 * Mux SHI related pins
-	 * SHI_SDI SHI_SDO SHI_CS# SHI_SCLK are selected to device pins
-	 */
-	SET_BIT(NPCX_DEVALT(ALT_GROUP_C), NPCX_DEVALTC_SHI_SL);
 
 	/*
 	 * SHICFG1 (SHI Configuration 1) setting
