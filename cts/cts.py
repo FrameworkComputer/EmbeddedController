@@ -14,10 +14,13 @@ import subprocess as sp
 import time
 from copy import deepcopy
 from abc import ABCMeta, abstractmethod
+import xml.etree.ElementTree as et
 
 # For most tests, error codes should never conflict
 CTS_CONFLICTING_CODE = -1
 CTS_SUCCESS_CODE = 0
+CTS_COLOR_RED = '#fb7d7d'
+CTS_COLOR_GREEN = '#7dfb9f'
 TH_BOARD = 'stm32l476g-eval'
 OCD_SCRIPT_DIR = '/usr/local/share/openocd/scripts'
 MAX_SUITE_TIME_SEC = 3
@@ -495,6 +498,35 @@ class Cts(object):
 
     return pretty_results
 
+  def resultsAsHtml(self):
+    res = self._resultsAsString()
+    root = et.Element('html')
+    head = et.SubElement(root, 'head')
+    style = et.SubElement(head, 'style')
+    style.text = ('table, td, th {border: 1px solid black;}'
+                  'body {font-family: \"Lucida Console\", Monaco, monospace')
+    body = et.SubElement(root, 'body')
+    table = et.SubElement(body, 'table')
+    table.set('align', 'center')
+    title_row = et.SubElement(table, 'tr')
+    test_name_title = et.SubElement(title_row, 'th')
+    test_name_title.text = 'Test Name'
+    test_results_title = et.SubElement(title_row, 'th')
+    test_results_title.text = 'Test Result'
+
+    for name, result in res.items():
+      row = et.SubElement(table, 'tr')
+      name_e = et.SubElement(row, 'td')
+      name_e.text = name
+      result_e = et.SubElement(row, 'td')
+      result_e.text = result
+      if result == self.return_codes[CTS_SUCCESS_CODE]:
+        result_e.set('bgcolor', CTS_COLOR_GREEN)
+      else:
+        result_e.set('bgcolor', CTS_COLOR_RED)
+
+    return et.tostring(root, method='html')
+
   def resetAndRecord(self):
     """Resets boards, records test results in results dir"""
     self.updateSerials()
@@ -516,13 +548,18 @@ class Cts(object):
 
     self._parseOutput(dut_results, th_results)
     pretty_results = self.prettyResults()
+    html_results = self.resultsAsHtml()
 
-    dest = os.path.join(self.results_dir, self.dut.board, self.module + '.txt')
+    dest = os.path.join(
+        self.results_dir,
+        self.dut.board,
+        self.module + '.html'
+        )
     if not os.path.exists(os.path.dirname(dest)):
       os.makedirs(os.path.dirname(dest))
 
     with open(dest, 'w') as fl:
-      fl.write(pretty_results)
+      fl.write(html_results)
 
     print pretty_results
 
