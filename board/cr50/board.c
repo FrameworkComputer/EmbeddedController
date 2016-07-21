@@ -48,6 +48,9 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 	NVMEM_CR50_SIZE
 };
 
+/*  Board specific configuration settings */
+static uint32_t board_properties;
+
 /*
  * There's no way to trigger on both rising and falling edges, so force a
  * compiler error if we try. The workaround is to use the pinmux to connect
@@ -498,4 +501,38 @@ void board_update_device_state(enum device_type device)
 		 */
 		hook_call_deferred(device_states[device].deferred, 50);
 	}
+}
+
+static void detect_slave_config(void)
+{
+	uint32_t properties = 0;
+
+	/* Check for power on reset */
+	if (system_get_reset_flags() & RESET_FLAG_POWER_ON) {
+		/* Read DIOA1 strap pin */
+		if (gpio_get_level(GPIO_STRAP0))
+			/* Strap is pulled high -> Kevin SPI TPM option */
+			properties |= BOARD_SLAVE_CONFIG_SPI;
+		else
+			/* Strap is low -> Reef I2C TPM option */
+			properties |= BOARD_SLAVE_CONFIG_I2C;
+		/* Write enable bit for LONG_LIFE_SCRATCH1 register */
+		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+		/* Save type in LONG_LIFE register */
+		GREG32(PMU, LONG_LIFE_SCRATCH1) = properties;
+		/* Clear enable bit of LONG_LIFE_SCRATCH1 register */
+		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+	} else {
+		/* Not a power on reset, so can read what was discovered */
+		properties = GREG32(PMU, LONG_LIFE_SCRATCH1);
+	}
+	/* Save this configuration setting */
+	board_properties = properties;
+}
+/* Need this hook to run before the default hook level */
+DECLARE_HOOK(HOOK_INIT, detect_slave_config, HOOK_PRIO_DEFAULT - 1);
+
+uint32_t system_board_properties_callback(void)
+{
+	return board_properties;
 }

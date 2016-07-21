@@ -466,4 +466,24 @@ int system_is_reboot_warm(void);
  */
 int system_process_retry_counter(void);
 
+/* Board properties options */
+#define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* Slave SPI interface */
+#define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* Slave I2C interface */
+/**
+ * Get board properites
+ *
+ *
+ * @return uint32_t bit field where a set bit indicates option exists
+ */
+uint32_t system_get_board_properties(void);
+
+/**
+ * API for board specific version of system_get_board_properties
+ *
+ * This function must be in the board's board.c file
+ *
+ * @return uint32_t bit field where a set bit indicates option exists
+ */
+uint32_t system_board_properties_callback(void);
+
 #endif  /* __CROS_EC_SYSTEM_H */

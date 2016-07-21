@@ -352,3 +352,12 @@ int system_process_retry_counter(void)
 }
 #endif
 
+uint32_t system_get_board_properties(void)
+{
+	uint32_t properties = 0;
+
+#ifdef BOARD_CR50
+	properties = system_board_properties_callback();
+#endif
+	return properties;
+}

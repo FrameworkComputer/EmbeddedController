@@ -58,6 +58,9 @@ GPIO(SPI_CS_L,        PIN(0, 9), GPIO_INPUT)
 /* Control the load switch powering the INA 3.3V rail */
 GPIO(EN_PP3300_INA_L, PIN(1, 9), GPIO_ODR_HIGH)
 
+/* GPIOs used for Cr50 strapping options */
+GPIO(STRAP0,        PIN(0, 10), GPIO_INPUT)
+
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */
 UNIMPLEMENTED(ENTERING_RW)
@@ -82,6 +85,7 @@ PINMUX(GPIO(SYS_RST_L_IN),    M0, DIO_WAKE_FALLING)
 PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
 PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
 PINMUX(GPIO(BATT_PRES),       M2, 0)
+PINMUX(GPIO(STRAP0),          A1, DIO_INPUT)
 
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
