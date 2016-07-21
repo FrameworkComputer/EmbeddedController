@@ -13,6 +13,20 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
+#ifdef CTS_DEBUG
+/* These debug tags should not be changed */
+#define CTS_DEBUG_START "\n[DEBUG]\n"
+#define CTS_DEBUG_END "\n[DEBUG_END]\n"
+
+#define CTS_DEBUG_PRINTF(format, args...) \
+	do { \
+		CPRINTF(CTS_DEBUG_START format CTS_DEBUG_END, ## args); \
+		cflush(); \
+	} while (0)
+#else
+#define CTS_DEBUG_PRINTF(format, args...)
+#endif
+
 #define READ_WAIT_TIME_MS 100
 
 /* In a single test, only one board can return unknown, the other must
