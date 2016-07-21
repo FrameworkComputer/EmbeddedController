@@ -43,8 +43,10 @@ enum bd99955_charge_port {
 #define BD99955_NO_BATTERY_CHARGE_I_MIN	512
 
 /* VSYSREG settings */
-#define DISCHARGE_VSYSREG	8960
-#define CHARGE_VSYSREG		6144
+/* Setting for precharge charging and discharge */
+#define PRECHARGE_DISCHARGE_VSYSREG	8960
+/* Setting for fastcharge charging */
+#define FASTCHARGE_VSYSREG		6144
 
 /* Battery Charger Commands */
 #define BD99955_CMD_CHG_CURRENT		0x14
