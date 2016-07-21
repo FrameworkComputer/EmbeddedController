@@ -46,7 +46,7 @@ static struct charge_state_data curr;
 static int prev_ac, prev_charge, prev_full;
 static enum battery_present prev_bp;
 static int is_full; /* battery not accepting current */
-static int state_machine_force_idle;
+static enum ec_charge_control_mode chg_ctl_mode;
 static int manual_mode;  /* volt/curr are no longer maintained by charger */
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_warning_time;
@@ -299,7 +299,7 @@ static void dump_charge_state(void)
 	ccprintf("\tis_present = %s\n", batt_pres[curr.batt.is_present]);
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
-	ccprintf("force_idle = %d\n", state_machine_force_idle);
+	ccprintf("chg_ctl_mode = %d\n", chg_ctl_mode);
 	ccprintf("manual_mode = %d\n", manual_mode);
 	ccprintf("user_current_limit = %dmA\n", user_current_limit);
 	ccprintf("battery_seems_to_be_dead = %d\n", battery_seems_to_be_dead);
@@ -416,7 +416,8 @@ static int charge_request(int voltage, int current)
 	 * power in some cases (e.g. Nyan with BQ24735).
 	 */
 #ifdef CONFIG_CHARGER_BD99955
-	if (current > 0)
+	/* Charger auto exits from battery learn mode if charge inhibited */
+	if (current > 0 || chg_ctl_mode == CHARGE_CONTROL_DISCHARGE)
 #else
 	if (voltage > 0 || current > 0)
 #endif
@@ -439,22 +440,24 @@ static int charge_request(int voltage, int current)
 
 
 /* Force charging off before the battery is full. */
-static int charge_force_idle(int enable)
+static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 {
-	/*
-	 * Force idle is only meaningful if external power is
-	 * present. If it's not present we can't charge anyway.
-	 */
-	if (enable && !curr.ac)
-		return EC_ERROR_NOT_POWERED;
+	if (mode == CHARGE_CONTROL_NORMAL) {
+		chg_ctl_mode = mode;
+		manual_mode = 0;
+	} else {
+		/*
+		 * Changing mode is only meaningful if external power is
+		 * present. If it's not present we can't charge anyway.
+		 */
+		if (!curr.ac)
+			return EC_ERROR_NOT_POWERED;
 
-	state_machine_force_idle = enable;
-	if (enable) {
+		chg_ctl_mode = mode;
 		charge_request(0, 0);
 		manual_mode = 1;
-	} else {
-		manual_mode = 0;
 	}
+
 	return EC_SUCCESS;
 }
 
@@ -598,7 +601,7 @@ void charger_task(void)
 	batt_info = battery_get_info();
 
 	prev_ac = prev_charge = -1;
-	state_machine_force_idle = 0;
+	chg_ctl_mode = CHARGE_CONTROL_NORMAL;
 	shutdown_warning_time.val = 0UL;
 	battery_seems_to_be_dead = 0;
 
@@ -646,7 +649,7 @@ void charger_task(void)
 				}
 			} else {
 				/* Some things are only meaningful on AC */
-				state_machine_force_idle = 0;
+				chg_ctl_mode = CHARGE_CONTROL_NORMAL;
 				battery_seems_to_be_dead = 0;
 				prev_ac = curr.ac;
 			}
@@ -733,7 +736,7 @@ void charger_task(void)
 		/* Okay, we're on AC and we should have a battery. */
 
 		/* Used for factory tests. */
-		if (state_machine_force_idle) {
+		if (chg_ctl_mode != CHARGE_CONTROL_NORMAL) {
 			curr.state = ST_IDLE;
 			goto wait_for_it;
 		}
@@ -1059,7 +1062,7 @@ uint32_t charge_get_flags(void)
 {
 	uint32_t flags = 0;
 
-	if (state_machine_force_idle)
+	if (chg_ctl_mode != CHARGE_CONTROL_NORMAL)
 		flags |= CHARGE_FLAG_FORCE_IDLE;
 	if (curr.ac)
 		flags |= CHARGE_FLAG_EXTERNAL_POWER;
@@ -1131,7 +1134,7 @@ static int charge_command_charge_control(struct host_cmd_handler_args *args)
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
 
-	rv = charge_force_idle(p->mode != CHARGE_CONTROL_NORMAL);
+	rv = set_chg_ctrl_mode(p->mode);
 	if (rv != EC_SUCCESS)
 		return EC_RES_ERROR;
 
@@ -1306,7 +1309,8 @@ static int command_chgstate(int argc, char **argv)
 				return EC_ERROR_PARAM_COUNT;
 			if (!parse_bool(argv[2], &val))
 				return EC_ERROR_PARAM2;
-			rv = charge_force_idle(val);
+			rv = set_chg_ctrl_mode(val ? CHARGE_CONTROL_IDLE :
+						CHARGE_CONTROL_NORMAL);
 			if (rv)
 				return rv;
 		} else if (!strcasecmp(argv[1], "debug")) {
