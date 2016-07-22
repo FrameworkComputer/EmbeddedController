@@ -119,6 +119,7 @@ int flash_physical_protect_now(int all)
 enum flash_op {
 	OP_ERASE_BLOCK,
 	OP_WRITE_BLOCK,
+	OP_READ_BLOCK,
 };
 
 static int do_flash_op(enum flash_op op, int is_info_bank,
@@ -178,6 +179,16 @@ static int do_flash_op(enum flash_op op, int is_info_bank,
 		opcode = 0x27182818;
 		words--;		     /* count register is zero-based */
 		/* This number is based on the TSMC spec Nmp=Tprog/Tsmp */
+		max_attempts = 9;
+		break;
+	case OP_READ_BLOCK:
+		if (!is_info_bank)
+			/* This code path only supports reading from
+			 * the INFO bank.
+			 */
+			return EC_ERROR_INVAL;
+		opcode = 0x16021765;
+		words = 1;
 		max_attempts = 9;
 		break;
 	}
@@ -322,6 +333,21 @@ static int flash_physical_write_internal(int byte_offset, int is_info_bank,
 int flash_physical_write(int byte_offset, int num_bytes, const char *data)
 {
 	return flash_physical_write_internal(byte_offset, 0, num_bytes, data);
+}
+
+int flash_physical_info_read_word(int byte_offset, uint32_t *dst)
+{
+	int ret;
+
+	if (byte_offset % CONFIG_FLASH_WRITE_SIZE)
+		return EC_ERROR_INVAL;
+
+	ret = do_flash_op(OP_READ_BLOCK, 1, byte_offset, 1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	*dst = GREG32(FLASH, FSH_DOUT_VAL1);
+	return EC_SUCCESS;
 }
 
 void flash_info_write_enable(void)

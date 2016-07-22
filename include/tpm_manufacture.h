@@ -13,5 +13,6 @@
 
 /* Returns non-zero if the TPM manufacture steps have been completed. */
 int tpm_manufactured(void);
+int tpm_endorse(void);
 
 #endif	/* __CROS_EC_TPM_MANUFACTURE_H */

@@ -476,6 +476,7 @@ static void tpm_init(void)
 		 */
 		TPM_Manufacture(1);
 		_TPM_Init();
+		tpm_endorse();
 	}
 
 	_plat__SetNvAvail();
