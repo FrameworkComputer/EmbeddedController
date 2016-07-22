@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+/* Currently tests will execute in the order they are listed here */
+
 /* Test whether sync completes successfully */
 CTS_TEST(sync_test)
 /* Check if the dut can set a line low */

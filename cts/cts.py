@@ -16,8 +16,8 @@ from copy import deepcopy
 from abc import ABCMeta, abstractmethod
 import xml.etree.ElementTree as et
 
-# For most tests, error codes should never conflict
-CTS_CONFLICTING_CODE = -1
+CTS_CORRUPTED_CODE = -2  # The test didn't execute correctly
+CTS_CONFLICTING_CODE = -1 # Error codes should never conflict
 CTS_SUCCESS_CODE = 0
 CTS_COLOR_RED = '#fb7d7d'
 CTS_COLOR_GREEN = '#7dfb9f'
@@ -434,27 +434,38 @@ class Cts(object):
     """
     self.test_results.clear()  # empty out any old results
 
+    first_corrupted_test = len(self.test_names)
+
     for output_str in [r1, r2]:
+      test_num = 0
       for ln in [ln.strip() for ln in output_str.split('\n')]:
         tokens = ln.split()
         if len(tokens) != 2:
           continue
-        print 'Tokens are: ' + str(tokens)
         test = tokens[0].strip()
+        if test not in self.test_names:
+          continue
         try:
           return_code = int(tokens[1])
         except ValueError: # Second token is not an int
           continue
-        if test not in self.test_names:
-          continue
+        if test != self.test_names[test_num]:
+          first_corrupted_test = test_num
+          break # Results after this test are corrupted
         elif self.test_results.get(
             test,
             CTS_SUCCESS_CODE) == CTS_SUCCESS_CODE:
           self.test_results[test] = return_code
-          print 'Is ' + str(return_code) + ' the same as ' + str(self.test_results[test])
         elif return_code != self.test_results[test]:
-          print 'Setting ' + test + ' to CTS_CONFLICTING_CODE'
           self.test_results[test] = CTS_CONFLICTING_CODE
+        test_num += 1
+
+      if test_num != len(self.test_names): # If a suite didn't finish
+        first_corrupted_test = min(first_corrupted_test, test_num)
+
+    if first_corrupted_test < len(self.test_names):
+      for test in self.test_names[first_corrupted_test:]:
+        self.test_results[test] = CTS_CORRUPTED_CODE
 
   def _resultsAsString(self):
     """Takes saved results and returns a duplicate of their dictionary
@@ -469,14 +480,10 @@ class Cts(object):
     for test, code in result.items():
       if code == CTS_CONFLICTING_CODE:
         result[test] = 'RESULTS CONFLICT'
+      elif code == CTS_CORRUPTED_CODE:
+        result[test] = 'CORRUPTED'
       else:
         result[test] = self.return_codes[code]
-
-    for tn in self.test_names:
-      if tn not in result:
-        # Exceptional case
-        result[tn] = 'NO RESULT RETURNED'
-
     return result
 
   def prettyResults(self):
