@@ -781,6 +781,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		board_reset_pd_mcu();
 #endif
 
+		cflush();
 		system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
