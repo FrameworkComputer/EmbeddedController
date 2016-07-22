@@ -36,11 +36,6 @@
 /* Program is run directly from storage */
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
-#if defined(BOARD)
-/* Compute the rest of the flash params from these */
-#include "config_std_internal_flash.h"
-#endif
-
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
@@ -67,17 +62,73 @@
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT (GC_INTERRUPTS_COUNT - 15)
 
-#undef CONFIG_RW_MEM_OFF
-#undef CONFIG_RW_SIZE
-
-/* Leaving 16K for the RO aka loader. */
-#define CONFIG_RW_MEM_OFF 0x4000
-#define CONFIG_RW_B_MEM_OFF (CONFIG_RW_MEM_OFF + (CONFIG_FLASH_SIZE>>1))
-#define CONFIG_RW_SIZE ((CONFIG_FLASH_SIZE>>1) - CONFIG_RW_MEM_OFF)
-#define CONFIG_CUSTOMIZED_RO
+/* We'll have some special commands of our own */
 #define CONFIG_EXTENSION_COMMAND 0xbaccd00a
 
-#undef CONFIG_RO_SIZE
-#define CONFIG_RO_SIZE CONFIG_RW_MEM_OFF
+/*
+ * The flash memory is implemented in two halves. The SoC bootrom will look for
+ * the first-stage bootloader at the beginning of each of the two halves and
+ * prefer the newer one if both are valid. In EC terminology the bootloader
+ * would be called the RO firmware, so we actually have two, not one. The
+ * bootloader also looks in each half of the flash for a valid RW firmware, so
+ * we have two possible RW images as well. The RO and RW images are not tightly
+ * coupled, so either RO image can choose to boot either RW image.
+ *
+ * The EC firmware configuration is not (yet?) prepared to handle multiple,
+ * non-contiguous, RO/RW combinations, so there's a bit of hackery to make this
+ * work.
+ *
+ * The following macros try to make this all work.
+ */
 
-#endif /* __CROS_EC_CONFIG_CHIP_H */
+/* It's easier for us to consider each half as having its own RO and RW */
+#define CFG_FLASH_HALF (CONFIG_FLASH_SIZE >> 1)
+
+/*
+ * We'll reserve some space at the top of each flash half for persistent
+ * storage and other stuff that's not part of the RW image. We don't promise to
+ * use these two areas for the same thing, it's just more convenient to make
+ * them the same size.
+ */
+#define CFG_TOP_SIZE  0x4000
+#define CFG_TOP_A_OFF (CFG_FLASH_HALF - CFG_TOP_SIZE)
+#define CFG_TOP_B_OFF (CONFIG_FLASH_SIZE - CFG_TOP_SIZE)
+
+/* The RO images start at the very beginning of each flash half */
+#define CONFIG_RO_MEM_OFF 0
+
+/* Size reserved for each RO image */
+#define CONFIG_RO_SIZE 0x4000
+
+/* RW images start right after the reserved-for-RO areas in each half */
+#define CONFIG_RW_MEM_OFF CONFIG_RO_SIZE
+#define CONFIG_RW_B_MEM_OFF (CFG_FLASH_HALF + CONFIG_RW_MEM_OFF)
+
+/* Size reserved for each RW image */
+#define CONFIG_RW_SIZE (CFG_FLASH_HALF - CONFIG_RW_MEM_OFF - CFG_TOP_SIZE)
+
+/*
+ * These are needed in a couple of places, but aren't very meaningful. Because
+ * we have two RO and two RW images, these values don't really match what's
+ * described in the EC Image Geometry Spec at www.chromium.org.
+ */
+/* TODO(wfrichar): Make them meaningful or learn to do without */
+#define CONFIG_EC_PROTECTED_STORAGE_OFF    0
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE   CONFIG_FLASH_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF     0
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE	   CONFIG_FLASH_SIZE
+#define CONFIG_RO_STORAGE_OFF              0
+#define CONFIG_RW_STORAGE_OFF              0
+#define CONFIG_WP_STORAGE_OFF		   0
+#define CONFIG_WP_STORAGE_SIZE		   CONFIG_EC_PROTECTED_STORAGE_SIZE
+
+/*
+ * Note: early versions of the SoC would let us build and manually sign our own
+ * bootloaders, and the RW images could be self-signed. Production SoCs require
+ * officially-signed binary blobs to use for the RO bootloader(s), and the RW
+ * images that we build must be manually signed. So even though we generate RO
+ * firmware images, they may not be useful.
+ */
+#define CONFIG_CUSTOMIZED_RO
+
+#endif	/* __CROS_EC_CONFIG_CHIP_H */

@@ -21,14 +21,15 @@
 /* TODO(crosbug.com/p/44745): For debugging only */
 #define CONFIG_CMD_FLASH
 
+/* We're using all of TOP_B for NVMEM. TOP_A is unused as yet. */
 #define CONFIG_FLASH_NVMEM
 /* Offset to start of NvMem area from base of flash */
-#define CONFIG_FLASH_NVMEM_OFFSET (CONFIG_FLASH_SIZE>>1)
+#define CONFIG_FLASH_NVMEM_OFFSET (CFG_TOP_B_OFF)
 /* Address of start of Nvmem area */
 #define CONFIG_FLASH_NVMEM_BASE (CONFIG_PROGRAM_MEMORY_BASE + \
 				 CONFIG_FLASH_NVMEM_OFFSET)
 /* Size in bytes of NvMem area */
-#define CONFIG_FLASH_NVMEM_SIZE CONFIG_RW_MEM_OFF
+#define CONFIG_FLASH_NVMEM_SIZE CFG_TOP_SIZE
 /* Size partition in NvMem */
 #define NVMEM_PARTITION_SIZE (CONFIG_FLASH_NVMEM_SIZE / NVMEM_NUM_PARTITIONS)
 

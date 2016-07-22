@@ -111,10 +111,10 @@ int main(void)
 		first = second;
 		second = a;
 	}
-	tryLaunch((uint32_t)first, CONFIG_FLASH_SIZE/2 - CONFIG_RW_MEM_OFF);
+	tryLaunch((uint32_t)first, CONFIG_RW_SIZE);
 	debug_printf("Failed to launch.\n");
 	debug_printf("Attempting to load the alternate image.\n");
-	tryLaunch((uint32_t)second, CONFIG_FLASH_SIZE/2 - CONFIG_RW_MEM_OFF);
+	tryLaunch((uint32_t)second, CONFIG_RW_SIZE);
 	debug_printf("No valid image found, not sure what to do...\n");
 	/* TODO: Some applications might want to reboot instead. */
 	halt();

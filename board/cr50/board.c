@@ -171,35 +171,38 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 int flash_regions_to_enable(struct g_flash_region *regions,
 			    int max_regions)
 {
-	uint32_t half = CONFIG_FLASH_SIZE / 2;
+	/*
+	 * This needs to account for two regions: the "other" RW partition and
+	 * the NVRAM in TOP_B.
+	 *
+	 * When running from RW_A the two regions are adjacent, but it is
+	 * simpler to keep function logic the same and always configure two
+	 * separate regions.
+	 */
 
-	if (max_regions < 1)
+	if (max_regions < 2)
 		return 0;
 
-	if ((uint32_t)flash_regions_to_enable <
-	    (CONFIG_MAPPED_STORAGE_BASE + half))
-		/*
-		 * Running from RW_A. Need to enable writes into the top half,
-		 * which consists of NV_RAM and RW_B sections.
-		 */
-		regions->reg_base = CONFIG_MAPPED_STORAGE_BASE + half;
+	/* Enable access to the other RW image... */
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+		/* Running RW_A, enable RW_B */
+		regions[0].reg_base = CONFIG_MAPPED_STORAGE_BASE +
+			CONFIG_RW_B_MEM_OFF;
 	else
-		/*
-		 * Running from RW_B, need to enable access to both program
-		 * memory in the lower half and the NVRAM space in the top
-		 * half.
-		 *
-		 * NVRAM space in the top half by design is at the same offset
-		 * and of the same size as the RO section in the lower half.
-		 */
-		regions->reg_base = CONFIG_MAPPED_STORAGE_BASE +
-			CONFIG_RO_SIZE;
+		/* Running RW_B, enable RW_A */
+		regions[0].reg_base = CONFIG_MAPPED_STORAGE_BASE +
+			CONFIG_RW_MEM_OFF;
+	/* Size is the same */
+	regions[0].reg_size = CONFIG_RW_SIZE;
+	regions[0].reg_perms = FLASH_REGION_EN_ALL;
 
-	/* The size of the write enable area is the same in both cases. */
-	regions->reg_size = half;
-	regions->reg_perms =  FLASH_REGION_EN_ALL;
+	/* Enable access to the NVRAM region */
+	regions[1].reg_base = CONFIG_MAPPED_STORAGE_BASE +
+		CONFIG_FLASH_NVMEM_OFFSET;
+	regions[1].reg_size = CONFIG_FLASH_NVMEM_SIZE;
+	regions[1].reg_perms = FLASH_REGION_EN_ALL;
 
-	return 1; /* One region is enough. */
+	return 2;
 }
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)

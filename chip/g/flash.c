@@ -155,8 +155,8 @@ static int do_flash_op(enum flash_op op, int is_info_bank,
 	if (is_info_bank) {
 		/* Only INFO bank operations are supported. */
 		fsh_pe_control = GREG32_ADDR(FLASH, FSH_PE_CONTROL1);
-	} else if (byte_offset >= CONFIG_FLASH_SIZE / 2) {
-		byte_offset -= CONFIG_FLASH_SIZE / 2;
+	} else if (byte_offset >= CFG_FLASH_HALF) {
+		byte_offset -= CFG_FLASH_HALF;
 		fsh_pe_control = GREG32_ADDR(FLASH, FSH_PE_CONTROL1);
 	} else {
 		fsh_pe_control = GREG32_ADDR(FLASH, FSH_PE_CONTROL0);
