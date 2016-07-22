@@ -1360,6 +1360,9 @@ void usb_release(void)
 	/* disable interrupt handlers */
 	task_disable_irq(GC_IRQNUM_USB0_USBINTR);
 
+	/* Deactivate the PHY */
+	GR_USB_GGPIO = GGPIO_WRITE(USB_CUSTOM_CFG_REG, 0);
+
 	/* disable clocks */
 	clock_enable_module(MODULE_USB, 0);
 	/* TODO: pin-mux */
