@@ -1313,13 +1313,30 @@ static int command_chgstate(int argc, char **argv)
 						CHARGE_CONTROL_NORMAL);
 			if (rv)
 				return rv;
+#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
+		} else if (!strcasecmp(argv[1], "discharge")) {
+			if (argc <= 2)
+				return EC_ERROR_PARAM_COUNT;
+			if (!parse_bool(argv[2], &val))
+				return EC_ERROR_PARAM2;
+			rv = set_chg_ctrl_mode(val ? CHARGE_CONTROL_DISCHARGE :
+						CHARGE_CONTROL_NORMAL);
+			if (rv)
+				return rv;
+#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
+			rv = board_discharge_on_ac(val);
+#else
+			rv = charger_discharge_on_ac(val);
+#endif /* CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM */
+			if (rv)
+				return rv;
+#endif /* CONFIG_CHARGER_DISCHARGE_ON_AC */
 		} else if (!strcasecmp(argv[1], "debug")) {
 			if (argc <= 2)
 				return EC_ERROR_PARAM_COUNT;
 			if (!parse_bool(argv[2], &debugging))
 				return EC_ERROR_PARAM2;
 		} else {
-			/* maybe handle board_discharge_on_ac() too? */
 			return EC_ERROR_PARAM1;
 		}
 	}
@@ -1328,6 +1345,6 @@ static int command_chgstate(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate,
-			"[idle|debug on|off]",
+			"[idle|discharge|debug on|off]",
 			"Get/set charge state machine status",
 			NULL);
