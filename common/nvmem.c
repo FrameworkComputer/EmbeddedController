@@ -244,7 +244,7 @@ static int nvmem_find_partition(void)
 		return EC_SUCCESS;
 
 	if (nvmem_is_unitialized()) {
-		CPRINTF("NvMem: No Valid Paritions and not fully erased!!\n");
+		CPRINTS("NvMem: No Valid Paritions!");
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -316,20 +316,18 @@ int nvmem_setup(uint8_t starting_version)
 			return EC_ERROR_TIMEOUT;
 		}
 
-		/* Fill in tag info */
+		/* Fill entire partition to 0xFFs */
+		memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
+		/* Get pointer to start of partition */
 		p_part = (struct nvmem_partition *)cache.base_ptr;
 		/* Commit function will increment version number */
 		p_part->tag.version = starting_version + part - 1;
+		/* Compute sha for the partition */
 		nvmem_compute_sha(&cache.base_ptr[NVMEM_SHA_SIZE],
 				  NVMEM_PARTITION_SIZE -
 				  NVMEM_SHA_SIZE,
 				  p_part->tag.sha,
 				  NVMEM_SHA_SIZE);
-		/*
-		 * TODO: Should erase parition area prior to this function being
-		 * called, or could write all user buffer data to 0xff here
-		 * before the commit() call.
-		 */
 		/* Partition is now ready, write it to flash. */
 		ret = nvmem_commit();
 		if (ret != EC_SUCCESS)
@@ -357,10 +355,16 @@ int nvmem_init(void)
 
 	ret = nvmem_find_partition();
 	if (ret != EC_SUCCESS) {
-		/* Change error state to non-zero */
-		nvmem_error_state = EC_ERROR_UNKNOWN;
-		CPRINTF("%s:%d\n", __func__, __LINE__);
-		return ret;
+		/* Write NvMem partitions to 0xff and setup new tags */
+		nvmem_setup(0);
+		/* Should find valid partiion now */
+		ret = nvmem_find_partition();
+		if (ret) {
+			/* Change error state to non-zero */
+			nvmem_error_state = EC_ERROR_UNKNOWN;
+			CPRINTF("%s:%d\n", __func__, __LINE__);
+			return ret;
+		}
 	}
 
 	CPRINTS("Active NVram partition set to %d", nvmem_act_partition);
