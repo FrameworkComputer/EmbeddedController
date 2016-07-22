@@ -16,28 +16,38 @@ CONSOLE_CHANNEL(CC_EXTENSION,    "extension")
 CONSOLE_CHANNEL(CC_CHARGER,      "charger")
 CONSOLE_CHANNEL(CC_CHIPSET,      "chipset")
 CONSOLE_CHANNEL(CC_CLOCK,        "clock")
+#ifdef CONFIG_DMA
 CONSOLE_CHANNEL(CC_DMA,          "dma")
+#endif
 CONSOLE_CHANNEL(CC_EVENTS,       "events")
 #ifdef CONFIG_GESTURE_SW_DETECTION
 CONSOLE_CHANNEL(CC_GESTURE,      "gesture")
 #endif
 CONSOLE_CHANNEL(CC_GPIO,         "gpio")
+#ifdef HAS_TASK_HOSTCMD
 CONSOLE_CHANNEL(CC_HOSTCMD,      "hostcmd")
+#endif
+#ifdef CONFIG_I2C
 CONSOLE_CHANNEL(CC_I2C,          "i2c")
+#endif
 CONSOLE_CHANNEL(CC_KEYBOARD,     "keyboard")
 CONSOLE_CHANNEL(CC_KEYSCAN,      "keyscan")
 CONSOLE_CHANNEL(CC_LIDANGLE,     "lidangle")
 #ifdef HAS_TASK_LIGHTBAR
 CONSOLE_CHANNEL(CC_LIGHTBAR,     "lightbar")
 #endif
+#ifdef CONFIG_LPC
 CONSOLE_CHANNEL(CC_LPC,          "lpc")
+#endif
 CONSOLE_CHANNEL(CC_MOTION_LID,   "motionlid")
 CONSOLE_CHANNEL(CC_MOTION_SENSE, "motionsense")
 #ifdef HAS_TASK_PDCMD
 CONSOLE_CHANNEL(CC_PD_HOST_CMD,  "pdhostcm")
 #endif
 CONSOLE_CHANNEL(CC_PORT80,       "port80")
+#if defined(CONFIG_PWM) || defined(CONFIG_FANS)
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
+#endif
 CONSOLE_CHANNEL(CC_SPI,          "spi")
 #ifdef CONFIG_RBOX
 CONSOLE_CHANNEL(CC_RBOX,         "rbox")
@@ -45,13 +55,17 @@ CONSOLE_CHANNEL(CC_RBOX,         "rbox")
 #ifdef CONFIG_SPS
 CONSOLE_CHANNEL(CC_SPS,          "sps")
 #endif
+#if defined(CONFIG_SWITCH) || defined(CONFIG_LID_SWITCH)
 CONSOLE_CHANNEL(CC_SWITCH,       "switch")
+#endif
 CONSOLE_CHANNEL(CC_SYSTEM,       "system")
 CONSOLE_CHANNEL(CC_TASK,         "task")
 CONSOLE_CHANNEL(CC_THERMAL,      "thermal")
 CONSOLE_CHANNEL(CC_TPM,          "tpm")
 CONSOLE_CHANNEL(CC_USB,          "usb")
 CONSOLE_CHANNEL(CC_USBCHARGE,    "usbcharge")
+#if defined(CONFIG_USB_POWER_DELIVERY) || defined(CONFIG_USB_PD_TCPC)
 CONSOLE_CHANNEL(CC_USBPD,        "usbpd")
+#endif
 CONSOLE_CHANNEL(CC_VBOOT,        "vboot")
 CONSOLE_CHANNEL(CC_HOOK,         "hook")
