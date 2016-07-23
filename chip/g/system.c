@@ -123,9 +123,16 @@ const char *system_get_chip_revision(void)
 
 	if ((build_date != GC_SWDP_BUILD_DATE_DEFAULT) ||
 	    (build_time != GC_SWDP_BUILD_TIME_DEFAULT))
-		return GC_REVISION_STR" BUILD MISMATCH!";
-	else
-		return GC_REVISION_STR;
+		return " BUILD MISMATCH!";
+
+	switch (GREAD_FIELD(PMU, CHIP_ID, REVISION)) {
+	case 3:
+		return "B1";
+	case 4:
+		return "B2";
+	}
+
+	return "B?";
 }
 
 /* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */

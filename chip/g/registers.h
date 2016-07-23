@@ -76,8 +76,6 @@
 #define REG_WRITE_MLV(reg, mask, lsb, val) \
 		(reg = ((reg & ~mask) | ((val << lsb) & mask)))
 
-/* Revision generated from the register definitions */
-#define GC_REVISION_STR STRINGIFY(GC_REVISION)
 /* Revision registers */
 #define GR_SWDP_BUILD_DATE  \
 	REG32(GC_SWDP0_BASE_ADDR + GC_SWDP_BUILD_DATE_OFFSET)
