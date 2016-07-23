@@ -81,6 +81,7 @@
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_VDM
+#define CONFIG_USB_PD_DISCHARGE_GPIO
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_LOG_SIZE 512
@@ -110,7 +111,7 @@
 
 /* TODO: determine the following board specific type-C power constants */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* start as a sink in case we have no other power supply/battery */
