@@ -9,14 +9,6 @@ SIGNED_IMAGES = 1
 CORE:=cortex-m
 CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
 
-# Extract the hardware version we are building against
-ver_defs := GC___MAJOR_REV__ GC___MINOR_REV__
-bld_defs := GC_SWDP_BUILD_DATE_DEFAULT GC_SWDP_BUILD_TIME_DEFAULT
-ver_params := $(shell echo "$(ver_defs) $(bld_defs)" | $(CPP) $(CPPFLAGS) -P \
-                -imacros chip/g/hw_regdefs.h | sed -e "s/__REV\([A-Z]\)__/\1/")
-ver_str := $(shell printf "%s%s %d_%d" $(ver_params))
-CPPFLAGS+= -DGC_REVISION="$(ver_str)"
-
 ifeq ($(CONFIG_DCRYPTO),y)
 INCLUDE_ROOT := $(abspath ./include)
 CRYPTOCLIB := $(realpath ../../third_party/cryptoc)
