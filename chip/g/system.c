@@ -4,7 +4,10 @@
  */
 
 #include "config.h"
+#include "console.h"
 #include "cpu.h"
+#include "cpu.h"
+#include "flash.h"
 #include "printf.h"
 #include "registers.h"
 #include "signed_header.h"
@@ -235,3 +238,110 @@ const char *system_get_version(enum system_image_copy_t copy)
 
 	return "Error";
 }
+
+#ifdef BOARD_CR50
+/*
+ * Check wich of the two cr50 RW images is newer, return true if the first
+ * image is no older than the second one.
+ *
+ * Note that RO and RW images use the same header structure. When deciding
+ * which image to run, the boot ROM ignores the timestamp, but the cros loader
+ * considers the timestamp if all other fields are equal.
+ */
+static int a_is_newer_than_b(const struct SignedHeader *a,
+			     const struct SignedHeader *b)
+{
+	if (a->epoch_ != b->epoch_)
+		return a->epoch_ > b->epoch_;
+	if (a->major_ != b->major_)
+		return a->major_ > b->major_;
+	if (a->minor_ != b->minor_)
+		return a->minor_ > b->minor_;
+
+	/* This comparison is not made by ROM. */
+	if (a->timestamp_ != b->timestamp_)
+		return a->timestamp_ > b->timestamp_;
+
+	return 1; /* All else being equal, consider A to be newer. */
+}
+
+/*
+ * Corrupt the 'magic' field of the passed in header. This prevents the
+ * apparently failing image from being considered as a candidate to load and
+ * run on the following reboots.
+ */
+static int corrupt_other_header(volatile struct SignedHeader *header)
+{
+	int rv;
+	const char zero[4] = {}; /* value to write to magic. */
+
+	/* Enable RW access to the other header. */
+	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) = (uint32_t) header;
+	GREG32(GLOBALSEC, FLASH_REGION6_SIZE) = 1023;
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
+
+	ccprintf("%s: RW fallback must have happened, magic at %p before: %x\n",
+		 __func__, &header->magic, header->magic);
+
+	rv = flash_physical_write((intptr_t)&header->magic -
+			     CONFIG_PROGRAM_MEMORY_BASE,
+			     sizeof(zero), zero);
+
+	/* Disable W access to the other header. */
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 0);
+	ccprintf("%s: magic after: %x\n",
+		 __func__, header->magic);
+
+	return rv;
+}
+
+/*
+ * Value of the retry counter which, if exceeded, indicates that the currently
+ * running RW image is not well and is rebooting before bringing the system
+ * manages to come up.
+ */
+#define RW_BOOT_MAX_RETRY_COUNT 5
+
+int system_process_retry_counter(void)
+{
+	unsigned retry_counter;
+	struct SignedHeader *me, *other;
+
+	retry_counter = GREG32(PMU, LONG_LIFE_SCRATCH0);
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
+	GREG32(PMU, LONG_LIFE_SCRATCH0) = 0;
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
+
+	if (retry_counter <= RW_BOOT_MAX_RETRY_COUNT)
+		return EC_SUCCESS;
+
+	ccprintf("%s:retry counter %d\n", __func__, retry_counter);
+
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
+		me = (struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW);
+		other = (struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+	} else {
+		me = (struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+		other = (struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW);
+	}
+
+	if (a_is_newer_than_b(me, other)) {
+		ccprintf("%s: "
+			 "this is odd, I am newer, but retry counter was %d\n",
+			 __func__, retry_counter);
+		return EC_SUCCESS;
+	}
+	/*
+	 * let's corrupt the "other" guy so that the next restart is happening
+	 * straight into this version.
+	 */
+	return corrupt_other_header(other);
+}
+#endif
+
