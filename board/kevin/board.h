@@ -113,6 +113,11 @@
 /* Optional features for test commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_CMD_CHARGER_PSYS
+
+/* Set PSYS gain for 50W max measurement */
+#define BD99955_PSYS_GAIN_SELECT \
+		BD99955_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_08UAW
 
 #define CONFIG_UART_HOST                0
 
