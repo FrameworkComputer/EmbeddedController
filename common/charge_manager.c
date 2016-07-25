@@ -87,9 +87,14 @@ enum charge_manager_change_type {
  */
 static int charge_manager_spoof_dualrole_capability(void)
 {
-	return (system_get_image_copy() == SYSTEM_IMAGE_RO &&
-		system_is_locked()) ||
-		(battery_is_present() != BP_YES);
+	int spoof_dualrole =  (system_get_image_copy() == SYSTEM_IMAGE_RO &&
+			       system_is_locked()) ||
+			       (battery_is_present() != BP_YES);
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+	spoof_dualrole |= (battery_get_disconnect_state() !=
+			   BATTERY_NOT_DISCONNECTED);
+#endif
+	return spoof_dualrole;
 }
 
 /**
