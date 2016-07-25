@@ -789,13 +789,7 @@ static void bd99995_init(void)
 	ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
 		       BD99955_EXTENDED_COMMAND);
 
-	/* VSYS Valid Threshold High & Low Settings */
-	ch_raw_write16(BD99955_CMD_VSYSVAL_THH_SET,
-		       bi->voltage_max & 0x7fe0,
-		       BD99955_EXTENDED_COMMAND);
-	ch_raw_write16(BD99955_CMD_VSYSVAL_THL_SET,
-		       bi->voltage_min & 0x7fe0,
-		       BD99955_EXTENDED_COMMAND);
+	/* TODO(crosbug.com/p/55626): Set  VSYSVAL_THH/THL appropriately */
 
 	/* Set battery OVP to 500 + maximum battery voltage */
 	ch_raw_write16(BD99955_CMD_VBATOVP_SET,
