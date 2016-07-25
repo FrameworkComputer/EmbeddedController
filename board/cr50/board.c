@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dcrypto/dcrypto.h"
@@ -58,11 +59,50 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 
 static void init_pmu(void)
 {
+	clock_enable_module(MODULE_PMU, 1);
+
 	/* This boot sequence may be a result of previous soft reset,
 	 * in which case the PMU low power sequence register needs to
 	 * be reset. */
 	GREG32(PMU, LOW_POWER_DIS) = 0;
+
+	/* Enable wakeup interrupt */
+	task_enable_irq(GC_IRQNUM_PMU_INTR_WAKEUP_INT);
+	GWRITE_FIELD(PMU, INT_ENABLE, INTR_WAKEUP, 1);
 }
+
+void pmu_wakeup_interrupt(void)
+{
+	int exiten;
+
+	delay_sleep_by(1000);
+
+	/* Clear interrupt state */
+	GWRITE_FIELD(PMU, INT_STATE, INTR_WAKEUP, 1);
+
+	/* Clear pmu reset */
+	GWRITE(PMU, CLRRST, 1);
+
+	if (GR_PMU_EXITPD_SRC & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK) {
+		/*
+		 * If any wake pins are edge triggered, the pad logic latches
+		 * the wakeup. Clear EXITEN0 to reset the wakeup logic.
+		 */
+		exiten = GREG32(PINMUX, EXITEN0);
+		GREG32(PINMUX, EXITEN0) = 0;
+		GREG32(PINMUX, EXITEN0) = exiten;
+
+		/*
+		 * Delay sleep long enough for a SPI slave transaction to start
+		 * or for the system to be reset.
+		 */
+		delay_sleep_by(3 * SECOND);
+
+		if (!gpio_get_level(GPIO_SYS_RST_L_IN))
+			sys_rst_asserted(GPIO_SYS_RST_L_IN);
+	}
+}
+DECLARE_IRQ(GC_IRQNUM_PMU_INTR_WAKEUP_INT, pmu_wakeup_interrupt, 1);
 
 static void init_timers(void)
 {

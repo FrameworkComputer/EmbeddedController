@@ -185,8 +185,8 @@ static inline int x_uart_addr(int ch, int offset)
 /* Use these combinations in gpio.inc for clarity */
 #define DIO_WAKE_HIGH           (DIO_WAKE_EN0)
 #define DIO_WAKE_LOW            (DIO_WAKE_EN0 | DIO_WAKE_INV0)
-#define DIO_WAKE_RISING         (DIO_WAKE_EN0 | DIO_WAKE_EDG0)
-#define DIO_WAKE_FALLING        (DIO_WAKE_EN0 | DIO_WAKE_EDG0 | DIO_WAKE_INV0)
+#define DIO_WAKE_RISING         (DIO_WAKE_EN0 | DIO_WAKE_EDGE0)
+#define DIO_WAKE_FALLING        (DIO_WAKE_EN0 | DIO_WAKE_EDGE0 | DIO_WAKE_INV0)
 /* Flags for pullup/pulldowns */
 #define DIO_PULL_UP             0x0080
 #define DIO_PULL_DOWN           0x0100

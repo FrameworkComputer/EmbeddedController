@@ -37,6 +37,7 @@ void rdd_interrupt(void)
 		/* Detect when debug cable is connected */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, debug_detect);
 		rdd_detached();
+		cflush();
 		enable_sleep(SLEEP_MASK_RDD);
 	}
 

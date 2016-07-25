@@ -78,7 +78,7 @@ PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
 PINMUX(GPIO(EN_PP3300_INA_L), B7, DIO_INPUT)
 PINMUX(GPIO(AP_WP_L),         M3, 0)
-PINMUX(GPIO(SYS_RST_L_IN),    M0, 0)
+PINMUX(GPIO(SYS_RST_L_IN),    M0, DIO_WAKE_FALLING)
 PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
 PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
 PINMUX(GPIO(BATT_PRES),       M2, 0)
@@ -123,7 +123,8 @@ PINMUX(GPIO(SERVO_UART2_OFF), B5, DIO_INPUT)
 PINMUX(FUNC(I2C0_SCL),        B0, DIO_INPUT)
 PINMUX(FUNC(I2C0_SDA),        B1, DIO_INPUT)
 
-/* Both SPI master and slave buses are wired directly to specific pads
+/*
+ * Both SPI master and slave buses are wired directly to specific pads
  *
  * If CONFIG_SPS is defined, these pads are used:
  *   DIOA2  = SPS_MOSI  (input)

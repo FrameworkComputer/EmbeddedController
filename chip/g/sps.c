@@ -248,7 +248,7 @@ static void sps_init(void)
 
 	/* Allow SPS_CS_L to wake from sleep */
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA12, 1);   /* enable powerdown exit */
-	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA12, 0); /* level sensitive */
+	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA12, 1); /* edge sensitive */
 	GWRITE_FIELD(PINMUX, EXITINV0, DIOA12, 1);  /* wake on low */
 }
 DECLARE_HOOK(HOOK_INIT, sps_init, HOOK_PRIO_DEFAULT);
