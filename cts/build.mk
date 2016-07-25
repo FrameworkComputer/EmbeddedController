@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+CFLAGS_CTS=-DCTS_MODULE -DCTS_TASKFILE=cts.tasklist
+
 ifeq ($(BOARD),stm32l476g-eval)
 	cts-y+=$(CTS_MODULE)/th.o
 	cts-y+=common/th_common.o
