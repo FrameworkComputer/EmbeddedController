@@ -53,12 +53,12 @@
  * Valid offset of SHI output buffer to write.
  * When SIMUL bit is set, IBUFPTR can be used instead of OBUFPTR
  */
-#define SHI_OBUF_VALID_OFFSET ((NPCX_IBUFSTAT + SHI_OUT_PREAMBLE_LENGTH) % \
-	SHI_OBUF_FULL_SIZE)
+#define SHI_OBUF_VALID_OFFSET ((shi_read_buf_pointer() + \
+			SHI_OUT_PREAMBLE_LENGTH) % SHI_OBUF_FULL_SIZE)
 /* Start address of SHI input buffer */
 #define SHI_IBUF_START_ADDR  (volatile uint8_t  *)(NPCX_SHI_BASE_ADDR + 0x060)
 /* Current address of SHI input buffer */
-#define SHI_IBUF_CUR_ADDR    (SHI_IBUF_START_ADDR + NPCX_IBUFSTAT)
+#define SHI_IBUF_CUR_ADDR    (SHI_IBUF_START_ADDR + shi_read_buf_pointer())
 
 /*
  * Timeout to wait for SHI request packet
@@ -181,6 +181,7 @@ static void shi_fill_out_status(uint8_t status);
 static void shi_write_half_outbuf(void);
 static void shi_write_first_pkg_outbuf(uint16_t szbytes);
 static int shi_read_inbuf_wait(uint16_t szbytes);
+static uint8_t shi_read_buf_pointer(void);
 
 /*****************************************************************************/
 /* V3 protocol layer functions */
@@ -354,7 +355,7 @@ static void shi_parse_header(void)
 static void shi_fill_out_status(uint8_t status)
 {
 	uint16_t i;
-	uint16_t offset = NPCX_IBUFSTAT + SHI_OUT_PREAMBLE_LENGTH;
+	uint16_t offset = SHI_OBUF_VALID_OFFSET;
 
 	/* Disable interrupts in case the interfere by the other interrupts */
 	interrupt_disable();
@@ -381,7 +382,7 @@ static int shi_is_cs_glitch(void)
 	 * If input buffer pointer is no changed after timeout, it will
 	 * return true
 	 */
-	while (shi_params.pre_ibufstat == NPCX_IBUFSTAT)
+	while (shi_params.pre_ibufstat == shi_read_buf_pointer())
 		if (timestamp_expired(deadline, NULL))
 			return 1;
 	/* valid package */
@@ -481,6 +482,18 @@ static int shi_read_inbuf_wait(uint16_t szbytes)
 	return 1;
 }
 
+/* Read pointer of input or output buffer by consecutive reading */
+static uint8_t shi_read_buf_pointer(void)
+{
+	uint8_t stat;
+	/* Wait for two consecutive equal values are read */
+	do {
+		stat = NPCX_IBUFSTAT;
+	} while (stat != NPCX_IBUFSTAT);
+
+	return stat;
+}
+
 /* This routine handles shi recevied unexcepted data */
 static void shi_bad_received_data(void)
 {
@@ -501,6 +514,11 @@ static void shi_bad_received_data(void)
 	 * at the begin of SHI_STATE_RECEIVING state
 	 */
 	task_enable_irq(NPCX_IRQ_SHI);
+
+	/* Reset shi's state machine for error recovery */
+	shi_reset_prepare();
+
+	DEBUG_CPRINTF("END\n");
 }
 
 /*
@@ -706,7 +724,7 @@ static void shi_reset_prepare(void)
 	shi_params.bytes_in_256b = 0;
 #endif
 	/* Record last IBUFSTAT for glitch case */
-	shi_params.pre_ibufstat = NPCX_IBUFSTAT;
+	shi_params.pre_ibufstat = shi_read_buf_pointer();
 
 	/*
 	 * Fill output buffer to indicate we`re
