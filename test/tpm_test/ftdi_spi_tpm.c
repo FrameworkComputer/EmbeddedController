@@ -25,6 +25,7 @@ static int ftdi_trace_enabled;
 #define TPM_DATA_FIFO_REG (TPM_LOCALITY_0_SPI_BASE + 0x24)
 #define TPM_DID_VID_REG   (TPM_LOCALITY_0_SPI_BASE + 0xf00)
 #define TPM_RID_REG       (TPM_LOCALITY_0_SPI_BASE + 0xf04)
+#define TPM_FW_VER        (TPM_LOCALITY_0_SPI_BASE + 0xf90)
 
 static struct swig_string_data empty_string_data = (struct swig_string_data){
 	.size = 0, .data = NULL
@@ -203,6 +204,35 @@ static uint32_t GetBurstCount(void)
 	return (status >> burstCountShift) & burstCountMask;
 }
 
+static void GetVersion(void)
+{
+	int chunk_count = 0;
+	uint32_t chunk = 0;
+	char vstr[sizeof(chunk) + 1];           /* room for 4 chars + zero */
+
+	/*
+	 * Does not really matter what's written, this just makes sure
+	 * the version is reported from the beginning.
+	 */
+	FtdiWriteReg(TPM_FW_VER, sizeof(chunk), &chunk);
+
+	/* Print it out in 4 byte chunks. */
+	vstr[sizeof(vstr) - 1] = 0;
+	do {
+		FtdiReadReg(TPM_FW_VER, sizeof(chunk), vstr);
+		printf("%s", vstr);
+
+		/*
+		 * While string is not over, and no more than 200
+		 * characters.
+		 * This is likely result in one extra printk()
+		 * invocation with an empty string, not a big deal.
+		 */
+	} while (vstr[0] && (chunk_count++ < (200 / sizeof(chunk))));
+
+	printf("\n");
+}
+
 int FtdiSpiInit(uint32_t freq, int enable_debug)
 {
 	uint32_t did_vid, status;
@@ -270,6 +300,8 @@ int FtdiSpiInit(uint32_t freq, int enable_debug)
 	FtdiReadReg(TPM_RID_REG, sizeof(cmd), &cmd);
 	printf("Connected to device vid:did:rid of %4.4x:%4.4x:%2.2x\n",
 	       did_vid & 0xffff, did_vid >> 16, cmd);
+
+	GetVersion();
 
 	return true;
 }

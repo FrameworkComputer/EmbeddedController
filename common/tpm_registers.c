@@ -107,11 +107,32 @@ enum tpm_sts_bits {
 	response_retry = (1 << 1),
 };
 
-#define TPM_FW_VER_MAX_SIZE 64
 /* Used to count bytes read in version string */
 static int tpm_fw_ver_index;
- /* 50 bytes should be enough for the version strings. */
-static uint8_t tpm_fw_ver[50];
+static uint8_t tpm_fw_ver[180];
+
+/*
+ * We need to be able to report firmware version to the host, both RO and RW
+ * sections. This copies the information into a static string so that it can be
+ * passed to the host a little bit at a time.
+ */
+static void set_version_string(void)
+{
+	enum system_image_copy_t active_ro, active_rw;
+
+	active_ro = system_get_ro_image_copy();
+	active_rw = system_get_image_copy();
+	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver),
+		 "RO_A:%s %s RO_B:%s %s RW_A:%s %s RW_B:%s %s",
+		 (active_ro == SYSTEM_IMAGE_RO ? "*" : ""),
+		 system_get_version(SYSTEM_IMAGE_RO),
+		 (active_ro == SYSTEM_IMAGE_RO_B ? "*" : ""),
+		 system_get_version(SYSTEM_IMAGE_RO_B),
+		 (active_rw == SYSTEM_IMAGE_RW ? "*" : ""),
+		 system_get_version(SYSTEM_IMAGE_RW),
+		 (active_rw == SYSTEM_IMAGE_RW_B ? "*" : ""),
+		 system_get_version(SYSTEM_IMAGE_RW_B));
+}
 
 static void set_tpm_state(enum tpm_states state)
 {
@@ -360,6 +381,8 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 		fifo_reg_write(data, data_size);
 		break;
 	case TPM_FW_VER:
+		/* Reload versions, in case something has been updated */
+		set_version_string();
 		/* Reset read byte count */
 		tpm_fw_ver_index = 0;
 		break;
@@ -425,7 +448,7 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 			 * Only read while the index remains less than the
 			 * maximum allowed version string size.
 			 */
-			if (tpm_fw_ver_index < TPM_FW_VER_MAX_SIZE) {
+			if (tpm_fw_ver_index < sizeof(tpm_fw_ver)) {
 				*dest++ = tpm_fw_ver[tpm_fw_ver_index];
 				/*
 				 * If reached end of string, then don't update
@@ -509,22 +532,6 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 	}
 }
 #endif
-
-/*
- * We need to be able to report firmware version to the host, both RO and RW
- * sections. The first four bytes of the RO seciton's SHA are saved in the RO
- * header, which is mapped into the beginning of flash memory.
- */
-static void set_version_string(void)
-{
-	enum system_image_copy_t current_image = system_get_image_copy();
-	const struct SignedHeader *sh = (const struct SignedHeader *)
-		CONFIG_PROGRAM_MEMORY_BASE;
-
-	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver), "RO: %08x RW%s: %s",
-		 sh->img_chk_, current_image == SYSTEM_IMAGE_RW_B ? "_B" : "",
-		 system_get_version(current_image));
-}
 
 void tpm_task(void)
 {

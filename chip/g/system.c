@@ -3,10 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
 #include "cpu.h"
+#include "printf.h"
 #include "registers.h"
+#include "signed_header.h"
 #include "system.h"
 #include "task.h"
+#include "version.h"
 
 static void check_reset_cause(void)
 {
@@ -144,4 +148,90 @@ int system_get_vbnvcontext(uint8_t *block)
 int system_set_vbnvcontext(const uint8_t *block)
 {
 	return 0;
+}
+
+enum system_image_copy_t system_get_ro_image_copy(void)
+{
+	/*
+	 * The bootrom protects the selected bootloader with REGION0,
+	 * so we should be able to identify the active RO by seeing which one
+	 * is protected.
+	 */
+	switch (GREG32(GLOBALSEC, FLASH_REGION0_BASE_ADDR)) {
+	case CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF:
+		return SYSTEM_IMAGE_RO;
+	case CONFIG_PROGRAM_MEMORY_BASE + CHIP_RO_B_MEM_OFF:
+		return SYSTEM_IMAGE_RO_B;
+	}
+
+	return SYSTEM_IMAGE_UNKNOWN;
+}
+
+/*
+ * The RW images contain version strings. The RO images don't, so we'll make
+ * some here.
+ */
+#define MAX_RO_VER_LEN 48
+static char ro_str[2][MAX_RO_VER_LEN];
+
+const char *system_get_version(enum system_image_copy_t copy)
+{
+	const struct version_struct *v;
+	const struct SignedHeader *h;
+	enum system_image_copy_t this_copy;
+	uintptr_t vaddr, delta;
+	int i;
+
+	switch (copy) {
+	case SYSTEM_IMAGE_RO:
+	case SYSTEM_IMAGE_RO_B:
+		/* The RO header is the first thing in each flash half */
+		vaddr = get_program_memory_addr(copy);
+		if (vaddr == INVALID_ADDR)
+			break;
+		h = (const struct SignedHeader *)vaddr;
+		i = (copy == SYSTEM_IMAGE_RO) ? 0 : 1;
+		/* Use some fields from the header for the version string */
+		snprintf(ro_str[i], MAX_RO_VER_LEN, "%d.%d.%d/%08x",
+			 h->epoch_, h->major_, h->minor_, h->img_chk_);
+		return ro_str[i];
+
+	case SYSTEM_IMAGE_RW:
+	case SYSTEM_IMAGE_RW_B:
+		/*
+		 * This function isn't part of any RO image, so we must be in a
+		 * RW image. If the current image is the one we're asked for,
+		 * we can just return our version string.
+		 */
+		this_copy = system_get_image_copy();
+		if (copy == this_copy)
+			return version_data.version;
+
+		/*
+		 * We want the version of the other RW image. The linker script
+		 * puts the version string right after the reset vectors, so
+		 * it's at the same relative offset. Measure that offset here.
+		 */
+		vaddr = get_program_memory_addr(this_copy);
+		delta = (uintptr_t)&version_data - vaddr;
+
+		/* Now look at that offset in the requested image */
+		vaddr = get_program_memory_addr(copy);
+		if (vaddr == INVALID_ADDR)
+			break;
+		vaddr += delta;
+		v = (const struct version_struct *)vaddr;
+
+		/*
+		 * Make sure the version struct cookies match before returning
+		 * the version string.
+		 */
+		if (v->cookie1 == version_data.cookie1 &&
+		    v->cookie2 == version_data.cookie2)
+			return v->version;
+	default:
+		break;
+	}
+
+	return "Error";
 }

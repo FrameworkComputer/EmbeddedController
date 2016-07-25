@@ -38,9 +38,9 @@ enum system_image_copy_t {
 	SYSTEM_IMAGE_UNKNOWN = 0,
 	SYSTEM_IMAGE_RO,
 	SYSTEM_IMAGE_RW,
-#ifdef CONFIG_RW_B
+	/* Some systems may have these too */
+	SYSTEM_IMAGE_RO_B,
 	SYSTEM_IMAGE_RW_B,
-#endif
 };
 
 /**
@@ -103,6 +103,21 @@ void system_disable_jump(void);
  * Return the image copy which is currently running.
  */
 enum system_image_copy_t system_get_image_copy(void);
+
+/**
+ * Return the active RO image copy so that if we're in RW, we can know how we
+ * got there. Only needed when there are multiple RO images.
+ */
+enum system_image_copy_t system_get_ro_image_copy(void);
+
+/**
+ * Return the program memory address where the image copy begins or should
+ * begin. In the case of external storage, the image may or may not currently
+ * reside at the location returned. Returns INVALID_ADDR if the image copy is
+ * not supported.
+ */
+uintptr_t get_program_memory_addr(enum system_image_copy_t copy);
+#define INVALID_ADDR ((uintptr_t)0xffffffff)
 
 /**
  * Return non-zero if the system has switched between image copies at least

@@ -101,19 +101,23 @@ uint32_t sleep_mask;
  * begin. In the case of external storage, the image may or may not currently
  * reside at the location returned.
  */
-static uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
+uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
 {
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RO_MEM_OFF;
 	case SYSTEM_IMAGE_RW:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF;
+#ifdef CHIP_HAS_RO_B
+	case SYSTEM_IMAGE_RO_B:
+		return CONFIG_PROGRAM_MEMORY_BASE + CHIP_RO_B_MEM_OFF;
+#endif
 #ifdef CONFIG_RW_B
 	case SYSTEM_IMAGE_RW_B:
 		return CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_B_MEM_OFF;
 #endif
 	default:
-		return 0xffffffff;
+		return INVALID_ADDR;
 	}
 }
 
@@ -128,13 +132,11 @@ static uint32_t get_size(enum system_image_copy_t copy)
 
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
+	case SYSTEM_IMAGE_RO_B:
 		return CONFIG_RO_SIZE;
 	case SYSTEM_IMAGE_RW:
-		return CONFIG_RW_SIZE;
-#ifdef CONFIG_RW_B
 	case SYSTEM_IMAGE_RW_B:
 		return CONFIG_RW_SIZE;
-#endif
 	default:
 		return 0;
 	}
@@ -344,6 +346,12 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 	    my_addr < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE))
 		return SYSTEM_IMAGE_RW;
 
+#ifdef CHIP_HAS_RO_B
+	if (my_addr >= CHIP_RO_B_MEM_OFF &&
+	    my_addr < (CHIP_RO_B_MEM_OFF + CONFIG_RO_SIZE))
+		return SYSTEM_IMAGE_RO_B;
+#endif
+
 #ifdef CONFIG_RW_B
 	if (my_addr >= CONFIG_RW_B_MEM_OFF &&
 	    my_addr < (CONFIG_RW_B_MEM_OFF + CONFIG_RW_SIZE))
@@ -443,11 +451,9 @@ const char *system_get_image_copy_string(void)
 
 const char *system_image_copy_t_to_string(enum system_image_copy_t copy)
 {
-	static const char * const image_names[] = {"unknown", "RO", "RW",
-#ifdef CONFIG_RW_B
-		"RW_B",
-#endif
-		};
+	static const char * const image_names[] = {
+		"unknown", "RO", "RW", "RO_B", "RW_B"
+	};
 	return image_names[copy < ARRAY_SIZE(image_names) ? copy : 0];
 }
 
@@ -603,6 +609,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	return EC_ERROR_UNKNOWN;
 }
 
+__attribute__((weak))	   /* Weird chips may need their own implementations */
 const char *system_get_version(enum system_image_copy_t copy)
 {
 #ifndef CONFIG_MAPPED_STORAGE
@@ -894,40 +901,37 @@ static int command_version(int argc, char **argv)
 	ccprintf("Chip:    %s %s %s\n", system_get_chip_vendor(),
 		 system_get_chip_name(), system_get_chip_revision());
 	ccprintf("Board:   %d\n", system_get_board_version());
-	ccprintf("RO:      %s\n", system_get_version(SYSTEM_IMAGE_RO));
-#ifdef CONFIG_RW_B
-
-	/*
-	 * Code reporting the RW version fails to properly retrieve the
-	 * version of the non actively running RW image. The code always uses a
-	 * fixed offset into the flash memory, which is correct for RW, but
-	 * incorrect for RW_B.
-	 *
-	 * The RW and RW_B versions end up at different offsets into their
-	 * respective image halves, so it is impossible to find the RW_B
-	 * versoin offset by just adding another offset the the RW version
-	 * offset.
-	 *
-	 * To address this issue, when running an RW image, report the version
-	 * of the running part of the image explicitly.
-	 */
-
+#ifdef CHIP_HAS_RO_B
 	{
-		enum system_image_copy_t active_copy = system_get_image_copy();
+		enum system_image_copy_t active;
 
-		if (active_copy == SYSTEM_IMAGE_RO) {
-			ccprintf("RW:      %s\n",
-				 system_get_version(SYSTEM_IMAGE_RW));
-		} else {
-			ccprintf("RW%s  %s\n",
-				 active_copy == SYSTEM_IMAGE_RW ? ":  " : "_B:",
-				 system_get_version(active_copy));
-		}
+		active = system_get_ro_image_copy();
+		ccprintf("RO_A:  %c %s\n",
+			 (active == SYSTEM_IMAGE_RO ? '*' : ' '),
+			 system_get_version(SYSTEM_IMAGE_RO));
+		ccprintf("RO_B:  %c %s\n",
+			 (active == SYSTEM_IMAGE_RO_B ? '*' : ' '),
+			 system_get_version(SYSTEM_IMAGE_RO_B));
+	}
+#else
+	ccprintf("RO:      %s\n", system_get_version(SYSTEM_IMAGE_RO));
+#endif
+#ifdef CONFIG_RW_B
+	{
+		enum system_image_copy_t active;
+
+		active = system_get_image_copy();
+		ccprintf("RW_A:  %c %s\n",
+			 (active == SYSTEM_IMAGE_RW ? '*' : ' '),
+			 system_get_version(SYSTEM_IMAGE_RW));
+		ccprintf("RW_B:  %c %s\n",
+			 (active == SYSTEM_IMAGE_RW_B ? '*' : ' '),
+			 system_get_version(SYSTEM_IMAGE_RW_B));
 	}
 #else
 	ccprintf("RW:      %s\n", system_get_version(SYSTEM_IMAGE_RW));
 #endif
-	ccprintf("Build: %s\n", system_get_build_info());
+	ccprintf("Build:   %s\n", system_get_build_info());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(version, command_version,

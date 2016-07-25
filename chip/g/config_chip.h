@@ -81,6 +81,9 @@
  * The following macros try to make this all work.
  */
 
+/* This isn't optional, since the bootrom will always look for both */
+#define CHIP_HAS_RO_B
+
 /* It's easier for us to consider each half as having its own RO and RW */
 #define CFG_FLASH_HALF (CONFIG_FLASH_SIZE >> 1)
 
@@ -96,11 +99,15 @@
 
 /* The RO images start at the very beginning of each flash half */
 #define CONFIG_RO_MEM_OFF 0
+#define CHIP_RO_B_MEM_OFF CFG_FLASH_HALF
 
 /* Size reserved for each RO image */
 #define CONFIG_RO_SIZE 0x4000
 
-/* RW images start right after the reserved-for-RO areas in each half */
+/*
+ * RW images start right after the reserved-for-RO areas in each half, but only
+ * because that's where the RO images look for them. It's not a HW constraint.
+ */
 #define CONFIG_RW_MEM_OFF CONFIG_RO_SIZE
 #define CONFIG_RW_B_MEM_OFF (CFG_FLASH_HALF + CONFIG_RW_MEM_OFF)
 
