@@ -23,12 +23,17 @@
 #define CHIP_VARIANT_STM32F03X
 #endif
 
+/* Number of I2C ports, can be overridden in variant */
+#define I2C_PORT_COUNT 2
+
 #if defined(CHIP_VARIANT_STM32L476)
 #include "config-stm32l476.h"
 #elif defined(CHIP_VARIANT_STM32L15X)
 #include "config-stm32l15x.h"
 #elif defined(CHIP_VARIANT_STM32L100)
 #include "config-stm32l100.h"
+#elif defined(CHIP_VARIANT_STM32F446)
+#include "config-stm32f446.h"
 #elif defined(CHIP_VARIANT_STM32F373)
 #include "config-stm32f373.h"
 #elif defined(CHIP_VARIANT_STM32F09X)
@@ -56,8 +61,10 @@
 /* Program is run directly from storage */
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
+#if !defined(CHIP_VARIANT_STM32F446)
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
+#endif
 
 /* System stack size */
 #if defined(CHIP_VARIANT_STM32F05X)
@@ -84,9 +91,6 @@
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
-
-/* Number of I2C ports */
-#define I2C_PORT_COUNT 2
 
 /*
  * Use a timer to print a watchdog warning event before the actual watchdog

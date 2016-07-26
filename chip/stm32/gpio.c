@@ -27,7 +27,7 @@ void gpio_pre_init(void)
 	int i;
 
 	/* Required to configure external IRQ lines (SYSCFG_EXTICRn) */
-	STM32_RCC_APB2ENR |= 1 << 0;
+	STM32_RCC_APB2ENR |= STM32_RCC_SYSCFGEN;
 
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);

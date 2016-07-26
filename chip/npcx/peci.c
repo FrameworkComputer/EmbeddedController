@@ -28,8 +28,6 @@
 
 /* PECI Time-out */
 #define PECI_DONE_TIMEOUT_US  (10*MSEC)
-/* Task Event for PECI */
-#define TASK_EVENT_PECI_DONE  TASK_EVENT_CUSTOM(1<<26)
 
 #define NULL_PENDING_TASK_ID  0xFFFFFFFF
 #define PECI_MAX_FIFO_SIZE    16

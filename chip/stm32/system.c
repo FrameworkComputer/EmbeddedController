@@ -186,9 +186,14 @@ void system_pre_init(void)
 #endif
 
 	/* enable clock on Power module */
-	STM32_RCC_APB1ENR |= 1 << 28;
+	STM32_RCC_APB1ENR |= STM32_RCC_PWREN;
+#if defined(CHIP_FAMILY_STM32F4)
+	/* enable backup registers */
+	STM32_RCC_AHB1ENR |= STM32_RCC_AHB1ENR_BKPSRAMEN;
+#else
 	/* enable backup registers */
 	STM32_RCC_APB1ENR |= 1 << 27;
+#endif
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* Enable access to RCC CSR register and RTC backup registers */
@@ -212,7 +217,7 @@ void system_pre_init(void)
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32L4)
+	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32F4)
 	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
 		/* the RTC settings are bad, we need to reset it */
 		STM32_RCC_BDCR |= 0x00010000;
@@ -404,5 +409,8 @@ int system_is_reboot_warm(void)
 #elif defined(CHIP_FAMILY_STM32L4)
 	return ((STM32_RCC_AHB2ENR & STM32_RCC_AHB2ENR_GPIOMASK)
 			== STM32_RCC_AHB2ENR_GPIOMASK);
+#elif defined(CHIP_FAMILY_STM32F4)
+	return ((STM32_RCC_AHB1ENR & STM32_RCC_AHB1ENR_GPIOMASK)
+			== STM32_RCC_AHB1ENR_GPIOMASK);
 #endif
 }

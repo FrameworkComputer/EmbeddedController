@@ -13,13 +13,26 @@
 
 /* Task event bitmasks */
 /* Tasks may use the bits in TASK_EVENT_CUSTOM for their own events */
-#define TASK_EVENT_CUSTOM(x)	(x & 0x03ffffff)
+#define TASK_EVENT_CUSTOM(x)	(x & 0x0007ffff)
+
+/* npcx peci event */
+#define TASK_EVENT_PECI_DONE	(1 << 19)
+
+/* I2C tx/rx interrupt handler completion event. */
+#define TASK_EVENT_I2C_COMPLETION(port) \
+				(1 << ((port) + 20))
+#define TASK_EVENT_I2C_IDLE	(TASK_EVENT_I2C_COMPLETION(0))
+#define TASK_EVENT_MAX_I2C	6
+#ifdef I2C_PORT_COUNT
+#if (I2C_PORT_COUNT > TASK_EVENT_MAX_I2C)
+#error "Too many i2c ports for i2c events"
+#endif
+#endif
+
 /* DMA transmit complete event */
 #define TASK_EVENT_DMA_TC       (1 << 26)
 /* ADC interrupt handler event */
 #define TASK_EVENT_ADC_DONE	(1 << 27)
-/* I2C interrupt handler event */
-#define TASK_EVENT_I2C_IDLE	(1 << 28)
 /* task_wake() called on task */
 #define TASK_EVENT_WAKE		(1 << 29)
 /* Mutex unlocking */

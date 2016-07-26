@@ -49,6 +49,7 @@ enum module_id {
 	MODULE_USB_PORT_POWER,	/* 35 */
 	MODULE_USB_SWITCH,
 	MODULE_VBOOT,
+	MODULE_MCO,
 
 	/* Module count; not an actual module */
 	MODULE_COUNT

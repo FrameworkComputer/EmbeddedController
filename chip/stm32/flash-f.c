@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "console.h"
+#include "clock.h"
 #include "flash.h"
 #include "hooks.h"
 #include "registers.h"
@@ -25,8 +26,6 @@
 
 /* Flash page programming timeout.  This is 2x the datasheet max. */
 #define FLASH_TIMEOUT_US 16000
-#define FLASH_TIMEOUT_LOOP \
-	(FLASH_TIMEOUT_US * (CPU_CLOCK / SECOND) / CYCLE_PER_FLASH_LOOP)
 
 /* Flash unlocking keys */
 #define KEY1    0x45670123
@@ -44,9 +43,15 @@
 
 static int write_optb(int byte, uint8_t value);
 
+static inline int calculate_flash_timeout(void)
+{
+	return (FLASH_TIMEOUT_US *
+		(clock_get_freq() / SECOND) / CYCLE_PER_FLASH_LOOP);
+}
+
 static int wait_busy(void)
 {
-	int timeout = FLASH_TIMEOUT_LOOP;
+	int timeout = calculate_flash_timeout();
 	while (STM32_FLASH_SR & (1 << 0) && timeout-- > 0)
 		udelay(CYCLE_PER_FLASH_LOOP);
 	return (timeout > 0) ? EC_SUCCESS : EC_ERROR_TIMEOUT;
@@ -207,6 +212,7 @@ int flash_physical_write(int offset, int size, const char *data)
 {
 	uint16_t *address = (uint16_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	int res = EC_SUCCESS;
+	int timeout = calculate_flash_timeout();
 	int i;
 
 	if (unlock(PRG_LOCK) != EC_SUCCESS) {
@@ -228,7 +234,7 @@ int flash_physical_write(int offset, int size, const char *data)
 		watchdog_reload();
 
 		/* wait to be ready  */
-		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP);
+		for (i = 0; (STM32_FLASH_SR & 1) && (i < timeout);
 		     i++)
 			;
 
@@ -237,7 +243,7 @@ int flash_physical_write(int offset, int size, const char *data)
 		data += 2;
 
 		/* Wait for writes to complete */
-		for (i = 0; (STM32_FLASH_SR & 1) && (i < FLASH_TIMEOUT_LOOP);
+		for (i = 0; (STM32_FLASH_SR & 1) && (i < timeout);
 		     i++)
 			;
 
