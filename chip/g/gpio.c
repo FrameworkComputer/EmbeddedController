@@ -335,9 +335,11 @@ static void show_pinmux(const char *name, int i, int ofs)
 {
 	uint32_t sel = DIO_SEL_REG(i * 8 + ofs);
 	uint32_t ctl = DIO_CTL_REG(i * 8 + ofs);
+	uint32_t bitmask = 1 << (i + ofs / 8);
+	uint32_t edge = GREG32(PINMUX, EXITEDGE0) & bitmask;
 
 	/* skip empty ones (ignoring drive strength bits) */
-	if (sel == 0 && (ctl & (0xf << 2)) == 0)
+	if (!sel && !(ctl & (0xf << 2)) && !(GREG32(PINMUX, EXITEN0) & bitmask))
 		return;
 
 	ccprintf("%08x: %s%-2d  %2d %s%s%s%s",
@@ -349,13 +351,20 @@ static void show_pinmux(const char *name, int i, int ofs)
 		 (ctl & (1<<5)) ? " INV" : "");
 
 	if (sel >= 1 && sel <= 16)
-		ccprintf("  GPIO0_GPIO%d\n", sel - 1);
+		ccprintf("  GPIO0_GPIO%d", sel - 1);
 	else if (sel >= 17 && sel <= 32)
-		ccprintf("  GPIO1_GPIO%d\n", sel - 17);
+		ccprintf("  GPIO1_GPIO%d", sel - 17);
 	else if (sel >= 67 && sel <= 78)
-		ccprintf("  UART%s\n", uart_str[sel - 67]);
-	else
-		ccprintf("\n");
+		ccprintf("  UART%s", uart_str[sel - 67]);
+
+	if (GREG32(PINMUX, EXITEN0) & bitmask) {
+		ccprintf("  WAKE_");
+		if (GREG32(PINMUX, EXITINV0) & bitmask)
+			ccprintf("%s", edge ? "FALLING" : "LOW");
+		else
+			ccprintf("%s", edge ? "RISING" : "HIGH");
+	}
+	ccprintf("\n");
 }
 
 static void print_dio_str(uint32_t sel)
