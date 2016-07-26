@@ -111,6 +111,7 @@ static int command_temps(int argc, char **argv)
 		switch (rv) {
 		case EC_SUCCESS:
 			ccprintf("%d K = %d C", t, K_TO_C(t));
+#ifdef CONFIG_THROTTLE_AP
 			if (thermal_params[i].temp_fan_off &&
 			    thermal_params[i].temp_fan_max)
 				ccprintf("  %d%%",
@@ -118,6 +119,7 @@ static int command_temps(int argc, char **argv)
 						 thermal_params[i].temp_fan_off,
 						 thermal_params[i].temp_fan_max,
 						 t));
+#endif
 			ccprintf("\n");
 			break;
 		case EC_ERROR_NOT_POWERED:

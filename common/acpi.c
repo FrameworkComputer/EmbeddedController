@@ -29,7 +29,7 @@ static int __bss_slow acpi_data_count;
 /* Test byte in ACPI memory space */
 static uint8_t __bss_slow acpi_mem_test;
 
-#ifdef CONFIG_TEMP_SENSOR
+#ifdef CONFIG_DPTF
 static int __bss_slow dptf_temp_sensor_id;	/* last sensor ID written */
 static int __bss_slow dptf_temp_threshold;	/* last threshold written */
 #endif
@@ -153,7 +153,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			result = dptf_get_fan_duty_target();
 			break;
 #endif
-#ifdef CONFIG_TEMP_SENSOR
+#ifdef CONFIG_DPTF
 		case EC_ACPI_MEM_TEMP_ID:
 			result = dptf_query_next_sensor_event();
 			break;
@@ -198,7 +198,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			dptf_set_fan_duty_target(data);
 			break;
 #endif
-#ifdef CONFIG_TEMP_SENSOR
+#ifdef CONFIG_DPTF
 		case EC_ACPI_MEM_TEMP_ID:
 			dptf_temp_sensor_id = data;
 			break;

@@ -1768,6 +1768,13 @@
 
 /* Compile common code for throttling the CPU based on the temp sensors */
 #undef CONFIG_THROTTLE_AP
+/*
+ * If defined, dptf is enabled to manage thermals.
+ *
+ * NOTE: This doesn't mean that thermal control is completely taken care by
+ * DPTF. We have some hybrid solutions where the EC still manages the fans.
+ */
+#undef CONFIG_DPTF
 
 /*****************************************************************************/
 /* TPM-like configuration */
@@ -2244,6 +2251,16 @@
 #if defined(CONFIG_THROTTLE_AP) && !defined(CONFIG_TEMP_SENSOR)
 #define CONFIG_TEMP_SENSOR
 #endif
+
+/******************************************************************************/
+/*
+ * DPTF must have temperature sensor enabled to get the readings for
+ * generating DPTF thresholds events.
+ */
+#if defined(CONFIG_DPTF) && !defined(CONFIG_TEMP_SENSOR)
+#define CONFIG_TEMP_SENSOR
+#endif
+
 
 /******************************************************************************/
 /* The Matrix Keyboard Protocol depends on MKBP events. */

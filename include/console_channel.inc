@@ -60,6 +60,9 @@ CONSOLE_CHANNEL(CC_SWITCH,       "switch")
 #endif
 CONSOLE_CHANNEL(CC_SYSTEM,       "system")
 CONSOLE_CHANNEL(CC_TASK,         "task")
+#ifdef CONFIG_DPTF
+CONSOLE_CHANNEL(CC_DPTF,         "dptf")
+#endif
 CONSOLE_CHANNEL(CC_THERMAL,      "thermal")
 CONSOLE_CHANNEL(CC_TPM,          "tpm")
 CONSOLE_CHANNEL(CC_USB,          "usb")
