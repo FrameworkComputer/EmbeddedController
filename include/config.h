@@ -312,9 +312,11 @@
 #undef CONFIG_BUTTON_COUNT
 
 /*
- * Enable case close debug (CCD) mode.
+ * Enable case close debug (CCD) mode in the EC.
  */
 #undef CONFIG_CASE_CLOSED_DEBUG
+/* The case close debug (CCD) feature is provided by an external chip. */
+#undef CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 
 /*
  * Capsense chip has buttons, too.

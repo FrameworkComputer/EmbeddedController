@@ -234,7 +234,8 @@ static inline int pd_is_vbus_present(int port)
 
 static int pd_snk_debug_acc_toggle(int port)
 {
-#ifdef CONFIG_CASE_CLOSED_DEBUG
+#if defined(CONFIG_CASE_CLOSED_DEBUG) || \
+defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 	/*
 	 * when we are in SNK_DISCONNECTED and we see VBUS appearing
 	 * (without having seen Rp before), that might be a powered debug
@@ -249,7 +250,8 @@ static int pd_snk_debug_acc_toggle(int port)
 
 static int pd_debug_acc_plugged(int port)
 {
-#ifdef CONFIG_CASE_CLOSED_DEBUG
+#if defined(CONFIG_CASE_CLOSED_DEBUG) || \
+defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 	return pd[port].task_state == PD_STATE_SRC_ACCESSORY;
 #else
 	/* Debug accessories not supported */
