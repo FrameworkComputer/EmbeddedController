@@ -191,6 +191,14 @@ static void showregs(void)
 #define CONFIG_USB_BCD_DEV 0x0100		/* 1.00 */
 #endif
 
+#ifndef USB_BMATTRIBUTES
+#ifdef CONFIG_USB_SELF_POWERED
+#define USB_BMATTRIBUTES 0xc0  /* Self powered. */
+#else
+#define USB_BMATTRIBUTES 0x80  /* Bus powered. */
+#endif
+#endif
+
 /* USB Standard Device Descriptor */
 static const struct usb_device_descriptor dev_desc = {
 	.bLength = USB_DT_DEVICE_SIZE,
@@ -217,8 +225,8 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bNumInterfaces = USB_IFACE_COUNT,
 	.bConfigurationValue = 1,		/* Caution: hard-coded value */
 	.iConfiguration = USB_STR_VERSION,
-	.bmAttributes = 0x80,			/* bus powered */
-	.bMaxPower = 250,			/* MaxPower 500 mA */
+	.bmAttributes = USB_BMATTRIBUTES, /* bus or self powered */
+	.bMaxPower = (CONFIG_USB_MAXPOWER_MA / 2),
 };
 
 const uint8_t usb_string_desc[] = {

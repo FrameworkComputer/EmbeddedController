@@ -57,6 +57,7 @@
 #define CONFIG_CASE_CLOSED_DEBUG
 
 #define CONFIG_USB_PID 0x5014
+#define CONFIG_USB_SELF_POWERED
 
 /* Enable SPI Master (SPI) module */
 #define CONFIG_SPI_MASTER

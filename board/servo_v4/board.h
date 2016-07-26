@@ -29,6 +29,8 @@
 #define CONFIG_USB_CONSOLE
 #define CONFIG_USB_UPDATE
 
+#define CONFIG_USB_SELF_POWERED
+
 #define CONFIG_USB_SERIALNO
 #define DEFAULT_SERIALNO "Uninitialized"
 
