@@ -17,7 +17,7 @@
 
 /* Use a bigger console output buffer */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 8192
+#define CONFIG_UART_TX_BUF_SIZE 1024
 
 /*
  * Interval between HOOK_TICK notifications
