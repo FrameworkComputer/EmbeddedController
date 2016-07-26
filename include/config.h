@@ -810,6 +810,9 @@
  */
 #undef CONFIG_FAN_UPDATE_PERIOD
 
+/* Send event when mode change, host read acpi memory and select DPTF table */
+#undef CONFIG_DPTF_DEVICE_ORIENTATION
+
 /*****************************************************************************/
 /* Flash configuration */
 

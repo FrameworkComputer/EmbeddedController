@@ -306,6 +306,13 @@
 #define EC_ACPI_MEM_CHARGING_LIMIT_DISABLED  0xff
 
 /*
+ * Report device orientation
+ *   bit 0 device is tablet mode
+ */
+#define EC_ACPI_MEM_DEVICE_ORIENTATION 0x09
+#define EC_ACPI_MEM_DEVICE_TABLET_MODE 0x01
+
+/*
  * ACPI addresses 0x20 - 0xff map to EC_MEMMAP offset 0x00 - 0xdf.  This data
  * is read-only from the AP.  Added in EC_ACPI_MEM_VERSION 2.
  */
@@ -442,6 +449,9 @@ enum host_event_code {
 
 	/* EC desires to change state of host-controlled USB mux */
 	EC_HOST_EVENT_USB_MUX = 28,
+
+	/* TABLET/LAPTOP mode event*/
+	EC_HOST_EVENT_MODE_CHANGE = 29,
 
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
