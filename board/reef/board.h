@@ -87,7 +87,7 @@
 #define CONFIG_I2C_MASTER
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
-/* #define CONFIG_LED_COMMON */
+#define CONFIG_LED_COMMON
 #define CONFIG_LID_SWITCH
 /* #define CONFIG_LOW_POWER_IDLE */
 #define CONFIG_LTO
@@ -118,10 +118,6 @@
 /* FIXME(dhendrix): these pins are just normal GPIOs on Reef. Do we need
  * to change some other setting to put them in GPIO mode? */
 #define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
-
-/* LED signals */
-#define GPIO_BAT_LED_RED GPIO_CHARGE_LED_1
-#define GPIO_BAT_LED_GREEN GPIO_CHARGE_LED_2
 
 /* I2C ports */
 #define I2C_PORT_GYRO                   NPCX_I2C_PORT1
