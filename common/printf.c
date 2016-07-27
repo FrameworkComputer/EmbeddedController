@@ -47,7 +47,7 @@ static int hexdigit(int c)
 /* Flags for vfnprintf() flags */
 #define PF_LEFT		(1 << 0)  /* Left-justify */
 #define PF_PADZERO	(1 << 1)  /* Pad with 0's not spaces */
-#define PF_NEGATIVE	(1 << 2)  /* Number is negative */
+#define PF_SIGN		(1 << 2)  /* Add sign (+) for a positive number */
 #define PF_64BIT	(1 << 3)  /* Number is 64-bit */
 
 int vfnprintf(int (*addchar)(void *context, int c), void *context,
@@ -68,6 +68,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 	while (*format) {
 		int c = *format++;
+		char sign = 0;
 
 		/* Copy normal characters */
 		if (c != '%') {
@@ -100,6 +101,12 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 		/* Handle left-justification ("%-5s") */
 		if (c == '-') {
 			flags |= PF_LEFT;
+			c = *format++;
+		}
+
+		/* Handle positive sign (%+d) */
+		if (c == '+') {
+			flags |= PF_SIGN;
 			c = *format++;
 		}
 
@@ -198,15 +205,19 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			case 'd':
 				if (flags & PF_64BIT) {
 					if ((int64_t)v < 0) {
-						flags |= PF_NEGATIVE;
+						sign = '-';
 						if (v != (1ULL << 63))
 							v = -v;
+					} else if (flags & PF_SIGN) {
+						sign = '+';
 					}
 				} else {
 					if ((int)v < 0) {
-						flags |= PF_NEGATIVE;
+						sign = '-';
 						if (v != (1ULL << 31))
 							v = -(int)v;
+					} else if (flags & PF_SIGN) {
+						sign = '+';
 					}
 				}
 				break;
@@ -263,8 +274,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					*(--vstr) = 'a' + digit - 10;
 			}
 
-			if (flags & PF_NEGATIVE)
-				*(--vstr) = '-';
+			if (sign)
+				*(--vstr) = sign;
 
 			/*
 			 * Precision field was interpreted by fixed-point

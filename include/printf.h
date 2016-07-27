@@ -18,6 +18,9 @@
  * order if present:
  *   - '0' = prefixed with 0's instead of spaces (%08x)
  *   - '-' = left-justify instead of right-justify (%-5s)
+ *   - '+' = prefix positive value with '+' (%+d). Write '%-+' instead of
+ *           '%+-' when used with left-justification. Ignored when
+ *           used with unsigned integer types or non-integer types.
  *
  * Width is the minimum output width, and may be:
  *   - A number ("0" - "255")
