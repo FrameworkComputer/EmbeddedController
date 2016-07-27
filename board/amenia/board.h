@@ -120,7 +120,7 @@
 
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_G782
-#define CONFIG_THROTTLE_AP
+#define CONFIG_DPTF
 
 /* Optional feature - used by nuvoton */
 #define NPCX_I2C0_BUS2       0 /* 0:GPIOB4/B5 1:GPIOB2/B3 as I2C0 */

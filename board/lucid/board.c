@@ -148,16 +148,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * Thermal limits for each temp sensor.  All temps are in degrees K.  Must be in
- * same order as enum temp_sensor_id.  To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
-	{{0, 0, 0}, 0, 0},	/* Battery */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 /* Initialize board. */
 static void board_init(void)
 {

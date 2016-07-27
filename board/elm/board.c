@@ -155,20 +155,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * Thermal limits for each temp sensor. All temps are in degrees K. Must be in
- * same order as enum temp_sensor_id. To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-#ifdef CONFIG_TEMP_SENSOR_TMP432
-	{{0, 0, 0}, 0, 0}, /* TMP432_Internal */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_1 */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
-#endif
-	{{0, 0, 0}, 0, 0}, /* Battery Sensor */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0, /* port idx */

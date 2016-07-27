@@ -160,17 +160,6 @@ struct als_t als[] = {
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 #endif
 
-/* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
- * same order as enum temp_sensor_id. To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	{{0, 0, 0}, 0, 0}, /* TMP432_Internal */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_1 */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
-	{{0, 0, 0}, 0, 0}, /* Battery Sensor */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0x54 << 1,

@@ -103,16 +103,3 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/* Thermal limits for each temp sensor. All temps are in degrees K. Must be in
- * same order as enum temp_sensor_id. To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
