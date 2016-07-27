@@ -1,0 +1,20 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Test interrupt_enable/disable */
+CTS_TEST(test_interrupt_enable)
+CTS_TEST(test_interrupt_disable)
+
+/* Test task_wait_for_event */
+CTS_TEST(test_task_wait_event)
+
+/* Test task_disable_irq */
+CTS_TEST(test_task_disable_irq)
+
+/*
+ * Other ideas
+ *
+ * Test back-to-back interrupts, NVIC, Priorities
+ */
