@@ -211,12 +211,6 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		shi_params.sz_response =
 			pkt->response_size + SHI_PROTO3_OVERHEAD;
 
-		/*
-		 * Disable SHI interrupt until we have prepared
-		 * the first package to output
-		 */
-		task_disable_irq(NPCX_IRQ_SHI);
-
 		/* Start to fill output buffer with msg buffer */
 		shi_write_first_pkg_outbuf(shi_params.sz_response);
 #ifdef NPCX_SHI_BYPASS_OVER_256B
@@ -233,8 +227,6 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		}
 #endif
 
-		/* Enable SHI interrupt */
-		task_enable_irq(NPCX_IRQ_SHI);
 		interrupt_enable();
 	}
 	/*
@@ -601,9 +593,9 @@ void shi_int_handler(void)
 				return shi_write_half_outbuf();
 			} else /* ignore it */
 				return;
-		} else if (state == SHI_STATE_PROCESSING)
-			/* Wait for host handles request */
-			return;
+		} else if (state == SHI_STATE_PROCESSING) {
+			/* Wait for host to handle request */
+		}
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 		else if (state == SHI_STATE_WAIT_ALIGNMENT) {
 			/*
