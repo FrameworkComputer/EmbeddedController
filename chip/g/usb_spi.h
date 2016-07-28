@@ -228,9 +228,9 @@ void usb_spi_board_enable(struct usb_spi_config const *config);
 void usb_spi_board_disable(struct usb_spi_config const *config);
 
 /*
- * Returns true if AP SPI update is running, needed to properly handle
- * SYS_RST_L input state changes.
+ * Returns true if SPI update is running, needed to properly handle SYS_RST_L
+ * input state changes.
  */
-int ap_spi_update_in_progress(void);
+int usb_spi_update_in_progress(void);
 
 #endif /* __CROS_EC_USB_SPI_H */

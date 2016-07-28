@@ -254,7 +254,7 @@ void sys_rst_asserted(enum gpio_signal signal)
 	 * asserting this signal should not cause a system reset.
 	 */
 	CPRINTS("%s resceived signal %d)", __func__, signal);
-	if (ap_spi_update_in_progress())
+	if (usb_spi_update_in_progress())
 		return;
 
 	cflush();
