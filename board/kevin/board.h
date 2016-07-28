@@ -140,6 +140,12 @@
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
+/*
+ * Remove task profiling to improve SHI interrupt latency.
+ * TODO(crosbug.com/p/55710): Re-define once interrupt latency is within
+ * tolerance.
+ */
+#undef CONFIG_TASK_PROFILING
 
 #define I2C_PORT_TCPC0    NPCX_I2C_PORT0_0
 #define I2C_PORT_TCPC1    NPCX_I2C_PORT0_1
