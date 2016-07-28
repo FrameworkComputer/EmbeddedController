@@ -69,6 +69,15 @@ static void check_reset_cause(void)
 void system_pre_init(void)
 {
 	check_reset_cause();
+
+	/*
+	 * This SoC supports dual "RO" bootloader images. The bootloader locks
+	 * the running RW image (us) before jumping to it, but we want to be
+	 * sure the active bootloader is also locked. Any images updates must
+	 * go into an inactive image location. If it's already locked, this has
+	 * no effect.
+	 */
+	GREG32(GLOBALSEC, FLASH_REGION0_CTRL_CFG_EN) = 0;
 }
 
 void system_reset(int flags)
