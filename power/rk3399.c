@@ -68,7 +68,7 @@ void chipset_reset(int cold_reset)
 
 	/* Pulse SYS_RST */
 	gpio_set_level(GPIO_SYS_RST_L, 0);
-	udelay(10);
+	udelay(90);
 	gpio_set_level(GPIO_SYS_RST_L, 1);
 }
 
