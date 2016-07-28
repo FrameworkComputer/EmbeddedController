@@ -592,8 +592,7 @@ _SIGN_INPUTS = (
 
 _KEYTEST_INPUTS = (
   (768,),
-# TODO(ngm): 1024-bit modinv is broken, see partner CRBUG/53893.
-#  (1024,),
+  (1024,),
   (2048,),
 )
 
