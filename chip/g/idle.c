@@ -82,7 +82,22 @@ static void prepare_to_sleep(void)
 		GC_PMU_LOW_POWER_DIS_VDDXO_MASK |
 		GC_PMU_LOW_POWER_DIS_JTR_RC_MASK;
 
+	/*
+	 * Deep sleep should only be enabled when the AP is off otherwise the
+	 * TPM state will lost.
+	 *
+	 * TODO(crosbug.com/p/55747): Enable deep sleep when the AP is shut
+	 * down. Currently deep sleep is only enabled through the console.
+	 */
 	if (idle_action == IDLE_DEEP_SLEEP) {
+		/*
+		 * Disable the i2c and spi slave wake sources since the TPM is
+		 * not being used and reenable them in their init functions on
+		 * resume.
+		 */
+		GWRITE_FIELD(PINMUX, EXITEN0, DIOA12, 0); /* SPS_CS_L */
+		/* TODO remove i2cs wake event */
+
 		/*
 		 * Preserve some state prior to deep sleep. Pretty much all we
 		 * need is the device address, since everything else can be
