@@ -103,9 +103,12 @@ enum usb_strings {
 /* ADC signal */
 enum adc_channel {
 	ADC_DUT_CC1_PD = 0,
+	ADC_DUT_CC2_PD,
 	ADC_CHG_CC1_PD,
 	ADC_CHG_CC2_PD,
-	ADC_DUT_CC2_PD,
+	ADC_SBU1_DET,
+	ADC_SBU2_DET,
+	ADC_SUB_C_REF,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
