@@ -1,0 +1,64 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Currently tests will execute in the order they are listed here */
+
+/* Test should succeed  show the following debug output:
+ * You should see #'s 1-4 on sequential lines:
+ * 1
+ * 2
+ * 3
+ * 4
+ */
+CTS_TEST(debug_test)
+
+/* Test should succeed if both report success
+ * (expected result: success)
+ */
+CTS_TEST(success_test)
+
+/* Test should fail if one reports success and
+ * (one reports failure (expected result: failure)
+ */
+CTS_TEST(fail_dut_test)
+
+/* Test should fail if one reports success and
+ * (one reports failure (expected result: failure)
+ */
+CTS_TEST(fail_th_test)
+
+/* Test should fail when both boards report failure
+ * (expected result: failure)
+ */
+CTS_TEST(fail_both_test)
+
+/* Test should fail with bad sync if one reports bad
+ * sync and the other reports success (expected result:
+ * bad_sync)
+ */
+CTS_TEST(bad_sync_and_success_test)
+
+/* Test should fail with bad sync if both boards report
+ * bad sync (expected result: bad_sync)
+ */
+CTS_TEST(bad_sync_both_test)
+
+/* Test should report conflict if one reports bad sync
+ * and the other reports failure
+ * (expected result: conflict)
+ */
+CTS_TEST(bad_sync_failure_test)
+
+/* Test should be listed as corrupted if one test hangs,
+ * regardless of what the other test outputs
+ * (expected result: corrupted)
+ */
+CTS_TEST(hang_test)
+
+/* Test should be corrupted if it follows a corrupted
+ * test, regardless of what the actual result was
+ * reported as
+ */
+CTS_TEST(post_corruption_success)
