@@ -896,6 +896,62 @@ DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
 			NULL);
 #endif /* CONFIG_HIBERNATE */
 
+/*
+ * A typical build string has the following format
+ *
+ * <version> <build_date_time> <user@buildhost>
+ *
+ * some EC board, however, are composed of multiple components, their build
+ * strings can include several subcomponent versions between the main version
+ * and the build date, for instance
+ *
+ * cr50_v1.1.4979-0061603+ private-cr51:v0.0.66-bd9a0fe tpm2:v0.0.259-2b...
+ *
+ * Each subcomponent in this case includes the ":v" substring. For these
+ * combined version strings this function prints each version or subcomponent
+ * version on a different line.
+ */
+static void print_build_string(void)
+{
+	const char *full_build_string;
+	const char *p;
+	char symbol;
+	int seen_colonv;
+
+	ccprintf("Build:   ");
+	full_build_string = system_get_build_info();
+
+	/* 50 characters or less, will fit into the terminal line. */
+	if (strlen(full_build_string) < 50) {
+		ccprintf("%s\n");
+		return;
+	}
+
+	/*
+	 * Build version string needs splitting, let's split it at the first
+	 * space (this is where the main version ends), and then on each space
+	 * after the ":v" substring, this is where subcomponent versions are
+	 * separated.
+	 */
+	p = full_build_string;
+	seen_colonv = 1;
+
+	symbol = *p++;
+	while (symbol) {
+		if ((symbol == ' ') && seen_colonv) {
+			seen_colonv = 0;
+			/* Indent each line under 'Build:    ' */
+			ccprintf("\n         ");
+		} else {
+			if ((symbol == ':') && (*p == 'v'))
+				seen_colonv = 1;
+			ccprintf("%c", symbol);
+		}
+		symbol = *p++;
+	}
+	ccprintf("\n");
+}
+
 static int command_version(int argc, char **argv)
 {
 	ccprintf("Chip:    %s %s %s\n", system_get_chip_vendor(),
@@ -931,7 +987,9 @@ static int command_version(int argc, char **argv)
 #else
 	ccprintf("RW:      %s\n", system_get_version(SYSTEM_IMAGE_RW));
 #endif
-	ccprintf("Build:   %s\n", system_get_build_info());
+
+	print_build_string();
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(version, command_version,
