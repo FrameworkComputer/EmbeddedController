@@ -40,4 +40,10 @@ struct tpm_cmd_header {
 	uint16_t subcommand_code;  /* Not a standard field. */
 } __packed;
 
+/*
+ * The only TPM2 command we care about on the driver level, see
+ * crosbug.com/p/55667 for detals.
+ */
+#define TPM2_PCR_Read		0x0000017e
+
 #endif	/* __CROS_EC_TPM_REGISTERS_H */

@@ -458,4 +458,12 @@ uintptr_t system_get_fw_reset_vector(uintptr_t base);
  */
 int system_is_reboot_warm(void);
 
+/**
+ * On systems with protection from a failing RW update: read the retry counter
+ * and act on it.
+ *
+ * @return EC_SUCCESS if no flash write errors were encounterd.
+ */
+int system_process_retry_counter(void);
+
 #endif  /* __CROS_EC_SYSTEM_H */

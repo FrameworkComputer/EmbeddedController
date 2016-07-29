@@ -323,10 +323,10 @@ int system_process_retry_counter(void)
 	GREG32(PMU, LONG_LIFE_SCRATCH0) = 0;
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
 
+	ccprintf("%s:retry counter %d\n", __func__, retry_counter);
+
 	if (retry_counter <= RW_BOOT_MAX_RETRY_COUNT)
 		return EC_SUCCESS;
-
-	ccprintf("%s:retry counter %d\n", __func__, retry_counter);
 
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
 		me = (struct SignedHeader *)
