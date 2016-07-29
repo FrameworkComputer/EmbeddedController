@@ -293,9 +293,6 @@ void shi_handle_host_package(void)
 /* Parse header for version of spi-protocol */
 static void shi_parse_header(void)
 {
-	/* Disable SHI interrupt until we're sure the size of request package.*/
-	task_disable_irq(NPCX_IRQ_SHI);
-
 	/* We're now inside a transaction */
 	state = SHI_STATE_RECEIVING;
 	DEBUG_CPRINTF("RV-");
@@ -329,9 +326,6 @@ static void shi_parse_header(void)
 
 		/* Computing total bytes need to receive */
 		shi_params.sz_request = pkt_size;
-
-		/* Enable SHI interrupt & handle request package */
-		task_enable_irq(NPCX_IRQ_SHI);
 
 		shi_handle_host_package();
 	} else {
@@ -501,12 +495,6 @@ static void shi_bad_received_data(void)
 		CPRINTF("%02x ", in_msg[i]);
 	CPRINTF("]\n");
 
-	/*
-	 * Enable SHI interrupt again since we disable it
-	 * at the begin of SHI_STATE_RECEIVING state
-	 */
-	task_enable_irq(NPCX_IRQ_SHI);
-
 	/* Reset shi's state machine for error recovery */
 	shi_reset_prepare();
 
@@ -559,6 +547,14 @@ void shi_int_handler(void)
 			shi_fill_out_status(EC_SPI_NOT_READY);
 
 			state = SHI_STATE_CNL_RESP_NOT_RDY;
+
+			/*
+			 * Disable SHI interrupt, it will remain disabled
+			 * until shi_send_response_packet() is called and
+			 * CS is asserted for a new transaction.
+			 */
+			task_disable_irq(NPCX_IRQ_SHI);
+
 			DEBUG_CPRINTF("CNL-");
 			return;
 		/* Next transaction but we're not ready */
@@ -684,6 +680,12 @@ void shi_cs_event(enum gpio_signal signal)
 
 	DEBUG_CPRINTF("CSL-");
 
+	/*
+	 * Enable SHI interrupt - we will either succeed to parse our host
+	 * command or reset on failure from here.
+	 */
+	task_enable_irq(NPCX_IRQ_SHI);
+
 	/* Read first three bytes to parse which protocol is receiving */
 	shi_parse_header();
 }
@@ -698,6 +700,12 @@ void shi_cs_event(enum gpio_signal signal)
 static void shi_reset_prepare(void)
 {
 	uint16_t i;
+
+	/* We no longer care about SHI interrupts, so disable them. */
+	task_disable_irq(NPCX_IRQ_SHI);
+
+	/* Disable SHI unit to clear all status bits */
+	CLEAR_BIT(NPCX_SHICFG1, NPCX_SHICFG1_EN);
 
 	/* Initialize parameters of next transaction */
 	shi_params.rx_msg = in_msg;
@@ -754,8 +762,17 @@ static void shi_enable(void)
 	 */
 	SET_BIT(NPCX_DEVALT(ALT_GROUP_C), NPCX_DEVALTC_SHI_SL);
 
+	task_clear_pending_irq(NPCX_IRQ_SHI);
+
 	/* Enable SHI_CS_L interrupt */
 	gpio_enable_interrupt(GPIO_SHI_CS_L);
+
+	/*
+	 * If CS is already asserted prior to enabling our GPIO interrupt then
+	 * we have missed the falling edge and we need to handle the
+	 * deassertion interrupt.
+	 */
+	task_enable_irq(NPCX_IRQ_SHI);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_enable, HOOK_PRIO_DEFAULT);
 
@@ -775,6 +792,8 @@ DECLARE_HOOK(HOOK_INIT,
 static void shi_disable(void)
 {
 	state = SHI_STATE_DISABLED;
+
+	task_disable_irq(NPCX_IRQ_SHI);
 
 	/* Disable SHI_CS_L interrupt */
 	gpio_disable_interrupt(GPIO_SHI_CS_L);
