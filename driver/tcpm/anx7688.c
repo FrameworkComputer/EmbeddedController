@@ -160,12 +160,27 @@ static int anx7688_mux_set(int i2c_addr, mux_state_t mux_state)
 	return tcpc_write(port, TCPC_REG_CONFIG_STD_OUTPUT, reg);
 }
 
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+static int anx7688_tcpm_get_vbus_level(int port)
+{
+	int reg = 0;
+
+	/* On ANX7688, POWER_STATUS.VBusPresent (bit 2) is averaged 16 times, so
+	 * its value may not be set to 1 quickly enough during power role swap.
+	 * Therefore, we use a proprietary register to read the unfiltered VBus
+	 * value. See crosbug.com/p/55221 .
+	 */
+	i2c_read8(I2C_PORT_TCPC, 0x50, 0x40, &reg);
+	return ((reg & 0x10) ? 1 : 0);
+}
+#endif
+
 /* ANX7688 is a TCPCI compatible port controller */
 const struct tcpm_drv anx7688_tcpm_drv = {
 	.init			= &anx7688_init,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
+	.get_vbus_level		= &anx7688_tcpm_get_vbus_level,
 #endif
 	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
