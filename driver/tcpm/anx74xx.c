@@ -25,6 +25,8 @@ struct anx_state {
 };
 static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
 
+static int anx74xx_set_mux(int port, int polarity);
+
 static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 {
 	int reg;
@@ -156,6 +158,11 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 	int rv;
 	int port = i2c_addr;
 
+	if (!(mux_state & ~MUX_POLARITY_INVERTED)) {
+		anx[port].mux_state = mux_state;
+		return anx74xx_tcpm_mux_exit(port);
+	}
+
 	rv = tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_5, &reg);
 	if (rv)
 		return EC_ERROR_UNKNOWN;
@@ -179,14 +186,14 @@ static int anx74xx_tcpm_mux_set(int i2c_addr, mux_state_t mux_state)
 			val = ANX74XX_REG_MUX_DP_MODE_ACE_CC1;
 			reg |= ANX74XX_REG_MUX_ML2_A;
 		}
-	} else if (!mux_state) {
-		return anx74xx_tcpm_mux_exit(port);
-	} else {
-		return  EC_ERROR_UNIMPLEMENTED;
-	 }
+	} else
+		return EC_ERROR_UNIMPLEMENTED;
 
 	rv = tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1, val);
 	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_5, reg);
+
+	anx74xx_set_mux(port, mux_state & MUX_POLARITY_INVERTED ? 1 : 0);
+
 	anx[port].mux_state = mux_state;
 
 	return rv;
