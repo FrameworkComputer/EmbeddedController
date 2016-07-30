@@ -252,6 +252,23 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define GR_TIMEHS_MIS(m, t)           X_TIMEHSREG(m, t, GC_TIMEHS_TIMER1MIS_OFFSET)
 #define GR_TIMEHS_BGLOAD(m, t)        X_TIMEHSREG(m, t, GC_TIMEHS_TIMER1BGLOAD_OFFSET)
 
+/* Microsecond timer registers */
+/* NOTE: module is always 0, timer is 0-3 */
+#define GR_TIMEUS_EN(t) REG32(GC_TIMEUS_BASE_ADDR + \
+			      GC_TIMEUS_ENABLE_CNTR##t##_OFFSET)
+#define GR_TIMEUS_ONESHOT_MODE(t) REG32(GC_TIMEUS_BASE_ADDR + \
+					GC_TIMEUS_ONESHOT_MODE_CNTR##t##_OFFSET)
+#define GR_TIMEUS_MAXVAL(t) REG32(GC_TIMEUS_BASE_ADDR + \
+				  GC_TIMEUS_MAXVAL_CNTR##t##_OFFSET)
+#define GR_TIMEUS_PROGVAL(t) REG32(GC_TIMEUS_BASE_ADDR + \
+				   GC_TIMEUS_PROGVAL_CNTR##t##_OFFSET)
+#define GR_TIMEUS_DIVIDER(t) REG32(GC_TIMEUS_BASE_ADDR + \
+				   GC_TIMEUS_DIVIDER_CNTR##t##_OFFSET)
+#define GR_TIMEUS_CUR_MAJOR(t) REG32(GC_TIMEUS_BASE_ADDR + \
+				     GC_TIMEUS_CUR_MAJOR_CNTR##t##_OFFSET)
+#define GR_TIMEUS_CUR_MINOR(t)  REG32(GC_TIMEUS_BASE_ADDR + \
+				      GC_TIMEUS_CUR_MINOR_CNTR##t##_OFFSET)
+
 /* Watchdog */
 #define GR_WDOG_REG(off)              REG32(GC_WATCHDOG0_BASE_ADDR + (off))
 #define GR_WATCHDOG_LOAD              GR_WDOG_REG(GC_WATCHDOG_WDOGLOAD_OFFSET)
