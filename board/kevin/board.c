@@ -15,6 +15,8 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
+#include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/bd99955.h"
 #include "driver/tcpm/fusb302.h"
@@ -396,9 +398,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, overtemp_interrupt_disable,
 #ifdef HAS_TASK_MOTIONSENSE
 /* Mutexes */
 static struct mutex g_base_mutex;
-#ifdef BOARD_KEVIN
 static struct mutex g_lid_mutex;
 
+#ifdef BOARD_KEVIN
 /* BMA255 private data */
 struct bma2x2_accel_data g_bma255_data = {
 	.variant = BMA255,
@@ -416,7 +418,25 @@ const matrix_3x3_t lid_standard_ref = {
 	{ FLOAT_TO_FP(-1),  0,  0},
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
-#endif
+#else
+/* Matrix to rotate accelerometer into standard reference frame */
+const matrix_3x3_t base_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0,  0},
+	{ 0,  FLOAT_TO_FP(1),  0},
+	{ 0,  0, FLOAT_TO_FP(-1)}
+};
+
+const matrix_3x3_t lid_standard_ref = {
+	{ 0, FLOAT_TO_FP(1),  0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+
+/* KX022 private data */
+struct kionix_accel_data g_kx022_data = {
+	.variant = KX022,
+};
+#endif /* BOARD_KEVIN */
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -434,11 +454,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = CONFIG_SPI_ACCEL_PORT,
 	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
-#ifdef BOARD_KEVIN
 	 .rot_standard_ref = &base_standard_ref,
-#else
-	 .rot_standard_ref = NULL, /* Identity matrix. */
-#endif
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
 		 /* AP: by default use EC settings */
@@ -476,7 +492,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
 	 .default_range = 1000, /* dps */
 #ifdef BOARD_KEVIN
-	 .rot_standard_ref = &base_standard_ref, /* Identity Matrix. */
+	 .rot_standard_ref = &base_standard_ref,
 #else
 	 .rot_standard_ref = NULL, /* Identity matrix. */
 #endif
@@ -539,7 +555,42 @@ struct motion_sensor_t motion_sensors[] = {
 		},
 	 },
 	},
-#endif
+#else
+	{.name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kionix_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_kx022_data,
+	 .port = I2C_PORT_ACCEL,
+	 .addr = KX022_ADDR0,
+	 .rot_standard_ref = &lid_standard_ref,
+	 .default_range = 2, /* g, enough for laptop. */
+	 .config = {
+		/* AP: by default use EC settings */
+		[SENSOR_CONFIG_AP] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* unused */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		[SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+	 },
+	},
+#endif /* BOARD_KEVIN */
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif /* defined(HAS_TASK_MOTIONSENSE) */
