@@ -184,7 +184,7 @@ enum system_image_copy_t system_get_ro_image_copy(void)
  * some here.
  */
 #define MAX_RO_VER_LEN 48
-static char ro_str[2][MAX_RO_VER_LEN];
+static char vers_str[MAX_RO_VER_LEN];
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
@@ -192,7 +192,6 @@ const char *system_get_version(enum system_image_copy_t copy)
 	const struct SignedHeader *h;
 	enum system_image_copy_t this_copy;
 	uintptr_t vaddr, delta;
-	int i;
 
 	switch (copy) {
 	case SYSTEM_IMAGE_RO:
@@ -202,11 +201,10 @@ const char *system_get_version(enum system_image_copy_t copy)
 		if (vaddr == INVALID_ADDR)
 			break;
 		h = (const struct SignedHeader *)vaddr;
-		i = (copy == SYSTEM_IMAGE_RO) ? 0 : 1;
 		/* Use some fields from the header for the version string */
-		snprintf(ro_str[i], MAX_RO_VER_LEN, "%d.%d.%d/%08x",
+		snprintf(vers_str, MAX_RO_VER_LEN, "%d.%d.%d/%08x",
 			 h->epoch_, h->major_, h->minor_, h->img_chk_);
-		return ro_str[i];
+		return vers_str;
 
 	case SYSTEM_IMAGE_RW:
 	case SYSTEM_IMAGE_RW_B:

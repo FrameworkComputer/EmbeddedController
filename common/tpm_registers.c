@@ -119,17 +119,40 @@ static uint8_t tpm_fw_ver[180];
 static void set_version_string(void)
 {
 	enum system_image_copy_t active_ro, active_rw;
+	size_t offset;
 
 	active_ro = system_get_ro_image_copy();
 	active_rw = system_get_image_copy();
+
 	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver),
-		 "RO_A:%s %s RO_B:%s %s RW_A:%s %s RW_B:%s %s",
+		 "RO_A:%s %s",
 		 (active_ro == SYSTEM_IMAGE_RO ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RO),
+		 system_get_version(SYSTEM_IMAGE_RO));
+	offset = strlen(tpm_fw_ver);
+	if (offset == sizeof(tpm_fw_ver) - 1)
+		return;
+
+	snprintf(tpm_fw_ver + offset,
+		 sizeof(tpm_fw_ver) - offset,
+		 " RO_B:%s %s",
 		 (active_ro == SYSTEM_IMAGE_RO_B ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RO_B),
+		 system_get_version(SYSTEM_IMAGE_RO_B));
+	offset = strlen(tpm_fw_ver);
+	if (offset == sizeof(tpm_fw_ver) - 1)
+		return;
+
+	snprintf(tpm_fw_ver + offset,
+		 sizeof(tpm_fw_ver) - offset,
+		 " RW_A:%s %s",
 		 (active_rw == SYSTEM_IMAGE_RW ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RW),
+		 system_get_version(SYSTEM_IMAGE_RW));
+	offset = strlen(tpm_fw_ver);
+	if (offset == sizeof(tpm_fw_ver) - 1)
+		return;
+
+	snprintf(tpm_fw_ver + offset,
+		 sizeof(tpm_fw_ver) - offset,
+		 " RW_B:%s %s",
 		 (active_rw == SYSTEM_IMAGE_RW_B ? "*" : ""),
 		 system_get_version(SYSTEM_IMAGE_RW_B));
 }
@@ -535,7 +558,6 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 
 void tpm_task(void)
 {
-	set_version_string();
 	tpm_init();
 	sps_tpm_enable();
 	while (1) {
