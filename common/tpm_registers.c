@@ -464,8 +464,6 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 		fifo_reg_read(dest, data_size);
 		break;
 	case TPM_FW_VER:
-		/* Make sure no more than 4 bytes are read */
-		data_size = MIN(4, data_size);
 		for (i = 0; i < data_size; i++) {
 			/*
 			 * Only read while the index remains less than the
