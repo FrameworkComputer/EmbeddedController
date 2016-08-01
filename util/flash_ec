@@ -212,6 +212,10 @@ servo_has_warm_reset() {
 	dut_control warm_reset >/dev/null 2>&1
 }
 
+servo_has_cold_reset() {
+	dut_control cold_reset >/dev/null 2>&1
+}
+
 # reset the EC
 toad_ec_hard_reset() {
 	if dut_control cold_reset 2>/dev/null ; then
@@ -544,7 +548,9 @@ function flash_stm32() {
 	# Force the EC to boot in serial monitor mode
 	ec_enable_boot0
 	# Reset the EC
-	ec_reset
+	if $(servo_has_cold_reset); then
+		ec_reset
+	fi
 	# Unprotect flash, erase, and write
 	timeout -k 10 -s 9 "${FLAGS_timeout}" \
 		${STM32MON} -d ${EC_UART} -U -u -e -w "${IMG}"
