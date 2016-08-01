@@ -129,7 +129,7 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 		perror("Could not write to TPM");
 		return -1;
 	} else if (done != len) {
-		fprintf(stderr, "Error: Wrote %x bytes, expected to write %x\n",
+		fprintf(stderr, "Error: Wrote %d bytes, expected to write %d\n",
 			done, len);
 		return -1;
 	}
@@ -142,10 +142,21 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 		return -1;
 	}
 
-	debug("Read %x bytes from TPM\n", len);
+	debug("Read %d bytes from TPM\n", len);
 	len = len - response_offset;
 	memcpy(response, &reply.digest, len);
 	*response_size = len;
+#ifdef DEBUG
+	{
+		uint8_t *inbuf = response;
+		int i;
+
+		debug("Response size is %d bytes\n", len);
+		for (i = 0; i < len; i++)
+			debug("%2.2x ", inbuf[i]);
+		debug("\n");
+	}
+#endif
 	return 0;
 }
 
