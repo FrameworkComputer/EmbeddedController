@@ -228,7 +228,7 @@ static void GetVersion(void)
 		 * This is likely result in one extra printk()
 		 * invocation with an empty string, not a big deal.
 		 */
-	} while (vstr[0] && (chunk_count++ < (200 / sizeof(chunk))));
+	} while (vstr[0] && (chunk_count++ < (400 / sizeof(chunk))));
 
 	printf("\n");
 }
