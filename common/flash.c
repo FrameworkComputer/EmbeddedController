@@ -952,6 +952,13 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 		     flash_command_write,
 		     EC_VER_MASK(0) | EC_VER_MASK(EC_VER_FLASH_WRITE));
 
+/*
+ * Make sure our image sizes are a multiple of flash block erase size so that
+ * the host can erase the entire image.
+ */
+BUILD_ASSERT(CONFIG_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+BUILD_ASSERT(CONFIG_RW_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+
 static int flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;

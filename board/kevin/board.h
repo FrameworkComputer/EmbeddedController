@@ -29,9 +29,9 @@
 
 /*
  * We are code space-constrained on kevin, so take 10K that is normally used
- * as data RAM (was 30K, now 20K) and use it for code RAM (was 96K, now 106K)
+ * as data RAM (was 30K, now 22K) and use it for code RAM (was 96K, now 104K)
  */
-#define RAM_SHIFT_SIZE (10 * 1024)
+#define RAM_SHIFT_SIZE (8 * 1024)
 #undef  CONFIG_RO_SIZE
 #define CONFIG_RO_SIZE (NPCX_PROGRAM_MEMORY_SIZE + RAM_SHIFT_SIZE)
 #undef  CONFIG_RAM_BASE
