@@ -26,6 +26,9 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size);
 /* Enable SPS TPM driver. */
 void sps_tpm_enable(void);
 
+/* Get the current value of the burst size field of the status register. */
+size_t tpm_get_burst_size(void);
+
 /*
  * This structure describes the header of all commands and responses sent and
  * received over TPM FIFO.

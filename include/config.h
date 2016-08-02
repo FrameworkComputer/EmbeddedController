@@ -1830,6 +1830,8 @@
 
 /* Speak the TPM SPI Hardware Protocol on the SPI slave interface */
 #undef CONFIG_TPM_SPS
+/* Speak to the TPM 2.0 hardware protocol on the I2C slave interface */
+#undef CONFIG_TPM_I2CS
 
 /*****************************************************************************/
 /* USART stream config */

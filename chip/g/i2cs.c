@@ -8,13 +8,14 @@
  *
  * The controller is has two register files, 64 bytes each, one for storing
  * data received from the master, and one for storing data to be transmitted
- * to the master. Both files are accessed only as 4 byte entities, so the
+ * to the master. Both files are accessed only as 4 byte quantities, so the
  * driver must provide adaptation to concatenate messages with sizes not
- * divisible by 4.
+ * divisible by 4 and or not properly aligned.
  *
  * The file holding data written by the master has associated with it a
- * register showing where the controller accessed the file last, which tells
- * the driver how many bytes written by the master are there.
+ * register showing where the controller accessed the file last, comparing it
+ * with its pervious value tells the driver how many bytes recently written by
+ * the master are there.
  *
  * The file holding data to be read by the master has a register associtated
  * with it showing where was the latest BIT the controller transmitted.
@@ -28,21 +29,21 @@
  * to assume that the master will always write first, even when it needs to
  * read data from the device.
  *
- * Each write or read access will be started by the master writing the two
+ * Each write or read access will be started by the master writing the one
  * byte address of the TPM register to access.
  *
  * If the master needs to read this register, the originating write
- * transaction will be limited to a two bytes payload, a read transaction
+ * transaction will be limited to a single byte payload, a read transaction
  * would follow immediately.
  *
- * If the master needs to write this register, the data to be written will be
- * included in the same i2c transaction immediately following the two byte
- * address.
+ * If the master needs to write into this register, the data to be written
+ * will be included in the same i2c transaction immediately following the one
+ * byte register address.
  *
  * This protocol allows to keep the driver simple: the only interrupt the
  * driver enables is the 'end a write cycle'. The number of bytes received
- * from the master gives this driver a hint as of what the master intention
- * is, to read or to write.
+ * from the master gives the callback function a hint as of what the master
+ * intention is, to read or to write.
  *
  * In both cases the same callback function is called. On write accesses the
  * callback function converts the data as necessary and passes it to the TPM.
@@ -58,8 +59,7 @@
  * TODO:
  * - figure out flow control - clock stretching can be challenging with this
  *   controller.
- * - transferring data exceeding 64 bytes in size (accessing TPM FIFO).
- * - detect and revover overflow/underflow situations
+ * - detect and recover from overflow/underflow situations
  */
 
 #include "common.h"
@@ -68,6 +68,7 @@
 #include "i2cs.h"
 #include "pmu.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 
 #define REGISTER_FILE_SIZE (1 << 6) /* 64 bytes. */
@@ -81,7 +82,7 @@
 static wr_complete_handler_f write_complete_handler_;
 
 /* A buffer to normalize the received data to pass it to the user. */
-static uint8_t i2cs_buffer[64];
+static uint8_t i2cs_buffer[REGISTER_FILE_SIZE];
 
 /*
  * Pointer where the CPU stopped retrieving the write data sent by the master
@@ -99,18 +100,15 @@ static void i2cs_init(void)
 {
 	/* First decide if i2c is even needed for this platform. */
 	/* if (i2cs is not needed) return; */
-	return; /* Let's not do anything yet. */
+	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_I2C))
+		return;
 
 	pmu_clock_en(PERIPH_I2CS);
 
-	/*
-	 * i2cs function has been already configured in the gpio.inc table,
-	 * here just enable pull ups on both signals. TODO(vbendeb): consider
-	 * adjusting pull strength.
-	 */
-	GWRITE_FIELD(PINMUX, DIOB0_CTL, PU, 1);
-	GWRITE_FIELD(PINMUX, DIOB1_CTL, PU, 1);
+	/* Set pinmux registers for I2CS interface */
+	i2cs_set_pinmux();
 
+	/* Enable I2CS interrupt */
 	GWRITE_FIELD(I2CS, INT_ENABLE, INTR_WRITE_COMPLETE, 1);
 
 	/* Slave address is hardcoded to 0x50. */
@@ -140,9 +138,9 @@ static void _i2cs_write_complete_int(void)
 		while (bytes_written != bytes_processed) {
 			/*
 			 * This loop iterates over bytes retrieved from the
-			 * master write register file in 4 byte entities. Each
-			 * time the ever incrementing last_write_pointer is
-			 * aligned at 4 bytes, a new value needs to be
+			 * master write register file in 4 byte quantities.
+			 * Each time the ever incrementing last_write_pointer
+			 * is aligned at 4 bytes, a new value needs to be
 			 * retrieved from the next register, indexed by
 			 * last_write_pointer/4.
 			 */

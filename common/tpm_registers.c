@@ -411,6 +411,7 @@ void fifo_reg_read(uint8_t *dest, uint32_t data_size)
 {
 	uint32_t still_in_fifo = tpm_.fifo_write_index -
 		tpm_.fifo_read_index;
+	uint32_t tpm_sts;
 
 	data_size = MIN(data_size, still_in_fifo);
 	memcpy(dest,
@@ -418,8 +419,23 @@ void fifo_reg_read(uint8_t *dest, uint32_t data_size)
 	       data_size);
 
 	tpm_.fifo_read_index += data_size;
-	if (tpm_.fifo_write_index == tpm_.fifo_read_index)
-		tpm_.regs.sts &= ~(data_avail | command_ready);
+
+	tpm_sts = tpm_.regs.sts;
+	tpm_sts &= ~(burst_count_mask << burst_count_shift);
+	if (tpm_.fifo_write_index == tpm_.fifo_read_index) {
+		tpm_sts &= ~(data_avail | command_ready);
+		/* Birst size for the following write requests. */
+		tpm_sts |= 63 << burst_count_shift;
+	} else {
+		/*
+		 * Tell the master how much there is to read in the next
+		 * burst.
+		 */
+		tpm_sts |= MIN(tpm_.fifo_write_index -
+			       tpm_.fifo_read_index, 63) << burst_count_shift;
+	}
+
+	tpm_.regs.sts = tpm_sts;
 }
 
 
@@ -513,6 +529,11 @@ static void tpm_init(void)
 	_plat__SetNvAvail();
 }
 
+size_t tpm_get_burst_size(void)
+{
+	return (tpm_.regs.sts >> burst_count_shift) & burst_count_mask;
+}
+
 #ifdef CONFIG_EXTENSION_COMMAND
 
 static void call_extension_command(struct tpm_cmd_header *tpmh,
@@ -579,6 +600,7 @@ void tpm_task(void)
 		CPRINTF("got %d bytes in response\n", response_size);
 		if (response_size &&
 		    (response_size <= sizeof(tpm_.regs.data_fifo))) {
+			uint32_t tpm_sts;
 			/*
 			 * TODO(vbendeb): revisit this when
 			 * crosbug.com/p/55667 has been addressed.
@@ -598,8 +620,12 @@ void tpm_task(void)
 			}
 			tpm_.fifo_read_index = 0;
 			tpm_.fifo_write_index = response_size;
-			tpm_.regs.sts |= data_avail;
 			set_tpm_state(tpm_state_completing_cmd);
+			tpm_sts = tpm_.regs.sts;
+			tpm_sts &= ~(burst_count_mask << burst_count_shift);
+			tpm_sts |= (MIN(response_size, 63) << burst_count_shift)
+				| data_avail;
+			tpm_.regs.sts = tpm_sts;
 		}
 	}
 }

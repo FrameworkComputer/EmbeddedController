@@ -12,6 +12,7 @@
 #include "flash_config.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2cs.h"
 #include "init_chip.h"
 #include "registers.h"
 #include "nvmem.h"
@@ -591,4 +592,25 @@ void system_init_board_properties(void)
 uint32_t system_board_properties_callback(void)
 {
 	return board_properties;
+}
+
+void i2cs_set_pinmux(void)
+{
+	/* Connect I2CS SDA/SCL output to A1/A9 pads */
+	GWRITE(PINMUX, DIOA1_SEL, GC_PINMUX_I2CS0_SDA_SEL);
+	GWRITE(PINMUX, DIOA9_SEL, GC_PINMUX_I2CS0_SCL_SEL);
+	/* Connect A1/A9 pads to I2CS input SDA/SCL */
+	GWRITE(PINMUX, I2CS0_SDA_SEL, GC_PINMUX_DIOA1_SEL);
+	GWRITE(PINMUX, I2CS0_SCL_SEL, GC_PINMUX_DIOA9_SEL);
+	/* Enable SDA/SCL inputs from A1/A9 pads */
+	GWRITE_FIELD(PINMUX, DIOA1_CTL, IE, 1);	 /* I2CS_SDA */
+	GWRITE_FIELD(PINMUX, DIOA9_CTL, IE, 1);	 /* I2CS_SCL */
+	/*
+	 * Enable pull ups on both signals. TODO(vbendeb): consider
+	 * adjusting pull strength.
+	 */
+	GWRITE_FIELD(PINMUX, DIOA1_CTL, PU, 1);
+	GWRITE_FIELD(PINMUX, DIOA9_CTL, PU, 1);
+	/* TODO(scollyer): Do we need to add wake on SCL activity here? */
+
 }

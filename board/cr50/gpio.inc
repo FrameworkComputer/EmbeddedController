@@ -110,9 +110,16 @@ PINMUX(GPIO(SERVO_UART1_OFF), A7, DIO_INPUT)
 PINMUX(GPIO(SERVO_UART2_ON),  B5, DIO_INPUT)
 PINMUX(GPIO(SERVO_UART2_OFF), B5, DIO_INPUT)
 
-/* I2C pins are bi-directional */
-PINMUX(FUNC(I2C0_SCL),        B0, DIO_INPUT)
-PINMUX(FUNC(I2C0_SDA),        B1, DIO_INPUT)
+/*
+ * I2CS pins are bi-directional and would be configured here as shown. However,
+ * A1 is also used as a strapping option GPIO input which is configured
+ * above. If a board is configured (via the strapping pins) to support the I2CS
+ * interface, then the connection of A1 and A9 to/from the I2C0_SDA and I2C0_SCL
+ * lines is done in the function i2cs_set_pinmux() which lives in board.c.
+ *
+ * PINMUX(FUNC(I2C0_SCL),        A9, DIO_INPUT)
+ * PINMUX(FUNC(I2C0_SDA),        A1, DIO_INPUT)
+*/
 
 /*
  * Both SPI master and slave buses are wired directly to specific pads

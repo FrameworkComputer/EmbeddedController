@@ -86,7 +86,7 @@ common-$(CONFIG_SWITCH)+=switch.o
 common-$(CONFIG_SW_CRC)+=crc.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
 common-$(CONFIG_THROTTLE_AP)+=thermal.o throttle_ap.o
-common-$(CONFIG_TPM_SPS)+=tpm_registers.o
+common-$(CONFIG_TPM_I2CS)+=i2cs_tpm.o
 common-$(CONFIG_USB_CHARGER)+=usb_charger.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
@@ -105,6 +105,7 @@ common-$(HAS_TASK_PDCMD)+=host_command_pd.o
 common-$(HAS_TASK_KEYSCAN)+=keyboard_scan.o
 common-$(HAS_TASK_LIGHTBAR)+=lb_common.o lightbar.o
 common-$(HAS_TASK_MOTIONSENSE)+=motion_sense.o
+common-$(HAS_TASK_TPM)+=tpm_registers.o
 
 ifeq ($(CTS_MODULE),)
 common-$(TEST_BUILD)+=test_util.o

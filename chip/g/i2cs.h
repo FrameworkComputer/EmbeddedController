@@ -24,4 +24,10 @@ int i2cs_register_write_complete_handler(wr_complete_handler_f wc_handler);
  */
 void i2cs_post_read_data(uint8_t byte_to_read);
 
+/*
+ * Configure the pinmux registers required to connect the I2CS interface. This
+ * function is board specific and so it exists in the associated board.c file.
+ */
+void i2cs_set_pinmux(void);
+
 #endif /* ! __CHIP_G_I2CS_H */

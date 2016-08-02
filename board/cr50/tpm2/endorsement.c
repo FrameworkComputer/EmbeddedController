@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "tpm_manufacture.h"
-#include "tpm_registers.h"
-
 #include "TPM_Types.h"
 #include "TpmBuildSwitches.h"
 #include "CryptoEngine.h"
@@ -27,6 +24,8 @@
 #include "flash_info.h"
 #include "printf.h"
 #include "registers.h"
+#include "tpm_manufacture.h"
+#include "tpm_registers.h"
 
 #include "dcrypto.h"
 
