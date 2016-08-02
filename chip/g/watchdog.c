@@ -85,9 +85,6 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
 int watchdog_init(void)
 {
-	/* Enable clocks */
-	/* TODO_FPGA add relevant clock init here, when supported. */
-
 	/* Unlock watchdog registers */
 	GR_WATCHDOG_LOCK = WATCHDOG_MAGIC_WORD;
 
@@ -105,6 +102,10 @@ int watchdog_init(void)
 
 	/* Enable watchdog interrupt */
 	task_enable_irq(GC_IRQNUM_WATCHDOG0_WDOGINT);
+
+	/* Reboot hard if the watchdog fires or the processor locks up */
+	GWRITE_FIELD(GLOBALSEC, ALERT_CONTROL, WATCHDOG_RESET_SHUTDOWN_EN, 1);
+	GWRITE_FIELD(GLOBALSEC, ALERT_CONTROL, PROC_LOCKUP_SHUTDOWN_EN, 1);
 
 	return EC_SUCCESS;
 }

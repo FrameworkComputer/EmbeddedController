@@ -47,7 +47,7 @@ static void check_reset_cause(void)
 			flags |= RESET_FLAG_OTHER;
 	}
 
-	/* TODO(crosbug.com/p/47289): This bit doesn't work */
+	/* This bit doesn't work. See crosbug.com/p/47289. */
 	if (g_rstsrc & GC_PMU_RSTSRC_WDOG_MASK)
 		flags |= RESET_FLAG_WATCHDOG;
 
