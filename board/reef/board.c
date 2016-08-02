@@ -22,6 +22,7 @@
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8751.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tcpm.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -240,6 +241,22 @@ void board_tcpc_init(void)
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
+
+	/*
+	 * If daughter board is not connected,
+	 * then enable Pull-Up for TCPC1 int# pin.
+	 */
+	if (board_get_version() <= BOARD_VERSION_2) {
+		int rv, vendor_id = 0, product_id = 0;
+
+		rv = tcpc_read16(1, TCPC_REG_VENDOR_ID, &vendor_id);
+		rv |= tcpc_read16(1, TCPC_REG_PRODUCT_ID, &product_id);
+
+		if (rv || ((vendor_id != PS8751_VENDOR_ID) &&
+			   (product_id != PS8751_PRODUCT_ID)))
+			gpio_set_flags(GPIO_USB_C1_PD_INT_ODL,
+				       GPIO_INT_FALLING | GPIO_PULL_UP);
+	}
 
 	/* Enable TCPC0 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -809,19 +826,6 @@ void board_hibernate(void)
 	/* FIXME(dhendrix): What to do here? EC is always on so we need to
 	 * turn off whatever can be turned off. */
 }
-
-enum reef_board_version {
-	BOARD_VERSION_UNKNOWN = -1,
-	BOARD_VERSION_1,
-	BOARD_VERSION_2,
-	BOARD_VERSION_3,
-	BOARD_VERSION_4,
-	BOARD_VERSION_5,
-	BOARD_VERSION_6,
-	BOARD_VERSION_7,
-	BOARD_VERSION_8,
-	BOARD_VERSION_COUNT,
-};
 
 struct {
 	enum reef_board_version version;

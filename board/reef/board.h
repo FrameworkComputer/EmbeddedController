@@ -209,6 +209,19 @@ enum sensor_id {
 	LID_ACCEL,
 };
 
+enum reef_board_version {
+	BOARD_VERSION_UNKNOWN = -1,
+	BOARD_VERSION_1,
+	BOARD_VERSION_2,
+	BOARD_VERSION_3,
+	BOARD_VERSION_4,
+	BOARD_VERSION_5,
+	BOARD_VERSION_6,
+	BOARD_VERSION_7,
+	BOARD_VERSION_8,
+	BOARD_VERSION_COUNT,
+};
+
 /* start as a sink in case we have no other power supply/battery */
 #define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 

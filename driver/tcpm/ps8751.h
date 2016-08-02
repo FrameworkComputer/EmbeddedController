@@ -1,6 +1,6 @@
 /* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file..
+ * found in the LICENSE file.
  */
 
 /* Parade Tech Type-C controller vendor specific APIs*/
@@ -9,6 +9,9 @@
 #define __CROS_EC_USB_PD_TCPM_PS8751_H
 
 /* Vendor defined registers */
+#define PS8751_VENDOR_ID	0x1DA0
+#define PS8751_PRODUCT_ID	0x8751
+
 #define PS8751_REG_CTRL_1       0xD0
 #define PS8751_REG_CTRL_1_HPD   (1 << 0)
 #define PS8751_REG_CTRL_1_IRQ   (1 << 1)
