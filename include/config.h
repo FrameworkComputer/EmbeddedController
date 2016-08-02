@@ -1685,6 +1685,9 @@
 /* Support W25X40 SPI flash */
 #undef CONFIG_SPI_FLASH_W25X40
 
+/* Support GD25Q40 SPI flash */
+#undef CONFIG_SPI_FLASH_GD25LQ40
+
 /* Support GD25Q41B SPI flash */
 #undef CONFIG_SPI_FLASH_GD25Q41B
 

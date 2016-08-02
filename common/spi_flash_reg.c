@@ -44,8 +44,9 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 	{ X, X, 1, { 0, 1, 0 }, 0, 0x20000 }, /* Lower 1/4 */
 };
 
-#elif defined(CONFIG_SPI_FLASH_W25Q40)
+#elif defined(CONFIG_SPI_FLASH_W25Q40) || defined(CONFIG_SPI_FLASH_GD25LQ40)
 /* Verified for W25Q40BV and W25Q40EW */
+/* For GD25LQ40, BP3 and BP4 have same meaning as TB and SEC */
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
 	{ 0, X, X, { 0, 0, 0 }, 0, 0 },             /* No protection */
