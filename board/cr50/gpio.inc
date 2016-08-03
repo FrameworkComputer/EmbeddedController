@@ -47,8 +47,8 @@ GPIO(SYS_RST_L_OUT,   PIN(0, 4), GPIO_INPUT)
  * it decided instead. The pullup is on the EC's side. */
 GPIO(CCD_MODE_L,      PIN(0, 5), GPIO_ODR_HIGH)
 
-/* Battery has a 10K pulldown on its side. We provide the pullup. */
-GPIO(BATT_PRES,       PIN(0, 6), GPIO_INPUT)
+/* Battery present signal is active low */
+GPIO(BATT_PRES_L,     PIN(0, 6), GPIO_INPUT)
 
 /* GPIOs used to tristate the SPI bus */
 GPIO(SPI_MOSI,        PIN(0, 7), GPIO_INPUT)
@@ -84,7 +84,7 @@ PINMUX(GPIO(AP_WP_L),         M3, 0)
 PINMUX(GPIO(SYS_RST_L_IN),    M0, DIO_WAKE_FALLING)
 PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
 PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
-PINMUX(GPIO(BATT_PRES),       M2, 0)
+PINMUX(GPIO(BATT_PRES_L),     M2, 0)
 PINMUX(GPIO(STRAP0),          A1, DIO_INPUT)
 
 /* UARTs */
