@@ -29,6 +29,9 @@
 #define RESET_FLAG_PRESERVED   (1 << 13)  /* Some reset flags preserved from
 					   * previous boot */
 #define RESET_FLAG_USB_RESUME  (1 << 14)  /* USB resume triggered wake */
+#define RESET_FLAG_RDD         (1 << 15)  /* USB Type-C debug cable */
+#define RESET_FLAG_RBOX        (1 << 16)  /* Fixed Reset Functionality */
+#define RESET_FLAG_SECURITY    (1 << 17)  /* Security threat */
 
 /* Per chip implementation to save raw RESET_FLAG_ flags. */
 void chip_save_reset_flags(int flags);

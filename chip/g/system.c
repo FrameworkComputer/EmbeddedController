@@ -41,15 +41,11 @@ static void check_reset_cause(void)
 		if (g_exitpd & (GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER0_MASK |
 				GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER1_MASK))
 			flags |= RESET_FLAG_RTC_ALARM;
-		/* Not yet sure what to do with these */
-		if (g_exitpd & (GC_PMU_EXITPD_SRC_RDD0_PD_EXIT_TIMER_MASK |
-				GC_PMU_EXITPD_SRC_RBOX_WAKEUP_MASK))
-			flags |= RESET_FLAG_OTHER;
+		if (g_exitpd & GC_PMU_EXITPD_SRC_RDD0_PD_EXIT_TIMER_MASK)
+			flags |= RESET_FLAG_RDD;
+		if (g_exitpd & GC_PMU_EXITPD_SRC_RBOX_WAKEUP_MASK)
+			flags |= RESET_FLAG_RBOX;
 	}
-
-	/* This bit doesn't work. See crosbug.com/p/47289. */
-	if (g_rstsrc & GC_PMU_RSTSRC_WDOG_MASK)
-		flags |= RESET_FLAG_WATCHDOG;
 
 	if (g_rstsrc & GC_PMU_RSTSRC_SOFTWARE_MASK)
 		flags |= RESET_FLAG_HARD;
@@ -59,6 +55,13 @@ static void check_reset_cause(void)
 
 	if (g_rstsrc & GC_PMU_RSTSRC_FST_BRNOUT_MASK)
 		flags |= RESET_FLAG_BROWNOUT;
+
+	/*
+	 * GC_PMU_RSTSRC_WDOG and GC_PMU_RSTSRC_LOCKUP are considered security
+	 * threats. They won't show up as a direct reset cause.
+	 */
+	if (g_rstsrc & GC_PMU_RSTSRC_SEC_THREAT_MASK)
+		flags |= RESET_FLAG_SECURITY;
 
 	if (g_rstsrc && !flags)
 		flags |= RESET_FLAG_OTHER;
