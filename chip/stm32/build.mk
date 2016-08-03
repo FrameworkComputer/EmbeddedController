@@ -43,7 +43,6 @@ chip-$(CONFIG_STREAM_USART)+=usart_rx_interrupt-$(CHIP_FAMILY).o
 chip-$(CONFIG_STREAM_USART)+=usart_tx_interrupt.o
 chip-$(CONFIG_STREAM_USART)+=usart_rx_dma.o usart_tx_dma.o
 chip-$(CONFIG_CMD_USART_INFO)+=usart_info_command.o
-chip-$(CONFIG_STREAM_USB)+=usb-stream.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
@@ -57,6 +56,14 @@ chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
 chip-$(CONFIG_STM32_CHARGER_DETECT)+=charger_detect.o
 chip-$(CONFIG_DEBUG_PRINTF)+=debug_printf.o
 chip-$(CONFIG_PWM)+=pwm.o
+
+ifeq ($(CHIP_FAMILY),stm32f4)
+chip-$(CONFIG_USB)+=usb_dwc.o usb_endpoints.o
+chip-$(CONFIG_USB_CONSOLE)+=usb_dwc_console.o
+chip-$(CONFIG_STREAM_USB)+=usb_dwc_stream.o
+chip-$(CONFIG_USB_I2C)+=usb_dwc_i2c.o
+else
+chip-$(CONFIG_STREAM_USB)+=usb-stream.o
 chip-$(CONFIG_USB)+=usb.o usb-$(CHIP_FAMILY).o usb_endpoints.o
 chip-$(CONFIG_USB_CONSOLE)+=usb_console.o
 chip-$(CONFIG_USB_GPIO)+=usb_gpio.o
@@ -64,3 +71,4 @@ chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
 chip-$(CONFIG_USB_SPI)+=usb_spi.o
 chip-$(CONFIG_USB_I2C)+=usb_i2c.o
+endif

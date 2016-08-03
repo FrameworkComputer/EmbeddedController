@@ -89,6 +89,20 @@ struct usb_contid_caps_descriptor {
 #define USB_DC_DTYPE_BILLBOARD 0x0d
 /* RESERVED 0x00, 0xOe - 0xff */
 
+/* Qualifier Descriptor */
+struct usb_qualifier_descriptor {
+	uint8_t  bLength;
+	uint8_t  bDescriptorType;
+	uint16_t bcdUSB;
+	uint8_t  bDeviceClass;
+	uint8_t  bDeviceSubClass;
+	uint8_t  bDeviceProtocol;
+	uint8_t  bMaxPacketSize0;
+	uint8_t  bNumConfigurations;
+	uint8_t  bReserved;
+} __packed;
+#define USB_DT_QUALIFIER_SIZE		10
+
 /* Configuration Descriptor */
 struct usb_config_descriptor {
 	uint8_t  bLength;

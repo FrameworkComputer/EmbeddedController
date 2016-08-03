@@ -6,6 +6,11 @@
 #ifndef __CROS_EC_USB_HW_H
 #define __CROS_EC_USB_HW_H
 
+#if defined(CHIP_FAMILY_STM32F4)
+#include "usb_dwc_hw.h"
+#else
+
+
 /*
  * The STM32 has dedicated USB RAM visible on the APB1 bus (so all reads &
  * writes are 16-bits wide). The endpoint tables and the data buffers live in
@@ -82,4 +87,5 @@ extern int (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 			       usb_uint *epo_buf_tx)			\
 	__attribute__ ((alias(STRINGIFY(handler))));
 
+#endif
 #endif	/* __CROS_EC_USB_HW_H */
