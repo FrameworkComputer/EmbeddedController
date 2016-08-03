@@ -881,3 +881,25 @@ int board_get_version(void)
 	CPRINTS("Board version: %d\n", version);
 	return version;
 }
+
+/* FIXME: Remove this once proto boards are obsolete */
+static void check_ec_fw_mismatch(void)
+{
+	int board_version = board_get_version();
+
+	if (board_version == BOARD_VERSION_UNKNOWN)
+		return;
+
+#if IS_PROTO == 1
+	if (board_version != BOARD_VERSION_1) {
+		CPRINTS("ERROR: Detected proto firmware on non-proto unit.");
+		CPRINTS("Set IS_PROTO correctly in board/reef/board.h");
+	}
+#else
+	if (board_version == BOARD_VERSION_1) {
+		CPRINTS("ERROR: Detected >=EVT firmware on proto unit.");
+		CPRINTS("Set IS_PROTO correctly in board/reef/board.h");
+	}
+#endif
+}
+DECLARE_HOOK(HOOK_SECOND, check_ec_fw_mismatch, HOOK_PRIO_DEFAULT);
