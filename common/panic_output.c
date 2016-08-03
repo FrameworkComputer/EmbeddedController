@@ -166,10 +166,12 @@ static int command_crash(int argc, char **argv)
 		int zero = 0;
 
 		cflush();
-		if (argc >= 3 && !strcasecmp(argv[2], "unsigned"))
-			ccprintf("%08x", (unsigned long)1 / zero);
-		else
-			ccprintf("%08x", (long)1 / zero);
+		ccprintf("%08x", (long)1 / zero);
+	} else if (!strcasecmp(argv[1], "udivzero")) {
+		int zero = 0;
+
+		cflush();
+		ccprintf("%08x", (unsigned long)1 / zero);
 #ifdef CONFIG_CMD_STACKOVERFLOW
 	} else if (!strcasecmp(argv[1], "stack")) {
 		stack_overflow_recurse(1);
@@ -180,6 +182,10 @@ static int command_crash(int argc, char **argv)
 	} else if (!strcasecmp(argv[1], "watchdog")) {
 		while (1)
 			;
+	} else if (!strcasecmp(argv[1], "hang")) {
+		interrupt_disable();
+		while (1)
+			;
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -188,7 +194,11 @@ static int command_crash(int argc, char **argv)
 	return EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(crash, command_crash,
-		"[assert | divzero | stack | unaligned | watchdog] [options]",
+		"[assert | divzero | udivzero"
+#ifdef CONFIG_CMD_STACKOVERFLOW
+			" | stack"
+#endif
+			" | unaligned | watchdog | hang]",
 		"Crash the system (for testing)",
 		NULL);
 #endif
