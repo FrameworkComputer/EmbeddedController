@@ -249,15 +249,6 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
-int board_get_battery_temp(int idx, int *temp_ptr)
-{
-	if (bd99955_get_temp(temp_ptr) < 0)
-		return -1;
-
-	*temp_ptr = C_TO_K(*temp_ptr);
-	return 0;
-}
-
 /*
  * Data derived from Seinhart-Hart equation in a resistor divider circuit with
  * Vdd=3300mV, R = 13.7Kohm, and Murata NCP15WB-series thermistor (B = 4050,
@@ -325,7 +316,7 @@ int board_get_ambient_temp(int idx, int *temp_ptr)
 
 const struct temp_sensor_t temp_sensors[] = {
 	/* FIXME(dhendrix): tweak action_delay_sec */
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, board_get_battery_temp, 0, 1},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 1},
 	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0, 5},
 	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
 };

@@ -364,6 +364,12 @@
 #undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
+ * If the battery temperature sense pin is connected to charger,
+ * get the battery temperature from the charger.
+ */
+#undef CONFIG_CHARGER_BATTERY_TSENSE
+
+/*
  * BQ2589x IR Compensation settings.
  * Should be the combination of BQ2589X_IR_TREG_xxxC, BQ2589X_IR_VCLAMP_yyyMV
  * and  BQ2589X_IR_BAT_COMP_zzzMOHM.

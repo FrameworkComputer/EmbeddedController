@@ -813,7 +813,8 @@ int bd99955_select_input_port(enum bd99955_charge_port port)
 			      BD99955_EXTENDED_COMMAND);
 }
 
-int bd99955_get_temp(int *temp_ptr)
+#ifdef CONFIG_CHARGER_BATTERY_TSENSE
+int bd99955_get_battery_temp(int *temp_ptr)
 {
 	int rv;
 
@@ -826,6 +827,7 @@ int bd99955_get_temp(int *temp_ptr)
 	*temp_ptr = 200 - *temp_ptr;
 	return EC_SUCCESS;
 }
+#endif
 
 #ifdef HAS_TASK_USB_CHG
 int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable)

@@ -296,6 +296,6 @@ int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable);
 /* Interrupt handler for USB charger VBUS */
 void bd99955_vbus_interrupt(enum gpio_signal signal);
 /* Read temperature measurement value (in Celsius) */
-int bd99955_get_temp(int *temp_ptr);
+int bd99955_get_battery_temp(int *temp_ptr);
 
 #endif /* __CROS_EC_BD99955_H */
