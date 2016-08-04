@@ -24,6 +24,7 @@
 #include "uart.h"
 #include "util.h"
 #include "system_chip.h"
+#include "lpc_chip.h"
 
 /* Console output macros */
 #if !(DEBUG_LPC)
@@ -92,6 +93,15 @@ static void lpc_task_enable_irq(void)
 	task_enable_irq(NPCX_IRQ_KBC_IBF);
 	task_enable_irq(NPCX_IRQ_PM_CHAN_IBF);
 	task_enable_irq(NPCX_IRQ_PORT80);
+#ifdef CONFIG_ESPI
+	task_enable_irq(NPCX_IRQ_ESPI);
+	/* Virtual Wire: SLP_S3/4/5, SUS_STAT, PLTRST, OOB_RST_WARN */
+	task_enable_irq(NPCX_IRQ_WKINTA_2);
+	/* Virtual Wire: HOST_RST_WARN, SUS_WARN, SUS_PWRDN_ACK, SLP_A */
+	task_enable_irq(NPCX_IRQ_WKINTB_2);
+	/* Enable eSPI module interrupts */
+	NPCX_ESPIIE |= (ESPIIE_GENERIC | ESPIIE_VW);
+#endif
 }
 
 static void lpc_task_disable_irq(void)
@@ -99,6 +109,15 @@ static void lpc_task_disable_irq(void)
 	task_disable_irq(NPCX_IRQ_KBC_IBF);
 	task_disable_irq(NPCX_IRQ_PM_CHAN_IBF);
 	task_disable_irq(NPCX_IRQ_PORT80);
+#ifdef CONFIG_ESPI
+	task_disable_irq(NPCX_IRQ_ESPI);
+	/* Virtual Wire: SLP_S3/4/5, SUS_STAT, PLTRST, OOB_RST_WARN */
+	task_disable_irq(NPCX_IRQ_WKINTA_2);
+	/* Virtual Wire: HOST_RST_WARN,SUS_WARN, SUS_PWRDN_ACK, SLP_A */
+	task_disable_irq(NPCX_IRQ_WKINTB_2);
+	/* Disable eSPI module interrupts */
+	NPCX_ESPIIE &= ~(ESPIIE_GENERIC | ESPIIE_VW);
+#endif
 }
 /**
  * Generate SMI pulse to the host chipset via GPIO.
@@ -688,7 +707,7 @@ uint8_t lpc_sib_read_reg(uint8_t io_offset, uint8_t index_value)
 }
 
 /* For LPC host register initial via SIB module */
-void lpc_host_register_init(void)
+void host_register_init(void)
 {
 	/* enable ACPI*/
 	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x11);
@@ -751,6 +770,7 @@ int lpc_get_pltrst_asserted(void)
 	return (NPCX_MSWCTL1 & 0x04) ? 1 : 0;
 }
 
+#ifndef CONFIG_ESPI
 /* Initialize host settings by interrupt */
 void lpc_lreset_pltrst_handler(void)
 {
@@ -774,7 +794,7 @@ void lpc_lreset_pltrst_handler(void)
 	 * won't be reset by Host domain reset but Core domain does.
 	 */
 	if (!pltrst_asserted)
-		lpc_host_register_init();
+		host_register_init();
 	else {
 #ifdef CONFIG_CHIPSET_RESET_HOOK
 		/* Notify HOOK_CHIPSET_RESET */
@@ -782,14 +802,26 @@ void lpc_lreset_pltrst_handler(void)
 #endif
 	}
 }
+#endif
+
+/*****************************************************************************/
+/* LPC/eSPI Initialization functions */
 
 static void lpc_init(void)
 {
 	/* Enable clock for LPC peripheral */
 	clock_enable_peripheral(CGC_OFFSET_LPC, CGC_LPC_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
+#ifdef CONFIG_ESPI
+	/* Enable clock for eSPI peripheral */
+	clock_enable_peripheral(CGC_OFFSET_ESPI, CGC_ESPI_MASK,
+		CGC_MODE_RUN | CGC_MODE_SLEEP);
+	/* Initialize eSPI IP */
+	espi_init();
+#else
 	/* Switching to LPC interface */
 	NPCX_DEVCNT |= 0x04;
+#endif
 	/* Enable 4E/4F */
 	if (!IS_BIT_SET(NPCX_MSWCTL1, 3)) {
 		NPCX_HCBAL = 0x4E;
@@ -798,11 +830,13 @@ static void lpc_init(void)
 	/* Clear Host Access Hold state */
 	NPCX_SMC_CTL = 0xC0;
 
+#ifndef CONFIG_ESPI
 	/*
 	 * Set alternative pin from GPIO to CLKRUN no matter SERIRQ is under
 	 * continuous or quiet mode.
 	 */
 	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_CLKRN_SL);
+#endif
 
 	/* Initialize Hardware for UART Host */
 #if CONFIG_UART_HOST
@@ -897,7 +931,7 @@ static void lpc_init(void)
 	 */
 #ifdef BOARD_NPCX_EVB
 	/* initial IO port address via SIB-write modules */
-	lpc_host_register_init();
+	host_register_init();
 #else
 	/* Initialize LRESET# interrupt */
 	/* Set detection mode to edge */

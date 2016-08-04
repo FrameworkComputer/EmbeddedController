@@ -63,6 +63,7 @@
 #define DEBUG_SHI                        0
 #define DEBUG_CLK                        0
 #define DEBUG_LPC                        0
+#define DEBUG_ESPI                       0
 
 /* Modules Map */
 #define NPCX_MDC_BASE_ADDR               0x4000C000
@@ -84,6 +85,7 @@
 #define NPCX_SPI_BASE_ADDR               0x400D2000
 #define NPCX_PECI_BASE_ADDR              0x400D4000
 #define NPCX_TWD_BASE_ADDR               0x400D8000
+#define NPCX_ESPI_BASE_ADDR              0x4000A000
 
 /* Multi-Modules Map */
 #define NPCX_PWM_BASE_ADDR(mdl)          (0x40080000 + ((mdl) * 0x2000L))
@@ -184,6 +186,7 @@
 #define NPCX_IRQ16_NOUSED                NPCX_IRQ_16
 #define NPCX_IRQ_ITIM16_3                NPCX_IRQ_17
 #define NPCX_IRQ_SHI                     NPCX_IRQ_18
+#define NPCX_IRQ_ESPI                    NPCX_IRQ_18
 #define NPCX_IRQ19_NOUSED                NPCX_IRQ_19
 #define NPCX_IRQ20_NOUSED                NPCX_IRQ_20
 #define NPCX_IRQ_PS2                     NPCX_IRQ_21
@@ -347,6 +350,7 @@ enum {
 enum {
 	MIWU_EDGE_RISING,
 	MIWU_EDGE_FALLING,
+	MIWU_EDGE_ANYING,
 };
 
 /* MIWU utilities */
@@ -464,6 +468,7 @@ enum {
 
 /* SCFG register fields */
 #define NPCX_DEVCNT_F_SPI_TRIS           6
+#define NPCX_DEVCNT_HIF_TYP_SEL_FIELD    FIELD(2, 2)
 #define NPCX_DEVCNT_JEN1_HEN             5
 #define NPCX_DEVCNT_JEN0_HEN             4
 #define NPCX_STRPST_TRIST                1
@@ -1226,6 +1231,202 @@ enum ITIM16_MODULE_T {
 /******************************************************************************/
 /* Low Power RAM definitions */
 #define NPCX_LPRAM_CTRL                  REG32(0x40001044)
+
+/******************************************************************************/
+/*  eSPI Registers */
+#define NPCX_ESPIID                 REG32(NPCX_ESPI_BASE_ADDR + 0X00)
+#define NPCX_ESPICFG                REG32(NPCX_ESPI_BASE_ADDR + 0X04)
+#define NPCX_ESPISTS                REG32(NPCX_ESPI_BASE_ADDR + 0X08)
+#define NPCX_ESPIIE                 REG32(NPCX_ESPI_BASE_ADDR + 0X0C)
+#define NPCX_ESPIIWE                REG32(NPCX_ESPI_BASE_ADDR + 0X10)
+#define NPCX_VWREGIDX               REG32(NPCX_ESPI_BASE_ADDR + 0X14)
+#define NPCX_VWREGDATA              REG32(NPCX_ESPI_BASE_ADDR + 0X18)
+#define NPCX_OOBCTL                 REG32(NPCX_ESPI_BASE_ADDR + 0X24)
+#define NPCX_FLASHRXRDHEAD          REG32(NPCX_ESPI_BASE_ADDR + 0X28)
+#define NPCX_FLASHTXWRHEAD          REG32(NPCX_ESPI_BASE_ADDR + 0X2C)
+#define NPCX_FLASHCFG               REG32(NPCX_ESPI_BASE_ADDR + 0X34)
+#define NPCX_FLASHCTL               REG32(NPCX_ESPI_BASE_ADDR + 0X38)
+#define NPCX_ESPIIERR               REG32(NPCX_ESPI_BASE_ADDR + 0X3C)
+
+/* eSPI Virtual Wire channel registers */
+#define NPCX_VWEVSM(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x100 + (4*(n)))
+#define NPCX_VWEVMS(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x140 + (4*(n)))
+#define NPCX_VWGPSM(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x180 + (4*(n)))
+#define NPCX_VWGPMS(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x1C0 + (4*(n)))
+#define NPCX_VWPING                 REG32(NPCX_ESPI_BASE_ADDR + 0x2F8)
+#define NPCX_VWCTL                  REG32(NPCX_ESPI_BASE_ADDR + 0x2FC)
+
+/* eSPI register fields */
+#define NPCX_ESPICFG_PCHANEN             0
+#define NPCX_ESPICFG_VWCHANEN            1
+#define NPCX_ESPICFG_OOBCHANEN           2
+#define NPCX_ESPICFG_FLASHCHANEN         3
+#define NPCX_ESPICFG_IOMODE_FILED        FIELD(8, 9)
+#define NPCX_ESPICFG_MAXFREQ_FILED       FIELD(10, 12)
+#define NPCX_ESPICFG_PCCHN_SUPP          24
+#define NPCX_ESPICFG_VWCHN_SUPP          25
+#define NPCX_ESPICFG_OOBCHN_SUPP         26
+#define NPCX_ESPICFG_FLASHCHN_SUPP       27
+#define NPCX_ESPIIE_IBRSTIE              0
+#define NPCX_ESPIIE_CFGUPDIE             1
+#define NPCX_ESPIIE_BERRIE               2
+#define NPCX_ESPIIE_OOBRXIE              3
+#define NPCX_ESPIIE_FLASHRXIE            4
+#define NPCX_ESPIIE_SFLASHRDIE           5
+#define NPCX_ESPIIE_PERACCIE             6
+#define NPCX_ESPIIE_DFRDIE               7
+#define NPCX_ESPIIE_VWUPDIE              8
+#define NPCX_ESPIIE_ESPIRSTIE            9
+#define NPCX_ESPIIE_PLTRSTIE             10
+#define NPCX_ESPIIE_VW1IE                11
+#define NPCX_ESPIIE_VW2IE                12
+#define NPCX_ESPIIE_VW3IE                13
+#define NPCX_ESPIIE_VW4IE                14
+#define NPCX_ESPIIE_AMERRIE              15
+#define NPCX_ESPIIE_AMDONEIE             16
+#define NPCX_ESPISTS_IBRST               0
+#define NPCX_ESPISTS_CFGUPD              1
+#define NPCX_ESPISTS_BERR                2
+#define NPCX_ESPISTS_OOBRX               3
+#define NPCX_ESPISTS_FLASHRX             4
+#define NPCX_ESPISTS_SFLASHRD            5
+#define NPCX_ESPISTS_PERACC              6
+#define NPCX_ESPISTS_DFRD                7
+#define NPCX_ESPISTS_VWUPD               8
+#define NPCX_ESPISTS_ESPIRST             9
+#define NPCX_ESPISTS_PLTRST              10
+#define NPCX_ESPISTS_VW1                 11
+#define NPCX_ESPISTS_VW2                 12
+#define NPCX_ESPISTS_VW3                 13
+#define NPCX_ESPISTS_VW4                 14
+#define NPCX_ESPISTS_AMERR               15
+#define NPCX_ESPISTS_AMDONE              16
+/* eSPI Virtual Wire channel register fields */
+#define NPCX_VWEVSM_WIRE                 FIELD(0, 4)
+#define NPCX_VWEVMS_WIRE                 FIELD(0, 4)
+#define NPCX_VWEVSM_VALID                FIELD(4, 4)
+#define NPCX_VWEVMS_VALID                FIELD(4, 4)
+
+/* Marco functions for eSPI CFG & IE */
+#define IS_SLAVE_CHAN_ENABLE(ch)         IS_BIT_SET(NPCX_ESPICFG, ch)
+#define IS_HOST_CHAN_EN(ch)              IS_BIT_SET(NPCX_ESPICFG, (ch+4))
+#define ENABLE_ESPI_CHAN(ch)             SET_BIT(NPCX_ESPICFG, ch)
+#define DISABLE_ESPI_CHAN(ch)            CLEAR_BIT(NPCX_ESPICFG, ch)
+/* ESPI Slave Channel Support Definitions */
+#define ESPI_SUPP_CH_PC                  (1 << NPCX_ESPICFG_PCCHN_SUPP)
+#define ESPI_SUPP_CH_VM                  (1 << NPCX_ESPICFG_VWCHN_SUPP)
+#define ESPI_SUPP_CH_OOB                 (1 << NPCX_ESPICFG_OOBCHN_SUPP)
+#define ESPI_SUPP_CH_FLASH               (1 << NPCX_ESPICFG_FLASHCHN_SUPP)
+#define ESPI_SUPP_CH_ALL                 (ESPI_SUPP_CH_PC | ESPI_SUPP_CH_VM | \
+					ESPI_SUPP_CH_OOB | ESPI_SUPP_CH_FLASH)
+/* ESPI Interrupts Enable Definitions */
+#define ESPIIE_IBRST                     (1 << NPCX_ESPIIE_IBRSTIE)
+#define ESPIIE_CFGUPD                    (1 << NPCX_ESPIIE_CFGUPDIE)
+#define ESPIIE_BERR                      (1 << NPCX_ESPIIE_BERRIE)
+#define ESPIIE_OOBRX                     (1 << NPCX_ESPIIE_OOBRXIE)
+#define ESPIIE_FLASHRX                   (1 << NPCX_ESPIIE_FLASHRXIE)
+#define ESPIIE_SFLASHRD                  (1 << NPCX_ESPIIE_SFLASHRDIE)
+#define ESPIIE_PERACC                    (1 << NPCX_ESPIIE_PERACCIE)
+#define ESPIIE_DFRD                      (1 << NPCX_ESPIIE_DFRDIE)
+#define ESPIIE_VWUPD                     (1 << NPCX_ESPIIE_VWUPDIE)
+#define ESPIIE_ESPIRST                   (1 << NPCX_ESPIIE_ESPIRSTIE)
+#define ESPIIE_PLTRST                    (1 << NPCX_ESPIIE_PLTRSTIE)
+#define ESPIIE_VW1                       (1 << NPCX_ESPIIE_VW1IE)
+#define ESPIIE_VW2                       (1 << NPCX_ESPIIE_VW2IE)
+#define ESPIIE_VW3                       (1 << NPCX_ESPIIE_VW3IE)
+#define ESPIIE_VW4                       (1 << NPCX_ESPIIE_VW4IE)
+#define ESPIIE_AMERR                     (1 << NPCX_ESPIIE_AMERRIE)
+#define ESPIIE_AMDONE                    (1 << NPCX_ESPIIE_AMDONEIE)
+/* eSPI Interrupts for VW */
+#define ESPIIE_VW                    (ESPIIE_VWUPD | ESPIIE_VW1 | ESPIIE_VW2 | \
+				ESPIIE_VW3 | ESPIIE_VW4 | ESPIIE_PLTRST)
+/* eSPI Interrupts for Generic */
+#define ESPIIE_GENERIC               (ESPIIE_IBRST | ESPIIE_CFGUPD | \
+				ESPIIE_BERR | ESPIIE_ESPIRST)
+
+/* Marco functions for eSPI VW */
+#define ESPI_VWEVMS_NUM                  12
+#define ESPI_VWEVSM_NUM                  10
+#define ESPI_VWGPMS_NUM                  16
+#define ESPI_VW_IDX_WIRE_NUM             4
+/* Determine Virtual Wire type */
+#define VM_TYPE(i)               ((i >= 0  && i <=  1) ? ESPI_VW_TYPE_INT_EV : \
+				(i >= 2  && i <=    7) ? ESPI_VW_TYPE_SYS_EV : \
+				(i >= 64  && i <= 127) ? ESPI_VW_TYPE_PLT : \
+				(i >= 128 && i <= 255) ? ESPI_VW_TYPE_GPIO : \
+							ESPI_VW_TYPE_NONE)
+
+/* Bit filed manipulation for VWEVMS Value */
+#define VWEVMS_INX(i)                ((i<<8)  & 0x00007F00)
+#define VWEVMS_INX_EN(n)             ((n<<15) & 0x00008000)
+#define VWEVMS_PLTRST_EN(p)          ((p<<17) & 0x00020000)
+#define VWEVMS_INT_EN(e)             ((e<<18) & 0x00040000)
+#define VWEVMS_ESPIRST_EN(r)         ((r<<19) & 0x00080000)
+#define VWEVMS_FIELD(i, n, p, e, r)  (VWEVMS_INX(i) | VWEVMS_INX_EN(n) | \
+				VWEVMS_PLTRST_EN(p) | VWEVMS_INT_EN(e) | \
+				VWEVMS_ESPIRST_EN(r))
+#define VWEVMS_IDX_GET(reg)          (((reg & 0x00007F00)>>8))
+
+/* Bit filed manipulation for VWEVSM Value */
+#define VWEVSM_VALID_N(v)            ((v<<4)  & 0x000000F0)
+#define VWEVSM_INX(i)                ((i<<8)  & 0x00007F00)
+#define VWEVSM_INX_EN(n)             ((n<<15) & 0x00008000)
+#define VWEVSM_DIRTY(d)              ((d<<16) & 0x00010000)
+#define VWEVSM_PLTRST_EN(p)          ((p<<17) & 0x00020000)
+#define VWEVSM_CDRST_EN(c)           ((c<<19) & 0x00080000)
+#define VWEVSM_FIELD(i, n, v, p, c)  (VWEVSM_INX(i) | VWEVSM_INX_EN(n) | \
+				VWEVSM_VALID_N(v) | VWEVSM_PLTRST_EN(p) |\
+				VWEVSM_CDRST_EN(c))
+#define VWEVSM_IDX_GET(reg)          (((reg & 0x00007F00)>>8))
+
+/* Bit filed manpulation for VWGPMS Value */
+#define VWGPMS_INX_EN(n)             (((n<<15) & 0x00008000))
+#define VWGPMS_MODIFIED(m)           (((m<<16) & 0x00010000))
+#define VWGPMS_PLTRST_EN(p)          (((p<<17) & 0x00020000))
+#define VWGPMS_INT_EN(e)             (((e<<18) & 0x00040000))
+#define VWGPMS_FIELD(n, m, p, e)     (VMGPMS_INX_EN(n) | VWGPMS_MODIFIED(m) | \
+				VWGPMS_PLTRST_EN(p) | VWGPMS_INT_EN(e))
+
+/* eSPI enumeration */
+/* eSPI channels */
+enum {
+	NPCX_ESPI_CH_PC = 0,
+	NPCX_ESPI_CH_VW,
+	NPCX_ESPI_CH_OOB,
+	NPCX_ESPI_CH_FLASH,
+	NPCX_ESPI_CH_COUNT,
+	NPCX_ESPI_CH_GENERIC,
+	NPCX_ESPI_CH_NONE = 0xFF
+};
+
+/* eSPI IO modes */
+enum {
+	NPCX_ESPI_IO_MODE_SINGLE = 0,
+	NPCX_ESPI_IO_MODE_DUAL   = 1,
+	NPCX_ESPI_IO_MODE_Quad   = 2,
+	NPCX_ESPI_IO_MODE_ALL    = 3,
+	NPCX_ESPI_IO_MODE_NONE   = 0xFF
+};
+
+/* eSPI max supported frequency */
+enum {
+	NPCX_ESPI_MAXFREQ_20   = 0,
+	NPCX_ESPI_MAXFREQ_25   = 1,
+	NPCX_ESPI_MAXFREQ_33   = 2,
+	NPCX_ESPI_MAXFREQ_50   = 3,
+	NPCX_ESPI_MAXFREQ_66   = 4,
+	NPCX_ESPI_MAXFREQ_NOOE = 0xFF
+};
+
+/* VW types */
+enum {
+	ESPI_VW_TYPE_INT_EV,            /* Interrupt event */
+	ESPI_VW_TYPE_SYS_EV,            /* System Event */
+	ESPI_VW_TYPE_PLT,               /* Platform specific */
+	ESPI_VW_TYPE_GPIO,              /* General Purpose I/O Expander */
+	ESPI_VW_TYPE_NUM,
+	ESPI_VW_TYPE_NONE = 0xFF
+};
 
 /******************************************************************************/
 /* Nuvoton internal used only registers */

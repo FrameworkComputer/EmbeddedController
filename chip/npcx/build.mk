@@ -20,6 +20,7 @@ chip-$(CONFIG_FANS)+=fan.o
 chip-$(CONFIG_FLASH)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_LPC)+=lpc.o
+chip-$(CONFIG_ESPI)+=espi.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(CONFIG_HOSTCMD_SPS)+=shi.o
 # pwm functions are implemented with the fan functions
