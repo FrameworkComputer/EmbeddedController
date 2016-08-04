@@ -505,10 +505,15 @@ void board_update_device_state(enum device_type device)
 
 static void detect_slave_config(void)
 {
-	uint32_t properties = 0;
+	uint32_t properties;
 
-	/* Check for power on reset */
-	if (system_get_reset_flags() & RESET_FLAG_POWER_ON) {
+	properties = GREG32(PMU, LONG_LIFE_SCRATCH1);
+
+	/*
+	 * This must be a power on reset or maybe restart due to a software
+	 * update from a version not setting the register.
+	 */
+	if (!properties) {
 		/* Read DIOA1 strap pin */
 		if (gpio_get_level(GPIO_STRAP0))
 			/* Strap is pulled high -> Kevin SPI TPM option */
@@ -516,16 +521,19 @@ static void detect_slave_config(void)
 		else
 			/* Strap is low -> Reef I2C TPM option */
 			properties |= BOARD_SLAVE_CONFIG_I2C;
-		/* Write enable bit for LONG_LIFE_SCRATCH1 register */
+
+		/*
+		 * Now save the properties value for future use.
+		 *
+		 * First enable write access to the LONG_LIFE_SCRATCH1 register.
+		 */
 		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
-		/* Save type in LONG_LIFE register */
+		/* Save properties in LONG_LIFE register */
 		GREG32(PMU, LONG_LIFE_SCRATCH1) = properties;
-		/* Clear enable bit of LONG_LIFE_SCRATCH1 register */
+		/* Disabel write access to the LONG_LIFE_SCRATCH1 register */
 		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
-	} else {
-		/* Not a power on reset, so can read what was discovered */
-		properties = GREG32(PMU, LONG_LIFE_SCRATCH1);
 	}
+
 	/* Save this configuration setting */
 	board_properties = properties;
 }
