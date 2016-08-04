@@ -195,15 +195,13 @@ static uint8_t shi_read_buf_pointer(void);
  */
 static void shi_send_response_packet(struct host_packet *pkt)
 {
-	/*
-	 * Disable interrupts. This routine is not called from interrupt
-	 * context and buffer underrun will likely occur if it is
-	 * preempted after writing its initial reply byte. Also, we must be
-	 * sure our state doesn't unexpectedly change, in case we're expected
-	 * to take RESP_NOT_RDY actions.
-	 */
-	interrupt_disable();
 	if (state == SHI_STATE_PROCESSING) {
+		/*
+		* Disable interrupts. This routine is not called from interrupt
+		* context and buffer underrun will likely occur if it is
+		* preempted after writing its initial reply byte.
+		*/
+		interrupt_disable();
 
 		/* Append our past-end byte, which we reserved space for. */
 		((uint8_t *) pkt->response)[pkt->response_size + 0] =
@@ -228,6 +226,8 @@ static void shi_send_response_packet(struct host_packet *pkt)
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 		}
 #endif
+
+		interrupt_enable();
 	}
 	/*
 	 * If we're not processing, then the AP has already terminated the
@@ -239,8 +239,6 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		DEBUG_CPRINTF("END\n");
 	} else
 		DEBUG_CPRINTS("Unexpected state %d in response handler", state);
-
-	interrupt_enable();
 }
 
 void shi_handle_host_package(void)
@@ -295,6 +293,9 @@ void shi_handle_host_package(void)
 /* Parse header for version of spi-protocol */
 static void shi_parse_header(void)
 {
+	/* Disable SHI interrupt until we're sure the size of request package.*/
+	task_disable_irq(NPCX_IRQ_SHI);
+
 	/* We're now inside a transaction */
 	state = SHI_STATE_RECEIVING;
 	DEBUG_CPRINTF("RV-");
@@ -328,6 +329,9 @@ static void shi_parse_header(void)
 
 		/* Computing total bytes need to receive */
 		shi_params.sz_request = pkt_size;
+
+		/* Enable SHI interrupt & handle request package */
+		task_enable_irq(NPCX_IRQ_SHI);
 
 		shi_handle_host_package();
 	} else {
@@ -497,6 +501,12 @@ static void shi_bad_received_data(void)
 		CPRINTF("%02x ", in_msg[i]);
 	CPRINTF("]\n");
 
+	/*
+	 * Enable SHI interrupt again since we disable it
+	 * at the begin of SHI_STATE_RECEIVING state
+	 */
+	task_enable_irq(NPCX_IRQ_SHI);
+
 	/* Reset shi's state machine for error recovery */
 	shi_reset_prepare();
 
@@ -549,14 +559,6 @@ void shi_int_handler(void)
 			shi_fill_out_status(EC_SPI_NOT_READY);
 
 			state = SHI_STATE_CNL_RESP_NOT_RDY;
-
-			/*
-			 * Disable SHI interrupt, it will remain disabled
-			 * until shi_send_response_packet() is called and
-			 * CS is asserted for a new transaction.
-			 */
-			task_disable_irq(NPCX_IRQ_SHI);
-
 			DEBUG_CPRINTF("CNL-");
 			return;
 		/* Next transaction but we're not ready */
@@ -686,12 +688,6 @@ void shi_cs_event(enum gpio_signal signal)
 
 	DEBUG_CPRINTF("CSL-");
 
-	/*
-	 * Enable SHI interrupt - we will either succeed to parse our host
-	 * command or reset on failure from here.
-	 */
-	task_enable_irq(NPCX_IRQ_SHI);
-
 	/* Read first three bytes to parse which protocol is receiving */
 	shi_parse_header();
 }
@@ -706,9 +702,6 @@ void shi_cs_event(enum gpio_signal signal)
 static void shi_reset_prepare(void)
 {
 	uint16_t i;
-
-	/* We no longer care about SHI interrupts, so disable them. */
-	task_disable_irq(NPCX_IRQ_SHI);
 
 	/* Initialize parameters of next transaction */
 	shi_params.rx_msg = in_msg;
