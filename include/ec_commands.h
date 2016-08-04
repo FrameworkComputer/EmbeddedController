@@ -3809,6 +3809,13 @@ struct ec_response_usb_pd_mux_info {
 
 /*****************************************************************************/
 /*
+ * Reserve a range of host commands for the CR51 firmware.
+ */
+#define EC_CMD_CR51_BASE 0x300
+#define EC_CMD_CR51_LAST 0x3FF
+
+/*****************************************************************************/
+/*
  * Reserve a range of host commands for board-specific, experimental, or
  * special purpose features. These can be (re)used without updating this file.
  *
