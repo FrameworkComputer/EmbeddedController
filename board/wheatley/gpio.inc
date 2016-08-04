@@ -15,8 +15,11 @@ GPIO_INT(WP_L,               PIN(7,  1), GPIO_INT_BOTH,                   switch
 GPIO_INT(POWER_BUTTON_L,     PIN(9,  7), GPIO_INT_BOTH,                   power_button_interrupt)  /* A48 - GPIO97 for ROP_EC_PWR_BTN_L_R */
 /* RSMRST from PMIC */
 GPIO_INT(RSMRST_L_PGOOD,     PIN(7,  2), GPIO_INT_BOTH,                   power_signal_interrupt)  /* A36 - PWRGD for ROP_EC_RSMRST_L */
+/* Use VW signals instead of GPIOs */
+#ifndef CONFIG_VW_SIGNALS
 GPIO_INT(PCH_SLP_S4_L,       PIN(5,  0), GPIO_INT_BOTH,                   power_signal_interrupt)  /* A25 - GPIO50 for SLP_S4_L */
 GPIO_INT(PCH_SLP_S3_L,       PIN(4,  0), GPIO_INT_BOTH,                   power_signal_interrupt)  /* B21 - TA1 for SLP_S3_L */
+#endif
 /*
  * This pulldown should be removed in future hardware followers. The signal
  * is pulled up in the SoC when the primary rails are on and/or ramping.
