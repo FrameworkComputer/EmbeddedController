@@ -18,6 +18,7 @@
 #include "util.h"
 #include "wireless.h"
 #include "lpc.h"
+#include "espi.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -54,6 +55,32 @@
 static int throttle_cpu;      /* Throttle CPU? */
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 static int power_s5_up;       /* Chipset is sequencing up or down */
+
+enum sys_sleep_state {
+	SYS_SLEEP_S5,
+	SYS_SLEEP_S4,
+	SYS_SLEEP_S3
+};
+
+/* Get system sleep state through GPIOs or VWs */
+static int chipset_get_sleep_signal(enum sys_sleep_state state)
+{
+#ifdef CONFIG_VW_SIGNALS
+	if (state == SYS_SLEEP_S4)
+		return espi_vw_get_wire(VW_SLP_S4_L);
+	else if (state == SYS_SLEEP_S3)
+		return espi_vw_get_wire(VW_SLP_S3_L);
+#else
+	if (state == SYS_SLEEP_S4)
+		return gpio_get_level(GPIO_PCH_SLP_S4_L);
+	else if (state == SYS_SLEEP_S3)
+		return gpio_get_level(GPIO_PCH_SLP_S3_L);
+#endif
+
+	/* We should never run here */
+	ASSERT(0);
+	return 0;
+}
 
 void chipset_force_shutdown(void)
 {
@@ -219,7 +246,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		if (power_s5_up)
 			return power_wait_s5_rtc_reset();
 #endif
-		if (gpio_get_level(GPIO_PCH_SLP_S4_L) == 1)
+		if (chipset_get_sleep_signal(SYS_SLEEP_S4) == 1)
 			return POWER_S5S3; /* Power up to next state */
 		break;
 
@@ -228,10 +255,10 @@ static enum power_state _power_handle_state(enum power_state state)
 			/* Required rail went away */
 			chipset_force_shutdown();
 			return POWER_S3S5;
-		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1) {
+		} else if (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1) {
 			/* Power up to next state */
 			return POWER_S3S0;
-		} else if (gpio_get_level(GPIO_PCH_SLP_S4_L) == 0) {
+		} else if (chipset_get_sleep_signal(SYS_SLEEP_S4) == 0) {
 			/* Power down to next state */
 			return POWER_S3S5;
 		}
@@ -243,10 +270,10 @@ static enum power_state _power_handle_state(enum power_state state)
 			return POWER_S0S3;
 #ifdef CONFIG_POWER_S0IX
 		} else if ((gpio_get_level(GPIO_PCH_SLP_S0_L) == 0) &&
-			   (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1)) {
+			   (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0S0ix;
 #endif
-		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
+		} else if (chipset_get_sleep_signal(SYS_SLEEP_S3) == 0) {
 			/* Power down to next state */
 			return POWER_S0S3;
 		}
@@ -259,7 +286,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		 * TODO: add code for unexpected power loss
 		 */
 		if ((gpio_get_level(GPIO_PCH_SLP_S0_L) == 1) &&
-		   (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1)) {
+		   (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0ixS0;
 		}
 

@@ -18,6 +18,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "espi.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -76,8 +77,23 @@ static int power_signal_get_level(enum gpio_signal signal)
 #ifdef CONFIG_POWER_S0IX
 	return chipset_get_ps_debounced_level(signal);
 #else
+#ifdef CONFIG_VW_SIGNALS
+	/* Check signal is from GPIOs or VWs */
+	if ((int)signal > VW_SIGNAL_BASE)
+		return espi_vw_get_wire(signal);
+#endif
 	return gpio_get_level(signal);
 #endif
+}
+
+static int power_signal_enable_interrupt(enum gpio_signal signal)
+{
+#ifdef CONFIG_VW_SIGNALS
+	/* Check signal is from GPIOs or VWs */
+	if ((int)signal > VW_SIGNAL_BASE)
+		return espi_vw_enable_wire_int(signal);
+#endif
+	return gpio_enable_interrupt(signal);
 }
 
 /**
@@ -384,7 +400,7 @@ static void power_common_init(void)
 
 	/* Enable interrupts for input signals */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++)
-		gpio_enable_interrupt(s->gpio);
+		power_signal_enable_interrupt(s->gpio);
 
 	/*
 	 * Update input state again since there is a small window
@@ -420,6 +436,10 @@ DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Interrupts */
+
+#if defined(CONFIG_BRINGUP) && defined(CONFIG_VW_SIGNALS)
+#error "Not support CONFIG_BRINGUP since gpio_get_name func"
+#endif
 
 #ifdef CONFIG_BRINGUP
 #define MAX_SIGLOG_ENTRIES 24
