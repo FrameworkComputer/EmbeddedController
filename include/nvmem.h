@@ -70,6 +70,13 @@ struct nvmem_tag {
 	uint8_t reserved[3];
 };
 
+/* Structure MvMem Partition */
+struct nvmem_partition {
+	struct nvmem_tag tag;
+	uint8_t buffer[NVMEM_PARTITION_SIZE -
+		       sizeof(struct nvmem_tag)];
+};
+
 /**
  * Initialize NVMem translation table and state variables
  *

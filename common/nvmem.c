@@ -19,13 +19,6 @@
 #define NVMEM_ACQUIRE_CACHE_MAX_ATTEMPTS (250 / NVMEM_ACQUIRE_CACHE_SLEEP_MS)
 #define NVMEM_NOT_INITIALIZED (-1)
 
-/* Structure MvMem Partition */
-struct nvmem_partition {
-	struct nvmem_tag tag;
-	uint8_t buffer[NVMEM_PARTITION_SIZE -
-		       sizeof(struct nvmem_tag)];
-};
-
 /* NvMem user buffer start offset table */
 static uint32_t nvmem_user_start_offset[NVMEM_NUM_USERS];
 
