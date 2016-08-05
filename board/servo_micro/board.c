@@ -145,9 +145,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  */
 
 /* SPI devices */
-/* Set clock divider to 7 since our SPI routing is non-optimal. */
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 7, GPIO_SPI_CS},
+	{ CONFIG_SPI_FLASH_PORT, 1, GPIO_SPI_CS},
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
