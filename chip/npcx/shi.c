@@ -650,11 +650,7 @@ void shi_int_handler(void)
 			log_unexpected_state("IBF");
 	}
 }
-/*
- * The interrupt priority for SHI interrupt should be higher than
- * GPIO. Then we could receive CS-deasserted event even in CS-asserted ISR.
- */
-DECLARE_IRQ(NPCX_IRQ_SHI, shi_int_handler, 0);
+DECLARE_IRQ(NPCX_IRQ_SHI, shi_int_handler, 1);
 
 /* Handle an CS assert event on the SHI_CS_L pin */
 void shi_cs_event(enum gpio_signal signal)

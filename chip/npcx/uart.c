@@ -130,7 +130,7 @@ void uart_ec_interrupt(void)
 	uart_process_input();
 	uart_process_output();
 }
-DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 1);
+DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 0);
 
 
 static void uart_config(void)

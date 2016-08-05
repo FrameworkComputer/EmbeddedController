@@ -189,7 +189,7 @@ void __hw_clock_event_irq(void)
 #endif
 
 }
-DECLARE_IRQ(ITIM16_INT(ITIM_EVENT_NO) , __hw_clock_event_irq, 1);
+DECLARE_IRQ(ITIM16_INT(ITIM_EVENT_NO), __hw_clock_event_irq, 2);
 
 
 /*****************************************************************************/

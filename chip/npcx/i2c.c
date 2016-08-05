@@ -581,10 +581,10 @@ void i2c1_interrupt(void) { handle_interrupt(1); }
 void i2c2_interrupt(void) { handle_interrupt(2); }
 void i2c3_interrupt(void) { handle_interrupt(3); }
 
-DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 2);
-DECLARE_IRQ(NPCX_IRQ_SMB2, i2c1_interrupt, 2);
-DECLARE_IRQ(NPCX_IRQ_SMB3, i2c2_interrupt, 2);
-DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 2);
+DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB2, i2c1_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB3, i2c2_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 3);
 
 /*****************************************************************************/
 /* IC specific low-level driver */
