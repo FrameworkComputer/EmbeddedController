@@ -28,14 +28,14 @@
 		routine();					\
 		task_end_irq_handler(ret);			\
 	}							\
-	const struct irq_priority IRQ_PRIORITY(irq)		\
+	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
 #else /* CONFIG_TASK_PROFILING */
 /* No Profiling : connect directly the IRQ vector */
 #define DECLARE_IRQ_(irq, routine, priority)                    \
 	void IRQ_HANDLER(irq)(void) __attribute__((alias(STRINGIFY(routine))));\
-	const struct irq_priority IRQ_PRIORITY(irq)		\
+	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
 #endif /* CONFIG_TASK_PROFILING */

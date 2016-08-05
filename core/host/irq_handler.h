@@ -23,7 +23,7 @@
 		routine();					\
 		task_resched_if_needed(ret);			\
 	}							\
-	const struct irq_priority IRQ_PRIORITY(irq)		\
+	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
 	__attribute__((section(".rodata.irqprio")))		\
 			= {irq, priority}
 #endif  /* __CROS_EC_IRQ_HANDLER_H */
