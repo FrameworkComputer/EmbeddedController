@@ -9,7 +9,7 @@
 AES = 0
 HASH = 1
 RSA = 2
-EC = 3
+ECC = 3
 FW_UPGRADE = 4
 HKDF = 5
 ECIES = 6

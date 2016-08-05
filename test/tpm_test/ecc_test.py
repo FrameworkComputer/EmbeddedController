@@ -12,14 +12,14 @@ import struct
 import subcmd
 import utils
 
-_EC_OPCODES = {
+_ECC_OPCODES = {
   'SIGN': 0x00,
   'VERIFY': 0x01,
   'KEYGEN': 0x02,
   'KEYDERIVE': 0x03,
 }
 
-_EC_CURVES = {
+_ECC_CURVES = {
   'NIST-P256': 0x03,
 }
 
@@ -55,39 +55,39 @@ _HASH_FUNC = {
 #   0x00 LSB DIGEST LEN
 #   .... DIGEST
 #
-_EC_CMD_FORMAT = '{o:c}{c:c}{s:c}{h:c}{ml:s}{msg}{dl:s}{dig}'
+_ECC_CMD_FORMAT = '{o:c}{c:c}{s:c}{h:c}{ml:s}{msg}{dl:s}{dig}'
 
 
 def _sign_cmd(curve_id, hash_func, sign_mode, msg):
-  op = _EC_OPCODES['SIGN']
+  op = _ECC_OPCODES['SIGN']
   digest = hash_func(msg).digest()
   digest_len = len(digest)
-  return _EC_CMD_FORMAT.format(o=op, c=curve_id, s=sign_mode, h=_HASH['NONE'],
+  return _ECC_CMD_FORMAT.format(o=op, c=curve_id, s=sign_mode, h=_HASH['NONE'],
                                ml=struct.pack('>H', 0), msg='',
                                dl=struct.pack('>H', digest_len), dig=digest)
 
 
 def _verify_cmd(curve_id, hash_func, sign_mode, msg, sig):
-  op = _EC_OPCODES['VERIFY']
+  op = _ECC_OPCODES['VERIFY']
   sig_len = len(sig)
   digest = hash_func(msg).digest()
   digest_len = len(digest)
-  return _EC_CMD_FORMAT.format(o=op, c=curve_id, s=sign_mode, h=_HASH['NONE'],
+  return _ECC_CMD_FORMAT.format(o=op, c=curve_id, s=sign_mode, h=_HASH['NONE'],
                                ml=struct.pack('>H', sig_len), msg=sig,
                                dl=struct.pack('>H', digest_len), dig=digest)
 
 
 def _keygen_cmd(curve_id):
-  op = _EC_OPCODES['KEYGEN']
-  return _EC_CMD_FORMAT.format(o=op, c=curve_id, s=_SIGN_MODE['NONE'],
+  op = _ECC_OPCODES['KEYGEN']
+  return _ECC_CMD_FORMAT.format(o=op, c=curve_id, s=_SIGN_MODE['NONE'],
                                h=_HASH['NONE'], ml=struct.pack('>H', 0), msg='',
                                dl=struct.pack('>H', 0), dig='')
 
 
 def _keyderive_cmd(curve_id, seed):
-  op = _EC_OPCODES['KEYDERIVE']
+  op = _ECC_OPCODES['KEYDERIVE']
   seed_len = len(seed)
-  return _EC_CMD_FORMAT.format(o=op, c=curve_id, s=_SIGN_MODE['NONE'],
+  return _ECC_CMD_FORMAT.format(o=op, c=curve_id, s=_SIGN_MODE['NONE'],
                                h=_HASH['NONE'], ml=struct.pack('>H', seed_len),
                                msg=seed, dl=struct.pack('>H', 0), dig='')
 
@@ -113,16 +113,16 @@ def _sign_test(tpm):
 
   for data in _SIGN_INPUTS:
     curve_id, sign_mode = data
-    test_name = 'EC-SIGN:%s:%s' % data
-    cmd = _sign_cmd(_EC_CURVES[curve_id], _HASH_FUNC[curve_id],
+    test_name = 'ECC-SIGN:%s:%s' % data
+    cmd = _sign_cmd(_ECC_CURVES[curve_id], _HASH_FUNC[curve_id],
                     _SIGN_MODE[sign_mode], msg)
-    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.EC, cmd))
-    signature = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
+    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.ECC, cmd))
+    signature = tpm.unwrap_ext_response(subcmd.ECC, wrapped_response)
 
-    cmd = _verify_cmd(_EC_CURVES[curve_id], _HASH_FUNC[curve_id],
+    cmd = _verify_cmd(_ECC_CURVES[curve_id], _HASH_FUNC[curve_id],
                       _SIGN_MODE[sign_mode], msg, signature)
-    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.EC, cmd))
-    verified = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
+    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.ECC, cmd))
+    verified = tpm.unwrap_ext_response(subcmd.ECC, wrapped_response)
     expected = '\x01'
     if verified != expected:
       raise subcmd.TpmTestError('%s error:%s:%s' % (
@@ -133,10 +133,10 @@ def _sign_test(tpm):
 def _keygen_test(tpm):
   for data in _KEYGEN_INPUTS:
     curve_id, = data
-    test_name = 'EC-KEYGEN:%s' % data
-    cmd = _keygen_cmd(_EC_CURVES[curve_id])
-    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.EC, cmd))
-    valid = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
+    test_name = 'ECC-KEYGEN:%s' % data
+    cmd = _keygen_cmd(_ECC_CURVES[curve_id])
+    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.ECC, cmd))
+    valid = tpm.unwrap_ext_response(subcmd.ECC, wrapped_response)
     expected = '\x01'
     if valid != expected:
       raise subcmd.TpmTestError('%s error:%s:%s' % (
@@ -148,10 +148,10 @@ def _keyderive_test(tpm):
   for data in _KEYDERIVE_INPUTS:
     curve_id, seed_bytes = data
     seed = os.urandom(seed_bytes)
-    test_name = 'EC-KEYDERIVE:%s' % data[0]
-    cmd = _keyderive_cmd(_EC_CURVES[curve_id], seed)
-    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.EC, cmd))
-    valid = tpm.unwrap_ext_response(subcmd.EC, wrapped_response)
+    test_name = 'ECC-KEYDERIVE:%s' % data[0]
+    cmd = _keyderive_cmd(_ECC_CURVES[curve_id], seed)
+    wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.ECC, cmd))
+    valid = tpm.unwrap_ext_response(subcmd.ECC, wrapped_response)
     expected = '\x01'
     if valid != expected:
       raise subcmd.TpmTestError('%s error:%s:%s' % (

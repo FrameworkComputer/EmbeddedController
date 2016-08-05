@@ -580,6 +580,6 @@ static void ecc_command_handler(void *cmd_body, size_t cmd_size,
 	}
 }
 
-DECLARE_EXTENSION_COMMAND(EXTENSION_EC, ecc_command_handler);
+DECLARE_EXTENSION_COMMAND(EXTENSION_ECC, ecc_command_handler);
 
 #endif   /* CRYPTO_TEST_SETUP */
