@@ -136,6 +136,17 @@ DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
 			"Simulate lid close",
 			NULL);
 
+static int command_lidstate(int argc, char **argv)
+{
+	ccprintf("lid state: %s\n", debounced_lid_open ? "open" : "closed");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(lidstate, command_lidstate,
+			NULL,
+			"Get state of lid",
+			NULL);
+
 /**
  * Host command to enable/disable lid opened.
  */
