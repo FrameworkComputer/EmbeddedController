@@ -12,6 +12,7 @@
 #include "byteorder.h"
 #include "console.h"
 #include "extension.h"
+#include "link_defs.h"
 #include "nvmem.h"
 #include "printf.h"
 #include "signed_header.h"
@@ -493,6 +494,9 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 
 static void tpm_init(void)
 {
+	/* This is more related to TPM task activity than TPM transactions */
+	cprints(CC_TASK, "%s", __func__);
+
 	set_tpm_state(tpm_state_idle);
 	tpm_.regs.access = tpm_reg_valid_sts;
 	/*
@@ -566,6 +570,33 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 }
 #endif
 
+static void tpm_reset(void)
+{
+	/* This is more related to TPM task activity than TPM transactions */
+	cprints(CC_TASK, "%s", __func__);
+
+	sps_tpm_disable();
+
+	/*
+	 * Clear the TPM library's zero-init data.  Note that the linker script
+	 * includes this file's .bss in the same section, so it will be cleared
+	 * at the same time.
+	 */
+	memset(__bss_libtpm2_start, __bss_libtpm2_end - __bss_libtpm2_start, 0);
+
+	/*
+	 * TPM reset currently only clears BSS for the TPM library.  It does
+	 * not reset any initialized variables in data.  So, make sure there
+	 * aren't any.
+	 */
+	ASSERT(__data_libtpm2_start == __data_libtpm2_end);
+
+	/* Re-initialize our registers */
+	tpm_init();
+
+	sps_tpm_enable();
+}
+
 void tpm_task(void)
 {
 	if (system_rolling_reboot_suspected())
@@ -578,9 +609,14 @@ void tpm_task(void)
 		unsigned response_size;
 		uint32_t command_code;
 		struct tpm_cmd_header *tpmh;
+		uint32_t evt;
 
 		/* Wait for the next command event */
-		task_wait_event(-1);
+		evt = task_wait_event(-1);
+		if (evt & TPM_EVENT_RESET) {
+			tpm_reset();
+			continue;
+		}
 		tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;
 		command_code = be32toh(tpmh->command_code);
 		CPRINTF("%s: received fifo command 0x%04x\n",

@@ -243,6 +243,14 @@ SECTIONS
         . = ALIGN(8);
         *(.bss.system_stack)
 	/* Rest of .bss takes care of its own alignment */
+
+	/* Group libtpm2 data so it can be cleared on system reset */
+	__bss_libtpm2_start = .;
+	Tpm2_*(.bss)
+	/* TPM registers should be cleared at the same time */
+        STRINGIFY(OUTDIR/common/tpm_registers.o*)(.bss)
+	__bss_libtpm2_end = .;
+
         *(.bss)
 
 	/*
@@ -284,6 +292,14 @@ SECTIONS
         . = ALIGN(4);
         __data_start = .;
         *(.data.tasks)
+
+	/* Group libtpm2 data so it can be reinitialized on system reset */
+	__data_libtpm2_start = .;
+	Tpm2_*(.data)
+	/* TPM registers should be reinitialized at the same time */
+        STRINGIFY(OUTDIR/common/tpm_registers.o*)(.data)
+	__data_libtpm2_end = .;
+
         *(.data)
 #ifdef CONFIG_MPU
         /* It has to be aligned by 32 bytes to be a valid MPU region. */

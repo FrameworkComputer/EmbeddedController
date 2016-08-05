@@ -87,6 +87,12 @@ extern const void *__irqhandler[];
 /* Shared memory buffer.  Use via shared_mem.h interface. */
 extern uint8_t __shared_mem_buf[];
 
+/* Image sections used by the TPM2 library */
+extern uint8_t *__bss_libtpm2_start;
+extern uint8_t *__bss_libtpm2_end;
+extern uint8_t *__data_libtpm2_start;
+extern uint8_t *__data_libtpm2_end;
+
 /* Image sections. */
 extern const void *__ro_end;
 extern const void *__data_start;

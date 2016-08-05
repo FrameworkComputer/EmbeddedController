@@ -79,6 +79,6 @@ $(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: $(out)/tpm2/libtpm2.a
 # Force the external build each time, so it can look for changed sources.
 .PHONY: $(out)/tpm2/libtpm2.a
 $(out)/tpm2/libtpm2.a:
-	$(MAKE) obj=$(realpath $(out))/tpm2 EMBEDDED_MODE=1 -C $(EXTLIB)
+	$(MAKE) obj=$(realpath $(out))/tpm2 EMBEDDED_MODE=1 OBJ_PREFIX=Tpm2_ -C $(EXTLIB)
 
 endif   # BOARD_MK_INCLUDED_ONCE is nonempty
