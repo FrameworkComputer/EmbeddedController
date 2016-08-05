@@ -10,6 +10,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "usb_api.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
@@ -34,12 +35,14 @@ void rdd_interrupt(void)
 {
 	int is_debug, current_map;
 
-	disable_sleep(SLEEP_MASK_RDD);
+	delay_sleep_by(1 * SECOND);
 
 	current_map = 0xffff & GREAD(RDD, PROG_DEBUG_STATE_MAP);
 	is_debug = debug_cable_is_attached();
 
 	if (is_debug && (current_map == DETECT_DEBUG)) {
+		disable_sleep(SLEEP_MASK_RDD);
+
 		CPRINTS("Debug Accessory connected");
 
 		/* Detect when debug cable is disconnected */
