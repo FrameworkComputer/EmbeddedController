@@ -552,6 +552,7 @@ static int anx74xx_alert_status(int port, int *alert)
 	rv = tcpc_read(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG, &reg);
 	if (rv)
 		return EC_ERROR_UNKNOWN;
+	rv |= tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG, 0);
 
 	if (reg & ANX74XX_REG_IRQ_CC_MSG_INT)
 		*alert |= ANX74XX_REG_ALERT_MSG_RECV;
@@ -560,24 +561,18 @@ static int anx74xx_alert_status(int port, int *alert)
 
 	if (reg & ANX74XX_REG_IRQ_CC_STATUS_INT) {
 		*alert |= ANX74XX_REG_ALERT_CC_CHANGE;
-		rv |= tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG,
-				reg & 0xfd);
 	} else {
 		*alert &= (~ANX74XX_REG_ALERT_CC_CHANGE);
 	}
 
 	if (reg & ANX74XX_REG_IRQ_GOOD_CRC_INT) {
 		*alert |= ANX74XX_REG_ALERT_TX_ACK_RECV;
-		rv |= tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG,
-				reg & 0xfb);
 	} else {
 		*alert &= (~ANX74XX_REG_ALERT_TX_ACK_RECV);
 	}
 
 	if (reg & ANX74XX_REG_IRQ_TX_FAIL_INT) {
 		*alert |= ANX74XX_REG_ALERT_TX_MSG_ERROR;
-		rv |= tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG,
-				reg & 0xf7);
 	}
 	/* Read TCPC Alert register2 */
 	rv |= tcpc_read(port, ANX74XX_REG_IRQ_EXT_SOURCE_2, &reg);
@@ -604,6 +599,25 @@ static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 		reg |= (ANX74XX_REG_IRQ_CC_MSG_INT);
 	anx74xx_tcpm_set_auto_good_crc(port, enable);
 	rv |= tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, reg);
+
+	/* patch for Rp 36K issue */
+	rv |= tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_6, &reg);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
+	/* clear Bit[0,1] R_RP to default Rp's value */
+	reg &= ~0x03;
+
+	if (enable) {
+#ifdef CONFIG_USB_PD_PULLUP_1_5A
+		/* Set Rp strength to 12K for presenting 1.5A */
+		reg |= ANX74XX_REG_CC_PULL_RP_12K;
+#elif defined(CONFIG_USB_PD_PULLUP_3A)
+		/* Set Rp strength to 4K for presenting 3A */
+		reg |= ANX74XX_REG_CC_PULL_RP_4K;
+#endif
+	}
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_6, reg);
 
 	return rv;
 }
