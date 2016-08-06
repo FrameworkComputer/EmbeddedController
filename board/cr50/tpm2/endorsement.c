@@ -455,7 +455,7 @@ int tpm_endorse(void)
 			CPRINTF("%s: Failed to process ECC cert\n", __func__);
 			break;
 		}
-		CPRINTF("%s: ECC cert intsall success\n", __func__);
+		CPRINTF("%s: ECC cert install success\n", __func__);
 
 		/* Copy EPS from INFO1 to flash data region. */
 		if (!store_eps(eps)) {
