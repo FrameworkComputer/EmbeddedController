@@ -232,7 +232,6 @@ static void svdm_safe_dp_mode(int port)
 	dp_status[port] = 0;
 	usb_mux_set(port, TYPEC_MUX_NONE,
 		    USB_SWITCH_CONNECT, pd_get_polarity(port));
-	gpio_set_level(GPIO_USB_DP_HPD, 0);
 }
 
 static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
@@ -288,10 +287,22 @@ static void svdm_dp_post_config(int port)
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
+	const struct usb_mux *mux = &usb_muxes[port];
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
+	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(payload[1]);
 
 	dp_status[port] = payload[1];
+
+	/* Its initial DP status message prior to config */
+	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
+		if (lvl)
+			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
+		return 1;
+	}
+
+	if (irq)
+		mux->hpd_update(port, lvl, 1);
 
 	if (lvl)
 		usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
@@ -300,14 +311,14 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		usb_mux_set(port, mf_pref ? TYPEC_MUX_USB : TYPEC_MUX_NONE,
 			    USB_SWITCH_CONNECT, pd_get_polarity(port));
 
-	gpio_set_level(GPIO_USB_DP_HPD, lvl);
-
 	return 1;
 }
 
 static void svdm_exit_dp_mode(int port)
 {
+	const struct usb_mux *mux = &usb_muxes[port];
 	svdm_safe_dp_mode(port);
+	mux->hpd_update(port, 0, 0);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)

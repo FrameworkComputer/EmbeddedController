@@ -4294,6 +4294,8 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 			printf("OPEN ");
 		if (r.flags & USB_PD_MUX_POLARITY_INVERTED)
 			printf("INV ");
+		if (r.flags & USB_PD_MUX_HPD_IRQ)
+			printf("HPD_IRQ ");
 		printf("\n");
 	}
 

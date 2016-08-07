@@ -81,6 +81,7 @@ struct usb_mux {
 	/*
 	 * USB Type-C DP alt mode support. Notify Type-C controller
 	 * there is DP dongle hot-plug.
+	 * TODO: Move this function to usb_mux_driver struct.
 	 */
 	void (*hpd_update)(int port, int hpd_lvl, int hpd_irq);
 };
@@ -90,6 +91,9 @@ extern const struct usb_mux_driver pi3usb30532_usb_mux_driver;
 extern const struct usb_mux_driver ps8740_usb_mux_driver;
 extern const struct usb_mux_driver tcpm_usb_mux_driver;
 extern const struct usb_mux_driver virtual_usb_mux_driver;
+
+/* Supported hpd_update functions */
+void virtual_hpd_update(int port, int hpd_lvl, int hpd_irq);
 
 /* USB muxes present in system, ordered by PD port #, defined at board-level */
 extern struct usb_mux usb_muxes[];

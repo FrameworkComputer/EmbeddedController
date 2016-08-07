@@ -170,6 +170,13 @@ static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	if (mux->driver->get(mux->port_addr, &r->flags) != EC_SUCCESS)
 		return EC_RES_ERROR;
 
+#ifdef CONFIG_USB_MUX_VIRTUAL
+	/* Clear HPD IRQ event since we're about to inform host of it. */
+	if ((r->flags & USB_PD_MUX_HPD_IRQ) &&
+	    mux->driver == &virtual_usb_mux_driver)
+		mux->hpd_update(port, 0, 0);
+#endif
+
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
