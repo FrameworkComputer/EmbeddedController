@@ -32,12 +32,10 @@
 #define IN_PGOOD_AP            POWER_SIGNAL_MASK(AP_PWR_GOOD)
 #define IN_SUSPEND_DEASSERTED  POWER_SIGNAL_MASK(SUSPEND_DEASSERTED)
 
-/* All always-on supplies */
-#define IN_PGOOD_ALWAYS_ON     (IN_PGOOD_SYS)
 /* Rails requires for S3 */
-#define IN_PGOOD_S3            (IN_PGOOD_ALWAYS_ON | IN_PGOOD_PP5000)
+#define IN_PGOOD_S3            (IN_PGOOD_PP5000)
 /* Rails required for S0 */
-#define IN_PGOOD_S0            (IN_PGOOD_S3 | IN_PGOOD_AP)
+#define IN_PGOOD_S0            (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
 /* All inputs in the right state for S0 */
 #define IN_ALL_S0              (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
@@ -81,6 +79,11 @@ enum power_state power_chipset_init(void)
 			return POWER_S0;
 		}
 
+		/*
+		 * TODO: Remove wireless_* control, boards have no
+		 * EC-controlled enable other than VR enable which uses
+		 * power state-based control.
+		 */
 		wireless_set_state(WIRELESS_OFF);
 	} else if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF))
 		/* Auto-power on */
@@ -120,9 +123,9 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
-		if (!power_has_signals(IN_PGOOD_S0) || forcing_shutdown)
-			return POWER_S0S3;
-		else if (gpio_get_level(GPIO_AP_EC_S3_S0_L))
+		if (!power_has_signals(IN_PGOOD_S0) ||
+		    forcing_shutdown ||
+		    gpio_get_level(GPIO_AP_EC_S3_S0_L))
 			return POWER_S0S3;
 		break;
 
@@ -156,22 +159,22 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PP900_PMU_EN, 1);
 		gpio_set_level(GPIO_PP900_PLL_EN, 1);
 		gpio_set_level(GPIO_PP900_USB_EN, 1);
-		gpio_set_level(GPIO_PP900_DDRPLL_EN, 1);
 		gpio_set_level(GPIO_PP900_PCIE_EN, 1);
 		msleep(2);
 		gpio_set_level(GPIO_PP1800_PMU_EN_L, 0);
+		msleep(2);
+		/* TODO(crosbug.com/p/55981): De-power CLOGIC in S3 */
 		gpio_set_level(GPIO_PPVAR_CLOGIC_EN, 1);
 		msleep(2);
-		gpio_set_level(GPIO_PP1800_USB_EN_L, 0);
-		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 0);
-		msleep(2);
 		gpio_set_level(GPIO_LPDDR_PWR_EN, 1);
+		msleep(2);
+		gpio_set_level(GPIO_PP1800_USB_EN_L, 0);
+		msleep(2);
+		gpio_set_level(GPIO_PP3300_USB_EN_L, 0);
 		gpio_set_level(GPIO_PP5000_EN, 1);
-		msleep(2);
-
-		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 0);
-		msleep(2);
 		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 0);
+		msleep(1);
+		gpio_set_level(GPIO_PP1800_LID_EN_L, 0);
 
 		/*
 		 * TODO: Consider ADC_PP900_AP / ADC_PP1200_LPDDR analog
@@ -179,7 +182,7 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		if (power_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
-			return POWER_S5;
+			return POWER_S3S5;
 		}
 
 		/* Call hooks now that rails are up */
@@ -192,14 +195,15 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S0:
+		gpio_set_level(GPIO_PP900_DDRPLL_EN, 1);
+		msleep(2);
+		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 0);
+		msleep(2);
 		gpio_set_level(GPIO_AP_CORE_EN, 1);
 		msleep(2);
 		gpio_set_level(GPIO_PP1800_S0_EN_L, 0);
 		msleep(2);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 0);
-		msleep(2);
-		gpio_set_level(GPIO_PP3300_USB_EN_L, 0);
-		msleep(2);
 
 		if (sys_reset_needed) {
 			/* Pulse SYS_RST if we came from S5 */
@@ -210,12 +214,13 @@ enum power_state power_handle_state(enum power_state state)
 			sys_reset_needed = 0;
 		}
 
-		gpio_set_level(GPIO_PP1800_LID_EN_L, 0);
+		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 0);
+		msleep(2);
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 0);
 
 		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
-			return POWER_S3;
+			return POWER_S3S0;
 		}
 
 		/* Enable wireless */
@@ -240,16 +245,19 @@ enum power_state power_handle_state(enum power_state state)
 		/* Suspend wireless */
 		wireless_set_state(WIRELESS_SUSPEND);
 
+		msleep(10);
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
-		gpio_set_level(GPIO_PP1800_LID_EN_L, 1);
-		msleep(10);
-		gpio_set_level(GPIO_PP3300_USB_EN_L, 1);
-		msleep(10);
+		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 1);
 		msleep(10);
 		gpio_set_level(GPIO_PP1800_S0_EN_L, 1);
 		msleep(10);
 		gpio_set_level(GPIO_AP_CORE_EN, 0);
+		msleep(10);
+		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 1);
+		msleep(10);
+		gpio_set_level(GPIO_PP900_DDRPLL_EN, 0);
+		msleep(10);
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
@@ -275,25 +283,24 @@ enum power_state power_handle_state(enum power_state state)
 		/* Disable wireless */
 		wireless_set_state(WIRELESS_OFF);
 
+		gpio_set_level(GPIO_PP1800_LID_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 1);
-		msleep(10);
-		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
-		msleep(10);
 		gpio_set_level(GPIO_PP5000_EN, 0);
-		gpio_set_level(GPIO_LPDDR_PWR_EN, 0);
+		gpio_set_level(GPIO_PP3300_USB_EN_L, 1);
 		msleep(10);
-		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 1);
 		gpio_set_level(GPIO_PP1800_USB_EN_L, 1);
-		msleep(10);
+		msleep(2);
+		gpio_set_level(GPIO_LPDDR_PWR_EN, 0);
+		msleep(2);
 		gpio_set_level(GPIO_PPVAR_CLOGIC_EN, 0);
-		gpio_set_level(GPIO_PP1800_PMU_EN_L, 1);
 		msleep(10);
+		gpio_set_level(GPIO_PP1800_PMU_EN_L, 1);
+		msleep(2);
 		gpio_set_level(GPIO_PP900_PCIE_EN, 0);
-		gpio_set_level(GPIO_PP900_DDRPLL_EN, 0);
 		gpio_set_level(GPIO_PP900_USB_EN, 0);
 		gpio_set_level(GPIO_PP900_PLL_EN, 0);
 		gpio_set_level(GPIO_PP900_PMU_EN, 0);
-		msleep(10);
+		msleep(2);
 		gpio_set_level(GPIO_PP900_AP_EN, 0);
 		gpio_set_level(GPIO_PPVAR_LOGIC_EN, 0);
 
