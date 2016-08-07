@@ -60,17 +60,6 @@ void adc_freq_changed(void)
 DECLARE_HOOK(HOOK_FREQ_CHANGE, adc_freq_changed, HOOK_PRIO_DEFAULT);
 
 /**
- * Get current voltage data of the specified channel.
- *
- * @param input_ch		npcx input channel to read
- * @return ADC channel voltage data.(Range: 0~1023)
- */
-static int get_channel_data(enum npcx_adc_input_channel input_ch)
-{
-	return GET_FIELD(NPCX_CHNDAT(input_ch), NPCX_CHNDAT_CHDAT_FIELD);
-}
-
-/**
  * Flush an ADC sequencer and initiate a read.
  *
  * @param   input_ch    operation channel
@@ -105,11 +94,11 @@ static int start_single_and_wait(enum npcx_adc_input_channel input_ch
 	SET_BIT(NPCX_ADCCNF, NPCX_ADCCNF_START);
 
 	/* Wait for interrupt */
-	event = task_wait_event(timeout);
+	event = task_wait_event_mask(TASK_EVENT_ADC_DONE, timeout);
 
 	task_waiting = TASK_ID_INVALID;
 
-	return event != TASK_EVENT_TIMER;
+	return (event == TASK_EVENT_ADC_DONE);
 
 }
 
@@ -124,15 +113,17 @@ int adc_read_channel(enum adc_channel ch)
 	const struct adc_t *adc = adc_channels + ch;
 	static struct mutex adc_lock;
 	int value;
+	uint16_t chn_data;
 
 	mutex_lock(&adc_lock);
 
 	if (start_single_and_wait(adc->input_ch, ADC_TIMEOUT_US)) {
+		chn_data = NPCX_CHNDAT(adc->input_ch);
 		if ((adc->input_ch ==
 			GET_FIELD(NPCX_ASCADD, NPCX_ASCADD_SADDR_FIELD))
-			&& (IS_BIT_SET(NPCX_CHNDAT(adc->input_ch),
+			&& (IS_BIT_SET(chn_data,
 					NPCX_CHNDAT_NEW))) {
-			value = get_channel_data(adc->input_ch) *
+			value = GET_FIELD(chn_data, NPCX_CHNDAT_CHDAT_FIELD) *
 				adc->factor_mul / adc->factor_div + adc->shift;
 		} else {
 			value = ADC_READ_ERROR;
@@ -167,7 +158,7 @@ void adc_interrupt(void)
 
 		/* Wake up the task which was waiting for the interrupt */
 		if (task_waiting != TASK_ID_INVALID)
-			task_wake(task_waiting);
+			task_set_event(task_waiting, TASK_EVENT_ADC_DONE, 0);
 	}
 }
 DECLARE_IRQ(NPCX_IRQ_ADC, adc_interrupt, 3);
@@ -205,6 +196,5 @@ static void adc_init(void)
 
 	/* Enable IRQs */
 	task_enable_irq(NPCX_IRQ_ADC);
-
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
