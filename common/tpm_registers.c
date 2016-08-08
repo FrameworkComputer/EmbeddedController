@@ -571,6 +571,9 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 
 void tpm_task(void)
 {
+	if (system_rolling_reboot_suspected())
+		return;
+
 	tpm_init();
 	sps_tpm_enable();
 	while (1) {

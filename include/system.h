@@ -489,4 +489,12 @@ uint32_t system_get_board_properties(void);
  */
 uint32_t system_board_properties_callback(void);
 
+/**
+ * A function provided by some platforms to hint that something is going
+ * wrong.
+ *
+ * @return a boolean, set to True if rolling reboot condition is suspected.
+ */
+int system_rolling_reboot_suspected(void);
+
 #endif  /* __CROS_EC_SYSTEM_H */

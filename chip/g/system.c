@@ -353,6 +353,22 @@ int system_process_retry_counter(void)
 	 */
 	return corrupt_other_header(other);
 }
+
+int system_rolling_reboot_suspected(void)
+{
+	if (GREG32(PMU, LONG_LIFE_SCRATCH0) > 50) {
+		/*
+		 * The chip has restarted 50 times without the restart counter
+		 * cleared. There must be something wrong going, the chip is
+		 * likely in rolling reboot.
+		 */
+		ccprintf("%s: Try powercycling to clear this condition.\n",
+			 __func__);
+		return 1;
+	}
+
+	return 0;
+}
 #endif
 
 uint32_t system_get_board_properties(void)
