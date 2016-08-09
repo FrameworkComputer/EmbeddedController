@@ -65,8 +65,7 @@ void fill_remapping_table(struct remapping_table *rt, uint8_t map[5],
 }
 
 /* BLE 4.1 Vol 6 4.5.8 */
-
-int select_data_channel(struct remapping_table *rt)
+uint8_t get_next_data_channel(struct remapping_table *rt)
 {
 	rt->last_unmapped_channel =
 		(rt->last_unmapped_channel + rt->hop_increment) % 37;

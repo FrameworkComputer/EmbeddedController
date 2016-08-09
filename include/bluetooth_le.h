@@ -137,19 +137,6 @@ struct ble_adv_header {
 
 #define BLE_MAX_ADV_PAYLOAD_OCTETS       37
 
-/* BLE 4.1 Vol 6 2.3.3.1 */
-struct ble_ll_data {
-	uint8_t aa[4]; /* Access Address */
-	uint8_t crc_init[3];
-	uint8_t win_size; /* Transmit Window Size */
-	uint16_t win_offset; /* Transmit Window Offset */
-	uint16_t interval; /* Connection Interval */
-	uint16_t latency; /* Connection Slave Latency */
-	uint16_t timeout; /* Connection Supervision Timeout */
-	uint8_t chm[5]; /* 37-bit Channel Map */
-	uint8_t hop_and_sca; /* Hop Increment and Sleep-clock Accuracy */
-} __packed;
-
 /* LL SCA Values.  They are shifted left 5 bits for Hop values */
 #define BLE_LL_SCA_251_PPM_TO_500_PPM    (0 << 5)
 #define BLE_LL_SCA_151_PPM_TO_250_PPM    (1 << 5)
@@ -369,8 +356,11 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv);
 
 int ble_radio_init(uint32_t access_address, uint32_t crc_init_val);
 
-/* BLE 4.1 Vol 6 4.5.8 */
-int select_data_channel(struct remapping_table *rt);
+/*
+ * Uses the algorithm defined in the BLE core specifcation
+ * 4.1 Vol 6 4.5.8 to select the next data channel
+ */
+uint8_t get_next_data_channel(struct remapping_table *rt);
 
 /* BLE 4.1 Vol 3 Part C 11 */
 uint8_t *pack_adv(uint8_t *dest, int length, int type, const uint8_t *data);

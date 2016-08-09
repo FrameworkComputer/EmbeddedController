@@ -78,6 +78,38 @@ enum ll_state_t {
 #define LL_PING_REQ               0x12
 #define LL_PING_RSP               0x13
 
+/* BLE 4.1 Vol 6 2.3.3.1 Connection information */
+#define CONNECT_REQ_INITA_LEN					6
+#define CONNECT_REQ_ADVA_LEN					6
+#define CONNECT_REQ_ACCESS_ADDR_LEN				4
+#define CONNECT_REQ_CRC_INIT_VAL_LEN				3
+#define CONNECT_REQ_WIN_SIZE_LEN				1
+#define CONNECT_REQ_WIN_OFFSET_LEN				2
+#define CONNECT_REQ_INTERVAL_LEN				2
+#define CONNECT_REQ_LATENCY_LEN					2
+#define CONNECT_REQ_TIMEOUT_LEN					2
+#define CONNECT_REQ_CHANNEL_MAP_LEN				5
+#define CONNECT_REQ_HOP_INCREMENT_AND_SCA_LEN			1
+struct ble_connection_params {
+	uint8_t		init_a[CONNECT_REQ_INITA_LEN];
+	uint8_t		adv_a[CONNECT_REQ_ADVA_LEN];
+	uint32_t	access_addr;
+	uint32_t	crc_init_val;
+	uint8_t		win_size;
+	uint16_t	win_offset;
+	uint16_t	interval;
+	uint16_t	latency;
+	uint16_t	timeout;
+	uint64_t	channel_map;
+	uint8_t		hop_increment;
+	uint8_t		sleep_clock_accuracy;
+	uint32_t	transmitWindowOffset;
+	uint32_t	transmitWindowSize;
+	uint32_t	connInterval;
+	uint16_t	connSlaveLatency;
+	uint32_t	connSupervisionTimeout;
+};
+
 uint8_t ll_reset(void);
 
 uint8_t ll_set_tx_power(uint8_t *params);
