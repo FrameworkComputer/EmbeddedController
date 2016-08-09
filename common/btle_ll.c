@@ -38,8 +38,22 @@ static int ll_adv_timeout_us;
 
 static struct ble_pdu ll_adv_pdu;
 static struct ble_pdu ll_scan_rsp_pdu;
+static struct ble_pdu tx_packet_1;
+static struct ble_pdu *packet_tb_sent;
+static struct ble_connection_params conn_params;
+static int connection_initialized;
+static struct remapping_table remap_table;
+
+static uint64_t receive_time, last_receive_time;
+static uint8_t num_consecutive_failures;
+
+static uint32_t tx_end, tx_rsp_end, time_of_connect_req;
+struct ble_pdu ll_rcv_packet;
+static uint32_t ll_conn_events;
+static uint32_t errors_recovered;
 
 int ll_power;
+uint8_t is_first_data_packet;
 
 static uint64_t ll_random_address = 0xC5BADBADBAD1; /* Uninitialized */
 static uint64_t ll_public_address = 0xC5BADBADBADF; /* Uninitialized */
@@ -190,6 +204,111 @@ uint8_t ll_set_scan_enable(uint8_t *params)
 		rv = ll_state_change_request(STANDBY);
 	}
 
+	return HCI_SUCCESS;
+}
+
+void set_empty_data_packet(struct ble_pdu *pdu)
+{
+	/* LLID == 1 means incomplete or empty data packet */
+	pdu->header.data.llid = 1;
+	pdu->header.data.nesn = 1;
+	pdu->header.data.sn = 0;
+	pdu->header.data.md = 0;
+	pdu->header.data.length = 0;
+	pdu->header_type_adv = 0;
+}
+
+/* Connection state */
+
+/**
+ * This function serves to take data from a CONNECT_REQ packet and copy it
+ * into a struct, conn_params, which defines the parameter of the connection.
+ * It also fills a remapping table, another essential element of the link
+ * layer connection.
+ */
+uint8_t initialize_connection(void)
+{
+	int cur_offset = 0, i = 0;
+	uint8_t final_octet = 0;
+	uint8_t remap_arr[5];
+	uint8_t *payload_start = (uint8_t *)(ll_rcv_packet.payload);
+
+	num_consecutive_failures = 0;
+
+	/* Copy data into the appropriate portions of memory */
+	memcpy((uint8_t *)&(conn_params.init_a),
+			payload_start, CONNECT_REQ_INITA_LEN);
+	cur_offset += CONNECT_REQ_INITA_LEN;
+
+	memcpy((uint8_t *)&(conn_params.adv_a),
+			payload_start+cur_offset, CONNECT_REQ_ADVA_LEN);
+	cur_offset += CONNECT_REQ_ADVA_LEN;
+
+	memcpy(&(conn_params.access_addr),
+			payload_start+cur_offset, CONNECT_REQ_ACCESS_ADDR_LEN);
+	cur_offset += CONNECT_REQ_ACCESS_ADDR_LEN;
+
+	conn_params.crc_init_val = 0;
+	memcpy(&(conn_params.crc_init_val),
+			payload_start+cur_offset, CONNECT_REQ_CRC_INIT_VAL_LEN);
+	cur_offset += CONNECT_REQ_CRC_INIT_VAL_LEN;
+
+	memcpy(&(conn_params.win_size),
+			payload_start+cur_offset, CONNECT_REQ_WIN_SIZE_LEN);
+	cur_offset += CONNECT_REQ_WIN_SIZE_LEN;
+
+	memcpy(&(conn_params.win_offset),
+			payload_start+cur_offset, CONNECT_REQ_WIN_OFFSET_LEN);
+	cur_offset += CONNECT_REQ_WIN_OFFSET_LEN;
+
+	memcpy(&(conn_params.interval),
+			payload_start+cur_offset, CONNECT_REQ_INTERVAL_LEN);
+	cur_offset += CONNECT_REQ_INTERVAL_LEN;
+
+	memcpy(&(conn_params.latency),
+			payload_start+cur_offset, CONNECT_REQ_LATENCY_LEN);
+	cur_offset += CONNECT_REQ_LATENCY_LEN;
+
+	memcpy(&(conn_params.timeout),
+			payload_start+cur_offset, CONNECT_REQ_TIMEOUT_LEN);
+	cur_offset += CONNECT_REQ_TIMEOUT_LEN;
+
+	conn_params.channel_map = 0;
+	memcpy(&(conn_params.channel_map),
+			payload_start+cur_offset, CONNECT_REQ_CHANNEL_MAP_LEN);
+	cur_offset += CONNECT_REQ_CHANNEL_MAP_LEN;
+
+	memcpy(&final_octet, payload_start+cur_offset,
+			CONNECT_REQ_HOP_INCREMENT_AND_SCA_LEN);
+
+	/* last  5 bits of final_octet: */
+	conn_params.hop_increment = final_octet & 0x1f;
+	/* first 3 bits of final_octet: */
+	conn_params.sleep_clock_accuracy = (final_octet & 0xe0) >> 5;
+
+	/* Set up channel mapping table */
+	for (i = 0; i < 5; ++i)
+		remap_arr[i] = *(((uint8_t *)&(conn_params.channel_map))+i);
+	fill_remapping_table(&remap_table, remap_arr,
+		conn_params.hop_increment);
+
+	/* Calculate transmission window parameters */
+	conn_params.transmitWindowSize = conn_params.win_size * 1250;
+	conn_params.transmitWindowOffset = conn_params.win_offset * 1250;
+	conn_params.connInterval = conn_params.interval * 1250;
+	/* The following two lines convert ms -> microseconds */
+	conn_params.connSlaveLatency = 1000 * conn_params.latency;
+	conn_params.connSupervisionTimeout = 10000 * conn_params.timeout;
+	/* All these times are in microseconds! */
+
+	/* Check for common transmission errors */
+	if (conn_params.hop_increment < 5 || conn_params.hop_increment > 16) {
+		for (i = 0; i < 5; ++i)
+			CPRINTF("ERROR!! ILLEGAL HOP_INCREMENT!!\n");
+		return HCI_ERR_Invalid_LMP_Parameters;
+	}
+
+	is_first_data_packet = 1;
 	return HCI_SUCCESS;
 }
 
@@ -412,6 +531,8 @@ int ble_ll_adv(int chan)
 {
 	int rv;
 
+	ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT);
+
 	/* Change channel */
 	NRF51_RADIO_FREQUENCY = NRF51_RADIO_FREQUENCY_VAL(chan2freq(chan));
 	NRF51_RADIO_DATAWHITEIV = chan;
@@ -469,9 +590,20 @@ int ble_ll_adv(int chan)
 		/* The InitAddr address needs to match for ADV_DIRECT_IND */
 		if (ll_adv_pdu.header.adv.type ==
 			BLE_ADV_HEADER_PDU_TYPE_ADV_DIRECT_IND &&
-		    memcmp(&ll_adv_pdu.payload[BLUETOOTH_ADDR_OCTETS],
-			   &ll_rcv_packet.payload[0], BLUETOOTH_ADDR_OCTETS))
+			memcmp(&ll_adv_pdu.payload[BLUETOOTH_ADDR_OCTETS],
+			&ll_rcv_packet.payload[0], BLUETOOTH_ADDR_OCTETS))
 			return rv;
+
+		/* Mark time that connect was received */
+		time_of_connect_req = NRF51_TIMER_CC(0, 1);
+
+		/*
+		 * Enter connection state upon receiving
+		 * a connect request packet
+		 */
+		ll_state = CONNECTION;
+
+		return rv;
 	break;
 	default: /* Unhandled response packet */
 		radio_disable();
@@ -479,7 +611,6 @@ int ble_ll_adv(int chan)
 	break;
 	}
 
-	dump_ble_packet(&ll_rcv_packet);
 	CPRINTF("ADV %u Response %u %u\n", tx_end, rsp_end, tx_rsp_end);
 
 	return rv;
@@ -501,12 +632,131 @@ int ble_ll_adv_event(void)
 	return rv;
 }
 
-static int ll_adv_events;
+
+void print_connection_state(void)
+{
+	CPRINTF("vvvvvvvvvvvvvvvvvvvCONNECTION STATEvvvvvvvvvvvvvvvvvvv\n");
+	CPRINTF("Number of connections events processed: %d\n", ll_conn_events);
+	CPRINTF("Recovered from %d bad receives.\n", errors_recovered);
+	CPRINTF("Access addr(hex): %x\n", conn_params.access_addr);
+	CPRINTF("win_size(hex): %x\n", conn_params.win_size);
+	CPRINTF("win_offset(hex): %x\n", conn_params.win_offset);
+	CPRINTF("interval(hex): %x\n", conn_params.interval);
+	CPRINTF("latency(hex): %x\n", conn_params.latency);
+	CPRINTF("timeout(hex): %x\n", conn_params.timeout);
+	CPRINTF("channel_map(hex): %lx\n", conn_params.channel_map);
+	CPRINTF("hop(hex): %x\n", conn_params.hop_increment);
+	CPRINTF("SCA(hex): %x\n", conn_params.sleep_clock_accuracy);
+	CPRINTF("transmitWindowOffset: %d\n", conn_params.transmitWindowOffset);
+	CPRINTF("connInterval: %d\n", conn_params.connInterval);
+	CPRINTF("transmitWindowSize: %d\n", conn_params.transmitWindowSize);
+	CPRINTF("^^^^^^^^^^^^^^^^^^^CONNECTION STATE^^^^^^^^^^^^^^^^^^^\n");
+}
+
+int connected_communicate(void)
+{
+	int rv;
+	long sleep_time;
+	int offset;
+	uint64_t listen_time;
+	uint8_t comm_channel = get_next_data_channel(&remap_table);
+
+	if (num_consecutive_failures > 0) {
+		ble_radio_init(conn_params.access_addr,
+			conn_params.crc_init_val);
+		NRF51_RADIO_FREQUENCY =
+			NRF51_RADIO_FREQUENCY_VAL(chan2freq(comm_channel));
+		NRF51_RADIO_DATAWHITEIV = comm_channel;
+		listen_time = last_receive_time + conn_params.connInterval
+			- get_time().val + conn_params.transmitWindowSize;
+
+		/*
+		 * This listens for 1.25 times the expected amount
+		 * of time. This is a margin of error. This line is
+		 * only called when a connection has failed (a missed
+		 * packet). The slave and the master could have
+		 * missed this packet due to a disagreement on when
+		 * the packet should have arrived. We listen for
+		 * slightly longer than expected in the case that
+		 * there was a timing disagreement.
+		 */
+		rv = ble_rx(&ll_rcv_packet,
+			listen_time + (listen_time >> 2), 0);
+	} else {
+		if (!is_first_data_packet) {
+			sleep_time = receive_time +
+				conn_params.connInterval - get_time().val;
+			/*
+			 * The time slept is 31/32 (96.875%) of the calculated
+			 * required sleep time because the code to receive
+			 * packets requires time to set up.
+			 */
+			usleep(sleep_time - (sleep_time >> 5));
+		} else {
+			last_receive_time = time_of_connect_req;
+			sleep_time = TRANSMIT_WINDOW_OFFSET_CONSTANT +
+					conn_params.transmitWindowOffset +
+					time_of_connect_req - get_time().val;
+			if (sleep_time >= 0) {
+				/*
+				 * Radio is on for longer than needed for first
+				 * packet to make sure that it is received.
+				 */
+				usleep(sleep_time - (sleep_time >> 2));
+			} else {
+				return EC_ERROR_TIMEOUT;
+			}
+		}
+
+		ble_radio_init(conn_params.access_addr,
+			conn_params.crc_init_val);
+		NRF51_RADIO_FREQUENCY =
+			NRF51_RADIO_FREQUENCY_VAL(chan2freq(comm_channel));
+		NRF51_RADIO_DATAWHITEIV = comm_channel;
+
+		/*
+		 * Timing the transmit window is very hard to do when the code
+		 * executing has actual effect on the timing. To combat this,
+		 * the radio starts a little early, and terminates when the
+		 * window normally should. The variable 'offset' represents
+		 * how early the window opens in microseconds.
+		 */
+		if (!is_first_data_packet)
+			offset = last_receive_time + conn_params.connInterval
+				- get_time().val;
+
+		rv = ble_rx(&ll_rcv_packet,
+			    offset + conn_params.transmitWindowSize,
+			    0);
+	}
+
+	/*
+	 * The radio shortcuts have been set up so that transmission
+	 * occurs automatically after receiving. The radio just needs
+	 * to know where to find the packet to be sent.
+	 */
+	NRF51_RADIO_PACKETPTR = (uint32_t)packet_tb_sent;
+
+	receive_time = NRF51_TIMER_CC(0, 1);
+	if (rv != EC_SUCCESS)
+		receive_time = last_receive_time + conn_params.connInterval;
+
+	while (!RADIO_DONE)
+		;
+
+	last_receive_time = receive_time;
+	is_first_data_packet = 0;
+
+	return rv;
+}
+
+static uint32_t ll_adv_events;
 static timestamp_t deadline;
 static uint32_t start, end;
 
 void bluetooth_ll_task(void)
 {
+	uint64_t last_rx_time;
 	CPRINTS("LL task init");
 
 	while (1) {
@@ -523,6 +773,10 @@ void bluetooth_ll_task(void)
 			ble_ll_adv_event();
 			ll_adv_events++;
 
+			if (ll_state == CONNECTION) {
+				receive_time = 0;
+				break;
+			}
 			/* sleep for 0-10ms */
 			usleep(ll_adv_interval_us + ll_pseudo_rand(10000));
 
@@ -535,7 +789,10 @@ void bluetooth_ll_task(void)
 			deadline.val = 0;
 			CPRINTS("Standby %d events", ll_adv_events);
 			ll_adv_events = 0;
+			ll_conn_events = 0;
 			task_wait_event(-1);
+			connection_initialized = 0;
+			errors_recovered = 0;
 		break;
 		case TEST_RX:
 			if (ble_test_rx() == HCI_SUCCESS)
@@ -551,8 +808,46 @@ void bluetooth_ll_task(void)
 			usleep(625 - 82 - (end-start)); /* 625us */
 		break;
 		case UNINITIALIZED:
+			ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT);
 			ll_adv_events = 0;
 			task_wait_event(-1);
+			connection_initialized = 0;
+			packet_tb_sent = &tx_packet_1;
+			set_empty_data_packet(&tx_packet_1);
+		break;
+		case CONNECTION:
+			if (!connection_initialized) {
+				if (initialize_connection() != HCI_SUCCESS) {
+					ll_state = STANDBY;
+					break;
+				}
+				connection_initialized = 1;
+				last_rx_time = NRF51_TIMER_CC(0, 1);
+			}
+
+			if (connected_communicate() == EC_SUCCESS) {
+				if (num_consecutive_failures > 0)
+					++errors_recovered;
+				num_consecutive_failures = 0;
+				last_rx_time = get_time().val;
+			} else {
+				num_consecutive_failures++;
+				if ((get_time().val - last_rx_time) >
+					conn_params.connSupervisionTimeout) {
+
+					ll_state = STANDBY;
+					CPRINTF("EXITING CONNECTION STATE "
+						"DUE TO TIMEOUT.\n");
+				}
+			}
+			++ll_conn_events;
+
+			if (ll_state == STANDBY) {
+				CPRINTF("Exiting connection state/Entering "
+					"Standby state after %d connections ",
+					"events\n", ll_conn_events);
+				print_connection_state();
+			}
 		break;
 		default:
 			CPRINTS("Unhandled State ll_state = %d", ll_state);

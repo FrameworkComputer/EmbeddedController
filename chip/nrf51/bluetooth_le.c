@@ -6,6 +6,7 @@
 #include "bluetooth_le.h"
 #include "include/bluetooth_le.h"
 #include "console.h"
+#include "ppi.h"
 #include "radio.h"
 #include "registers.h"
 #include "timer.h"
@@ -92,10 +93,13 @@ int ble_radio_init(uint32_t access_address, uint32_t crc_init_val)
 	NRF51_RADIO_BASE0 = access_address << 8;
 	NRF51_RADIO_PREFIX0 = access_address >> 24;
 
+	if (access_address != BLE_ADV_ACCESS_ADDRESS)
+		CPRINTF("Initializing radio for data packet.\n");
+
 	NRF51_RADIO_TXADDRESS = 0;
 	NRF51_RADIO_RXADDRESSES = 1;
 	NRF51_RADIO_PCNF0 = NRF51_RADIO_PCNF0_ADV_DATA;
-	NRF51_RADIO_PCNF1 = NRF51_RADIO_PCNF0_ADV_DATA;
+	NRF51_RADIO_PCNF1 = NRF51_RADIO_PCNF1_ADV_DATA;
 
 	return rv;
 
@@ -140,6 +144,7 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 {
 	uint32_t done;
 	uint32_t timeout_time;
+	int ppi_channel_requested;
 
 	/* Prevent illegal wait times */
 	if (timeout <= 0) {
@@ -157,6 +162,19 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 	NRF51_RADIO_SHORTS = NRF51_RADIO_SHORTS_READY_START |
 			NRF51_RADIO_SHORTS_DISABLED_TXEN |
 			NRF51_RADIO_SHORTS_END_DISABLE;
+
+	/*
+	 * This creates a shortcut that marks the time
+	 * that the payload was received by the radio
+	 * in NRF51_TIMER_CC(0,1)
+	 */
+	ppi_channel_requested = NRF51_PPI_CH_RADIO_ADDR__TIMER0CC1;
+	if (ppi_request_channel(&ppi_channel_requested) == EC_SUCCESS) {
+		NRF51_PPI_CHEN |= (1 << ppi_channel_requested);
+		NRF51_PPI_CHENSET |= (1 << ppi_channel_requested);
+	}
+
+
 	NRF51_RADIO_RXEN = 1;
 
 	timeout_time = get_time().val + RADIO_SETUP_TIMEOUT;
