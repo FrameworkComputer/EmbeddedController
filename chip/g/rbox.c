@@ -58,7 +58,17 @@ static void enable_interrupts(void)
 }
 #endif
 
-void rbox_init(void)
+static void rbox_release_ec_reset(void)
+{
+	/* Let the EC go. */
+	GREG32(RBOX, ASSERT_EC_RST) = 0;
+
+	/* And unfreeze the PINMUX */
+	GREG32(PINMUX, HOLD) = 0;
+}
+DECLARE_HOOK(HOOK_INIT, rbox_release_ec_reset, HOOK_PRIO_LAST);
+
+static void rbox_init(void)
 {
 	/* Enable RBOX */
 	clock_enable_module(MODULE_RBOX, 1);
