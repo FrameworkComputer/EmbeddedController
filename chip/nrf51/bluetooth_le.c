@@ -107,11 +107,32 @@ static uint32_t tx_end, rsp_end;
 
 void ble_tx(struct ble_pdu *pdu)
 {
+	uint32_t timeout_time;
+
 	ble2nrf_packet(pdu, &tx_packet);
 
 	NRF51_RADIO_PACKETPTR = (uint32_t)&tx_packet;
 	NRF51_RADIO_END = NRF51_RADIO_PAYLOAD = NRF51_RADIO_ADDRESS = 0;
+	NRF51_RADIO_RXEN = 0;
 	NRF51_RADIO_TXEN = 1;
+
+	timeout_time = get_time().val + RADIO_SETUP_TIMEOUT;
+	while (!NRF51_RADIO_READY) {
+		if (get_time().val > timeout_time) {
+			CPRINTF("ERROR DURING RADIO TX SETUP. TRY AGAIN.\n");
+			return;
+		}
+	}
+
+	timeout_time = get_time().val + RADIO_SETUP_TIMEOUT;
+	while (!NRF51_RADIO_END) {
+		if (get_time().val > timeout_time) {
+			CPRINTF("RADIO DID NOT SHUT DOWN AFTER TX. "
+				"RECOMMEND REBOOT.\n");
+			return;
+		}
+	}
+	NRF51_RADIO_DISABLE = 1;
 }
 
 static struct nrf51_ble_packet_t rx_packet;
