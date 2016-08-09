@@ -149,7 +149,7 @@
 /* aliases for easier code sharing */
 #define STM32_IRQ_I2C1 STM32_IRQ_I2C1_EV
 #define STM32_IRQ_I2C2 STM32_IRQ_I2C2_EV
-#endif /* CHIP_FAMILY_STM32F0 */
+#endif /* !CHIP_FAMILY_STM32F0 */
 
 #ifndef __ASSEMBLER__
 
@@ -199,7 +199,8 @@
 #define STM32_USART_SR_RXNE		(1 << 5)
 #define STM32_USART_SR_TC		(1 << 6)
 #define STM32_USART_SR_TXE		(1 << 7)
-#else /* !CHIP_FAMILY_STM32F0 */
+#else
+/* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 && !CHIP_FAMILY_STM32L4 */
 #define STM32_USART_SR(base)       STM32_USART_REG(base, 0x00)
 #define STM32_USART_SR_ORE		(1 << 3)
 #define STM32_USART_SR_RXNE		(1 << 5)
@@ -224,7 +225,8 @@
 /* register aliases */
 #define STM32_USART_TDR(base)      STM32_USART_DR(base)
 #define STM32_USART_RDR(base)      STM32_USART_DR(base)
-#endif /* !CHIP_FAMILY_STM32F0 */
+#endif
+/* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 && !CHIP_FAMILY_STM32L4 */
 
 #define STM32_IRQ_USART(n)         CONCAT2(STM32_IRQ_USART, n)
 
@@ -466,7 +468,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_I2C_PECR(n)           REG32(stm32_i2c_reg(n, 0x20))
 #define STM32_I2C_RXDR(n)           REG32(stm32_i2c_reg(n, 0x24))
 #define STM32_I2C_TXDR(n)           REG32(stm32_i2c_reg(n, 0x28))
-#else /* !CHIP_FAMILY_STM32F0 */
+#else /* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 */
 #define STM32_I2C_CR1(n)            REG16(stm32_i2c_reg(n, 0x00))
 #define STM32_I2C_CR1_PE	(1 << 0)
 #define STM32_I2C_CR1_START	(1 << 8)
@@ -493,7 +495,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #define STM32_I2C_CCR(n)            REG16(stm32_i2c_reg(n, 0x1C))
 #define STM32_I2C_TRISE(n)          REG16(stm32_i2c_reg(n, 0x20))
-#endif /* !CHIP_FAMILY_STM32F0 */
+#endif /* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 */
 
 /* --- Power / Reset / Clocks --- */
 #define STM32_PWR_BASE              0x40007000
