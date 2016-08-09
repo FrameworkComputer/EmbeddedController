@@ -708,7 +708,7 @@ void motion_sense_task(void)
 #endif
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 		if (event & CONFIG_GESTURE_TAP_EVENT) {
-#ifdef CONFIG_ACCEL_FIFO
+#ifdef CONFIG_GESTURE_HOST_DETECTION
 			struct ec_response_motion_sensor_data vector;
 
 			/*
@@ -729,7 +729,7 @@ void motion_sense_task(void)
 #ifdef CONFIG_GESTURE_SIGMO
 		if (event & CONFIG_GESTURE_SIGMO_EVENT) {
 			struct motion_sensor_t *activity_sensor;
-#ifdef CONFIG_ACCEL_FIFO
+#ifdef CONFIG_GESTURE_HOST_DETECTION
 			struct ec_response_motion_sensor_data vector;
 
 			/* Send events to the FIFO */
