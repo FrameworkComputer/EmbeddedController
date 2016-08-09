@@ -87,13 +87,23 @@ static int tcpci_tcpm_get_power_status(int port, int *status)
 
 int tcpci_tcpm_set_cc(int port, int pull)
 {
+	uint8_t rp = 0;
 	/*
 	 * Set manual control of Rp/Rd, and set both CC lines to the same
-	 * pull.
+	 * pull. Set desired Rp strength:
+	 * 00: Rp default
+	 * 01: Rp 1.5A
+	 * 10: Rp 3.0A
+	 * 11: Reserved
 	 */
-	/* TODO: set desired Rp strength */
+#ifdef CONFIG_USB_PD_PULLUP_1_5A
+	rp = 0x01;
+#elif defined(CONFIG_USB_PD_PULLUP_3A)
+	rp = 0x02;
+#endif
+
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
-			  TCPC_REG_ROLE_CTRL_SET(0, 0, pull, pull));
+			  TCPC_REG_ROLE_CTRL_SET(0, rp, pull, pull));
 }
 
 int tcpci_tcpm_set_polarity(int port, int polarity)

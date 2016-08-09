@@ -2122,6 +2122,18 @@
 /* Support reporting as self powered in USB configuration. */
 #undef CONFIG_USB_SELF_POWERED
 
+/*
+ * USB-C ports should be configured to present 1.5A pullup and provide
+ * 5V at 1.5A.
+ */
+#undef CONFIG_USB_PD_PULLUP_1_5A
+
+/*
+ * USB-C ports should be configured to present 3A pullup and provide
+ * 5V at 3A.
+ */
+#undef CONFIG_USB_PD_PULLUP_3A
+
 /******************************************************************************/
 /* USB port switch */
 

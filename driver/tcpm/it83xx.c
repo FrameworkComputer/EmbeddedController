@@ -311,6 +311,12 @@ static void it83xx_select_polarity(enum usbpd_port port,
 
 static void it83xx_set_cc(enum usbpd_port port, int pull)
 {
+	/*
+	 * TODO(crosbug.com/p/54452): Add configuration of Rp strength
+	 * values for presenting desired current to port partner.
+	 * This value will depend on config flags
+	 * CONFIG_USB_PD_PULLUP_* in the board file
+	 */
 	if (pull == TYPEC_CC_RD)
 		it83xx_set_power_role(port, PD_ROLE_SINK);
 	else if (pull == TYPEC_CC_RP)

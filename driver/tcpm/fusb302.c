@@ -459,6 +459,12 @@ static int fusb302_tcpm_set_cc(int port, int pull)
 	case TYPEC_CC_RP:
 
 		/* Only use autodetect feature for revA silicon */
+		/*
+		 * TODO(crosbug.com/p/54452): Add configuration of Rp strength
+		 * values for presenting desired current to port partner.
+		 * This value will depend on config flags
+		 * CONFIG_USB_PD_PULLUP_* in the board file
+		 */
 		/* if fusb302 hasn't figured anything out yet */
 		if ((state[port].device_id == FUSB302_DEVID_302A) &&
 		    !state[port].togdone_pullup_cc1 &&
