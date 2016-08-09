@@ -57,6 +57,9 @@
 #undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
 
+/* Specify barometer attached */
+#undef CONFIG_BARO_BMP280
+
 /*
  * Use the old standard reference frame for accelerometers. The old
  * reference frame is:

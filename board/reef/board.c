@@ -18,6 +18,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/baro_bmp280.h"
 #include "driver/charger/bd99955.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8751.h"
@@ -818,6 +819,41 @@ struct motion_sensor_t motion_sensors[] = {
 			.odr = 0,
 			.ec_rate = 0,
 		},
+	 },
+	},
+
+	[BASE_BARO] = {
+	 .name = "Base Baro",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_BMP280,
+	 .type = MOTIONSENSE_TYPE_BARO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmp280_drv,
+	 .drv_data = &bmp280_drv_data,
+	 .port = I2C_PORT_BARO,
+	 .addr = BMP280_I2C_ADDRESS1,
+	 .rot_standard_ref = NULL, /* Identity Matrix. */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC does not need in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
 	 },
 	},
 };

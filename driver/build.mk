@@ -22,6 +22,9 @@ driver-$(CONFIG_ALS_ISL29035)+=als_isl29035.o
 driver-$(CONFIG_ALS_OPT3001)+=als_opt3001.o
 driver-$(CONFIG_ALS_SI114X)+=als_si114x.o
 
+#Barometers
+driver-$(CONFIG_BARO_BMP280)+=baro_bmp280.o
+
 # Batteries
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
 driver-$(CONFIG_BATTERY_BQ27541)+=battery/bq27541.o
