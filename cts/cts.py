@@ -514,6 +514,8 @@ class Cts(object):
             test,
             CTS_SUCCESS_CODE) == CTS_SUCCESS_CODE:
           self.test_results[test] = return_code
+        elif return_code == CTS_SUCCESS_CODE:
+          pass
         elif return_code != self.test_results[test]:
           self.test_results[test] = CTS_CONFLICTING_CODE
         test_num += 1
