@@ -13,20 +13,21 @@
 #define NRF51_BLE_S0_BYTES    1
 #define NRF51_BLE_S1_BITS     0 /* no s1 field */
 
-#define NRF51_RADIO_PCNF0_ADV NRF51_RADIO_PCNF0_VAL(NRF51_BLE_LENGTH_BITS, \
-						    NRF51_BLE_S0_BYTES, \
-						    NRF51_BLE_S1_BITS)
-
 #define BLE_ACCESS_ADDRESS_BYTES 4
 #define EXTRA_RECEIVE_BYTES      0
 #define BLE_ADV_WHITEN           1
 
-#define NRF51_RADIO_PCNF1_ADV \
-	NRF51_RADIO_PCNF1_VAL(BLE_MAX_ADV_PAYLOAD_OCTETS, \
-			      EXTRA_RECEIVE_BYTES, \
-			      BLE_ACCESS_ADDRESS_BYTES - 1, \
-			      BLE_ADV_WHITEN)
+/* Data and Advertisements have the same PCNF values */
+#define NRF51_RADIO_PCNF0_ADV_DATA \
+			NRF51_RADIO_PCNF0_VAL(NRF51_BLE_LENGTH_BITS, \
+			NRF51_BLE_S0_BYTES, \
+			NRF51_BLE_S1_BITS)
 
+#define NRF51_RADIO_PCNF1_ADV_DATA \
+			NRF51_RADIO_PCNF1_VAL(BLE_MAX_ADV_PAYLOAD_OCTETS, \
+		    EXTRA_RECEIVE_BYTES, \
+		    BLE_ACCESS_ADDRESS_BYTES - 1, \
+		    BLE_ADV_WHITEN)
 
 struct nrf51_ble_packet_t {
 	uint8_t s0; /* First byte */
@@ -41,7 +42,7 @@ struct nrf51_ble_config_t {
 };
 
 /* Initialize the nRF51 radio for BLE */
-int ble_radio_init(void);
+int ble_radio_init(uint32_t access_address, uint32_t crc_init_val);
 
 /* Transmit pdu on the radio */
 void ble_tx(struct ble_pdu *pdu);

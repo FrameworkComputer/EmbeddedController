@@ -147,7 +147,8 @@ static uint8_t ll_state_change_request(enum ll_state_t next_state)
 {
 	/* Initialize the radio if it hasn't been initialized */
 	if (ll_state == UNINITIALIZED) {
-		if (ble_radio_init() != EC_SUCCESS)
+		if (ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT)
+				!= EC_SUCCESS)
 			return HCI_ERR_Hardware_Failure;
 		ll_state = STANDBY;
 	}
@@ -410,6 +411,7 @@ struct ble_pdu ll_rcv_packet;
 int ble_ll_adv(int chan)
 {
 	int rv;
+
 	/* Change channel */
 	NRF51_RADIO_FREQUENCY = NRF51_RADIO_FREQUENCY_VAL(chan2freq(chan));
 	NRF51_RADIO_DATAWHITEIV = chan;

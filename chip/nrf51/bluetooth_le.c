@@ -74,33 +74,31 @@ struct nrf51_ble_packet_t on_air_packet;
 
 struct ble_pdu rcv_packet;
 
-int ble_radio_init(void)
+int ble_radio_init(uint32_t access_address, uint32_t crc_init_val)
 {
 	int rv = radio_init(BLE_1MBIT);
 
 	if (rv)
 		return rv;
-
 	NRF51_RADIO_CRCCNF = 3 | NRF51_RADIO_CRCCNF_SKIP_ADDR; /* 3-byte CRC */
 	/* x^24 + x^10 + x^9 + x^6 + x^4 + x^3 + x + 1 */
 	/* 0x1_0000_0000_0000_0110_0101_1011 */
 	NRF51_RADIO_CRCPOLY = 0x100065B;
-	NRF51_RADIO_CRCINIT = 0x555555;
+
+	NRF51_RADIO_CRCINIT = crc_init_val;
 
 	NRF51_RADIO_TXPOWER = NRF51_RADIO_TXPOWER_0_DBM;
 
-	NRF51_RADIO_BASE0 = BLE_ADV_ACCESS_ADDRESS << 8;
-
-	NRF51_RADIO_PREFIX0 = BLE_ADV_ACCESS_ADDRESS >> 24;
+	NRF51_RADIO_BASE0 = access_address << 8;
+	NRF51_RADIO_PREFIX0 = access_address >> 24;
 
 	NRF51_RADIO_TXADDRESS = 0;
 	NRF51_RADIO_RXADDRESSES = 1;
-
-	NRF51_RADIO_PCNF0 = NRF51_RADIO_PCNF0_ADV;
-
-	NRF51_RADIO_PCNF1 = NRF51_RADIO_PCNF1_ADV;
+	NRF51_RADIO_PCNF0 = NRF51_RADIO_PCNF0_ADV_DATA;
+	NRF51_RADIO_PCNF1 = NRF51_RADIO_PCNF0_ADV_DATA;
 
 	return rv;
+
 }
 
 static struct nrf51_ble_packet_t tx_packet;
@@ -380,7 +378,7 @@ static int command_ble_adv(int argc, char **argv)
 		CPRINTS("type DIRECT needs to have a length of 12");
 	}
 
-	rv = ble_radio_init();
+	rv = ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT);
 
 
 		CPRINTS("ADV @%p", &adv_packet);
@@ -436,7 +434,7 @@ static int command_ble_adv_scan(int argc, char **argv)
 		addr_lsbyte = -1;
 	}
 
-	rv = ble_radio_init();
+	rv = ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT);
 
 	/* Change channel */
 	NRF51_RADIO_FREQUENCY = NRF51_RADIO_FREQUENCY_VAL(chan2freq(chan));

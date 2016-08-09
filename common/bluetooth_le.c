@@ -187,6 +187,13 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 		else
 			mem_dump(ble_p->payload + curr_offs,
 				 ble_p->header.adv.length - curr_offs);
+	} else { /* Data PDUs */
+		CPRINTF("BLE data packet @%p: LLID %d,"
+			" nesn %d, sn %d, md %d, length %d\n",
+			ble_p, ble_p->header.data.llid, ble_p->header.data.nesn,
+			ble_p->header.data.sn, ble_p->header.data.md,
+			ble_p->header.data.length);
+		mem_dump(ble_p->payload, ble_p->header.data.length);
 	}
 }
 

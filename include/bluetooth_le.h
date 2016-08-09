@@ -133,6 +133,7 @@ struct ble_adv_header {
 #define BLE_RANDOM_ADDR_MSBS_STATIC              0xC0
 
 #define BLE_ADV_ACCESS_ADDRESS 0x8E89BED6
+#define BLE_ADV_CRCINIT 0x555555
 
 #define BLE_MAX_ADV_PAYLOAD_OCTETS       37
 
@@ -366,7 +367,7 @@ void ble_tx(struct ble_pdu *pdu);
 
 int ble_rx(struct ble_pdu *pdu, int timeout, int adv);
 
-int ble_radio_init(void);
+int ble_radio_init(uint32_t access_address, uint32_t crc_init_val);
 
 /* BLE 4.1 Vol 6 4.5.8 */
 int select_data_channel(struct remapping_table *rt);
