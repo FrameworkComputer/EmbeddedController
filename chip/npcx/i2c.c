@@ -79,7 +79,7 @@ enum smb_oper_state_t {
 };
 
 /* IRQ for each port */
-static const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
+const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
 		NPCX_IRQ_SMB1, NPCX_IRQ_SMB2, NPCX_IRQ_SMB3, NPCX_IRQ_SMB4};
 BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_CONTROLLER_COUNT);
 
@@ -98,7 +98,7 @@ struct i2c_status {
 	uint32_t              timeout_us;/* Transaction timeout */
 };
 /* I2C controller state data array */
-static struct i2c_status i2c_stsobjs[I2C_CONTROLLER_COUNT];
+struct i2c_status i2c_stsobjs[I2C_CONTROLLER_COUNT];
 
 /* I2C timing setting */
 struct i2c_timing {
@@ -335,7 +335,7 @@ enum smb_error i2c_master_transaction(int controller)
 }
 
 /* Issue stop condition if necessary and end transaction */
-static void i2c_done(int controller)
+void i2c_done(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 
