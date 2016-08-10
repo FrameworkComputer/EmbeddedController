@@ -284,9 +284,6 @@ static int bd99955_bc12_detect(int port)
 		charge.voltage = USB_CHARGER_VOLTAGE_MV;
 		charge.current = bd99955_get_bc12_ilim(bc12_type);
 		charge_manager_update_charge(bc12_type, port, &charge);
-
-		/* notify host of power info change */
-		pd_send_host_event(PD_EVENT_POWER_CHANGE);
 	}
 
 	return bc12_type;
@@ -304,9 +301,6 @@ static void bd99955_bc12_detach(int port, int type)
 
 	/* Disable charging trigger by BC1.2 detection */
 	bd99955_bc12_enable_charging(port, 0);
-
-	/* notify host of power info change */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 static int bd99955_enable_vbus_detect_interrupts(int port, int enable)

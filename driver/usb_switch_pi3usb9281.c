@@ -342,9 +342,6 @@ static void bc12_detect(int port)
 					port,
 					&charge);
 	}
-
-	/* notify host of power info change */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 void usb_charger_task(void)

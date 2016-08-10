@@ -546,6 +546,10 @@ static void charge_manager_refresh(void)
 		board_set_charge_limit(new_port, new_supplier,
 					new_charge_current);
 #endif /* HAS_TASK_CHG_RAMP */
+
+		/* notify host of power info change */
+		pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
 		CPRINTS("CL: p%d s%d i%d v%d", new_port, new_supplier,
 			new_charge_current, new_charge_voltage);
 	}
