@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "timer.h"
 #include "console.h"
 #include "rdd.h"
 #include "registers.h"
@@ -171,6 +172,9 @@ void __idle(void)
 		idle_action = IDLE_DEFAULT;
 		GREG32(PMU, PWRDN_SCRATCH17) = idle_action;
 	}
+
+	/* Disable sleep until 3 minutes after init */
+	delay_sleep_by(3 * MINUTE);
 
 	while (1) {
 

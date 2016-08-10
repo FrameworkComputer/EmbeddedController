@@ -117,7 +117,7 @@ void pmu_wakeup_interrupt(void)
 		 * Delay sleep long enough for a SPI slave transaction to start
 		 * or for the system to be reset.
 		 */
-		delay_sleep_by(3 * SECOND);
+		delay_sleep_by(3 * MINUTE);
 
 		if (!gpio_get_level(GPIO_SYS_RST_L_IN))
 			sys_rst_asserted(GPIO_SYS_RST_L_IN);
