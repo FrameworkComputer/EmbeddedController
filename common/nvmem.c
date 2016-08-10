@@ -36,6 +36,8 @@ struct nvmem_cache cache;
 
 /* NvMem error state */
 static int nvmem_error_state;
+/* Flag to track if an Nv write/move is not completed */
+static int nvmem_write_error;
 
 static int nvmem_verify_partition_sha(int index)
 {
@@ -342,6 +344,7 @@ int nvmem_init(void)
 	}
 	/* Initialize error state, assume everything is good */
 	nvmem_error_state = EC_SUCCESS;
+	nvmem_write_error = 0;
 	/* Default state for cache base_ptr and task number */
 	cache.base_ptr = NULL;
 	cache.task = TASK_ID_COUNT;
@@ -436,14 +439,17 @@ int nvmem_write(uint32_t offset, uint32_t size,
 
 	/* Make sure that the cache buffer is active */
 	ret = nvmem_lock_cache();
-	if (ret)
-		/* TODO: What to do when can't access cache buffer? */
+	if (ret) {
+		nvmem_write_error = 1;
 		return ret;
+	}
 
 	/* Compute partition offset for this write operation */
 	ret = nvmem_get_partition_off(user, offset, size, &dest_offset);
-	if (ret != EC_SUCCESS)
+	if (ret != EC_SUCCESS) {
+		nvmem_write_error = 1;
 		return ret;
+	}
 
 	/* Advance to correct offset within data buffer */
 	dest_addr = (uintptr_t)cache.base_ptr;
@@ -465,19 +471,24 @@ int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
 
 	/* Make sure that the cache buffer is active */
 	ret = nvmem_lock_cache();
-	if (ret)
-		/* TODO: What to do when can't access cache buffer? */
+	if (ret) {
+		nvmem_write_error = 1;
 		return ret;
+	}
 
 	/* Compute partition offset for source */
 	ret = nvmem_get_partition_off(user, src_offset, size, &s_buff_offset);
-	if (ret != EC_SUCCESS)
+	if (ret != EC_SUCCESS) {
+		nvmem_write_error = 1;
 		return ret;
+	}
 
 	/* Compute partition offset for destination */
 	ret = nvmem_get_partition_off(user, dest_offset, size, &d_buff_offset);
-	if (ret != EC_SUCCESS)
+	if (ret != EC_SUCCESS) {
+		nvmem_write_error = 1;
 		return ret;
+	}
 
 	base_addr = (uintptr_t)cache.base_ptr;
 	/* Create pointer to src location within partition */
@@ -497,6 +508,14 @@ int nvmem_commit(void)
 	uint16_t version;
 	struct nvmem_partition *p_part;
 
+	/* Ensure that all writes/moves prior to commit call succeeded */
+	if (nvmem_write_error) {
+		CPRINTS("NvMem: Write Error, commit abandoned");
+		/* Clear error state */
+		nvmem_write_error = 0;
+		nvmem_release_cache();
+		return EC_ERROR_UNKNOWN;
+	}
 	/*
 	 * All scratch buffer blocks must be written to physical flash
 	 * memory. In addition, the scratch block buffer index table

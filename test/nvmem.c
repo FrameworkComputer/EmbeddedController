@@ -86,11 +86,6 @@ static int test_write_read(uint32_t offset, uint32_t num_bytes, int user)
 	generate_random_data(0, num_bytes);
 	/* Write source data to NvMem */
 	ret = nvmem_write(offset, num_bytes, write_buffer, user);
-	if (ret)
-		return ret;
-	nvmem_read(offset, num_bytes, read_buffer, user);
-	/* Verify memory was written into cache ram buffer */
-	TEST_ASSERT_ARRAY_EQ(write_buffer, read_buffer, num_bytes);
 	/* Write to flash */
 	ret = nvmem_commit();
 	if (ret != EC_SUCCESS)
@@ -117,9 +112,7 @@ static int write_full_buffer(uint32_t size, int user)
 		/* Generate data for tx buffer */
 		generate_random_data(offset, len);
 		/* Write data to Nvmem cache memory */
-		ret = nvmem_write(offset, len, &write_buffer[offset], user);
-		if (ret != EC_SUCCESS)
-			return ret;
+		nvmem_write(offset, len, &write_buffer[offset], user);
 		/* Write to flash */
 		ret = nvmem_commit();
 		if (ret != EC_SUCCESS)
@@ -427,6 +420,8 @@ static int test_move(void)
 			 len, user);
 	if (!ret)
 		return EC_ERROR_UNKNOWN;
+	/* nvmem_move returned an error, need to clear internal error state */
+	nvmem_commit();
 
 	return EC_SUCCESS;
 }
