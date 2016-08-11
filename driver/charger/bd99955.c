@@ -980,15 +980,13 @@ static int console_command_bd99955(int argc, char **argv)
 	if (*e || cmd < 0)
 		return EC_ERROR_PARAM3;
 
-	if (argc == 5) {
-		val = strtoi(argv[4], &e, 16);
-		if (*e || val < 0)
-			return EC_ERROR_PARAM4;
-	}
-
 	if (rw == 'r')
 		rv = ch_raw_read16(reg, &data, cmd);
 	else {
+		val = strtoi(argv[4], &e, 16);
+		if (*e || val < 0)
+			return EC_ERROR_PARAM4;
+
 		rv = ch_raw_write16(reg, val, cmd);
 		if (rv == EC_SUCCESS)
 			rv = ch_raw_read16(reg, &data, cmd);
