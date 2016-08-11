@@ -44,6 +44,8 @@ static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 		tcpc_read(port, ANX74XX_REG_TX_AUTO_GOODCRC_1, &reg);
 		reg |= ANX74XX_REG_AUTO_GOODCRC_EN;
 	} else {
+		/* Clear bit-0 for disable */
+		tcpc_read(port, ANX74XX_REG_TX_AUTO_GOODCRC_1, &reg);
 		reg &= ~ANX74XX_REG_AUTO_GOODCRC_EN;
 		tcpc_write(port, ANX74XX_REG_TX_AUTO_GOODCRC_2, 0);
 	}
