@@ -9,8 +9,20 @@
 #include "gpio.h"
 #include "gpio_list.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "registers.h"
 #include "stm32-dma.h"
+
+
+/* I2C ports */
+const struct i2c_port_t i2c_ports[] = {
+	{"i2c1", I2C_PORT_0, 100,
+		GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"fmpi2c4", FMPI2C_PORT_3, 100,
+		GPIO_FMPI2C_SCL, GPIO_FMPI2C_SDA},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
 
 #define GPIO_SET_HS(bank, number)	\
 	(STM32_GPIO_OSPEEDR(GPIO_##bank) |= (0x3 << (number * 2)))

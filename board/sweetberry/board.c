@@ -16,6 +16,18 @@
 #include "task.h"
 #include "util.h"
 
+/* I2C ports */
+const struct i2c_port_t i2c_ports[] = {
+	{"i2c1", I2C_PORT_0, 800,
+		GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"i2c2", I2C_PORT_1, 800,
+		GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"i2c3", I2C_PORT_2, 800,
+		GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{"fmpi2c4", FMPI2C_PORT_3, 800,
+		GPIO_FMPI2C_SCL, GPIO_FMPI2C_SDA},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 #define GPIO_SET_HS(bank, number)	\
 	(STM32_GPIO_OSPEEDR(GPIO_##bank) |= (0x3 << ((number) * 2)))
@@ -55,3 +67,12 @@ void board_config_post_gpio_init(void)
 	GPIO_SET_HS(C,  6);
 	GPIO_SET_HS(C,  7);
 }
+
+static void board_init(void)
+{
+	uint8_t tmp;
+
+	/* i2c 0 has a tendancy to get wedged. TODO(nsanders): why? */
+	i2c_xfer(0, 0, NULL, 0, &tmp, 1, I2C_XFER_SINGLE);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

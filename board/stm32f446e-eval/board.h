@@ -27,6 +27,11 @@
 #define CONFIG_UART_TX_REQ_CH 4
 #define CONFIG_UART_RX_REQ_CH 4
 
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+#define I2C_PORT_0 0
+#define FMPI2C_PORT_3 3
+
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH

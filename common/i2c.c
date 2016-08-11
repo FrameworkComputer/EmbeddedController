@@ -755,14 +755,25 @@ static void scan_bus(int port, const char *desc)
 
 static int command_scan(int argc, char **argv)
 {
-	int i;
+	int port;
+	char *e;
 
-	for (i = 0; i < i2c_ports_used; i++)
-		scan_bus(i2c_ports[i].port, i2c_ports[i].name);
+	if (argc == 1) {
+		for (port = 0; port < i2c_ports_used; port++)
+			scan_bus(i2c_ports[port].port, i2c_ports[port].name);
+		return EC_SUCCESS;
+	}
+
+
+	port = strtoi(argv[1], &e, 0);
+	if ((*e) || (port >= i2c_ports_used))
+		return EC_ERROR_PARAM2;
+
+	scan_bus(i2c_ports[port].port, i2c_ports[port].name);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
-			NULL,
+			"i2cscan [port]",
 			"Scan I2C ports for devices",
 			NULL);
 #endif
