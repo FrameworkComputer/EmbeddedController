@@ -788,8 +788,8 @@ static int command_flash_spi_sel_lock(int argc, char **argv)
 		if (!parse_bool(argv[1], &ena))
 			return EC_ERROR_PARAM1;
 		ena = flash_spi_sel_lock(ena);
+		ccprintf("Enabled: %d\n", ena);
 	}
-	ccprintf("Enabled: %d\n", ena);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(flash_spi_lock, command_flash_spi_sel_lock,
@@ -805,8 +805,9 @@ static int command_flash_tristate(int argc, char **argv)
 		if (!parse_bool(argv[1], &ena))
 			return EC_ERROR_PARAM1;
 		flash_tristate(ena);
+		ccprintf("Enabled: %d\n", ena);
 	}
-	ccprintf("Enabled: %d\n", ena);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate,
