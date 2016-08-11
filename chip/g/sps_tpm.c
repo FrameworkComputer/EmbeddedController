@@ -74,6 +74,8 @@
 #define TPM_STALL_ASSERT   0x00
 #define TPM_STALL_DEASSERT 0x01
 
+/* Locality 0 register address base */
+#define TPM_LOCALITY_0_SPI_BASE 0x00d40000
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_TPM, outstr)
@@ -175,7 +177,8 @@ static void process_rx_data(uint8_t *data, size_t data_size)
 			/* Copy the register contents into the TXFIFO */
 			/* TODO: This is blindly assuming TXFIFO has enough
 			 * room. What can we do if it doesn't? */
-			tpm_register_get(regaddr, txbuf + 1, bytecount);
+			tpm_register_get(regaddr - TPM_LOCALITY_0_SPI_BASE,
+					 txbuf + 1, bytecount);
 			sps_transmit(txbuf, bytecount + 1);
 			sps_tpm_state = SPS_TPM_STATE_PONDERING;
 			return;
@@ -243,7 +246,8 @@ static void process_rx_data(uint8_t *data, size_t data_size)
 
 	if (sps_tpm_state == SPS_TPM_STATE_RECEIVING_WRITE_DATA) {
 		/* Ok, we have all the write data. */
-		tpm_register_put(regaddr, rxbuf + stall_threshold, bytecount);
+		tpm_register_put(regaddr - TPM_LOCALITY_0_SPI_BASE,
+				 rxbuf + stall_threshold, bytecount);
 		sps_tpm_state = SPS_TPM_STATE_PONDERING;
 	}
 }

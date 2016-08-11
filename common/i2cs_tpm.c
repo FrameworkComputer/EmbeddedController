@@ -68,10 +68,13 @@ struct i2c_tpm_reg_map {
 	uint16_t  tpm_address;
 };
 static const struct i2c_tpm_reg_map i2c_to_tpm[] = {
-	{0, 1, 0},	/* TPM Access */
-	{1, 4, 0x18},	/* TPM Status */
-	{5, 0, 0x24},	/* TPM Fifo, variable size. */
-	{6, 4, 0xf00},  /* TPM DID VID */
+	{0, 1, 0},	 /* TPM Access */
+	{1, 4, 0x18},	 /* TPM Status */
+	{5, 0, 0x24},	 /* TPM Fifo, variable size. */
+	{6, 4, 0xf00},   /* TPM DID VID */
+	{0xa, 4, 0x14},  /* TPM TPM_INTF_CAPABILITY */
+	{0xe, 1, 0xf04}, /* TPM RID */
+	{0xf, 4, 0xf90}, /* TPM_FW_VER */
 };
 
 static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
