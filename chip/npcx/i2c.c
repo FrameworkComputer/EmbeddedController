@@ -592,6 +592,11 @@ DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 3);
 void i2c_set_timeout(int port, uint32_t timeout)
 {
 	int ctrl = i2c_port_to_controller(port);
+
+	/* Return if i2c_port_to_controller() returned an error */
+	if (ctrl < 0)
+		return;
+
 	/* Param is port, but timeout is stored by-controller. */
 	i2c_stsobjs[ctrl].timeout_us =
 		timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
@@ -600,8 +605,14 @@ void i2c_set_timeout(int port, uint32_t timeout)
 int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
+	volatile struct i2c_status *p_status;
 	int ctrl = i2c_port_to_controller(port);
-	volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
+
+	/* Return error if i2c_port_to_controller() returned an error */
+	if (ctrl < 0)
+		return EC_ERROR_INVAL;
+
+	p_status = i2c_stsobjs + ctrl;
 
 	interrupt_disable();
 	/* make sure bus is not occupied by the other task */
@@ -823,9 +834,15 @@ static void i2c_init(void)
 	 * initialize smb status and register
 	 */
 	for (i = 0; i < i2c_ports_used; i++) {
+		volatile struct i2c_status *p_status;
 		int port = i2c_ports[i].port;
 		int ctrl = i2c_port_to_controller(port);
-		volatile struct i2c_status *p_status = i2c_stsobjs + ctrl;
+
+		/* ignore the port if i2c_port_to_controller() failed */
+		if (ctrl < 0)
+			continue;
+
+		p_status = i2c_stsobjs + ctrl;
 
 		/* status init */
 		p_status->oper_state = SMB_IDLE;
