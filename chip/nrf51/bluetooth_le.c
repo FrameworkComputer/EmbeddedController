@@ -115,19 +115,38 @@ void ble_tx(struct ble_pdu *pdu)
 }
 
 static struct nrf51_ble_packet_t rx_packet;
-
 int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 {
 	uint32_t done;
 	uint32_t timeout_time;
 
+	/* Prevent illegal wait times */
+	if (timeout <= 0) {
+		NRF51_RADIO_DISABLE = 1;
+		return EC_ERROR_TIMEOUT;
+	}
+
 	NRF51_RADIO_PACKETPTR = (uint32_t)&rx_packet;
 	NRF51_RADIO_END = NRF51_RADIO_PAYLOAD = NRF51_RADIO_ADDRESS = 0;
+	/*
+	 * These shortcuts cause packet transmission 150 microseconds after
+	 * packet receive, as is the BTLE standard. See NRF51 manual:
+	 * section 17.1.12
+	 */
 	NRF51_RADIO_SHORTS = NRF51_RADIO_SHORTS_READY_START |
+			NRF51_RADIO_SHORTS_DISABLED_TXEN |
 			NRF51_RADIO_SHORTS_END_DISABLE;
 	NRF51_RADIO_RXEN = 1;
-	timeout_time = get_time().val + timeout;
 
+	timeout_time = get_time().val + RADIO_SETUP_TIMEOUT;
+	while (!NRF51_RADIO_READY) {
+		if (get_time().val > timeout_time) {
+			CPRINTF("RADIO NOT SET UP IN TIME. TIMING OUT.\n");
+			return EC_ERROR_TIMEOUT;
+		}
+	}
+
+	timeout_time = get_time().val + timeout;
 	do {
 		if (get_time().val >= timeout_time) {
 			NRF51_RADIO_DISABLE = 1;
@@ -138,8 +157,17 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 
 	rsp_end = get_time().le.lo;
 
+	if (NRF51_RADIO_CRCSTATUS == 0) {
+		CPRINTF("INVALID CRC\n");
+		return EC_ERROR_CRC;
+	}
+
 	nrf2ble_packet(pdu, &rx_packet, adv);
 
+	/*
+	 * Throw error if radio not yet disabled. Something has
+	 * gone wrong. May be in an unexpected state.
+	 */
 	if (NRF51_RADIO_DISABLED != 1)
 		return EC_ERROR_UNKNOWN;
 

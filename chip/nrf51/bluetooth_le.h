@@ -17,6 +17,8 @@
 #define EXTRA_RECEIVE_BYTES      0
 #define BLE_ADV_WHITEN           1
 
+#define RADIO_SETUP_TIMEOUT 1000
+
 /* Data and Advertisements have the same PCNF values */
 #define NRF51_RADIO_PCNF0_ADV_DATA \
 			NRF51_RADIO_PCNF0_VAL(NRF51_BLE_LENGTH_BITS, \
