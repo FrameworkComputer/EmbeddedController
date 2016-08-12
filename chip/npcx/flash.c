@@ -605,7 +605,7 @@ int flash_physical_write(int offset, int size, const char *data)
 
 int flash_physical_erase(int offset, int size)
 {
-	int rv;
+	int rv = EC_SUCCESS;
 	/* check protection */
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
