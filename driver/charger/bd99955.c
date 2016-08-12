@@ -994,7 +994,8 @@ static int console_command_bd99955(int argc, char **argv)
 			rv = ch_raw_read16(reg, &data, cmd);
 	}
 
-	CPRINTS("register 0x%x [%d] = 0x%x [%d]", reg, reg, data, data);
+	if (rv == EC_SUCCESS)
+		CPRINTS("register 0x%x [%d] = 0x%x [%d]", reg, reg, data, data);
 
 	return rv;
 }
