@@ -11,6 +11,7 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
+#include "power.h"
 #include "util.h"
 
 static uint32_t events;
@@ -44,13 +45,28 @@ static void set_host_interrupt(int active)
 #endif
 }
 
+/**
+ * Check if the host is sleeping. Check our power state in addition to the
+ * self-reported sleep state of host (CONFIG_POWER_TRACK_HOST_SLEEP_STATE).
+ */
+static inline int host_is_sleeping(void)
+{
+	int is_sleeping = !chipset_in_state(CHIPSET_STATE_ON);
+
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+	is_sleeping |=
+		(power_get_host_sleep_state() == HOST_SLEEP_EVENT_S3_SUSPEND);
+#endif
+	return is_sleeping;
+}
+
 void mkbp_send_event(uint8_t event_type)
 {
 	set_event(event_type);
 
 #ifdef CONFIG_MKBP_WAKEUP_MASK
-	/* checking the event if AP is not in S0 */
-	if (!chipset_in_state(CHIPSET_STATE_ON)) {
+	/* Only assert interrupt for wake events if host is sleeping */
+	if (host_is_sleeping()) {
 		uint32_t events;
 		events = *(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
 		/*

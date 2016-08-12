@@ -133,4 +133,12 @@ int power_get_pause_in_s5(void);
  */
 void power_set_pause_in_s5(int pause);
 
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+/**
+ * Get sleep state of host, as reported by the host.
+ *
+ * @return Believed sleep state of host.
+ */
+enum host_sleep_event power_get_host_sleep_state(void);
+#endif
 #endif  /* __CROS_EC_POWER_H */

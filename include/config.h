@@ -1527,6 +1527,13 @@
 
 /* Support S0ix */
 #undef CONFIG_POWER_S0IX
+
+/*
+ * Allow the host to self-report its sleep state, in case there is some delay
+ * between the host beginning to enter the sleep state and power signals
+ * actually reflecting the new state.
+ */
+#undef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 /*****************************************************************************/
 /* Support PWM control */
 #undef CONFIG_PWM

@@ -3186,10 +3186,6 @@ struct ec_params_host_sleep_event {
 	uint8_t sleep_event;
 } __packed;
 
-struct ec_response_host_sleep_event {
-	uint8_t sleep_event;
-} __packed;
-
 /*****************************************************************************/
 /* Smart battery pass-through */
 
