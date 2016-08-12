@@ -136,8 +136,6 @@ static void led_tick(void)
 		kevin_led_set_power_battery();
 		return;
 	}
-
-	set_color(LED_OFF);
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
