@@ -70,8 +70,10 @@ void i2c_lock(int port, int lock)
 #ifdef CONFIG_I2C_MULTI_PORT_CONTROLLER
 	/* Lock the controller, not the port */
 	port = i2c_port_to_controller(port);
-	ASSERT(port != -1);
 #endif
+	if (port < 0)
+		return;
+
 	if (lock) {
 		mutex_lock(port_mutex + port);
 
