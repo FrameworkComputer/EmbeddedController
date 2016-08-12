@@ -173,7 +173,7 @@ static const char * const pd_state_names[] = {
 	"DISABLED", "SUSPENDED",
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	"SNK_DISCONNECTED", "SNK_DISCONNECTED_DEBOUNCE",
-	"SNK_HARD_RESET_RECOVER",
+	"SNK_ACCESSORY", "SNK_HARD_RESET_RECOVER",
 	"SNK_DISCOVERY", "SNK_REQUESTED", "SNK_TRANSITION", "SNK_READY",
 	"SNK_SWAP_INIT", "SNK_SWAP_SNK_DISABLE",
 	"SNK_SWAP_SRC_DISABLE", "SNK_SWAP_STANDBY", "SNK_SWAP_COMPLETE",
@@ -261,7 +261,8 @@ static int pd_debug_acc_plugged(int port)
 {
 #if defined(CONFIG_CASE_CLOSED_DEBUG) || \
 defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
-	return pd[port].task_state == PD_STATE_SRC_ACCESSORY;
+	return pd[port].task_state == PD_STATE_SRC_ACCESSORY ||
+		pd[port].task_state == PD_STATE_SNK_ACCESSORY;
 #else
 	/* Debug accessories not supported */
 	return 0;
@@ -1361,16 +1362,52 @@ void pd_ping_enable(int port, int enable)
 		pd[port].flags &= ~PD_FLAGS_PING_ENABLED;
 }
 
+/**
+ * Returns whether the sink has detected a Rp resistor on the other side.
+ */
+static inline int cc_is_rp(int cc)
+{
+	return (cc == TYPEC_CC_VOLT_SNK_DEF) || (cc == TYPEC_CC_VOLT_SNK_1_5) ||
+	       (cc == TYPEC_CC_VOLT_SNK_3_0);
+}
+
+/*
+ * CC values for regular sources and Debug sources (aka DTS)
+ *
+ * Source type  Mode of Operation   CC1    CC2
+ * ---------------------------------------------
+ * Regular      Default USB Power   RpUSB  Open
+ * Regular      USB-C @ 1.5 A       Rp1A5  Open
+ * Regular      USB-C @ 3 A         Rp3A0  Open
+ * DTS          Default USB Power   Rp3A0  Rp1A5
+ * DTS          USB-C @ 1.5 A       Rp1A5  RpUSB
+ * DTS          USB-C @ 3 A         Rp3A0  RpUSB
+*/
+
+/**
+ * Returns the polarity of a Sink.
+ */
+static inline int get_snk_polarity(int cc1, int cc2)
+{
+	/* the following assumes:
+	 * TYPEC_CC_VOLT_SNK_3_0 > TYPEC_CC_VOLT_SNK_1_5
+	 * TYPEC_CC_VOLT_SNK_1_5 > TYPEC_CC_VOLT_SNK_DEF
+	 * TYPEC_CC_VOLT_SNK_DEF > TYPEC_CC_VOLT_OPEN
+	 */
+	return (cc2 > cc1);
+}
+
 #ifdef CONFIG_CHARGE_MANAGER
 /**
  * Returns type C current limit (mA) based upon cc_voltage (mV).
  */
-static inline int get_typec_current_limit(int cc)
+static inline int get_typec_current_limit(int polarity, int cc1, int cc2)
 {
 	int charge;
+	int cc = polarity ? cc2 : cc1;
+	int cc_alt = polarity ? cc1 : cc2;
 
-	/* Detect type C charger current limit based upon vbus voltage. */
-	if (cc == TYPEC_CC_VOLT_SNK_3_0)
+	if (cc == TYPEC_CC_VOLT_SNK_3_0 && cc_alt != TYPEC_CC_VOLT_SNK_1_5)
 		charge = 3000;
 	else if (cc == TYPEC_CC_VOLT_SNK_1_5)
 		charge = 1500;
@@ -1673,10 +1710,6 @@ void pd_task(void)
 					ccd_set_mode(system_is_locked() ?
 						     CCD_MODE_PARTIAL :
 						     CCD_MODE_ENABLED);
-					typec_set_input_current_limit(
-						port, 3000, TYPE_C_VOLTAGE);
-					charge_manager_update_dualrole(
-						port, CAP_DEDICATED);
 				}
 #endif
 				set_state(port, PD_STATE_SRC_ACCESSORY);
@@ -2014,7 +2047,7 @@ void pd_task(void)
 			    cc2 != TYPEC_CC_VOLT_OPEN) {
 				pd[port].cc_state = PD_CC_NONE;
 				hard_reset_count = 0;
-				new_cc_state = PD_CC_DFP_ATTACHED;
+				new_cc_state = PD_CC_NONE;
 				pd[port].cc_debounce = get_time().val +
 							PD_T_CC_DEBOUNCE;
 				set_state(port,
@@ -2055,8 +2088,13 @@ void pd_task(void)
 			break;
 		case PD_STATE_SNK_DISCONNECTED_DEBOUNCE:
 			tcpm_get_cc(port, &cc1, &cc2);
-			if (cc1 == TYPEC_CC_VOLT_OPEN &&
-			    cc2 == TYPEC_CC_VOLT_OPEN) {
+
+			if (cc_is_rp(cc1) && cc_is_rp(cc2)) {
+				/* Debug accessory */
+				new_cc_state = PD_CC_DEBUG_ACC;
+			} else if (cc_is_rp(cc1) || cc_is_rp(cc2)) {
+				new_cc_state = PD_CC_DFP_ATTACHED;
+			} else {
 				/* No connection any more */
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
 				timeout = 5*MSEC;
@@ -2065,6 +2103,13 @@ void pd_task(void)
 
 			timeout = 20*MSEC;
 
+			/* Debounce the cc state */
+			if (new_cc_state != pd[port].cc_state) {
+				pd[port].cc_debounce = get_time().val +
+					PD_T_CC_DEBOUNCE;
+				pd[port].cc_state = new_cc_state;
+				break;
+			}
 			/* Wait for CC debounce and VBUS present */
 			if (get_time().val < pd[port].cc_debounce ||
 			    !pd_is_vbus_present(port))
@@ -2089,15 +2134,15 @@ void pd_task(void)
 			}
 
 			/* We are attached */
-			pd[port].polarity = (cc2 != TYPEC_CC_VOLT_OPEN);
+			pd[port].polarity = get_snk_polarity(cc1, cc2);
 			tcpm_set_polarity(port, pd[port].polarity);
 			/* reset message ID  on connection */
 			pd[port].msg_id = 0;
 			/* initial data role for sink is UFP */
 			pd_set_data_role(port, PD_ROLE_UFP);
 #ifdef CONFIG_CHARGE_MANAGER
-			typec_curr = get_typec_current_limit(
-				pd[port].polarity ? cc2 : cc1);
+			typec_curr = get_typec_current_limit(pd[port].polarity,
+							     cc1, cc2);
 			typec_set_input_current_limit(
 				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
@@ -2105,17 +2150,47 @@ void pd_task(void)
 			if (pd_comm_enabled)
 				tcpm_set_rx_enable(port, 1);
 
-			/*
-			 * fake set data role swapped flag so we send
-			 * discover identity when we enter SRC_READY
-			 */
-			pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
-					  PD_FLAGS_CHECK_DR_ROLE |
-					  PD_FLAGS_DATA_SWAPPED;
-			set_state(port, PD_STATE_SNK_DISCOVERY);
-			timeout = 10*MSEC;
-			hook_call_deferred(&pd_usb_billboard_deferred_data,
-					   PD_T_AME);
+			/* DFP is attached */
+			if (new_cc_state == PD_CC_DFP_ATTACHED) {
+				/*
+				 * fake set data role swapped flag so we send
+				 * discover identity when we enter SRC_READY
+				 */
+				pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
+						  PD_FLAGS_CHECK_DR_ROLE |
+						  PD_FLAGS_DATA_SWAPPED;
+				set_state(port, PD_STATE_SNK_DISCOVERY);
+				timeout = 10*MSEC;
+				hook_call_deferred(
+					&pd_usb_billboard_deferred_data,
+					PD_T_AME);
+			}
+#if defined(CONFIG_CASE_CLOSED_DEBUG) || \
+defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
+			else if (new_cc_state == PD_CC_DEBUG_ACC) {
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+				ccd_set_mode(system_is_locked() ?
+					     CCD_MODE_PARTIAL :
+					     CCD_MODE_ENABLED);
+#endif
+				set_state(port, PD_STATE_SNK_ACCESSORY);
+			}
+			break;
+		case PD_STATE_SNK_ACCESSORY:
+			/* debug accessory state */
+			timeout = 100*MSEC;
+
+			tcpm_get_cc(port, &cc1, &cc2);
+
+			/* If accessory becomes detached */
+			if (!cc_is_rp(cc1) || !cc_is_rp(cc2)) {
+				set_state(port, PD_STATE_SNK_DISCONNECTED);
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+				ccd_set_mode(CCD_MODE_DISABLED);
+#endif
+				timeout = 10*MSEC;
+			}
+#endif
 			break;
 		case PD_STATE_SNK_HARD_RESET_RECOVER:
 			if (pd[port].last_state != pd[port].task_state)
@@ -2227,14 +2302,13 @@ void pd_task(void)
 
 			/* Check if CC pull-up has changed */
 			tcpm_get_cc(port, &cc1, &cc2);
-			if (pd[port].polarity)
-				cc1 = cc2;
-			if (typec_curr != get_typec_current_limit(cc1)) {
+			if (typec_curr != get_typec_current_limit(
+						pd[port].polarity, cc1, cc2)) {
 				/* debounce signal by requiring two reads */
 				if (typec_curr_change) {
 					/* set new input current limit */
 					typec_curr = get_typec_current_limit(
-							cc1);
+						pd[port].polarity, cc1, cc2);
 					typec_set_input_current_limit(
 					  port, typec_curr, TYPE_C_VOLTAGE);
 				} else {
