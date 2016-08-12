@@ -26,8 +26,6 @@ driver-$(CONFIG_ALS_SI114X)+=als_si114x.o
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
 driver-$(CONFIG_BATTERY_BQ27541)+=battery/bq27541.o
 driver-$(CONFIG_BATTERY_BQ27621)+=battery/bq27621_g1.o
-driver-$(CONFIG_BATTERY_RYU)+=battery/ryu.o
-driver-$(CONFIG_BATTERY_SAMUS)+=battery/samus.o
 driver-$(CONFIG_BATTERY_SMART)+=battery/smart.o
 
 # Battery charger ICs

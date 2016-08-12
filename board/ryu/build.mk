@@ -9,5 +9,5 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f3
 CHIP_VARIANT:=stm32f373
 
-board-y=board.o
+board-y=battery.o board.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_mux.o usb_pd_policy.o
