@@ -70,7 +70,7 @@ int usb_mux_get(int port, const char **dp_str, const char **usb_str)
 
 	res = mux->driver->get(mux->port_addr, &mux_state);
 	if (res) {
-		CPRINTS("Error setting mux port(%d): %d", port, res);
+		CPRINTS("Error getting mux port(%d): %d", port, res);
 		return 0;
 	}
 
