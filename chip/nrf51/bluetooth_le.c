@@ -119,16 +119,18 @@ static struct nrf51_ble_packet_t rx_packet;
 int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 {
 	uint32_t done;
+	uint32_t timeout_time;
 
 	NRF51_RADIO_PACKETPTR = (uint32_t)&rx_packet;
 	NRF51_RADIO_END = NRF51_RADIO_PAYLOAD = NRF51_RADIO_ADDRESS = 0;
 	NRF51_RADIO_SHORTS = NRF51_RADIO_SHORTS_READY_START |
 			NRF51_RADIO_SHORTS_END_DISABLE;
 	NRF51_RADIO_RXEN = 1;
+	timeout_time = get_time().val + timeout;
 
 	do {
-		if (timeout-- <= 0) {
-			radio_disable();
+		if (get_time().val >= timeout_time) {
+			NRF51_RADIO_DISABLE = 1;
 			return EC_ERROR_TIMEOUT;
 		}
 		done = NRF51_RADIO_END;
@@ -137,6 +139,9 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 	rsp_end = get_time().le.lo;
 
 	nrf2ble_packet(pdu, &rx_packet, adv);
+
+	if (NRF51_RADIO_DISABLED != 1)
+		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 }

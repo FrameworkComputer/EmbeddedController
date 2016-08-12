@@ -352,6 +352,14 @@ void fill_remapping_table(struct remapping_table *rt, uint8_t map[5],
 
 void ble_tx(struct ble_pdu *pdu);
 
+/**
+ * Receive a packet into pdu if one comes before the timeout
+ *
+ * @param	pdu Where the received data is to be stored
+ * @param	timeout Number of microseconds allowed before timeout
+ * @param	adv Set to 1 if receiving in advertising state; else set to 0
+ * @returns EC_SUCCESS on packet reception, else returns error
+ */
 int ble_rx(struct ble_pdu *pdu, int timeout, int adv);
 
 int ble_radio_init(uint32_t access_address, uint32_t crc_init_val);
