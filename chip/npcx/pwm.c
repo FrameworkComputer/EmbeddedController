@@ -86,7 +86,7 @@ void pwm_set_freq(enum pwm_channel ch, uint32_t freq, uint32_t res)
 		prescaler_divider = 0xFFFF;
 
 	/* Configure computed prescaler and resolution */
-	NPCX_PRSC(mdl) = (uint16_t)prescaler_divider - 1;
+	NPCX_PRSC(mdl) = (uint16_t)prescaler_divider;
 
 	/* Set PWM cycle time */
 	NPCX_CTR(mdl) = res - 1;
