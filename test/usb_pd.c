@@ -36,13 +36,11 @@ int pd_adc_read(int port, int cc)
 		  pd_port[port].partner_role == PD_ROLE_SOURCE)
 		/* we are sink connected to source, return Rp/Open */
 		return (pd_port[port].partner_polarity == cc) ? 1700 : 0;
-	else if (pd_port[port].host_mode &&
-		 pd_port[port].partner_role == PD_ROLE_SINK)
-		/* both sources */
+	else if (pd_port[port].host_mode)
+		/* no sink on the other side, both CC are opened */
 		return 3000;
-	else if (!pd_port[port].host_mode &&
-		 pd_port[port].partner_role == PD_ROLE_SOURCE)
-		/* both sinks */
+	else if (!pd_port[port].host_mode)
+		/* no source on the other side, both CC are opened */
 		return 0;
 
 	/* should never get here */
