@@ -22,6 +22,8 @@
 #define CONFIG_FLASH_WRITE_SIZE        4	/* min write size (bytes) */
 /* But we have a 32-word buffer for writing multiple adjacent cells */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE  128	/* best write size (bytes) */
+/* The flash controller prevents bulk writes that cross row boundaries */
+#define CONFIG_FLASH_ROW_SIZE          256	/* row size */
 
 /* Describe the flash layout */
 #define CONFIG_PROGRAM_MEMORY_BASE     0x40000

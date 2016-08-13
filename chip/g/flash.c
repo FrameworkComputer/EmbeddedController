@@ -311,10 +311,10 @@ static int flash_physical_write_internal(int byte_offset, int is_info_bank,
 		num = MIN(num_bytes, CONFIG_FLASH_WRITE_IDEAL_SIZE);
 		/*
 		 * Make sure that the write operation will not go
-		 * past a CONFIG_FLASH_ERASE_SIZE boundary.
+		 * past a CONFIG_FLASH_ROW_SIZE boundary.
 		 */
-		num = MIN(num, CONFIG_FLASH_ERASE_SIZE -
-			  byte_offset % CONFIG_FLASH_ERASE_SIZE);
+		num = MIN(num, CONFIG_FLASH_ROW_SIZE -
+			  byte_offset % CONFIG_FLASH_ROW_SIZE);
 		ret = write_batch(byte_offset,
 				  is_info_bank,
 				  num / 4,	/* word count */
