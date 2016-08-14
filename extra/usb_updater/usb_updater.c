@@ -477,13 +477,99 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 	return 0;
 }
 
+/**
+ * Transfer an image section (typically RW or RO).
+ *
+ * tep          - transfer endpoint to use to communicate with the target
+ * data_ptr     - pointer at the section base in the image
+ * section_addr - address of the section in the target memory space
+ * data_len     - section size
+ */
+static void transfer_section(struct transfer_endpoint *tep,
+			     uint8_t *data_ptr,
+			     uint32_t section_addr,
+			     size_t data_len)
+{
+	/*
+	 * Actually, we can skip trailing chunks of 0xff, as the entire
+	 * section space must be erased before the update is attempted.
+	 */
+	while (data_len && (data_ptr[data_len - 1] == 0xff))
+		data_len--;
+
+	printf("sending 0x%zx bytes to %#x\n", data_len, section_addr);
+	while (data_len) {
+		size_t payload_size;
+		SHA_CTX ctx;
+		uint8_t digest[SHA_DIGEST_LENGTH];
+		int max_retries;
+		struct update_pdu updu;
+
+		/* prepare the header to prepend to the block. */
+		payload_size = MIN(data_len, SIGNED_TRANSFER_SIZE);
+		updu.block_size = htobe32(payload_size +
+					  sizeof(struct update_pdu));
+
+		updu.cmd.block_base = htobe32(section_addr);
+
+		/* Calculate the digest. */
+		SHA1_Init(&ctx);
+		SHA1_Update(&ctx, &updu.cmd.block_base,
+			    sizeof(updu.cmd.block_base));
+		SHA1_Update(&ctx, data_ptr, payload_size);
+		SHA1_Final(digest, &ctx);
+
+		/* Copy the first few bytes. */
+		memcpy(&updu.cmd.block_digest, digest,
+		       sizeof(updu.cmd.block_digest));
+		if (tep->ep_type == usb_xfer) {
+			for (max_retries = 10; max_retries; max_retries--)
+				if (!transfer_block(&tep->uep, &updu,
+						    data_ptr, payload_size))
+					break;
+
+			if (!max_retries) {
+				fprintf(stderr,
+					"Failed to trasfer block, %zd to go\n",
+					data_len);
+				exit(1);
+			}
+		} else {
+			struct startup_resp resp;
+			size_t rxed_size;
+
+			rxed_size = sizeof(resp);
+			if (tpm_send_pkt(tep->tpm_fd,
+					 updu.cmd.block_digest,
+					 section_addr,
+					 data_ptr,
+					 payload_size, &resp,
+					 &rxed_size) < 0) {
+				fprintf(stderr,
+					"Failed to trasfer block, %zd to go\n",
+					data_len);
+				exit(1);
+			}
+			if ((rxed_size != 1) || *((uint8_t *)&resp)) {
+				fprintf(stderr,
+					"got response of size %zd, value %#x\n",
+					rxed_size, resp.value);
+
+				exit(1);
+			}
+		}
+		data_len -= payload_size;
+		data_ptr += payload_size;
+		section_addr += payload_size;
+	}
+
+}
+
 static void transfer_and_reboot(struct transfer_endpoint *tep,
-				uint8_t *data, uint32_t data_len)
+				uint8_t *data, size_t data_len)
 {
 	uint32_t out;
 	uint32_t reply;
-	uint8_t *data_ptr;
-	uint32_t next_offset;
 	struct update_pdu updu;
 	struct startup_resp first_resp;
 	size_t rxed_size;
@@ -521,76 +607,13 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 		shut_down(uep);
 	}
 
-	next_offset = reply - FLASH_BASE;
-	data_ptr = data + next_offset;
-	data_len = CONFIG_RW_SIZE;
-
-	/* Actually, we can skip trailing chunks of 0xff */
-	while (data_len && (data_ptr[data_len - 1] == 0xff))
-		data_len--;
-
-	printf("sending 0x%x/0x%x bytes to %#x\n", data_len, CONFIG_RW_SIZE,
-	       next_offset);
-	while (data_len) {
-		size_t payload_size;
-		SHA_CTX ctx;
-		uint8_t digest[SHA_DIGEST_LENGTH];
-		int max_retries;
-
-		/* prepare the header to prepend to the block. */
-		payload_size = MIN(data_len, SIGNED_TRANSFER_SIZE);
-		updu.block_size = htobe32(payload_size +
-					  sizeof(struct update_pdu));
-
-		updu.cmd.block_base = htobe32(next_offset + FLASH_BASE);
-
-		/* Calculate the digest. */
-		SHA1_Init(&ctx);
-		SHA1_Update(&ctx, &updu.cmd.block_base,
-			    sizeof(updu.cmd.block_base));
-		SHA1_Update(&ctx, data_ptr, payload_size);
-		SHA1_Final(digest, &ctx);
-
-		/* Copy the first few bytes. */
-		memcpy(&updu.cmd.block_digest, digest,
-		       sizeof(updu.cmd.block_digest));
-		if (tep->ep_type == usb_xfer) {
-			for (max_retries = 10; max_retries; max_retries--)
-				if (!transfer_block(uep, &updu,
-						    data_ptr, payload_size))
-					break;
-
-			if (!max_retries) {
-				fprintf(stderr,
-					"Failed to trasfer block, %d to go\n",
-					data_len);
-				exit(1);
-			}
-		} else {
-			rxed_size = sizeof(first_resp);
-			if (tpm_send_pkt(tep->tpm_fd,
-					 updu.cmd.block_digest,
-					 next_offset + FLASH_BASE,
-			  data_ptr,
-					 payload_size, &first_resp,
-					 &rxed_size) < 0) {
-				fprintf(stderr,
-					"Failed to trasfer block, %d to go\n",
-					data_len);
-				exit(1);
-			}
-			if ((rxed_size != 1) || *((uint8_t *)&first_resp)) {
-				fprintf(stderr,
-					"got response of size %zd, value %#x\n",
-					rxed_size, first_resp.value);
-
-				exit(1);
-			}
-		}
-		data_len -= payload_size;
-		data_ptr += payload_size;
-		next_offset += payload_size;
+	if ((reply - FLASH_BASE + CONFIG_RW_SIZE) > data_len) {
+		fprintf(stderr, "Base addr of %#x too high\n", reply);
+		shut_down(uep);
 	}
+
+	transfer_section(tep, data + reply - FLASH_BASE,
+			 reply, CONFIG_RW_SIZE);
 
 	printf("-------\nupdate complete\n");
 	if (tep->ep_type != usb_xfer)
