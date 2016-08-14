@@ -68,6 +68,7 @@ struct usb_endpoint {
 };
 
 struct transfer_endpoint {
+	int update_ro;
 	enum transfer_type {
 		usb_xfer = 0,
 		spi_xfer = 1
@@ -80,11 +81,12 @@ struct transfer_endpoint {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":d:hs";
+static char *short_opts = ":d:hrs";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"device",   1,   NULL, 'd'},
 	{"help",     0,   NULL, 'h'},
+	{"ro",       0,   NULL, 'r'},
 	{"spi",      0,   NULL, 's'},
 	{NULL,       0,   NULL,  0},
 };
@@ -179,6 +181,7 @@ static void usage(int errs)
 	       "\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -h,--help                Show this message\n"
+	       "  -r,--ro                  Update RO section along with RW\n"
 	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
 	       "\n", progname, VID, PID);
 
@@ -635,6 +638,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage(errorcnt);
+			break;
+		case 'r':
+			tep.update_ro = 1;
 			break;
 		case 's':
 			tep.ep_type = spi_xfer;
