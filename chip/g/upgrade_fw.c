@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "uart.h"
 
+#include "upgrade_fw.h"
 #include "cryptoc/sha.h"
 
 #define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
@@ -27,20 +28,6 @@ enum return_value {
 	UPGRADE_VERIFY_ERROR = 5,
 	UPGRADE_GEN_ERROR = 6,
 };
-
-/*
- * The payload of the upgrade command. (Integer values in network byte order).
- *
- * block digest: the first four bytes of the sha1 digest of the rest of the
- *               structure.
- * block_base:  address where this block needs to be written to.
- * block_body:  variable size data to written at address 'block_base'.
- */
-struct upgrade_command {
-	uint32_t  block_digest;
-	uint32_t  block_base;
-	uint8_t   block_body[0];
-} __packed;
 
 /*
  * This array defines two possibe sections available for the firmare update.
@@ -91,6 +78,7 @@ void fw_upgrade_command_handler(void *body,
 				size_t *response_size)
 {
 	struct upgrade_command *cmd_body = body;
+	void *upgrade_data;
 	uint8_t *rv = body;
 	uint8_t sha1_digest[SHA_DIGEST_SIZE];
 	size_t body_size;
@@ -102,12 +90,12 @@ void fw_upgrade_command_handler(void *body,
 	 */
 	*response_size = sizeof(*rv);
 
-	if (cmd_size < offsetof(struct upgrade_command, block_body)) {
+	if (cmd_size < sizeof(struct upgrade_command)) {
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		*rv = UPGRADE_GEN_ERROR;
 		return;
 	}
-	body_size = cmd_size - offsetof(struct upgrade_command, block_body);
+	body_size = cmd_size - sizeof(struct upgrade_command);
 
 	if (!cmd_body->block_base && !body_size) {
 		/*
@@ -171,8 +159,9 @@ void fw_upgrade_command_handler(void *body,
 
 	CPRINTF("%s: programming at address 0x%x\n", __func__,
 		block_offset + CONFIG_PROGRAM_MEMORY_BASE);
-	if (flash_physical_write(block_offset, body_size,
-				 cmd_body->block_body) != EC_SUCCESS) {
+	upgrade_data = cmd_body + 1;
+	if (flash_physical_write(block_offset, body_size, upgrade_data)
+	    != EC_SUCCESS) {
 		*rv = UPGRADE_WRITE_FAILURE;
 		CPRINTF("%s:%d upgrade write error\n",
 			__func__, __LINE__);
@@ -180,7 +169,7 @@ void fw_upgrade_command_handler(void *body,
 	}
 
 	/* Werify that data was written properly. */
-	if (memcmp(cmd_body->block_body, (void *)
+	if (memcmp(upgrade_data, (void *)
 		   (block_offset + CONFIG_PROGRAM_MEMORY_BASE),
 		   body_size)) {
 		*rv = UPGRADE_VERIFY_ERROR;

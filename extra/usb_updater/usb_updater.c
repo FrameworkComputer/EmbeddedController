@@ -403,11 +403,6 @@ static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
 	printf("READY\n-------\n");
 }
 
-struct upgrade_command {
-	uint32_t  block_digest;
-	uint32_t  block_base;
-};
-
 struct update_pdu {
 	uint32_t block_size; /* Total block size, include this field's size. */
 	struct upgrade_command cmd;
@@ -415,26 +410,6 @@ struct update_pdu {
 };
 
 #define FLASH_BASE 0x40000
-/*
- * When responding to the very first packet of the upgrade sequence, the
- * original implementation was responding with a four byte value, just as to
- * any other block of the transfer sequence.
- *
- * It became clear that there is a need to be able to enhance the upgrade
- * protocol, while stayng backwards compatible. To achieve that a new startup
- * response option was introduced, 8 bytes in size. The first 4 bytes the same
- * as before, the second 4 bytes - the protocol version number.
- *
- * So, receiving of a four byte value in response to the startup packet is an
- * indication of the 'legacy' protocol, version 0. Receiving of an 8 byte
- * value communicates the protocol version in the second 4 bytes.
- */
-
-struct startup_resp {
-	uint32_t value;
-	uint32_t version;
-};
-
 static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 			  uint8_t *transfer_data_ptr, size_t payload_size)
 {
@@ -535,7 +510,7 @@ static void transfer_section(struct transfer_endpoint *tep,
 				exit(1);
 			}
 		} else {
-			struct startup_resp resp;
+			struct first_response_pdu resp;
 			size_t rxed_size;
 
 			rxed_size = sizeof(resp);
@@ -553,7 +528,7 @@ static void transfer_section(struct transfer_endpoint *tep,
 			if ((rxed_size != 1) || *((uint8_t *)&resp)) {
 				fprintf(stderr,
 					"got response of size %zd, value %#x\n",
-					rxed_size, resp.value);
+					rxed_size, resp.return_value);
 
 				exit(1);
 			}
@@ -571,7 +546,7 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 	uint32_t out;
 	uint32_t reply;
 	struct update_pdu updu;
-	struct startup_resp first_resp;
+	struct first_response_pdu first_resp;
 	size_t rxed_size;
 	struct usb_endpoint *uep = &tep->uep;
 
@@ -596,11 +571,11 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 	if (rxed_size == sizeof(uint32_t))
 		protocol_version = 0;
 	else
-		protocol_version = be32toh(first_resp.version);
+		protocol_version = be32toh(first_resp.protocol_version);
 
 	printf("Target running protocol version %d\n", protocol_version);
 
-	reply = be32toh(first_resp.value);
+	reply = be32toh(first_resp.return_value);
 
 	if (reply < 256) {
 		fprintf(stderr, "Target reports error %d\n", reply);

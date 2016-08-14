@@ -67,25 +67,6 @@ enum rx_state {
 	rx_awaiting_reset /* Waiting for reset confirmation. */
 };
 
-/* This is the format of the header the programmer expects. */
-struct upgrade_command {
-	uint32_t  block_digest;  /* first 4 bytes of sha1 of the rest of the
-				    block. */
-	uint32_t  block_base;    /* Offset of this block into the flash SPI. */
-};
-
-/* This is the format of the header the host uses. */
-struct update_pdu_header {
-	uint32_t block_size;    /* Total size of the block, including this
-				   field. */
-	union {
-		struct upgrade_command cmd;
-		uint32_t resp; /* The programmer puts response to the same
-				  buffer where the command was. */
-	};
-	/* The actual payload goes here. */
-};
-
 enum rx_state rx_state_ = rx_idle;
 static uint8_t *block_buffer;
 static uint32_t block_size;
@@ -131,8 +112,6 @@ static int valid_transfer_start(struct consumer const *consumer, size_t count,
  */
 static uint64_t prev_activity_timestamp;
 
-#define UPGRADE_PROTOCOL_VERSION 2
-
 /* Called to deal with data from the host */
 static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 {
@@ -160,28 +139,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	}
 
 	if (rx_state_ == rx_idle) {
-		/*
-		 * When responding to the very first packet of the upgrade
-		 * sequence, the original implementation was responding with a
-		 * four byte value, just as to any other block of the transfer
-		 * sequence.
-		 *
-		 * It became clear that there is a need to be able to enhance
-		 * the upgrade protocol, while stayng backwards compatible. To
-		 * achieve that we respond to the very first packet with an 8
-		 * byte value, the first 4 bytes the same as before, the
-		 * second 4 bytes - the protocol version number.
-		 *
-		 * This way if on the host side receiving of a four byte value
-		 * in response to the first packet is an indication of the
-		 * 'legacy' protocol, version 0. Receiving of an 8 byte
-		 * response would communicate the protocol version in the
-		 * second 4 bytes.
-		 */
-		struct {
-			uint32_t value;
-			uint32_t version;
-		} startup_resp;
+		struct first_response_pdu *startup_resp;
 
 		if (!valid_transfer_start(consumer, count, &updu))
 			return;
@@ -193,20 +151,32 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 						    cmd),
 					   &resp_size);
 
+		/*
+		 * The handler reuses receive buffer to return the result
+		 * value.
+		 */
+		startup_resp = (struct first_response_pdu *)&updu.cmd;
 		if (resp_size == 4) {
-			/* Already in network order. */
-			startup_resp.value = updu.resp;
+			/*
+			 * The handler is happy, returned a 4 byte base
+			 * offset, it is in startup_resp->return_value now in
+			 * the proper byte order.
+			 */
 			rx_state_ = rx_outside_block;
 		} else {
-			/* This must be a single byte error code. */
-			startup_resp.value = htobe32(*((uint8_t *)&updu.resp));
+			/*
+			 * This must be a single byte error code, convert it
+			 * into a 4 byte network order representation.
+			 */
+			startup_resp->return_value = htobe32
+				(*((uint8_t *)&startup_resp->return_value));
 		}
-
-		startup_resp.version = htobe32(UPGRADE_PROTOCOL_VERSION);
+		startup_resp->protocol_version =
+			htobe32(UPGRADE_PROTOCOL_VERSION);
 
 		/* Let the host know what upgrader had to say. */
-		QUEUE_ADD_UNITS(&upgrade_to_usb, &startup_resp,
-				sizeof(startup_resp));
+		QUEUE_ADD_UNITS(&upgrade_to_usb, startup_resp,
+				sizeof(*startup_resp));
 		return;
 	}
 
