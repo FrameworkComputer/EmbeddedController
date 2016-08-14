@@ -92,7 +92,7 @@ static const struct option long_opts[] = {
 /* Prepare and transfer a block to /dev/tpm0, get a reply. */
 static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 			const void *data, int size,
-			void *response, int *response_size)
+			void *response, size_t *response_size)
 {
 	/* Used by transfer to /dev/tpm0 */
 	static uint8_t outbuf[MAX_BUF_SIZE];
@@ -186,12 +186,12 @@ static void usage(int errs)
 }
 
 /* Read file into buffer */
-static uint8_t *get_file_or_die(const char *filename, uint32_t *len_ptr)
+static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
 {
 	FILE *fp;
 	struct stat st;
 	uint8_t *data;
-	uint32_t len;
+	size_t len;
 
 	fp = fopen(filename, "rb");
 	if (!fp) {
@@ -234,7 +234,7 @@ static uint8_t *get_file_or_die(const char *filename, uint32_t *len_ptr)
  */
 static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		    void *inbuf, int inlen, int allow_less,
-		    int *rxed_count)
+		    size_t *rxed_count)
 {
 
 	int r, actual;
@@ -279,7 +279,7 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 }
 
 static void xfer(struct usb_endpoint *uep, void *outbuf,
-		 int outlen, void *inbuf, int inlen)
+		 size_t outlen, void *inbuf, size_t inlen)
 {
 	do_xfer(uep, outbuf, outlen, inbuf, inlen, 0, NULL);
 }
@@ -486,7 +486,7 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 	uint32_t next_offset;
 	struct update_pdu updu;
 	struct startup_resp first_resp;
-	int rxed_size;
+	size_t rxed_size;
 	struct usb_endpoint *uep = &tep->uep;
 
 	/* Send start/erase request */
@@ -581,7 +581,7 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 			}
 			if ((rxed_size != 1) || *((uint8_t *)&first_resp)) {
 				fprintf(stderr,
-					"got response of size %d, value %#x\n",
+					"got response of size %zd, value %#x\n",
 					rxed_size, first_resp.value);
 
 				exit(1);
@@ -611,7 +611,7 @@ int main(int argc, char *argv[])
 	struct transfer_endpoint tep;
 	int errorcnt;
 	uint8_t *data = 0;
-	uint32_t data_len = 0;
+	size_t data_len = 0;
 	uint16_t vid = VID, pid = PID;
 	int i;
 
@@ -670,7 +670,7 @@ int main(int argc, char *argv[])
 	}
 
 	data = get_file_or_die(argv[optind], &data_len);
-	printf("read 0x%x bytes from %s\n", data_len, argv[optind]);
+	printf("read 0x%zx bytes from %s\n", data_len, argv[optind]);
 	if (data_len != CONFIG_FLASH_SIZE) {
 		fprintf(stderr, "Image file is not %d bytes\n",
 			CONFIG_FLASH_SIZE);
