@@ -425,7 +425,7 @@ int ble_ll_adv(int chan)
 
 	if (ll_adv_pdu.header.adv.type ==
 	    BLE_ADV_HEADER_PDU_TYPE_ADV_NONCONN_IND)
-		return rv;
+		return EC_SUCCESS;
 
 	rv = ble_rx(&ll_rcv_packet, 16000, 1);
 
