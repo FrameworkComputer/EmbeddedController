@@ -444,16 +444,17 @@ int spi_nor_init(void)
 				spi_nor_device,
 				table_major_rev, table_minor_rev, table_offset,
 				&capacity);
-
-			mutex_lock(&driver_mutex);
-			spi_nor_device->capacity = capacity;
-			spi_nor_device->page_size = page_size;
-			DEBUG_CPRINTS_DEVICE(
-				spi_nor_device,
-				"Updated to SFDP params: %dKiB w/ %dB pages",
-				spi_nor_device->capacity >> 10,
-				spi_nor_device->page_size);
-			mutex_unlock(&driver_mutex);
+			if (rv == EC_SUCCESS) {
+				mutex_lock(&driver_mutex);
+				spi_nor_device->capacity = capacity;
+				spi_nor_device->page_size = page_size;
+				DEBUG_CPRINTS_DEVICE(
+					spi_nor_device,
+					"Updated to SFDP params: %dKiB w/ %dB pages",
+					spi_nor_device->capacity >> 10,
+					spi_nor_device->page_size);
+				mutex_unlock(&driver_mutex);
+			}
 		}
 
 		/* Ensure the device is in a determined addressing state by
@@ -764,7 +765,9 @@ static int command_spi_nor_info(int argc, char **argv)
 			 spi_nor_device->page_size);
 
 		/* Get JEDEC ID info. */
-		spi_nor_read_jedec_id(spi_nor_device, &mfn_bank, &mfn_id);
+		rv = spi_nor_read_jedec_id(spi_nor_device, &mfn_bank, &mfn_id);
+		if (rv != EC_SUCCESS)
+			return rv;
 		ccprintf("\tJEDEC ID bank %d manufacturing code 0x%x\n",
 			 mfn_bank, mfn_id);
 
