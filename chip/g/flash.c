@@ -191,6 +191,8 @@ static int do_flash_op(enum flash_op op, int is_info_bank,
 		words = 1;
 		max_attempts = 9;
 		break;
+	default:
+		return EC_ERROR_INVAL;
 	}
 
 	/*
