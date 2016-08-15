@@ -88,6 +88,7 @@ BOARDS_STM32_DFU=(
 	discovery
 	servo_v4
 	servo_micro
+	sweetberry
 	stm32f446e-eval
 )
 
