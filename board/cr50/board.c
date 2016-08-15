@@ -95,9 +95,11 @@ static void init_pmu(void)
 
 void pmu_wakeup_interrupt(void)
 {
-	int exiten;
+	int exiten, wakeup_src;
 
-	delay_sleep_by(1000);
+	delay_sleep_by(1 * MSEC);
+
+	wakeup_src = GR_PMU_EXITPD_SRC;
 
 	/* Clear interrupt state */
 	GWRITE_FIELD(PMU, INT_STATE, INTR_WAKEUP, 1);
@@ -105,7 +107,7 @@ void pmu_wakeup_interrupt(void)
 	/* Clear pmu reset */
 	GWRITE(PMU, CLRRST, 1);
 
-	if (GR_PMU_EXITPD_SRC & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK) {
+	if (wakeup_src & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK) {
 		/*
 		 * If any wake pins are edge triggered, the pad logic latches
 		 * the wakeup. Clear EXITEN0 to reset the wakeup logic.
@@ -123,22 +125,26 @@ void pmu_wakeup_interrupt(void)
 		if (!gpio_get_level(GPIO_SYS_RST_L_IN))
 			sys_rst_asserted(GPIO_SYS_RST_L_IN);
 	}
+
+	/* Trigger timer0 interrupt */
+	if (wakeup_src & GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER0_MASK)
+		task_trigger_irq(GC_IRQNUM_TIMELS0_TIMINT0);
+
+	/* Trigger timer1 interrupt */
+	if (wakeup_src & GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER1_MASK)
+		task_trigger_irq(GC_IRQNUM_TIMELS0_TIMINT1);
+
 }
 DECLARE_IRQ(GC_IRQNUM_PMU_INTR_WAKEUP_INT, pmu_wakeup_interrupt, 1);
-
-static void init_timers(void)
-{
-	/* Cancel low speed timers that may have
-	 * been initialized prior to soft reset. */
-	GREG32(TIMELS, TIMER0_CONTROL) = 0;
-	GREG32(TIMELS, TIMER0_LOAD) = 0;
-	GREG32(TIMELS, TIMER1_CONTROL) = 0;
-	GREG32(TIMELS, TIMER1_LOAD) = 0;
-}
 
 static void init_interrupts(void)
 {
 	int i;
+	uint32_t exiten = GREG32(PINMUX, EXITEN0);
+
+	/* Clear wake pin interrupts */
+	GREG32(PINMUX, EXITEN0) = 0;
+	GREG32(PINMUX, EXITEN0) = exiten;
 
 	/* Enable all GPIO interrupts */
 	for (i = 0; i < gpio_ih_count; i++)
@@ -191,7 +197,6 @@ static void init_runlevel(const enum permission_level desired_level)
 static void board_init(void)
 {
 	init_pmu();
-	init_timers();
 	init_interrupts();
 	init_trng();
 	init_jittery_clock(1);

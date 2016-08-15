@@ -4,12 +4,13 @@
  */
 
 #include "common.h"
-#include "timer.h"
 #include "console.h"
+#include "hwtimer.h"
 #include "rdd.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 /* What to do when we're just waiting */
@@ -22,6 +23,7 @@ static enum {
 } idle_action;
 
 #define IDLE_DEFAULT IDLE_SLEEP
+#define EVENT_MIN 500
 
 static const char const *idle_name[] = {
 	"invalid",
@@ -96,6 +98,9 @@ static void prepare_to_sleep(void)
 	 * down. Currently deep sleep is only enabled through the console.
 	 */
 	if (idle_action == IDLE_DEEP_SLEEP) {
+		/* Clear upcoming events. They don't matter in deep sleep */
+		__hw_clock_event_clear();
+
 		/*
 		 * Disable the i2c and spi slave wake sources since the TPM is
 		 * not being used and reenable them in their init functions on
@@ -164,7 +169,7 @@ void clock_refresh_console_in_use(void)
 /* Custom idle task, executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-	int sleep_ok, sleep_delay_passed;
+	int sleep_ok, sleep_delay_passed, next_evt_us;
 
 	/*
 	 * This register is preserved across soft reboots, but not hard. It
@@ -189,12 +194,15 @@ void __idle(void)
 		/* Wait a bit, just in case */
 		sleep_delay_passed = timestamp_expired(next_sleep_time, 0);
 
+		/* Don't enable sleep if there is about to be an event */
+		next_evt_us = __hw_clock_event_get() - __hw_clock_source_read();
+
 		/* If it hasn't yet been long enough, check again when it is */
 		if (!sleep_delay_passed)
 			timer_arm(next_sleep_time, TASK_ID_IDLE);
 
 		/* We're allowed to sleep now, so set it up. */
-		if (sleep_ok && sleep_delay_passed)
+		if (sleep_ok && sleep_delay_passed && next_evt_us > EVENT_MIN)
 			if (idle_action != IDLE_WFI)
 				prepare_to_sleep();
 

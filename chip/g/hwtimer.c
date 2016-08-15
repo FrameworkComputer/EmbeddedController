@@ -10,76 +10,63 @@
 #include "task.h"
 #include "util.h"
 
+/* The frequency of timerls is 256k so there are about 4usec/tick */
+#define USEC_PER_TICK 4
 /*
- * Other chips can interrupt at arbitrary match points. We can only interrupt
- * at zero, so we'll have to use a separate timer for events. We'll use module
- * 0, timer 1 for the current time and module 0, timer 2 for event timers.
- *
- * Oh, and we can't control the rate at which the timers tick. We expect to
- * have all counter values in microseconds, but instead they'll be some factor
- * faster than that. 1 usec / tick == 1 MHz, so if PCLK is 30 MHz, we'll have
- * to divide the hardware counter by 30 to get the values expected outside of
- * this file.
+ * Scale the maximum number of ticks so that it will only count up to the
+ * equivalent of 0xffffffff usecs.
  */
-static uint32_t clock_mul_factor;
-static uint32_t hw_rollover_count;
+#define TIMELS_MAX (0xffffffff / USEC_PER_TICK)
+
+#define SOURCE(field) TIMER0_##field
+#define EVENT(field) TIMER1_##field
 
 static inline uint32_t ticks_to_usecs(uint32_t ticks)
 {
-	return ((uint64_t)hw_rollover_count * 0xffffffff + ticks)
-			/ clock_mul_factor;
+	return ticks * USEC_PER_TICK;
 }
 
-static void update_prescaler(void)
+static inline uint32_t usec_to_ticks(uint32_t next_evt_us)
 {
-	/*
-	 * We want the timer to tick every microsecond, but we can only divide
-	 * PCLK by 1, 16, or 256. We're targeting 30MHz, so we'll just let it
-	 * run at 1:1.
-	 */
-	REG_WRITE_MLV(GR_TIMEHS_CONTROL(0, 1),
-		      GC_TIMEHS_TIMER1CONTROL_PRE_MASK,
-		      GC_TIMEHS_TIMER1CONTROL_PRE_LSB, 0);
-	REG_WRITE_MLV(GR_TIMEHS_CONTROL(0, 2),
-		      GC_TIMEHS_TIMER1CONTROL_PRE_MASK,
-		      GC_TIMEHS_TIMER1CONTROL_PRE_LSB, 0);
-
-	/*
-	 * Assume the clock rate is an integer multiple of MHz.
-	 */
-	clock_mul_factor = PCLK_FREQ / 1000000;
+	return next_evt_us / USEC_PER_TICK;
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
 uint32_t __hw_clock_event_get(void)
 {
 	/* At what time will the next event fire? */
-	uint32_t time_now_in_ticks;
-	time_now_in_ticks = (0xffffffff - GR_TIMEHS_VALUE(0, 1));
-	return ticks_to_usecs(time_now_in_ticks + GR_TIMEHS_VALUE(0, 2));
+	return __hw_clock_source_read() +
+		ticks_to_usecs(GREG32(TIMELS, EVENT(VALUE)));
 }
 
 void __hw_clock_event_clear(void)
 {
 	/* one-shot, 32-bit, timer & interrupts disabled, 1:1 prescale */
-	GR_TIMEHS_CONTROL(0, 2) = 0x3;
+	GWRITE_FIELD(TIMELS, EVENT(CONTROL), ENABLE, 0);
+
+	/* Disable interrupts */
+	GWRITE(TIMELS, EVENT(IER), 0);
+
 	/* Clear any pending interrupts */
-	GR_TIMEHS_INTCLR(0, 2) = 0x1;
+	GWRITE(TIMELS, EVENT(WAKEUP_ACK), 1);
+	GWRITE(TIMELS, EVENT(IAR), 1);
 }
 
 void __hw_clock_event_set(uint32_t deadline)
 {
-	uint32_t time_now_in_ticks;
+	uint32_t event_time;
 
 	__hw_clock_event_clear();
 
 	/* How long from the current time to the deadline? */
-	time_now_in_ticks = (0xffffffff - GR_TIMEHS_VALUE(0, 1));
-	GR_TIMEHS_LOAD(0, 2) = (deadline - time_now_in_ticks / clock_mul_factor)
-				* clock_mul_factor;
+	event_time = (deadline - __hw_clock_source_read());
 
-	/* timer & interrupts enabled */
-	GR_TIMEHS_CONTROL(0, 2) = 0xa3;
+	/* Convert event_time to ticks rounding up */
+	GREG32(TIMELS, EVENT(LOAD)) =
+		((uint64_t)(event_time + USEC_PER_TICK - 1) / USEC_PER_TICK);
+
+	/* Enable the timer & interrupts */
+	GWRITE(TIMELS, EVENT(IER), 1);
+	GWRITE_FIELD(TIMELS, EVENT(CONTROL), ENABLE, 1);
 }
 
 /*
@@ -92,7 +79,7 @@ void __hw_clock_event_irq(void)
 	__hw_clock_event_clear();
 	process_timers(0);
 }
-DECLARE_IRQ(GC_IRQNUM_TIMEHS0_TIMINT2, __hw_clock_event_irq, 1);
+DECLARE_IRQ(GC_IRQNUM_TIMELS0_TIMINT1, __hw_clock_event_irq, 1);
 
 uint32_t __hw_clock_source_read(void)
 {
@@ -100,58 +87,69 @@ uint32_t __hw_clock_source_read(void)
 	 * Return the current time in usecs. Since the counter counts down,
 	 * we have to invert the value.
 	 */
-	return ticks_to_usecs(0xffffffff - GR_TIMEHS_VALUE(0, 1));
+	return ticks_to_usecs(TIMELS_MAX - GREG32(TIMELS, SOURCE(VALUE)));
 }
 
 void __hw_clock_source_set(uint32_t ts)
 {
-	hw_rollover_count = ((uint64_t)ts * clock_mul_factor) >> 32;
-	GR_TIMEHS_LOAD(0, 1) = 0xffffffff - ts * clock_mul_factor;
-	GR_TIMEHS_BGLOAD(0, 1) = 0xffffffff;
+	GREG32(TIMELS, SOURCE(LOAD)) = (0xffffffff - ts) / USEC_PER_TICK;
 }
 
 /* This handles rollover in the HW timer */
 void __hw_clock_source_irq(void)
 {
 	/* Clear the interrupt */
-	GR_TIMEHS_INTCLR(0, 1) = 0x1;
+	GWRITE(TIMELS, SOURCE(WAKEUP_ACK), 1);
+	GWRITE(TIMELS, SOURCE(IAR), 1);
 
-	/* The one-tick-per-clock HW counter has rolled over. */
-	hw_rollover_count++;
-	/* Has the system's usec counter rolled over? */
-	if (hw_rollover_count >= clock_mul_factor) {
-		hw_rollover_count = 0;
-		process_timers(1);
-	} else {
-		process_timers(0);
-	}
+	/* Reset the load value */
+	GREG32(TIMELS, SOURCE(LOAD)) = TIMELS_MAX;
+
+	process_timers(1);
 }
-DECLARE_IRQ(GC_IRQNUM_TIMEHS0_TIMINT1, __hw_clock_source_irq, 1);
+DECLARE_IRQ(GC_IRQNUM_TIMELS0_TIMINT0, __hw_clock_source_irq, 1);
 
 int __hw_clock_source_init(uint32_t start_t)
 {
-	/* Set the reload and current value. */
-	GR_TIMEHS_BGLOAD(0, 1) = 0xffffffff;
-	GR_TIMEHS_LOAD(0, 1) = 0xffffffff;
 
-	/* HW Timer enabled, periodic, interrupt enabled, 32-bit, wrapping */
-	GR_TIMEHS_CONTROL(0, 1) = 0xe2;
+	/* Verify the contents of CC_TRIM are valid */
+	ASSERT(GR_FUSE(RC_RTC_OSC256K_CC_EN) == 0x5);
+
+	/* Initialize RTC to 256kHz */
+	GWRITE_FIELD(RTC, CTRL, X_RTC_RC_CTRL,
+		GR_FUSE(RC_RTC_OSC256K_CC_TRIM));
+
+	/* Configure timer1 */
+	GREG32(TIMELS, EVENT(LOAD)) = TIMELS_MAX;
+	GREG32(TIMELS, EVENT(RELOADVAL)) = TIMELS_MAX;
+	GWRITE_FIELD(TIMELS, EVENT(CONTROL), WRAP, 1);
+	GWRITE_FIELD(TIMELS, EVENT(CONTROL), RELOAD, 0);
+	GWRITE_FIELD(TIMELS, EVENT(CONTROL), ENABLE, 0);
+
+	/* Configure timer0 */
+	GREG32(TIMELS, SOURCE(RELOADVAL)) = TIMELS_MAX;
+	GWRITE_FIELD(TIMELS, SOURCE(CONTROL), WRAP, 1);
+	GWRITE_FIELD(TIMELS, SOURCE(CONTROL), RELOAD, 1);
+
 	/* Event timer disabled */
 	__hw_clock_event_clear();
 
-	/* Account for the clock speed. */
-	update_prescaler();
-
 	/* Clear any pending interrupts */
-	GR_TIMEHS_INTCLR(0, 1) = 0x1;
+	GWRITE(TIMELS, SOURCE(WAKEUP_ACK), 1);
 
 	/* Force the time to whatever we're told it is */
 	__hw_clock_source_set(start_t);
 
+	/* HW Timer enabled, periodic, interrupt enabled, 32-bit, wrapping */
+	GWRITE_FIELD(TIMELS, SOURCE(CONTROL), ENABLE, 1);
+
+	/* Enable source timer interrupts */
+	GWRITE(TIMELS, SOURCE(IER), 1);
+
 	/* Here we go... */
-	task_enable_irq(GC_IRQNUM_TIMEHS0_TIMINT1);
-	task_enable_irq(GC_IRQNUM_TIMEHS0_TIMINT2);
+	task_enable_irq(GC_IRQNUM_TIMELS0_TIMINT0);
+	task_enable_irq(GC_IRQNUM_TIMELS0_TIMINT1);
 
 	/* Return the Event timer IRQ number (NOT the HW timer IRQ) */
-	return GC_IRQNUM_TIMEHS0_TIMINT2;
+	return GC_IRQNUM_TIMELS0_TIMINT1;
 }
