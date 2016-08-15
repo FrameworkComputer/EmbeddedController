@@ -397,6 +397,15 @@ static int fusb302_tcpm_init(int port)
 	/* Interrupt Enable */
 	tcpc_read(port, TCPC_REG_CONTROL0, &reg);
 	reg &= ~TCPC_REG_CONTROL0_INT_MASK;
+	/* Set the current source for Rp value */
+	reg &= ~TCPC_REG_CONTROL0_HOST_CUR_MASK;
+#ifdef CONFIG_USB_PD_PULLUP_1_5A
+	reg |= TCPC_REG_CONTROL0_HOST_CUR_1A5;
+#elif defined(CONFIG_USB_PD_PULLUP_3A)
+	reg |= TCPC_REG_CONTROL0_HOST_CUR_3A0;
+#else
+	reg |= TCPC_REG_CONTROL0_HOST_CUR_USB;
+#endif
 	tcpc_write(port, TCPC_REG_CONTROL0, reg);
 
 	/* Set VCONN switch defaults */
