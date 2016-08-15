@@ -315,7 +315,7 @@ static void sps_advance_rx(int port, int data_size)
 static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 {
 	for (;;) {
-		uint8_t *received_data;
+		uint8_t *received_data = NULL;
 		size_t data_size;
 
 		data_size = sps_check_rx(port, &received_data);
