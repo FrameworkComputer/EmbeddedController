@@ -84,12 +84,8 @@ void board_pd_vbus_ctrl(int port, int enabled)
 }
 #else
 /* EC EVB */
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 void pd_task(void)
 {
-	CPRINTF("EC EVB so PD task (ID%x) is suspended all the time.\n",
-		task_get_current());
-
 	while (1)
 		task_wait_event(-1);
 }
