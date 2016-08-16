@@ -184,9 +184,9 @@ const struct i2c_ctrl_t i2c_ctrl_regs[] = {
 
 enum i2c_ch_status {
 	I2C_CH_NORMAL = 0,
-	I2C_CH_W2R,
+	I2C_CH_REPEAT_START,
 	I2C_CH_WAIT_READ,
-	I2C_CH_DIRECT_W2R = 4,
+	I2C_CH_WAIT_NEXT_XFER,
 };
 
 /* I2C port state data */
@@ -401,6 +401,10 @@ static int i2c_tran_write(int p)
 				pd->widx++;
 				/* W/C byte done for next byte */
 				IT83XX_SMB_HOSTA(p) = HOSTA_NEXT_BYTE;
+				if (pd->i2ccs == I2C_CH_REPEAT_START) {
+					pd->i2ccs = I2C_CH_NORMAL;
+					task_enable_irq(i2c_ctrl_regs[p].irq);
+				}
 			} else {
 				/* done */
 				pd->out_size = 0;
@@ -415,7 +419,7 @@ static int i2c_tran_write(int p)
 						IT83XX_SMB_HOSTA(p) =
 							HOSTA_NEXT_BYTE;
 					} else {
-						pd->i2ccs = I2C_CH_W2R;
+						pd->i2ccs = I2C_CH_REPEAT_START;
 						return 0;
 					}
 				}
@@ -451,9 +455,9 @@ static int i2c_tran_read(int p)
 		else
 			IT83XX_SMB_HOCTL(p) = 0x5D;
 	} else {
-		if ((pd->i2ccs == I2C_CH_W2R) ||
+		if ((pd->i2ccs == I2C_CH_REPEAT_START) ||
 			(pd->i2ccs == I2C_CH_WAIT_READ)) {
-			if (pd->i2ccs == I2C_CH_W2R) {
+			if (pd->i2ccs == I2C_CH_REPEAT_START) {
 				/* write to read */
 				i2c_w2r_change_direction(p);
 			} else {
@@ -535,12 +539,16 @@ static int enhanced_i2c_tran_write(int p)
 
 			/* Send Byte */
 			i2c_pio_trans_data(p, TX_DIRECT, out_data, 0);
+			if (pd->i2ccs == I2C_CH_WAIT_NEXT_XFER) {
+				pd->i2ccs = I2C_CH_NORMAL;
+				task_enable_irq(i2c_ctrl_regs[p].irq);
+			}
 		} else {
 			/* done */
 			pd->out_size = 0;
 			if (pd->in_size > 0) {
 				/* Write to read protocol */
-				pd->i2ccs = I2C_CH_W2R;
+				pd->i2ccs = I2C_CH_REPEAT_START;
 				/* Repeat Start */
 				i2c_pio_trans_data(p, RX_DIRECT,
 					(pd->addr + 1), 1);
@@ -555,7 +563,7 @@ static int enhanced_i2c_tran_write(int p)
 					return 0;
 				}
 				/* Direct write with direct read */
-				pd->i2ccs = I2C_CH_DIRECT_W2R;
+				pd->i2ccs = I2C_CH_WAIT_NEXT_XFER;
 				return 0;
 			}
 		}
@@ -586,7 +594,7 @@ static int enhanced_i2c_tran_read(int p)
 		i2c_pio_trans_data(p, RX_DIRECT, (pd->addr + 1), 1);
 	} else {
 		if (pd->i2ccs) {
-			if (pd->i2ccs == I2C_CH_W2R) {
+			if (pd->i2ccs == I2C_CH_REPEAT_START) {
 				pd->i2ccs = I2C_CH_NORMAL;
 				/* Receive data */
 				i2c_pio_trans_data(p, RX_DIRECT, in_data, 0);
@@ -718,9 +726,7 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
-	if ((pd->i2ccs == I2C_CH_W2R) ||
-		(pd->i2ccs == I2C_CH_WAIT_READ) ||
-		(pd->i2ccs & I2C_CH_DIRECT_W2R)) {
+	if (pd->i2ccs) {
 		if ((flags & I2C_XFER_SINGLE) == I2C_XFER_SINGLE)
 			flags &= ~I2C_XFER_START;
 	}
@@ -774,11 +780,15 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	pd->task_waiting = TASK_ID_INVALID;
 
 	/* Handle timeout */
-	if (events & TASK_EVENT_TIMER) {
+	if (!(events & TASK_EVENT_I2C_IDLE)) {
 		pd->err = EC_ERROR_TIMEOUT;
 		/* reset i2c port */
 		i2c_reset(port, I2C_RC_TIMEOUT);
 	}
+
+	/* reset i2c channel status */
+	if (pd->err)
+		pd->i2ccs = I2C_CH_NORMAL;
 
 	return pd->err;
 }
