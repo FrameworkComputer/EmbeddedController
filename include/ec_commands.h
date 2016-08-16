@@ -3808,11 +3808,7 @@ struct ec_response_usb_pd_mux_info {
 #endif  /* !__ACPI__ */
 
 /*****************************************************************************/
-/*
- * Blob commands are just opaque chunks of data, sent with proto v3.
- * params is struct ec_host_request, response is struct ec_host_response.
- */
-#define EC_CMD_BLOB 0x200
+/* The command range 0x200-0x2FF is reserved for Rotor. */
 
 /*****************************************************************************/
 /*
