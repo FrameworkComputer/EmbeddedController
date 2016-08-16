@@ -273,8 +273,24 @@ static void it83xx_init(enum usbpd_port port, int role)
 	IT83XX_USBPD_PDMSR(port) = USBPD_REG_MASK_SOP_ENABLE;
 	/* W/C status */
 	IT83XX_USBPD_ISR(port) = 0xff;
-	/* enable cc, select cc1 and Rd (80uA output when Rp selected) */
+	/* enable cc, select cc1 and Rd. */
+	/*
+	 * bit[3-2]: CC output current (when Rp selected)
+	 *       00: reserved
+	 *       01: 330uA outpt (3.0A)
+	 *       10: 180uA outpt (1.5A)
+	 *       11: 80uA outpt  (USB default)
+	 */
+#ifdef CONFIG_USB_PD_PULLUP_1_5A
+	/* (Rp 1.5A when selected) */
+	IT83XX_USBPD_CCGCR(port) = 0x9;
+#elif defined(CONFIG_USB_PD_PULLUP_3A)
+	/* (Rp 3.0A when selected) */
+	IT83XX_USBPD_CCGCR(port) = 0x5;
+#else
+	/* (Rp default when selected) */
 	IT83XX_USBPD_CCGCR(port) = 0xd;
+#endif
 	/* change data role as the same power role */
 	it83xx_set_data_role(port, role);
 	/* set power role */
@@ -311,12 +327,6 @@ static void it83xx_select_polarity(enum usbpd_port port,
 
 static void it83xx_set_cc(enum usbpd_port port, int pull)
 {
-	/*
-	 * TODO(crosbug.com/p/54452): Add configuration of Rp strength
-	 * values for presenting desired current to port partner.
-	 * This value will depend on config flags
-	 * CONFIG_USB_PD_PULLUP_* in the board file
-	 */
 	if (pull == TYPEC_CC_RD)
 		it83xx_set_power_role(port, PD_ROLE_SINK);
 	else if (pull == TYPEC_CC_RP)
