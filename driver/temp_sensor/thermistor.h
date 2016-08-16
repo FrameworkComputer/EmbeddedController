@@ -23,8 +23,8 @@ struct thermistor_info {
 	 *
 	 * Guidelines for data sets:
 	 * - Must contain at least two pairs.
-	 * - First and last pairs are the min and max.
-	 * - Pairs must be sorted in ascending order.
+	 * - First and last pairs are the max and min.
+	 * - Pairs must be sorted in descending order.
 	 * - 5 pairs should provide reasonable accuracy in most cases. Use
 	 *   points where the slope changes significantly or to recalibrate
 	 *   the algorithm if needed.

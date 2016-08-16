@@ -540,7 +540,7 @@ static int test_thermistor_linear_interpolate(void)
 	uint16_t mv;
 	/* Simple test case - a straight line. */
 	struct thermistor_data_pair line_data[] = {
-		{ 0, 0 }, { 100, 100 }
+		{ 100, 0 }, { 0, 100 }
 	};
 	struct thermistor_info line_info = {
 		.scaling_factor = 1,
@@ -554,17 +554,17 @@ static int test_thermistor_linear_interpolate(void)
 	 * resistance (R0) = 47Kohm).
 	 */
 	struct thermistor_data_pair data[] = {
-		{ 787 / THERMISTOR_SCALING_FACTOR, 0 },
-		{ 1142 / THERMISTOR_SCALING_FACTOR, 10 },
-		{ 1528 / THERMISTOR_SCALING_FACTOR, 20 },
-		{ 1901 / THERMISTOR_SCALING_FACTOR, 30 },
-		{ 2229 / THERMISTOR_SCALING_FACTOR, 40 },
-		{ 2497 / THERMISTOR_SCALING_FACTOR, 50 },
-		{ 2703 / THERMISTOR_SCALING_FACTOR, 60 },
-		{ 2857 / THERMISTOR_SCALING_FACTOR, 70 },
-		{ 2970 / THERMISTOR_SCALING_FACTOR, 80 },
-		{ 3053 / THERMISTOR_SCALING_FACTOR, 90 },
-		{ 3113 / THERMISTOR_SCALING_FACTOR, 100 },
+		{ 2512 / THERMISTOR_SCALING_FACTOR, 0 },
+		{ 2158 / THERMISTOR_SCALING_FACTOR, 10 },
+		{ 1772 / THERMISTOR_SCALING_FACTOR, 20 },
+		{ 1398 / THERMISTOR_SCALING_FACTOR, 30 },
+		{ 1070 / THERMISTOR_SCALING_FACTOR, 40 },
+		{ 803 / THERMISTOR_SCALING_FACTOR, 50 },
+		{ 597 / THERMISTOR_SCALING_FACTOR, 60 },
+		{ 443 / THERMISTOR_SCALING_FACTOR, 70 },
+		{ 329 / THERMISTOR_SCALING_FACTOR, 80 },
+		{ 247 / THERMISTOR_SCALING_FACTOR, 90 },
+		{ 188 / THERMISTOR_SCALING_FACTOR, 100 },
 	};
 	struct thermistor_info info = {
 		.scaling_factor = THERMISTOR_SCALING_FACTOR,
@@ -579,43 +579,43 @@ static int test_thermistor_linear_interpolate(void)
 		uint16_t mv;	/* not scaled */
 		int temp;
 	} cmp[] = {
-		{ 820, 1 },  { 958, 5 }, { 1104, 9 },
-		{ 1180, 11 }, { 1334, 15 }, { 1489, 19 },
-		{ 1566, 21 }, { 1718, 25 }, { 1866, 29 },
-		{ 1937, 31 }, { 2073, 35 }, { 2199, 39 },
-		{ 2259, 41 }, { 2371, 45 }, { 2473, 49 },
-		{ 2520, 51 }, { 2607, 55 }, { 2685, 59 },
-		{ 2720, 61 }, { 2786, 65 }, { 2844, 69 },
-		{ 2870, 71 }, { 2918, 75 }, { 2960, 79 },
-		{ 2980, 81 }, { 3015, 85 }, { 3045, 89 },
-		{ 3060, 91 }, { 3085, 95 }, { 3107, 99 },
+		{ 3030, 1 },  { 2341, 5 }, { 2195, 9 },
+		{ 2120, 11 }, { 1966, 15 }, { 1811, 19 },
+		{ 1733, 21 }, { 1581, 25 }, { 1434, 29 },
+		{ 1363, 31 }, { 1227, 35 }, { 1100, 39 },
+		{ 1040, 41 }, { 929, 45 }, { 827, 49 },
+		{ 780, 51 }, { 693, 55 }, { 615, 59 },
+		{ 579, 61 }, { 514, 65 }, { 460, 69 },
+		{ 430, 71 }, { 382, 75 }, { 339, 79 },
+		{ 320, 81 }, { 285, 85 }, { 254, 89 },
+		{ 240, 91 }, { 214, 95 }, { 192, 99 },
 	};
 
-	/* Return lowest temperature in data set if voltage is too low. */
-	mv = (data[0].mv * info.scaling_factor) - 1;
+	/* Return lowest temperature in data set if voltage is too high. */
+	mv = (data[0].mv * info.scaling_factor) + 1;
 	t = thermistor_linear_interpolate(mv, &info);
 	TEST_ASSERT(t == data[0].temp);
 
-	/* Return highest temperature in data set if voltage is too high. */
-	mv = (data[info.num_pairs - 1].mv * info.scaling_factor) + 1;
+	/* Return highest temperature in data set if voltage is too low. */
+	mv = (data[info.num_pairs - 1].mv * info.scaling_factor) - 1;
 	t = thermistor_linear_interpolate(mv, &info);
 	TEST_ASSERT(t == data[info.num_pairs - 1].temp);
 
 	/* Simple line test */
 	for (mv = line_data[0].mv;
-		mv < line_data[line_info.num_pairs - 1].mv;
-		mv++) {
+		mv > line_data[line_info.num_pairs - 1].mv;
+		mv--) {
 		t = thermistor_linear_interpolate(mv, &line_info);
-		TEST_ASSERT(mv == t);
+		TEST_ASSERT(mv == line_data[line_info.num_pairs - 1].temp - t);
 	}
 
 	/*
 	 * Verify that calculated temperature monotonically
-	 * increases with voltage (0-5V, 10mV steps).
+	 * decreases with increase in voltage (0-5V, 10mV steps).
 	 */
 	for (mv = data[0].mv * info.scaling_factor, t0 = data[0].temp;
-		mv < data[info.num_pairs - 1].mv;
-		mv += 10) {
+		mv > data[info.num_pairs - 1].mv;
+		mv -= 10) {
 		int t1 = thermistor_linear_interpolate(mv, &info);
 
 		TEST_ASSERT(t1 >= t0);
