@@ -217,21 +217,27 @@ const char *system_get_version(enum system_image_copy_t copy)
 		 * we can just return our version string.
 		 */
 		this_copy = system_get_image_copy();
-		if (copy == this_copy)
-			return version_data.version;
+		vaddr = get_program_memory_addr(this_copy);
+		h = (const struct SignedHeader *)vaddr;
+		if (copy == this_copy) {
+			snprintf(vers_str, sizeof(vers_str), "%d.%d.%d/%s",
+				 h->epoch_, h->major_, h->minor_,
+				 version_data.version);
+			return vers_str;
+		}
 
 		/*
 		 * We want the version of the other RW image. The linker script
 		 * puts the version string right after the reset vectors, so
 		 * it's at the same relative offset. Measure that offset here.
 		 */
-		vaddr = get_program_memory_addr(this_copy);
 		delta = (uintptr_t)&version_data - vaddr;
 
 		/* Now look at that offset in the requested image */
 		vaddr = get_program_memory_addr(copy);
 		if (vaddr == INVALID_ADDR)
 			break;
+		h = (const struct SignedHeader *)vaddr;
 		vaddr += delta;
 		v = (const struct version_struct *)vaddr;
 
@@ -240,8 +246,11 @@ const char *system_get_version(enum system_image_copy_t copy)
 		 * the version string.
 		 */
 		if (v->cookie1 == version_data.cookie1 &&
-		    v->cookie2 == version_data.cookie2)
-			return v->version;
+		    v->cookie2 == version_data.cookie2) {
+			snprintf(vers_str, sizeof(vers_str), "%d.%d.%d/%s",
+				 h->epoch_, h->major_, h->minor_, v->version);
+			return vers_str;
+		}
 	default:
 		break;
 	}
@@ -379,4 +388,22 @@ uint32_t system_get_board_properties(void)
 	properties = system_board_properties_callback();
 #endif
 	return properties;
+}
+
+/* Prepend header version to the current image's build info. */
+const char *system_get_build_info(void)
+{
+	static char combined_build_info[150];
+
+	if (!*combined_build_info) {
+		const struct SignedHeader *me;
+
+		me = (struct SignedHeader *)
+			get_program_memory_addr(system_get_image_copy());
+		snprintf(combined_build_info, sizeof(combined_build_info),
+			 "%d.%d.%d/%s",
+			 me->epoch_, me->major_, me->minor_, build_info);
+	}
+
+	return combined_build_info;
 }

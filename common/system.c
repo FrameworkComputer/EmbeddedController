@@ -684,6 +684,7 @@ int system_get_board_version(void)
 	return v;
 }
 
+__attribute__((weak))	   /* Weird chips may need their own implementations */
 const char *system_get_build_info(void)
 {
 	return build_info;
