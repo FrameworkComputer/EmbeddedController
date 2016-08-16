@@ -9,12 +9,17 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 GPIO_INT(CHARGER_INT_L,		PIN(3, 3), GPIO_INT_FALLING, bd99955_vbus_interrupt)		/* CHARGER_EC_INT_ODL from BD99955 */
+/*
+ * TODO: The pull ups for Parade TCPC interrupt line can be removed in versions
+ * of board following EVT in which daughter card (which has an external pull up)
+ * will always be inserted.
+ */
 #if IS_PROTO == 1
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_RISING, tcpc_alert_event)			/* from Analogix TCPC */
-GPIO_INT(USB_C1_PD_INT_ODL,	PIN(D, 2), GPIO_INT_FALLING, tcpc_alert_event)			/* from Parade TCPC */
+GPIO_INT(USB_C1_PD_INT_ODL,	PIN(D, 2), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC */
 #else
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_FALLING, tcpc_alert_event)			/* from Analogix TCPC */
-GPIO_INT(USB_C1_PD_INT_ODL,	PIN(B, 1), GPIO_INT_FALLING, tcpc_alert_event)			/* from Parade TCPC */
+GPIO_INT(USB_C1_PD_INT_ODL,	PIN(B, 1), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC */
 #endif
 
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S4_L */
