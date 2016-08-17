@@ -20,15 +20,16 @@ struct upgrade_command {
 } __packed;
 
 /*
- * This is the format of the header the host uses when sending update PDUs
- * over USB. The PDUs are 1K bytes in size, they are fragmented into USB units
- * of 64 bytes each and reassembled on the receive side before being passed to
+ * This is the frame format the host uses when sending update PDUs over USB.
+ *
+ * The PDUs are up to 1K bytes in size, they are fragmented into USB chunks of
+ * 64 bytes each and reassembled on the receive side before being passed to
  * the flash update function.
  *
- * The flash update function receives the PDU body starting at the cmd field
- * below, and puts its reply into the beginning of the same buffer.
+ * The flash update function receives the unframed PDU body (starting at the
+ * cmd field below), and puts its reply into the same buffer the PDU was in.
  */
-struct update_pdu_header {
+struct update_frame_header {
 	uint32_t block_size;    /* Total size of the block, including this
 				 * field.
 				 */
@@ -58,6 +59,12 @@ struct update_pdu_header {
 struct first_response_pdu {
 	uint32_t return_value;
 	uint32_t protocol_version;
+	union {
+		struct {
+			uint32_t  backup_ro_offset;
+			uint32_t  backup_rw_offset;
+		} vers3;
+	};
 };
 
 /* TODO: Handle this in upgrade_fw.c, not usb_upgrade.c */

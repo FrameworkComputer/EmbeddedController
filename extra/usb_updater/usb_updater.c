@@ -35,12 +35,96 @@
 #define debug(fmt, args...)
 #endif
 
+/*
+ * This file contains the source code of a Linux application used to update
+ * CR50 device firmware.
+ *
+ * The CR50 firmware image consists of multiple sections, of interest to this
+ * app are the RO and RW code sections, two of each. When firmware update
+ * session is established, the CR50 device reports locations of backup RW and RO
+ * sections (those not used by the device at the time of transfer).
+ *
+ * Based on this information this app carves out the appropriate sections form
+ * the full CR50 firmware binary image and sends them to the device for
+ * programming into flash. Once the new sections are programmed and the device
+ * is restarted, the new RO and RW are used if they pass verification and are
+ * logically newer than the existing sections.
+ *
+ * There are two ways to communicate with the CR50 device: USB and SPI (when
+ * this app is running on a chromebook with the CR50 device). Originally
+ * different protocols were used to communicate over different channels,
+ * starting with version 3 the same protocol is used.
+ *
+ * This app provides backwards compatibility to ensure that earlier CR50
+ * devices still can be updated.
+ *
+ *
+ * The host (either a local AP or a workstation) is the master of the firmware
+ * update protocol, it sends data to the cr50 device, which proceeses it and
+ * responds.
+ *
+ * The encapsultation format is different between the SPI and USB cases:
+ *
+ *   4 bytes      4 bytes         4 bytes               variable size
+ * +-----------+--------------+---------------+----------~~--------------+
+ * + total size| block digest |  dest address |           data           |
+ * +-----------+--------------+---------------+----------~~--------------+
+ *  \           \                                                       /
+ *   \           \                                                     /
+ *    \           +-------- FW update PDU sent over SPI --------------+
+ *     \                                                             /
+ *      +--------- USB frame, requires total size field ------------+
+ *
+ * The update protocol data unints (PDUs) are passed over SPI, the
+ * encapsulation includes integritiy verification and destination address of
+ * the data (more of this later). SPI transactions pretty much do not have
+ * size limits, whereas the USB data is sent in chunks of the size determined
+ * when the USB connestion is set up. This is why USB requires an additional
+ * encapsulation int frames to communicate the PDU size to the client side so
+ * that the PDU can be reassembled before passing to the programming function.
+ *
+ * In general, the protocol consists of two phases: connection establishment
+ * and actual image transfer.
+ *
+ * The very first PDU of the transfer session is used to establish the
+ * connection. The first PDU does not have any data, and the dest. address
+ * field is set to zero. Receiving such a PDU signals the programming function
+ * that the host intends to transfer a new image.
+ *
+ * The response to the first PDU varies depending on the protocol version.
+ *
+ * Version 1 is used over SPI. The response is either 4 or 1 bytes in size.
+ * The 4 byte response is the *base address* of the backup RW section, no
+ * support for RO updates. The one byte response is an error indication,
+ * possibly reporting flash erase failure, command format error, etc.
+ *
+ * Version 2 is used over USB. The response is 8 bytes in size. The first four
+ * bytes are either the *base address* of the backup RW section (still no RO
+ * updates), or an error code, the same as in Version 1. The second 4 bytes
+ * are the protocol version number (set to 2).
+ *
+ * Version 3 is used over both USB and SPI. The response is 16 bytes in size.
+ * The first 4 bytes are the error code, the second 4 bytes are the protocol
+ * version (set to 3) and then 4 byte *offset* of the RO section followed by
+ * the 4 byte *offset* of the RW section.
+ *
+ * Once the connection is established, the image to be programmed into flash
+ * is transferred to the CR50 in 1K PDUs. In versions 1 and 2 the address in
+ * the header is the absolute address to place the block to, in version 3 and
+ * later it is the offset into the flash.
+ *
+ * The CR50 device responds to each PDU with a confirmation which is 4 bytes
+ * in size in protocol version 2, and 1 byte in size in all other versions.
+ * Zero value means succes, non zero value is the error code reported by CR50.
+ */
+
 /* Look for Cr50 FW update interface */
 #define VID USB_VID_GOOGLE
 #define PID CONFIG_USB_PID
 #define SUBCLASS USB_SUBCLASS_GOOGLE_CR50
 #define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
 
+#define FLASH_BASE 0x40000
 
 /*
  * Need to create an entire TPM PDU when upgrading over /dev/tpm0 and need to
@@ -68,7 +152,10 @@ struct usb_endpoint {
 };
 
 struct transfer_descriptor {
-	int update_ro;
+	int update_ro;			/* True if RO update is required. */
+	uint32_t ro_offset;
+	uint32_t rw_offset;
+
 	enum transfer_type {
 		usb_xfer = 0,
 		spi_xfer = 1
@@ -101,7 +188,6 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 
 	struct upgrade_pkt *out = (struct upgrade_pkt *)outbuf;
 	/* Use the same structure, it will not be filled completely. */
-	struct upgrade_pkt reply;
 	int len, done;
 	int response_offset = offsetof(struct upgrade_pkt, digest);
 
@@ -136,29 +222,33 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 		return -1;
 	}
 
-	len = read(fd, &reply, sizeof(reply));
-	if ((len < response_offset) ||
-	    (len > ((int)(response_offset + sizeof(uint32_t))))) {
-		fprintf(stderr, "Problems reading from TPM, got %d bytes\n",
-			len);
-		return -1;
-	}
-
-	debug("Read %d bytes from TPM\n", len);
-	len = len - response_offset;
-	memcpy(response, &reply.digest, len);
-	*response_size = len;
+	/*
+	 * Let's reuse the output buffer as the receve buffer; the combined
+	 * size of the two structures below is sure enough for any expected
+	 * response size.
+	 */
+	len = read(fd, outbuf, sizeof(struct upgrade_pkt) +
+		   sizeof(struct first_response_pdu));
 #ifdef DEBUG
-	{
-		uint8_t *inbuf = response;
+	debug("Read %d bytes from TPM\n", len);
+	if (len > 0) {
 		int i;
 
-		debug("Response size is %d bytes\n", len);
 		for (i = 0; i < len; i++)
-			debug("%2.2x ", inbuf[i]);
+			debug("%2.2x ", outbuf[i]);
 		debug("\n");
 	}
 #endif
+	len = len - response_offset;
+	if (len < 0) {
+		fprintf(stderr, "Problems reading from TPM, got %d bytes\n",
+			len + response_offset);
+		return -1;
+	}
+
+	len = MIN(len, *response_size);
+	memcpy(response, outbuf + response_offset, len);
+	*response_size = len;
 	return 0;
 }
 
@@ -412,7 +502,6 @@ struct update_pdu {
 	/* The actual payload goes here. */
 };
 
-#define FLASH_BASE 0x40000
 static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 			  uint8_t *transfer_data_ptr, size_t payload_size)
 {
@@ -447,8 +536,13 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 		shut_down(uep);
 	}
 
+	if (protocol_version > 2)
+		reply = *((uint8_t *)&reply);
+	else
+		reply = be32toh(reply);
+
 	if (reply) {
-		fprintf(stderr, "error: status %#08x\n", be32toh(reply));
+		fprintf(stderr, "error: status %#x\n", reply);
 		exit(1);
 	}
 
@@ -488,7 +582,11 @@ static void transfer_section(struct transfer_descriptor *td,
 		updu.block_size = htobe32(payload_size +
 					  sizeof(struct update_pdu));
 
-		updu.cmd.block_base = htobe32(section_addr);
+		if (protocol_version <= 2)
+			updu.cmd.block_base = htobe32(section_addr +
+						      FLASH_BASE);
+		else
+			updu.cmd.block_base = htobe32(section_addr);
 
 		/* Calculate the digest. */
 		SHA1_Init(&ctx);
@@ -508,31 +606,45 @@ static void transfer_section(struct transfer_descriptor *td,
 
 			if (!max_retries) {
 				fprintf(stderr,
-					"Failed to trasfer block, %zd to go\n",
+					"Failed to transfer block, %zd to go\n",
 					data_len);
 				exit(1);
 			}
 		} else {
-			struct first_response_pdu resp;
-			size_t rxed_size;
+			uint8_t error_code[4];
+			size_t rxed_size = sizeof(error_code);
+			uint32_t block_addr;
 
-			rxed_size = sizeof(resp);
+			if (protocol_version <= 2)
+				block_addr = section_addr + FLASH_BASE;
+			else
+				block_addr = section_addr;
+
+			/*
+			 * A single byte response is expected, but let's give
+			 * the driver a few extra bytes to catch cases when a
+			 * different amount of data is transferred (which
+			 * would indicate a synchronization problem).
+			 */
 			if (tpm_send_pkt(td->tpm_fd,
 					 updu.cmd.block_digest,
-					 section_addr,
+					 block_addr,
 					 data_ptr,
-					 payload_size, &resp,
+					 payload_size, error_code,
 					 &rxed_size) < 0) {
 				fprintf(stderr,
 					"Failed to trasfer block, %zd to go\n",
 					data_len);
 				exit(1);
 			}
-			if ((rxed_size != 1) || *((uint8_t *)&resp)) {
-				fprintf(stderr,
-					"got response of size %zd, value %#x\n",
-					rxed_size, resp.return_value);
+			if (rxed_size != 1) {
+				fprintf(stderr, "Unexpected return size %zd\n",
+					rxed_size);
+				exit(1);
+			}
 
+			if (error_code[0]) {
+				fprintf(stderr, "error %d\n", error_code[0]);
 				exit(1);
 			}
 		}
@@ -540,71 +652,130 @@ static void transfer_section(struct transfer_descriptor *td,
 		data_ptr += payload_size;
 		section_addr += payload_size;
 	}
+}
 
+static void setup_connection(struct transfer_descriptor *td)
+{
+	size_t rxed_size;
+	uint32_t error_code;
+
+	/*
+	 * Need to be backwards compatible, communicate with targets running
+	 * different protocol versions.
+	 */
+	union {
+		struct first_response_pdu rpdu;
+		uint32_t legacy_resp;
+	} start_resp;
+
+	/* Send start/erase request */
+	printf("erase\n");
+
+	if (td->ep_type == usb_xfer) {
+		struct update_pdu updu;
+
+		memset(&updu, 0, sizeof(updu));
+		updu.block_size = htobe32(sizeof(updu));
+		do_xfer(&td->uep, &updu, sizeof(updu), &start_resp,
+			sizeof(start_resp), 1, &rxed_size);
+	} else {
+		rxed_size = sizeof(start_resp);
+		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
+				 &start_resp, &rxed_size) < 0) {
+			fprintf(stderr, "Failed to start transfer\n");
+			exit(1);
+		}
+	}
+
+	if (rxed_size <= 4) {
+		if (td->ep_type != spi_xfer) {
+			fprintf(stderr, "Unexpected response size %zd\n",
+				rxed_size);
+			exit(1);
+		}
+
+		/* This is a protocol version one response. */
+		protocol_version = 1;
+		if (rxed_size == 1) {
+			/* Target is reporting an error. */
+			error_code = *((uint8_t *) &start_resp);
+		} else {
+			/* Target reporting RW base_address. */
+			td->rw_offset = be32toh(start_resp.legacy_resp) -
+				FLASH_BASE;
+			error_code = 0;
+		}
+	} else {
+		protocol_version = be32toh(start_resp.rpdu.protocol_version);
+		error_code = be32toh(start_resp.rpdu.return_value);
+
+		if (protocol_version == 2) {
+			if (error_code > 256) {
+				td->rw_offset = error_code - FLASH_BASE;
+				error_code = 0;
+			}
+		} else {
+			/* All newer protocols. */
+			td->rw_offset = be32toh
+				(start_resp.rpdu.vers3.backup_rw_offset);
+		}
+	}
+
+	printf("Target running protocol version %d\n", protocol_version);
+
+	if (!error_code) {
+		if (protocol_version > 2) {
+			td->ro_offset = be32toh
+				(start_resp.rpdu.vers3.backup_ro_offset);
+			printf("Offsets: backup RO at %#x, backup RW at %#x\n",
+			       td->ro_offset, td->rw_offset);
+			return;
+		}
+		if (!td->update_ro)
+			return;
+
+		fprintf(stderr, "Target does not support RO updates\n");
+
+	} else {
+		fprintf(stderr, "Target reporting error %d\n", error_code);
+	}
+
+	if (td->ep_type == usb_xfer)
+		shut_down(&td->uep);
+	exit(1);
 }
 
 static void transfer_and_reboot(struct transfer_descriptor *td,
 				uint8_t *data, size_t data_len)
 {
-	uint32_t out;
-	uint32_t reply;
-	struct update_pdu updu;
-	struct first_response_pdu first_resp;
-	size_t rxed_size;
-	struct usb_endpoint *uep = &td->uep;
 
-	/* Send start/erase request */
-	printf("erase\n");
+	setup_connection(td);
 
-	memset(&updu, 0, sizeof(updu));
-	updu.block_size = htobe32(sizeof(updu));
+	transfer_section(td, data + td->rw_offset, td->rw_offset,
+			 CONFIG_RW_SIZE);
 
-	if (td->ep_type == usb_xfer) {
-		do_xfer(uep, &updu, sizeof(updu), &first_resp,
-			sizeof(first_resp), 1, &rxed_size);
-	} else {
-		rxed_size = sizeof(first_resp);
-		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
-				 &first_resp, &rxed_size) < 0) {
-			perror("Failed to start transfer");
-			return;
-		}
-	}
-
-	if (rxed_size == sizeof(uint32_t))
-		protocol_version = 0;
-	else
-		protocol_version = be32toh(first_resp.protocol_version);
-
-	printf("Target running protocol version %d\n", protocol_version);
-
-	reply = be32toh(first_resp.return_value);
-
-	if (reply < 256) {
-		fprintf(stderr, "Target reports error %d\n", reply);
-		shut_down(uep);
-	}
-
-	if ((reply - FLASH_BASE + CONFIG_RW_SIZE) > data_len) {
-		fprintf(stderr, "Base addr of %#x too high\n", reply);
-		shut_down(uep);
-	}
-
-	transfer_section(td, data + reply - FLASH_BASE,
-			 reply, CONFIG_RW_SIZE);
+	/* Transfer the RO part if requested. */
+	if (td->update_ro)
+		transfer_section(td, data + td->ro_offset, td->ro_offset,
+				 CONFIG_RO_SIZE);
 
 	printf("-------\nupdate complete\n");
-	if (td->ep_type != usb_xfer)
-		return;
+	if (td->ep_type == usb_xfer) {
+		uint32_t out;
 
-	/* Send stop request, ignorign reply. */
-	out = htobe32(UPGRADE_DONE);
-	xfer(uep, &out, sizeof(out), &reply, sizeof(reply));
+		/* Send stop request, ignoring reply. */
+		out = htobe32(UPGRADE_DONE);
+		xfer(&td->uep, &out, sizeof(out), &out,
+		     protocol_version < 3 ? sizeof(out) : 1);
 
-	printf("reboot\n");
+		printf("reboot\n");
 
-	/* Send a second stop request, which should reboot without replying */
-	xfer(uep, &out, sizeof(out), 0, 0);
+		/*
+		 * Send a second stop request, which should reboot without
+		 * replying.
+		 */
+		xfer(&td->uep, &out, sizeof(out), 0, 0);
+	}
 }
 
 int main(int argc, char *argv[])

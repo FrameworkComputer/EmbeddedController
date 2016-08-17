@@ -75,10 +75,10 @@ static uint32_t block_index;
 /*
  * Verify that the contens of the USB rx queue is a valid transfer start
  * message from host, and if so - save its contents in the passed in
- * update_pdu_header structure.
+ * update_frame_header structure.
  */
 static int valid_transfer_start(struct consumer const *consumer, size_t count,
-				struct update_pdu_header *pupdu)
+				struct update_frame_header *pupfr)
 {
 	int i;
 
@@ -89,19 +89,19 @@ static int valid_transfer_start(struct consumer const *consumer, size_t count,
 	 */
 	i = count;
 	while (i > 0) {
-		QUEUE_REMOVE_UNITS(consumer->queue, pupdu,
-				   MIN(i, sizeof(*pupdu)));
-		i -= sizeof(*pupdu);
+		QUEUE_REMOVE_UNITS(consumer->queue, pupfr,
+				   MIN(i, sizeof(*pupfr)));
+		i -= sizeof(*pupfr);
 	}
 
-	if (count != sizeof(struct update_pdu_header)) {
+	if (count != sizeof(struct update_frame_header)) {
 		CPRINTS("FW update: wrong first block, size %d", count);
 		return 0;
 	}
 
-	/* In the first block the payload (updu.cmd) must be all zeros. */
-	for (i = 0; i < sizeof(pupdu->cmd); i++)
-		if (((uint8_t *)&pupdu->cmd)[i])
+	/* In the first block the payload (pupfr->cmd) must be all zeros. */
+	for (i = 0; i < sizeof(pupfr->cmd); i++)
+		if (((uint8_t *)&pupfr->cmd)[i])
 			return 0;
 	return 1;
 }
@@ -115,7 +115,7 @@ static uint64_t prev_activity_timestamp;
 /* Called to deal with data from the host */
 static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 {
-	struct update_pdu_header updu;
+	struct update_frame_header upfr;
 	size_t resp_size;
 	uint32_t resp_value;
 	uint64_t delta_time;
@@ -141,13 +141,13 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	if (rx_state_ == rx_idle) {
 		struct first_response_pdu *startup_resp;
 
-		if (!valid_transfer_start(consumer, count, &updu))
+		if (!valid_transfer_start(consumer, count, &upfr))
 			return;
 
 		CPRINTS("FW update: starting...");
 
-		fw_upgrade_command_handler(&updu.cmd, count -
-					   offsetof(struct update_pdu_header,
+		fw_upgrade_command_handler(&upfr.cmd, count -
+					   offsetof(struct update_frame_header,
 						    cmd),
 					   &resp_size);
 
@@ -155,7 +155,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		 * The handler reuses receive buffer to return the result
 		 * value.
 		 */
-		startup_resp = (struct first_response_pdu *)&updu.cmd;
+		startup_resp = (struct first_response_pdu *)&upfr.cmd;
 		if (resp_size == 4) {
 			/*
 			 * The handler is happy, returned a 4 byte base
@@ -215,12 +215,12 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 
 		/*
 		 * At this point we expect a block start message. It is
-		 * sizeof(updu) bytes in size, but is not the transfer start
+		 * sizeof(upfr) bytes in size, but is not the transfer start
 		 * message, which also is of that size AND has the command
 		 * field of all zeros.
 		 */
-		if (valid_transfer_start(consumer, count, &updu) ||
-		    (count != sizeof(updu)))
+		if (valid_transfer_start(consumer, count, &upfr) ||
+		    (count != sizeof(upfr)))
 			/*
 			 * Instead of a block start message we received either
 			 * a transfer start message or a chunk. We must have
@@ -229,8 +229,8 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			return;
 
 		/* Let's allocate a large enough buffer. */
-		block_size = be32toh(updu.block_size) -
-			offsetof(struct update_pdu_header, cmd);
+		block_size = be32toh(upfr.block_size) -
+			offsetof(struct update_frame_header, cmd);
 		if (shared_mem_acquire(block_size, (char **)&block_buffer)
 		    != EC_SUCCESS) {
 			/* TODO:(vbendeb) report out of memory here. */
@@ -243,9 +243,9 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		 * Copy the rest of the message into the block buffer to pass
 		 * to the upgrader.
 		 */
-		block_index = sizeof(updu) -
-			offsetof(struct update_pdu_header, cmd);
-		memcpy(block_buffer, &updu.cmd, block_index);
+		block_index = sizeof(upfr) -
+			offsetof(struct update_frame_header, cmd);
+		memcpy(block_buffer, &upfr.cmd, block_index);
 		block_size -= block_index;
 		rx_state_ = rx_inside_block;
 		return;
@@ -257,7 +257,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	block_size -= count;
 
 	if (block_size) {
-		if (count == sizeof(updu)) {
+		if (count == sizeof(upfr)) {
 			/*
 			 * A block header size instead of chunk size message
 			 * has been received. There must have been some packet
@@ -265,14 +265,14 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			 *
 			 * Let's copy its contents into the header structure.
 			 */
-			memcpy(&updu, block_buffer + block_index - count,
+			memcpy(&upfr, block_buffer + block_index - count,
 			       count);
 
 
 			/* And re-allocate a large enough buffer. */
 			shared_mem_release(block_buffer);
-			block_size = be32toh(updu.block_size) -
-				offsetof(struct update_pdu_header, cmd);
+			block_size = be32toh(upfr.block_size) -
+				offsetof(struct update_frame_header, cmd);
 			if (shared_mem_acquire(block_size,
 					       (char **)&block_buffer)
 			    != EC_SUCCESS) {
@@ -286,9 +286,9 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			 * Copy the rest of the message into the block buffer
 			 * to pass to the upgrader.
 			 */
-			block_index = sizeof(updu) -
-				offsetof(struct update_pdu_header, cmd);
-			memcpy(block_buffer, &updu.cmd, block_index);
+			block_index = sizeof(upfr) -
+				offsetof(struct update_frame_header, cmd);
+			memcpy(block_buffer, &upfr.cmd, block_index);
 			block_size -= block_index;
 		}
 		return;	/* More to come. */
