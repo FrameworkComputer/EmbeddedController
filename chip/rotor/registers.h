@@ -167,17 +167,117 @@
 /* To prevent accidental restarts, this magic value must be written to CRR. */
 #define ROTOR_MCU_WDT_KICK		0x76
 
+/* SSI */
+#define ROTOR_MCU_SSI_BASE(port)	(0xED070000 + ((port) * 0x1000))
+#define ROTOR_MCU_SSI_CTRLR0(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x00)
+#define ROTOR_MCU_SSI_CTRLR1(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x04)
+#define ROTOR_MCU_SSI_SSIENR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x08)
+#define ROTOR_MCU_SSI_BAUDR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x14)
+#define ROTOR_MCU_SSI_TXFTLR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x18)
+#define ROTOR_MCU_SSI_RXFTLR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x1C)
+#define ROTOR_MCU_SSI_TXFLR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x20)
+#define ROTOR_MCU_SSI_RXFLR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x24)
+#define ROTOR_MCU_SSI_SR(port)		REG32(ROTOR_MCU_SSI_BASE(port) + 0x28)
+#define ROTOR_MCU_SSI_IMR(port)		REG32(ROTOR_MCU_SSI_BASE(port) + 0x2C)
+#define ROTOR_MCU_SSI_ISR(port)		REG32(ROTOR_MCU_SSI_BASE(port) + 0x30)
+#define ROTOR_MCU_SSI_RISR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x34)
+#define ROTOR_MCU_SSI_TXOICR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x38)
+#define ROTOR_MCU_SSI_RXOICR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x3C)
+#define ROTOR_MCU_SSI_RXUICR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x40)
+#define ROTOR_MCU_SSI_ICR(port)		REG32(ROTOR_MCU_SSI_BASE(port) + 0x48)
+#define ROTOR_MCU_SSI_DMACR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x4C)
+#define ROTOR_MCU_SSI_DMATDLR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x50)
+#define ROTOR_MCU_SSI_DMARDLR(port)	REG32(ROTOR_MCU_SSI_BASE(port) + 0x54)
+#define ROTOR_MCU_SSI_IDR(port)		REG32(ROTOR_MCU_SSI_BASE(port) + 0x58)
+#define ROTOR_MCU_SSI_DR(port, idx)	REG32(ROTOR_MCU_SSI_BASE(port) + \
+					      (0x60 + ((idx) * 0x04)))
+#define ROTOR_MCU_MAX_SSI_PORTS 2
+
+/* DMA */
+#define ROTOR_MCU_DMA_BASE 0xED200000
+
+enum dma_channel {
+	/* Channel numbers */
+	ROTOR_MCU_DMAC_SPI0_TX =	0,
+	ROTOR_MCU_DMAC_SPI0_RX =	1,
+	ROTOR_MCU_DMAC_SPI1_TX =	2,
+	ROTOR_MCU_DMAC_SPI1_RX =	3,
+
+	/* Channel count */
+	ROTOR_MCU_DMAC_COUNT =		8,
+};
+
+/* Registers for a single channel of the DMA controller. */
+struct rotor_mcu_dma_chan {
+	uint32_t cfg;			/* Config */
+	uint32_t ctrl;			/* Control */
+	uint32_t status;		/* Status */
+	uint32_t pad0;
+	uint32_t cpr;			/* Parameter */
+	uint32_t cdr;			/* Descriptor */
+	uint32_t cndar;			/* Next descriptor address */
+	uint32_t fill_value;		/* Fill value */
+	uint32_t int_en;		/* Interrupt enable */
+	uint32_t int_pend;		/* Interrupt pending */
+	uint32_t int_ack;		/* Interrupt acknowledge */
+	uint32_t int_force;		/* Interrupt force */
+	uint32_t tmr_ctrl;		/* Timer control */
+	uint32_t timeout_cnt_stat;	/* Timeout Count Status */
+	uint32_t crbar;			/* Read burst address */
+	uint32_t crblr;			/* Read burst length */
+	uint32_t cwbar;			/* Write burst address */
+	uint32_t cwblr;			/* Write burst length */
+	uint32_t cwbrr;			/* Write burst remain */
+	uint32_t csrr;			/* Save/restore control */
+	uint32_t csrli;			/* Save/restore lower DMA ID */
+	uint32_t csrui;			/* Save/restore upper DMA ID */
+	uint32_t crsl;			/* Lower request status */
+	uint32_t crsu;			/* Upper request status */
+	uint32_t cafr;			/* ACK force */
+	uint32_t pad1[0x27];		/* pad to offset 0x100 */
+};
+
+/* Always use rotor_mcu_dma_chan_t so volatile keyword is included! */
+typedef volatile struct rotor_mcu_dma_chan rotor_mcu_dma_chan_t;
+
+/* Common code and header file must use this */
+typedef rotor_mcu_dma_chan_t dma_chan_t;
+
+struct rotor_mcu_dma_regs {
+	uint32_t top_int_status;
+	uint32_t top_soft_reset;
+	uint32_t params;
+	uint32_t pad[0x3D];	/* Pad to offset 0x100 */
+	rotor_mcu_dma_chan_t chan[ROTOR_MCU_DMAC_COUNT];
+};
+
+/* Always use rotor_mcu_dma_regs_t so volatile keyword is included! */
+typedef volatile struct rotor_mcu_dma_regs rotor_mcu_dma_regs_t;
+
+#define ROTOR_MCU_DMA_REGS ((rotor_mcu_dma_regs_t *)ROTOR_MCU_DMA_BASE)
+
 /* IRQ Numbers */
 #define ROTOR_MCU_IRQ_TIMER_0		6
 #define ROTOR_MCU_IRQ_TIMER_1		7
 #define ROTOR_MCU_IRQ_WDT		14
 #define ROTOR_MCU_IRQ_UART_0		16
+#define ROTOR_MCU_IRQ_SPI_0		18
+#define ROTOR_MCU_IRQ_SPI_1		19
 #define ROTOR_MCU_IRQ_I2C_0		20
 #define ROTOR_MCU_IRQ_I2C_1		21
 #define ROTOR_MCU_IRQ_I2C_2		22
 #define ROTOR_MCU_IRQ_I2C_3		23
 #define ROTOR_MCU_IRQ_I2C_4		24
 #define ROTOR_MCU_IRQ_I2C_5		25
+#define ROTOR_MCU_IRQ_DMAC_0		44
+#define ROTOR_MCU_IRQ_DMAC_1		45
+#define ROTOR_MCU_IRQ_DMAC_2		46
+#define ROTOR_MCU_IRQ_DMAC_3		47
+#define ROTOR_MCU_IRQ_DMAC_4		48
+#define ROTOR_MCU_IRQ_DMAC_5		49
+#define ROTOR_MCU_IRQ_DMAC_6		50
+#define ROTOR_MCU_IRQ_DMAC_7		51
+#define ROTOR_MCU_IRQ_DMATOP		52
 #define ROTOR_MCU_IRQ_GPIO_0		79
 #define ROTOR_MCU_IRQ_GPIO_1		80
 #define ROTOR_MCU_IRQ_GPIO_2		81
