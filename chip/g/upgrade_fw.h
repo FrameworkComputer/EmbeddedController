@@ -8,14 +8,40 @@
 
 #include <stddef.h>
 
-#define UPGRADE_PROTOCOL_VERSION 2
 
-/* This is the format of the header the flash update function expects. */
+/*
+ * This file contains structures used to facilitate cr50 firmware updates,
+ * which can be used on any g chip.
+ *
+ * The firmware update protocol consists of two phases: connection
+ * establishment and actual image transfer.
+ *
+ * Image transfer is done in 1K blocks. The host supplying the image
+ * encapsulates blocks in frames by prepending a header including the flash
+ * offset where the block is destined and its digest.
+ *
+ * The CR50 device responds to each frame with a confirmation which is 1 byte
+ * response. Zero value means success, non zero value is the error code
+ * reported by CR50.
+ *
+ * To establish the connection, the host sends a different frame, which
+ * contains no data and is destined to offset 0. Receiving such a frame
+ * signals the CR50 that the host intends to transfer a new image.
+ *
+ * Version 3 connection establishment response is 16 bytes in size, all values
+ * in network byte order. The first 4 bytes are the error code (if any), the
+ * second 4 bytes are the protocol version (set to 3) and then 4 byte offset
+ * of the RO section followed by the 4 byte offset of the RW section.
+ */
+
+#define UPGRADE_PROTOCOL_VERSION 3
+
+/* This is the format of the update frame header. */
 struct upgrade_command {
 	uint32_t  block_digest;  /* first 4 bytes of sha1 of the rest of the
-				  * block.
+				  * frame.
 				  */
-	uint32_t  block_base;    /* Offset of this block into the flash SPI. */
+	uint32_t  block_base;    /* Offset of this frame into the flash SPI. */
 	/* The actual payload goes here. */
 } __packed;
 
@@ -37,7 +63,7 @@ struct update_frame_header {
 };
 
 /*
- * Response to the message initiating the update sequence.
+ * Response to the connection establishment request.
  *
  * When responding to the very first packet of the upgrade sequence, the
  * original USB update implementation was responding with a four byte value,
@@ -73,5 +99,18 @@ struct first_response_pdu {
 void fw_upgrade_command_handler(void *body,
 				size_t cmd_size,
 				size_t *response_size);
+
+
+/* Various upgrade command return values. */
+enum return_value {
+	UPGRADE_SUCCESS = 0,
+	UPGRADE_BAD_ADDR = 1,
+	UPGRADE_ERASE_FAILURE = 2,
+	UPGRADE_DATA_ERROR = 3,
+	UPGRADE_WRITE_FAILURE = 4,
+	UPGRADE_VERIFY_ERROR = 5,
+	UPGRADE_GEN_ERROR = 6,
+	UPGRADE_MALLOC_ERROR = 7,
+};
 
 #endif  /* ! __EC_CHIP_G_UPGRADE_FW_H */

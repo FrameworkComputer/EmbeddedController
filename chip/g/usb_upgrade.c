@@ -26,12 +26,13 @@
  * programming blocks from the USB chunks, and invokes the programmer passing
  * it the full block.
  *
- * The programmer reports results by putting the return value of one or four
- * bytes into the same buffer where the block was passed in. This wrapper
- * retrieves the programmer's return value, normalizes it to 4 bytes and sends
- * it back to the host.
+ * The programmer reports results by putting the return value into the same
+ * buffer where the block was passed in. This wrapper retrieves the
+ * programmer's return value, and sends it back to the host. The return value
+ * is usually one byte in size, the only exception is the connection
+ * establishment phase where the return value is 16 bytes in size.
  *
- * In the end of the successful image transfer and programming, the host send
+ * In the end of the successful image transfer and programming, the host sends
  * the reset command, and the device reboots itself.
  */
 
@@ -117,7 +118,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 {
 	struct update_frame_header upfr;
 	size_t resp_size;
-	uint32_t resp_value;
+	uint8_t resp_value;
 	uint64_t delta_time;
 
 	/* How much time since the previous USB callback? */
@@ -139,44 +140,43 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	}
 
 	if (rx_state_ == rx_idle) {
-		struct first_response_pdu *startup_resp;
+		/*
+		 * The payload must be an update initiating PDU.
+		 *
+		 * The size of the response returned in the same buffer will
+		 * exceed the received frame size; Let's make sure there is
+		 * enough room for the response in the buffer.
+		 */
+		union {
+			struct update_frame_header upfr;
+			struct {
+				uint32_t unused;
+				struct first_response_pdu startup_resp;
+			};
+		} u;
 
-		if (!valid_transfer_start(consumer, count, &upfr))
+		if (!valid_transfer_start(consumer, count, &u.upfr)) {
+			/*
+			 * Someting is wrong, this payload is not a valid
+			 * update start PDU. Let'w indicate this by returning
+			 * a single byte error code.
+			 */
+			resp_value = UPGRADE_GEN_ERROR;
+			QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, 1);
 			return;
+		}
 
 		CPRINTS("FW update: starting...");
-
-		fw_upgrade_command_handler(&upfr.cmd, count -
+		fw_upgrade_command_handler(&u.upfr.cmd, count -
 					   offsetof(struct update_frame_header,
 						    cmd),
 					   &resp_size);
 
-		/*
-		 * The handler reuses receive buffer to return the result
-		 * value.
-		 */
-		startup_resp = (struct first_response_pdu *)&upfr.cmd;
-		if (resp_size == 4) {
-			/*
-			 * The handler is happy, returned a 4 byte base
-			 * offset, it is in startup_resp->return_value now in
-			 * the proper byte order.
-			 */
-			rx_state_ = rx_outside_block;
-		} else {
-			/*
-			 * This must be a single byte error code, convert it
-			 * into a 4 byte network order representation.
-			 */
-			startup_resp->return_value = htobe32
-				(*((uint8_t *)&startup_resp->return_value));
-		}
-		startup_resp->protocol_version =
-			htobe32(UPGRADE_PROTOCOL_VERSION);
+		if (!u.startup_resp.return_value)
+			rx_state_ = rx_outside_block;  /* We're in business. */
 
 		/* Let the host know what upgrader had to say. */
-		QUEUE_ADD_UNITS(&upgrade_to_usb, startup_resp,
-				sizeof(*startup_resp));
+		QUEUE_ADD_UNITS(&upgrade_to_usb, &u.startup_resp, resp_size);
 		return;
 	}
 
@@ -205,9 +205,10 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			command = be32toh(command);
 			if (command == UPGRADE_DONE) {
 				CPRINTS("FW update: done");
+
 				resp_value = 0;
-				QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value,
-						sizeof(resp_value));
+				QUEUE_ADD_UNITS(&upgrade_to_usb,
+						&resp_value, 1);
 				rx_state_ = rx_awaiting_reset;
 				return;
 			}
@@ -220,22 +221,26 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		 * field of all zeros.
 		 */
 		if (valid_transfer_start(consumer, count, &upfr) ||
-		    (count != sizeof(upfr)))
+		    (count != sizeof(upfr))) {
 			/*
 			 * Instead of a block start message we received either
 			 * a transfer start message or a chunk. We must have
 			 * gotten out of sync with the host.
 			 */
+			resp_value = UPGRADE_GEN_ERROR;
+			QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, 1);
 			return;
+		}
 
 		/* Let's allocate a large enough buffer. */
 		block_size = be32toh(upfr.block_size) -
 			offsetof(struct update_frame_header, cmd);
 		if (shared_mem_acquire(block_size, (char **)&block_buffer)
 		    != EC_SUCCESS) {
-			/* TODO:(vbendeb) report out of memory here. */
 			CPRINTS("FW update: error: failed to alloc %d bytes.",
 				block_size);
+			resp_value = UPGRADE_MALLOC_ERROR;
+			QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, 1);
 			return;
 		}
 
