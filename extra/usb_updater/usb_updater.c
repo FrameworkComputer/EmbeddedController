@@ -67,7 +67,7 @@ struct usb_endpoint {
 	int     chunk_len;
 };
 
-struct transfer_endpoint {
+struct transfer_descriptor {
 	int update_ro;
 	enum transfer_type {
 		usb_xfer = 0,
@@ -458,12 +458,12 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 /**
  * Transfer an image section (typically RW or RO).
  *
- * tep          - transfer endpoint to use to communicate with the target
+ * td           - transfer descriptor to use to communicate with the target
  * data_ptr     - pointer at the section base in the image
  * section_addr - address of the section in the target memory space
  * data_len     - section size
  */
-static void transfer_section(struct transfer_endpoint *tep,
+static void transfer_section(struct transfer_descriptor *td,
 			     uint8_t *data_ptr,
 			     uint32_t section_addr,
 			     size_t data_len)
@@ -500,9 +500,9 @@ static void transfer_section(struct transfer_endpoint *tep,
 		/* Copy the first few bytes. */
 		memcpy(&updu.cmd.block_digest, digest,
 		       sizeof(updu.cmd.block_digest));
-		if (tep->ep_type == usb_xfer) {
+		if (td->ep_type == usb_xfer) {
 			for (max_retries = 10; max_retries; max_retries--)
-				if (!transfer_block(&tep->uep, &updu,
+				if (!transfer_block(&td->uep, &updu,
 						    data_ptr, payload_size))
 					break;
 
@@ -517,7 +517,7 @@ static void transfer_section(struct transfer_endpoint *tep,
 			size_t rxed_size;
 
 			rxed_size = sizeof(resp);
-			if (tpm_send_pkt(tep->tpm_fd,
+			if (tpm_send_pkt(td->tpm_fd,
 					 updu.cmd.block_digest,
 					 section_addr,
 					 data_ptr,
@@ -543,7 +543,7 @@ static void transfer_section(struct transfer_endpoint *tep,
 
 }
 
-static void transfer_and_reboot(struct transfer_endpoint *tep,
+static void transfer_and_reboot(struct transfer_descriptor *td,
 				uint8_t *data, size_t data_len)
 {
 	uint32_t out;
@@ -551,7 +551,7 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 	struct update_pdu updu;
 	struct first_response_pdu first_resp;
 	size_t rxed_size;
-	struct usb_endpoint *uep = &tep->uep;
+	struct usb_endpoint *uep = &td->uep;
 
 	/* Send start/erase request */
 	printf("erase\n");
@@ -559,12 +559,12 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 	memset(&updu, 0, sizeof(updu));
 	updu.block_size = htobe32(sizeof(updu));
 
-	if (tep->ep_type == usb_xfer) {
+	if (td->ep_type == usb_xfer) {
 		do_xfer(uep, &updu, sizeof(updu), &first_resp,
 			sizeof(first_resp), 1, &rxed_size);
 	} else {
 		rxed_size = sizeof(first_resp);
-		if (tpm_send_pkt(tep->tpm_fd, 0, 0, NULL, 0,
+		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
 				 &first_resp, &rxed_size) < 0) {
 			perror("Failed to start transfer");
 			return;
@@ -590,11 +590,11 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 		shut_down(uep);
 	}
 
-	transfer_section(tep, data + reply - FLASH_BASE,
+	transfer_section(td, data + reply - FLASH_BASE,
 			 reply, CONFIG_RW_SIZE);
 
 	printf("-------\nupdate complete\n");
-	if (tep->ep_type != usb_xfer)
+	if (td->ep_type != usb_xfer)
 		return;
 
 	/* Send stop request, ignorign reply. */
@@ -609,7 +609,7 @@ static void transfer_and_reboot(struct transfer_endpoint *tep,
 
 int main(int argc, char *argv[])
 {
-	struct transfer_endpoint tep;
+	struct transfer_descriptor td;
 	int errorcnt;
 	uint8_t *data = 0;
 	size_t data_len = 0;
@@ -623,8 +623,8 @@ int main(int argc, char *argv[])
 		progname = argv[0];
 
 	/* Usb transfer - default mode. */
-	memset(&tep, 0, sizeof(tep));
-	tep.ep_type = usb_xfer;
+	memset(&td, 0, sizeof(td));
+	td.ep_type = usb_xfer;
 
 	errorcnt = 0;
 	opterr = 0;				/* quiet, you */
@@ -640,10 +640,10 @@ int main(int argc, char *argv[])
 			usage(errorcnt);
 			break;
 		case 'r':
-			tep.update_ro = 1;
+			td.update_ro = 1;
 			break;
 		case 's':
-			tep.ep_type = spi_xfer;
+			td.ep_type = spi_xfer;
 			break;
 		case 0:				/* auto-handled option */
 			break;
@@ -681,22 +681,22 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (tep.ep_type == usb_xfer) {
-		usb_findit(vid, pid, &tep.uep);
+	if (td.ep_type == usb_xfer) {
+		usb_findit(vid, pid, &td.uep);
 	} else {
-		tep.tpm_fd = open("/dev/tpm0", O_RDWR);
-		if (tep.tpm_fd < 0) {
+		td.tpm_fd = open("/dev/tpm0", O_RDWR);
+		if (td.tpm_fd < 0) {
 			perror("Could not open TPM");
 			exit(1);
 		}
 	}
 
-	transfer_and_reboot(&tep, data, data_len);
+	transfer_and_reboot(&td, data, data_len);
 
 	printf("bye\n");
 	free(data);
-	if (tep.ep_type == usb_xfer) {
-		libusb_close(tep.uep.devh);
+	if (td.ep_type == usb_xfer) {
+		libusb_close(td.uep.devh);
 		libusb_exit(NULL);
 	}
 
