@@ -139,7 +139,14 @@ static void lpc_generate_smi(void)
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(GPIO_PCH_SMI_L, 1);
 #else
-	NPCX_HIPMIE(PMC_ACPI) |= NPCX_HIPMIE_SMIE;
+	/* Since SMIPOL is 1, clear SCIB bit means set SCI_L to high.*/
+	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
+	udelay(65);
+	/* Generate a falling edge */
+	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
+	udelay(65);
+	/* Set signal high */
+	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
 #endif
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI])
 		CPRINTS("smi 0x%08x",
@@ -161,7 +168,14 @@ static void lpc_generate_sci(void)
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #else
-	SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SCIE);
+	/* Since SCIPOL is 1, clear SCIB bit means set SCI_L to high.*/
+	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
+	udelay(65);
+	/* Generate a falling edge */
+	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
+	udelay(65);
+	/* Set signal high */
+	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
 #endif
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI])
@@ -309,16 +323,16 @@ static void update_host_event_status(void)
 		/* Only generate SMI for first event */
 		if (!(NPCX_HIPMIE(PMC_ACPI) & NPCX_HIPMIE_SMIE))
 			need_smi = 1;
-		SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SMIE);
+		SET_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_ST2);
 	} else
-		CLEAR_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SMIE);
+		CLEAR_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_ST2);
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
 		/* Generate SCI for every event */
 		need_sci = 1;
-		SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SCIE);
+		SET_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_ST1);
 	} else
-		CLEAR_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SCIE);
+		CLEAR_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_ST1);
 
 	/* Copy host events to mapped memory */
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = host_events;
@@ -902,6 +916,10 @@ static void lpc_init(void)
 	SET_BIT(NPCX_GLUE_SDP_CTS, 0);
 #endif
 
+#ifndef CONFIG_SCI_GPIO
+	SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SCIE);
+	SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SMIE);
+#endif
 	lpc_task_enable_irq();
 
 	/* Initialize host args and memory map to all zero */
