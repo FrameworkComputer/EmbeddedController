@@ -560,6 +560,22 @@ static void board_chipset_startup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
+#if IS_PROTO == 1
+/*
+ * FIXME: This is a workaround for chrome-os-partner:53791. As per comment #53
+ * this issue should not occur on boards newer than proto.
+ */
+static void drive_sys_rst_odl_high(void)
+{
+	gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_OUT_HIGH);
+	CPRINTS("SYS_RST_ODL driven high");
+	msleep(1000);
+	gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_ODR_HIGH);
+	CPRINTS("SYS_RST_ODL left floating (open-drain)");
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, drive_sys_rst_odl_high, HOOK_PRIO_DEFAULT);
+#endif
+
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
