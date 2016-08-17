@@ -375,14 +375,13 @@ static void chipset_pre_init(void)
 	 * To prevent SLP glitches, PMIC_EN (V5A_EN) should be enabled
 	 * at the same time as PP3300 (chrome-os-partner:51323).
 	 */
-
-	/* Enable PMIC */
-	gpio_set_level(GPIO_PMIC_EN, 1);
-
 	/* Enable 3.3V rail */
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	while (!gpio_get_level(GPIO_PP3300_PG))
 		;
+
+	/* Enable PMIC */
+	gpio_set_level(GPIO_PMIC_EN, 1);
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
