@@ -74,7 +74,7 @@ static void check_reset_cause(void)
 	}
 
 	if (raw_reset_cause2 & 0x04)
-		flags |= RESET_FLAG_POWER_ON;
+		flags |= RESET_FLAG_RESET_PIN;
 
 	/* Restore then clear saved reset flags. */
 	if (!(flags & RESET_FLAG_POWER_ON)) {
