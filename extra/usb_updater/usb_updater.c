@@ -194,9 +194,10 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":d:hsu";
+static char *short_opts = ":bd:hsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
+	{"binvers",  0,   NULL, 'b'},
 	{"device",   1,   NULL, 'd'},
 	{"help",     0,   NULL, 'h'},
 	{"spi",      0,   NULL, 's'},
@@ -975,6 +976,32 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 	return num_txed_secitons;
 }
 
+static int show_headers_versions(const void *image)
+{
+	const struct {
+		const char *name;
+		uint32_t    offset;
+	} sections[] = {
+		{"RO_A", CONFIG_RO_MEM_OFF},
+		{"RW_A", CONFIG_RW_MEM_OFF},
+		{"RO_B", CHIP_RO_B_MEM_OFF},
+		{"RW_B", CONFIG_RW_B_MEM_OFF}
+	};
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(sections); i++) {
+		const struct SignedHeader *h;
+
+		h = (const struct SignedHeader *)((uintptr_t)image +
+						  sections[i].offset);
+		printf("%s%s:%d.%d.%d", i ? " " : "", sections[i].name,
+		       h->epoch_, h->major_, h->minor_);
+	}
+	printf("\n");
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -985,7 +1012,7 @@ int main(int argc, char *argv[])
 	int i;
 	size_t j;
 	int transferred_sections;
-
+	int binary_vers = 0;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1001,6 +1028,9 @@ int main(int argc, char *argv[])
 	opterr = 0;				/* quiet, you */
 	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
 		switch (i) {
+		case 'b':
+			binary_vers = 1;
+			break;
 		case 'd':
 			if (!parse_vidpid(optarg, &vid, &pid)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
@@ -1055,6 +1085,9 @@ int main(int argc, char *argv[])
 	}
 
 	fetch_header_versions(data);
+
+	if (binary_vers)
+		exit(show_headers_versions(data));
 
 	if (td.ep_type == usb_xfer) {
 		usb_findit(vid, pid, &td.uep);
