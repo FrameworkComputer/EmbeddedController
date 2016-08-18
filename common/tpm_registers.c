@@ -115,7 +115,7 @@ static int tpm_fw_ver_index;
  * cr50 image components. The number is somewhat arbitrary, calculated for the
  * worst case scenario when all compontent trees are 'dirty'.
  */
-static uint8_t tpm_fw_ver[280];
+static uint8_t tpm_fw_ver[80];
 
 /*
  * We need to be able to report firmware version to the host, both RO and RW
@@ -130,46 +130,19 @@ static void set_version_string(void)
 	active_ro = system_get_ro_image_copy();
 	active_rw = system_get_image_copy();
 
-	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver),
-		 "RO_A:%s %s",
-		 (active_ro == SYSTEM_IMAGE_RO ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RO));
-	offset = strlen(tpm_fw_ver);
-	if (offset == sizeof(tpm_fw_ver) - 1)
-		return;
-
-	snprintf(tpm_fw_ver + offset,
-		 sizeof(tpm_fw_ver) - offset,
-		 " RO_B:%s %s",
-		 (active_ro == SYSTEM_IMAGE_RO_B ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RO_B));
-	offset = strlen(tpm_fw_ver);
-	if (offset == sizeof(tpm_fw_ver) - 1)
-		return;
-
-	snprintf(tpm_fw_ver + offset,
-		 sizeof(tpm_fw_ver) - offset,
-		 " RW_A:%s %s",
-		 (active_rw == SYSTEM_IMAGE_RW ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RW));
-	offset = strlen(tpm_fw_ver);
-	if (offset == sizeof(tpm_fw_ver) - 1)
-		return;
-
-	snprintf(tpm_fw_ver + offset,
-		 sizeof(tpm_fw_ver) - offset,
-		 " RW_B:%s %s",
-		 (active_rw == SYSTEM_IMAGE_RW_B ? "*" : ""),
-		 system_get_version(SYSTEM_IMAGE_RW_B));
-	offset = strlen(tpm_fw_ver);
-	if (offset == sizeof(tpm_fw_ver) - 1)
-		return;
-
-	snprintf(tpm_fw_ver + offset, sizeof(tpm_fw_ver) - offset,
-		 "\n%s:%d %s",
+	snprintf(tpm_fw_ver, sizeof(tpm_fw_ver), "%s:%d RO_%c:%s",
 		 system_get_chip_revision(),
 		 system_get_board_version(),
-		 system_get_build_info());
+		 (active_ro == SYSTEM_IMAGE_RO ? 'A' : 'B'),
+		 system_get_version(active_ro));
+	offset = strlen(tpm_fw_ver);
+	if (offset == sizeof(tpm_fw_ver) - 1)
+		return;
+
+	snprintf(tpm_fw_ver + offset,
+		 sizeof(tpm_fw_ver) - offset, " RW_%c:%s",
+		 (active_rw == SYSTEM_IMAGE_RW ? 'A' : 'B'),
+		 system_get_version(active_rw));
 }
 
 static void set_tpm_state(enum tpm_states state)
