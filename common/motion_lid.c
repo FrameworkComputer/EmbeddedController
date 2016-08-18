@@ -78,9 +78,9 @@ const struct accel_orientation acc_orient = {
 /* Pointer to constant acceleration orientation data. */
 const struct accel_orientation * const p_acc_orient = &acc_orient;
 
-struct motion_sensor_t *accel_base =
+const struct motion_sensor_t * const accel_base =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_BASE];
-struct motion_sensor_t *accel_lid =
+const struct motion_sensor_t * const accel_lid =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 
 /**
