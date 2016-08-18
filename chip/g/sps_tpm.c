@@ -267,33 +267,3 @@ void sps_tpm_enable(void)
 	sps_register_rx_handler(SPS_GENERIC_MODE, tpm_rx_handler, 3);
 	init_new_cycle();
 }
-
-static void sps_tpm_disable(void)
-{
-	sps_tpm_state = SPS_TPM_STATE_PONDERING;
-	sps_unregister_rx_handler();
-	/* We don't care anymore, so we can sleep whenever */
-	delay_sleep_by(0);
-	enable_sleep(SLEEP_MASK_SPI);
-}
-
-static int command_sps_tpm(int argc, char **argv)
-{
-	if (argc > 1) {
-		if (0 != strcasecmp(argv[1], "off"))
-			return EC_ERROR_PARAM1;
-
-		sps_tpm_disable();
-		ccprintf("TPM SPI protocol disabled\n");
-		return EC_SUCCESS;
-	}
-
-	sps_tpm_enable();
-	ccprintf("TPM SPI protocol enabled\n");
-	return EC_SUCCESS;
-}
-
-DECLARE_CONSOLE_COMMAND(spstpm, command_sps_tpm,
-			"[off]",
-			"Not sure yet...",
-			NULL);
