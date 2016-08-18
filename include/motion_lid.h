@@ -9,6 +9,7 @@
 #define __CROS_EC_MOTION_LID_H
 
 #include "host_command.h"
+#include "math_util.h"
 
 /**
  * This structure defines all of the data needed to specify the orientation
