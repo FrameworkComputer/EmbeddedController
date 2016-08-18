@@ -148,3 +148,18 @@ static int mkbp_get_next_event(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_NEXT_EVENT,
 		     mkbp_get_next_event,
 		     EC_VER_MASK(0));
+
+#ifdef CONFIG_MKBP_WAKEUP_MASK
+static int mkbp_get_wake_mask(struct host_cmd_handler_args *args)
+{
+	struct ec_response_host_event_mask *r = args->response;
+
+	r->mask = CONFIG_MKBP_WAKEUP_MASK;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
+		     mkbp_get_wake_mask,
+		     EC_VER_MASK(0));
+#endif
