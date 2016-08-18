@@ -80,11 +80,6 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-/*
- * Enable the spstest console command & corresponding handler.
- */
-#define CONFIG_SPS_TEST
-
 /* Include crypto stuff, both software and hardware. */
 #define CONFIG_DCRYPTO
 
