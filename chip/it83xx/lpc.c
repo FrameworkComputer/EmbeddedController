@@ -29,6 +29,8 @@
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
 
+#define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
+
 /* LPC PM channels */
 enum lpc_pm_ch {
 	LPC_PM1 = 0,
@@ -106,6 +108,26 @@ static void pm_clear_ibf(enum lpc_pm_ch ch)
 	/* bit7, write-1 clear IBF */
 	IT83XX_PMC_PMIE(ch) |= (1 << 7);
 }
+
+#ifdef CONFIG_KEYBOARD_IRQ_GPIO
+static void keyboard_irq_assert(void)
+{
+	/*
+	 * Enforce signal-high for long enough for the signal to be pulled high
+	 * by the external pullup resistor.  This ensures the host will see the
+	 * following falling edge, regardless of the line state before this
+	 * function call.
+	 */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
+	udelay(4);
+	/* Generate a falling edge */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 0);
+	udelay(4);
+
+	/* Set signal high, now that we've generated the edge */
+	gpio_set_level(CONFIG_KEYBOARD_IRQ_GPIO, 1);
+}
+#endif
 
 /**
  * Generate SMI pulse to the host chipset via GPIO.
@@ -273,6 +295,14 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	/* keyboard */
 	IT83XX_KBC_KBHISR |= 0x10;
 
+#ifdef CONFIG_KEYBOARD_IRQ_GPIO
+	task_clear_pending_irq(IT83XX_IRQ_KBC_OUT);
+	/* The data output to the KBC Data Output Register. */
+	IT83XX_KBC_KBHIKDOR = chr;
+	task_enable_irq(IT83XX_IRQ_KBC_OUT);
+	if (send_irq)
+		keyboard_irq_assert();
+#else
 	/*
 	 * bit0 = 0, The IRQ1 is controlled by the IRQ1B bit in KBIRQR.
 	 * bit1 = 0, The IRQ12 is controlled by the IRQ12B bit in KBIRQR.
@@ -292,6 +322,7 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 	/* The data output to the KBC Data Output Register. */
 	IT83XX_KBC_KBHIKDOR = chr;
 	task_enable_irq(IT83XX_IRQ_KBC_OUT);
+#endif
 }
 
 void lpc_keyboard_clear_buffer(void)
@@ -307,6 +338,9 @@ void lpc_keyboard_clear_buffer(void)
 void lpc_keyboard_resume_irq(void)
 {
 	if (lpc_keyboard_has_char()) {
+#ifdef CONFIG_KEYBOARD_IRQ_GPIO
+		keyboard_irq_assert();
+#else
 		/* The IRQ1 is controlled by the IRQ1B bit in KBIRQR. */
 		IT83XX_KBC_KBHICR &= ~0x01;
 
@@ -315,6 +349,7 @@ void lpc_keyboard_resume_irq(void)
 		 * (KBHICR) is 0, the bit directly controls the IRQ1 signal.
 		 */
 		IT83XX_KBC_KBIRQR |= 0x01;
+#endif
 
 		task_clear_pending_irq(IT83XX_IRQ_KBC_OUT);
 
@@ -409,11 +444,13 @@ void lpc_kbc_obe_interrupt(void)
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_OUT);
 
+#ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	if (!(IT83XX_KBC_KBHICR & 0x01)) {
 		IT83XX_KBC_KBIRQR &= ~0x01;
 
 		IT83XX_KBC_KBHICR |= 0x01;
 	}
+#endif
 
 #ifdef HAS_TASK_KEYPROTO
 	task_wake(TASK_ID_KEYPROTO);
@@ -562,6 +599,32 @@ void pm5_ibf_interrupt(void)
 	task_clear_pending_irq(IT83XX_IRQ_PMC5_IN);
 }
 
+/**
+ * Preserve event masks across a sysjump.
+ */
+static void lpc_sysjump(void)
+{
+	system_add_jump_tag(LPC_SYSJUMP_TAG, 1,
+				sizeof(event_mask), event_mask);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump, HOOK_PRIO_DEFAULT);
+
+/**
+ * Restore event masks after a sysjump.
+ */
+static void lpc_post_sysjump(void)
+{
+	const uint32_t *prev_mask;
+	int size, version;
+
+	prev_mask = (const uint32_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
+							  &version, &size);
+	if (!prev_mask || version != 1 || size != sizeof(event_mask))
+		return;
+
+	memcpy(event_mask, prev_mask, sizeof(event_mask));
+}
+
 static void lpc_init(void)
 {
 	enum ec2i_message ec2i_r;
@@ -687,13 +750,18 @@ static void lpc_init(void)
 	task_enable_irq(IT83XX_IRQ_KBC_IN);
 
 	task_clear_pending_irq(IT83XX_IRQ_PMC_IN);
+	pm_set_status(LPC_ACPI_CMD, EC_LPC_STATUS_PROCESSING, 0);
 	task_enable_irq(IT83XX_IRQ_PMC_IN);
 
 	task_clear_pending_irq(IT83XX_IRQ_PMC2_IN);
+	pm_set_status(LPC_HOST_CMD, EC_LPC_STATUS_PROCESSING, 0);
 	task_enable_irq(IT83XX_IRQ_PMC2_IN);
 
 	task_clear_pending_irq(IT83XX_IRQ_PMC3_IN);
 	task_enable_irq(IT83XX_IRQ_PMC3_IN);
+
+	/* Restore event masks if needed */
+	lpc_post_sysjump();
 
 	/* Sufficiently initialized */
 	init_done = 1;
