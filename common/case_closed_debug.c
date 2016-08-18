@@ -28,14 +28,16 @@
 USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI);
 #endif
 
-static enum ccd_mode current_mode = CCD_MODE_DISABLED;
+static enum ccd_mode current_mode = CCD_MODE_COUNT;
 
 void ccd_set_mode(enum ccd_mode new_mode)
 {
 	if (new_mode == current_mode)
 		return;
 
+#ifndef CONFIG_USB_SELECT_PHY
 	if (current_mode != CCD_MODE_DISABLED)
+#endif
 		usb_release();
 
 	current_mode = new_mode;
@@ -51,6 +53,10 @@ void ccd_set_mode(enum ccd_mode new_mode)
 	usb_spi_enable(&ccd_usb_spi, new_mode == CCD_MODE_ENABLED);
 #endif
 
+#ifdef CONFIG_USB_SELECT_PHY
+	ccd_phy_init(new_mode != CCD_MODE_DISABLED);
+#else
 	if (new_mode != CCD_MODE_DISABLED)
 		usb_init();
+#endif
 }

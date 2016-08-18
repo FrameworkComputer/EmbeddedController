@@ -33,14 +33,13 @@ int debug_cable_is_attached(void)
 
 void rdd_interrupt(void)
 {
-	int is_debug, current_map;
+	int is_debug;
 
 	delay_sleep_by(1 * SECOND);
 
-	current_map = 0xffff & GREAD(RDD, PROG_DEBUG_STATE_MAP);
 	is_debug = debug_cable_is_attached();
 
-	if (is_debug && (current_map == DETECT_DEBUG)) {
+	if (is_debug) {
 		disable_sleep(SLEEP_MASK_RDD);
 
 		CPRINTS("Debug Accessory connected");
@@ -49,7 +48,7 @@ void rdd_interrupt(void)
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DISCONNECT);
 
 		rdd_attached();
-	} else if (!is_debug && (current_map == DETECT_DISCONNECT)) {
+	} else if (!is_debug) {
 		CPRINTS("Debug Accessory disconnected");
 
 		/* Detect when debug cable is connected */

@@ -532,14 +532,17 @@ static void detect_slave_config(void)
 	 * This must be a power on reset or maybe restart due to a software
 	 * update from a version not setting the register.
 	 */
-	if (!properties) {
+	if (!properties || system_get_reset_flags() & RESET_FLAG_HARD) {
 		/* Read DIOA1 strap pin */
 		if (gpio_get_level(GPIO_STRAP0))
 			/* Strap is pulled high -> Kevin SPI TPM option */
 			properties |= BOARD_SLAVE_CONFIG_SPI;
-		else
+		else {
 			/* Strap is low -> Reef I2C TPM option */
 			properties |= BOARD_SLAVE_CONFIG_I2C;
+			/* One PHY is connected to the AP */
+			properties |= BOARD_USB_AP;
+		}
 
 		/*
 		 * Now save the properties value for future use.

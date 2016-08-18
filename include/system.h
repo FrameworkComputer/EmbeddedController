@@ -465,6 +465,8 @@ int system_process_retry_counter(void);
 /* Board properties options */
 #define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* Slave SPI interface */
 #define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* Slave I2C interface */
+#define BOARD_USB_AP                 (1 << 2)   /* One of the PHYs is  */
+						/* connected to the AP */
 /**
  * Get board properites
  *
