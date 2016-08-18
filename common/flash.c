@@ -820,24 +820,29 @@ DECLARE_CONSOLE_COMMAND(flashread, command_flash_read,
 
 static int command_flash_wp(int argc, char **argv)
 {
+	int val;
+
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strcasecmp(argv[1], "enable"))
-		return flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT, -1);
-	else if (!strcasecmp(argv[1], "disable"))
-		return flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
-	else if (!strcasecmp(argv[1], "now"))
+	if (!strcasecmp(argv[1], "now"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
-	else if (!strcasecmp(argv[1], "rw"))
+
+	if (!strcasecmp(argv[1], "rw"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
-	else if (!strcasecmp(argv[1], "norw"))
+
+	if (!strcasecmp(argv[1], "norw"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, 0);
-	else
-		return EC_ERROR_PARAM1;
+
+	/* Do this last, since anything starting with 'n' means "no" */
+	if (parse_bool(argv[1], &val))
+		return flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
+					 val ? -1 : 0);
+
+	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
-			"<enable | disable | now | rw | norw>",
+			"<BOOLEAN> | now | rw | norw",
 			"Modify flash write protect",
 			NULL);
 

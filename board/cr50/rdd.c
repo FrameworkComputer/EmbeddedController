@@ -125,21 +125,29 @@ void rdd_detached(void)
 
 static int command_ccd(int argc, char **argv)
 {
+	int val;
+
 	if (argc > 1) {
 		if (!strcasecmp("uart", argv[1]) && argc > 2) {
-			if (!strcasecmp("enable", argv[2])) {
+			if (!parse_bool(argv[2], &val))
+				return EC_ERROR_PARAM2;
+
+			if (val) {
 				uart_enabled = 1;
 				uartn_tx_connect(UART_EC);
 				uartn_tx_connect(UART_AP);
-			} else if (!strcasecmp("disable", argv[2])) {
+			} else {
 				uart_enabled = 0;
 				uartn_tx_disconnect(UART_EC);
 				uartn_tx_disconnect(UART_AP);
 			}
 		} else if (argc == 2) {
-			if (!strcasecmp("enable", argv[1]))
+			if (!parse_bool(argv[1], &val))
+				return EC_ERROR_PARAM1;
+
+			if (val)
 				rdd_attached();
-			else if (!strcasecmp("disable", argv[1]))
+			else
 				rdd_detached();
 		} else
 			return EC_ERROR_PARAM1;
@@ -152,6 +160,6 @@ static int command_ccd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
-	"[uart] [enable|disable]",
+	"[uart] [<BOOLEAN>]",
 	"Get/set the case closed debug state",
 	NULL);

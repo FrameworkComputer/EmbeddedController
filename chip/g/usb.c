@@ -1381,15 +1381,20 @@ void usb_release(void)
 
 static int command_usb(int argc, char **argv)
 {
+	int val;
+
 	if (argc > 1) {
-		if (!strcasecmp("on", argv[1]))
-			usb_init();
-		else if (!strcasecmp("off", argv[1]))
-			usb_release();
-		else if (!strcasecmp("a", argv[1]))
+		if (!strcasecmp("a", argv[1]))
 			usb_select_phy(USB_SEL_PHY0);
 		else if (!strcasecmp("b", argv[1]))
 			usb_select_phy(USB_SEL_PHY1);
+		else if (parse_bool(argv[1], &val)) {
+			if (val)
+				usb_init();
+			else
+				usb_release();
+		} else
+			return EC_ERROR_PARAM1;
 	}
 
 	showregs();
@@ -1398,6 +1403,6 @@ static int command_usb(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usb, command_usb,
-			"[on|off|a|b]",
+			"[<BOOLEAN> | a | b]",
 			"Get/set the USB connection state and PHY selection",
 			NULL);
