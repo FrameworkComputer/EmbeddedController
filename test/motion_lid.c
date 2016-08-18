@@ -230,6 +230,33 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 225);
 
+	/* Set lid open to 350 */
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = -173;
+	lid->xyz[Z] = -984;
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == 350);
+
+	/* Set lid open to 10, check rotation did not change. */
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = 173;
+	lid->xyz[Z] = -984;
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == 350);
+
+	/* Rotate back to 180 and then 10 */
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = 0;
+	lid->xyz[Z] = 1000;
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == 180);
+
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = 173;
+	lid->xyz[Z] = -984;
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == 10);
+
 	/*
 	 * Align base with hinge and make sure it returns unreliable for angle.
 	 * In this test it doesn't matter what the lid acceleration vector is.
