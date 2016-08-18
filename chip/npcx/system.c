@@ -255,6 +255,15 @@ void system_mpu_config(void)
 void __keep __attribute__ ((section(".lowpower_ram")))
 __enter_hibernate_in_lpram(void)
 {
+	/*
+	 * TODO (ML): Set stack pointer to upper 512B of Suspend RAM.
+	 * Our bypass needs stack instructions but FW will turn off main ram
+	 * later for better power consumption.
+	 */
+	asm (
+		"ldr r0, =0x40001800\n"
+		"mov sp, r0\n"
+	);
 
 	/* Disable Code RAM first */
 	SET_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_MRFSH_DIS);
@@ -262,8 +271,22 @@ __enter_hibernate_in_lpram(void)
 
 	/* Set deep idle mode*/
 	NPCX_PMCSR = 0x6;
+
 	/* Enter deep idle, wake-up by GPIOxx or RTC */
-	asm("wfi");
+	/*
+	 * TODO (ML): Although the probability is small, it still has chance
+	 * to meet the same symptom that CPU's behavior is abnormal after
+	 * wake-up from deep idle.
+	 * Workaround: Apply the same bypass of idle but don't enable interrupt.
+	 */
+	asm (
+		"push {r0-r5}\n"        /* Save needed registers */
+		"ldr r0, =0x40001600\n" /* Set r0 to Suspend RAM addr */
+		"wfi\n"                 /* Wait for int to enter idle */
+		"ldm r0, {r0-r5}\n"     /* Add a delay after WFI */
+		"pop {r0-r5}\n"         /* Restore regs before enabling ints */
+		"isb\n"                 /* Flush the cpu pipeline */
+	);
 
 	/* RTC wake-up */
 	if (IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO))
