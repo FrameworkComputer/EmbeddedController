@@ -80,6 +80,16 @@
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE    BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID     LID_ACCEL
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 256
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+
+/*
+ * Sensor internal FIFO are not enabled, we need to poll at
+ * every data point.
+ */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	((1 << BASE_ACCEL) | (1 << BASE_GYRO) | (1 << LID_ACCEL))
 
 /* USB PD config */
 #define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
