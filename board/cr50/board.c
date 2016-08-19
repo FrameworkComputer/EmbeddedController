@@ -123,7 +123,12 @@ void pmu_wakeup_interrupt(void)
 		 */
 		delay_sleep_by(3 * MINUTE);
 
-		if (!gpio_get_level(GPIO_SYS_RST_L_IN))
+		/*
+		 * If sys_rst_l is configured to wake on low and the signal is
+		 * low then call sys_rst_asserted
+		 */
+		if (!gpio_get_level(GPIO_SYS_RST_L_IN) &&
+		    GREAD_FIELD(PINMUX, EXITINV0, DIOM0))
 			sys_rst_asserted(GPIO_SYS_RST_L_IN);
 	}
 
@@ -137,6 +142,32 @@ void pmu_wakeup_interrupt(void)
 
 }
 DECLARE_IRQ(GC_IRQNUM_PMU_INTR_WAKEUP_INT, pmu_wakeup_interrupt, 1);
+
+void board_configure_deep_sleep_wakepins(void)
+{
+	/*
+	 * Disable the i2c and spi slave wake sources since the TPM is
+	 * not being used and reenable them in their init functions on
+	 * resume.
+	 */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA12, 0); /* SPS_CS_L */
+	/* TODO remove i2cs wake event */
+
+	/*
+	 * Whether it is a short pulse or long one waking on the rising edge is
+	 * fine because the goal of sys_rst is to reset the TPM and after
+	 * resuming from deep sleep the TPM will be reset. Cr50 doesn't need to
+	 * read the low value and then reset.
+	 *
+	 * Configure cr50 to resume on the rising edge of sys_rst_l
+	 */
+	/* Disable sys_rst_l as a wake pin */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 0);
+	/* Reconfigure and reenable it. */
+	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 1); /* edge sensitive */
+	GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 0);  /* wake on high */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);   /* enable powerdown exit */
+}
 
 static void init_interrupts(void)
 {

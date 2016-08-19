@@ -123,6 +123,7 @@ enum usb_spi {
 	USB_SPI_EC,
 };
 
+void board_configure_deep_sleep_wakepins(void);
 /* Interrupt handler */
 void sys_rst_asserted(enum gpio_signal signal);
 void device_state_on(enum gpio_signal signal);
