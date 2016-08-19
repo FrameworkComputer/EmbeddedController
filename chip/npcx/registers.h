@@ -948,9 +948,10 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define NPCX_HIPMCTL_IBFIE               0
 
 /* NPCX_HIPMST */
-#define NPCX_HIPMST_ST0                  4
-#define NPCX_HIPMST_ST1                  5
-#define NPCX_HIPMST_ST2                  6
+#define NPCX_HIPMST_F0                   2 /* EC_LPC_CMDR_BUSY */
+#define NPCX_HIPMST_ST0                  4 /* EC_LPC_CMDR_ACPI_BRST */
+#define NPCX_HIPMST_ST1                  5 /* EC_LPC_CMDR_SCI */
+#define NPCX_HIPMST_ST2                  6 /* EC_LPC_CMDR_SMI */
 
 /* NPCX_HIPMIC */
 #define NPCX_HIPMIC_SMIB                 1

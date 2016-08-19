@@ -245,7 +245,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	/* Write result to the data byte.  This sets the TOH status bit. */
 	NPCX_HIPMDO(PMC_HOST_CMD) = args->result;
 	/* Clear processing flag */
-	CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
+	CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 }
 
 static void lpc_send_response_packet(struct host_packet *pkt)
@@ -257,7 +257,7 @@ static void lpc_send_response_packet(struct host_packet *pkt)
 	/* Write result to the data byte.  This sets the TOH status bit. */
 	NPCX_HIPMDO(PMC_HOST_CMD) = pkt->driver_result;
 	/* Clear processing flag */
-	CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
+	CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 }
 
 int lpc_keyboard_has_char(void)
@@ -430,12 +430,18 @@ static void handle_acpi_write(int is_cmd)
 {
 	uint8_t value, result;
 
+	/* Set processing flag before reading command byte */
+	SET_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_F0);
+
 	/* Read command/data; this clears the FRMH status bit. */
 	value = NPCX_HIPMDI(PMC_ACPI);
 
 	/* Handle whatever this was. */
 	if (acpi_ap_to_ec(is_cmd, value, &result))
 		NPCX_HIPMDO(PMC_ACPI) = result;
+
+	/* Clear processing flag */
+	CLEAR_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_F0);
 
 	/*
 	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
@@ -452,7 +458,7 @@ static void handle_acpi_write(int is_cmd)
 static void handle_host_write(int is_cmd)
 {
 	/* Set processing flag before reading command byte */
-	SET_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
+	SET_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 	/*
 	 * Read the command byte.  This clears the FRMH bit in
 	 * the status byte.
@@ -488,7 +494,7 @@ static void handle_host_write(int is_cmd)
 		int csum, i;
 
 		/* Clear processing flag */
-		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
+		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 
 		host_cmd_args.version = lpc_host_args->command_version;
 		host_cmd_args.params = params_copy;
@@ -527,7 +533,7 @@ static void handle_host_write(int is_cmd)
 		/* Old style command, now unsupported */
 		host_cmd_args.result = EC_RES_INVALID_COMMAND;
 		/* Clear processing flag */
-		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), 2);
+		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 	}
 
 	/* Hand off to host command handler */
