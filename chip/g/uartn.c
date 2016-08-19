@@ -119,13 +119,12 @@ void uartn_enable(int uart)
 	GR_UART_CTRL(uart) = 0x01;
 
 /* TODO(crosbug.com/p/56540): Remove this when UART0_RX works everywhere */
-#ifdef GC_UART0_RX_DISABLE
-	if (!uart)
+#if defined(BOARD_CR50) && !defined(SECTION_IS_RO)
+	if (!uart && (system_get_board_properties() & BOARD_DISABLE_UART0_RX))
 		return;
 #endif
-	/* Enable UART RX if it is connected to an external pad */
-	if (DIO_SEL_REG(GC_PINMUX_UART0_RX_SEL_OFFSET + (uart * 16)))
-		GR_UART_CTRL(uart) |= 0x02;
+
+	GR_UART_CTRL(uart) |= 0x02;
 }
 
 /* Disable TX, RX, HW flow control, and loopback */

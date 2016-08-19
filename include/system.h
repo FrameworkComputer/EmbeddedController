@@ -467,6 +467,7 @@ int system_process_retry_counter(void);
 #define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* Slave I2C interface */
 #define BOARD_USB_AP                 (1 << 2)   /* One of the PHYs is  */
 						/* connected to the AP */
+#define BOARD_DISABLE_UART0_RX       (1 << 3)   /* Disable UART0 RX    */
 /**
  * Get board properites
  *
@@ -474,6 +475,9 @@ int system_process_retry_counter(void);
  * @return uint32_t bit field where a set bit indicates option exists
  */
 uint32_t system_get_board_properties(void);
+
+/* Board specific function used to initialize the system board properties. */
+void system_init_board_properties(void);
 
 /**
  * API for board specific version of system_get_board_properties

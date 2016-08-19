@@ -522,7 +522,7 @@ void board_update_device_state(enum device_type device)
 	}
 }
 
-static void detect_slave_config(void)
+void system_init_board_properties(void)
 {
 	uint32_t properties;
 
@@ -542,6 +542,12 @@ static void detect_slave_config(void)
 			properties |= BOARD_SLAVE_CONFIG_I2C;
 			/* One PHY is connected to the AP */
 			properties |= BOARD_USB_AP;
+			/*
+			 * TODO(crosbug.com/p/56540): enable UART0 RX on Reef.
+			 * Early reef boards dont have the necessary pullups on
+			 * UART0RX so disable it until that is fixed.
+			 */
+			properties |= BOARD_DISABLE_UART0_RX;
 		}
 
 		/*
@@ -559,8 +565,6 @@ static void detect_slave_config(void)
 	/* Save this configuration setting */
 	board_properties = properties;
 }
-/* Need this hook to run before the default hook level */
-DECLARE_HOOK(HOOK_INIT, detect_slave_config, HOOK_PRIO_DEFAULT - 1);
 
 uint32_t system_board_properties_callback(void)
 {

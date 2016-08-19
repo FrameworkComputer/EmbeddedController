@@ -81,15 +81,7 @@ PINMUX(GPIO(STRAP0),          A1, DIO_INPUT)
 
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
-/* PINMUX(FUNC(UART0_RX),     A13, DIO_INPUT | DIO_WAKE_LOW) */
-/*
- * TODO(crosbug.com/p/56540): Enable UART0_RX when possible.
- * At the moment, UART0_RX should only be used for debugging purposes.
- * If there is no external pull up on DIOA13, Cr50 can get continual UART0_RX
- * interrupts and will constantly reboot. Not all boards have that pullup.
- *   UART0_RX = DIOA13
- */
-
+PINMUX(FUNC(UART0_RX),        A13, DIO_INPUT | DIO_WAKE_FALLING)
 /*
  * UART1_TX and UART2_TX are configured in usart.c. They are not set as outputs
  * here in order to avoid interfering with servo. They can be controlled using

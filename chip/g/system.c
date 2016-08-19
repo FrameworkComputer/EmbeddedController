@@ -81,6 +81,10 @@ void system_pre_init(void)
 	 * no effect.
 	 */
 	GREG32(GLOBALSEC, FLASH_REGION0_CTRL_CFG_EN) = 0;
+
+#ifdef BOARD_CR50
+	system_init_board_properties();
+#endif
 }
 
 void system_reset(int flags)
