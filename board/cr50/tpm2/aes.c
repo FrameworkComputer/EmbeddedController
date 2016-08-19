@@ -119,34 +119,30 @@ CRYPT_RESULT _cpri__AESEncryptCFB(
 	uint8_t *out, uint32_t num_bits, uint8_t *key, uint8_t *iv,
 	uint32_t len, uint8_t *in)
 {
-	uint8_t *ivp = NULL;
-	int32_t slen;
-	int i;
-
 	if (len == 0)
 		return CRYPT_SUCCESS;
 
 	assert(out != NULL && key != NULL && iv != NULL && in != NULL);
 	assert(len <= INT32_MAX);
-	slen = (int32_t) len;
 	if (!DCRYPTO_aes_init(key, num_bits, iv, CIPHER_MODE_CTR, ENCRYPT_MODE))
 		return CRYPT_PARAMETER;
 
-	for (; slen > 0; slen -= 16) {
+	for (; len >= 16; len -= 16, in += 16, out += 16) {
 		DCRYPTO_aes_block(in, out);
-		ivp = iv;
-		for (i = slen < 16 ? slen : 16; i > 0; i--) {
-			*ivp++ = *out++;
-			in++;
-		}
-		DCRYPTO_aes_write_iv(iv);
+		DCRYPTO_aes_write_iv(out);
 	}
-	/* If the inner loop (i loop) was smaller than 16, then slen
-	 * would have been smaller than 16 and it is now negative. If
-	 * it is negative, then it indicates how many bytes are needed
-	 * to pad out the IV for the next round. */
-	for (; slen < 0; slen++)
-		*ivp++ = 0;
+	if (len > 0) {
+		uint8_t buf[16];
+
+		memcpy(buf, in, len);
+		memset(buf+len, 0, 16-len);
+		DCRYPTO_aes_block(buf, buf);
+		memcpy(out, buf, len);
+		memcpy(iv, buf, len);
+		memset(iv+len, 0, 16-len);
+	} else {
+		memcpy(iv, out-16, 16);
+	}
 	return CRYPT_SUCCESS;
 }
 
