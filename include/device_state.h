@@ -19,6 +19,7 @@ enum device_state {
 struct device_config {
 	const char *name;		/* Device name */
 	enum device_state state;	/* Device status */
+	enum device_state last_known_state;	/* Either off or on */
 	/* Deferred handler to detect power off */
 	const struct deferred_data *deferred;
 	enum gpio_signal detect;	/* GPIO detecting power on */
@@ -41,11 +42,4 @@ void device_set_state(enum device_type device, enum device_state state);
 
 /* Update the device state based on the device gpios */
 void board_update_device_state(enum device_type device);
-
-/**
- * Enables or disables all device gpio interrupts
- *
- * @param enable	enable or disable detection
- */
-void device_detect_state_enable(int enable);
 #endif  /* __CROS_DEVICE_STATE_H */

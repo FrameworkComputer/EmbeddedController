@@ -139,7 +139,6 @@ void pmu_wakeup_interrupt(void)
 	/* Trigger timer1 interrupt */
 	if (wakeup_src & GC_PMU_EXITPD_SRC_TIMELS0_PD_EXIT_TIMER1_MASK)
 		task_trigger_irq(GC_IRQNUM_TIMELS0_TIMINT1);
-
 }
 DECLARE_IRQ(GC_IRQNUM_PMU_INTR_WAKEUP_INT, pmu_wakeup_interrupt, 1);
 
@@ -402,15 +401,19 @@ void nvmem_compute_sha(uint8_t *p_buf, int num_bytes,
 	memcpy(p_sha, sha1_digest, sha_len);
 }
 
-static void device_state_changed(enum device_type device,
+static int device_state_changed(enum device_type device,
 				 enum device_state state)
 {
+	int state_changed = state != device_states[device].last_known_state;
+
 	device_set_state(device, state);
 
 	/*
 	 * We've determined the device state, so cancel any deferred callbacks.
 	 */
 	hook_call_deferred(device_states[device].deferred, -1);
+
+	return state_changed;
 }
 
 /*
@@ -426,12 +429,13 @@ static int servo_state_unknown(void)
 	return 0;
 }
 
-static void device_powered_off(enum device_type device, int uart)
+static int device_powered_off(enum device_type device, int uart)
 {
 	if (device_get_state(device) == DEVICE_STATE_ON)
-		return;
+		return EC_ERROR_UNKNOWN;
 
-	device_state_changed(device, DEVICE_STATE_OFF);
+	if (!device_state_changed(device, DEVICE_STATE_OFF))
+		return EC_ERROR_UNKNOWN;
 
 	if (uart) {
 		/* Disable RX and TX on the UART peripheral */
@@ -440,6 +444,7 @@ static void device_powered_off(enum device_type device, int uart)
 		/* Disconnect the TX pin from the UART peripheral */
 		uartn_tx_disconnect(uart);
 	}
+	return EC_SUCCESS;
 }
 
 static void servo_deferred(void)
@@ -453,7 +458,8 @@ DECLARE_DEFERRED(servo_deferred);
 
 static void ap_deferred(void)
 {
-	device_powered_off(DEVICE_AP, UART_AP);
+	if (device_powered_off(DEVICE_AP, UART_AP) == EC_SUCCESS)
+		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 }
 DECLARE_DEFERRED(ap_deferred);
 
@@ -482,10 +488,12 @@ struct device_config device_states[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
 
-static void device_powered_on(enum device_type device, int uart)
+/* Returns EC_SUCCESS if the device state changed to on */
+static int device_powered_on(enum device_type device, int uart)
 {
 	/* Update the device state */
-	device_state_changed(device, DEVICE_STATE_ON);
+	if (!device_state_changed(device, DEVICE_STATE_ON))
+		return EC_ERROR_UNKNOWN;
 
 	/* Enable RX and TX on the UART peripheral */
 	uartn_enable(uart);
@@ -494,6 +502,8 @@ static void device_powered_on(enum device_type device, int uart)
 	if (device_get_state(DEVICE_SERVO) != DEVICE_STATE_ON &&
 	    !uartn_enabled(uart))
 		uartn_tx_connect(uart);
+
+	return EC_SUCCESS;
 }
 
 static void servo_attached(void)
@@ -515,7 +525,8 @@ void device_state_on(enum gpio_signal signal)
 
 	switch (signal) {
 	case GPIO_DETECT_AP:
-		device_powered_on(DEVICE_AP, UART_AP);
+		if (device_powered_on(DEVICE_AP, UART_AP) == EC_SUCCESS)
+			hook_notify(HOOK_CHIPSET_RESUME);
 		break;
 	case GPIO_DETECT_EC:
 		device_powered_on(DEVICE_EC, UART_EC);
@@ -546,10 +557,13 @@ void board_update_device_state(enum device_type device)
 		gpio_enable_interrupt(device_states[device].detect);
 
 		/*
-		 * Wait a bit. If cr50 detects this device is ever powered on
-		 * during this time then the status wont be set to powered off.
+		 * The signal is low now, but the detect signals are on UART RX
+		 * which may be receiving something. Wait long enough for an
+		 * entire data chunk to be sent to declare that the device is
+		 * off. If the detect signal remains low for 100us then the
+		 * signal is low because the device is off.
 		 */
-		hook_call_deferred(device_states[device].deferred, 50);
+		hook_call_deferred(device_states[device].deferred, 100);
 	}
 }
 
