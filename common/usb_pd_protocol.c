@@ -245,12 +245,26 @@ static int pd_snk_debug_acc_toggle(int port)
 {
 #if defined(CONFIG_CASE_CLOSED_DEBUG) || \
 defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
+#ifdef CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS
+	static int possible_debug_acc[CONFIG_USB_PD_PORT_COUNT];
+	int vbus = pd_is_vbus_present(port);
+	int result;
+
+	/* reset debouncing of Rd/Rd debug accessory presence */
+	if ((pd[port].last_state != PD_STATE_SNK_DISCONNECTED) || !vbus)
+		possible_debug_acc[port] = 0;
+	/* returns if it was possibly present in the previous iteration */
+	result = possible_debug_acc[port];
+	possible_debug_acc[port] = vbus;
+	return result;
+#else /* !CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS */
 	/*
 	 * when we are in SNK_DISCONNECTED and we see VBUS appearing
 	 * (without having seen Rp before), that might be a powered debug
 	 * accessory, let's toggle to source to try to detect it.
 	 */
 	return pd_is_vbus_present(port);
+#endif /* !CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS */
 #else
 	/* Debug accessories not supported, never toggle */
 	return 0;
