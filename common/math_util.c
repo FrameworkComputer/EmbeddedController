@@ -167,7 +167,7 @@ void rotate(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 
 	if (R == NULL) {
 		if (v != res)
-			memcpy(res, v, sizeof(*v));
+			memcpy(res, v, sizeof(vector_3_t));
 		return;
 	}
 
@@ -196,7 +196,7 @@ void rotate_inv(const vector_3_t v, const matrix_3x3_t R, vector_3_t res)
 
 	if (R == NULL) {
 		if (v != res)
-			memcpy(res, v, sizeof(*v));
+			memcpy(res, v, sizeof(vector_3_t));
 		return;
 	}
 
