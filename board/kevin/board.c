@@ -36,6 +36,7 @@
 #include "shi_chip.h"
 #include "spi.h"
 #include "switch.h"
+#include "system.h"
 #include "task.h"
 #include "tcpm.h"
 #include "timer.h"
@@ -614,3 +615,27 @@ static void usb_charge_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_charge_shutdown, HOOK_PRIO_DEFAULT);
 #endif
+
+#define PWM_DISPLIGHT_SYSJUMP_TAG 0x5044 /* "PD" */
+#define PWM_HOOK_VERSION 1
+
+static void pwm_displight_restore_state(void)
+{
+	const int *prev;
+	int version, size;
+
+	prev = (const int *)system_get_jump_tag(PWM_DISPLIGHT_SYSJUMP_TAG,
+						&version, &size);
+	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev))
+		pwm_set_duty(PWM_CH_DISPLIGHT, *prev);
+}
+DECLARE_HOOK(HOOK_INIT, pwm_displight_restore_state, HOOK_PRIO_INIT_PWM + 1);
+
+static void pwm_displight_preserve_state(void)
+{
+	int pwm_displight_duty = pwm_get_duty(PWM_CH_DISPLIGHT);
+
+	system_add_jump_tag(PWM_DISPLIGHT_SYSJUMP_TAG, PWM_HOOK_VERSION,
+			    sizeof(pwm_displight_duty), &pwm_displight_duty);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, pwm_displight_preserve_state, HOOK_PRIO_DEFAULT);
