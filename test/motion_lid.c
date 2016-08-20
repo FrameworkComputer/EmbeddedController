@@ -96,18 +96,6 @@ const struct accelgyro_drv test_motion_sense = {
 	.get_data_rate = accel_get_data_rate,
 };
 
-const matrix_3x3_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
-const matrix_3x3_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
 struct motion_sensor_t motion_sensors[] = {
 	{.name = "base",
 	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
@@ -115,11 +103,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &test_motion_sense,
-	 .mutex = NULL,
-	 .drv_data = NULL,
-	 .port = 0,
-	 .addr = 0,
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
 		 /* AP: by default shutdown all sensors */
@@ -149,11 +133,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &test_motion_sense,
-	 .mutex = NULL,
-	 .drv_data = NULL,
-	 .port = 0,
-	 .addr = 0,
-	 .rot_standard_ref = &lid_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
 		 /* AP: by default shutdown all sensors */
@@ -197,8 +177,10 @@ static void wait_for_valid_sample(void)
 static int test_lid_angle(void)
 {
 
-	struct motion_sensor_t *base = &motion_sensors[0];
-	struct motion_sensor_t *lid = &motion_sensors[1];
+	struct motion_sensor_t *base = &motion_sensors[
+		CONFIG_LID_ANGLE_SENSOR_BASE];
+	struct motion_sensor_t *lid = &motion_sensors[
+		CONFIG_LID_ANGLE_SENSOR_LID];
 
 	/* We don't have TASK_CHIP so simulate init ourselves */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
@@ -223,7 +205,7 @@ static int test_lid_angle(void)
 	base->xyz[Z] = 1000;
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 0;
-	lid->xyz[Z] = 1000;
+	lid->xyz[Z] = -1000;
 	/* Initial wake up, like init does */
 	task_wake(TASK_ID_MOTIONSENSE);
 
@@ -235,16 +217,16 @@ static int test_lid_angle(void)
 	TEST_ASSERT(motion_lid_get_angle() == 0);
 
 	/* Set lid open to 90 degrees. */
-	lid->xyz[X] = -1000;
-	lid->xyz[Y] = 0;
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = 1000;
 	lid->xyz[Z] = 0;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 90);
 
 	/* Set lid open to 225. */
-	lid->xyz[X] = 500;
-	lid->xyz[Y] = 0;
-	lid->xyz[Z] = -500;
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = -500;
+	lid->xyz[Z] = 500;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 225);
 
@@ -252,8 +234,8 @@ static int test_lid_angle(void)
 	 * Align base with hinge and make sure it returns unreliable for angle.
 	 * In this test it doesn't matter what the lid acceleration vector is.
 	 */
-	base->xyz[X] = 0;
-	base->xyz[Y] = 1000;
+	base->xyz[X] = 1000;
+	base->xyz[Y] = 0;
 	base->xyz[Z] = 0;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
@@ -265,9 +247,9 @@ static int test_lid_angle(void)
 	base->xyz[X] = 500;
 	base->xyz[Y] = 400;
 	base->xyz[Z] = 300;
-	lid->xyz[X] = -500;
-	lid->xyz[Y] = -400;
-	lid->xyz[Z] = -300;
+	lid->xyz[X] =  500;
+	lid->xyz[Y] =  400;
+	lid->xyz[Z] =  300;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
 
