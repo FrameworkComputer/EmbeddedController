@@ -20,7 +20,6 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "util.h"
-#include "wireless.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -78,13 +77,6 @@ enum power_state power_chipset_init(void)
 			CPRINTS("already in S0");
 			return POWER_S0;
 		}
-
-		/*
-		 * TODO: Remove wireless_* control, boards have no
-		 * EC-controlled enable other than VR enable which uses
-		 * power state-based control.
-		 */
-		wireless_set_state(WIRELESS_OFF);
 	} else if (!(system_get_reset_flags() & RESET_FLAG_AP_OFF))
 		/* Auto-power on */
 		chipset_exit_hard_off();
@@ -223,9 +215,6 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S3S0;
 		}
 
-		/* Enable wireless */
-		wireless_set_state(WIRELESS_ON);
-
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
@@ -241,9 +230,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-
-		/* Suspend wireless */
-		wireless_set_state(WIRELESS_SUSPEND);
 
 		msleep(10);
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
@@ -279,9 +265,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S5:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
-
-		/* Disable wireless */
-		wireless_set_state(WIRELESS_OFF);
 
 		gpio_set_level(GPIO_PP1800_LID_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 1);
