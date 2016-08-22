@@ -159,9 +159,6 @@
 /* #define CONFIG_LID_ANGLE_SENSOR_BASE 0 */	/* FIXME(dhendrix): maybe? */
 /* #define CONFIG_LID_ANGLE_SENSOR_LID 2 */	/* FIXME(dhendrix): maybe? */
 
-#undef DEFERRABLE_MAX_COUNT
-#define DEFERRABLE_MAX_COUNT 15
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
