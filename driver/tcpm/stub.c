@@ -66,6 +66,11 @@ int tcpm_get_cc(int port, int *cc1, int *cc2)
 	return tcpc_get_cc(port, cc1, cc2);
 }
 
+int tcpm_select_rp_value(int port, int rp)
+{
+	return -EC_ERROR_UNIMPLEMENTED;
+}
+
 int tcpm_set_cc(int port, int pull)
 {
 	return tcpc_set_cc(port, pull);

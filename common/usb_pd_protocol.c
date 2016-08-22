@@ -1503,6 +1503,7 @@ void pd_task(void)
 	pd[port].power_role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
 	set_state(port, PD_DEFAULT_STATE);
+	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
 	tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
 							      TYPEC_CC_RD);
 

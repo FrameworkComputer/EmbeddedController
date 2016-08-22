@@ -54,6 +54,8 @@
 #define TCPC_REG_ROLE_CTRL         0x1a
 #define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2) \
 		((drp) << 6 | (rp) << 4 | (cc2) << 2 | (cc1))
+#define TCPC_REG_ROLE_CTRL_RP_MASK  0x30
+#define TCPC_REG_ROLE_CTRL_RP(reg)  (((reg) & TCPC_REG_ROLE_CTRL_RP_MASK) >> 4)
 #define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg) & 0xc) >> 2)
 #define TCPC_REG_ROLE_CTRL_CC1(reg) ((reg) & 0x3)
 
@@ -117,6 +119,7 @@ extern const struct usb_mux_driver tcpci_tcpm_usb_mux_driver;
 
 int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2);
 int tcpci_tcpm_get_vbus_level(int port);
+int tcpci_tcpm_select_rp_value(int port, int rp);
 int tcpci_tcpm_set_cc(int port, int pull);
 int tcpci_tcpm_set_polarity(int port, int polarity);
 int tcpci_tcpm_set_vconn(int port, int enable);

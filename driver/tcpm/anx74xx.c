@@ -436,6 +436,36 @@ static int anx74xx_tcpm_get_cc(int port, int *cc1, int *cc2)
 	return EC_SUCCESS;
 }
 
+static int anx74xx_tcpm_select_rp_value(int port, int rp)
+{
+	int reg;
+	int rv;
+
+	rv = tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_6, &reg);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
+	/* clear Bit[0,1] R_RP to default Rp's value */
+	reg &= ~0x03;
+
+	switch (rp) {
+	case TYPEC_RP_1A5:
+		/* Set Rp strength to 12K for presenting 1.5A */
+		reg |= ANX74XX_REG_CC_PULL_RP_12K;
+		break;
+	case TYPEC_RP_3A0:
+		/* Set Rp strength to 4K for presenting 3A */
+		reg |= ANX74XX_REG_CC_PULL_RP_4K;
+		break;
+	case TYPEC_RP_USB:
+	default:
+		/* default: Set Rp strength to 36K */
+		break;
+	}
+
+	return tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_6, reg);
+}
+
 static int anx74xx_tcpm_set_cc(int port, int pull)
 {
 	int rv = EC_SUCCESS;
@@ -592,36 +622,17 @@ static int anx74xx_alert_status(int port, int *alert)
 
 static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 {
-	int reg, rv = 0;
+	int reg, rv;
 
-	rv |= tcpc_read(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, &reg);
+	rv = tcpc_read(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, &reg);
+	if (rv)
+		return rv;
 	if (enable)
 		reg &= ~(ANX74XX_REG_IRQ_CC_MSG_INT);
 	else/* Disable RX message by masking interrupt */
 		reg |= (ANX74XX_REG_IRQ_CC_MSG_INT);
 	anx74xx_tcpm_set_auto_good_crc(port, enable);
-	rv |= tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, reg);
-
-	/* patch for Rp 36K issue */
-	rv |= tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_6, &reg);
-	if (rv)
-		return EC_ERROR_UNKNOWN;
-
-	/* clear Bit[0,1] R_RP to default Rp's value */
-	reg &= ~0x03;
-
-	if (enable) {
-#ifdef CONFIG_USB_PD_PULLUP_1_5A
-		/* Set Rp strength to 12K for presenting 1.5A */
-		reg |= ANX74XX_REG_CC_PULL_RP_12K;
-#elif defined(CONFIG_USB_PD_PULLUP_3A)
-		/* Set Rp strength to 4K for presenting 3A */
-		reg |= ANX74XX_REG_CC_PULL_RP_4K;
-#endif
-	}
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_6, reg);
-
-	return rv;
+	return tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, reg);
 }
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
@@ -830,6 +841,7 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &anx74xx_tcpm_get_vbus_level,
 #endif
+	.select_rp_value	= &anx74xx_tcpm_select_rp_value,
 	.set_cc			= &anx74xx_tcpm_set_cc,
 	.set_polarity		= &anx74xx_tcpm_set_polarity,
 	.set_vconn		= &anx74xx_tcpm_set_vconn,

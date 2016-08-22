@@ -30,6 +30,13 @@ enum tcpc_cc_pull {
 	TYPEC_CC_OPEN = 3,
 };
 
+enum tcpc_rp_value {
+	TYPEC_RP_USB = 0,
+	TYPEC_RP_1A5 = 1,
+	TYPEC_RP_3A0 = 2,
+	TYPEC_RP_RESERVED = 3,
+};
+
 enum tcpm_transmit_type {
 	TCPC_TX_SOP = 0,
 	TCPC_TX_SOP_PRIME = 1,
@@ -76,6 +83,16 @@ struct tcpm_drv {
 	 * @return 0 => VBUS not detected, 1 => VBUS detected
 	 */
 	int (*get_vbus_level)(int port);
+
+	/**
+	 * Set the value of the CC pull-up used when we are a source.
+	 *
+	 * @param port Type-C port number
+	 * @param rp One of enum tcpc_rp_value
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*select_rp_value)(int port, int rp);
 
 	/**
 	 * Set the CC pull resistor. This sets our role as either source or sink.

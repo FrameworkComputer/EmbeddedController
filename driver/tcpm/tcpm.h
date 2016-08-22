@@ -78,6 +78,11 @@ static inline int tcpm_get_vbus_level(int port)
 	return tcpc_config[port].drv->get_vbus_level(port);
 }
 
+static inline int tcpm_select_rp_value(int port, int rp)
+{
+	return tcpc_config[port].drv->select_rp_value(port, rp);
+}
+
 static inline int tcpm_set_cc(int port, int pull)
 {
 	return tcpc_config[port].drv->set_cc(port, pull);
@@ -150,6 +155,16 @@ int tcpm_get_cc(int port, int *cc1, int *cc2);
  * @return 0 => VBUS not detected, 1 => VBUS detected
  */
 int tcpm_get_vbus_level(int port);
+
+/**
+ * Set the value of the CC pull-up used when we are a source.
+ *
+ * @param port Type-C port number
+ * @param rp One of enum tcpc_rp_value
+ *
+ * @return EC_SUCCESS or error
+ */
+int tcpm_select_rp_value(int port, int rp);
 
 /**
  * Set the CC pull resistor. This sets our role as either source or sink.

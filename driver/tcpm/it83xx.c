@@ -274,23 +274,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* W/C status */
 	IT83XX_USBPD_ISR(port) = 0xff;
 	/* enable cc, select cc1 and Rd. */
-	/*
-	 * bit[3-2]: CC output current (when Rp selected)
-	 *       00: reserved
-	 *       01: 330uA outpt (3.0A)
-	 *       10: 180uA outpt (1.5A)
-	 *       11: 80uA outpt  (USB default)
-	 */
-#ifdef CONFIG_USB_PD_PULLUP_1_5A
-	/* (Rp 1.5A when selected) */
-	IT83XX_USBPD_CCGCR(port) = 0x9;
-#elif defined(CONFIG_USB_PD_PULLUP_3A)
-	/* (Rp 3.0A when selected) */
-	IT83XX_USBPD_CCGCR(port) = 0x5;
-#else
-	/* (Rp default when selected) */
 	IT83XX_USBPD_CCGCR(port) = 0xd;
-#endif
 	/* change data role as the same power role */
 	it83xx_set_data_role(port, role);
 	/* set power role */
@@ -347,6 +331,31 @@ static int it83xx_tcpm_get_cc(int port, int *cc1, int *cc2)
 	*cc1 = it83xx_get_cc(port, USBPD_CC_PIN_1);
 
 	return EC_SUCCESS;
+}
+
+static int it83xx_tcpm_select_rp_value(int port, int rp)
+{
+	uint8_t rp;
+	/*
+	 * bit[3-2]: CC output current (when Rp selected)
+	 *       00: reserved
+	 *       01: 330uA outpt (3.0A)
+	 *       10: 180uA outpt (1.5A)
+	 *       11: 80uA outpt  (USB default)
+	 */
+	switch (rp) {
+	case TYPEC_RP_1A5:
+		rp = 2 << 2;
+		break;
+	case TYPEC_RP_3A0:
+		rp = 1 << 2;
+		break;
+	case TYPEC_RP_USB:
+	default:
+		rp = 3 << 2;
+		break;
+	}
+	IT83XX_USBPD_CCGCR(port) = (IT83XX_USBPD_CCGCR(port) & ~(3 << 2)) | Rp;
 }
 
 static int it83xx_tcpm_set_cc(int port, int pull)
@@ -459,6 +468,7 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= NULL,
 #endif
+	.select_rp_value	= &it83xx_tcpm_select_rp_value,
 	.set_cc			= &it83xx_tcpm_set_cc,
 	.set_polarity		= &it83xx_tcpm_set_polarity,
 	.set_vconn		= &it83xx_tcpm_set_vconn,

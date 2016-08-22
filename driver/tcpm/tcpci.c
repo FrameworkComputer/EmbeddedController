@@ -85,23 +85,32 @@ static int tcpci_tcpm_get_power_status(int port, int *status)
 	return tcpc_read(port, TCPC_REG_POWER_STATUS, status);
 }
 
+int tcpci_tcpm_select_rp_value(int port, int rp)
+{
+	int reg;
+	int rv;
+
+	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &reg);
+	if (rv)
+		return rv;
+	reg = (reg & ~TCPC_REG_ROLE_CTRL_RP_MASK)
+	    | ((rp << 4) & TCPC_REG_ROLE_CTRL_RP_MASK);
+	return tcpc_write(port, TCPC_REG_ROLE_CTRL, reg);
+}
+
 int tcpci_tcpm_set_cc(int port, int pull)
 {
-	uint8_t rp = 0;
+	int reg, rv;
+	uint8_t rp;
+
+	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &reg);
+	if (rv)
+		return rv;
+	rp = TCPC_REG_ROLE_CTRL_RP(reg);
 	/*
 	 * Set manual control of Rp/Rd, and set both CC lines to the same
-	 * pull. Set desired Rp strength:
-	 * 00: Rp default
-	 * 01: Rp 1.5A
-	 * 10: Rp 3.0A
-	 * 11: Reserved
+	 * pull.
 	 */
-#ifdef CONFIG_USB_PD_PULLUP_1_5A
-	rp = 0x01;
-#elif defined(CONFIG_USB_PD_PULLUP_3A)
-	rp = 0x02;
-#endif
-
 	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
 			  TCPC_REG_ROLE_CTRL_SET(0, rp, pull, pull));
 }
@@ -366,6 +375,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,
 #endif
+	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,

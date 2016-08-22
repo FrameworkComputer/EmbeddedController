@@ -30,6 +30,8 @@ static struct fusb302_chip_state {
 	int tx_hard_reset_req;
 	int device_id;
 	struct mutex set_cc_lock;
+	uint8_t mdac_vnc;
+	uint8_t mdac_rd;
 } state[CONFIG_USB_PD_PORT_COUNT];
 
 /* bring the FUSB302 out of reset after Hard Reset signaling */
@@ -100,7 +102,6 @@ static int measure_cc_pin_source(int port, int cc_measure)
 	int switches0_reg;
 	int reg;
 	int cc_lvl;
-	int bc_lvl;
 
 	/* Read status register */
 	tcpc_read(port, TCPC_REG_SWITCHES0, &reg);
@@ -119,8 +120,8 @@ static int measure_cc_pin_source(int port, int cc_measure)
 	/* Set measurement switch */
 	tcpc_write(port, TCPC_REG_SWITCHES0, reg);
 
-	/* Set MDAC for Open vs Rd/Ra comparison (~1.6V) */
-	tcpc_write(port, TCPC_REG_MEASURE, 0x26);
+	/* Set MDAC for Open vs Rd/Ra comparison */
+	tcpc_write(port, TCPC_REG_MEASURE, state[port].mdac_vnc);
 
 	/* Wait on measurement */
 	usleep(250);
@@ -131,16 +132,19 @@ static int measure_cc_pin_source(int port, int cc_measure)
 	/* Assume open */
 	cc_lvl = TYPEC_CC_VOLT_OPEN;
 
+	/* CC level is below the 'no connect' threshold (vOpen) */
 	if ((reg & TCPC_REG_STATUS0_COMP) == 0) {
-		/*
-		 * CC line is < 1.6V, now need to determine if Rd or Ra is
-		 * attached. The Ra threshold is < 200 mV and so can use the
-		 * bc_lvl field of STATUS0 register.
-		 */
-		bc_lvl = reg & (TCPC_REG_STATUS0_BC_LVL1 |
-				TCPC_REG_STATUS0_BC_LVL0);
+		/* Set MDAC for Rd vs Ra comparison */
+		tcpc_write(port, TCPC_REG_MEASURE, state[port].mdac_rd);
 
-		cc_lvl = bc_lvl ? TYPEC_CC_VOLT_RD : TYPEC_CC_VOLT_RA;
+		/* Wait on measurement */
+		usleep(250);
+
+		/* Read status register */
+		tcpc_read(port, TCPC_REG_STATUS0, &reg);
+
+		cc_lvl = (reg & TCPC_REG_STATUS0_COMP) ? TYPEC_CC_VOLT_RD
+						       : TYPEC_CC_VOLT_RA;
 	}
 
 	/* Restore SWITCHES0 register to its value prior */
@@ -339,6 +343,40 @@ static int fusb302_send_message(int port, uint16_t header, const uint32_t *data,
 	return rv;
 }
 
+static int fusb302_tcpm_select_rp_value(int port, int rp)
+{
+	int reg;
+	int rv;
+	uint8_t vnc, rd;
+
+	rv = tcpc_read(port, TCPC_REG_CONTROL0, &reg);
+	if (rv)
+		return rv;
+
+	/* Set the current source for Rp value */
+	reg &= ~TCPC_REG_CONTROL0_HOST_CUR_MASK;
+	switch (rp) {
+	case TYPEC_RP_1A5:
+		reg |= TCPC_REG_CONTROL0_HOST_CUR_1A5;
+		vnc = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_1_5_VNC_MV);
+		rd = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_1_5_RD_THRESH_MV);
+		break;
+	case TYPEC_RP_3A0:
+		reg |= TCPC_REG_CONTROL0_HOST_CUR_3A0;
+		vnc = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_3_0_VNC_MV);
+		rd = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_3_0_RD_THRESH_MV);
+		break;
+	case TYPEC_RP_USB:
+	default:
+		reg |= TCPC_REG_CONTROL0_HOST_CUR_USB;
+		vnc = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_DEF_VNC_MV);
+		rd = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_DEF_RD_THRESH_MV);
+	}
+	state[port].mdac_vnc = vnc;
+	state[port].mdac_rd = rd;
+	return tcpc_write(port, TCPC_REG_CONTROL0, reg);
+}
+
 static int fusb302_tcpm_init(int port)
 {
 	int reg;
@@ -347,6 +385,10 @@ static int fusb302_tcpm_init(int port)
 	state[port].cc_polarity = -1;
 
 	state[port].previous_pull = TYPEC_CC_RD;
+	/* set the voltage threshold for no connect detection (vOpen) */
+	state[port].mdac_vnc = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_DEF_VNC_MV);
+	/* set the voltage threshold for Rd vs Ra detection */
+	state[port].mdac_rd = TCPC_REG_MEASURE_MDAC_MV(PD_SRC_DEF_RD_THRESH_MV);
 
 	/* all other variables assumed to default to 0 */
 
@@ -397,15 +439,6 @@ static int fusb302_tcpm_init(int port)
 	/* Interrupt Enable */
 	tcpc_read(port, TCPC_REG_CONTROL0, &reg);
 	reg &= ~TCPC_REG_CONTROL0_INT_MASK;
-	/* Set the current source for Rp value */
-	reg &= ~TCPC_REG_CONTROL0_HOST_CUR_MASK;
-#ifdef CONFIG_USB_PD_PULLUP_1_5A
-	reg |= TCPC_REG_CONTROL0_HOST_CUR_1A5;
-#elif defined(CONFIG_USB_PD_PULLUP_3A)
-	reg |= TCPC_REG_CONTROL0_HOST_CUR_3A0;
-#else
-	reg |= TCPC_REG_CONTROL0_HOST_CUR_USB;
-#endif
 	tcpc_write(port, TCPC_REG_CONTROL0, reg);
 
 	/* Set VCONN switch defaults */
@@ -468,12 +501,6 @@ static int fusb302_tcpm_set_cc(int port, int pull)
 	case TYPEC_CC_RP:
 
 		/* Only use autodetect feature for revA silicon */
-		/*
-		 * TODO(crosbug.com/p/54452): Add configuration of Rp strength
-		 * values for presenting desired current to port partner.
-		 * This value will depend on config flags
-		 * CONFIG_USB_PD_PULLUP_* in the board file
-		 */
 		/* if fusb302 hasn't figured anything out yet */
 		if ((state[port].device_id == FUSB302_DEVID_302A) &&
 		    !state[port].togdone_pullup_cc1 &&
@@ -1032,6 +1059,7 @@ const struct tcpm_drv fusb302_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &fusb302_tcpm_get_vbus_level,
 #endif
+	.select_rp_value	= &fusb302_tcpm_select_rp_value,
 	.set_cc			= &fusb302_tcpm_set_cc,
 	.set_polarity		= &fusb302_tcpm_set_polarity,
 	.set_vconn		= &fusb302_tcpm_set_vconn,
