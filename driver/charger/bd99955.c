@@ -947,8 +947,10 @@ static int console_bd99955_dump_regs(int argc, char **argv)
 		ccprintf("BAT REG %4x:  %4x\n", regs[i], read_bat(regs[i]));
 
 	/* Extended group registers */
-	for (i = 0; i < 0x7f; ++i)
+	for (i = 0; i < 0x7f; ++i) {
 		ccprintf("EXT REG %4x:  %4x\n", i, read_ext(i));
+		cflush();
+	}
 
 	return 0;
 }
