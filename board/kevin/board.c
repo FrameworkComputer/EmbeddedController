@@ -258,8 +258,16 @@ int pd_snk_is_vbus_provided(int port)
 
 static void board_init(void)
 {
+	/* Enable TCPC alert interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
+
 	/* Enable charger interrupt for BC1.2 detection on attach / detach */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
+
+	/* Enable reboot / shutdown control inputs from AP */
+	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
+	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
 
 	/* Sensor Init */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
@@ -389,19 +397,6 @@ static void board_config_check(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_config_check, HOOK_PRIO_LAST);
 #endif /* ifndef CONFIG_USB_PD_5V_EN_ACTIVE_LOW */
-
-static void overtemp_interrupt_enable(void)
-{
-	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, overtemp_interrupt_enable,
-	     HOOK_PRIO_DEFAULT);
-static void overtemp_interrupt_disable(void)
-{
-	gpio_disable_interrupt(GPIO_AP_OVERTEMP);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, overtemp_interrupt_disable,
-	     HOOK_PRIO_DEFAULT);
 
 /* Motion sensors */
 #ifdef HAS_TASK_MOTIONSENSE

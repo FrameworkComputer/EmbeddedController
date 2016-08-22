@@ -472,7 +472,6 @@ static void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 			NPCX_WKEDG(table, group) |= pmask;
 
 		/* Enable wake-up input sources */
-		NPCX_WKEN(table, group) |= pmask;
 		NPCX_WKINEN(table, group) |= pmask;
 		/*
 		 * Clear pending bit since it might be set
@@ -505,7 +504,6 @@ static void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 		}
 
 		/* Enable wake-up input sources */
-		NPCX_WKEN(table, group) |= pmask;
 		NPCX_WKINEN(table, group) |= pmask;
 		/*
 		 * Clear pending bit since it might be set
@@ -682,10 +680,13 @@ void gpio_pre_init(void)
 	SET_BIT(NPCX_DEVALT(ALT_GROUP_1), NPCX_DEVALT1_NO_LPC_ESPI);
 #endif
 
-	/* Clear all pending bits of GPIOS*/
-	for (i = 0; i < 2; i++)
-		for (j = 0; j < 8; j++)
+	/* Clear all interrupt pending and enable bits of GPIOS */
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 8; j++) {
 			NPCX_WKPCL(i, j) = 0xFF;
+			NPCX_WKEN(i, j) = 0;
+		}
+	}
 
 	/* No support enable clock for the GPIO port in run and sleep. */
 	/* Set flag for each GPIO pin in gpio_list */
