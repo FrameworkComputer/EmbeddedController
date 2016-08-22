@@ -30,6 +30,10 @@ const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
+const uint32_t pd_src_pdo_max[] = {
+		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
+};
+const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
 const uint32_t pd_snk_pdo[] = {
 		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
@@ -54,6 +58,9 @@ int pd_set_power_supply_ready(int port)
 	if (charge_manager_get_active_charge_port() == port)
 		bd99955_select_input_port(BD99955_CHARGE_PORT_NONE);
 
+	/* Ensure we advertise the proper available current quota */
+	charge_manager_source_port(port, 1);
+
 	/* Provide VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 1);
@@ -69,6 +76,9 @@ void pd_power_supply_reset(int port)
 	/* Disable VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
 			      GPIO_USB_C0_5V_EN, 0);
+
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
