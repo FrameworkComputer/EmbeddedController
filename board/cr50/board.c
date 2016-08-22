@@ -15,6 +15,8 @@
 #include "init_chip.h"
 #include "registers.h"
 #include "nvmem.h"
+#include "rbox.h"
+#include "spi.h"
 #include "system.h"
 #include "task.h"
 #include "trng.h"
@@ -22,7 +24,6 @@
 #include "usb_descriptor.h"
 #include "usb_hid.h"
 #include "util.h"
-#include "spi.h"
 #include "usb_spi.h"
 
 /* Define interrupt and gpio structs */
@@ -275,7 +276,7 @@ void sys_rst_asserted(enum gpio_signal signal)
 	 * asserting this signal should not cause a system reset.
 	 */
 	CPRINTS("%s resceived signal %d)", __func__, signal);
-	if (usb_spi_update_in_progress())
+	if (usb_spi_update_in_progress() || rbox_is_asserting_ec_reset())
 		return;
 
 	cflush();
