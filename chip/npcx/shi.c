@@ -195,14 +195,15 @@ static uint8_t shi_read_buf_pointer(void);
  */
 static void shi_send_response_packet(struct host_packet *pkt)
 {
+	/*
+	 * Disable interrupts. This routine is not called from interrupt
+	 * context and buffer underrun will likely occur if it is
+	 * preempted after writing its initial reply byte. Also, we must be
+	 * sure our state doesn't unexpectedly change, in case we're expected
+	 * to take RESP_NOT_RDY actions.
+	 */
+	interrupt_disable();
 	if (state == SHI_STATE_PROCESSING) {
-		/*
-		* Disable interrupts. This routine is not called from interrupt
-		* context and buffer underrun will likely occur if it is
-		* preempted after writing its initial reply byte.
-		*/
-		interrupt_disable();
-
 		/* Append our past-end byte, which we reserved space for. */
 		((uint8_t *) pkt->response)[pkt->response_size + 0] =
 			EC_SPI_PAST_END;
@@ -226,8 +227,6 @@ static void shi_send_response_packet(struct host_packet *pkt)
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 		}
 #endif
-
-		interrupt_enable();
 	}
 	/*
 	 * If we're not processing, then the AP has already terminated the
@@ -239,6 +238,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 		DEBUG_CPRINTF("END\n");
 	} else
 		DEBUG_CPRINTS("Unexpected state %d in response handler", state);
+	interrupt_enable();
 }
 
 void shi_handle_host_package(void)
