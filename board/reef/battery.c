@@ -34,6 +34,14 @@ static const struct battery_info info = {
 	.discharging_max_c = 60,
 };
 
+#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
+static inline enum battery_present battery_hw_present(void)
+{
+	/* The GPIO is low when the battery is physically present */
+	return gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;
+}
+#endif
+
 const struct battery_info *battery_get_info(void)
 {
 	return &info;
@@ -105,8 +113,12 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 		if (rv || data[2] || data[3] || data[4] || data[5])
 			return BATTERY_DISCONNECT_ERROR;
 
-		/* No safety fault, battery is disconnected */
-		return BATTERY_DISCONNECTED;
+		/*
+		 * Battery is present and also the status is initialized and
+		 * no safety fault, battery is disconnected.
+		 */
+		if (battery_is_present() == BP_YES)
+			return BATTERY_DISCONNECTED;
 	}
 	not_disconnected = 1;
 	return BATTERY_NOT_DISCONNECTED;
@@ -296,8 +308,8 @@ enum battery_present battery_is_present(void)
 	enum battery_present batt_pres;
 	int batt_status;
 
-	/* The GPIO is low when the battery is physically present */
-	batt_pres = gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;
+	/* Get the physical hardware status */
+	batt_pres = battery_hw_present();
 
 	/*
 	 * Make sure battery status is implemented, I2C transactions are

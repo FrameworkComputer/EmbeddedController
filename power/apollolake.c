@@ -256,9 +256,6 @@ static enum power_state _power_handle_state(enum power_state state)
 		/* Platform is powering up, clear forcing_coldreset */
 		forcing_coldreset = 0;
 
-		/* Call hooks to initialize PMIC */
-		hook_notify(HOOK_CHIPSET_PRE_INIT);
-
 		/*
 		 * Allow up to 1s for charger to be initialized, in case
 		 * we're trying to boot the AP with no battery.
@@ -275,6 +272,9 @@ static enum power_state _power_handle_state(enum power_state state)
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
+
+		/* Call hooks to initialize PMIC */
+		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 		/* Wait for RSMRST_L de-assert */
 		if (power_wait_signals(IN_PGOOD_ALL_CORE)) {
