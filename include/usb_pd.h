@@ -701,6 +701,7 @@ enum pd_states {
 #define PD_FLAGS_VCONN_ON          (1 << 12)/* vconn is being sourced */
 #define PD_FLAGS_TRY_SRC           (1 << 13)/* Try.SRC states are active */
 #define PD_FLAGS_PARTNER_USB_COMM  (1 << 14)/* port partner is USB comms */
+#define PD_FLAGS_UPDATE_SRC_CAPS   (1 << 15)/* send new source capabilities */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -713,7 +714,8 @@ enum pd_states {
 					   PD_FLAGS_PARTNER_EXTPOWER | \
 					   PD_FLAGS_VCONN_ON | \
 					   PD_FLAGS_TRY_SRC | \
-					   PD_FLAGS_PARTNER_USB_COMM)
+					   PD_FLAGS_PARTNER_USB_COMM | \
+					   PD_FLAGS_UPDATE_SRC_CAPS)
 
 
 enum pd_cc_states {
@@ -970,6 +972,14 @@ void pd_set_external_voltage_limit(int port, int mv);
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage);
 
+
+/**
+ * Update the power contract if it exists.
+ *
+ * @param port USB-C port number.
+ */
+void pd_update_contract(int port);
+
 /**
  * Set the type-C input current limit.
  *
@@ -1201,16 +1211,10 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 /* Power Data Objects for the source and the sink */
 extern const uint32_t pd_src_pdo[];
 extern const int pd_src_pdo_cnt;
+extern const uint32_t pd_src_pdo_max[];
+extern const int pd_src_pdo_max_cnt;
 extern const uint32_t pd_snk_pdo[];
 extern const int pd_snk_pdo_cnt;
-
-/**
- * Get PD source power data objects.
- *
- * @param src_pdo pointer to the data to return.
- * @return number of PDOs returned.
- */
-int pd_get_source_pdo(const uint32_t **src_pdo);
 
 /**
  * Request that a host event be sent to notify the AP of a PD power event.

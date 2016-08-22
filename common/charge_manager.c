@@ -4,6 +4,7 @@
  */
 
 #include "adc.h"
+#include "atomic.h"
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
@@ -13,8 +14,10 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
+#include "tcpm.h"
 #include "timer.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -71,6 +74,10 @@ static int override_port = OVERRIDE_OFF;
 
 static int delayed_override_port = OVERRIDE_OFF;
 static timestamp_t delayed_override_deadline;
+
+/* Bitmap of ports used as power source */
+static volatile uint32_t source_port_bitmap;
+BUILD_ASSERT(sizeof(source_port_bitmap)*8 >= CONFIG_USB_PD_PORT_COUNT);
 
 enum charge_manager_change_type {
 	CHANGE_CHARGE,
@@ -884,6 +891,52 @@ int charge_manager_get_power_limit_uw(void)
 	else
 		return current_ma * voltage_mv;
 }
+
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+void charge_manager_source_port(int port, int enable)
+{
+	uint32_t prev_bitmap = source_port_bitmap;
+	int p;
+
+	if (enable)
+		atomic_or(&source_port_bitmap, 1 << port);
+	else
+		atomic_clear(&source_port_bitmap, 1 << port);
+
+	/* No change, exit early. */
+	if (prev_bitmap == source_port_bitmap)
+		return;
+
+	/* Set port limit according to policy */
+	for (p = 0; p < CONFIG_USB_PD_PORT_COUNT; p++) {
+		/*
+		 * if we are the only active source port or there is none,
+		 * advertise all the available power.
+		 */
+		int rp = (source_port_bitmap & ~(1 << p)) ? CONFIG_USB_PD_PULLUP
+			: CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT;
+
+		tcpm_select_rp_value(p, rp);
+		pd_update_contract(p);
+	}
+}
+
+int charge_manager_get_source_pdo(const uint32_t **src_pdo)
+{
+	int p;
+	int count = 0;
+
+	/* count the number of connected sinks */
+	for (p = 0; p < CONFIG_USB_PD_PORT_COUNT; p++)
+		if (source_port_bitmap & (1 << p))
+			count++;
+
+	/* send the maximum current if we are sourcing only on one port */
+	*src_pdo = count <= 1 ? pd_src_pdo_max : pd_src_pdo;
+
+	return count <= 1 ? pd_src_pdo_cnt : pd_src_pdo_max_cnt;
+}
+#endif /* CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT */
 
 #ifndef TEST_BUILD
 static int hc_pd_power_info(struct host_cmd_handler_args *args)

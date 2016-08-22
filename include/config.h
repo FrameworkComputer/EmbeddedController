@@ -2165,6 +2165,14 @@
 
 /* Default pull-up value on the USB-C ports when they are used as source. */
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_1A5
+/*
+ * Override the pull-up value when only zero or one port is actively sourcing
+ * current and we can advertise more current than what is defined by
+ * `CONFIG_USB_PD_PULLUP`.
+ * Should be defined with one of the tcpc_rp_value.
+ */
+#undef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+
 
 /******************************************************************************/
 /* USB port switch */

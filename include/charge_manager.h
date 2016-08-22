@@ -91,6 +91,17 @@ int charge_manager_get_charger_current(void);
 void charge_manager_save_log(int port);
 #endif
 
+/* Update whether a given port is sourcing current. */
+void charge_manager_source_port(int port, int enable);
+
+/*
+ * Get PD source power data objects.
+ *
+ * @param src_pdo pointer to the data to return.
+ * @return number of PDOs returned.
+ */
+int charge_manager_get_source_pdo(const uint32_t **src_pdo);
+
 /* Board-level callback functions */
 
 /*

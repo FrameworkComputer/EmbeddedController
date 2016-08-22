@@ -421,9 +421,10 @@ static int send_control(int port, int type)
 static int send_source_cap(int port)
 {
 	int bit_len;
-#ifdef CONFIG_USB_PD_DYNAMIC_SRC_CAP
+#if defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
+		defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
 	const uint32_t *src_pdo;
-	const int src_pdo_cnt = pd_get_source_pdo(&src_pdo);
+	const int src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo);
 #else
 	const uint32_t *src_pdo = pd_src_pdo;
 	const int src_pdo_cnt = pd_src_pdo_cnt;
@@ -1887,6 +1888,18 @@ void pd_task(void)
 			    (pd[port].vdm_state == VDM_STATE_BUSY))
 				break;
 
+			/* Send updated source capabilities to our partner */
+			if (pd[port].flags & PD_FLAGS_UPDATE_SRC_CAPS) {
+				res = send_source_cap(port);
+				if (res >= 0) {
+					set_state(port,
+						  PD_STATE_SRC_NEGOCIATE);
+					pd[port].flags &=
+						~PD_FLAGS_UPDATE_SRC_CAPS;
+				}
+				break;
+			}
+
 			/* Send get sink cap if haven't received it yet */
 			if (pd[port].last_state != pd[port].task_state &&
 			    !(pd[port].flags & PD_FLAGS_SNK_CAP_RECVD)) {
@@ -2951,6 +2964,15 @@ void pd_set_external_voltage_limit(int port, int mv)
 	    pd[port].task_state == PD_STATE_SNK_TRANSITION) {
 		/* Set flag to send new power request in pd_task */
 		pd[port].new_power_request = 1;
+		task_wake(PD_PORT_TO_TASK_ID(port));
+	}
+}
+
+void pd_update_contract(int port)
+{
+	if ((pd[port].task_state >= PD_STATE_SRC_NEGOCIATE) &&
+	    (pd[port].task_state <= PD_STATE_SRC_GET_SINK_CAP)) {
+		pd[port].flags |= PD_FLAGS_UPDATE_SRC_CAPS;
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
