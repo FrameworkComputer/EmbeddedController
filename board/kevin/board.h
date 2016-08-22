@@ -45,6 +45,9 @@
 #define CONFIG_BUTTON_COUNT        2
 #define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_HOST_COMMAND_STATUS
+/* By default, set hcdebug to off */
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP /* Instead of 8042 protocol of keyboard */
