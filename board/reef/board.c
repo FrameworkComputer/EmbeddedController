@@ -356,8 +356,12 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
 {
-	/* No need to re-init PMIC since settings are sticky across sysjump */
-	if (system_jumped_to_this_image())
+	/*
+	 * No need to re-init PMIC since settings are sticky across sysjump.
+	 * However, be sure to check that PMIC is already enabled. If it is
+	 * then there's no need to re-sequence the PMIC.
+	 */
+	if (system_jumped_to_this_image() && gpio_get_level(GPIO_PMIC_EN))
 		return;
 
 #if IS_PROTO == 0
