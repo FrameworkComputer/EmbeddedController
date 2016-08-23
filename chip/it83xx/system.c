@@ -356,5 +356,4 @@ static int command_rw_ec_reg(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(rwreg, command_rw_ec_reg,
 			"addr [value (byte)]",
 			"R/W EC/PNPCFG registers."
-			" addr 0xec21xxyy for R/W PNPCFG, xx is LDN yy is IDX",
-			NULL);
+			" addr 0xec21xxyy for R/W PNPCFG, xx is LDN yy is IDX");

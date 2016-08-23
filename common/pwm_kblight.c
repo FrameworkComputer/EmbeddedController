@@ -41,8 +41,7 @@ static int command_kblight(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(kblight, command_kblight,
 			"percent",
-			"Set keyboard backlight",
-			NULL);
+			"Set keyboard backlight");
 
 /*****************************************************************************/
 /* Host commands */

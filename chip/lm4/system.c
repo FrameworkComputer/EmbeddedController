@@ -650,8 +650,7 @@ static int command_system_rtc(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc,
 			"[set <seconds>]",
-			"Get/set real-time clock",
-			NULL);
+			"Get/set real-time clock");
 
 #ifdef CONFIG_CMD_RTC_ALARM
 /**
@@ -684,8 +683,7 @@ static int command_rtc_alarm_test(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
 			"[seconds [microseconds]]",
-			"Test alarm",
-			NULL);
+			"Test alarm");
 #endif /* CONFIG_CMD_RTC_ALARM */
 #endif /* CONFIG_CMD_RTC */
 

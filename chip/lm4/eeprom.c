@@ -146,8 +146,7 @@ static int command_eeprom_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(eeinfo, command_eeprom_info,
 			NULL,
-			"Print EEPROM info",
-			NULL);
+			"Print EEPROM info");
 
 
 static int command_eeprom_read(int argc, char **argv)
@@ -178,8 +177,7 @@ static int command_eeprom_read(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(eeread, command_eeprom_read,
 			"block [offset]",
-			"Read a word of EEPROM",
-			NULL);
+			"Read a word of EEPROM");
 
 
 static int command_eeprom_write(int argc, char **argv)
@@ -207,8 +205,7 @@ static int command_eeprom_write(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(eewrite, command_eeprom_write,
 			"block offset value",
-			"Write a word of EEPROM",
-			NULL);
+			"Write a word of EEPROM");
 
 
 #ifdef CONSOLE_COMMAND_EEHIDE
@@ -229,8 +226,7 @@ static int command_eeprom_hide(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(eehide, command_eeprom_hide,
 			"block",
-			"Hide a block of EEPROM",
-			NULL);
+			"Hide a block of EEPROM");
 #endif
 
 

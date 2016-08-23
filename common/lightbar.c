@@ -2073,5 +2073,4 @@ static int command_lightbar(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(lightbar, command_lightbar,
 			"[help | COMMAND [ARGS]]",
-			"Get/set lightbar state",
-			NULL);
+			"Get/set lightbar state");

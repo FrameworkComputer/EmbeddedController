@@ -438,8 +438,7 @@ static int command_idle_stats(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 			"",
-			"Print last idle stats",
-			NULL);
+			"Print last idle stats");
 
 /**
  * Configure deep sleep clock settings.
@@ -486,6 +485,5 @@ DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
 		"Use 'off' to allow deep sleep to use heavysleep whenever\n"
 		"conditions allow.\n"
 		"Give a timeout value for the console in use timeout.\n"
-		"See also 'sleepmask'.",
-		NULL);
+		"See also 'sleepmask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */

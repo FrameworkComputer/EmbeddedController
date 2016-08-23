@@ -347,7 +347,6 @@ static int command_comxtest(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(comxtest, command_comxtest,
 			"[string]",
-			"Write test data to COMx uart",
-			NULL);
+			"Write test data to COMx uart");
 
 #endif /* CONFIG_CMD_COMXTEST */

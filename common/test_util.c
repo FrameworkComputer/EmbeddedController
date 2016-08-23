@@ -193,4 +193,4 @@ static int command_run_test(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(runtest, command_run_test,
-			NULL, NULL, NULL);
+			NULL, NULL);

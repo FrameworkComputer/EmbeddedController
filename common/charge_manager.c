@@ -938,8 +938,7 @@ static int command_charge_port_override(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(chgoverride, command_charge_port_override,
 	"[port | -1 | -2]",
-	"Force charging from a given port (-1 = off, -2 = disable charging)",
-	NULL);
+	"Force charging from a given port (-1 = off, -2 = disable charging)");
 
 #ifdef CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
 static void charge_manager_set_external_power_limit(int current_lim,
@@ -1010,8 +1009,7 @@ static int command_external_power_limit(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(chglim, command_external_power_limit,
 	"[max_current (mA)] [max_voltage (mV)]",
-	"Set max charger current / voltage",
-	NULL);
+	"Set max charger current / voltage");
 #endif /* CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT */
 
 #ifdef CONFIG_CMD_CHARGE_SUPPLIER_INFO
@@ -1026,5 +1024,5 @@ static int charge_supplier_info(int argc, char **argv)
 	return 0;
 }
 DECLARE_CONSOLE_COMMAND(chgsup, charge_supplier_info,
-			NULL, "print chg supplier info", NULL);
+			NULL, "print chg supplier info");
 #endif

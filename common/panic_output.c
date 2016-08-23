@@ -199,8 +199,7 @@ DECLARE_CONSOLE_COMMAND(crash, command_crash,
 			" | stack"
 #endif
 			" | unaligned | watchdog | hang]",
-		"Crash the system (for testing)",
-		NULL);
+		"Crash the system (for testing)");
 #endif
 
 static int command_panicinfo(int argc, char **argv)
@@ -221,8 +220,7 @@ static int command_panicinfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
 			NULL,
-			"Print info from a previous panic",
-			NULL);
+			"Print info from a previous panic");
 
 /*****************************************************************************/
 /* Host commands */

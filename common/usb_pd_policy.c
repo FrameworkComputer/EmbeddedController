@@ -599,8 +599,7 @@ static int command_pe(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(pe, command_pe,
 			"<port> dump",
-			"USB PE",
-			NULL);
+			"USB PE");
 #endif /* CONFIG_CMD_USB_PD_PE */
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

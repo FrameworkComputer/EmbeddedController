@@ -222,6 +222,5 @@ static int command_pd_mcu(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pdcmd, command_pd_mcu,
 			"cmd ver [params]",
-			"Send PD host command",
-			NULL);
+			"Send PD host command");
 

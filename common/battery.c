@@ -268,8 +268,7 @@ static int command_battery(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(battery, command_battery,
 			"<repeat_count> <sleep_ms>",
-			"Print battery info",
-			NULL);
+			"Print battery info");
 
 #ifdef CONFIG_BATTERY_CUT_OFF
 int battery_is_cut_off(void)
@@ -360,8 +359,7 @@ static int command_cutoff(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff,
 		"[at-shutdown]",
-		"Cut off the battery output",
-		NULL);
+		"Cut off the battery output");
 #else
 int battery_is_cut_off(void)
 {
@@ -406,8 +404,7 @@ static int console_command_battery_vendor_param(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(battparam, console_command_battery_vendor_param,
 			"<param> [value]",
-			"Get or set battery vendor parameters",
-			NULL);
+			"Get or set battery vendor parameters");
 
 static int host_command_battery_vendor_param(struct host_cmd_handler_args *args)
 {

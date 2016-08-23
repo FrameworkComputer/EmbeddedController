@@ -203,7 +203,6 @@ static int command_rtc_alarm_test(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
 			"[seconds [microseconds]]",
-			"Test alarm",
-			NULL);
+			"Test alarm");
 #endif /* CONFIG_CMD_RTC_ALARM */
 

@@ -598,7 +598,7 @@ static int lpc_command_init(int argc, char **argv)
 	lpc_init();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lpcinit, lpc_command_init, NULL, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(lpcinit, lpc_command_init, NULL, NULL);
 
 /* Get protocol information */
 static int lpc_get_protocol_info(struct host_cmd_handler_args *args)

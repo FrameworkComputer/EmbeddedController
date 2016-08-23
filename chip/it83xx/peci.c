@@ -403,8 +403,7 @@ static int peci_cmd(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(peci, peci_cmd,
 			"addr wlen rlen cmd timeout(us)",
-			"PECI command",
-			NULL);
+			"PECI command");
 
 static int command_peci_temp(int argc, char **argv)
 {
@@ -418,5 +417,4 @@ static int command_peci_temp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
 			NULL,
-			"Print CPU temperature",
-			NULL);
+			"Print CPU temperature");

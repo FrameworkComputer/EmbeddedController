@@ -412,8 +412,7 @@ static int console_command_psys(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 			NULL,
-			"Get the system power in mW",
-			NULL);
+			"Get the system power in mW");
 #endif /* CONFIG_CMD_CHARGER_PSYS */
 #endif /* CONFIG_CHARGER_PSYS */
 
@@ -462,6 +461,5 @@ static int console_command_amon_bmon(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
 			"amonbmon [a|b]",
-			"Get charger AMON/BMON voltage diff, current",
-			NULL);
+			"Get charger AMON/BMON voltage diff, current");
 #endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */

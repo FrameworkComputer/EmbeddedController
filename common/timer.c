@@ -270,8 +270,7 @@ static int command_wait(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(waitms, command_wait,
 			"msec",
-			"Busy-wait for msec",
-			NULL);
+			"Busy-wait for msec");
 
 #ifdef CONFIG_CMD_FORCETIME
 static int command_force_time(int argc, char **argv)
@@ -297,8 +296,7 @@ static int command_force_time(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(forcetime, command_force_time,
 			"hi lo",
-			"Force current time",
-			NULL);
+			"Force current time");
 #endif
 
 static int command_get_time(int argc, char **argv)
@@ -310,8 +308,7 @@ static int command_get_time(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(gettime, command_get_time,
 			NULL,
-			"Print current time",
-			NULL);
+			"Print current time");
 
 #ifdef CONFIG_CMD_TIMERINFO
 int command_timer_info(int argc, char **argv)
@@ -322,6 +319,5 @@ int command_timer_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info,
 			NULL,
-			"Print timer info",
-			NULL);
+			"Print timer info");
 #endif

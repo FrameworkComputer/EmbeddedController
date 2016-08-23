@@ -34,8 +34,7 @@ static int command_apreset(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(apreset, command_apreset,
 			"[warm | cold]",
-			"Issue AP reset",
-			NULL);
+			"Issue AP reset");
 
 static int command_apshutdown(int argc, char **argv)
 {
@@ -44,6 +43,5 @@ static int command_apshutdown(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(apshutdown, command_apshutdown,
 			NULL,
-			"Force AP shutdown",
-			NULL);
+			"Force AP shutdown");
 #endif

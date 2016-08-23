@@ -490,8 +490,7 @@ static int command_spi_flashinfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flashinfo, command_spi_flashinfo,
 	NULL,
-	"Print SPI flash info",
-	NULL);
+	"Print SPI flash info");
 
 #ifdef CONFIG_CMD_SPI_FLASH
 static int command_spi_flasherase(int argc, char **argv)
@@ -514,8 +513,7 @@ static int command_spi_flasherase(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flasherase, command_spi_flasherase,
 	"offset [bytes]",
-	"Erase flash",
-	NULL);
+	"Erase flash");
 
 static int command_spi_flashwrite(int argc, char **argv)
 {
@@ -560,8 +558,7 @@ static int command_spi_flashwrite(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flashwrite, command_spi_flashwrite,
 	"offset [bytes]",
-	"Write pattern to flash",
-	NULL);
+	"Write pattern to flash");
 
 static int command_spi_flashread(int argc, char **argv)
 {
@@ -619,8 +616,7 @@ static int command_spi_flashread(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flashread, command_spi_flashread,
 	"offset bytes",
-	"Read flash",
-	NULL);
+	"Read flash");
 
 static int command_spi_flashread_sr(int argc, char **argv)
 {
@@ -633,8 +629,7 @@ static int command_spi_flashread_sr(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_rsr, command_spi_flashread_sr,
 	NULL,
-	"Read status registers",
-	NULL);
+	"Read status registers");
 
 static int command_spi_flashwrite_sr(int argc, char **argv)
 {
@@ -653,8 +648,7 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_wsr, command_spi_flashwrite_sr,
 	"value1 value2",
-	"Write to status registers",
-	NULL);
+	"Write to status registers");
 
 static int command_spi_flashprotect(int argc, char **argv)
 {
@@ -672,6 +666,5 @@ static int command_spi_flashprotect(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spi_flash_prot, command_spi_flashprotect,
 	"offset len",
-	"Set block protection",
-	NULL);
+	"Set block protection");
 #endif

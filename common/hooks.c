@@ -275,6 +275,5 @@ static int command_stats(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hookstats, command_stats,
 			NULL,
-			"Print stats of hooks",
-			NULL);
+			"Print stats of hooks");
 #endif

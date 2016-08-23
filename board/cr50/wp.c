@@ -27,6 +27,5 @@ static int command_wp(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(wp, command_wp,
-	"[bool]",
-	"Get/set the flash HW write-protect signal",
-	NULL);
+			"[<BOOLEAN>]",
+			"Get/set the flash HW write-protect signal");

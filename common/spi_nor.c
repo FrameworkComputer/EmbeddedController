@@ -786,8 +786,7 @@ static int command_spi_nor_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spinorinfo, command_spi_nor_info,
 			"[device]",
-			"Report Serial NOR Flash device information",
-			NULL);
+			"Report Serial NOR Flash device information");
 #endif  /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
@@ -817,8 +816,7 @@ static int command_spi_nor_erase(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spinorerase, command_spi_nor_erase,
 			"device [offset] [size]",
-			"Erase flash",
-			NULL);
+			"Erase flash");
 #endif  /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
@@ -869,8 +867,7 @@ static int command_spi_nor_write(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spinorwrite, command_spi_nor_write,
 			"device [offset] [size]",
-			"Write pattern to flash",
-			NULL);
+			"Write pattern to flash");
 #endif  /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
@@ -933,6 +930,5 @@ err_free:
 }
 DECLARE_CONSOLE_COMMAND(spinorread, command_spi_nor_read,
 			"device [offset] [size]",
-			"Read flash",
-			NULL);
+			"Read flash");
 #endif  /* CONFIG_CMD_SPI_NOR */

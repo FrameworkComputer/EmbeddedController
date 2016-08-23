@@ -575,8 +575,7 @@ static int command_powerinfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 			NULL,
-			"Show current power state",
-			NULL);
+			"Show current power state");
 
 #ifdef CONFIG_CMD_POWERINDEBUG
 static int command_powerindebug(int argc, char **argv)
@@ -611,8 +610,7 @@ static int command_powerindebug(int argc, char **argv)
 };
 DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
 			"[mask]",
-			"Get/set power input debug mask",
-			NULL);
+			"Get/set power input debug mask");
 #endif
 
 #ifdef CONFIG_HIBERNATE
@@ -640,8 +638,7 @@ static int command_hibernation_delay(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
 			"[sec]",
-			"Set the delay before going into hibernation",
-			NULL);
+			"Set the delay before going into hibernation");
 
 static int host_command_hibernation_delay(struct host_cmd_handler_args *args)
 {
@@ -703,8 +700,7 @@ static int command_pause_in_s5(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
 			"[on|off]",
-			"Should the AP pause in S5 during shutdown?",
-			NULL);
+			"Should the AP pause in S5 during shutdown?");
 #endif /* CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5 */
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE

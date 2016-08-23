@@ -67,6 +67,5 @@ static int command_spixfer(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spixfer, command_spixfer,
 			"rlen/w id offset [value | len]",
-			"Read write spi. id is spi_devices array index",
-			NULL);
+			"Read write spi. id is spi_devices array index");
 

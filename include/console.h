@@ -101,27 +101,32 @@ void console_has_input(void);
  *			int handler(int argc, char **argv)
  * @param argdesc	String describing arguments to command; NULL if none.
  * @param shorthelp	String with one-line description of command.
- * @param longhelp	String with long description of command.
  */
 #ifndef HAS_TASK_CONSOLE
-#define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
-	int (routine)(int argc, char **argv) __attribute__((unused))
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, SHORTHELP)	\
+	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
 #elif defined(CONFIG_CONSOLE_CMDHELP)
-#define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
-	static const char __con_cmd_label_##name[] = #name;		\
-	struct size_check##name { \
-		int field[2 * (sizeof(__con_cmd_label_##name) < 16) - 1]; }; \
-	const struct console_command __keep __con_cmd_##name		\
-	__attribute__((section(".rodata.cmds." #name)))			\
-	     = {__con_cmd_label_##name, routine, argdesc, shorthelp}
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, SHORTHELP)	\
+	static const char __con_cmd_label_##NAME[] = #NAME;		\
+	struct size_check##NAME {					\
+		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
+	const struct console_command __keep __con_cmd_##NAME		\
+	__attribute__((section(".rodata.cmds." #NAME)))	=		\
+	{ .name = __con_cmd_label_##NAME,				\
+	  .handler = ROUTINE,						\
+	  .argdesc = ARGDESC,						\
+	  .shorthelp = SHORTHELP					\
+	}
 #else
-#define DECLARE_CONSOLE_COMMAND(name, routine, argdesc, shorthelp, longhelp) \
-	static const char __con_cmd_label_##name[] = #name;		\
-	struct size_check##name { \
-		int field[2 * (sizeof(__con_cmd_label_##name) < 16) - 1]; }; \
-	const struct console_command __keep __con_cmd_##name		\
-	__attribute__((section(".rodata.cmds." #name)))			\
-	     = {__con_cmd_label_##name, routine}
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, SHORTHELP)	\
+	static const char __con_cmd_label_##NAME[] = #NAME;		\
+	struct size_check##NAME {					\
+		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
+	const struct console_command __keep __con_cmd_##NAME		\
+	__attribute__((section(".rodata.cmds." #NAME))) =		\
+	{ .name = __con_cmd_label_##NAME,				\
+	  .handler = ROUTINE,						\
+	}
 #endif
 
 #endif  /* __CROS_EC_CONSOLE_H */

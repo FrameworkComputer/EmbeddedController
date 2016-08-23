@@ -509,8 +509,7 @@ static int command_ble_hci_cmd(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ble_hci_cmd, command_ble_hci_cmd,
 			"opcode len uint32 uint32 uint32... (little endian)",
-			"Send an hci command of length len",
-			NULL);
+			"Send an hci command of length len");
 
 static int command_hcitool(int argc, char **argv)
 {
@@ -550,8 +549,7 @@ static int command_hcitool(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hcitool, command_hcitool,
 			"cmd ogf ocf b0 b1 b2 b3... or lcmd opcode len uint32.. (little endian)",
-			"Send an hci command of length len",
-			NULL);
+			"Send an hci command of length len");
 
 static int command_ble_hci_acl(int argc, char **argv)
 {
@@ -596,8 +594,7 @@ static int command_ble_hci_acl(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ble_hci_acl, command_ble_hci_acl,
 			"hdr len uint32 uint32 uint32... (little endian)",
-			"Send hci acl data of length len",
-			NULL);
+			"Send hci acl data of length len");
 
 static int command_ble_hci_adv(int argc, char **argv)
 {
@@ -666,7 +663,6 @@ static int command_ble_hci_adv(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ble_hci_adv, command_ble_hci_adv,
 			"adv [params=0] [scan_rsp=0]",
-			"Use pre-defined parameters to start advertising",
-			NULL);
+			"Use pre-defined parameters to start advertising");
 
 #endif /* CONFIG_BLUETOOTH_HCI_DEBUG */

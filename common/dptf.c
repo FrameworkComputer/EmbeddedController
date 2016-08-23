@@ -184,5 +184,4 @@ static int command_dptftemp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(dptftemp, command_dptftemp,
 			NULL,
-			"Print DPTF thermal parameters (degrees Kelvin)",
-			NULL);
+			"Print DPTF thermal parameters (degrees Kelvin)");

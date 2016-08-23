@@ -1346,5 +1346,4 @@ static int command_chgstate(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate,
 			"[idle|discharge|debug on|off]",
-			"Get/set charge state machine status",
-			NULL);
+			"Get/set charge state machine status");

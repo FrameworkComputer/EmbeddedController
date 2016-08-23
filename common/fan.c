@@ -132,8 +132,7 @@ static int cc_fanauto(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(fanauto, cc_fanauto,
 			"{fan}",
-			"Enable thermal fan control",
-			NULL);
+			"Enable thermal fan control");
 
 /* Return 0 for off, 1 for on, -1 for unknown */
 static int is_powered(int fan)
@@ -188,8 +187,7 @@ static int cc_faninfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(faninfo, cc_faninfo,
 			NULL,
-			"Print fan info",
-			NULL);
+			"Print fan info");
 
 static int cc_fanset(int argc, char **argv)
 {
@@ -241,8 +239,7 @@ static int cc_fanset(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(fanset, cc_fanset,
 			"{fan} (rpm | pct%)",
-			"Set fan speed",
-			NULL);
+			"Set fan speed");
 
 static int cc_fanduty(int argc, char **argv)
 {
@@ -276,8 +273,7 @@ static int cc_fanduty(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(fanduty, cc_fanduty,
 			"{fan} percent",
-			"Set fan duty cycle",
-			NULL);
+			"Set fan duty cycle");
 
 /*****************************************************************************/
 /* DPTF interface functions */

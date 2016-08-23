@@ -328,8 +328,7 @@ static int command_hash(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hash, command_hash,
 			"[abort | ro | rw] | [<offset> <size> [<nonce>]]",
-			"Request hash recomputation",
-			NULL);
+			"Request hash recomputation");
 #endif /* CONFIG_CMD_HASH */
 /****************************************************************************/
 /* Host commands */

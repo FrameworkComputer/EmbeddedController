@@ -166,5 +166,4 @@ static int command_wireless(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(wireless, command_wireless,
 			"[now [suspend]]",
-			"Get/set wireless flags",
-			NULL);
+			"Get/set wireless flags");

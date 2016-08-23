@@ -422,5 +422,4 @@ static int console_command_powerfail(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerfail, console_command_powerfail,
 			NULL,
-			"Fake PLTRST# failure during next power-on",
-			NULL);
+			"Fake PLTRST# failure during next power-on");

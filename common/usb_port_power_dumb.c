@@ -117,8 +117,7 @@ static int command_set_mode(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
 			"[<port> <on | off>]",
-			"Set USB charge mode",
-			NULL);
+			"Set USB charge mode");
 
 
 /*****************************************************************************/

@@ -19,14 +19,14 @@ static int command_test_1(int argc, char **argv)
 	cmd_1_call_cnt++;
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(test1, command_test_1, NULL, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(test1, command_test_1, NULL, NULL);
 
 static int command_test_2(int argc, char **argv)
 {
 	cmd_2_call_cnt++;
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(test2, command_test_2, NULL, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(test2, command_test_2, NULL, NULL);
 
 /*****************************************************************************/
 /* Test utilities */

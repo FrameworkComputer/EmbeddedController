@@ -436,8 +436,7 @@ static int command_sensor_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info,
 			"[ <index> ]",
-			"Print TMP006 sensors",
-			NULL);
+			"Print TMP006 sensors");
 #endif
 
 /* Disable the t6cal command until/unless we have FP support in printf */
@@ -493,6 +492,5 @@ static int command_t6cal(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(t6cal, command_t6cal,
 			"[<index> <coeff_name> <radix>]",
-			"Set/print TMP006 calibration",
-			NULL);
+			"Set/print TMP006 calibration");
 #endif

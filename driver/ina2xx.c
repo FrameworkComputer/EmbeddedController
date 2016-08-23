@@ -143,6 +143,5 @@ static int command_ina(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ina, command_ina,
 			"<index> [config|calib|mask|alert <val>]",
-			"INA2XX power/current sensing",
-			NULL);
+			"INA2XX power/current sensing");
 #endif

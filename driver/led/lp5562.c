@@ -156,6 +156,5 @@ static int command_lp5562(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(lp5562, command_lp5562,
 			"on | off | <red> <green> <blue>",
-			"Set the color of the LED",
-			NULL);
+			"Set the color of the LED");
 #endif

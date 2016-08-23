@@ -101,5 +101,4 @@ static int command_devices(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(devices, command_devices,
 	"",
-	"Get the device states",
-	NULL);
+	"Get the device states");

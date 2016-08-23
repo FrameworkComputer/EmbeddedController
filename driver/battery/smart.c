@@ -396,8 +396,7 @@ static int command_battfake(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(battfake, command_battfake,
 			"percent (-1 = use real level)",
-			"Set fake battery level",
-			NULL);
+			"Set fake battery level");
 #endif
 
 /*****************************************************************************/

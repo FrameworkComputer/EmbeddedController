@@ -868,8 +868,7 @@ static int command_host_command(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hostcmd, command_host_command,
 			"cmd ver param",
-			"Fake host command",
-			NULL);
+			"Fake host command");
 #endif /* CONFIG_CMD_HOSTCMD */
 
 #ifdef CONFIG_CMD_HCDEBUG
@@ -895,6 +894,5 @@ static int command_hcdebug(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hcdebug, command_hcdebug,
 			"hcdebug [off | normal | every | params]",
-			"Set host command debug output mode",
-			NULL);
+			"Set host command debug output mode");
 #endif /* CONFIG_CMD_HCDEBUG */

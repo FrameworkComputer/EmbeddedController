@@ -373,5 +373,4 @@ static int command_clock(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(clock, command_clock,
 			"hsi | msi",
-			"Set clock frequency",
-			NULL);
+			"Set clock frequency");

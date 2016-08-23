@@ -435,5 +435,4 @@ static int command_backboost_det(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(bkboost, command_backboost_det, NULL,
-			"Read backboost detection",
-			NULL);
+			"Read backboost detection");

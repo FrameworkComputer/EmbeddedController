@@ -3162,8 +3162,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"[tx|bist_rx|bist_tx|charger|clock|dev"
 			"|soft|hash|hard|ping|state|swap [power|data]|"
 			"vdm [ping | curr | vers]]",
-			"USB PD",
-			NULL);
+			"USB PD");
 
 #ifdef HAS_TASK_HOSTCMD
 

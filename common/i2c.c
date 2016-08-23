@@ -717,8 +717,7 @@ static int command_i2cprotect(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(i2cprotect, command_i2cprotect,
 			"[port]",
-			"Protect I2C bus",
-			NULL);
+			"Protect I2C bus");
 #endif
 
 #ifdef CONFIG_CMD_I2C_SCAN
@@ -774,8 +773,7 @@ static int command_scan(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(i2cscan, command_scan,
 			"i2cscan [port]",
-			"Scan I2C ports for devices",
-			NULL);
+			"Scan I2C ports for devices");
 #endif
 
 #ifdef CONFIG_CMD_I2C_XFER
@@ -856,6 +854,5 @@ static int command_i2cxfer(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(i2cxfer, command_i2cxfer,
 			"r/r16/rlen/w/w16 port addr offset [value | len]",
-			"Read write I2C",
-			NULL);
+			"Read write I2C");
 #endif

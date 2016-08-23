@@ -123,6 +123,5 @@ static int command_mmapinfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 			NULL,
-			"Print memmap switch state",
-			NULL);
+			"Print memmap switch state");
 

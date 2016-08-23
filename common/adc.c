@@ -62,6 +62,5 @@ static int command_adc(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(adc, command_adc,
 			"[name]",
-			"Print ADC channel(s)",
-			NULL);
+			"Print ADC channel(s)");
 #endif

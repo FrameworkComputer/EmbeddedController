@@ -537,8 +537,7 @@ static int command_ec_int(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"",
-			"Toggle EC interrupt line",
-			NULL);
+			"Toggle EC interrupt line");
 
 static int command_pd_host_event(int argc, char **argv)
 {
@@ -558,8 +557,7 @@ static int command_pd_host_event(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pdevent, command_pd_host_event,
 			"event_mask",
-			"Send PD host event",
-			NULL);
+			"Send PD host event");
 
 /****************************************************************************/
 /* Host commands */

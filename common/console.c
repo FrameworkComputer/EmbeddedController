@@ -739,8 +739,7 @@ static int command_help(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(help, command_help,
 			"[ list | <name> ]",
-			"Print command help",
-			NULL);
+			"Print command help");
 
 #ifdef CONFIG_CONSOLE_RESTRICTED_INPUT
 static int command_force_enabled(int argc, char **argv)
@@ -760,8 +759,7 @@ static int command_force_enabled(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(forceen, command_force_enabled,
 			"<on | off>",
-			"Force enable console",
-			NULL);
+			"Force enable console");
 #endif
 
 #ifdef CONFIG_CONSOLE_HISTORY
@@ -779,6 +777,5 @@ static int command_history(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(history, command_history,
 			NULL,
-			"Print console history",
-			NULL);
+			"Print console history");
 #endif

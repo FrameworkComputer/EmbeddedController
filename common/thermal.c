@@ -200,8 +200,7 @@ static int command_thermalget(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(thermalget, command_thermalget,
 			NULL,
-			"Print thermal parameters (degrees Kelvin)",
-			NULL);
+			"Print thermal parameters (degrees Kelvin)");
 
 
 static int command_thermalset(int argc, char **argv)
@@ -248,8 +247,7 @@ static int command_thermalset(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(thermalset, command_thermalset,
 			"sensor warn [high [shutdown [fan_off [fan_max]]]]",
 			"Set thermal parameters (degrees Kelvin)."
-			" Use -1 to skip.",
-			NULL);
+			" Use -1 to skip.");
 
 /*****************************************************************************/
 /* Host commands. We'll reuse the host command number, but this is version 1,

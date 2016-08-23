@@ -1362,6 +1362,5 @@ static int command_tcpc(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(tcpc, command_tcpc,
 			"dump [0|1]\n\t<port> [clock|state]",
-			"Type-C Port Controller",
-			NULL);
+			"Type-C Port Controller");
 #endif

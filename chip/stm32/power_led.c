@@ -158,6 +158,5 @@ static int command_powerled(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
 		"[off | on | suspend]",
-		"Change power LED state",
-		NULL);
+		"Change power LED state");
 #endif

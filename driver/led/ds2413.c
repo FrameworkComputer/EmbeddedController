@@ -162,6 +162,5 @@ static int command_powerled(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
 			"<off | red | yellow | green>",
-			"Set power LED color",
-			NULL);
+			"Set power LED color");
 #endif

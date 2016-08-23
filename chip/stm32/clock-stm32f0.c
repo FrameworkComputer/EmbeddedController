@@ -412,7 +412,6 @@ static int command_idle_stats(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 			"",
-			"Print last idle stats",
-			NULL);
+			"Print last idle stats");
 #endif /* CONFIG_CMD_IDLE_STATS */
 #endif

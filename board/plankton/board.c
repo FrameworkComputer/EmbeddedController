@@ -586,8 +586,7 @@ static int cmd_usbc_action(int argc, char *argv[])
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
 			"<5v|12v|20v|ccd|dev|usb|dp|flip|pol0|pol1|drp>",
-			"Set Plankton type-C port state",
-			NULL);
+			"Set Plankton type-C port state");
 
 int board_in_hub_mode(void)
 {
@@ -628,7 +627,7 @@ static int cmd_usb_hub_reset(int argc, char *argv[])
 	return board_usb_hub_reset();
 }
 DECLARE_CONSOLE_COMMAND(hub_reset, cmd_usb_hub_reset,
-			NULL, "Reset USB hub", NULL);
+			NULL, "Reset USB hub");
 
 static void board_usb_hub_reset_no_return(void)
 {
@@ -771,7 +770,7 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(fakedisconnect, cmd_fake_disconnect,
-			"<delay_ms> <duration_ms>", NULL, NULL);
+			"<delay_ms> <duration_ms>", NULL);
 
 static void trigger_dfu_release(void)
 {
@@ -789,4 +788,4 @@ static int cmd_trigger_dfu(int argc, char *argv[])
 	hook_call_deferred(&trigger_dfu_release_data, 1500 * MSEC);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dfu, cmd_trigger_dfu, NULL, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(dfu, cmd_trigger_dfu, NULL, NULL);

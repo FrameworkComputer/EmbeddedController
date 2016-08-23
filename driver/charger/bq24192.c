@@ -271,5 +271,5 @@ static int command_bq24192(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(bq24192, command_bq24192,
-			NULL, NULL, NULL);
+			NULL, NULL);
 #endif

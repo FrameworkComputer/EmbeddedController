@@ -706,8 +706,7 @@ int command_task_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
 			NULL,
-			"Print task info",
-			NULL);
+			"Print task info");
 
 static int command_task_ready(int argc, char **argv)
 {
@@ -723,8 +722,7 @@ static int command_task_ready(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
 			"[setmask]",
-			"Print/set ready tasks",
-			NULL);
+			"Print/set ready tasks");
 
 void task_pre_init(void)
 {

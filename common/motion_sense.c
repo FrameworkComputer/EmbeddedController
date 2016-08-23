@@ -1263,7 +1263,7 @@ static int command_accelrange(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(accelrange, command_accelrange,
 	"id [data [roundup]]",
-	"Read or write accelerometer range", NULL);
+	"Read or write accelerometer range");
 
 static int command_accelresolution(int argc, char **argv)
 {
@@ -1310,7 +1310,7 @@ static int command_accelresolution(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(accelres, command_accelresolution,
 	"id [data [roundup]]",
-	"Read or write accelerometer resolution", NULL);
+	"Read or write accelerometer resolution");
 
 static int command_accel_data_rate(int argc, char **argv)
 {
@@ -1369,7 +1369,7 @@ static int command_accel_data_rate(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(accelrate, command_accel_data_rate,
 	"id [data [roundup]]",
-	"Read or write accelerometer ODR", NULL);
+	"Read or write accelerometer ODR");
 
 static int command_accel_read_xyz(int argc, char **argv)
 {
@@ -1408,7 +1408,7 @@ static int command_accel_read_xyz(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(accelread, command_accel_read_xyz,
 	"id [n]",
-	"Read sensor x/y/z", NULL);
+	"Read sensor x/y/z");
 
 static int command_accel_init(int argc, char **argv)
 {
@@ -1433,7 +1433,7 @@ static int command_accel_init(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(accelinit, command_accel_init,
 	"id",
-	"Init sensor", NULL);
+	"Init sensor");
 
 #ifdef CONFIG_CMD_ACCEL_INFO
 static int command_display_accel_info(int argc, char **argv)
@@ -1472,7 +1472,7 @@ static int command_display_accel_info(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(accelinfo, command_display_accel_info,
 	"on/off [interval]",
 	"Print motion sensor info, lid angle calculations"
-	" and set calculation frequency.", NULL);
+	" and set calculation frequency.");
 #endif /* CONFIG_CMD_ACCEL_INFO */
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
@@ -1522,7 +1522,7 @@ static int command_accelerometer_interrupt(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(accelint, command_accelerometer_interrupt,
 	"id threshold",
-	"Write interrupt threshold", NULL);
+	"Write interrupt threshold");
 #endif /* CONFIG_ACCEL_INTERRUPTS */
 
 #ifdef CONFIG_ACCEL_FIFO
@@ -1555,7 +1555,7 @@ static int motion_sense_read_fifo(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(fiforead, motion_sense_read_fifo,
 	"id",
-	"Read Fifo sensor", NULL);
+	"Read Fifo sensor");
 #endif
 
 #endif /* CONFIG_CMD_ACCELS */

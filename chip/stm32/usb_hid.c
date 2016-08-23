@@ -160,5 +160,4 @@ static int command_hid(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hid, command_hid,
 			"[<HID keycode>]",
-			"test USB HID driver",
-			NULL);
+			"test USB HID driver");

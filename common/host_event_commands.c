@@ -160,8 +160,7 @@ static int command_host_event(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hostevent, command_host_event,
 			"[set | clear | clearb | smi | sci | wake] [mask]",
-			"Print / set host event state",
-			NULL);
+			"Print / set host event state");
 
 /*****************************************************************************/
 /* Host commands */

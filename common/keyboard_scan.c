@@ -808,8 +808,7 @@ static int command_ksstate(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ksstate, command_ksstate,
 			"ksstate [on | off]",
-			"Show or toggle printing keyboard scan state",
-			NULL);
+			"Show or toggle printing keyboard scan state");
 
 static int command_keyboard_press(int argc, char **argv)
 {
@@ -854,6 +853,5 @@ static int command_keyboard_press(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(kbpress, command_keyboard_press,
 			"[col row [0 | 1]]",
-			"Simulate keypress",
-			NULL);
+			"Simulate keypress");
 #endif

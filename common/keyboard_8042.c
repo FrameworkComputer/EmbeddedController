@@ -986,8 +986,7 @@ static int command_typematic(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(typematic, command_typematic,
 			"[first] [inter]",
-			"Get/set typematic delays",
-			NULL);
+			"Get/set typematic delays");
 
 
 static int command_codeset(int argc, char **argv)
@@ -1010,8 +1009,7 @@ static int command_codeset(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(codeset, command_codeset,
 			"[set]",
-			"Get/set keyboard codeset",
-			NULL);
+			"Get/set keyboard codeset");
 
 
 static int command_controller_ram(int argc, char **argv)
@@ -1033,8 +1031,7 @@ static int command_controller_ram(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram,
 			"index [value]",
-			"Get/set keyboard controller RAM",
-			NULL);
+			"Get/set keyboard controller RAM");
 
 static int command_keyboard_log(int argc, char **argv)
 {
@@ -1080,8 +1077,7 @@ static int command_keyboard_log(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log,
 			"[on | off]",
-			"Print or toggle keyboard event log",
-			NULL);
+			"Print or toggle keyboard event log");
 
 
 static int command_keyboard(int argc, char **argv)
@@ -1100,8 +1096,7 @@ static int command_keyboard(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
 			"[0 | 1]",
-			"Print or toggle keyboard info",
-			NULL);
+			"Print or toggle keyboard info");
 
 
 static int command_8042_internal(int argc, char **argv)
@@ -1187,8 +1182,7 @@ static int command_8042(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(8042, command_8042,
 			"[internal | typematic | codeset | ctrlram |"
 			" kblog | kbd]",
-			"Print 8042 state in one place",
-			NULL);
+			"Print 8042 state in one place");
 #endif
 
 

@@ -152,8 +152,7 @@ static int command_typec(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,
 			"[port|debug] [none|usb|dp|dock]",
-			"Control type-C connector muxing",
-			NULL);
+			"Control type-C connector muxing");
 #endif
 
 static int hc_usb_pd_mux_info(struct host_cmd_handler_args *args)

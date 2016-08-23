@@ -220,8 +220,7 @@ static int command_fastcharge(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge,
 			"[on|off]",
-			"Get or set fast charging profile",
-			NULL);
+			"Get or set fast charging profile");
 #endif  /* CONFIG_CMD_FASTCHARGE */
 
 #endif	/* CONFIG_CHARGER_PROFILE_OVERRIDE */

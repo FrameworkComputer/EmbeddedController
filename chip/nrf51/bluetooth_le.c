@@ -469,8 +469,7 @@ static int command_ble_adv(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ble_adv, command_ble_adv,
 			"type len [reps] [interval = 100000 (100ms)]",
-			"Send a BLE packet of type type of length len",
-			NULL);
+			"Send a BLE packet of type type of length len");
 
 static int command_ble_adv_scan(int argc, char **argv)
 {
@@ -534,6 +533,5 @@ static int command_ble_adv_scan(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ble_scan, command_ble_adv_scan,
 			"chan [num] [addr0]",
-			"Scan for [num] BLE packets on channel chan",
-			NULL);
+			"Scan for [num] BLE packets on channel chan");
 

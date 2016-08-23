@@ -137,8 +137,7 @@ static int command_temps(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps,
 			NULL,
-			"Print temp sensors",
-			NULL);
+			"Print temp sensors");
 
 /*****************************************************************************/
 /* Host commands */

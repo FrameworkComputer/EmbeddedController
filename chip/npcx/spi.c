@@ -260,6 +260,5 @@ static int command_spirom(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(spirom, command_spirom,
 		NULL,
-		"Test reading SPI EEPROM",
-		NULL);
+		"Test reading SPI EEPROM");
 #endif

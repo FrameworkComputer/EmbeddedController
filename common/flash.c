@@ -700,8 +700,7 @@ static int command_flash_info(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
 			NULL,
-			"Print flash info",
-			NULL);
+			"Print flash info");
 
 #ifdef CONFIG_CMD_FLASH
 static int command_flash_erase(int argc, char **argv)
@@ -722,8 +721,7 @@ static int command_flash_erase(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase,
 			"offset [size]",
-			"Erase flash",
-			NULL);
+			"Erase flash");
 
 static int command_flash_write(int argc, char **argv)
 {
@@ -765,8 +763,7 @@ static int command_flash_write(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
 			"offset [size]",
-			"Write pattern to flash",
-			NULL);
+			"Write pattern to flash");
 
 static int command_flash_read(int argc, char **argv)
 {
@@ -814,8 +811,7 @@ static int command_flash_read(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flashread, command_flash_read,
 			"offset [size]",
-			"Read flash",
-			NULL);
+			"Read flash");
 #endif
 
 static int command_flash_wp(int argc, char **argv)
@@ -843,8 +839,7 @@ static int command_flash_wp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 			"<BOOLEAN> | now | rw | norw",
-			"Modify flash write protect",
-			NULL);
+			"Modify flash write protect");
 
 /*****************************************************************************/
 /* Host commands */

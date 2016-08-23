@@ -40,5 +40,4 @@ static int command_usart_info(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(usart_info,
 			command_usart_info,
 			NULL,
-			"Display USART info",
-			NULL);
+			"Display USART info");

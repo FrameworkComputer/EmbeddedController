@@ -137,8 +137,7 @@ static int cc_pwm_duty(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pwmduty, cc_pwm_duty,
 			"[channel [<percent> | -1=disable]]",
-			"Get/set PWM duty cycles ",
-			NULL);
+			"Get/set PWM duty cycles ");
 #endif /* CONFIG_PWM */
 
 /* Initialize all PWM pins as functional */

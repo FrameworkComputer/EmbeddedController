@@ -549,4 +549,4 @@ static int command_sniffer(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sniffer, command_sniffer,
-			"[]", "Buffering status", NULL);
+			"[]", "Buffering status");

@@ -117,8 +117,7 @@ static int command_port80(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(port80, command_port80,
 			"[scroll | intprint | flush]",
-			"Print port80 writes or toggle port80 scrolling",
-			NULL);
+			"Print port80 writes or toggle port80 scrolling");
 
 int port80_last_boot(struct host_cmd_handler_args *args)
 {

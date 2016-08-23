@@ -694,8 +694,7 @@ static int command_pmu(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pmu, command_pmu,
 			"<repeat_count|reset>",
-			"Print PMU info or force a hard reset",
-			NULL);
+			"Print PMU info or force a hard reset");
 #endif
 
 /*****************************************************************************/

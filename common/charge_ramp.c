@@ -358,6 +358,5 @@ static int command_chgramp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(chgramp, command_chgramp,
 	"",
-	"Dump charge ramp state info",
-	NULL);
+	"Dump charge ramp state info");
 #endif

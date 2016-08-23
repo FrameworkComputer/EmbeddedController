@@ -124,8 +124,7 @@ static int command_ec_int(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ecint, command_ec_int,
 			"",
-			"Toggle EC interrupt line",
-			NULL);
+			"Toggle EC interrupt line");
 
 static int ec_status_host_cmd(struct host_cmd_handler_args *args)
 {

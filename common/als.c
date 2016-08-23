@@ -118,6 +118,5 @@ static int command_als(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(als, command_als,
 			NULL,
-			"Print ALS values",
-			NULL);
+			"Print ALS values");
 #endif

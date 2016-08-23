@@ -309,6 +309,5 @@ int command_mcdp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(mcdp, command_mcdp,
 			"info|devid <id>|appstest <cmd> [<params>]",
-			"USB PD",
-			NULL);
+			"USB PD");
 #endif /* CONFIG_CMD_MCDP */

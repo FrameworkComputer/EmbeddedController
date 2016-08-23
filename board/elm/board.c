@@ -234,8 +234,7 @@ int command_pd_reset(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(resetpd, command_pd_reset,
 			"",
-			"Reset PD IC",
-			NULL);
+			"Reset PD IC");
 
 /**
  * There is a level shift for AC_OK & LID_OPEN signal between AP & EC,

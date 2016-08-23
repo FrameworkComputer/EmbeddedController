@@ -91,6 +91,5 @@ static int command_apthrottle(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(apthrottle, command_apthrottle,
 			NULL,
-			"Display the AP throttling state",
-			NULL);
+			"Display the AP throttling state");
 #endif

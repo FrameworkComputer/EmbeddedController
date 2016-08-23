@@ -88,4 +88,4 @@ static int command_test_rdd(int argc, char **argv)
 	GWRITE_FIELD(RDD, INT_TEST, INTR_DEBUG_STATE_DETECTED, 1);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(test_rdd, command_test_rdd, "", "", NULL);
+DECLARE_CONSOLE_COMMAND(test_rdd, command_test_rdd, "", "");

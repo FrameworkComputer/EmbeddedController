@@ -419,5 +419,4 @@ static int command_i2cdump(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(i2cdump, command_i2cdump,
 			NULL,
-			"Dump I2C regs",
-			NULL);
+			"Dump I2C regs");

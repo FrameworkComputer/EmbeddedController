@@ -50,8 +50,7 @@ static int command_idle(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(idle, command_idle,
 			"[w|s|d]",
-			"Set or show the idle action: wfi, sleep, deep sleep",
-			NULL);
+			"Set or show the idle action: wfi, sleep, deep sleep");
 
 static int utmi_wakeup_is_enabled(void)
 {

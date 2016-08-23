@@ -214,8 +214,7 @@ static int command_ectemp(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ectemp, command_ectemp,
 			NULL,
-			"Print EC temperature",
-			NULL);
+			"Print EC temperature");
 #endif
 
 /*****************************************************************************/

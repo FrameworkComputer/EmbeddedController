@@ -794,8 +794,7 @@ static int command_flash_spi_sel_lock(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flash_spi_lock, command_flash_spi_sel_lock,
 			"[0 | 1]",
-			"Lock spi flash interface selection",
-			NULL);
+			"Lock spi flash interface selection");
 
 static int command_flash_tristate(int argc, char **argv)
 {
@@ -812,6 +811,5 @@ static int command_flash_tristate(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate,
 			"[0 | 1]",
-			"Tristate spi flash pins",
-			NULL);
+			"Tristate spi flash pins");
 

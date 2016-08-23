@@ -134,8 +134,7 @@ static int command_gpio_get(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(gpioget, command_gpio_get,
 			"[name]",
-			"Read GPIO value(s)",
-			NULL);
+			"Read GPIO value(s)");
 
 static int command_gpio_set(int argc, char **argv)
 {
@@ -200,8 +199,7 @@ DECLARE_CONSOLE_COMMAND(gpioset, command_gpio_set,
 #else
 			"name <0 | 1>",
 #endif
-			"Set a GPIO",
-			NULL);
+			"Set a GPIO");
 
 /*****************************************************************************/
 /* Host commands */

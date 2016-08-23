@@ -178,11 +178,14 @@ static int command_set_mode(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
 			"[<port> <0 | 1 | 2 | 3>]",
-			"Set USB charge mode",
-			"Modes: 0=Disabled.\n"
-			"       1=Standard downstream port.\n"
-			"	2=Charging downstream port, BC 1.2.\n"
-			"       3=Dedicated charging port, BC 1.2.\n");
+			"Set USB charge mode");
+/*
+ * Modes:
+ * 0=Disabled.
+ * 1=Standard downstream port.
+ * 2=Charging downstream port, BC 1.2.
+ * 3=Dedicated charging port, BC 1.2.
+ */
 
 /*****************************************************************************/
 /* Host commands */

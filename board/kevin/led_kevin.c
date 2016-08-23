@@ -165,5 +165,4 @@ static int command_led_color(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(ledcolor, command_led_color,
 			"[debug|red|green|blue|off]",
-			"Change LED color",
-			NULL);
+			"Change LED color");

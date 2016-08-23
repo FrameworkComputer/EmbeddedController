@@ -234,5 +234,4 @@ static int command_hang_detect(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hangdet, command_hang_detect,
 			NULL,
-			"Print hang detect state",
-			NULL);
+			"Print hang detect state");

@@ -388,5 +388,5 @@ static int command_bq2589x(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(bq2589x, command_bq2589x,
-			NULL, NULL, NULL);
+			NULL, NULL);
 #endif

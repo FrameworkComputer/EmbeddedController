@@ -139,5 +139,4 @@ static int command_hx3(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hx3, command_hx3,
 			"",
-			"Reset and Send HX3 Hub settings over I2C",
-			NULL);
+			"Reset and Send HX3 Hub settings over I2C");

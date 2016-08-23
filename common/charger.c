@@ -205,5 +205,4 @@ static int command_charger(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(charger, command_charger,
 			"[input | current | voltage | dptf] [newval]",
-			"Get or set charger param(s)",
-			NULL);
+			"Get or set charger param(s)");

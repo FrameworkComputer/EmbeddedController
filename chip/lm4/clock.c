@@ -551,8 +551,7 @@ static int command_sleep(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(sleep, command_sleep,
 			"[level [clock] [sram pm] [flash pm]]",
-			"Drop into sleep",
-			NULL);
+			"Drop into sleep");
 #endif /* CONFIG_CMD_SLEEP */
 
 #ifdef CONFIG_CMD_PLL
@@ -594,8 +593,7 @@ static int command_pll(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pll, command_pll,
 			"[ on | off | <div> ]",
-			"Get/set PLL state",
-			NULL);
+			"Get/set PLL state");
 
 #endif /* CONFIG_CMD_PLL */
 
@@ -681,8 +679,7 @@ static int command_clock_gating(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(clockgates, command_clock_gating,
 			"",
-			"Get state of the clock gating controls regs",
-			NULL);
+			"Get state of the clock gating controls regs");
 #endif /* CONFIG_CMD_CLOCKGATES */
 
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -705,8 +702,7 @@ static int command_idle_stats(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 			"",
-			"Print last idle stats",
-			NULL);
+			"Print last idle stats");
 
 /**
  * Configure deep sleep clock settings.
@@ -753,7 +749,6 @@ DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
 			"allow deep sleep to auto-select using the low speed "
 			"clock.\n"
 			"Give a timeout value for the console in use timeout.\n"
-			"See also 'sleepmask'.",
-			NULL);
+			"See also 'sleepmask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */
 

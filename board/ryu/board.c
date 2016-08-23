@@ -744,5 +744,4 @@ static int cmd_btn_press(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(btnpress, cmd_btn_press,
 			"<volup|voldown> [0|1]",
-			"Simulate button press",
-			NULL);
+			"Simulate button press");

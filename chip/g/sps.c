@@ -520,6 +520,5 @@ static int command_sps(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(spstest, command_sps,
 			"<num of frames>",
-			"Loop back frames (10 by default) back to the host",
-			NULL);
+			"Loop back frames (10 by default) back to the host");
 #endif /* CONFIG_SPS_TEST */

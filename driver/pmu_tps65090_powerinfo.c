@@ -112,8 +112,7 @@ static int command_powerinfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
 		NULL,
-		"Show PMU power info",
-		NULL);
+		"Show PMU power info");
 
 /**
  * Host command to get power info from PMU

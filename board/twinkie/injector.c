@@ -599,4 +599,4 @@ static int command_tw(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(twinkie, command_tw,
 			"[send|fsm|cc|resistor|txclock|rxthresh|vbus|vconn]",
-			"Manual Twinkie tweaking", NULL);
+			"Manual Twinkie tweaking");

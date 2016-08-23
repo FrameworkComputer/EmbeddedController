@@ -847,8 +847,7 @@ static int command_sysinfo(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
 			NULL,
-			"Print system info",
-			NULL);
+			"Print system info");
 
 #ifdef CONFIG_CMD_SCRATCHPAD
 static int command_scratchpad(int argc, char **argv)
@@ -868,8 +867,7 @@ static int command_scratchpad(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(scratchpad, command_scratchpad,
 			"[val]",
-			"Get or set scratchpad value",
-			NULL);
+			"Get or set scratchpad value");
 #endif /* CONFIG_CMD_SCRATCHPAD */
 
 #ifdef CONFIG_HIBERNATE
@@ -894,8 +892,7 @@ static int command_hibernate(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(hibernate, command_hibernate,
 			"[sec] [usec]",
-			"Hibernate the EC",
-			NULL);
+			"Hibernate the EC");
 #endif /* CONFIG_HIBERNATE */
 
 /*
@@ -996,8 +993,7 @@ static int command_version(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(version, command_version,
 			NULL,
-			"Print versions",
-			NULL);
+			"Print versions");
 
 static int command_sysjump(int argc, char **argv)
 {
@@ -1037,8 +1033,7 @@ static int command_sysjump(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
 			"[RO | RW | addr | disable]",
-			"Jump to a system image or address",
-			NULL);
+			"Jump to a system image or address");
 
 static int command_reboot(int argc, char **argv)
 {
@@ -1072,8 +1067,7 @@ static int command_reboot(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
 			"[hard|soft] [preserve] [ap-off] [cancel]",
-			"Reboot the EC",
-			NULL);
+			"Reboot the EC");
 
 static int command_system_lock(int argc, char **argv)
 {
@@ -1082,8 +1076,7 @@ static int command_system_lock(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(syslock, command_system_lock,
 			NULL,
-			"Lock the system, even if WP is disabled",
-			NULL);
+			"Lock the system, even if WP is disabled");
 
 #ifdef CONFIG_LOW_POWER_IDLE
 /**
@@ -1117,8 +1110,7 @@ static int command_sleepmask(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(sleepmask, command_sleepmask,
 			"[ on | off | <sleep_mask>]",
-			"Display/force sleep mask.\nSee also 'dsleepmask'.",
-			NULL);
+			"Display/force sleep mask.\nSee also 'dsleepmask'.");
 #endif
 
 #ifdef CONFIG_CMD_JUMPTAGS
@@ -1146,8 +1138,7 @@ static int command_jumptags(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(jumptags, command_jumptags,
 			NULL,
-			"List jump tags",
-			NULL);
+			"List jump tags");
 #endif /* CONFIG_CMD_JUMPTAGS */
 
 /*****************************************************************************/

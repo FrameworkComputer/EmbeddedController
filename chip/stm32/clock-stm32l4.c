@@ -386,5 +386,4 @@ DECLARE_CONSOLE_COMMAND(clock, command_clock,
 			" | hse | pll"
 #endif
 			,
-			"Set clock frequency",
-			NULL);
+			"Set clock frequency");

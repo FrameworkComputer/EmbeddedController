@@ -98,8 +98,7 @@ static int command_vbus_toggle(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(vbus, command_vbus_toggle,
 			"",
-			"Toggle VBUS detected",
-			NULL);
+			"Toggle VBUS detected");
 
 int pd_snk_is_vbus_provided(int port)
 {

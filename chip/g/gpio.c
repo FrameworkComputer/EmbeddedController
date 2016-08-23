@@ -437,8 +437,7 @@ static int command_pinmux(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pinmux, command_pinmux,
 			"",
-			"Display pinmux info",
-			NULL);
+			"Display pinmux info");
 
 static const char * const int_str[] = {
 	"LOW", "FALLING", "HIGH", "RISING",
@@ -481,5 +480,4 @@ static int command_gpiocfg(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(gpiocfg, command_gpiocfg,
 			"",
-			"Display GPIO configs",
-			NULL);
+			"Display GPIO configs");

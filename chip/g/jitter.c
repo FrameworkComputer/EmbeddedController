@@ -218,6 +218,5 @@ static int command_sof(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(sof, command_sof,
 			"",
-			"Display the SoF clock stuff",
-			NULL);
+			"Display the SoF clock stuff");
 #endif	/* DEBUG_ME */

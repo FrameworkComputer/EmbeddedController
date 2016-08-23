@@ -515,6 +515,5 @@ static int command_serialno(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
 	"load/set [value]",
-	"Read and write USB serial number",
-	NULL);
+	"Read and write USB serial number");
 #endif

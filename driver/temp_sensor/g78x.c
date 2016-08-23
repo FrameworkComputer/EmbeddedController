@@ -231,5 +231,5 @@ static int command_g78x(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(g78x, command_g78x,
 	"[settemp|setbyte <offset> <value>] or [getbyte <offset>]. "
 	"Temps in Celsius.",
-	"Print g781/g782 temp sensor status or set parameters.", NULL);
+	"Print g781/g782 temp sensor status or set parameters.");
 #endif

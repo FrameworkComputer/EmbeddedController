@@ -576,5 +576,4 @@ static int command_power(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(power, command_power,
 			"on/off",
-			"Turn AP power on/off",
-			NULL);
+			"Turn AP power on/off");

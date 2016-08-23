@@ -108,8 +108,7 @@ static int command_mem_dump(int argc, char **argv)
 
 DECLARE_CONSOLE_COMMAND(md, command_mem_dump,
 			"[.b|.h|.s] addr [count]",
-			"dump memory values, optionally specifying the format",
-			NULL);
+			"dump memory values, optionally specifying the format");
 #endif /* CONFIG_CMD_MD */
 
 static int command_read_word(int argc, char **argv)
@@ -191,5 +190,4 @@ static int command_read_word(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND
 	(rw, command_read_word,
 	 "[.b|.h] addr [value]",
-	 "Read or write a word in memory optionally specifying the size",
-	 NULL);
+	 "Read or write a word in memory optionally specifying the size");

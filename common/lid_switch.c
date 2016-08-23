@@ -123,8 +123,7 @@ static int command_lidopen(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(lidopen, command_lidopen,
 			NULL,
-			"Simulate lid open",
-			NULL);
+			"Simulate lid open");
 
 static int command_lidclose(int argc, char **argv)
 {
@@ -133,8 +132,7 @@ static int command_lidclose(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(lidclose, command_lidclose,
 			NULL,
-			"Simulate lid close",
-			NULL);
+			"Simulate lid close");
 
 static int command_lidstate(int argc, char **argv)
 {
@@ -144,8 +142,7 @@ static int command_lidstate(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(lidstate, command_lidstate,
 			NULL,
-			"Get state of lid",
-			NULL);
+			"Get state of lid");
 
 /**
  * Host command to enable/disable lid opened.

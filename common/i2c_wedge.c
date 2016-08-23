@@ -327,8 +327,7 @@ static int command_i2c_wedge(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(i2cwedge, command_i2c_wedge,
 			"i2cwedge slave_addr out_byte "
 				"[wedge_flag [wedge_bit_count]]",
-			"Wedge host I2C bus",
-			NULL);
+			"Wedge host I2C bus");
 
 static int command_i2c_unwedge(int argc, char **argv)
 {
@@ -338,6 +337,5 @@ static int command_i2c_unwedge(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(i2cunwedge, command_i2c_unwedge,
 	"",
-	"Unwedge host I2C bus",
-	NULL);
+	"Unwedge host I2C bus");
 

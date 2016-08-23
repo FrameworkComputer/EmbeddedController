@@ -62,6 +62,5 @@ static int command_shmem(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(shmem, command_shmem,
 			NULL,
-			"Print shared memory stats",
-			NULL);
+			"Print shared memory stats");
 #endif
