@@ -387,8 +387,6 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 		fifo_reg_write(data, data_size);
 		break;
 	case TPM_FW_VER:
-		/* Reload versions, in case something has been updated */
-		set_version_string();
 		/* Reset read byte count */
 		tpm_fw_ver_index = 0;
 		break;
@@ -419,7 +417,7 @@ void fifo_reg_read(uint8_t *dest, uint32_t data_size)
 	tpm_sts &= ~(burst_count_mask << burst_count_shift);
 	if (tpm_.fifo_write_index == tpm_.fifo_read_index) {
 		tpm_sts &= ~(data_avail | command_ready);
-		/* Birst size for the following write requests. */
+		/* Burst size for the following write requests. */
 		tpm_sts |= 63 << burst_count_shift;
 	} else {
 		/*
@@ -494,12 +492,19 @@ static void tpm_init(void)
 {
 	set_tpm_state(tpm_state_idle);
 	tpm_.regs.access = tpm_reg_valid_sts;
+	/*
+	 * I2CS writes must limit the burstsize to 63 for fifo writes to work
+	 * properly. For I2CS fifo writes the first byte is the I2C TPM address
+	 * and the next up to 62 bytes are the data to write to that register.
+	 */
 	tpm_.regs.sts = (tpm_family_tpm2 << tpm_family_shift) |
-		(64 << burst_count_shift) | sts_valid;
+		(63 << burst_count_shift) | sts_valid;
 
 	/* TPM2 library functions. */
 	_plat__Signal_PowerOn();
 
+	/* Create version string to be read by host */
+	set_version_string();
 
 	/*
 	 * Make sure NV RAM metadata is initialized, needed to check

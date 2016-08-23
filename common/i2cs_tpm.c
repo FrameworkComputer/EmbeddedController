@@ -74,7 +74,7 @@ static const struct i2c_tpm_reg_map i2c_to_tpm[] = {
 	{6, 4, 0xf00},   /* TPM DID VID */
 	{0xa, 4, 0x14},  /* TPM TPM_INTF_CAPABILITY */
 	{0xe, 1, 0xf04}, /* TPM RID */
-	{0xf, 4, 0xf90}, /* TPM_FW_VER */
+	{0xf, 0, 0xf90}, /* TPM_FW_VER */
 };
 
 static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
@@ -150,6 +150,24 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 		 * burst size field of the tpm status register.
 		 */
 		reg_size = tpm_get_burst_size();
+
+		/* For TPM fifo reads, if there is already data pending in the
+		 * I2CS hw fifo, then don't read any more TPM fifo data until
+		 * the I2CS hw fifo has been fully drained.
+		 *
+		 * The Host will only read only enough data to extract the full
+		 * TPM message length. However, Cr50 will fill the I2CS hw fifo
+		 * with 'burstsize' amount of bytes. The 2nd fifo access for a
+		 * given TPM repsonse by the Host will extract the queued up
+		 * data. Following this, the Host will then read 'burstcount'
+		 * amount of data for subsequent fifo accesses until the
+		 * response has been fully read.
+		 *
+		 */
+		if (i2cs_get_read_fifo_buffer_depth())
+			/* Data is already in the queue, just return */
+			return;
+
 		/*
 		 * Now, this is a hack, but we are short on SRAM, so let's
 		 * reuse the receive buffer for the FIFO data sotrage. We know

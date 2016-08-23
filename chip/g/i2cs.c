@@ -202,3 +202,20 @@ int i2cs_register_write_complete_handler(wr_complete_handler_f wc_handler)
 
 	return 0;
 }
+
+size_t i2cs_get_read_fifo_buffer_depth(void)
+{
+	uint32_t hw_read_pointer;
+	size_t depth;
+
+	/*
+	 * Get the current value of the HW I2CS read pointer. Note that the read
+	 * pointer is b8:b3 of the I2CS_READ_PTR register. The lower 3 bits of
+	 * this register are used to support bit accesses by a host.
+	 */
+	hw_read_pointer = GREAD(I2CS, READ_PTR) >> 3;
+	/* Determine the number of bytes buffered in the HW fifo */
+	depth = (last_read_pointer - hw_read_pointer) & REGISTER_FILE_MASK;
+
+	return depth;
+}
