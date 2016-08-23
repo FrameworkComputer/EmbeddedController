@@ -336,8 +336,11 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 	}
 
 	/* Enable wake-up inputs of hibernate_wake_pins array */
-	for (i = 0; i < hibernate_wake_pins_used; i++)
+	for (i = 0; i < hibernate_wake_pins_used; i++) {
 		gpio_reset(hibernate_wake_pins[i]);
+		/* Re-enable interrupt for wake-up inputs */
+		gpio_enable_interrupt(hibernate_wake_pins[i]);
+	}
 }
 
 /**
