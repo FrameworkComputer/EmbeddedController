@@ -209,6 +209,15 @@ CRYPT_RESULT _cpri__AESEncryptOFB(
 #include "hooks.h"
 #include "uart.h"
 
+enum aes_test_cipher_mode {
+	TEST_MODE_ECB = 0,
+	TEST_MODE_CTR = 1,
+	TEST_MODE_CBC = 2,
+	TEST_MODE_GCM = 3,
+	TEST_MODE_OFB = 4,
+	TEST_MODE_CFB = 5,
+};
+
 #define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
 
 static void aes_command_handler(void *cmd_body,
@@ -219,12 +228,25 @@ static void aes_command_handler(void *cmd_body,
 	uint16_t key_len;
 	uint8_t iv_len;
 	uint8_t *iv;
-	enum cipher_mode c_mode;
+	enum aes_test_cipher_mode c_mode;
 	enum encrypt_mode e_mode;
 	uint8_t *cmd = (uint8_t *)cmd_body;
 	int16_t data_len;
 	unsigned max_data_len = *response_size;
 	unsigned actual_cmd_size;
+
+	/* Copy inputs into a local unaligned buffer, so as to ensure
+	 * that api's are memory-alignment agnostic.
+	 */
+	struct unaligned_buf {
+		uint8_t unused;
+		uint8_t b[128];
+	} __packed;
+
+	struct unaligned_buf out_local;
+	struct unaligned_buf iv_local;
+	struct unaligned_buf key_local;
+	struct unaligned_buf data_local;
 
 	*response_size = 0;
 
@@ -235,7 +257,7 @@ static void aes_command_handler(void *cmd_body,
 	 * field       |    size  |              note
 	 * ================================================================
 	 * mode        |    1     | 0 - decrypt, 1 - encrypt
-	 * cipher_mode |    1     | ECB = 0, CTR = 1, CBC = 2, GCM = 3
+	 * cipher_mode |    1     | as per aes_test_cipher_mode
 	 * key_len     |    1     | key size in bytes (16, 24 or 32)
 	 * key         | key len  | key to use
 	 * iv_len      |    1     | either 0 or 16
@@ -284,64 +306,149 @@ static void aes_command_handler(void *cmd_body,
 		return;
 	}
 
+	if (data_len > sizeof(out_local.b)) {
+		CPRINTF("Response buffer too small\n");
+		return;
+	}
+
+	memset(out_local.b, 'A', sizeof(out_local.b));
+	memcpy(iv_local.b, iv, iv_len);
+	memcpy(key_local.b, key, key_len / 8);
+	memcpy(data_local.b, cmd, data_len);
 
 	switch (c_mode) {
-	case CIPHER_MODE_ECB:
+	case TEST_MODE_ECB:
 		if (e_mode == 0) {
-			if (_cpri__AESDecryptECB((uint8_t *)cmd_body,
-						 key_len,
-						 key, data_len, cmd) ==
+			if (_cpri__AESDecryptECB(
+					out_local.b, key_len, key_local.b,
+					data_len, data_local.b) ==
 			    CRYPT_SUCCESS) {
 				*response_size = data_len;
 			}
 			CPRINTF("%s:%d response size %d\n",
 				__func__, __LINE__, *response_size);
-			return;
-		}
-		if (e_mode == 1) {
+		} else if (e_mode == 1) {
 			/* pad input data to integer block size. */
 			while (data_len & 15)
-				cmd[data_len++] = 0;
-			if (_cpri__AESEncryptECB((uint8_t *)cmd_body,
-						 key_len,
-						 key, data_len, cmd) ==
+				data_local.b[data_len++] = 0;
+			if (_cpri__AESEncryptECB(
+					out_local.b, key_len, key_local.b,
+					data_len, data_local.b) ==
 			    CRYPT_SUCCESS) {
 				*response_size = data_len;
 			}
 			CPRINTF("%s:%d response size %d\n",
 				__func__, __LINE__, *response_size);
-			return;
 		}
 		break;
-	case CIPHER_MODE_CTR:
+	case TEST_MODE_CTR:
 		if (e_mode == 0) {
-			if (_cpri__AESDecryptCTR((uint8_t *)cmd_body,
-						 key_len,
-						 key, iv, data_len, cmd) ==
+			if (_cpri__AESDecryptCTR(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
 			    CRYPT_SUCCESS) {
 				*response_size = data_len;
 			}
 			CPRINTF("%s:%d response size %d\n",
 				__func__, __LINE__, *response_size);
-			return;
-		}
-		if (e_mode == 1) {
+		} else if (e_mode == 1) {
 			/* pad input data to integer block size. */
 			while (data_len & 15)
-				cmd[data_len++] = 0;
-			if (_cpri__AESEncryptCTR((uint8_t *)cmd_body,
-						 key_len,
-						 key, iv, data_len, cmd) ==
+				data_local.b[data_len++] = 0;
+			if (_cpri__AESEncryptCTR(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
 			    CRYPT_SUCCESS) {
 				*response_size = data_len;
 			}
 			CPRINTF("%s:%d response size %d\n",
 				__func__, __LINE__, *response_size);
-			return;
 		}
 		break;
+	case TEST_MODE_CBC:
+	{
+		if (e_mode == 0) {
+			if (_cpri__AESDecryptCBC(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
+				CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+		} else if (e_mode == 1) {
+			if (_cpri__AESEncryptCBC(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+		}
+		break;
+	}
+	case TEST_MODE_OFB:
+		if (e_mode == 0) {
+			if (_cpri__AESDecryptOFB(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+		} else if (e_mode == 1) {
+			if (_cpri__AESEncryptOFB(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+		}
+		break;
+	case TEST_MODE_CFB:
+	{
+		if (e_mode == 0) {
+			if (_cpri__AESDecryptCFB(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+		} else if (e_mode == 1) {
+			if (_cpri__AESEncryptCFB(
+					out_local.b, key_len, key_local.b,
+					iv_local.b, data_len, data_local.b) ==
+			    CRYPT_SUCCESS) {
+				*response_size = data_len;
+			}
+			CPRINTF("%s:%d response size %d\n",
+				__func__, __LINE__, *response_size);
+		}
+		break;
+	}
 	default:
 		break;
+	}
+
+	if (*response_size > 0) {
+		int i;
+
+		for (i = *response_size; i < sizeof(out_local.b); i++) {
+			if (out_local.b[i] != 'A') {
+				CPRINTF(
+					"%s:%d output overwrite at offset %d\n",
+					__func__, __LINE__, i);
+				*response_size = 0;
+			}
+		}
+
+		memcpy(cmd_body, out_local.b, *response_size);
 	}
 }
 

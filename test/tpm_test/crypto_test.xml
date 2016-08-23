@@ -109,4 +109,455 @@ Many of the crypto_test elements were borrowed from NIST test vectors.
     </cipher_text>
     <iv>f3f2f1f0 f7f6f5f4 fbfaf9f8 fffefdfc</iv>
   </crypto_test>
+
+  <crypto_test name="AES:CBC128 1">
+    <clear_text format="hex">
+      a636839ed2b0ad1abf458f93adb6d5eb
+    </clear_text>
+    <key>
+      1f5b102067bf5ed28c24733abceb8b17
+    </key>
+    <cipher_text>
+      d955527cf393f7a6a2cdec0f1692104c
+    </cipher_text>
+    <iv>
+      f67c127e03e4f4de49f690f3b953b6db
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CBC128 2">
+    <clear_text format="hex">
+      da092d3ab24b2a6b585ea1cc7cd2f9f000d06d5c5169d20d02d883eda07224f5
+    </clear_text>
+    <key>
+      8587d0474afdd5fb265928fea02bce8b
+    </key>
+    <cipher_text>
+      2f039d2e6324fde3778a77f011b975d6e0ac68ad12edee19308536028e7d6e0e
+    </cipher_text>
+    <iv>
+      fd450534ab529f92567ab5c05f221ce2
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CBC192 1">
+    <clear_text format="hex">
+      9b4d5e71fed8bf8650ac1f4165a24dbf
+    </clear_text>
+    <key>
+      1ccc3bc8256027789502909f6633488906d18472dc5668de
+    </key>
+    <cipher_text>
+      cb0d808aecbf13aadbf9445ef31b211b
+    </cipher_text>
+    <iv>
+      b0aa195cfdb8128cd37006f7be857d2a
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CBC192 2">
+    <clear_text format="hex">
+      796a503d47ce4f508c781b05cabdf090b10bbd35eb8f266d6aefdf9c2557d1dd
+    </clear_text>
+    <key>
+      f24f6e0e8de446d81be04e8535cba109af54814946a58281
+    </key>
+    <cipher_text>
+      2da16ace5b1928f892816c4564a2156110eb6427068a8b84b91d3f7e2e8ba509
+    </cipher_text>
+    <iv>
+      72cc0e1acd9c45d80ed3aa24748a2d8b
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CBC256 1">
+    <clear_text format="hex">
+      aac63e7086300c38038512e8897c22d2
+    </clear_text>
+    <key>
+      a0af53a1b0d721ab33888afab77c4629332dd3a6c8e6025da3a5227289dec227
+    </key>
+    <cipher_text>
+      4b8dd68ed2ddac5a738c0ed8e881574d
+    </cipher_text>
+    <iv>
+      187a3ea27c383d45b864036adaa27a26
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CBC256 2">
+    <clear_text format="hex">
+      02c6dc282c745fe663457d93d3dc6b8259ab14bf7c56ef1ec1ac59c9a650804d
+    </clear_text>
+    <key>
+      5c01c80bc7206471558c157b5f0c053d9d77a0f3ea81059a1384dc9963e7fa67
+    </key>
+    <cipher_text>
+      de4838d472a8bf060378659f073a640d4978a9602e110eb02f70dade4d49e82b
+    </cipher_text>
+    <iv>
+      2dbb1d53de16d52185af3828884a61b3
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB128 1">
+    <clear_text format="hex">
+      c27e8ebe08
+    </clear_text>
+    <key>
+      21df77a9938963824ad4fb63699b9e10
+    </key>
+    <cipher_text>
+      93541291b3
+    </cipher_text>
+    <iv>
+      5b906ff8038ecdf186461cde68ceb87d
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB128 2">
+    <clear_text format="hex">
+      1ba5fec5c8ca5f28a79ee5f531d708c2
+    </clear_text>
+    <key>
+      db5331b06fae350196419746be3c8a99
+    </key>
+    <cipher_text>
+      a44756b5f721ee427f2a46e53ff4d1f5
+    </cipher_text>
+    <iv>
+      f43f8a8fe7db8f22f3627d7d594ead2f
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB128 3">
+    <clear_text format="hex">
+      8395cf5fa9dc4693d0489ed99ed3d79e4117441110
+    </clear_text>
+    <key>
+      c51e8b5aaac64563fdd3edf3756f4bae
+    </key>
+    <cipher_text>
+      229f61813f1d51524a11c17075a7999745055b3011
+    </cipher_text>
+    <iv>
+      d4e2873e252d374f3ab8bee783e33056
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB128 4">
+    <clear_text format="hex">
+      a35814e166659c2fd82894bdccde6f6371025b213bde35920423a7223a09eca3
+    </clear_text>
+    <key>
+      549ab2663df248cd6a971ea07bc4d7b1
+    </key>
+    <cipher_text>
+      40cf3a37ca6db39340f1004a57dda9ed3d0629cc93e4facf143c62e02246d0e4
+    </cipher_text>
+    <iv>
+      8a69c1cf5f9611c00b54478e8a27558b
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB192 1">
+    <clear_text format="hex">
+      86c4803c42
+    </clear_text>
+    <key>
+      746831e7e595aa3fddcbedc1ae26f94bfce4ee40f3e1e980
+    </key>
+    <cipher_text>
+      1856d5a500
+    </cipher_text>
+    <iv>
+      01039108067aaa1d4a5047e15f52a9a3
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB192 2">
+    <clear_text format="hex">
+      369a7f259cec0ee6cff199b5098dc0ac
+    </clear_text>
+    <key>
+      6a924856035968f0a1f99e098573085530af14165eb41c01
+    </key>
+    <cipher_text>
+      49d28326ac3ecabe84b8658ed267beb7
+    </cipher_text>
+    <iv>
+      944506624e812e1abd7eb0ab7fa08b05
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB192 3">
+    <clear_text format="hex">
+      7677dda1638143702f960d314c8b42e9ba012528d9
+    </clear_text>
+    <key>
+      a5f67cbae2b8fdd4ade986274787e74b0c943c4bb3f8ebec
+    </key>
+    <cipher_text>
+      4729f94311972a541de3a0c6a3808e582059db884f
+    </cipher_text>
+    <iv>
+      511d4661e60516891d167322417d565b
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB192 4">
+    <clear_text format="hex">
+      2ddc71dd68cd0b01a350180216d1d4de32b620e83c77a96decc5c45b571338ab
+    </clear_text>
+    <key>
+      f929b89472bdffa025a3a060e068734cd018e6a28071e48b
+    </key>
+    <cipher_text>
+      21e716bd4ebc84627786d1380df8499502dc1c028361442ffbe912fd7052d197
+    </cipher_text>
+    <iv>
+      23975ea307cc5204f29c235b61687ec1
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB256 1">
+    <clear_text format="hex">
+      d1657ed2b3
+    </clear_text>
+    <key>
+      cc0e6b12df0610b91f6d33ee1f712d87ffc798c157cd11e2f52c9a50bf093371
+    </key>
+    <cipher_text>
+      3319824a4f
+    </cipher_text>
+    <iv>
+      b123401360708c4aa6f11f5f04e191e1
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB256 2">
+    <clear_text format="hex">
+      7933ff6df6c98722419edcd3011a0b6b
+    </clear_text>
+    <key>
+      f42a206acd1c7064017cc869eed6a2807ac57e5f25edc220832e1c13daf113e1
+    </key>
+    <cipher_text>
+      ba6b4bd81d0e6926ed83ae684c2dd829
+    </cipher_text>
+    <iv>
+      79d679c00af714f943a1f649217d34b4
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB256 3">
+    <clear_text format="hex">
+      913091426fa791d9f7b822e5a5e360ca7d575943ea
+    </clear_text>
+    <key>
+      3c65a7d551d48c9ee6e37cb3f8d1f31cee6c1369e2068843905249346bbca0fa
+    </key>
+    <cipher_text>
+      fff98201e5fa0b08d818da9a614775c4b1e9d399a8
+    </cipher_text>
+    <iv>
+      70998e67f207486e575b640cfd8ae59f
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CFB256 4">
+    <clear_text format="hex">
+      59ee972cefa6d30c2c3c0c6c73c189066ced4cc0d59afd0728087223d3724943
+    </clear_text>
+    <key>
+      2826c55b27fdf41c6890a03d4113bb57ae0abb75c5b460e276edc148d3f96dc7
+    </key>
+    <cipher_text>
+      e17c9f488be47bcc54ea366704b9a0941e6e681d8f8445bec6c358038b5169b2
+    </cipher_text>
+    <iv>
+      c3f2173953f34012e82a3f1a6adf9b48
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB128 1">
+    <clear_text format="hex">
+      c69758215b
+    </clear_text>
+    <key>
+      30499479a11899b1b6c5293528809bd3
+    </key>
+    <cipher_text>
+      32fab4a0ac
+    </cipher_text>
+    <iv>
+      36d1827861331652397de67d24b9f6fa
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB128 2">
+    <clear_text format="hex">
+      41efde8ba6e71b9b034234cb7a99b47c
+    </clear_text>
+    <key>
+      5b966ff25d38416a701a27f686a915cf
+    </key>
+    <cipher_text>
+      b752d8e79190e4b8491268f1456a9511
+    </cipher_text>
+    <iv>
+      38acff7be2fdffc9314dfe410b24b3a2
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB128 3">
+    <clear_text format="hex">
+      49c74e50fb982a979eaf39ac2a558be1a9e5488e4b
+    </clear_text>
+    <key>
+      49385d8eb6ea0e63cb32c9383d5c3cb6
+    </key>
+    <cipher_text>
+      6b4f54782fae0cc337b9f806d459df35191fad0b80
+    </cipher_text>
+    <iv>
+      b417edffedd3fc706b5b0fea19ba409b
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB128 4">
+    <clear_text format="hex">
+      557c59c190a96492e7e3ce9a7c06a8e33931b1ed02002cb8727c4cc93ee7fcc0
+    </clear_text>
+    <key>
+      f458f61d05a9fff961c38cc2edbf02dc
+    </key>
+    <cipher_text>
+      778ed8ee5ecb0d41bafea9fbfa8ab5f1f4ab34eb176e9aabab0bc86f33370233
+    </cipher_text>
+    <iv>
+      90dfffe4e188f48eced3b2c39490530f
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB192 1">
+    <clear_text format="hex">
+      bb45f365fd
+    </clear_text>
+    <key>
+      37fa0d1f182f35cb59a11df8737a0c9d0b56801372d2f7ec
+    </key>
+    <cipher_text>
+      3e84a0d15c
+    </cipher_text>
+    <iv>
+      b3343ff1fdef4f95944b088e218e1b72
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB192 2">
+    <clear_text format="hex">
+      44bd7e4e005bc3c01f3f053c7e0589d7
+    </clear_text>
+    <key>
+      529b351bbe630dbf2d8f0c70331d57848cb773a7b70fe6cb
+    </key>
+    <cipher_text>
+      ac3dc2b0692da4604ac51a7136111bba
+    </cipher_text>
+    <iv>
+      9fa0ccfcd6368e9fa3ff25137c1a8112
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB192 3">
+    <clear_text format="hex">
+      0ff5e3ec8a978b623d72cdaf0ef94154b184161d74
+    </clear_text>
+    <key>
+      165a62acbf5ec4a01405b4a2f90fa50575327ceb8f70eb78
+    </key>
+    <cipher_text>
+      2e70ae41889b5d3074221fd830fc1c4774a3c53233
+    </cipher_text>
+    <iv>
+      aa4a6b2c9682c261651836c9205efabe
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB192 4">
+    <clear_text format="hex">
+      4d67b3b279c79349f4ca2cea233a2c982739ee38f40ffd1a2c65c0a15b23b0a0
+    </clear_text>
+    <key>
+      fe9a1fb428ac71ad58a5d701701db9cb385c3f366e0dc4cd
+    </key>
+    <cipher_text>
+      c082c1156c2aaab98094c4a097f1e2d1c986062ce89e86c79420512ad313121d
+    </cipher_text>
+    <iv>
+      db72feeeda791cfcb96b6ee6b724f986
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB256 1">
+    <clear_text format="hex">
+      732b346426
+    </clear_text>
+    <key>
+      2d6f926b2954d80e58e00145a74583dcce46efc6167d7d00b7c01ab73ffa83da
+    </key>
+    <cipher_text>
+      9626f27f3d
+    </cipher_text>
+    <iv>
+      d987a6c6956a951218959da30e2a2169
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB256 2">
+    <clear_text format="hex">
+      71fd48054f6db38d33c7314c62b362c2
+    </clear_text>
+    <key>
+      b8eee3cd1a391b59d2894dd47faa4a8266c814e95a460184b2361efd8b386a7a
+    </key>
+    <cipher_text>
+      d221511b5691c96a03c8b0729f8fc944
+    </cipher_text>
+    <iv>
+      e9404d883cb1fbfe4a1ed33193f9bbcf
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB256 3">
+    <clear_text format="hex">
+      4990a1bf14a3c56b62c32c670dbdb0d1bc2ce052d8
+    </clear_text>
+    <key>
+      8b04f99cf4a659490673fce9e81938895210ff98eb74235c22d5fdcc70f61d96
+    </key>
+    <cipher_text>
+      1246ec884679c1ddad53052a2daeb05f952e54a2d2
+    </cipher_text>
+    <iv>
+      e401e83a2cf2ece54d4b15ed2805d71d
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:OFB256 4">
+    <clear_text format="hex">
+      f9e4439e4eb67cce27f46417d74bcbb4d38040ac87e9ccbcfa2ad9f6ca612686
+    </clear_text>
+    <key>
+      5f6bc2dd955f56882c890b619769114796969b7162e1bbcb1260d25f78aae0bb
+    </key>
+    <cipher_text>
+      af05d2d2be7aeea3208e56741144f41369c98691c6e60f3ad2160bcc238d9099
+    </cipher_text>
+    <iv>
+      b11bf6f21675a8799172a8f52ee927a1
+    </iv>
+  </crypto_test>
+
 </crypto_tests>

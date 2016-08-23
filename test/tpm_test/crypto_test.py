@@ -7,6 +7,7 @@
 
 from __future__ import print_function
 
+import binascii
 import struct
 import xml.etree.ElementTree as ET
 
@@ -61,10 +62,8 @@ def get_attribute(tdesc, attr_name, required=True):
 
   # Drop spaces from hex representation.
   text = text.replace(' ', '')
-  if len(text) & 3:
-    raise subcmd.TpmTestError('%s:%s %swrong hex number size' %
-                      (tdesc.get('name'), attr_name, utils.hex_dump(text)))
-  # Convert text to binary
+
+  # Convert hex-text to little-endian binary (in 4-byte word chunks)
   value = ''
   for x in range(len(text)/8):
     try:
@@ -72,6 +71,11 @@ def get_attribute(tdesc, attr_name, required=True):
     except ValueError:
       raise subcmd.TpmTestError('%s:%s %swrong hex value' %
                         (tdesc.get('name'), attr_name, utils.hex_dump(text)))
+
+  # Unpack remaining hex text, without introducing a zero pad.
+  for x in range(-1, -(len(text) % 8), -1):
+    value += chr(int(text[2*x:len(text) + (2*x)+2], 16))
+
   return value
 
 
@@ -98,7 +102,9 @@ SUPPORTED_MODES = {
         'ECB': 0,
         'CTR': 1,
         'CBC': 2,
-        'GCM': 3
+        'GCM': 3,
+        'OFB': 4,
+        'CFB': 5
     }),
 }
 
@@ -165,9 +171,9 @@ def crypto_run(node_name, op_type, key, iv, in_text, out_text, tpm):
         print('Out text mismatch in node %s:\n' % node_name)
       else:
         raise subcmd.TpmTestError(
-          'Out text mismatch in node %s, operation %d:\n'
+          'Out text mismatch in node %s, operation %s:\n'
           'In text:%sExpected out text:%sReal out text:%s' % (
-            node_name, op_type,
+            node_name, 'ENCRYPT' if op_type == ENCRYPT else 'DECRYPT',
             utils.hex_dump(in_text),
             utils.hex_dump(out_text),
             utils.hex_dump(real_out_text)))
