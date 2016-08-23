@@ -177,8 +177,9 @@ static int command_crash(int argc, char **argv)
 		stack_overflow_recurse(1);
 #endif
 	} else if (!strcasecmp(argv[1], "unaligned")) {
+		volatile intptr_t unaligned_ptr = 0xcdef;
 		cflush();
-		ccprintf("%08x", *(volatile int *)0xcdef);
+		ccprintf("%08x", *(volatile int *)unaligned_ptr);
 	} else if (!strcasecmp(argv[1], "watchdog")) {
 		while (1)
 			;
