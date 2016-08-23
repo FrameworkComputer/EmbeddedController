@@ -18,8 +18,6 @@
 #include "version.h"
 #include "watchdog.h"
 
-#define CONSOLE_BIT_MASK 0x8000
-
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
@@ -128,15 +126,12 @@ static void check_reset_cause(void)
 	uint32_t raw_cause = STM32_RCC_CSR;
 	uint32_t pwr_status = STM32_PWR_CSR;
 
-	uint32_t console_en = flags & CONSOLE_BIT_MASK;
-	flags &= ~CONSOLE_BIT_MASK;
-
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_CSR |= 1 << 24;
 	/* Clear SBF in PWR_CSR */
 	STM32_PWR_CR |= 1 << 3;
 	/* Clear saved reset flags */
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0 | console_en);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, 0);
 
 	if (raw_cause & 0x60000000) {
 		/*
@@ -248,9 +243,6 @@ void system_reset(int flags)
 {
 	uint32_t save_flags = 0;
 
-	uint32_t console_en = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) &
-			      CONSOLE_BIT_MASK;
-
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
@@ -265,7 +257,7 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD)
 		save_flags |= RESET_FLAG_HARD;
 
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags | console_en);
+	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
 
 	if (flags & SYSTEM_RESET_HARD) {
 #ifdef CONFIG_SOFTWARE_PANIC
@@ -336,10 +328,7 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	if (system_get_console_force_enabled())
-		return STRINGIFY(CHIP_VARIANT-unsafe);
-	else
-		return STRINGIFY(CHIP_VARIANT);
+	return STRINGIFY(CHIP_VARIANT);
 }
 
 const char *system_get_chip_revision(void)
@@ -378,26 +367,6 @@ int system_set_vbnvcontext(const uint8_t *block)
 	}
 
 	return EC_SUCCESS;
-}
-
-int system_set_console_force_enabled(int val)
-{
-	uint16_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
-
-	if (val)
-		flags |= CONSOLE_BIT_MASK;
-	else
-		flags &= ~CONSOLE_BIT_MASK;
-
-	return bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, flags);
-}
-
-int system_get_console_force_enabled(void)
-{
-	if (bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS) & CONSOLE_BIT_MASK)
-		return 1;
-	else
-		return 0;
 }
 
 int system_is_reboot_warm(void)

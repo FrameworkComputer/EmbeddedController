@@ -669,13 +669,6 @@
 #define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
 
 /*
- * Disable EC console input if the system is locked.  This is needed for
- * security on platforms where the EC console is accessible from outside the
- * case - for example, via a special USB dongle.
- */
-#undef CONFIG_CONSOLE_RESTRICTED_INPUT
-
-/*
  * Enable the experimental console.
  *
  * NOTE: If you enable this experimental console, you will need to run the
