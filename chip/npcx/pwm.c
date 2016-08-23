@@ -8,8 +8,11 @@
  * On this chip, the PWM logic is implemented by the hardware FAN modules.
  */
 
+#include "assert.h"
 #include "clock.h"
 #include "clock_chip.h"
+#include "console.h"
+#include "ec_commands.h"
 #include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -17,7 +20,6 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "util.h"
-#include "console.h"
 
 #if !(DEBUG_PWM)
 #define CPRINTS(...)
@@ -43,22 +45,20 @@ enum npcx_pwm_heartbeat_mode {
 	NPCX_PWM_HBM_UNDEF     = 0xFF
 };
 
-/* Default duty cycle resolution */
-#define DUTY_CYCLE_RESOLUTION 100
-
 /**
  * Set PWM operation clock.
  *
  * @param   ch      operation channel
  * @param   freq    desired PWM frequency
- * @param   res     resolution for duty cycle
  * @notes   changed when initialization
  */
-void pwm_set_freq(enum pwm_channel ch, uint32_t freq, uint32_t res)
+static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 {
 	int mdl = pwm_channels[ch].channel;
-	uint32_t prescaler_divider = 0;
+	uint32_t prescaler_divider;
 	uint32_t clock;
+
+	assert(freq != 0);
 
 	/* Disable PWM for module configuration */
 	pwm_enable(ch, 0);
@@ -74,25 +74,20 @@ void pwm_set_freq(enum pwm_channel ch, uint32_t freq, uint32_t res)
 		clock = clock_get_apb2_freq();
 
 	/*
-	 * Using PWM Frequency and Resolution we calculate
-	 * prescaler for input clock
+	 * Based on freq = clock / ((ctr + 1) * (prsc + 1))
+	 *   where:  prsc = prescaler_divider
+	 *           ctr  = MAX_DUTY_CYCLE
 	 */
-	prescaler_divider = ((clock / freq)/res);
-
-	/* Set clock prescaler divider to PWM module*/
-	if (prescaler_divider >= 1)
-		prescaler_divider = prescaler_divider - 1;
-	if (prescaler_divider > 0xFFFF)
-		prescaler_divider = 0xFFFF;
+	prescaler_divider = (clock / ((EC_PWM_MAX_DUTY + 1) * freq)) - 1;
 
 	/* Configure computed prescaler and resolution */
 	NPCX_PRSC(mdl) = (uint16_t)prescaler_divider;
 
 	/* Set PWM cycle time */
-	NPCX_CTR(mdl) = res - 1;
+	NPCX_CTR(mdl) = EC_PWM_MAX_DUTY - 1;
 
 	/* Set the duty cycle to 0% since DCR > CTR */
-	NPCX_DCR(mdl) = res;
+	NPCX_DCR(mdl) = EC_PWM_MAX_DUTY;
 }
 
 /**
@@ -131,40 +126,34 @@ int pwm_get_enabled(enum pwm_channel ch)
  */
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {
-	int mdl = pwm_channels[ch].channel;
-	uint32_t dc_res = 0;
-	uint16_t dc_cnt = 0;
+	/* Convert 16 bit duty to percent on [0, 100] */
+	pwm_set_raw_duty(ch, (percent * EC_PWM_MAX_DUTY) / 100);
+}
 
-	/* Checking duty value first */
-	if (percent < 0)
-		percent = 0;
-	else if (percent > 100)
-		percent = 100;
-	CPRINTS("pwm%d, set duty=%d", mdl, percent);
+/**
+ * Set PWM duty cycle.
+ *
+ * @param   ch      operation channel
+ * @param   duty    cycle duty
+ * @return  none
+ */
+void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
+{
+	int mdl = pwm_channels[ch].channel;
+
+	CPRINTS("pwm%d, set duty=%d", mdl, duty);
 
 	/* Assume the fan control is active high and invert it ourselves */
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_INVP,
 			(pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW));
 
-	dc_res = NPCX_CTR(mdl) + 1;
-	dc_cnt = (percent*dc_res)/100;
 	CPRINTS("freq=0x%x", pwm_channels[ch].freq);
-	CPRINTS("duty_cycle_res=%d", dc_res);
-	CPRINTS("duty_cycle_cnt=%d", dc_cnt);
-
+	CPRINTS("duty_cycle_cnt=%d", duty);
 
 	/* Set the duty cycle */
-	if (percent > 0) {
-		if (percent == 100)
-			NPCX_DCR(mdl) = NPCX_CTR(mdl);
-		else
-			NPCX_DCR(mdl) = (dc_cnt - 1);
-		pwm_enable(ch, 1);
-	} else {
-		/* Output low since DCR > CTR */
-		NPCX_DCR(mdl) = NPCX_CTR(mdl) + 1;
-		pwm_enable(ch, 0);
-	}
+	NPCX_DCR(mdl) = (uint16_t)duty;
+
+	pwm_enable(ch, !!duty);
 }
 
 /**
@@ -175,12 +164,24 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
  */
 int pwm_get_duty(enum pwm_channel ch)
 {
+	return DIV_ROUND_NEAREST(pwm_get_raw_duty(ch) * 100, EC_PWM_MAX_DUTY);
+}
+
+/**
+ * Get PWM duty cycle.
+ *
+ * @param   ch  operation channel
+ * @return  duty cycle
+ */
+uint16_t pwm_get_raw_duty(enum pwm_channel ch)
+{
 	int mdl = pwm_channels[ch].channel;
-	/* Return percent */
-	if ((!pwm_get_enabled(ch)) || (NPCX_DCR(mdl) > NPCX_CTR(mdl)))
+
+	/* Return duty */
+	if (!pwm_get_enabled(ch))
 		return 0;
 	else
-		return ((NPCX_DCR(mdl) + 1) * 100) / (NPCX_CTR(mdl) + 1);
+		return NPCX_DCR(mdl);
 }
 
 /**
@@ -212,8 +213,7 @@ void pwm_config(enum pwm_channel ch)
 			(pwm_channels[ch].flags & PWM_CONFIG_DSLEEP));
 
 	/* Set PWM operation frequency */
-	pwm_set_freq(ch, pwm_channels[ch].freq, DUTY_CYCLE_RESOLUTION);
-
+	pwm_set_freq(ch, pwm_channels[ch].freq);
 }
 
 /**

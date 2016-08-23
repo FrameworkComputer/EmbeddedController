@@ -694,13 +694,13 @@ static void pwm_displight_restore_state(void)
 	prev = (const int *)system_get_jump_tag(PWM_DISPLIGHT_SYSJUMP_TAG,
 						&version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev))
-		pwm_set_duty(PWM_CH_DISPLIGHT, *prev);
+		pwm_set_raw_duty(PWM_CH_DISPLIGHT, *prev);
 }
 DECLARE_HOOK(HOOK_INIT, pwm_displight_restore_state, HOOK_PRIO_INIT_PWM + 1);
 
 static void pwm_displight_preserve_state(void)
 {
-	int pwm_displight_duty = pwm_get_duty(PWM_CH_DISPLIGHT);
+	int pwm_displight_duty = pwm_get_raw_duty(PWM_CH_DISPLIGHT);
 
 	system_add_jump_tag(PWM_DISPLIGHT_SYSJUMP_TAG, PWM_HOOK_VERSION,
 			    sizeof(pwm_displight_duty), &pwm_displight_duty);

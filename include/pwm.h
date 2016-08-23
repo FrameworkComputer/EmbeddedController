@@ -20,6 +20,16 @@ void pwm_enable(enum pwm_channel ch, int enabled);
 int pwm_get_enabled(enum pwm_channel ch);
 
 /**
+ * Set PWM channel duty cycle (0-65535).
+ */
+void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty);
+
+/**
+ * Get PWM channel duty cycle.
+ */
+uint16_t pwm_get_raw_duty(enum pwm_channel ch);
+
+/**
  * Set PWM channel duty cycle (0-100).
  */
 void pwm_set_duty(enum pwm_channel ch, int percent);
