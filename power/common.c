@@ -134,16 +134,23 @@ int power_has_signals(uint32_t want)
 
 int power_wait_signals(uint32_t want)
 {
+	int ret = power_wait_signals_timeout(want, DEFAULT_TIMEOUT);
+
+	if (ret == EC_ERROR_TIMEOUT)
+		CPRINTS("power timeout on input; wanted 0x%04x, got 0x%04x",
+			want, in_signals & want);
+	return ret;
+}
+
+int power_wait_signals_timeout(uint32_t want, int timeout)
+{
 	in_want = want;
 	if (!want)
 		return EC_SUCCESS;
 
 	while ((in_signals & in_want) != in_want) {
-		if (task_wait_event(DEFAULT_TIMEOUT) == TASK_EVENT_TIMER) {
+		if (task_wait_event(timeout) == TASK_EVENT_TIMER) {
 			power_update_signals();
-			CPRINTS("power timeout on input; "
-				"wanted 0x%04x, got 0x%04x",
-				in_want, in_signals & in_want);
 			return EC_ERROR_TIMEOUT;
 		}
 		/*
