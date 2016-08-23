@@ -118,6 +118,7 @@ void uartn_enable(int uart)
 	/* Enable UART TX */
 	GR_UART_CTRL(uart) = 0x01;
 
+/* TODO(crosbug.com/p/56540): Remove this when UART0_RX works everywhere */
 #ifdef GC_UART0_RX_DISABLE
 	if (!uart)
 		return;

@@ -18,15 +18,15 @@ GPIO_INT(SYS_RST_L_IN,    PIN(1, 0),  GPIO_INT_FALLING, sys_rst_asserted)
 GPIO_INT(AP_ON,           PIN(1, 1),  GPIO_INT_RISING, device_state_on)
 GPIO_INT(EC_ON,           PIN(1, 2),  GPIO_INT_RISING, device_state_on)
 GPIO_INT(SERVO_UART1_ON,  PIN(1, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
-	device_state_on)
+	 device_state_on)
 GPIO_INT(SERVO_UART2_ON,  PIN(1, 4),  GPIO_INT_RISING | GPIO_PULL_DOWN,
-	device_state_on)
+	 device_state_on)
 GPIO_INT(AP_OFF,          PIN(1, 5),  GPIO_INT_FALLING,  device_state_off)
 GPIO_INT(EC_OFF,          PIN(1, 6),  GPIO_INT_FALLING,  device_state_off)
 GPIO_INT(SERVO_UART1_OFF, PIN(1, 7),  GPIO_INT_FALLING | GPIO_PULL_DOWN,
-	device_state_off)
+	 device_state_off)
 GPIO_INT(SERVO_UART2_OFF, PIN(1, 8),  GPIO_INT_FALLING | GPIO_PULL_DOWN,
-	device_state_off)
+	 device_state_off)
 
 /* Pull this low to interrupt the AP */
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_INPUT)
@@ -83,13 +83,16 @@ PINMUX(GPIO(STRAP0),          A1, DIO_INPUT)
 
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
+/* PINMUX(FUNC(UART0_RX),     A13, DIO_INPUT | DIO_WAKE_LOW) */
 /*
- * UART0_RX should only be used for debugging purposes. There is no internal
- * pull up on DIOA13, so make sure there is an external pull up. If there is
- * no external pull up cr50 will be held in UART0RX interrupts and will
- * constantly reboot.
+ * TODO(crosbug.com/p/56540): Enable UART0_RX when possible.
+ * At the moment, UART0_RX should only be used for debugging purposes.
+ * If there is no external pull up on DIOA13, Cr50 can get continual UART0_RX
+ * interrupts and will constantly reboot. Not all boards have that pullup.
  *   UART0_RX = DIOA13
- *
+ */
+
+/*
  * UART1_TX and UART2_TX are configured in usart.c. They are not set as outputs
  * here in order to avoid interfering with servo. They can be controlled using
  * the 'uart' console command.

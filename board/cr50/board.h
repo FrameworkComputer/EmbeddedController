@@ -154,6 +154,8 @@ void device_state_off(enum gpio_signal signal);
 #define UART_EC		2
 
 #define UARTN UART_CR50
+
+/* TODO(crosbug.com/p/56540): Remove this when UART0_RX works everywhere */
 #define GC_UART0_RX_DISABLE
 
 /*
