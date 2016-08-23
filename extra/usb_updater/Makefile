@@ -9,8 +9,7 @@ SOURCE  := $(PROGRAM).c
 LIBS    :=
 LFLAGS  :=
 CFLAGS  := -std=gnu99 \
-	-g3 \
-	-O3 \
+	-g \
         -Wall \
         -Werror \
         -Wpointer-arith \
@@ -20,6 +19,12 @@ CFLAGS  := -std=gnu99 \
         -Wsign-compare \
         -Wredundant-decls \
         -Wmissing-declarations
+
+ifeq (DEBUG,)
+CFLAGS += -O3
+else
+CFLAGS += -O0
+endif
 
 #
 # Add libusb-1.0 required flags
