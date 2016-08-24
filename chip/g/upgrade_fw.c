@@ -15,6 +15,7 @@
 #include "registers.h"
 #include "uart.h"
 
+#include "signed_header.h"
 #include "upgrade_fw.h"
 #include "cryptoc/sha.h"
 
@@ -65,23 +66,6 @@ static void set_valid_sections(void)
 		CONFIG_RW_SIZE;
 }
 
-/* Verify that the passed in block fits into the valid area. */
-static int valid_upgrade_chunk(uint32_t block_offset, size_t body_size)
-{
-	 /* Is this an RW chunk? */
-	 if (valid_sections.rw_top_offset &&
-	     (block_offset >= valid_sections.rw_base_offset) &&
-	     ((block_offset + body_size) <= valid_sections.rw_top_offset))
-		return 1;
-
-	 /* Is this an RO chunk? */
-	 if (valid_sections.ro_top_offset &&
-	     (block_offset >= valid_sections.ro_base_offset) &&
-	     ((block_offset + body_size) <= valid_sections.ro_top_offset))
-		 return 1;
-	 return 0;
-}
-
 /* Enable write access to the backup RO section. */
 static void open_ro_window(uint32_t offset, size_t size_b)
 {
@@ -91,6 +75,78 @@ static void open_ro_window(uint32_t offset, size_t size_b)
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, EN, 1);
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
 	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
+}
+
+/*
+ * Verify that the passed in block fits into the valid area. If it does, and
+ * is destined to the base address of the area - erase the area contents.
+ *
+ * Return success, or indication of an erase failure or chunk not fitting into
+ * valid area.
+ */
+static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
+{
+	uint32_t base;
+	uint32_t size;
+
+	/* Is this an RW chunk? */
+	if (valid_sections.rw_top_offset &&
+	    (block_offset >= valid_sections.rw_base_offset) &&
+	    ((block_offset + body_size) <= valid_sections.rw_top_offset)) {
+
+		base = valid_sections.rw_base_offset;
+		size = valid_sections.rw_top_offset -
+			 valid_sections.rw_base_offset;
+		/*
+		 * If this is the first chunk for this section, it needs to
+		 * be erased.
+		 */
+		if (block_offset == valid_sections.rw_base_offset) {
+			if (flash_erase(base, size) != EC_SUCCESS) {
+				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
+					__func__, __LINE__, base, size);
+				return UPGRADE_ERASE_FAILURE;
+			}
+		}
+
+		return UPGRADE_SUCCESS;
+	}
+
+	/* Is this an RO chunk? */
+	if (valid_sections.ro_top_offset &&
+	    (block_offset >= valid_sections.ro_base_offset) &&
+	    ((block_offset + body_size) <= valid_sections.ro_top_offset)) {
+		/*
+		 * If this is the first chunk for this section, it needs to
+		 * be erased.
+		 */
+		if (block_offset == valid_sections.ro_base_offset) {
+			uint32_t base;
+			uint32_t size;
+
+			base = valid_sections.ro_base_offset;
+			size = valid_sections.ro_top_offset -
+				valid_sections.ro_base_offset;
+			/* backup RO area write access needs to be enabled. */
+			open_ro_window(base, size);
+			if (flash_erase(base, size) != EC_SUCCESS) {
+				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
+					__func__, __LINE__, base, size);
+				return UPGRADE_ERASE_FAILURE;
+			}
+		}
+		return UPGRADE_SUCCESS;
+	}
+
+	CPRINTF("%s:%d %x, %d ro base %x top %x, rw base %x top %x\n",
+		__func__, __LINE__,
+		block_offset, body_size,
+		valid_sections.ro_base_offset,
+		valid_sections.ro_top_offset,
+		valid_sections.rw_base_offset,
+		valid_sections.rw_top_offset);
+
+	return UPGRADE_BAD_ADDR;
 }
 
 void fw_upgrade_command_handler(void *body,
@@ -115,8 +171,7 @@ void fw_upgrade_command_handler(void *body,
 
 	if (!cmd_body->block_base && !body_size) {
 		struct first_response_pdu *rpdu = body;
-		uint32_t base;
-		uint32_t size;
+		const struct SignedHeader *header;
 
 		/*
 		 * This is the connection establishment request, the response
@@ -144,49 +199,25 @@ void fw_upgrade_command_handler(void *body,
 			return;
 		}
 
-		/*
-		 * No problems - let's erase the backup sections and return
-		 * their descriptions to the server.
-		 */
-		base = valid_sections.ro_base_offset;
-		size = valid_sections.ro_top_offset - base;
-
-		/* backup RO write access needs to be enabled. */
-		open_ro_window(base, size);
-		if (flash_erase(base, size) != EC_SUCCESS) {
-			CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
-				__func__, __LINE__, base, size);
-			rpdu->return_value = htobe32(UPGRADE_ERASE_FAILURE);
-			return;
-		}
-
-		/* Now the RW backup section. */
-		base = valid_sections.rw_base_offset;
-		size = valid_sections.rw_top_offset - base;
-		if (flash_erase(base, size) != EC_SUCCESS) {
-			CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
-				__func__, __LINE__, base, size);
-			rpdu->return_value = htobe32(UPGRADE_ERASE_FAILURE);
-			return;
-		}
-
 		rpdu->backup_ro_offset =
 			htobe32(valid_sections.ro_base_offset);
 
 		rpdu->backup_rw_offset =
 			htobe32(valid_sections.rw_base_offset);
 
-		return;
-	}
+		/* RO header information. */
+		header = (const struct SignedHeader *)
+			get_program_memory_addr(system_get_ro_image_copy());
+		rpdu->shv[0].minor = htobe32(header->minor_);
+		rpdu->shv[0].major = htobe32(header->major_);
+		rpdu->shv[0].epoch = htobe32(header->epoch_);
 
-	/* Check if the block will fit into the valid area. */
-	block_offset = be32toh(cmd_body->block_base);
-	if (!valid_upgrade_chunk(block_offset, body_size)) {
-		*error_code = UPGRADE_BAD_ADDR;
-		CPRINTF("%s:%d %x, %d base %x top %x\n", __func__, __LINE__,
-			block_offset, body_size,
-			valid_sections.rw_base_offset,
-			valid_sections.rw_top_offset);
+		/* RW header information. */
+		header = (const struct SignedHeader *)
+			get_program_memory_addr(system_get_image_copy());
+		rpdu->shv[1].minor = htobe32(header->minor_);
+		rpdu->shv[1].major = htobe32(header->major_);
+		rpdu->shv[1].epoch = htobe32(header->epoch_);
 		return;
 	}
 
@@ -203,6 +234,12 @@ void fw_upgrade_command_handler(void *body,
 			block_offset);
 		return;
 	}
+
+	/* Check if the block will fit into the valid area. */
+	block_offset = be32toh(cmd_body->block_base);
+	*error_code = check_update_chunk(block_offset, body_size);
+	if (*error_code)
+		return;
 
 	CPRINTF("%s: programming at address 0x%x\n", __func__,
 		block_offset + CONFIG_PROGRAM_MEMORY_BASE);
