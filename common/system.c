@@ -1110,7 +1110,7 @@ static int command_sleepmask(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(sleepmask, command_sleepmask,
 			"[ on | off | <sleep_mask>]",
-			"Display/force sleep mask.\nSee also 'dsleepmask'.");
+			"Display/force sleep mask");
 #endif
 
 #ifdef CONFIG_CMD_JUMPTAGS
