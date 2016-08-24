@@ -85,11 +85,9 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
 /*
- * Sensor internal FIFO are not enabled, we need to poll at
- * every data point.
+ * Sensor internal FIFO is enabled for BMI160, but not for BMA255.
  */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	((1 << BASE_ACCEL) | (1 << BASE_GYRO) | (1 << LID_ACCEL))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 /* USB PD config */
 #define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
