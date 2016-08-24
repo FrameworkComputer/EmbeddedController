@@ -99,7 +99,7 @@ DECLARE_DEFERRED(force_shutdown);
 
 enum power_state power_handle_state(enum power_state state)
 {
-	static int sys_reset_needed;
+	static int sys_reset_asserted;
 	int tries = 0;
 
 	switch (state) {
@@ -178,6 +178,14 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PP900_USB_EN, 1);
 		gpio_set_level(GPIO_PP900_PCIE_EN, 1);
 		msleep(2);
+
+		/*
+		 * Assert SYS_RST now, to be released in S3S0, to avoid
+		 * resetting the TPM soon after power-on.
+		 */
+		gpio_set_level(GPIO_SYS_RST_L, 0);
+		sys_reset_asserted = 1;
+
 		gpio_set_level(GPIO_PP1800_PMU_EN_L, 0);
 		msleep(2);
 		/* TODO(crosbug.com/p/55981): De-power CLOGIC in S3 */
@@ -205,9 +213,6 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 
-		/* We came from S5, so be sure to pulse sys_rst later */
-		sys_reset_needed = 1;
-
 		/* Power up to next state */
 		return POWER_S3;
 
@@ -222,13 +227,12 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(2);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 0);
 
-		if (sys_reset_needed) {
-			/* Pulse SYS_RST if we came from S5 */
-			gpio_set_level(GPIO_SYS_RST_L, 0);
+		/* Release SYS_RST if we came from S5 */
+		if (sys_reset_asserted) {
 			msleep(10);
 			gpio_set_level(GPIO_SYS_RST_L, 1);
 
-			sys_reset_needed = 0;
+			sys_reset_asserted = 0;
 		}
 
 		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 0);
