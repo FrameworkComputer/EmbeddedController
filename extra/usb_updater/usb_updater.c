@@ -22,12 +22,14 @@
 #define __packed __attribute__((packed))
 #endif
 
-#include "misc_util.h"
-#include "usb_descriptor.h"
-#include "upgrade_fw.h"
 #include "config_chip.h"
 #include "board.h"
+
 #include "compile_time_macros.h"
+#include "misc_util.h"
+#include "signed_header.h"
+#include "upgrade_fw.h"
+#include "usb_descriptor.h"
 
 #ifdef DEBUG
 #define debug printf
@@ -103,10 +105,14 @@
  * updates), or an error code, the same as in Version 1. The second 4 bytes
  * are the protocol version number (set to 2).
  *
- * Version 3 is used over both USB and SPI. The response is 16 bytes in size.
- * The first 4 bytes are the error code, the second 4 bytes are the protocol
- * version (set to 3) and then 4 byte *offset* of the RO section followed by
- * the 4 byte *offset* of the RW section.
+ * All versions above 2 behave the same over SPI and USB.
+ *
+ * Version 3 response is 16 bytes in size. The first 4 bytes are the error code
+ * the second 4 bytes are the protocol version (set to 3) and then 4 byte
+ * *offset* of the RO section followed by the 4 byte *offset* of the RW section.
+ *
+ * Version 4 response in addition to version 3 provides header revision fields
+ * for active RO and RW images running on the target.
  *
  * Once the connection is established, the image to be programmed into flash
  * is transferred to the CR50 in 1K PDUs. In versions 1 and 2 the address in
@@ -125,6 +131,13 @@
 #define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
 
 #define FLASH_BASE 0x40000
+
+enum exit_values {
+	noop = 0,	  /* All up to date, no update needed. */
+	all_updated = 1,  /* Update completed, reboot required. */
+	rw_updated  = 2,  /* RO was not updated, reboot required. */
+	update_error = 3  /* Something went wrong. */
+};
 
 /*
  * Need to create an entire TPM PDU when upgrading over /dev/tpm0 and need to
@@ -152,7 +165,20 @@ struct usb_endpoint {
 };
 
 struct transfer_descriptor {
-	int update_ro;			/* True if RO update is required. */
+	/*
+	 * Set to true for use in an upstart script. Do not reboot after
+	 * transfer, and do not transfer RW if versions are the same.
+	 *
+	 * When using in development environment it is beneficial to transfer
+	 * RW images with the same version, as they get started based on the
+	 * header timestamp.
+	 */
+	uint32_t upstart_mode;
+
+	/*
+	 * offsets of RO and WR sections available for update (not currently
+	 * active).
+	 */
 	uint32_t ro_offset;
 	uint32_t rw_offset;
 
@@ -168,13 +194,13 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":d:hrs";
+static char *short_opts = ":d:hsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"device",   1,   NULL, 'd'},
 	{"help",     0,   NULL, 'h'},
-	{"ro",       0,   NULL, 'r'},
 	{"spi",      0,   NULL, 's'},
+	{"upstart",  0,   NULL, 'u'},
 	{NULL,       0,   NULL,  0},
 };
 
@@ -257,12 +283,12 @@ static void shut_down(struct usb_endpoint *uep)
 {
 	libusb_close(uep->devh);
 	libusb_exit(NULL);
-	exit(1);
+	exit(update_error);
 }
 
 static void usage(int errs)
 {
-	printf("\nUsage: %s [options] ec.bin\n"
+	printf("\nUsage: %s [options] <binary image>\n"
 	       "\n"
 	       "This updates the Cr50 RW firmware over USB.\n"
 	       "The required argument is the full RO+RW image.\n"
@@ -271,11 +297,12 @@ static void usage(int errs)
 	       "\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -h,--help                Show this message\n"
-	       "  -r,--ro                  Update RO section along with RW\n"
 	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
+	       "  -u,--upstart             "
+			"Upstart mode (strict header checks, no reboot)\n"
 	       "\n", progname, VID, PID);
 
-	exit(!!errs);
+	exit(errs ? update_error : noop);
 }
 
 /* Read file into buffer */
@@ -289,11 +316,11 @@ static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
 	fp = fopen(filename, "rb");
 	if (!fp) {
 		perror(filename);
-		exit(1);
+		exit(update_error);
 	}
 	if (fstat(fileno(fp), &st)) {
 		perror("stat");
-		exit(1);
+		exit(update_error);
 	}
 
 	len = st.st_size;
@@ -301,12 +328,12 @@ static uint8_t *get_file_or_die(const char *filename, size_t *len_ptr)
 	data = malloc(len);
 	if (!data) {
 		perror("malloc");
-		exit(1);
+		exit(update_error);
 	}
 
 	if (1 != fread(data, st.st_size, 1, fp)) {
 		perror("fread");
-		exit(1);
+		exit(update_error);
 	}
 
 	fclose(fp);
@@ -340,7 +367,7 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 					 &actual, 1000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
-			exit(1);
+			exit(update_error);
 		}
 		if (actual != outlen) {
 			fprintf(stderr, "%s:%d, only sent %d/%d bytes\n",
@@ -358,7 +385,7 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 					 &actual, 1000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
-			exit(1);
+			exit(update_error);
 		}
 		if ((actual != inlen) && !allow_less) {
 			fprintf(stderr, "%s:%d, only received %d/%d bytes\n",
@@ -462,7 +489,7 @@ static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
 	r = libusb_init(NULL);
 	if (r < 0) {
 		USB_ERROR("libusb_init", r);
-		exit(1);
+		exit(update_error);
 	}
 
 	printf("open_device %04x:%04x\n", vid, pid);
@@ -470,7 +497,7 @@ static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
 	uep->devh = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if (!uep->devh) {
 		fprintf(stderr, "can't find device\n");
-		exit(1);
+		exit(update_error);
 	}
 
 	iface_num = find_interface(uep);
@@ -543,7 +570,7 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 
 	if (reply) {
 		fprintf(stderr, "error: status %#x\n", reply);
-		exit(1);
+		exit(update_error);
 	}
 
 	return 0;
@@ -608,7 +635,7 @@ static void transfer_section(struct transfer_descriptor *td,
 				fprintf(stderr,
 					"Failed to transfer block, %zd to go\n",
 					data_len);
-				exit(1);
+				exit(update_error);
 			}
 		} else {
 			uint8_t error_code[4];
@@ -635,22 +662,173 @@ static void transfer_section(struct transfer_descriptor *td,
 				fprintf(stderr,
 					"Failed to trasfer block, %zd to go\n",
 					data_len);
-				exit(1);
+				exit(update_error);
 			}
 			if (rxed_size != 1) {
 				fprintf(stderr, "Unexpected return size %zd\n",
 					rxed_size);
-				exit(1);
+				exit(update_error);
 			}
 
 			if (error_code[0]) {
 				fprintf(stderr, "error %d\n", error_code[0]);
-				exit(1);
+				exit(update_error);
 			}
 		}
 		data_len -= payload_size;
 		data_ptr += payload_size;
 		section_addr += payload_size;
+	}
+}
+
+/*
+ * Header versions retrieved from the target, RO at index 0 and RW at index
+ * 1.
+ */
+static struct signed_header_version target_shv[2];
+
+/*
+ * Each RO or RW section of the new image can be in one of the following
+ * states.
+ */
+enum upgrade_status {
+	not_needed = 0,  /* Version below or equal that on the target. */
+	not_possible,    /*
+			  * RO is newer, but can't be transferred due to
+			  * target RW shortcomings.
+			  */
+	needed            /*
+			   * This section needs to be transferred to the
+			   * target.
+			   */
+};
+
+/* This array describes all four sections of the new image. */
+static struct {
+	const char *name;
+	uint32_t    offset;
+	uint32_t    size;
+	enum upgrade_status  ustatus;
+	struct signed_header_version shv;
+} sections[] = {
+	{"RO_A", CONFIG_RO_MEM_OFF, CONFIG_RO_SIZE},
+	{"RW_A", CONFIG_RW_MEM_OFF, CONFIG_RW_SIZE},
+	{"RO_B", CHIP_RO_B_MEM_OFF, CONFIG_RO_SIZE},
+	{"RW_B", CONFIG_RW_B_MEM_OFF, CONFIG_RW_SIZE}
+};
+
+/*
+ * Scan the new image and retrieve versions of all four sections, two RO and
+ * two RW.
+ */
+static void fetch_header_versions(const void *image)
+{
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(sections); i++) {
+		const struct SignedHeader *h;
+
+		h = (const struct SignedHeader *)((uintptr_t)image +
+						  sections[i].offset);
+		sections[i].shv.epoch = h->epoch_;
+		sections[i].shv.major = h->major_;
+		sections[i].shv.minor = h->minor_;
+	}
+}
+
+
+/* Compare to signer headers and determine which one is newer. */
+static int a_newer_than_b(struct signed_header_version *a,
+			  struct signed_header_version *b)
+{
+	uint32_t fields[][3] = {
+		{a->epoch, a->major, a->minor},
+		{b->epoch, b->major, b->minor},
+	};
+	size_t i;
+
+	/*
+	 * Even though header version fields are 32 bits in size, we don't
+	 * exepect any version field ever exceed say 1000. Anything in excess
+	 * of 1000 should is considered zero.
+	 *
+	 * This would cover old images where one of the RO version fields is
+	 * the number of git patches since last tag (and is in excess of
+	 * 4000), and images where there is no code in a section (all fields
+	 * are set to 0xffffffff).
+	 */
+	for (i = 0; i < ARRAY_SIZE(fields[0]); i++) {
+		uint32_t a_value;
+		uint32_t b_value;
+
+		a_value = fields[0][i];
+		b_value = fields[1][i];
+
+		if (a_value > 4000)
+			a_value = 0;
+
+		if (b_value > 4000)
+			b_value = 0;
+
+		if (a_value != b_value)
+			return a_value > b_value;
+	}
+
+	return 0;	/* All else being equal A is no newer than B. */
+}
+/*
+ * Pick sections to transfer based on information retrieved from the target,
+ * the new image, and the protocol version the target is running.
+ */
+static void pick_sections(struct transfer_descriptor *td)
+{
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(sections); i++) {
+		uint32_t offset = sections[i].offset;
+
+		if ((offset == CONFIG_RW_MEM_OFF) ||
+		    (offset == CONFIG_RW_B_MEM_OFF)) {
+
+			/* Skip currently active section. */
+			if (offset != td->rw_offset)
+				continue;
+			/*
+			 * Ok, this would be the RW section to transfer to the
+			 * device. Is it newer in the new image than the
+			 * running RW section on the device?
+			 *
+			 * If not in 'upstart' mode - transfer even if
+			 * versions are the same, timestamps could be
+			 * different.
+			 */
+
+			if (a_newer_than_b(&sections[i].shv, target_shv + 1) ||
+			    !td->upstart_mode)
+				sections[i].ustatus = needed;
+			continue;
+		}
+
+		/*
+		 * RO update not supported in versions below 3, another
+		 * invocation will be required once the RW is updated to
+		 * handle protocol 3 or above.
+		 */
+		if (protocol_version < 3) {
+			sections[i].ustatus = not_possible;
+			continue;
+		}
+
+		/* Skip currently active section. */
+		if (offset != td->ro_offset)
+			continue;
+		/*
+		 * Ok, this would be the RO section to transfer to the device.
+		 * Is it newer in the new image than the running RO section on
+		 * the device?
+		 */
+		if (a_newer_than_b(&sections[i].shv, target_shv))
+			sections[i].ustatus = needed;
 	}
 }
 
@@ -668,8 +846,8 @@ static void setup_connection(struct transfer_descriptor *td)
 		uint32_t legacy_resp;
 	} start_resp;
 
-	/* Send start/erase request */
-	printf("erase\n");
+	/* Send start request. */
+	printf("start\n");
 
 	if (td->ep_type == usb_xfer) {
 		struct update_pdu updu;
@@ -683,7 +861,7 @@ static void setup_connection(struct transfer_descriptor *td)
 		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
 				 &start_resp, &rxed_size) < 0) {
 			fprintf(stderr, "Failed to start transfer\n");
-			exit(1);
+			exit(update_error);
 		}
 	}
 
@@ -691,7 +869,7 @@ static void setup_connection(struct transfer_descriptor *td)
 		if (td->ep_type != spi_xfer) {
 			fprintf(stderr, "Unexpected response size %zd\n",
 				rxed_size);
-			exit(1);
+			exit(update_error);
 		}
 
 		/* This is a protocol version one response. */
@@ -717,7 +895,20 @@ static void setup_connection(struct transfer_descriptor *td)
 		} else {
 			/* All newer protocols. */
 			td->rw_offset = be32toh
-				(start_resp.rpdu.vers3.backup_rw_offset);
+				(start_resp.rpdu.backup_rw_offset);
+			if (protocol_version > 3) {
+				size_t i;
+
+				/* Running header versions are available. */
+				for (i = 0; i < ARRAY_SIZE(target_shv); i++) {
+					target_shv[i].minor = be32toh
+						(start_resp.rpdu.shv[i].minor);
+					target_shv[i].major = be32toh
+						(start_resp.rpdu.shv[i].major);
+					target_shv[i].epoch = be32toh
+						(start_resp.rpdu.shv[i].epoch);
+				}
+			}
 		}
 	}
 
@@ -726,41 +917,45 @@ static void setup_connection(struct transfer_descriptor *td)
 	if (!error_code) {
 		if (protocol_version > 2) {
 			td->ro_offset = be32toh
-				(start_resp.rpdu.vers3.backup_ro_offset);
+				(start_resp.rpdu.backup_ro_offset);
 			printf("Offsets: backup RO at %#x, backup RW at %#x\n",
 			       td->ro_offset, td->rw_offset);
-			return;
 		}
-		if (!td->update_ro)
-			return;
-
-		fprintf(stderr, "Target does not support RO updates\n");
-
-	} else {
-		fprintf(stderr, "Target reporting error %d\n", error_code);
+		pick_sections(td);
+		return;
 	}
 
+	fprintf(stderr, "Target reporting error %d\n", error_code);
 	if (td->ep_type == usb_xfer)
 		shut_down(&td->uep);
-	exit(1);
+	exit(update_error);
 }
 
-static void transfer_and_reboot(struct transfer_descriptor *td,
-				uint8_t *data, size_t data_len)
+/* Returns number of successfully transmitted image sections. */
+static int transfer_and_reboot(struct transfer_descriptor *td,
+			       uint8_t *data, size_t data_len)
 {
+	size_t i;
+	int num_txed_secitons = 0;
 
 	setup_connection(td);
 
-	transfer_section(td, data + td->rw_offset, td->rw_offset,
-			 CONFIG_RW_SIZE);
+	for (i = 0; i < ARRAY_SIZE(sections); i++)
+		if (sections[i].ustatus == needed) {
+			transfer_section(td,
+					 data + sections[i].offset,
+					 sections[i].offset,
+					 sections[i].size);
+			num_txed_secitons++;
+		}
 
-	/* Transfer the RO part if requested. */
-	if (td->update_ro)
-		transfer_section(td, data + td->ro_offset, td->ro_offset,
-				 CONFIG_RO_SIZE);
+	if (!num_txed_secitons) {
+		printf("Nothing to do\n");
+		return 0;
+	}
 
 	printf("-------\nupdate complete\n");
-	if (td->ep_type == usb_xfer) {
+	if ((td->ep_type == usb_xfer) && !td->upstart_mode) {
 		uint32_t out;
 
 		/* Send stop request, ignoring reply. */
@@ -776,6 +971,8 @@ static void transfer_and_reboot(struct transfer_descriptor *td,
 		 */
 		xfer(&td->uep, &out, sizeof(out), 0, 0);
 	}
+
+	return num_txed_secitons;
 }
 
 int main(int argc, char *argv[])
@@ -786,6 +983,9 @@ int main(int argc, char *argv[])
 	size_t data_len = 0;
 	uint16_t vid = VID, pid = PID;
 	int i;
+	size_t j;
+	int transferred_sections;
+
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -810,11 +1010,11 @@ int main(int argc, char *argv[])
 		case 'h':
 			usage(errorcnt);
 			break;
-		case 'r':
-			td.update_ro = 1;
-			break;
 		case 's':
 			td.ep_type = spi_xfer;
+			break;
+		case 'u':
+			td.upstart_mode = 1;
 			break;
 		case 0:				/* auto-handled option */
 			break;
@@ -832,7 +1032,7 @@ int main(int argc, char *argv[])
 			break;
 		default:
 			printf("Internal error at %s:%d\n", __FILE__, __LINE__);
-			exit(1);
+			exit(update_error);
 		}
 	}
 
@@ -840,17 +1040,21 @@ int main(int argc, char *argv[])
 		usage(errorcnt);
 
 	if (optind >= argc) {
-		fprintf(stderr, "\nERROR: Missing required ec.bin file\n\n");
+		fprintf(stderr,
+			"\nERROR: Missing required <binary image>\n\n");
 		usage(1);
 	}
 
 	data = get_file_or_die(argv[optind], &data_len);
-	printf("read 0x%zx bytes from %s\n", data_len, argv[optind]);
+	printf("read %zd(%#zx) bytes from %s\n",
+	       data_len, data_len, argv[optind]);
 	if (data_len != CONFIG_FLASH_SIZE) {
 		fprintf(stderr, "Image file is not %d bytes\n",
 			CONFIG_FLASH_SIZE);
-		exit(1);
+		exit(update_error);
 	}
+
+	fetch_header_versions(data);
 
 	if (td.ep_type == usb_xfer) {
 		usb_findit(vid, pid, &td.uep);
@@ -858,11 +1062,11 @@ int main(int argc, char *argv[])
 		td.tpm_fd = open("/dev/tpm0", O_RDWR);
 		if (td.tpm_fd < 0) {
 			perror("Could not open TPM");
-			exit(1);
+			exit(update_error);
 		}
 	}
 
-	transfer_and_reboot(&td, data, data_len);
+	transferred_sections = transfer_and_reboot(&td, data, data_len);
 
 	printf("bye\n");
 	free(data);
@@ -871,5 +1075,19 @@ int main(int argc, char *argv[])
 		libusb_exit(NULL);
 	}
 
-	return 0;
+	if (!transferred_sections)
+		return noop;
+	/*
+	 * We should indicate if RO update was not done because of the
+	 * insufficient RW version.
+	 */
+	for (j = 0; j < ARRAY_SIZE(sections); j++)
+		if (sections[j].ustatus == not_possible) {
+			/* This will allow scripting repeat attempts. */
+			printf("Failed to update RO, run the command again\n");
+			return rw_updated;
+		}
+
+	printf("Image updated, reboot is needed\n");
+	return all_updated;
 }

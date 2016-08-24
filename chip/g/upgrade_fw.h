@@ -28,13 +28,11 @@
  * contains no data and is destined to offset 0. Receiving such a frame
  * signals the CR50 that the host intends to transfer a new image.
  *
- * Version 3 connection establishment response is 16 bytes in size, all values
- * in network byte order. The first 4 bytes are the error code (if any), the
- * second 4 bytes are the protocol version (set to 3) and then 4 byte offset
- * of the RO section followed by the 4 byte offset of the RW section.
+ * The connection establishment response is described by the
+ * first_response_pdu structure below.
  */
 
-#define UPGRADE_PROTOCOL_VERSION 3
+#define UPGRADE_PROTOCOL_VERSION 4
 
 /* This is the format of the update frame header. */
 struct upgrade_command {
@@ -63,6 +61,19 @@ struct update_frame_header {
 };
 
 /*
+ * A convenience structure which allows to group together various revision
+ * fields of the header created by the signer.
+ *
+ * These fields are compared when deciding if versions of two images are the
+ * same or when deciding which one of the available images to run.
+ */
+struct signed_header_version {
+	uint32_t minor;
+	uint32_t major;
+	uint32_t epoch;
+};
+
+/*
  * Response to the connection establishment request.
  *
  * When responding to the very first packet of the upgrade sequence, the
@@ -84,13 +95,17 @@ struct update_frame_header {
  */
 struct first_response_pdu {
 	uint32_t return_value;
+
+	/* The below fields are present in versions 2 and up. */
 	uint32_t protocol_version;
-	union {
-		struct {
-			uint32_t  backup_ro_offset;
-			uint32_t  backup_rw_offset;
-		} vers3;
-	};
+
+	/* The below fields are present in versions 3 and up. */
+	uint32_t  backup_ro_offset;
+	uint32_t  backup_rw_offset;
+
+	/* The below fields are present in versions 4 and up. */
+	/* Versions of the currently active RO and RW sections. */
+	struct signed_header_version shv[2];
 };
 
 /* TODO: Handle this in upgrade_fw.c, not usb_upgrade.c */

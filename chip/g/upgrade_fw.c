@@ -170,10 +170,10 @@ void fw_upgrade_command_handler(void *body,
 			return;
 		}
 
-		rpdu->vers3.backup_ro_offset =
+		rpdu->backup_ro_offset =
 			htobe32(valid_sections.ro_base_offset);
 
-		rpdu->vers3.backup_rw_offset =
+		rpdu->backup_rw_offset =
 			htobe32(valid_sections.rw_base_offset);
 
 		return;
