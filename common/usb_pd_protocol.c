@@ -1481,6 +1481,7 @@ void pd_task(void)
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = tcpm_init(port);
 	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
+	this_state = res ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
@@ -1502,7 +1503,7 @@ void pd_task(void)
 	/* Initialize PD protocol state variables for each port. */
 	pd[port].power_role = PD_ROLE_DEFAULT;
 	pd[port].vdm_state = VDM_STATE_DONE;
-	set_state(port, PD_DEFAULT_STATE);
+	set_state(port, this_state);
 	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
 	tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
 							      TYPEC_CC_RD);
