@@ -123,22 +123,33 @@ void console_has_input(void);
  * @param flags         Per-command flags, if needed.
  */
 #ifndef HAS_TASK_CONSOLE
-#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)		\
 	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
-#elif defined(CONFIG_CONSOLE_CMDHELP)
-#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
-	static const char __con_cmd_label_##NAME[] = #NAME;		\
-	struct size_check##NAME {					\
-		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
-	const struct console_command __keep __con_cmd_##NAME		\
-	__attribute__((section(".rodata.cmds." #NAME)))	=		\
-	{ .name = __con_cmd_label_##NAME,				\
-	  .handler = ROUTINE,						\
-	  .argdesc = ARGDESC,						\
-	  .help = HELP					\
-	}
+#define DECLARE_SAFE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
+	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
+#define DECLARE_CONSOLE_COMMAND_FLAGS(NAME, ROUTINE, ARGDESC, HELP, FLAGS) \
+	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
 #else
-#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
+
+/* We always provde help args, but we may discard them to save space. */
+#if defined(CONFIG_CONSOLE_CMDHELP)
+#define _HELP_ARGS(A, H)						\
+	.argdesc = A,							\
+	.help = H,
+#else
+#define _HELP_ARGS(A, H)
+#endif
+
+/* We may or may not have a .flags field */
+#ifdef CONFIG_CONSOLE_COMMAND_FLAGS
+#define _FLAG_ARGS(F)							\
+	.flags = F,
+#else
+#define _FLAG_ARGS(F)
+#endif
+
+/* This macro takes all possible args and discards the ones we don't use */
+#define _DCL_CON_CMD_ALL(NAME, ROUTINE, ARGDESC, HELP, FLAGS)		\
 	static const char __con_cmd_label_##NAME[] = #NAME;		\
 	struct size_check##NAME {					\
 		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
@@ -146,7 +157,32 @@ void console_has_input(void);
 	__attribute__((section(".rodata.cmds." #NAME))) =		\
 	{ .name = __con_cmd_label_##NAME,				\
 	  .handler = ROUTINE,						\
+	  _HELP_ARGS(ARGDESC, HELP)					\
+	  _FLAG_ARGS(FLAGS)						\
 	}
-#endif
+
+/*
+ * If the .flags field exists, we can use this to specify its value. If not,
+ * the value will be discarded so it doesn't matter.
+ */
+#define DECLARE_CONSOLE_COMMAND_FLAGS(NAME, ROUTINE, ARGDESC, HELP, FLAGS) \
+	_DCL_CON_CMD_ALL(NAME, ROUTINE, ARGDESC, HELP, FLAGS)
+
+/* This works as before, for the same reason. */
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
+	_DCL_CON_CMD_ALL(NAME, ROUTINE, ARGDESC, HELP,		\
+			 CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT)
+
+/*
+ * This can be used to ensure that whatever default flag bits are set (if any),
+ * the command is never restricted. BE CAREFUL! You should only use this for
+ * commands that either do nothing or that do only safe things.
+ */
+#define DECLARE_SAFE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
+	_DCL_CON_CMD_ALL(NAME, ROUTINE, ARGDESC, HELP,			\
+			 (CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT &	\
+			  ~CMD_FLAG_RESTRICTED))
+
+#endif	/* HAS_TASK_CONSOLE */
 
 #endif  /* __CROS_EC_CONSOLE_H */

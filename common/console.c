@@ -240,6 +240,11 @@ command_has_error:
 		return EC_ERROR_UNKNOWN;
 	}
 
+#ifdef CONFIG_RESTRICTED_CONSOLE_COMMANDS
+	if (console_is_restricted() && cmd->flags & CMD_FLAG_RESTRICTED)
+		rv = EC_ERROR_ACCESS_DENIED;
+	else
+#endif
 	rv = cmd->handler(argc, argv);
 	if (rv == EC_SUCCESS)
 		return rv;
@@ -720,12 +725,18 @@ static int command_help(int argc, char **argv)
 
 	ccputs("Known commands:\n");
 	for (i = 0; i < rows; i++) {
-		ccputs("  ");
+		ccputs(" ");
 		for (j = 0; j < cols; j++) {
 			int index = j * rows + i;
 			if (index >= ncmds)
 				break;
-			ccprintf("%-15s", __cmds[index].name);
+#ifdef CONFIG_RESTRICTED_CONSOLE_COMMANDS
+			if (console_is_restricted() &&
+			    __cmds[index].flags & CMD_FLAG_RESTRICTED)
+				ccprintf("-%-14s", __cmds[index].name);
+			else
+#endif
+				ccprintf(" %-14s", __cmds[index].name);
 		}
 		ccputs("\n");
 		cflush();
@@ -738,9 +749,9 @@ static int command_help(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(help, command_help,
-			"[ list | <name> ]",
-			"Print command help");
+DECLARE_SAFE_CONSOLE_COMMAND(help, command_help,
+			     "[ list | <name> ]",
+			     "Print command help");
 
 #ifdef CONFIG_CONSOLE_HISTORY
 static int command_history(int argc, char **argv)
