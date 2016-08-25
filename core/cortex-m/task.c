@@ -606,9 +606,9 @@ int command_task_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
-			NULL,
-			"Print task info");
+DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info,
+			     NULL,
+			     "Print task info");
 
 #ifdef CONFIG_CMD_TASKREADY
 static int command_task_ready(int argc, char **argv)

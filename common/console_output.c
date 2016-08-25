@@ -146,6 +146,6 @@ static int command_ch(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 };
-DECLARE_CONSOLE_COMMAND(chan, command_ch,
-			"[ save | restore | <mask> ]",
-			"Save, restore, get or set console channel mask");
+DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch,
+			     "[ save | restore | <mask> ]",
+			     "Save, restore, get or set console channel mask");

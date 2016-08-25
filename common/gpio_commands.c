@@ -132,9 +132,9 @@ static int command_gpio_get(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(gpioget, command_gpio_get,
-			"[name]",
-			"Read GPIO value(s)");
+DECLARE_SAFE_CONSOLE_COMMAND(gpioget, command_gpio_get,
+			     "[name]",
+			     "Read GPIO value(s)");
 
 static int command_gpio_set(int argc, char **argv)
 {

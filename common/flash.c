@@ -698,9 +698,9 @@ static int command_flash_info(int argc, char **argv)
 	ccputs("\n");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(flashinfo, command_flash_info,
-			NULL,
-			"Print flash info");
+DECLARE_SAFE_CONSOLE_COMMAND(flashinfo, command_flash_info,
+			     NULL,
+			     "Print flash info");
 
 #ifdef CONFIG_CMD_FLASH
 static int command_flash_erase(int argc, char **argv)

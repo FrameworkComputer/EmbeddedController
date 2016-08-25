@@ -766,7 +766,7 @@ static int command_history(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(history, command_history,
-			NULL,
-			"Print console history");
+DECLARE_SAFE_CONSOLE_COMMAND(history, command_history,
+			     NULL,
+			     "Print console history");
 #endif

@@ -852,9 +852,9 @@ static int command_sysinfo(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
-			NULL,
-			"Print system info");
+DECLARE_SAFE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
+			     NULL,
+			     "Print system info");
 
 #ifdef CONFIG_CMD_SCRATCHPAD
 static int command_scratchpad(int argc, char **argv)
@@ -998,9 +998,9 @@ static int command_version(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(version, command_version,
-			NULL,
-			"Print versions");
+DECLARE_SAFE_CONSOLE_COMMAND(version, command_version,
+			     NULL,
+			     "Print versions");
 
 static int command_sysjump(int argc, char **argv)
 {
@@ -1081,9 +1081,9 @@ static int command_system_lock(int argc, char **argv)
 	force_locked = 1;
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(syslock, command_system_lock,
-			NULL,
-			"Lock the system, even if WP is disabled");
+DECLARE_SAFE_CONSOLE_COMMAND(syslock, command_system_lock,
+			     NULL,
+			     "Lock the system, even if WP is disabled");
 
 #ifdef CONFIG_LOW_POWER_IDLE
 /**

@@ -306,9 +306,9 @@ static int command_get_time(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(gettime, command_get_time,
-			NULL,
-			"Print current time");
+DECLARE_SAFE_CONSOLE_COMMAND(gettime, command_get_time,
+			     NULL,
+			     "Print current time");
 
 #ifdef CONFIG_CMD_TIMERINFO
 int command_timer_info(int argc, char **argv)
@@ -317,7 +317,7 @@ int command_timer_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(timerinfo, command_timer_info,
-			NULL,
-			"Print timer info");
+DECLARE_SAFE_CONSOLE_COMMAND(timerinfo, command_timer_info,
+			     NULL,
+			     "Print timer info");
 #endif

@@ -60,7 +60,7 @@ static int command_shmem(int argc, char **argv)
 	ccprintf("Max: %6d\n", max_used);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(shmem, command_shmem,
-			NULL,
-			"Print shared memory stats");
+DECLARE_SAFE_CONSOLE_COMMAND(shmem, command_shmem,
+			     NULL,
+			     "Print shared memory stats");
 #endif
