@@ -4248,6 +4248,10 @@ static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 		printf("Unknown");
 	}
 
+	if ((r->role == USB_PD_PORT_POWER_SOURCE) &&
+	    (r->meas.current_max))
+		printf(" %dmA", r->meas.current_max);
+
 	if ((r->role == USB_PD_PORT_POWER_DISCONNECTED) ||
 	    (r->role == USB_PD_PORT_POWER_SOURCE)) {
 		printf("\n");

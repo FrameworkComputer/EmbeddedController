@@ -78,6 +78,7 @@ static timestamp_t delayed_override_deadline;
 /* Bitmap of ports used as power source */
 static volatile uint32_t source_port_bitmap;
 BUILD_ASSERT(sizeof(source_port_bitmap)*8 >= CONFIG_USB_PD_PORT_COUNT);
+static uint8_t source_port_last_rp[CONFIG_USB_PD_PORT_COUNT];
 
 enum charge_manager_change_type {
 	CHANGE_CHARGE,
@@ -124,6 +125,7 @@ static void charge_manager_init(void)
 			charge_ceil[i][j] = CHARGE_CEIL_NONE;
 		dualrole_capability[i] = spoof_capability ? CAP_DEDICATED :
 							    CAP_UNKNOWN;
+		source_port_last_rp[i] = CONFIG_USB_PD_PULLUP;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_CHARGE_MANAGER_INIT);
@@ -154,6 +156,19 @@ static int charge_manager_is_seeded(void)
 }
 
 #ifndef TEST_BUILD
+static int charge_manager_get_source_current(int port)
+{
+	switch (source_port_last_rp[port]) {
+	case TYPEC_RP_3A0:
+		return 3000;
+	case TYPEC_RP_1A5:
+		return 1500;
+	case TYPEC_RP_USB:
+	default:
+		return 500;
+	}
+}
+
 /**
  * Fills passed power_info structure with current info about the passed port.
  */
@@ -200,7 +215,7 @@ static void charge_manager_fill_power_info(int port,
 		r->meas.voltage_max = 0;
 		r->meas.voltage_now = r->role == USB_PD_PORT_POWER_SOURCE ? 5000
 									  : 0;
-		r->meas.current_max = 0;
+		r->meas.current_max = charge_manager_get_source_current(port);
 		r->max_power = 0;
 	} else {
 #if defined(HAS_TASK_CHG_RAMP) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -915,6 +930,14 @@ void charge_manager_source_port(int port, int enable)
 		 */
 		int rp = (source_port_bitmap & ~(1 << p)) ? CONFIG_USB_PD_PULLUP
 			: CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT;
+
+		source_port_last_rp[p] = rp;
+
+#ifdef CONFIG_USB_PD_LOGGING
+		if (pd_is_connected(p) &&
+		    pd_get_role(p) == PD_ROLE_SOURCE)
+			charge_manager_save_log(p);
+#endif
 
 		tcpm_select_rp_value(p, rp);
 		pd_update_contract(p);
