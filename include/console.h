@@ -20,9 +20,28 @@ struct console_command {
 	/* Description of args */
 	const char *argdesc;
 	/* Short help for command */
-	const char *shorthelp;
+	const char *help;
+#endif
+#ifdef CONFIG_CONSOLE_COMMAND_FLAGS
+	const uint32_t flags;
 #endif
 };
+
+/* Flag bits for when CONFIG_CONSOLE_COMMAND_FLAGS is enabled */
+#define CMD_FLAG_RESTRICTED  0x00000001
+
+/* The default .flags value can be overridden in board.h */
+#ifndef CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT
+#define CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT 0
+#endif
+
+#ifdef CONFIG_RESTRICTED_CONSOLE_COMMANDS
+/*
+ * This must be implemented somewhere. A true return value means that all
+ * CMD_FLAG_RESTRICTED commands are disabled.
+ */
+int console_is_restricted(void);
+#endif
 
 /* Console channels */
 enum console_channel {
@@ -94,19 +113,20 @@ void console_has_input(void);
 /**
  * Register a console command handler.
  *
- * @param name		Command name; must not be the beginning of another
- *			existing command name.  Note this is NOT in quotes
- *		        so it can be concatenated to form a struct name.
- * @param routine	Command handling routine, of the form
- *			int handler(int argc, char **argv)
- * @param argdesc	String describing arguments to command; NULL if none.
- * @param shorthelp	String with one-line description of command.
+ * @param name          Command name; must not be the beginning of another
+ *                      existing command name.  Note this is NOT in quotes
+ *                      so it can be concatenated to form a struct name.
+ * @param routine       Command handling routine, of the form
+ *                      int handler(int argc, char **argv)
+ * @param argdesc       String describing arguments to command; NULL if none.
+ * @param help          String with one-line description of command, or NULL.
+ * @param flags         Per-command flags, if needed.
  */
 #ifndef HAS_TASK_CONSOLE
-#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, SHORTHELP)	\
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
 	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
 #elif defined(CONFIG_CONSOLE_CMDHELP)
-#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, SHORTHELP)	\
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
 	static const char __con_cmd_label_##NAME[] = #NAME;		\
 	struct size_check##NAME {					\
 		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \
@@ -115,10 +135,10 @@ void console_has_input(void);
 	{ .name = __con_cmd_label_##NAME,				\
 	  .handler = ROUTINE,						\
 	  .argdesc = ARGDESC,						\
-	  .shorthelp = SHORTHELP					\
+	  .help = HELP					\
 	}
 #else
-#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, SHORTHELP)	\
+#define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
 	static const char __con_cmd_label_##NAME[] = #NAME;		\
 	struct size_check##NAME {					\
 		int field[2 * (sizeof(__con_cmd_label_##NAME) < 16) - 1]; }; \

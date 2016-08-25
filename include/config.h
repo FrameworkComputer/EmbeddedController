@@ -659,6 +659,22 @@
 #define CONFIG_CONSOLE_CMDHELP
 
 /*
+ * Add a .flags field to the console commands data structure, to distinguish
+ * some commands from others. The available flags bits are defined in
+ * include/console.h
+ */
+#undef CONFIG_CONSOLE_COMMAND_FLAGS
+
+/*
+ * One use of the .flags field is to make some console commands restricted, so
+ * that they can be disabled or enabled at run time.
+ */
+#undef CONFIG_RESTRICTED_CONSOLE_COMMANDS
+
+/* The default .flags field value is zero, unless overridden with this. */
+#undef CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT
+
+/*
  * Number of entries in console history buffer.
  *
  * Boards may #undef this to reduce memory usage.

@@ -676,7 +676,7 @@ void console_task(void)
 static int command_help(int argc, char **argv)
 {
 	const int ncmds = __cmds_end - __cmds;
-	const int cols = 5;  /* printing in five columns */
+	const int cols = 5;			/* printing in five columns */
 	const int rows = (ncmds + cols - 1) / cols;
 	int i, j;
 
@@ -685,12 +685,22 @@ static int command_help(int argc, char **argv)
 		const struct console_command *cmd;
 
 		if (!strcasecmp(argv[1], "list")) {
+#ifdef CONFIG_CONSOLE_COMMAND_FLAGS
+			ccputs("Command     Flags   Description\n");
+			for (i = 0; i < ncmds; i++) {
+				ccprintf(" %-14s %x %s\n",
+					 __cmds[i].name, __cmds[i].flags,
+					 __cmds[i].help);
+				cflush();
+			}
+#else
 			ccputs("Known commands:\n");
 			for (i = 0; i < ncmds; i++) {
 				ccprintf("  %-15s%s\n",
-					 __cmds[i].name, __cmds[i].shorthelp);
+					 __cmds[i].name, __cmds[i].help);
 				cflush();
 			}
+#endif
 			ccputs("HELP CMD = help on CMD.\n");
 			return EC_SUCCESS;
 		}
@@ -702,8 +712,8 @@ static int command_help(int argc, char **argv)
 		}
 		ccprintf("Usage: %s %s\n", cmd->name,
 			 (cmd->argdesc ? cmd->argdesc : ""));
-		if (cmd->shorthelp)
-			ccprintf("%s\n", cmd->shorthelp);
+		if (cmd->help)
+			ccprintf("%s\n", cmd->help);
 		return EC_SUCCESS;
 	}
 #endif
