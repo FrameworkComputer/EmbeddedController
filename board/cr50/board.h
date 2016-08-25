@@ -74,11 +74,10 @@
 /* We don't need to send events to the AP */
 #undef  CONFIG_HOSTCMD_EVENTS
 
-/*
- * Allow dangerous commands all the time, since we don't have a write protect
- * switch.
- */
-#define CONFIG_SYSTEM_UNLOCKED
+/* Make most commands restricted */
+#define CONFIG_CONSOLE_COMMAND_FLAGS
+#define CONFIG_RESTRICTED_CONSOLE_COMMANDS
+#define CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT CMD_FLAG_RESTRICTED
 
 /* Include crypto stuff, both software and hardware. */
 #define CONFIG_DCRYPTO
