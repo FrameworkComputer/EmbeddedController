@@ -473,6 +473,9 @@ int bn_modinv_vartime(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *e,
 	if (bn_size(e) > sizeof(U_buf))
 		return 0;
 
+	if (bn_is_even(e) && bn_is_even(MOD))
+		return 0;
+
 	bn_init(&A, A_buf, bn_size(MOD) + sizeof(uint32_t));
 	bn_init(&B, B_buf, bn_size(MOD) + sizeof(uint32_t));
 	bn_init(&C, C_buf, bn_size(MOD) + sizeof(uint32_t));
