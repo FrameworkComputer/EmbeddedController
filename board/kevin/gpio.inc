@@ -12,7 +12,8 @@
 
 
 GPIO_INT(WP_L,             PIN(9, 3), GPIO_INT_BOTH, switch_interrupt)
-GPIO_INT(SHI_CS_L,         PIN(5, 3), GPIO_INT_FALLING, shi_cs_event)
+GPIO_INT(SHI_CS_L,         PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN,
+         shi_cs_event)
 GPIO_INT(USB_C0_PD_INT_L,  PIN(6, 0), GPIO_INT_FALLING | GPIO_PULL_UP,
          tcpc_alert_event)
 GPIO_INT(USB_C1_PD_INT_L,  PIN(6, 2), GPIO_INT_FALLING | GPIO_PULL_UP,
@@ -123,6 +124,15 @@ GPIO(USB_A_EN,             PIN(C, 3), GPIO_OUT_LOW)
 GPIO(USB_A_CHARGE_EN,      PIN(8, 4), GPIO_OUT_LOW)
 GPIO(GPIOB6_NC,            PIN(B, 6), GPIO_INPUT | GPIO_PULL_UP)
 #endif
+
+/*
+ * SPI host interface - enable PDs by default. These will be made functional
+ * by the SHI driver when the AP powers up, and restored back to GPIO when
+ * the AP powers down.
+ */
+GPIO(SHI_SDI,              PIN(4, 6), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(SHI_SDO,              PIN(4, 7), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(SHI_SCLK,             PIN(5, 5), GPIO_INPUT | GPIO_PULL_DOWN)
 
 /* SPIP_MOSI/SPIP_SCLK GPIOA3/A1 */
 ALTERNATE(PIN_MASK(A, 0x0A), 1,  MODULE_SPI,           0)

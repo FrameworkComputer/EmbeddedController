@@ -779,13 +779,12 @@ static void shi_disable(void)
 	/* Disable SHI_CS_L interrupt */
 	gpio_disable_interrupt(GPIO_SHI_CS_L);
 
-	/* Disable pullup and interrupts on SHI_CS_L */
-	gpio_set_flags(GPIO_SHI_CS_L, GPIO_INPUT);
+	/* Restore SHI_CS_L back to default state */
+	gpio_reset(GPIO_SHI_CS_L);
 
 	/*
 	 * Mux SHI related pins
 	 * SHI_SDI SHI_SDO SHI_CS# SHI_SCLK are selected to GPIO
-	 * (Default GPIO config = input)
 	 */
 	CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_C), NPCX_DEVALTC_SHI_SL);
 }
