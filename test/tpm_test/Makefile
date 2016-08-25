@@ -12,28 +12,37 @@ obj = ../../build/tpm_test
 src = .
 SWIG = /usr/bin/swig
 
+vpath %c $(src) ../../chip/g/dcrypto $(src)/testlib
+
 CFLAGS = -fPIC
 CFLAGS += -I /usr/include/python2.7
-CFLAGS +=  -DLIBFTDI1=1
-CFLAGS +=  -c
-
+CFLAGS += -I../../../../third_party/cryptoc/include
+CFLAGS += -I../../chip/g/dcrypto
+CFLAGS += -I.
+CFLAGS += -Itestlib
+CFLAGS += -DLIBFTDI1=1
+CFLAGS += -c
+CFLAGS += -DCR50_NO_BN_ASM
 TARGET = ftdi_spi_tpm
+
 .PRECIOUS: $(obj)/ftdi_spi_tpm_wrap.c
 
-$(obj)/_$(TARGET).so:
+all: $(obj)/_$(TARGET).so $(obj)/bn_test
+
+BN_OBJS = $(obj)/bn_test.o $(obj)/common.o $(obj)/bn.o
 
 OBJS = $(obj)/$(TARGET).o $(obj)/$(TARGET)_wrap.o $(obj)/mpsse.o \
 	$(obj)/support.o
 
-DEPS := $(OBJS:.o=.o.d)
+DEPS := $(OBJS:.o=.o.d) $(BN_OBJS:.o=.o.d)
 
-$(OBJS): | $(obj)
+$(OBJS) $(BN_OBJS): | $(obj)
 
 $(obj)/%.o: $(obj)/%.c
 	@echo "  CC      $(notdir $@)"
 	$(Q)gcc $(CFLAGS) -o $@ $<
 
-$(obj)/%.o: $(src)/%.c
+$(obj)/%.o: %.c
 	@echo "  CC      $(notdir $@)"
 	$(Q)gcc $(CFLAGS) -Wall -Werror -MMD -MF $@.d -o $@ $<
 
@@ -52,5 +61,9 @@ clean:
 $(obj):
 	@echo "  MKDIR   $(obj)"
 	$(Q)mkdir -p $(obj)
+
+$(obj)/bn_test: $(BN_OBJS)
+	@echo "  LD      $(notdir $@)"
+	$(Q)$(CC) -o $@ $^ -lcrypto
 
 -include $(DEPS)
