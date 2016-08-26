@@ -281,6 +281,26 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	int i;
+	int rv;
+
+	/*
+	 * Disable the power enables for the TCPCs since we're going into
+	 * hibernate.  The charger VBUS interrupt will wake us up and reset the
+	 * EC.  Upon init, we'll reinitialize the TCPCs to be at full power.
+	 */
+	CPRINTS("Setting TCPCs to low power mode.");
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		rv = tcpc_write(i, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
+		if (rv)
+			CPRINTS("Error setting TCPC %d to low power!", i);
+	}
+
+	cflush();
+}
+
 enum kevin_board_version {
 	BOARD_VERSION_UNKNOWN = -1,
 	BOARD_VERSION_REV0 = 0,
