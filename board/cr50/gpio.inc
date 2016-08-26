@@ -14,7 +14,8 @@
  * TODO: Remove this internal pullup at some point. It's only here so that
  * boards that don't have an external pullup don't trigger due to noise.
  */
-GPIO_INT(SYS_RST_L_IN,    PIN(1, 0),  GPIO_INT_FALLING, sys_rst_asserted)
+GPIO_INT(SYS_RST_L_IN,    PIN(1, 0),  GPIO_INT_FALLING | GPIO_PULL_UP,
+	sys_rst_asserted)
 GPIO_INT(AP_ON,           PIN(1, 1),  GPIO_INT_RISING, device_state_on)
 GPIO_INT(EC_ON,           PIN(1, 2),  GPIO_INT_RISING, device_state_on)
 GPIO_INT(SERVO_UART1_ON,  PIN(1, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
