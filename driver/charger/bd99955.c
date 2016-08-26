@@ -354,8 +354,7 @@ static void usb_charger_process(enum bd99955_charge_port port)
 	if (vbus_provided) {
 		/* Charger/sync attached */
 		bc12_detected_type[port] = bd99955_bc12_detect(port);
-	} else if (bc12_detected_type[port] != CHARGE_SUPPLIER_NONE &&
-		!vbus_provided) {
+	} else if (bc12_detected_type[port] != CHARGE_SUPPLIER_NONE) {
 		/* Charger/sync detached */
 		bd99955_bc12_detach(port, bc12_detected_type[port]);
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
@@ -368,7 +367,7 @@ static int bd99955_set_vsysreg(int voltage)
 	/* VSYS Regulation voltage is in 64mV steps. */
 	voltage &= ~0x3F;
 
-	return ch_raw_write16(BD99955_CMD_VSYSREG_SETa, voltage,
+	return ch_raw_write16(BD99955_CMD_VSYSREG_SET, voltage,
 			      BD99955_EXTENDED_COMMAND);
 }
 
@@ -528,13 +527,13 @@ int charger_set_mode(int mode)
 	int rv;
 
 	if (mode & CHARGE_FLAG_INHIBIT_CHARGE) {
-		rv = bd99955_set_vsysreg(DISCHARGE_VSYSREG);
+		rv = bd99955_set_vsysreg(BD99955_DISCHARGE_VSYSREG);
 		msleep(50);
 		rv |= bd99955_charger_enable(0);
 	} else {
 		rv = bd99955_charger_enable(1);
 		msleep(1);
-		rv |= bd99955_set_vsysreg(CHARGE_VSYSREG);
+		rv |= bd99955_set_vsysreg(BD99955_CHARGE_VSYSREG);
 	}
 	if (rv)
 		return rv;
@@ -683,6 +682,16 @@ static void bd99995_init(void)
 
 	/* Set charge termination current to 0 mA. */
 	ch_raw_write16(BD99955_CMD_ITERM_SET, 0,
+		       BD99955_EXTENDED_COMMAND);
+
+	/* Set Pre-charge Voltage Threshold for trickle charging. */
+	ch_raw_write16(BD99955_CMD_VPRECHG_TH_SET,
+		       bi->voltage_min & 0x7FC0,
+		       BD99955_EXTENDED_COMMAND);
+
+	/* Trickle-charge Current Setting */
+	ch_raw_write16(BD99955_CMD_ITRICH_SET,
+		       bi->precharge_current & 0x07C0,
 		       BD99955_EXTENDED_COMMAND);
 }
 DECLARE_HOOK(HOOK_INIT, bd99995_init, HOOK_PRIO_INIT_EXTPOWER);
@@ -876,11 +885,10 @@ void usb_charger_task(void)
 	static int initialized;
 	int changed, port;
 
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
-
-	bd99955_enable_vbus_detect_interrupts(BD99955_CHARGE_PORT_VBUS, 1);
-	bd99955_enable_vbus_detect_interrupts(BD99955_CHARGE_PORT_VCC, 1);
+		bd99955_enable_vbus_detect_interrupts(port, 1);
+	}
 
 	while (1) {
 		changed = 0;
