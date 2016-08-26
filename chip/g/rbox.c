@@ -22,9 +22,11 @@ static void rbox_init(void)
 	/* Enable RBOX */
 	clock_enable_module(MODULE_RBOX, 1);
 
-	/* Clear existing interrupts */
-	GWRITE(RBOX, WAKEUP_CLEAR, 1);
-	GWRITE(RBOX, WAKEUP_CLEAR, 0);
-	GWRITE(RBOX, INT_STATE, 1);
+	/* Clear any interrupt bits (write 1's to clear) */
+	GREG32(RBOX, INT_STATE) = 0xffffffff;
+
+	/* Clear any wakeup bits (write 0x2, then 0x0) */
+	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_CLEAR_MASK;
+	GREG32(RBOX, WAKEUP) = 0;
 }
 DECLARE_HOOK(HOOK_INIT, rbox_init, HOOK_PRIO_DEFAULT - 1);
