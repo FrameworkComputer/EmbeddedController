@@ -1,0 +1,2034 @@
+<ArrayType>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK0_INTG_CHKSUM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>24</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK0_INTG_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>1</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>DS_GRP0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>2</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>9</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>DS_GRP1</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>3</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>9</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>DS_GRP2</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>4</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>9</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>DEV_ID0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>5</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>32</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>DEV_ID1</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>6</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>32</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK1_INTG_CHKSUM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>7</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>24</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK1_INTG_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>8</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB0_POST_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>9</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB0_POST_PATCNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>10</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB0_POST_WARMUP_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>11</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB0_POST_WARMUP_CNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>12</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB1_POST_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>13</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB1_POST_PATCNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>14</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB1_POST_WARMUP_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>15</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB1_POST_WARMUP_CNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>16</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB2_POST_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>17</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB2_POST_PATCNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>18</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB2_POST_WARMUP_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>19</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB2_POST_WARMUP_CNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>20</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB3_POST_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>21</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB3_POST_PATCNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>22</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB3_POST_WARMUP_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>23</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB3_POST_WARMUP_CNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>24</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB4_POST_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>25</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB4_POST_PATCNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>26</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB4_POST_WARMUP_OVRD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>27</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LB4_POST_WARMUP_CNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>28</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>MBIST_POST_SEQ</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>29</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>25</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LBIST_POST_SEQ</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>30</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>25</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>LBIST_VIA_TAP_DIS</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>31</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>MBIST_VIA_TAP_DIS</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>32</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TAP_DISABLE</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>33</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RNGBIST_AR_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>34</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TESTMODE_KEYS_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>35</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>PKG_ID</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>36</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BIN_ID</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>37</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_JTR_OSC48_CC_TRIM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>38</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_JTR_OSC48_CC_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>39</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_JTR_OSC60_CC_TRIM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>40</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_JTR_OSC60_CC_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>41</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_TIMER_OSC48_CC_TRIM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>42</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_TIMER_OSC48_CC_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>43</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_TIMER_OSC48_FC_TRIM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>44</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>5</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_TIMER_OSC48_FC_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>45</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_RTC_OSC256K_CC_TRIM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>46</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RC_RTC_OSC256K_CC_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>47</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>SEL_VREG_REG_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>48</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>SEL_VREF_REG</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>49</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>4</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>SEL_VREF_BATMON_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>50</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>SEL_VREF_BATMON</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>51</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>X_OSC_LDO_CTRL_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>52</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>X_OSC_LDO_CTRL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>53</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>4</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TEMP_OFFSET_CAL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>54</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>12</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TRNG_LDO_CTRL_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>55</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TRNG_LDO_CTRL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>56</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>5</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TRNG_ANALOG_CTRL_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>57</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TRNG_ANALOG_CTRL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>58</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>4</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>EXT_XTAL_PDB</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>59</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>DIS_EXT_XTAL_CLK_TREE</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>60</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>OBFUSCATION_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>61</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>HIK_CREATE_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>62</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK2_INTG_CHKSUM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>63</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>24</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK2_INTG_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>64</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>TESTMODE_OTPW_DIS</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>65</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>HKEY_WDOG_TIMER_EN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>66</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FLASH_PERSO_PAGE_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>67</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>ALERT_RSP_CFG</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>68</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK3_INTG_CHKSUM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>69</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>24</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK3_INTG_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>70</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_BLK0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>71</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_BROM_ERR_RESPONSE</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>72</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>16</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_BROM_APPLYSEC</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>73</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>12</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_BROM_CONFIG0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>74</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_BROM_CONFIG1</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>75</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_MODE_DBG_OVRD_DIS</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>76</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_MODE_OUTPUT_OVRD_DIS</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>77</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>7</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_CLK10HZ_COUNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>78</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>16</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_SHORT_DELAY_COUNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>79</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>16</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_LONG_DELAY_COUNT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>80</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DEBOUNCE_PERIOD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>81</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>16</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DEBOUNCE_BYPASS_PWRB</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>82</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DEBOUNCE_BYPASS_KEY0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>83</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DEBOUNCE_BYPASS_KEY1</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>84</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_KEY_COMBO0_VAL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>85</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_KEY_COMBO1_VAL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>86</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_KEY_COMBO2_VAL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>87</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_KEY_COMBO0_HOLD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>88</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_KEY_COMBO1_HOLD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>89</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_KEY_COMBO2_HOLD</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>90</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_BLOCK_KEY0_SEL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>91</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_BLOCK_KEY1_SEL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>92</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_BLOCK_KEY0_VAL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>93</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_BLOCK_KEY1_VAL</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>94</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_AC_PRESENT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>95</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_PWRB_IN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>96</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_PWRB_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>97</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_KEY0_IN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>98</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_KEY0_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>99</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_KEY1_IN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>100</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_KEY1_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>101</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_EC_RST</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>102</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_POL_BATT_DISABLE</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>103</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>1</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_AC_PRESENT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>104</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_ENTERING_RW</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>105</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_PWRB_IN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>106</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_PWRB_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>107</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_KEY0_IN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>108</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_KEY0_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>109</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_KEY1_IN</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>110</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_TERM_KEY1_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>111</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DRIVE_PWRB_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>112</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DRIVE_KEY0_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>113</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DRIVE_KEY1_OUT</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>114</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DRIVE_EC_RST</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>115</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>RBOX_DRIVE_BATT_DISABLE</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>116</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>2</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK4_INTG_CHKSUM</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>117</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>24</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>BNK4_INTG_LOCK</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>118</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>3</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK0</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>119</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK1</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>120</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK2</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>121</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK3</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>122</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK4</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>123</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK5</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>124</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>8</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+ <HashType>
+  <HashItem>
+   <Key>RegName</Key>
+   <Value>FW_DEFINED_DATA_EXTRA_BLK6</Value>
+  </HashItem>
+  <HashItem>
+   <Key>FuseLogicalOffset</Key>
+   <Value>125</Value>
+  </HashItem>
+  <HashItem>
+   <Key>Width</Key>
+   <Value>5</Value>
+  </HashItem>
+ </HashType>
+</ArrayItem>
+<ArrayItem>
+<HashType>
+ <HashItem>
+  <Key>RegName</Key>
+  <Value>SWDP_P4_LAST_SYNC</Value>
+ </HashItem>
+ <HashItem>
+  <Key>Default</Key>
+  <Value>177</Value>
+ </HashItem>
+ <HashItem>
+  <Key>FuseLogicalOffset</Key>
+  <Value>0</Value>
+ </HashItem>
+</HashType>
+</ArrayItem>
+</ArrayType>
