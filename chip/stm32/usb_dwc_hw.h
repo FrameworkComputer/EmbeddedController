@@ -30,6 +30,56 @@ struct usb_setup_packet;
 /* EP0 Interface handler callbacks */
 static int (*usb_iface_request[]) (struct usb_setup_packet *req);
 
+
+/* True if the HW Rx/OUT FIFO is currently listening. */
+int rx_ep_is_active(uint32_t ep_num);
+
+/* Number of bytes the HW Rx/OUT FIFO has for us.
+ *
+ * @param ep_num        USB endpoint
+ *
+ * @returns             number of bytes ready, zero if none.
+ */
+int rx_ep_pending(uint32_t ep_num);
+
+/* True if the Tx/IN FIFO can take some bytes from us. */
+int tx_ep_is_ready(uint32_t ep_num);
+
+/* Write packets of data IN to the host.
+ *
+ * This function uses DMA, so the *data write buffer
+ * must persist until the write completion event.
+ *
+ * @param ep_num        USB endpoint to write
+ * @param len           number of bytes to write
+ * @param data          pointer of data to write
+ *
+ * @return              bytes written
+ */
+int usb_write_ep(uint32_t ep_num, int len, void *data);
+
+/* Read a packet of data OUT from the host.
+ *
+ * This function uses DMA, so the *data write buffer
+ * must persist until the read completion event.
+ *
+ * @param ep_num        USB endpoint to read
+ * @param len           number of bytes to read
+ * @param data          pointer of data to read
+ *
+ * @return              EC_SUCCESS on success
+ */
+int usb_read_ep(uint32_t ep_num, int len, void *data);
+
+/* Tx/IN interrupt handler */
+void usb_epN_tx(uint32_t ep_num);
+
+/* Rx/OUT endpoint interrupt handler */
+void usb_epN_rx(uint32_t ep_num);
+
+/* Reset endpoint HW block. */
+void epN_reset(uint32_t ep_num);
+
 /*
  * Declare any interface-specific control request handlers. These Setup packets
  * arrive on the control endpoint (EP0), but are handled by the interface code.

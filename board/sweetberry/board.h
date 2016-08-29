@@ -40,6 +40,8 @@
 #define CONFIG_USB
 #define CONFIG_USB_PID 0x5020
 #define CONFIG_USB_CONSOLE
+#define CONFIG_STREAM_USB
+#define CONFIG_USB_UPDATE
 
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
@@ -48,13 +50,15 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE 0
-#define USB_IFACE_COUNT   1
+#define USB_IFACE_CONSOLE	0
+#define USB_IFACE_UPDATE	1
+#define USB_IFACE_COUNT		2
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL 0
-#define USB_EP_CONSOLE 1
-#define USB_EP_COUNT   2
+#define USB_EP_CONTROL		0
+#define USB_EP_CONSOLE		1
+#define USB_EP_UPDATE		2
+#define USB_EP_COUNT		3
 
 /* This is not actually a Chromium EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
@@ -85,6 +89,7 @@ enum usb_strings {
 	USB_STR_SERIALNO,
 	USB_STR_VERSION,
 	USB_STR_CONSOLE_NAME,
+	USB_STR_UPDATE_NAME,
 	USB_STR_COUNT
 };
 

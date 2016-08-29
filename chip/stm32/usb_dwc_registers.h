@@ -14,15 +14,18 @@ struct dwc_usb_ep {
 	int tx_fifo;
 
 	int out_pending;
+	int out_expected;
 	uint8_t *out_data;
 	uint8_t *out_databuffer;
 	int out_databuffer_max;
+	const struct deferred_data *rx_deferred;
 
 	int in_packets;
 	int in_pending;
 	uint8_t *in_data;
 	uint8_t *in_databuffer;
 	int in_databuffer_max;
+	const struct deferred_data *tx_deferred;
 };
 
 /* USB state */

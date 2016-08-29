@@ -28,23 +28,23 @@ static int is_readonly;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) = {
-	.bLength	    = USB_DT_INTERFACE_SIZE,
-	.bDescriptorType    = USB_DT_INTERFACE,
-	.bInterfaceNumber   = USB_IFACE_CONSOLE,
-	.bAlternateSetting  = 0,
-	.bNumEndpoints      = 2,
-	.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,
-	.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SERIAL,
-	.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SERIAL,
-	.iInterface	 = USB_STR_CONSOLE_NAME,
+	.bLength		= USB_DT_INTERFACE_SIZE,
+	.bDescriptorType	= USB_DT_INTERFACE,
+	.bInterfaceNumber	= USB_IFACE_CONSOLE,
+	.bAlternateSetting	= 0,
+	.bNumEndpoints		= 2,
+	.bInterfaceClass	= USB_CLASS_VENDOR_SPEC,
+	.bInterfaceSubClass	= USB_SUBCLASS_GOOGLE_SERIAL,
+	.bInterfaceProtocol	= USB_PROTOCOL_GOOGLE_SERIAL,
+	.iInterface		= USB_STR_CONSOLE_NAME,
 };
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 0) = {
-	.bLength	    = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType    = USB_DT_ENDPOINT,
-	.bEndpointAddress   = 0x80 | USB_EP_CONSOLE,
-	.bmAttributes       = 0x02 /* Bulk IN */,
-	.wMaxPacketSize     = USB_MAX_PACKET_SIZE,
-	.bInterval	  = 10
+	.bLength		= USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType	= USB_DT_ENDPOINT,
+	.bEndpointAddress	= 0x80 | USB_EP_CONSOLE,
+	.bmAttributes		= 0x02 /* Bulk IN */,
+	.wMaxPacketSize		= USB_MAX_PACKET_SIZE,
+	.bInterval		 = 10,
 };
 const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_CONSOLE, 1) = {
 	.bLength	    = USB_DT_ENDPOINT_SIZE,
@@ -218,14 +218,8 @@ static void con_ep_tx(void)
 
 static void ep_reset(void)
 {
-	GR_USB_DOEPCTL(USB_EP_CONSOLE) = DXEPCTL_MPS(USB_MAX_PACKET_SIZE) |
-		DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_BULK |
-		DXEPCTL_CNAK | DXEPCTL_EPENA;
-	GR_USB_DIEPCTL(USB_EP_CONSOLE) = DXEPCTL_MPS(USB_MAX_PACKET_SIZE) |
-		DXEPCTL_USBACTEP | DXEPCTL_EPTYPE_BULK |
-		DXEPCTL_TXFNUM(USB_EP_CONSOLE);
-	GR_USB_DAINTMSK |= DAINT_INEP(USB_EP_CONSOLE) |
-			   DAINT_OUTEP(USB_EP_CONSOLE);
+	epN_reset(USB_EP_CONSOLE);
+
 	is_reset = 1;
 
 	/* Flush any queued data */
