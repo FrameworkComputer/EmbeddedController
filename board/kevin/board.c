@@ -387,8 +387,11 @@ int board_get_version(void)
  */
 #ifdef BOARD_KEVIN
 #define BOARD_VERSION_NEW_GPIO_CFG BOARD_VERSION_REV3
+#define BOARD_VERSION_DISCREET_TPM BOARD_VERSION_REV5
 #else
 #define BOARD_VERSION_NEW_GPIO_CFG BOARD_VERSION_REV1
+/* No version of gru has a discreet TPM */
+#define BOARD_VERSION_DISCREET_TPM BOARD_VERSION_COUNT
 #endif
 
 /* CONFIG removed in CL:351151. */
@@ -416,6 +419,10 @@ static void board_config_warning(void)
 static void board_config_check(void)
 {
 	int board_ver = board_get_version();
+
+	/* On Boards without a discreet TPM add a pullup to SYR_RST_L */
+	if (board_ver < BOARD_VERSION_DISCREET_TPM)
+		gpio_set_flags(GPIO_SYS_RST_L, GPIO_ODR_HIGH | GPIO_PULL_UP);
 
 	if (board_ver < BOARD_VERSION_NEW_GPIO_CFG)
 		hook_call_deferred(&board_config_warning_data, 0);
