@@ -192,6 +192,67 @@ void i2cs_post_read_data(uint8_t byte_to_read)
 	last_read_pointer = (last_read_pointer + 1) & REGISTER_FILE_MASK;
 }
 
+void i2cs_post_read_fill_fifo(uint8_t *buffer, size_t len)
+{
+	volatile uint32_t *value_addr;
+	uint32_t word_out_value;
+	uint32_t addr_offset;
+	uint32_t remainder_bytes;
+	uint32_t start_offset;
+	uint32_t num_words;
+	int i, j;
+
+	/* Get offset into 1st fifo word*/
+	start_offset = last_read_pointer & 0x3;
+	/* Number of bytes to fill out 1st word */
+	remainder_bytes = (4 - start_offset) & 0x3;
+	/* Get pointer to base of fifo and offset */
+	addr_offset = last_read_pointer >> 2;
+	value_addr = GREG32_ADDR(I2CS, READ_BUFFER0);
+	/* Update read_pointer to reflect final value */
+	last_read_pointer = (last_read_pointer + len) &
+		REGISTER_FILE_MASK;
+
+	/* Insert bytes until fifo is word aligned */
+	if (remainder_bytes) {
+		/* mask the bytes to be kept */
+		word_out_value = *value_addr;
+		word_out_value &= (1 << (8 * start_offset)) - 1;
+		/* Write in remainder bytes */
+		for (i = 0; i < remainder_bytes; i++)
+			word_out_value |= *buffer++ << (8 * (start_offset + i));
+		/* Write to fifo regsiter */
+		value_addr[addr_offset] = word_out_value;
+		addr_offset = (addr_offset + 1) & (REGISTER_FILE_MASK >> 2);
+		/* Account for bytes consumed */
+		len -= remainder_bytes;
+	}
+
+	/* HW fifo is now word aligned */
+	num_words = len >> 2;
+	for (i = 0; i < num_words; i++) {
+		word_out_value = 0;
+		for (j = 0; j < 4; j++)
+			word_out_value |= *buffer++ << (j * 8);
+		/* Write word to fifo and update fifo offset */
+		value_addr[addr_offset] = word_out_value;
+		addr_offset = (addr_offset + 1) & (REGISTER_FILE_MASK >> 2);
+	}
+	len -= (num_words << 2);
+
+	/* Now proccess remaining bytes (if any), will be <= 3 at this point */
+	remainder_bytes = len;
+	if (remainder_bytes) {
+		/* read from HW fifo */
+		word_out_value = *value_addr;
+		/* Mask bytes that need to be kept */
+		word_out_value &= (0xffffffff << (8 * remainder_bytes));
+		for (i = 0; i < remainder_bytes; i++)
+			word_out_value |= *buffer++ << (8 * i);
+		value_addr[addr_offset] = word_out_value;
+	}
+}
+
 int i2cs_register_write_complete_handler(wr_complete_handler_f wc_handler)
 {
 	if (write_complete_handler_)

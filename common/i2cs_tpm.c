@@ -178,8 +178,7 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 		data -= 1;
 		tpm_register_get(tpm_reg, data, reg_size);
 		/* Transfer TPM fifo data to the I2CS HW fifo */
-		for (i = 0; i < reg_size; i++)
-			i2cs_post_read_data(data[i]);
+		i2cs_post_read_fill_fifo(data, reg_size);
 		return;
 	}
 

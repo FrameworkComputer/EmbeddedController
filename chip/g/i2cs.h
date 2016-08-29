@@ -37,4 +37,14 @@ void i2cs_set_pinmux(void);
  */
 size_t i2cs_get_read_fifo_buffer_depth(void);
 
+/*
+ * Write buffer of data into the I2CS HW read fifo. The function will operate a
+ * byte at a time until the fifo write pointer is word aligned. Then it will
+ * consume all remaining words of input data. There is another stage to handle
+ * any excess bytes. The efficiency benefits relative the byte at a time
+ * function diminish as the buffer size gets smaller and therefore not intended
+ * to be used for <= 4 byte buffers.
+ */
+void i2cs_post_read_fill_fifo(uint8_t *buffer, size_t len);
+
 #endif /* ! __CHIP_G_I2CS_H */
