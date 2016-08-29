@@ -12,12 +12,6 @@
 #include "driver/accel_kx022.h"
 #include "driver/accel_kxcj9.h"
 
-enum kionix_accel {
-	KX022,
-	KXCJ9,
-	SUPPORTED_KIONIX_ACCELS,
-};
-
 /*
  * Struct for pairing an engineering value with the register value for a
  * parameter.
@@ -28,8 +22,6 @@ struct accel_param_pair {
 };
 
 struct kionix_accel_data {
-	/* Variant of Kionix Accelerometer. */
-	uint8_t variant;
 	/* Note, the following are indicies into their respective tables. */
 	/* Current range of accelerometer. */
 	int sensor_range;

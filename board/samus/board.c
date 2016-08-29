@@ -274,9 +274,7 @@ static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
 /* kxcj9 local/private data */
-struct kionix_accel_data g_kxcj9_data = {
-	.variant = KXCJ9,
-};
+struct kionix_accel_data g_kxcj9_data;
 
 /* lsm6ds0 local sensor data (per-sensor) */
 struct lsm6ds0_data g_saved_data[2];

@@ -496,10 +496,7 @@ const matrix_3x3_t lid_standard_ref = {
 };
 
 /* KX022 private data */
-struct kionix_accel_data g_kx022_data[2] = {
-	{.variant = KX022},
-	{.variant = KX022},
-};
+struct kionix_accel_data g_kx022_data[2];
 
 struct motion_sensor_t motion_sensors[] = {
 	{.name = "Base Accel",

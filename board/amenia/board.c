@@ -484,9 +484,7 @@ const matrix_3x3_t base_standard_ref = {
 };
 
 /* KX022 private data */
-struct kionix_accel_data g_kx022_data = {
-	.variant = KX022,
-};
+struct kionix_accel_data g_kx022_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
