@@ -557,5 +557,4 @@ const struct accelgyro_drv kionix_accel_drv = {
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
-	.perform_calib = NULL,
 };
