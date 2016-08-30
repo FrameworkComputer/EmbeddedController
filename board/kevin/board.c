@@ -218,6 +218,11 @@ int board_set_active_charge_port(int charge_port)
 
 	switch (charge_port) {
 	case 0: case 1:
+		/* Don't charge from a source port */
+		if (gpio_get_level(charge_port == 0 ?
+				   GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN))
+			return -1;
+
 		bd99955_port = bd99955_pd_port_to_chg_port(charge_port);
 		break;
 	case CHARGE_PORT_NONE:
@@ -240,8 +245,22 @@ void board_set_charge_limit(int port, int supplier, int charge_ma)
 
 int extpower_is_present(void)
 {
-	/* Check VBUS on either port */
-	return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_BOTH);
+	int port;
+	int p0_src = gpio_get_level(GPIO_USB_C0_5V_EN);
+	int p1_src = gpio_get_level(GPIO_USB_C1_5V_EN);
+
+	/*
+	 * The charger will indicate VBUS presence if we're sourcing 5V,
+	 * so exclude such ports.
+	 */
+	if (p0_src && p1_src)
+		return 0;
+	else if (!p0_src && !p1_src)
+		port = BD99955_CHARGE_PORT_BOTH;
+	else
+		port = bd99955_pd_port_to_chg_port(p0_src);
+
+	return bd99955_is_vbus_provided(port);
 }
 
 int pd_snk_is_vbus_provided(int port)
