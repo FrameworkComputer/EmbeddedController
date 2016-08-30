@@ -14,7 +14,6 @@
 /* Don't compile features unless specifically testing for them */
 #undef CONFIG_VBOOT_HASH
 #undef CONFIG_USB_PD_LOGGING
-#undef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
 #ifdef TEST_BKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID
