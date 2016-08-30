@@ -451,12 +451,6 @@ static void motion_sense_shutdown(void)
 	}
 	motion_sense_switch_sensor_rate();
 
-	for (i = 0; i < motion_sensor_count; i++) {
-		sensor = &motion_sensors[i];
-		if (sensor->state != SENSOR_INITIALIZED)
-			continue;
-		sensor->drv->set_range(sensor, sensor->default_range, 0);
-	}
 	/* Forget activities set by the AP */
 #ifdef CONFIG_GESTURE_DETECTION_MASK
 	mask = CONFIG_GESTURE_DETECTION_MASK;
