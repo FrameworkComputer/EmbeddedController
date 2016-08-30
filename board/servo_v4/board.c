@@ -242,7 +242,7 @@ static void board_init(void)
 
 	/* Delay DUT hub to avoid brownout. */
 	usleep(1000);
-	gpio_set_flags(GPIO_DUT_HUB_USB_RESET_L, GPIO_INPUT);
+	gpio_set_flags(GPIO_DUT_HUB_USB_RESET_L, GPIO_OUT_HIGH);
 
 	/* Write USB3 Mode Enable to PS8742 USB/DP Mux. */
 	i2c_write8(1, 0x20, 0x0, 0x20);
