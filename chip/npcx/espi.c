@@ -93,7 +93,7 @@ static const struct host_wui_item espi_vw_int_list[] = {
 	/* VW_WIRE_HOST_RST_WARN */
 	{MIWU_TABLE_2, MIWU_GROUP_2, 0, MIWU_EDGE_ANYING},
 	/* VW_WIRE_SUS_WARN */
-	{MIWU_TABLE_2, MIWU_GROUP_2, 4, MIWU_EDGE_RISING},
+	{MIWU_TABLE_2, MIWU_GROUP_2, 4, MIWU_EDGE_ANYING},
 };
 
 /* VW signals used in eSPI */
