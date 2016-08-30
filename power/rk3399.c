@@ -97,6 +97,19 @@ DECLARE_DEFERRED(force_shutdown);
  */
 #define PGOOD_AP_DEBOUNCE_TIMEOUT (100 * MSEC)
 
+/*
+ * The AP informs the EC of its S0 / S3 state through IN_SUSPEND_DEASSERTED /
+ * AP_EC_S3_S0_L. Latency between deassertion and power rails coming up must
+ * be minimized, so check for deassertion at various stages of our suspend
+ * power sequencing, and immediately transition out of suspend if necessary.
+ */
+#define CHECK_ABORTED_SUSPEND() \
+	if (!forcing_shutdown && \
+	    power_get_signals() & IN_SUSPEND_DEASSERTED)  { \
+		CPRINTS("suspend aborted"); \
+		return POWER_S3S0; \
+	}
+
 enum power_state power_handle_state(enum power_state state)
 {
 	static int sys_reset_asserted;
@@ -259,20 +272,32 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+		CHECK_ABORTED_SUSPEND();
 
 		msleep(10);
+		CHECK_ABORTED_SUSPEND();
+
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
 		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 1);
 		msleep(10);
+		CHECK_ABORTED_SUSPEND();
+
 		gpio_set_level(GPIO_PP1800_S0_EN_L, 1);
 		msleep(10);
+		CHECK_ABORTED_SUSPEND();
+
 		gpio_set_level(GPIO_AP_CORE_EN, 0);
 		msleep(10);
+		CHECK_ABORTED_SUSPEND();
+
 		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 1);
 		msleep(10);
+		CHECK_ABORTED_SUSPEND();
+
 		gpio_set_level(GPIO_PP900_DDRPLL_EN, 0);
 		msleep(10);
+		CHECK_ABORTED_SUSPEND();
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
