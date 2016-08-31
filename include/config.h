@@ -1961,8 +1961,15 @@
 #define CONFIG_USB_PD_DEBUG_DR PD_ROLE_DFP
 
 /*
- * Define if this board has a GPIO-controlled 5v discharge circuit that can be
- * used to discharge VBUS when power swapping out of source role.
+ * Define if this board can enable VBUS discharge (eg. through a GPIO-controlled
+ * discharge circuit, or through port controller registers) to discharge VBUS
+ * rapidly on disconnect.
+ */
+#undef CONFIG_USB_PD_DISCHARGE
+
+/*
+ * Define (along with CONFIG_USB_PD_DISCHARGE) if discharge circuit is
+ * EC GPIO-controlled.
  */
 #undef CONFIG_USB_PD_DISCHARGE_GPIO
 

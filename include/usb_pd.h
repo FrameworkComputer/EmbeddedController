@@ -937,6 +937,14 @@ void pd_transition_voltage(int idx);
 void pd_power_supply_reset(int port);
 
 /**
+ * Enable or disable VBUS discharge for a given port.
+ *
+ * @param port USB-C port number
+ * @enable 1 if enabling discharge, 0 if disabling
+ */
+void pd_set_vbus_discharge(int port, int enable);
+
+/**
  * Enable the power supply output after the ready delay.
  *
  * @param port USB-C port number

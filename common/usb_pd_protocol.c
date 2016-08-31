@@ -97,15 +97,6 @@ enum pd_dual_role_states drp_state = PD_DRP_TOGGLE_OFF;
 static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_COUNT][PDO_MAX_OBJECTS];
 static int pd_src_cap_cnt[CONFIG_USB_PD_PORT_COUNT];
 
-#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-static const enum gpio_signal pd_discharge_gpio[CONFIG_USB_PD_PORT_COUNT] = {
-	[0] = GPIO_USB_C0_DISCHARGE,
-#if CONFIG_USB_PD_PORT_COUNT > 0
-	[1] = GPIO_USB_C1_DISCHARGE,
-#endif
-};
-#endif /* CONFIG_USB_PD_DISCHARGE_GPIO */
-
 /* Enable varible for Try.SRC states */
 static uint8_t pd_try_src_enable;
 #endif
@@ -306,11 +297,6 @@ static inline void set_state(int port, enum pd_states next_state)
 #endif
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-	if (last_state == PD_STATE_SRC_SWAP_SRC_DISABLE)
-		gpio_set_level(pd_discharge_gpio[port], 0);
-#endif
-
 	if (next_state == PD_STATE_SRC_DISCONNECTED ||
 	    next_state == PD_STATE_SNK_DISCONNECTED) {
 		/* Clear the input current limit */
@@ -2017,9 +2003,6 @@ void pd_task(void)
 			/* Turn power off */
 			if (pd[port].last_state != pd[port].task_state) {
 				pd_power_supply_reset(port);
-#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-				gpio_set_level(pd_discharge_gpio[port], 1);
-#endif
 				set_state_timeout(port,
 						  get_time().val +
 						  PD_POWER_SUPPLY_TURN_OFF_DELAY,

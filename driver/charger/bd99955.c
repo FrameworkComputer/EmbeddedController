@@ -312,16 +312,22 @@ static int bd99955_enable_vbus_detect_interrupts(int port, int enable)
 	if (rv)
 		return rv;
 
+	/* Enable threshold interrupts if we need to control discharge */
+#ifdef CONFIG_USB_PD_DISCHARGE
+	mask_val = BD99955_CMD_INT_VBUS_DET | BD99955_CMD_INT_VBUS_TH;
+#else
+	mask_val = BD99955_CMD_INT_VBUS_DET;
+#endif
 	if (enable)
-		reg |= (BD99955_CMD_INT_SET_RES | BD99955_CMD_INT_SET_DET);
+		reg |= mask_val;
 	else
-		reg &= ~(BD99955_CMD_INT_SET_RES | BD99955_CMD_INT_SET_DET);
+		reg &= ~mask_val;
 
 	return ch_raw_write16(port_reg, reg, BD99955_EXTENDED_COMMAND);
 }
 
 /* Read + clear active interrupt bits for a given port */
-static int bd99955_get_vbus_detect_interrupts(int port)
+static int bd99955_get_interrupts(int port)
 {
 	int rv;
 	int reg;
@@ -701,6 +707,14 @@ static void bd99995_init(void)
 #endif
 	ch_raw_write16(BD99955_CMD_SMBREG, power_save_mode,
 		       BD99955_EXTENDED_COMMAND);
+
+#ifdef CONFIG_USB_PD_DISCHARGE
+	/* Set VBUS / VCC detection threshold for discharge enable */
+	ch_raw_write16(BD99955_CMD_VBUS_TH_SET, BD99955_VBUS_DISCHARGE_TH,
+		       BD99955_EXTENDED_COMMAND);
+	ch_raw_write16(BD99955_CMD_VCC_TH_SET, BD99955_VBUS_DISCHARGE_TH,
+		       BD99955_EXTENDED_COMMAND);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, bd99995_init, HOOK_PRIO_INIT_EXTPOWER);
 
@@ -891,7 +905,10 @@ void bd99955_vbus_interrupt(enum gpio_signal signal)
 void usb_charger_task(void)
 {
 	static int initialized;
-	int changed, port;
+	int changed, port, interrupts;
+#ifdef CONFIG_USB_PD_DISCHARGE
+	int vbus_reg, voltage;
+#endif
 
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
@@ -901,13 +918,33 @@ void usb_charger_task(void)
 	while (1) {
 		changed = 0;
 		for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-			/* Get the VBUS interrupt */
-			if (bd99955_get_vbus_detect_interrupts(port) ||
+			/* Get port interrupts */
+			interrupts = bd99955_get_interrupts(port);
+			if (interrupts & BD99955_CMD_INT_VBUS_DET ||
 			    !initialized) {
 				/* Detect based on current state of VBUS */
 				usb_charger_process(port);
 				changed = 1;
 			}
+#ifdef CONFIG_USB_PD_DISCHARGE
+			if (interrupts & BD99955_CMD_INT_VBUS_TH ||
+			    !initialized) {
+				/* Get VBUS voltage */
+				vbus_reg = (port == BD99955_CHARGE_PORT_VBUS) ?
+					   BD99955_CMD_VBUS_VAL :
+					   BD99955_CMD_VCC_VAL;
+				if (ch_raw_read16(vbus_reg,
+						  &voltage,
+						  BD99955_EXTENDED_COMMAND))
+					voltage = 0;
+
+				/* Set discharge accordingly */
+				pd_set_vbus_discharge(
+					bd99955_pd_port_to_chg_port(port),
+					voltage < BD99955_VBUS_DISCHARGE_TH);
+				changed = 1;
+			}
+#endif
 		}
 
 		initialized = 1;
