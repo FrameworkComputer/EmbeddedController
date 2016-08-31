@@ -663,26 +663,13 @@ void chipset_do_shutdown(void)
 #endif
 }
 
-void board_set_gpio_hibernate_state(void)
+void board_hibernate_late(void)
 {
 	int i;
 	const uint32_t hibernate_pins[][2] = {
-#if 0
 		/* Turn off LEDs in hibernate */
 		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
 		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-		/*
-		 * Set PD wake low so that it toggles high to generate a wake
-		 * event once we leave hibernate.
-		 */
-		{GPIO_USB_PD_WAKE, GPIO_OUTPUT | GPIO_LOW},
-#endif
-		/*
-		 * In hibernate, this pin connected to GND. Set it to output
-		 * low to eliminate the current caused by internal pull-up.
-		 */
-		/* FIXME(dhendrix): What do to with PROCHOT? */
-		/* {GPIO_PLATFORM_EC_PROCHOT, GPIO_OUTPUT | GPIO_LOW}, */
 
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
@@ -917,19 +904,20 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 void board_hibernate(void)
 {
-	CPRINTS("Enter Pseudo G3");
+	/*
+	 * To support hibernate called from console commands, ectool commands
+	 * and key sequence, shutdown the AP before hibernating.
+	 */
+	chipset_do_shutdown();
+
+	/* Should not enter hibernate on AC */
+	ASSERT(!extpower_is_present());
+
+	/* Added delay to allow AP to settle down */
+	msleep(100);
 
 	/* Enable both the VBUS & VCC ports before entering PG3 */
 	bd99955_select_input_port(BD99955_CHARGE_PORT_BOTH);
-
-	/*
-	 * Clean up the UART buffer and prevent any unwanted garbage characters
-	 * before power off and also ensure above debug message is printed.
-	 */
-	cflush();
-
-	/* FIXME(dhendrix): What to do here? EC is always on so we need to
-	 * turn off whatever can be turned off. */
 }
 
 struct {
