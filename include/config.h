@@ -915,9 +915,11 @@
 /* Enable NV Memory module within flash */
 #undef CONFIG_FLASH_NVMEM
 /* Offset to start of NvMem area from base of flash */
-#undef CONFIG_FLASH_NVMEM_OFFSET
+#undef CONFIG_FLASH_NVMEM_OFFSET_A
+#undef CONFIG_FLASH_NVMEM_OFFSET_B
 /* Address of start of Nvmem area */
-#undef CONFIG_FLASH_NVMEM_BASE
+#undef CONFIG_FLASH_NVMEM_BASE_A
+#undef CONFIG_FLASH_NVMEM_BASE_B
 /* Size in bytes of NvMem area */
 #undef CONFIG_FLASH_NVMEM_SIZE
 

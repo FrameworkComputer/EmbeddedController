@@ -19,6 +19,17 @@
 #define NVMEM_ACQUIRE_CACHE_MAX_ATTEMPTS (250 / NVMEM_ACQUIRE_CACHE_SLEEP_MS)
 #define NVMEM_NOT_INITIALIZED (-1)
 
+/* Table of start addresses for each partition */
+static const uintptr_t nvmem_base_addr[NVMEM_NUM_PARTITIONS] = {
+		CONFIG_FLASH_NVMEM_BASE_A,
+		CONFIG_FLASH_NVMEM_BASE_B
+	};
+/* Table of offset within flash space to start of each partition */
+static const uint32_t nvmem_flash_offset[NVMEM_NUM_PARTITIONS] = {
+		CONFIG_FLASH_NVMEM_OFFSET_A,
+		CONFIG_FLASH_NVMEM_OFFSET_B
+	};
+
 /* NvMem user buffer start offset table */
 static uint32_t nvmem_user_start_offset[NVMEM_NUM_USERS];
 
@@ -45,8 +56,7 @@ static int nvmem_verify_partition_sha(int index)
 	struct nvmem_partition *p_part;
 	uint8_t *p_data;
 
-	p_part = (struct nvmem_partition *)CONFIG_FLASH_NVMEM_BASE;
-	p_part += index;
+	p_part = (struct nvmem_partition *)nvmem_base_addr[index];
 	p_data = (uint8_t *)p_part;
 	p_data += sizeof(sha_comp);
 
@@ -77,9 +87,7 @@ static int nvmem_acquire_cache(void)
 					 (char **)&shared_mem_ptr);
 		if (ret == EC_SUCCESS) {
 			/* Copy partiion contents from flash into cache */
-			p_src = (uint8_t *)(CONFIG_FLASH_NVMEM_BASE +
-					    nvmem_act_partition *
-					    NVMEM_PARTITION_SIZE);
+			p_src = (uint8_t *)nvmem_base_addr[nvmem_act_partition];
 			memcpy(shared_mem_ptr, p_src, NVMEM_PARTITION_SIZE);
 			/* Now that cache is up to date, assign pointer */
 			cache.base_ptr = shared_mem_ptr;
@@ -145,17 +153,20 @@ static void nvmem_release_cache(void)
 
 static int nvmem_is_unitialized(void)
 {
+	int p;
 	int n;
 	int ret;
 	uint32_t *p_nvmem;
 	struct nvmem_partition *p_part;
 
-	/* Point to start of Nv Memory */
-	p_nvmem = (uint32_t *)CONFIG_FLASH_NVMEM_BASE;
-	/* Verify that each byte is 0xff (4 bytes at a time) */
-	for (n = 0; n < (CONFIG_FLASH_NVMEM_SIZE >> 2); n++)
-		if (p_nvmem[n] != 0xffffffff)
-			return EC_ERROR_CRC;
+	for (p = 0; p < NVMEM_NUM_PARTITIONS; p++) {
+		/* Point to start of Nv Memory */
+		p_nvmem = (uint32_t *)nvmem_base_addr[p];
+		/* Verify that each byte is 0xff (4 bytes at a time) */
+		for (n = 0; n < (NVMEM_PARTITION_SIZE >> 2); n++)
+			if (p_nvmem[n] != 0xffffffff)
+				return EC_ERROR_CRC;
+	}
 
 	/*
 	 * NvMem is fully unitialized. Need to initialize tag and write tag to
@@ -179,8 +190,8 @@ static int nvmem_is_unitialized(void)
 	 * partition was just verified to be fully erased, can just do write
 	 * operation.
 	 */
-	ret = flash_physical_write(CONFIG_FLASH_NVMEM_OFFSET,
-				 sizeof(struct nvmem_tag),
+	ret = flash_physical_write(nvmem_flash_offset[0],
+				   sizeof(struct nvmem_tag),
 				   cache.base_ptr);
 	nvmem_release_cache();
 	if (ret) {
@@ -196,9 +207,9 @@ static int nvmem_compare_version(void)
 	uint16_t ver0, ver1;
 	uint32_t delta;
 
-	p_part = (struct nvmem_partition *)CONFIG_FLASH_NVMEM_BASE;
+	p_part = (struct nvmem_partition *)nvmem_base_addr[0];
 	ver0 = p_part->tag.version;
-	p_part++;
+	p_part = (struct nvmem_partition *)nvmem_base_addr[1];
 	ver1 = p_part->tag.version;
 
 	/* Compute version difference accounting for wrap condition */
@@ -382,8 +393,7 @@ int nvmem_is_different(uint32_t offset, uint32_t size, void *data,
 
 	/* Point to either NvMem flash or ram if that's active */
 	if (cache.base_ptr == NULL)
-		src_addr = CONFIG_FLASH_NVMEM_BASE + nvmem_act_partition *
-			NVMEM_PARTITION_SIZE;
+		src_addr = nvmem_base_addr[nvmem_act_partition];
 
 	else
 		src_addr = (uintptr_t)cache.base_ptr;
@@ -410,8 +420,7 @@ int nvmem_read(uint32_t offset, uint32_t size,
 
 	/* Point to either NvMem flash or ram if that's active */
 	if (cache.base_ptr == NULL)
-		src_addr = CONFIG_FLASH_NVMEM_BASE + nvmem_act_partition *
-			NVMEM_PARTITION_SIZE;
+		src_addr = nvmem_base_addr[nvmem_act_partition];
 
 	else
 		src_addr = (uintptr_t)cache.base_ptr;
@@ -542,8 +551,7 @@ int nvmem_commit(void)
 	/* Toggle parition being used (always write to current spare) */
 	new_active_partition = nvmem_act_partition ^ 1;
 	/* Point to first block within active partition */
-	nvmem_offset = CONFIG_FLASH_NVMEM_OFFSET + new_active_partition *
-			NVMEM_PARTITION_SIZE;
+	nvmem_offset = nvmem_flash_offset[new_active_partition];
 	/* Write partition to NvMem */
 
 	/* Erase partition */

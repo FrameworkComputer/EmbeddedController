@@ -247,7 +247,7 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 	 * separate regions.
 	 */
 
-	if (max_regions < 2)
+	if (max_regions < 3)
 		return 0;
 
 	/* Enable access to the other RW image... */
@@ -263,13 +263,19 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 	regions[0].reg_size = CONFIG_RW_SIZE;
 	regions[0].reg_perms = FLASH_REGION_EN_ALL;
 
-	/* Enable access to the NVRAM region */
+	/* Enable access to the NVRAM partition A region */
 	regions[1].reg_base = CONFIG_MAPPED_STORAGE_BASE +
-		CONFIG_FLASH_NVMEM_OFFSET;
-	regions[1].reg_size = CONFIG_FLASH_NVMEM_SIZE;
+		CONFIG_FLASH_NVMEM_OFFSET_A;
+	regions[1].reg_size = NVMEM_PARTITION_SIZE;
 	regions[1].reg_perms = FLASH_REGION_EN_ALL;
 
-	return 2;
+	/* Enable access to the NVRAM partition B region */
+	regions[2].reg_base = CONFIG_MAPPED_STORAGE_BASE +
+		CONFIG_FLASH_NVMEM_OFFSET_B;
+	regions[2].reg_size = NVMEM_PARTITION_SIZE;
+	regions[2].reg_perms = FLASH_REGION_EN_ALL;
+
+	return 3;
 }
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)

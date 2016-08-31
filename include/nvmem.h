@@ -32,6 +32,10 @@
  * aren't fully erased, then NvMem is marked corrupt and this failure condition
  * must be reported back to the caller.
  *
+ * Note that the NvMem partitions can be placed anywhere in flash space, but
+ * must be equal in total size. A table is used by the NvMem module to get the
+ * correct base address and offset for each partition.
+ *
  * A version number is used to distinguish between two valid partitions with
  * the newsest version number (in a circular sense) marking the correct
  * partition to use. The parition number 0/1 is tracked via a static
@@ -43,8 +47,8 @@
  *
  * The following CONFIG_FLASH_NVMEM_ defines are required for this module:
  *    CONFIG_FLASH_NVMEM -> enable/disable the module
- *    CONFIG_FLASH_NVMEM_OFFSET -> offset to start of NvMem from base of flash
- *    CONFIG_FLASH_NVMEM_BASE -> address of start of NvMem area
+ *    CONFIG_FLASH_NVMEM_OFFSET_(A|B) -> offset to start of each partition
+ *    CONFIG_FLASH_NVMEM_BASE_(A|B) -> address of start of each partition
  *
  * The board.h file must define a macro or enum named NVMEM_NUM_USERS.
  * The board.c file must include 1 function and an array of user buffer lengths
@@ -52,7 +56,7 @@
  *    nvmem_compute_sha() -> function used to compute 4 byte sha (or equivalent)
  *
  * Note that total length of user buffers must satisfy the following:
- *   sum(user sizes) <= (CONFIG_FLASH_NVMEM_SIZE / 2) - sizeof(struct nvmem_tag)
+ *   sum(user sizes) <= (NVMEM_PARTITION_SIZE) - sizeof(struct nvmem_tag)
  */
 
 /* NvMem user buffer length table */

@@ -139,8 +139,10 @@ static int test_fully_erased_nvmem(void)
 	 */
 
 	/* Erase full NvMem area */
-	flash_physical_erase(CONFIG_FLASH_NVMEM_OFFSET,
-			     CONFIG_FLASH_NVMEM_SIZE);
+	flash_physical_erase(CONFIG_FLASH_NVMEM_OFFSET_A,
+			     NVMEM_PARTITION_SIZE);
+	flash_physical_erase(CONFIG_FLASH_NVMEM_OFFSET_B,
+			     NVMEM_PARTITION_SIZE);
 	/* Call NvMem initialization function */
 	return nvmem_init();
 }
@@ -160,8 +162,6 @@ static int test_configured_nvmem(void)
 
 static int test_corrupt_nvmem(void)
 {
-	uint32_t offset;
-	int n;
 	int ret;
 	struct nvmem_tag *p_part;
 	uint8_t *p_data;
@@ -175,12 +175,12 @@ static int test_corrupt_nvmem(void)
 
 	/* Overwrite each partition will all 0s */
 	memset(write_buffer, 0, NVMEM_PARTITION_SIZE);
-	for (n = 0; n < NVMEM_NUM_PARTITIONS; n++) {
-		offset = NVMEM_PARTITION_SIZE * n;
-		flash_physical_write(CONFIG_FLASH_NVMEM_OFFSET + offset,
+	flash_physical_write(CONFIG_FLASH_NVMEM_OFFSET_A,
 				     NVMEM_PARTITION_SIZE,
 				     (const char *)write_buffer);
-	}
+	flash_physical_write(CONFIG_FLASH_NVMEM_OFFSET_B,
+				     NVMEM_PARTITION_SIZE,
+				     (const char *)write_buffer);
 	/*
 	 * The initialization function will look for a valid partition and if
 	 * none is found, then will call nvmem_setup() which will erase the
@@ -197,7 +197,7 @@ static int test_corrupt_nvmem(void)
 	 * partition 0 has a version number of 1 and that all of the user buffer
 	 * data has been erased.
 	 */
-	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE;
+	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_A;
 	TEST_ASSERT(p_part->version == 1);
 	p_data = (uint8_t *)p_part + sizeof(struct nvmem_tag);
 	/* Verify that partition 0 is fully erased */
@@ -205,8 +205,7 @@ static int test_corrupt_nvmem(void)
 			     sizeof(struct nvmem_tag));
 
 	/* Run the same test for partition 1 which should have version 0 */
-	p_part = (struct nvmem_tag *)(CONFIG_FLASH_NVMEM_BASE +
-				      NVMEM_PARTITION_SIZE);
+	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_B;
 	TEST_ASSERT(p_part->version == 0);
 	p_data = (uint8_t *)p_part + sizeof(struct nvmem_tag);
 	ccprintf("Partition Version = %d\n", p_part->version);
