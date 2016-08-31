@@ -201,8 +201,8 @@ static int raw_read_multi(const int port, int addr, uint8_t reg,
  *
  * Note: This is intended to be called in a pair with enable_sensor().
  *
- * @s Pointer to motion sensor data
- * @reg_val Pointer to location to store control register after disabling
+ * @param s Pointer to motion sensor data
+ * @param reg_val Pointer to location to store control register after disabling
  *
  * @return EC_SUCCESS if successful, EC_ERROR_* otherwise
  */
@@ -236,8 +236,8 @@ static int disable_sensor(const struct motion_sensor_t *s, int *reg_val)
  *
  * Note: This is intended to be called in a pair with disable_sensor().
  *
- * @s Pointer to motion sensor data
- * @reg_val Value of the control register to write to sensor
+ * @param s Pointer to motion sensor data
+ * @param reg_val Value of the control register to write to sensor
  *
  * @return EC_SUCCESS if successful, EC_ERROR_* otherwise
  */
@@ -259,22 +259,25 @@ static int enable_sensor(const struct motion_sensor_t *s, int reg_val)
 
 		/* On first success, we are done. */
 		if (ret == EC_SUCCESS)
-			return EC_SUCCESS;
+			break;
 	}
 	return ret;
 }
 
-static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+/**
+ * Set a register value.
+ *
+ * @param s Pointer to motion sensor data
+ * @param reg     Register to write to
+ * @param reg_val Value of the control register to write to sensor
+ * @param field   Bitfield to modify.
+ *
+ * @return EC_SUCCESS if successful, EC_ERROR_* otherwise
+ */
+static int set_value(const struct motion_sensor_t *s, int reg, int val,
+		     int field)
 {
-	int ret, reg_val, reg_val_new, index, range_field, reg, range_val;
-	struct kionix_accel_data *data = s->drv_data;
-
-	/* Find index for interface pair matching the specified range. */
-	index = find_param_index(range, rnd, ranges[T(s)],
-				 ARRAY_SIZE(ranges[T(s)]));
-	range_field = KIONIX_RANGE_FIELD(V(s));
-	reg = KIONIX_CTRL1_REG(V(s));
-	range_val = ranges[T(s)][index].reg;
+	int ret, reg_val_new, reg_val;
 
 	/* Disable the sensor to allow for changing of critical parameters. */
 	mutex_lock(s->mutex);
@@ -285,20 +288,33 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 	}
 
 	/* Determine new value of control reg and attempt to write it. */
-	reg_val_new = (reg_val & ~range_field) | range_val;
+	reg_val_new = (reg_val & ~field) | val;
 	ret = raw_write8(s->port, s->addr, reg, reg_val_new);
 
 	/* If successfully written, then save the range. */
-	if (ret == EC_SUCCESS) {
-		data->sensor_range = index;
-		reg_val = reg_val_new;
-	}
-
-	/* Re-enable the sensor. */
-	if (enable_sensor(s, reg_val) != EC_SUCCESS)
-		ret = EC_ERROR_UNKNOWN;
+	if (ret == EC_SUCCESS)
+		/* Re-enable the sensor. */
+		ret = enable_sensor(s, reg_val_new);
 
 	mutex_unlock(s->mutex);
+	return ret;
+}
+
+static int set_range(const struct motion_sensor_t *s, int range, int rnd)
+{
+	int ret, index, reg, range_field, range_val;
+	struct kionix_accel_data *data = s->drv_data;
+
+	/* Find index for interface pair matching the specified range. */
+	index = find_param_index(range, rnd, ranges[T(s)],
+				 ARRAY_SIZE(ranges[T(s)]));
+	range_field = KIONIX_RANGE_FIELD(V(s));
+	reg = KIONIX_CTRL1_REG(V(s));
+	range_val = ranges[T(s)][index].reg;
+
+	ret = set_value(s, reg, range_val, range_field);
+	if (ret == EC_SUCCESS)
+		data->sensor_range = index;
 	return ret;
 }
 
@@ -310,7 +326,7 @@ static int get_range(const struct motion_sensor_t *s)
 
 static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
 {
-	int ret, reg_val, reg_val_new, index, reg, res_field, res_val;
+	int ret, index, reg, res_field, res_val;
 	struct kionix_accel_data *data = s->drv_data;
 
 	/* Find index for interface pair matching the specified resolution. */
@@ -320,29 +336,9 @@ static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
 	res_field = KIONIX_RES_FIELD(V(s));
 	reg = KIONIX_CTRL1_REG(V(s));
 
-	/* Disable the sensor to allow for changing of critical parameters. */
-	mutex_lock(s->mutex);
-	ret = disable_sensor(s, &reg_val);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
-	}
-
-	/* Determine new value of the control reg and attempt to write it. */
-	reg_val_new = (reg_val & ~res_field) | res_val;
-	ret = raw_write8(s->port, s->addr, reg, reg_val_new);
-
-	/* If successfully written, then save the range. */
-	if (ret == EC_SUCCESS) {
+	ret = set_value(s, reg, res_val, res_field);
+	if (ret == EC_SUCCESS)
 		data->sensor_resolution = index;
-		reg_val = reg_val_new;
-	}
-
-	/* Re-enable the sensor. */
-	if (enable_sensor(s, reg_val) != EC_SUCCESS)
-		ret = EC_ERROR_UNKNOWN;
-
-	mutex_unlock(s->mutex);
 	return ret;
 }
 
@@ -354,8 +350,7 @@ static int get_resolution(const struct motion_sensor_t *s)
 
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
-	int ret, reg_val, index, odr_val, odr_val_new, reg, odr_field,
-		odr_reg_val;
+	int ret, index, reg, odr_field, odr_val;
 	struct kionix_accel_data *data = s->drv_data;
 
 	/* Find index for interface pair matching the specified rate. */
@@ -365,33 +360,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	reg = KIONIX_ODR_REG(V(s));
 	odr_field = KIONIX_ODR_FIELD(V(s));
 
-	/* Disable the sensor to allow for changing of critical parameters. */
-	mutex_lock(s->mutex);
-	ret = disable_sensor(s, &reg_val);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
-	}
-
-	/* Determine the new value of control reg and attempt to write it. */
-	ret = raw_read8(s->port, s->addr, reg, &odr_reg_val);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
-	}
-	odr_val_new = (odr_reg_val & ~odr_field) | odr_val;
-	/* Set output data rate. */
-	ret = raw_write8(s->port, s->addr, reg, odr_val_new);
-
-	/* If successfully written, then save the new data rate. */
+	ret = set_value(s, reg, odr_val, odr_field);
 	if (ret == EC_SUCCESS)
 		data->sensor_datarate = index;
-
-	/* Re-enable the sensor. */
-	if (enable_sensor(s, reg_val) != EC_SUCCESS)
-		ret = EC_ERROR_UNKNOWN;
-
-	mutex_unlock(s->mutex);
 	return ret;
 }
 
