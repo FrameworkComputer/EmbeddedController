@@ -12,8 +12,6 @@
 #include "host_command.h"
 #include "timer.h"
 
-#define EXTPOWER_DEBOUNCE_US  (30 * MSEC)
-
 static int debounced_extpower_presence;
 
 int extpower_is_present(void)
@@ -45,7 +43,8 @@ DECLARE_DEFERRED(extpower_deferred);
 void extpower_interrupt(enum gpio_signal signal)
 {
 	/* Trigger deferred notification of external power change */
-	hook_call_deferred(&extpower_deferred_data, EXTPOWER_DEBOUNCE_US);
+	hook_call_deferred(&extpower_deferred_data,
+			CONFIG_EXTPOWER_DEBOUNCE_MS * MSEC);
 }
 
 static void extpower_init(void)

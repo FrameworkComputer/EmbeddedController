@@ -812,6 +812,9 @@
 /* Support detecting external power presence via a GPIO */
 #undef CONFIG_EXTPOWER_GPIO
 
+/* Default debounce time for external power signal */
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 30
+
 /*****************************************************************************/
 /* Number of cooling fans. Undef if none. */
 #undef CONFIG_FANS
