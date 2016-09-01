@@ -34,8 +34,8 @@ GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* MECH_PWR_BTN_ODL */
 /* FIXME(furquan): GPIO_PULL_UP is not required for LID_OPEN on EVT. */
 GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH | GPIO_PULL_UP, lid_interrupt)
-GPIO_INT(EC_VOLDN_BTN_L,	PIN(8, 3), GPIO_INT_LOW | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_L,	PIN(8, 2), GPIO_INT_LOW | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLDN_BTN_L,	PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLUP_BTN_L,	PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH | GPIO_SEL_1P8V, switch_interrupt)	/* EC_WP_ODL */
 
