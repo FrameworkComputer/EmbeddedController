@@ -22,6 +22,7 @@
 #include "keyboard_test.h"
 #include "lid_switch.h"
 #include "mkbp_event.h"
+#include "motion_lid.h"
 #include "power_button.h"
 #include "system.h"
 #include "task.h"
@@ -204,15 +205,27 @@ void mkbp_update_switches(uint32_t sw, int state)
 		      (const uint8_t *)&mkbp_switch_state);
 }
 
+#ifdef CONFIG_LID_SWITCH
 /**
  * Handle lid changing state.
  */
-static void lid_change(void)
+static void mkbp_lid_change(void)
 {
 	mkbp_update_switches(EC_MKBP_LID_OPEN, lid_is_open());
 }
-DECLARE_HOOK(HOOK_LID_CHANGE, lid_change, HOOK_PRIO_LAST);
-DECLARE_HOOK(HOOK_INIT, lid_change, HOOK_PRIO_INIT_LID+1);
+DECLARE_HOOK(HOOK_LID_CHANGE, mkbp_lid_change, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, mkbp_lid_change, HOOK_PRIO_INIT_LID+1);
+#endif
+
+#ifdef CONFIG_TABLET_MODE_SWITCH
+static void mkbp_tablet_mode_change(void)
+{
+	mkbp_update_switches(EC_MKBP_TABLET_MODE,
+			     motion_lid_in_tablet_mode());
+}
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, mkbp_tablet_mode_change, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, mkbp_tablet_mode_change, HOOK_PRIO_INIT_LID+1);
+#endif
 
 void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 {
@@ -351,6 +364,9 @@ static uint32_t get_supported_switches(void)
 
 #ifdef CONFIG_LID_SWITCH
 	val |= (1 << EC_MKBP_LID_OPEN);
+#endif
+#ifdef CONFIG_TABLET_MODE_SWITCH
+	val |= (1 << EC_MKBP_TABLET_MODE);
 #endif
 	return val;
 }

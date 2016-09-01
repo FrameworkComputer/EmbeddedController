@@ -1758,6 +1758,11 @@
  */
 #undef CONFIG_SYSTEM_UNLOCKED
 
+/*
+ * Add a virtual switch to indicate when we are in tablet mode.
+ */
+#define CONFIG_TABLET_MODE_SWITCH
+
 /*****************************************************************************/
 /* Task config */
 
