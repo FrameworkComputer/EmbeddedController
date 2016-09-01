@@ -280,6 +280,22 @@ int pd_snk_is_vbus_provided(int port)
 	return bd99955_is_vbus_provided(bd99955_port);
 }
 
+static void board_spi_enable(void)
+{
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME,
+	     board_spi_enable,
+	     MOTION_SENSE_HOOK_PRIO - 1);
+
+static void board_spi_disable(void)
+{
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
+	     board_spi_disable,
+	     MOTION_SENSE_HOOK_PRIO + 1);
+
 static void board_init(void)
 {
 	/* Enable TCPC alert interrupts */
@@ -294,9 +310,8 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
 
 	/* Sensor Init */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
-	CPRINTS("Board using SPI sensors");
+	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
+		board_spi_enable();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
