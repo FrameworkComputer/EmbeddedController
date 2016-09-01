@@ -115,6 +115,11 @@ void fw_upgrade_command_handler(void *body,
 				size_t cmd_size,
 				size_t *response_size);
 
+/* Returns 1 if an upgrade was done during this run 0 if there was no upgrade */
+int fw_upgraded(void);
+
+/* Used to tell fw upgrade the update ran successfully and is finished */
+void fw_upgrade_complete(void);
 
 /* Various upgrade command return values. */
 enum return_value {

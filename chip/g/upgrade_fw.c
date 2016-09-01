@@ -32,6 +32,8 @@ struct {
 	uint32_t rw_top_offset;
 } valid_sections;
 
+static int upgrade_done;
+
 /* Pick sections where updates can go to based on current code addresses. */
 static void set_valid_sections(void)
 {
@@ -262,4 +264,14 @@ void fw_upgrade_command_handler(void *body,
 	}
 
 	*error_code = UPGRADE_SUCCESS;
+}
+
+void fw_upgrade_complete(void)
+{
+	upgrade_done = 1;
+}
+
+int fw_upgraded(void)
+{
+	return upgrade_done;
 }

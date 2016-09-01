@@ -13,6 +13,7 @@
 #include "signed_header.h"
 #include "system.h"
 #include "task.h"
+#include "upgrade_fw.h"
 #include "version.h"
 
 static void check_reset_cause(void)
@@ -86,6 +87,14 @@ void system_pre_init(void)
 	system_init_board_properties();
 #endif
 }
+#ifdef BOARD_CR50
+void clear_retry_counter(void)
+{
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
+	GREG32(PMU, LONG_LIFE_SCRATCH0) = 0;
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
+}
+#endif
 
 void system_reset(int flags)
 {
@@ -96,6 +105,15 @@ void system_reset(int flags)
 	interrupt_disable();
 
 	if (flags & SYSTEM_RESET_HARD) {
+#if defined(BOARD_CR50) && !defined(SECTION_IS_RO)
+		/*
+		 * If the system was updated during this boot clear the retry
+		 * counter.
+		 */
+		if (fw_upgraded())
+			clear_retry_counter();
+#endif
+
 		/* Reset the full microcontroller */
 		GR_PMU_GLOBAL_RESET = GC_PMU_GLOBAL_RESET_KEY;
 	} else {
@@ -333,9 +351,7 @@ int system_process_retry_counter(void)
 	struct SignedHeader *me, *other;
 
 	retry_counter = GREG32(PMU, LONG_LIFE_SCRATCH0);
-	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
-	GREG32(PMU, LONG_LIFE_SCRATCH0) = 0;
-	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
+	clear_retry_counter();
 
 	ccprintf("%s:retry counter %d\n", __func__, retry_counter);
 

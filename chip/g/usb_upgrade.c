@@ -206,6 +206,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			if (command == UPGRADE_DONE) {
 				CPRINTS("FW update: done");
 
+				fw_upgrade_complete();
 				resp_value = 0;
 				QUEUE_ADD_UNITS(&upgrade_to_usb,
 						&resp_value, 1);
