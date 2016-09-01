@@ -8,6 +8,7 @@
 #include "hooks.h"
 #include "registers.h"
 #include "spi.h"
+#include "system.h"
 #include "timer.h"
 #include "usb_spi.h"
 
@@ -45,6 +46,9 @@ void enable_ap_spi(void)
 	gpio_set_level(GPIO_AP_FLASH_SELECT, 1);
 	gpio_set_level(GPIO_EC_FLASH_SELECT, 0);
 
+	/* hold the EC in reset */
+	GWRITE(RBOX, ASSERT_EC_RST, 1);
+
 	/* Set SYS_RST_L as an output */
 	ASSERT(GREAD(PINMUX, GPIO0_GPIO4_SEL) == GC_PINMUX_DIOM0_SEL);
 	GWRITE(PINMUX, DIOM0_SEL, GC_PINMUX_GPIO0_GPIO4_SEL);
@@ -65,12 +69,9 @@ static void update_finished(void)
 
 	/*
 	 * The AP and EC are reset in usb_spi_enable so the TPM is in a bad
-	 * state. Assert SYS_RST_L to reset the state.
+	 * state. Do a hard reset to reset the entire system.
 	 */
-	ASSERT(GREAD(PINMUX, GPIO0_GPIO4_SEL) == GC_PINMUX_DIOM0_SEL);
-	GWRITE(PINMUX, DIOM0_SEL, GC_PINMUX_GPIO0_GPIO4_SEL);
-	gpio_set_flags(GPIO_SYS_RST_L_OUT, GPIO_OUT_HIGH);
-	gpio_set_level(GPIO_SYS_RST_L_OUT, 0);
+	system_reset(SYSTEM_RESET_HARD);
 }
 DECLARE_DEFERRED(update_finished);
 
