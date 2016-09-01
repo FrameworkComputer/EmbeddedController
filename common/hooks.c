@@ -44,6 +44,7 @@ static const struct hook_ptrs hook_list[] = {
 	{__hooks_chipset_reset, __hooks_chipset_reset_end},
 	{__hooks_ac_change, __hooks_ac_change_end},
 	{__hooks_lid_change, __hooks_lid_change_end},
+	{__hooks_tablet_mode_change, __hooks_tablet_mode_change_end},
 	{__hooks_pwrbtn_change, __hooks_pwrbtn_change_end},
 	{__hooks_charge_state_change, __hooks_charge_state_change_end},
 	{__hooks_battery_soc_change, __hooks_battery_soc_change_end},

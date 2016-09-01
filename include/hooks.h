@@ -139,6 +139,13 @@ enum hook_type {
 	HOOK_LID_CHANGE,
 
 	/*
+	 * Device in tablet mode (base behind lid).
+	 *
+	 * Hook routines are called from the TICK task.
+	 */
+	HOOK_TABLET_MODE_CHANGE,
+
+	/*
 	 * Power button pressed or released.  Based on debounced power button
 	 * state, not raw GPIO input.
 	 *

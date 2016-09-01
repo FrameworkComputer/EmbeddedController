@@ -73,6 +73,10 @@ SECTIONS {
     *(.rodata.HOOK_LID_CHANGE)
     __hooks_lid_change_end = .;
 
+    __hooks_tablet_mode_change = .;
+    KEEP(*(.rodata.HOOK_TABLET_MODE_CHANGE))
+    __hooks_tablet_mode_change_end = .;
+
     __hooks_pwrbtn_change = .;
     *(.rodata.HOOK_POWER_BUTTON_CHANGE)
     __hooks_pwrbtn_change_end = .;

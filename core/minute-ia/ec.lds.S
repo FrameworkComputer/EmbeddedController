@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -97,6 +97,10 @@ SECTIONS
 		__hooks_lid_change = .;
 		KEEP(*(.rodata.HOOK_LID_CHANGE))
 		__hooks_lid_change_end = .;
+
+		__hooks_tablet_mode_change = .;
+		KEEP(*(.rodata.HOOK_TABLET_MODE_CHANGE))
+		__hooks_tablet_mode_change_end = .;
 
 		__hooks_pwrbtn_change = .;
 		KEEP(*(.rodata.HOOK_POWER_BUTTON_CHANGE))
