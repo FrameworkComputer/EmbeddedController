@@ -90,8 +90,8 @@ GPIO(I2C3_SDA,             PIN(D, 0), GPIO_ODR_HIGH)
 /* TODO - configure 32KCLKIN for alternate mode */
 GPIO(CLK_32K_IN,           PIN(E, 7), GPIO_INPUT)
 
-/* TODO - check if internal PU is needed */
-GPIO(LID_ACCEL_INT_L,      PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
+/* Attached to push-pull interrupt pin of accel, but unused */
+GPIO(LID_ACCEL_INT_L,      PIN(C, 7), GPIO_INPUT)
 
 /* KSO2 is inverted */
 GPIO(KBD_KSO2,             PIN(1, 7), GPIO_OUT_LOW)
