@@ -160,5 +160,6 @@ extern const struct usb_mux_driver anx74xx_tcpm_usb_mux_driver;
 void anx74xx_tcpc_set_vbus(int port, int enable);
 void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 void anx74xx_tcpc_clear_hpd_status(int port);
+int anx74xx_tcpc_get_fw_version(int port, int *version);
 
 #endif /* __CROS_EC_USB_PD_TCPM_ANX74XX_H */

@@ -36,6 +36,10 @@ static int init_alert_mask(int port)
 	/* Set the alert mask in TCPC */
 	rv = tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
 
+#ifdef CONFIG_USB_PD_TCPC_FW_VERSION
+	board_print_tcpc_fw_version(port);
+#endif
+
 	return rv;
 }
 

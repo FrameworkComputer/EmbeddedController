@@ -2038,6 +2038,9 @@
 /* Use TCPC module (type-C port controller) */
 #undef CONFIG_USB_PD_TCPC
 
+/* Get TCPC firmware version */
+#undef CONFIG_USB_PD_TCPC_FW_VERSION
+
 /*
  * Track VBUS level in TCPC module. This will only be needed if we're acting
  * as an external TCPC.

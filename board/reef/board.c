@@ -238,6 +238,22 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 }
 
+#ifdef CONFIG_USB_PD_TCPC_FW_VERSION
+void board_print_tcpc_fw_version(int port)
+{
+	int rv;
+	int version;
+
+	if (port)
+		rv = ps8751_tcpc_get_fw_version(port, &version);
+	else
+		rv = anx74xx_tcpc_get_fw_version(port, &version);
+
+	if (!rv)
+		CPRINTS("TCPC p%d FW VER: 0x%x", port, version);
+}
+#endif
+
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
