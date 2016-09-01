@@ -480,6 +480,7 @@ void system_clear_retry_counter(void);
 						/* controller gets a request */
 /* TODO(crosbug.com/p/56945): Remove when sys_rst_l has an external pullup */
 #define BOARD_NEEDS_SYS_RST_PULL_UP  (1 << 5)   /* Add a pullup to sys_rst_l */
+#define BOARD_USE_PLT_RESET          (1 << 6)   /* Platform reset exists */
 
 /**
  * Get board properites
