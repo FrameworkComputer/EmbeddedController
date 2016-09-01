@@ -1886,6 +1886,7 @@ struct ec_motion_sense_activity {
 #define MOTIONSENSE_SENSOR_FLAG_FLUSH (1<<0)
 #define MOTIONSENSE_SENSOR_FLAG_TIMESTAMP (1<<1)
 #define MOTIONSENSE_SENSOR_FLAG_WAKEUP (1<<2)
+#define MOTIONSENSE_SENSOR_FLAG_TABLET_MODE (1<<3)
 
 /*
  * Send this value for the data element to only perform a read. If you
