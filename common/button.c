@@ -26,12 +26,29 @@ static struct button_state_t __bss_slow state[CONFIG_BUTTON_COUNT];
 
 static uint64_t __bss_slow next_deferred_time;
 
+#ifdef CONFIG_CMD_BUTTON
+static int siml_btn_presd;
+
+static int simulated_button_pressed(void)
+{
+	static int button = 1;
+
+	button = !button;
+	return button;
+}
+#endif
+
 /*
  * Whether a button is currently pressed.
  */
 static int raw_button_pressed(const struct button_config *button)
 {
-	int raw_value = gpio_get_level(button->gpio);
+	int raw_value =
+#ifdef CONFIG_CMD_BUTTON
+			siml_btn_presd ?
+			simulated_button_pressed() :
+#endif
+			gpio_get_level(button->gpio);
 
 	return button->flags & BUTTON_FLAG_ACTIVE_HIGH ?
 				       raw_value : !raw_value;
@@ -130,3 +147,70 @@ void button_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
+
+#ifdef CONFIG_CMD_BUTTON
+static int button_present(enum keyboard_button_type type)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_BUTTON_COUNT; i++)
+		if (buttons[i].type == type)
+			break;
+
+	return i;
+}
+
+static void button_interrupt_simulate(int button)
+{
+	button_interrupt(buttons[button].gpio);
+	usleep(buttons[button].debounce_us >> 2);
+	button_interrupt(buttons[button].gpio);
+}
+
+static int console_command_button(int argc, char **argv)
+{
+	int button;
+	int press_ms = 50;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "vup"))
+		button = button_present(KEYBOARD_BUTTON_VOLUME_UP);
+	else if (!strcasecmp(argv[1], "vdown"))
+		button = button_present(KEYBOARD_BUTTON_VOLUME_DOWN);
+	else
+		return EC_ERROR_PARAM1;
+
+	if (button == CONFIG_BUTTON_COUNT)
+		return EC_ERROR_PARAM1;
+
+	if (argc > 2) {
+		press_ms = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+	}
+
+	siml_btn_presd = 1;
+
+	/* Press the button */
+	button_interrupt_simulate(button);
+
+	/* Hold the button */
+	msleep(press_ms);
+
+	/* Release the button */
+	button_interrupt_simulate(button);
+
+	/* Wait till button processing is finished */
+	msleep(100);
+
+	siml_btn_presd = 0;
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(button, console_command_button,
+			"vup|vdown msec",
+			"Simulate button press");
+#endif
