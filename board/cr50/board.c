@@ -544,6 +544,12 @@ void system_init_board_properties(void)
 	 * update from a version not setting the register.
 	 */
 	if (!properties || system_get_reset_flags() & RESET_FLAG_HARD) {
+		/*
+		 * Reset the properties, because after a hard reset the register
+		 * won't be cleared.
+		 */
+		properties = 0;
+
 		/* Read DIOA1 strap pin */
 		if (gpio_get_level(GPIO_STRAP0))
 			/* Strap is pulled high -> Kevin SPI TPM option */
