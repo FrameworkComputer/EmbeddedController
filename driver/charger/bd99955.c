@@ -343,11 +343,12 @@ static int bd99955_get_vbus_detect_interrupts(int port)
 
 static void usb_charger_process(enum bd99955_charge_port port)
 {
-	int vbus_provided = bd99955_is_vbus_provided(port);
+	int chg_port = bd99955_pd_port_to_chg_port(port);
+	int vbus_provided = bd99955_is_vbus_provided(port) &&
+			    !usb_charger_port_is_sourcing_vbus(chg_port);
 
 	/* Inform other modules about VBUS level */
-	usb_charger_vbus_change(bd99955_pd_port_to_chg_port(port),
-				vbus_provided);
+	usb_charger_vbus_change(chg_port, vbus_provided);
 
 	/* Do BC1.2 detection */
 	if (vbus_provided) {
