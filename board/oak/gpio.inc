@@ -170,6 +170,8 @@ GPIO(PMIC_PWRON_H,      PIN(A, 12), GPIO_OUT_LOW)
 GPIO(PMIC_WARM_RESET_H, PIN(B, 3),  GPIO_OUT_LOW)
 #if BOARD_REV <= OAK_REV4
 GPIO(LEVEL_SHIFT_EN_L,  PIN(D, 3),  GPIO_OUT_LOW)    /* LID/AC level shift */
+GPIO(USB_C0_DEVMODE_L,  PIN(E, 4),  GPIO_OUT_HIGH)   /* set HSD2 (host mode) path as default */
+GPIO(USB_C1_DEVMODE,    PIN(E, 2),  GPIO_OUT_LOW)    /* set HSD1 (host mode) path as default */
 #else /* >= OAK_REV5 */
 GPIO(LEVEL_SHIFT_EN_L,  PIN(F, 10), GPIO_OUT_LOW)    /* LID/AC level shift */
 #endif
@@ -180,8 +182,6 @@ GPIO(USB_C1_5V_EN,      PIN(D, 10), GPIO_OUT_LOW)    /* USBC port 1 5V */
 GPIO(USB_C1_CHARGE_L,   PIN(D, 11), GPIO_OUT_LOW)    /* USBC port 1 charge */
 GPIO(USB_PD_VBUS_WAKE,  PIN(B, 15), GPIO_OUT_LOW)    /* PD MCU wake */
 GPIO(USB_DP_HPD,        PIN(F, 3),  GPIO_OUT_LOW)
-GPIO(USB_C0_DEVMODE_L,  PIN(E, 4),  GPIO_OUT_HIGH)   /* set HSD2 (host mode) path as default */
-GPIO(USB_C1_DEVMODE,    PIN(E, 2),  GPIO_OUT_LOW)    /* set HSD1 (host mode) path as default */
 
 #if (BOARD_REV < OAK_REV5)
 GPIO(TYPEC0_MUX_EN_L,   PIN(E, 13), GPIO_OUT_LOW)
