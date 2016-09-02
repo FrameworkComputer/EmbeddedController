@@ -105,37 +105,8 @@ uint32_t __ram_code __hw_clock_source_read(void)
 	 */
 	return IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H);
 #else
-/* Number of CPU cycles in 125 us */
-#define CYCLES_125NS (125*(PLL_CLOCK/SECOND) / 1000)
-	/*
-	 * TODO(crosbug.com/p/55044):
-	 * observation register of external timer latch issue.
-	 * we can remove this workaround after version change.
-	 */
-	uint32_t prev_mask = get_int_mask();
-	uint32_t val;
-
-	interrupt_disable();
-	asm volatile(
-		/* read observation register for the first time */
-		"lwi %0,[%1]\n\t"
-		/*
-		 * the delay time between reading the first and second
-		 * observation registers need to be greater than 0.125us and
-		 * smaller than 0.250us.
-		 */
-		".rept %2\n\t"
-		"nop\n\t"
-		".endr\n\t"
-		/* read for the second time */
-		"lwi %0,[%1]\n\t"
-		: "=&r"(val)
-		: "r"((uintptr_t) &IT83XX_ETWD_ETXCNTOR(FREE_EXT_TIMER_H)),
-			"i"(CYCLES_125NS));
-	/* restore interrupts */
-	set_int_mask(prev_mask);
-
-	return val;
+	/* TODO(crosbug.com/p/55044) */
+	return ext_observation_reg_read(FREE_EXT_TIMER_H);
 #endif
 }
 
@@ -172,7 +143,12 @@ uint32_t __hw_clock_event_get(void)
 	if (IT83XX_ETWD_ETXCTRL(EVENT_EXT_TIMER) & (1 << 0)) {
 		/* timer counter observation value to microseconds */
 		next_event_us += EVENT_TIMER_COUNT_TO_US(
+#if 0
 			IT83XX_ETWD_ETXCNTOR(EVENT_EXT_TIMER));
+#else
+			/* TODO(crosbug.com/p/55044) */
+			ext_observation_reg_read(EVENT_EXT_TIMER));
+#endif
 	}
 	return next_event_us;
 }
@@ -248,6 +224,41 @@ static void __hw_clock_source_irq(void)
 	}
 }
 DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 1);
+
+/*
+ * TODO(crosbug.com/p/55044):
+ * observation register of external timer latch issue.
+ * we can remove this workaround after version change.
+ */
+/* Number of CPU cycles in 125 us */
+#define CYCLES_125NS (125*(PLL_CLOCK/SECOND) / 1000)
+uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer)
+{
+	uint32_t prev_mask = get_int_mask();
+	uint32_t val;
+
+	interrupt_disable();
+	asm volatile(
+		/* read observation register for the first time */
+		"lwi %0,[%1]\n\t"
+		/*
+		 * the delay time between reading the first and second
+		 * observation registers need to be greater than 0.125us and
+		 * smaller than 0.250us.
+		 */
+		".rept %2\n\t"
+		"nop\n\t"
+		".endr\n\t"
+		/* read for the second time */
+		"lwi %0,[%1]\n\t"
+		: "=&r"(val)
+		: "r"((uintptr_t) &IT83XX_ETWD_ETXCNTOR(ext_timer)),
+			"i"(CYCLES_125NS));
+	/* restore interrupts */
+	set_int_mask(prev_mask);
+
+	return val;
+}
 
 void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq)
 {
