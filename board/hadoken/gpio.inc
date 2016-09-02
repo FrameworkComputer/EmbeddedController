@@ -25,11 +25,6 @@ GPIO(KB_IN06, PIN(0, 22), GPIO_KB_INPUT)
 GPIO(KB_IN07, PIN(0, 25), GPIO_KB_INPUT)
 
 /* Other inputs */
-GPIO(MCU_GPIO_13,   PIN(0, 13), GPIO_INPUT)    /* PAIR on the debug board */
-GPIO(MCU_GPIO_14,   PIN(0, 14), GPIO_INPUT)    /* TP 4 */
-GPIO(MCU_GPIO_17,   PIN(0, 17), GPIO_INPUT)    /* TP 5 */
-GPIO(MCU_GPIO_19,   PIN(0, 19), GPIO_INPUT)    /* TP 6 */
-GPIO(BQ27621_GPOUT, PIN(0, 20), GPIO_INPUT)    /* Fuel Gauge */
 GPIO(LID_PRESENT_L, PIN(0, 30), GPIO_INPUT)    /* Hall sensor */
 
 /* Useful for test software */
