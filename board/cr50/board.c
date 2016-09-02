@@ -553,6 +553,11 @@ void system_init_board_properties(void)
 			 * UART0RX so disable it until that is fixed.
 			 */
 			properties |= BOARD_DISABLE_UART0_RX;
+			/*
+			 * Use receiving a usb set address request as a
+			 * benchmark for marking the updated image as good.
+			 */
+			properties |= BOARD_MARK_UPDATE_ON_USB_REQ;
 		}
 
 		/*

@@ -303,6 +303,7 @@ static int cur_out_idx;				/* latest with xfercompl=1 */
 static const struct g_usb_desc *cur_out_desc;
 static int next_out_idx;			/* next packet will go here */
 static struct g_usb_desc *next_out_desc;
+static int processed_update_counter;
 
 /* For IN: Several DMA descriptors, all pointing into one large buffer, so that
  * we can return the configuration descriptor as one big blob. */
@@ -731,6 +732,13 @@ static int handle_setup_with_no_data_stage(enum table_case tc,
 		CPRINTS("SETAD 0x%02x (%d)", set_addr, set_addr);
 		print_later("SETAD 0x%02x (%d)", set_addr, set_addr, 0, 0, 0);
 		device_state = DS_ADDRESS;
+#ifdef BOARD_CR50
+		/* TODO(crosbug.com/p/56540): Remove when no longer needed */
+		if (!processed_update_counter && system_get_board_properties() &
+		    BOARD_MARK_UPDATE_ON_USB_REQ)
+			system_process_retry_counter();
+#endif
+		processed_update_counter = 1;
 		break;
 
 	case USB_REQ_SET_CONFIGURATION:
