@@ -37,3 +37,18 @@ const int gpio_ih_count = ARRAY_SIZE(gpio_irq_handlers);
 #define GPIO_INT(name, pin, flags, signal)	\
 	BUILD_ASSERT(GPIO_##name < ARRAY_SIZE(gpio_irq_handlers));
 #include "gpio.wrap"
+
+/*
+ * All PIN(...) assignments must be unique, since otherwise you're just
+ * creating duplicate names for the same thing, and may not always be
+ * initializing them the way you think.
+ */
+#define GPIO(name, pin, flags) pin
+#define GPIO_INT(name, pin, flags, signal) pin
+/*
+ * The compiler will complain if we use the same name twice. The linker ignores
+ * anything that gets by.
+ */
+#define PIN(a, b...) static const int _pin_ ## a ## _ ## b \
+	__attribute__((unused, section(".unused"))) = __LINE__;
+#include "gpio.wrap"

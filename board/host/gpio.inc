@@ -9,18 +9,18 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 GPIO_INT(LID_OPEN,             PIN(0, 0), GPIO_INT_BOTH, lid_interrupt)
-GPIO_INT(POWER_BUTTON_L,       PIN(0, 0), GPIO_INT_BOTH, power_button_interrupt)
-GPIO_INT(AC_PRESENT,           PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
-GPIO_INT(BUTTON_VOLUME_DOWN_L, PIN(0, 0), GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(BUTTON_VOLUME_UP,     PIN(0, 0), GPIO_INT_BOTH, button_interrupt)
-GPIO_INT(CHARGE_DONE,          PIN(0, 0), GPIO_INT_BOTH, inductive_charging_interrupt)
+GPIO_INT(POWER_BUTTON_L,       PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
+GPIO_INT(AC_PRESENT,           PIN(0, 2), GPIO_INT_BOTH, extpower_interrupt)
+GPIO_INT(BUTTON_VOLUME_DOWN_L, PIN(0, 3), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(BUTTON_VOLUME_UP,     PIN(0, 4), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(CHARGE_DONE,          PIN(0, 5), GPIO_INT_BOTH, inductive_charging_interrupt)
 
-GPIO(EC_INT_L,             PIN(0, 0), 0)
-GPIO(WP,                   PIN(0, 0), 0)
-GPIO(ENTERING_RW,          PIN(0, 0), 0)
-GPIO(PCH_BKLTEN,           PIN(0, 0), 0)
-GPIO(ENABLE_BACKLIGHT,     PIN(0, 0), 0)
+GPIO(EC_INT_L,             PIN(0, 6), 0)
+GPIO(WP,                   PIN(0, 7), 0)
+GPIO(ENTERING_RW,          PIN(0, 8), 0)
+GPIO(PCH_BKLTEN,           PIN(0, 9), 0)
+GPIO(ENABLE_BACKLIGHT,     PIN(0, 10), 0)
 
 /* Inductive charging */
-GPIO(CHARGE_EN,            PIN(0, 0), 0)
-GPIO(BASE_CHG_VDD_EN,      PIN(0, 0), 0)
+GPIO(CHARGE_EN,            PIN(0, 11), 0)
+GPIO(BASE_CHG_VDD_EN,      PIN(0, 12), 0)
