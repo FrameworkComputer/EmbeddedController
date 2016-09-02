@@ -20,7 +20,6 @@ const char __flash_dma_start;
 #define FLASH_DMA_CODE __attribute__((section(".flash_direct_map")))
 
 #define FLASH_SECTOR_ERASE_SIZE       0x00000400
-#define FLASH_STATUS_CHECK_TIMEOUT_US (20 * MSEC)
 
 /* Flash sector erase (1K bytes) command */
 #define FLASH_CMD_SECTOR_ERASE 0xD7
@@ -84,7 +83,10 @@ void FLASH_DMA_CODE dma_reset_immu(void)
 {
 	/* Immu tag sram reset */
 	IT83XX_GCTRL_MCCR |= 0x10;
+	/* Make sure the immu(dynamic cache) is reset */
+	asm volatile ("dsb");
 	IT83XX_GCTRL_MCCR &= ~0x10;
+	asm volatile ("dsb");
 }
 
 void FLASH_DMA_CODE dma_flash_follow_mode(void)
@@ -147,21 +149,20 @@ void FLASH_DMA_CODE dma_flash_cmd_read_status(enum flash_status_mask mask,
 {
 	uint8_t status[1];
 	uint8_t cmd_rs[] = {FLASH_CMD_RS};
-	int timeout = 0;
 
+	/*
+	 * We prefer no timeout here. We can always get the status
+	 * we want, or wait for watchdog triggered to check
+	 * e-flash's status instead of breaking loop.
+	 * This will avoid fetching unknown instruction from e-flash
+	 * and causing exception.
+	 */
 	while (1) {
 		/* read status */
 		dma_flash_transaction(sizeof(cmd_rs), cmd_rs, 1, status, 1);
 		/* only bit[1:0] valid */
-		if ((status[0] & mask) == target) {
+		if ((status[0] & mask) == target)
 			break;
-		} else {
-			/* delay ~15.25us */
-			IT83XX_GCTRL_WNCKR = 0;
-			timeout += 15;
-			if (timeout > FLASH_STATUS_CHECK_TIMEOUT_US)
-				break;
-		}
 	}
 }
 
@@ -348,6 +349,7 @@ int FLASH_DMA_CODE flash_physical_read(int offset, int size, char *data)
  */
 int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 {
+	int ret = EC_ERROR_UNKNOWN;
 
 	if (flash_dma_code_enabled == 0)
 		return EC_ERROR_ACCESS_DENIED;
@@ -366,10 +368,11 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
 
 	dma_flash_aai_write(offset, size, data);
 	dma_reset_immu();
+	ret = dma_flash_verify(offset, size, data);
 
 	interrupt_enable();
 
-	return dma_flash_verify(offset, size, data);
+	return ret;
 }
 
 /**
@@ -382,7 +385,7 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
  */
 int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 {
-	int v_size = size, v_addr = offset;
+	int v_size = size, v_addr = offset, ret = EC_ERROR_UNKNOWN;
 
 	if (flash_dma_code_enabled == 0)
 		return EC_ERROR_ACCESS_DENIED;
@@ -403,10 +406,11 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 		offset += FLASH_SECTOR_ERASE_SIZE;
 	}
 	dma_reset_immu();
+	ret = dma_flash_verify(v_addr, v_size, NULL);
 
 	interrupt_enable();
 
-	return dma_flash_verify(v_addr, v_size, NULL);
+	return ret;
 }
 
 /**
