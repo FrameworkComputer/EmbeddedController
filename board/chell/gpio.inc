@@ -103,8 +103,6 @@ GPIO(CHARGE_LED_1,          PIN(155), GPIO_OUT_LOW)
 GPIO(CHARGE_LED_2,          PIN(156), GPIO_OUT_LOW)
 
 /* This pins are either NC, NC / pulled up, or connected to test points */
-GPIO(I2C2_SENSOR_3V3_SCL,   PIN(20),  GPIO_INPUT)
-GPIO(I2C2_SENSOR_3V3_SDA,   PIN(21),  GPIO_INPUT)
 GPIO(NC_031,                PIN(31),  GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_047,                PIN(47),  GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_067,                PIN(67),  GPIO_INPUT | GPIO_PULL_UP)
