@@ -152,6 +152,10 @@
 #define ANX74XX_REG_PWR_ROLE_BIT_POS	(2)
 #define ANX74XX_REG_DATA_ROLE_BIT_POS	(1)
 
+#define ANX74XX_REG_RECVD_MSG_INT 0x98
+#define ANX74XX_REG_CC_STATUS     0x99
+#define ANX74XX_REG_CTRL_FW  0x2E
+#define CLEAR_RX_BUFFER (1)
 #define ANX74XX_REG_POWER_DOWN_CTRL	0x0d
 #define ANX74XX_REG_STATUS_CC1_VRD_USB	(1 << 7)
 #define ANX74XX_REG_STATUS_CC1_VRD_1P5	(1 << 6)
@@ -159,6 +163,19 @@
 #define ANX74XX_REG_STATUS_CC2_VRD_USB	(1 << 4)
 #define ANX74XX_REG_STATUS_CC2_VRD_1P5	(1 << 3)
 #define ANX74XX_REG_STATUS_CC2_VRD_3P0	(1 << 2)
+
+/* defined in the inter-bock Spec: 4.2.10 CC Detect Status */
+
+#define BIT_VALUE_OF_SRC_CC1_RD      0x01
+#define BIT_VALUE_OF_SRC_CC1_RA      0x02
+#define BIT_VALUE_OF_SNK_CC1_DEFAULT 0x04
+#define BIT_VALUE_OF_SNK_CC1_1_P_5   0x08
+#define BIT_VALUE_OF_SNK_CC1_3_P_0   0x0C
+#define BIT_VALUE_OF_SRC_CC2_RD      0x10
+#define BIT_VALUE_OF_SRC_CC2_RA      0x20
+#define BIT_VALUE_OF_SNK_CC2_DEFAULT 0x40
+#define BIT_VALUE_OF_SNK_CC2_1_P_5   0x80
+#define BIT_VALUE_OF_SNK_CC2_3_P_0   0xC0
 
 extern const struct tcpm_drv anx74xx_tcpm_drv;
 extern const struct usb_mux_driver anx74xx_tcpm_usb_mux_driver;
