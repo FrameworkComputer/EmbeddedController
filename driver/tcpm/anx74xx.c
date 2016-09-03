@@ -27,6 +27,9 @@ static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
 
 static int anx74xx_set_mux(int port, int polarity);
 
+/* Save the selected rp value */
+static int selected_rp = TYPEC_RP_USB;
+
 static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 {
 	int reg;
@@ -437,8 +440,7 @@ static int anx74xx_tcpm_get_cc(int port, int *cc1, int *cc2)
 
 	return EC_SUCCESS;
 }
-
-static int anx74xx_tcpm_select_rp_value(int port, int rp)
+static int anx74xx_rp_control(int port, int rp)
 {
 	int reg;
 	int rv;
@@ -466,6 +468,13 @@ static int anx74xx_tcpm_select_rp_value(int port, int rp)
 	}
 
 	return tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_6, reg);
+}
+
+static int anx74xx_tcpm_select_rp_value(int port, int rp)
+{
+	/* For ANX3429 cannot get cc correctly when Rp != USB_Default */
+	selected_rp = rp;
+	return 1;
 }
 
 static int anx74xx_tcpm_set_cc(int port, int pull)
@@ -629,11 +638,16 @@ static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 	rv = tcpc_read(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, &reg);
 	if (rv)
 		return rv;
-	if (enable)
+	if (enable) {
 		reg &= ~(ANX74XX_REG_IRQ_CC_MSG_INT);
-	else/* Disable RX message by masking interrupt */
+		anx74xx_tcpm_set_auto_good_crc(port, 1);
+		anx74xx_rp_control(port, selected_rp);
+	} else {
+	/* Disable RX message by masking interrupt */
 		reg |= (ANX74XX_REG_IRQ_CC_MSG_INT);
-	anx74xx_tcpm_set_auto_good_crc(port, enable);
+		anx74xx_tcpm_set_auto_good_crc(port, 0);
+		anx74xx_rp_control(port, TYPEC_RP_USB);
+	}
 	return tcpc_write(port, ANX74XX_REG_IRQ_SOURCE_RECV_MSG_MASK, reg);
 }
 
