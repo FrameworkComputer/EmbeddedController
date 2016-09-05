@@ -333,7 +333,7 @@ static int it83xx_tcpm_get_cc(int port, int *cc1, int *cc2)
 	return EC_SUCCESS;
 }
 
-static int it83xx_tcpm_select_rp_value(int port, int rp)
+static int it83xx_tcpm_select_rp_value(int port, int rp_sel)
 {
 	uint8_t rp;
 	/*
@@ -343,7 +343,7 @@ static int it83xx_tcpm_select_rp_value(int port, int rp)
 	 *       10: 180uA outpt (1.5A)
 	 *       11: 80uA outpt  (USB default)
 	 */
-	switch (rp) {
+	switch (rp_sel) {
 	case TYPEC_RP_1A5:
 		rp = 2 << 2;
 		break;
@@ -355,7 +355,9 @@ static int it83xx_tcpm_select_rp_value(int port, int rp)
 		rp = 3 << 2;
 		break;
 	}
-	IT83XX_USBPD_CCGCR(port) = (IT83XX_USBPD_CCGCR(port) & ~(3 << 2)) | Rp;
+	IT83XX_USBPD_CCGCR(port) = (IT83XX_USBPD_CCGCR(port) & ~(3 << 2)) | rp;
+
+	return EC_SUCCESS;
 }
 
 static int it83xx_tcpm_set_cc(int port, int pull)
