@@ -232,6 +232,7 @@ BUILD_ASSERT(sizeof(struct gpio_alt_map) == 2);
 #define NPCX_ALT(grp, pin)     { ALT_GROUP_##grp, NPCX_DEVALT##grp##_##pin, 0 }
 #define NPCX_ALT_INV(grp, pin) { ALT_GROUP_##grp, NPCX_DEVALT##grp##_##pin, 1 }
 
+/* TODO: Index this table on GPIO# */
 const struct gpio_alt_map gpio_alt_table[] = {
 	/* I2C Module */
 	{ NPCX_GPIO(B, 2),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SDA1 */
@@ -308,6 +309,9 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(8, 3),  NPCX_ALT_INV(9, NO_KSO15_SL)},/* KSO15 */
 	{ NPCX_GPIO(0, 3),  NPCX_ALT_INV(A, NO_KSO16_SL)},/* KSO16 */
 	{ NPCX_GPIO(B, 1),  NPCX_ALT_INV(A, NO_KSO17_SL)},/* KSO17 */
+	/* Clock module */
+	{ NPCX_GPIO(7, 5),  NPCX_ALT(A, 32K_OUT_SL)},     /* 32KHZ_OUT */
+	{ NPCX_GPIO(E, 7),  NPCX_ALT(A, 32KCLKIN_SL)},    /* 32KCLKIN */
 };
 
 struct gpio_lvol_item {

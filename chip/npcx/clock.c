@@ -159,6 +159,9 @@ void clock_init(void)
 
 	/* Notify modules of frequency change */
 	hook_notify(HOOK_FREQ_CHANGE);
+
+	/* Configure alt. clock GPIOs (eg. optional 32KHz clock) */
+	gpio_config_module(MODULE_CLOCK, 1);
 }
 
 /**
