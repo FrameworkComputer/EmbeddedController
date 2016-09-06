@@ -7,11 +7,6 @@
 #include "hooks.h"
 #include "registers.h"
 
-int rbox_is_asserting_ec_reset(void)
-{
-	return GREAD(RBOX, ASSERT_EC_RST);
-}
-
 static void rbox_release_ec_reset(void)
 {
 	/* Let the EC go (the RO bootloader asserts it ASAP after POR) */
