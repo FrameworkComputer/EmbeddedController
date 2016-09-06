@@ -193,9 +193,17 @@ static void init_runlevel(const enum permission_level desired_level)
 	}
 }
 
+static void configure_board_specific_gpios(void)
+{
+	/* Add a pullup to sys_rst_l */
+	if (system_get_board_properties() & BOARD_NEEDS_SYS_RST_PULL_UP)
+		GWRITE_FIELD(PINMUX, DIOM0_CTL, PU, 1);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
+	configure_board_specific_gpios();
 	init_pmu();
 	init_interrupts();
 	init_trng();
@@ -551,10 +559,16 @@ void system_init_board_properties(void)
 		properties = 0;
 
 		/* Read DIOA1 strap pin */
-		if (gpio_get_level(GPIO_STRAP0))
+		if (gpio_get_level(GPIO_STRAP0)) {
 			/* Strap is pulled high -> Kevin SPI TPM option */
 			properties |= BOARD_SLAVE_CONFIG_SPI;
-		else {
+			/* Add an internal pull up on sys_rst_l */
+			/*
+			 * TODO(crosbug.com/p/54059): Remove once SYS_RST_L can
+			 * be pulled up externally.
+			 */
+			properties |= BOARD_NEEDS_SYS_RST_PULL_UP;
+		} else {
 			/* Strap is low -> Reef I2C TPM option */
 			properties |= BOARD_SLAVE_CONFIG_I2C;
 			/* One PHY is connected to the AP */
