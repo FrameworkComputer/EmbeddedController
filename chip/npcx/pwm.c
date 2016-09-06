@@ -84,9 +84,9 @@ static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 	NPCX_PRSC(mdl) = (uint16_t)prescaler_divider;
 
 	/* Set PWM cycle time */
-	NPCX_CTR(mdl) = EC_PWM_MAX_DUTY - 1;
+	NPCX_CTR(mdl) = EC_PWM_MAX_DUTY;
 
-	/* Set the duty cycle to 0% since DCR > CTR */
+	/* Set the duty cycle to 100% since DCR == CTR */
 	NPCX_DCR(mdl) = EC_PWM_MAX_DUTY;
 }
 
