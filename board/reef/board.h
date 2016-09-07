@@ -142,18 +142,13 @@
 #define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
 
 /* I2C ports */
-#define I2C_PORT_GYRO                   NPCX_I2C_PORT1
-#define I2C_PORT_LID_ACCEL              NPCX_I2C_PORT2
-#define I2C_PORT_ALS                    NPCX_I2C_PORT2
-#define I2C_PORT_BARO	                NPCX_I2C_PORT2
-#define I2C_PORT_BATTERY                NPCX_I2C_PORT3
-#define I2C_PORT_CHARGER                NPCX_I2C_PORT3
-
-/*
- * FIXME: This #define is necessary for the BMI160 driver. The driver doesn't
- * actually use the value, so we should eventually re-factor the driver to
- * be less confusing.
- */
+#define I2C_PORT_GYRO			NPCX_I2C_PORT1
+#define I2C_PORT_LID_ACCEL		NPCX_I2C_PORT2
+#define I2C_PORT_ALS			NPCX_I2C_PORT2
+#define I2C_PORT_BARO			NPCX_I2C_PORT2
+#define I2C_PORT_BATTERY		NPCX_I2C_PORT3
+#define I2C_PORT_CHARGER		NPCX_I2C_PORT3
+/* Accelerometer and Gyroscope are the same device. */
 #define I2C_PORT_ACCEL			I2C_PORT_GYRO
 
 /* Sensors */
@@ -169,6 +164,13 @@
 /* #define CONFIG_LID_ANGLE */	/* FIXME(dhendrix): maybe? */
 /* #define CONFIG_LID_ANGLE_SENSOR_BASE 0 */	/* FIXME(dhendrix): maybe? */
 /* #define CONFIG_LID_ANGLE_SENSOR_LID 2 */	/* FIXME(dhendrix): maybe? */
+
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 1024
+
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+
 
 #ifndef __ASSEMBLER__
 
@@ -268,6 +270,10 @@ void board_reset_pd_mcu(void);
 int board_get_version(void);
 
 void board_set_tcpc_power_mode(int port, int mode);
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	((1 << LID_ACCEL) | (1 << BASE_BARO))
 
 #endif /* !__ASSEMBLER__ */
 

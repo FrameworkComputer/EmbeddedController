@@ -134,7 +134,7 @@ const struct i2c_port_t i2c_ports[]  = {
 		GPIO_EC_I2C_USB_C0_PD_SCL, GPIO_EC_I2C_USB_C0_PD_SDA},
 	{"tcpc1",     NPCX_I2C_PORT0_1, 400,
 		GPIO_EC_I2C_USB_C1_PD_SCL, GPIO_EC_I2C_USB_C1_PD_SDA},
-	{"gyro",      I2C_PORT_GYRO,   400,
+	{"accelgyro", I2C_PORT_GYRO,   400,
 		GPIO_EC_I2C_GYRO_SCL,      GPIO_EC_I2C_GYRO_SDA},
 	{"sensors",   NPCX_I2C_PORT2,   400,
 		GPIO_EC_I2C_SENSOR_SCL,    GPIO_EC_I2C_SENSOR_SDA},
@@ -734,23 +734,23 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		 /* AP: by default use EC settings */
 		 [SENSOR_CONFIG_AP] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-			 .ec_rate = 100 * MSEC,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-			 .ec_rate = 100 * MSEC,
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0
+			.odr = 0,
+			.ec_rate = 0
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0
+			.odr = 0,
+			.ec_rate = 0
 		 },
 	 },
 	},
@@ -771,23 +771,23 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* EC does not need in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 	 },
 	},
@@ -808,18 +808,18 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* EC does not need in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
@@ -845,8 +845,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		/* AP: by default use EC settings */
 		[SENSOR_CONFIG_AP] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
+			.odr = 0,
+			.ec_rate = 0,
 		},
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
@@ -879,23 +879,23 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* EC does not need in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 	 },
 	},
