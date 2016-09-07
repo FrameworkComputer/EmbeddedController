@@ -93,8 +93,13 @@ SECTIONS
         __flash_lpfw_start = .;
         /* Entering deep idle FW for better power consumption */
         KEEP(*(.lowpower_ram))
-	. = ALIGN(4);
+        . = ALIGN(4);
         __flash_lpfw_end = .;
+        __flash_lplfw_start = .;
+        /* GDMA utilities for better FW download speed */
+        KEEP(*(.lowpower_ram2))
+        . = ALIGN(4);
+        __flash_lplfw_end = .;
     } > CDRAM AT > FLASH
 #else
     } > FLASH

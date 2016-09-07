@@ -22,11 +22,14 @@ void system_watchdog_reset(void);
 /* Check reset cause and return reset flags */
 void system_check_reset_cause(void);
 
-/* End address for the .lpram section; defined in linker script */
-extern unsigned int __lpram_fw_end;
-/* Begin flash address for the lpram codes; defined in linker script */
+/* Begin flash address for hibernate utility; defined in linker script */
 extern unsigned int __flash_lpfw_start;
-/* End flash address for the lpram codes; defined in linker script */
+/* End flash address for hibernate utility; defined in linker script */
 extern unsigned int __flash_lpfw_end;
+
+/* Begin flash address for little FW; defined in linker script */
+extern unsigned int __flash_lplfw_start;
+/* End flash address for little FW; defined in linker script */
+extern unsigned int __flash_lplfw_end;
 
 #endif /* __CROS_EC_SYSTEM_CHIP_H */

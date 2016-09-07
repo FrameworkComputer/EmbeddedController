@@ -39,8 +39,13 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-/* Begin address for the .lpram section; defined in linker script */
+/* Begin address of Suspend RAM for hibernate utility */
 uintptr_t __lpram_fw_start = CONFIG_LPRAM_BASE;
+
+/* Offset of little FW in Suspend Ram for GDMA bypass */
+#define LFW_OFFSET 0x160
+/* Begin address of Suspend RAM for little FW (GDMA utilities). */
+uintptr_t __lpram_lfw_start = CONFIG_LPRAM_BASE + LFW_OFFSET;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -253,7 +258,7 @@ void system_mpu_config(void)
 	CPU_MPU_RASR = 0x1308001D;
 }
 
-void __keep __attribute__ ((section(".lowpower_ram")))
+void __keep __attribute__ ((noreturn, section(".lowpower_ram")))
 __enter_hibernate_in_lpram(void)
 {
 	/*
@@ -849,19 +854,132 @@ DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM,
 
 #endif /* CONFIG_HOSTCMD_RTC */
 #ifdef CONFIG_EXTERNAL_STORAGE
+void __keep __attribute__ ((noreturn, section(".lowpower_ram2")))
+__start_gdma(uint32_t exeAddr)
+{
+	/* Enable GDMA now */
+	SET_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAEN);
+
+	/* Start GDMA */
+	SET_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_SOFTREQ);
+
+	/* Wait for transfer to complete/fail */
+	while (!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_TC) &&
+			!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
+		;
+
+	/* Disable GDMA now */
+	CLEAR_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAEN);
+
+	/*
+	 * Failure occurs during GMDA transaction. Let watchdog issue and
+	 * boot from RO region again.
+	 */
+	if (IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
+		while (1)
+			;
+
+	/*
+	 * Jump to the exeAddr address if needed. Setting bit 0 of address to
+	 * indicate it's a thumb branch for cortex-m series CPU.
+	 */
+	((void (*)(void))(exeAddr | 0x01))();
+
+	/* Should never get here */
+	while (1)
+		;
+}
+
+static void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
+		uint32_t size, uint32_t exeAddr)
+{
+	int i;
+	uint8_t chunkSize = 16; /* 4 data burst mode. ie.16 bytes */
+	/*
+	 * GDMA utility in Suspend RAM. Setting bit 0 of address to indicate
+	 * it's a thumb branch for cortex-m series CPU.
+	 */
+	void (*__start_gdma_in_lpram)(uint32_t) =
+			(void(*)(uint32_t))(__lpram_lfw_start | 0x01);
+
+	/*
+	 * Before enabling burst mode for better performance of GDMA, it's
+	 * important to make sure srcAddr, dstAddr and size of transactions
+	 * are 16 bytes aligned in case failure occurs.
+	 */
+	ASSERT((size % chunkSize) == 0 && (srcAddr % chunkSize) == 0 &&
+			(dstAddr % chunkSize) == 0);
+
+	/* Check valid address for jumpiing */
+	ASSERT(exeAddr != 0x0);
+
+	/* Enable power for the Low Power RAM */
+	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6), 6);
+
+	/* Enable Low Power RAM */
+	NPCX_LPRAM_CTRL = 1;
+
+	/*
+	 * Initialize GDMA for flash reading.
+	 * [31:21] - Reserved.
+	 * [20]    - GDMAERR   = 0  (Indicate GMDA transfer error)
+	 * [19]    - Reserved.
+	 * [18]    - TC        = 0  (Terminal Count. Indicate operation is end.)
+	 * [17]    - Reserved.
+	 * [16]    - SOFTREQ   = 0  (Don't trigger here)
+	 * [15]    - DM        = 0  (Set normal demand mode)
+	 * [14]    - Reserved.
+	 * [13:12] - TWS.      = 10 (One double-word for every GDMA transaction)
+	 * [11:10] - Reserved.
+	 * [9]     - BME       = 1  (4-data ie.16 bytes - Burst mode enable)
+	 * [8]     - SIEN      = 0  (Stop interrupt disable)
+	 * [7]     - SAFIX     = 0  (Fixed source address)
+	 * [6]     - Reserved.
+	 * [5]     - SADIR     = 0  (Source address incremented)
+	 * [4]     - DADIR     = 0  (Destination address incremented)
+	 * [3:2]   - GDMAMS    = 00 (Software mode)
+	 * [1]     - Reserved.
+	 * [0]     - ENABLE    = 0  (Don't enable yet)
+	 */
+	NPCX_GDMA_CTL = 0x00002200;
+
+	/* Set source base address */
+	NPCX_GDMA_SRCB = CONFIG_MAPPED_STORAGE_BASE + srcAddr;
+
+	/* Set destination base address */
+	NPCX_GDMA_DSTB = dstAddr;
+
+	/* Set number of transfers */
+	NPCX_GDMA_TCNT = (size / chunkSize);
+
+	/* Clear Transfer Complete event */
+	SET_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_TC);
+
+	/* Copy the __start_gdma_in_lpram instructions to LPRAM */
+	for (i = 0; i < &__flash_lplfw_end - &__flash_lplfw_start; i++)
+		*((uint32_t *)__lpram_lfw_start + i) =
+				*(&__flash_lplfw_start + i);
+
+	/* Start GDMA in Suspend RAM */
+	__start_gdma_in_lpram(exeAddr);
+}
+
 void system_jump_to_booter(void)
 {
-	enum API_RETURN_STATUS_T status;
+	enum API_RETURN_STATUS_T status __attribute__((unused));
 	static uint32_t flash_offset;
 	static uint32_t flash_used;
 	static uint32_t addr_entry;
 
-	/* RO region FW */
+	/*
+	 * Get memory offset and size for RO/RW regions.
+	 * Both of them need 16-bytes alignment since GDMA burst mode.
+	 */
 	if (IS_BIT_SET(NPCX_FWCTRL, NPCX_FWCTRL_RO_REGION)) {
 		flash_offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
 				CONFIG_RO_STORAGE_OFF;
 		flash_used = CONFIG_RO_SIZE;
-	} else { /* RW region FW */
+	} else {
 		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
 				CONFIG_RW_STORAGE_OFF;
 		flash_used = CONFIG_RW_SIZE;
@@ -877,6 +995,15 @@ void system_jump_to_booter(void)
 	 */
 	clock_turbo();
 
+	/* Bypass for GMDA issue of ROM api utilities */
+#if defined(CHIP_VARIANT_NPCX5M5G) || defined(CHIP_VARIANT_NPCX5M6G)
+	system_download_from_flash(
+		flash_offset,      /* The offset of the data in spi flash */
+		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */
+		flash_used,        /* Number of bytes to download      */
+		addr_entry         /* jump to this address after download */
+	);
+#else
 	download_from_flash(
 		flash_offset,      /* The offset of the data in spi flash */
 		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */
@@ -885,6 +1012,7 @@ void system_jump_to_booter(void)
 		addr_entry,        /* jump to this address after download */
 		&status            /* Status fo download */
 	);
+#endif
 }
 
 uint32_t system_get_lfw_address()

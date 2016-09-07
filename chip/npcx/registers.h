@@ -86,6 +86,7 @@
 #define NPCX_PECI_BASE_ADDR              0x400D4000
 #define NPCX_TWD_BASE_ADDR               0x400D8000
 #define NPCX_ESPI_BASE_ADDR              0x4000A000
+#define NPCX_GDMA_BASE_ADDR              0x40011000
 
 /* Multi-Modules Map */
 #define NPCX_PWM_BASE_ADDR(mdl)          (0x40080000 + ((mdl) * 0x2000L))
@@ -1441,6 +1442,34 @@ enum {
 	ESPI_VW_TYPE_NUM,
 	ESPI_VW_TYPE_NONE = 0xFF
 };
+
+/******************************************************************************/
+/* GDMA (General DMA) Registers */
+#define NPCX_GDMA_CTL                    REG32(NPCX_GDMA_BASE_ADDR + 0x000)
+#define NPCX_GDMA_SRCB                   REG32(NPCX_GDMA_BASE_ADDR + 0x004)
+#define NPCX_GDMA_DSTB                   REG32(NPCX_GDMA_BASE_ADDR + 0x008)
+#define NPCX_GDMA_TCNT                   REG32(NPCX_GDMA_BASE_ADDR + 0x00C)
+#define NPCX_GDMA_CSRC                   REG32(NPCX_GDMA_BASE_ADDR + 0x010)
+#define NPCX_GDMA_CDST                   REG32(NPCX_GDMA_BASE_ADDR + 0x014)
+#define NPCX_GDMA_CTCNT                  REG32(NPCX_GDMA_BASE_ADDR + 0x018)
+
+
+/******************************************************************************/
+/* GDMA register fields */
+#define NPCX_GDMA_CTL_GDMAEN                         0
+#define NPCX_GDMA_CTL_GDMAMS                         FIELD(2,   2)
+#define NPCX_GDMA_CTL_DADIR                          4
+#define NPCX_GDMA_CTL_SADIR                          5
+#define NPCX_GDMA_CTL_SAFIX                          7
+#define NPCX_GDMA_CTL_SIEN                           8
+#define NPCX_GDMA_CTL_BME                            9
+#define NPCX_GDMA_CTL_SBMS                           11
+#define NPCX_GDMA_CTL_TWS                            FIELD(12,  2)
+#define NPCX_GDMA_CTL_DM                             15
+#define NPCX_GDMA_CTL_SOFTREQ                        16
+#define NPCX_GDMA_CTL_TC                             18
+#define NPCX_GDMA_CTL_GDMAERR                        20
+#define NPCX_GDMA_CTL_BLOCK_BUG_CORRECTION_DISABLE   26
 
 /******************************************************************************/
 /* Nuvoton internal used only registers */
