@@ -196,8 +196,9 @@ struct bmp280_calib_param_t {
  */
 struct bmp280_drv_data_t {
 
-	struct  bmp280_calib_param_t calib_param;
-	int	rate;
+	struct   bmp280_calib_param_t calib_param;
+	uint16_t rate;
+	uint16_t range;
 };
 
 extern const struct accelgyro_drv bmp280_drv;

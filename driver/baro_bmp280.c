@@ -276,6 +276,26 @@ static int bmp280_set_power_mode(const struct motion_sensor_t *s,
 	return raw_write8(s->port, s->addr, BMP280_CTRL_MEAS_REG, val);
 }
 
+static int bmp280_set_range(const struct motion_sensor_t *s,
+				int range,
+				int rnd)
+{
+	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
+	/*
+	 * ->range contains the number of bit to right shift in order for the
+	 * measurment to fit into 16 bits (or less if the AP wants to).
+	 */
+	data->range = 15 - __builtin_clz(range);
+	return EC_SUCCESS;
+}
+
+static int bmp280_get_range(const struct motion_sensor_t *s)
+{
+	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
+
+	return 1 << (16 + data->range);
+}
+
 /*
  * bmp280_init() - Used to initialize barometer with default config
  *
@@ -304,6 +324,7 @@ static int bmp280_init(const struct motion_sensor_t *s)
 	if (ret)
 		return ret;
 
+	bmp280_set_range(s, s->default_range, 0);
 	/* Read bmp280 calibration parameter */
 	return bmp280_get_calib_param(s);
 }
@@ -322,7 +343,7 @@ static int bmp280_read(const struct motion_sensor_t *s, vector_3_t v)
 	if (ret)
 		return ret;
 
-	v[0] = bmp280_compensate_pressure(s, pres);
+	v[0] = bmp280_compensate_pressure(s, pres) >> data->range;
 	v[1] = v[2] = 0;
 
 	return EC_SUCCESS;
@@ -378,6 +399,8 @@ struct bmp280_drv_data_t bmp280_drv_data;
 const struct accelgyro_drv bmp280_drv = {
 	.init = bmp280_init,
 	.read = bmp280_read,
+	.set_range = bmp280_set_range,
+	.get_range = bmp280_get_range,
 	.set_data_rate = bmp280_set_data_rate,
 	.get_data_rate = bmp280_get_data_rate,
 };

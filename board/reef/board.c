@@ -875,7 +875,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &bmp280_drv_data,
 	 .port = I2C_PORT_BARO,
 	 .addr = BMP280_I2C_ADDRESS1,
-	 .rot_standard_ref = NULL, /* Identity Matrix. */
+	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
