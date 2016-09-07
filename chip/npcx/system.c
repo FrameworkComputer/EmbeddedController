@@ -19,6 +19,7 @@
 #include "gpio.h"
 #include "hwtimer_chip.h"
 #include "system_chip.h"
+#include "clock_chip.h"
 #include "rom_chip.h"
 
 /* Flags for BBRM_DATA_INDEX_WAKE */
@@ -869,6 +870,12 @@ void system_jump_to_booter(void)
 	/* Make sure the reset vector is inside the destination image */
 	addr_entry = *(uintptr_t *)(flash_offset +
 				    CONFIG_MAPPED_STORAGE_BASE + 4);
+
+	/*
+	 * Speed up FW download time by increasing clock freq of EC. It will
+	 * restore to default in clock_init() later.
+	 */
+	clock_turbo();
 
 	download_from_flash(
 		flash_offset,      /* The offset of the data in spi flash */

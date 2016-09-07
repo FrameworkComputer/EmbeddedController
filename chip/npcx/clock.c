@@ -164,6 +164,34 @@ void clock_init(void)
 	gpio_config_module(MODULE_CLOCK, 1);
 }
 
+
+/**
+ * Set the CPU clock to maximum freq for better performance.
+ */
+void clock_turbo(void)
+{
+	/* Configure Frequency multiplier values to 50MHz */
+	NPCX_HFCGN  = 0x02;
+	NPCX_HFCGML = 0xEC;
+	NPCX_HFCGMH = 0x0B;
+
+	/* Load M and N values into the frequency multiplier */
+	SET_BIT(NPCX_HFCGCTRL, NPCX_HFCGCTRL_LOAD);
+
+	/* Wait for stable */
+	while (IS_BIT_SET(NPCX_HFCGCTRL, NPCX_HFCGCTRL_CLK_CHNG))
+		;
+
+	/* Keep Core CLK & FMCLK are the same if Core CLK exceed 33MHz */
+	NPCX_HFCGP = 0x00;
+
+	/*
+	 * Let APB2 equals Core CLK/2 if default APB2 clock is divisible
+	 * by 1MHz
+	 */
+	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
+}
+
 /**
  * Return the current clock frequency in Hz.
  */

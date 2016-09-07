@@ -21,4 +21,9 @@ int clock_get_apb1_freq(void);
  */
 int clock_get_apb2_freq(void);
 
+/**
+ * Set the CPU clock to maximum freq for better performance.
+ */
+void clock_turbo(void);
+
 #endif /* __CROS_EC_CLOCK_CHIP_H */
