@@ -659,11 +659,13 @@ static void bd99995_init(void)
 	ch_raw_write16(BD99955_CMD_CHGOP_SET1, reg,
 		       BD99955_EXTENDED_COMMAND);
 
-	/* Enable BC1.2 USB charging and DC/DC converter */
+	/* Enable BC1.2 USB charging and DC/DC converter @ 1200KHz */
 	if (ch_raw_read16(BD99955_CMD_CHGOP_SET2, &reg,
 			  BD99955_EXTENDED_COMMAND))
 		return;
-	reg &= ~(BD99955_CMD_CHGOP_SET2_USB_SUS);
+	reg &= ~(BD99955_CMD_CHGOP_SET2_USB_SUS |
+		 BD99955_CMD_CHGOP_SET2_DCDC_CLK_SEL);
+	reg |= BD99955_CMD_CHGOP_SET2_DCDC_CLK_SEL_1200;
 	ch_raw_write16(BD99955_CMD_CHGOP_SET2, reg,
 		       BD99955_EXTENDED_COMMAND);
 
@@ -714,6 +716,19 @@ static void bd99995_init(void)
 	ch_raw_write16(BD99955_CMD_VCC_TH_SET, BD99955_VBUS_DISCHARGE_TH,
 		       BD99955_EXTENDED_COMMAND);
 #endif
+
+	/* Unlock debug regs */
+	ch_raw_write16(BD99955_CMD_PROTECT_SET, 0x3c, BD99955_EXTENDED_COMMAND);
+	ch_raw_write16(BD99955_CMD_MAP_SET, 0x2, BD99955_EXTENDED_COMMAND);
+
+	/* Undocumented - reverse current threshold = -50mV */
+	ch_raw_write16(0x14, 0x0202, BD99955_DEBUG_COMMAND);
+	/* Undocumented - internal gain = 2x */
+	ch_raw_write16(0x1a, 0x80, BD99955_DEBUG_COMMAND);
+
+	/* Re-lock debug regs */
+	ch_raw_write16(BD99955_CMD_PROTECT_SET, 0x0, BD99955_EXTENDED_COMMAND);
+	ch_raw_write16(BD99955_CMD_MAP_SET, 0x1, BD99955_EXTENDED_COMMAND);
 }
 DECLARE_HOOK(HOOK_INIT, bd99995_init, HOOK_PRIO_INIT_EXTPOWER);
 
