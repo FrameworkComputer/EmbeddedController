@@ -15,7 +15,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-static int uart_enabled, enable_usb_wakeup;
+static int ec_uart_enabled, enable_usb_wakeup;
 
 struct uart_config {
 	const char *name;
@@ -63,7 +63,10 @@ static int servo_is_connected(void)
 
 void uartn_tx_connect(int uart)
 {
-	if (!uart_enabled || !ccd_is_enabled())
+	if (uart == UART_EC && !ec_uart_enabled)
+		return;
+
+	if (!ccd_is_enabled())
 		return;
 
 	if (servo_is_connected()) {
@@ -82,7 +85,7 @@ void uartn_tx_disconnect(int uart)
 {
 	/* If servo is connected disable UART */
 	if (servo_is_connected())
-		uart_enabled = 0;
+		ec_uart_enabled = 0;
 
 	/* Disconnect the TX pin from UART peripheral */
 	uart_select_tx(uart, 0);
@@ -97,6 +100,7 @@ void rdd_attached(void)
 	ccd_set_mode(CCD_MODE_ENABLED);
 
 	enable_usb_wakeup = 1;
+	uartn_tx_connect(UART_AP);
 
 	/* Enable device state monitoring */
 	device_detect_state_enable(1);
@@ -119,6 +123,7 @@ void rdd_detached(void)
 	gpio_set_level(GPIO_CCD_MODE_L, 1);
 
 	enable_usb_wakeup = 0;
+	ec_uart_enabled = 0;
 
 	/* Disable CCD */
 	ccd_set_mode(CCD_MODE_DISABLED);
@@ -158,13 +163,11 @@ static int command_ccd(int argc, char **argv)
 				return EC_ERROR_PARAM2;
 
 			if (val) {
-				uart_enabled = 1;
+				ec_uart_enabled = 1;
 				uartn_tx_connect(UART_EC);
-				uartn_tx_connect(UART_AP);
 			} else {
-				uart_enabled = 0;
+				ec_uart_enabled = 0;
 				uartn_tx_disconnect(UART_EC);
-				uartn_tx_disconnect(UART_AP);
 			}
 		} else if (argc == 2) {
 			if (!parse_bool(argv[1], &val))
