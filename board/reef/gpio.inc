@@ -34,8 +34,9 @@ GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* MECH_PWR_BTN_ODL */
 /* FIXME(furquan): GPIO_PULL_UP is not required for LID_OPEN on EVT. */
 GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH | GPIO_PULL_UP, lid_interrupt)
-GPIO_INT(EC_VOLDN_BTN_L,	PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_L,	PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLDN_BTN_ODL,	PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLUP_BTN_ODL,	PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(TABLET_MODE,		PIN(3, 6), GPIO_INT_BOTH, tablet_mode_interrupt)
 
 GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH | GPIO_SEL_1P8V, switch_interrupt)	/* EC_WP_ODL */
 
@@ -44,7 +45,6 @@ GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH | GPIO_SEL_1P8V, switch_interrupt)	/* 
 GPIO(BASE_SIXAXIS_INT_L,	PIN(9, 3), GPIO_INPUT | GPIO_SEL_1P8V)
 //GPIO_INT(LID_ACCEL_INT_L,	PIN(C, 7), GPIO_INT_LOW | GPIO_SEL_1P8V, lid_interrupt)
 GPIO(LID_ACCEL_INT_L,		PIN(C, 7), GPIO_INPUT | GPIO_SEL_1P8V)
-//GPIO_INT(TABLET_MODE,		PIN(3, 6), GPIO_INT_BOTH | GPIO_PULL_HIGH, tablet_mode_interrupt)
 
 /* I2C GPIOs will be set to alt. function later. */
 GPIO(EC_I2C_GYRO_SDA,		PIN(8, 7), GPIO_INPUT | GPIO_SEL_1P8V)
@@ -129,11 +129,8 @@ GPIO(CHARGER_RST_ODL,		PIN(C, 0), GPIO_ODR_HIGH)
 GPIO(USB_A_CHARGE_EN_L,		PIN(4, 2), GPIO_OUT_HIGH)
 GPIO(EN_USB_TCPC_PWR,		PIN(C, 3), GPIO_OUT_LOW)
 GPIO(EN_USB_A_5V,		PIN(4, 1), GPIO_OUT_LOW)
-/*
- * USB_C0_PD_RST_ODL is configured as push-pull to save power when the ANX TCPC
- * is in low power mode. See chrome-os-partner:55165 for details.
- */
-GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_OUT_LOW)		/* USB_C0_PD_RST_ODL */
+
+GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_OUT_LOW)		/* USB_C0_PD_RST_L */
 #if IS_PROTO == 0
 GPIO(USB_C1_PD_RST_ODL,		PIN(7, 4), GPIO_ODR_LOW)
 #endif
