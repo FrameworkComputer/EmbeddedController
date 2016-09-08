@@ -26,8 +26,8 @@
 #define HIBERNATE_WAKE_MTC        (1 << 0)  /* MTC alarm */
 #define HIBERNATE_WAKE_PIN        (1 << 1)  /* Wake pin */
 
-/* equivalent to 250us according to 48MHz core clock */
-#define MTC_TTC_LOAD_DELAY 1500
+/* Delay after writing TTC for value to latch */
+#define MTC_TTC_LOAD_DELAY_US 250
 #define MTC_ALARM_MASK     ((1 << 25) - 1)
 #define MTC_WUI_GROUP      MIWU_GROUP_4
 #define MTC_WUI_MASK       MASK_PIN7
@@ -141,14 +141,14 @@ uint32_t system_get_rtc_sec(void)
 
 void system_set_rtc(uint32_t seconds)
 {
-	volatile uint16_t __i;
-
-	/* Set MTC counter unit:seconds */
+	/*
+	 * Set MTC counter unit:seconds, write twice to ensure values
+	 * latch to NVMem.
+	 */
 	NPCX_TTC = seconds;
-
-	/* Wait till clock is readable */
-	for (__i = 0; __i < MTC_TTC_LOAD_DELAY; ++__i)
-		;
+	udelay(MTC_TTC_LOAD_DELAY_US);
+	NPCX_TTC = seconds;
+	udelay(MTC_TTC_LOAD_DELAY_US);
 }
 
 /* Check reset cause */
