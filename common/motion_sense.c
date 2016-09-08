@@ -1479,56 +1479,6 @@ DECLARE_CONSOLE_COMMAND(accelinfo, command_display_accel_info,
 	" and set calculation frequency.");
 #endif /* CONFIG_CMD_ACCEL_INFO */
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-/* TODO(crosbug.com/p/426659): this code is broken, does not with ST sensors. */
-void accel_int_lid(enum gpio_signal signal)
-{
-	/*
-	 * Print statement is here for testing with console accelint command.
-	 * Remove print statement when interrupt is used for real.
-	 */
-	CPRINTS("Accelerometer wake-up interrupt occurred on lid");
-}
-
-void accel_int_base(enum gpio_signal signal)
-{
-	/*
-	 * Print statement is here for testing with console accelint command.
-	 * Remove print statement when interrupt is used for real.
-	 */
-	CPRINTS("Accelerometer wake-up interrupt occurred on base");
-}
-
-static int command_accelerometer_interrupt(int argc, char **argv)
-{
-	char *e;
-	int id, thresh;
-	struct motion_sensor_t *sensor;
-
-	if (argc != 3)
-		return EC_ERROR_PARAM_COUNT;
-
-	/* First argument is id. */
-	id = strtoi(argv[1], &e, 0);
-	if (*e || id < 0 || id >= motion_sensor_count)
-		return EC_ERROR_PARAM1;
-
-	sensor = &motion_sensors[id];
-
-	/* Second argument is interrupt threshold. */
-	thresh = strtoi(argv[2], &e, 0);
-	if (*e)
-		return EC_ERROR_PARAM2;
-
-	sensor->drv->set_interrupt(sensor, thresh);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(accelint, command_accelerometer_interrupt,
-	"id threshold",
-	"Write interrupt threshold");
-#endif /* CONFIG_ACCEL_INTERRUPTS */
-
 #ifdef CONFIG_ACCEL_FIFO
 static int motion_sense_read_fifo(int argc, char **argv)
 {

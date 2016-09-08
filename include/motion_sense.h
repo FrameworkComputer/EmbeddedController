@@ -149,22 +149,6 @@ extern unsigned int motion_min_interval;
  */
 #define MOTION_SENSE_HOOK_PRIO (HOOK_PRIO_DEFAULT)
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-/**
- * Interrupt function for lid accelerometer.
- *
- * @param signal GPIO signal that caused interrupt
- */
-void accel_int_lid(enum gpio_signal signal);
-
-/**
- * Interrupt function for base accelerometer.
- *
- * @param signal GPIO signal that caused interrupt
- */
-void accel_int_base(enum gpio_signal signal);
-#endif
-
 #ifdef CONFIG_ACCEL_FIFO
 extern struct queue motion_sense_fifo;
 
