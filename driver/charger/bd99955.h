@@ -288,6 +288,16 @@ enum bd99955_charge_port {
 #define BD99955_CMD_OTPREG0		0x7A
 #define BD99955_CMD_OTPREG1		0x7B
 #define BD99955_CMD_SMBREG		0x7C
+/* Normal functionality - power save mode disabled. */
+#define BD99955_PWR_SAVE_OFF		0
+/* BGATE ON w/ PROCHOT# monitored only system voltage. */
+#define BD99955_PWR_SAVE_LOW		0x1
+/* BGATE ON w/ PROCHOT# monitored only system voltage every 1ms. */
+#define BD99955_PWR_SAVE_MED		0x2
+/* BGATE ON w/o PROCHOT# monitoring. */
+#define BD99955_PWR_SAVE_HIGH		0x5
+/* BGATE OFF */
+#define BD99955_PWR_SAVE_MAX		0x6
 #define BD99955_CMD_DEBUG_MODE_SET	0x7F
 
 /* Map PD port number to charge port number */

@@ -380,6 +380,15 @@
 #undef CONFIG_BD99955_PRIMARY_CHARGE_PORT_VCC
 
 /*
+ * BD99955 Power Save Mode
+ *
+ * Which power save mode should the charger enter when VBUS is removed.  Check
+ * driver/bd99955.h for the power save settings.  By default, no power save mode
+ * is enabled.
+ */
+#undef CONFIG_BD99955_POWER_SAVE_MODE
+
+/*
  * If the battery temperature sense pin is connected to charger,
  * get the battery temperature from the charger.
  */
