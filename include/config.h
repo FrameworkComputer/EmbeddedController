@@ -1069,12 +1069,6 @@
  */
 #undef CONFIG_LID_ANGLE_UPDATE
 
-/* Define which index in motion_sensors is in the base. */
-#undef CONFIG_SENSOR_BASE
-
-/* Define which index in motion_sensors is in the lid. */
-#undef CONFIG_SENSOR_LID
-
 /******************************************************************************/
 /* Host to RAM (H2RAM) Memory Mapping */
 
