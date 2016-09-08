@@ -26,6 +26,40 @@
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ## args)
 
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+
+#ifndef CONFIG_LID_ANGLE_INVALID_CHECK
+#error "Check for invalid transition needed"
+#endif
+/*
+ * We are in tablet mode when the lid angle has been calculated
+ * to be large.
+ *
+ * By default, at boot, we are in tablet mode.
+ * Once a lid angle is calculated, we will get out of this fake state and enter
+ * tablet mode only if a high angle has been calculated.
+ *
+ * There might be false positives:
+ * - when the EC enters RO or RW mode.
+ * - when lid is closed while the hinge is perpendicalar to the floor, we will
+ *   stay in tablet mode.
+ *
+ * Tablet mode is defined as the base being behind the lid. We use 2 threshold
+ * to calculate tablet mode:
+ * tablet_mode:
+ *   1 |                  +-----<----+----------
+ *     |                  \/         /\
+ *     |                  |          |
+ *   0 |------------------------>----+
+ *     +------------------+----------+----------+ lid angle
+ *     0                 240        300        360
+ */
+#define TABLET_ZONE_LID_ANGLE FLOAT_TO_FP(300)
+#define LAPTOP_ZONE_LID_ANGLE FLOAT_TO_FP(240)
+
+static int tablet_mode = 1;
+#endif
+
 #ifdef CONFIG_LID_ANGLE_INVALID_CHECK
 /* Previous lid_angle. */
 static fp_t last_lid_angle_fp = FLOAT_TO_FP(-1);
@@ -113,6 +147,9 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 	fp_t lid_to_base, base_to_hinge;
 	fp_t denominator;
 	int reliable = 1;
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+	int new_tablet_mode = tablet_mode;
+#endif
 
 	/*
 	 * The angle between lid and base is:
@@ -192,6 +229,16 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 	 */
 	*lid_angle = FP_TO_INT(last_lid_angle_fp + FLOAT_TO_FP(0.5));
 
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+	if (last_lid_angle_fp > TABLET_ZONE_LID_ANGLE)
+		new_tablet_mode = 1;
+	else if (last_lid_angle_fp < LAPTOP_ZONE_LID_ANGLE)
+		new_tablet_mode = 0;
+	if (tablet_mode != new_tablet_mode) {
+		tablet_mode = new_tablet_mode;
+		hook_notify(HOOK_TABLET_MODE_CHANGE);
+	}
+#endif   /* CONFIG_LID_ANGLE_TABLET_MODE */
 #else    /* CONFIG_LID_ANGLE_INVALID_CHECK */
 	*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
 #endif
@@ -234,8 +281,14 @@ void motion_lid_calc(void)
 #ifdef CONFIG_LID_ANGLE_UPDATE
 	lid_angle_update(motion_lid_get_angle());
 #endif
-
 }
+
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+int motion_lid_in_tablet_mode(void)
+{
+	return tablet_mode;
+}
+#endif
 
 /*****************************************************************************/
 /* Host commands */

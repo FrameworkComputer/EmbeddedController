@@ -46,6 +46,12 @@ int host_cmd_motion_lid(struct host_cmd_handler_args *args);
 
 void motion_lid_calc(void);
 
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+int motion_lid_in_tablet_mode(void);
+#else
+static inline int motion_lid_in_tablet_mode(void) { return 0; }
+#endif
+
 #endif  /* __CROS_EC_MOTION_LID_H */
 
 

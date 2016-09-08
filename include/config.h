@@ -1065,6 +1065,11 @@
  */
 #undef CONFIG_LID_ANGLE_INVALID_CHECK
 
+/*
+ * Use lid angle to detect tablet mode.
+ */
+#undef CONFIG_LID_ANGLE_TABLET_MODE
+
 /* Which sensor is located on the base? */
 #undef CONFIG_LID_ANGLE_SENSOR_BASE
 /* Which sensor is located on the lid? */
