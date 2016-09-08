@@ -1479,7 +1479,7 @@ DECLARE_CONSOLE_COMMAND(accelinfo, command_display_accel_info,
 	" and set calculation frequency.");
 #endif /* CONFIG_CMD_ACCEL_INFO */
 
-#ifdef CONFIG_ACCEL_FIFO
+#ifdef CONFIG_CMD_ACCEL_FIFO
 static int motion_sense_read_fifo(int argc, char **argv)
 {
 	int count, i;
