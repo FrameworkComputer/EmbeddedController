@@ -7,6 +7,7 @@
 #include "console.h"
 #include "device_state.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "rdd.h"
 #include "registers.h"
 #include "system.h"
@@ -16,6 +17,7 @@
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
 static int ec_uart_enabled, enable_usb_wakeup;
+static int usb_is_initialized;
 
 struct uart_config {
 	const char *name;
@@ -145,13 +147,44 @@ void ccd_phy_init(int enable_ccd)
 	usb_select_phy(which_phy);
 
 	/*
+	 * If the usb is going to be initialized on the AP PHY, but the AP is
+	 * off, wait until HOOK_CHIPSET_RESUME to initialize usb.
+	 */
+	if (!enable_ccd && device_get_state(DEVICE_AP) != DEVICE_STATE_ON) {
+		usb_is_initialized = 0;
+		return;
+	}
+
+	/*
 	 * If the board has the non-ccd phy connected to the AP initialize the
 	 * phy no matter what. Otherwise only initialized the phy if ccd is
 	 * enabled.
 	 */
-	if ((properties & BOARD_USB_AP) || enable_ccd)
+	if ((properties & BOARD_USB_AP) || enable_ccd) {
 		usb_init();
+		usb_is_initialized = 1;
+	}
 }
+
+void disable_ap_usb(void)
+{
+	if ((system_get_board_properties() & BOARD_USB_AP) &&
+	    !ccd_is_enabled() && usb_is_initialized) {
+		usb_release();
+		usb_is_initialized = 0;
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_ap_usb, HOOK_PRIO_DEFAULT);
+
+void enable_ap_usb(void)
+{
+	if ((system_get_board_properties() & BOARD_USB_AP) &&
+	    !ccd_is_enabled() && !usb_is_initialized) {
+		usb_is_initialized = 1;
+		usb_init();
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_ap_usb, HOOK_PRIO_DEFAULT);
 
 static int command_ccd(int argc, char **argv)
 {
