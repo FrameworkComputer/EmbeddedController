@@ -32,8 +32,11 @@ GPIO_INT(ALL_SYS_PGOOD,		PIN(5, 0), GPIO_INT_BOTH, power_signal_interrupt)		/* P
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD from BD99955 */
 /* TODO: We might remove external pull-up for POWER_BUTTON_L in EVT */
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* MECH_PWR_BTN_ODL */
-/* FIXME(furquan): GPIO_PULL_UP is not required for LID_OPEN on EVT. */
+#if IS_PROTO == 1
 GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH | GPIO_PULL_UP, lid_interrupt)
+#else
+GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH, lid_interrupt)
+#endif
 GPIO_INT(EC_VOLDN_BTN_ODL,	PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,	PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(TABLET_MODE,		PIN(3, 6), GPIO_INT_BOTH, tablet_mode_interrupt)

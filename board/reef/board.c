@@ -670,6 +670,7 @@ void board_hibernate_late(void)
 		/* Turn off LEDs in hibernate */
 		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
 		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
 
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
