@@ -336,30 +336,13 @@ static void device_state_changed(enum device_type device,
  * If the UART is enabled we cant tell anything about the
  * servo state, so disable servo detection.
  */
-static int servo_state_unknown(enum device_type device, int uart)
+static int servo_state_unknown(void)
 {
-	if (uartn_enabled(UART_AP) && uartn_enabled(UART_EC))
+	if (uartn_enabled(UART_EC)) {
 		device_set_state(DEVICE_SERVO, DEVICE_STATE_UNKNOWN);
-
-	if (uartn_enabled(uart)) {
-		device_state_changed(device, DEVICE_STATE_UNKNOWN);
 		return 1;
 	}
 	return 0;
-}
-
-static void servo_detached(enum device_type device, int uart)
-{
-	if (servo_state_unknown(device, uart) ||
-	    device_get_state(device) == DEVICE_STATE_ON)
-		return;
-	device_state_changed(DEVICE_SERVO_AP, DEVICE_STATE_OFF);
-	device_state_changed(DEVICE_SERVO_EC, DEVICE_STATE_OFF);
-
-	device_set_state(DEVICE_SERVO, DEVICE_STATE_OFF);
-
-	gpio_enable_interrupt(device_states[DEVICE_SERVO_AP].detect_on);
-	gpio_enable_interrupt(device_states[DEVICE_SERVO_EC].detect_on);
 }
 
 static void device_powered_off(enum device_type device, int uart)
@@ -369,26 +352,25 @@ static void device_powered_off(enum device_type device, int uart)
 
 	device_state_changed(device, DEVICE_STATE_OFF);
 
-	/* Disable RX and TX on the UART peripheral */
-	uartn_disable(uart);
+	if (uart) {
+		/* Disable RX and TX on the UART peripheral */
+		uartn_disable(uart);
 
-	/* Disconnect the TX pin from the UART peripheral */
-	uartn_tx_disconnect(uart);
+		/* Disconnect the TX pin from the UART peripheral */
+		uartn_tx_disconnect(uart);
+	}
 
 	gpio_enable_interrupt(device_states[device].detect_on);
 }
 
-static void servo_ap_deferred(void)
+static void servo_deferred(void)
 {
-	servo_detached(DEVICE_SERVO_AP, UART_AP);
-}
-DECLARE_DEFERRED(servo_ap_deferred);
+	if (servo_state_unknown())
+		return;
 
-static void servo_ec_deferred(void)
-{
-	servo_detached(DEVICE_SERVO_EC, UART_EC);
+	device_powered_off(DEVICE_SERVO, 0);
 }
-DECLARE_DEFERRED(servo_ec_deferred);
+DECLARE_DEFERRED(servo_deferred);
 
 static void ap_deferred(void)
 {
@@ -403,17 +385,11 @@ static void ec_deferred(void)
 DECLARE_DEFERRED(ec_deferred);
 
 struct device_config device_states[] = {
-	[DEVICE_SERVO_AP] = {
-		.deferred = &servo_ap_deferred_data,
-		.detect_on = GPIO_SERVO_UART1_ON,
-		.detect_off = GPIO_SERVO_UART1_OFF,
-		.name = "Servo AP"
-	},
-	[DEVICE_SERVO_EC] = {
-		.deferred = &servo_ec_deferred_data,
+	[DEVICE_SERVO] = {
+		.deferred = &servo_deferred_data,
 		.detect_on = GPIO_SERVO_UART2_ON,
 		.detect_off = GPIO_SERVO_UART2_OFF,
-		.name = "Servo EC"
+		.name = "Servo"
 	},
 	[DEVICE_AP] = {
 		.deferred = &ap_deferred_data,
@@ -426,11 +402,6 @@ struct device_config device_states[] = {
 		.detect_on = GPIO_EC_ON,
 		.detect_off = GPIO_EC_OFF,
 		.name = "EC"
-	},
-	[DEVICE_SERVO] = {
-		.detect_on = GPIO_COUNT,
-		.detect_off = GPIO_COUNT,
-		.name = "Servo"
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
@@ -449,14 +420,13 @@ static void device_powered_on(enum device_type device, int uart)
 		uartn_tx_connect(uart);
 }
 
-static void servo_attached(enum device_type device, int uart)
+static void servo_attached(void)
 {
-	if (servo_state_unknown(device, uart))
+	if (servo_state_unknown())
 		return;
 
 	/* Update the device state */
-	device_state_changed(device, DEVICE_STATE_ON);
-	device_set_state(DEVICE_SERVO, DEVICE_STATE_ON);
+	device_state_changed(DEVICE_SERVO, DEVICE_STATE_ON);
 
 	/* Disconnect AP and EC UART when servo is attached */
 	uartn_tx_disconnect(UART_AP);
@@ -472,11 +442,8 @@ void device_state_on(enum gpio_signal signal)
 	case GPIO_EC_ON:
 		device_powered_on(DEVICE_EC, UART_EC);
 		break;
-	case GPIO_SERVO_UART1_ON:
-		servo_attached(DEVICE_SERVO_AP, UART_AP);
-		break;
 	case GPIO_SERVO_UART2_ON:
-		servo_attached(DEVICE_SERVO_EC, UART_EC);
+		servo_attached();
 		break;
 	default:
 		CPRINTS("Device not supported");
@@ -493,11 +460,8 @@ void device_state_off(enum gpio_signal signal)
 	case GPIO_EC_OFF:
 		board_update_device_state(DEVICE_EC);
 		break;
-	case GPIO_SERVO_UART1_OFF:
-		board_update_device_state(DEVICE_SERVO_AP);
-		break;
 	case GPIO_SERVO_UART2_OFF:
-		board_update_device_state(DEVICE_SERVO_EC);
+		board_update_device_state(DEVICE_SERVO);
 		break;
 	default:
 		CPRINTS("Device not supported");
@@ -508,17 +472,12 @@ void board_update_device_state(enum device_type device)
 {
 	int state;
 
-	if (device == DEVICE_SERVO)
-		return;
-
-	if (device == DEVICE_SERVO_EC || device == DEVICE_SERVO_AP) {
+	if (device == DEVICE_SERVO) {
 		/*
-		 * If either AP UART TX or EC UART TX are pulled high when
-		 * cr50 uart is not enabled, then servo is attached
+		 * If EC UART TX is pulled high when EC UART is not enabled,
+		 * then servo is attached.
 		 */
-		state = (!uartn_enabled(UART_AP) &&
-			gpio_get_level(GPIO_SERVO_UART1_ON)) ||
-			(!uartn_enabled(UART_EC) &&
+		state = (!uartn_enabled(UART_EC) &&
 			gpio_get_level(GPIO_SERVO_UART2_ON));
 	} else
 		state = gpio_get_level(device_states[device].detect_on);
