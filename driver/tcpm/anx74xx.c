@@ -144,20 +144,24 @@ static int anx74xx_tcpm_mux_init(int i2c_addr)
 
 static int anx74xx_tcpm_mux_exit(int port)
 {
-	int  rv = EC_SUCCESS;
+	int rv = EC_SUCCESS;
+	int reg = 0x0;
 
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2,
-			 ANX74XX_REG_MODE_TRANS);
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1,
-			 0x0);
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_5,
-			 0x04);
-	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2,
-			 0x0);
+	rv = tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_2, &reg);
 	if (rv)
 		return EC_ERROR_UNKNOWN;
+
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2, reg | ANX74XX_REG_MODE_TRANS);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_1, 0x0);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_5, 0x04);
+	rv |= tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_2, reg & 0x09);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
 	return rv;
+
 }
+
 
 static int anx74xx_set_mux(int port, int polarity)
 {
