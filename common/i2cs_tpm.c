@@ -79,6 +79,9 @@ static const struct i2c_tpm_reg_map i2c_to_tpm[] = {
 	{0xf, 0, 0xf90}, /* TPM_FW_VER */
 };
 
+/* Used to track number of times i2cs hw read fifo was adjusted */
+static uint32_t i2cs_fifo_adjust_count;
+
 static void process_read_access(uint16_t reg_size,
 				uint16_t tpm_reg, uint8_t *data)
 {
@@ -92,6 +95,15 @@ static void process_read_access(uint16_t reg_size,
 	if (reg_size == 1 || reg_size == 4) {
 		/* Always read regsize number of bytes */
 		tpm_register_get(tpm_reg, reg_value, reg_size);
+		/*
+		 * For 1 or 4 byte register reads there should not be any data
+		 * buffered in the i2cs hw read fifo. This function will check
+		 * the current fifo queue depth and if non-zero, will adjust the
+		 * fw pointer to force it to 0.
+		 */
+		if (i2cs_zero_read_fifo_buffer_depth())
+			/* Count each instance that fifo was adjusted */
+			i2cs_fifo_adjust_count++;
 		for (i = 0; i < reg_size; i++)
 			i2cs_post_read_data(reg_value[i]);
 		return;
@@ -103,22 +115,6 @@ static void process_read_access(uint16_t reg_size,
 	 * the tpm status register.
 	 */
 	reg_size = tpm_get_burst_size();
-
-	/*
-	 * For TPM fifo reads, if there is already data pending in the I2CS hw
-	 * fifo, then don't read any more TPM fifo data until the I2CS hw fifo
-	 * has been fully drained.
-	 *
-	 * The Host will only read only enough data to extract the full TPM
-	 * message length. However, Cr50 will fill the I2CS hw fifo with
-	 * 'burstsize' amount of bytes. The 2nd fifo access for a given TPM
-	 * repsonse by the Host will extract the queued up data. Following
-	 * this, the Host will then read 'burstcount' amount of data for
-	 * subsequent fifo accesses until the response has been fully read.
-	 */
-	if (i2cs_get_read_fifo_buffer_depth())
-		/* Data is already in the queue, just return */
-		return;
 
 	/*
 	 * Now, this is a hack, but we are short on SRAM, so let's reuse the
@@ -226,5 +222,24 @@ static void i2cs_if_register(void)
 		return;
 
 	tpm_register_interface(i2cs_tpm_enable);
+	i2cs_fifo_adjust_count = 0;
 }
 DECLARE_HOOK(HOOK_INIT, i2cs_if_register, HOOK_PRIO_LAST);
+
+static int command_i2cs(int argc, char **argv)
+{
+	ccprintf("fifo adjust count = %d\n", i2cs_fifo_adjust_count);
+	if (argc < 2)
+		return EC_SUCCESS;
+
+	if (!strcasecmp(argv[1], "rst")) {
+		i2cs_fifo_adjust_count = 0;
+		ccprintf("fifo adjust count reset to 0\n");
+	} else
+		return EC_ERROR_PARAM1;
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(i2cs, command_i2cs,
+			     "rst",
+			     "Display fifo adjust count");
