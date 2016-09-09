@@ -370,10 +370,13 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 {
 	uint32_t i;
-	uint32_t idata;
 
-	memcpy(&idata, data, 4);
-	CPRINTF("%s(0x%03x, %d %x)\n", __func__, regaddr, data_size, idata);
+	CPRINTF("%s(0x%03x, %d,", __func__, regaddr, data_size);
+	for (i = 0; i < data_size && i < 4; i++)
+		CPRINTF(" %02x", data[i]);
+	if (data_size > 4)
+		CPRINTF(" ...");
+	CPRINTF(")\n");
 
 	switch (regaddr) {
 	case TPM_ACCESS:
