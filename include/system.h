@@ -462,6 +462,14 @@ int system_is_reboot_warm(void);
  */
 int system_process_retry_counter(void);
 
+/**
+ * On systems with protection from a failing RW update: reset retry
+ * counter, this is used after a new image upload is finished, to make
+ * sure that the new image has a chance to run.
+ */
+void system_clear_retry_counter(void);
+
+
 /* Board properties options */
 #define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* Slave SPI interface */
 #define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* Slave I2C interface */
