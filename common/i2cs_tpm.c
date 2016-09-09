@@ -82,7 +82,6 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 	size_t i;
 	uint16_t tpm_reg;
 	uint8_t *data = i2cs_data;
-	uint8_t reg_value[4];
 	const struct i2c_tpm_reg_map *i2c_reg_entry = NULL;
 	uint16_t reg_size;
 
@@ -122,24 +121,16 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 	data++;
 
 	if (!i2cs_data_size) {
+		uint8_t reg_value[4];
+
 		/*
 		 * The master wants to read the register, read the value and
 		 * pass it to the controller.
 		 */
-		if (reg_size == 1) {
-			uint8_t byte_reg;
-
-			/* Always read 4 bytes. */
-			tpm_register_get(tpm_reg, &byte_reg, sizeof(byte_reg));
-			i2cs_post_read_data(byte_reg);
-			return;
-		}
-
-		if (reg_size == 4) {
-			tpm_register_get(tpm_reg, reg_value, sizeof(reg_value));
-
-			/* Write data to I2CS HW fifo */
-			for (i = 0; i < sizeof(reg_value); i++)
+		if (reg_size == 1 || reg_size == 4) {
+			/* Always read regsize number of bytes */
+			tpm_register_get(tpm_reg, reg_value, reg_size);
+			for (i = 0; i < reg_size; i++)
 				i2cs_post_read_data(reg_value[i]);
 			return;
 		}
