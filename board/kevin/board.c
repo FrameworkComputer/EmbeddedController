@@ -238,6 +238,17 @@ int board_set_active_charge_port(int charge_port)
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 {
+	/*
+	 * Ignore lower charge ceiling on PD transition if our battery is
+	 * critical, as we may brownout.
+	 */
+	if (supplier == CHARGE_SUPPLIER_PD &&
+	    charge_ma < 1500 &&
+	    charge_get_percent() < 2) {
+		CPRINTS("Using max ilim %d", max_ma);
+		charge_ma = max_ma;
+	}
+
 	charge_set_input_current_limit(MAX(charge_ma,
 				       CONFIG_CHARGER_INPUT_CURRENT));
 }
