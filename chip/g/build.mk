@@ -56,6 +56,7 @@ chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_USB)+=usb.o usb_endpoints.o
 chip-$(CONFIG_USB_CONSOLE)+=usb_console.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
+chip-$(CONFIG_USB_I2C)+=usb_i2c.o
 chip-$(CONFIG_USB_BLOB)+=blob.o
 chip-$(CONFIG_USB_SPI)+=usb_spi.o
 chip-$(CONFIG_RDD)+=rdd.o

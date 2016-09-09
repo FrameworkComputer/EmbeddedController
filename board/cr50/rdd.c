@@ -15,6 +15,7 @@
 #include "system.h"
 #include "uartn.h"
 #include "usb_api.h"
+#include "usb_i2c.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
@@ -93,45 +94,6 @@ void uartn_tx_disconnect(int uart)
 
 	/* Disconnect the TX pin from UART peripheral */
 	uart_select_tx(uart, 0);
-}
-
-void ina_connect(void)
-{
-	/* Apply power to INA chips */
-	gpio_set_level(GPIO_EN_PP3300_INA_L, 0);
-	/* Allow enough time for power rail to come up */
-	usleep(25);
-
-	/*
-	 * Connect B0/B1 pads to I2C0 input SDA/SCL. Note, that the inputs
-	 * for these pads are already enabled for the gpio signals I2C_SCL_INA
-	 * and I2C_SDA_INA in gpio.inc.
-	 */
-	GWRITE(PINMUX, I2C0_SDA_SEL, GC_PINMUX_DIOB1_SEL);
-	GWRITE(PINMUX, I2C0_SCL_SEL, GC_PINMUX_DIOB0_SEL);
-
-	/* Connect I2CS SDA/SCL output to B1/B0 pads */
-	GWRITE(PINMUX, DIOB1_SEL, GC_PINMUX_I2C0_SDA_SEL);
-	GWRITE(PINMUX, DIOB0_SEL, GC_PINMUX_I2C0_SCL_SEL);
-
-	/*
-	 * Initialize the i2cm module after the INAs are powered and the signal
-	 * lines are connected.
-	 */
-	i2cm_init();
-}
-
-void ina_disconnect(void)
-{
-	/* Disonnect I2C0 SDA/SCL output to B1/B0 pads */
-	GWRITE(PINMUX, DIOB1_SEL, 0);
-	GWRITE(PINMUX, DIOB0_SEL, 0);
-	/* Disconnect B1/B0 pads to I2C0 input SDA/SCL */
-	GWRITE(PINMUX, I2C0_SDA_SEL, 0);
-	GWRITE(PINMUX, I2C0_SCL_SEL, 0);
-
-	/* Disable power to INA chips */
-	gpio_set_level(GPIO_EN_PP3300_INA_L, 1);
 }
 
 void rdd_attached(void)
@@ -238,16 +200,16 @@ static int command_ccd(int argc, char **argv)
 				ec_uart_enabled = 0;
 				uartn_tx_disconnect(UART_EC);
 			}
-		} else if (!strcasecmp("ina", argv[1]) && argc > 2) {
+		} else if (!strcasecmp("i2c", argv[1]) && argc > 2) {
 			if (!parse_bool(argv[2], &val))
 				return EC_ERROR_PARAM2;
 
 			if (val) {
-				ina_connect();
-				ccprintf("CCD: INAs enabled\n");
+				usb_i2c_board_enable();
+				ccprintf("CCD: i2c enabled\n");
 			} else {
-				ina_disconnect();
-				ccprintf("CCD: INAs disabled\n");
+				usb_i2c_board_disable(0);
+				ccprintf("CCD: i2c disabled\n");
 			}
 		} else if (argc == 2) {
 			if (!parse_bool(argv[1], &val))
@@ -268,7 +230,7 @@ static int command_ccd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
-			"[uart|ina] [<BOOLEAN>]",
+			"[uart|i2c] [<BOOLEAN>]",
 			"Get/set the case closed debug state");
 
 static int command_sys_rst(int argc, char **argv)
@@ -362,5 +324,3 @@ static int command_powerbtn(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
 			"[pulse [ms] | press | release]",
 			"get/set the state of the power button");
-
-

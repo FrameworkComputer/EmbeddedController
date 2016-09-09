@@ -18,10 +18,4 @@ void rdd_attached(void);
  * cable is detached.
  */
 int is_utmi_wakeup_allowed(void);
-
-/* Power up INAs and initialize I2C0 interface */
-void ina_connect(void);
-
-/* Disconnect I2C0 interface and powerdown INAs */
-void ina_disconnect(void);
 #endif  /* __CROS_RDD_H */

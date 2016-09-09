@@ -28,6 +28,7 @@
 #include "usb_descriptor.h"
 #include "usb_hid.h"
 #include "usb_spi.h"
+#include "usb_i2c.h"
 #include "util.h"
 
 /* Define interrupt and gpio structs */
@@ -325,6 +326,7 @@ const void * const usb_strings[] = {
 	[USB_STR_UPGRADE_NAME] = USB_STRING_DESC("Firmware upgrade"),
 	[USB_STR_SPI_NAME] = USB_STRING_DESC("AP EC upgrade"),
 	[USB_STR_SERIALNO] = USB_STRING_DESC(DEFAULT_SERIALNO),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #endif
@@ -607,7 +609,7 @@ static void servo_attached(void)
 	uartn_tx_disconnect(UART_EC);
 
 	/* Disconnect i2cm interface to ina */
-	ina_disconnect();
+	usb_i2c_board_disable(0);
 }
 
 void device_state_on(enum gpio_signal signal)

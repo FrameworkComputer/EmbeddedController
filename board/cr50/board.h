@@ -60,8 +60,9 @@
 
 /* USB configuration */
 #define CONFIG_USB
-#define CONFIG_USB_HID
 #define CONFIG_USB_CONSOLE
+#define CONFIG_USB_HID
+#define CONFIG_USB_I2C
 #define CONFIG_USB_INHIBIT_INIT
 #define CONFIG_USB_SELECT_PHY
 #define CONFIG_USB_SPI
@@ -118,6 +119,7 @@ enum usb_strings {
 	USB_STR_UPGRADE_NAME,
 	USB_STR_SPI_NAME,
 	USB_STR_SERIALNO,
+	USB_STR_I2C_NAME,
 
 	USB_STR_COUNT
 };
@@ -161,7 +163,8 @@ int is_ec_rst_asserted(void);
 #define USB_IFACE_EC      3
 #define USB_IFACE_UPGRADE 4
 #define USB_IFACE_SPI     5
-#define USB_IFACE_COUNT   6
+#define USB_IFACE_I2C     6
+#define USB_IFACE_COUNT   7
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
@@ -171,7 +174,8 @@ int is_ec_rst_asserted(void);
 #define USB_EP_EC        4
 #define USB_EP_UPGRADE   5
 #define USB_EP_SPI       6
-#define USB_EP_COUNT     7
+#define USB_EP_I2C       7
+#define USB_EP_COUNT     8
 
 /* UART indexes (use define rather than enum to expand them) */
 #define UART_CR50	0
