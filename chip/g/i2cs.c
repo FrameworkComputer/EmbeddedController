@@ -119,6 +119,9 @@ DECLARE_HOOK(HOOK_INIT, i2cs_init, HOOK_PRIO_DEFAULT);
 /* Process the 'end of a write cycle' interrupt. */
 static void _i2cs_write_complete_int(void)
 {
+	/* Reset the IRQ condition. */
+	GWRITE_FIELD(I2CS, INT_STATE, INTR_WRITE_COMPLETE, 1);
+
 	if (write_complete_handler_) {
 		uint16_t bytes_written;
 		uint16_t bytes_processed;
@@ -164,9 +167,6 @@ static void _i2cs_write_complete_int(void)
 		/* Invoke the callback to process the message. */
 		write_complete_handler_(i2cs_buffer, bytes_processed);
 	}
-
-	/* Reset the IRQ condition. */
-	GWRITE_FIELD(I2CS, INT_STATE, INTR_WRITE_COMPLETE, 1);
 }
 DECLARE_IRQ(GC_IRQNUM_I2CS0_INTR_WRITE_COMPLETE_INT,
 	    _i2cs_write_complete_int, 1);
