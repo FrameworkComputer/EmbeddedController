@@ -128,6 +128,14 @@ void sys_rst_asserted(enum gpio_signal signal);
 void device_state_on(enum gpio_signal signal);
 void device_state_off(enum gpio_signal signal);
 
+/* Special controls over EC and AP */
+void assert_sys_rst(void);
+void deassert_sys_rst(void);
+int is_sys_rst_asserted(void);
+void assert_ec_rst(void);
+void deassert_ec_rst(void);
+int is_ec_rst_asserted(void);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */

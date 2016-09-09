@@ -14,17 +14,18 @@
 #include "hooks.h"
 #include "i2cs.h"
 #include "init_chip.h"
-#include "registers.h"
 #include "nvmem.h"
+#include "registers.h"
+#include "spi.h"
 #include "system.h"
 #include "task.h"
+#include "tpm_registers.h"
 #include "trng.h"
 #include "uartn.h"
 #include "usb_descriptor.h"
 #include "usb_hid.h"
-#include "util.h"
-#include "spi.h"
 #include "usb_spi.h"
+#include "util.h"
 
 /* Define interrupt and gpio structs */
 #include "gpio_list.h"
@@ -288,18 +289,71 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
+/* This is the interrupt handler to react to SYS_RST_L_IN */
 void sys_rst_asserted(enum gpio_signal signal)
 {
 	/*
 	 * Cr50 drives SYS_RST_L in certain scenarios, in those cases
-	 * asserting this signal should not cause a system reset.
+	 * this signal's assertion should be ignored here.
 	 */
-	CPRINTS("%s resceived signal %d)", __func__, signal);
-	if (usb_spi_update_in_progress())
+	CPRINTS("%s", __func__);
+	if (usb_spi_update_in_progress() || is_sys_rst_asserted())
 		return;
 
 	cflush();
 	system_reset(0);
+}
+
+void assert_sys_rst(void)
+{
+	/*
+	 * We don't have a good (any?) way to easily look up the pinmux/gpio
+	 * assignments in gpio.inc, so they're hard-coded in this routine. This
+	 * assertion is just to ensure it hasn't changed.
+	 */
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO4_SEL) == GC_PINMUX_DIOM0_SEL);
+
+	/* Set SYS_RST_L_OUT as an output, connected to the pad */
+	GWRITE(PINMUX, DIOM0_SEL, GC_PINMUX_GPIO0_GPIO4_SEL);
+	gpio_set_flags(GPIO_SYS_RST_L_OUT, GPIO_OUT_HIGH);
+
+	/* Assert it */
+	gpio_set_level(GPIO_SYS_RST_L_OUT, 0);
+}
+
+void deassert_sys_rst(void)
+{
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO4_SEL) == GC_PINMUX_DIOM0_SEL);
+
+	/* Deassert SYS_RST_L */
+	gpio_set_level(GPIO_SYS_RST_L_OUT, 1);
+
+	/* Set SYS_RST_L_OUT as an input, disconnected from the pad */
+	gpio_set_flags(GPIO_SYS_RST_L_OUT, GPIO_INPUT);
+	GWRITE(PINMUX, DIOM0_SEL, 0);
+}
+
+int is_sys_rst_asserted(void)
+{
+	return (GREAD(PINMUX, DIOM0_SEL) == GC_PINMUX_GPIO0_GPIO4_SEL)
+#ifdef CONFIG_CMD_GPIO_EXTENDED
+		&& (gpio_get_flags(GPIO_SYS_RST_L_OUT) & GPIO_OUTPUT)
+#endif
+		&& (gpio_get_level(GPIO_SYS_RST_L_OUT) == 0);
+}
+
+void assert_ec_rst(void)
+{
+	GWRITE(RBOX, ASSERT_EC_RST, 1);
+}
+void deassert_ec_rst(void)
+{
+	GWRITE(RBOX, ASSERT_EC_RST, 0);
+}
+
+int is_ec_rst_asserted(void)
+{
+	return GREAD(RBOX, ASSERT_EC_RST);
 }
 
 void nvmem_compute_sha(uint8_t *p_buf, int num_bytes,
