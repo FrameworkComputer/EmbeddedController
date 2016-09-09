@@ -276,9 +276,6 @@ enum usb_strings {
 /* The lower the input voltage, the higher the power efficiency. */
 #define PD_PREFER_LOW_VOLTAGE
 
-/* Set the charge current limit. */
-void board_set_charge_limit(int port, int supplier, int charge_ma);
-
 /* PP1800 transition GPIO interrupt handler */
 void pp1800_on_off_evt(enum gpio_signal signal);
 

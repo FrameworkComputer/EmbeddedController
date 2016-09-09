@@ -236,7 +236,7 @@ int board_set_active_charge_port(int charge_port)
 	return bd99955_select_input_port(bd99955_port);
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 {
 	charge_set_input_current_limit(MAX(charge_ma,
 				       CONFIG_CHARGER_INPUT_CURRENT));

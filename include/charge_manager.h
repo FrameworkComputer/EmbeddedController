@@ -110,7 +110,14 @@ int charge_manager_get_source_pdo(const uint32_t **src_pdo);
  */
 int board_set_active_charge_port(int charge_port);
 
-/* Set the charge current limit. */
-void board_set_charge_limit(int port, int supplier, int charge_ma);
+/*
+ * Set the charge current limit.
+ *
+ * @param port PD port.
+ * @param supplier Identified CHARGE_SUPPLIER_*.
+ * @param charge_ma Desired charge current limit, <= max_ma.
+ * @param max_ma Maximum charge current limit, >= charge_ma.
+ */
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma);
 
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

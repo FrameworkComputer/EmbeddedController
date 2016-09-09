@@ -53,7 +53,7 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 	       vbus_low_current_ma;
 }
 
-void board_set_charge_limit(int port, int supplier, int limit_ma)
+void board_set_charge_limit(int port, int supplier, int limit_ma, int max_ma)
 {
 	charge_limit_ma = limit_ma;
 	if (charge_limit_ma > overcurrent_current_ma)

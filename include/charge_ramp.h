@@ -89,9 +89,6 @@ void chg_ramp_charge_supplier_change(int port, int supplier, int current,
 #else
 static inline void chg_ramp_charge_supplier_change(
 		int port, int supplier, timestamp_t registration_time) { }
-
-/* Point directly to board function to set charge limit */
-#define chg_ramp_set_min_current board_set_charge_limit
 #endif
 
 #endif /* __CROS_EC_CHARGE_RAMP_H */

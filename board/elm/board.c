@@ -327,7 +327,7 @@ int board_set_active_charge_port(int charge_port)
  * @param supplier      Charge supplier type.
  * @param charge_ma     Desired charge limit (mA).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 {
 	/* Limit input current 95% ratio on elm board for safety */
 	charge_ma = (charge_ma * 95) / 100;

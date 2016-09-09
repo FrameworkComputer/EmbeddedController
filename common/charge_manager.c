@@ -566,7 +566,8 @@ static void charge_manager_refresh(void)
 		charger_set_hw_ramp(board_is_ramp_allowed(new_supplier));
 #endif
 		board_set_charge_limit(new_port, new_supplier,
-					new_charge_current);
+					new_charge_current,
+					new_charge_current_uncapped);
 #endif /* HAS_TASK_CHG_RAMP */
 
 		/* notify host of power info change */
