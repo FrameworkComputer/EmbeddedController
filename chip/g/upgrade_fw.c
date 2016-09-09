@@ -10,7 +10,6 @@
 #include "flash.h"
 #include "hooks.h"
 #include "include/compile_time_macros.h"
-#include "memory.h"
 #include "system.h"
 #include "registers.h"
 #include "uart.h"

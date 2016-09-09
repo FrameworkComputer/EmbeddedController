@@ -213,12 +213,3 @@ void _plat__ClearNvAvail(void)
 	s_NvIsAvailable = FALSE;
 	return;
 }
-
-void wipe_nvram(void)
-{
-#ifdef CONFIG_FLASH_NVMEM
-	nvmem_setup(0);
-#else
-	memset(s_NV, 0xff, sizeof(s_NV));
-#endif
-}
