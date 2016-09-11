@@ -564,7 +564,7 @@ void system_init_board_properties(void)
 			properties |= BOARD_SLAVE_CONFIG_SPI;
 			/* Add an internal pull up on sys_rst_l */
 			/*
-			 * TODO(crosbug.com/p/54059): Remove once SYS_RST_L can
+			 * TODO(crosbug.com/p/56945): Remove once SYS_RST_L can
 			 * be pulled up externally.
 			 */
 			properties |= BOARD_NEEDS_SYS_RST_PULL_UP;
