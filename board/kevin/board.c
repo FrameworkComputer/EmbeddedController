@@ -26,7 +26,6 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
-#include "led_common.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -410,59 +409,6 @@ int board_get_version(void)
 
 	return version;
 }
-
-/*
- * Detect 'old' boards which are incompatible with our new GPIO configuration
- * and warn the user about the incompatibility by spamming the EC console and
- * blinking our red LED.
- *
- * TODO(crosbug.com/p/55561): Remove version checking / warning prints once
- * old boards are obsoleted.
- */
-#ifdef BOARD_KEVIN
-#define BOARD_VERSION_NEW_GPIO_CFG BOARD_VERSION_REV3
-#define BOARD_VERSION_DISCREET_TPM BOARD_VERSION_REV5
-#else
-#define BOARD_VERSION_NEW_GPIO_CFG BOARD_VERSION_REV1
-/* No version of gru has a discreet TPM */
-#define BOARD_VERSION_DISCREET_TPM BOARD_VERSION_COUNT
-#endif
-
-/* CONFIG removed in CL:351151. */
-#ifndef CONFIG_USB_PD_5V_EN_ACTIVE_LOW
-static void board_config_warning(void);
-DECLARE_DEFERRED(board_config_warning);
-
-static void board_config_warning(void)
-{
-	static int led_toggle;
-
-	ccprintf("WARNING: Invalid GPIO config detected.\n"
-		 "PLEASE REVERT CL:351151 in local EC source:\n"
-		 "`git revert d1138722`\n");
-
-	/* Flash red LED as warning */
-	led_auto_control(EC_LED_ID_POWER_LED, 0);
-	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
-	pwm_set_duty(PWM_CH_LED_RED, led_toggle ? 0 : 100);
-	led_toggle  = !led_toggle;
-
-	hook_call_deferred(&board_config_warning_data, SECOND);
-}
-
-static void board_config_check(void)
-{
-	int board_ver = board_get_version();
-
-	/* On Boards without a discreet TPM add a pullup to SYR_RST_L */
-	if (board_ver < BOARD_VERSION_DISCREET_TPM)
-		gpio_set_flags(GPIO_SYS_RST_L, GPIO_ODR_HIGH | GPIO_PULL_UP);
-
-	if (board_ver < BOARD_VERSION_NEW_GPIO_CFG)
-		hook_call_deferred(&board_config_warning_data, 0);
-}
-DECLARE_HOOK(HOOK_INIT, board_config_check, HOOK_PRIO_LAST);
-#endif /* ifndef CONFIG_USB_PD_5V_EN_ACTIVE_LOW */
 
 /* Motion sensors */
 #ifdef HAS_TASK_MOTIONSENSE
