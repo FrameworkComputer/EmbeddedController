@@ -888,12 +888,23 @@ int bd99955_bc12_enable_charging(enum bd99955_charge_port port, int enable)
 
 void usb_charger_set_switches(int port, enum usb_switch setting)
 {
+	int power_save_mode = BD99955_PWR_SAVE_OFF;
+
 	/* If switch is not changing then return */
 	if (setting == usb_switch_state[port])
 		return;
 
 	if (setting != USB_SWITCH_RESTORE)
 		usb_switch_state[port] = setting;
+	/* ensure we disable power saving when we are using DP/DN */
+#ifdef CONFIG_BD99955_POWER_SAVE_MODE
+	power_save_mode = (usb_switch_state[0] == USB_SWITCH_DISCONNECT &&
+			   usb_switch_state[1] == USB_SWITCH_DISCONNECT)
+			   ? CONFIG_BD99955_POWER_SAVE_MODE
+			   : BD99955_PWR_SAVE_OFF;
+#endif
+	ch_raw_write16(BD99955_CMD_SMBREG, power_save_mode,
+		       BD99955_EXTENDED_COMMAND);
 	bd99955_enable_usb_switch(port, usb_switch_state[port]);
 }
 
