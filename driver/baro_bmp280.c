@@ -66,7 +66,7 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-static const int standby_durn[] = {1, 63, 125, 250, 500, 1000, 2000, 4000};
+static const uint16_t standby_durn[] = {1, 63, 125, 250, 500, 1000, 2000, 4000};
 
 static inline int raw_read8(const int port, const int addr, const uint8_t reg,
 					 int *data_ptr)
@@ -249,7 +249,6 @@ static int bmp280_set_standby_durn(const struct motion_sensor_t *s,
 				uint8_t durn)
 {
 	int ret, val;
-	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 
 	ret = raw_read8(s->port, s->addr,
 			BMP280_CONFIG_REG, &val);
@@ -261,7 +260,6 @@ static int bmp280_set_standby_durn(const struct motion_sensor_t *s,
 			   BMP280_CONFIG_REG, val);
 	}
 
-	data->rate = standby_durn[durn] + BMP280_COMPUTE_TIME;
 	return ret;
 }
 
@@ -334,10 +332,6 @@ static int bmp280_read(const struct motion_sensor_t *s, vector_3_t v)
 	int ret, pres;
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 
-	/* Sensor in sleep mode */
-	if (!data->rate)
-		return EC_ERROR_INVAL;
-
 	ret = bmp280_read_uncomp_pressure(s, &pres);
 
 	if (ret)
@@ -349,17 +343,18 @@ static int bmp280_read(const struct motion_sensor_t *s, vector_3_t v)
 	return EC_SUCCESS;
 }
 
-/* Set desired standby duration in ms */
+/*
+ * Set data rate, rate in mHz.
+ * Calculate the delay (in ms) to apply.
+ */
 static int bmp280_set_data_rate(const struct motion_sensor_t *s, int rate,
 							int roundup)
 {
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 	int durn, i, ret;
+	int period = 1000000 / rate;  /* Period in ms */
 
-	if (rate < 0)
-		return EC_ERROR_INVAL;
-
-	if (!rate) {
+	if (rate == 0) {
 		/* Set to sleep mode */
 		data->rate = 0;
 		return bmp280_set_power_mode(s, BMP280_SLEEP_MODE);
@@ -372,26 +367,32 @@ static int bmp280_set_data_rate(const struct motion_sensor_t *s, int rate,
 			return ret;
 	}
 
-	durn = BMP280_STANDBY_CNT-1;
-	for (i = 0; i < BMP280_STANDBY_CNT-1; i++) {
-		if (rate == (standby_durn[i] + BMP280_COMPUTE_TIME) ||
-			rate < (standby_durn[i] + BMP280_COMPUTE_TIME)) {
+	durn = 0;
+	for (i = BMP280_STANDBY_CNT-1;  i > 0; i--) {
+		if (period >= standby_durn[i] + BMP280_COMPUTE_TIME) {
 			durn = i;
 			break;
-		} else if (rate > (standby_durn[i] + BMP280_COMPUTE_TIME) &&
-			rate < (standby_durn[i+1] + BMP280_COMPUTE_TIME)) {
-			durn = roundup ? i+1 : i;
+		} else if (period > standby_durn[i-1] + BMP280_COMPUTE_TIME) {
+			durn = roundup ? i-1 : i;
 			break;
 		}
 	}
-	return bmp280_set_standby_durn(s, durn);
+	ret = bmp280_set_standby_durn(s, durn);
+	if (ret == EC_SUCCESS)
+		/*
+		 * The maximum frequency is around 76Hz. Be sure it fits in 16
+		 * bits by shifting by one bit.
+		 */
+		data->rate = (1000000 >> BMP280_RATE_SHIFT) /
+			     (standby_durn[durn] + BMP280_COMPUTE_TIME);
+	return ret;
 }
 
 static int bmp280_get_data_rate(const struct motion_sensor_t *s)
 {
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 
-	return data->rate;
+	return data->rate << BMP280_RATE_SHIFT;
 }
 
 struct bmp280_drv_data_t bmp280_drv_data;

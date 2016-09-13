@@ -144,9 +144,9 @@
  */
 #define BMP280_COMPUTE_TIME \
 	((T_INIT_MAX + T_MEASURE_PER_OSRS_MAX * \
-	(((1 << BMP280_OVERSAMP_TEMP) >> 1) + \
-	((1 << BMP280_OVERSAMP_PRES) >> 1)) + \
-	(BMP280_OVERSAMP_PRES ? T_SETUP_PRESSURE_MAX : 0) + 15) / 16)
+	  (((1 << BMP280_OVERSAMP_TEMP) >> 1) + \
+	   ((1 << BMP280_OVERSAMP_PRES) >> 1)) + \
+	  (BMP280_OVERSAMP_PRES ? T_SETUP_PRESSURE_MAX : 0) + 15) / 16)
 
 /*
  * These values are selected as per Bosch recommendation for
@@ -192,7 +192,8 @@ struct bmp280_calib_param_t {
 /*
  * struct bmp280_t - This structure holds BMP280 initialization parameters
  * @calib_param:          calibration data
- * @rate:		  rate set
+ * @rate:     frequency, in mHz.
+ * @range:		bit offset to fit data in 16 bit or less.
  */
 struct bmp280_drv_data_t {
 
@@ -200,6 +201,7 @@ struct bmp280_drv_data_t {
 	uint16_t rate;
 	uint16_t range;
 };
+#define BMP280_RATE_SHIFT 1
 
 extern const struct accelgyro_drv bmp280_drv;
 extern struct bmp280_drv_data_t bmp280_drv_data;
