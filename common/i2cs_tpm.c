@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2cs.h"
 #include "registers.h"
@@ -77,6 +78,84 @@ static const struct i2c_tpm_reg_map i2c_to_tpm[] = {
 	{0xf, 0, 0xf90}, /* TPM_FW_VER */
 };
 
+static void process_read_access(uint16_t reg_size,
+				uint16_t tpm_reg, uint8_t *data)
+{
+	int i;
+	uint8_t reg_value[4];
+
+	/*
+	 * The master wants to read the register, read the value and pass it
+	 * to the controller.
+	 */
+	if (reg_size == 1 || reg_size == 4) {
+		/* Always read regsize number of bytes */
+		tpm_register_get(tpm_reg, reg_value, reg_size);
+		for (i = 0; i < reg_size; i++)
+			i2cs_post_read_data(reg_value[i]);
+		return;
+	}
+
+	/*
+	 * FIFO accesses do not require endianness conversion, but to find out
+	 * how many bytes to read we need to consult the burst size field of
+	 * the tpm status register.
+	 */
+	reg_size = tpm_get_burst_size();
+
+	/*
+	 * For TPM fifo reads, if there is already data pending in the I2CS hw
+	 * fifo, then don't read any more TPM fifo data until the I2CS hw fifo
+	 * has been fully drained.
+	 *
+	 * The Host will only read only enough data to extract the full TPM
+	 * message length. However, Cr50 will fill the I2CS hw fifo with
+	 * 'burstsize' amount of bytes. The 2nd fifo access for a given TPM
+	 * repsonse by the Host will extract the queued up data. Following
+	 * this, the Host will then read 'burstcount' amount of data for
+	 * subsequent fifo accesses until the response has been fully read.
+	 */
+	if (i2cs_get_read_fifo_buffer_depth())
+		/* Data is already in the queue, just return */
+		return;
+
+	/*
+	 * Now, this is a hack, but we are short on SRAM, so let's reuse the
+	 * receive buffer for the FIFO data sotrage. We know that the ISR has
+	 * a 64 byte buffer were it moves received data.
+	 */
+	/* Back pointer up by one to point to beginning of buffer */
+	data -= 1;
+	tpm_register_get(tpm_reg, data, reg_size);
+	/* Transfer TPM fifo data to the I2CS HW fifo */
+	i2cs_post_read_fill_fifo(data, reg_size);
+}
+
+static void process_write_access(uint16_t reg_size, uint16_t tpm_reg,
+				 uint8_t *data, size_t i2cs_data_size)
+{
+	/* This is an actual write request. */
+
+	/*
+	 * If reg_size is 0, then this is a fifo register write. Send the stream
+	 * down directly
+	 */
+	if (reg_size == 0) {
+		tpm_register_put(tpm_reg, data, i2cs_data_size);
+		return;
+	}
+
+	if (i2cs_data_size != reg_size) {
+		CPRINTF("%s: data size mismatch for reg 0x%x "
+			"(rx %d, need %d)\n", __func__, tpm_reg,
+			i2cs_data_size, reg_size);
+		return;
+	}
+
+	/* Write the data to the appropriate TPM register */
+	tpm_register_put(tpm_reg, data, reg_size);
+}
+
 static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 {
 	size_t i;
@@ -120,79 +199,19 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 	i2cs_data_size--;
 	data++;
 
-	if (!i2cs_data_size) {
-		uint8_t reg_value[4];
-
-		/*
-		 * The master wants to read the register, read the value and
-		 * pass it to the controller.
-		 */
-		if (reg_size == 1 || reg_size == 4) {
-			/* Always read regsize number of bytes */
-			tpm_register_get(tpm_reg, reg_value, reg_size);
-			for (i = 0; i < reg_size; i++)
-				i2cs_post_read_data(reg_value[i]);
-			return;
-		}
-
-		/*
-		 * FIFO accesses do not require endianness conversion, but to
-		 * find out how many bytes to read we need to consult the
-		 * burst size field of the tpm status register.
-		 */
-		reg_size = tpm_get_burst_size();
-
-		/* For TPM fifo reads, if there is already data pending in the
-		 * I2CS hw fifo, then don't read any more TPM fifo data until
-		 * the I2CS hw fifo has been fully drained.
-		 *
-		 * The Host will only read only enough data to extract the full
-		 * TPM message length. However, Cr50 will fill the I2CS hw fifo
-		 * with 'burstsize' amount of bytes. The 2nd fifo access for a
-		 * given TPM repsonse by the Host will extract the queued up
-		 * data. Following this, the Host will then read 'burstcount'
-		 * amount of data for subsequent fifo accesses until the
-		 * response has been fully read.
-		 *
-		 */
-		if (i2cs_get_read_fifo_buffer_depth())
-			/* Data is already in the queue, just return */
-			return;
-
-		/*
-		 * Now, this is a hack, but we are short on SRAM, so let's
-		 * reuse the receive buffer for the FIFO data sotrage. We know
-		 * that the ISR has a 64 byte buffer were it moves received
-		 * data.
-		 */
-		/* Back pointer up by one to point to beginning of buffer */
-		data -= 1;
-		tpm_register_get(tpm_reg, data, reg_size);
-		/* Transfer TPM fifo data to the I2CS HW fifo */
-		i2cs_post_read_fill_fifo(data, reg_size);
-		return;
-	}
-
-	/* This is an actual write request. */
+	if (!i2cs_data_size)
+		process_read_access(reg_size, tpm_reg, data);
+	else
+		process_write_access(reg_size, tpm_reg,
+				     data, i2cs_data_size);
 
 	/*
-	 * If reg_size is 0, then this is a fifo register write. Send the stream
-	 * down directly
+	 * Since cr50 does not provide i2c clock stretching, we need some
+	 * onther means of flow controlling the host. Let's generate a pulse
+	 * on the AP interrupt line for that.
 	 */
-	if (reg_size == 0) {
-		tpm_register_put(tpm_reg, data, i2cs_data_size);
-		return;
-	}
-
-	if (i2cs_data_size != reg_size) {
-		CPRINTF("%s: data size mismatch for reg 0x%x "
-			"(rx %d, need %d)\n", __func__, tpm_reg,
-			i2cs_data_size, reg_size);
-		return;
-	}
-
-	/* Write the data to the appropriate TPM register */
-	tpm_register_put(tpm_reg, data, reg_size);
+	gpio_set_level(GPIO_INT_AP_L, 0);
+	gpio_set_level(GPIO_INT_AP_L, 1);
 }
 
 static void i2cs_tpm_init(void)

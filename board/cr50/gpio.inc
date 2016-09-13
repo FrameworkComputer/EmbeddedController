@@ -23,7 +23,7 @@ GPIO_INT(SERVO_UART2_OFF, PIN(1, 6),  GPIO_INT_FALLING | GPIO_PULL_DOWN,
 	 device_state_off)
 
 /* Pull this low to interrupt the AP */
-GPIO(INT_AP_L,        PIN(0, 0), GPIO_INPUT)
+GPIO(INT_AP_L,        PIN(0, 0), GPIO_OUT_HIGH)
 
 /* Use these to take over the AP & EC flash (only when AP & EC are off!) */
 GPIO(EC_FLASH_SELECT, PIN(0, 1), GPIO_OUT_LOW)
