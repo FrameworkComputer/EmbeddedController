@@ -183,7 +183,7 @@ static inline int motion_sensor_time_to_read(const timestamp_t *ts,
 	if (rate_mhz == 0)
 		return 0;
 	/*
-	 * converting from kHz to us.
+	 * converting from mHz to us.
 	 * If within 95% of the time, check sensor.
 	 */
 	return time_after(ts->le.lo,
@@ -241,8 +241,12 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
 	mutex_lock(&g_sensor_mutex);
 	if (ap_odr_mhz)
-		sensor->oversampling_ratio =
-			sensor->drv->get_data_rate(sensor) / ap_odr_mhz;
+		/*
+		 * In case the AP want to run the sensors faster than it can,
+		 * be sure we don't see the ratio to 0.
+		 */
+		sensor->oversampling_ratio = MIN(1,
+			sensor->drv->get_data_rate(sensor) / ap_odr_mhz);
 	else
 		sensor->oversampling_ratio = 0;
 
@@ -266,6 +270,10 @@ static int motion_sense_set_ec_rate_from_ap(
 		return 0;
 #ifdef CONFIG_ACCEL_FORCE_MODE_MASK
 	if (CONFIG_ACCEL_FORCE_MODE_MASK & (1 << (sensor - motion_sensors)))
+		/*
+		 * AP EC sampling rate does not matter: we will collect at the
+		 * requested sensor frequency.
+		 */
 		goto end_set_ec_rate_from_ap;
 #endif
 	if (odr_mhz == 0)
