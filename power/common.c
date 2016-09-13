@@ -652,8 +652,11 @@ static int host_command_hibernation_delay(struct host_cmd_handler_args *args)
 	const struct ec_params_hibernation_delay *p = args->params;
 	struct ec_response_hibernation_delay *r = args->response;
 
-	uint32_t time_g3 = (uint32_t)((get_time().val - last_shutdown_time)
-				      / SECOND);
+	uint32_t time_g3;
+	uint64_t t = get_time().val - last_shutdown_time;
+
+	uint64divmod(&t, SECOND);
+	time_g3 = (uint32_t)t;
 
 	/* Only change the hibernation delay if seconds is non-zero. */
 	if (p->seconds)
