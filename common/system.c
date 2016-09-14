@@ -407,8 +407,10 @@ int system_get_image_used(enum system_image_copy_t copy)
 	} while (*image != 0xea);
 #else
 	image = (const uint8_t *)(image_offset + CONFIG_MAPPED_STORAGE_BASE);
+	flash_lock_mapped_storage(1);
 	for (size--; size > 0 && image[size] != 0xea; size--)
 		;
+	flash_lock_mapped_storage(0);
 #endif
 
 	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
@@ -613,12 +615,9 @@ int system_run_image_copy(enum system_image_copy_t copy)
 __attribute__((weak))	   /* Weird chips may need their own implementations */
 const char *system_get_version(enum system_image_copy_t copy)
 {
-#ifndef CONFIG_MAPPED_STORAGE
-	static struct version_struct vdata;
-#endif
+	static struct version_struct v;
 
 	uintptr_t addr;
-	const struct version_struct *v;
 	enum system_image_copy_t active_copy = system_get_image_copy();
 
 	/* Handle version of current image */
@@ -645,21 +644,20 @@ const char *system_get_version(enum system_image_copy_t copy)
 
 #ifdef CONFIG_MAPPED_STORAGE
 	addr += CONFIG_MAPPED_STORAGE_BASE;
-	v = (const struct version_struct *)addr;
+	flash_lock_mapped_storage(1);
+	memcpy(&v, (const void *)addr, sizeof(v));
+	flash_lock_mapped_storage(0);
 #else
-
 	/* Read the version struct from flash into a buffer. */
-	if (flash_read(addr, sizeof(vdata), (char *)&vdata))
+	if (flash_read(addr, sizeof(v), (char *)&v))
 		return "";
-
-	v = &vdata;
 #endif
 
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
-	if (v->cookie1 == version_data.cookie1 &&
-	    v->cookie2 == version_data.cookie2)
-		return v->version;
+	if (v.cookie1 == version_data.cookie1 &&
+	    v.cookie2 == version_data.cookie2)
+		return v.version;
 
 	return "";
 }

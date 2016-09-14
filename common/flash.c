@@ -370,9 +370,14 @@ int flash_is_erased(uint32_t offset, int size)
 			  (const char **)&ptr) < 0)
 		return 0;
 
+	flash_lock_mapped_storage(1);
 	for (size /= sizeof(uint32_t); size > 0; size--, ptr++)
-		if (*ptr != CONFIG_FLASH_ERASED_VALUE32)
+		if (*ptr != CONFIG_FLASH_ERASED_VALUE32) {
+			flash_lock_mapped_storage(0);
 			return 0;
+	}
+
+	flash_lock_mapped_storage(0);
 #else
 	/* Read flash a chunk at a time */
 	uint32_t buf[8];
@@ -406,7 +411,9 @@ int flash_read(int offset, int size, char *data)
 	if (flash_dataptr(offset, size, 1, &src) < 0)
 		return EC_ERROR_INVAL;
 
+	flash_lock_mapped_storage(1);
 	memcpy(data, src, size);
+	flash_lock_mapped_storage(0);
 	return EC_SUCCESS;
 #else
 	return flash_physical_read(offset, size, data);

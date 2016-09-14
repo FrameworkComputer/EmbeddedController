@@ -261,4 +261,14 @@ const char *flash_read_serial(void);
  */
 int flash_write_serial(const char *serialno);
 
+/**
+ * Lock or unlock HW necessary for mapped storage read.
+ *
+ * @param lock          1 to lock, 0 to unlock.
+ */
+#ifdef CONFIG_EXTERNAL_STORAGE
+void flash_lock_mapped_storage(int lock);
+#else
+static inline void flash_lock_mapped_storage(int lock) { };
+#endif /* CONFIG_EXTERNAL_STORAGE */
 #endif  /* __CROS_EC_FLASH_H */

@@ -777,6 +777,13 @@ int flash_pre_init(void)
 		return EC_SUCCESS;
 }
 
+void flash_lock_mapped_storage(int lock)
+{
+	/*
+	 * TODO(crosbug.com/p/55781): Add mutex to ensure no conflict between
+	 * mapped read and regular flash ops.
+	 */
+}
 /*****************************************************************************/
 /* Console commands */
 
