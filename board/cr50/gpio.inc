@@ -13,14 +13,10 @@
  * so we attach two internal GPIOs to the same pad.
  */
 GPIO_INT(SYS_RST_L_IN,    PIN(1, 0),  GPIO_INT_FALLING, sys_rst_asserted)
-GPIO_INT(AP_ON,           PIN(1, 1),  GPIO_INT_RISING, device_state_on)
-GPIO_INT(EC_ON,           PIN(1, 2),  GPIO_INT_RISING, device_state_on)
-GPIO_INT(SERVO_UART2_ON,  PIN(1, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
+GPIO_INT(DETECT_AP,       PIN(1, 1),  GPIO_INT_RISING, device_state_on)
+GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_RISING, device_state_on)
+GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_RISING | GPIO_PULL_DOWN,
 	 device_state_on)
-GPIO_INT(AP_OFF,          PIN(1, 4),  GPIO_INT_FALLING,  device_state_off)
-GPIO_INT(EC_OFF,          PIN(1, 5),  GPIO_INT_FALLING,  device_state_off)
-GPIO_INT(SERVO_UART2_OFF, PIN(1, 6),  GPIO_INT_FALLING | GPIO_PULL_DOWN,
-	 device_state_off)
 
 /* Pull this low to interrupt the AP */
 GPIO(INT_AP_L,        PIN(0, 0), GPIO_OUT_HIGH)
@@ -97,12 +93,9 @@ PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)	/* EC console */
  * driving the cr50 uart TX at the same time as servo is driving those pins may
  * damage both servo and cr50.
  */
-PINMUX(GPIO(AP_ON),           A3, DIO_INPUT)
-PINMUX(GPIO(AP_OFF),          A3, DIO_INPUT)
-PINMUX(GPIO(EC_ON),           B6, DIO_INPUT)
-PINMUX(GPIO(EC_OFF),          B6, DIO_INPUT)
-PINMUX(GPIO(SERVO_UART2_ON),  B5, DIO_INPUT)
-PINMUX(GPIO(SERVO_UART2_OFF), B5, DIO_INPUT)
+PINMUX(GPIO(DETECT_AP),       A3, DIO_INPUT)
+PINMUX(GPIO(DETECT_EC),       B6, DIO_INPUT)
+PINMUX(GPIO(DETECT_SERVO),    B5, DIO_INPUT)
 
 /*
  * I2CS pins are bi-directional and would be configured here as shown. However,

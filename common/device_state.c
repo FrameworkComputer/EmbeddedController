@@ -37,8 +37,7 @@ DECLARE_HOOK(HOOK_SECOND, check_device_state, HOOK_PRIO_DEFAULT);
 static int device_has_interrupts(enum device_type device)
 {
 	return (device_states[device].deferred &&
-		device_states[device].detect_on != GPIO_COUNT &&
-		device_states[device].detect_off != GPIO_COUNT);
+		device_states[device].detect != GPIO_COUNT);
 }
 
 static void disable_interrupts(enum device_type device)
@@ -50,8 +49,7 @@ static void disable_interrupts(enum device_type device)
 	hook_call_deferred(device_states[device].deferred, -1);
 
 	/* Disable gpio interrupts */
-	gpio_disable_interrupt(device_states[device].detect_on);
-	gpio_disable_interrupt(device_states[device].detect_off);
+	gpio_disable_interrupt(device_states[device].detect);
 }
 
 static void enable_interrupts(enum device_type device)
@@ -60,8 +58,7 @@ static void enable_interrupts(enum device_type device)
 		return;
 
 	/* Enable gpio interrupts */
-	gpio_enable_interrupt(device_states[device].detect_on);
-	gpio_enable_interrupt(device_states[device].detect_off);
+	gpio_enable_interrupt(device_states[device].detect);
 }
 
 void device_detect_state_enable(int enable)
