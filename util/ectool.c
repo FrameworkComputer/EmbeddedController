@@ -100,6 +100,8 @@ const char help_str[] =
 	"      Erases EC flash\n"
 	"  flashinfo\n"
 	"      Prints information on the EC flash\n"
+	"  flashspiinfo\n"
+	"      Prints information on EC SPI flash, if present\n"
 	"  flashpd <dev_id> <port> <filename>\n"
 	"      Flash commands over PD\n"
 	"  flashprotect [now] [enable | disable]\n"
@@ -747,6 +749,33 @@ int cmd_flash_info(int argc, char *argv[])
 		       r.write_ideal_size, r.flags);
 	}
 
+	return 0;
+}
+
+int cmd_flash_spi_info(int argc, char *argv[])
+{
+	struct ec_response_flash_spi_info r;
+	int rv;
+
+	memset(&r, 0, sizeof(r));
+
+	/* Print SPI flash info if available */
+	if (!ec_cmd_version_supported(EC_CMD_FLASH_SPI_INFO, 0)) {
+		printf("EC has no info (does not use SPI flash?)\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_FLASH_SPI_INFO, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("JEDECManufacturerID 0x%02x\n", r.jedec[0]);
+	printf("JEDECDeviceID 0x%02x 0x%02x\n", r.jedec[1], r.jedec[2]);
+	printf("JEDECCapacity %d\n", 1 << r.jedec[2]);
+	printf("ManufacturerID 0x%02x\n", r.mfr_dev_id[0]);
+	printf("DeviceID 0x%02x\n", r.mfr_dev_id[1]);
+	printf("StatusRegister1 0x%02x\n", r.sr1);
+	printf("StatusRegister2 0x%02x\n", r.sr2);
 	return 0;
 }
 
@@ -6800,6 +6829,7 @@ const struct command commands[] = {
 	{"flashread", cmd_flash_read},
 	{"flashwrite", cmd_flash_write},
 	{"flashinfo", cmd_flash_info},
+	{"flashspiinfo", cmd_flash_spi_info},
 	{"flashpd", cmd_flash_pd},
 	{"forcelidopen", cmd_force_lid_open},
 	{"gpioget", cmd_gpio_get},

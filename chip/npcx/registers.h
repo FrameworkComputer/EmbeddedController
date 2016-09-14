@@ -1492,6 +1492,7 @@ enum {
  *  Flash commands for the W25Q16CV SPI flash
  */
 #define CMD_READ_ID                      0x9F
+#define CMD_READ_MAN_DEV_ID              0x90
 #define CMD_WRITE_EN                     0x06
 #define CMD_WRITE_STATUS                 0x50
 #define CMD_READ_STATUS_REG              0x05

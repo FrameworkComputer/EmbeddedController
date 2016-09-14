@@ -123,18 +123,28 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 	const uint8_t const *data);
 
 /**
- * Returns the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
+ * Gets the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
  *
- * @return flash JEDEC ID
+ * @param dest		Destination buffer; must be 3 bytes long
+ * @return EC_SUCCESS or non-zero on error
  */
-uint32_t spi_flash_get_jedec_id(void);
+int spi_flash_get_jedec_id(uint8_t *dest);
 
 /**
- * Returns the SPI flash unique ID (serial)
+ * Gets the SPI flash manufacturer and device ID
  *
- * @return flash unique ID
+ * @param dest		Destination buffer; must be 2 bytes long
+ * @return EC_SUCCESS or non-zero on error
  */
-uint64_t spi_flash_get_unique_id(void);
+int spi_flash_get_mfr_dev_id(uint8_t *dest);
+
+/**
+ * Gets the SPI flash unique ID (serial)
+ *
+ * @param dest		Destination buffer; must be 8 bytes long
+ * @return EC_SUCCESS or non-zero on error
+ */
+int spi_flash_get_unique_id(uint8_t *dest);
 
 /**
  * Check for SPI flash status register write protection.

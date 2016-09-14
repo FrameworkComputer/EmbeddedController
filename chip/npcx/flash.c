@@ -6,6 +6,7 @@
 /* Flash memory module for Chrome EC */
 
 #include "flash.h"
+#include "host_command.h"
 #include "registers.h"
 #include "switch.h"
 #include "system.h"
@@ -159,6 +160,39 @@ uint8_t flash_get_status2(void)
 	TRISTATE_FLASH(1);
 	return NPCX_UMA_DB0;
 }
+
+#ifdef CONFIG_HOSTCMD_FLASH_SPI_INFO
+
+void flash_get_mfr_dev_id(uint8_t *dest)
+{
+	/* Disable tri-state */
+	TRISTATE_FLASH(0);
+	/* Read manufacturer and device ID.  Send cmd=0x90 + 24-bit address=0 */
+	flash_set_address(0);
+	flash_execute_cmd(CMD_READ_MAN_DEV_ID,
+			  MASK_CMD_RD_2BYTE | MASK(A_SIZE));
+	/* Enable tri-state */
+	TRISTATE_FLASH(1);
+
+	dest[0] = NPCX_UMA_DB0;
+	dest[1] = NPCX_UMA_DB1;
+}
+
+void flash_get_jedec_id(uint8_t *dest)
+{
+	/* Disable tri-state */
+	TRISTATE_FLASH(0);
+	/* Read manufacturer and device ID */
+	flash_execute_cmd(CMD_READ_ID, MASK_CMD_RD_3BYTE);
+	/* Enable tri-state */
+	TRISTATE_FLASH(1);
+
+	dest[0] = NPCX_UMA_DB0;
+	dest[1] = NPCX_UMA_DB1;
+	dest[2] = NPCX_UMA_DB2;
+}
+
+#endif /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
 
 /*****************************************************************************/
 /* flash protection functions */
@@ -740,6 +774,31 @@ void flash_lock_mapped_storage(int lock)
 	else
 		mutex_unlock(&flash_lock);
 }
+
+/*****************************************************************************/
+/* Host commands */
+
+#if defined(CONFIG_HOSTCMD_FLASH_SPI_INFO) && !defined(BOARD_NPCX_EVB)
+/* NPCX EVB uses implementation from spi_flash.c */
+
+static int flash_command_spi_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_flash_spi_info *r = args->response;
+
+	flash_get_jedec_id(r->jedec);
+	r->reserved0 = 0;
+	flash_get_mfr_dev_id(r->mfr_dev_id);
+	r->sr1 = flash_get_status1();
+	r->sr2 = flash_get_status2();
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO,
+		     flash_command_spi_info,
+		     EC_VER_MASK(0));
+
+#endif
 
 /*****************************************************************************/
 /* Console commands */

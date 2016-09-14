@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "host_command.h"
 #include "shared_mem.h"
 #include "spi.h"
 #include "spi_flash.h"
@@ -311,37 +312,42 @@ int spi_flash_write(unsigned int offset, unsigned int bytes,
 }
 
 /**
- * Returns the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
+ * Gets the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
  *
- * @return flash JEDEC ID or -1 on error
+ * @param dest		Destination buffer; must be 3 bytes long
+ * @return EC_SUCCESS or non-zero on error
  */
-uint32_t spi_flash_get_jedec_id(void)
+int spi_flash_get_jedec_id(uint8_t *dest)
 {
 	uint8_t cmd = SPI_FLASH_JEDEC_ID;
-	uint32_t resp;
 
-	if (spi_transaction(SPI_FLASH_DEVICE,
-			    &cmd, 1, (uint8_t *)&resp, 4) != EC_SUCCESS)
-		return -1;
-
-	return resp;
+	return spi_transaction(SPI_FLASH_DEVICE, &cmd, 1, dest, 3);
 }
 
 /**
- * Returns the SPI flash unique ID (serial)
+ * Gets the SPI flash manufacturer and device ID
  *
- * @return flash unique ID or -1 on error
+ * @param dest		Destination buffer; must be 2 bytes long
+ * @return EC_SUCCESS or non-zero on error
  */
-uint64_t spi_flash_get_unique_id(void)
+int spi_flash_get_mfr_dev_id(uint8_t *dest)
+{
+	uint8_t cmd[4] = {SPI_FLASH_MFR_DEV_ID, 0, 0, 0};
+
+	return spi_transaction(SPI_FLASH_DEVICE, cmd, sizeof(cmd), dest, 2);
+}
+
+/**
+ * Gets the SPI flash unique ID (serial)
+ *
+ * @param dest		Destination buffer; must be 8 bytes long
+ * @return EC_SUCCESS or non-zero on error
+ */
+int spi_flash_get_unique_id(uint8_t *dest)
 {
 	uint8_t cmd[5] = {SPI_FLASH_UNIQUE_ID, 0, 0, 0, 0};
-	uint64_t resp;
 
-	if (spi_transaction(SPI_FLASH_DEVICE,
-			    cmd, 5, (uint8_t *)&resp, 8) != EC_SUCCESS)
-		return -1;
-
-	return resp;
+	return spi_transaction(SPI_FLASH_DEVICE, cmd, sizeof(cmd), dest, 8);
 }
 
 /**
@@ -461,8 +467,8 @@ int spi_flash_set_protect(unsigned int offset, unsigned int bytes)
 
 static int command_spi_flashinfo(int argc, char **argv)
 {
-	uint32_t jedec;
-	uint64_t unique;
+	uint8_t jedec[3];
+	uint8_t unique[8];
 	int rv;
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
@@ -472,25 +478,40 @@ static int command_spi_flashinfo(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	jedec = spi_flash_get_jedec_id();
-	unique = spi_flash_get_unique_id();
+	spi_flash_get_jedec_id(jedec);
+	spi_flash_get_unique_id(unique);
 
 	ccprintf("Manufacturer ID: %02x\nDevice ID: %02x %02x\n",
-		((uint8_t *)&jedec)[0], ((uint8_t *)&jedec)[1],
-		((uint8_t *)&jedec)[2]);
+		 jedec[0], jedec[1], jedec[2]);
 	ccprintf("Unique ID: %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		((uint8_t *)&unique)[0], ((uint8_t *)&unique)[1],
-		((uint8_t *)&unique)[2], ((uint8_t *)&unique)[3],
-		((uint8_t *)&unique)[4], ((uint8_t *)&unique)[5],
-		((uint8_t *)&unique)[6], ((uint8_t *)&unique)[7]);
-	ccprintf("Capacity: %4d kB\n",
-		SPI_FLASH_SIZE(((uint8_t *)&jedec)[2]) / 1024);
+		 unique[0], unique[1], unique[2], unique[3],
+		 unique[4], unique[5], unique[6], unique[7]);
+	ccprintf("Capacity: %4d kB\n", SPI_FLASH_SIZE(jedec[2]) / 1024);
 
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(spi_flashinfo, command_spi_flashinfo,
 	NULL,
 	"Print SPI flash info");
+
+#ifdef CONFIG_HOSTCMD_FLASH_SPI_INFO
+static int flash_command_spi_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_flash_spi_info *r = args->response;
+
+	spi_flash_get_jedec_id(r->jedec);
+	r->reserved0 = 0;
+	spi_flash_get_mfr_dev_id(r->mfr_dev_id);
+	r->sr1 = spi_flash_get_status1();
+	r->sr2 = spi_flash_get_status2();
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO,
+		     flash_command_spi_info,
+		     EC_VER_MASK(0));
+#endif  /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
 
 #ifdef CONFIG_CMD_SPI_FLASH
 static int command_spi_flasherase(int argc, char **argv)

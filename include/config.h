@@ -1136,6 +1136,13 @@
 #endif
 
 /*
+ * Board supports host command to get EC SPI flash info.  This is typically
+ * only needed if the factory needs to determine which of several possible SPI
+ * flash chips is attached to the EC on a given board.
+ */
+#undef CONFIG_HOSTCMD_FLASH_SPI_INFO
+
+/*
  * For ECs where the host command interface is I2C, slave
  * address which the EC will respond to.
  */
