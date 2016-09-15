@@ -19,6 +19,7 @@
 #include "util.h"
 #include "usb_dwc_hw.h"
 #include "usb_dwc_console.h"
+#include "usb_power.h"
 #include "usb_dwc_update.h"
 
 /******************************************************************************
@@ -36,11 +37,16 @@ const void *const usb_strings[] = {
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
+/* USB power interface. */
+USB_POWER_CONFIG(sweetberry_power, USB_IFACE_POWER, USB_EP_POWER);
+
+
 struct dwc_usb usb_ctl = {
 	.ep = {
 		&ep0_ctl,
 		&ep_console_ctl,
 		&usb_update_ep_ctl,
+		&sweetberry_power_ep_ctl,
 	},
 	.speed = USB_SPEED_FS,
 	.phy_type = USB_PHY_ULPI,

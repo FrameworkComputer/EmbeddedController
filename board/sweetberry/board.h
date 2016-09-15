@@ -16,7 +16,7 @@
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
 
-/* The UART console can be on flax USART3 (PC10/PC11) */
+/* The UART console can be on flex USART3 (PC10/PC11) */
 /* The UART console can be on header USART4 (PA0/PA1) */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 4
@@ -42,6 +42,7 @@
 #define CONFIG_USB_CONSOLE
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
+#define CONFIG_USB_POWER
 
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
@@ -52,13 +53,15 @@
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE	0
 #define USB_IFACE_UPDATE	1
-#define USB_IFACE_COUNT		2
+#define USB_IFACE_POWER		2
+#define USB_IFACE_COUNT		3
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_CONSOLE		1
 #define USB_EP_UPDATE		2
-#define USB_EP_COUNT		3
+#define USB_EP_POWER		3
+#define USB_EP_COUNT		4
 
 /* This is not actually a Chromium EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP

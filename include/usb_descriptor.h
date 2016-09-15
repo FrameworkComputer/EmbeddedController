@@ -190,6 +190,9 @@ struct usb_endpoint_descriptor {
 /* We can use any protocol we want */
 #define USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE 0xff
 
+#define USB_SUBCLASS_GOOGLE_POWER  0x54
+#define USB_PROTOCOL_GOOGLE_POWER  0x01
+
 /* Control requests */
 
 /* bRequestType fields */

@@ -245,10 +245,15 @@ int usb_write_ep(uint32_t ep_num, int len, void *data)
 {
 	struct dwc_usb_ep *ep = usb_ctl.ep[ep_num];
 
+	if (GR_USB_DIEPCTL(ep_num) & DXEPCTL_EPENA) {
+		CPRINTS("usb_write_ep ep%d: FAIL: tx already in progress!");
+		return 0;
+	}
+
 	/* We will send as many packets as necessary, including a final
 	 * packet of < USB_MAX_PACKET_SIZE (maybe zero length)
 	 */
-	ep->in_packets = (len + USB_MAX_PACKET_SIZE)/USB_MAX_PACKET_SIZE;
+	ep->in_packets = (len + USB_MAX_PACKET_SIZE - 1) / USB_MAX_PACKET_SIZE;
 	ep->in_pending = len;
 	ep->in_data = data;
 
@@ -256,12 +261,9 @@ int usb_write_ep(uint32_t ep_num, int len, void *data)
 
 	GR_USB_DIEPTSIZ(ep_num) |= DXEPTSIZ_PKTCNT(ep->in_packets);
 	GR_USB_DIEPTSIZ(ep_num) |= DXEPTSIZ_XFERSIZE(len);
-	GR_USB_DIEPDMA(ep_num) = (uint32_t)ep->in_data;
+	GR_USB_DIEPDMA(ep_num) = (uint32_t)(ep->in_data);
 
-
-	/* We're sending this much.
-	 * TODO: we should support sending more than one packet.
-	 */
+	/* We could support longer multi-dma transfers here. */
 	ep->in_pending -= len;
 	ep->in_packets -= ep->in_packets;
 	ep->in_data += len;
@@ -275,13 +277,20 @@ int usb_write_ep(uint32_t ep_num, int len, void *data)
 void usb_epN_tx(uint32_t ep_num)
 {
 	struct dwc_usb_ep *ep = usb_ctl.ep[ep_num];
-
 	uint32_t dieptsiz = GR_USB_DIEPTSIZ(ep_num);
+
+	if (GR_USB_DIEPCTL(ep_num) & DXEPCTL_EPENA) {
+		CPRINTS("usb_epN_tx ep%d: tx still active.", ep_num);
+		return;
+	}
 
 	/* clear the Tx/IN interrupts */
 	GR_USB_DIEPINT(ep_num) = 0xffffffff;
 
-	/* Let's assume this is actually true. */
+	/*
+	 * Let's assume this is actually true.
+	 * We could support multi-dma transfers here.
+	 */
 	ep->in_packets = 0;
 	ep->in_pending = dieptsiz & GC_USB_DIEPTSIZ1_XFERSIZE_MASK;
 
@@ -303,7 +312,7 @@ void usb_epN_tx(uint32_t ep_num)
 int usb_read_ep(uint32_t ep_num, int len, void *data)
 {
 	struct dwc_usb_ep *ep = usb_ctl.ep[ep_num];
-	int packets = (len + USB_MAX_PACKET_SIZE)/USB_MAX_PACKET_SIZE;
+	int packets = (len + USB_MAX_PACKET_SIZE - 1) / USB_MAX_PACKET_SIZE;
 
 	ep->out_data = data;
 	ep->out_pending = 0;
