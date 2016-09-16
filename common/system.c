@@ -32,6 +32,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /* Round up to a multiple of 4 */
@@ -812,6 +813,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 
 static void system_common_shutdown(void)
 {
+	if (reboot_at_shutdown)
+		CPRINTF("Reboot at shutdown: %d\n", reboot_at_shutdown);
 	handle_pending_reboot(reboot_at_shutdown);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, system_common_shutdown, HOOK_PRIO_DEFAULT);
