@@ -28,12 +28,8 @@ static int opt3001_i2c_read(const int reg, int *data_ptr)
  */
 static int opt3001_i2c_write(const int reg, int data)
 {
-	int ret;
-
 	data = ((data << 8) & 0xFF00) | ((data >> 8) & 0x00FF);
-	ret = i2c_write16(I2C_PORT_ALS, OPT3001_I2C_ADDR, reg, data);
-
-	return ret;
+	return i2c_write16(I2C_PORT_ALS, OPT3001_I2C_ADDR, reg, data);
 }
 
 /**
@@ -45,12 +41,16 @@ int opt3001_init(void)
 	int ret;
 
 	ret = opt3001_i2c_read(OPT3001_REG_MAN_ID, &data);
-	if (ret || data != OPT3001_MANUFACTURER_ID)
+	if (ret)
 		return ret;
+	if (data != OPT3001_MANUFACTURER_ID)
+		return EC_ERROR_UNKNOWN;
 
 	ret = opt3001_i2c_read(OPT3001_REG_DEV_ID, &data);
-	if (ret || data != OPT3001_DEVICE_ID)
+	if (ret)
 		return ret;
+	if (data != OPT3001_DEVICE_ID)
+		return EC_ERROR_UNKNOWN;
 
 	/*
 	 * [15:12]: 0101b Automatic full scale (1310.40lux, 0.32lux/lsb)
