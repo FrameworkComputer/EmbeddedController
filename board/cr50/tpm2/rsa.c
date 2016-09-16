@@ -4,6 +4,8 @@
  */
 
 #include "CryptoEngine.h"
+#include "Global.h"
+#include "Hierarchy_fp.h"
 
 #include "dcrypto.h"
 #include "trng.h"
@@ -292,6 +294,33 @@ static const uint8_t VERIFY_SEED[32] = {
 };
 #endif
 
+/* The array below represents the output of ObjectComputeName() when
+ * applied to the TPMT_PUBLIC RSA template described in the TPM 2.0
+ * EK Credential Profile specification: https://goo.gl/rbE6q7
+ */
+static const uint8_t TPM2_RSA_EK_NAME_TEMPLATE[] = {
+	/* TPM_ALG_SHA256 in big endian. */
+	0x00, 0x0b,
+	/* SHA256 digest of the default template TPMT_PUBLIC. */
+	0x32, 0x50, 0x39, 0x29, 0xa1, 0x28, 0x7e, 0xed,
+	0xaa, 0x3e, 0x89, 0xd9, 0x32, 0xf9, 0xb5, 0x1a,
+	0x6f, 0x92, 0xab, 0xd0, 0xfa, 0x57, 0x72, 0x1f,
+	0xfa, 0x6f, 0xc0, 0x41, 0xe0, 0x4f, 0x74, 0x98
+};
+BUILD_ASSERT(sizeof(TPM2_RSA_EK_NAME_TEMPLATE) == 2 + SHA256_DIGEST_SIZE);
+
+/* The array below represents the 'name' (corresponding to the
+ * parameter extra) used by the CR50 certificate authority when
+ * generating the endorsement certificate.
+ */
+static const uint8_t TPM2_RSA_EK_NAME_CR50[] = {
+	0x68, 0xd1, 0xa2, 0x41, 0xfb, 0x27, 0x2f, 0x03,
+	0x90, 0xbf, 0xd0, 0x42, 0x8d, 0xad, 0xee, 0xb0,
+	0x2b, 0xf4, 0xa1, 0xcd, 0x46, 0xab, 0x6c, 0x39,
+	0x1b, 0xa3, 0x1f, 0x51, 0x87, 0x06, 0x8e, 0x6a
+};
+BUILD_ASSERT(sizeof(TPM2_RSA_EK_NAME_CR50) == SHA256_DIGEST_SIZE);
+
 CRYPT_RESULT _cpri__GenerateKeyRSA(
 	TPM2B *N_buf, TPM2B *p_buf, uint16_t num_bits,
 	uint32_t e_buf, TPM_ALG_ID hashing, TPM2B *seed,
@@ -314,8 +343,12 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	struct LITE_BIGNUM q;
 	struct LITE_BIGNUM N;
 
-	uint32_t counter;
+	uint32_t counter = 0;
 	TPM2B_32_BYTE_VALUE local_seed = { .t = {32} };
+	TPM2B_32_BYTE_VALUE local_extra = { .t = {32} };
+
+	const TPM2B_SEED *endorsement_seed = HierarchyGetPrimarySeed(
+		TPM_RH_ENDORSEMENT);
 
 	if (num_bits & 0xF)
 		return CRYPT_FAIL;
@@ -324,6 +357,19 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	/* Seed size must be at least 2*security_strength per TPM 2.0 spec. */
 	if (seed == NULL || seed->size * 8 < 2 * security_strength)
 		return CRYPT_FAIL;
+
+	/* When generating the endorsement primary key (based on the
+	 * TPM 2.0 standard template, swap in the vendor specific
+	 * template instead.
+	 */
+	if (extra->size == sizeof(TPM2_RSA_EK_NAME_TEMPLATE) &&
+		memcmp(extra->buffer, TPM2_RSA_EK_NAME_TEMPLATE,
+			sizeof(TPM2_RSA_EK_NAME_TEMPLATE)) == 0 &&
+		seed == &endorsement_seed->b) {
+		memcpy(local_extra.b.buffer, TPM2_RSA_EK_NAME_CR50,
+			sizeof(TPM2_RSA_EK_NAME_CR50));
+		extra = &local_extra.b;
+	}
 
 	/* Hash down the primary seed for RSA key generation, so that
 	 * the derivation tree is distinct from ECC key derivation.
@@ -353,10 +399,18 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 
 	if (label == NULL)
 		label = label_p;
+
+	/* The manufacture process uses a counter of 1, whereas the
+	 * TPM2.0 library (CryptGenerateKeyRSA) passes in a counter
+	 * value of 0.  Having that the counter always start at least
+	 * at 1 ensures that endorsement keys are correctly generated.
+	 * For non-endorsement keys, the counter value used is
+	 * immaterial, as the generation process remains deterministic.
+	 */
 	if (counter_in != NULL)
 		counter = *counter_in;
-	else
-		counter = 1;
+	counter++;
+
 	if (!generate_prime(&p, hashing, &local_seed.b, label, extra,
 			    &counter)) {
 		if (counter_in != NULL)
