@@ -28,9 +28,13 @@ uint8_t flag_prot_inconsistent;
 #else
 #define TRISTATE_FLASH(x) flash_tristate(x)
 #endif
+
+/* Ensure only one task is accessing flash at a time. */
+static struct mutex flash_lock;
+
 /*****************************************************************************/
 /* flash internal functions */
-void flash_pinmux(int enable)
+static void flash_pinmux(int enable)
 {
 	/* Select pin-mux for FIU*/
 	UPDATE_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_NO_F_SPI, !enable);
@@ -48,13 +52,13 @@ void flash_pinmux(int enable)
 	}
 }
 
-void flash_tristate(int enable)
+static void flash_tristate(int enable)
 {
 	/* Enable/Disable FIU pins to tri-state */
 	UPDATE_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS, enable);
 }
 
-void flash_execute_cmd(uint8_t code, uint8_t cts)
+static void flash_execute_cmd(uint8_t code, uint8_t cts)
 {
 	/* set UMA_CODE */
 	NPCX_UMA_CODE = code;
@@ -64,7 +68,7 @@ void flash_execute_cmd(uint8_t code, uint8_t cts)
 		;
 }
 
-void flash_cs_level(int level)
+static void flash_cs_level(int level)
 {
 	/* Set chip select to high/low level */
 	UPDATE_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_SW_CS1, level);
@@ -102,7 +106,7 @@ static int flash_wait_ready(int timeout)
 	return EC_SUCCESS;
 }
 
-int flash_write_enable(void)
+static int flash_write_enable(void)
 {
 	uint8_t mask = SPI_FLASH_SR1_WEL;
 	int rv;
@@ -125,7 +129,7 @@ int flash_write_enable(void)
 		return EC_ERROR_BUSY;
 }
 
-void flash_set_address(uint32_t dest_addr)
+static void flash_set_address(uint32_t dest_addr)
 {
 	uint8_t *addr = (uint8_t *)&dest_addr;
 	/* Write address */
@@ -309,8 +313,11 @@ static int protect_to_reg(unsigned int start, unsigned int len,
 	return EC_SUCCESS;
 }
 
-int flash_set_status_for_prot(int reg1, int reg2)
+static int flash_set_status_for_prot(int reg1, int reg2)
 {
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 	/* Enable write */
@@ -324,12 +331,15 @@ int flash_set_status_for_prot(int reg1, int reg2)
 	/* Enable tri-state */
 	TRISTATE_FLASH(1);
 
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
 	reg_to_protect(reg1, reg2, &addr_prot_start, &addr_prot_length);
 
 	return EC_SUCCESS;
 }
 
-int flash_check_prot_range(unsigned int offset, unsigned int bytes)
+static int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 {
 	/* Invalid value */
 	if (offset + bytes > CONFIG_FLASH_SIZE)
@@ -342,7 +352,7 @@ int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 	return EC_SUCCESS;
 }
 
-int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
+static int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 {
 	unsigned int start;
 	unsigned int len;
@@ -369,7 +379,7 @@ int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 
 }
 
-int flash_write_prot_reg(unsigned int offset, unsigned int bytes)
+static int flash_write_prot_reg(unsigned int offset, unsigned int bytes)
 {
 	int rv;
 	uint8_t sr1 = flash_get_status1();
@@ -387,7 +397,7 @@ int flash_write_prot_reg(unsigned int offset, unsigned int bytes)
 	return flash_set_status_for_prot(sr1, sr2);
 }
 
-void flash_burst_write(unsigned int dest_addr, unsigned int bytes,
+static void flash_burst_write(unsigned int dest_addr, unsigned int bytes,
 		const char *data)
 {
 	unsigned int i;
@@ -437,13 +447,13 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 	return rv;
 }
 
-int flash_uma_lock(int enable)
+static int flash_uma_lock(int enable)
 {
 	UPDATE_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK, enable);
 	return EC_SUCCESS;
 }
 
-int flash_spi_sel_lock(int enable)
+static int flash_spi_sel_lock(int enable)
 {
 	/*
 	 * F_SPI_QUAD, F_SPI_CS1_1/2, F_SPI_TRIS become read-only
@@ -454,12 +464,14 @@ int flash_spi_sel_lock(int enable)
 }
 
 /*****************************************************************************/
-/* Physical layer APIs */
 
 int flash_physical_read(int offset, int size, char *data)
 {
 	int dest_addr = offset;
 	uint32_t idx;
+
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -486,80 +498,11 @@ int flash_physical_read(int offset, int size, char *data)
 	flash_cs_level(1);
 	/* Enable tri-state */
 	TRISTATE_FLASH(1);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
 	return EC_SUCCESS;
-}
-
-int flash_physical_read_image_size(int offset, int size)
-{
-	int dest_addr = offset;
-	uint8_t		temp;
-	uint32_t	idx;
-	uint32_t	image_size = 0;
-
-	/* Disable tri-state */
-	TRISTATE_FLASH(0);
-	/* Chip Select down. */
-	flash_cs_level(0);
-
-	/* Set read address */
-	flash_set_address(dest_addr);
-	/* Start fast read - 1110 1001 - EXEC, WR, CMD, ADDR */
-	flash_execute_cmd(CMD_FAST_READ, MASK_CMD_ADR_WR);
-
-	/* Burst read transaction */
-	for (idx = 0; idx < size; idx++) {
-		/* 1101 0101 - EXEC, RD, NO CMD, NO ADDR, 4 bytes */
-		NPCX_UMA_CTS  = MASK_RD_1BYTE;
-		/* wait for UMA to complete */
-		while (IS_BIT_SET(NPCX_UMA_CTS, EXEC_DONE))
-			;
-		/* Find eof of image */
-		temp = NPCX_UMA_DB0;
-		if (temp == 0xea)
-			image_size = idx;
-	}
-
-	/* Chip Select up */
-	flash_cs_level(1);
-	/* Enable tri-state */
-	TRISTATE_FLASH(1);
-	return image_size;
-}
-
-int flash_physical_is_erased(uint32_t offset, int size)
-{
-	int dest_addr = offset;
-	uint32_t idx;
-	uint8_t temp;
-
-	/* Chip Select down. */
-	flash_cs_level(0);
-
-	/* Set read address */
-	flash_set_address(dest_addr);
-	/* Start fast read -1110 1001 - EXEC, WR, CMD, ADDR */
-	flash_execute_cmd(CMD_FAST_READ, MASK_CMD_ADR_WR);
-
-	/* Burst read transaction */
-	for (idx = 0; idx < size; idx++) {
-		/* 1101 0101 - EXEC, RD, NO CMD, NO ADDR, 4 bytes */
-		NPCX_UMA_CTS  = MASK_RD_1BYTE;
-		/* Wait for UMA to complete */
-		while (IS_BIT_SET(NPCX_UMA_CTS, EXEC_DONE))
-			;
-		/* Get read transaction results */
-		temp = NPCX_UMA_DB0;
-		if (temp != 0xFF)
-			break;
-	}
-
-	/* Chip Select up */
-	flash_cs_level(1);
-
-	if (idx == size)
-		return 1;
-	else
-		return 0;
 }
 
 int flash_physical_write(int offset, int size, const char *data)
@@ -577,6 +520,9 @@ int flash_physical_write(int offset, int size, const char *data)
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
 
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 
@@ -586,12 +532,14 @@ int flash_physical_write(int offset, int size, const char *data)
 					size : CONFIG_FLASH_WRITE_IDEAL_SIZE;
 
 		/* check protection */
-		if (flash_check_prot_range(dest_addr, write_len))
-			return EC_ERROR_ACCESS_DENIED;
+		if (flash_check_prot_range(dest_addr, write_len)) {
+			rv = EC_ERROR_ACCESS_DENIED;
+			break;
+		}
 
 		rv = flash_program_bytes(dest_addr, write_len, data);
 		if (rv)
-			return rv;
+			break;
 
 		data      += write_len;
 		dest_addr += write_len;
@@ -600,6 +548,10 @@ int flash_physical_write(int offset, int size, const char *data)
 
 	/* Enable tri-state */
 	TRISTATE_FLASH(1);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
 	return rv;
 }
 
@@ -610,20 +562,20 @@ int flash_physical_erase(int offset, int size)
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
 
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 
 	/* Alignment has been checked in upper layer */
 	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
 		offset += CONFIG_FLASH_ERASE_SIZE) {
-
-		/* Do nothing if already erased */
-		if (flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE))
-			continue;
-
 		/* check protection */
-		if (flash_check_prot_range(offset, CONFIG_FLASH_ERASE_SIZE))
-			return EC_ERROR_ACCESS_DENIED;
+		if (flash_check_prot_range(offset, CONFIG_FLASH_ERASE_SIZE)) {
+			rv = EC_ERROR_ACCESS_DENIED;
+			break;
+		}
 
 		/*
 		 * Reload the watchdog timer, so that erasing many flash pages
@@ -635,7 +587,7 @@ int flash_physical_erase(int offset, int size)
 		/* Enable write */
 		rv = flash_write_enable();
 		if (rv)
-			return rv;
+			break;
 
 		/* Set erase address */
 		flash_set_address(offset);
@@ -645,11 +597,15 @@ int flash_physical_erase(int offset, int size)
 		/* Wait erase completed */
 		rv = flash_wait_ready(FLASH_ABORT_TIMEOUT);
 		if (rv)
-			return rv;
+			break;
 	}
 
 	/* Enable tri-state */
 	TRISTATE_FLASH(1);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
 	return rv;
 }
 
@@ -779,11 +735,12 @@ int flash_pre_init(void)
 
 void flash_lock_mapped_storage(int lock)
 {
-	/*
-	 * TODO(crosbug.com/p/55781): Add mutex to ensure no conflict between
-	 * mapped read and regular flash ops.
-	 */
+	if (lock)
+		mutex_lock(&flash_lock);
+	else
+		mutex_unlock(&flash_lock);
 }
+
 /*****************************************************************************/
 /* Console commands */
 
