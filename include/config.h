@@ -1144,6 +1144,12 @@
  */
 #undef CONFIG_HOST_COMMAND_STATUS
 
+/*
+ * Host command parameters and response are 32-bit aligned.  This generates
+ * much more efficient code on ARM.
+ */
+#undef CONFIG_HOSTCMD_ALIGNED
+
 /* Default hcdebug mode, e.g. HCDEBUG_OFF or HCDEBUG_NORMAL */
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_NORMAL
 

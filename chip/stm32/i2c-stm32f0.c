@@ -193,9 +193,11 @@ defined(CONFIG_LOW_POWER_IDLE) && \
 /* Host command slave */
 /*
  * Buffer for received host command packets (including prefix byte on request,
- * and result/size on response)
+ * and result/size on response).  After any protocol-specific headers, the
+ * buffers must be 32-bit aligned.
  */
-static uint8_t host_buffer[I2C_MAX_HOST_PACKET_SIZE + 2];
+static uint8_t host_buffer_padded[I2C_MAX_HOST_PACKET_SIZE + 4] __aligned(4);
+static uint8_t * const host_buffer = host_buffer_padded + 2;
 static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
 static int host_i2c_resp_port;
 static int tx_pending;
@@ -248,7 +250,9 @@ static void i2c_process_command(void)
 
 	/*
 	 * Stuff response at buff[2] to leave the first two bytes of
-	 * buffer available for the result and size to send over i2c.
+	 * buffer available for the result and size to send over i2c.  Note
+	 * that this 2-byte offset and the 2-byte offset from host_buffer
+	 * add up to make the response buffer 32-bit aligned.
 	 */
 	i2c_packet.response = (void *)(&buff[2]);
 	i2c_packet.response_max = I2C_MAX_HOST_PACKET_SIZE;

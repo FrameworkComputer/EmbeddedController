@@ -126,10 +126,13 @@ BUILD_ASSERT(SHI_MAX_RESPONSE_SIZE <= SHI_BYPASS_BOUNDARY);
 
 /*
  * Our input and output msg buffers. These must be large enough for our largest
- * message, including protocol overhead, and must be 32-bit aligned.
+ * message, including protocol overhead.  The pointers after the protocol
+ * overhead, as passed to the host command handler, must be 32-bit aligned.
  */
-static uint8_t out_msg[SHI_MAX_RESPONSE_SIZE];
-static uint8_t in_msg[SHI_MAX_REQUEST_SIZE];
+#define SHI_OUT_PAD ((4 - EC_SPI_FRAME_START_LENGTH) % 4)
+static uint8_t out_msg_padded[SHI_OUT_PAD + SHI_MAX_RESPONSE_SIZE] __aligned(4);
+static uint8_t * const out_msg = out_msg_padded + SHI_OUT_PAD;
+static uint8_t in_msg[SHI_MAX_REQUEST_SIZE] __aligned(4);
 
 /* Parameters used by host protocols */
 static struct host_packet shi_packet;
@@ -282,7 +285,7 @@ void shi_handle_host_package(void)
 	shi_packet.response = out_msg + EC_SPI_FRAME_START_LENGTH;
 
 	/* Reserve space for frame start and trailing past-end byte */
-	shi_packet.response_max = sizeof(out_msg) - SHI_PROTO3_OVERHEAD;
+	shi_packet.response_max = SHI_MAX_RESPONSE_SIZE - SHI_PROTO3_OVERHEAD;
 	shi_packet.response_size = 0;
 	shi_packet.driver_result = EC_RES_SUCCESS;
 
