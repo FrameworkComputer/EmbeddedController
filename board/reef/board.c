@@ -613,7 +613,7 @@ static void enable_input_devices(void)
 static void board_chipset_startup(void)
 {
 	/* Enable USB-A port. */
-	gpio_set_level(GPIO_EN_USB_A_5V, 1);
+	gpio_set_level(GPIO_USB1_ENABLE, 1);
 
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
@@ -639,7 +639,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, drive_sys_rst_odl_high, HOOK_PRIO_DEFAULT);
 static void board_chipset_shutdown(void)
 {
 	/* Disable USB-A port. */
-	gpio_set_level(GPIO_EN_USB_A_5V, 0);
+	gpio_set_level(GPIO_USB1_ENABLE, 0);
 
 	hook_call_deferred(&enable_input_devices_data, 0);
 	/* FIXME(dhendrix): Drive USB_PD_RST_ODL low to prevent
