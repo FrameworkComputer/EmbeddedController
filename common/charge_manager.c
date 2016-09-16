@@ -889,8 +889,7 @@ int charge_manager_get_active_charge_port(void)
  */
 int charge_manager_get_charger_current(void)
 {
-	return (charge_current != CHARGE_CURRENT_UNINITIALIZED) ?
-		charge_current : 0;
+	return charge_current;
 }
 
 /**

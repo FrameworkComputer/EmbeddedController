@@ -571,13 +571,15 @@ void charger_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
 
-int get_desired_input_current(enum battery_present batt_present,
-			      const struct charger_info * const info)
+static int get_desired_input_current(enum battery_present batt_present,
+				     const struct charger_info * const info)
 {
 	if (batt_present == BP_YES || system_is_locked()) {
 #ifdef CONFIG_CHARGE_MANAGER
-		return MAX(CONFIG_CHARGER_INPUT_CURRENT,
-			charge_manager_get_charger_current());
+		int ilim = charge_manager_get_charger_current();
+		return ilim == CHARGE_CURRENT_UNINITIALIZED ?
+			CHARGE_CURRENT_UNINITIALIZED :
+			MAX(CONFIG_CHARGER_INPUT_CURRENT, ilim);
 #else
 		return CONFIG_CHARGER_INPUT_CURRENT;
 #endif
@@ -640,8 +642,10 @@ void charger_task(void)
 				if (rv != EC_SUCCESS) {
 					problem(PR_POST_INIT, rv);
 				} else {
-					rv = charger_set_input_current(
-						curr.desired_input_current);
+					if (curr.desired_input_current !=
+					    CHARGE_CURRENT_UNINITIALIZED)
+						rv = charger_set_input_current(
+						    curr.desired_input_current);
 					if (rv != EC_SUCCESS)
 						problem(PR_SET_INPUT_CURR, rv);
 					else
@@ -666,7 +670,10 @@ void charger_task(void)
 
 			curr.desired_input_current =
 				get_desired_input_current(prev_bp, info);
-			charger_set_input_current(curr.desired_input_current);
+			if (curr.desired_input_current !=
+			    CHARGE_CURRENT_UNINITIALIZED)
+				charger_set_input_current(
+					curr.desired_input_current);
 			hook_notify(HOOK_BATTERY_SOC_CHANGE);
 		}
 
