@@ -58,13 +58,13 @@ static void tcpc_alert_event(enum gpio_signal signal)
 
 static void overtemp_interrupt(enum gpio_signal signal)
 {
-	CPRINTS("AP_OVERTEMP asserted.  Shutting down AP!");
+	CPRINTS("AP wants shutdown");
 	chipset_force_shutdown();
 }
 
 static void warm_reset_request_interrupt(enum gpio_signal signal)
 {
-	CPRINTS("WARM_RESET_REQ asserted.");
+	CPRINTS("AP wants warm reset");
 	chipset_reset(0);
 }
 
@@ -376,11 +376,11 @@ void board_hibernate(void)
 	 * hibernate.  The charger VBUS interrupt will wake us up and reset the
 	 * EC.  Upon init, we'll reinitialize the TCPCs to be at full power.
 	 */
-	CPRINTS("Setting TCPCs to low power mode.");
+	CPRINTS("Set TCPCs to low power");
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		rv = tcpc_write(i, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
 		if (rv)
-			CPRINTS("Error setting TCPC %d to low power!", i);
+			CPRINTS("Error setting TCPC %d", i);
 	}
 
 	cflush();
