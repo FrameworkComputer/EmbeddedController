@@ -681,6 +681,12 @@ void shi_cs_event(enum gpio_signal signal)
 	DEBUG_CPRINTF("CSL-");
 
 	/*
+	 * Clear possible EOR event from previous transaction since it's
+	 * irrelevant now that CS is re-asserted.
+	 */
+	SET_BIT(NPCX_EVSTAT, NPCX_EVSTAT_EOR);
+
+	/*
 	 * Enable SHI interrupt - we will either succeed to parse our host
 	 * command or reset on failure from here.
 	 */
