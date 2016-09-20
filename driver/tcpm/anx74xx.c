@@ -818,9 +818,6 @@ int anx74xx_tcpm_init(int port)
 	/* Bring chip in normal mode to work */
 	anx74xx_set_power_mode(port, ANX74XX_NORMAL_MODE);
 
-	/* Set Pd dual role mode */
-	pd_set_dual_role(PD_DRP_TOGGLE_ON);
-
 	/* Initialize analog section of ANX */
 	rv |= anx74xx_init_analog(port);
 
