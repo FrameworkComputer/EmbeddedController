@@ -533,9 +533,8 @@ void i2c_master_int_handler (int controller)
 	/* Condition 3: A Stall after START has occurred for READ-BYTE */
 	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_STASTR)) {
 		CPUTS("-STL");
-		/* Clear STASTR Bit */
-		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
-		/* Disable Stall-After-Start mode */
+
+		/* Disable Stall-After-Start mode first */
 		CLEAR_BIT(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STASTRE);
 
 		/*
@@ -550,6 +549,9 @@ void i2c_master_int_handler (int controller)
 		 */
 		else if (p_status->flags & I2C_XFER_STOP)
 			I2C_NACK(controller);
+
+		/* Clear STASTR to release SCL after setting NACK/STOP bits */
+		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
 	}
 
 	/* Condition 4: SDA status is set - transmit or receive */
