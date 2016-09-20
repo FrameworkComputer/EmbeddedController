@@ -360,6 +360,7 @@
 
 /* Compile charger-specific code for these chargers (pick at most one) */
 #undef CONFIG_CHARGER_BD99955
+#undef CONFIG_CHARGER_BD99956
 #undef CONFIG_CHARGER_BQ24707A
 #undef CONFIG_CHARGER_BQ24715
 #undef CONFIG_CHARGER_BQ24725
@@ -374,20 +375,20 @@
 #undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
- * BD99955 PD port to charger port mapping.
+ * BD9995X PD port to charger port mapping.
  * By default VBUS is selected as primary port.
  * Define only if the VCC is the primary port.
  */
-#undef CONFIG_BD99955_PRIMARY_CHARGE_PORT_VCC
+#undef CONFIG_BD9995X_PRIMARY_CHARGE_PORT_VCC
 
 /*
- * BD99955 Power Save Mode
+ * BD9995X Power Save Mode
  *
  * Which power save mode should the charger enter when VBUS is removed.  Check
- * driver/bd99955.h for the power save settings.  By default, no power save mode
+ * driver/bd9995x.h for the power save settings.  By default, no power save mode
  * is enabled.
  */
-#undef CONFIG_BD99955_POWER_SAVE_MODE
+#undef CONFIG_BD9995X_POWER_SAVE_MODE
 
 /*
  * If the battery temperature sense pin is connected to charger,

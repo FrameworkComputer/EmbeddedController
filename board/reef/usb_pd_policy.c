@@ -8,7 +8,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
-#include "driver/charger/bd99955.h"
+#include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8751.h"
 #include "gpio.h"
@@ -55,7 +55,7 @@ int pd_set_power_supply_ready(int port)
 {
 	/* Ensure we're not charging from this port */
 	if (charge_manager_get_active_charge_port() == port)
-		bd99955_select_input_port(BD99955_CHARGE_PORT_NONE);
+		bd9995x_select_input_port(BD9995X_CHARGE_PORT_NONE);
 
 	/* Provide VBUS */
 	gpio_set_level(port ? GPIO_USB_C1_5V_EN :

@@ -415,7 +415,7 @@ static int charge_request(int voltage, int current)
 	 * Set the charge inhibit bit when possible as it appears to save
 	 * power in some cases (e.g. Nyan with BQ24735).
 	 */
-#ifdef CONFIG_CHARGER_BD99955
+#if defined(CONFIG_CHARGER_BD99955) || defined(CONFIG_CHARGER_BD99956)
 	/* Charger auto exits from battery learn mode if charge inhibited */
 	if (current > 0 || chg_ctl_mode == CHARGE_CONTROL_DISCHARGE)
 #else

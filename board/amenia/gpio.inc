@@ -28,7 +28,7 @@ GPIO_INT(RSMRST_L_PGOOD,     PIN(9,  3), GPIO_INT_BOTH,                   power_
 
 GPIO_INT(USB_C0_PD_INT,      PIN(8,  5), GPIO_INT_RISING,                 tcpc_alert_event)        /* A43 - RXD for USB_C0_PHY_INT */
 GPIO_INT(USB_C1_PD_INT_L,    PIN(9,  4), GPIO_INT_FALLING,                tcpc_alert_event)        /* B49 - GPIO94 for USB_C1_PHY_INT_N */
-GPIO_INT(CHARGER_INT_L,      PIN(0,  2), GPIO_INT_FALLING | GPIO_PULL_UP, bd99955_vbus_interrupt)  /* A01 - GPIO02 for CHRGR_INT_N */
+GPIO_INT(CHARGER_INT_L,      PIN(0,  2), GPIO_INT_FALLING | GPIO_PULL_UP, bd9995x_vbus_interrupt)  /* A01 - GPIO02 for CHRGR_INT_N */
 
 GPIO(NC_USB_C0_VBUS_WAKE_L,  PIN(A,  7), GPIO_INPUT | GPIO_PULL_UP)       /* B56 - PS2_DAT3/TB2/F_DIO3 for USB_C0_VBUS_DET_N */
 GPIO(NC_USB_C1_VBUS_WAKE_L,  PIN(6,  1), GPIO_INPUT | GPIO_PULL_UP)       /* B32 - GPIO61 for USB_C1_VBUS_DET_N */

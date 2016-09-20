@@ -18,7 +18,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/charger/bd99955.h"
+#include "driver/charger/bd9995x.h"
 #include "driver/tcpm/fusb302.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -198,7 +198,7 @@ uint16_t tcpc_get_alert_status(void)
 
 int board_set_active_charge_port(int charge_port)
 {
-	enum bd99955_charge_port bd99955_port;
+	enum bd9995x_charge_port bd9995x_port;
 	static int initialized;
 
 	/*
@@ -222,10 +222,10 @@ int board_set_active_charge_port(int charge_port)
 				   GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN))
 			return -1;
 
-		bd99955_port = bd99955_pd_port_to_chg_port(charge_port);
+		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
 		break;
 	case CHARGE_PORT_NONE:
-		bd99955_port = BD99955_CHARGE_PORT_NONE;
+		bd9995x_port = BD9995X_CHARGE_PORT_NONE;
 		break;
 	default:
 		panic("Invalid charge port\n");
@@ -233,7 +233,7 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	initialized = 1;
-	return bd99955_select_input_port(bd99955_port);
+	return bd9995x_select_input_port(bd9995x_port);
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
@@ -266,28 +266,28 @@ int extpower_is_present(void)
 	if (p0_src && p1_src)
 		return 0;
 	else if (!p0_src && !p1_src)
-		port = BD99955_CHARGE_PORT_BOTH;
+		port = BD9995X_CHARGE_PORT_BOTH;
 	else
-		port = bd99955_pd_port_to_chg_port(p0_src);
+		port = bd9995x_pd_port_to_chg_port(p0_src);
 
-	return bd99955_is_vbus_provided(port);
+	return bd9995x_is_vbus_provided(port);
 }
 
 int pd_snk_is_vbus_provided(int port)
 {
-	enum bd99955_charge_port bd99955_port;
+	enum bd9995x_charge_port bd9995x_port;
 
 	switch (port) {
 	case 0:
 	case 1:
-		bd99955_port = bd99955_pd_port_to_chg_port(port);
+		bd9995x_port = bd9995x_pd_port_to_chg_port(port);
 		break;
 	default:
 		panic("Invalid charge port\n");
 		break;
 	}
 
-	return bd99955_is_vbus_provided(bd99955_port);
+	return bd9995x_is_vbus_provided(bd9995x_port);
 }
 
 static void board_spi_enable(void)

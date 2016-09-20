@@ -8,7 +8,7 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
-GPIO_INT(CHARGER_INT_L,		PIN(3, 3), GPIO_INT_FALLING, bd99955_vbus_interrupt)		/* CHARGER_EC_INT_ODL from BD99955 */
+GPIO_INT(CHARGER_INT_L,		PIN(3, 3), GPIO_INT_FALLING, bd9995x_vbus_interrupt)		/* CHARGER_EC_INT_ODL from BD99956 */
 /*
  * TODO: The pull ups for Parade TCPC interrupt line can be removed in versions
  * of board following EVT in which daughter card (which has an external pull up)
@@ -29,7 +29,7 @@ GPIO_INT(SUSPWRNACK,		PIN(7, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_L_PGOOD,	PIN(6, 0), GPIO_INT_BOTH, power_signal_interrupt)		/* PMIC_EC_RSMRST_ODL */
 GPIO_INT(ALL_SYS_PGOOD,		PIN(5, 0), GPIO_INT_BOTH, power_signal_interrupt)		/* PMIC_EC_PWROK_OD */
 
-GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD from BD99955 */
+GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD from BD99956 */
 /* TODO: We might remove external pull-up for POWER_BUTTON_L in EVT */
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* MECH_PWR_BTN_ODL */
 #if IS_PROTO == 1

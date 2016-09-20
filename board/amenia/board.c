@@ -19,7 +19,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/baro_bmp280.h"
-#include "driver/charger/bd99955.h"
+#include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/ps8751.h"
@@ -119,7 +119,7 @@ const struct adc_t adc_channels[] = {
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH1, 28160, ADC_READ_MAX+1, 0},
 	/* Adapter current output or battery discharging current */
 	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH4,
-				(5 << BD99955_IOUT_GAIN_SELECT) * 10000,
+				(5 << BD9995X_IOUT_GAIN_SELECT) * 10000,
 				ADC_READ_MAX+1, 0},
 	/* System current consumption */
 	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3, ADC_MAX_VOLT * 10,
@@ -269,19 +269,19 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 int pd_snk_is_vbus_provided(int port)
 {
-	enum bd99955_charge_port bd99955_port;
+	enum bd9995x_charge_port bd9995x_port;
 
 	switch (port) {
 	case 0:
 	case 1:
-		bd99955_port = bd99955_pd_port_to_chg_port(port);
+		bd9995x_port = bd9995x_pd_port_to_chg_port(port);
 		break;
 	default:
 		panic("Invalid charge port\n");
 		break;
 	}
 
-	return bd99955_is_vbus_provided(bd99955_port);
+	return bd9995x_is_vbus_provided(bd9995x_port);
 }
 
 /**
@@ -294,7 +294,7 @@ int pd_snk_is_vbus_provided(int port)
  */
 int board_set_active_charge_port(int charge_port)
 {
-	enum bd99955_charge_port bd99955_port;
+	enum bd9995x_charge_port bd9995x_port;
 	static int initialized;
 
 	/* charge port is a realy physical port */
@@ -325,10 +325,10 @@ int board_set_active_charge_port(int charge_port)
 	switch (charge_port) {
 	case 0:
 	case 1:
-		bd99955_port = bd99955_pd_port_to_chg_port(charge_port);
+		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
 		break;
 	case CHARGE_PORT_NONE:
-		bd99955_port = BD99955_CHARGE_PORT_NONE;
+		bd9995x_port = BD9995X_CHARGE_PORT_NONE;
 		break;
 	default:
 		panic("Invalid charge port\n");
@@ -337,7 +337,7 @@ int board_set_active_charge_port(int charge_port)
 
 	initialized = 1;
 
-	return bd99955_select_input_port(bd99955_port);
+	return bd9995x_select_input_port(bd9995x_port);
 }
 
 /**
@@ -355,7 +355,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 			   supplier == CHARGE_SUPPLIER_BC12_SDP ||
 			   supplier == CHARGE_SUPPLIER_OTHER);
 
-	if (bd99955_bc12_enable_charging(port, bc12_enable))
+	if (bd9995x_bc12_enable_charging(port, bc12_enable))
 		return;
 
 	charge_set_input_current_limit(MAX(charge_ma,
@@ -383,7 +383,7 @@ int board_is_ramp_allowed(int supplier)
  */
 int board_get_ramp_current_limit(int supplier, int sup_curr)
 {
-	return bd99955_get_bc12_ilim(supplier);
+	return bd9995x_get_bc12_ilim(supplier);
 }
 
 /**
@@ -401,7 +401,7 @@ int board_is_consuming_full_charge(void)
  */
 int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 {
-	return charger_get_vbus_level() < BD99955_BC12_MIN_VOLTAGE;
+	return charger_get_vbus_level() < BD9995X_BC12_MIN_VOLTAGE;
 }
 
 /* Enable or disable input devices, based upon chipset state and tablet mode */
@@ -682,7 +682,7 @@ void board_hibernate(void)
 	CPRINTS("Enter Pseudo G3");
 
 	/* Enable both the VBUS & VCC ports before entering PG3 */
-	bd99955_select_input_port(BD99955_CHARGE_PORT_BOTH);
+	bd9995x_select_input_port(BD9995X_CHARGE_PORT_BOTH);
 
 	/*
 	 * Clean up the UART buffer and prevent any unwanted garbage characters
