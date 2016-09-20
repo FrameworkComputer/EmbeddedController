@@ -5,6 +5,7 @@
 
 #include "queue.h"
 #include "queue_policies.h"
+#include "timer.h"
 #include "uartn.h"
 #include "usart.h"
 #include "usb-stream.h"
@@ -29,12 +30,15 @@ static struct queue const ec_uart_to_usb =
 static struct queue const ec_usb_to_uart =
 	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ec_usb.producer, ec_uart.consumer);
 
-struct usart_config const ap_uart = USART_CONFIG(UART_AP,
-						 ap_uart_to_usb,
-						 ap_usb_to_uart);
-struct usart_config const ec_uart = USART_CONFIG(UART_EC,
-						 ec_uart_to_usb,
-						 ec_usb_to_uart);
+USART_CONFIG(ec_uart,
+	     UART_EC,
+	     ec_uart_to_usb,
+	     ec_usb_to_uart);
+USART_CONFIG(ap_uart,
+	     UART_AP,
+	     ap_uart_to_usb,
+	     ap_usb_to_uart);
+
 USB_STREAM_CONFIG(ap_usb,
 		  USB_IFACE_AP,
 		  USB_STR_AP_NAME,
@@ -64,6 +68,13 @@ void get_data_from_usb(struct usart_config const *config)
 	/* If output buffer is empty, disable transmit interrupt */
 	if (!queue_count(uart_out))
 		uartn_tx_stop(config->uart);
+
+	/*
+	 * Make sure rx fifo is cleared after any input to the console to ensure
+	 * user will be able to see their input as they are typing instead of
+	 * only when the RX FIFO reaches the level set by RXILVL.
+	 */
+	hook_call_deferred(config->deferred, 1 * MSEC);
 }
 
 void send_data_to_usb(struct usart_config const *config)
