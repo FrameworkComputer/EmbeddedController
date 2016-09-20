@@ -80,7 +80,7 @@ case "${BOARD}" in
     # cr50 includes sources from 4 different git trees. Shortened 'dirty' tree
     # marker allows to keep the summary version string shorter.
     dirty_marker='+'
-    dir_list+=( private-cr51 ../../third_party/tpm2 ../../third_party/cryptoc )
+    dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
     ;;
 esac
 
