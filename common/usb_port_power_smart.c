@@ -103,12 +103,18 @@ int usb_charge_ports_enabled(void)
 {
 	int mask = 0;
 
+#if CONFIG_USB_PORT_POWER_SMART_PORT_COUNT >= 1
 	if (gpio_get_level(GPIO_USB1_ENABLE))
 		mask |= (1 << 0);
-
+#endif
+#if CONFIG_USB_PORT_POWER_SMART_PORT_COUNT >= 2
 	if (gpio_get_level(GPIO_USB2_ENABLE))
 		mask |= (1 << 1);
-
+#endif
+#if CONFIG_USB_PORT_POWER_SMART_PORT_COUNT >= 3
+	if (gpio_get_level(GPIO_USB3_ENABLE))
+		mask |= (1 << 2);
+#endif
 	return mask;
 }
 
