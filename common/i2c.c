@@ -728,16 +728,16 @@ static void scan_bus(int port, const char *desc)
 
 	ccprintf("Scanning %d %s", port, desc);
 
+	i2c_lock(port, 1);
+
 	/* Don't scan a busy port, since reads will just fail / time out */
 	a = i2c_get_line_levels(port);
 	if (a != I2C_LINE_IDLE) {
-		ccprintf(": port busy (SDA=%d, SCL=%d)\n",
+		ccprintf(": port busy (SDA=%d, SCL=%d)",
 			 (a & I2C_LINE_SDA_HIGH) ? 1 : 0,
 			 (a & I2C_LINE_SCL_HIGH) ? 1 : 0);
-		return;
+		goto scan_bus_exit;
 	}
-
-	i2c_lock(port, 1);
 
 	for (a = 0; a < 0x100; a += 2) {
 		watchdog_reload();  /* Otherwise a full scan trips watchdog */
@@ -748,6 +748,7 @@ static void scan_bus(int port, const char *desc)
 			ccprintf("\n  0x%02x", a);
 	}
 
+scan_bus_exit:
 	i2c_lock(port, 0);
 	ccputs("\n");
 }
