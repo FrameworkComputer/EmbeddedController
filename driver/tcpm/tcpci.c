@@ -17,6 +17,9 @@
 
 static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
 
+/* Save the selected rp value */
+static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
+
 static int init_alert_mask(int port)
 {
 	uint16_t mask;
@@ -65,9 +68,12 @@ int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2)
 
 	rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
 
-	/* If tcpc read fails, return error */
-	if (rv)
+	/* If tcpc read fails, return error and CC as open */
+	if (rv) {
+		*cc1 = TYPEC_CC_VOLT_OPEN;
+		*cc2 = TYPEC_CC_VOLT_OPEN;
 		return rv;
+	}
 
 	*cc1 = TCPC_REG_CC_STATUS_CC1(status);
 	*cc2 = TCPC_REG_CC_STATUS_CC2(status);
@@ -91,15 +97,8 @@ static int tcpci_tcpm_get_power_status(int port, int *status)
 
 int tcpci_tcpm_select_rp_value(int port, int rp)
 {
-	int reg;
-	int rv;
-
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &reg);
-	if (rv)
-		return rv;
-	reg = (reg & ~TCPC_REG_ROLE_CTRL_RP_MASK)
-	    | ((rp << 4) & TCPC_REG_ROLE_CTRL_RP_MASK);
-	return tcpc_write(port, TCPC_REG_ROLE_CTRL, reg);
+	selected_rp[port] = rp;
+	return EC_SUCCESS;
 }
 
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
@@ -119,22 +118,33 @@ static void tcpci_tcpc_discharge_vbus(int port, int enable)
 }
 #endif
 
+static int set_role_ctrl(int port, int toggle, int rp, int pull)
+{
+	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
+			  TCPC_REG_ROLE_CTRL_SET(toggle, rp, pull, pull));
+}
+
 int tcpci_tcpm_set_cc(int port, int pull)
 {
-	int reg, rv;
-	uint8_t rp;
-
-	rv = tcpc_read(port, TCPC_REG_ROLE_CTRL, &reg);
-	if (rv)
-		return rv;
-	rp = TCPC_REG_ROLE_CTRL_RP(reg);
-	/*
-	 * Set manual control of Rp/Rd, and set both CC lines to the same
-	 * pull.
-	 */
-	return tcpc_write(port, TCPC_REG_ROLE_CTRL,
-			  TCPC_REG_ROLE_CTRL_SET(0, rp, pull, pull));
+	/* Set manual control, and set both CC lines to the same pull */
+	return set_role_ctrl(port, 0, selected_rp[port], pull);
 }
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int tcpci_tcpc_drp_toggle(int port)
+{
+	int rv;
+
+	/* Set auto drp toggle */
+	rv = set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_OPEN);
+
+	/* Set Look4Connection command */
+	rv |= tcpc_write(port, TCPC_REG_COMMAND,
+			 TCPC_REG_COMMAND_LOOK4CONNECTION);
+
+	return rv;
+}
+#endif
 
 int tcpci_tcpm_set_polarity(int port, int polarity)
 {
@@ -407,5 +417,8 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.tcpc_alert		= &tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+#endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle	= &tcpci_tcpc_drp_toggle,
 #endif
 };

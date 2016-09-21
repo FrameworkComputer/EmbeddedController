@@ -13,6 +13,12 @@
 #include "i2c.h"
 #include "usb_pd_tcpm.h"
 
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+	!defined(CONFIG_USB_PD_DUAL_ROLE)
+#error "DRP auto toggle requires board to have DRP support"
+#error "Please upgrade your board configuration"
+#endif
+
 #ifndef CONFIG_USB_PD_TCPC
 extern const struct tcpc_config_t tcpc_config[];
 
@@ -129,6 +135,13 @@ static inline void tcpc_discharge_vbus(int port, int enable)
 {
 	tcpc_config[port].drv->tcpc_discharge_vbus(port, enable);
 }
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static inline int tcpm_set_drp_toggle(int port)
+{
+	return tcpc_config[port].drv->drp_toggle(port);
+}
+#endif
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 static inline int tcpc_i2c_read(const int port, const int addr,

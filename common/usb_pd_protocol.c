@@ -189,6 +189,9 @@ static const char * const pd_state_names[] = {
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	"SOFT_RESET", "HARD_RESET_SEND", "HARD_RESET_EXECUTE", "BIST_RX",
 	"BIST_TX",
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	"DRP_AUTO_TOGGLE",
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
 #endif
@@ -214,6 +217,11 @@ int pd_is_connected(int port)
 {
 	if (pd[port].task_state == PD_STATE_DISABLED)
 		return 0;
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	if (pd[port].task_state == PD_STATE_DRP_AUTO_TOGGLE)
+		return 0;
+#endif
 
 	return DUAL_ROLE_IF_ELSE(port,
 		/* sink */
@@ -294,16 +302,21 @@ static inline void set_state(int port, enum pd_states next_state)
 
 	if (last_state == next_state)
 		return;
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/* Clear flag to allow DRP auto toggle when possible */
+	if (last_state != PD_STATE_DRP_AUTO_TOGGLE)
+		pd[port].flags &= ~PD_FLAGS_TCPC_DRP_TOGGLE;
+#endif
+
 	/* Ignore dual-role toggling between sink and source */
 	if ((last_state == PD_STATE_SNK_DISCONNECTED &&
 	     next_state == PD_STATE_SRC_DISCONNECTED) ||
 	    (last_state == PD_STATE_SRC_DISCONNECTED &&
 	     next_state == PD_STATE_SNK_DISCONNECTED))
 		return;
-#endif
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 	if (next_state == PD_STATE_SRC_DISCONNECTED ||
 	    next_state == PD_STATE_SNK_DISCONNECTED) {
 		/* Clear the input current limit */
@@ -1593,7 +1606,12 @@ void pd_task(void)
 			CPRINTS("TCPC p%d reset!", port);
 			if (tcpm_init(port) != EC_SUCCESS)
 				CPRINTS("TCPC p%d init failed", port);
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+		}
 
+		if ((evt & PD_EVENT_TCPC_RESET) &&
+		    (pd[port].task_state != PD_STATE_DRP_AUTO_TOGGLE)) {
+#endif
 			/* Ensure CC termination is default */
 			tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ?
 							      TYPEC_CC_RP :
@@ -1643,6 +1661,21 @@ void pd_task(void)
 		case PD_STATE_SRC_DISCONNECTED:
 			timeout = 10*MSEC;
 			tcpm_get_cc(port, &cc1, &cc2);
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+			/*
+			 * Attempt TCPC auto DRP toggle if it is
+			 * not already auto toggling and not try.src
+			 */
+			if (!(pd[port].flags & PD_FLAGS_TCPC_DRP_TOGGLE) &&
+			    !(pd[port].flags & PD_FLAGS_TRY_SRC) &&
+			    (cc1 == TYPEC_CC_VOLT_OPEN &&
+			     cc2 == TYPEC_CC_VOLT_OPEN)) {
+				set_state(port, PD_STATE_DRP_AUTO_TOGGLE);
+				timeout = 2*MSEC;
+				break;
+			}
+#endif
 
 			/* Vnc monitoring */
 			if ((cc1 == TYPEC_CC_VOLT_RD ||
@@ -2111,6 +2144,21 @@ void pd_task(void)
 			timeout = 10*MSEC;
 #endif
 			tcpm_get_cc(port, &cc1, &cc2);
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+			/*
+			 * Attempt TCPC auto DRP toggle if it is
+			 * not already auto toggling and not try.src
+			 */
+			if (!(pd[port].flags & PD_FLAGS_TCPC_DRP_TOGGLE) &&
+			    !(pd[port].flags & PD_FLAGS_TRY_SRC) &&
+			    (cc1 == TYPEC_CC_VOLT_OPEN &&
+			     cc2 == TYPEC_CC_VOLT_OPEN)) {
+				set_state(port, PD_STATE_DRP_AUTO_TOGGLE);
+				timeout = 2*MSEC;
+				break;
+			}
+#endif
 
 			/* Source connection monitoring */
 			if (cc1 != TYPEC_CC_VOLT_OPEN ||
@@ -2709,6 +2757,53 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 						PD_STATE_SNK_DISCONNECTED,
 						PD_STATE_SRC_DISCONNECTED));
 			break;
+#endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+		case PD_STATE_DRP_AUTO_TOGGLE:
+		{
+			enum pd_states next_state;
+
+			/* Check for connection */
+			tcpm_get_cc(port, &cc1, &cc2);
+
+			/* Set to appropriate port state */
+			if (cc1 == TYPEC_CC_VOLT_OPEN &&
+			    cc2 == TYPEC_CC_VOLT_OPEN)
+				/* nothing connected, keep toggling*/
+				next_state = PD_STATE_DRP_AUTO_TOGGLE;
+			else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
+				 drp_state != PD_DRP_FORCE_SOURCE)
+				/* SNK allowed unless ForceSRC */
+				next_state = PD_STATE_SNK_DISCONNECTED;
+			else if (((cc1 == TYPEC_CC_VOLT_RD ||
+				   cc2 == TYPEC_CC_VOLT_RD) ||
+				  (cc1 == TYPEC_CC_VOLT_RA &&
+				   cc2 == TYPEC_CC_VOLT_RA)) &&
+				 (drp_state != PD_DRP_TOGGLE_OFF &&
+				  drp_state != PD_DRP_FORCE_SINK))
+				/* SRC allowed unless ForceSNK or Toggle Off */
+				next_state = PD_STATE_SRC_DISCONNECTED;
+			else
+				/* Anything else, keep toggling */
+				next_state = PD_STATE_DRP_AUTO_TOGGLE;
+
+			if (next_state == PD_STATE_SNK_DISCONNECTED) {
+				tcpm_set_cc(port, TYPEC_CC_RD);
+				pd[port].power_role = PD_ROLE_SINK;
+				timeout = 2*MSEC;
+			} else if (next_state == PD_STATE_SRC_DISCONNECTED) {
+				tcpm_set_cc(port, TYPEC_CC_RP);
+				pd[port].power_role = PD_ROLE_SOURCE;
+				timeout = 2*MSEC;
+			} else {
+				tcpm_set_drp_toggle(port);
+				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
+				timeout = -1;
+			}
+			set_state(port, next_state);
+
+			break;
+		}
 #endif
 		default:
 			break;

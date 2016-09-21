@@ -35,7 +35,7 @@ static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
 static int anx74xx_set_mux(int port, int polarity);
 
 /* Save the selected rp value */
-static int selected_rp = TYPEC_RP_USB;
+static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
 
 static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 {
@@ -472,8 +472,27 @@ static int anx74xx_rp_control(int port, int rp)
 static int anx74xx_tcpm_select_rp_value(int port, int rp)
 {
 	/* For ANX3429 cannot get cc correctly when Rp != USB_Default */
-	selected_rp = rp;
-	return 1;
+	selected_rp[port] = rp;
+	return EC_SUCCESS;
+}
+
+
+static int anx74xx_cc_software_ctrl(int port, int enable)
+{
+	int rv;
+	int reg;
+
+	rv = tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
+	if (enable)
+		reg |= ANX74XX_REG_CC_SW_CTRL_ENABLE;
+	else
+		reg &= ~ANX74XX_REG_CC_SW_CTRL_ENABLE;
+
+	rv |= tcpc_write(port, ANX74XX_REG_CC_SOFTWARE_CTRL, reg);
+	return rv;
 }
 
 static int anx74xx_tcpm_set_cc(int port, int pull)
@@ -482,11 +501,7 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 	int reg;
 
 	/* Enable CC software Control */
-	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
-	if (rv)
-		return EC_ERROR_UNKNOWN;
-	reg |= ANX74XX_REG_CC_SW_CTRL_ENABLE;
-	rv |= tcpc_write(port, ANX74XX_REG_CC_SOFTWARE_CTRL, reg);
+	rv = anx74xx_cc_software_ctrl(port, 1);
 	if (rv)
 		return EC_ERROR_UNKNOWN;
 
@@ -514,6 +529,18 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 
 	return rv;
 }
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int anx74xx_tcpc_drp_toggle(int port)
+{
+	int rv;
+
+	/* Disable CC software Control */
+	rv = anx74xx_cc_software_ctrl(port, 0);
+
+	return rv;
+}
+#endif
 
 static int anx74xx_tcpm_set_polarity(int port, int polarity)
 {
@@ -638,7 +665,7 @@ static int anx74xx_tcpm_set_rx_enable(int port, int enable)
 	if (enable) {
 		reg &= ~(ANX74XX_REG_IRQ_CC_MSG_INT);
 		anx74xx_tcpm_set_auto_good_crc(port, 1);
-		anx74xx_rp_control(port, selected_rp);
+		anx74xx_rp_control(port, selected_rp[port]);
 	} else {
 		/* Disable RX message by masking interrupt */
 		reg |= (ANX74XX_REG_IRQ_CC_MSG_INT);
@@ -878,6 +905,9 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 	.tcpc_alert		= &anx74xx_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 	.tcpc_discharge_vbus	= &anx74xx_tcpc_discharge_vbus,
+#endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle	= &anx74xx_tcpc_drp_toggle,
 #endif
 };
 

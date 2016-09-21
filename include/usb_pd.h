@@ -684,6 +684,9 @@ enum pd_states {
 	PD_STATE_BIST_TX,
 #endif
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	PD_STATE_DRP_AUTO_TOGGLE,
+#endif
 	/* Number of states. Not an actual state. */
 	PD_STATE_COUNT,
 };
@@ -693,6 +696,7 @@ enum pd_states {
 #define PD_FLAGS_PARTNER_DR_DATA   (1 << 2) /* port partner is dualrole data */
 #define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
 #define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
+#define PD_FLAGS_TCPC_DRP_TOGGLE   (1 << 5) /* TCPC-controlled DRP toggling */
 #define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
 #define PD_FLAGS_VBUS_NEVER_LOW    (1 << 7) /* VBUS input has never been low */
 #define PD_FLAGS_PREVIOUS_PD_CONN  (1 << 8) /* previously PD connected */
@@ -708,6 +712,7 @@ enum pd_states {
 					   PD_FLAGS_PARTNER_DR_DATA | \
 					   PD_FLAGS_DATA_SWAPPED | \
 					   PD_FLAGS_SNK_CAP_RECVD | \
+					   PD_FLAGS_TCPC_DRP_TOGGLE | \
 					   PD_FLAGS_EXPLICIT_CONTRACT | \
 					   PD_FLAGS_PREVIOUS_PD_CONN | \
 					   PD_FLAGS_CHECK_PR_ROLE | \

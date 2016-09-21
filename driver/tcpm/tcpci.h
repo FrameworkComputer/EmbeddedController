@@ -66,6 +66,7 @@
 #define TCPC_REG_POWER_CTRL_VCONN(reg)    ((reg) & 0x1)
 
 #define TCPC_REG_CC_STATUS         0x1d
+#define TCPC_REG_CC_STATUS_LOOK4CONNECTION(reg) ((reg & 0x20) >> 5)
 #define TCPC_REG_CC_STATUS_SET(term, cc1, cc2) \
 		((term) << 4 | ((cc2) & 0x3) << 2 | ((cc1) & 0x3))
 #define TCPC_REG_CC_STATUS_TERM(reg) (((reg) & 0x10) >> 4)
@@ -80,6 +81,8 @@
 #define TCPC_REG_FAULT_STATUS      0x1f
 
 #define TCPC_REG_COMMAND           0x23
+#define TCPC_REG_COMMAND_LOOK4CONNECTION	0x99
+
 #define TCPC_REG_DEV_CAP_1         0x24
 #define TCPC_REG_DEV_CAP_2         0x26
 #define TCPC_REG_STD_INPUT_CAP     0x28

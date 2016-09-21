@@ -184,6 +184,17 @@ struct tcpm_drv {
 	 * @param enable Discharge enable or disable
 	 */
 	void (*tcpc_discharge_vbus)(int port, int enable);
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	/**
+	 * Enable TCPC auto DRP toggling.
+	 *
+	 * @param port Type-C port number
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*drp_toggle)(int port);
+#endif
 };
 
 enum tcpc_alert_polarity {
