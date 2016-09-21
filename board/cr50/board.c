@@ -765,6 +765,14 @@ void i2cs_set_pinmux(void)
 	 */
 	GWRITE_FIELD(PINMUX, DIOA1_CTL, PU, 1);
 	GWRITE_FIELD(PINMUX, DIOA9_CTL, PU, 1);
-	/* TODO(scollyer): Do we need to add wake on SCL activity here? */
 
+	/* Allow I2CS_SCL to wake from sleep */
+	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA9, 1); /* edge sensitive */
+	GWRITE_FIELD(PINMUX, EXITINV0, DIOA9, 1);  /* wake on low */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA9, 1);   /* enable powerdown exit */
+
+	/* Allow I2CS_SDA to wake from sleep */
+	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA1, 1); /* edge sensitive */
+	GWRITE_FIELD(PINMUX, EXITINV0, DIOA1, 1);  /* wake on low */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 1);   /* enable powerdown exit */
 }

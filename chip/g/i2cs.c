@@ -122,6 +122,9 @@ static void _i2cs_write_complete_int(void)
 	/* Reset the IRQ condition. */
 	GWRITE_FIELD(I2CS, INT_STATE, INTR_WRITE_COMPLETE, 1);
 
+	/* We're receiving some bytes, so don't sleep */
+	disable_sleep(SLEEP_MASK_I2C_SLAVE);
+
 	if (write_complete_handler_) {
 		uint16_t bytes_written;
 		uint16_t bytes_processed;
