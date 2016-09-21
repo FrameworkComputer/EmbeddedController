@@ -59,6 +59,7 @@
 
 #ifndef __ASSEMBLER__
 
+#include "gpio_signal.h"
 #include "registers.h"
 
 #define I2C_PORT_CHARGER IT83XX_I2C_CH_C

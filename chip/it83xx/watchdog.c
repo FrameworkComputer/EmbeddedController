@@ -63,8 +63,13 @@ int watchdog_init(void)
 	/* Set WDT key match enabled and WDT clock to use ET1PSR. */
 	IT83XX_ETWD_ETWCFG = 0x30;
 
+#ifdef CONFIG_HIBERNATE
+	/* bit4: watchdog can be stopped. */
+	IT83XX_ETWD_ETWCTRL |= (1 << 4);
+#else
 	/* Specify that watchdog cannot be stopped. */
 	IT83XX_ETWD_ETWCTRL = 0x00;
+#endif
 
 	/* Start WDT_EXT_TIMER (CONFIG_AUX_TIMER_PERIOD_MS ms). */
 	ext_timer_ms(WDT_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 1,

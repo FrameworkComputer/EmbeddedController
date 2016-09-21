@@ -1224,6 +1224,10 @@ enum usbpd_port {
 	USBPD_PORT_COUNT,
 };
 
+/* Wake pin definitions, defined at board-level */
+extern const enum gpio_signal hibernate_wake_pins[];
+extern const int hibernate_wake_pins_used;
+
 /* --- MISC (not implemented yet) --- */
 
 #define IT83XX_PS2_BASE   0x00F01700

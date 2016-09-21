@@ -228,6 +228,12 @@ const struct ec2i_t pnpcfg_settings[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pnpcfg_settings) == EC2I_SETTING_COUNT);
 
+/* Wake-up pins for hibernate */
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_POWER_BUTTON_L, GPIO_LID_OPEN
+};
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
 /* Initialize board. */
 static void board_init(void)
 {

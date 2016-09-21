@@ -10,6 +10,8 @@
 #include "console.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
+#include "intc.h"
+#include "irq_chip.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -31,6 +33,7 @@ static int idle_doze_cnt;
 static int idle_sleep_cnt;
 static uint64_t total_idle_sleep_time_us;
 static int allow_sleep;
+static uint32_t ec_sleep;
 /*
  * Fixed amount of time to keep the console in use flag true after boot in
  * order to give a permanent window in which the heavy sleep mode is not used.
@@ -348,9 +351,65 @@ static int clock_allow_low_power_idle(void)
 	return 1;
 }
 
+int clock_ec_wake_from_sleep(void)
+{
+	return ec_sleep;
+}
+
+void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	int i;
+
+	/* disable all interrupts */
+	interrupt_disable();
+	for (i = 0; i < IT83XX_IRQ_COUNT; i++) {
+		chip_disable_irq(i);
+		chip_clear_pending_irq(i);
+	}
+	/* bit5: watchdog is disabled. */
+	IT83XX_ETWD_ETWCTRL |= (1 << 5);
+	/* Setup GPIOs for hibernate */
+	if (board_hibernate_late)
+		board_hibernate_late();
+
+	if (seconds || microseconds) {
+		/* At least 1 ms for hibernate. */
+		uint64_t c = (seconds * 1000 + microseconds / 1000 + 1) * 1024;
+
+		uint64divmod(&c, 1000);
+		/* enable a 56-bit timer and clock source is 1.024 KHz */
+		ext_timer_stop(FREE_EXT_TIMER_L, 1);
+		ext_timer_stop(FREE_EXT_TIMER_H, 1);
+		IT83XX_ETWD_ETXPSR(FREE_EXT_TIMER_L) = EXT_PSR_1P024K_HZ;
+		IT83XX_ETWD_ETXPSR(FREE_EXT_TIMER_H) = EXT_PSR_1P024K_HZ;
+		IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_L) = c & 0xffffff;
+		IT83XX_ETWD_ETXCNTLR(FREE_EXT_TIMER_H) = (c >> 24) & 0xffffffff;
+		ext_timer_start(FREE_EXT_TIMER_H, 1);
+		ext_timer_start(FREE_EXT_TIMER_L, 0);
+	}
+
+	for (i = 0; i < hibernate_wake_pins_used; ++i)
+		gpio_enable_interrupt(hibernate_wake_pins[i]);
+
+	/* EC sleep */
+	ec_sleep = 1;
+	clock_ec_pll_ctrl(EC_PLL_SLEEP);
+	interrupt_enable();
+	/* standby instruction */
+	asm("standby wake_grant");
+
+	/* we should never reach that point */
+	while (1)
+		;
+}
+
 void clock_sleep_mode_wakeup_isr(void)
 {
 	uint32_t st_us, c;
+
+	/* trigger a reboot if wake up EC from sleep mode (system hibernate) */
+	if (clock_ec_wake_from_sleep())
+		system_reset(SYSTEM_RESET_HARD);
 
 	if (IT83XX_ECPM_PLLCTRL == EC_PLL_DEEP_DOZE) {
 		clock_ec_pll_ctrl(EC_PLL_DOZE);

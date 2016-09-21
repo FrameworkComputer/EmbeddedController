@@ -10,29 +10,13 @@
 #include "ec2i_chip.h"
 #include "flash.h"
 #include "host_command.h"
+#include "intc.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
 #include "version.h"
 #include "watchdog.h"
-
-void __no_hibernate(uint32_t seconds, uint32_t microseconds)
-{
-#ifdef CONFIG_COMMON_RUNTIME
-	/*
-	 * Hibernate not implemented on this platform.
-	 *
-	 * Until then, treat this as a request to hard-reboot.
-	 */
-	cprints(CC_SYSTEM, "hibernate not supported, so rebooting");
-	cflush();
-	system_reset(SYSTEM_RESET_HARD);
-#endif
-}
-
-void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
-	__attribute__((weak, alias("__no_hibernate")));
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
@@ -141,6 +125,9 @@ void system_reset(int flags)
 		save_flags |= RESET_FLAG_HARD;
 	else
 		save_flags |= RESET_FLAG_SOFT;
+
+	if (clock_ec_wake_from_sleep())
+		save_flags |= RESET_FLAG_HIBERNATE;
 
 	/* Store flags to battery backed RAM. */
 	BRAM_RESET_FLAGS = save_flags >> 24;
