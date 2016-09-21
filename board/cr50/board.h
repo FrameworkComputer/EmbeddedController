@@ -136,9 +136,6 @@ void assert_ec_rst(void);
 void deassert_ec_rst(void);
 int is_ec_rst_asserted(void);
 
-/* Event to request a reset/re-initialization of the TPM task */
-#define TPM_EVENT_RESET (TASK_EVENT_CUSTOM(1))
-
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */

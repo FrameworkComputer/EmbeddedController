@@ -32,6 +32,17 @@ void sps_tpm_disable(void);
 size_t tpm_get_burst_size(void);
 
 /*
+ * Reset the TPM. This sends a request to the TPM task, so that the reset can
+ * happen when the TPM task finishes whatever it's doing at the moment.
+ *
+ * Returns 0 if the request was made, but we can't wait for it to complete
+ * because we're in interrupt context or something similar. Otherwise, it
+ * blocks and returns 1 after the TPM has been cleared, or returns -1 if the
+ * request timed out.
+ */
+int tpm_reset(void);
+
+/*
  * This structure describes the header of all commands and responses sent and
  * received over TPM FIFO.
  *

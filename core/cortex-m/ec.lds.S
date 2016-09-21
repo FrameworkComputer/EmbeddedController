@@ -300,7 +300,15 @@ SECTIONS
         STRINGIFY(OUTDIR/common/tpm_registers.o*)(.data)
 	__data_libtpm2_end = .;
 
-        *(.data)
+	/*
+	 * TPM reset currently only clears BSS for the TPM library.  It does
+	 * not reset any initialized variables in data.  So, make sure there
+	 * aren't any.
+	 */
+	ASSERT(__data_libtpm2_start == __data_libtpm2_end,
+        "libtpm2 .data section is nonzero");
+
+        *(.data*)
 #ifdef CONFIG_MPU
         /* It has to be aligned by 32 bytes to be a valid MPU region. */
         . = ALIGN(32);

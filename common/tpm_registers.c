@@ -570,7 +570,39 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 }
 #endif
 
-static void tpm_reset(void)
+/* Event (to TPM task) to request reset, or (from TPM task) on completion. */
+#define TPM_EVENT_RESET (TASK_EVENT_CUSTOM(1))
+
+/* Calling task to notify when the TPM reset has completed. */
+static task_id_t waiting_for_reset
+/* This must not be affected by the reset, or we'll forget who to tell. */
+__attribute__((section(".data.noreinit"))) = TASK_ID_INVALID;
+
+int tpm_reset(void)
+{
+	uint32_t evt;
+
+	cprints(CC_TASK, "%s", __func__);
+
+	task_set_event(TASK_ID_TPM, TPM_EVENT_RESET, 0);
+
+	if (in_interrupt_context() ||
+	    task_get_current() == TASK_ID_TPM)
+		return 0;		    /* Can't sleep. Clown'll eat me. */
+
+	/* Try to wait until the TPM is reset, but timeout eventually */
+	waiting_for_reset = task_get_current();
+	evt = task_wait_event_mask(TPM_EVENT_RESET, SECOND);
+
+	/* Timeout is bad */
+	if (evt & TASK_EVENT_TIMER)
+		return -1;
+
+	/* Otherwise, good */
+	return 1;
+}
+
+static void tpm_reset_now(void)
 {
 	/* This is more related to TPM task activity than TPM transactions */
 	cprints(CC_TASK, "%s", __func__);
@@ -585,16 +617,20 @@ static void tpm_reset(void)
 	memset(__bss_libtpm2_start, __bss_libtpm2_end - __bss_libtpm2_start, 0);
 
 	/*
-	 * TPM reset currently only clears BSS for the TPM library.  It does
-	 * not reset any initialized variables in data.  So, make sure there
-	 * aren't any.
+	 * NOTE: Any initialized variables in this file must be placed in a
+	 * separate section (NOT .data). If they need resetting, do so here.
 	 */
-	ASSERT(__data_libtpm2_start == __data_libtpm2_end);
 
 	/* Re-initialize our registers */
 	tpm_init();
 
 	sps_tpm_enable();
+
+	if (waiting_for_reset != TASK_ID_INVALID) {
+		/* Wake the waiting task, if any */
+		task_set_event(waiting_for_reset, TPM_EVENT_RESET, 0);
+		waiting_for_reset = TASK_ID_INVALID;
+	}
 }
 
 void tpm_task(void)
@@ -614,7 +650,7 @@ void tpm_task(void)
 		/* Wait for the next command event */
 		evt = task_wait_event(-1);
 		if (evt & TPM_EVENT_RESET) {
-			tpm_reset();
+			tpm_reset_now();
 			continue;
 		}
 		tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;

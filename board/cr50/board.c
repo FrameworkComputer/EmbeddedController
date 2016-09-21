@@ -395,7 +395,7 @@ void sys_rst_asserted(enum gpio_signal signal)
 		return;
 
 	/* Re-initialize the TPM software state */
-	task_set_event(TASK_ID_TPM, TPM_EVENT_RESET, 0);
+	tpm_reset();
 }
 
 void assert_sys_rst(void)
