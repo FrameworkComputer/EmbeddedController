@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "nvmem.h"
 #include "registers.h"
@@ -52,15 +53,16 @@ int console_is_restricted(void)
 /****************************************************************************/
 /* Stuff for the unlock sequence */
 
-/* Total time to spend poking the power button */
-#define UNLOCK_TIME (10 * SECOND)
-/* Max time between pokes */
-#define UNLOCK_BEAT (2 * SECOND)
+/* Max time that can elapse between power button pokes */
+static int unlock_beat;
 
+/* When will we have poked the power button for long enough? */
 static timestamp_t unlock_deadline;
+
+/* Are we expecting power button pokes? */
 static int unlock_in_progress;
 
-/* Only invoked when the unlock sequence is done, either good or bad. */
+/* This is invoked only when the unlock sequence has ended */
 static void unlock_sequence_is_over(void)
 {
 	/* Disable the power button interrupt so we aren't bothered */
@@ -94,7 +96,7 @@ static void power_button_poked(void)
 		CPRINTS("poke: enough already", __func__);
 	} else {
 		/* Wait for the next poke */
-		hook_call_deferred(&unlock_sequence_is_over_data, UNLOCK_BEAT);
+		hook_call_deferred(&unlock_sequence_is_over_data, unlock_beat);
 		CPRINTS("poke: not yet %.6ld", unlock_deadline);
 	}
 
@@ -103,12 +105,8 @@ static void power_button_poked(void)
 DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT, power_button_poked, 1);
 
 
-static int start_the_unlock_process(void)
+static void start_unlock_process(int total_poking_time, int max_poke_interval)
 {
-	/* Don't invoke more than one at a time */
-	if (unlock_in_progress)
-		return EC_ERROR_BUSY;
-
 	unlock_in_progress = 1;
 
 	/* Clear any leftover power button interrupts */
@@ -118,20 +116,18 @@ static int start_the_unlock_process(void)
 	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 1);
 	task_enable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT);
 
+	/* Must poke at least this often */
+	unlock_beat = max_poke_interval;
+
 	/* Keep poking until it's been long enough */
 	unlock_deadline = get_time();
-	unlock_deadline.val += UNLOCK_TIME;
+	unlock_deadline.val += total_poking_time;
 
 	/* Stay awake while we're doing this, just in case. */
 	disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
 
 	/* Check progress after waiting long enough for one button press */
-	hook_call_deferred(&unlock_sequence_is_over_data, UNLOCK_BEAT);
-
-	CPRINTS("Unlock sequence starting. Continue until %.6ld",
-		unlock_deadline);
-
-	return EC_SUCCESS;
+	hook_call_deferred(&unlock_sequence_is_over_data, unlock_beat);
 }
 
 /****************************************************************************/
@@ -175,15 +171,50 @@ static int command_lock(int argc, char **argv)
 		/* Warn about the side effects of wiping nvmem */
 		ccputs(warning);
 
-		/* Now the user has to sit there and poke the button */
-		ccprintf("Start poking the power button in ");
-		for (i = 10; i; i--) {
-			ccprintf("%d ", i);
-			sleep(1);
-		}
-		ccprintf("go!\n");
+		if (gpio_get_level(GPIO_BATT_PRES_L) == 1) {
+			/*
+			 * If the battery cable has been disconnected, we only
+			 * need to poke the power button once to prove physical
+			 * presence.
+			 */
+			ccprintf("Tap the power button once to confirm...\n\n");
 
-		return start_the_unlock_process();
+			/*
+			 * We'll be satisified with the first press (so the
+			 * unlock_deadine is now + 0us), but we're willing to
+			 * wait for up to 10 seconds for that first press to
+			 * happen. If we don't get one, the unlock will fail.
+			 */
+			start_unlock_process(0, 10 * SECOND);
+
+		} else {
+			/*
+			 * If the battery is present, the user has to sit there
+			 * and poke the button repeatedly until enough time has
+			 * elapsed.
+			 */
+
+			ccprintf("Start poking the power button in ");
+			for (i = 10; i; i--) {
+				ccprintf("%d ", i);
+				sleep(1);
+			}
+			ccprintf("go!\n");
+
+			/*
+			 * We won't be happy until we've poked the button for a
+			 * good long while, but we'll only wait a short time
+			 * between each press before deciding that the user has
+			 * given up.
+			 */
+			/* TODO(crbug.com/p/57408): Poke 5 mins, not 10 secs */
+			start_unlock_process(10 * SECOND, 2 * SECOND);
+
+			ccprintf("Unlock sequence starting."
+				 " Continue until %.6ld\n", unlock_deadline);
+		}
+
+		return EC_SUCCESS;
 	}
 
 out:
