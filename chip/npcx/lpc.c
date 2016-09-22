@@ -885,6 +885,11 @@ static void lpc_init(void)
 	/* Write protect of Share memory */
 	NPCX_WIN_WR_PROT(1) = 0xFF;
 
+	/* We support LPC args and version 3 protocol */
+	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
+			EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
+			EC_HOST_CMD_FLAG_VERSION_3;
+
 	/* Turn on PMC2 for Host Command usage */
 	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 0);
 	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 1);
@@ -895,6 +900,10 @@ static void lpc_init(void)
 	NPCX_SMC_CTL = NPCX_SMC_CTL&~0x7F;
 	/* Clear status */
 	NPCX_SMC_STS = NPCX_SMC_STS;
+
+	/* Restore event masks if needed */
+	lpc_post_sysjump();
+
 	/* Create mailbox */
 
 	/*
@@ -927,18 +936,6 @@ static void lpc_init(void)
 	SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SMIE);
 #endif
 	lpc_task_enable_irq();
-
-	/* Initialize host args and memory map to all zero */
-	memset(lpc_host_args, 0, sizeof(*lpc_host_args));
-	memset(lpc_get_memmap_range(), 0, EC_MEMMAP_SIZE);
-
-	/* We support LPC args and version 3 protocol */
-	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
-			EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
-			EC_HOST_CMD_FLAG_VERSION_3;
-
-	/* Restore event masks if needed */
-	lpc_post_sysjump();
 
 	/* Sufficiently initialized */
 	init_done = 1;
