@@ -293,8 +293,6 @@ static int svdm_dp_config(int port, uint32_t *payload)
 static void svdm_dp_post_config(int port)
 {
 	dp_flags[port] |= DP_FLAGS_DP_ON;
-	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
-		return;
 }
 
 static int svdm_dp_attention(int port, uint32_t *payload)
@@ -306,15 +304,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 	dp_status[port] = payload[1];
 
-	/* Its initial DP status message prior to config */
-	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
-		if (lvl)
-			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
-		return 1;
-	}
-
-	if (irq)
-		mux->hpd_update(port, lvl, 1);
+	mux->hpd_update(port, lvl, irq);
 
 	if (lvl)
 		usb_mux_set(port, mf_pref ? TYPEC_MUX_DOCK : TYPEC_MUX_DP,
