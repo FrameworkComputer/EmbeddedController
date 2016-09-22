@@ -164,6 +164,14 @@ void board_configure_deep_sleep_wakepins(void)
 	/* TODO remove i2cs wake event */
 
 	/*
+	 * DIOA3 is GPIO_DETECT_AP which is used to detect if the AP is in S0.
+	 * If the AP is in s0, cr50 should not be in deep sleep so wake up.
+	 */
+	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA3, 1); /* edge sensitive */
+	GWRITE_FIELD(PINMUX, EXITINV0, DIOA3, 0);  /* wake on high */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA3, 1);   /* GPIO_DETECT_AP */
+
+	/*
 	 * Whether it is a short pulse or long one waking on the rising edge is
 	 * fine because the goal of sys_rst is to reset the TPM and after
 	 * resuming from deep sleep the TPM will be reset. Cr50 doesn't need to
