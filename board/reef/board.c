@@ -933,9 +933,6 @@ void board_hibernate(void)
 	 */
 	chipset_do_shutdown();
 
-	/* Should not enter hibernate on AC */
-	ASSERT(!extpower_is_present());
-
 	/* Added delay to allow AP to settle down */
 	msleep(100);
 
