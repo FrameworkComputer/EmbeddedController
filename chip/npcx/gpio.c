@@ -744,11 +744,7 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 static void gpio_interrupt(int int_no)
 {
-#if DEBUG_GPIO
-	static uint8_t i, j, pin, wui_mask;
-#else
 	uint8_t i, j, pin, wui_mask;
-#endif
 
 	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++) {
 		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++) {

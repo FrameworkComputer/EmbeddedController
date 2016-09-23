@@ -54,7 +54,6 @@
 #define DEBUG_I2C                        0
 #define DEBUG_TMR                        0
 #define DEBUG_WDG                        0
-#define DEBUG_GPIO                       1
 #define DEBUG_FAN                        0
 #define DEBUG_PWM                        0
 #define DEBUG_SPI                        0
