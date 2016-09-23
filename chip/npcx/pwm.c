@@ -27,6 +27,9 @@
 #define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
 #endif
 
+/* pwm resolution for each channel */
+static uint32_t pwm_res[PWM_CH_COUNT];
+
 /* PWM clock source */
 enum npcx_pwm_source_clock {
 	NPCX_PWM_CLOCK_APB2_LFCLK  = 0,
@@ -55,8 +58,8 @@ enum npcx_pwm_heartbeat_mode {
 static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 {
 	int mdl = pwm_channels[ch].channel;
-	uint32_t prescaler_divider;
 	uint32_t clock;
+	uint32_t pre;
 
 	assert(freq != 0);
 
@@ -67,27 +70,28 @@ static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 	 * Get PWM clock frequency. Use internal 32K as PWM clock source if
 	 * the PWM must be active during low-power idle.
 	 */
-
 	if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
 		clock = INT_32K_CLOCK;
 	else
 		clock = clock_get_apb2_freq();
 
-	/*
-	 * Based on freq = clock / ((ctr + 1) * (prsc + 1))
-	 *   where:  prsc = prescaler_divider
-	 *           ctr  = MAX_DUTY_CYCLE
-	 */
-	prescaler_divider = (clock / ((EC_PWM_MAX_DUTY + 1) * freq)) - 1;
+	/* Calculate prescaler */
+	pre = DIV_ROUND_UP(clock, (0xffff * freq));
 
-	/* Configure computed prescaler and resolution */
-	NPCX_PRSC(mdl) = (uint16_t)prescaler_divider;
+	/* Calculate maximum resolution for the given freq. and prescaler */
+	pwm_res[ch] = (clock / pre) / freq;
+
+	/* Make sure we have at least 1% resolution */
+	assert(pwm_res[ch] >= 100);
+
+	/* Set PWM prescaler. */
+	NPCX_PRSC(mdl) = pre - 1;
 
 	/* Set PWM cycle time */
-	NPCX_CTR(mdl) = EC_PWM_MAX_DUTY;
+	NPCX_CTR(mdl) = pwm_res[ch];
 
 	/* Set the duty cycle to 100% since DCR == CTR */
-	NPCX_DCR(mdl) = EC_PWM_MAX_DUTY;
+	NPCX_DCR(mdl) = pwm_res[ch];
 }
 
 /**
@@ -140,6 +144,7 @@ void pwm_set_duty(enum pwm_channel ch, int percent)
 void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 {
 	int mdl = pwm_channels[ch].channel;
+	uint32_t sd;
 
 	CPRINTS("pwm%d, set duty=%d", mdl, duty);
 
@@ -150,8 +155,11 @@ void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 	CPRINTS("freq=0x%x", pwm_channels[ch].freq);
 	CPRINTS("duty_cycle_cnt=%d", duty);
 
+	/* duty ranges from 0 - 0xffff, so scale down to 0 - pwm_res[ch] */
+	sd = DIV_ROUND_NEAREST(duty * pwm_res[ch], EC_PWM_MAX_DUTY);
+
 	/* Set the duty cycle */
-	NPCX_DCR(mdl) = (uint16_t)duty;
+	NPCX_DCR(mdl) = (uint16_t)sd;
 
 	pwm_enable(ch, !!duty);
 }
@@ -164,6 +172,7 @@ void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
  */
 int pwm_get_duty(enum pwm_channel ch)
 {
+	/* duty ranges from 0 - 0xffff, so scale to 0 - 100 */
 	return DIV_ROUND_NEAREST(pwm_get_raw_duty(ch) * 100, EC_PWM_MAX_DUTY);
 }
 
@@ -181,7 +190,12 @@ uint16_t pwm_get_raw_duty(enum pwm_channel ch)
 	if (!pwm_get_enabled(ch))
 		return 0;
 	else
-		return NPCX_DCR(mdl);
+		/*
+		 * NPCX_DCR ranges from 0 - pwm_res[ch],
+		 * so scale to 0 - 0xffff
+		 */
+		return DIV_ROUND_NEAREST(NPCX_DCR(mdl) * EC_PWM_MAX_DUTY,
+						pwm_res[ch]);
 }
 
 /**
@@ -228,8 +242,11 @@ static void pwm_init(void)
 	uint8_t pd_mask = 0;
 
 	/* Take enabled PWMs out of power-down state */
-	for (i = 0; i < PWM_CH_COUNT; i++)
+	for (i = 0; i < PWM_CH_COUNT; i++) {
 		pd_mask |= (1 << pwm_channels[i].channel);
+		pwm_res[i] = 0;
+	}
+
 	clock_enable_peripheral(CGC_OFFSET_PWM, pd_mask, CGC_MODE_ALL);
 
 	for (i = 0; i < PWM_CH_COUNT; i++)
