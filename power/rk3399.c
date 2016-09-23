@@ -60,6 +60,9 @@ void chipset_force_shutdown(void)
 
 void chipset_reset(int cold_reset)
 {
+	/* Print out the RTC to help correlate resets in logs. */
+	print_system_rtc(CC_CHIPSET);
+
 	/* TODO: handle cold_reset */
 	CPRINTS("%s(%d)", __func__, cold_reset);
 
