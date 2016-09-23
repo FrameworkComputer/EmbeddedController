@@ -608,6 +608,18 @@ DECLARE_IRQ(NPCX_IRQ_PORT80, lpc_port80_interrupt, 3);
  */
 static void lpc_sysjump(void)
 {
+	lpc_task_disable_irq();
+
+	/* Disable protect for Win 1 and 2. */
+	NPCX_WIN_WR_PROT(0) = 0;
+	NPCX_WIN_WR_PROT(1) = 0;
+	NPCX_WIN_RD_PROT(0) = 0;
+	NPCX_WIN_RD_PROT(1) = 0;
+
+	/* Reset base address for Win 1 and 2. */
+	NPCX_WIN_BASE(0) = 0xfffffff8;
+	NPCX_WIN_BASE(1) = 0xfffffff8;
+
 	system_add_jump_tag(LPC_SYSJUMP_TAG, 1,
 			sizeof(event_mask), event_mask);
 }
