@@ -624,13 +624,19 @@ const char *system_get_chip_revision(void)
 
 /*****************************************************************************/
 /* Console commands */
-
 #ifdef CONFIG_CMD_RTC
-static int command_system_rtc(int argc, char **argv)
+void print_system_rtc(enum console_channel ch)
 {
 	uint32_t rtc;
 	uint32_t rtcss;
 
+	rtc = system_get_rtc_sec_subsec(&rtcss);
+	cprintf(ch, "RTC: 0x%08x.%04x (%d.%06d s)\n",
+		 rtc, rtcss, rtc, HIB_RTC_SUBSEC_TO_USEC(rtcss));
+}
+
+static int command_system_rtc(int argc, char **argv)
+{
 	if (argc == 3 && !strcasecmp(argv[1], "set")) {
 		char *e;
 		uint32_t t = strtoi(argv[2], &e, 0);
@@ -642,9 +648,7 @@ static int command_system_rtc(int argc, char **argv)
 		return EC_ERROR_INVAL;
 	}
 
-	rtc = system_get_rtc_sec_subsec(&rtcss);
-	ccprintf("RTC: 0x%08x.%04x (%d.%06d s)\n",
-		 rtc, rtcss, rtc, HIB_RTC_SUBSEC_TO_USEC(rtcss));
+	print_system_rtc(CC_COMMAND);
 
 	return EC_SUCCESS;
 }

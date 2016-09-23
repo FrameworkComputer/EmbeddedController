@@ -742,9 +742,15 @@ int system_is_reboot_warm(void)
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_RTC
+void print_system_rtc(enum console_channel ch)
+{
+	uint32_t sec = system_get_rtc_sec();
+
+	cprintf(ch, "RTC: 0x%08x (%d.00 s)\n", sec, sec);
+}
+
 static int command_system_rtc(int argc, char **argv)
 {
-	uint32_t sec;
 	if (argc == 3 && !strcasecmp(argv[1], "set")) {
 		char *e;
 		uint32_t t = strtoi(argv[2], &e, 0);
@@ -756,8 +762,7 @@ static int command_system_rtc(int argc, char **argv)
 		return EC_ERROR_INVAL;
 	}
 
-	sec = system_get_rtc_sec();
-	ccprintf("RTC: 0x%08x (%d.00 s)\n", sec, sec);
+	print_system_rtc(CC_COMMAND);
 
 	return EC_SUCCESS;
 }
