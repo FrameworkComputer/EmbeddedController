@@ -160,7 +160,12 @@ void system_set_rtc(uint32_t seconds)
 void system_check_reset_cause(void)
 {
 	uint32_t hib_wake_flags = bbram_data_read(BBRM_DATA_INDEX_WAKE);
-	uint32_t flags = 0;
+	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+
+	/* Clear saved reset flags in bbram */
+	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, 0);
+	/* Clear saved hibernate wake flag in bbram , too */
+	bbram_data_write(BBRM_DATA_INDEX_WAKE, 0);
 
 	/* Use scratch bit to check power on reset or VCC1_RST reset */
 	if (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) {
@@ -189,23 +194,26 @@ void system_check_reset_cause(void)
 		SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS);
 	}
 
+	/* Reset by hibernate */
+	if (hib_wake_flags & HIBERNATE_WAKE_PIN)
+		flags |= RESET_FLAG_WAKE_PIN | RESET_FLAG_HIBERNATE;
+	else if (hib_wake_flags & HIBERNATE_WAKE_MTC)
+		flags |= RESET_FLAG_RTC_ALARM | RESET_FLAG_HIBERNATE;
+
 	/* Watchdog Reset */
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
-		flags |= RESET_FLAG_WATCHDOG;
+		/*
+		 * Don't set RESET_FLAG_WATCHDOG flag if watchdog is issued by
+		 * system_reset or hibernate in order to distinguish reset cause
+		 * is panic reason or not.
+		 */
+		if (!(flags & (RESET_FLAG_SOFT | RESET_FLAG_HARD |
+				RESET_FLAG_HIBERNATE)))
+			flags |= RESET_FLAG_WATCHDOG;
+
 		/* Clear watchdog reset status initially*/
 		SET_BIT(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS);
 	}
-
-	if ((hib_wake_flags & HIBERNATE_WAKE_PIN))
-		flags |= RESET_FLAG_WAKE_PIN;
-	else if ((hib_wake_flags & HIBERNATE_WAKE_MTC))
-		flags |= RESET_FLAG_RTC_ALARM;
-
-	/* Restore then clear saved reset flags */
-	flags |= bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
-	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, 0);
-	/* Clear saved hibernate wake flag, too */
-	bbram_data_write(BBRM_DATA_INDEX_WAKE, 0);
 
 	system_set_reset_flags(flags);
 }
