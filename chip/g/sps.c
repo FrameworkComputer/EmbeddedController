@@ -211,8 +211,8 @@ static rx_handler_f sps_rx_handler;
 int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler,
 			    unsigned rx_fifo_threshold)
 {
-	if (sps_rx_handler)
-		return -1;
+	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
+	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
 
 	if (!rx_fifo_threshold)
 		rx_fifo_threshold = 8;  /* This is a sensible default. */
@@ -222,18 +222,6 @@ int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler,
 	task_enable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
 	task_enable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
 
-	return 0;
-}
-
-int sps_unregister_rx_handler(void)
-{
-	if (!sps_rx_handler)
-		return -1;
-
-	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
-	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
-
-	sps_rx_handler = NULL;
 	return 0;
 }
 
@@ -502,8 +490,6 @@ static int command_sps(int argc, char **argv)
 			usleep(10);
 		}
 	}
-
-	sps_unregister_rx_handler();
 
 	ccprintf("Processed %d frames\n", count - 1);
 	ccprintf("rx count %d, tx count %d, tx_empty %d, max rx batch %d\n",

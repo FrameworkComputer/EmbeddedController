@@ -262,7 +262,7 @@ static void tpm_rx_handler(uint8_t *data, size_t data_size, int cs_disabled)
 		init_new_cycle();
 }
 
-void sps_tpm_enable(void)
+static void sps_tpm_enable(void)
 {
 	/*
 	 * Let's make sure we get an interrupt as soon as the header is
@@ -272,11 +272,12 @@ void sps_tpm_enable(void)
 	init_new_cycle();
 }
 
-void sps_tpm_disable(void)
+
+static void sps_if_register(void)
 {
-	sps_tpm_state = SPS_TPM_STATE_PONDERING;
-	sps_unregister_rx_handler();
-	/* We don't care anymore, so we can sleep whenever */
-	delay_sleep_by(0);
-	enable_sleep(SLEEP_MASK_SPI);
+	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_SPI))
+		return;
+
+	tpm_register_interface(sps_tpm_enable);
 }
+DECLARE_HOOK(HOOK_INIT, sps_if_register, HOOK_PRIO_LAST);

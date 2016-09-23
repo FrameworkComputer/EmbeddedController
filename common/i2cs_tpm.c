@@ -223,8 +223,16 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 	gpio_set_level(GPIO_INT_AP_L, 1);
 }
 
-static void i2cs_tpm_init(void)
+static void i2cs_tpm_enable(void)
 {
 	i2cs_register_write_complete_handler(wr_complete_handler);
 }
-DECLARE_HOOK(HOOK_INIT, i2cs_tpm_init, HOOK_PRIO_LAST);
+
+static void i2cs_if_register(void)
+{
+	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_I2C))
+		return;
+
+	tpm_register_interface(i2cs_tpm_enable);
+}
+DECLARE_HOOK(HOOK_INIT, i2cs_if_register, HOOK_PRIO_LAST);

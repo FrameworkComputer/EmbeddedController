@@ -114,7 +114,6 @@ static void i2cs_init(void)
 	/* Slave address is hardcoded to 0x50. */
 	GWRITE(I2CS, SLAVE_DEVADDRVAL, 0x50);
 }
-DECLARE_HOOK(HOOK_INIT, i2cs_init, HOOK_PRIO_DEFAULT);
 
 /* Process the 'end of a write cycle' interrupt. */
 static void _i2cs_write_complete_int(void)
@@ -258,9 +257,8 @@ void i2cs_post_read_fill_fifo(uint8_t *buffer, size_t len)
 
 int i2cs_register_write_complete_handler(wr_complete_handler_f wc_handler)
 {
-	if (write_complete_handler_)
-		return -1;
-
+	task_disable_irq(GC_IRQNUM_I2CS0_INTR_WRITE_COMPLETE_INT);
+	i2cs_init();
 	write_complete_handler_ = wc_handler;
 	task_enable_irq(GC_IRQNUM_I2CS0_INTR_WRITE_COMPLETE_INT);
 

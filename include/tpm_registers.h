@@ -23,13 +23,12 @@ void tpm_register_put(uint32_t regaddr,
 /* The SPI master is reading data from a TPM register. */
 void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size);
 
-/* Enable SPS TPM driver. */
-void sps_tpm_enable(void);
-/* Disable SPS TPM driver. */
-void sps_tpm_disable(void);
-
 /* Get the current value of the burst size field of the status register. */
 size_t tpm_get_burst_size(void);
+
+/* Register a function to restart TPM communications layer. */
+typedef void (*interface_restart_func)(void);
+void tpm_register_interface(interface_restart_func interface_restart);
 
 /*
  * Reset the TPM. This sends a request to the TPM task, so that the reset can

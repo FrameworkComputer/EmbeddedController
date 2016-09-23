@@ -46,6 +46,8 @@
 #define GOOGLE_DID 0x0028
 #define CR50_RID	0  /* No revision ID yet */
 
+static uint8_t reset_in_progress __attribute__((section(".bss.noreinit")));
+
 /* Tpm state machine states. */
 enum tpm_states {
 	tpm_state_idle,
@@ -372,6 +374,9 @@ void tpm_register_put(uint32_t regaddr, const uint8_t *data, uint32_t data_size)
 {
 	uint32_t i;
 
+	if (reset_in_progress)
+		return;
+
 	CPRINTF("%s(0x%03x, %d,", __func__, regaddr, data_size);
 	for (i = 0; i < data_size && i < 4; i++)
 		CPRINTF(" %02x", data[i]);
@@ -443,6 +448,9 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 {
 	int i;
 
+	if (reset_in_progress)
+		return;
+
 	CPRINTF("%s(0x%06x, %d)", __func__, regaddr, data_size);
 	switch (regaddr) {
 	case TPM_DID_VID:
@@ -492,10 +500,22 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 	CPRINTF("\n");
 }
 
+static interface_restart_func if_restart
+__attribute__((section(".bss.noreinit")));
+void tpm_register_interface(interface_restart_func interface_restart)
+{
+	if_restart = interface_restart;
+}
+
 static void tpm_init(void)
 {
 	/* This is more related to TPM task activity than TPM transactions */
 	cprints(CC_TASK, "%s", __func__);
+
+	if (system_rolling_reboot_suspected()) {
+		cprints(CC_TASK, "%s interrupted", __func__);
+		return;
+	}
 
 	set_tpm_state(tpm_state_idle);
 	tpm_.regs.access = tpm_reg_valid_sts;
@@ -534,6 +554,9 @@ static void tpm_init(void)
 	}
 
 	_plat__SetNvAvail();
+
+	/* Reinitialize TPM interface. */
+	if_restart();
 }
 
 size_t tpm_get_burst_size(void)
@@ -604,10 +627,10 @@ int tpm_reset(void)
 
 static void tpm_reset_now(void)
 {
+	reset_in_progress = 1;
+
 	/* This is more related to TPM task activity than TPM transactions */
 	cprints(CC_TASK, "%s", __func__);
-
-	sps_tpm_disable();
 
 	/*
 	 * Clear the TPM library's zero-init data.  Note that the linker script
@@ -626,22 +649,17 @@ static void tpm_reset_now(void)
 	/* Re-initialize our registers */
 	tpm_init();
 
-	sps_tpm_enable();
-
 	if (waiting_for_reset != TASK_ID_INVALID) {
 		/* Wake the waiting task, if any */
 		task_set_event(waiting_for_reset, TPM_EVENT_RESET, 0);
 		waiting_for_reset = TASK_ID_INVALID;
 	}
+	reset_in_progress = 0;
 }
 
 void tpm_task(void)
 {
-	if (system_rolling_reboot_suspected())
-		return;
-
 	tpm_init();
-	sps_tpm_enable();
 	while (1) {
 		uint8_t *response;
 		unsigned response_size;
