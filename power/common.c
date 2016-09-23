@@ -169,6 +169,9 @@ void power_set_state(enum power_state new_state)
 	if (new_state == POWER_G3)
 		last_shutdown_time = get_time().val;
 
+	/* Print out the RTC value to help correlate EC and kernel logs. */
+	print_system_rtc(CC_CHIPSET);
+
 	state = new_state;
 
 	/*
