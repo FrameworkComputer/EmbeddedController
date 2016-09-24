@@ -49,27 +49,27 @@ int console_is_restricted(void)
 }
 
 /****************************************************************************/
-/* Stuff for the unlock dance */
+/* Stuff for the unlock sequence */
 
 /* Total time to spend poking the power button */
-#define DANCE_TIME (10 * SECOND)
+#define UNLOCK_TIME (10 * SECOND)
 /* Max time between pokes */
-#define DANCE_BEAT (2 * SECOND)
+#define UNLOCK_BEAT (2 * SECOND)
 
-static timestamp_t dance_deadline;
-static int dance_in_progress;
+static timestamp_t unlock_deadline;
+static int unlock_in_progress;
 
-/* This will only be invoked when the dance is done, either good or bad. */
-static void dance_is_over(void)
+/* Only invoked when the unlock sequence is done, either good or bad. */
+static void unlock_sequence_is_over(void)
 {
-	if (dance_in_progress) {
-		CPRINTS("Unlock dance failed");
+	if (unlock_in_progress) {
+		CPRINTS("Unlock process failed");
 	} else {
-		CPRINTS("Unlock dance completed successfully");
+		CPRINTS("Unlock process completed successfully");
 		console_restricted_state = 0;
 	}
 
-	dance_in_progress = 0;
+	unlock_in_progress = 0;
 
 	/* Disable power button interrupt */
 	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 0);
@@ -77,19 +77,20 @@ static void dance_is_over(void)
 
 	/* Allow sleeping again */
 	enable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
+
 }
-DECLARE_DEFERRED(dance_is_over);
+DECLARE_DEFERRED(unlock_sequence_is_over);
 
 static void power_button_poked(void)
 {
-	if (timestamp_expired(dance_deadline, NULL)) {
+	if (timestamp_expired(unlock_deadline, NULL)) {
 		/* We've been poking for long enough */
-		dance_in_progress = 0;
-		hook_call_deferred(&dance_is_over_data, 0);
+		unlock_in_progress = 0;
+		hook_call_deferred(&unlock_sequence_is_over_data, 0);
 		CPRINTS("poke: enough already", __func__);
 	} else {
 		/* Wait for the next poke */
-		hook_call_deferred(&dance_is_over_data, DANCE_BEAT);
+		hook_call_deferred(&unlock_sequence_is_over_data, UNLOCK_BEAT);
 		CPRINTS("poke");
 	}
 
@@ -98,13 +99,13 @@ static void power_button_poked(void)
 DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT, power_button_poked, 1);
 
 
-static int start_the_dance(void)
+static int start_the_unlock_process(void)
 {
 	/* Don't invoke more than one at a time */
-	if (dance_in_progress)
+	if (unlock_in_progress)
 		return EC_ERROR_BUSY;
 
-	dance_in_progress = 1;
+	unlock_in_progress = 1;
 
 	/* Clear any leftover power button interrupts */
 	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
@@ -113,17 +114,18 @@ static int start_the_dance(void)
 	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 1);
 	task_enable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT);
 
-	/* Keep dancing until it's been long enough */
-	dance_deadline = get_time();
-	dance_deadline.val += DANCE_TIME;
+	/* Keep poking until it's been long enough */
+	unlock_deadline = get_time();
+	unlock_deadline.val += UNLOCK_TIME;
 
 	/* Stay awake while we're doing this, just in case. */
 	disable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
 
 	/* Check progress after waiting long enough for one button press */
-	hook_call_deferred(&dance_is_over_data, DANCE_BEAT);
+	hook_call_deferred(&unlock_sequence_is_over_data, UNLOCK_BEAT);
 
-	CPRINTS("Unlock dance starting. Dance until %.6ld", dance_deadline);
+	CPRINTS("Unlock sequence starting. Continue until %.6ld",
+		unlock_deadline);
 
 	return EC_SUCCESS;
 }
@@ -157,8 +159,8 @@ static int command_lock(int argc, char **argv)
 		 */
 
 		/* Don't count down if we know it's likely to fail */
-		if (dance_in_progress) {
-			ccprintf("An unlock dance is already in progress\n");
+		if (unlock_in_progress) {
+			ccprintf("An unlock process is already in progress\n");
 			return EC_ERROR_BUSY;
 		}
 
@@ -170,7 +172,7 @@ static int command_lock(int argc, char **argv)
 		}
 		ccprintf("go!\n");
 
-		return start_the_dance();
+		return start_the_unlock_process();
 	}
 
 out:
