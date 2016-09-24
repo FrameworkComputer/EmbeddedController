@@ -42,8 +42,12 @@ DECLARE_CONSOLE_COMMAND(wp, command_wp,
 /* When the system is locked down, provide a means to unlock it */
 #ifdef CONFIG_RESTRICTED_CONSOLE_COMMANDS
 
-/* TODO(crosbug.com/p/55510): It should be locked by default */
+/* Hand-built images may be initially unlocked; Buildbot images are not. */
+#ifdef CR50_DEV
 static int console_restricted_state;
+#else
+static int console_restricted_state = 1;
+#endif
 
 int console_is_restricted(void)
 {
@@ -52,6 +56,17 @@ int console_is_restricted(void)
 
 /****************************************************************************/
 /* Stuff for the unlock sequence */
+
+/*
+ * The normal unlock sequence should take 5 minutes (unless the case is
+ * opened). Hand-built images only need to be long enough to demonstrate that
+ * they work.
+ */
+#ifdef CR50_DEV
+#define UNLOCK_SEQUENCE_DURATION (10 * SECOND)
+#else
+#define UNLOCK_SEQUENCE_DURATION (300 * SECOND)
+#endif
 
 /* Max time that can elapse between power button pokes */
 static int unlock_beat;
@@ -183,7 +198,8 @@ static int command_lock(int argc, char **argv)
 			 * We'll be satisified with the first press (so the
 			 * unlock_deadine is now + 0us), but we're willing to
 			 * wait for up to 10 seconds for that first press to
-			 * happen. If we don't get one, the unlock will fail.
+			 * happen. If we don't get one by then, the unlock will
+			 * fail.
 			 */
 			start_unlock_process(0, 10 * SECOND);
 
@@ -202,13 +218,13 @@ static int command_lock(int argc, char **argv)
 			ccprintf("go!\n");
 
 			/*
-			 * We won't be happy until we've poked the button for a
-			 * good long while, but we'll only wait a short time
-			 * between each press before deciding that the user has
-			 * given up.
+			 * We won't be happy until we've been poking the button
+			 * for a good long while, but we'll only wait a couple
+			 * of seconds between each press before deciding that
+			 * the user has given up.
 			 */
-			/* TODO(crbug.com/p/57408): Poke 5 mins, not 10 secs */
-			start_unlock_process(10 * SECOND, 2 * SECOND);
+			start_unlock_process(UNLOCK_SEQUENCE_DURATION,
+					     2 * SECOND);
 
 			ccprintf("Unlock sequence starting."
 				 " Continue until %.6ld\n", unlock_deadline);
