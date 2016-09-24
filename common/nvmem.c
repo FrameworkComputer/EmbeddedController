@@ -314,14 +314,13 @@ int nvmem_setup(uint8_t starting_version)
 	 * both corrupted
 	 */
 	for (part = 0; part < NVMEM_NUM_PARTITIONS; part++) {
-		/* Set active partition variable */
-		nvmem_act_partition = part;
 		/* Get the cache buffer */
 		if (nvmem_lock_cache() != EC_SUCCESS) {
 			CPRINTF("NvMem: Cache ram not available!\n");
 			return EC_ERROR_TIMEOUT;
 		}
-
+		/* Set active partition variable */
+		nvmem_act_partition = part;
 		/* Fill entire partition to 0xFFs */
 		memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
 		/* Get pointer to start of partition */

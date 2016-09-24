@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
+#include "nvmem.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -62,22 +63,25 @@ static int unlock_in_progress;
 /* Only invoked when the unlock sequence is done, either good or bad. */
 static void unlock_sequence_is_over(void)
 {
+	/* Disable the power button interrupt so we aren't bothered */
+	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 0);
+	task_disable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT);
+
 	if (unlock_in_progress) {
+		/* We didn't poke the button fast enough */
 		CPRINTS("Unlock process failed");
 	} else {
+		/* The last poke was after the final deadline, so we're done */
 		CPRINTS("Unlock process completed successfully");
+		nvmem_wipe_or_reboot();
 		console_restricted_state = 0;
+		CPRINTS("TPM is erased, console is unlocked.");
 	}
 
 	unlock_in_progress = 0;
 
-	/* Disable power button interrupt */
-	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 0);
-	task_disable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT);
-
 	/* Allow sleeping again */
 	enable_sleep(SLEEP_MASK_FORCE_NO_DSLEEP);
-
 }
 DECLARE_DEFERRED(unlock_sequence_is_over);
 
@@ -91,7 +95,7 @@ static void power_button_poked(void)
 	} else {
 		/* Wait for the next poke */
 		hook_call_deferred(&unlock_sequence_is_over_data, UNLOCK_BEAT);
-		CPRINTS("poke");
+		CPRINTS("poke: not yet %.6ld", unlock_deadline);
 	}
 
 	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
@@ -131,6 +135,10 @@ static int start_the_unlock_process(void)
 }
 
 /****************************************************************************/
+static const char warning[] = "\n\t!!! WARNING !!!\n\n"
+	"\tThe AP will be impolitely shut down and the TPM persistent memory\n"
+	"\tERASED before the console is unlocked. If this is not what you\n"
+	"\twant, simply do nothing and the unlock process will fail.\n\n";
 
 static int command_lock(int argc, char **argv)
 {
@@ -164,9 +172,12 @@ static int command_lock(int argc, char **argv)
 			return EC_ERROR_BUSY;
 		}
 
+		/* Warn about the side effects of wiping nvmem */
+		ccputs(warning);
+
 		/* Now the user has to sit there and poke the button */
 		ccprintf("Start poking the power button in ");
-		for (i = 5; i; i--) {
+		for (i = 10; i; i--) {
 			ccprintf("%d ", i);
 			sleep(1);
 		}
