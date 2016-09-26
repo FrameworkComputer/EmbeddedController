@@ -390,9 +390,13 @@ void sys_rst_asserted(enum gpio_signal signal)
 	 * Cr50 drives SYS_RST_L in certain scenarios, in those cases
 	 * this signal's assertion should be ignored here.
 	 */
-	CPRINTS("%s", __func__);
-	if (usb_spi_update_in_progress() || is_sys_rst_asserted())
+	CPRINTS("%s from %d", __func__, signal);
+	if (usb_spi_update_in_progress() ||
+	    is_sys_rst_asserted() ||
+	    tpm_is_resetting()) {
+		CPRINTS("%s ignored", __func__);
 		return;
+	}
 
 	/* Re-initialize the TPM software state */
 	tpm_reset();

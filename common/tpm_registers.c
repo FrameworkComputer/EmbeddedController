@@ -625,6 +625,11 @@ int tpm_reset(void)
 	return 1;
 }
 
+int tpm_is_resetting(void)
+{
+	return reset_in_progress;
+}
+
 static void tpm_reset_now(void)
 {
 	reset_in_progress = 1;
@@ -659,7 +664,7 @@ static void tpm_reset_now(void)
 
 void tpm_task(void)
 {
-	tpm_init();
+	tpm_reset_now();
 	while (1) {
 		uint8_t *response;
 		unsigned response_size;
