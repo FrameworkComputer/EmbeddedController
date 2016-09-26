@@ -614,7 +614,9 @@ static void tpm_reset_now(void)
 	 * includes this file's .bss in the same section, so it will be cleared
 	 * at the same time.
 	 */
-	memset(__bss_libtpm2_start, __bss_libtpm2_end - __bss_libtpm2_start, 0);
+	memset(&__bss_libtpm2_start, 0,
+	       (uintptr_t)(&__bss_libtpm2_end) -
+	       (uintptr_t)(&__bss_libtpm2_start));
 
 	/*
 	 * NOTE: Any initialized variables in this file must be placed in a
