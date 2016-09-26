@@ -76,6 +76,14 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 		/* Print panic info */
 		watchdog_trace(excep_lr, excep_sp);
 		cflush();
+#ifdef CONFIG_SOFTWARE_PANIC
+		/*
+		 * panic_reboot() will be called by software_panic(), so this
+		 * typically will not return, and panic reason will appear
+		 * as "soft".
+		 */
+		software_panic(PANIC_SW_WATCHDOG, excep_lr);
+#endif
 		/* Trigger watchdog immediately */
 		system_watchdog_reset();
 	}
