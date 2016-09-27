@@ -294,7 +294,8 @@ void getPIN(uint8_t* out) {
 static
 std::string tokenFilename(const uint8_t* fp) {
   const char* home = getenv("HOME");
-  if (home == NULL) getpwuid(getuid())->pw_dir;
+  if (home == NULL)
+    home = getpwuid(getuid())->pw_dir;
   std::string s(home);
   s.append("/.tmp/");
   for (int i = 0; i < 32; ++i) {
