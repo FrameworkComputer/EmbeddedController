@@ -48,6 +48,6 @@ static int command_devices(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(devices, command_devices,
-	"",
-	"Get the device states");
+DECLARE_SAFE_CONSOLE_COMMAND(devices, command_devices,
+			     "",
+			     "Get the device states");
