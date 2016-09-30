@@ -101,7 +101,7 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 		 * be erased.
 		 */
 		if (block_offset == valid_sections.rw_base_offset) {
-			if (flash_erase(base, size) != EC_SUCCESS) {
+			if (flash_physical_erase(base, size) != EC_SUCCESS) {
 				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
 					__func__, __LINE__, base, size);
 				return UPGRADE_ERASE_FAILURE;
@@ -128,7 +128,7 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 				valid_sections.ro_base_offset;
 			/* backup RO area write access needs to be enabled. */
 			open_ro_window(base, size);
-			if (flash_erase(base, size) != EC_SUCCESS) {
+			if (flash_physical_erase(base, size) != EC_SUCCESS) {
 				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
 					__func__, __LINE__, base, size);
 				return UPGRADE_ERASE_FAILURE;

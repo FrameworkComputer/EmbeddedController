@@ -11,6 +11,7 @@
 #ifndef __ASSEMBLER__
 
 #undef CONFIG_FLASH /* TODO: implement me */
+#undef CONFIG_FLASH_PHYSICAL /* TODO: implement me */
 #undef CONFIG_FMAP /* TODO: implement me */
 #undef CONFIG_WATCHDOG
 #undef CONFIG_LID_SWITCH

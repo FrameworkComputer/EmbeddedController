@@ -868,9 +868,10 @@
 /*****************************************************************************/
 /* Flash configuration */
 
-/* Support programming on-chip flash */
+/* This enables console commands and higher-level features */
 #define CONFIG_FLASH
-
+/* This enables chip-specific access functions */
+#define CONFIG_FLASH_PHYSICAL
 #undef CONFIG_FLASH_BANK_SIZE
 #undef CONFIG_FLASH_ERASED_VALUE32
 #undef CONFIG_FLASH_ERASE_SIZE

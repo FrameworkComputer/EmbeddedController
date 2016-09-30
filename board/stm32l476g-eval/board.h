@@ -38,6 +38,7 @@
 #ifndef __ASSEMBLER__
 
 #undef CONFIG_FLASH
+#undef CONFIG_FLASH_PHYSICAL
 
 /* Timer selection */
 #define TIM_CLOCK32	5

@@ -66,7 +66,7 @@ chip-$(CONFIG_I2C_SLAVE)+= i2cs.o
 
 chip-$(CONFIG_LOW_POWER_IDLE)+=idle.o
 
-chip-$(CONFIG_FLASH)+=flash.o
+chip-$(CONFIG_FLASH_PHYSICAL) += flash.o
 dirs-y += chip/g/dcrypto
 
 ifneq ($(CONFIG_CUSTOMIZED_RO),)

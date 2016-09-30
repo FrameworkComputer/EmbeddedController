@@ -47,8 +47,8 @@ chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 chip-$(HAS_TASK_POWERLED)+=power_led.o
-chip-$(CONFIG_FLASH)+=flash-$(CHIP_FAMILY).o
-ifdef CONFIG_FLASH
+chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o
+ifdef CONFIG_FLASH_PHYSICAL
 chip-$(CHIP_FAMILY_STM32F0)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
 endif
