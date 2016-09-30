@@ -135,6 +135,8 @@ static int hid_iface_request(struct usb_setup_packet *req)
 }
 USB_DECLARE_IFACE(USB_IFACE_HID, hid_iface_request);
 
+#ifdef CR50_DEV
+/* Just for debugging */
 static int command_hid(int argc, char **argv)
 {
 	uint8_t keycode = 0x0a; /* 'G' key */
@@ -156,3 +158,4 @@ static int command_hid(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(hid, command_hid,
 			"[<HID keycode>]",
 			"test USB HID driver");
+#endif
