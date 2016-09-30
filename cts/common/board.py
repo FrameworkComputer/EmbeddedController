@@ -93,7 +93,7 @@ class Board(object):
     for cmd in commands:
       args += ['-c', cmd]
     args += ['-c', 'shutdown']
-    sp.call(args)
+    return sp.call(args)
 
   def build(self, module, ec_dir, debug=False):
     """Builds test suite module for board
@@ -116,7 +116,7 @@ class Board(object):
       cmds.append('CTS_DEBUG=TRUE')
 
     print ' '.join(cmds)
-    sp.call(cmds)
+    return sp.call(cmds)
 
   def flash(self):
     """Flashes board with most recent build ec.bin"""
@@ -125,7 +125,7 @@ class Board(object):
            'init',
            'reset init',
            'flash write_image erase %s %s' % (image_path, self.flash_offset)]
-    self.send_open_ocd_commands(cmd)
+    return self.send_open_ocd_commands(cmd)
 
   def to_string(self):
     s = ('Type: Board\n'

@@ -94,14 +94,18 @@ class Cts(object):
 
   def build(self):
     """Build images for DUT and TH"""
-    self.dut.build(self.module, self.ec_dir, self.debug)
-    self.th.build(self.module, self.ec_dir, self.debug)
+    if self.dut.build(self.module, self.ec_dir, self.debug):
+      raise RuntimeError('Building module %s for DUT failed' % (self.module))
+    if self.th.build(self.module, self.ec_dir, self.debug):
+      raise RuntimeError('Building module %s for TH failed' % (self.module))
 
   def flash_boards(self):
     """Flashes th and dut boards with their most recently build ec.bin"""
     self.identify_boards()
-    self.th.flash()
-    self.dut.flash()
+    if self.th.flash():
+      raise RuntimeError('Flashing TH failed')
+    if self.dut.flash():
+      raise RuntimeError('Flashing DUT failed')
 
   def setup(self):
     """Setup boards"""
