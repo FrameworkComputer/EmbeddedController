@@ -108,7 +108,7 @@ CR50_RW_KEY = loader-testkey-A.pem
 SIGNER = $(out)/util/signer
 SIGNER_EXTRAS =
 else
-CFLAGS += -DCR50_DEV=1
+CPPFLAGS += -DCR50_DEV=1
 SIGNER = $(HOME)/bin/codesigner
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub
 RW_SIGNER_EXTRAS = -x util/signer/fuses.xml
