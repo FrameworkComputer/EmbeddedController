@@ -483,14 +483,11 @@ int system_process_retry_counter(void);
 void system_clear_retry_counter(void);
 
 
-/* Board properties options */
+/* Board properties options. A gap is left for backwards compatibility. */
 #define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* Slave SPI interface */
 #define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* Slave I2C interface */
 #define BOARD_USB_AP                 (1 << 2)   /* One of the PHYs is  */
 						/* connected to the AP */
-#define BOARD_DISABLE_UART0_RX       (1 << 3)   /* Disable UART0 RX */
-#define BOARD_MARK_UPDATE_ON_USB_REQ (1 << 4)   /* update is good once the   */
-						/* controller gets a request */
 /* TODO(crosbug.com/p/56945): Remove when sys_rst_l has an external pullup */
 #define BOARD_NEEDS_SYS_RST_PULL_UP  (1 << 5)   /* Add a pullup to sys_rst_l */
 #define BOARD_USE_PLT_RESET          (1 << 6)   /* Platform reset exists */

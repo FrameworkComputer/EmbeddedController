@@ -129,17 +129,11 @@ void pmu_wakeup_interrupt(void)
 		 * configured to wake on low and the signal is low, then call
 		 * sys_rst_asserted
 		 */
-
-		/*
-		 * TODO(crosbug.com/p/56540): When plt_rst_l is connected to
-		 * DIOM3, need to change DIOA13 below to DIOM3 so that
-		 * the correct wake on low setting is being checked.
-		 */
 		plt_rst_asserted = board_properties & BOARD_USE_PLT_RESET ?
 			!gpio_get_level(GPIO_PLT_RST_L) : 0;
 		if ((!gpio_get_level(GPIO_SYS_RST_L_IN) &&
 		     GREAD_FIELD(PINMUX, EXITINV0, DIOM0)) || (plt_rst_asserted
-		     && GREAD_FIELD(PINMUX, EXITINV0, DIOA13)))
+		     && GREAD_FIELD(PINMUX, EXITINV0, DIOM3)))
 			sys_rst_asserted(GPIO_SYS_RST_L_IN);
 	}
 
@@ -191,18 +185,13 @@ void board_configure_deep_sleep_wakepins(void)
 	 * rising edge of this signal.
 	 */
 	if (system_get_board_properties() & BOARD_USE_PLT_RESET) {
-		/*
-		 * TODO(crosbug.com/p/56540): When plt_rst_l is connected to
-		 * DIOM3, need to change DIOA13 below to DIOM3 so that
-		 * the correct pin is being configured.
-		 */
 		/* Disable sys_rst_l as a wake pin */
-		GWRITE_FIELD(PINMUX, EXITEN0, DIOA13, 0);
+		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 0);
 		/* Reconfigure and reenable it. */
-		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA13, 1); /* edge sensitive */
-		GWRITE_FIELD(PINMUX, EXITINV0, DIOA13, 0);  /* wake on high */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 1); /* edge sensitive */
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOM3, 0);  /* wake on high */
 		/* enable powerdown exit */
-		GWRITE_FIELD(PINMUX, EXITEN0, DIOA13, 1);
+		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	}
 }
 
@@ -268,30 +257,20 @@ static void configure_board_specific_gpios(void)
 	if (system_get_board_properties() & BOARD_NEEDS_SYS_RST_PULL_UP)
 		GWRITE_FIELD(PINMUX, DIOM0_CTL, PU, 1);
 
-	/*
-	 * TODO(crosbug.com/p/56540): Need to connect platform reset to DI0A13
-	 * for current Reef boards. This function is a no-op for Kevin/Gru. When
-	 * platform reset is moved to DIOM3 in HW, then need change to
-	 * GC_PINMUX_DIOM3_SEL and DIOM3_CTL respectively. In addition,
-	 * uncomment the 3 GRWITE() lines for enabling wake on falling
-	 * edge. Note that the DIO_WAKE_FALLING config is not required for
-	 * DIOA13 as the default for this pad is for uart which already includes
-	 * this option for the pminmux setting.
-	 */
 	/* Connect PLT_RST_L signal to the pinmux */
 	if (system_get_board_properties() & BOARD_USE_PLT_RESET) {
 		/* Signal using GPIO1 pin 10 for DIOA13 */
-		GWRITE(PINMUX, GPIO1_GPIO10_SEL, GC_PINMUX_DIOA13_SEL);
+		GWRITE(PINMUX, GPIO1_GPIO10_SEL, GC_PINMUX_DIOM3_SEL);
 		/* Enbale the input */
-		GWRITE_FIELD(PINMUX, DIOA13_CTL, IE, 1);
+		GWRITE_FIELD(PINMUX, DIOM3_CTL, IE, 1);
 
 		/* Set power down for the equivalent of DIO_WAKE_FALLING */
 		/* Set to be edge sensitive */
-		/* GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 1); */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 1);
 		/* Select failling edge polarity */
-		/* GWRITE_FIELD(PINMUX, EXITINV0, DIOM3, 1); */
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOM3, 1);
 		/* Enable powerdown exit on DIOM3 */
-		/* GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1); */
+		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	}
 }
 
@@ -713,17 +692,6 @@ void system_init_board_properties(void)
 			properties |= BOARD_SLAVE_CONFIG_I2C;
 			/* One PHY is connected to the AP */
 			properties |= BOARD_USB_AP;
-			/*
-			 * TODO(crosbug.com/p/56540): enable UART0 RX on Reef.
-			 * Early reef boards dont have the necessary pullups on
-			 * UART0RX so disable it until that is fixed.
-			 */
-			properties |= BOARD_DISABLE_UART0_RX;
-			/*
-			 * Use receiving a usb set address request as a
-			 * benchmark for marking the updated image as good.
-			 */
-			properties |= BOARD_MARK_UPDATE_ON_USB_REQ;
 			/*
 			 * Platform reset is present and will need to be
 			 * configured as a an falling edge interrupt.
