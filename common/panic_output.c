@@ -219,9 +219,9 @@ static int command_panicinfo(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
-			     NULL,
-			     "Print info from a previous panic");
+DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
+			NULL,
+			"Print info from a previous panic");
 
 /*****************************************************************************/
 /* Host commands */
