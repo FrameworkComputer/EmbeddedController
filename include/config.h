@@ -624,13 +624,16 @@
 #define CONFIG_CMD_REGULATOR
 #undef  CONFIG_CMD_RTC
 #undef  CONFIG_CMD_RTC_ALARM
+#define CONFIG_CMD_RW
 #undef  CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_SHMEM
 #undef  CONFIG_CMD_SLEEP
+#define CONFIG_CMD_SLEEPMASK
 #undef  CONFIG_CMD_SPI_FLASH
 #undef  CONFIG_CMD_SPI_NOR
 #undef  CONFIG_CMD_SPI_XFER
 #undef  CONFIG_CMD_STACKOVERFLOW
+#define CONFIG_CMD_SYSJUMP
 #undef  CONFIG_CMD_TASKREADY
 #define CONFIG_CMD_TEMP_SENSOR
 #define CONFIG_CMD_TIMERINFO
@@ -638,6 +641,7 @@
 #undef  CONFIG_CMD_USART_INFO
 #define CONFIG_CMD_USBMUX
 #undef  CONFIG_CMD_USB_PD_PE
+#define CONFIG_CMD_WAITMS
 
 /*****************************************************************************/
 

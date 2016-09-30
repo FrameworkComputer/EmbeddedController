@@ -252,6 +252,7 @@ static void timer_sysjump(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, timer_sysjump, HOOK_PRIO_DEFAULT);
 
+#ifdef CONFIG_CMD_WAITMS
 static int command_wait(int argc, char **argv)
 {
 	char *e;
@@ -271,6 +272,7 @@ static int command_wait(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(waitms, command_wait,
 			"msec",
 			"Busy-wait for msec");
+#endif
 
 #ifdef CONFIG_CMD_FORCETIME
 static int command_force_time(int argc, char **argv)
