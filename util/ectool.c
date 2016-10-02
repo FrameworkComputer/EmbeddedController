@@ -3425,8 +3425,8 @@ static const struct {
 	MS_SIZES(sensor_range),
 	MS_SIZES(kb_wake_angle),
 	MS_SIZES(data),
-	MS_SIZES(fifo_flush),
 	MS_FIFO_INFO_SIZE(),
+	MS_SIZES(fifo_flush),
 	MS_SIZES(fifo_read),
 	MS_SIZES(perform_calib),
 	MS_SIZES(sensor_offset),
@@ -3452,7 +3452,7 @@ static int ms_help(const char *cmd)
 	printf("  %s data NUM                   - read sensor latest data\n",
 			cmd);
 	printf("  %s fifo_info                  - print fifo info\n", cmd);
-	printf("  %s fifo_int enable [0/1]      - enable/disable/get fifo "
+	printf("  %s fifo_int_enable [0/1]      - enable/disable/get fifo "
 	       "interrupt status\n", cmd);
 	printf("  %s fifo_read MAX_DATA         - read fifo data\n", cmd);
 	printf("  %s fifo_flush NUM             - trigger fifo interrupt\n",
@@ -3742,6 +3742,17 @@ static int cmd_motionsense(int argc, char **argv)
 	}
 
 	if (argc == 2 && !strcasecmp(argv[1], "fifo_info")) {
+		int sensor_count;
+
+		param.cmd = MOTIONSENSE_CMD_DUMP;
+		param.dump.max_sensor_count = 0;
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+		sensor_count = resp->dump.sensor_count;
+
 		param.cmd = MOTIONSENSE_CMD_FIFO_INFO;
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
 				&param, ms_command_sizes[param.cmd].outsize,
@@ -3753,7 +3764,7 @@ static int cmd_motionsense(int argc, char **argv)
 		printf("Count:    %d\n", resp->fifo_info.count);
 		printf("Timestamp:%" PRIx32 "\n", resp->fifo_info.timestamp);
 		printf("Total lost: %d\n", resp->fifo_info.total_lost);
-		for (i = 0; i < ECTOOL_MAX_SENSOR; i++) {
+		for (i = 0; i < sensor_count; i++) {
 			int lost;
 			lost = resp->fifo_info.lost[i];
 			if (lost != 0)
