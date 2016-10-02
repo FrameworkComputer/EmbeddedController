@@ -36,21 +36,7 @@ struct flash_wp_state {
  */
 int flash_physical_read(int offset, int size, char *data)
 {
-	int ret = EC_SUCCESS;
-	int i, read_size;
-
-	for (i = 0; i < size; i += read_size) {
-		read_size = MIN((size - i), SPI_FLASH_MAX_READ_SIZE);
-		ret = spi_flash_read((uint8_t *)(data + i),
-					offset + i,
-					read_size);
-		if (ret != EC_SUCCESS)
-			break;
-		/* yield so other tasks get a chance to wake up */
-		msleep(1);
-	}
-
-	return ret;
+	return spi_flash_read(data, offset, size);
 }
 
 /**
