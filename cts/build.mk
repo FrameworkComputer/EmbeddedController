@@ -9,6 +9,14 @@ ifeq "$(CTS_MODULE)" "gpio"
 CFLAGS_CTS+=-DCTS_MODULE_GPIO
 endif
 
+ifeq "$(CTS_MODULE)" "i2c"
+CFLAGS_CTS+=-DCTS_MODULE_I2C
+CONFIG_I2C=y
+ifneq ($(BOARD),stm32l476g-eval)
+CONFIG_I2C_MASTER=y
+endif
+endif
+
 ifeq ($(BOARD),stm32l476g-eval)
 	cts-y+=$(CTS_MODULE)/th.o
 	cts-y+=common/th_common.o

@@ -29,6 +29,13 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 
+#ifdef CTS_MODULE_I2C
+#define CONFIG_I2C
+#define CONFIG_I2C_SLAVE
+#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR 0x3c
+#define I2C_PORT_EC STM32_I2C2_PORT
+#endif
+
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
  * switch.

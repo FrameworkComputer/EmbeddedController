@@ -1,0 +1,14 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Currently tests will execute in the order they are listed here */
+
+/* Test whether sync completes successfully */
+CTS_TEST(write8_test)
+CTS_TEST(write16_test)
+CTS_TEST(write32_test)
+CTS_TEST(read8_test)
+CTS_TEST(read16_test)
+CTS_TEST(read32_test)

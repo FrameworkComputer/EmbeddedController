@@ -8,6 +8,8 @@
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"
+#include "i2c.h"
+#include "timer.h"
 
 void button_event(enum gpio_signal signal)
 {
@@ -25,6 +27,14 @@ void tick_event(void)
 	count++;
 }
 DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
+
+#ifdef CTS_MODULE_I2C
+const struct i2c_port_t i2c_ports[]  = {
+	{"test", STM32_I2C1_PORT, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+};
+
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+#endif
 
 /******************************************************************************
  * Initialize board.
