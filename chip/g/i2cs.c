@@ -105,6 +105,23 @@ static void i2cs_init(void)
 
 	pmu_clock_en(PERIPH_I2CS);
 
+	/*
+	 * Toggle the reset register to make sure i2cs interface is in the
+	 * initial state even if it is mid transaction at this time.
+	 */
+	GWRITE_FIELD(PMU, RST0, DI2CS0, 1);
+
+	/*
+	 * This initialization is guraranteed to take way more than enough
+	 * time for the reset to kick in.
+	 */
+	memset(i2cs_buffer, 0, sizeof(i2cs_buffer));
+	last_write_pointer = 0;
+	last_read_pointer = 0;
+
+	GWRITE_FIELD(PMU, RST0, DI2CS0, 0);
+
+
 	/* Set pinmux registers for I2CS interface */
 	i2cs_set_pinmux();
 
