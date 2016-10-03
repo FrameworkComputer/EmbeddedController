@@ -64,8 +64,10 @@ int spi_transaction(const struct spi_device_t *spi_device,
 {
 	int totallen = txlen + rxlen;
 	int txcount = 0, rxcount = 0;
+	static struct mutex spi_mutex;
 	volatile uint32_t dummy  __attribute__((unused));
 
+	mutex_lock(&spi_mutex);
 	/* Empty the receive FIFO */
 	while (LM4_SSI_SR(0) & LM4_SSI_SR_RNE)
 		dummy = LM4_SSI_DR(0);
@@ -104,6 +106,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 
 	/* End transaction */
 	gpio_set_level(spi_device->gpio_cs, 1);
+	mutex_unlock(&spi_mutex);
 
 	return EC_SUCCESS;
 }

@@ -109,7 +109,9 @@ int spi_transaction(const struct spi_device_t *spi_device,
 {
 	int idx;
 	uint8_t port = spi_device->port;
+	static struct mutex spi_mutex;
 
+	mutex_lock(&spi_mutex);
 	/* bit[0]: Write cycle */
 	IT83XX_SSPI_SPICTRL2 &= ~0x04;
 	for (idx = 0x00; idx < txlen; idx++) {
@@ -135,6 +137,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 	}
 
 	sspi_transmission_end();
+	mutex_unlock(&spi_mutex);
 
 	return EC_SUCCESS;
 }

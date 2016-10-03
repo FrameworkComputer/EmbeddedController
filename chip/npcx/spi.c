@@ -131,7 +131,9 @@ int spi_transaction(const struct spi_device_t *spi_device,
 {
 	int i = 0;
 	enum gpio_signal gpio = spi_device->gpio_cs;
+	static struct mutex spi_lock;
 
+	mutex_lock(&spi_lock);
 	/* Make sure CS# is a GPIO output mode. */
 	gpio_set_flags(gpio, GPIO_OUTPUT);
 	/* Make sure CS# is deselected */
@@ -174,6 +176,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 	}
 	/* Deassert CS# (high) to end transaction */
 	gpio_set_level(gpio, 1);
+	mutex_unlock(&spi_lock);
 
 	return EC_SUCCESS;
 }
