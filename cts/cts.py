@@ -324,9 +324,9 @@ class Cts(object):
     th_results = self.th.read_tty()
 
     if not dut_results or not th_results:
-      msg = ('Output missing from boards. If you have a process reading '
-             'ttyACMx, please kill that process and try again.')
-      raise ValueError(bad_cat_message)
+      raise ValueError('Output missing from boards. If you have a process '
+                       'reading ttyACMx, please kill that process and try '
+                       'again.')
 
     self.parse_output(dut_results, th_results)
     pretty_results = self.prettify_results()

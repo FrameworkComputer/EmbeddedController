@@ -167,9 +167,9 @@ class Board(object):
         except (IOError, OSError):
           continue
     if not tty:
-      raise ValueError('Unable to read ' + self.name + '\n'
-                       'If you are running cat on a ttyACMx file,\n'
-                       'please kill that process and try again')
+      raise ValueError('Unable to read ' + self.board + '. If you are running '
+                       'cat on a ttyACMx file, please kill that process and '
+                       'try again')
     self.tty = tty
 
   def read_tty(self):
