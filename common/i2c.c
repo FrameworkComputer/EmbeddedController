@@ -599,6 +599,18 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 #if defined(VIRTUAL_BATTERY_ADDR) && defined(I2C_PORT_VIRTUAL_BATTERY)
 		if (params->port == I2C_PORT_VIRTUAL_BATTERY &&
 		    VIRTUAL_BATTERY_ADDR == addr) {
+#if defined(CONFIG_BATTERY_PRESENT_GPIO) || \
+	defined(CONFIG_BATTERY_PRESENT_CUSTOM)
+			/*
+			 * If the battery isn't present, return a NAK (which we
+			 * would have gotten anyways had we attempted to talk to
+			 * the battery.)
+			 */
+			if (battery_is_present() != BP_YES) {
+				resp->i2c_status = EC_I2C_STATUS_NAK;
+				break;
+			}
+#endif /* defined(CONFIG_BATTERY_PRESENT_{GPIO/CUSTOM}) */
 			/* get batt param from write msg */
 			if (*out)
 				batt_param = *out;
