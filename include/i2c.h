@@ -9,9 +9,16 @@
 #define __CROS_EC_I2C_H
 
 #include "common.h"
+#include "host_command.h"
 
 /* Flags for slave address field, in addition to the 8-bit address */
 #define I2C_FLAG_BIG_ENDIAN 0x100  /* 16 byte values are MSB-first */
+
+/*
+ * Max data size for a version 3 request/response packet. This is
+ * big enough for EC_CMD_GET_VERSION plus header info.
+ */
+#define I2C_MAX_HOST_PACKET_SIZE 128
 
 /*
  * Supported I2C CLK frequencies.
@@ -285,5 +292,13 @@ int i2c_read_string(int port, int slave_addr, int offset, uint8_t *data,
  * @return controller number, or -1 on invalid parameter
  */
 int i2c_port_to_controller(int port);
+
+/**
+ * Command handler to get host command protocol information
+ *
+ * @param args:	host command handler arguments
+ * @return	EC_SUCCESS
+ */
+int i2c_get_protocol_info(struct host_cmd_handler_args *args);
 
 #endif  /* __CROS_EC_I2C_H */

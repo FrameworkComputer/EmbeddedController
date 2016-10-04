@@ -27,12 +27,6 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
 
-/*
- * Max data size for a version 3 request/response packet. This is
- * big enough for EC_CMD_GET_VERSION plus header info.
- */
-#define I2C_MAX_HOST_PACKET_SIZE 128
-
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE STM32_IRQ_I2C1
@@ -611,27 +605,4 @@ static void i2c_init(void)
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
-
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
-/**
- * Get protocol information
- */
-static int i2c_get_protocol_info(struct host_cmd_handler_args *args)
-{
-	struct ec_response_get_protocol_info *r = args->response;
-
-	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 3);
-	r->max_request_packet_size = I2C_MAX_HOST_PACKET_SIZE;
-	r->max_response_packet_size = I2C_MAX_HOST_PACKET_SIZE;
-	r->flags = 0;
-
-	args->response_size = sizeof(*r);
-
-	return EC_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		     i2c_get_protocol_info,
-		     EC_VER_MASK(0));
-#endif
 
