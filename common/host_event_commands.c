@@ -78,6 +78,7 @@ void host_clear_events(uint32_t mask)
 #endif  /* !CONFIG_LPC */
 }
 
+#ifndef CONFIG_LPC
 static int host_get_next_event(uint8_t *out)
 {
 	uint32_t event_out = events;
@@ -86,6 +87,7 @@ static int host_get_next_event(uint8_t *out)
 	return sizeof(event_out);
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT, host_get_next_event);
+#endif
 
 /**
  * Clear one or more host event bits from copy B.
@@ -117,7 +119,6 @@ test_mockable void host_throttle_cpu(int throttle)
 
 /*****************************************************************************/
 /* Console commands */
-
 static int command_host_event(int argc, char **argv)
 {
 	/* Handle sub-commands */
