@@ -213,7 +213,10 @@ enum nvmem_users {
 #define CONFIG_USB_FW_UPDATE
 
 #define CONFIG_I2C
+#define CONFIG_I2C_MASTER
 #define CONFIG_I2C_SLAVE
 #define CONFIG_TPM_I2CS
+
+#define I2C_PORT_MASTER 0
 
 #endif /* __CROS_EC_BOARD_H */

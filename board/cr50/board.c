@@ -12,9 +12,11 @@
 #include "flash_config.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "i2cs.h"
 #include "init_chip.h"
 #include "nvmem.h"
+#include "rdd.h"
 #include "registers.h"
 #include "signed_header.h"
 #include "spi.h"
@@ -73,11 +75,19 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 static uint32_t board_properties;
 static uint8_t reboot_request_posted;
 
+/* I2C Port definition */
+const struct i2c_port_t i2c_ports[]  = {
+	{"master", I2C_PORT_MASTER, 100,
+	 GPIO_I2C_SCL_INA, GPIO_I2C_SDA_INA},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
 void post_reboot_request(void)
 {
 	/* Reboot the device next time TPM reset is requested. */
 	reboot_request_posted = 1;
 }
+
 /*
  * There's no way to trigger on both rising and falling edges, so force a
  * compiler error if we try. The workaround is to use the pinmux to connect
@@ -595,6 +605,9 @@ static void servo_attached(void)
 	/* Disconnect AP and EC UART when servo is attached */
 	uartn_tx_disconnect(UART_AP);
 	uartn_tx_disconnect(UART_EC);
+
+	/* Disconnect i2cm interface to ina */
+	ina_disconnect();
 }
 
 void device_state_on(enum gpio_signal signal)
