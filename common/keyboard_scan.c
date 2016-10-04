@@ -27,6 +27,14 @@
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
 
+#ifdef CONFIG_KEYBOARD_DEBUG
+#define CPUTS5(outstr) cputs(CC_KEYSCAN, outstr)
+#define CPRINTS5(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#else
+#define CPUTS5(outstr)
+#define CPRINTS5(format, args...)
+#endif
+
 #define SCAN_TIME_COUNT 32  /* Number of last scan times to track */
 
 /* If we're waiting for a scan to happen, we'll give it this long */
@@ -481,7 +489,7 @@ static int check_keys_changed(uint8_t *state)
 		if (print_state_changes)
 			print_state(state, "state");
 
-#ifdef PRINT_SCAN_TIMES
+#ifdef CONFIG_KEYBOARD_PRINT_SCAN_TIMES
 		/* Print delta times from now back to each previous scan */
 		CPRINTF("[%T kb deltaT");
 		for (i = 0; i < SCAN_TIME_COUNT; i++) {
@@ -644,7 +652,7 @@ void keyboard_scan_task(void)
 
 	while (1) {
 		/* Enable all outputs */
-		CPRINTS("KB wait");
+		CPRINTS5("KB wait");
 
 		keyboard_raw_enable_interrupt(1);
 
@@ -696,7 +704,7 @@ void keyboard_scan_task(void)
 		force_poll = 0;
 
 		/* Enter polling mode */
-		CPRINTS("KB poll");
+		CPRINTS5("KB poll");
 		keyboard_raw_enable_interrupt(0);
 		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 

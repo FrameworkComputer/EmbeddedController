@@ -1364,6 +1364,9 @@
  */
 #undef CONFIG_KEYBOARD_POST_SCAN_CLOCKS
 
+/*  Print keyboard scan time intervals. */
+#undef CONFIG_KEYBOARD_PRINT_SCAN_TIMES
+
 /*
  * Call board-supplied keyboard_suppress_noise() function when the debounced
  * keyboard state changes.  Some boards use this to send a signal to the audio
