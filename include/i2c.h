@@ -301,4 +301,21 @@ int i2c_port_to_controller(int port);
  */
 int i2c_get_protocol_info(struct host_cmd_handler_args *args);
 
+/**
+ * Callbacks processing received data and response
+ *
+ * i2c_data_recived will be called when a slave finishes receiving data and
+ * i2c_set_response will be called when a slave is expected to send response.
+ *
+ * Using these, Chrome OS host command protocol should be separated from
+ * i2c slave drivers (e.g. i2c-stm32f0.c, i2c-stm32f3.c).
+ *
+ * @param port: I2C port number
+ * @param buf:	Buffer containing received data on call and response on return
+ * @param len:	Size of received data
+ * @return	Size of response data
+ */
+void i2c_data_received(int port, uint8_t *buf, int len);
+int i2c_set_response(int port, uint8_t *buf, int len);
+
 #endif  /* __CROS_EC_I2C_H */
