@@ -140,4 +140,7 @@
  */
 #define CONFIG_CUSTOMIZED_RO
 
+/* Number of I2C ports */
+#define I2C_PORT_COUNT 2
+
 #endif	/* __CROS_EC_CONFIG_CHIP_H */

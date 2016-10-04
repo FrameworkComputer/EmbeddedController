@@ -62,6 +62,7 @@ chip-$(CONFIG_RDD)+=rdd.o
 chip-$(CONFIG_RBOX)+=rbox.o
 chip-$(CONFIG_STREAM_USB)+=usb-stream.o
 chip-$(CONFIG_STREAM_USART)+=usart.o
+chip-$(CONFIG_I2C_MASTER)+= i2cm.o
 chip-$(CONFIG_I2C_SLAVE)+= i2cs.o
 
 chip-$(CONFIG_LOW_POWER_IDLE)+=idle.o

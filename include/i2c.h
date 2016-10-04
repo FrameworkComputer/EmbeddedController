@@ -318,4 +318,10 @@ int i2c_get_protocol_info(struct host_cmd_handler_args *args);
 void i2c_data_received(int port, uint8_t *buf, int len);
 int i2c_set_response(int port, uint8_t *buf, int len);
 
+/**
+ * Initialize i2c master ports. This function can be called for cases where i2c
+ * ports are not initialized by default via a hook call.
+ */
+void i2cm_init(void);
+
 #endif  /* __CROS_EC_I2C_H */
