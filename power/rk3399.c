@@ -144,9 +144,11 @@ enum power_state power_handle_state(enum power_state state)
 
 		/*
 		 * Wait up to PGOOD_AP_DEBOUNCE_TIMEOUT for IN_PGOOD_AP to
-		 * come back before transitioning back to S3.
+		 * come back before transitioning back to S3. PGOOD_SYS can
+		 * also glitch, with a glitch duration < 1ms, so debounce
+		 * it here as well.
 		 */
-		if (power_wait_signals_timeout(IN_PGOOD_AP,
+		if (power_wait_signals_timeout(IN_PGOOD_AP | IN_PGOOD_SYS,
 					       PGOOD_AP_DEBOUNCE_TIMEOUT)
 					       == EC_ERROR_TIMEOUT)
 			return POWER_S0S3;
