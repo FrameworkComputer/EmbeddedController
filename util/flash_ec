@@ -104,6 +104,7 @@ BOARDS_NPCX_SPI=(
 	amenia
 	gru
 	kevin
+	pyro
 	reef
 	wheatley
 )
@@ -121,12 +122,14 @@ BOARDS_MEC1322=(
 BOARDS_SPI_1800MV=(
 	gru
 	kevin
+	pyro
 	reef
 )
 
 BOARDS_RAIDEN=(
 	gru
 	kevin
+	pyro
 	reef
 )
 
