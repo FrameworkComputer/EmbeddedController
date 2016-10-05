@@ -82,6 +82,9 @@
  */
 #undef CONFIG_ACCELGYRO_BMI160_INT_EVENT
 
+/* Set when INT2 is an ouptut */
+#undef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
+
 /* Specify type of Gyrometers attached. */
 #undef CONFIG_GYRO_L3GD20H
 

@@ -793,12 +793,16 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		BMI160_TAP_TH(s, CONFIG_GESTURE_TAP_THRES_MG));
 #endif
 	/*
-	 * configure int2 as an external input.
 	 * Set a 5ms latch to be sure the EC can read the interrupt register
 	 * properly, even when it is running more slowly.
 	 */
+#ifdef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
+	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH, BMI160_LATCH_5MS);
+#else
+	/* Also, configure int2 as an external input. */
 	ret = raw_write8(s->port, s->addr, BMI160_INT_LATCH,
 		BMI160_INT2_INPUT_EN | BMI160_LATCH_5MS);
+#endif
 
 	/* configure int1 as an interupt */
 	ret = raw_write8(s->port, s->addr, BMI160_INT_OUT_CTRL,
@@ -823,10 +827,14 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	/* configure fifo watermark at 50% */
 	ret = raw_write8(s->port, s->addr, BMI160_FIFO_CONFIG_0,
 			512 / sizeof(uint32_t));
+#ifdef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
 	ret = raw_write8(s->port, s->addr, BMI160_FIFO_CONFIG_1,
-			BMI160_FIFO_TAG_INT1_EN |
+			BMI160_FIFO_HEADER_EN);
+#else
+	ret = raw_write8(s->port, s->addr, BMI160_FIFO_CONFIG_1,
 			BMI160_FIFO_TAG_INT2_EN |
 			BMI160_FIFO_HEADER_EN);
+#endif
 
 	/* Set fifo*/
 	ret = raw_read8(s->port, s->addr, BMI160_INT_EN_1, &tmp);
@@ -932,12 +940,6 @@ static int bmi160_decode_header(struct motion_sensor_t *s,
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
 		}
-#if 0
-		if (hdr & BMI160_FH_EXT_MASK)
-			CPRINTF("%s%s\n",
-				(hdr & 0x1 ? "INT1" : ""),
-				(hdr & 0x2 ? "INT2" : ""));
-#endif
 		return 1;
 	} else {
 		return 0;
