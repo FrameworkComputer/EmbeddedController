@@ -6,6 +6,24 @@
 #include "clock.h"
 #include "hooks.h"
 #include "registers.h"
+#include "timer.h"
+
+#define POWER_BUTTON 2
+
+void rbox_press_power_btn(int ms)
+{
+	uint8_t val = GREAD_FIELD(RBOX, OVERRIDE_OUTPUT, VAL);
+
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, VAL, ~(1 << POWER_BUTTON) & val);
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, OEN, 1 << POWER_BUTTON);
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, EN, 1 << POWER_BUTTON);
+
+	msleep(ms);
+
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, EN, 0);
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, OEN, 0);
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, VAL, val);
+}
 
 static void rbox_release_ec_reset(void)
 {

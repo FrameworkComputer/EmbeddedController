@@ -8,6 +8,7 @@
 #include "device_state.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "rbox.h"
 #include "rdd.h"
 #include "registers.h"
 #include "system.h"
@@ -218,3 +219,78 @@ static int command_ccd(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
 			"[uart] [<BOOLEAN>]",
 			"Get/set the case closed debug state");
+
+static int command_sys_rst(int argc, char **argv)
+{
+	int val;
+
+	if (argc > 1) {
+		if (parse_bool(argv[1], &val)) {
+			if (val)
+				assert_sys_rst();
+			else
+				deassert_sys_rst();
+		} else
+			return EC_ERROR_PARAM1;
+		ccprintf("SYS_RST_L is %s\n", is_sys_rst_asserted() ?
+			"asserted" : "deasserted");
+	} else {
+		ccprintf("Issuing AP reset\n");
+		assert_sys_rst();
+		usleep(200);
+		deassert_sys_rst();
+	}
+
+	return EC_SUCCESS;
+
+}
+DECLARE_SAFE_CONSOLE_COMMAND(sysrst, command_sys_rst,
+	"[<BOOLEAN>]",
+	"Assert/deassert SYS_RST_L to reset the AP");
+
+static int command_ec_rst(int argc, char **argv)
+{
+	int val;
+
+
+	if (argc > 1) {
+		if (parse_bool(argv[1], &val)) {
+			if (val)
+				assert_ec_rst();
+			else
+				deassert_ec_rst();
+		} else
+			return EC_ERROR_PARAM1;
+
+		ccprintf("EC_RST_L is %s\n", is_ec_rst_asserted() ?
+			"asserted" : "deasserted");
+	} else {
+		ccprintf("Issuing EC reset\n");
+		assert_ec_rst();
+		usleep(200);
+		deassert_ec_rst();
+	}
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(ecrst, command_ec_rst,
+	"[<BOOLEAN>]",
+	"Assert/deassert EC_RST_L");
+
+static int command_powerbtn(int argc, char **argv)
+{
+	char *e;
+	int ms = 200;
+
+	if (argc == 2) {
+		ms = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+	}
+	ccprintf("Simulating %dms power button press\n", ms);
+	rbox_press_power_btn(ms);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
+			"ms",
+			"Simulate a power button press");
