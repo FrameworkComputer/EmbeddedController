@@ -392,6 +392,9 @@ int tpm_endorse(void)
 	/* 2-kB RO cert region is setup like so:
 	 *
 	 *   | struct ro_cert | rsa_cert | struct ro_cert | ecc_cert |
+	 *
+	 *   last 32 bytes is hmac over (2048 - 32) preceding bytes.
+	 *   using hmac(eps, "RSA", 4) as key
 	 */
 	const uint8_t *p = (const uint8_t *) RO_CERTS_START_ADDR;
 	const uint32_t *c = (const uint32_t *) RO_CERTS_START_ADDR;
@@ -399,6 +402,8 @@ int tpm_endorse(void)
 	const struct ro_cert *ecc_cert;
 	int result = 0;
 	uint8_t eps[PRIMARY_SEED_SIZE];
+
+	LITE_HMAC_CTX hmac;
 
 	flash_cert_region_enable();
 
@@ -434,6 +439,21 @@ int tpm_endorse(void)
 	}
 	if (ecc_cert->cert_info.component_type !=
 		CROS_PERSO_COMPONENT_TYPE_P256_CERT) {
+		return 0;
+	}
+
+	/* Check cert region hmac.
+	 *
+	 * This will fail if we are not running w/ expected keyladder.
+	 */
+	DCRYPTO_HMAC_SHA256_init(&hmac, eps, sizeof(eps));
+	HASH_update(&hmac.hash, "RSA", 4);
+	DCRYPTO_HMAC_SHA256_init(&hmac, DCRYPTO_HMAC_final(&hmac), 32);
+	HASH_update(&hmac.hash, p, RO_CERTS_REGION_SIZE - 32);
+	if (memcmp(
+		p + RO_CERTS_REGION_SIZE - 32,
+		DCRYPTO_HMAC_final(&hmac), 32) != 0) {
+		CPRINTF("%s: bad cert region hmac\n", __func__);
 		return 0;
 	}
 
