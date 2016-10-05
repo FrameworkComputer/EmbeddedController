@@ -79,7 +79,7 @@ enum smb_oper_state_t {
 };
 
 /* IRQ for each port */
-const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
+static const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
 		NPCX_IRQ_SMB1, NPCX_IRQ_SMB2, NPCX_IRQ_SMB3, NPCX_IRQ_SMB4};
 BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_CONTROLLER_COUNT);
 
@@ -616,16 +616,8 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 
 	p_status = i2c_stsobjs + ctrl;
 
-	interrupt_disable();
-	/* make sure bus is not occupied by the other task */
-	if (p_status->task_waiting != TASK_ID_INVALID) {
-		interrupt_enable();
-		return EC_ERROR_BUSY;
-	}
-
 	/* Assign current task ID */
 	p_status->task_waiting = task_get_current();
-	interrupt_enable();
 
 	/* Select port for multi-ports i2c controller */
 	i2c_select_port(port);
