@@ -1265,37 +1265,40 @@ void pd_set_dual_role(enum pd_dual_role_states state)
 	pd_update_try_source();
 #endif
 
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		/*
-		 * Change to sink if port is currently a source AND (new DRP
-		 * state is force sink OR new DRP state is either toggle off
-		 * or debug accessory toggle only and we are in the source
-		 * disconnected state).
-		 */
-		if (pd[i].power_role == PD_ROLE_SOURCE &&
-		    ((drp_state == PD_DRP_FORCE_SINK &&
-		      !pd_debug_acc_plugged(i)) ||
-		     (drp_state == PD_DRP_TOGGLE_OFF
-		      && pd[i].task_state == PD_STATE_SRC_DISCONNECTED))) {
-			pd[i].power_role = PD_ROLE_SINK;
-			set_state(i, PD_STATE_SNK_DISCONNECTED);
-			tcpm_set_cc(i, TYPEC_CC_RD);
-			/* Make sure we're not sourcing VBUS. */
-			pd_power_supply_reset(i);
-			task_wake(PD_PORT_TO_TASK_ID(i));
-		}
+	/* Inform PD tasks of dual role change. */
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		task_set_event(PD_PORT_TO_TASK_ID(i),
+			       PD_EVENT_UPDATE_DUAL_ROLE, 0);
+}
 
-		/*
-		 * Change to source if port is currently a sink and the
-		 * new DRP state is force source.
-		 */
-		if (pd[i].power_role == PD_ROLE_SINK &&
-		    drp_state == PD_DRP_FORCE_SOURCE) {
-			pd[i].power_role = PD_ROLE_SOURCE;
-			set_state(i, PD_STATE_SRC_DISCONNECTED);
-			tcpm_set_cc(i, TYPEC_CC_RP);
-			task_wake(PD_PORT_TO_TASK_ID(i));
-		}
+void pd_update_dual_role_config(int port)
+{
+	/*
+	 * Change to sink if port is currently a source AND (new DRP
+	 * state is force sink OR new DRP state is either toggle off
+	 * or debug accessory toggle only and we are in the source
+	 * disconnected state).
+	 */
+	if (pd[port].power_role == PD_ROLE_SOURCE &&
+	    ((drp_state == PD_DRP_FORCE_SINK && !pd_debug_acc_plugged(port)) ||
+	     (drp_state == PD_DRP_TOGGLE_OFF
+	      && pd[port].task_state == PD_STATE_SRC_DISCONNECTED))) {
+		pd[port].power_role = PD_ROLE_SINK;
+		set_state(port, PD_STATE_SNK_DISCONNECTED);
+		tcpm_set_cc(port, TYPEC_CC_RD);
+		/* Make sure we're not sourcing VBUS. */
+		pd_power_supply_reset(port);
+	}
+
+	/*
+	 * Change to source if port is currently a sink and the
+	 * new DRP state is force source.
+	 */
+	if (pd[port].power_role == PD_ROLE_SINK &&
+	    drp_state == PD_DRP_FORCE_SOURCE) {
+		pd[port].power_role = PD_ROLE_SOURCE;
+		set_state(port, PD_STATE_SRC_DISCONNECTED);
+		tcpm_set_cc(port, TYPEC_CC_RP);
 	}
 }
 
@@ -1437,6 +1440,41 @@ void pd_set_new_power_request(int port)
 #error "Backwards compatible DFP does not support USB"
 #endif
 
+#ifdef CONFIG_COMMON_RUNTIME
+
+/* Initialize globals based on system state. */
+static void pd_init_tasks(void)
+{
+	static int initialized;
+
+	/* Initialize globals once, for all PD tasks.  */
+	if (initialized)
+		return;
+
+#if defined(HAS_TASK_CHIPSET) && defined(CONFIG_USB_PD_DUAL_ROLE)
+	/* Set dual-role state based on chipset power state */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		drp_state = PD_DRP_FORCE_SINK;
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+		drp_state = PD_DRP_TOGGLE_OFF;
+	else /* CHIPSET_STATE_ON */
+		drp_state = PD_DRP_TOGGLE_ON;
+#endif
+
+#if !defined(CONFIG_USB_PD_COMM_ENABLED) || defined(CONFIG_USB_PD_COMM_LOCKED)
+	/* Enable PD communication at init if we're in RW or unlocked. */
+	if (system_get_image_copy() != SYSTEM_IMAGE_RW && system_is_locked()) {
+		pd_comm_enabled = 0;
+		ccprintf("[%T PD comm disabled]\n");
+	} else {
+		pd_comm_enabled = 1;
+	}
+#endif
+
+	initialized = 1;
+}
+#endif /* CONFIG_COMMON_RUNTIME */
+
 void pd_task(void)
 {
 	int head;
@@ -1461,6 +1499,10 @@ void pd_task(void)
 	int caps_count = 0, hard_reset_sent = 0;
 	int snk_cap_count = 0;
 	int evt;
+
+#ifdef CONFIG_COMMON_RUNTIME
+	pd_init_tasks();
+#endif
 
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
@@ -1495,6 +1537,7 @@ void pd_task(void)
 	tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
 							      TYPEC_CC_RD);
 
+
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	/* Initialize PD Policy engine */
 	pd_dfp_pe_init(port);
@@ -1522,6 +1565,11 @@ void pd_task(void)
 
 		/* wait for next event/packet or timeout expiration */
 		evt = task_wait_event(timeout);
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		if (evt & PD_EVENT_UPDATE_DUAL_ROLE)
+			pd_update_dual_role_config(port);
+#endif
 
 #ifdef CONFIG_USB_PD_TCPC
 		/*
@@ -2734,18 +2782,16 @@ static void dual_role_on(void)
 {
 	int i;
 
-	pd_set_dual_role(PD_DRP_TOGGLE_ON);
-	CPRINTS("chipset -> S0");
-
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 #ifdef CONFIG_CHARGE_MANAGER
 		if (charge_manager_get_active_charge_port() != i)
 #endif
 			pd[i].flags |= PD_FLAGS_CHECK_PR_ROLE |
 				       PD_FLAGS_CHECK_DR_ROLE;
-		/* kick the task to ensure we start toggling immediatly */
-		task_wake(PD_PORT_TO_TASK_ID(i));
 	}
+
+	pd_set_dual_role(PD_DRP_TOGGLE_ON);
+	CPRINTS("chipset -> S0");
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
 
@@ -2760,23 +2806,10 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, dual_role_off, HOOK_PRIO_DEFAULT);
 static void dual_role_force_sink(void)
 {
 	pd_set_dual_role(PD_DRP_FORCE_SINK);
-
 	CPRINTS("chipset -> S5");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
 
-#ifdef HAS_TASK_CHIPSET
-static void dual_role_init(void)
-{
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		dual_role_force_sink();
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-		dual_role_off();
-	else /* CHIPSET_STATE_ON */
-		dual_role_on();
-}
-DECLARE_HOOK(HOOK_INIT, dual_role_init, HOOK_PRIO_DEFAULT);
-#endif /* HAS_TASK_CHIPSET */
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -3477,23 +3510,6 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 #endif /* HAS_TASK_HOSTCMD */
-
-#ifdef CONFIG_USB_PD_COMM_LOCKED
-/* Enable PD communication at init if we're in RO or unlocked. */
-static void pd_comm_init(void)
-{
-	int pd_enable = 1;
-
-	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-	    && system_is_locked()) {
-		ccprintf("[%T PD comm disabled]\n");
-		pd_enable = 0;
-	}
-
-	pd_comm_enable(pd_enable);
-}
-DECLARE_HOOK(HOOK_INIT, pd_comm_init, HOOK_PRIO_LAST);
-#endif /* CONFIG_USB_PD_COMM_LOCKED */
 
 #ifdef CONFIG_CMD_PD_CONTROL
 static int pd_control_disabled;
