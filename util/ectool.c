@@ -3579,6 +3579,9 @@ static int cmd_motionsense(int argc, char **argv)
 		case MOTIONSENSE_TYPE_ACTIVITY:
 			printf("activity\n");
 			break;
+		case MOTIONSENSE_TYPE_BARO:
+			printf("barometer\n");
+			break;
 		default:
 			printf("unknown\n");
 		}
@@ -3611,6 +3614,15 @@ static int cmd_motionsense(int argc, char **argv)
 			break;
 		case MOTIONSENSE_CHIP_KX022:
 			printf("kx022\n");
+			break;
+		case MOTIONSENSE_CHIP_L3GD20H:
+			printf("l3gd20h\n");
+			break;
+		case MOTIONSENSE_CHIP_BMA255:
+			printf("bma255\n");
+			break;
+		case MOTIONSENSE_CHIP_BMP280:
+			printf("bmp280\n");
 			break;
 		default:
 			printf("unknown\n");
@@ -3765,8 +3777,7 @@ static int cmd_motionsense(int argc, char **argv)
 		printf("Timestamp:%" PRIx32 "\n", resp->fifo_info.timestamp);
 		printf("Total lost: %d\n", resp->fifo_info.total_lost);
 		for (i = 0; i < sensor_count; i++) {
-			int lost;
-			lost = resp->fifo_info.lost[i];
+			int lost = resp->fifo_info.lost[i];
 			if (lost != 0)
 				printf("Lost %d:     %d\n", i, lost);
 		}
