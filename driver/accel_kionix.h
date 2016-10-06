@@ -69,11 +69,11 @@ extern const struct accelgyro_drv kionix_accel_drv;
 #define KIONIX_XOUT_L(v) (KX022_XOUT_L +	\
 			  (v) * (KXCJ9_XOUT_L - KX022_XOUT_L))
 
-#ifdef CONFIG_ACCEL_KX022
-#define KIONIX_WHO_AM_I_VAL KX022_WHO_AM_I_VAL
-#elif defined(CONFIG_ACCEL_KXCJ9)
-#define KIONIX_WHO_AM_I_VAL KXCJ9_WHO_AM_I_VAL
-#endif
+#define KIONIX_WHO_AM_I(v) (KX022_WHOAMI + \
+			    (v) * (KXCJ9_WHOAMI - KX022_WHOAMI))
+
+#define KIONIX_WHO_AM_I_VAL(v) (KX022_WHO_AM_I_VAL + \
+			(v) * (KXCJ9_WHO_AM_I_VAL - KX022_WHO_AM_I_VAL))
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
 extern struct i2c_stress_test_dev kionix_i2c_stress_test_dev;

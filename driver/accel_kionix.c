@@ -450,11 +450,32 @@ static int init(const struct motion_sensor_t *s)
 	int ret, val, reg, reset_field;
 	uint8_t timeout;
 
+	/* The chip can take up to 10ms to boot */
+	mutex_lock(s->mutex);
+	reg = KIONIX_WHO_AM_I(V(s));
+	timeout = 0;
+	do {
+		msleep(1);
+		/* Read WHO_AM_I to be sure the device has booted */
+		ret = raw_read8(s->port, s->addr, reg, &val);
+		if (ret == EC_SUCCESS)
+			break;
+
+		/* Check for timeout. */
+		if (timeout++ > 20) {
+			ret = EC_ERROR_TIMEOUT;
+			break;
+		}
+	} while (1);
+	if (ret != EC_SUCCESS) {
+		mutex_unlock(s->mutex);
+		return ret;
+	}
+
 	reg = KIONIX_CTRL2_REG(V(s));
 	reset_field = KIONIX_RESET_FIELD(V(s));
 
 	/* Issue a software reset. */
-	mutex_lock(s->mutex);
 
 	/* Place the sensor in standby mode to make changes. */
 	ret = disable_sensor(s, &val);
@@ -533,8 +554,8 @@ const struct accelgyro_drv kionix_accel_drv = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
 struct i2c_stress_test_dev kionix_i2c_stress_test_dev = {
 	.reg_info = {
-		.read_reg = KX022_WHOAMI,
-		.read_val = KIONIX_WHO_AM_I_VAL,
+		.read_reg = KIONIX_WHO_AM_I(V(s)),
+		.read_val = KIONIX_WHO_AM_I_VAL(V(s)),
 		.write_reg = KIONIX_ODR_REG(V(s)),
 	},
 	.i2c_read = &raw_read8,
