@@ -302,7 +302,7 @@ static void usage(int errs)
 	       "  -h,--help                Show this message\n"
 	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
 	       "  -u,--upstart             "
-			"Upstart mode (strict header checks, no reboot)\n"
+			"Upstart mode (strict header checks)\n"
 	       "\n", progname, VID, PID);
 
 	exit(errs ? update_error : noop);
@@ -958,7 +958,7 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 	}
 
 	printf("-------\nupdate complete\n");
-	if ((td->ep_type == usb_xfer) && !td->upstart_mode) {
+	if (td->ep_type == usb_xfer) {
 		uint32_t out;
 
 		/* Send stop request, ignoring reply. */
