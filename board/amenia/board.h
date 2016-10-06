@@ -208,12 +208,17 @@ enum als_id {
 	ALS_COUNT
 };
 
-/* Motion sensors */
+/*
+ * Motion sensors
+ * When reading through IO memory is set up for sensors (LPC is used),
+ * the first 2 entries must be accelerometers, then gyroscope.
+ * For BMI160, accel, gyro and compass sensors must be next to each other.
+ */
 enum sensor_id {
-	LID_ACCEL = 0,
+	BASE_ACCEL = 0,
+	LID_ACCEL,
 	LID_GYRO,
 	LID_MAG,
-	BASE_ACCEL,
 	BASE_BARO,
 };
 

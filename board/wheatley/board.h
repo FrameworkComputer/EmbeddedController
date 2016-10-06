@@ -47,8 +47,8 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 #define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_SENSOR_BASE 0
-#define CONFIG_LID_ANGLE_SENSOR_LID 2
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
@@ -196,6 +196,18 @@ enum als_id {
 	ALS_OPT3001 = 0,
 
 	ALS_COUNT
+};
+
+/*
+ * Motion sensors
+ * When reading through IO memory is set up for sensors (LPC is used),
+ * the first 2 entries must be accelerometers, then gyroscope.
+ * For BMI160, accel, gyro and compass sensors must be next to each other.
+ */
+enum sensor_id {
+	LID_ACCEL = 0,
+	BASE_ACCEL,
+	BASE_GYRO,
 };
 
 /* start as a sink in case we have no other power supply/battery */
