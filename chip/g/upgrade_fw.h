@@ -32,7 +32,7 @@
  * first_response_pdu structure below.
  */
 
-#define UPGRADE_PROTOCOL_VERSION 4
+#define UPGRADE_PROTOCOL_VERSION 5
 
 /* This is the format of the update frame header. */
 struct upgrade_command {
@@ -83,7 +83,7 @@ struct signed_header_version {
  * It became clear that there is a need to be able to enhance the upgrade
  * protocol, while stayng backwards compatible.
  *
- * All newer protocol versions (satring with version 2) respond to the very
+ * All newer protocol versions (starting with version 2) respond to the very
  * first packet with an 8 byte or larger response, where the first 4 bytes are
  * a version specific data, and the second 4 bytes - the protocol version
  * number.
@@ -106,6 +106,10 @@ struct first_response_pdu {
 	/* The below fields are present in versions 4 and up. */
 	/* Versions of the currently active RO and RW sections. */
 	struct signed_header_version shv[2];
+
+	/* The below fields are present in versions 5 and up */
+	/* keyids of the currently active RO and RW sections. */
+	uint32_t keyid[2];
 };
 
 /* TODO: Handle this in upgrade_fw.c, not usb_upgrade.c */

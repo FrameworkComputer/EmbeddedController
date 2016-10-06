@@ -684,11 +684,8 @@ static void transfer_section(struct transfer_descriptor *td,
 	}
 }
 
-/*
- * Header versions retrieved from the target, RO at index 0 and RW at index
- * 1.
- */
-static struct signed_header_version target_shv[2];
+/* Information about the target */
+static struct first_response_pdu targ;
 
 /*
  * Each RO or RW section of the new image can be in one of the following
@@ -713,6 +710,7 @@ static struct {
 	uint32_t    size;
 	enum upgrade_status  ustatus;
 	struct signed_header_version shv;
+	uint32_t keyid;
 } sections[] = {
 	{"RO_A", CONFIG_RO_MEM_OFF, CONFIG_RO_SIZE},
 	{"RW_A", CONFIG_RW_MEM_OFF, CONFIG_RW_SIZE},
@@ -736,6 +734,7 @@ static void fetch_header_versions(const void *image)
 		sections[i].shv.epoch = h->epoch_;
 		sections[i].shv.major = h->major_;
 		sections[i].shv.minor = h->minor_;
+		sections[i].keyid = h->keyid;
 	}
 }
 
@@ -806,7 +805,7 @@ static void pick_sections(struct transfer_descriptor *td)
 			 * different.
 			 */
 
-			if (a_newer_than_b(&sections[i].shv, target_shv + 1) ||
+			if (a_newer_than_b(&sections[i].shv, &targ.shv[1]) ||
 			    !td->upstart_mode)
 				sections[i].ustatus = needed;
 			continue;
@@ -830,7 +829,7 @@ static void pick_sections(struct transfer_descriptor *td)
 		 * Is it newer in the new image than the running RO section on
 		 * the device?
 		 */
-		if (a_newer_than_b(&sections[i].shv, target_shv))
+		if (a_newer_than_b(&sections[i].shv, &targ.shv[0]))
 			sections[i].ustatus = needed;
 	}
 }
@@ -868,6 +867,8 @@ static void setup_connection(struct transfer_descriptor *td)
 		}
 	}
 
+	/* We got something. Check for errors in response */
+
 	if (rxed_size <= 4) {
 		if (td->ep_type != spi_xfer) {
 			fprintf(stderr, "Unexpected response size %zd\n",
@@ -899,18 +900,26 @@ static void setup_connection(struct transfer_descriptor *td)
 			/* All newer protocols. */
 			td->rw_offset = be32toh
 				(start_resp.rpdu.backup_rw_offset);
+
 			if (protocol_version > 3) {
 				size_t i;
 
 				/* Running header versions are available. */
-				for (i = 0; i < ARRAY_SIZE(target_shv); i++) {
-					target_shv[i].minor = be32toh
+				for (i = 0; i < ARRAY_SIZE(targ.shv); i++) {
+					targ.shv[i].minor = be32toh
 						(start_resp.rpdu.shv[i].minor);
-					target_shv[i].major = be32toh
+					targ.shv[i].major = be32toh
 						(start_resp.rpdu.shv[i].major);
-					target_shv[i].epoch = be32toh
+					targ.shv[i].epoch = be32toh
 						(start_resp.rpdu.shv[i].epoch);
 				}
+			}
+			if (protocol_version > 4) {
+				size_t i;
+
+				for (i = 0; i < ARRAY_SIZE(targ.keyid); i++)
+					targ.keyid[i] = be32toh
+						(start_resp.rpdu.keyid[i]);
 			}
 		}
 	}
@@ -924,6 +933,9 @@ static void setup_connection(struct transfer_descriptor *td)
 			printf("Offsets: backup RO at %#x, backup RW at %#x\n",
 			       td->ro_offset, td->rw_offset);
 		}
+		if (protocol_version > 4)
+			printf("Keyids: RO 0x%08x, RW 0x%08x\n",
+			       targ.keyid[0], targ.keyid[1]);
 		pick_sections(td);
 		return;
 	}

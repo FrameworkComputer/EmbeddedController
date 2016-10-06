@@ -210,6 +210,8 @@ void fw_upgrade_command_handler(void *body,
 		rpdu->shv[0].minor = htobe32(header->minor_);
 		rpdu->shv[0].major = htobe32(header->major_);
 		rpdu->shv[0].epoch = htobe32(header->epoch_);
+		/* New with protocol version 5 */
+		rpdu->keyid[0] = htobe32(header->keyid);
 
 		/* RW header information. */
 		header = (const struct SignedHeader *)
@@ -217,6 +219,8 @@ void fw_upgrade_command_handler(void *body,
 		rpdu->shv[1].minor = htobe32(header->minor_);
 		rpdu->shv[1].major = htobe32(header->major_);
 		rpdu->shv[1].epoch = htobe32(header->epoch_);
+		/* New with protocol version 5 */
+		rpdu->keyid[1] = htobe32(header->keyid);
 		return;
 	}
 
