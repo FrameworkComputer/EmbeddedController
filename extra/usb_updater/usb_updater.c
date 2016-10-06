@@ -296,6 +296,8 @@ static void usage(int errs)
 	       "\n"
 	       "Options:\n"
 	       "\n"
+	       "  -b,--binvers             Report versions of image's "
+				"RW and RO headers, do not update\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -h,--help                Show this message\n"
 	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
