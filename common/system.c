@@ -822,6 +822,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, system_common_shutdown, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_SYSINFO
 static int command_sysinfo(int argc, char **argv)
 {
 	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
@@ -849,6 +850,7 @@ static int command_sysinfo(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
 			     NULL,
 			     "Print system info");
+#endif
 
 #ifdef CONFIG_CMD_SCRATCHPAD
 static int command_scratchpad(int argc, char **argv)
@@ -1072,6 +1074,7 @@ DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
 			"[hard|soft] [preserve] [ap-off] [cancel]",
 			"Reboot the EC");
 
+#ifdef CONFIG_CMD_SYSLOCK
 static int command_system_lock(int argc, char **argv)
 {
 	force_locked = 1;
@@ -1080,6 +1083,7 @@ static int command_system_lock(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(syslock, command_system_lock,
 			     NULL,
 			     "Lock the system, even if WP is disabled");
+#endif
 
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_CMD_SLEEPMASK)
 /**
