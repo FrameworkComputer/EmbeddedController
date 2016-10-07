@@ -16,6 +16,7 @@
 #include "init_chip.h"
 #include "nvmem.h"
 #include "registers.h"
+#include "signed_header.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"
@@ -748,3 +749,35 @@ void i2cs_set_pinmux(void)
 	GWRITE_FIELD(PINMUX, EXITINV0, DIOA1, 1);  /* wake on low */
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 1);   /* enable powerdown exit */
 }
+
+static int command_sysinfo(int argc, char **argv)
+{
+	enum system_image_copy_t active;
+	uintptr_t vaddr;
+	const struct SignedHeader *h;
+
+	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
+	system_print_reset_flags();
+	ccprintf(")\n");
+
+	ccprintf("Chip:        %s %s %s\n", system_get_chip_vendor(),
+		 system_get_chip_name(), system_get_chip_revision());
+
+	active = system_get_ro_image_copy();
+	vaddr = get_program_memory_addr(active);
+	h = (const struct SignedHeader *)vaddr;
+	ccprintf("RO keyid:    0x%08x\n", h->keyid);
+
+	active = system_get_image_copy();
+	vaddr = get_program_memory_addr(active);
+	h = (const struct SignedHeader *)vaddr;
+	ccprintf("RW keyid:    0x%08x\n", h->keyid);
+
+	ccprintf("DEV_ID:      0x%08x 0x%08x\n",
+		 GREG32(FUSE, DEV_ID0), GREG32(FUSE, DEV_ID1));
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
+			     NULL,
+			     "Print system info");
