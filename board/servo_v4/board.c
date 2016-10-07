@@ -226,10 +226,48 @@ const int num_rw_sections = ARRAY_SIZE(board_rw_sections);
 /******************************************************************************
  * Initialize board.
  */
-static void board_init(void)
+
+/* Write a GPIO output on the tca6416 I2C ioexpander. */
+static void write_ioexpander(int bank, int gpio, int val)
 {
 	int tmp;
 
+	/* Read output port register */
+	i2c_read8(1, 0x40, 0x2 + bank, &tmp);
+	if (val)
+		tmp |= (1 << gpio);
+	else
+		tmp &= ~(1 << gpio);
+	/* Write back modified output port register */
+	i2c_write8(1, 0x40, 0x2 + bank, tmp);
+
+	/* Set Configuration port to output/0 */
+	i2c_read8(1, 0x40, 0x6 + bank, &tmp);
+	i2c_write8(1, 0x40, 0x6 + bank, tmp & ~(1 << gpio));
+}
+
+/* Enable uservo USB. */
+static void init_uservo_port(void)
+{
+	/* Write USERVO_POWER_EN */
+	write_ioexpander(0, 7, 1);
+	/* Write USERVO_FASTBOOT_MUX_SEL */
+	write_ioexpander(1, 0, 0);
+}
+
+/* Enable all ioexpander outputs. */
+static void init_ioexpander(void)
+{
+	/* Write all GPIO to output 0 */
+	i2c_write8(1, 0x40, 0x2, 0x0);
+	i2c_write8(1, 0x40, 0x3, 0x0);
+	/* Write all GPIO to output direction */
+	i2c_write8(1, 0x40, 0x6, 0x0);
+	i2c_write8(1, 0x40, 0x7, 0x0);
+}
+
+static void board_init(void)
+{
 	/* USB to serial queues */
 	queue_init(&usart3_to_usb);
 	queue_init(&usb_to_usart3);
@@ -248,13 +286,7 @@ static void board_init(void)
 	i2c_write8(1, 0x20, 0x0, 0x20);
 
 	/* Enable uservo USB by default. */
-	/* Write USERVO_POWER_EN */
-	i2c_write8(1, 0x40, 0x1, 0xff | (1 << 7));
-	i2c_read8(1, 0x40, 0x3, &tmp);
-	i2c_write8(1, 0x40, 0x3, tmp & ~(1 << 7));
-	/* Write USERVO_FASTBOOT_MUX_SEL */
-	i2c_write8(1, 0x40, 0x0, 0xff & ~(1 << 0));
-	i2c_read8(1, 0x40, 0x2, &tmp);
-	i2c_write8(1, 0x40, 0x2, tmp & ~(1 << 0));
+	init_ioexpander();
+	init_uservo_port();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
