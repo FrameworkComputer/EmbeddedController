@@ -741,7 +741,8 @@ int system_is_reboot_warm(void)
 	    (reset_flags & RESET_FLAG_POWER_ON) ||
 	    (reset_flags & RESET_FLAG_WATCHDOG) ||
 	    (reset_flags & RESET_FLAG_HARD) ||
-	    (reset_flags & RESET_FLAG_SOFT))
+	    (reset_flags & RESET_FLAG_SOFT) ||
+	    (reset_flags & RESET_FLAG_HIBERNATE))
 		return 0;
 	else
 		return 1;
