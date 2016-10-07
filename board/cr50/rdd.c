@@ -225,56 +225,57 @@ static int command_sys_rst(int argc, char **argv)
 	int val;
 
 	if (argc > 1) {
-		if (parse_bool(argv[1], &val)) {
+		if (!strcasecmp("pulse", argv[1])) {
+			ccprintf("Pulsing AP reset\n");
+			assert_sys_rst();
+			usleep(200);
+			deassert_sys_rst();
+		} else if (parse_bool(argv[1], &val)) {
 			if (val)
 				assert_sys_rst();
 			else
 				deassert_sys_rst();
 		} else
 			return EC_ERROR_PARAM1;
-		ccprintf("SYS_RST_L is %s\n", is_sys_rst_asserted() ?
-			"asserted" : "deasserted");
-	} else {
-		ccprintf("Issuing AP reset\n");
-		assert_sys_rst();
-		usleep(200);
-		deassert_sys_rst();
 	}
+
+	ccprintf("SYS_RST_L is %s\n", is_sys_rst_asserted() ?
+		 "asserted" : "deasserted");
 
 	return EC_SUCCESS;
 
 }
 DECLARE_SAFE_CONSOLE_COMMAND(sysrst, command_sys_rst,
-	"[<BOOLEAN>]",
+	"[pulse | <BOOLEAN>]",
 	"Assert/deassert SYS_RST_L to reset the AP");
 
 static int command_ec_rst(int argc, char **argv)
 {
 	int val;
 
-
 	if (argc > 1) {
-		if (parse_bool(argv[1], &val)) {
+		if (!strcasecmp("pulse", argv[1])) {
+			ccprintf("Pulsing EC reset\n");
+			assert_ec_rst();
+			usleep(200);
+			deassert_ec_rst();
+		} else if (parse_bool(argv[1], &val)) {
 			if (val)
 				assert_ec_rst();
 			else
 				deassert_ec_rst();
 		} else
 			return EC_ERROR_PARAM1;
-
-		ccprintf("EC_RST_L is %s\n", is_ec_rst_asserted() ?
-			"asserted" : "deasserted");
-	} else {
-		ccprintf("Issuing EC reset\n");
-		assert_ec_rst();
-		usleep(200);
-		deassert_ec_rst();
 	}
+
+	ccprintf("EC_RST_L is %s\n", is_ec_rst_asserted() ?
+		 "asserted" : "deasserted");
+
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(ecrst, command_ec_rst,
-	"[<BOOLEAN>]",
-	"Assert/deassert EC_RST_L");
+	"[pulse | <BOOLEAN>]",
+	"Assert/deassert EC_RST_L to reset the EC (and AP)");
 
 static int command_powerbtn(int argc, char **argv)
 {
