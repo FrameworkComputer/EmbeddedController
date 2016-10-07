@@ -155,8 +155,11 @@ struct upgrade_pkt {
 
 #define SIGNED_TRANSFER_SIZE 1024
 #define MAX_BUF_SIZE	(SIGNED_TRANSFER_SIZE + sizeof(struct upgrade_pkt))
+
+/* These are copied from ./include/extension.h */
 #define EXT_CMD		0xbaccd00a
 #define FW_UPGRADE	4
+#define POST_RESET	7
 
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
@@ -208,7 +211,8 @@ static const struct option long_opts[] = {
 /* Prepare and transfer a block to /dev/tpm0, get a reply. */
 static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 			const void *data, int size,
-			void *response, size_t *response_size)
+			void *response, size_t *response_size,
+			uint16_t subcmd)
 {
 	/* Used by transfer to /dev/tpm0 */
 	static uint8_t outbuf[MAX_BUF_SIZE];
@@ -225,7 +229,7 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 	out->tag = __cpu_to_be16(0x8001);
 	out->length = __cpu_to_be32(len);
 	out->ordinal = __cpu_to_be32(EXT_CMD);
-	out->subcmd = __cpu_to_be16(FW_UPGRADE);
+	out->subcmd = __cpu_to_be16(subcmd);
 	out->digest = digest;
 	out->address = __cpu_to_be32(addr);
 	memcpy(out->data, data, size);
@@ -661,7 +665,7 @@ static void transfer_section(struct transfer_descriptor *td,
 					 block_addr,
 					 data_ptr,
 					 payload_size, error_code,
-					 &rxed_size) < 0) {
+					 &rxed_size, FW_UPGRADE) < 0) {
 				fprintf(stderr,
 					"Failed to trasfer block, %zd to go\n",
 					data_len);
@@ -861,7 +865,7 @@ static void setup_connection(struct transfer_descriptor *td)
 	} else {
 		rxed_size = sizeof(start_resp);
 		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
-				 &start_resp, &rxed_size) < 0) {
+				 &start_resp, &rxed_size, FW_UPGRADE) < 0) {
 			fprintf(stderr, "Failed to start transfer\n");
 			exit(update_error);
 		}
@@ -977,16 +981,25 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 		out = htobe32(UPGRADE_DONE);
 		xfer(&td->uep, &out, sizeof(out), &out,
 		     protocol_version < 3 ? sizeof(out) : 1);
-
-		printf("reboot\n");
-
 		/*
 		 * Send a second stop request, which should reboot without
 		 * replying.
 		 */
 		xfer(&td->uep, &out, sizeof(out), 0, 0);
+	} else {
+		uint8_t response;
+		size_t response_size;
+
+		/* Need to send extended command for posted reboot. */
+		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
+				 &response, &response_size, POST_RESET) < 0) {
+			fprintf(stderr, "Failed to request posted reboot\n");
+			exit(update_error);
+		}
+
 	}
 
+	printf("Reboot request posted");
 	return num_txed_secitons;
 }
 
