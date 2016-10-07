@@ -81,7 +81,7 @@ GPIO(USB_C0_5V_EN,      PIN(D, 8),  GPIO_OUT_LOW)    /* USBC port 0 5V */
 GPIO(USB_C0_CHARGE_L,   PIN(D, 9),  GPIO_OUT_LOW)    /* USBC port 0 charge */
 GPIO(USB_C0_RST,        PIN(D, 10), GPIO_ODR_HIGH)    /* ANX7688 reset */
 GPIO(USB_C0_PWR_EN_L,   PIN(B, 15), GPIO_ODR_HIGH)    /* ANX7688 power enable */
-GPIO(USB_C0_EXTPWR_EN,  PIN(F, 2),  GPIO_OUT_HIGH)   /* ANX7688 3.3V ext power enable */
+GPIO(USB_C0_EXTPWR_EN,  PIN(F, 2),  GPIO_OUT_LOW)   /* ANX7688 3.3V ext power enable */
 GPIO(USB_DP_HPD,        PIN(F, 3),  GPIO_INPUT)
 GPIO(EN_TP_INT_L,       PIN(E, 14), GPIO_OUT_LOW)    /* touchpad interrupt enable */
 

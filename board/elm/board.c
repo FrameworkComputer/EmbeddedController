@@ -215,6 +215,8 @@ static void board_power_on_pd_mcu(void)
 	/* check if power is already on */
 	if (!gpio_get_level(GPIO_USB_C0_PWR_EN_L))
 		return;
+
+	gpio_set_level(GPIO_USB_C0_EXTPWR_EN, 1);
 	hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
 }
 
