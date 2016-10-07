@@ -139,6 +139,7 @@ void board_configure_deep_sleep_wakepins(void);
 /* Interrupt handler */
 void sys_rst_asserted(enum gpio_signal signal);
 void device_state_on(enum gpio_signal signal);
+void post_reboot_request(void);
 
 /* Special controls over EC and AP */
 void assert_sys_rst(void);

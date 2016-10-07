@@ -71,7 +71,13 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 
 /*  Board specific configuration settings */
 static uint32_t board_properties;
+static uint8_t reboot_request_posted;
 
+void post_reboot_request(void)
+{
+	/* Reboot the device next time TPM reset is requested. */
+	reboot_request_posted = 1;
+}
 /*
  * There's no way to trigger on both rising and falling edges, so force a
  * compiler error if we try. The workaround is to use the pinmux to connect
@@ -377,6 +383,9 @@ void sys_rst_asserted(enum gpio_signal signal)
 		CPRINTS("%s ignored", __func__);
 		return;
 	}
+
+	if (reboot_request_posted)
+		system_reset(SYSTEM_RESET_HARD);  /* This will never return. */
 
 	/* Re-initialize the TPM software state */
 	tpm_reset();

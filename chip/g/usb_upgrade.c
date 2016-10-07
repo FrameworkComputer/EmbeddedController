@@ -182,14 +182,12 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 
 	if (rx_state_ == rx_awaiting_reset) {
 		/*
-		 * Any USB data received in this state triggers reset, no
+		 * Any USB data received in this state should cause a post of
+		 * a system reset request on the next TPM reboot, no USB
 		 * response required.
 		 */
-		CPRINTS("reboot hard");
-		cflush();
-		system_reset(SYSTEM_RESET_HARD);
-		while (1)
-			;
+		rx_state_ = rx_idle;
+		post_reboot_request();
 	}
 
 	if (rx_state_ == rx_outside_block) {
