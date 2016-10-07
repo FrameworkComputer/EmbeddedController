@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "case_closed_debug.h"
 #include "clock.h"
 #include "common.h"
 #include "config.h"
@@ -11,6 +12,7 @@
 #include "hooks.h"
 #include "init_chip.h"
 #include "link_defs.h"
+#include "printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -25,6 +27,13 @@
 /* Console output macro */
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+
+#define USE_SERIAL_NUMBER (defined(CONFIG_USB_SERIALNO) && \
+			   defined(CONFIG_CASE_CLOSED_DEBUG))
+
+#if !USE_SERIAL_NUMBER
+#define USB_STR_SERIALNO 0
+#endif
 
 /* This is not defined anywhere else. Change it here to debug. */
 #undef DEBUG_ME
@@ -213,7 +222,7 @@ static const struct usb_device_descriptor dev_desc = {
 	.bcdDevice = CONFIG_USB_BCD_DEV,
 	.iManufacturer = USB_STR_VENDOR,
 	.iProduct = USB_STR_PRODUCT,
-	.iSerialNumber = 0,
+	.iSerialNumber = USB_STR_SERIALNO,
 	.bNumConfigurations = 1
 };
 
@@ -598,7 +607,13 @@ static int handle_setup_with_in_stage(enum table_case tc,
 		case USB_DT_STRING:
 			if (idx >= USB_STR_COUNT)
 				return -1;
-			data = usb_strings[idx];
+#if USE_SERIAL_NUMBER
+			if (idx == USB_STR_SERIALNO &&
+			    ccd_get_mode() == CCD_MODE_ENABLED)
+				data = usb_serialno_desc;
+			else
+#endif
+				data = usb_strings[idx];
 			len = *(uint8_t *)data;
 			break;
 		case USB_DT_DEVICE_QUALIFIER:
@@ -1407,3 +1422,64 @@ static int command_usb(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(usb, command_usb,
 			"[<BOOLEAN> | a | b]",
 			"Get/set the USB connection state and PHY selection");
+
+#if USE_SERIAL_NUMBER
+/* This will be subbed into USB_STR_SERIALNO. */
+struct usb_string_desc *usb_serialno_desc =
+	USB_WR_STRING_DESC(DEFAULT_SERIALNO);
+
+/* Update serial number */
+static int usb_set_serial(const char *serialno)
+{
+	struct usb_string_desc *sd = usb_serialno_desc;
+	int i;
+
+	if (!serialno)
+		return EC_ERROR_INVAL;
+
+	/* Convert into unicode usb string desc. */
+	for (i = 0; i < USB_STRING_LEN; i++) {
+		sd->_data[i] = serialno[i];
+		if (serialno[i] == 0)
+			break;
+	}
+	/* Count wchars (w/o null terminator) plus size & type bytes. */
+	sd->_len = (i * 2) + 2;
+	sd->_type = USB_DT_STRING;
+
+	return EC_SUCCESS;
+}
+
+static void usb_load_serialno(void)
+{
+	char devid_str[20];
+
+	snprintf(devid_str, 20, "%08X-%08X", GREG32(FUSE, DEV_ID0),
+		GREG32(FUSE, DEV_ID1));
+
+	usb_set_serial(devid_str);
+}
+DECLARE_HOOK(HOOK_INIT, usb_load_serialno, HOOK_PRIO_DEFAULT - 1);
+
+static int command_serialno(int argc, char **argv)
+{
+	struct usb_string_desc *sd = usb_serialno_desc;
+	char buf[USB_STRING_LEN];
+	int rv = EC_SUCCESS;
+	int i;
+
+	if (argc != 1) {
+		ccprintf("Setting serial number\n");
+		rv = usb_set_serial(argv[1]);
+	}
+
+	for (i = 0; i < USB_STRING_LEN; i++)
+		buf[i] = sd->_data[i];
+	ccprintf("Serial number: %s\n", buf);
+	return rv;
+}
+
+DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
+	"[value]",
+	"Read and write USB serial number");
+#endif

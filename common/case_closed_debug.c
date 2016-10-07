@@ -60,3 +60,8 @@ void ccd_set_mode(enum ccd_mode new_mode)
 		usb_init();
 #endif
 }
+
+enum ccd_mode ccd_get_mode(void)
+{
+	return current_mode;
+}

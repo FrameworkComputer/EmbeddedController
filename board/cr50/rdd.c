@@ -34,7 +34,7 @@ static struct uart_config uarts[] = {
 
 static int ccd_is_enabled(void)
 {
-	return !gpio_get_level(GPIO_CCD_MODE_L);
+	return ccd_get_mode() == CCD_MODE_ENABLED;
 }
 
 int is_utmi_wakeup_allowed(void)
