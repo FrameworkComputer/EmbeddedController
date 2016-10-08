@@ -597,7 +597,7 @@ enum ec_status host_command_process(struct host_cmd_handler_args *args)
 	}
 
 	if (rv != EC_RES_SUCCESS)
-		CPRINTS("HC err %d", rv);
+		CPRINTS("HC 0x%02x err %d", args->command, rv);
 
 	if (hcdebug >= HCDEBUG_PARAMS && args->response_size)
 		CPRINTS("HC resp:%.*h", args->response_size,
