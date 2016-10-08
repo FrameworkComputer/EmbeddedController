@@ -58,6 +58,7 @@ void chipset_force_shutdown(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 
+#define SYS_RST_HOLD_US (1 * MSEC)
 void chipset_reset(int cold_reset)
 {
 	/* Print out the RTC to help correlate resets in logs. */
@@ -68,7 +69,10 @@ void chipset_reset(int cold_reset)
 
 	/* Pulse SYS_RST */
 	gpio_set_level(GPIO_SYS_RST_L, 0);
-	udelay(90);
+	if (in_interrupt_context())
+		udelay(SYS_RST_HOLD_US);
+	else
+		usleep(SYS_RST_HOLD_US);
 	gpio_set_level(GPIO_SYS_RST_L, 1);
 }
 
