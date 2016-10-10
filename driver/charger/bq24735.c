@@ -10,6 +10,7 @@
 #include "charger.h"
 #include "console.h"
 #include "common.h"
+#include "i2c.h"
 #include "util.h"
 
 /* Sense resistor configurations and macros */
@@ -38,6 +39,16 @@ static const struct charger_info bq24735_charger_info = {
 };
 
 /* bq24735 specific interfaces */
+
+static inline int sbc_read(int cmd, int *param)
+{
+	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
+}
+
+static inline int sbc_write(int cmd, int param)
+{
+	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
+}
 
 int charger_set_input_current(int input_current)
 {

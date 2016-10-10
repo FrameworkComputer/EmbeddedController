@@ -10,6 +10,7 @@
 #include "charger.h"
 #include "console.h"
 #include "common.h"
+#include "i2c.h"
 #include "util.h"
 
 /* Sense resistor configurations and macros */
@@ -33,6 +34,16 @@ static const struct charger_info bq24725_charger_info = {
 	.input_current_min  = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
 	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC),
 };
+
+static inline int sbc_read(int cmd, int *param)
+{
+	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
+}
+
+static inline int sbc_write(int cmd, int param)
+{
+	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
+}
 
 int charger_set_input_current(int input_current)
 {

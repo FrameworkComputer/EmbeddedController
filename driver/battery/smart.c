@@ -22,16 +22,6 @@
 
 static int fake_state_of_charge = -1;
 
-test_mockable int sbc_read(int cmd, int *param)
-{
-	return i2c_read16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
-}
-
-test_mockable int sbc_write(int cmd, int param)
-{
-	return i2c_write16(I2C_PORT_CHARGER, CHARGER_ADDR, cmd, param);
-}
-
 test_mockable int sb_read(int cmd, int *param)
 {
 #ifdef CONFIG_BATTERY_CUT_OFF

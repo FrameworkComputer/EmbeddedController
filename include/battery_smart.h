@@ -137,12 +137,6 @@
 #define BATTERY_DISCHARGING_DISABLED    0x20
 #define BATTERY_CHARGING_DISABLED       0x40
 
-/* Read from charger */
-int sbc_read(int cmd, int *param);
-
-/* Write to charger */
-int sbc_write(int cmd, int param);
-
 /* Read from battery */
 int sb_read(int cmd, int *param);
 
