@@ -333,16 +333,34 @@ static int command_powerbtn(int argc, char **argv)
 	char *e;
 	int ms = 200;
 
-	if (argc == 2) {
-		ms = strtoi(argv[1], &e, 0);
-		if (*e)
+	if (argc > 1) {
+		if (!strcasecmp("pulse", argv[1])) {
+			if (argc == 3) {
+				ms = strtoi(argv[2], &e, 0);
+				if (*e)
+					return EC_ERROR_PARAM2;
+			}
+
+			ccprintf("Force %dms power button press\n", ms);
+
+			rbox_powerbtn_press();
+			msleep(ms);
+			rbox_powerbtn_release();
+		} else if (!strcasecmp("press", argv[1])) {
+			rbox_powerbtn_press();
+		} else if (!strcasecmp("release", argv[1])) {
+			rbox_powerbtn_release();
+		} else
 			return EC_ERROR_PARAM1;
 	}
-	ccprintf("Simulating %dms power button press\n", ms);
-	rbox_press_power_btn(ms);
 
+	ccprintf("powerbtn: %s\n",
+		 rbox_powerbtn_override_is_enabled() ? "forced press" :
+		 rbox_powerbtn_is_pressed() ? "pressed\n" : "released\n");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
-			"ms",
-			"Simulate a power button press");
+			"[pulse [ms] | press | release]",
+			"get/set the state of the power button");
+
+
