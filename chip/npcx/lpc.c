@@ -139,14 +139,14 @@ static void lpc_generate_smi(void)
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(GPIO_PCH_SMI_L, 1);
 #else
-	/* Since SMIPOL is 1, clear SCIB bit means set SCI_L to high.*/
-	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
-	udelay(65);
-	/* Generate a falling edge */
+	/* SET SMIB bit to pull SMI_L to high.*/
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
 	udelay(65);
-	/* Set signal high */
+	/* Generate a falling edge */
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
+	udelay(65);
+	/* Set signal high */
+	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
 #endif
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI])
 		CPRINTS("smi 0x%08x",
@@ -168,14 +168,14 @@ static void lpc_generate_sci(void)
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #else
-	/* Since SCIPOL is 1, clear SCIB bit means set SCI_L to high.*/
-	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
-	udelay(65);
-	/* Generate a falling edge */
+	/* Set SCIB bit to pull SCI_L to high.*/
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
 	udelay(65);
-	/* Set signal high */
+	/* Generate a falling edge */
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
+	udelay(65);
+	/* Set signal high */
+	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
 #endif
 
 	if (host_events & event_mask[LPC_HOST_EVENT_SCI])
@@ -870,6 +870,16 @@ static void lpc_init(void)
 	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_CLKRN_SL);
 #endif
 
+	/*
+	 * Set pin-mux from GPIOs to SCL/SMI to make sure toggling SCIB/SMIB is
+	 * valid if CONFIG_SCI_GPIO isn't defined. eSPI sends SMI/SCI through VW
+	 * automatically by toggling them, too. It's unnecessary to set pin mux.
+	 */
+#if !defined(CONFIG_SCI_GPIO) && !defined(CONFIG_ESPI)
+	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_EC_SCI_SL);
+	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_SMI_SL);
+#endif
+
 	/* Initialize Hardware for UART Host */
 #if CONFIG_UART_HOST
 	/* Init COMx LPC UART */
@@ -944,6 +954,14 @@ static void lpc_init(void)
 #endif
 
 #ifndef CONFIG_SCI_GPIO
+	/* Disable SMI/SCI Negative Polarity */
+	CLEAR_BIT(NPCX_HIPMCTL(PMC_ACPI), NPCX_HIPMCTL_SCIPOL);
+	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIPOL);
+	/*
+	 * Allow SMI/SCI generated from PM module.
+	 * Either hardware autimatically generates,
+	 * or set SCIB/SMIB bit in HIPMIC register.
+	 */
 	SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SCIE);
 	SET_BIT(NPCX_HIPMIE(PMC_ACPI), NPCX_HIPMIE_SMIE);
 #endif

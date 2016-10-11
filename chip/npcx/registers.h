@@ -946,6 +946,7 @@ enum NPCX_PMC_PWDWN_CTL_T {
 
 /* NPCX_HIPMCTL */
 #define NPCX_HIPMCTL_IBFIE               0
+#define NPCX_HIPMCTL_SCIPOL              6
 
 /* NPCX_HIPMST */
 #define NPCX_HIPMST_F0                   2 /* EC_LPC_CMDR_BUSY */
@@ -956,6 +957,7 @@ enum NPCX_PMC_PWDWN_CTL_T {
 /* NPCX_HIPMIC */
 #define NPCX_HIPMIC_SMIB                 1
 #define NPCX_HIPMIC_SCIB                 2
+#define NPCX_HIPMIC_SMIPOL               6
 
 /*
  * PM Channel enumeration
