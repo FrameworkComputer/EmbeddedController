@@ -58,7 +58,7 @@ struct vw_event_t {
 
 /* Default settings of VWEVMS registers (Please refer Table.43/44) */
 static const struct vwevms_config_t espi_in_list[] = {
-	/*IDX EN ENPL ENESP IE             VW Event Bit 3 -0 (M->S)          */
+	/* IDX EN ENPL ENESP IE             VW Event Bit 0 - 3 (M->S)         */
 	{0x02,  1,  0,  0,  0},  /* SLP_S3#,   SLP_S4#,    SLP_S5,    Reserve */
 	{0x03,  1,  0,  1,  0},  /* SUS_STAT#, PLTRST#,    ORST_WARN, Reserve */
 	{0x07,  1,  1,  1,  0},  /* HRST_WARN, SMIOUT#,    NMIOUT#,   Reserve */
@@ -69,11 +69,15 @@ static const struct vwevms_config_t espi_in_list[] = {
 
 /* Default settings of VWEVSM registers (Please refer Table.43/44) */
 static const struct vwevsm_config_t espi_out_list[] = {
-	/*IDX EN ENPL ENCDR VDMASK         VW Event Bit 3 -0 (S->M)        */
-	{0x04,  1,  0,  0, 0x0D}, /* PME#,       WAKE#,   Reserve, ORST_ACK   */
-	{0x05,  1,  0,  0, 0x0F}, /* SLV_BL_STS, ERR_NF,  ERR_F,   SLV_BL_DONE*/
-	{0x06,  1,  1,  0, 0x0C}, /* HRST_ACK,   RCIN#,   SMI#,    SCI#       */
-	{0x40,  1,  0,  0, 0x01}, /* Reserve,    Reserve, Reserve, SUS_ACK#   */
+	/* IDX EN ENPL ENCDR VDMASK         VW Event Bit 0 - 3 (S->M)         */
+	{0x04,  1,  0,  0, 0x0D}, /* ORST_ACK,   Reserve, WAKE#,   PME#       */
+	{0x05,  1,  0,  0, 0x0F}, /* SLV_BL_DNE, ERR_F,   ERR_NF,  SLV_BL_STS */
+#ifdef CONFIG_SCI_GPIO
+	{0x06,  1,  1,  0, 0x0C}, /* SCI#,       SMI#,    RCIN#,   HRST_ACK   */
+#else
+	{0x06,  1,  1,  0, 0x0F}, /* SCI#,       SMI#,    RCIN#,   HRST_ACK   */
+#endif
+	{0x40,  1,  0,  0, 0x01}, /* SUS_ACK,    Reserve, Reserve, Reserve    */
 };
 
 /* eSPI interrupts used in MIWU */
