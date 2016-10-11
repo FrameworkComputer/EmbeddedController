@@ -19,7 +19,6 @@
 
 struct anx_state {
 	int	polarity;
-	int	pull;
 	int	vconn_en;
 	int	mux_state;
 };
@@ -404,41 +403,32 @@ static int anx74xx_tcpm_get_cc(int port, int *cc1, int *cc2)
 	int rv = EC_SUCCESS;
 	int reg = 0;
 	rv |= tcpc_read(port, ANX74XX_REG_CC_STATUS, &reg);
-	if (!anx[port].pull) {/* get CC in sink mode */
-		/* CC1 */
-		if (reg & BIT_VALUE_OF_SNK_CC1_DEFAULT)
-			*cc1 = TYPEC_CC_VOLT_SNK_DEF;
-		else if (reg & BIT_VALUE_OF_SNK_CC1_1_P_5)
-			*cc1 = TYPEC_CC_VOLT_SNK_1_5;
-		else if (reg & BIT_VALUE_OF_SNK_CC1_3_P_0)
-			*cc1 = TYPEC_CC_VOLT_SNK_3_0;
-		else
-			*cc1 = TYPEC_CC_VOLT_OPEN;
-		/* CC2 */
-		if (reg & BIT_VALUE_OF_SNK_CC2_DEFAULT)
-			*cc2 = TYPEC_CC_VOLT_SNK_DEF;
-		else if (reg & BIT_VALUE_OF_SNK_CC2_1_P_5)
-			*cc2 = TYPEC_CC_VOLT_SNK_1_5;
-		else if (reg & BIT_VALUE_OF_SNK_CC2_3_P_0)
-			*cc2 = TYPEC_CC_VOLT_SNK_3_0;
-		else
-			*cc2 = TYPEC_CC_VOLT_OPEN;
-	} else {/* get CC in source mode */
-		/* CC1 */
-		if (reg & BIT_VALUE_OF_SRC_CC1_RA)
-			*cc1 = TYPEC_CC_VOLT_RA;
-		else if (reg & BIT_VALUE_OF_SRC_CC1_RD)
-			*cc1 = TYPEC_CC_VOLT_RD;
-		else
-			*cc1 = TYPEC_CC_VOLT_OPEN;
-		/* CC2 */
-		if (reg & BIT_VALUE_OF_SRC_CC2_RA)
-			*cc2 = TYPEC_CC_VOLT_RA;
-		else if (reg & BIT_VALUE_OF_SRC_CC2_RD)
-			*cc2 = TYPEC_CC_VOLT_RD;
-		else
-			*cc2 = TYPEC_CC_VOLT_OPEN;
-	}
+	/* CC1 */
+	if (reg & BIT_VALUE_OF_SNK_CC1_DEFAULT)
+		*cc1 = TYPEC_CC_VOLT_SNK_DEF;
+	else if (reg & BIT_VALUE_OF_SNK_CC1_1_P_5)
+		*cc1 = TYPEC_CC_VOLT_SNK_1_5;
+	else if (reg & BIT_VALUE_OF_SNK_CC1_3_P_0)
+		*cc1 = TYPEC_CC_VOLT_SNK_3_0;
+	else if (reg & BIT_VALUE_OF_SRC_CC1_RA)
+		*cc1 = TYPEC_CC_VOLT_RA;
+	else if (reg & BIT_VALUE_OF_SRC_CC1_RD)
+		*cc1 = TYPEC_CC_VOLT_RD;
+	else
+		*cc1 = TYPEC_CC_VOLT_OPEN;
+	/* CC2 */
+	if (reg & BIT_VALUE_OF_SNK_CC2_DEFAULT)
+		*cc2 = TYPEC_CC_VOLT_SNK_DEF;
+	else if (reg & BIT_VALUE_OF_SNK_CC2_1_P_5)
+		*cc2 = TYPEC_CC_VOLT_SNK_1_5;
+	else if (reg & BIT_VALUE_OF_SNK_CC2_3_P_0)
+		*cc2 = TYPEC_CC_VOLT_SNK_3_0;
+	else if (reg & BIT_VALUE_OF_SRC_CC2_RA)
+		*cc2 = TYPEC_CC_VOLT_RA;
+	else if (reg & BIT_VALUE_OF_SRC_CC2_RD)
+		*cc2 = TYPEC_CC_VOLT_RD;
+	else
+		*cc2 = TYPEC_CC_VOLT_OPEN;
 	/* clear HPD status*/
 	if (!(*cc1) && !(*cc2)) {
 		anx74xx_tcpc_clear_hpd_status(port);
@@ -508,7 +498,6 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 			return EC_ERROR_UNKNOWN;
 		reg |= ANX74XX_REG_CC_PULL_RP;
 		rv |= tcpc_write(port, ANX74XX_REG_ANALOG_STATUS, reg);
-		anx[port].pull = 1;
 		break;
 	case TYPEC_CC_RD:
 	/* Enable Rd */
@@ -517,7 +506,6 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 			return EC_ERROR_UNKNOWN;
 		reg &= ANX74XX_REG_CC_PULL_RD;
 		rv |= tcpc_write(port, ANX74XX_REG_ANALOG_STATUS, reg);
-		anx[port].pull = 0;
 		break;
 	default:
 		rv = EC_ERROR_UNKNOWN;
