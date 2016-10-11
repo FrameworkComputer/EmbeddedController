@@ -69,7 +69,7 @@ struct cros_perso_certificate_response_v0 {
 BUILD_ASSERT(sizeof(struct cros_perso_response_component_info_v0) == 8);
 BUILD_ASSERT(sizeof(struct cros_perso_certificate_response_v0) == 8);
 
-/* TODO(ngm): replace with real pub key. */
+/* Test endorsement CA root. */
 static const uint32_t TEST_ENDORSEMENT_CA_RSA_N[64] = {
 	0xfa3b34ed, 0x3c59ad05, 0x912d6623, 0x83302402,
 	0xd43b6755, 0x5777021a, 0xaf37e9a1, 0x45c0e8ad,
@@ -89,11 +89,43 @@ static const uint32_t TEST_ENDORSEMENT_CA_RSA_N[64] = {
 	0x486fb315, 0xa1098c31, 0x5dc50dd6, 0xcdc10874
 };
 
+/* Production endorsement CA root. */
+static const uint32_t PROD_ENDORSEMENT_CA_RSA_N[64] = {
+	0xeb6a07bf, 0x6cf8eca6, 0x4756e85e, 0x2fc3874c,
+	0xa4c23e87, 0xc364dffe, 0x2a2ddb95, 0x2f7f0e1e,
+	0xdb485bd8, 0xce8aa808, 0xe062001b, 0x187811c3,
+	0x0e400462, 0xb7097a01, 0xb988152b, 0xba9d058a,
+	0x814b6691, 0xc70a694f, 0x8108c7f0, 0x4c7a1f33,
+	0x5cfda48e, 0xef303dbc, 0x84f5a3ea, 0x14607435,
+	0xc72f1e60, 0x345d0b38, 0x0ac16927, 0xbdf903c7,
+	0x11b660ed, 0x21ebfe0e, 0x8c8b303c, 0xd6eff6cb,
+	0x76156bf7, 0x57735ce4, 0x8b7a87ed, 0x7a757188,
+	0xd4fb3eb0, 0xc67fa05d, 0x163f0cf5, 0x69d8abf3,
+	0xec105749, 0x1de78f37, 0xb885a62f, 0x81344a82,
+	0x390df2b7, 0x58a7c56a, 0xa938f471, 0x506ee7d4,
+	0x2ca0f2a3, 0x2aa5392c, 0x39052797, 0x199e837c,
+	0x0d367b81, 0xb7bbff6f, 0x0ea99f5f, 0xfbac0d2a,
+	0x7bbe018d, 0x265fc995, 0x34f73008, 0x5e2cd747,
+	0x42096e33, 0x0c15f816, 0xffa7f7d2, 0xbd6f0198
+};
+
 static const struct RSA TEST_ENDORSEMENT_CA_RSA_PUB = {
 	.e = RSA_F4,
 	.N = {
 		.dmax = sizeof(TEST_ENDORSEMENT_CA_RSA_N) / sizeof(uint32_t),
 		.d = (struct access_helper *) TEST_ENDORSEMENT_CA_RSA_N,
+	},
+	.d = {
+		.dmax = 0,
+		.d = NULL,
+	},
+};
+
+static const struct RSA PROD_ENDORSEMENT_CA_RSA_PUB = {
+	.e = RSA_F4,
+	.N = {
+		.dmax = sizeof(PROD_ENDORSEMENT_CA_RSA_N) / sizeof(uint32_t),
+		.d = (struct access_helper *) PROD_ENDORSEMENT_CA_RSA_N,
 	},
 	.d = {
 		.dmax = 0,
@@ -115,8 +147,15 @@ static int validate_cert(
 	if (cert->cert_len > MAX_NV_BUFFER_SIZE)
 		return 0;
 
-	/* Verify certificate signature. */
+	/* Verify certificate signature; accept either root CA.
+	 * Getting here implies that the previous mac check on the
+	 * endorsement seed passed, and that one of these two CA
+	 * certificates serve as roots for the installed endorsement
+	 * certificate.
+	 */
 	return DCRYPTO_x509_verify(cert->cert, cert->cert_len,
+				&PROD_ENDORSEMENT_CA_RSA_PUB) ||
+		DCRYPTO_x509_verify(cert->cert, cert->cert_len,
 				&TEST_ENDORSEMENT_CA_RSA_PUB);
 }
 
