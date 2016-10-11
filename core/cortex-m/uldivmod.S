@@ -68,7 +68,7 @@ __aeabi_uldivmod:
 	blo	L_upper_result
 
 L_denom_shift_loop1:
-	lsls	r5, #1
+	lsl	r5, #1
 	lsls	r7, #1
 	bmi	L_upper_result	@ dont shift if overflow
 	cmp	r1, r7
@@ -77,23 +77,26 @@ L_denom_shift_loop1:
 L_upper_result:
 	mov	r3, r1
 	mov	r2, r0
-	movs	r1, #0		@ upper result = 0
+	mov	r1, #0		@ upper result = 0
+	mov	r6, #0
 
 L_sub_loop1:
-	cmp	r3, r7
-	bcc	L_dont_sub1	@ if (num>denom)
+	orr	r1, r5		@ result(r7:r6) |= bitmask(r5)
+	subs	r2, r6		@ num -= denom
+	sbcs	r3, r7
+	bhs	L_done_sub1
 
-	subs	r3, r7		@ num -= denom
-	orrs	r1, r5		@ result(r7:r6) |= bitmask(r5)
-L_dont_sub1:
+	eor	r1, r5		@ undo add mask
+	adds	r2, r6		@ undo subtract
+	adc	r3, r7
 
+L_done_sub1:
 	lsrs	r7, #1		@ denom(r7:r6) >>= 1
+	rrx	r6, r6
 	lsrs	r5, #1		@ bitmask(r5) >>= 1
 	bne	L_sub_loop1
 
-	movs	r5, #1
-	lsls	r5, #31
-	movs	r6, #0
+	rrx r5, r5
 	b	L_lower_result
 
 
@@ -113,9 +116,9 @@ L_fallback_32bits:
 	mov	r1, r0
 	udiv	r0, r2		@ r0 = quotient
 	mul	r3, r0, r2	@ r3 = quotient * divisor
-	subs	r2, r3, r2	@ r2 = remainder
-	movs	r1, #0
-	movs	r3, #0
+	sub	r2, r1, r3	@ r2 = remainder
+	mov	r1, #0
+	mov	r3, #0
 	bx	lr
 
 
@@ -133,18 +136,17 @@ L_large_denom:
 
 	@ Shift left the denominator until it is greater than the numerator
 
-	movs	r1, #0		@ high word of result is 0
-	movs	r5, #1		@ bitmask
+	mov	r1, #0		@ high word of result is 0
+	mov	r5, #1		@ bitmask
 	adds	r7, #0		@ dont shift if denominator would overflow
 	bmi	L_lower_result
 	cmp	r3, r7
 	blo	L_lower_result
 
 L_denom_shift_loop4:
-	lsls	r5, #1
-	lsls	r7, #1
-	lsls	r6, #1
-	adcs	r7, r1		@ r1=0
+	lsl	r5, #1
+	lsls	r6, #1		@ denom(r7:r6) <<= 1
+	adcs	r7, r7
 	bmi	L_lower_result	@ dont shift if overflow
 	cmp	r3, r7
 	bhs	L_denom_shift_loop4
@@ -155,20 +157,18 @@ L_lower_result:
 	movs	r0, #0
 
 L_sub_loop4:
-	mov	r4, r3
-	cmp	r2, r6
-	sbcs	r4, r7
-	bcc	L_dont_sub4	@ if (num>denom)
-
+	orr	r0, r5		@ result(r1:r0) |= bitmask(r5)
 	subs	r2, r6		@ numerator -= denom
 	sbcs	r3, r7
-	orrs	r0, r5		@ result(r1:r0) |= bitmask(r5)
-L_dont_sub4:
+	bhs	L_done_sub4
 
-	lsls	r4, r7, #31	@ denom(r7:r6) >>= 1
-	lsrs	r6, #1
-	lsrs	r7, #1
-	orrs	r6, r4
+	eor	r0, r5		 @ undo add mask
+	adds	r2, r6		 @ undo subtract
+	adc	r3, r7
+
+L_done_sub4:
+	lsrs	r7, #1		@ denom(r7:r6) >>= 1
+	rrx	r6, r6
 	lsrs	r5, #1		@ bitmask(r5) >>= 1
 	bne	L_sub_loop4
 
