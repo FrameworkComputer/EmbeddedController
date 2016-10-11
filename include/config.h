@@ -1802,7 +1802,7 @@
 /*
  * Add a virtual switch to indicate when we are in tablet mode.
  */
-#define CONFIG_TABLET_MODE_SWITCH
+#undef CONFIG_TABLET_MODE_SWITCH
 
 /*****************************************************************************/
 /* Task config */
