@@ -22,16 +22,16 @@
 /* Battery info for BQ40Z55 */
 static const struct battery_info info = {
 	/* FIXME(dhendrix): where do these values come from? */
-	.voltage_max = 8700,	/* mV */
-	.voltage_normal = 7600,
-	.voltage_min = 6100,
-	.precharge_current = 256,	/* mA */
+	.voltage_max = 13050,	/* mV */
+	.voltage_normal = 11250,
+	.voltage_min = 9000,
+	.precharge_current = 200,	/* mA */
 	.start_charging_min_c = 0,
-	.start_charging_max_c = 46,
+	.start_charging_max_c = 45,
 	.charging_min_c = 0,
 	.charging_max_c = 60,
 	.discharging_min_c = 0,
-	.discharging_max_c = 60,
+	.discharging_max_c = 70,
 };
 
 #ifdef CONFIG_BATTERY_PRESENT_CUSTOM
