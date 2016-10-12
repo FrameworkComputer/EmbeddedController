@@ -11,7 +11,7 @@
 dc=$'\001'
 
 # Default marker to indicate 'dirty' repositories
-dirty_marker='-dirty'
+dirty_marker='+'
 
 # This function examines the state of the current directory and attempts to
 # extract its version information: the latest tag, if any, how many patches
@@ -77,9 +77,6 @@ dir_list=( . )   # list of component directories, always includes the EC tree
 
 case "${BOARD}" in
   (cr50)
-    # cr50 includes sources from 4 different git trees. Shortened 'dirty' tree
-    # marker allows to keep the summary version string shorter.
-    dirty_marker='+'
     dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
     ;;
 esac
