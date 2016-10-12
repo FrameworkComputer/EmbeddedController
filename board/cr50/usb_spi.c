@@ -61,9 +61,12 @@ static void update_finished(void)
 
 	/*
 	 * The AP and EC are reset in usb_spi_enable so the TPM is in a bad
-	 * state. Do a hard reset to reset the entire system.
+	 * state. Use resetting the EC to reset the entire system including the
+	 * TPM.
 	 */
-	system_reset(SYSTEM_RESET_HARD);
+	assert_ec_rst();
+	usleep(200);
+	deassert_ec_rst();
 }
 DECLARE_DEFERRED(update_finished);
 
