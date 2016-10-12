@@ -389,7 +389,6 @@ void sys_rst_asserted(enum gpio_signal signal)
 	 */
 	CPRINTS("%s from %d", __func__, signal);
 	if (usb_spi_update_in_progress() ||
-	    is_sys_rst_asserted() ||
 	    tpm_is_resetting()) {
 		CPRINTS("%s ignored", __func__);
 		return;
