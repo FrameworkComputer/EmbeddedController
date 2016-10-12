@@ -109,8 +109,6 @@ struct usb_spi_config {
 	 */
 	struct usb_spi_state *state;
 
-	struct usb_stream_config const *usb;
-
 	/*
 	 * Interface and endpoint indicies.
 	 */
@@ -170,7 +168,6 @@ extern struct consumer_ops const usb_spi_consumer_ops;
 	static struct usb_spi_state CONCAT2(NAME, _state_);		\
 	struct usb_spi_config const NAME = {				\
 		.state     = &CONCAT2(NAME, _state_),			\
-		.usb       = &CONCAT2(NAME, _usb_),			\
 		.interface = INTERFACE,					\
 		.endpoint  = ENDPOINT,					\
 		.deferred  = &CONCAT2(NAME, _deferred__data),		\

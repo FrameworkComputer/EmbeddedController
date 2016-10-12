@@ -42,14 +42,12 @@ static void usb_spi_write_packet(struct usb_spi_config const *config,
 	QUEUE_ADD_UNITS(config->tx_queue, config->buffer, count);
 }
 
-static int rx_valid(struct usb_spi_config const *config)
-{
-	return (config->usb->out_desc->flags & DOEPDMA_BS_MASK) ==
-	       DOEPDMA_BS_DMA_DONE;
-}
-
 void usb_spi_deferred(struct usb_spi_config const *config)
 {
+	uint16_t count;
+	uint8_t  write_count;
+	uint8_t  read_count;
+	uint16_t res;
 	/*
 	 * If our overall enabled state has changed we call the board specific
 	 * enable or disable routines and save our new state.
@@ -70,34 +68,31 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	 * And if there is a USB packet waiting we process it and generate a
 	 * response.
 	 */
-	if (!rx_valid(config)) {
-		uint16_t count       = usb_spi_read_packet(config);
-		uint8_t  write_count = config->buffer[0];
-		uint8_t  read_count  = config->buffer[1];
-		uint16_t res;
+	count       = usb_spi_read_packet(config);
+	write_count = config->buffer[0];
+	read_count  = config->buffer[1];
 
-		if (!read_count && !write_count)
-			return;
+	if (!count || (!read_count && !write_count))
+		return;
 
-		if (!config->state->enabled) {
-			res = USB_SPI_DISABLED;
-		} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
-			   write_count != (count - HEADER_SIZE)) {
-			res = USB_SPI_WRITE_COUNT_INVALID;
-		} else if (read_count > USB_SPI_MAX_READ_COUNT) {
-			res = USB_SPI_READ_COUNT_INVALID;
-		} else {
-			res = usb_spi_map_error(
-				spi_transaction(SPI_FLASH_DEVICE,
-						config->buffer + HEADER_SIZE,
-						write_count,
-						config->buffer + HEADER_SIZE,
-						read_count));
-		}
-
-		memcpy(config->buffer, &res, HEADER_SIZE);
-		usb_spi_write_packet(config, read_count + HEADER_SIZE);
+	if (!config->state->enabled) {
+		res = USB_SPI_DISABLED;
+	} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
+		   write_count != (count - HEADER_SIZE)) {
+		res = USB_SPI_WRITE_COUNT_INVALID;
+	} else if (read_count > USB_SPI_MAX_READ_COUNT) {
+		res = USB_SPI_READ_COUNT_INVALID;
+	} else {
+		res = usb_spi_map_error(
+			spi_transaction(SPI_FLASH_DEVICE,
+					config->buffer + HEADER_SIZE,
+					write_count,
+					config->buffer + HEADER_SIZE,
+					read_count));
 	}
+
+	memcpy(config->buffer, &res, HEADER_SIZE);
+	usb_spi_write_packet(config, read_count + HEADER_SIZE);
 }
 
 static void usb_spi_written(struct consumer const *consumer, size_t count)

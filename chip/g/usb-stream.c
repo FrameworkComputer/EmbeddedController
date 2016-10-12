@@ -57,6 +57,10 @@ int rx_stream_handler(struct usb_stream_config const *config)
 	 */
 	static int rx_handled;
 
+	/* If the HW FIFO isn't ready, then we're waiting for more bytes */
+	if (!rx_fifo_is_ready(config))
+		return 0;
+
 	/*
 	 * How many of the HW FIFO bytes have we not yet handled? We need to
 	 * know both where we are in the buffer and how many bytes we haven't
