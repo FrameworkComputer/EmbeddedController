@@ -109,8 +109,7 @@ class Board(object):
             '--directory=' + ec_dir,
             'BOARD=' + self.board,
             'CTS_MODULE=' + module,
-            '-j',
-            '-B']
+            '-j']
 
     if debug:
       cmds.append('CTS_DEBUG=TRUE')
@@ -118,9 +117,8 @@ class Board(object):
     print ' '.join(cmds)
     return sp.call(cmds)
 
-  def flash(self):
+  def flash(self, image_path):
     """Flashes board with most recent build ec.bin"""
-    image_path = os.path.join('build', self.board, 'ec.bin')
     cmd = ['reset_config connect_assert_srst',
            'init',
            'reset init',

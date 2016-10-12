@@ -101,10 +101,15 @@ class Cts(object):
 
   def flash_boards(self):
     """Flashes th and dut boards with their most recently build ec.bin"""
+    cts_module = 'cts_' + self.module
+    image_path = os.path.join('build', self.th.board, cts_module, 'ec.bin')
     self.identify_boards()
-    if self.th.flash():
+    print 'Flashing TH with', image_path
+    if self.th.flash(image_path):
       raise RuntimeError('Flashing TH failed')
-    if self.dut.flash():
+    image_path = os.path.join('build', self.dut.board, cts_module, 'ec.bin')
+    print 'Flashing DUT with', image_path
+    if self.dut.flash(image_path):
       raise RuntimeError('Flashing DUT failed')
 
   def setup(self):

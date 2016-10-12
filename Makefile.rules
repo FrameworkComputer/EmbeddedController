@@ -185,17 +185,10 @@ cts_boards := stm32l476g-eval nucleo-f072rb
 # Create CTS rule automatically for given suite and board
 # $1: suite name
 # $2: board name
-# $3: suite name used in the previous loop
 define make-cts =
-ifneq ($$(filter $(1),$$(cts_suites)),)
-ifneq ($$(filter $(3),$$(cts_suites)),)
-# Serialize builds
-cts-$(1)-$(2): cts-$(3)-$(2)
-endif
 build_cts: cts-$(1)-$(2)
 cts-$(1)-$(2):
 	$$(MAKE) CTS_MODULE=$(1) BOARD=$(2)
-endif
 # Do not remove this blank line
 
 endef
@@ -205,8 +198,8 @@ endef
 # If we don't serialize targets, parallel make fails because all suites
 # try to produce ec.bin in the same directory (e.g. build/stm32l476g-eval).
 $(foreach b, $(cts_boards), \
-	$(foreach s, $(cts_suites) none, \
-		$(eval $(call make-cts,$(s),$(b),$(prev)) prev:=$(s)) \
+	$(foreach s, $(cts_suites), \
+		$(eval $(call make-cts,$(s),$(b))) \
 	) \
 )
 

@@ -23,7 +23,12 @@ endif
 PROJECT?=ec
 
 # Output directory for build objects
+ifdef CTS_MODULE
+# CTS builds need different directories per board per suite.
+out?=build/$(BOARD)/cts_$(CTS_MODULE)
+else
 out?=build/$(BOARD)
+endif
 
 # File containing configuration information
 config=$(out)/.config
