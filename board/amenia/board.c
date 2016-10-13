@@ -224,7 +224,7 @@ const struct temp_sensor_t temp_sensors[] = {
 		G78X_IDX_EXTERNAL1, 4},
 	{"G782_Sensor_2", TEMP_SENSOR_TYPE_BOARD, g78x_get_val,
 		G78X_IDX_EXTERNAL2, 4},
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val,
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp,
 		0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);

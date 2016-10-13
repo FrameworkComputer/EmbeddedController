@@ -110,7 +110,7 @@ int charge_prevent_power_on(int power_button_pressed);
  *
  * @return EC_SUCCESS if successful, non-zero if error.
  */
-int charge_temp_sensor_get_val(int idx, int *temp_ptr);
+int charge_get_battery_temp(int idx, int *temp_ptr);
 
 /**
  * Get the pointer to the battery parameters we saved in charge state.

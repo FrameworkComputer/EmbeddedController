@@ -182,7 +182,7 @@ void board_reset_pd_mcu(void)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
 
 	/* These BD99992GW temp sensors are only readable in S0 */
 	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,

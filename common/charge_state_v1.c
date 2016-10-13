@@ -665,7 +665,7 @@ int charge_get_percent(void)
 	return task_ctx.curr.batt.state_of_charge;
 }
 
-int charge_temp_sensor_get_val(int idx, int *temp_ptr)
+int charge_get_battery_temp(int idx, int *temp_ptr)
 {
 	const struct batt_params *batt = &task_ctx.curr.batt;
 

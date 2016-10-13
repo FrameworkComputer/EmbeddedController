@@ -100,6 +100,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		TMP432_IDX_REMOTE1, 4},
 	{"TMP432_CPU_bottom", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
 		TMP432_IDX_REMOTE2, 4},
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);

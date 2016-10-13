@@ -144,7 +144,7 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_temp_sensor_get_val, 0, 4},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
