@@ -366,13 +366,7 @@ static void power_button_changed(void)
 			/* Power up from off */
 			chipset_exit_hard_off();
 
-		else if (!chipset_in_state(CHIPSET_STATE_ON)) {
-			/* Power down immediately from S3 */
-			force_shutdown();
-			return;
-		}
-
-		/* Delayed power down from S0, cancel on PB release */
+		/* Delayed power down from S0/S3, cancel on PB release */
 		hook_call_deferred(&force_shutdown_data,
 				   FORCED_SHUTDOWN_DELAY);
 	} else {
