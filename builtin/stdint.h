@@ -21,6 +21,8 @@ typedef signed long long   int64_t;
 typedef int                intptr_t;
 typedef unsigned int       uintptr_t;
 
+typedef uint8_t            uint_least8_t;
+
 #ifndef UINT16_MAX
 #define UINT16_MAX (65535U)
 #endif
