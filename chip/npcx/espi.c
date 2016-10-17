@@ -14,6 +14,8 @@
 #include "power.h"
 #include "espi.h"
 #include "lpc_chip.h"
+#include "hooks.h"
+#include "timer.h"
 
 /* Console output macros */
 #if !(DEBUG_ESPI)
@@ -91,7 +93,7 @@ static const struct host_wui_item espi_vw_int_list[] = {
 	/* SLP_S5 */
 	{MIWU_TABLE_2, MIWU_GROUP_1, 2, MIWU_EDGE_ANYING},
 	/* VW_WIRE_PLTRST */
-	{MIWU_TABLE_2, MIWU_GROUP_1, 5, MIWU_EDGE_RISING},
+	{MIWU_TABLE_2, MIWU_GROUP_1, 5, MIWU_EDGE_ANYING},
 	/* VW_WIRE_OOB_RST_WARN */
 	{MIWU_TABLE_2, MIWU_GROUP_1, 6, MIWU_EDGE_ANYING},
 	/* VW_WIRE_HOST_RST_WARN */
@@ -382,28 +384,40 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 /*****************************************************************************/
 /* VW event handlers */
 
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static void espi_chipset_reset(void)
+{
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(espi_chipset_reset);
+#endif
+
 /* PLTRST# event handler */
 void espi_vw_evt_pltrst(void)
 {
-	CPRINTS("VW PLTRST: %d", espi_vw_get_wire(VW_PLTRST_L));
+	int pltrst = espi_vw_get_wire(VW_PLTRST_L);
 
-	/* Disable eSPI peripheral channel support first */
-	CLEAR_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCCHN_SUPP);
+	CPRINTS("VW PLTRST: %d", pltrst);
 
-	/* Enable eSPI peripheral channel */
-	SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCHANEN);
-	/* Initialize host settings */
-	host_register_init();
+	if (pltrst) {
+		/* PLTRST# deasserted */
+		/* Disable eSPI peripheral channel support first */
+		CLEAR_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCCHN_SUPP);
 
-	/* Re-enable eSPI peripheral channel support */
-	SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCCHN_SUPP);
+		/* Enable eSPI peripheral channel */
+		SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCHANEN);
 
+		/* Initialize host settings */
+		host_register_init();
+
+		/* Re-enable eSPI peripheral channel support */
+		SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCCHN_SUPP);
+	} else {
+		/* PLTRST# asserted */
 #ifdef CONFIG_CHIPSET_RESET_HOOK
-	if (lpc_get_pltrst_asserted()) {
-		/* Notify HOOK_CHIPSET_RESET */
-		hook_call_deferred(lpc_chipset_reset, MSEC);
-	}
+		hook_call_deferred(&espi_chipset_reset_data, MSEC);
 #endif
+	}
 }
 
 /* SLP_Sx event handler */
