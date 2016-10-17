@@ -947,7 +947,11 @@ static void lpc_init(void)
 	 * Init PORT80
 	 * Enable Port80, Enable Port80 function & Interrupt & Read auto
 	 */
+#ifdef CONFIG_ESPI
+	NPCX_DP80CTL = 0x2b;
+#else
 	NPCX_DP80CTL = 0x29;
+#endif
 	SET_BIT(NPCX_GLUE_SDP_CTS, 3);
 #if SUPPORT_P80_SEG
 	SET_BIT(NPCX_GLUE_SDP_CTS, 0);
