@@ -817,6 +817,25 @@ void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 	}
 }
 
+void charge_manager_force_ceil(int port, int ceil)
+{
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
+
+	/*
+	 * Force our input current to ceil if we're exceeding it, without
+	 * waiting for our deferred task to run.
+	 */
+	if (port == charge_port && ceil < charge_current)
+		board_set_charge_limit(port, CHARGE_SUPPLIER_PD,
+				       ceil, charge_current_uncapped);
+
+	/*
+	 * Now inform charge_manager so it stays in sync with the state of
+	 * the world.
+	 */
+	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, ceil);
+}
+
 /**
  * Select an 'override port', a port which is always the preferred charge port.
  * Returns EC_SUCCESS on success, ec_error_list status on failure.

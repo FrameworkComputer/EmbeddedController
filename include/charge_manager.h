@@ -73,6 +73,16 @@ enum ceil_requestor {
 /* Update charge ceiling for a given port / requestor */
 void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil);
 
+/*
+ * Update PD charge ceiling for a given port. In the event that our ceiling
+ * is currently above ceil, change the current limit before returning, without
+ * waiting for a charge manager refresh. This function should only be used in
+ * time-critical situations where we absolutely cannot proceed without limiting
+ * our input current, and it should only be called from the PD tasks.
+ * If you ever call this function then you are a terrible person.
+ */
+void charge_manager_force_ceil(int port, int ceil);
+
 /* Select an 'override port', which is always the preferred charge port */
 int charge_manager_set_override(int port);
 int charge_manager_get_override(void);

@@ -288,6 +288,14 @@ static int test_charge_ceil(void)
 	TEST_ASSERT(active_charge_port == 1);
 	TEST_ASSERT(active_charge_limit == 2500);
 
+	/* Verify forced ceil takes effect immediately */
+	charge_manager_force_ceil(1, 500);
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 500);
+	wait_for_charge_manager_refresh();
+	TEST_ASSERT(active_charge_port == 1);
+	TEST_ASSERT(active_charge_limit == 500);
+
 	return EC_SUCCESS;
 }
 
