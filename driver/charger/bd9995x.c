@@ -612,7 +612,8 @@ int charger_set_voltage(int voltage)
 	if (rv)
 		return rv;
 
-	if (reg & BD9995X_CMD_CHGOP_SET2_BATT_LEARN ||
+	if (voltage == 0 ||
+		reg & BD9995X_CMD_CHGOP_SET2_BATT_LEARN ||
 		battery_is_present() != BP_YES ||
 		battery_is_cut_off())
 		voltage = bi->voltage_max;
