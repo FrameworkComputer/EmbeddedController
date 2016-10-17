@@ -131,9 +131,13 @@ void chipset_reset(int cold_reset)
 		 */
 
 		/* Pulse must be at least 16 PCI clocks long = 500 ns */
+#ifdef CONFIG_ESPI_VW_SIGNALS
+		lpc_host_reset();
+#else
 		gpio_set_level(GPIO_PCH_RCIN_L, 0);
 		udelay(10);
 		gpio_set_level(GPIO_PCH_RCIN_L, 1);
+#endif
 	}
 }
 

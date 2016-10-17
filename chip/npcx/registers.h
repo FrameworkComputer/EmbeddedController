@@ -428,6 +428,15 @@ enum {
 #define NPCX_SID_CR                       REG8(NPCX_MSWC_BASE_ADDR + 0x020)
 #define NPCX_DEVICE_ID_CR                 REG8(NPCX_MSWC_BASE_ADDR + 0x022)
 
+/* MSWC register fields */
+#define NPCX_MSWCTL1_HRSTOB              0
+#define NPCS_MSWCTL1_HWPRON              1
+#define NPCX_MSWCTL1_PLTRST_ACT          2
+#define NPCX_MSWCTL1_VHCFGA              3
+#define NPCX_MSWCTL1_HCFGLK              4
+#define NPCX_MSWCTL1_PWROFFB             6
+#define NPCX_MSWCTL1_A20MB               7
+
 /******************************************************************************/
 /* System Configuration (SCFG) Registers */
 #define NPCX_DEVCNT                       REG8(NPCX_SCFG_BASE_ADDR + 0x000)
