@@ -321,7 +321,7 @@ static void update_host_event_status(void)
 	lpc_task_disable_irq();
 	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
 		/* Only generate SMI for first event */
-		if (!(NPCX_HIPMIE(PMC_ACPI) & NPCX_HIPMIE_SMIE))
+		if (!(NPCX_HIPMST(PMC_ACPI) & NPCX_HIPMST_ST2))
 			need_smi = 1;
 		SET_BIT(NPCX_HIPMST(PMC_ACPI), NPCX_HIPMST_ST2);
 	} else
