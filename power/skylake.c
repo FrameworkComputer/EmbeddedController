@@ -65,7 +65,7 @@ enum sys_sleep_state {
 /* Get system sleep state through GPIOs or VWs */
 static int chipset_get_sleep_signal(enum sys_sleep_state state)
 {
-#ifdef CONFIG_VW_SIGNALS
+#ifdef CONFIG_ESPI_VW_SIGNALS
 	if (state == SYS_SLEEP_S4)
 		return espi_vw_get_wire(VW_SLP_S4_L);
 	else if (state == SYS_SLEEP_S3)

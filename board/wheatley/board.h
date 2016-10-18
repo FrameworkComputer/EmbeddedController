@@ -150,7 +150,7 @@
 
 /* Features of eSPI */
 #undef CONFIG_ESPI       /* Use eSPI protocol for host interface of x86 CPU */
-#undef CONFIG_VW_SIGNALS /* Use VW signals instead of GPIOs */
+#undef CONFIG_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
 
 #ifndef __ASSEMBLER__
 

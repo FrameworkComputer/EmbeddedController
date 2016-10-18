@@ -838,6 +838,12 @@
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 
+/* Support for eSPI for host communication */
+#undef CONFIG_ESPI
+
+/* Use Virtual Wire signals instead of GPIO with eSPI interface */
+#undef CONFIG_ESPI_VW_SIGNALS
+
 /* Include code for handling external power */
 #define CONFIG_EXTPOWER
 

@@ -77,7 +77,7 @@ static int power_signal_get_level(enum gpio_signal signal)
 #ifdef CONFIG_POWER_S0IX
 	return chipset_get_ps_debounced_level(signal);
 #else
-#ifdef CONFIG_VW_SIGNALS
+#ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */
 	if ((int)signal > VW_SIGNAL_BASE)
 		return espi_vw_get_wire(signal);
@@ -88,7 +88,7 @@ static int power_signal_get_level(enum gpio_signal signal)
 
 static int power_signal_enable_interrupt(enum gpio_signal signal)
 {
-#ifdef CONFIG_VW_SIGNALS
+#ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */
 	if ((int)signal > VW_SIGNAL_BASE)
 		return espi_vw_enable_wire_int(signal);
@@ -461,7 +461,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Interrupts */
 
-#if defined(CONFIG_BRINGUP) && defined(CONFIG_VW_SIGNALS)
+#if defined(CONFIG_BRINGUP) && defined(CONFIG_ESPI_VW_SIGNALS)
 #error "Not support CONFIG_BRINGUP since gpio_get_name func"
 #endif
 

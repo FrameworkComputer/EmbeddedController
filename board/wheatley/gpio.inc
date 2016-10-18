@@ -16,7 +16,7 @@ GPIO_INT(POWER_BUTTON_L,     PIN(9,  7), GPIO_INT_BOTH,                   power_
 /* RSMRST from PMIC */
 GPIO_INT(RSMRST_L_PGOOD,     PIN(7,  2), GPIO_INT_BOTH,                   power_signal_interrupt)  /* A36 - PWRGD for ROP_EC_RSMRST_L */
 /* Use VW signals instead of GPIOs */
-#ifndef CONFIG_VW_SIGNALS
+#ifndef CONFIG_ESPI_VW_SIGNALS
 GPIO_INT(PCH_SLP_S4_L,       PIN(5,  0), GPIO_INT_BOTH,                   power_signal_interrupt)  /* A25 - GPIO50 for SLP_S4_L */
 GPIO_INT(PCH_SLP_S3_L,       PIN(4,  0), GPIO_INT_BOTH,                   power_signal_interrupt)  /* B21 - TA1 for SLP_S3_L */
 #endif

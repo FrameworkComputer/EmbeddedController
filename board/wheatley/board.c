@@ -102,7 +102,7 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_RSMRST_L_PGOOD,    1, "RSMRST_N_PWRGD"},
 	{GPIO_PCH_SLP_S0_L,      1, "SLP_S0_DEASSERTED"},
-#ifdef CONFIG_VW_SIGNALS
+#ifdef CONFIG_ESPI_VW_SIGNALS
 	{VW_SLP_S3_L,            1, "SLP_S3_DEASSERTED"},
 	{VW_SLP_S4_L,            1, "SLP_S4_DEASSERTED"},
 #else
