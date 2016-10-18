@@ -25,6 +25,18 @@ CTS_TEST(test_task_disable_irq)
  */
 CTS_TEST(test_nested_interrupt_low_high)
 
+/* Test nested interrupt. Higher priority IRQ is fired, followed by
+ * lower priority IRQ. Handlers should be executed sequentially.
+ *
+ * P1               *-----*
+ *                 /       \
+ * P2             /         *-----*
+ *               /                 \
+ * task_cts ----*                   *----
+ *                  B     C A     D
+ */
+CTS_TEST(test_nested_interrupt_high_low)
+
 /*
  * Other ideas
  *

@@ -45,12 +45,15 @@ static int busy_loop(void)
 void cts_irq1(enum gpio_signal signal)
 {
 	state[state_index++] = 'B';
-	/* test some APIs */
+
 	got_interrupt = in_interrupt_context();
 
 	/* Wake up the CTS task */
 	if (wake_me_up)
 		task_wake(TASK_ID_CTS);
+
+	busy_loop();
+
 	state[state_index++] = 'C';
 }
 
@@ -82,7 +85,7 @@ enum cts_rc test_task_wait_event(void)
 	/* Sleep and wait for interrupt. This shouldn't time out. */
 	event = task_wait_event(CTS_INTERRUPT_TRIGGER_DELAY_US * 2);
 	if (event != TASK_EVENT_WAKE) {
-		CPRINTS("Woke up by 0x%08x", event);
+		CPRINTS("Woken up by unexpected event: 0x%08x", event);
 		return CTS_RC_FAILURE;
 	}
 	if (!got_interrupt) {
@@ -103,7 +106,7 @@ enum cts_rc test_task_disable_irq(void)
 	/* Sleep and wait for interrupt. This should time out. */
 	event = task_wait_event(CTS_INTERRUPT_TRIGGER_DELAY_US * 2);
 	if (event != TASK_EVENT_TIMER) {
-		CPRINTS("Woke up by 0x%08x", event);
+		CPRINTS("Woken up by unexpected event: 0x%08x", event);
 		return CTS_RC_FAILURE;
 	}
 	task_enable_irq(CTS_IRQ_NUMBER);
@@ -136,7 +139,7 @@ enum cts_rc test_nested_interrupt_low_high(void)
 
 	event = task_wait_event(CTS_INTERRUPT_TRIGGER_DELAY_US * 4);
 	if (event != TASK_EVENT_TIMER) {
-		CPRINTS("Woke up by 0x%08x", event);
+		CPRINTS("Woken up by unexpected event: 0x%08x", event);
 		return CTS_RC_FAILURE;
 	}
 	if (!got_interrupt) {
@@ -144,6 +147,24 @@ enum cts_rc test_nested_interrupt_low_high(void)
 		return CTS_RC_TIMEOUT;
 	}
 	if (memcmp(state, "ABCD", sizeof(state))) {
+		CPRINTS("State transition differs from expectation");
+		return CTS_RC_FAILURE;
+	}
+
+	return CTS_RC_SUCCESS;
+}
+
+enum cts_rc test_nested_interrupt_high_low(void)
+{
+	uint32_t event;
+
+	event = task_wait_event(CTS_INTERRUPT_TRIGGER_DELAY_US * 4);
+	if (event != TASK_EVENT_TIMER) {
+		CPRINTS("Woken up by unexpected event: 0x%08x", event);
+		return CTS_RC_FAILURE;
+	}
+
+	if (memcmp(state, "BCAD", sizeof(state))) {
 		CPRINTS("State transition differs from expectation");
 		return CTS_RC_FAILURE;
 	}

@@ -54,6 +54,13 @@ enum cts_rc test_nested_interrupt_low_high(void)
 	return CTS_RC_SUCCESS;
 }
 
+enum cts_rc test_nested_interrupt_high_low(void)
+{
+	trigger_interrupt1();
+	trigger_interrupt2();
+	return CTS_RC_SUCCESS;
+}
+
 #include "cts_testlist.h"
 
 void cts_task(void)
