@@ -197,7 +197,7 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":bd:hsu";
+static char *short_opts = ":bfd:hsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",  0,   NULL, 'b'},
@@ -205,6 +205,7 @@ static const struct option long_opts[] = {
 	{"help",     0,   NULL, 'h'},
 	{"spi",      0,   NULL, 's'},
 	{"upstart",  0,   NULL, 'u'},
+	{"fwver",    0,   NULL, 'f'},
 	{NULL,       0,   NULL,  0},
 };
 
@@ -303,6 +304,7 @@ static void usage(int errs)
 	       "  -b,--binvers             Report versions of image's "
 				"RW and RO headers, do not update\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
+	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
 	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
 	       "  -u,--upstart             "
@@ -957,8 +959,6 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 	size_t i;
 	int num_txed_secitons = 0;
 
-	setup_connection(td);
-
 	for (i = 0; i < ARRAY_SIZE(sections); i++)
 		if (sections[i].ustatus == needed) {
 			transfer_section(td,
@@ -1040,6 +1040,7 @@ int main(int argc, char *argv[])
 	size_t j;
 	int transferred_sections;
 	int binary_vers = 0;
+	int show_fw_ver = 0;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1063,6 +1064,9 @@ int main(int argc, char *argv[])
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
+			break;
+		case 'f':
+			show_fw_ver = 1;
 			break;
 		case 'h':
 			usage(errorcnt);
@@ -1096,25 +1100,27 @@ int main(int argc, char *argv[])
 	if (errorcnt)
 		usage(errorcnt);
 
-	if (optind >= argc) {
-		fprintf(stderr,
-			"\nERROR: Missing required <binary image>\n\n");
-		usage(1);
+	if (!show_fw_ver) {
+		if (optind >= argc) {
+			fprintf(stderr,
+				"\nERROR: Missing required <binary image>\n\n");
+			usage(1);
+		}
+
+		data = get_file_or_die(argv[optind], &data_len);
+		printf("read %zd(%#zx) bytes from %s\n",
+		       data_len, data_len, argv[optind]);
+		if (data_len != CONFIG_FLASH_SIZE) {
+			fprintf(stderr, "Image file is not %d bytes\n",
+				CONFIG_FLASH_SIZE);
+			exit(update_error);
+		}
+
+		fetch_header_versions(data);
+
+		if (binary_vers)
+			exit(show_headers_versions(data));
 	}
-
-	data = get_file_or_die(argv[optind], &data_len);
-	printf("read %zd(%#zx) bytes from %s\n",
-	       data_len, data_len, argv[optind]);
-	if (data_len != CONFIG_FLASH_SIZE) {
-		fprintf(stderr, "Image file is not %d bytes\n",
-			CONFIG_FLASH_SIZE);
-		exit(update_error);
-	}
-
-	fetch_header_versions(data);
-
-	if (binary_vers)
-		exit(show_headers_versions(data));
 
 	if (td.ep_type == usb_xfer) {
 		usb_findit(vid, pid, &td.uep);
@@ -1126,10 +1132,22 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	transferred_sections = transfer_and_reboot(&td, data, data_len);
+	setup_connection(&td);
 
-	printf("bye\n");
-	free(data);
+	if (show_fw_ver) {
+		printf("Current versions:\n");
+		printf("RO %d.%d.%d\n", targ.shv[0].epoch, targ.shv[0].major,
+		       targ.shv[0].minor);
+		printf("RW %d.%d.%d\n", targ.shv[1].epoch, targ.shv[1].major,
+		       targ.shv[1].minor);
+	}
+
+	if (data) {
+		transferred_sections = transfer_and_reboot(&td, data, data_len);
+
+		printf("bye\n");
+		free(data);
+	}
 	if (td.ep_type == usb_xfer) {
 		libusb_close(td.uep.devh);
 		libusb_exit(NULL);
