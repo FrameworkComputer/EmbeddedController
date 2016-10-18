@@ -9,34 +9,48 @@
 #include "timer.h"
 #include "watchdog.h"
 
-static void trigger_interrupt(void)
+static void trigger_interrupt1(void)
 {
 	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
 	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
 }
 
+static void trigger_interrupt2(void)
+{
+	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
+	gpio_set_level(GPIO_CTS_IRQ2, 0);
+	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
+}
+
 enum cts_rc test_task_wait_event(void)
 {
-	trigger_interrupt();
+	trigger_interrupt1();
 	return CTS_RC_SUCCESS;
 }
 
 enum cts_rc test_task_disable_irq(void)
 {
-	trigger_interrupt();
+	trigger_interrupt1();
 	return CTS_RC_SUCCESS;
 }
 
 enum cts_rc test_interrupt_enable(void)
 {
-	trigger_interrupt();
+	trigger_interrupt1();
 	return CTS_RC_SUCCESS;
 }
 
 enum cts_rc test_interrupt_disable(void)
 {
-	trigger_interrupt();
+	trigger_interrupt1();
+	return CTS_RC_SUCCESS;
+}
+
+enum cts_rc test_nested_interrupt_low_high(void)
+{
+	trigger_interrupt2();
+	trigger_interrupt1();
 	return CTS_RC_SUCCESS;
 }
 
@@ -51,6 +65,7 @@ void cts_task(void)
 
 	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
 		gpio_set_level(GPIO_OUTPUT_TEST, 1);
+		gpio_set_level(GPIO_CTS_IRQ2, 1);
 		sync();
 		rc = tests[i].run();
 		CPRINTF("\n%s %d\n", tests[i].name, rc);

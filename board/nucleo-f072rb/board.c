@@ -21,9 +21,8 @@ void button_event(enum gpio_signal signal)
  * Dummy interrupt handler. It's supposed to be overwritten by each suite
  * if needed.
  */
-__attribute__((weak)) void cts_irq(enum gpio_signal signal)
-{
-}
+__attribute__((weak)) void cts_irq1(enum gpio_signal signal) {}
+__attribute__((weak)) void cts_irq2(enum gpio_signal signal) {}
 #endif
 
 #include "gpio_list.h"

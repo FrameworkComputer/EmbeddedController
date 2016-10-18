@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <string.h>
 #include "common.h"
 #include "gpio.h"
 #include "registers.h"
@@ -13,6 +14,8 @@
 
 static int got_interrupt;
 static int wake_me_up;
+static int state_index;
+static char state[4];
 
 /*
  * Raw busy loop. Returns 1 if loop finishes before interrupt is triggered.
@@ -39,14 +42,35 @@ static int busy_loop(void)
 /*
  * Interrupt handler.
  */
-void cts_irq(enum gpio_signal signal)
+void cts_irq1(enum gpio_signal signal)
 {
+	state[state_index++] = 'B';
 	/* test some APIs */
 	got_interrupt = in_interrupt_context();
 
 	/* Wake up the CTS task */
 	if (wake_me_up)
 		task_wake(TASK_ID_CTS);
+	state[state_index++] = 'C';
+}
+
+void cts_irq2(enum gpio_signal signal)
+{
+	state[state_index++] = 'A';
+	busy_loop();
+	state[state_index++] = 'D';
+}
+
+static void clear_state(void)
+{
+	uint32_t *event;
+
+	got_interrupt = 0;
+	wake_me_up = 0;
+	state_index = 0;
+	memset(state, '_', sizeof(state));
+	event = task_get_event_bitmap(TASK_ID_CTS);
+	*event = 0;
 }
 
 enum cts_rc test_task_wait_event(void)
@@ -106,6 +130,27 @@ enum cts_rc test_interrupt_disable(void)
 	return CTS_RC_SUCCESS;
 }
 
+enum cts_rc test_nested_interrupt_low_high(void)
+{
+	uint32_t event;
+
+	event = task_wait_event(CTS_INTERRUPT_TRIGGER_DELAY_US * 4);
+	if (event != TASK_EVENT_TIMER) {
+		CPRINTS("Woke up by 0x%08x", event);
+		return CTS_RC_FAILURE;
+	}
+	if (!got_interrupt) {
+		CPRINTS("Interrupt context not detected");
+		return CTS_RC_TIMEOUT;
+	}
+	if (memcmp(state, "ABCD", sizeof(state))) {
+		CPRINTS("State transition differs from expectation");
+		return CTS_RC_FAILURE;
+	}
+
+	return CTS_RC_SUCCESS;
+}
+
 #include "cts_testlist.h"
 
 void cts_task(void)
@@ -113,11 +158,11 @@ void cts_task(void)
 	enum cts_rc rc;
 	int i;
 
-	gpio_enable_interrupt(GPIO_CTS_IRQ);
+	gpio_enable_interrupt(GPIO_CTS_IRQ1);
+	gpio_enable_interrupt(GPIO_CTS_IRQ2);
 	interrupt_enable();
 	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		got_interrupt = 0;
-		wake_me_up = 0;
+		clear_state();
 		sync();
 		rc = tests[i].run();
 		interrupt_enable();

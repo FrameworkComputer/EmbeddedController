@@ -13,11 +13,12 @@ GPIO_INT(USER_BUTTON, PIN(C, 13), GPIO_INT_FALLING, button_event)
 #ifndef CTS_MODULE_GPIO
 /* Overload C1 for interrupt. Enabled only for non-GPIO suites as
  * GPIO tests don't require a separate notification line. */
-GPIO_INT(CTS_IRQ, PIN(C, 1), GPIO_INT_FALLING | GPIO_PULL_UP , cts_irq)
+GPIO_INT(CTS_IRQ1, PIN(C, 1), GPIO_INT_FALLING | GPIO_PULL_UP , cts_irq1)
 /* Used to disable interrupt. This IRQ# has to match the number used for the
  * pin set above */
 #define CTS_IRQ_NUMBER STM32_IRQ_EXTI0_1
 #endif
+GPIO_INT(CTS_IRQ2, PIN(C, 2), GPIO_INT_FALLING | GPIO_PULL_UP , cts_irq2)
 #endif
 
 /* Outputs */
