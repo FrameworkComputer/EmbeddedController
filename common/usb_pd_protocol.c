@@ -2799,6 +2799,9 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 				tcpm_set_drp_toggle(port);
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
 				timeout = -1;
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+				CPRINTS("TCPC p%d Low Power Mode", port);
+#endif
 			}
 			set_state(port, next_state);
 

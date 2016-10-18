@@ -2117,6 +2117,9 @@
 /* Get TCPC firmware version */
 #undef CONFIG_USB_PD_TCPC_FW_VERSION
 
+/* Enable TCPC to enter low power mode */
+#undef CONFIG_USB_PD_TCPC_LOW_POWER
+
 /*
  * Track VBUS level in TCPC module. This will only be needed if we're acting
  * as an external TCPC.

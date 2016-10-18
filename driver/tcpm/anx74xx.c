@@ -556,6 +556,9 @@ static int anx74xx_tcpc_drp_toggle(int port)
 	/* Disable CC software Control */
 	rv = anx74xx_cc_software_ctrl(port, 0);
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	anx74xx_set_power_mode(port, ANX74XX_STANDBY_MODE);
+#endif
 	return rv;
 }
 #endif

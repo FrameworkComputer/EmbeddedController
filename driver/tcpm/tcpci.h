@@ -82,6 +82,7 @@
 
 #define TCPC_REG_COMMAND           0x23
 #define TCPC_REG_COMMAND_LOOK4CONNECTION	0x99
+#define TCPC_REG_COMMAND_I2CIDLE		0xFF
 
 #define TCPC_REG_DEV_CAP_1         0x24
 #define TCPC_REG_DEV_CAP_2         0x26

@@ -142,6 +142,9 @@ static int tcpci_tcpc_drp_toggle(int port)
 	rv |= tcpc_write(port, TCPC_REG_COMMAND,
 			 TCPC_REG_COMMAND_LOOK4CONNECTION);
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	rv |= tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
+#endif
 	return rv;
 }
 #endif
