@@ -1412,6 +1412,21 @@ enum ITIM16_MODULE_T {
 #define VWGPMS_FIELD(n, m, p, e)     (VMGPMS_INX_EN(n) | VWGPMS_MODIFIED(m) | \
 				VWGPMS_PLTRST_EN(p) | VWGPMS_INT_EN(e))
 
+/* define macro to handle SMI/SCI Virtual Wire */
+/* Read SMI VWire status from VWEVSM(offset 2) register. */
+#define SMI_STATUS_MASK    ((uint8_t) (NPCX_VWEVSM(2) & 0x00000002))
+/*
+ * Read SCI VWire status from VWEVSM(offset 2) register.
+ * Left shift 2 to meet the SCIB filed in HIPMIC register.
+ */
+#define SCI_STATUS_MASK    (((uint8_t) (NPCX_VWEVSM(2) & 0x00000001)) << 2)
+#define SCIB_MASK(v)       (v << NPCX_HIPMIC_SCIB)
+#define SMIB_MASK(v)       (v << NPCX_HIPMIC_SMIB)
+#define NPCX_VW_SCI(level)  ((NPCX_HIPMIC(PM_CHAN_1) & 0xF9) | \
+				SMI_STATUS_MASK | SCIB_MASK(level))
+#define NPCX_VW_SMI(level)  ((NPCX_HIPMIC(PM_CHAN_1) & 0xF9) | \
+				SCI_STATUS_MASK | SMIB_MASK(level))
+
 /* eSPI enumeration */
 /* eSPI channels */
 enum {
