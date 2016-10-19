@@ -50,10 +50,10 @@ static const struct protect_range spi_flash_protect_ranges[] = {
 static const struct protect_range spi_flash_protect_ranges[] = {
 	/* CMP = 0 */
 	{ 0, X, X, { 0, 0, 0 }, 0, 0 },             /* No protection */
-	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x1ffff },       /* Lower 1/4 */
-	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x3ffff },       /* Lower 1/2 */
+	{ 0, 0, 1, { 0, 1, 0 }, 0, 0x20000 },       /* Lower 1/4 */
+	{ 0, 0, 1, { 0, 1, 1 }, 0, 0x40000 },       /* Lower 1/2 */
 	/* CMP = 1 */
-	{ 1, 0, 0, { 0, 1, 1 }, 0, 0x3ffff },       /* Lower 1/2 */
+	{ 1, 0, 0, { 0, 1, 1 }, 0, 0x40000 },       /* Lower 1/2 */
 	{ 1, 0, X, { 1, X, X }, 0, 0 },             /* None (W25Q40EW only) */
 };
 
