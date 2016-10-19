@@ -61,6 +61,7 @@ BOARDS_STM32=(
 	chell_pd
 	elm
 	glados_pd
+	hammer
 	honeybuns
 	jerry
 	kitty
