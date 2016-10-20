@@ -107,6 +107,7 @@ BOARDS_NPCX_SPI=(
 	kevin
 	pyro
 	reef
+	snappy
 	wheatley
 )
 
@@ -125,6 +126,7 @@ BOARDS_SPI_1800MV=(
 	kevin
 	pyro
 	reef
+	snappy
 )
 
 BOARDS_RAIDEN=(
@@ -132,6 +134,7 @@ BOARDS_RAIDEN=(
 	kevin
 	pyro
 	reef
+	snappy
 )
 
 # Flags
