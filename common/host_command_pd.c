@@ -157,6 +157,10 @@ static int pd_get_alert(void)
 
 static void pd_exchange_status(uint32_t ec_state)
 {
+#ifdef USB_TCPM_WITH_OFF_CHIP_TCPC
+	int first_exchange = 1;
+#endif
+
 #ifdef CONFIG_HOSTCMD_PD
 	struct ec_params_pd_status ec_status;
 	struct ec_response_pd_status pd_status;
@@ -168,7 +172,6 @@ static void pd_exchange_status(uint32_t ec_state)
 #ifdef USB_TCPM_WITH_OFF_CHIP_TCPC
 	/* Loop until the alert gpio is not active */
 	do {
-		int first_exchange = 1;
 #endif
 
 #ifdef CONFIG_HOSTCMD_PD
