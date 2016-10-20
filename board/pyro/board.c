@@ -122,7 +122,6 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_GREEN] = { 2, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_RED] =   { 3, PWM_CONFIG_DSLEEP, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
@@ -661,7 +660,7 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_BAT_LED_GREEN, GPIO_INPUT | GPIO_PULL_UP},
 		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
 		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
 
