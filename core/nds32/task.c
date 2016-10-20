@@ -434,8 +434,11 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 		__schedule(1, resched, 0);
 		resched = TASK_ID_IDLE;
 	}
-	if (timeout_us > 0)
+	if (timeout_us > 0) {
 		timer_cancel(me);
+		/* Ensure timer event is clear, we no longer care about it */
+		atomic_clear(&tsk->events, TASK_EVENT_TIMER);
+	}
 	return evt;
 }
 

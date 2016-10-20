@@ -137,8 +137,8 @@ void timer_cancel(task_id_t tskid)
 
 	atomic_clear(&timer_running, 1 << tskid);
 	/*
-	 * Don't need to cancel the interrupt: it would be slow, just do it on
-	 * the next IT
+	 * Don't need to cancel the hardware timer interrupt, instead do
+	 * timer-related housekeeping when the next timer interrupt fires.
 	 */
 }
 
