@@ -106,12 +106,20 @@ DECLARE_DEFERRED(force_shutdown);
  * be minimized, so check for deassertion at various stages of our suspend
  * power sequencing, and immediately transition out of suspend if necessary.
  */
-#define CHECK_ABORTED_SUSPEND() \
-	if (!forcing_shutdown && \
-	    power_get_signals() & IN_SUSPEND_DEASSERTED)  { \
-		CPRINTS("suspend aborted"); \
-		return POWER_S3S0; \
-	}
+#define SLEEP_INTERVAL_MS 5
+#define MSLEEP_CHECK_ABORTED_SUSPEND(msec) \
+	do { \
+		int sleep_remain = msec; \
+		do { \
+			msleep(MIN(sleep_remain, SLEEP_INTERVAL_MS)); \
+			sleep_remain -= SLEEP_INTERVAL_MS; \
+			if (!forcing_shutdown && \
+			    power_get_signals() & IN_SUSPEND_DEASSERTED)  { \
+				CPRINTS("suspend aborted"); \
+				return POWER_S3S0; \
+			} \
+		} while (sleep_remain > 0); \
+	} while (0)
 
 enum power_state power_handle_state(enum power_state state)
 {
@@ -276,32 +284,24 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		CHECK_ABORTED_SUSPEND();
-
-		msleep(20);
-		CHECK_ABORTED_SUSPEND();
+		MSLEEP_CHECK_ABORTED_SUSPEND(20);
 
 		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
 		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 1);
-		msleep(20);
-		CHECK_ABORTED_SUSPEND();
+		MSLEEP_CHECK_ABORTED_SUSPEND(20);
 
 		gpio_set_level(GPIO_PP1800_S0_EN_L, 1);
-		msleep(1);
-		CHECK_ABORTED_SUSPEND();
+		MSLEEP_CHECK_ABORTED_SUSPEND(1);
 
 		gpio_set_level(GPIO_AP_CORE_EN, 0);
-		msleep(20);
-		CHECK_ABORTED_SUSPEND();
+		MSLEEP_CHECK_ABORTED_SUSPEND(20);
 
 		gpio_set_level(GPIO_PP1800_AP_AVDD_EN_L, 1);
-		msleep(1);
-		CHECK_ABORTED_SUSPEND();
+		MSLEEP_CHECK_ABORTED_SUSPEND(1);
 
 		gpio_set_level(GPIO_PP900_DDRPLL_EN, 0);
-		msleep(1);
-		CHECK_ABORTED_SUSPEND();
+		MSLEEP_CHECK_ABORTED_SUSPEND(1);
 
 		gpio_set_level(GPIO_PPVAR_CLOGIC_EN, 0);
 
