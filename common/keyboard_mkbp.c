@@ -22,9 +22,9 @@
 #include "keyboard_test.h"
 #include "lid_switch.h"
 #include "mkbp_event.h"
-#include "motion_lid.h"
 #include "power_button.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -222,8 +222,7 @@ DECLARE_HOOK(HOOK_INIT, mkbp_lid_change, HOOK_PRIO_INIT_LID+1);
 #ifdef CONFIG_TABLET_MODE_SWITCH
 static void mkbp_tablet_mode_change(void)
 {
-	mkbp_update_switches(EC_MKBP_TABLET_MODE,
-			     motion_lid_in_tablet_mode());
+	mkbp_update_switches(EC_MKBP_TABLET_MODE, tablet_get_mode());
 }
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, mkbp_tablet_mode_change, HOOK_PRIO_LAST);
 DECLARE_HOOK(HOOK_INIT, mkbp_tablet_mode_change, HOOK_PRIO_INIT_LID+1);

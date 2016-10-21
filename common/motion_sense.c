@@ -22,6 +22,7 @@
 #include "motion_lid.h"
 #include "power.h"
 #include "queue.h"
+#include "tablet_mode.h"
 #include "timer.h"
 #include "task.h"
 #include "util.h"
@@ -127,15 +128,9 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 		motion_sense_insert_timestamp();
 		wake_up_needed = 1;
 	}
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
-	data->flags |= (motion_lid_in_tablet_mode() ?
+#ifdef CONFIG_TABLET_MODE
+	data->flags |= (tablet_get_mode() ?
 			MOTIONSENSE_SENSOR_FLAG_TABLET_MODE : 0);
-#elif defined(CONFIG_DPTF_DEVICE_ORIENTATION)
-	/*
-	 * TODO(gwendal): When other method finding tablet mode are used.
-	 * define them here.
-	 */
-#error "Need to set we are in tablet mode"
 #endif
 	mutex_lock(&g_sensor_mutex);
 	queue_add_unit(&motion_sense_fifo, data);

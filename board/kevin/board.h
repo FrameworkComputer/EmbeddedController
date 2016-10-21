@@ -103,6 +103,7 @@
 	((1 << LID_ACCEL) | (1 << BASE_BARO))
 #endif
 
+#define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 
 /* USB PD config */

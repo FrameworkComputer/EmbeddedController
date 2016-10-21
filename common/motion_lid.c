@@ -17,6 +17,7 @@
 #include "motion_lid.h"
 #include "motion_sense.h"
 #include "power.h"
+#include "tablet_mode.h"
 #include "timer.h"
 #include "task.h"
 #include "util.h"
@@ -57,7 +58,6 @@
 #define TABLET_ZONE_LID_ANGLE FLOAT_TO_FP(300)
 #define LAPTOP_ZONE_LID_ANGLE FLOAT_TO_FP(240)
 
-static int tablet_mode = 1;
 #endif
 
 #ifdef CONFIG_LID_ANGLE_INVALID_CHECK
@@ -148,7 +148,7 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 	fp_t denominator;
 	int reliable = 1;
 #ifdef CONFIG_LID_ANGLE_TABLET_MODE
-	int new_tablet_mode = tablet_mode;
+	int new_tablet_mode = tablet_get_mode();
 #endif
 
 	/*
@@ -234,8 +234,8 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 		new_tablet_mode = 1;
 	else if (last_lid_angle_fp < LAPTOP_ZONE_LID_ANGLE)
 		new_tablet_mode = 0;
-	if (tablet_mode != new_tablet_mode) {
-		tablet_mode = new_tablet_mode;
+	if (tablet_get_mode() != new_tablet_mode) {
+		tablet_set_mode(new_tablet_mode);
 		hook_notify(HOOK_TABLET_MODE_CHANGE);
 	}
 #endif   /* CONFIG_LID_ANGLE_TABLET_MODE */
@@ -282,13 +282,6 @@ void motion_lid_calc(void)
 	lid_angle_update(motion_lid_get_angle());
 #endif
 }
-
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
-int motion_lid_in_tablet_mode(void)
-{
-	return tablet_mode;
-}
-#endif
 
 /*****************************************************************************/
 /* Host commands */

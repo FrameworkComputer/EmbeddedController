@@ -11,6 +11,7 @@
 #include "host_command.h"
 #include "lpc.h"
 #include "ec_commands.h"
+#include "tablet_mode.h"
 #include "pwm.h"
 #include "timer.h"
 #include "util.h"
@@ -170,7 +171,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 
 #ifdef CONFIG_DPTF_DEVICE_ORIENTATION
 		case EC_ACPI_MEM_DEVICE_ORIENTATION:
-			result = board_get_device_orientation();
+			result = tablet_get_mode();
 			break;
 #endif
 

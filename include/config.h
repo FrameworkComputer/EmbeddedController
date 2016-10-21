@@ -1819,6 +1819,11 @@
 #undef CONFIG_SYSTEM_UNLOCKED
 
 /*
+ * Device can be a tablet as well as a clamshell.
+ */
+#undef CONFIG_TABLET_MODE
+
+/*
  * Add a virtual switch to indicate when we are in tablet mode.
  */
 #undef CONFIG_TABLET_MODE_SWITCH
