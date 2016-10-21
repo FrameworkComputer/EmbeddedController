@@ -290,6 +290,13 @@
 #undef CONFIG_BOARD_HAS_RTC_RESET
 
 /*
+ * Call board_before_rsmrst(state) before passing RSMRST# to the AP.
+ * This is for board workarounds that are required after rails are up
+ * but before the AP is out of reset.
+ */
+#undef CONFIG_BOARD_HAS_BEFORE_RSMRST
+
+/*
  * Call board_config_post_gpio_init() after GPIOs are initialized.  See
  * include/board_config.h for more information.
  */

@@ -32,4 +32,20 @@ void board_config_pre_init(void);
 void board_config_post_gpio_init(void);
 #endif
 
+#ifdef CONFIG_BOARD_HAS_BEFORE_RSMRST
+/**
+ * Configure board before RSMRST# state change
+ *
+ * This board function allows workarounds to be applied to a board after all
+ * power rails are up but before the AP is out of reset.
+ *
+ * Most workarounds for power sequencing can go in board init hooks, but for
+ * devices where the power sequencing is driven by external PMIC the EC may
+ * not get interrupts in time to handle workarounds.  For x86 platforms and
+ * boards which support RSMRST# passthrough this hook will allow the board
+ * to apply workarounds despite the PMIC sequencing.
+ */
+void board_before_rsmrst(int rsmrst);
+#endif
+
 #endif /* __CROS_EC_BOARD_CONFIG_H */

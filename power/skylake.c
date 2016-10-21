@@ -5,6 +5,7 @@
 
 /* Skylake IMVP8 / ROP PMIC chipset power control module for Chrome EC */
 
+#include "board_config.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
@@ -176,6 +177,11 @@ static void handle_rsmrst(enum power_state state)
 	/* Nothing to do. */
 	if (rsmrst_in == rsmrst_out)
 		return;
+
+#ifdef CONFIG_BOARD_HAS_BEFORE_RSMRST
+	board_before_rsmrst(rsmrst_in);
+#endif
+
 	/*
 	 * Wait at least 10ms between power signals going high
 	 * and deasserting RSMRST to PCH.
