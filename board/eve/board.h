@@ -41,6 +41,10 @@
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_DX_WLAN
 
+/* EC console commands */
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+
 /* SOC */
 #define CONFIG_CHIPSET_SKYLAKE
 #define CONFIG_CHIPSET_RESET_HOOK
@@ -86,11 +90,28 @@
 #define CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD 30
 
 /* Sensor */
+#define CONFIG_ACCEL_KXCJ9
 #define CONFIG_ALS
 #define CONFIG_ALS_ISL29035
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
 #define CONFIG_THERMISTOR_NCP15WB
+
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_MAG_BMI160_BMM150
+#define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
+#define CONFIG_MAG_CALIBRATE
+
+/* FIFO size is in power of 2. */
+/*
+ * TODO (crosbug.com/p/59144): Uncomment this when AP is reading sensor
+ * data. For now, it's commented so that the data can be read from the EC
+ * console.
+ */
+/*#define CONFIG_ACCEL_FIFO 1024*/
+
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
 /* USB */
 #define CONFIG_USB_CHARGER
@@ -125,7 +146,8 @@
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
 #define I2C_PORT_TCPC1		NPCX_I2C_PORT0_1
 #define I2C_PORT_GYRO		NPCX_I2C_PORT1
-#define I2C_PORT_ACCEL		NPCX_I2C_PORT2
+#define I2C_PORT_ACCEL		I2C_PORT_GYRO
+#define I2C_PORT_LID_ACCEL	NPCX_I2C_PORT2
 #define I2C_PORT_ALS		NPCX_I2C_PORT2
 #define I2C_PORT_PMIC		NPCX_I2C_PORT3
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT3
@@ -177,6 +199,19 @@ enum pwm_channel {
 enum als_id {
 	ALS_ISL29035,
 	ALS_COUNT
+};
+
+/*
+ * Motion sensors:
+ * When reading through IO memory is set up for sensors (LPC is used),
+ * the first 2 entries must be accelerometers, then gyroscope.
+ * For BMI160, accel, gyro and compass sensors must be next to each other.
+ */
+enum sensor_id {
+	LID_ACCEL = 0,
+	BASE_ACCEL,
+	BASE_GYRO,
+	BASE_MAG,
 };
 
 enum adc_channel {
