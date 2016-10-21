@@ -66,11 +66,9 @@ static void tcpc_alert_event(enum gpio_signal signal)
 			!gpio_get_level(GPIO_USB_C0_PD_RST_L))
 		return;
 
-#if IS_PROTO == 0
 	if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
 			!gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
 		return;
-#endif
 
 #ifdef HAS_TASK_PDCMD
 	/* Exchange status with TCPCs */
@@ -207,11 +205,7 @@ const int i2c_test_dev_used = ARRAY_SIZE(i2c_stress_tests);
 #endif /* CONFIG_CMD_I2C_STRESS_TEST */
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-#if IS_PROTO == 1
-	{NPCX_I2C_PORT0_0, 0x50, &anx74xx_tcpm_drv, TCPC_ALERT_ACTIVE_HIGH},
-#else
 	{NPCX_I2C_PORT0_0, 0x50, &anx74xx_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
-#endif
 	{NPCX_I2C_PORT0_1, 0x16, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
 };
 
@@ -219,19 +213,13 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-#if IS_PROTO == 0
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
-#else
-	if (gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
-#endif
 		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
-#if IS_PROTO == 0
 		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
-#endif
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
 
@@ -277,20 +265,16 @@ void board_set_tcpc_power_mode(int port, int mode)
  */
 void board_reset_pd_mcu(void)
 {
-#if IS_PROTO == 0
 	/* Assert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
-#endif
 
 	/* Assert reset to TCPC0 */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	msleep(1);
 	gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
 
-#if IS_PROTO == 0
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
-#endif
 
 	/* TCPC0 requires 10ms reset/power down assertion */
 	msleep(10);
@@ -445,7 +429,6 @@ static void chipset_pre_init(void)
 	if (system_jumped_to_this_image() && gpio_get_level(GPIO_PMIC_EN))
 		return;
 
-#if IS_PROTO == 0
 	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
 	gpio_set_level(GPIO_EN_PP5000, 1);
 	while (!gpio_get_level(GPIO_PP5000_PG))
@@ -462,52 +445,12 @@ static void chipset_pre_init(void)
 
 	/* Enable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 1);
-#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
-
-#if IS_PROTO == 1
-/* FIXME: Remove this hack once proto boards are obsolete. */
-static void board_init_proto(void)
-{
-	/*
-	 * By removing the power rail while PMIC is enabled,
-	 * PMIC will sense a power fault and reset itself.
-	 */
-	if (!system_jumped_to_this_image()) {
-		/* Disable all power rail */
-		gpio_set_level(GPIO_EN_PP3300, 0);
-		gpio_set_level(GPIO_EN_PP5000, 0);
-
-		/* Toggle PMIC_EN */
-		gpio_set_level(GPIO_PMIC_EN, 1);
-		msleep(500);
-		gpio_set_level(GPIO_PMIC_EN, 0);
-	}
-
-	/* Enable PP5000 before PP3300 due to NFC: chrome-os-partner:50807 */
-	gpio_set_level(GPIO_EN_PP5000, 1);
-	while (!gpio_get_level(GPIO_PP5000_PG))
-		;
-
-	/* Enable 3.3V rail */
-	gpio_set_level(GPIO_EN_PP3300, 1);
-	while (!gpio_get_level(GPIO_PP3300_PG))
-		;
-
-	/* Enable PMIC */
-	gpio_set_level(GPIO_PMIC_EN, 1);
-
-}
-#endif
 
 /* Initialize board. */
 static void board_init(void)
 {
-#if IS_PROTO == 1
-	board_init_proto();
-#endif
-
 	/* FIXME: Handle tablet mode */
 	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); */
 
@@ -682,22 +625,6 @@ static void board_chipset_startup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
-#if IS_PROTO == 1
-/*
- * FIXME: This is a workaround for chrome-os-partner:53791. As per comment #53
- * this issue should not occur on boards newer than proto.
- */
-static void drive_sys_rst_odl_high(void)
-{
-	gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_OUT_HIGH);
-	CPRINTS("SYS_RST_ODL driven high");
-	msleep(1000);
-	gpio_set_flags(GPIO_PCH_RCIN_L, GPIO_ODR_HIGH);
-	CPRINTS("SYS_RST_ODL left floating (open-drain)");
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, drive_sys_rst_odl_high, HOOK_PRIO_DEFAULT);
-#endif
-
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
@@ -723,14 +650,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
  */
 void chipset_do_shutdown(void)
 {
-#if IS_PROTO == 1
-	/*
-	 * If we shut off TCPCs the TCPC tasks will fail and spam the
-	 * EC console with I2C errors. So for now we'll leave the TCPCs
-	 * on which means leaving PMIC_EN, PP3300, and PP5000 enabled.
-	 */
-	cprintf(CC_CHIPSET, "%s called, but not doing anything.\n", __func__);
-#else
 	/* Disable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 0);
 
@@ -743,7 +662,6 @@ void chipset_do_shutdown(void)
 	gpio_set_level(GPIO_EN_PP5000, 0);
 	while (gpio_get_level(GPIO_PP5000_PG))
 		;
-#endif
 }
 
 void board_hibernate_late(void)
@@ -1056,25 +974,3 @@ int board_get_version(void)
 	CPRINTS("Board version: %d\n", version);
 	return version;
 }
-
-/* FIXME: Remove this once proto boards are obsolete */
-static void check_ec_fw_mismatch(void)
-{
-	int board_version = board_get_version();
-
-	if (board_version == BOARD_VERSION_UNKNOWN)
-		return;
-
-#if IS_PROTO == 1
-	if (board_version != BOARD_VERSION_1) {
-		CPRINTS("ERROR: Detected proto firmware on non-proto unit.");
-		CPRINTS("Set IS_PROTO correctly in board/pyro/board.h");
-	}
-#else
-	if (board_version == BOARD_VERSION_1) {
-		CPRINTS("ERROR: Detected >=EVT firmware on proto unit.");
-		CPRINTS("Set IS_PROTO correctly in board/pyro/board.h");
-	}
-#endif
-}
-DECLARE_HOOK(HOOK_SECOND, check_ec_fw_mismatch, HOOK_PRIO_DEFAULT);

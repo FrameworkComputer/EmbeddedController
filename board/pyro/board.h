@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* FIXME: Gross hack. Remove it once proto boards are obsolete. */
-#define IS_PROTO 0
-
 /*
  * Allow dangerous commands.
  * TODO: Remove this config before production.
