@@ -758,10 +758,22 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_transmit_type type,
 
 		break;
 	case TCPC_TX_BIST_MODE_2:
-		/* Simply hit the BIST_MODE2 bit */
+		/* Hit the BIST_MODE2 bit and start TX */
 		tcpc_read(port, TCPC_REG_CONTROL1, &reg);
 		reg |= TCPC_REG_CONTROL1_BIST_MODE2;
 		tcpc_write(port, TCPC_REG_CONTROL1, reg);
+
+		tcpc_read(port, TCPC_REG_CONTROL0, &reg);
+		reg |= TCPC_REG_CONTROL0_TX_START;
+		tcpc_write(port, TCPC_REG_CONTROL0, reg);
+
+		task_wait_event(PD_T_BIST_TRANSMIT);
+
+		/* Clear BIST mode bit, TX_START is self-clearing */
+		tcpc_read(port, TCPC_REG_CONTROL1, &reg);
+		reg &= ~TCPC_REG_CONTROL1_BIST_MODE2;
+		tcpc_write(port, TCPC_REG_CONTROL1, reg);
+
 		break;
 	default:
 		return EC_ERROR_UNIMPLEMENTED;
@@ -863,6 +875,7 @@ void fusb302_tcpc_alert(int port)
 
 }
 
+/* For BIST receiving */
 void tcpm_set_bist_test_data(int port)
 {
 	int reg;
