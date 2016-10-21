@@ -130,14 +130,6 @@ static void process_read_access(uint16_t reg_size,
 	tpm_register_get(tpm_reg, data, reg_size);
 	/* Transfer TPM fifo data to the I2CS HW fifo */
 	i2cs_post_read_fill_fifo(data, reg_size);
-
-	/*
-	 * Could be the end of a TPM trasaction. Set sleep to be reenabled in 1
-	 * second. If this is not the end of a TPM response, then sleep will be
-	 * disabled again in the next I2CS interrupt.
-	*/
-	delay_sleep_by(1 * SECOND);
-	enable_sleep(SLEEP_MASK_I2C_SLAVE);
 }
 
 static void process_write_access(uint16_t reg_size, uint16_t tpm_reg,

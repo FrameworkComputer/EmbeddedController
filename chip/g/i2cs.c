@@ -186,6 +186,14 @@ static void _i2cs_write_complete_int(void)
 		/* Invoke the callback to process the message. */
 		write_complete_handler_(i2cs_buffer, bytes_processed);
 	}
+
+	/*
+	 * Could be the end of a TPM trasaction. Set sleep to be reenabled in 1
+	 * second. If this is not the end of a TPM response, then sleep will be
+	 * disabled again in the next I2CS interrupt.
+	 */
+	delay_sleep_by(1 * SECOND);
+	enable_sleep(SLEEP_MASK_I2C_SLAVE);
 }
 DECLARE_IRQ(GC_IRQNUM_I2CS0_INTR_WRITE_COMPLETE_INT,
 	    _i2cs_write_complete_int, 1);
