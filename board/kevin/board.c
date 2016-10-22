@@ -357,6 +357,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
 	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
 
+	/* Enable interrupts from BMI160 sensor. */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
 	/* Sensor Init */
 	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
 		board_spi_enable();
