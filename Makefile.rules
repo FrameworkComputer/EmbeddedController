@@ -389,6 +389,24 @@ clean:
 clobber:
 	-rm -rf build TAGS cscope.files cscope.out
 
+.PHONY: help
+help:
+	@echo "Google Chromium EC build"
+	@echo "Common Targets:"
+	@echo "  all   [BOARD=]     - Build a single board (Default target)"
+	@echo "  clean [BOARD=]     - Clean a single board"
+	@echo "  buildall           - Build and test all boards"
+	@echo "  clobber            - Clean all boards"
+	@echo "  proj-<boardname>   - Build a single board (similar to 'all BOARD=boardname')"
+	@echo "  savesizes          - Save the filesizes of currently built boards for comparison"
+	@echo "  newsizes           - Compare previously saved filesizes against new sizes"
+	@echo "Common Variables:"
+	@echo "  BOARD=             - Set the board name to build (Default is $(BOARD))"
+	@echo "  CROSS_COMPILE=     - Set the compiler for the board"
+	@echo "  V=1                - Show make output"
+	@echo "Example:"
+	@echo "  make BOARD=reef CROSS_COMPILE='arm-eabi-'"
+
 .PHONY: savesizes
 savesizes:
 	@find $(BUILD_DIR) -name '*.flat' -printf "%s %p\n" | sort --key 2 > \
