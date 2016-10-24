@@ -501,6 +501,7 @@ int board_set_active_charge_port(int charge_port)
 		CPRINTF("Skip enable p%d", charge_port);
 		return EC_ERROR_INVAL;
 	}
+
 	/*
 	 * Reject charge port disable if our battery is critical and we
 	 * have yet to initialize a charge port - continue to charge using
@@ -508,11 +509,8 @@ int board_set_active_charge_port(int charge_port)
 	 */
 	if (!initialized &&
 	    charge_port == CHARGE_PORT_NONE &&
-	    charge_get_percent() < 2) {
-		CPRINTS("Battery critical, don't disable charging");
+	    charge_get_percent() < 2)
 		return -1;
-	}
-
 
 	CPRINTS("New chg p%d", charge_port);
 

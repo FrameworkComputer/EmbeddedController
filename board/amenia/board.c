@@ -315,10 +315,8 @@ int board_set_active_charge_port(int charge_port)
 	 */
 	if (!initialized &&
 	    charge_port == CHARGE_PORT_NONE &&
-	    charge_get_percent() < 2) {
-		CPRINTS("Battery critical, don't disable charging");
+	    charge_get_percent() < 2)
 		return -1;
-	}
 
 	CPRINTS("New chg p%d", charge_port);
 
