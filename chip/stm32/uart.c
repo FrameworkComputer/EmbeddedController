@@ -165,7 +165,7 @@ void uart_interrupt(void)
 {
 #ifndef CONFIG_UART_TX_DMA
 	/*
-	 * When trasmission completes, enable sleep if we are done with Tx.
+	 * When transmission completes, enable sleep if we are done with Tx.
 	 * After that, proceed if there is other interrupt to handle.
 	 */
 	if (STM32_USART_SR(UARTN_BASE) & STM32_USART_SR_TC) {

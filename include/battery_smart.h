@@ -56,7 +56,7 @@
 #define SB_DEVICE_NAME                  0x21
 #define SB_DEVICE_CHEMISTRY             0x22
 #define SB_MANUFACTURER_DATA            0x23
-/* Extention of smart battery spec, may not be supported on all platforms */
+/* Extension of smart battery spec, may not be supported on all platforms */
 #define SB_ALT_MANUFACTURER_ACCESS      0x44
 
 /* Battery mode */

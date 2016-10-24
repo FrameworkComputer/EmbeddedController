@@ -83,7 +83,7 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 void gpio_set_level(enum gpio_signal signal, int value)
 {
 	/*
-	 * Ok to write 0xff becuase LM4_GPIO_DATA bit-masks only the bit
+	 * Ok to write 0xff because LM4_GPIO_DATA bit-masks only the bit
 	 * we care about.
 	 */
 	LM4_GPIO_DATA(gpio_list[signal].port,

@@ -131,7 +131,7 @@ static void init_new_cycle(void)
 	enable_sleep(SLEEP_MASK_SPI);
 }
 
-/* Extract R/W bit, register addresss, and data count from 4-byte header */
+/* Extract R/W bit, register address, and data count from 4-byte header */
 static int header_says_to_read(uint8_t *data, uint32_t *reg, uint32_t *count)
 {
 	uint32_t addr = data[1];		/* reg address is MSB first */

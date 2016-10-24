@@ -220,7 +220,7 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
-/* Sensor index defintion */
+/* Sensor index definition */
 enum sensor_id {
 	RYU_LID_ACCEL,
 	RYU_LID_GYRO,

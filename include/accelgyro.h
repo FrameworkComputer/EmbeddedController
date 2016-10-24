@@ -97,7 +97,7 @@ struct accelgyro_drv {
 	 * @event Event to process. May add other events for the next processor.
 	 *
 	 * Return EC_SUCCESS when one event is handled, EC_ERROR_NOT_HANDLED
-	 * when no events have been proccessed.
+	 * when no events have been processed.
 	 */
 	int (*irq_handler)(struct motion_sensor_t *s, uint32_t *event);
 #endif
@@ -106,7 +106,7 @@ struct accelgyro_drv {
 	 * Retrieve hardware FIFO from sensor,
 	 * - put data in Sensor Hub fifo.
 	 * - update sensor raw_xyz vector with the last information.
-	 * We put raw data in hub fifo and process data from theres.
+	 * We put raw data in hub fifo and process data from there.
 	 * @s Pointer to sensor data.
 	 */
 	int (*load_fifo)(struct motion_sensor_t *s);
@@ -118,7 +118,7 @@ struct accelgyro_drv {
 	 * @s Pointer to sensor data.
 	 * @activity activity to work on
 	 * @enable 1 to enable, 0 to disable
-	 * @data addtional data if needed, activity dependant.
+	 * @data additional data if needed, activity dependent.
 	 */
 	int (*manage_activity)(const struct motion_sensor_t *s,
 			       enum motionsensor_activity activity,

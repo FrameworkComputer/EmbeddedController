@@ -173,7 +173,7 @@ static int tmp006_read_die_temp_k(const struct tmp006_data_t *tdata,
 }
 
 /*
- * This uses Tdie and Vobj and a bunch of magic parameters to calulate the
+ * This uses Tdie and Vobj and a bunch of magic parameters to calculate the
  * object temperature, Tobj.
  */
 static int tmp006_read_object_temp_k(struct tmp006_data_t *tdata,

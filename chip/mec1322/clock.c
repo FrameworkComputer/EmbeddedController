@@ -105,7 +105,7 @@ static void htimer_init(void)
 {
 	MEC1322_INT_BLK_EN |= 1 << 17;
 	MEC1322_INT_ENABLE(17) |= 1 << 20;  /* GIRQ=17, aggregator bit = 20 */
-	MEC1322_HTIMER_PRELOAD = 0;  /* disable at begining */
+	MEC1322_HTIMER_PRELOAD = 0;  /* disable at beginning */
 
 	task_enable_irq(MEC1322_IRQ_HTIMER);
 }

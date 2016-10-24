@@ -38,7 +38,7 @@
  */
 #define I2C_MIN_TIMEOUT 25
 
-/* Marco functions of I2C */
+/* Macro functions of I2C */
 #define I2C_START(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_START)
 #define I2C_STOP(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STOP)
 #define I2C_NACK(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_ACK)
@@ -66,7 +66,7 @@ enum smb_error {
 
 /*
  * Internal SMBus Interface driver states values, which reflect events
- * which occured on the bus
+ * which occurred on the bus
  */
 enum smb_oper_state_t {
 	SMB_IDLE,

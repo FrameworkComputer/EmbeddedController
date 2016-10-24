@@ -137,7 +137,7 @@ test_mockable __keep int main(void)
 
 #ifdef CONFIG_WATCHDOG
 	/*
-	 * Intialize watchdog timer.  All lengthy operations between now and
+	 * Initialize watchdog timer.  All lengthy operations between now and
 	 * task_start() must periodically call watchdog_reload() to avoid
 	 * triggering a watchdog reboot.  (This pretty much applies only to
 	 * verified boot, because all *other* lengthy operations should be done

@@ -79,7 +79,7 @@ struct usart_tx_dma {
 };
 
 /*
- * Function pointers needed to intialize a usart_tx struct.  These shouldn't
+ * Function pointers needed to initialize a usart_tx struct.  These shouldn't
  * be called in any other context as they assume that the consumer or config
  * that they are passed was initialized with a complete usart_tx_dma struct.
  */

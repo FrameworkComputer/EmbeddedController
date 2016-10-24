@@ -141,7 +141,7 @@ static int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
 		return rv;
 
 	*out_mfn_bank = 0;
-	/* Go through the JEDEC ID a byate a time to looking for a manufacturer
+	/* Go through the JEDEC ID a byte a time to looking for a manufacturer
 	 * ID instead of the next bank indicator (0x7F). */
 	for (i = 0; i < SPI_NOR_JEDEC_ID_BANKS; i++) {
 		*out_mfn_id = jedec_id[i];
@@ -412,7 +412,7 @@ int spi_nor_init(void)
 	int rv = EC_SUCCESS;
 	size_t i;
 
-	/* Initiailize the state for each serial NOR flash device. */
+	/* Initialize the state for each serial NOR flash device. */
 	for (i = 0; i < SPI_NOR_DEVICE_COUNT; i++) {
 		uint8_t sfdp_major_rev, sfdp_minor_rev;
 		uint8_t table_major_rev, table_minor_rev;

@@ -878,7 +878,7 @@ void lpc_lreset_pltrst_handler(void)
 		pltrst_asserted ? "" : "de");
 
 	/*
-	 * Once LRESET is de-asserted (low -> high), we need to intialize lpc
+	 * Once LRESET is de-asserted (low -> high), we need to initialize lpc
 	 * settings once. If RSTCTL_LRESET_PLTRST_MODE is active, LPC registers
 	 * won't be reset by Host domain reset but Core domain does.
 	 */

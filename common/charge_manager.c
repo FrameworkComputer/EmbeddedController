@@ -823,7 +823,7 @@ void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
  *
  * @param port			Charge port to select as override, or
  *				OVERRIDE_OFF to select no override port,
- *				or OVERRIDE_DONT_CHARGE to specifc that no
+ *				or OVERRIDE_DONT_CHARGE to specific that no
  *				charge port should be selected.
  */
 int charge_manager_set_override(int port)

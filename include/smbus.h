@@ -126,7 +126,7 @@ int smbus_read_word(uint8_t i2c_port, uint8_t slave_addr,
  * @param plen uint8_t *, a pointer data length
  * @return error_code
  *       EC_SUCCESS if success; none-zero if fail
- *       EC_ERROR_BUSY if interface is bussy
+ *       EC_ERROR_BUSY if interface is busy
  *       none zero error code if fail
  */
 int smbus_read_block(uint8_t i2c_port, uint8_t slave_addr,
@@ -138,7 +138,7 @@ int smbus_read_block(uint8_t i2c_port, uint8_t slave_addr,
  * Read bytestream from <slaveaddr>:<smbus_cmd> with format:
  *     [length_N] [byte_0] [byte_1] ... [byte_N-1][byte_N='\0']
  *
- * <len>  : the max length of receving buffer. to read N bytes
+ * <len>  : the max length of receiving buffer. to read N bytes
  *          ascii, len should be at least N+1 to include the
  *          terminating 0 (NULL).
  *

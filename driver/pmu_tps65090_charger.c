@@ -205,7 +205,7 @@ static int calc_next_state(int state)
 	case ST_IDLE0:
 	case ST_BAD_COND:
 	case ST_IDLE:
-		/* Check AC and chiset state */
+		/* Check AC and chipset state */
 		if (!extpower_is_present()) {
 			if (chipset_in_state(CHIPSET_STATE_ON))
 				return ST_DISCHARGING;
@@ -429,8 +429,8 @@ void charger_task(void)
 #endif
 		/*
 		 * When battery is extremely low, the internal voltage can not
-		 * power on its gas guage IC. Charging loop will enable the
-		 * charger and turn on trickle charging. For safty reason,
+		 * power on its gas gauge IC. Charging loop will enable the
+		 * charger and turn on trickle charging. For safety reason,
 		 * charger should be disabled if the communication to battery
 		 * failed.
 		 */

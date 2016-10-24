@@ -20,7 +20,7 @@ BUILD_ASSERT(POWER_OF_TWO(LOG_SIZE));
 /*
  * The FIFO pointers are defined as following :
  * "log_head" is the next available event to dequeue.
- * "log_tail" is marking the end of the FIFO content (after last commited event)
+ * "log_tail" is marking the end of the FIFO content (after last committed event)
  * "log_tail_next" is the next available spot to enqueue events.
  * The pointers are not wrapped until they are used, so we don't need an extra
  * entry to disambiguate between full and empty FIFO.

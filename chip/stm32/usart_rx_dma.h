@@ -38,7 +38,7 @@
  * to use for the DMA circular buffer.  This buffer must be large enough to
  * hide the worst case interrupt latency the system will encounter.  The DMA
  * RX driver adds to the output of the usart_info command a high water mark
- * of how many bytes were transfered out of this FIFO on any one interrupt.
+ * of how many bytes were transferred out of this FIFO on any one interrupt.
  * This value can be used to correctly size the FIFO by setting the FIFO_SIZE
  * to something large, stress test the USART, and run usart_info.  After a
  * reasonable stress test the "DMA RX max_bytes" value will be a reasonable
@@ -73,7 +73,7 @@ struct usart_rx_dma_state {
 	size_t index;
 
 	/*
-	 * Maximum number of bytes transfered in any one RX interrupt.
+	 * Maximum number of bytes transferred in any one RX interrupt.
 	 */
 	uint32_t max_bytes;
 };
@@ -94,7 +94,7 @@ struct usart_rx_dma {
 };
 
 /*
- * Function pointers needed to intialize a usart_rx struct.  These shouldn't
+ * Function pointers needed to initialize a usart_rx struct.  These shouldn't
  * be called in any other context as they assume that the producer or config
  * that they are passed was initialized with a complete usart_rx_dma struct.
  */

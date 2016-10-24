@@ -120,7 +120,7 @@ static void chipset_turn_off_power_rails(void);
 /**
  * Set the AP RESET signal.
  *
- * This fucntion is for backward-compatible.
+ * This function is for backward-compatibility.
  *
  * AP_RESET_L (PB3) is stuffed before rev <= 2.0 and connected to PMIC RESET.
  * After rev >= 2.2, this is removed. This should not effected the new board.
@@ -180,7 +180,7 @@ static int check_for_power_off_event(void)
 		pressed = 1;
 	} else if (power_request == POWER_REQ_OFF) {
 		power_request = POWER_REQ_NONE;
-		return 4;  /* return non-zero for shudown down */
+		return 4;  /* return non-zero for shutdown */
 	}
 
 	now = get_time();

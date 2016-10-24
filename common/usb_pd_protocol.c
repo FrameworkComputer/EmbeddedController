@@ -104,7 +104,7 @@ enum pd_dual_role_states drp_state = PD_DRP_TOGGLE_OFF;
 static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_COUNT][PDO_MAX_OBJECTS];
 static int pd_src_cap_cnt[CONFIG_USB_PD_PORT_COUNT];
 
-/* Enable varible for Try.SRC states */
+/* Enable variable for Try.SRC states */
 static uint8_t pd_try_src_enable;
 #endif
 
@@ -1895,7 +1895,7 @@ void pd_task(void)
 
 			/* Send source cap some minimum number of times */
 			if (caps_count < PD_CAPS_COUNT) {
-				/* Query capabilites of the other side */
+				/* Query capabilities of the other side */
 				res = send_source_cap(port);
 				/* packet was acked => PD capable device) */
 				if (res >= 0) {

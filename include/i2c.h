@@ -274,7 +274,7 @@ int i2c_unwedge(int port);
  * Read bytestream from <slaveaddr>:<offset> with format:
  *     [length_N] [byte_0] [byte_1] ... [byte_N-1]
  *
- * <len>      : the max length of receving buffer. to read N bytes
+ * <len>      : the max length of receiving buffer. to read N bytes
  *              ascii, len should be at least N+1 to include the
  *              terminating 0.
  * <len> == 0 : buffer size > 255

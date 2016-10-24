@@ -144,7 +144,7 @@ int open_serial(const char *port)
 	/*
 	 * tcsetattr() returns success if any of the modifications succeed, so
 	 * its return value of zero is not an indication of success, one needs
-	 * to check the result explicitely.
+	 * to check the result explicitly.
 	 */
 	tcsetattr(fd, TCSANOW, &cfg);
 	if (tcgetattr(fd, &cfg)) {

@@ -907,7 +907,7 @@ static void ep0_interrupt(uint32_t intr_on_out, uint32_t intr_on_in)
 			/*
 			 * The Programmer's Guide says (p291) to stall any
 			 * further INs, but that's stupid because it'll destroy
-			 * the packet we just tranferred to SPRAM, so don't do
+			 * the packet we just transferred to SPRAM, so don't do
 			 * that (we tried it anyway, and Bad Things happened).
 			 * Also don't stop here, but keep looking at stuff.
 			 */

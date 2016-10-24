@@ -46,7 +46,7 @@ static void usart_variant_disable(struct usart_config const *config)
 	int index = config->hw->index;
 
 	/*
-	 * Only disable the shared interupt for USART3/4 if both USARTs are
+	 * Only disable the shared interrupt for USART3/4 if both USARTs are
 	 * now disabled.
 	 */
 	if ((index == 0) ||

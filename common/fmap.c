@@ -152,7 +152,7 @@ const struct _ec_fmap {
 			 * ASCII, and padded with \0.
 			 * TODO: Get the relative offset of
 			 * __version_struct_offset within our RW image to
-			 * accomodate image asymmetry.
+			 * accommodate image asymmetry.
 			 */
 			.area_name = "RW_FWID",
 			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -

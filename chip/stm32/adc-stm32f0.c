@@ -169,7 +169,7 @@ static int adc_enable_watchdog_no_lock(void)
 			  (watchdog_ain_id << 26);
 	adc_configure(watchdog_ain_id);
 
-	/* Clear AWD interupt flag */
+	/* Clear AWD interrupt flag */
 	STM32_ADC_ISR = 0x80;
 	/* Set Watchdog enable bit on a single channel */
 	STM32_ADC_CFGR1 |= STM32_ADC_CFGR1_AWDEN | STM32_ADC_CFGR1_AWDSGL;

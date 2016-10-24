@@ -326,7 +326,7 @@ void usb_init(void)
 
 	/* Enable interrupt handlers */
 	task_enable_irq(STM32_IRQ_USB_LP);
-	/* set interrupts mask : reset/correct tranfer/errors */
+	/* set interrupts mask : reset/correct transfer/errors */
 	STM32_USB_CNTR = 0xe400;
 
 #ifdef CONFIG_USB_SERIALNO

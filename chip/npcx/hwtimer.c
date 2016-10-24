@@ -139,7 +139,7 @@ uint32_t __hw_clock_get_sleep_time(uint16_t pre_evt_cnt)
 	uint32_t sleep_time;
 	uint16_t cnt = __hw_clock_event_count();
 
-	/* Event has been triggered but timer ISR dosen't handle it */
+	/* Event has been triggered but timer ISR doesn't handle it */
 	if (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_TO_STS))
 		sleep_time = FP_TO_INT((fp_inter_t)(pre_evt_cnt+1) * evt_tick);
 	/* Event hasn't been triggered */

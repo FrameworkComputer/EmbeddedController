@@ -17,7 +17,7 @@ extern const enum ec_led_id supported_led_ids[];
 extern const int supported_led_ids_count;
 
 /**
- * Enable or diable automatic control of an LED.
+ * Enable or disable automatic control of an LED.
  *
  * @param led_id	ID of LED to enable or disable automatic control.
  * @param enable	1 to enable . 0 to disable

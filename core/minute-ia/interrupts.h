@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Registers map and defintions for mIA LM2 processor
+ * Registers map and definitions for mIA LM2 processor
  */
 
 #ifndef __CROS_EC_IA32_INTERRUPTS_H
@@ -39,7 +39,7 @@ typedef struct {
 
 /* Default flags setting for entries in the IDT.
  * 7	- Present bit
- * 6:5	- Descriptor privilage level
+ * 6:5	- Descriptor privilege level
  * 4	- Storage segment (0 for interrupt gate)
  * 3:0	- Gate type (1110 = Interrupt gate)
  */

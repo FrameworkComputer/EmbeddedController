@@ -244,7 +244,7 @@ static void setup_lpc(void)
 	/* Set up 8042 interface at 0x60/0x64 */
 	MEC1322_LPC_8042_BAR = 0x00608104;
 
-	/* Set up indication of Auxillary sts */
+	/* Set up indication of Auxiliary sts */
 	MEC1322_8042_KB_CTRL |= 1 << 7;
 
 	MEC1322_8042_ACT |= 1;
@@ -630,7 +630,7 @@ static void lpc_clear_host_events(void)
  * the chipset_suspend is called.
  *
  * The chipset_in_state(CHIPSET_STATE_STANDBY | CHIPSET_STATE_ON)
- * is used to detect the S0ix transiton.
+ * is used to detect the S0ix transition.
  *
  * During S0ix entry, the wake mask for lid open is enabled.
  *

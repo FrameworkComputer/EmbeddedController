@@ -44,7 +44,7 @@
 
 /*
  * Hardware pointers use one extra bit, which means that indexing FIFO and
- * values written into the pointers have to have dfferent sizes. Tracked under
+ * values written into the pointers have to have different sizes. Tracked under
  * http://b/20894690
  */
 #define SPS_FIFO_PTR_MASK	((SPS_FIFO_MASK << 1) | 1)
@@ -118,7 +118,7 @@ int sps_transmit(uint8_t *data, size_t data_size)
 				/*
 				 * CR50 SPS controller does not allow byte
 				 * accesses for writes into the FIFO, so read
-				 * modify/write is requred. Tracked uder
+				 * modify/write is required. Tracked under
 				 * http://b/20894727
 				 */
 				bit_shift = 8 * (wptr & 3);
@@ -151,7 +151,7 @@ int sps_transmit(uint8_t *data, size_t data_size)
 
 	/*
 	 * Start TX if necessary. This happens after FIFO is primed, which
-	 * helps aleviate TX underrun problems but introduces delay before
+	 * helps alleviate TX underrun problems but introduces delay before
 	 * data starts coming out.
 	 */
 	if (!GREAD_FIELD(SPS, FIFO_CTRL, TXFIFO_EN))
@@ -290,7 +290,7 @@ static void sps_advance_rx(int port, int data_size)
 /*
  * Actual receive interrupt processing function. Invokes the callback passing
  * it a pointer to the linear space in the RX FIFO and the number of bytes
- * availabe at that address.
+ * available at that address.
  *
  * If RX fifo is wrapping around, the callback will be called twice with two
  * flat pointers.
@@ -363,7 +363,7 @@ DECLARE_IRQ(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR, _sps0_interrupt, 1);
  */
 
  /*
-  * Receive callback implemets a simple state machine, it could be in one of
+  * Receive callback implements a simple state machine, it could be in one of
   * three states:  not started, receiving frame, frame finished.
   */
 
@@ -483,7 +483,7 @@ static int command_sps(int argc, char **argv)
 
 		/*
 		 * Wait for receive state machine to transition out of 'frame
-		 * finised' state.
+		 * finished' state.
 		 */
 		while (rx_state == spstrx_finished) {
 			watchdog_reload();

@@ -20,7 +20,7 @@
 #define REG_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS))
 #define CURRENT_TO_REG(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR)
 
-/* Charger infomation
+/* Charger information
  * charge voltage bitmask: 0111 1111 1111 0000
  * charge current bitmask: 0001 1111 1000 0000
  * input current bitmask : 0000 0000 1000 0000

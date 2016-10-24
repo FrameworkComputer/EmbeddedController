@@ -418,7 +418,7 @@ static int send_validate_message(int port, uint16_t header,
 				 * we have received a good packet
 				 * but not the expected GoodCRC,
 				 * the other side is trying to contact us,
-				 * bail out immediatly so we can get the retry.
+				 * bail out immediately so we can get the retry.
 				 */
 				return PD_TX_ERR_INV_ACK;
 			}

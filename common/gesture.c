@@ -94,7 +94,7 @@ static int gesture_tap_for_battery(void)
 
 	/*
 	 * Running sums of data diffs for inner and outer windows.
-	 * Z data kept seperate from X and Y data
+	 * Z data kept separate from X and Y data
 	 */
 	static int sum_z_inner, sum_z_outer, sum_xy_inner, sum_xy_outer;
 

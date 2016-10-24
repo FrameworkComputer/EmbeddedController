@@ -162,7 +162,7 @@ void host_clear_events(uint32_t mask);
 uint32_t host_get_events(void);
 
 /**
- * Send a response to the relevent driver for transmission
+ * Send a response to the relevant driver for transmission
  *
  * Once command processing is complete, this is used to send a response
  * back to the host.

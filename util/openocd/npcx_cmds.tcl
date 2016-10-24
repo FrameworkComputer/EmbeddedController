@@ -82,7 +82,7 @@ proc flash_npcx_ro {chip_name image_dir image_offset} {
 	# Halt CPU first
 	halt
 
-	# diable MPU for Data RAM
+	# disable MPU for Data RAM
 	mww $MPU_RNR  0x1
 	mww $MPU_RASR 0x0
 
@@ -109,7 +109,7 @@ proc flash_npcx_all {chip_name image_dir image_offset} {
 	# Halt CPU first
 	halt
 
-	# diable MPU for Data RAM
+	# disable MPU for Data RAM
 	mww $MPU_RNR  0x1
 	mww $MPU_RASR 0x0
 

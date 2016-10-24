@@ -10,7 +10,7 @@
 
 #include "common.h"
 
-/* Charger infomation
+/* Charger information
  * voltage unit: mV
  * current unit: mA
  */

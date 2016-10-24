@@ -587,7 +587,7 @@ class TestConsoleEditingMethods(unittest.TestCase):
     # Perform the same verification.
     CheckInputBufferPosition(self, len(test_str))
 
-    # We expect to see the test string, a jump to the begining of the line, and
+    # We expect to see the test string, a jump to the beginning of the line, and
     # one jump to the end of the line.
     exp_console_out = test_str
     # Jump to beginning.

@@ -809,7 +809,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		BMI160_INT2_INPUT_EN | BMI160_LATCH_5MS);
 #endif
 
-	/* configure int1 as an interupt */
+	/* configure int1 as an interrupt */
 	ret = raw_write8(s->port, s->addr, BMI160_INT_OUT_CTRL,
 		BMI160_INT_CTRL(1, OUTPUT_EN));
 

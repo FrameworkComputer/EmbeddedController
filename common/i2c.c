@@ -27,7 +27,7 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
-/* Only chips with multi-port controllers will define I2C_CONTROLER_COUNT */
+/* Only chips with multi-port controllers will define I2C_CONTROLLER_COUNT */
 #ifndef I2C_CONTROLLER_COUNT
 #define I2C_CONTROLLER_COUNT I2C_PORT_COUNT
 #endif

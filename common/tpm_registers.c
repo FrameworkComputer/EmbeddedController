@@ -324,7 +324,7 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 	struct tpm_cmd_header *tpmh;
 
 	/*
-	 * Make sure we are in the approriate sate, otherwise ignore this
+	 * Make sure we are in the appropriate state, otherwise ignore this
 	 * access.
 	 */
 	if ((tpm_.state == tpm_state_ready) && (tpm_.fifo_write_index == 0))
@@ -363,7 +363,7 @@ static void fifo_reg_write(const uint8_t *data, uint32_t data_size)
 		return;
 	}
 
-	/* All data has been receved, Ready for the 'go' command. */
+	/* All data has been received, Ready for the 'go' command. */
 	tpm_.regs.sts &= ~expect;
 }
 
