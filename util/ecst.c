@@ -96,15 +96,15 @@ int main(int argc, char *argv[])
 
 	/* Set default values */
 	g_calc_type = CALC_TYPE_NONE;
-	bin_params.spi_max_clk = SPI_MAX_CLOCK_DEAFULT;
-	bin_params.spi_read_mode = SPI_READ_MODE_DEAFULT;
+	bin_params.spi_max_clk = SPI_MAX_CLOCK_DEFAULT;
+	bin_params.spi_read_mode = SPI_READ_MODE_DEFAULT;
 	bin_params.fw_load_addr =
 				chip_info[NPCX5M5G].ram_addr;
 	bin_params.fw_ep =
 				chip_info[NPCX5M5G].ram_addr;
 	bin_params.fw_err_detec_s_addr = FW_CRC_START_ADDR;
 	bin_params.fw_err_detec_e_addr = FW_CRC_START_ADDR;
-	bin_params.flash_size = FLASH_SIZE_DEAFULT;
+	bin_params.flash_size = FLASH_SIZE_DEFAULT;
 	bin_params.fw_hdr_offset = 0;
 
 	ptr_fw_addr = 0x00000000;
