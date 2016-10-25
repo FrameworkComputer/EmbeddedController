@@ -271,10 +271,10 @@
 #define HCI_EVENT_CHANGE_CONN_LINK_KEY_COMPLETE                  0x0000000000000100ULL /* BT 1.1+ */
 #define HCI_EVENT_MASTER_LINK_KEY_COMPLETE                       0x0000000000000200ULL /* BT 1.1+ */
 #define HCI_EVENT_READ_REMOTE_SUPPORTED_FEATURES_COMPLETE        0x0000000000000400ULL /* BT 1.1+ */
-#define HCI_EVENT_READ_REMOTE_VERSON_INFO_COMPLETE               0x0000000000000800ULL /* BT 1.1+ */
+#define HCI_EVENT_READ_REMOTE_VERSION_INFO_COMPLETE              0x0000000000000800ULL /* BT 1.1+ */
 #define HCI_EVENT_QOS_SETUP_COMPLETE                             0x0000000000001000ULL /* BT 1.1+ */
 #define HCI_EVENT_HARDWARE_ERROR                                 0x0000000000008000ULL /* BT 1.1+ */
-#define HCI_EVENT_FLUSH_OCCURED                                  0x0000000000010000ULL /* BT 1.1+ */
+#define HCI_EVENT_FLUSH_OCCURRED                                 0x0000000000010000ULL /* BT 1.1+ */
 #define HCI_EVENT_ROLE_CHANGE                                    0x0000000000020000ULL /* BT 1.1+ */
 #define HCI_EVENT_MODE_CHANGE                                    0x0000000000080000ULL /* BT 1.1+ */
 #define HCI_EVENT_RETURN_LINK_KEYS                               0x0000000000100000ULL /* BT 1.1+ */
@@ -1476,7 +1476,7 @@ struct hciCmplWriteAfhChannelAssessment {
 
 /* ==== BT 2.1 ==== */
 
-#define HCI_CMD_Read_Extended_Inquiry_Reponse                    0x0051 /* complete */
+#define HCI_CMD_Read_Extended_Inquiry_Response                   0x0051 /* complete */
 struct hciCmplReadEIR {
 	uint8_t status;
 	uint8_t useFec;
@@ -1976,7 +1976,7 @@ struct hciCmplReadDataBlockSize {
 
 /* ==== BT 4.1 ==== */
 
-#define HCI_CMD_Read_Local_Suported_Codecs                       0x000B /* complete */
+#define HCI_CMD_Read_Local_Supported_Codecs                      0x000B /* complete */
 struct hciCmplReadLocalSupportedCodecs {
 	uint8_t status;
 	uint8_t numSupportedCodecs;
@@ -2564,8 +2564,8 @@ struct hciEvtHwError {
 	uint8_t errCode;
 } __packed;
 
-#define HCI_EVT_Flush_Occured                                    0x11
-struct hciEvtFlushOccured {
+#define HCI_EVT_Flush_Occurred                                   0x11
+struct hciEvtFlushOccurred {
 	uint16_t conn;
 } __packed;
 
