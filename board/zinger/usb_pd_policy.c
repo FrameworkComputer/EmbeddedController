@@ -198,7 +198,7 @@ static int discharge_volt_idx;
 /* output current measurement */
 int vbus_amp;
 
-int pd_board_check_request(uint32_t rdo)
+int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 {
 	int idx = RDO_POS(rdo);
 

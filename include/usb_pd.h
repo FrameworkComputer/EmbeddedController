@@ -919,9 +919,11 @@ int pd_check_requested_voltage(uint32_t rdo);
 /**
  * Run board specific checks on request message
  *
+ * @param rdo the request data object word sent by the sink.
+ * @param pdo_cnt the total number of source PDOs.
  * @return EC_SUCCESS if request is ok , <0 else.
  */
-int pd_board_check_request(uint32_t rdo);
+int pd_board_check_request(uint32_t rdo, int pdo_cnt);
 
 /**
  * Select a new output voltage.

@@ -74,12 +74,12 @@ int pd_is_valid_input_voltage(int mv)
 	return 1;
 }
 
-int pd_board_check_request(uint32_t rdo)
+int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 {
 	int idx = RDO_POS(rdo);
 
 	/* Check for invalid index */
-	return (!idx || idx > pd_src_pdo_cnts[pd_src_pdo_idx]) ?
+	return (!idx || idx > pdo_cnt) ?
 		EC_ERROR_INVAL : EC_SUCCESS;
 }
 

@@ -40,13 +40,21 @@ int pd_check_requested_voltage(uint32_t rdo)
 	int idx = RDO_POS(rdo);
 	uint32_t pdo;
 	uint32_t pdo_ma;
+#if defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
+		defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
+	const uint32_t *src_pdo;
+	const int pdo_cnt = charge_manager_get_source_pdo(&src_pdo);
+#else
+	const uint32_t *src_pdo = pd_src_pdo;
+	const int pdo_cnt = pd_src_pdo_cnt;
+#endif
 
 	/* Board specific check for this request */
-	if (pd_board_check_request(rdo))
+	if (pd_board_check_request(rdo, pdo_cnt))
 		return EC_ERROR_INVAL;
 
 	/* check current ... */
-	pdo = pd_src_pdo[idx - 1];
+	pdo = src_pdo[idx - 1];
 	pdo_ma = (pdo & 0x3ff);
 	if (op_ma > pdo_ma)
 		return EC_ERROR_INVAL; /* too much op current */
@@ -61,15 +69,15 @@ int pd_check_requested_voltage(uint32_t rdo)
 	return EC_SUCCESS;
 }
 
-static int stub_pd_board_check_request(uint32_t rdo)
+static int stub_pd_board_check_request(uint32_t rdo, int pdo_cnt)
 {
 	int idx = RDO_POS(rdo);
 
 	/* Check for invalid index */
-	return (!idx || idx > pd_src_pdo_cnt) ?
+	return (!idx || idx > pdo_cnt) ?
 		EC_ERROR_INVAL : EC_SUCCESS;
 }
-int pd_board_check_request(uint32_t)
+int pd_board_check_request(uint32_t, int)
 	__attribute__((weak, alias("stub_pd_board_check_request")));
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
