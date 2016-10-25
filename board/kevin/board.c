@@ -432,7 +432,7 @@ struct {
 };
 BUILD_ASSERT(ARRAY_SIZE(kevin_boards) == BOARD_VERSION_COUNT);
 
-#define THRESHHOLD_MV 56 /* Simply assume 1800/16/2 */
+#define THRESHOLD_MV 56 /* Simply assume 1800/16/2 */
 
 int board_get_version(void)
 {
@@ -455,7 +455,7 @@ int board_get_version(void)
 	gpio_set_level(GPIO_EC_BOARD_ID_EN_L, 1);
 
 	for (i = 0; i < BOARD_VERSION_COUNT; ++i) {
-		if (mv < kevin_boards[i].expect_mv + THRESHHOLD_MV) {
+		if (mv < kevin_boards[i].expect_mv + THRESHOLD_MV) {
 			version = kevin_boards[i].version;
 			break;
 		}
