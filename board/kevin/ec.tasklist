@@ -16,6 +16,7 @@
  * 'd' is an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
+#ifdef BOARD_KEVIN
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(USB_CHG, usb_charger_task, NULL, TASK_STACK_SIZE) \
@@ -28,4 +29,18 @@
 	TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C0, pd_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C1, pd_task, NULL, LARGER_TASK_STACK_SIZE)
-
+#else
+#define CONFIG_TASK_LIST \
+	TASK_ALWAYS(HOOKS, hook_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(ALS, als_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(USB_CHG, usb_charger_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(CHARGER, charger_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_NOTEST(CHIPSET, chipset_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(MOTIONSENSE, motion_sense_task, NULL, VENTI_TASK_STACK_SIZE) \
+	TASK_NOTEST(PDCMD, pd_command_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(CONSOLE, console_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_C0, pd_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_C1, pd_task, NULL, LARGER_TASK_STACK_SIZE)
+#endif
