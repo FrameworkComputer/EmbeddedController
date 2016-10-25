@@ -304,8 +304,8 @@ static void board_init(void)
 	/* Initialize NvMem partitions */
 	nvmem_init();
 
-	/* TODO(crosbug.com/p/49959): For now, leave flash WP unlocked */
-	GREG32(RBOX, EC_WP_L) = 1;
+	/* Enable write protect on production images. Disable it on dev */
+	GREG32(RBOX, EC_WP_L) = !console_is_restricted();
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
