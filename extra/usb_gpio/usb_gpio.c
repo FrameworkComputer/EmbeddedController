@@ -34,7 +34,7 @@ static int gpio_write(libusb_device_handle *device,
 		      uint32_t clear_mask)
 {
 	uint8_t command[8];
-	int     transfered;
+	int     transferred;
 
 	command[0] = (set_mask >>  0) & 0xff;
 	command[1] = (set_mask >>  8) & 0xff;
@@ -50,14 +50,14 @@ static int gpio_write(libusb_device_handle *device,
 				   LIBUSB_ENDPOINT_OUT | 2,
 				   command,
 				   sizeof(command),
-				   &transfered,
+				   &transferred,
 				   TRANSFER_TIMEOUT_MS));
 
-	if (transfered != sizeof(command)) {
+	if (transferred != sizeof(command)) {
 		fprintf(stderr,
 			"Failed to transfer full command "
 			"(sent %d of %d bytes)\n",
-			transfered,
+			transferred,
 			(int)sizeof(command));
 		return LIBUSB_ERROR_OTHER;
 	}
@@ -68,7 +68,7 @@ static int gpio_write(libusb_device_handle *device,
 static int gpio_read(libusb_device_handle *device, uint32_t *mask)
 {
 	uint8_t response[4];
-	int     transfered;
+	int     transferred;
 
 	/*
 	 * The first query does triggers the sampling of the GPIO values, the
@@ -78,21 +78,21 @@ static int gpio_read(libusb_device_handle *device, uint32_t *mask)
 				   LIBUSB_ENDPOINT_IN | 2,
 				   response,
 				   sizeof(response),
-				   &transfered,
+				   &transferred,
 				   TRANSFER_TIMEOUT_MS));
 
 	CHECK(libusb_bulk_transfer(device,
 				   LIBUSB_ENDPOINT_IN | 2,
 				   response,
 				   sizeof(response),
-				   &transfered,
+				   &transferred,
 				   TRANSFER_TIMEOUT_MS));
 
-	if (transfered != sizeof(response)) {
+	if (transferred != sizeof(response)) {
 		fprintf(stderr,
 			"Failed to transfer full response "
 			"(read %d of %d bytes)\n",
-			transfered,
+			transferred,
 			(int)sizeof(response));
 		return LIBUSB_ERROR_OTHER;
 	}
