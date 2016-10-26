@@ -51,6 +51,11 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
+int board_vbus_source_enabled(int port)
+{
+	return gpio_get_level(port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN);
+}
+
 int pd_set_power_supply_ready(int port)
 {
 	/* Ensure we're not charging from this port */

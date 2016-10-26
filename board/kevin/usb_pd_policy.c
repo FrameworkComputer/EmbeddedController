@@ -18,6 +18,7 @@
 #include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -51,6 +52,31 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
+static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
+
+int board_vbus_source_enabled(int port)
+{
+	return vbus_en[port];
+}
+
+static void board_vbus_update_source_current(int port)
+{
+	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
+	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
+			(GPIO_INPUT | GPIO_PULL_UP) : GPIO_OUTPUT;
+
+	/*
+	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
+	 * (2x 33k in parallel) on the NX5P3290 load switch ILIM pin,
+	 * setting a minimum OCP current of 3186 mA.
+	 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put a 33k
+	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
+	 */
+	gpio_set_level(gpio, vbus_en[port]);
+	gpio_set_flags(gpio, flags);
+}
+
 int pd_set_power_supply_ready(int port)
 {
 	/* Ensure we're not charging from this port */
@@ -59,10 +85,10 @@ int pd_set_power_supply_ready(int port)
 	/* Ensure we advertise the proper available current quota */
 	charge_manager_source_port(port, 1);
 
-	/* Provide VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
-			      GPIO_USB_C0_5V_EN, 1);
 	pd_set_vbus_discharge(port, 0);
+	/* Provide VBUS */
+	vbus_en[port] = 1;
+	board_vbus_update_source_current(port);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -72,13 +98,12 @@ int pd_set_power_supply_ready(int port)
 
 void pd_power_supply_reset(int port)
 {
-	enum gpio_signal gpio;
 	int prev_en;
 
-	gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	prev_en = gpio_get_level(gpio);
+	prev_en = vbus_en[port];
 	/* Disable VBUS */
-	gpio_set_level(gpio, 0);
+	vbus_en[port] = 0;
+	board_vbus_update_source_current(port);
 	/* Enable discharge if we were previously sourcing 5V */
 	if (prev_en)
 		pd_set_vbus_discharge(port, 1);
@@ -112,6 +137,14 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
 #endif
+}
+
+void typec_set_source_current_limit(int port, int rp)
+{
+	vbus_rp[port] = rp;
+
+	/* change the GPIO driving the load switch if needed */
+	board_vbus_update_source_current(port);
 }
 
 int pd_board_checks(void)

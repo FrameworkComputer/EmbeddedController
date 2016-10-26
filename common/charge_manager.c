@@ -939,6 +939,7 @@ void charge_manager_source_port(int port, int enable)
 			charge_manager_save_log(p);
 #endif
 
+		typec_set_source_current_limit(p, rp);
 		tcpm_select_rp_value(p, rp);
 		pd_update_contract(p);
 	}
