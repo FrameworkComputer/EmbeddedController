@@ -724,6 +724,8 @@ int connected_communicate(void)
 		if (!is_first_data_packet)
 			offset = last_receive_time + conn_params.connInterval
 				- get_time().val;
+		else
+			offset = 0;
 
 		rv = ble_rx(&ll_rcv_packet,
 			    offset + conn_params.transmitWindowSize,
