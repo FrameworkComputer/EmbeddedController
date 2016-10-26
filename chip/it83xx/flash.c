@@ -539,13 +539,13 @@ static void flash_code_static_dma(void)
 	/*
 	 * Enable ILM
 	 * Set the logic memory address(flash code of RO/RW) in eflash
-	 * by programing the register SCARx bit19-bit0.
+	 * by programming the register SCARx bit19-bit0.
 	 */
 	IT83XX_SMFI_SCAR2L = FLASH_DMA_START & 0xFF;
 	IT83XX_SMFI_SCAR2M = (FLASH_DMA_START >> 8) & 0xFF;
 	IT83XX_SMFI_SCAR2H = (FLASH_DMA_START >> 16) & 0x0F;
 	/*
-	 * Validate Direct-map SRAM function by programing
+	 * Validate Direct-map SRAM function by programming
 	 * register SCARx bit20=0
 	 */
 	IT83XX_SMFI_SCAR2H &= ~0x10;

@@ -74,7 +74,7 @@ static uint32_t block_size;
 static uint32_t block_index;
 
 /*
- * Verify that the contens of the USB rx queue is a valid transfer start
+ * Verify that the contents of the USB rx queue is a valid transfer start
  * message from host, and if so - save its contents in the passed in
  * update_frame_header structure.
  */
@@ -157,7 +157,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 
 		if (!valid_transfer_start(consumer, count, &u.upfr)) {
 			/*
-			 * Someting is wrong, this payload is not a valid
+			 * Something is wrong, this payload is not a valid
 			 * update start PDU. Let'w indicate this by returning
 			 * a single byte error code.
 			 */

@@ -14,10 +14,10 @@
  *
  * The file holding data written by the master has associated with it a
  * register showing where the controller accessed the file last, comparing it
- * with its pervious value tells the driver how many bytes recently written by
+ * with its previous value tells the driver how many bytes recently written by
  * the master are there.
  *
- * The file holding data to be read by the master has a register associtated
+ * The file holding data to be read by the master has a register associated
  * with it showing where was the latest BIT the controller transmitted.
  *
  * The controller can generate interrupts on three different conditions:
@@ -248,7 +248,7 @@ void i2cs_post_read_fill_fifo(uint8_t *buffer, size_t len)
 		/* Write in remainder bytes */
 		for (i = 0; i < remainder_bytes; i++)
 			word_out_value |= *buffer++ << (8 * (start_offset + i));
-		/* Write to fifo regsiter */
+		/* Write to fifo register */
 		value_addr[addr_offset] = word_out_value;
 		addr_offset = (addr_offset + 1) & (REGISTER_FILE_MASK >> 2);
 		/* Account for bytes consumed */
@@ -267,7 +267,7 @@ void i2cs_post_read_fill_fifo(uint8_t *buffer, size_t len)
 	}
 	len -= (num_words << 2);
 
-	/* Now proccess remaining bytes (if any), will be <= 3 at this point */
+	/* Now process remaining bytes (if any), will be <= 3 at this point */
 	remainder_bytes = len;
 	if (remainder_bytes) {
 		/* read from HW fifo */

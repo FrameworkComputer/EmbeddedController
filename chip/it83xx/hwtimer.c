@@ -166,7 +166,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	IT83XX_ETWD_ETXCTRL(FREE_EXT_TIMER_L) |= (1 << 3);
 	/* init free running timer (timer 4, TIMER_H), clock source is 8mhz */
 	ext_timer_ms(FREE_EXT_TIMER_H, EXT_PSR_8M_HZ, 0, 1, 0xffffffff, 1, 1);
-	/* 1us counter settiing (timer 3, TIMER_L) */
+	/* 1us counter setting (timer 3, TIMER_L) */
 	ext_timer_ms(FREE_EXT_TIMER_L, EXT_PSR_8M_HZ, 1, 0, 7, 1, 1);
 	__hw_clock_source_set(start_t);
 	/* init event timer */

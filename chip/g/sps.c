@@ -404,7 +404,7 @@ static void sps_receive_callback(uint8_t *data, size_t data_size, int cs_status)
 			rx_state = spstrx_receiving;
 		else
 			/*
-			 * If we won't be able to receve this much, enter the
+			 * If we won't be able to receive this much, enter the
 			 * 'frame finished' state.
 			 */
 			rx_state = spstrx_finished;

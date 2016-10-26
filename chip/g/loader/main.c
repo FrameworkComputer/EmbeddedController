@@ -15,7 +15,7 @@
 
 /*
  * This file is a proof of concept stub which will be extended and split into
- * appropriate pieces sortly, when full blown support for cr50 bootrom is
+ * appropriate pieces shortly, when full blown support for cr50 bootrom is
  * introduced.
  */
 uint32_t sleep_mask;

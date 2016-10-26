@@ -81,7 +81,7 @@ struct signed_header_version {
  * just as to any other block of the transfer sequence.
  *
  * It became clear that there is a need to be able to enhance the upgrade
- * protocol, while stayng backwards compatible.
+ * protocol, while staying backwards compatible.
  *
  * All newer protocol versions (starting with version 2) respond to the very
  * first packet with an 8 byte or larger response, where the first 4 bytes are

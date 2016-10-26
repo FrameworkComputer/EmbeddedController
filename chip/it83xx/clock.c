@@ -147,7 +147,7 @@ void __ram_code clock_pll_changed(void)
 	IT83XX_ECPM_SCDCR0 = (2 << 4);
 	/* JTAG and EC */
 	IT83XX_ECPM_SCDCR3 = (pll_div_jtag << 4) | pll_div_ec;
-	/* EC sleep after stanbdy instructioin */
+	/* EC sleep after standby instruction */
 	clock_ec_pll_ctrl(EC_PLL_SLEEP);
 	/* Global interrupt enable */
 	asm volatile ("setgie.e");
@@ -157,7 +157,7 @@ void __ram_code clock_pll_changed(void)
 	asm volatile ("setgie.d");
 	/* New FND clock frequency */
 	IT83XX_ECPM_SCDCR0 = (pll_div_fnd << 4);
-	/* EC doze after stanbdy instructioin */
+	/* EC doze after standby instruction */
 	clock_ec_pll_ctrl(EC_PLL_DOZE);
 }
 

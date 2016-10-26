@@ -301,7 +301,7 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	 * Wait for the write to commit.  This ensures that the RTC interrupt
 	 * actually gets enabled.  This is important if we're about to switch
 	 * the system to the 30 kHz oscillator, which might prevent the write
-	 * from comitting.
+	 * from committing.
 	 */
 	wait_for_hibctl_wc();
 }

@@ -190,7 +190,7 @@ void fw_upgrade_command_handler(void *body,
 
 		/*
 		 * If there have been any problems when determining the valid
-		 * secitons offsets/sizes - return an error code.
+		 * Sections offsets/sizes - return an error code.
 		 */
 		if (!valid_sections.ro_top_offset ||
 		    !valid_sections.rw_top_offset) {

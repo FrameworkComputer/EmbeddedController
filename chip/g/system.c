@@ -282,7 +282,7 @@ void system_clear_retry_counter(void)
 }
 
 /*
- * Check wich of the two cr50 RW images is newer, return true if the first
+ * Check which of the two cr50 RW images is newer, return true if the first
  * image is no older than the second one.
  *
  * Note that RO and RW images use the same header structure. When deciding

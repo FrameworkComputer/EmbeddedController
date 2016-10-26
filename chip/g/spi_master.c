@@ -188,7 +188,7 @@ int spi_enable(int port, int enable)
 				continue;
 
 #ifndef CONFIG_SPI_MASTER_NO_CS_GPIOS
-			/* Make sure CS# is deaserted and disabled. */
+			/* Make sure CS# is deasserted and disabled. */
 			gpio_set_level(spi_devices[i].gpio_cs, 1);
 			gpio_set_flags(spi_devices[i].gpio_cs, GPIO_ODR_HIGH);
 #endif  /* CONFIG_SPI_MASTER_NO_CS_GPIOS */

@@ -51,13 +51,13 @@
  * I2C_INST_FWBYTESCOUNT = 1  -> 1 byte in FWBYTES (register address)
  * I2C_INST_REPEATEDSTART = 1 -> send start bit following write
  * I2C_INST_RWDEVADDR = 1     -> send slave address in read mode
- * I2C_INST_RWDEVADDR_RWB = 1 -> read bytes followin slave address
+ * I2C_INST_RWDEVADDR_RWB = 1 -> read bytes following slave address
  * I2C_INST_FINALNA = 1       -> ACK read bytes, NACK last byte read
  * I2C_INST_FINALSTOP = 1     -> send stop bit
  * I2C_INST_DEVADDRVAL = slave address
  * I2C_FWBYTES[b7:b0] = out[0] -> register address byte
  *
- * Once trasnaction is complete:
+ * Once transaction is complete:
  * in[0] = I2C_RW0[b7:b0]     -> copy first byte of read into destination
  * in[1] = I2C_RW0[b15:b8]    -> copy 2nd byte of read into destination
  *
@@ -325,7 +325,7 @@ static int i2cm_execute_sequence(int port, int slave_addr, const uint8_t *out,
 	int rv;
 	uint32_t inst;
 
-	/* Build sequence instruciton */
+	/* Build sequence instruction */
 	inst = i2cm_build_sequence(port, slave_addr, out, out_size, in,
 				   in_size, flags);
 	/* Start transaction */

@@ -110,7 +110,7 @@ struct usb_spi_config {
 	struct usb_spi_state *state;
 
 	/*
-	 * Interface and endpoint indicies.
+	 * Interface and endpoint indices.
 	 */
 	int interface;
 	int endpoint;
@@ -123,7 +123,7 @@ struct usb_spi_config {
 
 
 	/*
-	 * Pointer to tx and rx queus and bounce buffer.
+	 * Pointer to tx and rx queues and bounce buffer.
 	 */
 	uint8_t *buffer;
 	struct consumer const consumer;

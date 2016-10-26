@@ -813,7 +813,7 @@ static void lpc_init(void)
 #endif /* CONFIG_UART_HOST */
 
 	/*
-	 * Unmaksk LPC bus reset interrupt.  This lets us monitor the PCH
+	 * Unmask LPC bus reset interrupt.  This lets us monitor the PCH
 	 * PLTRST# signal for debugging.
 	 */
 	LM4_LPC_LPCIM |= (1 << 31);
@@ -833,7 +833,7 @@ static void lpc_init(void)
 
 	/*
 	 * Ensure the EC (slave) has control of the memory-mapped I/O space.
-	 * Once the EC has won arbtration for the memory-mapped space, it will
+	 * Once the EC has won arbitration for the memory-mapped space, it will
 	 * keep control of it until it writes the last byte in the space.
 	 * (That never happens; we can't use the last byte in the space because
 	 * ACPI can't see it anyway.)

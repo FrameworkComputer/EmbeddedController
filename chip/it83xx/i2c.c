@@ -201,7 +201,7 @@ struct i2c_port_data {
 	int err;             /* Error code, if any */
 	uint8_t addr;        /* address of device */
 	uint32_t timeout_us; /* Transaction timeout, or 0 to use default */
-	uint8_t freq;        /* Freqency setting */
+	uint8_t freq;        /* Frequency setting */
 
 	enum i2c_ch_status i2ccs;
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
@@ -887,7 +887,7 @@ static void i2c_freq_changed(void)
 			 *          (1 / (1000 x freq)) x (1 / 2)) - 2
 			 */
 			if (freq) {
-				/* Get SMBus clock devide value */
+				/* Get SMBus clock divide value */
 				clk_div = (IT83XX_ECPM_SCDCR2 & 0x0F) + 1;
 				/* Calculate PSR value */
 				psr = (PLL_CLOCK /

@@ -33,7 +33,7 @@ void IRQ_HANDLER(GC_IRQNUM_WATCHDOG0_WDOGINT)(void)
 	asm volatile("mov r0, lr\n"
 		     "mov r1, sp\n"
 		     /* Must push registers in pairs to keep 64-bit aligned
-		      * stack for ARM EABI.  This also conveninently saves
+		      * stack for ARM EABI.  This also conveniently saves
 		      * R0=LR so we can pass it to task_resched_if_needed. */
 		     "push {r0, lr}\n"
 		     /* We've lowered our runlevel, so just rebooting the ARM

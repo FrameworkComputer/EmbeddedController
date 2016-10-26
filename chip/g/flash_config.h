@@ -37,7 +37,7 @@ struct g_flash_region {
  * properly.
  *
  * The function is passed an array of the g_flash_region structures of the
- * max_regions size, it fills as many entties as necessary and returns the
+ * max_regions size, it fills as many entries as necessary and returns the
  * number of set up entries.
  */
 int flash_regions_to_enable(struct g_flash_region *regions,

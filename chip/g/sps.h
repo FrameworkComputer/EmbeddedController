@@ -41,7 +41,7 @@ int sps_transmit(uint8_t *data, size_t data_size);
 /*
  * These functions return zero on success or non-zero on failure (attempt to
  * register a callback on top of existing one, or attempt to unregister
- * non-exitisng callback.
+ * non-existing callback.
  *
  * rx_fifo_threshold value of zero means 'default'.
  */
