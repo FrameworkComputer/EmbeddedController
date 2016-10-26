@@ -657,7 +657,7 @@ int connected_communicate(void)
 {
 	int rv;
 	long sleep_time;
-	int offset;
+	int offset = 0;
 	uint64_t listen_time;
 	uint8_t comm_channel = get_next_data_channel(&remap_table);
 
@@ -758,7 +758,7 @@ static uint32_t start, end;
 
 void bluetooth_ll_task(void)
 {
-	uint64_t last_rx_time;
+	uint64_t last_rx_time = 0;
 	CPRINTS("LL task init");
 
 	while (1) {
