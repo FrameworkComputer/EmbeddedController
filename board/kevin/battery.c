@@ -18,7 +18,7 @@
 
 #ifdef BOARD_KEVIN
 static const struct battery_info info = {
-	.voltage_max		= 8700,
+	.voltage_max		= 8688, /* 8700mA, round down for chg reg */
 	.voltage_normal		= 7600,
 	.voltage_min		= 6000,
 	.precharge_current	= 200,
@@ -31,7 +31,7 @@ static const struct battery_info info = {
 };
 #elif defined(BOARD_GRU)
 static const struct battery_info info = {
-	.voltage_max		= 8700,
+	.voltage_max		= 8688, /* 8700mA, round down for chg reg */
 	.voltage_normal		= 7600,
 	.voltage_min		= 5800,
 	.precharge_current	= 256,
@@ -116,19 +116,28 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	const struct battery_info *batt_info;
+	static int prev_state = ST_IDLE;
+	const struct battery_info *batt_info = battery_get_info();
+
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
 
-	batt_info = battery_get_info();
-	/* Don't charge if outside of allowable temperature range */
-	if (bat_temp_c >= batt_info->charging_max_c * 10 ||
-	    bat_temp_c < batt_info->charging_min_c * 10) {
-		curr->requested_current = 0;
-		curr->requested_voltage = 0;
-		curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
-		curr->state = ST_IDLE;
+	if (curr->state == ST_CHARGE) {
+		/* Don't charge if outside of allowable temperature range */
+		if (bat_temp_c >= batt_info->charging_max_c * 10 ||
+		    bat_temp_c < batt_info->charging_min_c * 10 ||
+		    /* Don't start charging if battery is nearly full */
+		    (prev_state != ST_CHARGE &&
+		     curr->batt.state_of_charge > 95) ||
+		    /* Don't charge if battery voltage is approaching max */
+		    curr->batt.voltage > batt_info->voltage_max - 10) {
+			curr->requested_current = curr->requested_voltage = 0;
+			curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
+			curr->state = ST_IDLE;
+		}
 	}
+
+	prev_state = curr->state;
 	return 0;
 }
 
