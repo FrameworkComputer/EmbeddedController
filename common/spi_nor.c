@@ -434,8 +434,8 @@ int spi_nor_init(void)
 		 * table, use the default capacity, page size, and addressing
 		 * mode values. */
 		if (rv == EC_SUCCESS) {
-			size_t page_size;
-			uint32_t capacity;
+			size_t page_size = 0;
+			uint32_t capacity = 0;
 
 			rv |= spi_nor_device_discover_sfdp_page_size(
 				spi_nor_device,
@@ -769,7 +769,7 @@ static int command_spi_nor_info(int argc, char **argv)
 	uint8_t sfdp_major_rev, sfdp_minor_rev;
 	uint8_t table_major_rev, table_minor_rev;
 	uint32_t table_offset;
-	uint8_t mfn_bank, mfn_id;
+	uint8_t mfn_bank = 0, mfn_id = 0;
 	size_t table_size;
 	const struct spi_nor_device_t *spi_nor_device = 0;
 	int spi_nor_device_index = 0;
