@@ -104,6 +104,9 @@ buildall:
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
 
+showboards:
+	@echo $(sort $(boards))
+
 # Print any important notices at the end of the build.
 .PHONY: notice
 notice: $(config)
