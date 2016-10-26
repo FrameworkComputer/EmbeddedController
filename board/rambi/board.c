@@ -103,3 +103,8 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+int board_allow_i2c_passthru(int port)
+{
+	return 0;
+}

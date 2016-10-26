@@ -542,11 +542,6 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	uint8_t batt_param = 0;
 #endif
 
-#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-#endif
-
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
@@ -624,9 +619,17 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 			    "write_len=%x, data=%p, read_len=%x, flags=%x",
 			    params->port, addr, out, write_len,
 			    &resp->data[in_len], read_len, xferflags);
-		if (rv)
+		if (rv) {
+#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
+			if (system_is_locked() &&
+			    !board_allow_i2c_passthru(params->port)) {
+				i2c_lock(params->port, 0);
+				return EC_RES_ACCESS_DENIED;
+			}
+#endif
 			rv = i2c_xfer(params->port, addr, out, write_len,
 				      &resp->data[in_len], read_len, xferflags);
+		}
 
 		if (rv) {
 			/* Driver will have sent a stop bit here */

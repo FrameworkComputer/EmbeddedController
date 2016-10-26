@@ -324,4 +324,13 @@ int i2c_set_response(int port, uint8_t *buf, int len);
  */
 void i2cm_init(void);
 
+/**
+ * Board-level function to determine whether i2c passthru should be allowed
+ * on a given port.
+ *
+ * @parm port I2C port
+ *
+ * @return true, if passthru should be allowed on the port.
+ */
+int board_allow_i2c_passthru(int port);
 #endif  /* __CROS_EC_I2C_H */

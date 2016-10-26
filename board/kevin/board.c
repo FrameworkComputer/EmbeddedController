@@ -752,3 +752,8 @@ static void pwm_displight_preserve_state(void)
 			    sizeof(pwm_displight_duty), &pwm_displight_duty);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, pwm_displight_preserve_state, HOOK_PRIO_DEFAULT);
+
+int board_allow_i2c_passthru(int port)
+{
+	return (port == I2C_PORT_VIRTUAL_BATTERY);
+}
