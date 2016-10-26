@@ -32,15 +32,16 @@ static int check_encrypt_params(TPM_ALG_ID padding_alg, TPM_ALG_ID hash_alg,
 				enum padding_mode *padding,
 				enum hashing_mode *hashing)
 {
+	/* Initialize hashing for all padding types */
+	*hashing = HASH_SHA1;
+
 	if (padding_alg == TPM_ALG_RSAES) {
 		*padding = PADDING_MODE_PKCS1;
 	} else if (padding_alg == TPM_ALG_OAEP) {
 		/* Only SHA1 and SHA256 supported with OAEP. */
-		if (hash_alg == TPM_ALG_SHA1)
-			*hashing = HASH_SHA1;
-		else if (hash_alg == TPM_ALG_SHA256)
+		if (hash_alg == TPM_ALG_SHA256)
 			*hashing = HASH_SHA256;
-		else
+		else if (hash_alg != TPM_ALG_SHA1)
 			/* Unsupported hash algorithm. */
 			return 0;
 		*padding = PADDING_MODE_OAEP;
