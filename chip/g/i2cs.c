@@ -144,7 +144,7 @@ static void _i2cs_write_complete_int(void)
 	if (write_complete_handler_) {
 		uint16_t bytes_written;
 		uint16_t bytes_processed;
-		uint32_t word_in_value;
+		uint32_t word_in_value = 0;
 
 		/* How many bytes has the master just written. */
 		bytes_written = ((uint16_t)GREAD(I2CS, WRITE_PTR) -
