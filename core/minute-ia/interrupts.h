@@ -48,8 +48,8 @@ typedef struct {
 /* APIC bit definitions. */
 #define APIC_DIV_16			0x03
 #define APIC_ENABLE_BIT			(1UL << 8UL)
-#define APIC_SPURIOUS_INT		REG32(LAPIC_BASE + 0xF0UL )
-#define APIC_LVT_ERROR			REG32(LAPIC_BASE + 0x370UL)
+#define APIC_SPURIOUS_INT		REG32(ISH_LAPIC_BASE + 0xF0UL )
+#define APIC_LVT_ERROR			REG32(ISH_LAPIC_BASE + 0x370UL)
 
 #ifndef __ASSEMBLER__
 /* Interrupt descriptor entry */
