@@ -228,6 +228,9 @@ void fw_upgrade_command_handler(void *body,
 	DCRYPTO_SHA1_hash((uint8_t *)&cmd_body->block_base,
 			  body_size + sizeof(cmd_body->block_base),
 			  sha1_digest);
+
+	block_offset = be32toh(cmd_body->block_base);
+
 	if (memcmp(sha1_digest, &cmd_body->block_digest,
 		   sizeof(cmd_body->block_digest))) {
 		*error_code = UPGRADE_DATA_ERROR;
@@ -239,7 +242,6 @@ void fw_upgrade_command_handler(void *body,
 	}
 
 	/* Check if the block will fit into the valid area. */
-	block_offset = be32toh(cmd_body->block_base);
 	*error_code = check_update_chunk(block_offset, body_size);
 	if (*error_code)
 		return;
