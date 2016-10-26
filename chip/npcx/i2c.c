@@ -367,7 +367,7 @@ void i2c_done(int controller)
 	CPUTS("-END");
 }
 
-inline void i2c_handle_sda_irq(int controller)
+static void i2c_handle_sda_irq(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 	/* 1 Issue Start is successful ie. write address byte */
