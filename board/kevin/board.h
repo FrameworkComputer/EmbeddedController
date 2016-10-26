@@ -163,6 +163,14 @@
 #undef  CONFIG_PECI
 #undef  CONFIG_PSTORE
 
+/* Reduce code size */
+#ifdef BOARD_GRU
+#define CONFIG_COMMON_GPIO_SHORTNAMES
+#define GPIO_NAME_BY_PIN(port, index) #port#index
+#endif
+
+#define CONFIG_HOSTCMD_ALIGNED
+
 /* Modules we want to exclude */
 #undef CONFIG_CMD_ACCEL_INFO
 #undef CONFIG_CMD_FLASH
