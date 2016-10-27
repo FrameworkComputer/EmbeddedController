@@ -12,8 +12,21 @@
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
+#include "host_command.h"
+#include "system.h"
 #include "i2c.h"
 #include "util.h"
+
+/* FET ON/OFF cammand write to fet off register */
+#define SB_FET_OFF      0x34
+#define SB_FETOFF_DATA1 0x0000
+#define SB_FETOFF_DATA2 0x1000
+#define SB_FETON_DATA1  0x2000
+#define SB_FETON_DATA2  0x4000
+#define BATTERY_FETOFF  0x0100
+
+#define GREEN_BOOK_SUPPORT      (1 << 2)
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define PARAM_CUT_OFF_LOW  0x10
@@ -47,24 +60,42 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
-int board_cut_off_battery(void)
+static void wakeup(void)
+{
+	int d;
+	int mode;
+
+	/* Add Green Book support */
+	if (sb_read(SB_BATTERY_MODE, &mode) == EC_RES_SUCCESS) {
+		mode |= GREEN_BOOK_SUPPORT;
+		sb_write(SB_BATTERY_MODE, mode);
+	}
+
+	if (sb_read(SB_FET_OFF, &d) == EC_RES_SUCCESS) {
+		if (extpower_is_present() && (d == BATTERY_FETOFF)) {
+			sb_write(SB_FET_OFF, SB_FETON_DATA1);
+			sb_write(SB_FET_OFF, SB_FETON_DATA2);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_INIT, wakeup, HOOK_PRIO_DEFAULT);
+
+static int cutoff(void)
 {
 	int rv;
-	uint8_t buf[3];
 
 	/* Ship mode command must be sent twice to take effect */
-	buf[0] = SB_MANUFACTURER_ACCESS & 0xff;
-	buf[1] = PARAM_CUT_OFF_LOW;
-	buf[2] = PARAM_CUT_OFF_HIGH;
+	rv = sb_write(SB_FET_OFF, SB_FETOFF_DATA1);
 
-	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
-		      I2C_XFER_SINGLE);
-	rv |= i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR, buf, 3, NULL, 0,
-		       I2C_XFER_SINGLE);
-	i2c_lock(I2C_PORT_BATTERY, 0);
+	if (rv != EC_SUCCESS)
+		return rv;
 
-	return rv;
+	return sb_write(SB_FET_OFF, SB_FETOFF_DATA2);
+}
+
+int board_cut_off_battery(void)
+{
+	return cutoff();
 }
 
 enum battery_disconnect_state battery_get_disconnect_state(void)
