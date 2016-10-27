@@ -1038,7 +1038,7 @@ int main(int argc, char *argv[])
 	uint16_t vid = VID, pid = PID;
 	int i;
 	size_t j;
-	int transferred_sections;
+	int transferred_sections = 0;
 	int binary_vers = 0;
 	int show_fw_ver = 0;
 
