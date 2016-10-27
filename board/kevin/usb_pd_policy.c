@@ -55,8 +55,7 @@ void pd_transition_voltage(int idx)
 int pd_set_power_supply_ready(int port)
 {
 	/* Ensure we're not charging from this port */
-	if (charge_manager_get_active_charge_port() == port)
-		bd9995x_select_input_port(BD9995X_CHARGE_PORT_NONE);
+	bd9995x_select_input_port(bd9995x_pd_port_to_chg_port(port), 0);
 
 	/* Ensure we advertise the proper available current quota */
 	charge_manager_source_port(port, 1);

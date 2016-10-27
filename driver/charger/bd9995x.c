@@ -798,7 +798,7 @@ int bd9995x_is_vbus_provided(int port)
 	return !!reg;
 }
 
-int bd9995x_select_input_port(enum bd9995x_charge_port port)
+int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
 {
 	int rv;
 	int reg;
@@ -808,22 +808,31 @@ int bd9995x_select_input_port(enum bd9995x_charge_port port)
 	if (rv)
 		return rv;
 
-	if (port == BD9995X_CHARGE_PORT_NONE) {
-		reg &= ~(BD9995X_CMD_VIN_CTRL_SET_VBUS_EN |
-			 BD9995X_CMD_VIN_CTRL_SET_VCC_EN);
-	} else if (port == BD9995X_CHARGE_PORT_VBUS) {
-		reg |= BD9995X_CMD_VIN_CTRL_SET_VBUS_EN;
-		reg &= ~BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
-	} else if (port == BD9995X_CHARGE_PORT_VCC) {
-		reg |= BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
-		reg &= ~BD9995X_CMD_VIN_CTRL_SET_VBUS_EN;
-	} else if (port == BD9995X_CHARGE_PORT_BOTH) {
-		/* Enable both the ports for PG3 */
-		reg |= BD9995X_CMD_VIN_CTRL_SET_VBUS_EN |
-			BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
+	if (select) {
+		if (port == BD9995X_CHARGE_PORT_VBUS) {
+			reg |= BD9995X_CMD_VIN_CTRL_SET_VBUS_EN;
+			reg &= ~BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
+		} else if (port == BD9995X_CHARGE_PORT_VCC) {
+			reg |= BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
+			reg &= ~BD9995X_CMD_VIN_CTRL_SET_VBUS_EN;
+		} else if (port == BD9995X_CHARGE_PORT_BOTH) {
+			/* Enable both the ports for PG3 */
+			reg |= BD9995X_CMD_VIN_CTRL_SET_VBUS_EN |
+				BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
+		} else {
+			/* Invalid charge port */
+			panic("Invalid charge port");
+		}
 	} else {
-		/* Invalid charge port */
-		panic("Invalid charge port");
+		if (port == BD9995X_CHARGE_PORT_VBUS)
+			reg &= ~BD9995X_CMD_VIN_CTRL_SET_VBUS_EN;
+		else if (port == BD9995X_CHARGE_PORT_VCC)
+			reg &= ~BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
+		if (port == BD9995X_CHARGE_PORT_BOTH)
+			reg &= ~(BD9995X_CMD_VIN_CTRL_SET_VBUS_EN |
+				 BD9995X_CMD_VIN_CTRL_SET_VCC_EN);
+		else
+			panic("Invalid charge port");
 	}
 
 	return ch_raw_write16(BD9995X_CMD_VIN_CTRL_SET, reg,

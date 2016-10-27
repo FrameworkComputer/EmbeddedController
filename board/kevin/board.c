@@ -199,6 +199,7 @@ uint16_t tcpc_get_alert_status(void)
 int board_set_active_charge_port(int charge_port)
 {
 	enum bd9995x_charge_port bd9995x_port;
+	int bd9995x_port_select = 1;
 	static int initialized;
 
 	/*
@@ -213,8 +214,6 @@ int board_set_active_charge_port(int charge_port)
 		return -1;
 	}
 
-	CPRINTS("New chg p%d", charge_port);
-
 	switch (charge_port) {
 	case 0: case 1:
 		/* Don't charge from a source port */
@@ -225,15 +224,18 @@ int board_set_active_charge_port(int charge_port)
 		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
 		break;
 	case CHARGE_PORT_NONE:
-		bd9995x_port = BD9995X_CHARGE_PORT_NONE;
+		bd9995x_port_select = 0;
+		bd9995x_port = BD9995X_CHARGE_PORT_BOTH;
 		break;
 	default:
 		panic("Invalid charge port\n");
 		break;
 	}
 
+	CPRINTS("New chg p%d", charge_port);
 	initialized = 1;
-	return bd9995x_select_input_port(bd9995x_port);
+
+	return bd9995x_select_input_port(bd9995x_port, bd9995x_port_select);
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
