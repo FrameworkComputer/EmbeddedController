@@ -630,7 +630,6 @@ int charger_set_voltage(int voltage)
 static void bd99995_init(void)
 {
 	int reg;
-	int power_save_mode = BD9995X_PWR_SAVE_OFF;
 	const struct battery_info *bi = battery_get_info();
 
 	/* Enable BC1.2 detection on VCC */
@@ -708,10 +707,10 @@ static void bd99995_init(void)
 
 	/* Power save mode when VBUS/VCC is removed. */
 #ifdef CONFIG_BD9995X_POWER_SAVE_MODE
-	power_save_mode = CONFIG_BD9995X_POWER_SAVE_MODE;
+	bd9995x_set_power_save_mode(CONFIG_BD9995X_POWER_SAVE_MODE);
+#else
+	bd9995x_set_power_save_mode(BD9995X_PWR_SAVE_OFF);
 #endif
-	ch_raw_write16(BD9995X_CMD_SMBREG, power_save_mode,
-		       BD9995X_EXTENDED_COMMAND);
 
 #ifdef CONFIG_USB_PD_DISCHARGE
 	/* Set VBUS / VCC detection threshold for discharge enable */
@@ -855,6 +854,11 @@ int bd9995x_get_battery_temp(int *temp_ptr)
 }
 #endif
 
+void bd9995x_set_power_save_mode(int mode)
+{
+	ch_raw_write16(BD9995X_CMD_SMBREG, mode, BD9995X_EXTENDED_COMMAND);
+}
+
 #ifdef HAS_TASK_USB_CHG
 int bd9995x_get_bc12_ilim(int charge_supplier)
 {
@@ -913,23 +917,21 @@ int bd9995x_bc12_enable_charging(enum bd9995x_charge_port port, int enable)
 
 void usb_charger_set_switches(int port, enum usb_switch setting)
 {
-	int power_save_mode = BD9995X_PWR_SAVE_OFF;
-
 	/* If switch is not changing then return */
 	if (setting == usb_switch_state[port])
 		return;
 
 	if (setting != USB_SWITCH_RESTORE)
 		usb_switch_state[port] = setting;
+
 	/* ensure we disable power saving when we are using DP/DN */
 #ifdef CONFIG_BD9995X_POWER_SAVE_MODE
-	power_save_mode = (usb_switch_state[0] == USB_SWITCH_DISCONNECT &&
-			   usb_switch_state[1] == USB_SWITCH_DISCONNECT)
-			   ? CONFIG_BD9995X_POWER_SAVE_MODE
-			   : BD9995X_PWR_SAVE_OFF;
+	bd9995x_set_power_save_mode(
+		(usb_switch_state[0] == USB_SWITCH_DISCONNECT &&
+		usb_switch_state[1] == USB_SWITCH_DISCONNECT)
+		? CONFIG_BD9995X_POWER_SAVE_MODE : BD9995X_PWR_SAVE_OFF);
 #endif
-	ch_raw_write16(BD9995X_CMD_SMBREG, power_save_mode,
-		       BD9995X_EXTENDED_COMMAND);
+
 	bd9995x_enable_usb_switch(port, usb_switch_state[port]);
 }
 

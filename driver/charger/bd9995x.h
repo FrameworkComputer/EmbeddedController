@@ -357,6 +357,8 @@ int bd9995x_bc12_enable_charging(enum bd9995x_charge_port port, int enable);
 void bd9995x_vbus_interrupt(enum gpio_signal signal);
 /* Read temperature measurement value (in Celsius) */
 int bd9995x_get_battery_temp(int *temp_ptr);
+/* Set power save mode */
+void bd9995x_set_power_save_mode(int mode);
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_CHARGER
 extern struct i2c_stress_test_dev bd9995x_i2c_stress_test_dev;
