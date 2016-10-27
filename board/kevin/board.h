@@ -130,10 +130,6 @@
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
-/*
- * TODO(crosbug.com/p/59074): determine the following board specific type-C
- * power constants
- */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */

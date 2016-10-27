@@ -25,7 +25,6 @@
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			 PDO_FIXED_COMM_CAP)
 
-/* TODO(crosbug.com/p/59075): fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
