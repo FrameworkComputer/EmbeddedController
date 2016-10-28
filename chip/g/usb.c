@@ -1087,7 +1087,7 @@ static void usb_init_endpoints(void)
 
 static void usb_reset(void)
 {
-	CPRINTS("%s", __func__);
+	CPRINTS("%s, status %x", __func__, GR_USB_GINTSTS);
 	print_later("usb_reset()", 0, 0, 0, 0, 0);
 
 	/* Clear our internal state */
@@ -1099,14 +1099,6 @@ static void usb_reset(void)
 
 	/* Reinitialize all the endpoints */
 	usb_init_endpoints();
-}
-
-static void usb_resetdet(void)
-{
-	/* TODO: Same as normal reset, right? I think we only get this if we're
-	 * suspended (sleeping) and the host resets us. Try it and see. */
-	print_later("usb_resetdet()", 0, 0, 0, 0, 0);
-	usb_reset();
 }
 
 void usb_interrupt(void)
@@ -1139,10 +1131,7 @@ void usb_interrupt(void)
 		print_later("usb_enumdone()", 0, 0, 0, 0, 0);
 #endif
 
-	if (status & GINTSTS(RESETDET))
-		usb_resetdet();
-
-	if (status & GINTSTS(USBRST))
+	if (status & (GINTSTS(RESETDET) | GINTSTS(USBRST)))
 		usb_reset();
 
 	/* Initialize the SOF clock calibrator only on the first SOF */
