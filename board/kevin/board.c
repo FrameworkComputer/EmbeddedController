@@ -467,9 +467,7 @@ static struct mutex g_lid_mutex;
 
 #ifdef BOARD_KEVIN
 /* BMA255 private data */
-struct bma2x2_accel_data g_bma255_data = {
-	.variant = BMA255,
-};
+struct bma2x2_accel_data g_bma255_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t base_standard_ref = {

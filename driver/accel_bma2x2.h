@@ -14,8 +14,6 @@ enum bma2x2_accel {
 };
 
 struct bma2x2_accel_data {
-	/* Variant of Bosch Accelerometer. */
-	uint8_t variant;
 	/* Note, the following are indicies into their respective tables. */
 	/* Current range of accelerometer. */
 	int sensor_range;
@@ -23,8 +21,6 @@ struct bma2x2_accel_data {
 	int sensor_datarate;
 	/* Current resolution of accelerometer. */
 	int sensor_resolution;
-	/* Device address. */
-	int accel_addr;
 	int16_t offset[3];
 };
 

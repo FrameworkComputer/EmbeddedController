@@ -29,8 +29,6 @@ struct kionix_accel_data {
 	int sensor_datarate;
 	/* Current resolution of accelerometer. */
 	int sensor_resolution;
-	/* Device address. */
-	int accel_addr;
 	int16_t offset[3];
 };
 
