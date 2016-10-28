@@ -612,6 +612,10 @@ static int anx74xx_alert_status(int port, int *alert)
 	/* Clears interrupt bits */
 	rv |= tcpc_write(port, ANX74XX_REG_IRQ_EXT_SOURCE_1, reg);
 
+	/* Check for Hard Reset done bit */
+	if (reg & ANX74XX_REG_ALERT_TX_HARD_RESETOK)
+		*alert |= ANX74XX_REG_ALERT_TX_HARD_RESETOK;
+
 	/* Read TCPC Alert register2 */
 	rv |= tcpc_read(port, ANX74XX_REG_IRQ_EXT_SOURCE_2, &reg);
 
