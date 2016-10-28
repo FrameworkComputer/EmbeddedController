@@ -130,8 +130,8 @@ GPIO(USB_C1_PD_RST_ODL,		PIN(7, 4), GPIO_ODR_LOW)
  * Configure as input to enable @ 1.5A, output-low to turn off, or output-high
  * to enable @ 3A.
  */
-GPIO(USB_C0_5V_EN,		PIN(D, 3), GPIO_OUT_LOW)		/* EN_USB_C0_5V_OUT, Enable C0 */
-GPIO(USB_C1_5V_EN,		PIN(D, 2), GPIO_OUT_LOW)		/* EN_USB_C1_5V_OUT, Enable C1 */
+GPIO(USB_C0_5V_EN,		PIN(D, 3), GPIO_OUT_LOW | GPIO_PULL_UP)	/* EN_USB_C0_5V_OUT, Enable C0 */
+GPIO(USB_C1_5V_EN,		PIN(D, 2), GPIO_OUT_LOW | GPIO_PULL_UP)	/* EN_USB_C1_5V_OUT, Enable C1 */
 
 /* Clear for non-HDI breakout, must be pulled high */
 GPIO(NC1,			PIN(0, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_SEL_1P8V)

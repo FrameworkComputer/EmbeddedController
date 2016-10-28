@@ -547,8 +547,7 @@ int board_set_active_charge_port(int charge_port)
 	case 0:
 	case 1:
 		/* Don't charge from a source port */
-		if (gpio_get_level(charge_port == 0 ?
-				   GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN))
+		if (board_vbus_source_enabled(charge_port))
 			return -1;
 
 		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
