@@ -130,6 +130,7 @@ const void *const usb_strings[] = {
 	[USB_STR_PRODUCT]      = USB_STRING_DESC("Servo Micro"),
 	[USB_STR_SERIALNO]     = 0,
 	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
 	[USB_STR_USART4_STREAM_NAME]  = USB_STRING_DESC("Servo UART3"),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Servo EC Shell"),
 	[USB_STR_USART3_STREAM_NAME]  = USB_STRING_DESC("Servo UART2"),
@@ -198,7 +199,8 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-USB_I2C_CONFIG(usb_i2c, USB_IFACE_I2C, USB_EP_I2C);
+int usb_i2c_board_enable(void) {return EC_SUCCESS; }
+void usb_i2c_board_disable(int debounce) {}
 
 
 /******************************************************************************

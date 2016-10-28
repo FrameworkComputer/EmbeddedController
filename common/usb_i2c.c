@@ -58,7 +58,8 @@ void usb_i2c_deferred(struct usb_i2c_config const *config)
 	 */
 	uint8_t count      = usb_i2c_read_packet(config);
 	int portindex       = (config->buffer[0] >> 0) & 0xff;
-	uint8_t slave_addr  = (config->buffer[0] >> 8) & 0xff;
+	/* Convert 7-bit slave address to chromium EC 8-bit address. */
+	uint8_t slave_addr  = (config->buffer[0] >> 7) & 0xfe;
 	int write_count     = (config->buffer[1] >> 0) & 0xff;
 	int read_count      = (config->buffer[1] >> 8) & 0xff;
 	int port;

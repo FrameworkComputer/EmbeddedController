@@ -70,5 +70,4 @@ chip-$(CONFIG_USB_GPIO)+=usb_gpio.o
 chip-$(CONFIG_USB_HID)+=usb_hid.o
 chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
 chip-$(CONFIG_USB_SPI)+=usb_spi.o
-chip-$(CONFIG_USB_I2C)+=usb_i2c.o
 endif

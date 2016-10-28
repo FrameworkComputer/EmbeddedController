@@ -8,6 +8,7 @@
 #include "registers.h"
 #include "task.h"
 #include "usb_descriptor.h"
+#include "util.h"
 
 #ifndef __CROS_USB_I2C_H
 #define __CROS_USB_I2C_H
