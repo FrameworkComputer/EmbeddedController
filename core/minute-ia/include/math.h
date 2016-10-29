@@ -13,10 +13,11 @@ static inline float sqrtf(float v)
 {
 	float root;
 
+	/* root = fsqart (v); */
 	asm volatile(
-		"fsqrt %0, %1"
-		: "=w" (root)
-		: "w" (v)
+		"fsqrt"
+		: "=t" (root)
+		: "0" (v)
 	);
 	return root;
 }
@@ -25,10 +26,11 @@ static inline float fabsf(float v)
 {
 	float root;
 
+	/* root = fabs (v); */
 	asm volatile(
-		"fabs %0, %1"
-		: "=w" (root)
-		: "w" (v)
+		"fabs"
+		: "=t" (root)
+		: "0" (v)
 	);
 	return root;
 }
