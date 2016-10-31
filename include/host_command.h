@@ -197,13 +197,18 @@ void host_packet_receive(struct host_packet *pkt);
 
 /* Register a host command handler */
 #ifdef HAS_TASK_HOSTCMD
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	const struct host_command __keep __host_cmd_##command		\
-	__attribute__((section(".rodata.hcmds")))			\
+#define EXPAND(cmd) __host_cmd_(cmd)
+#define __host_cmd_(cmd) __host_cmd_##cmd
+#define EXPANDSTR(cmd) __host_cmd_str(cmd)
+#define __host_cmd_str(cmd) #cmd
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)	\
+	const struct host_command __keep EXPAND(command)	\
+	__attribute__((section(".rodata.hcmds.__host_cmd_"	\
+		EXPANDSTR(command))))	\
 	     = {routine, command, version_mask}
 #else
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	int (routine)(struct host_cmd_handler_args *args)		\
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)	\
+	int (routine)(struct host_cmd_handler_args *args)	\
 	__attribute__((unused))
 #endif
 
