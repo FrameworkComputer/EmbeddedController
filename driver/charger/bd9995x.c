@@ -827,7 +827,7 @@ int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
 			reg &= ~BD9995X_CMD_VIN_CTRL_SET_VBUS_EN;
 		else if (port == BD9995X_CHARGE_PORT_VCC)
 			reg &= ~BD9995X_CMD_VIN_CTRL_SET_VCC_EN;
-		if (port == BD9995X_CHARGE_PORT_BOTH)
+		else if (port == BD9995X_CHARGE_PORT_BOTH)
 			reg &= ~(BD9995X_CMD_VIN_CTRL_SET_VBUS_EN |
 				 BD9995X_CMD_VIN_CTRL_SET_VCC_EN);
 		else
