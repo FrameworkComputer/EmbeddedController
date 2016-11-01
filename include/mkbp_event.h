@@ -15,8 +15,9 @@
  * when the AP queries the event, an error is returned and the event is lost.
  *
  * @param event_type  One of EC_MKBP_EVENT_*.
+ * @return   True if event succeeded to generate host interrupt.
  */
-void mkbp_send_event(uint8_t event_type);
+int mkbp_send_event(uint8_t event_type);
 
 /*
  * The struct to store the event source definition.  The get_data routine is

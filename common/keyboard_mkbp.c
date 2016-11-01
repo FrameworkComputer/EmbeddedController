@@ -161,7 +161,6 @@ test_mockable int keyboard_fifo_add(const uint8_t *buffp)
 
 test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 {
-	int ret = EC_SUCCESS;
 	uint8_t size;
 
 	/*
@@ -175,8 +174,8 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	if (fifo_entries >= config.fifo_max_depth) {
 		CPRINTS("MKBP common FIFO depth %d reached",
 			config.fifo_max_depth);
-		ret = EC_ERROR_OVERFLOW;
-		goto fifo_push_done;
+
+		return EC_ERROR_OVERFLOW;
 	}
 
 	size = get_data_size(event_type);
@@ -185,14 +184,17 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	memcpy(&fifo[fifo_end].data, buffp, size);
 	fifo_end = (fifo_end + 1) % FIFO_DEPTH;
 	atomic_add(&fifo_entries, 1);
+
+	/*
+	 * If our event didn't generate an interrupt then the host is still
+	 * asleep. In this case, we don't want to queue our event, except if
+	 * another event just woke the host (and wake is already in progress).
+	 */
+	if (!mkbp_send_event(event_type) && fifo_entries == 1)
+		mkbp_clear_fifo();
+
 	mutex_unlock(&fifo_mutex);
-
-fifo_push_done:
-
-	if (ret == EC_SUCCESS)
-		mkbp_send_event(event_type);
-
-	return ret;
+	return EC_SUCCESS;
 }
 
 void mkbp_update_switches(uint32_t sw, int state)

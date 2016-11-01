@@ -60,26 +60,22 @@ static inline int host_is_sleeping(void)
 	return is_sleeping;
 }
 
-void mkbp_send_event(uint8_t event_type)
+int mkbp_send_event(uint8_t event_type)
 {
 	set_event(event_type);
 
 #ifdef CONFIG_MKBP_WAKEUP_MASK
 	/* Only assert interrupt for wake events if host is sleeping */
 	if (host_is_sleeping()) {
-		/*
-		 * interrupt the AP if it is a wakeup event
-		 * which is defined in the white list.
-		 */
-		if ((host_get_events() & CONFIG_MKBP_WAKEUP_MASK) ||
-		    (event_type == EC_MKBP_EVENT_KEY_MATRIX))
-			set_host_interrupt(1);
-
-		return;
+		/* Skip host wake if this isn't a wake event */
+		if (!(host_get_events() & CONFIG_MKBP_WAKEUP_MASK) &&
+		      event_type != EC_MKBP_EVENT_KEY_MATRIX)
+			return 0;
 	}
 #endif
 
 	set_host_interrupt(1);
+	return 1;
 }
 
 static int mkbp_get_next_event(struct host_cmd_handler_args *args)
