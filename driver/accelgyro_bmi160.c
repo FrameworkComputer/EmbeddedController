@@ -616,9 +616,14 @@ int perform_calib(const struct motion_sensor_t *s)
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		/* We assume the device is laying flat for calibration */
+		if (s->rot_standard_ref == NULL ||
+		    (*s->rot_standard_ref)[2][2] > INT_TO_FP(0))
+			val = BMI160_FOC_ACC_PLUS_1G;
+		else
+			val = BMI160_FOC_ACC_MINUS_1G;
 		val = (BMI160_FOC_ACC_0G << BMI160_FOC_ACC_X_OFFSET) |
 			(BMI160_FOC_ACC_0G << BMI160_FOC_ACC_Y_OFFSET) |
-			(BMI160_FOC_ACC_PLUS_1G << BMI160_FOC_ACC_Z_OFFSET);
+			(val << BMI160_FOC_ACC_Z_OFFSET);
 		en_flag = BMI160_OFFSET_ACC_EN;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
