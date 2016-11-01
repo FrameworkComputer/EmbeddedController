@@ -272,8 +272,11 @@ static uint32_t i2cm_build_sequence(int port, int slave_addr,
 	if (flags & I2C_XFER_START)
 		inst |= INST_START;
 
-	/* Setup slave device address */
-	inst |= INST_DEVADDRVAL(slave_addr);
+	/*
+	 *  Setup slave device address. Calls to chip_i2c_xfer assume an 8 bit
+	 *  slave address. Need to shift right by 1 bit.
+	 */
+	inst |= INST_DEVADDRVAL(slave_addr >> 1);
 
 	if (out_size) {
 		/* Send slave addr byte if this is start of I2C transaction */
