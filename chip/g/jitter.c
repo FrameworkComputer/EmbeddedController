@@ -35,7 +35,8 @@ void init_jittery_clock(int highsec)
 		/* saturate at 0xff */
 		bankval = (setting > 0xfff) ? 0xff : (setting >> 4);
 
-		GR_XO_JTR_JITTERY_TRIM_BANK(bank) = bankval;
+		if (runlevel_is_high())
+			GR_XO_JTR_JITTERY_TRIM_BANK(bank) = bankval;
 
 		setting += stepx16;
 		if ((setting > skiplow) && (setting < skiphigh))

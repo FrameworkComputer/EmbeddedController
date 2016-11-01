@@ -47,6 +47,7 @@ chip-$(CONFIG_SPI_MASTER)+=spi_master.o
 chip-y+= jitter.o
 chip-y+= pmu.o
 chip-y+= trng.o
+chip-y+= runlevel.o
 chip-$(CONFIG_USB_FW_UPDATE)+= usb_upgrade.o
 chip-$(CONFIG_NON_HC_FW_UPDATE)+= upgrade_fw.o
 chip-$(CONFIG_SPS)+= sps.o

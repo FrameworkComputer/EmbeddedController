@@ -228,47 +228,6 @@ static void init_interrupts(void)
 			gpio_enable_interrupt(i);
 }
 
-enum permission_level {
-	PERMISSION_LOW = 0x00,
-	PERMISSION_MEDIUM = 0x33,    /* APPS run at medium */
-	PERMISSION_HIGH = 0x3C,
-	PERMISSION_HIGHEST = 0x55
-};
-
-/* Drop run level to at least medium. */
-static void init_runlevel(const enum permission_level desired_level)
-{
-	volatile uint32_t *const reg_addrs[] = {
-		/* CPU's use of the system peripheral bus */
-		GREG32_ADDR(GLOBALSEC, CPU0_S_PERMISSION),
-		/* CPU's use of the system bus via the debug access port */
-		GREG32_ADDR(GLOBALSEC, CPU0_S_DAP_PERMISSION),
-		/* DMA's use of the system peripheral bus */
-		GREG32_ADDR(GLOBALSEC, DDMA0_PERMISSION),
-		/* Current software level affects which (if any) scratch
-		 * registers can be used for a warm boot hardware-verified
-		 * jump. */
-		GREG32_ADDR(GLOBALSEC, SOFTWARE_LVL),
-	};
-	int i;
-
-	/* Permission registers drop by 1 level (e.g. HIGHEST -> HIGH)
-	 * each time a write is encountered (the value written does
-	 * not matter).  So we repeat writes and reads, until the
-	 * desired level is reached.
-	 */
-	for (i = 0; i < ARRAY_SIZE(reg_addrs); i++) {
-		uint32_t current_level;
-
-		while (1) {
-			current_level = *reg_addrs[i];
-			if (current_level <= desired_level)
-				break;
-			*reg_addrs[i] = desired_level;
-		}
-	}
-}
-
 static void configure_board_specific_gpios(void)
 {
 	/* Add a pullup to sys_rst_l */

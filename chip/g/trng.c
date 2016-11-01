@@ -3,10 +3,22 @@
  * found in the LICENSE file.
  */
 
+#include "init_chip.h"
 #include "registers.h"
 
 void init_trng(void)
 {
+#if (!(defined(CONFIG_CUSTOMIZED_RO) && defined(SECTION_IS_RO)))
+	/*
+	 * Most of the trng initialization requires high permissions. If RO has
+	 * dropped the permission level, dont try to read or write these high
+	 * permission registers because it will cause rolling reboots. RO
+	 * should do the TRNG initialization before dropping the level.
+	 */
+	if (!runlevel_is_high())
+		return;
+#endif
+
 	GWRITE(TRNG, POST_PROCESSING_CTRL,
 		GC_TRNG_POST_PROCESSING_CTRL_SHUFFLE_BITS_MASK |
 		GC_TRNG_POST_PROCESSING_CTRL_CHURN_MODE_MASK);

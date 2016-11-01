@@ -6,6 +6,7 @@
 #include "common.h"
 #include "hooks.h"
 #include "hwtimer.h"
+#include "init_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -112,12 +113,14 @@ DECLARE_IRQ(GC_IRQNUM_TIMELS0_TIMINT0, __hw_clock_source_irq, 1);
 int __hw_clock_source_init(uint32_t start_t)
 {
 
-	/* Verify the contents of CC_TRIM are valid */
-	ASSERT(GR_FUSE(RC_RTC_OSC256K_CC_EN) == 0x5);
+	if (runlevel_is_high()) {
+		/* Verify the contents of CC_TRIM are valid */
+		ASSERT(GR_FUSE(RC_RTC_OSC256K_CC_EN) == 0x5);
 
-	/* Initialize RTC to 256kHz */
-	GWRITE_FIELD(RTC, CTRL, X_RTC_RC_CTRL,
-		GR_FUSE(RC_RTC_OSC256K_CC_TRIM));
+		/* Initialize RTC to 256kHz */
+		GWRITE_FIELD(RTC, CTRL, X_RTC_RC_CTRL,
+			GR_FUSE(RC_RTC_OSC256K_CC_TRIM));
+	}
 
 	/* Configure timer1 */
 	GREG32(TIMELS, EVENT(LOAD)) = TIMELS_MAX;
