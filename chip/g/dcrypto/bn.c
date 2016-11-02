@@ -241,7 +241,7 @@ static void bn_rshift(struct LITE_BIGNUM *r, uint32_t carry, uint32_t neg)
 /* Montgomery c[] += a * b[] / R % N. */
 /* TODO(ngm): constant time. */
 static void bn_mont_mul_add(struct LITE_BIGNUM *c, const uint32_t a,
-			const struct LITE_BIGNUM *b,	const uint32_t nprime,
+			const struct LITE_BIGNUM *b, const uint32_t nprime,
 			const struct LITE_BIGNUM *N)
 {
 	uint32_t A, B, d0;
@@ -341,13 +341,9 @@ void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
 	struct LITE_BIGNUM aR;
 
 #ifndef CR50_NO_BN_ASM
-	if (bn_bits(N) == 2048 || bn_bits(N) == 1024) {
-		/* TODO(ngm): add hardware support for standard key sizes. */
+	if ((bn_bits(N) & 255) == 0) {
+		/* Use hardware support for standard key sizes. */
 		bn_mont_modexp_asm(output, input, exp, N);
-		/* Final reduce. */
-		/* TODO(ngm): constant time. */
-		if (bn_sub(output, N))
-			bn_add(output, N);
 		return;
 	}
 #endif
@@ -398,7 +394,7 @@ void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
 
 /* c[] += a * b[] */
 static uint32_t bn_mul_add(struct LITE_BIGNUM *c, uint32_t a,
-			const struct LITE_BIGNUM *b, uint32_t offset)
+		const struct LITE_BIGNUM *b, uint32_t offset)
 {
 	int i;
 	uint64_t carry = 0;
@@ -429,118 +425,345 @@ void DCRYPTO_bn_mul(struct LITE_BIGNUM *c, const struct LITE_BIGNUM *a,
 	BN_DIGIT(c, i + b->dmax - 1) = carry;
 }
 
-#define bn_is_even(b) !bn_is_bit_set((b), 0)
-#define bn_is_odd(b) bn_is_bit_set((b), 0)
-
-static int bn_is_zero(const struct LITE_BIGNUM *a)
+/* c[] = a[] * b[] */
+static void bn_mul_ex(struct LITE_BIGNUM *c,
+		const struct LITE_BIGNUM *a, int a_len,
+		const struct LITE_BIGNUM *b)
 {
-	int i, result = 0;
+	int i;
+	uint32_t carry = 0;
 
-	for (i = 0; i < a->dmax; ++i)
-		result |= BN_DIGIT(a, i);
-	return !result;
+	memset(c->d, 0, bn_size(c));
+	for (i = 0; i < a_len; i++) {
+		BN_DIGIT(c, i + b->dmax - 1) = carry;
+		carry = bn_mul_add(c, BN_DIGIT(a, i), b, i);
+	}
+
+	BN_DIGIT(c, i + b->dmax - 1) = carry;
 }
 
-/* d = (e ^ -1) mod MOD  */
-/* TODO(ngm): this method is used in place of division to calculate
- * q = N/p, i.e.  q = p^-1 mod (N-1).  The buffer e may be
- * resized to uint32_t once division is implemented. */
-int bn_modinv_vartime(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *e,
-		const struct LITE_BIGNUM *MOD)
+static int bn_div_word_ex(struct LITE_BIGNUM *q,
+		struct LITE_BIGNUM *r,
+		const struct LITE_BIGNUM *u, int m,
+		uint32_t div)
 {
-	/* Buffers for B, D, and U must be as large as e. */
-	uint32_t A_buf[RSA_MAX_WORDS + 1];
-	uint32_t B_buf[RSA_MAX_WORDS + 1];
-	uint32_t C_buf[RSA_MAX_WORDS + 1];
-	uint32_t D_buf[RSA_MAX_WORDS + 1];
-	uint32_t U_buf[RSA_MAX_WORDS];
-	uint32_t V_buf[RSA_MAX_WORDS];
-	int a_neg = 0;
-	int b_neg = 0;
-	int c_neg = 0;
-	int d_neg = 0;
-	int carry1;
-	int carry2;
-	int i = 0;
+	uint32_t rem = 0;
+	int i;
 
-	struct LITE_BIGNUM A;
-	struct LITE_BIGNUM B;
-	struct LITE_BIGNUM C;
-	struct LITE_BIGNUM D;
-	struct LITE_BIGNUM U;
-	struct LITE_BIGNUM V;
+	for (i = m - 1; i >= 0; --i) {
+		uint64_t tmp = ((uint64_t)rem << 32) + BN_DIGIT(u, i);
+		uint32_t qd = tmp / div;
 
-	if (bn_size(e) > sizeof(U_buf))
+		BN_DIGIT(q, i) = qd;
+		rem = tmp - (uint64_t)qd * div;
+	}
+
+	if (r != NULL)
+		BN_DIGIT(r, 0) = rem;
+
+	return 1;
+}
+
+/*
+ * Knuth's long division.
+ *
+ * Returns 0 on error.
+ * |u| >= |v|
+ * v[n-1] must not be 0
+ * r gets |v| digits written to.
+ * q gets |u| - |v| + 1 digits written to.
+ */
+static int bn_div_ex(struct LITE_BIGNUM *q,
+		struct LITE_BIGNUM *r,
+		const struct LITE_BIGNUM *u, int m,
+		const struct LITE_BIGNUM *v, int n)
+{
+	uint32_t vtop;
+	int s, i, j;
+	uint32_t vn[RSA_MAX_WORDS]; /* Normalized v */
+	uint32_t un[RSA_MAX_WORDS + 1]; /* Normalized u */
+
+	if (m < n || n <= 0)
 		return 0;
 
-	if (bn_is_even(e) && bn_is_even(MOD))
+	vtop = BN_DIGIT(v, n - 1);
+
+	if (vtop == 0)
 		return 0;
 
-	bn_init(&A, A_buf, bn_size(MOD) + sizeof(uint32_t));
-	bn_init(&B, B_buf, bn_size(MOD) + sizeof(uint32_t));
-	bn_init(&C, C_buf, bn_size(MOD) + sizeof(uint32_t));
-	bn_init(&D, D_buf, bn_size(MOD) + sizeof(uint32_t));
-	bn_init(&U, U_buf, bn_size(MOD));
-	bn_init(&V, V_buf, bn_size(MOD));
+	if (n == 1)
+		return bn_div_word_ex(q, r, u, m, vtop);
 
-	BN_DIGIT(&A, 0) = 1;
-	BN_DIGIT(&D, 0) = 1;
-	memcpy(U_buf, e->d, bn_size(e));
-	memcpy(V_buf, MOD->d, bn_size(MOD));
+	/* Compute shift factor to make v have high bit set */
+	s = 0;
+	while ((vtop & 0x80000000) == 0) {
+		s = s + 1;
+		vtop = vtop << 1;
+	}
 
-	/* Binary extended GCD, as per Handbook of Applied
-	 * Cryptography, 14.61. */
-	for (i = 0;; i++) {
-		carry1 = 0;
-		carry2 = 0;
-		if (bn_is_even(&U)) {
-			bn_rshift(&U, 0, 0);
-			if (bn_is_odd(&A) || bn_is_odd(&B)) {
-				carry1 = bn_signed_add(&A, &a_neg, MOD, 0);
-				carry2 = bn_signed_sub(&B, &b_neg, e, 0);
-			}
-			bn_rshift(&A, carry1, a_neg);
-			bn_rshift(&B, carry2, b_neg);
-		} else if (bn_is_even(&V)) {
-			bn_rshift(&V, 0, 0);
-			if (bn_is_odd(&C) || bn_is_odd(&D)) {
-				carry1 = bn_signed_add(&C, &c_neg, MOD, 0);
-				carry2 = bn_signed_sub(&D, &d_neg, e, 0);
-			}
-			bn_rshift(&C, carry1, c_neg);
-			bn_rshift(&D, carry2, d_neg);
-		} else {  /* U, V both odd. */
-			if (bn_gte(&U, &V)) {
-				assert(!bn_sub(&U, &V));
-				bn_signed_sub(&A, &a_neg, &C, c_neg);
-				bn_signed_sub(&B, &b_neg, &D, d_neg);
-				if (bn_is_zero(&U))
-					break;  /* done. */
-			} else {
-				assert(!bn_sub(&V, &U));
-				bn_signed_sub(&C, &c_neg, &A, a_neg);
-				bn_signed_sub(&D, &d_neg, &B, b_neg);
+	/* Normalize u and v into un and vn.
+	 * Note un always gains a leading digit
+	 */
+	if (s != 0) {
+		for (i = n - 1; i > 0; i--)
+			vn[i] = (BN_DIGIT(v, i) << s) |
+				(BN_DIGIT(v, i - 1) >> (32 - s));
+		vn[0] = BN_DIGIT(v, 0) << s;
+
+		un[m] = BN_DIGIT(u, m - 1) >> (32 - s);
+		for (i = m - 1; i > 0; i--)
+			un[i] = (BN_DIGIT(u, i) << s) |
+			  (BN_DIGIT(u, i - 1) >> (32 - s));
+		un[0] = BN_DIGIT(u, 0) << s;
+	} else {
+		for (i = 0; i < n; ++i)
+			vn[i] = BN_DIGIT(v, i);
+		for (i = 0; i < m; ++i)
+			un[i] = BN_DIGIT(u, i);
+		un[m] = 0;
+	}
+
+	/* Main loop, reducing un digit by digit */
+	for (j = m - n; j >= 0; j--) {
+		uint32_t qd;
+		int64_t t, k;
+
+		/* Estimate quotient digit */
+		if (un[j + n] == vn[n - 1]) {
+			/* Maxed out */
+			qd = 0xFFFFFFFF;
+		} else {
+			/* Fine tune estimate */
+			uint64_t rhat = ((uint64_t)un[j + n] << 32) +
+				un[j + n - 1];
+
+			qd = rhat / vn[n - 1];
+			rhat = rhat - (uint64_t)qd * vn[n - 1];
+			while ((rhat >> 32) == 0 &&
+				(uint64_t)qd * vn[n - 2] >
+					(rhat << 32) + un[j + n - 2]) {
+				qd = qd - 1;
+				rhat = rhat + vn[n - 1];
 			}
 		}
-		if ((i + 1) % 1000 == 0)
-			/* TODO(ngm): Poke the watchdog (only
-			 * necessary for q = N/p).  Remove once
-			 * division is implemented. */
-			watchdog_reload();
+
+		/* Multiply and subtract */
+		k = 0;
+		for (i = 0; i < n; i++) {
+			uint64_t p = (uint64_t)qd * vn[i];
+
+			t = un[i + j] - k - (p & 0xFFFFFFFF);
+			un[i + j] = t;
+			k = (p >> 32) - (t >> 32);
+		}
+		t = un[j + n] - k;
+		un[j + n] = t;
+
+		/* If borrowed, add one back and adjust estimate */
+		if (t < 0) {
+			qd = qd - 1;
+			for (i = 0; i < n; i++) {
+				t = (uint64_t)un[i + j] + vn[i] + k;
+				un[i + j] = t;
+				k = t >> 32;
+			}
+			un[j + n] = un[j + n] + k;
+		}
+
+		BN_DIGIT(q, j) = qd;
 	}
 
-	BN_DIGIT(&V, 0) ^= 0x01;
-	if (bn_is_zero(&V)) {
-		while (c_neg)
-			bn_signed_add(&C, &c_neg, MOD, 0);
-		while (bn_gte(&C, MOD))
-			bn_sub(&C, MOD);
-
-		memcpy(d->d, C.d, bn_size(d));
-		return 1;
-	} else {
-		return 0;  /* Inverse not found. */
+	if (r != NULL) {
+		/* Denormalize un into r */
+		if (s != 0) {
+			for (i = 0; i < n - 1; i++)
+				BN_DIGIT(r, i) = (un[i] >> s) |
+					(un[i + 1] << (32 - s));
+			BN_DIGIT(r, n - 1) = un[n - 1] >> s;
+		} else {
+			for (i = 0; i < n; i++)
+				BN_DIGIT(r, i) = un[i];
+		}
 	}
+
+	return 1;
+}
+
+static void bn_set_bn(struct LITE_BIGNUM *d, const struct LITE_BIGNUM *src,
+		size_t n)
+{
+	size_t i = 0;
+
+	for (; i < n && i < d->dmax; ++i)
+		BN_DIGIT(d, i) = BN_DIGIT(src, i);
+	for (; i < d->dmax; ++i)
+		BN_DIGIT(d, i) = 0;
+}
+
+static size_t bn_digits(const struct LITE_BIGNUM *a)
+{
+	size_t n = a->dmax - 1;
+
+	while (BN_DIGIT(a, n) == 0 && n)
+		--n;
+	return n + 1;
+}
+
+int DCRYPTO_bn_div(struct LITE_BIGNUM *quotient,
+		struct LITE_BIGNUM *remainder,
+		const struct LITE_BIGNUM *src,
+		const struct LITE_BIGNUM *divisor)
+{
+	int src_len = bn_digits(src);
+	int div_len = bn_digits(divisor);
+	int i, result;
+
+	if (src_len < div_len)
+		return 0;
+
+	result = bn_div_ex(quotient, remainder,
+			src, src_len,
+			divisor, div_len);
+
+	if (!result)
+		return 0;
+
+	/* 0-pad the destinations. */
+	for (i = src_len - div_len + 1; i < quotient->dmax; ++i)
+		BN_DIGIT(quotient, i) = 0;
+	if (remainder) {
+		for (i = div_len; i < remainder->dmax; ++i)
+			BN_DIGIT(remainder, i) = 0;
+	}
+
+	return result;
+}
+
+/*
+ * Extended Euclid modular inverse.
+ *
+ * https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
+ * #Computing_multiplicative_inverses_in_modular_structures:
+
+ * function inverse(a, n)
+ *  t := 0;     newt := 1;
+ *  r := n;     newr := a;
+ *  while newr ≠ 0
+ *      quotient := r div newr
+ *      (t, newt) := (newt, t - quotient * newt)
+ *      (r, newr) := (newr, r - quotient * newr)
+ *  if r > 1 then return "a is not invertible"
+ *  if t < 0 then t := t + n
+ *  return t
+ */
+int bn_modinv_vartime(struct LITE_BIGNUM *dst, const struct LITE_BIGNUM *src,
+		const struct LITE_BIGNUM *mod)
+{
+	uint32_t R_buf[RSA_MAX_WORDS];
+	uint32_t nR_buf[RSA_MAX_WORDS];
+	uint32_t Q_buf[RSA_MAX_WORDS];
+
+	uint32_t nT_buf[RSA_MAX_WORDS + 1]; /* Can go negative, hence +1 */
+	uint32_t T_buf[RSA_MAX_WORDS + 1]; /* Can go negative */
+	uint32_t tmp_buf[2 * RSA_MAX_WORDS + 1]; /* needs to hold Q*nT */
+
+	struct LITE_BIGNUM R;
+	struct LITE_BIGNUM nR;
+	struct LITE_BIGNUM Q;
+	struct LITE_BIGNUM T;
+	struct LITE_BIGNUM nT;
+	struct LITE_BIGNUM tmp;
+
+	struct LITE_BIGNUM *pT = &T;
+	struct LITE_BIGNUM *pnT = &nT;
+	struct LITE_BIGNUM *pR = &R;
+	struct LITE_BIGNUM *pnR = &nR;
+	struct LITE_BIGNUM *bnswap;
+
+	int t_neg = 0;
+	int nt_neg = 0;
+	int iswap;
+
+	size_t r_len, nr_len;
+
+	bn_init(&R, R_buf, bn_size(mod));
+	bn_init(&nR, nR_buf, bn_size(mod));
+	bn_init(&Q, Q_buf, bn_size(mod));
+	bn_init(&T, T_buf, bn_size(mod) + sizeof(uint32_t));
+	bn_init(&nT, nT_buf, bn_size(mod) + sizeof(uint32_t));
+	bn_init(&tmp, tmp_buf, bn_size(mod) + sizeof(uint32_t));
+
+	r_len = bn_digits(mod);
+	nr_len = bn_digits(src);
+
+	BN_DIGIT(&nT, 0) = 1;              /* T = 0, nT = 1 */
+	bn_set_bn(&R, mod, r_len);         /* R = n */
+	bn_set_bn(&nR, src, nr_len);       /* nR = input */
+
+	/* Trim nR */
+	while (nr_len && BN_DIGIT(&nR, nr_len - 1) == 0)
+		--nr_len;
+
+	while (nr_len) {
+		size_t q_len = r_len - nr_len + 1;
+
+		/* (r, nr) = (nr, r % nr), q = r / nr */
+		if (!bn_div_ex(&Q, pR, pR, r_len, pnR, nr_len))
+			return 0;
+
+		/* swap R and nR */
+		r_len = nr_len;
+		bnswap = pR; pR = pnR; pnR = bnswap;
+
+		/* trim nR and Q */
+		while (nr_len && BN_DIGIT(pnR, nr_len - 1) == 0)
+			--nr_len;
+		while (q_len && BN_DIGIT(&Q, q_len - 1) == 0)
+			--q_len;
+
+		Q.dmax = q_len;
+
+		/* compute t - q*nt */
+		if (q_len == 1 && BN_DIGIT(&Q, 0) <= 2) {
+			/* Doing few direct subs is faster than mul + sub */
+			uint32_t n = BN_DIGIT(&Q, 0);
+
+			while (n--)
+				bn_signed_sub(pT, &t_neg, pnT, nt_neg);
+		} else {
+			/* Call bn_mul_ex with smallest operand first */
+			if (nt_neg) {
+				/* Negative numbers use all digits,
+				 * thus pnT is large
+				 */
+				bn_mul_ex(&tmp, &Q, q_len, pnT);
+			} else {
+				int nt_len = bn_digits(pnT);
+
+				if (q_len < nt_len)
+					bn_mul_ex(&tmp, &Q, q_len, pnT);
+				else
+					bn_mul_ex(&tmp, pnT, nt_len, &Q);
+			}
+			bn_signed_sub(pT, &t_neg, &tmp, nt_neg);
+		}
+
+		/* swap T and nT */
+		bnswap = pT; pT = pnT; pnT = bnswap;
+		iswap = t_neg; t_neg = nt_neg; nt_neg = iswap;
+	}
+
+	if (r_len != 1 || BN_DIGIT(pR, 0) != 1) {
+		/* gcd not 1; no direct inverse */
+		return 0;
+	}
+
+	if (t_neg)
+		bn_signed_add(pT, &t_neg, mod, 0);
+
+	bn_set_bn(dst, pT, bn_digits(pT));
+
+	return 1;
 }
 
 #define NUM_PRIMES 4095

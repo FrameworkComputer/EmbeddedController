@@ -169,6 +169,9 @@ int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p);
 void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len);
 void DCRYPTO_bn_mul(struct LITE_BIGNUM *c, const struct LITE_BIGNUM *a,
 		const struct LITE_BIGNUM *b);
+int DCRYPTO_bn_div(struct LITE_BIGNUM *quotient, struct LITE_BIGNUM *remainder,
+		const struct LITE_BIGNUM *input,
+		const struct LITE_BIGNUM *divisor);
 
 /*
  *  X509.
