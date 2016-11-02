@@ -224,6 +224,10 @@ enum power_state power_handle_state(enum power_state state)
 		msleep(1);
 		gpio_set_level(GPIO_PP1800_LID_EN_L, 0);
 
+		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 0);
+		msleep(2);
+		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 0);
+
 		/*
 		 * TODO: Consider ADC_PP900_AP / ADC_PP1200_LPDDR analog
 		 * voltage levels for state transition.
@@ -260,10 +264,6 @@ enum power_state power_handle_state(enum power_state state)
 			sys_reset_asserted = 0;
 		}
 
-		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 0);
-		msleep(2);
-		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 0);
-
 		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
 			return POWER_S3S0;
@@ -286,8 +286,6 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		MSLEEP_CHECK_ABORTED_SUSPEND(20);
 
-		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
-		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_S0_EN_L, 1);
 		MSLEEP_CHECK_ABORTED_SUSPEND(20);
 
@@ -326,6 +324,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
+		gpio_set_level(GPIO_PP1800_SENSOR_EN_L, 1);
+		gpio_set_level(GPIO_PP1800_SIXAXIS_EN_L, 1);
 		gpio_set_level(GPIO_PP1800_LID_EN_L, 1);
 		gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, 1);
 		gpio_set_level(GPIO_PP5000_EN, 0);
