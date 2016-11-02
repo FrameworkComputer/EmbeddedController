@@ -67,13 +67,11 @@ void mkbp_send_event(uint8_t event_type)
 #ifdef CONFIG_MKBP_WAKEUP_MASK
 	/* Only assert interrupt for wake events if host is sleeping */
 	if (host_is_sleeping()) {
-		uint32_t events;
-		events = *(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS);
 		/*
 		 * interrupt the AP if it is a wakeup event
 		 * which is defined in the white list.
 		 */
-		if ((events & CONFIG_MKBP_WAKEUP_MASK) ||
+		if ((host_get_events() & CONFIG_MKBP_WAKEUP_MASK) ||
 		    (event_type == EC_MKBP_EVENT_KEY_MATRIX))
 			set_host_interrupt(1);
 
