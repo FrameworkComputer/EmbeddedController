@@ -34,7 +34,7 @@ static const int led_color_to_pwm_duty[LED_COLOR_COUNT] = {
 	[LED_OFF] =   100,
 	[LED_RED] =   0,
 	[LED_AMBER] = 80,
-	[LED_GREEN] = 85,
+	[LED_GREEN] = 10,
 };
 
 static int bat_led_set_color(enum led_color color)
