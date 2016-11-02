@@ -5,18 +5,15 @@
 
 /* Apollolake chipset power control module for Chrome EC */
 
+#include "apollolake.h"
 #include "charge_state.h"
 #include "chipset.h"
-#include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "hooks.h"
-#include "host_command.h"
-#include "lid_switch.h"
+#include "intel_x86.h"
 #include "lpc.h"
-#include "power.h"
-#include "power_button.h"
 #include "system.h"
-#include "task.h"
 #include "util.h"
 #include "wireless.h"
 
@@ -24,25 +21,6 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-/* Input state flags */
-#define IN_RSMRST_N	POWER_SIGNAL_MASK(X86_RSMRST_N)
-#define IN_ALL_SYS_PG	POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
-#define IN_SLP_S3_N	POWER_SIGNAL_MASK(X86_SLP_S3_N)
-#define IN_SLP_S4_N	POWER_SIGNAL_MASK(X86_SLP_S4_N)
-#define IN_SUSPWRDNACK	POWER_SIGNAL_MASK(X86_SUSPWRDNACK)
-#define IN_SUS_STAT_N	POWER_SIGNAL_MASK(X86_SUS_STAT_N)
-
-#define IN_ALL_PM_SLP_DEASSERTED (IN_SLP_S3_N | \
-				  IN_SLP_S4_N)
-
-#define IN_PGOOD_ALL_CORE (IN_RSMRST_N)
-
-#define IN_ALL_S0 (IN_PGOOD_ALL_CORE | IN_ALL_PM_SLP_DEASSERTED)
-
-#define CHARGER_INITIALIZED_DELAY_MS 100
-#define CHARGER_INITIALIZED_TRIES 40
-
-static int throttle_cpu;      /* Throttle CPU? */
 static int forcing_coldreset; /* Forced coldreset in progress? */
 static int power_s5_up;       /* Chipset is sequencing up or down */
 
@@ -85,6 +63,11 @@ void chipset_force_shutdown(void)
 	chipset_do_shutdown();
 }
 
+void chipset_force_g3(void)
+{
+	chipset_force_shutdown();
+}
+
 void chipset_reset(int cold_reset)
 {
 	CPRINTS("%s(%d)", __func__, cold_reset);
@@ -106,35 +89,7 @@ void chipset_reset(int cold_reset)
 	}
 }
 
-void chipset_throttle_cpu(int throttle)
-{
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
-}
-
-enum power_state power_chipset_init(void)
-{
-	/*
-	 * If we're switching between images without rebooting, see if the x86
-	 * is already powered on; if so, leave it there instead of cycling
-	 * through G3.
-	 */
-	if (system_jumped_to_this_image()) {
-		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
-			/* Disable idle task deep sleep when in S0. */
-			disable_sleep(SLEEP_MASK_AP_RUN);
-			CPRINTS("already in S0");
-			return POWER_S0;
-		} else {
-			/* Force all signals to their G3 states */
-			chipset_force_shutdown();
-		}
-	}
-
-	return POWER_G3;
-}
-
-static void handle_rsmrst_l_pgood(enum power_state state)
+void handle_rsmrst(enum power_state state)
 {
 	/*
 	 * Pass through asynchronously, as SOC may not react
@@ -173,37 +128,6 @@ static void handle_all_sys_pgood(enum power_state state)
 
 	CPRINTS("Pass through GPIO_ALL_SYS_PGOOD: %d", in_level);
 }
-
-#ifdef CONFIG_BOARD_HAS_RTC_RESET
-static enum power_state power_wait_s5_rtc_reset(void)
-{
-	static int s5_exit_tries;
-
-	/* Wait for S5 exit and then attempt RTC reset */
-	while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
-		/* Handle RSMRST passthru event while waiting */
-		handle_rsmrst(POWER_S5);
-		if (task_wait_event(SECOND*4) == TASK_EVENT_TIMER) {
-			CPRINTS("timeout waiting for S5 exit");
-			chipset_force_g3();
-
-			/* Assert RTCRST# and retry 5 times */
-			board_rtc_reset();
-
-			if (++s5_exit_tries > 4) {
-				s5_exit_tries = 0;
-				return POWER_G3; /* Stay off */
-			}
-
-			udelay(10 * MSEC);
-			return POWER_G3S5; /* Power up again */
-		}
-	}
-
-	s5_exit_tries = 0;
-	return POWER_S5S3; /* Power up to next state */
-}
-#endif
 
 static enum power_state _power_handle_state(enum power_state state)
 {
@@ -352,7 +276,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		 * Throttle CPU if necessary.  This should only be asserted
 		 * when +VCCP is powered (it is by now).
 		 */
-		gpio_set_level(GPIO_CPU_PROCHOT, throttle_cpu);
+		gpio_set_level(GPIO_CPU_PROCHOT, 0);
 
 		return POWER_S0;
 
@@ -454,7 +378,7 @@ enum power_state power_handle_state(enum power_state state)
 	 * RSMRST_L is also checked in some states and, if asserted, will
 	 * force shutdown.
 	 */
-	handle_rsmrst_l_pgood(new_state);
+	handle_rsmrst(new_state);
 
 	return new_state;
 }
