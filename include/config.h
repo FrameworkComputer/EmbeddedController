@@ -1904,6 +1904,16 @@
 #undef CONFIG_DPTF
 
 /*****************************************************************************/
+/* Touchpad config */
+
+/* Enable Elan driver */
+#undef CONFIG_TOUCHPAD_ELAN
+
+/* Set I2C port and address (8-bit) */
+#undef CONFIG_TOUCHPAD_I2C_PORT
+#undef CONFIG_TOUCHPAD_I2C_ADDR
+
+/*****************************************************************************/
 /* TPM-like configuration */
 
 /* Speak the TPM SPI Hardware Protocol on the SPI slave interface */
