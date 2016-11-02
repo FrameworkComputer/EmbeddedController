@@ -11,6 +11,8 @@
 
 #include "power.h"
 
+extern int power_s5_up;       /* Chipset is sequencing up or down */
+
 /**
  * Handle RSMRST signal.
  *
@@ -20,14 +22,17 @@ void handle_rsmrst(enum power_state state);
 
 /**
  * Force chipset to G3 state.
- */
-void chipset_force_g3(void);
-
-/**
- * Wait for S5 exit and then attempt RTC reset.
  *
  * @return power_state New chipset state.
  */
-enum power_state power_wait_s5_rtc_reset(void);
+enum power_state chipset_force_g3(void);
+
+/**
+ * Handle power states.
+ *
+ * @param state        Current chipset state.
+ * @return power_state New chipset state.
+ */
+enum power_state common_intel_x86_power_handle_state(enum power_state state);
 
 #endif /* __CROS_EC_INTEL_X86_H */
