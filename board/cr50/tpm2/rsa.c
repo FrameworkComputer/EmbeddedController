@@ -910,16 +910,6 @@ static void rsa_command_handler(void *cmd_body,
 		return;
 	}
 	memcpy(in, cmd, in_len);
-	if (op == TEST_RSA_VERIFY) {
-		cmd += in_len;
-		digest_len = ((uint16_t) (cmd[0] << 8)) | cmd[1];
-		cmd += 2;
-		if (digest_len > sizeof(digest)) {
-			*response_size = 0;
-			return;
-		}
-		memcpy(digest, cmd, digest_len);
-	}
 
 	/* Make copies of N, and d, as const data is immutable. */
 	switch (key_len) {
@@ -978,6 +968,15 @@ static void rsa_command_handler(void *cmd_body,
 			*response_size = 0;
 		return;
 	case TEST_RSA_VERIFY:
+		cmd += in_len;
+		digest_len = ((uint16_t) (cmd[0] << 8)) | cmd[1];
+		cmd += 2;
+		if (digest_len > sizeof(digest)) {
+			*response_size = 0;
+			return;
+		}
+		memcpy(digest, cmd, digest_len);
+
 		if (_cpri__ValidateSignatureRSA(
 				&key, padding_alg, hashing_alg, digest_len,
 				digest, in_len, in, 0)
