@@ -21,15 +21,19 @@
 
 /* Battery info for BQ40Z55 */
 static const struct battery_info info = {
-	/* FIXME(dhendrix): where do these values come from? */
 	.voltage_max = 8700,	/* mV */
 	.voltage_normal = 7600,
+
+	/*
+	 * Actual value 6000mV, added 100mV for charger accuracy so
+	 * that unwanted low VSYS_Prochot# assertion can be avoided.
+	 */
 	.voltage_min = 6100,
 	.precharge_current = 256,	/* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 46,
 	.charging_min_c = 0,
-	.charging_max_c = 60,
+	.charging_max_c = 45,
 	.discharging_min_c = 0,
 	.discharging_max_c = 60,
 };
@@ -161,39 +165,37 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	/*
 	 * Determine temperature range. The five ranges are:
-	 *   < 10C
-	 *   10-15C
-	 *   15-23C
-	 *   23-45C
+	 *   < 0C
+	 *    0C>= <=15C
+	 *   15C>  <=20C
+	 *   20C>  <=45C
 	 *   > 45C
 	 *
-	 * Add 0.2 degrees of hysteresis.
 	 * If temp reading was bad, use last range.
 	 */
 	if (!(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE)) {
-		if (temp_c < 99)
+		if (temp_c < 0)
 			temp_range = TEMP_RANGE_1;
-		else if (temp_c > 101 && temp_c < 149)
+		else if (temp_c <= 150)
 			temp_range = TEMP_RANGE_2;
-		else if (temp_c > 151 && temp_c < 229)
+		else if (temp_c <= 200)
 			temp_range = TEMP_RANGE_3;
-		else if (temp_c > 231 && temp_c < 449)
+		else if (temp_c <= 450)
 			temp_range = TEMP_RANGE_4;
-		else if (temp_c > 451)
+		else
 			temp_range = TEMP_RANGE_5;
 	}
 
 	/*
-	 * If battery voltage reading is bad, use the last reading. Otherwise,
-	 * determine voltage range with hysteresis.
+	 * If battery voltage reading is bad, use the last reading.
 	 */
 	if (curr->batt.flags & BATT_FLAG_BAD_VOLTAGE) {
 		batt_voltage = prev_batt_voltage;
 	} else {
 		batt_voltage = prev_batt_voltage = curr->batt.voltage;
-		if (batt_voltage < 8200)
+		if (batt_voltage <= 8000)
 			voltage_range = VOLTAGE_RANGE_LOW;
-		else if (batt_voltage > 8300)
+		else if (batt_voltage > 8000)
 			voltage_range = VOLTAGE_RANGE_HIGH;
 	}
 
@@ -206,54 +208,49 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	/*
 	 * Okay, impose our custom will:
-	 * When battery is 0-10C:
-	 * CC at 486mA @ 8.7V
+	 *
+	 * When battery is < 0C:
+	 * CC at 0mA @ 0V
+	 * CV at 0V
+	 *
+	 * When battery is 0-15C:
+	 * CC at 944mA until 8.0V @ 8.7V
+	 * CC at 472mA @ 8.7V
 	 * CV at 8.7V
 	 *
-	 * When battery is <15C:
-	 * CC at 1458mA @ 8.7V
+	 * When battery is 15-20C:
+	 * CC at 1416mA @ 8.7V
 	 * CV at 8.7V
 	 *
-	 * When battery is <23C:
-	 * CC at 3402mA until 8.3V @ 8.7V
-	 * CC at 2430mA @ 8.7V
+	 * When battery is 20-45C:
+	 * CC at 3300mA @ 8.7V
 	 * CV at 8.7V
 	 *
-	 * When battery is <45C:
-	 * CC at 4860mA until 8.3V @ 8.7V
-	 * CC at 2430mA @ 8.7V
-	 * CV at 8.7V until current drops to 450mA
-	 *
-	 * When battery is >45C:
-	 * CC at 2430mA @ 8.3V
-	 * CV at 8.3V (when battery is hot we don't go to fully charged)
+	 * When battery is > 45C:
+	 * CC at 0mA @ 0V
+	 * CV at 0V
 	 */
 	switch (temp_range) {
-	case TEMP_RANGE_1:
-		curr->requested_current = 486;
-		curr->requested_voltage = 8700;
-		break;
 	case TEMP_RANGE_2:
-		curr->requested_current = 1458;
+		if (voltage_range == VOLTAGE_RANGE_HIGH)
+			curr->requested_current = 472;
+		else
+			curr->requested_current = 944;
 		curr->requested_voltage = 8700;
 		break;
 	case TEMP_RANGE_3:
+		curr->requested_current = 1416;
 		curr->requested_voltage = 8700;
-		if (voltage_range == VOLTAGE_RANGE_HIGH)
-			curr->requested_current = 2430;
-		else
-			curr->requested_current = 3402;
 		break;
 	case TEMP_RANGE_4:
+		curr->requested_current = 3300;
 		curr->requested_voltage = 8700;
-		if (voltage_range == VOLTAGE_RANGE_HIGH)
-			curr->requested_current = 2430;
-		else
-			curr->requested_current = 4860;
 		break;
+	case TEMP_RANGE_1:
 	case TEMP_RANGE_5:
-		curr->requested_current = 2430;
-		curr->requested_voltage = 8300;
+	default:
+		curr->requested_current = 0;
+		curr->requested_voltage = 0;
 		break;
 	}
 
