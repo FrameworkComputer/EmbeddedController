@@ -198,7 +198,8 @@ static void pd_exchange_status(uint32_t ec_state)
 #endif
 
 		if (!first_exchange)
-			usleep(50*MSEC);
+			/* Delay to prevent task starvation */
+			usleep(5*MSEC);
 		first_exchange = 0;
 	} while (pd_get_alert());
 #endif /* USB_TCPM_WITH_OFF_CHIP_TCPC */
