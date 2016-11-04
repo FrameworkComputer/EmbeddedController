@@ -286,6 +286,7 @@ void __idle(void)
 #else
 
 	timestamp_t t0, t1;
+	uint32_t next_evt;
 	uint32_t next_evt_us;
 	uint16_t evt_count;
 
@@ -307,12 +308,16 @@ void __idle(void)
 
 		/* Compute event delay */
 		t0 = get_time();
-		next_evt_us = __hw_clock_event_get() - t0.le.lo;
+		next_evt = __hw_clock_event_get();
 
 		/* Do we have enough time before next event to deep sleep. */
-		if (DEEP_SLEEP_ALLOWED && (next_evt_us > WAKE_INTERVAL)
-				/* Make sure it's over  console expired time */
-				&& (t0.val > console_expire_time.val)) {
+		if (DEEP_SLEEP_ALLOWED &&
+		    /* Ensure event hasn't already expired */
+		    next_evt > t0.le.lo &&
+		    /* Ensure we have sufficient time before expiration */
+		    next_evt - t0.le.lo > WAKE_INTERVAL &&
+		    /* Make sure it's over console expired time */
+		    t0.val > console_expire_time.val) {
 #if DEBUG_CLK
 			/* Use GPIO to indicate SLEEP mode */
 			CLEAR_BIT(NPCX_PDOUT(0), 0);

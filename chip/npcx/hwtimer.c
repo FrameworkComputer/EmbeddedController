@@ -16,6 +16,7 @@
 #include "console.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 /* Use ITIM32 as main hardware timer */
 #define TICK_ITIM32_MAX_CNT  0xFFFFFFFF
@@ -86,6 +87,7 @@ void __hw_clock_event_set(uint32_t deadline)
 
 	/* Event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
+
 	/*
 	 * ITIM count down : event expired : Unit: 1/32768 sec
 	 * It must exceed evt_expired_us for process_timers function
@@ -96,10 +98,19 @@ void __hw_clock_event_set(uint32_t deadline)
 				evt_cnt, evt_cnt_us);
 		evt_cnt = TICK_EVT_MAX_CNT;
 	}
-	NPCX_ITCNT16(ITIM_EVENT_NO) = evt_cnt;
+
+	/* Wait for module disable to take effect before updating count */
+	while (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN))
+		;
+
+	NPCX_ITCNT16(ITIM_EVENT_NO) = MAX(evt_cnt, 1);
 
 	/* Event module enable */
 	SET_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
+
+	/* Wait for module enable */
+	while (!IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN))
+		;
 
 	/* Enable interrupt of ITIM */
 	task_enable_irq(ITIM16_INT(ITIM_EVENT_NO));
@@ -200,7 +211,6 @@ void hw_clock_source_set_preload(uint32_t ts, uint8_t clear)
 {
 	/* ITIM32 module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_ITEN);
-
 	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_CKSEL);
 
 	/* Set preload counter to current time */
