@@ -81,6 +81,8 @@ static const struct i2c_tpm_reg_map i2c_to_tpm[] = {
 
 /* Used to track number of times i2cs hw read fifo was adjusted */
 static uint32_t i2cs_fifo_adjust_count;
+/* Used to track number of write mismatch errors */
+static uint32_t i2cs_write_error_count;
 
 static void process_read_access(uint16_t reg_size,
 				uint16_t tpm_reg, uint8_t *data)
@@ -143,9 +145,7 @@ static void process_write_access(uint16_t reg_size, uint16_t tpm_reg,
 	}
 
 	if (i2cs_data_size != reg_size) {
-		CPRINTF("%s: data size mismatch for reg 0x%x "
-			"(rx %d, need %d)\n", __func__, tpm_reg,
-			i2cs_data_size, reg_size);
+		i2cs_write_error_count++;
 		return;
 	}
 
@@ -223,23 +223,26 @@ static void i2cs_if_register(void)
 
 	tpm_register_interface(i2cs_tpm_enable);
 	i2cs_fifo_adjust_count = 0;
+	i2cs_write_error_count = 0;
 }
 DECLARE_HOOK(HOOK_INIT, i2cs_if_register, HOOK_PRIO_LAST);
 
 static int command_i2cs(int argc, char **argv)
 {
-	ccprintf("fifo adjust count = %d\n", i2cs_fifo_adjust_count);
+	ccprintf("rd fifo adjust cnt = %d\n", i2cs_fifo_adjust_count);
+	ccprintf("wr mismatch cnt = %d\n", i2cs_write_error_count);
 	if (argc < 2)
 		return EC_SUCCESS;
 
-	if (!strcasecmp(argv[1], "rst")) {
+	if (!strcasecmp(argv[1], "reset")) {
 		i2cs_fifo_adjust_count = 0;
-		ccprintf("fifo adjust count reset to 0\n");
+		i2cs_write_error_count = 0;
+		ccprintf("i2cs error counts reset\n");
 	} else
 		return EC_ERROR_PARAM1;
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(i2cs, command_i2cs,
-			     "rst",
+DECLARE_SAFE_CONSOLE_COMMAND(i2cstpm, command_i2cs,
+			     "reset",
 			     "Display fifo adjust count");
