@@ -68,6 +68,11 @@
 #define CONFIG_SHA256
 #define CONFIG_RSA_KEY_SIZE 2048
 
+/* Enable elan trackpad driver */
+#define CONFIG_TOUCHPAD_ELAN
+#define CONFIG_TOUCHPAD_I2C_PORT 0
+#define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)
+
 #ifndef __ASSEMBLER__
 
 /* Timer selection */

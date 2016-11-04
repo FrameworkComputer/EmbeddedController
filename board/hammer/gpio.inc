@@ -5,6 +5,11 @@
  * found in the LICENSE file.
  */
 
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
+GPIO_INT(TOUCHPAD_INT, PIN(A, 1), GPIO_INT_FALLING | GPIO_PULL_UP, elan_tp_interrupt)
+
 /* I2C pins should be configured as inputs until I2C module is    */
 /* initialized. This will avoid driving the lines unintentionally.*/
 GPIO(MASTER_I2C_SCL,		PIN(B, 8), GPIO_INPUT)

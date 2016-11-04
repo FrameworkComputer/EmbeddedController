@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "ec_version.h"
+#include "touchpad_elan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -63,7 +64,6 @@ const struct section_descriptor board_rw_sections[] = {
 };
 const struct section_descriptor * const rw_sections = board_rw_sections;
 const int num_rw_sections = ARRAY_SIZE(board_rw_sections);
-
 
 /******************************************************************************
  * Initialize board.
