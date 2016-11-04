@@ -70,12 +70,13 @@ struct boot_key_entry {
 	uint8_t mask_index;
 	uint8_t mask_value;
 };
+
 static const struct boot_key_entry boot_key_list[] = {
-	{0, 0x00},  /* (none) */
 	{KEYBOARD_COL_ESC, KEYBOARD_MASK_ESC},   /* Esc */
 	{KEYBOARD_COL_DOWN, KEYBOARD_MASK_DOWN}, /* Down-arrow */
+	{KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_MASK_LEFT_SHIFT}, /* Left-Shift */
 };
-static enum boot_key boot_key_value = BOOT_KEY_OTHER;
+static uint32_t boot_key_value = BOOT_KEY_NONE;
 
 /* Debounced key matrix */
 static uint8_t __bss_slow debounced_state[KEYBOARD_COLS];
@@ -516,21 +517,18 @@ static int check_keys_changed(uint8_t *state)
 }
 
 /*
- * Return non-zero if the specified key is pressed, with at most the keys used
+ * Returns mask of the boot keys that are pressed, with at most the keys used
  * for keyboard-controlled reset also pressed.
  */
-static int check_key(const uint8_t *state, int index, int mask)
+static uint32_t check_key_list(const uint8_t *state)
 {
-	uint8_t allowed_mask[KEYBOARD_COLS] = {0};
+	uint8_t curr_state[KEYBOARD_COLS];
 	int c;
+	uint32_t boot_key_mask = BOOT_KEY_NONE;
+	const struct boot_key_entry *k;
 
-	/* Check for the key */
-	if (mask && !(state[index] & mask))
-		return 0;
-
-	/* Check for other allowed keys */
-	allowed_mask[index] |= mask;
-	allowed_mask[KEYBOARD_COL_REFRESH] |= KEYBOARD_MASK_REFRESH;
+	/* Make copy of current debounced state. */
+	memcpy(curr_state, state, sizeof(curr_state));
 
 #ifdef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
 	/*
@@ -539,19 +537,31 @@ static int check_key(const uint8_t *state, int index, int mask)
 	 */
 	for (c = 0; c < KEYBOARD_COLS; c++)
 		if ((keyscan_config.actual_key_mask[c] & KEYBOARD_MASK_KSI2) &&
-		   !(state[c] & KEYBOARD_MASK_KSI2))
+		   !(curr_state[c] & KEYBOARD_MASK_KSI2))
 			break;
 
 	if (c == KEYBOARD_COLS)
 		for (c = 0; c < KEYBOARD_COLS; c++)
-			allowed_mask[c] |= KEYBOARD_MASK_KSI2;
+			curr_state[c] &= ~KEYBOARD_MASK_KSI2;
 #endif
 
-	for (c = 0; c < KEYBOARD_COLS; c++) {
-		if (state[c] & ~allowed_mask[c])
-			return 0;  /* Disallowed key pressed */
+	/* Update mask with all boot keys that were pressed. */
+	k = boot_key_list;
+	for (c = 0; c < ARRAY_SIZE(boot_key_list); c++, k++) {
+		if (curr_state[k->mask_index] & k->mask_value) {
+			boot_key_mask |= (1 << c);
+			curr_state[k->mask_index] &= ~k->mask_value;
+		}
 	}
-	return 1;
+
+	/* If any other key was pressed, ignore all boot keys. */
+	for (c = 0; c < KEYBOARD_COLS; c++) {
+		if (curr_state[c])
+			return BOOT_KEY_NONE;
+	}
+
+	CPRINTS("KB boot key mask %x", boot_key_mask);
+	return boot_key_mask;
 }
 
 /**
@@ -559,37 +569,26 @@ static int check_key(const uint8_t *state, int index, int mask)
  *
  * @param state		Keyboard state at boot.
  *
- * @return the key which is down, or BOOT_KEY_OTHER if an unrecognized
+ * @return the key which is down, or BOOT_KEY_NONE if an unrecognized
  * key combination is down or this isn't the right type of boot to look at
  * boot keys.
  */
-static enum boot_key check_boot_key(const uint8_t *state)
+static uint32_t check_boot_key(const uint8_t *state)
 {
-	const struct boot_key_entry *k = boot_key_list;
-	int i;
-
 	/*
 	 * If we jumped to this image, ignore boot keys.  This prevents
 	 * re-triggering events in RW firmware that were already processed by
 	 * RO firmware.
 	 */
 	if (system_jumped_to_this_image())
-		return BOOT_KEY_OTHER;
+		return BOOT_KEY_NONE;
 
 	/* If reset was not caused by reset pin, refresh must be held down */
 	if (!(system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
 	    !(state[KEYBOARD_COL_REFRESH] & KEYBOARD_MASK_REFRESH))
-		return BOOT_KEY_OTHER;
+		return BOOT_KEY_NONE;
 
-	/* Check what single key is down */
-	for (i = 0; i < ARRAY_SIZE(boot_key_list); i++, k++) {
-		if (check_key(state, k->mask_index, k->mask_value)) {
-			CPRINTS("KB boot key %d", i);
-			return i;
-		}
-	}
-
-	return BOOT_KEY_OTHER;
+	return check_key_list(state);
 }
 
 static void keyboard_freq_change(void)
@@ -607,7 +606,7 @@ struct keyboard_scan_config *keyboard_scan_get_config(void)
 	return &keyscan_config;
 }
 
-enum boot_key keyboard_scan_get_boot_key(void)
+uint32_t keyboard_scan_get_boot_keys(void)
 {
 	return boot_key_value;
 }
@@ -632,9 +631,19 @@ void keyboard_scan_init(void)
 	/* Check for keys held down at boot */
 	boot_key_value = check_boot_key(debounced_state);
 
-	/* Trigger event if recovery key was pressed */
-	if (boot_key_value == BOOT_KEY_ESC)
+	/*
+	 * If any key other than Esc or Left_Shift was pressed, do not trigger
+	 * recovery.
+	 */
+	if (boot_key_value & ~(BOOT_KEY_ESC | BOOT_KEY_LEFT_SHIFT))
+		return;
+
+	if (boot_key_value & BOOT_KEY_ESC) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+		if (boot_key_value & BOOT_KEY_LEFT_SHIFT)
+			host_set_single_event(
+				EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
+	}
 }
 
 void keyboard_scan_task(void)

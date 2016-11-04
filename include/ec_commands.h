@@ -548,6 +548,9 @@ enum host_event_code {
 	/* TABLET/LAPTOP mode event*/
 	EC_HOST_EVENT_MODE_CHANGE = 29,
 
+	/* Keyboard recovery combo with hardware reinitialization */
+	EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT = 30,
+
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be

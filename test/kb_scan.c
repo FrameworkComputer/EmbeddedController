@@ -350,12 +350,12 @@ static int lid_test(void)
 
 static int test_check_boot_esc(void)
 {
-	TEST_CHECK(keyboard_scan_get_boot_key() == BOOT_KEY_ESC);
+	TEST_CHECK(keyboard_scan_get_boot_keys() == BOOT_KEY_ESC);
 }
 
 static int test_check_boot_down(void)
 {
-	TEST_CHECK(keyboard_scan_get_boot_key() == BOOT_KEY_DOWN_ARROW);
+	TEST_CHECK(keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW);
 }
 
 void test_init(void)
