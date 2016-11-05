@@ -519,13 +519,6 @@ static int get_offset(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int set_interrupt(const struct motion_sensor_t *s,
-			       unsigned int threshold)
-{
-	/* Currently unsupported. */
-	return EC_ERROR_UNKNOWN;
-}
-
 static int init(const struct motion_sensor_t *s)
 {
 	int ret, resol;
@@ -575,7 +568,6 @@ const struct accelgyro_drv si114x_drv = {
 	.get_offset = get_offset,
 	.perform_calib = NULL,
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	.set_interrupt = set_interrupt,
 	.irq_handler = irq_handler,
 #endif
 #ifdef CONFIG_ACCEL_FIFO

@@ -881,13 +881,6 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	 */
 	return EC_SUCCESS;
 }
-
-static int set_interrupt(const struct motion_sensor_t *s,
-			       unsigned int threshold)
-{
-	/* Currently unsupported. */
-	return EC_ERROR_UNKNOWN;
-}
 #endif  /* CONFIG_ACCEL_INTERRUPTS */
 
 #ifdef CONFIG_ACCEL_FIFO
@@ -1238,7 +1231,6 @@ const struct accelgyro_drv bmi160_drv = {
 	.get_offset = get_offset,
 	.perform_calib = perform_calib,
 #ifdef CONFIG_ACCEL_INTERRUPTS
-	.set_interrupt = set_interrupt,
 	.irq_handler = irq_handler,
 #endif
 #ifdef CONFIG_ACCEL_FIFO

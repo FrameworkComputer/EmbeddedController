@@ -91,16 +91,6 @@ struct accelgyro_drv {
 	int (*perform_calib)(const struct motion_sensor_t *s);
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	/**
-	 * Setup a one-time accel interrupt. If the threshold is low enough, the
-	 * interrupt may trigger due simply to noise and not any real motion.
-	 * If the threshold is 0, the interrupt will fire immediately.
-	 * @s Pointer to sensor data.
-	 * @threshold Threshold for interrupt in units of counts.
-	 */
-	int (*set_interrupt)(const struct motion_sensor_t *s,
-			     unsigned int threshold);
-
-	/**
 	 * handler for interrupts triggered by the sensor: it runs in task and
 	 * process the events that triggered an interrupt.
 	 * @s Pointer to sensor data.
