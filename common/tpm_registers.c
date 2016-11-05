@@ -533,6 +533,8 @@ static void tpm_init(void)
 	/* Create version string to be read by host */
 	set_version_string();
 
+	watchdog_reload();
+
 	/*
 	 * Make sure NV RAM metadata is initialized, needed to check
 	 * manufactured status. This is a speculative call which will have to
