@@ -73,16 +73,5 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
  */
 int charge_set_input_current_limit(int ma, int mv);
 
-
-/**
- * Get value of battery parameter from charge state.
- *
- * @param batt_param	battery parameter
- * @param dest		Destination buffer for data
- * @param read_len	Number of bytes to write to buffer
- * @return EC_SUCCESS if successful, non-zero if error.
- *
- */
-int virtual_battery_read(uint8_t batt_param, uint8_t *dest, int read_len);
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
 

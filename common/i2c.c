@@ -16,6 +16,7 @@
 #include "task.h"
 #include "util.h"
 #include "watchdog.h"
+#include "virtual_battery.h"
 
 /* Delay for bitbanging i2c corresponds roughly to 100kHz. */
 #define I2C_BITBANG_DELAY_US	5
@@ -538,9 +539,6 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	const uint8_t *out;
 	int in_len;
 	int ret, i;
-#if defined(VIRTUAL_BATTERY_ADDR) && defined(I2C_PORT_VIRTUAL_BATTERY)
-	uint8_t batt_param = 0;
-#endif
 
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
@@ -594,24 +592,10 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 #if defined(VIRTUAL_BATTERY_ADDR) && defined(I2C_PORT_VIRTUAL_BATTERY)
 		if (params->port == I2C_PORT_VIRTUAL_BATTERY &&
 		    VIRTUAL_BATTERY_ADDR == addr) {
-#if defined(CONFIG_BATTERY_PRESENT_GPIO) || \
-	defined(CONFIG_BATTERY_PRESENT_CUSTOM)
-			/*
-			 * If the battery isn't present, return a NAK (which we
-			 * would have gotten anyways had we attempted to talk to
-			 * the battery.)
-			 */
-			if (battery_is_present() != BP_YES) {
-				resp->i2c_status = EC_I2C_STATUS_NAK;
+			if (virtual_battery_handler(resp, in_len, &rv,
+						xferflags, read_len,
+						write_len, out))
 				break;
-			}
-#endif /* defined(CONFIG_BATTERY_PRESENT_{GPIO/CUSTOM}) */
-			/* get batt param from write msg */
-			if (*out)
-				batt_param = *out;
-			rv = virtual_battery_read(batt_param,
-						  &resp->data[in_len],
-						  read_len);
 		}
 #endif
 		/* Transfer next message */

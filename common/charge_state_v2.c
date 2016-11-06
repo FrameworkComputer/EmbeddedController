@@ -17,6 +17,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "i2c.h"
 #include "math_util.h"
 #include "printf.h"
 #include "sb_fw_update.h"
@@ -1001,54 +1002,6 @@ int charge_prevent_power_on(int power_button_pressed)
 
 	return prevent_power_on;
 }
-
-#ifdef VIRTUAL_BATTERY_ADDR
-int virtual_battery_read(uint8_t batt_param, uint8_t *dest, int read_len)
-{
-	int val;
-
-	switch (batt_param) {
-	case SB_SERIAL_NUMBER:
-		val = strtoi(host_get_memmap(EC_MEMMAP_BATT_SERIAL), NULL, 16);
-		memcpy(dest, &val, read_len);
-		break;
-	case SB_VOLTAGE:
-		memcpy(dest, &curr.batt.voltage, read_len);
-		break;
-	case SB_RELATIVE_STATE_OF_CHARGE:
-		memcpy(dest, &curr.batt.state_of_charge, read_len);
-		break;
-	case SB_TEMPERATURE:
-		memcpy(dest, &curr.batt.temperature, read_len);
-		break;
-	case SB_CURRENT:
-		memcpy(dest, &curr.batt.current, read_len);
-		break;
-	case SB_FULL_CHARGE_CAPACITY:
-		memcpy(dest, &curr.batt.full_capacity, read_len);
-		break;
-	case SB_BATTERY_STATUS:
-		memcpy(dest, &curr.batt.status, read_len);
-		break;
-	case SB_CYCLE_COUNT:
-		memcpy(dest, (int *)host_get_memmap(EC_MEMMAP_BATT_CCNT),
-		       read_len);
-		break;
-	case SB_DESIGN_CAPACITY:
-		memcpy(dest, (int *)host_get_memmap(EC_MEMMAP_BATT_DCAP),
-		       read_len);
-		break;
-	case SB_DESIGN_VOLTAGE:
-		memcpy(dest, (int *)host_get_memmap(EC_MEMMAP_BATT_DVLT),
-		       read_len);
-		break;
-	default:
-		return EC_ERROR_INVAL;
-	}
-	return EC_SUCCESS;
-
-}
-#endif
 
 enum charge_state charge_get_state(void)
 {
