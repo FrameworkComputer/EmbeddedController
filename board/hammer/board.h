@@ -101,14 +101,16 @@
 #define USB_IFACE_UPDATE	0
 #define USB_IFACE_HID_KEYBOARD	1
 #define USB_IFACE_HID_TOUCHPAD	2
-#define USB_IFACE_COUNT		3
+#define USB_IFACE_I2C		3
+#define USB_IFACE_COUNT		4
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_UPDATE		1
 #define USB_EP_HID_KEYBOARD	2
 #define USB_EP_HID_TOUCHPAD	3
-#define USB_EP_COUNT		4
+#define USB_EP_I2C		4
+#define USB_EP_COUNT		5
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
@@ -121,7 +123,8 @@
 #define CONFIG_KEYBOARD_DEBUG
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_F
 
-/* Enable I2C */
+/* Enable control of I2C over USB */
+#define CONFIG_USB_I2C
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_MASTER 0
@@ -164,6 +167,7 @@ enum usb_strings {
 	USB_STR_PRODUCT,
 	USB_STR_SERIALNO,
 	USB_STR_VERSION,
+	USB_STR_I2C_NAME,
 	USB_STR_UPDATE_NAME,
 	USB_STR_COUNT
 };

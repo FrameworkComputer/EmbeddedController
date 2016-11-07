@@ -20,6 +20,7 @@
 #include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
 #include "usb_descriptor.h"
+#include "usb_i2c.h"
 #include "util.h"
 
 #include "gpio_list.h"
@@ -33,13 +34,15 @@ const void *const usb_strings[] = {
 	[USB_STR_PRODUCT]      = USB_STRING_DESC("Hammer"),
 	[USB_STR_SERIALNO]     = 0,
 	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
 	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /******************************************************************************
- * Support I2C master port for trackpad.
+ * Support I2C bridging over USB, this requires usb_i2c_board_enable and
+ * usb_i2c_board_disable to be defined to enable and disable the I2C bridge.
  */
 
 /* I2C ports */
@@ -54,6 +57,9 @@ const struct pwm_t pwm_channels[] = {
 	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, 10000 /* Hz */ },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+int usb_i2c_board_enable(void) { return EC_SUCCESS; }
+void usb_i2c_board_disable(void) {}
 
 /******************************************************************************
  * Support firmware upgrade over USB. We can update whichever section is not
