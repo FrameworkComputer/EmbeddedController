@@ -1664,6 +1664,9 @@
 /* Define the RSA key size. */
 #undef CONFIG_RSA_KEY_SIZE
 
+/* Use RSA exponent 3 instead of F4 (65537) */
+#undef CONFIG_RSA_EXPONENT_3
+
 /*
  * Verify the RW firmware using the RSA signature.
  * (for accessories without software sync)
