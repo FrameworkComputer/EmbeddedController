@@ -67,6 +67,7 @@
 #define CONFIG_RSA
 #define CONFIG_SHA256
 #define CONFIG_RSA_KEY_SIZE 2048
+#define CONFIG_RSA_EXPONENT_3
 
 /* Enable elan trackpad driver */
 #define CONFIG_TOUCHPAD_ELAN
