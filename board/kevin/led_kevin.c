@@ -86,7 +86,11 @@ static void kevin_led_set_power_battery(void)
 	/* CHIPSET_STATE_OFF */
 	switch (charge_get_state()) {
 	case PWR_STATE_DISCHARGE:
-		set_color(LED_OFF);
+		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
+		     charge_get_percent() >= BATTERY_LEVEL_NEAR_FULL)
+			set_color(LED_GREEN);
+		else
+			set_color(LED_OFF);
 		break;
 	case PWR_STATE_CHARGE:
 		set_color(LED_RED);

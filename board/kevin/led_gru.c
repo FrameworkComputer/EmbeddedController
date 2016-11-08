@@ -106,6 +106,9 @@ static void gru_led_set_battery(void)
 		else if (charge_get_percent() < 10)
 			bat_led_set_color((battery_second & 3)
 					? LED_OFF : LED_AMBER);
+		else if (charge_get_percent() >= BATTERY_LEVEL_NEAR_FULL &&
+		    (chflags & CHARGE_FLAG_EXTERNAL_POWER))
+			bat_led_set_color(LED_GREEN);
 		else
 			bat_led_set_color(LED_OFF);
 		break;
