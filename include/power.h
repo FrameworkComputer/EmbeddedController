@@ -142,5 +142,15 @@ void power_set_pause_in_s5(int pause);
  * @return Believed sleep state of host.
  */
 enum host_sleep_event power_get_host_sleep_state(void);
-#endif
+
+#ifdef CONFIG_POWER_S0IX
+/**
+ * Reset the sleep state reported by the host.
+ *
+ * @param sleep_event Reset sleep state.
+ */
+void power_reset_host_sleep_state(enum host_sleep_event sleep_event);
+#endif /* CONFIG_POWER_S0IX */
+#endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
+
 #endif  /* __CROS_EC_POWER_H */
