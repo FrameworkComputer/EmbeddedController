@@ -118,7 +118,7 @@ void __keep gpio_interrupt(void)
 	}
 }
 #ifdef CHIP_FAMILY_STM32F0
-DECLARE_IRQ(STM32_IRQ_EXTI0_1, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI2_3, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI4_15, gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI0_1, gpio_interrupt, STM32_IRQ_EXT0_1_PRIORITY);
+DECLARE_IRQ(STM32_IRQ_EXTI2_3, gpio_interrupt, STM32_IRQ_EXT2_3_PRIORITY);
+DECLARE_IRQ(STM32_IRQ_EXTI4_15, gpio_interrupt, STM32_IRQ_EXTI4_15_PRIORITY);
 #endif
