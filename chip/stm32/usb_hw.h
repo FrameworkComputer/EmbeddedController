@@ -81,6 +81,10 @@ extern void (*usb_ep_reset[]) (void);
 /* array with interface-specific control request callbacks */
 extern int (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 
+/*
+ * Interface handler returns -1 on error, 0 if it wrote the last chunk of data,
+ * or 1 if more data needs to be transferred on the next control request.
+ */
 #define _IFACE_HANDLER(num) CONCAT3(iface_, num, _request)
 #define USB_DECLARE_IFACE(num, handler)					\
 	int _IFACE_HANDLER(num)(usb_uint *ep0_buf_rx,			\
