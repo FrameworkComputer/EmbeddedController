@@ -15,8 +15,8 @@
  * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_CTS_TASK_LIST \
-	TASK_ALWAYS(TESTA, task_abc, NULL, TASK_STACK_SIZE) \
-	TASK_ALWAYS(TESTB, task_abc, NULL, TASK_STACK_SIZE) \
-	TASK_ALWAYS(TESTC, task_abc, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(A, task_abc, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(B, task_abc, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(C, task_abc, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(TICK, task_tick, NULL, 256) \
 	TASK_ALWAYS(CTS, cts_task, NULL, TASK_STACK_SIZE)

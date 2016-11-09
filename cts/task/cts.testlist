@@ -1,0 +1,14 @@
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Test task switching. Task A wakes up B and goes to sleep. Task B wakes
+ * up C then goes to sleep. Task C wakes up A then goes to sleep. This is
+ * repeated TEST_COUNT times. It's expected all tasks to run exactly
+ * TEST_COUNT times. Tick task runs to inject some irregularity.
+ */
+CTS_TEST(test_task_switch)
+
+CTS_TEST(test_task_priority)
