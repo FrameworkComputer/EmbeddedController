@@ -480,6 +480,7 @@ static void charge_manager_refresh(void)
 	int updated_new_port = CHARGE_PORT_NONE;
 	int updated_old_port = CHARGE_PORT_NONE;
 	int ceil;
+	int power_changed = 0;
 
 	/* Hunt for an acceptable charge port */
 	while (1) {
@@ -570,8 +571,7 @@ static void charge_manager_refresh(void)
 					new_charge_current_uncapped);
 #endif /* HAS_TASK_CHG_RAMP */
 
-		/* notify host of power info change */
-		pd_send_host_event(PD_EVENT_POWER_CHANGE);
+		power_changed = 1;
 
 		CPRINTS("CL: p%d s%d i%d v%d", new_port, new_supplier,
 			new_charge_current, new_charge_voltage);
@@ -630,6 +630,10 @@ static void charge_manager_refresh(void)
 		pd_set_new_power_request(updated_new_port);
 	if (updated_old_port != CHARGE_PORT_NONE)
 		pd_set_new_power_request(updated_old_port);
+
+	if (power_changed)
+		/* notify host of power info change */
+		pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 DECLARE_DEFERRED(charge_manager_refresh);
 
