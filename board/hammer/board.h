@@ -28,6 +28,7 @@
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
 #define CONFIG_USB_HID
+#define CONFIG_USB_HID_KEYBOARD
 
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
@@ -41,13 +42,13 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_UPDATE	0
-#define USB_IFACE_HID		1
+#define USB_IFACE_HID_KEYBOARD	1
 #define USB_IFACE_COUNT		2
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_UPDATE		1
-#define USB_EP_HID		2
+#define USB_EP_HID_KEYBOARD	2
 #define USB_EP_COUNT		3
 
 /* Optional features */

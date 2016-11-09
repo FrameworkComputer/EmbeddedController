@@ -39,7 +39,4 @@ struct usb_hid_descriptor {
 	struct usb_hid_class_descriptor desc[1];
 } __packed;
 
-/* class implementation interfaces */
-void set_keyboard_report(uint64_t rpt);
-
 #endif /* USB_H */

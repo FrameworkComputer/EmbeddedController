@@ -2232,6 +2232,9 @@
 /* Support USB HID interface. */
 #undef CONFIG_USB_HID
 
+/* Support USB HID keyboard interface. */
+#undef CONFIG_USB_HID_KEYBOARD
+
 /* USB device buffers and descriptors */
 #undef CONFIG_USB_RAM_ACCESS_SIZE
 #undef CONFIG_USB_RAM_ACCESS_TYPE
