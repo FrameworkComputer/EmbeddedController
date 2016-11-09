@@ -12,6 +12,11 @@
 #define ITIM_EVENT_NO	ITIM16_1
 #define ITIM_WDG_NO	ITIM16_5
 
+/* Use ITIM32 as main hardware timer */
+#define TICK_ITIM32_MAX_CNT  0xFFFFFFFF
+/* Maximum deadline of event */
+#define EVT_MAX_EXPIRED_US   TICK_ITIM32_MAX_CNT
+
 /* Clock source for ITIM16 */
 enum ITIM_SOURCE_CLOCK_T {
 	ITIM_SOURCE_CLOCK_APB2 = 0,

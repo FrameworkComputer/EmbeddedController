@@ -312,6 +312,13 @@ void __idle(void)
 
 		/* Do we have enough time before next event to deep sleep. */
 		if (DEEP_SLEEP_ALLOWED &&
+		    /*
+		     * Our HW timer doesn't tick in deep sleep - we do manual
+		     * adjustment based on sleep duration after wake. Avoid
+		     * the tricky overflow case by waiting out the period just
+		     * before overflow.
+		     */
+		    next_evt != EVT_MAX_EXPIRED_US &&
 		    /* Ensure event hasn't already expired */
 		    next_evt > t0.le.lo &&
 		    /* Ensure we have sufficient time before expiration */

@@ -18,11 +18,6 @@
 #include "timer.h"
 #include "util.h"
 
-/* Use ITIM32 as main hardware timer */
-#define TICK_ITIM32_MAX_CNT  0xFFFFFFFF
-/* Maximum deadline of event */
-#define EVT_MAX_EXPIRED_US   0xFFFFFFFF
-
 /* Depth of event timer */
 #define TICK_EVT_DEPTH         16 /* Depth of event timer Unit: bits */
 #define TICK_EVT_INTERVAL      (1 << TICK_EVT_DEPTH) /* Unit: us */
