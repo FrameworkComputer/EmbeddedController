@@ -185,7 +185,11 @@
 /* KHZ, MHZ */
 #define KHZ(x)				((x) * 1000)
 #define MHZ(x)				(KHZ(x) * 1000)
+#if (defined CONFIG_ISH_30 || defined CONFIG_ISH_20)
 #define UART_ISH_INPUT_FREQ		MHZ(120)
+#elif defined CONFIG_ISH_40
+#define UART_ISH_INPUT_FREQ		MHZ(100)
+#endif
 #define UART_DEFAULT_BAUD_RATE		115200
 #define UART_STATE_CG			(1 << UART_OP_CG)
 
