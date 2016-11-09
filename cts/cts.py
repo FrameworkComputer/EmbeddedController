@@ -121,19 +121,6 @@ class Cts(object):
     self.th.get_serial()
     self.dut.get_serial()
 
-  def reset_boards(self):
-    """Resets the boards and allows them to run tests
-    Due to current (7/27/16) version of sync function,
-    both boards must be rest and halted, with the th
-    resuming first, in order for the test suite to run
-    in sync
-    """
-    self.identify_boards()
-    self.th.send_open_ocd_commands(['init', 'reset halt'])
-    self.dut.send_open_ocd_commands(['init', 'reset halt'])
-    self.th.send_open_ocd_commands(['init', 'resume'])
-    self.dut.send_open_ocd_commands(['init', 'resume'])
-
   @staticmethod
   def get_macro_args(filepath, macro):
     """Get list of args of a certain macro in a file when macro is used
@@ -317,11 +304,25 @@ class Cts(object):
     self.dut.setup_tty()
     self.th.setup_tty()
 
+    # Boards might be still writing to tty. Wait a few seconds before flashing.
+    time.sleep(3)
+
     # clear buffers
     self.dut.read_tty()
     self.th.read_tty()
 
-    self.reset_boards()
+    # Resets the boards and allows them to run tests
+    # Due to current (7/27/16) version of sync function,
+    # both boards must be rest and halted, with the th
+    # resuming first, in order for the test suite to run in sync
+    print 'Halting TH...'
+    self.th.send_open_ocd_commands(['init', 'reset halt'])
+    print 'Resetting DUT...'
+    self.dut.send_open_ocd_commands(['init', 'reset halt'])
+    print 'Resuming TH...'
+    self.th.send_open_ocd_commands(['init', 'resume'])
+    print 'Resuming DUT...'
+    self.dut.send_open_ocd_commands(['init', 'resume'])
 
     time.sleep(MAX_SUITE_TIME_SEC)
 
