@@ -569,10 +569,21 @@ size_t tpm_get_burst_size(void)
 
 #ifdef CONFIG_EXTENSION_COMMAND
 
+/* Recognize both original extension and new vendor-specific command codes */
+#define IS_CUSTOM_CODE(code)					\
+	((code == CONFIG_EXTENSION_COMMAND) ||			\
+	 (code & TPM_CC_VENDOR_BIT_MASK))
+
 static void call_extension_command(struct tpm_cmd_header *tpmh,
-				  size_t *total_size)
+				   size_t *total_size)
 {
 	size_t command_size = be32toh(tpmh->size);
+	uint32_t rc;
+
+	/*
+	 * Note that we don't look for TPM_CC_VENDOR_CR50 anywhere. All
+	 * vendor-specific commands are handled the same way for now.
+	 */
 
 	/* Verify there is room for at least the extension command header. */
 	if (command_size >= sizeof(struct tpm_cmd_header)) {
@@ -582,14 +593,18 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 		*total_size -= sizeof(struct tpm_cmd_header);
 
 		subcommand_code = be16toh(tpmh->subcommand_code);
-		extension_route_command(subcommand_code,
-				       tpmh + 1,
-				       command_size -
-				       sizeof(struct tpm_cmd_header),
-				       total_size);
+		rc = extension_route_command(subcommand_code,
+					     tpmh + 1,
+					     command_size -
+					     sizeof(struct tpm_cmd_header),
+					     total_size);
 		/* Add the header size back. */
 		*total_size += sizeof(struct tpm_cmd_header);
 		tpmh->size = htobe32(*total_size);
+		/* Flag errors from commands as vendor-specific */
+		if (rc)
+			rc |= VENDOR_RC_ERR;
+		tpmh->command_code = htobe32(rc);
 	} else {
 		*total_size = command_size;
 	}
@@ -689,7 +704,7 @@ void tpm_task(void)
 		watchdog_reload();
 
 #ifdef CONFIG_EXTENSION_COMMAND
-		if (command_code == CONFIG_EXTENSION_COMMAND) {
+		if (IS_CUSTOM_CODE(command_code)) {
 			response_size = sizeof(tpm_.regs.data_fifo);
 			call_extension_command(tpmh, &response_size);
 		} else
@@ -711,7 +726,7 @@ void tpm_task(void)
 			if (command_code == TPM2_PCR_Read)
 				system_process_retry_counter();
 #ifdef CONFIG_EXTENSION_COMMAND
-			if (command_code != CONFIG_EXTENSION_COMMAND)
+			if (!IS_CUSTOM_CODE(command_code))
 #endif
 			{
 				/*

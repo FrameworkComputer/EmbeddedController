@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "extension.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "nvmem.h"
@@ -49,6 +50,19 @@ static int console_restricted_state;
 static int console_restricted_state = 1;
 #endif
 
+static void lock_the_console(void)
+{
+	CPRINTS("The console is locked");
+	console_restricted_state = 1;
+}
+
+static void unlock_the_console(void)
+{
+	nvmem_wipe_or_reboot();
+	CPRINTS("TPM is erased, console is unlocked");
+	console_restricted_state = 0;
+}
+
 int console_is_restricted(void)
 {
 	return console_restricted_state;
@@ -90,9 +104,7 @@ static void unlock_sequence_is_over(void)
 	} else {
 		/* The last poke was after the final deadline, so we're done */
 		CPRINTS("Unlock process completed successfully");
-		nvmem_wipe_or_reboot();
-		console_restricted_state = 0;
-		CPRINTS("TPM is erased, console is unlocked.");
+		unlock_the_console();
 	}
 
 	unlock_in_progress = 0;
@@ -146,6 +158,59 @@ static void start_unlock_process(int total_poking_time, int max_poke_interval)
 }
 
 /****************************************************************************/
+/* TPM vendor-specific commands */
+
+static enum vendor_cmd_rc vc_lock(enum vendor_cmd_cc code,
+				  void *buf,
+				  size_t input_size,
+				  size_t *response_size)
+{
+	uint8_t *buffer = buf;
+
+	if (code == VENDOR_CC_GET_LOCK) {
+		/*
+		 * Get the state of the console lock.
+		 *
+		 *   Args: none
+		 *   Returns: one byte; true (locked) or false (unlocked)
+		 */
+		if (input_size != 0) {
+			*response_size = 0;
+			return VENDOR_RC_BOGUS_ARGS;
+		}
+
+		buffer[0] = console_is_restricted() ? 0x01 : 0x00;
+		*response_size = 1;
+		return VENDOR_RC_SUCCESS;
+	}
+
+	if (code == VENDOR_CC_SET_LOCK) {
+		/*
+		 * Lock the console if it isn't already. Note that there
+		 * intentionally isn't an unlock command. At most, we may want
+		 * to call start_unlock_process(), but we haven't yet decided.
+		 *
+		 *   Args: none
+		 *   Returns: none
+		 */
+		if (input_size != 0) {
+			*response_size = 0;
+			return VENDOR_RC_BOGUS_ARGS;
+		}
+
+		lock_the_console();
+		*response_size = 0;
+		return VENDOR_RC_SUCCESS;
+	}
+
+	/* I have no idea what you're talking about */
+	*response_size = 0;
+	return VENDOR_RC_NO_SUCH_COMMAND;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_GET_LOCK, vc_lock);
+DECLARE_VENDOR_COMMAND(VENDOR_CC_SET_LOCK, vc_lock);
+
+/****************************************************************************/
 static const char warning[] = "\n\t!!! WARNING !!!\n\n"
 	"\tThe AP will be impolitely shut down and the TPM persistent memory\n"
 	"\tERASED before the console is unlocked. If this is not what you\n"
@@ -161,12 +226,12 @@ static int command_lock(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 
 		/* Changing nothing does nothing */
-		if (enabled == console_restricted_state)
+		if (enabled == console_is_restricted())
 			goto out;
 
 		/* Locking the console is always allowed */
 		if (enabled)  {
-			console_restricted_state = 1;
+			lock_the_console();
 			goto out;
 		}
 
