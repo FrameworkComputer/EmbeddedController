@@ -83,6 +83,40 @@ enum cts_rc test_task_switch(void)
 	return CTS_RC_SUCCESS;
 }
 
+enum cts_rc test_task_priority(void)
+{
+	uint32_t event;
+
+	repeat_count = 2;
+
+	task_wake(TASK_ID_A);
+	task_wake(TASK_ID_C);
+
+	event = task_wait_event(5 * SECOND);
+
+	if (event != TASK_EVENT_WAKE) {
+		CPRINTS("Woken up by unexpected event: 0x%08x", event);
+		return CTS_RC_FAILURE;
+	}
+
+	if (wake_count[0] != repeat_count - 1
+			|| wake_count[1] != repeat_count - 1) {
+		CPRINTS("Unexpected counter values: %d %d %d",
+			wake_count[0], wake_count[1], wake_count[2]);
+		return CTS_RC_FAILURE;
+	}
+
+	/* TODO: Verify no tasks are ready, no events are pending. */
+	if (*task_get_event_bitmap(TASK_ID_A)
+			|| *task_get_event_bitmap(TASK_ID_B)
+			|| *task_get_event_bitmap(TASK_ID_C)) {
+		CPRINTS("Events are pending");
+		return CTS_RC_FAILURE;
+	}
+
+	return CTS_RC_SUCCESS;
+}
+
 #include "cts_testlist.h"
 
 void cts_task(void)

@@ -11,4 +11,9 @@
  */
 CTS_TEST(test_task_switch)
 
+/*
+ * Test task priority. CTS task wakes up A and C then goes to sleep. Since C
+ * has a higher priority, C should run first. This should result in C running
+ * one more time than A (or B).
+ */
 CTS_TEST(test_task_priority)
