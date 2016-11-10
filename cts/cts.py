@@ -24,6 +24,7 @@ import common.board as board
 from copy import deepcopy
 import xml.etree.ElementTree as et
 from twisted.python.syslog import DEFAULT_FACILITY
+import shutil
 
 
 CTS_CORRUPTED_CODE = -2  # The test didn't execute correctly
@@ -36,7 +37,7 @@ DEFAULT_DUT = 'nucleo-f072rb'
 MAX_SUITE_TIME_SEC = 5
 CTS_DEBUG_START = '[DEBUG]'
 CTS_DEBUG_END = '[DEBUG_END]'
-CTS_TEST_RESULT_DIR = '/tmp/cts'
+CTS_TEST_RESULT_DIR = '/tmp/ects'
 
 
 class Cts(object):
@@ -58,7 +59,7 @@ class Cts(object):
       messages sent while it was running
   """
 
-  def __init__(self, ec_dir, dut, module, debug=False):
+  def __init__(self, ec_dir, th, dut, module, debug=False):
     """Initializes cts class object with given arguments.
 
     Args:
@@ -69,13 +70,17 @@ class Cts(object):
       debug: Boolean that indicates whether or not on-board debug message
         printing should be enabled.
     """
-    self.results_dir = CTS_TEST_RESULT_DIR
+    self.results_dir = os.path.join(CTS_TEST_RESULT_DIR, dut, module)
+    if os.path.isdir(self.results_dir):
+      shutil.rmtree(self.results_dir)
+    else:
+      os.makedirs(self.results_dir)
     self.ec_dir = ec_dir
     self.module = module
     self.debug = debug
-    serial_path = os.path.join(self.ec_dir, 'build', 'cts_th_serial')
-    self.th = board.TestHarness(DEFAULT_TH, serial_path)
-    self.dut = board.DeviceUnderTest(dut, self.th)
+    serial_path = os.path.join(CTS_TEST_RESULT_DIR, 'th_serial')
+    self.th = board.TestHarness(th, module, self.results_dir, serial_path)
+    self.dut = board.DeviceUnderTest(dut, self.th, module, self.results_dir)
     cts_dir = os.path.join(self.ec_dir, 'cts')
     testlist_path = os.path.join(cts_dir, self.module, 'cts.testlist')
     self.test_names = Cts.get_macro_args(testlist_path, 'CTS_TEST')
@@ -94,9 +99,11 @@ class Cts(object):
 
   def build(self):
     """Build images for DUT and TH"""
-    if self.dut.build(self.module, self.ec_dir, self.debug):
+    print 'Building DUT image...'
+    if not self.dut.build(self.module, self.ec_dir, self.debug):
       raise RuntimeError('Building module %s for DUT failed' % (self.module))
-    if self.th.build(self.module, self.ec_dir, self.debug):
+    print 'Building TH image...'
+    if not self.th.build(self.module, self.ec_dir, self.debug):
       raise RuntimeError('Building module %s for TH failed' % (self.module))
 
   def flash_boards(self):
@@ -105,11 +112,11 @@ class Cts(object):
     image_path = os.path.join('build', self.th.board, cts_module, 'ec.bin')
     self.identify_boards()
     print 'Flashing TH with', image_path
-    if self.th.flash(image_path):
+    if not self.th.flash(image_path):
       raise RuntimeError('Flashing TH failed')
     image_path = os.path.join('build', self.dut.board, cts_module, 'ec.bin')
     print 'Flashing DUT with', image_path
-    if self.dut.flash(image_path):
+    if not self.dut.flash(image_path):
       raise RuntimeError('Flashing DUT failed')
 
   def setup(self):
@@ -316,13 +323,17 @@ class Cts(object):
     # both boards must be rest and halted, with the th
     # resuming first, in order for the test suite to run in sync
     print 'Halting TH...'
-    self.th.send_open_ocd_commands(['init', 'reset halt'])
-    print 'Resetting DUT...'
-    self.dut.send_open_ocd_commands(['init', 'reset halt'])
+    if not self.th.send_open_ocd_commands(['init', 'reset halt']):
+      raise RuntimeError('Failed to halt TH')
+    print 'Halting DUT...'
+    if not self.dut.send_open_ocd_commands(['init', 'reset halt']):
+      raise RuntimeError('Failed to halt DUT')
     print 'Resuming TH...'
-    self.th.send_open_ocd_commands(['init', 'resume'])
+    if not self.th.send_open_ocd_commands(['init', 'resume']):
+      raise RuntimeError('Failed to resume TH')
     print 'Resuming DUT...'
-    self.dut.send_open_ocd_commands(['init', 'resume'])
+    if not self.dut.send_open_ocd_commands(['init', 'resume']):
+      raise RuntimeError('Failed to resume DUT')
 
     time.sleep(MAX_SUITE_TIME_SEC)
 
@@ -338,12 +349,18 @@ class Cts(object):
     pretty_results = self.prettify_results()
     html_results = self.results_as_html()
 
-    dest = os.path.join(self.results_dir, self.dut.board, self.module + '.html')
-    if not os.path.exists(os.path.dirname(dest)):
-      os.makedirs(os.path.dirname(dest))
-
+    # Write results in html
+    dest = os.path.join(self.results_dir, 'results.html')
     with open(dest, 'w') as fl:
       fl.write(html_results)
+
+    # Write UART outputs
+    dest = os.path.join(self.results_dir, 'uart_th.log')
+    with open(dest, 'w') as fl:
+      fl.write(th_results)
+    dest = os.path.join(self.results_dir, 'uart_dut.log')
+    with open(dest, 'w') as fl:
+      fl.write(dut_results)
 
     print pretty_results
 
@@ -393,7 +410,7 @@ def main():
   if args.dut:
     dut = args.dut
 
-  cts = Cts(ec_dir, dut=dut, module=module, debug=args.debug)
+  cts = Cts(ec_dir, DEFAULT_TH, dut=dut, module=module, debug=args.debug)
 
   if args.setup:
     cts.setup()
