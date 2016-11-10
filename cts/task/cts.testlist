@@ -17,3 +17,10 @@ CTS_TEST(test_task_switch)
  * one more time than A (or B).
  */
 CTS_TEST(test_task_priority)
+
+/*
+ * Test stack overflow. CTS task overflows the stack and it should be detected
+ * when task switch happens. Reboot is expected.
+ * TODO: Verify stack overflow detection and reboot.
+ */
+CTS_TEST(test_stack_overflow)

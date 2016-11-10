@@ -117,7 +117,26 @@ enum cts_rc test_task_priority(void)
 	return CTS_RC_SUCCESS;
 }
 
+static void recurse(int x)
+{
+	CPRINTS("+%d", x);
+	msleep(1);
+	recurse(x + 1);
+	CPRINTS("-%d", x);
+}
+
+enum cts_rc test_stack_overflow(void);
+
 #include "cts_testlist.h"
+
+enum cts_rc test_stack_overflow(void)
+{
+	/* recurse() is expected to overflow the stack, which leads to reboot.
+	 * So, we print output proactively. */
+	CPRINTF("\n%s %d\n", tests[CTS_TEST_ID_COUNT - 1].name, CTS_RC_SUCCESS);
+	recurse(0);
+	return CTS_RC_FAILURE;
+}
 
 void cts_task(void)
 {
