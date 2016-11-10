@@ -22,6 +22,7 @@ FLASH_OFFSETS = {
     'nucleo-f072rb': '0x08000000',
     'nucleo-f411re': '0x08000000',
 }
+REBOOT_MARKER = 'UART initialized after reboot'
 
 
 class Board(object):
@@ -119,22 +120,17 @@ class Board(object):
     with open(self.openocd_log) as log:
       print log.read()
 
-  def build(self, module, ec_dir, debug=False):
+  def build(self, module, ec_dir):
     """Builds test suite module for board
 
     Args:
       ec_dir: String of the ec directory path
-      debug: True means compile in debug messages when building (may
-        affect test results)
     """
     cmds = ['make',
             '--directory=' + ec_dir,
             'BOARD=' + self.board,
             'CTS_MODULE=' + self.module,
             '-j']
-
-    if debug:
-      cmds.append('CTS_DEBUG=TRUE')
 
     rv = 1
     with open(self.build_log, 'a') as output:
@@ -167,11 +163,11 @@ class Board(object):
     return s
 
   def reset(self):
-    """Reset board (used when can't connect to TTY)"""
-    return self.send_open_ocd_commands(['init', 'reset init', 'resume'])
+    """Reset then halt board """
+    return self.send_open_ocd_commands(['init', 'reset halt'])
 
   def setup_tty(self):
-    """Call this before trying to call readOutput for the first time.
+    """Call this before calling read_tty for the first time.
     This is not in the initialization because caller only should call
     this function after serial numbers are setup
     """
@@ -179,68 +175,67 @@ class Board(object):
     self.reset()
     self.identify_tty_port()
 
-    # In testing 3 retries is enough to reset board (2 can fail)
-    num_file_setup_retries = 3
-    # In testing, 10 seconds is sufficient to allow board to reconnect
-    reset_wait_time_seconds = 10
     tty = None
     try:
       tty = self.open_tty()
-    # If board was just connected, must be reset to be read from
     except (IOError, OSError):
-      for i in range(num_file_setup_retries):
-        self.reset()
-        time.sleep(reset_wait_time_seconds)
-        try:
-          tty = self.open_tty()
-          break
-        except (IOError, OSError):
-          continue
-    if not tty:
       raise ValueError('Unable to read ' + self.board + '. If you are running '
                        'cat on a ttyACMx file, please kill that process and '
                        'try again')
     self.tty = tty
 
-  def read_tty(self):
+  def read_tty(self, max_boot_count=1):
     """Read info from a serial port described by a file descriptor
 
+    Args:
+      max_boot_count: Stop reading if boot count exceeds this number
+
     Return:
-      Bytes that UART has output
+      result: characters read from tty
+      boot: boot counts
     """
     buf = []
+    line = []
+    boot = 0
     while True:
       if select.select([self.tty], [], [], 1)[0]:
-        buf.append(os.read(self.tty, 1))
+        c = os.read(self.tty, 1)
       else:
         break
+      line.append(c)
+      if c == '\n':
+        l = ''.join(line)
+        buf.append(l)
+        if REBOOT_MARKER in l:
+          boot += 1
+        line = []
+        if boot > max_boot_count:
+          break
+
+    l = ''.join(line)
+    buf.append(l)
     result = ''.join(buf)
-    return result
+
+    return result, boot
 
   def identify_tty_port(self):
     """Saves this board's serial port"""
     dev_dir = '/dev'
     id_prefix = 'ID_SERIAL_SHORT='
-    num_reset_tries = 3
-    reset_wait_time_s = 10
     com_devices = [f for f in os.listdir(dev_dir) if f.startswith('ttyACM')]
 
-    for i in range(num_reset_tries):
-      for device in com_devices:
-        self.tty_port = os.path.join(dev_dir, device)
-        properties = sp.check_output(['udevadm',
-                        'info',
-                        '-a',
-                        '-n',
-                        self.tty_port,
-                        '--query=property'])
-        for line in [l.strip() for l in properties.split('\n')]:
-          if line.startswith(id_prefix):
-            if self.hla_serial == line[len(id_prefix):]:
-              return
-      if i != num_reset_tries - 1: # No need to reset the board the last time
-        self.reset() # May need to reset to connect
-        time.sleep(reset_wait_time_s)
+    for device in com_devices:
+      self.tty_port = os.path.join(dev_dir, device)
+      properties = sp.check_output(['udevadm',
+                      'info',
+                      '-a',
+                      '-n',
+                      self.tty_port,
+                      '--query=property'])
+      for line in [l.strip() for l in properties.split('\n')]:
+        if line.startswith(id_prefix):
+          if self.hla_serial == line[len(id_prefix):]:
+            return
 
     # If we get here without returning, something is wrong
     raise RuntimeError('The device dev path could not be found')
