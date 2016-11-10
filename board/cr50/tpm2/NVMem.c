@@ -135,8 +135,7 @@ _plat__NvIsDifferent(unsigned int startOffset,
 #ifdef CONFIG_FLASH_NVMEM
 	return (nvmem_is_different(startOffset, size, data, NVMEM_TPM) != 0);
 #else
-	/* Do we need a safe memcmp here? */
-	return (memcmp(&s_NV[startOffset], data, size) != 0);
+	return !DCRYPTO_equals(&s_NV[startOffset], data, size);
 #endif
 }
 

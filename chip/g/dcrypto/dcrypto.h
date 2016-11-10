@@ -179,4 +179,9 @@ int DCRYPTO_bn_div(struct LITE_BIGNUM *quotient, struct LITE_BIGNUM *remainder,
 int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
 			const struct RSA *ca_pub_key);
 
+/*
+ * Memory related functions.
+ */
+int DCRYPTO_equals(const void *a, const void *b, size_t len);
+
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

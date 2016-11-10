@@ -363,8 +363,8 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	 * template instead.
 	 */
 	if (extra->size == sizeof(TPM2_RSA_EK_NAME_TEMPLATE) &&
-		memcmp(extra->buffer, TPM2_RSA_EK_NAME_TEMPLATE,
-			sizeof(TPM2_RSA_EK_NAME_TEMPLATE)) == 0 &&
+		DCRYPTO_equals(extra->buffer, TPM2_RSA_EK_NAME_TEMPLATE,
+			       sizeof(TPM2_RSA_EK_NAME_TEMPLATE)) &&
 		seed == &endorsement_seed->b) {
 		memcpy(local_extra.b.buffer, TPM2_RSA_EK_NAME_CR50,
 			sizeof(TPM2_RSA_EK_NAME_CR50));
@@ -376,7 +376,7 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	 */
 #ifdef CRYPTO_TEST_SETUP
 	if (seed->size == sizeof(VERIFY_SEED) &&
-	    memcmp(seed->buffer, VERIFY_SEED, seed->size) == 0) {
+		DCRYPTO_equals(seed->buffer, VERIFY_SEED, seed->size)) {
 		/* Test seed has already been hashed down. */
 		memcpy(local_seed.t.buffer, seed->buffer, seed->size);
 	} else

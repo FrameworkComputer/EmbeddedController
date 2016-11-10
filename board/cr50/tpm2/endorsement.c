@@ -688,8 +688,8 @@ int tpm_endorse(void)
 		HASH_update(&hmac.hash, "RSA", 4);
 		DCRYPTO_HMAC_SHA256_init(&hmac, DCRYPTO_HMAC_final(&hmac), 32);
 		HASH_update(&hmac.hash, p, RO_CERTS_REGION_SIZE - 32);
-		if (memcmp(p + RO_CERTS_REGION_SIZE - 32,
-				DCRYPTO_HMAC_final(&hmac), 32) != 0) {
+		if (!DCRYPTO_equals(p + RO_CERTS_REGION_SIZE - 32,
+				   DCRYPTO_HMAC_final(&hmac), 32)) {
 			CPRINTF("%s: bad cert region hmac; falling back\n"
 				"    to fixed endorsement\n", __func__);
 

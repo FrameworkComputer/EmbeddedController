@@ -31,6 +31,7 @@ endif
 chip-$(CONFIG_DCRYPTO)+= dcrypto/aes.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/bn.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/bn_hw.o
+chip-$(CONFIG_DCRYPTO)+= dcrypto/compare.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/dcrypto_runtime.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/hkdf.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/hmac.o

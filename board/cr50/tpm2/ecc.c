@@ -394,11 +394,18 @@ static const struct TPM2B_ECC_PARAMETER_aligned NIST_P256_qy = {
 
 static int point_equals(const TPMS_ECC_POINT *a, const TPMS_ECC_POINT *b)
 {
-	return a->x.b.size == b->x.b.size &&
-		a->y.b.size == b->y.b.size &&
-		memcmp(a->x.b.buffer, b->x.b.buffer, a->x.b.size) == 0 &&
-		memcmp(a->y.b.buffer, b->y.b.buffer, a->y.b.size) == 0;
+	int diff = 0;
 
+	diff = a->x.b.size != b->x.b.size;
+	diff |= a->y.b.size != b->y.b.size;
+	if (!diff) {
+		diff |= !DCRYPTO_equals(
+			a->x.b.buffer, b->x.b.buffer, a->x.b.size);
+		diff |= !DCRYPTO_equals(
+			a->y.b.buffer, b->y.b.buffer, a->y.b.size);
+	}
+
+	return !diff;
 }
 
 static void ecc_command_handler(void *cmd_body, size_t cmd_size,
