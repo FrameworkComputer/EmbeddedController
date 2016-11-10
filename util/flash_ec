@@ -285,7 +285,8 @@ on_servov3() {
 
 # Returns 0 on success (if raiden should be used instead of servo)
 on_raiden() {
-	if $(in_array "${BOARDS_RAIDEN[@]}" "${BOARD}") && \
+	if ([ -z "${BOARD}" ] || \
+	    $(in_array "${BOARDS_RAIDEN[@]}" "${BOARD}")) && \
 	   [ "${FLAGS_raiden}" = ${FLAGS_TRUE} ] ; then
 		return 0
 	fi
