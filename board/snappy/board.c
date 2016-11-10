@@ -301,6 +301,8 @@ void board_print_tcpc_fw_version(int port)
 
 void board_tcpc_init(void)
 {
+	int port;
+
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
@@ -310,6 +312,16 @@ void board_tcpc_init(void)
 
 	/* Enable TCPC1 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+	/*
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		const struct usb_mux *mux = &usb_muxes[port];
+
+		mux->hpd_update(port, 0, 0);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
