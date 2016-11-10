@@ -24,11 +24,10 @@ import shutil
 import time
 
 
-CTS_CORRUPTED_CODE = -2  # The test didn't execute correctly
-CTS_CONFLICTING_CODE = -1 # Error codes should never conflict
-CTS_SUCCESS_CODE = 0
-CTS_COLOR_RED = '#fb7d7d'
-CTS_COLOR_GREEN = '#7dfb9f'
+# Host only return codes. Make sure they match values in cts.rc
+CTS_RC_DUPLICATE_RUN = -2  # The test was run multiple times.
+CTS_RC_NO_RESULT = -1  # The test did not run.
+
 DEFAULT_TH = 'stm32l476g-eval'
 DEFAULT_DUT = 'nucleo-f072rb'
 MAX_SUITE_TIME_SEC = 5
@@ -72,11 +71,7 @@ class Cts(object):
     self.test_names = Cts.get_macro_args(testlist_path, 'CTS_TEST')
 
     return_codes_path = os.path.join(cts_dir, 'common', 'cts.rc')
-    self.return_codes = dict(enumerate(Cts.get_macro_args(
-        return_codes_path, 'CTS_RC_')))
-
-    self.return_codes[CTS_CONFLICTING_CODE] = 'RESULTS CONFLICT'
-    self.return_codes[CTS_CORRUPTED_CODE] = 'CORRUPTED'
+    self.get_return_codes(return_codes_path, 'CTS_RC_')
 
   def build(self):
     """Build images for DUT and TH"""
@@ -127,8 +122,26 @@ class Cts(object):
         args.append(l.strip('()').replace(',', ''))
     return args
 
+  def get_return_codes(self, file, prefix):
+    """Extract return code names from the definition file (cts.rc)"""
+    self.return_codes = {}
+    val = 0
+    with open(file, 'r') as f:
+      for line in f.readlines():
+        line = line.strip()
+        if not line.startswith(prefix):
+          continue
+        line = line[len(prefix):]
+        line = line.split(',')[0]
+        if '=' in line:
+          tokens = line.split('=')
+          line = tokens[0].strip()
+          val = int(tokens[1].strip())
+        self.return_codes[val] = line
+        val += 1
+
   def parse_output(self, output):
-    results = defaultdict(lambda: CTS_CORRUPTED_CODE)
+    results = defaultdict(lambda: CTS_RC_NO_RESULT)
 
     for ln in [ln.strip() for ln in output.split('\n')]:
       tokens = ln.split()
@@ -141,7 +154,10 @@ class Cts(object):
         return_code = int(tokens[1])
       except ValueError: # Second token is not an int
         continue
-      results[test_name] = return_code
+      if test_name in results:
+        results[test_name] = CTS_RC_DUPLICATE_RUN
+      else:
+        results[test_name] = return_code
 
     return results
 
@@ -168,7 +184,7 @@ class Cts(object):
     fmt += '{:>' + str(len_code_name) + '} '
     fmt += '{:>' + str(len_code_name) + '}\n'
 
-    self.formatted_results = head.format('test name', 'TH result', 'DUT result')
+    self.formatted_results = head.format('test name', 'TH', 'DUT')
     for test_name in self.test_names:
       th_cn = self.get_return_code_name(th_results[test_name])
       dut_cn = self.get_return_code_name(dut_results[test_name])
@@ -245,6 +261,8 @@ class Cts(object):
       fl.write(dut_output)
 
     print self.formatted_results
+
+    # TODO: Should set exit code for the shell
 
 
 def main():
