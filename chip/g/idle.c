@@ -23,7 +23,11 @@ static enum {
 	NUM_CHOICES
 } idle_action;
 
-#define IDLE_DEFAULT IDLE_SLEEP
+/*
+ * TODO(crosbug.com/p/59641): Set the default action to sleep when the new
+ * boards come in.
+ */
+#define IDLE_DEFAULT IDLE_WFI
 #define EVENT_MIN 500
 
 static const char const *idle_name[] = {
