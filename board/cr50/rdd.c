@@ -115,10 +115,6 @@ void rdd_detached(void)
 	uartn_tx_disconnect(UART_EC);
 	uartn_tx_disconnect(UART_AP);
 
-	/* Disable the AP and EC UART peripheral */
-	uartn_disable(UART_AP);
-	uartn_disable(UART_EC);
-
 	/* Done with case-closed debug mode */
 	gpio_set_level(GPIO_CCD_MODE_L, 1);
 
