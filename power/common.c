@@ -74,16 +74,12 @@ static int pause_in_s5;
 
 static int power_signal_get_level(enum gpio_signal signal)
 {
-#ifdef CONFIG_POWER_S0IX
-	return chipset_get_ps_debounced_level(signal);
-#else
 #ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */
 	if ((int)signal > VW_SIGNAL_BASE)
 		return espi_vw_get_wire(signal);
 #endif
 	return gpio_get_level(signal);
-#endif
 }
 
 static int power_signal_enable_interrupt(enum gpio_signal signal)

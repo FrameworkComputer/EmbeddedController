@@ -163,7 +163,6 @@ enum pwm_channel {
 /* power signal definitions */
 enum power_signal {
 	X86_RSMRST_L_PWRGD = 0,
-	X86_SLP_S0_DEASSERTED,
 	X86_SLP_S3_DEASSERTED,
 	X86_SLP_S4_DEASSERTED,
 	X86_SLP_SUS_DEASSERTED,
