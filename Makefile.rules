@@ -7,6 +7,9 @@
 # Embedded Controller firmware build system - common targets
 #
 
+FLATSIZE_FILE ?= .sizes.txt
+BUILD_DIR := $(firstword $(subst /, ,$(out)))
+
 build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
@@ -385,6 +388,65 @@ clean:
 .PHONY: clobber
 clobber:
 	-rm -rf build TAGS cscope.files cscope.out
+
+.PHONY: savesizes
+savesizes:
+	@find $(BUILD_DIR) -name '*.flat' -printf "%s %p\n" | sort --key 2 > \
+		$(FLATSIZE_FILE)
+	@if [ -s $(FLATSIZE_FILE) ]; then \
+		echo "Saved sizes for $$(cat $(FLATSIZE_FILE) | wc -l) files"; \
+	else \
+		echo "Error: No file sizes saved.  Are they built?"; \
+	fi
+
+.PHONY: newsizes
+newsizes:
+	@if [ ! -s "$(FLATSIZE_FILE)" ]; then \
+		echo "Error: no saved size file ($(FLATSIZE_FILE))."; \
+		echo " Run 'make savesizes' first"; \
+		exit 1; \
+	fi
+	@FILES_CHANGED=0; \
+	FILES_IN_LIST=0; \
+	FILES_COMPARED=0; \
+	FILE_SIZE_CHANGE=0; \
+	NEW_SIZES=$$(find $(BUILD_DIR) -name '*.flat' -printf "%s %p\n"); \
+	while read -r -u 10 line; do \
+		FILES_IN_LIST=$$((FILES_IN_LIST+1)); \
+		FLATFILE=$$(echo "$$line" | cut -f2 -d ' '); \
+		FLATSIZE_ORG=$$(echo "$$line" | cut -f1 -d ' '); \
+		FLATSIZE_NEW="$$(grep "$$FLATFILE" <<< "$$NEW_SIZES" | \
+			sed 's/ .*$$//')"; \
+		if [ -n "$$FLATSIZE_NEW" ]; then \
+			FILES_COMPARED=$$((FILES_COMPARED+1)); \
+			if [ "$$FLATSIZE_NEW" -gt "$$FLATSIZE_ORG" ]; then \
+				FILES_CHANGED=$$((FILES_CHANGED+1)); \
+				FILE_SIZE_CHANGE=$$((FILE_SIZE_CHANGE+ \
+				FLATSIZE_NEW-FLATSIZE_ORG)); \
+				printf "%s grew by %s bytes: (%d to %d)\n" \
+					"$$FLATFILE" \
+					"$$((FLATSIZE_NEW-FLATSIZE_ORG))" \
+					"$$FLATSIZE_ORG" "$$FLATSIZE_NEW"; \
+			elif [ "$$FLATSIZE_NEW" -lt "$$FLATSIZE_ORG" ]; then \
+				FILES_CHANGED=$$((FILES_CHANGED+1)); \
+				FILE_SIZE_CHANGE=$$((FILE_SIZE_CHANGE+ \
+				FLATSIZE_NEW-FLATSIZE_ORG)); \
+				printf "%s shrank by %s bytes: (%d to %d)\n" \
+					"$$FLATFILE" \
+					"$$((FLATSIZE_ORG-FLATSIZE_NEW))" \
+					"$$FLATSIZE_ORG" "$$FLATSIZE_NEW"; \
+			fi; \
+		fi; \
+	done 10< "$(FLATSIZE_FILE)"; \
+	echo "Compared $$FILES_COMPARED of $$FILES_IN_LIST files."; \
+	if [ $$FILES_COMPARED -ne 0 ] && [ $$FILES_CHANGED -eq 0 ]; then \
+		echo "File sizes are unchanged."; \
+	else \
+		printf "%d files changed.\n" "$$FILES_CHANGED"; \
+		printf "Total size change: %s bytes.\n" "$$FILE_SIZE_CHANGE"; \
+		printf "Average size change: %d bytes.\n" \
+			"$$((FILE_SIZE_CHANGE / FILES_CHANGED))"; \
+	fi
 
 .SECONDARY:
 

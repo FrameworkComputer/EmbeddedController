@@ -7,3 +7,4 @@ TAGS
 cscope.*
 .tests-passed
 .failedboards/
+.sizes.txt
