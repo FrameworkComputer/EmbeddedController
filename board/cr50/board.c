@@ -727,6 +727,23 @@ void i2cs_set_pinmux(void)
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 1);   /* enable powerdown exit */
 }
 
+/* Determine key type based on the key ID. */
+static const char *key_type(uint32_t key_id)
+{
+
+	/*
+	 * It is a mere convention, but all prod keys are required to have key
+	 * IDs such, that bit D2 is set, and all dev keys are required to have
+	 * key IDs such, that bit D2 is not set.
+	 *
+	 * This convention is enforced at the key generation time.
+	 */
+	if (key_id & (1 << 2))
+		return "prod";
+	else
+		return "dev";
+}
+
 static int command_sysinfo(int argc, char **argv)
 {
 	enum system_image_copy_t active;
@@ -743,12 +760,12 @@ static int command_sysinfo(int argc, char **argv)
 	active = system_get_ro_image_copy();
 	vaddr = get_program_memory_addr(active);
 	h = (const struct SignedHeader *)vaddr;
-	ccprintf("RO keyid:    0x%08x\n", h->keyid);
+	ccprintf("RO keyid:    0x%08x(%s)\n", h->keyid, key_type(h->keyid));
 
 	active = system_get_image_copy();
 	vaddr = get_program_memory_addr(active);
 	h = (const struct SignedHeader *)vaddr;
-	ccprintf("RW keyid:    0x%08x\n", h->keyid);
+	ccprintf("RW keyid:    0x%08x(%s)\n", h->keyid, key_type(h->keyid));
 
 	ccprintf("DEV_ID:      0x%08x 0x%08x\n",
 		 GREG32(FUSE, DEV_ID0), GREG32(FUSE, DEV_ID1));
