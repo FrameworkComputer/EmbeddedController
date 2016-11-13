@@ -29,6 +29,7 @@
 #define CONFIG_USB_UPDATE
 #define CONFIG_USB_HID
 #define CONFIG_USB_HID_KEYBOARD
+#define CONFIG_USB_HID_TOUCHPAD
 
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
@@ -43,13 +44,15 @@
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_UPDATE	0
 #define USB_IFACE_HID_KEYBOARD	1
-#define USB_IFACE_COUNT		2
+#define USB_IFACE_HID_TOUCHPAD	2
+#define USB_IFACE_COUNT		3
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_UPDATE		1
 #define USB_EP_HID_KEYBOARD	2
-#define USB_EP_COUNT		3
+#define USB_EP_HID_TOUCHPAD	3
+#define USB_EP_COUNT		4
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
