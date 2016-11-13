@@ -11,6 +11,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usb_hid_touchpad.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_TOUCHPAD, outstr)
@@ -59,6 +60,12 @@ struct {
 	uint8_t pressure_adj;
 } elan_tp_params;
 
+/*
+ * Report a more reasonable pressure value, so that no adjustment is necessary
+ * on Chrome OS side.
+ */
+const int pressure_mult = 3;
+
 static int elan_tp_read_cmd(uint16_t reg, uint16_t *val)
 {
 	uint8_t buf[2];
@@ -94,14 +101,17 @@ static int elan_tp_write_cmd(uint16_t reg, uint16_t val)
 	return rv;
 }
 
+static int finger_status[ETP_MAX_FINGERS] = {0};
+
 static int elan_tp_read_report(void)
 {
 	int rv;
 	uint8_t tp_buf[ETP_I2C_REPORT_LEN];
-	int i;
+	int i, ri;
 	uint8_t touch_info;
 	uint8_t hover_info;
 	uint8_t *finger = tp_buf+ETP_FINGER_DATA_OFFSET;
+	struct usb_hid_touchpad_report report;
 
 	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
@@ -113,48 +123,61 @@ static int elan_tp_read_report(void)
 		return rv;
 	}
 
-	CPRINTF("[%T ");
-#if 0
-	for (i = 0; i < ETP_I2C_REPORT_LEN; i++)
-		CPRINTF("%02x", tp_buf[i]);
-	CPRINTF(" || ");
-#endif
-
 	if (tp_buf[ETP_REPORT_ID_OFFSET] != ETP_REPORT_ID) {
 		CPRINTS("Invalid report id (%x)", tp_buf[ETP_REPORT_ID_OFFSET]);
 		return -1;
 	}
 
+	memset(&report, 0, sizeof(report));
+	report.id = 0x01;
+	ri = 0; /* Next finger index in HID report */
+
 	touch_info = tp_buf[ETP_TOUCH_INFO_OFFSET];
 	hover_info = tp_buf[ETP_HOVER_INFO_OFFSET];
 
 	if (touch_info & 0x01)
-		CPRINTF("click|");
-	if (hover_info & 0x40)
-		CPRINTF("hover|");
+		report.button = 1;
+	if (hover_info & 0x40) {
+		/* TODO(crosbug.com/p/59083): Report hover event */
+		CPRINTF("[TP] hover!\n");
+	}
 
 	for (i = 0; i < ETP_MAX_FINGERS; i++) {
 		int valid = touch_info & (1 << (3+i));
 
 		if (valid) {
-			int x = ((finger[0] & 0xf0) << 4) | finger[1];
-			int y = ((finger[0] & 0x0f) << 8) | finger[2];
 			int width = (finger[3] & 0xf0) >> 4;
 			int height = finger[3] & 0x0f;
-			int pressure = finger[4];
+			int pressure = finger[4] + elan_tp_params.pressure_adj;
 
-			y = elan_tp_params.max_y - y;
-			width = width * elan_tp_params.width_x;
-			height = height * elan_tp_params.width_y;
-			pressure = pressure + elan_tp_params.pressure_adj;
+			width = MIN(4095, width * elan_tp_params.width_x);
+			height = MIN(4095, height * elan_tp_params.width_y);
+			pressure = MIN(255, pressure * pressure_mult);
 
-			if (1)
-				CPRINTF("i=%d %d/%d %d/%d %d|", i, x, y,
-					width, height, pressure);
+			report.finger[ri].tip = 1;
+			report.finger[ri].inrange = 1;
+			report.finger[ri].id = i;
+			report.finger[ri].width = width;
+			report.finger[ri].height = height;
+			report.finger[ri].x =
+				((finger[0] & 0xf0) << 4) | finger[1];
+			report.finger[ri].y =
+				elan_tp_params.max_y -
+				(((finger[0] & 0x0f) << 8) | finger[2]);
+			report.finger[ri].pressure = pressure;
 			finger += ETP_FINGER_DATA_LEN;
+			ri++;
+			finger_status[i] = 1;
+		} else if (finger_status[i]) {
+			report.finger[ri].id = i;
+			ri++;
+			finger_status[i] = 0;
 		}
 	}
-	CPRINTF("]\n");
+
+	report.count = ri;
+
+	set_touchpad_report(&report);
 
 	return 0;
 }
