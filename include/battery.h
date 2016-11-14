@@ -137,6 +137,13 @@ void battery_override_params(struct batt_params *batt);
 enum battery_present battery_is_present(void);
 
 /**
+ * Check for battery initialization status.
+ *
+ * @return zero if not initialized.
+ */
+int board_battery_initialized(void);
+
+/**
  * Get battery mode.
  *
  * See MODE_* constants in battery_smart.h

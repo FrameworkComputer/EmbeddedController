@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "bd9995x.h"
 #include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -18,6 +19,8 @@
 /* Shutdown mode parameter to write to manufacturer access register */
 #define PARAM_CUT_OFF_LOW  0x10
 #define PARAM_CUT_OFF_HIGH 0x00
+
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /* Battery info for BQ40Z55 */
 static const struct battery_info info = {
@@ -34,13 +37,11 @@ static const struct battery_info info = {
 	.discharging_max_c = 60,
 };
 
-#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
 static inline enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;
 }
-#endif
 
 const struct battery_info *battery_get_info(void)
 {
@@ -299,14 +300,13 @@ DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge,
 
 #endif				/* CONFIG_CHARGER_PROFILE_OVERRIDE */
 
-#ifdef CONFIG_BATTERY_PRESENT_CUSTOM
 /*
  * Physical detection of battery.
  */
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;
-	int batt_status;
+	int batt_status, rv;
 
 	/* Get the physical hardware status */
 	batt_pres = battery_hw_present();
@@ -316,14 +316,27 @@ enum battery_present battery_is_present(void)
 	 * success & the battery status is Initialized to find out if it
 	 * is a working battery and it is not in the cut-off mode.
 	 *
+	 * If battery I2C fails but VBATT is high, battery is booting from
+	 * cut-off mode.
+	 *
 	 * FETs are turned off after Power Shutdown time.
 	 * The device will wake up when a voltage is applied to PACK.
 	 * Battery status will be inactive until it is initialized.
 	 */
-	if (batt_pres == BP_YES && !battery_status(&batt_status))
-		if (!(batt_status & STATUS_INITIALIZED))
+	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
+		!battery_is_cut_off()) {
+		rv = battery_status(&batt_status);
+		if ((rv && bd9995x_get_battery_voltage() >= info.voltage_min) ||
+			(!rv && !(batt_status & STATUS_INITIALIZED)))
 			batt_pres = BP_NO;
+	}
+
+	batt_pres_prev = batt_pres;
 
 	return batt_pres;
 }
-#endif
+
+int board_battery_initialized(void)
+{
+	return battery_hw_present() == batt_pres_prev;
+}

@@ -389,6 +389,12 @@
 #undef CONFIG_CHARGER_TPS65090  /* Note: does not use CONFIG_CHARGER */
 
 /*
+ * Enable the CHG_EN at initialization to turn-on the BGATE which allows voltage
+ * to be applied to the battery PACK & wakes the battery if it is in shipmode.
+ */
+#undef CONFIG_CHARGER_BD9995X_CHGEN
+
+/*
  * BD9995X PD port to charger port mapping.
  * By default VBUS is selected as primary port.
  * Define only if the VCC is the primary port.
