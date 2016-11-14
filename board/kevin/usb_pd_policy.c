@@ -64,7 +64,7 @@ static void board_vbus_update_source_current(int port)
 {
 	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
 	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
-			(GPIO_INPUT | GPIO_PULL_UP) : GPIO_OUTPUT;
+		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
 
 	/*
 	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
