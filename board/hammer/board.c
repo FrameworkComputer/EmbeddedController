@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_raw.h"
 #include "registers.h"
 #include "task.h"
 #include "update_fw.h"

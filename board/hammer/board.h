@@ -58,6 +58,10 @@
 /* No lid switch */
 #undef CONFIG_LID_SWITCH
 
+/* Keyboard output port list */
+#define CONFIG_KEYBOARD_DEBUG
+#define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_D
+
 /* Enable I2C */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
