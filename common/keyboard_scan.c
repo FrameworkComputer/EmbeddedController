@@ -638,12 +638,14 @@ void keyboard_scan_init(void)
 	if (boot_key_value & ~(BOOT_KEY_ESC | BOOT_KEY_LEFT_SHIFT))
 		return;
 
+#ifdef CONFIG_HOSTCMD_EVENTS
 	if (boot_key_value & BOOT_KEY_ESC) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 		if (boot_key_value & BOOT_KEY_LEFT_SHIFT)
 			host_set_single_event(
 				EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
 	}
+#endif
 }
 
 void keyboard_scan_task(void)

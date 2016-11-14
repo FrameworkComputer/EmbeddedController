@@ -225,7 +225,7 @@ void pd_command_task(void)
 	}
 }
 
-#ifdef USB_TCPM_WITH_OFF_CHIP_TCPC
+#if defined(USB_TCPM_WITH_OFF_CHIP_TCPC) && defined(CONFIG_HOSTCMD_EVENTS)
 /*
  * PD host event status for host command
  * Note: this variable must be aligned on 4-byte boundary because we pass the

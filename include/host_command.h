@@ -131,6 +131,7 @@ uint8_t *host_get_memmap(int offset);
  */
 enum ec_status host_command_process(struct host_cmd_handler_args *args);
 
+#ifdef CONFIG_HOSTCMD_EVENTS
 /**
  * Set one or more host event bits.
  *
@@ -160,6 +161,7 @@ void host_clear_events(uint32_t mask);
  * Return the raw event state.
  */
 uint32_t host_get_events(void);
+#endif
 
 /**
  * Send a response to the relevant driver for transmission
