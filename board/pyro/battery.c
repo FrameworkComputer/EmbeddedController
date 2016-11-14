@@ -26,6 +26,9 @@
 #define SB_FETON_DATA2  0x4000
 #define BATTERY_FETOFF  0x0100
 
+/* First use day base */
+#define BATT_FUD_BASE   0x38
+
 #define GREEN_BOOK_SUPPORT      (1 << 2)
 
 /* Shutdown mode parameter to write to manufacturer access register */
@@ -96,6 +99,44 @@ static int cutoff(void)
 int board_cut_off_battery(void)
 {
 	return cutoff();
+}
+
+int battery_get_vendor_param(uint32_t param, uint32_t *value)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
+/* parameter 0 for first use day */
+int battery_set_vendor_param(uint32_t param, uint32_t value)
+{
+	if (param == 0) {
+		int rv, ymd;
+
+		rv = sb_read(BATT_FUD_BASE, &ymd);
+		if (rv != EC_SUCCESS)
+			return EC_ERROR_UNKNOWN;
+		if (ymd == 0)
+			return sb_write(BATT_FUD_BASE, value) ?
+					EC_ERROR_UNKNOWN : EC_SUCCESS;
+
+		rv = sb_read(BATT_FUD_BASE | 0x03, &ymd);
+		if (rv != EC_SUCCESS)
+			return EC_ERROR_UNKNOWN;
+		if (ymd == 0)
+			return sb_write(BATT_FUD_BASE | 0x03, value) ?
+					EC_ERROR_UNKNOWN : EC_SUCCESS;
+
+		rv = sb_read(BATT_FUD_BASE | 0x07, &ymd);
+		if (rv != EC_SUCCESS)
+			return EC_ERROR_UNKNOWN;
+		if (ymd == 0)
+			return sb_write(BATT_FUD_BASE | 0x07, value) ?
+					EC_ERROR_UNKNOWN : EC_SUCCESS;
+
+		return EC_ERROR_UNKNOWN;
+	} else {
+		return EC_ERROR_UNIMPLEMENTED;
+	}
 }
 
 enum battery_disconnect_state battery_get_disconnect_state(void)
