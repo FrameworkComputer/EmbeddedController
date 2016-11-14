@@ -1155,7 +1155,11 @@ int cmd_flash_pd(int argc, char *argv[])
 	int rv, fsize, step = 96;
 	char *e;
 	char *buf;
-	uint32_t *data = &(p->size) + 1;
+	/* Double casting is a workaround to silent clang error.
+	 * The pointer is always aligned but clang complains.
+	 * https://crbug.com/665240
+	 */
+	uint32_t *data = (uint32_t *) ((char *)&(p->size)) + 1;
 
 	if (argc < 4) {
 		fprintf(stderr, "Usage: %s <dev_id> <port> <filename>\n",
