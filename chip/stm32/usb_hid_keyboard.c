@@ -10,6 +10,8 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_config.h"
+#include "keyboard_protocol.h"
 #include "link_defs.h"
 #include "registers.h"
 #include "task.h"
@@ -17,13 +19,46 @@
 #include "util.h"
 #include "usb_descriptor.h"
 #include "usb_hid.h"
-#include "usb_hid_keyboard.h"
 #include "usb_hid_hw.h"
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
-#define HID_KEYBOARD_REPORT_SIZE  8
+struct __attribute__((__packed__)) usb_hid_keyboard_report {
+	uint8_t modifiers; /* bitmap of modifiers 224-231 */
+	uint8_t reserved; /* 0x0 */
+	uint8_t keys[6];
+};
+
+#define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
+
+#define HID_KEYBOARD_EP_INTERVAL_MS 32 /* ms */
+
+/* Modifiers keycode range */
+#define HID_KEYBOARD_MODIFIER_LOW 0xe0
+#define HID_KEYBOARD_MODIFIER_HIGH 0xe7
+
+/* The standard Chrome OS keyboard matrix table. See HUT 1.12v2 Table 12 and
+ * https://www.w3.org/TR/DOM-Level-3-Events-code .
+ */
+const uint8_t keycodes[KEYBOARD_ROWS][KEYBOARD_COLS] = {
+	{ 0x00, 0xe3, 0x3a, 0x05, 0x43, 0x87, 0x11, 0x00, 0x2e,
+	  0x00, 0xe6, 0x00, 0x00 },
+	{ 0x00, 0x29, 0x3d, 0x0a, 0x40, 0x00, 0x0b, 0x00, 0x34,
+	  0x42, 0x00, 0x2a, 0x90 },
+	{ 0xe0, 0x2b, 0x3c, 0x17, 0x3f, 0x30, 0x1c, 0x64, 0x2F,
+	  0x41, 0x89, 0x00, 0x00 },
+	{ 0x00, 0x35, 0x3b, 0x22, 0x3e, 0x00, 0x23, 0x00, 0x2d,
+	  0x68, 0x00, 0x31, 0x91 },
+	{ 0xe4, 0x04, 0x07, 0x09, 0x16, 0x0e, 0x0d, 0x00, 0x33,
+	  0x0f, 0x31, 0x28, 0x00 },
+	{ 0x00, 0x1d, 0x06, 0x19, 0x1b, 0x36, 0x10, 0xe1, 0x38,
+	  0x37, 0x00, 0x2c, 0x00 },
+	{ 0x00, 0x1e, 0x20, 0x21, 0x1f, 0x25, 0x24, 0x00, 0x27,
+	  0x26, 0xe2, 0x51, 0x4f },
+	{ 0x00, 0x14, 0x08, 0x15, 0x1a, 0x0c, 0x18, 0xe5, 0x13,
+	  0x12, 0x00, 0x52, 0x50 }
+};
 
 /* HID descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_HID_KEYBOARD) = {
@@ -43,7 +78,7 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 81) = {
 	.bEndpointAddress = 0x80 | USB_EP_HID_KEYBOARD,
 	.bmAttributes = 0x03 /* Interrupt endpoint */,
 	.wMaxPacketSize = HID_KEYBOARD_REPORT_SIZE,
-	.bInterval = 40 /* ms polling interval */
+	.bInterval = HID_KEYBOARD_EP_INTERVAL_MS /* ms polling interval */
 };
 
 /* HID : Report Descriptor */
@@ -51,9 +86,11 @@ static const uint8_t report_desc[] = {
 	0x05, 0x01, /* Usage Page (Generic Desktop) */
 	0x09, 0x06, /* Usage (Keyboard) */
 	0xA1, 0x01, /* Collection (Application) */
+
+	/* Modifiers */
 	0x05, 0x07, /* Usage Page (Key Codes) */
-	0x19, 0xE0, /* Usage Minimum (224) */
-	0x29, 0xE7, /* Usage Maximum (231) */
+	0x19, HID_KEYBOARD_MODIFIER_LOW, /* Usage Minimum */
+	0x29, HID_KEYBOARD_MODIFIER_HIGH, /* Usage Maximum */
 	0x15, 0x00, /* Logical Minimum (0) */
 	0x25, 0x01, /* Logical Maximum (1) */
 	0x75, 0x01, /* Report Size (1) */
@@ -64,13 +101,14 @@ static const uint8_t report_desc[] = {
 	0x75, 0x08, /* Report Size (8) */
 	0x81, 0x01, /* Input (Constant), ;Reserved byte */
 
+	/* Normal keys */
 	0x95, 0x06, /* Report Count (6) */
 	0x75, 0x08, /* Report Size (8) */
 	0x15, 0x00, /* Logical Minimum (0) */
-	0x25, 0x65, /* Logical Maximum(101) */
+	0x25, 0xa4, /* Logical Maximum (164) */
 	0x05, 0x07, /* Usage Page (Key Codes) */
 	0x19, 0x00, /* Usage Minimum (0) */
-	0x29, 0x65, /* Usage Maximum (101) */
+	0x29, 0xa4, /* Usage Maximum (164) */
 	0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
 	0xC0        /* End Collection */
 };
@@ -87,12 +125,16 @@ const struct usb_hid_descriptor USB_CUSTOM_DESC(USB_IFACE_HID_KEYBOARD, hid) = {
 	}}
 };
 
-static usb_uint hid_ep_buf[2][HID_KEYBOARD_REPORT_SIZE / 2] __usb_ram;
+#define EP_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_REPORT_SIZE, 2)
+
+static usb_uint hid_ep_buf[2][EP_BUF_SIZE] __usb_ram;
 static volatile int hid_current_buf;
 
 static volatile int hid_ep_data_ready;
 
-void set_keyboard_report(uint64_t rpt)
+static struct usb_hid_keyboard_report report;
+
+static void write_keyboard_report(void)
 {
 	/* Prevent the interrupt handler from sending the data (which would use
 	 * an incomplete buffer).
@@ -100,7 +142,7 @@ void set_keyboard_report(uint64_t rpt)
 	hid_ep_data_ready = 0;
 	hid_current_buf = hid_current_buf ? 0 : 1;
 	memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf[hid_current_buf]),
-			 &rpt, sizeof(rpt));
+			 &report, sizeof(report));
 
 	/* Tell the interrupt handler to send the next buffer. */
 	hid_ep_data_ready = 1;
@@ -155,42 +197,57 @@ static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 }
 USB_DECLARE_IFACE(USB_IFACE_HID_KEYBOARD, hid_keyboard_iface_request)
 
-static int command_hid_kb(int argc, char **argv)
+void keyboard_clear_buffer(void)
 {
-	uint8_t keycode = 0x0a; /* 'G' key */
+	memset(&report, 0, sizeof(report));
+	write_keyboard_report();
+}
 
-	if (argc >= 2) {
-		char *e;
+void keyboard_state_changed(int row, int col, int is_pressed)
+{
+	int i;
+	uint8_t mask;
+	uint8_t keycode = keycodes[row][col];
 
-		keycode = strtoi(argv[1], &e, 16);
-		if (*e)
-			return EC_ERROR_PARAM1;
+	if (!keycode) {
+		CPRINTF("Unknown key at %d/%d\n", row, col);
+		return;
 	}
 
-	/* press then release the key */
-	set_keyboard_report((uint32_t)keycode << 16);
-	udelay(50000);
-	set_keyboard_report(0x000000);
+	if (keycode >= HID_KEYBOARD_MODIFIER_LOW &&
+	    keycode <= HID_KEYBOARD_MODIFIER_HIGH) {
+		mask = 0x01 << (keycode - HID_KEYBOARD_MODIFIER_LOW);
+		if (is_pressed)
+			report.modifiers |= mask;
+		else
+			report.modifiers &= ~mask;
 
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(hid_kb, command_hid_kb,
-			"[<HID keycode>]",
-			"test USB HID driver");
-
-static int command_hid_test(int argc, char **argv)
-{
-	uint8_t keycode = 0x0a; /* 'G' key */
-
-	for (keycode = 0x0a; keycode < 0x3a; keycode++) {
-		/* Quickly change the report (faster than interrupt period) */
-		set_keyboard_report((uint32_t)keycode << 16);
-		udelay(1000);
+		write_keyboard_report();
+		return;
 	}
-	udelay(50000);
-	set_keyboard_report(0x000000);
 
-	return EC_SUCCESS;
+	if (is_pressed) {
+		/* Add keycode to the list of keys */
+		for (i = 0; i < ARRAY_SIZE(report.keys); i++) {
+			/* Is key already pressed? */
+			if (report.keys[i] == keycode)
+				return;
+			if (report.keys[i] == 0) {
+				report.keys[i] = keycode;
+				write_keyboard_report();
+				return;
+			}
+		}
+		/* Too many keys, ignoring. */
+	} else {
+		/* Remove keycode from the list of keys */
+		for (i = 0; i < ARRAY_SIZE(report.keys); i++) {
+			if (report.keys[i] == keycode) {
+				report.keys[i] = 0;
+				write_keyboard_report();
+				return;
+			}
+		}
+		/* Couldn't find the key... */
+	}
 }
-DECLARE_CONSOLE_COMMAND(hid_test, command_hid_test,
-			"", "test USB HID driver");
