@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "clock.h"
 #include "common.h"
 #include "config.h"
@@ -86,23 +87,61 @@ const struct usb_hid_descriptor USB_CUSTOM_DESC(USB_IFACE_HID_KEYBOARD, hid) = {
 	}}
 };
 
-static usb_uint hid_ep_buf[HID_KEYBOARD_REPORT_SIZE / 2] __usb_ram;
+static usb_uint hid_ep_buf[2][HID_KEYBOARD_REPORT_SIZE / 2] __usb_ram;
+static volatile int hid_current_buf;
+
+static volatile int hid_ep_data_ready;
 
 void set_keyboard_report(uint64_t rpt)
 {
-	memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf), &rpt, sizeof(rpt));
-	/* enable TX */
-	STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK, EP_TX_VALID, 0);
+	/* Prevent the interrupt handler from sending the data (which would use
+	 * an incomplete buffer).
+	 */
+	hid_ep_data_ready = 0;
+	hid_current_buf = hid_current_buf ? 0 : 1;
+	memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf[hid_current_buf]),
+			 &rpt, sizeof(rpt));
+
+	/* Tell the interrupt handler to send the next buffer. */
+	hid_ep_data_ready = 1;
+	if ((STM32_USB_EP(USB_EP_HID_KEYBOARD) & EP_TX_MASK) == EP_TX_VALID) {
+		/* Endpoint is busy: we sneak in an address change to give us a
+		 * chance to send the most updated report. However, there is no
+		 * guarantee that this buffer is the one actually sent, so we
+		 * keep hid_ep_data_ready = 1, which will send a duplicated
+		 * report.
+		 */
+		btable_ep[USB_EP_HID_KEYBOARD].tx_addr =
+			usb_sram_addr(hid_ep_buf[hid_current_buf]);
+		hid_ep_data_ready = 1;
+	} else if (atomic_read_clear(&hid_ep_data_ready)) {
+		/* Endpoint is not busy, and interrupt handler did not just
+		 * send our last buffer: swap buffer, enable TX.
+		 */
+		btable_ep[USB_EP_HID_KEYBOARD].tx_addr =
+			usb_sram_addr(hid_ep_buf[hid_current_buf]);
+		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
+				EP_TX_VALID, 0);
+	}
 }
 
 static void hid_keyboard_tx(void)
 {
 	hid_tx(USB_EP_HID_KEYBOARD);
+	if (hid_ep_data_ready) {
+		/* swap buffer, enable TX */
+		btable_ep[USB_EP_HID_KEYBOARD].tx_addr =
+			usb_sram_addr(hid_ep_buf[hid_current_buf]);
+		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
+				EP_TX_VALID, 0);
+	}
+	hid_ep_data_ready = 0;
 }
 
 static void hid_keyboard_reset(void)
 {
-	hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf, HID_KEYBOARD_REPORT_SIZE);
+	hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf[hid_current_buf],
+		  HID_KEYBOARD_REPORT_SIZE);
 }
 
 USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx, hid_keyboard_tx,
@@ -138,3 +177,20 @@ static int command_hid_kb(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(hid_kb, command_hid_kb,
 			"[<HID keycode>]",
 			"test USB HID driver");
+
+static int command_hid_test(int argc, char **argv)
+{
+	uint8_t keycode = 0x0a; /* 'G' key */
+
+	for (keycode = 0x0a; keycode < 0x3a; keycode++) {
+		/* Quickly change the report (faster than interrupt period) */
+		set_keyboard_report((uint32_t)keycode << 16);
+		udelay(1000);
+	}
+	udelay(50000);
+	set_keyboard_report(0x000000);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hid_test, command_hid_test,
+			"", "test USB HID driver");
