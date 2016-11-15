@@ -28,11 +28,4 @@ void button_state_changed(enum keyboard_button_type button, int is_pressed);
  */
 void keyboard_host_write(int data, int is_cmd);
 
-/**
- * Called by keyboard scan code once any key state change (after de-bounce),
- *
- * This function will look up matrix table and convert scancode host.
- */
-void keyboard_state_changed(int row, int col, int is_pressed);
-
 #endif  /* __CROS_EC_KEYBOARD_8042_H */

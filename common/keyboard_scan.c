@@ -472,11 +472,13 @@ static int check_keys_changed(uint8_t *state)
 			state[c] ^= mask;
 			any_change = 1;
 
-#ifdef CONFIG_KEYBOARD_PROTOCOL_8042
 			/* Inform keyboard module if scanning is enabled */
-			if (keyboard_scan_is_enabled())
+			if (keyboard_scan_is_enabled()) {
+				/* This is no-op for protocols that require a
+				 * full keyboard matrix (e.g., MKBP).
+				 */
 				keyboard_state_changed(i, c, new_mask ? 1 : 0);
-#endif
+			}
 		}
 	}
 

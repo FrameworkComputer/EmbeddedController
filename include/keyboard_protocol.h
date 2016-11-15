@@ -35,6 +35,18 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed);
 
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 #include "keyboard_mkbp.h"
+
+/* MKBP protocol takes the whole keyboard matrix, and does not care about
+ * individual key presses.
+ */
+static inline void keyboard_state_changed(int row, int col, int is_pressed) {}
+#else
+/**
+ * Called by keyboard scan code once any key state change (after de-bounce),
+ *
+ * This function will look up matrix table and convert scancode host.
+ */
+void keyboard_state_changed(int row, int col, int is_pressed);
 #endif
 
 #endif  /* __CROS_EC_KEYBOARD_PROTOCOL_H */
