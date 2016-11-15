@@ -171,12 +171,13 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
 {
 	int rv;
 
 	charge_ma = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-	rv = charge_set_input_current_limit(charge_ma);
+	rv = charge_set_input_current_limit(charge_ma, charge_mv);
 	if (rv < 0)
 		CPRINTS("Failed to set input current limit for PD");
 }

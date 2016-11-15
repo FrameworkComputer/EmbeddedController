@@ -82,9 +82,10 @@ int chg_ramp_is_detected(void);
  * @supplier Active charging supplier
  * @current Minimum input current limit
  * @registration_time Timestamp of when the supplier is registered
+ * @voltage Negotiated charge voltage.
  */
 void chg_ramp_charge_supplier_change(int port, int supplier, int current,
-				     timestamp_t registration_time);
+			     timestamp_t registration_time, int voltage);
 
 #else
 static inline void chg_ramp_charge_supplier_change(

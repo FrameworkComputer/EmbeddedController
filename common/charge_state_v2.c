@@ -1106,7 +1106,7 @@ int charge_get_battery_temp(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-int charge_set_input_current_limit(int ma)
+int charge_set_input_current_limit(int ma, int mv)
 {
 	/*
 	 * If battery is not present and we are not locked, then allow system
@@ -1114,8 +1114,26 @@ int charge_set_input_current_limit(int ma)
 	 * the charger but this is no worse then browning out due to
 	 * insufficient input current.
 	 */
-	if (curr.batt.is_present != BP_YES && !system_is_locked())
+	if (curr.batt.is_present != BP_YES && !system_is_locked()) {
+#ifdef CONFIG_USB_POWER_DELIVERY
+#if ((PD_MAX_POWER_MW * 1000) / PD_MAX_VOLTAGE_MV != PD_MAX_CURRENT_MA)
+		/*
+		 * If battery is not present, input current is set to
+		 * PD_MAX_CURRENT_MA. If the input power set is greater than
+		 * the maximum allowed system power, system might get damaged.
+		 * Hence, limit the input current to meet maximum allowed
+		 * input system power.
+		 */
+		if (mv > 0 && mv * curr.desired_input_current >
+			PD_MAX_POWER_MW * 1000)
+			ma = (PD_MAX_POWER_MW * 1000) / mv;
+		else
+			return EC_SUCCESS;
+#else
 		return EC_SUCCESS;
+#endif
+#endif /* CONFIG_USB_POWER_DELIVERY */
+	}
 
 #ifdef CONFIG_CHARGER_MAX_INPUT_CURRENT
 	/* Limit input current limit to max limit for this board */

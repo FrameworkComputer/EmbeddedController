@@ -126,7 +126,7 @@ static void pd_check_chg_status(struct ec_response_pd_status *pd_status)
 
 	/* Set input current limit */
 	rv = charge_set_input_current_limit(MAX(pd_status->curr_lim_ma,
-					CONFIG_CHARGER_INPUT_CURRENT));
+					CONFIG_CHARGER_INPUT_CURRENT), 0);
 	if (rv < 0)
 		CPRINTS("Failed to set input curr limit from PD MCU");
 }

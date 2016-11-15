@@ -53,7 +53,8 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 	       vbus_low_current_ma;
 }
 
-void board_set_charge_limit(int port, int supplier, int limit_ma, int max_ma)
+void board_set_charge_limit(int port, int supplier, int limit_ma,
+			    int max_ma, int max_mv)
 {
 	charge_limit_ma = limit_ma;
 	if (charge_limit_ma > overcurrent_current_ma)
@@ -79,7 +80,7 @@ static void plug_charger_with_ts(int supplier_type, int port, int min_current,
 	vbus_low_current_ma = vbus_low_current;
 	overcurrent_current_ma = overcurrent_current;
 	chg_ramp_charge_supplier_change(port, supplier_type, min_current,
-					reg_time);
+					reg_time, 0);
 }
 
 static void plug_charger(int supplier_type, int port, int min_current,
@@ -93,7 +94,7 @@ static void plug_charger(int supplier_type, int port, int min_current,
 static void unplug_charger(void)
 {
 	chg_ramp_charge_supplier_change(CHARGE_PORT_NONE, CHARGE_SUPPLIER_NONE,
-					0, get_time());
+					0, get_time(), 0);
 }
 
 static int unplug_charger_and_check(void)

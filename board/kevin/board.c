@@ -245,7 +245,8 @@ int board_set_active_charge_port(int charge_port)
 	return bd9995x_select_input_port(bd9995x_port, bd9995x_port_select);
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -259,7 +260,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 	}
 
 	charge_set_input_current_limit(MAX(charge_ma,
-				       CONFIG_CHARGER_INPUT_CURRENT));
+			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int extpower_is_present(void)

@@ -498,11 +498,13 @@ static int board_update_charge_limit(int charge_ma)
  * @param port          Port number.
  * @param supplier      Charge supplier type.
  * @param charge_ma     Desired charge limit (mA).
+ * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
 {
 	/* Update current limit and notify EC if it changed */
-	if (board_update_charge_limit(charge_ma))
+	if (board_update_charge_limit(charge_ma), charge_mv)
 		pd_send_ec_int();
 }
 

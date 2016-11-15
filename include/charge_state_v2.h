@@ -68,9 +68,10 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
  * time AC is applied.
  *
  * @param ma New input current limit in mA
+ * @param mv Negotiated charge voltage in mV.
  * @return EC_SUCCESS or error
  */
-int charge_set_input_current_limit(int ma);
+int charge_set_input_current_limit(int ma, int mv);
 
 
 /**

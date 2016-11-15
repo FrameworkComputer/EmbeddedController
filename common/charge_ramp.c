@@ -66,6 +66,7 @@ static int oc_info_idx[CONFIG_USB_PD_PORT_COUNT];
 static int active_port = CHARGE_PORT_NONE;
 static int active_sup;
 static int active_icl;
+static int active_vtg;
 static timestamp_t reg_time;
 
 static int stablize_port;
@@ -77,7 +78,7 @@ static int min_icl;
 
 
 void chg_ramp_charge_supplier_change(int port, int supplier, int current,
-				     timestamp_t registration_time)
+				timestamp_t registration_time, int voltage)
 {
 	/*
 	 * If the last active port was a valid port and the port
@@ -97,6 +98,7 @@ void chg_ramp_charge_supplier_change(int port, int supplier, int current,
 	/* Set new active port, set ramp state, and wake ramp task */
 	active_port = port;
 	active_sup = supplier;
+	active_vtg = voltage;
 
 	/* Set min and max input current limit based on if ramp is allowed */
 	if (board_is_ramp_allowed(active_sup)) {
@@ -320,7 +322,8 @@ void chg_ramp_task(void)
 
 		/* Set the input current limit */
 		lim = chg_ramp_get_current_limit();
-		board_set_charge_limit(active_port, active_sup, lim, lim);
+		board_set_charge_limit(active_port, active_sup, lim,
+				       lim, active_vtg);
 
 		if (ramp_st == CHG_RAMP_STABILIZE)
 			/*
