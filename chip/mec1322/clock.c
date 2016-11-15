@@ -414,9 +414,8 @@ void __idle(void)
 		interrupt_enable();
 	} /* while(1) */
 }
-#endif /*CONFIG_LOW_POWER_IDLE*/
 
-#ifdef CONFIG_LOW_POWER_IDLE
+#ifdef CONFIG_CMD_IDLE_STATS
 /**
  * Print low power idle statistics
  */
@@ -435,6 +434,7 @@ static int command_idle_stats(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 			"",
 			"Print last idle stats");
+#endif /* defined(CONFIG_CMD_IDLE_STATS) */
 
 /**
  * Configure deep sleep clock settings.
