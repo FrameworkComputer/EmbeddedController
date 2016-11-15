@@ -95,11 +95,11 @@ static unsigned max_request_mv = PD_MAX_VOLTAGE_MV; /* no cap */
  */
 static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 {
-	int i, uw, max_uw = 0, mv, ma;
+	int i, uw, mv, ma;
 	int ret = -1;
-#ifdef PD_PREFER_LOW_VOLTAGE
-	int cur_mv = 0;
-#endif
+	int __attribute__((unused)) cur_mv = 0;
+	int cur_uw = 0;
+	int prefer_cur;
 
 	/* max voltage is always limited by this boards max request */
 	max_mv = MIN(max_mv, PD_MAX_VOLTAGE_MV);
@@ -118,21 +118,26 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 			ma = MIN(ma, PD_MAX_CURRENT_MA);
 			uw = ma * mv;
 		}
-#ifdef PD_PREFER_LOW_VOLTAGE
+
 		if (mv > max_mv)
 			continue;
 		uw = MIN(uw, PD_MAX_POWER_MW * 1000);
-		if ((uw > max_uw) || ((uw == max_uw) && mv < cur_mv)) {
+		prefer_cur = 0;
+
+		/* Apply special rules in case of 'tie' */
+#ifdef PD_PREFER_LOW_VOLTAGE
+		if (uw == cur_uw && mv < cur_mv)
+			prefer_cur = 1;
+#elif defined(PD_PREFER_HIGH_VOLTAGE)
+		if (uw == cur_uw && mv > cur_mv)
+			prefer_cur = 1;
+#endif
+		/* Prefer higher power, except for tiebreaker */
+		if (uw > cur_uw || prefer_cur) {
 			ret = i;
-			max_uw = uw;
+			cur_uw = uw;
 			cur_mv = mv;
 		}
-#else
-		if ((uw > max_uw) && (mv <= max_mv)) {
-			ret = i;
-			max_uw = uw;
-		}
-#endif
 	}
 	return ret;
 }

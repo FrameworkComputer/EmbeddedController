@@ -294,6 +294,9 @@ enum pyro_board_version {
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
+/* The higher the input voltage, the higher the power efficiency. */
+#define PD_PREFER_HIGH_VOLTAGE
+
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
 
