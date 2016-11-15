@@ -408,7 +408,7 @@ static int anx74xx_check_cc_type(int cc_reg)
 		break;
 
 	case BIT_VALUE_OF_SRC_CC_RA:
-		cc = TYPEC_CC_VOLT_RD;
+		cc = TYPEC_CC_VOLT_RA;
 		break;
 
 	case BIT_VALUE_OF_SNK_CC_DEFAULT:
