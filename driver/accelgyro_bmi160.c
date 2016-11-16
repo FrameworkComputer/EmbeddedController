@@ -788,7 +788,6 @@ static int config_interrupt(const struct motion_sensor_t *s)
 
 	mutex_lock(s->mutex);
 	raw_write8(s->port, s->addr, BMI160_CMD_REG, BMI160_CMD_FIFO_FLUSH);
-	msleep(30);
 	raw_write8(s->port, s->addr, BMI160_CMD_REG, BMI160_CMD_INT_RESET);
 
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
@@ -1110,7 +1109,7 @@ static int init(const struct motion_sensor_t *s)
 		/* Reset the chip to be in a good state */
 		raw_write8(s->port, s->addr, BMI160_CMD_REG,
 				BMI160_CMD_SOFT_RESET);
-		msleep(30);
+		msleep(1);
 		data->flags &= ~(BMI160_FLAG_SEC_I2C_ENABLED |
 				(BMI160_FIFO_ALL_MASK <<
 				 BMI160_FIFO_FLAG_OFFSET));
@@ -1130,13 +1129,18 @@ static int init(const struct motion_sensor_t *s)
 		raw_write8(s->port, s->addr, BMI160_PMU_TRIGGER, 0);
 	}
 
-	raw_write8(s->port, s->addr, BMI160_CMD_REG,
-			BMI160_CMD_MODE_NORMAL(s->type));
-	msleep(wakeup_time[s->type]);
-
 #ifdef CONFIG_MAG_BMI160_BMM150
 	if (s->type == MOTIONSENSE_TYPE_MAG) {
 		struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
+
+		/*
+		 * To be able to configure the real magnetometer, we must set
+		 * the BMI160 magnetometer part (a pass through) in normal mode.
+		 */
+		raw_write8(s->port, s->addr, BMI160_CMD_REG,
+				BMI160_CMD_MODE_NORMAL(s->type));
+		msleep(wakeup_time[s->type]);
+
 		if ((data->flags & BMI160_FLAG_SEC_I2C_ENABLED) == 0) {
 			int ext_page_reg, pullup_reg;
 			/* Enable secondary interface */

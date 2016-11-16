@@ -121,9 +121,7 @@ int bmm150_init(const struct motion_sensor_t *s)
 	raw_mag_write8(s->port, s->addr, BMM150_REPXY, BMM150_REP(SPECIAL, XY));
 	raw_mag_write8(s->port, s->addr, BMM150_REPZ, BMM150_REP(SPECIAL, Z));
 	ret = raw_mag_read8(s->port, s->addr, BMM150_REPXY, &val);
-	CPRINTS("repxy: 0x%02x", val);
 	ret = raw_mag_read8(s->port, s->addr, BMM150_REPZ, &val);
-	CPRINTS("repz: 0x%02x", val);
 	/*
 	 * Set the compass forced mode, to sleep after each measure.
 	 */
