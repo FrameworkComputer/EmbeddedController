@@ -13,6 +13,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "tpm_registers.h"
 
 #define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
@@ -58,7 +59,21 @@ static void lock_the_console(void)
 
 static void unlock_the_console(void)
 {
-	nvmem_wipe_or_reboot();
+	int rc;
+
+	/* Wipe the TPM's memory and reset the TPM task. */
+	rc = tpm_reset(1, 1);
+	if (rc != EC_SUCCESS) {
+		/*
+		 * If anything goes wrong (which is unlikely), we REALLY don't
+		 * want to unlock the console. It's possible to fail without
+		 * the TPM task ever running, so rebooting is probably our best
+		 * bet for fixing the problem.
+		 */
+		CPRINTS("%s: Couldn't wipe nvmem! (rc %d)", __func__, rc);
+		system_reset(SYSTEM_RESET_HARD);
+	}
+
 	CPRINTS("TPM is erased, console is unlocked");
 	console_restricted_state = 0;
 }

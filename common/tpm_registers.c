@@ -640,33 +640,55 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 #endif
 
 /* Event (to TPM task) to request reset, or (from TPM task) on completion. */
-#define TPM_EVENT_RESET (TASK_EVENT_CUSTOM(1))
+#define TPM_EVENT_RESET TASK_EVENT_CUSTOM(1 << 0)
 
-/* Calling task to notify when the TPM reset has completed */
+/* Calling task (singular) to notify when the TPM reset has completed */
 static __initialized task_id_t waiting_for_reset = TASK_ID_INVALID;
 
-int tpm_reset(void)
+/* Return value from blocking tpm_reset() call */
+static __preserved int wipe_result;
+
+/* Did tpm_reset() request nvmem wipe? (intentionally cleared on reset) */
+static int wipe_requested;
+
+int tpm_reset(int wait_until_done, int wipe_nvmem_first)
 {
 	uint32_t evt;
 
-	cprints(CC_TASK, "%s", __func__);
+	cprints(CC_TASK, "%s(%d, %d)", __func__,
+		wait_until_done, wipe_nvmem_first);
 
+	if (reset_in_progress) {
+		cprints(CC_TASK, "%s: already scheduled", __func__);
+		return EC_ERROR_BUSY;
+	}
+
+	reset_in_progress = 1;
+	wipe_result = EC_SUCCESS;
+
+	/* We can't change our minds about wiping. */
+	wipe_requested |= wipe_nvmem_first;
+
+	/* Ask the TPM task to reset itself */
 	task_set_event(TASK_ID_TPM, TPM_EVENT_RESET, 0);
+
+	if (!wait_until_done)
+		return EC_SUCCESS;
 
 	if (in_interrupt_context() ||
 	    task_get_current() == TASK_ID_TPM)
-		return 0;		    /* Can't sleep. Clown'll eat me. */
+		return EC_ERROR_BUSY;	    /* Can't sleep. Clown'll eat me. */
 
-	/* Try to wait until the TPM is reset, but timeout eventually */
+	/* Completion could take a while, if other things have priority */
 	waiting_for_reset = task_get_current();
-	evt = task_wait_event_mask(TPM_EVENT_RESET, SECOND);
+	evt = task_wait_event_mask(TPM_EVENT_RESET, 5 * SECOND);
+
+	/* We were notified of completion */
+	if (evt & TPM_EVENT_RESET)
+		return wipe_result;
 
 	/* Timeout is bad */
-	if (evt & TASK_EVENT_TIMER)
-		return -1;
-
-	/* Otherwise, good */
-	return 1;
+	return EC_ERROR_TIMEOUT;
 }
 
 int tpm_is_resetting(void)
@@ -674,12 +696,25 @@ int tpm_is_resetting(void)
 	return reset_in_progress;
 }
 
-static void tpm_reset_now(void)
+static void tpm_reset_now(int wipe_first)
 {
-	reset_in_progress = 1;
-
 	/* This is more related to TPM task activity than TPM transactions */
-	cprints(CC_TASK, "%s", __func__);
+	cprints(CC_TASK, "%s(%d)", __func__, wipe_first);
+
+	if (wipe_first) {
+		/*
+		 * Blindly zapping the TPM space while the AP is awake and
+		 * poking at it will bork the TPM task and the AP itself, so
+		 * force the whole system off by holding the EC in reset.
+		 */
+		cprints(CC_TASK, "%s: force EC off", __func__);
+		assert_ec_rst();
+
+		/* Now wipe nvmem */
+		wipe_result = nvmem_setup(0);
+	} else {
+		wipe_result = EC_SUCCESS;
+	}
 
 	/*
 	 * Clear the TPM library's zero-init data.  Note that the linker script
@@ -691,9 +726,10 @@ static void tpm_reset_now(void)
 	       (uintptr_t)(&__bss_libtpm2_start));
 
 	/*
-	 * NOTE: Any initialized variables in this file must be placed in a
-	 * separate section (NOT .data). If they need resetting, do so here.
+	 * NOTE: If any __initialized variables need reinitializing after
+	 * reset, this is the place to do it.
 	 */
+
 
 	/* Re-initialize our registers */
 	tpm_init();
@@ -703,12 +739,20 @@ static void tpm_reset_now(void)
 		task_set_event(waiting_for_reset, TPM_EVENT_RESET, 0);
 		waiting_for_reset = TASK_ID_INVALID;
 	}
+
+	if (wipe_first) {
+		/* Allow AP & EC to boot again */
+		cprints(CC_TASK, "%s: allow EC to boot", __func__);
+		deassert_ec_rst();
+	}
+
+	cprints(CC_TASK, "%s: done", __func__);
 	reset_in_progress = 0;
 }
 
 void tpm_task(void)
 {
-	tpm_reset_now();
+	tpm_reset_now(0);
 	while (1) {
 		uint8_t *response;
 		unsigned response_size;
@@ -719,7 +763,7 @@ void tpm_task(void)
 		/* Wait for the next command event */
 		evt = task_wait_event(-1);
 		if (evt & TPM_EVENT_RESET) {
-			tpm_reset_now();
+			tpm_reset_now(wipe_requested);
 			continue;
 		}
 		tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;

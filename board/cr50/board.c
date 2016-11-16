@@ -359,7 +359,7 @@ void sys_rst_asserted(enum gpio_signal signal)
 		system_reset(SYSTEM_RESET_HARD);  /* This will never return. */
 
 	/* Re-initialize the TPM software state */
-	tpm_reset();
+	tpm_reset(0, 0);
 }
 
 void assert_sys_rst(void)
@@ -412,27 +412,6 @@ void deassert_ec_rst(void)
 int is_ec_rst_asserted(void)
 {
 	return GREAD(RBOX, ASSERT_EC_RST);
-}
-
-void nvmem_wipe_or_reboot(void)
-{
-	/*
-	 * Blindly zapping the TPM space while the AP is awake and poking at it
-	 * will bork the TPM task and the AP itself, so force the whole system
-	 * off by holding the EC in reset.
-	 */
-	assert_ec_rst();
-
-	/*
-	 * If we can't clear the NVMEM or can't reset the TPM task, something
-	 * is unexpectedly wrong. To be safe, let's reboot the Cr50 (which also
-	 * reboots the EC and AP).
-	 */
-	if (nvmem_setup(0) != EC_SUCCESS || tpm_reset() != 1)
-		system_reset(SYSTEM_RESET_HARD);
-
-	/* Wipe & reset is complete. Allow the EC and AP to reboot */
-	deassert_ec_rst();
 }
 
 void nvmem_compute_sha(uint8_t *p_buf, int num_bytes,

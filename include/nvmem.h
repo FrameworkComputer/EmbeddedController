@@ -177,11 +177,4 @@ int nvmem_setup(uint8_t version);
 void nvmem_compute_sha(uint8_t *p_buf, int num_bytes, uint8_t *p_sha,
 		       int sha_len);
 
-/*
- * Erase and reformat the entire nvmem storage space. This returns only if it
- * was successful. If it fails, we can't be certain of the state of the system,
- * so it should do a hard reboot to be safe.
- */
-void nvmem_wipe_or_reboot(void);
-
 #endif /* __CROS_EC_NVMEM_UTILS_H */

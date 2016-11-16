@@ -31,20 +31,21 @@ typedef void (*interface_restart_func)(void);
 void tpm_register_interface(interface_restart_func interface_restart);
 
 /*
- * Reset the TPM. This sends a request to the TPM task, so that the reset can
- * happen when the TPM task finishes whatever it's doing at the moment.
+ * This requests the TPM task to reset itself.
  *
- * Returns 0 if the request was made, but we can't wait for it to complete
- * because we're in interrupt context or something similar. Otherwise, it
- * blocks and returns 1 after the TPM has been cleared, or returns -1 if the
- * request timed out.
+ * If wait_until_done is false, it returns EC_SUCCESS immediately. Otherwise it
+ * returns EC_SUCCESS after the reset has completed, or an error code on
+ * failure.
+ *
+ * If wipe_nvmem_first is true, the EC and AP will be forced off and TPM memory
+ * will be erased before the TPM task is reset.
  */
-int tpm_reset(void);
+int tpm_reset(int wait_until_done, int wipe_nvmem_first);
 
 /*
- * Return true if tpm is being reset. Usually this helps to avoid unnecessary
- * extra reset early at startup time, when TPM could be busy installing
- * endorsement certificates.
+ * Return true if the TPM is being reset. Usually this helps to avoid
+ * unnecessary extra reset early at startup time, when TPM could be busy
+ * installing endorsement certificates.
  */
 int tpm_is_resetting(void);
 
