@@ -17,6 +17,8 @@ GPIO_INT(CHARGER_INT_L,		PIN(3, 3), GPIO_INT_FALLING, bd9995x_vbus_interrupt)		/
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_FALLING, tcpc_alert_event)			/* from Analogix TCPC */
 GPIO_INT(USB_C1_PD_INT_ODL,	PIN(B, 1), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC */
 
+GPIO_INT(USB_C0_CABLE_DET,	PIN(C, 5), GPIO_INT_RISING, anx74xx_cable_det_interrupt)	/* CABLE_DET from ANX3429 */
+
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S4_L */
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S3_L */
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S0_L */
@@ -75,13 +77,6 @@ GPIO(EC_BRD_ID_EN_ODL,		PIN(3, 5), GPIO_INPUT)
 GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)			/* EC_ENTERING_RW */
-
-/*
- * FIXME(dhendrix): Should this be an interrupt? It's a normal input on elm.
- * ANX72xx programming guide section 6 suggests it should interrupt on both
- * high and low edges and we should use it to set PWR_EN and RESET_N pins.
- */
-GPIO(USB_C0_CABLE_DET,		PIN(C, 5), GPIO_INPUT)
 
 GPIO(PCH_RSMRST_L,		PIN(7, 0), GPIO_OUT_LOW)
 GPIO(EC_BATT_PRES_L,		PIN(3, 4), GPIO_INPUT)

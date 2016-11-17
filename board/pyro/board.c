@@ -76,6 +76,26 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static void anx74xx_cable_det_handler(void)
+{
+	/* confirm if cable_det is asserted */
+	if (!gpio_get_level(GPIO_USB_C0_CABLE_DET) ||
+		gpio_get_level(GPIO_USB_C0_PD_RST_L))
+		return;
+
+	task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+}
+DECLARE_DEFERRED(anx74xx_cable_det_handler);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_cable_det_handler, HOOK_PRIO_LAST);
+
+void anx74xx_cable_det_interrupt(enum gpio_signal signal)
+{
+	/* debounce for 2ms */
+	hook_call_deferred(&anx74xx_cable_det_handler_data, (2 * MSEC));
+}
+#endif
+
 /*
  * enable_input_devices() is called by the tablet_mode ISR, but changes the
  * state of GPIOs, so its definition must reside after including gpio_list.
@@ -249,12 +269,11 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 /* called from anx74xx_set_power_mode() */
 void board_set_tcpc_power_mode(int port, int mode)
 {
-	/*
-	 * This is called during init by the ANX driver to take the TCPC out
-	 * of reset and enable power. Since we have two TCPC chips and one
-	 * power enable on Pyro, we take both chips out of reset in a
-	 * separate function.
-	 */
+	if (port == 0) {
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, mode);
+		msleep(mode ? 10 : 1);
+		gpio_set_level(GPIO_EN_USB_TCPC_PWR, mode);
+	}
 }
 
 /**
@@ -268,9 +287,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
 
 	/* Assert reset to TCPC0 */
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	msleep(1);
-	gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
+	board_set_tcpc_power_mode(0, 0);
 
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
@@ -279,9 +296,7 @@ void board_reset_pd_mcu(void)
 	msleep(10);
 
 	/* Deassert reset to TCPC0 */
-	gpio_set_level(GPIO_EN_USB_TCPC_PWR, 1);
-	msleep(10);
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
+	board_set_tcpc_power_mode(0, 1);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_FW_VERSION
@@ -314,6 +329,10 @@ void board_tcpc_init(void)
 	/* Enable TCPC1 interrupt */
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	/* Enable CABLE_DET interrupt for ANX3429 wake from standby */
+	gpio_enable_interrupt(GPIO_USB_C0_CABLE_DET);
+#endif
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
