@@ -70,6 +70,9 @@
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_MASTER 0
 
+/* Enable PWM */
+#define CONFIG_PWM
+
 /* Sign and switch to RW partition on boot. */
 #define CONFIG_RWSIG
 #define CONFIG_RSA
@@ -86,7 +89,8 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_WATCHDOG 17
+#define TIM_WATCHDOG 16
+#define TIM_KBLIGHT 17
 
 #include "gpio_signal.h"
 
@@ -99,6 +103,12 @@ enum usb_strings {
 	USB_STR_VERSION,
 	USB_STR_UPDATE_NAME,
 	USB_STR_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT = 0,
+	/* Number of PWM channels */
+	PWM_CH_COUNT
 };
 
 #endif /* !__ASSEMBLER__ */

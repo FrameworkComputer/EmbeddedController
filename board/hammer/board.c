@@ -11,6 +11,8 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "update_fw.h"
@@ -46,6 +48,12 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, 100 /* Hz */ },
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /******************************************************************************
  * Support firmware upgrade over USB. We can update whichever section is not
