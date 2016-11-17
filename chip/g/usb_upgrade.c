@@ -188,6 +188,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		 */
 		rx_state_ = rx_idle;
 		post_reboot_request();
+		return;
 	}
 
 	if (rx_state_ == rx_outside_block) {
