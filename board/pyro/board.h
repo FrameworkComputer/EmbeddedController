@@ -186,9 +186,9 @@
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 #define CONFIG_BARO_BMP280
-/* #define CONFIG_LID_ANGLE */	/* FIXME(dhendrix): maybe? */
-/* #define CONFIG_LID_ANGLE_SENSOR_BASE 0 */	/* FIXME(dhendrix): maybe? */
-/* #define CONFIG_LID_ANGLE_SENSOR_LID 2 */	/* FIXME(dhendrix): maybe? */
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
