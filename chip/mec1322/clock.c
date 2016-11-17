@@ -49,8 +49,8 @@ static int freq = 48000000;
 
 void clock_wait_cycles(uint32_t cycles)
 {
-	asm("1: subs %0, #1\n"
-	    "   bne 1b\n" :: "r"(cycles));
+	asm volatile("1: subs %0, #1\n"
+		     "   bne 1b\n" : "+r"(cycles));
 }
 
 int clock_get_freq(void)
