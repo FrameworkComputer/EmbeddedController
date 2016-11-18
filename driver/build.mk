@@ -14,6 +14,7 @@ driver-$(CONFIG_ACCELGYRO_LSM6DS0)+=accelgyro_lsm6ds0.o
 driver-$(CONFIG_ACCELGYRO_BMI160)+=accelgyro_bmi160.o
 driver-$(CONFIG_MAG_BMI160_BMM150)+=mag_bmm150.o
 driver-$(CONFIG_ACCELGYRO_LSM6DSM)+=accelgyro_lsm6dsm.o
+driver-$(CONFIG_ACCEL_LIS2DH)+=accel_lis2dh.o stm_mems_common.o
 
 # Gyrometers
 driver-$(CONFIG_GYRO_L3GD20H)+=gyro_l3gd20h.o

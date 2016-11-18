@@ -67,9 +67,16 @@
 #undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
 #undef CONFIG_ACCELGYRO_LSM6DSM
+#undef CONFIG_ACCEL_LIS2DH
 
 /* Specify barometer attached */
 #undef CONFIG_BARO_BMP280
+
+/*
+ * Define the event to raise when LIS2DH interrupt.
+ * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
+ */
+#undef CONFIG_ACCEL_LIS2DH_INT_EVENT
 
 /*
  * Use the old standard reference frame for accelerometers. The old
@@ -681,6 +688,9 @@
 #define CONFIG_CMD_USBMUX
 #undef  CONFIG_CMD_USB_PD_PE
 #define CONFIG_CMD_WAITMS
+
+/* Enable console sensor debug level cmd */
+#undef CONFIG_ST_SENSORS_DEBUG
 
 /*****************************************************************************/
 
