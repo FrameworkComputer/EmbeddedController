@@ -4,6 +4,43 @@
  * found in the LICENSE file.
  */
 
+/*
+ * This file describes GPIO mapping for the cr50 code running on the H1 chip.
+ *
+ * For the purposes of this file H1 core has the following logical and
+ * physical items and properties:
+ *
+ *   - 32 internal GPIOs, which are split into two ports of 16 bits each.
+ *     Ports' architecture and programmig is described in "ARM Cortex-M System
+ *     Design Kit TRM" DDIO47B.
+ *
+ *   - a set of peripherals - slave and master SPI and I2C controllers, UARTs,
+ *     interrupt controller, etc.
+ *
+ *   - 28 pins on the package named DIOA0..14, DIOB0..7 and DIOM0..4
+ *
+ *   - a PINMUX - a unit which allows to interconnect objects from the three
+ *     groups listed above. Note that some peripherals are attached to some
+ *     pins directly, so in case those peripherals are used the pins should
+ *     not be connected by PINMUX to any other outputs.
+ *
+ * The below macros are somewhat misleading (apparently for historical
+ * reasons), as PIN(p, b) component in fact refers not to the external pin,
+ * but to the GPIO (bit b on port p), where bit is in 0..15 range, and port is
+ * in 0..1 range.
+ *
+ * To describe routing of an external signal two macro instantiations are
+ * required:
+ *
+ * The GPIO_INT() or GPIO() macro assigns the signal a name and assigns it to
+ * the internal GPIO port, (again, defining the port using the PIN(port, bit)
+ * component of the macro invocation). GPIO_INT definitions assign their
+ * respective signals to interrupts and ISRs.
+ *
+ * The PINMUX macro assigns the previously defined GPIO to another object,
+ * most commonly to an external pin, but possibly to some internal component.
+ */
+
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
