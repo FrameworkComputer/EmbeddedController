@@ -29,6 +29,35 @@
 #include "_TPM_Init_fp.h"
 #include "Manufacture_fp.h"
 
+/****************************************************************************/
+/*
+ * CAUTION: Variables defined in this in this file are treated specially.
+ *
+ * As always, initialized variables are placed in the .data section, and
+ * uninitialized variables in the .bss section. This saves space in the
+ * executable, because the loader can just zero .bss prior to running the
+ * program.
+ *
+ * However, the tpm_reset() function will zero the .bss section for THIS FILE
+ * and all files in the TPM library. Any uninitialized variables defined in
+ * this file that must be preserved across tpm_reset() must be placed in a
+ * separate section.
+ *
+ * On the other hand, initialized variables (in the .data section) are NOT
+ * affected by tpm_reset(), so any variables that should be reinitialized must
+ * be dealt with manually in the tpm_reset() function. To prevent initialized
+ * variables from being added to the TPM library without notice, the compiler
+ * will reject any that aren't explicitly flagged.
+ */
+
+/* This marks uninitialized variables that tpm_reset() should ignore */
+#define __preserved __attribute__((section(".bss.noreinit")))
+
+/* This marks initialized variables that tpm_reset() may need to reset */
+#define __initialized __attribute__((section(".data.noreinit")))
+
+/****************************************************************************/
+
 #define CPRINTS(format, args...) cprints(CC_TPM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_TPM, format, ## args)
 
@@ -46,7 +75,7 @@
 #define GOOGLE_DID 0x0028
 #define CR50_RID	0  /* No revision ID yet */
 
-static uint8_t reset_in_progress __attribute__((section(".bss.noreinit")));
+static __preserved uint8_t reset_in_progress;
 
 /* Tpm state machine states. */
 enum tpm_states {
@@ -500,8 +529,7 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 	CPRINTF("\n");
 }
 
-static interface_restart_func if_restart
-__attribute__((section(".bss.noreinit")));
+static __preserved interface_restart_func if_restart;
 void tpm_register_interface(interface_restart_func interface_restart)
 {
 	if_restart = interface_restart;
@@ -614,10 +642,8 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 /* Event (to TPM task) to request reset, or (from TPM task) on completion. */
 #define TPM_EVENT_RESET (TASK_EVENT_CUSTOM(1))
 
-/* Calling task to notify when the TPM reset has completed. */
-static task_id_t waiting_for_reset
-/* This must not be affected by the reset, or we'll forget who to tell. */
-__attribute__((section(".data.noreinit"))) = TASK_ID_INVALID;
+/* Calling task to notify when the TPM reset has completed */
+static __initialized task_id_t waiting_for_reset = TASK_ID_INVALID;
 
 int tpm_reset(void)
 {
