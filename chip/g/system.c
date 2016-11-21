@@ -260,7 +260,8 @@ const char *system_get_version(enum system_image_copy_t copy)
 		 * the version string.
 		 */
 		if (v->cookie1 == version_data.cookie1 &&
-		    v->cookie2 == version_data.cookie2) {
+		    v->cookie2 == version_data.cookie2 &&
+		    h->magic) { /* Corrupted header's magic is set to zero. */
 			snprintf(vers_str, sizeof(vers_str), "%d.%d.%d/%s",
 				 h->epoch_, h->major_, h->minor_, v->version);
 			return vers_str;
