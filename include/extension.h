@@ -28,6 +28,7 @@ enum vendor_cmd_cc {
 	/* Our TPMv2 vendor-specific command codes. 16 bits available. */
 	VENDOR_CC_GET_LOCK = 16,
 	VENDOR_CC_SET_LOCK = 17,
+	VENDOR_CC_SYSINFO = 18,
 
 	LAST_VENDOR_COMMAND = 65535,
 };

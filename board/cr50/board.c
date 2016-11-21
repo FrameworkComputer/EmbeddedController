@@ -3,12 +3,15 @@
  * found in the LICENSE file.
  */
 
+#include <endian.h>
+
 #include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dcrypto/dcrypto.h"
 #include "device_state.h"
 #include "ec_version.h"
+#include "extension.h"
 #include "flash_config.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -754,3 +757,43 @@ static int command_sysinfo(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(sysinfo, command_sysinfo,
 			     NULL,
 			     "Print system info");
+
+/*
+ * SysInfo command:
+ * There are no input args.
+ * Output is this struct, all fields in network order.
+ */
+struct sysinfo_s {
+	uint32_t ro_keyid;
+	uint32_t rw_keyid;
+	uint32_t dev_id0;
+	uint32_t dev_id1;
+} __packed;
+
+static enum vendor_cmd_rc vc_sysinfo(enum vendor_cmd_cc code,
+				     void *buf,
+				     size_t input_size,
+				     size_t *response_size)
+{
+	enum system_image_copy_t active;
+	uintptr_t vaddr;
+	const struct SignedHeader *h;
+	struct sysinfo_s *sysinfo = buf;
+
+	active = system_get_ro_image_copy();
+	vaddr = get_program_memory_addr(active);
+	h = (const struct SignedHeader *)vaddr;
+	sysinfo->ro_keyid = htobe32(h->keyid);
+
+	active = system_get_image_copy();
+	vaddr = get_program_memory_addr(active);
+	h = (const struct SignedHeader *)vaddr;
+	sysinfo->rw_keyid = htobe32(h->keyid);
+
+	sysinfo->dev_id0 = htobe32(GREG32(FUSE, DEV_ID0));
+	sysinfo->dev_id1 = htobe32(GREG32(FUSE, DEV_ID1));
+
+	*response_size = sizeof(*sysinfo);
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_SYSINFO, vc_sysinfo);
