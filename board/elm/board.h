@@ -116,6 +116,8 @@
 /* Optional features */
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #define CONFIG_CMD_HOSTCMD
+/* Mark host command structs as aligned */
+#define CONFIG_HOSTCMD_ALIGNED
 /* By default, set hcdebug to off */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
