@@ -499,6 +499,9 @@ static void board_init(void)
 
 	/* Enable charger interrupts */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
+
+	/* Enable Gyro interrupts */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 }
 /* PP3300 needs to be enabled before TCPC init hooks */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_FIRST);
