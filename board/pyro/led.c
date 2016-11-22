@@ -75,8 +75,8 @@ static int led_set_color_battery(enum led_color color)
 
 /* Brightness vs. color, in the order of off, red */
 static const uint8_t color_brightness[2] = {
-	[LED_OFF]   = 100,
-	[LED_RED]   = 0,
+	[LED_OFF]   = 0,
+	[LED_RED]   = 100,
 };
 
 static void led_set_color_power(enum led_color color)
@@ -93,13 +93,24 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_GREEN] != 0)
-		led_set_color_battery(LED_GREEN);
-	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color_battery(LED_AMBER);
-	else
-		led_set_color_battery(LED_OFF);
-
+	switch (led_id) {
+	case EC_LED_ID_BATTERY_LED:
+		if (brightness[EC_LED_COLOR_GREEN] != 0)
+			led_set_color_battery(LED_GREEN);
+		else if (brightness[EC_LED_COLOR_AMBER] != 0)
+			led_set_color_battery(LED_AMBER);
+		else
+			led_set_color_battery(LED_OFF);
+		break;
+	case EC_LED_ID_POWER_LED:
+		if (brightness[EC_LED_COLOR_RED] != 0)
+			pwm_set_duty(PWM_CH_LED_RED, color_brightness[LED_RED]);
+		else
+			pwm_set_duty(PWM_CH_LED_RED, color_brightness[LED_OFF]);
+		break;
+	default:
+		break;
+	}
 	return EC_SUCCESS;
 }
 
@@ -141,10 +152,11 @@ static void suspend_led_update_deferred(void)
 
 	ticks++;
 
+	/* 1s gradual on, 1s gradual off, 3s off */
 	if (ticks <= TICKS_STEP2_DIMMER) {
-		pwm_set_duty(PWM_CH_LED_RED, (TICKS_STEP2_DIMMER - ticks)*5);
+		pwm_set_duty(PWM_CH_LED_RED, ticks*5);
 	} else if (ticks <= TICKS_STEP3_OFF) {
-		pwm_set_duty(PWM_CH_LED_RED, (ticks - TICKS_STEP2_DIMMER)*5);
+		pwm_set_duty(PWM_CH_LED_RED, (TICKS_STEP3_OFF - ticks)*5);
 	} else {
 		ticks = TICKS_STEP1_BRIGHTER;
 		delay = 3000 * MSEC;
