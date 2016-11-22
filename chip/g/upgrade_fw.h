@@ -122,6 +122,10 @@ void fw_upgrade_command_handler(void *body,
 /* Used to tell fw upgrade the update ran successfully and is finished */
 void fw_upgrade_complete(void);
 
+/* Verify integrity of the PDU received over USB. */
+int usb_pdu_valid(struct upgrade_command *cmd_body,
+		  size_t cmd_size);
+
 /* Various upgrade command return values. */
 enum return_value {
 	UPGRADE_SUCCESS = 0,
