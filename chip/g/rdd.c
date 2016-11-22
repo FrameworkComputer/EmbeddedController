@@ -40,8 +40,6 @@ void rdd_interrupt(void)
 	is_debug = debug_cable_is_attached();
 
 	if (is_debug) {
-		disable_sleep(SLEEP_MASK_RDD);
-
 		CPRINTS("Debug Accessory connected");
 
 		/* Detect when debug cable is disconnected */
@@ -57,7 +55,6 @@ void rdd_interrupt(void)
 		rdd_detached();
 
 		cflush();
-		enable_sleep(SLEEP_MASK_RDD);
 	}
 
 	/* Clear interrupt */
