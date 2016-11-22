@@ -795,10 +795,18 @@ int charger_discharge_on_ac(int enable)
 	if (rv)
 		return rv;
 
+	/*
+	 * Suspend USB charging and DC/DC converter so that BATT_LEARN mode
+	 * doesn't auto exit if VBAT < VSYSVAL_THL_SET and also it helps to
+	 * discharge VBUS quickly when charging is not allowed and the AC
+	 * is removed.
+	 */
 	if (enable)
-		reg |= BD9995X_CMD_CHGOP_SET2_BATT_LEARN;
+		reg |= BD9995X_CMD_CHGOP_SET2_BATT_LEARN |
+			BD9995X_CMD_CHGOP_SET2_USB_SUS;
 	else
-		reg &= ~BD9995X_CMD_CHGOP_SET2_BATT_LEARN;
+		reg &= ~(BD9995X_CMD_CHGOP_SET2_BATT_LEARN |
+			BD9995X_CMD_CHGOP_SET2_USB_SUS);
 
 	return ch_raw_write16(BD9995X_CMD_CHGOP_SET2, reg,
 				BD9995X_EXTENDED_COMMAND);
