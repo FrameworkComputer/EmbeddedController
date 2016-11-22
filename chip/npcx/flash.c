@@ -17,10 +17,14 @@
 #include "console.h"
 #include "hwtimer_chip.h"
 
-int all_protected; /* Has all-flash protection been requested? */
-int addr_prot_start;
-int addr_prot_length;
-uint8_t flag_prot_inconsistent;
+static int all_protected; /* Has all-flash protection been requested? */
+static int addr_prot_start;
+static int addr_prot_length;
+static uint8_t flag_prot_inconsistent;
+
+/* SR regs aren't readable when UMA lock is on, so save a copy */
+static uint8_t saved_sr1;
+static uint8_t saved_sr2;
 
 #define FLASH_ABORT_TIMEOUT     10000
 
@@ -139,8 +143,11 @@ static void flash_set_address(uint32_t dest_addr)
 	NPCX_UMA_AB0 = addr[0];
 }
 
-uint8_t flash_get_status1(void)
+static uint8_t flash_get_status1(void)
 {
+	if (all_protected)
+		return saved_sr1;
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 	/* Read status register1 */
@@ -150,8 +157,11 @@ uint8_t flash_get_status1(void)
 	return NPCX_UMA_DB0;
 }
 
-uint8_t flash_get_status2(void)
+static uint8_t flash_get_status2(void)
 {
+	if (all_protected)
+		return saved_sr2;
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 	/* Read status register2 */
@@ -347,8 +357,33 @@ static int protect_to_reg(unsigned int start, unsigned int len,
 	return EC_SUCCESS;
 }
 
+static void flash_uma_lock(int enable)
+{
+	if (enable && !all_protected) {
+		/*
+		 * Store SR1 / SR2 for later use since we're about to lock
+		 * out all access (including read access) to these regs.
+		 */
+		saved_sr1 = flash_get_status1();
+		saved_sr2 = flash_get_status2();
+	}
+
+	all_protected = enable;
+	UPDATE_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK, enable);
+}
+
 static int flash_set_status_for_prot(int reg1, int reg2)
 {
+	/*
+	 * Writing SR regs will fail if our UMA lock is enabled. If WP
+	 * is deasserted then remove the lock and allow the write.
+	 */
+	if (all_protected) {
+		if (flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)
+			return EC_ERROR_ACCESS_DENIED;
+		flash_uma_lock(0);
+	}
+
 	/* Lock physical flash operations */
 	flash_lock_mapped_storage(1);
 
@@ -390,7 +425,7 @@ static int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 {
 	unsigned int start;
 	unsigned int len;
-	uint8_t sr1 = 0, sr2 = 0;
+	uint8_t sr1, sr2;
 	int rv = EC_SUCCESS;
 
 	sr1 = flash_get_status1();
@@ -479,12 +514,6 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 	}
 
 	return rv;
-}
-
-static int flash_uma_lock(int enable)
-{
-	UPDATE_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK, enable);
-	return EC_SUCCESS;
 }
 
 static int flash_spi_sel_lock(int enable)
@@ -646,9 +675,6 @@ int flash_physical_erase(int offset, int size)
 int flash_physical_get_protect(int bank)
 {
 	uint32_t addr = bank * CONFIG_FLASH_BANK_SIZE;
-	/* All UMA transaction is locked means all banks are protected */
-	if (IS_BIT_SET(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK))
-		return EC_ERROR_ACCESS_DENIED;
 
 	return flash_check_prot_reg(addr, CONFIG_FLASH_BANK_SIZE);
 }
@@ -679,18 +705,14 @@ uint32_t flash_physical_get_protect_flags(void)
 int flash_physical_protect_now(int all)
 {
 	if (all) {
-		all_protected = 1;
 		/*
 		 * Set UMA_LOCK bit for locking all UMA transaction.
 		 * But we still can read directly from flash mapping address
 		 */
 		flash_uma_lock(1);
 	} else {
-		all_protected = 0;
-		/* Unlocking all UMA transaction */
-		flash_uma_lock(0);
+		/* TODO: Implement RO "now" protection */
 	}
-	/* TODO: if all, disable SPI interface */
 
 	return EC_SUCCESS;
 }
@@ -700,26 +722,22 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 {
 	switch (range) {
 	case FLASH_WP_NONE:
-		/* Unlock UMA transactions */
-		if (IS_BIT_SET(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK))
-			CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK);
 		/* Clear protection bits in status register */
 		return flash_set_status_for_prot(0, 0);
 	case FLASH_WP_RO:
-		/* Unlock UMA transactions */
-		if (IS_BIT_SET(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK))
-			CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK);
 		/* Protect read-only */
-		return flash_write_prot_reg(
-			    WP_BANK_OFFSET*CONFIG_FLASH_BANK_SIZE,
-			    WP_BANK_COUNT*CONFIG_FLASH_BANK_SIZE);
+		return flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
+					    CONFIG_WP_STORAGE_SIZE);
 	case FLASH_WP_ALL:
-		/* Protect all */
+		flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
+				     CONFIG_WP_STORAGE_SIZE);
+
 		/*
 		 * Set UMA_LOCK bit for locking all UMA transaction.
 		 * But we still can read directly from flash mapping address
 		 */
-		return flash_uma_lock(1);
+		flash_uma_lock(1);
+		return EC_SUCCESS;
 	default:
 		return EC_ERROR_INVAL;
 	}
@@ -764,7 +782,9 @@ int flash_pre_init(void)
 	CLEAR_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
 #endif
 
-		return EC_SUCCESS;
+	/* Initialize UMA to unlocked */
+	flash_uma_lock(0);
+	return EC_SUCCESS;
 }
 
 void flash_lock_mapped_storage(int lock)
