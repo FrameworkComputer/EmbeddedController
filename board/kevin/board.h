@@ -25,6 +25,8 @@
 #define CONFIG_PWM_DISPLIGHT
 #define CONFIG_SPI
 #define CONFIG_SPI_MASTER
+#define CONFIG_SPI_FLASH_GD25LQ40
+#define CONFIG_SPI_FLASH_REGS
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
