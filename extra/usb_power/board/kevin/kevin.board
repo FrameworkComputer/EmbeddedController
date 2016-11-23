@@ -1,0 +1,18 @@
+[
+{"name": "pp5000", "rs": 0.01, "sweetberry": "A", "channel": 0},
+{"name": "ppvar_gpu", "rs": 0.01, "sweetberry": "A", "channel": 1},
+{"name": "pp3300_wifi_bt", "rs": 0.01, "sweetberry": "A", "channel": 2},
+{"name": "pp1500_ap_io", "rs": 0.01, "sweetberry": "A", "channel": 3},
+{"name": "pp3300_alw", "rs": 0.01, "sweetberry": "A", "channel": 4},
+{"name": "ppvar_litcpu", "rs": 0.01, "sweetberry": "A", "channel": 5},
+{"name": "pp1800_s0", "rs": 0.01, "sweetberry": "A", "channel": 6},
+{"name": "pp3300_haven", "rs": 0.1, "sweetberry": "A", "channel": 7},
+{"name": "ppvar_bigcpu", "rs": 0.01, "sweetberry": "A", "channel": 8},
+{"name": "pp900_ap", "rs": 0.01, "sweetberry": "A", "channel": 9},
+{"name": "pp1800_ec", "rs": 0.1, "sweetberry": "A", "channel": 10},
+{"name": "pp1800_sensor", "rs": 0.01, "sweetberry": "A", "channel": 11},
+{"name": "pp1800_alw", "rs": 0.01, "sweetberry": "A", "channel": 12},
+{"name": "pp1200_lpddr", "rs": 0.01, "sweetberry": "A", "channel": 13},
+{"name": "pp3300_ec", "rs": 0.1, "sweetberry": "A", "channel": 14},
+{"name": "pp3300_s0", "rs": 0.01, "sweetberry": "A", "channel": 15}
+]
