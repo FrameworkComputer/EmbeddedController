@@ -228,8 +228,11 @@ DECLARE_VENDOR_COMMAND(VENDOR_CC_SET_LOCK, vc_lock);
 /****************************************************************************/
 static const char warning[] = "\n\t!!! WARNING !!!\n\n"
 	"\tThe AP will be impolitely shut down and the TPM persistent memory\n"
-	"\tERASED before the console is unlocked. If this is not what you\n"
-	"\twant, simply do nothing and the unlock process will fail.\n\n";
+	"\tERASED before the console is unlocked. The system will reboot in\n"
+	"\tnormal mode and ALL encrypted content will be LOST.\n\n"
+	"\tIf this is not what you want, simply do nothing and the unlock\n"
+	"\tprocess will fail.\n\n"
+	"\n\t!!! WARNING !!!\n\n";
 
 static int command_lock(int argc, char **argv)
 {
