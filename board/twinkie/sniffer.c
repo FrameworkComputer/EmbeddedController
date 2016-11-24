@@ -92,6 +92,12 @@ static usb_uint ep_buf[2][EP_BUF_SIZE / 2] __usb_ram;
 static volatile uint32_t free_usb = 3;
 
 #ifdef CONFIG_USBC_SNIFFER_HEADER_V2
+static void vbus_vol_read_deferred(void);
+DECLARE_DEFERRED(vbus_vol_read_deferred);
+
+static void vbus_curr_read_deferred(void);
+DECLARE_DEFERRED(vbus_curr_read_deferred);
+
 static void vbus_vol_read_deferred(void)
 {
 	/* read may be interrupted, use average of start & end as the tstamp */
@@ -121,7 +127,6 @@ static void vbus_vol_read_deferred(void)
 
 	hook_call_deferred(&vbus_vol_read_deferred_data, DEFERRED_READ_TIME_US);
 }
-DECLARE_DEFERRED(vbus_vol_read_deferred);
 
 static void vbus_curr_read_deferred(void)
 {
@@ -152,7 +157,6 @@ static void vbus_curr_read_deferred(void)
 	hook_call_deferred(&vbus_curr_read_deferred_data,
 			   DEFERRED_READ_TIME_US);
 }
-DECLARE_DEFERRED(vbus_curr_read_deferred);
 #endif
 
 static inline void led_set_activity(int ch)
