@@ -227,12 +227,12 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 
 	len = size + sizeof(struct upgrade_pkt);
 
-	out->tag = __cpu_to_be16(0x8001);
-	out->length = __cpu_to_be32(len);
-	out->ordinal = __cpu_to_be32(EXT_CMD);
-	out->subcmd = __cpu_to_be16(subcmd);
+	out->tag = htobe16(0x8001);
+	out->length = htobe32(len);
+	out->ordinal = htobe32(EXT_CMD);
+	out->subcmd = htobe16(subcmd);
 	out->digest = digest;
-	out->address = __cpu_to_be32(addr);
+	out->address = htobe32(addr);
 	memcpy(out->data, data, size);
 #ifdef DEBUG
 	{
