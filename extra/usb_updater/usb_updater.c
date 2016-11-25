@@ -878,8 +878,15 @@ static void setup_connection(struct transfer_descriptor *td)
 
 	if (rxed_size <= 4) {
 		if (td->ep_type != spi_xfer) {
-			fprintf(stderr, "Unexpected response size %zd\n",
+			size_t i;
+
+			fprintf(stderr, "Unexpected response size %zd: ",
 				rxed_size);
+
+			for (i = 0; i < rxed_size; i++)
+				fprintf(stderr, " %02x",
+					((uint8_t *)&start_resp)[i]);
+			fprintf(stderr, "\n");
 			exit(update_error);
 		}
 

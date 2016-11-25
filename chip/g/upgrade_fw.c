@@ -214,6 +214,7 @@ void fw_upgrade_command_handler(void *body,
 		 */
 		if (!valid_sections.ro_top_offset ||
 		    !valid_sections.rw_top_offset) {
+			CPRINTF("%s:%d\n", __func__, __LINE__);
 			rpdu->return_value = htobe32(UPGRADE_GEN_ERROR);
 			return;
 		}

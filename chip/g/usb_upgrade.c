@@ -162,6 +162,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			 * a single byte error code.
 			 */
 			resp_value = UPGRADE_GEN_ERROR;
+			CPRINTS("%s:%d", __FILE__, __LINE__);
 			QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, 1);
 			return;
 		}
@@ -228,6 +229,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			 * gotten out of sync with the host.
 			 */
 			resp_value = UPGRADE_GEN_ERROR;
+			CPRINTS("%s:%d", __FILE__, __LINE__);
 			QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, 1);
 			return;
 		}
