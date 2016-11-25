@@ -505,7 +505,7 @@ static void usb_findit(uint16_t vid, uint16_t pid, struct usb_endpoint *uep)
 	/* NOTE: This doesn't handle multiple matches! */
 	uep->devh = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if (!uep->devh) {
-		fprintf(stderr, "can't find device\n");
+		fprintf(stderr, "Can't find device\n");
 		exit(update_error);
 	}
 
@@ -578,7 +578,7 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 		reply = be32toh(reply);
 
 	if (reply) {
-		fprintf(stderr, "error: status %#x\n", reply);
+		fprintf(stderr, "Error: status %#x\n", reply);
 		exit(update_error);
 	}
 
@@ -680,7 +680,7 @@ static void transfer_section(struct transfer_descriptor *td,
 			}
 
 			if (error_code[0]) {
-				fprintf(stderr, "error %d\n", error_code[0]);
+				fprintf(stderr, "Error %d\n", error_code[0]);
 				exit(update_error);
 			}
 		}
@@ -930,17 +930,17 @@ static void setup_connection(struct transfer_descriptor *td)
 		}
 	}
 
-	printf("Target running protocol version %d\n", protocol_version);
+	printf("target running protocol version %d\n", protocol_version);
 
 	if (!error_code) {
 		if (protocol_version > 2) {
 			td->ro_offset = be32toh
 				(start_resp.rpdu.backup_ro_offset);
-			printf("Offsets: backup RO at %#x, backup RW at %#x\n",
+			printf("offsets: backup RO at %#x, backup RW at %#x\n",
 			       td->ro_offset, td->rw_offset);
 		}
 		if (protocol_version > 4)
-			printf("Keyids: RO 0x%08x, RW 0x%08x\n",
+			printf("keyids: RO 0x%08x, RW 0x%08x\n",
 			       targ.keyid[0], targ.keyid[1]);
 		pick_sections(td);
 		return;
@@ -969,7 +969,7 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 		}
 
 	if (!num_txed_secitons) {
-		printf("Nothing to do\n");
+		printf("nothing to do\n");
 		return 0;
 	}
 
@@ -999,7 +999,7 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 
 	}
 
-	printf("Reboot request posted");
+	printf("reboot request posted");
 	return num_txed_secitons;
 }
 
@@ -1166,6 +1166,6 @@ int main(int argc, char *argv[])
 			return rw_updated;
 		}
 
-	printf("Image updated, reboot is needed\n");
+	printf("image updated, reboot is needed\n");
 	return all_updated;
 }
