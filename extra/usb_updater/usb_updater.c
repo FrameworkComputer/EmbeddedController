@@ -225,7 +225,10 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 
 	out->tag = htobe16(0x8001);
 	out->length = htobe32(len);
-	out->ordinal = htobe32(CONFIG_EXTENSION_COMMAND);
+	if (subcmd <= LAST_EXTENSION_COMMAND)
+		out->ordinal = htobe32(CONFIG_EXTENSION_COMMAND);
+	else
+		out->ordinal = htobe32(TPM_CC_VENDOR_BIT_MASK);
 	out->subcmd = htobe16(subcmd);
 	out->digest = digest;
 	out->address = htobe32(addr);
