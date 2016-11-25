@@ -28,6 +28,7 @@
 #include "compile_time_macros.h"
 #include "misc_util.h"
 #include "signed_header.h"
+#include "tpm_vendor_cmds.h"
 #include "upgrade_fw.h"
 #include "usb_descriptor.h"
 
@@ -156,11 +157,6 @@ struct upgrade_pkt {
 #define SIGNED_TRANSFER_SIZE 1024
 #define MAX_BUF_SIZE	(SIGNED_TRANSFER_SIZE + sizeof(struct upgrade_pkt))
 
-/* These are copied from ./include/extension.h */
-#define EXT_CMD		0xbaccd00a
-#define FW_UPGRADE	4
-#define POST_RESET	7
-
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
 	uint8_t ep_num;
@@ -229,7 +225,7 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 
 	out->tag = htobe16(0x8001);
 	out->length = htobe32(len);
-	out->ordinal = htobe32(EXT_CMD);
+	out->ordinal = htobe32(CONFIG_EXTENSION_COMMAND);
 	out->subcmd = htobe16(subcmd);
 	out->digest = digest;
 	out->address = htobe32(addr);
@@ -667,7 +663,8 @@ static void transfer_section(struct transfer_descriptor *td,
 					 block_addr,
 					 data_ptr,
 					 payload_size, error_code,
-					 &rxed_size, FW_UPGRADE) < 0) {
+					 &rxed_size,
+					 EXTENSION_FW_UPGRADE) < 0) {
 				fprintf(stderr,
 					"Failed to trasfer block, %zd to go\n",
 					data_len);
@@ -867,7 +864,8 @@ static void setup_connection(struct transfer_descriptor *td)
 	} else {
 		rxed_size = sizeof(start_resp);
 		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
-				 &start_resp, &rxed_size, FW_UPGRADE) < 0) {
+				 &start_resp, &rxed_size,
+				 EXTENSION_FW_UPGRADE) < 0) {
 			fprintf(stderr, "Failed to start transfer\n");
 			exit(update_error);
 		}
@@ -992,7 +990,8 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 
 		/* Need to send extended command for posted reboot. */
 		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
-				 &response, &response_size, POST_RESET) < 0) {
+				 &response, &response_size,
+				 EXTENSION_POST_RESET) < 0) {
 			fprintf(stderr, "Failed to request posted reboot\n");
 			exit(update_error);
 		}
