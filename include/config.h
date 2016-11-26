@@ -1166,12 +1166,6 @@
 #undef CONFIG_HOST_COMMAND_STATUS
 
 /*
- * The host commands are sorted in the .rodata.hcmds section so use the binary
- * search algorithm to match a command to its handler
- */
-#undef CONFIG_HOSTCMD_SECTION_SORTED
-
-/*
  * Host command parameters and response are 32-bit aligned.  This generates
  * much more efficient code on ARM.
  */
