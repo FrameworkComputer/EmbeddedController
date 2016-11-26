@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "consumer.h"
+#include "extension.h"
 #include "queue_policies.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -65,7 +66,6 @@ enum rx_state {
 	rx_inside_block,   /* Assembling a block to pass to the programmer. */
 	rx_outside_block,  /* Waiting for the next block to start or for the
 			      reset command. */
-	rx_awaiting_reset /* Waiting for reset confirmation. */
 };
 
 enum rx_state rx_state_ = rx_idle;
@@ -105,6 +105,64 @@ static int valid_transfer_start(struct consumer const *consumer, size_t count,
 		if (((uint8_t *)&pupfr->cmd)[i])
 			return 0;
 	return 1;
+}
+static int try_vendor_command(struct consumer const *consumer, size_t count)
+{
+	struct update_frame_header ufh;
+	struct update_frame_header *cmd_buffer;
+	int rv = 0;
+
+	if (count < sizeof(ufh))
+		return 0;	/* Too short to be a valid vendor command. */
+
+	/*
+	 * Let's copy off the queue the upgrade frame header, to see if this
+	 * is a channeled vendor command.
+	 */
+	queue_peek_units(consumer->queue, &ufh, 0, sizeof(ufh));
+	if (be32toh(ufh.cmd.block_base) != CONFIG_EXTENSION_COMMAND)
+		return 0;
+
+	if (be32toh(ufh.block_size) != count) {
+		CPRINTS("%s: problem: block size and count mismatch (%d != %d)",
+			__func__, be32toh(ufh.block_size), count);
+		return 0;
+	}
+
+	if (shared_mem_acquire(count, (char **)&cmd_buffer)
+	    != EC_SUCCESS) {
+		CPRINTS("%s: problem: failed to allocate block of %d",
+			__func__, count);
+		return 0;
+	}
+
+	/* Get the entire command, don't remove it from the queue just yet. */
+	queue_peek_units(consumer->queue, cmd_buffer, 0, count);
+
+	/* Looks like this is a vendor command, let's verify it. */
+	if (usb_pdu_valid(&cmd_buffer->cmd,
+			  count - offsetof(struct update_frame_header, cmd))) {
+		uint16_t *subcommand;
+		size_t response_size;
+
+		/* looks good, let's process it. */
+		rv = 1;
+
+		/* Now remove if from the queue. */
+		queue_advance_head(consumer->queue, count);
+
+		subcommand = (uint16_t *)(cmd_buffer + 1);
+		extension_route_command(be16toh(*subcommand),
+					subcommand + 1,
+					count -
+					sizeof(struct update_frame_header),
+					&response_size);
+
+		QUEUE_ADD_UNITS(&upgrade_to_usb, subcommand + 1, response_size);
+	}
+	shared_mem_release(cmd_buffer);
+
+	return rv;
 }
 
 /*
@@ -155,6 +213,10 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			};
 		} u;
 
+		/* Check is this is a channeled TPM extension command. */
+		if (try_vendor_command(consumer, count))
+			return;
+
 		if (!valid_transfer_start(consumer, count, &u.upfr)) {
 			/*
 			 * Something is wrong, this payload is not a valid
@@ -181,17 +243,6 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 		return;
 	}
 
-	if (rx_state_ == rx_awaiting_reset) {
-		/*
-		 * Any USB data received in this state should cause a post of
-		 * a system reset request on the next TPM reboot, no USB
-		 * response required.
-		 */
-		rx_state_ = rx_idle;
-		post_reboot_request();
-		return;
-	}
-
 	if (rx_state_ == rx_outside_block) {
 		/*
 		 * Expecting to receive the beginning of the block or the
@@ -210,7 +261,7 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 				resp_value = 0;
 				QUEUE_ADD_UNITS(&upgrade_to_usb,
 						&resp_value, 1);
-				rx_state_ = rx_awaiting_reset;
+				rx_state_ = rx_idle;
 				return;
 			}
 		}

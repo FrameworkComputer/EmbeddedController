@@ -32,7 +32,7 @@
  * first_response_pdu structure below.
  */
 
-#define UPGRADE_PROTOCOL_VERSION 5
+#define UPGRADE_PROTOCOL_VERSION 6
 
 /* This is the format of the update frame header. */
 struct upgrade_command {

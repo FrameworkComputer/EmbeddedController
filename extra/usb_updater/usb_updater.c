@@ -120,9 +120,34 @@
  * the header is the absolute address to place the block to, in version 3 and
  * later it is the offset into the flash.
  *
- * The CR50 device responds to each PDU with a confirmation which is 4 bytes
- * in size in protocol version 2, and 1 byte in size in all other versions.
- * Zero value means succes, non zero value is the error code reported by CR50.
+ * Protocol version 5 includes RO and RW key ID information into the first PDU
+ * response. The key ID could be used to tell between prod and dev signing
+ * modes, among other things.
+ *
+ * Protocol version 6 does not change the format of the first PDU response,
+ * but it indicates the target's ablitiy to channel TPM venfor commands
+ * through USB connection.
+ *
+ * When channeling TPM vendor commands the USB frame looks as follows:
+ *
+ *   4 bytes      4 bytes         4 bytes       2 bytes      variable size
+ * +-----------+--------------+---------------+-----------+------~~~-------+
+ * + total size| block digest |    EXT_CMD    | Vend. sub.|      data      |
+ * +-----------+--------------+---------------+-----------+------~~~-------+
+ *
+ * Where 'Vend. sub' is the vendor subcommand, and data field is subcommand
+ * dependent. The target tells between update PDUs and encapsulated vendor
+ * subcommands by looking at the EXT_CMD value - it is set to 0xbaccd00a and
+ * as such is guaranteed not to be a valid update PDU destination address.
+ *
+ * The vendor command response size is not fixed, it is subcommand dependent.
+ *
+ * The CR50 device responds to each update PDU with a confirmation which is 4
+ * bytes in size in protocol version 2, and 1 byte in size in all other
+ * versions. Zero value means success, non zero value is the error code
+ * reported by CR50.
+ *
+ * Again, vendor command responses are subcommand specific.
  */
 
 /* Look for Cr50 FW update interface */
@@ -960,12 +985,77 @@ static void setup_connection(struct transfer_descriptor *td)
 	exit(update_error);
 }
 
+/*
+ * Channel TPM extension/vendor command over USB. The payload of the USB frame
+ * in this case consists of the 2 byte subcommand code concatenated with the
+ * command body. The caller needs to indicate if a response is expected, and
+ * if it is - of what maximum size.
+ */
+static int ext_cmd_over_usb(struct usb_endpoint *uep, uint16_t subcommand,
+			    void *cmd_body, size_t body_size,
+			    void *resp, size_t *resp_size)
+{
+	struct update_frame_header *ufh;
+	uint16_t *frame_ptr;
+	size_t usb_msg_size;
+	SHA_CTX ctx;
+	uint8_t digest[SHA_DIGEST_LENGTH];
+
+	usb_msg_size = sizeof(struct update_frame_header) +
+		sizeof(subcommand) + body_size;
+
+	ufh = malloc(usb_msg_size);
+	if (!ufh) {
+		printf("%s: failed to allocate %zd bytes\n",
+		       __func__, usb_msg_size);
+		return -1;
+	}
+
+	ufh->block_size = htobe32(usb_msg_size);
+	ufh->cmd.block_base = htobe32(CONFIG_EXTENSION_COMMAND);
+	frame_ptr = (uint16_t *)(ufh + 1);
+	*frame_ptr = htobe16(subcommand);
+
+	if (body_size)
+		memcpy(frame_ptr + 1, cmd_body, body_size);
+
+	/* Calculate the digest. */
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, &ufh->cmd.block_base,
+		    usb_msg_size -
+		    offsetof(struct update_frame_header, cmd.block_base));
+	SHA1_Final(digest, &ctx);
+	memcpy(&ufh->cmd.block_digest, digest, sizeof(ufh->cmd.block_digest));
+	xfer(uep, ufh, usb_msg_size, resp, resp_size ? *resp_size : 0);
+
+	free(ufh);
+	return 0;
+}
+
+/*
+ * Indicate to the target that update image transfer has been completed. Upon
+ * receiveing of this message the target state machine transitions into the
+ * 'rx_idle' state. The host may send an extension command to reset the target
+ * after this.
+ */
+static void send_done(struct usb_endpoint *uep)
+{
+	uint32_t out;
+
+	/* Send stop request, ignoring reply. */
+	out = htobe32(UPGRADE_DONE);
+	xfer(uep, &out, sizeof(out), &out,
+	     protocol_version < 3 ? sizeof(out) : 1);
+}
+
 /* Returns number of successfully transmitted image sections. */
 static int transfer_and_reboot(struct transfer_descriptor *td,
 			       uint8_t *data, size_t data_len)
 {
 	size_t i;
 	int num_txed_secitons = 0;
+	/* By default target is reset immediately after update. */
+	uint16_t subcommand = VENDOR_CC_IMMEDIATE_RESET;
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++)
 		if (sections[i].ustatus == needed) {
@@ -977,38 +1067,73 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 		}
 
 	if (!num_txed_secitons) {
+		if (td->ep_type == usb_xfer)
+			send_done(&td->uep);
+
 		printf("nothing to do\n");
 		return 0;
 	}
 
 	printf("-------\nupdate complete\n");
+
+	/*
+	 * In upstart mode or in case target is running older protocol version
+	 * - post reset is requested.
+	 */
+	if (td->upstart_mode || (protocol_version <= 5))
+		subcommand = EXTENSION_POST_RESET;
+
 	if (td->ep_type == usb_xfer) {
 		uint32_t out;
 
-		/* Send stop request, ignoring reply. */
-		out = htobe32(UPGRADE_DONE);
-		xfer(&td->uep, &out, sizeof(out), &out,
-		     protocol_version < 3 ? sizeof(out) : 1);
-		/*
-		 * Send a second stop request, which should reboot without
-		 * replying.
-		 */
-		xfer(&td->uep, &out, sizeof(out), 0, 0);
+		send_done(&td->uep);
+
+		if (protocol_version > 5) {
+			uint8_t response;
+			size_t response_size;
+			void *presponse;
+
+			/*
+			 * Protocol versions 6 and above use vendor command to
+			 * communicate reset mode (immediate or posted) to the
+			 * target.
+			 *
+			 * No response is expected in case of immediate reset.
+			 */
+			if (subcommand == VENDOR_CC_IMMEDIATE_RESET) {
+				presponse = NULL;
+				response_size = 0;
+			} else {
+				presponse = &response;
+				response_size = sizeof(response);
+			}
+
+			ext_cmd_over_usb(&td->uep, subcommand,
+					 NULL, 0,
+					 presponse, &response_size);
+		} else {
+			/*
+			 * Send a second stop request, which should reboot
+			 * without replying.
+			 */
+			xfer(&td->uep, &out, sizeof(out), 0, 0);
+		}
 	} else {
 		uint8_t response;
 		size_t response_size;
 
 		/* Need to send extended command for posted reboot. */
 		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
-				 &response, &response_size,
-				 EXTENSION_POST_RESET) < 0) {
+				 &response, &response_size, subcommand) < 0) {
 			fprintf(stderr, "Failed to request posted reboot\n");
 			exit(update_error);
 		}
 
 	}
 
-	printf("reboot request posted");
+	printf("reboot %s\n", subcommand == EXTENSION_POST_RESET ?
+	       "request posted" : "triggered");
+
 	return num_txed_secitons;
 }
 
@@ -1153,8 +1278,6 @@ int main(int argc, char *argv[])
 
 	if (data) {
 		transferred_sections = transfer_and_reboot(&td, data, data_len);
-
-		printf("bye\n");
 		free(data);
 	}
 	if (td.ep_type == usb_xfer) {
@@ -1175,6 +1298,6 @@ int main(int argc, char *argv[])
 			return rw_updated;
 		}
 
-	printf("image updated, reboot is needed\n");
+	printf("image updated\n");
 	return all_updated;
 }
