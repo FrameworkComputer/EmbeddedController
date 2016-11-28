@@ -42,7 +42,7 @@ test-list-host+=bklight_lid bklight_passthru interrupt timer_dos button
 test-list-host+=math_util motion_lid sbs_charging_v2 battery_get_params_smart
 test-list-host+=lightbar inductive_charging usb_pd fan charge_manager
 test-list-host+=charge_manager_drp_charging charge_ramp
-test-list-host+=rsa rsa3
+test-list-host+=nvmem_vars rsa rsa3
 endif
 
 battery_get_params_smart-y=battery_get_params_smart.o
@@ -68,6 +68,7 @@ math_util-y=math_util.o
 motion_lid-y=motion_lid.o
 mutex-y=mutex.o
 nvmem-y=nvmem.o
+nvmem_vars-y=nvmem_vars.o
 pingpong-y=pingpong.o
 power_button-y=power_button.o
 powerdemo-y=powerdemo.o

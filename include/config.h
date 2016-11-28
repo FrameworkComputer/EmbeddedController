@@ -987,6 +987,16 @@
 /* Size in bytes of NvMem area */
 #undef CONFIG_FLASH_NVMEM_SIZE
 
+/* Enable <key,value> variable support (requires CONFIG_FLASH_NVMEM) */
+#undef CONFIG_FLASH_NVMEM_VARS
+/*
+ * We already have to define nvmem_user_sizes[] to specify the order and size
+ * of the user regions. CONFIG_FLASH_NVMEM_VARS looks for two symbols to
+ * specify the region number and size for the variable region.
+ */
+#undef CONFIG_FLASH_NVMEM_VARS_USER_NUM
+#undef CONFIG_FLASH_NVMEM_VARS_USER_SIZE
+
 /*****************************************************************************/
 
 /* Include a flashmap in the compiled firmware image */

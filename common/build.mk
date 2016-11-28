@@ -49,6 +49,7 @@ common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
 common-$(CONFIG_FANS)+=fan.o pwm.o
 common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FLASH_NVMEM)+=nvmem.o
+common-$(CONFIG_FLASH_NVMEM_VARS)+=nvmem_vars.o
 common-$(CONFIG_FMAP)+=fmap.o
 common-$(CONFIG_GESTURE_SW_DETECTION)+=gesture.o
 common-$(CONFIG_HOSTCMD_EVENTS)+=host_event_commands.o
