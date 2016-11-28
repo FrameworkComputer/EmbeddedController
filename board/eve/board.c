@@ -316,7 +316,7 @@ void board_before_rsmrst(int rsmrst)
 		return;
 
 	/* Only apply workaround to P0 boards */
-	if (system_get_board_version() != BOARD_VERSION_P0)
+	if (system_get_board_version() > BOARD_VERSION_P0B)
 		return;
 
 	i2c_lock(I2C_PORT_MP2949, 1);
