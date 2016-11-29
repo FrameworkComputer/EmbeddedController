@@ -835,9 +835,11 @@ void charger_task(void)
 
 wait_for_it:
 #ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
-		sleep_usec = charger_profile_override(&curr);
-		if (sleep_usec < 0)
-			problem(PR_CUSTOM, sleep_usec);
+		if (chg_ctl_mode == CHARGE_CONTROL_NORMAL) {
+			sleep_usec = charger_profile_override(&curr);
+			if (sleep_usec < 0)
+				problem(PR_CUSTOM, sleep_usec);
+		}
 #endif
 
 		/* Keep the AP informed */
