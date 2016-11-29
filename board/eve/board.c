@@ -575,8 +575,10 @@ void board_hibernate_late(void)
 	 * while hibernating we want to enable GPIO_PULL_UP as well.
 	 */
 	gpio_set_flags_by_mask(0x2, 0x03, GPIO_INPUT | GPIO_PULL_UP);
-	gpio_set_flags_by_mask(0x1, 0xFF, GPIO_INPUT | GPIO_PULL_UP);
+	gpio_set_flags_by_mask(0x1, 0x7F, GPIO_INPUT | GPIO_PULL_UP);
 	gpio_set_flags_by_mask(0x0, 0xE0, GPIO_INPUT | GPIO_PULL_UP);
+	/* KBD_KS02 needs to have a pull-down enabled to match cr50 */
+	gpio_set_flags_by_mask(0x1, 0x80, GPIO_INPUT | GPIO_PULL_DOWN);
 }
 
 void board_hibernate(void)
