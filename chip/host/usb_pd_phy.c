@@ -42,9 +42,30 @@ static const uint16_t enc4b5b[] = {
 	0x17, 0x1A, 0x1B, 0x1C, 0x1D};
 
 /* Test utilities */
+static void pd_test_reset_phy(int port)
+{
+	int i;
+	int enc_len = PD_BIT_LEN / 5;
+
+	for (i = 0; i < PD_BIT_LEN; i++)
+		pd_phy[port].bits[i] = 0;
+
+	for (i = 0; i < enc_len; i++)
+		pd_phy[port].out_msg[i] = 0;
+
+	pd_phy[port].total = 0;
+	pd_phy[port].has_preamble = 0;
+	pd_phy[port].rx_started = 0;
+	pd_phy[port].rx_monitoring = 0;
+	pd_phy[port].preamble_written = 0;
+	pd_phy[port].has_msg = 0;
+	pd_phy[port].last_edge_written = 0;
+	pd_phy[port].verified_idx = 0;
+}
 
 void pd_test_rx_set_preamble(int port, int has_preamble)
 {
+	pd_phy[port].total = 0;
 	pd_phy[port].has_preamble = has_preamble;
 }
 
@@ -105,7 +126,8 @@ void pd_simulate_rx(int port)
 {
 	if (!pd_phy[port].rx_monitoring)
 		return;
-	pd_rx_start(port);
+
+	pd_phy[port].rx_started = 1;
 	pd_rx_disable_monitoring(port);
 	pd_rx_event(port);
 }
@@ -241,6 +263,7 @@ int pd_start_tx(int port, int polarity, int bit_len)
 	pd_phy[port].has_msg = 0;
 	pd_phy[port].preamble_written = 0;
 	pd_phy[port].verified_idx = 0;
+	pd_phy[port].total = 0;
 
 	/*
 	 * Hand over to test runner. The test runner must wake us after
@@ -254,19 +277,23 @@ int pd_start_tx(int port, int polarity, int bit_len)
 
 void pd_tx_done(int port, int polarity)
 {
-	/* Nothing to do */
+	pd_test_reset_phy(port);
 }
 
 void pd_rx_start(int port)
 {
 	ASSERT(pd_phy[port].hw_init_done);
+
+	task_wake(TASK_ID_TEST_RUNNER);
+	task_wait_event(-1);
+
 	pd_phy[port].rx_started = 1;
 }
 
 void pd_rx_complete(int port)
 {
 	ASSERT(pd_phy[port].hw_init_done);
-	pd_phy[port].rx_started = 0;
+	pd_test_reset_phy(port);
 }
 
 int pd_rx_started(int port)

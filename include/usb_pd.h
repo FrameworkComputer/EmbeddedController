@@ -160,6 +160,7 @@ enum pd_rx_errors {
 #define PD_T_VCONN_SOURCE_ON  (100*MSEC) /* 100ms */
 #define PD_T_TRY_SRC          (125*MSEC) /* Max time for Try.SRC state */
 #define PD_T_TRY_WAIT         (600*MSEC) /* Max time for TryWait.SNK state */
+#define PD_T_SINK_REQUEST     (100*MSEC) /* Wait 100ms before next request */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
