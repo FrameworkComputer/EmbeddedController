@@ -297,7 +297,8 @@ static int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 
 }
 
-static int flash_write_prot_reg(unsigned int offset, unsigned int bytes)
+static int flash_write_prot_reg(unsigned int offset, unsigned int bytes,
+				int hw_protect)
 {
 	int rv;
 	uint8_t sr1 = flash_get_status1();
@@ -311,6 +312,9 @@ static int flash_write_prot_reg(unsigned int offset, unsigned int bytes)
 	rv = spi_flash_protect_to_reg(offset, bytes, &sr1, &sr2);
 	if (rv)
 		return rv;
+
+	if (hw_protect)
+		sr1 |= SPI_FLASH_SR1_SRP0;
 
 	return flash_set_status_for_prot(sr1, sr2);
 }
@@ -576,10 +580,12 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 	case FLASH_WP_RO:
 		/* Protect read-only */
 		return flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
-					    CONFIG_WP_STORAGE_SIZE);
+					    CONFIG_WP_STORAGE_SIZE,
+					    1);
 	case FLASH_WP_ALL:
 		flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
-				     CONFIG_WP_STORAGE_SIZE);
+				     CONFIG_WP_STORAGE_SIZE,
+				     1);
 
 		/*
 		 * Set UMA_LOCK bit for locking all UMA transaction.
