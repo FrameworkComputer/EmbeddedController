@@ -232,20 +232,66 @@ static const uint8_t SHA256_DER[] = {
 	0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01, 0x05,
 	0x00, 0x04, 0x20
 };
+static const uint8_t SHA384_DER[] = {
+	0x30, 0x41, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86,
+	0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x02, 0x05,
+	0x00, 0x04, 0x30
+};
+static const uint8_t SHA512_DER[] = {
+	0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86,
+	0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03, 0x05,
+	0x00, 0x04, 0x40
+};
+
+/* TODO(ngm): move these #defines to third_party/cryptoc once SHA-384
+ * & 512 support is available.
+ */
+#define SHA384_DIGEST_SIZE 48
+#define SHA512_DIGEST_SIZE 64
+
+static int pkcs1_get_der(enum hashing_mode hashing, const uint8_t **der,
+			uint32_t *der_size, uint32_t *hash_size)
+{
+	switch (hashing) {
+	case HASH_SHA1:
+		*der = &SHA1_DER[0];
+		*der_size = sizeof(SHA1_DER);
+		*hash_size = SHA_DIGEST_SIZE;
+		break;
+	case HASH_SHA256:
+		*der = &SHA256_DER[0];
+		*der_size = sizeof(SHA256_DER);
+		*hash_size = SHA256_DIGEST_SIZE;
+		break;
+	case HASH_SHA384:
+		*der = &SHA384_DER[0];
+		*der_size = sizeof(SHA384_DER);
+		*hash_size = SHA384_DIGEST_SIZE;
+		break;
+	case HASH_SHA512:
+		*der = &SHA512_DER[0];
+		*der_size = sizeof(SHA512_DER);
+		*hash_size = SHA512_DIGEST_SIZE;
+		break;
+	default:
+		return 0;
+	}
+
+	return 1;
+}
 
 /* sign */
 static int pkcs1_type1_pad(uint8_t *padded, uint32_t padded_len,
 			const uint8_t *in, uint32_t in_len,
 			enum hashing_mode hashing)
 {
-	const uint8_t *der = (hashing == HASH_SHA1) ? &SHA1_DER[0]
-		: &SHA256_DER[0];
-	const uint32_t der_size = (hashing == HASH_SHA1) ? sizeof(SHA1_DER)
-		: sizeof(SHA256_DER);
-	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
-		: SHA256_DIGEST_SIZE;
+	const uint8_t *der;
+	uint32_t der_size;
+	uint32_t hash_size;
 	uint32_t ps_len;
 
+	if (!pkcs1_get_der(hashing, &der, &der_size, &hash_size))
+		return 0;
 	if (padded_len < RSA_PKCS1_PADDING_SIZE + der_size)
 		return 0;
 	if (in_len != hash_size)
@@ -272,14 +318,13 @@ static int check_pkcs1_type1_pad(const uint8_t *msg, uint32_t msg_len,
 				enum hashing_mode hashing)
 {
 	int i;
-	const uint8_t *der = (hashing == HASH_SHA1) ? &SHA1_DER[0]
-		: &SHA256_DER[0];
-	const uint32_t der_size = (hashing == HASH_SHA1) ? sizeof(SHA1_DER)
-		: sizeof(SHA256_DER);
-	const uint32_t hash_size = (hashing == HASH_SHA1) ? SHA_DIGEST_SIZE
-		: SHA256_DIGEST_SIZE;
+	const uint8_t *der;
+	uint32_t der_size;
+	uint32_t hash_size;
 	uint32_t ps_len;
 
+	if (!pkcs1_get_der(hashing, &der, &der_size, &hash_size))
+		return 0;
 	if (msg_len != hash_size)
 		return 0;
 	if (padded_len < RSA_PKCS1_PADDING_SIZE + der_size + hash_size)

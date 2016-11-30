@@ -63,6 +63,12 @@ static int check_sign_params(TPM_ALG_ID padding_alg, TPM_ALG_ID hash_alg,
 			*hashing = HASH_SHA1;
 		else if (hash_alg == TPM_ALG_SHA256)
 			*hashing = HASH_SHA256;
+		else if (hash_alg == ALG_SHA384_VALUE &&
+			 padding_alg == TPM_ALG_RSASSA)
+			*hashing = HASH_SHA384;
+		else if (hash_alg == ALG_SHA512_VALUE &&
+			 padding_alg == TPM_ALG_RSASSA)
+			*hashing = HASH_SHA512;
 		else
 			return 0;
 		if (padding_alg == TPM_ALG_RSASSA)
