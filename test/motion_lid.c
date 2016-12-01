@@ -10,6 +10,7 @@
 
 #include "accelgyro.h"
 #include "common.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "motion_lid.h"
@@ -206,6 +207,7 @@ static int test_lid_angle(void)
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 0;
 	lid->xyz[Z] = -1000;
+	gpio_set_level(GPIO_LID_OPEN, 0);
 	/* Initial wake up, like init does */
 	task_wake(TASK_ID_MOTIONSENSE);
 
@@ -220,7 +222,10 @@ static int test_lid_angle(void)
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 1000;
 	lid->xyz[Z] = 0;
+	gpio_set_level(GPIO_LID_OPEN, 1);
+	msleep(100);
 	wait_for_valid_sample();
+
 	TEST_ASSERT(motion_lid_get_angle() == 90);
 
 	/* Set lid open to 225. */
@@ -237,12 +242,15 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 350);
 
-	/* Set lid open to 10, check rotation did not change. */
+	/*
+	 * Set lid open to 10.  Since the lid switch still indicates that it's
+	 * open, we should be getting an unreliable reading.
+	 */
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 173;
 	lid->xyz[Z] = -984;
 	wait_for_valid_sample();
-	TEST_ASSERT(motion_lid_get_angle() == 350);
+	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
 	/* Rotate back to 180 and then 10 */
 	lid->xyz[X] = 0;
@@ -251,11 +259,15 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
 
+	/*
+	 * Again, since the lid isn't closed, the angle should be unreliable.
+	 * See SMALL_LID_ANGLE_RANGE.
+	 */
 	lid->xyz[X] = 0;
 	lid->xyz[Y] = 173;
 	lid->xyz[Z] = -984;
 	wait_for_valid_sample();
-	TEST_ASSERT(motion_lid_get_angle() == 10);
+	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
 	/*
 	 * Align base with hinge and make sure it returns unreliable for angle.
@@ -279,6 +291,30 @@ static int test_lid_angle(void)
 	lid->xyz[Z] =  300;
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == 180);
+
+	/*
+	 * Close the lid and set the angle to 0.
+	 */
+	base->xyz[X] = 0;
+	base->xyz[Y] = 0;
+	base->xyz[Z] = 1000;
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = 0;
+	lid->xyz[Z] = -1000;
+	gpio_set_level(GPIO_LID_OPEN, 0);
+	msleep(100);
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == 0);
+
+	/*
+	 * Make the angle large, but since the lid is closed, the angle should
+	 * be regarded as unreliable.
+	 */
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = -173;
+	lid->xyz[Z] = -984;
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
 	return EC_SUCCESS;
 }
