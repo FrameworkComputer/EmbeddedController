@@ -1280,7 +1280,10 @@ int main(int argc, char *argv[])
 		transferred_sections = transfer_and_reboot(&td, data, data_len);
 		free(data);
 	}
+
 	if (td.ep_type == usb_xfer) {
+		if (!data)
+			send_done(&td.uep);
 		libusb_close(td.uep.devh);
 		libusb_exit(NULL);
 	}
