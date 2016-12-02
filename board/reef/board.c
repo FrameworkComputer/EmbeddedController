@@ -760,12 +760,6 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const matrix_3x3_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
-};
-
 const matrix_3x3_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ FLOAT_TO_FP(1), 0,  0},
@@ -794,7 +788,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_LID_ACCEL,
 	 .addr = KX022_ADDR1,
-	 .rot_standard_ref = &lid_standard_ref,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
 	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {
 		/* AP: by default use EC settings */
