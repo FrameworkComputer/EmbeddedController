@@ -13,6 +13,7 @@
 #include "led_common.h"
 #include "lid_switch.h"
 #include "pwm.h"
+#include "pwm_chip.h"
 #include "util.h"
 
 #define GRU_BAT_LED_PWM PWM_CH_LED_RED
@@ -29,16 +30,23 @@ enum led_color {
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
-/* One LED active at a time. PWM low period determines which LED is active. */
+/* One LED active at a time. edge frequency determines which LED is active. */
 static const int led_color_to_pwm_duty[LED_COLOR_COUNT] = {
 	[LED_OFF] =   100,
 	[LED_RED] =   0,
 	[LED_AMBER] = 80,
-	[LED_GREEN] = 10,
+	[LED_GREEN] = 70,
+};
+static const int led_color_to_pwm_frequency[LED_COLOR_COUNT] = {
+	[LED_OFF] =   1,
+	[LED_RED] =   1,
+	[LED_AMBER] = 1100,
+	[LED_GREEN] = 200,
 };
 
 static int bat_led_set_color(enum led_color color)
 {
+	pwm_set_freq(GRU_BAT_LED_PWM, led_color_to_pwm_frequency[color]);
 	pwm_set_duty(GRU_BAT_LED_PWM, led_color_to_pwm_duty[color]);
 	return EC_SUCCESS;
 }

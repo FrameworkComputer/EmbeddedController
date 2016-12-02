@@ -20,6 +20,12 @@ void pwm_enable(enum pwm_channel ch, int enabled);
 int pwm_get_enabled(enum pwm_channel ch);
 
 /**
+ * Set PWM channel frequency (Hz).
+ * PWM will be disabled until the duty is set.
+ */
+void pwm_set_freq(enum pwm_channel ch, uint32_t freq);
+
+/**
  * Set PWM channel duty cycle (0-65535).
  */
 void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty);

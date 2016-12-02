@@ -55,7 +55,7 @@ enum npcx_pwm_heartbeat_mode {
  * @param   freq    desired PWM frequency
  * @notes   changed when initialization
  */
-static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
+void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 {
 	int mdl = pwm_channels[ch].channel;
 	uint32_t clock;
@@ -80,9 +80,6 @@ static void pwm_set_freq(enum pwm_channel ch, uint32_t freq)
 
 	/* Calculate maximum resolution for the given freq. and prescaler */
 	pwm_res[ch] = (clock / pre) / freq;
-
-	/* Make sure we have at least 1% resolution */
-	assert(pwm_res[ch] >= 100);
 
 	/* Set PWM prescaler. */
 	NPCX_PRSC(mdl) = pre - 1;
@@ -152,7 +149,7 @@ void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_INVP,
 			(pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW));
 
-	CPRINTS("freq=0x%x", pwm_channels[ch].freq);
+	CPRINTS("initial freq=0x%x", pwm_channels[ch].freq);
 	CPRINTS("duty_cycle_cnt=%d", duty);
 
 	/* duty ranges from 0 - 0xffff, so scale down to 0 - pwm_res[ch] */
