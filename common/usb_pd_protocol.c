@@ -844,6 +844,18 @@ static void pd_request_vconn_swap(int port)
 		set_state(port, PD_STATE_VCONN_SWAP_SEND);
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
+
+void pd_try_vconn_src(int port)
+{
+	/*
+	 * If we don't currently provide vconn, and we can supply it, send
+	 * a vconn swap request.
+	 */
+	if (!(pd[port].flags & PD_FLAGS_VCONN_ON)) {
+		if (pd_check_vconn_swap(port))
+			pd_request_vconn_swap(port);
+	}
+}
 #endif
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 

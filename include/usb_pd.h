@@ -1515,6 +1515,14 @@ int pd_get_partner_data_swap_capable(int port);
 void pd_request_power_swap(int port);
 
 /**
+ * Try to become the VCONN source, if we are not already the source and the
+ * other side is willing to accept a VCONN swap.
+ *
+ * @param port USB-C port number
+ */
+void pd_try_vconn_src(int port);
+
+/**
  * Request data swap command to be issued
  *
  * @param port USB-C port number
