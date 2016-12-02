@@ -884,7 +884,7 @@ static void pd_set_data_role(int port, int role)
 static void pd_dr_swap(int port)
 {
 	pd_set_data_role(port, !pd[port].data_role);
-	pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
+	pd[port].flags |= PD_FLAGS_CHECK_IDENTITY;
 }
 
 static void handle_ctrl_request(int port, uint16_t head,
@@ -1897,11 +1897,7 @@ void pd_task(void)
 		case PD_STATE_SRC_STARTUP:
 			/* Wait for power source to enable */
 			if (pd[port].last_state != pd[port].task_state) {
-				/*
-				 * fake set data role swapped flag so we send
-				 * discover identity when we enter SRC_READY
-				 */
-				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
+				pd[port].flags |= PD_FLAGS_CHECK_IDENTITY;
 				/* reset various counters */
 				caps_count = 0;
 				pd[port].msg_id = 0;
@@ -2059,12 +2055,12 @@ void pd_task(void)
 
 			/* Send discovery SVDMs last */
 			if (pd[port].data_role == PD_ROLE_DFP &&
-			    (pd[port].flags & PD_FLAGS_DATA_SWAPPED)) {
+			    (pd[port].flags & PD_FLAGS_CHECK_IDENTITY)) {
 #ifndef CONFIG_USB_PD_SIMPLE_DFP
 				pd_send_vdm(port, USB_SID_PD,
 					    CMD_DISCOVER_IDENT, NULL, 0);
 #endif
-				pd[port].flags &= ~PD_FLAGS_DATA_SWAPPED;
+				pd[port].flags &= ~PD_FLAGS_CHECK_IDENTITY;
 				break;
 			}
 
@@ -2320,13 +2316,9 @@ void pd_task(void)
 
 			/* DFP is attached */
 			if (new_cc_state == PD_CC_DFP_ATTACHED) {
-				/*
-				 * fake set data role swapped flag so we send
-				 * discover identity when we enter SRC_READY
-				 */
 				pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
 						  PD_FLAGS_CHECK_DR_ROLE |
-						  PD_FLAGS_DATA_SWAPPED;
+						  PD_FLAGS_CHECK_IDENTITY;
 				set_state(port, PD_STATE_SNK_DISCOVERY);
 				timeout = 10*MSEC;
 				hook_call_deferred(
@@ -2362,7 +2354,7 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 			break;
 		case PD_STATE_SNK_HARD_RESET_RECOVER:
 			if (pd[port].last_state != pd[port].task_state)
-				pd[port].flags |= PD_FLAGS_DATA_SWAPPED;
+				pd[port].flags |= PD_FLAGS_CHECK_IDENTITY;
 #ifdef CONFIG_USB_PD_VBUS_DETECT_NONE
 			/*
 			 * Can't measure vbus state so this is the maximum
@@ -2544,10 +2536,10 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 
 			/* If DFP, send discovery SVDMs */
 			if (pd[port].data_role == PD_ROLE_DFP &&
-			     (pd[port].flags & PD_FLAGS_DATA_SWAPPED)) {
+			     (pd[port].flags & PD_FLAGS_CHECK_IDENTITY)) {
 				pd_send_vdm(port, USB_SID_PD,
 					    CMD_DISCOVER_IDENT, NULL, 0);
-				pd[port].flags &= ~PD_FLAGS_DATA_SWAPPED;
+				pd[port].flags &= ~PD_FLAGS_CHECK_IDENTITY;
 				break;
 			}
 

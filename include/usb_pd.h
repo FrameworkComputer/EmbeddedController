@@ -695,7 +695,7 @@ enum pd_states {
 #define PD_FLAGS_PING_ENABLED      (1 << 0) /* SRC_READY pings enabled */
 #define PD_FLAGS_PARTNER_DR_POWER  (1 << 1) /* port partner is dualrole power */
 #define PD_FLAGS_PARTNER_DR_DATA   (1 << 2) /* port partner is dualrole data */
-#define PD_FLAGS_DATA_SWAPPED      (1 << 3) /* data swap complete */
+#define PD_FLAGS_CHECK_IDENTITY    (1 << 3) /* discover identity in READY */
 #define PD_FLAGS_SNK_CAP_RECVD     (1 << 4) /* sink capabilities received */
 #define PD_FLAGS_TCPC_DRP_TOGGLE   (1 << 5) /* TCPC-controlled DRP toggling */
 #define PD_FLAGS_EXPLICIT_CONTRACT (1 << 6) /* explicit pwr contract in place */
@@ -711,7 +711,7 @@ enum pd_states {
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
-					   PD_FLAGS_DATA_SWAPPED | \
+					   PD_FLAGS_CHECK_IDENTITY | \
 					   PD_FLAGS_SNK_CAP_RECVD | \
 					   PD_FLAGS_TCPC_DRP_TOGGLE | \
 					   PD_FLAGS_EXPLICIT_CONTRACT | \
