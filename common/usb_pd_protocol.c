@@ -2950,6 +2950,8 @@ static void dual_role_on(void)
 #endif
 			pd[i].flags |= PD_FLAGS_CHECK_PR_ROLE |
 				       PD_FLAGS_CHECK_DR_ROLE;
+
+		pd[i].flags |= PD_FLAGS_CHECK_IDENTITY;
 	}
 
 	pd_set_dual_role(PD_DRP_TOGGLE_ON);
