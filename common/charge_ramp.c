@@ -305,6 +305,8 @@ void chg_ramp_task(void)
 			if (board_is_ramp_allowed(active_sup) &&
 			    board_is_vbus_too_low(CHG_RAMP_VBUS_STABLE)) {
 				CPRINTS("VBUS low; Re-ramp");
+				max_icl = MAX(min_icl,
+						max_icl - RAMP_ICL_BACKOFF);
 				active_icl_new = min_icl;
 				ramp_st_new = CHG_RAMP_RAMP;
 			}
