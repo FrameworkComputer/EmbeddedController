@@ -160,6 +160,8 @@ int charger_profile_override(struct charge_state_data *curr)
 	int batt_voltage;
 	static int prev_batt_voltage;
 
+	charger_discharge_on_ac(!(curr->batt.flags & BATT_FLAG_WANT_CHARGE));
+
 	/*
 	 * Determine temperature range. The five ranges are:
 	 *   < 10C
