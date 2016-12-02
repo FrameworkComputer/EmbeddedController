@@ -1261,3 +1261,19 @@ struct i2c_stress_test_dev bmi160_i2c_stress_test_dev = {
 	.i2c_write = &raw_write8,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_ACCEL */
+
+int bmi160_get_sensor_temp(int idx, int *temp_ptr)
+{
+	struct motion_sensor_t *s = &motion_sensors[idx];
+	int16_t temp;
+	int ret;
+
+	ret = raw_read_n(s->port, s->addr, BMI160_TEMPERATURE_0,
+			 (uint8_t *)&temp, sizeof(temp));
+
+	if (ret || temp == BMI160_INVALID_TEMP)
+		return EC_ERROR_NOT_POWERED;
+
+	*temp_ptr = C_TO_K(23 + ((temp + 256) >> 9));
+	return 0;
+}

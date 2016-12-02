@@ -127,6 +127,8 @@
 
 #define BMI160_TEMPERATURE_0   0x20
 #define BMI160_TEMPERATURE_1   0x21
+#define BMI160_INVALID_TEMP        0x8000
+
 
 #define BMI160_FIFO_LENGTH_0   0x22
 #define BMI160_FIFO_LENGTH_1   0x23
@@ -463,4 +465,5 @@ int raw_mag_write8(const int port, const int addr, const uint8_t reg, int data);
 extern struct i2c_stress_test_dev bmi160_i2c_stress_test_dev;
 #endif
 
+int bmi160_get_sensor_temp(int idx, int *temp_ptr);
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */
