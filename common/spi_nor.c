@@ -125,9 +125,10 @@ static int spi_nor_wait(const struct spi_nor_device_t *spi_nor_device)
 /**
  * Read the Manufacturer bank and ID out of the JEDEC ID.
  */
-static int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
-				 uint8_t *out_mfn_bank,
-				 uint8_t *out_mfn_id)
+static int spi_nor_read_jedec_mfn_id(
+		const struct spi_nor_device_t *spi_nor_device,
+		uint8_t *out_mfn_bank,
+		uint8_t *out_mfn_id)
 {
 	int rv = EC_SUCCESS;
 	uint8_t jedec_id[SPI_NOR_JEDEC_ID_BANKS];
@@ -518,6 +519,32 @@ int spi_nor_set_4b_mode(struct spi_nor_device_t *spi_nor_device,
 }
 
 /**
+ * Read JEDEC Identifier.
+ *
+ * @param spi_nor_device The Serial NOR Flash device to use.
+ * @param size Number of Bytes to read.
+ * @param data Destination buffer for data.
+ * @return ec_error_list (non-zero on error and timeout).
+ */
+int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
+			  size_t size, uint8_t *data) {
+	int rv;
+	uint8_t cmd = SPI_NOR_OPCODE_JEDEC_ID;
+
+	if (size > CONFIG_SPI_NOR_MAX_READ_SIZE)
+		return EC_ERROR_INVAL;
+	/* Claim the driver mutex. */
+	mutex_lock(&driver_mutex);
+	/* Read the JEDEC ID. */
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_master],
+			     &cmd, 1, data, size);
+	/* Release the driver mutex. */
+	mutex_unlock(&driver_mutex);
+
+	return rv;
+}
+
+/**
  * Read from the Serial NOR Flash device.
  *
  * @param spi_nor_device The Serial NOR Flash device to use.
@@ -587,7 +614,8 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		  uint32_t offset, size_t size)
 {
 	int rv = EC_SUCCESS;
-	size_t erase_command_size;
+	size_t erase_command_size, erase_size;
+	uint8_t erase_opcode;
 
 	/* Invalid input */
 	if ((offset % 4096 != 0) || (size % 4096 != 0) || (size < 4096))
@@ -607,8 +635,18 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		if (rv)
 			goto err_free;
 
+		erase_opcode = SPI_NOR_DRIVER_SPECIFIED_OPCODE_4KIB_ERASE;
+		erase_size = 4096;
+
+#ifdef CONFIG_SPI_NOR_BLOCK_ERASE
+		if (!(offset % 65536) && size >= 65536) {
+			erase_opcode =
+				SPI_NOR_DRIVER_SPECIFIED_OPCODE_64KIB_ERASE;
+			erase_size = 65536;
+		}
+#endif
 		/* Set up the erase instruction. */
-		buf[0] = SPI_NOR_DRIVER_SPECIFIED_OPCODE_4KIB_ERASE;
+		buf[0] = erase_opcode;
 		if (spi_nor_device->in_4b_addressing_mode) {
 			buf[1] = (offset & 0xFF000000) >> 24;
 			buf[2] = (offset & 0xFF0000) >> 16;
@@ -628,8 +666,8 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		if (rv)
 			goto err_free;
 
-		offset += 4096;
-		size -= 4096;
+		offset += erase_size;
+		size -= erase_size;
 	}
 
 	/* Wait for the previous operation to finish. */
@@ -765,7 +803,8 @@ static int command_spi_nor_info(int argc, char **argv)
 			 spi_nor_device->page_size);
 
 		/* Get JEDEC ID info. */
-		rv = spi_nor_read_jedec_id(spi_nor_device, &mfn_bank, &mfn_id);
+		rv = spi_nor_read_jedec_mfn_id(spi_nor_device, &mfn_bank,
+					       &mfn_id);
 		if (rv != EC_SUCCESS)
 			return rv;
 		ccprintf("\tJEDEC ID bank %d manufacturing code 0x%x\n",

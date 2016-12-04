@@ -1797,6 +1797,9 @@
  * two. */
 #undef CONFIG_SPI_NOR_MAX_WRITE_SIZE
 
+/* If defined will enable block (64KiB) erase operations. */
+#undef CONFIG_SPI_NOR_BLOCK_ERASE
+
 /* SPI master feature */
 #undef CONFIG_SPI_MASTER
 

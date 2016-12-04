@@ -79,6 +79,7 @@ extern const unsigned int spi_nor_devices_used;
 /* If needed in the future this driver can be extended to discover SFDP
  * advertised erase sizes and opcodes for SFDP v1.0+. */
 #define SPI_NOR_DRIVER_SPECIFIED_OPCODE_4KIB_ERASE 0x20
+#define SPI_NOR_DRIVER_SPECIFIED_OPCODE_64KIB_ERASE 0xd8
 
 /* If needed in the future this driver can be extended to discover 4B entry and
  * exit methods for SFDP v1.5+. */
@@ -118,6 +119,17 @@ int spi_nor_init(void);
  */
 int spi_nor_set_4b_mode(struct spi_nor_device_t *spi_nor_device,
 			int enter_4b_addressing_mode);
+
+/**
+ * Read JEDEC Identifier.
+ *
+ * @param spi_nor_device The Serial NOR Flash device to use.
+ * @param size Number of Bytes to read.
+ * @param data Destination buffer for data.
+ * @return ec_error_list (non-zero on error and timeout).
+ */
+int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
+			  size_t size, uint8_t *data);
 
 /**
  * Read from the Serial NOR Flash device.
