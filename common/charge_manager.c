@@ -92,6 +92,9 @@ enum charge_manager_change_type {
  * PD communication is not allowed, so we must assume that it is dedicated.
  * Also, if no battery is present, the charger may be our only source of power,
  * so again we must assume that the charger is dedicated.
+ *
+ * @return	1 when we need to override the a non-dedicated charger
+ *		to be a dedicated one, 0 otherwise.
  */
 static int charge_manager_spoof_dualrole_capability(void)
 {
@@ -131,8 +134,10 @@ static void charge_manager_init(void)
 DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_CHARGE_MANAGER_INIT);
 
 /**
- * Returns 1 if all ports + suppliers have reported in with some initial charge,
- * 0 otherwise.
+ * Check if the charge manager is seeded.
+ *
+ * @return	1 if all ports/suppliers have reported
+ *		with some initial charge, 0 otherwise.
  */
 static int charge_manager_is_seeded(void)
 {
@@ -156,6 +161,12 @@ static int charge_manager_is_seeded(void)
 }
 
 #ifndef TEST_BUILD
+/**
+ * Get the maximum charge current for a port.
+ *
+ * @param port	Charge port.
+ * @return	Charge current (mA).
+ */
 static int charge_manager_get_source_current(int port)
 {
 	switch (source_port_last_rp[port]) {
@@ -171,6 +182,9 @@ static int charge_manager_get_source_current(int port)
 
 /**
  * Fills passed power_info structure with current info about the passed port.
+ *
+ * @param port	Charge port.
+ * @param r	USB PD power info to be updated.
  */
 static void charge_manager_fill_power_info(int port,
 	struct ec_response_usb_pd_power_info *r)
@@ -345,6 +359,8 @@ void charge_manager_save_log(int port)
 
 /**
  * Attempt to switch to power source on port if applicable.
+ *
+ * @param port	USB-C port to be swapped.
  */
 static void charge_manager_switch_to_source(int port)
 {
@@ -369,7 +385,6 @@ static int charge_manager_get_ceil(int port)
 	int ceil = CHARGE_CEIL_NONE;
 	int val, i;
 
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 	for (i = 0; i < CEIL_REQUESTOR_COUNT; ++i) {
 		val = charge_ceil[port][i];
 		if (val != CHARGE_CEIL_NONE &&
@@ -383,6 +398,9 @@ static int charge_manager_get_ceil(int port)
 /**
  * Select the 'best' charge port, as defined by the supplier heirarchy and the
  * ability of the port to provide power.
+ *
+ * @param new_port	Pointer to the best charge port by definition.
+ * @param new_supplier	Pointer to the best charge supplier by definition.
  */
 static void charge_manager_get_best_charge_port(int *new_port,
 						int *new_supplier)
@@ -659,6 +677,14 @@ static void charger_detect_debounced(void)
 }
 DECLARE_DEFERRED(charger_detect_debounced);
 
+/**
+ * Update charge parameters for a given port / supplier.
+ *
+ * @param change		Type of change.
+ * @param supplier		Charge supplier to be updated.
+ * @param port			Charge port to be updated.
+ * @param charge		Charge port current / voltage.
+ */
 static void charge_manager_make_change(enum charge_manager_change_type change,
 				       int supplier,
 				       int port,
@@ -761,33 +787,15 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		hook_call_deferred(&charge_manager_refresh_data, 0);
 }
 
-/**
- * Update available charge for a given port / supplier.
- *
- * @param supplier		Charge supplier to update.
- * @param port			Charge port to update.
- * @param charge		Charge port current / voltage.
- */
 void charge_manager_update_charge(int supplier,
 				  int port,
 				  struct charge_port_info *charge)
 {
-	ASSERT(supplier >= 0 && supplier < CHARGE_SUPPLIER_COUNT);
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
-	ASSERT(charge != NULL);
-
 	charge_manager_make_change(CHANGE_CHARGE, supplier, port, charge);
 }
 
-/**
- * Notify charge_manager of a partner dualrole capability change.
- *
- * @param port			Charge port which changed.
- * @param cap			New port capability.
- */
 void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
 	if (charge_manager_spoof_dualrole_capability())
 		cap = CAP_DEDICATED;
@@ -799,19 +807,8 @@ void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 	}
 }
 
-/**
- * Update charge ceiling for a given port. The ceiling can be set independently
- * for several requestors, and the min. ceil will be enforced.
- *
- * @param port			Charge port to update.
- * @param requestor		Charge ceiling requestor.
- * @param ceil			Charge ceiling (mA).
- */
 void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 {
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT &&
-	       requestor >= 0 && requestor < CEIL_REQUESTOR_COUNT);
-
 	if (charge_ceil[port][requestor] != ceil) {
 		charge_ceil[port][requestor] = ceil;
 		if (port == charge_port && charge_manager_is_seeded())
@@ -838,20 +835,9 @@ void charge_manager_force_ceil(int port, int ceil)
 	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, ceil);
 }
 
-/**
- * Select an 'override port', a port which is always the preferred charge port.
- * Returns EC_SUCCESS on success, ec_error_list status on failure.
- *
- * @param port			Charge port to select as override, or
- *				OVERRIDE_OFF to select no override port,
- *				or OVERRIDE_DONT_CHARGE to specific that no
- *				charge port should be selected.
- */
 int charge_manager_set_override(int port)
 {
 	int retval = EC_SUCCESS;
-
-	ASSERT(port >= OVERRIDE_DONT_CHARGE && port < CONFIG_USB_PD_PORT_COUNT);
 
 	CPRINTS("Charge Override: %d", port);
 
@@ -893,12 +879,6 @@ int charge_manager_set_override(int port)
 	return retval;
 }
 
-/**
- * Get the override port. OVERRIDE_OFF if no override port.
- * OVERRIDE_DONT_CHARGE if override is set for no port.
- *
- * @return override port
- */
 int charge_manager_get_override(void)
 {
 	return override_port;
@@ -909,17 +889,11 @@ int charge_manager_get_active_charge_port(void)
 	return charge_port;
 }
 
-/**
- * Return the charger current (mA) value.
- */
 int charge_manager_get_charger_current(void)
 {
 	return charge_current;
 }
 
-/**
- * Return the power limit (uW) set by charge manager.
- */
 int charge_manager_get_power_limit_uw(void)
 {
 	int current_ma = charge_current;
