@@ -107,6 +107,9 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 	/* Get max power that is under our max voltage input */
 	for (i = 0; i < cnt; i++) {
 		mv = ((src_caps[i] >> 10) & 0x3FF) * 50;
+		/* Skip invalid voltage */
+		if (!mv)
+			continue;
 		/* Skip any voltage not supported by this board */
 		if (!pd_is_valid_input_voltage(mv))
 			continue;
@@ -153,6 +156,12 @@ static void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
 {
 	int max_ma, uw;
 	*mv = ((pdo >> 10) & 0x3FF) * 50;
+
+	if (*mv == 0) {
+		CPRINTF("ERR:PDO mv=0\n");
+		*ma = 0;
+		return;
+	}
 
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		uw = 250000 * (pdo & 0x3FF);
