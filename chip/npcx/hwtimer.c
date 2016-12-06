@@ -265,7 +265,7 @@ void __hw_clock_source_irq(void)
 #endif
 	}
 }
-DECLARE_IRQ(NPCX_IRQ_ITIM32, __hw_clock_source_irq, 0);
+DECLARE_IRQ(NPCX_IRQ_ITIM32, __hw_clock_source_irq, 2);
 
 static void update_prescaler(void)
 {
