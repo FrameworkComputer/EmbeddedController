@@ -1,0 +1,166 @@
+#!/bin/bash
+
+#
+# Copyright 2016 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# This script is a utility which allows to create differently signed CR50
+# images from different sources.
+#
+set -e
+set -u
+
+progname=$(basename $0)
+
+tmpf="/tmp/bs_manifest.$$"
+trap "{ rm -rf [01].flat ${tmpf} ; }" EXIT
+
+usage() {
+  local rv="${1}"
+  cat <<EOF
+
+This script allows to sign CR50 RW images. By default it uses ec.RW.elf and
+ec.RW_B.elf in build/cr50/RW as inputs and util/signer/ec_RW-manifest-dev.json
+as the manifest, and places the newly signed images into build/cr50/ec.bin.
+
+The only outside dependency of this script is the signing utility itself,
+which is expected to be available as \$HOME/bin/codesigner.
+
+The following command line options are accepted:
+
+  b1 - generate signature for the b1 version of the H1 chip
+  elves <elf1> <elf2> - sign the supplied elf files instead of the default
+        ones. Handy if the builder generated files need to be signed
+  help - print this message
+  hex - generate hex output instead of binary (place in 0.signed.hex and
+        1.signed.hex in the local directory)
+  prod - sign with prod key (no debug image will be signed)
+
+This script also allows to sign dev images for running on prod RO. To do that
+invoke this script as follows:
+
+  H1_DEVIDS='<dev id0> <dev id1>' ${progname} [other options, if any]
+
+where <dev id0> <dev id1> are values reported by sysinfo command in the
+DEV_ID: line when run on the CR50 for which the image is built.
+
+The same values can be obtained in the lsusb command output:
+
+  lsusb -vd 18d1:5014 | grep -i serial
+
+note that the lsusb reported values are in hex and need to be prefixed with
+0x.
+
+EOF
+  exit "${rv}"
+}
+
+# This is the suggested location of the codesigner utility.
+BIN_ROOT="${HOME}/bin"
+
+# This is where the new signed image will be pasted into.
+RESULT_FILE="build/cr50/ec.bin"
+
+if [ -z "${CROS_WORKON_SRCROOT}" ]; then
+  echo "$(basename $0): This script must run inside Chrome OS chroot" >&2
+  exit 1
+fi
+
+H1_DEVIDS=${H1_DEVIDS:=}
+EC_ROOT="${CROS_WORKON_SRCROOT}/src/platform/ec"
+EC_BIN_ROOT="${EC_ROOT}/util/signer"
+
+do_hex=
+do_b1=
+do_prod=
+
+# Prepare the default manifest.
+cp "${EC_BIN_ROOT}/ec_RW-manifest-dev.json" "${tmpf}"
+
+elves=( build/cr50/RW/ec.RW.elf build/cr50/RW/ec.RW_B.elf )
+cd "${EC_ROOT}"
+while (( "$#" )); do
+  param="${1}"
+  case $param in
+    (hex) do_hex='true';;
+    (b1)
+      do_b1='true'
+      sed -i 's/\(.*FW_DEFINED_DATA_BLK0.*\): 2/\1: 0/' "${tmpf}"
+      ;;
+    (elves)
+      if [ -z "${2}" -o -z "${3}" ]; then
+        echo "two elf file names are required" 2>&1
+        exit 1
+      fi
+      elves=( $2 $3 )
+      shift
+      shift
+      ;;
+    (prod)
+      do_prod='true'
+      ;;
+    (help)
+      usage 0
+      ;;
+    (*)
+      usage 1
+      ;;
+  esac
+  shift
+done
+
+if [ -z "${do_hex}" -a ! -f "${RESULT_FILE}" ]; then
+  echo "${RESULT_FILE} not found. Run 'make BOARD=cr50' first" >& 2
+  exit 1
+fi
+
+if [ -n "${do_prod}" -a -n "${do_b1}" ]; then
+  echo "can not build prod images for B1, sorry..."
+  exit 1
+fi
+
+signer_command_params=''
+signer_command_params=" -x ${EC_BIN_ROOT}/fuses.xml"
+if [ -z "${do_prod}" ]; then
+  signer_command_params+=" -k ${EC_BIN_ROOT}/cr50_rom0-dev-blsign.pem.pub"
+else
+  cp "${EC_BIN_ROOT}/ec_RW-manifest-prod.json" "${tmpf}"
+  signer_command_params+=" -k ${EC_BIN_ROOT}/cr50_RW-prod.pem.pub"
+fi
+signer_command_params+=" -j ${tmpf}"
+
+if [ -n "${do_hex}" ]; then
+  dst_suffix='signed.hex'
+else
+  signer_command_params+=' --format=bin'
+  dst_suffix='flat'
+fi
+
+if [ -z "${do_prod}" -a -n "${H1_DEVIDS}" ]; then
+  echo "creating a customized DEV image for DEV IDS ${H1_DEVIDS}"
+  sub=$(printf "\\\n    \"DEV_ID0\": %d,\\\n    \"DEV_ID1\": %d," ${H1_DEVIDS})
+  sed -i "s/\"fuses\": {/\"fuses\": {${sub}/" "${tmpf}"
+fi
+
+count=0
+for elf in ${elves[@]}; do
+  if [ -n "${do_prod}" ]; then
+    if grep -q "DEV/cr50" "${elf}"; then
+      echo "Will not sign debug image with prod keys" >&2
+      exit 1
+    fi
+  fi
+  sudo ${BIN_ROOT}/codesigner ${signer_command_params} \
+    -i ${elf} -o "${count}.${dst_suffix}"
+  count=$(( count + 1 ))
+done
+
+if [ -n "${do_hex}" ]; then
+  exit 0  # Hex RW images generated.
+fi
+
+# Now paste the newly signed blobs into the output image.
+dd if="0.flat" of="${RESULT_FILE}" seek=16384 bs=1 conv=notrunc
+dd if="1.flat" of="${RESULT_FILE}" seek=278528 bs=1 conv=notrunc
+sudo rm [01].flat
