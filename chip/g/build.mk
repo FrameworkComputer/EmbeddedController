@@ -115,7 +115,7 @@ CPPFLAGS += -DCR50_DEV=1
 SIGNER = $(HOME)/bin/codesigner
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub
 RW_SIGNER_EXTRAS = -x util/signer/fuses.xml
-RW_SIGNER_EXTRAS += -j util/signer/ec_RW-manifest-kevin_evt_1.json
+RW_SIGNER_EXTRAS += -j util/signer/ec_RW-manifest-dev.json
 $(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
 $(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
 endif
