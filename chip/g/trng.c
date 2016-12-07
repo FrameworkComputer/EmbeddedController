@@ -5,6 +5,7 @@
 
 #include "init_chip.h"
 #include "registers.h"
+#include "trng.h"
 
 void init_trng(void)
 {

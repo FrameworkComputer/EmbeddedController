@@ -6,6 +6,7 @@
 #define __EC_INCLUDE_TRNG_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * Initialize the true random number generator.
