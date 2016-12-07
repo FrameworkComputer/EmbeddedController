@@ -568,6 +568,14 @@ int board_set_active_charge_port(int charge_port)
 	case CHARGE_PORT_NONE:
 		bd9995x_port_select = 0;
 		bd9995x_port = BD9995X_CHARGE_PORT_BOTH;
+
+		/*
+		 * To avoid inrush current from the external charger, enable
+		 * discharge on AC till the new charger is detected and
+		 * charge detect delay has passed.
+		 */
+		if (charge_get_percent() > 2)
+			charger_discharge_on_ac(1);
 		break;
 	default:
 		panic("Invalid charge port\n");
