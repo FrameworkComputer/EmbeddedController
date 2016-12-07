@@ -711,9 +711,6 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 void lid_angle_peripheral_enable(int enable)
 {
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
-
-	/* enable/disable touchpad */
-	gpio_set_level(GPIO_PP3300_TRACKPAD_EN_L, !enable);
 }
 #endif
 
