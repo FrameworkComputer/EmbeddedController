@@ -716,7 +716,10 @@ static void bd9995x_init(void)
 	ch_raw_write16(BD9995X_CMD_VBUS_UCD_SET, reg,
 		       BD9995X_EXTENDED_COMMAND);
 
-	/* Disable charging trigger by BC1.2 on VCC & VBUS. */
+	/*
+	 * Disable charging trigger by BC1.2 on VCC & VBUS and
+	 * automatic limitation of the input current.
+	 */
 	if (ch_raw_read16(BD9995X_CMD_CHGOP_SET1, &reg,
 			  BD9995X_EXTENDED_COMMAND))
 		return;
@@ -724,7 +727,9 @@ static void bd9995x_init(void)
 		BD9995X_CMD_CHGOP_SET1_SDP_CHG_TRIG |
 		BD9995X_CMD_CHGOP_SET1_VBUS_BC_DISEN |
 		BD9995X_CMD_CHGOP_SET1_VCC_BC_DISEN |
-		BD9995X_CMD_CHGOP_SET1_ILIM_AUTO_DISEN);
+		BD9995X_CMD_CHGOP_SET1_ILIM_AUTO_DISEN |
+		BD9995X_CMD_CHGOP_SET1_SDP_500_SEL |
+		BD9995X_CMD_CHGOP_SET1_DCP_2500_SEL);
 	ch_raw_write16(BD9995X_CMD_CHGOP_SET1, reg,
 		       BD9995X_EXTENDED_COMMAND);
 
