@@ -78,7 +78,7 @@ PINMUX(GPIO(I2C_SCL_INA),     B0, DIO_INPUT)
 PINMUX(GPIO(I2C_SDA_INA),     B1, DIO_INPUT)
 /* UARTs */
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
-PINMUX(FUNC(UART0_RX),        A13, DIO_INPUT | DIO_WAKE_FALLING)
+PINMUX(FUNC(UART0_RX),        A13, DIO_INPUT | DIO_WAKE_LOW)
 /*
  * UART1_TX and UART2_TX are configured in usart.c. They are not set as outputs
  * here in order to avoid interfering with servo. They can be controlled using
