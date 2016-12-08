@@ -811,9 +811,6 @@ void host_register_init(void)
 	/* enable SHM */
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
-	/* An active LRESET or PLTRST does not generate host domain reset */
-	SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_LRESET_PLTRST_MODE);
-
 	CPRINTS("Host settings are done!");
 
 }
