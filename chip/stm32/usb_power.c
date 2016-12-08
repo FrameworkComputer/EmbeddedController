@@ -22,17 +22,6 @@ static int usb_power_init_inas(struct usb_power_config const *config);
 static int usb_power_read(struct usb_power_config const *config);
 static int usb_power_write_line(struct usb_power_config const *config);
 
-
-static int8_t usb_power_map_error(int error)
-{
-	switch (error) {
-	case EC_SUCCESS:       return USB_POWER_SUCCESS;
-	case EC_ERROR_TIMEOUT: return USB_POWER_ERROR_TIMEOUT;
-	case EC_ERROR_BUSY:    return USB_POWER_ERROR_BUSY;
-	default:	       return USB_POWER_ERROR_UNKNOWN | (error & 0x7f);
-	}
-}
-
 void usb_power_deferred_rx(struct usb_power_config const *config)
 {
 	int rx_count = rx_ep_pending(config->endpoint);
@@ -327,7 +316,6 @@ static int usb_power_read(struct usb_power_config const *config)
 	}
 
 	/* Return result code if applicable. */
-	usb_power_map_error(0);
 	ep->in_databuffer[0] = result;
 
 	usb_write_ep(config->endpoint, in_msgsize, ep->in_databuffer);
