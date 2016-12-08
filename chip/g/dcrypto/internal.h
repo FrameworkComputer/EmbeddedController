@@ -15,6 +15,8 @@
 #include "cryptoc/p256.h"
 #include "cryptoc/sha.h"
 #include "cryptoc/sha256.h"
+#include "cryptoc/sha384.h"
+#include "cryptoc/sha512.h"
 
 /*
  * SHA.

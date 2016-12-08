@@ -71,14 +71,12 @@ uint16_t _cpri__HashBlock(TPM_ALG_ID alg, uint32_t in_len, uint8_t *in,
 	case TPM_ALG_SHA256:
 		DCRYPTO_SHA256_hash(in, in_len, digest);
 		break;
-/* TODO: add support for SHA384 and SHA512
- *
- *	case TPM_ALG_SHA384:
- *		DCRYPTO_SHA384_hash(in, in_len, p);
- *		break;
- *	case TPM_ALG_SHA512:
- *		DCRYPTO_SHA512_hash(in, in_len, p);
- *		break; */
+	case TPM_ALG_SHA384:
+		DCRYPTO_SHA384_hash(in, in_len, digest);
+		break;
+	case TPM_ALG_SHA512:
+		DCRYPTO_SHA512_hash(in, in_len, digest);
+		break;
 	default:
 		FAIL(FATAL_ERROR_INTERNAL);
 		break;
@@ -106,13 +104,13 @@ uint16_t _cpri__StartHash(TPM_ALG_ID alg, BOOL sequence,
 		DCRYPTO_SHA256_init(ctx, sequence);
 		result = HASH_size(ctx);
 		break;
-/* TODO: add support for SHA384 and SHA512
- *	case TPM_ALG_SHA384:
- *		DCRYPTO_SHA384_init(in, in_len, p);
- *		break;
- *	case TPM_ALG_SHA512:
- *		DCRYPTO_SHA512_init(in, in_len, p);
- *		break; */
+
+	case TPM_ALG_SHA384:
+		DCRYPTO_SHA384_init(ctx);
+		break;
+	case TPM_ALG_SHA512:
+		DCRYPTO_SHA512_init(ctx);
+		break;
 	default:
 		result = 0;
 		break;

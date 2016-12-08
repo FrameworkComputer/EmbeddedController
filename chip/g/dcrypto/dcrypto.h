@@ -60,10 +60,16 @@ int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
  */
 void DCRYPTO_SHA1_init(SHA_CTX *ctx, uint32_t sw_required);
 void DCRYPTO_SHA256_init(LITE_SHA256_CTX *ctx, uint32_t sw_required);
+void DCRYPTO_SHA384_init(LITE_SHA384_CTX *ctx);
+void DCRYPTO_SHA512_init(LITE_SHA512_CTX *ctx);
 const uint8_t *DCRYPTO_SHA1_hash(const void *data, uint32_t n,
 				uint8_t *digest);
 const uint8_t *DCRYPTO_SHA256_hash(const void *data, uint32_t n,
-				uint8_t *digest);
+				   uint8_t *digest);
+const uint8_t *DCRYPTO_SHA384_hash(const void *data, uint32_t n,
+				   uint8_t *digest);
+const uint8_t *DCRYPTO_SHA512_hash(const void *data, uint32_t n,
+				   uint8_t *digest);
 
 /*
  *  HMAC.
