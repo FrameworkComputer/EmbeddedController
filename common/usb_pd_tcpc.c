@@ -1235,7 +1235,7 @@ static int tcpc_i2c_read(int port, int reg, uint8_t *payload)
 		payload[1] = (pd[port].alert_mask >> 8) & 0xff;
 		return 2;
 	case TCPC_REG_RX_BYTE_CNT:
-		payload[0] = 4 *
+		payload[0] = 3 + 4 *
 			PD_HEADER_CNT(pd[port].rx_head[pd[port].rx_buf_tail]);
 		return 1;
 	case TCPC_REG_RX_HDR:
