@@ -231,8 +231,32 @@ int charger_profile_override(struct charge_state_data *curr)
 	/* Current and previous battery voltage */
 	int batt_voltage;
 	static int prev_batt_voltage;
+	int disch_on_ac;
 
-	charger_discharge_on_ac(!(curr->batt.flags & BATT_FLAG_WANT_CHARGE));
+	/*
+	 * In light load (<450mA being withdrawn from VSYS) the DCDC of the
+	 * charger operates intermittently i.e. DCDC switches continuously
+	 * and then stops to regulate the output voltage and current, and
+	 * sometimes to prevent	reverse current from flowing to the input.
+	 * This causes a slight voltage ripple on VSYS that falls in the
+	 * audible noise frequency (single digit kHz range). This small
+	 * ripple generates audible noise in the output ceramic capacitors
+	 * (caps on VSYS and any input of DCDC under VSYS).
+	 *
+	 * To overcome this issue enable the battery learning operation
+	 * and suspend USB charging and DC/DC converter.
+	 */
+	disch_on_ac = curr->batt.is_present == BP_YES &&
+			!battery_is_cut_off() &&
+			!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+			curr->batt.status & STATUS_FULLY_CHARGED;
+
+	charger_discharge_on_ac(disch_on_ac);
+
+	if (disch_on_ac) {
+		curr->state = ST_DISCHARGE;
+		return 0;
+	}
 
 	/*
 	 * Determine temperature range. The five ranges are:
