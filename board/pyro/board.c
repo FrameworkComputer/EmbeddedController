@@ -31,6 +31,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
+#include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
 #include "motion_sense.h"
@@ -42,6 +43,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
@@ -104,9 +106,10 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 static void enable_input_devices(void);
 DECLARE_DEFERRED(enable_input_devices);
 
+#define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&enable_input_devices_data, 0);
+	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
 }
 
 #include "gpio_list.h"
@@ -490,8 +493,7 @@ DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 /* Initialize board. */
 static void board_init(void)
 {
-	/* FIXME: Handle tablet mode */
-	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); */
+	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
 
 	/* Enable charger interrupts */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
@@ -633,22 +635,36 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 	return charger_get_vbus_level() < BD9995X_BC12_MIN_VOLTAGE;
 }
 
-/* Enable or disable input devices, based upon chipset state and tablet mode */
 static void enable_input_devices(void)
 {
-	int kb_enable = 1;
-	int tp_enable = 1;
+	/* We need to turn on tablet mode for motion sense */
+	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
 
-	/* Disable KB & TP if chipset is off */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		kb_enable = 0;
-		tp_enable = 0;
-	}
-
-	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_ANGLE);
-
-	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, !tp_enable);
+	/*
+	 * Then, we disable peripherals only when the lid reaches 360 position.
+	 * (It's probably already disabled by motion_sense_task.)
+	 * We deliberately do not enable peripherals when the lid is leaving
+	 * 360 position. Instead, we let motion_sense_task enable it once it
+	 * reaches laptop zone (180 or less).
+	 */
+	if (tablet_get_mode())
+		lid_angle_peripheral_enable(0);
 }
+
+/* Enable or disable input devices, based on chipset state and tablet mode */
+#ifndef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+	/*
+	 * If the lid is in 360 position, ignore the lid angle,
+	 * which might be faulty. Disable keyboard and touchpad.
+	 */
+	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		enable = 0;
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, !enable);
+}
+#endif
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)

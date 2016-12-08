@@ -32,14 +32,13 @@ GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* M
 GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,	PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,	PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(TABLET_MODE,		PIN(3, 6), GPIO_INT_BOTH, tablet_mode_interrupt)
+/* Tablet switch is active-low. L: lid is attached (360 position) H: detached */
+GPIO_INT(TABLET_MODE_L,		PIN(3, 6), GPIO_INT_BOTH, tablet_mode_interrupt)
 
 GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH | GPIO_SEL_1P8V, switch_interrupt)	/* EC_WP_ODL */
 
-/* FIXME(dhendrix): Implement interrupt handlers for lid, tablet mode, etc. */
 GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(9, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
 	bmi160_interrupt)
-//GPIO_INT(LID_ACCEL_INT_L,	PIN(C, 7), GPIO_INT_LOW | GPIO_SEL_1P8V, lid_interrupt)
 GPIO(LID_ACCEL_INT_L,		PIN(C, 7), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /* I2C GPIOs will be set to alt. function later. */
