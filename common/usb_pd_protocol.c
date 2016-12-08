@@ -1698,8 +1698,7 @@ void pd_task(void)
 		/* process any potential incoming message */
 		incoming_packet = evt & PD_EVENT_RX;
 		if (incoming_packet) {
-			tcpm_get_message(port, payload, &head);
-			if (head > 0)
+			if (!tcpm_get_message(port, payload, &head))
 				handle_request(port, head, payload);
 		}
 		/* if nothing to do, verify the state of the world in 500ms */

@@ -201,7 +201,6 @@ int tcpci_tcpm_get_message(int port, uint32_t *payload, int *head)
 
 	/* RX_BYTE_CNT includes 3 bytes for frame type and header */
 	if (rv != EC_SUCCESS || cnt < 3) {
-		*head = 0;
 		rv = EC_ERROR_UNKNOWN;
 		goto clear;
 	}

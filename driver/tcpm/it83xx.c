@@ -93,13 +93,12 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 	return cc_state;
 }
 
-static void it83xx_rx_data(enum usbpd_port port, int *head, uint32_t *buf)
+static int it83xx_rx_data(enum usbpd_port port, int *head, uint32_t *buf)
 {
 	struct usbpd_header *p_head = (struct usbpd_header *)head;
-	*head = 0;
 
 	if (!USBPD_IS_RX_DONE(port))
-		return;
+		return EC_ERROR_UNKNOWN;
 
 	/* store header */
 	*p_head = *((struct usbpd_header *)IT83XX_USBPD_RMH_BASE(port));
@@ -113,6 +112,8 @@ static void it83xx_rx_data(enum usbpd_port port, int *head, uint32_t *buf)
 	 * If clear this bit, USBPD receives next packet
 	 */
 	IT83XX_USBPD_MRSR(port) = USBPD_REG_MASK_RX_MSG_VALID;
+
+	return EC_SUCCESS;
 }
 
 static enum tcpc_transmit_complete it83xx_tx_data(
@@ -423,11 +424,11 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 
 static int it83xx_tcpm_get_message(int port, uint32_t *payload, int *head)
 {
-	it83xx_rx_data(port, head, payload);
+	int ret = it83xx_rx_data(port, head, payload);
 	/* un-mask RX done interrupt */
 	IT83XX_USBPD_IMR(port) &= ~USBPD_REG_MASK_MSG_RX_DONE;
 
-	return EC_SUCCESS;
+	return ret;
 }
 
 static int it83xx_tcpm_transmit(int port,
