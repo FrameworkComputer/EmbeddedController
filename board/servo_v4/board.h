@@ -70,6 +70,40 @@
 
 /* PD features */
 #define CONFIG_ADC
+#define CONFIG_BOARD_PRE_INIT
+/*
+ * If task profiling is enabled then the rx falling edge detection interrupts
+ * can't be processed in time and can't support USB PD messaging.
+ */
+#undef CONFIG_TASK_PROFILING
+
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_INTERNAL_COMP
+#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_TCPC
+#define CONFIG_USB_PD_TCPM_STUB
+
+/* 3.0A Standard-current Rp */
+#define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
+#define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
+
+/* Start as a sink for both CHG/DUT ports */
+#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
+
+/*
+ * TODO(crosbug.com/p/60792): The delay values are currently just place holders
+ * and the delay will need to be relative to the circuitry that allows VBUS to
+ * be supplied to the DUT port from the CHG port.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
+
+/* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
@@ -98,17 +132,16 @@ enum usb_strings {
 	USB_STR_USART3_STREAM_NAME,
 	USB_STR_USART4_STREAM_NAME,
 	USB_STR_UPDATE_NAME,
-
 	USB_STR_COUNT
 };
 
 
 /* ADC signal */
 enum adc_channel {
-	ADC_DUT_CC1_PD = 0,
-	ADC_DUT_CC2_PD,
-	ADC_CHG_CC1_PD,
+	ADC_CHG_CC1_PD = 0,
 	ADC_CHG_CC2_PD,
+	ADC_DUT_CC1_PD,
+	ADC_DUT_CC2_PD,
 	ADC_SBU1_DET,
 	ADC_SBU2_DET,
 	ADC_SUB_C_REF,
