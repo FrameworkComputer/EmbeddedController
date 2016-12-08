@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -109,6 +110,8 @@ static void prepare_to_sleep(void)
 		/* Configure pins for deep sleep */
 		board_configure_deep_sleep_wakepins();
 
+		/* Make sure the usb clock is enabled */
+		clock_enable_module(MODULE_USB, 1);
 		/*
 		 * Preserve some state prior to deep sleep. Pretty much all we
 		 * need is the device address, since everything else can be
