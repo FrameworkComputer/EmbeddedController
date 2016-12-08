@@ -27,9 +27,42 @@
 #include "usb-stream.h"
 #include "util.h"
 
-
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
+/******************************************************************************
+ * Board pre-init function.
+ */
+
+void board_config_pre_init(void)
+{
+	/* enable SYSCFG clock */
+	STM32_RCC_APB2ENR |= 1 << 0;
+
+	/*
+	 * the DMA mapping is :
+	 *  Chan 2 : TIM1_CH1  (CHG RX) - Default mapping
+	 *  Chan 3 : SPI1_TX   (CHG TX) - Default mapping
+	 *  Chan 4 : USART1 TX - Remapped from default Chan 2
+	 *  Chan 5 : USART1 RX - Remapped from default Chan 3
+	 *  Chan 6 : TIM3_CH1  (DUT RX) - Remapped from default Chan 4
+	 *  Chan 7 : SPI2_TX   (DUT TX) - Remapped from default Chan 5
+	 *
+	 * As described in the comments above, both USART1 TX/RX and DUT Tx/RX
+	 * channels must be remapped from the defulat locations. Remapping is
+	 * acoomplished by setting the following bits in the STM32_SYSCFG_CFGR1
+	 * register. Information about this register and its settings can be
+	 * found in section 11.3.7 DMA Request Mapping of the STM RM0091
+	 * Reference Manual
+	 */
+	/* Remap USART1 Tx from DMA channel 2 to channel 4 */
+	STM32_SYSCFG_CFGR1 |= (1 << 9);
+	/* Remap USART1 Rx from DMA channel 3 to channel 5 */
+	STM32_SYSCFG_CFGR1 |= (1 << 10);
+	/* Remap TIM3_CH1 from DMA channel 4 to channel 6 */
+	STM32_SYSCFG_CFGR1 |= (1 << 30);
+	/* Remap SPI2 Tx from DMA channel 5 to channel 7 */
+	STM32_SYSCFG_CFGR1 |= (1 << 24);
+}
 
 /******************************************************************************
  * Build GPIO tables and expose a subset of the GPIOs over USB.
@@ -92,10 +125,10 @@ USB_GPIO_CONFIG(usb_gpio,
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_DUT_CC1_PD] = {"DUT_CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
-	[ADC_DUT_CC2_PD] = {"DUT_CC2_PD", 3300, 4096, 0, STM32_AIN(5)},
 	[ADC_CHG_CC1_PD] = {"CHG_CC1_PD", 3300, 4096, 0, STM32_AIN(2)},
 	[ADC_CHG_CC2_PD] = {"CHG_CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
+	[ADC_DUT_CC1_PD] = {"DUT_CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
+	[ADC_DUT_CC2_PD] = {"DUT_CC2_PD", 3300, 4096, 0, STM32_AIN(5)},
 	[ADC_SBU1_DET] = {"SBU1_DET", 3300, 4096, 0, STM32_AIN(3)},
 	[ADC_SBU2_DET] = {"SBU2_DET", 3300, 4096, 0, STM32_AIN(7)},
 	[ADC_SUB_C_REF] = {"SUB_C_REF", 3300, 4096, 0, STM32_AIN(1)},
@@ -474,6 +507,12 @@ static void board_init(void)
 	init_ioexpander();
 	init_uservo_port();
 
+	/*
+	 * TODO(crosbug.com/p/60828): The result of init_ccd() will be
+	 * overwritten when the usb pd protocol state machine attempts to attach
+	 * as SNK or SRC since it will modify the pullup/pulldown resistor on
+	 * the chosen polarity CC line.
+	 */
 	/* Enable CCD if type-c */
 	if (gpio_get_level(GPIO_DONGLE_DET))
 		init_ccd(CCD_ID_RPUSB);
