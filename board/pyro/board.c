@@ -490,9 +490,20 @@ static void chipset_pre_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
+static void board_set_tablet_mode(void)
+{
+	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * Ensure tablet mode is initialized according to the hardware state
+	 * so that the cached state reflects reality.
+	 */
+	board_set_tablet_mode();
+
 	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
 
 	/* Enable charger interrupts */
@@ -638,7 +649,7 @@ int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
 static void enable_input_devices(void)
 {
 	/* We need to turn on tablet mode for motion sense */
-	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
+	board_set_tablet_mode();
 
 	/*
 	 * Then, we disable peripherals only when the lid reaches 360 position.
