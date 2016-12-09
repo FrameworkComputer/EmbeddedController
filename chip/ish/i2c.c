@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -147,6 +147,9 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 	struct i2c_bus_info *bus_info = &board_config[ctx->bus];
 	uint32_t clk_in_val = clk_in[bus_freq[ctx->bus]];
 
+	/* Convert 8-bit slave addrees to 7-bit for driver expectation*/
+	slave_addr >>= 1;
+
 	/* disable interrupts */
 	i2c_intr_switch(base, DISABLE_INT);
 
@@ -263,15 +266,10 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	if (in_size > 0)
 		is_read = 1;
 
-	/* function interface specifies an 8-bit slave addr: convert it to
-	 * a 7-bit addr to meet the expectations of the driver code.
-	 */
-	slave_addr >>= 1;
-
 	ctx = &i2c_ctxs[port];
 	ctx->error_flag = 0;
 
-	total_len = 1 + (is_read ? 1 : in_size);
+	total_len = is_read ? (1 + in_size) : out_size;
 
 	i2c_init_transaction(ctx, slave_addr, flags);
 
@@ -327,15 +325,6 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	}
 
 	i2c_mmio_write(ctx->base, IC_ENABLE, IC_ENABLE_DISABLE);
-
-#ifdef ISH_DEBUG
-	if (req.operation == I2C_READ) {
-		CPRINTF("I2C read len: %d [", req.r_len);
-		for (i = 0; i < req.r_len; i++)
-			CPRINTF("0x%0x ", req.r_data[i]);
-		CPUTS("]\n");
-	}
-#endif
 
 	return EC_SUCCESS;
 }
