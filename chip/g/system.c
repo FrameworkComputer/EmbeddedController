@@ -34,6 +34,8 @@ static void check_reset_cause(void)
 		/* This register is cleared by reading it */
 		uint32_t g_exitpd = GR_PMU_EXITPD_SRC;
 
+		flags |= RESET_FLAG_HIBERNATE;
+
 		if (g_exitpd & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK)
 			flags |= RESET_FLAG_WAKE_PIN;
 		if (g_exitpd & GC_PMU_EXITPD_SRC_UTMI_SUSPEND_N_MASK)
