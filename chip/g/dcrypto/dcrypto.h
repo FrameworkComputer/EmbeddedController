@@ -9,8 +9,9 @@
 #ifndef __EC_CHIP_G_DCRYPTO_DCRYPTO_H
 #define __EC_CHIP_G_DCRYPTO_DCRYPTO_H
 
-/* TODO(vbendeb) don't forget to disable this for prod builds. */
+#ifdef CR50_DEV
 #define CRYPTO_TEST_SETUP
+#endif
 
 #include "internal.h"
 
