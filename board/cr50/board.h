@@ -196,15 +196,6 @@ int is_ec_rst_asserted(void);
 /* TODO(crosbug.com/p/56540): Remove this when UART0_RX works everywhere */
 #define GC_UART0_RX_DISABLE
 
-/*
- * This would be a low hanging fruit if there is a need to reduce memory
- * footprint. Having a large buffer helps not to drop debug outputs generated
- * before console is initialized, but this is not really necessary in a
- * production device.
- */
-#undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 4096
-
 #define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_TPM))
 
 /* Nv Memory users */
