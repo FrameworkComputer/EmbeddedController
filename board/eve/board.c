@@ -590,6 +590,50 @@ void board_hibernate(void)
 	bd9995x_set_power_save_mode(BD9995X_PWR_SAVE_MAX);
 }
 
+static int gpio_get_ternary(enum gpio_signal gpio)
+{
+	int pd, pu;
+	int flags = gpio_get_default_flags(gpio);
+
+	/* Read GPIO with internal pull-down */
+	gpio_set_flags(gpio, GPIO_INPUT | GPIO_PULL_DOWN);
+	pd = gpio_get_level(gpio);
+	usleep(100);
+
+	/* Read GPIO with internal pull-up */
+	gpio_set_flags(gpio, GPIO_INPUT | GPIO_PULL_UP);
+	pu = gpio_get_level(gpio);
+	usleep(100);
+
+	/* Reset GPIO flags */
+	gpio_set_flags(gpio, flags);
+
+	/* Check PU and PD readings to determine tristate */
+	return pu && !pd ? 2 : pd;
+}
+
+int board_get_version(void)
+{
+	static int ver;
+
+	if (!ver) {
+		/*
+		 * Read the board EC ID on the tristate strappings
+		 * using ternary encoding: 0 = 0, 1 = 1, Hi-Z = 2
+		 */
+		uint8_t id0, id1, id2;
+
+		id0 = gpio_get_ternary(GPIO_BOARD_VERSION1);
+		id1 = gpio_get_ternary(GPIO_BOARD_VERSION2);
+		id2 = gpio_get_ternary(GPIO_BOARD_VERSION3);
+
+		ver = (id2 * 9) + (id1 * 3) + id0;
+		CPRINTS("Board ID = %d", ver);
+	}
+
+	return ver;
+}
+
 /* Base Sensor mutex */
 static struct mutex g_base_mutex;
 

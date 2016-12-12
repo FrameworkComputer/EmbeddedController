@@ -18,6 +18,7 @@
 #define CONFIG_ADC
 #define CONFIG_BOARD_HAS_BEFORE_RSMRST
 #define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BUTTON_COUNT 2
 #define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 #define CONFIG_DPTF
@@ -241,6 +242,7 @@ enum adc_channel {
 #define PD_MAX_VOLTAGE_MV		20000
 
 /* Board specific handlers */
+int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 void board_print_tcpc_fw_version(int port);
