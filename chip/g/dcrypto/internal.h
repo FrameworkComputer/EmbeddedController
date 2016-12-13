@@ -29,7 +29,11 @@
 #define SHA_DIGEST_WORDS   (SHA_DIGEST_SIZE / sizeof(uint32_t))
 #define SHA256_DIGEST_WORDS (SHA256_DIGEST_SIZE / sizeof(uint32_t))
 
+#ifdef SHA512_SUPPORT
+#define SHA_DIGEST_MAX_BYTES SHA512_DIGEST_SIZE
+#else
 #define SHA_DIGEST_MAX_BYTES SHA256_DIGEST_SIZE
+#endif
 
 enum sha_mode {
 	SHA1_MODE = 0,

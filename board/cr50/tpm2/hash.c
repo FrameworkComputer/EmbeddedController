@@ -107,9 +107,11 @@ uint16_t _cpri__StartHash(TPM_ALG_ID alg, BOOL sequence,
 
 	case TPM_ALG_SHA384:
 		DCRYPTO_SHA384_init(ctx);
+		result = HASH_size(ctx);
 		break;
 	case TPM_ALG_SHA512:
 		DCRYPTO_SHA512_init(ctx);
+		result = HASH_size(ctx);
 		break;
 	default:
 		result = 0;
