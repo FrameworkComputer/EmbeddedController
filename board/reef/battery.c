@@ -21,6 +21,8 @@
 enum battery_type {
 	BATTERY_SONY_CORP,
 	BATTERY_SMP_COS4870,
+	BATTERY_SMP_C22N1626,
+	BATTERY_CPT_C22N1626,
 	BATTERY_TYPE_COUNT,
 };
 
@@ -104,6 +106,60 @@ static const struct board_batt_params info[] = {
 			.start_charging_max_c = 46,
 			.charging_min_c = 0,
 			.charging_max_c = 45,
+			.discharging_min_c = 0,
+			.discharging_max_c = 60,
+		},
+	},
+	/* SMP C22N1626 BATTERY battery specific configurations */
+	[BATTERY_SMP_C22N1626] = {
+		.manuf_name = "AS1FNZD3KD",
+		.ship_mode_reg = 0x00,
+		.ship_mode_data = 0x0010,
+		.batt_init = batt_smp_cos4870_init,
+
+		/* Battery info for BQ40Z55 */
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+
+			/*
+			 * Actual value 6000mV, added 100mV for charger accuracy
+			 * so that unwanted low VSYS_Prochot# assertion can be
+			 * avoided.
+			 */
+			.voltage_min = 6100,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 60,
+			.discharging_min_c = 0,
+			.discharging_max_c = 60,
+		},
+	},
+	/* CPT C22N1626 BATTERY battery specific configurations */
+	[BATTERY_CPT_C22N1626] = {
+		.manuf_name = "AS1FOAD3KD",
+		.ship_mode_reg = 0x00,
+		.ship_mode_data = 0x0010,
+		.batt_init = batt_smp_cos4870_init,
+
+		/* Battery info for BQ40Z55 */
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+
+			/*
+			 * Actual value 6000mV, added 100mV for charger accuracy
+			 * so that unwanted low VSYS_Prochot# assertion can be
+			 * avoided.
+			 */
+			.voltage_min = 6100,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 60,
 			.discharging_min_c = 0,
 			.discharging_max_c = 60,
 		},
