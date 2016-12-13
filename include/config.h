@@ -762,6 +762,10 @@
  * only supported on CR50.
  */
 #undef CONFIG_DCRYPTO
+/*
+ * When enabled build support for SHA-384/512, requires CONFIG_DCRYPTO.
+ */
+#undef CONFIG_UPTO_SHA512
 
 /*****************************************************************************/
 /*

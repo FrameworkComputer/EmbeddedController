@@ -63,14 +63,21 @@ CPPFLAGS += -I$(abspath ./chip/$(CHIP))
 CPPFLAGS += -I$(abspath .)
 CPPFLAGS += -I$(abspath $(BDIR))
 CPPFLAGS += -I$(abspath ./test)
+ifeq ($(CONFIG_UPTO_SHA512),y)
+CPPFLAGS += -DSHA512_SUPPORT
+endif
 
 # Make sure the context of the software sha512 implementation fits. If it ever
 # increases, a compile time assert will fire in tpm2/hash.c.
+ifeq ($(CONFIG_UPTO_SHA512),y)
 CFLAGS += -DUSER_MIN_HASH_STATE_SIZE=208
+else
+CFLAGS += -DUSER_MIN_HASH_STATE_SIZE=112
+endif
 # Configure TPM2 headers accordingly.
 CFLAGS += -DEMBEDDED_MODE=1
 # Configure cryptoc headers to handle unaligned accesses.
-CFLAGS += -DSUPPORT_UNALIGNED=1 -DSHA512_SUPPORT=1
+CFLAGS += -DSUPPORT_UNALIGNED=1
 
 # Add dependencies on that library
 $(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += -L$(out)/tpm2 -ltpm2

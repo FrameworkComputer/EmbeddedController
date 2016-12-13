@@ -111,6 +111,7 @@
 
 /* Include crypto stuff, both software and hardware. */
 #define CONFIG_DCRYPTO
+#define CONFIG_UPTO_SHA512
 
 #ifndef __ASSEMBLER__
 
