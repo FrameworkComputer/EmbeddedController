@@ -52,7 +52,7 @@ static enum chg_ramp_state ramp_st;
 
 struct oc_info {
 	timestamp_t ts;
-	uint64_t recover;
+	int oc_detected;
 	int sup;
 	int icl;
 };
@@ -175,15 +175,23 @@ void chg_ramp_task(void)
 		case CHG_RAMP_CHARGE_DETECT_DELAY:
 			/* Delay for charge_manager to determine supplier */
 			/*
-			 * On entry to state, or if port changes, store the
-			 * OC recovery time, and calculate the detect end
-			 * time to exit this state.
+			 * On entry to state, or if port changes, check
+			 * timestamps to determine if this was likely an
+			 * OC event (check if we lost VBUS and it came back
+			 * within OC_RECOVER_MAX_TIME).
 			 */
 			if (ramp_st_prev != ramp_st ||
 			    active_port != last_active_port) {
 				last_active_port = active_port;
-				ACTIVE_OC_INFO.recover =
-					reg_time.val - ACTIVE_OC_INFO.ts.val;
+				if (reg_time.val <
+				    ACTIVE_OC_INFO.ts.val +
+				    OC_RECOVER_MAX_TIME) {
+					ACTIVE_OC_INFO.oc_detected = 1;
+				} else {
+					for (i = 0; i < RAMP_COUNT; ++i)
+						oc_info[active_port][i].
+							oc_detected = 0;
+				}
 				detect_end_time_us = get_time().val +
 						     CHARGE_DETECT_DELAY;
 				task_wait_time = CHARGE_DETECT_DELAY;
@@ -227,8 +235,7 @@ void chg_ramp_task(void)
 			 */
 			for (i = 0; i < RAMP_COUNT; i++) {
 				if (oc_info[active_port][i].sup != active_sup ||
-				    oc_info[active_port][i].recover >
-				    OC_RECOVER_MAX_TIME)
+				    !oc_info[active_port][i].oc_detected)
 					break;
 			}
 
@@ -352,9 +359,9 @@ static int command_chgramp(int argc, char **argv)
 		ccprintf("Port %d:\n", port);
 		ccprintf("  OC idx:%d\n", oc_info_idx[port]);
 		for (i = 0; i < RAMP_COUNT; i++) {
-			ccprintf("  OC %d: s%d recover%lu icl%d\n", i,
+			ccprintf("  OC %d: s%d oc_det%d icl%d\n", i,
 				 oc_info[port][i].sup,
-				 oc_info[port][i].recover,
+				 oc_info[port][i].oc_detected,
 				 oc_info[port][i].icl);
 		}
 	}
