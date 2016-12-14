@@ -1575,6 +1575,9 @@ void pd_task(void)
 #ifndef CONFIG_USB_PD_VBUS_DETECT_NONE
 	int snk_hard_reset_vbus_off = 0;
 #endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	const int auto_toggle_supported = tcpm_auto_toggle_supported(port);
+#endif
 #ifdef CONFIG_CHARGE_MANAGER
 	int typec_curr = 0, typec_curr_change = 0;
 #endif /* CONFIG_CHARGE_MANAGER */
@@ -1729,7 +1732,8 @@ void pd_task(void)
 			 * Attempt TCPC auto DRP toggle if it is
 			 * not already auto toggling and not try.src
 			 */
-			if (!(pd[port].flags & PD_FLAGS_TCPC_DRP_TOGGLE) &&
+			if (auto_toggle_supported &&
+			    !(pd[port].flags & PD_FLAGS_TCPC_DRP_TOGGLE) &&
 			    !(pd[port].flags & PD_FLAGS_TRY_SRC) &&
 			    (cc1 == TYPEC_CC_VOLT_OPEN &&
 			     cc2 == TYPEC_CC_VOLT_OPEN)) {
@@ -2208,7 +2212,8 @@ void pd_task(void)
 			 * Attempt TCPC auto DRP toggle if it is
 			 * not already auto toggling and not try.src
 			 */
-			if (!(pd[port].flags & PD_FLAGS_TCPC_DRP_TOGGLE) &&
+			if (auto_toggle_supported &&
+			    !(pd[port].flags & PD_FLAGS_TCPC_DRP_TOGGLE) &&
 			    !(pd[port].flags & PD_FLAGS_TRY_SRC) &&
 			    (cc1 == TYPEC_CC_VOLT_OPEN &&
 			     cc2 == TYPEC_CC_VOLT_OPEN)) {
@@ -2816,6 +2821,8 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 		case PD_STATE_DRP_AUTO_TOGGLE:
 		{
 			enum pd_states next_state;
+
+			assert(auto_toggle_supported);
 
 			/* Check for connection */
 			tcpm_get_cc(port, &cc1, &cc2);
