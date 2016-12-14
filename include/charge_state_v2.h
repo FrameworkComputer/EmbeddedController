@@ -40,29 +40,6 @@ struct charge_state_data {
 	int desired_input_current;
 };
 
-/*
- * Optional customization.
- *
- * On input, the struct reflects the default behavior. The function can make
- * changes to the state, requested_voltage, or requested_current.
- *
- * Return value:
- *   >0    Desired time in usec for this poll period.
- *   0     Use the default poll period (which varies with the state).
- *  <0     An error occurred. The poll time will be shorter than usual. Too
- *           many errors in a row may trigger some corrective action.
- */
-int charger_profile_override(struct charge_state_data *);
-
-/*
- * Access to custom profile params through host commands.
- * What this does is up to the implementation.
- */
-enum ec_status charger_profile_override_get_param(uint32_t param,
-						  uint32_t *value);
-enum ec_status charger_profile_override_set_param(uint32_t param,
-						  uint32_t value);
-
 /**
  * Set the charge input current limit. This value is stored and sent every
  * time AC is applied.

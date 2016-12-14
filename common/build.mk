@@ -34,6 +34,7 @@ common-$(CONFIG_CASE_CLOSED_DEBUG)+=case_closed_debug.o
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 common-$(CONFIG_CHARGE_RAMP)+=charge_ramp.o
 common-$(CONFIG_CHARGER)+=charger.o
+common-$(CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON)+=charger_profile_override.o
 common-$(CONFIG_CHARGER_V1)+=charge_state_v1.o
 common-$(CONFIG_CHARGER_V2)+=charge_state_v2.o
 common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
