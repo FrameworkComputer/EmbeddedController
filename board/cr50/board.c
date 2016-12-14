@@ -115,6 +115,50 @@ const struct i2c_port_t i2c_ports[]  = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* Strapping pin info structure */
+#define STRAP_PIN_DELAY_USEC  100
+enum strap_list {
+	a0,
+	a1,
+	b0,
+	b1,
+};
+
+struct strap_desc {
+	/* GPIO enum from gpio.inc for the strap pin */
+	uint8_t gpio_signal;
+	/* Offset into pinmux register section for pad SEL register */
+	uint8_t sel_offset;
+	/* Entry in the pinmux peripheral selector table for pad */
+	uint8_t pad_select;
+};
+
+struct board_cfg {
+	/* Value the strap pins should read for a given board */
+	uint8_t strap_cfg;
+	/* Properties required for a given board */
+	uint32_t board_properties;
+};
+
+/*
+ * This table contains both the GPIO and pad specific information required to
+ * configure each strapping pin to be either a GPIO input or output.
+ */
+const struct strap_desc strap_regs[] = {
+	{ GPIO_STRAP_A0, GOFFSET(PINMUX, DIOA1_SEL), GC_PINMUX_DIOA1_SEL, },
+	{ GPIO_STRAP_A1, GOFFSET(PINMUX, DIOA9_SEL), GC_PINMUX_DIOA9_SEL, },
+	{ GPIO_STRAP_B0, GOFFSET(PINMUX, DIOA6_SEL), GC_PINMUX_DIOA6_SEL, },
+	{ GPIO_STRAP_B1, GOFFSET(PINMUX, DIOA12_SEL), GC_PINMUX_DIOA12_SEL, },
+};
+
+#define BOARD_PORPERTIES_DEFAULT (BOARD_SLAVE_CONFIG_I2C | BOARD_USE_PLT_RESET)
+static struct board_cfg board_cfg_table[] = {
+	/* Kevin/Gru: DI0A9 = 5k PD, DIOA1 = 1M PU */
+	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP },
+	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
+	{ 0x20, BOARD_SLAVE_CONFIG_I2C | BOARD_USB_AP | BOARD_USE_PLT_RESET },
+};
+
 void post_reboot_request(void)
 {
 	/* Reboot the device next time TPM reset is requested. */
@@ -821,6 +865,183 @@ void enable_int_ap_l(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_int_ap_l, HOOK_PRIO_DEFAULT);
 
+/*
+ * This function duplicates some of the functionality in chip/g/gpio.c in order
+ * to configure a given strap pin to be either a low gpio output, a gpio input
+ * with or without an internal pull resistor, or disconnect the gpio signal
+ * from the pin pad.
+ *
+ * The desired gpio functionality is contained in the input parameter flags,
+ * while the strap parameter is an index into the array strap_regs.
+ */
+static void strap_config_pin(enum strap_list strap, int flags)
+{
+	const struct gpio_info *g = gpio_list + strap_regs[strap].gpio_signal;
+	int bitnum  = GPIO_MASK_TO_NUM(g->mask);
+	int mask = DIO_CTL_IE_MASK | DIO_CTL_PD_MASK | DIO_CTL_PU_MASK;
+	int val;
+
+	if (!flags) {
+		/* Reset strap pins, disconnect output and clear pull up/dn */
+		/* Disconnect gpio from pin mux */
+		DIO_SEL_REG(strap_regs[strap].sel_offset) = 0;
+		/* Clear input enable and pulldown/pullup in pinmux */
+		REG_WRITE_MLV(DIO_CTL_REG(strap_regs[strap].sel_offset),
+			      mask, 0, 0);
+		return;
+	}
+
+	if (flags & GPIO_OUT_LOW) {
+		/* Config gpio to output and drive low */
+		gpio_set_flags(strap_regs[strap].gpio_signal, GPIO_OUT_LOW);
+		/* connect pin mux to gpio */
+		DIO_SEL_REG(strap_regs[strap].sel_offset) =
+			GET_GPIO_FUNC(g->port, bitnum);
+		return;
+	}
+
+	if (flags & GPIO_INPUT) {
+		/* Configure gpio pin to be an input */
+		gpio_set_flags(strap_regs[strap].gpio_signal, GPIO_INPUT);
+		/* Connect pad to gpio */
+		GET_GPIO_SEL_REG(g->port, bitnum) =
+			strap_regs[strap].pad_select;
+
+		/*
+		 * Input enable is bit 2 of the CTL register. Pulldown enable is
+		 * bit 3, and pullup enable is bit 4. Always set input enable
+		 * and clear the pullup/pulldown bits unless the flags variable
+		 * specifies that pulldown or pullup should be enabled.
+		 */
+		val = DIO_CTL_IE_MASK;
+		if (flags & GPIO_PULL_DOWN)
+			val |= DIO_CTL_PD_MASK;
+		if (flags & GPIO_PULL_UP)
+			val |= DIO_CTL_PU_MASK;
+		/* Set input enable and pulldown/pullup in pinmux */
+		REG_WRITE_MLV(DIO_CTL_REG(strap_regs[strap].sel_offset),
+			      mask, 0, val);
+	}
+}
+
+static int get_strap_config(uint8_t *config)
+{
+	enum strap_list s0;
+	int lvl;
+	int flags;
+	uint8_t pullup_bits;
+
+	/*
+	 * There are 4 pins that are used to determine Cr50 board strapping
+	 * options. These pins are:
+	 *   1. DIOA1  -> I2CS_SDA
+	 *   2. DI0A9  -> I2CS_SCL
+	 *   3. DIOA6  -> SPS_CLK
+	 *   4. DIOA12 -> SPS_CS_L
+	 * There are two main configuration options based on whether I2C or SPI
+	 * is used for TPM2 communication to/from the host AP. If SPI is the
+	 * TPM2 bus, then the pair of pins DIOA9|DIOA1 are used to designate
+	 * strapping options. If TPM uses I2C, then DIOA12|DIOA6 are the
+	 * strapping pins.
+	 *
+	 * Each strapping pin will have either an external pullup or pulldown
+	 * resistor. The external pull resistors have two levels, 5k for strong
+	 * and 1M for weak. Cr50 has internal pullup/pulldown 50k resistors that
+	 * can be configured via pinmux register settings. This combination of
+	 * external and internal pullup/pulldown resistors allows for 4 possible
+	 * states per strapping pin. The following table shows the different
+	 * combinations. Note that when a strong external pull down/up resistor
+	 * is used, the internal resistor is a don't care and those cases are
+	 * marked by n/a. The bits column represents the signal level read on
+	 * the gpio pin. Bit 1 of this field is the value read with the internal
+	 * pull down/up resistors disabled, and bit 0 is the gpio signal level
+	 * of the same pin when the internal pull resistor is selected as shown
+	 * in the 'internal' column.
+	 *   external    internal   bits
+	 *   --------    --------   ----
+	 *    5K PD       n/a        00
+	 *    1M PD       50k PU     01
+	 *    1M PU       50k PD     10
+	 *    5K PU       n/a        11
+	 *
+	 * To determine the bits associated with each strapping pin, the
+	 * following method is used.
+	 *   1. Set all 4 pins as inputs with internal pulls disabled.
+	 *   2. For each pin do the following to encode 2 bits b1:b0
+	 *      a. b1 = gpio_get_level(pin)
+	 *      b. If b1 == 1, then enable internal pulldown, else enable
+	 *         internal pullup resistor.
+	 *      c. b0 = gpio_get_level(pin)
+	 *
+	 * To be considered a valid strap configuraiton, the upper 4 bits must
+	 * have no pullups and at least one pullup in the lower 4 bits or vice
+	 * versa. So can use 0xA0 and 0x0A as masks to check for each
+	 * condition. Once this check is passed, the 4 bits which are used to
+	 * distinguish between SPI vs I2C are masked since reading them as weak
+	 * pulldowns is not being explicitly required due to concerns that the
+	 * AP could prevent accurate differentiation between strong and weak
+	 * pull down cases.
+	 */
+
+	/* Drive all 4 strap pins low to discharge caps. */
+	for (s0 = a0; s0 < ARRAY_SIZE(strap_regs); s0++)
+		strap_config_pin(s0, GPIO_OUT_LOW);
+	/* Delay long enough to discharge any caps. */
+	udelay(STRAP_PIN_DELAY_USEC);
+
+	/* Set all 4 strap pins as inputs with pull resistors disabled. */
+	for (s0 = a0; s0 < ARRAY_SIZE(strap_regs); s0++)
+		strap_config_pin(s0, GPIO_INPUT);
+	/* Delay so voltage levels can settle. */
+	udelay(STRAP_PIN_DELAY_USEC);
+
+	*config = 0;
+	/* Read 2 bit value of each strapping pin. */
+	for (s0 = a0; s0 < ARRAY_SIZE(strap_regs); s0++) {
+		lvl = gpio_get_level(strap_regs[s0].gpio_signal);
+		flags = GPIO_INPUT;
+		if (lvl)
+			flags |= GPIO_PULL_DOWN;
+		else
+			flags |= GPIO_PULL_UP;
+		/* Enable internal pull down/up resistor. */
+		strap_config_pin(s0, flags);
+		udelay(STRAP_PIN_DELAY_USEC);
+		lvl = (lvl << 1) |
+			gpio_get_level(strap_regs[s0].gpio_signal);
+		*config |= lvl << s0 * 2;
+
+		/*
+		 * Finished with this pin. Disable internal pull up/dn resistor
+		 * and disconnect gpio from pin mux. The pins used for straps
+		 * are configured for their desired role when either the SPI or
+		 * I2C interfaces are initialized.
+		 */
+		strap_config_pin(s0, 0);
+	}
+
+	/*
+	 * The strap bits for DIOA12|DIOA6 are in the upper 4 bits of 'config'
+	 * while the strap bits for DIOA9|DIOA1 are in the lower 4 bits. Check
+	 * for SPI vs I2C config by checking for presence of external pullups in
+	 * one group of 4 bits and confirming no external pullups in the other
+	 * group. For SPI config the weak pulldowns may not be accurately read
+	 * on DIOA12|DIOA6 and similarly for I2C config on
+	 * DIOA9|DIOA1. Therefore, only requiring that there be no external
+	 * pullups on these pins and will mask the bits so they will match the
+	 * config table entries.
+	 */
+
+	pullup_bits = *config & 0xaa;
+	if (!pullup_bits)
+		return EC_ERROR_UNKNOWN;
+
+	/* Now that I2C vs SPI is known, mask the unused strap bits. */
+	*config &= pullup_bits & 0xa ? 0xf : 0xf0;
+
+	return EC_SUCCESS;
+}
+
 static void init_board_properties(void)
 {
 	uint32_t properties;
@@ -831,47 +1052,69 @@ static void init_board_properties(void)
 	 * This must be a power on reset or maybe restart due to a software
 	 * update from a version not setting the register.
 	 */
-	if (!properties || (system_get_reset_flags() & RESET_FLAG_HARD)) {
+	if (!(properties & BOARD_ALL_PROPERTIES) || (system_get_reset_flags() &
+						     RESET_FLAG_HARD)) {
+		int i;
+		uint8_t config;
+
 		/*
-		 * Reset the properties, because after a hard reset the register
+		 * Mask board properties because following hard reset, they
 		 * won't be cleared.
 		 */
-		properties = 0;
+		properties &= ~BOARD_ALL_PROPERTIES;
 
-		/* Read DIOA1 strap pin */
-		if (gpio_get_level(GPIO_STRAP0)) {
-			/* Strap is pulled high -> Kevin SPI TPM option */
-			properties |= BOARD_SLAVE_CONFIG_SPI;
-			/* Add an internal pull up on sys_rst_l */
+		if (get_strap_config(&config) != EC_SUCCESS) {
 			/*
-			 * TODO(crosbug.com/p/56945): Remove once SYS_RST_L can
-			 * be pulled up externally.
+			 * No pullups were detected on any of the strap pins so
+			 * there is no point in checking for a matching config
+			 * table entry. For this case default to I2C with
+			 * platform reset and don't store in long life register.
 			 */
-			properties |= BOARD_NEEDS_SYS_RST_PULL_UP;
-		} else {
-			/* Strap is low -> Reef I2C TPM option */
-			properties |= BOARD_SLAVE_CONFIG_I2C;
-			/* One PHY is connected to the AP */
-			properties |= BOARD_USB_AP;
-			/*
-			 * Platform reset is present and will need to be
-			 * configured as a an falling edge interrupt.
-			 */
-			properties |= BOARD_USE_PLT_RESET;
+			CPRINTS("No pullup on strap pins detected!");
+			/* Save this configuration setting */
+			board_properties = BOARD_PORPERTIES_DEFAULT;
+			return;
+		}
+
+		/* Search board config table to find a matching entry */
+		i = 0;
+		while (i < ARRAY_SIZE(board_cfg_table)) {
+			if (board_cfg_table[i].strap_cfg == config) {
+				/* Read board properties for this config */
+				properties |=
+					board_cfg_table[i].board_properties;
+				CPRINTS("Valid strap: 0x%x properties: 0x%x",
+					config, properties);
+				/*
+				 * Now save the properties value for future use.
+				 *
+				 * Enable access to LONG_LIFE_SCRATCH1 reg.
+				 */
+				GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN,
+					     REG1, 1);
+				/* Save properties in LONG_LIFE register */
+				GREG32(PMU, LONG_LIFE_SCRATCH1) = properties;
+				/* Disable access to LONG_LIFE_SCRATCH1 reg */
+				GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN,
+					     REG1, 0);
+				/* Save this configuration setting */
+				board_properties = properties;
+				return;
+			}
+			i++;
 		}
 
 		/*
-		 * Now save the properties value for future use.
-		 *
-		 * First enable write access to the LONG_LIFE_SCRATCH1 register.
+		 * Reached the end of the table and didn't find a
+		 * matching config entry. However, the SPI vs I2C
+		 * determination can still be made as get_strap_config()
+		 * returned EC_SUCCESS.
 		 */
-		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
-		/* Save properties in LONG_LIFE register */
-		GREG32(PMU, LONG_LIFE_SCRATCH1) = properties;
-		/* Disabel write access to the LONG_LIFE_SCRATCH1 register */
-		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+		properties = config & 0xa ? BOARD_SLAVE_CONFIG_SPI :
+			BOARD_PORPERTIES_DEFAULT;
+		CPRINTS("strap_cfg 0x%x has no table entry, prop = 0x%x",
+			config, properties);
 	}
-
 	/* Save this configuration setting */
 	board_properties = properties;
 }
@@ -1051,3 +1294,12 @@ static enum vendor_cmd_rc vc_commit_nvmem(enum vendor_cmd_cc code,
 	return VENDOR_RC_SUCCESS;
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_COMMIT_NVMEM, vc_commit_nvmem);
+
+static int command_board_properties(int argc, char **argv)
+{
+	ccprintf("properties = 0x%x\n", board_properties);
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(brdprop, command_board_properties,
+			     NULL, "Display board properties");

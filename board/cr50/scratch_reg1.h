@@ -34,4 +34,11 @@
 #define BOARD_CONSOLE_UNLOCKED       (1 << 7)
 #define BOARD_WP_ASSERTED            (1 << 8)
 
+/*
+ * Macro to capture all properties related to board strapping pins. This must be
+ * updated if additional strap related properties are added.
+ */
+#define BOARD_ALL_PROPERTIES (BOARD_SLAVE_CONFIG_SPI | BOARD_SLAVE_CONFIG_I2C \
+	| BOARD_USB_AP | BOARD_NEEDS_SYS_RST_PULL_UP | BOARD_USE_PLT_RESET)
+
 #endif  /* ! __EC_BOARD_CR50_SCRATCH_REG1_H */
