@@ -352,13 +352,14 @@ static int bmp280_set_data_rate(const struct motion_sensor_t *s, int rate,
 {
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 	int durn, i, ret;
-	int period = 1000000 / rate;  /* Period in ms */
+	int period; /* Period in ms */
 
 	if (rate == 0) {
 		/* Set to sleep mode */
 		data->rate = 0;
 		return bmp280_set_power_mode(s, BMP280_SLEEP_MODE);
-	}
+	} else
+		period = 1000000 / rate;
 
 	/* reset power mode, waking from sleep */
 	if (!data->rate) {
