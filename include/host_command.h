@@ -195,18 +195,42 @@ int host_request_expected_size(const struct ec_host_request *r);
  */
 void host_packet_receive(struct host_packet *pkt);
 
-/* Register a host command handler */
 #ifdef HAS_TASK_HOSTCMD
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	const struct host_command __keep __host_cmd_##command		\
-	__attribute__((section(".rodata.hcmds")))			\
-	     = {routine, command, version_mask}
+#define EXPAND(off, cmd) __host_cmd_(off, cmd)
+#define __host_cmd_(off, cmd) __host_cmd_##off##cmd
+#define EXPANDSTR(off, cmd) "__host_cmd_"#off#cmd
+
+/*
+ * Register a host command handler with
+ * commands starting at offset 0x0000
+ */
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
+	const struct host_command __keep EXPAND(0x0000, command)        \
+	__attribute__((section(".rodata.hcmds."EXPANDSTR(0x0000, command)))) \
+		= {routine, command, version_mask}
+
+/*
+ * Register a private host command handler with
+ * commands starting at offset EC_CMD_BOARD_SPECIFIC_BASE,
+ */
+#define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask) \
+	const struct host_command __keep \
+	EXPAND(EC_CMD_BOARD_SPECIFIC_BASE, command) \
+	__attribute__((section(".rodata.hcmds."\
+	EXPANDSTR(EC_CMD_BOARD_SPECIFIC_BASE, command)))) \
+		= {routine, EC_CMD_BOARD_SPECIFIC_BASE + command, version_mask}
+
+/*
+ * Given the private host command offset, calculate
+ * the true private host command value.
+ */
+#define PRIVATE_HOST_COMMAND_VALUE(command) \
+	(EC_CMD_BOARD_SPECIFIC_BASE + command)
 #else
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	int (routine)(struct host_cmd_handler_args *args)		\
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
+	int (routine)(struct host_cmd_handler_args *args)       \
 	__attribute__((unused))
 #endif
-
 
 /**
  * Politely ask the CPU to enable/disable its own throttling.

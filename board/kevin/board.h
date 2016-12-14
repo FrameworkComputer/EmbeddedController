@@ -50,6 +50,7 @@
 #define CONFIG_BUTTON_COUNT        2
 #define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_HOST_COMMAND_STATUS
+#define CONFIG_HOSTCMD_SECTION_SORTED /* Host commands are sorted. */
 /* By default, set hcdebug to off */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF

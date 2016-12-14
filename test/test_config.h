@@ -11,6 +11,9 @@
 /* Test config flags only apply for test builds */
 #ifdef TEST_BUILD
 
+/* Host commands are sorted. */
+#define CONFIG_HOSTCMD_SECTION_SORTED
+
 /* Don't compile features unless specifically testing for them */
 #undef CONFIG_VBOOT_HASH
 #undef CONFIG_USB_PD_LOGGING

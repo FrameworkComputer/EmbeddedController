@@ -16,7 +16,7 @@ SECTIONS {
 
     . = ALIGN(8);
     __hcmds = .;
-    *(.rodata.hcmds)
+    *(SORT(.rodata.hcmds*))
     __hcmds_end = .;
 
     . = ALIGN(4);

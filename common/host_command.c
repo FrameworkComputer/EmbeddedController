@@ -363,6 +363,29 @@ host_packet_bad:
  */
 static const struct host_command *find_host_command(int command)
 {
+#ifdef CONFIG_HOSTCMD_SECTION_SORTED
+	const struct host_command *l, *r, *m;
+	uint32_t num;
+
+/* Use binary search to locate host command handler */
+	l = __hcmds;
+	r = __hcmds_end - 1;
+
+	while (1) {
+		if (l > r)
+			return NULL;
+
+		num = r - l;
+		m = l + (num / 2);
+
+		if (m->command < command)
+			l = m + 1;
+		else if (m->command > command)
+			r = m - 1;
+		else
+			return m;
+	}
+#else
 	const struct host_command *cmd;
 
 	for (cmd = __hcmds; cmd < __hcmds_end; cmd++) {
@@ -371,6 +394,7 @@ static const struct host_command *find_host_command(int command)
 	}
 
 	return NULL;
+#endif
 }
 
 static void host_command_init(void)

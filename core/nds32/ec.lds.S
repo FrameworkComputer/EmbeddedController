@@ -68,7 +68,7 @@ SECTIONS
 
         . = ALIGN(4);
         __hcmds = .;
-        KEEP(*(.rodata.hcmds))
+        KEEP(*(SORT(.rodata.hcmds*)))
         __hcmds_end = .;
 
         . = ALIGN(4);
