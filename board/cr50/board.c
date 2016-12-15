@@ -12,6 +12,7 @@
 #include "device_state.h"
 #include "ec_version.h"
 #include "extension.h"
+#include "flash.h"
 #include "flash_config.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -818,3 +819,55 @@ static enum vendor_cmd_rc vc_sysinfo(enum vendor_cmd_cc code,
 	return VENDOR_RC_SUCCESS;
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_SYSINFO, vc_sysinfo);
+
+static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
+						    void *buf,
+						    size_t input_size,
+						    size_t *response_size)
+{
+	struct SignedHeader *header;
+	uint32_t ctrl;
+	uint32_t base_addr;
+	uint32_t size;
+	const char zero[4] = {}; /* value to write to magic. */
+
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
+		header = (struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+	} else {
+		header = (struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW);
+	}
+
+	/* save the original flash region6 register values */
+	ctrl = GREAD(GLOBALSEC, FLASH_REGION6_CTRL);
+	base_addr = GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR);
+	size = GREG32(GLOBALSEC, FLASH_REGION6_SIZE);
+
+	/* Enable RW access to the other header. */
+	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) = (uint32_t) header;
+	GREG32(GLOBALSEC, FLASH_REGION6_SIZE) = 1023;
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
+
+	CPRINTS("%s: TPM verified corrupting inactive image, magic before %x",
+		__func__, header->magic);
+
+	flash_physical_write((intptr_t)&header->magic -
+			     CONFIG_PROGRAM_MEMORY_BASE,
+			     sizeof(zero), zero);
+
+	CPRINTS("%s: magic after: %x", __func__, header->magic);
+
+	/* Restore original values */
+	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) = base_addr;
+	GREG32(GLOBALSEC, FLASH_REGION6_SIZE) = size;
+	GREG32(GLOBALSEC, FLASH_REGION6_CTRL) = ctrl;
+
+	*response_size = 0;
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_INVALIDATE_INACTIVE_RW,
+	vc_invalidate_inactive_rw);
