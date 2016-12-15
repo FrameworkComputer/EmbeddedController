@@ -291,6 +291,46 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 
 static int fast_charging_allowed = 1;
 
+static int charger_should_discharge_on_ac(struct charge_state_data *curr)
+{
+	/* can not discharge on AC without battery */
+	if (curr->batt.is_present != BP_YES)
+		return 0;
+
+	/* Do not discharge on AC if the battery is still waking up */
+	if (!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+		!(curr->batt.status & STATUS_FULLY_CHARGED))
+		return 0;
+
+	/*
+	 * In light load (<450mA being withdrawn from VSYS) the DCDC of the
+	 * charger operates intermittently i.e. DCDC switches continuously
+	 * and then stops to regulate the output voltage and current, and
+	 * sometimes to prevent reverse current from flowing to the input.
+	 * This causes a slight voltage ripple on VSYS that falls in the
+	 * audible noise frequency (single digit kHz range). This small
+	 * ripple generates audible noise in the output ceramic capacitors
+	 * (caps on VSYS and any input of DCDC under VSYS).
+	 *
+	 * To overcome this issue enable the battery learning operation
+	 * and suspend USB charging and DC/DC converter.
+	 */
+	if (!battery_is_cut_off() &&
+		!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+		(curr->batt.status & STATUS_FULLY_CHARGED))
+		return 1;
+
+	/*
+	 * To avoid inrush current from the external charger, enable
+	 * discharge on AC till the new charger is detected and charge
+	 * detect delay has passed.
+	 */
+	if (!chg_ramp_is_detected() && curr->batt.state_of_charge > 2)
+		return 1;
+
+	return 0;
+}
+
 /*
  * This can override the smart battery's charging profile. To make a change,
  * modify one or more of requested_voltage, requested_current, or state.
@@ -322,31 +362,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	/* Current and previous battery voltage */
 	int batt_voltage;
 	static int prev_batt_voltage;
-	int disch_on_ac;
-
-	/*
-	 * In light load (<450mA being withdrawn from VSYS) the DCDC of the
-	 * charger operates intermittently i.e. DCDC switches continuously
-	 * and then stops to regulate the output voltage and current, and
-	 * sometimes to prevent	reverse current from flowing to the input.
-	 * This causes a slight voltage ripple on VSYS that falls in the
-	 * audible noise frequency (single digit kHz range). This small
-	 * ripple generates audible noise in the output ceramic capacitors
-	 * (caps on VSYS and any input of DCDC under VSYS).
-	 *
-	 * To overcome this issue enable the battery learning operation
-	 * and suspend USB charging and DC/DC converter.
-	 *
-	 * And also to avoid inrush current from the external charger, enable
-	 * discharge on AC till the new charger is detected and charge detect
-	 * delay has passed.
-	 */
-	disch_on_ac = (curr->batt.is_present == BP_YES &&
-			!battery_is_cut_off() &&
-			!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-			curr->batt.status & STATUS_FULLY_CHARGED) ||
-			(!chg_ramp_is_detected() &&
-			curr->batt.state_of_charge > 2);
+	int disch_on_ac = charger_should_discharge_on_ac(curr);
 
 	charger_discharge_on_ac(disch_on_ac);
 
