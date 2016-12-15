@@ -933,6 +933,7 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define NPCX_HICTRL_PMICIE               6 /* PMC1 IBF interrupt enable */
 #define NPCX_HICTRL_FW_OBF               7 /* Firmware control over OBF */
 
+#define NPCX_HIKMST_OBF                  0 /* KB output buffer is full */
 /******************************************************************************/
 /* PM Channel Registers */
 #define NPCX_HIPMST(n)                    REG8(NPCX_PM_CH_BASE_ADDR(n) + 0x000)
@@ -992,7 +993,9 @@ enum PM_CHANNEL_T {
 #define NPCX_SIBCTRL_CSRD                1
 #define NPCX_SIBCTRL_CSWR                2
 #define NPCX_LKSIOHA_LKCFG               0
+#define NPCX_LKSIOHA_LKHIKBD            11
 #define NPCX_CRSMAE_CFGAE                0
+#define NPCX_CRSMAE_HIKBDAE             11
 
 /******************************************************************************/
 /* Battery-Backed RAM (BBRAM) Registers */
