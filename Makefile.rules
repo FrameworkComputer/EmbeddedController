@@ -85,20 +85,32 @@ cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
 
+# By default, the "build_boards" and "try_build_boards" targets will build all
+# of the boards listed in $(boards). However, the invoker can provide a
+# different list via the BOARDS variable. Providing an empty value for BOARDS
+# is not allowed.
+BOARDS ?= $(boards)
+ifeq ($(BOARDS),)
+$(error BOARDS must be non-empty)
+endif
+
 FAILED_BOARDS_DIR = .failedboards
 # When building with -j, it's easy to miss errors. If you don't have your shell
 # configured to warn you about nonzero exit, you may not even notice that "make
 # buildall -j" failed. To make it more obvious, we'll do one level of recursion
 # here.
-.PHONY: try_buildall
-try_buildall: $(foreach b, $(boards), proj-$(b))
+.PHONY: try_build_boards
+try_build_boards: $(foreach b, $(BOARDS), proj-$(b))
 
-.PHONY: buildall
-buildall:
+.PHONY: build_boards
+build_boards:
 	@rm -rf $(FAILED_BOARDS_DIR)
 	@mkdir $(FAILED_BOARDS_DIR)
-	@for b in $(boards); do echo 'starting' > $(FAILED_BOARDS_DIR)/$$b; done
-	$(MAKE) try_buildall
+	@for b in $(BOARDS); do echo 'starting' > $(FAILED_BOARDS_DIR)/$$b; done
+	$(MAKE) try_build_boards
+
+.PHONY: buildall
+buildall: build_boards
 	$(MAKE) build_cts
 	$(MAKE) runtests
 	@touch .tests-passed
