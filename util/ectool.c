@@ -456,16 +456,17 @@ int cmd_s5(int argc, char *argv[])
 {
 	struct ec_params_get_set_value p;
 	struct ec_params_get_set_value r;
-	int rv;
+	int rv, param;
 
 	p.flags = 0;
 
 	if (argc > 1) {
 		p.flags |= EC_GSV_SET;
-		if (!parse_bool(argv[1], &p.value)) {
+		if (!parse_bool(argv[1], &param)) {
 			fprintf(stderr, "invalid arg \"%s\"\n", argv[1]);
 			return -1;
 		}
+		p.value = param;
 	}
 
 	rv = ec_command(EC_CMD_GSV_PAUSE_IN_S5, 0,
@@ -1155,7 +1156,7 @@ int cmd_flash_pd(int argc, char *argv[])
 	int rv, fsize, step = 96;
 	char *e;
 	char *buf;
-	uint32_t *data = &(p->size) + 1;
+	char *data = (char *)p + sizeof(*p);
 
 	if (argc < 4) {
 		fprintf(stderr, "Usage: %s <dev_id> <port> <filename>\n",
