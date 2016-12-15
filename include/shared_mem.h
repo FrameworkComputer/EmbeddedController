@@ -18,11 +18,7 @@
 #define __CROS_EC_SHARED_MEM_H
 
 #include "common.h"
-
-/**
- * Initializes the module.
- */
-int shared_mem_init(void);
+#include <stddef.h>
 
 /**
  * Returns the maximum amount of shared memory which can be acquired, in
@@ -30,8 +26,13 @@ int shared_mem_init(void);
  */
 int shared_mem_size(void);
 
-/**
+/*
  * Acquires a shared memory area of the requested size in bytes.
+ *
+ * Doing a sysjump between images will corrupt and/or erase shared memory as
+ * jump tags are added and .bss is reinitialized. Due to the way jump tags are
+ * added to the end of RAM, shared memory must not be allocated, accessed, or
+ * freed after the start of a sysjump (for example, in HOOK_SYSJUMP).
  *
  * @param size		Number of bytes requested
  * @param dest_ptr	If successful, set on return to the start of the
@@ -46,5 +47,33 @@ int shared_mem_acquire(int size, char **dest_ptr);
  * Releases a shared memory area previously allocated via shared_mem_acquire().
  */
 void shared_mem_release(void *ptr);
+
+/*
+ * This structure is allocated at the base of the free memory chunk and every
+ * allocated buffer.
+ */
+struct shm_buffer {
+	struct shm_buffer *next_buffer;
+	struct shm_buffer *prev_buffer;
+	size_t buffer_size;
+};
+
+#ifdef TEST_BUILD
+
+/*
+ * When in test mode, all possible paths in the allocation/free functions set
+ * unique bits in an integer bitmap.
+ *
+ * The test function generates random allocation and free requests and
+ * monitors the bitmap until all bits have been set, which indicates that all
+ * possible paths have been executed.
+ */
+
+#define MAX_MASK_BIT 24
+#define ALL_PATHS_MASK ((1 << (MAX_MASK_BIT + 1)) - 1)
+void set_map_bit(uint32_t mask);
+extern struct shm_buffer *free_buf_chain;
+extern struct shm_buffer *allocced_buf_chain;
+#endif
 
 #endif  /* __CROS_EC_SHARED_MEM_H */

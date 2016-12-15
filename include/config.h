@@ -1540,6 +1540,9 @@
 /* Use Link-Time Optimizations to try to reduce the firmware code size */
 #undef CONFIG_LTO
 
+/* Provide rudimentary malloc/free like services for shared memory. */
+#undef CONFIG_MALLOC
+
 /* Need for a math library */
 #undef CONFIG_MATH_UTIL
 

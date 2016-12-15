@@ -78,6 +78,10 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_CHARGER 0
 #endif
 
+#ifdef TEST_SHMALLOC
+#define CONFIG_MALLOC
+#endif
+
 #ifdef TEST_SBS_CHARGING_V2
 #define CONFIG_BATTERY_MOCK
 #define CONFIG_BATTERY_SMART
