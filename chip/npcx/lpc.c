@@ -882,6 +882,8 @@ void lpc_lreset_pltrst_handler(void)
 	if (!pltrst_asserted)
 		host_register_init();
 	else {
+		/* Clear processing flag when LRESET is asserted */
+		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 #ifdef CONFIG_CHIPSET_RESET_HOOK
 		/* Notify HOOK_CHIPSET_RESET */
 		hook_call_deferred(&lpc_chipset_reset_data, MSEC);
@@ -965,6 +967,12 @@ static void lpc_init(void)
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
 			EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
 			EC_HOST_CMD_FLAG_VERSION_3;
+
+	/*
+	 * Clear processing flag before enabling lpc's interrupts in case
+	 * it's set by the other command during sysjump.
+	 */
+	CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 
 	/* Turn on PMC2 for Host Command usage */
 	SET_BIT(NPCX_HIPMCTL(PMC_HOST_CMD), 0);
