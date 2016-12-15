@@ -35,7 +35,8 @@ enum hashing_mode {
 	HASH_SHA1 = 0,
 	HASH_SHA256 = 1,
 	HASH_SHA384 = 2,  /* Only supported for PKCS#1 signing */
-	HASH_SHA512 = 3   /* Only supported for PKCS#1 signing */
+	HASH_SHA512 = 3,  /* Only supported for PKCS#1 signing */
+	HASH_NULL = 4  /* Only supported for PKCS#1 signing */
 };
 
 /*

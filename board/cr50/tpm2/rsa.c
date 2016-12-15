@@ -69,6 +69,11 @@ static int check_sign_params(TPM_ALG_ID padding_alg, TPM_ALG_ID hash_alg,
 		else if (hash_alg == ALG_SHA512_VALUE &&
 			 padding_alg == TPM_ALG_RSASSA)
 			*hashing = HASH_SHA512;
+#if defined(SUPPORT_PADDING_ONLY_RSASSA) && SUPPORT_PADDING_ONLY_RSASSA == YES
+		else if (hash_alg == TPM_ALG_NULL &&
+			 padding_alg == TPM_ALG_RSASSA)
+			*hashing = HASH_NULL;
+#endif
 		else
 			return 0;
 		if (padding_alg == TPM_ALG_RSASSA)

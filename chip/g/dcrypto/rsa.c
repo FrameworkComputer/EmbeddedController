@@ -273,6 +273,11 @@ static int pkcs1_get_der(enum hashing_mode hashing, const uint8_t **der,
 		*der_size = sizeof(SHA512_DER);
 		*hash_size = SHA512_DIGEST_SIZE;
 		break;
+	case HASH_NULL:
+		*der = NULL;
+		*der_size = 0;
+		*hash_size = 0;  /* any size allowed */
+		break;
 	default:
 		return 0;
 	}
@@ -294,7 +299,7 @@ static int pkcs1_type1_pad(uint8_t *padded, uint32_t padded_len,
 		return 0;
 	if (padded_len < RSA_PKCS1_PADDING_SIZE + der_size)
 		return 0;
-	if (in_len != hash_size)
+	if (!in_len || (hash_size && in_len != hash_size))
 		return 0;
 	if (in_len > padded_len - RSA_PKCS1_PADDING_SIZE - der_size)
 		return 0;
