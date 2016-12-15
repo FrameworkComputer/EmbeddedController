@@ -22,6 +22,7 @@
 #include "nvmem.h"
 #include "rdd.h"
 #include "registers.h"
+#include "scratch_reg1.h"
 #include "signed_header.h"
 #include "spi.h"
 #include "system.h"
@@ -80,18 +81,6 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 static uint32_t board_properties;
 static uint8_t reboot_request_posted;
 
-/*
- * Bit assignments of the LONG_LIFE_SCRATCH1 register. This register survives
- * all kinds of resets, it is cleared only on the Power ON event.
- */
-#define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* TPM uses SPI interface */
-#define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* TPM uses I2C interface */
-#define BOARD_USB_AP                 (1 << 2)   /* One of the USB PHYs is  */
-						/* connected to the AP */
-
-/* TODO(crosbug.com/p/56945): Remove when sys_rst_l has an external pullup */
-#define BOARD_NEEDS_SYS_RST_PULL_UP  (1 << 5)   /* Add a pullup to sys_rst_l */
-#define BOARD_USE_PLT_RESET          (1 << 6)   /* Platform reset exists */
 int board_has_ap_usb(void)
 {
 	return !!(board_properties & BOARD_USB_AP);
@@ -324,9 +313,6 @@ static void board_init(void)
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
 	nvmem_init();
-
-	/* Enable write protect on production images. Disable it on dev */
-	GREG32(RBOX, EC_WP_L) = !console_is_restricted();
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;

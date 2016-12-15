@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include "nvmem.h"
 #include "registers.h"
+#include "scratch_reg1.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -18,16 +19,36 @@
 #define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
 
+static void set_wp_state(int asserted)
+{
+	/* Enable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+
+	if (asserted) {
+		GREG32(PMU, LONG_LIFE_SCRATCH1) |= BOARD_WP_ASSERTED;
+		GREG32(RBOX, EC_WP_L) = 0;
+	} else {
+		GREG32(PMU, LONG_LIFE_SCRATCH1) &= ~BOARD_WP_ASSERTED;
+		GREG32(RBOX, EC_WP_L) = 1;
+	}
+
+	/* Disable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+}
+
 static int command_wp(int argc, char **argv)
 {
 	int val;
 
 	if (argc > 1) {
-		if (!parse_bool(argv[1], &val))
-			return EC_ERROR_PARAM1;
+		if (console_is_restricted()) {
+			ccprintf("Console is locked, no parameters allowed\n");
+		} else {
+			if (!parse_bool(argv[1], &val))
+				return EC_ERROR_PARAM1;
 
-		/* Invert, because active low */
-		GREG32(RBOX, EC_WP_L) = !val;
+			set_wp_state(!!val);
+		}
 	}
 
 	/* Invert, because active low */
@@ -37,24 +58,53 @@ static int command_wp(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(wp, command_wp,
-			"[<BOOLEAN>]",
-			"Get/set the flash HW write-protect signal");
+DECLARE_SAFE_CONSOLE_COMMAND(wp, command_wp,
+			     "[<BOOLEAN>]",
+			     "Get/set the flash HW write-protect signal");
 
 /* When the system is locked down, provide a means to unlock it */
 #ifdef CONFIG_RESTRICTED_CONSOLE_COMMANDS
 
+#define LOCK_ENABLED 1
+
 /* Hand-built images may be initially unlocked; Buildbot images are not. */
 #ifdef CR50_DEV
-static int console_restricted_state;
+static int console_restricted_state = !LOCK_ENABLED;
 #else
-static int console_restricted_state = 1;
+static int console_restricted_state = LOCK_ENABLED;
 #endif
+
+static void set_console_lock_state(int lock_state)
+{
+	console_restricted_state = lock_state;
+
+	/*
+	 * Assert WP unconditionally on locked console. Keep this invocation
+	 * separate, as it will also enable/disable writes into
+	 * LONG_LIFE_SCRATCH1
+	 */
+	if (lock_state == LOCK_ENABLED)
+		set_wp_state(1);
+
+	/* Enable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+
+	/* Save the lock state in long life scratch */
+	if (lock_state == LOCK_ENABLED)
+		GREG32(PMU, LONG_LIFE_SCRATCH1) &= ~BOARD_CONSOLE_UNLOCKED;
+	else
+		GREG32(PMU, LONG_LIFE_SCRATCH1) |= BOARD_CONSOLE_UNLOCKED;
+
+	/* Disable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+
+	CPRINTS("The console is %s",
+		lock_state == LOCK_ENABLED ? "locked" : "unlocked");
+}
 
 static void lock_the_console(void)
 {
-	CPRINTS("The console is locked");
-	console_restricted_state = 1;
+	set_console_lock_state(LOCK_ENABLED);
 }
 
 static void unlock_the_console(void)
@@ -71,12 +121,41 @@ static void unlock_the_console(void)
 		 * bet for fixing the problem.
 		 */
 		CPRINTS("%s: Couldn't wipe nvmem! (rc %d)", __func__, rc);
+		cflush();
 		system_reset(SYSTEM_RESET_HARD);
 	}
 
-	CPRINTS("TPM is erased, console is unlocked");
-	console_restricted_state = 0;
+	CPRINTS("TPM is erased");
+	set_console_lock_state(!LOCK_ENABLED);
 }
+
+static void init_console_lock_and_wp(void)
+{
+	/*
+	 * On an unexpected reboot or a system rollback reset the console and
+	 * write protect states.
+	 */
+	if (system_rollback_detected() ||
+	    !(system_get_reset_flags() & RESET_FLAG_HIBERNATE)) {
+		/* Reset the console lock to the default value */
+		set_console_lock_state(console_restricted_state);
+
+		/* Always assert WP on H1 cold resets, reboots or fallbacks. */
+		set_wp_state(1);
+		return;
+	}
+
+	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_CONSOLE_UNLOCKED)
+		set_console_lock_state(!LOCK_ENABLED);
+	else
+		set_console_lock_state(LOCK_ENABLED);
+
+	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_WP_ASSERTED)
+		set_wp_state(1);
+	else
+		set_wp_state(0);
+}
+DECLARE_HOOK(HOOK_INIT, init_console_lock_and_wp, HOOK_PRIO_DEFAULT);
 
 int console_is_restricted(void)
 {

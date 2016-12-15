@@ -310,7 +310,7 @@ static int a_is_newer_than_b(const struct SignedHeader *a,
  * apparently failing image from being considered as a candidate to load and
  * run on the following reboots.
  */
-static int corrupt_other_header(volatile struct SignedHeader *header)
+static int corrupt_header(volatile struct SignedHeader *header)
 {
 	int rv;
 	const char zero[4] = {}; /* value to write to magic. */
@@ -344,18 +344,14 @@ static int corrupt_other_header(volatile struct SignedHeader *header)
  */
 #define RW_BOOT_MAX_RETRY_COUNT 5
 
-int system_process_retry_counter(void)
+/*
+ * Check if the current running image is newer. Set the passed in pointer, if
+ * supplied, to point to the newer image in case the running image is the
+ * older one.
+ */
+static int current_image_is_newer(struct SignedHeader **newer_image)
 {
-	unsigned retry_counter;
 	struct SignedHeader *me, *other;
-
-	retry_counter = GREG32(PMU, LONG_LIFE_SCRATCH0);
-	system_clear_retry_counter();
-
-	ccprintf("%s:retry counter %d\n", __func__, retry_counter);
-
-	if (retry_counter <= RW_BOOT_MAX_RETRY_COUNT)
-		return EC_SUCCESS;
 
 	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
 		me = (struct SignedHeader *)
@@ -369,17 +365,43 @@ int system_process_retry_counter(void)
 			get_program_memory_addr(SYSTEM_IMAGE_RW);
 	}
 
-	if (a_is_newer_than_b(me, other)) {
+	if (a_is_newer_than_b(me, other))
+		return 1;
+
+	if (newer_image)
+		*newer_image = other;
+	return 0;
+}
+
+int system_rollback_detected(void)
+{
+	return !current_image_is_newer(NULL);
+}
+
+int system_process_retry_counter(void)
+{
+	unsigned retry_counter;
+	struct SignedHeader *newer_image;
+
+	retry_counter = GREG32(PMU, LONG_LIFE_SCRATCH0);
+	system_clear_retry_counter();
+
+	ccprintf("%s:retry counter %d\n", __func__, retry_counter);
+
+	if (retry_counter <= RW_BOOT_MAX_RETRY_COUNT)
+		return EC_SUCCESS;
+
+	if (current_image_is_newer(&newer_image)) {
 		ccprintf("%s: "
 			 "this is odd, I am newer, but retry counter was %d\n",
 			 __func__, retry_counter);
 		return EC_SUCCESS;
 	}
 	/*
-	 * let's corrupt the "other" guy so that the next restart is happening
-	 * straight into this version.
+	 * let's corrupt the newer image so that the next restart is happening
+	 * straight into the current version.
 	 */
-	return corrupt_other_header(other);
+	return corrupt_header(newer_image);
 }
 
 int system_rolling_reboot_suspected(void)

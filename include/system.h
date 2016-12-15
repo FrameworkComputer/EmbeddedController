@@ -488,4 +488,10 @@ void system_clear_retry_counter(void);
  */
 int system_rolling_reboot_suspected(void);
 
+/**
+ * Compare the rw headers to check if there was a rollback.
+ *
+ * @return a boolean, set to True if a rollback is detected.
+ */
+int system_rollback_detected(void);
 #endif  /* __CROS_EC_SYSTEM_H */
