@@ -27,6 +27,7 @@
 #define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_LED_COMMON
 #define CONFIG_LID_SWITCH
 #define CONFIG_LTO
 #define CONFIG_PWM
@@ -205,6 +206,12 @@ enum temp_sensor_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
+	PWM_CH_LED_L_RED,
+	PWM_CH_LED_L_GREEN,
+	PWM_CH_LED_L_BLUE,
+	PWM_CH_LED_R_RED,
+	PWM_CH_LED_R_GREEN,
+	PWM_CH_LED_R_BLUE,
 	PWM_CH_COUNT
 };
 

@@ -114,7 +114,13 @@ struct keyboard_scan_config keyscan_config = {
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_KBLIGHT]     = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_L_RED]   = { 2, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_L_GREEN] = { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_L_BLUE]  = { 4, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_R_RED]   = { 1, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_R_GREEN] = { 0, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_R_BLUE]  = { 6, PWM_CONFIG_DSLEEP, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -575,13 +581,6 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		{GPIO_LID_OPEN, GPIO_INT_RISING},
-		/* Turn off LEDs in hibernate */
-		{GPIO_CHARGE_LED_1, GPIO_OUTPUT | GPIO_HIGH},
-		{GPIO_CHARGE_LED_2, GPIO_OUTPUT | GPIO_HIGH},
-		{GPIO_CHARGE_LED_3, GPIO_OUTPUT | GPIO_HIGH},
-		{GPIO_CHARGE_LED_4, GPIO_OUTPUT | GPIO_HIGH},
-		{GPIO_CHARGE_LED_5, GPIO_OUTPUT | GPIO_HIGH},
-		{GPIO_CHARGE_LED_6, GPIO_OUTPUT | GPIO_HIGH},
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
 		 * charge output in hibernate. Charger will assert ACOK_OD
