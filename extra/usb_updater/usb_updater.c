@@ -218,10 +218,11 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":bfd:hsu";
+static char *short_opts = ":bcfd:hsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",  0,   NULL, 'b'},
+	{"corrupt",  0,   NULL, 'c'},
 	{"device",   1,   NULL, 'd'},
 	{"help",     0,   NULL, 'h'},
 	{"spi",      0,   NULL, 's'},
@@ -327,6 +328,7 @@ static void usage(int errs)
 	       "\n"
 	       "  -b,--binvers             Report versions of image's "
 				"RW and RO headers, do not update\n"
+	       "  -c,--corrupt             Corrupt the inactive rw.\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
@@ -1048,6 +1050,27 @@ static void send_done(struct usb_endpoint *uep)
 	     protocol_version < 3 ? sizeof(out) : 1);
 }
 
+/*
+ * Corrupt the header of the inactive rw image to make sure the system can't
+ * rollback
+ */
+static void invalidate_inactive_rw(struct transfer_descriptor *td)
+{
+	/* Corrupt the rw image that is not running. */
+	uint16_t subcommand = VENDOR_CC_INVALIDATE_INACTIVE_RW;
+
+	if (td->ep_type == usb_xfer) {
+		send_done(&td->uep);
+
+		if (protocol_version > 5) {
+			ext_cmd_over_usb(&td->uep, subcommand,
+					 NULL, 0,
+					 NULL, 0);
+			printf("inactive rw corrupted\n");
+		}
+	}
+}
+
 /* Returns number of successfully transmitted image sections. */
 static int transfer_and_reboot(struct transfer_descriptor *td,
 			       uint8_t *data, size_t data_len)
@@ -1175,6 +1198,7 @@ int main(int argc, char *argv[])
 	int transferred_sections = 0;
 	int binary_vers = 0;
 	int show_fw_ver = 0;
+	int corrupt_inactive_rw;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1198,6 +1222,9 @@ int main(int argc, char *argv[])
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
+			break;
+		case 'c':
+			corrupt_inactive_rw = 1;
 			break;
 		case 'f':
 			show_fw_ver = 1;
@@ -1234,7 +1261,7 @@ int main(int argc, char *argv[])
 	if (errorcnt)
 		usage(errorcnt);
 
-	if (!show_fw_ver) {
+	if (!show_fw_ver && !corrupt_inactive_rw) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -1276,13 +1303,16 @@ int main(int argc, char *argv[])
 		       targ.shv[1].minor);
 	}
 
+	if (corrupt_inactive_rw)
+		invalidate_inactive_rw(&td);
+
 	if (data) {
 		transferred_sections = transfer_and_reboot(&td, data, data_len);
 		free(data);
 	}
 
 	if (td.ep_type == usb_xfer) {
-		if (!data)
+		if (!data && !corrupt_inactive_rw)
 			send_done(&td.uep);
 		libusb_close(td.uep.devh);
 		libusb_exit(NULL);
