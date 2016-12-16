@@ -35,6 +35,7 @@ struct board_batt_params {
 };
 
 #define DEFAULT_BATTERY_TYPE BATTERY_SONY_CORP
+#define SONY_DISCHARGE_DISABLE_FET_BIT (0x01 << 13)
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
@@ -50,8 +51,16 @@ static int batt_smp_cos4870_init(void)
 
 static int batt_sony_corp_init(void)
 {
-	/* TODO: crosbug.com/p/59904 */
-	return 1;
+	int batt_status;
+
+	/*
+	 * SB_MANUFACTURER_ACCESS:
+	 * [13] : Discharging Disabled
+	 *      : 0b - Allowed to Discharge
+	 *      : 1b - Not Allowed to Discharge
+	 */
+	return sb_read(SB_MANUFACTURER_ACCESS, &batt_status) ? 0 :
+		!(batt_status & SONY_DISCHARGE_DISABLE_FET_BIT);
 }
 
 static const struct board_batt_params info[] = {
