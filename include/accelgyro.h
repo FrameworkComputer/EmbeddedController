@@ -108,6 +108,10 @@ struct accelgyro_drv {
 	 * - update sensor raw_xyz vector with the last information.
 	 * We put raw data in hub fifo and process data from there.
 	 * @s Pointer to sensor data.
+	 *
+	 * NOTE: If a new driver supports this function, be sure to add a check
+	 * for spoof_mode in order to load the sensor stack with the spoofed
+	 * data.  See accelgyro_bmi160.c::load_fifo for an example.
 	 */
 	int (*load_fifo)(struct motion_sensor_t *s);
 #endif

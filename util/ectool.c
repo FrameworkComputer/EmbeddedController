@@ -3435,6 +3435,7 @@ static const struct {
 	MS_SIZES(set_activity),
 	MS_SIZES(lid_angle),
 	MS_SIZES(fifo_int_enable),
+	MS_SIZES(spoof),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 #undef MS_SIZES
@@ -3463,6 +3464,8 @@ static int ms_help(const char *cmd)
 	printf("  %s set_activity NUM ACT EN    - enable/disable activity\n",
 			cmd);
 	printf("  %s lid_angle                  - print lid angle\n", cmd);
+	printf("  %s spoof -- NUM [0/1] [X Y Z] - enable/disable spoofing\n",
+	       cmd);
 
 	return 0;
 }
@@ -3496,8 +3499,8 @@ static int cmd_motionsense(int argc, char **argv)
 		{ "Motion sensing active", "1"},
 	};
 
-	/* No motionsense command has more than 5 args. */
-	if (argc > 5)
+	/* No motionsense command has more than 7 args. */
+	if (argc > 7)
 		return ms_help(argv[0]);
 
 	if ((argc == 1) ||
@@ -3945,6 +3948,75 @@ static int cmd_motionsense(int argc, char **argv)
 			printf("unreliable\n");
 		else
 			printf("%d\n", resp->lid_angle.value);
+
+		return 0;
+	}
+
+	if (argc >= 3 && !strcasecmp(argv[1], "spoof")) {
+		param.cmd = MOTIONSENSE_CMD_SPOOF;
+		/* By default, just query the current spoof status. */
+		param.spoof.spoof_enable = MOTIONSENSE_SPOOF_MODE_QUERY;
+		param.spoof.sensor_id = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+
+		if (argc >= 4) {
+			int enable, i;
+			int16_t val;
+
+			enable = strtol(argv[3], &e, 0);
+			if ((e && *e) || (enable != 0 && enable != 1)) {
+				fprintf(stderr, "Bad %s arg.\n", argv[3]);
+				return -1;
+			}
+
+			if ((enable == 1) && (argc == 4)) {
+				/*
+				 * Enable spoofing, but lock to current sensor
+				 * values.
+				 */
+				param.spoof.spoof_enable =
+					MOTIONSENSE_SPOOF_MODE_LOCK_CURRENT;
+			} else if ((enable == 1) && (argc == 7)) {
+				/*
+				 * Enable spoofing, but use provided component
+				 * values.
+				 */
+				param.spoof.spoof_enable =
+					MOTIONSENSE_SPOOF_MODE_CUSTOM;
+				for (i = 0; i < 3; i++) {
+					val = strtol(argv[4+i], &e, 0);
+					if (e && *e) {
+						fprintf(stderr, "Bad %s arg.\n",
+							argv[4+i]);
+						return -1;
+					}
+					param.spoof.components[i] = val;
+				}
+			} else if (enable == 0) {
+				param.spoof.spoof_enable =
+					MOTIONSENSE_SPOOF_MODE_DISABLE;
+			} else {
+				return ms_help(argv[0]);
+			}
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+
+		if (param.spoof.spoof_enable == MOTIONSENSE_SPOOF_MODE_QUERY)
+			/*
+			 * Response is the current spoof status of the
+			 * sensor.
+			 */
+			printf("Sensor %d spoof mode is %s.\n",
+			       param.spoof.sensor_id,
+			       resp->spoof.ret ? "enabled" : "disabled");
 
 		return 0;
 	}

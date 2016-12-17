@@ -78,6 +78,12 @@ struct motion_sensor_t {
 	/* i2c address or SPI slave logic GPIO. */
 	uint8_t addr;
 
+	/*
+	 * When non-zero, spoof mode will allow the EC to report arbitrary
+	 * values for any of the components.
+	 */
+	uint8_t in_spoof_mode;
+
 	const matrix_3x3_t *rot_standard_ref;
 
 	/*
@@ -108,6 +114,7 @@ struct motion_sensor_t {
 	enum sensor_state state;
 	vector_3_t raw_xyz;
 	vector_3_t xyz;
+	vector_3_t spoof_xyz;
 
 	/* How many flush events are pending */
 	uint32_t flush_pending;

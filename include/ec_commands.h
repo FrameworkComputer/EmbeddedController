@@ -1909,6 +1909,12 @@ enum motionsense_command {
 	 */
 	MOTIONSENSE_CMD_FIFO_INT_ENABLE = 15,
 
+	/*
+	 * Spoof the readings of the sensors.  The spoofed readings can be set
+	 * to arbitrary values, or will lock to the last read actual values.
+	 */
+	MOTIONSENSE_CMD_SPOOF = 16,
+
 	/* Number of motionsense sub-commands. */
 	MOTIONSENSE_NUM_CMDS
 };
@@ -2030,6 +2036,20 @@ struct __ec_todo_unpacked ec_motion_sense_activity {
 
 #define LID_ANGLE_UNRELIABLE 500
 
+enum motionsense_spoof_mode {
+	/* Disable spoof mode. */
+	MOTIONSENSE_SPOOF_MODE_DISABLE = 0,
+
+	/* Enable spoof mode, but use provided component values. */
+	MOTIONSENSE_SPOOF_MODE_CUSTOM,
+
+	/* Enable spoof mode, but use the current sensor values. */
+	MOTIONSENSE_SPOOF_MODE_LOCK_CURRENT,
+
+	/* Query the current spoof mode status for the sensor. */
+	MOTIONSENSE_SPOOF_MODE_QUERY,
+};
+
 struct __ec_todo_packed ec_params_motion_sense {
 	uint8_t cmd;
 	union {
@@ -2131,6 +2151,20 @@ struct __ec_todo_packed ec_params_motion_sense {
 			 */
 			int8_t enable;
 		} fifo_int_enable;
+
+		/* Used for MOTIONSENSE_CMD_SPOOF */
+		struct __ec_todo_packed {
+			uint8_t sensor_id;
+
+			/* See enum motionsense_spoof_mode. */
+			uint8_t spoof_enable;
+
+			/* Ignored, used for alignment. */
+			uint8_t rsvd;
+
+			/* Individual component values to spoof. */
+			int16_t components[3];
+		} spoof;
 	};
 };
 
@@ -2169,14 +2203,15 @@ struct __ec_todo_packed ec_response_motion_sense {
 		/*
 		 * Used for MOTIONSENSE_CMD_EC_RATE, MOTIONSENSE_CMD_SENSOR_ODR,
 		 * MOTIONSENSE_CMD_SENSOR_RANGE,
-		 * MOTIONSENSE_CMD_KB_WAKE_ANGLE and
-		 * MOTIONSENSE_CMD_FIFO_INT_ENABLE.
+		 * MOTIONSENSE_CMD_KB_WAKE_ANGLE,
+		 * MOTIONSENSE_CMD_FIFO_INT_ENABLE and
+		 * MOTIONSENSE_CMD_SPOOF.
 		 */
 		struct __ec_todo_unpacked {
 			/* Current value of the parameter queried. */
 			int32_t ret;
 		} ec_rate, sensor_odr, sensor_range, kb_wake_angle,
-		  fifo_int_enable;
+		  fifo_int_enable, spoof;
 
 		/* Used for MOTIONSENSE_CMD_SENSOR_OFFSET */
 		struct __ec_todo_unpacked  {
