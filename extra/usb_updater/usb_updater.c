@@ -1198,7 +1198,7 @@ int main(int argc, char *argv[])
 	int transferred_sections = 0;
 	int binary_vers = 0;
 	int show_fw_ver = 0;
-	int corrupt_inactive_rw;
+	int corrupt_inactive_rw = 0;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1281,6 +1281,9 @@ int main(int argc, char *argv[])
 
 		if (binary_vers)
 			exit(show_headers_versions(data));
+	} else {
+		if (optind < argc)
+			printf("Ignoring binary image %s\n", argv[optind]);
 	}
 
 	if (td.ep_type == usb_xfer) {
