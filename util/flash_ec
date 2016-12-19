@@ -106,6 +106,7 @@ BOARDS_NPCX_SPI=(
 	eve
 	gru
 	kevin
+        poppy
 	pyro
 	reef
 	snappy
@@ -134,6 +135,7 @@ BOARDS_RAIDEN=(
 	eve
 	gru
 	kevin
+        poppy
 	pyro
 	reef
 	snappy
