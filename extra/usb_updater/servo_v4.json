@@ -8,7 +8,6 @@
   "Comment on region format": "name: [baseoffset, length]",
   "regions": {
     "RW": ["0x10000", "0x10000"],
-    "PSTATE": ["0xf000", "0x1000"],
-    "RO": ["0x0000", "0xf000"]
+    "RO": ["0x0000", "0x10000"]
   }
 }
