@@ -26,7 +26,7 @@ __entry_\()\name:
 	slt45 $r3, $sp /* if sp > end of system stack, then r15 = 1 and */
 	cmovn $sp, $r3, $r15 /* point sp to the top of the system stack */
 	/* save entry number of HW interrupt */
-	movi55  $r3, entry_number
+	movi55  $r3, \entry_number\()
 	swi.gp  $r3, [ + cpu_int_entry_number]
 	/* isr entry */
 	jal start_irq_handler
@@ -116,19 +116,19 @@ reset:
 	mtsr $r0, $mr7
 
 	/* Enable DLM 8k~12K(bit2) and DLM 12k~16k(bit3) */
-	la  $r1, 0x00F02030
+	li  $r1, 0x00F02030
 	lbi $r0, [$r1]
 	ori $r0, $r0, 0x0C
 	sbi $r0, [$r1]
 
 	/* Enable DLM 16k~36K bit[2-6] */
-	la  $r1, 0x00F0203E
+	li  $r1, 0x00F0203E
 	lbi $r0, [$r1]
 	ori $r0, $r0, 0x7C
 	sbi $r0, [$r1]
 
 	/* Enable DLM 36k~48K bit[0-2] */
-	la  $r1, 0x00F02044
+	li  $r1, 0x00F02044
 	lbi $r0, [$r1]
 	ori $r0, $r0, 0x7
 	sbi $r0, [$r1]
@@ -207,6 +207,7 @@ excep_handler:
 	/* we never return: exceptions are fatal */
 	j .
 
+.align 2
 _bss_start:
 .long __bss_start
 _bss_end:

@@ -97,7 +97,7 @@ void software_panic(uint32_t reason, uint32_t info)
 	if (in_interrupt_context())
 		asm("j excep_handler");
 	else
-		asm("trap 0");
+		asm("break 0");
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
