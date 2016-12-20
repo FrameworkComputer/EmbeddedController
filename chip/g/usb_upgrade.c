@@ -171,6 +171,12 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
  */
 static uint64_t prev_activity_timestamp;
 
+/*
+ * A flag indicating that at least one valid PDU containing flash update block
+ * has been received in the current transfer session.
+ */
+static uint8_t  data_was_transferred;
+
 /* Called to deal with data from the host */
 static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 {
@@ -235,8 +241,10 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 						    cmd),
 					   &resp_size);
 
-		if (!u.startup_resp.return_value)
+		if (!u.startup_resp.return_value) {
 			rx_state_ = rx_outside_block;  /* We're in business. */
+			data_was_transferred = 0;   /* No data received yet. */
+		}
 
 		/* Let the host know what upgrader had to say. */
 		QUEUE_ADD_UNITS(&upgrade_to_usb, &u.startup_resp, resp_size);
@@ -257,7 +265,11 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 			if (command == UPGRADE_DONE) {
 				CPRINTS("FW update: done");
 
-				fw_upgrade_complete();
+				if (data_was_transferred) {
+					fw_upgrade_complete();
+					data_was_transferred = 0;
+				}
+
 				resp_value = 0;
 				QUEUE_ADD_UNITS(&upgrade_to_usb,
 						&resp_value, 1);
@@ -358,6 +370,11 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	 */
 	fw_upgrade_command_handler(block_buffer, block_index, &resp_size);
 
+	/*
+	 * There was at least an attempt to program the flash, set the
+	 * flag.
+	 */
+	data_was_transferred = 1;
 	resp_value = block_buffer[0];
 	QUEUE_ADD_UNITS(&upgrade_to_usb, &resp_value, sizeof(resp_value));
 	rx_state_ = rx_outside_block;
