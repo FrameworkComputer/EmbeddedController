@@ -147,10 +147,41 @@ const char *system_get_chip_name(void)
 	return "cr50";
 }
 
-const char *system_get_chip_revision(void)
+/*
+ * There are three versions of B2 H1s outhere in the wild so far: chromebook,
+ * poppy and detachable. The following registers are different in those
+ * three versions in the following way:
+ *
+ *   register                chromebook          poppy     detachable
+ *--------------------------------------------------------------------
+ * RBOX_KEY_COMBO0_VAL          0xc0             0x80        0xc0
+ * RBOX_POL_KEY1_IN             0x01             0x00        0x00
+ * RBOX_KEY_COMBO0_HOLD         0x00             0x00        0x59
+ */
+
+static const struct {
+	uint32_t  register_values;
+	const char *revision_str;
+} rev_map[] = {
+	{0xc00100, "B2-C"},	/* Chromebook. */
+	{0x800000, "B2-P"},	/* Poppy (a one off actually). */
+	{0xc00059, "B2-D"},	/* Detachable. */
+};
+
+/* Return a value which allows to identify the fuse setting of this chip. */
+static uint32_t get_fuse_set_id(void)
+{
+	return  (GREAD_FIELD(FUSE, RBOX_KEY_COMBO0_VAL, VAL) << 16) |
+		(GREAD_FIELD(FUSE, RBOX_POL_KEY1_IN, VAL) << 8) |
+		GREAD_FIELD(FUSE, RBOX_KEY_COMBO0_HOLD, VAL);
+}
+
+static const char *get_revision_str(void)
 {
 	int build_date = GR_SWDP_BUILD_DATE;
 	int build_time = GR_SWDP_BUILD_TIME;
+	uint32_t register_vals;
+	int i;
 
 	if ((build_date != GC_SWDP_BUILD_DATE_DEFAULT) ||
 	    (build_time != GC_SWDP_BUILD_TIME_DEFAULT))
@@ -159,11 +190,27 @@ const char *system_get_chip_revision(void)
 	switch (GREAD_FIELD(PMU, CHIP_ID, REVISION)) {
 	case 3:
 		return "B1";
+
 	case 4:
-		return "B2";
+		register_vals = get_fuse_set_id();
+		for (i = 0; i < ARRAY_SIZE(rev_map); i++)
+			if (rev_map[i].register_values == register_vals)
+				return rev_map[i].revision_str;
+
+		return "B2-?";
 	}
 
 	return "B?";
+}
+
+const char *system_get_chip_revision(void)
+{
+	static const char *revision_str;
+
+	if (!revision_str)
+		revision_str = get_revision_str();
+
+	return revision_str;
 }
 
 /* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
