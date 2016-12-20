@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Intersil ISL9237 battery charger driver.
+ * Intersil ISL-9237/8 battery charger driver.
  */
 
 #include "adc.h"
@@ -13,7 +13,7 @@
 #include "common.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "isl9237.h"
+#include "isl923x.h"
 #include "timer.h"
 #include "util.h"
 
@@ -62,12 +62,12 @@ static inline int raw_write16(int offset, int value)
 
 static int isl9237_set_current(uint16_t current)
 {
-	return raw_write16(ISL9237_REG_CHG_CURRENT, CURRENT_TO_REG(current));
+	return raw_write16(ISL923X_REG_CHG_CURRENT, CURRENT_TO_REG(current));
 }
 
 static int isl9237_set_voltage(uint16_t voltage)
 {
-	return raw_write16(ISL9237_REG_SYS_VOLTAGE_MAX, voltage);
+	return raw_write16(ISL923X_REG_SYS_VOLTAGE_MAX, voltage);
 }
 
 /* chip specific interfaces */
@@ -77,11 +77,11 @@ int charger_set_input_current(int input_current)
 	int rv;
 	uint16_t reg = AC_CURRENT_TO_REG(input_current);
 
-	rv = raw_write16(ISL9237_REG_ADAPTER_CURRENT1, reg);
+	rv = raw_write16(ISL923X_REG_ADAPTER_CURRENT1, reg);
 	if (rv)
 		return rv;
 
-	return raw_write16(ISL9237_REG_ADAPTER_CURRENT2, reg);
+	return raw_write16(ISL923X_REG_ADAPTER_CURRENT2, reg);
 }
 
 int charger_get_input_current(int *input_current)
@@ -89,7 +89,7 @@ int charger_get_input_current(int *input_current)
 	int rv;
 	int reg;
 
-	rv = raw_read16(ISL9237_REG_ADAPTER_CURRENT1, &reg);
+	rv = raw_read16(ISL923X_REG_ADAPTER_CURRENT1, &reg);
 	if (rv)
 		return rv;
 
@@ -102,7 +102,7 @@ int charger_manufacturer_id(int *id)
 	int rv;
 	int reg;
 
-	rv = raw_read16(ISL9237_REG_MANUFACTURER_ID, &reg);
+	rv = raw_read16(ISL923X_REG_MANUFACTURER_ID, &reg);
 	if (rv)
 		return rv;
 
@@ -115,7 +115,7 @@ int charger_device_id(int *id)
 	int rv;
 	int reg;
 
-	rv = raw_read16(ISL9237_REG_DEVICE_ID, &reg);
+	rv = raw_read16(ISL923X_REG_DEVICE_ID, &reg);
 	if (rv)
 		return rv;
 
@@ -129,12 +129,12 @@ int charger_get_option(int *option)
 	uint32_t controls;
 	int reg;
 
-	rv = raw_read8(ISL9237_REG_CONTROL0, &reg);
+	rv = raw_read8(ISL923X_REG_CONTROL0, &reg);
 	if (rv)
 		return rv;
 
 	controls = reg;
-	rv = raw_read16(ISL9237_REG_CONTROL1, &reg);
+	rv = raw_read16(ISL923X_REG_CONTROL1, &reg);
 	if (rv)
 		return rv;
 
@@ -149,13 +149,13 @@ int charger_set_option(int option)
 	uint16_t reg;
 
 	reg = option & 0xffff;
-	rv = raw_write16(ISL9237_REG_CONTROL0, reg);
+	rv = raw_write16(ISL923X_REG_CONTROL0, reg);
 
 	if (rv)
 		return rv;
 
 	reg = (option >> 16) & 0xffff;
-	return raw_write16(ISL9237_REG_CONTROL1, reg);
+	return raw_write16(ISL923X_REG_CONTROL1, reg);
 }
 
 /* Charger interfaces */
@@ -183,7 +183,7 @@ int charger_set_mode(int mode)
 	if (!learn_mode)
 		rv = charger_discharge_on_ac(0);
 
-	/* ISL9237 does not support inhibit mode setting. */
+	/* ISL923X does not support inhibit mode setting. */
 	return rv;
 }
 
@@ -192,7 +192,7 @@ int charger_get_current(int *current)
 	int rv;
 	int reg;
 
-	rv = raw_read16(ISL9237_REG_CHG_CURRENT, &reg);
+	rv = raw_read16(ISL923X_REG_CHG_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -207,14 +207,14 @@ int charger_set_current(int current)
 
 int charger_get_voltage(int *voltage)
 {
-	return raw_read16(ISL9237_REG_SYS_VOLTAGE_MAX, voltage);
+	return raw_read16(ISL923X_REG_SYS_VOLTAGE_MAX, voltage);
 }
 
 int charger_set_voltage(int voltage)
 {
-	/* The ISL9237 will drop voltage to as low as requested. As the
+	/* The ISL923X will drop voltage to as low as requested. As the
 	 * charger state machine will pass in 0 voltage, protect the system
-	 * voltage by capping to the minimum. The reason is that the ISL9237
+	 * voltage by capping to the minimum. The reason is that the ISL923X
 	 * only can regulate the system voltage which will kill the board's
 	 * power if below 0. */
 	if (voltage == 0) {
@@ -232,7 +232,7 @@ int charger_post_init(void)
 #ifdef CONFIG_TRICKLE_CHARGING
 	const struct battery_info *bi = battery_get_info();
 
-	rv = raw_write16(ISL9237_REG_SYS_VOLTAGE_MIN, bi->voltage_min);
+	rv = raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, bi->voltage_min);
 	if (rv)
 		return rv;
 #endif
@@ -241,31 +241,42 @@ int charger_post_init(void)
 	 * [10:9]: Prochot# Debounce time
 	 *         11b: 1ms
 	 */
-	rv = raw_read16(ISL9237_REG_CONTROL2, &reg);
+	rv = raw_read16(ISL923X_REG_CONTROL2, &reg);
 	if (rv)
 		return rv;
 
-	rv = raw_write16(ISL9237_REG_CONTROL2,
+	rv = raw_write16(ISL923X_REG_CONTROL2,
 			reg |
-			ISL9237_C2_PROCHOT_DEBOUNCE_1000 |
-			ISL9237_C2_ADAPTER_DEBOUNCE_150);
-	if (rv)
-		return rv;
-
-	rv = charger_get_option(&reg);
+			ISL923X_C2_PROCHOT_DEBOUNCE_1000 |
+			ISL923X_C2_ADAPTER_DEBOUNCE_150);
 	if (rv)
 		return rv;
 
 #ifdef CONFIG_CHARGE_RAMP_HW
+#ifdef CONFIG_ISL9237
+	rv = charger_get_option(&reg);
+	if (rv)
+		return rv;
+
 	/* Set input voltage regulation reference voltage for charge ramp */
-	reg &= ~ISL9237_C0_VREG_REF_MASK;
-	reg |= ISL9237_C0_VREG_REF_4200;
-#else
-	/* Disable voltage regulation loop to disable charge ramp */
-	reg |= ISL9237_C0_DISABLE_VREG;
-#endif
+	reg &= ~ISL923X_C0_VREG_REF_MASK;
+	reg |= ISL923X_C0_VREG_REF_4200;
 
 	return charger_set_option(reg);
+#else
+	/* ISL9238 default input voltage regulation is 4096 mV. */
+	return EC_SUCCESS;
+#endif
+#else
+	rv = charger_get_option(&reg);
+	if (rv)
+		return rv;
+
+	/* Disable voltage regulation loop to disable charge ramp */
+	reg |= ISL923X_C0_DISABLE_VREG;
+
+	return charger_set_option(reg);
+#endif
 }
 
 int charger_discharge_on_ac(int enable)
@@ -273,17 +284,17 @@ int charger_discharge_on_ac(int enable)
 	int rv;
 	int control1;
 
-	rv = raw_read16(ISL9237_REG_CONTROL1, &control1);
+	rv = raw_read16(ISL923X_REG_CONTROL1, &control1);
 	if (rv)
 		return rv;
 
-	control1 &= ~ISL9237_C1_LEARN_MODE_AUTOEXIT;
+	control1 &= ~ISL923X_C1_LEARN_MODE_AUTOEXIT;
 	if (enable)
-		control1 |= ISL9237_C1_LEARN_MODE_ENABLE;
+		control1 |= ISL923X_C1_LEARN_MODE_ENABLE;
 	else
-		control1 &= ~ISL9237_C1_LEARN_MODE_ENABLE;
+		control1 &= ~ISL923X_C1_LEARN_MODE_ENABLE;
 
-	rv = raw_write16(ISL9237_REG_CONTROL1, control1);
+	rv = raw_write16(ISL923X_REG_CONTROL1, control1);
 
 	learn_mode = !rv && enable;
 	return rv;
@@ -303,9 +314,9 @@ int charger_set_hw_ramp(int enable)
 
 	/* HW ramp is controlled by input voltage regulation reference bits */
 	if (enable)
-		reg &= ~ISL9237_C0_DISABLE_VREG;
+		reg &= ~ISL923X_C0_DISABLE_VREG;
 	else
-		reg |= ISL9237_C0_DISABLE_VREG;
+		reg |= ISL923X_C0_DISABLE_VREG;
 
 	return charger_set_option(reg);
 }
@@ -348,9 +359,9 @@ static void charger_enable_psys(void)
 	/*
 	 * enable system power monitor PSYS function
 	 */
-	if (!raw_read16(ISL9237_REG_CONTROL1, &val)) {
-		val |= ISL9237_C1_ENABLE_PSYS;
-		raw_write16(ISL9237_REG_CONTROL1, val);
+	if (!raw_read16(ISL923X_REG_CONTROL1, &val)) {
+		val |= ISL923X_C1_ENABLE_PSYS;
+		raw_write16(ISL923X_REG_CONTROL1, val);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, charger_enable_psys, HOOK_PRIO_DEFAULT);
@@ -362,14 +373,15 @@ static void charger_disable_psys(void)
 	/*
 	 * disable system power monitor PSYS function
 	 */
-	if (!raw_read16(ISL9237_REG_CONTROL1, &val)) {
-		val &= ~ISL9237_C1_ENABLE_PSYS;
-		raw_write16(ISL9237_REG_CONTROL1, val);
+	if (!raw_read16(ISL923X_REG_CONTROL1, &val)) {
+		val &= ~ISL923X_C1_ENABLE_PSYS;
+		raw_write16(ISL923X_REG_CONTROL1, val);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_CHARGER_PSYS
+/* TODO(crosbug.com/p/61166): This dead code is ISL9237-specific. */
 #define PSYS_ADC_READ_COUNT 100
 static int charger_get_system_power(void)
 {
@@ -378,7 +390,7 @@ static int charger_get_system_power(void)
 	int ret;
 	int val;
 
-	ret = raw_read16(ISL9237_REG_CONTROL2, &val);
+	ret = raw_read16(ISL923X_REG_CONTROL2, &val);
 	if (ret)
 		return ret;
 
@@ -397,11 +409,11 @@ static int charger_get_system_power(void)
 	 *
 	 * Do not divide the constants first to ensure precision is not lost.
 	 */
-	if (val & ISL9237_C2_PSYS_GAIN)
-		return ((adc * ISL9237_C2_PSYS_GAIN_0_36) /
+	if (val & ISL923X_C2_PSYS_GAIN)
+		return ((adc * ISL923X_C2_PSYS_GAIN_0_36) /
 				PSYS_ADC_READ_COUNT);
 	else
-		return ((adc * ISL9237_C2_PSYS_GAIN_1_44) /
+		return ((adc * ISL923X_C2_PSYS_GAIN_1_44) /
 				PSYS_ADC_READ_COUNT);
 }
 
@@ -425,17 +437,17 @@ static int console_command_amon_bmon(int argc, char **argv)
 	int adc, curr, val, ret;
 
 	ret = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-			 ISL9237_REG_CONTROL1, &val);
+			 ISL923X_REG_CONTROL1, &val);
 	if (ret)
 		return ret;
 
 	/* Enable monitor */
-	val &= ~ISL9237_C1_DISABLE_MON;
+	val &= ~ISL923X_C1_DISABLE_MON;
 	if (argc == 1 || (argc >= 2 && argv[1][0] == 'a')) {
 		/* Switch to AMON */
-		val &= ~ISL9237_C1_SELECT_BMON;
+		val &= ~ISL923X_C1_SELECT_BMON;
 		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-				  ISL9237_REG_CONTROL1, val);
+				  ISL923X_REG_CONTROL1, val);
 		if (ret)
 			return ret;
 
@@ -446,9 +458,9 @@ static int console_command_amon_bmon(int argc, char **argv)
 
 	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b')) {
 		/* Switch to BMON */
-		val |= ISL9237_C1_SELECT_BMON;
+		val |= ISL923X_C1_SELECT_BMON;
 		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-				  ISL9237_REG_CONTROL1, val);
+				  ISL923X_REG_CONTROL1, val);
 		if (ret)
 			return ret;
 
