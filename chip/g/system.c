@@ -83,10 +83,6 @@ void system_pre_init(void)
 	 * no effect.
 	 */
 	GREG32(GLOBALSEC, FLASH_REGION0_CTRL_CFG_EN) = 0;
-
-#ifdef BOARD_CR50
-	system_init_board_properties();
-#endif
 }
 
 void system_reset(int flags)
@@ -402,16 +398,6 @@ int system_rolling_reboot_suspected(void)
 	return 0;
 }
 #endif
-
-uint32_t system_get_board_properties(void)
-{
-	uint32_t properties = 0;
-
-#ifdef BOARD_CR50
-	properties = system_board_properties_callback();
-#endif
-	return properties;
-}
 
 /* Prepend header version to the current image's build info. */
 const char *system_get_build_info(void)

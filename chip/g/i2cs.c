@@ -100,7 +100,7 @@ static void i2cs_init(void)
 {
 	/* First decide if i2c is even needed for this platform. */
 	/* if (i2cs is not needed) return; */
-	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_I2C))
+	if (!board_tpm_uses_i2c())
 		return;
 
 	pmu_clock_en(PERIPH_I2CS);

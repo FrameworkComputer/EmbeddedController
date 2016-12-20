@@ -231,7 +231,7 @@ static void sps_init(void)
 	 * Check to see if slave SPI interface is required by the board before
 	 * initializing it. If SPI option is not set, then just return.
 	 */
-	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_SPI))
+	if (!board_tpm_uses_spi())
 		return;
 
 	pmu_clock_en(PERIPH_SPS);

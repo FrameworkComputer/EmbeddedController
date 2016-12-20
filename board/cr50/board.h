@@ -166,6 +166,12 @@ void assert_ec_rst(void);
 void deassert_ec_rst(void);
 int is_ec_rst_asserted(void);
 
+int board_has_ap_usb(void);
+int board_has_plt_rst(void);
+int board_rst_pullup_needed(void);
+int board_tpm_uses_i2c(void);
+int board_tpm_uses_spi(void);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */

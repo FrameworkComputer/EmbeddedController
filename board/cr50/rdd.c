@@ -137,7 +137,6 @@ void rdd_detached(void)
 
 void ccd_phy_init(int enable_ccd)
 {
-	uint32_t properties = system_get_board_properties();
 	/*
 	 * For boards that have one phy connected to the AP and one to the
 	 * external port PHY0 is for the AP and PHY1 is for CCD.
@@ -161,10 +160,10 @@ void ccd_phy_init(int enable_ccd)
 
 	/*
 	 * If the board has the non-ccd phy connected to the AP initialize the
-	 * phy no matter what. Otherwise only initialized the phy if ccd is
+	 * phy no matter what. Otherwise only initialize the phy if ccd is
 	 * enabled.
 	 */
-	if ((properties & BOARD_USB_AP) || enable_ccd) {
+	if (board_has_ap_usb() || enable_ccd) {
 		usb_init();
 		usb_is_initialized = 1;
 	}
@@ -172,8 +171,7 @@ void ccd_phy_init(int enable_ccd)
 
 void disable_ap_usb(void)
 {
-	if ((system_get_board_properties() & BOARD_USB_AP) &&
-	    !ccd_is_enabled() && usb_is_initialized) {
+	if (board_has_ap_usb() && !ccd_is_enabled() && usb_is_initialized) {
 		usb_release();
 		usb_is_initialized = 0;
 	}
@@ -182,8 +180,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_ap_usb, HOOK_PRIO_DEFAULT);
 
 void enable_ap_usb(void)
 {
-	if ((system_get_board_properties() & BOARD_USB_AP) &&
-	    !ccd_is_enabled() && !usb_is_initialized) {
+	if (board_has_ap_usb() && !ccd_is_enabled() && !usb_is_initialized) {
 		usb_is_initialized = 1;
 		usb_init();
 	}

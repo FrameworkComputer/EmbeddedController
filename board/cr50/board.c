@@ -80,6 +80,43 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 static uint32_t board_properties;
 static uint8_t reboot_request_posted;
 
+/*
+ * Bit assignments of the LONG_LIFE_SCRATCH1 register. This register survives
+ * all kinds of resets, it is cleared only on the Power ON event.
+ */
+#define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* TPM uses SPI interface */
+#define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* TPM uses I2C interface */
+#define BOARD_USB_AP                 (1 << 2)   /* One of the USB PHYs is  */
+						/* connected to the AP */
+
+/* TODO(crosbug.com/p/56945): Remove when sys_rst_l has an external pullup */
+#define BOARD_NEEDS_SYS_RST_PULL_UP  (1 << 5)   /* Add a pullup to sys_rst_l */
+#define BOARD_USE_PLT_RESET          (1 << 6)   /* Platform reset exists */
+int board_has_ap_usb(void)
+{
+	return !!(board_properties & BOARD_USB_AP);
+}
+
+int board_has_plt_rst(void)
+{
+	return !!(board_properties & BOARD_USE_PLT_RESET);
+}
+
+int board_rst_pullup_needed(void)
+{
+	return !!(board_properties & BOARD_NEEDS_SYS_RST_PULL_UP);
+}
+
+int board_tpm_uses_i2c(void)
+{
+	return !!(board_properties & BOARD_SLAVE_CONFIG_I2C);
+}
+
+int board_tpm_uses_spi(void)
+{
+	return !!(board_properties & BOARD_SLAVE_CONFIG_SPI);
+}
+
 /* I2C Port definition */
 const struct i2c_port_t i2c_ports[]  = {
 	{"master", I2C_PORT_MASTER, 100,
@@ -210,7 +247,7 @@ void board_configure_deep_sleep_wakepins(void)
 	 * If the board includes plt_rst_l, configure Cr50 to resume on the
 	 * rising edge of this signal.
 	 */
-	if (system_get_board_properties() & BOARD_USE_PLT_RESET) {
+	if (board_has_plt_rst()) {
 		/* Disable sys_rst_l as a wake pin */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 0);
 		/* Reconfigure and reenable it. */
@@ -239,11 +276,11 @@ static void init_interrupts(void)
 static void configure_board_specific_gpios(void)
 {
 	/* Add a pullup to sys_rst_l */
-	if (system_get_board_properties() & BOARD_NEEDS_SYS_RST_PULL_UP)
+	if (board_rst_pullup_needed())
 		GWRITE_FIELD(PINMUX, DIOM0_CTL, PU, 1);
 
 	/* Connect PLT_RST_L signal to the pinmux */
-	if (system_get_board_properties() & BOARD_USE_PLT_RESET) {
+	if (board_has_plt_rst()) {
 		/* Signal using GPIO1 pin 10 for DIOA13 */
 		GWRITE(PINMUX, GPIO1_GPIO10_SEL, GC_PINMUX_DIOM3_SEL);
 		/* Enbale the input */
@@ -648,7 +685,7 @@ void enable_int_ap_l(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_int_ap_l, HOOK_PRIO_DEFAULT);
 
-void system_init_board_properties(void)
+static void init_board_properties(void)
 {
 	uint32_t properties;
 
@@ -658,7 +695,7 @@ void system_init_board_properties(void)
 	 * This must be a power on reset or maybe restart due to a software
 	 * update from a version not setting the register.
 	 */
-	if (!properties || system_get_reset_flags() & RESET_FLAG_HARD) {
+	if (!properties || (system_get_reset_flags() & RESET_FLAG_HARD)) {
 		/*
 		 * Reset the properties, because after a hard reset the register
 		 * won't be cleared.
@@ -702,11 +739,7 @@ void system_init_board_properties(void)
 	/* Save this configuration setting */
 	board_properties = properties;
 }
-
-uint32_t system_board_properties_callback(void)
-{
-	return board_properties;
-}
+DECLARE_HOOK(HOOK_INIT, init_board_properties, HOOK_PRIO_FIRST);
 
 void i2cs_set_pinmux(void)
 {

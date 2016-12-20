@@ -480,36 +480,6 @@ int system_process_retry_counter(void);
  */
 void system_clear_retry_counter(void);
 
-
-/* Board properties options. A gap is left for backwards compatibility. */
-#define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* Slave SPI interface */
-#define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* Slave I2C interface */
-#define BOARD_USB_AP                 (1 << 2)   /* One of the PHYs is  */
-						/* connected to the AP */
-/* TODO(crosbug.com/p/56945): Remove when sys_rst_l has an external pullup */
-#define BOARD_NEEDS_SYS_RST_PULL_UP  (1 << 5)   /* Add a pullup to sys_rst_l */
-#define BOARD_USE_PLT_RESET          (1 << 6)   /* Platform reset exists */
-
-/**
- * Get board properites
- *
- *
- * @return uint32_t bit field where a set bit indicates option exists
- */
-uint32_t system_get_board_properties(void);
-
-/* Board specific function used to initialize the system board properties. */
-void system_init_board_properties(void);
-
-/**
- * API for board specific version of system_get_board_properties
- *
- * This function must be in the board's board.c file
- *
- * @return uint32_t bit field where a set bit indicates option exists
- */
-uint32_t system_board_properties_callback(void);
-
 /**
  * A function provided by some platforms to hint that something is going
  * wrong.

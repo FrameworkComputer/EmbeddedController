@@ -218,7 +218,7 @@ static void i2cs_tpm_enable(void)
 
 static void i2cs_if_register(void)
 {
-	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_I2C))
+	if (!board_tpm_uses_i2c())
 		return;
 
 	tpm_register_interface(i2cs_tpm_enable);

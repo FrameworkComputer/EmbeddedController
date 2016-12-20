@@ -275,7 +275,7 @@ static void sps_tpm_enable(void)
 
 static void sps_if_register(void)
 {
-	if (!(system_get_board_properties() & BOARD_SLAVE_CONFIG_SPI))
+	if (!board_tpm_uses_spi())
 		return;
 
 	tpm_register_interface(sps_tpm_enable);
