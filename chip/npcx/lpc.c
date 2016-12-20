@@ -518,52 +518,9 @@ static void handle_host_write(int is_cmd)
 		host_packet_receive(&lpc_packet);
 		return;
 
-	} else if (host_cmd_flags & EC_HOST_ARGS_FLAG_FROM_HOST) {
-		/* Version 2 (link) style command */
-		int size = lpc_host_args->data_size;
-		int csum, i;
-
-		/* Clear processing flag */
-		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
-
-		host_cmd_args.version = lpc_host_args->command_version;
-		host_cmd_args.params = params_copy;
-		host_cmd_args.params_size = size;
-		host_cmd_args.response = cmd_params;
-		host_cmd_args.response_max = EC_PROTO2_MAX_PARAM_SIZE;
-		host_cmd_args.response_size = 0;
-
-		/* Verify params size */
-		if (size > EC_PROTO2_MAX_PARAM_SIZE) {
-			host_cmd_args.result = EC_RES_INVALID_PARAM;
-		} else {
-			const uint8_t *src = cmd_params;
-			uint8_t *copy = params_copy;
-
-			/*
-			 * Verify checksum and copy params out of LPC space.
-			 * This ensures the data acted on by the host command
-			 * handler can't be changed by host writes after the
-			 * checksum is verified.
-			 */
-			csum = host_cmd_args.command +
-					host_cmd_flags +
-					host_cmd_args.version +
-					host_cmd_args.params_size;
-
-			for (i = 0; i < size; i++) {
-				csum += *src;
-				*(copy++) = *(src++);
-			}
-
-			if ((uint8_t)csum != lpc_host_args->checksum)
-				host_cmd_args.result = EC_RES_INVALID_CHECKSUM;
-		}
 	} else {
 		/* Old style command, now unsupported */
 		host_cmd_args.result = EC_RES_INVALID_COMMAND;
-		/* Clear processing flag */
-		CLEAR_BIT(NPCX_HIPMST(PMC_HOST_CMD), NPCX_HIPMST_F0);
 	}
 
 	/* Hand off to host command handler */
@@ -1097,7 +1054,7 @@ static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-	r->protocol_versions = (1 << 2) | (1 << 3);
+	r->protocol_versions = (1 << 3);
 	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
 	r->flags = 0;
