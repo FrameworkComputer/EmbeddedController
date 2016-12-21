@@ -12,6 +12,7 @@ import json
 import struct
 import sys
 import time
+import traceback
 from pprint import pprint
 
 import usb
@@ -34,7 +35,6 @@ class Spower(object):
     bus = Spower()
 
   Instance Variables:
-    _logger: Sgpio tagged log output
     _dev: pyUSB device object
     _read_ep: pyUSB read endpoint for this interface
     _write_ep: pyUSB write endpoint for this interface
@@ -95,8 +95,10 @@ class Spower(object):
 	47: (0, 0x4b),
   }
 
-  def __init__(self, vendor=0x18d1,
+  def __init__(self, board, vendor=0x18d1,
                product=0x5020, interface=1, serialname=None):
+    self._board = board
+
     # Find the stm32.
     dev_list = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
     if dev_list is None:
@@ -109,7 +111,8 @@ class Spower(object):
         dev_serial = "PyUSB dioesn't have a stable interface"
         try:
           dev_serial = usb.util.get_string(d, 256, d.iSerialNumber)
-        except:
+        except ValueError:
+          # Incompatible pyUsb version.
           dev_serial = usb.util.get_string(d, d.iSerialNumber)
         if dev_serial == serialname:
           dev = d
@@ -119,7 +122,8 @@ class Spower(object):
     else:
       try:
         dev = dev_list[0]
-      except:
+      except TypeError:
+        # Incompatible pyUsb version.
         dev = dev_list.next()
 
     debuglog("Found USB device: %04x:%04x" % (vendor, product))
@@ -128,7 +132,7 @@ class Spower(object):
     # Get an endpoint instance.
     try:
       dev.set_configuration()
-    except:
+    except usb.USBError:
       pass
     cfg = dev.get_active_configuration()
 
@@ -309,7 +313,6 @@ class Spower(object):
     for i in range(0, len(self._inas)):
       name = self._inas[i]['name']
       title += ", %s uW" % name
-    logoutput(title)
 
     return actual_us
 
@@ -319,17 +322,24 @@ class Spower(object):
     Args:
       name:	readable name of power rail in board config.
 
+    Returns:
+      True if INA added, False if the INA is not on this board.
+
     Raises:
-      Exception on failure.
+      Exception on unexpected failure.
     """
     for datum in self._brdcfg:
       if datum["name"] == name:
         channel = int(datum["channel"])
         rs = int(float(datum["rs"]) * 1000.)
+        board = datum["sweetberry"]
 
-        port, addr = self.CHMAP[channel]
-        self.add_ina(port, self.INA231, addr, 0, rs, data=datum)
-        return
+        if board == self._board:
+          port, addr = self.CHMAP[channel]
+          self.add_ina(port, self.INA231, addr, 0, rs, data=datum)
+          return True
+        else:
+          return False
     raise Exception("Power", "Failed to find INA %s" % name)
 
   def set_time(self, timestamp_us):
@@ -382,10 +392,11 @@ class Spower(object):
     return datasize
 
   def read_line(self):
-    """Read a line of data fromteh setup INAs
+    """Read a line of data from the setup INAs
 
-    Output:
-      stdout of the record retrieved in csv format.
+    Return:
+      list of dicts of the values read, otherwise None.
+      [{ts:100, vbat:450}, {ts:200, vbat:440}]
     """
     try:
       expected_bytes = self.report_size(len(self._inas))
@@ -393,13 +404,13 @@ class Spower(object):
       bytesread = self.wr_command(cmd, read_count=expected_bytes)
     except usb.core.USBError as e:
       print "READ LINE FAILED %s" % e
-      return
+      return None
 
     if len(bytesread) == 1:
       if bytesread[0] != 0x6:
         debuglog("READ LINE FAILED bytes: %d ret: %02x" % (
             len(bytesread), bytesread[0]))
-      return
+      return None
 
     if len(bytesread) % expected_bytes != 0:
       debuglog("READ LINE WARNING: expected %d, got %d" % (
@@ -407,10 +418,14 @@ class Spower(object):
 
     packet_count = len(bytesread) / expected_bytes
 
+    values = []
     for i in range(0, packet_count):
       start = i * expected_bytes
       end = (i + 1) * expected_bytes
-      self.interpret_line(bytesread[start:end])
+      record = self.interpret_line(bytesread[start:end])
+      values.append(record)
+
+    return values
 
   def interpret_line(self, data):
     """Interpret a power record from INAs
@@ -420,6 +435,9 @@ class Spower(object):
 
     Output:
       stdout of the record in csv format.
+
+    Return:
+      dict containing name, value of recorded data.
     """
     status, size = struct.unpack("<BB", data[0:2])
     if len(data) != self.report_size(size):
@@ -432,7 +450,7 @@ class Spower(object):
     debuglog("READ LINE: st:%d size:%d time:%d" % (status, size, timestamp))
     ftimestamp = float(timestamp) / 1000000.
 
-    output = "%f" % ftimestamp
+    record = {"ts": ftimestamp, "status": status, "berry":self._board}
 
     for i in range(0, size):
       idx = self.report_header_size() + 2*i
@@ -440,10 +458,9 @@ class Spower(object):
       uw = raw_w * self._inas[i]['uWscale']
       name = self._inas[i]['name']
       debuglog("READ %d %s: %fs: %fmW" % (i, name, ftimestamp, uw))
-      output += ", %.02f" % uw
+      record[self._inas[i]['name']] = uw
 
-    logoutput(output)
-    return status
+    return record
 
   def load_board(self, brdfile):
     """Load a board config.
@@ -459,6 +476,145 @@ class Spower(object):
     if debug:
       pprint(data)
 
+
+class powerlog(object):
+  """Power class to log aggregated power.
+
+  Usage:
+    obj = powerlog()
+
+  Instance Variables:
+    _pwr[]: Spower objects for individual sweetberries
+  """
+
+  def __init__(self, brdfile, cfgfile, serial_a=None,
+               serial_b=None, sync_date=False, use_ms=False):
+    """
+    Args:
+      brdfile: string name of json file containing board layout.
+      cfgfile: string name of json containing list of rails to read.
+      serial_a: serial number of sweetberry A.
+      serial_b: serial number of sweetberry B.
+      sync_date: report timestamps synced with host datetime.
+      use_ms: report timestamps in ms rather than us.
+    """
+    self._pwr = {}
+    self._use_ms = use_ms
+
+    if not serial_a and not serial_b:
+      self._pwr['A'] = Spower('A')
+    if serial_a:
+      self._pwr['A'] = Spower('A', serialname=serial_a)
+    if serial_b:
+      self._pwr['B'] = Spower('B', serialname=serial_b)
+
+    with open(cfgfile) as data_file:
+      names = json.load(data_file)
+    self._names = names
+
+    for key in self._pwr:
+      self._pwr[key].load_board(brdfile)
+      self._pwr[key].reset()
+
+    # Allocate the rails to the appropriate boards.
+    used_boards = []
+    for name in names:
+      success = False
+      for key in self._pwr.keys():
+        if self._pwr[key].add_ina_name(name):
+          success = True
+          if key not in used_boards:
+            used_boards.append(key)
+      if not success:
+        raise Exception("Failed to add %s (maybe missing "
+                        "sweetberry, or bad board file?)" % name)
+
+    # Evict unused boards.
+    for key in self._pwr.keys():
+      if key not in used_boards:
+        self._pwr.pop(key)
+
+    for key in self._pwr.keys():
+      if sync_date:
+        self._pwr[key].set_time(time.time() * 1000000)
+      else:
+        self._pwr[key].set_time(0)
+
+  def start(self, integration_us_request, seconds, sync_speed=.8):
+    """
+    Starts sampling.
+
+    Args:
+      integration_us_request: requested interval between sample values.
+      seconds: time until exit, or None to run until cancel.
+      sync_speed: A usb request is sent every [.8] * integration_us.
+    """
+    # We will get back the actual integration us.
+    # It should be the same for all devices.
+    integration_us = None
+    for key in self._pwr:
+      integration_us_new = self._pwr[key].start(integration_us_request)
+      if integration_us:
+        if integration_us != integration_us_new:
+          raise Exception("FAIL",
+              "Integration on A: %dus != integration on B %dus" % (
+              integration_us, integration_us_new))
+      integration_us = integration_us_new
+
+    # CSV header
+    title = "ts:%dus" % integration_us
+    for name in self._names:
+      title += ", %s uW" % name
+    title += ", status"
+    logoutput(title)
+
+    forever = False
+    if not seconds:
+      forever = True
+    end_time = time.time() + seconds
+    try:
+      pending_records = []
+      while forever or end_time > time.time():
+        if (integration_us > 5000):
+          time.sleep((integration_us / 1000000.) * sync_speed)
+        for key in self._pwr:
+          records = self._pwr[key].read_line()
+          if not records:
+            continue
+
+          for record in records:
+            pending_records.append(record)
+
+        pending_records.sort(key=lambda r: r['ts'])
+
+        aggregate_record = {"boards": set()}
+        for record in pending_records:
+          if record["berry"] not in aggregate_record["boards"]:
+            for rkey in record.keys():
+              aggregate_record[rkey] = record[rkey]
+            aggregate_record["boards"].add(record["berry"])
+          else:
+            print "break %s, %s" % (record["berry"], aggregate_record["boards"])
+            break
+
+          if aggregate_record["boards"] == set(self._pwr.keys()):
+            csv = "%f" % aggregate_record["ts"]
+            for name in self._names:
+              if name in aggregate_record:
+                csv += ", %.2f" % aggregate_record[name]
+              else:
+                csv += ", "
+            csv += ", %d" % aggregate_record["status"]
+            logoutput(csv)
+
+            aggregate_record = {"boards": set()}
+            for r in range(0, len(self._pwr)):
+              pending_records.pop(0)
+
+
+    finally:
+      for key in self._pwr:
+        self._pwr[key].stop()
 
 
 def main():
@@ -481,6 +637,8 @@ def main():
       help="Seconds to run capture. Overrides -n", default=0.)
   parser.add_argument('--date', default=False,
       help="Sync logged timestamp to host date", action="store_true")
+  parser.add_argument('--ms', default=False,
+      help="Print timestamp as milliseconds", action="store_true")
   parser.add_argument('--slow', default=False,
       help="Intentionally overflow", action="store_true")
   parser.add_argument('-v', '--verbose', default=False,
@@ -492,7 +650,7 @@ def main():
   if args.verbose:
     debug = True
 
-  integration_us = args.integration_us
+  integration_us_request = args.integration_us
   if not args.board:
     raise Exception("Power", "No board file selected, see board.README")
   if not args.config:
@@ -503,7 +661,11 @@ def main():
   samples = args.samples
   seconds = args.seconds
   serial_a = args.serial
+  serial_b = args.serial_b
   sync_date = args.date
+  use_ms = args.ms
+
+  boards = []
 
   sync_speed = .8
   if args.slow:
@@ -513,35 +675,13 @@ def main():
   if samples > 0 or seconds > 0.:
     forever = False
 
-  with open(cfgfile) as data_file:
-    names = json.load(data_file)
+  # Set up logging interface.
+  powerlogger = powerlog(brdfile, cfgfile, serial_a=serial_a,
+      serial_b=serial_b, sync_date=sync_date, use_ms=use_ms)
 
-  p = Spower(serialname=serial_a)
-  p.load_board(brdfile)
-  p.reset()
+  # Start logging.
+  powerlogger.start(integration_us_request, seconds, sync_speed=sync_speed)
 
-  for name in names:
-    p.add_ina_name(name)
-
-  if sync_date:
-    p.set_time(time.time() * 1000000)
-  else:
-    p.set_time(0)
-
-
-  # We will get back the actual integration us.
-  integration_us = p.start(integration_us)
-
-  if not seconds > 0.:
-    seconds = samples * integration_us / 1000000.;
-  end_time = time.time() + seconds
-  try:
-    while forever or end_time > time.time():
-      if (integration_us > 5000):
-        time.sleep((integration_us / 1000000.) * sync_speed)
-      ret = p.read_line()
-  finally:
-    p.stop()
 
 if __name__ == "__main__":
   main()
