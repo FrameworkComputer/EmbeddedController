@@ -91,10 +91,29 @@ int bn_modinv_vartime(struct LITE_BIGNUM *r, const struct LITE_BIGNUM *e,
 int bn_is_bit_set(const struct LITE_BIGNUM *a, int n);
 
 /*
+ * ECC.
+ */
+int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
+		p256_int *r, p256_int *s)
+	__attribute__((warn_unused_result));
+int dcrypto_p256_base_point_mul(const p256_int *k, p256_int *x, p256_int *y)
+	 __attribute__((warn_unused_result));
+int dcrypto_p256_point_mul(const p256_int *k,
+		const p256_int *in_x, const p256_int *in_y,
+		p256_int *x, p256_int *y)
+	__attribute__((warn_unused_result));
+int dcrypto_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
+		const p256_int *message, const p256_int *r,
+		const p256_int *s)
+	__attribute__((warn_unused_result));
+int dcrypto_p256_is_valid_point(const p256_int *x, const p256_int *y)
+	__attribute__((warn_unused_result));
+
+/*
  * Runtime.
  */
 void dcrypto_init(void);
-uint32_t dcrypto_call(uint32_t adr);
+uint32_t dcrypto_call(uint32_t adr) __attribute__((warn_unused_result));
 void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
 		       size_t n_opcodes);
 void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words);

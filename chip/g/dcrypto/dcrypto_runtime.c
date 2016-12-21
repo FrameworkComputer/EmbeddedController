@@ -12,10 +12,15 @@
 
 static task_id_t my_task_id;
 
+static int dcrypto_is_initialized;
+
 void dcrypto_init(void)
 {
 	int i;
 	volatile uint32_t *ptr;
+
+	if (dcrypto_is_initialized)
+		return;
 
 	/* Enable PMU. */
 	REG_WRITE_MLV(GR_PMU_PERICLKSET0, GC_PMU_PERICLKSET0_DCRYPTO0_CLK_MASK,
@@ -48,6 +53,8 @@ void dcrypto_init(void)
 	/* Reset. */
 	GREG32(CRYPTO, CONTROL) = 1;
 	GREG32(CRYPTO, CONTROL) = 0;
+
+	dcrypto_is_initialized = 1;
 }
 
 #define DCRYPTO_CALL_TIMEOUT_US  (700 * 1000)
@@ -69,9 +76,9 @@ uint32_t dcrypto_call(uint32_t adr)
 	/* TODO(ngm): switch return value to an enum. */
 	switch (event) {
 	case TASK_EVENT_DCRYPTO_DONE:
-		return 1;
-	default:
 		return 0;
+	default:
+		return 1;
 	}
 }
 
@@ -90,8 +97,11 @@ void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
 	volatile uint32_t *ptr = GREG32_ADDR(CRYPTO, IMEM_DUMMY);
 
 	ptr += offset;
-	for (i = 0; i < n_opcodes; ++i)
-		ptr[i] = opcodes[i];
+	/* Check first word and copy all only if different. */
+	if (ptr[0] != opcodes[0]) {
+		for (i = 0; i < n_opcodes; ++i)
+			ptr[i] = opcodes[i];
+	}
 }
 
 void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words)

@@ -4,6 +4,7 @@
  */
 #include "internal.h"
 #include "registers.h"
+#include "trng.h"
 
 /* Firmware blob for crypto accelerator */
 
@@ -994,27 +995,6 @@ const uint32_t IMEM_dcrypto[] = {
 	0x08000251,
 	0x0c000000,
 
-
-#define CF_selftest_adr 847
-	0xfc000000,
-	0x08000010,
-	0xf8123456,
-	0x08000181,
-	0xf9cdd4f6,
-	0x84004000,
-	0x81800006,
-	0x82000007,
-	0x88004000,
-	0xfc000000,
-	0x080001a8,
-	0x84004000,
-	0x81800004,
-	0x82000005,
-	0x88004000,
-	0xfc000000,
-	0x080001e2,
-	0x0c000000,
-
 };
 
 struct DMEM_montmul_ptrs {
@@ -1030,7 +1010,7 @@ struct DMEM_montmul_ptrs {
 
 /*
  * This struct is "calling convention" for passing parameters into the
- * code block above.  Parameters start at &DMEM[0].
+ * code block above for RSA operations.  Parameters start at &DMEM[0].
  */
 struct DMEM_montmul {
 	struct DMEM_montmul_ptrs in_ptrs;
@@ -1051,11 +1031,12 @@ struct DMEM_montmul {
 
 /* output = input ** exp % N. */
 /* TODO(ngm): add blinding; measure timing. */
+/* TODO(ngm): propagate return code. */
 void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 		const struct LITE_BIGNUM *input,
 		const struct LITE_BIGNUM *exp,
 		const struct LITE_BIGNUM *N) {
-	int i;
+	int i, result;
 	struct DMEM_montmul *montmul;
 
 	/* Initialize hardware; load code page. */
@@ -1088,7 +1069,7 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 		montmul->exp[i] = 0;
 
 	/* Calculate RR and d0inv. */
-	dcrypto_call(CF_modload_adr);
+	result = dcrypto_call(CF_modload_adr);
 
 	if (bn_words(exp) > 1) {
 		/* in = in * RR */
@@ -1111,7 +1092,7 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 		montmul->out_ptrs.pB = DMEM_INDEX(montmul, exp);
 		montmul->out_ptrs.pC = DMEM_INDEX(montmul, out);
 
-		dcrypto_call(CF_modexp_adr);
+		result |= dcrypto_call(CF_modexp_adr);
 	} else {
 		/* Small public exponent */
 		uint32_t e = BN_DIGIT(exp, 0);
@@ -1124,11 +1105,11 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 		montmul->in_ptrs.pA = DMEM_INDEX(montmul, in);
 		montmul->in_ptrs.pB = DMEM_INDEX(montmul, RR);
 		montmul->in_ptrs.pC = DMEM_INDEX(montmul, out);
-		dcrypto_call(CF_mulx_adr);
+		result |= dcrypto_call(CF_mulx_adr);
 
 		/* in = in * RR */
 		montmul->in_ptrs.pC = DMEM_INDEX(montmul, in);
-		dcrypto_call(CF_mulx_adr);
+		result |= dcrypto_call(CF_mulx_adr);
 
 		b >>= 1;
 
@@ -1137,14 +1118,14 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 			montmul->in_ptrs.pA = DMEM_INDEX(montmul, out);
 			montmul->in_ptrs.pB = DMEM_INDEX(montmul, out);
 			montmul->in_ptrs.pC = DMEM_INDEX(montmul, out);
-			dcrypto_call(CF_mulx_adr);
+			result |= dcrypto_call(CF_mulx_adr);
 
 			if ((b & e) != 0) {
 				/* out = out * in */
 				montmul->in_ptrs.pA = DMEM_INDEX(montmul, in);
 				montmul->in_ptrs.pB = DMEM_INDEX(montmul, out);
 				montmul->in_ptrs.pC = DMEM_INDEX(montmul, out);
-				dcrypto_call(CF_mulx_adr);
+				result |= dcrypto_call(CF_mulx_adr);
 			}
 
 			b >>= 1;
@@ -1153,8 +1134,215 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 		montmul->in_ptrs.pA = DMEM_INDEX(montmul, out);
 		montmul->in_ptrs.pB = DMEM_INDEX(montmul, out);
 		montmul->in_ptrs.pC = DMEM_INDEX(montmul, out);
-		dcrypto_call(CF_mul1_adr);
+		result |= dcrypto_call(CF_mul1_adr);
 	}
 
 	memcpy(output->d, montmul->out, bn_size(output));
+
+	(void) (result == 0); /* end of errorcode propagation */
+}
+
+/*
+ * This struct is "calling convention" for passing parameters into the
+ * code block above for ecc operations.  Parameters start at &DMEM[0].
+ */
+struct DMEM_ecc {
+	uint32_t pK;
+	uint32_t pRnd;
+	uint32_t pMsg;
+	uint32_t pR;
+	uint32_t pS;
+	uint32_t pX;
+	uint32_t pY;
+	uint32_t pD;
+	p256_int k;
+	p256_int rnd;
+	p256_int msg;
+	p256_int r;
+	p256_int s;
+	p256_int x;
+	p256_int y;
+	p256_int d;
+};
+
+static void dcrypto_ecc_init(void)
+{
+	struct DMEM_ecc *pEcc =
+		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+
+	dcrypto_init();
+	dcrypto_imem_load(0, IMEM_dcrypto, ARRAY_SIZE(IMEM_dcrypto));
+
+	pEcc->pK = DMEM_INDEX(pEcc, k);
+	pEcc->pRnd = DMEM_INDEX(pEcc, rnd);
+	pEcc->pMsg = DMEM_INDEX(pEcc, msg);
+	pEcc->pR = DMEM_INDEX(pEcc, r);
+	pEcc->pS = DMEM_INDEX(pEcc, s);
+	pEcc->pX = DMEM_INDEX(pEcc, x);
+	pEcc->pY = DMEM_INDEX(pEcc, y);
+	pEcc->pD = DMEM_INDEX(pEcc, d);
+
+	/* (over)write first words to ensure pairwise mismatch. */
+	pEcc->k.a[0] = 1;
+	pEcc->rnd.a[0] = 2;
+	pEcc->msg.a[0] = 3;
+	pEcc->r.a[0] = 4;
+	pEcc->s.a[0] = 5;
+	pEcc->x.a[0] = 6;
+	pEcc->y.a[0] = 7;
+	pEcc->d.a[0] = 8;
+}
+
+/*
+ * Local copy function since for some reason we have p256_int as
+ * packed structs.
+ * This causes wrong writes (bytes vs. words) to the peripheral with
+ * struct copies in case the src operand is unaligned.
+ *
+ * Our peripheral dst are always aligned correctly.
+ * By making sure the src is aligned too, we get word copy behavior.
+ */
+static inline void cp8w(p256_int *dst, const p256_int *src)
+{
+	p256_int tmp;
+
+	tmp = *src;
+	*dst = tmp;
+}
+
+int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
+		p256_int *r, p256_int *s)
+{
+	int i, result;
+	struct DMEM_ecc *pEcc =
+		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+
+	dcrypto_ecc_init();
+	result = dcrypto_call(CF_p256init_adr);
+
+	/* Pick uniform 0 < k < R */
+	do {
+		for (i = 0; i < 8; ++i)
+			pEcc->rnd.a[i] ^= rand();
+	} while (p256_cmp(&SECP256r1_nMin2, &pEcc->rnd) < 0);
+
+	p256_add_d(&pEcc->rnd, 1, &pEcc->k);
+
+	for (i = 0; i < 8; ++i)
+		pEcc->rnd.a[i] = rand();
+
+	cp8w(&pEcc->msg, message);
+	cp8w(&pEcc->d, key);
+
+	result |= dcrypto_call(CF_p256sign_adr);
+
+	cp8w(r, &pEcc->r);
+	cp8w(s, &pEcc->s);
+
+	/* Wipe d,k */
+	cp8w(&pEcc->d, &pEcc->rnd);
+	cp8w(&pEcc->k, &pEcc->rnd);
+
+	return result == 0;
+}
+
+int dcrypto_p256_base_point_mul(const p256_int *k, p256_int *x, p256_int *y)
+{
+	int i, result;
+	struct DMEM_ecc *pEcc =
+		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+
+	dcrypto_ecc_init();
+	result = dcrypto_call(CF_p256init_adr);
+
+	for (i = 0; i < 8; ++i)
+		pEcc->rnd.a[i] ^= rand();
+
+	cp8w(&pEcc->d, k);
+
+	result |= dcrypto_call(CF_p256scalarbasemult_adr);
+
+	cp8w(x, &pEcc->x);
+	cp8w(y, &pEcc->y);
+
+	/* Wipe d */
+	cp8w(&pEcc->d, &pEcc->rnd);
+
+	return result == 0;
+}
+
+int dcrypto_p256_point_mul(const p256_int *k,
+		const p256_int *in_x, const p256_int *in_y,
+		p256_int *x, p256_int *y)
+{
+	int i, result;
+	struct DMEM_ecc *pEcc =
+		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+
+	dcrypto_ecc_init();
+	result = dcrypto_call(CF_p256init_adr);
+
+	for (i = 0; i < 8; ++i)
+		pEcc->rnd.a[i] ^= rand();
+
+	cp8w(&pEcc->k, k);
+	cp8w(&pEcc->x, in_x);
+	cp8w(&pEcc->y, in_y);
+
+	result |= dcrypto_call(CF_p256scalarmult_adr);
+
+	cp8w(x, &pEcc->x);
+	cp8w(y, &pEcc->y);
+
+	/* Wipe k,x,y */
+	cp8w(&pEcc->k, &pEcc->rnd);
+	cp8w(&pEcc->x, &pEcc->rnd);
+	cp8w(&pEcc->y, &pEcc->rnd);
+
+	return result == 0;
+}
+
+int dcrypto_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
+		const p256_int *message, const p256_int *r,
+		const p256_int *s)
+{
+	int i, result;
+	struct DMEM_ecc *pEcc =
+		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+
+	dcrypto_ecc_init();
+	result = dcrypto_call(CF_p256init_adr);
+
+	cp8w(&pEcc->msg, message);
+	cp8w(&pEcc->r, r);
+	cp8w(&pEcc->s, s);
+	cp8w(&pEcc->x, key_x);
+	cp8w(&pEcc->y, key_y);
+
+	result |= dcrypto_call(CF_p256verify_adr);
+
+	for (i = 0; i < 8; ++i)
+		result |= (pEcc->rnd.a[i] ^ r->a[i]);
+
+	return result == 0;
+}
+
+int dcrypto_p256_is_valid_point(const p256_int *x, const p256_int *y)
+{
+	int i, result;
+	struct DMEM_ecc *pEcc =
+		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
+
+	dcrypto_ecc_init();
+	result = dcrypto_call(CF_p256init_adr);
+
+	cp8w(&pEcc->x, x);
+	cp8w(&pEcc->y, y);
+
+	result |= dcrypto_call(CF_p256isoncurve_adr);
+
+	for (i = 0; i < 8; ++i)
+		result |= (pEcc->r.a[i] ^ pEcc->s.a[i]);
+
+	return result == 0;
 }

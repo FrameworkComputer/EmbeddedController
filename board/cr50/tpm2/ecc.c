@@ -47,7 +47,7 @@ BOOL _cpri__EccIsPointOnCurve(TPM_ECC_CURVE curve_id, TPMS_ECC_POINT *q)
 		reverse_tpm2b(&q->x.b);
 		reverse_tpm2b(&q->y.b);
 
-		result = p256_is_valid_point((p256_int *) q->x.b.buffer,
+		result = dcrypto_p256_is_valid_point((p256_int *) q->x.b.buffer,
 					(p256_int *) q->y.b.buffer);
 
 		reverse_tpm2b(&q->x.b);
@@ -223,6 +223,7 @@ CRYPT_RESULT _cpri__SignEcc(
 	uint8_t digest_local[sizeof(p256_int)];
 	const size_t digest_len = MIN(digest->size, sizeof(digest_local));
 	p256_int p256_digest;
+	int result;
 
 	if (curve_id != TPM_ECC_NIST_P256)
 		return CRYPT_PARAMETER;
@@ -239,7 +240,7 @@ CRYPT_RESULT _cpri__SignEcc(
 
 		reverse_tpm2b(&d->b);
 
-		p256_ecdsa_sign((p256_int *) d->b.buffer,
+		result = dcrypto_p256_ecdsa_sign((p256_int *) d->b.buffer,
 				&p256_digest,
 				(p256_int *) r->b.buffer,
 				(p256_int *) s->b.buffer);
@@ -250,7 +251,10 @@ CRYPT_RESULT _cpri__SignEcc(
 		reverse_tpm2b(&r->b);
 		reverse_tpm2b(&s->b);
 
-		return CRYPT_SUCCESS;
+		if (result)
+			return CRYPT_SUCCESS;
+		else
+			return CRYPT_FAIL;
 	default:
 		return CRYPT_PARAMETER;
 	}
@@ -283,7 +287,7 @@ CRYPT_RESULT _cpri__ValidateSignatureEcc(
 		reverse_tpm2b(&r->b);
 		reverse_tpm2b(&s->b);
 
-		result = p256_ecdsa_verify(
+		result = dcrypto_p256_ecdsa_verify(
 			(p256_int *) q->x.b.buffer,
 			(p256_int *) q->y.b.buffer,
 			&p256_digest,

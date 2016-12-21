@@ -20,8 +20,7 @@ int DCRYPTO_p256_base_point_mul(p256_int *out_x, p256_int *out_y,
 		return 0;
 	}
 
-	p256_base_point_mul(n, out_x, out_y);
-	return 1;
+	return dcrypto_p256_base_point_mul(n, out_x, out_y);
 }
 
 /* DCRYPTO_p256_point_mul sets {out_x,out_y} = n*{in_x,in_y}, where n is <
@@ -35,6 +34,6 @@ int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
 		p256_clear(out_y);
 		return 0;
 	}
-	p256_point_mul(n, in_x, in_y, out_x, out_y);
-	return 1;
+
+	return dcrypto_p256_point_mul(n, in_x, in_y, out_x, out_y);
 }

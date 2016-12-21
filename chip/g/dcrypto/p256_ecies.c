@@ -58,7 +58,7 @@ size_t DCRYPTO_ecies_encrypt(
 					&eph_d, pub_x, pub_y))
 		return 0;
 	/* Check for computational errors. */
-	if (!p256_is_valid_point(&secret_x, &secret_y))
+	if (!dcrypto_p256_is_valid_point(&secret_x, &secret_y))
 		return 0;
 	/* Convert secret to big-endian. */
 	reverse(&secret_x, sizeof(secret_x));
@@ -140,14 +140,14 @@ size_t DCRYPTO_ecies_decrypt(
 	inp += P256_NBYTES;
 
 	/* Verify that the public point is on the curve. */
-	if (!p256_is_valid_point(&eph_x, &eph_y))
+	if (!dcrypto_p256_is_valid_point(&eph_x, &eph_y))
 		return 0;
 	/* Compute the DH point. */
 	if (!DCRYPTO_p256_point_mul(&secret_x, &secret_y,
 					d, &eph_x, &eph_y))
 		return 0;
 	/* Check for computational errors. */
-	if (!p256_is_valid_point(&secret_x, &secret_y))
+	if (!dcrypto_p256_is_valid_point(&secret_x, &secret_y))
 		return 0;
 	/* Convert secret to big-endian. */
 	reverse(&secret_x, sizeof(secret_x));
