@@ -68,18 +68,6 @@
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_MASTER 1
 
-/*
- * Create 0x1000 more space in RO so that the build with USB PD will fit.
- * TODO(crosbug.com/p/61170): This fix works currently, but as more PD
- * options are included, the image will no longer fit in the 0x10000 space
- * that's allocated.
- */
-#undef CONFIG_FLASH_PSTATE
-#undef CONFIG_FLASH_PSTATE_BANK
-#undef CONFIG_FW_PSTATE_SIZE
-#define CONFIG_FW_PSTATE_SIZE 0
-
-
 /* PD features */
 #define CONFIG_ADC
 
