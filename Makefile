@@ -92,10 +92,17 @@ endif
 
 _tsk_cfg:=$(foreach t,$(_tsk_lst) ,HAS_TASK_$(t))
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
-_flag_cfg:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BDIR) \
-	include/config.h | grep -o "\#define CONFIG_[A-Z0-9_]*" | \
+_flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BDIR) \
+	-DSECTION_IS_RO include/config.h | grep -o "\#define CONFIG_[A-Z0-9_]*" | \
 	cut -c9- | sort)
+_flag_cfg_rw:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BDIR) \
+	-DSECTION_IS_RW include/config.h | grep -o "\#define CONFIG_[A-Z0-9_]*" | \
+	cut -c9- | sort)
+_flag_cfg:= $(filter $(_flag_cfg_ro), $(_flag_cfg_rw))
+_flag_cfg_ro:= $(filter-out $(_flag_cfg), $(_flag_cfg_ro))
+_flag_cfg_rw:= $(filter-out $(_flag_cfg), $(_flag_cfg_rw))
 
+$(foreach c,$(_flag_cfg_rw),$(eval $(c)=rw))
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 
 ifneq "$(CONFIG_COMMON_RUNTIME)" "y"
@@ -125,8 +132,11 @@ $(eval CHIP_FAMILY_$(UC_CHIP_FAMILY)=y)
 
 # Private subdirectories may call this from their build.mk
 # First arg is the path to be prepended to configured *.o files.
-# Second arg is the config variable (ie, "FOO" to select with $(FOO-y)).
-objs_from_dir=$(foreach obj, $($(2)-y), $(1)/$(obj))
+# Second arg is the config variable (ie, "FOO" to select with $(FOO-$3)).
+# Third arg is the config variable value ("y" for configuration options
+#   that are set for both RO and RW, "rw" for RW-only configuration options)
+objs_from_dir_p=$(foreach obj, $($(2)-$(3)), $(1)/$(obj))
+objs_from_dir=$(call objs_from_dir_p,$(1),$(2),y)
 
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
@@ -151,33 +161,51 @@ include util/signer/build.mk
 
 includes+=$(includes-y)
 
-# Get all sources to build
-all-obj-y+=$(call objs_from_dir,core/$(CORE),core)
-all-obj-y+=$(call objs_from_dir,chip/$(CHIP),chip)
-all-obj-y+=$(call objs_from_dir,$(BDIR),board)
-all-obj-y+=$(call objs_from_dir,private,private)
+# Wrapper for fetching all the sources relevant to this build
+# target.
+# First arg is "y" indicating sources for all segments,
+#   or "rw" indicating sources for rw segment.
+define get_sources =
+# Get sources to build for this target
+all-obj-$(1)+=$(call objs_from_dir_p,core/$(CORE),core,$(1))
+all-obj-$(1)+=$(call objs_from_dir_p,chip/$(CHIP),chip,$(1))
+all-obj-$(1)+=$(call objs_from_dir_p,$(BDIR),board,$(1))
+all-obj-$(1)+=$(call objs_from_dir_p,private,private,$(1))
 ifneq ($(PDIR),)
-all-obj-y+=$(call objs_from_dir,$(PDIR),$(PDIR))
+all-obj-$(1)+=$(call objs_from_dir_p,$(PDIR),$(PDIR),$(1))
 endif
-all-obj-y+=$(call objs_from_dir,common,common)
-all-obj-y+=$(call objs_from_dir,driver,driver)
-all-obj-y+=$(call objs_from_dir,power,power)
+all-obj-$(1)+=$(call objs_from_dir_p,common,common,$(1))
+all-obj-$(1)+=$(call objs_from_dir_p,driver,driver,$(1))
+all-obj-$(1)+=$(call objs_from_dir_p,power,power,$(1))
 ifdef CTS_MODULE
-all-obj-y+=$(call objs_from_dir,cts,cts)
+all-obj-$(1)+=$(call objs_from_dir_p,cts,cts,$(1))
 endif
-all-obj-y+=$(call objs_from_dir,test,$(PROJECT))
+all-obj-$(1)+=$(call objs_from_dir_p,test,$(PROJECT),$(1))
+endef
+
+# Get all sources to build
+$(eval $(call get_sources,y))
+$(eval $(call get_sources,ro))
+
 dirs=core/$(CORE) chip/$(CHIP) $(BDIR) common power test cts/common cts/$(CTS_MODULE)
 dirs+= private $(PDIR)
 dirs+=$(shell find driver -type d)
 common_dirs=util
 
 ifeq ($(custom-ro_objs-y),)
-ro-objs := $(sort $(foreach obj, $(all-obj-y), $(out)/RO/$(obj)))
+ro-common-objs := $(sort $(foreach obj, $(all-obj-y), $(out)/RO/$(obj)))
+ro-only-objs := $(sort $(foreach obj, $(all-obj-ro), $(out)/RO/$(obj)))
+ro-objs := $(sort $(ro-common-objs) $(ro-only-objs))
 else
 ro-objs := $(sort $(foreach obj, $(custom-ro_objs-y), $(out)/RO/$(obj)))
 endif
 
-rw-objs := $(sort $(foreach obj, $(all-obj-y), $(out)/RW/$(obj)))
+# Add RW-only sources to build
+$(eval $(call get_sources,rw))
+
+rw-common-objs := $(sort $(foreach obj, $(all-obj-y), $(out)/RW/$(obj)))
+rw-only-objs := $(sort $(foreach obj, $(all-obj-rw), $(out)/RW/$(obj)))
+rw-objs := $(sort $(rw-common-objs) $(rw-only-objs))
 
 # Don't include the shared objects in the RO/RW image if we're enabling
 # the shared objects library.
