@@ -896,3 +896,14 @@ static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_INVALIDATE_INACTIVE_RW,
 	vc_invalidate_inactive_rw);
+
+static enum vendor_cmd_rc vc_commit_nvmem(enum vendor_cmd_cc code,
+					  void *buf,
+					  size_t input_size,
+					  size_t *response_size)
+{
+	nvmem_enable_commits();
+	*response_size = 0;
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_COMMIT_NVMEM, vc_commit_nvmem);
