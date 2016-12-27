@@ -177,4 +177,13 @@ int nvmem_setup(uint8_t version);
 void nvmem_compute_sha(uint8_t *p_buf, int num_bytes, uint8_t *p_sha,
 		       int sha_len);
 
+/*
+ * Temporarily stopping NVMEM commits could be beneficial. One use case is
+ * when TPM operations need to be sped up.
+ *
+ * Both below functions should be called from the same task.
+ */
+void nvmem_enable_commits(void);
+void nvmem_disable_commits(void);
+
 #endif /* __CROS_EC_NVMEM_UTILS_H */

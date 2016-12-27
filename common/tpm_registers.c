@@ -730,6 +730,14 @@ static void tpm_reset_now(int wipe_first)
 	 * reset, this is the place to do it.
 	 */
 
+	/*
+	 * If TPM was reset while commits were disabled, save whatever changes
+	 * might have accumulated.
+	 */
+	nvmem_enable_commits();
+
+	/* Prevent NVRAM commits until further notice. */
+	nvmem_disable_commits();
 
 	/* Re-initialize our registers */
 	tpm_init();
@@ -793,8 +801,20 @@ void tpm_task(void)
 			 * TODO(vbendeb): revisit this when
 			 * crosbug.com/p/55667 has been addressed.
 			 */
-			if (command_code == TPM2_PCR_Read)
+			if (command_code == TPM2_PCR_Read) {
 				system_process_retry_counter();
+				/*
+				 * The AP issuing a PCR Read command is
+				 * considered an indication of the boot
+				 * process being finished.
+				 *
+				 * There is no need to speed up TPM operations
+				 * any more, pending NVMEM changes should be
+				 * committed and future NVMEM commits should
+				 * not be postponed.
+				 */
+				nvmem_enable_commits();
+			}
 #ifdef CONFIG_EXTENSION_COMMAND
 			if (!IS_CUSTOM_CODE(command_code))
 #endif

@@ -45,6 +45,9 @@ struct nvmem_cache {
 
 struct nvmem_cache cache;
 
+static uint8_t commits_enabled;
+static uint8_t commits_skipped;
+
 /* NvMem error state */
 static int nvmem_error_state;
 /* Flag to track if an Nv write/move is not completed */
@@ -375,6 +378,9 @@ int nvmem_init(void)
 	}
 
 	CPRINTS("Active NVram partition set to %d", nvmem_act_partition);
+	commits_enabled = 1;
+	commits_skipped = 0;
+
 	return EC_SUCCESS;
 }
 
@@ -510,12 +516,38 @@ int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
 	return EC_SUCCESS;
 }
 
+void nvmem_enable_commits(void)
+{
+	if (commits_enabled)
+		return;
+
+	commits_enabled = 1;
+	if (!commits_skipped)
+		return;
+
+	CPRINTS("Committing NVMEM changes.");
+	nvmem_commit();
+	commits_skipped = 0;
+}
+
+void nvmem_disable_commits(void)
+{
+	commits_enabled = 0;
+	commits_skipped = 0;
+}
+
 int nvmem_commit(void)
 {
 	int nvmem_offset;
 	int new_active_partition;
 	uint16_t version;
 	struct nvmem_partition *p_part;
+
+	if (!commits_enabled) {
+		commits_skipped = 1;
+		CPRINTS("Skipping commit");
+		return EC_SUCCESS;
+	}
 
 	/* Ensure that all writes/moves prior to commit call succeeded */
 	if (nvmem_write_error) {

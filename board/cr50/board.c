@@ -403,11 +403,17 @@ void sys_rst_asserted(enum gpio_signal signal)
 		return;
 	}
 
-	if (reboot_request_posted)
+	if (reboot_request_posted) {
+		/*
+		 * Reset TPM and wait to completion to make sure nvmem is
+		 * committed before reboot.
+		 */
+		tpm_reset(1, 0);
 		system_reset(SYSTEM_RESET_HARD);  /* This will never return. */
-
-	/* Re-initialize the TPM software state */
-	tpm_reset(0, 0);
+	} else {
+		/* Reset TPM, no need to wait for completion. */
+		tpm_reset(0, 0);
+	}
 }
 
 void assert_sys_rst(void)
