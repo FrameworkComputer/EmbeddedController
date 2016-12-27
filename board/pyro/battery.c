@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "bd9995x.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -245,11 +246,17 @@ int charger_profile_override(struct charge_state_data *curr)
 	 *
 	 * To overcome this issue enable the battery learning operation
 	 * and suspend USB charging and DC/DC converter.
+	 *
+	 * And also to avoid inrush current from the external charger, enable
+	 * discharge on AC till the new charger is detected and charge detect
+	 * delay has passed.
 	 */
-	disch_on_ac = curr->batt.is_present == BP_YES &&
+	disch_on_ac = (curr->batt.is_present == BP_YES &&
 			!battery_is_cut_off() &&
 			!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
 			curr->batt.status & STATUS_FULLY_CHARGED;
+			(!chg_ramp_is_detected() &&
+			curr->batt.state_of_charge > 2);
 
 	charger_discharge_on_ac(disch_on_ac);
 
