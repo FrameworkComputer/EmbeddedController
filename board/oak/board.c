@@ -152,7 +152,7 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-#ifdef CONFIG_ALS
+#ifdef HAS_TASK_ALS
 /* ALS instances. Must be in same order as enum als_id. */
 struct als_t als[] = {
 	{"TI", opt3001_init, opt3001_read_lux, 5},
@@ -549,14 +549,6 @@ void vbus_task(void)
 		task_wait_event(-1);
 }
 #endif /* BOARD_REV < OAK_REV4 */
-
-#ifndef CONFIG_ALS
-void als_task(void)
-{
-	while (1)
-		task_wait_event(-1);
-}
-#endif
 
 #ifdef CONFIG_TEMP_SENSOR_TMP432
 static void tmp432_set_power_deferred(void)

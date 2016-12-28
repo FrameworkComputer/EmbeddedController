@@ -174,6 +174,9 @@ GPIO(USB_C0_DEVMODE_L,  PIN(E, 4),  GPIO_OUT_HIGH)   /* set HSD2 (host mode) pat
 GPIO(USB_C1_DEVMODE,    PIN(E, 2),  GPIO_OUT_LOW)    /* set HSD1 (host mode) path as default */
 #else /* >= OAK_REV5 */
 GPIO(LEVEL_SHIFT_EN_L,  PIN(F, 10), GPIO_OUT_LOW)    /* LID/AC level shift */
+/* SPI MASTER. For SPI sensor */
+GPIO(SPI2_NSS, PIN(D, 0),  GPIO_OUT_LOW)
+
 #endif
 GPIO(USB_PD_RST_L,      PIN(A, 15), GPIO_OUT_HIGH)   /* PD reset */
 GPIO(USB_C0_5V_EN,      PIN(D, 8),  GPIO_OUT_LOW)    /* USBC port 0 5V */
@@ -201,9 +204,6 @@ GPIO(I2C0_SCL, PIN(B, 6),  GPIO_INPUT) /* EC I2C */
 GPIO(I2C0_SDA, PIN(B, 7),  GPIO_INPUT)
 GPIO(I2C1_SCL, PIN(B, 13), GPIO_INPUT) /* PD I2C */
 GPIO(I2C1_SDA, PIN(B, 14), GPIO_INPUT)
-
-/* SPI MASTER. For SPI sensor */
-GPIO(SPI2_NSS, PIN(D, 0),  GPIO_OUT_LOW)
 
 ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART,       0) /* USART1: PA9/PA10 */
 ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C,        0) /* I2C MASTER:PB6/7 */
