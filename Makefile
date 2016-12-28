@@ -69,7 +69,7 @@ endif
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst_file:=ec.tasklist
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST" | \
-		    $(CPP) -P -I$(BDIR) -Itest \
+		    $(CPP) -P -I$(BDIR) -DBOARD_$(UC_BOARD) -Itest \
 		    -D"TASK_NOTEST(n, r, d, s)=" -D"TASK_ALWAYS(n, r, d, s)=n" \
 		    -D"TASK_TEST(n, r, d, s)=n" -imacros $(_tsk_lst_file) \
 		    -imacros $(PROJECT).tasklist)
@@ -77,6 +77,7 @@ else ifdef CTS_MODULE
 	_tsk_lst_file:=ec.tasklist
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_CTS_TASK_LIST" | \
 		    $(CPP) -P -I cts/$(CTS_MODULE) -Icts -I$(BDIR) \
+		    -DBOARD_$(UC_BOARD) \
 		    -D"TASK_NOTEST(n, r, d, s)=n" \
 		    -D"TASK_ALWAYS(n, r, d, s)=n" \
 		    -imacros $(_tsk_lst_file) \
@@ -84,7 +85,8 @@ else ifdef CTS_MODULE
 else
 	_tsk_lst_file:=$(PROJECT).tasklist
 	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
-		    -I$(BDIR) -D"TASK_NOTEST(n, r, d, s)=n" \
+		    -I$(BDIR) -DBOARD_$(UC_BOARD) \
+		    -D"TASK_NOTEST(n, r, d, s)=n" \
 		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros $(_tsk_lst_file))
 endif
 
