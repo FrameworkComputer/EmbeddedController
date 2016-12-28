@@ -780,8 +780,9 @@ const matrix_3x3_t lid_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-/* KX022 private data */
 struct kionix_accel_data g_kx022_data;
+struct bmi160_drv_data_t g_bmi160_data;
+struct bmp280_drv_data_t bmp280_drv_data;
 
 /* FIXME(dhendrix): Copied from Amenia, probably need to tweak for Snappy */
 struct motion_sensor_t motion_sensors[] = {

@@ -474,6 +474,8 @@ int board_get_version(void)
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
+struct bmi160_drv_data_t g_bmi160_data;
+
 #ifdef BOARD_KEVIN
 /* BMA255 private data */
 struct bma2x2_accel_data g_bma255_data;
@@ -504,8 +506,8 @@ const matrix_3x3_t lid_standard_ref = {
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
-/* KX022 private data */
 struct kionix_accel_data g_kx022_data;
+struct bmp280_drv_data_t bmp280_drv_data;
 
 /* ALS instances. Must be in same order as enum als_id. */
 struct als_t als[] = {

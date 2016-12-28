@@ -474,8 +474,8 @@ DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-/* KX022 private data */
 struct kionix_accel_data g_kx022_data;
+struct bmi160_drv_data_t g_bmi160_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	/*

@@ -1246,10 +1246,6 @@ const struct accelgyro_drv bmi160_drv = {
 #endif
 };
 
-struct bmi160_drv_data_t g_bmi160_data = {
-	.flags = 0,
-};
-
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
 struct i2c_stress_test_dev bmi160_i2c_stress_test_dev = {
 	.reg_info = {

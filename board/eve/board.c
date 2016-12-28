@@ -654,8 +654,8 @@ static struct mutex g_base_mutex;
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
 
-/* kxcj9 local/private data */
 struct kionix_accel_data g_kxcj9_data;
+struct bmi160_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t base_standard_ref = {

@@ -269,6 +269,8 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /* Sensor mutex */
 static struct mutex g_mutex;
 
+struct bmi160_drv_data_t g_bmi160_data;
+
 /* Matrix to rotate sensor vector into standard reference frame */
 const matrix_3x3_t accelgyro_standard_ref = {
 	{FLOAT_TO_FP(-1),  0,  0},

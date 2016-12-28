@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -19,9 +19,6 @@
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-
-struct lsm6dsm_data lsm6dsm_a_data;
-struct lsm6dsm_data lsm6dsm_g_data;
 
 /**
  * @return output base register for sensor
