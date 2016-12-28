@@ -31,7 +31,7 @@ int pstore_command_read(struct host_cmd_handler_args *args)
 	const struct ec_params_pstore_read *p = args->params;
 	char *dest = args->response;
 	int block_size = eeprom_get_block_size();
-	int block = p->offset / block_size + EEPROM_BLOCK_COUNT_PSTORE;
+	int block = p->offset / block_size + EEPROM_BLOCK_START_PSTORE;
 	int offset = p->offset % block_size;
 	int bytes_left = p->size;
 
@@ -69,7 +69,7 @@ int pstore_command_write(struct host_cmd_handler_args *args)
 
 	const char *src = p->data;
 	int block_size = eeprom_get_block_size();
-	int block = p->offset / block_size + EEPROM_BLOCK_COUNT_PSTORE;
+	int block = p->offset / block_size + EEPROM_BLOCK_START_PSTORE;
 	int offset = p->offset % block_size;
 	int bytes_left = p->size;
 
