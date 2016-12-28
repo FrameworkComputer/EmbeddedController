@@ -604,8 +604,6 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK) &&
 	    (sensor->drv->irq_handler != NULL)) {
 		ret = sensor->drv->irq_handler(sensor, event);
-		if (ret == EC_SUCCESS)
-			sensor->last_collection = ts->le.lo;
 	}
 #endif
 #ifdef CONFIG_ACCEL_FIFO
@@ -622,8 +620,8 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 			vector.data[Y] = sensor->raw_xyz[Y];
 			vector.data[Z] = sensor->raw_xyz[Z];
 			motion_sense_fifo_add_unit(&vector, sensor, 3);
-			sensor->last_collection = ts->le.lo;
 		}
+		sensor->last_collection = ts->le.lo;
 	} else {
 		ret = EC_ERROR_BUSY;
 	}
@@ -639,11 +637,11 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	if (motion_sensor_time_to_read(ts, sensor)) {
 		/* Get latest data for local calculation */
 		ret = motion_sense_read(sensor);
+		sensor->last_collection = ts->le.lo;
 	} else {
 		ret = EC_ERROR_BUSY;
 	}
 	if (ret == EC_SUCCESS) {
-		sensor->last_collection = ts->le.lo;
 		mutex_lock(&g_sensor_mutex);
 		memcpy(sensor->xyz, sensor->raw_xyz, sizeof(sensor->xyz));
 		mutex_unlock(&g_sensor_mutex);
