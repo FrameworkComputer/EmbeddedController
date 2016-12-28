@@ -202,7 +202,6 @@
 #define CONFIG_MAG_CALIBRATE
 #define CONFIG_ACCEL_KX022
 #define CONFIG_ALS_OPT3001
-#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 #define CONFIG_BARO_BMP280
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -257,12 +256,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-/* Light sensors */
-enum als_id {
-	ALS_OPT3001 = 0,
-
-	ALS_COUNT
-};
+/*
+ * For backward compatibility, to report ALS via ACPI,
+ * Define the number of ALS sensors: motion_sensor copy the data to the ALS
+ * memmap region.
+ */
+#define CONFIG_ALS
+#define ALS_COUNT 1
 
 /*
  * Motion sensors:
@@ -276,6 +276,7 @@ enum sensor_id {
 	BASE_GYRO,
 	BASE_MAG,
 	BASE_BARO,
+	LID_ALS,
 };
 
 enum reef_board_version {
@@ -319,7 +320,7 @@ void board_print_tcpc_fw_version(int port);
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	((1 << LID_ACCEL) | (1 << BASE_BARO))
+	((1 << LID_ACCEL) | (1 << BASE_BARO) | (1 << LID_ALS))
 
 #endif /* !__ASSEMBLER__ */
 

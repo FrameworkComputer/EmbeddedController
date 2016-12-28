@@ -7,7 +7,6 @@
 
 #include "adc.h"
 #include "adc_chip.h"
-#include "als.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
@@ -216,6 +215,8 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #endif
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ALS
 	{
+		.port = I2C_PORT_ALS,
+		.addr = OPT3001_I2C_ADDR1,
 		.i2c_test = &opt3001_i2c_stress_test_dev,
 	},
 #endif
@@ -440,13 +441,6 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/* ALS instances. Must be in same order as enum als_id. */
-struct als_t als[] = {
-	/* FIXME(dhendrix): verify attenuation_factor */
-	{"TI", opt3001_init, opt3001_read_lux, 5},
-};
-BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_EC_VOLDN_BTN_ODL,
@@ -779,10 +773,13 @@ const matrix_3x3_t mag_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+/* sensor private data */
 struct kionix_accel_data g_kx022_data;
 struct bmi160_drv_data_t g_bmi160_data;
 struct bmp280_drv_data_t bmp280_drv_data;
-
+struct opt3001_drv_data_t g_opt3001_data = {
+	.attenuation = 5,
+};
 
 /* FIXME(dhendrix): Copied from Amenia, probably need to tweak for Reef */
 struct motion_sensor_t motion_sensors[] = {
@@ -967,8 +964,48 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 	 },
 	},
+	[LID_ALS] = {
+	 .name = "Light",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_OPT3001,
+	 .type = MOTIONSENSE_TYPE_LIGHT,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &opt3001_drv,
+	 .drv_data = &g_opt3001_data,
+	 .port = I2C_PORT_ALS,
+	 .addr = OPT3001_I2C_ADDR1,
+	 .rot_standard_ref = NULL,
+	 .default_range = OPT3001_RANGE_AUTOMATIC_FULL_SCALE,
+	 .config = {
+		/* AP: by default shutdown all sensors */
+		[SENSOR_CONFIG_AP] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 1000,
+			.ec_rate = 0,
+		},
+		/* Sensor off in S3/S5 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+		/* Sensor off in S3/S5 */
+		[SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
+		},
+	 },
+	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
+const struct motion_sensor_t *motion_als_sensors[] = {
+	&motion_sensors[LID_ALS],
+};
+BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 void board_hibernate(void)
 {

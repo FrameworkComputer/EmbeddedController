@@ -575,10 +575,13 @@ static inline void set_present(uint8_t *lpc_status)
 
 #ifdef UPDATE_HOST_MEM_MAP
 /* Update/Write LPC data */
-static inline void update_sense_data(uint8_t *lpc_status,
-		uint16_t *lpc_data, int *psample_id)
+static inline void update_sense_data(uint8_t *lpc_status, int *psample_id)
 {
 	int i;
+	uint16_t *lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
+#if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
+	uint16_t *lpc_als = (uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
+#endif
 	struct motion_sensor_t *sensor;
 	/*
 	 * Set the busy bit before writing the sensor data. Increment
@@ -609,6 +612,11 @@ static inline void update_sense_data(uint8_t *lpc_status,
 		lpc_data[2+3*i] = sensor->xyz[Y];
 		lpc_data[3+3*i] = sensor->xyz[Z];
 	}
+
+#if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
+	for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++)
+		lpc_als[i] = motion_als_sensors[i]->xyz[X];
+#endif
 
 	/*
 	 * Increment sample id and clear busy bit to signal we finished
@@ -727,10 +735,8 @@ void motion_sense_task(void)
 #ifdef UPDATE_HOST_MEM_MAP
 	int sample_id = 0;
 	uint8_t *lpc_status;
-	uint16_t *lpc_data;
 
 	lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
-	lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
 	set_present(lpc_status);
 #endif
 
@@ -832,7 +838,7 @@ void motion_sense_task(void)
 		}
 #endif
 #ifdef UPDATE_HOST_MEM_MAP
-		update_sense_data(lpc_status, lpc_data, &sample_id);
+		update_sense_data(lpc_status, &sample_id);
 #endif
 
 		ts_end_task = get_time();

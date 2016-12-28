@@ -146,6 +146,10 @@ struct motion_sensor_t {
 /* Defined at board level. */
 extern struct motion_sensor_t motion_sensors[];
 extern const unsigned motion_sensor_count;
+#if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
+/* Needed if reading ALS via LPC is needed */
+extern const struct motion_sensor_t *motion_als_sensors[];
+#endif
 
 /* optionally defined at board level */
 extern unsigned int motion_min_interval;
