@@ -21,11 +21,6 @@ struct mutex adc_lock;
 
 static int restore_clock;
 
-static const struct dma_option dma_adc_option = {
-	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
-	STM32_DMA_CCR_MSIZE_16_BIT | STM32_DMA_CCR_PSIZE_16_BIT,
-};
-
 static inline void adc_set_channel(int sample_id, int channel)
 {
 	uint32_t mask, val;
