@@ -35,13 +35,17 @@ enum temp_range {
 	TEMP_RANGE_4,
 };
 
-struct board_batt_params {
-	char *manuf_name;
-	int ship_mode_reg;
-	int ship_mode_data;
-	struct battery_info batt_info;
-	const struct fast_charge_params *fast_chg_params;
+struct ship_mode_info {
+	const int ship_mode_reg;
+	const int ship_mode_data;
 	int (*batt_init)(void);
+};
+
+struct board_batt_params {
+	const char *manuf_name;
+	const struct ship_mode_info *ship_mode_inf;
+	const struct battery_info *batt_info;
+	const struct fast_charge_params *fast_chg_params;
 };
 
 #define DEFAULT_BATTERY_TYPE BATTERY_SONY_CORP
@@ -108,6 +112,23 @@ static const struct fast_charge_params fast_chg_params_smp_cos4870 = {
 	.chg_profile_info = &fast_charge_smp_cos4870_info[0],
 };
 
+const struct battery_info batt_info_smp_cos4870 = {
+	.voltage_max = 8700,	/* mV */
+	.voltage_normal = 7600,
+	/*
+	 * Actual value 6000mV, added 100mV for charger accuracy so that
+	 * unwanted low VSYS_Prochot# assertion can be avoided.
+	 */
+	.voltage_min = 6100,
+	.precharge_current = 256,	/* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 46,
+	.charging_min_c = 0,
+	.charging_max_c = 45,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
+};
+
 static const struct fast_charge_profile fast_charge_sonycorp_info[] = {
 	/* < 10C */
 	[TEMP_RANGE_0] = {
@@ -135,6 +156,42 @@ static const struct fast_charge_params fast_chg_params_sonycorp = {
 	.chg_profile_info = &fast_charge_sonycorp_info[0],
 };
 
+const struct battery_info batt_info_sonycorp = {
+	.voltage_max = 8700,	/* mV */
+	.voltage_normal = 7600,
+
+	/*
+	 * Actual value 6000mV, added 100mV for charger accuracy so that
+	 * unwanted low VSYS_Prochot# assertion can be avoided.
+	 */
+	.voltage_min = 6100,
+	.precharge_current = 256,	/* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
+	.discharging_min_c = -20,
+	.discharging_max_c = 75,
+};
+
+const struct battery_info batt_info_smp_c22n1626 = {
+	.voltage_max = 8800,	/* mV */
+	.voltage_normal = 7700,
+
+	/*
+	 * Actual value 6000mV, added 100mV for charger accuracy so that
+	 * unwanted low VSYS_Prochot# assertion can be avoided.
+	 */
+	.voltage_min = 6100,
+	.precharge_current = 256,	/* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 45,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
+};
+
 static int batt_smp_cos4870_init(void)
 {
 	int batt_status;
@@ -157,129 +214,49 @@ static int batt_sony_corp_init(void)
 		!(batt_status & SONY_DISCHARGE_DISABLE_FET_BIT);
 }
 
+static const struct ship_mode_info ship_mode_info_smp_cos4870 = {
+	.ship_mode_reg = 0x00,
+	.ship_mode_data = 0x0010,
+	.batt_init = batt_smp_cos4870_init,
+};
+
+static const struct ship_mode_info ship_mode_info_sonycorp = {
+	.ship_mode_reg = 0x3A,
+	.ship_mode_data = 0xC574,
+	.batt_init = batt_sony_corp_init,
+};
+
 static const struct board_batt_params info[] = {
-	/* SONY CORP BATTERY battery specific configurations */
+	/* BQ40Z555 SONY CORP BATTERY battery specific configurations */
 	[BATTERY_SONY_CORP] = {
 		.manuf_name = "SONYCorp",
-		.ship_mode_reg = 0x3A,
-		.ship_mode_data = 0xC574,
-		.batt_init = batt_sony_corp_init,
-
-		/* Fast charging params info for BQ40Z555 */
+		.ship_mode_inf = &ship_mode_info_sonycorp,
 		.fast_chg_params = &fast_chg_params_sonycorp,
-
-		/* Battery info for BQ40Z555 */
-		.batt_info = {
-			.voltage_max = 8700,	/* mV */
-			.voltage_normal = 7600,
-
-			/*
-			 * Actual value 6000mV, added 100mV for charger accuracy
-			 * so that unwanted low VSYS_Prochot# assertion can be
-			 * avoided.
-			 */
-			.voltage_min = 6100,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c = 0,
-			.charging_max_c = 60,
-			.discharging_min_c = -20,
-			.discharging_max_c = 75,
-		},
+		.batt_info = &batt_info_sonycorp,
 	},
 
-	/* SMP COS4870 BATTERY battery specific configurations */
+	/* BQ40Z55 SMP COS4870 BATTERY battery specific configurations */
 	[BATTERY_SMP_COS4870] = {
 		.manuf_name = "SMP-COS4870",
-		.ship_mode_reg = 0x00,
-		.ship_mode_data = 0x0010,
-		.batt_init = batt_smp_cos4870_init,
-
-		/* Fast charging params info for BQ40Z55 */
+		.ship_mode_inf = &ship_mode_info_smp_cos4870,
 		.fast_chg_params = &fast_chg_params_smp_cos4870,
-
-		/* Battery info for BQ40Z55 */
-		.batt_info = {
-			.voltage_max = 8700,	/* mV */
-			.voltage_normal = 7600,
-
-			/*
-			 * Actual value 6000mV, added 100mV for charger accuracy
-			 * so that unwanted low VSYS_Prochot# assertion can be
-			 * avoided.
-			 */
-			.voltage_min = 6100,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 46,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
-		},
+		.batt_info = &batt_info_smp_cos4870,
 	},
 
-	/* SMP C22N1626 BATTERY battery specific configurations */
+	/* BQ40Z55 SMP C22N1626 BATTERY battery specific configurations */
 	[BATTERY_SMP_C22N1626] = {
 		.manuf_name = "AS1FNZD3KD",
-		.ship_mode_reg = 0x00,
-		.ship_mode_data = 0x0010,
-		.batt_init = batt_smp_cos4870_init,
-
-		/* Fast charging params info for BQ40Z55 */
+		.ship_mode_inf = &ship_mode_info_smp_cos4870,
 		.fast_chg_params = &fast_chg_params_smp_cos4870,
-
-		/* Battery info for BQ40Z55 */
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-
-			/*
-			 * Actual value 6000mV, added 100mV for charger accuracy
-			 * so that unwanted low VSYS_Prochot# assertion can be
-			 * avoided.
-			 */
-			.voltage_min = 6100,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 60,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
-		},
+		.batt_info = &batt_info_smp_c22n1626,
 	},
 
-	/* CPT C22N1626 BATTERY battery specific configurations */
+	/* BQ40Z55 CPT C22N1626 BATTERY battery specific configurations */
 	[BATTERY_CPT_C22N1626] = {
 		.manuf_name = "AS1FOAD3KD",
-		.ship_mode_reg = 0x00,
-		.ship_mode_data = 0x0010,
-		.batt_init = batt_smp_cos4870_init,
-
-		/* Fast charging params info for BQ40Z55 */
+		.ship_mode_inf = &ship_mode_info_smp_cos4870,
 		.fast_chg_params = &fast_chg_params_smp_cos4870,
-
-		/* Battery info for BQ40Z55 */
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-
-			/*
-			 * Actual value 6000mV, added 100mV for charger accuracy
-			 * so that unwanted low VSYS_Prochot# assertion can be
-			 * avoided.
-			 */
-			.voltage_min = 6100,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 60,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
-		},
+		.batt_info = &batt_info_smp_c22n1626,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
@@ -335,22 +312,23 @@ DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_I2C + 1);
 
 const struct battery_info *battery_get_info(void)
 {
-	return &board_get_batt_params()->batt_info;
+	return board_get_batt_params()->batt_info;
 }
 
 int board_cut_off_battery(void)
 {
 	int rv;
-	const struct board_batt_params *board_battery = board_get_batt_params();
+	const struct ship_mode_info *ship_mode_inf =
+				board_get_batt_params()->ship_mode_inf;
 
 	/* Ship mode command must be sent twice to take effect */
-	rv = sb_write(board_battery->ship_mode_reg,
-			board_battery->ship_mode_data);
+	rv = sb_write(ship_mode_inf->ship_mode_reg,
+			ship_mode_inf->ship_mode_data);
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	return sb_write(board_battery->ship_mode_reg,
-			board_battery->ship_mode_data);
+	return sb_write(ship_mode_inf->ship_mode_reg,
+			ship_mode_inf->ship_mode_data);
 }
 
 enum battery_disconnect_state battery_get_disconnect_state(void)
@@ -461,9 +439,9 @@ int charger_profile_override(struct charge_state_data *curr)
 	}
 
 	return charger_profile_override_common(curr,
-				board_get_batt_params()->fast_chg_params,
-				&prev_chg_profile_info,
-				board_get_batt_params()->batt_info.voltage_max);
+			board_get_batt_params()->fast_chg_params,
+			&prev_chg_profile_info,
+			board_get_batt_params()->batt_info->voltage_max);
 }
 
 /*
@@ -493,9 +471,9 @@ enum battery_present battery_is_present(void)
 		/* Re-init board battery if battery presence status changes */
 		if (board_get_battery_type() == BATTERY_TYPE_COUNT) {
 			if (bd9995x_get_battery_voltage() >=
-			    board_get_batt_params()->batt_info.voltage_min)
+			    board_get_batt_params()->batt_info->voltage_min)
 				batt_pres = BP_NO;
-		} else if (!board_get_batt_params()->batt_init())
+		} else if (!board_get_batt_params()->ship_mode_inf->batt_init())
 			batt_pres = BP_NO;
 	}
 
