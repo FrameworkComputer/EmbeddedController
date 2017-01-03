@@ -539,11 +539,15 @@ void mutex_unlock(struct mutex *mtx)
 	uint32_t waiters;
 	task_ *tsk = current_task;
 
-	__asm__ __volatile__("   ldr     %0, [%2]\n"
-			     "   str     %3, [%1]\n"
-			     : "=&r" (waiters)
-			     : "r" (&mtx->lock), "r" (&mtx->waiters), "r" (0)
-			     : "cc");
+	/*
+	 * Add a critical section to keep the unlock and the snapshotting of
+	 * waiters atomic in case a task switching occurs between them.
+	 */
+	interrupt_disable();
+	waiters = mtx->waiters;
+	mtx->lock = 0;
+	interrupt_enable();
+
 	while (waiters) {
 		task_id_t id = __fls(waiters);
 		waiters &= ~(1 << id);
