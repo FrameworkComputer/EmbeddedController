@@ -124,9 +124,12 @@ enum ec_error_list {
 	EC_ERROR_PARAM7 = 17,
 	EC_ERROR_PARAM8 = 18,
 	EC_ERROR_PARAM9 = 19,
-	EC_ERROR_PARAM_COUNT = 20,  /* Wrong number of params */
-
-	EC_ERROR_NOT_HANDLED = 21,  /* Interrupt event not handled */
+	/* Wrong number of params */
+	EC_ERROR_PARAM_COUNT = 20,
+	/* Interrupt event not handled */
+	EC_ERROR_NOT_HANDLED = 21,
+	/* Data has not changed */
+	EC_ERROR_UNCHANGED = 22,
 
 	/* Module-internal error codes may use this range.   */
 	EC_ERROR_INTERNAL_FIRST = 0x10000,

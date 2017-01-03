@@ -141,7 +141,7 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 			break;
 	}
 	if (i == nb)
-		return EC_SUCCESS;
+		return EC_ERROR_UNCHANGED;
 
 #ifdef CONFIG_ACCEL_FIFO
 	vector.flags = 0;
