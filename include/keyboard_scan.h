@@ -98,6 +98,11 @@ enum kb_scan_disable_masks {
  * @param mask Disable reasons from kb_scan_disable_masks
  */
 void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask);
+
+/**
+ * Clears typematic key
+ */
+void clear_typematic_key(void);
 #else
 static inline void keyboard_scan_enable(int enable,
 		enum kb_scan_disable_masks mask) { }

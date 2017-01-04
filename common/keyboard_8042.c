@@ -382,7 +382,7 @@ static void set_typematic_key(const uint8_t *scan_code, int32_t len)
 	typematic_len = len;
 }
 
-static void clear_typematic_key(void)
+void clear_typematic_key(void)
 {
 	typematic_len = 0;
 }

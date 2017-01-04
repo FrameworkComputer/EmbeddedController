@@ -122,10 +122,12 @@ static int keyboard_scan_is_enabled(void)
 void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 {
 	/* Access atomically */
-	if (enable)
+	if (enable) {
 		atomic_clear((uint32_t *)&disable_scanning_mask, mask);
-	else
+	} else {
 		atomic_or((uint32_t *)&disable_scanning_mask, mask);
+		clear_typematic_key();
+	}
 
 	/* Let the task figure things out */
 	task_wake(TASK_ID_KEYSCAN);
