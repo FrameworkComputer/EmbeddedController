@@ -50,7 +50,12 @@
 #define CONFIG_FLASH_ERASE_SIZE     0x00000400  /* erase bank size */
 #define CONFIG_FLASH_WRITE_SIZE     0x00000004  /* minimum write size */
 
-#define CONFIG_IT83XX_ILM_BLOCK_SIZE 0x00001000
+/*
+ * This is the block size of the ILM on the it83xx chip.
+ * The ILM for static code cache, CPU fetch instruction from
+ * ILM(ILM -> CPU)instead of flash(flash -> IMMU -> CPU) if enabled.
+ */
+#define IT83XX_ILM_BLOCK_SIZE       0x00001000
 
 /*
  * The AAI program instruction allows continue write flash

@@ -28,6 +28,12 @@ MEMORY
 SECTIONS
 {
     .text : {
+        /* We put "__flash_dma_start" at the beginning of the text section
+         * to avoid gap.
+         */
+        __flash_dma_start = .;
+        ASSERT((__flash_dma_start == 0),
+                "__flash_dma_start has to be 4k-byte aligned");
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable))
         . = ALIGN(4);
         __version_struct_offset = .;
@@ -35,17 +41,14 @@ SECTIONS
         . = ALIGN(4);
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vectirq))
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text))
-        *(.text*)
-
-        . = ALIGN(CONFIG_IT83XX_ILM_BLOCK_SIZE);
-        __flash_dma_start = .;
         KEEP(*(.flash_direct_map))
         . = ALIGN(16);
         KEEP(*(.ram_code))
         __flash_dma_size = . - __flash_dma_start;
-        ASSERT((__flash_dma_size < CONFIG_IT83XX_ILM_BLOCK_SIZE),
-                "__flash_dma_size < CONFIG_IT83XX_ILM_BLOCK_SIZE");
-        . = ALIGN(CONFIG_IT83XX_ILM_BLOCK_SIZE);
+        ASSERT((__flash_dma_size < IT83XX_ILM_BLOCK_SIZE),
+                "__flash_dma_size < IT83XX_ILM_BLOCK_SIZE");
+        . = ALIGN(IT83XX_ILM_BLOCK_SIZE);
+        *(.text*)
     } > FLASH
     . = ALIGN(4);
     .rodata :  {
@@ -67,6 +70,11 @@ SECTIONS
         __hcmds = .;
         KEEP(*(.rodata.hcmds))
         __hcmds_end = .;
+
+        . = ALIGN(4);
+        __mkbp_evt_srcs = .;
+        KEEP(*(.rodata.evtsrcs))
+        __mkbp_evt_srcs_end = .;
 
         . = ALIGN(4);
         __hooks_init = .;

@@ -533,7 +533,7 @@ static void flash_code_static_dma(void)
 	/* Copy to DLM */
 	IT83XX_GCTRL_MCCR2 |= 0x20;
 	memcpy((void *)SCAR2_ILM2_DLM14, (const void *)FLASH_DMA_START,
-		CONFIG_IT83XX_ILM_BLOCK_SIZE);
+		IT83XX_ILM_BLOCK_SIZE);
 	IT83XX_GCTRL_MCCR2 &= ~0x20;
 
 	/*

@@ -1363,13 +1363,6 @@
 /* Number of IRQs supported on the EC chip */
 #undef CONFIG_IRQ_COUNT
 
-/*
- * This is the block size of the ILM on the it839x chip.
- * The ILM for static code cache, CPU fetch instruction from
- * ILM(ILM -> CPU)instead of flash(flash -> IMMU -> CPU) if enabled.
- */
-#undef CONFIG_IT83XX_ILM_BLOCK_SIZE
-
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 
