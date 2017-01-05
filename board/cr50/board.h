@@ -61,6 +61,9 @@
 /* Go to sleep when nothing else is happening */
 #define CONFIG_LOW_POWER_IDLE
 
+/* Allow multiple concurrent memory allocations. */
+#define CONFIG_MALLOC
+
 /* Detect the states of other devices */
 #define CONFIG_DEVICE_STATE
 
