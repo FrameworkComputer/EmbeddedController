@@ -682,6 +682,17 @@ void lid_angle_peripheral_enable(int enable)
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, !enable);
+
+	/*
+	 * In S3 state, then disable KB/TP function
+	 * when state switch to tablet mode from normal mode.
+	 * Enable KB/TP function when state switch to nromal
+	 * mode from tablet mode.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+		gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, !enable);
+	}
 }
 #endif
 
@@ -796,7 +807,7 @@ struct bmp280_drv_data_t bmp280_drv_data;
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	.name = "Lid Accel",
-	.active_mask = SENSOR_ACTIVE_S0,
+	.active_mask = SENSOR_ACTIVE_S0_S3,
 	.chip = MOTIONSENSE_CHIP_KX022,
 	.type = MOTIONSENSE_TYPE_ACCEL,
 	.location = MOTIONSENSE_LOC_LID,
@@ -820,8 +831,8 @@ struct motion_sensor_t motion_sensors[] = {
 		},
 		/* unused */
 		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
 		},
 		[SENSOR_CONFIG_EC_S5] = {
 			.odr = 0,
@@ -832,7 +843,7 @@ struct motion_sensor_t motion_sensors[] = {
 
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0,
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -856,8 +867,8 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0
+			.odr = 0 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
