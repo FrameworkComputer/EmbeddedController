@@ -343,17 +343,25 @@ static void shi_parse_header(void)
 /* This routine fills out all SHI output buffer with status byte */
 static void shi_fill_out_status(uint8_t status)
 {
-	uint16_t i;
-	uint16_t offset = SHI_OBUF_VALID_OFFSET;
+	uint8_t offset;
+	uint8_t *obuf_ptr;
+	uint8_t *obuf_end;
 
 	/* Disable interrupts in case the interfere by the other interrupts */
 	interrupt_disable();
 
+	offset = SHI_OBUF_VALID_OFFSET;
+
 	/* Fill out all output buffer with status byte */
-	for (i = offset; i < SHI_OBUF_FULL_SIZE; i++)
-		NPCX_OBUF(i) = status;
-	for (i = 0; i < offset; i++)
-		NPCX_OBUF(i) = status;
+	obuf_ptr = (uint8_t *)SHI_OBUF_START_ADDR + offset;
+	obuf_end = (uint8_t *)SHI_OBUF_START_ADDR + SHI_OBUF_FULL_SIZE;
+	while (obuf_ptr != obuf_end)
+		*(obuf_ptr++) = status;
+
+	obuf_ptr = (uint8_t *)SHI_OBUF_START_ADDR;
+	obuf_end = (uint8_t *)SHI_OBUF_START_ADDR + offset;
+	while (obuf_ptr != obuf_end)
+		*(obuf_ptr++) = status;
 
 	/* End of critical section */
 	interrupt_enable();
@@ -383,12 +391,20 @@ static int shi_is_cs_glitch(void)
  */
 static void shi_write_half_outbuf(void)
 {
-	uint16_t i;
-	uint16_t size = MIN(SHI_OBUF_HALF_SIZE,
-			shi_params.sz_response - shi_params.sz_sending);
+	const uint8_t size = MIN(SHI_OBUF_HALF_SIZE,
+				 shi_params.sz_response -
+				 shi_params.sz_sending);
+	uint8_t *obuf_ptr = (uint8_t *)shi_params.tx_buf;
+	const uint8_t *obuf_end = obuf_ptr + size;
+	uint8_t *msg_ptr = shi_params.tx_msg;
+
 	/* Fill half output buffer */
-	for (i = 0; i < size; i++, shi_params.sz_sending++)
-		*(shi_params.tx_buf++) = *(shi_params.tx_msg++);
+	while (obuf_ptr != obuf_end)
+		*(obuf_ptr++) = *(msg_ptr++);
+
+	shi_params.sz_sending += size;
+	shi_params.tx_buf = obuf_ptr;
+	shi_params.tx_msg = msg_ptr;
 }
 
 /*
@@ -397,8 +413,10 @@ static void shi_write_half_outbuf(void)
  */
 static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 {
-	uint16_t i;
-	uint16_t offset, size;
+	uint8_t size, offset;
+	uint8_t *obuf_ptr;
+	uint8_t *obuf_end;
+	uint8_t *msg_ptr;
 
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 	/*
@@ -415,22 +433,35 @@ static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 	}
 #endif
 
+	/* Start writing at our current OBUF position */
 	offset = SHI_OBUF_VALID_OFFSET;
-	shi_params.tx_buf = SHI_OBUF_START_ADDR + offset;
-	/* Fill half output buffer */
+	obuf_ptr = (uint8_t *)SHI_OBUF_START_ADDR + offset;
+	msg_ptr = shi_params.tx_msg;
+
+	/* Fill up to OBUF mid point, or OBUF end */
 	size = MIN(SHI_OBUF_HALF_SIZE - (offset % SHI_OBUF_HALF_SIZE),
 					szbytes - shi_params.sz_sending);
-	for (i = 0; i < size; i++, shi_params.sz_sending++)
-		*(shi_params.tx_buf++) = *(shi_params.tx_msg++);
+	obuf_end = obuf_ptr + size;
+	while (obuf_ptr != obuf_end)
+		*(obuf_ptr++) = *(msg_ptr++);
 
-	/* Write data from bottom address again */
-	if (shi_params.tx_buf == SHI_OBUF_FULL_ADDR)
-		shi_params.tx_buf = SHI_OBUF_START_ADDR;
+	/* Track bytes sent for later accounting */
+	shi_params.sz_sending += size;
+
+	/* Write data to beginning of OBUF if we've reached the end */
+	if (obuf_ptr == SHI_OBUF_FULL_ADDR)
+		obuf_ptr = (uint8_t *)SHI_OBUF_START_ADDR;
 
 	/* Fill next half output buffer */
 	size = MIN(SHI_OBUF_HALF_SIZE, szbytes - shi_params.sz_sending);
-	for (i = 0; i < size; i++, shi_params.sz_sending++)
-		*(shi_params.tx_buf++) = *(shi_params.tx_msg++);
+	obuf_end = obuf_ptr + size;
+	while (obuf_ptr != obuf_end)
+		*(obuf_ptr++) = *(msg_ptr++);
+
+	/* Track bytes sent / last OBUF position written for later accounting */
+	shi_params.sz_sending += size;
+	shi_params.tx_buf = obuf_ptr;
+	shi_params.tx_msg = msg_ptr;
 }
 
 /* This routine copies SHI half input buffer data to msg buffer */
