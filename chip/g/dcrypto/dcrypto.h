@@ -55,6 +55,48 @@ void DCRYPTO_aes_read_iv(uint8_t *iv);
 int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
 		const uint8_t *iv, const uint8_t *in, size_t in_len);
 
+/* AES-GCM-128 */
+struct GCM_CTX {
+	union {
+		uint32_t d[4];
+		uint8_t c[16];
+	} block, Ej0;
+
+	uint64_t aad_len;
+	uint64_t count;
+	size_t remainder;
+};
+
+/* Initialize the GCM context structure. */
+void DCRYPTO_gcm_init(struct GCM_CTX *ctx, const uint8_t *key,
+		const uint8_t *iv, size_t iv_len);
+/* Additional authentication data to include in the tag calculation. */
+void DCRYPTO_gcm_aad(struct GCM_CTX *ctx, const uint8_t *aad_data, size_t len);
+/* Encrypt & decrypt return the number of bytes written to out
+ * (always an integral multiple of 16), or -1 on error.  These functions
+ * may be called repeatedly with incremental data.
+ *
+ * NOTE: if in_len is not a integral multiple of 16, then out_len must
+ * be atleast in_len - (in_len % 16) + 16 bytes.
+ */
+int DCRYPTO_gcm_encrypt(struct GCM_CTX *ctx, uint8_t *out, size_t out_len,
+			const uint8_t *in, size_t in_len);
+int DCRYPTO_gcm_decrypt(struct GCM_CTX *ctx, uint8_t *out, size_t out_len,
+			const uint8_t *in, size_t in_len);
+/* Encrypt & decrypt a partial final block, if any.  These functions
+ * return the number of bytes written to out (<= 15), or -1 on error.
+ */
+int DCRYPTO_gcm_encrypt_final(struct GCM_CTX *ctx,
+			uint8_t *out, size_t out_len);
+int DCRYPTO_gcm_decrypt_final(struct GCM_CTX *ctx,
+			uint8_t *out, size_t out_len);
+/* Compute the tag over AAD + encrypt or decrypt data, and return the
+ * number of bytes written to tag.  Returns -1 on error.
+ */
+int DCRYPTO_gcm_tag(struct GCM_CTX *ctx, uint8_t *tag, size_t tag_len);
+/* Cleanup secrets. */
+void DCRYPTO_gcm_finish(struct GCM_CTX *ctx);
+
 /*
  * SHA implementation.  This abstraction is backed by either a
  * software or hardware implementation.
@@ -76,7 +118,6 @@ const uint8_t *DCRYPTO_SHA384_hash(const void *data, uint32_t n,
 				   uint8_t *digest);
 const uint8_t *DCRYPTO_SHA512_hash(const void *data, uint32_t n,
 				   uint8_t *digest);
-
 /*
  *  HMAC.
  */

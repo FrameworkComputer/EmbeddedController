@@ -36,7 +36,7 @@ def get_attribute(tdesc, attr_name, required=True):
 
   """
   # Fields stored in hex format by default.
-  default_hex = ('cipher_text', 'iv', 'key')
+  default_hex = ('aad', 'cipher_text', 'iv', 'key', 'tag')
 
   data = tdesc.find(attr_name)
   if data is None:
@@ -108,7 +108,7 @@ SUPPORTED_MODES = {
     }),
 }
 
-def crypto_run(node_name, op_type, key, iv, in_text, out_text, tpm):
+def crypto_run(node_name, op_type, key, iv, aad, in_text, out_text, tpm):
   """Perform a basic operation(encrypt or decrypt).
 
   This function creates an extended command with the requested parameters,
@@ -125,6 +125,7 @@ def crypto_run(node_name, op_type, key, iv, in_text, out_text, tpm):
      directly to the device as a field in the extended command
    key: a binary string
    iv: a binary string, might be empty
+   aad: additional authenticated data
    in_text: a binary string, the input of the encrypt/decrypt operation
    out_text: a binary string, might be empty, the expected output of the
      operation. Note that it could be shorter than actual output (padded to
@@ -156,6 +157,9 @@ def crypto_run(node_name, op_type, key, iv, in_text, out_text, tpm):
   cmd += '%c' % len(iv)
   if iv:
     cmd += iv
+  cmd += '%c' % len(aad)
+  if aad:
+    cmd += aad
   cmd += struct.pack('>H', len(in_text))
   cmd += in_text
   if tpm.debug_enabled():
@@ -203,18 +207,33 @@ def crypto_test(tdesc, tpm):
         node_name,
         ''.join('%2.2x' % ord(x) for x in key)))
   iv = get_attribute(tdesc, 'iv', required=False)
-  if iv and len(iv) != 16:
+  if iv and not node_name.startswith('AES:GCM') and len(iv) != 16:
     raise subcmd.TpmTestError('wrong iv size "%s:%s"' % (
         node_name,
         ''.join('%2.2x' % ord(x) for x in iv)))
-  clear_text = get_attribute(tdesc, 'clear_text')
+  clear_text = get_attribute(tdesc, 'clear_text', required=False)
+  if clear_text:
+    clear_text_len = get_attribute(tdesc, 'clear_text_len', required=False)
+    if clear_text_len:
+      clear_text = clear_text[:int(clear_text_len)]
+  else:
+    clear_text_len = None
   if tpm.debug_enabled():
     print('clear text size', len(clear_text))
   cipher_text = get_attribute(tdesc, 'cipher_text', required=False)
+  if clear_text_len:
+    cipher_text = cipher_text[:int(clear_text_len)]
+  tag = get_attribute(tdesc, 'tag', required=False)
+  aad = get_attribute(tdesc, 'aad', required=False)
+  if aad:
+    aad_len = get_attribute(tdesc, 'aad_len', required=False)
+    if aad_len:
+      aad = aad[:int(aad_len)]
   real_cipher_text = crypto_run(node_name, ENCRYPT, key, iv,
-                                clear_text, cipher_text, tpm)
-  crypto_run(node_name, DECRYPT, key, iv, real_cipher_text,
-             clear_text, tpm)
+                                aad or '', clear_text, cipher_text + tag, tpm)
+  crypto_run(node_name, DECRYPT, key, iv, aad or '',
+             real_cipher_text[:len(real_cipher_text) - len(tag)],
+             clear_text + tag, tpm)
   print(utils.cursor_back() + 'SUCCESS: %s' % node_name)
 
 def crypto_tests(tpm, xml_file):

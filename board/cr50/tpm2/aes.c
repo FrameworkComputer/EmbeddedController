@@ -228,6 +228,8 @@ static void aes_command_handler(void *cmd_body,
 	uint16_t key_len;
 	uint8_t iv_len;
 	uint8_t *iv;
+	uint8_t aad_len;
+	const uint8_t *aad;
 	enum aes_test_cipher_mode c_mode;
 	enum encrypt_mode e_mode;
 	uint8_t *cmd = (uint8_t *)cmd_body;
@@ -262,6 +264,8 @@ static void aes_command_handler(void *cmd_body,
 	 * key         | key len  | key to use
 	 * iv_len      |    1     | either 0 or 16
 	 * iv          | 0 or 16  | as defined by iv_len
+	 * aad_len     |  <= 127  | additional authentication data length
+	 * aad         |  aad_len | additional authentication data
 	 * text_len    |    2     | size of the text to process, big endian
 	 * text        | text_len | text to encrypt/decrypt
 	 */
@@ -277,12 +281,16 @@ static void aes_command_handler(void *cmd_body,
 	cmd += key_len;
 	key_len *= 8;
 	iv_len = *cmd++;
-	if (iv_len && (iv_len != 16)) {
+	if ((c_mode == TEST_MODE_GCM && iv_len == 0) ||
+		(c_mode != TEST_MODE_GCM && iv_len && iv_len != 16)) {
 		CPRINTF("Invalid vector len %d\n", iv_len);
 		return;
 	}
 	iv = cmd;
 	cmd += iv_len;
+	aad_len = *cmd++;
+	aad = cmd;
+	cmd += aad_len;
 	data_len = *cmd++;
 	data_len = data_len * 256 + *cmd++;
 
@@ -385,6 +393,80 @@ static void aes_command_handler(void *cmd_body,
 			}
 			CPRINTF("%s:%d response size %d\n",
 				__func__, __LINE__, *response_size);
+		}
+		break;
+	}
+	case TEST_MODE_GCM:
+	{
+		if (e_mode == 0) {
+			size_t total;
+			size_t count;
+			struct GCM_CTX ctx;
+
+			DCRYPTO_gcm_init(&ctx, key_local.b, iv_local.b, iv_len);
+			DCRYPTO_gcm_aad(&ctx, aad, aad_len);
+			count = DCRYPTO_gcm_decrypt(
+				&ctx, out_local.b, sizeof(out_local.b),
+				data_local.b, data_len);
+			if (count < 0) {
+				CPRINTF(
+					"%s: gcm decrypt failed\n", __func__);
+				break;
+			}
+			total = count;
+			count = DCRYPTO_gcm_decrypt_final(
+				&ctx, out_local.b + total,
+				sizeof(out_local.b) - total);
+			if (count < 0) {
+				CPRINTF(
+					"%s: gcm decrypt_final failed\n",
+					__func__);
+				break;
+			}
+			total += count;
+			count = DCRYPTO_gcm_tag(&ctx, out_local.b + total,
+						sizeof(out_local.b) - total);
+			if (count == 0) {
+				CPRINTF("%s: gcm tag failed\n", __func__);
+				break;
+			}
+			total += count;
+			*response_size = total;
+		} else if (e_mode == 1) {
+			size_t total;
+			size_t count;
+			struct GCM_CTX ctx;
+
+			DCRYPTO_gcm_init(&ctx, key_local.b, iv_local.b, iv_len);
+			DCRYPTO_gcm_aad(&ctx, aad, aad_len);
+			count = DCRYPTO_gcm_encrypt(
+				&ctx, out_local.b, sizeof(out_local.b),
+				data_local.b, data_len);
+			if (count < 0) {
+				CPRINTF(
+					"%s: gcm encrypt failed\n");
+				break;
+			}
+			total = count;
+			count = DCRYPTO_gcm_encrypt_final(
+				&ctx, out_local.b + total,
+				sizeof(out_local.b) - total);
+			if (count < 0) {
+				CPRINTF(
+					"%s: gcm encrypt_final failed\n",
+					__func__);
+				break;
+			}
+			total += count;
+			count = DCRYPTO_gcm_tag(
+				&ctx, out_local.b + total,
+				sizeof(out_local.b) - total);
+			if (count == 0) {
+				CPRINTF("%s: gcm tag failed\n", __func__);
+				break;
+			}
+			total += count;
+			*response_size = total;
 		}
 		break;
 	}

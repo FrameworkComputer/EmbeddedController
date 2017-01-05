@@ -316,6 +316,9 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 /* Key manager */
 #define GR_KEYMGR_AES_KEY(n)     REG32(GREG32_ADDR(KEYMGR, AES_KEY0) + (n))
 #define GR_KEYMGR_AES_CTR(n)     REG32(GREG32_ADDR(KEYMGR, AES_CTR0) + (n))
+#define GR_KEYMGR_GCM_H(n)       REG32(GREG32_ADDR(KEYMGR, GCM_H0) + (n))
+#define GR_KEYMGR_GCM_HASH_IN(n) REG32(GREG32_ADDR(KEYMGR, GCM_HASH_IN0) + (n))
+#define GR_KEYMGR_GCM_MAC(n)     REG32(GREG32_ADDR(KEYMGR, GCM_MAC0) + (n))
 #define GR_KEYMGR_SHA_HASH(n)    REG32(GREG32_ADDR(KEYMGR, SHA_STS_H0) + (n))
 #define GR_KEYMGR_HKEY_FRR(n)    REG32(GREG32_ADDR(KEYMGR, HKEY_FRR0) + (n))
 

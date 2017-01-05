@@ -39,6 +39,7 @@ Many of the crypto_test elements were borrowed from NIST test vectors.
       34b58f68 a9e27607 7bdd8e72 8b2b528b
     </cipher_text>
   </crypto_test>
+
   <crypto_test name="AES:ECB128 1">
     <clear_text format="hex">
       33221100 77665544 bbaa9988 ffeeddcc
@@ -560,4 +561,270 @@ Many of the crypto_test elements were borrowed from NIST test vectors.
     </iv>
   </crypto_test>
 
+  <crypto_test name="AES:GCM128 1">
+    <key>
+      53c372160082fa7a468a6b4c26d0f0f6
+    </key>
+    <iv>
+      05
+    </iv>
+    <tag>
+      21d72a8e745f45f9313db5d88e7ef241
+    </tag>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 2">
+    <key>
+      74b5dd7fd041c2533aedfb3e1c374ec4
+    </key>
+    <iv>
+      3f3a28eee37555c78748fd3e
+    </iv>
+    <tag>
+      f91d6db396e5d5b97f8b3ef8b31c9752
+    </tag>
+    <clear_text format="hex">
+      b442ded5256c646129bd875ca2b9d362
+    </clear_text>
+    <cipher_text>
+      a5a4cd2c1eb95c410f2a5c13fdb2c978
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 3">
+    <key>
+      5571dcfeb2002d197598dd3cbaebb90d
+    </key>
+    <iv>
+      f5746ba756171a5cb13883a0
+    </iv>
+    <tag>
+      55c43dd28798d4ceeae817c78429ecbe
+    </tag>
+    <aad>
+      c406d22a557e6e173688a02afa16688859e777fa
+    </aad>
+    <clear_text format="hex">
+      5b433168f1da578848b113c5b5130d8290c42ca7989aa7bdd820f5a6d1393c76
+    </clear_text>
+    <cipher_text>
+      0538821592a189da6f1dfc3b564d78878b12d1badedbff4da52fbbef685ec362
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 4">
+    <key>
+      7063be77e2c4718979cbd140eb7fd7e8
+    </key>
+    <iv>
+      190fe0e001bad7fef397a736
+    </iv>
+    <tag>
+      8dcc9f2093ed753666719c8e46d99d70
+    </tag>
+    <aad>
+      1dec437a785a0a9c3365b1a0ab3c21a6
+    </aad>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 5">
+    <key>
+      79e8e399576e683ec585821d2b5ef764
+    </key>
+    <iv>
+      b80addc2a86ada68230d9cad
+    </iv>
+    <tag>
+      10ba4f3f341faf0eaaadbab0855d99e9
+    </tag>
+    <aad>
+      2de468b6a84c444ed9fd3cb2d5ed9f5a21a58a17b0904814f53c73936c5222cf47ee17599a8041658c7a86c6fc099339
+    </aad>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 6">
+    <key>
+      8824a2d45c1dddf8d6a7196c4c9617ca
+    </key>
+    <iv>
+      7f83d5f3041aac22d5d1e025
+    </iv>
+    <tag>
+      f9ac3ef273f8cdd186c526779c6e8248
+    </tag>
+    <aad>
+      24d4c5f1c6963fb88cb28cad470ed2a05a3b025e
+    </aad>
+    <clear_text format="hex">
+      6a01437b97648916e67b45fb2241a5d2
+    </clear_text>
+    <cipher_text>
+      ee67bdc2ac5ce9f56eb0e327a8d03130
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 7">
+    <key>
+      635c7cbd562b54b771be0ea088156a33
+    </key>
+    <iv>
+      231f72878e3c9cbabc1a57a5
+    </iv>
+    <tag>
+      2267b59c2e250b0d46ff7bb9f80fb0e4
+    </tag>
+    <aad>
+      7580eca60e37d3a0188959b7483eb9f36251474499b89749a9a67fa84e849f93b7a88a003b4c9f0e28d3191ae743f56bcbfe7b12a517ada1ccfc53ecacecfa266953c7c47daa8e4963ef6a702709004dbae4119b5e3e996c0000d99e
+    </aad>
+    <aad_len>
+      90
+    </aad_len>
+    <clear_text format="hex">
+      bbdd15de6121201ef69aa7e8f3c65aa5
+    </clear_text>
+    <cipher_text>
+      c028eb4162d7e4fe612397de80bc63c8
+    </cipher_text>,
+    </crypto_test>
+
+  <crypto_test name="AES:GCM128 8">
+    <key>
+      23deefdff02b12c689b50a37734b800e
+    </key>
+    <iv>
+      02a8d6920f679099e279de16
+    </iv>
+    <tag>
+      9982a39d07c5cd680dc3d1941545cd41
+    </tag>
+    <aad>
+      786db1a2c1e61d250e35ce9142f25e5c
+    </aad>
+    <clear_text format="hex">
+      8c0a266478e97d2821756ce9000000d0
+    </clear_text>
+    <clear_text_len>
+      13
+    </clear_text_len>
+    <cipher_text>
+      94de78bf177c848ab4d44936000000d0
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 9">
+    <key>
+      dbb8d3cbce11fbfce60657341a8873cd
+    </key>
+    <iv>
+      68bb62dc5d9aecd041679d75
+    </iv>
+    <tag>
+      b2215a420c5890ea03349188b54b912b
+    </tag>
+    <aad>
+      61b64409f39462fe08bb2ac959b2c17e4edc32b068285f0c636ebe1c478f17c25af32643c280cad3e785348ec852b2e5
+    </aad>
+    <aad_len>
+      48
+    </aad_len>
+    <clear_text format="hex">
+      f53bf8855bd5df982adebfc800000064
+    </clear_text>
+    <clear_text_len>
+      13
+    </clear_text_len>
+    <cipher_text>
+      3b6b6f20ecdf32b040839fd3000000b1
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 10">
+    <key>
+      1007719909c0ab5969bdf2e438b39d86
+    </key>
+    <iv>
+      5ea9a9079c1e82a35132c613
+    </iv>
+    <tag>
+      11d970781a81547ff1706934410c09de
+    </tag>
+    <clear_text format="hex">
+      50c34bf56f4fed1fa85efb6d0bdf060182e636d85cb72562e8f622028359b359
+    </clear_text>
+    <cipher_text>
+      59c156056cf34ef8452b60b10920b1261b6175c7c04db6ff9792cad9016a2ccd
+    </cipher_text>
+    </crypto_test>
+
+  <crypto_test name="AES:GCM128 11">
+    <key>
+      a17cbf8fdd25d52f58621ee9c251fe73
+    </key>
+    <iv>
+      51ea0b20a190977b5eafadcf
+    </iv>
+    <tag>
+      7407867cb93283f8bd6bcea727a77202
+    </tag>
+    <aad>
+      7fc014a4ec0be6e29e40cc9c6f9c899ebb8005e661c807262385f0f71bda9ce61d713a9c09359c1dc9e471176d99b9502e4fd00a10b3d1002a545358ff9fe0960fc82efc2887f88caef094f5a6984fb18b4e23882703f7fb000064b3
+    </aad>
+    <aad_len>
+      90
+    </aad_len>
+    <clear_text format="hex">
+      27e6d33963494b7c42160d840aaefae697dae25b554e1cf602ce57bbc4d40319
+    </clear_text>
+    <cipher_text>
+      f78e67fe95ac696f6d3b55db7aa0d5ad51e1c89da39f6afe1662cda16878b836
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 12">
+    <key>
+      bb5315b6b9954885d01c75298403f8c5
+    </key>
+    <iv>
+      99f963885de564ae5774bd0b
+    </iv>
+    <tag>
+      4a5f9b5dc6c16898d86fbd9c4013f051
+    </tag>
+    <aad>
+      f2b514d9e58cb0d1b39ca53e45725810
+    </aad>
+    <clear_text format="hex">
+      32111b9beac4d01712cf4379adc6693c36973c2e75c9518c55d1454186eee1ddffcac840975c7af1136ad237f34bee7e006d0969
+    </clear_text>
+    <clear_text_len>
+      51
+    </clear_text_len>
+    <cipher_text>
+      63b4faac80258a2b3df11251bc82e085bd49dc89a84f169242d2daa2f2b2a1c3df2f6f695f0279f5a96e143f7de4a37d00654bc3
+    </cipher_text>
+  </crypto_test>
+
+  <crypto_test name="AES:GCM128 13">
+    <key>
+      2862503caa50f4680c99280936ebe115
+    </key>
+    <iv>
+      90521d81e7578d76c7b67bd8
+    </iv>
+    <tag>
+      fc5e9bbdcd0880a47d4f3a974438722c
+    </tag>
+    <aad>
+      e0c7e2da2bfdd3a319ca4ec0a07851b184cfb503c2280c890ff215a67f42db8a128c69707887efb2fb93110c7416cdb8
+    </aad>
+    <clear_text format="hex">
+      f8a8d0ed19e93328bfe20f744acfde9edc726cc8ef0c4989aa83697b85fc99af7dc85c6c7c8af96327f31b86a86dea1f00ab156a
+    </clear_text>
+    <clear_text_len>
+      51
+    </clear_text_len>
+    <cipher_text>
+      b02514a54b3b8d6005ecd446f0da1dca8920dd2bec5405ae841c2afbdc823dc6abb9dd71490b1f1b7cd22adee773512b00a60a00
+    </cipher_text>
+  </crypto_test>
 </crypto_tests>
