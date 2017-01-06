@@ -494,4 +494,11 @@ int system_rolling_reboot_suspected(void);
  * @return a boolean, set to True if a rollback is detected.
  */
 int system_rollback_detected(void);
+
+/**
+ * Returns non-zero value when firmware is expected to be abe to detect user
+ * request to cut off battery supply.
+ */
+int system_battery_cutoff_support_required(void);
+
 #endif  /* __CROS_EC_SYSTEM_H */

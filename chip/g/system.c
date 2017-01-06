@@ -213,6 +213,15 @@ const char *system_get_chip_revision(void)
 	return revision_str;
 }
 
+int system_battery_cutoff_support_required(void)
+{
+	switch (get_fuse_set_id())
+	case 0xc00059:
+		return 1;
+
+	return 0;
+}
+
 /* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
 int system_get_vbnvcontext(uint8_t *block)
 {

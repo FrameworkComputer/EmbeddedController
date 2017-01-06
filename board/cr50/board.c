@@ -59,6 +59,8 @@
 #undef SHA_DIGEST_SIZE
 #include "Implementation.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
 #define NVMEM_CR50_SIZE 300
 #define NVMEM_TPM_SIZE ((sizeof((struct nvmem_partition *)0)->buffer) \
 			- NVMEM_CR50_SIZE)
@@ -118,6 +120,124 @@ void post_reboot_request(void)
 	/* Reboot the device next time TPM reset is requested. */
 	reboot_request_posted = 1;
 }
+
+/*****************************************************************************/
+/*                                                                           */
+
+/*
+ * Battery cutoff monitor is needed on the devices where hardware alone does
+ * not provide proper battery cutoff functionality.
+ *
+ * The sequence is as follows: set up an interrupt to react to the charger
+ * disconnect event. When the interrupt happens observe status of the buttons
+ * connected to PWRB_IN and KEY0_IN.
+ *
+ * If both are pressed, start the 5 second timeout, while keeping monitoring
+ * the charger connection state. If it remains disconnected for the entire
+ * duration - generate 5 second pulses on EC_RST_L and BAT_EN outputs.
+ *
+ * In reality the BAT_EN output pulse will cause the complete power cut off,
+ * so strictly speaking the code does not need to do anything once BAT_EN
+ * output is deasserted.
+ */
+
+/* Time to wait before initiating battery cutoff procedure. */
+#define CUTOFF_TIMEOUT_US (5 * SECOND)
+
+/* A timeout hook to run in the end of the 5 s interval. */
+static void ac_stayed_disconnected(void)
+{
+	uint32_t saved_override_state;
+
+	CPRINTS("%s", __func__);
+
+	/* assert EC_RST_L and deassert BAT_EN */
+	GREG32(RBOX, ASSERT_EC_RST) = 1;
+
+	/*
+	 * BAT_EN needs to use the RBOX override ability, bit 1 is battery
+	 * disable bit.
+	 */
+	saved_override_state = GREG32(RBOX, OVERRIDE_OUTPUT);
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, VAL, 0); /* Setting it to zero. */
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, OEN, 1);
+	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, EN, 1);
+
+
+	msleep(5000);
+
+	/*
+	 * The system was supposed to be shut down the moment battery
+	 * disconnect was asserted, but if we made it here we might as well
+	 * restore the original state.
+	 */
+	GREG32(RBOX, OVERRIDE_OUTPUT) = saved_override_state;
+	GREG32(RBOX, ASSERT_EC_RST) = 0;
+}
+DECLARE_DEFERRED(ac_stayed_disconnected);
+
+/*
+ * Just a shortcut to make use of these AC power interrupt states better
+ * readable. RED means rising edge and FED means falling edge.
+ */
+enum {
+	ac_pres_red = GC_RBOX_INT_STATE_INTR_AC_PRESENT_RED_MASK,
+	ac_pres_fed = GC_RBOX_INT_STATE_INTR_AC_PRESENT_FED_MASK,
+	buttons_not_pressed = GC_RBOX_CHECK_INPUT_KEY0_IN_MASK |
+		GC_RBOX_CHECK_INPUT_PWRB_IN_MASK
+};
+
+/*
+ * ISR reacting to both falling and raising edges of the AC_PRESENT signal.
+ * Falling edge indicates pulling out of the charger cable and vice versa.
+ */
+static void ac_power_state_changed(void)
+{
+	uint32_t req;
+
+	/* Get current status and clear it. */
+	req = GREG32(RBOX, INT_STATE) & (ac_pres_red | ac_pres_fed);
+	GREG32(RBOX, INT_STATE) = req;
+
+	CPRINTS("%s: status 0x%x", __func__, req);
+
+	/* Raising edge gets priority, stop timeout timer and go. */
+	if (req & ac_pres_red) {
+		hook_call_deferred(&ac_stayed_disconnected_data, -1);
+		return;
+	}
+
+	/*
+	 * If this is not a falling edge, or either of the buttons is not
+	 * pressed - bail out.
+	 */
+	if (!(req & ac_pres_fed) ||
+	    (GREG32(RBOX, CHECK_INPUT) & buttons_not_pressed))
+		return;
+
+	/*
+	 * Charger cable was yanked while the power and key0 buttons were kept
+	 * pressed - user wants a battery cut off.
+	 */
+	hook_call_deferred(&ac_stayed_disconnected_data, CUTOFF_TIMEOUT_US);
+}
+DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_AC_PRESENT_RED_INT, ac_power_state_changed, 1);
+DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_AC_PRESENT_FED_INT, ac_power_state_changed, 1);
+
+/* Enable interrupts on plugging in and yanking out of the charger cable. */
+static void set_up_battery_cutoff_monitor(void)
+{
+	/* It is set in idle.c also. */
+	GWRITE_FIELD(RBOX, WAKEUP, ENABLE, 1);
+
+	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_AC_PRESENT_RED, 1);
+	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_AC_PRESENT_FED, 1);
+
+	task_enable_irq(GC_IRQNUM_RBOX0_INTR_AC_PRESENT_RED_INT);
+	task_enable_irq(GC_IRQNUM_RBOX0_INTR_AC_PRESENT_FED_INT);
+}
+/*                                                                           */
+/*****************************************************************************/
 
 /*
  * There's no way to trigger on both rising and falling edges, so force a
@@ -316,6 +436,10 @@ static void board_init(void)
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
+
+	/* Enable battery cutoff software support on detachable devices. */
+	if (system_battery_cutoff_support_required())
+		set_up_battery_cutoff_monitor();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -386,8 +510,6 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 
 	return 3;
 }
-
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /* This is the interrupt handler to react to SYS_RST_L_IN */
 void sys_rst_asserted(enum gpio_signal signal)
