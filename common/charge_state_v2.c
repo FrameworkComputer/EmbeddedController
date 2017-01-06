@@ -314,8 +314,31 @@ static void dump_charge_state(void)
 
 static void show_charging_progress(void)
 {
-	int rv, minutes, to_full;
+	int rv = 0, minutes, to_full;
 
+#ifdef CONFIG_BATTERY_SMART
+	/*
+	 * Predicted remaining battery capacity based on AverageCurrent().
+	 * 65535 = Battery is not being discharged.
+	 */
+	if (!battery_time_to_empty(&minutes) && minutes != 65535)
+		to_full = 0;
+	/*
+	 * Predicted time-to-full charge based on AverageCurrent().
+	 * 65535 = Battery is not being discharged.
+	 */
+	else if (!battery_time_to_full(&minutes) && minutes != 65535)
+		to_full = 1;
+	/*
+	 * If both time to empty and time to full have invalid data, consider
+	 * measured current from the coulomb counter and ac present status to
+	 * decide whether battery is about to full or empty.
+	 */
+	else {
+		to_full = curr.batt_is_charging;
+		rv = EC_ERROR_UNKNOWN;
+	}
+#else
 	if (!curr.batt_is_charging) {
 		rv = battery_time_to_empty(&minutes);
 		to_full = 0;
@@ -323,6 +346,7 @@ static void show_charging_progress(void)
 		rv = battery_time_to_full(&minutes);
 		to_full = 1;
 	}
+#endif
 
 	if (rv)
 		CPRINTS("Battery %d%% / ??h:?? %s%s",
