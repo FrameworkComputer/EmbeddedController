@@ -370,7 +370,7 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
  */
 int system_get_image_used(enum system_image_copy_t copy)
 {
-#ifndef CONFIG_MAPPED_STORAGE
+#ifdef CONFIG_EXTERNAL_STORAGE
 	static uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
 #endif
 	int image_offset;
@@ -388,7 +388,7 @@ int system_get_image_used(enum system_image_copy_t copy)
 	image_offset = (copy == SYSTEM_IMAGE_RW) ?
 			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF :
 			CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
-#ifndef CONFIG_MAPPED_STORAGE
+#ifdef CONFIG_EXTERNAL_STORAGE
 	image = buf;
 
 	do {
