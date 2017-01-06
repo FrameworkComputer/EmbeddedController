@@ -55,19 +55,6 @@ enum sys_sleep_state {
 	SYS_SLEEP_S3
 };
 
-#ifdef CONFIG_POWER_S0IX
-static int slp_s0ix_host_evt = 1;
-static int get_slp_s0ix_host_evt(void)
-{
-	return slp_s0ix_host_evt;
-}
-
-static void set_slp_s0ix_host_evt(int val)
-{
-	slp_s0ix_host_evt = val;
-}
-#endif
-
 /* Get system sleep state through GPIOs or VWs */
 static int chipset_get_sleep_signal(enum sys_sleep_state state)
 {
@@ -284,7 +271,8 @@ static enum power_state _power_handle_state(enum power_state state)
 			chipset_force_shutdown();
 			return POWER_S0S3;
 #ifdef CONFIG_POWER_S0IX
-		} else if ((get_slp_s0ix_host_evt() == 0) &&
+		} else if ((power_get_host_sleep_state() ==
+			    HOST_SLEEP_EVENT_S0IX_SUSPEND) &&
 			   (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0S0ix;
 #endif
@@ -300,7 +288,8 @@ static enum power_state _power_handle_state(enum power_state state)
 		/*
 		 * TODO: add code for unexpected power loss
 		 */
-		if ((get_slp_s0ix_host_evt() == 1) &&
+		if ((power_get_host_sleep_state() ==
+		     HOST_SLEEP_EVENT_S0IX_RESUME) &&
 		   (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0ixS0;
 		}
@@ -352,7 +341,7 @@ static enum power_state _power_handle_state(enum power_state state)
 		 * Clearing the S0ix flag on the path to S0
 		 * to handle any reset conditions.
 		 */
-		set_slp_s0ix_host_evt(1);
+		power_reset_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
 #endif
 		return POWER_S3;
 
@@ -402,7 +391,7 @@ static enum power_state _power_handle_state(enum power_state state)
 
 #ifdef CONFIG_POWER_S0IX
 		/* re-init S0ix flag */
-		set_slp_s0ix_host_evt(1);
+		power_reset_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
 #endif
 		return POWER_S3;
 
@@ -475,37 +464,3 @@ enum power_state power_handle_state(enum power_state state)
 
 	return new_state;
 }
-
-#ifdef CONFIG_POWER_S0IX
-/*
- * EC enters S0ix via a host command and exits S0ix via the above
- * lid open hook. The host event for exit is received but is a no-op for now.
- *
- * EC will not react directly to SLP_S0 signal interrupts anymore.
- */
-static int host_event_sleep_event(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_host_sleep_event *p = args->params;
-
-	if (p->sleep_event == HOST_SLEEP_EVENT_S0IX_SUSPEND) {
-		CPRINTS("S0ix sus evt");
-		set_slp_s0ix_host_evt(0);
-		task_wake(TASK_ID_CHIPSET);
-	} else if (p->sleep_event == HOST_SLEEP_EVENT_S0IX_RESUME) {
-		CPRINTS("S0ix res evt");
-		set_slp_s0ix_host_evt(1);
-		/*
-		 * For all scenarios where lid is not open
-		 * this will be trigerred when other wake
-		 * sources like keyboard, trackpad are used.
-		 */
-		if (!chipset_in_state(CHIPSET_STATE_ON))
-			task_wake(TASK_ID_CHIPSET);
-	}
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, host_event_sleep_event,
-			EC_VER_MASK(0));
-
-#endif
