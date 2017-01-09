@@ -750,8 +750,8 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_BAT_LED_GREEN, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
+		{GPIO_BAT_LED_GREEN, GPIO_INPUT | GPIO_PULL_DOWN},
+		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_DOWN},
 		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
 
 		/*
@@ -768,6 +768,7 @@ void board_hibernate_late(void)
 		gpio_set_flags(hibernate_pins[i][0], hibernate_pins[i][1]);
 
 	gpio_config_module(MODULE_KEYBOARD_SCAN, 0);
+	gpio_config_module(MODULE_PWM, 0);
 
 	/*
 	 * Calling gpio_config_module sets disabled alternate function pins to
