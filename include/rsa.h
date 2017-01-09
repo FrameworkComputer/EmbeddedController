@@ -39,6 +39,7 @@
 #ifndef __ASSEMBLER__
 
 #include "common.h"
+#include "util.h"
 
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 /* RSA public key definition, VBoot2 packing */
@@ -74,7 +75,6 @@ void check_rw_signature(void);
  * These can be overridden in board.h files if desired.
  */
 
-/* The pubkey goes at the end of the first half of flash */
 #ifndef CONFIG_RO_PUBKEY_SIZE
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 /*
@@ -90,12 +90,23 @@ void check_rw_signature(void);
 #endif
 #endif /* ! CONFIG_RO_PUBKEY_SIZE */
 #ifndef CONFIG_RO_PUBKEY_ADDR
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+/* The pubkey goes at the end of the RO region */
+#define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
+			       + CONFIG_RO_MEM_OFF		\
+			       + CONFIG_RO_SIZE			\
+			       - CONFIG_RO_PUBKEY_SIZE)
+#else
+/*
+ * usbpd1 type assumes pubkey location at the end of first half of flash,
+ * which might actually be in the PSTATE region.
+ */
 #define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
 			       + (CONFIG_FLASH_SIZE / 2)	\
 			       - CONFIG_RO_PUBKEY_SIZE)
 #endif
+#endif /* CONFIG_RO_PUBKEY_ADDR */
 
-/* The signature goes at the end of the second half of flash */
 #ifndef CONFIG_RW_SIG_SIZE
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 /*
@@ -108,9 +119,11 @@ void check_rw_signature(void);
 #endif
 #endif /* ! CONFIG_RW_SIG_SIZE */
 #ifndef CONFIG_RW_SIG_ADDR
+/* The signature goes at the end of the RW region */
 #define CONFIG_RW_SIG_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
-			    + CONFIG_FLASH_SIZE		\
+			    + CONFIG_RW_MEM_OFF		\
+			    + CONFIG_RW_SIZE		\
 			    - CONFIG_RW_SIG_SIZE)
-#endif
+#endif /* !CONFIG_RW_SIG_ADDR */
 
 #endif /* __CROS_EC_RSA_H */
