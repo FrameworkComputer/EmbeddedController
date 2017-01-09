@@ -21,14 +21,28 @@ uint32_t nvmem_user_sizes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(nvmem_user_sizes) == NVMEM_NUM_USERS);
 
-/* Internal functions exported for test */
-void release_local_copy(void);
-
 /****************************************************************************/
 /* Mock the flash storage */
 
 static uint8_t ram_buffer[CONFIG_FLASH_NVMEM_VARS_USER_SIZE];
 static uint8_t flash_buffer[CONFIG_FLASH_NVMEM_VARS_USER_SIZE];
+
+extern char *rbuf;
+
+/* Internal functions exported for test */
+void release_local_copy(void)
+{
+	rbuf = NULL;
+}
+
+int get_local_copy(void)
+{
+	if (!rbuf) {
+		memcpy(ram_buffer, flash_buffer, sizeof(ram_buffer));
+		rbuf = (char *)ram_buffer;
+	}
+	return EC_SUCCESS;
+}
 
 int nvmem_read(uint32_t startOffset, uint32_t size,
 	       void *data_, enum nvmem_users user)

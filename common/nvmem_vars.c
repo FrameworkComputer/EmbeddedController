@@ -8,23 +8,20 @@
 #include "nvmem.h"
 #include "nvmem_vars.h"
 #include "printf.h"
+#include "shared_mem.h"
 #include "util.h"
 
 /****************************************************************************/
-/* Obtain/release a RAM copy of the persistent variable store */
+/* Pointer to the RAM copy of the persistent variable store */
 
-/*
- * NOTE: It would be nice to allocate this at need, but shared memory is
- * currently all or nothing and it's used elsewhere when writing to flash, so
- * we have to allocate it statically until/unless that changes.
- */
-static uint8_t rbuf[CONFIG_FLASH_NVMEM_VARS_USER_SIZE];
-static int rbuf_in_use;
+test_mockable_static uint8_t *rbuf;
 
 test_mockable_static
 void release_local_copy(void)
 {
-	rbuf_in_use = 0;
+	if (rbuf)
+		shared_mem_release(rbuf);
+	rbuf = NULL;
 }
 
 test_mockable_static
@@ -32,15 +29,18 @@ int get_local_copy(void)
 {
 	int rv;
 
-	if (rbuf_in_use)
+	if (rbuf)
 		return EC_SUCCESS;
 
-	rbuf_in_use = 1;
+	rv = shared_mem_acquire(CONFIG_FLASH_NVMEM_VARS_USER_SIZE,
+				(char **)&rbuf);
 
-	rv = nvmem_read(0, CONFIG_FLASH_NVMEM_VARS_USER_SIZE,
-			rbuf, CONFIG_FLASH_NVMEM_VARS_USER_NUM);
-	if (rv)
-		release_local_copy();
+	if (rv == EC_SUCCESS) {
+		rv = nvmem_read(0, CONFIG_FLASH_NVMEM_VARS_USER_SIZE,
+				rbuf, CONFIG_FLASH_NVMEM_VARS_USER_NUM);
+		if (rv != EC_SUCCESS)
+			release_local_copy();
+	}
 
 	return rv;
 }
@@ -320,7 +320,7 @@ int writevars(void)
 {
 	int rv;
 
-	if (!rbuf_in_use)
+	if (!rbuf)
 		return EC_SUCCESS;
 
 	rv = nvmem_write(0, CONFIG_FLASH_NVMEM_VARS_USER_SIZE,
