@@ -687,7 +687,7 @@ void shi_cs_event(enum gpio_signal signal)
 	 * Clear possible EOR event from previous transaction since it's
 	 * irrelevant now that CS is re-asserted.
 	 */
-	SET_BIT(NPCX_EVSTAT, NPCX_EVSTAT_EOR);
+	NPCX_EVSTAT = 1 << NPCX_EVSTAT_EOR;
 
 	/*
 	 * Enable SHI interrupt - we will either succeed to parse our host
