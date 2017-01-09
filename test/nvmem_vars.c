@@ -186,12 +186,10 @@ static int check_init(void)
 				      [513] = 0x01, [514] = 0x52, /* 513-598 */
 				      [599] = 0xff };
 
-	erase_flash();
 	load_flash(good, sizeof(good));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(good, sizeof(good)));
 
-	erase_flash();
 	load_flash(empty, sizeof(empty));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(empty, sizeof(empty)));
@@ -201,27 +199,22 @@ static int check_init(void)
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(empty, sizeof(empty)));
 
-	erase_flash();
 	load_flash(bad_key, sizeof(bad_key));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(empty, sizeof(empty)));
 
-	erase_flash();
 	load_flash(bad_val, sizeof(bad_val));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(empty, sizeof(empty)));
 
-	erase_flash();
 	load_flash(too_big, sizeof(too_big));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(empty, sizeof(empty)));
 
-	erase_flash();
 	load_flash(just_right, sizeof(just_right));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(just_right, sizeof(just_right)));
 
-	erase_flash();
 	load_flash(not_right, sizeof(not_right));
 	TEST_ASSERT(initvars() == EC_SUCCESS);
 	TEST_ASSERT(verify_flash(empty, sizeof(empty)));
