@@ -31,30 +31,38 @@ int debug_cable_is_attached(void)
 	return (cc1 == cc2 && (cc1 == 3 || cc1 == 1));
 }
 
+static void rdd_disconnected(void)
+{
+	CPRINTS("Debug Accessory disconnected");
+
+	rdd_detached();
+}
+DECLARE_DEFERRED(rdd_disconnected);
+
 void rdd_interrupt(void)
 {
-	int is_debug;
-
 	delay_sleep_by(1 * SECOND);
 
-	is_debug = debug_cable_is_attached();
+	if (debug_cable_is_attached()) {
+		/* cancel pending rdd disconnect */
+		hook_call_deferred(&rdd_disconnected_data, -1);
 
-	if (is_debug) {
 		CPRINTS("Debug Accessory connected");
 
 		/* Detect when debug cable is disconnected */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DISCONNECT);
 
 		rdd_attached();
-	} else if (!is_debug) {
-		CPRINTS("Debug Accessory disconnected");
-
+	} else {
 		/* Detect when debug cable is connected */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DEBUG);
 
-		rdd_detached();
-
-		cflush();
+		/*
+		 * Debounce the RDD disconnect for 2 seconds so rdd events
+		 * won't be triggered by any PD negotiation the EC does during
+		 * reset or sysjump.
+		 */
+		hook_call_deferred(&rdd_disconnected_data, 2 * SECOND);
 	}
 
 	/* Clear interrupt */
