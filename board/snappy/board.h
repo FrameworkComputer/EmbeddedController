@@ -115,6 +115,8 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
+#define CONFIG_POWER_S0IX
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
 /* EC */
 #define CONFIG_ADC
@@ -226,7 +228,6 @@ enum pwm_channel {
 
 enum power_signal {
 	X86_RSMRST_N = 0,
-	X86_SLP_S0_N,
 	X86_SLP_S3_N,
 	X86_SLP_S4_N,
 	X86_SUSPWRDNACK,

@@ -117,7 +117,6 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_RSMRST_L_PGOOD,     1, "RSMRST_L"},
-	{GPIO_PCH_SLP_S0_L,       1, "PMU_SLP_S0_N"},
 	{GPIO_PCH_SLP_S3_L,       1, "SLP_S3_DEASSERTED"},
 	{GPIO_PCH_SLP_S4_L,       1, "SLP_S4_DEASSERTED"},
 	{GPIO_SUSPWRNACK,         1, "SUSPWRNACK_DEASSERTED"},
