@@ -71,6 +71,7 @@ test-list-host += system
 test-list-host += thermal
 test-list-host += timer_dos
 test-list-host += usb_pd
+test-list-host += usb_pd_giveback
 test-list-host += utils
 endif
 
@@ -115,4 +116,5 @@ thermal-y=thermal.o
 timer_calib-y=timer_calib.o
 timer_dos-y=timer_dos.o
 usb_pd-y=usb_pd.o
+usb_pd_giveback-y=usb_pd.o
 utils-y=utils.o

@@ -27,6 +27,8 @@ struct pd_port_t {
 	int partner_polarity;
 } pd_port[CONFIG_USB_PD_PORT_COUNT];
 
+static int give_back_called;
+
 /* Mock functions */
 
 int pd_adc_read(int port, int cc)
@@ -193,9 +195,37 @@ static void unplug(int port)
 	usleep(30 * MSEC);
 }
 
+void pd_snk_give_back(int port, uint32_t * const ma, uint32_t * const mv)
+{
+	if (*ma == 3000)
+		give_back_called = 1;
+}
+
+static void simulate_ps_rdy(int port)
+{
+	uint16_t header = PD_HEADER(PD_CTRL_PS_RDY, PD_ROLE_SOURCE,
+				PD_ROLE_DFP, pd_port[port].msg_rx_id,
+				0);
+
+	simulate_rx_msg(port, header, 0, NULL);
+}
+
+static void simulate_goto_min(int port)
+{
+	uint16_t header = PD_HEADER(PD_CTRL_GOTO_MIN, PD_ROLE_SOURCE,
+		PD_ROLE_DFP, pd_port[port].msg_rx_id, 0);
+
+	simulate_rx_msg(port, header, 0, NULL);
+}
+
 static int test_request_with_wait_and_contract(void)
 {
+#ifdef CONFIG_USB_PD_GIVE_BACK
+	uint32_t expected_rdo =
+		RDO_FIXED(2, 3000, PD_MIN_CURRENT_MA, RDO_GIVE_BACK);
+#else
 	uint32_t expected_rdo = RDO_FIXED(2, 3000, 3000, 0);
+#endif
 	uint8_t port = PORT0;
 
 	plug_in_source(port, 0);
@@ -310,6 +340,34 @@ static int test_request_with_wait_and_contract(void)
 	task_wait_event(30 * MSEC);
 	TEST_ASSERT(verify_goodcrc(0, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
+	task_wake(PD_PORT_TO_TASK_ID(port));
+	task_wait_event(30 * MSEC);
+	inc_rx_id(port);
+
+	/* We're in SNK_TRANSITION. Send ps_rdy */
+	simulate_ps_rdy(port);
+	task_wait_event(30 * MSEC);
+	TEST_ASSERT(verify_goodcrc(0, PD_ROLE_SINK, pd_port[port].msg_rx_id));
+
+	task_wake(PD_PORT_TO_TASK_ID(port));
+	task_wait_event(30 * MSEC);
+	inc_rx_id(port);
+
+	/* We're in SNK_READY. Send goto_min */
+	simulate_goto_min(port);
+	task_wait_event(30 * MSEC);
+	TEST_ASSERT(verify_goodcrc(0, PD_ROLE_SINK, pd_port[port].msg_rx_id));
+
+	task_wake(PD_PORT_TO_TASK_ID(port));
+	task_wait_event(30 * MSEC);
+	inc_rx_id(port);
+
+#ifdef CONFIG_USB_PD_GIVE_BACK
+	TEST_ASSERT(give_back_called);
+#else
+	TEST_ASSERT(!give_back_called);
+#endif
+
 	/* We're done */
 	unplug(port);
 
@@ -318,7 +376,12 @@ static int test_request_with_wait_and_contract(void)
 
 static int test_request_with_wait(void)
 {
+#ifdef CONFIG_USB_PD_GIVE_BACK
+	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
+					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+#else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
+#endif
 	uint8_t port = PORT0;
 
 	plug_in_source(port, 0);
@@ -401,7 +464,12 @@ static int test_request_with_wait(void)
 
 static int test_request_with_reject(void)
 {
+#ifdef CONFIG_USB_PD_GIVE_BACK
+	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
+					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+#else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
+#endif
 	uint8_t port = PORT0;
 
 	plug_in_source(port, 0);
@@ -474,7 +542,12 @@ static int test_request_with_reject(void)
 
 static int test_request(void)
 {
+#ifdef CONFIG_USB_PD_GIVE_BACK
+	uint32_t expected_rdo = RDO_FIXED(1, 900, PD_MIN_CURRENT_MA,
+					RDO_CAP_MISMATCH | RDO_GIVE_BACK);
+#else
 	uint32_t expected_rdo = RDO_FIXED(1, 900, 900, RDO_CAP_MISMATCH);
+#endif
 	uint8_t port = PORT0;
 
 	plug_in_source(port, 0);
@@ -562,6 +635,5 @@ void run_test(void)
 	RUN_TEST(test_request_with_wait);
 	RUN_TEST(test_request_with_wait_and_contract);
 	RUN_TEST(test_request_with_reject);
-
 	test_print_result();
 }

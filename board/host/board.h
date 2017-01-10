@@ -69,4 +69,7 @@ extern const int supplier_priority[];
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
+#define PD_MIN_CURRENT_MA     500
+#define PD_MIN_POWER_MW       7500
+
 #endif /* __CROS_EC_BOARD_H */

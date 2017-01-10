@@ -927,6 +927,21 @@ static void handle_ctrl_request(int port, uint16_t head,
 		break;
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	case PD_CTRL_GOTO_MIN:
+#ifdef CONFIG_USB_PD_GIVE_BACK
+		if (pd[port].task_state == PD_STATE_SNK_READY) {
+			/*
+			 * Reduce power consumption now!
+			 *
+			 * The source will restore power to this sink
+			 * by sending a new source cap message at a
+			 * later time.
+			 */
+			pd_snk_give_back(port, &pd[port].curr_limit,
+				&pd[port].supply_voltage);
+			set_state(port, PD_STATE_SNK_TRANSITION);
+		}
+#endif
+
 		break;
 	case PD_CTRL_PS_RDY:
 		if (pd[port].task_state == PD_STATE_SNK_SWAP_SRC_DISABLE) {

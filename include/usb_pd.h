@@ -904,6 +904,15 @@ int pd_is_max_request_allowed(void);
 void pd_process_source_cap(int port, int cnt, uint32_t *src_caps);
 
 /**
+ * Reduce the sink power consumption to a minimum value.
+ *
+ * @param port USB-C port number
+ * @param ma reduce current to minimum value.
+ * @param mv reduce voltage to minimum value.
+ */
+void pd_snk_give_back(int port, uint32_t * const ma, uint32_t * const mv);
+
+/**
  * Put a cap on the max voltage requested as a sink.
  * @param mv maximum voltage in millivolts.
  */

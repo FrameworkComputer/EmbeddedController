@@ -60,6 +60,16 @@ int board_vbus_source_enabled(int port)
 	return vbus_en[port];
 }
 
+void pd_snk_give_back(int port, uint32_t * const ma, uint32_t * const mv)
+{
+	/* Just reduce the current */
+	*ma = PD_MIN_CURRENT_MA;
+	pd_set_input_current_limit(port, *ma, *mv);
+#ifdef CONFIG_CHARGE_MANAGER
+	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, *ma);
+#endif
+}
+
 static void board_vbus_update_source_current(int port)
 {
 	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;

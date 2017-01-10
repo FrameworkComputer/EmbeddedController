@@ -2140,6 +2140,9 @@
 /* Check whether PD is the sole power source before flash erase operation */
 #undef CONFIG_USB_PD_FLASH_ERASE_CHECK
 
+/* Define if this board, operating as a sink, can give power back to a source */
+#undef CONFIG_USB_PD_GIVE_BACK
+
 /* Major and Minor ChromeOS specific PD device Hardware IDs. */
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR

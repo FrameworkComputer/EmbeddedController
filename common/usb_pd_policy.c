@@ -179,6 +179,8 @@ int pd_build_request(int cnt, uint32_t *src_caps, uint32_t *rdo,
 {
 	int pdo_index, flags = 0;
 	int uw;
+	int max_or_min_ma;
+	int max_or_min_mw;
 
 	if (req_type == PD_REQUEST_VSAFE5V)
 		/* src cap 0 should be vSafe5V */
@@ -197,11 +199,35 @@ int pd_build_request(int cnt, uint32_t *src_caps, uint32_t *rdo,
 	if (uw < (1000 * PD_OPERATING_POWER_MW))
 		flags |= RDO_CAP_MISMATCH;
 
+#ifdef CONFIG_USB_PD_GIVE_BACK
+	/* Tell source we are give back capable. */
+	flags |= RDO_GIVE_BACK;
+
+	/*
+	 * BATTERY PDO: Inform the source that the sink will reduce
+	 * power to this minimum level on receipt of a GotoMin Request.
+	 */
+	max_or_min_mw = PD_MIN_POWER_MW;
+
+	/*
+	 * FIXED or VARIABLE PDO: Inform the source that the sink will reduce
+	 * current to this minimum level on receipt of a GotoMin Request.
+	 */
+	max_or_min_ma = PD_MIN_CURRENT_MA;
+#else
+	/*
+	 * Can't give back, so set maximum current and power to operating
+	 * level.
+	 */
+	max_or_min_ma = *ma;
+	max_or_min_mw = uw / 1000;
+#endif
+
 	if ((src_caps[pdo_index] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		int mw = uw / 1000;
-		*rdo = RDO_BATT(pdo_index + 1, mw, mw, flags);
+		*rdo = RDO_BATT(pdo_index + 1, mw, max_or_min_mw, flags);
 	} else {
-		*rdo = RDO_FIXED(pdo_index + 1, *ma, *ma, flags);
+		*rdo = RDO_FIXED(pdo_index + 1, *ma, max_or_min_ma, flags);
 	}
 	return EC_SUCCESS;
 }
