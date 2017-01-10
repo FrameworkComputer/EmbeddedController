@@ -5,6 +5,7 @@
 
 /* Clocks and power management settings */
 
+#include "adc_chip.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -26,6 +27,10 @@
 #ifdef CONFIG_LOW_POWER_IDLE
 #define SLEEP_SET_HTIMER_DELAY_USEC 250
 #define SLEEP_FTIMER_SKIP_USEC      (HOOK_TICK_INTERVAL * 2)
+
+#ifdef CONFIG_ADC
+BUILD_ASSERT(ADC_TIMEOUT_US < SLEEP_SET_HTIMER_DELAY_USEC);
+#endif
 
 static timestamp_t sleep_mode_t0;
 static timestamp_t sleep_mode_t1;

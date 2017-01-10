@@ -121,6 +121,23 @@ void intc_cpu_int_group_12(void)
 }
 DECLARE_IRQ(CPU_INT_GROUP_12, intc_cpu_int_group_12, 2);
 
+void intc_cpu_int_group_7(void)
+{
+	/* Determine interrupt number. */
+	int intc_group_7 = intc_get_ec_int();
+
+	switch (intc_group_7) {
+#ifdef CONFIG_ADC
+	case IT83XX_IRQ_ADC:
+		adc_interrupt();
+		break;
+#endif
+	default:
+		break;
+	}
+}
+DECLARE_IRQ(CPU_INT_GROUP_7, intc_cpu_int_group_7, 2);
+
 void intc_cpu_int_group_6(void)
 {
 	/* Determine interrupt number. */

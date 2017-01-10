@@ -3,10 +3,21 @@
  * found in the LICENSE file.
  */
 
-/* IT8380 ADC module for Chrome EC */
+/* IT83xx ADC module for Chrome EC */
 
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
+
+#include "common.h"
+
+/*
+ * Maximum time we allow for an ADC conversion.
+ * NOTE:
+ * This setting must be less than "SLEEP_SET_HTIMER_DELAY_USEC" in clock.c
+ * or adding a sleep mask to prevent going in to deep sleep while ADC
+ * converting.
+ */
+#define ADC_TIMEOUT_US 248
 
 /* Data structure to define ADC channel control registers. */
 struct adc_ctrl_t {
