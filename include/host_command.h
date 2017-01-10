@@ -218,18 +218,15 @@ void host_packet_receive(struct host_packet *pkt);
 	EXPAND(EC_CMD_BOARD_SPECIFIC_BASE, command) \
 	__attribute__((section(".rodata.hcmds."\
 	EXPANDSTR(EC_CMD_BOARD_SPECIFIC_BASE, command)))) \
-		= {routine, EC_CMD_BOARD_SPECIFIC_BASE + command, version_mask}
-
-/*
- * Given the private host command offset, calculate
- * the true private host command value.
- */
-#define PRIVATE_HOST_COMMAND_VALUE(command) \
-	(EC_CMD_BOARD_SPECIFIC_BASE + command)
+		= {routine, EC_PRIVATE_HOST_COMMAND_VALUE(command), \
+		   version_mask}
 #else
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
 	int (routine)(struct host_cmd_handler_args *args)       \
-	__attribute__((unused))
+		__attribute__((unused))
+
+#define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask)	\
+	DECLARE_HOST_COMMAND(command, routine, version_mask)
 #endif
 
 /**

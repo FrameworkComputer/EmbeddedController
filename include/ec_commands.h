@@ -4022,6 +4022,13 @@ struct __ec_align1 ec_response_usb_pd_mux_info {
 #define EC_CMD_BOARD_SPECIFIC_BASE 0x3E00
 #define EC_CMD_BOARD_SPECIFIC_LAST 0x3FFF
 
+/*
+ * Given the private host command offset, calculate the true private host
+ * command value.
+ */
+#define EC_PRIVATE_HOST_COMMAND_VALUE(command) \
+	(EC_CMD_BOARD_SPECIFIC_BASE + (command))
+
 /*****************************************************************************/
 /*
  * Passthru commands
