@@ -29,8 +29,6 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 enum led_color {
 	BAT_LED_BLUE = 0,
 	BAT_LED_ORANGE,
-	PWR_LED_BLUE,
-	PWR_LED_ORANGE,
 	LED_COLOR_COUNT		/* Number of colors, not a color itself */
 };
 
@@ -42,12 +40,6 @@ static int bat_led_set(enum led_color color, int on)
 		break;
 	case BAT_LED_ORANGE:
 		gpio_set_level(GPIO_BAT_LED1, on); /* BAT_LED_ORANGE */
-		break;
-	case PWR_LED_BLUE:
-		gpio_set_level(GPIO_PWR_LED0, on); /* PWR_LED_BLUE */
-		break;
-	case PWR_LED_ORANGE:
-		gpio_set_level(GPIO_PWR_LED1, on); /* PWR_LED_ORANGE */
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -76,45 +68,12 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			bat_led_set(BAT_LED_ORANGE, 0);
 		}
 		return EC_SUCCESS;
-	} else if (EC_LED_ID_POWER_LED == led_id) {
-		if (brightness[EC_LED_COLOR_BLUE] != 0) {
-			bat_led_set(PWR_LED_BLUE, 1);
-			bat_led_set(PWR_LED_ORANGE, 0);
-		} else if (brightness[EC_LED_COLOR_AMBER] != 0) {
-			bat_led_set(PWR_LED_BLUE, 0);
-			bat_led_set(PWR_LED_ORANGE, 1);
-		} else {
-			bat_led_set(PWR_LED_BLUE, 0);
-			bat_led_set(PWR_LED_ORANGE, 0);
-		}
-		return EC_SUCCESS;
 	} else {
 		return EC_ERROR_UNKNOWN;
 	}
 }
 
 static unsigned blink_second;
-
-static void rowan_led_set_power(void)
-{
-	/*
-	 * PWR LED behavior:
-	 * Power on: Blue ON
-	 * Suspend: Orange in breeze mode ( 1 sec on/ 3 sec off)
-	 * Power off: OFF
-	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		bat_led_set(PWR_LED_BLUE, 0);
-		bat_led_set(PWR_LED_ORANGE, 0);
-	} else if (chipset_in_state(CHIPSET_STATE_ON)) {
-		bat_led_set(PWR_LED_BLUE, 1);
-		bat_led_set(PWR_LED_ORANGE, 0);
-	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
-		bat_led_set(PWR_LED_BLUE, 0);
-		bat_led_set(PWR_LED_ORANGE,
-			    (blink_second & 3) ? 0 : 1);
-	}
-}
 
 static void rowan_led_set_battery(void)
 {
@@ -191,8 +150,6 @@ static void led_second(void)
 {
 	blink_second++;
 
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		rowan_led_set_power();
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		rowan_led_set_battery();
 }

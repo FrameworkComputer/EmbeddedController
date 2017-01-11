@@ -118,7 +118,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	{ CONFIG_SPI_ACCEL_PORT, 2, GPIO_SPI2_NSS },
-	{ CONFIG_SPI_ACCEL_PORT, 2, GPIO_SPI2_NSS_DB }
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -457,7 +456,6 @@ static void board_chipset_shutdown(void)
 	 */
 	gpio_set_flags_by_mask(GPIO_D, 0x1a, GPIO_OUT_LOW);
 	gpio_set_level(GPIO_SPI2_NSS, 0);
-	gpio_set_level(GPIO_SPI2_NSS_DB, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
@@ -574,9 +572,6 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 void lid_angle_peripheral_enable(int enable)
 {
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
-
-	/* enable/disable touchpad */
-	gpio_set_level(GPIO_EN_TP_INT_L, !enable);
 }
 #endif /* defined(HAS_TASK_MOTIONSENSE) */
 

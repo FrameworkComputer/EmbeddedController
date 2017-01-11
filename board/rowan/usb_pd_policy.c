@@ -311,29 +311,21 @@ static void svdm_dp_post_config(int port)
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
-	int cur_lvl;
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	int ack = 1;
 
 	anx7688_update_hpd(port, lvl, irq);
 
 	dp_status[port] = payload[1];
-	cur_lvl = gpio_get_level(GPIO_USB_DP_HPD);
 
 	/* Its initial DP status message prior to config */
 	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
 		if (lvl)
 			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
-		return ack;
 	}
 
-	if (!(irq & cur_lvl) && irq & !cur_lvl) {
-		CPRINTF("ERR:HPD:IRQ&LOW\n");
-		ack = 0; /* nak */
-	}
 	/* ack */
-	return ack;
+	return 1;
 }
 
 static void svdm_exit_dp_mode(int port)
