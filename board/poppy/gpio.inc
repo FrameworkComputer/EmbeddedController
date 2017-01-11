@@ -27,6 +27,7 @@ GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,			usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(3, 3), GPIO_INT_FALLING,			usb1_evt)
+GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 0), GPIO_INT_FALLING,			bmi160_interrupt)
 
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(ENABLE_BACKLIGHT,		PIN(2, 6), GPIO_OUT_LOW)			/* Enable Backlight */
@@ -47,8 +48,6 @@ GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
 
 /* Sensor interrupts, not implemented yet */
-/* TODO(crosbug.com/p/61098): Implement */
-GPIO(ACCELGYRO3_INT_L,		PIN(3, 6), GPIO_INPUT)
 GPIO(ALS_INT_L,			PIN(2, 5), GPIO_INPUT)
 GPIO(FP_INT_L,			PIN(5, 6), GPIO_INPUT)
 

@@ -91,20 +91,19 @@
 /* TODO(crosbug.com/p/61098): Is this the correct thermistor? */
 #define CONFIG_THERMISTOR_NCP15WB
 
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_MAG_BMI160_BMM150
+#define CONFIG_ACCEL_INTERRUPTS
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
 #define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
 #define CONFIG_MAG_CALIBRATE
 
 #define CONFIG_BARO_BMP280
 
 /* FIFO size is in power of 2. */
-/*
- * TODO(crosbug.com/p/61098): Uncomment this when AP is reading sensor
- * data. For now, it's commented so that the data can be read from the EC
- * console.
- */
-/*#define CONFIG_ACCEL_FIFO 1024*/
+#define CONFIG_ACCEL_FIFO 1024
 
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
@@ -241,6 +240,9 @@ int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 void board_print_tcpc_fw_version(int port);
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_BARO)
 
 #endif /* !__ASSEMBLER__ */
 
