@@ -114,6 +114,14 @@
 #define CONFIG_CHIPSET_RESET_HOOK
 #undef CONFIG_PECI
 #define CONFIG_POWER_BUTTON
+/*
+ * FIXME: Workaround to Pyro DVT system can not power on when system
+ * at G3 state.
+ * Hardware has leakage with LID_OPEN pin to touch control board if system
+ * turns off PP3300 power rail, so enable CONFIG_POWER_BUTTON_IGNORE_LID
+ * on temporarily.
+ */
+#define CONFIG_POWER_BUTTON_IGNORE_LID
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_S0IX
