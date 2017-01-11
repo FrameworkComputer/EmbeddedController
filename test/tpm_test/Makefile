@@ -2,10 +2,18 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# V unset for normal output, V=1 for verbose output, V=0 for silent build
+# (warnings/errors only). Use echo thus: $(call echo,"stuff  to  echo")
+ifeq ($(V),0)
+Q := @
+echo = echo -n;
+else
+echo = echo $(1);
 ifeq ($(V),)
 Q := @
 else
 Q :=
+endif
 endif
 
 obj = ../../build/tpm_test
@@ -39,31 +47,31 @@ DEPS := $(OBJS:.o=.o.d) $(BN_OBJS:.o=.o.d)
 $(OBJS) $(BN_OBJS): | $(obj)
 
 $(obj)/%.o: $(obj)/%.c
-	@echo "  CC      $(notdir $@)"
+	$(call echo,"  CC      $(notdir $@)")
 	$(Q)gcc $(CFLAGS) -o $@ $<
 
 $(obj)/%.o: %.c
-	@echo "  CC      $(notdir $@)"
+	$(call echo,"  CC      $(notdir $@)")
 	$(Q)gcc $(CFLAGS) -Wall -Werror -MMD -MF $@.d -o $@ $<
 
 $(obj)/_$(TARGET).so: $(OBJS) $(obj)/$(TARGET).py
-	@echo "  LD      $(notdir $@)"
+	$(call echo,"  LD      $(notdir $@)")
 	$(Q)rm -f $@
 	$(Q)gcc -shared $(OBJS) -lftdi1 -o $@
 
 $(obj)/%_wrap.c: $(src)/%.i
-	@echo "  SWIG    $(notdir $@)"
+	$(call echo,"  SWIG    $(notdir $@)")
 	$(Q)swig -python -outdir $(obj) -o $@ $<
 
 clean:
 	@rm -rf $(obj)/
 
 $(obj):
-	@echo "  MKDIR   $(obj)"
+	$(call echo,"  MKDIR   $(obj)")
 	$(Q)mkdir -p $(obj)
 
 $(obj)/bn_test: $(BN_OBJS)
-	@echo "  LD      $(notdir $@)"
+	$(call echo,"  LD      $(notdir $@)")
 	$(Q)$(CC) -o $@ $^ -lcrypto
 
 -include $(DEPS)
