@@ -5,6 +5,7 @@
 
 /* Intel X86 chipset power control module for Chrome EC */
 
+#include "board_config.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
@@ -32,31 +33,32 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 enum sys_sleep_state {
-	SYS_SLEEP_S5,
-	SYS_SLEEP_S4,
-	SYS_SLEEP_S3
+	SYS_SLEEP_S3,
+	SYS_SLEEP_S4
 };
 
-int power_s5_up;       /* Chipset is sequencing up or down */
-
-/* Get system sleep state through GPIOs or VWs */
-static int chipset_get_sleep_signal(enum sys_sleep_state state)
-{
 #ifdef CONFIG_ESPI_VW_SIGNALS
-	if (state == SYS_SLEEP_S4)
-		return espi_vw_get_wire(VW_SLP_S4_L);
-	else if (state == SYS_SLEEP_S3)
-		return espi_vw_get_wire(VW_SLP_S3_L);
+static const enum espi_vw_signal espi_vm_sig[] = {
+	[SYS_SLEEP_S3] = VW_SLP_S3_L,
+	[SYS_SLEEP_S4] = VW_SLP_S4_L,
+};
 #else
-	if (state == SYS_SLEEP_S4)
-		return gpio_get_level(GPIO_PCH_SLP_S4_L);
-	else if (state == SYS_SLEEP_S3)
-		return gpio_get_level(GPIO_PCH_SLP_S3_L);
+static const enum gpio_signal gpio_sig[] = {
+	[SYS_SLEEP_S3] = GPIO_PCH_SLP_S3_L,
+	[SYS_SLEEP_S4] = GPIO_PCH_SLP_S4_L,
+};
 #endif
 
-	/* We should never run here */
-	ASSERT(0);
-	return 0;
+static int power_s5_up;       /* Chipset is sequencing up or down */
+
+/* Get system sleep state through GPIOs or VWs */
+static inline int chipset_get_sleep_signal(enum sys_sleep_state state)
+{
+#ifdef CONFIG_ESPI_VW_SIGNALS
+	return espi_vw_get_wire(espi_vm_sig[state]);
+#else
+	return gpio_get_level(gpio_sig[state]);
+#endif
 }
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
@@ -67,7 +69,7 @@ static enum power_state power_wait_s5_rtc_reset(void)
 	/* Wait for S5 exit and then attempt RTC reset */
 	while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
 		/* Handle RSMRST passthru event while waiting */
-		handle_rsmrst(POWER_S5);
+		common_intel_x86_handle_rsmrst(POWER_S5);
 		if (task_wait_event(SECOND*4) == TASK_EVENT_TIMER) {
 			CPRINTS("timeout waiting for S5 exit");
 			chipset_force_g3();
@@ -379,4 +381,39 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 	}
 
 	return state;
+}
+
+void common_intel_x86_handle_rsmrst(enum power_state state)
+{
+	/*
+	 * Pass through RSMRST asynchronously, as PCH may not react
+	 * immediately to power changes.
+	 */
+	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
+
+	/* Nothing to do. */
+	if (rsmrst_in == rsmrst_out)
+		return;
+
+#ifdef CONFIG_BOARD_HAS_BEFORE_RSMRST
+	board_before_rsmrst(rsmrst_in);
+#endif
+
+#ifdef CONFIG_CHIPSET_APOLLOLAKE
+	/* Only passthrough RSMRST_L de-assertion on power up */
+	if (rsmrst_in && !power_s5_up)
+		return;
+#elif defined(CONFIG_CHIPSET_SKYLAKE)
+	/*
+	 * Wait at least 10ms between power signals going high
+	 * and deasserting RSMRST to PCH.
+	 */
+	if (rsmrst_in)
+		msleep(10);
+#endif
+
+	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
+
+	CPRINTS("Pass through GPIO_RSMRST_L_PGOOD: %d", rsmrst_in);
 }

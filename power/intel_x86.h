@@ -11,14 +11,12 @@
 
 #include "power.h"
 
-extern int power_s5_up;       /* Chipset is sequencing up or down */
-
 /**
  * Handle RSMRST signal.
  *
  * @param state Current chipset state.
  */
-void handle_rsmrst(enum power_state state);
+void common_intel_x86_handle_rsmrst(enum power_state state);
 
 /**
  * Force chipset to G3 state.

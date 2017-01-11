@@ -5,7 +5,6 @@
 
 /* Skylake IMVP8 / ROP PMIC chipset power control module for Chrome EC */
 
-#include "board_config.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
@@ -81,33 +80,6 @@ void chipset_reset(int cold_reset)
 	}
 }
 
-void handle_rsmrst(enum power_state state)
-{
-	/*
-	 * Pass through RSMRST asynchronously, as PCH may not react
-	 * immediately to power changes.
-	 */
-	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
-	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
-
-	/* Nothing to do. */
-	if (rsmrst_in == rsmrst_out)
-		return;
-
-#ifdef CONFIG_BOARD_HAS_BEFORE_RSMRST
-	board_before_rsmrst(rsmrst_in);
-#endif
-
-	/*
-	 * Wait at least 10ms between power signals going high
-	 * and deasserting RSMRST to PCH.
-	 */
-	if (rsmrst_in)
-		msleep(10);
-	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
-	CPRINTS("RSMRST: %d", rsmrst_in);
-}
-
 static void handle_slp_sus(enum power_state state)
 {
 	/* If we're down or going down don't do anythin with SLP_SUS_L. */
@@ -123,7 +95,7 @@ enum power_state power_handle_state(enum power_state state)
 	enum power_state new_state;
 
 	/* Process RSMRST_L state changes. */
-	handle_rsmrst(state);
+	common_intel_x86_handle_rsmrst(state);
 
 	if (state == POWER_S5 && forcing_shutdown) {
 		power_button_pch_release();

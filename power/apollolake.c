@@ -63,28 +63,6 @@ void chipset_reset(int cold_reset)
 	}
 }
 
-void handle_rsmrst(enum power_state state)
-{
-	/*
-	 * Pass through asynchronously, as SOC may not react
-	 * immediately to power changes.
-	 */
-	int in_level = gpio_get_level(GPIO_RSMRST_L_PGOOD);
-	int out_level = gpio_get_level(GPIO_PCH_RSMRST_L);
-
-	/* Nothing to do. */
-	if (in_level == out_level)
-		return;
-
-	/* Only passthrough RSMRST_L de-assertion on power up */
-	if (in_level && !power_s5_up)
-		return;
-
-	gpio_set_level(GPIO_PCH_RSMRST_L, in_level);
-
-	CPRINTS("Pass through GPIO_RSMRST_L_PGOOD: %d", in_level);
-}
-
 static void handle_all_sys_pgood(enum power_state state)
 {
 	/*
@@ -132,7 +110,7 @@ rsmrst_handle:
 	 * RSMRST_L is also checked in some states and, if asserted, will
 	 * force shutdown.
 	 */
-	handle_rsmrst(new_state);
+	common_intel_x86_handle_rsmrst(new_state);
 
 	return new_state;
 }
