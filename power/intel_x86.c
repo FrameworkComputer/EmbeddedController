@@ -136,6 +136,16 @@ static void s0ix_lpc_disable_wake_mask_for_lid_open(void)
 			;
 	}
 }
+
+static void handle_chipset_reset(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
+		CPRINTS("chipset reset: exit s0ix");
+		power_reset_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
 #endif
 
 void chipset_throttle_cpu(int throttle)
@@ -217,14 +227,12 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 #ifdef CONFIG_POWER_S0IX
 	case POWER_S0ix:
-		/*
-		 * TODO: crosbug.com/p/61645
-		 * Add code to handle unexpected power loss.
-		 */
 		if ((power_get_host_sleep_state() ==
 		     HOST_SLEEP_EVENT_S0IX_RESUME) &&
 		   (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0ixS0;
+		} else if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
+			return POWER_S0;
 		}
 
 		break;
