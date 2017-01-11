@@ -145,8 +145,13 @@ int DCRYPTO_p256_base_point_mul(p256_int *out_x, p256_int *out_y,
 int DCRYPTO_p256_point_mul(p256_int *out_x, p256_int *out_y,
 			const p256_int *n, const p256_int *in_x,
 			const p256_int *in_y);
+/*
+ * Produce uniform private key from seed.
+ * If x or y is NULL, the public key part is not computed.
+ * Returns !0 on success.
+ */
 int DCRYPTO_p256_key_from_bytes(p256_int *x, p256_int *y, p256_int *d,
-				const uint8_t key_bytes[P256_NBYTES]);
+				const uint8_t bytes[P256_NBYTES]);
 /* P256 based integration encryption (DH+AES128+SHA256). */
 /* Authenticated data may be provided, where the first auth_data_len
  * bytes of in will be authenticated but not encrypted. */
