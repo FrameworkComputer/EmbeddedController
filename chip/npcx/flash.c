@@ -571,31 +571,28 @@ int flash_physical_protect_now(int all)
 }
 
 
-int flash_physical_protect_at_boot(enum flash_wp_range range)
+int flash_physical_protect_at_boot(uint32_t new_flags)
 {
-	switch (range) {
-	case FLASH_WP_NONE:
+	int ret;
+
+	if ((new_flags & (EC_FLASH_PROTECT_RO_AT_BOOT |
+			  EC_FLASH_PROTECT_ALL_AT_BOOT)) == 0) {
 		/* Clear protection bits in status register */
 		return flash_set_status_for_prot(0, 0);
-	case FLASH_WP_RO:
-		/* Protect read-only */
-		return flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
-					    CONFIG_WP_STORAGE_SIZE,
-					    1);
-	case FLASH_WP_ALL:
-		flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
-				     CONFIG_WP_STORAGE_SIZE,
-				     1);
-
-		/*
-		 * Set UMA_LOCK bit for locking all UMA transaction.
-		 * But we still can read directly from flash mapping address
-		 */
-		flash_uma_lock(1);
-		return EC_SUCCESS;
-	default:
-		return EC_ERROR_INVAL;
 	}
+
+	ret = flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
+				   CONFIG_WP_STORAGE_SIZE,
+				   1);
+
+	/*
+	 * Set UMA_LOCK bit for locking all UMA transaction.
+	 * But we still can read directly from flash mapping address
+	 */
+	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
+		flash_uma_lock(1);
+
+	return ret;
 }
 
 uint32_t flash_physical_get_valid_flags(void)

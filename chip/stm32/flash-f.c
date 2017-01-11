@@ -338,12 +338,11 @@ static int flash_physical_get_protect_at_boot(int block)
 	return (!(val & (1 << (block % 8)))) ? 1 : 0;
 }
 
-int flash_physical_protect_at_boot(enum flash_wp_range range)
+int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int block;
 	int i;
 	int original_val[4], val[4];
-	enum flash_wp_range cur_range;
 
 	for (i = 0; i < 4; ++i)
 		original_val[i] = val[i] = read_optb(i * 2 + 8);
@@ -351,14 +350,14 @@ int flash_physical_protect_at_boot(enum flash_wp_range range)
 	for (block = WP_BANK_OFFSET;
 	     block < WP_BANK_OFFSET + PHYSICAL_BANKS;
 	     block++) {
+		int protect = new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
 		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2 - 4;
 
-		if (block >= WP_BANK_OFFSET + WP_BANK_COUNT)
-			cur_range = FLASH_WP_ALL;
-		else
-			cur_range = FLASH_WP_RO;
+		if (block >= WP_BANK_OFFSET &&
+		    block < WP_BANK_OFFSET + WP_BANK_COUNT)
+			protect |= new_flags & EC_FLASH_PROTECT_RO_AT_BOOT;
 
-		if (cur_range <= range)
+		if (protect)
 			val[byte_off] = val[byte_off] & (~(1 << (block % 8)));
 		else
 			val[byte_off] = val[byte_off] | (1 << (block % 8));
@@ -434,7 +433,8 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_physical_protect_at_boot(FLASH_WP_RO);
+			flash_physical_protect_at_boot(
+				EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 
@@ -448,8 +448,7 @@ int flash_pre_init(void)
 			 * go away.
 			 */
 			flash_protect_at_boot(
-				(prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) ?
-				FLASH_WP_RO : FLASH_WP_NONE);
+				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	} else {

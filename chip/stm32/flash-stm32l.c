@@ -317,20 +317,20 @@ int flash_physical_get_protect(int block)
 	return STM32_FLASH_WRPR & (1 << block);
 }
 
-int flash_physical_protect_at_boot(enum flash_wp_range range)
+int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	uint32_t prot;
 	uint32_t mask = ((1 << WP_BANK_COUNT) - 1) << WP_BANK_OFFSET;
 	int rv;
 
-	if (range == FLASH_WP_ALL)
+	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
 		return EC_ERROR_UNIMPLEMENTED;
 
 	/* Read the current protection status */
 	prot = read_optb_wrp();
 
 	/* Set/clear bits */
-	if (range == FLASH_WP_RO)
+	if (new_flags & EC_FLASH_PROTECT_RO_AT_BOOT)
 		prot |= mask;
 	else
 		prot &= ~mask;
@@ -448,7 +448,7 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_protect_at_boot(FLASH_WP_RO);
+			flash_protect_at_boot(EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 
@@ -457,9 +457,8 @@ int flash_pre_init(void)
 			 * Write protect register was in an inconsistent state.
 			 * Set it back to a good state and reboot.
 			 */
-			flash_protect_at_boot(
-				(prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) ?
-				FLASH_WP_RO : FLASH_WP_NONE);
+			flash_protect_at_boot(prot_flags &
+					EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	} else if (prot_flags & (EC_FLASH_PROTECT_RO_NOW |

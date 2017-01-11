@@ -26,13 +26,6 @@
 #define PSTATE_BANK_COUNT	0
 #endif
 
-/* Range of write protection */
-enum flash_wp_range {
-	FLASH_WP_NONE = 0,
-	FLASH_WP_RO,
-	FLASH_WP_ALL,
-};
-
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
 
@@ -86,10 +79,11 @@ uint32_t flash_physical_get_protect_flags(void);
 /**
  * Enable/disable protecting firmware/pstate at boot.
  *
- * @param range		The range to protect
+ * @param new_flags to protect (only EC_FLASH_PROTECT_*_AT_BOOT are
+ * taken care of)
  * @return non-zero if error.
  */
-int flash_physical_protect_at_boot(enum flash_wp_range range);
+int flash_physical_protect_at_boot(uint32_t new_flags);
 
 /**
  * Protect flash now.
@@ -154,10 +148,11 @@ int flash_is_erased(uint32_t offset, int size);
  * protect pin is deasserted, the protect setting is ignored, and the entire
  * flash will be writable.
  *
- * @param range		The range to protect.
+ * @param new_flags to protect (only EC_FLASH_PROTECT_*_AT_BOOT are
+ * taken care of)
  * @return EC_SUCCESS, or nonzero if error.
  */
-int flash_protect_at_boot(enum flash_wp_range range);
+int flash_protect_at_boot(uint32_t new_flags);
 
 /*****************************************************************************/
 /* High-level interface for use by other modules. */

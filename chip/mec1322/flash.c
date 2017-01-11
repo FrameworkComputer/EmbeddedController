@@ -187,32 +187,31 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
  * Once write protect is enabled, it will stay enabled until HW PIN is
  * de-asserted and SRP register is unset.
  *
- * However, this implementation treats FLASH_WP_ALL as FLASH_WP_RO but
- * tries to remember if "all" region is protected.
+ * However, this implementation treats EC_FLASH_PROTECT_ALL_AT_BOOT as
+ * EC_FLASH_PROTECT_RO_AT_BOOT but tries to remember if "all" region
+ * is protected.
  *
- * @param range         The range to protect.
+ * @param new_flags to protect (only EC_FLASH_PROTECT_*_AT_BOOT are
+ * taken care of)
  * @return              EC_SUCCESS, or nonzero if error.
  */
-int flash_physical_protect_at_boot(enum flash_wp_range range)
+int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int offset, size, ret;
 	enum spi_flash_wp flashwp = SPI_WP_NONE;
 
-	switch (range) {
-	case FLASH_WP_NONE:
+	if ((new_flags & (EC_FLASH_PROTECT_RO_AT_BOOT |
+			  EC_FLASH_PROTECT_ALL_AT_BOOT)) == 0) {
+		/* Clear protection */
 		offset = size = 0;
 		flashwp = SPI_WP_NONE;
-		break;
-	case FLASH_WP_ALL:
-		entire_flash_locked = 1;
-		/* Fallthrough */
-	case FLASH_WP_RO:
+	} else {
+		if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
+			entire_flash_locked = 1;
+
 		offset = CONFIG_WP_STORAGE_OFF;
 		size = CONFIG_WP_STORAGE_SIZE;
 		flashwp = SPI_WP_HARDWARE;
-		break;
-	default:
-		return EC_ERROR_INVAL;
 	}
 
 	ret = spi_flash_set_protect(offset, size);

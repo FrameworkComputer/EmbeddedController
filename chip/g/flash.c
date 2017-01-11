@@ -105,7 +105,7 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return 0;				/* no flags writable */
 }
 
-int flash_physical_protect_at_boot(enum flash_wp_range range)
+int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	return EC_SUCCESS;			/* yeah, I did it. */
 }

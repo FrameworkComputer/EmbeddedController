@@ -478,14 +478,13 @@ int flash_write_serial(const char *serialno)
 #endif
 }
 
-int flash_protect_at_boot(enum flash_wp_range range)
+int flash_protect_at_boot(uint32_t new_flags)
 {
 #ifdef CONFIG_FLASH_PSTATE
-	uint32_t new_flags =
-		(range != FLASH_WP_NONE) ? EC_FLASH_PROTECT_RO_AT_BOOT : 0;
+	uint32_t new_pstate_flags = new_flags & EC_FLASH_PROTECT_RO_AT_BOOT;
 
 	/* Read the current persist state from flash */
-	if (flash_read_pstate() != new_flags) {
+	if (flash_read_pstate() != new_pstate_flags) {
 		/* Need to update pstate */
 		int rv;
 
@@ -496,7 +495,7 @@ int flash_protect_at_boot(enum flash_wp_range range)
 #endif
 
 		/* Write the desired flags */
-		rv = flash_write_pstate(new_flags);
+		rv = flash_write_pstate(new_pstate_flags);
 		if (rv)
 			return rv;
 	}
@@ -513,12 +512,12 @@ int flash_protect_at_boot(enum flash_wp_range range)
 	 * This assumes PSTATE immediately follows RO, which it does on
 	 * all STM32 platforms (which are the only ones with this config).
 	 */
-	flash_physical_protect_at_boot(range);
+	flash_physical_protect_at_boot(new_flags);
 #endif
 
 	return EC_SUCCESS;
 #else
-	return flash_physical_protect_at_boot(range);
+	return flash_physical_protect_at_boot(new_flags);
 #endif
 }
 
@@ -586,8 +585,9 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 {
 	int retval = EC_SUCCESS;
 	int rv;
-	enum flash_wp_range range = FLASH_WP_NONE;
-	int need_set_protect = 0;
+	int old_flags_at_boot = flash_get_protect() &
+		(EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_ALL_AT_BOOT);
+	int new_flags_at_boot = old_flags_at_boot;
 
 	/*
 	 * Process flags we can set.  Track the most recent error, but process
@@ -612,21 +612,19 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 *   2. RO_AT_BOOT was not set, but it's requested to be set by
 	 *      the caller of flash_set_protect().
 	 */
-	if (mask & EC_FLASH_PROTECT_RO_AT_BOOT) {
-		range = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ?
-			FLASH_WP_RO : FLASH_WP_NONE;
-		need_set_protect = 1;
-	}
+
+	new_flags_at_boot &= ~(mask & EC_FLASH_PROTECT_RO_AT_BOOT);
+	new_flags_at_boot |= mask & flags & EC_FLASH_PROTECT_RO_AT_BOOT;
+
 	if ((mask & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
-	    !(flags & EC_FLASH_PROTECT_ALL_AT_BOOT)) {
-		if (flash_get_protect() & EC_FLASH_PROTECT_RO_AT_BOOT)
-			range = FLASH_WP_RO;
-		need_set_protect = 1;
-	}
-	if (need_set_protect) {
-		rv = flash_protect_at_boot(range);
+	    !(flags & EC_FLASH_PROTECT_ALL_AT_BOOT))
+		new_flags_at_boot &= ~EC_FLASH_PROTECT_ALL_AT_BOOT;
+
+	if (new_flags_at_boot != old_flags_at_boot) {
+		rv = flash_protect_at_boot(new_flags_at_boot);
 		if (rv)
 			retval = rv;
+		old_flags_at_boot = new_flags_at_boot;
 	}
 
 	/*
@@ -637,9 +635,15 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 				      EC_FLASH_PROTECT_RO_AT_BOOT))
 		return retval;
 
-	if ((mask & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
-	    (flags & EC_FLASH_PROTECT_ALL_AT_BOOT)) {
-		rv = flash_protect_at_boot(FLASH_WP_ALL);
+	/*
+	 * The case where ALL_AT_BOOT is unset is already covered above,
+	 * but this does not hurt.
+	 */
+	new_flags_at_boot &= ~(mask & EC_FLASH_PROTECT_ALL_AT_BOOT);
+	new_flags_at_boot |= mask & flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
+
+	if (new_flags_at_boot != old_flags_at_boot) {
+		rv = flash_protect_at_boot(new_flags_at_boot);
 		if (rv)
 			retval = rv;
 	}

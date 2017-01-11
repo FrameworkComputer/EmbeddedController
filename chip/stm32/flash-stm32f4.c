@@ -196,7 +196,7 @@ static void clear_flash_errors(void)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_protect_at_boot(enum flash_wp_range range)
+int flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	return EC_SUCCESS;
 }
