@@ -19,6 +19,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
+static int keep_ccd_enabled;
 static int ec_uart_enabled, enable_usb_wakeup;
 static int usb_is_initialized;
 
@@ -108,6 +109,9 @@ void uartn_tx_disconnect(int uart)
 
 void rdd_attached(void)
 {
+	if (ccd_is_enabled())
+		return;
+
 	/* Indicate case-closed debug mode (active low) */
 	gpio_set_level(GPIO_CCD_MODE_L, 0);
 
@@ -121,6 +125,9 @@ void rdd_attached(void)
 
 void rdd_detached(void)
 {
+	if (keep_ccd_enabled)
+		return;
+
 	/* Disconnect from AP and EC UART TX peripheral from gpios */
 	uartn_tx_disconnect(UART_EC);
 	uartn_tx_disconnect(UART_AP);
@@ -187,15 +194,21 @@ void enable_ap_usb(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_ap_usb, HOOK_PRIO_DEFAULT);
 
+static void clear_keepalive(void)
+{
+	keep_ccd_enabled = 0;
+	ccprintf("Cleared CCD keepalive\n");
+}
+
 static int command_ccd(int argc, char **argv)
 {
 	int val;
 
 	if (argc > 1) {
-		if (!strcasecmp("uart", argv[1]) && argc > 2) {
-			if (!parse_bool(argv[2], &val))
-				return EC_ERROR_PARAM2;
+		if (!parse_bool(argv[argc - 1], &val))
+			return argc == 2 ? EC_ERROR_PARAM1 : EC_ERROR_PARAM2;
 
+		if (!strcasecmp("uart", argv[1])) {
 			if (val) {
 				ec_uart_enabled = 1;
 				uartn_tx_connect(UART_EC);
@@ -203,37 +216,46 @@ static int command_ccd(int argc, char **argv)
 				ec_uart_enabled = 0;
 				uartn_tx_disconnect(UART_EC);
 			}
-		} else if (!strcasecmp("i2c", argv[1]) && argc > 2) {
-			if (!parse_bool(argv[2], &val))
-				return EC_ERROR_PARAM2;
-
-			if (val) {
+		} else if (!strcasecmp("i2c", argv[1])) {
+			if (val)
 				usb_i2c_board_enable();
-				ccprintf("CCD: i2c enabled\n");
-			} else {
+			else
 				usb_i2c_board_disable(0);
-				ccprintf("CCD: i2c disabled\n");
+		} else if (!strcasecmp("keepalive", argv[1])) {
+			if (val) {
+				/* Make sure ccd is enabled */
+				if (!ccd_is_enabled())
+					rdd_attached();
+
+				keep_ccd_enabled = 1;
+				ccprintf("Warning CCD will remain "
+					 "enabled until it is "
+					 "explicitly disabled.\n");
+			} else {
+				clear_keepalive();
 			}
 		} else if (argc == 2) {
-			if (!parse_bool(argv[1], &val))
-				return EC_ERROR_PARAM1;
-
-			if (val)
+			if (val) {
 				rdd_attached();
-			else
+			} else {
+				if (keep_ccd_enabled)
+					clear_keepalive();
+
 				rdd_detached();
+			}
 		} else
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("CCD:     %s\nAP UART: %s\nEC UART: %s\n",
+	ccprintf("CCD:%14s\nAP UART:  %s\nEC UART:  %s\n",
+		keep_ccd_enabled ? "forced enable" :
 		ccd_is_enabled() ? " enabled" : "disabled",
 		uartn_enabled(UART_AP) ? " enabled" : "disabled",
 		uartn_enabled(UART_EC) ? " enabled" : "disabled");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
-			"[uart|i2c] [<BOOLEAN>]",
+			"[uart|i2c|keepalive] [<BOOLEAN>]",
 			"Get/set the case closed debug state");
 
 static int command_sys_rst(int argc, char **argv)
