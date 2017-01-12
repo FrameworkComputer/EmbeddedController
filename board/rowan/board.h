@@ -16,8 +16,10 @@
 
 /* Accelero meter and gyro sensor */
 #define CONFIG_ACCEL_KX022
+#define CONFIG_ALS_ISL29035
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_CMD_ALS
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE 0
 #define CONFIG_LID_ANGLE_SENSOR_LID 1
@@ -135,6 +137,7 @@
 /* 2 I2C master ports, connect to battery, charger, pd and USB switches */
 #define I2C_PORT_MASTER  0
 #define I2C_PORT_ACCEL   0
+#define I2C_PORT_ALS     0
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define I2C_PORT_PERICOM 0
@@ -191,6 +194,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_BATTERY,
 
 	TEMP_SENSOR_COUNT
+};
+
+/* Light sensors attached to the EC. */
+enum als_id {
+	ALS_ISL29035 = 0,
+
+	ALS_COUNT,
 };
 
 /* TODO: determine the following board specific type-C power constants */

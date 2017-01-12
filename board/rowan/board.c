@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "als.h"
 #include "atomic.h"
 #include "battery.h"
 #include "charge_manager.h"
@@ -17,6 +18,7 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/als_isl29035.h"
 #include "driver/tcpm/anx7688.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -473,6 +475,12 @@ static void board_chipset_suspend(void)
 #endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+/* ALS instances. Must be in same order as enum als_id. */
+struct als_t als[] = {
+	{"ISL", isl29035_init, isl29035_read_lux, 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 #ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
