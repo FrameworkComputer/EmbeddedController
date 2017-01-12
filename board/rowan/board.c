@@ -16,8 +16,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_kionix.h"
-#include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi160.h"
 #include "driver/als_isl29035.h"
 #include "driver/tcpm/anx7688.h"
 #include "driver/tcpm/tcpci.h"
@@ -419,7 +418,7 @@ static void board_chipset_pre_init(void)
 	/* Enable level shift of AC_OK when power on */
 	board_extpower_buffer_to_soc();
 
-	/* Enable SPI for KX022 */
+	/* Enable SPI for BMI160 */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 
 	/* Set all four SPI pins to high speed */
@@ -483,103 +482,98 @@ struct als_t als[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
-#ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
 /* Mutexes */
-static struct mutex g_kx022_mutex[2];
+static struct mutex g_lid_mutex;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const matrix_3x3_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0,  FLOAT_TO_FP(1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
-};
-
 const matrix_3x3_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1),  0,  0},
-	{ 0, FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
+	{ 0, FLOAT_TO_FP(1),  0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
-/* KX022 private data */
-struct kionix_accel_data g_kx022_data[2];
+struct bmi160_drv_data_t g_bmi160_data;
 
 struct motion_sensor_t motion_sensors[] = {
-	{.name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_KX022,
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	{.name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &kionix_accel_drv,
-	 .mutex = &g_kx022_mutex[0],
-	 .drv_data = &g_kx022_data[0],
-	 .addr = 1, /* SPI, device ID 0 */
-	 .rot_standard_ref = &base_standard_ref,
-	 .default_range = 2, /* g, enough for laptop. */
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = CONFIG_SPI_ACCEL_PORT,
+	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
+	 .rot_standard_ref = &lid_standard_ref,
+	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
-		/* AP: by default use EC settings */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* unused */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
+		 /* AP: by default use EC settings */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* EC: angle detection is not used */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0
+		 },
 	 },
 	},
 
-	{.name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_KX022,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
+	{.name = "Lid Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &kionix_accel_drv,
-	 .mutex = &g_kx022_mutex[1],
-	 .drv_data = &g_kx022_data[1],
-	 .addr = 3, /* SPI, device ID 1 */
+	 .drv = &bmi160_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = CONFIG_SPI_ACCEL_PORT,
+	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
+	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &lid_standard_ref,
-	 .default_range = 2, /* g, enough for laptop. */
 	 .config = {
-		/* AP: by default use EC settings */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* unused */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Enable gyro in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+			 .ec_rate = 100 * MSEC,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
 	 },
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-void lid_angle_peripheral_enable(int enable)
-{
-	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
-}
-#endif /* defined(HAS_TASK_MOTIONSENSE) */
 
 uint16_t tcpc_get_alert_status(void)
 {
