@@ -194,4 +194,13 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
  */
 int board_vbus_source_enabled(int port);
 
+/**
+ * Get ramp start current.
+ *
+ * @param port PD port.
+ * @param supplier Identified CHARGE_SUPPLIER_*.
+ * @return ramp start current.
+ */
+int charge_manager_get_ramp_start_current(int port, int supplier);
+
 #endif /* __CROS_EC_CHARGE_MANAGER_H */
