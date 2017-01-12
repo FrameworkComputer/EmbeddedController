@@ -29,10 +29,24 @@ _dir_create := $(foreach d,$(dirs),$(shell [ -d $(out)/$(BLD)/$(d) ] || \
 _dir_y_create := $(foreach d,$(dirs-y),$(shell [ -d $(out)/$(BLD)/$(d) ] || \
 	    mkdir -p $(out)/RO/$(d); mkdir -p $(out)/RW/$(d)))
 
-# Decrease verbosity unless you pass V=1
-quiet = $(if $(V),,@echo '  $(2)' $(subst $(out)/,,$@) ; )$(cmd_$(1))
-silent = $(if $(V),,1>/dev/null)
-silent_err = $(if $(V),,2>/dev/null)
+# V unset for normal output, V=1 for verbose output, V=0 for silent build
+# (warnings/errors only). Use echo thus: $(call echo,"stuff  to  echo")
+ifeq ($(V),0)
+Q := @
+quiet = echo -n; $(cmd_$(1))
+silent = 1>/dev/null
+silent_err = 2>/dev/null
+else
+ifeq ($(V),)
+Q := @
+quiet = @echo '  $(2)' $(subst $(out)/,,$@) ; $(cmd_$(1))
+silent = 1>/dev/null
+silent_err = 2>/dev/null
+else
+Q :=
+quiet = $(cmd_$(1))
+endif
+endif
 
 # commands to build all targets
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) $< -o $@
