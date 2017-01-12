@@ -421,10 +421,8 @@ static void board_chipset_pre_init(void)
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 
 	/* Set all four SPI pins to high speed */
-	/* pins D0/D1/D3/D4 */
-	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000003cf;
-	/* pins F6 */
-	STM32_GPIO_OSPEEDR(GPIO_F) |= 0x00003000;
+	/* pins B12/B13/B14/B15 */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
 
 	/* Enable clocks to SPI2 module */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
@@ -454,8 +452,7 @@ static void board_chipset_shutdown(void)
 	 * Calling gpio_config_module sets disabled alternate function pins to
 	 * GPIO_INPUT.  But to prevent leakage we want to set GPIO_OUT_LOW
 	 */
-	gpio_set_flags_by_mask(GPIO_D, 0x1a, GPIO_OUT_LOW);
-	gpio_set_level(GPIO_SPI2_NSS, 0);
+	gpio_set_flags_by_mask(GPIO_B, 0xf000, GPIO_OUT_LOW);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
