@@ -616,14 +616,14 @@ int system_run_image_copy(enum system_image_copy_t copy)
 __attribute__((weak))	   /* Weird chips may need their own implementations */
 const char *system_get_version(enum system_image_copy_t copy)
 {
-	static struct version_struct v;
+	static struct image_data data;
 
 	uintptr_t addr;
 	enum system_image_copy_t active_copy = system_get_image_copy();
 
 	/* Handle version of current image */
 	if (copy == active_copy || copy == SYSTEM_IMAGE_UNKNOWN)
-		return &version_data.version[0];
+		return &current_image_data.version[0];
 
 	if (active_copy == SYSTEM_IMAGE_UNKNOWN)
 		return "";
@@ -632,7 +632,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 	 * The version string is always located after the reset vectors, so
 	 * it's the same offset as in the current image.  Find that offset.
 	 */
-	addr = ((uintptr_t)&version_data -
+	addr = ((uintptr_t)&current_image_data -
 	       get_program_memory_addr(active_copy));
 
 	/*
@@ -646,19 +646,19 @@ const char *system_get_version(enum system_image_copy_t copy)
 #ifdef CONFIG_MAPPED_STORAGE
 	addr += CONFIG_MAPPED_STORAGE_BASE;
 	flash_lock_mapped_storage(1);
-	memcpy(&v, (const void *)addr, sizeof(v));
+	memcpy(&data, (const void *)addr, sizeof(data));
 	flash_lock_mapped_storage(0);
 #else
 	/* Read the version struct from flash into a buffer. */
-	if (flash_read(addr, sizeof(v), (char *)&v))
+	if (flash_read(addr, sizeof(data), (char *)&data))
 		return "";
 #endif
 
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
-	if (v.cookie1 == version_data.cookie1 &&
-	    v.cookie2 == version_data.cookie2)
-		return v.version;
+	if (data.cookie1 == current_image_data.cookie1 &&
+	    data.cookie2 == current_image_data.cookie2)
+		return data.version;
 
 	return "";
 }

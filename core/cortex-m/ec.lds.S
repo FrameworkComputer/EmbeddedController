@@ -79,7 +79,7 @@ SECTIONS
 #endif
         STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable)
         . = ALIGN(4);
-        __version_struct_offset = .;
+        __image_data_offset = .;
         KEEP(*(.rodata.ver))
 
         . = ALIGN(4);
@@ -352,6 +352,12 @@ SECTIONS
 #endif
         ) >= (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
+
+#if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
+    __image_size = __hey_flash_used - FW_SIZE(RO_HDR);
+#else
+   __image_size = __hey_flash_used;
+#endif
 
 #ifdef CONFIG_USB_RAM_SIZE
     .usb_ram (NOLOAD) : {

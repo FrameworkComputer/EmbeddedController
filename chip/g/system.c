@@ -267,7 +267,7 @@ static char vers_str[MAX_RO_VER_LEN];
 
 const char *system_get_version(enum system_image_copy_t copy)
 {
-	const struct version_struct *v;
+	const struct image_data *data;
 	const struct SignedHeader *h;
 	enum system_image_copy_t this_copy;
 	uintptr_t vaddr, delta;
@@ -298,7 +298,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 		if (copy == this_copy) {
 			snprintf(vers_str, sizeof(vers_str), "%d.%d.%d/%s",
 				 h->epoch_, h->major_, h->minor_,
-				 version_data.version);
+				 current_image_data.version);
 			return vers_str;
 		}
 
@@ -307,7 +307,7 @@ const char *system_get_version(enum system_image_copy_t copy)
 		 * puts the version string right after the reset vectors, so
 		 * it's at the same relative offset. Measure that offset here.
 		 */
-		delta = (uintptr_t)&version_data - vaddr;
+		delta = (uintptr_t)&current_image_data - vaddr;
 
 		/* Now look at that offset in the requested image */
 		vaddr = get_program_memory_addr(copy);
@@ -315,17 +315,18 @@ const char *system_get_version(enum system_image_copy_t copy)
 			break;
 		h = (const struct SignedHeader *)vaddr;
 		vaddr += delta;
-		v = (const struct version_struct *)vaddr;
+		data = (const struct image_data *)vaddr;
 
 		/*
 		 * Make sure the version struct cookies match before returning
 		 * the version string.
 		 */
-		if (v->cookie1 == version_data.cookie1 &&
-		    v->cookie2 == version_data.cookie2 &&
+		if (data->cookie1 == current_image_data.cookie1 &&
+		    data->cookie2 == current_image_data.cookie2 &&
 		    h->magic) { /* Corrupted header's magic is set to zero. */
 			snprintf(vers_str, sizeof(vers_str), "%d.%d.%d/%s",
-				 h->epoch_, h->major_, h->minor_, v->version);
+				 h->epoch_, h->major_, h->minor_,
+				 data->version);
 			return vers_str;
 		}
 	default:

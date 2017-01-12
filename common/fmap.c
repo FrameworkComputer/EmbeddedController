@@ -114,9 +114,9 @@ const struct _ec_fmap {
 			.area_name = "RO_FRID",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
 				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF +
-				RELATIVE_RO((uint32_t)__version_struct_offset) +
-				offsetof(struct version_struct,  version),
-			.area_size = sizeof(version_data.version),
+				RELATIVE_RO((uint32_t)__image_data_offset) +
+				offsetof(struct image_data,  version),
+			.area_size = sizeof(current_image_data.version),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 
@@ -167,15 +167,15 @@ const struct _ec_fmap {
 			 * RW firmware version ID. Must be NULL terminated
 			 * ASCII, and padded with \0.
 			 * TODO: Get the relative offset of
-			 * __version_struct_offset within our RW image to
+			 * __image_data_offset within our RW image to
 			 * accommodate image asymmetry.
 			 */
 			.area_name = "RW_FWID",
 			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
 				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
-				RELATIVE_RO((uint32_t)__version_struct_offset) +
-				offsetof(struct version_struct,  version),
-			.area_size = sizeof(version_data.version),
+				RELATIVE_RO((uint32_t)__image_data_offset) +
+				offsetof(struct image_data,  version),
+			.area_size = sizeof(current_image_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
