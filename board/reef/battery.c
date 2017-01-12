@@ -52,6 +52,7 @@ struct board_batt_params {
 
 #define DEFAULT_BATTERY_TYPE BATTERY_SONY_CORP
 #define SONY_DISCHARGE_DISABLE_FET_BIT (0x01 << 13)
+#define C22N1626_DISCHARGE_ENABLE_FET_BIT (0x01 << 0)
 
 /* keep track of previous charge profile info */
 static const struct fast_charge_profile *prev_chg_profile_info;
@@ -176,7 +177,7 @@ const struct battery_info batt_info_sonycorp = {
 	.discharging_max_c = 75,
 };
 
-const struct battery_info batt_info_smp_c22n1626 = {
+const struct battery_info batt_info_c22n1626 = {
 	.voltage_max = 8800,	/* mV */
 	.voltage_normal = 7700,
 
@@ -216,6 +217,20 @@ static int batt_sony_corp_init(void)
 		!(batt_status & SONY_DISCHARGE_DISABLE_FET_BIT);
 }
 
+static int batt_c22n1626_init(void)
+{
+	int batt_status;
+
+	/*
+	 * SB_PACK_STATUS:
+	 * [0] : Discharging Enabled
+	 *      : 0b - Not Allowed to Discharge
+	 *      : 1b - Allowed to Discharge
+	 */
+	return sb_read(SB_PACK_STATUS, &batt_status) ? 0 :
+		!!(batt_status & C22N1626_DISCHARGE_ENABLE_FET_BIT);
+}
+
 static const struct ship_mode_info ship_mode_info_smp_cos4870 = {
 	.ship_mode_reg = 0x00,
 	.ship_mode_data = 0x0010,
@@ -226,6 +241,12 @@ static const struct ship_mode_info ship_mode_info_sonycorp = {
 	.ship_mode_reg = 0x3A,
 	.ship_mode_data = 0xC574,
 	.batt_init = batt_sony_corp_init,
+};
+
+static const struct ship_mode_info ship_mode_info_c22n1626= {
+	.ship_mode_reg = 0x00,
+	.ship_mode_data = 0x0010,
+	.batt_init = batt_c22n1626_init,
 };
 
 static const struct board_batt_params info[] = {
@@ -248,17 +269,17 @@ static const struct board_batt_params info[] = {
 	/* BQ40Z55 SMP C22N1626 BATTERY battery specific configurations */
 	[BATTERY_SMP_C22N1626] = {
 		.manuf_name = "AS1FNZD3KD",
-		.ship_mode_inf = &ship_mode_info_smp_cos4870,
+		.ship_mode_inf = &ship_mode_info_c22n1626,
 		.fast_chg_params = &fast_chg_params_smp_cos4870,
-		.batt_info = &batt_info_smp_c22n1626,
+		.batt_info = &batt_info_c22n1626,
 	},
 
 	/* BQ40Z55 CPT C22N1626 BATTERY battery specific configurations */
 	[BATTERY_CPT_C22N1626] = {
 		.manuf_name = "AS1FOAD3KD",
-		.ship_mode_inf = &ship_mode_info_smp_cos4870,
+		.ship_mode_inf = &ship_mode_info_c22n1626,
 		.fast_chg_params = &fast_chg_params_smp_cos4870,
-		.batt_info = &batt_info_smp_c22n1626,
+		.batt_info = &batt_info_c22n1626,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);

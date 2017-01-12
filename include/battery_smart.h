@@ -57,6 +57,7 @@
 #define SB_DEVICE_CHEMISTRY             0x22
 #define SB_MANUFACTURER_DATA            0x23
 /* Extension of smart battery spec, may not be supported on all platforms */
+#define SB_PACK_STATUS                  0x43
 #define SB_ALT_MANUFACTURER_ACCESS      0x44
 
 /* Battery mode */
