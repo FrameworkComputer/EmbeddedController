@@ -10,18 +10,20 @@
 
 #include "common.h"
 
-#define CROS_EC_VERSION_COOKIE1 0xce112233
-#define CROS_EC_VERSION_COOKIE2 0xce445566
+#define CROS_EC_IMAGE_DATA_COOKIE1 0xce778899
+#define CROS_EC_IMAGE_DATA_COOKIE2 0xceaabbcc
 
-struct version_struct {
+struct image_data {
 	uint32_t cookie1;
 	char version[32];
+	uint32_t size;
 	uint32_t cookie2;
 } __packed;
 
-extern const struct version_struct version_data;
+extern const struct image_data current_image_data;
 extern const char build_info[];
-extern const char __version_struct_offset[];
+extern const char __image_data_offset[];
+extern const void *__image_size;
 
 /**
  * Get the number of commits field from version string.

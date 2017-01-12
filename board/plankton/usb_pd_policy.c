@@ -289,7 +289,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	*rpayload = payload;
 	switch (cmd) {
 	case VDO_CMD_VERSION:
-		memcpy(payload + 1, &version_data.version, 24);
+		memcpy(payload + 1, &current_image_data.version, 24);
 		rsize = 7;
 		break;
 	default:

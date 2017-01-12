@@ -36,7 +36,7 @@ SECTIONS
                 "__flash_dma_start has to be 4k-byte aligned");
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable))
         . = ALIGN(4);
-        __version_struct_offset = .;
+        __image_data_offset = .;
         KEEP(*(.rodata.ver))
         . = ALIGN(4);
         KEEP(STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vectirq))

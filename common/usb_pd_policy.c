@@ -959,7 +959,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 
 	switch (PD_VDO_CMD(payload[0])) {
 	case VDO_CMD_VERSION:
-		memcpy(payload + 1, &version_data.version, 24);
+		memcpy(payload + 1, &current_image_data.version, 24);
 		rsize = 7;
 		break;
 	case VDO_CMD_REBOOT:
