@@ -118,6 +118,8 @@ if [ -n "$global_dirty" ]; then
     echo "#define DATE \"$(date '+%F %T')\""
 else
     echo "/* Repo is clean, use the commit date of the last commit */"
-    gitdate=$(git log -1 --format='%ci' HEAD | cut -d ' ' -f '1 2')
+    # If called from an ebuild we won't have a git repo, so redirect stderr
+    # to avoid annoying 'Not a git repository' errors.
+    gitdate=$(git log -1 --format='%ci' HEAD 2>/dev/null | cut -d ' ' -f '1 2')
     echo "#define DATE \"${gitdate}\""
 fi
