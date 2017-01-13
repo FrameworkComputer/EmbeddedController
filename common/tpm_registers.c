@@ -641,6 +641,7 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 
 /* Event (to TPM task) to request reset, or (from TPM task) on completion. */
 #define TPM_EVENT_RESET TASK_EVENT_CUSTOM(1 << 0)
+#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(1 << 1)
 
 /* Calling task (singular) to notify when the TPM reset has completed */
 static __initialized task_id_t waiting_for_reset = TASK_ID_INVALID;
@@ -695,6 +696,20 @@ int tpm_is_resetting(void)
 {
 	return reset_in_progress;
 }
+
+/*
+ * A timeout hook to reinstate NVMEM commits soon after reset.
+ *
+ * The TPM task disables nvmem commits during TPM reset, they need to be
+ * reinstated on the same task context. This is why an event is raised here to
+ * wake up the TPM task and force it to reinstate nvmem commits instead of
+ * doing it here directly.
+ */
+static void reinstate_nvmem_commits(void)
+{
+	task_set_event(TASK_ID_TPM, TPM_EVENT_COMMIT, 0);
+}
+DECLARE_DEFERRED(reinstate_nvmem_commits);
 
 static void tpm_reset_now(int wipe_first)
 {
@@ -755,6 +770,13 @@ static void tpm_reset_now(int wipe_first)
 	}
 
 	cprints(CC_TASK, "%s: done", __func__);
+
+	/*
+	 * The host might decide to do it sooner, but let's make sure commits
+	 * do not stay disabled for more than 3 seconds.
+	 */
+	hook_call_deferred(&reinstate_nvmem_commits_data, 3 * SECOND);
+
 	reset_in_progress = 0;
 }
 
@@ -772,8 +794,23 @@ void tpm_task(void)
 		evt = task_wait_event(-1);
 		if (evt & TPM_EVENT_RESET) {
 			tpm_reset_now(wipe_requested);
+			/*
+			 * There is no point in looking at other events in
+			 * this situation: the nvram will be committed by TPM
+			 * reset; other tpm commands would be ignored.
+			 *
+			 * Let's just continue. This could change if there are
+			 * other events added to the set.
+			 */
 			continue;
 		}
+
+		if (evt & TPM_EVENT_COMMIT)
+			nvmem_enable_commits();
+
+		if (!(evt & TASK_EVENT_WAKE))
+			continue;
+
 		tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;
 		command_code = be32toh(tpmh->command_code);
 		CPRINTF("%s: received fifo command 0x%04x\n",
@@ -801,20 +838,8 @@ void tpm_task(void)
 			 * TODO(vbendeb): revisit this when
 			 * crosbug.com/p/55667 has been addressed.
 			 */
-			if (command_code == TPM2_PCR_Read) {
+			if (command_code == TPM2_PCR_Read)
 				system_process_retry_counter();
-				/*
-				 * The AP issuing a PCR Read command is
-				 * considered an indication of the boot
-				 * process being finished.
-				 *
-				 * There is no need to speed up TPM operations
-				 * any more, pending NVMEM changes should be
-				 * committed and future NVMEM commits should
-				 * not be postponed.
-				 */
-				nvmem_enable_commits();
-			}
 #ifdef CONFIG_EXTENSION_COMMAND
 			if (!IS_CUSTOM_CODE(command_code))
 #endif
