@@ -6,13 +6,23 @@
 """Module for testing rsa functions using extended commands."""
 
 import binascii
+import Crypto
+import Crypto.Hash.SHA
+import Crypto.Hash.SHA256
+import Crypto.Hash.SHA384
+import Crypto.Hash.SHA512
+from Crypto.PublicKey import RSA
+import Crypto.Signature.PKCS1_PSS
+import Crypto.Signature.PKCS1_v1_5
 import hashlib
+import os
 import rsa
 import struct
 
 import subcmd
 import utils
 
+_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 _RSA_OPCODES = {
   'ENCRYPT': 0x00,
@@ -41,9 +51,29 @@ _RSA_PADDING = {
 _HASH = {
   'NONE': 0x00,
   'SHA1': 0x04,
-  'SHA256': 0x0B
+  'SHA256': 0x0B,
+  'SHA384': 0x0C,
+  'SHA512': 0x0D,
 }
 
+_SIGNER = {
+  'PKCS1-SSA': Crypto.Signature.PKCS1_v1_5,
+  'PKCS1-PSS': Crypto.Signature.PKCS1_PSS,
+}
+
+_HASHER = {
+  'SHA1':   Crypto.Hash.SHA,
+  'SHA256': Crypto.Hash.SHA256,
+  'SHA384': Crypto.Hash.SHA384,
+  'SHA512': Crypto.Hash.SHA512,
+}
+
+_KEYS = {
+  768:  RSA.importKey(open(os.path.join(_MODULE_DIR, 'rsa768.pem')).read()),
+  1024: RSA.importKey(open(os.path.join(_MODULE_DIR, 'rsa1024.pem')).read()),
+  2048: RSA.importKey(open(os.path.join(_MODULE_DIR, 'rsa2048.pem')).read()),
+  4096: RSA.importKey(open(os.path.join(_MODULE_DIR, 'rsa4096.pem')).read()),
+}
 
 # Command format.
 #
@@ -80,13 +110,8 @@ def _encrypt_cmd(padding, hashing, key_len, msg):
                                 dl='', dig='')
 
 
-def _sign_cmd(padding, hashing, key_len, msg):
+def _sign_cmd(padding, hashing, key_len, digest):
   op = _RSA_OPCODES['SIGN']
-  digest = ''
-  if hashing == _HASH['SHA1']:
-      digest = hashlib.sha1(msg).digest()
-  elif hashing == _HASH['SHA256']:
-      digest = hashlib.sha256(msg).digest()
   digest_len = len(digest)
   return _RSA_CMD_FORMAT.format(o=op, p=padding, h=hashing,
                                 kl=struct.pack('>H', key_len),
@@ -94,14 +119,9 @@ def _sign_cmd(padding, hashing, key_len, msg):
                                 dl='', dig='')
 
 
-def _verify_cmd(padding, hashing, key_len, sig, msg):
+def _verify_cmd(padding, hashing, key_len, sig, digest):
   op = _RSA_OPCODES['VERIFY']
   sig_len = len(sig)
-  digest = ''
-  if hashing == _HASH['SHA1']:
-      digest = hashlib.sha1(msg).digest()
-  elif hashing == _HASH['SHA256']:
-      digest = hashlib.sha256(msg).digest()
   digest_len = len(digest)
   return _RSA_CMD_FORMAT.format(o=op, p=padding, h=hashing,
                                 kl=struct.pack('>H', key_len),
@@ -585,9 +605,23 @@ _SIGN_INPUTS = (
   ('PKCS1-SSA', 'SHA1', 768),
   ('PKCS1-SSA', 'SHA256', 768),
   ('PKCS1-SSA', 'SHA256', 1024),
+  ('PKCS1-SSA', 'SHA384', 2048),
+  ('PKCS1-SSA', 'SHA512', 2048),
   ('PKCS1-PSS', 'SHA1', 768),
   ('PKCS1-PSS', 'SHA256', 768),
   ('PKCS1-PSS', 'SHA256', 2048),
+)
+
+_VERIFY_INPUTS = (
+  ('PKCS1-SSA', 'SHA1', 768),
+  ('PKCS1-SSA', 'SHA256', 768),
+  ('PKCS1-SSA', 'SHA256', 1024),
+  ('PKCS1-SSA', 'SHA384', 2048),
+  ('PKCS1-SSA', 'SHA512', 4096),
+  ('PKCS1-PSS', 'SHA1', 768),
+  ('PKCS1-PSS', 'SHA256', 768),
+  ('PKCS1-PSS', 'SHA256', 2048),
+  ('PKCS1-PSS', 'SHA256', 4096),
 )
 
 _KEYTEST_INPUTS = (
@@ -644,17 +678,43 @@ def _encrypt_tests(tpm):
 
 
 def _sign_tests(tpm):
-  msg = 'Hello CR50!'
-
   for data in _SIGN_INPUTS:
+    msg = rsa.randnum.read_random_bits(256)
     padding, hashing, key_len = data
     test_name = 'RSA-SIGN:%s:%s:%d' % data
-    cmd = _sign_cmd(_RSA_PADDING[padding], _HASH[hashing], key_len, msg)
+
+    key = _KEYS[key_len]
+    verifier = _SIGNER[padding].new(key)
+    h = _HASHER[hashing].new()
+    h.update(msg)
+
+    cmd = _sign_cmd(_RSA_PADDING[padding], _HASH[hashing], key_len, h.digest())
     wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
     signature = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
 
+    signer = _SIGNER[padding].new(key)
+    expected_signature = signer.sign(h)
+
+    if not verifier.verify(h, signature):
+      raise subcmd.TpmTestError('%s error' % (
+          test_name,))
+    print('%sSUCCESS: %s' % (utils.cursor_back(), test_name))
+
+
+def _verify_tests(tpm):
+  for data in _VERIFY_INPUTS:
+    msg = rsa.randnum.read_random_bits(256)
+    padding, hashing, key_len = data
+    test_name = 'RSA-VERIFY:%s:%s:%d' % data
+
+    key = _KEYS[key_len]
+    signer = _SIGNER[padding].new(key)
+    h = _HASHER[hashing].new()
+    h.update(msg)
+    signature = signer.sign(h)
+
     cmd = _verify_cmd(_RSA_PADDING[padding], _HASH[hashing],
-                      key_len, signature, msg)
+                      key_len, signature, h.digest())
     wrapped_response = tpm.command(tpm.wrap_ext_command(subcmd.RSA, cmd))
     verified = tpm.unwrap_ext_response(subcmd.RSA, wrapped_response)
     expected = '\x01'
@@ -751,6 +811,7 @@ def _x509_verify_tests(tpm):
 def rsa_test(tpm):
   _encrypt_tests(tpm)
   _sign_tests(tpm)
+  _verify_tests(tpm)
   _keytest_tests(tpm)
   _keygen_tests(tpm)
   _primegen_tests(tpm)

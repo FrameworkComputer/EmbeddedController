@@ -452,9 +452,10 @@ static int check_pkcs1_pss_pad(const uint8_t *in, uint32_t in_len,
 	return !bad;
 }
 
-static int check_modulus_params(const struct LITE_BIGNUM *N, uint32_t *out_len)
+static int check_modulus_params(
+	const struct LITE_BIGNUM *N, size_t rsa_max_bytes, uint32_t *out_len)
 {
-	if (bn_size(N) > RSA_MAX_BYTES)
+	if (bn_size(N) > rsa_max_bytes)
 		return 0;                      /* Unsupported key size. */
 	if (!bn_check_topbit(N))               /* Check that top bit is set. */
 		return 0;
@@ -476,7 +477,7 @@ int DCRYPTO_rsa_encrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	struct LITE_BIGNUM e;
 	struct LITE_BIGNUM encrypted;
 
-	if (!check_modulus_params(&rsa->N, out_len))
+	if (!check_modulus_params(&rsa->N, sizeof(padded_buf), out_len))
 		return 0;
 
 	bn_init(&padded, padded_buf, bn_size(&rsa->N));
@@ -536,7 +537,7 @@ int DCRYPTO_rsa_decrypt(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	struct LITE_BIGNUM padded;
 	int ret = 1;
 
-	if (!check_modulus_params(&rsa->N, NULL))
+	if (!check_modulus_params(&rsa->N, sizeof(padded_buf), NULL))
 		return 0;
 	if (in_len != bn_size(&rsa->N))
 		return 0;                      /* Invalid input length. */
@@ -592,7 +593,7 @@ int DCRYPTO_rsa_sign(struct RSA *rsa, uint8_t *out, uint32_t *out_len,
 	struct LITE_BIGNUM padded;
 	struct LITE_BIGNUM signature;
 
-	if (!check_modulus_params(&rsa->N, out_len))
+	if (!check_modulus_params(&rsa->N, sizeof(padded_buf), out_len))
 		return 0;
 
 	bn_init(&padded, padded_buf, bn_size(&rsa->N));
@@ -629,8 +630,8 @@ int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 		const uint32_t sig_len,	enum padding_mode padding,
 		enum hashing_mode hashing)
 {
-	uint32_t padded_buf[RSA_MAX_WORDS];
-	uint32_t signature_buf[RSA_MAX_WORDS];
+	uint32_t padded_buf[RSA_WORDS_4K];
+	uint32_t signature_buf[RSA_WORDS_4K];
 	uint32_t e_buf[LITE_BN_BYTES / sizeof(uint32_t)];
 
 	struct LITE_BIGNUM padded;
@@ -638,7 +639,7 @@ int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 	struct LITE_BIGNUM e;
 	int ret = 1;
 
-	if (!check_modulus_params(&rsa->N, NULL))
+	if (!check_modulus_params(&rsa->N, sizeof(padded_buf), NULL))
 		return 0;
 	if (sig_len != bn_size(&rsa->N))
 		return 0;                      /* Invalid input length. */
@@ -650,10 +651,10 @@ int DCRYPTO_rsa_verify(const struct RSA *rsa, const uint8_t *digest,
 	BN_DIGIT(&e, 0) = rsa->e;
 
 	/* Reverse from big-endian to little-endian notation. */
-	reverse((uint8_t *) signature.d, signature.dmax * LITE_BN_BYTES);
+	reverse((uint8_t *) signature.d, bn_size(&signature));
 	bn_mont_modexp(&padded, &signature, &e, &rsa->N);
 	/* Back to big-endian notation. */
-	reverse((uint8_t *) padded.d, padded.dmax * LITE_BN_BYTES);
+	reverse((uint8_t *) padded.d, bn_size(&padded));
 
 	switch (padding) {
 	case PADDING_MODE_PKCS1:

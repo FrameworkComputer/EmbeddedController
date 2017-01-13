@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "dcrypto.h"
 #include "internal.h"
 #include "registers.h"
 #include "trng.h"
@@ -1017,12 +1018,12 @@ struct DMEM_montmul {
 	struct DMEM_montmul_ptrs sqr_ptrs;
 	struct DMEM_montmul_ptrs mul_ptrs;
 	struct DMEM_montmul_ptrs out_ptrs;
-	uint32_t mod[64];
+	uint32_t mod[RSA_WORDS_4K];
 	uint32_t dInv[8];
-	uint32_t RR[64];
-	uint32_t in[64];
-	uint32_t exp[64];
-	uint32_t out[64];
+	uint32_t RR[RSA_WORDS_4K];
+	uint32_t in[RSA_WORDS_4K];
+	uint32_t exp[RSA_WORDS_4K];
+	uint32_t out[RSA_WORDS_4K];
 };
 
 #define DMEM_CELL_SIZE 32

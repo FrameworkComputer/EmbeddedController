@@ -134,8 +134,17 @@ void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len);
  *  RSA.
  */
 
-/* Largest supported key size, 2048-bits. */
-#define RSA_MAX_BYTES   256
+/* Largest supported key size for signing / encryption: 2048-bits.
+ * Verification is a special case and supports 4096-bits (signing /
+ * decryption could also support 4k-RSA, but is disabled since support
+ * is not required, and enabling support would result in increased
+ * stack usage for all key sizes.)
+ */
+#define RSA_BYTES_2K    256
+#define RSA_BYTES_4K    512
+#define RSA_WORDS_2K    (RSA_BYTES_2K / sizeof(uint32_t))
+#define RSA_WORDS_4K    (RSA_BYTES_4K / sizeof(uint32_t))
+#define RSA_MAX_BYTES   RSA_BYTES_2K
 #define RSA_MAX_WORDS   (RSA_MAX_BYTES / sizeof(uint32_t))
 #define RSA_F4          65537
 
