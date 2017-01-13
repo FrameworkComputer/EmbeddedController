@@ -120,10 +120,40 @@ CPPFLAGS += -DCR50_DEV=1
 SIGNER = $(HOME)/bin/codesigner
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub
 RW_SIGNER_EXTRAS = -x util/signer/fuses.xml
-RW_SIGNER_EXTRAS += -j util/signer/ec_RW-manifest-dev.json
-$(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
-$(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
-endif
+
+ifneq ($(CHIP_MK_INCLUDED_ONCE),)
+ifneq ($(H1_DEVIDS),)
+#
+# When building a node locked cr50 image for an H1 device with prod RO, the
+# manifest needs to be modifed to include the device ID of the chip the image
+# is built for.
+#
+# The device ID consists of two 32 bit numbers which can be retrieved by
+# running the 'sysinfo' command on the cr50 console. These two numbers
+# need to be spliced into the signer manifest after the '"fuses": {' line
+# for the signer to pick them up. Pass the numbers on the make command line
+# like this:
+#
+# H1_DEVIDS='<num 1> <num 2>' make ...
+#
+
+SIGNER_MANIFEST := $(shell mktemp /tmp/h1.signer.XXXXXX)
+DUMMY := $(shell /bin/cp util/signer/ec_RW-manifest-dev.json $(SIGNER_MANIFEST))
+REPLACEMENT := $(shell printf \
+	'\\n    \\"DEV_ID0\\": %d,\\n    \\"DEV_ID1\\": %d,' $${H1_DEVIDS})
+NODE_JSON :=  $(shell sed -i \
+	"s/\"fuses\": {/\"fuses\": {$(REPLACEMENT)/" $(SIGNER_MANIFEST))
+
+else  # H1_DEVIDS  ^^^^^ nonempty    vvvvvv empty
+
+SIGNER_MANIFEST := util/signer/ec_RW-manifest-dev.json
+
+endif  # H1_DEVIDS  ^^^^^ empty
+
+RW_SIGNER_EXTRAS += -j $(SIGNER_MANIFEST)
+endif  # CHIP_MK_INCLUDED_ONCE defined
+endif  # CR50_DEV defined
+
 
 # This file is included twice by the Makefile, once to determine the CHIP info
 # # and then again after defining all the CONFIG_ and HAS_TASK variables. We use
@@ -132,6 +162,9 @@ endif
 ifeq ($(CHIP_MK_INCLUDED_ONCE),)
 CHIP_MK_INCLUDED_ONCE=1
 else
+
+$(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
+$(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
 
 ifeq ($(CONFIG_DCRYPTO),y)
 $(out)/RW/ec.RW.elf $(out)/RW/ec.RW_B.elf: LDFLAGS_EXTRA += -L$(out)/cryptoc \
