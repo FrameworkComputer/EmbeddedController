@@ -1085,9 +1085,9 @@ void tcpc_init(int port)
 	int i;
 
 	/* Initialize physical layer */
-	pd_hw_init(port, PD_ROLE_DEFAULT);
-	pd[port].cc_pull = PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
-							       TYPEC_CC_RD;
+	pd_hw_init(port, PD_ROLE_DEFAULT(port));
+	pd[port].cc_pull = PD_ROLE_DEFAULT(port) ==
+		PD_ROLE_SOURCE ? TYPEC_CC_RP : TYPEC_CC_RD;
 #ifdef TCPC_LOW_POWER
 	/* Don't use low power immediately after boot */
 	pd[port].low_power_ts.val = get_time().val + SECOND;

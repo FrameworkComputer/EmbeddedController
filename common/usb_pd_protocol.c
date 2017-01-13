@@ -1634,13 +1634,12 @@ void pd_task(void)
 #endif
 
 	/* Initialize PD protocol state variables for each port. */
-	pd[port].power_role = PD_ROLE_DEFAULT;
+	pd[port].power_role = PD_ROLE_DEFAULT(port);
 	pd[port].vdm_state = VDM_STATE_DONE;
 	set_state(port, this_state);
 	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
-	tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ? TYPEC_CC_RP :
-							      TYPEC_CC_RD);
-
+	tcpm_set_cc(port, PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE ?
+		    TYPEC_CC_RP : TYPEC_CC_RD);
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	/* Initialize PD Policy engine */
@@ -1694,9 +1693,8 @@ void pd_task(void)
 		    (pd[port].task_state != PD_STATE_DRP_AUTO_TOGGLE)) {
 #endif
 			/* Ensure CC termination is default */
-			tcpm_set_cc(port, PD_ROLE_DEFAULT == PD_ROLE_SOURCE ?
-							      TYPEC_CC_RP :
-							      TYPEC_CC_RD);
+			tcpm_set_cc(port, PD_ROLE_DEFAULT(port) ==
+				    PD_ROLE_SOURCE ? TYPEC_CC_RP : TYPEC_CC_RD);
 
 			/*
 			 * If we have a stable contract in the default role,
@@ -1707,10 +1705,10 @@ void pd_task(void)
 			 */
 			if (pd[port].vdm_state == VDM_STATE_DONE && (
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-			    (PD_ROLE_DEFAULT == PD_ROLE_SINK &&
+			     (PD_ROLE_DEFAULT(port) == PD_ROLE_SINK &&
 			     pd[port].task_state == PD_STATE_SNK_READY) ||
 #endif
-			    (PD_ROLE_DEFAULT == PD_ROLE_SOURCE &&
+			     (PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE &&
 			     pd[port].task_state == PD_STATE_SRC_READY))) {
 				tcpm_set_polarity(port, pd[port].polarity);
 				tcpm_set_msg_header(port, pd[port].power_role,
@@ -1718,7 +1716,7 @@ void pd_task(void)
 				tcpm_set_rx_enable(port, 1);
 			} else {
 				/* Ensure state variables are at default */
-				pd[port].power_role = PD_ROLE_DEFAULT;
+				pd[port].power_role = PD_ROLE_DEFAULT(port);
 				pd[port].vdm_state = VDM_STATE_DONE;
 				set_state(port, PD_DEFAULT_STATE(port));
 			}
@@ -1772,7 +1770,7 @@ void pd_task(void)
 				set_state(port,
 					PD_STATE_SRC_DISCONNECTED_DEBOUNCE);
 			}
-#ifdef CONFIG_USB_PD_DUAL_ROLE
+#if defined(CONFIG_USB_PD_DUAL_ROLE) && !defined(CONFIG_USB_PD_DTS)
 			/*
 			 * Try.SRC state is embedded here. Wait for SNK
 			 * detect, or if timer expires, transition to
@@ -1876,11 +1874,14 @@ void pd_task(void)
 				/* Remove VBUS */
 				pd_power_supply_reset(port);
 #endif
-
+#ifdef CONFIG_USB_PD_DTS
+				if (new_cc_state == PD_CC_DEBUG_ACC)
+					pd_set_power_supply_ready(port);
+#endif
 				/* Set the USB muxes and the default USB role */
 				pd_set_data_role(port, CONFIG_USB_PD_DEBUG_DR);
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG
+#if defined(CONFIG_CASE_CLOSED_DEBUG) || defined(CONFIG_USB_PD_DTS)
 				if (new_cc_state == PD_CC_DEBUG_ACC) {
 					ccd_set_mode(system_is_locked() ?
 						     CCD_MODE_PARTIAL :
@@ -1904,7 +1905,7 @@ void pd_task(void)
 			     (cc1 != TYPEC_CC_VOLT_RD ||
 			      cc2 != TYPEC_CC_VOLT_RD))) {
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
-#ifdef CONFIG_CASE_CLOSED_DEBUG
+#if defined(CONFIG_CASE_CLOSED_DEBUG) || defined(CONFIG_USB_PD_DTS)
 				ccd_set_mode(CCD_MODE_DISABLED);
 #endif
 				timeout = 10*MSEC;
@@ -2209,7 +2210,7 @@ void pd_task(void)
 			while (pd[port].task_state == PD_STATE_SUSPENDED)
 				task_wait_event(-1);
 #ifdef CONFIG_USB_PD_TCPC
-			pd_hw_init(port, PD_ROLE_DEFAULT);
+			pd_hw_init(port, PD_ROLE_DEFAULT(port));
 #endif
 			CPRINTS("TCPC p%d resumed!", port);
 			break;

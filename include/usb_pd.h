@@ -765,6 +765,7 @@ void pd_set_dual_role(enum pd_dual_role_states state);
  * @param port Port number from which to get role
  */
 int pd_get_role(int port);
+
 #endif
 
 /* Control Message type */
@@ -812,15 +813,17 @@ enum pd_data_msg_type {
 #define PD_ROLE_VCONN_ON  1
 
 /* Port role at startup */
+#ifndef PD_ROLE_DEFAULT
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-#define PD_ROLE_DEFAULT PD_ROLE_SINK
+#define PD_ROLE_DEFAULT(port) PD_ROLE_SINK
 #else
-#define PD_ROLE_DEFAULT PD_ROLE_SOURCE
+#define PD_ROLE_DEFAULT(port) PD_ROLE_SOURCE
+#endif
 #endif
 
 /* Port default state at startup */
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-#define PD_DEFAULT_STATE(port) ((PD_ROLE_DEFAULT == PD_ROLE_SOURCE) ? \
+#define PD_DEFAULT_STATE(port) ((PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE) ? \
 				PD_STATE_SRC_DISCONNECTED :	      \
 				PD_STATE_SNK_DISCONNECTED)
 #else

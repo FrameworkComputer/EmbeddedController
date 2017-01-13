@@ -2119,6 +2119,9 @@
  */
 #undef CONFIG_USB_PD_DISCHARGE_TCPC
 
+/* Define if this board is acting as a Debug Test System (DTS) */
+#undef CONFIG_USB_PD_DTS
+
 /* Define if this board can act as a dual-role PD port (source and sink) */
 #undef CONFIG_USB_PD_DUAL_ROLE
 

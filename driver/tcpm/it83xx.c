@@ -321,7 +321,7 @@ static void it83xx_set_cc(enum usbpd_port port, int pull)
 static int it83xx_tcpm_init(int port)
 {
 	/* Initialize physical layer */
-	it83xx_init(port, PD_ROLE_DEFAULT);
+	it83xx_init(port, PD_ROLE_DEFAULT(port));
 
 	return EC_SUCCESS;
 }
