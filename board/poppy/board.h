@@ -18,6 +18,7 @@
 #define CONFIG_ADC
 #define CONFIG_BOARD_VERSION
 #define CONFIG_BUTTON_COUNT 2
+#define CONFIG_BUTTON_RECOVERY
 #define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 #define CONFIG_DPTF
 #define CONFIG_FLASH_SIZE 0x80000
@@ -213,6 +214,12 @@ enum adc_channel {
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
+};
+
+enum button {
+	BUTTON_VOLUME_DOWN = 0,
+	BUTTON_VOLUME_UP = 1,
+	BUTTON_COUNT
 };
 
 /* start as a sink in case we have no other power supply/battery */
