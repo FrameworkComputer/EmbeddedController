@@ -78,11 +78,15 @@
 #undef CONFIG_TASK_PROFILING
 
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_DTS
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_INTERNAL_COMP
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
+
+/* Override PD_ROLE_DEFAULT in usb_pd.h */
+#define PD_ROLE_DEFAULT(port) ((port) ? PD_ROLE_SOURCE : PD_ROLE_SINK)
 
 /* 3.0A Standard-current Rp */
 #define PD_SRC_VNC           PD_SRC_DEF_VNC_MV

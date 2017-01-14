@@ -59,21 +59,32 @@ void pd_transition_voltage(int idx)
 
 int pd_set_power_supply_ready(int port)
 {
+	/* Port 0 can never provide vbus. */
+	if (!port)
+		return EC_ERROR_INVAL;
+
 	/*
-	 * TODO(crosbug.com/p/60794): Will likely need to set the GPIOs
-	 * DUT_CHG_EN and HOST_OR_CHG_CTL which control whether DUT port
-	 * provides VBUS from Host or CHG port.
+	 * TODO(crosbug.com/p/60794): For now always assume VBUS is supplied by
+	 * host. No support yet for using CHG VBUS passthru mode.
 	 */
+
+	/*
+	 * Select Host as source for VBUS.
+	 * To select host, set GPIO_HOST_OR_CHG_CTL low. To select CHG as VBUS
+	 * source, then set GPIO_HOST_OR_CHG_CTL high.
+	 */
+	gpio_set_level(GPIO_HOST_OR_CHG_CTL, 0);
+
+	/* Enable VBUS from the source selected above. */
+	gpio_set_level(GPIO_DUT_CHG_EN, 1);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
 void pd_power_supply_reset(int port)
 {
-	/*
-	 * TODO(crosbug.com/p/60794): Will need to set the GPIOs
-	 * DUT_CHG_EN and HOST_OR_CHG_CTL which control whether DUT port
-	 * provides VBUS from Host or CHG port.
-	 */
+	/* Disable VBUS */
+	gpio_set_level(GPIO_DUT_CHG_EN, 0);
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,

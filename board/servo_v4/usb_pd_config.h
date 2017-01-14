@@ -14,13 +14,6 @@
 #ifndef __CROS_EC_USB_PD_CONFIG_H
 #define __CROS_EC_USB_PD_CONFIG_H
 
-/*
- * For DUT PD port uses a fixed cable and both CC lines are connected. Need to
- * choose a default polarity. DUT_CC_POLARITY is this selection.
- */
-#define DUT_CC_POLARITY 0
-
-
 /* NOTES: Servo V4 and glados equivalents:
  *	Glados		Servo V4
  *	C0		CHG
@@ -226,49 +219,54 @@ static inline void pd_tx_init(void)
 
 static inline void pd_set_host_mode(int port, int enable)
 {
-	if (port == 0) {
-		/* CHG port. Rd is wired to 5k pulldown. */
-		/* Can't set host mode. */
+	/*
+	 * CHG (port == 0) port has fixed Rd attached and therefore can only
+	 * present as a SNK device. If port != DUT (port == 1), then nothing to
+	 * do in this function.
+	 */
+	if (!port)
+		return;
+
+	if (enable) {
+		/*
+		 * Servo_v4 in SRC mode acts as a DTS (debug test
+		 * accessory) and needs to present Rp on both CC
+		 * lines. In order to support orientation detection, the
+		 * values of Rp1/Rp2 need to asymmetric with Rp1 > Rp2.
+		 */
+
+		/* Set Rd for CC1/CC2 to High-Z. */
+		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_INPUT);
+
+		/*
+		 * TODO(crosbug.com/p/60794): Currently always advertising
+		 * 1.5A. If CHG port is attached then can advertise 3A
+		 * instead. Additionally, if CHG port is not attached and having
+		 * to use host provided vbus, can 1.5A be advertised?
+		 */
+		/* Pull up for host mode */
+		gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUTPUT);
+		gpio_set_level(GPIO_USB_DUT_CC1_RP1A5, 1);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUTPUT);
+		gpio_set_level(GPIO_USB_DUT_CC2_RPUSB, 1);
+		/* Set TX Hi-Z */
+		gpio_set_flags(GPIO_USB_DUT_CC1_TX_DATA, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC2_TX_DATA, GPIO_INPUT);
 	} else {
-		if (enable) {
-			/*
-			 * TODO(crosbug.com/p/60792): Similar to what's done for
-			 * SNK mode, only want to adjust the CC line that
-			 * matches the chosen polarity for the DUT port. Since
-			 * DUT port uses a fixed cable and both CC lines are
-			 * connected will only need to toggle 1 of the CC lines.
-			 */
-			/* High-Z is used for host mode. */
-			gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_INPUT);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_INPUT);
-			/* Pull up for host mode */
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUTPUT);
-			gpio_set_level(GPIO_USB_DUT_CC1_RP1A5, 1);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_OUTPUT);
-			gpio_set_level(GPIO_USB_DUT_CC2_RP1A5, 1);
-			/* Set TX Hi-Z */
-			gpio_set_flags(GPIO_USB_DUT_CC1_TX_DATA, GPIO_INPUT);
-			gpio_set_flags(GPIO_USB_DUT_CC2_TX_DATA, GPIO_INPUT);
-		} else {
-			/* Set RD to High-Z for device mode. */
-			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_INPUT);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_INPUT);
-			/*
-			 * TODO(crosbug.com/p/60828): Undo what was done in
-			 * init_ccd.
-			 */
-			gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_INPUT);
-			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_INPUT);
-			if (DUT_CC_POLARITY == 0) {
-				gpio_set_flags(GPIO_USB_DUT_CC1_RD,
-					       GPIO_OUTPUT);
-				gpio_set_level(GPIO_USB_DUT_CC1_RD, 0);
-			} else {
-				gpio_set_flags(GPIO_USB_DUT_CC2_RD,
-					       GPIO_OUTPUT);
-				gpio_set_level(GPIO_USB_DUT_CC2_RD, 0);
-			}
-		}
+		/* Set Rp for CC1/CC2 to High-Z. */
+		gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RP3A0, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_INPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_INPUT);
+
+		/* DTS in SNK mode presents Rd on CC1/CC2 */
+		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_OUTPUT);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUTPUT);
+		gpio_set_level(GPIO_USB_DUT_CC1_RD, 0);
+		gpio_set_level(GPIO_USB_DUT_CC2_RD, 0);
 	}
 }
 
@@ -301,21 +299,8 @@ static inline int pd_adc_read(int port, int cc)
 
 	if (port == 0)
 		mv = adc_read_channel(cc ? ADC_CHG_CC2_PD : ADC_CHG_CC1_PD);
-	else {
-		/*
-		 * TODO(crosbug.com/p/60792): Only want to read the CC line that
-		 * matches the chosen polarity for DUT port. If not for the
-		 * chosen polarity, then return 0. This only works when the DUT
-		 * port is presenting as a SNK device. Need to fix this so that
-		 * the returned value for the cc line that doesn't match the
-		 * chosen polarity returns 0 for SNK and 3300 for SRC mode.
-		 */
-		if (cc == DUT_CC_POLARITY)
-			mv = adc_read_channel(cc ? ADC_DUT_CC2_PD :
-						ADC_DUT_CC1_PD);
-		else
-			mv = 0;
-	}
+	else
+		mv = adc_read_channel(cc ? ADC_DUT_CC2_PD : ADC_DUT_CC1_PD);
 
 	return mv;
 }
