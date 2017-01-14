@@ -43,6 +43,11 @@ struct button_config {
 extern const struct button_config buttons[];
 
 /*
+ * Button initialization, called from main.
+ */
+void button_init(void);
+
+/*
  * Interrupt handler for button.
  *
  * @param signal	Signal which triggered the interrupt.

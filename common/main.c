@@ -6,6 +6,7 @@
  */
 
 #include "board_config.h"
+#include "button.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -156,6 +157,9 @@ test_mockable __keep int main(void)
 #endif
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
+#endif
+#ifdef CONFIG_BUTTON_COUNT
+	button_init();
 #endif
 
 #ifdef CONFIG_RWSIG

@@ -9,8 +9,10 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "host_command.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "system.h"
 #include "timer.h"
 #include "util.h"
 
@@ -57,7 +59,7 @@ static int raw_button_pressed(const struct button_config *button)
 /*
  * Button initialization.
  */
-static void button_init(void)
+void button_init(void)
 {
 	int i;
 
@@ -68,8 +70,16 @@ static void button_init(void)
 		state[i].debounce_time = 0;
 		gpio_enable_interrupt(buttons[i].gpio);
 	}
+
+#ifdef CONFIG_BUTTON_RECOVERY
+	if (!system_jumped_to_this_image() &&
+	    (system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
+	    raw_button_pressed(&buttons[BUTTON_VOLUME_DOWN]) &&
+	    raw_button_pressed(&buttons[BUTTON_VOLUME_UP])) {
+		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+	}
+#endif
 }
-DECLARE_HOOK(HOOK_INIT, button_init, HOOK_PRIO_DEFAULT);
 
 /*
  * Handle debounced button changing state.

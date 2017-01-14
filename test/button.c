@@ -140,7 +140,7 @@ static int test_button_press_both(void)
 	return EC_SUCCESS;
 }
 
-static void button_init(void)
+static void button_test_init(void)
 {
 	int i;
 
@@ -159,21 +159,23 @@ void run_test(void)
 	test_reset();
 
 	button_init();
+
+	button_test_init();
 	RUN_TEST(test_button_press);
 
-	button_init();
+	button_test_init();
 	RUN_TEST(test_button_release);
 
-	button_init();
+	button_test_init();
 	RUN_TEST(test_button_debounce_short_press);
 
-	button_init();
+	button_test_init();
 	RUN_TEST(test_button_debounce_short_bounce);
 
-	button_init();
+	button_test_init();
 	RUN_TEST(test_button_debounce_stability);
 
-	button_init();
+	button_test_init();
 	RUN_TEST(test_button_press_both);
 
 	test_print_result();

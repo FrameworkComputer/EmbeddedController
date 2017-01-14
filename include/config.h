@@ -349,6 +349,9 @@
  */
 #undef CONFIG_BUTTON_COUNT
 
+/* Support for entering recovery mode using volume buttons. */
+#undef CONFIG_BUTTON_RECOVERY
+
 /*
  * Enable case close debug (CCD) mode in the EC.
  */
