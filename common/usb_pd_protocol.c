@@ -3110,7 +3110,7 @@ int pd_fetch_acc_log_entry(int port)
 				EC_RES_BUSY : EC_RES_UNAVAILABLE;
 
 	pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_GET_LOG, NULL, 0);
-	timeout.val = get_time().val + 500*MSEC;
+	timeout.val = get_time().val + 75*MSEC;
 
 	/* Wait until VDM is done */
 	while ((pd[port].vdm_state > 0) &&
