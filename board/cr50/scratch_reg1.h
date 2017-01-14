@@ -23,7 +23,9 @@
 
 /* TODO(crosbug.com/p/56945): Remove when sys_rst_l has an external pullup */
 #define BOARD_NEEDS_SYS_RST_PULL_UP  (1 << 5)   /* Add a pullup to sys_rst_l */
-#define BOARD_USE_PLT_RESET          (1 << 6)   /* Platform reset exists */
+#define BOARD_USE_PLT_RESET          (1 << 6)   /* Use plt_rst_l instead of */
+						/* sys_rst_l to monitor the */
+						/* system resets */
 
 /*
  * Bits to store console and write protect bit states across deep sleep and

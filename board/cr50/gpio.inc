@@ -8,12 +8,17 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /*
- * We can assert SYS_RST_L but so can the EC, so we need react if it's pulled
- * low. The ARM core can't trigger an interrupt if it's driving it as an output
- * so we attach two internal GPIOs to the same pad.
+ * The system reset signal can be from two different pins depending on what the
+ * board type is. One board uses plt_rst_l (diom3) and the other board type uses
+ * sys_rst_l (diom0) to detect a warm reset. The pin is selected based on the
+ * board properties in board.c
+ *
+ * On both boards sys_rst_l is used as an output to trigger warm resets. The ARM
+ * core can't trigger an interrupt if it's driving it as an output so we attach
+ * two internal GPIOs to the same pad if sys_rst_l is also being used to detect
+ * system resets.
  */
-GPIO_INT(SYS_RST_L_IN,    PIN(1, 0),  GPIO_INT_FALLING, sys_rst_asserted)
-GPIO_INT(PLT_RST_L,       PIN(1, 10), GPIO_INT_FALLING, sys_rst_asserted)
+GPIO_INT(TPM_RST_L,       PIN(1, 0),  GPIO_INT_FALLING, tpm_rst_asserted)
 GPIO_INT(DETECT_AP,       PIN(1, 1),  GPIO_INT_HIGH, device_state_on)
 GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, device_state_on)
 GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
@@ -69,7 +74,10 @@ PINMUX(GPIO(INT_AP_L),        A5, DIO_INPUT)	/* DIOB7 is p_digitial_od */
 PINMUX(GPIO(EC_FLASH_SELECT), B2, DIO_INPUT)
 PINMUX(GPIO(AP_FLASH_SELECT), B3, DIO_INPUT)
 PINMUX(GPIO(EN_PP3300_INA_L), B7, DIO_INPUT)
-PINMUX(GPIO(SYS_RST_L_IN),    M0, DIO_WAKE_FALLING)
+/*
+ * To allow the EC to drive the signal we set sys_rst_l_out as an input here and
+ * only change it to an output when we want to assert the signal.
+ */
 PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
 PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
 PINMUX(GPIO(BATT_PRES_L),     M2, 0)
