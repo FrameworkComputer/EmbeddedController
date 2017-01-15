@@ -42,6 +42,8 @@ enum hashing_mode {
 /*
  * AES implementation, based on a hardware AES block.
  */
+#define AES256_BLOCK_CIPHER_KEY_SIZE       32
+
 int DCRYPTO_aes_init(const uint8_t *key, uint32_t key_len, const uint8_t *iv,
 		enum cipher_mode c_mode, enum encrypt_mode e_mode);
 int DCRYPTO_aes_block(const uint8_t *in, uint8_t *out);
@@ -198,5 +200,10 @@ int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
  * Memory related functions.
  */
 int DCRYPTO_equals(const void *a, const void *b, size_t len);
+
+/*
+ * Key ladder related functions.
+ */
+int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);
 
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

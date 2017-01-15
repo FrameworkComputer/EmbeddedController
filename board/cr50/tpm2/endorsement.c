@@ -39,7 +39,6 @@
 #define EK_CERT_NV_START_INDEX             0x01C00000
 #define INFO1_EPS_SIZE                     PRIMARY_SEED_SIZE
 #define INFO1_EPS_OFFSET                   FLASH_INFO_MANUFACTURE_STATE_OFFSET
-#define AES256_BLOCK_CIPHER_KEY_SIZE       32
 
 #define RO_CERTS_START_ADDR                 0x43800
 #define RO_CERTS_REGION_SIZE                0x0800
@@ -408,93 +407,6 @@ static int store_cert(enum cros_perso_component_type component_type,
 	return 0;
 }
 
-static uint32_t hw_key_ladder_step(uint32_t cert)
-{
-	uint32_t itop;
-
-	GREG32(KEYMGR, SHA_ITOP) = 0;  /* clear status */
-
-	GREG32(KEYMGR, SHA_USE_CERT_INDEX) =
-		(cert << GC_KEYMGR_SHA_USE_CERT_INDEX_LSB) |
-		GC_KEYMGR_SHA_USE_CERT_ENABLE_MASK;
-
-	GREG32(KEYMGR, SHA_CFG_EN) =
-		GC_KEYMGR_SHA_CFG_EN_INT_EN_DONE_MASK;
-	GREG32(KEYMGR, SHA_TRIG) =
-		GC_KEYMGR_SHA_TRIG_TRIG_GO_MASK;
-
-	do {
-		itop = GREG32(KEYMGR, SHA_ITOP);
-	} while (!itop);
-
-	GREG32(KEYMGR, SHA_ITOP) = 0;  /* clear status */
-
-	return !!GREG32(KEYMGR, HKEY_ERR_FLAGS);
-}
-
-
-#define KEYMGR_CERT_0 0
-#define KEYMGR_CERT_3 3
-#define KEYMGR_CERT_4 4
-#define KEYMGR_CERT_5 5
-#define KEYMGR_CERT_7 7
-#define KEYMGR_CERT_15 15
-#define KEYMGR_CERT_20 20
-#define KEYMGR_CERT_25 25
-#define KEYMGR_CERT_26 26
-
-#define K_CROS_FW_MAJOR_VERSION 0
-static const uint8_t k_cr50_max_fw_major_version = 254;
-
-static int compute_frk2(uint8_t frk2[AES256_BLOCK_CIPHER_KEY_SIZE])
-{
-	int i;
-
-	/* TODO(ngm): reading ITOP in hw_key_ladder_step hangs on
-	 * second run of this function (i.e. install of ECC cert,
-	 * which re-generates FRK2) unless the SHA engine is reset.
-	 */
-	GREG32(KEYMGR, SHA_TRIG) =
-		GC_KEYMGR_SHA_TRIG_TRIG_RESET_MASK;
-
-	if (hw_key_ladder_step(KEYMGR_CERT_0))
-		return 0;
-
-	/* Derive HC_PHIK --> Deposited into ISR0 */
-	if (hw_key_ladder_step(KEYMGR_CERT_3))
-		return 0;
-
-	/* Cryptographically mix OBS-FBS --> Deposited into ISR1 */
-	if (hw_key_ladder_step(KEYMGR_CERT_4))
-		return 0;
-
-	/* Derive HIK_RT --> Deposited into ISR0 */
-	if (hw_key_ladder_step(KEYMGR_CERT_5))
-		return 0;
-
-	/* Derive BL_HIK --> Deposited into ISR0 */
-	if (hw_key_ladder_step(KEYMGR_CERT_7))
-		return 0;
-
-	/* Generate FRK2 by executing certs 15, 20, 25, and 26 */
-	if (hw_key_ladder_step(KEYMGR_CERT_15))
-		return 0;
-
-	if (hw_key_ladder_step(KEYMGR_CERT_20))
-		return 0;
-
-	for (i = 0; i < k_cr50_max_fw_major_version -
-			K_CROS_FW_MAJOR_VERSION; i++) {
-		if (hw_key_ladder_step(KEYMGR_CERT_25))
-			return 0;
-	}
-	if (hw_key_ladder_step(KEYMGR_CERT_26))
-		return 0;
-	memcpy(frk2, (void *) GREG32_ADDR(KEYMGR, HKEY_FRR0),
-		AES256_BLOCK_CIPHER_KEY_SIZE);
-	return 1;
-}
-
 static void flash_info_read_enable(void)
 {
 	/* Enable R access to INFO. */
@@ -523,6 +435,8 @@ static void flash_cert_region_enable(void)
 		GC_GLOBALSEC_FLASH_REGION6_CTRL_RD_EN_MASK;
 }
 
+#define K_CROS_FW_MAJOR_VERSION 0
+
 /* EPS is stored XOR'd with FRK2, so make sure that the sizes match. */
 BUILD_ASSERT(AES256_BLOCK_CIPHER_KEY_SIZE == PRIMARY_SEED_SIZE);
 static int get_decrypted_eps(uint8_t eps[PRIMARY_SEED_SIZE])
@@ -531,7 +445,7 @@ static int get_decrypted_eps(uint8_t eps[PRIMARY_SEED_SIZE])
 	uint8_t frk2[AES256_BLOCK_CIPHER_KEY_SIZE];
 
 	CPRINTF("%s: getting eps\n", __func__);
-	if (!compute_frk2(frk2))
+	if (!DCRYPTO_ladder_compute_frk2(K_CROS_FW_MAJOR_VERSION, frk2))
 		return 0;
 
 	/* Setup flash region mapping. */
