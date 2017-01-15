@@ -24,11 +24,6 @@ static const uintptr_t nvmem_base_addr[NVMEM_NUM_PARTITIONS] = {
 		CONFIG_FLASH_NVMEM_BASE_A,
 		CONFIG_FLASH_NVMEM_BASE_B
 	};
-/* Table of offset within flash space to start of each partition */
-static const uint32_t nvmem_flash_offset[NVMEM_NUM_PARTITIONS] = {
-		CONFIG_FLASH_NVMEM_OFFSET_A,
-		CONFIG_FLASH_NVMEM_OFFSET_B
-	};
 
 /* NvMem user buffer start offset table */
 static uint32_t nvmem_user_start_offset[NVMEM_NUM_USERS];
@@ -53,30 +48,60 @@ static int nvmem_error_state;
 /* Flag to track if an Nv write/move is not completed */
 static int nvmem_write_error;
 
-static int nvmem_verify_partition_sha(int index)
+static int nvmem_save(uint8_t tag_version, size_t partition)
+{
+	struct nvmem_tag *tag;
+	size_t nvmem_offset;
+
+	/* Flash offset of the partition to save. */
+	nvmem_offset = nvmem_base_addr[partition] - CONFIG_PROGRAM_MEMORY_BASE;
+
+	/* Erase partition */
+	if (flash_physical_erase(nvmem_offset,
+				 NVMEM_PARTITION_SIZE)) {
+		CPRINTF("%s:%d\n", __func__, __LINE__);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	tag = (struct nvmem_tag *)cache.base_ptr;
+	tag->version = tag_version;
+
+	/* Calculate sha of the whole thing. */
+	nvmem_compute_sha(&tag->version,
+			  NVMEM_PARTITION_SIZE -
+			  offsetof(struct nvmem_tag, version),
+			  tag->sha,
+			  sizeof(tag->sha));
+
+	/* Write partition */
+	if (flash_physical_write(nvmem_offset,
+				 NVMEM_PARTITION_SIZE,
+				 cache.base_ptr)) {
+		CPRINTF("%s:%d\n", __func__, __LINE__);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+
+static int nvmem_partition_sha_match(int index)
 {
 	uint8_t sha_comp[NVMEM_SHA_SIZE];
 	struct nvmem_partition *p_part;
-	uint8_t *p_data;
 
 	p_part = (struct nvmem_partition *)nvmem_base_addr[index];
-	p_data = (uint8_t *)p_part;
-	p_data += sizeof(sha_comp);
-
-	/* Number of bytes to compute sha over */
-	nvmem_compute_sha(p_data,
+	nvmem_compute_sha(&p_part->tag.version,
 			  (NVMEM_PARTITION_SIZE - NVMEM_SHA_SIZE),
-			  sha_comp,
-			  NVMEM_SHA_SIZE);
+			  sha_comp, sizeof(sha_comp));
+
 	/* Check if computed value matches stored value. */
-	return memcmp(p_part->tag.sha, sha_comp, NVMEM_SHA_SIZE);
+	return !memcmp(p_part->tag.sha, sha_comp, NVMEM_SHA_SIZE);
 }
 
+/* Called with the semaphore locked. */
 static int nvmem_acquire_cache(void)
 {
 	int attempts = 0;
-	uint8_t *shared_mem_ptr;
-	uint8_t *p_src;
 	int ret;
 
 	if (shared_mem_size() < NVMEM_PARTITION_SIZE) {
@@ -87,13 +112,13 @@ static int nvmem_acquire_cache(void)
 
 	while (attempts < NVMEM_ACQUIRE_CACHE_MAX_ATTEMPTS) {
 		ret = shared_mem_acquire(NVMEM_PARTITION_SIZE,
-					 (char **)&shared_mem_ptr);
+					 (char **)&cache.base_ptr);
 		if (ret == EC_SUCCESS) {
 			/* Copy partiion contents from flash into cache */
-			p_src = (uint8_t *)nvmem_base_addr[nvmem_act_partition];
-			memcpy(shared_mem_ptr, p_src, NVMEM_PARTITION_SIZE);
-			/* Now that cache is up to date, assign pointer */
-			cache.base_ptr = shared_mem_ptr;
+			memcpy(cache.base_ptr,
+			       (void *)nvmem_base_addr[nvmem_act_partition],
+			       NVMEM_PARTITION_SIZE);
+
 			return EC_SUCCESS;
 		} else if (ret == EC_ERROR_BUSY) {
 			CPRINTF("Shared Mem not avail! Attempt %d\n", attempts);
@@ -105,6 +130,7 @@ static int nvmem_acquire_cache(void)
 	}
 	/* Timeout Error condition */
 	CPRINTF("%s:%d\n", __func__, __LINE__);
+	cache.base_ptr = NULL;  /* Just in case. */
 	return EC_ERROR_TIMEOUT;
 }
 
@@ -154,48 +180,25 @@ static void nvmem_release_cache(void)
 	mutex_unlock(&cache.mtx);
 }
 
-static int nvmem_is_unitialized(void)
+static int nvmem_reinitialize(void)
 {
-	int p;
-	int n;
 	int ret;
-	uint32_t *p_nvmem;
-	struct nvmem_partition *p_part;
-
-	for (p = 0; p < NVMEM_NUM_PARTITIONS; p++) {
-		/* Point to start of Nv Memory */
-		p_nvmem = (uint32_t *)nvmem_base_addr[p];
-		/* Verify that each byte is 0xff (4 bytes at a time) */
-		for (n = 0; n < (NVMEM_PARTITION_SIZE >> 2); n++)
-			if (p_nvmem[n] != 0xffffffff)
-				return EC_ERROR_CRC;
-	}
 
 	/*
-	 * NvMem is fully unitialized. Need to initialize tag and write tag to
-	 * flash so at least 1 partition is ready to be used.
+	 * NvMem is not properly itialized. Let's just erase everything and
+	 * start over, so that at least 1 partition is ready to be used.
 	 */
 	nvmem_act_partition = 0;
+
 	/* Need to acquire the shared memory buffer */
 	ret = nvmem_lock_cache();
 	if (ret != EC_SUCCESS)
 		return ret;
-	p_part = (struct nvmem_partition *)cache.base_ptr;
-	/* Start with version 0 */
-	p_part->tag.version = 0;
-	/* Compute sha with updated tag */
-	nvmem_compute_sha(&cache.base_ptr[NVMEM_SHA_SIZE],
-			  NVMEM_PARTITION_SIZE - NVMEM_SHA_SIZE,
-			  p_part->tag.sha,
-			  NVMEM_SHA_SIZE);
-	/*
-	 * Partition 0 is initialized, write tag only to flash. Since the
-	 * partition was just verified to be fully erased, can just do write
-	 * operation.
-	 */
-	ret = flash_physical_write(nvmem_flash_offset[0],
-				   sizeof(struct nvmem_tag),
-				   cache.base_ptr);
+
+	memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
+
+	/* Start with version zero in the current active partition. */
+	ret = nvmem_save(0, nvmem_act_partition);
 	nvmem_release_cache();
 	if (ret) {
 		CPRINTF("%s:%d\n", __func__, __LINE__);
@@ -237,23 +240,28 @@ static int nvmem_find_partition(void)
 	 * the most recent one.
 	 */
 	for (n = 0; n < NVMEM_NUM_PARTITIONS; n++)
-		if (nvmem_verify_partition_sha(n) == EC_SUCCESS) {
+		if (nvmem_partition_sha_match(n)) {
 			if (nvmem_act_partition == NVMEM_NOT_INITIALIZED)
 				nvmem_act_partition = n;
 			else
 				nvmem_act_partition = nvmem_compare_version();
+		} else {
+			ccprintf("%s:%d partiton %d verification FAILED\n",
+				 __func__, __LINE__, n);
 		}
-	/*
-	 * If active_partition is still not selected, then neither partition is
-	 * valid. In this case need to determine if they are simply erased or
-	 * both are corrupt. If erased, then can initialze the tag for the first
-	 * one. If not fully erased, then this is an error condition.
-	 */
+
 	if (nvmem_act_partition != NVMEM_NOT_INITIALIZED)
 		return EC_SUCCESS;
 
-	if (nvmem_is_unitialized()) {
-		CPRINTS("NvMem: No Valid Paritions!");
+	/*
+	 * If active_partition is still not selected, then neither partition
+	 * is valid. Let's reinitialize the NVMEM - there is nothing else we
+	 * can do.
+	 */
+	CPRINTS("%s: No Valid Parition found, have to reinitialize!");
+
+	if (nvmem_reinitialize() != EC_SUCCESS) {
+		CPRINTS("%s: Reinitialization failed!!");
 		return EC_ERROR_UNKNOWN;
 	}
 
@@ -538,7 +546,6 @@ void nvmem_disable_commits(void)
 
 int nvmem_commit(void)
 {
-	int nvmem_offset;
 	int new_active_partition;
 	uint16_t version;
 	struct nvmem_partition *p_part;
@@ -573,40 +580,21 @@ int nvmem_commit(void)
 	/* Check for restricted version number */
 	if (version == NVMEM_VERSION_MASK)
 		version = 0;
-	p_part->tag.version = version;
-	/* Update the sha */
-	nvmem_compute_sha(&cache.base_ptr[NVMEM_SHA_SIZE],
-			  NVMEM_PARTITION_SIZE - NVMEM_SHA_SIZE,
-			  p_part->tag.sha,
-			  NVMEM_SHA_SIZE);
 
 	/* Toggle parition being used (always write to current spare) */
 	new_active_partition = nvmem_act_partition ^ 1;
-	/* Point to first block within active partition */
-	nvmem_offset = nvmem_flash_offset[new_active_partition];
-	/* Write partition to NvMem */
 
-	/* Erase partition */
-	if (flash_physical_erase(nvmem_offset,
-				 NVMEM_PARTITION_SIZE)) {
-		CPRINTF("%s:%d\n", __func__, __LINE__);
+	/* Write active partition to NvMem */
+	if (nvmem_save(version, new_active_partition) != EC_SUCCESS) {
 		/* Free up scratch buffers */
 		nvmem_release_cache();
 		return EC_ERROR_UNKNOWN;
 	}
-	/* Write partition */
-	if (flash_physical_write(nvmem_offset,
-				 NVMEM_PARTITION_SIZE,
-				 cache.base_ptr)) {
-		CPRINTF("%s:%d\n", __func__, __LINE__);
-		/* Free up scratch buffers */
-		nvmem_release_cache();
-		return EC_ERROR_UNKNOWN;
-	}
+
+	/* Update newest partition index */
+	nvmem_act_partition = new_active_partition;
 
 	/* Free up scratch buffers */
 	nvmem_release_cache();
-	/* Update newest partition index */
-	nvmem_act_partition = new_active_partition;
 	return EC_SUCCESS;
 }
