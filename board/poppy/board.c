@@ -69,6 +69,20 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
+void vbus0_evt(enum gpio_signal signal)
+{
+	/* VBUS present GPIO is inverted */
+	usb_charger_vbus_change(0, !gpio_get_level(signal));
+	task_wake(TASK_ID_PD_C0);
+}
+
+void vbus1_evt(enum gpio_signal signal)
+{
+	/* VBUS present GPIO is inverted */
+	usb_charger_vbus_change(1, !gpio_get_level(signal));
+	task_wake(TASK_ID_PD_C1);
+}
+
 void usb0_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
@@ -388,6 +402,28 @@ static void board_init(void)
 	/* Enable sensors power supply */
 	gpio_set_level(GPIO_PP1800_DX_SENSOR, 1);
 	gpio_set_level(GPIO_PP3300_DX_SENSOR, 1);
+
+	/* Enable VBUS interrupt */
+	if (system_get_board_version() == 0) {
+		/*
+		 * crosbug.com/p/61929: rev0 does not have VBUS detection,
+		 * force detection on both ports.
+		 */
+		gpio_set_flags(GPIO_USB_C0_VBUS_WAKE_L,
+			GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_USB_C1_VBUS_WAKE_L,
+			GPIO_INPUT | GPIO_PULL_DOWN);
+
+		vbus0_evt(GPIO_USB_C0_VBUS_WAKE_L);
+		vbus1_evt(GPIO_USB_C1_VBUS_WAKE_L);
+	} else {
+		gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+		gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+	}
+
+	/* Enable pericom BC1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
 	/* Enable base detection interrupt */
 	base_detect_debounce_time = get_time().val;

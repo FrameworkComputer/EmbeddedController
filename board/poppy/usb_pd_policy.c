@@ -113,15 +113,11 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
-/*
- * TODO(crosbug.com/p/61098): Can we implement this, and change the vbus
- * detection method.
- */
-#if 0
 int pd_snk_is_vbus_provided(int port)
 {
+	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
+				      GPIO_USB_C0_VBUS_WAKE_L);
 }
-#endif
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
