@@ -177,6 +177,96 @@ const struct battery_info batt_info_sonycorp = {
 	.discharging_max_c = 75,
 };
 
+static const struct fast_charge_profile fast_charge_smp_c22n1626_info[] = {
+	/* < 1C */
+	[TEMP_RANGE_0] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(0),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 0,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+
+	/* >=1C && <=10C */
+	[TEMP_RANGE_1] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(10),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 1752,
+			[VOLTAGE_RANGE_HIGH] = 1752,
+		},
+	},
+
+	/* 10C > && <=45C */
+	[TEMP_RANGE_2] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(45),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 5200,
+			[VOLTAGE_RANGE_HIGH] = 5200,
+		},
+	},
+
+	/* 45C > && <=60C */
+	[TEMP_RANGE_3] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(60),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 2920,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+
+	/* > 60C */
+	[TEMP_RANGE_4] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(CHARGER_PROF_TEMP_C_LAST_RANGE),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 0,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+};
+
+static const struct fast_charge_params fast_chg_params_smp_c22n1626 = {
+	.total_temp_ranges = ARRAY_SIZE(fast_charge_smp_c22n1626_info),
+	.default_temp_range_profile = TEMP_RANGE_2,
+	.vtg_low_limit_mV = 8200,
+	.chg_profile_info = &fast_charge_smp_c22n1626_info[0],
+};
+
+static const struct fast_charge_profile fast_charge_cpt_c22n1626_info[] = {
+	/* < 0C */
+	[TEMP_RANGE_0] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(-1),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 0,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+
+	/* >=0C && <=60C */
+	[TEMP_RANGE_1] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(60),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 5200,
+			[VOLTAGE_RANGE_HIGH] = 5200,
+		},
+	},
+
+	/* >60C */
+	[TEMP_RANGE_2] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(CHARGER_PROF_TEMP_C_LAST_RANGE),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 0,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+};
+
+static const struct fast_charge_params fast_chg_params_cpt_c22n1626 = {
+	.total_temp_ranges = ARRAY_SIZE(fast_charge_cpt_c22n1626_info),
+	.default_temp_range_profile = TEMP_RANGE_1,
+	.vtg_low_limit_mV = 8000,
+	.chg_profile_info = &fast_charge_cpt_c22n1626_info[0],
+};
+
 const struct battery_info batt_info_c22n1626 = {
 	.voltage_max = 8800,	/* mV */
 	.voltage_normal = 7700,
@@ -270,7 +360,7 @@ static const struct board_batt_params info[] = {
 	[BATTERY_SMP_C22N1626] = {
 		.manuf_name = "AS1FNZD3KD",
 		.ship_mode_inf = &ship_mode_info_c22n1626,
-		.fast_chg_params = &fast_chg_params_smp_cos4870,
+		.fast_chg_params = &fast_chg_params_smp_c22n1626,
 		.batt_info = &batt_info_c22n1626,
 	},
 
@@ -278,7 +368,7 @@ static const struct board_batt_params info[] = {
 	[BATTERY_CPT_C22N1626] = {
 		.manuf_name = "AS1FOAD3KD",
 		.ship_mode_inf = &ship_mode_info_c22n1626,
-		.fast_chg_params = &fast_chg_params_smp_cos4870,
+		.fast_chg_params = &fast_chg_params_cpt_c22n1626,
 		.batt_info = &batt_info_c22n1626,
 	},
 };
