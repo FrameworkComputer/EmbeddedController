@@ -5,6 +5,7 @@
 
 /* Poppy board-specific configuration */
 
+#include "adc.h"
 #include "adc_chip.h"
 #include "als.h"
 #include "bd99992gw.h"
@@ -78,6 +79,63 @@ void usb1_evt(enum gpio_signal signal)
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
 }
 
+/*
+ * Base detection and debouncing
+ *
+ * Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
+ * value should be around 5.1/(100+5.1)*3300 = 160.
+ * TODO(crosbug.com/p/61098): Fine-tune these values.
+ */
+#define BASE_DETECT_DEBOUNCE_US (5 * MSEC)
+#define BASE_DETECT_MIN_MV 140
+#define BASE_DETECT_MAX_MV 180
+
+static uint64_t base_detect_debounce_time;
+
+static void base_detect_deferred(void);
+DECLARE_DEFERRED(base_detect_deferred);
+
+static void base_detect_deferred(void)
+{
+	uint64_t time_now = get_time().val;
+
+	if (base_detect_debounce_time <= time_now) {
+		int v;
+
+		v = adc_read_channel(ADC_BASE_DET);
+		if (v == ADC_READ_ERROR)
+			return;
+		CPRINTS("%s = %d\n", adc_channels[ADC_BASE_DET].name, v);
+
+		if (v >= BASE_DETECT_MIN_MV && v <= BASE_DETECT_MAX_MV) {
+			CPRINTS("Base connected\n");
+			gpio_set_level(GPIO_PP3300_DX_BASE, 1);
+		} else {
+			/*
+			 * TODO(crosbug.com/p/61098): Figure out what to do with
+			 * other ADC values that do not clearly indicate base
+			 * presence or absence.
+			 */
+			CPRINTS("No base connected\n");
+			gpio_set_level(GPIO_PP3300_DX_BASE, 0);
+		}
+	} else {
+		hook_call_deferred(&base_detect_deferred_data,
+				   base_detect_debounce_time - time_now);
+	}
+}
+
+void base_detect_interrupt(enum gpio_signal signal)
+{
+	uint64_t time_now = get_time().val;
+
+	if (base_detect_debounce_time <= time_now)
+		hook_call_deferred(&base_detect_deferred_data,
+				   BASE_DETECT_DEBOUNCE_US);
+
+	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
+}
+
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */
@@ -105,6 +163,9 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
+	/* Base detection */
+	[ADC_BASE_DET] = {"BASE_DET", NPCX_ADC_CH0,
+			  ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	/* Vbus sensing (10x voltage divider). */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 	/* Adapter current output or battery discharging current */
@@ -327,6 +388,11 @@ static void board_init(void)
 	/* Enable sensors power supply */
 	gpio_set_level(GPIO_PP1800_DX_SENSOR, 1);
 	gpio_set_level(GPIO_PP3300_DX_SENSOR, 1);
+
+	/* Enable base detection interrupt */
+	base_detect_debounce_time = get_time().val;
+	hook_call_deferred(&base_detect_deferred_data, 0);
+	gpio_enable_interrupt(GPIO_BASE_DET_A);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

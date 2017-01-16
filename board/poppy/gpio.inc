@@ -28,6 +28,7 @@ GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,			usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(3, 3), GPIO_INT_FALLING,			usb1_evt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 0), GPIO_INT_FALLING,			bmi160_interrupt)
+GPIO_INT(BASE_DET_A,		PIN(4, 5), GPIO_INT_BOTH,			base_detect_interrupt)
 
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(ENABLE_BACKLIGHT,		PIN(2, 6), GPIO_OUT_LOW)			/* Enable Backlight */
@@ -67,9 +68,7 @@ GPIO(LTE_GPS_OFF_L,		PIN(0, 0), GPIO_OUTPUT)
 GPIO(LTE_BODY_SAR_L,		PIN(0, 1), GPIO_OUTPUT)
 GPIO(LTE_WAKE_L,		PIN(7, 1), GPIO_INPUT)
 
-GPIO(PP3300_DX_BASE,		PIN(1, 1), GPIO_OUTPUT)
-/* TODO(crosbug.com/p/61098): Should be interrupt+ADC */
-GPIO(BASE_DET_A,		PIN(4, 5), GPIO_INPUT)
+GPIO(PP3300_DX_BASE,		PIN(1, 1), GPIO_OUT_LOW)
 
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_0_SCL,		PIN(B, 5), GPIO_INPUT)				/* EC_I2C0_0_USBC_3V3_SCL */

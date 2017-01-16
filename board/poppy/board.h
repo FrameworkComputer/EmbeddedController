@@ -212,6 +212,7 @@ enum sensor_id {
 };
 
 enum adc_channel {
+	ADC_BASE_DET,
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
