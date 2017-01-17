@@ -35,7 +35,7 @@ const uint32_t pd_src_pdo[] = {
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 const uint32_t pd_src_pdo_max[] = {
-		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
@@ -67,9 +67,8 @@ int board_vbus_source_enabled(int port)
 static void board_vbus_update_source_current(int port)
 {
 	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	/* TODO(crosbug.com/p/61431): do not attempt to set 1.5A config */
 	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
-		(GPIO_OUTPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
+		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
 
 	/*
 	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
