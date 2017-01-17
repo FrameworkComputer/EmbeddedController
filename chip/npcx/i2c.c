@@ -500,19 +500,33 @@ static void i2c_handle_sda_irq(int controller)
 void i2c_master_int_handler (int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
+
 	/* Condition 1 : A Bus Error has been identified */
 	if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_BER)) {
+		uint8_t __attribute__((unused)) data;
 		/* Generate a STOP condition */
 		I2C_STOP(controller);
 		CPUTS("-SP");
 		/* Clear BER Bit */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
+		/* Mask sure slave doesn't hold bus by dummy reading */
+		I2C_READ_BYTE(controller, data);
+
 		/* Set error code */
 		p_status->err_code = SMB_BUS_ERROR;
 		/* Notify upper layer */
 		p_status->oper_state = SMB_IDLE;
 		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE, 0);
 		CPUTS("-BER");
+
+		/*
+		 * Disable smb's interrupts to forbid ec to enter ISR again
+		 * before executing error recovery.
+		 */
+		task_disable_irq(i2c_irqs[controller]);
+
+		/* return for executing error recovery immediately */
+		return;
 	}
 
 	/* Condition 2: A negative acknowledge has occurred */
