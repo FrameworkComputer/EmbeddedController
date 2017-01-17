@@ -115,7 +115,7 @@ static uint64_t tnext_state;
 /*
  * Determines whether to execute initial SMI pulse (t0 stage)
  */
-static int smi_enabled = 1;
+static int power_button_pulse_enabled = 1;
 
 static void set_pwrbtn_to_pch(int high, int init)
 {
@@ -272,7 +272,7 @@ static void state_machine(uint64_t tnow)
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
 			set_pwrbtn_to_pch(0, 0);
 		} else {
-			if (smi_enabled) {
+			if (power_button_pulse_enabled) {
 				/* Chipset is on, so send the chipset a pulse */
 				tnext_state = tnow + PWRBTN_DELAY_T0;
 				pwrbtn_state = PWRBTN_STATE_T0;
@@ -479,7 +479,8 @@ static int hc_config_powerbtn_x86(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_config_power_button *p = args->params;
 
-	smi_enabled = p->flags & (1 << EC_POWER_BUTTON_ENABLE_SMI_PULSE);
+	power_button_pulse_enabled =
+		p->flags & (1 << EC_POWER_BUTTON_ENABLE_SMI_PULSE);
 
 	return EC_SUCCESS;
 }
