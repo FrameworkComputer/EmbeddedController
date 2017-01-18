@@ -23,6 +23,7 @@
 
 enum battery_type {
 	BATTERY_SONY_CORP,
+	BATTERY_PANASONIC,
 	BATTERY_SMP_COS4870,
 	BATTERY_SMP_C22N1626,
 	BATTERY_CPT_C22N1626,
@@ -52,6 +53,7 @@ struct board_batt_params {
 
 #define DEFAULT_BATTERY_TYPE BATTERY_SONY_CORP
 #define SONY_DISCHARGE_DISABLE_FET_BIT (0x01 << 13)
+#define PANASONIC_DISCHARGE_ENABLE_FET_BIT (0x01 << 14)
 #define C22N1626_DISCHARGE_ENABLE_FET_BIT (0x01 << 0)
 
 /* keep track of previous charge profile info */
@@ -162,6 +164,60 @@ static const struct fast_charge_params fast_chg_params_sonycorp = {
 const struct battery_info batt_info_sonycorp = {
 	.voltage_max = 8700,	/* mV */
 	.voltage_normal = 7600,
+
+	/*
+	 * Actual value 6000mV, added 100mV for charger accuracy so that
+	 * unwanted low VSYS_Prochot# assertion can be avoided.
+	 */
+	.voltage_min = 6100,
+	.precharge_current = 256,	/* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
+	.discharging_min_c = -20,
+	.discharging_max_c = 75,
+};
+
+static const struct fast_charge_profile fast_charge_panasonic_info[] = {
+	/* < 0C */
+	[TEMP_RANGE_0] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(-1),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 0,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+
+	/* 0C >= && <= 60C */
+	[TEMP_RANGE_1] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(60),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 3072,
+			[VOLTAGE_RANGE_HIGH] = 3072,
+		},
+	},
+
+	/* > 60C */
+	[TEMP_RANGE_2] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(CHARGER_PROF_TEMP_C_LAST_RANGE),
+		.current_mA = {
+			[VOLTAGE_RANGE_LOW] = 0,
+			[VOLTAGE_RANGE_HIGH] = 0,
+		},
+	},
+};
+
+static const struct fast_charge_params fast_chg_params_panasonic = {
+	.total_temp_ranges = ARRAY_SIZE(fast_charge_panasonic_info),
+	.default_temp_range_profile = TEMP_RANGE_1,
+	.vtg_low_limit_mV = 8000,
+	.chg_profile_info = &fast_charge_panasonic_info[0],
+};
+
+const struct battery_info batt_info_panasoic = {
+	.voltage_max = 8800,	/* mV */
+	.voltage_normal = 7700,
 
 	/*
 	 * Actual value 6000mV, added 100mV for charger accuracy so that
@@ -307,6 +363,20 @@ static int batt_sony_corp_init(void)
 		!(batt_status & SONY_DISCHARGE_DISABLE_FET_BIT);
 }
 
+static int batt_panasonic_init(void)
+{
+	int batt_status;
+
+	/*
+	 * SB_MANUFACTURER_ACCESS:
+	 * [14] : Discharging Disabled
+	 *      : 0b - Not Allowed to Discharge
+	 *      : 1b - Allowed to Discharge
+	 */
+	return sb_read(SB_MANUFACTURER_ACCESS, &batt_status) ? 0 :
+		!!(batt_status & PANASONIC_DISCHARGE_ENABLE_FET_BIT);
+}
+
 static int batt_c22n1626_init(void)
 {
 	int batt_status;
@@ -333,6 +403,12 @@ static const struct ship_mode_info ship_mode_info_sonycorp = {
 	.batt_init = batt_sony_corp_init,
 };
 
+static const struct ship_mode_info ship_mode_info_panasonic = {
+	.ship_mode_reg = 0x3A,
+	.ship_mode_data = 0xC574,
+	.batt_init = batt_panasonic_init,
+};
+
 static const struct ship_mode_info ship_mode_info_c22n1626= {
 	.ship_mode_reg = 0x00,
 	.ship_mode_data = 0x0010,
@@ -346,6 +422,14 @@ static const struct board_batt_params info[] = {
 		.ship_mode_inf = &ship_mode_info_sonycorp,
 		.fast_chg_params = &fast_chg_params_sonycorp,
 		.batt_info = &batt_info_sonycorp,
+	},
+
+	/* RAJ240045 Panasoic battery specific configurations */
+	[BATTERY_PANASONIC] = {
+		.manuf_name = "PANASONIC",
+		.ship_mode_inf = &ship_mode_info_panasonic,
+		.fast_chg_params = &fast_chg_params_panasonic,
+		.batt_info = &batt_info_panasoic,
 	},
 
 	/* BQ40Z55 SMP COS4870 BATTERY battery specific configurations */
