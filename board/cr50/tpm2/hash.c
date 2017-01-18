@@ -95,13 +95,19 @@ uint16_t _cpri__StartHash(TPM_ALG_ID alg, BOOL sequence,
 	struct HASH_CTX *ctx = (struct HASH_CTX *) state->state;
 	uint16_t result;
 
+	/* NOTE: as per bug http://crosbug.com/p/55331#26 (NVMEM
+	 * encryption), always use the software hash implementation
+	 * for TPM related calculations, since we have no guarantee
+	 * that the key-ladder will not be used between SHA_init() and
+	 * final().
+	 */
 	switch (alg) {
 	case TPM_ALG_SHA1:
-		DCRYPTO_SHA1_init(ctx, sequence);
+		DCRYPTO_SHA1_init(ctx, 1);
 		result = HASH_size(ctx);
 		break;
 	case TPM_ALG_SHA256:
-		DCRYPTO_SHA256_init(ctx, sequence);
+		DCRYPTO_SHA256_init(ctx, 1);
 		result = HASH_size(ctx);
 		break;
 
