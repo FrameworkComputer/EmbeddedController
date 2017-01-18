@@ -40,7 +40,6 @@ static void HMAC_init(LITE_HMAC_CTX *ctx, const void *key, unsigned int len)
 void DCRYPTO_HMAC_SHA256_init(LITE_HMAC_CTX *ctx, const void *key,
 			unsigned int len)
 {
-	DCRYPTO_SHA256_init(&ctx->hash, 0);
 	HMAC_init(ctx, key, len);
 }
 
