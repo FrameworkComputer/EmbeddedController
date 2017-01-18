@@ -211,8 +211,8 @@ void __idle(void)
 	if (!idle_action)
 		idle_action = idle_default;
 
-	/* Disable sleep until 3 minutes after init */
-	delay_sleep_by(3 * MINUTE);
+	/* Disable sleep for 20 seconds after init */
+	delay_sleep_by(20 * SECOND);
 
 	while (1) {
 
