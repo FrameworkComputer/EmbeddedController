@@ -14,7 +14,6 @@
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
-#include "usb_charge.h"
 #include "util.h"
 
 #define TASK_EVENT_OVERCURRENT (1 << 0)
@@ -36,11 +35,6 @@ static int overcurrent_current_ma = 3000;
 static int charge_limit_ma;
 
 /* Mock functions */
-
-int charge_manager_get_ramp_start_current(int port, int supplier)
-{
-	return USB_CHARGER_MIN_CURR_MA;
-}
 
 int board_is_ramp_allowed(int supplier)
 {

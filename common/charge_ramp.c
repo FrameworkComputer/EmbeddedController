@@ -29,6 +29,7 @@
 /* Current ramp increment */
 #define RAMP_CURR_INCR_MA   64
 #define RAMP_CURR_DELAY     (500*MSEC)
+#define RAMP_CURR_START_MA  500
 
 /* How much to backoff the input current limit when limit has been found */
 #define RAMP_ICL_BACKOFF    (2*RAMP_CURR_INCR_MA)
@@ -101,8 +102,7 @@ void chg_ramp_charge_supplier_change(int port, int supplier, int current,
 
 	/* Set min and max input current limit based on if ramp is allowed */
 	if (board_is_ramp_allowed(active_sup)) {
-		min_icl = charge_manager_get_ramp_start_current(active_port,
-								active_sup);
+		min_icl = RAMP_CURR_START_MA;
 		max_icl = board_get_ramp_current_limit(active_sup, current);
 	} else {
 		min_icl = max_icl = current;

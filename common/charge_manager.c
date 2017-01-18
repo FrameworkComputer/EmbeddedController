@@ -16,7 +16,6 @@
 #include "system.h"
 #include "tcpm.h"
 #include "timer.h"
-#include "usb_charge.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -906,29 +905,6 @@ int charge_manager_get_power_limit_uw(void)
 	else
 		return current_ma * voltage_mv;
 }
-
-#ifdef HAS_TASK_CHG_RAMP
-int charge_manager_get_ramp_start_current(int port, int supplier)
-{
-	/*
-	 * A valid charge port is always detected as VBUS supplier type,
-	 * 'USB charger' can detect the same port as BC1.2 DCP supplier type
-	 * & also 'TCPC' can detect the same port as TYPEC supplier type. Thus
-	 * a valid port is detected as 2 or 3 supplier types. Depending on the
-	 * supplier's priority and the power that the supplier can provide,
-	 * charge manager choses the charge supplier type of the port.
-	 *
-	 * If the USB charger detected supplier is BC1.2 DCP and the TCPC
-	 * detected supplier is TYPEC then the supplier can provide stable
-	 * current from TYPEC supplier's advertised current hence start
-	 * ramping from TYPEC supplier's advertised current.
-	 */
-	return (supplier == CHARGE_SUPPLIER_BC12_DCP &&
-		available_charge[CHARGE_SUPPLIER_TYPEC][port].current) ?
-			available_charge[CHARGE_SUPPLIER_TYPEC][port].current :
-			USB_CHARGER_MIN_CURR_MA;
-}
-#endif
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 void charge_manager_source_port(int port, int enable)
