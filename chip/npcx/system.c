@@ -156,6 +156,11 @@ void system_set_rtc(uint32_t seconds)
 	udelay(MTC_TTC_LOAD_DELAY_US);
 }
 
+void chip_save_reset_flags(int flags)
+{
+	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, flags);
+}
+
 /* Check reset cause */
 void system_check_reset_cause(void)
 {
@@ -163,7 +168,7 @@ void system_check_reset_cause(void)
 	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
 
 	/* Clear saved reset flags in bbram */
-	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, 0);
+	chip_save_reset_flags(0);
 	/* Clear saved hibernate wake flag in bbram , too */
 	bbram_data_write(BBRM_DATA_INDEX_WAKE, 0);
 
@@ -601,7 +606,7 @@ void system_reset(int flags)
 		save_flags |= RESET_FLAG_SOFT;
 
 	/* Store flags to battery backed RAM. */
-	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, save_flags);
+	chip_save_reset_flags(save_flags);
 
 	/* Ask the watchdog to trigger a hard reboot */
 	system_watchdog_reset();
