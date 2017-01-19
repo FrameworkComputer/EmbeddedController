@@ -201,7 +201,13 @@
 /* Control2: PSYS gain in uA/W (ISL9237 only) */
 #define ISL9237_C2_PSYS_GAIN (1 << 0)
 
-/* Control2: PSYS gain in uA/W (ISL9238 only) */
+/*
+ * Control3: AMON/BMON direction.
+ * 0: adapter/charging, 1:OTG/discharging (ISL9238 only)
+ */
+#define ISL9238_C3_AMON_BMON_DIRECTION (1 << 3)
+
+/* Control3: PSYS gain in uA/W (ISL9238 only) */
 #define ISL9238_C3_PSYS_GAIN (1 << 9)
 
 /* OTG voltage limit in mV, current limit in mA */

@@ -429,49 +429,92 @@ DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 #endif /* CONFIG_CHARGER_PSYS */
 
 #ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
+enum amon_bmon { AMON, BMON };
+
+static int print_amon_bmon(enum amon_bmon amon, int direction,
+			   int resistor, char *text)
+{
+	int adc, curr, reg, ret;
+
+#ifdef CONFIG_CHARGER_ISL9238
+	ret = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+			ISL9238_REG_CONTROL3, &reg);
+	if (ret)
+		return ret;
+
+	/* Switch direction */
+	if (direction)
+		reg |= ISL9238_C3_AMON_BMON_DIRECTION;
+	else
+		reg &= ~ISL9238_C3_AMON_BMON_DIRECTION;
+	ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+			ISL9238_REG_CONTROL3, reg);
+	if (ret)
+		return ret;
+#endif
+
+	ret = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+			 ISL923X_REG_CONTROL1, &reg);
+	if (ret)
+		return ret;
+
+	/* Switch between AMON/BMON */
+	if (amon == AMON)
+		reg &= ~ISL923X_C1_SELECT_BMON;
+	else
+		reg |= ISL923X_C1_SELECT_BMON;
+
+	/* Enable monitor */
+	reg &= ~ISL923X_C1_DISABLE_MON;
+	ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+			ISL923X_REG_CONTROL1, reg);
+	if (ret)
+		return ret;
+
+	adc = adc_read_channel(ADC_AMON_BMON);
+	curr = adc / resistor;
+	CPRINTF("%s: %d uV, %d mA\n", text, adc, curr);
+
+	return ret;
+}
+
 /**
  * Get charger AMON and BMON current.
  */
 static int console_command_amon_bmon(int argc, char **argv)
 {
-	int adc, curr, val, ret;
+	int ret = EC_SUCCESS;
 
-	ret = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-			 ISL923X_REG_CONTROL1, &val);
-	if (ret)
-		return ret;
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'a'))
+		ret |= print_amon_bmon(AMON, 0,
+				       CONFIG_CHARGER_SENSE_RESISTOR_AC,
+				       "AMON");
 
-	/* Enable monitor */
-	val &= ~ISL923X_C1_DISABLE_MON;
-	if (argc == 1 || (argc >= 2 && argv[1][0] == 'a')) {
-		/* Switch to AMON */
-		val &= ~ISL923X_C1_SELECT_BMON;
-		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-				  ISL923X_REG_CONTROL1, val);
-		if (ret)
-			return ret;
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b' &&
+			 (argv[1][1] == '\0' || argv[1][1] == 'd')))
+		ret |= print_amon_bmon(BMON, 1,
+				       CONFIG_CHARGER_SENSE_RESISTOR,
+				       "BMON(discharging)");
 
-		adc = adc_read_channel(ADC_AMON_BMON);
-		curr = adc / CONFIG_CHARGER_SENSE_RESISTOR_AC;
-		CPRINTF("AMON: %d uV, %d mA\n", adc, curr);
-	}
-
-	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b')) {
-		/* Switch to BMON */
-		val |= ISL923X_C1_SELECT_BMON;
-		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-				  ISL923X_REG_CONTROL1, val);
-		if (ret)
-			return ret;
-
-		adc = adc_read_channel(ADC_AMON_BMON);
-		curr = adc / CONFIG_CHARGER_SENSE_RESISTOR;
-		CPRINTF("BMON: %d uV, %d mA\n", adc, curr);
-	}
+#ifdef CONFIG_CHARGER_ISL9238
+	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b' &&
+				(argv[1][1] == '\0' || argv[1][1] == 'c')))
+		ret |= print_amon_bmon(BMON, 0,
+				       /*
+					* charging current monitor has
+					* 2x amplification factor
+					*/
+				       2*CONFIG_CHARGER_SENSE_RESISTOR,
+				       "BMON(charging)");
+#endif
 
 	return ret;
 }
 DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
+#ifdef CONFIG_CHARGER_ISL9237
 			"amonbmon [a|b]",
+#else
+			"amonbmon [a|b[c|d]]",
+#endif
 			"Get charger AMON/BMON voltage diff, current");
 #endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */
