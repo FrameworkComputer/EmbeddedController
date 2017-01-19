@@ -148,6 +148,7 @@ const struct gpio_wui_item gpio_wui_table[2][8] = {
 		    NPCX_GPIO(1, 7), },
 		  NPCX_IRQ_WKINTB_1 },
 		/* Group C */
+#ifdef HAS_TASK_KEYSCAN
 		{ { NPCX_GPIO_NONE,
 		    NPCX_GPIO_NONE,
 		    NPCX_GPIO_NONE,
@@ -157,6 +158,17 @@ const struct gpio_wui_item gpio_wui_table[2][8] = {
 		    NPCX_GPIO_NONE,
 		    NPCX_GPIO_NONE, },
 		  NPCX_IRQ_COUNT },
+#else
+		{ { NPCX_GPIO(3, 1),
+		    NPCX_GPIO(3, 0),
+		    NPCX_GPIO(2, 7),
+		    NPCX_GPIO(2, 6),
+		    NPCX_GPIO(2, 5),
+		    NPCX_GPIO(2, 4),
+		    NPCX_GPIO(2, 3),
+		    NPCX_GPIO(2, 2), },
+		  NPCX_IRQ_KSI_WKINTC_1 },
+#endif
 		/* Group D */
 		{ { NPCX_GPIO(2, 0),
 		    NPCX_GPIO(2, 1),
@@ -828,6 +840,10 @@ GPIO_IRQ_FUNC(__gpio_wk0b_interrupt   , NPCX_IRQ_TWD_WKINTB_0);
 GPIO_IRQ_FUNC(__gpio_wk0c_interrupt   , NPCX_IRQ_WKINTC_0);
 GPIO_IRQ_FUNC(__gpio_wk1a_interrupt   , NPCX_IRQ_WKINTA_1);
 GPIO_IRQ_FUNC(__gpio_wk1b_interrupt   , NPCX_IRQ_WKINTB_1);
+#ifndef HAS_TASK_KEYSCAN
+/* Delcare GPIO irq functions for KSI pins if there's no keyboard scan task, */
+GPIO_IRQ_FUNC(__gpio_wk1c_interrupt   , NPCX_IRQ_KSI_WKINTC_1);
+#endif
 GPIO_IRQ_FUNC(__gpio_wk1d_interrupt   , NPCX_IRQ_WKINTD_1);
 GPIO_IRQ_FUNC(__gpio_wk1e_interrupt   , NPCX_IRQ_WKINTE_1);
 GPIO_IRQ_FUNC(__gpio_wk1f_interrupt   , NPCX_IRQ_WKINTF_1);
@@ -840,6 +856,9 @@ DECLARE_IRQ(NPCX_IRQ_WKINTC_0,      __gpio_wk0c_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_WKINTEFGH_0,   __gpio_wk0efgh_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_WKINTA_1,      __gpio_wk1a_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_WKINTB_1,      __gpio_wk1b_interrupt, 2);
+#ifndef HAS_TASK_KEYSCAN
+DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1,  __gpio_wk1c_interrupt, 2);
+#endif
 DECLARE_IRQ(NPCX_IRQ_WKINTD_1,      __gpio_wk1d_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_WKINTE_1,      __gpio_wk1e_interrupt, 2);
 #ifdef CONFIG_HOSTCMD_SPS
