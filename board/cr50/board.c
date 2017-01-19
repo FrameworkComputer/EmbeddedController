@@ -647,7 +647,38 @@ static int servo_state_unknown(void)
 	return 0;
 }
 
-static int device_powered_off(enum device_type device, int uart)
+static void enable_uart(int uart)
+{
+	/* Enable RX and TX on the UART peripheral */
+	uartn_enable(uart);
+
+	/* Connect the TX pin to the UART TX Signal */
+	if (!uartn_enabled(uart))
+		uartn_tx_connect(uart);
+}
+
+static void disable_uart(int uart)
+{
+	/* Disable RX and TX on the UART peripheral */
+	uartn_disable(uart);
+
+	/* Disconnect the TX pin from the UART peripheral */
+	uartn_tx_disconnect(uart);
+}
+
+static void enable_ap_uart(void)
+{
+	enable_uart(UART_AP);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_ap_uart, HOOK_PRIO_DEFAULT);
+
+static void disable_ap_uart(void)
+{
+	disable_uart(UART_AP);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_ap_uart, HOOK_PRIO_DEFAULT);
+
+static int device_powered_off(enum device_type device)
 {
 	if (device_get_state(device) == DEVICE_STATE_ON)
 		return EC_ERROR_UNKNOWN;
@@ -655,13 +686,6 @@ static int device_powered_off(enum device_type device, int uart)
 	if (!device_state_changed(device, DEVICE_STATE_OFF))
 		return EC_ERROR_UNKNOWN;
 
-	if (uart) {
-		/* Disable RX and TX on the UART peripheral */
-		uartn_disable(uart);
-
-		/* Disconnect the TX pin from the UART peripheral */
-		uartn_tx_disconnect(uart);
-	}
 	return EC_SUCCESS;
 }
 
@@ -670,20 +694,21 @@ static void servo_deferred(void)
 	if (servo_state_unknown())
 		return;
 
-	device_powered_off(DEVICE_SERVO, 0);
+	device_powered_off(DEVICE_SERVO);
 }
 DECLARE_DEFERRED(servo_deferred);
 
 static void ap_deferred(void)
 {
-	if (device_powered_off(DEVICE_AP, UART_AP) == EC_SUCCESS)
+	if (device_powered_off(DEVICE_AP) == EC_SUCCESS)
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 }
 DECLARE_DEFERRED(ap_deferred);
 
 static void ec_deferred(void)
 {
-	device_powered_off(DEVICE_EC, UART_EC);
+	if (device_powered_off(DEVICE_EC) == EC_SUCCESS)
+		disable_uart(UART_EC);
 }
 DECLARE_DEFERRED(ec_deferred);
 
@@ -705,24 +730,6 @@ struct device_config device_states[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
-
-/* Returns EC_SUCCESS if the device state changed to on */
-static int device_powered_on(enum device_type device, int uart)
-{
-	/* Update the device state */
-	if (!device_state_changed(device, DEVICE_STATE_ON))
-		return EC_ERROR_UNKNOWN;
-
-	/* Enable RX and TX on the UART peripheral */
-	uartn_enable(uart);
-
-	/* Connect the TX pin to the UART TX Signal */
-	if (device_get_state(DEVICE_SERVO) != DEVICE_STATE_ON &&
-	    !uartn_enabled(uart))
-		uartn_tx_connect(uart);
-
-	return EC_SUCCESS;
-}
 
 static void servo_attached(void)
 {
@@ -746,11 +753,12 @@ void device_state_on(enum gpio_signal signal)
 
 	switch (signal) {
 	case GPIO_DETECT_AP:
-		if (device_powered_on(DEVICE_AP, UART_AP) == EC_SUCCESS)
+		if (device_state_changed(DEVICE_AP, DEVICE_STATE_ON))
 			hook_notify(HOOK_CHIPSET_RESUME);
 		break;
 	case GPIO_DETECT_EC:
-		device_powered_on(DEVICE_EC, UART_EC);
+		if (device_state_changed(DEVICE_EC, DEVICE_STATE_ON))
+			enable_uart(UART_EC);
 		break;
 	case GPIO_DETECT_SERVO:
 		servo_attached();
