@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,7 +7,7 @@
 #include "endian.h"
 #include "registers.h"
 
-void DCRYPTO_ladder_init(void)
+static void ladder_init(void)
 {
 	/* Do not reset keyladder engine here, as before.
 	 *
@@ -16,13 +16,10 @@ void DCRYPTO_ladder_init(void)
 	 * Reset will make this flow work, but will have broken
 	 * the other pending sha flow.
 	 * Hence leave as is and observe the error.
-	 *
-	 * TODO: hw sha engine usage and keyladder usage cannot
-	 * interleave and should share a semaphore.
 	 */
 }
 
-int DCRYPTO_ladder_step(uint32_t cert)
+static int ladder_step(uint32_t cert)
 {
 	uint32_t itop;
 
@@ -51,7 +48,7 @@ static int compute_certs(const uint32_t *certs, size_t num_certs)
 	int i;
 
 	for (i = 0; i < num_certs; i++) {
-		if (DCRYPTO_ladder_step(certs[i]))
+		if (ladder_step(certs[i]))
 			return 0;
 	}
 
@@ -86,25 +83,38 @@ static const uint32_t FRK2_CERTS_POSTFIX[] = {
 
 int DCRYPTO_ladder_compute_frk2(size_t fw_version, uint8_t *frk2)
 {
-	int i;
+	int result = 0;
 
 	if (fw_version > MAX_MAJOR_FW_VERSION)
 		return 0;
 
-	DCRYPTO_ladder_init();
-
-	if (!compute_certs(FRK2_CERTS_PREFIX, ARRAY_SIZE(FRK2_CERTS_PREFIX)))
+	if (!dcrypto_grab_sha_hw())
 		return 0;
 
-	for (i = 0; i < MAX_MAJOR_FW_VERSION - fw_version; i++) {
-		if (DCRYPTO_ladder_step(KEYMGR_CERT_25))
-			return 0;
-	}
+	do {
+		int i;
 
-	if (!compute_certs(FRK2_CERTS_POSTFIX, ARRAY_SIZE(FRK2_CERTS_POSTFIX)))
-		return 0;
+		ladder_init();
 
-	memcpy(frk2, (void *) GREG32_ADDR(KEYMGR, HKEY_FRR0),
-		AES256_BLOCK_CIPHER_KEY_SIZE);
-	return 1;
+		if (!compute_certs(FRK2_CERTS_PREFIX,
+					ARRAY_SIZE(FRK2_CERTS_PREFIX)))
+			break;
+
+		for (i = 0; i < MAX_MAJOR_FW_VERSION - fw_version; i++) {
+			if (ladder_step(KEYMGR_CERT_25))
+				break;
+		}
+
+		if (!compute_certs(FRK2_CERTS_POSTFIX,
+					ARRAY_SIZE(FRK2_CERTS_POSTFIX)))
+			break;
+
+		memcpy(frk2, (void *) GREG32_ADDR(KEYMGR, HKEY_FRR0),
+			AES256_BLOCK_CIPHER_KEY_SIZE);
+
+		result = 1;
+	} while (0);
+
+	dcrypto_release_sha_hw();
+	return result;
 }
