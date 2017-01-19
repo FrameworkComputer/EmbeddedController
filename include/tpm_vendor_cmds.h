@@ -34,6 +34,10 @@ enum vendor_cmd_cc {
 	VENDOR_CC_INVALIDATE_INACTIVE_RW = 20,
 	VENDOR_CC_COMMIT_NVMEM = 21,
 
+	/* A gap left for the deep sleep control command. */
+
+	VENDOR_CC_REPORT_TPM_STATE = 23,
+
 	LAST_VENDOR_COMMAND = 65535,
 };
 
