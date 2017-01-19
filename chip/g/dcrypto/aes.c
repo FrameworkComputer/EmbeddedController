@@ -140,7 +140,8 @@ int DCRYPTO_aes_ctr(uint8_t *out, const uint8_t *key, uint32_t key_bits,
 			inp = in;
 			outp = out;
 		}
-		DCRYPTO_aes_block(inp, outp);
+		if (!DCRYPTO_aes_block(inp, outp))
+			return 0;
 		if (outp != out)
 			memcpy(out, outp, count);
 
