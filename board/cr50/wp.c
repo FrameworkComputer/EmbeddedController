@@ -399,6 +399,10 @@ static void power_button_handler(void)
 {
 	if (unlock_in_progress)
 		power_button_poked();
+#ifdef CONFIG_U2F
+	else
+		power_button_record();
+#endif
 
 	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
 }
