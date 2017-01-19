@@ -12,15 +12,16 @@ int device_get_state(enum device_type device)
 	return device_states[device].state;
 }
 
-void device_set_state(enum device_type device, enum device_state state)
+int device_set_state(enum device_type device, enum device_state state)
 {
-	if (device_states[device].state == state)
-		return;
-
-	if (state != DEVICE_STATE_UNKNOWN)
-		device_states[device].last_known_state = state;
-
 	device_states[device].state = state;
+
+	if (state != DEVICE_STATE_UNKNOWN &&
+	    device_states[device].last_known_state != state) {
+		device_states[device].last_known_state = state;
+		return 1;
+	}
+	return 0;
 }
 
 static void check_device_state(void)

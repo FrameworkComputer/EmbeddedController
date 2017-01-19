@@ -626,16 +626,12 @@ void nvmem_compute_sha(uint8_t *p_buf, int num_bytes,
 static int device_state_changed(enum device_type device,
 				 enum device_state state)
 {
-	int state_changed = state != device_states[device].last_known_state;
-
-	device_set_state(device, state);
-
 	/*
 	 * We've determined the device state, so cancel any deferred callbacks.
 	 */
 	hook_call_deferred(device_states[device].deferred, -1);
 
-	return state_changed;
+	return device_set_state(device, state);
 }
 
 /*

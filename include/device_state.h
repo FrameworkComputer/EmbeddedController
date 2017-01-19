@@ -37,8 +37,9 @@ int device_get_state(enum device_type device);
  *
  * @param device	the device to update
  * @param state		the new device state
+ * @return true if the last_known_state was changed
  */
-void device_set_state(enum device_type device, enum device_state state);
+int device_set_state(enum device_type device, enum device_state state);
 
 /* Update the device state based on the device gpios */
 void board_update_device_state(enum device_type device);
