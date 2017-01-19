@@ -182,9 +182,12 @@ const struct adc_t adc_channels[] = {
 			  ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	/* Vbus sensing (10x voltage divider). */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	/* Adapter current output or battery discharging current */
-	/* TODO(crosbug.com/p/61098): verify these values */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, 55000, 6144, 0},
+	/*
+	 * Adapter current output or battery charging/discharging current (uV)
+	 * 18x amplification on charger side.
+	 */
+	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
+			   ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
