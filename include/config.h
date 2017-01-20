@@ -589,6 +589,9 @@
 #define CONFIG_CHIPSET_HAS_PP1350
 #define CONFIG_CHIPSET_HAS_PP5000
 
+/* Support PMIC reset(using LDO_EN) in chipset */
+#undef CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
+
 /*****************************************************************************/
 /*
  * Chip config for clock circuitry
