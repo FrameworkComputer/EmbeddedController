@@ -148,8 +148,8 @@ static const struct fast_charge_profile fast_charge_sonycorp_info[] = {
 	[TEMP_RANGE_1] = {
 		.temp_c = TEMPC_TENTHS_OF_DEG(CHARGER_PROF_TEMP_C_LAST_RANGE),
 		.current_mA = {
-			[VOLTAGE_RANGE_LOW] = 3300,
-			[VOLTAGE_RANGE_HIGH] = 3300,
+			[VOLTAGE_RANGE_LOW] = 2250,
+			[VOLTAGE_RANGE_HIGH] = 2250,
 		},
 	},
 };
