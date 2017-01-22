@@ -97,6 +97,75 @@ Many of the crypto_test elements were borrowed from NIST test vectors.
     </cipher_text>
     <iv>f3f2f1f0 f7f6f5f4 fbfaf9f8 fffefdfc</iv>
   </crypto_test>
+
+  <crypto_test name="AES:CTR128I 2">
+    <clear_text format="hex">
+      8081582f 93b9e22f b62411a3 1cc78eac
+      43e9160a e450aeee c03fd20f 2c857832
+    </clear_text>
+    <key>
+      8c6b27c1 b3f18092 f782418c 0f52779d
+    </key>
+    <cipher_text>
+      0d61fe65 927bb9db 9f9c8cc4 6287a402
+      f530a9cf c892dec2 86cb6ae3 2b54fc89
+    </cipher_text>
+    <iv>
+      00000000 00000000 00000000 FFFFFFFF
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CTR128I 3">
+    <clear_text format="hex">
+      d66dc833 7ca1d802 572c5244 a24ae3ab
+      ef87947a f917ccf8 568e4d8d 5a4c46d0
+    </clear_text>
+    <key>
+      82bee9e5 57d2cc8c fa8796d4 338eff1d
+    </key>
+    <cipher_text>
+      4ab3cfa4 2866ae63 ea4bbc19 a041774d
+      3c16e4a3 5b5589f2 ff6e2e94 6ead92ba
+    </cipher_text>
+    <iv>
+      00000000 00000000 FFFFFFFF FFFFFFFF
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CTR128I 4">
+    <clear_text format="hex">
+      50ee7879 ff5eeb9b 8b9bbf8d 75d13193
+      a61b24a3 5b3cd159 1fa0290c 67693d8c
+    </clear_text>
+    <key>
+      ad9af8e4 dfca7c06 d61adf4c a5d845a3
+    </key>
+    <cipher_text>
+      123b06d0 fdfcc772 a8a96688 29f40ff2
+      0fcfa412 01fc81ec 15bde846 1ef15d21
+    </cipher_text>
+    <iv>
+      00000000 FFFFFFFF FFFFFFFF FFFFFFFF
+    </iv>
+  </crypto_test>
+
+  <crypto_test name="AES:CTR128I 5">
+    <clear_text format="hex">
+      3b0c5276 f93ae7c6 7791b673 c2af23a1
+      c907cb9b 44681b6a dce78a4c f688dcb1
+    </clear_text>
+    <key>
+      f8e5cff3 c5032a29 f1ec8fb9 d01cb31a
+    </key>
+    <cipher_text>
+      9a74141f 8f8db10e 81e6f51e 84f571a6
+      72e1d939 4b1ad600 7fd5d973 4497a688
+    </cipher_text>
+    <iv>
+      FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
+    </iv>
+  </crypto_test>
+
   <crypto_test name="AES:CTR256I 1">
     <clear_text format="hex">
       13c31e60 a5895777 04f5a7b7 28d2f3bb
