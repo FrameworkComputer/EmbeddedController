@@ -154,7 +154,7 @@ static int test_configured_nvmem(void)
 	 * partitions are configured and valid.
 	 */
 
-	/* Configure all NvMem partitions with starting version number 0 */
+	/* Configure all NvMem partitions with starting generation number 0 */
 	nvmem_setup(0);
 	/* Call NvMem initialization */
 	return nvmem_init();
@@ -162,6 +162,7 @@ static int test_configured_nvmem(void)
 
 static int test_corrupt_nvmem(void)
 {
+	uint8_t invalid_value = 0x55;
 	int ret;
 	struct nvmem_tag *p_part;
 	uint8_t *p_data;
@@ -174,7 +175,7 @@ static int test_corrupt_nvmem(void)
 	 */
 
 	/* Overwrite each partition will all 0s */
-	memset(write_buffer, 0, NVMEM_PARTITION_SIZE);
+	memset(write_buffer, invalid_value, NVMEM_PARTITION_SIZE);
 	flash_physical_write(CONFIG_FLASH_NVMEM_OFFSET_A,
 				     NVMEM_PARTITION_SIZE,
 				     (const char *)write_buffer);
@@ -192,27 +193,23 @@ static int test_corrupt_nvmem(void)
 	/* Fill buffer with 0xffs */
 	memset(write_buffer, 0xff, NVMEM_PARTITION_SIZE);
 	/*
-	 * nvmem_setup() will write put version 1 into partition 1 since the
-	 * commit() function toggles the active partition. Check here that
-	 * partition 0 has a version number of 1 and that all of the user buffer
-	 * data has been erased.
+	 * nvmem_init() will create generation 0 in partition 0 and commit it.
+	 * Check here that partition 0 has a generation number of 0 and that
+	 * all of the user buffer data has been erased.
 	 */
 	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_A;
-	TEST_ASSERT(p_part->version == 1);
+	TEST_ASSERT(p_part->generation == 0);
 	p_data = (uint8_t *)p_part + sizeof(struct nvmem_tag);
 	/* Verify that partition 0 is fully erased */
 	TEST_ASSERT_ARRAY_EQ(write_buffer, p_data, NVMEM_PARTITION_SIZE -
 			     sizeof(struct nvmem_tag));
 
-	/* Run the same test for partition 1 which should have version 0 */
-	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_B;
-	TEST_ASSERT(p_part->version == 0);
-	p_data = (uint8_t *)p_part + sizeof(struct nvmem_tag);
-	ccprintf("Partition Version = %d\n", p_part->version);
-	/* Verify that partition 1 is fully erased */
-	TEST_ASSERT_ARRAY_EQ(write_buffer, p_data, NVMEM_PARTITION_SIZE -
-			     sizeof(struct nvmem_tag));
-	return ret;
+	/* Verify that partition 1 still has invalid values in it. */
+	p_data = (uint8_t *)CONFIG_FLASH_NVMEM_BASE_B;
+	memset(write_buffer, invalid_value, NVMEM_PARTITION_SIZE);
+	TEST_ASSERT_ARRAY_EQ(write_buffer, p_data, NVMEM_PARTITION_SIZE);
+
+	return EC_SUCCESS;
 }
 
 static int test_write_read_sequence(void)

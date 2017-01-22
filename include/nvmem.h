@@ -17,12 +17,12 @@
  *     ---------------------------------------------------------------------
  *
  *     Physical Block Tag details
- *     ---------------------------------------------------------------------
- *     |             sha               |    version      |    reserved     |
- *     ---------------------------------------------------------------------
- *         sha       -> 4 bytes of sha1 digest
- *         version   -> 1 byte version number (0 - 0xfe)
- *         reserved  -> 3 bytes
+ *     --------------------------------------------------------------------
+ *     |             sha           |    generation      |    reserved     |
+ *     --------------------------------------------------------------------
+ *         sha        -> 4 bytes of sha1 digest
+ *         generation -> 1 byte generation number (0 - 0xfe)
+ *         reserved   -> 3 bytes
  *
  * At initialization time, each partition is scanned to see if it has a good sha
  * entry. One of the two partitions being valid is a supported condition. If
@@ -36,8 +36,8 @@
  * must be equal in total size. A table is used by the NvMem module to get the
  * correct base address and offset for each partition.
  *
- * A version number is used to distinguish between two valid partitions with
- * the newsest version number (in a circular sense) marking the correct
+ * A generation number is used to distinguish between two valid partitions with
+ * the newsest generation number (in a circular sense) marking the correct
  * partition to use. The parition number 0/1 is tracked via a static
  * variable. When the NvMem contents need to be updated, the flash erase/write
  * of the updated partition will use the inactive partition space in NvMem. This
@@ -65,13 +65,13 @@ extern uint32_t nvmem_user_sizes[NVMEM_NUM_USERS];
 
 #define NVMEM_NUM_PARTITIONS 2
 #define NVMEM_SHA_SIZE 4
-#define NVMEM_VERSION_BITS 8
-#define NVMEM_VERSION_MASK ((1 << NVMEM_VERSION_BITS) - 1)
+#define NVMEM_GENERATION_BITS 8
+#define NVMEM_GENERATION_MASK ((1 << NVMEM_GENERATION_BITS) - 1)
 
 /* Struct for NV block tag */
 struct nvmem_tag {
 	uint8_t sha[NVMEM_SHA_SIZE];
-	uint8_t version;
+	uint8_t generation;
 	uint8_t reserved[3];
 };
 
@@ -159,12 +159,12 @@ int nvmem_commit(void);
 
 /**
  * One time initialization of NvMem partitions
- * @param version: Starting version number of partition 0
+ * @param generation: Starting generation number of partition 0
  *
  * @return EC_SUCCESS if flash operations are successful.
  *         EC_ERROR_UNKNOWN otherwise.
  */
-int nvmem_setup(uint8_t version);
+int nvmem_setup(uint8_t generation);
 
 /**
  * Compute sha1 (lower 4 bytes or equivalent checksum) for NvMem tag

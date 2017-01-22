@@ -48,7 +48,7 @@ static int nvmem_error_state;
 /* Flag to track if an Nv write/move is not completed */
 static int nvmem_write_error;
 
-static int nvmem_save(uint8_t tag_version, size_t partition)
+static int nvmem_save(uint8_t tag_generation, size_t partition)
 {
 	struct nvmem_tag *tag;
 	size_t nvmem_offset;
@@ -64,12 +64,12 @@ static int nvmem_save(uint8_t tag_version, size_t partition)
 	}
 
 	tag = (struct nvmem_tag *)cache.base_ptr;
-	tag->version = tag_version;
+	tag->generation = tag_generation;
 
 	/* Calculate sha of the whole thing. */
-	nvmem_compute_sha(&tag->version,
+	nvmem_compute_sha(&tag->generation,
 			  NVMEM_PARTITION_SIZE -
-			  offsetof(struct nvmem_tag, version),
+			  offsetof(struct nvmem_tag, generation),
 			  tag->sha,
 			  sizeof(tag->sha));
 
@@ -90,7 +90,7 @@ static int nvmem_partition_sha_match(int index)
 	struct nvmem_partition *p_part;
 
 	p_part = (struct nvmem_partition *)nvmem_base_addr[index];
-	nvmem_compute_sha(&p_part->tag.version,
+	nvmem_compute_sha(&p_part->tag.generation,
 			  (NVMEM_PARTITION_SIZE - NVMEM_SHA_SIZE),
 			  sha_comp, sizeof(sha_comp));
 
@@ -197,7 +197,7 @@ static int nvmem_reinitialize(void)
 
 	memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
 
-	/* Start with version zero in the current active partition. */
+	/* Start with generation zero in the current active partition. */
 	ret = nvmem_save(0, nvmem_act_partition);
 	nvmem_release_cache();
 	if (ret) {
@@ -207,25 +207,26 @@ static int nvmem_reinitialize(void)
 	return EC_SUCCESS;
 }
 
-static int nvmem_compare_version(void)
+static int nvmem_compare_generation(void)
 {
 	struct nvmem_partition *p_part;
 	uint16_t ver0, ver1;
 	uint32_t delta;
 
 	p_part = (struct nvmem_partition *)nvmem_base_addr[0];
-	ver0 = p_part->tag.version;
+	ver0 = p_part->tag.generation;
 	p_part = (struct nvmem_partition *)nvmem_base_addr[1];
-	ver1 = p_part->tag.version;
+	ver1 = p_part->tag.generation;
 
-	/* Compute version difference accounting for wrap condition */
-	delta = (ver0 - ver1 + (1<<NVMEM_VERSION_BITS)) & NVMEM_VERSION_MASK;
+	/* Compute generation difference accounting for wrap condition */
+	delta = (ver0 - ver1 + (1<<NVMEM_GENERATION_BITS)) &
+		NVMEM_GENERATION_MASK;
 	/*
-	 * If version number delta is positive in a circular sense then
-	 * partition 0 has the newest version number. Otherwise, it's
+	 * If generation number delta is positive in a circular sense then
+	 * partition 0 has the newest generation number. Otherwise, it's
 	 * partition 1.
 	 */
-	return delta < (1<<(NVMEM_VERSION_BITS-1)) ? 0 : 1;
+	return delta < (1<<(NVMEM_GENERATION_BITS-1)) ? 0 : 1;
 }
 
 static int nvmem_find_partition(void)
@@ -236,15 +237,16 @@ static int nvmem_find_partition(void)
 	nvmem_act_partition = NVMEM_NOT_INITIALIZED;
 	/*
 	 * Check each partition to determine if the sha is good. If both
-	 * partitions have valid sha(s), then compare version numbers to select
-	 * the most recent one.
+	 * partitions have valid sha(s), then compare generation numbers to
+	 * select the most recent one.
 	 */
 	for (n = 0; n < NVMEM_NUM_PARTITIONS; n++)
 		if (nvmem_partition_sha_match(n)) {
 			if (nvmem_act_partition == NVMEM_NOT_INITIALIZED)
 				nvmem_act_partition = n;
 			else
-				nvmem_act_partition = nvmem_compare_version();
+				nvmem_act_partition =
+					nvmem_compare_generation();
 		} else {
 			ccprintf("%s:%d partiton %d verification FAILED\n",
 				 __func__, __LINE__, n);
@@ -311,7 +313,7 @@ static int nvmem_get_partition_off(int user, uint32_t offset,
 	return EC_SUCCESS;
 }
 
-int nvmem_setup(uint8_t starting_version)
+int nvmem_setup(uint8_t starting_generation)
 {
 	struct nvmem_partition *p_part;
 	int part;
@@ -337,8 +339,8 @@ int nvmem_setup(uint8_t starting_version)
 		memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
 		/* Get pointer to start of partition */
 		p_part = (struct nvmem_partition *)cache.base_ptr;
-		/* Commit function will increment version number */
-		p_part->tag.version = starting_version + part - 1;
+		/* Commit function will increment generation number */
+		p_part->tag.generation = starting_generation + part - 1;
 		/* Compute sha for the partition */
 		nvmem_compute_sha(&cache.base_ptr[NVMEM_SHA_SIZE],
 				  NVMEM_PARTITION_SIZE -
@@ -547,7 +549,7 @@ void nvmem_disable_commits(void)
 int nvmem_commit(void)
 {
 	int new_active_partition;
-	uint16_t version;
+	uint16_t generation;
 	struct nvmem_partition *p_part;
 
 	if (!commits_enabled) {
@@ -570,22 +572,22 @@ int nvmem_commit(void)
 	 * entries must be reset along with the index itself.
 	 */
 
-	/* Update version number */
+	/* Update generation number */
 	if (cache.base_ptr == NULL) {
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		return EC_ERROR_UNKNOWN;
 	}
 	p_part = (struct nvmem_partition *)cache.base_ptr;
-	version = p_part->tag.version + 1;
-	/* Check for restricted version number */
-	if (version == NVMEM_VERSION_MASK)
-		version = 0;
+	generation = p_part->tag.generation + 1;
+	/* Check for restricted generation number */
+	if (generation == NVMEM_GENERATION_MASK)
+		generation = 0;
 
 	/* Toggle parition being used (always write to current spare) */
 	new_active_partition = nvmem_act_partition ^ 1;
 
 	/* Write active partition to NvMem */
-	if (nvmem_save(version, new_active_partition) != EC_SUCCESS) {
+	if (nvmem_save(generation, new_active_partition) != EC_SUCCESS) {
 		/* Free up scratch buffers */
 		nvmem_release_cache();
 		return EC_ERROR_UNKNOWN;
