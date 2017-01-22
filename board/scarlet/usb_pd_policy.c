@@ -52,18 +52,19 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
-static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
+static uint8_t vbus_en;
+static uint8_t vbus_rp = TYPEC_RP_1A5;
 
 int board_vbus_source_enabled(int port)
 {
-	return vbus_en[port];
+	return vbus_en;
 }
 
 static void board_vbus_update_source_current(int port)
 {
-	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
+	/* There is only one usb type-c port on Scarlet. */
+	enum gpio_signal gpio = GPIO_USB_C0_5V_EN;
+	int flags = (vbus_rp == TYPEC_RP_1A5 && vbus_en) ?
 		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
 
 	/*
@@ -73,7 +74,7 @@ static void board_vbus_update_source_current(int port)
 	 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put a 33k
 	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
 	 */
-	gpio_set_level(gpio, vbus_en[port]);
+	gpio_set_level(gpio, vbus_en);
 	gpio_set_flags(gpio, flags);
 }
 
@@ -88,7 +89,7 @@ int pd_set_power_supply_ready(int port)
 
 	pd_set_vbus_discharge(port, 0);
 	/* Provide VBUS */
-	vbus_en[port] = 1;
+	vbus_en = 1;
 	board_vbus_update_source_current(port);
 
 	/* notify host of power info change */
@@ -101,9 +102,9 @@ void pd_power_supply_reset(int port)
 {
 	int prev_en;
 
-	prev_en = vbus_en[port];
+	prev_en = vbus_en;
 	/* Disable VBUS */
-	vbus_en[port] = 0;
+	vbus_en = 0;
 	board_vbus_update_source_current(port);
 	/* Enable discharge if we were previously sourcing 5V */
 	if (prev_en)
@@ -142,7 +143,7 @@ void typec_set_input_current_limit(int port, uint32_t max_ma,
 
 void typec_set_source_current_limit(int port, int rp)
 {
-	vbus_rp[port] = rp;
+	vbus_rp = rp;
 
 	/* change the GPIO driving the load switch if needed */
 	board_vbus_update_source_current(port);

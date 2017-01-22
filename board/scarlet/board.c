@@ -99,7 +99,6 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 	{"tcpc0",   NPCX_I2C_PORT0_0, 1000, GPIO_I2C0_SCL0, GPIO_I2C0_SDA0},
-	{"tcpc1",   NPCX_I2C_PORT0_1, 1000, GPIO_I2C0_SCL1, GPIO_I2C0_SDA1},
 	{"sensors", NPCX_I2C_PORT1,    400, GPIO_I2C1_SCL,  GPIO_I2C1_SDA},
 	{"charger", NPCX_I2C_PORT2,    400, GPIO_I2C2_SCL,  GPIO_I2C2_SDA},
 	{"battery", NPCX_I2C_PORT3,    100, GPIO_I2C3_SCL,  GPIO_I2C3_SDA},
@@ -153,17 +152,11 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC0, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
-	{I2C_PORT_TCPC1, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
 };
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
-	},
-	{
-		.port_addr = 1,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
 	},
@@ -179,8 +172,6 @@ uint16_t tcpc_get_alert_status(void)
 
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_L))
-		status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
 }
@@ -206,12 +197,11 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("New chg p%d", charge_port);
 
 	switch (charge_port) {
-	case 0: case 1:
+	case 0:
 		/* Don't charge from a source port */
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
-
-		bd99955_port = bd99955_pd_port_to_chg_port(charge_port);
+		bd99955_port = BD99955_CHARGE_PORT_VBUS;
 		break;
 	case CHARGE_PORT_NONE:
 		bd99955_port = BD99955_CHARGE_PORT_NONE;
@@ -245,39 +235,22 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 
 int extpower_is_present(void)
 {
-	int port;
-	int p0_src = board_vbus_source_enabled(0);
-	int p1_src = board_vbus_source_enabled(1);
-
 	/*
 	 * The charger will indicate VBUS presence if we're sourcing 5V,
 	 * so exclude such ports.
 	 */
-	if (p0_src && p1_src)
+	if (board_vbus_source_enabled(0))
 		return 0;
-	else if (!p0_src && !p1_src)
-		port = BD99955_CHARGE_PORT_BOTH;
 	else
-		port = bd99955_pd_port_to_chg_port(p0_src);
-
-	return bd99955_is_vbus_provided(port);
+		return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_VBUS);
 }
 
 int pd_snk_is_vbus_provided(int port)
 {
-	enum bd99955_charge_port bd99955_port;
-
-	switch (port) {
-	case 0:
-	case 1:
-		bd99955_port = bd99955_pd_port_to_chg_port(port);
-		break;
-	default:
+	if (port)
 		panic("Invalid charge port\n");
-		break;
-	}
 
-	return bd99955_is_vbus_provided(bd99955_port);
+	return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_VBUS);
 }
 
 static void board_spi_enable(void)
@@ -315,7 +288,6 @@ static void board_init(void)
 {
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
 
 	/* Enable charger interrupt for BC1.2 detection on attach / detach */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
@@ -335,7 +307,6 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_hibernate(void)
 {
-	int i;
 	int rv;
 
 	/*
@@ -344,11 +315,9 @@ void board_hibernate(void)
 	 * EC.  Upon init, we'll reinitialize the TCPCs to be at full power.
 	 */
 	CPRINTS("Set TCPCs to low power");
-	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		rv = tcpc_write(i, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
-		if (rv)
-			CPRINTS("Error setting TCPC %d", i);
-	}
+	rv = tcpc_write(0, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
+	if (rv)
+		CPRINTS("Error setting TCPC %d", 0);
 
 	cflush();
 }
