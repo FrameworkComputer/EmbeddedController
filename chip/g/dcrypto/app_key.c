@@ -22,7 +22,7 @@ int DCRYPTO_appkey_init(enum dcrypto_appid appid, struct APPKEY_CTX *ctx)
 	if (appid >= ARRAY_SIZE(dcrypto_app_names))
 		return 0;
 
-	memset(ctx, 0, sizeof(ctx));
+	memset(ctx, 0, sizeof(*ctx));
 
 	if (!DCRYPTO_ladder_compute_frk2(0, ctx->key))
 		return 0;
