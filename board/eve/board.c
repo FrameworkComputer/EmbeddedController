@@ -42,6 +42,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "timer.h"
@@ -78,9 +79,10 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void enable_input_devices(void);
 DECLARE_DEFERRED(enable_input_devices);
 
+#define LID_DEBOUNCE_US	(30 * MSEC)
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&enable_input_devices_data, 0);
+	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
 }
 
 #include "gpio_list.h"
@@ -310,9 +312,17 @@ static void board_pmic_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
+static void board_set_tablet_mode(void)
+{
+	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
+	/* Enabure tablet mode is initialized */
+	board_set_tablet_mode();
+
 	/* Enable tablet mode interrupt for input device enable */
 	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
 
@@ -540,8 +550,11 @@ static void enable_input_devices(void)
 	int kb_enable = 1;
 	int tp_enable = 1;
 
+	/* Turn on tablet mode for motion sense */
+	board_set_tablet_mode();
+
 	/* Disable both TP and KB in tablet mode */
-	if (!gpio_get_level(GPIO_TABLET_MODE_L))
+	if (tablet_get_mode())
 		kb_enable = tp_enable = 0;
 	/* Disable TP if chipset is off */
 	else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
