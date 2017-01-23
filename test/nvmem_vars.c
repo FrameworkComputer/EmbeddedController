@@ -5,8 +5,6 @@
  * Test of the key=val variable implementation (set, get, delete, etc).
  */
 
-#include <string.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
 #include "nvmem.h"

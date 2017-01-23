@@ -30,8 +30,8 @@ static uint8_t read_buffer[NVMEM_PARTITION_SIZE];
 static int flash_write_fail;
 static int lock_test_started;
 
-void nvmem_compute_sha(uint8_t *p_buf, int num_bytes, uint8_t *p_sha,
-		       int sha_bytes)
+void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
+		      uint8_t *p_hash, size_t hash_bytes)
 {
 	uint32_t crc;
 	uint32_t *p_data;
@@ -46,8 +46,11 @@ void nvmem_compute_sha(uint8_t *p_buf, int num_bytes, uint8_t *p_sha,
 		crc32_hash32(*p_data++);
 	crc = crc32_result();
 
-	p_data = (uint32_t *)p_sha;
-	*p_data = crc;
+	for (n = 0; n < hash_bytes; n += sizeof(crc)) {
+		size_t copy_bytes = MIN(sizeof(crc), hash_bytes - n);
+
+		memcpy(p_hash + n, &crc, copy_bytes);
+	}
 }
 
 /* Used to allow/prevent Flash erase/write operations */

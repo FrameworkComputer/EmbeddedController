@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_NVMEM_UTILS_H
 #define __CROS_EC_NVMEM_UTILS_H
 
+#include "crypto_api.h"
+
 /*
  * In order to provide maximum robustness for NvMem operations, the NvMem space
  * is divided into two equal sized partitions. A partition contains a tag
@@ -165,17 +167,6 @@ int nvmem_commit(void);
  *         EC_ERROR_UNKNOWN otherwise.
  */
 int nvmem_setup(uint8_t generation);
-
-/**
- * Compute sha1 (lower 4 bytes or equivalent checksum) for NvMem tag
- *
- * @param p_buf: pointer to beginning of data
- * @param num_bytes: length of data in bytes
- * @param p_sha: pointer to where computed sha will be stored
- * @param sha_len: length in bytes to use from sha computation
- */
-void nvmem_compute_sha(uint8_t *p_buf, int num_bytes, uint8_t *p_sha,
-		       int sha_len);
 
 /*
  * Temporarily stopping NVMEM commits could be beneficial. One use case is

@@ -15,6 +15,8 @@
 
 #include "internal.h"
 
+#include "crypto_api.h"
+
 #include <stddef.h>
 
 #include "cryptoc/hmac.h"
@@ -219,6 +221,7 @@ void DCRYPTO_appkey_finish(struct APPKEY_CTX *ctx);
 
 /* Number of bytes in the salt object. */
 #define DCRYPTO_CIPHER_SALT_SIZE 16
+BUILD_ASSERT(DCRYPTO_CIPHER_SALT_SIZE == CIPHER_SALT_SIZE);
 
 /*
  * Encrypt/decrypt a flat blob.
