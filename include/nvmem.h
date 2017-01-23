@@ -14,25 +14,24 @@
  * and a buffer for each NvMem user.
  *
  *     NvMem Partiion
- *     ---------------------------------------------------------------------
- *     |0x8 tag | User Buffer 0 | User Buffer 1 | .... |  User Buffer N-1  |
- *     ---------------------------------------------------------------------
+ *     ------------------------------------------------------------------------
+ *     |36 byte tag | User Buffer 0 | User Buffer 1 | .... |  User Buffer N-1 |
+ *     ------------------------------------------------------------------------
  *
  *     Physical Block Tag details
- *     --------------------------------------------------------------------
- *     |             sha           |    generation      |    reserved     |
- *     --------------------------------------------------------------------
- *         sha        -> 4 bytes of sha1 digest
+ *     ------------------------------------------------------------------------
+ *     |      sha       |      padding     |  version  | generation | reserved |
+ *     -------------------------------------------------------------------------
+ *         sha        -> 16 bytes of sha1 digest
+ *         padding    -> 16 bytes for future extensions
+ *         version    -> nvmem layout version, currently at 0
  *         generation -> 1 byte generation number (0 - 0xfe)
- *         reserved   -> 3 bytes
+ *         reserved   -> 2 bytes
  *
  * At initialization time, each partition is scanned to see if it has a good sha
  * entry. One of the two partitions being valid is a supported condition. If
- * however, neither partiion is valid, then a check is made to see if NvMem
- * space is fully erased. If this is detected, then the tag for partion 0 is
- * populated and written into flash. If neither partition is valid and they
- * aren't fully erased, then NvMem is marked corrupt and this failure condition
- * must be reported back to the caller.
+ * neither partiion is valid a new partition is created with generation set to
+ * zero.
  *
  * Note that the NvMem partitions can be placed anywhere in flash space, but
  * must be equal in total size. A table is used by the NvMem module to get the
@@ -66,15 +65,19 @@
 extern uint32_t nvmem_user_sizes[NVMEM_NUM_USERS];
 
 #define NVMEM_NUM_PARTITIONS 2
-#define NVMEM_SHA_SIZE 4
+#define NVMEM_SHA_SIZE CIPHER_SALT_SIZE
 #define NVMEM_GENERATION_BITS 8
 #define NVMEM_GENERATION_MASK ((1 << NVMEM_GENERATION_BITS) - 1)
+#define NVMEM_PADDING_SIZE 16
+#define NVMEM_LAYOUT_VERSION 0
 
 /* Struct for NV block tag */
 struct nvmem_tag {
 	uint8_t sha[NVMEM_SHA_SIZE];
+	uint8_t padding[NVMEM_PADDING_SIZE];
+	uint8_t layout_version;
 	uint8_t generation;
-	uint8_t reserved[3];
+	uint8_t reserved[2];
 };
 
 /* Structure MvMem Partition */
@@ -159,8 +162,11 @@ int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
  */
 int nvmem_commit(void);
 
-/**
- * One time initialization of NvMem partitions
+/*
+ * Reinitialzse all NvMem partitions
+ *
+ * This function should be called when NvMem needs to be wiped out.
+ *
  * @param generation: Starting generation number of partition 0
  *
  * @return EC_SUCCESS if flash operations are successful.

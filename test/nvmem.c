@@ -30,6 +30,20 @@ static uint8_t read_buffer[NVMEM_PARTITION_SIZE];
 static int flash_write_fail;
 static int lock_test_started;
 
+int app_cipher(const void *salt_p, void *out_p, const void *in_p, size_t size)
+{
+
+	const uint8_t *in = in_p;
+	uint8_t *out = out_p;
+	const uint8_t *salt = salt_p;
+	size_t i;
+
+	for (i = 0; i < size; i++)
+		out[i] = in[i] ^ salt[i % CIPHER_SALT_SIZE];
+
+	return 1;
+}
+
 void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
 		      uint8_t *p_hash, size_t hash_bytes)
 {
@@ -157,10 +171,47 @@ static int test_configured_nvmem(void)
 	 * partitions are configured and valid.
 	 */
 
-	/* Configure all NvMem partitions with starting generation number 0 */
-	nvmem_setup(0);
 	/* Call NvMem initialization */
 	return nvmem_init();
+}
+
+/* Verify that nvmem_setup indeed reinitializes the entire NVMEM. */
+static int test_nvmem_setup(void)
+{
+	uint32_t write_value;
+	uint32_t read_value;
+
+	nvmem_init();
+
+	write_value = 1;
+
+	/* Make sure both partitions have data in them. */
+	nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
+	nvmem_commit();
+	read_value = ~write_value;
+	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
+	TEST_ASSERT(read_value == write_value);
+
+	nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
+	nvmem_commit();
+	read_value = ~write_value;
+	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
+	TEST_ASSERT(read_value == write_value);
+
+	/* nvmem_setup() is supposed to erase both partitions. */
+	nvmem_setup(0);
+
+	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
+	TEST_ASSERT(read_value == 0xffffffff);
+
+	/* Switch active partition. */
+	nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
+	nvmem_commit();
+
+	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
+	TEST_ASSERT(read_value != 0xffffffff);
+
+	return EC_SUCCESS;
 }
 
 static int test_corrupt_nvmem(void)
@@ -173,8 +224,7 @@ static int test_corrupt_nvmem(void)
 	/*
 	 * The purpose of this test is to check nvmem_init() in the case when no
 	 * vailid partition exists (not fully erased and no valid sha). In this
-	 * case, the initialization function will call setup() to create two new
-	 * valid partitions.
+	 * case, the initialization create one new valid partition.
 	 */
 
 	/* Overwrite each partition will all 0s */
@@ -187,30 +237,42 @@ static int test_corrupt_nvmem(void)
 				     (const char *)write_buffer);
 	/*
 	 * The initialization function will look for a valid partition and if
-	 * none is found, then will call nvmem_setup() which will erase the
-	 * paritions and setup new tags.
+	 * none is found, it will create one, and save it at partition index
+	 * 1.
 	 */
 	ret = nvmem_init();
 	if (ret)
 		return ret;
-	/* Fill buffer with 0xffs */
-	memset(write_buffer, 0xff, NVMEM_PARTITION_SIZE);
+
 	/*
-	 * nvmem_init() will create generation 0 in partition 0 and commit it.
-	 * Check here that partition 0 has a generation number of 0 and that
-	 * all of the user buffer data has been erased.
+	 * nvmem_init() called on uninitialized flash will create the first
+	 * valid partition with generation set to 0 at flash partition 1.
+	 *
+	 * Check here that partition 1 has a generation number of 0.
 	 */
-	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_A;
+	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_B;
 	TEST_ASSERT(p_part->generation == 0);
 	p_data = (uint8_t *)p_part + sizeof(struct nvmem_tag);
-	/* Verify that partition 0 is fully erased */
-	TEST_ASSERT_ARRAY_EQ(write_buffer, p_data, NVMEM_PARTITION_SIZE -
-			     sizeof(struct nvmem_tag));
 
-	/* Verify that partition 1 still has invalid values in it. */
-	p_data = (uint8_t *)CONFIG_FLASH_NVMEM_BASE_B;
+	/* Verify that partition 0 is still empty. */
 	memset(write_buffer, invalid_value, NVMEM_PARTITION_SIZE);
+	p_data = (void *)CONFIG_FLASH_NVMEM_BASE_A;
 	TEST_ASSERT_ARRAY_EQ(write_buffer, p_data, NVMEM_PARTITION_SIZE);
+	memset(write_buffer, 0xff, NVMEM_PARTITION_SIZE);
+
+	/* Now let's write one byte of 'invalid_value' into user NVMEM_CR50 */
+	TEST_ASSERT(nvmem_write(0, 1, write_buffer, NVMEM_USER_0) ==
+		    EC_SUCCESS);
+	TEST_ASSERT(nvmem_commit() == EC_SUCCESS);
+
+	/* Verify that partition 0 genration did not change. */
+	TEST_ASSERT(p_part->generation == 0);
+
+	/*
+	 * Now verify that partition 0 generation is set to 1;
+	 */
+	p_part = (struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_A;
+	TEST_ASSERT(p_part->generation == 1);
 
 	return EC_SUCCESS;
 }
@@ -592,5 +654,7 @@ void run_test(void)
 	RUN_TEST(test_is_different);
 	/* Test Nvmem write lock */
 	RUN_TEST(test_lock);
+	/* Test nvmem_setup() function. */
+	RUN_TEST(test_nvmem_setup);
 	test_print_result();
 }

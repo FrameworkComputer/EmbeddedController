@@ -55,18 +55,19 @@ static int nvmem_write_error;
  */
 static void nvmem_compute_sha(struct nvmem_tag *tag, void *sha_buf)
 {
-	app_compute_hash(&tag->generation,
-			 NVMEM_PARTITION_SIZE - NVMEM_SHA_SIZE,
+	app_compute_hash(tag->padding, NVMEM_PARTITION_SIZE - NVMEM_SHA_SIZE,
 			 sha_buf, sizeof(tag->sha));
 }
 
-static int nvmem_save(uint8_t tag_generation, size_t partition)
+static int nvmem_save(uint8_t tag_generation)
 {
 	struct nvmem_tag *tag;
 	size_t nvmem_offset;
+	int dest_partition = (nvmem_act_partition + 1) % NVMEM_NUM_PARTITIONS;
 
 	/* Flash offset of the partition to save. */
-	nvmem_offset = nvmem_base_addr[partition] - CONFIG_PROGRAM_MEMORY_BASE;
+	nvmem_offset = nvmem_base_addr[dest_partition] -
+		CONFIG_PROGRAM_MEMORY_BASE;
 
 	/* Erase partition */
 	if (flash_physical_erase(nvmem_offset,
@@ -77,9 +78,17 @@ static int nvmem_save(uint8_t tag_generation, size_t partition)
 
 	tag = (struct nvmem_tag *)cache.base_ptr;
 	tag->generation = tag_generation;
+	tag->layout_version = NVMEM_LAYOUT_VERSION;
 
 	/* Calculate sha of the whole thing. */
 	nvmem_compute_sha(tag, tag->sha);
+
+	/* Encrypt actual payload. */
+	if (!app_cipher(tag->sha, tag + 1, tag + 1,
+			NVMEM_PARTITION_SIZE - sizeof(struct nvmem_tag))) {
+		CPRINTF("%s:%d\n", __func__, __LINE__);
+		return EC_ERROR_UNKNOWN;
+	}
 
 	/* Write partition */
 	if (flash_physical_write(nvmem_offset,
@@ -89,54 +98,88 @@ static int nvmem_save(uint8_t tag_generation, size_t partition)
 		return EC_ERROR_UNKNOWN;
 	}
 
+	nvmem_act_partition = dest_partition;
 	return EC_SUCCESS;
 }
 
-static int nvmem_partition_sha_match(int index)
+/*
+ * Read from flash and verify partition.
+ *
+ * @param index - index of the partition to verify
+ * @param part_buffer - if non-null, a pointer where the caller wants to save
+ *                      the address of the verified partition in SRAM. If
+ *                      verification succeeded, the caller is responsible for
+ *                      releasing the allocated memory.
+ *
+ * Returns EC_SUCCESS on verification success
+ *         EC_ERROR_BUSY in case of malloc failure
+ *         EC_ERROR_UNKNOWN on failure to decrypt of verify.
+ */
+static int nvmem_partition_read_verify(int index, void **part_buffer)
 {
 	uint8_t sha_comp[NVMEM_SHA_SIZE];
 	struct nvmem_partition *p_part;
+	struct nvmem_partition *p_copy;
+	int ret;
 
 	p_part = (struct nvmem_partition *)nvmem_base_addr[index];
-	nvmem_compute_sha(&p_part->tag, sha_comp);
 
-	/* Check if computed value matches stored value. */
-	return !memcmp(p_part->tag.sha, sha_comp, NVMEM_SHA_SIZE);
+	/* First copy it into ram. */
+	ret = shared_mem_acquire(NVMEM_PARTITION_SIZE, (char **)&p_copy);
+	if (ret != EC_SUCCESS) {
+		CPRINTF("%s failed to malloc!\n", __func__);
+		return ret;
+	}
+	memcpy(p_copy, p_part, NVMEM_PARTITION_SIZE);
+
+	/* Then decrypt it. */
+	if (!app_cipher(p_copy->tag.sha, &p_copy->tag + 1,
+			&p_copy->tag + 1,
+			NVMEM_PARTITION_SIZE - sizeof(struct nvmem_tag))) {
+		CPRINTF("%s: decryption failure\n", __func__);
+		shared_mem_release(p_copy);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	/*
+	 * Check if computed value matches stored value. Nonzero 'ret' value
+	 * means there was a match.
+	 */
+	nvmem_compute_sha(&p_copy->tag, sha_comp);
+	ret = !memcmp(p_copy->tag.sha, sha_comp, NVMEM_SHA_SIZE);
+
+	if (ret && part_buffer)
+		*part_buffer = p_copy;
+
+	if (!ret || !part_buffer)
+		shared_mem_release(p_copy);
+
+	return ret ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 /* Called with the semaphore locked. */
 static int nvmem_acquire_cache(void)
 {
 	int attempts = 0;
-	int ret;
 
-	if (shared_mem_size() < NVMEM_PARTITION_SIZE) {
-		CPRINTF("Not enough shared mem! avail = 0x%x < reqd = 0x%x\n",
-			shared_mem_size(), NVMEM_PARTITION_SIZE);
-		return EC_ERROR_OVERFLOW;
-	}
+	cache.base_ptr = NULL;  /* Just in case. */
 
 	while (attempts < NVMEM_ACQUIRE_CACHE_MAX_ATTEMPTS) {
-		ret = shared_mem_acquire(NVMEM_PARTITION_SIZE,
-					 (char **)&cache.base_ptr);
-		if (ret == EC_SUCCESS) {
-			/* Copy partiion contents from flash into cache */
-			memcpy(cache.base_ptr,
-			       (void *)nvmem_base_addr[nvmem_act_partition],
-			       NVMEM_PARTITION_SIZE);
+		int ret;
 
-			return EC_SUCCESS;
-		} else if (ret == EC_ERROR_BUSY) {
-			CPRINTF("Shared Mem not avail! Attempt %d\n", attempts);
-			/* wait NVMEM_ACQUIRE_CACHE_SLEEP_MS  msec */
-			/* TODO: what time really makes sense? */
-			msleep(NVMEM_ACQUIRE_CACHE_SLEEP_MS);
-		}
+		ret = nvmem_partition_read_verify(nvmem_act_partition,
+						  (void **)&cache.base_ptr);
+
+		if (ret != EC_ERROR_BUSY)
+			return ret;
+
+		CPRINTF("Shared Mem not available on attempt %d!\n", attempts);
+		/* TODO: what time really makes sense? */
+		msleep(NVMEM_ACQUIRE_CACHE_SLEEP_MS);
 		attempts++;
 	}
 	/* Timeout Error condition */
 	CPRINTF("%s:%d\n", __func__, __LINE__);
-	cache.base_ptr = NULL;  /* Just in case. */
 	return EC_ERROR_TIMEOUT;
 }
 
@@ -191,26 +234,27 @@ static int nvmem_reinitialize(void)
 	int ret;
 
 	/*
-	 * NvMem is not properly itialized. Let's just erase everything and
+	 * NvMem is not properly initialized. Let's just erase everything and
 	 * start over, so that at least 1 partition is ready to be used.
 	 */
 	nvmem_act_partition = 0;
 
 	/* Need to acquire the shared memory buffer */
-	ret = nvmem_lock_cache();
+	ret = shared_mem_acquire(NVMEM_PARTITION_SIZE,
+				 (char **)&cache.base_ptr);
+
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
 
 	/* Start with generation zero in the current active partition. */
-	ret = nvmem_save(0, nvmem_act_partition);
-	nvmem_release_cache();
-	if (ret) {
+	ret = nvmem_save(0);
+	shared_mem_release(cache.base_ptr);
+	cache.base_ptr = 0;
+	if (ret != EC_SUCCESS)
 		CPRINTF("%s:%d\n", __func__, __LINE__);
-		return ret;
-	}
-	return EC_SUCCESS;
+	return ret;
 }
 
 static int nvmem_compare_generation(void)
@@ -247,7 +291,7 @@ static int nvmem_find_partition(void)
 	 * select the most recent one.
 	 */
 	for (n = 0; n < NVMEM_NUM_PARTITIONS; n++)
-		if (nvmem_partition_sha_match(n)) {
+		if (nvmem_partition_read_verify(n, NULL) == EC_SUCCESS) {
 			if (nvmem_act_partition == NVMEM_NOT_INITIALIZED)
 				nvmem_act_partition = n;
 			else
@@ -266,7 +310,7 @@ static int nvmem_find_partition(void)
 	 * is valid. Let's reinitialize the NVMEM - there is nothing else we
 	 * can do.
 	 */
-	CPRINTS("%s: No Valid Parition found, have to reinitialize!");
+	CPRINTS("%s: No Valid Partition found, will reinitialize!", __func__);
 
 	if (nvmem_reinitialize() != EC_SUCCESS) {
 		CPRINTS("%s: Reinitialization failed!!");
@@ -321,42 +365,36 @@ static int nvmem_get_partition_off(int user, uint32_t offset,
 
 int nvmem_setup(uint8_t starting_generation)
 {
-	struct nvmem_partition *p_part;
 	int part;
 	int ret;
 
-	CPRINTS("Configuring NVMEM FLash Partition");
-	/*
-	 * Initialize NVmem partition. This function will only be called
-	 * if during nvmem_init() fails which implies that NvMem is not fully
-	 * erased and neither partion tag contains a valid sha meaning they are
-	 * both corrupted
-	 */
-	for (part = 0; part < NVMEM_NUM_PARTITIONS; part++) {
-		/* Set active partition variable */
+	CPRINTS("Configuring NVMEM Flash Partition");
+
+	part = nvmem_act_partition;
+	nvmem_act_partition = 0;
+
+	/* Get the cache buffer */
+	if (nvmem_lock_cache() != EC_SUCCESS) {
+		CPRINTF("%s: Cache ram not available!\n", __func__);
 		nvmem_act_partition = part;
-
-		/* Get the cache buffer */
-		if (nvmem_lock_cache() != EC_SUCCESS) {
-			CPRINTF("NvMem: Cache ram not available!\n");
-			return EC_ERROR_TIMEOUT;
-		}
-		/* Fill entire partition to 0xFFs */
-		memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
-		/* Get pointer to start of partition */
-		p_part = (struct nvmem_partition *)cache.base_ptr;
-		/* Commit function will increment generation number */
-		p_part->tag.generation = starting_generation + part - 1;
-		/* Compute sha for the partition */
-		nvmem_compute_sha(&p_part->tag, p_part->tag.sha);
-
-		/* Partition is now ready, write it to flash. */
-		ret = nvmem_commit();
-		if (ret != EC_SUCCESS)
-			return ret;
+		return EC_ERROR_TIMEOUT;
 	}
 
-	return EC_SUCCESS;
+	ret = EC_SUCCESS;
+
+	for (part = 0; part < NVMEM_NUM_PARTITIONS; part++) {
+		int rv;
+
+		memset(cache.base_ptr, 0xff, NVMEM_PARTITION_SIZE);
+		rv = nvmem_save(starting_generation + part);
+
+		/* Even if one partition saving failed, let's keep going. */
+		if (rv != EC_SUCCESS)
+			ret = rv;
+	}
+
+	nvmem_release_cache();
+	return ret;
 }
 
 int nvmem_init(void)
@@ -378,19 +416,13 @@ int nvmem_init(void)
 
 	ret = nvmem_find_partition();
 	if (ret != EC_SUCCESS) {
-		/* Write NvMem partitions to 0xff and setup new tags */
-		nvmem_setup(0);
-		/* Should find valid partiion now */
-		ret = nvmem_find_partition();
-		if (ret) {
-			/* Change error state to non-zero */
-			nvmem_error_state = EC_ERROR_UNKNOWN;
-			CPRINTF("%s:%d\n", __func__, __LINE__);
-			return ret;
-		}
+		/* Change error state to non-zero */
+		nvmem_error_state = ret;
+		CPRINTF("%s:%d\n", __func__, __LINE__);
+		return ret;
 	}
 
-	CPRINTS("Active NVram partition set to %d", nvmem_act_partition);
+	CPRINTS("Active Nvmem partition set to %d", nvmem_act_partition);
 	commits_enabled = 1;
 	commits_skipped = 0;
 
@@ -406,16 +438,18 @@ int nvmem_is_different(uint32_t offset, uint32_t size, void *data,
 		       enum nvmem_users user)
 {
 	int ret;
-	uint8_t *p_src;
-	uintptr_t src_addr;
 	uint32_t src_offset;
+	int need_to_release;
 
 	/* Point to either NvMem flash or ram if that's active */
-	if (cache.base_ptr == NULL)
-		src_addr = nvmem_base_addr[nvmem_act_partition];
-
-	else
-		src_addr = (uintptr_t)cache.base_ptr;
+	if (!cache.base_ptr) {
+		ret = nvmem_lock_cache();
+		if (ret != EC_SUCCESS)
+			return ret;
+		need_to_release = 1;
+	} else {
+		need_to_release = 0;
+	}
 
 	/* Get partition offset for this read operation */
 	ret = nvmem_get_partition_off(user, offset, size, &src_offset);
@@ -423,38 +457,42 @@ int nvmem_is_different(uint32_t offset, uint32_t size, void *data,
 		return ret;
 
 	/* Advance to the correct byte within the data buffer */
-	src_addr += src_offset;
-	p_src = (uint8_t *)src_addr;
+
 	/* Compare NvMem with data */
-	return memcmp(p_src, data, size);
+	ret = memcmp(cache.base_ptr + src_offset, data, size);
+	if (need_to_release)
+		nvmem_release_cache();
+
+	return ret;
 }
 
 int nvmem_read(uint32_t offset, uint32_t size,
 		    void *data, enum nvmem_users user)
 {
 	int ret;
-	uint8_t *p_src;
-	uintptr_t src_addr;
 	uint32_t src_offset;
+	int need_to_release;
 
-	/* Point to either NvMem flash or ram if that's active */
-	if (cache.base_ptr == NULL)
-		src_addr = nvmem_base_addr[nvmem_act_partition];
+	if (!cache.base_ptr) {
+		ret = nvmem_lock_cache();
+		if (ret != EC_SUCCESS)
+			return ret;
+		need_to_release = 1;
+	} else {
+		need_to_release = 0;
+	}
 
-	else
-		src_addr = (uintptr_t)cache.base_ptr;
 	/* Get partition offset for this read operation */
 	ret = nvmem_get_partition_off(user, offset, size, &src_offset);
-	if (ret != EC_SUCCESS)
-		return ret;
-	/* Advance to the correct byte within the data buffer */
-	src_addr += src_offset;
-	p_src = (uint8_t *)src_addr;
 
-	/* Copy from src into the caller's destination buffer */
-	memcpy(data, p_src, size);
+	if (ret == EC_SUCCESS)
+		/* Copy from src into the caller's destination buffer */
+		memcpy(data, cache.base_ptr + src_offset, size);
 
-	return EC_SUCCESS;
+	if (commits_enabled && need_to_release)
+		nvmem_release_cache();
+
+	return ret;
 }
 
 int nvmem_write(uint32_t offset, uint32_t size,
@@ -551,7 +589,6 @@ void nvmem_disable_commits(void)
 
 int nvmem_commit(void)
 {
-	int new_active_partition;
 	uint16_t generation;
 	struct nvmem_partition *p_part;
 
@@ -586,18 +623,12 @@ int nvmem_commit(void)
 	if (generation == NVMEM_GENERATION_MASK)
 		generation = 0;
 
-	/* Toggle parition being used (always write to current spare) */
-	new_active_partition = nvmem_act_partition ^ 1;
-
 	/* Write active partition to NvMem */
-	if (nvmem_save(generation, new_active_partition) != EC_SUCCESS) {
+	if (nvmem_save(generation) != EC_SUCCESS) {
 		/* Free up scratch buffers */
 		nvmem_release_cache();
 		return EC_ERROR_UNKNOWN;
 	}
-
-	/* Update newest partition index */
-	nvmem_act_partition = new_active_partition;
 
 	/* Free up scratch buffers */
 	nvmem_release_cache();

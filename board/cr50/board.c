@@ -61,7 +61,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-#define NVMEM_CR50_SIZE 300
+#define NVMEM_CR50_SIZE 272
 #define NVMEM_TPM_SIZE ((sizeof((struct nvmem_partition *)0)->buffer) \
 			- NVMEM_CR50_SIZE)
 
