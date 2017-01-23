@@ -561,14 +561,14 @@ void board_hibernate_late(void)
 {
 	int i;
 	const uint32_t hibernate_pins[][2] = {
-		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
+		{GPIO_LID_OPEN, GPIO_INT_RISING},
 		/* Turn off LEDs in hibernate */
-		{GPIO_CHARGE_LED_1, GPIO_OUTPUT | GPIO_LOW},
-		{GPIO_CHARGE_LED_2, GPIO_OUTPUT | GPIO_LOW},
-		{GPIO_CHARGE_LED_3, GPIO_OUTPUT | GPIO_LOW},
-		{GPIO_CHARGE_LED_4, GPIO_OUTPUT | GPIO_LOW},
-		{GPIO_CHARGE_LED_5, GPIO_OUTPUT | GPIO_LOW},
-		{GPIO_CHARGE_LED_6, GPIO_OUTPUT | GPIO_LOW},
+		{GPIO_CHARGE_LED_1, GPIO_OUTPUT | GPIO_HIGH},
+		{GPIO_CHARGE_LED_2, GPIO_OUTPUT | GPIO_HIGH},
+		{GPIO_CHARGE_LED_3, GPIO_OUTPUT | GPIO_HIGH},
+		{GPIO_CHARGE_LED_4, GPIO_OUTPUT | GPIO_HIGH},
+		{GPIO_CHARGE_LED_5, GPIO_OUTPUT | GPIO_HIGH},
+		{GPIO_CHARGE_LED_6, GPIO_OUTPUT | GPIO_HIGH},
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
 		 * charge output in hibernate. Charger will assert ACOK_OD
