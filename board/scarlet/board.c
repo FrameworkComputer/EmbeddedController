@@ -14,11 +14,9 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "driver/accel_bma2x2.h"
-#include "driver/accel_kionix.h"
-#include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/bd9995x.h"
+#include "driver/baro_bmp280.h"
 #include "driver/tcpm/fusb302.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -415,12 +413,6 @@ const matrix_3x3_t base_standard_ref = {
 	{ 0,  0, FLOAT_TO_FP(-1)}
 };
 
-const matrix_3x3_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1),  0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
-
 struct bmp280_drv_data_t bmp280_drv_data;
 
 struct motion_sensor_t motion_sensors[] = {
@@ -448,17 +440,17 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 0,
 			 .ec_rate = 0,
 		 },
-		 /* EC use accel for angle detection */
+		 /* Enable accel in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
 			 .ec_rate = 100 * MSEC,
 		 },
-		 /* EC use accel for angle detection */
+		 /* Enable accel in S3 */
 		 [SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
 			.ec_rate = 0,
 		 },
-		 /* Sensor off in S3/S5 */
+		 /* Sensor off in S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
 			 .odr = 0,
 			 .ec_rate = 0
@@ -484,10 +476,10 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 0,
 			 .ec_rate = 0,
 		 },
-		 /* EC does not need in S0 */
+		 /* Enable gyro in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			 .odr = 10000 | ROUND_UP_FLAG,
+			 .ec_rate = 100 * MSEC,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
@@ -498,6 +490,40 @@ struct motion_sensor_t motion_sensors[] = {
 		 [SENSOR_CONFIG_EC_S5] = {
 			 .odr = 0,
 			 .ec_rate = 0,
+		 },
+	 },
+	},
+	[BASE_BARO] = {
+	 .name = "Base Baro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMP280,
+	 .type = MOTIONSENSE_TYPE_BARO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmp280_drv,
+	 .drv_data = &bmp280_drv_data,
+	 .port = I2C_PORT_BARO,
+	 .addr = BMP280_I2C_ADDRESS1,
+	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			.odr = 0,
+			.ec_rate = 0,
+		 },
+		 /* Enable barometer in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+			 .ec_rate = 100 * MSEC,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			.odr = 0,
+			.ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			.odr = 0,
+			.ec_rate = 0,
 		 },
 	 },
 	},
