@@ -73,6 +73,7 @@ enum smb_oper_state_t {
 	SMB_MASTER_START,
 	SMB_WRITE_OPER,
 	SMB_READ_OPER,
+	SMB_DUMMY_READ_OPER,
 	SMB_REPEAT_START,
 	SMB_WRITE_SUSPEND,
 	SMB_READ_SUSPEND,
@@ -269,22 +270,24 @@ enum smb_error i2c_master_transaction(int controller)
 					p_status->tx_buf[p_status->idx_buf-1]);
 		}
 	} else if (p_status->oper_state == SMB_READ_SUSPEND) {
-		/* Need to read the other bytes from next transaction */
-		p_status->oper_state = SMB_READ_OPER;
-		if (p_status->sz_rxbuf == 1) {
+		/*
+		 * Do dummy read if read length is 1 and I2C_XFER_STOP is set
+		 * simultaneously.
+		 */
+		if (p_status->sz_rxbuf == 1 &&
+				(p_status->flags & I2C_XFER_STOP)) {
 			/*
 			 * Since SCL is released after reading last byte from
-			 * previous transaction, we have no chance to set NACK
-			 * bit if the next transaction is only one byte. Master
-			 * cannot generate STOP when the last byte is ACK during
-			 * receiving.
+			 * previous transaction, adding a dummy byte for next
+			 * transaction which let ec sets NACK bit in time is
+			 * necessary. Or i2c master cannot generate STOP
+			 * when the last byte is ACK during receiving.
 			 */
-			CPRINTS("I2C %d rxbuf size should exceed one byte in "
-					"2th transaction", controller);
-			p_status->err_code = SMB_NO_SUPPORT_PTL;
-			i2c_recovery(controller, p_status);
-			return EC_ERROR_UNKNOWN;
-		}
+			p_status->sz_rxbuf++;
+			p_status->oper_state = SMB_DUMMY_READ_OPER;
+		} else
+			/* Need to read the other bytes from next transaction */
+			p_status->oper_state = SMB_READ_OPER;
 	} else
 		cprints(CC_I2C, "Unexpected i2c state machine! %d",
 				p_status->oper_state);
@@ -444,7 +447,8 @@ static void i2c_handle_sda_irq(int controller)
 		}
 	}
 	/* 3 Handle master read operation (read or after a write operation) */
-	else if (p_status->oper_state == SMB_READ_OPER) {
+	else if (p_status->oper_state == SMB_READ_OPER ||
+			p_status->oper_state == SMB_DUMMY_READ_OPER) {
 		uint8_t data;
 		/* last byte is about to be read - end of transaction */
 		if (p_status->idx_buf == (p_status->sz_rxbuf - 1)) {
@@ -479,8 +483,12 @@ static void i2c_handle_sda_irq(int controller)
 		I2C_READ_BYTE(controller, data);
 		CPRINTS("-R(%02x)", data);
 
-		/* Read to buffer */
-		p_status->rx_buf[p_status->idx_buf++] = data;
+		/* Read to buf. Skip last byte if meet SMB_DUMMY_READ_OPER */
+		if (p_status->oper_state == SMB_DUMMY_READ_OPER &&
+				p_status->idx_buf == (p_status->sz_rxbuf - 1))
+			p_status->idx_buf++;
+		else
+			p_status->rx_buf[p_status->idx_buf++] = data;
 
 		/* last byte is read - end of transaction */
 		if (p_status->idx_buf == p_status->sz_rxbuf) {
@@ -627,6 +635,10 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	/* Return error if i2c_port_to_controller() returned an error */
 	if (ctrl < 0)
 		return EC_ERROR_INVAL;
+
+	/* Skip unnecessary transaction */
+	if (out_size == 0 && in_size == 0)
+		return EC_SUCCESS;
 
 	p_status = i2c_stsobjs + ctrl;
 
