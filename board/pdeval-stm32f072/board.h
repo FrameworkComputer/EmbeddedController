@@ -29,9 +29,6 @@
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPM_TCPCI
 
-/* start as a sink */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* fake board specific type-C power constants */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */

@@ -79,9 +79,6 @@ enum board_src_cap {
 #define PD_SRC_VNC            PD_SRC_3_0_VNC_MV
 #define PD_SNK_RD_THRESHOLD   PD_SRC_3_0_RD_THRESH_MV
 
-/* we are acting only as a sink */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* delay necessary for the voltage transition on the power supply */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */

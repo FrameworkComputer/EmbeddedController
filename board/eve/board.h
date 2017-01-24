@@ -230,9 +230,6 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /*
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.

@@ -113,8 +113,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* we are never a source : don't care about power supply */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  0 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 0 /* us */

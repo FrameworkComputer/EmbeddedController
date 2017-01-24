@@ -1599,7 +1599,7 @@ void pd_task(void)
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = tcpm_init(port);
 	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
-	this_state = res ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE;
+	this_state = res ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE(port);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	/*
@@ -1705,7 +1705,7 @@ void pd_task(void)
 				/* Ensure state variables are at default */
 				pd[port].power_role = PD_ROLE_DEFAULT;
 				pd[port].vdm_state = VDM_STATE_DONE;
-				set_state(port, PD_DEFAULT_STATE);
+				set_state(port, PD_DEFAULT_STATE(port));
 			}
 		}
 #endif
@@ -2989,7 +2989,8 @@ void pd_set_suspend(int port, int enable)
 	int tries = 3;
 
 	do {
-		set_state(port, enable ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE);
+		set_state(port, enable ? PD_STATE_SUSPENDED :
+			  PD_DEFAULT_STATE(port));
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	} while (enable && pd[port].task_state != PD_STATE_SUSPENDED
 			&& --tries);

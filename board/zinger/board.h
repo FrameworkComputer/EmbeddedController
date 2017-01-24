@@ -104,9 +104,6 @@ enum adc_channel {
 /* 3.0A Rp */
 #define PD_SRC_VNC (PD_SRC_3_0_VNC_MV * 4096 / 3300/* 12-bit ADC, 3.3V range */)
 
-/* we are a power supply, boot as a power source waiting for a sink */
-#define PD_DEFAULT_STATE PD_STATE_SRC_DISCONNECTED
-
 /* delay necessary for the voltage transition on the power supply */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */

@@ -152,9 +152,6 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* Optional features for test commands */
 #define CONFIG_CMD_CHARGER_PSYS
 

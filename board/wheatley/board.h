@@ -210,9 +210,6 @@ enum sensor_id {
 	BASE_GYRO,
 };
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* TODO: determine the following board specific type-C power constants */
 /*
  * delay to turn on the power supply max is ~16ms.

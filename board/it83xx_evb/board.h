@@ -131,8 +131,6 @@ enum ec2i_setting {
 #define PD_MAX_CURRENT_MA     3000
 /* Try to negotiate to 20V since i2c noise problems should be fixed. */
 #define PD_MAX_VOLTAGE_MV     20000
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
 /* TODO: determine the following board specific type-C power constants */
 /*
  * delay to turn on the power supply max is ~16ms.

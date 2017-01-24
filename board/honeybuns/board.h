@@ -92,9 +92,6 @@ enum usb_strings {
 #define PD_SRC_VNC            PD_SRC_3_0_VNC_MV
 #define PD_SRC_RD_THRESHOLD   PD_SRC_3_0_RD_THRESH_MV
 
-/* we are acting only as a source */
-#define PD_DEFAULT_STATE PD_STATE_SRC_DISCONNECTED
-
 /* delay necessary for the voltage transition on the power supply */
 /* TODO (code.google.com/p/chrome-os-partner/issues/detail?id=37078)
  * Need to measure these and adjust for honeybuns.

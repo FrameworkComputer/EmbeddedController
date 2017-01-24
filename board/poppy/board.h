@@ -222,9 +222,6 @@ enum button {
 	BUTTON_COUNT
 };
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
 /*
  * delay to turn on the power supply max is ~16ms.

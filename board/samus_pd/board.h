@@ -119,9 +119,6 @@ enum pwm_channel {
 #define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
 #define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /*
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.

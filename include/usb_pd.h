@@ -818,6 +818,15 @@ enum pd_data_msg_type {
 #define PD_ROLE_DEFAULT PD_ROLE_SOURCE
 #endif
 
+/* Port default state at startup */
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+#define PD_DEFAULT_STATE(port) ((PD_ROLE_DEFAULT == PD_ROLE_SOURCE) ? \
+				PD_STATE_SRC_DISCONNECTED :	      \
+				PD_STATE_SNK_DISCONNECTED)
+#else
+#define PD_DEFAULT_STATE(port) PD_STATE_SRC_DISCONNECTED
+#endif
+
 /* build message header */
 #define PD_HEADER(type, prole, drole, id, cnt) \
 	((type) | (PD_REV20 << 6) | \

@@ -257,9 +257,6 @@ enum usb_strings {
 #define PD_SRC_VNC            PD_SRC_1_5_VNC_MV
 #define PD_SRC_RD_THRESHOLD   PD_SRC_1_5_RD_THRESH_MV
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* delay for the voltage transition on the power supply, BQ25x spec is 30ms */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  40000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 20000 /* us */

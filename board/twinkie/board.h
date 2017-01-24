@@ -110,9 +110,6 @@ enum usb_strings {
 #define PD_SRC_VNC           PD_SRC_DEF_VNC_MV
 #define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
 
-/* start as a sink in case we have no other power supply/battery */
-#define PD_DEFAULT_STATE PD_STATE_SNK_DISCONNECTED
-
 /* delay necessary for the voltage transition on the power supply */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
