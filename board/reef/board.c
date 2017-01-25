@@ -687,6 +687,9 @@ static void board_chipset_startup(void)
 	/* Enable USB-A port. */
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 
+	/* Enable Trackpad */
+	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, 0);
+
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -696,6 +699,9 @@ static void board_chipset_shutdown(void)
 {
 	/* Disable USB-A port. */
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
+
+	/* Disable Trackpad */
+	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, 1);
 
 	hook_call_deferred(&enable_input_devices_data, 0);
 	/* FIXME(dhendrix): Drive USB_PD_RST_ODL low to prevent
