@@ -88,9 +88,6 @@ GPIO(I2C3_SDA,             PIN(D, 0), GPIO_ODR_HIGH)
 /* Attached to push-pull interrupt pin of accel, but unused */
 GPIO(LID_ACCEL_INT_L,      PIN(C, 7), GPIO_INPUT)
 
-/* KSO2 is inverted */
-GPIO(KBD_KSO2,             PIN(1, 7), GPIO_OUT_LOW)
-
 GPIO(USB_C0_5V_EN,       PIN(D, 3), GPIO_OUT_LOW | GPIO_PULL_UP)
 
 GPIO(ENTERING_RW,          PIN(7, 6), GPIO_OUT_LOW)
@@ -150,15 +147,5 @@ ALTERNATE(PIN_MASK(8, 0x01), 1,  MODULE_PWM,           0)
 ALTERNATE(PIN_MASK(6, 0x30), 1,  MODULE_UART,          GPIO_PULL_UP)
 /* ADC0-4 */
 ALTERNATE(PIN_MASK(4, 0x3e), 1,  MODULE_ADC,           0)
-
-/* Keyboard Columns */
-ALTERNATE(PIN_MASK(0, 0xE0), 0,  MODULE_KEYBOARD_SCAN, 0)
-ALTERNATE(PIN_MASK(1, 0x7F), 0,  MODULE_KEYBOARD_SCAN, 0)
-ALTERNATE(PIN_MASK(2, 0x03), 0,  MODULE_KEYBOARD_SCAN, 0)
-
-/* Keyboard Rows */
-ALTERNATE(PIN_MASK(2, 0xFC), 0,  MODULE_KEYBOARD_SCAN, 0)
-ALTERNATE(PIN_MASK(3, 0x03), 0,  MODULE_KEYBOARD_SCAN, 0)
-
 /* External 32KHz input clock - GPIOE7 */
 ALTERNATE(PIN_MASK(E, 0x80), 1,  MODULE_CLOCK,         0)
