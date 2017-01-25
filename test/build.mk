@@ -58,6 +58,7 @@ test-list-host += lightbar
 test-list-host += math_util
 test-list-host += motion_lid
 test-list-host += mutex
+test-list-host += nvmem
 test-list-host += nvmem_vars
 test-list-host += pingpong
 test-list-host += power_button

@@ -205,7 +205,7 @@ enum nvmem_users {
 #endif
 
 #ifdef TEST_NVMEM_VARS
-#define NVMEM_PARTITION_SIZE 0x4000
+#define NVMEM_PARTITION_SIZE 0x3000
 #define CONFIG_FLASH_NVMEM_VARS
 #ifndef __ASSEMBLER__
 /* Define the user region numbers */

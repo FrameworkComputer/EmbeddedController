@@ -35,7 +35,7 @@
  *
  * Note that the NvMem partitions can be placed anywhere in flash space, but
  * must be equal in total size. A table is used by the NvMem module to get the
- * correct base address and offset for each partition.
+ * correct base address for each partition.
  *
  * A generation number is used to distinguish between two valid partitions with
  * the newsest generation number (in a circular sense) marking the correct
@@ -54,8 +54,8 @@
  * The board.h file must define a macro or enum named NVMEM_NUM_USERS.
  * The board.c file must implement:
  *    nvmem_user_sizes[] -> array of user buffer lengths
- *    nvmem_compute_sha() -> function used to compute 4 byte sha (or equivalent)
- *    nvmem_wipe() -> function to erase and reformat the users' storage
+ * The chip must provide
+ *    app_compute_hash() -> function used to compute 16 byte sha (or equivalent)
  *
  * Note that total length of user buffers must satisfy the following:
  *   sum(user sizes) <= (NVMEM_PARTITION_SIZE) - sizeof(struct nvmem_tag)
@@ -130,6 +130,9 @@ int nvmem_read(uint32_t startOffset, uint32_t size,
 /**
  * Write 'size' amount of bytes to NvMem
  *
+ * Calling this function will wait for the mutex, then lock it until
+ * nvmem_commit() is invoked.
+ *
  * @param startOffset: Offset (in bytes) into NVmem logical space
  * @param size: Number of bytes to write
  * @param data: Pointer to source buffer
@@ -143,6 +146,9 @@ int nvmem_write(uint32_t startOffset, uint32_t size,
 
 /**
  * Move 'size' amount of bytes within NvMem
+ *
+ * Calling this function will wait for the mutex, then lock it until
+ * nvmem_commit() is invoked.
  *
  * @param src_offset: source offset within NvMem logical space
  * @param dest_offset: destination offset within NvMem logical space
@@ -158,7 +164,12 @@ int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
  * Commit all previous NvMem writes to flash
  *
  * @return EC_SUCCESS if flash erase/operations are successful.
- *         EC_ERROR_UNKNOWN otherwise.
+
+ *         EC_ERROR_OVERFLOW in case the mutex is not locked when this
+ *                           function is called
+ *         EC_ERROR_INVAL    if task trying to commit is not the one
+ *                           holding the mutex
+ *         EC_ERROR_UNKNOWN  in other error cases
  */
 int nvmem_commit(void);
 
@@ -167,20 +178,28 @@ int nvmem_commit(void);
  *
  * This function should be called when NvMem needs to be wiped out.
  *
- * @param generation: Starting generation number of partition 0
- *
  * @return EC_SUCCESS if flash operations are successful.
  *         EC_ERROR_UNKNOWN otherwise.
  */
-int nvmem_setup(uint8_t generation);
+int nvmem_setup(void);
 
 /*
  * Temporarily stopping NVMEM commits could be beneficial. One use case is
  * when TPM operations need to be sped up.
  *
+ * Calling this function will wait for the mutex, then lock it until
+ * nvmem_commit() is invoked.
+ *
  * Both below functions should be called from the same task.
  */
-void nvmem_enable_commits(void);
 void nvmem_disable_commits(void);
+
+/*
+ * Only the task holding the mutex is allowed to enable commits.
+ *
+ * @return error if this task does not hold the lock or commit
+ *         fails, EC_SUCCESS otherwise.
+ */
+int nvmem_enable_commits(void);
 
 #endif /* __CROS_EC_NVMEM_UTILS_H */

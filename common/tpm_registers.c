@@ -726,7 +726,7 @@ static void tpm_reset_now(int wipe_first)
 		assert_ec_rst();
 
 		/* Now wipe nvmem */
-		wipe_result = nvmem_setup(0);
+		wipe_result = nvmem_setup();
 	} else {
 		wipe_result = EC_SUCCESS;
 	}

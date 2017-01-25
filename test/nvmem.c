@@ -199,7 +199,7 @@ static int test_nvmem_setup(void)
 	TEST_ASSERT(read_value == write_value);
 
 	/* nvmem_setup() is supposed to erase both partitions. */
-	nvmem_setup(0);
+	nvmem_setup();
 
 	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
 	TEST_ASSERT(read_value == 0xffffffff);
@@ -258,14 +258,14 @@ static int test_corrupt_nvmem(void)
 	memset(write_buffer, invalid_value, NVMEM_PARTITION_SIZE);
 	p_data = (void *)CONFIG_FLASH_NVMEM_BASE_A;
 	TEST_ASSERT_ARRAY_EQ(write_buffer, p_data, NVMEM_PARTITION_SIZE);
-	memset(write_buffer, 0xff, NVMEM_PARTITION_SIZE);
 
-	/* Now let's write one byte of 'invalid_value' into user NVMEM_CR50 */
-	TEST_ASSERT(nvmem_write(0, 1, write_buffer, NVMEM_USER_0) ==
-		    EC_SUCCESS);
+	/* Now let's write a different value  into user NVMEM_CR50 */
+	invalid_value ^= ~0;
+	TEST_ASSERT(nvmem_write(0, sizeof(invalid_value),
+				&invalid_value, NVMEM_USER_0) == EC_SUCCESS);
 	TEST_ASSERT(nvmem_commit() == EC_SUCCESS);
 
-	/* Verify that partition 0 genration did not change. */
+	/* Verify that partition 1 generation did not change. */
 	TEST_ASSERT(p_part->generation == 0);
 
 	/*
@@ -344,38 +344,6 @@ static int test_write_fail(void)
 
 	/* This test is successful if write attempt failed */
 	return !ret;
-}
-
-static int test_cache_not_available(void)
-{
-	char **p_shared;
-	int ret;
-	uint32_t offset = 0;
-	uint32_t num_bytes = 0x200;
-
-	/*
-	 * The purpose of this test is to validate that NvMem writes behave as
-	 * expected when the shared memory buffer (used for cache ram) is and
-	 * isn't available.
-	 */
-
-	/* Do write/read sequence that's expected to be successful */
-	if (test_write_read(offset, num_bytes, NVMEM_USER_1))
-		return EC_ERROR_UNKNOWN;
-
-	/* Acquire shared memory */
-	if (shared_mem_acquire(num_bytes, p_shared))
-		return EC_ERROR_UNKNOWN;
-
-	/* Attempt write/read sequence that should fail */
-	ret = test_write_read(offset, num_bytes, NVMEM_USER_1);
-	/* Release shared memory */
-	shared_mem_release(*p_shared);
-	if (!ret)
-		return EC_ERROR_UNKNOWN;
-
-	/* Write/read sequence should work now */
-	return test_write_read(offset, num_bytes, NVMEM_USER_1);
 }
 
 static int test_buffer_overflow(void)
@@ -625,6 +593,82 @@ static int test_lock(void)
 	return EC_SUCCESS;
 }
 
+static int test_nvmem_save(void)
+{
+	/*
+	 * The purpose of this test is to verify that if the written value
+	 * did not change the cache contents there is no actual write
+	 * happening at the commit time.
+	 */
+	int dummy_value;
+	int offset = 0x10;
+	uint8_t generation_a;
+	uint8_t generation_b;
+	uint8_t prev_generation;
+	uint8_t new_generation;
+	const struct nvmem_tag *part_a;
+	const struct nvmem_tag *part_b;
+	const struct nvmem_tag *new_gen_part;
+	const struct nvmem_tag *prev_gen_part;
+
+	part_a = (const struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_A;
+	part_b = (const struct nvmem_tag *)CONFIG_FLASH_NVMEM_BASE_B;
+	/*
+	 * Make sure nvmem is initialized and both partitions have been
+	 * written.
+	 */
+	nvmem_init();
+
+	/*
+	 * Make sure something is changed at offset 0x10 into the second user
+	 * space.
+	 */
+	nvmem_read(offset, sizeof(dummy_value), &dummy_value, NVMEM_USER_1);
+	dummy_value ^= ~0;
+	nvmem_write(0x10, sizeof(dummy_value), &dummy_value, NVMEM_USER_1);
+	nvmem_commit();
+
+	/* Verify that the two generation values are different. */
+	generation_a = part_a->generation;
+	generation_b = part_b->generation;
+	TEST_ASSERT(generation_a != generation_b);
+
+	/*
+	 * Figure out which one should change next, we are close to the
+	 * beginnig of the test, no wrap is expected.
+	 */
+	if (generation_a > generation_b) {
+		prev_generation = generation_a;
+		new_generation = generation_a + 1;
+		new_gen_part = part_b;
+		prev_gen_part = part_a;
+	} else {
+		prev_generation = generation_b;
+		new_generation = generation_b + 1;
+		new_gen_part = part_a;
+		prev_gen_part = part_b;
+	}
+
+	/* Write a new value, this should trigger generation switch. */
+	dummy_value += 1;
+	TEST_ASSERT(nvmem_write(0x10, sizeof(dummy_value),
+				&dummy_value, NVMEM_USER_1) == EC_SUCCESS);
+	TEST_ASSERT(nvmem_commit() == EC_SUCCESS);
+
+	TEST_ASSERT(prev_gen_part->generation == prev_generation);
+	TEST_ASSERT(new_gen_part->generation == new_generation);
+
+	/* Write the same value, this should NOT trigger generation switch. */
+	TEST_ASSERT(nvmem_write(0x10, sizeof(dummy_value),
+				&dummy_value, NVMEM_USER_1) == EC_SUCCESS);
+	TEST_ASSERT(nvmem_commit() == EC_SUCCESS);
+
+	TEST_ASSERT(prev_gen_part->generation == prev_generation);
+	TEST_ASSERT(new_gen_part->generation == new_generation);
+
+	return EC_SUCCESS;
+}
+
 static void run_test_setup(void)
 {
 	/* Allow Flash erase/writes */
@@ -635,26 +679,17 @@ static void run_test_setup(void)
 void run_test(void)
 {
 	run_test_setup();
-	/* Test NvMem Initialization function */
 	RUN_TEST(test_corrupt_nvmem);
 	RUN_TEST(test_fully_erased_nvmem);
 	RUN_TEST(test_configured_nvmem);
-	/* Test Read/Write/Commit functions */
 	RUN_TEST(test_write_read_sequence);
 	RUN_TEST(test_write_full_multi);
-	/* Test flash erase/write fail case */
 	RUN_TEST(test_write_fail);
-	/* Test shared_mem not available case */
-	RUN_TEST(test_cache_not_available);
-	/* Test buffer overflow logic */
 	RUN_TEST(test_buffer_overflow);
-	/* Test NvMem Move function */
 	RUN_TEST(test_move);
-	/* Test NvMem IsDifferent function */
 	RUN_TEST(test_is_different);
-	/* Test Nvmem write lock */
 	RUN_TEST(test_lock);
-	/* Test nvmem_setup() function. */
 	RUN_TEST(test_nvmem_setup);
+	RUN_TEST(test_nvmem_save);
 	test_print_result();
 }
