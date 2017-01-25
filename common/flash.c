@@ -723,7 +723,7 @@ static int command_flash_erase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	ccprintf("Erasing %d bytes at 0x%x...\n", size, offset, offset);
+	ccprintf("Erasing %d bytes at 0x%x...\n", size, offset);
 	return flash_erase(offset, size);
 }
 DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase,
@@ -759,8 +759,7 @@ static int command_flash_write(int argc, char **argv)
 	for (i = 0; i < size; i++)
 		data[i] = i;
 
-	ccprintf("Writing %d bytes to 0x%x...\n",
-		 size, offset, offset);
+	ccprintf("Writing %d bytes to 0x%x...\n", size, offset);
 	rv = flash_write(offset, size, data);
 
 	/* Free the buffer */
