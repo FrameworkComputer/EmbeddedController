@@ -84,6 +84,12 @@
 #define CELSIUS_TO_DECI_KELVIN(temp_c) ((temp_c) * 10 + 2731)
 #define DECI_KELVIN_TO_CELSIUS(temp_dk) ((temp_dk - 2731) / 10)
 
+/* Calculate a value with error margin considered. For example,
+ * TARGET_WITH_MARGIN(X, 5) returns X' where X' * 100.5% is almost equal to
+ * but does not exceed X. */
+#define TARGET_WITH_MARGIN(target, tenths_percent) \
+	(((target) * 1000) / (1000 + (tenths_percent)))
+
 /* Include top-level configuration file */
 #include "config.h"
 

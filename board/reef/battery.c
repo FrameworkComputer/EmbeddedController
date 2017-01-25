@@ -11,6 +11,7 @@
 #include "charge_ramp.h"
 #include "charge_state.h"
 #include "charger_profile_override.h"
+#include "common.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -118,7 +119,7 @@ static const struct fast_charge_params fast_chg_params_smp_cos4870 = {
 };
 
 const struct battery_info batt_info_smp_cos4870 = {
-	.voltage_max = 8700,	/* mV */
+	.voltage_max = TARGET_WITH_MARGIN(8700, 5),
 	.voltage_normal = 7600,
 	/*
 	 * Actual value 6000mV, added 100mV for charger accuracy so that
@@ -162,7 +163,7 @@ static const struct fast_charge_params fast_chg_params_sonycorp = {
 };
 
 const struct battery_info batt_info_sonycorp = {
-	.voltage_max = 8700,	/* mV */
+	.voltage_max = TARGET_WITH_MARGIN(8700, 5),
 	.voltage_normal = 7600,
 
 	/*
@@ -216,7 +217,7 @@ static const struct fast_charge_params fast_chg_params_panasonic = {
 };
 
 const struct battery_info batt_info_panasoic = {
-	.voltage_max = 8800,	/* mV */
+	.voltage_max = TARGET_WITH_MARGIN(8800, 5),
 	.voltage_normal = 7700,
 
 	/*
@@ -324,7 +325,7 @@ static const struct fast_charge_params fast_chg_params_cpt_c22n1626 = {
 };
 
 const struct battery_info batt_info_c22n1626 = {
-	.voltage_max = 8800,	/* mV */
+	.voltage_max = TARGET_WITH_MARGIN(8800, 5),
 	.voltage_normal = 7700,
 
 	/*

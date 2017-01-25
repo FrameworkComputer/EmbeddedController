@@ -607,6 +607,7 @@ int charger_get_voltage(int *voltage)
 
 int charger_set_voltage(int voltage)
 {
+	const int battery_voltage_max = battery_get_info()->voltage_max;
 	int rv;
 	int reg;
 
@@ -620,14 +621,16 @@ int charger_set_voltage(int voltage)
 		return rv;
 
 	if (voltage == 0 ||
-		reg & BD9995X_CMD_CHGOP_SET2_BATT_LEARN ||
-		battery_is_present() != BP_YES ||
-		battery_is_cut_off())
-		voltage = battery_get_info()->voltage_max;
+			reg & BD9995X_CMD_CHGOP_SET2_BATT_LEARN ||
+			battery_is_present() != BP_YES ||
+			battery_is_cut_off() ||
+			voltage > battery_voltage_max)
+		voltage = battery_voltage_max;
 
 	/* Charge voltage step 16 mV */
 	voltage &= ~0x0F;
 
+	/* Assumes charger's voltage_min < battery's voltagte_max */
 	if (voltage < bd9995x_charger_info.voltage_min)
 		voltage = bd9995x_charger_info.voltage_min;
 
