@@ -846,6 +846,42 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_SYSCFG_EXTICR(n)		REG32(STM32_SYSCFG_BASE + 8 + 4 * (n))
 
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+#define STM32_CRS_BASE              0x40006c00 /* STM32F0XX */
+
+#define STM32_CRS_CR                REG32(STM32_CRS_BASE + 0x00) /* STM32F0XX */
+#define STM32_CRS_CR_SYNCOKIE           (1 << 0)
+#define STM32_CRS_CR_SYNCWARNIE         (1 << 1)
+#define STM32_CRS_CR_ERRIE              (1 << 2)
+#define STM32_CRS_CR_ESYNCIE            (1 << 3)
+#define STM32_CRS_CR_CEN                (1 << 5)
+#define STM32_CRS_CR_AUTOTRIMEN         (1 << 6)
+#define STM32_CRS_CR_SWSYNC             (1 << 7)
+#define STM32_CRS_CR_TRIM(n)		(((n) & 0x3f) << 8)
+
+#define STM32_CRS_CFGR              REG32(STM32_CRS_BASE + 0x04) /* STM32F0XX */
+#define STM32_CRS_CFGR_RELOAD(n)	(((n) & 0xffff) << 0)
+#define STM32_CRS_CFGR_FELIM(n)		(((n) & 0xff) << 16)
+#define STM32_CRS_CFGR_SYNCDIV(n)	(((n) & 7) << 24)
+#define STM32_CRS_CFGR_SYNCSRC(n)	(((n) & 3) << 28)
+#define STM32_CRS_CFGR_SYNCPOL		(1 << 31)
+
+#define STM32_CRS_ISR               REG32(STM32_CRS_BASE + 0x08) /* STM32F0XX */
+#define STM32_CRS_ISR_SYNCOKF		(1 << 0)
+#define STM32_CRS_ISR_SYNCWARNF		(1 << 1)
+#define STM32_CRS_ISR_ERRF		(1 << 2)
+#define STM32_CRS_ISR_ESYNCF		(1 << 3)
+#define STM32_CRS_ISR_SYNCERR		(1 << 8)
+#define STM32_CRS_ISR_SYNCMISS		(1 << 9)
+#define STM32_CRS_ISR_TRIMOVF		(1 << 10)
+#define STM32_CRS_ISR_FEDIR		(1 << 15)
+#define STM32_CRS_ISR_FECAP		(0xffff << 16)
+
+#define STM32_CRS_ICR               REG32(STM32_CRS_BASE + 0x0c) /* STM32F0XX */
+#define STM32_CRS_ICR_SYNCOKC		(1 << 0)
+#define STM32_CRS_ICR_SYNCWARINC	(1 << 1)
+#define STM32_CRS_ICR_ERRC		(1 << 2)
+#define STM32_CRS_ICR_ESYNCC		(1 << 3)
+
 #define STM32_RCC_BASE              0x40021000
 
 #define STM32_RCC_CR                REG32(STM32_RCC_BASE + 0x00)
@@ -883,6 +919,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_PB1_TIM14		(1 << 8)  /* STM32F0XX and STM32F373 */
 #define STM32_RCC_PB1_TIM18		(1 << 9)  /* STM32F373 */
 #define STM32_RCC_PB1_USB		(1 << 23)
+#define STM32_RCC_PB1_CRS		(1 << 27)
 
 #define STM32_SYSCFG_BASE           0x40010000
 

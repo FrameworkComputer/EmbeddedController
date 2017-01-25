@@ -179,6 +179,28 @@ defined(CHIP_VARIANT_STM32F070)
 	 * USB uses HSI48 = 48MHz
 	 */
 
+#ifdef CONFIG_USB
+	/*
+	 * Configure and enable Clock Recovery System
+	 *
+	 * Since we are running from the internal RC HSI48 clock, the CSR
+	 * is needed to guarantee an accurate 48MHz clock for USB.
+	 *
+	 * The default values configure the CRS to use the periodic USB SOF
+	 * as the SYNC signal for calibrating the HSI48.
+	 *
+	 */
+
+	/* Enable Clock Recovery System */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_CRS;
+
+	/* Enable automatic trimming */
+	STM32_CRS_CR |= STM32_CRS_CR_AUTOTRIMEN;
+
+	/* Enable oscillator clock for the frequency error counter */
+	STM32_CRS_CR |= STM32_CRS_CR_CEN;
+#endif
+
 	/* switch SYSCLK to HSI48 */
 	STM32_RCC_CFGR = 0x00000003;
 
