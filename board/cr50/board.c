@@ -151,7 +151,8 @@ const struct strap_desc strap_regs[] = {
 	{ GPIO_STRAP_B1, GOFFSET(PINMUX, DIOA12_SEL), GC_PINMUX_DIOA12_SEL, },
 };
 
-#define BOARD_PORPERTIES_DEFAULT (BOARD_SLAVE_CONFIG_I2C | BOARD_USE_PLT_RESET)
+#define BOARD_PROPERTIES_DEFAULT (BOARD_SLAVE_CONFIG_I2C | BOARD_USE_PLT_RESET \
+				  | BOARD_USB_AP)
 static struct board_cfg board_cfg_table[] = {
 	/* Kevin/Gru: DI0A9 = 5k PD, DIOA1 = 1M PU */
 	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP },
@@ -914,7 +915,8 @@ static int get_strap_config(uint8_t *config)
 	enum strap_list s0;
 	int lvl;
 	int flags;
-	uint8_t pullup_bits;
+	uint8_t pull_a;
+	uint8_t pull_b;
 
 	/*
 	 * There are 4 pins that are used to determine Cr50 board strapping
@@ -1017,12 +1019,13 @@ static int get_strap_config(uint8_t *config)
 	 * config table entries.
 	 */
 
-	pullup_bits = *config & 0xaa;
-	if (!pullup_bits)
-		return EC_ERROR_UNKNOWN;
+	pull_a = *config & 0xa0;
+	pull_b = *config & 0xa;
+	if ((!pull_a && !pull_b) || (pull_a && pull_b))
+		return EC_ERROR_INVAL;
 
 	/* Now that I2C vs SPI is known, mask the unused strap bits. */
-	*config &= pullup_bits & 0xa ? 0xf : 0xf0;
+	*config &= *config & 0xa ? 0xf : 0xf0;
 
 	return EC_SUCCESS;
 }
@@ -1055,9 +1058,10 @@ static void init_board_properties(void)
 			 * table entry. For this case default to I2C with
 			 * platform reset and don't store in long life register.
 			 */
-			CPRINTS("No pullup on strap pins detected!");
 			/* Save this configuration setting */
-			board_properties = BOARD_PORPERTIES_DEFAULT;
+			board_properties = BOARD_PROPERTIES_DEFAULT;
+			CPRINTS("Invalid strap pins! Default properties = 0x%x",
+				board_properties);
 			return;
 		}
 
@@ -1096,7 +1100,7 @@ static void init_board_properties(void)
 		 * returned EC_SUCCESS.
 		 */
 		properties = config & 0xa ? BOARD_SLAVE_CONFIG_SPI :
-			BOARD_PORPERTIES_DEFAULT;
+			BOARD_PROPERTIES_DEFAULT;
 		CPRINTS("strap_cfg 0x%x has no table entry, prop = 0x%x",
 			config, properties);
 	}
