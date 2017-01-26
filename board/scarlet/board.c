@@ -433,12 +433,12 @@ struct motion_sensor_t motion_sensors[] = {
 	 * Requirement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
-	[BASE_ACCEL] = {
-	 .name = "Base Accel",
+	[LID_ACCEL] = {
+	 .name = "Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
+	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
@@ -457,24 +457,24 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
 			 .ec_rate = 100 * MSEC,
 		 },
-		 /* Enable accel in S3 */
+		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
+			.odr = 0,
 			.ec_rate = 0,
 		 },
-		 /* Sensor off in S5 */
+		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
 			 .odr = 0,
 			 .ec_rate = 0
 		 },
 	 },
 	},
-	[BASE_GYRO] = {
-	 .name = "Base Gyro",
+	[LID_GYRO] = {
+	 .name = "Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
+	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
@@ -505,12 +505,12 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 	 },
 	},
-	[BASE_BARO] = {
-	 .name = "Base Baro",
+	[LID_BARO] = {
+	 .name = "Baro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_BMP280,
 	 .type = MOTIONSENSE_TYPE_BARO,
-	 .location = MOTIONSENSE_LOC_BASE,
+	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmp280_drv,
 	 .drv_data = &bmp280_drv_data,
 	 .port = I2C_PORT_BARO,
@@ -522,10 +522,10 @@ struct motion_sensor_t motion_sensors[] = {
 			.odr = 0,
 			.ec_rate = 0,
 		 },
-		 /* Enable barometer in S0 */
+		 /* Sensor off in S0 */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-			 .ec_rate = 100 * MSEC,
+			 .odr = 0,
+			 .ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
