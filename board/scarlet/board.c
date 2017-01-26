@@ -18,6 +18,7 @@
 #include "driver/charger/bd9995x.h"
 #include "driver/baro_bmp280.h"
 #include "driver/tcpm/fusb302.h"
+#include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -35,6 +36,8 @@
 #include "system.h"
 #include "task.h"
 #include "tcpm.h"
+#include "temp_sensor.h"
+#include "temp_sensor_chip.h"
 #include "timer.h"
 #include "thermal.h"
 #include "usb_charge.h"
@@ -110,6 +113,30 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_AP_EC_S3_S0_L,     0, "SUSPEND_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+#ifdef CONFIG_TEMP_SENSOR_TMP432
+/* Temperature sensors data; must be in same order as enum temp_sensor_id. */
+const struct temp_sensor_t temp_sensors[] = {
+	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_LOCAL, 4},
+	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_REMOTE1, 4},
+	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+		TMP432_IDX_REMOTE2, 4},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/*
+ * Thermal limits for each temp sensor. All temps are in degrees K. Must be in
+ * same order as enum temp_sensor_id. To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	{{0, 0, 0}, 0, 0}, /* TMP432_Internal */
+	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_1 */
+	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+#endif
 
 /******************************************************************************/
 /* SPI devices */
