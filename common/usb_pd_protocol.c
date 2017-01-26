@@ -1924,6 +1924,16 @@ void pd_task(void)
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				break;
 			}
+#ifdef CONFIG_USB_PD_TCPM_TCPCI
+			/*
+			 * After transmitting hard reset, TCPM writes
+			 * to RECEIVE_DETECT register to enable
+			 * PD message passing.
+			 */
+			if (pd_comm_enabled)
+				tcpm_set_rx_enable(port, 1);
+#endif /* CONFIG_USB_PD_TCPM_TCPCI */
+
 			set_state(port, PD_STATE_SRC_STARTUP);
 			break;
 		case PD_STATE_SRC_STARTUP:
