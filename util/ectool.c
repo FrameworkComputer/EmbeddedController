@@ -154,6 +154,8 @@ const char help_str[] =
 	"      Whether or not the AP should pause in S5 on shutdown\n"
 	"  pdcontrol [suspend|resume|reset|disable]\n"
 	"      Controls the PD chip\n"
+	"  pdchipinfo <port>\n"
+	"      Get PD chip information\n"
 	"  pdlog\n"
 	"      Prints the PD event log entries\n"
 	"  pdwritelog <type> <port>\n"
@@ -6861,6 +6863,36 @@ int cmd_pd_control(int argc, char *argv[])
 	return (rv < 0 ? rv : 0);
 }
 
+int cmd_pd_chip_info(int argc, char *argv[])
+{
+	struct ec_params_pd_chip_info p;
+	struct ec_response_pd_chip_info r;
+	char *e;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port number.\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_PD_CHIP_INFO, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("vendor_id: 0x%x\n", r.vendor_id);
+	printf("product_id: 0x%x\n", r.product_id);
+	printf("device_id: 0x%x\n", r.device_id);
+	printf("fw_version: 0x%x\n", r.fw_version);
+
+	return 0;
+}
+
 int cmd_pd_write_log(int argc, char *argv[])
 {
 	struct ec_params_pd_write_log_entry p;
@@ -6954,6 +6986,7 @@ const struct command commands[] = {
 	{"port80read", cmd_port80_read},
 	{"pdlog", cmd_pd_log},
 	{"pdcontrol", cmd_pd_control},
+	{"pdchipinfo", cmd_pd_chip_info},
 	{"pdwritelog", cmd_pd_write_log},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},

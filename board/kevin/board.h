@@ -198,6 +198,8 @@
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_CONSOLE_HISTORY
+#undef CONFIG_EC_CMD_PD_CHIP_INFO
+
 /*
  * Remove task profiling to improve SHI interrupt latency.
  * TODO(crosbug.com/p/55710): Re-define once interrupt latency is within

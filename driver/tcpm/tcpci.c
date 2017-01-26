@@ -5,6 +5,9 @@
 
 /* Type-C port manager */
 
+#include "anx74xx.h"
+#include "ec_commands.h"
+#include "ps8751.h"
 #include "task.h"
 #include "tcpci.h"
 #include "tcpm.h"
@@ -23,7 +26,6 @@ static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
 static int init_alert_mask(int port)
 {
 	uint16_t mask;
-	int rv;
 
 	/*
 	 * Create mask of alert events that will cause the TCPC to
@@ -37,13 +39,7 @@ static int init_alert_mask(int port)
 #endif
 		;
 	/* Set the alert mask in TCPC */
-	rv = tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
-
-#ifdef CONFIG_USB_PD_TCPC_FW_VERSION
-	board_print_tcpc_fw_version(port);
-#endif
-
-	return rv;
+	return tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
 }
 
 static int init_power_status_mask(int port)
@@ -318,6 +314,72 @@ void tcpci_tcpc_alert(int port)
 }
 
 /*
+ * For PS8751, this function will fail if the chip is in low power mode.
+ * PS8751 has to be woken up by reading a random register first then wait for
+ * 10ms.
+ *
+ * This code doesn't have the wake-up read to avoid 10ms delay. Instead, we
+ * call this function immediately after the chip is reset or initialized
+ * because it'll gurantee the chip is awake. Once it's called, the chip info
+ * will be stored in cache, which can be accessed by tcpm_get_chip_info without
+ * worrying about chip states.
+ */
+int tcpci_get_chip_info(int port, struct ec_response_pd_chip_info **chip_info)
+{
+	static struct ec_response_pd_chip_info info[CONFIG_USB_PD_PORT_COUNT];
+	int error;
+	int val;
+
+	if (port >= CONFIG_USB_PD_PORT_COUNT)
+		return EC_ERROR_INVAL;
+
+	/* If chip_info is NULL, chip info will be stored in cache and can be
+	 * read later by another call. */
+	if (chip_info)
+		*chip_info = &info[port];
+
+	if (info[port].vendor_id)
+		return EC_SUCCESS;
+
+	error = tcpc_read16(port, TCPC_REG_VENDOR_ID, &val);
+	if (error)
+		return error;
+	info[port].vendor_id = val;
+
+	error = tcpc_read16(port, TCPC_REG_PRODUCT_ID, &val);
+	if (error)
+		return error;
+	info[port].product_id = val;
+
+	error = tcpc_read16(port, TCPC_REG_BCD_DEV, &val);
+	if (error)
+		return error;
+	info[port].device_id = val;
+
+	switch(info[port].vendor_id) {
+#ifdef CONFIG_USB_PD_TCPM_ANX74XX
+	case ANX74XX_VENDOR_ID:
+		error = anx74xx_tcpc_get_fw_version(port, &val);
+		break;
+#endif
+#ifdef CONFIG_USB_PD_TCPM_PS8751
+	case PS8751_VENDOR_ID:
+		error = ps8751_tcpc_get_fw_version(port, &val);
+		break;
+#endif
+	default:
+		/* Even if the chip doesn't implement get_fw_version, we
+		 * return success. The version will be 0xffff. */
+		return EC_SUCCESS;
+	}
+	if (error)
+		return error;
+	info[port].fw_version = val;
+
+	return EC_SUCCESS;
+}
+
+/*
  * On TCPC i2c failure, make 30 tries (at least 300ms) before giving up
  * in order to allow the TCPC time to boot / reset.
  */
@@ -325,30 +387,38 @@ void tcpci_tcpc_alert(int port)
 
 int tcpci_tcpm_init(int port)
 {
-	int rv;
+	int error;
 	int power_status;
 	int tries = TCPM_INIT_TRIES;
 
 	while (1) {
-		rv = tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status);
+		error = tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status);
 		/*
 		 * If read succeeds and the uninitialized bit is clear, then
 		 * initalization is complete, clear all alert bits and write
 		 * the initial alert mask.
 		 */
-		if (rv == EC_SUCCESS &&
-		    !(power_status & TCPC_REG_POWER_STATUS_UNINIT)) {
-			tcpc_write16(port, TCPC_REG_ALERT, 0xffff);
-			/* Initialize power_status_mask */
-			init_power_status_mask(port);
-			/* Update VBUS status */
-			tcpc_vbus[port] = power_status &
-				TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
-			return init_alert_mask(port);
-		} else if (rv != EC_SUCCESS && --tries == 0)
-			return rv;
+		if (!error && !(power_status & TCPC_REG_POWER_STATUS_UNINIT))
+			break;
+		else if (error && --tries == 0)
+			return error;
 		msleep(10);
 	}
+
+	tcpc_write16(port, TCPC_REG_ALERT, 0xffff);
+	/* Initialize power_status_mask */
+	init_power_status_mask(port);
+	/* Update VBUS status */
+	tcpc_vbus[port] = power_status &
+			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+	error = init_alert_mask(port);
+	if (error)
+		return error;
+
+	/* Read chip info here when we know the chip is awake. */
+	tcpm_get_chip_info(port, NULL);
+
+	return EC_SUCCESS;
 }
 
 #ifdef CONFIG_USB_PD_TCPM_MUX
@@ -432,4 +502,5 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle	= &tcpci_tcpc_drp_toggle,
 #endif
+	.get_chip_info		= &tcpci_get_chip_info,
 };
