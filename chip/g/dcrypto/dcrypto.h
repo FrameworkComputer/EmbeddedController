@@ -253,18 +253,19 @@ int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
  */
 int DCRYPTO_equals(const void *a, const void *b, size_t len);
 
-int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);
-
 /*
- * Application key related functions.
+ * Key-ladder and application key related functions.
  */
 enum dcrypto_appid {
-	NVMEM = 0
+	RESERVED = 0,
+	NVMEM = 1
+	/* This enum value should not exceed 7. */
 };
 
 struct APPKEY_CTX {
-	uint8_t key[SHA256_DIGEST_SIZE];
 };
+
+int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);
 
 int DCRYPTO_appkey_init(enum dcrypto_appid id, struct APPKEY_CTX *ctx);
 void DCRYPTO_appkey_finish(struct APPKEY_CTX *ctx);
@@ -278,14 +279,17 @@ BUILD_ASSERT(DCRYPTO_CIPHER_SALT_SIZE == CIPHER_SALT_SIZE);
  *
  * Encrypt or decrypt the input buffer, and write the correspondingly
  * ciphered output to out.  The number of bytes produced is equal to
- * the number of input bytes.
+ * the number of input bytes.  Note that the input and output pointers
+ * MUST be word-aligned.
  *
- * This API is expected to be applied to a single contiguous region. WARNING:
- * Presently calling this function more than once with "in" pointing to
- * logically different buffers will result in using the same IV value
- * internally and as such reduce encryption efficiency. Upcoming changes are
- * expected to make proper use of blob_iv.
+ * This API is expected to be applied to a single contiguous region.
+
+ * WARNING: A given salt/"in" pair MUST be unique, i.e. re-using a
+ * salt with a logically different input buffer is catastrophic.  An
+ * example of a suitable salt is one that is derived from "in", e.g. a
+ * digest of the input data.
  *
+ * @param appid the application-id of the calling context.
  * @param salt pointer to a unique value to be associated with this blob,
  *	       used for derivation of the proper IV, the size of the value
  *	       is as defined by DCRYPTO_CIPHER_SALT_SIZE above.
@@ -294,6 +298,7 @@ BUILD_ASSERT(DCRYPTO_CIPHER_SALT_SIZE == CIPHER_SALT_SIZE);
  * @param len Number of bytes to read from in / write to out.
  * @return non-zero on success, and zero otherwise.
  */
-int DCRYPTO_app_cipher(const void *salt, void *out, const void *in, size_t len);
+int DCRYPTO_app_cipher(enum dcrypto_appid appid, const void *salt,
+		void *out, const void *in, size_t len);
 
 #endif  /* ! __EC_CHIP_G_DCRYPTO_DCRYPTO_H */

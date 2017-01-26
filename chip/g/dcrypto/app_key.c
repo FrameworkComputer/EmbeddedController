@@ -6,40 +6,38 @@
 #include "internal.h"
 #include "endian.h"
 #include "registers.h"
-#include "console.h"
-#include "shared_mem.h"
 
 #include "cryptoc/util.h"
 
-static const char * const dcrypto_app_names[] = {
-	"NVMEM"
+const struct {
+	const char *name;
+	/* SHA256(name, strlen(name)) */
+	const uint32_t digest[SHA256_DIGEST_WORDS];
+} dcrypto_app_names[] = {
+	{
+		"RESERVED",
+		{
+			0x89ef2e22,  0x0032b61a,  0x7b349ab1,  0x3f512449,
+			0x4cd161dd,  0x2a6cac94,  0x109a045a,  0x23d669ea
+		}
+	},
+	{
+		"NVMEM",
+		{
+			0xd137e92f,  0x0f39686e,  0xd663f548,  0x9b570397,
+			0x5801c4ce,  0x8e7c7654,  0xa2a13c85,  0x875779b6
+		}
+	},
 };
 
 int DCRYPTO_appkey_init(enum dcrypto_appid appid, struct APPKEY_CTX *ctx)
 {
-	LITE_HMAC_CTX *hmac_ctx;
-
-	if (appid >= ARRAY_SIZE(dcrypto_app_names))
-		return 0;
-
 	memset(ctx, 0, sizeof(*ctx));
 
-	if (!DCRYPTO_ladder_compute_frk2(0, ctx->key))
+	if (!dcrypto_ladder_compute_usr(
+			appid, dcrypto_app_names[appid].digest))
 		return 0;
 
-	if (shared_mem_acquire(sizeof(LITE_HMAC_CTX),
-			       (char **)&hmac_ctx) != EC_SUCCESS) {
-		return 0;
-	}
-
-	HMAC_SHA256_init(hmac_ctx, ctx->key, sizeof(ctx->key));
-	HMAC_update(hmac_ctx, dcrypto_app_names[appid],
-		strlen(dcrypto_app_names[appid]));
-	memcpy(ctx->key, HMAC_final(hmac_ctx), SHA256_DIGEST_SIZE);
-
-	always_memset(hmac_ctx, 0, sizeof(LITE_HMAC_CTX));
-
-	shared_mem_release(hmac_ctx);
 	return 1;
 }
 

@@ -119,6 +119,14 @@ void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
 void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words);
 
 /*
+ * Key ladder.
+ */
+enum dcrypto_appid;      /* Forward declaration. */
+
+int dcrypto_ladder_compute_usr(enum dcrypto_appid id,
+			const uint32_t usr_salt[8]);
+
+/*
  * Utility functions.
  */
 /* TODO(ngm): memset that doesn't get optimized out. */

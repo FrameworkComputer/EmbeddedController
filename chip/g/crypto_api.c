@@ -27,5 +27,5 @@ void app_compute_hash(uint8_t *p_buf, size_t num_bytes,
 
 int app_cipher(const void *salt, void *out, const void *in, size_t size)
 {
-	return DCRYPTO_app_cipher(salt, out, in, size);
+	return DCRYPTO_app_cipher(NVMEM, salt, out, in, size);
 }
