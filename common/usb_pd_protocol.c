@@ -1420,6 +1420,31 @@ static int pd_is_power_swapping(int port)
 		pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY;
 }
 
+/*
+ * Provide Rp to ensure the partner port is in a known state (eg. not
+ * PD negotiated, not sourcing 20V).
+ */
+static void pd_partner_port_reset(int port)
+{
+	uint64_t timeout;
+
+	/*
+	 * If we already ran RO, then PD comms were disabled, and we are
+	 * already in a known state. Likewise, if the board is powering up,
+	 * we're also in a known state.
+	 */
+	if (system_get_image_copy() != SYSTEM_IMAGE_RO ||
+	   system_get_reset_flags() &
+	   (RESET_FLAG_BROWNOUT | RESET_FLAG_POWER_ON))
+		return;
+
+	/* Provide Rp for 100 msec. or until we no longer have VBUS. */
+	tcpm_set_cc(port, TYPEC_CC_RP);
+	timeout = get_time().val + 100 * MSEC;
+
+	while (get_time().val < timeout && pd_is_vbus_present(port))
+		msleep(10);
+}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 int pd_get_polarity(int port)
@@ -1613,6 +1638,11 @@ void pd_task(void)
 
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = tcpm_init(port);
+
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	pd_partner_port_reset(port);
+#endif
+
 	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
 	this_state = res ? PD_STATE_SUSPENDED : PD_DEFAULT_STATE(port);
 #ifndef CONFIG_USB_PD_TCPC
