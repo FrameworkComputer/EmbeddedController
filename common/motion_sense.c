@@ -463,6 +463,7 @@ static void motion_sense_switch_sensor_rate(void)
 	}
 	motion_sense_set_motion_intervals();
 }
+DECLARE_DEFERRED(motion_sense_switch_sensor_rate);
 
 static void motion_sense_shutdown(void)
 {
@@ -516,7 +517,21 @@ static void motion_sense_suspend(void)
 		return;
 
 	sensor_active = SENSOR_ACTIVE_S3;
-	motion_sense_switch_sensor_rate();
+
+	/*
+	 * During shutdown sequence sensor rails can be powered down
+	 * asynchronously to the EC hence EC cannot interlock the sensor
+	 * states with the power down states. To avoid this issue, defer
+	 * switching the sensors rate with a configurable delay if in S3.
+	 * By the time deferred function is serviced, if the chipset is
+	 * in S5 we can back out from switching the sensor rate.
+	 *
+	 * TODO: This does not fix the issue completely. It is mitigating
+	 * some of the accesses when we're going from S0->S5 with a very
+	 * brief stop in S3.
+	 */
+	hook_call_deferred(&motion_sense_switch_sensor_rate_data,
+				CONFIG_MOTION_SENSE_SUSPEND_DELAY_US);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sense_suspend,
 	     MOTION_SENSE_HOOK_PRIO);

@@ -149,6 +149,19 @@
 #define CONFIG_WLAN_POWER_ACTIVE_LOW
 #define  WIRELESS_GPIO_WLAN_POWER GPIO_WIRELESS_GPIO_WLAN_POWER
 
+/*
+ * During shutdown sequence TPS65094x PMIC turns off the sensor rails
+ * asynchronously to the EC. If we access the sensors when the sensor power
+ * rails are off we get I2C errors. To avoid this issue, defer switching
+ * the sensors rate if in S3. By the time deferred function is serviced if
+ * the chipset is in S5 we can back out from switching the sensor rate.
+ *
+ * Time taken by V1P8U rail to go down from S3 is 30ms to 60ms hence defer
+ * the sensor switching after 60ms.
+ */
+#undef CONFIG_MOTION_SENSE_SUSPEND_DELAY_US
+#define CONFIG_MOTION_SENSE_SUSPEND_DELAY_US (MSEC * 60)
+
 #define CONFIG_FLASH_SIZE 524288
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q40	/* FIXME: Should be GD25LQ40? */

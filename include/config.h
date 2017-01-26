@@ -1181,6 +1181,15 @@
  */
 #undef CONFIG_LID_ANGLE_UPDATE
 
+/*
+ * During shutdown sequence sensor rails can be powered down asynchronously
+ * to the EC hence EC cannot interlock the sensor states with the power down
+ * states. To avoid this issue, defer switching the sensors rate with a
+ * configurable delay if in S3. By the time deferred function is serviced,
+ * if the chipset is in S5 we can back out from switching the sensor rate.
+ */
+#define CONFIG_MOTION_SENSE_SUSPEND_DELAY_US 0
+
 /******************************************************************************/
 /* Host to RAM (H2RAM) Memory Mapping */
 
