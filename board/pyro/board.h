@@ -51,6 +51,11 @@
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BATTERY_VENDOR_PARAM
 
+/* battery firmware update */
+#define CONFIG_CRC8
+#define CONFIG_SB_FIRMWARE_UPDATE
+#define CONFIG_SMBUS
+
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGE_RAMP
