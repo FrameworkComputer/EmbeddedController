@@ -419,6 +419,9 @@ clean:
 .PHONY: clobber
 clobber:
 	-rm -rf build TAGS cscope.files cscope.out
+ifneq ($(CCACHE),)
+	$(CCACHE) -c
+endif
 
 .PHONY: help
 help:
