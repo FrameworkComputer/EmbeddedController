@@ -112,7 +112,7 @@ static void unlock_the_console(void)
 	int rc;
 
 	/* Wipe the TPM's memory and reset the TPM task. */
-	rc = tpm_reset(1, 1);
+	rc = tpm_reset_request(1, 1);
 	if (rc != EC_SUCCESS) {
 		/*
 		 * If anything goes wrong (which is unlikely), we REALLY don't

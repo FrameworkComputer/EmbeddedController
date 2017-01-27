@@ -40,7 +40,7 @@ void tpm_register_interface(interface_restart_func interface_restart);
  * If wipe_nvmem_first is true, the EC and AP will be forced off and TPM memory
  * will be erased before the TPM task is reset.
  */
-int tpm_reset(int wait_until_done, int wipe_nvmem_first);
+int tpm_reset_request(int wait_until_done, int wipe_nvmem_first);
 
 /*
  * Return true if the TPM is being reset. Usually this helps to avoid

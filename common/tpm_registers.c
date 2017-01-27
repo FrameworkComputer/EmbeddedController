@@ -38,22 +38,25 @@
  * executable, because the loader can just zero .bss prior to running the
  * program.
  *
- * However, the tpm_reset() function will zero the .bss section for THIS FILE
- * and all files in the TPM library. Any uninitialized variables defined in
- * this file that must be preserved across tpm_reset() must be placed in a
- * separate section.
+ * However, the tpm_reset_request() function will zero the .bss section for THIS
+ * FILE and all files in the TPM library. Any uninitialized variables defined in
+ * this file that must be preserved across tpm_reset_request() must be placed in
+ * a separate section.
  *
  * On the other hand, initialized variables (in the .data section) are NOT
- * affected by tpm_reset(), so any variables that should be reinitialized must
- * be dealt with manually in the tpm_reset() function. To prevent initialized
- * variables from being added to the TPM library without notice, the compiler
- * will reject any that aren't explicitly flagged.
+ * affected by tpm_reset_request(), so any variables that should be
+ * reinitialized must be dealt with manually in the tpm_reset_request()
+ * function. To prevent initialized variables from being added to the TPM
+ * library without notice, the compiler will reject any that aren't explicitly
+ * flagged.
  */
 
-/* This marks uninitialized variables that tpm_reset() should ignore */
+/* This marks uninitialized variables that tpm_reset_request() should ignore */
 #define __preserved __attribute__((section(".bss.noreinit")))
 
-/* This marks initialized variables that tpm_reset() may need to reset */
+/*
+ * This marks initialized variables that tpm_reset_request() may need to reset
+ */
 #define __initialized __attribute__((section(".data.noreinit")))
 
 /****************************************************************************/
@@ -646,13 +649,15 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 /* Calling task (singular) to notify when the TPM reset has completed */
 static __initialized task_id_t waiting_for_reset = TASK_ID_INVALID;
 
-/* Return value from blocking tpm_reset() call */
+/* Return value from blocking tpm_reset_request() call */
 static __preserved int wipe_result;
 
-/* Did tpm_reset() request nvmem wipe? (intentionally cleared on reset) */
+/*
+ * Did tpm_reset_request() request nvmem wipe? (intentionally cleared on reset)
+ */
 static int wipe_requested;
 
-int tpm_reset(int wait_until_done, int wipe_nvmem_first)
+int tpm_reset_request(int wait_until_done, int wipe_nvmem_first)
 {
 	uint32_t evt;
 
