@@ -45,6 +45,10 @@
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
 #undef  CONFIG_MPU
 
+/* Enable a different power-on sequence than the one on gru */
+#undef CONFIG_CHIPSET_POWER_SEQ_VERSION
+#define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
+
 /* Optional features */
 #define CONFIG_BOARD_VERSION
 #define CONFIG_BOARD_SPECIFIC_VERSION

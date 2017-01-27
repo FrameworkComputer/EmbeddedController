@@ -611,6 +611,9 @@
 /* Support PMIC reset(using LDO_EN) in chipset */
 #undef CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
 
+/* Redefine when we need a different power-on sequence on the same chipset. */
+#define CONFIG_CHIPSET_POWER_SEQ_VERSION 0
+
 /*****************************************************************************/
 /*
  * Chip config for clock circuitry
