@@ -27,6 +27,9 @@ struct anx_state {
 	int	polarity;
 	int	vconn_en;
 	int	mux_state;
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	int	prev_mode;
+#endif
 };
 #define clear_recvd_msg_int(port) do {\
 		int reg, rv; \
@@ -42,6 +45,8 @@ static int anx74xx_set_mux(int port, int polarity);
 
 /* Save the selected rp value */
 static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
+
+static int anx74xx_tcpm_init(int port);
 
 static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 {
@@ -70,20 +75,30 @@ static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 
 static void anx74xx_set_power_mode(int port, int mode)
 {
-	switch (mode) {
-	case ANX74XX_NORMAL_MODE:
-	/* Set PWR_EN and RST_N GPIO pins high */
-		board_set_tcpc_power_mode(port, 1);
-		break;
-	case ANX74XX_STANDBY_MODE:
-	/* Disable PWR_EN, keep Digital and analog block
-	 *  ON for cable detection
+	int reg;
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	anx[port].prev_mode = mode;
+#endif
+
+	tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_0, &reg);
+
+	/*
+	 * When ANX3429 needs to enter ANX74XX_STANDBY_MODE, Cable det pin
+	 * shall be pulled low first by ANX3429`s register, in this way,
+	 * for use case of E-mark cable only, EC can find cable det pin is
+	 * pulled high again.
 	 */
-		board_set_tcpc_power_mode(port, 0);
-		break;
-	default:
-		break;
-	}
+	if (mode == ANX74XX_STANDBY_MODE)
+		reg &= ~ANX74XX_REG_R_PIN_CABLE_DET;
+	else
+		reg |= ANX74XX_REG_R_PIN_CABLE_DET;
+
+	tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_0, reg);
+
+	/* Delay recommended by Analogix for CABLE_DET setup time */
+	msleep(2);
+
+	board_set_tcpc_power_mode(port, mode);
 }
 
 void anx74xx_tcpc_set_vbus(int port, int enable)
@@ -554,6 +569,31 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+void anx74xx_handle_power_mode(int port, int mode)
+{
+	if (mode == ANX74XX_STANDBY_MODE) {
+		anx74xx_set_power_mode(port, mode);
+	} else if (anx[port].prev_mode != ANX74XX_NORMAL_MODE) {
+		/*
+		 * TODO: Interrupt high follows CC line hence ignore multiple
+		 * interrupts.
+		 */
+		anx74xx_tcpm_init(port);
+	}
+}
+#endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
+
+static int anx74xx_tcpc_drp_toggle(int port)
+{
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	anx74xx_handle_power_mode(port, ANX74XX_STANDBY_MODE);
+#endif
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
+
 static int anx74xx_tcpm_set_polarity(int port, int polarity)
 {
 	int reg, mux_state, rv = EC_SUCCESS;
@@ -829,11 +869,11 @@ void anx74xx_tcpc_alert(int port)
 	}
 }
 
-int anx74xx_tcpm_init(int port)
+static int anx74xx_tcpm_init(int port)
 {
 	int rv = 0, reg;
 
-	memset(anx, 0, CONFIG_USB_PD_PORT_COUNT*sizeof(struct anx_state));
+	memset(&anx[port], 0, sizeof(struct anx_state));
 	/* Bring chip in normal mode to work */
 	anx74xx_set_power_mode(port, ANX74XX_NORMAL_MODE);
 
@@ -912,6 +952,9 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 	.tcpc_discharge_vbus	= &anx74xx_tcpc_discharge_vbus,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle		= &anx74xx_tcpc_drp_toggle,
+#endif
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
