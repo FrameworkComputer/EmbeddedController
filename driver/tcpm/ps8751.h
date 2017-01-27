@@ -18,6 +18,8 @@
 #define PS8751_REG_CTRL_1       0xD0
 #define PS8751_REG_CTRL_1_HPD   (1 << 0)
 #define PS8751_REG_CTRL_1_IRQ   (1 << 1)
+#define PS8751_REG_MUX_USB_C2SS_EQ		0xe7
+#define PS8751_REG_MUX_USB_C2SS_HS_THRESHOLD	0xe8
 
 void ps8751_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 int ps8751_tcpc_get_fw_version(int port, int *version);

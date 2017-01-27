@@ -225,8 +225,10 @@ const int i2c_test_dev_used = ARRAY_SIZE(i2c_stress_tests);
 #endif /* CONFIG_CMD_I2C_STRESS_TEST */
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{NPCX_I2C_PORT0_0, 0x50, &anx74xx_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
-	{NPCX_I2C_PORT0_1, 0x16, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
+	{NPCX_I2C_PORT0_0, TCPC_PORT0_I2C_ADDR, &anx74xx_tcpm_drv,
+			TCPC_ALERT_ACTIVE_LOW},
+	{NPCX_I2C_PORT0_1, TCPC_PORT1_I2C_ADDR, &tcpci_tcpm_drv,
+			TCPC_ALERT_ACTIVE_LOW},
 };
 
 uint16_t tcpc_get_alert_status(void)
@@ -254,6 +256,16 @@ const enum gpio_signal hibernate_wake_pins[] = {
 
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
+static int ps8751_tune_mux(const struct usb_mux *mux)
+{
+	/* Snappy specific signal reconditioning */
+	i2c_write8(mux->port_addr, TCPC_PORT1_I2C_ADDR,
+		   PS8751_REG_MUX_USB_C2SS_EQ, 0x50);
+	i2c_write8(mux->port_addr, TCPC_PORT1_I2C_ADDR,
+		   PS8751_REG_MUX_USB_C2SS_HS_THRESHOLD, 0x80);
+	return EC_SUCCESS;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,	/* don't care / unused */
@@ -261,9 +273,10 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.hpd_update = &anx74xx_tcpc_update_hpd_status,
 	},
 	{
-		.port_addr = 1,
+		.port_addr = 1,		/* port # not i2c address */
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.board_init = &ps8751_tune_mux,
 	}
 };
 
