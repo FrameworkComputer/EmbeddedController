@@ -234,6 +234,14 @@ static void it83xx_enable_vconn(enum usbpd_port port, int enabled)
 	}
 }
 
+static void it83xx_enable_cc(enum usbpd_port port, int enable)
+{
+	if (enable)
+		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), (1 << 4));
+	else
+		SET_MASK(IT83XX_USBPD_CCGCR(port), (1 << 4));
+}
+
 static void it83xx_set_power_role(enum usbpd_port port, int power_role)
 {
 	/* PD_ROLE_SINK 0, PD_ROLE_SOURCE 1 */
@@ -310,12 +318,27 @@ static void it83xx_select_polarity(enum usbpd_port port,
 		CLEAR_MASK(IT83XX_USBPD_CCGCR(port), (1 << 0));
 }
 
-static void it83xx_set_cc(enum usbpd_port port, int pull)
+static int it83xx_set_cc(enum usbpd_port port, int pull)
 {
-	if (pull == TYPEC_CC_RD)
+	int enable_cc = 1;
+
+	switch (pull) {
+	case TYPEC_CC_RD:
 		it83xx_set_power_role(port, PD_ROLE_SINK);
-	else if (pull == TYPEC_CC_RP)
+		break;
+	case TYPEC_CC_RP:
 		it83xx_set_power_role(port, PD_ROLE_SOURCE);
+		break;
+	case TYPEC_CC_OPEN:
+		/* Power-down CC1 & CC2 to remove Rp/Rd */
+		enable_cc = 0;
+		break;
+	default:
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	it83xx_enable_cc(port, enable_cc);
+	return EC_SUCCESS;
 }
 
 static int it83xx_tcpm_init(int port)
@@ -363,9 +386,7 @@ static int it83xx_tcpm_select_rp_value(int port, int rp_sel)
 
 static int it83xx_tcpm_set_cc(int port, int pull)
 {
-	it83xx_set_cc(port, pull);
-
-	return EC_SUCCESS;
+	return it83xx_set_cc(port, pull);
 }
 
 static int it83xx_tcpm_set_polarity(int port, int polarity)
