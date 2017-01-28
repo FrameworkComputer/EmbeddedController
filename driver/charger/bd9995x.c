@@ -541,19 +541,31 @@ int charger_get_status(int *status)
 
 int charger_set_mode(int mode)
 {
-	int rv;
+	int rv, inhibit_chg;
+	static int inhibit_chg_prev = -1;
 
-	if (mode & CHARGE_FLAG_INHIBIT_CHARGE) {
-		rv = bd9995x_set_vsysreg(BD9995X_DISCHARGE_VSYSREG);
-		msleep(50);
-		rv |= bd9995x_charger_enable(0);
-	} else {
-		rv = bd9995x_charger_enable(1);
-		msleep(1);
-		rv |= bd9995x_set_vsysreg(BD9995X_CHARGE_VSYSREG);
+	inhibit_chg = mode & CHARGE_FLAG_INHIBIT_CHARGE;
+
+	if (inhibit_chg != inhibit_chg_prev) {
+		if (inhibit_chg) {
+			rv = bd9995x_set_vsysreg(BD9995X_DISCHARGE_VSYSREG);
+			msleep(50);
+			rv |= bd9995x_charger_enable(0);
+		} else {
+			rv = bd9995x_charger_enable(1);
+			/*
+			 * BGATE capacitor max : 0.1uF + 20%
+			 * Charge MOSFET threshold max : 2.8V
+			 * BGATE charge pump current min : 3uA
+			 * T = C * V / I so, Tmax = 112ms
+			 */
+			msleep(115);
+			rv |= bd9995x_set_vsysreg(BD9995X_CHARGE_VSYSREG);
+		}
+		inhibit_chg_prev = inhibit_chg;
+		if (rv)
+			return rv;
 	}
-	if (rv)
-		return rv;
 
 	if (mode & CHARGE_FLAG_POR_RESET) {
 		rv = bd9995x_por_reset();
