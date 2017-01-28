@@ -169,60 +169,243 @@ int DCRYPTO_app_cipher(enum dcrypto_appid appid, const void *salt,
 #include "shared_mem.h"
 #include "task.h"
 #include "timer.h"
+#include "watchdog.h"
+
+#define HEAP_HEAD_ROOM 0x400
+static uint32_t number_of_iterations;
+static uint8_t result;
+
+/* Staticstics for ecrypt and decryp passes. */
+struct ciph_stats {
+	uint16_t min_time;
+	uint16_t max_time;
+	uint32_t total_time;
+} __packed; /* Just in case. */
+
+/* A common structure to contain information about the test run. */
+struct test_info {
+	size_t test_blob_size;
+	struct ciph_stats enc_stats;
+	struct ciph_stats dec_stats;
+	char *p; /* Pointer to an allcoated buffer of test_blob_size bytes. */
+};
+
+static void init_stats(struct ciph_stats *stats)
+{
+	stats->min_time = ~0;
+	stats->max_time = 0;
+	stats->total_time = 0;
+}
+
+static void update_stats(struct ciph_stats *stats, uint32_t time)
+{
+	if (time < stats->min_time)
+		stats->min_time = time;
+
+	if (time > stats->max_time)
+		stats->max_time = time;
+
+	stats->total_time += time;
+}
+
+static void report_stats(const char *direction, struct ciph_stats *stats)
+{
+	ccprintf("%s results: min %d us, max %d us, average %d us\n",
+		 direction, stats->min_time, stats->max_time,
+		 stats->total_time / number_of_iterations);
+}
 
 /*
- * Let's use some odd size to make sure unaligned buffers are handled
- * properly.
+ * Prepare to run the test: allocate memory, initialize stats structures.
+ *
+ * Returns EC_SUCCESS if everything is fine, EC_ERROR_OVERFLOW on malloc
+ * failures.
  */
-#define TEST_BLOB_SIZE 16387
-
-static uint8_t result;
-static void run_cipher_cmd(void)
+static int prepare_running(struct test_info *pinfo)
 {
-	int rv;
-	char *p;
+	memset(pinfo, 0, sizeof(*pinfo));
+
+
+	pinfo->test_blob_size = shared_mem_size();
+	/*
+	 * Leave some room for crypto functions if they need to allocate
+	 * something, just in case. 0x20 extra bytes are needed to be able to
+	 * modify size alignment of the allocated buffer.
+	 */
+	if (pinfo->test_blob_size < (HEAP_HEAD_ROOM + 0x20)) {
+		ccprintf("Not enough memory to run the test\n");
+		return EC_ERROR_OVERFLOW;
+	}
+	pinfo->test_blob_size = (pinfo->test_blob_size - HEAP_HEAD_ROOM);
+
+	if (shared_mem_acquire(pinfo->test_blob_size,
+			       (char **)&(pinfo->p)) != EC_SUCCESS) {
+		ccprintf("Failed to allocate %d bytes\n",
+			 pinfo->test_blob_size);
+		return EC_ERROR_OVERFLOW;
+	}
+
+	/*
+	 * Use odd block size to make sure unaligned length blocks are handled
+	 * properly. This leaves room in the end of the buffer to check if the
+	 * decryption routine scratches it.
+	 */
+	pinfo->test_blob_size &= ~0x1f;
+	pinfo->test_blob_size |= 7;
+
+	ccprintf("running %d iterations\n", number_of_iterations);
+	ccprintf("blob size %d at %p\n", pinfo->test_blob_size, pinfo->p);
+
+	init_stats(&(pinfo->enc_stats));
+	init_stats(&(pinfo->dec_stats));
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Let's split the buffer in two equal halves, encrypt the lower half into the
+ * upper half and compare them word by word. There should be no repetitions.
+ *
+ * The side effect of this is starting the test with random clear text data.
+ *
+ * The first 16 bytes of the allocated buffer are used as the encryption IV.
+ */
+static int basic_check(struct test_info *pinfo)
+{
+	size_t half;
+	int i;
+	uint32_t *p;
+
+	ccprintf("original data  %.16h\n", pinfo->p);
+
+	half = (pinfo->test_blob_size/2) & ~3;
+	if (!DCRYPTO_app_cipher(NVMEM, pinfo->p, pinfo->p,
+				pinfo->p + half, half)) {
+		ccprintf("first ecnryption run failed\n");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	p = (uint32_t *)pinfo->p;
+	half /= sizeof(*p);
+
+	for (i = 0; i < half; i++)
+		if (p[i] == p[i + half]) {
+			ccprintf("repeating 32 bit word detected"
+				 " at offset 0x%x!\n", i * 4);
+			return EC_ERROR_UNKNOWN;
+		}
+
+	ccprintf("hashed data    %.16h\n", pinfo->p);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Main iteration of the console command, runs ecnryption/decryption cycles,
+ * vefifying that decrypted text's hash matches the original, and accumulating
+ * timing statistics.
+ */
+static int command_loop(struct test_info *pinfo)
+{
 	uint8_t sha[SHA_DIGEST_SIZE];
 	uint8_t sha_after[SHA_DIGEST_SIZE];
-	int match;
-	uint32_t tstamp;
+	uint32_t iteration;
+	uint8_t *p_last_byte;
+	int rv;
 
-	rv = shared_mem_acquire(TEST_BLOB_SIZE, (char **)&p);
+	/*
+	 * Prepare the hash of the original data to be able to verify
+	 * results.
+	 */
+	DCRYPTO_SHA1_hash((uint8_t *)(pinfo->p), pinfo->test_blob_size, sha);
 
-	if (rv != EC_SUCCESS) {
-		result = rv;
-		return;
-	}
+	/* Use the hash as an IV for the cipher. */
+	memcpy(sha_after, sha, sizeof(sha_after));
 
-	ccprintf("original data           %.16h\n", p);
+	iteration = number_of_iterations;
+	p_last_byte = pinfo->p + pinfo->test_blob_size;
 
-	DCRYPTO_SHA1_hash((uint8_t *)p, TEST_BLOB_SIZE, sha);
+	while (iteration--) {
+		char last_byte = (char) iteration;
+		uint32_t tstamp;
 
-	tstamp = get_time().val;
-	rv = DCRYPTO_app_cipher(NVMEM, &sha, p, p, TEST_BLOB_SIZE);
-	tstamp = get_time().val - tstamp;
-	ccprintf("rv 0x%02x, out data       %.16h, time %d us\n",
-		 rv, p, tstamp);
+		*p_last_byte = last_byte;
 
-	if (rv == 1) {
+		if (!(iteration % 500))
+			watchdog_reload();
+
 		tstamp = get_time().val;
-		rv = DCRYPTO_app_cipher(NVMEM, &sha, p, p, TEST_BLOB_SIZE);
+		rv = DCRYPTO_app_cipher(NVMEM, sha_after, pinfo->p,
+					pinfo->p, pinfo->test_blob_size);
 		tstamp = get_time().val - tstamp;
-		ccprintf("rv 0x%02x, orig. data     %.16h, time %d us\n",
-			 rv, p, tstamp);
+
+		if (!rv) {
+			ccprintf("encryption failed\n");
+			return EC_ERROR_UNKNOWN;
+		}
+		if (*p_last_byte != last_byte) {
+			ccprintf("encryption overflowed\n");
+			return EC_ERROR_UNKNOWN;
+		}
+		update_stats(&pinfo->enc_stats, tstamp);
+
+		tstamp = get_time().val;
+		rv = DCRYPTO_app_cipher(NVMEM, sha_after, pinfo->p,
+					pinfo->p, pinfo->test_blob_size);
+		tstamp = get_time().val - tstamp;
+
+		if (!rv) {
+			ccprintf("decryption failed\n");
+			return EC_ERROR_UNKNOWN;
+		}
+		if (*p_last_byte != last_byte) {
+			ccprintf("decryption overflowed\n");
+			return EC_ERROR_UNKNOWN;
+		}
+
+		DCRYPTO_SHA1_hash((uint8_t *)(pinfo->p),
+				  pinfo->test_blob_size, sha_after);
+		if (memcmp(sha, sha_after, sizeof(sha))) {
+			ccprintf("\n"
+				 "sha1 before and after mismatch, %d to go!\n",
+				 iteration);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		update_stats(&pinfo->dec_stats, tstamp);
+
+		/* get a new IV */
+		DCRYPTO_SHA1_hash(sha_after, sizeof(sha), sha_after);
 	}
 
-	DCRYPTO_SHA1_hash((uint8_t *)p, TEST_BLOB_SIZE, sha_after);
+	return EC_SUCCESS;
+}
 
-	match = !memcmp(sha, sha_after, sizeof(sha));
-	ccprintf("sha1 before and after %smatch!\n",
-		 match ? "" : "MIS");
+/*
+ * Run cipher command on the hooks task context, as dcrypto's stack
+ * requirements exceed console tasks' allowance.
+ */
+static void run_cipher_cmd(void)
+{
+	struct test_info info;
 
-	shared_mem_release(p);
+	result = prepare_running(&info);
 
-	if ((rv == 1) && match)
-		result = EC_SUCCESS;
-	else
-		result = EC_ERROR_UNKNOWN;
+	if (result == EC_SUCCESS)
+		result = basic_check(&info);
+
+	if (result == EC_SUCCESS)
+		result = command_loop(&info);
+
+	if (result == EC_SUCCESS) {
+		report_stats("Encryption", &info.enc_stats);
+		report_stats("Decryption", &info.dec_stats);
+	} else if (info.p) {
+		ccprintf("current data   %.16h\n", info.p);
+	}
+
+	if (info.p)
+		shared_mem_release(info.p);
 
 	task_set_event(TASK_ID_CONSOLE, TASK_EVENT_CUSTOM(1), 0);
 }
@@ -231,11 +414,27 @@ DECLARE_DEFERRED(run_cipher_cmd);
 static int cmd_cipher(int argc, char **argv)
 {
 	uint32_t events;
+	uint32_t max_time;
+
+	/* Ignore potential input errors, let the user handle them. */
+	if (argc > 1)
+		number_of_iterations = strtoi(argv[1], NULL, 0);
+	else
+		number_of_iterations = 1000;
+
+	if (!number_of_iterations) {
+		ccprintf("not running zero iterations\n");
+		return EC_ERROR_PARAM1;
+	}
 
 	hook_call_deferred(&run_cipher_cmd_data, 0);
 
-	/* Should be done much sooner than in 1 second. */
-	events = task_wait_event_mask(TASK_EVENT_CUSTOM(1), 1 * SECOND);
+	/* Roughly, .5 us per byte should be more than enough. */
+	max_time = number_of_iterations * shared_mem_size() / 2;
+
+	ccprintf("Will wait up to %d ms\n", (max_time + 500)/1000);
+
+	events = task_wait_event_mask(TASK_EVENT_CUSTOM(1), max_time);
 	if (!(events & TASK_EVENT_CUSTOM(1))) {
 		ccprintf("Timed out, you might want to reboot...\n");
 		return EC_ERROR_TIMEOUT;
