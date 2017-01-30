@@ -50,8 +50,6 @@ BOARDS_IT83XX=(
 )
 
 BOARDS_LM4=(
-	auron
-	rambi
 	samus
 )
 

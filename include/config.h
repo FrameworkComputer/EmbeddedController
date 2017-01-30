@@ -564,11 +564,9 @@
 
 /* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_APOLLOLAKE/* Intel Apollolake (x86) */
-#undef CONFIG_CHIPSET_BAYTRAIL  /* Intel Bay Trail (x86) */
 #undef CONFIG_CHIPSET_BRASWELL  /* Intel Braswell (x86) */
 #undef CONFIG_CHIPSET_ECDRIVEN  /* Dummy power module */
 #undef CONFIG_CHIPSET_GAIA      /* Gaia and Ares (ARM) */
-#undef CONFIG_CHIPSET_HASWELL   /* Intel Haswell (x86) */
 #undef CONFIG_CHIPSET_MEDIATEK  /* MediaTek MT81xx */
 #undef CONFIG_CHIPSET_RK3399    /* Rockchip rk3399 */
 /* TODO: Rename below config to CONFIG_CHIPSET_RK32XX */
@@ -2569,10 +2567,8 @@
 
 #ifndef HAS_TASK_CHIPSET
 #undef CONFIG_CHIPSET_APOLLOLAKE
-#undef CONFIG_CHIPSET_BAYTRAIL
 #undef CONFIG_CHIPSET_BRASWELL
 #undef CONFIG_CHIPSET_GAIA
-#undef CONFIG_CHIPSET_HASWELL
 #undef CONFIG_CHIPSET_MEDIATEK
 #undef CONFIG_CHIPSET_RK3399
 #undef CONFIG_CHIPSET_ROCKCHIP
