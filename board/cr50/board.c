@@ -131,6 +131,7 @@ struct strap_desc {
 	uint8_t sel_offset;
 	/* Entry in the pinmux peripheral selector table for pad */
 	uint8_t pad_select;
+	const char *pad_name;
 };
 
 struct board_cfg {
@@ -145,10 +146,11 @@ struct board_cfg {
  * configure each strapping pin to be either a GPIO input or output.
  */
 const struct strap_desc strap_regs[] = {
-	{ GPIO_STRAP_A0, GOFFSET(PINMUX, DIOA1_SEL), GC_PINMUX_DIOA1_SEL, },
-	{ GPIO_STRAP_A1, GOFFSET(PINMUX, DIOA9_SEL), GC_PINMUX_DIOA9_SEL, },
-	{ GPIO_STRAP_B0, GOFFSET(PINMUX, DIOA6_SEL), GC_PINMUX_DIOA6_SEL, },
-	{ GPIO_STRAP_B1, GOFFSET(PINMUX, DIOA12_SEL), GC_PINMUX_DIOA12_SEL, },
+	{GPIO_STRAP_A0, GOFFSET(PINMUX, DIOA1_SEL), GC_PINMUX_DIOA1_SEL, "a1"},
+	{GPIO_STRAP_A1, GOFFSET(PINMUX, DIOA9_SEL), GC_PINMUX_DIOA9_SEL, "a9"},
+	{GPIO_STRAP_B0, GOFFSET(PINMUX, DIOA6_SEL), GC_PINMUX_DIOA6_SEL, "a6"},
+	{GPIO_STRAP_B1, GOFFSET(PINMUX, DIOA12_SEL), GC_PINMUX_DIOA12_SEL,
+	 "a12"},
 };
 
 #define BOARD_PROPERTIES_DEFAULT (BOARD_SLAVE_CONFIG_I2C | BOARD_USE_PLT_RESET \
@@ -984,6 +986,7 @@ static int get_strap_config(uint8_t *config)
 
 	*config = 0;
 	/* Read 2 bit value of each strapping pin. */
+	ccprintf("strap pin readings:");
 	for (s0 = a0; s0 < ARRAY_SIZE(strap_regs); s0++) {
 		lvl = gpio_get_level(strap_regs[s0].gpio_signal);
 		flags = GPIO_INPUT;
@@ -996,6 +999,7 @@ static int get_strap_config(uint8_t *config)
 		udelay(STRAP_PIN_DELAY_USEC);
 		lvl = (lvl << 1) |
 			gpio_get_level(strap_regs[s0].gpio_signal);
+		ccprintf(" %s:%d", strap_regs[s0].pad_name, lvl);
 		*config |= lvl << s0 * 2;
 
 		/*
@@ -1006,6 +1010,7 @@ static int get_strap_config(uint8_t *config)
 		 */
 		strap_config_pin(s0, 0);
 	}
+	ccprintf("\n");
 
 	/*
 	 * The strap bits for DIOA12|DIOA6 are in the upper 4 bits of 'config'
