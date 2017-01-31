@@ -314,7 +314,7 @@ static void charge_manager_fill_power_info(int port,
 			r->meas.voltage_now = 5000;
 		else {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_CHARGER
-			r->meas.voltage_now = charger_get_vbus_level();
+			r->meas.voltage_now = charger_get_vbus_voltage(port);
 #else
 			if (ADC_VBUS >= 0)
 				r->meas.voltage_now =

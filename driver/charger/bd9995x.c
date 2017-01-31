@@ -867,25 +867,22 @@ int charger_discharge_on_ac(int enable)
 				BD9995X_EXTENDED_COMMAND);
 }
 
-int charger_get_vbus_level(void)
+int charger_get_vbus_voltage(int port)
 {
-	int vbus_val;
-	int vcc_val;
-	int rv;
+	uint8_t read_reg;
+	int voltage;
 
-	rv = ch_raw_read16(BD9995X_CMD_VBUS_VAL, &vbus_val,
-				BD9995X_EXTENDED_COMMAND);
+	read_reg = (bd9995x_pd_port_to_chg_port(port) ==
+		    BD9995X_CHARGE_PORT_VBUS) ? BD9995X_CMD_VBUS_VAL :
+						BD9995X_CMD_VCC_VAL;
 
-	rv += ch_raw_read16(BD9995X_CMD_VCC_VAL, &vcc_val,
-				BD9995X_EXTENDED_COMMAND);
-
-	return rv ? 0 : MAX(vbus_val, vcc_val);
+	return ch_raw_read16(read_reg, &voltage, BD9995X_EXTENDED_COMMAND) ?
+			     0 : voltage;
 }
-
 
 /*** Non-standard interface functions ***/
 
-int bd9995x_is_vbus_provided(int port)
+int bd9995x_is_vbus_provided(enum bd9995x_charge_port port)
 {
 	int reg;
 

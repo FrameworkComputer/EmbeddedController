@@ -45,11 +45,12 @@ int board_is_consuming_full_charge(void);
 /**
  * Check if VBUS is too low
  *
+ * @param port Charge ramp port
  * @param ramp_state Current ramp state
  *
  * @return VBUS is sagging low
  */
-int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state);
+int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state);
 
 /**
  * Get the input current limit set by ramp module

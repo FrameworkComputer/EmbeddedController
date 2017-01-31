@@ -417,7 +417,7 @@ int board_is_consuming_full_charge(void)
 /**
  * Return if VBUS is sagging too low
  */
-int board_is_vbus_too_low(enum chg_ramp_vbus_state ramp_state)
+int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
 	static int vbus[VBUS_STABLE_SAMPLE_COUNT];
 	static int vbus_idx, vbus_samples_full;

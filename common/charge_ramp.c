@@ -264,7 +264,8 @@ void chg_ramp_task(void)
 			}
 
 			/* If VBUS is sagging a lot, then stop ramping */
-			if (board_is_vbus_too_low(CHG_RAMP_VBUS_RAMPING)) {
+			if (board_is_vbus_too_low(active_port,
+						  CHG_RAMP_VBUS_RAMPING)) {
 				CPRINTS("VBUS low");
 				active_icl_new = MAX(min_icl, active_icl -
 							      RAMP_ICL_BACKOFF);
@@ -310,7 +311,8 @@ void chg_ramp_task(void)
 
 			/* Keep an eye on VBUS and restart ramping if it dips */
 			if (board_is_ramp_allowed(active_sup) &&
-			    board_is_vbus_too_low(CHG_RAMP_VBUS_STABLE)) {
+			    board_is_vbus_too_low(active_port,
+						  CHG_RAMP_VBUS_STABLE)) {
 				CPRINTS("VBUS low; Re-ramp");
 				max_icl = MAX(min_icl,
 						max_icl - RAMP_ICL_BACKOFF);

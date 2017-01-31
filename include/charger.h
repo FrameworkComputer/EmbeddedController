@@ -99,8 +99,8 @@ int charger_set_voltage(int voltage);
 /* Discharge battery when on AC power. */
 int charger_discharge_on_ac(int enable);
 
-/* Get the VBUS level from the charger */
-int charger_get_vbus_level(void);
+/* Get the VBUS voltage (mV) from the charger */
+int charger_get_vbus_voltage(int port);
 
 /* Custom board function to discharge battery when on AC power */
 int board_discharge_on_ac(int enable);
