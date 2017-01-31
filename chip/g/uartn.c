@@ -151,15 +151,6 @@ void uartn_init(int uart)
 	 */
 	GR_UART_FIFO(uart) = 0x63;
 
-	/*
-	 * To reduce the number of UART RX interrupts on the peripheral UARTS,
-	 * set the FIFO RXILVL to only trigger rx interrupts every 4 characters.
-	 *
-	 * Reset the RX FIFO.
-	 */
-	if (uart)
-		GR_UART_FIFO(uart) |= 0x7;
-
 	/* enable RX interrupts in block */
 	/* Note: doesn't do anything unless turned on in NVIC */
 	GR_UART_ICTRL(uart) = 0x02;

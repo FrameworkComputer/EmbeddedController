@@ -5,7 +5,6 @@
 
 #include "queue.h"
 #include "queue_policies.h"
-#include "timer.h"
 #include "uartn.h"
 #include "usart.h"
 #include "usb-stream.h"
@@ -68,13 +67,6 @@ void get_data_from_usb(struct usart_config const *config)
 	/* If output buffer is empty, disable transmit interrupt */
 	if (!queue_count(uart_out))
 		uartn_tx_stop(config->uart);
-
-	/*
-	 * Make sure rx fifo is cleared after any input to the console to ensure
-	 * user will be able to see their input as they are typing instead of
-	 * only when the RX FIFO reaches the level set by RXILVL.
-	 */
-	hook_call_deferred(config->deferred, 1 * MSEC);
 }
 
 void send_data_to_usb(struct usart_config const *config)
