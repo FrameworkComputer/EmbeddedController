@@ -9,12 +9,6 @@
 #define __CROS_EC_BOARD_H
 
 /*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-
-/*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
@@ -103,6 +97,7 @@
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_COMM_LOCKED
 
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
