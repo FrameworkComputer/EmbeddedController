@@ -204,6 +204,11 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+/*
+ * The PWM channel enums for the LEDs need to be in Red, Green, Blue order as
+ * the 'set_color()' function assumes this order. The left vs right order
+ * doesn't matter as long as each side follows RGB order.
+ */
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
 	PWM_CH_LED_L_RED,

@@ -5,6 +5,7 @@
  * Power/Battery LED control for Eve
  */
 
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
@@ -33,36 +34,52 @@ enum led_color {
 	LED_RED,
 	LED_GREEN,
 	LED_BLUE,
+	LED_WHITE,
+	LED_AMBER,
 
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
 };
 
+enum led_side {
+	LED_LEFT = 0,
+	LED_RIGHT,
+	LED_BOTH
+};
+
 /* Brightness vs. color, in the order of off, red, green and blue */
-static const uint8_t color_brightness[LED_COLOR_COUNT][3] = {
+#define PWM_CHAN_PER_LED 3
+static const uint8_t color_brightness[LED_COLOR_COUNT][PWM_CHAN_PER_LED] = {
 	/* {Red, Green, Blue}, */
 	[LED_OFF]   = {100, 100, 100},
 	[LED_RED]   = {20,  100, 100},
 	[LED_GREEN] = {100, 20, 100},
 	[LED_BLUE]  = {100, 100, 20},
+	[LED_WHITE]  = {0, 0, 0},
+	[LED_AMBER]  = {0, 87, 100},
 };
 
 /**
  * Set LED color
  *
- * @param color		Enumerated color value
+ * @param color	Enumerated color value
+ * @param side		Left LED, Right LED, or both LEDs
  */
-static void set_color(enum led_color color)
+static void set_color(enum led_color color, enum led_side side)
 {
+	int i;
+
 	/* Set color for left LED */
-	pwm_set_duty(PWM_CH_LED_L_RED, color_brightness[color][0]);
-	pwm_set_duty(PWM_CH_LED_L_GREEN, color_brightness[color][1]);
-	pwm_set_duty(PWM_CH_LED_L_BLUE, color_brightness[color][2]);
+	if (side == LED_LEFT || side == LED_BOTH)
+		for (i = 0; i < PWM_CHAN_PER_LED; i++)
+			pwm_set_duty(PWM_CH_LED_L_RED + i,
+				     color_brightness[color][i]);
 
 	/* Set color for right LED */
-	pwm_set_duty(PWM_CH_LED_R_RED, color_brightness[color][0]);
-	pwm_set_duty(PWM_CH_LED_R_GREEN, color_brightness[color][1]);
-	pwm_set_duty(PWM_CH_LED_R_BLUE, color_brightness[color][2]);
+	if (side == LED_RIGHT || side == LED_BOTH)
+		for (i = 0; i < PWM_CHAN_PER_LED; i++)
+			pwm_set_duty(PWM_CH_LED_R_RED + i,
+				     color_brightness[color][i]);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -90,9 +107,21 @@ static void eve_led_set_power_battery(void)
 {
 	static int power_ticks;
 	enum charge_state chg_state = charge_get_state();
+	int side;
+
+	/* Get active charge port which maps directly to left/right LED */
+	side = charge_manager_get_active_charge_port();
+	/* Ensure that side can be safely used as an index */
+	if (side < 0 || side >= CONFIG_USB_PD_PORT_COUNT)
+		side = LED_BOTH;
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		set_color(LED_BLUE);
+		set_color(LED_BLUE, LED_BOTH);
+		if (chg_state == PWR_STATE_CHARGE)
+			set_color(LED_AMBER, side);
+		else if (chg_state == PWR_STATE_IDLE || chg_state ==
+			 PWR_STATE_CHARGE_NEAR_FULL)
+			set_color(LED_GREEN, side);
 		return;
 	}
 
@@ -100,28 +129,45 @@ static void eve_led_set_power_battery(void)
 	if (battery_is_present() != BP_YES ||
 	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
 		set_color(((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
-			    LED_RED : LED_OFF);
+			  LED_RED : LED_OFF, LED_BOTH);
 		return;
+	}
+
+	/* Suspend or Standby state */
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND) ||
+	    chipset_in_state(CHIPSET_STATE_STANDBY)) {
+		if (chg_state == PWR_STATE_DISCHARGE) {
+			/*
+			 * If in S3/S0iX and not charging or in some error
+			 * state, then flash both LEDs white.
+			 */
+			set_color(((power_ticks++ % LED_TOTAL_TICKS) <
+				   LED_ON_TICKS) ?
+				  LED_WHITE : LED_OFF, LED_BOTH);
+			return;
+		}
 	}
 
 	/* CHIPSET_STATE_OFF */
 	switch (chg_state) {
 	case PWR_STATE_DISCHARGE:
-		set_color(LED_OFF);
+		set_color(LED_OFF, LED_BOTH);
 		break;
 	case PWR_STATE_CHARGE:
-		set_color(LED_RED);
+		set_color(LED_OFF, LED_BOTH);
+		set_color(LED_RED, side);
 		break;
 	case PWR_STATE_ERROR:
 		set_color(((power_ticks++ % LED_TOTAL_TICKS)
-			  < LED_ON_TICKS) ? LED_RED : LED_GREEN);
+			   < LED_ON_TICKS) ? LED_RED : LED_GREEN, LED_BOTH);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
-		set_color(LED_GREEN);
+		set_color(LED_OFF, LED_BOTH);
+		set_color(LED_GREEN, side);
 		break;
 	default:
-		set_color(LED_RED);
+		set_color(LED_RED, LED_BOTH);
 		break;
 	}
 	if (chg_state != PWR_STATE_ERROR)
@@ -144,7 +190,7 @@ static void led_init(void)
 	pwm_enable(PWM_CH_LED_R_GREEN, 1);
 	pwm_enable(PWM_CH_LED_R_BLUE, 1);
 
-	set_color(LED_OFF);
+	set_color(LED_OFF, LED_BOTH);
 }
 /* After pwm_pin_init() */
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
@@ -169,19 +215,33 @@ DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 /* Console commands */
 static int command_led(int argc, char **argv)
 {
+	int side = LED_BOTH;
+	char *e;
+
 	if (argc > 1) {
-		ccprintf("cmd led %s\n", argv[1]);
+		if (argc > 2) {
+			side = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM2;
+			if (side > 1)
+				return EC_ERROR_PARAM2;
+		}
+
 		if (!strcasecmp(argv[1], "debug")) {
 			led_debug ^= 1;
 			CPRINTF("led_debug = %d\n", led_debug);
 		} else if (!strcasecmp(argv[1], "off")) {
-			set_color(LED_OFF);
+			set_color(LED_OFF, side);
 		} else if (!strcasecmp(argv[1], "red")) {
-			set_color(LED_RED);
+			set_color(LED_RED, side);
 		} else if (!strcasecmp(argv[1], "green")) {
-			set_color(LED_GREEN);
+			set_color(LED_GREEN, side);
 		} else if (!strcasecmp(argv[1], "blue")) {
-			set_color(LED_BLUE);
+			set_color(LED_BLUE, side);
+		} else if (!strcasecmp(argv[1], "white")) {
+			set_color(LED_WHITE, side);
+		} else if (!strcasecmp(argv[1], "amber")) {
+			set_color(LED_AMBER, side);
 		} else {
 			/* maybe handle charger_discharge_on_ac() too? */
 			return EC_ERROR_PARAM1;
@@ -190,5 +250,5 @@ static int command_led(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|blue|off]",
+			"[debug|red|green|blue|white|amber|off <0|1>]",
 			"Change LED color");
