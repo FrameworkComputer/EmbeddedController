@@ -2865,7 +2865,7 @@ struct __ec_align4 ec_response_host_event_mask {
 #define EC_CMD_HOST_EVENT_GET_B         0x0087
 #define EC_CMD_HOST_EVENT_GET_SMI_MASK  0x0088
 #define EC_CMD_HOST_EVENT_GET_SCI_MASK  0x0089
-#define EC_CMD_HOST_EVENT_GET_WAKE_MASK 0x008d
+#define EC_CMD_HOST_EVENT_GET_WAKE_MASK 0x008D
 
 /* These all use ec_params_host_event_mask */
 #define EC_CMD_HOST_EVENT_SET_SMI_MASK  0x008A
