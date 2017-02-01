@@ -854,11 +854,6 @@ void charger_task(void)
 			curr.state = ST_CHARGE;
 		}
 
-		/*
-		 * TODO(crosbug.com/p/27643): Quit trying if charging too long
-		 * without getting full (CONFIG_CHARGER_TIMEOUT_HOURS).
-		 */
-
 wait_for_it:
 #ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
 		if (chg_ctl_mode == CHARGE_CONTROL_NORMAL) {

@@ -65,7 +65,6 @@ test-list-host += power_button
 test-list-host += queue
 test-list-host += rsa
 test-list-host += rsa3
-test-list-host += sbs_charging
 test-list-host += sbs_charging_v2
 test-list-host += shmalloc
 test-list-host += system

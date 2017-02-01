@@ -188,14 +188,6 @@
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
 
-/*
- * Charger should call battery_override_params() to limit/correct the voltage
- * and current requested by the battery pack before acting on the request.
- *
- * This is valid with CONFIG_CHARGER_V1 only.
- */
-#undef CONFIG_BATTERY_OVERRIDE_PARAMS
-
 /* Maximum time to wake a non-responsive battery, in second */
 #define CONFIG_BATTERY_PRECHARGE_TIMEOUT 30
 
@@ -386,7 +378,6 @@
 
 /* Compile common charge state code. You must pick an implementation. */
 #undef CONFIG_CHARGER
-#undef CONFIG_CHARGER_V1
 #undef CONFIG_CHARGER_V2
 
 /* Compile charger-specific code for these chargers (pick at most one) */
@@ -519,8 +510,10 @@
 #undef CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
 
 /*
- * Equivalent of CONFIG_BATTERY_OVERRIDE_PARAMS for use with
- * CONFIG_CHARGER_V2
+ * Charger should call battery_override_params() to limit/correct the voltage
+ * and current requested by the battery pack before acting on the request.
+ *
+ * This is valid with CONFIG_CHARGER_V2 only.
  */
 #undef CONFIG_CHARGER_PROFILE_OVERRIDE
 
@@ -535,15 +528,6 @@
 
 /* Value of the input current sense resistor, in mOhms */
 #undef CONFIG_CHARGER_SENSE_RESISTOR_AC
-
-/*
- * Maximum time to charge the battery, in hours.
- *
- * If this timeout is reached, the charger will enter force-idle state.
- * If not defined, charger will provide current until the battery asks it to
- * stop.
- */
-#undef CONFIG_CHARGER_TIMEOUT_HOURS
 
 /*
  * Board has an GPIO pin to enable or disable charging.

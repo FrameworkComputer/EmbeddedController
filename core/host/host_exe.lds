@@ -81,10 +81,6 @@ SECTIONS {
     *(.rodata.HOOK_POWER_BUTTON_CHANGE)
     __hooks_pwrbtn_change_end = .;
 
-    __hooks_charge_state_change = .;
-    *(.rodata.HOOK_CHARGE_STATE_CHANGE)
-    __hooks_charge_state_change_end = .;
-
     __hooks_battery_soc_change = .;
     *(.rodata.HOOK_BATTERY_SOC_CHANGE)
     __hooks_battery_soc_change_end = .;

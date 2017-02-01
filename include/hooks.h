@@ -154,13 +154,6 @@ enum hook_type {
 	HOOK_POWER_BUTTON_CHANGE,
 
 	/*
-	 * Charge state machine status changed.
-	 *
-	 * Hook routines are called from the charger task.
-	 */
-	HOOK_CHARGE_STATE_CHANGE,
-
-	/*
 	 * Battery state of charge changed
 	 *
 	 * Hook routines are called from the charger task.

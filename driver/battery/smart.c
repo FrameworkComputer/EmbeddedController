@@ -392,7 +392,7 @@ int battery_wait_for_stable(void)
 	return EC_ERROR_NOT_POWERED;
 }
 
-#if !defined(CONFIG_CHARGER_V1) && defined(CONFIG_CMD_BATTFAKE)
+#if defined(CONFIG_CMD_BATTFAKE)
 static int command_battfake(int argc, char **argv)
 {
 	char *e;
