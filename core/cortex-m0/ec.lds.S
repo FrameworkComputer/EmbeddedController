@@ -41,7 +41,7 @@ SECTIONS
     .text : {
         STRINGIFY(OUTDIR/core/CORE/init.o) (.text.vecttable)
         . = ALIGN(4);
-        __image_data_offset = .;
+        __version_struct_offset = .;
         KEEP(*(.rodata.ver))
 
         . = ALIGN(4);
@@ -244,8 +244,6 @@ SECTIONS
 #endif
         ) >= (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
                  "No room left in the flash")
-
-    __image_size = __hey_flash_used;
 
 #ifdef CONFIG_USB_RAM_SIZE
     .usb_ram (NOLOAD) : {

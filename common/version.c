@@ -10,14 +10,11 @@
 #include "ec_version.h"
 #include "version.h"
 
-const struct image_data __keep current_image_data
+const struct version_struct __keep version_data
 	__attribute__((section(".rodata.ver"))) = {
-	.cookie1 = CROS_EC_IMAGE_DATA_COOKIE1,
-	.version = CROS_EC_VERSION32,
-#ifndef TEST_BUILD
-	.size = (const uintptr_t)&__image_size,
-#endif
-	.cookie2 = CROS_EC_IMAGE_DATA_COOKIE2,
+	CROS_EC_VERSION_COOKIE1,
+	CROS_EC_VERSION32,
+	CROS_EC_VERSION_COOKIE2
 };
 
 const char build_info[] __keep __attribute__((section(".rodata.buildinfo"))) =
@@ -35,7 +32,7 @@ uint32_t ver_get_numcommits(void)
 	 * we want to return the numcommits as an int.
 	 */
 	for (i = 0; i < 32; i++) {
-		if (current_image_data.version[i] == '.') {
+		if (version_data.version[i] == '.') {
 			numperiods++;
 			if (numperiods == 2)
 				break;
@@ -44,11 +41,12 @@ uint32_t ver_get_numcommits(void)
 
 	i++;
 	for (; i < 32; i++) {
-		if (current_image_data.version[i] == '-')
+		if (version_data.version[i] == '-')
 			break;
 		ret *= 10;
-		ret += current_image_data.version[i] - '0';
+		ret += version_data.version[i] - '0';
 	}
 
 	return (i == 32 ? 0 : ret);
 }
+
