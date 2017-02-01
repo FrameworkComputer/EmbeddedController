@@ -126,7 +126,7 @@ uintptr_t get_program_memory_addr(enum system_image_copy_t copy)
 /**
  * Return the size of the image copy, or 0 if error.
  */
-static uint32_t __attribute__((unused)) get_size(enum system_image_copy_t copy)
+static uint32_t get_size(enum system_image_copy_t copy)
 {
 	/* Ensure we return aligned sizes. */
 	BUILD_ASSERT(CONFIG_RO_SIZE % SPI_FLASH_MAX_WRITE_SIZE == 0);
@@ -364,6 +364,59 @@ test_mockable enum system_image_copy_t system_get_image_copy(void)
 #endif
 }
 
+/*
+ * TODO(crbug.com/577915): Store image used size at build time and simply
+ * read it back.
+ */
+int system_get_image_used(enum system_image_copy_t copy)
+{
+#ifdef CONFIG_EXTERNAL_STORAGE
+	static uint8_t buf[SPI_FLASH_MAX_WRITE_SIZE];
+#endif
+	int image_offset;
+	const uint8_t *image;
+	int size;
+	size = get_size(copy);
+	if (size <= 0)
+		return 0;
+
+	/*
+	 * Scan backwards looking for 0xea byte, which is by definition the
+	 * last byte of the image.  See ec.lds.S for how this is inserted at
+	 * the end of the image.
+	 */
+	image_offset = (copy == SYSTEM_IMAGE_RW) ?
+			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF :
+			CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
+#ifdef CONFIG_EXTERNAL_STORAGE
+	image = buf;
+
+	do {
+		if (image == buf) {
+			/* No valid image found? */
+			if (size < SPI_FLASH_MAX_WRITE_SIZE)
+				return 0;
+
+			flash_read(image_offset + size -
+				SPI_FLASH_MAX_WRITE_SIZE,
+				SPI_FLASH_MAX_WRITE_SIZE, buf);
+			image = buf + SPI_FLASH_MAX_WRITE_SIZE;
+		}
+
+		image--, size--;
+
+	} while (*image != 0xea);
+#else
+	image = (const uint8_t *)(image_offset + CONFIG_MAPPED_STORAGE_BASE);
+	flash_lock_mapped_storage(1);
+	for (size--; size > 0 && image[size] != 0xea; size--)
+		;
+	flash_lock_mapped_storage(0);
+#endif
+
+	return size ? size + 1 : 0;  /* 0xea byte IS part of the image */
+}
+
 test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 {
 	uint32_t r_offset;
@@ -560,8 +613,8 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	return EC_ERROR_UNKNOWN;
 }
 
-static const struct image_data *system_get_image_data(
-					enum system_image_copy_t copy)
+__attribute__((weak))	   /* Weird chips may need their own implementations */
+const char *system_get_version(enum system_image_copy_t copy)
 {
 	static struct image_data data;
 
@@ -570,9 +623,10 @@ static const struct image_data *system_get_image_data(
 
 	/* Handle version of current image */
 	if (copy == active_copy || copy == SYSTEM_IMAGE_UNKNOWN)
-		return &current_image_data;
+		return &current_image_data.version[0];
+
 	if (active_copy == SYSTEM_IMAGE_UNKNOWN)
-		return NULL;
+		return "";
 
 	/*
 	 * The version string is always located after the reset vectors, so
@@ -597,31 +651,16 @@ static const struct image_data *system_get_image_data(
 #else
 	/* Read the version struct from flash into a buffer. */
 	if (flash_read(addr, sizeof(data), (char *)&data))
-		return NULL;
+		return "";
 #endif
 
 	/* Make sure the version struct cookies match before returning the
 	 * version string. */
 	if (data.cookie1 == current_image_data.cookie1 &&
 	    data.cookie2 == current_image_data.cookie2)
-		return &data;
+		return data.version;
 
-	return NULL;
-}
-
-__attribute__((weak))	   /* Weird chips may need their own implementations */
-const char *system_get_version(enum system_image_copy_t copy)
-{
-	const struct image_data *data = system_get_image_data(copy);
-
-	return data ? data->version : "";
-}
-
-int system_get_image_used(enum system_image_copy_t copy)
-{
-	const struct image_data *data = system_get_image_data(copy);
-
-	return data ? MAX((int)data->size, 0) : 0;
+	return "";
 }
 
 int system_get_board_version(void)

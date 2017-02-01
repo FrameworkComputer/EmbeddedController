@@ -218,7 +218,17 @@ SECTIONS
 
     } > IRAM
 
-    /* TODO: Add __image_size. */
+    .flash.tag : {
+        /* Tag at end of firmware image so that we can find the image size.
+         * This may be overwritten by the shared memory buffer; that's ok
+         * because we only use it to find the image size in flash. */
+        . = ALIGN(4);
+        BYTE(0x45);
+        BYTE(0x4e);
+        BYTE(0x44);
+        BYTE(0xea);
+        /* NOTHING MAY GO IN FLASH AFTER THIS! */
+    } >FLASH
 
 #ifdef CONFIG_LPC
     .h2ram (NOLOAD) : {
