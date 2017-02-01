@@ -301,22 +301,6 @@ void board_reset_pd_mcu(void)
 	board_set_tcpc_power_mode(0, 1);
 }
 
-#ifdef CONFIG_USB_PD_TCPC_FW_VERSION
-void board_print_tcpc_fw_version(int port)
-{
-	int rv;
-	int version;
-
-	if (port)
-		rv = ps8751_tcpc_get_fw_version(port, &version);
-	else
-		rv = anx74xx_tcpc_get_fw_version(port, &version);
-
-	if (!rv)
-		CPRINTS("TCPC p%d FW VER: 0x%x", port, version);
-}
-#endif
-
 void board_tcpc_init(void)
 {
 	int port, reg;
