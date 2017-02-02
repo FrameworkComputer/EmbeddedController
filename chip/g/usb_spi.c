@@ -48,6 +48,8 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	uint8_t  write_count;
 	uint8_t  read_count;
 	uint16_t res;
+	int rv = EC_SUCCESS;
+
 	/*
 	 * If our overall enabled state has changed we call the board specific
 	 * enable or disable routines and save our new state.
@@ -57,11 +59,13 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 
 	if (enabled ^ config->state->enabled) {
 		if (enabled)
-			usb_spi_board_enable(config);
+			rv = usb_spi_board_enable(config);
 		else
 			usb_spi_board_disable(config);
 
-		config->state->enabled = enabled;
+		/* Only update our state if we were successful. */
+		if (rv == EC_SUCCESS)
+			config->state->enabled = enabled;
 	}
 
 	/*

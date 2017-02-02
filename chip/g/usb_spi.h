@@ -220,8 +220,10 @@ int usb_spi_interface(struct usb_spi_config const *config,
 /*
  * These functions should be implemented by the board to provide any board
  * specific operations required to enable or disable access to the SPI device.
+ * usb_spi_board_enable should return EC_SUCCESS on success or an error
+ * otherwise.
  */
-void usb_spi_board_enable(struct usb_spi_config const *config);
+int usb_spi_board_enable(struct usb_spi_config const *config);
 void usb_spi_board_disable(struct usb_spi_config const *config);
 
 /*

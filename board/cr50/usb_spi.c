@@ -70,9 +70,16 @@ static void update_finished(void)
 }
 DECLARE_DEFERRED(update_finished);
 
-void usb_spi_board_enable(struct usb_spi_config const *config)
+int usb_spi_board_enable(struct usb_spi_config const *config)
 {
 	hook_call_deferred(&update_finished_data, -1);
+
+	/* Prevent SPI access if the console is currently locked. */
+	if (console_is_restricted()) {
+		CPRINTS("usb_spi access denied (console is restricted.");
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
 	update_in_progress = 1;
 
 	disable_ec_ap_spi();
@@ -83,7 +90,7 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 		enable_ap_spi();
 	else {
 		CPRINTS("DEVICE NOT SUPPORTED");
-		return;
+		return EC_ERROR_INVAL;
 	}
 
 	/* Connect DIO A4, A8, and A14 to the SPI peripheral */
@@ -97,6 +104,8 @@ void usb_spi_board_enable(struct usb_spi_config const *config)
 		gpio_get_level(GPIO_AP_FLASH_SELECT) ? "AP" : "EC");
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+
+	return EC_SUCCESS;
 }
 
 void usb_spi_board_disable(struct usb_spi_config const *config)
