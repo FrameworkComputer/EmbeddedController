@@ -162,7 +162,8 @@ static void led_set_power(void)
 
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		led_set_color_power(LED_WHITE);
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
+				  CHIPSET_STATE_STANDBY))
 		led_set_color_power(
 			(power_tick & 0x4) ? LED_WHITE : LED_OFF);
 	else
