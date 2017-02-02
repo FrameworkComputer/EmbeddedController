@@ -1030,6 +1030,46 @@ static int get_strap_config(uint8_t *config)
 	return EC_SUCCESS;
 }
 
+static uint32_t get_properties(void)
+{
+	int i;
+	uint8_t config;
+	uint32_t properties;
+
+	if (get_strap_config(&config) != EC_SUCCESS) {
+		/*
+		 * No pullups were detected on any of the strap pins so there
+		 * is no point in checking for a matching config table entry.
+		 * For this case use default properties.
+		 */
+		CPRINTS("Invalid strap pins! Default properties = 0x%x",
+			BOARD_PROPERTIES_DEFAULT);
+		return BOARD_PROPERTIES_DEFAULT;
+	}
+
+	/* Search board config table to find a matching entry */
+	for (i = 0; i < ARRAY_SIZE(board_cfg_table); i++) {
+		if (board_cfg_table[i].strap_cfg == config) {
+			properties = board_cfg_table[i].board_properties;
+			CPRINTS("Valid strap: 0x%x properties: 0x%x",
+				config, properties);
+			/* Read board properties for this config */
+			return properties;
+		}
+	}
+
+	/*
+	 * Reached the end of the table and didn't find a matching config entry.
+	 * However, the SPI vs I2C determination can still be made as
+	 *get_strap_config() returned EC_SUCCESS.
+	 */
+	properties = config & 0xa ? BOARD_SLAVE_CONFIG_SPI :
+		BOARD_PROPERTIES_DEFAULT;
+	CPRINTS("strap_cfg 0x%x has no table entry, prop = 0x%x",
+		config, properties);
+	return properties;
+}
+
 static void init_board_properties(void)
 {
 	uint32_t properties;
@@ -1042,67 +1082,22 @@ static void init_board_properties(void)
 	 */
 	if (!(properties & BOARD_ALL_PROPERTIES) || (system_get_reset_flags() &
 						     RESET_FLAG_HARD)) {
-		int i;
-		uint8_t config;
-
 		/*
 		 * Mask board properties because following hard reset, they
 		 * won't be cleared.
 		 */
 		properties &= ~BOARD_ALL_PROPERTIES;
-
-		if (get_strap_config(&config) != EC_SUCCESS) {
-			/*
-			 * No pullups were detected on any of the strap pins so
-			 * there is no point in checking for a matching config
-			 * table entry. For this case default to I2C with
-			 * platform reset and don't store in long life register.
-			 */
-			/* Save this configuration setting */
-			board_properties = BOARD_PROPERTIES_DEFAULT;
-			CPRINTS("Invalid strap pins! Default properties = 0x%x",
-				board_properties);
-			return;
-		}
-
-		/* Search board config table to find a matching entry */
-		i = 0;
-		while (i < ARRAY_SIZE(board_cfg_table)) {
-			if (board_cfg_table[i].strap_cfg == config) {
-				/* Read board properties for this config */
-				properties |=
-					board_cfg_table[i].board_properties;
-				CPRINTS("Valid strap: 0x%x properties: 0x%x",
-					config, properties);
-				/*
-				 * Now save the properties value for future use.
-				 *
-				 * Enable access to LONG_LIFE_SCRATCH1 reg.
-				 */
-				GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN,
-					     REG1, 1);
-				/* Save properties in LONG_LIFE register */
-				GREG32(PMU, LONG_LIFE_SCRATCH1) = properties;
-				/* Disable access to LONG_LIFE_SCRATCH1 reg */
-				GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN,
-					     REG1, 0);
-				/* Save this configuration setting */
-				board_properties = properties;
-				return;
-			}
-			i++;
-		}
-
+		properties |= get_properties();
 		/*
-		 * Reached the end of the table and didn't find a
-		 * matching config entry. However, the SPI vs I2C
-		 * determination can still be made as get_strap_config()
-		 * returned EC_SUCCESS.
+		 * Now save the properties value for future use.
+		 *
+		 * Enable access to LONG_LIFE_SCRATCH1 reg.
 		 */
-		properties = config & 0xa ? BOARD_SLAVE_CONFIG_SPI :
-			BOARD_PROPERTIES_DEFAULT;
-		CPRINTS("strap_cfg 0x%x has no table entry, prop = 0x%x",
-			config, properties);
+		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+		/* Save properties in LONG_LIFE register */
+		GREG32(PMU, LONG_LIFE_SCRATCH1) = properties;
+		/* Disable access to LONG_LIFE_SCRATCH1 reg */
+		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
 	}
 	/* Save this configuration setting */
 	board_properties = properties;
