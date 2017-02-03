@@ -9,6 +9,14 @@
 #define __CROS_EC_BOARD_H
 
 /*
+ * By default, enable all console messages excepted HC, ACPI and event:
+ * The sensor stack is generating a lot of activity.
+ */
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+
+/*
  * Allow dangerous commands.
  * TODO: Remove this config before production.
  */
@@ -115,6 +123,10 @@
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
 #define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
 #define CONFIG_MAG_CALIBRATE
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024

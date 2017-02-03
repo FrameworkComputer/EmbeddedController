@@ -31,6 +31,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
+#include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
 #include "motion_lid.h"
@@ -323,6 +324,18 @@ static void board_set_tablet_mode(void)
 	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
 }
 
+/* TODO(gwendal): Should be in common code:
+ * When tablet mode changes, send an event to update tablet
+ * kernel driver state.
+ */
+static void tablet_mode_changed(void)
+{
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+}
+DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_changed, HOOK_PRIO_DEFAULT);
+
+
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -545,26 +558,40 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 /* Enable or disable input devices, based upon chipset state and tablet mode */
 static void enable_input_devices(void)
 {
-	int kb_enable = 1;
-	int tp_enable = 1;
-
-	/* Turn on tablet mode for motion sense */
+	/* We need to turn on tablet mode for motion sense */
 	board_set_tablet_mode();
 
-	/* Disable both TP and KB in tablet mode */
+	/*
+	 * Then, we disable peripherals only when the lid reaches 360 position.
+	 * (It's probably already disabled by motion_sense_task.)
+	 * We deliberately do not enable peripherals when the lid is leaving
+	 * 360 position. Instead, we let motion_sense_task enable it once it
+	 * reaches laptop zone (180 or less).
+	 */
 	if (tablet_get_mode())
-		kb_enable = tp_enable = 0;
-	/* Disable TP if chipset is off */
-	else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		tp_enable = 0;
-
-	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_ANGLE);
-	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
+		lid_angle_peripheral_enable(0);
 }
+
+/* Enable or disable input devices, based on chipset state and tablet mode */
+#ifndef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+	/*
+	 * If the lid is in 360 position, ignore the lid angle,
+	 * which might be faulty. Disable keyboard and touchpad.
+	 */
+	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		enable = 0;
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	gpio_set_level(GPIO_TRACKPAD_INT_L, !enable);
+}
+#endif
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
+	/* Enable Trackpad */
+	gpio_set_level(GPIO_TRACKPAD_SHDN_L, 1);
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -572,6 +599,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
+	/* Disable Trackpad */
+	gpio_set_level(GPIO_TRACKPAD_SHDN_L, 0);
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
@@ -671,12 +700,6 @@ struct kionix_accel_data g_kxcj9_data;
 struct bmi160_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const matrix_3x3_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
-
 const matrix_3x3_t mag_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0,  FLOAT_TO_FP(1), 0},
@@ -684,16 +707,16 @@ const matrix_3x3_t mag_standard_ref = {
 };
 
 const matrix_3x3_t lid_standard_ref = {
-	{ 0,  FLOAT_TO_FP(1),  0},
 	{FLOAT_TO_FP(-1),  0,  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
+	{ 0,  FLOAT_TO_FP(-1), 0},
+	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {
 
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0,
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_KXCJ9,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
@@ -713,11 +736,11 @@ struct motion_sensor_t motion_sensors[] = {
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
+			.ec_rate = 0,
 		},
-		/* unused */
+		 /* Sensor on for lid angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
+			.odr = 10000 | ROUND_UP_FLAG,
 			.ec_rate = 0,
 		},
 		[SENSOR_CONFIG_EC_S5] = {
@@ -729,7 +752,7 @@ struct motion_sensor_t motion_sensors[] = {
 
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0,
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -738,7 +761,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_GYRO,
 	 .addr = BMI160_ADDR0,
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .default_range = 2,  /* g, enough for laptop. */
 	 .config = {
 		 /* AP: by default use EC settings */
@@ -751,10 +774,10 @@ struct motion_sensor_t motion_sensors[] = {
 			.odr = 10000 | ROUND_UP_FLAG,
 			.ec_rate = 100 * MSEC,
 		 },
-		 /* Sensor off in S3/S5 */
+		 /* Sensor on for lid angle detection */
 		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S5] = {
@@ -776,7 +799,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_GYRO,
 	 .addr = BMI160_ADDR0,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = NULL,
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
@@ -803,7 +826,7 @@ struct motion_sensor_t motion_sensors[] = {
 
 	[BASE_MAG] = {
 	 .name = "Base Mag",
-	 .active_mask = SENSOR_ACTIVE_S0,
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_MAG,
 	 .location = MOTIONSENSE_LOC_BASE,

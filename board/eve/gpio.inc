@@ -26,7 +26,7 @@ GPIO_INT(ACCELGYRO3_INT_L,	PIN(9, 3), GPIO_INT_FALLING,			bmi160_interrupt)
 
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(ENABLE_BACKLIGHT,		PIN(5, 6), GPIO_OUT_LOW)			/* Enable Backlight */
-GPIO(ENABLE_TOUCHPAD,		PIN(3, 2), GPIO_OUT_LOW)			/* Enable Trackpad */
+GPIO(TRACKPAD_SHDN_L,		PIN(3, 2), GPIO_OUT_LOW)			/* Enable Trackpad */
 GPIO(WLAN_OFF_L,		PIN(7, 2), GPIO_OUT_LOW)			/* Disable WLAN */
 GPIO(PP3300_DX_WLAN,		PIN(A, 7), GPIO_OUT_LOW)			/* Enable WLAN 3.3V Power */
 GPIO(CHARGER_RST_ODL,		PIN(0, 1), GPIO_ODR_HIGH)			/* CHARGER_RST_ODL */
@@ -60,7 +60,7 @@ GPIO(I2C3_SCL,			PIN(D, 1), GPIO_INPUT)				/* EC_I2C3_POWER_SCL */
 GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_I2C3_POWER_SDA */
 
 /* AP wake sources when in Deep-S3 state */
-GPIO(TOUCHPAD_WAKE_L,		PIN(7, 1), GPIO_INPUT | GPIO_SEL_1P8V)		/* INT# from Trackpad */
+GPIO(TRACKPAD_INT_L,		PIN(7, 1), GPIO_ODR_LOW)			/* INT# from Trackpad */
 GPIO(DSP_WAKE_L,		PIN(C, 6), GPIO_INPUT | GPIO_SEL_1P8V)		/* INT# from DSP Mic */
 
 /* 5V enables: INPUT=1.5A, OUT_LOW=OFF, OUT_HIGH=3A */
