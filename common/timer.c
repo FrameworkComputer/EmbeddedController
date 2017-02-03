@@ -205,10 +205,10 @@ void timer_print_info(void)
 		__hw_clock_event_get();
 	int tskid;
 
-	ccprintf("Time:     0x%016lx us\n"
+	ccprintf("Time:     0x%016lx us, %11.6ld s\n"
 		 "Deadline: 0x%016lx -> %11.6ld s from now\n"
 		 "Active timers:\n",
-		 t, deadline, deadline - t);
+		 t, t, deadline, deadline - t);
 	cflush();
 
 	for (tskid = 0; tskid < TASK_ID_COUNT; tskid++) {
