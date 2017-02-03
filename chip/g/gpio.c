@@ -365,6 +365,7 @@ static void show_pinmux(const char *name, int i, int ofs)
 			ccprintf("%s", edge ? "RISING" : "HIGH");
 	}
 	ccprintf("\n");
+	cflush();
 }
 
 static void print_dio_str(uint32_t sel)
@@ -379,6 +380,7 @@ static void print_dio_str(uint32_t sel)
 		ccprintf("  DIOM%d\n", 30 - sel);
 	else
 		ccprintf("\n");
+	cflush();
 }
 
 static void show_pinmux_gpio(const char *name, int i, int ofs)
@@ -428,11 +430,12 @@ static int command_pinmux(int argc, char **argv)
 	for (i = 0; i <= 15; i++)
 		show_pinmux_gpio("GPIO0_GPIO", i, 0xf8);
 	for (i = 0; i <= 15; i++)
-		show_pinmux_gpio("GPIO1_GPIO", i, 0x134);
+		show_pinmux_gpio("GPIO1_GPIO", i, 0x138);
 
 	for (i = 0; i <= 11; i++)
 		show_pinmux_uart(i);
 
+	ccprintf("\n");
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(pinmux, command_pinmux,
