@@ -18,6 +18,18 @@ int strlen(const char *s)
 }
 
 
+size_t strnlen(const char *s, size_t maxlen)
+{
+	size_t len = 0;
+
+	while (len < maxlen && *s) {
+		s++;
+		len++;
+	}
+	return len;
+}
+
+
 int isspace(int c)
 {
 	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
@@ -49,6 +61,7 @@ int tolower(int c)
 int strcasecmp(const char *s1, const char *s2)
 {
 	int diff;
+
 	do {
 		diff = tolower(*s1) - tolower(*s2);
 		if (diff)
@@ -310,6 +323,20 @@ void *memmove(void *dest, const void *src, size_t len)
 }
 
 
+void *memchr(const void *buffer, int c, size_t n)
+{
+	char *current = (char *)buffer;
+	char *end = current + n;
+
+	while (current != end) {
+		if (*current == c)
+			return current;
+		current++;
+	}
+	return NULL;
+}
+
+
 void reverse(void *dest, size_t len)
 {
 	int i;
@@ -336,6 +363,35 @@ char *strzcpy(char *dest, const char *src, int len)
 	}
 	*d = '\0';
 	return dest;
+}
+
+
+char *strncpy(char *dest, const char *src, size_t n)
+{
+	char *d = dest;
+
+	while (n && *src) {
+		*d++ = *src++;
+		n--;
+	}
+	if (n)
+		*d = '\0';
+	return dest;
+}
+
+
+int strncmp(const char *s1, const char *s2, size_t n)
+{
+	while (n--) {
+		if (*s1 != *s2)
+			return *s1 - *s2;
+		if (!*s1)
+			break;
+		s1++;
+		s2++;
+
+	}
+	return 0;
 }
 
 

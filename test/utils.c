@@ -231,6 +231,17 @@ static int test_memset(void)
 	return EC_SUCCESS;
 }
 
+static int test_memchr(void)
+{
+	char *buf = "1234";
+
+	TEST_ASSERT(memchr("123", '4', 8) == NULL);
+	TEST_ASSERT(memchr("123", '3', 2) == NULL);
+	TEST_ASSERT(memchr(buf, '3', 8) == buf + 2);
+	TEST_ASSERT(memchr(buf, '4', 4) == buf + 3);
+	return EC_SUCCESS;
+}
+
 static int test_strzcpy(void)
 {
 	char dest[10];
@@ -245,9 +256,41 @@ static int test_strzcpy(void)
 	return EC_SUCCESS;
 }
 
+static int test_strncpy(void)
+{
+	char dest[10];
+
+	strncpy(dest, "test", 10);
+	TEST_ASSERT_ARRAY_EQ("test", dest, 5);
+	strncpy(dest, "12345", 6);
+	TEST_ASSERT_ARRAY_EQ("12345", dest, 6);
+	strncpy(dest, "testtesttest", 10);
+	TEST_ASSERT_ARRAY_EQ("testtestte", dest, 10);
+
+	return EC_SUCCESS;
+}
+
+static int test_strncmp(void)
+{
+	TEST_ASSERT(strncmp("123", "123", 8) == 0);
+	TEST_ASSERT(strncmp("789", "456", 8) > 0);
+	TEST_ASSERT(strncmp("abc", "abd", 4) < 0);
+	TEST_ASSERT(strncmp("abc", "abd", 2) == 0);
+	return EC_SUCCESS;
+}
+
 static int test_strlen(void)
 {
 	TEST_CHECK(strlen("this is a string") == 16);
+}
+
+static int test_strnlen(void)
+{
+	TEST_ASSERT(strnlen("this is a string", 17) == 16);
+	TEST_ASSERT(strnlen("this is a string", 16) == 16);
+	TEST_ASSERT(strnlen("this is a string", 5) == 5);
+
+	return EC_SUCCESS;
 }
 
 static int test_strcasecmp(void)
@@ -453,8 +496,12 @@ void run_test(void)
 	RUN_TEST(test_memmove);
 	RUN_TEST(test_memcpy);
 	RUN_TEST(test_memset);
+	RUN_TEST(test_memchr);
 	RUN_TEST(test_strzcpy);
+	RUN_TEST(test_strncpy);
+	RUN_TEST(test_strncmp);
 	RUN_TEST(test_strlen);
+	RUN_TEST(test_strnlen);
 	RUN_TEST(test_strcasecmp);
 	RUN_TEST(test_strncasecmp);
 	RUN_TEST(test_atoi);

@@ -23,6 +23,13 @@ typedef unsigned int       uintptr_t;
 
 typedef uint8_t            uint_least8_t;
 
+#ifndef UINT8_MAX
+#define UINT8_MAX (255U)
+#endif
+#ifndef INT8_MAX
+#define INT8_MAX (127U)
+#endif
+
 #ifndef UINT16_MAX
 #define UINT16_MAX (65535U)
 #endif

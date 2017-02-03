@@ -69,9 +69,13 @@ int memcmp(const void *s1, const void *s2, size_t len);
 void *memcpy(void *dest, const void *src, size_t len);
 __visible void *memset(void *dest, int c, size_t len);
 void *memmove(void *dest, const void *src, size_t len);
+void *memchr(const void *buffer, int c, size_t n);
 int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, size_t size);
 int strlen(const char *s);
+size_t strnlen(const char *s, size_t maxlen);
+char *strncpy(char *dest, const char *src, size_t n);
+int strncmp(const char *s1, const char *s2, size_t n);
 
 /* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
