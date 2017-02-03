@@ -44,6 +44,10 @@ static int command_idle(int argc, char **argv)
 	int c, i;
 
 	if (argc > 1) {
+		if (console_is_restricted()) {
+			ccprintf("Console is locked, no parameters allowed\n");
+			return EC_ERROR_INVAL;
+		}
 		c = tolower(argv[1][0]);
 		for (i = 1; i < ARRAY_SIZE(idle_name); i++)
 			if (idle_name[i][0] == c) {
@@ -56,9 +60,9 @@ static int command_idle(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idle, command_idle,
-			"[w|s|d]",
-			"Set or show the idle action: wfi, sleep, deep sleep");
+DECLARE_SAFE_CONSOLE_COMMAND(idle, command_idle,
+			     "[w|s|d]",
+			     "Set or show the idle action: wfi, sleep, deep sleep");
 
 static int utmi_wakeup_is_enabled(void)
 {
