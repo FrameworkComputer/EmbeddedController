@@ -35,7 +35,6 @@ static void ina_disconnect(void)
 	/* Disable power to INA chips */
 	gpio_set_level(GPIO_EN_PP3300_INA_L, 1);
 }
-DECLARE_DEFERRED(ina_disconnect);
 
 static void ina_connect(void)
 {
@@ -65,29 +64,24 @@ static void ina_connect(void)
 	i2cm_init();
 }
 
-void usb_i2c_board_disable(int debounce)
+void usb_i2c_board_disable(void)
 {
 	if (!i2c_enabled())
 		return;
 
-	/*
-	 * Wait to disable i2c in case we are doing a bunch of i2c transactions
-	 * in a row.
-	 */
-	hook_call_deferred(&ina_disconnect_data, debounce ? 1 * SECOND : 0);
+	ina_disconnect();
 }
 
 int usb_i2c_board_enable(void)
 {
-	if (device_get_state(DEVICE_SERVO) != DEVICE_STATE_OFF) {
+	if (device_get_state(DEVICE_SERVO) == DEVICE_STATE_ON) {
 		CPRINTS("Servo is attached I2C cannot be enabled");
-		usb_i2c_board_disable(0);
+		usb_i2c_board_disable();
 		return EC_ERROR_BUSY;
 	}
 
-	hook_call_deferred(&ina_disconnect_data, -1);
-
 	if (!i2c_enabled())
 		ina_connect();
+
 	return EC_SUCCESS;
 }

@@ -149,5 +149,5 @@ void usb_i2c_deferred(struct usb_i2c_config const *config);
  * specific operations required to enable or disable access to the I2C device.
  */
 int usb_i2c_board_enable(void);
-void usb_i2c_board_disable(int debounce);
+void usb_i2c_board_disable(void);
 #endif  /* __CROS_USB_I2C_H */

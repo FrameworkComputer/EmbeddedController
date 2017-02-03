@@ -776,7 +776,7 @@ static void servo_attached(void)
 	uartn_tx_disconnect(UART_EC);
 
 	/* Disconnect i2cm interface to ina */
-	usb_i2c_board_disable(0);
+	usb_i2c_board_disable();
 }
 
 void device_state_on(enum gpio_signal signal)

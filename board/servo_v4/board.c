@@ -237,9 +237,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int usb_i2c_board_enable(void) {return EC_SUCCESS; }
-void usb_i2c_board_disable(int debounce) {}
-
 
 /******************************************************************************
  * Support firmware upgrade over USB. We can update whichever section is not

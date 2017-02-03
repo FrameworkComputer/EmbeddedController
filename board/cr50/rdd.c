@@ -121,6 +121,9 @@ void rdd_attached(void)
 	enable_usb_wakeup = 1;
 
 	uartn_tx_connect(UART_AP);
+
+	/* Turn on 3.3V rail used for INAs and initialize I2CM module */
+	usb_i2c_board_enable();
 }
 
 void rdd_detached(void)
@@ -140,6 +143,9 @@ void rdd_detached(void)
 
 	/* Disable CCD */
 	ccd_set_mode(CCD_MODE_DISABLED);
+
+	/* Turn off 3.3V rail to INAs and disconnect I2CM module */
+	usb_i2c_board_disable();
 }
 
 void ccd_phy_init(int enable_ccd)
@@ -220,7 +226,7 @@ static int command_ccd(int argc, char **argv)
 			if (val)
 				usb_i2c_board_enable();
 			else
-				usb_i2c_board_disable(0);
+				usb_i2c_board_disable();
 		} else if (!strcasecmp("keepalive", argv[1])) {
 			if (val) {
 				/* Make sure ccd is enabled */

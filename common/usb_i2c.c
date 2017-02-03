@@ -63,7 +63,6 @@ void usb_i2c_deferred(struct usb_i2c_config const *config)
 	int write_count     = (config->buffer[1] >> 0) & 0xff;
 	int read_count      = (config->buffer[1] >> 8) & 0xff;
 	int port;
-	int rv;
 
 	config->buffer[0] = 0;
 	config->buffer[1] = 0;
@@ -79,19 +78,13 @@ void usb_i2c_deferred(struct usb_i2c_config const *config)
 	} else if (portindex >= i2c_ports_used) {
 		config->buffer[0] = USB_I2C_PORT_INVALID;
 	} else {
-		rv = usb_i2c_board_enable();
-		if (rv) {
-			config->buffer[0] = usb_i2c_map_error(rv);
-		} else {
-			port = i2c_ports[portindex].port;
-			config->buffer[0] = usb_i2c_map_error(
-				i2c_xfer(port, slave_addr,
-					(uint8_t *)(config->buffer + 2),
-					write_count,
-					(uint8_t *)(config->buffer + 2),
-					read_count, I2C_XFER_SINGLE));
-			usb_i2c_board_disable(1);
-		}
+		port = i2c_ports[portindex].port;
+		config->buffer[0] = usb_i2c_map_error(
+			i2c_xfer(port, slave_addr,
+				 (uint8_t *)(config->buffer + 2),
+				 write_count,
+				 (uint8_t *)(config->buffer + 2),
+				 read_count, I2C_XFER_SINGLE));
 	}
 
 	usb_i2c_write_packet(config, read_count + 4);
