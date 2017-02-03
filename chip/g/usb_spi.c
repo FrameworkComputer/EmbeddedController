@@ -45,8 +45,9 @@ static void usb_spi_write_packet(struct usb_spi_config const *config,
 void usb_spi_deferred(struct usb_spi_config const *config)
 {
 	uint16_t count;
-	uint8_t  write_count;
-	uint8_t  read_count;
+	int write_count;
+	int read_count;
+	int read_length;
 	uint16_t res;
 	int rv = EC_SUCCESS;
 
@@ -76,7 +77,18 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	write_count = config->buffer[0];
 	read_count  = config->buffer[1];
 
-	if (!count || (!read_count && !write_count))
+	/* Handle SPI_READBACK_ALL case */
+	if (read_count == 255) {
+		/* Handle simultaneously clocked RX and TX */
+		read_count = SPI_READBACK_ALL;
+		read_length = write_count;
+	} else {
+		/* Normal case */
+		read_length = read_count;
+	}
+
+	if (!count || (!read_count && !write_count) ||
+	    (!write_count && read_count == (uint8_t)SPI_READBACK_ALL))
 		return;
 
 	if (!config->state->enabled) {
@@ -84,7 +96,7 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
 		   write_count != (count - HEADER_SIZE)) {
 		res = USB_SPI_WRITE_COUNT_INVALID;
-	} else if (read_count > USB_SPI_MAX_READ_COUNT) {
+	} else if (read_length > USB_SPI_MAX_READ_COUNT) {
 		res = USB_SPI_READ_COUNT_INVALID;
 	} else {
 		res = usb_spi_map_error(
@@ -96,7 +108,7 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	}
 
 	memcpy(config->buffer, &res, HEADER_SIZE);
-	usb_spi_write_packet(config, read_count + HEADER_SIZE);
+	usb_spi_write_packet(config, read_length + HEADER_SIZE);
 }
 
 static void usb_spi_written(struct consumer const *consumer, size_t count)

@@ -13,26 +13,15 @@
 defined(SECTION_IS_RO)))
 #define QUEUE_SIZE 64
 
+#ifdef CONFIG_STREAM_USART1
 struct usb_stream_config const ap_usb;
 struct usart_config const ap_uart;
-
-struct usb_stream_config const ec_usb;
-struct usart_config const ec_uart;
 
 static struct queue const ap_uart_to_usb =
 	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_uart.producer, ap_usb.consumer);
 static struct queue const ap_usb_to_uart =
 	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_usb.producer, ap_uart.consumer);
 
-static struct queue const ec_uart_to_usb =
-	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ec_uart.producer, ec_usb.consumer);
-static struct queue const ec_usb_to_uart =
-	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ec_usb.producer, ec_uart.consumer);
-
-USART_CONFIG(ec_uart,
-	     UART_EC,
-	     ec_uart_to_usb,
-	     ec_usb_to_uart);
 USART_CONFIG(ap_uart,
 	     UART_AP,
 	     ap_uart_to_usb,
@@ -46,6 +35,22 @@ USB_STREAM_CONFIG(ap_usb,
 		  USB_MAX_PACKET_SIZE,
 		  ap_usb_to_uart,
 		  ap_uart_to_usb)
+#endif
+
+#ifdef CONFIG_STREAM_USART2
+struct usb_stream_config const ec_usb;
+struct usart_config const ec_uart;
+
+static struct queue const ec_uart_to_usb =
+	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ec_uart.producer, ec_usb.consumer);
+static struct queue const ec_usb_to_uart =
+	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ec_usb.producer, ec_uart.consumer);
+
+USART_CONFIG(ec_uart,
+	     UART_EC,
+	     ec_uart_to_usb,
+	     ec_usb_to_uart);
+
 USB_STREAM_CONFIG(ec_usb,
 		  USB_IFACE_EC,
 		  USB_STR_EC_NAME,
@@ -54,6 +59,7 @@ USB_STREAM_CONFIG(ec_usb,
 		  USB_MAX_PACKET_SIZE,
 		  ec_usb_to_uart,
 		  ec_uart_to_usb)
+#endif
 
 void get_data_from_usb(struct usart_config const *config)
 {
@@ -112,17 +118,21 @@ struct consumer_ops const uart_consumer_ops = {
 };
 
 #if USE_UART_INTERRUPTS
+#ifdef CONFIG_STREAM_USART1
 /*
  * Interrupt handlers for UART1
  */
 CONFIGURE_INTERRUPTS(ap_uart,
 		     GC_IRQNUM_UART1_RXINT,
 		     GC_IRQNUM_UART1_TXINT)
+#endif
 
+#ifdef CONFIG_STREAM_USART2
 /*
  * Interrupt handlers for UART2
  */
 CONFIGURE_INTERRUPTS(ec_uart,
 		     GC_IRQNUM_UART2_RXINT,
 		     GC_IRQNUM_UART2_TXINT)
+#endif
 #endif

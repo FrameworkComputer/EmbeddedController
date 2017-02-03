@@ -41,6 +41,31 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	set_one_gpio_bit(g->port, g->mask, value);
 }
 
+int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
+{
+	uint32_t flags = 0;
+	uint32_t val = 0;
+
+	/* Only one bit must be set. */
+	if ((mask != (mask & -mask)) || (mask == 0))
+		return 0;
+
+	/* Check mode. */
+	/* ARM DDI 0479B: 3.5.2 */
+	val = GR_GPIO_SETDOUTEN(port) & mask;
+	if (val) {
+		flags |= GPIO_OUTPUT;
+		val = GR_GPIO_DOUT(port) & mask;
+		if (val)
+			flags |= GPIO_HIGH;
+		else
+			flags |= GPIO_LOW;
+	} else
+		flags |= GPIO_INPUT;
+
+	return flags;
+}
+
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	/* Only matters for outputs */

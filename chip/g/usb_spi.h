@@ -66,7 +66,17 @@ enum usb_spi_request {
 	USB_SPI_REQ_DISABLE         = 0x0001,
 	USB_SPI_REQ_ENABLE_AP       = 0x0002,
 	USB_SPI_REQ_ENABLE_EC       = 0x0003,
+	USB_SPI_REQ_ENABLE_H1       = 0x0004,
 };
+
+/* USB SPI device indexes */
+enum usb_spi {
+	USB_SPI_DISABLE = 0,
+	USB_SPI_AP,
+	USB_SPI_EC,
+	USB_SPI_H1,
+};
+
 
 #define USB_SPI_MAX_WRITE_COUNT 62
 #define USB_SPI_MAX_READ_COUNT  62
