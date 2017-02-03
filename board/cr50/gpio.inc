@@ -55,7 +55,7 @@
  * two internal GPIOs to the same pad if sys_rst_l is also being used to detect
  * system resets.
  */
-GPIO_INT(TPM_RST_L,       PIN(1, 0),  GPIO_INT_FALLING, tpm_rst_asserted)
+GPIO_INT(TPM_RST_L,       PIN(1, 0),  GPIO_INT_RISING, tpm_rst_deasserted)
 GPIO_INT(DETECT_AP,       PIN(1, 1),  GPIO_INT_HIGH, device_state_on)
 GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, device_state_on)
 GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
@@ -145,7 +145,6 @@ PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)	/* EC console */
  * driving the cr50 uart TX at the same time as servo is driving those pins may
  * damage both servo and cr50.
  */
-PINMUX(GPIO(DETECT_AP),       A3, DIO_INPUT)
 PINMUX(GPIO(DETECT_EC),       B6, DIO_INPUT)
 PINMUX(GPIO(DETECT_SERVO),    B5, DIO_INPUT)
 
