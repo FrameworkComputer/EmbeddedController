@@ -12,6 +12,7 @@
 #define CONFIG_ADC
 #define CONFIG_CHIPSET_RK3399
 #define CONFIG_CMD_RTC
+#define CONFIG_FPU
 #define CONFIG_HOSTCMD_RTC
 #define CONFIG_HOSTCMD_SPS
 #define CONFIG_I2C
@@ -77,7 +78,7 @@
 
 /* Increase tx buffer size, as we'd like to stream EC log to AP. */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 4096
+#define CONFIG_UART_TX_BUF_SIZE 2048
 
 /* Sensors */
 #define CONFIG_ACCEL_BMA255
@@ -156,16 +157,9 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
-/* Optional features for test commands */
-#define CONFIG_CMD_CHARGER_PSYS
-
 #ifdef BOARD_GRU
 #define CONFIG_CMD_ALS
 #endif
-
-/* Set PSYS gain for 50W max measurement */
-#define BD9995X_PSYS_GAIN_SELECT \
-		BD9995X_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_08UAW
 
 #define CONFIG_UART_HOST                0
 
@@ -182,18 +176,19 @@
 #undef  CONFIG_PSTORE
 
 /* Reduce code size */
-#ifdef BOARD_GRU
 #define CONFIG_COMMON_GPIO_SHORTNAMES
 #define GPIO_NAME_BY_PIN(port, index) #port#index
-#endif
+#undef  CONFIG_CONSOLE_VERBOSE
 
 #define CONFIG_HOSTCMD_ALIGNED
 
 /* Modules we want to exclude */
+#undef CONFIG_CMD_BATTFAKE
 #undef CONFIG_CMD_FLASH
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_I2C_SCAN
 #undef CONFIG_CMD_MD
+#undef CONFIG_CMD_MMAPINFO
 #undef CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP

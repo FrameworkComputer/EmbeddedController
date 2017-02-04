@@ -58,12 +58,6 @@ static void flash_pinmux(int enable)
 	}
 }
 
-static void flash_tristate(int enable)
-{
-	/* Enable/Disable FIU pins to tri-state */
-	UPDATE_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS, enable);
-}
-
 static void flash_execute_cmd(uint8_t code, uint8_t cts)
 {
 	/* set UMA_CODE */
@@ -369,16 +363,6 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 	return rv;
 }
 
-static int flash_spi_sel_lock(int enable)
-{
-	/*
-	 * F_SPI_QUAD, F_SPI_CS1_1/2, F_SPI_TRIS become read-only
-	 * if this bit is set
-	 */
-	UPDATE_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_F_SPI_SLLK, enable);
-	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_F_SPI_SLLK);
-}
-
 /*****************************************************************************/
 
 int flash_physical_read(int offset, int size, char *data)
@@ -672,6 +656,23 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO,
 
 #endif
 
+#ifdef CONFIG_CMD_FLASH_TRISTATE
+static void flash_tristate(int enable)
+{
+	/* Enable/Disable FIU pins to tri-state */
+	UPDATE_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS, enable);
+}
+
+static int flash_spi_sel_lock(int enable)
+{
+	/*
+	 * F_SPI_QUAD, F_SPI_CS1_1/2, F_SPI_TRIS become read-only
+	 * if this bit is set
+	 */
+	UPDATE_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_F_SPI_SLLK, enable);
+	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_F_SPI_SLLK);
+}
+
 /*****************************************************************************/
 /* Console commands */
 
@@ -707,4 +708,4 @@ static int command_flash_tristate(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate,
 			"[0 | 1]",
 			"Tristate spi flash pins");
-
+#endif /* CONFIG_CMD_FLASH_TRISTATE */

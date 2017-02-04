@@ -142,31 +142,3 @@ static void led_tick(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
-
-/******************************************************************/
-/* Console commands */
-static int command_led_color(int argc, char **argv)
-{
-	if (argc > 1) {
-		if (!strcasecmp(argv[1], "debug")) {
-			led_debug ^= 1;
-			CPRINTF("led_debug = %d\n", led_debug);
-		} else if (!strcasecmp(argv[1], "off")) {
-			set_color(LED_OFF);
-		} else if (!strcasecmp(argv[1], "red")) {
-			set_color(LED_RED);
-		} else if (!strcasecmp(argv[1], "green")) {
-			set_color(LED_GREEN);
-		} else if (!strcasecmp(argv[1], "blue")) {
-			set_color(LED_BLUE);
-		} else {
-			/* maybe handle charger_discharge_on_ac() too? */
-			return EC_ERROR_PARAM1;
-		}
-	}
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(ledcolor, command_led_color,
-			"[debug|red|green|blue|off]",
-			"Change LED color");

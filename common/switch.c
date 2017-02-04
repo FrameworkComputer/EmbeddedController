@@ -101,6 +101,7 @@ void switch_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&switch_update_data, 0);
 }
 
+#ifdef CONFIG_CMD_MMAPINFO
 static int command_mmapinfo(int argc, char **argv)
 {
 	uint8_t *memmap_switches = host_get_memmap(EC_MEMMAP_SWITCHES);
@@ -124,4 +125,4 @@ static int command_mmapinfo(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
 			NULL,
 			"Print memmap switch state");
-
+#endif
