@@ -175,13 +175,11 @@ void disable_deep_sleep(void)
 {
 	idle_action = idle_default;
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, disable_deep_sleep, HOOK_PRIO_DEFAULT);
 
 void enable_deep_sleep(void)
 {
 	idle_action = IDLE_DEEP_SLEEP;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, enable_deep_sleep, HOOK_PRIO_DEFAULT);
 
 static void idle_init(void)
 {

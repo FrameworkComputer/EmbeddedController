@@ -709,18 +709,6 @@ static void disable_uart(int uart)
 	uartn_tx_disconnect(uart);
 }
 
-static void enable_ap_uart(void)
-{
-	enable_uart(UART_AP);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_ap_uart, HOOK_PRIO_DEFAULT);
-
-static void disable_ap_uart(void)
-{
-	disable_uart(UART_AP);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_ap_uart, HOOK_PRIO_DEFAULT);
-
 static int device_powered_off(enum device_type device)
 {
 	if (device_get_state(device) == DEVICE_STATE_ON)
@@ -845,7 +833,7 @@ void board_update_device_state(enum device_type device)
 	}
 }
 
-void disable_int_ap_l(void)
+static void ap_shutdown(void)
 {
 	/*
 	 * If I2C TPM is configured then the INT_AP_L signal is used as
@@ -856,10 +844,20 @@ void disable_int_ap_l(void)
 	 * INT_AP_L as an input while the AP is powered off.
 	 */
 	gpio_set_flags(GPIO_INT_AP_L, GPIO_INPUT);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_int_ap_l, HOOK_PRIO_DEFAULT);
 
-void enable_int_ap_l(void)
+	disable_uart(UART_AP);
+
+	/*
+	 * We don't enable deep sleep on ARM devices yet, as its processing
+	 * there will require more support on the AP side than is available
+	 * now.
+	 */
+	if (board_use_plt_rst())
+		enable_deep_sleep();
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ap_shutdown, HOOK_PRIO_DEFAULT);
+
+static void ap_resume(void)
 {
 	/*
 	 * AP is powering up, set the I2C host sync signal to output and set
@@ -867,8 +865,12 @@ void enable_int_ap_l(void)
 	 */
 	gpio_set_flags(GPIO_INT_AP_L, GPIO_OUT_HIGH);
 	gpio_set_level(GPIO_INT_AP_L, 1);
+
+	enable_uart(UART_AP);
+
+	disable_deep_sleep();
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_int_ap_l, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, ap_resume, HOOK_PRIO_DEFAULT);
 
 /*
  * This function duplicates some of the functionality in chip/g/gpio.c in order

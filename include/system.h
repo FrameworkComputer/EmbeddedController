@@ -394,12 +394,23 @@ static inline void disable_sleep(uint32_t mask)
 	atomic_or(&sleep_mask, mask);
 }
 
+/* The following three functions are not available on all chips. */
 /**
  * Postpone sleeping for at least this long, regardless of sleep_mask.
  *
  * @param Amount of time to postpone sleeping
  */
 void delay_sleep_by(uint32_t us);
+
+/*
+ **
+ * Funtctions to control deep sleep behavior. When disabled - the device never
+ * falls into deep sleep (the lowest power consumption state exit of which
+ * usually happens through the regular reset vector with just a few bits of
+ * state preserved).
+ */
+void disable_deep_sleep(void);
+void enable_deep_sleep(void);
 
 /**
  * Use hibernate module to set up an RTC interrupt at a given
