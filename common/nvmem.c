@@ -77,7 +77,7 @@ struct nvmem_mutex_ {
 	struct mutex mtx;
 };
 
-static struct nvmem_mutex_ nvmem_mutex;
+static struct nvmem_mutex_ nvmem_mutex = { .task = TASK_ID_COUNT };
 static uint8_t nvmem_cache[NVMEM_PARTITION_SIZE] __aligned(4);
 
 static uint8_t commits_enabled;
@@ -229,7 +229,7 @@ static void nvmem_lock_cache(void)
 
 static void nvmem_release_cache(void)
 {
-	if (nvmem_mutex.write_in_progress)
+	if (nvmem_mutex.write_in_progress || !commits_enabled)
 		return;		/* It will have to be saved first. */
 
 	/* Reset task number to max value */
