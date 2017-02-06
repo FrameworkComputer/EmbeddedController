@@ -34,6 +34,7 @@ enum battery_type {
 enum fast_chg_voltage_ranges {
 	VOLTAGE_RANGE_0,
 	VOLTAGE_RANGE_1,
+	VOLTAGE_RANGE_2,
 };
 
 enum temp_range {
@@ -255,6 +256,7 @@ static const struct fast_charge_profile fast_charge_smp_c22n1626_info[] = {
 		.current_mA = {
 			[VOLTAGE_RANGE_0] = 0,
 			[VOLTAGE_RANGE_1] = 0,
+			[VOLTAGE_RANGE_2] = 0,
 		},
 	},
 
@@ -264,6 +266,7 @@ static const struct fast_charge_profile fast_charge_smp_c22n1626_info[] = {
 		.current_mA = {
 			[VOLTAGE_RANGE_0] = 1752,
 			[VOLTAGE_RANGE_1] = 1752,
+			[VOLTAGE_RANGE_2] = 1752,
 		},
 	},
 
@@ -271,8 +274,9 @@ static const struct fast_charge_profile fast_charge_smp_c22n1626_info[] = {
 	[TEMP_RANGE_2] = {
 		.temp_c = TEMPC_TENTHS_OF_DEG(45),
 		.current_mA = {
-			[VOLTAGE_RANGE_0] = 5200,
-			[VOLTAGE_RANGE_1] = 5200,
+			[VOLTAGE_RANGE_0] = 4672,
+			[VOLTAGE_RANGE_1] = 4672,
+			[VOLTAGE_RANGE_2] = 2920,
 		},
 	},
 
@@ -282,6 +286,7 @@ static const struct fast_charge_profile fast_charge_smp_c22n1626_info[] = {
 		.current_mA = {
 			[VOLTAGE_RANGE_0] = 2920,
 			[VOLTAGE_RANGE_1] = 0,
+			[VOLTAGE_RANGE_2] = 0,
 		},
 	},
 
@@ -291,6 +296,7 @@ static const struct fast_charge_profile fast_charge_smp_c22n1626_info[] = {
 		.current_mA = {
 			[VOLTAGE_RANGE_0] = 0,
 			[VOLTAGE_RANGE_1] = 0,
+			[VOLTAGE_RANGE_2] = 0,
 		},
 	},
 };
@@ -300,7 +306,8 @@ static const struct fast_charge_params fast_chg_params_smp_c22n1626 = {
 	.default_temp_range_profile = TEMP_RANGE_2,
 	.voltage_mV = {
 		[VOLTAGE_RANGE_0] = 8200,
-		[VOLTAGE_RANGE_1] = CHARGER_PROF_VOLTAGE_MV_LAST_RANGE,
+		[VOLTAGE_RANGE_1] = 8500,
+		[VOLTAGE_RANGE_2] = CHARGER_PROF_VOLTAGE_MV_LAST_RANGE,
 	},
 	.chg_profile_info = &fast_charge_smp_c22n1626_info[0],
 };
