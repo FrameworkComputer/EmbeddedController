@@ -1961,6 +1961,9 @@
 /* SPI master feature */
 #undef CONFIG_SPI_MASTER
 
+/* Support STM32 SPI1 as master. */
+#undef CONFIG_STM32_SPI1_MASTER
+
 /* SPI master configure gpios on init */
 #undef CONFIG_SPI_MASTER_CONFIGURE_GPIOS
 
