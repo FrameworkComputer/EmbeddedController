@@ -25,9 +25,9 @@ int charger_profile_override_common(struct charge_state_data *curr,
 			const struct fast_charge_profile **prev_chg_prof_info,
 			int batt_vtg_max)
 {
+	int i, voltage_range;
 	/* temp in 0.1 deg C */
 	int temp_c = curr->batt.temperature - 2731;
-	enum fast_chg_voltage_ranges voltage_range;
 	int temp_ranges = fast_chg_params->total_temp_ranges;
 	const struct fast_charge_profile *chg_profile_info =
 				fast_chg_params->chg_profile_info;
@@ -74,11 +74,18 @@ int charger_profile_override_common(struct charge_state_data *curr,
 	 * not in the charger profile voltage range, consider battery has high
 	 * voltage range so that we charge at lower current limit.
 	 */
-	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE) &&
-		curr->batt.voltage < fast_chg_params->vtg_low_limit_mV)
-		voltage_range = VOLTAGE_RANGE_LOW;
-	else
-		voltage_range = VOLTAGE_RANGE_HIGH;
+	voltage_range = CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES - 1;
+
+	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE)) {
+		for (i = 0; i < CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES - 1;
+			i++) {
+			if (curr->batt.voltage <
+					fast_chg_params->voltage_mV[i]) {
+				voltage_range = i;
+				break;
+			}
+		}
+	}
 
 	/*
 	 * If we are not charging or we aren't using fast charging profiles,

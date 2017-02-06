@@ -530,6 +530,12 @@
  */
 #undef CONFIG_CHARGER_PROFILE_OVERRIDE_COMMON
 
+/*
+ * Battery voltage threshold ranges for charge profile override.
+ * Override it in board.h if battery has multiple threshold ranges.
+ */
+#define CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES 2
+
 /* Value of the charge sense resistor, in mOhms */
 #undef CONFIG_CHARGER_SENSE_RESISTOR
 
