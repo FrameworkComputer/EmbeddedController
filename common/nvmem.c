@@ -408,6 +408,11 @@ int nvmem_init(void)
 	nvmem_error_state = EC_SUCCESS;
 	nvmem_write_error = 0;
 
+	/*
+	 * Default policy is to allow all commits. This ensures reinitialization
+	 * succeeds to bootstrap the nvmem area.
+	 */
+	commits_enabled = 1;
 	ret = nvmem_find_partition();
 
 	if (ret != EC_SUCCESS) {
@@ -418,7 +423,6 @@ int nvmem_init(void)
 	}
 
 	CPRINTS("Active Nvmem partition set to %d", nvmem_act_partition);
-	commits_enabled = 1;
 
 	return EC_SUCCESS;
 }
