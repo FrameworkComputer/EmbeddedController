@@ -1,0 +1,55 @@
+/* -*- mode:c -*-
+ *
+ * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Outputs */
+GPIO(SEL_CC2_A,			PIN(A, 14), GPIO_OUT_LOW)
+GPIO(SEL_VBUS_A,		PIN(A, 15), GPIO_OUT_LOW)
+GPIO(SEL_CC2_B,			PIN(B,  0), GPIO_OUT_LOW)
+GPIO(SEL_VBUS_B,		PIN(B,  1), GPIO_OUT_LOW)
+GPIO(SEL_RELAY_A,		PIN(B,  2), GPIO_OUT_LOW)
+GPIO(SEL_RELAY_B,		PIN(B,  3), GPIO_OUT_LOW)
+GPIO(USB_C_SEL_B,		PIN(B,  4), GPIO_OUT_LOW)
+GPIO(USB_C_OE_N,		PIN(B,  5), GPIO_OUT_HIGH)
+
+GPIO(ST_UART_LVL_DIS,		PIN(B, 10), GPIO_OUT_HIGH)
+GPIO(ST_UART_TX_DIR,		PIN(B, 12), GPIO_OUT_HIGH)
+GPIO(ST_UART_TX_DIR_N,		PIN(B, 15), GPIO_OUT_LOW)
+
+GPIO(LED_G,			PIN(B, 11), GPIO_OUT_HIGH)
+GPIO(LED_R,			PIN(B, 13), GPIO_OUT_LOW)
+GPIO(LED_B,			PIN(B, 14), GPIO_OUT_HIGH)
+
+/* Inputs */
+GPIO(USB_C_SBU1_DET,		PIN(A,  6), GPIO_INPUT)
+GPIO(USB_C_SBU2_DET,		PIN(A,  7), GPIO_INPUT)
+
+/* USART interface */
+GPIO(USART2_CTS,		PIN(A,  0), GPIO_INPUT)
+GPIO(USART2_RTS,		PIN(A,  1), GPIO_INPUT)
+GPIO(USART2_TX,			PIN(A,  2), GPIO_INPUT)
+GPIO(USART2_RX,			PIN(A,  3), GPIO_INPUT)
+GPIO(USART2_CK,			PIN(A,  4), GPIO_INPUT)
+
+GPIO(USART1_TX,			PIN(A,  9), GPIO_INPUT)
+GPIO(USART1_RX,			PIN(A, 10), GPIO_INPUT)
+
+/* I2C pins should be configured as inputs until I2C module is    */
+/* initialized. This will avoid driving the lines unintentionally.*/
+GPIO(MASTER_I2C_SCL,		PIN(B,  8), GPIO_INPUT)
+GPIO(MASTER_I2C_SDA,		PIN(B,  9), GPIO_INPUT)
+
+/* Unimplemented signals since we are not an EC */
+UNIMPLEMENTED(ENTERING_RW)
+UNIMPLEMENTED(WP_L)
+
+/* USART2: PA2/PA3 - Console UART */
+ALTERNATE(PIN_MASK(A, 0x000C), 1, MODULE_UART, 0)
+/* USART1: PA09/PA10 - AP/SBU UART */
+ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_USART, 0)
+
+/* I2C MASTER:PB8/9 GPIO_ODR_HIGH */
+ALTERNATE(PIN_MASK(B, 0x0300), 1, MODULE_I2C, 0)

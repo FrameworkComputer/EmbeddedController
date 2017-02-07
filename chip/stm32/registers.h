@@ -224,6 +224,7 @@
 #define STM32_USART_CR1_TXEIE		(1 << 7)
 #define STM32_USART_CR1_OVER8		(1 << 15)
 #define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x04)
+#define STM32_USART_CR2_SWAP		(1 << 15)
 #define STM32_USART_CR3(base)      STM32_USART_REG(base, 0x08)
 #define STM32_USART_CR3_EIE		(1 << 0)
 #define STM32_USART_CR3_DMAR		(1 << 6)

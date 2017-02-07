@@ -91,6 +91,7 @@ BOARDS_STM32_DFU=(
 	sweetberry
 	polyberry
 	stm32f446e-eval
+	tigertail
 )
 
 BOARDS_NPCX_5M5G_JTAG=(
