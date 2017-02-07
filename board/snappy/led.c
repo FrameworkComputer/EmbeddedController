@@ -156,7 +156,7 @@ static void led_set_battery(void)
 
 static void led_set_power(void)
 {
-	static unsigned int power_tick;
+	static int power_tick;
 
 	power_tick++;
 
@@ -165,7 +165,7 @@ static void led_set_power(void)
 	else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
 				  CHIPSET_STATE_STANDBY))
 		led_set_color_power(
-			((power_tick & 0xf) >= 0xc) ? LED_WHITE : LED_OFF);
+			(power_tick & 0x4) ? LED_WHITE : LED_OFF);
 	else
 		led_set_color_power(LED_OFF);
 }
