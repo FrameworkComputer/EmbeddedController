@@ -1259,6 +1259,16 @@ static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
 			get_program_memory_addr(SYSTEM_IMAGE_RW);
 	}
 
+	*response_size = 0;
+	/*
+	 * First check to see if the inactive region has already been
+	 * invalidated.
+	 */
+	if (!header->magic) {
+		CPRINTS("%s: Inactive region already corrupted", __func__);
+		return VENDOR_RC_SUCCESS;
+	}
+
 	/* save the original flash region6 register values */
 	ctrl = GREAD(GLOBALSEC, FLASH_REGION6_CTRL);
 	base_addr = GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR);
@@ -1284,8 +1294,6 @@ static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
 	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) = base_addr;
 	GREG32(GLOBALSEC, FLASH_REGION6_SIZE) = size;
 	GREG32(GLOBALSEC, FLASH_REGION6_CTRL) = ctrl;
-
-	*response_size = 0;
 
 	return VENDOR_RC_SUCCESS;
 }
