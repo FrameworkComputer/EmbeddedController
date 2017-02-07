@@ -1173,10 +1173,14 @@ static int command_sysinfo(int argc, char **argv)
 	enum system_image_copy_t active;
 	uintptr_t vaddr;
 	const struct SignedHeader *h;
+	int reset_count = GREG32(PMU, LONG_LIFE_SCRATCH0);
 
 	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
 	system_print_reset_flags();
 	ccprintf(")\n");
+	if (reset_count > 6)
+		ccprintf("Rollback detected\n");
+	ccprintf("Reset count: %d\n", reset_count);
 
 	ccprintf("Chip:        %s %s %s\n", system_get_chip_vendor(),
 		 system_get_chip_name(), system_get_chip_revision());
