@@ -42,8 +42,6 @@ static void ina_connect(void)
 
 	/* Apply power to INA chips */
 	gpio_set_level(GPIO_EN_PP3300_INA_L, 0);
-	/* Allow enough time for power rail to come up */
-	usleep(25);
 
 	/*
 	 * Connect B0/B1 pads to I2C0 input SDA/SCL. Note, that the inputs
