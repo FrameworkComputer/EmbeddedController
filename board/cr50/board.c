@@ -725,7 +725,12 @@ static void servo_deferred(void)
 	if (servo_state_unknown())
 		return;
 
-	device_powered_off(DEVICE_SERVO);
+	/*
+	 * If servo was detached reconnect the AP uart making it read write
+	 * again.
+	 */
+	if (device_powered_off(DEVICE_SERVO) == EC_SUCCESS)
+		uartn_tx_connect(UART_AP);
 }
 DECLARE_DEFERRED(servo_deferred);
 
