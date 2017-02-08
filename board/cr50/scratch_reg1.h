@@ -33,6 +33,7 @@
  */
 #define BOARD_CONSOLE_UNLOCKED       (1 << 7)
 #define BOARD_WP_ASSERTED            (1 << 8)
+#define BOARD_FORCING_WP             (1 << 9)
 
 /*
  * Macro to capture all properties related to board strapping pins. This must be

@@ -15,11 +15,12 @@
 #include "task.h"
 #include "timer.h"
 #include "tpm_registers.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
 
-static void set_wp_state(int asserted)
+void set_wp_state(int asserted)
 {
 	/* Enable writing to the long life register */
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
@@ -36,30 +37,67 @@ static void set_wp_state(int asserted)
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
 }
 
+/**
+ * Force write protect state or follow battery presence.
+ *
+ * @param force: Force write protect to wp_en if non-zero, otherwise use battery
+ *               presence as the source.
+ * @param wp_en: 0: Deassert WP. 1: Assert WP.
+ */
+static void force_write_protect(int force, int wp_en)
+{
+	/* Enable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+
+	if (force) {
+		/* Force WP regardless of battery presence. */
+		GREG32(PMU, LONG_LIFE_SCRATCH1) |= BOARD_FORCING_WP;
+	} else {
+		/* Stop forcing write protect. */
+		GREG32(PMU, LONG_LIFE_SCRATCH1) &= ~BOARD_FORCING_WP;
+		/*
+		 * Use battery presence as the value for write protect.
+		 * Inverted because the signal is active low.
+		 */
+		wp_en = !gpio_get_level(GPIO_BATT_PRES_L);
+	}
+
+	/* Disable writing to the long life register */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+
+	/* Update the WP state. */
+	set_wp_state(!!wp_en);
+}
+
 static int command_wp(int argc, char **argv)
 {
 	int val;
+	int forced;
 
 	if (argc > 1) {
 		if (console_is_restricted()) {
 			ccprintf("Console is locked, no parameters allowed\n");
 		} else {
-			if (!parse_bool(argv[1], &val))
+			if (strncasecmp(argv[1], "follow_batt_pres", 16) == 0)
+				force_write_protect(0, -1);
+			else if (parse_bool(argv[1], &val))
+				force_write_protect(1, val);
+			else
 				return EC_ERROR_PARAM1;
-
-			set_wp_state(!!val);
 		}
 	}
 
 	/* Invert, because active low */
 	val = !GREG32(RBOX, EC_WP_L);
 
-	ccprintf("Flash WP is %s\n", val ? "enabled" : "disabled");
+	forced = GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP;
+	ccprintf("Flash WP is %s%s\n", forced ? "forced " : "",
+		 val ? "enabled" : "disabled");
 
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(wp, command_wp,
-			     "[<BOOLEAN>]",
+			     "[<BOOLEAN>/follow_batt_pres]",
 			     "Get/set the flash HW write-protect signal");
 
 /* When the system is locked down, provide a means to unlock it */
@@ -132,16 +170,16 @@ static void unlock_the_console(void)
 static void init_console_lock_and_wp(void)
 {
 	/*
-	 * On an unexpected reboot or a system rollback reset the console and
-	 * write protect states.
+	 * On an unexpected reboot or a system rollback reset the console lock
+	 * and write protect states.
 	 */
 	if (system_rollback_detected() ||
 	    !(system_get_reset_flags() & RESET_FLAG_HIBERNATE)) {
 		/* Reset the console lock to the default value */
 		set_console_lock_state(console_restricted_state);
 
-		/* Always assert WP on H1 cold resets, reboots or fallbacks. */
-		set_wp_state(1);
+		/* Use BATT_PRES_L as the source for write protect. */
+		set_wp_state(!gpio_get_level(GPIO_BATT_PRES_L));
 		return;
 	}
 
