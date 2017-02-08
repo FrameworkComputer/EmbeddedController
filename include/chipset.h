@@ -82,6 +82,11 @@ void chipset_reset(int cold_reset);
  */
 void power_interrupt(enum gpio_signal signal);
 
+/**
+ * Handle assert of eSPI_Reset# pin.
+ */
+void chipset_handle_espi_reset_assert(void);
+
 #else /* !HAS_TASK_CHIPSET */
 /*
  * Allow other modules to compile if the chipset module is disabled.  This is
@@ -98,6 +103,7 @@ static inline void chipset_throttle_cpu(int throttle) { }
 static inline void chipset_force_shutdown(void) { }
 static inline void chipset_reset(int cold_reset) { }
 static inline void power_interrupt(enum gpio_signal signal) { }
+static inline void chipset_handle_espi_reset_assert(void) { }
 
 #endif /* !HAS_TASK_CHIPSET */
 

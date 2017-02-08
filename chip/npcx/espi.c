@@ -8,6 +8,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "chipset.h"
 #include "console.h"
 #include "uart.h"
 #include "util.h"
@@ -542,6 +543,7 @@ void espi_interrupt(void)
 		} /* eSPI reset (from eSPI_rst pin) */
 		else if (IS_BIT_SET(status, NPCX_ESPISTS_ESPIRST)) {
 			CPRINTS("eSPI RST");
+			chipset_handle_espi_reset_assert();
 			espi_reset_recovery();
 		}
 

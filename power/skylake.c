@@ -92,6 +92,20 @@ static void handle_slp_sus(enum power_state state)
 	chipset_set_pmic_slp_sus_l(gpio_get_level(GPIO_PCH_SLP_SUS_L));
 }
 
+void chipset_handle_espi_reset_assert(void)
+{
+	/*
+	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
+	 * it means that there is an unexpected power loss (global reset
+	 * event). In this case, check if shutdown was being forced by pressing
+	 * power button. If yes, release power button.
+	 */
+	if (power_has_signals(IN_PCH_SLP_SUS_DEASSERTED) && forcing_shutdown) {
+		power_button_pch_release();
+		forcing_shutdown = 0;
+	}
+}
+
 enum power_state power_handle_state(enum power_state state)
 {
 	enum power_state new_state;
