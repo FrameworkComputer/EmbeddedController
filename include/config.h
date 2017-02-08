@@ -766,6 +766,9 @@
 /* Max length of a single line of input */
 #define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
 
+/* Enable verbose output to UART console and extra timestamp print precision. */
+#define CONFIG_CONSOLE_VERBOSE
+
 /*
  * Enable the experimental console.
  *

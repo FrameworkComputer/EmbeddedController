@@ -145,7 +145,7 @@ void mkbp_clear_fifo(void)
 {
 	int i;
 
-	CPRINTS("clearing MKBP common fifo");
+	CPRINTS("clear MKBP fifo");
 
 	fifo_start = 0;
 	fifo_end = 0;

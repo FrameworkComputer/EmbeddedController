@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -381,8 +381,7 @@ static int init(const struct motion_sensor_t *s)
 	ret = config_interrupt(s);
 #endif
 
-	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
-		s->name, s->type, get_range(s));
+	sensor_init_done(s, get_range(s));
 	return ret;
 
 err_unlock:

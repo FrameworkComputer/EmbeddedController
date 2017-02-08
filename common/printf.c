@@ -193,7 +193,12 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			if (c == 'T') {
 				v = get_time().val;
 				flags |= PF_64BIT;
+#ifdef CONFIG_CONSOLE_VERBOSE
 				precision = 6;
+#else
+				precision = 3;
+				v /= 1000;
+#endif
 			} else if (flags & PF_64BIT) {
 				v = va_arg(args, uint64_t);
 			} else {

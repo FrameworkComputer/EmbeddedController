@@ -99,6 +99,12 @@ static int read_and_hash_chunk(int offset, int size)
 
 #endif
 
+#ifdef CONFIG_CONSOLE_VERBOSE
+#define SHA256_PRINT_SIZE SHA256_DIGEST_SIZE
+#else
+#define SHA256_PRINT_SIZE 4
+#endif
+
 /**
  * Do next chunk of hashing work, if any.
  */
@@ -130,7 +136,7 @@ static void vboot_hash_next_chunk(void)
 	if (curr_pos >= data_size) {
 		/* Store the final hash */
 		hash = SHA256_final(&ctx);
-		CPRINTS("hash done %.*h", SHA256_DIGEST_SIZE, hash);
+		CPRINTS("hash done %.*h", SHA256_PRINT_SIZE, hash);
 
 		in_progress = 0;
 

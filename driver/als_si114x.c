@@ -550,8 +550,8 @@ static int init(const struct motion_sensor_t *s)
 	 */
 	set_resolution(s, resol, 0);
 
-	CPRINTF("[%T %s: MS Done Init type:0x%X range:%d]\n",
-			s->name, s->type, get_range(s));
+	sensor_init_done(s, get_range(s));
+
 	return EC_SUCCESS;
 }
 

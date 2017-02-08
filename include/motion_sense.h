@@ -172,6 +172,15 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 
 #endif
 
+/**
+ * Take actions at end of sensor initialization (currently only printing
+ * init done status to console).
+ *
+ * @param sensor sensor which was just initialized
+ * @param range  range of sensor
+ */
+void sensor_init_done(const struct motion_sensor_t *sensor, int range);
+
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 /* Add an extra sensor. We may need to add more */
 #define MOTION_SENSE_ACTIVITY_SENSOR_ID (motion_sensor_count)

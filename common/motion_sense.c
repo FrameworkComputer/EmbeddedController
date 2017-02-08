@@ -235,9 +235,15 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	if (ret)
 		return ret;
 
+#ifdef CONFIG_CONSOLE_VERBOSE
 	CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]",
 		sensor->name, odr, roundup, config_id,
 		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
+#else
+	CPRINTS("%c%d ODR %d rup %d cfg %d AP %d",
+		sensor->name[0], sensor->type, odr, roundup, config_id,
+		BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
+#endif
 	mutex_lock(&g_sensor_mutex);
 	if (ap_odr_mhz)
 		/*
