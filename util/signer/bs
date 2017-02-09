@@ -60,7 +60,7 @@ EOF
 BIN_ROOT="${HOME}/bin"
 
 # This is where the new signed image will be pasted into.
-RESULT_FILE="build/cr50/ec.bin"
+RESULT_FILE="${RESULT_FILE:=build/cr50/ec.bin}"
 
 if [ -z "${CROS_WORKON_SRCROOT}" ]; then
   echo "$(basename $0): This script must run inside Chrome OS chroot" >&2
@@ -90,7 +90,7 @@ while (( "$#" )); do
       ;;
     (elves)
       if [ -z "${2}" -o -z "${3}" ]; then
-        echo "two elf file names are required" 2>&1
+        echo "two elf file names are required" >&2
         exit 1
       fi
       elves=( $2 $3 )
@@ -111,7 +111,7 @@ while (( "$#" )); do
 done
 
 if [ -z "${do_hex}" -a ! -f "${RESULT_FILE}" ]; then
-  echo "${RESULT_FILE} not found. Run 'make BOARD=cr50' first" >& 2
+  echo "${RESULT_FILE} not found. Run 'make BOARD=cr50' first" >&2
   exit 1
 fi
 
@@ -151,8 +151,13 @@ for elf in ${elves[@]}; do
       exit 1
     fi
   fi
+  signed_file="${count}.${dst_suffix}"
   sudo ${BIN_ROOT}/codesigner ${signer_command_params} \
-    -i ${elf} -o "${count}.${dst_suffix}"
+    -i ${elf} -o "${signed_file}"
+  if [ ! -s "${signed_file}" ]; then
+    echo "$(basename $0): error: empty signed file ${signed_file}" >&2
+    exit 1
+  fi
   count=$(( count + 1 ))
 done
 
