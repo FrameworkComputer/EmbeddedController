@@ -163,6 +163,16 @@ void si114x_interrupt(enum gpio_signal signal)
 		       CONFIG_ALS_SI114X_INT_EVENT, 0);
 }
 
+#ifdef CONFIG_ALS_SI114X_POLLING
+static void si114x_read_deferred(void)
+{
+	task_set_event(TASK_ID_MOTIONSENSE,
+		       CONFIG_ALS_SI114X_INT_EVENT, 0);
+
+}
+DECLARE_DEFERRED(si114x_read_deferred);
+#endif
+
 /**
  * irq_handler - bottom half of the interrupt stack.
  * Ran from the motion_sense task, finds the events that raised the interrupt.
@@ -266,6 +276,10 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 			return EC_ERROR_INVAL;
 		}
 		ret = raw_write8(s->port, s->addr, SI114X_REG_COMMAND, cmd);
+#ifdef CONFIG_ALS_SI114X_POLLING
+		hook_call_deferred(&si114x_read_deferred_data,
+				   SI114x_POLLING_DELAY);
+#endif
 		ret = EC_RES_IN_PROGRESS;
 		break;
 	case SI114X_ALS_IN_PROGRESS_PS_PENDING:
