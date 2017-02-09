@@ -60,7 +60,7 @@ GPIO(I2C3_SCL,			PIN(D, 1), GPIO_INPUT)				/* EC_I2C3_POWER_SCL */
 GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_I2C3_POWER_SDA */
 
 /* AP wake sources when in Deep-S3 state */
-GPIO(TRACKPAD_INT_L,		PIN(7, 1), GPIO_ODR_LOW)			/* INT# from Trackpad */
+GPIO(TRACKPAD_INT_L,		PIN(7, 1), GPIO_INPUT)				/* INT# from Trackpad */
 GPIO(DSP_WAKE_L,		PIN(C, 6), GPIO_INPUT | GPIO_SEL_1P8V)		/* INT# from DSP Mic */
 
 /* 5V enables: INPUT=1.5A, OUT_LOW=OFF, OUT_HIGH=3A */

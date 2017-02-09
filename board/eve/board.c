@@ -573,7 +573,6 @@ void lid_angle_peripheral_enable(int enable)
 	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
-	gpio_set_level(GPIO_TRACKPAD_INT_L, !enable);
 }
 #endif
 
