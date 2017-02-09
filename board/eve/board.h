@@ -113,11 +113,12 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_ACCEL_KXCJ9
-#define CONFIG_ALS_ISL29035
+#define CONFIG_ALS_SI114X 0x40
+#define CONFIG_ALS_SI114X_INT_EVENT TASK_EVENT_CUSTOM(8)
+#define CONFIG_ALS_SI114X_POLLING
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
 #define CONFIG_THERMISTOR_NCP15WB
-
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_MAG_BMI160_BMM150
 #define CONFIG_ACCEL_INTERRUPTS
@@ -232,10 +233,13 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-enum als_id {
-	ALS_ISL29035,
-	ALS_COUNT
-};
+/*
+ * For backward compatibility, to report ALS via ACPI,
+ * Define the number of ALS sensors: motion_sensor copy the data to the ALS
+ * memmap region.
+ */
+#define CONFIG_ALS
+#define ALS_COUNT 1
 
 /*
  * Motion sensors:
@@ -248,6 +252,7 @@ enum sensor_id {
 	BASE_ACCEL,
 	BASE_GYRO,
 	BASE_MAG,
+	LID_LIGHT,
 };
 
 enum adc_channel {
@@ -277,7 +282,7 @@ void board_set_tcpc_power_mode(int port, int mode);
 void board_print_tcpc_fw_version(int port);
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+#define CONFIG_ACCEL_FORCE_MODE_MASK ((1 << LID_ACCEL) | (1 << LID_LIGHT))
 
 #endif /* !__ASSEMBLER__ */
 

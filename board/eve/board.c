@@ -6,7 +6,6 @@
 /* Eve board-specific configuration */
 
 #include "adc_chip.h"
-#include "als.h"
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
@@ -19,7 +18,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/als_isl29035.h"
+#include "driver/als_si114x.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/tcpci.h"
@@ -266,12 +265,6 @@ const struct temp_sensor_t temp_sensors[] = {
 	{"Gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, BASE_GYRO, 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/* ALS instances. Must be in same order as enum als_id. */
-struct als_t als[] = {
-	{"ISL", isl29035_init, isl29035_read_lux, 5},
-};
-BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
@@ -837,7 +830,49 @@ struct motion_sensor_t motion_sensors[] = {
 		 },
 	 },
 	},
+
+	[LID_LIGHT] = {
+	 .name = "Light",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_SI1141,
+	 .type = MOTIONSENSE_TYPE_LIGHT,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &si114x_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_si114x_data,
+	 .port = I2C_PORT_ALS,
+	 .addr = SI114X_ADDR,
+	 .rot_standard_ref = NULL,
+	 .default_range = 9000, /* 90%: int = 0 - frac = 9000/10000 */
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Run ALS sensor in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 1000,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
+	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
+const struct motion_sensor_t *motion_als_sensors[] = {
+	&motion_sensors[LID_LIGHT],
+};
+BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 

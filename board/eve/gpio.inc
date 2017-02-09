@@ -24,6 +24,9 @@ GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(9, 3), GPIO_INT_FALLING,			bmi160_interrupt)
 
+/* Lid KCJX9 accelerometer sensor interrupt */
+GPIO(ACCEL1_INT_L,			PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
+
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(ENABLE_BACKLIGHT,		PIN(5, 6), GPIO_OUT_LOW)			/* Enable Backlight */
 GPIO(TRACKPAD_SHDN_L,		PIN(3, 2), GPIO_OUT_LOW)			/* Enable Trackpad */
@@ -43,9 +46,6 @@ GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)			/* H1 Reset */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
-
-/* Sensor interrupts, not implemented yet */
-GPIO(ACCEL1_INT_L,		PIN(C, 7), GPIO_INPUT)
 
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_0_SCL,		PIN(B, 5), GPIO_INPUT)				/* EC_I2C00_USB_C0_SCL */
