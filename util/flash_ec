@@ -284,11 +284,19 @@ on_servov3() {
 }
 
 # Returns 0 on success (if raiden should be used instead of servo)
+error_reported=  # Avoid double printing the error message.
 on_raiden() {
-	if ([ -z "${BOARD}" ] || \
-	    $(in_array "${BOARDS_RAIDEN[@]}" "${BOARD}")) && \
-	   [ "${FLAGS_raiden}" = ${FLAGS_TRUE} ] ; then
+	if [ -z "${BOARD}" ]; then
 		return 0
+	fi
+	if [ "${FLAGS_raiden}" = ${FLAGS_TRUE} ]; then
+		if in_array "${BOARDS_RAIDEN[@]}" "${BOARD}"; then
+			return 0
+		fi
+		if [ -z "${error_reported}" ]; then
+			error_reported="y"
+			die "raiden mode not supported on ${BOARD}" >&2
+		fi
 	fi
 	return 1
 }
