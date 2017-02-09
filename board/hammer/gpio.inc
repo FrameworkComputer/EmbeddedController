@@ -23,6 +23,7 @@ GPIO_INT(KB_IN05, PIN(B, 2),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN06, PIN(B, 14), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN07, PIN(B, 15), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 
+/* Do not forget to update KB_OUT_PORT_LIST to match this. */
 GPIO(KB_OUT00,			PIN(B, 1),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT01,			PIN(A, 5),  GPIO_KB_OUTPUT)
 GPIO(KB_OUT02,			PIN(A, 3),  GPIO_KB_OUTPUT)
