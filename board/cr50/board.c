@@ -800,10 +800,39 @@ static void servo_attached(void)
 
 void device_state_on(enum gpio_signal signal)
 {
-	gpio_disable_interrupt(signal);
+	/*
+	 * On boards with plt_rst_l the ap state is detected with tpm_rst_l.
+	 * Make sure we don't disable the tpm reset interrupt.
+	 */
+	if (signal != GPIO_TPM_RST_L)
+		gpio_disable_interrupt(signal);
 
 	switch (signal) {
-	case GPIO_DETECT_AP: /* Would happen only on non plt_rst_l devices. */
+	case GPIO_TPM_RST_L:
+		/*
+		 * Boards using tpm_rst_l have no AP state interrupt that will
+		 * trigger device_state_on, so this will only get called when we
+		 * poll the AP state and see that the detect signal is high, but
+		 * the device state is not 'on'.
+		 *
+		 * Boards using tpm_rst_l to detect the AP state use the tpm
+		 * reset handler to set the AP state to 'on'. If we managed to
+		 * get to this point, the tpm reset handler has not run yet.
+		 * This should only happen if there is a race between the board
+		 * state polling and a scheduled call to
+		 * deferred_tpm_rst_isr_data, but it may be because we missed
+		 * the rising edge. Notify the handler again just in case we
+		 * missed the edge to make sure we reset the tpm and update the
+		 * state. If there is already a pending call, then this call
+		 * won't affect it, because subsequent calls to to
+		 * hook_call_deferred just change the delay for the call, and we
+		 * are setting the delay to asap.
+		 */
+		CPRINTS("%s: tpm_rst_isr hasn't set the AP state to 'on'.",
+			__func__);
+		hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
+		break;
+	case GPIO_DETECT_AP:
 		if (device_state_changed(DEVICE_AP, DEVICE_STATE_ON))
 			hook_notify(HOOK_CHIPSET_RESUME);
 		break;
