@@ -13,16 +13,41 @@
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
+enum battery_type {
+	BATTERY_LG,
+	BATTERY_LISHEN,
+	BATTERY_TYPE_COUNT,
+};
 
-/* Battery info for proto */
-static const struct battery_info info = {
-	.voltage_max		= 8800,	/* mV */
+struct board_batt_params {
+	const char *manuf_name;
+	const struct battery_info *batt_info;
+};
+
+/*
+ * Set LISHEN as default since the LG precharge current level could cause the
+ * LISHEN battery to not accept charge when it's recovering from a fully
+ * discharged state.
+ */
+#define DEFAULT_BATTERY_TYPE BATTERY_LISHEN
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
+static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
+
+/*
+ * Battery info for LG A50. Note that the fields start_charging_min/max and
+ * charging_min/max are not used for the Eve charger. The effective temperature
+ * limits are given by discharging_min/max_c.
+ */
+static const struct battery_info batt_info_lg = {
+	.voltage_max		= 8800, /* mV */
 	.voltage_normal		= 7700,
 	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
 	.precharge_current	= 256,	/* mA */
@@ -34,9 +59,77 @@ static const struct battery_info info = {
 	.discharging_max_c	= 60,
 };
 
+/*
+ * Battery info for LISHEN. Note that the fields start_charging_min/max and
+ * charging_min/max are not used for the Eve charger. The effective temperature
+ * limits are given by discharging_min/max_c.
+ */
+static const struct battery_info batt_info_lishen = {
+	.voltage_max		= 8750, /* mV */
+	.voltage_normal		= 7700,
+	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
+	.precharge_current	= 88,	/* mA */
+	.start_charging_min_c	= 0,
+	.start_charging_max_c	= 46,
+	.charging_min_c		= 10,
+	.charging_max_c		= 50,
+	.discharging_min_c	= 10,
+	.discharging_max_c	= 50,
+};
+
+static const struct board_batt_params info[] = {
+	[BATTERY_LG] = {
+		.manuf_name = "LG A50",
+		.batt_info = &batt_info_lg,
+	},
+
+	[BATTERY_LISHEN] = {
+		.manuf_name = "Lishen A50",
+		.batt_info = &batt_info_lishen,
+	},
+
+};
+BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
+
+/* Get type of the battery connected on the board */
+static int board_get_battery_type(void)
+{
+	char name[3];
+	int i;
+
+	if (!battery_manufacturer_name(name, sizeof(name))) {
+		for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
+			if (!strncasecmp(name, info[i].manuf_name,
+					 ARRAY_SIZE(name)-1)) {
+				board_battery_type = i;
+				break;
+			}
+		}
+	}
+
+	return board_battery_type;
+}
+
+/*
+ * Initialize the battery type for the board.
+ *
+ * Very first battery info is called by the charger driver to initialize
+ * the charger parameters hence initialize the battery type for the board
+ * as soon as the I2C is initialized.
+ */
+static void board_init_battery_type(void)
+{
+	if (board_get_battery_type() != BATTERY_TYPE_COUNT)
+		CPRINTS("found batt: %s", info[board_battery_type].manuf_name);
+	else
+		CPRINTS("battery not found");
+}
+DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_I2C + 1);
+
 const struct battery_info *battery_get_info(void)
 {
-	return &info;
+	return info[board_battery_type == BATTERY_TYPE_COUNT ?
+		    DEFAULT_BATTERY_TYPE : board_battery_type].batt_info;
 }
 
 int board_cut_off_battery(void)
