@@ -314,18 +314,6 @@ static void board_set_tablet_mode(void)
 	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
 }
 
-/* TODO(gwendal): Should be in common code:
- * When tablet mode changes, send an event to update tablet
- * kernel driver state.
- */
-static void tablet_mode_changed(void)
-{
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
-}
-DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_changed, HOOK_PRIO_DEFAULT);
-
-
-
 /* Initialize board. */
 static void board_init(void)
 {
