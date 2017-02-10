@@ -1047,7 +1047,7 @@ int board_get_version(void)
 		}
 	}
 
-	CPRINTS("Board version: %d\n", version);
+	CPRINTS("Board version: %d", version);
 	return version;
 }
 
