@@ -163,11 +163,11 @@ static inline int tcpc_i2c_write(const int port, const int addr,
 }
 #endif
 
-static inline int tcpm_get_chip_info(int port,
+static inline int tcpm_get_chip_info(int port, int renew,
 				     struct ec_response_pd_chip_info **info)
 {
 	if (tcpc_config[port].drv->get_chip_info)
-		return tcpc_config[port].drv->get_chip_info(port, info);
+		return tcpc_config[port].drv->get_chip_info(port, renew, info);
 	return EC_ERROR_UNIMPLEMENTED;
 }
 

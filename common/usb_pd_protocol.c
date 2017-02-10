@@ -1648,7 +1648,7 @@ void pd_task(void)
 #ifndef CONFIG_USB_PD_TCPC
 	if (!res) {
 		struct ec_response_pd_chip_info *info;
-		tcpm_get_chip_info(port, &info);
+		tcpm_get_chip_info(port, 0, &info);
 		CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x FWV:0x%lx",
 			port, info->vendor_id, info->product_id,
 			info->device_id, info->fw_version_number);
@@ -3725,7 +3725,7 @@ static int hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	if (p->port >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	if (tcpm_get_chip_info(p->port, &info))
+	if (tcpm_get_chip_info(p->port, p->renew, &info))
 		return EC_RES_ERROR;
 
 	memcpy(r, info, sizeof(*r));

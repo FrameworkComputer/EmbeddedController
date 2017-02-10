@@ -202,11 +202,13 @@ struct tcpm_drv {
 	 * Get firmware version.
 	 *
 	 * @param port Type-C port number
+	 * @param renew Force renewal
 	 * @param info Pointer to pointer to PD chip info
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*get_chip_info)(int port, struct ec_response_pd_chip_info **info);
+	int (*get_chip_info)(int port, int renew,
+			struct ec_response_pd_chip_info **info);
 };
 
 enum tcpc_alert_polarity {

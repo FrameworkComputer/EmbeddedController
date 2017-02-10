@@ -3999,6 +3999,7 @@ struct __ec_align1 ec_response_usb_pd_mux_info {
 
 struct __ec_align1 ec_params_pd_chip_info {
 	uint8_t port;	/* USB-C port number */
+	uint8_t renew;	/* Force renewal */
 };
 
 struct __ec_align2 ec_response_pd_chip_info {

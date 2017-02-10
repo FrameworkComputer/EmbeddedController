@@ -6872,8 +6872,8 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	char *e;
 	int rv;
 
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+	if (argc < 2 || 3 < argc) {
+		fprintf(stderr, "Usage: %s <port> [renew(on/off)]\n", argv[0]);
 		return -1;
 	}
 
@@ -6881,6 +6881,16 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	if (e && *e) {
 		fprintf(stderr, "Bad port number.\n");
 		return -1;
+	}
+
+	p.renew = 0;
+	if (argc == 3) {
+		int val;
+		if (!parse_bool(argv[2], &val)) {
+			fprintf(stderr, "invalid arg \"%s\"\n", argv[2]);
+			return -1;
+		}
+		p.renew = val;
 	}
 
 	rv = ec_command(EC_CMD_PD_CHIP_INFO, 0, &p, sizeof(p), &r, sizeof(r));

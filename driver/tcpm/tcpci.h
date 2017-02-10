@@ -137,6 +137,7 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 int tcpci_tcpm_mux_init(int i2c_addr);
 int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);
 int tcpci_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state);
-int tcpci_get_chip_info(int port, struct ec_response_pd_chip_info **chip_info);
+int tcpci_get_chip_info(int port, int renew,
+			struct ec_response_pd_chip_info **chip_info);
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */
