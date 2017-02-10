@@ -1649,9 +1649,9 @@ void pd_task(void)
 	if (!res) {
 		struct ec_response_pd_chip_info *info;
 		tcpm_get_chip_info(port, &info);
-		CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x FWV:0x%x",
+		CPRINTS("TCPC p%d VID:0x%x PID:0x%x DID:0x%x FWV:0x%lx",
 			port, info->vendor_id, info->product_id,
-			info->device_id, info->fw_version);
+			info->device_id, info->fw_version_number);
 	}
 #endif
 

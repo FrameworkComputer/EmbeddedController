@@ -14,6 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "anx74xx.h"
 #include "battery.h"
 #include "comm-host.h"
 #include "compile_time_macros.h"
@@ -24,6 +25,7 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
+#include "ps8751.h"
 #include "usb_pd.h"
 
 /* Command line options */
@@ -6888,7 +6890,15 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	printf("vendor_id: 0x%x\n", r.vendor_id);
 	printf("product_id: 0x%x\n", r.product_id);
 	printf("device_id: 0x%x\n", r.device_id);
-	printf("fw_version: 0x%x\n", r.fw_version);
+
+	switch (r.vendor_id) {
+	case ANX74XX_VENDOR_ID:
+	case PS8751_VENDOR_ID:
+		printf("fw_version: 0x%" PRIx64 "\n", r.fw_version_number);
+		break;
+	default:
+		printf("fw_version: UNSUPPORTED\n");
+	}
 
 	return 0;
 }
