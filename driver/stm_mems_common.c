@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,8 +11,7 @@
 /**
  * Read single register
  */
-inline int raw_read8(const int port, const int addr, const int reg,
-		     int *data_ptr)
+int raw_read8(const int port, const int addr, const int reg, int *data_ptr)
 {
 	/* TODO: Implement SPI interface support */
 	return i2c_read8(port, addr, reg, data_ptr);
@@ -21,8 +20,7 @@ inline int raw_read8(const int port, const int addr, const int reg,
 /**
  * Write single register
  */
-inline int raw_write8(const int port, const int addr, const int reg,
-		      int data)
+int raw_write8(const int port, const int addr, const int reg, int data)
 {
 	/* TODO: Implement SPI interface support */
 	return i2c_write8(port, addr, reg, data);
@@ -34,14 +32,11 @@ inline int raw_write8(const int port, const int addr, const int reg,
  * MSB must be set for autoincrement in multi read when auto_inc
  * is set
  */
-int raw_read_n(const int port, const int addr, const uint8_t reg,
-	       uint8_t *data_ptr, const int len, int auto_inc)
+int st_raw_read_n(const int port, const int addr, const uint8_t reg,
+	       uint8_t *data_ptr, const int len)
 {
 	int rv = -EC_ERROR_PARAM1;
-	uint8_t reg_a = reg;
-
-	if (auto_inc)
-		reg_a |= AUTO_INC;
+	uint8_t reg_a = reg | 0x80;
 
 	/* TODO: Implement SPI interface support */
 	i2c_lock(port, 1);
@@ -58,7 +53,7 @@ int raw_read_n(const int port, const int addr, const uint8_t reg,
  * @mask: The mask to search
  * @data: Data pointer
  */
-int write_data_with_mask(const struct motion_sensor_t *s, int reg,
+int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 			 uint8_t mask, uint8_t data)
 {
 	int err;
@@ -68,7 +63,8 @@ int write_data_with_mask(const struct motion_sensor_t *s, int reg,
 	if (err != EC_SUCCESS)
 		return err;
 
-	new_data = ((old_data & (~mask)) | ((data << __builtin_ctz(mask)) & mask));
+	new_data = ((old_data & (~mask)) |
+		    ((data << __builtin_ctz(mask)) & mask));
 
 	if (new_data == old_data)
 		return EC_SUCCESS;
@@ -84,7 +80,7 @@ int write_data_with_mask(const struct motion_sensor_t *s, int reg,
  *
  * TODO: must support multiple resolution
  */
-int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
+int st_set_resolution(const struct motion_sensor_t *s, int res, int rnd)
 {
 	return EC_SUCCESS;
 }
@@ -95,7 +91,7 @@ int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
  *
  * TODO: must support multiple resolution
  */
-int get_resolution(const struct motion_sensor_t *s)
+int st_get_resolution(const struct motion_sensor_t *s)
 {
 	struct stprivate_data *data = s->drv_data;
 
@@ -108,7 +104,7 @@ int get_resolution(const struct motion_sensor_t *s)
  * @offset: offset vector
  * @temp: Temp
  */
-int set_offset(const struct motion_sensor_t *s,
+int st_set_offset(const struct motion_sensor_t *s,
 	       const int16_t *offset, int16_t temp)
 {
 	struct stprivate_data *data = s->drv_data;
@@ -125,7 +121,7 @@ int set_offset(const struct motion_sensor_t *s,
  * @offset: offset vector
  * @temp: Temp
  */
-int get_offset(const struct motion_sensor_t *s,
+int st_get_offset(const struct motion_sensor_t *s,
 	       int16_t *offset, int16_t *temp)
 {
 	struct stprivate_data *data = s->drv_data;
@@ -141,7 +137,7 @@ int get_offset(const struct motion_sensor_t *s,
  * get_data_rate - Get data rate (ODR)
  * @s: Motion sensor pointer
  */
-int get_data_rate(const struct motion_sensor_t *s)
+int st_get_data_rate(const struct motion_sensor_t *s)
 {
 	struct stprivate_data *data = s->drv_data;
 
@@ -154,7 +150,7 @@ int get_data_rate(const struct motion_sensor_t *s)
  * @v: output vector
  * @data: LSB raw data
  */
-void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
+void st_normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 {
 	int i;
 	struct stprivate_data *drvdata = s->drv_data;

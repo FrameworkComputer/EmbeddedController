@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -7,6 +7,8 @@
 
 #ifndef __CROS_EC_ACCEL_LIS2DH_H
 #define __CROS_EC_ACCEL_LIS2DH_H
+
+#include "driver/stm_mems_common.h"
 
 #define LIS2DH_I2C_ADDR(__x)	(__x << 1)
 
@@ -88,7 +90,8 @@ enum lis2dh_fifo_modes {
 
 /* Acc data rate */
 enum lis2dh_odr {
-	LIS2DH_ODR_1HZ_VAL = 0x01,
+	LIS2DH_ODR_0HZ_VAL = 0,
+	LIS2DH_ODR_1HZ_VAL,
 	LIS2DH_ODR_10HZ_VAL,
 	LIS2DH_ODR_25HZ_VAL,
 	LIS2DH_ODR_50HZ_VAL,
@@ -157,5 +160,7 @@ enum lis2dh_fs {
 #define LIS2DH_RESOLUTION      	10
 
 extern const struct accelgyro_drv lis2dh_drv;
+
+void lis2dh_interrupt(enum gpio_signal signal);
 
 #endif /* __CROS_EC_ACCEL_LIS2DH_H */

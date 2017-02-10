@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -13,19 +13,12 @@
 #include "accelgyro.h"
 #include "console.h"
 #include "i2c.h"
-#include "driver/accel_lis2dh.h"
 
 /* Common debug funcions */
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format "\n", ## args)
 
-/* Set auto increment subaddress on multiple access */
-#define AUTO_INC			0x80
-
 /* X, Y, Z axis data len */
 #define OUT_XYZ_SIZE			6
-
-/* Common define for poswer off ODR */
-#define ODR_POWER_OFF_VAL		0x00
 
 #ifdef CONFIG_ACCEL_FIFO
 #define FIFO_BUFFER_NUM_PATTERN		16
@@ -42,23 +35,20 @@
 /**
  * Read single register
  */
-inline int raw_read8(const int port, const int addr, const int reg,
+extern inline int raw_read8(const int port, const int addr, const int reg,
 		     int *data_ptr);
 
 /**
  * Write single register
  */
-inline int raw_write8(const int port, const int addr, const int reg,
+extern inline int raw_write8(const int port, const int addr, const int reg,
 		      int data);
 
 /**
  * Read n bytes for read
- * NOTE: Some chip use MSB for auto-increments in SUB address
- * 		 MSB must be set for autoincrement in multi read when auto_inc
- * 		 is set
  */
-int raw_read_n(const int port, const int addr, const uint8_t reg,
-	       uint8_t *data_ptr, const int len, int auto_inc);
+int st_raw_read_n(const int port, const int addr, const uint8_t reg,
+	       uint8_t *data_ptr, const int len);
 
  /**
  * write_data_with_mask - Write register with mask
@@ -67,7 +57,7 @@ int raw_read_n(const int port, const int addr, const uint8_t reg,
  * @mask: The mask to search
  * @data: Data pointer
  */
-int write_data_with_mask(const struct motion_sensor_t *s, int reg,
+int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 			 uint8_t mask, uint8_t data);
 
  /**
@@ -76,7 +66,7 @@ int write_data_with_mask(const struct motion_sensor_t *s, int reg,
  * @res: Bit resolution
  * @rnd: Round bit
  */
-int set_resolution(const struct motion_sensor_t *s, int res, int rnd);
+int st_set_resolution(const struct motion_sensor_t *s, int res, int rnd);
 
  /**
  * get_resolution - Get bit resolution
@@ -84,7 +74,7 @@ int set_resolution(const struct motion_sensor_t *s, int res, int rnd);
  *
  * TODO: must support multiple resolution
  */
-int get_resolution(const struct motion_sensor_t *s);
+int st_get_resolution(const struct motion_sensor_t *s);
 
 /**
  * set_offset - Set data offset
@@ -92,8 +82,8 @@ int get_resolution(const struct motion_sensor_t *s);
  * @offset: offset vector
  * @temp: Temp
  */
-int set_offset(const struct motion_sensor_t *s,
-	       const int16_t *offset, int16_t temp);
+int st_set_offset(const struct motion_sensor_t *s,
+		  const int16_t *offset, int16_t temp);
 
 /**
  * get_offset - Get data offset
@@ -101,13 +91,14 @@ int set_offset(const struct motion_sensor_t *s,
  * @offset: offset vector
  * @temp: Temp
  */
-int get_offset(const struct motion_sensor_t *s, int16_t *offset, int16_t *temp);
+int st_get_offset(const struct motion_sensor_t *s,
+		  int16_t *offset, int16_t *temp);
 
 /**
  * get_data_rate - Get data rate (ODR)
  * @s: Motion sensor pointer
  */
-int get_data_rate(const struct motion_sensor_t *s);
+int st_get_data_rate(const struct motion_sensor_t *s);
 
 /**
  * normalize - Apply to LSB data sensitivity and rotation
@@ -115,7 +106,7 @@ int get_data_rate(const struct motion_sensor_t *s);
  * @v: vector
  * @data: LSB raw data
  */
-void normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data);
+void st_normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data);
 
 /* Internal data structure for sensors */
 struct stprivate_data {

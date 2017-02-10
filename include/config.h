@@ -64,6 +64,7 @@
 #undef CONFIG_ACCEL_BMA255
 #undef CONFIG_ACCEL_KXCJ9
 #undef CONFIG_ACCEL_KX022
+#undef CONFIG_ACCEL_LIS2DH
 #undef CONFIG_ACCELGYRO_LSM6DS0
 #undef CONFIG_ACCELGYRO_BMI160
 #undef CONFIG_ACCELGYRO_LSM6DSM
@@ -105,6 +106,12 @@
 
 /* Specify type of Gyrometers attached. */
 #undef CONFIG_GYRO_L3GD20H
+
+/*
+ * Define the event to raise when LIS2DH  interrupt.
+ * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
+ */
+#undef CONFIG_ACCEL_LIS2DH_INT_EVENT
 
 /* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC

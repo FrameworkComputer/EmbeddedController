@@ -15,13 +15,7 @@
 #include "math_util.h"
 #include "task.h"
 #include "util.h"
-#include "driver/stm_mems_common.h"
-
-/* Internal data structure */
-struct stprivate_data lis2dh_a_data;
-#ifdef CONFIG_ACCEL_FIFO
-static uint8_t fifo[FIFO_READ_LEN];
-#endif /* CONFIG_ACCEL_FIFO */
+#include "driver/accel_lis2dh.h"
 
 #ifdef CONFIG_ACCEL_FIFO
 /**
@@ -34,13 +28,13 @@ static int enable_fifo(const struct motion_sensor_t *s, int mode, int en_dis)
 {
 	int ret;
 
-	ret = write_data_with_mask(s, LIS2DH_FIFO_CTRL_REG, LIS2DH_FIFO_MODE_MASK,
-				   mode);
+	ret = st_write_data_with_mask(s, LIS2DH_FIFO_CTRL_REG,
+				      LIS2DH_FIFO_MODE_MASK, mode);
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = write_data_with_mask(s, LIS2DH_CTRL5_ADDR, LIS2DH_FIFO_EN_MASK,
-				   en_dis);
+	ret = st_write_data_with_mask(s, LIS2DH_CTRL5_ADDR, LIS2DH_FIFO_EN_MASK,
+				      en_dis);
 
 	return ret;
 }
@@ -78,7 +72,8 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 	/* Lock accel resource to prevent another task from attempting
 	 * to write accel parameters until we are done */
 	mutex_lock(s->mutex);
-	err = write_data_with_mask(s, LIS2DH_CTRL4_ADDR, LIS2DH_FS_MASK, val);
+	err = st_write_data_with_mask(s, LIS2DH_CTRL4_ADDR, LIS2DH_FS_MASK,
+				      val);
 
 	/* Save Gain in range for speed up data path */
 	if (err == EC_SUCCESS)
@@ -110,10 +105,11 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		goto unlock_rate;
 #endif /* CONFIG_ACCEL_FIFO */
 
-	if (rate == ODR_POWER_OFF_VAL) {
+	if (rate == 0) {
 		/* Power Off device */
-		ret = write_data_with_mask(s, LIS2DH_CTRL1_ADDR,
-					   LIS2DH_ACC_ODR_MASK, ODR_POWER_OFF_VAL);
+		ret = st_write_data_with_mask(
+				s, LIS2DH_CTRL1_ADDR,
+				LIS2DH_ACC_ODR_MASK, LIS2DH_ODR_0HZ_VAL);
 		goto unlock_rate;
 	}
 
@@ -138,8 +134,8 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 * Lock accel resource to prevent another task from attempting
 	 * to write accel parameters until we are done
 	 */
-	ret = write_data_with_mask(s, LIS2DH_CTRL1_ADDR, LIS2DH_ACC_ODR_MASK,
-				   reg_val);
+	ret = st_write_data_with_mask(s, LIS2DH_CTRL1_ADDR, LIS2DH_ACC_ODR_MASK,
+			reg_val);
 	if (ret == EC_SUCCESS)
 		data->base.odr = normalized_rate;
 
@@ -163,6 +159,7 @@ static int load_fifo(struct motion_sensor_t *s)
 	struct ec_response_motion_sensor_data vect;
 	int done = 0;
 	int *axis = s->raw_xyz;
+	uint8_t fifo[FIFO_READ_LEN];
 
 	/* Try to Empty FIFO */
 	do {
@@ -184,14 +181,14 @@ static int load_fifo(struct motion_sensor_t *s)
 		else
 			done = 1;
 
-		ret = raw_read_n(s->port, s->addr, LIS2DH_OUT_X_L_ADDR, fifo,
-				 nsamples, AUTO_INC);
+		ret = st_raw_read_n(s->port, s->addr, LIS2DH_OUT_X_L_ADDR, fifo,
+				 nsamples);
 		if (ret != EC_SUCCESS)
 			return ret;
 
 		for (i = 0; i < nsamples; i += OUT_XYZ_SIZE) {
 			/* Apply precision, sensitivity and rotation vector */
-			normalize(s, axis, &fifo[i]);
+			st_normalize(s, axis, &fifo[i]);
 
 			/* Fill vector array */
 			vect.data[0] = axis[0];
@@ -214,12 +211,13 @@ static int config_interrupt(const struct motion_sensor_t *s)
 
 #ifdef CONFIG_ACCEL_FIFO_THRES
 	/* configure FIFO watermark level */
-	ret = write_data_with_mask(s, LIS2DH_FIFO_CTRL_REG,
-				   LIS2DH_FIFO_THR_MASK, CONFIG_ACCEL_FIFO_THRES);
+	ret = st_write_data_with_mask(s, LIS2DH_FIFO_CTRL_REG,
+				   LIS2DH_FIFO_THR_MASK,
+				   CONFIG_ACCEL_FIFO_THRES);
 	if (ret != EC_SUCCESS)
 		return ret;
 	/* enable interrupt on FIFO watermask and route to int1 */
-	ret = write_data_with_mask(s, LIS2DH_CTRL3_ADDR,
+	ret = st_write_data_with_mask(s, LIS2DH_CTRL3_ADDR,
 				   LIS2DH_FIFO_WTM_INT_MASK, 1);
 #endif /* CONFIG_ACCEL_FIFO */
 
@@ -301,8 +299,8 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	}
 
 	/* Read output data bytes starting at LIS2DH_OUT_X_L_ADDR */
-	ret = raw_read_n(s->port, s->addr, LIS2DH_OUT_X_L_ADDR, raw,
-			 OUT_XYZ_SIZE, AUTO_INC);
+	ret = st_raw_read_n(s->port, s->addr, LIS2DH_OUT_X_L_ADDR, raw,
+			 OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RD XYZ Error]",
 			s->name, s->type);
@@ -310,7 +308,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	}
 
 	/* Transform from LSB to real data with rotation and gain */
-	normalize(s, v, raw);
+	st_normalize(s, v, raw);
 
 	/* apply offset in the device coordinates */
 	for (i = X; i <= Z; i++)
@@ -396,12 +394,12 @@ const struct accelgyro_drv lis2dh_drv = {
 	.read = read,
 	.set_range = set_range,
 	.get_range = get_range,
-	.set_resolution = set_resolution,
-	.get_resolution = get_resolution,
+	.set_resolution = st_set_resolution,
+	.get_resolution = st_get_resolution,
 	.set_data_rate = set_data_rate,
-	.get_data_rate = get_data_rate,
-	.set_offset = set_offset,
-	.get_offset = get_offset,
+	.get_data_rate = st_get_data_rate,
+	.set_offset = st_set_offset,
+	.get_offset = st_get_offset,
 	.perform_calib = NULL,
 #ifdef CONFIG_ACCEL_FIFO
 	.load_fifo = load_fifo,
