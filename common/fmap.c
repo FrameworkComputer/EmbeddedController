@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "common.h"
+#include "rsa.h"
 #include "util.h"
 #include "version.h"
 
@@ -61,7 +62,11 @@ struct fmap_area_header {
 	uint16_t area_flags;
 } __packed;
 
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+#define NUM_EC_FMAP_AREAS 9
+#else
 #define NUM_EC_FMAP_AREAS 7
+#endif
 
 const struct _ec_fmap {
 	struct fmap_header header;
@@ -136,6 +141,17 @@ const struct _ec_fmap {
 			.area_size = CONFIG_WP_STORAGE_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+		{
+			/* RO public key address, for RW verification */
+			.area_name = "KEY_RO",
+			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RO_PUBKEY_ADDR -
+				CONFIG_PROGRAM_MEMORY_BASE,
+			.area_size = CONFIG_RO_PUBKEY_SIZE,
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+#endif
 
 		/* RW Firmware */
 		{
@@ -162,5 +178,16 @@ const struct _ec_fmap {
 			.area_size = sizeof(version_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+		{
+			 /* RW image signature */
+			.area_name = "SIG_RW",
+			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RW_SIG_ADDR -
+				CONFIG_PROGRAM_MEMORY_BASE,
+			.area_size = CONFIG_RW_SIG_SIZE,
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+#endif
 	}
 };

@@ -4,6 +4,7 @@
  */
 
 #include "config.h"
+#include "rsa.h"
 
 OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
 OUTPUT_ARCH(BFD_ARCH)
@@ -25,6 +26,13 @@ SECTIONS
         *(.image.RO)
     } > FLASH =0xff
     . = ALIGN(CONFIG_FLASH_BANK_SIZE);
+
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+    .image.RO.key : AT(CONFIG_RO_PUBKEY_ADDR) {
+        *(.image.RO.key)
+    } > FLASH =0xff
+#endif
+
 #ifdef CONFIG_SHAREDLIB
     .image.libsharedobjs : AT(CONFIG_PROGRAM_MEMORY_BASE + \
                               CONFIG_SHAREDLIB_MEM_OFF) {
@@ -48,6 +56,11 @@ and RW images at different Flash offset */
 #endif
         *(.image.RW)
     } > FLASH =0xff
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+    .image.RW.sign : AT(CONFIG_RW_SIG_ADDR) {
+        *(.image.RW.sign)
+    } > FLASH =0xff
+#endif
 #ifdef CONFIG_RW_B_MEM_OFF
     .image.RW_B : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_B_MEM_OFF) {
         *(.image.RW_B)

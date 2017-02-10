@@ -15,6 +15,7 @@
 #include "system.h"
 #include "usb_pd.h"
 #include "util.h"
+#include "vb21_struct.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
@@ -24,12 +25,44 @@
 static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
 
+/*
+ * Check that memory between rwdata[start] and rwdata[len-1] is filled
+ * with ones. data, start and len must be aligned on 4-byte boundary.
+ */
+static int check_padding(const uint8_t *data,
+			 unsigned int start, unsigned int len)
+{
+	unsigned int i;
+	const uint32_t *data32 = (const uint32_t *)data;
+
+	if ((start % 4) != 0 || (len % 4) != 0)
+		return 0;
+
+	for (i = start/4; i < len/4; i++) {
+		if (data32[i] != 0xffffffff)
+			return 0;
+	}
+
+	return 1;
+}
+
 void check_rw_signature(void)
 {
 	struct sha256_ctx ctx;
-	int good, res;
+	int res;
+	const struct rsa_public_key *key;
+	const uint8_t *sig;
 	uint8_t *hash;
 	uint32_t *rsa_workbuf;
+	const uint8_t *rwdata = (uint8_t *)CONFIG_PROGRAM_MEMORY_BASE
+					+ CONFIG_RW_MEM_OFF;
+	int good = 0;
+
+	unsigned int rwlen;
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+	const struct vb21_packed_key *vb21_key;
+	const struct vb21_signature *vb21_sig;
+#endif
 
 	/* Only the Read-Only firmware needs to do the signature check */
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
@@ -48,17 +81,60 @@ void check_rw_signature(void)
 		return;
 	}
 
+#ifdef CONFIG_RWSIG_TYPE_USBPD1
+	key = (const struct rsa_public_key *)CONFIG_RO_PUBKEY_ADDR;
+	sig = (const uint8_t *)CONFIG_RW_SIG_ADDR;
+	rwlen = CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE;
+#elif defined(CONFIG_RWSIG_TYPE_RWSIG)
+	vb21_key = (const struct vb21_packed_key *)CONFIG_RO_PUBKEY_ADDR;
+	vb21_sig = (const struct vb21_signature *)CONFIG_RW_SIG_ADDR;
+
+	if (vb21_key->c.magic != VB21_MAGIC_PACKED_KEY ||
+	    vb21_key->key_size != sizeof(struct rsa_public_key)) {
+		CPRINTS("Invalid key.");
+		goto out;
+	}
+
+	key = (const struct rsa_public_key *)
+		((const uint8_t *)vb21_key + vb21_key->key_offset);
+
+	/*
+	 * TODO(crbug.com/690773): We could verify other parameters such
+	 * as sig_alg/hash_alg actually matches what we build for.
+	 */
+	if (vb21_sig->c.magic != VB21_MAGIC_SIGNATURE ||
+	    vb21_sig->sig_size != RSANUMBYTES ||
+	    vb21_key->sig_alg != vb21_sig->sig_alg ||
+	    vb21_key->hash_alg != vb21_sig->hash_alg ||
+	    /* Sanity check signature offset and data size. */
+	    vb21_sig->sig_offset < sizeof(vb21_sig) ||
+	    (vb21_sig->sig_offset + RSANUMBYTES) > CONFIG_RW_SIG_SIZE ||
+	    vb21_sig->data_size > (CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)) {
+		CPRINTS("Invalid signature.");
+		goto out;
+	}
+
+	sig = (const uint8_t *)vb21_sig + vb21_sig->sig_offset;
+	rwlen = vb21_sig->data_size;
+#endif
+
+	/*
+	 * Check that unverified RW region is actually filled with ones.
+	 */
+	good = check_padding(rwdata, rwlen,
+			CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
+	if (!good) {
+		CPRINTS("Invalid padding.");
+		goto out;
+	}
+
 	/* SHA-256 Hash of the RW firmware */
-	/* TODO(crosbug.com/p/44803): Do we have to hash the whole region? */
 	SHA256_init(&ctx);
-	SHA256_update(&ctx, (void *)CONFIG_PROGRAM_MEMORY_BASE
-		      + CONFIG_RW_MEM_OFF,
-		      CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
+	SHA256_update(&ctx, rwdata, rwlen);
 	hash = SHA256_final(&ctx);
 
-	good = rsa_verify((const struct rsa_public_key *)CONFIG_RO_PUBKEY_ADDR,
-			  (const uint8_t *)CONFIG_RW_SIG_ADDR,
-			  hash, rsa_workbuf);
+	good = rsa_verify(key, sig, hash, rsa_workbuf);
+out:
 	if (good) {
 		CPRINTS("RW image verified");
 		/* Jump to the RW firmware */

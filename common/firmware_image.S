@@ -8,17 +8,25 @@
 
 #include "config.h"
 
-#define FW_FILE(builddir,proj,sect,suffix) \
-	builddir##/##sect##/##proj##.##sect##suffix##.flat
+#define FW_FILE(builddir,proj,sect,suffix,ext) \
+	builddir##/##sect##/##proj##.##sect##suffix##.flat##ext
+
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
 #define FW_IMAGE(sect,suffix) \
-	STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect,suffix))
+	STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect,suffix,))
+#define FW_IMAGE_SIGN(sect,suffix) \
+	STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect,suffix,.sig))
 
 /* Read Only firmware */
 #ifdef CONFIG_FW_INCLUDE_RO
 .section .image.RO, "ax"
 .incbin FW_IMAGE(RO,)
+#endif
+
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+.section .image.RO.key, "a"
+.incbin STRINGIFY(FINAL_OUTDIR/key.vbpubk2)
 #endif
 
 /* Shared objects library */
@@ -30,6 +38,11 @@
 /* Read Write firmware */
 .section .image.RW, "ax"
 .incbin FW_IMAGE(RW,)
+
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+.section .image.RW.sign, "a"
+.incbin FW_IMAGE_SIGN(RW,)
+#endif
 
 #ifdef CONFIG_RW_B
 .section .image.RW_B, "ax"

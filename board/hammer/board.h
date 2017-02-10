@@ -78,6 +78,7 @@
 
 /* Sign and switch to RW partition on boot. */
 #define CONFIG_RWSIG
+#define CONFIG_RWSIG_TYPE_USBPD1
 #define CONFIG_RSA
 #define CONFIG_SHA256
 #define CONFIG_RSA_KEY_SIZE 2048

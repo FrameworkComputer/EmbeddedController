@@ -1755,6 +1755,15 @@
  * (for accessories without software sync)
  */
 #undef CONFIG_RWSIG
+
+/*
+ * Defines what type of futility signature type should be used.
+ * RWSIG should be used for new designs.
+ * Old adapters use the USBPD1 futility signature type.
+ */
+#undef CONFIG_RWSIG_TYPE_RWSIG
+#undef CONFIG_RWSIG_TYPE_USBPD1
+
 /*
  * By default the pubkey and sig are put at the end of the first and second
  * half of the total flash, and take up the minimum space possible. You can

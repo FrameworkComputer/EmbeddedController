@@ -21,6 +21,7 @@
 #define CONFIG_HW_CRC
 #define CONFIG_RSA
 #define CONFIG_RWSIG
+#define CONFIG_RWSIG_TYPE_USBPD1
 #define CONFIG_SHA256
 #define CONFIG_USB
 #define CONFIG_USB_BOS
