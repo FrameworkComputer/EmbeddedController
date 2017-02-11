@@ -430,6 +430,7 @@ static void board_chipset_pre_init(void)
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
 
 	/* Reset SPI2 */
+	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
