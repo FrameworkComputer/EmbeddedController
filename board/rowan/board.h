@@ -10,9 +10,11 @@
 
 /*
  * Allow dangerous commands.
- * TODO: Remove this config engineering velidation.
+ * TODO: Remove this config engineering validation.
  */
 #define CONFIG_SYSTEM_UNLOCKED
+#define CONFIG_CMD_SPI_XFER
+#define CONFIG_CMD_GPIO_EXTENDED
 
 /* Accelero meter and gyro sensor */
 #define CONFIG_ACCEL_KX022
