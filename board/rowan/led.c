@@ -27,19 +27,19 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
-	BAT_LED_BLUE = 0,
-	BAT_LED_ORANGE,
+	BAT_LED_RED = 0,
+	BAT_LED_GREEN,
 	LED_COLOR_COUNT		/* Number of colors, not a color itself */
 };
 
 static int bat_led_set(enum led_color color, int on)
 {
 	switch (color) {
-	case BAT_LED_BLUE:
-		gpio_set_level(GPIO_BAT_LED0, on); /* BAT_LED_BLUE */
+	case BAT_LED_RED:
+		gpio_set_level(GPIO_BAT_LED0, on); /* BAT_LED_RED */
 		break;
-	case BAT_LED_ORANGE:
-		gpio_set_level(GPIO_BAT_LED1, on); /* BAT_LED_ORANGE */
+	case BAT_LED_GREEN:
+		gpio_set_level(GPIO_BAT_LED1, on); /* BAT_LED_GREEN */
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -50,22 +50,22 @@ static int bat_led_set(enum led_color color, int on)
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	/* Ignoring led_id as both leds support the same colors */
-	brightness_range[EC_LED_COLOR_BLUE] = 1;
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
+	brightness_range[EC_LED_COLOR_RED] = 1;
+	brightness_range[EC_LED_COLOR_GREEN] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (EC_LED_ID_BATTERY_LED == led_id) {
-		if (brightness[EC_LED_COLOR_BLUE] != 0) {
-			bat_led_set(BAT_LED_BLUE, 1);
-			bat_led_set(BAT_LED_ORANGE, 0);
-		} else if (brightness[EC_LED_COLOR_AMBER] != 0) {
-			bat_led_set(BAT_LED_BLUE, 0);
-			bat_led_set(BAT_LED_ORANGE, 1);
+		if (brightness[EC_LED_COLOR_RED] != 0) {
+			bat_led_set(BAT_LED_RED, 1);
+			bat_led_set(BAT_LED_GREEN, 0);
+		} else if (brightness[EC_LED_COLOR_GREEN] != 0) {
+			bat_led_set(BAT_LED_RED, 0);
+			bat_led_set(BAT_LED_GREEN, 1);
 		} else {
-			bat_led_set(BAT_LED_BLUE, 0);
-			bat_led_set(BAT_LED_ORANGE, 0);
+			bat_led_set(BAT_LED_RED, 0);
+			bat_led_set(BAT_LED_GREEN, 0);
 		}
 		return EC_SUCCESS;
 	} else {
@@ -100,41 +100,41 @@ static void rowan_led_set_battery(void)
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
 		if (permillage < FULL_BATTERY_PERMILLAGE) {
-			bat_led_set(BAT_LED_BLUE, 0);
-			bat_led_set(BAT_LED_ORANGE, 1);
+			bat_led_set(BAT_LED_RED, 0);
+			bat_led_set(BAT_LED_GREEN, 1);
 		} else {
-			bat_led_set(BAT_LED_BLUE, 1);
-			bat_led_set(BAT_LED_ORANGE, 0);
+			bat_led_set(BAT_LED_RED, 1);
+			bat_led_set(BAT_LED_GREEN, 0);
 		}
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		bat_led_set(BAT_LED_BLUE, 1);
-		bat_led_set(BAT_LED_ORANGE, 0);
+		bat_led_set(BAT_LED_RED, 1);
+		bat_led_set(BAT_LED_GREEN, 0);
 		break;
 	case PWR_STATE_DISCHARGE:
-		bat_led_set(BAT_LED_BLUE, 0);
+		bat_led_set(BAT_LED_RED, 0);
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 		    permillage <= CRITICAL_LOW_BATTERY_PERMILLAGE)
-			bat_led_set(BAT_LED_ORANGE,
+			bat_led_set(BAT_LED_GREEN,
 				    (blink_second & 1) ? 0 : 1);
 		else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 			 permillage <= LOW_BATTERY_PERMILLAGE)
-			bat_led_set(BAT_LED_ORANGE,
+			bat_led_set(BAT_LED_GREEN,
 				    (blink_second & 3) ? 0 : 1);
 		else
-			bat_led_set(BAT_LED_ORANGE, 0);
+			bat_led_set(BAT_LED_GREEN, 0);
 		break;
 	case PWR_STATE_ERROR:
-		bat_led_set(BAT_LED_BLUE, 0);
-		bat_led_set(BAT_LED_ORANGE, (blink_second & 1) ? 0 : 1);
+		bat_led_set(BAT_LED_RED, 0);
+		bat_led_set(BAT_LED_GREEN, (blink_second & 1) ? 0 : 1);
 		break;
 	case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
 		if (charge_flags & CHARGE_FLAG_FORCE_IDLE) {
-			bat_led_set(BAT_LED_BLUE, (blink_second & 2) ? 0 : 1);
-			bat_led_set(BAT_LED_ORANGE, (blink_second & 2) ? 1 : 0);
+			bat_led_set(BAT_LED_RED, (blink_second & 2) ? 0 : 1);
+			bat_led_set(BAT_LED_GREEN, (blink_second & 2) ? 1 : 0);
 		} else {
-			bat_led_set(BAT_LED_BLUE, 1);
-			bat_led_set(BAT_LED_ORANGE, 0);
+			bat_led_set(BAT_LED_RED, 1);
+			bat_led_set(BAT_LED_GREEN, 0);
 		}
 		break;
 	default:
