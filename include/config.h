@@ -991,6 +991,11 @@
 #undef CONFIG_FLASH_PROTECT_NEXT_BOOT
 
 /*
+ * Some platforms need to write protect RW independently of all flash.
+ */
+#undef CONFIG_FLASH_PROTECT_RW
+
+/*
  * Store persistent write protect for the flash inside the flash data itself.
  * This allows ECs with internal flash to emulate something closer to a SPI
  * flash write protect register.  If this is not defined, write protect state

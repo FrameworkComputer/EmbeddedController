@@ -26,6 +26,13 @@
 #define PSTATE_BANK_COUNT	0
 #endif
 
+/* This enum is useful to identify different regions during verification. */
+enum flash_region {
+	FLASH_REGION_RW = 0,
+	FLASH_REGION_RO,
+	FLASH_REGION_COUNT
+};
+
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
 
