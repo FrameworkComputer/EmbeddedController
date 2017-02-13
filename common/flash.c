@@ -834,10 +834,10 @@ static int command_flash_wp(int argc, char **argv)
 	if (!strcasecmp(argv[1], "now"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
 
-	if (!strcasecmp(argv[1], "rw"))
+	if (!strcasecmp(argv[1], "all"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
 
-	if (!strcasecmp(argv[1], "norw"))
+	if (!strcasecmp(argv[1], "noall"))
 		return flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, 0);
 
 	/* Do this last, since anything starting with 'n' means "no" */
@@ -848,7 +848,7 @@ static int command_flash_wp(int argc, char **argv)
 	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
-			"<BOOLEAN> | now | rw | norw",
+			"<BOOLEAN> | now | all | noall",
 			"Modify flash write protect");
 
 /*****************************************************************************/
