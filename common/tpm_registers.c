@@ -727,8 +727,8 @@ static void tpm_reset_now(int wipe_first)
 		cprints(CC_TASK, "%s: force EC off", __func__);
 		assert_ec_rst();
 
-		/* Now wipe nvmem */
-		wipe_result = nvmem_setup();
+		/* Now wipe the TPM's nvmem */
+		wipe_result = nvmem_erase_user_data(NVMEM_TPM);
 	} else {
 		wipe_result = EC_SUCCESS;
 	}

@@ -358,34 +358,41 @@ static int nvmem_get_partition_off(int user, uint32_t offset,
 	return EC_SUCCESS;
 }
 
-int nvmem_setup(void)
+int nvmem_erase_user_data(enum nvmem_users user)
 {
 	int part;
 	int ret;
+	uint32_t user_offset, user_size;
 
-	CPRINTS("Configuring NVMEM Flash Partition");
+	if (user >= NVMEM_NUM_USERS)
+		return EC_ERROR_INVAL;
 
-	part = nvmem_act_partition;
-	nvmem_act_partition = 0;
+	CPRINTS("Erasing NVMEM Flash Partition user: %d", user);
 
 	ret = EC_SUCCESS;
+
+	/* Find offset within cache. */
+	user_offset = nvmem_user_start_offset[user];
+	user_size = nvmem_user_sizes[user];
 
 	for (part = 0; part < NVMEM_NUM_PARTITIONS; part++) {
 		int rv;
 
-		memset(nvmem_cache, 0xff, NVMEM_PARTITION_SIZE);
+		/* Lock the cache buffer. */
+		nvmem_lock_cache();
+		/* Erase the user's data. */
+		memset(nvmem_cache + user_offset, 0xFF, user_size);
+
 		/*
 		 * Make sure the contents change between runs of
-		 * nvmem_save() so that both flash partitions are
+		 * nvmem_save() so that all flash partitions are
 		 * written with empty contents and different
 		 * generation numbers.
 		 */
 		((struct nvmem_partition *)nvmem_cache)->tag.generation = part;
-		/* Lock the cache buffer (unlocked by nvmem_save() */
-		nvmem_lock_cache();
-		rv = nvmem_save();
 
-		/* Even if one partition saving failed, let's keep going. */
+		/* Make a best effort to clear each partition. */
+		rv = nvmem_save();
 		if (rv != EC_SUCCESS)
 			ret = rv;
 	}

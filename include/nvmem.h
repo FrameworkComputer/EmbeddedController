@@ -174,14 +174,13 @@ int nvmem_move(uint32_t src_offset, uint32_t dest_offset, uint32_t size,
 int nvmem_commit(void);
 
 /*
- * Reinitialzse all NvMem partitions
+ * Clear out a user's data across all partitions.
  *
- * This function should be called when NvMem needs to be wiped out.
- *
- * @return EC_SUCCESS if flash operations are successful.
- *         EC_ERROR_UNKNOWN otherwise.
+ * @param user:   The user who's data should be cleared.
+ * @return        EC_SUCCESS if the user's data across all partitions was
+ *                cleared.  Error othrwise.
  */
-int nvmem_setup(void);
+int nvmem_erase_user_data(enum nvmem_users user);
 
 /*
  * Temporarily stopping NVMEM commits could be beneficial. One use case is

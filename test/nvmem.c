@@ -175,41 +175,61 @@ static int test_configured_nvmem(void)
 	return nvmem_init();
 }
 
-/* Verify that nvmem_setup indeed reinitializes the entire NVMEM. */
-static int test_nvmem_setup(void)
+/* Verify that nvmem_erase_user_data only erases the given user's data. */
+static int test_nvmem_erase_user_data(void)
 {
 	uint32_t write_value;
 	uint32_t read_value;
+	int i;
 
 	nvmem_init();
 
-	write_value = 1;
+	/* Make sure all partitions have data in them. */
+	for (i = 0; i < NVMEM_NUM_PARTITIONS; i++) {
+		write_value = i;
+		nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
+		write_value = 2;
+		nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_1);
+		write_value = 3;
+		nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_2);
+		nvmem_commit();
+	}
 
-	/* Make sure both partitions have data in them. */
-	nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
-	nvmem_commit();
+	/* Check that the writes took place. */
 	read_value = ~write_value;
 	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
-	TEST_ASSERT(read_value == write_value);
+	TEST_ASSERT(read_value == i-1);
+	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_1);
+	TEST_ASSERT(read_value == 2);
+	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_2);
+	TEST_ASSERT(read_value == 3);
 
-	nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
-	nvmem_commit();
-	read_value = ~write_value;
-	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
-	TEST_ASSERT(read_value == write_value);
+	/*
+	 * nvmem_erase_user_data() is supposed to erase the user's data across
+	 * all partitions.
+	 */
+	nvmem_erase_user_data(NVMEM_USER_0);
 
-	/* nvmem_setup() is supposed to erase both partitions. */
-	nvmem_setup();
+	for (i = 0; i < NVMEM_NUM_PARTITIONS; i++) {
+		/* Make sure USER 0's data is (still) gone. */
+		nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
+		TEST_ASSERT(read_value == 0xffffffff);
 
-	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
-	TEST_ASSERT(read_value == 0xffffffff);
+		/* Make sure the other users' data has been untouched. */
+		nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_1);
+		TEST_ASSERT(read_value == 2);
 
-	/* Switch active partition. */
-	nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_0);
-	nvmem_commit();
-
-	nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_0);
-	TEST_ASSERT(read_value != 0xffffffff);
+		/*
+		 * The active partition changes when the contents of the cache
+		 * changes.  Therefore, in order to examine all the paritions,
+		 * we'll keep modifying one of the user's data.
+		 */
+		nvmem_read(0, sizeof(read_value), &read_value, NVMEM_USER_2);
+		TEST_ASSERT(read_value == (3+i));
+		write_value = 4 + i;
+		nvmem_write(0, sizeof(write_value), &write_value, NVMEM_USER_2);
+		nvmem_commit();
+	}
 
 	return EC_SUCCESS;
 }
@@ -689,7 +709,7 @@ void run_test(void)
 	RUN_TEST(test_move);
 	RUN_TEST(test_is_different);
 	RUN_TEST(test_lock);
-	RUN_TEST(test_nvmem_setup);
+	RUN_TEST(test_nvmem_erase_user_data);
 	RUN_TEST(test_nvmem_save);
 	test_print_result();
 }
