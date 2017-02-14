@@ -16,6 +16,8 @@ GPIO_INT(PD_MCU_INT,     PIN(C, 15), GPIO_INT_RISING,  pd_mcu_interrupt)       /
 GPIO_INT(BC12_CABLE_INT, PIN(C, 7),  GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt) /* interrupt from BC12 and CABLE_DET */
 GPIO_INT(POWER_BUTTON_L, PIN(B, 5),  GPIO_INT_BOTH | GPIO_PULL_UP,  power_button_interrupt)
 GPIO_INT(SPI1_NSS,       PIN(A, 4),  GPIO_INT_BOTH | GPIO_PULL_UP,  spi_event) /* SPI Chip Select */
+GPIO_INT(VOLUME_DOWN_L,  PIN(A, 14), GPIO_INT_BOTH, button_interrupt)
+GPIO_INT(VOLUME_UP_L,    PIN(A, 13), GPIO_INT_BOTH, button_interrupt)
 
 /* Inputs without interrupt handlers */
 GPIO(5V_POWER_GOOD,      PIN(A, 1),  GPIO_INPUT)

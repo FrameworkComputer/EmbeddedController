@@ -16,6 +16,10 @@
 #define CONFIG_CMD_SPI_XFER
 #define CONFIG_CMD_GPIO_EXTENDED
 
+/* Button */
+#define CONFIG_BUTTON_COUNT 2
+#define CONFIG_BUTTON_RECOVERY
+
 /* Accelero meter and gyro sensor */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ALS_ISL29035
@@ -180,6 +184,12 @@ enum adc_channel {
 	ADC_AMON_BMON, /* PC0: STM32_AIN(10) */
 	ADC_VBUS,      /* PA2: STM32_AIN(11) */
 	ADC_CH_COUNT
+};
+
+enum button {
+	BUTTON_VOLUME_DOWN = 0,
+	BUTTON_VOLUME_UP = 1,
+	BUTTON_COUNT
 };
 
 enum temp_sensor_id {
