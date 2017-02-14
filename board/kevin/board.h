@@ -195,6 +195,12 @@
 #undef CONFIG_CONSOLE_HISTORY
 #undef CONFIG_EC_CMD_PD_CHIP_INFO
 
+/* Gru is especially limited on code space */
+#ifdef BOARD_GRU
+#undef CONFIG_CMD_I2C_XFER
+#undef CONFIG_CMD_SHMEM
+#endif
+
 /*
  * Remove task profiling to improve SHI interrupt latency.
  * TODO(crosbug.com/p/55710): Re-define once interrupt latency is within
