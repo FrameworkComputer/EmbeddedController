@@ -193,7 +193,7 @@ void system_pre_init(void)
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* Enable access to RCC CSR register and RTC backup registers */
 	STM32_PWR_CR |= 1 << 8;
-#ifdef CHIP_FAMILY_STM32L4
+#ifdef CHIP_VARIANT_STM32L476
 	/* Enable Vddio2 */
 	STM32_PWR_CR2 |= 1 << 9;
 #endif

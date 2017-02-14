@@ -36,6 +36,8 @@
 #include "config-stm32l15x.h"
 #elif defined(CHIP_VARIANT_STM32L100)
 #include "config-stm32l100.h"
+#elif defined(CHIP_VARIANT_STM32L442)
+#include "config-stm32l442.h"
 #elif defined(CHIP_VARIANT_STM32F446)
 #include "config-stm32f446.h"
 #elif defined(CHIP_VARIANT_STM32F373)

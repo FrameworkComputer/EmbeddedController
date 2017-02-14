@@ -29,7 +29,7 @@ enum clock_osc {
 	OSC_PLL,	/* PLL */
 };
 
-static int freq;
+static int freq = STM32_MSI_CLOCK;
 static int current_osc;
 
 int clock_get_freq(void)

@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "shared_mem.h"
 #include "spi.h"
+#include "stm32-dma.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -18,10 +19,18 @@
 /* The second (and third if available) SPI port are used as master */
 static stm32_spi_regs_t *SPI_REGS[] = {
 	STM32_SPI2_REGS,
-#ifdef CHIP_VARIANT_STM32F373
+#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4)
 	STM32_SPI3_REGS,
 #endif
 };
+
+#ifdef CHIP_FAMILY_STM32L4
+/* DMA request mapping on channels */
+static uint8_t dma_req[ARRAY_SIZE(SPI_REGS)] = {
+	/* SPI2 */ 1,
+	/* SPI3 */ 3,
+};
+#endif
 
 static struct mutex spi_mutex[ARRAY_SIZE(SPI_REGS)];
 
@@ -33,7 +42,7 @@ static const struct dma_option dma_tx_option[] = {
 		STM32_DMAC_SPI2_TX, (void *)&STM32_SPI2_REGS->dr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 	},
-#ifdef CHIP_VARIANT_STM32F373
+#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4)
 	{
 		STM32_DMAC_SPI3_TX, (void *)&STM32_SPI3_REGS->dr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
@@ -46,7 +55,7 @@ static const struct dma_option dma_rx_option[] = {
 		STM32_DMAC_SPI2_RX, (void *)&STM32_SPI2_REGS->dr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 	},
-#ifdef CHIP_VARIANT_STM32F373
+#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4)
 	{
 		STM32_DMAC_SPI3_RX, (void *)&STM32_SPI3_REGS->dr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
@@ -77,6 +86,10 @@ static int spi_master_initialize(int port)
 	spi->cr1 = STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI |
 		(div << 3);
 
+#ifdef CHIP_FAMILY_STM32L4
+	dma_select_channel(dma_tx_option[port].channel, dma_req[port]);
+	dma_select_channel(dma_rx_option[port].channel, dma_req[port]);
+#endif
 	/*
 	 * Configure 8-bit datasize, set FRXTH, enable DMA,
 	 * and enable NSS output
