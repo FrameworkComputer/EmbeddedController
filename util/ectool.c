@@ -909,12 +909,16 @@ static void print_flash_protect_flags(const char *desc, uint32_t flags)
 		printf(" ro_at_boot");
 	if (flags & EC_FLASH_PROTECT_RW_AT_BOOT)
 		printf(" rw_at_boot");
+	if (flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)
+		printf(" rollback_at_boot");
 	if (flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
 		printf(" all_at_boot");
 	if (flags & EC_FLASH_PROTECT_RO_NOW)
 		printf(" ro_now");
 	if (flags & EC_FLASH_PROTECT_RW_NOW)
 		printf(" rw_now");
+	if (flags & EC_FLASH_PROTECT_ROLLBACK_NOW)
+		printf(" rollback_now");
 	if (flags & EC_FLASH_PROTECT_ALL_NOW)
 		printf(" all_now");
 	if (flags & EC_FLASH_PROTECT_ERROR_STUCK)

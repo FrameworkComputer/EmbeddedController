@@ -1113,6 +1113,15 @@
 #undef CONFIG_WP_STORAGE_SIZE
 
 /*
+ * Rollback protect region. If CONFIG_ROLLBACK is defined to enable the rollback
+ * protect region, CONFIG_ROLLBACK_OFF and CONFIG_ROLLBACK_SIZE must be defined
+ * too.
+ */
+#undef CONFIG_ROLLBACK
+#undef CONFIG_ROLLBACK_OFF
+#undef CONFIG_ROLLBACK_SIZE
+
+/*
  * Board Image ec.bin contains a RO firmware.  If not defined, the image will
  * only contain the RW firmware. The RO firmware comes from another board.
  */

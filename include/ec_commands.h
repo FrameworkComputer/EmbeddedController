@@ -1213,6 +1213,10 @@ struct __ec_align4 ec_params_flash_erase {
 #define EC_FLASH_PROTECT_RW_AT_BOOT         (1 << 7)
 /* RW flash code protected now. */
 #define EC_FLASH_PROTECT_RW_NOW             (1 << 8)
+/* Rollback information flash region protected when the EC boots */
+#define EC_FLASH_PROTECT_ROLLBACK_AT_BOOT   (1 << 9)
+/* Rollback information flash region protected now */
+#define EC_FLASH_PROTECT_ROLLBACK_NOW       (1 << 10)
 
 struct __ec_align4 ec_params_flash_protect {
 	uint32_t mask;   /* Bits in flags to apply */

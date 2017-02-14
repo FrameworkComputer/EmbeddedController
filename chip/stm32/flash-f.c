@@ -356,6 +356,11 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 		if (block >= WP_BANK_OFFSET &&
 		    block < WP_BANK_OFFSET + WP_BANK_COUNT)
 			protect |= new_flags & EC_FLASH_PROTECT_RO_AT_BOOT;
+#ifdef CONFIG_ROLLBACK
+		else if (block >= ROLLBACK_BANK_OFFSET &&
+			 block < ROLLBACK_BANK_OFFSET + ROLLBACK_BANK_COUNT)
+			protect |= new_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
+#endif
 #ifdef CONFIG_FLASH_PROTECT_RW
 		else
 			protect |= new_flags & EC_FLASH_PROTECT_RW_AT_BOOT;
@@ -485,6 +490,15 @@ int flash_pre_init(void)
 	    (!!(prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_RW_NOW))) {
 		/* RW_AT_BOOT and RW_NOW do not match. */
+		need_reset = 1;
+	}
+#endif
+
+#ifdef CONFIG_ROLLBACK
+	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
+	    (!!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) !=
+	     !!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_NOW))) {
+		/* ROLLBACK_AT_BOOT and ROLLBACK_NOW do not match. */
 		need_reset = 1;
 	}
 #endif
