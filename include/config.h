@@ -1848,6 +1848,9 @@
 /* SPI flash part supports SR2 register */
 #undef CONFIG_SPI_FLASH_HAS_SR2
 
+/* Define the SPI port to use to access the fingerprint sensor */
+#undef CONFIG_SPI_FP_PORT
+
 /* Support JEDEC SFDP based Serial NOR flash */
 #undef CONFIG_SPI_NOR
 
