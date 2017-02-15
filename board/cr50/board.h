@@ -28,6 +28,7 @@
 
 #ifndef CR50_DEV
 /* Disable stuff that should only be in debug builds */
+#undef CONFIG_CMD_CRASH
 #undef CONFIG_CMD_MD
 #undef CONFIG_CMD_RW
 #undef CONFIG_CMD_SLEEPMASK
