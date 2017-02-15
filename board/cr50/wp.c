@@ -161,7 +161,8 @@ static void unlock_the_console(void)
 		 */
 		CPRINTS("%s: Couldn't wipe nvmem! (rc %d)", __func__, rc);
 		cflush();
-		system_reset(SYSTEM_RESET_HARD);
+		system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED |
+			     SYSTEM_RESET_HARD);
 	}
 
 	CPRINTS("TPM is erased");

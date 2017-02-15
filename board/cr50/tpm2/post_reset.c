@@ -30,7 +30,8 @@ static enum vendor_cmd_rc immediate_reset(enum vendor_cmd_cc code,
 {
 	CPRINTS("%s: rebooting on host's request", __func__);
 	cflush(); /* Let the console drain. */
-	system_reset(SYSTEM_RESET_HARD);  /* This will never return. */
+	/* This will never return. */
+	system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD);
 
 	/* Never reached. */
 	return VENDOR_RC_SUCCESS;

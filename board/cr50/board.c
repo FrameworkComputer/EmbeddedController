@@ -628,7 +628,9 @@ static void deferred_tpm_rst_isr(void)
 	 * committed before reboot.
 	 */
 	tpm_reset_request(1, 0);
-	system_reset(SYSTEM_RESET_HARD);  /* This will never return. */
+
+	/* This will never return. */
+	system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD);
 }
 
 /* This is the interrupt handler to react to TPM_RST_L */

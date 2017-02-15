@@ -1042,7 +1042,7 @@ DECLARE_CONSOLE_COMMAND(sysjump, command_sysjump,
 
 static int command_reboot(int argc, char **argv)
 {
-	int flags = 0;
+	int flags = SYSTEM_RESET_MANUALLY_TRIGGERED;
 	int i;
 
 	for (i = 1; i < argc; i++) {

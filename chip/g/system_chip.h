@@ -24,6 +24,13 @@ int system_process_retry_counter(void);
 void system_clear_retry_counter(void);
 
 /**
+ * A function provided by some platforms to decrement a retry counter.
+ *
+ * This should be used whenever a system reset is manually triggered.
+ */
+void system_decrement_retry_counter(void);
+
+/**
  * A function provided by some platforms to hint that something is going
  * wrong.
  *

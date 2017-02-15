@@ -12,6 +12,7 @@
 #include "registers.h"
 #include "signed_header.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "version.h"
 
@@ -94,6 +95,13 @@ void system_reset(int flags)
 	interrupt_disable();
 
 #ifdef BOARD_CR50
+	/*
+	 * Decrement the retry counter on manually triggered reboots.  We were
+	 * able to process the console command, therefore we're probably okay.
+	 */
+	if (flags & SYSTEM_RESET_MANUALLY_TRIGGERED)
+		system_decrement_retry_counter();
+
 	/*
 	 * On CR50 we want every reset be hard reset, causing the entire
 	 * chromebook to reboot: we don't want the TPM reset while the AP
@@ -334,6 +342,17 @@ void system_clear_retry_counter(void)
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
 	GREG32(PMU, LONG_LIFE_SCRATCH0) = 0;
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
+}
+
+void system_decrement_retry_counter(void)
+{
+	uint32_t val = GREG32(PMU, LONG_LIFE_SCRATCH0);
+
+	if (val != 0) {
+		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
+		GREG32(PMU, LONG_LIFE_SCRATCH0) = val - 1;
+		GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
+	}
 }
 
 /*
