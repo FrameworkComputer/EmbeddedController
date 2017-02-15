@@ -369,7 +369,8 @@ void board_configure_deep_sleep_wakepins(void)
 	 * resume.
 	 */
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA12, 0); /* SPS_CS_L */
-	/* TODO remove i2cs wake event */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 0);  /* I2CS_SDA */
+	GWRITE_FIELD(PINMUX, EXITEN0, DIOA9, 0);  /* I2CS_SCL */
 
 	/* Remove the pulldown on EC uart tx and disable the input */
 	GWRITE_FIELD(PINMUX, DIOB5_CTL, PD, 0);
