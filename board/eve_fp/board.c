@@ -16,14 +16,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-/* Interrupt line from the fingerprint senser */
-void fps_event(enum gpio_signal signal)
-{
-	/* HACK: Forward interrupt to AP */
-	gpio_set_level(GPIO_AP_INT, gpio_get_level(GPIO_FPS_INT));
-	CPRINTS("FPS %d\n", gpio_get_level(GPIO_FPS_INT));
-}
-
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor */

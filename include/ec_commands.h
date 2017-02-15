@@ -2794,6 +2794,9 @@ enum ec_mkbp_event {
 	/* The state of the switches have changed. */
 	EC_MKBP_EVENT_SWITCH = 4,
 
+	/* New Fingerprint sensor event, the event data is fp_events bitmap. */
+	EC_MKBP_EVENT_FINGERPRINT = 5,
+
 	/* Number of MKBP events */
 	EC_MKBP_EVENT_COUNT,
 };
@@ -2813,6 +2816,8 @@ union __ec_align_offset1 ec_response_get_next_data {
 	uint32_t buttons;
 
 	uint32_t switches;
+
+	uint32_t fp_events;
 };
 
 struct __ec_align1 ec_response_get_next_event {

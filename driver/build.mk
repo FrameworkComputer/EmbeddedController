@@ -109,3 +109,6 @@ driver-$(CONFIG_SB_FIRMWARE_UPDATE)+=battery/sb_fw_update.o
 
 # video converters
 driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o
+
+# Fingerprint sensor
+driver-$(HAS_TASK_FPC1140)+=fpc1140.o
