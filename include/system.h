@@ -267,15 +267,34 @@ const char *system_get_chip_vendor(void);
 const char *system_get_chip_name(void);
 const char *system_get_chip_revision(void);
 
-/**
- * Get/Set VbNvContext in non-volatile storage.  The block should be 16 bytes
- * long, which is the current size of VbNvContext block.
- *
- * @param block		Pointer to a buffer holding VbNvContext.
- * @return 0 on success, !0 on error.
+/*
+ * Common bbram entries. Chips don't necessarily need to implement
+ * all of these, error will be returned from system_get/set_bbram if
+ * not implemented.
  */
-int system_get_vbnvcontext(uint8_t *block);
-int system_set_vbnvcontext(const uint8_t *block);
+enum system_bbram_idx {
+	/*
+	 * TODO(crbug.com/693210): Consider boards without vbnvcontext
+	 * host command.
+	 */
+	SYSTEM_BBRAM_IDX_VBNVBLOCK0 = 0,
+	/*
+	 * ...
+	 * 16 total bytes of VB NVRAM.
+	 * ...
+	 */
+	SYSTEM_BBRAM_IDX_VBNVBLOCK15 = 15,
+};
+
+/**
+ * Get/Set byte in battery-backed storage.
+ *
+ * @param idx		bbram byte to get / set.
+ * @param value		byte to read / write from / to bbram.
+ * @return		0 on success, !0 on error.
+ */
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value);
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value);
 
 /**
  * Put the EC in hibernate (lowest EC power state).

@@ -1227,17 +1227,22 @@ int host_command_vbnvcontext(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vbnvcontext *p = args->params;
 	struct ec_response_vbnvcontext *r;
+	int i;
 
 	switch (p->op) {
 	case EC_VBNV_CONTEXT_OP_READ:
 		r = args->response;
-		if (system_get_vbnvcontext(r->block))
-			return EC_RES_ERROR;
+		for (i = 0; i < EC_VBNV_BLOCK_SIZE; ++i)
+			if (system_get_bbram(SYSTEM_BBRAM_IDX_VBNVBLOCK0 + i,
+					     r->block + i))
+				return EC_RES_ERROR;
 		args->response_size = sizeof(*r);
 		break;
 	case EC_VBNV_CONTEXT_OP_WRITE:
-		if (system_set_vbnvcontext(p->block))
-			return EC_RES_ERROR;
+		for (i = 0; i < EC_VBNV_BLOCK_SIZE; ++i)
+			if (system_set_bbram(SYSTEM_BBRAM_IDX_VBNVBLOCK0 + i,
+					     p->block[i]))
+				return EC_RES_ERROR;
 		break;
 	default:
 		return EC_RES_ERROR;

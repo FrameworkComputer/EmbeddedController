@@ -600,12 +600,12 @@ const char *system_get_chip_name(void)
 	}
 }
 
-int system_get_vbnvcontext(uint8_t *block)
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int system_set_vbnvcontext(const uint8_t *block)
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }

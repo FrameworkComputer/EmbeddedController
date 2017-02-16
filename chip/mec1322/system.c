@@ -23,7 +23,7 @@
 /* Indices for hibernate data registers (RAM backed by VBAT) */
 enum hibdata_index {
 	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratchpad */
-	HIBDATA_INDEX_SAVED_RESET_FLAGS  /* Saved reset flags */
+	HIBDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
 };
 
 static void check_reset_cause(void)
@@ -166,14 +166,30 @@ const char *system_get_chip_revision(void)
 	return buf;
 }
 
-int system_get_vbnvcontext(uint8_t *block)
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	enum hibdata_index hibdata;
+
+	switch (idx) {
+	default:
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	*value = MEC1322_VBAT_RAM(hibdata);
+	return EC_SUCCESS;
 }
 
-int system_set_vbnvcontext(const uint8_t *block)
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	enum hibdata_index hibdata;
+
+	switch (idx) {
+	default:
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	MEC1322_VBAT_RAM(hibdata) = value;
+	return EC_SUCCESS;
 }
 
 int system_set_scratchpad(uint32_t value)

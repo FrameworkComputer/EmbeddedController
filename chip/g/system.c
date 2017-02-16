@@ -231,12 +231,12 @@ int system_battery_cutoff_support_required(void)
 }
 
 /* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
-int system_get_vbnvcontext(uint8_t *block)
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
 	return 0;
 }
 
-int system_set_vbnvcontext(const uint8_t *block)
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 {
 	return 0;
 }

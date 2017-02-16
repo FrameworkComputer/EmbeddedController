@@ -226,25 +226,37 @@ const char *system_get_chip_revision(void)
 	return buf;
 }
 
-int system_get_vbnvcontext(uint8_t *block)
+static int bram_idx_lookup(enum system_bbram_idx idx)
 {
-	int i;
+	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
+	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
+		return BRAM_IDX_NVCONTEXT +
+		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
+	return -1;
+}
 
-	for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++)
-		block[i] = IT83XX_BRAM_BANK0((BRAM_IDX_NVCONTEXT + i));
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
+{
+	int bram_idx = bram_idx_lookup(idx);
 
+	if (bram_idx < 0)
+		return EC_ERROR_INVAL;
+
+	*value = IT83XX_BRAM_BANK0(bram_idx);
 	return EC_SUCCESS;
 }
 
-int system_set_vbnvcontext(const uint8_t *block)
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 {
-	int i;
+	int bram_idx = bram_idx_lookup(idx);
 
-	for (i = 0; i < EC_VBNV_BLOCK_SIZE; i++)
-		IT83XX_BRAM_BANK0((BRAM_IDX_NVCONTEXT + i)) = block[i];
+	if (bram_idx < 0)
+		return EC_ERROR_INVAL;
 
+	IT83XX_BRAM_BANK0(bram_idx) = value;
 	return EC_SUCCESS;
 }
+
 #define BRAM_NVCONTEXT_SIZE (BRAM_IDX_NVCONTEXT_END - BRAM_IDX_NVCONTEXT + 1)
 BUILD_ASSERT(EC_VBNV_BLOCK_SIZE <= BRAM_NVCONTEXT_SIZE);
 

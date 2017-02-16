@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -76,12 +76,12 @@ const char *system_get_chip_revision(void)
 	return buf;
 }
 
-int system_get_vbnvcontext(uint8_t *block)
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
-int system_set_vbnvcontext(const uint8_t *block)
+int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
