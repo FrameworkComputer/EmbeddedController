@@ -75,10 +75,9 @@ static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 
 static void anx74xx_set_power_mode(int port, int mode)
 {
-	int reg;
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	int reg;
 	anx[port].prev_mode = mode;
-#endif
 
 	tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_0, &reg);
 
@@ -97,8 +96,9 @@ static void anx74xx_set_power_mode(int port, int mode)
 
 	/* Delay recommended by Analogix for CABLE_DET setup time */
 	msleep(2);
+#endif
 
-	board_set_tcpc_power_mode(port, mode);
+	board_set_tcpc_power_mode(port, mode == ANX74XX_NORMAL_MODE);
 }
 
 void anx74xx_tcpc_set_vbus(int port, int enable)
@@ -569,8 +569,8 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 	return rv;
 }
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
 void anx74xx_handle_power_mode(int port, int mode)
 {
 	if (mode == ANX74XX_STANDBY_MODE) {
@@ -583,16 +583,13 @@ void anx74xx_handle_power_mode(int port, int mode)
 		anx74xx_tcpm_init(port);
 	}
 }
-#endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 static int anx74xx_tcpc_drp_toggle(int port)
 {
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	anx74xx_handle_power_mode(port, ANX74XX_STANDBY_MODE);
-#endif
 	return EC_SUCCESS;
 }
-#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
+#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE && CONFIG_USB_PD_TCPC_LOW_POWER */
 
 static int anx74xx_tcpm_set_polarity(int port, int polarity)
 {
@@ -950,7 +947,8 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 	.tcpc_discharge_vbus	= &anx74xx_tcpc_discharge_vbus,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+		defined(CONFIG_USB_PD_TCPC_LOW_POWER)
 	.drp_toggle		= &anx74xx_tcpc_drp_toggle,
 #endif
 };
