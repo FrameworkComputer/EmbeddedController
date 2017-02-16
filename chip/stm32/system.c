@@ -34,6 +34,8 @@ enum bkpdata_index {
 	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
 	BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, /* Saved panic exception code */
 #endif
+	BKPDATA_INDEX_PD0,		     /* USB-PD saved port0 state */
+	BKPDATA_INDEX_PD1,		     /* USB-PD saved port1 state */
 };
 
 /**
@@ -346,6 +348,12 @@ static int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb)
 		return BKPDATA_INDEX_VBNV_CONTEXT0 +
 		       (idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0) / 2;
 	}
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	if (idx == SYSTEM_BBRAM_IDX_PD0)
+		return BKPDATA_INDEX_PD0;
+	if (idx == SYSTEM_BBRAM_IDX_PD1)
+		return BKPDATA_INDEX_PD1;
+#endif
 	return -1;
 }
 

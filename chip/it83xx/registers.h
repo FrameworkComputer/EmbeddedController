@@ -1078,7 +1078,11 @@ enum bram_indices {
 	BRAM_IDX_RESET_FLAGS2 = 2,
 	BRAM_IDX_RESET_FLAGS3 = 3,
 
-	/* index 4 ~ 7 are reserved */
+	/* PD state data for CONFIG_USB_PD_DUAL_ROLE uses 2 bytes */
+	BRAM_IDX_PD0 =           4,
+	BRAM_IDX_PD1 =           5,
+
+	/* index 6 ~ 7 are reserved */
 
 	BRAM_IDX_SCRATCHPAD   = 8,
 	BRAM_IDX_SCRATCHPAD1  = 9,

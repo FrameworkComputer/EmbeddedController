@@ -479,6 +479,25 @@ static int send_request(int port, uint32_t rdo)
 
 	return bit_len;
 }
+
+static int pd_get_saved_active(int port)
+{
+	uint8_t val;
+
+	if (system_get_bbram(port ? SYSTEM_BBRAM_IDX_PD1 :
+				    SYSTEM_BBRAM_IDX_PD0, &val)) {
+		CPRINTS("PD NVRAM FAIL");
+		return 0;
+	}
+	return !!val;
+}
+
+static void pd_set_saved_active(int port, int val)
+{
+	if (system_set_bbram(port ? SYSTEM_BBRAM_IDX_PD1 :
+				    SYSTEM_BBRAM_IDX_PD0, val))
+		CPRINTS("PD NVRAM FAIL");
+}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -785,6 +804,9 @@ static void handle_data_request(int port, uint16_t head,
 
 				/* explicit contract is now in place */
 				pd[port].flags |= PD_FLAGS_EXPLICIT_CONTRACT;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+				pd_set_saved_active(port, 1);
+#endif
 				pd[port].requested_idx = RDO_POS(payload[0]);
 				set_state(port, PD_STATE_SRC_ACCEPTED);
 				return;
@@ -1070,6 +1092,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 		} else if (pd[port].task_state == PD_STATE_SNK_REQUESTED) {
 			/* explicit contract is now in place */
 			pd[port].flags |= PD_FLAGS_EXPLICIT_CONTRACT;
+			pd_set_saved_active(port, 1);
 			set_state(port, PD_STATE_SNK_TRANSITION);
 #endif
 		}
@@ -1429,11 +1452,12 @@ static void pd_partner_port_reset(int port)
 	uint64_t timeout;
 
 	/*
-	 * If we already ran RO, then PD comms were disabled, and we are
-	 * already in a known state. Likewise, if the board is powering up,
-	 * we're also in a known state.
+	 * Check our battery-backed previous port state. If PD comms were
+	 * active, and we didn't just lose power, make sure we
+	 * don't boot into RO with a pre-existing power contract.
 	 */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RO ||
+	if (!pd_get_saved_active(port) ||
+	   system_get_image_copy() != SYSTEM_IMAGE_RO ||
 	   system_get_reset_flags() &
 	   (RESET_FLAG_BROWNOUT | RESET_FLAG_POWER_ON))
 		return;
@@ -1444,6 +1468,7 @@ static void pd_partner_port_reset(int port)
 
 	while (get_time().val < timeout && pd_is_vbus_present(port))
 		msleep(10);
+	pd_set_saved_active(port, 0);
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 

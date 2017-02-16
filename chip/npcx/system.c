@@ -87,7 +87,12 @@ void system_watchdog_reset(void)
 static int bbram_is_byte_access(enum bbram_data_index index)
 {
 	return (index >= BBRM_DATA_INDEX_VBNVCNTXT &&
-		index <  BBRM_DATA_INDEX_RAMLOG);
+		index <  BBRM_DATA_INDEX_RAMLOG)
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+		|| index == BBRM_DATA_INDEX_PD0
+		|| index == BBRM_DATA_INDEX_PD1
+#endif
+	;
 }
 
 /**
@@ -158,6 +163,12 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
 		return BBRM_DATA_INDEX_VBNVCNTXT +
 		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	if (idx == SYSTEM_BBRAM_IDX_PD0)
+		return BBRM_DATA_INDEX_PD0;
+	if (idx == SYSTEM_BBRAM_IDX_PD1)
+		return BBRM_DATA_INDEX_PD1;
+#endif
 	return -1;
 }
 

@@ -24,6 +24,8 @@
 enum hibdata_index {
 	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratchpad */
 	HIBDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
+	HIBDATA_INDEX_PD0,               /* USB-PD0 saved port state */
+	HIBDATA_INDEX_PD1,               /* USB-PD1 saved port state */
 };
 
 static void check_reset_cause(void)
@@ -166,14 +168,26 @@ const char *system_get_chip_revision(void)
 	return buf;
 }
 
+static int bbram_idx_lookup(enum system_bbram_idx idx)
+{
+	switch (idx) {
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	case SYSTEM_BBRAM_IDX_PD0:
+		return HIBDATA_INDEX_PD0;
+	case SYSTEM_BBRAM_IDX_PD1:
+		return HIBDATA_INDEX_PD1;
+#endif
+	default:
+		return -1;
+	}
+}
+
 int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
-	enum hibdata_index hibdata;
+	int hibdata = bbram_idx_lookup(idx);
 
-	switch (idx) {
-	default:
+	if (hibdata < 0)
 		return EC_ERROR_UNIMPLEMENTED;
-	}
 
 	*value = MEC1322_VBAT_RAM(hibdata);
 	return EC_SUCCESS;
@@ -181,12 +195,10 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 
 int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 {
-	enum hibdata_index hibdata;
+	int hibdata = bbram_idx_lookup(idx);
 
-	switch (idx) {
-	default:
+	if (hibdata < 0)
 		return EC_ERROR_UNIMPLEMENTED;
-	}
 
 	MEC1322_VBAT_RAM(hibdata) = value;
 	return EC_SUCCESS;
