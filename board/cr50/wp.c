@@ -12,6 +12,7 @@
 #include "registers.h"
 #include "scratch_reg1.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "timer.h"
 #include "tpm_registers.h"

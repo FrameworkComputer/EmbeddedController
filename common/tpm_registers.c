@@ -18,6 +18,7 @@
 #include "printf.h"
 #include "signed_header.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "tpm_manufacture.h"
 #include "tpm_registers.h"
