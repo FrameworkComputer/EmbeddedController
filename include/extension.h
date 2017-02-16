@@ -26,8 +26,12 @@ typedef enum vendor_cmd_rc (*extension_handler)(enum vendor_cmd_cc code,
 						size_t command_size,
 						size_t *response_size);
 
-/*
+/**
  * Find handler for an extension command.
+ *
+ * Use the interface specific function call in order to check the policies for
+ * handling the commands on that interface.
+ *
  * @param command_code Code associated with a extension command handler.
  * @param buffer       Data to be processd by the handler, the same space
  *                     is used for data returned by the handler.
@@ -36,10 +40,14 @@ typedef enum vendor_cmd_rc (*extension_handler)(enum vendor_cmd_cc code,
  *                     data returned by the handler. A single byte return
  *                     usually indicates an error and contains the error code.
  */
-uint32_t extension_route_command(uint16_t command_code,
-				 void *buffer,
-				 size_t command_size,
-				 size_t *size);
+uint32_t usb_extension_route_command(uint16_t command_code,
+				     void *buffer,
+				     size_t command_size,
+				     size_t *size);
+uint32_t tpm_extension_route_command(uint16_t command_code,
+				     void *buffer,
+				     size_t command_size,
+				     size_t *size);
 
 /* Pointer table */
 struct extension_command {

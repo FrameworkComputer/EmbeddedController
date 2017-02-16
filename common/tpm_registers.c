@@ -626,11 +626,11 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 		*total_size -= sizeof(struct tpm_cmd_header);
 
 		subcommand_code = be16toh(tpmh->subcommand_code);
-		rc = extension_route_command(subcommand_code,
-					     tpmh + 1,
-					     command_size -
-					     sizeof(struct tpm_cmd_header),
-					     total_size);
+		rc = tpm_extension_route_command(subcommand_code,
+						 tpmh + 1,
+						 command_size -
+						 sizeof(struct tpm_cmd_header),
+						 total_size);
 		/* Add the header size back. */
 		*total_size += sizeof(struct tpm_cmd_header);
 		tpmh->size = htobe32(*total_size);
