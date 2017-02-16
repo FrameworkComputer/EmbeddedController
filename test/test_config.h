@@ -203,6 +203,10 @@ enum nvmem_users {
 #define CONFIG_FLASH_NVMEM_VARS_USER_SIZE 600
 #endif	/* TEST_NVMEM_VARS */
 
+#ifdef TEST_X25519
+#define CONFIG_CURVE25519
+#endif /* TEST_X25519 */
+
 #ifndef __ASSEMBLER__
 /* Callback function from charge_manager to send host event */
 static inline void pd_send_host_event(int mask) { }

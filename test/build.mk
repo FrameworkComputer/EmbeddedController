@@ -73,6 +73,7 @@ test-list-host += timer_dos
 test-list-host += usb_pd
 test-list-host += usb_pd_giveback
 test-list-host += utils
+test-list-host += x25519
 endif
 
 battery_get_params_smart-y=battery_get_params_smart.o
@@ -118,3 +119,4 @@ timer_dos-y=timer_dos.o
 usb_pd-y=usb_pd.o
 usb_pd_giveback-y=usb_pd.o
 utils-y=utils.o
+x25519-y=x25519.o

@@ -44,4 +44,11 @@ typedef uint8_t            uint_least8_t;
 #define INT32_MAX (2147483647U)
 #endif
 
+#ifndef UINT64_C
+#define UINT64_C(c)	c ## ULL
+#endif
+#ifndef INT64_C
+#define INT64_C(c)	c ## LL
+#endif
+
 #endif /* __CROS_EC_STDINT_H__ */
