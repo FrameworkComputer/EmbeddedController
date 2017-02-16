@@ -31,6 +31,7 @@ GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,			usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(3, 3), GPIO_INT_FALLING,			usb1_evt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 0), GPIO_INT_FALLING,			bmi160_interrupt)
 GPIO_INT(BASE_DET_A,		PIN(4, 5), GPIO_INT_BOTH,			base_detect_interrupt)
+GPIO_INT(USB_C0_CABLE_DET,      PIN(D, 2), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(ENABLE_BACKLIGHT,		PIN(2, 6), GPIO_OUT_LOW)			/* Enable Backlight */
@@ -89,7 +90,6 @@ GPIO(USB_C0_5V_EN,		PIN(4, 2), GPIO_OUT_LOW)			/* C0 5V Enable */
 GPIO(USB_C0_CHARGE_L,		PIN(C, 0), GPIO_OUT_LOW)			/* C0 Charge enable */
 GPIO(USB_C1_5V_EN,		PIN(B, 1), GPIO_OUT_LOW)			/* C1 5V Enable */
 GPIO(USB_C1_CHARGE_L,		PIN(C, 3), GPIO_OUT_LOW)			/* C1 Charge enable */
-GPIO(USB_C0_CABLE_DET,		PIN(D, 2), GPIO_INPUT)				/* C0 Cable Detect */
 GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_OUT_LOW)			/* C0 PD Reset */
 GPIO(USB_C1_PD_RST_L,		PIN(7, 4), GPIO_OUT_LOW)			/* C1 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */

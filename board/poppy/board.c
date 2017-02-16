@@ -93,6 +93,35 @@ void usb1_evt(enum gpio_signal signal)
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static void anx74xx_cable_det_handler(void)
+{
+	int level = gpio_get_level(GPIO_USB_C0_CABLE_DET);
+
+	/*
+	 * Setting the low power is handled by DRP status hence
+	 * handle only the attach event.
+	 */
+	if (level)
+		anx74xx_handle_power_mode(NPCX_I2C_PORT0_0,
+					ANX74XX_NORMAL_MODE);
+
+	/* confirm if cable_det is asserted */
+	if (!level || gpio_get_level(GPIO_USB_C0_PD_RST_L))
+		return;
+
+	task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+}
+DECLARE_DEFERRED(anx74xx_cable_det_handler);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_cable_det_handler, HOOK_PRIO_LAST);
+
+void anx74xx_cable_det_interrupt(enum gpio_signal signal)
+{
+	/* debounce for 2ms */
+	hook_call_deferred(&anx74xx_cable_det_handler_data, (2 * MSEC));
+}
+#endif
+
 /*
  * Base detection and debouncing
  *
