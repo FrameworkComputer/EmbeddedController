@@ -191,6 +191,7 @@
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* SPI master port (SPIP) form BMI160 */
 
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 /* Define the MKBP events which are allowed to wakeup AP in S3. */
 #define CONFIG_MKBP_WAKEUP_MASK \

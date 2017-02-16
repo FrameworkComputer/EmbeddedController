@@ -561,3 +561,9 @@ int board_allow_i2c_passthru(int port)
 {
 	return (port == I2C_PORT_VIRTUAL_BATTERY);
 }
+
+int tablet_get_mode(void)
+{
+	/* Always in tablet mode */
+	return 1;
+}
