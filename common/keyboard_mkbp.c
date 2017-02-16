@@ -411,12 +411,13 @@ static int mkbp_get_info(struct host_cmd_handler_args *args)
 
 		case EC_MKBP_INFO_CURRENT:
 			switch (p->event_type) {
+#ifdef HAS_TASK_KEYSCAN
 			case EC_MKBP_EVENT_KEY_MATRIX:
 				memcpy(r->key_matrix, keyboard_scan_get_state(),
 				       sizeof(r->key_matrix));
 				args->response_size = sizeof(r->key_matrix);
 				break;
-
+#endif
 			case EC_MKBP_EVENT_HOST_EVENT:
 				r->host_event = host_get_events();
 				args->response_size = sizeof(r->host_event);
@@ -448,6 +449,7 @@ static int mkbp_get_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_MKBP_INFO, mkbp_get_info,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
+#ifdef HAS_TASK_KEYSCAN
 static void set_keyscan_config(const struct ec_mkbp_config *src,
 			       struct ec_mkbp_protocol_config *dst,
 			       uint32_t valid_mask, uint8_t new_flags)
@@ -570,3 +572,4 @@ static int host_command_mkbp_get_config(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_MKBP_GET_CONFIG,
 		     host_command_mkbp_get_config,
 		     EC_VER_MASK(0));
+#endif /* HAS_TASK_KEYSCAN */
