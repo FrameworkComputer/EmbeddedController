@@ -100,7 +100,8 @@ void chipset_handle_espi_reset_assert(void)
 	 * event). In this case, check if shutdown was being forced by pressing
 	 * power button. If yes, release power button.
 	 */
-	if (power_has_signals(IN_PCH_SLP_SUS_DEASSERTED) && forcing_shutdown) {
+	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
+		forcing_shutdown) {
 		power_button_pch_release();
 		forcing_shutdown = 0;
 	}
