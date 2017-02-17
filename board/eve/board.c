@@ -85,6 +85,61 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static void anx74xx_c0_cable_det_handler(void)
+{
+	int level = gpio_get_level(GPIO_USB_C0_CABLE_DET);
+
+	/*
+	 * Setting the low power is handled by DRP status hence
+	 * handle only the attach event.
+	 */
+	if (level)
+		anx74xx_handle_power_mode(I2C_PORT_TCPC0,
+					ANX74XX_NORMAL_MODE);
+
+	/* confirm if cable_det is asserted */
+	if (!level || gpio_get_level(GPIO_USB_C0_PD_RST_L))
+		return;
+
+	task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+}
+DECLARE_DEFERRED(anx74xx_c0_cable_det_handler);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_c0_cable_det_handler, HOOK_PRIO_LAST);
+
+static void anx74xx_c1_cable_det_handler(void)
+{
+	int level = gpio_get_level(GPIO_USB_C1_CABLE_DET);
+
+	/*
+	 * Setting the low power is handled by DRP status hence
+	 * handle only the attach event.
+	 */
+	if (level)
+		anx74xx_handle_power_mode(I2C_PORT_TCPC1,
+					ANX74XX_NORMAL_MODE);
+
+	/* confirm if cable_det is asserted */
+	if (!level || gpio_get_level(GPIO_USB_C1_PD_RST_L))
+		return;
+
+	task_set_event(TASK_ID_PD_C1, PD_EVENT_TCPC_RESET, 0);
+}
+DECLARE_DEFERRED(anx74xx_c1_cable_det_handler);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_c1_cable_det_handler, HOOK_PRIO_LAST);
+
+void anx74xx_cable_det_interrupt(enum gpio_signal signal)
+{
+	/* Check if it is port 0 or 1, and debounce for 2 msec. */
+	if (signal == GPIO_USB_C0_CABLE_DET)
+		hook_call_deferred(&anx74xx_c0_cable_det_handler_data,
+				   (2 * MSEC));
+	else
+		hook_call_deferred(&anx74xx_c1_cable_det_handler_data,
+				   (2 * MSEC));
+}
+#endif
+
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */
@@ -220,6 +275,12 @@ void board_tcpc_init(void)
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	/* Enable CABLE_DET interrupt for ANX3429 wake from standby */
+	gpio_enable_interrupt(GPIO_USB_C0_CABLE_DET);
+	gpio_enable_interrupt(GPIO_USB_C1_CABLE_DET);
+#endif
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
