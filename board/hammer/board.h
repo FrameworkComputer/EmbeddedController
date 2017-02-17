@@ -84,6 +84,8 @@
 #define CONFIG_RSA_KEY_SIZE 2048
 #define CONFIG_RSA_EXPONENT_3
 
+#define CONFIG_FLASH_PROTECT_RW
+
 /* Enable elan trackpad driver */
 #define CONFIG_TOUCHPAD_ELAN
 #define CONFIG_TOUCHPAD_I2C_PORT 0
