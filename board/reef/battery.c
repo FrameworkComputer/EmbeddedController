@@ -313,40 +313,64 @@ static const struct fast_charge_params fast_chg_params_smp_c22n1626 = {
 };
 
 static const struct fast_charge_profile fast_charge_cpt_c22n1626_info[] = {
-	/* < 0C */
+	/* < 1C */
 	[TEMP_RANGE_0] = {
-		.temp_c = TEMPC_TENTHS_OF_DEG(-1),
+		.temp_c = TEMPC_TENTHS_OF_DEG(0),
 		.current_mA = {
 			[VOLTAGE_RANGE_0] = 0,
 			[VOLTAGE_RANGE_1] = 0,
+			[VOLTAGE_RANGE_2] = 0,
 		},
 	},
 
-	/* >=0C && <=60C */
+	/* >=1C && <=10C */
 	[TEMP_RANGE_1] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(10),
+		.current_mA = {
+			[VOLTAGE_RANGE_0] = 1752,
+			[VOLTAGE_RANGE_1] = 1752,
+			[VOLTAGE_RANGE_2] = 1752,
+		},
+	},
+
+	/* 10C > && <=45C */
+	[TEMP_RANGE_2] = {
+		.temp_c = TEMPC_TENTHS_OF_DEG(45),
+		.current_mA = {
+			[VOLTAGE_RANGE_0] = 4600,
+			[VOLTAGE_RANGE_1] = 4600,
+			[VOLTAGE_RANGE_2] = 2920,
+		},
+	},
+
+	/* 45C > && <=60C */
+	[TEMP_RANGE_3] = {
 		.temp_c = TEMPC_TENTHS_OF_DEG(60),
 		.current_mA = {
-			[VOLTAGE_RANGE_0] = 5200,
-			[VOLTAGE_RANGE_1] = 5200,
+			[VOLTAGE_RANGE_0] = 2920,
+			[VOLTAGE_RANGE_1] = 0,
+			[VOLTAGE_RANGE_2] = 0,
 		},
 	},
 
 	/* >60C */
-	[TEMP_RANGE_2] = {
+	[TEMP_RANGE_4] = {
 		.temp_c = TEMPC_TENTHS_OF_DEG(CHARGER_PROF_TEMP_C_LAST_RANGE),
 		.current_mA = {
 			[VOLTAGE_RANGE_0] = 0,
 			[VOLTAGE_RANGE_1] = 0,
+			[VOLTAGE_RANGE_2] = 0,
 		},
 	},
 };
 
 static const struct fast_charge_params fast_chg_params_cpt_c22n1626 = {
 	.total_temp_ranges = ARRAY_SIZE(fast_charge_cpt_c22n1626_info),
-	.default_temp_range_profile = TEMP_RANGE_1,
+	.default_temp_range_profile = TEMP_RANGE_2,
 	.voltage_mV = {
-		[VOLTAGE_RANGE_0] = 8000,
-		[VOLTAGE_RANGE_1] = CHARGER_PROF_VOLTAGE_MV_LAST_RANGE,
+		[VOLTAGE_RANGE_0] = 8200,
+		[VOLTAGE_RANGE_1] = 8500,
+		[VOLTAGE_RANGE_2] = CHARGER_PROF_VOLTAGE_MV_LAST_RANGE,
 	},
 	.chg_profile_info = &fast_charge_cpt_c22n1626_info[0],
 };
