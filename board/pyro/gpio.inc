@@ -85,6 +85,11 @@ GPIO(PP3300_PG,			PIN(6, 2), GPIO_INPUT)
 GPIO(EN_PP5000,			PIN(C, 6), GPIO_OUT_LOW)
 GPIO(PP5000_PG,			PIN(7, 1), GPIO_INPUT)
 GPIO(EN_P3300_TRACKPAD_ODL,	PIN(3, 2), GPIO_ODR_LOW)
+/*
+ * Control the gate for trackpad IRQ. High closes the gate.
+ * This is always set low so that the OS can manage the trackpad.
+ */
+GPIO(TRACKPAD_INT_GATE,		PIN(A, 1), GPIO_OUT_LOW)
 GPIO(PCH_SYS_PWROK,		PIN(E, 7), GPIO_OUT_LOW)		/* EC_PCH_PWROK */
 GPIO(ENABLE_BACKLIGHT,		PIN(9, 7), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* EC_BL_EN_OD */
 
@@ -102,7 +107,6 @@ GPIO(PCH_WAKE_L,		PIN(8, 1), GPIO_ODR_HIGH)		/* EC_PCH_WAKE_ODL */
 GPIO(USB_C0_HPD_1P8_ODL,	PIN(9, 4), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(USB_C1_HPD_1P8_ODL,	PIN(A, 5), GPIO_INPUT | GPIO_SEL_1P8V)
 
-GPIO(USB2_OTG_ID,		PIN(A, 1), GPIO_OUTPUT) /* FIXME: what should this init to? */
 GPIO(USB2_OTG_VBUSSENSE,	PIN(9, 5), GPIO_OUTPUT)
 
 /* EC_PCH_RTCRST is a sledgehammer for resetting SoC state and should rarely
