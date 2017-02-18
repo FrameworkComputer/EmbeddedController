@@ -496,8 +496,8 @@ static void dfp_consume_attention(int port, uint32_t *payload)
 }
 
 /*
- * This algorithm defaults to choosing higher pin config over lower ones.  Pin
- * configs are organized in pairs with the following breakdown.
+ * This algorithm defaults to choosing higher pin config over lower ones in
+ * order to prefer multi-function if desired.
  *
  *  NAME | SIGNALING | OUTPUT TYPE | MULTI-FUNCTION | PIN CONFIG
  * -------------------------------------------------------------
@@ -511,9 +511,8 @@ static void dfp_consume_attention(int port, uint32_t *payload)
  * if UFP has NOT asserted multi-function preferred code masks away B/D/F
  * leaving only A/C/E.  For single-output dongles that should leave only one
  * possible pin config depending on whether its a converter DP->(VGA|HDMI) or DP
- * output.  If someone creates a multi-output dongle presumably they would need
- * to either offer different mode capabilities depending upon connection type or
- * the DFP would need additional system policy to expose those options.
+ * output.  If UFP is a USB-C receptacle it may assert C/D/E/F.  The DFP USB-C
+ * receptacle must always choose C/D in those cases.
  */
 int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 {
@@ -534,6 +533,10 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 
 	/* TODO(crosbug.com/p/39656) revisit if DFP drives USB Gen 2 signals */
 	pin_caps &= ~MODE_DP_PIN_BR2_MASK;
+
+	/* if C/D present they have precedence over E/F for USB-C->USB-C */
+	if (pin_caps & (MODE_DP_PIN_C | MODE_DP_PIN_D))
+		pin_caps &= ~(MODE_DP_PIN_E | MODE_DP_PIN_F);
 
 	/* get_next_bit returns undefined for zero */
 	if (!pin_caps)
