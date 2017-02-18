@@ -29,18 +29,20 @@ enum hook_priority {
 	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 4,
 	/* Power button inits before chipset and switch */
 	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 5,
+	/* Init switch states after power button / lid */
+	HOOK_PRIO_INIT_SWITCH = HOOK_PRIO_FIRST + 6,
 	/* Init fan before PWM */
-	HOOK_PRIO_INIT_FAN = HOOK_PRIO_FIRST + 6,
+	HOOK_PRIO_INIT_FAN = HOOK_PRIO_FIRST + 7,
 	/* PWM inits before modules which might use it (LEDs) */
-	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 7,
+	HOOK_PRIO_INIT_PWM = HOOK_PRIO_FIRST + 8,
 	/* SPI inits before modules which might use it (sensors) */
-	HOOK_PRIO_INIT_SPI = HOOK_PRIO_FIRST + 8,
+	HOOK_PRIO_INIT_SPI = HOOK_PRIO_FIRST + 9,
 	/* Extpower inits before modules which might use it (battery, LEDs) */
-	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 9,
+	HOOK_PRIO_INIT_EXTPOWER = HOOK_PRIO_FIRST + 10,
 	/* Init VBOOT hash later, since it depends on deferred functions */
-	HOOK_PRIO_INIT_VBOOT_HASH = HOOK_PRIO_FIRST + 10,
+	HOOK_PRIO_INIT_VBOOT_HASH = HOOK_PRIO_FIRST + 11,
 	/* Init charge manager before usage in board init */
-	HOOK_PRIO_CHARGE_MANAGER_INIT = HOOK_PRIO_FIRST + 11,
+	HOOK_PRIO_CHARGE_MANAGER_INIT = HOOK_PRIO_FIRST + 12,
 
 	/* Specific values to lump temperature-related hooks together */
 	HOOK_PRIO_TEMP_SENSOR = 6000,

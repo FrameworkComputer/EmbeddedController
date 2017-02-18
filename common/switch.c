@@ -94,7 +94,7 @@ static void switch_init(void)
 	gpio_enable_interrupt(GPIO_WP_L);
 #endif
 }
-DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_INIT_SWITCH);
 
 void switch_interrupt(enum gpio_signal signal)
 {
