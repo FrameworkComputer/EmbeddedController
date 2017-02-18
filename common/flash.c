@@ -220,7 +220,6 @@ static int validate_pstate_struct(struct persist_state *pstate)
 	if (pstate->version != PERSIST_STATE_VERSION) {
 		memset(pstate, 0, sizeof(*pstate));
 		pstate->version = PERSIST_STATE_VERSION;
-		pstate->valid_fields = 0;
 	}
 
 	return EC_SUCCESS;
@@ -589,6 +588,9 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 		(EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_ALL_AT_BOOT);
 	int new_flags_at_boot = old_flags_at_boot;
 
+	/* Sanitize input flags */
+	flags = flags & mask;
+
 	/*
 	 * Process flags we can set.  Track the most recent error, but process
 	 * all flags before returning.
@@ -614,7 +616,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	 */
 
 	new_flags_at_boot &= ~(mask & EC_FLASH_PROTECT_RO_AT_BOOT);
-	new_flags_at_boot |= mask & flags & EC_FLASH_PROTECT_RO_AT_BOOT;
+	new_flags_at_boot |= flags & EC_FLASH_PROTECT_RO_AT_BOOT;
 
 	if ((mask & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
 	    !(flags & EC_FLASH_PROTECT_ALL_AT_BOOT))
@@ -637,10 +639,9 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 
 	/*
 	 * The case where ALL_AT_BOOT is unset is already covered above,
-	 * but this does not hurt.
+	 * so we do not need to mask it out.
 	 */
-	new_flags_at_boot &= ~(mask & EC_FLASH_PROTECT_ALL_AT_BOOT);
-	new_flags_at_boot |= mask & flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
+	new_flags_at_boot |= flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
 
 	if (new_flags_at_boot != old_flags_at_boot) {
 		rv = flash_protect_at_boot(new_flags_at_boot);
@@ -648,20 +649,17 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 			retval = rv;
 	}
 
-	if ((mask & EC_FLASH_PROTECT_RO_NOW) &&
-	    (flags & EC_FLASH_PROTECT_RO_NOW)) {
+	if (flags & EC_FLASH_PROTECT_RO_NOW) {
 		rv = flash_physical_protect_now(0);
 		if (rv)
 			retval = rv;
 	}
 
-	if ((mask & EC_FLASH_PROTECT_ALL_NOW) &&
-	    (flags & EC_FLASH_PROTECT_ALL_NOW)) {
+	if (flags & EC_FLASH_PROTECT_ALL_NOW) {
 		rv = flash_physical_protect_now(1);
 		if (rv)
 			retval = rv;
 	}
-
 	return retval;
 }
 
