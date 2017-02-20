@@ -1097,6 +1097,7 @@ struct __ec_align4 ec_response_get_features {
 
 /* Get flash info */
 #define EC_CMD_FLASH_INFO 0x0010
+#define EC_VER_FLASH_INFO 2
 
 /* Version 0 returns these fields */
 struct __ec_align4 ec_response_flash_info {
@@ -1130,6 +1131,12 @@ struct __ec_align4 ec_response_flash_info {
  * gcc anonymous structs don't seem to get along with the __packed directive;
  * if they did we'd define the version 0 structure as a sub-structure of this
  * one.
+ *
+ * Version 2 supports flash banks of different sizes:
+ * The caller specified the number of banks it has preallocated
+ * (num_banks_desc)
+ * The EC returns the number of banks describing the flash memory.
+ * It adds banks descriptions up to num_banks_desc.
  */
 struct __ec_align4 ec_response_flash_info_1 {
 	/* Version 0 fields; see above for description */
@@ -1149,6 +1156,42 @@ struct __ec_align4 ec_response_flash_info_1 {
 
 	/* Flags; see EC_FLASH_INFO_* */
 	uint32_t flags;
+};
+
+struct __ec_align4 ec_params_flash_info_2 {
+	/* Number of banks to describe */
+	uint16_t num_banks_desc;
+	/* Reserved; set 0; ignore on read */
+	uint8_t reserved[2];
+};
+
+struct ec_flash_bank {
+	/* Number of sector is in this bank. */
+	uint16_t count;
+	/* Size in power of 2 of each sector (8 --> 256 bytes) */
+	uint8_t size_exp;
+	/* Minimal write size for the sectors in this bank */
+	uint8_t write_size_exp;
+	/* Erase size for the sectors in this bank */
+	uint8_t erase_size_exp;
+	/* Size for write protection, usually identical to erase size. */
+	uint8_t protect_size_exp;
+	/* Reserved; set 0; ignore on read */
+	uint8_t reserved[2];
+};
+
+struct __ec_align4 ec_response_flash_info_2 {
+	/* Total flash in the EC. */
+	uint32_t flash_size;
+	/* Flags; see EC_FLASH_INFO_* */
+	uint32_t flags;
+	/* Maximum size to use to send data to write to the EC. */
+	uint32_t write_ideal_size;
+	/* Number of banks present in the EC. */
+	uint16_t num_banks_total;
+	/* Number of banks described in banks array. */
+	uint16_t num_banks_desc;
+	struct ec_flash_bank banks[0];
 };
 
 /*
@@ -1986,7 +2029,7 @@ struct __ec_todo_packed ec_response_motion_sensor_data {
 	union {
 		int16_t             data[3];
 		struct __ec_todo_packed {
-			uint16_t    rsvd;
+			uint16_t    reserved;
 			uint32_t    timestamp;
 		};
 		struct __ec_todo_unpacked {
@@ -2186,7 +2229,7 @@ struct __ec_todo_packed ec_params_motion_sense {
 			uint8_t spoof_enable;
 
 			/* Ignored, used for alignment. */
-			uint8_t rsvd;
+			uint8_t reserved;
 
 			/* Individual component values to spoof. */
 			int16_t components[3];
@@ -2847,7 +2890,7 @@ union __ec_align_offset1 ec_response_get_next_data {
 
 	struct __ec_todo_unpacked {
 		/* For aligning the fifo_info */
-		uint8_t rsvd[3];
+		uint8_t reserved[3];
 		struct ec_response_motion_sense_fifo_info info;
 	} sensor_fifo;
 

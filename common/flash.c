@@ -102,11 +102,56 @@ const uint32_t pstate_data __attribute__((section(".rodata.pstate"))) =
 #endif /* !CONFIG_FLASH_PSTATE_BANK */
 #endif /* CONFIG_FLASH_PSTATE */
 
+#ifdef CONFIG_FLASH_MULTIPLE_REGION
+int flash_bank_size(int bank)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
+		if (bank < flash_bank_array[i].count)
+			return 1 << flash_bank_array[i].size_exp;
+		bank -= flash_bank_array[i].count;
+	}
+	return -1;
+}
+
+int flash_bank_index(int offset)
+{
+	int bank_offset = 0, i;
+
+	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
+		int all_sector_size = flash_bank_array[i].count <<
+			flash_bank_array[i].size_exp;
+		if (offset >= all_sector_size) {
+			offset -= all_sector_size;
+			bank_offset += flash_bank_array[i].count;
+			continue;
+		}
+		if (offset & ((1 << flash_bank_array[i].size_exp) - 1))
+			return -1;
+		return bank_offset + (offset >> flash_bank_array[i].size_exp);
+	}
+	if (offset != 0)
+		return -1;
+	return bank_offset;
+}
+
+int flash_bank_count(int offset, int size)
+{
+	int begin = flash_bank_index(offset);
+	int end = flash_bank_index(offset + size);
+
+	if (begin == -1 || end == -1)
+		return -1;
+	return end - begin;
+}
+#endif  /* CONFIG_FLASH_MULTIPLE_REGION */
+
 int flash_range_ok(int offset, int size_req, int align)
 {
 	if (offset < 0 || size_req < 0 ||
-			offset + size_req > CONFIG_FLASH_SIZE ||
-			(offset | size_req) & (align - 1))
+	    offset + size_req > CONFIG_FLASH_SIZE ||
+	    (offset | size_req) & (align - 1))
 		return 0;  /* Invalid range */
 
 	return 1;
@@ -445,8 +490,10 @@ int flash_write(int offset, int size, const char *data)
 
 int flash_erase(int offset, int size)
 {
+#ifndef CONFIG_FLASH_MULTIPLE_REGION
 	if (!flash_range_ok(offset, size, CONFIG_FLASH_ERASE_SIZE))
 		return EC_ERROR_INVAL;  /* Invalid range */
+#endif
 
 #ifdef CONFIG_VBOOT_HASH
 	/*
@@ -732,48 +779,60 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 
 static int command_flash_info(int argc, char **argv)
 {
-	int i;
+	int i, flags;
 
 	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE / 1024);
 	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
 		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
+#ifdef CONFIG_FLASH_MULTIPLE_REGION
+	ccprintf("Regions:\n");
+	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
+		ccprintf(" %d region%s:\n",
+			 flash_bank_array[i].count,
+			 (flash_bank_array[i].count == 1 ? "" : "s"));
+		ccprintf("  Erase:   %4d B (to %d-bits)\n",
+			 1 << flash_bank_array[i].erase_size_exp,
+			 CONFIG_FLASH_ERASED_VALUE32 ? 1 : 0);
+		ccprintf("  Size/Protect: %4d B\n",
+			 1 << flash_bank_array[i].size_exp);
+	}
+#else
 	ccprintf("Erase:   %4d B (to %d-bits)\n", CONFIG_FLASH_ERASE_SIZE,
 		 CONFIG_FLASH_ERASED_VALUE32 ? 1 : 0);
 	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
-
-	i = flash_get_protect();
+#endif
+	flags = flash_get_protect();
 	ccprintf("Flags:  ");
-	if (i & EC_FLASH_PROTECT_GPIO_ASSERTED)
+	if (flags & EC_FLASH_PROTECT_GPIO_ASSERTED)
 		ccputs(" wp_gpio_asserted");
-	if (i & EC_FLASH_PROTECT_RO_AT_BOOT)
+	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
 		ccputs(" ro_at_boot");
-	if (i & EC_FLASH_PROTECT_ALL_AT_BOOT)
+	if (flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
 		ccputs(" all_at_boot");
-	if (i & EC_FLASH_PROTECT_RO_NOW)
+	if (flags & EC_FLASH_PROTECT_RO_NOW)
 		ccputs(" ro_now");
-	if (i & EC_FLASH_PROTECT_ALL_NOW)
+	if (flags & EC_FLASH_PROTECT_ALL_NOW)
 		ccputs(" all_now");
 #ifdef CONFIG_FLASH_PROTECT_RW
-	if (i & EC_FLASH_PROTECT_RW_AT_BOOT)
+	if (flags & EC_FLASH_PROTECT_RW_AT_BOOT)
 		ccputs(" rw_at_boot");
-	if (i & EC_FLASH_PROTECT_RW_NOW)
+	if (flags & EC_FLASH_PROTECT_RW_NOW)
 		ccputs(" rw_now");
 #endif
-	if (i & EC_FLASH_PROTECT_ERROR_STUCK)
+	if (flags & EC_FLASH_PROTECT_ERROR_STUCK)
 		ccputs(" STUCK");
-	if (i & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
+	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
 		ccputs(" INCONSISTENT");
 #ifdef CONFIG_ROLLBACK
-	if (i & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)
+	if (flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)
 		ccputs(" rollback_at_boot");
-	if (i & EC_FLASH_PROTECT_ROLLBACK_NOW)
+	if (flags & EC_FLASH_PROTECT_ROLLBACK_NOW)
 		ccputs(" rollback_now");
 #endif
 	ccputs("\n");
 
 	ccputs("Protected now:");
-	for (i = 0; i < CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE;
-	     i++) {
+	for (i = 0; i < PHYSICAL_BANKS; i++) {
 		if (!(i & 31))
 			ccputs("\n    ");
 		else if (!(i & 7))
@@ -791,7 +850,7 @@ DECLARE_SAFE_CONSOLE_COMMAND(flashinfo, command_flash_info,
 static int command_flash_erase(int argc, char **argv)
 {
 	int offset = -1;
-	int size = CONFIG_FLASH_ERASE_SIZE;
+	int size = -1;
 	int rv;
 
 	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
@@ -805,13 +864,13 @@ static int command_flash_erase(int argc, char **argv)
 	return flash_erase(offset, size);
 }
 DECLARE_CONSOLE_COMMAND(flasherase, command_flash_erase,
-			"offset [size]",
+			"offset size",
 			"Erase flash");
 
 static int command_flash_write(int argc, char **argv)
 {
 	int offset = -1;
-	int size = CONFIG_FLASH_ERASE_SIZE;
+	int size = -1;
 	int rv;
 	char *data;
 	int i;
@@ -846,7 +905,7 @@ static int command_flash_write(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(flashwrite, command_flash_write,
-			"offset [size]",
+			"offset size",
 			"Write pattern to flash");
 
 static int command_flash_read(int argc, char **argv)
@@ -965,50 +1024,92 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 
 static int flash_command_get_info(struct host_cmd_handler_args *args)
 {
-	struct ec_response_flash_info_1 *r = args->response;
+	const struct ec_params_flash_info_2 *p_2 = args->params;
+	struct ec_response_flash_info_2 *r_2 = args->response;
+#ifdef CONFIG_FLASH_MULTIPLE_REGION
+	int banks_size = ARRAY_SIZE(flash_bank_array);
+	const struct ec_flash_bank *banks = flash_bank_array;
+#else
+	struct ec_response_flash_info_1 *r_1 = args->response;
+#if CONFIG_FLASH_BANK_SIZE < CONFIG_FLASH_ERASE_SIZE
+#error "Flash: Bank size expected bigger or equal to erase size."
+#endif
+	struct ec_flash_bank single_bank = {
+		.count = CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE,
+		.size_exp = __fls(CONFIG_FLASH_BANK_SIZE),
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.erase_size_exp = __fls(CONFIG_FLASH_ERASE_SIZE),
+		.protect_size_exp = __fls(CONFIG_FLASH_BANK_SIZE),
+	};
+	int banks_size = 1;
+	const struct ec_flash_bank *banks = &single_bank;
+#endif
+	int banks_len;
+	int ideal_size;
 
-	r->flash_size = CONFIG_FLASH_SIZE - EC_FLASH_REGION_START;
-	r->write_block_size = CONFIG_FLASH_WRITE_SIZE;
-	r->erase_block_size = CONFIG_FLASH_ERASE_SIZE;
-	r->protect_block_size = CONFIG_FLASH_BANK_SIZE;
+	/*
+	 * Compute the ideal amount of data for the host to send us,
+	 * based on the maximum response size and the ideal write size.
+	 */
+	ideal_size = (args->response_max -
+		 sizeof(struct ec_params_flash_write)) &
+		~(CONFIG_FLASH_WRITE_IDEAL_SIZE - 1);
+	/*
+	 * If we can't get at least one ideal block, then just want
+	 * as high a multiple of the minimum write size as possible.
+	 */
+	if (!ideal_size)
+		ideal_size = (args->response_max -
+				sizeof(struct ec_params_flash_write)) &
+				~(CONFIG_FLASH_WRITE_SIZE - 1);
 
+
+	if (args->version >= 2) {
+		args->response_size = sizeof(struct ec_response_flash_info_2);
+		r_2->flash_size = CONFIG_FLASH_SIZE - EC_FLASH_REGION_START;
+#if (CONFIG_FLASH_ERASED_VALUE32 == 0)
+		r_2->flags = EC_FLASH_INFO_ERASE_TO_0;
+#else
+		r_2->flags = 0;
+#endif
+		r_2->write_ideal_size = ideal_size;
+		r_2->num_banks_total = banks_size;
+		r_2->num_banks_desc = MIN(banks_size, p_2->num_banks_desc);
+		banks_len = r_2->num_banks_desc * sizeof(struct ec_flash_bank);
+		memcpy(r_2->banks, banks, banks_len);
+		args->response_size += banks_len;
+		return EC_RES_SUCCESS;
+	}
+#ifdef CONFIG_FLASH_MULTIPLE_REGION
+	return EC_RES_INVALID_PARAM;
+#else
+	r_1->flash_size = CONFIG_FLASH_SIZE - EC_FLASH_REGION_START;
+	r_1->flags = 0;
+	r_1->write_block_size = CONFIG_FLASH_WRITE_SIZE;
+	r_1->erase_block_size = CONFIG_FLASH_ERASE_SIZE;
+	r_1->protect_block_size = CONFIG_FLASH_BANK_SIZE;
 	if (args->version == 0) {
 		/* Only version 0 fields returned */
 		args->response_size = sizeof(struct ec_response_flash_info);
 	} else {
+		args->response_size = sizeof(struct ec_response_flash_info_1);
 		/* Fill in full version 1 struct */
-
-		/*
-		 * Compute the ideal amount of data for the host to send us,
-		 * based on the maximum response size and the ideal write size.
-		 */
-		r->write_ideal_size =
-			(args->response_max -
-			 sizeof(struct ec_params_flash_write)) &
-			~(CONFIG_FLASH_WRITE_IDEAL_SIZE - 1);
-		/*
-		 * If we can't get at least one ideal block, then just want
-		 * as high a multiple of the minimum write size as possible.
-		 */
-		if (!r->write_ideal_size)
-			r->write_ideal_size =
-				(args->response_max -
-				 sizeof(struct ec_params_flash_write)) &
-				~(CONFIG_FLASH_WRITE_SIZE - 1);
-
-		r->flags = 0;
-
+		r_1->write_ideal_size = ideal_size;
 #if (CONFIG_FLASH_ERASED_VALUE32 == 0)
-		r->flags |= EC_FLASH_INFO_ERASE_TO_0;
+		r_1->flags |= EC_FLASH_INFO_ERASE_TO_0;
 #endif
-
-		args->response_size = sizeof(*r);
 	}
 	return EC_RES_SUCCESS;
+#endif  /* CONFIG_FLASH_MULTIPLE_REGION */
 }
+#ifdef CONFIG_FLASH_MULTIPLE_REGION
+#define FLASH_INFO_VER EC_VER_MASK(2)
+#else
+#define FLASH_INFO_VER (EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2))
+#endif
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_INFO,
-		     flash_command_get_info,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     flash_command_get_info, FLASH_INFO_VER);
+
 
 static int flash_command_read(struct host_cmd_handler_args *args)
 {

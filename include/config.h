@@ -1035,6 +1035,12 @@
  * screw, of course).
  */
 #define CONFIG_FLASH_PSTATE_BANK
+/*
+ * For flash that is segemented in different regions.
+ */
+#undef CONFIG_FLASH_MULTIPLE_REGION
+/* Number of regions of different size/type */
+#undef CONFIG_FLASH_REGION_TYPE_COUNT
 
 /* Total size of writable flash */
 #undef CONFIG_FLASH_SIZE

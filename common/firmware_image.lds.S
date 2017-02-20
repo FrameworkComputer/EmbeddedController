@@ -14,7 +14,6 @@ MEMORY
 }
 SECTIONS
 {
-    . = ALIGN(CONFIG_FLASH_BANK_SIZE);
 #if defined(NPCX_RO_HEADER)
 /* Replace *_MEM_OFF with *_STORAGE_OFF to indicate flat file contains header
  * or some struture which doesn't belong to FW */
@@ -25,7 +24,6 @@ SECTIONS
 #endif
         *(.image.RO)
     } > FLASH =0xff
-    . = ALIGN(CONFIG_FLASH_BANK_SIZE);
 
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
     .image.RO.key : AT(CONFIG_RO_PUBKEY_ADDR) {
@@ -44,7 +42,6 @@ SECTIONS
                               CONFIG_SHAREDLIB_MEM_OFF) {
         *(.image.libsharedobjs)
     } > FLASH =0xff
-    . = ALIGN(CONFIG_FLASH_BANK_SIZE);
 #endif
 
 #if defined(NPCX_RO_HEADER)
