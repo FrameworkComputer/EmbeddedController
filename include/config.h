@@ -2018,6 +2018,9 @@
 /* SPI master feature */
 #undef CONFIG_SPI_MASTER
 
+/* SPI master halfduplex/3-wire mode */
+#undef CONFIG_SPI_HALFDUPLEX
+
 /* Support STM32 SPI1 as master. */
 #undef CONFIG_STM32_SPI1_MASTER
 
