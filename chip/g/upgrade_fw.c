@@ -252,7 +252,40 @@ static int contents_allowed(uint32_t block_offset,
 	return 1;
 }
 
+
+static uint32_t prev_offset;
+static uint64_t prev_timestamp;
+#define BACKOFF_TIME (60 * SECOND)
+
+static int chunk_came_too_soon(uint32_t block_offset)
+{
+	if (!prev_timestamp ||
+	    ((get_time().val - prev_timestamp) > BACKOFF_TIME))
+		return 0;
+
+	if (!prev_offset ||
+	    (block_offset >= (prev_offset + SIGNED_TRANSFER_SIZE)))
+		return 0;
+
+	CPRINTF("%s: rejecting a write to the same block\n", __func__);
+	return 1;
+}
+
+static void new_chunk_written(uint32_t block_offset)
+{
+	prev_timestamp = get_time().val;
+	prev_offset = block_offset;
+}
 #else
+static int chunk_came_too_soon(uint32_t block_offset)
+{
+	return 0;
+}
+
+static void new_chunk_written(uint32_t block_offset)
+{
+}
+
 static int contents_allowed(uint32_t block_offset,
 			    size_t body_size, void *upgrade_data)
 {
@@ -354,6 +387,11 @@ void fw_upgrade_command_handler(void *body,
 	if (*error_code)
 		return;
 
+	if (chunk_came_too_soon(block_offset)) {
+		*error_code = UPGRADE_RATE_LIMIT_ERROR;
+		return;
+	}
+
 	CPRINTF("%s: programming at address 0x%x\n", __func__,
 		block_offset + CONFIG_PROGRAM_MEMORY_BASE);
 	if (flash_physical_write(block_offset, body_size, upgrade_data)
@@ -362,6 +400,8 @@ void fw_upgrade_command_handler(void *body,
 		CPRINTF("%s:%d upgrade write error\n",	__func__, __LINE__);
 		return;
 	}
+
+	new_chunk_written(block_offset);
 
 	/* Verify that data was written properly. */
 	if (memcmp(upgrade_data, (void *)

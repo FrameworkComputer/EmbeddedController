@@ -179,7 +179,6 @@ struct upgrade_pkt {
 	char data[0];
 } __packed;
 
-#define SIGNED_TRANSFER_SIZE 1024
 #define MAX_BUF_SIZE	(SIGNED_TRANSFER_SIZE + sizeof(struct upgrade_pkt))
 
 struct usb_endpoint {
