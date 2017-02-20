@@ -2005,7 +2005,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)]))
 #define STM32_DMA_GET_ISR(channel)       \
 	(STM32_DMA_CH_GETBITS(channel,   \
-	STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)]))
+	STM32_DMA_REGS(channel)->isr[STM32_DMA_CH_LH(channel)]))
 
 #define STM32_DMA_SET_IFCR(channel, val) \
 	(STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)] = \
