@@ -278,28 +278,27 @@ static int nvmem_compare_generation(void)
 static int nvmem_find_partition(void)
 {
 	int n;
+	int newest;
 
 	/* Don't know which partition to use yet */
 	nvmem_act_partition = NVMEM_NOT_INITIALIZED;
-	/*
-	 * Check each partition to determine if the sha is good. If both
-	 * partitions have valid sha(s), then compare generation numbers to
-	 * select the most recent one.
-	 */
-	for (n = 0; n < NVMEM_NUM_PARTITIONS; n++)
-		if (nvmem_partition_read_verify(n) == EC_SUCCESS) {
-			if (nvmem_act_partition == NVMEM_NOT_INITIALIZED)
-				nvmem_act_partition = n;
-			else
-				nvmem_act_partition =
-					nvmem_compare_generation();
-		} else {
-			ccprintf("%s:%d partiton %d verification FAILED\n",
-				 __func__, __LINE__, n);
-		}
 
-	if (nvmem_act_partition != NVMEM_NOT_INITIALIZED)
-		return EC_SUCCESS;
+	/* Find the newest partition available in flash. */
+	newest = nvmem_compare_generation();
+
+	/*
+	 * Find a partition with a valid sha, starting with the newest one.
+	 */
+	for (n = 0; n < NVMEM_NUM_PARTITIONS; n++) {
+		int check_part = (n + newest) % NVMEM_NUM_PARTITIONS;
+
+		if (nvmem_partition_read_verify(check_part) == EC_SUCCESS) {
+			nvmem_act_partition = check_part;
+			return EC_SUCCESS;
+		}
+		ccprintf("%s:%d partiton %d verification FAILED\n",
+			 __func__, __LINE__, check_part);
+	}
 
 	/*
 	 * If active_partition is still not selected, then neither partition
