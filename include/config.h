@@ -1749,6 +1749,9 @@
 /* Support IR357x Link voltage regulator debugging / reprogramming */
 #undef CONFIG_REGULATOR_IR357X
 
+/* Enable hardware Random Number generator support */
+#undef CONFIG_RNG
+
 /* Support verifying 2048-bit RSA signature */
 #undef CONFIG_RSA
 

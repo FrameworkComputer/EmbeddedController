@@ -763,6 +763,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #define STM32_RCC_AHB2ENR		REG32(STM32_RCC_BASE + 0x4C)
 #define STM32_RCC_AHB2ENR_GPIOMASK	(0xff << 0)
+#define STM32_RCC_AHB2ENR_RNGEN		(1 << 18)
 
 #define STM32_RCC_APB1ENR		REG32(STM32_RCC_BASE + 0x58)
 #define STM32_RCC_PWREN                 (1 << 28)
@@ -848,6 +849,12 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_BDCR			REG32(STM32_RCC_BASE + 0x90)
 
 #define STM32_RCC_CSR			REG32(STM32_RCC_BASE + 0x94)
+
+#define STM32_RCC_CRRCR			REG32(STM32_RCC_BASE + 0x98)
+
+#define STM32_RCC_CRRCR_HSI48ON         (1<<0)
+#define STM32_RCC_CRRCR_HSI48RDY        (1<<1)
+#define STM32_RCC_CRRCR_HSI48CAL_MASK   (0x1ff<<7)
 
 #define STM32_RCC_PB2_TIM1		(1 << 11)
 #define STM32_RCC_PB2_TIM8		(1 << 13)
@@ -2156,6 +2163,16 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_TOGGLE_EP(n, mask, val, flags) \
 	STM32_USB_EP(n) = (((STM32_USB_EP(n) & (EP_MASK | (mask))) \
 			^ (val)) | (flags))
+
+/* --- TRNG --- */
+#define STM32_RNG_BASE              0x50060800  /* STM32L4 */
+
+#define STM32_RNG_CR                REG32(STM32_RNG_BASE + 0x0)
+#define STM32_RNG_CR_RNGEN          (1<<2)
+#define STM32_RNG_CR_IE             (1<<3)
+#define STM32_RNG_SR                REG32(STM32_RNG_BASE + 0x4)
+#define STM32_RNG_SR_DRDY           (1<<0)
+#define STM32_RNG_DR                REG32(STM32_RNG_BASE + 0x8)
 
 /* --- MISC --- */
 
