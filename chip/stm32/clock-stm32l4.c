@@ -372,6 +372,9 @@ static int command_clock(int argc, char **argv)
 			clock_set_osc(OSC_HSE, OSC_INIT);
 		else if (!strcasecmp(argv[1], "pll"))
 			clock_set_osc(OSC_PLL, OSC_HSE);
+#else
+		else if (!strcasecmp(argv[1], "pll"))
+			clock_set_osc(OSC_PLL, OSC_HSI);
 #endif
 		else
 			return EC_ERROR_PARAM1;

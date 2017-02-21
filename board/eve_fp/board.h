@@ -36,6 +36,17 @@
 #define TIM_CLOCK32     2
 #define TIM_WATCHDOG   16
 
+/*
+ * PLL configuration for 80Mhz:
+ * SYSCLK = HSE * n/m/r = 16 * 10 / 2 = 80 Mhz
+ */
+#undef STM32_PLLM
+#define STM32_PLLM	1
+#undef STM32_PLLN
+#define STM32_PLLN	10
+#undef STM32_PLLR
+#define STM32_PLLR	2
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
