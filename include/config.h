@@ -1783,6 +1783,12 @@
 #undef CONFIG_RSA_EXPONENT_3
 
 /*
+ * Adjust the compiler optimization flags for the RSA code to get a speed-up
+ * at the expense of a small code size delta.
+ */
+#undef CONFIG_RSA_OPTIMIZED
+
+/*
  * Verify the RW firmware using the RSA signature.
  * (for accessories without software sync)
  */

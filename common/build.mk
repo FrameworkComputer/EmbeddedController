@@ -127,3 +127,8 @@ else
 common-y+=test_util.o
 endif
 common-$(TEST_BUILD)+=sensor_common.o
+
+ifneq ($(CONFIG_RSA_OPTIMIZED),)
+$(out)/RW/common/rsa.o: CFLAGS+=-O3
+$(out)/RO/common/rsa.o: CFLAGS+=-O3
+endif
