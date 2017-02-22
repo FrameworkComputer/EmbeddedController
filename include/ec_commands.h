@@ -205,7 +205,7 @@
  *    - Wait for EC_LPC_CMDR_DATA bit to set
  *    - Read value from EC_LPC_ADDR_ACPI_DATA
  */
-#define EC_CMD_ACPI_READ 0x80
+#define EC_CMD_ACPI_READ 0x0080
 
 /*
  * ACPI Write Embedded Controller
@@ -220,7 +220,7 @@
  *    - Wait for EC_LPC_CMDR_PENDING bit to clear
  *    - Write value to EC_LPC_ADDR_ACPI_DATA
  */
-#define EC_CMD_ACPI_WRITE 0x81
+#define EC_CMD_ACPI_WRITE 0x0081
 
 /*
  * ACPI Burst Enable Embedded Controller
@@ -229,7 +229,7 @@
  * commands back-to-back. While in this mode, writes to mapped multi-byte
  * data are locked out to ensure data consistency.
  */
-#define EC_CMD_ACPI_BURST_ENABLE 0x82
+#define EC_CMD_ACPI_BURST_ENABLE 0x0082
 
 /*
  * ACPI Burst Disable Embedded Controller
@@ -237,7 +237,7 @@
  * This disables burst mode on the EC and stops preventing EC writes to mapped
  * multi-byte data.
  */
-#define EC_CMD_ACPI_BURST_DISABLE 0x83
+#define EC_CMD_ACPI_BURST_DISABLE 0x0083
 
 /*
  * ACPI Query Embedded Controller
@@ -246,7 +246,7 @@
  * sets the result code to the 1-based index of the bit (event 0x00000001 = 1,
  * event 0x80000000 = 32), or 0 if no event was pending.
  */
-#define EC_CMD_ACPI_QUERY_EVENT 0x84
+#define EC_CMD_ACPI_QUERY_EVENT 0x0084
 
 /* Valid addresses in ACPI memory space, for read/write commands */
 
