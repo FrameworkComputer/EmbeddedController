@@ -37,6 +37,9 @@
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
 
+#define CONFIG_USB_REMOTE_WAKEUP
+#define CONFIG_USB_SUSPEND
+
 #define CONFIG_USB_SERIALNO
 /* TODO(drinkcat): Replace this by proper serial number. Note that according to
  * USB standard, we must either unset this (iSerialNumber = 0), or have a unique
