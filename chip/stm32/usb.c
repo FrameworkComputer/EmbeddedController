@@ -296,13 +296,13 @@ void usb_interrupt(void)
 {
 	uint16_t status = STM32_USB_ISTR;
 
-	if ((status & (1 << 10)))
+	if (status & STM32_USB_ISTR_RESET)
 		usb_reset();
 
-	if (status & (1 << 15)) {
-		int ep = status & 0x000f;
+	if (status & STM32_USB_ISTR_CTR) {
+		int ep = status & STM32_USB_ISTR_EP_ID_MASK;
 		if (ep < USB_EP_COUNT) {
-			if (status & 0x0010)
+			if (status & STM32_USB_ISTR_DIR)
 				usb_ep_rx[ep]();
 			else
 				usb_ep_tx[ep]();
@@ -330,7 +330,7 @@ void usb_init(void)
 	/* power on sequence */
 
 	/* keep FRES (USB reset) and remove PDWN (power down) */
-	STM32_USB_CNTR = 0x01;
+	STM32_USB_CNTR = STM32_USB_CNTR_FRES;
 	udelay(1); /* startup time */
 	/* reset FRES and keep interrupts masked */
 	STM32_USB_CNTR = 0x00;
@@ -347,7 +347,10 @@ void usb_init(void)
 	/* Enable interrupt handlers */
 	task_enable_irq(STM32_IRQ_USB_LP);
 	/* set interrupts mask : reset/correct transfer/errors */
-	STM32_USB_CNTR = 0xe400;
+	STM32_USB_CNTR = STM32_USB_CNTR_CTRM |
+			 STM32_USB_CNTR_PMAOVRM |
+			 STM32_USB_CNTR_ERRM |
+			 STM32_USB_CNTR_RESETM;
 
 #ifdef CONFIG_USB_SERIALNO
 	usb_load_serial();
