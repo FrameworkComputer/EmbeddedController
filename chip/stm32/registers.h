@@ -2157,6 +2157,10 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_USB_ISTR_CTR	    (1 << 15)
 
 #define STM32_USB_FNR              REG16(STM32_USB_FS_BASE + 0x48)
+
+#define STM32_USB_FNR_RXDP_RXDM_SHIFT (14)
+#define STM32_USB_FNR_RXDP_RXDM_MASK  (3 << STM32_USB_FNR_RXDP_RXDM_SHIFT)
+
 #define STM32_USB_DADDR            REG16(STM32_USB_FS_BASE + 0x4C)
 #define STM32_USB_BTABLE           REG16(STM32_USB_FS_BASE + 0x50)
 #define STM32_USB_LPMCSR           REG16(STM32_USB_FS_BASE + 0x54)

@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "link_defs.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -292,12 +293,61 @@ static void usb_reset(void)
 	CPRINTF("RST EP0 %04x\n", STM32_USB_EP(0));
 }
 
+#ifdef CONFIG_USB_SUSPEND
+/* See RM0091 Reference Manual 30.5.5 Suspend/Resume events */
+static void usb_suspend(void)
+{
+	CPRINTF("USB suspend!\n");
+
+	/* Set FSUSP bit to activate suspend mode */
+	STM32_USB_CNTR |= STM32_USB_CNTR_FSUSP;
+
+	/* Set USB low power mode */
+	STM32_USB_CNTR |= STM32_USB_CNTR_LP_MODE;
+
+	clock_enable_module(MODULE_USB, 0);
+
+	/* USB is not in use anymore, we can (hopefully) sleep now. */
+	enable_sleep(SLEEP_MASK_USB_DEVICE);
+}
+
+static void usb_resume(void)
+{
+	int state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
+			>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
+
+	CPRINTF("USB resume %x\n", state);
+
+	/*
+	 * TODO(crosbug.com/p/63273): Reference manual suggests going back to
+	 * sleep if state is 10 or 11, but this seems to cause other problems
+	 * (see bug). Ignore them for now.
+	 */
+
+	clock_enable_module(MODULE_USB, 1);
+
+	/* Clear FSUSP bit to exit suspend mode */
+	STM32_USB_CNTR &= ~STM32_USB_CNTR_FSUSP;
+
+	/* USB is in use again */
+	disable_sleep(SLEEP_MASK_USB_DEVICE);
+}
+#endif /* CONFIG_USB_SUSPEND */
+
 void usb_interrupt(void)
 {
 	uint16_t status = STM32_USB_ISTR;
 
 	if (status & STM32_USB_ISTR_RESET)
 		usb_reset();
+
+#ifdef CONFIG_USB_SUSPEND
+	if (status & STM32_USB_ISTR_SUSP)
+		usb_suspend();
+
+	if (status & STM32_USB_ISTR_WKUP)
+		usb_resume();
+#endif
 
 	if (status & STM32_USB_ISTR_CTR) {
 		int ep = status & STM32_USB_ISTR_EP_ID_MASK;
@@ -311,8 +361,8 @@ void usb_interrupt(void)
 		/* task_set_event(, 1 << ep_task); */
 	}
 
-	/* ack interrupts */
-	STM32_USB_ISTR = 0;
+	/* ack only interrupts that we handled */
+	STM32_USB_ISTR = ~status;
 }
 DECLARE_IRQ(STM32_IRQ_USB_LP, usb_interrupt, 1);
 
@@ -350,6 +400,10 @@ void usb_init(void)
 	STM32_USB_CNTR = STM32_USB_CNTR_CTRM |
 			 STM32_USB_CNTR_PMAOVRM |
 			 STM32_USB_CNTR_ERRM |
+#ifdef CONFIG_USB_SUSPEND
+			 STM32_USB_CNTR_WKUPM |
+			 STM32_USB_CNTR_SUSPM |
+#endif
 			 STM32_USB_CNTR_RESETM;
 
 #ifdef CONFIG_USB_SERIALNO

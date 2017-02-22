@@ -2442,6 +2442,9 @@
 /* Support reporting as self powered in USB configuration. */
 #undef CONFIG_USB_SELF_POWERED
 
+/* Support correct handling of USB suspend (host-initiated). */
+#undef CONFIG_USB_SUSPEND
+
 /* Default pull-up value on the USB-C ports when they are used as source. */
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_1A5
 /*
