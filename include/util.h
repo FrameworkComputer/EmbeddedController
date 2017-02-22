@@ -66,6 +66,7 @@ int isspace(int c);
 int isalpha(int c);
 int isprint(int c);
 int memcmp(const void *s1, const void *s2, size_t len);
+int safe_memcmp(const void *s1, const void *s2, size_t len);
 void *memcpy(void *dest, const void *src, size_t len);
 __visible void *memset(void *dest, int c, size_t len);
 void *memmove(void *dest, const void *src, size_t len);
