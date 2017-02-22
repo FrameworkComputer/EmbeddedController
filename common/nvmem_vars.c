@@ -5,6 +5,7 @@
  */
 
 #include "common.h"
+#include "console.h"
 #include "nvmem.h"
 #include "nvmem_vars.h"
 #include "printf.h"
@@ -427,10 +428,82 @@ static int command_dump(int argc, char **argv)
 	for (i = 0; i < CONFIG_FLASH_NVMEM_VARS_USER_SIZE; i++)
 		ccprintf(" %02x", rbuf[i]);
 	ccprintf("\n");
+	release_local_copy();
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(dump, command_dump,
 			"",
 			"Dump the variable memory");
+
+static int command_clear_nvmem_vars(int argc, char **argv)
+{
+	int rv;
+
+	rv = nvmem_erase_user_data(CONFIG_FLASH_NVMEM_VARS_USER_NUM);
+	if (rv)
+		ccprintf("Error clearing nvmem vars! (rv: %d)\n", rv);
+	else
+		ccprintf("NvMem vars cleared successfully.\n");
+
+	/*
+	 * Invalidate the cache buffer since we just erased the backing
+	 * store.
+	 */
+	writevars();
+
+	/*
+	 * Re-initialize the NvMem vars space so that it's ready for
+	 * immediate use.
+	 */
+	initvars();
+
+	/*
+	 * TODO(aaboagye): For "V1", this is where you might want to call and
+	 * reset the defaults.
+	 */
+
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(clr_nvmem_vars, command_clear_nvmem_vars,
+			"",
+			"Clear the NvMem variables.");
+
+static int command_nv_test_var(int argc, char **argv)
+{
+	const struct tuple *t;
+	uint8_t key;
+	uint8_t val;
+	int rv;
+
+	key = NVMEM_VAR_TEST_VAR;
+
+	if (argc > 1) {
+		val = (uint8_t)atoi(argv[1]);
+		rv = setvar(&key, 1, &val, 1);
+		if (rv)
+			ccprintf("setvar err %d", rv);
+
+		rv = writevars();
+		if (rv)
+			ccprintf("writevar err %d", rv);
+	}
+
+	t = getvar(&key, 1);
+	if (t) {
+		val = *tuple_val(t);
+	} else {
+		ccprintf("No value set.\n");
+		return EC_SUCCESS;
+	}
+
+	/* Invalidate RAM buffer. */
+	writevars();
+	ccprintf("test_var: %d\n", val);
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(nvtestvar, command_nv_test_var,
+			     "[0-255]",
+			     "Get/Set an NvMem test variable.");
 #endif

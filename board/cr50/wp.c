@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "nvmem.h"
+#include "nvmem_vars.h"
 #include "registers.h"
 #include "scratch_reg1.h"
 #include "system.h"
@@ -115,7 +116,10 @@ static int console_restricted_state = LOCK_ENABLED;
 
 static void set_console_lock_state(int lock_state)
 {
-	console_restricted_state = lock_state;
+	uint8_t nv_console_lock_state;
+	uint8_t key;
+	const struct tuple *t;
+	int rv;
 
 	/*
 	 * Assert WP unconditionally on locked console. Keep this invocation
@@ -125,17 +129,41 @@ static void set_console_lock_state(int lock_state)
 	if (lock_state == LOCK_ENABLED)
 		set_wp_state(1);
 
-	/* Enable writing to the long life register */
-	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+	/* Retrieve the console locked state. */
+	key = NVMEM_VAR_CONSOLE_LOCKED;
+	t = getvar((const uint8_t *)&key, sizeof(key));
+	if (t == NULL) {
+		CPRINTS("Failed to read lock state from nvmem!");
+		/*
+		 * It's possible that the tuple doesn't (yet) exist.  Set the
+		 * value to some unknown.
+		 */
+		nv_console_lock_state = '?';
+	} else {
+		nv_console_lock_state = *tuple_val(t);
+	}
 
-	/* Save the lock state in long life scratch */
-	if (lock_state == LOCK_ENABLED)
-		GREG32(PMU, LONG_LIFE_SCRATCH1) &= ~BOARD_CONSOLE_UNLOCKED;
-	else
-		GREG32(PMU, LONG_LIFE_SCRATCH1) |= BOARD_CONSOLE_UNLOCKED;
+	/* Update the NVMem state if it differs. */
+	if (lock_state != nv_console_lock_state) {
+		uint8_t val = lock_state == LOCK_ENABLED;
 
-	/* Disable writing to the long life register */
-	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+		rv = setvar((const uint8_t *)&key, 1, (const uint8_t *)&val, 1);
+		if (rv) {
+			CPRINTS("Failed to save nvmem tuple in RAM buffer!"
+				" (rv: %d)", rv);
+			return;
+		}
+
+		rv = writevars();
+		if (rv) {
+			CPRINTS("Failed to save lock state in nvmem! (rv:%d)",
+				rv);
+			return;
+		}
+	}
+
+	/* Update our RAM copy. */
+	console_restricted_state = lock_state;
 
 	CPRINTS("The console is %s",
 		lock_state == LOCK_ENABLED ? "locked" : "unlocked");
@@ -166,18 +194,29 @@ static void unlock_the_console(void)
 	}
 
 	CPRINTS("TPM is erased");
+
+	/* Tell the TPM task to re-enable NvMem commits. */
+	tpm_reinstate_nvmem_commits();
+
+	/* Unlock the console. */
 	set_console_lock_state(!LOCK_ENABLED);
 }
 
 static void init_console_lock_and_wp(void)
 {
+	uint8_t key;
+	const struct tuple *t;
+	uint8_t lock_state;
+
 	/*
 	 * On an unexpected reboot or a system rollback reset the console lock
 	 * and write protect states.
 	 */
 	if (system_rollback_detected() ||
-	    !(system_get_reset_flags() & RESET_FLAG_HIBERNATE)) {
+	    !(system_get_reset_flags() &
+	      (RESET_FLAG_HIBERNATE | RESET_FLAG_POWER_ON))) {
 		/* Reset the console lock to the default value */
+		CPRINTS("Setting console lock to default.");
 		set_console_lock_state(console_restricted_state);
 
 		/* Use BATT_PRES_L as the source for write protect. */
@@ -185,17 +224,27 @@ static void init_console_lock_and_wp(void)
 		return;
 	}
 
-	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_CONSOLE_UNLOCKED)
-		set_console_lock_state(!LOCK_ENABLED);
-	else
-		set_console_lock_state(LOCK_ENABLED);
+	key = NVMEM_VAR_CONSOLE_LOCKED;
+	t = getvar((const uint8_t *)&key, 1);
+	if (t == NULL) {
+		/*
+		 * If the tuple doesn't exist, just use the default value (which
+		 * will also create the tuple).
+		 */
+		CPRINTS("No tuple in nvmem.  Setting console lock to default.");
+		set_console_lock_state(console_restricted_state);
+	} else {
+		lock_state = *tuple_val(t);
+		set_console_lock_state(lock_state);
+	}
 
 	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_WP_ASSERTED)
 		set_wp_state(1);
 	else
 		set_wp_state(0);
 }
-DECLARE_HOOK(HOOK_INIT, init_console_lock_and_wp, HOOK_PRIO_DEFAULT);
+/* This must run after initializing the NVMem partitions. */
+DECLARE_HOOK(HOOK_INIT, init_console_lock_and_wp, HOOK_PRIO_DEFAULT+1);
 
 int console_is_restricted(void)
 {
@@ -238,6 +287,7 @@ static void unlock_sequence_is_over(void)
 	} else {
 		/* The last poke was after the final deadline, so we're done */
 		CPRINTS("Unlock process completed successfully");
+		cflush();
 		unlock_the_console();
 	}
 

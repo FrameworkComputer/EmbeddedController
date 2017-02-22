@@ -199,6 +199,10 @@ enum nvmem_users {
 	CONFIG_FLASH_NVMEM_VARS_USER_NUM,
 	NVMEM_NUM_USERS
 };
+/* Define a test var. */
+enum nvmem_vars {
+	NVMEM_VAR_TEST_VAR,
+};
 #endif
 #define CONFIG_FLASH_NVMEM_VARS_USER_SIZE 600
 #endif	/* TEST_NVMEM_VARS */

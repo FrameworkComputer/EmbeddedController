@@ -82,6 +82,13 @@ int nvmem_commit(void)
 	return EC_SUCCESS;
 }
 
+int nvmem_erase_user_data(enum nvmem_users user)
+{
+	memset(ram_buffer, 0xff, sizeof(ram_buffer));
+	memset(flash_buffer, 0xff, sizeof(flash_buffer));
+	return EC_SUCCESS;
+}
+
 /****************************************************************************/
 /* Helper routines */
 

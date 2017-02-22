@@ -20,6 +20,7 @@
 #include "i2cs.h"
 #include "init_chip.h"
 #include "nvmem.h"
+#include "nvmem_vars.h"
 #include "rdd.h"
 #include "registers.h"
 #include "scratch_reg1.h"
@@ -63,7 +64,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-#define NVMEM_CR50_SIZE 272
 #define NVMEM_TPM_SIZE ((sizeof((struct nvmem_partition *)0)->buffer) \
 			- NVMEM_CR50_SIZE)
 
@@ -72,6 +72,8 @@
  * should be set to
  *
  * NVMEM_PARTITION_SIZE - NVMEM_CR50_SIZE - 8
+ *
+ * Both of these macros are defined in board.h.
  */
 BUILD_ASSERT(NVMEM_TPM_SIZE == NV_MEMORY_SIZE);
 
@@ -532,6 +534,8 @@ static void board_init(void)
 	init_runlevel(PERMISSION_MEDIUM);
 	/* Initialize NvMem partitions */
 	nvmem_init();
+	/* Initialize the persistent storage. */
+	initvars();
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;

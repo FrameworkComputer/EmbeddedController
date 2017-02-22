@@ -16,8 +16,8 @@
 #define BOARD_USB_AP                 (1 << 2)   /* One of the USB PHYs is  */
 						/* connected to the AP */
 /*
- * This gap is left to enusre backwards compatibility with the earliest cr50
- * code releases. It will be possible to safely reuse this gap if and when the
+ * The gaps are left to enusre backwards compatibility with the earliest cr50
+ * code releases. It will be possible to safely reuse these gaps if and when the
  * rest of the bits are taken.
  */
 
@@ -27,11 +27,7 @@
 						/* sys_rst_l to monitor the */
 						/* system resets */
 
-/*
- * Bits to store console and write protect bit states across deep sleep and
- * resets.
- */
-#define BOARD_CONSOLE_UNLOCKED       (1 << 7)
+/* Bits to store write protect bit state across deep sleep and resets. */
 #define BOARD_WP_ASSERTED            (1 << 8)
 #define BOARD_FORCING_WP             (1 << 9)
 

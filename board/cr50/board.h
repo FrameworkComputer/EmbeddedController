@@ -57,6 +57,10 @@
 #define NVMEM_PARTITION_SIZE CFG_TOP_SIZE
 /* Size in bytes of NvMem area */
 #define CONFIG_FLASH_NVMEM_SIZE (CFG_TOP_SIZE * NVMEM_NUM_PARTITIONS)
+/* Enable <key, value> variable support. */
+#define CONFIG_FLASH_NVMEM_VARS
+#define NVMEM_CR50_SIZE 272
+#define CONFIG_FLASH_NVMEM_VARS_USER_SIZE NVMEM_CR50_SIZE
 
 
 /* Go to sleep when nothing else is happening */
@@ -157,6 +161,14 @@ enum usb_spi {
 	USB_SPI_EC,
 };
 
+/* NVMem variables. */
+enum nvmem_vars {
+	NVMEM_VAR_CONSOLE_LOCKED = 0,
+	NVMEM_VAR_TEST_VAR,
+
+	NVMEM_VARS_COUNT
+};
+
 void board_configure_deep_sleep_wakepins(void);
 /* Interrupt handler */
 void tpm_rst_deasserted(enum gpio_signal signal);
@@ -218,6 +230,8 @@ enum nvmem_users {
 	NVMEM_NUM_USERS
 };
 #endif
+
+#define CONFIG_FLASH_NVMEM_VARS_USER_NUM NVMEM_CR50
 
 /*
  * Let's be on the lookout for stack overflow, while debugging.

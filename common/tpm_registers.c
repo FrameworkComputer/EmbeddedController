@@ -709,9 +709,14 @@ int tpm_reset_request(int wait_until_done, int wipe_nvmem_first)
  */
 static void reinstate_nvmem_commits(void)
 {
-	task_set_event(TASK_ID_TPM, TPM_EVENT_COMMIT, 0);
+	tpm_reinstate_nvmem_commits();
 }
 DECLARE_DEFERRED(reinstate_nvmem_commits);
+
+void tpm_reinstate_nvmem_commits(void)
+{
+	task_set_event(TASK_ID_TPM, TPM_EVENT_COMMIT, 0);
+}
 
 static void tpm_reset_now(int wipe_first)
 {
