@@ -69,5 +69,6 @@ struct tpm_cmd_header {
  * crosbug.com/p/55667 for detals.
  */
 #define TPM2_PCR_Read		0x0000017e
+#define TPM2_Startup		0x00000144
 
 #endif	/* __CROS_EC_TPM_REGISTERS_H */

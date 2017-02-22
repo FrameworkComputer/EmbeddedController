@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#ifndef __EC_BOARD_CR50_WP_H
+#define __EC_BOARD_CR50_WP_H
+
 #include "common.h"
 
 /**
@@ -11,3 +14,11 @@
  * @param asserted: 0 to disable write protect, otherwise enable write protect.
  */
 void set_wp_state(int asserted);
+
+/**
+ * Read the FWMP value from TPM NVMEM and set the console restriction
+ * appropriately.
+ */
+void read_fwmp(void);
+
+#endif  /* ! __EC_BOARD_CR50_WP_H */
