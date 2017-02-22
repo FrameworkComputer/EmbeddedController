@@ -67,7 +67,7 @@
 /* Program is run directly from storage */
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
-#if !defined(CHIP_VARIANT_STM32F446)
+#if !defined(CHIP_VARIANT_STM32F446) && !defined(CHIP_VARIANT_STM32F09X)
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 #endif

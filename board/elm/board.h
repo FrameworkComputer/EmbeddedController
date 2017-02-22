@@ -124,6 +124,30 @@
 #define CONFIG_CMD_I2C_PROTECT
 #define CONFIG_CMD_PD_CONTROL
 
+/*
+ * Flash layout:
+ *                            PSTATE(4KB)
+ *                              |
+ *          (124KB)             v            (132KB)
+ * |<-----Protected Region------>|<------Unprotected Region----->|
+ * |<--------RO image--------->| | |<--------RW image----------->|
+ * 0        (120KB)            ^ ^           (128KB)
+ *                             | |
+ *                             | sector 31(132KB sector)
+ *                             |
+ *                             sector 30(4KB sector)
+ */
+#undef CONFIG_RW_MEM_OFF
+#undef CONFIG_RW_SIZE
+#undef CONFIG_EC_WRITABLE_STORAGE_OFF
+#undef CONFIG_EC_WRITABLE_STORAGE_SIZE
+#undef CONFIG_WP_STORAGE_SIZE
+#define CONFIG_RW_MEM_OFF                (128 * 1024)
+#define CONFIG_RW_SIZE                   (128 * 1024)
+#define CONFIG_EC_WRITABLE_STORAGE_OFF   (128 * 1024)
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE  (128 * 1024)
+#define CONFIG_WP_STORAGE_SIZE           (128 * 1024)
+
 /* Drivers */
 #ifndef __ASSEMBLER__
 
