@@ -501,11 +501,6 @@ static int init(const struct motion_sensor_t *s)
 		msleep(1);
 
 		ret = raw_read8(s->port, s->addr, reg, &val);
-		if (ret != EC_SUCCESS) {
-			mutex_unlock(s->mutex);
-			return ret;
-		}
-
 		/* Reset complete. */
 		if ((ret == EC_SUCCESS) && !(val & reset_field))
 			break;
