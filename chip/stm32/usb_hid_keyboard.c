@@ -165,6 +165,11 @@ static void write_keyboard_report(void)
 		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
 				EP_TX_VALID, 0);
 	}
+
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+	/* Wake up host, if required. */
+	usb_wake();
+#endif
 }
 
 static void hid_keyboard_tx(void)

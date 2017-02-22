@@ -36,14 +36,6 @@
 #define CONFIG_USB_BCD_DEV 0x0100 /* 1.00 */
 #endif
 
-#ifndef USB_BMATTRIBUTES
-#ifdef CONFIG_USB_SELF_POWERED
-#define USB_BMATTRIBUTES 0xc0  /* Self powered. */
-#else
-#define USB_BMATTRIBUTES 0x80  /* Bus powered. */
-#endif
-#endif
-
 #ifndef CONFIG_USB_SERIALNO
 #define USB_STR_SERIALNO 0
 #else
@@ -76,7 +68,14 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bNumInterfaces = USB_IFACE_COUNT,
 	.bConfigurationValue = 1,
 	.iConfiguration = USB_STR_VERSION,
-	.bmAttributes = USB_BMATTRIBUTES, /* bus or self powered */
+	.bmAttributes = 0x80 /* Reserved bit */
+#ifdef CONFIG_USB_SELF_POWERED  /* bus or self powered */
+		      | 0x40
+#endif
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+		      | 0x20
+#endif
+	,
 	.bMaxPower = (CONFIG_USB_MAXPOWER_MA / 2),
 };
 
@@ -332,6 +331,21 @@ static void usb_resume(void)
 	/* USB is in use again */
 	disable_sleep(SLEEP_MASK_USB_DEVICE);
 }
+
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+void usb_wake(void)
+{
+	if (!(STM32_USB_CNTR & STM32_USB_CNTR_FSUSP)) {
+		/* USB is already woken up, nothing to do. */
+		return;
+	}
+
+	/* Set RESUME bit for 1 to 15 ms, then clear it. */
+	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME;
+	msleep(5);
+	STM32_USB_CNTR &= ~STM32_USB_CNTR_RESUME;
+}
+#endif
 #endif /* CONFIG_USB_SUSPEND */
 
 void usb_interrupt(void)

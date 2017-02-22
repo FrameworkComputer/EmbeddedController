@@ -52,14 +52,6 @@
 #define CONFIG_USB_BCD_DEV 0x0100		/* 1.00 */
 #endif
 
-#ifndef USB_BMATTRIBUTES
-#ifdef CONFIG_USB_SELF_POWERED
-#define USB_BMATTRIBUTES 0xc0  /* Self powered. */
-#else
-#define USB_BMATTRIBUTES 0x80  /* Bus powered. */
-#endif
-#endif
-
 #ifndef CONFIG_USB_SERIALNO
 #define USB_STR_SERIALNO 0
 #else
@@ -93,7 +85,14 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bNumInterfaces = USB_IFACE_COUNT,
 	.bConfigurationValue = 1,		/* Caution: hard-coded value */
 	.iConfiguration = USB_STR_VERSION,
-	.bmAttributes = USB_BMATTRIBUTES, /* bus or self powered */
+	.bmAttributes = 0x80 /* Reserved bit */
+#ifdef CONFIG_USB_SELF_POWERED  /* bus or self powered */
+		      | 0x40
+#endif
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+		      | 0x20
+#endif
+	,
 	.bMaxPower = (CONFIG_USB_MAXPOWER_MA / 2),
 };
 

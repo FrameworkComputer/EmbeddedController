@@ -2433,6 +2433,12 @@
  */
 #undef CONFIG_USB_PORT_POWER_SMART_INVERTED
 
+/*
+ * Support waking up host by setting the K-state on the data lines (requires
+ * CONFIG_USB_SUSPEND to be set as well).
+ */
+#undef CONFIG_USB_REMOTE_WAKEUP
+
 /* Support programmable USB device iSerial field. */
 #undef CONFIG_USB_SERIALNO
 
