@@ -8,6 +8,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "ec_commands.h"
+#include "usb_pd_tcpm.h"
 
 /* USB Power delivery board configuration */
 
@@ -20,6 +21,8 @@
  *	C1		DUT
  *
  */
+#define CHG 0
+#define DUT 1
 
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_CHG 16
@@ -217,6 +220,62 @@ static inline void pd_tx_init(void)
 	gpio_config_module(MODULE_USB_PD, 1);
 }
 
+static inline int pd_set_rp_rd(int port, int cc_pull, int rp_value)
+{
+	/* Set Rd for CC1/CC2 to High-Z. */
+	gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_INPUT);
+	/* Set Rp for CC1/CC2 to High-Z. */
+	gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RP3A0, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_INPUT);
+
+	if (cc_pull == TYPEC_CC_RP) {
+		/*
+		 * CC values for Debug sources (DTS)
+		 *
+		 * Source type  Mode of Operation   CC1    CC2
+		 * ---------------------------------------------
+		 * DTS          Default USB Power   Rp3A0  Rp1A5
+		 * DTS          USB-C @ 1.5 A       Rp1A5  RpUSB
+		 * DTS          USB-C @ 3 A         Rp3A0  RpUSB
+		 */
+		switch (rp_value) {
+		case TYPEC_RP_USB:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_1A5:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_3A0:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_RESERVED:
+			/*
+			 * This case can be used to force a detach event since
+			 * all values are set to inputs above. Nothing else to
+			 * set.
+			 */
+			break;
+		default:
+			return EC_ERROR_INVAL;
+		}
+
+	} else if (cc_pull == TYPEC_CC_RD) {
+		/* DTS in SNK mode presents Rd on CC1/CC2 */
+		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_OUT_LOW);
+		gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUT_LOW);
+	}
+
+	return EC_SUCCESS;
+}
+
 static inline void pd_set_host_mode(int port, int enable)
 {
 	/*
@@ -231,42 +290,21 @@ static inline void pd_set_host_mode(int port, int enable)
 		/*
 		 * Servo_v4 in SRC mode acts as a DTS (debug test
 		 * accessory) and needs to present Rp on both CC
-		 * lines. In order to support orientation detection, the
-		 * values of Rp1/Rp2 need to asymmetric with Rp1 > Rp2.
+		 * lines. In order to support orientation detection, and
+		 * advertise the correct TypeC current level, the
+		 * values of Rp1/Rp2 need to asymmetric with Rp1 > Rp2. This
+		 * function is called without a specified Rp value so assume the
+		 * servo_v4 default of USB level current. If a higher current
+		 * can be supported, then the Rp value will get adjusted when
+		 * VBUS is enabled.
 		 */
+		pd_set_rp_rd(port, TYPEC_CC_RP, TYPEC_RP_USB);
 
-		/* Set Rd for CC1/CC2 to High-Z. */
-		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_INPUT);
-
-		/*
-		 * TODO(crosbug.com/p/60794): Currently always advertising
-		 * 1.5A. If CHG port is attached then can advertise 3A
-		 * instead. Additionally, if CHG port is not attached and having
-		 * to use host provided vbus, can 1.5A be advertised?
-		 */
-		/* Pull up for host mode */
-		gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUTPUT);
-		gpio_set_level(GPIO_USB_DUT_CC1_RP1A5, 1);
-		gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUTPUT);
-		gpio_set_level(GPIO_USB_DUT_CC2_RPUSB, 1);
-		/* Set TX Hi-Z */
 		gpio_set_flags(GPIO_USB_DUT_CC1_TX_DATA, GPIO_INPUT);
 		gpio_set_flags(GPIO_USB_DUT_CC2_TX_DATA, GPIO_INPUT);
 	} else {
-		/* Set Rp for CC1/CC2 to High-Z. */
-		gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC2_RP3A0, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_INPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_INPUT);
-
-		/* DTS in SNK mode presents Rd on CC1/CC2 */
-		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_OUTPUT);
-		gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUTPUT);
-		gpio_set_level(GPIO_USB_DUT_CC1_RD, 0);
-		gpio_set_level(GPIO_USB_DUT_CC2_RD, 0);
+		/* Select Rd, the Rp value is a don't care */
+		pd_set_rp_rd(port, TYPEC_CC_RD, TYPEC_RP_RESERVED);
 	}
 }
 
