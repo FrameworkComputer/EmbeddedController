@@ -169,7 +169,7 @@ struct keyboard_scan_config keyscan_config = {
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT]     = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_KBLIGHT]     = { 5, 0, 10000 },
 	[PWM_CH_LED_L_RED]   = { 2, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_L_GREEN] = { 3, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_L_BLUE]  = { 4, PWM_CONFIG_DSLEEP, 100 },
