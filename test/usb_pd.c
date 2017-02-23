@@ -72,6 +72,11 @@ int pd_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 	return 0;
 }
 
+int board_select_rp_value(int port, int rp)
+{
+	return 0;
+}
+
 /* Tests */
 
 void inc_tx_id(int port)

@@ -970,6 +970,16 @@ int tcpc_get_cc(int port, int *cc1, int *cc2)
 	return EC_SUCCESS;
 }
 
+int board_select_rp_value(int port, int rp) __attribute__((weak));
+
+int tcpc_select_rp_value(int port, int rp)
+{
+	if (board_select_rp_value)
+		return board_select_rp_value(port, rp);
+	else
+		return EC_ERROR_UNIMPLEMENTED;
+}
+
 int tcpc_set_polarity(int port, int polarity)
 {
 	pd[port].polarity = polarity;

@@ -15,6 +15,7 @@ extern int tcpc_alert_status(int port, int *alert);
 extern int tcpc_alert_status_clear(int port, uint16_t mask);
 extern int tcpc_alert_mask_set(int port, uint16_t mask);
 extern int tcpc_get_cc(int port, int *cc1, int *cc2);
+extern int tcpc_select_rp_value(int port, int rp);
 extern int tcpc_set_cc(int port, int pull);
 extern int tcpc_set_polarity(int port, int polarity);
 extern int tcpc_set_power_status_mask(int port, uint8_t mask);
@@ -68,7 +69,7 @@ int tcpm_get_cc(int port, int *cc1, int *cc2)
 
 int tcpm_select_rp_value(int port, int rp)
 {
-	return -EC_ERROR_UNIMPLEMENTED;
+	return tcpc_select_rp_value(port, rp);
 }
 
 int tcpm_set_cc(int port, int pull)
