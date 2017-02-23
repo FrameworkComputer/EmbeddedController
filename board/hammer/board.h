@@ -22,6 +22,7 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Optional features */
+#define CONFIG_LOW_POWER_IDLE
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 
