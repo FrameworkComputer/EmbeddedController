@@ -769,6 +769,9 @@ static void gpio_interrupt(int int_no)
 			/* Get pending mask */
 			wui_mask = NPCX_WKPND(i, j);
 
+			/* Get enabled mask */
+			wui_mask &= NPCX_WKEN(i, j);
+
 			/* If pending bits is not zero */
 			if (!wui_mask)
 				continue;
