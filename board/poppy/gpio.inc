@@ -10,7 +10,6 @@
 
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_FALLING,			tcpc_alert_event)
 GPIO_INT(USB_C1_PD_INT_ODL,	PIN(C, 5), GPIO_INT_FALLING,			tcpc_alert_event)
-GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
 /* Use VW signals instead of GPIOs */
 #ifndef CONFIG_ESPI_VW_SIGNALS
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH,			power_signal_interrupt)
@@ -50,6 +49,7 @@ GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)			/* H1 Reset */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
+GPIO(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INPUT)
 
 /* Sensor interrupts, not implemented yet */
 GPIO(ALS_INT_L,			PIN(2, 5), GPIO_INPUT)
