@@ -557,7 +557,26 @@ int board_is_consuming_full_charge(void)
 }
 
 
-/* TODO(crosbug.com/p/61098): add board_hibernate[_late] functions as needed */
+void board_hibernate(void)
+{
+    CPRINTS("Triggering PMIC shutdown.");
+    uart_flush_output();
+
+    /* Trigger PMIC shutdown. */
+    if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x01)) {
+        /*
+         * If we can't tell the PMIC to shutdown, instead reset
+         * and don't start the AP. Hopefully we'll be able to
+         * communicate with the PMIC next time.
+         */
+        CPRINTS("PMIC i2c failed.");
+        system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+    }
+
+    /* Await shutdown. */
+    while (1)
+        ;
+}
 
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
