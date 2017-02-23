@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "pmu.h"
 #include "registers.h"
@@ -323,6 +324,14 @@ static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 
 	if (cs_deasserted)
 		sps_rx_handler(NULL, 0, 1);
+
+	/*
+	 * SPI does not provide inherent flow control. Let's use this pin to
+	 * signal the AP that the device has finished processing received
+	 * data.
+	 */
+	gpio_set_level(GPIO_INT_AP_L, 0);
+	gpio_set_level(GPIO_INT_AP_L, 1);
 }
 
 static void sps_cs_deassert_interrupt(uint32_t port)
