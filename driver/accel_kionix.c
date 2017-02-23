@@ -511,7 +511,7 @@ static int init(const struct motion_sensor_t *s)
 			break;
 
 		/* Check for timeout. */
-		if (timeout++ > 5) {
+		if (timeout++ > 20) {
 			ret = EC_ERROR_TIMEOUT;
 			mutex_unlock(s->mutex);
 			return ret;
