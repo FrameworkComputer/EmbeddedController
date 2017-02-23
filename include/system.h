@@ -273,10 +273,6 @@ const char *system_get_chip_revision(void);
  * not implemented.
  */
 enum system_bbram_idx {
-	/*
-	 * TODO(crbug.com/693210): Consider boards without vbnvcontext
-	 * host command.
-	 */
 	SYSTEM_BBRAM_IDX_VBNVBLOCK0 = 0,
 	/*
 	 * ...

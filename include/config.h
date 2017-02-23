@@ -1328,8 +1328,11 @@
 /* Panic when status of PD MCU reflects that it has crashed */
 #undef CONFIG_HOSTCMD_PD_PANIC
 
-/* Board supports RTC host commands*/
+/* Board supports RTC host commands */
 #undef CONFIG_HOSTCMD_RTC
+
+/* For access to VBNV on-EC battery-backed storage */
+#undef CONFIG_HOSTCMD_VBNV_CONTEXT
 
 /*****************************************************************************/
 

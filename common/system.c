@@ -1223,6 +1223,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION,
 		     EC_VER_MASK(0));
 #endif
 
+#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
 int host_command_vbnvcontext(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vbnvcontext *p = args->params;
@@ -1250,15 +1251,10 @@ int host_command_vbnvcontext(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-
-/*
- * TODO(crbug.com/239197) : Adding both versions to the version mask is a
- * temporary workaround for a problem in the cros_ec driver. Drop
- * EC_VER_MASK(0) once cros_ec driver can send the correct version.
- */
 DECLARE_HOST_COMMAND(EC_CMD_VBNV_CONTEXT,
 		     host_command_vbnvcontext,
-		     EC_VER_MASK(EC_VER_VBNV_CONTEXT) | EC_VER_MASK(0));
+		     EC_VER_MASK(EC_VER_VBNV_CONTEXT));
+#endif /* CONFIG_HOSTCMD_VBNV_CONTEXT */
 
 int host_command_reboot(struct host_cmd_handler_args *args)
 {
