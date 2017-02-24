@@ -385,68 +385,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-#define MP2949_PAGE_SELECT	0x00	/* Select rail/page */
-#define MP2949_STORE_USER_ALL	0x15	/* Write settings to EEPROM */
-#define MP2949_MFR_TRANS_FAST	0xfa	/* Slew rate control */
-#define MP2949_FIXED_SLEW_RATE	0x0ac5	/* 40mV/uS */
-
-/*
- * Workaround for P0 boards:
- * Set voltage slew rate to 40mV/uS for all rails
- */
-void board_before_rsmrst(int rsmrst)
-{
-	int rail, rate;
-	int fixed = 0;
-
-	/* Only trigger on RSMRST# deassertion */
-	if (!rsmrst)
-		return;
-
-	/* Only apply workaround to P0 boards */
-	if (system_get_board_version() > BOARD_VERSION_P0B)
-		return;
-
-	i2c_lock(I2C_PORT_MP2949, 1);
-
-	for (rail = 2; rail >= 0; rail--) {
-		uint8_t buf[3];
-
-		/* Select register page for this rail */
-		buf[0] = MP2949_PAGE_SELECT;
-		buf[1] = rail;
-		i2c_xfer(I2C_PORT_MP2949, I2C_ADDR_MP2949,
-			 buf, 2, NULL, 0, I2C_XFER_SINGLE);
-
-		/* Check for workaround already applied */
-		buf[0] = MP2949_MFR_TRANS_FAST;
-		i2c_xfer(I2C_PORT_MP2949, I2C_ADDR_MP2949,
-			 buf, 1, buf+1, 2, I2C_XFER_SINGLE);
-		rate = ((int)buf[2] << 8) | buf[1];
-
-		if (rate == MP2949_FIXED_SLEW_RATE)
-			continue;
-		fixed = 1;
-
-		/* Set slew rate */
-		buf[0] = MP2949_MFR_TRANS_FAST;
-		buf[1] = MP2949_FIXED_SLEW_RATE & 0xff;
-		buf[2] = (MP2949_FIXED_SLEW_RATE >> 8) & 0xff;
-		i2c_xfer(I2C_PORT_MP2949, I2C_ADDR_MP2949,
-			 buf, 3, NULL, 0, I2C_XFER_SINGLE);
-
-		/* Store new settings (1 byte write, no data) */
-		buf[0] = MP2949_STORE_USER_ALL;
-		i2c_xfer(I2C_PORT_MP2949, I2C_ADDR_MP2949,
-			 buf, 1, NULL, 0, I2C_XFER_SINGLE);
-	}
-
-	i2c_lock(I2C_PORT_MP2949, 0);
-
-	CPRINTS("P0 board - IMVP8 workaround %sapplied",
-		fixed ? "" : "already ");
-}
-
 /**
  * Buffer the AC present GPIO to the PCH.
  */
