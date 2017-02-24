@@ -68,18 +68,33 @@ static const uint8_t color_brightness[LED_COLOR_COUNT][PWM_CHAN_PER_LED] = {
 static void set_color(enum led_color color, enum led_side side)
 {
 	int i;
+	static uint8_t saved_duty[LED_BOTH][PWM_CHAN_PER_LED];
 
 	/* Set color for left LED */
-	if (side == LED_LEFT || side == LED_BOTH)
-		for (i = 0; i < PWM_CHAN_PER_LED; i++)
-			pwm_set_duty(PWM_CH_LED_L_RED + i,
-				     color_brightness[color][i]);
+	if (side == LED_LEFT || side == LED_BOTH) {
+		for (i = 0; i < PWM_CHAN_PER_LED; i++) {
+			if (saved_duty[LED_LEFT][i] !=
+			    color_brightness[color][i]) {
+				pwm_set_duty(PWM_CH_LED_L_RED + i,
+					     color_brightness[color][i]);
+				saved_duty[LED_LEFT][i] =
+					color_brightness[color][i];
+			}
+		}
+	}
 
 	/* Set color for right LED */
-	if (side == LED_RIGHT || side == LED_BOTH)
-		for (i = 0; i < PWM_CHAN_PER_LED; i++)
-			pwm_set_duty(PWM_CH_LED_R_RED + i,
-				     color_brightness[color][i]);
+	if (side == LED_RIGHT || side == LED_BOTH) {
+		for (i = 0; i < PWM_CHAN_PER_LED; i++) {
+			if (saved_duty[LED_RIGHT][i] !=
+			    color_brightness[color][i]) {
+				pwm_set_duty(PWM_CH_LED_R_RED + i,
+					     color_brightness[color][i]);
+				saved_duty[LED_RIGHT][i] =
+					color_brightness[color][i];
+			}
+		}
+	}
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -116,12 +131,17 @@ static void eve_led_set_power_battery(void)
 		side = LED_BOTH;
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		set_color(LED_BLUE, LED_BOTH);
-		if (chg_state == PWR_STATE_CHARGE)
+		enum led_side blueside = LED_BOTH;
+
+		if (chg_state == PWR_STATE_CHARGE) {
 			set_color(LED_AMBER, side);
-		else if (chg_state == PWR_STATE_IDLE || chg_state ==
-			 PWR_STATE_CHARGE_NEAR_FULL)
+			blueside = !side;
+		} else if (chg_state == PWR_STATE_IDLE || chg_state ==
+			   PWR_STATE_CHARGE_NEAR_FULL) {
 			set_color(LED_GREEN, side);
+			blueside = !side;
+		}
+		set_color(LED_BLUE, blueside);
 		return;
 	}
 
@@ -138,12 +158,18 @@ static void eve_led_set_power_battery(void)
 	    chipset_in_state(CHIPSET_STATE_STANDBY)) {
 		enum led_side blinkside = LED_BOTH;
 
-		if (chg_state == PWR_STATE_CHARGE) {
+		if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
+		    chg_state == PWR_STATE_IDLE) {
+			set_color(LED_GREEN, side);
+			blinkside = !side;
+		} else if (chg_state == PWR_STATE_CHARGE) {
 			set_color(LED_AMBER, side);
 			blinkside = !side;
 		}
 		if (chg_state == PWR_STATE_DISCHARGE ||
-		    chg_state == PWR_STATE_CHARGE) {
+		    chg_state == PWR_STATE_CHARGE ||
+		    chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
+		    chg_state == PWR_STATE_IDLE) {
 			/*
 			 * If in S3/S0iX and not in some error
 			 * state, then flash non-charging LEDs white.
