@@ -23,8 +23,13 @@ GPIO_INT(VOLUME_UP_L,		PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt
 GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(9, 3), GPIO_INT_FALLING,			bmi160_interrupt)
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 GPIO_INT(USB_C0_CABLE_DET,      PIN(D, 2), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 GPIO_INT(USB_C1_CABLE_DET,      PIN(D, 3), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
+#else
+GPIO(USB_C0_CABLE_DET,          PIN(D, 2), GPIO_INPUT)
+GPIO(USB_C1_CABLE_DET,          PIN(D, 3), GPIO_INPUT)
+#endif
 
 /* Lid KCJX9 accelerometer sensor interrupt */
 GPIO(ACCEL1_INT_L,			PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
