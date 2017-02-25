@@ -204,7 +204,7 @@ struct transfer_descriptor {
 	 */
 	uint32_t ro_offset;
 	uint32_t rw_offset;
-
+	uint32_t post_reset;
 	enum transfer_type {
 		usb_xfer = 0,
 		spi_xfer = 1
@@ -217,17 +217,18 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = ":bcfd:hsu";
+static char *short_opts = "b:cd:fhpsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"binvers",  0,   NULL, 'b'},
-	{"corrupt",  0,   NULL, 'c'},
-	{"device",   1,   NULL, 'd'},
-	{"help",     0,   NULL, 'h'},
-	{"spi",      0,   NULL, 's'},
-	{"upstart",  0,   NULL, 'u'},
-	{"fwver",    0,   NULL, 'f'},
-	{NULL,       0,   NULL,  0},
+	{"binvers",	1,   NULL, 'b'},
+	{"corrupt",	0,   NULL, 'c'},
+	{"device",	1,   NULL, 'd'},
+	{"fwver",	0,   NULL, 'f'},
+	{"help",	0,   NULL, 'h'},
+	{"post_reset",	0,   NULL, 'p'},
+	{"spi",		0,   NULL, 's'},
+	{"upstart",	0,   NULL, 'u'},
+	{},
 };
 
 /* Prepare and transfer a block to /dev/tpm0, get a reply. */
@@ -1099,10 +1100,13 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 	printf("-------\nupdate complete\n");
 
 	/*
-	 * In upstart mode or in case target is running older protocol version
-	 * - post reset is requested.
+	 * In upstart mode, or in case target is running older protocol
+	 * version, or in case the user explicitly wants it, request post
+	 * reset instead of immediate reset. In this case the h1 will reset
+	 * next time the target reboots, and will consider running the
+	 * uploaded code.
 	 */
-	if (td->upstart_mode || (protocol_version <= 5))
+	if (td->upstart_mode || (protocol_version <= 5) || td->post_reset)
 		subcommand = EXTENSION_POST_RESET;
 
 	if (td->ep_type == usb_xfer) {
@@ -1233,6 +1237,9 @@ int main(int argc, char *argv[])
 			break;
 		case 's':
 			td.ep_type = spi_xfer;
+			break;
+		case 'p':
+			td.post_reset = 1;
 			break;
 		case 'u':
 			td.upstart_mode = 1;
