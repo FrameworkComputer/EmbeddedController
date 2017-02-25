@@ -216,6 +216,16 @@ int gpio_enable_interrupt(enum gpio_signal signal);
 int gpio_disable_interrupt(enum gpio_signal signal);
 
 /**
+ * Clear pending interrupts for the signal.
+ *
+ * The signal must have been defined with an interrupt handler.
+ *
+ * @param signal	Signal to clear interrupts for
+ * @return EC_SUCCESS, or non-zero on error.
+ */
+int gpio_clear_pending_interrupt(enum gpio_signal signal);
+
+/**
  * Set flags for GPIO(s) by port and mask.
  *
  * Use gpio_set_flags() to set flags for an individual GPIO by id.

@@ -170,6 +170,18 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	/* Fail if no interrupt handler */
+	if (signal >= GPIO_IH_COUNT)
+		return EC_ERROR_INVAL;
+
+	LM4_GPIO_ICR(g->port) |= g->mask;
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_LOW_POWER_IDLE
 /**
  * Convert GPIO port to a mask that can be used to set the

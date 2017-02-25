@@ -173,6 +173,24 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	int i, port, girq_id, bit_id;
+
+	if (gpio_list[signal].mask == 0)
+		return EC_SUCCESS;
+
+	i = GPIO_MASK_TO_NUM(gpio_list[signal].mask);
+	port = gpio_list[signal].port;
+	girq_id = int_map[port].girq_id;
+	bit_id = (port - int_map[port].port_offset) * 8 + i;
+
+	/* Clear interrupt source sticky status bit even if not enabled */
+	MEC1322_INT_SOURCE(girq_id) |= 1 << bit_id;
+
+	return EC_SUCCESS;
+}
+
 void gpio_pre_init(void)
 {
 	int i;

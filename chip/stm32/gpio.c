@@ -98,6 +98,18 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	if (!g->mask || signal >= GPIO_IH_COUNT)
+		return EC_ERROR_INVAL;
+
+	STM32_EXTI_PR |= g->mask;
+
+	return EC_SUCCESS;
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
 

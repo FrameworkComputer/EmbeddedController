@@ -256,6 +256,13 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+	GR_GPIO_CLRINTSTAT(g->port) = g->mask;
+	return EC_SUCCESS;
+}
+
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;

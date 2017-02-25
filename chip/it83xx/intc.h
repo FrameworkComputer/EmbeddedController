@@ -20,7 +20,6 @@ void lpcrst_interrupt(enum gpio_signal signal);
 void peci_interrupt(void);
 void adc_interrupt(void);
 void i2c_interrupt(int port);
-int gpio_clear_pending_interrupt(enum gpio_signal signal);
 void clock_sleep_mode_wakeup_isr(void);
 int clock_ec_wake_from_sleep(void);
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds);

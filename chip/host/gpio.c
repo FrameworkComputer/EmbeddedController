@@ -60,6 +60,11 @@ test_mockable int gpio_enable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+test_mockable int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	return EC_SUCCESS;
+}
+
 test_mockable void gpio_set_flags_by_mask(uint32_t port, uint32_t mask,
 					  uint32_t flags)
 {

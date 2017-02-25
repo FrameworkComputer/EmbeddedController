@@ -669,6 +669,20 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	return EC_SUCCESS;
 }
 
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g     = gpio_list + signal;
+	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(g->port, g->mask);
+
+	/* Clear pending interrupt for this signal */
+	if (wui.valid)
+		NPCX_WKPCL(wui.table, wui.group) |= (1 << wui.bit);
+	else
+		return EC_ERROR_PARAM1;
+
+	return EC_SUCCESS;
+}
+
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
