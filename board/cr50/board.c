@@ -794,6 +794,11 @@ struct device_config device_states[] = {
 		.detect = GPIO_BATT_PRES_L,
 		.name = "BattPrsnt"
 	},
+	[DEVICE_CCD_MODE] = {
+		.deferred = NULL,
+		.detect = GPIO_CCD_MODE_L,
+		.name = "CCD Mode"
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
 
@@ -889,6 +894,22 @@ void board_update_device_state(enum device_type device)
 			    == 0)
 				set_wp_state(bp);
 		}
+		return;
+	}
+
+	if (device == DEVICE_CCD_MODE) {
+		int pin_level = gpio_get_level(device_states[device].detect);
+		/* The CCD mode pin is active low. */
+		int changed = device_set_state(device,
+					       pin_level ?
+					       DEVICE_STATE_OFF :
+					       DEVICE_STATE_ON);
+
+		if (changed) {
+			CPRINTS("CCD MODE changed: %d", pin_level);
+			ccd_mode_pin_changed(pin_level);
+		}
+
 		return;
 	}
 

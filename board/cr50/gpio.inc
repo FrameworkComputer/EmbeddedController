@@ -71,9 +71,11 @@ GPIO(AP_FLASH_SELECT, PIN(0, 2), GPIO_OUT_LOW)
 /* Pull this low to reset the AP. (We reset the EC with the RBOX.) */
 GPIO(SYS_RST_L_OUT,   PIN(0, 4), GPIO_INPUT)
 
-/* Indicate to EC when CCD is enabled. EC can pull this down too, to tell us if
- * it decided instead. The pullup is on the EC's side. */
-GPIO(CCD_MODE_L,      PIN(0, 5), GPIO_ODR_HIGH)
+/*
+ * Indicate to EC when CCD is enabled. EC can pull this down too, to tell us if
+ * it decided instead.
+ */
+GPIO(CCD_MODE_L,      PIN(0, 5), GPIO_INPUT | GPIO_PULL_UP)
 
 /* Battery present signal is active low */
 GPIO(BATT_PRES_L,     PIN(0, 6), GPIO_INPUT)
