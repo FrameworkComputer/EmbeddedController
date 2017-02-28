@@ -53,8 +53,8 @@
  * is restarted, the new RO and RW are used if they pass verification and are
  * logically newer than the existing sections.
  *
- * There are two ways to communicate with the CR50 device: USB and SPI (when
- * this app is running on a chromebook with the CR50 device). Originally
+ * There are two ways to communicate with the CR50 device: USB and /dev/tpm0
+ * (when this app is running on a chromebook with the CR50 device). Originally
  * different protocols were used to communicate over different channels,
  * starting with version 3 the same protocol is used.
  *
@@ -66,7 +66,7 @@
  * update protocol, it sends data to the cr50 device, which proceeses it and
  * responds.
  *
- * The encapsultation format is different between the SPI and USB cases:
+ * The encapsultation format is different between the /dev/tpm0 and USB cases:
  *
  *   4 bytes      4 bytes         4 bytes               variable size
  * +-----------+--------------+---------------+----------~~--------------+
@@ -74,17 +74,18 @@
  * +-----------+--------------+---------------+----------~~--------------+
  *  \           \                                                       /
  *   \           \                                                     /
- *    \           +-------- FW update PDU sent over SPI --------------+
+ *    \           +----- FW update PDU sent over /dev/tpm0 -----------+
  *     \                                                             /
  *      +--------- USB frame, requires total size field ------------+
  *
- * The update protocol data unints (PDUs) are passed over SPI, the
+ * The update protocol data unints (PDUs) are passed over /dev/tpm0, the
  * encapsulation includes integritiy verification and destination address of
- * the data (more of this later). SPI transactions pretty much do not have
- * size limits, whereas the USB data is sent in chunks of the size determined
- * when the USB connestion is set up. This is why USB requires an additional
- * encapsulation int frames to communicate the PDU size to the client side so
- * that the PDU can be reassembled before passing to the programming function.
+ * the data (more of this later). /dev/tpm0 transactions pretty much do not
+ * have size limits, whereas the USB data is sent in chunks of the size
+ * determined when the USB connestion is set up. This is why USB requires an
+ * additional encapsulation into frames to communicate the PDU size to the
+ * client side so that the PDU can be reassembled before passing to the
+ * programming function.
  *
  * In general, the protocol consists of two phases: connection establishment
  * and actual image transfer.
@@ -96,9 +97,9 @@
  *
  * The response to the first PDU varies depending on the protocol version.
  *
- * Version 1 is used over SPI. The response is either 4 or 1 bytes in size.
- * The 4 byte response is the *base address* of the backup RW section, no
- * support for RO updates. The one byte response is an error indication,
+ * Version 1 is used over /dev/tpm0. The response is either 4 or 1 bytes in
+ * size. The 4 byte response is the *base address* of the backup RW section,
+ * no support for RO updates. The one byte response is an error indication,
  * possibly reporting flash erase failure, command format error, etc.
  *
  * Version 2 is used over USB. The response is 8 bytes in size. The first four
@@ -106,7 +107,7 @@
  * updates), or an error code, the same as in Version 1. The second 4 bytes
  * are the protocol version number (set to 2).
  *
- * All versions above 2 behave the same over SPI and USB.
+ * All versions above 2 behave the same over /dev/tpm0 and USB.
  *
  * Version 3 response is 16 bytes in size. The first 4 bytes are the error code
  * the second 4 bytes are the protocol version (set to 3) and then 4 byte
@@ -207,7 +208,7 @@ struct transfer_descriptor {
 	uint32_t post_reset;
 	enum transfer_type {
 		usb_xfer = 0,
-		spi_xfer = 1
+		dev_xfer = 1
 	} ep_type;
 	union {
 		struct usb_endpoint uep;
@@ -226,7 +227,7 @@ static const struct option long_opts[] = {
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
 	{"post_reset",	0,   NULL, 'p'},
-	{"spi",		0,   NULL, 's'},
+	{"systemdev",	0,   NULL, 's'},
 	{"upstart",	0,   NULL, 'u'},
 	{},
 };
@@ -332,7 +333,7 @@ static void usage(int errs)
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
-	       "  -s,--spi                 Use /dev/tmp0 (-d is ignored)\n"
+	       "  -s,--systemdev           Use /dev/tmp0 (-d is ignored)\n"
 	       "  -u,--upstart             "
 			"Upstart mode (strict header checks)\n"
 	       "\n", progname, VID, PID);
@@ -904,7 +905,7 @@ static void setup_connection(struct transfer_descriptor *td)
 	/* We got something. Check for errors in response */
 
 	if (rxed_size <= 4) {
-		if (td->ep_type != spi_xfer) {
+		if (td->ep_type != dev_xfer) {
 			size_t i;
 
 			fprintf(stderr, "Unexpected response size %zd: ",
@@ -1236,7 +1237,7 @@ int main(int argc, char *argv[])
 			usage(errorcnt);
 			break;
 		case 's':
-			td.ep_type = spi_xfer;
+			td.ep_type = dev_xfer;
 			break;
 		case 'p':
 			td.post_reset = 1;
