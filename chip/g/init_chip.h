@@ -20,7 +20,7 @@
  *
  * PWRDN_SCRATCH 16 - 27 - Can be used by RW
  *	SCRATCH16 - Indicator that firmware is running for debug purposes
- *
+ *	SCRATCH17 - deep sleep count
  *	SCRATCH18 - Preserving USB_DCFG through deep sleep
  *
  * PWRDN_SCRATCH 28 - 31 - Reserved for boot rom
