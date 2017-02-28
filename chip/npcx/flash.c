@@ -60,6 +60,9 @@ static void flash_pinmux(int enable)
 
 static void flash_execute_cmd(uint8_t code, uint8_t cts)
 {
+	/* Flash mutex must be held while executing UMA commands. */
+	ASSERT(flash_lock.lock);
+
 	/* set UMA_CODE */
 	NPCX_UMA_CODE = code;
 	/* execute UMA flash transaction */
@@ -140,8 +143,13 @@ static void flash_set_address(uint32_t dest_addr)
 
 static uint8_t flash_get_status1(void)
 {
+	uint8_t ret;
+
 	if (all_protected)
 		return saved_sr1;
+
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -149,13 +157,24 @@ static uint8_t flash_get_status1(void)
 	flash_execute_cmd(CMD_READ_STATUS_REG, MASK_CMD_RD_1BYTE);
 	/* Enable tri-state */
 	TRISTATE_FLASH(1);
-	return NPCX_UMA_DB0;
+
+	ret = NPCX_UMA_DB0;
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
+	return ret;
 }
 
 static uint8_t flash_get_status2(void)
 {
+	uint8_t ret;
+
 	if (all_protected)
 		return saved_sr2;
+
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -163,13 +182,22 @@ static uint8_t flash_get_status2(void)
 	flash_execute_cmd(CMD_READ_STATUS_REG2, MASK_CMD_RD_1BYTE);
 	/* Enable tri-state */
 	TRISTATE_FLASH(1);
-	return NPCX_UMA_DB0;
+
+	ret = NPCX_UMA_DB0;
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
+	return ret;
 }
 
 #ifdef CONFIG_HOSTCMD_FLASH_SPI_INFO
 
 void flash_get_mfr_dev_id(uint8_t *dest)
 {
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 	/* Read manufacturer and device ID.  Send cmd=0x90 + 24-bit address=0 */
@@ -181,10 +209,16 @@ void flash_get_mfr_dev_id(uint8_t *dest)
 
 	dest[0] = NPCX_UMA_DB0;
 	dest[1] = NPCX_UMA_DB1;
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
 }
 
 void flash_get_jedec_id(uint8_t *dest)
 {
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
 	/* Read manufacturer and device ID */
@@ -195,6 +229,9 @@ void flash_get_jedec_id(uint8_t *dest)
 	dest[0] = NPCX_UMA_DB0;
 	dest[1] = NPCX_UMA_DB1;
 	dest[2] = NPCX_UMA_DB2;
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
 }
 
 #endif /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
