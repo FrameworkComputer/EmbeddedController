@@ -6870,7 +6870,16 @@ int cmd_pd_control(int argc, char *argv[])
 		return -1;
 	}
 
-	p.chip = 0;
+	if (argc == 2) {
+		p.chip = 0;
+	} else {
+		char *e;
+		p.chip = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad port number '%s'.\n", argv[2]);
+			return -1;
+		}
+	}
 
 	rv = ec_command(EC_CMD_PD_CONTROL, 0, &p, sizeof(p), NULL, 0);
 	return (rv < 0 ? rv : 0);

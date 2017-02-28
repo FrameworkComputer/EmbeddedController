@@ -203,14 +203,14 @@ static void detect_cc_cable(void)
 					     TYPEC_CABLE_SINGLE_CC;
 		/* Flip back to original polarity and enable PD comms */
 		set_active_cc(!active_cc);
-		pd_comm_enable(1);
+		pd_comm_enable(0, 1);
 		break;
 	case TYPEC_CABLE_SINGLE_CC:
 	case TYPEC_CABLE_DOUBLE_CC:
 		/* Check for disconnection and disable PD comms */
 		if (!pd_is_connected(0)) {
 			cable = TYPEC_CABLE_NONE;
-			pd_comm_enable(0);
+			pd_comm_enable(0, 0);
 		}
 		break;
 	}
@@ -269,7 +269,7 @@ static void update_usbc_dual_role(int dual_role)
 		/* Need to make sure both CC lines are set for SNK or SRC. */
 		set_active_cc(host_mode);
 		/* Ensure that PD communication is enabled. */
-		pd_comm_enable(1);
+		pd_comm_enable(0, 1);
 	} else {
 		drp_enable = 0;
 		/*

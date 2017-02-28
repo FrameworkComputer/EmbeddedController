@@ -2158,8 +2158,8 @@
 /* Check if max voltage request is allowed before each request */
 #undef CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
 
-/* Default state of PD communication enabled flag */
-#define CONFIG_USB_PD_COMM_ENABLED
+/* Default state of PD communication disabled flag */
+#undef CONFIG_USB_PD_COMM_DISABLED
 
 /*
  * Do not enable PD communication in RO as a security measure.

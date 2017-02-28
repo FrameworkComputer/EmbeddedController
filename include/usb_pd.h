@@ -1555,9 +1555,10 @@ void pd_request_data_swap(int port);
  * the port can still detect connection and source power but will not
  * send or respond to any PD communication.
  *
+ * @param port USB-C port number
  * @param enable Enable flag to set
  */
-void pd_comm_enable(int enable);
+void pd_comm_enable(int port, int enable);
 
 /**
  * Set the PD pings enabled flag. When source has negotiated power over
