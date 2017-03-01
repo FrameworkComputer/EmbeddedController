@@ -407,18 +407,6 @@ static int store_cert(enum cros_perso_component_type component_type,
 	return 0;
 }
 
-static void flash_info_read_enable(void)
-{
-	/* Enable R access to INFO. */
-	GREG32(GLOBALSEC, FLASH_REGION7_BASE_ADDR) = FLASH_INFO_MEMORY_BASE +
-		FLASH_INFO_MANUFACTURE_STATE_OFFSET;
-	GREG32(GLOBALSEC, FLASH_REGION7_SIZE) =
-		FLASH_INFO_MANUFACTURE_STATE_SIZE - 1;
-	GREG32(GLOBALSEC, FLASH_REGION7_CTRL) =
-		GC_GLOBALSEC_FLASH_REGION7_CTRL_EN_MASK |
-		GC_GLOBALSEC_FLASH_REGION7_CTRL_RD_EN_MASK;
-}
-
 static void flash_info_read_disable(void)
 {
 	GREG32(GLOBALSEC, FLASH_REGION7_CTRL) = 0;
@@ -449,7 +437,8 @@ static int get_decrypted_eps(uint8_t eps[PRIMARY_SEED_SIZE])
 		return 0;
 
 	/* Setup flash region mapping. */
-	flash_info_read_enable();
+	flash_info_read_enable(FLASH_INFO_MANUFACTURE_STATE_OFFSET,
+			       FLASH_INFO_MANUFACTURE_STATE_SIZE);
 
 	for (i = 0; i < INFO1_EPS_SIZE; i += sizeof(uint32_t)) {
 		uint32_t word;
