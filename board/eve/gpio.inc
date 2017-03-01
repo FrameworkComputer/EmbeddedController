@@ -70,9 +70,14 @@ GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_I2C3_POWER_SDA */
 GPIO(TRACKPAD_INT_L,		PIN(7, 1), GPIO_INPUT)				/* INT# from Trackpad */
 GPIO(DSP_WAKE_L,		PIN(C, 6), GPIO_INPUT | GPIO_SEL_1P8V)		/* INT# from DSP Mic */
 
-/* 5V enables: INPUT=1.5A, OUT_LOW=OFF, OUT_HIGH=3A */
+/*
+ * For P1 and prior: 5V enables: INPUT=1.5A, OUT_LOW=OFF, OUT_HIGH=3A
+ * For P1B and later: 5V enables: OUT_LOW=VBUS Off, OUT_HIGH=VBUS On
+ */
 GPIO(USB_C0_5V_EN,		PIN(4, 2), GPIO_OUT_LOW | GPIO_PULL_UP)		/* C0 5V Enable */
 GPIO(USB_C1_5V_EN,		PIN(B, 1), GPIO_OUT_LOW | GPIO_PULL_UP)		/* C1 5V Enable */
+GPIO(EN_USB_C0_3A,		PIN(6, 6), GPIO_OUT_LOW)			/* 1.5/3.0 C0 current limit selection */
+GPIO(EN_USB_C1_3A,		PIN(3, 5), GPIO_OUT_LOW)			/* 1.5/3.0 C1 current limit selection */
 GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_OUT_LOW)			/* C0 PD Reset */
 GPIO(USB_C1_PD_RST_L,		PIN(7, 4), GPIO_OUT_LOW)			/* C1 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */
@@ -86,10 +91,6 @@ GPIO(USB2_OTG_VBUSSENSE,	PIN(9, 5), GPIO_OUT_LOW)			/* OTG VBUS Sense */
 GPIO(BOARD_VERSION1,		PIN(4, 3), GPIO_INPUT)				/* Board ID bit0 */
 GPIO(BOARD_VERSION2,		PIN(4, 4), GPIO_INPUT)				/* Board ID bit1 */
 GPIO(BOARD_VERSION3,		PIN(4, 5), GPIO_INPUT)				/* Board ID bit2 */
-
-/* Test points */
-GPIO(TP249,			PIN(6, 6), GPIO_INPUT | GPIO_PULL_UP)		/* EC_GPO66_ARM_L */
-GPIO(TP250,			PIN(3, 5), GPIO_INPUT | GPIO_PULL_UP)		/* EC_GPIO35_TEST_L */
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 1, MODULE_UART, 0)		/* GPIO64-65 */		/* UART from EC to Servo */
