@@ -10,7 +10,7 @@
 
 GPIO_INT(AC_PRESENT,     PIN(C, 6),  GPIO_INT_BOTH,    extpower_interrupt)
 GPIO_INT(LID_OPEN,       PIN(C, 9),  GPIO_INT_BOTH,    lid_interrupt)          /* LID switch detection */
-GPIO_INT(SUSPEND_L,      PIN(C, 3),  GPIO_INT_BOTH,    power_signal_interrupt) /* AP suspend/resume state */
+GPIO_INT(SUSPEND_L,      PIN(C, 11), GPIO_INT_BOTH,    power_signal_interrupt) /* AP suspend/resume state */
 GPIO_INT(SOC_POWER_GOOD, PIN(A, 3),  GPIO_INT_BOTH,    power_signal_interrupt)
 GPIO_INT(PD_MCU_INT,     PIN(C, 15), GPIO_INT_RISING,  pd_mcu_interrupt)       /* Signal from PD MCU, external pull-up */
 GPIO_INT(BC12_CABLE_INT, PIN(C, 7),  GPIO_INT_FALLING | GPIO_PULL_UP, usb_evt) /* interrupt from BC12 and CABLE_DET */
