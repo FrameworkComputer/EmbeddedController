@@ -49,6 +49,8 @@ GPIO(KEYBOARD_BACKLIGHT,	PIN(B, 9), GPIO_OUT_LOW)
 
 GPIO(WP_L,			PIN(A, 13), GPIO_INPUT)
 
+GPIO(BASE_DET,			PIN(A, 15), GPIO_INPUT)
+
 /* Unimplemented signals since we are not an EC */
 UNIMPLEMENTED(ENTERING_RW)
 

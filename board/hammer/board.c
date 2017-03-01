@@ -15,6 +15,7 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
@@ -84,4 +85,24 @@ void board_config_pre_init(void)
 	 *  Chan 5 : USART1_RX
 	 */
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10); /* Remap USART1 RX/TX DMA */
+}
+
+/*
+ * Side-band USB wake, to be able to wake lid even in deep S3, when USB
+ * controller is off.
+ */
+void board_usb_wake(void)
+{
+	/*
+	 * Poke detection pin for less than 100us, we disable interrupts
+	 * to make sure that we do not get preempted (setting GPIO high
+	 * for too long would prevent pulse detection on lid EC side from
+	 * working properly, or even kill hammer power if it is held for
+	 * longer than debounce time).
+	 */
+	interrupt_disable();
+	gpio_set_flags(GPIO_BASE_DET, GPIO_OUT_HIGH);
+	udelay(100);
+	gpio_set_flags(GPIO_BASE_DET, GPIO_INPUT);
+	interrupt_enable();
 }

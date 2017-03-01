@@ -372,6 +372,12 @@ static volatile int usb_wake_done = 1;
  */
 static volatile int esof_count;
 
+__attribute__((weak))
+void board_usb_wake(void)
+{
+	/* Side-band USB wake, do nothing by default. */
+}
+
 void usb_wake(void)
 {
 	if (!remote_wakeup_enabled ||
@@ -396,6 +402,9 @@ void usb_wake(void)
 	 */
 	esof_count = 3;
 	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME | STM32_USB_CNTR_ESOFM;
+
+	/* Try side-band wake as well. */
+	board_usb_wake();
 }
 #endif
 
