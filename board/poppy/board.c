@@ -138,6 +138,25 @@ static uint64_t base_detect_debounce_time;
 static void base_detect_deferred(void);
 DECLARE_DEFERRED(base_detect_deferred);
 
+enum base_status {
+	BASE_DISCONNECTED = 0,
+	BASE_CONNECTED = 1,
+};
+
+/*
+ * This function is called whenever there is a change in the base detect
+ * status. Actions taken include:
+ * 1. Change in power to base
+ * 2. Indicate mode change to host.
+ */
+static void base_detect_change(enum base_status connected)
+{
+	CPRINTS("Base %sconnected", (connected == BASE_DISCONNECTED) ?
+		"not " : "");
+	gpio_set_level(GPIO_PP3300_DX_BASE, connected);
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+}
+
 static void base_detect_deferred(void)
 {
 	uint64_t time_now = get_time().val;
@@ -150,17 +169,15 @@ static void base_detect_deferred(void)
 			return;
 		CPRINTS("%s = %d\n", adc_channels[ADC_BASE_DET].name, v);
 
-		if (v >= BASE_DETECT_MIN_MV && v <= BASE_DETECT_MAX_MV) {
-			CPRINTS("Base connected\n");
-			gpio_set_level(GPIO_PP3300_DX_BASE, 1);
-		} else {
+		if (v >= BASE_DETECT_MIN_MV && v <= BASE_DETECT_MAX_MV)
+			base_detect_change(BASE_CONNECTED);
+		else {
 			/*
 			 * TODO(crosbug.com/p/61098): Figure out what to do with
 			 * other ADC values that do not clearly indicate base
 			 * presence or absence.
 			 */
-			CPRINTS("No base connected\n");
-			gpio_set_level(GPIO_PP3300_DX_BASE, 0);
+			base_detect_change(BASE_DISCONNECTED);
 		}
 	} else {
 		hook_call_deferred(&base_detect_deferred_data,
