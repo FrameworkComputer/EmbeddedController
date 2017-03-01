@@ -375,6 +375,10 @@ void board_tcpc_init(void)
 
 		mux->hpd_update(port, 0, 0);
 	}
+
+	/* 0x98 sets lower EQ of DP port (4.5db) */
+	i2c_write8(NPCX_I2C_PORT0_1, 0x16, PS8751_REG_MUX_DP_EQ_Configuration,
+		   0x98);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
