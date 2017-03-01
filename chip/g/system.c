@@ -8,9 +8,9 @@
 #include "cpu.h"
 #include "cpu.h"
 #include "flash.h"
+#include "flash_info.h"
 #include "printf.h"
 #include "registers.h"
-#include "signed_header.h"
 #include "system.h"
 #include "system_chip.h"
 #include "task.h"
@@ -512,4 +512,112 @@ const char *system_get_build_info(void)
 	}
 
 	return combined_build_info;
+}
+
+void system_update_rollback_mask(void)
+{
+#ifndef CR50_DEV
+	int updated_words_count = 0;
+	int i;
+	int write_enabled = 0;
+	uint32_t header_mask = 0;
+	const struct SignedHeader *header_a;
+	const struct SignedHeader *header_b;
+
+	header_a = (const struct SignedHeader *)
+		get_program_memory_addr(SYSTEM_IMAGE_RW);
+	header_b = (const struct SignedHeader *)
+		get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+
+	/*
+	 * Make sure INFO1 RW map space is readable.
+	 */
+	if (flash_info_read_enable(INFO_RW_MAP_OFFSET, INFO_RW_MAP_SIZE) !=
+	    EC_SUCCESS) {
+		ccprintf("%s: failed to enable read access to info\n",
+			 __func__);
+		return;
+	}
+
+	/*
+	 * The infomap field in the image header has a matching space in the
+	 * flash INFO1 section.
+	 *
+	 * The INFO1 space words which map into zeroed bits in the infomap
+	 * header are ignored by the RO.
+	 *
+	 * Let's make sure that those words in the INFO1 space are erased.
+	 * This in turn makes sure that attempts to load earlier RW images
+	 * (where those bits in the header are not zeroed) will fail, thus
+	 * ensuring rollback protection.
+	 */
+	/* For each bit in the header infomap field of the running image. */
+	for (i = 0; i < INFO_MAX; i++) {
+		uint32_t bit;
+		uint32_t word;
+		int byte_offset;
+
+		/* Read the next infomap word when done with the current one. */
+		if (!(i % 32)) {
+			/*
+			 * Not to shoot ourselves in the foot, let's zero only
+			 * those words in the INFO1 space which have both A
+			 * and B header's infomap bit set to zero.
+			 */
+			header_mask =
+				header_a->infomap[i/32] |
+				header_b->infomap[i/32];
+		}
+
+		/* Get the next bit value. */
+		bit = !!(header_mask & (1 << (i % 32)));
+		if (bit) {
+			/*
+			 * By convention zeroed bits are expected to be
+			 * adjacent at the LSB of the info mask field. Stop as
+			 * soon as a non-zeroed bit is encountered.
+			 */
+			ccprintf("%s: bailing out at bit %d\n", __func__, i);
+			break;
+		}
+
+		byte_offset = (INFO_MAX + i) * sizeof(uint32_t);
+
+		if (flash_physical_info_read_word(byte_offset, &word) !=
+		    EC_SUCCESS) {
+			ccprintf("failed to read info mask word %d\n", i);
+			continue;
+		}
+
+		if (!word)
+			continue; /* This word has been zeroed already. */
+
+		if (!write_enabled) {
+			if (flash_info_write_enable(
+				INFO_RW_MAP_OFFSET,
+				INFO_RW_MAP_SIZE) != EC_SUCCESS) {
+				ccprintf("%s: failed to enable write access to"
+					 " info\n", __func__);
+				return;
+			}
+			write_enabled = 1;
+		}
+
+		word = 0;
+		if (flash_info_physical_write(byte_offset,
+					      sizeof(word),
+					      (const char *) &word) !=
+		    EC_SUCCESS) {
+			ccprintf("failed to write info mask word %d\n", i);
+			continue;
+		}
+		updated_words_count++;
+
+	}
+	if (!write_enabled)
+		return;
+
+	flash_info_write_disable();
+	ccprintf("updated %d info map words\n", updated_words_count);
+#endif  /*  CR50_DEV ^^^^^^^^ NOT defined. */
 }

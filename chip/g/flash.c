@@ -371,20 +371,20 @@ static int valid_info_range(uint32_t offset, size_t size)
 
 }
 
+/* Write access is a superset of read access. */
 static int flash_info_configure_access(uint32_t offset,
-				       size_t size, int read_mode)
+				       size_t size, int write_mode)
 {
 	int mask;
 
 	if (!valid_info_range(offset, size))
 		return EC_ERROR_INVAL;
 
-	if (read_mode)
-		mask = GC_GLOBALSEC_FLASH_REGION6_CTRL_EN_MASK |
-			GC_GLOBALSEC_FLASH_REGION6_CTRL_RD_EN_MASK;
-	else
-		mask = GC_GLOBALSEC_FLASH_REGION6_CTRL_EN_MASK |
-			GC_GLOBALSEC_FLASH_REGION6_CTRL_WR_EN_MASK;
+	mask = GREG32(GLOBALSEC, FLASH_REGION6_CTRL);
+	mask |= GC_GLOBALSEC_FLASH_REGION6_CTRL_EN_MASK |
+		GC_GLOBALSEC_FLASH_REGION6_CTRL_RD_EN_MASK;
+	if (write_mode)
+		mask |= GC_GLOBALSEC_FLASH_REGION6_CTRL_WR_EN_MASK;
 
 	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) =
 		FLASH_INFO_MEMORY_BASE + offset;
@@ -397,12 +397,12 @@ static int flash_info_configure_access(uint32_t offset,
 
 int flash_info_read_enable(uint32_t offset, size_t size)
 {
-	return flash_info_configure_access(offset, size, 1);
+	return flash_info_configure_access(offset, size, 0);
 }
 
 int flash_info_write_enable(uint32_t offset, size_t size)
 {
-	return flash_info_configure_access(offset, size, 0);
+	return flash_info_configure_access(offset, size, 1);
 }
 
 void flash_info_write_disable(void)

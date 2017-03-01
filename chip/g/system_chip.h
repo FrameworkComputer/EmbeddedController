@@ -51,4 +51,10 @@ int system_rollback_detected(void);
  */
 int system_battery_cutoff_support_required(void);
 
+/**
+ * Modify info1 RW rollback mask to match currently executing RW image's
+ * header.
+ */
+void system_update_rollback_mask(void);
+
 #endif /* __CROS_EC_SYSTEM_CHIP_H */
