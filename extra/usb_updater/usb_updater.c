@@ -218,7 +218,7 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "b:cd:fhpsu";
+static char *short_opts = "bcd:fhpsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	1,   NULL, 'b'},
@@ -333,6 +333,7 @@ static void usage(int errs)
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
+	       "  -p,--post_reset          Request post reset after transfer\n"
 	       "  -s,--systemdev           Use /dev/tmp0 (-d is ignored)\n"
 	       "  -u,--upstart             "
 			"Upstart mode (strict header checks)\n"
