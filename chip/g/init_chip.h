@@ -6,6 +6,27 @@
 #ifndef __CROS_EC_INIT_CHIP_H
 #define __CROS_EC_INIT_CHIP_H
 
+/**
+ * This is the current state of the PMU persistent registers. There are two
+ * types: long life and pwrdn scratch. Long life will persist through any
+ * reset other than POR. PWRDN scratch only survives deep sleep.
+ *
+ * LONG_LIFE_SCRATCH 0 - 2
+ *	SCRATCH0 - Rollback counter
+ *	SCRATCH1 - Board properties
+ *	SCRATCH2
+ *
+ * PWRDN_SCRATCH  0 - 15 - Locked
+ *
+ * PWRDN_SCRATCH 16 - 27 - Can be used by RW
+ *	SCRATCH16 - Indicator that firmware is running for debug purposes
+ *
+ *	SCRATCH18 - Preserving USB_DCFG through deep sleep
+ *
+ * PWRDN_SCRATCH 28 - 31 - Reserved for boot rom
+ */
+
+
 enum permission_level {
 	PERMISSION_LOW = 0x00,
 	PERMISSION_MEDIUM = 0x33,    /* APPS run at medium */
