@@ -50,27 +50,8 @@ static int anx74xx_tcpm_init(int port);
 
 static void anx74xx_tcpm_set_auto_good_crc(int port, int enable)
 {
-	int reg;
-
-	if (enable) {
-		/* Set default header for Good CRC auto reply */
-		tcpc_read(port, ANX74XX_REG_TX_MSG_HEADER, &reg);
-		reg |= (PD_REV20 << ANX74XX_REG_SPEC_REV_BIT_POS);
-		reg |= ANX74XX_REG_AUTO_GOODCRC_EN;
-		tcpc_write(port, ANX74XX_REG_TX_MSG_HEADER, reg);
-
-		reg = ANX74XX_REG_ENABLE_GOODCRC;
-		tcpc_write(port, ANX74XX_REG_TX_AUTO_GOODCRC_2, reg);
-		/* Set bit-0 if enable, reset bit-0 if disable */
-		tcpc_read(port, ANX74XX_REG_TX_AUTO_GOODCRC_1, &reg);
-		reg |= ANX74XX_REG_AUTO_GOODCRC_EN;
-	} else {
-		/* Clear bit-0 for disable */
-		tcpc_read(port, ANX74XX_REG_TX_AUTO_GOODCRC_1, &reg);
-		reg &= ~ANX74XX_REG_AUTO_GOODCRC_EN;
-		tcpc_write(port, ANX74XX_REG_TX_AUTO_GOODCRC_2, 0);
-	}
-	tcpc_write(port, ANX74XX_REG_TX_AUTO_GOODCRC_1, reg);
+	tcpc_write(port, ANX74XX_REG_TX_AUTO_GOODCRC_2,
+		   enable ? ANX74XX_REG_REPLY_SOP_EN : 0);
 }
 
 static void anx74xx_set_power_mode(int port, int mode)
@@ -643,14 +624,8 @@ static int anx74xx_tcpm_set_vconn(int port, int enable)
 
 static int anx74xx_tcpm_set_msg_header(int port, int power_role, int data_role)
 {
-	int rv = 0, reg;
-
-	rv |= tcpc_read(port, ANX74XX_REG_TX_MSG_HEADER, &reg);
-	reg |= ((!!power_role) << ANX74XX_REG_PWR_ROLE_BIT_POS);
-	reg |= ((!!data_role) << ANX74XX_REG_DATA_ROLE_BIT_POS);
-	rv |= tcpc_write(port, ANX74XX_REG_TX_MSG_HEADER, reg);
-
-	return rv;
+	return tcpc_write(port, ANX74XX_REG_TX_AUTO_GOODCRC_1,
+		  ANX74XX_REG_AUTO_GOODCRC_SET(!!data_role, !!power_role));
 }
 
 static int anx74xx_alert_status(int port, int *alert)
