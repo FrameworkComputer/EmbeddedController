@@ -116,6 +116,7 @@ BOARDS_NPCX_SPI=(
 	kevin
 	poppy
 	reef
+	scarlet
 	soraka
 	wheatley
 	kahlee
@@ -136,6 +137,7 @@ BOARDS_SPI_1800MV=(
 	gru
 	kevin
 	reef
+	scarlet
 )
 
 BOARDS_RAIDEN=(
@@ -146,6 +148,7 @@ BOARDS_RAIDEN=(
 	kevin
 	poppy
 	reef
+	scarlet
 	soraka
 )
 
