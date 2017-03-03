@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#include "config.h"
+
 /**
  * Initialize the watchdog.
  *
