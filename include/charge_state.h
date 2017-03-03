@@ -35,6 +35,8 @@ enum charge_state {
 	PWR_STATE_IDLE,
 	/* Discharging */
 	PWR_STATE_DISCHARGE,
+	/* Discharging and fully charged */
+	PWR_STATE_DISCHARGE_FULL,
 	/* Charging */
 	PWR_STATE_CHARGE,
 	/* Charging, almost fully charged */
@@ -61,6 +63,7 @@ enum charge_state {
 		"idle0",	\
 		"idle",		\
 		"discharge",	\
+		"discharge_full",	\
 		"charge",	\
 		"charge_near_full",      \
 		"error"		\

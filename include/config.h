@@ -2583,6 +2583,12 @@
 /* A different config for the same update. TODO(vbendeb): dedup these */
 #undef CONFIG_USB_UPDATE
 
+/*
+ * If defined, charge_get_state returns a special status if battery is
+ * discharging and battery is nearly full.
+ */
+#undef CONFIG_PWR_STATE_DISCHARGE_FULL
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

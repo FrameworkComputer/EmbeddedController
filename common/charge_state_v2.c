@@ -1031,7 +1031,12 @@ enum charge_state charge_get_state(void)
 			return PWR_STATE_ERROR;
 		return PWR_STATE_IDLE;
 	case ST_DISCHARGE:
-		return PWR_STATE_DISCHARGE;
+#ifdef CONFIG_PWR_STATE_DISCHARGE_FULL
+		if (curr.batt.state_of_charge >= BATTERY_LEVEL_NEAR_FULL)
+			return PWR_STATE_DISCHARGE_FULL;
+		else
+#endif
+			return PWR_STATE_DISCHARGE;
 	case ST_CHARGE:
 		/* The only difference here is what the LEDs display. */
 		if (curr.batt.state_of_charge >= BATTERY_LEVEL_NEAR_FULL)
