@@ -8,6 +8,7 @@
 #include "clock.h"
 #include "common.h"
 #include "gpio.h"
+#include "gpio_wui.h"
 #include "keyboard_config.h"
 #include "hooks.h"
 #include "registers.h"
@@ -21,6 +22,18 @@
 #include "ec_commands.h"
 #include "host_command.h"
 
+struct npcx_wui {
+	uint8_t table : 2;
+	uint8_t group : 3;
+	uint8_t bit   : 3;
+};
+
+/* Constants for GPIO interrupt mapping */
+#define GPIO_INT(name, pin, flags, signal) NPCX_WUI_GPIO_##pin,
+static const struct npcx_wui gpio_wui_table[] = {
+	#include "gpio.wrap"
+};
+
 /* Flags for PWM IO type */
 #define PWM_IO_FUNC        (1 << 1)  /* PWM optional func bit */
 #define PWM_IO_OD          (1 << 2)  /* PWM IO open-drain bit */
@@ -33,199 +46,8 @@ struct npcx_gpio {
 
 BUILD_ASSERT(sizeof(struct npcx_gpio) == 1);
 
-struct gpio_wui_item {
-	struct npcx_gpio gpio[8];
-	uint8_t          irq;
-};
-
-/* Macros to initialize the gpio_wui_table */
 #define NPCX_GPIO_NONE       {               0,   0, 0}
 #define NPCX_GPIO(port, pin) {GPIO_PORT_##port, pin, 1}
-
-const struct gpio_wui_item gpio_wui_table[2][8] = {
-	/* MIWU0 */
-	{
-		/* Group A*/
-		{ { NPCX_GPIO(8, 0),
-		    NPCX_GPIO(8, 1),
-		    NPCX_GPIO(8, 2),
-		    NPCX_GPIO(8, 3),
-		    NPCX_GPIO(8, 4),
-		    NPCX_GPIO(8, 5),
-		    NPCX_GPIO(8, 6),
-		    NPCX_GPIO(8, 7), },
-		  NPCX_IRQ_MTC_WKINTAD_0 },
-		/* Group B */
-		{ { NPCX_GPIO(9, 0),
-		    NPCX_GPIO(9, 1),
-		    NPCX_GPIO(9, 2),
-		    NPCX_GPIO(9, 3),
-		    NPCX_GPIO(9, 4),
-		    NPCX_GPIO(9, 5),
-		    NPCX_GPIO_NONE, /* MSWC Wake-Up  */
-		    NPCX_GPIO_NONE, }, /* T0OUT Wake-Up */
-		  NPCX_IRQ_TWD_WKINTB_0 },
-		/* Group C */
-		{ { NPCX_GPIO(9, 6),
-		    NPCX_GPIO(9, 7),
-		    NPCX_GPIO(A, 0),
-		    NPCX_GPIO(A, 1),
-		    NPCX_GPIO(A, 2),
-		    NPCX_GPIO(A, 3),
-		    NPCX_GPIO(A, 4),
-		    NPCX_GPIO(A, 5), },
-		  NPCX_IRQ_WKINTC_0 },
-		/* Group D */
-		{ { NPCX_GPIO(A, 6),
-		    NPCX_GPIO(A, 7),
-		    NPCX_GPIO(B, 0),
-		    NPCX_GPIO_NONE, /* SMB0 Wake-Up */
-		    NPCX_GPIO_NONE, /* SMB1 Wake-Up */
-		    NPCX_GPIO(B, 1),
-		    NPCX_GPIO(B, 2),
-		    NPCX_GPIO_NONE, }, /* MTC Wake-Up */
-		  NPCX_IRQ_MTC_WKINTAD_0 },
-		/* Group E */
-		{ { NPCX_GPIO(B, 3),
-		    NPCX_GPIO(B, 4),
-		    NPCX_GPIO(B, 5),
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO(B, 7),
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE, /* Host Wake-Up  */
-		    NPCX_GPIO_NONE, }, /* LRESET Wake-Up */
-		  NPCX_IRQ_WKINTEFGH_0 },
-		/* Group F */
-		{ { NPCX_GPIO(C, 0),
-		    NPCX_GPIO(C, 1),
-		    NPCX_GPIO(C, 2),
-		    NPCX_GPIO(C, 3),
-		    NPCX_GPIO(C, 4),
-		    NPCX_GPIO(C, 5),
-		    NPCX_GPIO(C, 6),
-		    NPCX_GPIO(C, 7), },
-		  NPCX_IRQ_WKINTEFGH_0 },
-		/* Group G */
-		{ { NPCX_GPIO(D, 0),
-		    NPCX_GPIO(D, 1),
-		    NPCX_GPIO(D, 2),
-		    NPCX_GPIO(D, 3),
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE, },
-		  NPCX_IRQ_WKINTEFGH_0 },
-		/* Group H */
-		{ { NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO(E, 7), },
-		  NPCX_IRQ_WKINTEFGH_0 }, },
-	/* MIWU1 */
-	{
-		/* Group A */
-		{ { NPCX_GPIO(0, 0),
-		    NPCX_GPIO(0, 1),
-		    NPCX_GPIO(0, 2),
-		    NPCX_GPIO(0, 3),
-		    NPCX_GPIO(0, 4),
-		    NPCX_GPIO(0, 5),
-		    NPCX_GPIO(0, 6),
-		    NPCX_GPIO(0, 7), },
-		  NPCX_IRQ_WKINTA_1 },
-		/* Group B */
-		{ { NPCX_GPIO(1, 0),
-		    NPCX_GPIO(1, 1),
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO(1, 3),
-		    NPCX_GPIO(1, 4),
-		    NPCX_GPIO(1, 5),
-		    NPCX_GPIO(1, 6),
-		    NPCX_GPIO(1, 7), },
-		  NPCX_IRQ_WKINTB_1 },
-		/* Group C */
-#ifdef HAS_TASK_KEYSCAN
-		{ { NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO_NONE, },
-		  NPCX_IRQ_COUNT },
-#else
-		{ { NPCX_GPIO(3, 1),
-		    NPCX_GPIO(3, 0),
-		    NPCX_GPIO(2, 7),
-		    NPCX_GPIO(2, 6),
-		    NPCX_GPIO(2, 5),
-		    NPCX_GPIO(2, 4),
-		    NPCX_GPIO(2, 3),
-		    NPCX_GPIO(2, 2), },
-		  NPCX_IRQ_KSI_WKINTC_1 },
-#endif
-		/* Group D */
-		{ { NPCX_GPIO(2, 0),
-		    NPCX_GPIO(2, 1),
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO(3, 3),
-		    NPCX_GPIO(3, 4),
-		    NPCX_GPIO_NONE,
-		    NPCX_GPIO(3, 6),
-		    NPCX_GPIO(3, 7), },
-		  NPCX_IRQ_WKINTD_1 },
-		/* Group E */
-		{ { NPCX_GPIO(4, 0),
-		    NPCX_GPIO(4, 1),
-		    NPCX_GPIO(4, 2),
-		    NPCX_GPIO(4, 3),
-		    NPCX_GPIO(4, 4),
-		    NPCX_GPIO(4, 5),
-		    NPCX_GPIO(4, 6),
-		    NPCX_GPIO(4, 7), },
-		  NPCX_IRQ_WKINTE_1 },
-		/* Group F */
-		{ { NPCX_GPIO(5, 0),
-		    NPCX_GPIO(5, 1),
-		    NPCX_GPIO(5, 2),
-		    NPCX_GPIO(5, 3),
-		    NPCX_GPIO(5, 4),
-		    NPCX_GPIO(5, 5),
-		    NPCX_GPIO(5, 6),
-		    NPCX_GPIO(5, 7), },
-		  NPCX_IRQ_WKINTF_1 },
-		/* Group G */
-		{ { NPCX_GPIO(6, 0),
-		    NPCX_GPIO(6, 1),
-		    NPCX_GPIO(6, 2),
-		    NPCX_GPIO(6, 3),
-		    NPCX_GPIO(6, 4),
-		    NPCX_GPIO(6, 5),
-		    NPCX_GPIO(6, 6),
-		    NPCX_GPIO(7, 1), },
-		  NPCX_IRQ_WKINTG_1 },
-		/* Group H */
-		{ { NPCX_GPIO(7, 0),
-		    NPCX_GPIO(6, 7),
-		    NPCX_GPIO(7, 2),
-		    NPCX_GPIO(7, 3),
-		    NPCX_GPIO(7, 4),
-		    NPCX_GPIO(7, 5),
-		    NPCX_GPIO(7, 6),
-		    NPCX_GPIO_NONE, },
-		  NPCX_IRQ_WKINTH_1 }, },
-};
-
-/*
- * Only the first two MIWU tables are supported.
- */
-BUILD_ASSERT(ARRAY_SIZE(gpio_wui_table)    == 2);
-BUILD_ASSERT(ARRAY_SIZE(gpio_wui_table[0]) == MIWU_GROUP_COUNT);
 
 struct npcx_alt {
 	uint8_t group     : 4;
@@ -372,43 +194,9 @@ const struct gpio_lvol_item gpio_lvol_table[] = {
 /*****************************************************************************/
 /* Internal functions */
 
-struct gpio_wui_gpio_info {
-	uint8_t table : 1;
-	uint8_t group : 3;
-	uint8_t bit   : 3;
-	uint8_t valid : 1;
-};
-
-BUILD_ASSERT(sizeof(struct gpio_wui_gpio_info) == 1);
-
 static int gpio_match(uint8_t port, uint8_t mask, struct npcx_gpio gpio)
 {
 	return (gpio.valid && (gpio.port == port) && ((1 << gpio.bit) == mask));
-}
-
-static struct gpio_wui_gpio_info gpio_find_wui_from_io(uint8_t port,
-						       uint8_t mask)
-{
-	int i, j, k;
-
-	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++) {
-		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++) {
-			const struct npcx_gpio *gpio =
-				gpio_wui_table[i][j].gpio;
-
-			for (k = 0; k < 8; k++) {
-				if (gpio_match(port, mask, gpio[k]))
-					return ((struct gpio_wui_gpio_info) {
-						.table = i,
-						.group = j,
-						.bit   = k,
-						.valid = 1,
-					});
-			}
-		}
-	}
-
-	return ((struct gpio_wui_gpio_info) { .valid = 0 });
 }
 
 static void gpio_pwm_io_type_sel(uint8_t chan, uint8_t func)
@@ -451,33 +239,20 @@ static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 	return -1;
 }
 
-static void gpio_execute_isr(uint8_t port, uint8_t mask)
-{
-	int i;
-	const struct gpio_info *g = gpio_list;
-	/* Find GPIOs and execute interrupt service routine */
-	for (i = 0; i < GPIO_IH_COUNT; i++, g++) {
-		if (port == g->port && mask == g->mask) {
-			gpio_irq_handlers[i](i);
-			return;
-		}
-	}
-}
-
 /* Set interrupt type for GPIO input */
-static void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
+static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 {
-	struct gpio_wui_gpio_info wui   = gpio_find_wui_from_io(port, mask);
-	uint8_t                   table = wui.table;
-	uint8_t                   group = wui.group;
-	uint8_t                   pmask = 1 << wui.bit;
+	uint8_t table, group, pmask;
 
-	if (!wui.valid)
+	if (signal >= ARRAY_SIZE(gpio_wui_table))
 		return;
 
+	table = gpio_wui_table[signal].table;
+	group = gpio_wui_table[signal].group;
+	pmask = 1 << gpio_wui_table[signal].bit;
+
 	/* Handle interrupt for level trigger */
-	if ((flags & GPIO_INT_F_HIGH) ||
-			(flags & GPIO_INT_F_LOW)) {
+	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW)) {
 		/* Set detection mode to level */
 		NPCX_WKMOD(table, group) |= pmask;
 		/* Handle interrupting on level high */
@@ -496,8 +271,7 @@ static void gpio_interrupt_type_sel(uint8_t port, uint8_t mask, uint32_t flags)
 		NPCX_WKPCL(table, group) |= pmask;
 	}
 	/* Handle interrupt for edge trigger */
-	else if ((flags & GPIO_INT_F_RISING) ||
-			(flags & GPIO_INT_F_FALLING)) {
+	else if ((flags & GPIO_INT_F_RISING) || (flags & GPIO_INT_F_FALLING)) {
 		/* Set detection mode to edge */
 		NPCX_WKMOD(table, group) &= ~pmask;
 		/* Handle interrupting on both edges */
@@ -627,8 +401,15 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		gpio_low_voltage_level_sel(port, mask, 0);
 
 	/* Set up interrupt type */
-	if (flags & GPIO_INPUT)
-		gpio_interrupt_type_sel(port, mask, flags);
+	if (flags & GPIO_INT_ANY) {
+		const struct gpio_info *g = gpio_list;
+		enum gpio_signal gpio_int;
+
+		/* Find gpio signal in GPIO_INTs by port and mask */
+		for (gpio_int = 0; gpio_int < GPIO_IH_COUNT; gpio_int++, g++)
+			if ((g->port == port) && (g->mask & mask))
+				gpio_interrupt_type_sel(gpio_int, flags);
+	}
 
 	/* Set level 0:low 1:high*/
 	if (flags & GPIO_HIGH)
@@ -643,42 +424,43 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
-	const struct gpio_info *g     = gpio_list + signal;
-	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(g->port, g->mask);
+	struct npcx_wui wui;
 
-	/* Set MIWU enable bit */
-	if (wui.valid)
-		NPCX_WKEN(wui.table, wui.group) |= (1 << wui.bit);
-	else
+	/* Fail if not an interrupt handler */
+	if (signal >= GPIO_IH_COUNT)
 		return EC_ERROR_PARAM1;
+
+	wui = gpio_wui_table[signal];
+	/* Set MIWU enable bit */
+	NPCX_WKEN(wui.table, wui.group) |= 1 << wui.bit;
 
 	return EC_SUCCESS;
 }
 
 int gpio_disable_interrupt(enum gpio_signal signal)
 {
-	const struct gpio_info *g     = gpio_list + signal;
-	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(g->port, g->mask);
+	struct npcx_wui wui;
 
-	/* Clear MIWU enable bit */
-	if (wui.valid)
-		NPCX_WKEN(wui.table, wui.group) &= ~(1 << wui.bit);
-	else
+	/* Fail if not an interrupt handler */
+	if (signal >= GPIO_IH_COUNT)
 		return EC_ERROR_PARAM1;
+
+	wui = gpio_wui_table[signal];
+	NPCX_WKEN(wui.table, wui.group) &= ~(1 << wui.bit);
 
 	return EC_SUCCESS;
 }
 
 int gpio_clear_pending_interrupt(enum gpio_signal signal)
 {
-	const struct gpio_info *g     = gpio_list + signal;
-	struct gpio_wui_gpio_info wui = gpio_find_wui_from_io(g->port, g->mask);
+	struct npcx_wui wui;
 
-	/* Clear pending interrupt for this signal */
-	if (wui.valid)
-		NPCX_WKPCL(wui.table, wui.group) |= (1 << wui.bit);
-	else
+	/* Fail if not an interrupt handler */
+	if (signal >= GPIO_IH_COUNT)
 		return EC_ERROR_PARAM1;
+
+	wui = gpio_wui_table[signal];
+	NPCX_WKPCL(wui.table, wui.group) |= 1 << wui.bit;
 
 	return EC_SUCCESS;
 }
@@ -749,13 +531,21 @@ void gpio_pre_init(void)
  * bank is different for different systems. */
 static void gpio_init(void)
 {
-	int i, j;
 	/* Enable IRQs now that pins are set up */
-	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++)
-		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++)
-			if (gpio_wui_table[i][j].irq < NPCX_IRQ_COUNT)
-				task_enable_irq(gpio_wui_table[i][j].irq);
-
+	task_enable_irq(NPCX_IRQ_MTC_WKINTAD_0);
+	task_enable_irq(NPCX_IRQ_WKINTEFGH_0);
+	task_enable_irq(NPCX_IRQ_WKINTC_0);
+	task_enable_irq(NPCX_IRQ_TWD_WKINTB_0);
+	task_enable_irq(NPCX_IRQ_WKINTA_1);
+	task_enable_irq(NPCX_IRQ_WKINTB_1);
+#ifndef HAS_TASK_KEYSCAN
+	task_enable_irq(NPCX_IRQ_KSI_WKINTC_1);
+#endif
+	task_enable_irq(NPCX_IRQ_WKINTD_1);
+	task_enable_irq(NPCX_IRQ_WKINTE_1);
+	task_enable_irq(NPCX_IRQ_WKINTF_1);
+	task_enable_irq(NPCX_IRQ_WKINTG_1);
+	task_enable_irq(NPCX_IRQ_WKINTH_1);
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
@@ -765,40 +555,32 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 /**
  * Handle a GPIO interrupt.
  *
- * @param int_no	Interrupt number for GPIO
+ * @param wui_int wui table & group for GPIO interrupt no.
  */
 
-static void gpio_interrupt(int int_no)
+static void gpio_interrupt(struct npcx_wui wui_int)
 {
-	uint8_t i, j, pin, wui_mask;
+	int i;
+	uint8_t wui_mask;
+	uint8_t table = wui_int.table;
+	uint8_t group = wui_int.group;
 
-	for (i = 0; i < ARRAY_SIZE(gpio_wui_table); i++) {
-		for (j = 0; j < ARRAY_SIZE(gpio_wui_table[0]); j++) {
-			const struct npcx_gpio *gpio =
-				gpio_wui_table[i][j].gpio;
+	/* Get pending mask */
+	wui_mask = NPCX_WKPND(table, group) & NPCX_WKEN(table, group);
 
-			if (gpio_wui_table[i][j].irq != int_no)
-				continue;
+	/* Find GPIOs and execute interrupt service routine */
+	for (i = 0; i < GPIO_IH_COUNT && wui_mask; i++) {
+		uint8_t pin_mask = 1 << gpio_wui_table[i].bit;
 
-			/* Get pending mask */
-			wui_mask = NPCX_WKPND(i, j);
-
-			/* Get enabled mask */
-			wui_mask &= NPCX_WKEN(i, j);
-
-			/* If pending bits is not zero */
-			if (!wui_mask)
-				continue;
-
-			for (pin = 0; pin < 8; pin++, gpio++)
-				/* If GPIO's pending bit is set, execute ISR */
-				if ((wui_mask & (1 << pin)) && gpio->valid) {
-					/* Clear pending bit of GPIO */
-					NPCX_WKPCL(i, j) = (1 << pin);
-					/* Execute GPIO's ISR */
-					gpio_execute_isr(gpio->port,
-							 1 << gpio->bit);
-				}
+		if ((gpio_wui_table[i].table == table) &&
+			(gpio_wui_table[i].group == group) &&
+			(wui_mask & pin_mask)) {
+			/* Clear pending bit of GPIO */
+			NPCX_WKPCL(table, group) = pin_mask;
+			/* Execute GPIO's ISR */
+			gpio_irq_handlers[i](i);
+			/* In case declare the same GPIO in gpio_wui_table */
+			wui_mask &= ~pin_mask;
 		}
 	}
 }
@@ -808,10 +590,10 @@ static void gpio_interrupt(int int_no)
  * the port, then call the master handler above.
  */
 
-#define GPIO_IRQ_FUNC(_irq_func, int_no)	\
-void _irq_func(void)				\
-{						\
-	gpio_interrupt(int_no);			\
+#define GPIO_IRQ_FUNC(_irq_func, wui_int)		\
+void _irq_func(void)					\
+{							\
+	gpio_interrupt(wui_int);			\
 }
 
 /* If we need to handle the other type interrupts except GPIO, add code here */
@@ -837,7 +619,12 @@ void __gpio_wk0efgh_interrupt(void)
 #endif
 	else
 #endif
-		gpio_interrupt(NPCX_IRQ_WKINTEFGH_0);
+	{
+		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_5));
+		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_6));
+		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_7));
+		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_8));
+	}
 }
 
 void __gpio_rtc_interrupt(void)
@@ -850,23 +637,25 @@ void __gpio_rtc_interrupt(void)
 		host_set_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC));
 	} else
 #endif
-		gpio_interrupt(NPCX_IRQ_MTC_WKINTAD_0);
+	{
+		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_1));
+		gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_4));
+	}
 }
 
-GPIO_IRQ_FUNC(__gpio_wk0ad_interrupt  , NPCX_IRQ_MTC_WKINTAD_0);
-GPIO_IRQ_FUNC(__gpio_wk0b_interrupt   , NPCX_IRQ_TWD_WKINTB_0);
-GPIO_IRQ_FUNC(__gpio_wk0c_interrupt   , NPCX_IRQ_WKINTC_0);
-GPIO_IRQ_FUNC(__gpio_wk1a_interrupt   , NPCX_IRQ_WKINTA_1);
-GPIO_IRQ_FUNC(__gpio_wk1b_interrupt   , NPCX_IRQ_WKINTB_1);
+GPIO_IRQ_FUNC(__gpio_wk0b_interrupt, WUI_INT(MIWU_TABLE_0, MIWU_GROUP_2));
+GPIO_IRQ_FUNC(__gpio_wk0c_interrupt, WUI_INT(MIWU_TABLE_0, MIWU_GROUP_3));
+GPIO_IRQ_FUNC(__gpio_wk1a_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_1));
+GPIO_IRQ_FUNC(__gpio_wk1b_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_2));
 #ifndef HAS_TASK_KEYSCAN
 /* Delcare GPIO irq functions for KSI pins if there's no keyboard scan task, */
-GPIO_IRQ_FUNC(__gpio_wk1c_interrupt   , NPCX_IRQ_KSI_WKINTC_1);
+GPIO_IRQ_FUNC(__gpio_wk1c_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_3));
 #endif
-GPIO_IRQ_FUNC(__gpio_wk1d_interrupt   , NPCX_IRQ_WKINTD_1);
-GPIO_IRQ_FUNC(__gpio_wk1e_interrupt   , NPCX_IRQ_WKINTE_1);
-GPIO_IRQ_FUNC(__gpio_wk1f_interrupt   , NPCX_IRQ_WKINTF_1);
-GPIO_IRQ_FUNC(__gpio_wk1g_interrupt   , NPCX_IRQ_WKINTG_1);
-GPIO_IRQ_FUNC(__gpio_wk1h_interrupt   , NPCX_IRQ_WKINTH_1);
+GPIO_IRQ_FUNC(__gpio_wk1d_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_4));
+GPIO_IRQ_FUNC(__gpio_wk1e_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_5));
+GPIO_IRQ_FUNC(__gpio_wk1f_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_6));
+GPIO_IRQ_FUNC(__gpio_wk1g_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_7));
+GPIO_IRQ_FUNC(__gpio_wk1h_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_8));
 
 DECLARE_IRQ(NPCX_IRQ_MTC_WKINTAD_0, __gpio_rtc_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0,  __gpio_wk0b_interrupt, 2);
