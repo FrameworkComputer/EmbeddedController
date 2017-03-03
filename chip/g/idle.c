@@ -94,7 +94,7 @@ static void prepare_to_sleep(void)
 	/* Wake on RBOX interrupts */
 	GREG32(RBOX, WAKEUP) = GC_RBOX_WAKEUP_ENABLE_MASK;
 
-	if (utmi_wakeup_is_enabled())
+	if (utmi_wakeup_is_enabled() && idle_action != IDLE_DEEP_SLEEP)
 		GR_PMU_EXITPD_MASK |=
 			GC_PMU_EXITPD_MASK_UTMI_SUSPEND_N_MASK;
 

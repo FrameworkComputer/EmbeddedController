@@ -138,7 +138,7 @@ void rdd_detached(void)
 	/* Done with case-closed debug mode */
 	gpio_set_level(GPIO_CCD_MODE_L, 1);
 
-	enable_usb_wakeup = 0;
+	enable_usb_wakeup = board_has_ap_usb();
 	ec_uart_enabled = 0;
 
 	/* Disable CCD */

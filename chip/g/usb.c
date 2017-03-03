@@ -1261,6 +1261,9 @@ void usb_init(void)
 	GR_USB_DIEPMSK = 0;
 	GR_USB_DOEPMSK = 0;
 
+	/* Disable the PHY clock whenever usb suspend is detected */
+	GWRITE_FIELD(USB, PCGCCTL, STOPPCLK, 1);
+
 	/* Select the correct PHY */
 	usb_select_phy(which_phy);
 
