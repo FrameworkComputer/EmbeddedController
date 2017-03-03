@@ -790,14 +790,15 @@ static void gpio_interrupt(int int_no)
 			if (!wui_mask)
 				continue;
 
-			/* Clear pending bits of WUI */
-			NPCX_WKPCL(i, j) = wui_mask;
-
 			for (pin = 0; pin < 8; pin++, gpio++)
-				/* If pending bit is high, execute ISR*/
-				if (wui_mask & (1 << pin))
+				/* If GPIO's pending bit is set, execute ISR */
+				if ((wui_mask & (1 << pin)) && gpio->valid) {
+					/* Clear pending bit of GPIO */
+					NPCX_WKPCL(i, j) = (1 << pin);
+					/* Execute GPIO's ISR */
 					gpio_execute_isr(gpio->port,
 							 1 << gpio->bit);
+				}
 		}
 	}
 }
