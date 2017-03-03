@@ -182,4 +182,22 @@ static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
 int parse_offset_size(int argc, char **argv, int shift,
 			     int *offset, int *size);
 
+#ifdef CONFIG_ASSEMBLY_MULA32
+/*
+ * Compute (a*b)+c, where a, b, c are 32-bit integers, and the result is
+ * 64-bit long.
+ */
+uint64_t mula32(uint32_t a, uint32_t b, uint32_t c);
+#else
+static inline uint64_t mula32(uint32_t a, uint32_t b, uint32_t c)
+{
+	uint64_t ret = a;
+
+	ret *= b;
+	ret += c;
+
+	return ret;
+}
+#endif
+
 #endif  /* __CROS_EC_UTIL_H */

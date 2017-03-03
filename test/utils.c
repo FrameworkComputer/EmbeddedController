@@ -12,6 +12,7 @@
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 static int test_memmove(void)
 {
@@ -356,6 +357,31 @@ static int test_cond_t(void)
 	return EC_SUCCESS;
 }
 
+static int test_mula32(void)
+{
+	uint64_t r = 0x0;
+	uint32_t b = 0x1;
+	uint32_t c = 0x1;
+	uint32_t i;
+	timestamp_t t0, t1;
+
+	t0 = get_time();
+	for (i = 0; i < 5000000; i++) {
+		r = mula32(b, c, r + (r >> 32));
+		b = (b << 13) ^ (b >> 2) ^ i;
+		c = (c << 16) ^ (c >> 7) ^ i;
+		watchdog_reload();
+	}
+	t1 = get_time();
+
+	ccprintf("After %d iterations, r=%08x%08x (time: %d)\n", i,
+		(uint32_t)(r >> 32), (uint32_t)r, t1.le.lo-t0.le.lo);
+	TEST_ASSERT(r == 0x9df59b9fb0ab9d96L);
+
+	/* well okay then */
+	return EC_SUCCESS;
+}
+
 void run_test(void)
 {
 	test_reset();
@@ -371,6 +397,7 @@ void run_test(void)
 	RUN_TEST(test_shared_mem);
 	RUN_TEST(test_scratchpad);
 	RUN_TEST(test_cond_t);
+	RUN_TEST(test_mula32);
 
 	test_print_result();
 }

@@ -197,6 +197,13 @@
  */
 #undef CONFIG_ARMV7M_CACHE
 
+/*
+ * Defined if core/ code provides assembly optimized implementation of
+ * multiply-accumulate operations (32-bit operands, 64-bit result), for the
+ * cores that lack native instructions.
+ */
+#undef CONFIG_ASSEMBLY_MULA32
+
 /* Allow proprietary communication protocols' extensions. */
 #undef CONFIG_EXTENSION_COMMAND
 
