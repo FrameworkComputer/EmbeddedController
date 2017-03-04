@@ -1098,13 +1098,23 @@ static void lpc_init(void)
 	/* initial IO port address via SIB-write modules */
 	host_register_init();
 #else
-	/* Initialize LRESET# interrupt */
+#ifndef CONFIG_ESPI
+	/*
+	 * Initialize LRESET# interrupt only in case of LPC. For eSPI, there is
+	 * no dedicated GPIO pin for LRESET/PLTRST. PLTRST is indicated as a VW
+	 * signal instead. WUI57 of table 0 is set when EC receives
+	 * LRESET/PLTRST from either VW or GPIO. Since WUI57 of table 0 and
+	 * WUI15 of table 2 are issued at the same time in case of eSPI, there
+	 * is no need to indicate LRESET/PLTRST via two sources. Thus, do not
+	 * initialize LRESET# interrupt in case of eSPI.
+	 */
 	/* Set detection mode to edge */
 	CLEAR_BIT(NPCX_WKMOD(MIWU_TABLE_0, MIWU_GROUP_5), 7);
 	/* Handle interrupting on any edge */
 	SET_BIT(NPCX_WKAEDG(MIWU_TABLE_0, MIWU_GROUP_5), 7);
 	/* Enable wake-up input sources */
 	SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 7);
+#endif
 #endif
 }
 /*
