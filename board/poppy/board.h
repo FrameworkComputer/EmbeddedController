@@ -92,6 +92,7 @@
 /* TODO(crosbug.com/p/61098): Is this the correct thermistor? */
 #define CONFIG_THERMISTOR_NCP15WB
 
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_ACCELGYRO_BMI160
