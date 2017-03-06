@@ -293,10 +293,22 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 /* called from anx74xx_set_power_mode() */
 void board_set_tcpc_power_mode(int port, int mode)
 {
-	if (port == 0) {
-		gpio_set_level(GPIO_USB_C0_PD_RST_L, mode);
-		msleep(mode ? 10 : 1);
-		gpio_set_level(GPIO_EN_USB_TCPC_PWR, mode);
+	if (port != USB_PD_PORT_ANX74XX)
+		return;
+
+	switch (mode) {
+	case ANX74XX_NORMAL_MODE:
+		gpio_set_level(GPIO_EN_USB_TCPC_PWR, 1);
+		msleep(10);
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
+		break;
+	case ANX74XX_STANDBY_MODE:
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
+		msleep(1);
+		gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
+		break;
+	default:
+		break;
 	}
 }
 
