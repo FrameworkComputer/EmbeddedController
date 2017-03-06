@@ -28,7 +28,7 @@
  * Touchpad EP interval: Make sure this value is smaller than the typical
  * interrupt interval from the trackpad.
  */
-#define HID_TOUCHPAD_EP_INTERVAL_MS 8 /* ms */
+#define HID_TOUCHPAD_EP_INTERVAL_MS 2 /* ms */
 
 /* HID descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_HID_TOUCHPAD) = {
