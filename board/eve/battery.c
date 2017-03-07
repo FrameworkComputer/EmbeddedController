@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "bd9995x.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -194,11 +195,59 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	return BATTERY_NOT_DISCONNECTED;
 }
 
+static int charger_should_discharge_on_ac(struct charge_state_data *curr)
+{
+	/* Can not discharge on AC without battery */
+	if (curr->batt.is_present != BP_YES)
+		return 0;
+
+	/* Do not discharge on AC if the battery is still waking up */
+	if (!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+		!(curr->batt.status & STATUS_FULLY_CHARGED))
+		return 0;
+
+	/*
+	 * In light load (<450mA being withdrawn from VSYS) the DCDC of the
+	 * charger operates intermittently i.e. DCDC switches continuously
+	 * and then stops to regulate the output voltage and current, and
+	 * sometimes to prevent reverse current from flowing to the input.
+	 * This causes a slight voltage ripple on VSYS that falls in the
+	 * audible noise frequency (single digit kHz range). This small
+	 * ripple generates audible noise in the output ceramic capacitors
+	 * (caps on VSYS and any input of DCDC under VSYS).
+	 *
+	 * To overcome this issue enable the battery learning operation
+	 * and suspend USB charging and DC/DC converter.
+	 */
+	if (!battery_is_cut_off() &&
+		!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
+		(curr->batt.status & STATUS_FULLY_CHARGED))
+		return 1;
+
+	/*
+	 * To avoid inrush current from the external charger, enable
+	 * discharge on AC 2till the new charger is detected and charge
+	 * detect delay has passed.
+	 */
+	if (!chg_ramp_is_detected() && curr->batt.state_of_charge > 2)
+		return 1;
+
+	return 0;
+}
+
 int charger_profile_override(struct charge_state_data *curr)
 {
 	const struct battery_info *batt_info;
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
+	int disch_on_ac = charger_should_discharge_on_ac(curr);
+
+	charger_discharge_on_ac(disch_on_ac);
+
+	if (disch_on_ac) {
+		curr->state = ST_DISCHARGE;
+		return 0;
+	}
 
 	batt_info = battery_get_info();
 	/* Don't charge if outside of allowable temperature range */
