@@ -47,7 +47,7 @@ static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lg = {
-	.voltage_max		= 8800, /* mV */
+	.voltage_max		= TARGET_WITH_MARGIN(8800, 5), /* mV */
 	.voltage_normal		= 7700,
 	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
 	.precharge_current	= 256,	/* mA */
@@ -65,7 +65,7 @@ static const struct battery_info batt_info_lg = {
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lishen = {
-	.voltage_max		= 8750, /* mV */
+	.voltage_max		= TARGET_WITH_MARGIN(8750, 5), /* mV */
 	.voltage_normal		= 7700,
 	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
 	.precharge_current	= 88,	/* mA */
