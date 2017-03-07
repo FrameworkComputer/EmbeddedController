@@ -140,6 +140,10 @@ static void eve_led_set_power_battery(void)
 			   PWR_STATE_CHARGE_NEAR_FULL) {
 			set_color(LED_GREEN, side);
 			blueside = !side;
+		} else if (chg_state == PWR_STATE_DISCHARGE_FULL &&
+			   extpower_is_present()) {
+			set_color(LED_GREEN, side);
+			blueside = !side;
 		}
 		set_color(LED_BLUE, blueside);
 		return;
@@ -165,8 +169,13 @@ static void eve_led_set_power_battery(void)
 		} else if (chg_state == PWR_STATE_CHARGE) {
 			set_color(LED_AMBER, side);
 			blinkside = !side;
+		} else if (chg_state == PWR_STATE_DISCHARGE_FULL &&
+			   extpower_is_present()) {
+			set_color(LED_GREEN, side);
+			blinkside = !side;
 		}
 		if (chg_state == PWR_STATE_DISCHARGE ||
+		    chg_state == PWR_STATE_DISCHARGE_FULL ||
 		    chg_state == PWR_STATE_CHARGE ||
 		    chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
 		    chg_state == PWR_STATE_IDLE) {
@@ -183,6 +192,11 @@ static void eve_led_set_power_battery(void)
 
 	/* CHIPSET_STATE_OFF */
 	switch (chg_state) {
+	case PWR_STATE_DISCHARGE_FULL:
+		set_color(LED_OFF, LED_BOTH);
+		if (extpower_is_present())
+			set_color(LED_GREEN, side);
+		break;
 	case PWR_STATE_DISCHARGE:
 		set_color(LED_OFF, LED_BOTH);
 		break;
