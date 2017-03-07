@@ -85,6 +85,13 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
 }
 
+/* Send event to wake AP based on trackpad input */
+void trackpad_interrupt(enum gpio_signal signal)
+{
+	/* TODO(b/36024430): Use device specific wake event */
+	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
+}
+
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static void anx74xx_c0_cable_det_handler(void)
 {
@@ -534,6 +541,23 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	return charger_get_vbus_voltage(port) < BD9995X_BC12_MIN_VOLTAGE;
 }
 
+/* Clear pending interrupts and enable trackpad for wake */
+static void trackpad_wake_enable(int enable)
+{
+	static int prev_enable = -1;
+
+	if (prev_enable == enable)
+		return;
+	prev_enable = enable;
+
+	if (enable) {
+		gpio_clear_pending_interrupt(GPIO_TRACKPAD_INT_L);
+		gpio_enable_interrupt(GPIO_TRACKPAD_INT_L);
+	} else {
+		gpio_disable_interrupt(GPIO_TRACKPAD_INT_L);
+	}
+}
+
 /* Enable or disable input devices, based upon chipset state and tablet mode */
 static void enable_input_devices(void)
 {
@@ -557,11 +581,16 @@ void lid_angle_peripheral_enable(int enable)
 {
 	/*
 	 * If the lid is in 360 position, ignore the lid angle,
-	 * which might be faulty. Disable keyboard and touchpad.
+	 * which might be faulty. Disable keyboard and trackpad wake.
 	 */
 	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+
+	/* Also disable trackpad wake if not in suspend */
+	if (!chipset_in_state(CHIPSET_STATE_SUSPEND))
+		enable = 0;
+	trackpad_wake_enable(enable);
 }
 #endif
 
@@ -578,10 +607,26 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 static void board_chipset_shutdown(void)
 {
 	/* Disable Trackpad */
+	trackpad_wake_enable(0);
 	gpio_set_level(GPIO_TRACKPAD_SHDN_L, 0);
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+	if (!tablet_get_mode())
+		trackpad_wake_enable(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S0 transition */
+static void board_chipset_resume(void)
+{
+	trackpad_wake_enable(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 void board_hibernate_late(void)
 {

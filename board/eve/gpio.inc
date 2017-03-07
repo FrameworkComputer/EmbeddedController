@@ -23,6 +23,7 @@ GPIO_INT(VOLUME_UP_L,		PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt
 GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(9, 3), GPIO_INT_FALLING,			bmi160_interrupt)
+GPIO_INT(TRACKPAD_INT_L,	PIN(7, 1), GPIO_INT_FALLING,			trackpad_interrupt)
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 GPIO_INT(USB_C0_CABLE_DET,      PIN(D, 2), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 GPIO_INT(USB_C1_CABLE_DET,      PIN(D, 3), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
@@ -32,7 +33,7 @@ GPIO(USB_C1_CABLE_DET,          PIN(D, 3), GPIO_INPUT)
 #endif
 
 /* Lid KCJX9 accelerometer sensor interrupt */
-GPIO(ACCEL1_INT_L,			PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(ACCEL1_INT_L,		PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
 
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(ENABLE_BACKLIGHT,		PIN(5, 6), GPIO_OUT_LOW)			/* Enable Backlight */
@@ -67,7 +68,6 @@ GPIO(I2C3_SCL,			PIN(D, 1), GPIO_INPUT)				/* EC_I2C3_POWER_SCL */
 GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_I2C3_POWER_SDA */
 
 /* AP wake sources when in Deep-S3 state */
-GPIO(TRACKPAD_INT_L,		PIN(7, 1), GPIO_INPUT)				/* INT# from Trackpad */
 GPIO(DSP_WAKE_L,		PIN(C, 6), GPIO_INPUT | GPIO_SEL_1P8V)		/* INT# from DSP Mic */
 
 /*
