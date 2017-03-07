@@ -40,10 +40,12 @@
 
 #include "common.h"
 #include "console.h"
+#include "cryptoc/util.h"
 #include "flash.h"
 #include "flash_config.h"
 #include "flash_info.h"
 #include "registers.h"
+#include "shared_mem.h"
 #include "timer.h"
 #include "watchdog.h"
 
@@ -166,10 +168,12 @@ static int do_flash_op(enum flash_op op, int is_info_bank,
 	/* What are we doing? */
 	switch (op) {
 	case OP_ERASE_BLOCK:
+#ifndef CR50_DEV
 		if (is_info_bank)
 			/* Erasing the INFO bank from the RW section is
 			 * unsupported. */
 			return EC_ERROR_INVAL;
+#endif
 		opcode = 0x31415927;
 		words = 0;			/* don't care, really */
 		/* This number is based on the TSMC spec Nme=Terase/Tsme */
@@ -446,3 +450,60 @@ int flash_physical_erase(int byte_offset, int num_bytes)
 
 	return EC_SUCCESS;
 }
+
+#ifdef CR50_DEV
+
+static int command_erase_flash_info(int argc, char **argv)
+{
+	uint32_t *preserved_manufacture_state;
+	const size_t manuf_word_count = FLASH_INFO_MANUFACTURE_STATE_SIZE /
+		sizeof(uint32_t);
+	int i;
+	int rv = EC_ERROR_BUSY;
+
+	if (shared_mem_acquire(FLASH_INFO_MANUFACTURE_STATE_SIZE,
+			       (char **)&preserved_manufacture_state) !=
+	    EC_SUCCESS) {
+		ccprintf("Failed to allocate memory for manufacture state!\n");
+		return rv;
+	}
+
+	flash_info_read_enable(0, 2048);
+	flash_info_write_enable(0, 2048);
+
+	/* Preserve manufacturing information. */
+	for (i = 0; i < manuf_word_count; i++) {
+		if (flash_physical_info_read_word
+		    (FLASH_INFO_MANUFACTURE_STATE_OFFSET +
+		     i * sizeof(uint32_t),
+		     preserved_manufacture_state + i) != EC_SUCCESS) {
+			ccprintf("Failed to read word %d!\n", i);
+			goto exit;
+		}
+	}
+
+	if (do_flash_op(OP_ERASE_BLOCK, 1, 0, 512) != EC_SUCCESS) {
+		ccprintf("Failed to erase info space!\n");
+		goto exit;
+	}
+
+	if (flash_info_physical_write
+	    (FLASH_INFO_MANUFACTURE_STATE_OFFSET,
+	     FLASH_INFO_MANUFACTURE_STATE_SIZE,
+	     (char *)preserved_manufacture_state) != EC_SUCCESS) {
+		ccprintf("Failed to restore manufacture state!\n");
+		goto exit;
+	}
+
+	rv = EC_SUCCESS;
+ exit:
+	always_memset(preserved_manufacture_state, 0,
+		      FLASH_INFO_MANUFACTURE_STATE_SIZE);
+	shared_mem_release(preserved_manufacture_state);
+	flash_info_write_disable();
+	return rv;
+}
+DECLARE_CONSOLE_COMMAND(eraseflashinfo, command_erase_flash_info,
+			"",
+			"Erase INFO1 flash space");
+#endif
