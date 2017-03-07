@@ -214,8 +214,13 @@ struct usb_endpoint_descriptor {
 
 /* Standard requests for bRequest field in a SETUP packet. */
 #define USB_REQ_GET_STATUS         0x00
+#define USB_REQ_GET_STATUS_SELF_POWERED  (1 << 0)
+#define USB_REQ_GET_STATUS_REMOTE_WAKEUP (1 << 1)
 #define USB_REQ_CLEAR_FEATURE      0x01
 #define USB_REQ_SET_FEATURE        0x03
+#define USB_REQ_FEATURE_ENDPOINT_HALT        0x0000
+#define USB_REQ_FEATURE_DEVICE_REMOTE_WAKEUP 0x0001
+#define USB_REQ_FEATURE_TEST_MODE            0x0002
 #define USB_REQ_SET_ADDRESS        0x05
 #define USB_REQ_GET_DESCRIPTOR     0x06
 #define USB_REQ_SET_DESCRIPTOR     0x07

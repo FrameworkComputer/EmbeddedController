@@ -101,7 +101,10 @@ static int desc_left;
 static const uint8_t *desc_ptr;
 /* interface that should handle the next tx transaction */
 static uint8_t iface_next = USB_IFACE_COUNT;
-
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+/* remote wake up feature enabled */
+static int remote_wakeup_enabled;
+#endif
 
 void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet)
 {
@@ -196,14 +199,35 @@ static void ep0_rx(void)
 				desc_left ? 0 : EP_STATUS_OUT);
 		/* send the null OUT transaction if the transfer is complete */
 	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
-		uint16_t zero = 0;
+		uint16_t data = 0;
 		/* Get status */
-		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, (void *)&zero, 2);
+#ifdef CONFIG_USB_SELF_POWERED
+		data |= USB_REQ_GET_STATUS_SELF_POWERED;
+#endif
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+		if (remote_wakeup_enabled)
+			data |= USB_REQ_GET_STATUS_REMOTE_WAKEUP;
+#endif
+		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, (void *)&data, 2);
 		btable_ep[0].tx_count = 2;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
 			  EP_STATUS_OUT /*null OUT transaction */);
 	} else if ((req & 0xff) == USB_DIR_OUT) {
 		switch (req >> 8) {
+		case USB_REQ_SET_FEATURE:
+		case USB_REQ_CLEAR_FEATURE:
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+			if (ep0_buf_rx[1] ==
+					USB_REQ_FEATURE_DEVICE_REMOTE_WAKEUP) {
+				remote_wakeup_enabled =
+					((req >> 8) == USB_REQ_SET_FEATURE);
+				btable_ep[0].tx_count = 0;
+				STM32_TOGGLE_EP(0, EP_TX_RX_MASK,
+						EP_TX_RX_VALID, 0);
+				break;
+			}
+#endif
+			goto unknown_req;
 		case USB_REQ_SET_ADDRESS:
 			/* set the address after we got IN packet handshake */
 			set_addr = ep0_buf_rx[1] & 0xff;
@@ -335,8 +359,9 @@ static void usb_resume(void)
 #ifdef CONFIG_USB_REMOTE_WAKEUP
 void usb_wake(void)
 {
-	if (!(STM32_USB_CNTR & STM32_USB_CNTR_FSUSP)) {
-		/* USB is already woken up, nothing to do. */
+	if (!remote_wakeup_enabled ||
+			!(STM32_USB_CNTR & STM32_USB_CNTR_FSUSP)) {
+		/* USB wake not enabled, or already woken up, nothing to do. */
 		return;
 	}
 
