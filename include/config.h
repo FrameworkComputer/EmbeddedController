@@ -292,6 +292,12 @@
  */
 #undef CONFIG_BATTERY_REVIVE_DISCONNECT
 
+/*
+ * Specify the battery percentage at which the host is told it is full.
+ * If this value is not specified the default is 97% set in battery.h.
+ */
+#undef CONFIG_BATTERY_LEVEL_NEAR_FULL
+
 /* Include support for Bluetooth LE */
 #undef CONFIG_BLUETOOTH_LE
 
