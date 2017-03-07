@@ -57,4 +57,15 @@ int system_battery_cutoff_support_required(void);
  */
 void system_update_rollback_mask(void);
 
+/*
+ **
+ * Scan INFO1 rollback map and infomap fields of both RW and RW_B image
+ * headers, and return a string showing how many zeros are there at the base
+ * of in each of these objects.
+ *
+ * The passed in parameters are the memory area to put the string in and the
+ * size of this memory area.
+ */
+void system_get_rollback_bits(char *value, size_t value_size);
+
 #endif /* __CROS_EC_SYSTEM_CHIP_H */

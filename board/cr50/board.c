@@ -1293,6 +1293,7 @@ static int command_sysinfo(int argc, char **argv)
 	uintptr_t vaddr;
 	const struct SignedHeader *h;
 	int reset_count = GREG32(PMU, LONG_LIFE_SCRATCH0);
+	char rollback_str[15];
 
 	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
 	system_print_reset_flags();
@@ -1316,6 +1317,9 @@ static int command_sysinfo(int argc, char **argv)
 
 	ccprintf("DEV_ID:      0x%08x 0x%08x\n",
 		 GREG32(FUSE, DEV_ID0), GREG32(FUSE, DEV_ID1));
+
+	system_get_rollback_bits(rollback_str, sizeof(rollback_str));
+	ccprintf("Rollback:    %s\n", rollback_str);
 
 	return EC_SUCCESS;
 }

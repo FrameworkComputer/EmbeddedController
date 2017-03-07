@@ -621,3 +621,43 @@ void system_update_rollback_mask(void)
 	ccprintf("updated %d info map words\n", updated_words_count);
 #endif  /*  CR50_DEV ^^^^^^^^ NOT defined. */
 }
+
+void system_get_rollback_bits(char *value, size_t value_size)
+{
+	int info_count;
+	int i;
+	struct {
+		int count;
+		const struct SignedHeader *h;
+	} headers[] = {
+		{.h = (const struct SignedHeader *)
+		 get_program_memory_addr(SYSTEM_IMAGE_RW)},
+
+		{.h = (const struct SignedHeader *)
+		 get_program_memory_addr(SYSTEM_IMAGE_RW_B)},
+	};
+
+	flash_info_read_enable(INFO_RW_MAP_OFFSET, INFO_RW_MAP_SIZE);
+	for (i = 0; i < INFO_MAX; i++) {
+		uint32_t w;
+
+		flash_physical_info_read_word(INFO_RW_MAP_OFFSET +
+					      i * sizeof(uint32_t),
+					      &w);
+		if (w)
+			break;
+	}
+	info_count = i;
+
+	for (i = 0; i < ARRAY_SIZE(headers); i++) {
+		int j;
+
+		for (j = 0; j < INFO_MAX; j++)
+			if (headers[i].h->infomap[j/32] & (1 << (j%32)))
+				break;
+		headers[i].count = j;
+	}
+
+	snprintf(value, value_size, "%d/%d/%d", info_count,
+		 headers[0].count, headers[1].count);
+}
