@@ -119,12 +119,13 @@ ifneq ($(CR50_DEV),)
 CPPFLAGS += -DCR50_DEV=1
 endif
 
+MANIFEST := util/signer/ec_RW-manifest-dev.json
 CR50_RO_KEY ?= rom-testkey-A.pem
 ifeq ($(H1_DEVIDS),)
 CR50_RW_KEY = loader-testkey-A.pem
 SIGNER = $(out)/util/signer
 SIGNER_EXTRAS =
-SIGNER_MANIFEST := util/signer/ec_RW-manifest-dev.json
+SIGNER_MANIFEST := $(MANIFEST)
 else
 SIGNER = $(HOME)/bin/codesigner
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub
@@ -144,8 +145,24 @@ ifneq ($(CHIP_MK_INCLUDED_ONCE),)
 #
 # H1_DEVIDS='<num 1> <num 2>' make ...
 #
+ifeq ($(SIGNER_MANIFEST),)
 SIGNER_MANIFEST := $(shell mktemp /tmp/h1.signer.XXXXXX)
-DUMMY := $(shell /bin/cp util/signer/ec_RW-manifest-dev.json $(SIGNER_MANIFEST))
+endif
+ifneq ($(CR50_DEV),)
+
+#
+# When building a debug image, we don't want rollback protection to be in the
+# way - a debug image, which is guaranteed to be node locked should run on any
+# H1, whatever its info mask state is. The awk script below clears out the
+# info {} section of the manifest.
+#
+DUMMY := $(shell /usr/bin/awk 'BEGIN {skip = 0}; \
+	/^},/ {skip = 0}; \
+	{if (!skip) {print };} \
+	/\"info\": {/ {skip = 1};' $(MANIFEST) > $(SIGNER_MANIFEST))
+else
+DUMMY := $(shell /bin/cp $(MANIFEST) $(SIGNER_MANIFEST))
+endif
 REPLACEMENT := $(shell printf \
 	'\\n    \\"DEV_ID0\\": %d,\\n    \\"DEV_ID1\\": %d,' $(H1_DEVIDS))
 NODE_JSON :=  $(shell sed -i \
