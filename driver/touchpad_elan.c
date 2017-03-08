@@ -62,9 +62,10 @@ struct {
 
 /*
  * Report a more reasonable pressure value, so that no adjustment is necessary
- * on Chrome OS side.
+ * on Chrome OS side. 3216/1024 ~= 3.1416.
  */
-const int pressure_mult = 3;
+const int pressure_mult = 3216;
+const int pressure_div = 1024;
 
 static int elan_tp_read_cmd(uint16_t reg, uint16_t *val)
 {
@@ -149,10 +150,12 @@ static int elan_tp_read_report(void)
 			int width = (finger[3] & 0xf0) >> 4;
 			int height = finger[3] & 0x0f;
 			int pressure = finger[4] + elan_tp_params.pressure_adj;
+			pressure = DIV_ROUND_NEAREST(pressure * pressure_mult,
+						pressure_div);
 
 			width = MIN(4095, width * elan_tp_params.width_x);
 			height = MIN(4095, height * elan_tp_params.width_y);
-			pressure = MIN(255, pressure * pressure_mult);
+			pressure = MIN(255, pressure);
 
 			report.finger[ri].tip = 1;
 			report.finger[ri].inrange = 1;
