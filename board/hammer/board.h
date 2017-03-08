@@ -71,6 +71,7 @@
 
 /* Optional features */
 #define CONFIG_LOW_POWER_IDLE
+#define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 
