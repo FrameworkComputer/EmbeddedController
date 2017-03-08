@@ -410,12 +410,17 @@ void board_configure_deep_sleep_wakepins(void)
 		GWRITE_FIELD(PINMUX, EXITINV0, DIOA3, 0);  /* wake on high */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOA3, 1);
 
-		 /* Configure cr50 to resume on the rising edge of sys_rst_l */
+		 /*
+		  * Configure cr50 to wake when sys_rst_l is asserted. It is
+		  * wake on low to make sure that Cr50 is awake to detect the
+		  * rising edge of sys_rst_l. This will keep Cr50 awake the
+		  * entire time sys_rst_l is asserted.
+		  */
 		/* Disable sys_rst_l as a wake pin */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 0);
 		/* Reconfigure and reenable it. */
-		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 1); /* edge sensitive */
-		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 0);  /* wake on high */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 0); /* level sensitive */
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 1);  /* wake on low */
 		/* enable powerdown exit */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
 	}
@@ -488,10 +493,10 @@ static void configure_board_specific_gpios(void)
 		/* Enbale the input */
 		GWRITE_FIELD(PINMUX, DIOA3_CTL, IE, 1);
 
-		/* Set to be edge sensitive */
-		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 1);
-		/* Select rising edge polarity */
-		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 0);
+		/* Set to be level sensitive */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 0);
+		/* wake on low */
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 1);
 		/* Enable powerdown exit on DIOM0 */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
 	}
