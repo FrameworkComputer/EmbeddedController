@@ -123,6 +123,12 @@ static void led_set_battery(void)
 	case PWR_STATE_CHARGE:
 		led_set_color_battery(LED_AMBER);
 		break;
+	case PWR_STATE_DISCHARGE_FULL:
+		if (extpower_is_present()) {
+			led_set_color_battery(LED_WHITE);
+			break;
+		}
+		/* Intentional fall-through */
 	case PWR_STATE_DISCHARGE:
 		/*
 		 * Blink white light (1 sec on, 1 sec off)
