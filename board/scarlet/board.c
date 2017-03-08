@@ -422,7 +422,7 @@ struct bmi160_drv_data_t g_bmi160_data;
 const matrix_3x3_t base_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0,  0},
 	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
+	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
 struct bmp280_drv_data_t bmp280_drv_data;
