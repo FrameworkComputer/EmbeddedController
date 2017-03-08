@@ -925,7 +925,7 @@ static void print_build_string(void)
 
 	/* 50 characters or less, will fit into the terminal line. */
 	if (strlen(full_build_string) < 50) {
-		ccprintf("%s\n");
+		ccprintf("%s\n", full_build_string);
 		return;
 	}
 
