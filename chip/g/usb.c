@@ -1347,8 +1347,8 @@ void usb_init(void)
 		GINTMSK(RESETDET) |		/* TODO: Do we need this? */
 		/* Idle, Suspend detected. Should go to sleep. */
 		GINTMSK(ERLYSUSP) | GINTMSK(USBSUSP) |
-		/* Watch for first SOF */
-		GINTMSK(SOF);
+		/* Watch for first SOF and usb wakeup */
+		GINTMSK(SOF) | GINTMSK(WKUPINT);
 
 	/* Device registers have been setup */
 	GR_USB_DCTL |= DCTL_PWRONPRGDONE;
