@@ -326,10 +326,11 @@ int pd_board_checks(void)
 int pd_check_power_swap(int port)
 {
 	/*
-	 * TODO(crosbug.com/p/60792): CHG port can't do a power swap as it's SNK
-	 * only. Don't allow DUT port to accept a power role swap request. More
-	 * support still needs to be added so that servo_v4 DUT port behaves
-	 * properly when acting as a SNK device.
+	 * When only host VBUS is available, then servo_v4 is not setting
+	 * PDO_FIXED_EXTERNAL in the src_pdo sent to the DUT. When this bit is
+	 * not set, the DUT will always attempt to swap its power role to
+	 * SRC. Let servo_v4 have more control over its power role by always
+	 * rejecting power swap requests from the DUT.
 	 */
 	return 0;
 }
@@ -357,12 +358,12 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
-	/*
-	 * TODO(crosbug.com/p/60792): CHG port is SNK only and should not need
-	 * to change from default UFP role. DUT port behavior needs to be
-	 * flushed out. Don't request any data role change for either port for
-	 * now.
-	 */
+	if (port == CHG)
+		return;
+
+	/* If DFP, try to switch to UFP */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
+		pd_request_data_swap(port);
 }
 
 

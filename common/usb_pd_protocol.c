@@ -1962,6 +1962,8 @@ void pd_task(void)
 					/* Enable TCPC RX */
 					if (pd_comm_is_enabled(port))
 						tcpm_set_rx_enable(port, 1);
+					pd[port].flags |=
+						PD_FLAGS_CHECK_DR_ROLE;
 					hard_reset_count = 0;
 					timeout = 10*MSEC;
 					set_state(port, PD_STATE_SRC_STARTUP);
