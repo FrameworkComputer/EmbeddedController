@@ -78,6 +78,7 @@ common-$(CONFIG_PSTORE)+=pstore_commands.o
 common-$(CONFIG_PWM)+=pwm.o
 common-$(CONFIG_PWM_KBLIGHT)+=pwm_kblight.o
 common-$(CONFIG_RSA)+=rsa.o
+common-$(CONFIG_ROLLBACK)+=rollback.o
 common-$(CONFIG_RWSIG)+=rwsig.o
 common-$(CONFIG_MATH_UTIL)+=math_util.o
 common-$(CONFIG_SHA1)+= sha1.o

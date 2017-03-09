@@ -1132,6 +1132,17 @@
 #undef CONFIG_ROLLBACK_SIZE
 
 /*
+ * Current rollback version. Meaningless for RO (but provides the minimum value
+ * that will be written to the rollback protection at flash time).
+ *
+ * For RW, rollback version included in version structure, used by RO to
+ * determine if the RW image is recent enough and can be jumped to.
+ *
+ * Valid values are >= 0, <= INT32_MAX (positive, 32-bit signed integer).
+ */
+#define CONFIG_ROLLBACK_VERSION 0
+
+/*
  * Board Image ec.bin contains a RO firmware.  If not defined, the image will
  * only contain the RW firmware. The RO firmware comes from another board.
  */

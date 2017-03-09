@@ -194,6 +194,15 @@ int system_get_image_used(enum system_image_copy_t copy);
 int system_run_image_copy(enum system_image_copy_t copy);
 
 /**
+ * Get the rollback version for an image
+ *
+ * @param copy		Image copy to get version from, or SYSTEM_IMAGE_UNKNOWN
+ *			to get the version for the currently running image.
+ * @return The rollback version, negative value on error.
+ */
+int32_t system_get_rollback_version(enum system_image_copy_t copy);
+
+/**
  * Get the version string for an image
  *
  * @param copy		Image copy to get version from, or SYSTEM_IMAGE_UNKNOWN

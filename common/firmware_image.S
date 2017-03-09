@@ -7,6 +7,7 @@
  */
 
 #include "config.h"
+#include "rollback.h"
 
 #define FW_FILE(builddir,proj,sect,suffix,ext) \
 	builddir##/##sect##/##proj##.##sect##suffix##.flat##ext
@@ -27,6 +28,13 @@
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 .section .image.RO.key, "a"
 .incbin STRINGIFY(FINAL_OUTDIR/key.vbpubk2)
+#endif
+
+#ifdef CONFIG_ROLLBACK
+/* Note: matches struct rollback_data in common/rollback.c. */
+.section .image.ROLLBACK, "a"
+.long CONFIG_ROLLBACK_VERSION
+.long CROS_EC_ROLLBACK_COOKIE
 #endif
 
 /* Shared objects library */

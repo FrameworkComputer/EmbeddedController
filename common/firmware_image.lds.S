@@ -33,6 +33,12 @@ SECTIONS
     } > FLASH =0xff
 #endif
 
+#ifdef CONFIG_ROLLBACK
+    .image.ROLLBACK : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_ROLLBACK_OFF) {
+        *(.image.ROLLBACK)
+    } > FLASH =0xff
+#endif
+
 #ifdef CONFIG_SHAREDLIB
     .image.libsharedobjs : AT(CONFIG_PROGRAM_MEMORY_BASE + \
                               CONFIG_SHAREDLIB_MEM_OFF) {

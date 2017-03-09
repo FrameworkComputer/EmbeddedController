@@ -11,12 +11,13 @@
 #include "common.h"
 
 #define CROS_EC_IMAGE_DATA_COOKIE1 0xce778899
-#define CROS_EC_IMAGE_DATA_COOKIE2 0xceaabbcc
+#define CROS_EC_IMAGE_DATA_COOKIE2 0xceaabbdd
 
 struct image_data {
 	uint32_t cookie1;
 	char version[32];
 	uint32_t size;
+	int32_t rollback_version;
 	uint32_t cookie2;
 } __packed;
 

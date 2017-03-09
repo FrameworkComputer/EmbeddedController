@@ -9,6 +9,7 @@
 
 #include "console.h"
 #include "ec_commands.h"
+#include "rollback.h"
 #include "rsa.h"
 #include "sha256.h"
 #include "shared_mem.h"
@@ -16,6 +17,7 @@
 #include "usb_pd.h"
 #include "util.h"
 #include "vb21_struct.h"
+#include "version.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
@@ -63,6 +65,10 @@ void check_rw_signature(void)
 	const struct vb21_packed_key *vb21_key;
 	const struct vb21_signature *vb21_sig;
 #endif
+#ifdef CONFIG_ROLLBACK
+	int32_t rw_rollback_version;
+	int32_t min_rollback_version;
+#endif
 
 	/* Only the Read-Only firmware needs to do the signature check */
 	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
@@ -73,6 +79,18 @@ void check_rw_signature(void)
 		return;
 
 	CPRINTS("Verifying RW image...");
+
+#ifdef CONFIG_ROLLBACK
+	rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
+	min_rollback_version = rollback_get_minimum_version();
+
+	if (rw_rollback_version < 0 || min_rollback_version < 0 ||
+	    rw_rollback_version < min_rollback_version) {
+		CPRINTS("Rollback error (%d < %d)",
+			rw_rollback_version, min_rollback_version);
+		return;
+	}
+#endif
 
 	/* Large buffer for RSA computation : could be re-use afterwards... */
 	res = shared_mem_acquire(3 * RSANUMBYTES, (char **)&rsa_workbuf);

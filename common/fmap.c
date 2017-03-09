@@ -63,10 +63,20 @@ struct fmap_area_header {
 } __packed;
 
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-#define NUM_EC_FMAP_AREAS 9
+#define NUM_EC_FMAP_AREAS_RWSIG 2
 #else
-#define NUM_EC_FMAP_AREAS 7
+#define NUM_EC_FMAP_AREAS_RWSIG 0
 #endif
+
+#ifdef CONFIG_ROLLBACK
+#define NUM_EC_FMAP_AREAS_ROLLBACK 1
+#else
+#define NUM_EC_FMAP_AREAS_ROLLBACK 0
+#endif
+
+#define NUM_EC_FMAP_AREAS (7 + \
+			NUM_EC_FMAP_AREAS_RWSIG + \
+			NUM_EC_FMAP_AREAS_ROLLBACK)
 
 const struct _ec_fmap {
 	struct fmap_header header;
@@ -178,6 +188,24 @@ const struct _ec_fmap {
 			.area_size = sizeof(current_image_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
+#ifdef CONFIG_ROLLBACK
+		{
+			/*
+			 * RW rollback version, 32-bit unsigned integer.
+			 * TODO: Get the relative offset of
+			 * __image_data_offset within our RW image to
+			 * accommodate image asymmetry.
+			 */
+			.area_name = "RW_RBVER",
+			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
+				RELATIVE_RO((uint32_t)__image_data_offset) +
+				offsetof(struct image_data, rollback_version),
+			.area_size = sizeof(
+				current_image_data.rollback_version),
+			.area_flags = FMAP_AREA_STATIC,
+		},
+#endif
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 		{
 			 /* RW image signature */

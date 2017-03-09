@@ -7,8 +7,12 @@
 
 #include <stdint.h>
 #include "common.h"
+#include "compile_time_macros.h"
 #include "ec_version.h"
 #include "version.h"
+
+BUILD_ASSERT(CONFIG_ROLLBACK_VERSION >= 0);
+BUILD_ASSERT(CONFIG_ROLLBACK_VERSION <= INT32_MAX);
 
 const struct image_data __keep current_image_data
 	__attribute__((section(".rodata.ver"))) = {
@@ -17,6 +21,7 @@ const struct image_data __keep current_image_data
 #ifndef TEST_BUILD
 	.size = (const uintptr_t)&__image_size,
 #endif
+	.rollback_version = CONFIG_ROLLBACK_VERSION,
 	.cookie2 = CROS_EC_IMAGE_DATA_COOKIE2,
 };
 
