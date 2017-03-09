@@ -91,9 +91,9 @@
 /* Override PD_ROLE_DEFAULT in usb_pd.h */
 #define PD_ROLE_DEFAULT(port) ((port) ? PD_ROLE_SOURCE : PD_ROLE_SINK)
 
-/* 3.0A Standard-current Rp */
-#define PD_SRC_VNC           PD_SRC_3_0_VNC_MV
-#define PD_SRC_RD_THRESHOLD  PD_SRC_DEF_RD_THRESH_MV
+/* Variable-current Rp no connect and Ra attach macros */
+#define CC_NC(port, cc, sel)  (pd_tcpc_cc_nc(port, cc, sel))
+#define CC_RA(port, cc, sel)  (pd_tcpc_cc_ra(port, cc, sel))
 
 /*
  * TODO(crosbug.com/p/60792): The delay values are currently just place holders
@@ -152,6 +152,34 @@ enum adc_channel {
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
+
+/**
+ * Compare cc_voltage to disconnect threshold
+ *
+ * This function can be used for boards that support variable Rp settings and
+ * require a different voltage threshold based on the Rp value attached to a
+ * given cc line.
+ *
+ * @param port USB-C port number
+ * @param cc_volt voltage measured in mV of the CC line
+ * @param cc_sel cc1 or cc2 selection
+ * @return 1 if voltage is >= threshold value for disconnect
+ */
+int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel);
+
+/**
+ * Compare cc_voltage to Ra threshold
+ *
+ * This function can be used for boards that support variable Rp settings and
+ * require a different voltage threshold based on the Rp value attached to a
+ * given cc line.
+ *
+ * @param port USB-C port number
+ * @param cc_volt voltage measured in mV of the CC line
+ * @param cc_sel cc1 or cc2 selection
+ * @return 1 if voltage is < threshold value for Ra attach
+ */
+int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

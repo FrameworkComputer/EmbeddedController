@@ -158,9 +158,13 @@ static const uint8_t dec4b5b[] = {
 #define PD_SRC_VNC PD_SRC_DEF_VNC_MV
 #endif
 
-#define CC_RA(cc)  (cc < PD_SRC_RD_THRESHOLD)
+#ifndef CC_RA
+#define CC_RA(port, cc, sel)  (cc < PD_SRC_RD_THRESHOLD)
+#endif
 #define CC_RD(cc) ((cc >= PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
-#define CC_NC(cc)  (cc >= PD_SRC_VNC)
+#ifndef CC_NC
+#define CC_NC(port, cc, sel)  (cc >= PD_SRC_VNC)
+#endif
 
 /*
  * Polarity based on 'UFP Perspective'.
@@ -715,13 +719,13 @@ static void handle_request(int port, uint16_t head)
 }
 
 /* Convert CC voltage to CC status */
-static int cc_voltage_to_status(int port, int cc_volt)
+static int cc_voltage_to_status(int port, int cc_volt, int cc_sel)
 {
 	/* If we have a pull-up, then we are source, check for Rd. */
 	if (pd[port].cc_pull == TYPEC_CC_RP) {
-		if (CC_NC(cc_volt))
+		if (CC_NC(port, cc_volt, cc_sel))
 			return TYPEC_CC_VOLT_OPEN;
-		else if (CC_RA(cc_volt))
+		else if (CC_RA(port, cc_volt, cc_sel))
 			return TYPEC_CC_VOLT_RA;
 		else
 			return TYPEC_CC_VOLT_RD;
@@ -824,7 +828,7 @@ int tcpc_run(int port, int evt)
 			cc = pd_adc_read(port, i);
 
 			/* convert voltage to status, and check status change */
-			cc = cc_voltage_to_status(port, cc);
+			cc = cc_voltage_to_status(port, cc, i);
 			if (pd[port].cc_status[i] != cc) {
 				pd[port].cc_status[i] = cc;
 				alert(port, TCPC_REG_ALERT_CC_STATUS);
@@ -1109,7 +1113,8 @@ void tcpc_init(int port)
 	/* make initial readings of CC voltages */
 	for (i = 0; i < 2; i++) {
 		pd[port].cc_status[i] = cc_voltage_to_status(port,
-						pd_adc_read(port, i));
+							     pd_adc_read(port, i),
+							     i);
 	}
 
 #ifdef CONFIG_USB_PD_TCPC_TRACK_VBUS
