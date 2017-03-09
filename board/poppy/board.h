@@ -110,6 +110,9 @@
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_MODE_SWITCH
+
 /* USB */
 #define CONFIG_USB_CHARGER
 #define CONFIG_USB_PD_ALT_MODE

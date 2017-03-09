@@ -40,6 +40,7 @@
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "timer.h"
@@ -148,6 +149,9 @@ enum base_status {
  * status. Actions taken include:
  * 1. Change in power to base
  * 2. Indicate mode change to host.
+ * 3. Indicate tablet mode to host. Current assumption is that if base is
+ * disconnected then the system is in tablet mode, else if the base is
+ * connected, then the system is not in tablet mode.
  */
 static void base_detect_change(enum base_status connected)
 {
@@ -155,6 +159,7 @@ static void base_detect_change(enum base_status connected)
 		"not " : "");
 	gpio_set_level(GPIO_PP3300_DX_BASE, connected);
 	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+	tablet_set_mode(!connected);
 }
 
 static void base_detect_deferred(void)
