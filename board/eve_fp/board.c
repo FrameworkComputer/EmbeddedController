@@ -36,5 +36,8 @@ static void board_init(void)
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000fc0;
 	/* Enable clocks to SPI3 module (master) */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI3;
+
+	/* we are ready for host transactions */
+	hook_notify(HOOK_CHIPSET_RESUME);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

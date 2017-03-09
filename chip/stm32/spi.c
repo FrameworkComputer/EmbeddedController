@@ -17,6 +17,7 @@
 #include "host_command.h"
 #include "registers.h"
 #include "spi.h"
+#include "stm32-dma.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
@@ -90,7 +91,7 @@ static const uint8_t out_preamble[4] = {
  *
  * See crbug.com/31390
  */
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 #define EC_SPI_PAST_END_LENGTH 4
 #else
 #define EC_SPI_PAST_END_LENGTH 1
@@ -271,7 +272,7 @@ static void tx_status(uint8_t byte)
 	stm32_spi_regs_t *spi = STM32_SPI1_REGS;
 
 	spi->dr = byte;
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 	/* It sends the byte 4 times in order to be sure it bypassed the FIFO
 	 * from the STM32F0 line.
 	 */
@@ -309,7 +310,7 @@ static void setup_for_transaction(void)
 	 * receive DMA from getting that byte right when we start it.
 	 */
 	dummy = spi->dr;
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 	/* 4 Bytes makes sure the RX FIFO on the F0 is empty as well. */
 	dummy = spi->dr;
 	dummy = spi->dr;
@@ -403,7 +404,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
 
 	/* Append our past-end byte, which we reserved space for. */
 	((uint8_t *)pkt->response)[pkt->response_size + 0] = EC_SPI_PAST_END;
-#ifdef CHIP_FAMILY_STM32F0
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 	/* Make sure we are going to be outputting it properly when the DMA
 	 * ends due to the TX FIFO bug on the F0. See crbug.com/31390
 	 */
@@ -644,12 +645,17 @@ static void spi_init(void)
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
 
+	/* Select the right DMA request for the variants using it */
+#ifdef CHIP_FAMILY_STM32L4
+	dma_select_channel(STM32_DMAC_SPI1_TX, 1);
+	dma_select_channel(STM32_DMAC_SPI1_RX, 1);
+#endif
 	/*
 	 * Enable rx/tx DMA and get ready to receive our first transaction and
 	 * "disable" FIFO by setting event to happen after only 1 byte
 	 */
 	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN |
-		STM32_SPI_CR2_FRXTH;
+		STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
 
 	/* Enable the SPI peripheral */
 	spi->cr1 |= STM32_SPI_CR1_SPE;

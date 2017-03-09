@@ -24,6 +24,7 @@
 
 /* Optional features */
 #define CONFIG_CMD_SPI_XFER
+#define CONFIG_HOST_COMMAND_STATUS
 #undef  CONFIG_LID_SWITCH
 #define CONFIG_SPI
 #define CONFIG_SPI_MASTER
