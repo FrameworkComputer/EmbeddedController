@@ -303,6 +303,8 @@ static void sps_advance_rx(int port, int data_size)
  */
 static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 {
+	static uint8_t seen_data;
+
 	for (;;) {
 		uint8_t *received_data = NULL;
 		size_t data_size;
@@ -311,6 +313,7 @@ static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 		if (!data_size)
 			break;
 
+		seen_data = 1;
 		sps_rx_count += data_size;
 
 		if (sps_rx_handler)
@@ -322,16 +325,20 @@ static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 		sps_advance_rx(port, data_size);
 	}
 
-	if (cs_deasserted)
+	if (cs_deasserted) {
 		sps_rx_handler(NULL, 0, 1);
 
-	/*
-	 * SPI does not provide inherent flow control. Let's use this pin to
-	 * signal the AP that the device has finished processing received
-	 * data.
-	 */
-	gpio_set_level(GPIO_INT_AP_L, 0);
-	gpio_set_level(GPIO_INT_AP_L, 1);
+		if (seen_data) {
+			/*
+			 * SPI does not provide inherent flow control. Let's
+			 * use this pin to signal the AP that the device has
+			 * finished processing received data.
+			 */
+			gpio_set_level(GPIO_INT_AP_L, 0);
+			gpio_set_level(GPIO_INT_AP_L, 1);
+			seen_data = 0;
+		}
+	}
 }
 
 static void sps_cs_deassert_interrupt(uint32_t port)
