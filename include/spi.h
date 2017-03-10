@@ -64,17 +64,22 @@ extern const unsigned int spi_devices_used;
  */
 int spi_enable(int port, int enable);
 
+#define SPI_READBACK_ALL (-1)
+
 /* Issue a SPI transaction.  Assumes SPI port has already been enabled.
  *
  * Transmits <txlen> bytes from <txdata>, throwing away the corresponding
  * received data, then transmits <rxlen> dummy bytes, saving the received data
  * in <rxdata>.
+ * If SPI_READBACK_ALL is set in <rxlen>, the received data during transmission
+ * is recorded in rxdata buffer and it assumes that the real <rxlen> is equal
+ * to <txlen>.
  *
  * @param spi_device  the SPI device to use
  * @param txdata  buffer to transmit
  * @param txlen  number of bytes in txdata.
  * @param rxdata  receive buffer.
- * @param rxlen  number of bytes in rxdata.
+ * @param rxlen  number of bytes in rxdata or SPI_READBACK_ALL.
  */
 int spi_transaction(const struct spi_device_t *spi_device,
 		    const uint8_t *txdata, int txlen,
@@ -90,6 +95,9 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 
 /* Wait for async response received */
 int spi_transaction_flush(const struct spi_device_t *spi_device);
+
+/* Wait for async response received but do not de-assert chip select */
+int spi_transaction_wait(const struct spi_device_t *spi_device);
 
 #ifdef CONFIG_SPI
 /**

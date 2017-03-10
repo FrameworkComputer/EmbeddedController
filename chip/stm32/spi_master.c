@@ -212,13 +212,20 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 {
 	int rv = EC_SUCCESS;
 	int port = spi_device->port;
+	int full_readback = 0;
 
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 	char *buf;
 
-	rv = shared_mem_acquire(MAX(txlen, rxlen), &buf);
-	if (rv != EC_SUCCESS)
-		return rv;
+	if (rxlen == SPI_READBACK_ALL) {
+		buf = rxdata;
+		rxlen = txlen;
+		full_readback = 1;
+	} else {
+		rv = shared_mem_acquire(MAX(txlen, rxlen), &buf);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
 
 	/* Drive SS low */
 	gpio_set_level(spi_device->gpio_cs, 0);
@@ -235,14 +242,15 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	if (rv != EC_SUCCESS)
 		goto err_free;
 
-	if (rxlen) {
+	if (!full_readback && rxlen) {
 		rv = spi_dma_start(port, buf, rxdata, rxlen);
 		if (rv != EC_SUCCESS)
 			goto err_free;
 	}
 
 err_free:
-	shared_mem_release(buf);
+	if (!full_readback)
+		shared_mem_release(buf);
 	return rv;
 }
 
@@ -254,6 +262,11 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 	gpio_set_level(spi_device->gpio_cs, 1);
 
 	return rv;
+}
+
+int spi_transaction_wait(const struct spi_device_t *spi_device)
+{
+	return spi_dma_wait(spi_device->port);
 }
 
 int spi_transaction(const struct spi_device_t *spi_device,
