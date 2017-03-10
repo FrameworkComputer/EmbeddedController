@@ -38,7 +38,10 @@
 
   "p4cl": 177,  // P4 sync cl for XML we link against. 177 == 0xb1.
 
-  "timestamp": 0,
+  // Make sure a value is there so that current time is not used, and make
+  // sure the value is small so that any dev build with the same
+  // epoch/major/minor would be preferred
+  "timestamp": 1,
   "epoch": 0,  // FWR diversification contributor, 32 bits.
   "major": 0,  // FW2_HIK_CHAIN counter.
   "minor": 17,  // Mostly harmless version field.
