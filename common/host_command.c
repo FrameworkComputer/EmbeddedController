@@ -787,6 +787,9 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef CONFIG_HOSTCMD_RTC
 		| EC_FEATURE_MASK_0(EC_FEATURE_RTC)
 #endif
+#ifdef CONFIG_SPI_FP_PORT
+		| EC_FEATURE_MASK_0(EC_FEATURE_FINGERPRINT)
+#endif
 		;
 	return EC_RES_SUCCESS;
 }

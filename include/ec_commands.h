@@ -1074,6 +1074,8 @@ enum ec_feature_code {
 	EC_FEATURE_USBC_SS_MUX_VIRTUAL = 26,
 	/* EC has RTC feature that can be controlled by host commands */
 	EC_FEATURE_RTC = 27,
+	/* The MCU exposes a Fingerprint sensor */
+	EC_FEATURE_FINGERPRINT = 28,
 };
 
 #define EC_FEATURE_MASK_0(event_code) (1UL << (event_code % 32))
