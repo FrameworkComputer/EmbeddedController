@@ -107,9 +107,7 @@ BOARDS_NPCX_SPI=(
 	gru
 	kevin
         poppy
-	pyro
 	reef
-	snappy
 	wheatley
 )
 
@@ -126,9 +124,7 @@ BOARDS_MEC1322=(
 BOARDS_SPI_1800MV=(
 	gru
 	kevin
-	pyro
 	reef
-	snappy
 )
 
 BOARDS_RAIDEN=(
@@ -136,9 +132,7 @@ BOARDS_RAIDEN=(
 	gru
 	kevin
         poppy
-	pyro
 	reef
-	snappy
 )
 
 # Flags
