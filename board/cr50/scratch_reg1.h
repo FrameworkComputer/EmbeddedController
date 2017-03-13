@@ -32,6 +32,12 @@
 #define BOARD_FORCING_WP             (1 << 9)
 
 /*
+ * Bit to signal to compatible RO to suppress its uart output.
+ * Helps to reduce time to resume from deep sleep.
+ */
+#define BOARD_NO_RO_UART             (1 << 10)
+
+/*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
  */
