@@ -26,7 +26,7 @@
 static int led_debug;
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_POWER_LED, EC_LED_ID_BATTERY_LED};
+	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED};
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
@@ -106,15 +106,28 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	/* Set brightness for left LED */
-	pwm_set_duty(PWM_CH_LED_L_RED, brightness[EC_LED_COLOR_RED]);
-	pwm_set_duty(PWM_CH_LED_L_BLUE, brightness[EC_LED_COLOR_BLUE]);
-	pwm_set_duty(PWM_CH_LED_L_GREEN, brightness[EC_LED_COLOR_GREEN]);
-
-	/* Set brightness for right LED */
-	pwm_set_duty(PWM_CH_LED_R_RED, brightness[EC_LED_COLOR_RED]);
-	pwm_set_duty(PWM_CH_LED_R_BLUE, brightness[EC_LED_COLOR_BLUE]);
-	pwm_set_duty(PWM_CH_LED_R_GREEN, brightness[EC_LED_COLOR_GREEN]);
+	switch (led_id) {
+	case EC_LED_ID_LEFT_LED:
+		/* Set brightness for left LED */
+		pwm_set_duty(PWM_CH_LED_L_RED,
+			     100 - brightness[EC_LED_COLOR_RED]);
+		pwm_set_duty(PWM_CH_LED_L_BLUE,
+			     100 - brightness[EC_LED_COLOR_BLUE]);
+		pwm_set_duty(PWM_CH_LED_L_GREEN,
+			     100 - brightness[EC_LED_COLOR_GREEN]);
+		break;
+	case EC_LED_ID_RIGHT_LED:
+		/* Set brightness for right LED */
+		pwm_set_duty(PWM_CH_LED_R_RED,
+			     100 - brightness[EC_LED_COLOR_RED]);
+		pwm_set_duty(PWM_CH_LED_R_BLUE,
+			     100 - brightness[EC_LED_COLOR_BLUE]);
+		pwm_set_duty(PWM_CH_LED_R_GREEN,
+			     100 - brightness[EC_LED_COLOR_GREEN]);
+		break;
+	default:
+		return EC_ERROR_UNKNOWN;
+	}
 	return EC_SUCCESS;
 }
 
