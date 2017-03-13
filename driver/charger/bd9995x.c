@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "bd9995x.h"
 #include "charge_manager.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -645,7 +646,8 @@ int charger_set_current(int current)
 	if (current < BD9995X_NO_BATTERY_CHARGE_I_MIN &&
 	    (battery_is_present() != BP_YES || battery_is_cut_off()))
 		current = BD9995X_NO_BATTERY_CHARGE_I_MIN;
-	else if (current < bd9995x_charger_info.current_min)
+	else if (current < bd9995x_charger_info.current_min &&
+		!(charge_get_flags() & CHARGE_FLAG_FORCE_IDLE))
 		current = bd9995x_charger_info.current_min;
 
 	rv = ch_raw_write16(BD9995X_CMD_IPRECH_SET,
