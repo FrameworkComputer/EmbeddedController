@@ -2954,6 +2954,13 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 				/* Anything else, keep toggling */
 				next_state = PD_STATE_DRP_AUTO_TOGGLE;
 
+			if (next_state != PD_STATE_DRP_AUTO_TOGGLE) {
+				tcpm_set_drp_toggle(port, 0);
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+				CPRINTS("TCPC p%d Exit Low Power Mode", port);
+#endif
+			}
+
 			if (next_state == PD_STATE_SNK_DISCONNECTED) {
 				tcpm_set_cc(port, TYPEC_CC_RD);
 				pd[port].power_role = PD_ROLE_SINK;
@@ -2963,7 +2970,7 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 				pd[port].power_role = PD_ROLE_SOURCE;
 				timeout = 2*MSEC;
 			} else {
-				tcpm_set_drp_toggle(port);
+				tcpm_set_drp_toggle(port, 1);
 				pd[port].flags |= PD_FLAGS_TCPC_DRP_TOGGLE;
 				timeout = -1;
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

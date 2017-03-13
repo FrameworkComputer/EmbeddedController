@@ -143,9 +143,9 @@ static inline int tcpm_auto_toggle_supported(int port)
 	return !!tcpc_config[port].drv->drp_toggle;
 }
 
-static inline int tcpm_set_drp_toggle(int port)
+static inline int tcpm_set_drp_toggle(int port, int enable)
 {
-	return tcpc_config[port].drv->drp_toggle(port);
+	return tcpc_config[port].drv->drp_toggle(port, enable);
 }
 #endif
 

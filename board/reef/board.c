@@ -279,6 +279,14 @@ const enum gpio_signal hibernate_wake_pins[] = {
 
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
+static int ps8751_tune_mux(const struct usb_mux *mux)
+{
+	/* 0x98 sets lower EQ of DP port (4.5db) */
+	i2c_write8(NPCX_I2C_PORT0_1, 0x16, PS8751_REG_MUX_DP_EQ_CONFIGURATION,
+		   0x98);
+	return EC_SUCCESS;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = USB_PD_PORT_ANX74XX,  /* don't care / unused */
@@ -289,6 +297,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.port_addr = USB_PD_PORT_PS8751,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.board_init = &ps8751_tune_mux,
 	}
 };
 
@@ -375,10 +384,6 @@ void board_tcpc_init(void)
 
 		mux->hpd_update(port, 0, 0);
 	}
-
-	/* 0x98 sets lower EQ of DP port (4.5db) */
-	i2c_write8(NPCX_I2C_PORT0_1, 0x16, PS8751_REG_MUX_DP_EQ_Configuration,
-		   0x98);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 

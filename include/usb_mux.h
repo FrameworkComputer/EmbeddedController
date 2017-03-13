@@ -71,7 +71,8 @@ struct usb_mux {
 
 	/**
 	 * Board specific initialization for USB mux that is
-	 * called after mux->driver->init() function.
+	 * called after mux->driver->init() function and every time the port
+	 * leaves auto-toggle state.
 	 *
 	 * @param mux USB mux to tune
 	 * @return EC_SUCCESS on success, non-zero error code on failure.

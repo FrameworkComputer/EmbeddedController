@@ -127,10 +127,18 @@ int tcpci_tcpm_set_cc(int port, int pull)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static int tcpci_tcpc_drp_toggle(int port)
+static int tcpci_tcpc_drp_toggle(int port, int enable)
 {
 	int rv;
 
+	if (!enable) {
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+		struct usb_mux *mux = &usb_muxes[port];
+		if (mux->board_init)
+			return mux->board_init(mux);
+#endif
+		return EC_SUCCESS;
+	}
 	/* Set auto drp toggle */
 	rv = set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_OPEN);
 
@@ -507,7 +515,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle	= &tcpci_tcpc_drp_toggle,
+	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
 };

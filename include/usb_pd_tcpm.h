@@ -192,10 +192,11 @@ struct tcpm_drv {
 	 * Enable TCPC auto DRP toggling.
 	 *
 	 * @param port Type-C port number
+	 * @param enable 1: Enable 0: Disable
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*drp_toggle)(int port);
+	int (*drp_toggle)(int port, int enable);
 #endif
 
 	/**
