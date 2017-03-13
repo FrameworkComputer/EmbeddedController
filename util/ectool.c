@@ -7126,6 +7126,9 @@ int main(int argc, char *argv[])
 	/* Handle sub-devices command offset */
 	if (dev > 0 && dev < 4) {
 		set_command_offset(EC_CMD_PASSTHRU_OFFSET(dev));
+	} else if (dev == 8) {
+		/* Special offset for Fingerprint MCU */
+		strcpy(device_name, "cros_fp");
 	} else if (dev != 0) {
 		fprintf(stderr, "Bad device number %d\n", dev);
 		parse_error = 1;
