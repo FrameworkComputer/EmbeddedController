@@ -458,7 +458,7 @@ static int init(const struct motion_sensor_t *s)
 		msleep(1);
 		/* Read WHO_AM_I to be sure the device has booted */
 		ret = raw_read8(s->port, s->addr, reg, &val);
-		if (ret == EC_SUCCESS)
+		if (ret == EC_SUCCESS && val == KIONIX_WHO_AM_I_VAL(V(s)))
 			break;
 
 		/* Check for timeout. */
