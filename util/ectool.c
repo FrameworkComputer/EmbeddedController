@@ -252,7 +252,7 @@ BUILD_ASSERT(ARRAY_SIZE(led_color_names) == EC_LED_COLOR_COUNT);
 
 /* Note: depends on enum ec_led_id */
 static const char * const led_names[] = {
-	"battery", "power", "adapter"};
+	"battery", "power", "adapter", "left", "right"};
 BUILD_ASSERT(ARRAY_SIZE(led_names) == EC_LED_ID_COUNT);
 
 /* Check SBS numerical value range */
