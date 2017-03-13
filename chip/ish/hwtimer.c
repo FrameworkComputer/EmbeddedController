@@ -5,6 +5,7 @@
 
 /* Hardware timers driver  - HPET */
 
+#include "console.h"
 #include "hpet.h"
 #include "hwtimer.h"
 #include "registers.h"
@@ -14,15 +15,24 @@
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
 
+static uint32_t last_deadline;
+
+/* TODO: Conform to EC API
+ * ISH supports 32KHz and 12MHz clock sources.
+ * EC expects timer value in 1MHz.
+ * Scale the values and support it.
+ */
+
 void __hw_clock_event_set(uint32_t deadline)
 {
-	HPET_TIMER_COMP(1) = HPET_MAIN_COUNTER + deadline;
+	last_deadline = deadline;
+	HPET_TIMER_COMP(1) = deadline;
 	HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
 }
 
 uint32_t __hw_clock_event_get(void)
 {
-	return 0;
+	return last_deadline;
 }
 
 void __hw_clock_event_clear(void)
@@ -38,11 +48,7 @@ uint32_t __hw_clock_source_read(void)
 void __hw_clock_source_set(uint32_t ts)
 {
 	HPET_GENERAL_CONFIG &= ~HPET_ENABLE_CNF;
-	HPET_MAIN_COUNTER = 0x00;
-
-	while (HPET_CTRL_STATUS & HPET_GEN_CONF_STATUS_BIT)
-		;
-
+	HPET_MAIN_COUNTER = ts;
 	HPET_GENERAL_CONFIG |= HPET_ENABLE_CNF;
 }
 
@@ -77,53 +83,55 @@ int __hw_clock_source_init(uint32_t start_t)
 	 *   - Timer 1 as event timer
 	 */
 
+	uint32_t timer0_config = 0x00000000;
+	uint32_t timer1_config = 0x00000000;
+
 	/* Disable HPET */
 	HPET_GENERAL_CONFIG &= ~HPET_ENABLE_CNF;
-	HPET_MAIN_COUNTER = 0x00;
+	HPET_MAIN_COUNTER = start_t;
 
 	/* Set comparator value */
-	HPET_TIMER_COMP(0) = ISH_HPET_CLK_FREQ / ISH_TICKS_PER_SEC;
-
-	/* Wait for timer to settle */
-	while (HPET_CTRL_STATUS & HPET_GEN_CONF_STATUS_BIT)
-		;
+	HPET_TIMER_COMP(0) = 0XFFFFFFFF;
 
 	/* Timer 0 - enable periodic mode */
-	HPET_TIMER_CONF_CAP(0) |= HPET_Tn_TYPE_CNF;
-	HPET_TIMER_CONF_CAP(0) |= HPET_Tn_32MODE_CNF;
+	timer0_config |= HPET_Tn_TYPE_CNF;
+	timer0_config |= HPET_Tn_32MODE_CNF;
+	timer0_config |= HPET_Tn_VAL_SET_CNF;
 
-	while (HPET_CTRL_STATUS & HPET_T0_CONF_CAP_BIT)
-		;
+	/* Timer 0 - IRQ routing */
+	timer0_config &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
+	timer0_config |= (ISH_HPET_TIMER0_IRQ <<
+				HPET_Tn_INT_ROUTE_CNF_SHIFT);
 
-	/* Set IRQ routing */
-#if ISH_HPET_TIMER0_IRQ < 32
-	HPET_TIMER_CONF_CAP(0) &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
-	HPET_TIMER_CONF_CAP(0) |= (ISH_HPET_TIMER0_IRQ <<
-			HPET_Tn_INT_ROUTE_CNF_SHIFT);
-#else
-	HPET_TIMER_CONF_CAP(0) &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
-#endif
+	/* Timer 1 - IRQ routing */
+	timer1_config &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
+	timer1_config |= (ISH_HPET_TIMER1_IRQ <<
+				HPET_Tn_INT_ROUTE_CNF_SHIFT);
 
-	while (HPET_CTRL_STATUS & HPET_T0_CONF_CAP_BIT)
-		;
+	/* Level triggered interrupt */
+	timer0_config |= HPET_Tn_INT_TYPE_CNF;
+	timer1_config |= HPET_Tn_INT_TYPE_CNF;
 
-	/* Level interrupt */
-	HPET_TIMER_CONF_CAP(0) |= HPET_Tn_INT_TYPE_CNF;
-	HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_TYPE_CNF;
+	/* Enable interrupt */
+	timer0_config |= HPET_Tn_INT_ENB_CNF;
+	timer1_config |= HPET_Tn_INT_ENB_CNF;
 
 	/* Unask HPET IRQ in IOAPIC */
 	task_enable_irq(ISH_HPET_TIMER0_IRQ);
 	task_enable_irq(ISH_HPET_TIMER1_IRQ);
 
-	/* Enable interrupt */
-	HPET_TIMER_CONF_CAP(0) |= HPET_Tn_INT_ENB_CNF;
-	HPET_TIMER_CONF_CAP(1) |= HPET_Tn_INT_ENB_CNF;
+	/* Set timer 0/1 config */
+	HPET_TIMER_CONF_CAP(0) |= timer0_config;
+	HPET_TIMER_CONF_CAP(1) |= timer1_config;
 
-	while (HPET_CTRL_STATUS & HPET_T0_CONF_CAP_BIT)
+#if defined CONFIG_ISH_40
+	/* Wait for timer to settle. required for ISH 4 */
+	while (HPET_CTRL_STATUS & HPET_T_CONF_CAP_BIT)
 		;
+#endif
 
-	/* Enable HPET main  counter */
+	/* Enable HPET main counter */
 	HPET_GENERAL_CONFIG |= HPET_ENABLE_CNF;
 
-	return ISH_HPET_TIMER1_IRQ; /* One shot */
+	return ISH_HPET_TIMER1_IRQ;
 }

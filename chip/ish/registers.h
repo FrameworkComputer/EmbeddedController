@@ -39,14 +39,14 @@ enum ish_i2c_port {
 /* HW interrupt pins mapped to IOAPIC, from I/O sources */
 #define ISH_I2C0_IRQ               0
 #define ISH_I2C1_IRQ               1
-#define ISH_HPET_TIMER1_IRQ        8
+#define ISH_HPET_TIMER0_IRQ        22
+#define ISH_HPET_TIMER1_IRQ        23
 #define ISH_HPET_TIMER2_IRQ        11
 #define ISH_IPC_HOST2ISH_IRQ       12
 #define ISH_IPC_ISH2HOST_CLR_IRQ   24
 #define ISH_UART0_IRQ              34
 #define ISH_UART1_IRQ              35
 #define ISH_I2C2_IRQ               40
-#define ISH_HPET_TIMER0_IRQ        55
 
 /* Interrupt vectors 0-31 are architecture reserved.
  * Vectors 32-255 are user-defined.
