@@ -10,6 +10,7 @@
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 
 /*
  * Command:

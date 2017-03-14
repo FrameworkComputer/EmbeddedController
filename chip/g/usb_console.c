@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "util.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)

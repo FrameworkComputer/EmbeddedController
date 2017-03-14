@@ -14,6 +14,7 @@
 #include "producer.h"
 #include "queue.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 
 /*
  * Compile time Per-USB stream configuration stored in flash.  Instances of this

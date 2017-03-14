@@ -14,7 +14,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "usb_descriptor.h"
+#include "usb_api.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 

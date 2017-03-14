@@ -10,9 +10,6 @@
 
 #include <stddef.h> /* for wchar_t */
 
-#include "usb_api.h"
-#include "usb_hw.h"
-
 #define USB_MAX_PACKET_SIZE 64
 
 /* USB 2.0 chapter 9 definitions */

@@ -17,6 +17,7 @@
 #include "producer.h"
 #include "queue.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 
 #include <stdint.h>
 

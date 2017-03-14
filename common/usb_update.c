@@ -12,6 +12,8 @@
 #include "shared_mem.h"
 #include "system.h"
 #include "update_fw.h"
+#include "usb_api.h"
+#include "usb_hw.h"
 #include "usb-stream.h"
 #include "util.h"
 

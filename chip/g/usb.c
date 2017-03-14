@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "util.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 #include "watchdog.h"
 
 /****************************************************************************/

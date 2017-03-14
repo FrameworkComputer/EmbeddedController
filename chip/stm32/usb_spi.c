@@ -8,6 +8,7 @@
 #include "registers.h"
 #include "spi.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 #include "usb_spi.h"
 #include "util.h"
 

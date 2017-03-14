@@ -17,6 +17,7 @@
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usb_hw.h"
 #include "usb_i2c.h"
 #include "usb_spi.h"
 #include "usb-stream.h"

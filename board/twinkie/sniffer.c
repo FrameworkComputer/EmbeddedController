@@ -17,6 +17,7 @@
 #include "task.h"
 #include "timer.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 #include "util.h"
 #include "ina2xx.h"
 

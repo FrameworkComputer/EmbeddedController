@@ -9,6 +9,7 @@
 
 #include "compile_time_macros.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 
 struct usb_gpio_state {
 	uint32_t set_mask;
