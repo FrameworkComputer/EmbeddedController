@@ -4,8 +4,7 @@
 
 CC ?= gcc
 PKG_CONFIG ?= pkg-config
-PROGRAM := usb_updater
-SOURCE  := $(PROGRAM).c
+PROGRAMS := usb_updater usb_updater2
 LIBS    :=
 LFLAGS  :=
 CFLAGS  := -std=gnu99 \
@@ -29,17 +28,28 @@ endif
 #
 # Add libusb-1.0 required flags
 #
-LIBS    += $(shell $(PKG_CONFIG) --libs   libusb-1.0 libcrypto)
-CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0 libcrypto)
+LIBS    += $(shell $(PKG_CONFIG) --libs   libusb-1.0)
+CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
+CFLAGS  += -I../../include -I../../util
 
-# NOTE: This may be board-specific
 BOARD ?= cr50
-CFLAGS  += -I../../include -I../../board/$(BOARD) -I ../../chip/g -I../../util
+LIBS_g  = $(shell $(PKG_CONFIG) --libs   libcrypto)
+CFLAGS_g = $(shell $(PKG_CONFIG) --cflags libcrypto)
+CFLAGS_g  += -I../../board/$(BOARD) -I ../../chip/g
 
-$(PROGRAM): $(SOURCE) Makefile
-	$(CC) $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) -o $@
+LIBS_common  = -lfmap
+
+all: $(PROGRAMS)
+
+# chip/g updater
+usb_updater: usb_updater.c Makefile
+	$(CC) $(CFLAGS) $(CFLAGS_g) $< $(LFLAGS) $(LIBS) $(LIBS_g) -o $@
+
+# common EC code USB updater
+usb_updater2: usb_updater2.c Makefile
+	$(CC) $(CFLAGS) $< $(LFLAGS) $(LIBS) $(LIBS_common) -o $@
 
 .PHONY: clean
 
 clean:
-	rm -rf $(PROGRAM) *~
+	rm -rf $(PROGRAMS) *~
