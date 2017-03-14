@@ -3015,22 +3015,15 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 		if (pd[port].power_role == PD_ROLE_SOURCE) {
 			/* Source: detect disconnect by monitoring CC */
 			tcpm_get_cc(port, &cc1, &cc2);
-#ifdef CONFIG_USB_PD_DTS
-			/* If accessory becomes detached */
-			if (cc1 != TYPEC_CC_VOLT_RD ||
-			    cc2 != TYPEC_CC_VOLT_RD) {
-				set_state(port, PD_STATE_SRC_DISCONNECTED);
-				/* Debouncing */
-				timeout = 10*MSEC;
-				ccd_set_mode(CCD_MODE_DISABLED);
-			}
-#endif
 			if (pd[port].polarity)
 				cc1 = cc2;
 			if (cc1 == TYPEC_CC_VOLT_OPEN) {
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				/* Debouncing */
 				timeout = 10*MSEC;
+#ifdef CONFIG_USB_PD_DTS
+				ccd_set_mode(CCD_MODE_DISABLED);
+#endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 				/*
 				 * If Try.SRC is configured, then ATTACHED_SRC

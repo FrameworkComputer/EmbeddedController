@@ -181,5 +181,18 @@ int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel);
  */
 int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel);
 
+/**
+ * Set Rp or Rd resistor for CC lines
+ *
+ * This function is used to configure the CC pullup or pulldown resistor to
+ * the requested value.
+ *
+ * @param port USB-C port number
+ * @param cc_pull 1 for Rp and 0 for Rd
+ * @param rp_value If cc_pull == 1, the value of Rp to use
+ * @return 1 if cc_pull == 1 and Rp is invalid, otherwise 0
+ */
+int pd_set_rp_rd(int port, int cc_pull, int rp_value);
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

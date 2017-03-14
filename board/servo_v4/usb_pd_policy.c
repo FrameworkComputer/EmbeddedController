@@ -57,18 +57,31 @@ struct vbus_prop {
 static struct vbus_prop vbus[CONFIG_USB_PD_PORT_COUNT];
 static struct vbus_prop vbus_pend;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
+static int disable_dts_mode;
 
-/* Voltage thresholds for no connect */
-static int pd_src_vnc[TYPEC_RP_RESERVED][2] = {
+/* Voltage thresholds for no connect in DTS mode */
+static int pd_src_vnc_dts[TYPEC_RP_RESERVED][2] = {
 	{PD_SRC_3_0_VNC_MV, PD_SRC_1_5_VNC_MV},
 	{PD_SRC_1_5_VNC_MV, PD_SRC_DEF_VNC_MV},
 	{PD_SRC_3_0_VNC_MV, PD_SRC_DEF_VNC_MV},
 };
-/* Voltage thresholds for Ra attach */
-static int pd_src_rd_threshold[TYPEC_RP_RESERVED][2] = {
+/* Voltage thresholds for Ra attach in DTS mode */
+static int pd_src_rd_threshold_dts[TYPEC_RP_RESERVED][2] = {
 	{PD_SRC_3_0_RD_THRESH_MV, PD_SRC_1_5_RD_THRESH_MV},
 	{PD_SRC_1_5_RD_THRESH_MV, PD_SRC_DEF_RD_THRESH_MV},
 	{PD_SRC_3_0_RD_THRESH_MV, PD_SRC_DEF_RD_THRESH_MV},
+};
+/* Voltage thresholds for no connect in normal SRC mode */
+static int pd_src_vnc[TYPEC_RP_RESERVED] = {
+	PD_SRC_DEF_VNC_MV,
+	PD_SRC_1_5_VNC_MV,
+	PD_SRC_3_0_VNC_MV,
+};
+/* Voltage thresholds for Ra attach in normal SRC mode */
+static int pd_src_rd_threshold[TYPEC_RP_RESERVED] = {
+	PD_SRC_DEF_RD_THRESH_MV,
+	PD_SRC_1_5_RD_THRESH_MV,
+	PD_SRC_3_0_RD_THRESH_MV,
 };
 
 static void board_manage_dut_port(void)
@@ -94,12 +107,9 @@ static void board_manage_dut_port(void)
 	}
 
 	/* Check if Rp setting needs to change from current value */
-	if (vbus_rp != rp) {
+	if (vbus_rp != rp)
 		/* Present new Rp value */
 		tcpm_select_rp_value(DUT, rp);
-		/* Save new Rp value for DUT port */
-		vbus_rp = rp;
-	}
 
 	/*
 	 * If CHG vbus voltage/current doesn't match the DUT port value, then
@@ -181,33 +191,160 @@ static void board_update_chg_vbus(int max_ma, int vbus_mv)
 int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel)
 {
 	int rp_index;
+	int nc;
 
 	/* Can never be called from CHG port as it's sink only */
 	if (port == CHG)
 		return 0;
 
 	rp_index = vbus_rp;
-	/* Ensure that rp_index doens't exceed the array size */
+	/*
+	 * If rp_index > 2, then always return not connected. This case should
+	 * only happen when all Rp GPIO controls are tri-stated.
+	 */
 	if (rp_index >= TYPEC_RP_RESERVED)
-		rp_index = 0;
+		return 1;
 
-	return cc_volt >= pd_src_vnc[rp_index][cc_sel];
+	/* Select the correct voltage threshold for current Rp and DTS mode */
+	if (disable_dts_mode)
+		nc = cc_volt >= pd_src_vnc[rp_index];
+	else
+		nc = cc_volt >= pd_src_vnc_dts[rp_index][cc_sel];
+
+	return nc;
 }
 
 int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel)
 {
 	int rp_index;
+	int ra;
 
 	/* Can never be called from CHG port as it's sink only */
 	if (port == CHG)
 		return 0;
 
 	rp_index = vbus_rp;
-	/* Ensure that rp_index doens't exceed the array size */
+	/*
+	 * If rp_index > 2, then can't be Ra. This case should
+	 * only happen when all Rp GPIO controls are tri-stated.
+	 */
 	if (rp_index >= TYPEC_RP_RESERVED)
-		rp_index = 0;
+		return 0;
 
-	return cc_volt < pd_src_rd_threshold[rp_index][cc_sel];
+	/* Select the correct voltage threshold for current Rp and DTS mode */
+	if (disable_dts_mode)
+		ra = cc_volt < pd_src_rd_threshold[rp_index];
+	else
+		ra = cc_volt < pd_src_rd_threshold_dts[rp_index][cc_sel];
+
+	return ra;
+}
+
+static int board_set_rp(int rp)
+{
+	if (disable_dts_mode) {
+		/*
+		 * DTS mode is disabled, so only present the requested Rp value
+		 * on CC1 and leave all Rp/Rd resistors on CC2 disconnected.
+		 */
+		switch (rp) {
+		case TYPEC_RP_USB:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_1A5:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_3A0:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_RESERVED:
+			/*
+			 * This case can be used to force a detach event since
+			 * all values are set to inputs above. Nothing else to
+			 * set.
+			 */
+			break;
+		default:
+			return EC_ERROR_INVAL;
+		}
+	} else {
+		/* DTS mode is enabled. The rp parameter is used to select the
+		 * Type C current limit to advertise. The combinations of Rp on
+		 * each CC line is shown in the table below.
+		 *
+		 * CC values for Debug sources (DTS)
+		 *
+		 * Source type  Mode of Operation   CC1    CC2
+		 * ---------------------------------------------
+		 * DTS          Default USB Power   Rp3A0  Rp1A5
+		 * DTS          USB-C @ 1.5 A       Rp1A5  RpUSB
+		 * DTS          USB-C @ 3 A         Rp3A0  RpUSB
+		 */
+		switch (rp) {
+		case TYPEC_RP_USB:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_1A5:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_3A0:
+			gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_OUT_HIGH);
+			gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_OUT_HIGH);
+			break;
+		case TYPEC_RP_RESERVED:
+			/*
+			 * This case can be used to force a detach event since
+			 * all values are set to inputs above. Nothing else to
+			 * set.
+			 */
+			break;
+		default:
+			return EC_ERROR_INVAL;
+		}
+	}
+	/* Save new Rp value for DUT port */
+	vbus_rp = rp;
+
+	return EC_SUCCESS;
+}
+
+int pd_set_rp_rd(int port, int cc_pull, int rp_value)
+{
+	int rv = EC_SUCCESS;
+
+	/* By default disconnect all Rp/Rd resistors from both CC lines */
+	/* Set Rd for CC1/CC2 to High-Z. */
+	gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_INPUT);
+	/* Set Rp for CC1/CC2 to High-Z. */
+	gpio_set_flags(GPIO_USB_DUT_CC1_RP3A0, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RP3A0, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC1_RP1A5, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RP1A5, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC1_RPUSB, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_RPUSB, GPIO_INPUT);
+
+	/* Set TX Hi-Z */
+	gpio_set_flags(GPIO_USB_DUT_CC1_TX_DATA, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_DUT_CC2_TX_DATA, GPIO_INPUT);
+
+	if (cc_pull == TYPEC_CC_RP) {
+		rv = board_set_rp(rp_value);
+	} else if (cc_pull == TYPEC_CC_RD) {
+		/*
+		 * The DUT port uses a captive cable. If can present Rd on both
+		 * CC1 and CC2. If DTS mode is enabled, then present Rd on both
+		 * CC lines. However, if DTS mode is disabled only present Rd on
+		 * CC1.
+		 */
+		gpio_set_flags(GPIO_USB_DUT_CC1_RD, GPIO_OUT_LOW);
+		if (!disable_dts_mode)
+			gpio_set_flags(GPIO_USB_DUT_CC2_RD, GPIO_OUT_LOW);
+	}
+
+	return rv;
 }
 
 int board_select_rp_value(int port, int rp)
@@ -401,3 +538,40 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 const struct svdm_amode_fx supported_modes[] = {};
 const int supported_modes_cnt = ARRAY_SIZE(supported_modes);
+
+static int command_dts(int argc, char **argv)
+{
+	int disable_dts_new;
+	int val;
+
+	if (argc < 2) {
+		/* Get current CCD status */
+		ccprintf("dts mode: %s\n", disable_dts_mode ? "off" : "on");
+		return EC_SUCCESS;
+	}
+
+	if (!parse_bool(argv[1], &val))
+		return EC_ERROR_PARAM2;
+
+	disable_dts_new = val ^ 1;
+	if (disable_dts_new != disable_dts_mode) {
+		/* Force detach */
+		pd_power_supply_reset(DUT);
+		/* Always set to 0 here so both CC lines are changed */
+		disable_dts_mode = 0;
+		/* Remove Rp/Rd on both CC lines */
+		board_select_rp_value(DUT, TYPEC_RP_RESERVED);
+		/* Accept new disable_dts value */
+		disable_dts_mode = disable_dts_new;
+		/* Some time for DUT to detach */
+		msleep(100);
+		/* Present RP_USB on CC1 and CC2 based on disable_dts_mode */
+		board_select_rp_value(DUT, TYPEC_RP_USB);
+		ccprintf("dts mode: %s\n", disable_dts_mode ? "off" : "on");
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dts, command_dts,
+			"off|on",
+			"Servo_v4 DTS mode on/off");
