@@ -72,7 +72,8 @@ enum {
 	F_UPDATE        = 0x4, /* do firmware update */
 	F_NEED_UPDATE   = 0x8,  /* need firmware update */
 	F_POWERD_DISABLED = 0x10,  /* powerd is disabled */
-	F_LFCC_ZERO =       0x20  /* last full charge is zero */
+	F_LFCC_ZERO =       0x20,  /* last full charge is zero */
+	F_BATT_DISCHARGE =  0x40   /* battery discharging */
 };
 
 struct fw_update_ctrl {
@@ -471,6 +472,20 @@ static enum fw_update_state s1_read_battery_info(
 			"Require AC Adapter Counnected.");
 		return S10_TERMINAL;
 	}
+
+	if ((fw_update->flags & F_BATT_DISCHARGE) &&
+	    (fw_update->flags & F_AC_PRESENT)) {
+		/*
+		 * If battery discharge due to battery learning mode,
+		 * we can't update battery FW, because device will shutdown
+		 * during FW update.
+		 */
+		fw_update->rv = 0;
+		log_msg(fw_update, S1_READ_INFO,
+			"battery can't update in learning mode");
+		return S10_TERMINAL;
+	}
+
 	return S2_WRITE_PREPARE;
 }
 
@@ -789,6 +804,11 @@ int main(int argc, char *argv[])
 			fw_update.flags |= F_AC_PRESENT;
 			printf("AC_PRESENT\n");
 		}
+	}
+
+	if (val & EC_BATT_FLAG_DISCHARGING) {
+		fw_update.flags |= F_BATT_DISCHARGE;
+		printf("Battery is in discharge state\n");
 	}
 	rv = ec_readmem(EC_MEMMAP_BATT_LFCC, sizeof(val), &val);
 	if (rv <= 0) {
