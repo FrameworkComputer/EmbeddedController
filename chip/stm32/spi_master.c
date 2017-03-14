@@ -219,7 +219,6 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 
 	if (rxlen == SPI_READBACK_ALL) {
 		buf = rxdata;
-		rxlen = txlen;
 		full_readback = 1;
 	} else {
 		rv = shared_mem_acquire(MAX(txlen, rxlen), &buf);
@@ -238,11 +237,14 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	if (rv != EC_SUCCESS)
 		goto err_free;
 
+	if (full_readback)
+		return EC_SUCCESS;
+
 	rv = spi_dma_wait(port);
 	if (rv != EC_SUCCESS)
 		goto err_free;
 
-	if (!full_readback && rxlen) {
+	if (rxlen) {
 		rv = spi_dma_start(port, buf, rxdata, rxlen);
 		if (rv != EC_SUCCESS)
 			goto err_free;
