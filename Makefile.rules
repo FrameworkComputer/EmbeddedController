@@ -12,6 +12,7 @@ BUILD_DIR := $(firstword $(subst /, ,$(out)))
 
 build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
+build-art := $(foreach u,$(build-util-art),$(out)/$(u))
 build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
 host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
 
@@ -82,6 +83,7 @@ cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_host_test = ./util/run_host_test $* $(silent)
 cmd_version = ./util/getversion.sh > $@
+cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out)
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
 	       bs=1 count=$(_rw_size) skip=$(_rw_off) $(silent_err)
@@ -172,6 +174,9 @@ hex-y := $(out)/RO/$(PROJECT).RO.hex $(out)/RW/$(PROJECT).RW.hex $(out)/$(PROJEC
 hex: $(hex-y)
 .PHONY: hex
 
+.PHONY: utils-art
+utils-art: $(build-art)
+
 .PHONY: utils-host
 utils-host: $(host-utils)
 
@@ -179,7 +184,7 @@ utils-host: $(host-utils)
 utils-build: $(build-utils)
 
 .PHONY: utils
-utils: utils-host utils-build
+utils: utils-host utils-build utils-art
 
 # On board test binaries
 test-targets=$(foreach t,$(test-list-y),test-$(t))
@@ -278,6 +283,9 @@ $(out)/%.bin: $(out)/%.obj
 	$(if $(wildcard $(PEM)),$(call quiet,extractrw-y,EXTR_RW), \
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
+
+$(out)/$(BOARD)_vif.txt: $(out)/util/genvif
+	$(call quiet,vif,VIF    )
 
 flat-y := $(out)/RW/$(PROJECT).RW.flat
 flat-$(CONFIG_FW_INCLUDE_RO) += $(out)/RO/$(PROJECT).RO.flat

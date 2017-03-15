@@ -2404,6 +2404,19 @@
 /* USB Device version of product */
 #undef CONFIG_USB_BCD_DEV
 
+/*
+ * Used during generation of VIF for USB Type-C Compliance Testing.
+ * Indicates whether the UUT can communicate with USB 2.0 or USB 3.1 as a host
+ * or as the Downstream Facing Port of a hub.
+ */
+#undef CONFIG_VIF_TYPE_C_CAN_ACT_AS_HOST
+
+/*
+ * Used during generation of VIF for USB Type-C Compliance Testing.
+ * Indicates whether the UUT has a captive cable.
+ */
+#undef CONFIG_VIF_CAPTIVE_CABLE
+
 /*****************************************************************************/
 
 /* Compile chip support for the USB device controller */
