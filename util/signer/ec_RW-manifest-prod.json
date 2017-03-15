@@ -7,7 +7,7 @@
 },
 // Rollback state.
 "info": {
-  "0": -1,   "1": -1,   "2": -1,   "3": -1,   "4": -1,   "5": -1,   "6": -1,
+             "1": -1,   "2": -1,   "3": -1,   "4": -1,   "5": -1,   "6": -1,
   "7": -1,   "8": -1,   "9": -1,  "10": -1,  "11": -1,  "12": -1 , "13": -1,
  "14": -1,  "15": -1,  "16": -1,  "17": -1,  "18": -1,  "19": -1,  "20": -1,
  "21": -1,  "22": -1,  "23": -1,  "24": -1,  "25": -1,  "26": -1,  "27": -1,
@@ -44,7 +44,7 @@
   "timestamp": 1,
   "epoch": 0,  // FWR diversification contributor, 32 bits.
   "major": 0,  // FW2_HIK_CHAIN counter.
-  "minor": 17,  // Mostly harmless version field.
+  "minor": 18,  // Mostly harmless version field.
   "applysec": -1,  // Mask to and with fuse BROM_APPLYSEC.
   "config1": 13,  // Which BROM_CONFIG1 actions to take before launching.
   "err_response": 0,  // Mask to or with fuse BROM_ERR_RESPONSE.
