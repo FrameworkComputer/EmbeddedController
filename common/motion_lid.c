@@ -323,11 +323,14 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 		/*
 		 * If the angle was last seen as really large and now it's quite
 		 * small, we may be rotating around from 360->0 so correct it to
-		 * be large.
+		 * be large. But in case that the lid switch is closed, we can
+		 * prove the small angle we see is correct so we take the angle
+		 * as is.
 		 */
 		if ((last_lid_angle_fp >=
 		     FLOAT_TO_FP(360) - DEBOUNCE_ANGLE_DELTA) &&
-		    (lid_to_base_fp <= DEBOUNCE_ANGLE_DELTA))
+		    (lid_to_base_fp <= DEBOUNCE_ANGLE_DELTA) &&
+		    (lid_is_open()))
 			last_lid_angle_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
 		else
 			last_lid_angle_fp = lid_to_base_fp;

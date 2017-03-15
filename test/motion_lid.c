@@ -316,6 +316,20 @@ static int test_lid_angle(void)
 	wait_for_valid_sample();
 	TEST_ASSERT(motion_lid_get_angle() == LID_ANGLE_UNRELIABLE);
 
+	/*
+	 * Open the lid to 350, and then close the lid and set the angle
+	 * to 10. The reading of small angle shouldn't be corrected.
+	 */
+	gpio_set_level(GPIO_LID_OPEN, 1);
+	msleep(100);
+	gpio_set_level(GPIO_LID_OPEN, 0);
+	msleep(100);
+	lid->xyz[X] = 0;
+	lid->xyz[Y] = 173;
+	lid->xyz[Z] = -984;
+	wait_for_valid_sample();
+	TEST_ASSERT(motion_lid_get_angle() == 10);
+
 	return EC_SUCCESS;
 }
 
