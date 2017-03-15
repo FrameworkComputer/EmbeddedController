@@ -473,10 +473,19 @@ static void configure_board_specific_gpios(void)
 		/* Enbale the input */
 		GWRITE_FIELD(PINMUX, DIOM3_CTL, IE, 1);
 
-		/* Set to be edge sensitive */
-		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 1);
-		/* Select rising edge polarity */
-		GWRITE_FIELD(PINMUX, EXITINV0, DIOM3, 0);
+		/*
+		 * Make plt_rst_l routed to DIOM3 a low level sensitive wake
+		 * source. This way when a plt_rst_l pulse comes along while
+		 * H1 is in sleep, the H1 wakes from sleep first, enabling all
+		 * necessary clocks, and becomes ready to generate an
+		 * interrupt on the rising edge of plt_rst_l.
+		 *
+		 * It takes at most 150 us to wake up, and the pulse is at
+		 * least 1ms long.
+		 */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 0);
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOM3, 1);
+
 		/* Enable powerdown exit on DIOM3 */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	} else {
