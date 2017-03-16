@@ -922,6 +922,9 @@
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 
+/* Support for sending emulated sysrq commands to AP */
+#undef CONFIG_EMULATED_SYSRQ
+
 /* Support for eSPI for host communication */
 #undef CONFIG_ESPI
 

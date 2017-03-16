@@ -498,4 +498,12 @@ uintptr_t system_get_fw_reset_vector(uintptr_t base);
  */
 int system_is_reboot_warm(void);
 
+/*
+ * Sends an emulated sysrq to the host, used by button-based debug mode.
+ * Only implemented on top of MKBP protocol.
+ *
+ * @param key		Key to be sent (e.g. 'x')
+ */
+void send_sysrq(uint8_t key);
+
 #endif  /* __CROS_EC_SYSTEM_H */

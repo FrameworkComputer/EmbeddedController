@@ -1109,6 +1109,23 @@ DECLARE_CONSOLE_COMMAND(jumptags, command_jumptags,
 			"List jump tags");
 #endif /* CONFIG_CMD_JUMPTAGS */
 
+#ifdef CONFIG_EMULATED_SYSRQ
+static int command_sysrq(int argc, char **argv)
+{
+	char key = 'x';
+
+	if (argc > 1 && argv[1])
+		key = argv[1][0];
+
+	send_sysrq(key);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(sysrq, command_sysrq,
+			"[key]",
+			"Simulate sysrq press (default: x)");
+#endif /* CONFIG_EMULATED_SYSRQ */
+
 /*****************************************************************************/
 /* Host commands */
 
