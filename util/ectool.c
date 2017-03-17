@@ -1761,11 +1761,12 @@ static int get_num_fans(void)
 	int idx, rv;
 	struct ec_response_get_features r;
 
+	/*
+	 * iff the EC supports the GET_FEATURES,
+	 * check whether it has fan support enabled.
+	 */
 	rv = ec_command(EC_CMD_GET_FEATURES, 0, NULL, 0, &r, sizeof(r));
-	if (rv < 0)
-		return rv;
-
-	if (!(r.flags[0] & (1 << EC_FEATURE_PWM_FAN)))
+	if (rv == EC_SUCCESS && !(r.flags[0] & (1 << EC_FEATURE_PWM_FAN)))
 		return 0;
 
 	for (idx = 0; idx < EC_FAN_SPEED_ENTRIES; idx++) {
