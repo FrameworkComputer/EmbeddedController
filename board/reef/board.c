@@ -83,28 +83,27 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static void anx74xx_cable_det_handler(void)
 {
-	int level = gpio_get_level(GPIO_USB_C0_CABLE_DET);
+	int cable_det = gpio_get_level(GPIO_USB_C0_CABLE_DET);
+	int reset_n = gpio_get_level(GPIO_USB_C0_PD_RST_L);
 
 	/*
-	 * Setting the low power is handled by DRP status hence
-	 * handle only the attach event.
+	 * A cable_det low->high transition was detected. If following the
+	 * debounce time, cable_det is high, and reset_n is low, then ANX3429 is
+	 * currently in standby mode and needs to be woken up. Set the
+	 * TCPC_RESET event which will bring the ANX3429 out of standby
+	 * mode. Setting this event is gated on reset_n being low because the
+	 * ANX3429 will always set cable_det when transitioning to normal mode
+	 * and if in normal mode, then there is no need to trigger a tcpc reset.
 	 */
-	if (level)
-		anx74xx_handle_power_mode(USB_PD_PORT_ANX74XX,
-					  ANX74XX_NORMAL_MODE);
-
-	/* confirm if cable_det is asserted */
-	if (!level || gpio_get_level(GPIO_USB_C0_PD_RST_L))
-		return;
-
-	task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+	if (cable_det && !reset_n)
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
 }
 DECLARE_DEFERRED(anx74xx_cable_det_handler);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_cable_det_handler, HOOK_PRIO_LAST);
 
 void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 {
-	/* debounce for 2ms */
+	/* debounce for 2 msec */
 	hook_call_deferred(&anx74xx_cable_det_handler_data, (2 * MSEC));
 }
 #endif
