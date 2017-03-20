@@ -214,8 +214,7 @@ SECTIONS
 
     } > IRAM
 
-    /* TODO(b:36228568): Properly compute image size for nds32. */
-    __image_size = 0;
+    __image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 
 #ifdef CONFIG_LPC
     .h2ram (NOLOAD) : {
