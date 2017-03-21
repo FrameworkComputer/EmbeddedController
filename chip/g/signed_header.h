@@ -50,5 +50,6 @@ struct SignedHeader {
 
 BUILD_ASSERT(sizeof(struct SignedHeader) == 1024);
 BUILD_ASSERT(offsetof(struct SignedHeader, info_chk_) == 1020);
-
+#define TOP_IMAGE_SIZE_BIT (1 <<			\
+	    (sizeof(((struct SignedHeader *)0)->image_size) * 8 - 1))
 #endif /* __CROS_EC_SIGNED_HEADER_H */

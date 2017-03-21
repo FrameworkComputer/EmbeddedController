@@ -37,6 +37,7 @@ enum vendor_cmd_cc {
 	/* A gap left for the deep sleep control command. */
 
 	VENDOR_CC_REPORT_TPM_STATE = 23,
+	VENDOR_CC_TURN_UPDATE_ON = 24,
 
 	LAST_VENDOR_COMMAND = 65535,
 };
