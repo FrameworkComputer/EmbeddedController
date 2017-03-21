@@ -97,6 +97,9 @@
  *
  * The response to the first PDU varies depending on the protocol version.
  *
+ * Note that protocol versions before 5 are described here for completeness,
+ * but are not supported any more by this utility.
+ *
  * Version 1 is used over /dev/tpm0. The response is either 4 or 1 bytes in
  * size. The 4 byte response is the *base address* of the backup RW section,
  * no support for RO updates. The one byte response is an error indication,
@@ -156,8 +159,6 @@
 #define PID CONFIG_USB_PID
 #define SUBCLASS USB_SUBCLASS_GOOGLE_CR50
 #define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
-
-#define FLASH_BASE 0x40000
 
 enum exit_values {
 	noop = 0,	  /* All up to date, no update needed. */
@@ -592,7 +593,7 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 				 (void *) &reply, sizeof(reply),
 				 &actual, 1000);
 	if (r) {
-		if ((r == -7) && (protocol_version >= 2)) {
+		if (r == -7) {
 			fprintf(stderr, "Timeout!\n");
 			return r;
 		}
@@ -600,11 +601,7 @@ static int transfer_block(struct usb_endpoint *uep, struct update_pdu *updu,
 		shut_down(uep);
 	}
 
-	if (protocol_version > 2)
-		reply = *((uint8_t *)&reply);
-	else
-		reply = be32toh(reply);
-
+	reply = *((uint8_t *)&reply);
 	if (reply) {
 		fprintf(stderr, "Error: status %#x\n", reply);
 		exit(update_error);
@@ -646,11 +643,7 @@ static void transfer_section(struct transfer_descriptor *td,
 		updu.block_size = htobe32(payload_size +
 					  sizeof(struct update_pdu));
 
-		if (protocol_version <= 2)
-			updu.cmd.block_base = htobe32(section_addr +
-						      FLASH_BASE);
-		else
-			updu.cmd.block_base = htobe32(section_addr);
+		updu.cmd.block_base = htobe32(section_addr);
 
 		/* Calculate the digest. */
 		SHA1_Init(&ctx);
@@ -679,10 +672,7 @@ static void transfer_section(struct transfer_descriptor *td,
 			size_t rxed_size = sizeof(error_code);
 			uint32_t block_addr;
 
-			if (protocol_version <= 2)
-				block_addr = section_addr + FLASH_BASE;
-			else
-				block_addr = section_addr;
+			block_addr = section_addr;
 
 			/*
 			 * A single byte response is expected, but let's give
@@ -846,16 +836,6 @@ static void pick_sections(struct transfer_descriptor *td)
 			continue;
 		}
 
-		/*
-		 * RO update not supported in versions below 3, another
-		 * invocation will be required once the RW is updated to
-		 * handle protocol 3 or above.
-		 */
-		if (protocol_version < 3) {
-			sections[i].ustatus = not_possible;
-			continue;
-		}
-
 		/* Skip currently active section. */
 		if (offset != td->ro_offset)
 			continue;
@@ -872,6 +852,7 @@ static void pick_sections(struct transfer_descriptor *td)
 static void setup_connection(struct transfer_descriptor *td)
 {
 	size_t rxed_size;
+	size_t i;
 	uint32_t error_code;
 
 	/*
@@ -904,89 +885,50 @@ static void setup_connection(struct transfer_descriptor *td)
 	}
 
 	/* We got something. Check for errors in response */
+	if (rxed_size < 8) {
+		fprintf(stderr, "Unexpected response size %zd: ", rxed_size);
+		for (i = 0; i < rxed_size; i++)
+			fprintf(stderr, " %02x", ((uint8_t *)&start_resp)[i]);
+		fprintf(stderr, "\n");
+		exit(update_error);
+	}
 
-	if (rxed_size <= 4) {
-		if (td->ep_type != dev_xfer) {
-			size_t i;
-
-			fprintf(stderr, "Unexpected response size %zd: ",
-				rxed_size);
-
-			for (i = 0; i < rxed_size; i++)
-				fprintf(stderr, " %02x",
-					((uint8_t *)&start_resp)[i]);
-			fprintf(stderr, "\n");
-			exit(update_error);
-		}
-
-		/* This is a protocol version one response. */
-		protocol_version = 1;
-		if (rxed_size == 1) {
-			/* Target is reporting an error. */
-			error_code = *((uint8_t *) &start_resp);
-		} else {
-			/* Target reporting RW base_address. */
-			td->rw_offset = be32toh(start_resp.legacy_resp) -
-				FLASH_BASE;
-			error_code = 0;
-		}
-	} else {
-		protocol_version = be32toh(start_resp.rpdu.protocol_version);
-		error_code = be32toh(start_resp.rpdu.return_value);
-
-		if (protocol_version == 2) {
-			if (error_code > 256) {
-				td->rw_offset = error_code - FLASH_BASE;
-				error_code = 0;
-			}
-		} else {
-			/* All newer protocols. */
-			td->rw_offset = be32toh
-				(start_resp.rpdu.backup_rw_offset);
-
-			if (protocol_version > 3) {
-				size_t i;
-
-				/* Running header versions are available. */
-				for (i = 0; i < ARRAY_SIZE(targ.shv); i++) {
-					targ.shv[i].minor = be32toh
-						(start_resp.rpdu.shv[i].minor);
-					targ.shv[i].major = be32toh
-						(start_resp.rpdu.shv[i].major);
-					targ.shv[i].epoch = be32toh
-						(start_resp.rpdu.shv[i].epoch);
-				}
-			}
-			if (protocol_version > 4) {
-				size_t i;
-
-				for (i = 0; i < ARRAY_SIZE(targ.keyid); i++)
-					targ.keyid[i] = be32toh
-						(start_resp.rpdu.keyid[i]);
-			}
-		}
+	protocol_version = be32toh(start_resp.rpdu.protocol_version);
+	if (protocol_version < 5) {
+		fprintf(stderr, "Unsupported protocol version %d\n",
+			protocol_version);
+		exit(update_error);
 	}
 
 	printf("target running protocol version %d\n", protocol_version);
 
-	if (!error_code) {
-		if (protocol_version > 2) {
-			td->ro_offset = be32toh
-				(start_resp.rpdu.backup_ro_offset);
-			printf("offsets: backup RO at %#x, backup RW at %#x\n",
-			       td->ro_offset, td->rw_offset);
-		}
-		if (protocol_version > 4)
-			printf("keyids: RO 0x%08x, RW 0x%08x\n",
-			       targ.keyid[0], targ.keyid[1]);
-		pick_sections(td);
-		return;
+	error_code = be32toh(start_resp.rpdu.return_value);
+
+	if (error_code) {
+		fprintf(stderr, "Target reporting error %d\n", error_code);
+		if (td->ep_type == usb_xfer)
+			shut_down(&td->uep);
+		exit(update_error);
 	}
 
-	fprintf(stderr, "Target reporting error %d\n", error_code);
-	if (td->ep_type == usb_xfer)
-		shut_down(&td->uep);
-	exit(update_error);
+	td->rw_offset = be32toh(start_resp.rpdu.backup_rw_offset);
+	td->ro_offset = be32toh(start_resp.rpdu.backup_ro_offset);
+
+	/* Running header versions. */
+	for (i = 0; i < ARRAY_SIZE(targ.shv); i++) {
+		targ.shv[i].minor = be32toh(start_resp.rpdu.shv[i].minor);
+		targ.shv[i].major = be32toh(start_resp.rpdu.shv[i].major);
+		targ.shv[i].epoch = be32toh(start_resp.rpdu.shv[i].epoch);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(targ.keyid); i++)
+		targ.keyid[i] = be32toh(start_resp.rpdu.keyid[i]);
+
+	printf("keyids: RO 0x%08x, RW 0x%08x\n", targ.keyid[0], targ.keyid[1]);
+	printf("offsets: backup RO at %#x, backup RW at %#x\n",
+	       td->ro_offset, td->rw_offset);
+
+	pick_sections(td);
 }
 
 /*
@@ -1048,8 +990,7 @@ static void send_done(struct usb_endpoint *uep)
 
 	/* Send stop request, ignoring reply. */
 	out = htobe32(UPGRADE_DONE);
-	xfer(uep, &out, sizeof(out), &out,
-	     protocol_version < 3 ? sizeof(out) : 1);
+	xfer(uep, &out, sizeof(out), &out, 1);
 }
 
 /*
@@ -1102,13 +1043,12 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 	printf("-------\nupdate complete\n");
 
 	/*
-	 * In upstart mode, or in case target is running older protocol
-	 * version, or in case the user explicitly wants it, request post
-	 * reset instead of immediate reset. In this case the h1 will reset
-	 * next time the target reboots, and will consider running the
+	 * In upstart mode, or in case the user explicitly wants it, request
+	 * post reset instead of immediate reset. In this case the h1 will
+	 * reset next time the target reboots, and will consider running the
 	 * uploaded code.
 	 */
-	if (td->upstart_mode || (protocol_version <= 5) || td->post_reset)
+	if (td->upstart_mode || td->post_reset)
 		subcommand = EXTENSION_POST_RESET;
 
 	if (td->ep_type == usb_xfer) {
