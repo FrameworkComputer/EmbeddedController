@@ -292,6 +292,12 @@ void system_reset(int flags)
 		 * use this for hard reset.
 		 */
 		STM32_FLASH_CR |= STM32_FLASH_CR_OBL_LAUNCH;
+#elif defined(CHIP_FAMILY_STM32L4)
+		STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
+		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
+		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;
+		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY2;
+		STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
 #else
 		/* Ask the watchdog to trigger a hard reboot */
 		STM32_IWDG_KR = 0x5555;

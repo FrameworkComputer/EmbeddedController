@@ -1323,30 +1323,41 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_ACR_DCEN        (1 << 10)
 #define STM32_FLASH_PDKEYR          REG32(STM32_FLASH_REGS_BASE + 0x04)
 #define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x08)
+#define  FLASH_KEYR_KEY1            0x45670123
+#define  FLASH_KEYR_KEY2            0xCDEF89AB
 #define STM32_FLASH_OPTKEYR         REG32(STM32_FLASH_REGS_BASE + 0x0c)
+#define  FLASH_OPTKEYR_KEY1         0x08192A3B
+#define  FLASH_OPTKEYR_KEY2         0x4C5D6E7F
 #define STM32_FLASH_SR              REG32(STM32_FLASH_REGS_BASE + 0x10)
 #define  FLASH_SR_BUSY              (1 << 16)
-#define  FLASH_SR_ERR_MASK          (0xc3fb)
+#define  FLASH_SR_ERR_MASK          (0xc3fa)
 #define STM32_FLASH_CR              REG32(STM32_FLASH_REGS_BASE + 0x14)
 #define  FLASH_CR_PG                (1 << 0)
 #define  FLASH_CR_PER               (1 << 1)
 #define  FLASH_CR_STRT              (1 << 16)
+#define  FLASH_CR_OPTSTRT           (1 << 17)
+#define  FLASH_CR_OBL_LAUNCH        (1 << 27)
+#define  FLASH_CR_OPTLOCK           (1 << 30)
 #define  FLASH_CR_LOCK              (1 << 31)
 #define  FLASH_CR_PNB(sec)          (((sec) & 0xff) << 3)
-#define  FLASH_CR_PNB_MASK          FLASH_CR_SNB(0xff)
+#define  FLASH_CR_PNB_MASK          FLASH_CR_PNB(0xff)
 #define STM32_FLASH_ECCR            REG32(STM32_FLASH_REGS_BASE + 0x18)
 #define STM32_FLASH_OPTR            REG32(STM32_FLASH_REGS_BASE + 0x20)
 #define STM32_FLASH_PCROP1SR        REG32(STM32_FLASH_REGS_BASE + 0x24)
 #define STM32_FLASH_PCROP1ER        REG32(STM32_FLASH_REGS_BASE + 0x28)
 #define STM32_FLASH_WRP1AR          REG32(STM32_FLASH_REGS_BASE + 0x2C)
 #define STM32_FLASH_WRP1BR          REG32(STM32_FLASH_REGS_BASE + 0x30)
+#define  FLASH_WRP_START(val)       ((val) & 0xff)
+#define  FLASH_WRP_END(val)         (((val) >> 16) & 0xff)
+#define  FLASH_WRP_RANGE(strt, end) (((end) << 16) | (strt))
+#define  FLASH_WRP_RANGE_DISABLED   FLASH_WRP_RANGE(0xFF, 0x00)
+#define  FLASH_WRP_MASK             FLASH_WRP_RANGE(0xFF, 0xFF)
 
 #define STM32_OPTB_BASE             0x1FFF7800
 
-#define STM32_OPTB_USER_RDP_OFF     0x00
-#define STM32_OPTB_WRP1A            0x18
-#define STM32_OPTB_WRP1B            0x20
-#define STM32_OPTB_COMPL_OFF        4
+#define STM32_OPTB_USER_RDP         REG32(STM32_OPTB_BASE + 0x00)
+#define STM32_OPTB_WRP1AR           REG32(STM32_OPTB_BASE + 0x18)
+#define STM32_OPTB_WRP1BR           REG32(STM32_OPTB_BASE + 0x20)
 
 #elif defined(CHIP_FAMILY_STM32F4)
 #define STM32_FLASH_REGS_BASE       0x40023c00
