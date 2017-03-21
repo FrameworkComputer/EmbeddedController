@@ -8,13 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/*
- * TODO(crosbug.com/p/62893)
- * implement flash support for STM32L4
- * and write protection.
- */
-#undef  CONFIG_FLASH
-#undef  CONFIG_FLASH_PHYSICAL
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Serial console */
