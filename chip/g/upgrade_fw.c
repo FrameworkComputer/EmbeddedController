@@ -383,6 +383,23 @@ void fw_upgrade_command_handler(void *body,
 		return;
 	}
 
+	if ((block_offset == valid_sections.ro_base_offset) ||
+	    (block_offset == valid_sections.rw_base_offset)) {
+		/*
+		 * This is the header coming, let's corrupt it so that it does
+		 * not run until it's time to switch.
+		 */
+		struct SignedHeader *header;
+
+		header = (struct SignedHeader *) upgrade_data;
+
+		/*
+		 * Set the top bit of the size field. It will be impossible to
+		 * run this image until this bit is erased.
+		 */
+		header->image_size |= TOP_IMAGE_SIZE_BIT;
+	}
+
 	CPRINTF("%s: programming at address 0x%x\n", __func__,
 		block_offset + CONFIG_PROGRAM_MEMORY_BASE);
 	if (flash_physical_write(block_offset, body_size, upgrade_data)

@@ -115,6 +115,25 @@ int board_tpm_uses_spi(void)
 	return !!(board_properties & BOARD_SLAVE_CONFIG_SPI);
 }
 
+/* Get header address of the backup RW copy. */
+const struct SignedHeader *get_other_rw_addr(void)
+{
+	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+		return (const struct SignedHeader *)
+			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
+
+	return (const struct SignedHeader *)
+		get_program_memory_addr(SYSTEM_IMAGE_RW);
+}
+
+/* Return true if the other RW is not ready to run. */
+static int other_rw_is_inactive(void)
+{
+	const struct SignedHeader *header = get_other_rw_addr();
+
+	return !!(header->image_size & TOP_IMAGE_SIZE_BIT);
+}
+
 /* I2C Port definition */
 const struct i2c_port_t i2c_ports[]  = {
 	{"master", I2C_PORT_MASTER, 100,
@@ -638,7 +657,15 @@ static void deferred_tpm_rst_isr(void)
 	    device_state_changed(DEVICE_AP, DEVICE_STATE_ON))
 		hook_notify(HOOK_CHIPSET_RESUME);
 
-	if (!reboot_request_posted) {
+	/*
+	 * If no reboot request is posted, OR if the other RW's header is not
+	 * ready to run - do not try rebooting the device, just reset the
+	 * TPM.
+	 *
+	 * The inactive header will have to be restored by the appropriate
+	 * vendor command, the device will be rebooted then.
+	 */
+	if (!reboot_request_posted || other_rw_is_inactive()) {
 		/* Reset TPM, no need to wait for completion. */
 		tpm_reset_request(0, 0);
 		return;
@@ -1381,27 +1408,16 @@ static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
 						    size_t input_size,
 						    size_t *response_size)
 {
-	struct SignedHeader *header;
+	const struct SignedHeader *header;
 	uint32_t ctrl;
 	uint32_t base_addr;
 	uint32_t size;
 	const char zero[4] = {}; /* value to write to magic. */
 
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
-		header = (struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW_B);
-	} else {
-		header = (struct SignedHeader *)
-			get_program_memory_addr(SYSTEM_IMAGE_RW);
-	}
-
 	*response_size = 0;
-	/*
-	 * First check to see if the inactive region has already been
-	 * invalidated.
-	 */
-	if (!header->magic) {
-		CPRINTS("%s: Inactive region already corrupted", __func__);
+
+	if (other_rw_is_inactive()) {
+		CPRINTS("%s: Inactive region is disabled", __func__);
 		return VENDOR_RC_SUCCESS;
 	}
 
@@ -1409,6 +1425,8 @@ static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
 	ctrl = GREAD(GLOBALSEC, FLASH_REGION6_CTRL);
 	base_addr = GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR);
 	size = GREG32(GLOBALSEC, FLASH_REGION6_SIZE);
+
+	header = get_other_rw_addr();
 
 	/* Enable RW access to the other header. */
 	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) = (uint32_t) header;
