@@ -1003,8 +1003,6 @@ static void invalidate_inactive_rw(struct transfer_descriptor *td)
 	uint16_t subcommand = VENDOR_CC_INVALIDATE_INACTIVE_RW;
 
 	if (td->ep_type == usb_xfer) {
-		send_done(&td->uep);
-
 		if (protocol_version > 5) {
 			ext_cmd_over_usb(&td->uep, subcommand,
 					 NULL, 0,
@@ -1015,13 +1013,11 @@ static void invalidate_inactive_rw(struct transfer_descriptor *td)
 }
 
 /* Returns number of successfully transmitted image sections. */
-static int transfer_and_reboot(struct transfer_descriptor *td,
+static int transfer_image(struct transfer_descriptor *td,
 			       uint8_t *data, size_t data_len)
 {
 	size_t i;
-	int num_txed_secitons = 0;
-	/* By default target is reset immediately after update. */
-	uint16_t subcommand = VENDOR_CC_IMMEDIATE_RESET;
+	int num_txed_sections = 0;
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++)
 		if (sections[i].ustatus == needed) {
@@ -1029,69 +1025,77 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 					 data + sections[i].offset,
 					 sections[i].offset,
 					 sections[i].size);
-			num_txed_secitons++;
+			num_txed_sections++;
 		}
 
-	if (!num_txed_secitons) {
-		if (td->ep_type == usb_xfer)
-			send_done(&td->uep);
-
-		printf("nothing to do\n");
-		return 0;
-	}
-
-	printf("-------\nupdate complete\n");
-
 	/*
-	 * In upstart mode, or in case the user explicitly wants it, request
-	 * post reset instead of immediate reset. In this case the h1 will
-	 * reset next time the target reboots, and will consider running the
-	 * uploaded code.
+	 * Move USB receiver sate machine to idle state so that vendor
+	 * commands can be processed later, if any.
 	 */
-	if (td->upstart_mode || td->post_reset)
-		subcommand = EXTENSION_POST_RESET;
-
-	if (td->ep_type == usb_xfer) {
-		uint32_t out;
-
+	if (td->ep_type == usb_xfer)
 		send_done(&td->uep);
 
-		if (protocol_version > 5) {
-			uint8_t response;
-			size_t response_size;
-			void *presponse;
+	if (!num_txed_sections)
+		printf("nothing to do\n");
+	else
+		printf("-------\nupdate complete\n");
+	return num_txed_sections;
+}
 
-			/*
-			 * Protocol versions 6 and above use vendor command to
-			 * communicate reset mode (immediate or posted) to the
-			 * target.
-			 *
-			 * No response is expected in case of immediate reset.
-			 */
-			if (subcommand == VENDOR_CC_IMMEDIATE_RESET) {
-				presponse = NULL;
-				response_size = 0;
-			} else {
-				presponse = &response;
-				response_size = sizeof(response);
-			}
+static void generate_reset_request(struct transfer_descriptor *td)
+{
+	size_t response_size;
+	uint8_t response;
+	uint16_t subcommand;
+	uint8_t command_body[2]; /* Max command body size. */
+	size_t command_body_size;
 
-			ext_cmd_over_usb(&td->uep, subcommand,
-					 NULL, 0,
-					 presponse, &response_size);
-		} else {
+	if (protocol_version < 6) {
+		if (td->ep_type == usb_xfer) {
 			/*
 			 * Send a second stop request, which should reboot
 			 * without replying.
 			 */
-			xfer(&td->uep, &out, sizeof(out), 0, 0);
+			send_done(&td->uep);
 		}
-	} else {
-		uint8_t response;
-		size_t response_size;
+		/* Nothing we can do over /dev/tpm0 running versions below 6. */
+		return;
+	}
 
-		/* Need to send extended command for posted reboot. */
-		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
+	/*
+	 * If the user explicitly wants it, request post reset instead of
+	 * immediate reset. In this case next time the target reboots, the h1
+	 * will reboot as well, and will consider running the uploaded code.
+	 *
+	 * In case target RW version is 19 or above, to reset the target the
+	 * host is supposed to send the command to enable the uploaded image
+	 * disabled by default.
+	 *
+	 * Otherwise the immediate reset command would suffice.
+	 */
+	/* Most common case. */
+	command_body_size = 0;
+	response_size = 1;
+	if (td->post_reset) {
+		subcommand = EXTENSION_POST_RESET;
+	} else if (targ.shv[1].minor >= 19) {
+		subcommand = VENDOR_CC_TURN_UPDATE_ON;
+		command_body_size = sizeof(command_body);
+		command_body[0] = 0;
+		command_body[1] = 100;  /* Reset in 100 ms. */
+	} else {
+		response_size = 0;
+		subcommand = VENDOR_CC_IMMEDIATE_RESET;
+	}
+	if (td->ep_type == usb_xfer) {
+		ext_cmd_over_usb(&td->uep, subcommand,
+				 command_body, command_body_size,
+				 &response, &response_size);
+	} else {
+
+		/* Need to send extended command for reboot. */
+		if (tpm_send_pkt(td->tpm_fd, 0, 0,
+				 command_body, command_body_size,
 				 &response, &response_size, subcommand) < 0) {
 			fprintf(stderr, "Failed to request posted reboot\n");
 			exit(update_error);
@@ -1101,8 +1105,6 @@ static int transfer_and_reboot(struct transfer_descriptor *td,
 
 	printf("reboot %s\n", subcommand == EXTENSION_POST_RESET ?
 	       "request posted" : "triggered");
-
-	return num_txed_secitons;
 }
 
 static int show_headers_versions(const void *image)
@@ -1254,17 +1256,17 @@ int main(int argc, char *argv[])
 		       targ.shv[1].minor);
 	}
 
-	if (corrupt_inactive_rw)
-		invalidate_inactive_rw(&td);
-
 	if (data) {
-		transferred_sections = transfer_and_reboot(&td, data, data_len);
+		transferred_sections = transfer_image(&td, data, data_len);
 		free(data);
+
+		if (transferred_sections && !td.upstart_mode)
+			generate_reset_request(&td);
+	} else if (corrupt_inactive_rw) {
+		invalidate_inactive_rw(&td);
 	}
 
 	if (td.ep_type == usb_xfer) {
-		if (!data && !corrupt_inactive_rw)
-			send_done(&td.uep);
 		libusb_close(td.uep.devh);
 		libusb_exit(NULL);
 	}
