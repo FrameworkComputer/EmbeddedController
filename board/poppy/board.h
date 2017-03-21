@@ -44,6 +44,7 @@
 /* EC console commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_CMD_BUTTON
 
 /* SOC */
 #define CONFIG_CHIPSET_SKYLAKE
