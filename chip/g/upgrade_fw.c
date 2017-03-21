@@ -3,21 +3,23 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
+
 #include "byteorder.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "cryptoc/sha.h"
 #include "dcrypto/dcrypto.h"
 #include "extension.h"
 #include "flash.h"
+#include "flash_info.h"
 #include "hooks.h"
+#include "registers.h"
+#include "signed_header.h"
 #include "system.h"
 #include "system_chip.h"
-#include "registers.h"
 #include "uart.h"
-
-#include "signed_header.h"
 #include "upgrade_fw.h"
-#include "cryptoc/sha.h"
 
 #define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
 
@@ -64,17 +66,6 @@ static void set_valid_sections(void)
 
 	valid_sections.rw_top_offset = valid_sections.rw_base_offset +
 		CONFIG_RW_SIZE;
-}
-
-/* Enable write access to the backup RO section. */
-static void open_ro_window(uint32_t offset, size_t size_b)
-{
-	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) =
-		offset + CONFIG_PROGRAM_MEMORY_BASE;
-	GREG32(GLOBALSEC, FLASH_REGION6_SIZE) = size_b - 1;
-	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, EN, 1);
-	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
-	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
 }
 
 /*
@@ -128,7 +119,7 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 			size = valid_sections.ro_top_offset -
 				valid_sections.ro_base_offset;
 			/* backup RO area write access needs to be enabled. */
-			open_ro_window(base, size);
+			flash_open_ro_window(base, size);
 			if (flash_physical_erase(base, size) != EC_SUCCESS) {
 				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
 					__func__, __LINE__, base, size);

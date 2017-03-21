@@ -451,6 +451,18 @@ int flash_physical_erase(int byte_offset, int num_bytes)
 	return EC_SUCCESS;
 }
 
+
+/* Enable write access to the backup RO section. */
+void flash_open_ro_window(uint32_t offset, size_t size_b)
+{
+	GREG32(GLOBALSEC, FLASH_REGION6_BASE_ADDR) =
+		offset + CONFIG_PROGRAM_MEMORY_BASE;
+	GREG32(GLOBALSEC, FLASH_REGION6_SIZE) = size_b - 1;
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, RD_EN, 1);
+	GWRITE_FIELD(GLOBALSEC, FLASH_REGION6_CTRL, WR_EN, 1);
+}
+
 #ifdef CR50_DEV
 
 static int command_erase_flash_info(int argc, char **argv)
