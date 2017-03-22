@@ -38,7 +38,7 @@
 /* NOTE: It's not expected that RO and RW will support
  * differing PSTATE versions. */
 #define PERSIST_STATE_VERSION 3  /* Expected persist_state.version */
-#define SERIALNO_MAX 30
+#define SERIALNO_MAX 28
 
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
@@ -53,6 +53,10 @@ struct persist_state {
 	uint8_t reserved;           /* Reserved; set 0 */
 	uint8_t serialno[SERIALNO_MAX]; /* Serial number. */
 };
+/* written with flash_physical_write, need to respect alignment constraints */
+#ifndef CHIP_FAMILY_STM32L /* STM32L1xx is somewhat lying to us */
+BUILD_ASSERT(sizeof(struct persist_state) % CONFIG_FLASH_WRITE_SIZE == 0);
+#endif
 
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 
