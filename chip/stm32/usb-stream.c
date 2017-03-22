@@ -24,7 +24,7 @@ static size_t rx_read(struct usb_stream_config const *config)
 	 * Only read the received USB packet if there is enough space in the
 	 * receive queue.
 	 */
-	if (count >= queue_space(config->producer.queue))
+	if (count > queue_space(config->producer.queue))
 		return 0;
 
 	return queue_add_memcpy(config->producer.queue,
