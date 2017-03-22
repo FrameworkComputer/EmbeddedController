@@ -223,6 +223,10 @@ void pwm_config(enum pwm_channel ch)
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_CKSEL,
 			(pwm_channels[ch].flags & PWM_CONFIG_DSLEEP));
 
+	/* Select PWM IO type */
+	UPDATE_BIT(NPCX_PWMCTLEX(mdl), NPCX_PWMCTLEX_OD_OUT,
+			(pwm_channels[ch].flags & PWM_CONFIG_OPEN_DRAIN));
+
 	/* Set PWM operation frequency */
 	pwm_set_freq(ch, pwm_channels[ch].freq);
 }

@@ -34,10 +34,6 @@ static const struct npcx_wui gpio_wui_table[] = {
 	#include "gpio.wrap"
 };
 
-/* Flags for PWM IO type */
-#define PWM_IO_FUNC        (1 << 1)  /* PWM optional func bit */
-#define PWM_IO_OD          (1 << 2)  /* PWM IO open-drain bit */
-
 struct npcx_gpio {
 	uint8_t port  : 4;
 	uint8_t bit   : 3;
@@ -199,16 +195,6 @@ static int gpio_match(uint8_t port, uint8_t mask, struct npcx_gpio gpio)
 	return (gpio.valid && (gpio.port == port) && ((1 << gpio.bit) == mask));
 }
 
-static void gpio_pwm_io_type_sel(uint8_t chan, uint8_t func)
-{
-	if (func & PWM_IO_OD)
-		/* Set PWM open drain output is open drain type*/
-		SET_BIT(NPCX_PWMCTLEX(chan), NPCX_PWMCTLEX_OD_OUT);
-	else
-		/* Set PWM open drain output is push-pull type*/
-		CLEAR_BIT(NPCX_PWMCTLEX(chan), NPCX_PWMCTLEX_OD_OUT);
-}
-
 static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 {
 	struct gpio_alt_map const *map;
@@ -227,10 +213,6 @@ static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 				NPCX_DEVALT(map->alt.group) &= ~alt_mask;
 			else
 				NPCX_DEVALT(map->alt.group) |=  alt_mask;
-
-			/* PWM optional functionality */
-			if ((func >= 0) && (func & PWM_IO_FUNC))
-				gpio_pwm_io_type_sel(map->alt.bit, func);
 
 			return 1;
 		}

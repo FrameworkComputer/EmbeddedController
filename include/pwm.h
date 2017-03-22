@@ -71,4 +71,8 @@ int pwm_get_duty(enum pwm_channel ch);
  * PWM channel must stay active in low-power idle, if enabled.
  */
 #define PWM_CONFIG_DSLEEP		(1 << 4)
+/**
+ * PWM channel's IO type is open-drain, if enabled. (default IO is push-pull.)
+ */
+#define PWM_CONFIG_OPEN_DRAIN		(1 << 5)
 #endif  /* __CROS_EC_PWM_H */
