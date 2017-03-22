@@ -154,6 +154,14 @@ enum first_response_pdu_header_type {
 
 /* TODO: Handle this in update_fw.c, not usb_update.c */
 #define UPDATE_DONE          0xB007AB1E
+#define UPDATE_EXTRA_CMD     0xB007AB1F
+
+enum update_extra_command {
+	UPDATE_EXTRA_CMD_IMMEDIATE_RESET = 0,
+	UPDATE_EXTRA_CMD_JUMP_TO_RW = 1,
+	UPDATE_EXTRA_CMD_STAY_IN_RO = 2,
+	UPDATE_EXTRA_CMD_UNLOCK_RW = 3,
+};
 
 void fw_update_command_handler(void *body,
 			       size_t cmd_size,

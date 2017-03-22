@@ -8,7 +8,10 @@
 #include "console.h"
 #include "consumer.h"
 #include "extension.h"
+#include "flash.h"
 #include "queue_policies.h"
+#include "host_command.h"
+#include "rwsig.h"
 #include "system.h"
 #include "update_fw.h"
 #include "usb-stream.h"
@@ -109,8 +112,98 @@ static int fetch_transfer_start(struct consumer const *consumer, size_t count,
 
 static int try_vendor_command(struct consumer const *consumer, size_t count)
 {
-	/* TODO(b/35587171): Vendor commands not implemented (yet). */
-	return 0;
+	char buffer[USB_MAX_PACKET_SIZE];
+	struct update_frame_header *cmd_buffer = (void *)buffer;
+	int rv = 0;
+
+	/* Validate count (too short, or too long). */
+	if (count < sizeof(*cmd_buffer) || count > sizeof(buffer))
+		return 0;
+
+	/*
+	 * Let's copy off the queue the update frame header, to see if this
+	 * is a channeled vendor command.
+	 */
+	queue_peek_units(consumer->queue, cmd_buffer, 0, sizeof(*cmd_buffer));
+	if (be32toh(cmd_buffer->cmd.block_base) != UPDATE_EXTRA_CMD)
+		return 0;
+
+	if (be32toh(cmd_buffer->block_size) != count) {
+		CPRINTS("%s: problem: block size and count mismatch (%d != %d)",
+			__func__, be32toh(cmd_buffer->block_size), count);
+		return 0;
+	}
+
+	/* Get the entire command, don't remove it from the queue just yet. */
+	queue_peek_units(consumer->queue, cmd_buffer, 0, count);
+
+	/* Looks like this is a vendor command, let's verify it. */
+	if (update_pdu_valid(&cmd_buffer->cmd,
+			  count - offsetof(struct update_frame_header, cmd))) {
+		enum update_extra_command subcommand;
+		uint16_t response;
+		size_t response_size = sizeof(response);
+
+		/* looks good, let's process it. */
+		rv = 1;
+
+		/* Now remove it from the queue. */
+		queue_advance_head(consumer->queue, count);
+
+		subcommand = be16toh(*((uint16_t *)(cmd_buffer + 1)));
+
+		switch (subcommand) {
+		case UPDATE_EXTRA_CMD_IMMEDIATE_RESET:
+			CPRINTS("Rebooting!\n\n\n");
+			cflush();
+			system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED);
+			/* Unreachable, unless something bad happens. */
+			response = EC_RES_ERROR;
+			break;
+		case UPDATE_EXTRA_CMD_JUMP_TO_RW:
+#ifdef CONFIG_RWSIG
+			/*
+			 * Tell rwsig task to jump to RW. This does nothing if
+			 * verification failed, and will only jump later on if
+			 * verification is still in progress.
+			 */
+			rwsig_continue();
+
+			switch (rwsig_get_status()) {
+			case RWSIG_VALID:
+				response = EC_RES_SUCCESS;
+				break;
+			case RWSIG_INVALID:
+				response = EC_RES_INVALID_CHECKSUM;
+				break;
+			case RWSIG_IN_PROGRESS:
+				response = EC_RES_IN_PROGRESS;
+				break;
+			default:
+				response = EC_RES_ERROR;
+			}
+#else
+			system_run_image_copy(SYSTEM_IMAGE_RW);
+#endif
+			break;
+#ifdef CONFIG_RWSIG
+		case UPDATE_EXTRA_CMD_STAY_IN_RO:
+			rwsig_abort();
+			response = EC_RES_SUCCESS;
+			break;
+		case UPDATE_EXTRA_CMD_UNLOCK_RW:
+			flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
+			response = EC_RES_SUCCESS;
+			break;
+#endif
+		default:
+			response = EC_RES_INVALID_COMMAND;
+		}
+
+		QUEUE_ADD_UNITS(&update_to_usb, &response, response_size);
+	}
+
+	return rv;
 }
 
 /*
