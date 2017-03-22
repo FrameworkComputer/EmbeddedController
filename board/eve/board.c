@@ -616,7 +616,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
-	if (!tablet_get_mode())
+	if (!tablet_get_mode() && lid_is_open())
 		trackpad_wake_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
@@ -627,6 +627,14 @@ static void board_chipset_resume(void)
 	trackpad_wake_enable(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on lid change */
+static void board_lid_change(void)
+{
+	if (!lid_is_open())
+		trackpad_wake_enable(0);
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, board_lid_change, HOOK_PRIO_DEFAULT);
 
 void board_hibernate_late(void)
 {
