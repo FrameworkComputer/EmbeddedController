@@ -798,6 +798,16 @@ static void bd9995x_init(void)
 	ch_raw_write16(BD9995X_CMD_CHGOP_SET2, reg,
 		       BD9995X_EXTENDED_COMMAND);
 
+	/*
+	 * We disable IADP (here before setting IBUS_LIM_SET and ICC_LIM_SET)
+	 * to prevent voltage on IADP/RESET pin from affecting SEL_ILIM_VAL.
+	 */
+	if (ch_raw_read16(BD9995X_CMD_VM_CTRL_SET, &reg,
+			  BD9995X_EXTENDED_COMMAND))
+		return;
+	reg &= ~BD9995X_CMD_VM_CTRL_SET_EXTIADPEN;
+	ch_raw_write16(BD9995X_CMD_VM_CTRL_SET, reg, BD9995X_EXTENDED_COMMAND);
+
 	/* Define battery charging profile */
 	bd9995x_battery_charging_profile_settings();
 
