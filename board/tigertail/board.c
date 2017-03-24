@@ -260,7 +260,8 @@ void uart_sbu_tick(void)
 			if (debounce > 4) {
 				debounce = 0;
 				CPRINTS("UART autoenable\n");
-				set_uart_state(state);
+				uart_state = state;
+				set_uart_gpios(state);
 			}
 			return;
 		}
@@ -272,7 +273,8 @@ void uart_sbu_tick(void)
 			if (debounce > 4) {
 				debounce = 0;
 				CPRINTS("UART autodisable\n");
-				set_uart_state(UART_OFF);
+				uart_state = UART_OFF;
+				set_uart_gpios(UART_OFF);
 			}
 			return;
 		}
