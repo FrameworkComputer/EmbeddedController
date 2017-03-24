@@ -310,9 +310,15 @@ void set_mux_state(int state)
 	gpio_set_level(GPIO_SEL_RELAY_A, 0);
 	gpio_set_level(GPIO_SEL_RELAY_B, 0);
 
-	/* Reconnect in the requested direction. */
+	/* Let USB disconnect. */
+	msleep(100);
+
+	/* Reconnect VBUS/CC in the requested direction. */
 	gpio_set_level(GPIO_SEL_RELAY_A, !dir && enabled);
 	gpio_set_level(GPIO_SEL_RELAY_B, dir && enabled);
+
+	/* Reconnect data. */
+	msleep(10);
 
 	gpio_set_level(GPIO_USB_C_SEL_B, dir);
 	gpio_set_level(GPIO_USB_C_OE_N, !enabled);
