@@ -55,47 +55,19 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
-static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
+static uint8_t vbus_en;
 
 int board_vbus_source_enabled(int port)
 {
-	return vbus_en[port];
-}
-
-static void board_vbus_update_source_current(int port)
-{
-	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
-		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
-
-	/*
-	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
-	 * (2x 33k in parallel) on the NX5P3290 load switch ILIM pin,
-	 * setting a minimum OCP current of 3186 mA.
-	 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put a 33k
-	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
-	 */
-	gpio_set_level(gpio, vbus_en[port]);
-	gpio_set_flags(gpio, flags);
-}
-
-void typec_set_source_current_limit(int port, int rp)
-{
-	vbus_rp[port] = rp;
-
-	/* change the GPIO driving the load switch if needed */
-	board_vbus_update_source_current(port);
+	return vbus_en;
 }
 
 int pd_set_power_supply_ready(int port)
 {
 	/* Disable charging */
-	gpio_set_level(port ? GPIO_USB_C1_CHARGE_L :
-			      GPIO_USB_C0_CHARGE_L, 1);
+	gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
 	/* Provide VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
-			      GPIO_USB_C0_5V_EN, 1);
+	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -106,8 +78,7 @@ int pd_set_power_supply_ready(int port)
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS */
-	gpio_set_level(port ? GPIO_USB_C1_5V_EN :
-			      GPIO_USB_C0_5V_EN, 0);
+	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -115,8 +86,7 @@ void pd_power_supply_reset(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
-				      GPIO_USB_C0_VBUS_WAKE_L);
+	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
