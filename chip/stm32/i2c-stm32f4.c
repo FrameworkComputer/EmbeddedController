@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -23,6 +24,16 @@
 
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER   (10 * MSEC)
+
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+#if (I2C_PORT_EC == STM32_I2C1_PORT)
+#define IRQ_SLAVE_EV STM32_IRQ_I2C1_EV
+#define IRQ_SLAVE_ER STM32_IRQ_I2C1_ER
+#else
+#define IRQ_SLAVE_EV STM32_IRQ_I2C2_EV
+#define IRQ_SLAVE_ER STM32_IRQ_I2C2_ER
+#endif
+#endif
 
 /* Define I2C blocks available in stm32f4:
  * We have standard ST I2C blocks and a "fast mode plus" I2C block,
@@ -743,6 +754,229 @@ static void i2c_freq_change_hook(void)
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change_hook, HOOK_PRIO_DEFAULT);
 #endif
 
+/*****************************************************************************/
+/* Slave */
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+/* Host command slave */
+/*
+ * Buffer for received host command packets (including prefix byte on request,
+ * and result/size on response).  After any protocol-specific headers, the
+ * buffers must be 32-bit aligned.
+ */
+static uint8_t host_buffer_padded[I2C_MAX_HOST_PACKET_SIZE + 4] __aligned(4);
+static uint8_t * const host_buffer = host_buffer_padded + 2;
+static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
+static int host_i2c_resp_port;
+static int tx_pending;
+static int tx_index, tx_end;
+static struct host_packet i2c_packet;
+
+static void i2c_send_response_packet(struct host_packet *pkt)
+{
+	int size = pkt->response_size;
+	uint8_t *out = host_buffer;
+
+	/* Ignore host command in-progress */
+	if (pkt->driver_result == EC_RES_IN_PROGRESS)
+		return;
+
+	/* Write result and size to first two bytes. */
+	*out++ = pkt->driver_result;
+	*out++ = size;
+
+	/* host_buffer data range */
+	tx_index = 0;
+	tx_end = size + 2;
+
+	/*
+	 * Set the transmitter to be in 'not full' state to keep sending
+	 * '0xec' in the event loop. Because of this, the master i2c
+	 * doesn't need to snoop the response stream to abort transaction.
+	 */
+	STM32_I2C_CR2(host_i2c_resp_port) |= STM32_I2C_CR2_ITBUFEN;
+}
+
+/* Process the command in the i2c host buffer */
+static void i2c_process_command(void)
+{
+	char *buff = host_buffer;
+
+	/*
+	 * TODO(crosbug.com/p/29241): Combine this functionality with the
+	 * i2c_process_command function in chip/stm32/i2c-stm32f.c to make one
+	 * host command i2c process function which handles all protocol
+	 * versions.
+	 */
+	i2c_packet.send_response = i2c_send_response_packet;
+
+	i2c_packet.request = (const void *)(&buff[1]);
+	i2c_packet.request_temp = params_copy;
+	i2c_packet.request_max = sizeof(params_copy);
+	/* Don't know the request size so pass in the entire buffer */
+	i2c_packet.request_size = I2C_MAX_HOST_PACKET_SIZE;
+
+	/*
+	 * Stuff response at buff[2] to leave the first two bytes of
+	 * buffer available for the result and size to send over i2c.  Note
+	 * that this 2-byte offset and the 2-byte offset from host_buffer
+	 * add up to make the response buffer 32-bit aligned.
+	 */
+	i2c_packet.response = (void *)(&buff[2]);
+	i2c_packet.response_max = I2C_MAX_HOST_PACKET_SIZE;
+	i2c_packet.response_size = 0;
+
+	if (*buff >= EC_COMMAND_PROTOCOL_3) {
+		i2c_packet.driver_result = EC_RES_SUCCESS;
+	} else {
+		/* Only host command protocol 3 is supported. */
+		i2c_packet.driver_result = EC_RES_INVALID_HEADER;
+	}
+	host_packet_receive(&i2c_packet);
+}
+
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR
+static void i2c_send_board_response(int len)
+{
+	/* host_buffer data range, beyond this length, will return 0xec */
+	tx_index = 0;
+	tx_end = len;
+
+	/* enable transmit interrupt and use irq to send data back */
+	STM32_I2C_CR2(host_i2c_resp_port) |= STM32_I2C_CR2_ITBUFEN;
+}
+
+static void i2c_process_board_command(int read, int addr, int len)
+{
+	board_i2c_process(read, addr, len, &host_buffer[0],
+			  i2c_send_board_response);
+}
+#endif
+
+static void i2c_event_handler(int port)
+{
+	volatile uint32_t i2c_cr1;
+	volatile uint32_t i2c_sr2;
+	volatile uint32_t i2c_sr1;
+	static int rx_pending, buf_idx;
+	static uint16_t addr;
+
+	volatile uint32_t dummy __attribute__((unused));
+
+	i2c_cr1 = STM32_I2C_CR1(port);
+	i2c_sr2 = STM32_I2C_SR2(port);
+	i2c_sr1 = STM32_I2C_SR1(port);
+
+	/*
+	 * Check for error conditions. Note, arbitration loss and bus error
+	 * are the only two errors we can get as a slave allowing clock
+	 * stretching and in non-SMBus mode.
+	 */
+	if (i2c_sr1 & (STM32_I2C_SR1_ARLO | STM32_I2C_SR1_BERR)) {
+		rx_pending = 0;
+		tx_pending = 0;
+		/* Disable buffer interrupt */
+		STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
+		/* Clear error status bits */
+		STM32_I2C_SR1(port) &= ~(STM32_I2C_SR1_ARLO |
+					 STM32_I2C_SR1_BERR);
+	}
+
+	/* Transfer matched our slave address */
+	if (i2c_sr1 & STM32_I2C_SR1_ADDR) {
+		addr = ((i2c_sr2 & STM32_I2C_SR2_DUALF) ?
+			STM32_I2C_OAR2(port) : STM32_I2C_OAR1(port)) & 0xfe;
+		if (i2c_sr2 & STM32_I2C_SR2_TRA) {
+			/* Transmitter slave */
+			i2c_sr1 |= STM32_I2C_SR1_TXE;
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR
+			if (!rx_pending && !tx_pending) {
+				tx_pending = 1;
+				i2c_process_board_command(1, addr, 0);
+			}
+#endif
+		} else {
+			/* Receiver slave */
+			buf_idx = 0;
+			rx_pending = 1;
+		}
+
+		/* Enable buffer interrupt to start receive/response */
+		STM32_I2C_CR2(port) |= STM32_I2C_CR2_ITBUFEN;
+		/* Clear ADDR bit */
+		dummy = STM32_I2C_SR1(port);
+		dummy = STM32_I2C_SR2(port);
+		/* Inhibit stop mode when addressed until STOPF flag is set */
+		disable_sleep(SLEEP_MASK_I2C_SLAVE);
+	}
+
+	/* STOPF or AF */
+	if (i2c_sr1 & (STM32_I2C_SR1_STOPF | STM32_I2C_SR1_AF)) {
+		/* Disable buffer interrupt */
+		STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
+
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR
+		if (rx_pending && addr == CONFIG_BOARD_I2C_SLAVE_ADDR)
+			i2c_process_board_command(0, addr, buf_idx);
+#endif
+		rx_pending = 0;
+		tx_pending = 0;
+
+		/* Clear AF */
+		STM32_I2C_SR1(port) &= ~STM32_I2C_SR1_AF;
+		/* Clear STOPF: read SR1 and write CR1 */
+		dummy = STM32_I2C_SR1(port);
+		STM32_I2C_CR1(port) = i2c_cr1 | STM32_I2C_CR1_PE;
+
+		/* No longer inhibit deep sleep after stop condition */
+		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+	}
+
+	/* I2C in slave transmitter */
+	if (i2c_sr2 & STM32_I2C_SR2_TRA) {
+		if (i2c_sr1 & (STM32_I2C_SR1_BTF | STM32_I2C_SR1_TXE)) {
+			if (tx_pending) {
+				if (tx_index < tx_end) {
+					STM32_I2C_DR(port) =
+						host_buffer[tx_index++];
+				} else {
+					STM32_I2C_DR(port) = 0xec;
+					tx_index = 0;
+					tx_end = 0;
+					tx_pending = 0;
+				}
+			} else if (rx_pending) {
+				host_i2c_resp_port = port;
+				/* Disable buffer interrupt */
+				STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR
+				if (addr == CONFIG_BOARD_I2C_SLAVE_ADDR)
+					i2c_process_board_command(1, addr,
+								  buf_idx);
+				else
+#endif
+					i2c_process_command();
+				/* Reset host buffer */
+				rx_pending = 0;
+				tx_pending = 1;
+			} else {
+				STM32_I2C_DR(port) = 0xec;
+			}
+		}
+	} else { /* I2C in slave receiver */
+		if (i2c_sr1 & (STM32_I2C_SR1_BTF | STM32_I2C_SR1_RXNE))
+			host_buffer[buf_idx++] = STM32_I2C_DR(port);
+	}
+
+	/* Enable again */
+	if (!(i2c_cr1 & STM32_I2C_CR1_PE))
+		STM32_I2C_CR1(port) |= STM32_I2C_CR1_PE;
+}
+void i2c_event_interrupt(void) { i2c_event_handler(I2C_PORT_EC); }
+DECLARE_IRQ(IRQ_SLAVE_EV, i2c_event_interrupt, 2);
+DECLARE_IRQ(IRQ_SLAVE_ER, i2c_event_interrupt, 2);
+#endif
+
+
 /* Init all available i2c ports */
 static void i2c_init(void)
 {
@@ -751,5 +985,23 @@ static void i2c_init(void)
 
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
+
+
+#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR
+	/* Enable ACK */
+	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_ACK;
+	/* Enable interrupts */
+	STM32_I2C_CR2(I2C_PORT_EC) |= STM32_I2C_CR2_ITEVTEN
+			| STM32_I2C_CR2_ITERREN;
+	/* Setup host command slave */
+	STM32_I2C_OAR1(I2C_PORT_EC) = STM32_I2C_OAR1_B14
+			| CONFIG_HOSTCMD_I2C_SLAVE_ADDR;
+#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR
+	STM32_I2C_OAR2(I2C_PORT_EC) = STM32_I2C_OAR2_ENDUAL
+			| CONFIG_BOARD_I2C_SLAVE_ADDR;
+#endif
+	task_enable_irq(IRQ_SLAVE_EV);
+	task_enable_irq(IRQ_SLAVE_ER);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);

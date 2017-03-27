@@ -341,6 +341,9 @@
 /* The decoding of the GPIOs defining board version is defined in board code */
 #undef CONFIG_BOARD_SPECIFIC_VERSION
 
+/* EC responses to a board defined I2C slave address */
+#undef CONFIG_BOARD_I2C_SLAVE_ADDR
+
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
 
