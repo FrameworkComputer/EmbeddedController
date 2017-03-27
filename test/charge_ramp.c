@@ -121,7 +121,13 @@ static int test_no_ramp(void)
 	system_load_current_ma = 3000;
 	/* A powerful charger, but hey, you're not allowed to ramp! */
 	plug_charger(CHARGE_SUPPLIER_TEST1, 0, 500, 3000, 3000);
-	usleep(CHARGE_DETECT_DELAY_TEST);
+	/*
+	 * NOTE: Since this is currently the first test being run, give the
+	 * charge ramp task enough time to actually transition states and set
+	 * the charge limit.  This just needs at least transition to the
+	 * CHG_RAMP_OVERCURRENT_DETECT state.
+	 */
+	usleep(CHARGE_DETECT_DELAY_TEST + 200*MSEC);
 	/* That's right. Start at 500 mA */
 	TEST_ASSERT(charge_limit_ma == 500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -485,6 +491,11 @@ void run_test(void)
 {
 	test_reset();
 
+	/*
+	 * If the following test order changes, make sure to add enough time for
+	 * the charge ramp task to make its first transition after plugging in a
+	 * charger.  See the comment in test_no_ramp().
+	 */
 	RUN_TEST(test_no_ramp);
 	RUN_TEST(test_full_ramp);
 	RUN_TEST(test_vbus_dip);
