@@ -162,12 +162,15 @@ test_mockable __keep int main(void)
 	button_init();
 #endif
 
-#ifdef CONFIG_RWSIG
+#if defined(CONFIG_RWSIG) && !defined(HAS_TASK_RWSIG)
 	/*
-	 * Check the RW firmware signature
-	 * and eventually jump to it if it is good.
+	 * Check the RW firmware signature and jump to it if it is good.
+	 *
+	 * Only the Read-Only firmware needs to do the signature check.
 	 */
-	check_rw_signature();
+	if (system_get_image_copy() == SYSTEM_IMAGE_RO &&
+	    rwsig_check_signature())
+		rwsig_jump_now();
 #endif
 
 	/*

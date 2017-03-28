@@ -15,6 +15,7 @@
 #include "sha256.h"
 #include "shared_mem.h"
 #include "system.h"
+#include "task.h"
 #include "usb_pd.h"
 #include "util.h"
 #include "vb21_struct.h"
@@ -27,6 +28,15 @@
 /* RW firmware reset vector */
 static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
+
+
+void rwsig_jump_now(void)
+{
+	/*
+	 * TODO(b/35587171): This should also check RW flash is protected.
+	 */
+	system_run_image_copy(SYSTEM_IMAGE_RW);
+}
 
 /*
  * Check that memory between rwdata[start] and rwdata[len-1] is filled
@@ -49,14 +59,14 @@ static int check_padding(const uint8_t *data,
 	return 1;
 }
 
-void check_rw_signature(void)
+int rwsig_check_signature(void)
 {
 	struct sha256_ctx ctx;
 	int res;
 	const struct rsa_public_key *key;
 	const uint8_t *sig;
 	uint8_t *hash;
-	uint32_t *rsa_workbuf;
+	uint32_t *rsa_workbuf = NULL;
 	const uint8_t *rwdata = (uint8_t *)CONFIG_PROGRAM_MEMORY_BASE
 					+ CONFIG_RW_MEM_OFF;
 	int good = 0;
@@ -71,13 +81,9 @@ void check_rw_signature(void)
 	int32_t min_rollback_version;
 #endif
 
-	/* Only the Read-Only firmware needs to do the signature check */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
-		return;
-
 	/* Check if we have a RW firmware flashed */
 	if (*rw_rst == 0xffffffff)
-		return;
+		goto out;
 
 	CPRINTS("Verifying RW image...");
 
@@ -89,7 +95,7 @@ void check_rw_signature(void)
 	    rw_rollback_version < min_rollback_version) {
 		CPRINTS("Rollback error (%d < %d)",
 			rw_rollback_version, min_rollback_version);
-		return;
+		goto out;
 	}
 #endif
 
@@ -97,7 +103,7 @@ void check_rw_signature(void)
 	res = shared_mem_acquire(3 * RSANUMBYTES, (char **)&rsa_workbuf);
 	if (res) {
 		CPRINTS("No memory for RW verification");
-		return;
+		goto out;
 	}
 
 #ifdef CONFIG_RWSIG_TYPE_USBPD1
@@ -186,14 +192,65 @@ void check_rw_signature(void)
 out:
 	CPRINTS("RW verify %s", good ? "OK" : "FAILED");
 
-	if (good) {
-		/* Jump to the RW firmware */
-		system_run_image_copy(SYSTEM_IMAGE_RW);
-	} else {
+	if (!good) {
 		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);
 		/* RW firmware is invalid : do not jump there */
 		if (system_is_locked())
 			system_disable_jump();
 	}
-	shared_mem_release(rsa_workbuf);
+	if (rsa_workbuf)
+		shared_mem_release(rsa_workbuf);
+
+	return good;
 }
+
+#ifdef HAS_TASK_RWSIG
+#define TASK_EVENT_ABORT TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_CONTINUE TASK_EVENT_CUSTOM(2)
+
+static enum rwsig_status rwsig_status;
+
+enum rwsig_status rwsig_get_status(void)
+{
+	return rwsig_status;
+}
+
+void rwsig_abort(void)
+{
+	task_set_event(TASK_ID_RWSIG, TASK_EVENT_ABORT, 0);
+}
+
+void rwsig_continue(void)
+{
+	task_set_event(TASK_ID_RWSIG, TASK_EVENT_CONTINUE, 0);
+}
+
+void rwsig_task(void)
+{
+	uint32_t evt;
+
+	if (system_get_image_copy() != SYSTEM_IMAGE_RO)
+		goto exit;
+
+	rwsig_status = RWSIG_IN_PROGRESS;
+	if (!rwsig_check_signature()) {
+		rwsig_status = RWSIG_INVALID;
+		goto exit;
+	}
+	rwsig_status = RWSIG_VALID;
+
+	/* Jump to RW after a timeout */
+	evt = task_wait_event(CONFIG_RWSIG_JUMP_TIMEOUT);
+
+	/* Jump now if we timed out, or were told to continue. */
+	if (evt == TASK_EVENT_TIMER || evt == TASK_EVENT_CONTINUE)
+		rwsig_jump_now();
+	else
+		rwsig_status = RWSIG_ABORTED;
+
+exit:
+	/* We're done, yield forever. */
+	while (1)
+		task_wait_event(-1);
+}
+#endif
