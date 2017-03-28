@@ -181,6 +181,10 @@
 #define BIT_VALUE_OF_SNK_CC_DEFAULT 0x04
 #define BIT_VALUE_OF_SNK_CC_1_P_5   0x08
 #define BIT_VALUE_OF_SNK_CC_3_P_0   0x0C
+#define ANX74XX_CC_RA_MASK (BIT_VALUE_OF_SRC_CC_RA | \
+			    (BIT_VALUE_OF_SRC_CC_RA << 4))
+#define ANX74XX_CC_RD_MASK (BIT_VALUE_OF_SRC_CC_RD | \
+			    (BIT_VALUE_OF_SRC_CC_RD << 4))
 
 extern const struct tcpm_drv anx74xx_tcpm_drv;
 extern const struct usb_mux_driver anx74xx_tcpm_usb_mux_driver;

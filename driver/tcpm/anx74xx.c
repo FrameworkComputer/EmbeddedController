@@ -67,16 +67,56 @@ static void anx74xx_update_cable_det(int port, int mode)
 	if (tcpc_read(port, ANX74XX_REG_ANALOG_CTRL_0, &reg))
 		return;
 
-	/*
-	 * When ANX3429 needs to enter ANX74XX_STANDBY_MODE, Cable det pin
-	 * shall be pulled low first by ANX3429`s register, in this way,
-	 * for use case of E-mark cable only, EC can find cable det pin is
-	 * pulled high again.
-	 */
-	if (mode == ANX74XX_STANDBY_MODE)
-		reg &= ~ANX74XX_REG_R_PIN_CABLE_DET;
-	else
+	if (mode == ANX74XX_STANDBY_MODE) {
+		int cc_reg;
+
+		/*
+		 * The ANX4329 enters standby mode by setting PWR_EN signal
+		 * low. In addition, RESET_L must be set low to keep the ANX3429
+		 * in standby mode.
+		 *
+		 * Clearing bit 7 of ANX74XX_REG_ANALOG_CTRL_0 will cause the
+		 * ANX3429 to clear the cable_det signal that goes from the
+		 * ANX3429 to the EC. If this bit is cleared when a cable is
+		 * attached then cable_det will go high once standby is entered.
+		 *
+		 * In some cases, such as when the chipset power state is
+		 * S3/S5/G3 and a sink only adapter is connected to the port,
+		 * this behavior is undesirable. The constant toggling between
+		 * standby and normal mode means that effectively the ANX3429 is
+		 * not in standby mode only consumes ~1 mW less than just
+		 * remaining in normal mode. However when an E mark cable is
+		 * connected, clearing bit 7 is required so that while the E
+		 * mark cable configuration happens, the USB PD state machine
+		 * will continue to wake up until the USB PD attach event can be
+		 * regtistered.
+		 *
+		 * Therefore, the decision to clear bit 7 is based on the
+		 * current CC status of the port. If the CC status is open for
+		 * both CC lines OR if either CC line is showing Ra, then clear
+		 * bit 7. Not clearing bit 7 has no impact for normal cables and
+		 * prevents the constant toggle of standby<->normal when an
+		 * adapter is connected that isn't allowed to attach. Clearing
+		 * bit 7 when CC status reads Ra for either CC line allows the
+		 * USB PD state machine to be woken until the attach event can
+		 * happen. Note that in the case an E mark cable is connected
+		 * and can't attach (i.e. sink only port <- Emark cable -> sink
+		 * only adapter), then the ANX3429 will toggle indefinitely,
+		 * until either the cable is removed, or the port drp status
+		 * changes so the attach event can occur.
+		 * .
+		 */
+
+		/* Read CC status to see if cable_det bit should be cleared */
+		if (tcpc_read(port, ANX74XX_REG_CC_STATUS, &cc_reg))
+			return;
+		/* If open or either CC line is Ra, then clear cable_det */
+		if (!cc_reg || (cc_reg & ANX74XX_CC_RA_MASK &&
+				!(cc_reg & ANX74XX_CC_RD_MASK)))
+			reg &= ~ANX74XX_REG_R_PIN_CABLE_DET;
+	} else {
 		reg |= ANX74XX_REG_R_PIN_CABLE_DET;
+	}
 
 	tcpc_write(port, ANX74XX_REG_ANALOG_CTRL_0, reg);
 #endif
@@ -664,10 +704,14 @@ void anx74xx_handle_power_mode(int port, int mode)
 
 static int anx74xx_tcpc_drp_toggle(int port, int enable)
 {
-	if (!enable)
-		/* TODO: Switch to normal mode here (Issue 702277) */
-		return EC_SUCCESS;
-	anx74xx_handle_power_mode(port, ANX74XX_STANDBY_MODE);
+	/*
+	 * When using low power mode, this function is an entry to point to
+	 * bring the ANX3429 in to or out of standby mode. DRP toggle is
+	 * associated with the chip being in standby mode.
+	 */
+	anx74xx_handle_power_mode(port, enable ? ANX74XX_STANDBY_MODE :
+				  ANX74XX_NORMAL_MODE);
+
 	return EC_SUCCESS;
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE && CONFIG_USB_PD_TCPC_LOW_POWER */

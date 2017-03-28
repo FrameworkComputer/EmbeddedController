@@ -1428,6 +1428,12 @@ void pd_update_dual_role_config(int port)
 		set_state(port, PD_STATE_SRC_DISCONNECTED);
 		tcpm_set_cc(port, TYPEC_CC_RP);
 	}
+
+#if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
+	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
+	/* When switching drp mode, make sure tcpc is out of standby mode */
+	tcpm_set_drp_toggle(port, 0);
+#endif
 }
 
 int pd_get_role(int port)

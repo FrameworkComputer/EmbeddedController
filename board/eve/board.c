@@ -111,7 +111,6 @@ static void anx74xx_c0_cable_det_handler(void)
 		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
 }
 DECLARE_DEFERRED(anx74xx_c0_cable_det_handler);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_c0_cable_det_handler, HOOK_PRIO_LAST);
 
 static void anx74xx_c1_cable_det_handler(void)
 {
@@ -131,7 +130,6 @@ static void anx74xx_c1_cable_det_handler(void)
 		task_set_event(TASK_ID_PD_C1, PD_EVENT_TCPC_RESET, 0);
 }
 DECLARE_DEFERRED(anx74xx_c1_cable_det_handler);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx74xx_c1_cable_det_handler, HOOK_PRIO_LAST);
 
 void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 {
