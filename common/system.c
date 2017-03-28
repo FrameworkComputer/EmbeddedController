@@ -15,7 +15,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lpc.h"
-#include "rsa.h"
+#include "rwsig.h"
 #include "spi_flash.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"

@@ -21,7 +21,7 @@
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
-#include "rsa.h"
+#include "rwsig.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"

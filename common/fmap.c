@@ -7,7 +7,7 @@
 #include <stddef.h>
 
 #include "common.h"
-#include "rsa.h"
+#include "rwsig.h"
 #include "util.h"
 #include "version.h"
 

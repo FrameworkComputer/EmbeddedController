@@ -4,7 +4,7 @@
  */
 
 #include "config.h"
-#include "rsa.h"
+#include "rwsig.h"
 
 OUTPUT_FORMAT(BFD_FORMAT, BFD_FORMAT, BFD_FORMAT)
 OUTPUT_ARCH(BFD_ARCH)

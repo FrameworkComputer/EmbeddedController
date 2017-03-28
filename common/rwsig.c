@@ -11,6 +11,7 @@
 #include "ec_commands.h"
 #include "rollback.h"
 #include "rsa.h"
+#include "rwsig.h"
 #include "sha256.h"
 #include "shared_mem.h"
 #include "system.h"

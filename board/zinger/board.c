@@ -9,6 +9,7 @@
 #include "ec_commands.h"
 #include "registers.h"
 #include "rsa.h"
+#include "rwsig.h"
 #include "sha256.h"
 #include "system.h"
 #include "task.h"

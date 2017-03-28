@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 #include "config.h"
-#include "rsa.h"
+#include "rwsig.h"
 
 #define STRINGIFY0(name) #name
 #define STRINGIFY(name) STRINGIFY0(name)
