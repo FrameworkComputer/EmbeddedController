@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <dirent.h>
@@ -20,6 +19,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "charge_manager.h"
+#include "system.h"
 
 #define PD_REV_2_0 1
 #define PD_REV_3_0 2
@@ -38,6 +38,11 @@ uint32_t src_pdo_cnt;
 char *yes_no(int val)
 {
 	return val ? "YES" : "NO";
+}
+
+enum system_image_copy_t system_get_image_copy(void)
+{
+	return SYSTEM_IMAGE_RW;
 }
 
 static void init_src_pdos(void)
