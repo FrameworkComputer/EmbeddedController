@@ -32,9 +32,12 @@ enum fpc_cmd {
 	FPC_CMD_INT_CLR           = 0x1C,
 	FPC_CMD_FINGER_QUERY      = 0x20,
 	FPC_CMD_SLEEP             = 0x28,
+	FPC_CMD_DEEPSLEEP         = 0x2B,
 	FPC_CMD_SOFT_RESET        = 0xF8,
 	FPC_CMD_HW_ID             = 0xFC,
 };
+
+#define FPC_IDLE_MASK		0x1E
 
 #define FPC_INT_FINGER_DOWN (1 << 0)
 
@@ -97,6 +100,29 @@ static uint8_t fpc_read_int(void)
 	return val;
 }
 
+static uint8_t fpc_read_status(void)
+{
+	const uint8_t cmd = FPC_CMD_STATUS;
+	uint8_t val[2];
+
+	if (spi_transaction(SPI_FPC_DEVICE, &cmd, 1, val, 2))
+		return 0xff;
+	return val[1];
+}
+
+static int fpc_wait_for_idle(void)
+{
+	uint8_t sts;
+	int retries = 100;
+
+	do {
+		fpc_read_clear_int();
+		sts = fpc_read_status();
+	} while (sts != FPC_IDLE_MASK && retries--);
+
+	return sts != FPC_IDLE_MASK;
+}
+
 /* Reset and initialize the sensor IC */
 static int fpc_init(void)
 {
@@ -126,9 +152,35 @@ static int fpc_init(void)
 	fpc_read_clear_int();
 	gpio_enable_interrupt(GPIO_FPS_INT);
 
-	fpc_send_cmd(FPC_CMD_SLEEP);
+	fpc_send_cmd(FPC_CMD_DEEPSLEEP);
 
 	return EC_SUCCESS;
+}
+
+static void fp_configure_sensor(void)
+{
+	int i, index;
+
+	for (i = 0, index = 0; i < u.sensor_config.count; i++) {
+		uint8_t *data = u.sensor_config.data + index;
+		int len = u.sensor_config.len[i];
+		int rc = spi_transaction(&spi_devices[0], data, len, NULL, 0);
+
+		if (rc)
+			CPRINTS("Config %d failed with %d for 0x%02x",
+				i, rc, data[0]);
+		index += len;
+	}
+}
+
+static void fp_prepare_capture(void)
+{
+	/* wake it from deep-sleep by doing a soft-reset */
+	fpc_send_cmd(FPC_CMD_SOFT_RESET);
+	fpc_wait_for_idle();
+	fp_configure_sensor();
+	/* sleep until the finger down is detected */
+	fpc_send_cmd(FPC_CMD_SLEEP);
 }
 
 /* Interrupt line from the fingerprint sensor */
@@ -231,10 +283,10 @@ static int fp_command_mode(struct host_cmd_handler_args *args)
 	if (!(p->mode & FP_MODE_DONT_CHANGE)) {
 		sensor_mode = p->mode;
 		if (p->mode & FP_MODE_DEEPSLEEP) {
-			/* TBD fpc_send_cmd(FPC_CMD_DEEPSLEEP) */;
+			fpc_send_cmd(FPC_CMD_DEEPSLEEP);
 		} else {
 			if (p->mode & FP_MODE_FINGER_DOWN)
-				/* TBD: fp_prepare_capture()*/;
+				fp_prepare_capture();
 			if (p->mode & FP_MODE_FINGER_UP)
 				/* TBD */;
 		}
