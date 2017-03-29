@@ -109,6 +109,7 @@ BOARDS_NPCX_SPI=(
         poppy
 	reef
 	wheatley
+	kahlee
 )
 
 BOARDS_NRF51=(

@@ -1,0 +1,132 @@
+/* -*- mode:c -*-
+ *
+ * Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Declare symbolic names for all the GPIOs that we care about.
+ * Note: Those with interrupt handlers must be declared first. */
+
+GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC1 */
+GPIO_INT(USB_C1_PD_INT_ODL,	PIN(B, 1), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC2 */
+
+GPIO_INT(PCH_SLP_S5_L,		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S5_L */
+GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S3_L */
+
+GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH, extpower_interrupt)			/* ACOK_OD from chargerIC */
+GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH, power_button_interrupt)		/* MECH_PWR_BTN_ODL */
+GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH, lid_interrupt)
+
+GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH, switch_interrupt)	/* EC_WP_ODL */
+
+GPIO(LID_ACCEL_INT_L,		PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(ALS_INT_L,			PIN(0, 2), GPIO_INPUT | GPIO_PULL_UP)
+
+/* I2C GPIOs will be set to alt. function later. */
+GPIO(EC_I2C_THERMAL_SDA,	PIN(8, 7), GPIO_INPUT)	/* Thermel sensor & APU */
+GPIO(EC_I2C_THERMAL_SCL,	PIN(9, 0), GPIO_INPUT)	/* Thermel sensor & APU */
+GPIO(EC_I2C_SENSOR_SDA,		PIN(9, 1), GPIO_INPUT)	/* Sensor board ( G-sensor, light sensor ) */
+GPIO(EC_I2C_SENSOR_SCL,		PIN(9, 2), GPIO_INPUT)	/* Sensor board ( G-sensor, light sensor ) */
+GPIO(EC_I2C_USB_C0_PD_SDA,	PIN(B, 4), GPIO_INPUT)	/* PD1 */
+GPIO(EC_I2C_USB_C0_PD_SCL,	PIN(B, 5), GPIO_INPUT)	/* PD1 */
+GPIO(EC_I2C_USB_C1_PD_SDA,	PIN(B, 2), GPIO_INPUT)	/* PD2 */
+GPIO(EC_I2C_USB_C1_PD_SCL,	PIN(B, 3), GPIO_INPUT)  /* PD2 */
+GPIO(EC_I2C_POWER_SDA,		PIN(D, 0), GPIO_INPUT)	/* battery & charger */
+GPIO(EC_I2C_POWER_SCL,		PIN(D, 1), GPIO_INPUT)	/* battery & charger */
+
+/*
+ * LPC:
+ * Pins 46, 47, 51, 52, 53, 54, 55, default to LPC mode.
+ * Pin 56 (CLKRUN#) defaults to GPIO mode.
+ * Pin 57 (SER_IRQ) defaults to LPC mode.
+ */
+GPIO(PCH_SMI_L,			PIN(A, 6), GPIO_ODR_HIGH)	/* EC_SMI_ODL */
+GPIO(PCH_SCI_L,			PIN(A, 7), GPIO_ODR_HIGH)	/* EC_SCI_ODL */
+GPIO(PCH_SLP_S0_L,              PIN(7, 5), GPIO_INPUT)		/* SLP_S0_L */
+
+/*
+ * BRD_ID1 is a an ADC pin which will be used to measure multiple values.
+ * Assert EC_BRD_ID_EN_ODL and then read BRD_ID1.
+ */
+ALTERNATE(PIN_MASK(4, 0x08), 1, MODULE_ADC, 0)
+GPIO(EC_BRD_ID_EN_ODL,		PIN(3, 5), GPIO_INPUT)
+
+GPIO(APU_RST_L,			PIN(7, 2), GPIO_INPUT)			/* reserved */
+GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)			/* EC_ENTERING_RW */
+GPIO(EC_BATT_PRES_L,		PIN(3, 4), GPIO_INPUT)
+
+GPIO(PCH_RSMRST_L,		PIN(7, 0), GPIO_OUT_LOW)
+GPIO(VR_ON,			PIN(3, 3), GPIO_OUTPUT)
+GPIO(VGATE,			PIN(5, 0), GPIO_INPUT)
+GPIO(SPOK,			PIN(6, 0), GPIO_INPUT)
+GPIO(P095VALW_EN,		PIN(C, 6), GPIO_OUTPUT)
+GPIO(P095VALW_PG,		PIN(7, 1), GPIO_INPUT)
+GPIO(PCH_SYS_PWROK,		PIN(E, 7), GPIO_OUT_LOW)		/* EC_PCH_PWROK */
+GPIO(GA20,			PIN(A, 5), GPIO_ODR_HIGH)
+GPIO(G3_SLEEP_EN,		PIN(C, 2), GPIO_OUT_LOW)
+GPIO(KBRST_L,			PIN(C, 5), GPIO_ODR_HIGH)
+
+GPIO(EN_TOUCHSCREEN,		PIN(8, 3), GPIO_OUT_LOW)
+GPIO(EN_TRACKPAD,		PIN(3, 2), GPIO_OUT_LOW)
+GPIO(ENABLE_BACKLIGHT,		PIN(9, 7), GPIO_ODR_HIGH)	/* EC_BL_EN_OD */
+GPIO(WIRELESS_GPIO_WLAN_POWER,	PIN(6, 6), GPIO_ODR_HIGH)
+GPIO(EN_ALC_CLK,		PIN(B, 0), GPIO_OUT_LOW)	/* Codec OSC EN */
+
+GPIO(CPU_PROCHOT,		PIN(A, 3), GPIO_ODR_HIGH)	/* PCH_PROCHOT_ODL */
+
+GPIO(PCH_PWRBTN_L,		PIN(0, 1), GPIO_ODR_HIGH)	/* EC_PCH_PWR_BTN_ODL */
+GPIO(USB_C0_HPD_ODL,		PIN(9, 4), GPIO_INPUT)
+GPIO(USB_C1_HPD_ODL,		PIN(9, 5), GPIO_INPUT)
+
+/* EC_PCH_RTCRST is a sledgehammer for resetting SoC state and should rarely
+ * be used. Set as input for now, we'll set it as an output when we want to use
+ * it. Has external pull-down resistor. */
+GPIO(EC_PCH_RTCRST,		PIN(B, 7), GPIO_INPUT)
+GPIO(PCH_RCIN_L,		PIN(6, 1), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
+
+GPIO(USB_A_CHARGE_EN_L,		PIN(3, 6), GPIO_OUT_LOW)
+GPIO(USB1_ENABLE,		PIN(4, 1), GPIO_OUT_LOW)
+
+GPIO(USB_C0_PD_RST_ODL,		PIN(0, 3), GPIO_OUT_LOW)
+GPIO(USB_C1_PD_RST_ODL,		PIN(7, 4), GPIO_ODR_LOW)
+
+GPIO(USB_C0_20V_EN,		PIN(4, 2), GPIO_OUT_LOW)	/* EN_USB_charge1 */
+GPIO(USB_C1_20V_EN,		PIN(6, 3), GPIO_OUT_LOW)	/* EN_USB_charge2 */
+
+GPIO(USB_C0_5V_EN,		PIN(D, 3), GPIO_OUT_LOW)	/* EN_USB_C0_5V_OUT, Enable C0 */
+GPIO(USB_C1_5V_EN,		PIN(D, 2), GPIO_OUT_LOW)	/* EN_USB_C1_5V_OUT, Enable C1 */
+
+GPIO(PWR_LED_GREEN,		PIN(C, 4), GPIO_OUT_HIGH)
+GPIO(BAT_LED_GREEN,		PIN(8, 4), GPIO_OUT_HIGH)
+GPIO(BAT_LED_AMBER,		PIN(B, 6), GPIO_OUT_HIGH)
+
+/*
+ * Alternate function pins
+ */
+/* Keyboard pins */
+#define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
+#define GPIO_KB_OUTPUT (GPIO_ODR_HIGH)
+#define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
+ALTERNATE(PIN_MASK(3, 0x03), 0,  MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)
+ALTERNATE(PIN_MASK(2, 0xfc), 0,  MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)
+ALTERNATE(PIN_MASK(2, 0x03), 0,  MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
+ALTERNATE(PIN_MASK(0, 0xe0), 0,  MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
+ALTERNATE(PIN_MASK(1, 0x7f), 0,  MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
+GPIO(KBD_KSO2,			 PIN(1, 7), GPIO_KB_OUTPUT_COL2)
+
+ALTERNATE(PIN(4, 4), 6, MODULE_ADC, 0)		/* IMON1 */
+ALTERNATE(PIN(4, 5), 6, MODULE_ADC, 0)		/* IMON2 */
+
+ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)	/* GPIO87 for EC_I2C_THERMAL_SDA */
+ALTERNATE(PIN_MASK(9, 0x01), 1, MODULE_I2C, 0)	/* GPIO90 for EC_I2C_THERMAL_SCL */
+ALTERNATE(PIN_MASK(9, 0x06), 1, MODULE_I2C, 0)	/* GPIO92-91 for EC_I2C_SENSOR_SDA/SCL */
+ALTERNATE(PIN_MASK(B, 0x30), 1, MODULE_I2C, 0)	/* GPIOB5-B4 for EC_I2C_USB_C0_PD_SDA/SCL */
+ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, 0)	/* GPOPB3-B2 for EC_I2C_USB_C1_PD_SDA/SCL */
+ALTERNATE(PIN_MASK(D, 0x03), 1, MODULE_I2C, 0)	/* GPIOD1-D0 for EC_I2C_POWER_SDA/SCL */
+
+ALTERNATE(PIN_MASK(C, 0x08), 7,  MODULE_PWM,         0)    /* PWM0 for PWM/FAN Test   GPIOC3       */
+ALTERNATE(PIN_MASK(9, 0x08), 3,  MODULE_PWM,         0)    /* MFT-1/TA1_TACH1 for FAN GPIO93       */
+
+/* FIXME: Make UART RX an interrupt? */
+ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)	/* UART from EC to Servo */

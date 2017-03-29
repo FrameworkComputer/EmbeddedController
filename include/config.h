@@ -591,6 +591,7 @@
 #undef CONFIG_CHIPSET_ROCKCHIP  /* Rockchip rk32xx */
 #undef CONFIG_CHIPSET_SKYLAKE   /* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_TEGRA     /* nVidia Tegra 5 */
+#undef CONFIG_CHIPSET_STONEY     /* AMD Stoney (x86)*/
 
 /* Support chipset throttling */
 #undef CONFIG_CHIPSET_CAN_THROTTLE
@@ -2372,6 +2373,9 @@
 
 /* USB Device version of product */
 #undef CONFIG_USB_BCD_DEV
+
+/* Support TCPC FW version */
+#undef CONFIG_USB_PD_TCPC_FW_VERSION
 
 /*****************************************************************************/
 
