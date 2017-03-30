@@ -77,11 +77,11 @@ enum lsm6dsm_odr {
 
 /* ODR reg value from selected data rate in mHz */
 #define LSM6DSM_ODR_TO_REG(_odr) \
-	(31 - __builtin_clz(_odr / LSM6DSM_ODR_MIN_VAL))
+	__fls(_odr / LSM6DSM_ODR_MIN_VAL)
 
 /* normalized ODR value from selected data rate in mHz */
 #define LSM6DSM_ODR_TO_NORMALIZE(_odr) \
-	(LSM6DSM_ODR_MIN_VAL * (_odr / LSM6DSM_ODR_MIN_VAL))
+	(LSM6DSM_ODR_MIN_VAL << __fls(_odr/LSM6DSM_ODR_MIN_VAL))
 
 /* Full Scale range value for Accel */
 #define LSM6DSM_FS_LIST_NUM		4
@@ -104,7 +104,7 @@ enum lsm6dsm_odr {
 /* Accel Gain value from selected Full Scale */
 #define LSM6DSM_ACCEL_FS_GAIN(_fs) \
 	(_fs == 16 ? LSM6DSM_ACCEL_FS_16G_GAIN : \
-	LSM6DSM_ACCEL_FS_2G_GAIN << (31 - __builtin_clz(_fs / 2)))
+	LSM6DSM_ACCEL_FS_2G_GAIN << __fls(_fs / 2))
 
 /* Accel FS Full Scale value from Gain */
 #define LSM6DSM_ACCEL_GAIN_FS(_gain) \
@@ -138,7 +138,7 @@ enum lsm6dsm_odr {
 
 /* Gyro FS Gain value from selected Full Scale */
 #define LSM6DSM_GYRO_FS_GAIN(_fs) \
-	(LSM6DSM_GYRO_FS_245_GAIN << (31 - __builtin_clz(_fs / 245)))
+	(LSM6DSM_GYRO_FS_245_GAIN << __fls(_fs / 245))
 
 /* Gyro FS Full Scale value from Gain */
 #define LSM6DSM_GYRO_GAIN_FS(_gain) \
@@ -147,11 +147,11 @@ enum lsm6dsm_odr {
 
 /* Gyro Reg value from Full Scale */
 #define LSM6DSM_GYRO_FS_REG(_fs) \
-	((31 - __builtin_clz(_fs / 245)))
+	__fls(_fs / 245)
 
 /* Gyro normalized FS value from Full Scale: for Gyro Gains are not multiple */
 #define LSM6DSM_GYRO_NORMALIZE_FS(_fs) \
-	(_fs == 245 ? 245 : 500 << (31 - __builtin_clz(_fs / 500)))
+	(_fs == 245 ? 245 : 500 << __fls(_fs / 500))
 
 /* FS register address/mask for Acc/Gyro sensors */
 #define LSM6DSM_RANGE_REG(_sensor)  	(LSM6DSM_ACCEL_FS_ADDR + (_sensor))
