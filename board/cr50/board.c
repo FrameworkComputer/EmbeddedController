@@ -345,6 +345,7 @@ static void init_pmu(void)
 void pmu_wakeup_interrupt(void)
 {
 	int exiten, wakeup_src;
+	static int count;
 
 	delay_sleep_by(1 * MSEC);
 
@@ -355,6 +356,16 @@ void pmu_wakeup_interrupt(void)
 
 	/* Clear pmu reset */
 	GWRITE(PMU, CLRRST, 1);
+
+	/*
+	 * This will print '.' every time cr50 resumes from regular sleep.
+	 * During sleep Cr50 wakes up every half second for HOOK_TICK, so that
+	 * is around the rate cr50 will print '.' while it is idle.
+	 */
+	ccprintf(".");
+	if (!(count % 50))
+		ccprintf("\n");
+	count++;
 
 	if (wakeup_src & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK) {
 		/*
