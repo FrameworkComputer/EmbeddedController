@@ -1,29 +1,27 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* LSM6DSM Accel and Gyro driver for Chrome EC */
+/* LSM6DSM (also LSM6DSL) Accel and Gyro driver for Chrome EC */
 
 #ifndef __CROS_EC_ACCELGYRO_LSM6DSM_H
 #define __CROS_EC_ACCELGYRO_LSM6DSM_H
 
-#include "accelgyro.h"
+#include "stm_mems_common.h"
 
 #define LSM6DSM_I2C_ADDR(__x)		(__x << 1)
 
 /*
- * 7-bit address is 110101Xb. Where 'X' is determined
- * by the voltage on the ADDR pin.
+ * 7-bit address is 110101xb. Where 'x' is determined
+ * by the voltage on the ADDR pin
  */
-#define LSM6DSM_ADDR0             	LSM6DSM_I2C_ADDR(0x6a)
-#define LSM6DSM_ADDR1             	LSM6DSM_I2C_ADDR(0x6b)
+#define LSM6DSM_ADDR0			LSM6DSM_I2C_ADDR(0x6a)
+#define LSM6DSM_ADDR1			LSM6DSM_I2C_ADDR(0x6b)
 
 /* Who Am I */
 #define LSM6DSM_WHO_AM_I_REG		0x0f
-#define LSM6DSM_WHO_AM_I          	0x6a
-
-#define LSM6DSM_OUT_XYZ_SIZE 		6
+#define LSM6DSM_WHO_AM_I		0x6a
 
 /* Sensor Software Reset Bit */
 #define LSM6DSM_RESET_ADDR		0x12
@@ -33,14 +31,8 @@
 #define LSM6DSM_EN_BIT			0x01
 #define LSM6DSM_DIS_BIT			0x00
 
-#define LSM6DSM_LIR_ADDR		0x58
-#define LSM6DSM_LIR_MASK		0x01
-
 #define LSM6DSM_BDU_ADDR		0x12
 #define LSM6DSM_BDU_MASK		0x40
-
-#define LSM6DSM_INT2_ON_INT1_ADDR	0x13
-#define LSM6DSM_INT2_ON_INT1_MASK	0x20
 
 #define LSM6DSM_GYRO_OUT_X_L_ADDR	0x22
 #define LSM6DSM_ACCEL_OUT_X_L_ADDR	0x28
@@ -60,20 +52,19 @@
 
 /* Common Acc/Gyro data rate */
 enum lsm6dsm_odr {
-	LSM6DSM_ODR_POWER_OFF_VAL = 0x00,
+	LSM6DSM_ODR_0HZ_VAL = 0,
 	LSM6DSM_ODR_13HZ_VAL,
 	LSM6DSM_ODR_26HZ_VAL,
 	LSM6DSM_ODR_52HZ_VAL,
 	LSM6DSM_ODR_104HZ_VAL,
 	LSM6DSM_ODR_208HZ_VAL,
 	LSM6DSM_ODR_416HZ_VAL,
-	LSM6DSM_ODR_833HZ_VAL,
 	LSM6DSM_ODR_LIST_NUM
 };
 
 /* Absolute maximum rate for acc and gyro sensors */
 #define LSM6DSM_ODR_MIN_VAL		13000
-#define LSM6DSM_ODR_MAX_VAL		833000
+#define LSM6DSM_ODR_MAX_VAL		416000
 
 /* ODR reg value from selected data rate in mHz */
 #define LSM6DSM_ODR_TO_REG(_odr) \
@@ -83,7 +74,7 @@ enum lsm6dsm_odr {
 #define LSM6DSM_ODR_TO_NORMALIZE(_odr) \
 	(LSM6DSM_ODR_MIN_VAL << __fls(_odr/LSM6DSM_ODR_MIN_VAL))
 
-/* Full Scale range value for Accel */
+/* Full Scale range value and gain for Acc */
 #define LSM6DSM_FS_LIST_NUM		4
 
 #define LSM6DSM_ACCEL_FS_ADDR		0x10
@@ -120,7 +111,7 @@ enum lsm6dsm_odr {
 #define LSM6DSM_ACCEL_NORMALIZE_FS(_fs) \
 	(1 << (32 - __builtin_clz(_fs / 2)))
 
-/* Full Scale range value for Gyro */
+/* Full Scale range value and gain for Gyro */
 #define LSM6DSM_GYRO_FS_ADDR		0x11
 #define LSM6DSM_GYRO_FS_MASK		0x0c
 
@@ -154,7 +145,7 @@ enum lsm6dsm_odr {
 	(_fs == 245 ? 245 : 500 << __fls(_fs / 500))
 
 /* FS register address/mask for Acc/Gyro sensors */
-#define LSM6DSM_RANGE_REG(_sensor)  	(LSM6DSM_ACCEL_FS_ADDR + (_sensor))
+#define LSM6DSM_RANGE_REG(_sensor)  (LSM6DSM_ACCEL_FS_ADDR + (_sensor))
 #define LSM6DSM_RANGE_MASK  		0x0c
 
 /* Status register bitmask for Acc/Gyro data ready */
@@ -167,14 +158,9 @@ enum lsm6dsm_status {
 #define LSM6DSM_STS_XLDA_MASK		0x01
 #define LSM6DSM_STS_GDA_MASK		0x02
 
-/* Sensor resolution in number of bits. This sensor has fixed resolution. */
+/* Sensor resolution in number of bits: fixed 16 bit */
 #define LSM6DSM_RESOLUTION      	16
 
 extern const struct accelgyro_drv lsm6dsm_drv;
-
-struct lsm6dsm_data {
-	struct accelgyro_saved_data_t base;
-	int16_t offset[3];
-};
 
 #endif /* __CROS_EC_ACCELGYRO_LSM6DSM_H */

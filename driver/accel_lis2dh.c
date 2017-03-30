@@ -19,6 +19,9 @@
 #include "driver/accel_lis2dh.h"
 #include "driver/stm_mems_common.h"
 
+#define CPUTS(outstr) cputs(CC_ACCEL, outstr)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+
 #ifdef CONFIG_ACCEL_FIFO
 /**
  * enable_fifo - Enable/Disable FIFO in LIS2DH
@@ -316,10 +319,6 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 
 	/* Transform from LSB to real data with rotation and gain */
 	st_normalize(s, v, raw);
-
-	/* apply offset in the device coordinates */
-	for (i = X; i <= Z; i++)
-		v[i] += (data->offset[i] << 5) / data->base.range;
 
 	return EC_SUCCESS;
 }
