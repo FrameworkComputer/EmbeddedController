@@ -12,6 +12,9 @@
 #include "system.h"
 #include "util.h"
 
+/* Console output macros */
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
 /* Number of rollback regions */
 #define ROLLBACK_REGIONS 2
 
@@ -90,13 +93,41 @@ int32_t rollback_get_minimum_version(void)
 	return rollback_min_version;
 }
 
+int rollback_lock(void)
+{
+	int ret;
+
+	/* Already locked */
+	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW)
+		return EC_SUCCESS;
+
+	CPRINTS("Protecting rollback");
+
+	/* This may do nothing if WP is not enabled, or RO is not protected. */
+	ret = flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT, -1);
+
+	if (!(flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) &&
+	      flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) {
+		/*
+		 * If flash protection is still not enabled (some chips may
+		 * be able to enable it immediately), reboot.
+		 */
+		cflush();
+		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
+	}
+
+	return ret;
+}
+
 int rollback_update(int32_t next_min_version)
 {
 	struct rollback_data data;
 	uintptr_t offset;
 	int region;
 	int32_t current_min_version;
-	int ret;
+
+	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW)
+		return EC_ERROR_ACCESS_DENIED;
 
 	region = get_latest_rollback(&current_min_version);
 
@@ -119,14 +150,17 @@ int rollback_update(int32_t next_min_version)
 	data.rollback_min_version = next_min_version;
 	data.cookie = CROS_EC_ROLLBACK_COOKIE;
 
+	/* Offset should never be part of active image. */
 	if (system_unsafe_to_overwrite(offset, CONFIG_FLASH_ERASE_SIZE))
-		return EC_ERROR_ACCESS_DENIED;
+		return EC_ERROR_UNKNOWN;
 
-	ret = flash_erase(offset, CONFIG_FLASH_ERASE_SIZE);
-	if (ret)
-		return ret;
+	if (flash_erase(offset, CONFIG_FLASH_ERASE_SIZE))
+		return EC_ERROR_UNKNOWN;
 
-	return flash_write(offset, sizeof(data), (char *)&data);
+	if (flash_write(offset, sizeof(data), (char *)&data))
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
 }
 
 static int command_rollback_info(int argc, char **argv)

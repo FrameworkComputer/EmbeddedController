@@ -152,13 +152,43 @@ void check_rw_signature(void)
 	hash = SHA256_final(&ctx);
 
 	good = rsa_verify(key, sig, hash, rsa_workbuf);
+	if (!good)
+		goto out;
+
+#ifdef CONFIG_ROLLBACK
+	/*
+	 * Signature verified: we know that rw_rollback_version is valid, check
+	 * if rollback information should be updated.
+	 */
+	if (rw_rollback_version != min_rollback_version) {
+		/*
+		 * This will fail if the rollback block is protected (RW image
+		 * will unprotect that block later on).
+		 */
+		int ret = rollback_update(rw_rollback_version);
+
+		if (ret == 0) {
+			CPRINTS("Rollback updated to %d",
+				rw_rollback_version);
+		} else if (ret != EC_ERROR_ACCESS_DENIED) {
+			CPRINTS("Rollback update error %d", ret);
+			good = 0;
+		}
+	}
+
+	/*
+	 * Lock the ROLLBACK region, this will cause the board to reboot if the
+	 * region is not already protected.
+	 */
+	rollback_lock();
+#endif
 out:
+	CPRINTS("RW verify %s", good ? "OK" : "FAILED");
+
 	if (good) {
-		CPRINTS("RW image verified");
 		/* Jump to the RW firmware */
 		system_run_image_copy(SYSTEM_IMAGE_RW);
 	} else {
-		CPRINTS("RSA verify FAILED");
 		pd_log_event(PD_EVENT_ACC_RW_FAIL, 0, 0, NULL);
 		/* RW firmware is invalid : do not jump there */
 		if (system_is_locked())
