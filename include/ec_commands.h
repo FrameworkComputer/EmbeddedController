@@ -2881,6 +2881,12 @@ struct __ec_align2 ec_response_keyboard_factory_test {
 	uint16_t shorted;	/* Keyboard pins are shorted */
 };
 
+/* Fingerprint events in 'fp_events' for EC_MKBP_EVENT_FINGERPRINT */
+#define EC_MKBP_FP_RAW_EVENT(fp_events) ((fp_events) & 0x00FFFFFF)
+#define EC_MKBP_FP_FINGER_DOWN          (1 << 29)
+#define EC_MKBP_FP_FINGER_UP            (1 << 30)
+#define EC_MKBP_FP_IMAGE_READY          (1 << 31)
+
 /*****************************************************************************/
 /* Temperature sensor commands */
 
@@ -4104,7 +4110,7 @@ struct __ec_align4 ec_params_rwsig_action {
 /*****************************************************************************/
 /* Fingerprint MCU commands: range 0x0400-0x040x */
 
-/* Fingerprint SPI sensor passthru command */
+/* Fingerprint SPI sensor passthru command: prototyping ONLY */
 #define EC_CMD_FP_PASSTHRU 0x0400
 
 #define EC_FP_FLAG_NOT_COMPLETE 0x1
@@ -4113,6 +4119,71 @@ struct __ec_align2 ec_params_fp_passthru {
 	uint16_t len;		/* Number of bytes to write then read */
 	uint16_t flags;		/* EC_FP_FLAG_xxx */
 	uint8_t data[];		/* Data to send */
+};
+
+/* Fingerprint sensor configuration command: prototyping ONLY */
+#define EC_CMD_FP_SENSOR_CONFIG 0x0401
+
+#define EC_FP_SENSOR_CONFIG_MAX_REGS 16
+
+struct __ec_align2 ec_params_fp_sensor_config {
+	uint8_t count;		/* Number of setup registers */
+	/*
+	 * the value to send to each of the 'count' setup registers
+	 * is stored in the 'data' array for 'len' bytes just after
+	 * the previous one.
+	 */
+	uint8_t len[EC_FP_SENSOR_CONFIG_MAX_REGS];
+	uint8_t data[];
+};
+
+/* Configure the Fingerprint MCU behavior */
+#define EC_CMD_FP_MODE 0x0402
+
+/* Put the sensor in its lowest power mode */
+#define FP_MODE_DEEPSLEEP     (1<<0)
+/* Wait to see a finger on the sensor */
+#define FP_MODE_FINGER_DOWN   (1<<1)
+/* Poll until the finger has left the sensor */
+#define FP_MODE_FINGER_UP     (1<<2)
+/* Capture the current finger image */
+#define FP_MODE_CAPTURE       (1<<3)
+/* special value: don't change anything just read back current mode */
+#define FP_MODE_DONT_CHANGE   (1<<31)
+
+struct __ec_align4 ec_params_fp_mode {
+	uint32_t mode; /* as defined by FP_MODE_ constants */
+	/* TBD */
+};
+
+struct __ec_align4 ec_response_fp_mode {
+	uint32_t mode; /* as defined by FP_MODE_ constants */
+	/* TBD */
+};
+
+/* Retrieve Fingerprint sensor information */
+#define EC_CMD_FP_INFO 0x0403
+
+struct __ec_align2 ec_response_fp_info {
+	/* Sensor identification */
+	uint32_t vendor_id;
+	uint32_t product_id;
+	uint32_t model_id;
+	uint32_t version;
+	/* Image frame characteristics */
+	uint32_t frame_size;
+	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
+	uint16_t width;
+	uint16_t height;
+	uint16_t bpp;
+};
+
+/* Get the last captured finger frame: TODO: will be AES-encrypted */
+#define EC_CMD_FP_FRAME 0x0404
+
+struct __ec_align4 ec_params_fp_frame {
+	uint32_t offset;
+	uint32_t size;
 };
 
 /*****************************************************************************/

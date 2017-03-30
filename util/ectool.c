@@ -112,6 +112,12 @@ const char help_str[] =
 	"      Reads from EC flash to a file\n"
 	"  flashwrite <offset> <infile>\n"
 	"      Writes to EC flash from a file\n"
+	"  fpframe\n"
+	"      Retrieve the finger image as a PGM image\n"
+	"  fpinfo\n"
+	"      Prints information about the Fingerprint sensor\n"
+	"  fpmode [capture|deepsleep|fingerdown|fingerup]\n"
+	"      Configure/Read the fingerprint sensor current mode\n"
 	"  forcelidopen <enable>\n"
 	"      Forces the lid switch to open position\n"
 	"  gpioget <GPIO name>\n"
@@ -1057,6 +1063,110 @@ int cmd_rwsig_action(int argc, char *argv[])
 		return -1;
 
 	return ec_command(EC_CMD_RWSIG_ACTION, 0, &req, sizeof(req), NULL, 0);
+}
+
+int cmd_fp_mode(int argc, char *argv[])
+{
+	struct ec_params_fp_mode p;
+	struct ec_response_fp_mode r;
+	uint32_t mode = 0;
+	int i, rv;
+
+	if (argc == 1)
+		mode = FP_MODE_DONT_CHANGE;
+	for (i = 1; i < argc; i++) {
+		if (!strncmp(argv[i], "deepsleep", 9))
+			mode |= FP_MODE_DEEPSLEEP;
+		else if (!strncmp(argv[i], "fingerdown", 10))
+			mode |= FP_MODE_FINGER_DOWN;
+		else if (!strncmp(argv[i], "fingerup", 8))
+			mode |= FP_MODE_FINGER_UP;
+		else if (!strncmp(argv[i], "capture", 7))
+			mode |= FP_MODE_CAPTURE;
+	}
+
+	p.mode = mode;
+	rv = ec_command(EC_CMD_FP_MODE, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("FP mode: (0x%x) ", r.mode);
+	if (r.mode & FP_MODE_DEEPSLEEP)
+		printf("deepsleep ");
+	if (r.mode & FP_MODE_FINGER_DOWN)
+		printf("finger-down ");
+	if (r.mode & FP_MODE_FINGER_UP)
+		printf("finger-up ");
+	if (r.mode & FP_MODE_CAPTURE)
+		printf("capture ");
+	printf("\n");
+	return rv;
+}
+
+int cmd_fp_info(int argc, char *argv[])
+{
+	struct ec_response_fp_info r;
+	int rv;
+
+	rv = ec_command(EC_CMD_FP_INFO, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("Fingerprint sensor: vendor %x product %x model %x version %x\n",
+		r.vendor_id, r.product_id, r.model_id, r.version);
+	printf("Image: size %dx%d %d bpp\n", r.width, r.height, r.bpp);
+
+	return 0;
+}
+
+int cmd_fp_frame(int argc, char *argv[])
+{
+	struct ec_response_fp_info r;
+	struct ec_params_fp_frame p;
+	int rv = 0;
+	size_t stride, size;
+	uint8_t *buffer8 = ec_inbuf;
+
+	rv = ec_command(EC_CMD_FP_INFO, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	stride = (size_t)r.width * r.bpp/8;
+	if (stride > ec_max_insize) {
+		fprintf(stderr, "Not implemented for line size %zu B "
+			"(%u pixels) > EC transfer size %d\n",
+			stride, r.width, ec_max_insize);
+		return -1;
+	}
+	if (r.bpp != 8) {
+		fprintf(stderr, "Not implemented for BPP = %d != 8\n", r.bpp);
+		return -1;
+	}
+
+	size = stride * r.height;
+
+	/* Print 8-bpp PGM ASCII header */
+	printf("P2\n%d %d\n%d\n", r.width, r.height, (1 << r.bpp) - 1);
+
+	p.offset = 0;
+	p.size = stride;
+	while (size) {
+		int x;
+
+		rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p),
+				ec_inbuf, stride);
+		if (rv < 0)
+			return rv;
+		p.offset += stride;
+		size -= stride;
+
+		for (x = 0; x < stride; x++)
+			printf("%d ", buffer8[x]);
+		printf("\n");
+	}
+	printf("# END OF FILE\n");
+
+	return 0;
 }
 
 /**
@@ -7064,6 +7174,9 @@ const struct command commands[] = {
 	{"flashspiinfo", cmd_flash_spi_info},
 	{"flashpd", cmd_flash_pd},
 	{"forcelidopen", cmd_force_lid_open},
+	{"fpframe", cmd_fp_frame},
+	{"fpinfo", cmd_fp_info},
+	{"fpmode", cmd_fp_mode},
 	{"gpioget", cmd_gpio_get},
 	{"gpioset", cmd_gpio_set},
 	{"hangdetect", cmd_hang_detect},

@@ -7,7 +7,6 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "host_command.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"
@@ -57,35 +56,3 @@ static void board_init(void)
 	hook_call_deferred(&ap_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-static int fp_command_passthru(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_fp_passthru *params = args->params;
-	void *out = args->response;
-	int rc;
-	int ret = EC_RES_SUCCESS;
-
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
-	if (params->len > args->params_size +
-	    offsetof(struct ec_params_fp_passthru, data) ||
-	    params->len > args->response_max)
-		return EC_RES_INVALID_PARAM;
-
-	rc = spi_transaction_async(&spi_devices[0], params->data,
-				   params->len, out, SPI_READBACK_ALL);
-	if (params->flags & EC_FP_FLAG_NOT_COMPLETE)
-		rc |= spi_transaction_wait(&spi_devices[0]);
-	else
-		rc |= spi_transaction_flush(&spi_devices[0]);
-
-	if (rc == EC_ERROR_TIMEOUT)
-		ret = EC_RES_TIMEOUT;
-	else if (rc)
-		ret = EC_RES_ERROR;
-
-	args->response_size = params->len;
-	return ret;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_PASSTHRU, fp_command_passthru, EC_VER_MASK(0));
