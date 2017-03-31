@@ -207,14 +207,15 @@ static void init_console_lock_and_wp(void)
 	uint8_t key;
 	const struct tuple *t;
 	uint8_t lock_state;
+	uint32_t reset_flags;
 
+	reset_flags = system_get_reset_flags();
 	/*
 	 * On an unexpected reboot or a system rollback reset the console lock
 	 * and write protect states.
 	 */
 	if (system_rollback_detected() ||
-	    !(system_get_reset_flags() &
-	      (RESET_FLAG_HIBERNATE | RESET_FLAG_POWER_ON))) {
+	    !(reset_flags & (RESET_FLAG_HIBERNATE | RESET_FLAG_POWER_ON))) {
 		/* Reset the console lock to the default value */
 		CPRINTS("Setting console lock to default.");
 		set_console_lock_state(console_restricted_state);
@@ -238,10 +239,15 @@ static void init_console_lock_and_wp(void)
 		set_console_lock_state(lock_state);
 	}
 
-	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_WP_ASSERTED)
-		set_wp_state(1);
-	else
-		set_wp_state(0);
+	if (reset_flags & RESET_FLAG_HIBERNATE) {
+		if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_WP_ASSERTED)
+			set_wp_state(1);
+		else
+			set_wp_state(0);
+	} else if (reset_flags & RESET_FLAG_POWER_ON) {
+		/* Use BATT_PRES_L as the source for write protect. */
+		set_wp_state(!gpio_get_level(GPIO_BATT_PRES_L));
+	}
 }
 /* This must run after initializing the NVMem partitions. */
 DECLARE_HOOK(HOOK_INIT, init_console_lock_and_wp, HOOK_PRIO_DEFAULT+1);
