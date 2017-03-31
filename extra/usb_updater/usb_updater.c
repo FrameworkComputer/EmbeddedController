@@ -222,7 +222,7 @@ static char *progname;
 static char *short_opts = "bcd:fhpsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"binvers",	1,   NULL, 'b'},
+	{"binvers",	0,   NULL, 'b'},
 	{"corrupt",	0,   NULL, 'c'},
 	{"device",	1,   NULL, 'd'},
 	{"fwver",	0,   NULL, 'f'},
