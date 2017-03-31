@@ -42,11 +42,15 @@ void rbox_powerbtn_press(void)
 
 static void rbox_release_ec_reset(void)
 {
+	/* Unfreeze the PINMUX */
+	GREG32(PINMUX, HOLD) = 0;
+
+	/* Allow some time for outputs to stabilize. */
+	usleep(500);
+
 	/* Let the EC go (the RO bootloader asserts it ASAP after POR) */
 	GREG32(RBOX, ASSERT_EC_RST) = 0;
 
-	/* And unfreeze the PINMUX */
-	GREG32(PINMUX, HOLD) = 0;
 }
 DECLARE_HOOK(HOOK_INIT, rbox_release_ec_reset, HOOK_PRIO_LAST);
 
