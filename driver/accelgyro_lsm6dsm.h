@@ -23,16 +23,10 @@
 #define LSM6DSM_WHO_AM_I_REG		0x0f
 #define LSM6DSM_WHO_AM_I		0x6a
 
-/* Sensor Software Reset Bit */
-#define LSM6DSM_RESET_ADDR		0x12
-#define LSM6DSM_RESET_MASK		0x01
-
 /* COMMON DEFINE FOR ACCEL-GYRO SENSORS */
 #define LSM6DSM_EN_BIT			0x01
 #define LSM6DSM_DIS_BIT			0x00
 
-#define LSM6DSM_BDU_ADDR		0x12
-#define LSM6DSM_BDU_MASK		0x40
 
 #define LSM6DSM_GYRO_OUT_X_L_ADDR	0x22
 #define LSM6DSM_ACCEL_OUT_X_L_ADDR	0x28
@@ -40,6 +34,15 @@
 #define LSM6DSM_CTRL1_ADDR		0x10
 #define LSM6DSM_CTRL2_ADDR		0x11
 #define LSM6DSM_CTRL3_ADDR		0x12
+#define LSM6DSM_SW_RESET			0x01
+#define LSM6DSM_IF_INC				0x04
+#define LSM6DSM_PP_OD				0x10
+#define LSM6DSM_H_L_ACTIVE			0x20
+#define LSM6DSM_BDU				0x40
+
+#define LSM6DSM_CTRL4_ADDR		0x13
+#define LSM6DSM_INT2_ON_INT1_MASK		0x20
+
 #define LSM6DSM_CTRL6_ADDR		0x15
 #define LSM6DSM_CTRL7_ADDR		0x16
 
@@ -50,16 +53,70 @@
 	(LSM6DSM_CTRL1_ADDR + _sensor)
 #define LSM6DSM_ODR_MASK		0xf0
 
-/* Common Acc/Gyro data rate */
-enum lsm6dsm_odr {
-	LSM6DSM_ODR_0HZ_VAL = 0,
-	LSM6DSM_ODR_13HZ_VAL,
-	LSM6DSM_ODR_26HZ_VAL,
-	LSM6DSM_ODR_52HZ_VAL,
-	LSM6DSM_ODR_104HZ_VAL,
-	LSM6DSM_ODR_208HZ_VAL,
-	LSM6DSM_ODR_416HZ_VAL,
-	LSM6DSM_ODR_LIST_NUM
+/* Hardware FIFO size in byte */
+#define LSM6DSM_MAX_FIFO_SIZE		4096
+#define LSM6DSM_MAX_FIFO_LENGTH	(LSM6DSM_MAX_FIFO_SIZE / OUT_XYZ_SIZE)
+
+/* FIFO decimator registers and bitmask */
+#define LSM6DSM_FIFO_CTRL1_ADDR		0x06
+#define LSM6DSM_FIFO_CTRL2_ADDR		0x07
+
+#define LSM6DSM_FIFO_CTRL3_ADDR		0x08
+#define LSM6DSM_FIFO_DEC_XL_OFF			0
+#define LSM6DSM_FIFO_DEC_G_OFF			3
+
+#define LSM6DSM_FIFO_CTRL4_ADDR		0x09
+
+#define LSM6DSM_FIFO_DECIMATOR(_dec) \
+	(_dec < 8 ? _dec : (2 + __builtin_ctz(_dec)))
+
+#define LSM6DSM_INT1_CTRL		0x0d
+#define LSM6DSM_INT_FIFO_TH			0x08
+#define LSM6DSM_INT_FIFO_OVR			0x10
+#define LSM6DSM_INT_FIFO_FULL			0x20
+#define LSM6DSM_INT_SIGMO			0x40
+
+#define LSM6DSM_FIFO_STS1_ADDR		0x3a
+#define LSM6DSM_FIFO_STS2_ADDR		0x3b
+#define LSM6DSM_FIFO_DIFF_MASK			0x07ff
+#define LSM6DSM_FIFO_EMPTY			0x1000
+#define LSM6DSM_FIFO_FULL			0x2000
+#define LSM6DSM_FIFO_DATA_OVR			0x4000
+#define LSM6DSM_FIFO_WATERMARK			0x8000
+#define LSM6DSM_FIFO_NODECIM		0x01
+
+/* Out data register */
+#define LSM6DSM_FIFO_DATA_ADDR		0x3e
+
+/* Registers value for supported FIFO mode */
+#define LSM6DSM_FIFO_MODE_BYPASS_VAL	0x00
+#define LSM6DSM_FIFO_MODE_CONTINUOUS_VAL	0x06
+
+#define LSM6DSM_FIFO_CTRL5_ADDR		0x0a
+#define LSM6DSM_FIFO_CTRL5_ODR_OFF		3
+#define LSM6DSM_FIFO_CTRL5_ODR_MASK \
+	(0xf << LSM6DSM_FIFO_CTRL5_ODR_OFF)
+#define LSM6DSM_FIFO_CTRL5_MODE_MASK		0x07
+
+/* Define ODR FIFO values. Max value is max ODR for sensors
+ * Value is limited to 416 Hz
+ */
+
+/* Registers value for sensor Hub */
+#define LSM6DSM_FUNC_SRC1		0x53
+#define LSM6DSM_SENSORHUB_END_OP	0x01
+
+/* Define device available in FIFO pattern */
+enum dev_fifo {
+	FIFO_DEV_INVALID = -1,
+	FIFO_DEV_GYRO = 0,
+	FIFO_DEV_ACCEL,
+	FIFO_DEV_NUM,
+};
+
+struct fstatus {
+	uint16_t len;
+	uint16_t pattern;
 };
 
 /* Absolute maximum rate for acc and gyro sensors */
@@ -145,5 +202,38 @@ enum lsm6dsm_status {
 #define LSM6DSM_RESOLUTION      	16
 
 extern const struct accelgyro_drv lsm6dsm_drv;
+
+void lsm6dsm_interrupt(enum gpio_signal signal);
+
+struct lsm6dsm_fifo_data {
+	/*
+	 * FIFO data order is based on the ODR of each sensors.
+	 * For example Acc @ 52 Hz, Gyro @ 26 Hz Mag @ 13 Hz in FIFO we have
+	 * for each pattern this data samples:
+	 *  ________ _______ _______ _______ ________ _______ _______
+	 * | Gyro_0 | Acc_0 | Mag_0 | Acc_1 | Gyro_1 | Acc_2 | Acc_3 |
+	 * |________|_______|_______|_______|________|_______|_______|
+	 *
+	 * Total samples for each pattern: 2 Gyro, 4 Acc, 1 Mag
+	 */
+	/* Calculated samples in a pattern, based on ODR. */
+	int samples_in_pattern[FIFO_DEV_NUM];
+
+	/* Sum of all samples_in_pattern. */
+	int total_samples_in_pattern;
+};
+
+
+struct lsm6dsm_data {
+	/* Must be first: ST generic accelerometer data. */
+	struct stprivate_data a_data;
+#ifdef CONFIG_ACCEL_FIFO
+	struct lsm6dsm_fifo_data config;
+	struct lsm6dsm_fifo_data current;
+	int next_in_patten;
+#endif
+};
+
+#define LSM6DSM_MAIN_SENSOR(_s) ((_s) - (_s)->type)
 
 #endif /* __CROS_EC_ACCELGYRO_LSM6DSM_H */

@@ -163,10 +163,5 @@ void st_normalize(const struct motion_sensor_t *s, vector_3_t v, uint8_t *data)
 	/* apply offset in the device coordinates */
 	range = s->drv->get_range(s);
 	for (i = X; i <= Z; i++)
-		/*
-		 * TODO(gwendal): only work for accel:
-		 * offsest is in 1/1024th g/LSB, so shift left and divide by
-		 * range to normalize the value.
-		 */
 		v[i] += (drvdata->offset[i] << 5) / range;
 }
