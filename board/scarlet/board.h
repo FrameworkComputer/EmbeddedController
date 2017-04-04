@@ -53,6 +53,7 @@
 #define CONFIG_BOARD_VERSION
 #define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BUTTON_COUNT        2
+#define CONFIG_BUTTON_RECOVERY
 #define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_HOST_COMMAND_STATUS
 /* By default, set hcdebug to off */
@@ -202,6 +203,12 @@ enum adc_channel {
 	ADC_PPVAR_CLOGIC,
 	ADC_PPVAR_LOGIC,
 	ADC_CH_COUNT
+};
+
+enum button {
+	BUTTON_VOLUME_DOWN = 0,
+	BUTTON_VOLUME_UP = 1,
+	BUTTON_COUNT
 };
 
 #ifdef CONFIG_TEMP_SENSOR_TMP432
