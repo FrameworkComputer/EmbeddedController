@@ -26,8 +26,20 @@
 /* EC console commands  */
 
 /* Battery */
+#define CONFIG_BATTERY_PRESENT_CUSTOM
+#define CONFIG_BATTERY_SMART
 
 /* Charger */
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_INPUT_CURRENT 2250
+#define CONFIG_CHARGER_ISL9238
+#define CONFIG_CHARGER_NARROW_VDC
+#define CONFIG_CHARGER_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_V2
+#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 1000
+#define CONFIG_EXTPOWER_GPIO
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_PROTOCOL_8042
@@ -72,6 +84,8 @@
 #define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
 
 /* I2C ports */
+#define I2C_PORT_CHARGER	NPCX_I2C_PORT3
+#define I2C_PORT_BATTERY	NPCX_I2C_PORT3
 
 /* EC exclude modules */
 #undef CONFIG_ADC
@@ -93,6 +107,10 @@ enum power_signal {
 
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT
+};
+
+enum adc_channel {
+	ADC_CH_COUNT,
 };
 
 /* Define typical operating power and max power */

@@ -7,6 +7,7 @@
 
 #include "chipset.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -49,15 +50,16 @@ const struct i2c_port_t i2c_ports[] = {
 	{"master0-1", NPCX_I2C_PORT0_1, 400, GPIO_I2C0_SCL1, GPIO_I2C0_SDA1},
 	{"master1",   NPCX_I2C_PORT1,   400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 	{"master2",   NPCX_I2C_PORT2,   100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"master3",   NPCX_I2C_PORT3,   100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{"charger",   NPCX_I2C_PORT3,   100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_AC_PRESENT,
+	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
 };
-
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
@@ -145,21 +147,6 @@ void board_hibernate(void)
 	/* Power to EC should shut down now */
 	while (1)
 		;
-}
-
-int charge_prevent_power_on(int power_button_pressed)
-{
-	return 0;
-}
-
-int extpower_is_present(void)
-{
-	return 1;
-}
-
-int charge_want_shutdown(void)
-{
-	return 0;
 }
 
 static void pmic_init(void)
