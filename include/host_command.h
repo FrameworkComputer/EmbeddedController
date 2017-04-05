@@ -281,4 +281,12 @@ int pd_host_command(int command, int version,
  */
 int host_get_vboot_mode(void);
 
+/*
+ * Sends an emulated sysrq to the host, used by button-based debug mode.
+ * Only implemented on top of MKBP protocol.
+ *
+ * @param key		Key to be sent (e.g. 'x')
+ */
+void host_send_sysrq(uint8_t key);
+
 #endif  /* __CROS_EC_HOST_COMMAND_H */

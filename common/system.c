@@ -1126,7 +1126,7 @@ static int command_sysrq(int argc, char **argv)
 	if (argc > 1 && argv[1])
 		key = argv[1][0];
 
-	send_sysrq(key);
+	host_send_sysrq(key);
 
 	return EC_SUCCESS;
 }

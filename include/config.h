@@ -923,7 +923,10 @@
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 
-/* Support for sending emulated sysrq commands to AP */
+/*
+ * Support for sending emulated sysrq events to AP (on designs with a keyboard,
+ * sysrq is passed as normal key presses).
+ */
 #undef CONFIG_EMULATED_SYSRQ
 
 /* Support for eSPI for host communication */

@@ -260,7 +260,7 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 }
 
 #ifdef CONFIG_EMULATED_SYSRQ
-void send_sysrq(uint8_t key)
+void host_send_sysrq(uint8_t key)
 {
 	uint32_t value = key;
 
