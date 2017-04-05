@@ -1042,6 +1042,12 @@ static int transfer_image(struct transfer_descriptor *td,
 	return num_txed_sections;
 }
 
+static struct signed_header_version ver19 = {
+	.epoch = 0,
+	.major = 0,
+	.minor = 19,
+};
+
 static void generate_reset_request(struct transfer_descriptor *td)
 {
 	size_t response_size;
@@ -1049,6 +1055,7 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	uint16_t subcommand;
 	uint8_t command_body[2]; /* Max command body size. */
 	size_t command_body_size;
+	uint32_t background_update_supported;
 
 	if (protocol_version < 6) {
 		if (td->ep_type == usb_xfer) {
@@ -1062,8 +1069,20 @@ static void generate_reset_request(struct transfer_descriptor *td)
 		return;
 	}
 
+	/* RW version 0.0.19 and above has support for background updates. */
+	background_update_supported = !a_newer_than_b(&ver19, &targ.shv[1]);
+
 	/*
-	 * If the user explicitly wants it, request post reset instead of
+	 * If this is an upstart request and there is support for background
+	 * updates, don't post a request now. The target should handle it on
+	 * the next reboot.
+	 */
+	if (td->upstart_mode && background_update_supported)
+		return;
+
+	/*
+	 * If the user explicitly wants it or a reset is needed because h1
+	 * does not support background updates, request post reset instead of
 	 * immediate reset. In this case next time the target reboots, the h1
 	 * will reboot as well, and will consider running the uploaded code.
 	 *
@@ -1076,9 +1095,9 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	/* Most common case. */
 	command_body_size = 0;
 	response_size = 1;
-	if (td->post_reset) {
+	if (td->post_reset || td->upstart_mode) {
 		subcommand = EXTENSION_POST_RESET;
-	} else if (targ.shv[1].minor >= 19) {
+	} else if (background_update_supported) {
 		subcommand = VENDOR_CC_TURN_UPDATE_ON;
 		command_body_size = sizeof(command_body);
 		command_body[0] = 0;
@@ -1262,7 +1281,7 @@ int main(int argc, char *argv[])
 		transferred_sections = transfer_image(&td, data, data_len);
 		free(data);
 
-		if (transferred_sections && !td.upstart_mode)
+		if (transferred_sections)
 			generate_reset_request(&td);
 	} else if (corrupt_inactive_rw) {
 		invalidate_inactive_rw(&td);
