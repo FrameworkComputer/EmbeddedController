@@ -335,7 +335,7 @@ static void usage(int errs)
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
-	       "  -s,--systemdev           Use /dev/tmp0 (-d is ignored)\n"
+	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -u,--upstart             "
 			"Upstart mode (strict header checks)\n"
 	       "\n", progname, VID, PID);
