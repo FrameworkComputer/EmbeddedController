@@ -1254,7 +1254,8 @@ int main(int argc, char *argv[])
 		       targ.shv[0].minor);
 		printf("RW %d.%d.%d\n", targ.shv[1].epoch, targ.shv[1].major,
 		       targ.shv[1].minor);
-		send_done(&td.uep);
+		if (td.ep_type == usb_xfer)
+			send_done(&td.uep);
 	}
 
 	if (data) {
