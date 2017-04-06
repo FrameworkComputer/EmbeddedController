@@ -7,16 +7,18 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 GPIO_INT(FPS_INT,  PIN(A, 2), GPIO_INT_RISING, fps_event)
-GPIO_INT(SPI1_NSS, PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_UP,  spi_event)
+GPIO_INT(SPI1_NSS, PIN(A, 4), GPIO_INPUT,  spi_event)
+GPIO_INT(SLP_S3_L, PIN(A, 11), GPIO_INT_BOTH, slp_event)
 
 /* Outputs */
-GPIO(EC_INT_L,   PIN(A, 1), GPIO_ODR_HIGH | GPIO_PULL_UP)
+GPIO(EC_INT_L,   PIN(A, 1), GPIO_INPUT) /* Enabled when PCH is up */
 GPIO(FP_RST_ODL, PIN(A, 3), GPIO_ODR_LOW)
 GPIO(SPI3_NSS,   PIN(A, 15), GPIO_OUT_HIGH)
 
-/* Unimplemented signals which we need to emulate for now */
+GPIO(WP_L,       PIN(B, 7), GPIO_INPUT)
+
+/* Unimplemented signals which we need to emulate */
 UNIMPLEMENTED(ENTERING_RW)
-UNIMPLEMENTED(WP_L)
 
 /* USART1: PA9/10 */
 ALTERNATE(PIN_MASK(A, 0x0600), GPIO_ALT_F7, MODULE_UART, 0)
