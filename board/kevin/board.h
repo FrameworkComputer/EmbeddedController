@@ -148,7 +148,13 @@
 #endif
 
 #define PD_OPERATING_POWER_MW 15000
+/* Kevin board accommodate 40W input charge current */
+#ifdef BOARD_KEVIN
+#define PD_MAX_POWER_MW       40000
+#else
+/* 60W for Gru */
 #define PD_MAX_POWER_MW       60000
+#endif
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
