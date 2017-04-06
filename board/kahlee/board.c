@@ -178,7 +178,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 	[1] = {
 		.i2c_host_port = NPCX_I2C_PORT0_1,
-		.i2c_slave_addr = 0x36,
+		.i2c_slave_addr = 0x16,
 		.drv = &tcpci_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
@@ -244,20 +244,6 @@ void board_reset_pd_mcu(void)
 	/* Deassert reset to TCPC0 */
 	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 1);
 }
-
-#ifdef CONFIG_USB_PD_TCPC_FW_VERSION
-void board_print_tcpc_fw_version(int port)
-{
-	int rv;
-	int version;
-
-	if (port >= 0)
-		rv = ps8751_tcpc_get_fw_version(port, &version);
-
-	if (!rv)
-		CPRINTS("TCPC p%d FW VER: 0x%x", port, version);
-}
-#endif
 
 void board_tcpc_init(void)
 {

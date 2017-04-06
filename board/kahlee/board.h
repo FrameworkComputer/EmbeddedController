@@ -74,7 +74,6 @@
 #undef CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define ADC_VBUS -1
 #define CONFIG_USB_PD_TCPC_LOW_POWER
-#define CONFIG_USB_PD_TCPC_FW_VERSION
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USB_PD_TCPM_TCPCI
@@ -291,8 +290,6 @@ enum board_version {
 void board_reset_pd_mcu(void);
 
 int board_get_version(void);
-
-void board_print_tcpc_fw_version(int port);
 
 #endif /* !__ASSEMBLER__ */
 

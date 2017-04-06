@@ -2395,9 +2395,6 @@
 /* USB Device version of product */
 #undef CONFIG_USB_BCD_DEV
 
-/* Support TCPC FW version */
-#undef CONFIG_USB_PD_TCPC_FW_VERSION
-
 /*****************************************************************************/
 
 /* Compile chip support for the USB device controller */
