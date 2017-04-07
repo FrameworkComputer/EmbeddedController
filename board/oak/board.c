@@ -354,6 +354,12 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 	}
 }
 
+/*
+ * timestamp of the next possible toggle to ensure the 2-ms spacing
+ * between IRQ_HPD.
+ */
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+
 static void board_typec_set_dp_hpd(int port, int level)
 {
 #if BOARD_REV >= OAK_REV5
@@ -362,14 +368,7 @@ static void board_typec_set_dp_hpd(int port, int level)
 #endif
 
 	gpio_set_level(GPIO_USB_DP_HPD, level);
-
 }
-
-static void hpd_irq_deferred(void)
-{
-	board_typec_set_dp_hpd(dp_hw_port, 1);
-}
-DECLARE_DEFERRED(hpd_irq_deferred);
 
 /**
  * Turn on DP hardware on type-C port.
@@ -388,11 +387,18 @@ void board_typec_dp_on(int port)
 		if (!gpio_get_level(GPIO_USB_DP_HPD)) {
 			board_typec_set_dp_hpd(port, 1);
 		} else {
+			uint64_t now = get_time().val;
+			/* wait for the minimum spacing between IRQ_HPD */
+			if (now < hpd_deadline[port])
+				usleep(hpd_deadline[port] - now);
+
 			board_typec_set_dp_hpd(port, 0);
-			hook_call_deferred(&hpd_irq_deferred_data,
-					   HPD_DSTREAM_DEBOUNCE_IRQ);
+			usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+			board_typec_set_dp_hpd(port, 1);
 		}
 	}
+	/* enforce 2-ms delay between HPD pulses */
+	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 
 	mutex_unlock(&dp_hw_lock);
 }

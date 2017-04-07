@@ -176,6 +176,12 @@ static void anx74xx_tcpc_discharge_vbus(int port, int enable)
 }
 #endif
 
+/*
+ * timestamp of the next possible toggle to ensure the 2-ms spacing
+ * between IRQ_HPD.
+ */
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+
 void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {
 	int reg;
@@ -188,13 +194,20 @@ void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	tcpc_write(port, ANX74XX_REG_HPD_CTRL_0, reg);
 
 	if (hpd_irq) {
+		uint64_t now = get_time().val;
+		/* wait for the minimum spacing between IRQ_HPD if needed */
+		if (now < hpd_deadline[port])
+			usleep(hpd_deadline[port] - now);
+
 		tcpc_read(port, ANX74XX_REG_HPD_CTRL_0, &reg);
 		reg &= ~ANX74XX_REG_HPD_OUT_DATA;
 		tcpc_write(port, ANX74XX_REG_HPD_CTRL_0, reg);
-		msleep(1);
+		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 		reg |= ANX74XX_REG_HPD_OUT_DATA;
 		tcpc_write(port, ANX74XX_REG_HPD_CTRL_0, reg);
 	}
+	/* enforce 2-ms delay between HPD pulses */
+	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 }
 
 void anx74xx_tcpc_clear_hpd_status(int port)

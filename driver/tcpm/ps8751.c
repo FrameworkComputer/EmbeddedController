@@ -9,6 +9,7 @@
 #include "ps8751.h"
 #include "tcpm.h"
 #include "timer.h"
+#include "usb_pd.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI) || \
 	!defined(CONFIG_USB_PD_TCPM_MUX) || \
@@ -18,6 +19,12 @@
 #error "Please upgrade your board configuration"
 
 #endif
+
+/*
+ * timestamp of the next possible toggle to ensure the 2-ms spacing
+ * between IRQ_HPD.
+ */
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
 
 static int dp_set_hpd(int port, int enable)
 {
@@ -55,10 +62,17 @@ void ps8751_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	dp_set_hpd(port, hpd_lvl);
 
 	if (hpd_irq) {
+		uint64_t now = get_time().val;
+		/* wait for the minimum spacing between IRQ_HPD if needed */
+		if (now < hpd_deadline[port])
+			usleep(hpd_deadline[port] - now);
+
 		dp_set_irq(port, 0);
-		msleep(1);
+		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 		dp_set_irq(port, hpd_irq);
 	}
+	/* enforce 2-ms delay between HPD pulses */
+	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 }
 
 int ps8751_tcpc_get_fw_version(int port, int *version)

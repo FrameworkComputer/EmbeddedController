@@ -563,7 +563,7 @@ struct pd_policy {
 /* Per DisplayPort Spec v1.3 Section 3.3 */
 #define HPD_USTREAM_DEBOUNCE_LVL (2*MSEC)
 #define HPD_USTREAM_DEBOUNCE_IRQ (250)
-#define HPD_DSTREAM_DEBOUNCE_IRQ (750)  /* between 500-1000us */
+#define HPD_DSTREAM_DEBOUNCE_IRQ (500)  /* between 500-1000us */
 
 /*
  * DisplayPort Configure VDO
