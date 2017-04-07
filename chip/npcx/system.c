@@ -596,7 +596,7 @@ void system_enable_hib_interrupt(void)
 	task_enable_irq(NPCX_IRQ_MTC_WKINTAD_0);
 }
 
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
+void chip_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Flush console before hibernating */
 	cflush();

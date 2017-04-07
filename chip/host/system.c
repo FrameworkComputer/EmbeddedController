@@ -150,7 +150,7 @@ test_mockable void system_reset(int flags)
 	emulator_reboot();
 }
 
-test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
+void chip_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	uint32_t i;
 

@@ -322,6 +322,12 @@ int system_set_bbram(enum system_bbram_idx idx, uint8_t value);
 void system_hibernate(uint32_t seconds, uint32_t microseconds);
 
 /**
+ * Chip-level callback functions called in system_hibernate() after we force
+ * to shutdown the chipset and get ready to enter hibernate mode.
+ */
+void chip_hibernate(uint32_t seconds, uint32_t microseconds);
+
+/**
  * Optional board-level callback functions called before and after initiating
  * chip-level hibernate sequence. These function may or may not return,
  * depending if the board implements an alternate hibernate method.  The _late

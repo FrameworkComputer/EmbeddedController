@@ -18,7 +18,7 @@
 #include "version.h"
 #include "watchdog.h"
 
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
+void chip_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 #ifdef CONFIG_HOSTCMD_PD
 	/* Inform the PD MCU that we are going to hibernate. */

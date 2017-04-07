@@ -96,7 +96,7 @@ uint32_t system_get_scratchpad(void)
 	return 0;
 }
 
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
+void chip_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 }
 
