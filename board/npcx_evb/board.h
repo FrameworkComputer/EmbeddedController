@@ -45,7 +45,7 @@
 /* Optional feature - used by nuvoton */
 #define NPCX_UART_MODULE2    0 /* 0:GPIO10/11 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
-#define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
+#define NPCX_TACH_SEL2       0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 
 /* Optional for testing */
 #undef  CONFIG_PSTORE
@@ -66,6 +66,9 @@ enum adc_channel {
 
 enum pwm_channel {
 	PWM_CH_FAN,
+#if (CONFIG_FANS == 2)
+	PWM_CH_FAN2,
+#endif
 	PWM_CH_KBLIGHT,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
@@ -73,12 +76,18 @@ enum pwm_channel {
 
 enum fan_channel {
 	FAN_CH_0,
+#if (CONFIG_FANS == 2)
+	FAN_CH_1,
+#endif
 	/* Number of FAN channels */
 	FAN_CH_COUNT
 };
 
 enum mft_channel {
 	MFT_CH_0,
+#if (CONFIG_FANS == 2)
+	MFT_CH_1,
+#endif
 	/* Number of MFT channels */
 	MFT_CH_COUNT
 };

@@ -42,7 +42,7 @@
 /* Optional feature - used by nuvoton */
 #define NPCX_UART_MODULE2    0 /* 0:GPIO10/11 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
-#define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
+#define NPCX_TACH_SEL2       0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 /* Enable SHI PU on transition to S0. Disable the PU otherwise for leakage. */
 #define NPCX_SHI_CS_PU
 /* Enable bypass since shi outputs invalid data when across 256B boundary */

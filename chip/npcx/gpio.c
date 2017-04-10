@@ -105,11 +105,11 @@ const struct gpio_alt_map gpio_alt_table[] = {
 	{ NPCX_GPIO(6, 0),  NPCX_ALT(4, PWM7_SL)}, /* PWM7 */
 	/* MFT Module */
 #if NPCX_TACH_SEL2
-	{ NPCX_GPIO(9, 3),  NPCX_ALT(C, TA1_TACH1_SL2)},/* TA1_TACH1 */
-	{ NPCX_GPIO(D, 3),  NPCX_ALT(C, TB1_TACH2_SL2)},/* TB1_TACH2 */
+	{ NPCX_GPIO(9, 3),  NPCX_ALT(C, TA1_SL2)},/* TA1_SEL2 */
+	{ NPCX_GPIO(A, 6),  NPCX_ALT(C, TA2_SL2)},/* TA2_SEL2 */
 #else
-	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_TACH1_SL1)},/* TA1_TACH1 */
-	{ NPCX_GPIO(A, 4),  NPCX_ALT(3, TB1_TACH2_SL1)},/* TB1_TACH2 */
+	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_SL1)},/* TA1_SEL1 */
+	{ NPCX_GPIO(7, 3),  NPCX_ALT(3, TA2_SL1)},/* TA2_SEL1 */
 #endif
 	/* Keyboard Scan Module (Inputs) */
 	{ NPCX_GPIO(3, 1),  NPCX_ALT_INV(7, NO_KSI0_SL)},/* KSI0 */

@@ -183,7 +183,7 @@
 #define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
 /* FIXME(dhendrix): these pins are just normal GPIOs on Reef. Do we need
  * to change some other setting to put them in GPIO mode? */
-#define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
+#define NPCX_TACH_SEL2       0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 
 /* I2C ports */
 #define I2C_PORT_GYRO			NPCX_I2C_PORT1

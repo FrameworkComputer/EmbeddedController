@@ -526,8 +526,8 @@ enum {
 #define NPCX_DEVALT3_PS2_1_SL            1
 #define NPCX_DEVALT3_PS2_2_SL            2
 #define NPCX_DEVALT3_PS2_3_SL            3
-#define NPCX_DEVALT3_TA1_TACH1_SL1       4
-#define NPCX_DEVALT3_TB1_TACH2_SL1       5
+#define NPCX_DEVALT3_TA1_SL1             4
+#define NPCX_DEVALT3_TB1_SL1             5
 #define NPCX_DEVALT3_TA2_SL1             6
 #define NPCX_DEVALT3_TB2_SL1             7
 
@@ -591,8 +591,8 @@ enum {
 #define NPCX_DEVALTC_UART_SL2            0
 #define NPCX_DEVALTC_SHI_SL              1
 #define NPCX_DEVALTC_PS2_3_SL2           3
-#define NPCX_DEVALTC_TA1_TACH1_SL2       4
-#define NPCX_DEVALTC_TB1_TACH2_SL2       5
+#define NPCX_DEVALTC_TA1_SL2             4
+#define NPCX_DEVALTC_TB1_SL2             5
 #define NPCX_DEVALTC_TA2_SL2             6
 #define NPCX_DEVALTC_TB2_SL2             7
 
@@ -791,7 +791,8 @@ enum NPCX_PMC_PWDWN_CTL_T {
 /* TODO: set PD masks based upon actual peripheral usage */
 #define CGC_KBS_MASK     (1 << NPCX_PWDWN_CTL1_KBS_PD)
 #define CGC_UART_MASK    (1 << NPCX_PWDWN_CTL1_UART_PD)
-#define CGC_FAN_MASK     (1 << NPCX_PWDWN_CTL1_MFT1_PD)
+#define CGC_FAN_MASK     ((1 << NPCX_PWDWN_CTL1_MFT1_PD) | \
+			 (1 << NPCX_PWDWN_CTL1_MFT2_PD))
 #define CGC_FIU_MASK     (1 << NPCX_PWDWN_CTL1_FIU_PD)
 #define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \

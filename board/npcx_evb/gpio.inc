@@ -73,13 +73,21 @@ ALTERNATE(PIN_MASK(9, 0x20), 1,  MODULE_SPI,         0)    /* SPIP_MISO         
 ALTERNATE(PIN_MASK(C, 0x04), 1,  MODULE_PWM,         0)    /* PWM1 for PWM/KBLIGHT Test GPIOC2     */
 /* Alternative functionality for FANS */
 #ifdef CONFIG_FANS
-ALTERNATE(PIN_MASK(C, 0x08), 1,  MODULE_PWM,         0)    /* PWM0 for PWM/FAN Test   GPIOC3       */
+ALTERNATE(PIN_MASK(C, 0x08), 1,  MODULE_PWM,         0)    /* PWM0 for PWM/FAN Test GPIOC3 */
 #if NPCX_TACH_SEL2
-ALTERNATE(PIN_MASK(9, 0x08), 1,  MODULE_PWM,         0)    /* MFT-1/TA1_TACH1 for FAN GPIO93       */
+ALTERNATE(PIN_MASK(9, 0x08), 1,  MODULE_PWM,         0)    /* TA1_SL2 GPIO93 for tachometer input */
 #else
-ALTERNATE(PIN_MASK(4, 0x01), 1,  MODULE_PWM,         0)    /* MFT-1/TA1_TACH1 for FAN Test GPIO40  */
-#endif
-#endif
+ALTERNATE(PIN_MASK(4, 0x01), 1,  MODULE_PWM,         0)    /* TA1_SL1 GPIO40 for tachometer input */
+#endif /* NPCX_TACH_SEL2 */
+#if (CONFIG_FANS == 2)
+ALTERNATE(PIN_MASK(C, 0x10), 1,  MODULE_PWM,         0)    /* PWM2 for PWM/FAN Test GPIOC4 */
+#if NPCX_TACH_SEL2
+ALTERNATE(PIN_MASK(A, 0x40), 1,  MODULE_PWM,         0)    /* TA2_SL2 GPIOA6 for tachometer input */
+#else
+ALTERNATE(PIN_MASK(7, 0x08), 1,  MODULE_PWM,         0)    /* TA2_SL1 GPIO73 for tachometer input */
+#endif /* NPCX_TACH_SEL2 */
+#endif /* (CONFIG_FANS == 2) */
+#endif /* CONFIG_FANS */
 
 /* Keyboard Columns */
 ALTERNATE(PIN_MASK(0, 0xE0), 0,  MODULE_KEYBOARD_SCAN, 0)
