@@ -2273,8 +2273,8 @@ struct __ec_align1 ec_params_force_lid_open {
 #define EC_CMD_CONFIG_POWER_BUTTON 0x002D
 
 enum ec_config_power_button_flags {
-	/* Enable/Disable SMI pulses for x86 devices */
-	EC_POWER_BUTTON_ENABLE_SMI_PULSE = 1 << 0,
+	/* Enable/Disable power button pulses for x86 devices */
+	EC_POWER_BUTTON_ENABLE_PULSE = (1 << 0),
 };
 
 struct __ec_align1 ec_params_config_power_button {

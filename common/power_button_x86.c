@@ -113,7 +113,7 @@ static const char * const state_names[] = {
 static uint64_t tnext_state;
 
 /*
- * Determines whether to execute initial SMI pulse (t0 stage)
+ * Determines whether to execute power button pulse (t0 stage)
  */
 static int power_button_pulse_enabled = 1;
 
@@ -466,7 +466,7 @@ static int hc_config_powerbtn_x86(struct host_cmd_handler_args *args)
 	const struct ec_params_config_power_button *p = args->params;
 
 	power_button_pulse_enabled =
-		p->flags & (1 << EC_POWER_BUTTON_ENABLE_SMI_PULSE);
+		!!(p->flags & EC_POWER_BUTTON_ENABLE_PULSE);
 
 	return EC_SUCCESS;
 }
