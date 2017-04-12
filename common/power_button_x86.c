@@ -472,3 +472,24 @@ static int hc_config_powerbtn_x86(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CONFIG_POWER_BUTTON, hc_config_powerbtn_x86,
 		     EC_VER_MASK(0));
+
+
+/*
+ * Currently, the only reason why we disable power button pulse is to allow
+ * detachable menu on AP to use power button for selection purpose without
+ * triggering SMI. Thus, re-enable the pulse any time there is a chipset
+ * state transition event.
+ */
+static void power_button_pulse_setting_reset(void)
+{
+	power_button_pulse_enabled = 1;
+}
+
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, power_button_pulse_setting_reset,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, power_button_pulse_setting_reset,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, power_button_pulse_setting_reset,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, power_button_pulse_setting_reset,
+	     HOOK_PRIO_DEFAULT);
