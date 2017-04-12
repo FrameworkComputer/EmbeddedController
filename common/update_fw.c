@@ -9,10 +9,13 @@
 #include "flash.h"
 #include "hooks.h"
 #include "include/compile_time_macros.h"
+#include "rollback.h"
+#include "rwsig.h"
 #include "system.h"
 #include "uart.h"
 #include "update_fw.h"
 #include "util.h"
+#include "vb21_struct.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
@@ -98,17 +101,26 @@ static int contents_allowed(uint32_t block_offset,
  */
 void fw_update_start(struct first_response_pdu *rpdu)
 {
+	const char *version;
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+	const struct vb21_packed_key *vb21_key;
+#endif
+
+	rpdu->header_type = htobe16(UPDATE_HEADER_TYPE_COMMON);
+
 	/* Determine the valid update section. */
 	switch (system_get_image_copy()) {
 	case SYSTEM_IMAGE_RO:
 		/* RO running, so update RW */
 		update_section.base_offset = CONFIG_RW_MEM_OFF;
 		update_section.top_offset = CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE;
+		version = system_get_version(SYSTEM_IMAGE_RW);
 		break;
 	case SYSTEM_IMAGE_RW:
 		/* RW running, so update RO */
 		update_section.base_offset = CONFIG_RO_MEM_OFF;
 		update_section.top_offset = CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE;
+		version = system_get_version(SYSTEM_IMAGE_RO);
 		break;
 	default:
 		CPRINTF("%s:%d\n", __func__, __LINE__);
@@ -116,27 +128,23 @@ void fw_update_start(struct first_response_pdu *rpdu)
 		return;
 	}
 
-	/*
-	 * TODO(b/36375666): We reuse the same structure as cr50 updater, but
-	 * there isn't a whole lot that can be shared... We should probably
-	 * switch to a board-specific response packet (at least common vs
-	 * cr50-specific).
-	 */
-	rpdu->backup_ro_offset = htobe32(update_section.base_offset);
-	rpdu->backup_rw_offset = 0x0;
+	rpdu->common.maximum_pdu_size = htobe32(CONFIG_UPDATE_PDU_SIZE);
+	rpdu->common.flash_protection = htobe32(flash_get_protect());
+	rpdu->common.offset = htobe32(update_section.base_offset);
+	if (version)
+		memcpy(rpdu->common.version, version,
+			sizeof(rpdu->common.version));
 
-	/* RO header information. */
-	rpdu->shv[0].minor = 0;
-	rpdu->shv[0].major = 0;
-	rpdu->shv[0].epoch = 0;
-	rpdu->keyid[0] = 0;
+#ifdef CONFIG_ROLLBACK
+	rpdu->common.min_rollback = htobe32(rollback_get_minimum_version());
+#else
+	rpdu->common.min_rollback = htobe32(-1);
+#endif
 
-	/* RW header information. */
-	rpdu->shv[1].minor = 0;
-	rpdu->shv[1].major = 0;
-	rpdu->shv[1].epoch = 0;
-
-	rpdu->keyid[1] = 0;
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+	vb21_key = (const struct vb21_packed_key *)CONFIG_RO_PUBKEY_ADDR;
+	rpdu->common.key_version = htobe32(vb21_key->key_version);
+#endif
 }
 
 void fw_update_command_handler(void *body,
@@ -169,8 +177,13 @@ void fw_update_command_handler(void *body,
 
 		/* First, prepare the response structure. */
 		memset(rpdu, 0, sizeof(*rpdu));
+		/*
+		 * TODO(b/36375666): The response size can be shorter depending
+		 * on which board-specific type of response we provide. This
+		 * may send trailing 0 bytes, which should be harmless.
+		 */
 		*response_size = sizeof(*rpdu);
-		rpdu->protocol_version = htobe32(UPDATE_PROTOCOL_VERSION);
+		rpdu->protocol_version = htobe16(UPDATE_PROTOCOL_VERSION);
 
 		/* Setup internal state (e.g. valid sections, and fill rpdu) */
 		fw_update_start(rpdu);

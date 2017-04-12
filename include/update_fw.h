@@ -64,7 +64,7 @@ struct update_frame_header {
 
 /*
  * A convenience structure which allows to group together various revision
- * fields of the header created by the signer.
+ * fields of the header created by the signer (cr50-specific).
  *
  * These fields are compared when deciding if versions of two images are the
  * same or when deciding which one of the available images to run.
@@ -99,19 +99,57 @@ struct first_response_pdu {
 	uint32_t return_value;
 
 	/* The below fields are present in versions 2 and up. */
-	uint32_t protocol_version;
 
-	/* The below fields are present in versions 3 and up. */
-	uint32_t  backup_ro_offset;
-	uint32_t  backup_rw_offset;
+	/* Type of header following (one of first_response_pdu_header_type) */
+	uint16_t header_type;
 
-	/* The below fields are present in versions 4 and up. */
-	/* Versions of the currently active RO and RW sections. */
-	struct signed_header_version shv[2];
+	/* Must be UPDATE_PROTOCOL_VERSION */
+	uint16_t protocol_version;
 
-	/* The below fields are present in versions 5 and up */
-	/* keyids of the currently active RO and RW sections. */
-	uint32_t keyid[2];
+	/* In version 6 and up, a board-specific header follows. */
+	union {
+		/* cr50 (header_type = UPDATE_HEADER_TYPE_CR50) */
+		struct {
+			/* The below fields are present in versions 3 and up. */
+			uint32_t  backup_ro_offset;
+			uint32_t  backup_rw_offset;
+
+			/* The below fields are present in versions 4 and up. */
+			/*
+			 * Versions of the currently active RO and RW sections.
+			 */
+			struct signed_header_version shv[2];
+
+			/* The below fields are present in versions 5 and up */
+			/* keyids of the currently active RO and RW sections. */
+			uint32_t keyid[2];
+		} cr50;
+		/* Common code (header_type = UPDATE_HEADER_TYPE_COMMON) */
+		struct {
+			/* Maximum PDU size */
+			uint32_t maximum_pdu_size;
+
+			/* Flash protection status */
+			uint32_t flash_protection;
+
+			/* Offset of the other region */
+			uint32_t offset;
+
+			/* Version string of the other region */
+			char version[32];
+
+			/* Minimum rollback version that RO will accept */
+			int32_t min_rollback;
+
+			/* RO public key version */
+			uint32_t key_version;
+		} common;
+	};
+};
+
+enum first_response_pdu_header_type {
+	UPDATE_HEADER_TYPE_CR50 = 0, /* Must be 0 for backwards compatibility */
+	UPDATE_HEADER_TYPE_COMMON = 1,
 };
 
 /* TODO: Handle this in update_fw.c, not usb_update.c */
