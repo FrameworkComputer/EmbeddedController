@@ -6,9 +6,9 @@
 /* Currently tests will execute in the order they are listed here */
 
 /* Test whether sync completes successfully */
-CTS_TEST(write8_test)
-CTS_TEST(write16_test)
-CTS_TEST(write32_test)
-CTS_TEST(read8_test)
-CTS_TEST(read16_test)
-CTS_TEST(read32_test)
+CTS_TEST(write8_test,,,,)
+CTS_TEST(write16_test,,,,)
+CTS_TEST(write32_test,,,,)
+CTS_TEST(read8_test,,,,)
+CTS_TEST(read16_test,,,,)
+CTS_TEST(read32_test,,,,)

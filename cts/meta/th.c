@@ -55,20 +55,9 @@ enum cts_rc bad_sync_both_test(void)
 	return CTS_RC_BAD_SYNC;
 }
 
-enum cts_rc bad_sync_failure_test(void)
-{
-	CTS_DEBUG_PRINTF("Expect: Conflict");
-	return CTS_RC_FAILURE;
-}
-
 enum cts_rc hang_test(void)
 {
 	CTS_DEBUG_PRINTF("This and next, expect: Corrupted");
-	return CTS_RC_SUCCESS;
-}
-
-enum cts_rc post_corruption_success(void)
-{
 	return CTS_RC_SUCCESS;
 }
 
@@ -82,12 +71,13 @@ void cts_task(void)
 	cflush();
 	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
 		sync();
+		CPRINTF("\n%s start\n", tests[i].name);
 		result = tests[i].run();
-		CPRINTF("\n%s %d\n", tests[i].name, result);
+		CPRINTF("\n%s end %d\n", tests[i].name, result);
 		cflush();
 	}
 
-	CPRINTS("GPIO test suite finished");
+	CPRINTS("Meta test finished");
 	cflush();
 	while (1) {
 		watchdog_reload();

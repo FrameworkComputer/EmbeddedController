@@ -12,53 +12,41 @@
  * 3
  * 4
  */
-CTS_TEST(debug_test)
+CTS_TEST(debug_test,,,,)
 
 /* Test should succeed if both report success
  * (expected result: success)
  */
-CTS_TEST(success_test)
+CTS_TEST(success_test,,,,)
 
 /* Test should fail if one reports success and
  * (one reports failure (expected result: failure)
  */
-CTS_TEST(fail_dut_test)
+CTS_TEST(fail_dut_test,,, CTS_RC_FAILURE,)
 
 /* Test should fail if one reports success and
  * (one reports failure (expected result: failure)
  */
-CTS_TEST(fail_th_test)
+CTS_TEST(fail_th_test, CTS_RC_FAILURE,,,)
 
 /* Test should fail when both boards report failure
  * (expected result: failure)
  */
-CTS_TEST(fail_both_test)
+CTS_TEST(fail_both_test, CTS_RC_FAILURE,, CTS_RC_FAILURE,)
 
 /* Test should fail with bad sync if one reports bad
  * sync and the other reports success (expected result:
  * bad_sync)
  */
-CTS_TEST(bad_sync_and_success_test)
+CTS_TEST(bad_sync_and_success_test, CTS_RC_BAD_SYNC,,,)
 
 /* Test should fail with bad sync if both boards report
  * bad sync (expected result: bad_sync)
  */
-CTS_TEST(bad_sync_both_test)
-
-/* Test should report conflict if one reports bad sync
- * and the other reports failure
- * (expected result: conflict)
- */
-CTS_TEST(bad_sync_failure_test)
+CTS_TEST(bad_sync_both_test, CTS_RC_BAD_SYNC,, CTS_RC_BAD_SYNC,)
 
 /* Test should be listed as corrupted if one test hangs,
  * regardless of what the other test outputs
  * (expected result: corrupted)
  */
-CTS_TEST(hang_test)
-
-/* Test should be corrupted if it follows a corrupted
- * test, regardless of what the actual result was
- * reported as
- */
-CTS_TEST(post_corruption_success)
+CTS_TEST(hang_test, CTS_RC_SUCCESS,, CTS_RC_DID_NOT_END,)

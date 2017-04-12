@@ -14,11 +14,21 @@
  * where <NAME> will be printed on the result screen.
  */
 
-/* Host only codes. Should not be needed by th.c or dut.c. */
-CTS_RC_DUPLICATE_RUN = -2,
-CTS_RC_NO_RESULT = -1,
+/*
+ * Host only return codes. Should not be needed by th.c or dut.c.
+ */
+/* Test didn't run */
+CTS_RC_DID_NOT_START = -1,
+/* Test didn't end */
+CTS_RC_DID_NOT_END = -2,
+/* Results were reported twice or more */
+CTS_RC_DUPLICATE_RUN = -3,
+/* Error in parsing return code. Probably it was null or not an integer. */
+CTS_RC_INVALID_RC = -4,
 
-/* Regular codes */
+/*
+ * Regular return codes. Used by DUT and TH.
+ */
 CTS_RC_SUCCESS = 0,
 CTS_RC_FAILURE,
 CTS_RC_BAD_SYNC,

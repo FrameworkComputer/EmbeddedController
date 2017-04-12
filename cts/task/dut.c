@@ -125,18 +125,13 @@ static void recurse(int x)
 	CPRINTS("-%d", x);
 }
 
-enum cts_rc test_stack_overflow(void);
-
-#include "cts_testlist.h"
-
 enum cts_rc test_stack_overflow(void)
 {
-	/* recurse() is expected to overflow the stack, which leads to reboot.
-	 * So, we print output proactively. */
-	CPRINTF("\n%s %d\n", tests[CTS_TEST_ID_COUNT - 1].name, CTS_RC_SUCCESS);
 	recurse(0);
 	return CTS_RC_FAILURE;
 }
+
+#include "cts_testlist.h"
 
 void cts_task(void)
 {
@@ -147,8 +142,9 @@ void cts_task(void)
 
 	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
 		clear_state();
+		CPRINTF("\n%s start\n", tests[i].name);
 		rc = tests[i].run();
-		CPRINTF("\n%s %d\n", tests[i].name, rc);
+		CPRINTF("\n%s end %d\n", tests[i].name, rc);
 		cflush();
 	}
 

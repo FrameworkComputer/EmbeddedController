@@ -62,8 +62,9 @@ void cts_task(void)
 
 	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
 		sync();
+		CPRINTF("\n%s start\n", tests[i].name);
 		rc = tests[i].run();
-		CPRINTF("\n%s %d\n", tests[i].name, rc);
+		CPRINTF("\n%s end %d\n", tests[i].name, rc);
 		cflush();
 	}
 

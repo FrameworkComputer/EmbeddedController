@@ -16,4 +16,4 @@
  * - GPIO_OUTPUT connection for sending notification from DUT
  * - Calibrated TH timer
  */
-CTS_TEST(timer_calibration_test)
+CTS_TEST(timer_calibration_test,,,,)

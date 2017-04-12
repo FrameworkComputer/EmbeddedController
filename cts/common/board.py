@@ -2,13 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 import fcntl
 import os
 import select
 import shutil
 import subprocess as sp
-import time
 
 
 OCD_SCRIPT_DIR = '/usr/local/share/openocd/scripts'
@@ -26,7 +26,7 @@ REBOOT_MARKER = 'UART initialized after reboot'
 
 
 class Board(object):
-  """Class representing a single board connected to a host machine
+  """Class representing a single board connected to a host machine.
 
   Attributes:
     board: String containing actual type of board, i.e. nucleo-f072rb
@@ -40,19 +40,23 @@ class Board(object):
   """
 
   __metaclass__ = ABCMeta  # This is an Abstract Base Class (ABC)
+
   def __init__(self, board, module, hla_serial=None):
-    """Initializes a board object with given attributes
+    """Initializes a board object with given attributes.
 
     Args:
       board: String containing board name
       module: String of the test module you are building,
         i.e. gpio, timer, etc.
       hla_serial: Serial number if board's adaptor is an HLA
+
+    Raises:
+      RuntimeError: Board is not supported
     """
-    if not board in OPENOCD_CONFIGS:
+    if board not in OPENOCD_CONFIGS:
       msg = 'OpenOcd configuration not found for ' + board
       raise RuntimeError(msg)
-    if not board in FLASH_OFFSETS:
+    if board not in FLASH_OFFSETS:
       msg = 'Flash offset not found for ' + board
       raise RuntimeError(msg)
     self.board = board
@@ -64,14 +68,14 @@ class Board(object):
     self.tty = None
 
   def reset_log_dir(self):
-    """Reset log directory"""
+    """Reset log directory."""
     if os.path.isdir(self.log_dir):
       shutil.rmtree(self.log_dir)
     os.makedirs(self.log_dir)
 
   @staticmethod
   def get_stlink_serials():
-    """Gets serial numbers of all st-link v2.1 board attached to host
+    """Gets serial numbers of all st-link v2.1 board attached to host.
 
     Returns:
       List of serials
@@ -81,7 +85,7 @@ class Board(object):
     st_link_info = usb_process.communicate()[0]
     st_serials = []
     for line in st_link_info.split('\n'):
-      if not 'iSerial' in line:
+      if 'iSerial' not in line:
         continue
       words = line.split()
       if len(words) <= 2:
@@ -91,14 +95,17 @@ class Board(object):
 
   @abstractmethod
   def get_serial(self):
-    """Subclass should implement this"""
+    """Subclass should implement this."""
     pass
 
   def send_open_ocd_commands(self, commands):
-    """Send a command to the board via openocd
+    """Send a command to the board via openocd.
 
     Args:
       commands: A list of commands to send
+
+    Returns:
+      True if execution is successful or False otherwise.
     """
     args = ['openocd', '-s', OCD_SCRIPT_DIR,
             '-f', self.openocd_config, '-c', 'hla_serial ' + self.hla_serial]
@@ -120,11 +127,14 @@ class Board(object):
     with open(self.openocd_log) as log:
       print log.read()
 
-  def build(self, module, ec_dir):
-    """Builds test suite module for board
+  def build(self, ec_dir):
+    """Builds test suite module for board.
 
     Args:
       ec_dir: String of the ec directory path
+
+    Returns:
+      True if build is successful or False otherwise.
     """
     cmds = ['make',
             '--directory=' + ec_dir,
@@ -146,7 +156,7 @@ class Board(object):
       print log.read()
 
   def flash(self, image_path):
-    """Flashes board with most recent build ec.bin"""
+    """Flashes board with most recent build ec.bin."""
     cmd = ['reset_config connect_assert_srst',
            'init',
            'reset init',
@@ -163,11 +173,12 @@ class Board(object):
     return s
 
   def reset(self):
-    """Reset then halt board """
+    """Reset then halt board."""
     return self.send_open_ocd_commands(['init', 'reset halt'])
 
   def setup_tty(self):
     """Call this before calling read_tty for the first time.
+
     This is not in the initialization because caller only should call
     this function after serial numbers are setup
     """
@@ -185,12 +196,12 @@ class Board(object):
     self.tty = tty
 
   def read_tty(self, max_boot_count=1):
-    """Read info from a serial port described by a file descriptor
+    """Read info from a serial port described by a file descriptor.
 
     Args:
       max_boot_count: Stop reading if boot count exceeds this number
 
-    Return:
+    Returns:
       result: characters read from tty
       boot: boot counts
     """
@@ -219,19 +230,15 @@ class Board(object):
     return result, boot
 
   def identify_tty_port(self):
-    """Saves this board's serial port"""
+    """Saves this board's serial port."""
     dev_dir = '/dev'
     id_prefix = 'ID_SERIAL_SHORT='
     com_devices = [f for f in os.listdir(dev_dir) if f.startswith('ttyACM')]
 
     for device in com_devices:
       self.tty_port = os.path.join(dev_dir, device)
-      properties = sp.check_output(['udevadm',
-                      'info',
-                      '-a',
-                      '-n',
-                      self.tty_port,
-                      '--query=property'])
+      properties = sp.check_output(
+          ['udevadm', 'info', '-a', '-n', self.tty_port, '--query=property'])
       for line in [l.strip() for l in properties.split('\n')]:
         if line.startswith(id_prefix):
           if self.hla_serial == line[len(id_prefix):]:
@@ -241,7 +248,7 @@ class Board(object):
     raise RuntimeError('The device dev path could not be found')
 
   def open_tty(self):
-    """Read available bytes from device dev path"""
+    """Read available bytes from device dev path."""
     fd = os.open(self.tty_port, os.O_RDONLY)
     flag = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
@@ -249,18 +256,19 @@ class Board(object):
 
 
 class TestHarness(Board):
-  """Subclass of Board representing a Test Harness
+  """Subclass of Board representing a Test Harness.
 
   Attributes:
     serial_path: Path to file containing serial number
   """
 
   def __init__(self, board, module, log_dir, serial_path):
-    """Initializes a board object with given attributes
+    """Initializes a board object with given attributes.
 
     Args:
       board: board name
       module: module name
+      log_dir: Directory where log file is stored
       serial_path: Path to file containing serial number
     """
     Board.__init__(self, board, module)
@@ -271,9 +279,9 @@ class TestHarness(Board):
     self.reset_log_dir()
 
   def get_serial(self):
-    """Loads serial number from saved location"""
+    """Loads serial number from saved location."""
     if self.hla_serial:
-      return # serial was already loaded
+      return  # serial was already loaded
     try:
       with open(self.serial_path, mode='r') as ser_f:
         self.hla_serial = ser_f.read()
@@ -284,7 +292,7 @@ class TestHarness(Board):
       raise RuntimeError(msg)
 
   def save_serial(self):
-    """Saves the TH serial number to a file"""
+    """Saves the TH serial number to a file."""
     serials = Board.get_stlink_serials()
     if len(serials) > 1:
       msg = ('There are more than one test board connected to the host.'
@@ -296,9 +304,9 @@ class TestHarness(Board):
       raise RuntimeError(msg)
 
     serial = serials[0]
-    dir = os.path.dirname(self.serial_path)
-    if not os.path.exists(dir):
-      os.makedirs(dir)
+    serial_dir = os.path.dirname(self.serial_path)
+    if not os.path.exists(serial_dir):
+      os.makedirs(serial_dir)
     with open(self.serial_path, mode='w') as ser_f:
       ser_f.write(serial)
       self.hla_serial = serial
@@ -308,20 +316,21 @@ class TestHarness(Board):
 
 
 class DeviceUnderTest(Board):
-  """Subclass of Board representing a DUT board
+  """Subclass of Board representing a DUT board.
 
   Attributes:
     th: Reference to test harness board to which this DUT is attached
   """
 
   def __init__(self, board, th, module, log_dir, hla_ser=None):
-    """Initializes a Device Under Test object with given attributes
+    """Initializes a DUT object.
 
     Args:
       board: String containing board name
       th: Reference to test harness board to which this DUT is attached
       module: module name
-      hla_serial: Serial number if board uses an HLA adaptor
+      log_dir: Directory where log file is stored
+      hla_ser: Serial number if board uses an HLA adaptor
     """
     Board.__init__(self, board, module, hla_serial=hla_ser)
     self.th = th
@@ -335,8 +344,11 @@ class DeviceUnderTest(Board):
 
     Precondition: The DUT and TH must both be connected, and th.hla_serial
     must hold the correct value (the th's serial #)
+
+    Raises:
+      RuntimeError: DUT isn't found or multiple DUTs are found.
     """
-    if self.hla_serial != None:
+    if self.hla_serial is not None:
       # serial was already set ('' is a valid serial)
       return
 

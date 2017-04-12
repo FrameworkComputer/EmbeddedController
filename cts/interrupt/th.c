@@ -74,8 +74,9 @@ void cts_task(void)
 		gpio_set_level(GPIO_OUTPUT_TEST, 1);
 		gpio_set_level(GPIO_CTS_IRQ2, 1);
 		sync();
+		CPRINTF("\n%s start\n", tests[i].name);
 		rc = tests[i].run();
-		CPRINTF("\n%s %d\n", tests[i].name, rc);
+		CPRINTF("\n%s end %d\n", tests[i].name, rc);
 		cflush();
 	}
 
