@@ -9,39 +9,18 @@
 #include "flash.h"
 #include "hooks.h"
 #include "include/compile_time_macros.h"
+#include "system.h"
 #include "uart.h"
 #include "update_fw.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
-const struct section_descriptor *valid_section;
-
-/*
- * Pick the section where updates can go to based on current code address.
- *
- * TODO(b/36375666): Each board/chip should be able to re-define this.
- */
-static int set_valid_section(void)
-{
-	int i;
-	uint32_t run_time_offs = (uint32_t) set_valid_section -
-		CONFIG_PROGRAM_MEMORY_BASE;
-	valid_section = rw_sections;
-
-	for (i = 0; i < num_rw_sections; i++) {
-		if ((run_time_offs > rw_sections[i].sect_base_offset) &&
-		    (run_time_offs < rw_sections[i].sect_top_offset))
-			continue;
-		valid_section = rw_sections + i;
-		break;
-	}
-	if (i == num_rw_sections) {
-		CPRINTF("%s:%d No valid section found!\n", __func__, __LINE__);
-		return EC_ERROR_INVAL;
-	}
-	return EC_SUCCESS;
-}
+/* Section to be updated (i.e. not the current section). */
+struct {
+	uint32_t base_offset;
+	uint32_t top_offset;
+} update_section;
 
 /*
  * Verify that the passed in block fits into the valid area. If it does, and
@@ -58,13 +37,13 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 	uint32_t size;
 
 	/* Is this an RW chunk? */
-	if (valid_section &&
-	    (block_offset >= valid_section->sect_base_offset) &&
-	    ((block_offset + body_size) <= valid_section->sect_top_offset)) {
+	if (update_section.base_offset != update_section.top_offset &&
+	    (block_offset >= update_section.base_offset) &&
+	    ((block_offset + body_size) <= update_section.top_offset)) {
 
-		base = valid_section->sect_base_offset;
-		size = valid_section->sect_top_offset -
-			 valid_section->sect_base_offset;
+		base = update_section.base_offset;
+		size = update_section.top_offset -
+			 update_section.base_offset;
 		/*
 		 * If this is the first chunk for this section, it needs to
 		 * be erased.
@@ -83,8 +62,8 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 	CPRINTF("%s:%d %x, %d section base %x top %x\n",
 		__func__, __LINE__,
 		block_offset, body_size,
-		valid_section->sect_base_offset,
-		valid_section->sect_top_offset);
+		update_section.base_offset,
+		update_section.top_offset);
 
 	return UPDATE_BAD_ADDR;
 
@@ -116,19 +95,22 @@ static int contents_allowed(uint32_t block_offset,
  *
  * Assumes rpdu is already prefilled with 0, and that version has already
  * been set. May set a return_value != 0 on error.
- *
- * TODO(b/36375666): Each board/chip should be able to re-define this.
  */
 void fw_update_start(struct first_response_pdu *rpdu)
 {
 	/* Determine the valid update section. */
-	set_valid_section();
-
-	/*
-	 * If there have been any problems when determining the valid
-	 * section offsets/sizes - return an error code.
-	 */
-	if (!valid_section) {
+	switch (system_get_image_copy()) {
+	case SYSTEM_IMAGE_RO:
+		/* RO running, so update RW */
+		update_section.base_offset = CONFIG_RW_MEM_OFF;
+		update_section.top_offset = CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE;
+		break;
+	case SYSTEM_IMAGE_RW:
+		/* RW running, so update RO */
+		update_section.base_offset = CONFIG_RO_MEM_OFF;
+		update_section.top_offset = CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE;
+		break;
+	default:
 		CPRINTF("%s:%d\n", __func__, __LINE__);
 		rpdu->return_value = htobe32(UPDATE_GEN_ERROR);
 		return;
@@ -140,7 +122,7 @@ void fw_update_start(struct first_response_pdu *rpdu)
 	 * switch to a board-specific response packet (at least common vs
 	 * cr50-specific).
 	 */
-	rpdu->backup_ro_offset = htobe32(valid_section->sect_base_offset);
+	rpdu->backup_ro_offset = htobe32(update_section.base_offset);
 	rpdu->backup_rw_offset = 0x0;
 
 	/* RO header information. */

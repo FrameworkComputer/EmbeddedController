@@ -114,27 +114,6 @@ void usb_i2c_board_disable(void) {}
 
 
 /******************************************************************************
- * Support firmware upgrade over USB. We can update whichever section is not
- * the current section.
- */
-
-/*
- * This array defines possible sections available for the firmware update.
- * The section which does not map the current executing code is picked as the
- * valid update area. The values are offsets into the flash space.
- */
-const struct section_descriptor board_rw_sections[] = {
-	{CONFIG_RO_MEM_OFF,
-	 CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE},
-	{CONFIG_RW_MEM_OFF,
-	 CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE},
-};
-const struct section_descriptor * const rw_sections = board_rw_sections;
-const int num_rw_sections = ARRAY_SIZE(board_rw_sections);
-
-
-
-/******************************************************************************
  * Console commands.
  */
 

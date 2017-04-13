@@ -149,23 +149,4 @@ enum {
  */
 #define UPDATE_PDU_SIZE 1024
 
-/* TODO(b/36375666): The structures below might not belong in this file. */
-
-/*
- * This array defines possible sections available for the firmare update.
- * The section which does not map the current execting code is picked as the
- * valid update area. The values are offsets into the flash space.
- *
- * This should be defined in board.c, with each entry containing:
- * {CONFIG_RW_MEM_OFF, CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE}
- * for its relevant section.
- */
-struct section_descriptor {
-	uint32_t sect_base_offset;
-	uint32_t sect_top_offset;
-};
-
-extern const struct section_descriptor * const rw_sections;
-extern const int num_rw_sections;
-
 #endif  /* ! __CROS_EC_UPDATE_FW_H */
