@@ -9,6 +9,7 @@
 
 #include "console.h"
 #include "ec_commands.h"
+#include "flash.h"
 #include "rollback.h"
 #include "rsa.h"
 #include "rwsig.h"
@@ -32,10 +33,28 @@ static uint32_t * const rw_rst =
 
 void rwsig_jump_now(void)
 {
+	/* Protect all flash before jumping to RW. */
+
 	/*
-	 * TODO(b/35587171): This should also check RW flash is protected.
+	 * This may do nothing if WP is not enabled, RO is not
+	 * protected, or if ALL_AT_BOOT is already set.
 	 */
-	system_run_image_copy(SYSTEM_IMAGE_RW);
+	flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
+
+	if (!(flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW) &&
+	      flash_get_protect() & EC_FLASH_PROTECT_ALL_AT_BOOT) {
+		/*
+		 * If flash protection is still not enabled (some chips may
+		 * be able to enable it immediately), reboot.
+		 */
+		cflush();
+		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
+	}
+
+	/* When system is locked, only boot to RW is all flash is protected. */
+	if (!system_is_locked() ||
+	    flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
+		system_run_image_copy(SYSTEM_IMAGE_RW);
 }
 
 /*
