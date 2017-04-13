@@ -106,8 +106,9 @@ BOARDS_NPCX_SPI=(
 	eve
 	gru
 	kevin
-        poppy
+	poppy
 	reef
+	soraka
 	wheatley
 	kahlee
 )
@@ -132,8 +133,9 @@ BOARDS_RAIDEN=(
 	eve
 	gru
 	kevin
-        poppy
+	poppy
 	reef
+	soraka
 )
 
 # Flags
