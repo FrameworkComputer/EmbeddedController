@@ -30,10 +30,15 @@ int		is_ptr_merge;
 unsigned int	g_ram_start_address;
 unsigned int	g_ram_size;
 unsigned int	api_file_size_bytes;
+int is_mrider15 = FALSE;
+
 
 /* Chips information, RAM start address and RAM size. */
 struct chip_info chip_info[] = {{NPCX5M5G_RAM_ADDR, NPCX5M5G_RAM_SIZE},
-				{NPCX5M6G_RAM_ADDR, NPCX5M6G_RAM_SIZE} };
+				{NPCX5M6G_RAM_ADDR, NPCX5M6G_RAM_SIZE},
+				{NPCX7M5X_RAM_ADDR, NPCX7M5X_RAM_SIZE},
+				{NPCX7M6X_RAM_ADDR, NPCX7M6X_RAM_SIZE},
+				{NPCX7M7X_RAM_ADDR, NPCX7M7X_RAM_SIZE},};
 
 static unsigned int calc_api_csum_bin(void);
 static unsigned int initialize_crc_32(void);
@@ -66,7 +71,8 @@ int main(int argc, char *argv[])
 	/* Following variables: common to all modes */
 	int main_status = TRUE;
 	unsigned int  main_temp = 0L;
-	char		   main_str_temp[TMP_STR_SIZE];
+	char		  main_str_temp[TMP_STR_SIZE];
+	char		  *end_ptr;
 
 	int arg_num;
 	int arg_ind;
@@ -77,6 +83,7 @@ int main(int argc, char *argv[])
 
 	/* Following variables are used when bin file is provided */
 	struct tbinparams bin_params;
+
 	bin_params.bin_params = 0;
 
 	input_file_name[0]	= '\0';
@@ -91,17 +98,18 @@ int main(int argc, char *argv[])
 	/* Initialize Global variables */
 	g_verbose = NO_VERBOSE;
 
-	g_ram_start_address = chip_info[NPCX5M5G].ram_addr;
-	g_ram_size	    = chip_info[NPCX5M5G].ram_size;
+	g_ram_start_address = chip_info[DEFAULT_CHIP].ram_addr;
+	g_ram_size          = chip_info[DEFAULT_CHIP].ram_size;
 
 	/* Set default values */
 	g_calc_type = CALC_TYPE_NONE;
 	bin_params.spi_max_clk = SPI_MAX_CLOCK_DEFAULT;
+	bin_params.spi_clk_ratio = 0x00;
 	bin_params.spi_read_mode = SPI_READ_MODE_DEFAULT;
 	bin_params.fw_load_addr =
-				chip_info[NPCX5M5G].ram_addr;
+				chip_info[DEFAULT_CHIP].ram_addr;
 	bin_params.fw_ep =
-				chip_info[NPCX5M5G].ram_addr;
+				chip_info[DEFAULT_CHIP].ram_addr;
 	bin_params.fw_err_detec_s_addr = FW_CRC_START_ADDR;
 	bin_params.fw_err_detec_e_addr = FW_CRC_START_ADDR;
 	bin_params.flash_size = FLASH_SIZE_DEFAULT;
@@ -182,10 +190,65 @@ int main(int argc, char *argv[])
 					"%s",
 					main_str_temp) != 1)) {
 				my_printf(TERR, "\nCannot read chip name, ");
-				my_printf(TERR,	"npcx5m5g or npcx5m6g.\n");
+				my_printf(TERR,	"npcx7m7k, npcx7m6f, npcx7m5g");
+				my_printf(TERR,	", npcx5m5g or npcx5m6g.\n");
 				main_status = FALSE;
 			} else {
 				if (str_cmp_no_case(main_str_temp,
+					"npcx7m7k") == 0) {
+					if ((bin_params.bin_params
+						& BIN_FW_LOAD_START_ADDR) ==
+						0x00000000)
+						bin_params.fw_load_addr =
+						chip_info[NPCX7M7].ram_addr;
+
+					if ((bin_params.bin_params
+						& BIN_FW_ENTRY_POINT) ==
+						0x00000000)
+						bin_params.fw_ep =
+						chip_info[NPCX7M7].ram_addr;
+
+					g_ram_start_address =
+						chip_info[NPCX7M7].ram_addr;
+					g_ram_size =
+						chip_info[NPCX7M7].ram_size;
+				} else if (str_cmp_no_case(main_str_temp,
+					"npcx7m6f") == 0) {
+					if ((bin_params.bin_params
+						& BIN_FW_LOAD_START_ADDR) ==
+						0x00000000)
+						bin_params.fw_load_addr =
+						chip_info[NPCX7M6].ram_addr;
+
+					if ((bin_params.bin_params &
+						BIN_FW_ENTRY_POINT) ==
+						0x00000000)
+						bin_params.fw_ep =
+						chip_info[NPCX7M6].ram_addr;
+
+					g_ram_start_address =
+						chip_info[NPCX7M6].ram_addr;
+					g_ram_size =
+						chip_info[NPCX7M6].ram_size;
+				} else if (str_cmp_no_case(main_str_temp,
+					"npcx7m5g") == 0) {
+					if ((bin_params.bin_params
+						& BIN_FW_LOAD_START_ADDR) ==
+						0x00000000)
+						bin_params.fw_load_addr =
+						chip_info[NPCX7M5].ram_addr;
+
+					if ((bin_params.bin_params &
+						BIN_FW_ENTRY_POINT) ==
+						0x00000000)
+						bin_params.fw_ep =
+						chip_info[NPCX7M5].ram_addr;
+
+					g_ram_start_address =
+						chip_info[NPCX7M5].ram_addr;
+					g_ram_size =
+						chip_info[NPCX7M5].ram_size;
+				} else if (str_cmp_no_case(main_str_temp,
 						    "npcx5m5g") == 0) {
 					if ((bin_params.bin_params
 						& BIN_FW_LOAD_START_ADDR) ==
@@ -202,6 +265,9 @@ int main(int argc, char *argv[])
 						chip_info[NPCX5M5G].ram_addr;
 					g_ram_size =
 						chip_info[NPCX5M5G].ram_size;
+
+					is_mrider15 = TRUE;
+
 				} else if (str_cmp_no_case(main_str_temp,
 							   "npcx5m6g") == 0) {
 					if ((bin_params.bin_params &
@@ -221,13 +287,17 @@ int main(int argc, char *argv[])
 					g_ram_size =
 						chip_info[NPCX5M6G].ram_size;
 
+					is_mrider15 = TRUE;
+
 				} else {
 					my_printf(TERR,
 						  "\nInvalid chip name (%s) ",
 						  main_str_temp);
-					my_printf(TERR, "should be npcx5m5g ");
-					my_printf(TERR, "or npcx5m6g.\n");
-						  main_status = FALSE;
+					my_printf(TERR, "should be npcx7m7k, ");
+					my_printf(TERR, "npcx7m6f, npcx7m5g, ");
+					my_printf(TERR, "npcx5m5g or ");
+					my_printf(TERR, "npcx5m6g.");
+					main_status = FALSE;
 				}
 
 			}
@@ -339,7 +409,7 @@ int main(int argc, char *argv[])
 				arg_ind++;
 				bin_params.fw_hdr_offset = main_temp;
 			}
-		  /* -spimacclk  Get SPI flash mac clock. */
+		/* -spimaxclk  Get SPI flash max clock. */
 		} else if (str_cmp_no_case(hdr_args[arg_ind],
 					   "-spimaxclk") == 0) {
 			arg_ind++;
@@ -351,8 +421,22 @@ int main(int argc, char *argv[])
 				main_status = FALSE;
 			} else
 				bin_params.spi_max_clk =
+						(unsigned char) main_temp;
+		/* -spiclkratio  Get SPI flash max clock ratio. */
+		} else if (str_cmp_no_case(hdr_args[arg_ind],
+			"-spiclkratio") == 0) {
+			arg_ind++;
+			if ((hdr_args[arg_ind] == NULL) ||
+				(sscanf(hdr_args[arg_ind],
+				"%d", &main_temp) != 1)) {
+				my_printf(TERR,
+					  "\nCannot read SPI Clock Ratio\n");
+				main_status = FALSE;
+			} else
+				bin_params.spi_clk_ratio =
 						(unsigned char)main_temp;
-		  /* spireadmode	get SPI read mode. */
+
+		/* spireadmode	get SPI read mode. */
 		} else if (str_cmp_no_case(hdr_args[arg_ind],
 					   "-spireadmode") == 0) {
 			arg_ind++;
@@ -385,18 +469,25 @@ int main(int argc, char *argv[])
 						SPI_QUAD_MODE;
 				else {
 					my_printf(TERR,
-						  "\nInvalid SPI Flash Read "
-						  "Mode (%s), it should be "
-						  "normal, singleMode, "
-						  "dualMode or quadMode !\n",
+						  "\nInvalid SPI Flash Read ");
+					my_printf(TERR,
+						  "Mode (%s), it should be ",
 						  main_str_temp);
+					my_printf(TERR,
+						  "normal, singleMode, ");
+					my_printf(TERR,
+						  "dualMode or quadMode !\n");
 					main_status = FALSE;
 				}
 			}
-		  /* -nofcrc	disable FW CRC. */
-		} else if (str_cmp_no_case(hdr_args[arg_ind], "-nofcrc") == 0)
-			bin_params.bin_params |=
-							BIN_FW_CRC_DISABLE;
+
+		}
+		/* -unlimburst	enable unlimited burst */
+		else if (str_cmp_no_case(hdr_args[arg_ind], "-unlimburst") == 0)
+			bin_params.bin_params |= BIN_UNLIM_BURST_ENABLE;
+		/* -nofcrc	disable FW CRC. */
+		else if (str_cmp_no_case(hdr_args[arg_ind], "-nofcrc") == 0)
+			bin_params.bin_params |= BIN_FW_CRC_DISABLE;
 
 		/* -fwloadaddr,	 Get the FW load address. */
 		else if (str_cmp_no_case(hdr_args[arg_ind],
@@ -414,10 +505,12 @@ int main(int argc, char *argv[])
 				if ((main_temp &
 					ADDR_16_BYTES_ALIGNED_MASK) != 0) {
 					my_printf(TERR,
-						  "\nFW load address start "
-						  "address (0x%08X) is not "
-						  "16-bytes aligned !\n",
+						  "\nFW load address start ");
+					my_printf(TERR,
+						  "address (0x%08X) is not ",
 						  main_temp);
+					my_printf(TERR,
+						  "16-bytes aligned !\n");
 					main_status = FALSE;
 				} else {
 					bin_params.fw_load_addr =
@@ -431,7 +524,8 @@ int main(int argc, char *argv[])
 			if ((bin_params.bin_params & BIN_FW_USER_ARM_RESET)
 								!= 0x00000000) {
 				my_printf(TERR,
-					  "\n-fwep not allowed, FW entry point"
+					 "\n-fwep not allowed, FW entry point");
+				my_printf(TERR,
 					  " already set using -usearmrst!\n");
 				main_status = FALSE;
 			} else {
@@ -462,7 +556,8 @@ int main(int argc, char *argv[])
 					"%x",
 					&main_temp) != 1)) {
 						my_printf(TERR,
-						  "\nCannot read FW CRC"
+						  "\nCannot read FW CRC");
+						my_printf(TERR,
 						  " start address !\n");
 				main_status = FALSE;
 			} else {
@@ -478,11 +573,16 @@ int main(int argc, char *argv[])
 		} else if (str_cmp_no_case(hdr_args[arg_ind],
 					   "-crcsize") == 0) {
 			arg_ind++;
-			if ((hdr_args[arg_ind] == NULL) ||
-				(sscanf(hdr_args[arg_ind], "%x", &main_temp)
-									!= 1)) {
-				my_printf(TERR, "\nCannot read FW CRC ");
-				my_printf(TERR, "\area size !\n");
+			main_temp = 0x00;
+			if (hdr_args[arg_ind] == NULL)
+				end_ptr = NULL;
+			else
+				main_temp = strtol(hdr_args[arg_ind],
+						   &end_ptr, 16);
+
+			if (hdr_args[arg_ind] == end_ptr) {
+				my_printf(TERR,
+					  "\nCannot read FW CRC area size !\n");
 				main_status = FALSE;
 			} else {
 				bin_params.fw_err_detec_e_addr =
@@ -566,7 +666,8 @@ int main(int argc, char *argv[])
 				if ((main_temp & ADDR_16_BYTES_ALIGNED_MASK)
 									!= 0) {
 					my_printf(TERR,
-						  "\nFW Image address (0x%08X)"
+						 "\nFW Image address (0x%08X)");
+					my_printf(TERR,
 						  " isn't 16-bytes aligned !\n",
 						  main_temp);
 					main_status = FALSE;
@@ -591,9 +692,14 @@ int main(int argc, char *argv[])
 		/* -bhoffset,  BootLoader Header Offset (BH location in BT). */
 		else if (str_cmp_no_case(hdr_args[arg_ind], "-bhoffset") == 0) {
 			arg_ind++;
-			if ((hdr_args[arg_ind] == NULL) ||
-				(sscanf(hdr_args[arg_ind], "%x", &main_temp)
-									!= 1)) {
+			main_temp = 0x00;
+			if (hdr_args[arg_ind] == NULL)
+				end_ptr = NULL;
+			else
+				main_temp = strtol(hdr_args[arg_ind],
+						   &end_ptr, 16);
+
+			if (hdr_args[arg_ind] == end_ptr) {
 				my_printf(TERR, "\nCannot read BootLoader");
 				my_printf(TERR, " Header Offset !\n");
 				main_status = FALSE;
@@ -602,18 +708,20 @@ int main(int argc, char *argv[])
 				if ((main_temp & ADDR_16_BYTES_ALIGNED_MASK)
 									!= 0) {
 					my_printf(TERR,
-						  "\nFW Image address (0x%08X) "
-						  "is not 16-bytes aligned !\n",
+						  "\nFW Image address (0x%08X) ",
 						  main_temp);
-					main_status = FALSE;
+					my_printf(TERR,
+						  "is not 16-bytes aligned!\n");
 				}
 
 				if (main_temp > MAX_FLASH_SIZE) {
 					my_printf(TERR,
-						  "\nFW Image address (0x%08X)"
-						  " is higher from flash size "
-						  "(0x%08X) !\n",
-						  main_temp,
+						  "\nFW Image address (0x%08X)",
+						  main_temp);
+					my_printf(TERR,
+						  " is higher from flash size");
+					my_printf(TERR,
+						  " (0x%08X) !\n",
 						  MAX_FLASH_SIZE);
 					main_status = FALSE;
 				} else {
@@ -727,7 +835,8 @@ void exit_with_usage(void)
 	my_printf(TUSG, "\n -argfile <filename>	- Arguments file name; ");
 	my_printf(TUSG, "includes multiple flags");
 	my_printf(TUSG, "\n -chip <name>		- EC Chip Name: ");
-	my_printf(TUSG, "npcx5m5g|npcx5m6g (default is npcx5m5g)");
+	my_printf(TUSG, "npcx7m7k|npcx7m6f|npcx7m5g|npcx5m5g|npcx5m6g");
+	my_printf(TUSG, " (default is npcx5m5g)");
 	my_printf(TUSG,	"\n -v			- Verbose; prints ");
 	my_printf(TUSG,	"information messages");
 	my_printf(TUSG, "\n -vv			- Super Verbose; prints ");
@@ -741,8 +850,16 @@ void exit_with_usage(void)
 	my_printf(TUSG, "(default is ON)");
 	my_printf(TUSG, "\n -spimaxclk <val>	- SPI Flash Maximum Clock, in");
 	my_printf(TUSG, " MHz: 20|25|33|40|50 (default is 20)");
+	my_printf(TUSG, "\n -spiclkratio <val>  - Core Clock / SPI Flash ");
+	my_printf(TUSG, "Clocks Ratio: 1 | 2 (default is 1)");
+	my_printf(TUSG, "\n                       ");
+	my_printf(TUSG, "Note: Not relevant for npcx5mng chips family");
 	my_printf(TUSG, "\n -spireadmode <type>	- SPI Flash Read Mode: ");
 	my_printf(TUSG, "normal|fast|dual|quad (default is normal)");
+	my_printf(TUSG, "\n -unlimburst         - Enable FIU Unlimited ");
+	my_printf(TUSG, "\n                       ");
+	my_printf(TUSG, "Note: Not relevant for npcx5mng chips family");
+	my_printf(TUSG, "Burst for SPI Flash Accesses (default is disable).");
 	my_printf(TUSG, "\n -fwloadaddr <addr>	- Firmware load start ");
 	my_printf(TUSG, "address (default is Start-of-RAM)");
 	my_printf(TUSG, "\n			  Located in code RAM, ");
@@ -868,22 +985,17 @@ int copy_file_to_file(char *dst_file_name,
  */
 void my_printf(int error_level, char *fmt, ...)
 {
-	char buffer[256];
 	va_list argptr;
-	va_start(argptr, fmt);
-	vsprintf(buffer, fmt, argptr);
-	va_end(argptr);
 
 	if ((g_verbose == NO_VERBOSE) && (error_level == TINF))
 		return;
 
-	if ((error_level == TDBG) && (g_verbose != SUPER_VERBOSE))
+	if ((g_verbose != SUPER_VERBOSE) && (error_level == TDBG))
 		return;
 
-	if (error_level == TERR)
-		fprintf(stderr, "%s", buffer);
-	else
-		printf("%s", buffer);
+	va_start(argptr, fmt);
+	vprintf(fmt, argptr);
+	va_end(argptr);
 }
 
 /*
@@ -1004,7 +1116,6 @@ int read_from_file(unsigned int	offset,
 		my_printf(TERR, "\nIn read_from_file - %s", print_string);
 		my_printf(TERR, "\n\nInvalid call to read_from_file\n\n");
 		return FALSE;
-		break;
 	}
 
 	my_printf(TINF, "\nIn read_from_file - %s", print_string);
@@ -1201,12 +1312,12 @@ int main_bin(struct tbinparams binary_params)
 	if (((int)binary_params.fw_hdr_offset < 0) ||
 		(binary_params.fw_hdr_offset > bin_file_size_bytes)) {
 		my_printf(TERR,
-			  "\nFW header offset 0x%08x (%d) should be in the"
+			  "\nFW header offset 0x%08x (%d) should be in the",
+			  binary_params.fw_hdr_offset);
+		my_printf(TERR,
 			  " range of 0 and file size (%d).\n",
 			  binary_params.fw_hdr_offset,
-			  binary_params.fw_hdr_offset,
-			  bin_file_size_bytes);
-		return FALSE;
+			  bin_file_size_bytes);		return FALSE;
 	}
 
 	/* Get the input directory and input file name. */
@@ -1286,7 +1397,36 @@ int main_bin(struct tbinparams binary_params)
 				  binary_params.spi_max_clk);
 		my_printf(TERR, "- it should be 20, 25, 33, 40 or 50 MHz");
 		return FALSE;
+	}
+
+	/* If SPI clock ratio set for MRIDER15, then it is error. */
+	if ((binary_params.spi_clk_ratio != 0x00) && (is_mrider15 == TRUE)) {
+
+		my_printf(TERR, "\nspiclkratio is not relevant for");
+		my_printf(TERR, " npcx5mng chips family !\n");
+
+		return FALSE;
+	}
+
+	/*
+	 * In case SPIU clock ratio didn't set by the user,
+	 *  set it to its default value.
+	 */
+	if (binary_params.spi_clk_ratio == 0x00)
+		binary_params.spi_clk_ratio = SPI_CLOCK_RATIO_1_VAL;
+
+	switch (binary_params.spi_clk_ratio) {
+	case SPI_CLOCK_RATIO_1_VAL:
+		tmp_param &= SPI_CLOCK_RATIO_1;
 		break;
+	case SPI_CLOCK_RATIO_2_VAL:
+		tmp_param |= SPI_CLOCK_RATIO_2;
+		break;
+	default:
+		my_printf(TERR, "\n\nInvalid SPI Core Clock Ratio (%d) ",
+			binary_params.spi_clk_ratio);
+		my_printf(TERR, "- it should be 1 or 2");
+		return FALSE;
 	}
 
 	if (!write_to_file(tmp_param, HDR_SPI_MAX_CLK_OFFSET, 1,
@@ -1294,7 +1434,20 @@ int main_bin(struct tbinparams binary_params)
 		return FALSE;
 
 	/* Write the SPI flash Read Mode. */
-	if (!write_to_file(binary_params.spi_read_mode,
+	tmp_param = binary_params.spi_read_mode;
+	/* If needed, set the unlimited burst bit. */
+	if (binary_params.bin_params & BIN_UNLIM_BURST_ENABLE) {
+		if (is_mrider15 == TRUE) {
+
+			my_printf(TERR, "\nunlimburst is not relevant for");
+			my_printf(TERR, " npcx5mng chips family !\n");
+
+			return FALSE;
+		}
+
+		tmp_param |= SPI_UNLIMITED_BURST_ENABLE;
+	}
+	if (!write_to_file(tmp_param,
 					   HDR_SPI_READ_MODE_OFFSET, 1,
 					   "HDR - SPI flash Read Mode	   "))
 		return FALSE;
@@ -1319,11 +1472,13 @@ int main_bin(struct tbinparams binary_params)
 					(g_ram_start_address + g_ram_size)) ||
 		(binary_params.fw_load_addr < g_ram_start_address)) {
 		my_printf(TERR,
-			  "\nFW load address (0x%08x) should be between "
+			  "\nFW load address (0x%08x) should be between ",
+			  binary_params.fw_load_addr);
+		my_printf(TERR,
 			  "start (0x%08x) and end (0x%08x) of RAM ).",
-			  binary_params.fw_load_addr,
 			  g_ram_start_address,
 			  (g_ram_start_address + g_ram_size));
+
 		return FALSE;
 	}
 
@@ -1443,8 +1598,8 @@ int main_bin(struct tbinparams binary_params)
 				  binary_params.fw_err_detec_e_addr);
 			my_printf(TERR,
 				  "than the FW length %d (0x%08x)",
-				  (binary_params.fw_len - 1),
-				  (binary_params.fw_len - 1));
+				  (binary_params.fw_len),
+				  (binary_params.fw_len));
 			return FALSE;
 		}
 	}
@@ -1549,7 +1704,6 @@ int main_bin(struct tbinparams binary_params)
 				  binary_params.flash_size);
 		my_printf(TERR, " it should be 1, 2, 4, 8 or 16 MBytes\n");
 		return FALSE;
-		break;
 	}
 	if (!write_to_file(tmp_param,
 			   HDR_FLASH_SIZE_OFFSET,
