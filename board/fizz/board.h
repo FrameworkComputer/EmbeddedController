@@ -132,6 +132,14 @@
 /* I2C addresses */
 #define I2C_ADDR_TCPC0		0x16
 
+/* Verify and jump to RW image on boot */
+#define CONFIG_RWSIG
+#define CONFIG_RWSIG_TYPE_RWSIG
+#define CONFIG_RSA
+#define CONFIG_SHA256
+#define CONFIG_RSA_KEY_SIZE 3072
+#define CONFIG_RSA_EXPONENT_3
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

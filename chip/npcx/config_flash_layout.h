@@ -52,7 +52,8 @@
 #define CONFIG_RO_SIZE		NPCX_PROGRAM_MEMORY_SIZE
 
 /* RW firmware offset in flash */
-#define CONFIG_RW_MEM_OFF	CONFIG_RW_STORAGE_OFF
+#define CONFIG_RW_MEM_OFF	CONFIG_EC_WRITABLE_STORAGE_OFF + \
+				CONFIG_RW_STORAGE_OFF
 #define CONFIG_RW_SIZE		CONFIG_RO_SIZE
 
 /* The storage offset of ec.R*.flat which is used for firmware_image.lds */
