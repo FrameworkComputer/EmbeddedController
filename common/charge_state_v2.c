@@ -730,7 +730,8 @@ void charger_task(void)
 
 		/* If we *know* there's no battery, wait for one to appear. */
 		if (curr.batt.is_present == BP_NO) {
-			ASSERT(curr.ac);	/* How are we running? */
+			if (!curr.ac)
+				CPRINTS("running with no battery and no AC");
 			curr.state = ST_IDLE;
 			curr.batt_is_charging = 0;
 			battery_was_removed = 1;
