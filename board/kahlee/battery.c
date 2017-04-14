@@ -12,8 +12,6 @@
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
-
 static const struct battery_info info = {
 	.voltage_max = 13200,/* mV */
 	.voltage_normal = 11400,
@@ -39,51 +37,3 @@ int board_cut_off_battery(void)
 		return rv;
 	return sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
 }
-
-static inline enum battery_present battery_hw_present(void)
-{
-	/* The GPIO is low when the battery is physically present */
-	return gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;
-}
-
-static int battery_init(void)
-{
-	int batt_status;
-
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
-}
-
-/*
- * Physical detection of battery.
- */
-enum battery_present battery_is_present(void)
-{
-	enum battery_present batt_pres;
-
-	/* Get the physical hardware status */
-	batt_pres = battery_hw_present();
-
-	/*
-	 * Make sure battery status is implemented, I2C transactions are
-	 * success & the battery status is Initialized to find out if it
-	 * is a working battery and it is not in the cut-off mode.
-	 *
-	 * If battery I2C fails but VBATT is high, battery is booting from
-	 * cut-off mode.
-	 *
-	 * FETs are turned off after Power Shutdown time.
-	 * The device will wake up when a voltage is applied to PACK.
-	 * Battery status will be inactive until it is initialized.
-	 */
-	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-	    !battery_is_cut_off() && !battery_init()) {
-		batt_pres = BP_NO;
-	}
-
-	batt_pres_prev = batt_pres;
-
-	return batt_pres;
-}
-
-
