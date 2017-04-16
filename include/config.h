@@ -2620,6 +2620,9 @@
 /* A different config for the same update. TODO(vbendeb): dedup these */
 #undef CONFIG_USB_UPDATE
 
+/* PDU size for fw update over USB (or TPM). */
+#define CONFIG_UPDATE_PDU_SIZE 1024
+
 /*
  * If defined, charge_get_state returns a special status if battery is
  * discharging and battery is nearly full.

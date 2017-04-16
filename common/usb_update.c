@@ -9,7 +9,6 @@
 #include "consumer.h"
 #include "extension.h"
 #include "queue_policies.h"
-#include "shared_mem.h"
 #include "system.h"
 #include "update_fw.h"
 #include "usb-stream.h"
@@ -70,7 +69,8 @@ enum rx_state {
 };
 
 enum rx_state rx_state_ = rx_idle;
-static uint8_t *block_buffer;
+static uint8_t block_buffer[sizeof(struct update_command) +
+			    CONFIG_UPDATE_PDU_SIZE];
 static uint32_t block_size;
 static uint32_t block_index;
 
@@ -131,10 +131,6 @@ static void send_error_reset(uint8_t resp_value)
 	QUEUE_ADD_UNITS(&update_to_usb, &resp_value, 1);
 	rx_state_ = rx_idle;
 	data_was_transferred = 0;
-	if (block_buffer) {
-		shared_mem_release(block_buffer);
-		block_buffer = NULL;
-	}
 }
 
 /* Called to deal with data from the host */
@@ -151,14 +147,6 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 
 	/* If timeout exceeds 5 seconds - let's start over. */
 	if ((delta_time > 5000000) && (rx_state_ != rx_idle)) {
-		if (block_buffer) {
-			/*
-			 * Previous transfer could have been aborted mid
-			 * block.
-			 */
-			shared_mem_release(block_buffer);
-			block_buffer = NULL;
-		}
 		rx_state_ = rx_idle;
 		CPRINTS("FW update: recovering after timeout");
 	}
@@ -263,17 +251,9 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 		 * Only update start PDU is allowed to have a size 0 payload.
 		 */
 		if (block_size <= sizeof(struct update_command) ||
-		    block_size > (UPDATE_PDU_SIZE +
-					sizeof(struct update_command))) {
+		    block_size > sizeof(block_buffer)) {
 			CPRINTS("Invalid block size (%d).", block_size);
 			send_error_reset(UPDATE_GEN_ERROR);
-			return;
-		}
-
-		if (shared_mem_acquire(block_size, (char **)&block_buffer)
-				!= EC_SUCCESS) {
-			CPRINTS("Alloc error (%d).", block_size);
-			send_error_reset(UPDATE_MALLOC_ERROR);
 			return;
 		}
 
@@ -321,8 +301,6 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 	resp_value = block_buffer[0];
 	QUEUE_ADD_UNITS(&update_to_usb, &resp_value, sizeof(resp_value));
 	rx_state_ = rx_outside_block;
-	shared_mem_release(block_buffer);
-	block_buffer = NULL;
 }
 
 static void update_flush(struct consumer const *consumer)
