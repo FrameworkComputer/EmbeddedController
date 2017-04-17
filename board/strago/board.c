@@ -139,6 +139,11 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
+const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+	GPIO_USB1_ENABLE,
+	GPIO_USB2_ENABLE,
+};
+
 /*
  * Temperature sensors data; must be in same order as enum temp_sensor_id.
  * Sensor index and name must match those present in coreboot:

@@ -21,32 +21,27 @@
 #define USB_SYSJUMP_TAG 0x5550 /* "UP" - Usb Port */
 #define USB_HOOK_VERSION 1
 
-/* We need to think about this a little more */
-BUILD_ASSERT(USB_PORT_COUNT == 2);
-
-static struct usb_state {
-	uint8_t en[USB_PORT_COUNT];
-} state;
+static uint8_t charge_mode[USB_PORT_COUNT];
+extern const int usb_port_enable[USB_PORT_COUNT];
 
 static void usb_port_set_enabled(int port_id, int en)
 {
-	if (port_id == 0)
-		gpio_set_level(GPIO_USB1_ENABLE, en);
-	else
-		gpio_set_level(GPIO_USB2_ENABLE, en);
-	state.en[port_id] = en;
+	gpio_set_level(usb_port_enable[port_id], en);
+	charge_mode[port_id] = en;
 }
 
 static void usb_port_all_ports_on(void)
 {
-	usb_port_set_enabled(0, 1);
-	usb_port_set_enabled(1, 1);
+	int i;
+	for (i = 0; i < USB_PORT_COUNT; i++)
+		usb_port_set_enabled(i, 1);
 }
 
 static void usb_port_all_ports_off(void)
 {
-	usb_port_set_enabled(0, 0);
-	usb_port_set_enabled(1, 0);
+	int i;
+	for (i = 0; i < USB_PORT_COUNT; i++)
+		usb_port_set_enabled(i, 0);
 }
 
 /*****************************************************************************/
@@ -93,6 +88,7 @@ static int command_set_mode(int argc, char **argv)
 {
 	int port_id = -1;
 	int mode = -1;
+	int i;
 	char *e;
 
 	switch (argc) {
@@ -107,9 +103,9 @@ static int command_set_mode(int argc, char **argv)
 		usb_port_set_enabled(port_id, mode);
 		/* fallthrough */
 	case 1:
-		ccprintf("Port 0: %s\nPort 1: %s\n",
-			 state.en[0] ? "on" : "off",
-			 state.en[1] ? "on" : "off");
+		for (i = 0; i < USB_PORT_COUNT; i++)
+			ccprintf("Port %d: %s\n",
+				 i, charge_mode[i] ? "on" : "off");
 		return EC_SUCCESS;
 	}
 
@@ -126,23 +122,25 @@ DECLARE_CONSOLE_COMMAND(usbchargemode, command_set_mode,
 static void usb_port_preserve_state(void)
 {
 	system_add_jump_tag(USB_SYSJUMP_TAG, USB_HOOK_VERSION,
-			    sizeof(state), &state);
+			    sizeof(charge_mode), charge_mode);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, usb_port_preserve_state, HOOK_PRIO_DEFAULT);
 
 static void usb_port_init(void)
 {
-	const struct usb_state *prev;
-	int version, size;
+	const uint8_t *prev;
+	int version, size, i;
 
-	prev = (const struct usb_state *)system_get_jump_tag(USB_SYSJUMP_TAG,
-							     &version, &size);
-	if (prev && version == USB_HOOK_VERSION && size == sizeof(*prev)) {
-		usb_port_set_enabled(0, prev->en[0]);
-		usb_port_set_enabled(1, prev->en[1]);
-	} else {
+	prev = (const uint8_t *)system_get_jump_tag(USB_SYSJUMP_TAG,
+						    &version, &size);
+	if (!prev || version != USB_HOOK_VERSION ||
+			size != sizeof(charge_mode)) {
 		usb_port_all_ports_off();
+		return;
 	}
+
+	for (i = 0; i < USB_PORT_COUNT; i++)
+		usb_port_set_enabled(i, prev[i]);
 }
 DECLARE_HOOK(HOOK_INIT, usb_port_init, HOOK_PRIO_DEFAULT);
 

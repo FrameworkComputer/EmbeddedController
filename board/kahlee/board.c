@@ -222,6 +222,10 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	}
 };
 
+const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+	GPIO_USB1_ENABLE,
+};
+
 /**
  * Reset PD MCU -- currently only called from handle_pending_reboot() in
  * common/power.c just before hard resetting the system. This logic is likely

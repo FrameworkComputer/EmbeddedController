@@ -25,12 +25,10 @@
 #define CONFIG_USB_PORT_POWER_SMART_DEFAULT_MODE USB_CHARGE_MODE_SDP2
 #endif
 
-/* The previous USB port state before sys jump */
-struct usb_state {
-	uint8_t port_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
-};
-
 static uint8_t charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
+
+/* GPIOs to enable/disable USB ports. Board specific. */
+extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
 
 static void usb_charge_set_control_mode(int port_id, int mode)
 {
@@ -57,18 +55,7 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 static void usb_charge_set_enabled(int port_id, int en)
 {
 	ASSERT(port_id < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT);
-#if CONFIG_USB_PORT_POWER_SMART_PORT_COUNT >= 1
-	if (port_id == 0)
-		gpio_set_level(GPIO_USB1_ENABLE, en);
-#endif
-#if CONFIG_USB_PORT_POWER_SMART_PORT_COUNT >= 2
-	if (port_id == 1)
-		gpio_set_level(GPIO_USB2_ENABLE, en);
-#endif
-#if CONFIG_USB_PORT_POWER_SMART_PORT_COUNT >= 3
-	if (port_id == 2)
-		gpio_set_level(GPIO_USB3_ENABLE, en);
-#endif
+	gpio_set_level(usb_port_enable[port_id], en);
 }
 
 static void usb_charge_set_ilim(int port_id, int sel)
@@ -195,31 +182,27 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_CHARGE_SET_MODE,
 
 static void usb_charge_preserve_state(void)
 {
-	struct usb_state state;
-	int i;
-
-	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
-		state.port_mode[i] = charge_mode[i];
-
 	system_add_jump_tag(USB_SYSJUMP_TAG, USB_HOOK_VERSION,
-			    sizeof(state), &state);
+			    sizeof(charge_mode), charge_mode);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, usb_charge_preserve_state, HOOK_PRIO_DEFAULT);
 
 static void usb_charge_init(void)
 {
-	const struct usb_state *prev;
+	const uint8_t *prev;
 	int version, size, i;
 
-	prev = (const struct usb_state *)system_get_jump_tag(USB_SYSJUMP_TAG,
-							     &version, &size);
+	prev = (const uint8_t *)system_get_jump_tag(USB_SYSJUMP_TAG,
+						    &version, &size);
 
-	if (prev && version == USB_HOOK_VERSION && size == sizeof(*prev)) {
-		for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
-			usb_charge_set_mode(i, prev->port_mode[i]);
-	} else {
+	if (!prev || version != USB_HOOK_VERSION ||
+			size != sizeof(charge_mode)) {
 		usb_charge_all_ports_ctrl(USB_CHARGE_MODE_DISABLED);
+		return;
 	}
+
+	for (i = 0; i < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT; i++)
+		usb_charge_set_mode(i, prev[i]);
 }
 DECLARE_HOOK(HOOK_INIT, usb_charge_init, HOOK_PRIO_DEFAULT);
 
