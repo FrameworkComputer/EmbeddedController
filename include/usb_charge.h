@@ -39,14 +39,6 @@ enum usb_charge_mode {
  */
 int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode);
 
-/**
- * Return a bitmask of which USB ports are enabled.
- *
- * If bit (1 << i) is set, port <i> is enabled.  If it is clear, port <i> is
- * in USB_CHARGE_MODE_DISABLED.
- */
-int usb_charge_ports_enabled(void);
-
 #ifdef HAS_TASK_USB_CHG_P0
 #define USB_CHG_EVENT_BC12 TASK_EVENT_CUSTOM(1)
 #define USB_CHG_EVENT_VBUS TASK_EVENT_CUSTOM(2)
