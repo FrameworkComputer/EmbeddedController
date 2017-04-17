@@ -68,41 +68,48 @@ includes+=cts/$(CTS_MODULE) cts
 endif
 ifeq "$(TEST_BUILD)" "y"
 	_tsk_lst_file:=ec.tasklist
-	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST" | \
-		    $(CPP) -P -I$(BDIR) -DBOARD_$(UC_BOARD) -Itest \
-		    -D"TASK_NOTEST(n, r, d, s)=" -D"TASK_ALWAYS(n, r, d, s)=n" \
-		    -D"TASK_TEST(n, r, d, s)=n" -imacros $(_tsk_lst_file) \
-		    -imacros $(PROJECT).tasklist)
+	_tsk_lst_flags:=-Itest -DTEST_BUILD -imacros $(PROJECT).tasklist
 else ifdef CTS_MODULE
 	_tsk_lst_file:=ec.tasklist
-	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST CONFIG_CTS_TASK_LIST" | \
-		    $(CPP) -P -I cts/$(CTS_MODULE) -Icts -I$(BDIR) \
-		    -DBOARD_$(UC_BOARD) \
-		    -D"TASK_NOTEST(n, r, d, s)=n" \
-		    -D"TASK_ALWAYS(n, r, d, s)=n" \
-		    -imacros $(_tsk_lst_file) \
-		    -imacros cts.tasklist)
+	_tsk_lst_flags:=-I cts/$(CTS_MODULE) -Icts -DCTS_MODULE=$(CTS_MODULE) \
+			-imacros cts.tasklist
 else
 	_tsk_lst_file:=$(PROJECT).tasklist
-	_tsk_lst:=$(shell echo "CONFIG_TASK_LIST" | $(CPP) -P \
-		    -I$(BDIR) -DBOARD_$(UC_BOARD) \
-		    -D"TASK_NOTEST(n, r, d, s)=n" \
-		    -D"TASK_ALWAYS(n, r, d, s)=n" -imacros $(_tsk_lst_file))
+	_tsk_lst_flags:=
 endif
 
-_tsk_cfg:=$(foreach t,$(_tsk_lst) ,HAS_TASK_$(t))
+_tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD) -D_MAKEFILE \
+		-imacros $(_tsk_lst_file)
+
+_tsk_lst_ro:=$(shell $(CPP) -P -DSECTION_IS_RO \
+	$(_tsk_lst_flags) include/task_filter.h)
+_tsk_lst_rw:=$(shell $(CPP) -P -DSECTION_IS_RW \
+	$(_tsk_lst_flags) include/task_filter.h)
+
+_tsk_cfg_ro:=$(foreach t,$(_tsk_lst_ro) ,HAS_TASK_$(t))
+_tsk_cfg_rw:=$(foreach t,$(_tsk_lst_rw) ,HAS_TASK_$(t))
+
+_tsk_cfg:= $(filter $(_tsk_cfg_ro), $(_tsk_cfg_rw))
+_tsk_cfg_ro:= $(filter-out $(_tsk_cfg), $(_tsk_cfg_ro))
+_tsk_cfg_rw:= $(filter-out $(_tsk_cfg), $(_tsk_cfg_rw))
+
+CPPFLAGS_RO+=$(foreach t,$(_tsk_cfg_ro),-D$(t))
+CPPFLAGS_RW+=$(foreach t,$(_tsk_cfg_rw),-D$(t))
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
-_flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BDIR) \
-	-DSECTION_IS_RO include/config.h | grep -o "\#define CONFIG_[A-Z0-9_]*" | \
-	cut -c9- | sort)
-_flag_cfg_rw:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) -I$(BDIR) \
-	-DSECTION_IS_RW include/config.h | grep -o "\#define CONFIG_[A-Z0-9_]*" | \
-	cut -c9- | sort)
+
+_flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
+	-I$(BDIR) -DSECTION_IS_RO include/config.h | \
+	grep -o "\#define CONFIG_[A-Z0-9_]*" | cut -c9- | sort)
+_flag_cfg_rw:=$(_tsk_cfg_rw) $(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
+	-I$(BDIR) -DSECTION_IS_RW include/config.h | \
+	grep -o "\#define CONFIG_[A-Z0-9_]*" | cut -c9- | sort)
+
 _flag_cfg:= $(filter $(_flag_cfg_ro), $(_flag_cfg_rw))
 _flag_cfg_ro:= $(filter-out $(_flag_cfg), $(_flag_cfg_ro))
 _flag_cfg_rw:= $(filter-out $(_flag_cfg), $(_flag_cfg_rw))
 
-$(foreach c,$(_flag_cfg_rw),$(eval $(c)=rw))
+$(foreach c,$(_tsk_cfg_rw) $(_flag_cfg_rw),$(eval $(c)=rw))
+$(foreach c,$(_tsk_cfg_ro) $(_flag_cfg_ro),$(eval $(c)=ro))
 $(foreach c,$(_tsk_cfg) $(_flag_cfg),$(eval $(c)=y))
 
 ifneq "$(CONFIG_COMMON_RUNTIME)" "y"

@@ -8,20 +8,7 @@
 #ifndef __CROS_EC_TASK_ID_H
 #define __CROS_EC_TASK_ID_H
 
-/* excludes non-base tasks for test build */
-#ifdef TEST_BUILD
-#define TASK_NOTEST(n, r, d, s)
-#define TASK_TEST TASK
-#else
-#define TASK_NOTEST TASK
-#define CONFIG_TEST_TASK_LIST
-#endif
-
-#ifndef CTS_MODULE
-#define CONFIG_CTS_TASK_LIST
-#endif
-
-#define TASK_ALWAYS TASK
+#include "task_filter.h"
 
 /* define the name of the header containing the list of tasks */
 #define STRINGIFY0(name)  #name
