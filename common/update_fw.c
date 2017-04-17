@@ -145,6 +145,14 @@ void fw_update_start(struct first_response_pdu *rpdu)
 	vb21_key = (const struct vb21_packed_key *)CONFIG_RO_PUBKEY_ADDR;
 	rpdu->common.key_version = htobe32(vb21_key->key_version);
 #endif
+
+#ifdef HAS_TASK_RWSIG
+	/* Do not allow the update to start if RWSIG is still running. */
+	if (rwsig_get_status() == RWSIG_IN_PROGRESS) {
+		CPRINTF("RWSIG in progress\n");
+		rpdu->return_value = htobe32(UPDATE_RWSIG_BUSY);
+	}
+#endif
 }
 
 void fw_update_command_handler(void *body,

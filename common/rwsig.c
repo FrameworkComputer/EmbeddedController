@@ -185,8 +185,13 @@ int rwsig_check_signature(void)
 	/*
 	 * Signature verified: we know that rw_rollback_version is valid, check
 	 * if rollback information should be updated.
+	 *
+	 * When system is locked, we only increment the rollback if RW is
+	 * currently protected.
 	 */
-	if (rw_rollback_version != min_rollback_version) {
+	if (rw_rollback_version != min_rollback_version &&
+			((!system_is_locked() ||
+			flash_get_protect() & EC_FLASH_PROTECT_RW_NOW))) {
 		/*
 		 * This will fail if the rollback block is protected (RW image
 		 * will unprotect that block later on).
@@ -201,12 +206,6 @@ int rwsig_check_signature(void)
 			good = 0;
 		}
 	}
-
-	/*
-	 * Lock the ROLLBACK region, this will cause the board to reboot if the
-	 * region is not already protected.
-	 */
-	rollback_lock();
 #endif
 out:
 	CPRINTS("RW verify %s", good ? "OK" : "FAILED");
