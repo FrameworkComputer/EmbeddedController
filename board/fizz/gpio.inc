@@ -77,6 +77,12 @@ GPIO(USB_C0_PD_RST_ODL,		PIN(0, 3), GPIO_OUT_LOW)			/* C0 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */
 GPIO(USB_C0_TCPC_PWR,		PIN(8, 4), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
 GPIO(FAN_PWR_EN,		PIN(9, 5), GPIO_OUT_HIGH)			/* Fan power */
+GPIO(USB1_ENABLE,		PIN(3, 2), GPIO_OUT_LOW)			/* Rear port, bottom */
+GPIO(USB2_ENABLE,		PIN(C, 6), GPIO_OUT_LOW)			/* Rear port, top */
+GPIO(USB3_ENABLE,		PIN(A, 1), GPIO_OUT_LOW)			/* Rear port, single */
+GPIO(USB4_ENABLE,		PIN(0, 0), GPIO_OUT_LOW)			/* Front port 1 */
+GPIO(USB5_ENABLE,		PIN(B, 1), GPIO_OUT_LOW)			/* Front port 2 */
+GPIO(USB_A_CHARGE_EN_L,		PIN(A, 5), GPIO_OUT_LOW)
 
 /* Board ID */
 GPIO(BOARD_VERSION1,		PIN(C, 4), GPIO_INPUT)	/* Board ID bit0 */

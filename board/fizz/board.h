@@ -117,6 +117,10 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
+/* USB-A config */
+#define CONFIG_USB_PORT_POWER_DUMB
+#define USB_PORT_COUNT 5
+
 /* Optional feature to configure npcx chip */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2	0 /* 0:GPIO21/17/16/20 as JTAG */
