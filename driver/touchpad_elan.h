@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_TOUCHPAD_ELAN_H
 #define __CROS_EC_TOUCHPAD_ELAN_H
 
+#ifdef CONFIG_TOUCHPAD_ELAN
 void elan_tp_interrupt(enum gpio_signal signal);
+#else
+static inline void elan_tp_interrupt(enum gpio_signal signal) { }
+#endif /* !CONFIG_TOUCHPAD_ELAN */
 
 #endif

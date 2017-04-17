@@ -45,6 +45,7 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  * usb_i2c_board_disable to be defined to enable and disable the I2C bridge.
  */
 
+#ifdef SECTION_IS_RW
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
 	{"master", I2C_PORT_MASTER, 400,
@@ -60,6 +61,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 int usb_i2c_board_enable(void) { return EC_SUCCESS; }
 void usb_i2c_board_disable(void) {}
+#endif
 
 /******************************************************************************
  * Initialize board.

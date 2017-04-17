@@ -80,9 +80,6 @@
 #define CONFIG_USB_PID 0x5022
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
-#define CONFIG_USB_HID
-#define CONFIG_USB_HID_KEYBOARD
-#define CONFIG_USB_HID_TOUCHPAD
 
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
@@ -99,18 +96,26 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_UPDATE	0
+#ifdef SECTION_IS_RW
 #define USB_IFACE_HID_KEYBOARD	1
 #define USB_IFACE_HID_TOUCHPAD	2
 #define USB_IFACE_I2C		3
 #define USB_IFACE_COUNT		4
+#else
+#define USB_IFACE_COUNT		1
+#endif
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_UPDATE		1
+#ifdef SECTION_IS_RW
 #define USB_EP_HID_KEYBOARD	2
 #define USB_EP_HID_TOUCHPAD	3
 #define USB_EP_I2C		4
 #define USB_EP_COUNT		5
+#else
+#define USB_EP_COUNT		2
+#endif
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
@@ -118,6 +123,11 @@
 
 /* No lid switch */
 #undef CONFIG_LID_SWITCH
+
+#ifdef SECTION_IS_RW
+#define CONFIG_USB_HID
+#define CONFIG_USB_HID_KEYBOARD
+#define CONFIG_USB_HID_TOUCHPAD
 
 /* Keyboard output port list */
 #define CONFIG_KEYBOARD_DEBUG
@@ -132,24 +142,27 @@
 /* Enable PWM */
 #define CONFIG_PWM
 
+/* Enable elan trackpad driver */
+#define CONFIG_TOUCHPAD_ELAN
+#define CONFIG_TOUCHPAD_I2C_PORT 0
+#define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)
+
+#else /* SECTION_IS_RO */
 /* Sign and switch to RW partition on boot. */
 #define CONFIG_RWSIG
-#define CONFIG_RWSIG_TYPE_RWSIG
 #define CONFIG_RSA
 #define CONFIG_SHA256
 #define CONFIG_RSA_KEY_SIZE 3072
 #define CONFIG_RSA_EXPONENT_3
+#endif
+
+#define CONFIG_RWSIG_TYPE_RWSIG
 
 /*
  * Add rollback protection, and independent RW region protection.
  */
 #define CONFIG_ROLLBACK
 #define CONFIG_FLASH_PROTECT_RW
-
-/* Enable elan trackpad driver */
-#define CONFIG_TOUCHPAD_ELAN
-#define CONFIG_TOUCHPAD_I2C_PORT 0
-#define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)
 
 #ifndef __ASSEMBLER__
 
@@ -172,11 +185,13 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
+#ifdef SECTION_IS_RW
 enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
+#endif
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

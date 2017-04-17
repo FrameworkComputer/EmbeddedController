@@ -17,8 +17,8 @@
  * 's' is the stack size in bytes; must be a multiple of 8
  */
 #define CONFIG_TASK_LIST \
-	TASK_ALWAYS(RWSIG,    rwsig_task,   NULL, 1024) \
-	TASK_ALWAYS(HOOKS,    hook_task,    NULL, LARGER_TASK_STACK_SIZE) \
-	TASK_ALWAYS(TOUCHPAD, elan_tp_task, NULL, TASK_STACK_SIZE) \
-	TASK_ALWAYS(CONSOLE,  console_task, NULL, LARGER_TASK_STACK_SIZE) \
-	TASK_NOTEST(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
+	TASK_ALWAYS_RO(RWSIG,    rwsig_task,   NULL, 1024) \
+	TASK_ALWAYS   (HOOKS,    hook_task,    NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS_RW(TOUCHPAD, elan_tp_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS   (CONSOLE,  console_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_NOTEST_RW(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
