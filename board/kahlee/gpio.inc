@@ -11,6 +11,9 @@
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC1 */
 GPIO_INT(USB_C1_PD_INT_ODL,	PIN(B, 1), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)	/* from Parade TCPC2 */
 
+GPIO_INT(USB_C0_BC12_INT_L,	PIN(0, 0), GPIO_INT_FALLING | GPIO_PULL_UP, usb0_evt)
+GPIO_INT(USB_C1_BC12_INT_L,	PIN(8, 5), GPIO_INT_FALLING | GPIO_PULL_UP, usb1_evt)
+
 GPIO_INT(PCH_SLP_S5_L,		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S5_L */
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S3_L */
 

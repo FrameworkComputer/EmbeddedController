@@ -286,6 +286,9 @@ enum board_version {
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
+/* Request the max voltage for type-c adapter */
+#define PD_PREFER_HIGH_VOLTAGE
+
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
 

@@ -29,11 +29,11 @@
 
 /* TODO: fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
-	PDO_FIXED(5000, 2250, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 const uint32_t pd_src_pdo_max[] = {
-		PDO_FIXED(5000, 2250, PDO_FIXED_FLAGS),
+		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
@@ -65,8 +65,6 @@ int board_vbus_source_enabled(int port)
 static void board_vbus_update_source_current(int port)
 {
 	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	enum gpio_signal gpio_AC = port ?
-		GPIO_USB_C1_20V_EN : GPIO_USB_C0_20V_EN;
 	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
 		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
 
@@ -78,7 +76,6 @@ static void board_vbus_update_source_current(int port)
 	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
 	 */
 	gpio_set_level(gpio, vbus_en[port]);
-	gpio_set_level(gpio_AC, 0);
 	gpio_set_flags(gpio, flags);
 }
 
