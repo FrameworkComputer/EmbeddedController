@@ -11,6 +11,11 @@ CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
 CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 
+# Assign default CHIP_FAMILY as npcx5 for old boards used npcx5 series
+ifeq ($(CHIP_FAMILY),)
+CHIP_FAMILY:=npcx5
+endif
+
 # Required chip modules
 chip-y=header.o clock.o gpio.o hwtimer.o jtag.o system.o uart.o
 

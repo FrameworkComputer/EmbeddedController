@@ -9,6 +9,15 @@
 /* CPU core BFD configuration */
 #include "core/cortex-m/config_core.h"
 
+/* Features depend on chip family */
+#if defined(CHIP_FAMILY_NPCX5)
+#include "config_chip-npcx5.h"
+#elif defined(CHIP_FAMILY_NPCX7)
+#include "config_chip-npcx7.h"
+#else
+#error "Unsupported chip family"
+#endif
+
 /* 32k hz internal oscillator frequency (FRCLK) */
 #define INT_32K_CLOCK 32768
 
@@ -25,42 +34,6 @@
  */
 #define HOOK_TICK_INTERVAL_MS 200
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
-
-/*
- * Number of I2C controllers. Controller 0 has 2 ports, so the chip has one
- * additional port.
- */
-#define CONFIG_I2C_MULTI_PORT_CONTROLLER
-/* Number of I2C controllers */
-#define I2C_CONTROLLER_COUNT	4
-/* Number of I2C ports */
-#define I2C_PORT_COUNT		5
-
-
-/* Number of PWM ports */
-#define PWM_COUNT 8
-
-/*****************************************************************************/
-/* Memory mapping */
-#define CONFIG_RAM_BASE            0x200C0000 /* memory address of data ram */
-#define CONFIG_RAM_SIZE            (0x00008000 - 0x800) /* 30KB data ram */
-#define CONFIG_LPRAM_BASE          0x40001600 /* memory address of lpwr ram */
-#define CONFIG_LPRAM_SIZE	   0x00000620 /* 1568B low power ram */
-
-/* Use chip variant to specify the size and start address of program memory */
-#if defined(CHIP_VARIANT_NPCX5M5G)
-/* 96KB RAM for FW code */
-#define NPCX_PROGRAM_MEMORY_SIZE (96 * 1024)
-/* program memory base address for 128KB RAM */
-#define CONFIG_PROGRAM_MEMORY_BASE 0x100A8000
-#elif defined(CHIP_VARIANT_NPCX5M6G)
-/* 224KB RAM for FW code */
-#define NPCX_PROGRAM_MEMORY_SIZE (224 * 1024)
-/* program memory base address for 256KB RAM */
-#define CONFIG_PROGRAM_MEMORY_BASE 0x10088000
-#else
-#error "Unsupported chip variant"
-#endif
 
 /* System stack size */
 #define CONFIG_STACK_SIZE       1024
