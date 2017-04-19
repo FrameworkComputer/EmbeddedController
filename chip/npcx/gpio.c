@@ -8,7 +8,7 @@
 #include "clock.h"
 #include "common.h"
 #include "gpio.h"
-#include "gpio_wui.h"
+#include "gpio_chip.h"
 #include "keyboard_config.h"
 #include "hooks.h"
 #include "registers.h"
@@ -21,6 +21,14 @@
 #include "lpc_chip.h"
 #include "ec_commands.h"
 #include "host_command.h"
+
+#if !(DEBUG_GPIO)
+#define CPUTS(...)
+#define CPRINTS(...)
+#else
+#define CPUTS(outstr) cputs(CC_GPIO, outstr)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#endif
 
 struct npcx_wui {
 	uint8_t table : 2;
@@ -42,9 +50,6 @@ struct npcx_gpio {
 
 BUILD_ASSERT(sizeof(struct npcx_gpio) == 1);
 
-#define NPCX_GPIO_NONE       {               0,   0, 0}
-#define NPCX_GPIO(port, pin) {GPIO_PORT_##port, pin, 1}
-
 struct npcx_alt {
 	uint8_t group     : 4;
 	uint8_t bit       : 3;
@@ -58,134 +63,16 @@ struct gpio_alt_map {
 
 BUILD_ASSERT(sizeof(struct gpio_alt_map) == 2);
 
-/* Convenient macros to initialize the gpio_alt_table */
-#define NPCX_ALT(grp, pin)     { ALT_GROUP_##grp, NPCX_DEVALT##grp##_##pin, 0 }
-#define NPCX_ALT_INV(grp, pin) { ALT_GROUP_##grp, NPCX_DEVALT##grp##_##pin, 1 }
-
-/* TODO: Index this table on GPIO# */
-const struct gpio_alt_map gpio_alt_table[] = {
-	/* I2C Module */
-	{ NPCX_GPIO(B, 2),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SDA1 */
-	{ NPCX_GPIO(B, 3),  NPCX_ALT(2, I2C0_1_SL)}, /* SMB0SCL1 */
-	{ NPCX_GPIO(B, 4),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SDA0 */
-	{ NPCX_GPIO(B, 5),  NPCX_ALT(2, I2C0_0_SL)}, /* SMB0SCL0 */
-	{ NPCX_GPIO(8, 7),  NPCX_ALT(2, I2C1_0_SL)}, /* SMB1SDA */
-	{ NPCX_GPIO(9, 0),  NPCX_ALT(2, I2C1_0_SL)}, /* SMB1SCL */
-	{ NPCX_GPIO(9, 1),  NPCX_ALT(2, I2C2_0_SL)}, /* SMB2SDA */
-	{ NPCX_GPIO(9, 2),  NPCX_ALT(2, I2C2_0_SL)}, /* SMB2SCL */
-	{ NPCX_GPIO(D, 0),  NPCX_ALT(2, I2C3_0_SL)}, /* SMB3SDA */
-	{ NPCX_GPIO(D, 1),  NPCX_ALT(2, I2C3_0_SL)}, /* SMB3SCL */
-	/* ADC Module */
-	{ NPCX_GPIO(4, 5),  NPCX_ALT(6, ADC0_SL)}, /* ADC0  */
-	{ NPCX_GPIO(4, 4),  NPCX_ALT(6, ADC1_SL)}, /* ADC1  */
-	{ NPCX_GPIO(4, 3),  NPCX_ALT(6, ADC2_SL)}, /* ADC2  */
-	{ NPCX_GPIO(4, 2),  NPCX_ALT(6, ADC3_SL)}, /* ADC3  */
-	{ NPCX_GPIO(4, 1),  NPCX_ALT(6, ADC4_SL)}, /* ADC4  */
-	/* UART Module 1/2 */
-#if NPCX_UART_MODULE2
-	{ NPCX_GPIO(6, 4),  NPCX_ALT(C, UART_SL2)}, /* CR_SIN */
-	{ NPCX_GPIO(6, 5),  NPCX_ALT(C, UART_SL2)}, /* CR_SOUT */
-#else
-	{ NPCX_GPIO(1, 0),  NPCX_ALT(9, NO_KSO08_SL)}, /* CR_SIN/KSO09 */
-	{ NPCX_GPIO(1, 1),  NPCX_ALT(9, NO_KSO09_SL)}, /* CR_SOUT/KSO10 */
-#endif
-	/* SPI Module */
-	{ NPCX_GPIO(9, 5),  NPCX_ALT(0, SPIP_SL)}, /* SPIP_MISO */
-	{ NPCX_GPIO(A, 5),  NPCX_ALT(0, SPIP_SL)}, /* SPIP_CS1  */
-	{ NPCX_GPIO(A, 3),  NPCX_ALT(0, SPIP_SL)}, /* SPIP_MOSI */
-	{ NPCX_GPIO(A, 1),  NPCX_ALT(0, SPIP_SL)}, /* SPIP_SCLK */
-	/* PWM Module */
-	{ NPCX_GPIO(C, 3),  NPCX_ALT(4, PWM0_SL)}, /* PWM0 */
-	{ NPCX_GPIO(C, 2),  NPCX_ALT(4, PWM1_SL)}, /* PWM1 */
-	{ NPCX_GPIO(C, 4),  NPCX_ALT(4, PWM2_SL)}, /* PWM2 */
-	{ NPCX_GPIO(8, 0),  NPCX_ALT(4, PWM3_SL)}, /* PWM3 */
-	{ NPCX_GPIO(B, 6),  NPCX_ALT(4, PWM4_SL)}, /* PWM4 */
-	{ NPCX_GPIO(B, 7),  NPCX_ALT(4, PWM5_SL)}, /* PWM5 */
-	{ NPCX_GPIO(C, 0),  NPCX_ALT(4, PWM6_SL)}, /* PWM6 */
-	{ NPCX_GPIO(6, 0),  NPCX_ALT(4, PWM7_SL)}, /* PWM7 */
-	/* MFT Module */
-#if NPCX_TACH_SEL2
-	{ NPCX_GPIO(9, 3),  NPCX_ALT(C, TA1_SL2)},/* TA1_SEL2 */
-	{ NPCX_GPIO(A, 6),  NPCX_ALT(C, TA2_SL2)},/* TA2_SEL2 */
-#else
-	{ NPCX_GPIO(4, 0),  NPCX_ALT(3, TA1_SL1)},/* TA1_SEL1 */
-	{ NPCX_GPIO(7, 3),  NPCX_ALT(3, TA2_SL1)},/* TA2_SEL1 */
-#endif
-	/* Keyboard Scan Module (Inputs) */
-	{ NPCX_GPIO(3, 1),  NPCX_ALT_INV(7, NO_KSI0_SL)},/* KSI0 */
-	{ NPCX_GPIO(3, 0),  NPCX_ALT_INV(7, NO_KSI1_SL)},/* KSI1 */
-	{ NPCX_GPIO(2, 7),  NPCX_ALT_INV(7, NO_KSI2_SL)},/* KSI2 */
-	{ NPCX_GPIO(2, 6),  NPCX_ALT_INV(7, NO_KSI3_SL)},/* KSI3 */
-	{ NPCX_GPIO(2, 5),  NPCX_ALT_INV(7, NO_KSI4_SL)},/* KSI4 */
-	{ NPCX_GPIO(2, 4),  NPCX_ALT_INV(7, NO_KSI5_SL)},/* KSI5 */
-	{ NPCX_GPIO(2, 3),  NPCX_ALT_INV(7, NO_KSI6_SL)},/* KSI6 */
-	{ NPCX_GPIO(2, 2),  NPCX_ALT_INV(7, NO_KSI7_SL)},/* KSI7 */
-	/* Keyboard Scan Module (Outputs) */
-	{ NPCX_GPIO(2, 1),  NPCX_ALT_INV(8, NO_KSO00_SL)},/* KSO00 */
-	{ NPCX_GPIO(2, 0),  NPCX_ALT_INV(8, NO_KSO01_SL)},/* KSO01 */
-	{ NPCX_GPIO(1, 7),  NPCX_ALT_INV(8, NO_KSO02_SL)},/* KSO02 */
-	{ NPCX_GPIO(1, 6),  NPCX_ALT_INV(8, NO_KSO03_SL)},/* KSO03 */
-	{ NPCX_GPIO(1, 5),  NPCX_ALT_INV(8, NO_KSO04_SL)},/* KSO04 */
-	{ NPCX_GPIO(1, 4),  NPCX_ALT_INV(8, NO_KSO05_SL)},/* KSO05 */
-	{ NPCX_GPIO(1, 3),  NPCX_ALT_INV(8, NO_KSO06_SL)},/* KSO06 */
-	{ NPCX_GPIO(1, 2),  NPCX_ALT_INV(8, NO_KSO07_SL)},/* KSO07 */
-	{ NPCX_GPIO(1, 1),  NPCX_ALT_INV(9, NO_KSO08_SL)},/* KSO08 */
-	{ NPCX_GPIO(1, 0),  NPCX_ALT_INV(9, NO_KSO09_SL)},/* KSO09 */
-	{ NPCX_GPIO(0, 7),  NPCX_ALT_INV(9, NO_KSO10_SL)},/* KSO10 */
-	{ NPCX_GPIO(0, 6),  NPCX_ALT_INV(9, NO_KSO11_SL)},/* KSO11 */
-	{ NPCX_GPIO(0, 5),  NPCX_ALT_INV(9, NO_KSO12_SL)},/* KSO12 */
-	{ NPCX_GPIO(0, 4),  NPCX_ALT_INV(9, NO_KSO13_SL)},/* KSO13 */
-	{ NPCX_GPIO(8, 2),  NPCX_ALT_INV(9, NO_KSO14_SL)},/* KSO14 */
-	{ NPCX_GPIO(8, 3),  NPCX_ALT_INV(9, NO_KSO15_SL)},/* KSO15 */
-	{ NPCX_GPIO(0, 3),  NPCX_ALT_INV(A, NO_KSO16_SL)},/* KSO16 */
-	{ NPCX_GPIO(B, 1),  NPCX_ALT_INV(A, NO_KSO17_SL)},/* KSO17 */
-	/* Clock module */
-	{ NPCX_GPIO(7, 5),  NPCX_ALT(A, 32K_OUT_SL)},     /* 32KHZ_OUT */
-	{ NPCX_GPIO(E, 7),  NPCX_ALT(A, 32KCLKIN_SL)},    /* 32KCLKIN */
-};
+/* Constants for GPIO alternative mapping */
+const struct gpio_alt_map gpio_alt_table[] = NPCX_ALT_TABLE;
 
 struct gpio_lvol_item {
 	struct npcx_gpio lvol_gpio[8];
 };
 
-const struct gpio_lvol_item gpio_lvol_table[] = {
-	/* Low-Voltage GPIO Control 0 */
-	{ { NPCX_GPIO(B, 5),
-	    NPCX_GPIO(B, 4),
-	    NPCX_GPIO(B, 3),
-	    NPCX_GPIO(B, 2),
-	    NPCX_GPIO(9, 0),
-	    NPCX_GPIO(8, 7),
-	    NPCX_GPIO(0, 0),
-	    NPCX_GPIO(3, 3), }, },
-	/* Low-Voltage GPIO Control 1 */
-	{ { NPCX_GPIO(9, 2),
-	    NPCX_GPIO(9, 1),
-	    NPCX_GPIO(D, 1),
-	    NPCX_GPIO(D, 0),
-	    NPCX_GPIO(3, 6),
-	    NPCX_GPIO(6, 4),
-	    NPCX_GPIO(6, 5),
-	    NPCX_GPIO_NONE , }, },
-	/* Low-Voltage GPIO Control 2 */
-	{ { NPCX_GPIO(7, 4),
-	    NPCX_GPIO(8, 4),
-	    NPCX_GPIO(8, 5),
-	    NPCX_GPIO(7, 3),
-	    NPCX_GPIO(C, 1),
-	    NPCX_GPIO(C, 7),
-	    NPCX_GPIO(E, 7),
-	    NPCX_GPIO(3, 4), }, },
-	/* Low-Voltage GPIO Control 3 */
-	{ { NPCX_GPIO(C, 6),
-	    NPCX_GPIO(3, 7),
-	    NPCX_GPIO(4, 0),
-	    NPCX_GPIO(7, 1),
-	    NPCX_GPIO(8, 2),
-	    NPCX_GPIO(7, 5),
-	    NPCX_GPIO(8, 0),
-	    NPCX_GPIO(C, 5), }, },
-};
+/* Constants for GPIO low-voltage mapping */
+const struct gpio_lvol_item gpio_lvol_table[] = NPCX_LVOL_TABLE;
+
 
 /*****************************************************************************/
 /* Internal functions */
@@ -217,6 +104,9 @@ static int gpio_alt_sel(uint8_t port, uint8_t bit, int8_t func)
 			return 1;
 		}
 	}
+
+	if (func > 0)
+		CPRINTS("Warn! No alter func in port%d, pin%d", port, bit);
 
 	return -1;
 }
@@ -309,6 +199,10 @@ void gpio_low_voltage_level_sel(uint8_t port, uint8_t mask, uint8_t low_voltage)
 			}
 
 	}
+
+	if (low_voltage)
+		CPRINTS("Warn! No low voltage support in port%d, mask%d\n",
+								port, mask);
 }
 /*
  * Make sure the bit depth of low voltage register.
@@ -344,6 +238,12 @@ void gpio_set_level(enum gpio_signal signal, int value)
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
+	/* If all GPIO pins are locked, return directly */
+#if defined(CHIP_FAMILY_NPCX7)
+	if ((NPCX_PLOCK_CTL(port) & mask) == mask)
+		return;
+#endif
+
 	/*
 	 * Configure pin as input, if requested. Output is configured only
 	 * after setting all other attributes, so as not to create a
@@ -402,6 +302,12 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	/* Configure pin as output, if requested 0:input 1:output */
 	if (flags & GPIO_OUTPUT)
 		NPCX_PDIR(port) |= mask;
+
+	/* Lock GPIO output and configuration if need */
+#if defined(CHIP_FAMILY_NPCX7)
+	if (flags & GPIO_LOCKED)
+		NPCX_PLOCK_CTL(port) |= mask;
+#endif
 }
 
 int gpio_enable_interrupt(enum gpio_signal signal)
@@ -528,6 +434,9 @@ static void gpio_init(void)
 	task_enable_irq(NPCX_IRQ_WKINTF_1);
 	task_enable_irq(NPCX_IRQ_WKINTG_1);
 	task_enable_irq(NPCX_IRQ_WKINTH_1);
+#if defined(CHIP_FAMILY_NPCX7)
+	task_enable_irq(NPCX_IRQ_WKINTFG_2);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
@@ -625,6 +534,27 @@ void __gpio_rtc_interrupt(void)
 	}
 }
 
+void __gpio_wk1h_interrupt(void)
+{
+#if defined(CHIP_FAMILY_NPCX7) && defined(CONFIG_LOW_POWER_IDLE)
+	/* Handle the interrupt from UART wakeup event */
+	if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_1, MIWU_GROUP_8), 7) &&
+	    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_1, MIWU_GROUP_8), 7)) {
+		/*
+		 * Disable WKEN bit to avoid the other unnecessary interrupts
+		 * from the coming data bits after the start bit. (Pending bit
+		 * of CR_SIN is set when a high-to-low transaction occurs.)
+		 */
+		CLEAR_BIT(NPCX_WKEN(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+		/* Clear pending bit for WUI */
+		SET_BIT(NPCX_WKPCL(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+		/* Notify the clock module that the console is in use. */
+		clock_refresh_console_in_use();
+	} else
+#endif
+		gpio_interrupt(WUI_INT(MIWU_TABLE_1, MIWU_GROUP_8));
+}
+
 GPIO_IRQ_FUNC(__gpio_wk0b_interrupt, WUI_INT(MIWU_TABLE_0, MIWU_GROUP_2));
 GPIO_IRQ_FUNC(__gpio_wk0c_interrupt, WUI_INT(MIWU_TABLE_0, MIWU_GROUP_3));
 GPIO_IRQ_FUNC(__gpio_wk1a_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_1));
@@ -637,7 +567,9 @@ GPIO_IRQ_FUNC(__gpio_wk1d_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_4));
 GPIO_IRQ_FUNC(__gpio_wk1e_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_5));
 GPIO_IRQ_FUNC(__gpio_wk1f_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_6));
 GPIO_IRQ_FUNC(__gpio_wk1g_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_7));
-GPIO_IRQ_FUNC(__gpio_wk1h_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_8));
+#if defined(CHIP_FAMILY_NPCX7)
+GPIO_IRQ_FUNC(__gpio_wk2fg_interrupt, WUI_INT(MIWU_TABLE_2, MIWU_GROUP_6));
+#endif
 
 DECLARE_IRQ(NPCX_IRQ_MTC_WKINTAD_0, __gpio_rtc_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0,  __gpio_wk0b_interrupt, 2);
@@ -662,6 +594,8 @@ DECLARE_IRQ(NPCX_IRQ_WKINTF_1,      __gpio_wk1f_interrupt, 2);
 #endif
 DECLARE_IRQ(NPCX_IRQ_WKINTG_1,      __gpio_wk1g_interrupt, 2);
 DECLARE_IRQ(NPCX_IRQ_WKINTH_1,      __gpio_wk1h_interrupt, 2);
-
+#if defined(CHIP_FAMILY_NPCX7)
+DECLARE_IRQ(NPCX_IRQ_WKINTFG_2,     __gpio_wk2fg_interrupt, 2);
+#endif
 
 #undef GPIO_IRQ_FUNC
