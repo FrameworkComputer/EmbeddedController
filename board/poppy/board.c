@@ -70,11 +70,25 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
+/* Set PD discharge whenever VBUS detection is high (i.e. below threshold). */
+static void vbus_discharge_handler(void)
+{
+	if (system_get_board_version() >= 2) {
+		pd_set_vbus_discharge(0,
+				gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+		pd_set_vbus_discharge(1,
+				gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
+	}
+}
+DECLARE_DEFERRED(vbus_discharge_handler);
+
 void vbus0_evt(enum gpio_signal signal)
 {
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(0, !gpio_get_level(signal));
 	task_wake(TASK_ID_PD_C0);
+
+	hook_call_deferred(&vbus_discharge_handler_data, 0);
 }
 
 void vbus1_evt(enum gpio_signal signal)
@@ -82,6 +96,8 @@ void vbus1_evt(enum gpio_signal signal)
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(1, !gpio_get_level(signal));
 	task_wake(TASK_ID_PD_C1);
+
+	hook_call_deferred(&vbus_discharge_handler_data, 0);
 }
 
 void usb0_evt(enum gpio_signal signal)
