@@ -31,8 +31,9 @@
 #define CONFIG_BATTERY_SMART
 
 /* Charger */
+#define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
-#define CONFIG_CHARGER_INPUT_CURRENT 2250
+#define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_ISL9238
 #define CONFIG_CHARGER_NARROW_VDC
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
@@ -55,6 +56,15 @@
 /* USB-A config */
 
 /* USB PD config */
+#define CONFIG_USB_CHARGER
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
+#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_POWER_DELIVERY
 
 /* SoC / PCH */
 #define CONFIG_LPC
@@ -120,12 +130,27 @@ enum power_signal {
 };
 
 enum adc_channel {
+	ADC_VBUS,
 	ADC_CH_COUNT,
 };
 
 int board_get_version(void);
 
+/* TODO: Verify the numbers below. */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
 /* Define typical operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW       45000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     20000
+
+/* Reset PD MCU */
+void board_reset_pd_mcu(void);
+void tcpc_alert_event(enum gpio_signal signal);
+void board_charging_enable(int port, int enable);
+void board_vbus_enable(int port, int enable);
 
 #endif /* !__ASSEMBLER__ */
 
