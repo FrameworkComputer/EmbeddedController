@@ -106,6 +106,7 @@
 #define CONFIG_PECI
 #define CONFIG_PWM
 #define CONFIG_SPI
+#define CONFIG_SWITCH
 
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
