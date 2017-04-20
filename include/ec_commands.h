@@ -8,10 +8,12 @@
 #ifndef __CROS_EC_EC_COMMANDS_H
 #define __CROS_EC_EC_COMMANDS_H
 
+#include <stdint.h>
+
 /*
- * Include common.h first for CONFIG_HOSTCMD_ALIGNED, if it's defined.  This
- * generates more efficient code for accessing request/response structures
- * on ARM Cortex-M if the structures are guaranteed 32-bit aligned.
+ * Include common.h for CONFIG_HOSTCMD_ALIGNED, if it's defined. This
+ * generates more efficient code for accessing request/response structures on
+ * ARM Cortex-M if the structures are guaranteed 32-bit aligned.
  */
 #ifdef CHROMIUM_EC
 #include "common.h"
