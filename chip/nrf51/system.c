@@ -31,7 +31,7 @@ const char *system_get_chip_revision(void)
 	return "";
 }
 
-void chip_hibernate(uint32_t seconds, uint32_t microseconds)
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Flush console before hibernating */
 	cflush();

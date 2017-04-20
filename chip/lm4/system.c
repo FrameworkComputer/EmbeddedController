@@ -381,7 +381,7 @@ static void hibernate(uint32_t seconds, uint32_t microseconds, uint32_t flags)
 	__enter_hibernate(hibctl | LM4_HIBCTL_HIBREQ);
 }
 
-void chip_hibernate(uint32_t seconds, uint32_t microseconds)
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	/* Flush console before hibernating */
 	cflush();

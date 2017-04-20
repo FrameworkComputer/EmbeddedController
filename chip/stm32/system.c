@@ -103,7 +103,7 @@ void __no_hibernate(uint32_t seconds, uint32_t microseconds)
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	__attribute__((weak, alias("__no_hibernate")));
 
-void chip_hibernate(uint32_t seconds, uint32_t microseconds)
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 #ifdef CONFIG_HOSTCMD_PD
 	/* Inform the PD MCU that we are going to hibernate. */

@@ -4,7 +4,6 @@
  */
 
 /* System module for Chrome EC : common functions */
-#include "chipset.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -409,23 +408,6 @@ const char *system_image_copy_t_to_string(enum system_image_copy_t copy)
 	return image_names[copy < ARRAY_SIZE(image_names) ? copy : 0];
 }
 
-test_mockable void system_hibernate(uint32_t seconds, uint32_t microseconds)
-{
-#ifdef HAS_TASK_CHIPSET
-	/* Wait up to a second for chipset to shut down */
-	int retries = 100;
-
-	chipset_force_shutdown();
-	while (--retries) {
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			break;
-		msleep(10);
-	}
-	if (!retries)
-		CPRINTS("Hibernate before chipset shutdown");
-#endif
-	chip_hibernate(seconds, microseconds);
-}
 /**
  * Jump to what we hope is the init address of an image.
  *
