@@ -501,4 +501,11 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.get_message		= &it83xx_tcpm_get_message,
 	.transmit		= &it83xx_tcpm_transmit,
 	.tcpc_alert		= NULL,
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+	.tcpc_discharge_vbus	= NULL,
+#endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle		= NULL,
+#endif
+	.get_chip_info		= NULL,
 };
