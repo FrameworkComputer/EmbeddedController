@@ -57,11 +57,14 @@ enum pd_rx_errors {
  *    if present shall be sent in Minimum Voltage order; lowest to highest.
  * 4. The Variable Supply (non battery) Objects,
  *    if present, shall be sent in Minimum Voltage order; lowest to highest.
+ * 5. (PD3.0) The Augmented PDO is defined to allow extension beyond the 4 PDOs
+ *     above by examining bits <29:28> to determine the additional PDO function.
  */
-#define PDO_TYPE_FIXED    (0 << 30)
-#define PDO_TYPE_BATTERY  (1 << 30)
-#define PDO_TYPE_VARIABLE (2 << 30)
-#define PDO_TYPE_MASK     (3 << 30)
+#define PDO_TYPE_FIXED     (0 << 30)
+#define PDO_TYPE_BATTERY   (1 << 30)
+#define PDO_TYPE_VARIABLE  (2 << 30)
+#define PDO_TYPE_AUGMENTED (3 << 30)
+#define PDO_TYPE_MASK      (3 << 30)
 
 #define PDO_FIXED_DUAL_ROLE (1 << 29) /* Dual role device */
 #define PDO_FIXED_SUSPEND   (1 << 28) /* USB Suspend supported */

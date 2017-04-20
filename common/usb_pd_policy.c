@@ -106,6 +106,10 @@ static int pd_find_pdo_index(int cnt, uint32_t *src_caps, int max_mv)
 
 	/* Get max power that is under our max voltage input */
 	for (i = 0; i < cnt; i++) {
+		/* its an unsupported Augmented PDO (PD3.0) */
+		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED)
+			continue;
+
 		mv = ((src_caps[i] >> 10) & 0x3FF) * 50;
 		/* Skip invalid voltage */
 		if (!mv)
