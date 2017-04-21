@@ -527,10 +527,10 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 0,
 			 .ec_rate = 0,
 		 },
-		 /* EC: angle detection is not used */
+		 /* Sensor on in S0 for Chrome screen orientation */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
+			 .odr = 10000 | ROUND_UP_FLAG,
+			 .ec_rate = 100 * MSEC,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
@@ -563,10 +563,10 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 0,
 			 .ec_rate = 0,
 		 },
-		 /* Enable gyro in S0 */
+		 /* Sensor off in S0 by default */
 		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-			 .ec_rate = 100 * MSEC,
+			 .odr = 0,
+			 .ec_rate = 0,
 		 },
 		 /* Sensor off in S3/S5 */
 		 [SENSOR_CONFIG_EC_S3] = {
