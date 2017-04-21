@@ -208,6 +208,8 @@ const char help_str[] =
 	"      Set real-time clock alarm to go off in <sec> seconds\n"
 	"  rwhashpd <dev_id> <HASH[0] ... <HASH[4]>\n"
 	"      Set entry in PD MCU's device rw_hash table.\n"
+	"  rwsigstatus\n"
+	"      Run RW signature verification and get status.\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
 	"  switches\n"
@@ -1017,6 +1019,21 @@ int cmd_rw_hash_pd(int argc, char *argv[])
 	rv = ec_command(EC_CMD_USB_PD_RW_HASH_ENTRY, 0, p, sizeof(*p), NULL, 0);
 
 	return rv;
+}
+
+int cmd_rwsig_status(int argc, char *argv[])
+{
+	int rv;
+	struct ec_response_rwsig_check_status resp;
+
+	rv = ec_command(EC_CMD_RWSIG_CHECK_STATUS, 0, NULL, 0,
+			&resp, sizeof(resp));
+	if (rv < 0)
+		return rv;
+
+	printf("RW signature check: %s\n", resp.status ? "OK" : "FAILED");
+
+	return 0;
 }
 
 /**
@@ -7048,6 +7065,7 @@ const struct command commands[] = {
 	{"rtcset", cmd_rtc_set},
 	{"rtcsetalarm", cmd_rtc_set_alarm},
 	{"rwhashpd", cmd_rw_hash_pd},
+	{"rwsigstatus", cmd_rwsig_status},
 	{"sertest", cmd_serial_test},
 	{"port80flood", cmd_port_80_flood},
 	{"switches", cmd_switches},
