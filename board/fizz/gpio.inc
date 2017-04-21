@@ -42,7 +42,7 @@ GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
 
 /* Fizz specific pins */
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_INPUT)				/* Ethernet power enabled */
-GPIO(EC_RECOVERY_L,		PIN(8, 2), GPIO_INPUT)				/* Recovery button */
+GPIO(RECOVERY_L,		PIN(8, 2), GPIO_INPUT)				/* Recovery button */
 GPIO(PWR_RED_LED,		PIN(8, 0), GPIO_OUT_HIGH)			/* Power Red LED */
 GPIO(PWR_GRN_LED,		PIN(B, 7), GPIO_OUT_HIGH)			/* Power Green LED */
 
