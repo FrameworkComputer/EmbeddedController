@@ -295,6 +295,21 @@ DECLARE_CONSOLE_COMMAND(uart, command_uart,
 	"[off|on|flip|auto]",
 	"Get/set the flip and enable state of the SBU UART");
 
+static void set_led_a(int r, int g, int b)
+{
+	/* LEDs are active low */
+	gpio_set_level(GPIO_LED_R_L, !r);
+	gpio_set_level(GPIO_LED_G_L, !g);
+	gpio_set_level(GPIO_LED_B_L, !b);
+}
+
+static void set_led_b(int r, int g, int b)
+{
+	gpio_set_level(GPIO_LED2_R_L, !r);
+	gpio_set_level(GPIO_LED2_G_L, !g);
+	gpio_set_level(GPIO_LED2_B_L, !b);
+}
+
 /* State we intend the mux GPIOs to be set. */
 static int mux_state = MUX_OFF;
 
@@ -327,6 +342,16 @@ void set_mux_state(int state)
 		mux_state = MUX_OFF;
 	else
 		mux_state = state;
+
+	if (state == MUX_A)
+		set_led_a(0, 1, 0);
+	else
+		set_led_a(1, 0, 0);
+
+	if (state == MUX_B)
+		set_led_b(0, 1, 0);
+	else
+		set_led_b(1, 0, 0);
 }
 
 static int command_mux(int argc, char **argv)
@@ -378,4 +403,3 @@ static void board_init(void)
 	ina2xx_init(4, 0x8000, INA2XX_CALIB_1MA(15 /*mOhm*/));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
