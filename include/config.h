@@ -1819,6 +1819,12 @@
 #undef CONFIG_RWSIG
 
 /*
+ * Disable rwsig jump when the reset source is hard pin-reset. This only work
+ * for the case where rwsig task is not used.
+ */
+#undef CONFIG_RWSIG_DONT_CHECK_ON_PIN_RESET
+
+/*
  * When RWSIG verification is performed as a task, time to wait from signature
  * verification to an automatic jump to RW (if AP does not request the wait to
  * be interrupted).
