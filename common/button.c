@@ -85,6 +85,19 @@ static void button_blink_hw_reinit_led(void)
 #endif
 
 /*
+ * Whether recovery button (or combination of equivalent buttons) is pressed
+ */
+static int is_recovery_button_pressed(void)
+{
+	int i;
+	for (i = 0; i < recovery_buttons_count; i++) {
+		if (!raw_button_pressed(recovery_buttons[i]))
+			return 0;
+	}
+	return 1;
+}
+
+/*
  * If the EC is reset and recovery is requested, then check if HW_REINIT is
  * requested as well. Since the EC reset occurs after volup+voldn+power buttons
  * are held down for 10 seconds, check the state of these buttons for 20 more
@@ -102,8 +115,7 @@ static void button_check_hw_reinit_required(void)
 	CPRINTS("Checking for HW_REINIT request");
 
 	while (!timestamp_expired(deadline, &now)) {
-		if (!raw_button_pressed(&buttons[BUTTON_VOLUME_UP]) ||
-		    !raw_button_pressed(&buttons[BUTTON_VOLUME_DOWN]) ||
+		if (!is_recovery_button_pressed() ||
 		    !power_button_signal_asserted()) {
 			CPRINTS("No HW_REINIT request");
 			return;
@@ -139,8 +151,7 @@ void button_init(void)
 #ifdef CONFIG_BUTTON_RECOVERY
 	if (!system_jumped_to_this_image() &&
 	    (system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
-	    raw_button_pressed(&buttons[BUTTON_VOLUME_DOWN]) &&
-	    raw_button_pressed(&buttons[BUTTON_VOLUME_UP])) {
+	    is_recovery_button_pressed()) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 		button_check_hw_reinit_required();
 	}

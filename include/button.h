@@ -43,6 +43,12 @@ struct button_config {
 extern const struct button_config buttons[];
 
 /*
+ * Buttons used to decide whether recovery is requested or not
+ */
+extern const struct button_config *recovery_buttons[];
+extern const int recovery_buttons_count;
+
+/*
  * Button initialization, called from main.
  */
 void button_init(void);

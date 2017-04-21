@@ -362,7 +362,10 @@
  */
 #undef CONFIG_BUTTON_COUNT
 
-/* Support for entering recovery mode using volume buttons. */
+/*
+ * Support for entering recovery mode using volume buttons. You need to
+ * list the buttons in recovery_buttons.
+ */
 #undef CONFIG_BUTTON_RECOVERY
 
 /*
