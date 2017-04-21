@@ -65,6 +65,7 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_S0IX
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+#define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
 
 /* EC */
 #define CONFIG_BOARD_VERSION
@@ -99,7 +100,6 @@
 /* EC exclude modules */
 #undef CONFIG_ADC
 #undef CONFIG_PECI
-#undef CONFIG_SWITCH
 #undef CONFIG_WATCHDOG
 
 #ifndef __ASSEMBLER__

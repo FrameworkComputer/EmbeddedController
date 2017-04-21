@@ -19,6 +19,7 @@ GPIO_INT(ALL_SYS_PGOOD,		PIN(7, 2), GPIO_INT_BOTH, power_signal_interrupt)	/* PM
 GPIO_INT(POWER_BUTTON_L,	PIN(A, 6), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 GPIO_INT(LID_OPEN,		PIN(0, 3), GPIO_INT_BOTH | GPIO_PULL_UP, lid_interrupt)	/* SMC_LID */
 GPIO_INT(AC_PRESENT,		PIN(D, 2), GPIO_INT_BOTH, extpower_interrupt)		/* ACOK_OD from ISL9238 */
+GPIO_INT(WP_L,			PIN(9, 3), GPIO_INT_BOTH | GPIO_SEL_1P8V, switch_interrupt)	/* EC_WP_ODL */
 
 GPIO(PCH_SMI_L,		PIN(C, 6), GPIO_ODR_HIGH)		/* EC_SMI_ODL */
 GPIO(PCH_SCI_L,		PIN(7, 6), GPIO_ODR_HIGH)		/* EC_SCI_ODL */
@@ -93,7 +94,6 @@ GPIO(NC_D3,	PIN(D, 3), GPIO_INPUT)
 GPIO(NC_E7,	PIN(E, 7), GPIO_INPUT)
 
 /* Unused pins: VSPI 3.3V or 1.8V & Interruptable */
-GPIO(NC_93,	PIN(9, 3), GPIO_INPUT)
 GPIO(NC_94,	PIN(9, 4), GPIO_INPUT)
 GPIO(NC_95,	PIN(9, 5), GPIO_INPUT)
 
