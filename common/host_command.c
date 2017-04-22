@@ -790,6 +790,9 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef CONFIG_SPI_FP_PORT
 		| EC_FEATURE_MASK_0(EC_FEATURE_FINGERPRINT)
 #endif
+#ifdef HAS_TASK_CENTROIDING
+		| EC_FEATURE_MASK_0(EC_FEATURE_TOUCHPAD)
+#endif
 		;
 	return EC_RES_SUCCESS;
 }
