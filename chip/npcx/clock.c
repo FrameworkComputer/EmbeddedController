@@ -29,36 +29,6 @@
 #define WAKE_INTERVAL   61        /* Unit: 61 usec */
 #define IDLE_PARAMS     0x7       /* Support deep idle, instant wake-up */
 
-/*
- * Frequency multiplier values definition according to the requested
- * PLL_CLOCK Clock Frequency
- */
-#define HFCGN    0x02
-#if   (OSC_CLK == 50000000)
-#define HFCGMH   0x0B
-#define HFCGML   0xEC
-#elif (OSC_CLK == 48000000)
-#define HFCGMH   0x0B
-#define HFCGML   0x72
-#elif (OSC_CLK == 40000000)
-#define HFCGMH   0x09
-#define HFCGML   0x89
-#elif (OSC_CLK == 33000000)
-#define HFCGMH   0x07
-#define HFCGML   0xDE
-#elif (OSC_CLK == 24000000)
-#define HFCGMH   0x0B
-#define HFCGML   0x71
-#elif (OSC_CLK == 15000000)
-#define HFCGMH   0x07
-#define HFCGML   0x27
-#elif (OSC_CLK == 13000000)
-#define HFCGMH   0x06
-#define HFCGML   0x33
-#else
-#error "Unsupported FMCLK Clock Frequency"
-#endif
-
 /* Low power idle statistics */
 #ifdef CONFIG_LOW_POWER_IDLE
 static int idle_sleep_cnt;
@@ -72,11 +42,6 @@ static uint64_t idle_dsleep_time_us;
 static int console_in_use_timeout_sec = 15;
 static timestamp_t console_expire_time;
 #endif
-
-
-static int freq;
-
-/* Low power idle statistics */
 
 /**
  * Enable clock to peripheral by setting the CGC register pertaining
@@ -124,8 +89,8 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
 void clock_init(void)
 {
 	/*
-	 * Configure Frequency multiplier values according to the requested
-	 * FMCLK Clock Frequency
+	 * Configure frequency multiplier M/N values according to
+	 * the requested OSC_CLK (Unit:Hz).
 	 */
 	NPCX_HFCGN  = HFCGN;
 	NPCX_HFCGML = HFCGML;
@@ -138,24 +103,16 @@ void clock_init(void)
 	while (IS_BIT_SET(NPCX_HFCGCTRL, NPCX_HFCGCTRL_CLK_CHNG))
 		;
 
-	/* Keep FMCLK in 33-50 MHz which is tested strictly. */
-#if (OSC_CLK >= 33000000)
-	/* Keep Core CLK & FMCLK are the same */
-	NPCX_HFCGP = 0x00;
-#else
-	/* Keep Core CLK = 0.5 * FMCLK */
-	NPCX_HFCGP = 0x10;
+	/* Set all clock prescalers of core and peripherals. */
+#if defined(CHIP_FAMILY_NPCX5)
+	NPCX_HFCGP  = (FPRED << 4);
+	NPCX_HFCBCD = (NPCX_HFCBCD & 0xF0) | (APB1DIV | (APB2DIV << 2));
+#elif defined(CHIP_FAMILY_NPCX7)
+	NPCX_HFCGP   = ((FPRED << 4) | AHB6DIV);
+	NPCX_HFCBCD  = (FIUDIV << 4);
+	NPCX_HFCBCD1 = (APB1DIV | (APB2DIV << 4));
+	NPCX_HFCBCD2 = APB3DIV;
 #endif
-
-	/*
-	 * Let APB2 and Core CLK are equal if default APB2 clock isn't
-	 * divisible by 1MHz
-	 */
-#if (OSC_CLK % 2000000)
-	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
-#endif
-
-	freq = OSC_CLK;
 
 	/* Notify modules of frequency change */
 	hook_notify(HOOK_FREQ_CHANGE);
@@ -164,10 +121,7 @@ void clock_init(void)
 	gpio_config_module(MODULE_CLOCK, 1);
 }
 
-
-/**
- * Set the CPU clock to maximum freq for better performance.
- */
+#if defined(CHIP_FAMILY_NPCX5)
 void clock_turbo(void)
 {
 	/* Configure Frequency multiplier values to 50MHz */
@@ -191,13 +145,39 @@ void clock_turbo(void)
 	 */
 	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
 }
+#elif defined(CHIP_FAMILY_NPCX7)
+void clock_turbo(void)
+{
+	/*
+	 * Increase CORE_CLK (CPU) as the same as OSC_CLK. Since
+	 * CORE_CLK > 66MHz, we also need to set AHB6DIV and FIUDIV as 1.
+	 */
+	NPCX_HFCGP = 0x01;
+	NPCX_HFCBCD = (1 << 4);
+}
+
+void clock_turbo_disable(void)
+{
+	/* Set CORE_CLK (CPU), AHB6_CLK and FIU_CLK back to original values. */
+	NPCX_HFCGP = ((FPRED << 4) | AHB6DIV);
+	NPCX_HFCBCD = (FIUDIV << 4);
+}
+#endif
 
 /**
  * Return the current clock frequency in Hz.
  */
 int clock_get_freq(void)
 {
-	return freq;
+	return CORE_CLK;
+}
+
+/**
+ * Return the current FMUL clock frequency in Hz.
+ */
+int clock_get_fm_freq(void)
+{
+	return FMCLK;
 }
 
 /**
@@ -205,8 +185,7 @@ int clock_get_freq(void)
  */
 int clock_get_apb1_freq(void)
 {
-	int apb1_div = (NPCX_HFCBCD & 0x03) + 1;
-	return freq/apb1_div;
+	return NPCX_APB_CLOCK(1);
 }
 
 /**
@@ -214,9 +193,18 @@ int clock_get_apb1_freq(void)
  */
 int clock_get_apb2_freq(void)
 {
-	int apb2_div = ((NPCX_HFCBCD>>2) & 0x03) + 1;
-	return freq/apb2_div;
+	return NPCX_APB_CLOCK(2);
 }
+
+/**
+ * Return the current APB3 clock frequency in Hz.
+ */
+#if defined(CHIP_FAMILY_NPCX7)
+int clock_get_apb3_freq(void)
+{
+	return NPCX_APB_CLOCK(3);
+}
+#endif
 
 /**
  * Wait for a number of clock cycles.
@@ -240,6 +228,7 @@ void clock_refresh_console_in_use(void)
 	return;
 }
 
+#if defined(CHIP_FAMILY_NPCX5)
 void clock_uart2gpio(void)
 {
 	/* Is pimux to UART? */
@@ -271,20 +260,11 @@ void clock_gpio2uart(void)
 		task_enable_irq(NPCX_IRQ_UART);
 	}
 }
+#endif
 
 /* Idle task.  Executed when no tasks are ready to be scheduled. */
 void __idle(void)
 {
-#if (CHIP_VERSION < 3)
-	while (1) {
-		/*
-		 * TODO:(ML) JTAG bug: if debugger is connected,
-		 * CPU can't enter wfi. Rev A3 will fix it.
-		 */
-		;
-	};
-#else
-
 	timestamp_t t0, t1;
 	uint32_t next_evt;
 	uint32_t next_evt_us;
@@ -334,8 +314,15 @@ void __idle(void)
 			/* Enable Host access wakeup */
 			SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
 
+#if defined(CHIP_FAMILY_NPCX5)
 			/* UART-rx(console) become to GPIO (NONE INT mode) */
 			clock_uart2gpio();
+#elif defined(CHIP_FAMILY_NPCX7)
+			/* Clear pending bit before enable uart wake-up */
+			SET_BIT(NPCX_WKPCL(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+			/* Enable UART wake-up and interrupt request */
+			SET_BIT(NPCX_WKEN(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+#endif
 			/* Set deep idle - instant wake-up mode */
 			NPCX_PMCSR = IDLE_PARAMS;
 
@@ -364,8 +351,10 @@ void __idle(void)
 			 * setting it and wfi.
 			 */
 			NPCX_PMCSR = 0;
+#if defined(CHIP_FAMILY_NPCX5)
 			/* GPIO back to UART-rx (console) */
 			clock_gpio2uart();
+#endif
 
 			/* Record time spent in deep sleep. */
 			idle_dsleep_time_us += next_evt_us;
@@ -401,7 +390,6 @@ void __idle(void)
 		 */
 		interrupt_enable();
 	}
-#endif
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
 

@@ -43,7 +43,6 @@
  */
 
 /* Global Definition */
-#define CHIP_VERSION                     3 /* A3 version */
 #define I2C_7BITS_ADDR                   0
 /* Switcher of features */
 #define SUPPORT_LCT                      1
@@ -251,6 +250,10 @@
 #define NPCX_HFCGN                        REG8(NPCX_HFCG_BASE_ADDR + 0x006)
 #define NPCX_HFCGP                        REG8(NPCX_HFCG_BASE_ADDR + 0x008)
 #define NPCX_HFCBCD                       REG8(NPCX_HFCG_BASE_ADDR + 0x010)
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_HFCBCD1                      REG8(NPCX_HFCG_BASE_ADDR + 0x012)
+#define NPCX_HFCBCD2                      REG8(NPCX_HFCG_BASE_ADDR + 0x014)
+#endif
 
 /* HFCG register fields */
 #define NPCX_HFCGCTRL_LOAD               0
@@ -1645,6 +1648,7 @@ enum {
 /******************************************************************************/
 /* Inline functions */
 /* This routine checks pending bit of GPIO wake-up functionality */
+#if defined(CHIP_FAMILY_NPCX5)
 static inline int uart_is_wakeup_from_gpio(void)
 {
 #if NPCX_UART_MODULE2
@@ -1705,6 +1709,7 @@ static inline void npcx_uart2gpio(void)
 	CLEAR_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
 #endif
 }
+#endif
 
 /* This routine switches the functionality from GPIO to UART rx */
 static inline void npcx_gpio2uart(void)
@@ -1713,6 +1718,10 @@ static inline void npcx_gpio2uart(void)
 	CLEAR_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
 	SET_BIT(NPCX_DEVALT(0x0C), NPCX_DEVALTC_UART_SL2);
 #else
+#if defined(CHIP_FAMILY_NPCX7)
+	/* UART module 1 belongs to KSO since wake-up functionality in npcx7. */
+	CLEAR_BIT(NPCX_DEVALT(0x09), NPCX_DEVALT9_NO_KSO09_SL);
+#endif
 	SET_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
 #endif
 }

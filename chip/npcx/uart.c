@@ -26,6 +26,8 @@ int uart_init_done(void)
 
 void uart_tx_start(void)
 {
+	/* We needn't to switch uart from gpio again in npcx7. */
+#if defined(CHIP_FAMILY_NPCX5)
 	if (uart_is_enable_wakeup()) {
 		/* disable MIWU */
 		uart_enable_wakeup(0);
@@ -34,6 +36,7 @@ void uart_tx_start(void)
 		/* enable uart again from MIWU mode */
 		task_enable_irq(NPCX_IRQ_UART);
 	}
+#endif
 
 	/* If interrupt is already enabled, nothing to do */
 	if (NPCX_UICTRL & 0x20)
@@ -132,45 +135,35 @@ void uart_ec_interrupt(void)
 }
 DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 0);
 
-
 static void uart_config(void)
 {
 	/* Configure pins from GPIOs to CR_UART */
 	gpio_config_module(MODULE_UART, 1);
-	/* Enable MIWU IRQ of UART*/
+
+	/* Enable MIWU IRQ of UART */
 #if NPCX_UART_MODULE2
 	task_enable_irq(NPCX_IRQ_WKINTG_1);
 #else
 	task_enable_irq(NPCX_IRQ_WKINTB_1);
-
+#endif
+	/*
+	 * Configure the UART wake-up event triggered from a falling edge
+	 * on CR_SIN pin.
+	 */
+#if defined(CHIP_FAMILY_NPCX7) && defined(CONFIG_LOW_POWER_IDLE)
+	SET_BIT(NPCX_WKEDG(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+#endif
+	/*
+	 * If apb2's clock is not 15MHz, we need to find the other optimized
+	 * values of UPSR and UBAUD for baud rate 115200.
+	 */
+#if (NPCX_APB_CLOCK(2) != 15000000)
+#error "Unsupported apb2 clock for UART!"
 #endif
 
 	/* Fix baud rate to 115200 */
-#if   (OSC_CLK == 50000000)
-	NPCX_UPSR = 0x10;
-	NPCX_UBAUD = 0x08;
-#elif (OSC_CLK == 48000000)
-	NPCX_UPSR = 0x08;
-	NPCX_UBAUD = 0x0C;
-#elif (OSC_CLK == 40000000)
-	NPCX_UPSR = 0x30;
-	NPCX_UBAUD = 0x02;
-#elif (OSC_CLK == 33000000) /* APB2 is the same as core clock */
-	NPCX_UPSR = 0x08;
-	NPCX_UBAUD = 0x11;
-#elif (OSC_CLK == 24000000)
-	NPCX_UPSR = 0x60;
-	NPCX_UBAUD = 0x00;
-#elif (OSC_CLK == 15000000) /* APB2 is the same as core clock */
 	NPCX_UPSR = 0x38;
 	NPCX_UBAUD = 0x01;
-#elif (OSC_CLK == 13000000) /* APB2 is the same as core clock */
-	NPCX_UPSR = 0x30;
-	NPCX_UBAUD = 0x01;
-#else
-#error "Unsupported Core Clock Frequency"
-#endif
-
 
 	/*
 	 * 8-N-1, FIFO enabled.  Must be done after setting
