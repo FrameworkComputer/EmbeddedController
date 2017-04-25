@@ -43,10 +43,16 @@ void usb_disconnect(void);
 void usb_release(void);
 
 /*
+ * Returns true if USB device is currently suspended.
+ * Requires CONFIG_USB_SUSPEND to be defined.
+ */
+int usb_is_suspended(void);
+
+/*
  * Tell the host to wake up. Requires CONFIG_USB_REMOTE_WAKEUP to be defined,
  * and a chip that implements the function.
  *
- * This function sleeps, so it must not be used in interrupt context.
+ * Returns immediately, suspend status can be checked using usb_is_suspended.
  */
 void usb_wake(void);
 
