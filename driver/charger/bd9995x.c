@@ -25,11 +25,14 @@
 
 #define BD9995X_CHARGE_PORT_COUNT 2
 
+/*
+ * BC1.2 detection starts 100ms after VBUS/VCC attach and typically
+ * completes 312ms after VBUS/VCC attach.
+ */
+#define BC12_DETECT_US (312*MSEC)
+
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
-
-/* TODO: Add accurate timeout for detecting BC1.2 */
-#define BC12_DETECT_RETRY	10
 
 /* Charger parameters */
 static const struct charger_info bd9995x_charger_info = {
@@ -330,38 +333,37 @@ static int bd9995x_enable_usb_switch(enum bd9995x_charge_port port,
 	return ch_raw_write16(port_reg, reg, BD9995X_EXTENDED_COMMAND);
 }
 
-static int bd9995x_bc12_detect(int port)
+static int bd9995x_bc12_check_type(int port)
 {
-	int i;
 	int bc12_type;
 	struct charge_port_info charge;
+	int chg_port = bd9995x_pd_port_to_chg_port(port);
+	int vbus_provided = bd9995x_is_vbus_provided(port) &&
+			    !usb_charger_port_is_sourcing_vbus(chg_port);
 
 	/*
-	 * BC1.2 detection starts 100ms after VBUS/VCC attach and typically
-	 * completes 312ms after VBUS/VCC attach.
+	 * If vbus is no longer provided, then no need to continue. Return 0 so
+	 * that a wait event is not scheduled.
 	 */
-	msleep(312);
-	for (i = 0; i < BC12_DETECT_RETRY; i++) {
-		/* get device type */
-		bc12_type = bd9995x_get_bc12_device_type(port);
+	if (!vbus_provided)
+		return 0;
 
-		/* Detected BC1.2 */
-		if (bc12_type != CHARGE_SUPPLIER_NONE)
-			break;
+	/* get device type */
+	bc12_type = bd9995x_get_bc12_device_type(port);
+	if (bc12_type == CHARGE_SUPPLIER_NONE)
+		/*
+		 * Device type is not available, return non-zero so new wait
+		 * will be scheduled before putting the task to sleep.
+		 */
+		return 1;
 
-		/* TODO: Add accurate timeout for detecting BC1.2 */
-		msleep(100);
-	}
+	bc12_detected_type[port] = bc12_type;
+	/* Update charge manager */
+	charge.voltage = USB_CHARGER_VOLTAGE_MV;
+	charge.current = bd9995x_get_bc12_ilim(bc12_type);
+	charge_manager_update_charge(bc12_type, port, &charge);
 
-	/* BC1.2 device attached */
-	if (bc12_type != CHARGE_SUPPLIER_NONE) {
-		/* Update charge manager */
-		charge.voltage = USB_CHARGER_VOLTAGE_MV;
-		charge.current = bd9995x_get_bc12_ilim(bc12_type);
-		charge_manager_update_charge(bc12_type, port, &charge);
-	}
-
-	return bc12_type;
+	return 0;
 }
 
 static void bd9995x_bc12_detach(int port, int type)
@@ -447,7 +449,7 @@ static int bd9995x_get_interrupts(int port)
 	return reg;
 }
 
-static void usb_charger_process(enum bd9995x_charge_port port)
+static int usb_charger_process(enum bd9995x_charge_port port)
 {
 	int chg_port = bd9995x_pd_port_to_chg_port(port);
 	int vbus_provided = bd9995x_is_vbus_provided(port) &&
@@ -458,13 +460,25 @@ static void usb_charger_process(enum bd9995x_charge_port port)
 
 	/* Do BC1.2 detection */
 	if (vbus_provided) {
-		/* Charger/sink attached */
-		bc12_detected_type[port] = bd9995x_bc12_detect(port);
-	} else if (bc12_detected_type[port] != CHARGE_SUPPLIER_NONE) {
+		/*
+		 * Need to give the charger time (~312 mSec) before the
+		 * bc12_type is available. The main task loop will schedule a
+		 * task wait event which will then call bd9995x_bc12_get_type.
+		 */
+		return 1;
+	}
+
+	/*
+	 * VBUS is no longer being provided, if the bc12_type had been
+	 * previously determined, then need to detach.
+	 */
+	if (bc12_detected_type[port] != CHARGE_SUPPLIER_NONE) {
 		/* Charger/sink detached */
 		bd9995x_bc12_detach(port, bc12_detected_type[port]);
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
 	}
+	/* No need for the task to schedule a wait event */
+	return 0;
 }
 #endif /* HAS_TASK_USB_CHG */
 
@@ -1085,6 +1099,8 @@ void usb_charger_task(void)
 {
 	static int initialized;
 	int changed, port, interrupts;
+	int sleep_usec;
+	uint64_t bc12_det_mark[CONFIG_USB_PD_PORT_COUNT];
 #ifdef CONFIG_USB_PD_DISCHARGE
 	int vbus_reg, voltage;
 #endif
@@ -1092,17 +1108,25 @@ void usb_charger_task(void)
 	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 		bc12_detected_type[port] = CHARGE_SUPPLIER_NONE;
 		bd9995x_enable_vbus_detect_interrupts(port, 1);
+		bc12_det_mark[port] = 0;
 	}
 
 	while (1) {
+		sleep_usec = -1;
 		changed = 0;
 		for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
 			/* Get port interrupts */
 			interrupts = bd9995x_get_interrupts(port);
 			if (interrupts & BD9995X_CMD_INT_VBUS_DET ||
 			    !initialized) {
-				/* Detect based on current state of VBUS */
-				usb_charger_process(port);
+				/*
+				 * Detect based on current state of VBUS. If
+				 * VBUS is provided, then need to wait for
+				 * bc12_type to be available. If VBUS is not
+				 * provided, then disable wait for this port.
+				 */
+				bc12_det_mark[port] = usb_charger_process(port)
+					? get_time().val + BC12_DETECT_US : 0;
 				changed = 1;
 			}
 #ifdef CONFIG_USB_PD_DISCHARGE
@@ -1124,10 +1148,39 @@ void usb_charger_task(void)
 				changed = 1;
 			}
 #endif
+			if (bc12_det_mark[port] && (get_time().val >
+						    bc12_det_mark[port])) {
+				/*
+				 * bc12_type result should be available. If not
+				 * available still, then function will return
+				 * 1. Set up additional 100 msec wait. Note that
+				 * if VBUS is no longer provided when this call
+				 * happens the funciton will return 0.
+				 */
+				bc12_det_mark[port] =
+					bd9995x_bc12_check_type(port) ?
+					get_time().val + 100 * MSEC : 0;
+			}
+
+			/*
+			 * Determine if a wait for reading bc12_type needs to be
+			 * scheduled. Use the scheduled wait for this port if
+			 * it's less than the wait needed for a previous
+			 * port. If previous port(s) don't need a wait, then
+			 * sleep_usec will be -1.
+			 */
+			if (bc12_det_mark[port]) {
+				int bc12_wait_usec;
+
+				bc12_wait_usec = bc12_det_mark[port]
+					- get_time().val;
+				if ((sleep_usec < 0) ||
+				    (sleep_usec > bc12_wait_usec))
+					sleep_usec = bc12_wait_usec;
+			}
 		}
 
 		initialized = 1;
-
 		/*
 		 * Re-read interrupt registers immediately if we got an
 		 * interrupt. We're dealing with multiple independent
@@ -1136,8 +1189,7 @@ void usb_charger_task(void)
 		 * state simultaneously.
 		 */
 		if (!changed)
-			/* Wait for task wake */
-			task_wait_event(-1);
+			task_wait_event(sleep_usec);
 	}
 }
 #endif /* HAS_TASK_USB_CHG */
