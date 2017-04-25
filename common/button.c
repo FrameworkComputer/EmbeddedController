@@ -12,9 +12,11 @@
 #include "host_command.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "power_button.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* Console output macro */
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
@@ -56,6 +58,40 @@ static int raw_button_pressed(const struct button_config *button)
 				       raw_value : !raw_value;
 }
 
+#ifdef CONFIG_BUTTON_RECOVERY
+/*
+ * If the EC is reset and recovery is requested, then check if HW_REINIT is
+ * requested as well. Since the EC reset occurs after volup+voldn+power buttons
+ * are held down for 10 seconds, check the state of these buttons for 20 more
+ * seconds. If they are still held down all this time, then set host event to
+ * indicate HW_REINIT is requested. Also, make sure watchdog is reloaded in
+ * order to prevent watchdog from resetting the EC.
+ */
+static void button_check_hw_reinit_required(void)
+{
+	timestamp_t deadline;
+	timestamp_t now = get_time();
+
+	deadline.val = now.val + (20 * SECOND);
+
+	CPRINTS("Checking for HW_REINIT request");
+
+	while (!timestamp_expired(deadline, &now)) {
+		if (!raw_button_pressed(&buttons[BUTTON_VOLUME_UP]) ||
+		    !raw_button_pressed(&buttons[BUTTON_VOLUME_DOWN]) ||
+		    !power_button_signal_asserted()) {
+			CPRINTS("No HW_REINIT request");
+			return;
+		}
+		now = get_time();
+		watchdog_reload();
+	}
+
+	CPRINTS("HW_REINIT requested");
+	host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
+}
+#endif
+
 /*
  * Button initialization.
  */
@@ -77,6 +113,7 @@ void button_init(void)
 	    raw_button_pressed(&buttons[BUTTON_VOLUME_DOWN]) &&
 	    raw_button_pressed(&buttons[BUTTON_VOLUME_UP])) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+		button_check_hw_reinit_required();
 	}
 #endif
 }
