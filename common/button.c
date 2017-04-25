@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "led_common.h"
 #include "power_button.h"
 #include "system.h"
 #include "timer.h"
@@ -59,6 +60,30 @@ static int raw_button_pressed(const struct button_config *button)
 }
 
 #ifdef CONFIG_BUTTON_RECOVERY
+
+#ifdef CONFIG_LED_COMMON
+static void button_blink_hw_reinit_led(void)
+{
+	int led_state = LED_STATE_ON;
+	timestamp_t deadline;
+	timestamp_t now = get_time();
+
+	/* Blink LED for 3 seconds. */
+	deadline.val = now.val + (3 * SECOND);
+
+	while (!timestamp_expired(deadline, &now)) {
+		led_control(EC_LED_ID_RECOVERY_HW_REINIT_LED, led_state);
+		led_state = !led_state;
+		watchdog_reload();
+		msleep(100);
+		now = get_time();
+	}
+
+	/* Reset LED to default state. */
+	led_control(EC_LED_ID_RECOVERY_HW_REINIT_LED, LED_STATE_RESET);
+}
+#endif
+
 /*
  * If the EC is reset and recovery is requested, then check if HW_REINIT is
  * requested as well. Since the EC reset occurs after volup+voldn+power buttons
@@ -89,6 +114,10 @@ static void button_check_hw_reinit_required(void)
 
 	CPRINTS("HW_REINIT requested");
 	host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
+
+#ifdef CONFIG_LED_COMMON
+	button_blink_hw_reinit_led();
+#endif
 }
 #endif
 
