@@ -8,6 +8,14 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/*
+ * Board Versions:
+ * Versions are designated by the PCB color and consist of red, blue, and
+ * black. Only the black version has pullup resistors to distinguish its board
+ * id from previous versions.
+ */
+#define BOARD_VERSION_BLACK 3
+
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
@@ -193,6 +201,13 @@ int pd_tcpc_cc_ra(int port, int cc_volt, int cc_sel);
  * @return 1 if cc_pull == 1 and Rp is invalid, otherwise 0
  */
 int pd_set_rp_rd(int port, int cc_pull, int rp_value);
+
+/**
+ * Get board HW ID version
+ *
+ * @return HW ID version
+ */
+int board_get_version(void);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

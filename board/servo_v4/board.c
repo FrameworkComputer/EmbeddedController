@@ -24,6 +24,7 @@
 #include "usart_rx_dma.h"
 #include "usb_gpio.h"
 #include "usb_i2c.h"
+#include "usb_pd.h"
 #include "usb_spi.h"
 #include "usb-stream.h"
 #include "util.h"
@@ -261,6 +262,21 @@ static void write_ioexpander(int bank, int gpio, int val)
 	i2c_write8(1, 0x40, 0x6 + bank, tmp & ~(1 << gpio));
 }
 
+/* Read a single GPIO input on the tca6416 I2C ioexpander. */
+static int read_ioexpander_bit(int bank, int bit)
+{
+	int tmp;
+	int mask = 1 << bit;
+
+	/* Configure GPIO for this bit as an input */
+	i2c_read8(1, 0x40, 0x6 + bank, &tmp);
+	i2c_write8(1, 0x40, 0x6 + bank, tmp | mask);
+	/* Read input port register */
+	i2c_read8(1, 0x40, bank, &tmp);
+
+	return (tmp & mask) >> bit;
+}
+
 /* Enable uservo USB. */
 static void init_uservo_port(void)
 {
@@ -335,6 +351,23 @@ void ccd_set_mode(enum ccd_mode new_mode)
 	}
 }
 
+int board_get_version(void)
+{
+	static int ver = -1;
+
+	if (ver < 0) {
+		uint8_t id0, id1;
+
+		id0 = read_ioexpander_bit(1, 3);
+		id1 = read_ioexpander_bit(1, 4);
+
+		ver = (id1 * 2) + id0;
+		CPRINTS("Board ID = %d", ver);
+	}
+
+	return ver;
+}
+
 static void board_init(void)
 {
 	/* USB to serial queues */
@@ -364,5 +397,13 @@ static void board_init(void)
 	 * console will survie a DUT EC reset.
 	 */
 	gpio_set_level(GPIO_SBU_MUX_EN, 1);
+
+	/*
+	 * Set the USB PD max voltage to value appropriate for the board
+	 * version. The red/blue versions of servo_v4 have an ESD between VBUS
+	 * and CC1/CC2 that has a breakdown voltage of 11V.
+	 */
+	pd_set_max_voltage(board_get_version() >= BOARD_VERSION_BLACK ?
+			   PD_MAX_VOLTAGE_MV : 9000);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
