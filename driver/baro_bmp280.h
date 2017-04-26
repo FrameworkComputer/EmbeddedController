@@ -159,6 +159,14 @@
 /*******************************************************/
 #define BMP280_GET_DATA(_s) \
 	((struct bmp280_drv_data_t *)(_s)->drv_data)
+
+/* Min and Max sampling frequency in mHz based on x4 oversampling used */
+/* FIXME - verify how chip is setup to make sure MAX is correct, manual says
+ * "Typical", not Max.
+ */
+#define BMP280_BARO_MIN_FREQ  75000
+#define BMP280_BARO_MAX_FREQ  87000
+
 /**************************************************************/
 /*	STRUCTURE and ENUM DEFINITIONS                        */
 /**************************************************************/

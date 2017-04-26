@@ -1020,10 +1020,23 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		else
 #endif
 			out->info.type = sensor->type;
+
 		out->info.location = sensor->location;
 		out->info.chip = sensor->chip;
-
-		args->response_size = sizeof(out->info);
+		if (args->version >= 3) {
+			out->info_3.min_frequency = sensor->min_frequency;
+			/*
+			 * Make sure reported max frequency for this sensor
+			 * doesn't exceed the max sensor frequency the EC is
+			 * capable of supporting
+			 */
+			out->info_3.max_frequency = MIN(sensor->max_frequency,
+					CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ);
+			out->info_3.fifo_max_event_count = MAX_FIFO_EVENT_COUNT;
+			args->response_size = sizeof(out->info_3);
+		} else {
+			args->response_size = sizeof(out->info);
+		}
 		break;
 
 	case MOTIONSENSE_CMD_EC_RATE:
@@ -1329,7 +1342,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 DECLARE_HOST_COMMAND(EC_CMD_MOTION_SENSE_CMD,
 		     host_cmd_motion_sense,
-		     EC_VER_MASK(1) | EC_VER_MASK(2));
+		     EC_VER_MASK(1) | EC_VER_MASK(2) | EC_VER_MASK(3));
 
 /*****************************************************************************/
 /* Console commands */

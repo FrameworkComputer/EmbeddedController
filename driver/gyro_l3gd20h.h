@@ -71,6 +71,10 @@
 #define L3GD20_LOW_ODR_MASK      (1 << 0)
 #define L3GD20_ODR_PD_MASK       (1 << 3)
 
+/* Min and Max sampling frequency in mHz */
+#define L3GD20_GYRO_MIN_FREQ     12500
+#define L3GD20_GYRO_MAX_FREQ     800000
+
 /*
  * Register      : STATUS_REG
  * Address       : 0X27

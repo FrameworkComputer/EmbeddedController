@@ -527,6 +527,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
 	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 2,  /* g, enough for laptop. */
+	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
 	 .config = {
 		 /* AP: by default use EC settings */
 		 [SENSOR_CONFIG_AP] = {
@@ -563,6 +565,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &lid_standard_ref,
+	 .min_frequency = BMI160_GYRO_MIN_FREQ,
+	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {

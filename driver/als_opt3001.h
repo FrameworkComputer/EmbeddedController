@@ -36,6 +36,10 @@ enum opt3001_mode {
 #define OPT3001_MANUFACTURER_ID		0x5449
 #define OPT3001_DEVICE_ID		0x3001
 
+/* Min and Max sampling frequency in mHz */
+#define OPT3001_LIGHT_MIN_FREQ          1250
+#define OPT3001_LIGHT_MAX_FREQ          10000
+
 #ifdef HAS_TASK_ALS
 int opt3001_init(void);
 int opt3001_read_lux(int *lux, int af);

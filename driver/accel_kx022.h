@@ -120,4 +120,8 @@
 #define KX022_INC2_XPWUE	(1 << 4)
 #define KX022_INC2_XNWUE	(1 << 5)
 
+/* Min and Max sampling frequency in mHz */
+#define KX022_ACCEL_MIN_FREQ    781
+#define KX022_ACCEL_MAX_FREQ    1600000
+
 #endif /* __CROS_EC_ACCEL_KX022_H */

@@ -304,6 +304,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.addr = BMI160_ADDR0,
 		.rot_standard_ref = &accelgyro_standard_ref,
 		.default_range = 8,  /* g, use hifi requirements */
+		.min_frequency = BMI160_ACCEL_MIN_FREQ,
+		.max_frequency = BMI160_ACCEL_MAX_FREQ,
 		.config = {
 			/* AP: by default shutdown all sensors */
 			[SENSOR_CONFIG_AP] = {
@@ -339,6 +341,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.addr = BMI160_ADDR0,
 		.default_range = 1000, /* dps, use hifi requirement */
 		.rot_standard_ref = &accelgyro_standard_ref,
+		.min_frequency = BMI160_GYRO_MIN_FREQ,
+		.max_frequency = BMI160_GYRO_MAX_FREQ,
 		.config = {
 			/* AP: by default shutdown all sensors */
 			[SENSOR_CONFIG_AP] = {
@@ -374,6 +378,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.addr = BMI160_ADDR0,
 		.rot_standard_ref = &mag_standard_ref,
 		.default_range = 1 << 11, /* 16LSB / uT, fixed */
+		.min_frequency = BMM150_MAG_MIN_FREQ,
+		.max_frequency = BMM150_MAG_MAX_FREQ,
 		.config = {
 			/* AP: by default shutdown all sensors */
 			[SENSOR_CONFIG_AP] = {
@@ -408,6 +414,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.addr = SI114X_ADDR,
 		.rot_standard_ref = NULL,
 		.default_range = 9000, /* 90%: int = 0 - frac = 9000/10000 */
+		.min_frequency = SI114X_LIGHT_MIN_FREQ,
+		.max_frequency = SI114X_LIGHT_MAX_FREQ,
 		.config = {
 			/* AP: by default shutdown all sensors */
 			[SENSOR_CONFIG_AP] = {
@@ -443,6 +451,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.addr = SI114X_ADDR,
 		.rot_standard_ref = NULL,
 		.default_range = 7630, /* Upon testing at desk */
+		.min_frequency = SI114X_PROX_MIN_FREQ,
+		.max_frequency = SI114X_PROX_MAX_FREQ,
 		.config = {
 			/* AP: by default shutdown all sensors */
 			[SENSOR_CONFIG_AP] = {

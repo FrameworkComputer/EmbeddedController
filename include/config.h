@@ -925,6 +925,9 @@
 /* Support EC to Internal bus bridge. */
 #undef CONFIG_EC2I
 
+/* EC capable of sensor speeds up to 200000 mHz */
+#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 200000
+
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 

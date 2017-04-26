@@ -154,4 +154,8 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 #define BMA2x2_BW_250HZ         0x0D /* LowPass 250HZ */
 #define BMA2x2_BW_500HZ         0x0E /* LowPass 500HZ */
 #define BMA2x2_BW_1000HZ        0x0F /* LowPass 1000HZ */
+
+/* Min and Max sampling frequency in mHz */
+#define BMA255_ACCEL_MIN_FREQ   7810
+#define BMA255_ACCEL_MAX_FREQ   1000000
 #endif /* __CROS_EC_ACCEL_BMA2x2_H */

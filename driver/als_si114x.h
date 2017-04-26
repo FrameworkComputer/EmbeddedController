@@ -214,6 +214,12 @@
 /* Delay used for deferred callback when polling is enabled */
 #define SI114x_POLLING_DELAY (8 * MSEC)
 
+/* Min and Max sampling frequency in mHz */
+#define SI114X_PROX_MIN_FREQ            504
+#define SI114X_PROX_MAX_FREQ            100000
+#define SI114X_LIGHT_MIN_FREQ           504
+#define SI114X_LIGHT_MAX_FREQ           100000
+
 extern const struct accelgyro_drv si114x_drv;
 
 enum si114x_state {

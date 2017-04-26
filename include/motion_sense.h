@@ -45,6 +45,12 @@ enum sensor_config {
 #define ROUND_UP_FLAG (1 << 31)
 #define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
 
+#ifdef CONFIG_ACCEL_FIFO
+#define MAX_FIFO_EVENT_COUNT CONFIG_ACCEL_FIFO
+#else
+#define MAX_FIFO_EVENT_COUNT 0
+#endif
+
 struct motion_data_t {
 	/*
 	 * data rate the sensor will measure, in mHz: 0 suspended.
@@ -141,6 +147,12 @@ struct motion_sensor_t {
 	 * from sensor registers.
 	 */
 	 uint32_t last_collection;
+
+	 /* Minimum supported sampling frequency in miliHertz for this sensor */
+	 uint32_t min_frequency;
+
+	 /* Maximum supported sampling frequency in miliHertz for this sensor */
+	 uint32_t max_frequency;
 };
 
 /* Defined at board level. */

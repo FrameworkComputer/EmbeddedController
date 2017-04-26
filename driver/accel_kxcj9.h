@@ -104,4 +104,8 @@
 #define KXCJ9_OSA_1600_HZ	7
 #define KXCJ9_OSA_FIELD		0xf
 
+/* Min and Max sampling frequency in mHz */
+#define KXCJ9_ACCEL_MIN_FREQ    781
+#define KXCJ9_ACCEL_MAX_FREQ    1600000
+
 #endif /* __CROS_EC_ACCEL_KXCJ9_H */

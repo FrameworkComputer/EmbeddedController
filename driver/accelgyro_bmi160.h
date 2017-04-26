@@ -417,6 +417,12 @@ enum fifo_header {
 /* Sensor resolution in number of bits. This sensor has fixed resolution. */
 #define BMI160_RESOLUTION      16
 
+/* Min and Max sampling frequency in mHz */
+#define BMI160_ACCEL_MIN_FREQ 12500
+#define BMI160_ACCEL_MAX_FREQ 1600000
+#define BMI160_GYRO_MIN_FREQ  25
+#define BMI160_GYRO_MAX_FREQ  3200000
+
 extern const struct accelgyro_drv bmi160_drv;
 
 enum bmi160_running_mode {

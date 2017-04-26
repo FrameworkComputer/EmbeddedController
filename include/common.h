@@ -156,4 +156,7 @@ enum ec_error_list {
 #define test_export_static static
 #endif
 
+/* find the most significant bit. Not defined in n == 0. */
+#define __fls(n) (31 - __builtin_clz(n))
+
 #endif  /* __CROS_EC_COMMON_H */

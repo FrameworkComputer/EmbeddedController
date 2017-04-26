@@ -117,6 +117,12 @@ enum lsm6ds0_bdu {
 /* Sensor resolution in number of bits. This sensor has fixed resolution. */
 #define LSM6DS0_RESOLUTION      16
 
+/* Min and Max sampling frequency in mHz */
+#define LSM6DS0_ACCEL_MIN_FREQ  14900
+#define LSM6DS0_ACCEL_MAX_FREQ  952000
+#define LSM6DS0_GYRO_MIN_FREQ   14900
+#define LSM6DS0_GYRO_MAX_FREQ   952000
+
 extern const struct accelgyro_drv lsm6ds0_drv;
 struct lsm6ds0_data {
 	struct accelgyro_saved_data_t base;
