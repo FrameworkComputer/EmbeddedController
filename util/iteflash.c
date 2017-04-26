@@ -288,6 +288,11 @@ static int dbgr_reset(struct ftdi_context *ftdi)
 {
 	int ret = 0;
 
+	/* Reset CPU only, and we keep power state until flashing is done. */
+	ret |= i2c_write_byte(ftdi, 0x2f, 0x20);
+	ret |= i2c_write_byte(ftdi, 0x2e, 0x06);
+	ret |= i2c_write_byte(ftdi, 0x30, 0x40);
+
 	ret |= i2c_write_byte(ftdi, 0x27, 0x80);
 	if (ret < 0)
 		printf("DBGR RESET FAILED\n");
@@ -295,18 +300,23 @@ static int dbgr_reset(struct ftdi_context *ftdi)
 	return 0;
 }
 
-/* Do WatchDog Reset*/
-static int do_watchdog_reset(struct ftdi_context *ftdi)
+static int exit_dbgr_mode(struct ftdi_context *ftdi)
 {
+	uint8_t val;
 	int ret = 0;
 
-	ret |= i2c_write_byte(ftdi, 0x2f, 0x20);
-	ret |= i2c_write_byte(ftdi, 0x2e, 0x06);
-	ret |= i2c_write_byte(ftdi, 0x30, 0x4C);
-	ret |= i2c_write_byte(ftdi, 0x27, 0x80);
-
-	if (ret < 0)
-		printf("WATCHDOG RESET FAILED\n");
+	/* We have to exit dbgr mode so that EC won't hold I2C bus. */
+	ret |= i2c_write_byte(ftdi, 0x2f, 0x1c);
+	ret |= i2c_write_byte(ftdi, 0x2e, 0x08);
+	ret |= i2c_read_byte(ftdi, 0x30, &val);
+	ret |= i2c_write_byte(ftdi, 0x30, (val | (1 << 4)));
+	/*
+	 * NOTE:
+	 * We won't be able to send any commands to EC
+	 * if we have exit dbgr mode.
+	 * We do a cold reset for EC after flashing.
+	 */
+	printf("=== EXIT DBGR MODE %s ===\n", (ret < 0) ? "FAILED" : "DONE");
 
 	return 0;
 }
@@ -1090,8 +1100,8 @@ int main(int argc, char **argv)
 	ret = 0;
 terminate:
 
-	/* DO EC WATCHDOG RESET */
-	do_watchdog_reset(hnd);
+	/* Exit DBGR mode */
+	exit_dbgr_mode(hnd);
 
 	/* Close the FTDI USB handle */
 	ftdi_usb_close(hnd);
