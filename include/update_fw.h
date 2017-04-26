@@ -161,6 +161,7 @@ enum update_extra_command {
 	UPDATE_EXTRA_CMD_JUMP_TO_RW = 1,
 	UPDATE_EXTRA_CMD_STAY_IN_RO = 2,
 	UPDATE_EXTRA_CMD_UNLOCK_RW = 3,
+	UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK = 4,
 };
 
 void fw_update_command_handler(void *body,

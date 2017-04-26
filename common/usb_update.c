@@ -196,6 +196,12 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
 			response = EC_RES_SUCCESS;
 			break;
+#ifdef CONFIG_ROLLBACK
+		case UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK:
+			flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT, 0);
+			response = EC_RES_SUCCESS;
+			break;
+#endif
 		default:
 			response = EC_RES_INVALID_COMMAND;
 		}
