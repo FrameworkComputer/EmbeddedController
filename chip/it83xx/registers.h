@@ -1231,6 +1231,8 @@ enum usbpd_port {
 	USBPD_PORT_COUNT,
 };
 
+#define USB_VID_ITE 0x048d
+
 /* Wake pin definitions, defined at board-level */
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;

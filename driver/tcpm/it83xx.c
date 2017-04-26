@@ -486,6 +486,20 @@ static int it83xx_tcpm_transmit(int port,
 	return EC_SUCCESS;
 }
 
+static int it83xx_tcpm_get_chip_info(int port, int renew,
+			struct ec_response_pd_chip_info **chip_info)
+{
+	static struct ec_response_pd_chip_info i;
+
+	*chip_info = &i;
+	i.vendor_id = USB_VID_ITE;
+	i.product_id = (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
+	i.device_id = IT83XX_GCTRL_CHIPVER & 0xf;
+	i.fw_version_number = 0xEC;
+
+	return EC_SUCCESS;
+}
+
 const struct tcpm_drv it83xx_tcpm_drv = {
 	.init			= &it83xx_tcpm_init,
 	.get_cc			= &it83xx_tcpm_get_cc,
@@ -507,5 +521,5 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= NULL,
 #endif
-	.get_chip_info		= NULL,
+	.get_chip_info		= &it83xx_tcpm_get_chip_info,
 };
