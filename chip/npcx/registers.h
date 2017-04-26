@@ -95,9 +95,19 @@
 #define NPCX_MIWU_BASE_ADDR(mdl)         (0x400BB000 + ((mdl) * 0x2000L))
 #define NPCX_MFT_BASE_ADDR(mdl)          (0x400E1000 + ((mdl) * 0x2000L))
 #define NPCX_PM_CH_BASE_ADDR(mdl)        (0x400C9000 + ((mdl) * 0x2000L))
-#define NPCX_SMB_BASE_ADDR(mdl)          ((mdl < 2) ? (0x40009000 + \
-					 ((mdl) * 0x2000L)) : \
-					 (0x400C0000 + ((mdl - 2) * 0x2000L)))
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_SMB_BASE_ADDR(mdl)        (((mdl) < 2) ? \
+					(0x40009000 +  ((mdl) * 0x2000L)) : \
+					((mdl) < 4) ? \
+				      (0x400C0000 + (((mdl) - 2) * 0x2000L)) : \
+					((mdl) == 4) ? \
+					(0x40008000) : \
+					(0x40017000 + (((mdl) - 5) * 0x1000L)))
+#else
+#define NPCX_SMB_BASE_ADDR(mdl)        (((mdl) < 2) ? \
+					(0x40009000 +  ((mdl) * 0x2000L)) : \
+					(0x400C0000 + (((mdl) - 2) * 0x2000L)))
+#endif
 
 /*
  * NPCX-IRQ numbers
@@ -175,7 +185,7 @@
 #define NPCX_IRQ5_NOUSED                 NPCX_IRQ_5
 #define NPCX_IRQ_PORT80                  NPCX_IRQ_6
 #define NPCX_IRQ_MTC_WKINTAD_0           NPCX_IRQ_7
-#define NPCX_IRQ8_NOUSED                 NPCX_IRQ_8
+#define NPCX_IRQ_SMB8                    NPCX_IRQ_8
 #define NPCX_IRQ_MFT_1                   NPCX_IRQ_9
 #define NPCX_IRQ_ADC                     NPCX_IRQ_10
 #define NPCX_IRQ_WKINTEFGH_0             NPCX_IRQ_11
@@ -183,12 +193,12 @@
 #define NPCX_IRQ_SMB1                    NPCX_IRQ_13
 #define NPCX_IRQ_SMB2                    NPCX_IRQ_14
 #define NPCX_IRQ_WKINTC_0                NPCX_IRQ_15
-#define NPCX_IRQ16_NOUSED                NPCX_IRQ_16
+#define NPCX_IRQ_SMB7                    NPCX_IRQ_16
 #define NPCX_IRQ_ITIM16_3                NPCX_IRQ_17
 #define NPCX_IRQ_SHI                     NPCX_IRQ_18
 #define NPCX_IRQ_ESPI                    NPCX_IRQ_18
-#define NPCX_IRQ19_NOUSED                NPCX_IRQ_19
-#define NPCX_IRQ20_NOUSED                NPCX_IRQ_20
+#define NPCX_IRQ_SMB5                    NPCX_IRQ_19
+#define NPCX_IRQ_SMB6                    NPCX_IRQ_20
 #define NPCX_IRQ_PS2                     NPCX_IRQ_21
 #define NPCX_IRQ22_NOUSED                NPCX_IRQ_22
 #define NPCX_IRQ_MFT_2                   NPCX_IRQ_23
@@ -742,19 +752,46 @@ enum {
 #define NPCX_SMBADDR6_SAEN               7
 #define NPCX_SMBADDR7_SAEN               7
 #define NPCX_SMBADDR8_SAEN               7
+#if defined(CHIP_FAMILY_NPCX5)
 #define NPCX_SMBSEL_SMB0SEL              0
-
+#elif defined(CHIP_FAMILY_NPCX7)
+#define NPCX_SMBSEL_SMB4SEL              4
+#define NPCX_SMBSEL_SMB5SEL              5
+#define NPCX_SMBSEL_SMB6SEL              6
+#endif
 /*
  * SMB enumeration
- * I2C Port.
+ * I2C port definitions.
  */
-enum NPCX_I2C_PORT_T {
-	NPCX_I2C_PORT0_0  = 0, /* I2C port 0, bus 0*/
-	NPCX_I2C_PORT0_1  = 1, /* I2C port 0, bus 1*/
-	NPCX_I2C_PORT1    = 2, /* I2C port 1 */
-	NPCX_I2C_PORT2    = 3, /* I2C port 2 */
-	NPCX_I2C_PORT3    = 4, /* I2C port 3 */
+#if defined(CHIP_FAMILY_NPCX5)
+enum {
+	NPCX_I2C_PORT0_0  = 0, /* I2C port 0, bus 0 */
+	NPCX_I2C_PORT0_1,      /* I2C port 0, bus 1 */
+	NPCX_I2C_PORT1,        /* I2C port 1 */
+	NPCX_I2C_PORT2,        /* I2C port 2 */
+	NPCX_I2C_PORT3,        /* I2C port 3 */
+	NPCX_I2C_COUNT,
 };
+#elif defined(CHIP_FAMILY_NPCX7)
+enum {
+	NPCX_I2C_PORT0_0  = 0, /* I2C port 0, bus 0 */
+	NPCX_I2C_PORT1_0,      /* I2C port 1, bus 0 */
+	NPCX_I2C_PORT2_0,      /* I2C port 2, bus 0 */
+	NPCX_I2C_PORT3_0,      /* I2C port 3, bus 0 */
+#if !defined(NPCX_PSL_MODE_SUPPORT)
+	NPCX_I2C_PORT4_0,      /* I2C port 4, bus 0 */
+#endif
+	NPCX_I2C_PORT4_1,      /* I2C port 4, bus 1 */
+	NPCX_I2C_PORT5_0,      /* I2C port 5, bus 0 */
+	NPCX_I2C_PORT5_1,      /* I2C port 5, bus 1 */
+	NPCX_I2C_PORT6_0,      /* I2C port 6, bus 0 */
+	NPCX_I2C_PORT6_1,      /* I2C port 6, bus 1 */
+	NPCX_I2C_PORT7_0,      /* I2C port 7, bus 0 */
+	NPCX_I2C_COUNT,
+};
+#else
+#error "Unsupported chip family for i2c ports."
+#endif
 
 /******************************************************************************/
 /* Power Management Controller (PMC) Registers */
@@ -763,7 +800,6 @@ enum NPCX_I2C_PORT_T {
 #define NPCX_DISIDL_CTL                REG8(NPCX_PMC_BASE_ADDR + 0x004)
 #define NPCX_DISIDL_CTL1               REG8(NPCX_PMC_BASE_ADDR + 0x005)
 #define NPCX_PWDWN_CTL(offset)         REG8(NPCX_PMC_BASE_ADDR + 0x008 + offset)
-#define NPCX_PWDWN_CTL_COUNT          6
 
 /* PMC register fields */
 #define NPCX_PMCSR_DI_INSTW              0
@@ -797,6 +833,9 @@ enum NPCX_I2C_PORT_T {
 #define NPCX_PWDWN_CTL3_SMB1_PD          1
 #define NPCX_PWDWN_CTL3_SMB2_PD          2
 #define NPCX_PWDWN_CTL3_SMB3_PD          3
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_PWDWN_CTL3_SMB4_PD          4
+#endif
 #define NPCX_PWDWN_CTL3_GMDA_PD          7
 #define NPCX_PWDWN_CTL4_ITIM1_PD         0
 #define NPCX_PWDWN_CTL4_ITIM2_PD         1
@@ -816,6 +855,11 @@ enum NPCX_I2C_PORT_T {
 #define NPCX_PWDWN_CTL6_ITIM5_PD         1
 #define NPCX_PWDWN_CTL6_ITIM6_PD         2
 #define NPCX_PWDWN_CTL6_ESPI_PD          7
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_PWDWN_CTL7_SMB5_PD          0
+#define NPCX_PWDWN_CTL7_SMB6_PD          1
+#define NPCX_PWDWN_CTL7_SMB7_PD          2
+#endif
 
 /*
  * PMC enumeration
@@ -834,6 +878,9 @@ enum {
 	CGC_OFFSET_TIMER  = 3,
 	CGC_OFFSET_LPC    = 4,
 	CGC_OFFSET_ESPI   = 5,
+#if defined(CHIP_FAMILY_NPCX7)
+	CGC_OFFSET_I2C2   = 6,
+#endif
 };
 
 enum NPCX_PMC_PWDWN_CTL_T {
@@ -843,6 +890,10 @@ enum NPCX_PMC_PWDWN_CTL_T {
 	NPCX_PMC_PWDWN_4    = 3,
 	NPCX_PMC_PWDWN_5    = 4,
 	NPCX_PMC_PWDWN_6    = 5,
+#if defined(CHIP_FAMILY_NPCX7)
+	NPCX_PMC_PWDWN_7    = 6,
+#endif
+	NPCX_PMC_PWDWN_CNT,
 };
 
 /* TODO: set PD masks based upon actual peripheral usage */
@@ -851,10 +902,21 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define CGC_FAN_MASK     ((1 << NPCX_PWDWN_CTL1_MFT1_PD) | \
 			 (1 << NPCX_PWDWN_CTL1_MFT2_PD))
 #define CGC_FIU_MASK     (1 << NPCX_PWDWN_CTL1_FIU_PD)
+#if defined(CHIP_FAMILY_NPCX5)
 #define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB2_PD) | \
 			 (1 << NPCX_PWDWN_CTL3_SMB3_PD))
+#elif defined(CHIP_FAMILY_NPCX7)
+#define CGC_I2C_MASK     ((1 << NPCX_PWDWN_CTL3_SMB0_PD) | \
+			 (1 << NPCX_PWDWN_CTL3_SMB1_PD) | \
+			 (1 << NPCX_PWDWN_CTL3_SMB2_PD) | \
+			 (1 << NPCX_PWDWN_CTL3_SMB3_PD) | \
+			 (1 << NPCX_PWDWN_CTL3_SMB4_PD))
+#define CGC_I2C_MASK2    ((1 << NPCX_PWDWN_CTL7_SMB5_PD) | \
+			 (1 << NPCX_PWDWN_CTL7_SMB6_PD) | \
+			 (1 << NPCX_PWDWN_CTL7_SMB7_PD))
+#endif
 #define CGC_ADC_MASK     (1 << NPCX_PWDWN_CTL4_ADC_PD)
 #define CGC_PECI_MASK    (1 << NPCX_PWDWN_CTL4_PECI_PD)
 #define CGC_SPI_MASK     (1 << NPCX_PWDWN_CTL4_SPIP_PD)

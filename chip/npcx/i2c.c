@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "i2c_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -24,10 +25,6 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 #endif
-
-/* Pull-up bit for I2C */
-#define NPCX_I2C_PUBIT(controller, port) \
-	((controller*2) + port)
 
 /* Timeout for device should be available after reset (SMBus spec. unit:ms) */
 #define I2C_MAX_TIMEOUT 35
@@ -79,11 +76,6 @@ enum smb_oper_state_t {
 	SMB_READ_SUSPEND,
 };
 
-/* IRQ for each port */
-static const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
-		NPCX_IRQ_SMB1, NPCX_IRQ_SMB2, NPCX_IRQ_SMB3, NPCX_IRQ_SMB4};
-BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_CONTROLLER_COUNT);
-
 /* I2C controller state data */
 struct i2c_status {
 	int                   flags;     /* Flags (I2C_XFER_*) */
@@ -132,26 +124,14 @@ static const struct i2c_timing i2c_1m_timings[] = {
 	{15,  9, 10, 10},};
 const unsigned int i2c_1m_timing_used = ARRAY_SIZE(i2c_1m_timings);
 
-int i2c_port_to_controller(int port)
-{
-	if (port < 0 || port >= I2C_PORT_COUNT)
-		return -1;
-	return (port == NPCX_I2C_PORT0_0) ? 0 : port - 1;
-}
-
-static void i2c_select_port(int port)
-{
-	/*
-	 * I2C0_1 uses port 1 of controller 0. All other I2C pin sets
-	 * use port 0.
-	 */
-	if (port > NPCX_I2C_PORT0_1)
-		return;
-
-	/* Select IO pins for multi-ports I2C controllers */
-	UPDATE_BIT(NPCX_GLUE_SMBSEL, NPCX_SMBSEL_SMB0SEL,
-			(port == NPCX_I2C_PORT0_1));
-}
+/* IRQ for each port */
+const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
+		NPCX_IRQ_SMB1, NPCX_IRQ_SMB2, NPCX_IRQ_SMB3, NPCX_IRQ_SMB4,
+#if defined(CHIP_FAMILY_NPCX7)
+		NPCX_IRQ_SMB5, NPCX_IRQ_SMB6, NPCX_IRQ_SMB7, NPCX_IRQ_SMB8,
+#endif
+};
+BUILD_ASSERT(ARRAY_SIZE(i2c_irqs) == I2C_CONTROLLER_COUNT);
 
 static void i2c_init_bus(int controller)
 {
@@ -605,11 +585,23 @@ void i2c0_interrupt(void) { handle_interrupt(0); }
 void i2c1_interrupt(void) { handle_interrupt(1); }
 void i2c2_interrupt(void) { handle_interrupt(2); }
 void i2c3_interrupt(void) { handle_interrupt(3); }
+#if defined(CHIP_FAMILY_NPCX7)
+void i2c4_interrupt(void) { handle_interrupt(4); }
+void i2c5_interrupt(void) { handle_interrupt(5); }
+void i2c6_interrupt(void) { handle_interrupt(6); }
+void i2c7_interrupt(void) { handle_interrupt(7); }
+#endif
 
 DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_SMB2, i2c1_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_SMB3, i2c2_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 3);
+#if defined(CHIP_FAMILY_NPCX7)
+DECLARE_IRQ(NPCX_IRQ_SMB5, i2c4_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB6, i2c5_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB7, i2c6_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB8, i2c7_interrupt, 3);
+#endif
 
 /*****************************************************************************/
 /* IC specific low-level driver */
@@ -708,20 +700,6 @@ int i2c_get_line_levels(int port)
 		   (i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
 
-/*
- * Due to we couldn't support GPIO reading when IO is selected SMBus, we need
- * to distingulish which mode we used currently.
- */
-int i2c_is_raw_mode(int port)
-{
-	int bit = (port > NPCX_I2C_PORT0_1) ? ((port - 1) * 2) : port;
-
-	if (IS_BIT_SET(NPCX_DEVALT(2), bit))
-		return 0;
-	else
-		return 1;
-}
-
 int i2c_raw_get_scl(int port)
 {
 	enum gpio_signal g;
@@ -774,10 +752,16 @@ static void i2c_freq_changed(void)
 		int ctrl = i2c_port_to_controller(i2c_ports[i].port);
 		int scl_freq;
 
-		/* SMB0/1 use core clock & SMB2/3 use apb2 clock */
 		if (ctrl < 2)
+#if defined(CHIP_FAMILY_NPCX7)
+			/* SMB0/1 use APB3 clock */
+			freq = clock_get_apb3_freq();
+#else
+			/* SMB0/1 use core clock */
 			freq = clock_get_freq();
+#endif
 		else
+			/* Other SMB controller use APB2 clock */
 			freq = clock_get_apb2_freq();
 
 		/*
@@ -842,12 +826,17 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);
 static void i2c_init(void)
 {
 	int i;
+
 	/* Configure pins from GPIOs to I2Cs */
 	gpio_config_module(MODULE_I2C, 1);
 
 	/* Enable clock for I2C peripheral */
 	clock_enable_peripheral(CGC_OFFSET_I2C, CGC_I2C_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
+#if defined(CHIP_FAMILY_NPCX7)
+	clock_enable_peripheral(CGC_OFFSET_I2C2, CGC_I2C_MASK2,
+			CGC_MODE_RUN | CGC_MODE_SLEEP);
+#endif
 
 	/* Set I2C freq */
 	i2c_freq_changed();
