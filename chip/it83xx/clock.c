@@ -65,6 +65,8 @@ static void clock_module_disable(void)
 	IT83XX_SMFI_FLHCTRL3R |= (1 << 0);
 	/* bit7: USB pad power-on disable */
 	IT83XX_GCTRL_PMER2 &= ~(1 << 7);
+	/* bit7: USB debug disable */
+	IT83XX_GCTRL_MCCR &= ~(1 << 7);
 	clock_disable_peripheral((CGC_OFFSET_EGPC | CGC_OFFSET_CIR), 0, 0);
 	clock_disable_peripheral((CGC_OFFSET_SMBA | CGC_OFFSET_SMBB |
 		CGC_OFFSET_SMBC | CGC_OFFSET_SMBD | CGC_OFFSET_SMBE |
@@ -495,6 +497,7 @@ void __idle(void)
 #endif /* CONFIG_LOW_POWER_IDLE */
 
 #ifdef CONFIG_LOW_POWER_IDLE
+#ifdef CONFIG_CMD_IDLE_STATS
 /**
  * Print low power idle statistics
  */
@@ -514,50 +517,5 @@ DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
 			"",
 			"Print last idle stats");
 
-/**
- * Configure deep sleep clock settings.
- */
-static int command_dsleep(int argc, char **argv)
-{
-	int v;
-
-	if (argc > 1) {
-		if (parse_bool(argv[1], &v)) {
-			/*
-			 * Force deep sleep not to use heavy sleep mode or
-			 * allow it to use the heavy sleep mode.
-			 */
-			if (v)  /* 'on' */
-				disable_sleep(SLEEP_MASK_FORCE_NO_LOW_SPEED);
-			else    /* 'off' */
-				enable_sleep(SLEEP_MASK_FORCE_NO_LOW_SPEED);
-		} else {
-			/* Set console in use timeout. */
-			char *e;
-
-			v = strtoi(argv[1], &e, 10);
-			if (*e)
-				return EC_ERROR_PARAM1;
-
-			console_in_use_timeout_sec = v;
-
-			/* Refresh console in use to use new timeout. */
-			clock_refresh_console_in_use();
-		}
-	}
-
-	ccprintf("Sleep mask: %08x\n", sleep_mask);
-	ccprintf("Console in use timeout:   %d sec\n",
-			console_in_use_timeout_sec);
-
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
-		"[ on | off | <timeout> sec]",
-		"Deep sleep clock settings:\n"
-		"Use 'on' to force deep sleep NOT to enter heavysleep mode.\n"
-		"Use 'off' to allow deep sleep to use heavysleep whenever\n"
-		"conditions allow.\n"
-		"Give a timeout value for the console in use timeout.\n"
-		"See also 'sleepmask'.");
+#endif /* CONFIG_CMD_IDLE_STATS */
 #endif /* CONFIG_LOW_POWER_IDLE */
