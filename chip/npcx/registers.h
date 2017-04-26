@@ -803,6 +803,9 @@ enum {
 #define NPCX_DISIDL_CTL                REG8(NPCX_PMC_BASE_ADDR + 0x004)
 #define NPCX_DISIDL_CTL1               REG8(NPCX_PMC_BASE_ADDR + 0x005)
 #define NPCX_PWDWN_CTL(offset)         REG8(NPCX_PMC_BASE_ADDR + 0x008 + offset)
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_RAM_PD(offset)            REG8(NPCX_PMC_BASE_ADDR + 0x020 + offset)
+#endif
 
 /* PMC register fields */
 #define NPCX_PMCSR_DI_INSTW              0

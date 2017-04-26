@@ -18,6 +18,7 @@ endif
 
 # Required chip modules
 chip-y=header.o clock.o gpio.o hwtimer.o jtag.o system.o uart.o
+chip-y+=system-$(CHIP_FAMILY).o
 
 # Optional chip modules
 chip-$(CONFIG_ADC)+=adc.o

@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_SYSTEM_CHIP_H
 #define __CROS_EC_SYSTEM_CHIP_H
 
+/* Flags for BBRM_DATA_INDEX_WAKE */
+#define HIBERNATE_WAKE_MTC        (1 << 0)  /* MTC alarm */
+#define HIBERNATE_WAKE_PIN        (1 << 1)  /* Wake pin */
+
 /* Indices for battery-backed ram (BBRAM) data position */
 enum bbram_data_index {
 	BBRM_DATA_INDEX_SCRATCHPAD = 0,        /* General-purpose scratchpad */
@@ -21,17 +25,41 @@ enum bbram_data_index {
 
 /* Issue a watchdog reset*/
 void system_watchdog_reset(void);
-/* Check reset cause and return reset flags */
-void system_check_reset_cause(void);
 
-/* Begin flash address for hibernate utility; defined in linker script */
+/*
+ * Configure the specific memory addresses in the the MPU
+ * (Memory Protection Unit) for Nuvoton different chip series.
+ */
+void system_mpu_config(void);
+
+/* Hibernate function for different Nuvoton chip series. */
+void __hibernate_npcx_series(void);
+
+/* The utilities and variables depend on npcx chip family */
+#if defined(CHIP_FAMILY_NPCX5)
+/* Bypass for GMDA issue of ROM api utilities only on npcx5 series */
+void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
+		uint32_t size, uint32_t exeAddr);
+
+/* Begin address for hibernate utility; defined in linker script */
 extern unsigned int __flash_lpfw_start;
-/* End flash address for hibernate utility; defined in linker script */
+
+/* End address for hibernate utility; defined in linker script */
 extern unsigned int __flash_lpfw_end;
 
-/* Begin flash address for little FW; defined in linker script */
+/* Begin address for little FW; defined in linker script */
 extern unsigned int __flash_lplfw_start;
-/* End flash address for little FW; defined in linker script */
+
+/* End address for little FW; defined in linker script */
 extern unsigned int __flash_lplfw_end;
+
+#elif defined(CHIP_FAMILY_NPCX7)
+/* Configure PSL mode setting for the wake-up pins. */
+int system_config_psl_mode(enum gpio_signal signal);
+
+/* End address for hibernate utility; defined in linker script */
+extern unsigned int __after_init_end;
+
+#endif
 
 #endif /* __CROS_EC_SYSTEM_CHIP_H */

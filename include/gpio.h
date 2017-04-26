@@ -32,6 +32,7 @@
 #define GPIO_SEL_1P8V      (1 << 16) /* Support 1.8v */
 #define GPIO_ALTERNATE     (1 << 17) /* GPIO used for alternate function. */
 #define GPIO_LOCKED        (1 << 18) /* Lock GPIO output and configuration */
+#define GPIO_HIB_WAKE_HIGH (1 << 19) /* Hibernate wake on high level */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)

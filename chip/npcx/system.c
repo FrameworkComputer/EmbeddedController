@@ -22,10 +22,6 @@
 #include "timer.h"
 #include "util.h"
 
-/* Flags for BBRM_DATA_INDEX_WAKE */
-#define HIBERNATE_WAKE_MTC        (1 << 0)  /* MTC alarm */
-#define HIBERNATE_WAKE_PIN        (1 << 1)  /* Wake pin */
-
 /* Delay after writing TTC for value to latch */
 #define MTC_TTC_LOAD_DELAY_US 250
 #define MTC_ALARM_MASK     ((1 << 25) - 1)
@@ -38,14 +34,6 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-
-/* Begin address of Suspend RAM for hibernate utility */
-uintptr_t __lpram_fw_start = CONFIG_LPRAM_BASE;
-
-/* Offset of little FW in Suspend Ram for GDMA bypass */
-#define LFW_OFFSET 0x160
-/* Begin address of Suspend RAM for little FW (GDMA utilities). */
-uintptr_t __lpram_lfw_start = CONFIG_LPRAM_BASE + LFW_OFFSET;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -282,115 +270,6 @@ void system_check_reset_cause(void)
 }
 
 /**
- * Configure address 0x40001600 in the the MPU
- * (Memory Protection Unit) as a "regular" memory
- */
-void system_mpu_config(void)
-{
-	/* Enable MPU */
-	CPU_MPU_CTRL = 0x7;
-
-	/* Create a new MPU Region for low-power ram */
-	CPU_MPU_RNR  = 0;                         /* Select region number 0 */
-	CPU_MPU_RASR = CPU_MPU_RASR & 0xFFFFFFFE; /* Disable region */
-	CPU_MPU_RBAR = CONFIG_LPRAM_BASE;         /* Set region base address */
-	/*
-	 * Set region size & attribute and enable region
-	 * [31:29] - Reserved.
-	 * [28]    - XN (Execute Never) = 0
-	 * [27]    - Reserved.
-	 * [26:24] - AP                 = 011 (Full access)
-	 * [23:22] - Reserved.
-	 * [21:19,18,17,16] - TEX,S,C,B = 001000 (Normal memory)
-	 * [15:8]  - SRD                = 0 (Subregions enabled)
-	 * [7:6]   - Reserved.
-	 * [5:1]   - SIZE               = 01001 (1K)
-	 * [0]     - ENABLE             = 1 (enabled)
-	 */
-	CPU_MPU_RASR = 0x03080013;
-
-	/* Create a new MPU Region for data ram */
-	CPU_MPU_RNR  = 1;                         /* Select region number 1 */
-	CPU_MPU_RASR = CPU_MPU_RASR & 0xFFFFFFFE; /* Disable region */
-	CPU_MPU_RBAR = CONFIG_RAM_BASE;           /* Set region base address */
-	/*
-	 * Set region size & attribute and enable region
-	 * [31:29] - Reserved.
-	 * [28]    - XN (Execute Never) = 1
-	 * [27]    - Reserved.
-	 * [26:24] - AP                 = 011 (Full access)
-	 * [23:22] - Reserved.
-	 * [21:19,18,17,16] - TEX,S,C,B = 001000 (Normal memory)
-	 * [15:8]  - SRD                = 0 (Subregions enabled)
-	 * [7:6]   - Reserved.
-	 * [5:1]   - SIZE               = 01110 (32K)
-	 * [0]     - ENABLE             = 1 (enabled)
-	 */
-	CPU_MPU_RASR = 0x1308001D;
-}
-
-void __keep __attribute__ ((noreturn, section(".lowpower_ram")))
-__enter_hibernate_in_lpram(void)
-{
-	/*
-	 * TODO (ML): Set stack pointer to upper 512B of Suspend RAM.
-	 * Our bypass needs stack instructions but FW will turn off main ram
-	 * later for better power consumption.
-	 */
-	asm (
-		"ldr r0, =0x40001800\n"
-		"mov sp, r0\n"
-	);
-
-	/* Disable Code RAM first */
-	SET_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_MRFSH_DIS);
-	SET_BIT(NPCX_DISIDL_CTL, NPCX_DISIDL_CTL_RAM_DID);
-
-	/* Set deep idle mode*/
-	NPCX_PMCSR = 0x6;
-
-	/* Enter deep idle, wake-up by GPIOxx or RTC */
-	/*
-	 * TODO (ML): Although the probability is small, it still has chance
-	 * to meet the same symptom that CPU's behavior is abnormal after
-	 * wake-up from deep idle.
-	 * Workaround: Apply the same bypass of idle but don't enable interrupt.
-	 */
-	asm (
-		"push {r0-r5}\n"        /* Save needed registers */
-		"ldr r0, =0x40001600\n" /* Set r0 to Suspend RAM addr */
-		"wfi\n"                 /* Wait for int to enter idle */
-		"ldm r0, {r0-r5}\n"     /* Add a delay after WFI */
-		"pop {r0-r5}\n"         /* Restore regs before enabling ints */
-		"isb\n"                 /* Flush the cpu pipeline */
-	);
-
-	/* RTC wake-up */
-	if (IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO))
-		/*
-		 * Mark wake-up reason for hibernate
-		 * Do not call bbram_data_write directly cause of
-		 * executing in low-power ram
-		 */
-		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_MTC;
-	else
-		/* Otherwise, we treat it as GPIOs wake-up */
-		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
-
-	/* Start a watchdog reset */
-	NPCX_WDCNT = 0x01;
-	/* Reload and restart Timer 0*/
-	SET_BIT(NPCX_T0CSR, NPCX_T0CSR_RST);
-	/* Wait for timer is loaded and restart */
-	while (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_RST))
-		;
-
-	/* Spin and wait for reboot; should never return */
-	while (1)
-		;
-}
-
-/**
  * Chip-level function to set GPIOs and wake-up inputs for hibernate.
  */
 void system_set_gpios_and_wakeup_inputs_hibernate(void)
@@ -412,16 +291,28 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 		}
 	}
 
+#if defined(CHIP_FAMILY_NPCX7)
+	/* Disable MIWU 2 group 6 inputs which used for the additional GPIOs */
+	NPCX_WKEN(MIWU_TABLE_2, MIWU_GROUP_6)  = 0x00;
+	NPCX_WKPCL(MIWU_TABLE_2, MIWU_GROUP_6) = 0xFF;
+	NPCX_WKINEN(MIWU_TABLE_2, MIWU_GROUP_6) = 0x00;
+#endif
+
 	/* Enable wake-up inputs of hibernate_wake_pins array */
 	for (i = 0; i < hibernate_wake_pins_used; i++) {
 		gpio_reset(hibernate_wake_pins[i]);
 		/* Re-enable interrupt for wake-up inputs */
 		gpio_enable_interrupt(hibernate_wake_pins[i]);
+#if defined(CONFIG_HIBERNATE_PSL)
+		/* Config PSL pins setting for wake-up inputs */
+		if (!system_config_psl_mode(hibernate_wake_pins[i]))
+			ccprintf("Invalid PSL setting in wake-up pin %d\n", i);
+#endif
 	}
 }
 
 /**
- * Internal hibernate function.
+ * hibernate function for npcx ec.
  *
  * @param seconds      Number of seconds to sleep before LCT alarm
  * @param microseconds Number of microseconds to sleep before LCT alarm
@@ -429,11 +320,6 @@ void system_set_gpios_and_wakeup_inputs_hibernate(void)
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 	int i;
-	void (*__hibernate_in_lpram)(void) =
-			(void(*)(void))(__lpram_fw_start | 0x01);
-
-	/* Enable power for the Low Power RAM */
-	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6), 6);
 
 	/* Disable ADC */
 	NPCX_ADCCNF = 0;
@@ -445,6 +331,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* Disable instant wake up mode for better power consumption */
 	CLEAR_BIT(NPCX_ENIDL_CTL, NPCX_ENIDL_CTL_LP_WK_CTL);
 
+	/* Disable interrupt */
 	interrupt_disable();
 
 	/* ITIM event module disable */
@@ -459,19 +346,11 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	NPCX_WDSDM = 0x61;
 	NPCX_WDSDM = 0x63;
 
-	/* Enable Low Power RAM */
-	NPCX_LPRAM_CTRL = 1;
-
 	/* Initialize watchdog */
 	NPCX_TWCFG = 0; /* Select T0IN clock as watchdog prescaler clock */
 	SET_BIT(NPCX_TWCFG, NPCX_TWCFG_WDCT0I);
 	NPCX_TWCP = 0x00; /* Keep prescaler ratio timer0 clock to 1:1 */
 	NPCX_TWDT0 = 0x00; /* Set internal counter and prescaler */
-
-	/* Copy the __enter_hibernate_in_lpram instructions to LPRAM */
-	for (i = 0; i < &__flash_lpfw_end - &__flash_lpfw_start; i++)
-		*((uint32_t *)__lpram_fw_start + i) =
-				*(&__flash_lpfw_start + i);
 
 	/* Disable interrupt */
 	interrupt_disable();
@@ -500,8 +379,9 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	if (seconds || microseconds)
 		system_set_rtc_alarm(seconds, microseconds);
 
-	/* execute hibernate func in LPRAM */
-	__hibernate_in_lpram();
+
+	/* execute hibernate func depend on chip series */
+	__hibernate_npcx_series();
 
 }
 
@@ -620,12 +500,21 @@ void system_pre_init(void)
 	/* Power-down the modules we don't need */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_1) = 0xF9; /* Skip SDP_PD FIU_PD */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_2) = 0xFF;
+#if defined(CHIP_FAMILY_NPCX5)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F; /* Skip GDMA */
+#elif defined(CHIP_FAMILY_NPCX7)
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x1F; /* Skip GDMA */
+#endif
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = 0xF5; /* Skip ITIM5_PD */
+#if defined(CHIP_FAMILY_NPCX7)
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
+#endif
 
-	/* Power down the modules used internally */
+	/* Following modules can be powered down automatically in npcx7 */
+#if defined(CHIP_FAMILY_NPCX5)
+	/* Power down the modules of npcx5 used internally */
 	NPCX_INTERNAL_CTRL1 = 0x03;
 	NPCX_INTERNAL_CTRL2 = 0x03;
 	NPCX_INTERNAL_CTRL3 = 0x03;
@@ -633,6 +522,7 @@ void system_pre_init(void)
 	/* Enable low-power regulator */
 	CLEAR_BIT(NPCX_LFCGCALCNT, NPCX_LFCGCALCNT_LPREG_CTL_EN);
 	SET_BIT(NPCX_LFCGCALCNT, NPCX_LFCGCALCNT_LPREG_CTL_EN);
+#endif
 
 	/*
 	 * Configure LPRAM in the MPU as a regular memory
@@ -702,6 +592,7 @@ const char *system_get_chip_name(void)
 	/* Read Chip ID in core register */
 	uint8_t chip_id = NPCX_DEVICE_ID_CR;
 	switch (chip_id) {
+#if defined(CHIP_FAMILY_NPCX5)
 	case 0x12:
 		return "NPCX585G";
 	case 0x13:
@@ -710,6 +601,10 @@ const char *system_get_chip_name(void)
 		return "NPCX586G";
 	case 0x17:
 		return "NPCX576G";
+#elif defined(CHIP_FAMILY_NPCX7)
+	case 0x21:
+		return "NPCX796F";
+#endif
 	default:
 		*p       = system_to_hex((chip_id & 0xF0) >> 4);
 		*(p + 1) = system_to_hex(chip_id & 0x0F);
@@ -896,116 +791,6 @@ DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM,
 
 #endif /* CONFIG_HOSTCMD_RTC */
 #ifdef CONFIG_EXTERNAL_STORAGE
-void __keep __attribute__ ((noreturn, section(".lowpower_ram2")))
-__start_gdma(uint32_t exeAddr)
-{
-	/* Enable GDMA now */
-	SET_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAEN);
-
-	/* Start GDMA */
-	SET_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_SOFTREQ);
-
-	/* Wait for transfer to complete/fail */
-	while (!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_TC) &&
-			!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
-		;
-
-	/* Disable GDMA now */
-	CLEAR_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAEN);
-
-	/*
-	 * Failure occurs during GMDA transaction. Let watchdog issue and
-	 * boot from RO region again.
-	 */
-	if (IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
-		while (1)
-			;
-
-	/*
-	 * Jump to the exeAddr address if needed. Setting bit 0 of address to
-	 * indicate it's a thumb branch for cortex-m series CPU.
-	 */
-	((void (*)(void))(exeAddr | 0x01))();
-
-	/* Should never get here */
-	while (1)
-		;
-}
-
-static void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
-		uint32_t size, uint32_t exeAddr)
-{
-	int i;
-	uint8_t chunkSize = 16; /* 4 data burst mode. ie.16 bytes */
-	/*
-	 * GDMA utility in Suspend RAM. Setting bit 0 of address to indicate
-	 * it's a thumb branch for cortex-m series CPU.
-	 */
-	void (*__start_gdma_in_lpram)(uint32_t) =
-			(void(*)(uint32_t))(__lpram_lfw_start | 0x01);
-
-	/*
-	 * Before enabling burst mode for better performance of GDMA, it's
-	 * important to make sure srcAddr, dstAddr and size of transactions
-	 * are 16 bytes aligned in case failure occurs.
-	 */
-	ASSERT((size % chunkSize) == 0 && (srcAddr % chunkSize) == 0 &&
-			(dstAddr % chunkSize) == 0);
-
-	/* Check valid address for jumpiing */
-	ASSERT(exeAddr != 0x0);
-
-	/* Enable power for the Low Power RAM */
-	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6), 6);
-
-	/* Enable Low Power RAM */
-	NPCX_LPRAM_CTRL = 1;
-
-	/*
-	 * Initialize GDMA for flash reading.
-	 * [31:21] - Reserved.
-	 * [20]    - GDMAERR   = 0  (Indicate GMDA transfer error)
-	 * [19]    - Reserved.
-	 * [18]    - TC        = 0  (Terminal Count. Indicate operation is end.)
-	 * [17]    - Reserved.
-	 * [16]    - SOFTREQ   = 0  (Don't trigger here)
-	 * [15]    - DM        = 0  (Set normal demand mode)
-	 * [14]    - Reserved.
-	 * [13:12] - TWS.      = 10 (One double-word for every GDMA transaction)
-	 * [11:10] - Reserved.
-	 * [9]     - BME       = 1  (4-data ie.16 bytes - Burst mode enable)
-	 * [8]     - SIEN      = 0  (Stop interrupt disable)
-	 * [7]     - SAFIX     = 0  (Fixed source address)
-	 * [6]     - Reserved.
-	 * [5]     - SADIR     = 0  (Source address incremented)
-	 * [4]     - DADIR     = 0  (Destination address incremented)
-	 * [3:2]   - GDMAMS    = 00 (Software mode)
-	 * [1]     - Reserved.
-	 * [0]     - ENABLE    = 0  (Don't enable yet)
-	 */
-	NPCX_GDMA_CTL = 0x00002200;
-
-	/* Set source base address */
-	NPCX_GDMA_SRCB = CONFIG_MAPPED_STORAGE_BASE + srcAddr;
-
-	/* Set destination base address */
-	NPCX_GDMA_DSTB = dstAddr;
-
-	/* Set number of transfers */
-	NPCX_GDMA_TCNT = (size / chunkSize);
-
-	/* Clear Transfer Complete event */
-	SET_BIT(NPCX_GDMA_CTL, NPCX_GDMA_CTL_TC);
-
-	/* Copy the __start_gdma_in_lpram instructions to LPRAM */
-	for (i = 0; i < &__flash_lplfw_end - &__flash_lplfw_start; i++)
-		*((uint32_t *)__lpram_lfw_start + i) =
-				*(&__flash_lplfw_start + i);
-
-	/* Start GDMA in Suspend RAM */
-	__start_gdma_in_lpram(exeAddr);
-}
-
 void system_jump_to_booter(void)
 {
 	enum API_RETURN_STATUS_T status __attribute__((unused));
@@ -1038,7 +823,7 @@ void system_jump_to_booter(void)
 	clock_turbo();
 
 	/* Bypass for GMDA issue of ROM api utilities */
-#if defined(CHIP_VARIANT_NPCX5M5G) || defined(CHIP_VARIANT_NPCX5M6G)
+#if defined(CHIP_FAMILY_NPCX5)
 	system_download_from_flash(
 		flash_offset,      /* The offset of the data in spi flash */
 		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */
