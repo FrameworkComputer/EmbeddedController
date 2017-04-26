@@ -167,13 +167,17 @@ static int command_rollback_info(int argc, char **argv)
 {
 	int region, ret, min_region;
 	int32_t rollback_min_version;
+	int32_t rw_rollback_version;
 
 	min_region = get_latest_rollback(&rollback_min_version);
 
 	if (min_region < 0)
 		return EC_ERROR_UNKNOWN;
 
+	rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
+
 	ccprintf("rollback minimum version: %d\n", rollback_min_version);
+	ccprintf("RW rollback version: %d\n", rw_rollback_version);
 
 	for (region = 0; region < ROLLBACK_REGIONS; region++) {
 		struct rollback_data data;
