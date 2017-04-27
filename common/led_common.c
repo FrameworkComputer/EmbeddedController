@@ -71,3 +71,12 @@ static int led_command_control(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_LED_CONTROL, led_command_control, EC_VER_MASK(1));
+
+__attribute__((weak))
+void led_control(enum ec_led_id led_id, enum ec_led_state state)
+{
+	/*
+	 * Default weak implementation that does not affect the state of
+	 * LED. Boards can provide their own implementation.
+	 */
+}
