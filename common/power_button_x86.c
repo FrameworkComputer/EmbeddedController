@@ -410,6 +410,7 @@ static void powerbtn_x86_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
 
+#ifdef CONFIG_LID_SWITCH
 /**
  * Handle switch changes based on lid event.
  */
@@ -420,6 +421,7 @@ static void powerbtn_x86_lid_change(void)
 		power_button_pch_pulse();
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, powerbtn_x86_lid_change, HOOK_PRIO_DEFAULT);
+#endif
 
 /**
  * Handle debounced power button changing state.

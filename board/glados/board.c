@@ -393,6 +393,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
 
@@ -414,6 +415,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
 }

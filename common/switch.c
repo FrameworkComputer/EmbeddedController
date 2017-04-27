@@ -43,10 +43,15 @@ static void switch_update(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_POWER_BUTTON_PRESSED;
 
+#ifdef CONFIG_LID_SWITCH
 	if (lid_is_open())
 		*memmap_switches |= EC_SWITCH_LID_OPEN;
 	else
 		*memmap_switches &= ~EC_SWITCH_LID_OPEN;
+#else
+	/* For lid-less systems, lid looks always open */
+	*memmap_switches |= EC_SWITCH_LID_OPEN;
+#endif
 
 	if ((flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;

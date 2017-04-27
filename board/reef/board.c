@@ -734,6 +734,19 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 /* FIXME(dhendrix): Add CHIPSET_RESUME and CHIPSET_SUSPEND
    hooks to enable/disable sensors? */
+/* Called on AP S3 -> S0 transition */
+static void board_chipset_resume(void)
+{
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*
  * FIXME(dhendrix): Weak symbol hack until we can get a better solution for
