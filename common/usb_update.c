@@ -191,11 +191,11 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			rwsig_abort();
 			response = EC_RES_SUCCESS;
 			break;
+#endif
 		case UPDATE_EXTRA_CMD_UNLOCK_RW:
 			flash_set_protect(EC_FLASH_PROTECT_RW_AT_BOOT, 0);
 			response = EC_RES_SUCCESS;
 			break;
-#endif
 		default:
 			response = EC_RES_INVALID_COMMAND;
 		}
