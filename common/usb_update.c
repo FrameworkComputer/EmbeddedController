@@ -141,7 +141,7 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 	if (update_pdu_valid(&cmd_buffer->cmd,
 			  count - offsetof(struct update_frame_header, cmd))) {
 		enum update_extra_command subcommand;
-		uint16_t response;
+		uint8_t response;
 		size_t response_size = sizeof(response);
 
 		/* looks good, let's process it. */
