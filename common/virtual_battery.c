@@ -229,7 +229,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	case SB_FULL_CHARGE_CAPACITY:
 		val = curr_batt->full_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
-			val = val * curr_batt->voltage / 10;
+			val = val * curr_batt->voltage / 10000;
 		memcpy(dest, &val, read_len);
 		break;
 	case SB_BATTERY_STATUS:
@@ -242,7 +242,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	case SB_DESIGN_CAPACITY:
 		val = *(int *)host_get_memmap(EC_MEMMAP_BATT_DCAP);
 		if (batt_mode_cache & MODE_CAPACITY)
-			val = val * curr_batt->voltage / 10;
+			val = val * curr_batt->voltage / 10000;
 		memcpy(dest, &val, read_len);
 		break;
 	case SB_DESIGN_VOLTAGE:
@@ -252,7 +252,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	case SB_REMAINING_CAPACITY:
 		val = curr_batt->remaining_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
-			val = val * curr_batt->voltage / 10;
+			val = val * curr_batt->voltage / 10000;
 		memcpy(dest, &val, read_len);
 		break;
 	default:
