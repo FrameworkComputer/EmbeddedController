@@ -774,16 +774,6 @@ static int a_newer_than_b(struct signed_header_version *a,
 	};
 	size_t i;
 
-	/*
-	 * Even though header version fields are 32 bits in size, we don't
-	 * exepect any version field ever exceed say 1000. Anything in excess
-	 * of 1000 should is considered zero.
-	 *
-	 * This would cover old images where one of the RO version fields is
-	 * the number of git patches since last tag (and is in excess of
-	 * 4000), and images where there is no code in a section (all fields
-	 * are set to 0xffffffff).
-	 */
 	for (i = 0; i < ARRAY_SIZE(fields[0]); i++) {
 		uint32_t a_value;
 		uint32_t b_value;
@@ -791,10 +781,14 @@ static int a_newer_than_b(struct signed_header_version *a,
 		a_value = fields[0][i];
 		b_value = fields[1][i];
 
-		if (a_value > 4000)
+		/*
+		 * Let's filter out images where the section is not
+		 * initialized and the version field value is set to all ones.
+		 */
+		if (a_value == 0xffffffff)
 			a_value = 0;
 
-		if (b_value > 4000)
+		if (b_value == 0xffffffff)
 			b_value = 0;
 
 		if (a_value != b_value)
