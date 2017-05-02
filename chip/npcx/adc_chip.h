@@ -20,6 +20,13 @@ enum npcx_adc_input_channel {
 	NPCX_ADC_CH2,
 	NPCX_ADC_CH3,
 	NPCX_ADC_CH4,
+#if defined(CHIP_FAMILY_NPCX7)
+	NPCX_ADC_CH5,
+	NPCX_ADC_CH6,
+	NPCX_ADC_CH7,
+	NPCX_ADC_CH8,
+	NPCX_ADC_CH9,
+#endif
 	NPCX_ADC_CH_COUNT
 };
 
