@@ -302,6 +302,9 @@
 #define NPCX_KBSMODE                     1
 #define NPCX_KBSIEN                      2
 #define NPCX_KBSINC                      3
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_KBHDRV_FIELD                FIELD(6, 2)
+#endif
 #define NPCX_KBSCFGINDX                  0
 
 /* KBSCAN definitions */

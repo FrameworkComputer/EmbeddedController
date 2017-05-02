@@ -1527,6 +1527,14 @@
  */
 #undef CONFIG_KEYBOARD_TEST
 
+/*
+ * Enable quasi-bidirectional buffers for KSO pins. It has an open-drain output
+ * and a low-impedance pull-up. The low-impedance pull-up is active when ec
+ * changes the output data buffers from 0 to 1, thereby reducing the
+ * low-to-high transition time.
+ */
+#undef CONFIG_KEYBOARD_KSO_HIGH_DRIVE
+
 /*****************************************************************************/
 
 /* Support common LED interface */

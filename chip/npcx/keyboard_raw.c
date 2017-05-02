@@ -25,6 +25,14 @@ void keyboard_raw_init(void)
 	/* Ensure top-level interrupt is disabled */
 	keyboard_raw_enable_interrupt(0);
 
+	/*
+	 * Select quasi-bidirectional buffers for KSO pins. It reduces the
+	 * low-to-high transition time. This feature only supports in npcx7.
+	 */
+#ifdef CONFIG_KEYBOARD_KSO_HIGH_DRIVE
+	SET_FIELD(NPCX_KBSCTL, NPCX_KBHDRV_FIELD, 0x01);
+#endif
+
 	/* pull-up KBSIN 0-7 internally */
 	NPCX_KBSINPU = 0xFF;
 
