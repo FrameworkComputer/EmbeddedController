@@ -25,6 +25,7 @@
 enum battery_type {
 	BATTERY_LG,
 	BATTERY_LISHEN,
+	BATTERY_SIMPLO,
 	BATTERY_TYPE_COUNT,
 };
 
@@ -69,7 +70,7 @@ static const struct battery_info batt_info_lishen = {
 	.voltage_max		= TARGET_WITH_MARGIN(8750, 5), /* mV */
 	.voltage_normal		= 7700,
 	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
-	.precharge_current	= 88,	/* mA */
+	.precharge_current	= 256,	/* mA */
 	.start_charging_min_c	= 0,
 	.start_charging_max_c	= 46,
 	.charging_min_c		= 10,
@@ -86,6 +87,11 @@ static const struct board_batt_params info[] = {
 
 	[BATTERY_LISHEN] = {
 		.manuf_name = "Lishen A50",
+		.batt_info = &batt_info_lishen,
+	},
+
+	[BATTERY_SIMPLO] = {
+		.manuf_name = "Simplo A50",
 		.batt_info = &batt_info_lishen,
 	},
 
