@@ -405,6 +405,7 @@ static int host_command_console_read(struct host_cmd_handler_args *args)
 		 * snapshot.
 		 */
 		return console_read_helper(args, &tx_snapshot_tail);
+#ifdef CONFIG_CONSOLE_ENABLE_READ_V1
 	} else if (args->version == 1) {
 		/* Check the params to figure out where to start reading. */
 		p = args->params;
@@ -413,9 +414,14 @@ static int host_command_console_read(struct host_cmd_handler_args *args)
 		else if (p->subcmd == CONSOLE_READ_RECENT)
 			return console_read_helper(args,
 						   &tx_last_snapshot_head);
+#endif
 	}
 	return EC_RES_INVALID_PARAM;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_READ,
 		     host_command_console_read,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(0)
+#ifdef CONFIG_CONSOLE_ENABLE_READ_V1
+		     | EC_VER_MASK(1)
+#endif
+		     );

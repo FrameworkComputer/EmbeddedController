@@ -775,6 +775,12 @@
 #undef CONFIG_CONSOLE_COMMAND_FLAGS_DEFAULT
 
 /*
+ * Enable EC_CMD_CONSOLE_READ V1. One could disable this config to prevent
+ * kernel from creating the `console_log` debugfs entry.
+ */
+#define CONFIG_CONSOLE_ENABLE_READ_V1
+
+/*
  * Number of entries in console history buffer.
  *
  * Boards may #undef this to reduce memory usage.
