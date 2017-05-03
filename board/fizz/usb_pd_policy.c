@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
 #include "atomic.h"
 #include "extpower.h"
 #include "charge_manager.h"
@@ -55,18 +56,19 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
-static uint8_t vbus_en;
-
 int board_vbus_source_enabled(int port)
 {
-	return vbus_en;
+	if (port != 0)
+		return 0;
+	return gpio_get_level(GPIO_USB_C0_5V_EN);
 }
 
 int pd_set_power_supply_ready(int port)
 {
 	/* Disable charging */
 	gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
-	/* Provide VBUS */
+
+	/* Enable VBUS source */
 	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
 
 	/* notify host of power info change */
@@ -77,7 +79,7 @@ int pd_set_power_supply_ready(int port)
 
 void pd_power_supply_reset(int port)
 {
-	/* Disable VBUS */
+	/* Disable VBUS source */
 	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
 
 	/* notify host of power info change */
@@ -241,6 +243,48 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	}
 
 	return 0;
+}
+
+static void board_charge_manager_init(void)
+{
+	int input_voltage;
+	int i, j;
+	struct charge_port_info cpi = {
+		.voltage = USB_CHARGER_VOLTAGE_MV,
+		.current = 0,
+	};
+
+	/* Initialize all charge suppliers to 0 */
+	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
+		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+			charge_manager_update_charge(j, i, &cpi);
+	}
+
+	input_voltage = adc_read_channel(ADC_VBUS);
+
+	/* Initialize the power source supplier */
+	if (input_voltage > 5500) {
+		/* Power source is barrel jack */
+		CPRINTF("Source: BJ (%dmV)\n", input_voltage);
+		cpi.voltage = input_voltage;
+		cpi.current = 3330;	/* TODO: Set right value */
+		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY, 1,
+					     &cpi);
+		/* Source only. Disable PD negotiation as a sink */
+	} else {
+		/* Power source is usb-c */
+		CPRINTF("Source: C0 (%dmV)\n", input_voltage);
+		cpi.voltage = input_voltage;
+		cpi.current = 3000;	/* TODO: Set right value */
+		charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, 0, &cpi);
+		/* Sink only. Disable PD negotiation as a source */
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_charge_manager_init, HOOK_PRIO_INIT_ADC + 1);
+
+int board_get_battery_soc(void)
+{
+	return 100;
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP

@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "als.h"
+#include "battery.h"
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
@@ -90,10 +91,7 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	/* Base detection */
-	[ADC_BASE_DET] = {"BASE_DET", NPCX_ADC_CH0,
-			  ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	/* Vbus sensing (10x voltage divider). */
+	/* Vbus sensing (1/10 voltage divider). */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
@@ -195,8 +193,6 @@ uint16_t tcpc_get_alert_status(void)
  *     src/mainboard/google/${board}/acpi/dptf.asl
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp,
-			0, 4},
 	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
 			TMP432_IDX_LOCAL, 4},
 	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
@@ -215,7 +211,6 @@ struct ec_thermal_config thermal_params[] = {
 	{{0, 0, 0}, C_TO_K(35), C_TO_K(68)},	/* TMP432_Internal */
 	{{0, 0, 0}, 0, 0},	/* TMP432_Sensor_1 */
 	{{0, 0, 0}, 0, 0},	/* TMP432_Sensor_2 */
-	{{0, 0, 0}, 0, 0},	/* Battery */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -373,52 +368,42 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-/**
- * Set active charge port -- only one port can be active at a time.
- *
- * @param charge_port   Charge port to enable.
- *
- * Returns EC_SUCCESS if charge port is accepted and made active,
- * EC_ERROR_* otherwise.
- */
 int board_set_active_charge_port(int charge_port)
 {
-	/* charge port is a physical port */
-	int is_real_port = (charge_port >= 0 &&
-			    charge_port < CONFIG_USB_PD_PORT_COUNT);
-	/* check if we are source VBUS on the port */
-	int source = gpio_get_level(GPIO_USB_C0_5V_EN);
+	const int active_port = charge_manager_get_active_charge_port();
 
-	if (is_real_port && source) {
-		CPRINTF("Skip enable p%d", charge_port);
+	if (charge_port < 0 || CHARGE_PORT_COUNT <= charge_port)
+		return EC_ERROR_INVAL;
+
+	if (charge_port == active_port)
+		return EC_SUCCESS;
+
+	/* Don't charge from a source port */
+	if (board_vbus_source_enabled(charge_port))
+		return EC_ERROR_INVAL;
+
+	CPRINTS("New charger p%d", charge_port);
+
+	switch (charge_port) {
+	case CHARGE_PORT_TYPEC0:
+		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
+		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
+		break;
+	case CHARGE_PORT_BARRELJACK :
+		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
+		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
+		break;
+	default:
 		return EC_ERROR_INVAL;
 	}
-
-	CPRINTF("New chg p%d", charge_port);
-
-	if (charge_port == CHARGE_PORT_NONE)
-		/* Disable port */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
-	else
-		/* Enable charging port */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
 
 	return EC_SUCCESS;
 }
 
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charger_set_input_current(charge_ma);
 }
 
 /**
@@ -479,3 +464,9 @@ const struct button_config *recovery_buttons[] = {
 	&buttons[BUTTON_RECOVERY],
 };
 const int recovery_buttons_count = ARRAY_SIZE(recovery_buttons);
+
+enum battery_present battery_is_present(void)
+{
+	/* The GPIO is low when the battery is present */
+	return BP_NO;
+}

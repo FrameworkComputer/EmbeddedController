@@ -180,7 +180,6 @@ enum power_state power_chipset_init(void)
 
 enum power_state common_intel_x86_power_handle_state(enum power_state state)
 {
-	int tries = 0;
 
 	switch (state) {
 	case POWER_G3:
@@ -241,6 +240,9 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 #endif
 
 	case POWER_G3S5:
+#ifdef CONFIG_CHARGER
+		{
+		int tries = 0;
 		/*
 		 * Allow charger to be initialized for upto defined tries,
 		 * in case we're trying to boot the AP with no battery.
@@ -257,6 +259,8 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			chipset_force_shutdown();
 			return POWER_G3;
 		}
+		}
+#endif
 
 		/* Call hooks to initialize PMIC */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);

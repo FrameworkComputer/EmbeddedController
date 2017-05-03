@@ -55,27 +55,12 @@
 #define CONFIG_ESPI_VW_SIGNALS
 #define CONFIG_LPC
 
-/* Battery */
-#define CONFIG_BATTERY_CUT_OFF
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
-#define CONFIG_BATTERY_PRESENT_GPIO GPIO_BATTERY_PRESENT_L
-#define CONFIG_BATTERY_REVIVE_DISCONNECT
-#define CONFIG_BATTERY_SMART
-
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGE_RAMP_HW /* This, or just RAMP? */
 
-#define CONFIG_CHARGER
-#define CONFIG_CHARGER_V2
 #define CONFIG_CHARGER_ISL9238
-#define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT 512
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15000
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT 1
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
-#define CONFIG_CHARGER_NARROW_VDC
-#define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
@@ -119,6 +104,10 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
+/* Charge ports */
+#undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
+
 /* USB-A config */
 #define CONFIG_USB_PORT_POWER_DUMB
 #define USB_PORT_COUNT 5
@@ -144,6 +133,11 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
+enum charge_port {
+	CHARGE_PORT_TYPEC0,
+	CHARGE_PORT_BARRELJACK,
+};
+
 enum power_signal {
 	X86_SLP_S0_DEASSERTED,
 	X86_SLP_S3_DEASSERTED,
@@ -155,7 +149,6 @@ enum power_signal {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_BATTERY,	/* BD99956GW TSENSE */
 	TEMP_SENSOR_CHARGER,	/* BD99992GW SYSTHERM1 */
 	TEMP_SENSOR_DRAM,	/* BD99992GW SYSTHERM2 */
 	TEMP_SENSOR_EMMC,	/* BD99992GW SYSTHERM3 */
@@ -163,7 +156,6 @@ enum temp_sensor_id {
 };
 
 enum adc_channel {
-	ADC_BASE_DET,
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
@@ -195,6 +187,7 @@ enum button {
 int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
+int board_get_battery_soc(void);
 
 #endif /* !__ASSEMBLER__ */
 
