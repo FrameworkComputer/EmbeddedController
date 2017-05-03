@@ -392,8 +392,13 @@ static void board_init(void)
 
 	/* UART init */
 	usart_init(&usart1);
-	/* No default type-c mux. TODO: would we like this to be set? */
-	set_mux_state(MUX_OFF);
+
+	/*
+	 * Default to port A, to allow easier charging and
+	 * detection of unconfigured devices.
+	 */
+	set_mux_state(MUX_A);
+
 	/* Note that we can't enable AUTO until after init. */
 	set_uart_gpios(UART_OFF);
 
