@@ -140,16 +140,18 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
 		case START:
 		case WRITE_VB:
 			virtual_battery_operation(batt_cmd_head,
-						&resp->data[in_len],
+						NULL,
 						0,
 						acc_write_len);
 			break;
 		/* read from virtual battery */
 		case READ_VB:
 			if (cache_hit) {
+				read_len += in_len;
+				memset(&resp->data[0], 0, read_len);
 				virtual_battery_operation(batt_cmd_head,
 							&resp->data[0],
-							in_len + read_len,
+							read_len,
 							0);
 			}
 			break;
@@ -187,6 +189,13 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	static uint16_t batt_mode_cache;
 	const struct batt_params *curr_batt;
 
+	/*
+	 * All of the smart battery reg indexes supported by this virtual
+	 * battery implementation are two bytes long. So we should limit
+	 * the range of memory access accordingly.
+	 */
+	if (read_len > 2)
+		read_len = 2;
 	curr_batt = charger_current_battery_params();
 	switch (*batt_cmd_head) {
 	case SB_BATTERY_MODE:
