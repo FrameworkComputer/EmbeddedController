@@ -129,8 +129,10 @@
 #define CONFIG_USB_HID_KEYBOARD
 #define CONFIG_USB_HID_TOUCHPAD
 
-/* Keyboard output port list */
 #define CONFIG_KEYBOARD_DEBUG
+#undef CONFIG_KEYBOARD_BOOT_KEYS
+#undef CONFIG_KEYBOARD_RUNTIME_KEYS
+/* Keyboard output port list */
 #define KB_OUT_PORT_LIST GPIO_A, GPIO_B, GPIO_C, GPIO_F
 
 /* Enable control of I2C over USB */
