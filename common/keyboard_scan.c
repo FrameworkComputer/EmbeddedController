@@ -272,6 +272,7 @@ static int read_matrix(uint8_t *state)
 	return pressed ? 1 : 0;
 }
 
+#ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 /**
  * Check special runtime key combinations.
  *
@@ -365,6 +366,7 @@ static int check_runtime_keys(const uint8_t *state)
 
 	return 0;
 }
+#endif /* CONFIG_KEYBOARD_RUNTIME_KEYS */
 
 /**
  * Check for ghosting in the keyboard state.
@@ -506,9 +508,11 @@ static int check_keys_changed(uint8_t *state)
 		CPRINTF("]\n");
 #endif
 
+#ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 		/* Swallow special keys */
 		if (check_runtime_keys(state))
 			return 0;
+#endif
 
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 		keyboard_fifo_add(state);

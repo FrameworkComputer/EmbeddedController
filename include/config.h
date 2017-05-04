@@ -1516,6 +1516,12 @@
 #undef CONFIG_KEYBOARD_PRINT_SCAN_TIMES
 
 /*
+ * Support for extra runtime key combinations (e.g. alt+volup+h/r for hibernate
+ * and warm reboot, respectively).
+ */
+#define CONFIG_KEYBOARD_RUNTIME_KEYS
+
+/*
  * Call board-supplied keyboard_suppress_noise() function when the debounced
  * keyboard state changes.  Some boards use this to send a signal to the audio
  * codec to suppress typing noise picked up by the microphone.
