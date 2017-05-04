@@ -124,13 +124,25 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 /*
  * Base detection and debouncing
  *
- * Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
- * value should be around 5.1/(100+5.1)*3300 = 160.
- * TODO(crosbug.com/p/61098): Fine-tune these values.
+ * TODO(b/35585396): Fine-tune these values.
  */
 #define BASE_DETECT_DEBOUNCE_US (5 * MSEC)
+
+#ifdef POPPY_REV0
+/*
+ * rev0: Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
+ * value should be around 5.1/(100+5.1)*3300 = 160.
+ */
 #define BASE_DETECT_MIN_MV 140
-#define BASE_DETECT_MAX_MV 180
+#define BASE_DETECT_MAX_MV 200
+#else
+/*
+ * >=rev1: Lid has 600K pull-up, base has 10K pull-down, 1% tolerance, so the
+ * ADC value should be around 10.0/(604+10.0)*3300 = 54
+ */
+#define BASE_DETECT_MIN_MV 50
+#define BASE_DETECT_MAX_MV 60
+#endif
 
 static uint64_t base_detect_debounce_time;
 
