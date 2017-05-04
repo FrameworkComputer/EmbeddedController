@@ -71,12 +71,14 @@ struct boot_key_entry {
 	uint8_t mask_value;
 };
 
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
 static const struct boot_key_entry boot_key_list[] = {
 	{KEYBOARD_COL_ESC, KEYBOARD_MASK_ESC},   /* Esc */
 	{KEYBOARD_COL_DOWN, KEYBOARD_MASK_DOWN}, /* Down-arrow */
 	{KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_MASK_LEFT_SHIFT}, /* Left-Shift */
 };
 static uint32_t boot_key_value = BOOT_KEY_NONE;
+#endif
 
 /* Debounced key matrix */
 static uint8_t __bss_slow debounced_state[KEYBOARD_COLS];
@@ -524,6 +526,7 @@ static int check_keys_changed(uint8_t *state)
 	return any_pressed;
 }
 
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
 /*
  * Returns mask of the boot keys that are pressed, with at most the keys used
  * for keyboard-controlled reset also pressed.
@@ -598,6 +601,7 @@ static uint32_t check_boot_key(const uint8_t *state)
 
 	return check_key_list(state);
 }
+#endif
 
 static void keyboard_freq_change(void)
 {
@@ -614,10 +618,12 @@ struct keyboard_scan_config *keyboard_scan_get_config(void)
 	return &keyscan_config;
 }
 
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
 uint32_t keyboard_scan_get_boot_keys(void)
 {
 	return boot_key_value;
 }
+#endif
 
 const uint8_t *keyboard_scan_get_state(void)
 {
@@ -636,6 +642,7 @@ void keyboard_scan_init(void)
 	read_matrix(debounced_state);
 	memcpy(prev_state, debounced_state, sizeof(prev_state));
 
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
 	/* Check for keys held down at boot */
 	boot_key_value = check_boot_key(debounced_state);
 
@@ -654,6 +661,7 @@ void keyboard_scan_init(void)
 				EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
 	}
 #endif
+#endif /* CONFIG_KEYBOARD_BOOT_KEYS */
 }
 
 void keyboard_scan_task(void)

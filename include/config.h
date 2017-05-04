@@ -1506,6 +1506,12 @@
 #undef CONFIG_KEYBOARD_BOARD_CONFIG
 
 /*
+ * Support for boot key combinations (e.g. refresh key being held on boot to
+ * trigger recovery).
+ */
+#define CONFIG_KEYBOARD_BOOT_KEYS
+
+/*
  * Minimum CPU clocks between scans.  This ensures that keyboard scanning
  * doesn't starve the other EC tasks of CPU when running at a decreased system
  * clock.
