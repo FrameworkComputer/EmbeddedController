@@ -272,6 +272,28 @@ exit:
 	while (1)
 		task_wait_event(-1);
 }
+
+int rwsig_cmd_action(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rwsig_action *p = args->params;
+
+	switch (p->action) {
+	case RWSIG_ACTION_ABORT:
+		rwsig_abort();
+		break;
+	case RWSIG_ACTION_CONTINUE:
+		rwsig_continue();
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+	args->response_size = 0;
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RWSIG_ACTION,
+		     rwsig_cmd_action,
+		     EC_VER_MASK(0));
+
 #else /* !HAS_TASK_RWSIG */
 int rwsig_cmd_check_status(struct host_cmd_handler_args *args)
 {
