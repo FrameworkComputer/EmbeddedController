@@ -1080,6 +1080,8 @@ enum ec_feature_code {
 	EC_FEATURE_FINGERPRINT = 28,
 	/* The MCU exposes a Touchpad */
 	EC_FEATURE_TOUCHPAD = 29,
+	/* The MCU has RWSIG task enabled */
+	EC_FEATURE_RWSIG = 30,
 };
 
 #define EC_FEATURE_MASK_0(event_code) (1UL << (event_code % 32))
