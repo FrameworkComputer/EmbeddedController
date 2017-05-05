@@ -360,6 +360,14 @@ void gpio_pre_init(void)
 	int flags;
 	int i, j;
 
+#ifdef CHIP_FAMILY_NPCX7
+	/*
+	 * TODO: Set bit 7 of DEVCNT again for npcx7 series. Please see Errata
+	 * for more information. It will be fixed in next chip.
+	 */
+	SET_BIT(NPCX_DEVCNT, 7);
+#endif
+
 	/* Pin_Mux for FIU/SPI (set to GPIO) */
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_GPIO_NO_SPIP);
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_NO_F_SPI);
