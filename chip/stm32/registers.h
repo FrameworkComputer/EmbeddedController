@@ -1356,6 +1356,8 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_ACR_PRFTEN      (1 << 8)
 #define STM32_FLASH_ACR_ICEN        (1 << 9)
 #define STM32_FLASH_ACR_DCEN        (1 << 10)
+#define STM32_FLASH_ACR_ICRST       (1 << 11)
+#define STM32_FLASH_ACR_DCRST       (1 << 12)
 #define STM32_FLASH_PDKEYR          REG32(STM32_FLASH_REGS_BASE + 0x04)
 #define STM32_FLASH_KEYR            REG32(STM32_FLASH_REGS_BASE + 0x08)
 #define  FLASH_KEYR_KEY1            0x45670123
