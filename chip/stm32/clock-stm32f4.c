@@ -91,22 +91,25 @@ void config_hispeed_clock(void)
 	pllinputclock = srcclock / plldiv;
 
 	/* PLL output clock: Must be 100-432MHz */
-	/* Valid values 50-432, we'll get 336MHz */
 	pllmult = (STM32F4_VCO_CLOCK + (pllinputclock / 2)) / pllinputclock;
 	vcoclock = pllinputclock * pllmult;
 
-	/* CPU/System clock: Below 180MHz */
-	/* We'll do 84MHz */
+	/* CPU/System clock */
 	systemclock = vcoclock / 4;
 	systemdivq = 1;
 	/* USB clock = 48MHz exactly */
 	usbdiv = (vcoclock + (STM32F4_USB_REQ / 2)) / STM32F4_USB_REQ;
+	assert(vcoclock / usbdiv == STM32F4_USB_REQ);
+
 	/* SYSTEM/I2S: same system clock */
 	i2sdiv = (vcoclock + (systemclock / 2)) / systemclock;
 
-	/* All IO clocks at 42MHz */
+	/* All IO clocks at STM32F4_IO_CLOCK
+	 * For STM32F446: max 45 MHz
+	 * For STM32F412: max 50 MHz
+	 */
 	/* AHB Prescalar */
-	ahbpre = 0x8;   /* AHB = system clock / 2*/
+	ahbpre = 0x8;   /* AHB = system clock / 2 */
 	/* NOTE: If apbXpre is not 0, timers are x2 clocked. RM0390 Fig. 13 */
 	apb1pre = 0;  /* APB1 = AHB */
 	apb2pre = 0;  /* APB2 = AHB */
