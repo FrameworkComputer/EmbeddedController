@@ -30,12 +30,7 @@ GPIO_INT(USB_C0_VBUS_WAKE_L,	PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP,	vbus0_evt)
 GPIO_INT(USB_C1_VBUS_WAKE_L,	PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	vbus1_evt)
 GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,			usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(3, 3), GPIO_INT_FALLING,			usb1_evt)
-/* TODO(b/35585396): Invert logic after rev1, then deprecate rev0 and remove. */
-#ifdef POPPY_REV1
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 6), GPIO_INT_FALLING,			bmi160_interrupt)
-#else
-GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 0), GPIO_INT_FALLING,			bmi160_interrupt)
-#endif
 GPIO_INT(BASE_DET_A,		PIN(4, 5), GPIO_INT_BOTH,			base_detect_interrupt)
 GPIO_INT(USB_C0_CABLE_DET,      PIN(D, 2), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 
