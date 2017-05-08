@@ -17,6 +17,22 @@
 #define SB_SHIP_MODE_REG	0x3a
 #define SB_SHUTDOWN_DATA	0xC574
 
+#ifdef BOARD_SORAKA
+static const struct battery_info info = {
+	.voltage_max = 8800,
+	.voltage_normal = 7700,
+	.voltage_min = 6100,
+	/* Pre-charge values. */
+	.precharge_current = 256, /* mA */
+
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 45,
+	.charging_min_c = 0,
+	.charging_max_c = 45,
+	.discharging_min_c = -10,
+	.discharging_max_c = 60,
+};
+#elif defined(BOARD_POPPY)
 static const struct battery_info info = {
 	.voltage_max = 13200,
 	.voltage_normal = 11550,
@@ -31,6 +47,9 @@ static const struct battery_info info = {
 	.discharging_min_c = 0,
 	.discharging_max_c = 60,
 };
+#else
+#error "Battery information not available for board"
+#endif
 
 const struct battery_info *battery_get_info(void)
 {
