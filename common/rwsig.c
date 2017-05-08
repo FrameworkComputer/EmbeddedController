@@ -36,23 +36,30 @@ void rwsig_jump_now(void)
 {
 	/* Protect all flash before jumping to RW. */
 
-	/*
-	 * This may do nothing if WP is not enabled, RO is not
-	 * protected, or if ALL_AT_BOOT is already set.
-	 */
-	flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
+	/* This may do nothing if WP is not enabled, RO is not protected. */
+	flash_set_protect(EC_FLASH_PROTECT_ALL_NOW, -1);
 
-	if (!(flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW) &&
-	      flash_get_protect() & EC_FLASH_PROTECT_ALL_AT_BOOT) {
-		/*
-		 * If flash protection is still not enabled (some chips may
-		 * be able to enable it immediately), reboot.
-		 */
-		cflush();
-		system_reset(SYSTEM_RESET_HARD | SYSTEM_RESET_PRESERVE_FLAGS);
+	/*
+	 * For chips that does not support EC_FLASH_PROTECT_ALL_NOW, use
+	 * EC_FLASH_PROTECT_ALL_AT_BOOT.
+	 */
+	if (system_is_locked() &&
+	    !(flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)) {
+		flash_set_protect(EC_FLASH_PROTECT_ALL_AT_BOOT, -1);
+
+		if (!(flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW) &&
+		    flash_get_protect() & EC_FLASH_PROTECT_ALL_AT_BOOT) {
+			/*
+			 * If flash protection is still not enabled (some chips
+			 * may be able to enable it immediately), reboot.
+			 */
+			cflush();
+			system_reset(SYSTEM_RESET_HARD |
+				     SYSTEM_RESET_PRESERVE_FLAGS);
+		}
 	}
 
-	/* When system is locked, only boot to RW is all flash is protected. */
+	/* When system is locked, only boot to RW if all flash is protected. */
 	if (!system_is_locked() ||
 	    flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		system_run_image_copy(SYSTEM_IMAGE_RW);
