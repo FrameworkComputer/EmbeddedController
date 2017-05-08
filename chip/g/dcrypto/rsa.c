@@ -14,6 +14,24 @@
 #include "cryptoc/sha.h"
 #include "cryptoc/sha256.h"
 
+/* Extend the MSB throughout the word. */
+static uint32_t msb_extend(uint32_t a)
+{
+	return 0u - (a >> 31);
+}
+
+/* Return 0xFF..FF if a is zero, and zero otherwise. */
+static uint32_t is_zero(uint32_t a)
+{
+	return msb_extend(~a & (a - 1));
+}
+
+/* Select a or b based on mask.  Mask expected to be 0xFF..FF or 0. */
+static uint32_t select(uint32_t mask, uint32_t a, uint32_t b)
+{
+	return (mask & a) | (~mask & b);
+}
+
 static void MGF1_xor(uint8_t *dst, uint32_t dst_len,
 		const uint8_t *seed, uint32_t seed_len,
 		enum hashing_mode hashing)
@@ -107,7 +125,6 @@ static int oaep_pad(uint8_t *output, uint32_t output_len,
 }
 
 /* decrypt */
-/* TODO(ngm): constant time. */
 static int check_oaep_pad(uint8_t *out, uint32_t *out_len,
 			uint8_t *padded, uint32_t padded_len,
 			enum hashing_mode hashing, const char *label)
@@ -119,7 +136,8 @@ static int check_oaep_pad(uint8_t *out, uint32_t *out_len,
 	uint8_t *PS = phash + hash_size;
 	const uint32_t max_msg_len = padded_len - 2 - 2 * hash_size;
 	struct HASH_CTX ctx;
-	int one_index = -1;
+	size_t one_index = 0;
+	uint32_t looking_for_one_byte = ~0;
 	int bad;
 	int i;
 
@@ -141,17 +159,22 @@ static int check_oaep_pad(uint8_t *out, uint32_t *out_len,
 	bad |= padded[0];
 
 	for (i = PS - padded; i <  padded_len; i++) {
-		if (padded[i] == 1) {
-			one_index = i;
-			break;
-		} else if (padded[i] != 0) {
-			bad = 1;
-			break;
-		}
+		uint32_t equals0 = is_zero(padded[i]);
+		uint32_t equals1 = is_zero(padded[i] ^ 1);
+
+		one_index = select(looking_for_one_byte & equals1,
+				i, one_index);
+		looking_for_one_byte = select(equals1, 0, looking_for_one_byte);
+
+		/* Bad padding if padded[i] is neither 1 nor 0. */
+		bad |= looking_for_one_byte & ~equals0;
 	}
 
-	if (one_index < 0 || bad)
+	bad |= looking_for_one_byte;
+
+	if (bad)
 		return 0;
+
 	one_index++;
 	if (*out_len < padded_len - one_index)
 		return 0;
@@ -196,30 +219,38 @@ static int pkcs1_type2_pad(uint8_t *padded, uint32_t padded_len,
 }
 
 /* decrypt */
-/* TODO(ngm): constant time */
 static int check_pkcs1_type2_pad(uint8_t *out, uint32_t *out_len,
 				const uint8_t *padded, uint32_t padded_len)
 {
 	int i;
+	int valid;
+	uint32_t zero_index = 0;
+	uint32_t looking_for_index = ~0;
 
 	if (padded_len < RSA_PKCS1_PADDING_SIZE)
 		return 0;
-	if (padded[0] != 0 || padded[1] != 2)
-		return 0;
+
+	valid = (padded[0] == 0);
+	valid &= (padded[1] == 2);
+
 	for (i = 2; i < padded_len; i++) {
-		if (padded[i] == 0)
-			break;
+		uint32_t found = is_zero(padded[i]);
+
+		zero_index = select(looking_for_index & found, i, zero_index);
+		looking_for_index = select(found, 0, looking_for_index);
 	}
 
-	if (i == padded_len)
+	zero_index++;
+
+	valid &= ~looking_for_index;
+	valid &= (zero_index >= RSA_PKCS1_PADDING_SIZE);
+	if (!valid)
 		return 0;
-	i++;
-	if (i < RSA_PKCS1_PADDING_SIZE)
+
+	if (*out_len < padded_len - zero_index)
 		return 0;
-	if (*out_len < padded_len - i)
-		return 0;
-	memcpy(out, &padded[i], padded_len - i);
-	*out_len = padded_len - i;
+	memcpy(out, &padded[zero_index], padded_len - zero_index);
+	*out_len = padded_len - zero_index;
 	return 1;
 }
 
@@ -317,7 +348,6 @@ static int pkcs1_type1_pad(uint8_t *padded, uint32_t padded_len,
 }
 
 /* verify */
-/* TODO(ngm): constant time */
 static int check_pkcs1_type1_pad(const uint8_t *msg, uint32_t msg_len,
 				const uint8_t *padded, uint32_t padded_len,
 				enum hashing_mode hashing)
