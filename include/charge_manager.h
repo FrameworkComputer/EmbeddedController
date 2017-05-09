@@ -81,6 +81,9 @@ enum ceil_requestor {
 	CEIL_REQUESTOR_COUNT,
 };
 
+#define CHARGE_PORT_COUNT \
+		(CONFIG_USB_PD_PORT_COUNT + CONFIG_DEDICATED_CHARGE_PORT_COUNT)
+
 /**
  * Update charge ceiling for a given port. The ceiling can be set independently
  * for several requestors, and the min. ceil will be enforced.
