@@ -41,6 +41,11 @@ struct console_command {
  * CMD_FLAG_RESTRICTED commands are disabled.
  */
 int console_is_restricted(void);
+#else
+static inline int console_is_restricted(void)
+{
+	return 0;
+}
 #endif
 
 /* Console channels */
