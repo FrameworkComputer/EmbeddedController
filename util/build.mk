@@ -33,7 +33,6 @@ $(out)/util/genvif: BUILD_LDFLAGS+=$(out)/util/usb_pd_policy.o -flto
 
 STANDALONE_FLAGS=-ffreestanding -fno-builtin -nostdinc -Ibuiltin/ -D"__keep= "
 $(out)/util/usb_pd_policy.o: board/$(BOARD)/usb_pd_policy.c
-	$(BUILDCC) $(BUILD_CFLAGS) $(STANDALONE_FLAGS) \
-				-MMD -MF $@.d -c $< -flto -o $@
+	$(call quiet,c_to_vif,BUILDCC)
 deps += $(out)/util/usb_pd_policy.o.d
 endif # CONFIG_USB_POWER_DELIVERY
