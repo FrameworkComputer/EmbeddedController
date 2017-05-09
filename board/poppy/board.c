@@ -128,21 +128,14 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
  */
 #define BASE_DETECT_DEBOUNCE_US (5 * MSEC)
 
-#ifdef POPPY_REV0
 /*
  * rev0: Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
  * value should be around 5.1/(100+5.1)*3300 = 160.
+ * >=rev1: Lid has 604K pull-up, base has 30.1K pull-down, so the
+ * ADC value should be around 30.1/(604+30.1)*3300 = 156
  */
 #define BASE_DETECT_MIN_MV 140
 #define BASE_DETECT_MAX_MV 200
-#else
-/*
- * >=rev1: Lid has 600K pull-up, base has 10K pull-down, 1% tolerance, so the
- * ADC value should be around 10.0/(604+10.0)*3300 = 54
- */
-#define BASE_DETECT_MIN_MV 50
-#define BASE_DETECT_MAX_MV 60
-#endif
 
 /*
  * Base EC pulses detection pin for 100 us to signal out of band USB wake (that
