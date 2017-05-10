@@ -288,19 +288,17 @@ static int svdm_dp_config(int port, uint32_t *payload)
 
 static void svdm_dp_post_config(int port)
 {
-	const struct usb_mux *mux = &usb_muxes[port];
-
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
-	mux->hpd_update(port, 1, 0);
+	/* TODO: Update HPD to host */
 }
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
-	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	const struct usb_mux *mux = &usb_muxes[port];
+
+	/* TODO: Read HPD IRQ */
 
 	dp_status[port] = payload[1];
 	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
@@ -308,7 +306,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
 		return 1;
 	}
-	mux->hpd_update(port, lvl, irq);
+	/* TODO: Update HPD to host */
 
 	/* ack */
 	return 1;
@@ -316,10 +314,8 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 
 static void svdm_exit_dp_mode(int port)
 {
-	const struct usb_mux *mux = &usb_muxes[port];
-
 	svdm_safe_dp_mode(port);
-	mux->hpd_update(port, 0, 0);
+	/* TODO: Update HPD to host */
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)

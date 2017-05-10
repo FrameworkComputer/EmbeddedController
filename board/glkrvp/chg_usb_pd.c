@@ -10,6 +10,7 @@
 #include "task.h"
 #include "tcpci.h"
 #include "system.h"
+#include "usb_mux.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -28,6 +29,22 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{NPCX_I2C_PORT0_1, 0xA4, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_COUNT);
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.port_addr = 0x20,
+		.driver = &ps874x_usb_mux_driver,
+	},
+	{
+		.port_addr = 0x22,
+		.driver = &ps874x_usb_mux_driver,
+	},
+};
+
+/* TODO: Implement this function and move to appropriate file */
+void usb_charger_set_switches(int port, enum usb_switch setting)
+{
+}
 
 static int board_charger_port_is_sourcing_vbus(int port)
 {
