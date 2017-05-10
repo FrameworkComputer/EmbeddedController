@@ -15,6 +15,7 @@
 
 #include "cryptoc/p256.h"
 #include "cryptoc/p256_ecdsa.h"
+#include "cryptoc/util.h"
 
 static void reverse_tpm2b(TPM2B *b)
 {
@@ -171,6 +172,7 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 	HASH_update(&hmac.hash, "ECC", 4);
 	memcpy(local_seed.t.buffer, DCRYPTO_HMAC_final(&hmac),
 	       local_seed.t.size);
+	always_memset(&hmac, 0, sizeof(hmac));
 	/* TODO(ngm): CRBUG/P/55260: the personalize code uses only
 	 * the first 4 bytes of extra.
 	 */
@@ -204,8 +206,9 @@ CRYPT_RESULT _cpri__GenerateKeyEcc(
 			break;
 		}
 	}
-	/* TODO(ngm): implement secure memset. */
-	memset(local_seed.t.buffer, 0, local_seed.t.size);
+
+	always_memset(local_seed.t.buffer, 0, local_seed.t.size);
+	always_memset(key_bytes, 0, sizeof(key_bytes));
 
 	if (count == 0)
 		FAIL(FATAL_ERROR_INTERNAL);
@@ -312,6 +315,7 @@ CRYPT_RESULT _cpri__ValidateSignatureEcc(
 CRYPT_RESULT _cpri__GetEphemeralEcc(TPMS_ECC_POINT *q, TPM2B_ECC_PARAMETER *d,
 				TPM_ECC_CURVE curve_id)
 {
+	int result;
 	uint8_t key_bytes[P256_NBYTES] __aligned(4);
 
 	if (curve_id != TPM_ECC_NIST_P256)
@@ -319,10 +323,13 @@ CRYPT_RESULT _cpri__GetEphemeralEcc(TPMS_ECC_POINT *q, TPM2B_ECC_PARAMETER *d,
 
 	rand_bytes(key_bytes, sizeof(key_bytes));
 
-	if (DCRYPTO_p256_key_from_bytes((p256_int *) q->x.b.buffer,
-						(p256_int *) q->y.b.buffer,
-						(p256_int *) d->b.buffer,
-						key_bytes)) {
+	result = DCRYPTO_p256_key_from_bytes((p256_int *) q->x.b.buffer,
+					(p256_int *) q->y.b.buffer,
+					(p256_int *) d->b.buffer,
+					key_bytes);
+	always_memset(key_bytes, 0, sizeof(key_bytes));
+
+	if (result) {
 		q->x.b.size = sizeof(p256_int);
 		q->y.b.size = sizeof(p256_int);
 		reverse_tpm2b(&q->x.b);

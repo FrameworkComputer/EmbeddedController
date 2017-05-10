@@ -126,10 +126,4 @@ enum dcrypto_appid;      /* Forward declaration. */
 int dcrypto_ladder_compute_usr(enum dcrypto_appid id,
 			const uint32_t usr_salt[8]);
 
-/*
- * Utility functions.
- */
-/* TODO(ngm): memset that doesn't get optimized out. */
-#define dcrypto_memset(p, b, len)  memset((p), (b), (len))
-
 #endif  /* ! __EC_CHIP_G_DCRYPTO_INTERNAL_H */

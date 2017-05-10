@@ -8,6 +8,7 @@
 #include "internal.h"
 
 #include "cryptoc/sha256.h"
+#include "cryptoc/util.h"
 
 static int hkdf_extract(uint8_t *PRK, const uint8_t *salt, size_t salt_len,
 			const uint8_t *IKM, size_t IKM_len)
@@ -77,6 +78,6 @@ int DCRYPTO_hkdf(uint8_t *OKM, size_t OKM_len,
 		return 0;
 
 	result = hkdf_expand(OKM, OKM_len, PRK, info, info_len);
-	memset(PRK, 0, sizeof(PRK));
+	always_memset(PRK, 0, sizeof(PRK));
 	return result;
 }

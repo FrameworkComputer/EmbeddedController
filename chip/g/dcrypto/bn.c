@@ -8,6 +8,8 @@
 
 #include "trng.h"
 
+#include "cryptoc/util.h"
+
 #include <assert.h>
 
 #ifdef CONFIG_WATCHDOG
@@ -19,7 +21,7 @@ static inline void watchdog_reload(void) { }
 void bn_init(struct LITE_BIGNUM *b, void *buf, size_t len)
 {
 	DCRYPTO_bn_wrap(b, buf, len);
-	dcrypto_memset(buf, 0x00, len);
+	always_memset(buf, 0x00, len);
 }
 
 void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len)
@@ -387,9 +389,9 @@ void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
 		bn_add(output, N);                      /* Final reduce. */
 	output->dmax = N->dmax;
 
-	dcrypto_memset(RR_buf, 0, sizeof(RR_buf));
-	dcrypto_memset(acc_buf, 0, sizeof(acc_buf));
-	dcrypto_memset(aR_buf, 0, sizeof(aR_buf));
+	always_memset(RR_buf, 0, sizeof(RR_buf));
+	always_memset(acc_buf, 0, sizeof(acc_buf));
+	always_memset(aR_buf, 0, sizeof(aR_buf));
 }
 
 /* c[] += a * b[] */
@@ -1218,6 +1220,6 @@ int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p)
 		}
 	}
 
-	memset(composites_buf, 0, sizeof(composites_buf));
+	always_memset(composites_buf, 0, sizeof(composites_buf));
 	return 0;
 }

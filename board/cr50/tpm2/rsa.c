@@ -10,6 +10,8 @@
 #include "dcrypto.h"
 #include "trng.h"
 
+#include "cryptoc/util.h"
+
 #include <assert.h>
 
 TPM2B_BYTE_VALUE(4);
@@ -427,8 +429,7 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 			    &counter)) {
 		if (counter_in != NULL)
 			*counter_in = counter;
-		/* TODO(ngm): implement secure memset. */
-		memset(local_seed.t.buffer, 0, local_seed.t.size);
+		always_memset(local_seed.t.buffer, 0, local_seed.t.size);
 		return CRYPT_FAIL;
 	}
 
@@ -438,8 +439,7 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 			    &counter)) {
 		if (counter_in != NULL)
 			*counter_in = counter;
-		/* TODO(ngm): implement secure memset. */
-		memset(local_seed.t.buffer, 0, local_seed.t.size);
+		always_memset(local_seed.t.buffer, 0, local_seed.t.size);
 		return CRYPT_FAIL;
 	}
 
@@ -451,9 +451,8 @@ CRYPT_RESULT _cpri__GenerateKeyRSA(
 	DCRYPTO_bn_mul(&N, &p, &q);
 	reverse_tpm2b(N_buf);
 	reverse_tpm2b(p_buf);
-	/* TODO(ngm): replace with secure memset. */
-	memset(q_buf, 0, sizeof(q_buf));
-	memset(local_seed.t.buffer, 0, local_seed.t.size);
+	always_memset(q_buf, 0, sizeof(q_buf));
+	always_memset(local_seed.t.buffer, 0, local_seed.t.size);
 	return CRYPT_SUCCESS;
 }
 

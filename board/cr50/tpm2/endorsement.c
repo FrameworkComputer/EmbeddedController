@@ -30,6 +30,7 @@
 #include "dcrypto.h"
 
 #include <cryptoc/sha256.h>
+#include <cryptoc/util.h>
 
 #include <endian.h>
 #include <string.h>
@@ -445,7 +446,7 @@ static int get_decrypted_eps(uint8_t eps[PRIMARY_SEED_SIZE])
 
 		if (flash_physical_info_read_word(
 				INFO1_EPS_OFFSET + i, &word) != EC_SUCCESS) {
-			memset(frk2, 0, sizeof(frk2));
+			always_memset(frk2, 0, sizeof(frk2));
 			return 0;     /* Flash read INFO1 failed. */
 		}
 		memcpy(eps + i, &word, sizeof(word));
@@ -458,7 +459,7 @@ static int get_decrypted_eps(uint8_t eps[PRIMARY_SEED_SIZE])
 	for (i = 0; i < PRIMARY_SEED_SIZE; i++)
 		eps[i] ^= frk2[i];
 
-	memset(frk2, 0, sizeof(frk2));
+	always_memset(frk2, 0, sizeof(frk2));
 	return 1;
 }
 
@@ -650,6 +651,6 @@ int tpm_endorse(void)
 		result = 1;
 	} while (0);
 
-	memset(eps, 0, sizeof(eps));
+	always_memset(eps, 0, sizeof(eps));
 	return result;
 }
