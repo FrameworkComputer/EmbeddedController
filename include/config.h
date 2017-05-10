@@ -2483,6 +2483,8 @@
 
 /* Support control of multiple PHY */
 #undef CONFIG_USB_SELECT_PHY
+/* Select which USB PHY will be used at startup */
+#undef CONFIG_USB_SELECT_PHY_DEFAULT
 
 /* Support simple control of power to the device's USB ports */
 #undef CONFIG_USB_PORT_POWER_DUMB

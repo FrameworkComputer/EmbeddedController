@@ -331,8 +331,12 @@ static enum {
 } device_state;
 static uint8_t configuration_value;
 
+#ifndef CONFIG_USB_SELECT_PHY_DEFAULT
+#define CONFIG_USB_SELECT_PHY_DEFAULT USB_SEL_PHY1
+#endif
+
 /* Default PHY to use */
-static uint32_t which_phy = USB_SEL_PHY1;
+static uint32_t which_phy = CONFIG_USB_SELECT_PHY_DEFAULT;
 
 void usb_select_phy(uint32_t phy)
 {
