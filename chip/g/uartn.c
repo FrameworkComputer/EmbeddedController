@@ -10,6 +10,7 @@
 #include "system.h"
 #include "task.h"
 #include "uart.h"
+#include "uart_bitbang.h"
 #include "util.h"
 
 #define USE_UART_INTERRUPTS (!(defined(CONFIG_CUSTOMIZED_RO) && \
@@ -23,6 +24,26 @@ static struct uartn_interrupts interrupt[] = {
 	{GC_IRQNUM_UART0_TXINT, GC_IRQNUM_UART0_RXINT},
 	{GC_IRQNUM_UART1_TXINT, GC_IRQNUM_UART1_RXINT},
 	{GC_IRQNUM_UART2_TXINT, GC_IRQNUM_UART2_RXINT},
+};
+
+struct uartn_function_ptrs uartn_funcs[3] = {
+	{
+		_uartn_rx_available,
+		_uartn_write_char,
+		_uartn_read_char,
+	},
+
+	{
+		_uartn_rx_available,
+		_uartn_write_char,
+		_uartn_read_char,
+	},
+
+	{
+		_uartn_rx_available,
+		_uartn_write_char,
+		_uartn_read_char,
+	},
 };
 
 void uartn_tx_start(int uart)
@@ -92,13 +113,18 @@ int uartn_tx_ready(int uart)
 	return !(GR_UART_STATE(uart) & GC_UART_STATE_TX_MASK);
 }
 
-int uartn_rx_available(int uart)
+int _uartn_rx_available(int uart)
 {
 	/* True if the RX buffer is not completely empty. */
 	return !(GR_UART_STATE(uart) & GC_UART_STATE_RXEMPTY_MASK);
 }
 
-void uartn_write_char(int uart, char c)
+int uartn_rx_available(int uart)
+{
+	return uartn_funcs[uart]._rx_available(uart);
+}
+
+void _uartn_write_char(int uart, char c)
 {
 	/* Wait for space in transmit FIFO. */
 	while (!uartn_tx_ready(uart))
@@ -107,10 +133,44 @@ void uartn_write_char(int uart, char c)
 	GR_UART_WDATA(uart) = c;
 }
 
-int uartn_read_char(int uart)
+void uartn_write_char(int uart, char c)
+{
+	uartn_funcs[uart]._write_char(uart, c);
+}
+
+int _uartn_read_char(int uart)
 {
 	return GR_UART_RDATA(uart);
 }
+
+int uartn_read_char(int uart)
+{
+	return uartn_funcs[uart]._read_char(uart);
+}
+
+#ifdef CONFIG_UART_BITBANG
+int _uart_bitbang_rx_available(int uart)
+{
+	if (uart_bitbang_is_enabled(uart))
+		return uart_bitbang_is_char_available(uart);
+
+	return 0;
+}
+
+void _uart_bitbang_write_char(int uart, char c)
+{
+	if (uart_bitbang_is_enabled(uart))
+		uart_bitbang_write_char(uart, c);
+}
+
+int _uart_bitbang_read_char(int uart)
+{
+	if (uart_bitbang_is_enabled(uart))
+		return uart_bitbang_read_char(uart);
+
+	return 0;
+}
+#endif /* defined(CONFIG_UART_BITBANG) */
 
 void uartn_disable_interrupt(int uart)
 {

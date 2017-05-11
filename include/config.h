@@ -2215,6 +2215,9 @@
 /* Baud rate for UARTs */
 #define CONFIG_UART_BAUD_RATE 115200
 
+/* Allow bit banging of a UARTs pins and bypassing the UART block. */
+#undef CONFIG_UART_BITBANG
+
 /* UART index (number) for EC console */
 #undef CONFIG_UART_CONSOLE
 
