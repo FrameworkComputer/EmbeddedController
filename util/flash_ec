@@ -606,7 +606,14 @@ function flash_stm32() {
 		dut_control ${MCU}_uart_en:on
 	fi
 	dut_control ${MCU}_uart_parity:even
-	dut_control ${MCU}_uart_baudrate:115200
+
+	if [ "${SERVO_TYPE}" == "servo_v4_with_ccd_cr50" ] ; then
+	    dut_control ${MCU}_uart_baudrate:9600
+	    dut_control ${MCU}_uart_bitbang_en:on
+	else
+	    dut_control ${MCU}_uart_baudrate:115200
+	fi
+
 	if $(servo_has_warm_reset); then
 		dut_control warm_reset:on
 	fi
