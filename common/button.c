@@ -131,7 +131,19 @@ static void button_check_hw_reinit_required(void)
 	button_blink_hw_reinit_led();
 #endif
 }
-#endif
+
+static int is_recovery_boot(void)
+{
+	if (system_jumped_to_this_image())
+		return 0;
+	if (!(system_get_reset_flags() &
+	    (RESET_FLAG_RESET_PIN | RESET_FLAG_POWER_ON)))
+		return 0;
+	if (!is_recovery_button_pressed())
+		return 0;
+	return 1;
+}
+#endif	/* CONFIG_BUTTON_RECOVERY */
 
 /*
  * Button initialization.
@@ -149,9 +161,7 @@ void button_init(void)
 	}
 
 #ifdef CONFIG_BUTTON_RECOVERY
-	if (!system_jumped_to_this_image() &&
-	    (system_get_reset_flags() & RESET_FLAG_RESET_PIN) &&
-	    is_recovery_button_pressed()) {
+	if (is_recovery_boot()) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 		button_check_hw_reinit_required();
 	}
