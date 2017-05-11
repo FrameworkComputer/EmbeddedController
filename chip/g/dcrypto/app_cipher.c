@@ -94,6 +94,12 @@ static int aes_init(struct APPKEY_CTX *ctx, enum dcrypto_appid appid,
 	GWRITE_FIELD(KEYMGR, AES_CTRL, ENC_MODE, ENCRYPT_MODE);
 	GWRITE_FIELD(KEYMGR, AES_CTRL, CTR_ENDIAN, CTRL_CTR_BIG_ENDIAN);
 
+	/*
+	 * For fixed-key, bulk ciphering, turn off random nops (which
+	 * are enabled by default).
+	 */
+	GWRITE_FIELD(KEYMGR, AES_RAND_STALL_CTL, STALL_EN, 0);
+
 	/* Enable hidden key usage, each appid gets its own
 	 * USR, with USR0 starting at 0x2a0.
 	 */

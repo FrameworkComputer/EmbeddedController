@@ -16,6 +16,13 @@ static void set_control_register(
 	GWRITE_FIELD(KEYMGR, AES_CTRL, ENC_MODE, encrypt);
 	GWRITE_FIELD(KEYMGR, AES_CTRL, CTR_ENDIAN, CTRL_CTR_BIG_ENDIAN);
 	GWRITE_FIELD(KEYMGR, AES_CTRL, ENABLE, CTRL_ENABLE);
+
+	/* Turn off random nops (which are enabled by default). */
+	GWRITE_FIELD(KEYMGR, AES_RAND_STALL_CTL, STALL_EN, 0);
+	/* Configure random nop percentage at 25%. */
+	GWRITE_FIELD(KEYMGR, AES_RAND_STALL_CTL, FREQ, 1);
+	/* Now turn on random nops. */
+	GWRITE_FIELD(KEYMGR, AES_RAND_STALL_CTL, STALL_EN, 1);
 }
 
 static int wait_read_data(volatile uint32_t *addr)
