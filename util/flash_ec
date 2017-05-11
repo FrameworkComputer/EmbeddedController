@@ -165,6 +165,7 @@ DEFINE_string offset "0" \
 	"Offset where to program the image from."
 DEFINE_integer port 9999 \
 	"Port to communicate to servo on."
+# TODO(aaboagye): It's not just for SPI.
 DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
 DEFINE_boolean ro "${FLAGS_FALSE}" \
@@ -184,7 +185,18 @@ if [ -z "${FLAGS_board}" -a -z "${FLAGS_chip}" ]; then
 	die "should specify a board or a chip."
 fi
 
-SERVO_TYPE=servo
+DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
+
+function dut_control() {
+	$DUT_CONTROL_CMD "$@" >/dev/null
+}
+
+function get_servo_type() {
+	if dut_control "servo_type" ; then
+	    $DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
+	fi
+}
+
 BOARD=${FLAGS_board}
 BOARD_ROOT=/build/${BOARD}
 
@@ -265,7 +277,12 @@ servo_sh_hard_reset() {
 }
 
 ec_reset() {
-	eval ${SERVO_TYPE}_${MCU}_hard_reset
+        stype=${SERVO_TYPE}
+        if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
+            stype=servo
+	fi
+
+	eval ${stype}_${MCU}_hard_reset
 }
 
 # force the EC to boot in serial monitor mode
@@ -274,7 +291,13 @@ toad_ec_boot0() {
 }
 
 servo_ec_boot0() {
+    ## This is a stupid hack.
+    if [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
+	info "Using CCD"
+	dut_control ccd_ec_boot_mode:on
+    else
 	dut_control ec_boot_mode:on
+    fi
 }
 
 servo_usbpd_boot0() {
@@ -290,7 +313,13 @@ ec_enable_boot0() {
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 		dut_control prog_en:yes
 	fi
-	eval ${SERVO_TYPE}_${MCU}_boot0
+	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
+	    stype=servo
+	else
+	    stype=${SERVO_TYPE}
+	fi
+	# eval ${SERVO_TYPE}_${MCU}_boot0
+	eval ${stype}_${MCU}_boot0
 }
 
 # Returns 0 on success (if on beaglebone)
@@ -372,14 +401,8 @@ function ec_image() {
 	die "no EC image found : build one or specify one."
 }
 
-DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
-
-function dut_control() {
-	$DUT_CONTROL_CMD "$@" >/dev/null
-}
-
-# Find the EC UART on the servo v2
-function ec_uart() {
+# Find the EC UART provided by servo.
+function servo_ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
 	($DUT_CONTROL_CMD raw_${MCU}_uart_pty || \
 	    $DUT_CONTROL_CMD ${MCU}_uart_pty || \
@@ -395,16 +418,24 @@ case "${BOARD}" in
 	*) MCU="ec" ;;
 esac
 
-servo_VARS="${MCU}_uart_en ${MCU}_uart_parity \
-${MCU}_uart_baudrate jtag_buf_on_flex_en jtag_buf_en dev_mode"
+# Not every control is supported on every servo type.  Therfore, define which
+# controls are supported by each servo type.
+common_servo_VARS="${MCU}_uart_en ${MCU}_uart_parity ${MCU}_uart_baudrate"
+servo_v2_VARS="${common_servo_VARS} jtag_buf_on_flex_en jtag_buf_en dev_mode"
 if [ "${CHIP}" = "stm32" ] ; then
-	servo_VARS+=" ${MCU}_boot_mode"
+    servo_v2_VARS+=" ${MCU}_boot_mode"
 fi
 if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
-	servo_VARS+=" prog_en"
+	servo_v2_VARS+=" prog_en"
 fi
-toad_VARS="${MCU}_uart_parity \
-${MCU}_uart_baudrate boot_mode"
+servo_v3_VARS="${servo_v2_VARS}"
+servo_micro_VARS="${common_servo_VARS} ${MCU}_boot_mode dev_mode"
+servo_v4_with_ccd_cr50_VARS="${common_servo_VARS} ccd_${MCU}_boot_mode \
+ec_uart_bitbang_en"
+servo_v4_with_servo_micro_VARS="${servo_micro_VARS}"
+toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
+
+SERVO_TYPE="$(get_servo_type)"
 
 function servo_save() {
 	SERVO_VARS_NAME=${SERVO_TYPE}_VARS
@@ -571,7 +602,7 @@ function flash_stm32() {
 	info "Using serial flasher : ${STM32MON}"
 	claim_pty ${EC_UART}
 
-	if [ "${SERVO_TYPE}" = "servo" ] ; then
+	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
 		dut_control ${MCU}_uart_en:on
 	fi
 	dut_control ${MCU}_uart_parity:even
@@ -704,7 +735,9 @@ IMG="$(ec_image)"
 info "Using ${MCU} image : ${IMG}"
 
 if ! on_raiden && [ "${NEED_SERVO}" != "no" ] ; then
-  EC_UART="$(ec_uart)"
+  SERVO_TYPE="$(get_servo_type)"
+  info "Using ${SERVO_TYPE}"
+  EC_UART="$(servo_ec_uart)"
   info "${MCU} UART pty : ${EC_UART}"
 
   save="$(servo_save)"
