@@ -41,6 +41,8 @@
 static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
 static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
 
+static int pi3usb9281_reset(int port);
+
 static void select_chip(int port)
 {
 	struct pi3usb9281_config *chip = &pi3usb9281_chips[port];
@@ -146,6 +148,7 @@ void pi3usb9281_init(int port)
 	if (dev_id != PI3USB9281_DEV_ID && dev_id != PI3USB9281_DEV_ID_A)
 		CPRINTS("PI3USB9281 invalid ID 0x%02x", dev_id);
 
+	pi3usb9281_reset(port);
 	pi3usb9281_set_interrupt_mask(port, 0xff);
 	pi3usb9281_enable_interrupts(port);
 }
