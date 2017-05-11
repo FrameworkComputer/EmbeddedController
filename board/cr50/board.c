@@ -31,6 +31,7 @@
 #include "task.h"
 #include "tpm_registers.h"
 #include "trng.h"
+#include "uart_bitbang.h"
 #include "uartn.h"
 #include "usb_descriptor.h"
 #include "usb_hid.h"
@@ -89,6 +90,30 @@ static int device_state_changed(enum device_type device,
 /*  Board specific configuration settings */
 static uint32_t board_properties;
 static uint8_t reboot_request_posted;
+
+/* Which UARTs we'd like to be able to bitbang. */
+struct uart_bitbang_properties bitbang_config = {
+	.uart = UART_EC,
+	.tx_gpio = GPIO_DETECT_SERVO, /* This is TX to EC console. */
+	.rx_gpio = GPIO_EC_TX_CR50_RX,
+	/*
+	 * The rx/tx_pinmux_regval values MUST agree with the pin config for
+	 * both the TX and RX GPIOs in gpio.inc.  Don't change one without
+	 * changing the other.
+	 */
+	.tx_pinmux_reg = GBASE(PINMUX) + GOFFSET(PINMUX, DIOB5_SEL),
+	.tx_pinmux_regval = GC_PINMUX_GPIO1_GPIO3_SEL,
+	.rx_pinmux_reg = GBASE(PINMUX) + GOFFSET(PINMUX, DIOB6_SEL),
+	.rx_pinmux_regval = GC_PINMUX_GPIO1_GPIO4_SEL,
+};
+
+extern struct deferred_data ec_uart_deferred__data;
+void ec_tx_cr50_rx(enum gpio_signal signal)
+{
+	uart_bitbang_receive_char(UART_EC);
+	/* Let the USART module know that there's new bits to consume. */
+	hook_call_deferred(&ec_uart_deferred__data, 0);
+}
 
 int board_has_ap_usb(void)
 {
@@ -589,6 +614,12 @@ static void board_init(void)
 	/* Enable battery cutoff software support on detachable devices. */
 	if (system_battery_cutoff_support_required())
 		set_up_battery_cutoff_monitor();
+
+	/*
+	 * The interrupt is enabled by default, but we only want it enabled when
+	 * bit banging mode is active.
+	 */
+	gpio_disable_interrupt(GPIO_EC_TX_CR50_RX);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -772,6 +803,13 @@ static int servo_state_unknown(void)
 
 static void enable_uart(int uart)
 {
+	/*
+	 * For the EC UART, we can't connect the TX pin to the UART block when
+	 * it's in bit bang mode.
+	 */
+	if ((uart == UART_EC) && uart_bitbang_is_enabled(uart))
+		return;
+
 	/* Enable RX and TX on the UART peripheral */
 	uartn_enable(uart);
 
@@ -861,6 +899,10 @@ static void servo_attached(void)
 	if (servo_state_unknown())
 		return;
 
+#ifdef CONFIG_UART_BITBANG
+	uart_bitbang_disable(bitbang_config.uart);
+#endif /* defined(CONFIG_UART_BITBANG) */
+
 	/* Update the device state */
 	device_state_changed(DEVICE_SERVO, DEVICE_STATE_ON);
 
@@ -911,7 +953,8 @@ void device_state_on(enum gpio_signal signal)
 			hook_notify(HOOK_CHIPSET_RESUME);
 		break;
 	case GPIO_DETECT_EC:
-		if (device_state_changed(DEVICE_EC, DEVICE_STATE_ON))
+		if (device_state_changed(DEVICE_EC, DEVICE_STATE_ON) &&
+		    !uart_bitbang_is_enabled(UART_EC))
 			enable_uart(UART_EC);
 		break;
 	case GPIO_DETECT_SERVO:

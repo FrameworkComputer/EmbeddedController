@@ -106,6 +106,9 @@
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 0
 
+/* Need to be able to bitbang the EC UART for updates through CCD. */
+#define CONFIG_UART_BITBANG
+
 /* Enable SPI Master (SPI) module */
 #define CONFIG_SPI_MASTER
 #define CONFIG_SPI_MASTER_NO_CS_GPIOS
@@ -177,6 +180,7 @@ void board_configure_deep_sleep_wakepins(void);
 void tpm_rst_deasserted(enum gpio_signal signal);
 void device_state_on(enum gpio_signal signal);
 void post_reboot_request(void);
+void ec_tx_cr50_rx(enum gpio_signal signal);
 
 /* Special controls over EC and AP */
 void assert_sys_rst(void);
