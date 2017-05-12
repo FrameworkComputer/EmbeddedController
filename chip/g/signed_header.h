@@ -14,6 +14,9 @@
 #define INFO_MAX 128             /* baked in rom! */
 #define INFO_IGNORE 0xaa3c55c3   /* baked in rom! */
 
+/* Default value for _pad[] words */
+#define SIGNED_HEADER_PADDING 0x33333333
+
 struct SignedHeader {
 	uint32_t magic;       /* -1 (thanks, boot_sys!) */
 	uint32_t signature[96];
@@ -42,8 +45,18 @@ struct SignedHeader {
 	uint32_t err_response_;
 	/* action to take when expectation is violated */
 	uint32_t expect_response_;
-	uint32_t _pad[256 - 1 - 96 - 1 - 7 - 1 - 96 -
-			5*1 - 4 - 4 - 9*1 - 2 - 1];
+	/*
+	 * Padding to bring the total structure size to 1K. Note: First 17
+	 * words of _pad[] may be used by a second FIPS-compliant signature,
+	 * so don't put anything there.
+	 */
+	uint32_t _pad[24];
+	/* Board ID type, mask, flags (stored ^SIGNED_HEADER_PADDING) */
+	uint32_t board_id_type;
+	uint32_t board_id_type_mask;
+	uint32_t board_id_flags;
+	uint32_t dev_id0_;    /* node id, if locked */
+	uint32_t dev_id1_;
 	uint32_t fuses_chk_;  /* top 32 bit of expected fuses hash */
 	uint32_t info_chk_;   /* top 32 bit of expected info hash */
 };

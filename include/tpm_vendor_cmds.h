@@ -38,6 +38,8 @@ enum vendor_cmd_cc {
 
 	VENDOR_CC_REPORT_TPM_STATE = 23,
 	VENDOR_CC_TURN_UPDATE_ON = 24,
+	VENDOR_CC_GET_BOARD_ID = 25,
+	VENDOR_CC_SET_BOARD_ID = 26,
 
 	LAST_VENDOR_COMMAND = 65535,
 };
@@ -54,6 +56,8 @@ enum vendor_cmd_rc {
 	/* Our TPMv2 vendor-specific response codes. */
 	VENDOR_RC_SUCCESS = 0,
 	VENDOR_RC_BOGUS_ARGS = 1,
+	VENDOR_RC_READ_FLASH_FAIL = 2,
+	VENDOR_RC_WRITE_FLASH_FAIL = 3,
 	/* Only 7 bits available; max is 127 */
 	VENDOR_RC_NO_SUCH_COMMAND = 127,
 };

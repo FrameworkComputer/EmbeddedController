@@ -11,17 +11,24 @@
 #include "signed_header.h"
 
 /*
- * Info1 space available to the app firmware is split in several areas. Of
- * interest are the two spaces used for rollback prevention of RO and RW image
- * versions.
+ * Info1 space available to the app firmware is split in four equal size
+ * areas, used as follows:
  *
- * Each bit in the image infomap header section is mapped into a 4 byte word
- * in the Info1 space.
+ * Area 0 - RO rollback prevention
+ * Area 1 - RW rollback prevention
+ * Area 2 - Board specific stuff
+ * Area 3 - Crypto scratch
  */
+#define INFO_AREA_SIZE	   (INFO_MAX * 4)
+#define INFO_TOTAL_SIZE	   (INFO_AREA_SIZE * 4)
+
 #define INFO_RO_MAP_OFFSET 0
-#define INFO_RO_MAP_SIZE   (INFO_MAX * 4)
-#define INFO_RW_MAP_OFFSET INFO_RO_MAP_SIZE
-#define INFO_RW_MAP_SIZE   (INFO_MAX * 4)
+#define INFO_RO_MAP_SIZE   INFO_AREA_SIZE
+
+#define INFO_RW_MAP_OFFSET (INFO_RO_MAP_OFFSET + INFO_RO_MAP_SIZE)
+#define INFO_RW_MAP_SIZE   INFO_AREA_SIZE
+
+#define INFO_BOARD_SPACE_OFFSET (INFO_RW_MAP_OFFSET + INFO_RW_MAP_SIZE)
 
 int flash_info_read_enable(uint32_t offset, size_t size);
 /* This in fact enables both read and write. */
