@@ -13,6 +13,8 @@
 
 #include "cryptoc/sha.h"
 #include "cryptoc/sha256.h"
+#include "cryptoc/sha384.h"
+#include "cryptoc/sha512.h"
 #include "cryptoc/util.h"
 
 /* Extend the MSB throughout the word. */
@@ -274,12 +276,6 @@ static const uint8_t SHA512_DER[] = {
 	0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x03, 0x05,
 	0x00, 0x04, 0x40
 };
-
-/* TODO(ngm): move these #defines to third_party/cryptoc once SHA-384
- * & 512 support is available.
- */
-#define SHA384_DIGEST_SIZE 48
-#define SHA512_DIGEST_SIZE 64
 
 static int pkcs1_get_der(enum hashing_mode hashing, const uint8_t **der,
 			uint32_t *der_size, uint32_t *hash_size)
