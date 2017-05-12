@@ -396,8 +396,6 @@ static int console_read_helper(struct host_cmd_handler_args *args,
 
 static int host_command_console_read(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_console_read_v1 *p;
-
 	if (args->version == 0) {
 		/*
 		 * Prior versions of this command only support reading from
@@ -407,6 +405,8 @@ static int host_command_console_read(struct host_cmd_handler_args *args)
 		return console_read_helper(args, &tx_snapshot_tail);
 #ifdef CONFIG_CONSOLE_ENABLE_READ_V1
 	} else if (args->version == 1) {
+		const struct ec_params_console_read_v1 *p;
+
 		/* Check the params to figure out where to start reading. */
 		p = args->params;
 		if (p->subcmd == CONSOLE_READ_NEXT)
