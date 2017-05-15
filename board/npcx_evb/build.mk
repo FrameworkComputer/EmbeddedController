@@ -6,8 +6,10 @@
 # Board specific files build
 #
 
-# the IC is Nuvoton M-Series EC (npcx5m5g, npcx5m6g)
+# the IC is Nuvoton NPCX5 M-Series EC (npcx5m5g, npcx5m6g)
+
 CHIP:=npcx
+CHIP_FAMILY:=npcx5
 CHIP_VARIANT:=npcx5m5g
 
 board-y=board.o

@@ -66,7 +66,7 @@ const struct fan_t fans[] = {
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
 /******************************************************************************/
-/* MFT channels. These are logically separate from mft_channels. */
+/* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
 	[MFT_CH_0] = { NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN},
 };

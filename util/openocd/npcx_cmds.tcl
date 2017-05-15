@@ -71,6 +71,17 @@ proc flash_npcx5m6g {image_path image_offset spifw_image} {
 	echo "*** Finish program npcx5m6g ***\r\n"
 }
 
+proc flash_npcx7m6x {image_path image_offset spifw_image} {
+	# 192 KB for RO & RW regions
+	set fw_size   0x30000
+	# Code RAM start address
+	set cram_addr 0x10090000
+
+	echo "*** Start to program npcx7m6f/g/k with $image_path ***"
+	flash_npcx $image_path $cram_addr $image_offset $fw_size $spifw_image
+	echo "*** Finish program npcx7m6f/g/k ***\r\n"
+}
+
 proc flash_npcx_ro {chip_name image_dir image_offset} {
 	set MPU_RNR  0xE000ED98;
 	set MPU_RASR 0xE000EDA0;
@@ -92,6 +103,9 @@ proc flash_npcx_ro {chip_name image_dir image_offset} {
 	} elseif {$chip_name == "npcx_5m6g_jtag"} {
 		# program RO region
 		flash_npcx5m6g $ro_image_path $image_offset $spifw_image
+	} elseif {$chip_name == "npcx_7m6x_jtag"} {
+		# program RO region
+		flash_npcx7m6x $ro_image_path $image_offset $spifw_image
 	} else {
 		echo $chip_name "no supported."
 	}
@@ -121,12 +135,19 @@ proc flash_npcx_all {chip_name image_dir image_offset} {
 		# program RW region
 		flash_npcx5m5g $rw_image_path $rw_image_offset $spifw_image
 	} elseif {$chip_name == "npcx_5m6g_jtag"} {
-		# RW images offset - 512 KB
+		# RW images offset - 256 KB
 		set rw_image_offset  [expr ($image_offset + 0x40000)]
 		# program RO region
 		flash_npcx5m6g $ro_image_path $image_offset $spifw_image
 		# program RW region
 		flash_npcx5m6g $rw_image_path $rw_image_offset $spifw_image
+	} elseif {$chip_name == "npcx_7m6x_jtag"} {
+		# RW images offset - 256 KB
+		set rw_image_offset  [expr ($image_offset + 0x40000)]
+		# program RO region
+		flash_npcx7m6x $ro_image_path $image_offset $spifw_image
+		# program RW region
+		flash_npcx7m6x $rw_image_path $rw_image_offset $spifw_image
 	} else {
 		echo $chip_name "no supported."
 	}
