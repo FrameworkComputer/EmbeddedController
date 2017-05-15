@@ -104,6 +104,7 @@ BOARDS_NPCX_5M6G_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
+	coral
 	eve
 	fizz
 	gru
@@ -126,12 +127,14 @@ BOARDS_MEC1322=(
 )
 
 BOARDS_SPI_1800MV=(
+	coral
 	gru
 	kevin
 	reef
 )
 
 BOARDS_RAIDEN=(
+	coral
 	eve
 	fizz
 	gru
