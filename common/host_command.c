@@ -26,6 +26,9 @@
 /* Maximum delay to skip printing repeated host command debug output */
 #define HCDEBUG_MAX_REPEAT_DELAY (50 * MSEC)
 
+/* Stop printing repeated host commands "+" after this count */
+#define HCDEBUG_MAX_REPEAT_COUNT 5
+
 static struct host_cmd_handler_args *pending_args;
 
 /* Verify Boot Mode */
@@ -564,6 +567,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 static void host_command_debug_request(struct host_cmd_handler_args *args)
 {
 	static int hc_prev_cmd;
+	static int hc_prev_count;
 	static uint64_t hc_prev_time;
 
 	/*
@@ -575,10 +579,15 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 		uint64_t t = get_time().val;
 		if (args->command == hc_prev_cmd &&
 		    t - hc_prev_time < HCDEBUG_MAX_REPEAT_DELAY) {
+			hc_prev_count++;
 			hc_prev_time = t;
-			CPUTS("+");
+			if (hc_prev_count < HCDEBUG_MAX_REPEAT_COUNT)
+				CPUTS("+");
+			else if (hc_prev_count == HCDEBUG_MAX_REPEAT_COUNT)
+				CPUTS("(++)");
 			return;
 		}
+		hc_prev_count = 1;
 		hc_prev_time = t;
 		hc_prev_cmd = args->command;
 	}
