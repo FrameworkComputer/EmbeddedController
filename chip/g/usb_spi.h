@@ -236,10 +236,4 @@ int usb_spi_interface(struct usb_spi_config const *config,
 int usb_spi_board_enable(struct usb_spi_config const *config);
 void usb_spi_board_disable(struct usb_spi_config const *config);
 
-/*
- * Returns true if SPI update is running, needed to properly handle SYS_RST_L
- * input state changes.
- */
-int usb_spi_update_in_progress(void);
-
 #endif /* __CROS_EC_USB_SPI_H */

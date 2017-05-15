@@ -14,8 +14,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-static uint8_t update_in_progress;
-
 static void disable_ec_ap_spi(void)
 {
 	/* Configure SPI GPIOs */
@@ -50,37 +48,13 @@ static void enable_ap_spi(void)
 	assert_ec_rst();
 }
 
-int usb_spi_update_in_progress(void)
-{
-	return update_in_progress;
-}
-
-static void update_finished(void)
-{
-	update_in_progress = 0;
-
-	/*
-	 * The AP and EC are reset in usb_spi_enable so the TPM is in a bad
-	 * state. Use resetting the EC to reset the entire system including the
-	 * TPM.
-	 */
-	assert_ec_rst();
-	usleep(200);
-	deassert_ec_rst();
-}
-DECLARE_DEFERRED(update_finished);
-
 int usb_spi_board_enable(struct usb_spi_config const *config)
 {
-	hook_call_deferred(&update_finished_data, -1);
-
 	/* Prevent SPI access if the console is currently locked. */
 	if (console_is_restricted()) {
 		CPRINTS("usb_spi access denied (console is restricted.");
 		return EC_ERROR_ACCESS_DENIED;
 	}
-
-	update_in_progress = 1;
 
 	disable_ec_ap_spi();
 
@@ -112,7 +86,6 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 {
 	CPRINTS("usb_spi disable");
 	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
-	disable_ec_ap_spi();
 
 	/* Disconnect SPI peripheral to tri-state pads */
 	/* Disable internal pull up */
@@ -127,14 +100,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	GWRITE(PINMUX, DIOA8_SEL, GC_PINMUX_GPIO0_GPIO8_SEL);
 	GWRITE(PINMUX, DIOA14_SEL, GC_PINMUX_GPIO0_GPIO9_SEL);
 
-	/*
-	 * TODO(crosbug.com/p/52366): remove once sys_rst just resets the TPM
-	 * instead of cr50.
-	 * Resetting the EC and AP cause sys_rst to be asserted currently that
-	 * will cause cr50 to do a soft reset. Delay the end of the transaction
-	 * to prevent cr50 from resetting during a series of usb_spi calls.
-	 */
-	hook_call_deferred(&update_finished_data, 1 * SECOND);
+	disable_ec_ap_spi();
 }
 
 int usb_spi_interface(struct usb_spi_config const *config,
