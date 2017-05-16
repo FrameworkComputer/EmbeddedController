@@ -77,7 +77,13 @@
 
 /* USB Configuration */
 #define CONFIG_USB
+#ifdef BOARD_STAFF
+#define CONFIG_USB_PID 0x502b
+#elif defined(BOARD_HAMMER)
 #define CONFIG_USB_PID 0x5022
+#else
+#error "Invalid board"
+#endif
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
 

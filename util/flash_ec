@@ -74,6 +74,7 @@ BOARDS_STM32=(
 	ryu
 	samus_pd
 	snoball
+	staff
 	strago_pd
 	zinger
 )

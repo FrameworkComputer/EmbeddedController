@@ -54,9 +54,15 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+#ifdef BOARD_STAFF
+#define KBLIGHT_PWM_FREQ 100 /* Hz */
+#else
+#define KBLIGHT_PWM_FREQ 10000 /* Hz */
+#endif
+
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, 10000 /* Hz */ },
+	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, KBLIGHT_PWM_FREQ},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
