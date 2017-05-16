@@ -30,6 +30,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
+#include "keyboard_8042_sharedlib.h"
 #include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -385,6 +386,15 @@ static void board_init(void)
 
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+
+#if defined(CONFIG_KEYBOARD_SCANCODE_MUTABLE) && !defined(TEST_BUILD)
+	if (board_get_version() == 4) {
+		/* Set F13 to new defined key on EVT */
+		CPRINTS("Overriding F13 scan code");
+		scancode_set1[3][9] = 0xe058;
+		scancode_set2[3][9] = 0xe007;
+	}
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
