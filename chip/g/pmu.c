@@ -7,11 +7,6 @@
 #include "task.h"
 
 /*
- * TODO_FPGA this file should be thoroughly reworked when actual support is
- * introduced.
- */
-
-/*
  * RC Trim constants
  */
 #define RCTRIM_RESOLUTION       (12)

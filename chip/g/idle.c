@@ -107,9 +107,6 @@ static void prepare_to_sleep(void)
 	/*
 	 * Deep sleep should only be enabled when the AP is off otherwise the
 	 * TPM state will lost.
-	 *
-	 * TODO(crosbug.com/p/55747): Enable deep sleep when the AP is shut
-	 * down. Currently deep sleep is only enabled through the console.
 	 */
 	if (idle_action == IDLE_DEEP_SLEEP) {
 		/* Clear upcoming events. They don't matter in deep sleep */

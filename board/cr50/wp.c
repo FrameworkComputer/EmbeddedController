@@ -436,13 +436,6 @@ static int command_lock(int argc, char **argv)
 			goto out;
 		}
 
-		/*
-		 * TODO(crosbug.com/p/55322, crosbug.com/p/55728): There may be
-		 * other preconditions which must be satisified before
-		 * continuing. We can return EC_ERROR_ACCESS_DENIED if those
-		 * aren't met.
-		 */
-
 		/* Don't count down if we know it's likely to fail */
 		if (unlock_in_progress) {
 			ccprintf("An unlock process is already in progress\n");

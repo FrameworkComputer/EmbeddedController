@@ -52,7 +52,6 @@ BOOL _cpri__Startup(
   /*
    * Below is the list of functions called by the TPM2 library from
    * _cpri__Startup().
-   * TODO(vbendeb): verify proper initialization.
    *
    *  _cpri__HashStartup() - not doing anything for now, maybe hw
    *               reinitialization is required?

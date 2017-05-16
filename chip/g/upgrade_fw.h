@@ -112,7 +112,6 @@ struct first_response_pdu {
 	uint32_t keyid[2];
 };
 
-/* TODO: Handle this in upgrade_fw.c, not usb_upgrade.c */
 #define UPGRADE_DONE          0xB007AB1E
 
 void fw_upgrade_command_handler(void *body,

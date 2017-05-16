@@ -88,9 +88,6 @@ void system_pre_init(void)
 
 void system_reset(int flags)
 {
-	/* TODO: Do we need to handle SYSTEM_RESET_PRESERVE_FLAGS? Doubtful. */
-	/* TODO(crosbug.com/p/47289): handle RESET_FLAG_WATCHDOG */
-
 	/* Disable interrupts to avoid task swaps during reboot */
 	interrupt_disable();
 
@@ -230,7 +227,6 @@ int system_battery_cutoff_support_required(void)
 	return 0;
 }
 
-/* TODO(crosbug.com/p/33822): Where can we store stuff persistently? */
 int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
 	return 0;

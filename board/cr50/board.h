@@ -38,9 +38,7 @@
 
 /* Flash configuration */
 #undef CONFIG_FLASH_PSTATE
-/* TODO(crosbug.com/p/44745): Bringup only! Do the right thing for real! */
 #define CONFIG_WP_ALWAYS
-/* TODO(crosbug.com/p/44745): For debugging only */
 #define CONFIG_CMD_FLASH
 
 /* We're using TOP_A for partition 0, TOP_B for partition 1 */
@@ -213,9 +211,6 @@ int board_tpm_uses_spi(void);
 
 #define UARTN UART_CR50
 
-/* TODO(crosbug.com/p/56540): Remove this when UART0_RX works everywhere */
-#define GC_UART0_RX_DISABLE
-
 #define CC_DEFAULT     (CC_ALL & ~CC_MASK(CC_TPM))
 
 /* Nv Memory users */
@@ -228,13 +223,6 @@ enum nvmem_users {
 #endif
 
 #define CONFIG_FLASH_NVMEM_VARS_USER_NUM NVMEM_CR50
-
-/*
- * Let's be on the lookout for stack overflow, while debugging.
- *
- * TODO(vbendeb): remove this before finalizing the code.
- */
-#define CONFIG_DEBUG_STACK_OVERFLOW
 #define CONFIG_RW_B
 
 /* Firmware upgrade options. */
