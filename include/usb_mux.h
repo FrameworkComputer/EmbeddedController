@@ -90,6 +90,7 @@ struct usb_mux {
 /* Supported USB mux drivers */
 extern const struct usb_mux_driver pi3usb30532_usb_mux_driver;
 extern const struct usb_mux_driver ps8740_usb_mux_driver;
+extern const struct usb_mux_driver ps8743_usb_mux_driver;
 extern const struct usb_mux_driver tcpm_usb_mux_driver;
 extern const struct usb_mux_driver virtual_usb_mux_driver;
 
