@@ -47,6 +47,7 @@ die() {
 
 BOARDS_IT83XX=(
 	it83xx_evb
+	reef_it8320
 )
 
 BOARDS_LM4=(

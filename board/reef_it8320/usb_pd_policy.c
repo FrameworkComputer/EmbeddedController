@@ -1,4 +1,4 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -67,18 +67,11 @@ int board_vbus_source_enabled(int port)
 static void board_vbus_update_source_current(int port)
 {
 	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
-		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
+	enum gpio_signal gpio_3a_en = port ? GPIO_EN_USB_C1_3A :
+		GPIO_EN_USB_C0_3A;
 
-	/*
-	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
-	 * (2x 33k in parallel) on the NX5P3290 load switch ILIM pin,
-	 * setting a minimum OCP current of 3186 mA.
-	 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put a 33k
-	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
-	 */
+	gpio_set_level(gpio_3a_en, vbus_rp[port] == TYPEC_RP_3A0 ? 1 : 0);
 	gpio_set_level(gpio, vbus_en[port]);
-	gpio_set_flags(gpio, flags);
 }
 
 void typec_set_source_current_limit(int port, int rp)

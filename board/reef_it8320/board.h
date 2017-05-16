@@ -1,9 +1,9 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Reef board configuration */
+/* reef_it8320 board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -16,10 +16,7 @@
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
-
 /* EC console commands  */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BATT_MFG_ACCESS
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
@@ -30,13 +27,6 @@
 #define CONFIG_CMD_CHARGER_PSYS
 #define BD9995X_PSYS_GAIN_SELECT \
 		BD9995X_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_02UAW
-
-#define CONFIG_CMD_I2C_STRESS_TEST
-#define CONFIG_CMD_I2C_STRESS_TEST_ACCEL
-#define CONFIG_CMD_I2C_STRESS_TEST_ALS
-#define CONFIG_CMD_I2C_STRESS_TEST_BATTERY
-#define CONFIG_CMD_I2C_STRESS_TEST_CHARGER
-#define CONFIG_CMD_I2C_STRESS_TEST_TCPC
 
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
@@ -73,29 +63,24 @@
 #define GPIO_USB_ILIM_SEL GPIO_USB_A_CHARGE_EN_L
 #define GPIO_USB_CTL1 GPIO_EN_PP5000
 
-#define CONFIG_TABLET_MODE
-
 /* USB PD config */
 #define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
+#define CONFIG_USB_MUX_PI3USB30532
+#define CONFIG_USB_MUX_PS8740
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_DISCHARGE
-#define CONFIG_USB_PD_DISCHARGE_TCPC
+#define CONFIG_USB_PD_DISCHARGE_GPIO
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_LOG_SIZE 512
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
 #define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
-#define CONFIG_USB_PD_TCPC_LOW_POWER
-#define CONFIG_USB_PD_TCPM_MUX  /* for both PS8751 and ANX3429 */
-#define CONFIG_USB_PD_TCPM_ANX74XX
-#define CONFIG_USB_PD_TCPM_PS8751
-#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TCPM_ITE83XX
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_COMM_LOCKED
@@ -109,7 +94,6 @@
 #define CONFIG_LPC
 #define CONFIG_CHIPSET_APOLLOLAKE
 #define CONFIG_CHIPSET_RESET_HOOK
-#undef CONFIG_PECI
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
@@ -122,54 +106,28 @@
 #define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BUTTON_COUNT 2
 #define CONFIG_EXTPOWER_GPIO
-#undef   CONFIG_EXTPOWER_DEBOUNCE_MS
-#define  CONFIG_EXTPOWER_DEBOUNCE_MS 1000
-#define CONFIG_FPU
-/* Region sizes are not a power of 2 so we can't use MPU */
-#undef  CONFIG_MPU
-#define CONFIG_HOSTCMD_FLASH_SPI_INFO
+#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 1000
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
-#define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
 #define CONFIG_LED_COMMON
 #define CONFIG_LID_SWITCH
 #define CONFIG_LOW_POWER_IDLE
-#define CONFIG_LTO
 #define CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD 30
-#define CONFIG_PWM
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR_NCP15WB
 #define CONFIG_DPTF
-#define CONFIG_DPTF_DEVICE_ORIENTATION
 #define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
-#define CONFIG_UART_HOST 0
 #define CONFIG_VBOOT_HASH
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_WIRELESS
 #define CONFIG_WIRELESS_SUSPEND EC_WIRELESS_SWITCH_WLAN_POWER
 #define CONFIG_WLAN_POWER_ACTIVE_LOW
-#define  WIRELESS_GPIO_WLAN_POWER GPIO_WIRELESS_GPIO_WLAN_POWER
+#define WIRELESS_GPIO_WLAN_POWER GPIO_WIRELESS_GPIO_WLAN_POWER
 #define CONFIG_PWR_STATE_DISCHARGE_FULL
-
-/*
- * During shutdown sequence TPS65094x PMIC turns off the sensor rails
- * asynchronously to the EC. If we access the sensors when the sensor power
- * rails are off we get I2C errors. To avoid this issue, defer switching
- * the sensors rate if in S3. By the time deferred function is serviced if
- * the chipset is in S5 we can back out from switching the sensor rate.
- *
- * Time taken by V1P8U rail to go down from S3 is 30ms to 60ms hence defer
- * the sensor switching after 60ms.
- */
-#undef CONFIG_MOTION_SENSE_SUSPEND_DELAY_US
-#define CONFIG_MOTION_SENSE_SUSPEND_DELAY_US (MSEC * 60)
-
-#define CONFIG_FLASH_SIZE 524288
-#define CONFIG_SPI_FLASH_REGS
-#define CONFIG_SPI_FLASH_W25Q40	/* FIXME: Should be GD25LQ40? */
 
 /*
  * Enable 1 slot of secure temporary storage to support
@@ -178,66 +136,39 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
-/* Optional feature - used by nuvoton */
-#define NPCX_UART_MODULE2    1 /* 0:GPIO10/11 1:GPIO64/65 as UART */
-#define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
-/* FIXME(dhendrix): these pins are just normal GPIOs on Reef. Do we need
- * to change some other setting to put them in GPIO mode?
- */
-#define NPCX_TACH_SEL2       0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
+/* modules we want to exclude */
+#undef CONFIG_PECI
+#undef CONFIG_PWM
+#undef CONFIG_SPI
+#undef CONFIG_UART_HOST
 
-/* I2C ports */
-#define I2C_PORT_GYRO			NPCX_I2C_PORT1
-#define I2C_PORT_LID_ACCEL		NPCX_I2C_PORT2
-#define I2C_PORT_ALS			NPCX_I2C_PORT2
-#define I2C_PORT_BARO			NPCX_I2C_PORT2
-#define I2C_PORT_BATTERY		NPCX_I2C_PORT3
-#define I2C_PORT_CHARGER		NPCX_I2C_PORT3
-/* Accelerometer and Gyroscope are the same device. */
-#define I2C_PORT_ACCEL			I2C_PORT_GYRO
+/* TODO: There isn't enough space on flash before nds32 toolchain is updated */
+#undef CONFIG_CMD_HASH
+#undef CONFIG_CMD_IDLE_STATS
+#undef CONFIG_CMD_SLEEPMASK
+#undef CONFIG_CMD_TIMERINFO
 
-/* Sensors */
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_HOST_EVENT
-#define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
-#define CONFIG_MAG_BMI160_BMM150
-#define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
-#define CONFIG_MAG_CALIBRATE
-#define CONFIG_ACCEL_KX022
-#define CONFIG_ALS_OPT3001
-#define CONFIG_BARO_BMP280
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
-
-/* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 1024
-
-/* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
-
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
+#undef CONFIG_UART_RX_BUF_SIZE
+#define CONFIG_UART_RX_BUF_SIZE 512
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "registers.h"
 
+/* I2C ports */
+#define I2C_PORT_USB_MUX		IT83XX_I2C_CH_C
+#define I2C_PORT_BATTERY		IT83XX_I2C_CH_E
+#define I2C_PORT_CHARGER		IT83XX_I2C_CH_E
+
 /* ADC signal */
 enum adc_channel {
-	ADC_TEMP_SENSOR_CHARGER,	/* ADC0 */
-	ADC_TEMP_SENSOR_AMB,		/* ADC1 */
-	ADC_BOARD_ID,			/* ADC2 */
+	ADC_TEMP_SENSOR_CHARGER,	/* ADC CH1 */
+	ADC_TEMP_SENSOR_AMB,		/* ADC CH2 */
+	ADC_BOARD_ID,			/* ADC CH3 */
 	ADC_CH_COUNT
-};
-
-enum pwm_channel {
-	PWM_CH_LED_GREEN = 0,
-	PWM_CH_LED_RED,
-	/* Number of PWM channels */
-	PWM_CH_COUNT
 };
 
 enum power_signal {
@@ -261,30 +192,7 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-/*
- * For backward compatibility, to report ALS via ACPI,
- * Define the number of ALS sensors: motion_sensor copy the data to the ALS
- * memmap region.
- */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-
-/*
- * Motion sensors:
- * When reading through IO memory is set up for sensors (LPC is used),
- * the first 2 entries must be accelerometers, then gyroscope.
- * For BMI160, accel, gyro and compass sensors must be next to each other.
- */
-enum sensor_id {
-	LID_ACCEL = 0,
-	BASE_ACCEL,
-	BASE_GYRO,
-	BASE_MAG,
-	BASE_BARO,
-	LID_ALS,
-};
-
-enum reef_board_version {
+enum reef_it8320_board_version {
 	BOARD_VERSION_UNKNOWN = -1,
 	BOARD_VERSION_1,
 	BOARD_VERSION_2,
@@ -295,6 +203,50 @@ enum reef_board_version {
 	BOARD_VERSION_7,
 	BOARD_VERSION_8,
 	BOARD_VERSION_COUNT,
+};
+
+enum ec2i_setting {
+	EC2I_SET_KB_LDN,
+	EC2I_SET_KB_IRQ,
+	EC2I_SET_KB_ENABLE,
+	EC2I_SET_MOUSE_LDN,
+	EC2I_SET_MOUSE_IRQ,
+	EC2I_SET_MOUSE_ENABLE,
+	EC2I_SET_PMC1_LDN,
+	EC2I_SET_PMC1_IRQ,
+	EC2I_SET_PMC1_ENABLE,
+	EC2I_SET_PMC2_LDN,
+	EC2I_SET_PMC2_BASE0_MSB,
+	EC2I_SET_PMC2_BASE0_LSB,
+	EC2I_SET_PMC2_BASE1_MSB,
+	EC2I_SET_PMC2_BASE1_LSB,
+	EC2I_SET_PMC2_IRQ,
+	EC2I_SET_PMC2_ENABLE,
+	EC2I_SET_SMFI_LDN,
+	EC2I_SET_SMFI_H2RAM_IO_BASE,
+	EC2I_SET_SMFI_H2RAM_MAP_LPC_IO,
+	EC2I_SET_SMFI_ENABLE,
+	EC2I_SET_PMC3_LDN,
+	EC2I_SET_PMC3_BASE0_MSB,
+	EC2I_SET_PMC3_BASE0_LSB,
+	EC2I_SET_PMC3_BASE1_MSB,
+	EC2I_SET_PMC3_BASE1_LSB,
+	EC2I_SET_PMC3_IRQ,
+	EC2I_SET_PMC3_ENABLE,
+	EC2I_SET_RTCT_LDN,
+	EC2I_SET_RTCT_P80LB,
+	EC2I_SET_RTCT_P80LE,
+	EC2I_SET_RTCT_P80LC,
+#ifdef CONFIG_UART_HOST
+	EC2I_SET_UART2_LDN,
+	EC2I_SET_UART2_IO_BASE_MSB,
+	EC2I_SET_UART2_IO_BASE_LSB,
+	EC2I_SET_UART2_IRQ,
+	EC2I_SET_UART2_IRQ_TYPE,
+	EC2I_SET_UART2_ENABLE,
+#endif
+	/* Number of EC2I settings */
+	EC2I_SETTING_COUNT
 };
 
 /* TODO: determine the following board specific type-C power constants */
@@ -317,14 +269,9 @@ enum reef_board_version {
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
-
 int board_get_version(void);
-
-void board_set_tcpc_power_mode(int port, int mode);
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	((1 << LID_ACCEL) | (1 << BASE_BARO) | (1 << LID_ALS))
+/* Turn on/off vconn power switch. */
+void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
 
 #endif /* !__ASSEMBLER__ */
 
