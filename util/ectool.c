@@ -230,6 +230,10 @@ const char help_str[] =
 	"      Get the threshold temperature values from the thermal engine.\n"
 	"  thermalset <platform-specific args>\n"
 	"      Set the threshold temperature values for the thermal engine.\n"
+	"  tpselftest\n"
+	"      Run touchpad self test.\n"
+	"  tpframeget\n"
+	"      Get touchpad frame data.\n"
 	"  tmp006cal <tmp006_index> [params...]\n"
 	"      Get/set TMP006 calibration\n"
 	"  tmp006raw <tmp006_index>\n"
@@ -7138,6 +7142,77 @@ int cmd_pd_write_log(int argc, char *argv[])
 	return ec_command(EC_CMD_PD_WRITE_LOG_ENTRY, 0, &p, sizeof(p), NULL, 0);
 }
 
+int cmd_tp_self_test(int argc, char* argv[])
+{
+	int rv;
+
+	rv = ec_command(EC_CMD_TP_SELF_TEST, 0, NULL, 0, NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	printf("Touchpad self test: %s\n",
+	       rv == EC_RES_SUCCESS ? "passed" : "failed");
+
+	return rv;
+}
+
+int cmd_tp_frame_get(int argc, char* argv[])
+{
+	int i, j;
+	uint32_t remaining = 0, offset = 0;
+	int rv = EC_SUCCESS;
+	uint8_t *data;
+	struct ec_response_tp_frame_info* r;
+	struct ec_params_tp_frame_get p;
+
+	data = malloc(ec_max_insize);
+	r = malloc(ec_max_insize);
+
+	rv = ec_command(EC_CMD_TP_FRAME_INFO, 0, NULL, 0, r, ec_max_insize);
+	if (rv < 0) {
+		fprintf(stderr, "Failed to get toucpad frame info.\n");
+		goto err;
+	}
+
+	rv = ec_command(EC_CMD_TP_FRAME_SNAPSHOT, 0, NULL, 0, NULL, 0);
+	if (rv < 0) {
+		fprintf(stderr, "Failed to snapshot frame.\n");
+		goto err;
+	}
+
+	for (i = 0; i < r->n_frames; i++) {
+		p.frame_index = i;
+		offset = 0;
+		remaining = r->frame_sizes[i];
+
+		while (remaining > 0) {
+			p.offset = offset;
+			p.size = MIN(remaining, ec_max_insize);
+
+			rv = ec_command(EC_CMD_TP_FRAME_GET, 0,
+					&p, sizeof(p), data, p.size);
+			if (rv < 0) {
+				fprintf(stderr, "Failed to get frame data "
+						"at offset 0x%x\n", offset);
+				goto err;
+			}
+
+			for (j = 0; j < p.size; j++)
+				printf("%02x ", data[j]);
+
+			offset += p.size;
+			remaining -= p.size;
+		}
+		printf("\n");
+	}
+
+err:
+	free(data);
+	free(r);
+
+	return rv;
+}
+
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
@@ -7235,6 +7310,8 @@ const struct command commands[] = {
 	{"test", cmd_test},
 	{"thermalget", cmd_thermal_get_threshold},
 	{"thermalset", cmd_thermal_set_threshold},
+	{"tpselftest", cmd_tp_self_test},
+	{"tpframeget", cmd_tp_frame_get},
 	{"tmp006cal", cmd_tmp006cal},
 	{"tmp006raw", cmd_tmp006raw},
 	{"usbchargemode", cmd_usb_charge_set_mode},
