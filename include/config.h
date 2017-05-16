@@ -1552,6 +1552,11 @@
 #define CONFIG_KEYBOARD_RUNTIME_KEYS
 
 /*
+ * Allow the keyboard scan code set tables to be modified at runtime.
+ */
+#undef CONFIG_KEYBOARD_SCANCODE_MUTABLE
+
+/*
  * Call board-supplied keyboard_suppress_noise() function when the debounced
  * keyboard state changes.  Some boards use this to send a signal to the audio
  * codec to suppress typing noise picked up by the microphone.

@@ -19,8 +19,13 @@ struct button_8042_t {
 };
 
 /* The standard Chrome OS keyboard matrix table. */
+#ifdef CONFIG_KEYBOARD_SCANCODE_MUTABLE
+extern uint16_t scancode_set1[KEYBOARD_ROWS][KEYBOARD_COLS];
+extern uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS];
+#else
 extern const uint16_t scancode_set1[KEYBOARD_ROWS][KEYBOARD_COLS];
 extern const uint16_t scancode_set2[KEYBOARD_ROWS][KEYBOARD_COLS];
+#endif
 
 /* Button scancodes (Power, Volume Down, Volume Up, etc.) */
 extern const struct button_8042_t buttons_8042[KEYBOARD_BUTTON_COUNT];
