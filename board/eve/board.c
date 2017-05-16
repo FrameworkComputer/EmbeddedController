@@ -644,38 +644,6 @@ static void board_lid_change(void)
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, board_lid_change, HOOK_PRIO_DEFAULT);
 
-void board_hibernate_late(void)
-{
-	int i;
-	const uint32_t hibernate_pins[][2] = {
-		{GPIO_LID_OPEN, GPIO_INT_RISING},
-		/*
-		 * BD99956 handles charge input automatically. We'll disable
-		 * charge output in hibernate. Charger will assert ACOK_OD
-		 * when VBUS or VCC are plugged in.
-		 */
-		{GPIO_USB_C0_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN},
-		{GPIO_USB_C1_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN},
-	};
-
-	/* Change GPIOs' state in hibernate for better power consumption */
-	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
-		gpio_set_flags(hibernate_pins[i][0], hibernate_pins[i][1]);
-
-	gpio_config_module(MODULE_KEYBOARD_SCAN, 0);
-
-	/*
-	 * Calling gpio_config_module sets disabled alternate function pins to
-	 * GPIO_INPUT.  But to prevent keypresses causing leakage currents
-	 * while hibernating we want to enable GPIO_PULL_UP as well.
-	 */
-	gpio_set_flags_by_mask(0x2, 0x03, GPIO_INPUT | GPIO_PULL_UP);
-	gpio_set_flags_by_mask(0x1, 0x7F, GPIO_INPUT | GPIO_PULL_UP);
-	gpio_set_flags_by_mask(0x0, 0xE0, GPIO_INPUT | GPIO_PULL_UP);
-	/* KBD_KS02 needs to have a pull-down enabled to match cr50 */
-	gpio_set_flags_by_mask(0x1, 0x80, GPIO_INPUT | GPIO_PULL_DOWN);
-}
-
 void board_hibernate(void)
 {
 	/* Enable both the VBUS & VCC ports before entering PG3 */
@@ -683,6 +651,22 @@ void board_hibernate(void)
 
 	/* Turn BGATE OFF for power saving */
 	bd9995x_set_power_save_mode(BD9995X_PWR_SAVE_MAX);
+
+	/* Shut down PMIC */
+	CPRINTS("Triggering PMIC shutdown");
+	uart_flush_output();
+	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x01)) {
+		/*
+		 * If we can't tell the PMIC to shutdown, instead reset
+		 * and don't start the AP. Hopefully we'll be able to
+		 * communicate with the PMIC next time.
+		 */
+		CPRINTS("PMIC I2C failed");
+		uart_flush_output();
+		system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+	}
+	while (1)
+		;
 }
 
 static int gpio_get_ternary(enum gpio_signal gpio)
