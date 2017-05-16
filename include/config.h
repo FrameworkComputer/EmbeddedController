@@ -2469,6 +2469,13 @@
 /* Support USB HID touchpad interface. */
 #undef CONFIG_USB_HID_TOUCHPAD
 
+/* HID touchpad logical dimensions */
+#undef CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X
+#undef CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y
+/* HID touchpad physical dimensions (tenth of mm) */
+#undef CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X
+#undef CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y
+
 /* USB device buffers and descriptors */
 #undef CONFIG_USB_RAM_ACCESS_SIZE
 #undef CONFIG_USB_RAM_ACCESS_TYPE

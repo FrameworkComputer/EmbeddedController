@@ -135,6 +135,22 @@
 #define CONFIG_USB_HID_KEYBOARD
 #define CONFIG_USB_HID_TOUCHPAD
 
+#ifdef BOARD_STAFF
+/* TODO(b:38277869): Adjust values to match hardware. */
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3214
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1840
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1020 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 584 /* tenth of mm */
+#elif defined(BOARD_HAMMER)
+/* TODO(b:35582031): Adjust values to match hardware. */
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 2948
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1600
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 935 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 508 /* tenth of mm */
+#else
+#error "No trackpad information for board."
+#endif
+
 #define CONFIG_KEYBOARD_DEBUG
 #undef CONFIG_KEYBOARD_BOOT_KEYS
 #undef CONFIG_KEYBOARD_RUNTIME_KEYS

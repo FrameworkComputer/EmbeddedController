@@ -53,12 +53,33 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_TOUCHPAD, 81) = {
 	.bInterval = HID_TOUCHPAD_EP_INTERVAL_MS /* polling interval */
 };
 
+#define FINGER_USAGE_X_Y \
+	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */ \
+	0x75, 0x0C,        /*     Report Size (12) */ \
+	0x55, 0x0E,        /*     Unit Exponent (-2) */ \
+	0x65, 0x11,        /*     Unit (System: SI Linear, Length: cm) */ \
+	0x09, 0x30,        /*     Usage (X) */ \
+	0x35, 0x00,        /*     Physical Minimum (0) */ \
+	0x26, (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X & 0xff), \
+	      (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X >> 8), \
+	                   /*     Logical Maximum */ \
+	0x46, (CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X & 0xff), \
+	      (CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X >> 8), \
+	                   /*     Physical Maximum (tenth of mm) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0x26, (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y & 0xff), \
+	      (CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y >> 8), \
+	                   /*     Logical Maximum */ \
+	0x46, (CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y & 0xff), \
+	      (CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y >> 8), \
+	                   /*     Physical Maximum (tenth of mm) */ \
+	0x09, 0x31,        /*     Usage (Y) */ \
+	0x81, 0x02         /*     Input (Data,Var,Abs) */
+
 /*
  * HID: Report Descriptor
- * TODO(crosbug.com/p/59083): There are ways to reduce flash usage, as the
+ * TODO(b/35582031): There are ways to reduce flash usage, as the
  * Finger Usage is repeated 5 times.
- * TODO(crosbug.com/p/59083): Touchpad specific values should be probed from
- * touchpad itself.
  */
 static const uint8_t report_desc[] = {
 	0x05, 0x0D,        /* Usage Page (Digitizer) */
@@ -87,20 +108,7 @@ static const uint8_t report_desc[] = {
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
 	0x09, 0x49,        /*     Usage (HEIGHT) */
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x55, 0x0E,        /*     Unit Exponent (-2) */
-	0x65, 0x11,        /*     Unit (System: SI Linear, Length: cm) */
-	0x09, 0x30,        /*     Usage (X) */
-	/* FIXME: Physical/logical dimensions should come from trackpad info */
-	0x35, 0x00,        /*     Physical Minimum (0) */
-	0x26, 0x86, 0x0C,  /*     Logical Maximum (3206) */
-	0x46, 0xF8, 0x03,  /*     Physical Maximum (10.16 cm) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x26, 0xf7, 0x06,  /*     Logical Maximum (1783) */
-	0x46, 0x36, 0x02,  /*     Physical Maximum (5.66 cm) */
-	0x09, 0x31,        /*     Usage (Y) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
+	FINGER_USAGE_X_Y,
 	0x05, 0x0D,        /*     Usage Page (Digitizer) */
 	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
 	0x75, 0x08,        /*     Report Size (8) */
@@ -129,20 +137,7 @@ static const uint8_t report_desc[] = {
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
 	0x09, 0x49,        /*     Usage (HEIGHT) */
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x55, 0x0E,        /*     Unit Exponent (-2) */
-	0x65, 0x11,        /*     Unit (System: SI Linear, Length: cm) */
-	0x09, 0x30,        /*     Usage (X) */
-	/* FIXME: Physical/logical dimensions should come from trackpad info */
-	0x35, 0x00,        /*     Physical Minimum (0) */
-	0x26, 0x86, 0x0C,  /*     Logical Maximum (3206) */
-	0x46, 0xF8, 0x03,  /*     Physical Maximum (10.16 cm) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x26, 0xf7, 0x06,  /*     Logical Maximum (1783) */
-	0x46, 0x36, 0x02,  /*     Physical Maximum (5.66 cm) */
-	0x09, 0x31,        /*     Usage (Y) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
+	FINGER_USAGE_X_Y,
 	0x05, 0x0D,        /*     Usage Page (Digitizer) */
 	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
 	0x75, 0x08,        /*     Report Size (8) */
@@ -171,20 +166,7 @@ static const uint8_t report_desc[] = {
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
 	0x09, 0x49,        /*     Usage (HEIGHT) */
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x55, 0x0E,        /*     Unit Exponent (-2) */
-	0x65, 0x11,        /*     Unit (System: SI Linear, Length: cm) */
-	0x09, 0x30,        /*     Usage (X) */
-	/* FIXME: Physical/logical dimensions should come from trackpad info */
-	0x35, 0x00,        /*     Physical Minimum (0) */
-	0x26, 0x86, 0x0C,  /*     Logical Maximum (3206) */
-	0x46, 0xF8, 0x03,  /*     Physical Maximum (10.16 cm) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x26, 0xf7, 0x06,  /*     Logical Maximum (1783) */
-	0x46, 0x36, 0x02,  /*     Physical Maximum (5.66 cm) */
-	0x09, 0x31,        /*     Usage (Y) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
+	FINGER_USAGE_X_Y,
 	0x05, 0x0D,        /*     Usage Page (Digitizer) */
 	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
 	0x75, 0x08,        /*     Report Size (8) */
@@ -213,20 +195,7 @@ static const uint8_t report_desc[] = {
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
 	0x09, 0x49,        /*     Usage (HEIGHT) */
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x55, 0x0E,        /*     Unit Exponent (-2) */
-	0x65, 0x11,        /*     Unit (System: SI Linear, Length: cm) */
-	0x09, 0x30,        /*     Usage (X) */
-	/* FIXME: Physical/logical dimensions should come from trackpad info */
-	0x35, 0x00,        /*     Physical Minimum (0) */
-	0x26, 0x86, 0x0C,  /*     Logical Maximum (3206) */
-	0x46, 0xF8, 0x03,  /*     Physical Maximum (10.16 cm) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x26, 0xf7, 0x06,  /*     Logical Maximum (1783) */
-	0x46, 0x36, 0x02,  /*     Physical Maximum (5.66 cm) */
-	0x09, 0x31,        /*     Usage (Y) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
+	FINGER_USAGE_X_Y,
 	0x05, 0x0D,        /*     Usage Page (Digitizer) */
 	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
 	0x75, 0x08,        /*     Report Size (8) */
@@ -255,20 +224,7 @@ static const uint8_t report_desc[] = {
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
 	0x09, 0x49,        /*     Usage (HEIGHT) */
 	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x55, 0x0E,        /*     Unit Exponent (-2) */
-	0x65, 0x11,        /*     Unit (System: SI Linear, Length: cm) */
-	0x09, 0x30,        /*     Usage (X) */
-	/* FIXME: Physical/logical dimensions should come from trackpad info */
-	0x35, 0x00,        /*     Physical Minimum (0) */
-	0x26, 0x86, 0x0C,  /*     Logical Maximum (3206) */
-	0x46, 0xF8, 0x03,  /*     Physical Maximum (10.16 cm) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x26, 0xf7, 0x06,  /*     Logical Maximum (1783) */
-	0x46, 0x36, 0x02,  /*     Physical Maximum (5.66 cm) */
-	0x09, 0x31,        /*     Usage (Y) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
+	FINGER_USAGE_X_Y,
 	0x05, 0x0D,        /*     Usage Page (Digitizer) */
 	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
 	0x75, 0x08,        /*     Report Size (8) */
