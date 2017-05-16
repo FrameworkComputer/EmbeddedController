@@ -127,6 +127,10 @@ enum usb_strings {
 
 void post_reboot_request(void);
 void ccd_force_enable(void);
+void disable_socket(void);
+void enable_socket(void);
+int is_socket_enabled(void);
+int is_socket_off(void);
 
 #endif /* !__ASSEMBLER__ */
 

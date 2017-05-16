@@ -46,10 +46,11 @@
 
 
 /* Use these to reset/flash the DUT haven */
-GPIO(DUT_BOOT_CFG,    PIN(0,  0), GPIO_OUT_LOW)     /* DIOB2 */
-GPIO(DUT_RST_L,       PIN(0,  1), GPIO_ODR_LOW)     /* DIOB3 */
 GPIO(DUT_PWR_EN,      PIN(0,  2), GPIO_OUT_LOW)     /* DIOB5 */
 GPIO(DUT_PWRGOOD,     PIN(0,  3), GPIO_INPUT)       /* DIOB7 */
+/* These GPIOS are switched between input/output by socket enable. */
+GPIO(DUT_BOOT_CFG,    PIN(0,  0), GPIO_OUT_LOW)     /* DIOB2 */
+GPIO(DUT_RST_L,       PIN(0,  1), GPIO_OUT_LOW)     /* DIOB3 */
 
 GPIO(LED_B_L,         PIN(0,  4), GPIO_ODR_HIGH)    /* DIOA9 */
 GPIO(LED_R_L,         PIN(0,  5), GPIO_ODR_HIGH)    /* DIOA13 */
@@ -60,7 +61,7 @@ GPIO(LED_L,           PIN(0, 11), GPIO_ODR_HIGH)    /* DIOB6 */
 GPIO(SPI_MOSI,        PIN(0,  7), GPIO_INPUT)       /* DIOA4 */
 GPIO(SPI_CLK,         PIN(0,  8), GPIO_INPUT)       /* DIOA8 */
 GPIO(SPI_CS_L,        PIN(0,  9), GPIO_INPUT)       /* DIOA14 */
-GPIO(SPI_CS_ALT_L,    PIN(0, 10), GPIO_OUT_HIGH)    /* DIOA5 */
+GPIO(SPI_CS_ALT_L,    PIN(0, 10), GPIO_INPUT)       /* DIOA5 */
 
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */
@@ -90,7 +91,14 @@ PINMUX(GPIO(LED_L),           B6,  DIO_INPUT)
 PINMUX(FUNC(UART0_TX),        A0, DIO_OUTPUT)	/* Cr50 console */
 PINMUX(FUNC(UART0_RX),        A1, DIO_INPUT | DIO_WAKE_LOW)
 
-PINMUX(FUNC(UART1_TX),        A7, DIO_OUTPUT)   /* DUT console */
+/*
+ * UART1_TX will be enabled when the socket power is enabled,
+ * to prevent backpowering.
+ *
+ * PINMUX(FUNC(UART1_TX),        A7, DIO_OUTPUT)
+ */
+
+/* DUT console */
 PINMUX(FUNC(UART1_RX),        A3, DIO_INPUT)
 
 /* I2C setup */
@@ -111,6 +119,6 @@ PINMUX(FUNC(I2C0_SDA),        B1, DIO_INPUT | DIO_OUTPUT)
  */
 PINMUX(GPIO(SPI_MOSI),           A4, DIO_OUTPUT)
 PINMUX(GPIO(SPI_CLK),            A8, DIO_OUTPUT)
-PINMUX(GPIO(SPI_CS_ALT_L),       A5, DIO_INPUT)
+PINMUX(GPIO(SPI_CS_ALT_L),       A5, DIO_OUTPUT)
 
 #undef PINMUX

@@ -67,6 +67,9 @@ enum usb_spi_request {
 	USB_SPI_REQ_ENABLE_AP       = 0x0002,
 	USB_SPI_REQ_ENABLE_EC       = 0x0003,
 	USB_SPI_REQ_ENABLE_H1       = 0x0004,
+	USB_SPI_REQ_RESET           = 0x0005,
+	USB_SPI_REQ_BOOT_CFG        = 0x0006,
+	USB_SPI_REQ_SOCKET          = 0x0007,
 };
 
 /* USB SPI device indexes */

@@ -16,10 +16,6 @@
 
 int usb_spi_board_enable(struct usb_spi_config const *config)
 {
-	/* Connect DIO A4, A8, and A14 to the SPI peripheral */
-	GWRITE(PINMUX, DIOA4_SEL, 0); /* SPI_MOSI */
-	GWRITE(PINMUX, DIOA8_SEL, 0); /* SPI_CLK */
-
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
 
 	/* Enable SPI framing for H1 bootloader */
@@ -34,14 +30,6 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	gpio_set_level(GPIO_SPI_CS_ALT_L, 1);
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 0);
-
-	/* Disconnect SPI peripheral to tri-state pads */
-	ASSERT(GREAD(PINMUX, GPIO0_GPIO7_SEL) == GC_PINMUX_DIOA4_SEL);
-	ASSERT(GREAD(PINMUX, GPIO0_GPIO8_SEL) == GC_PINMUX_DIOA8_SEL);
-
-	/* Set SPI MOSI, CLK as inputs */
-	GWRITE(PINMUX, DIOA4_SEL, GC_PINMUX_GPIO0_GPIO7_SEL);
-	GWRITE(PINMUX, DIOA8_SEL, GC_PINMUX_GPIO0_GPIO8_SEL);
 }
 
 int usb_spi_interface(struct usb_spi_config const *config,
@@ -52,7 +40,7 @@ int usb_spi_interface(struct usb_spi_config const *config,
 				    USB_RECIP_INTERFACE))
 		return 1;
 
-	if (req->wValue  != 0 ||
+	if ((req->wValue != 0 && req->wValue  != 1)  ||
 	    req->wIndex  != config->interface ||
 	    req->wLength != 0)
 		return 1;
@@ -63,6 +51,21 @@ int usb_spi_interface(struct usb_spi_config const *config,
 	switch (req->bRequest) {
 	case USB_SPI_REQ_ENABLE_H1:
 		config->state->enabled_host = USB_SPI_H1;
+		break;
+
+	/* Set reset and DFU pins. Both active high. */
+	case USB_SPI_REQ_RESET:
+		gpio_set_level(GPIO_DUT_RST_L, !req->wValue);
+		break;
+	case USB_SPI_REQ_BOOT_CFG:
+		gpio_set_level(GPIO_DUT_BOOT_CFG, req->wValue);
+		break;
+	/* Set socket power. */
+	case USB_SPI_REQ_SOCKET:
+		if (req->wValue)
+			enable_socket();
+		else
+			disable_socket();
 		break;
 	case USB_SPI_REQ_ENABLE_AP:
 	case USB_SPI_REQ_ENABLE:

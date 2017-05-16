@@ -54,9 +54,11 @@ const struct i2c_port_t i2c_ports[]  = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* Recall whether we have enable socket power. */
+static int socket_set_enabled;
 
 /*****************************************************************************/
-/*                                                                           */
+
 #include "gpio.wrap"
 
 static void init_interrupts(void)
@@ -118,6 +120,9 @@ static void board_init(void)
 	nvmem_init();
 	/* Initialize the persistent storage. */
 	initvars();
+
+	/* Disable all power to socket, for hot swapping. */
+	disable_socket();
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
@@ -199,6 +204,107 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 	return 3;
 }
 
+/* Check if socket has been anabled and power is OK. */
+int is_socket_enabled(void)
+{
+	/* TODO: check voltage rails within approved bands. */
+	return (gpio_get_level(GPIO_DUT_PWRGOOD) && socket_set_enabled);
+}
+
+/* Determine whether the socket has no voltage. TODO: check GPIOS? */
+int is_socket_off(void)
+{
+	/* Check 3.3v = 0. */
+	if (ina2xx_get_voltage(1) > 10)
+		return 0;
+	/* Check 2.6v = 0. */
+	if (ina2xx_get_voltage(4) > 10)
+		return 0;
+	return 1;
+}
+
+void enable_socket(void)
+{
+	/* Power up. */
+	gpio_set_level(GPIO_DUT_PWR_EN, 1);
+
+	/* Indicate socket powered with red LED. */
+	gpio_set_level(GPIO_LED_L, 0);
+
+	/* GPIOs as ioutputs. */
+	gpio_set_flags(GPIO_DUT_RST_L, GPIO_OUT_LOW);
+	gpio_set_flags(GPIO_DUT_BOOT_CFG, GPIO_OUT_LOW);
+	gpio_set_flags(GPIO_SPI_CS_ALT_L, GPIO_OUT_HIGH);
+
+	/* Connect DIO A4, A8 to the SPI peripheral */
+	GWRITE(PINMUX, DIOA4_SEL, 0); /* SPI_MOSI */
+	GWRITE(PINMUX, DIOA8_SEL, 0); /* SPI_CLK */
+	GWRITE(PINMUX, DIOA5_SEL, GC_PINMUX_GPIO0_GPIO10_SEL);
+
+	/* UART */
+	GWRITE(PINMUX, DIOA7_SEL, GC_PINMUX_UART1_TX_SEL);
+
+	/* Chip select. */
+	GWRITE_FIELD(PINMUX, DIOA5_CTL, PU, 1);
+
+	socket_set_enabled = 1;
+}
+
+void disable_socket(void)
+{
+	/* Disable CS pin. */
+	GWRITE_FIELD(PINMUX, DIOA5_CTL, PU, 0);
+
+	/* TODO: Implement way to get the gpio */
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO7_SEL) == GC_PINMUX_DIOA4_SEL);
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO8_SEL) == GC_PINMUX_DIOA8_SEL);
+	ASSERT(GREAD(PINMUX, GPIO0_GPIO10_SEL) == GC_PINMUX_DIOA5_SEL);
+
+	/* Set SPI MOSI, CLK, and CS_L as inputs */
+	GWRITE(PINMUX, DIOA4_SEL, GC_PINMUX_GPIO0_GPIO7_SEL);
+	GWRITE(PINMUX, DIOA8_SEL, GC_PINMUX_GPIO0_GPIO8_SEL);
+	GWRITE(PINMUX, DIOA5_SEL, GC_PINMUX_GPIO0_GPIO10_SEL);
+
+	/* UART */
+	GWRITE(PINMUX, DIOA7_SEL, 0);
+
+	/* GPIOs as inputs. */
+	gpio_set_flags(GPIO_DUT_BOOT_CFG, GPIO_INPUT);
+	gpio_set_flags(GPIO_DUT_RST_L, GPIO_INPUT);
+	gpio_set_flags(GPIO_SPI_CS_ALT_L, GPIO_INPUT);
+
+	/* Turn off socket power. */
+	gpio_set_level(GPIO_DUT_PWR_EN, 0);
+
+	/* Indicate socket unpowered with no red LED. */
+	gpio_set_level(GPIO_LED_L, 1);
+	socket_set_enabled = 0;
+}
+
+static int command_socket(int argc, char **argv)
+{
+	if (argc > 1) {
+		if (!strcasecmp("enable", argv[1]))
+			enable_socket();
+		else if (!strcasecmp("disable", argv[1]))
+			disable_socket();
+		else
+			return EC_ERROR_PARAM1;
+
+		/* Let power settle. */
+		msleep(5);
+	}
+
+	ccprintf("Socket enabled: %s, powered: %s\n",
+		 is_socket_enabled() ? "yes" : "no",
+		 is_socket_off() ? "off" : "on");
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(socket, command_socket,
+			     "[enable|disable]",
+			     "Activate and deactivate socket");
+
+
 
 /* Determine key type based on the key ID. */
 static const char *key_type(uint32_t key_id)
@@ -227,7 +333,7 @@ static int command_sysinfo(int argc, char **argv)
 	system_print_reset_flags();
 	ccprintf(")\n");
 
-	ccprintf("Chip:        %s %s %s\n", system_get_chip_vendor(),
+	ccprintf("Chip:	%s %s %s\n", system_get_chip_vendor(),
 		 system_get_chip_name(), system_get_chip_revision());
 
 	active = system_get_ro_image_copy();
