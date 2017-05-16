@@ -35,6 +35,9 @@ void system_mpu_config(void);
 /* Hibernate function for different Nuvoton chip series. */
 void __hibernate_npcx_series(void);
 
+/* Check and clear BBRAM status on power-on reset */
+void system_check_bbram_on_reset(void);
+
 /* The utilities and variables depend on npcx chip family */
 #if defined(CHIP_FAMILY_NPCX5)
 /* Bypass for GMDA issue of ROM api utilities only on npcx5 series */

@@ -34,6 +34,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 /*****************************************************************************/
 /* Internal functions */
@@ -83,6 +84,42 @@ static int bbram_is_byte_access(enum bbram_data_index index)
 	;
 }
 
+/* Check and clear BBRAM status on power-on reset */
+void system_check_bbram_on_reset(void)
+{
+	/* Check if power on reset */
+	if ((!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) &&
+	    (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))) {
+		/*
+		 * Clear IBBR bit because it's default value is 1
+		 * on reset whenever the VBAT supply is powered up.
+		 */
+		SET_BIT(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR);
+	} else {
+		/*
+		 * When the reset cause is other than power on reset,
+		 * it is illegal if IBBR is set.
+		 */
+		if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR))
+			CPRINTF("VBAT drop!\n");
+	}
+}
+
+/* Check index is within valid BBRAM range and IBBR is not set */
+static int bbram_valid(enum bbram_data_index index, int bytes)
+{
+	/* Check index */
+	if (index < 0 || index + bytes > NPCX_BBRAM_SIZE)
+		return 0;
+
+	/* Check BBRAM is valid */
+	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR)) {
+		CPRINTF("IBBR set: BBRAM corrupted!\n");
+		return 0;
+	}
+	return 1;
+}
+
 /**
  * Read battery-backed ram (BBRAM) at specified index.
  *
@@ -93,12 +130,7 @@ static uint32_t bbram_data_read(enum bbram_data_index index)
 	uint32_t value = 0;
 	int bytes = bbram_is_byte_access(index) ? 1 : 4;
 
-	/* Check index */
-	if (index < 0 || index + bytes >= NPCX_BBRAM_SIZE)
-		return 0;
-
-	/* BBRAM is valid */
-	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR))
+	if (!bbram_valid(index, bytes))
 		return 0;
 
 	/* Read BBRAM */
@@ -124,12 +156,7 @@ static int bbram_data_write(enum bbram_data_index index, uint32_t value)
 {
 	int bytes = bbram_is_byte_access(index) ? 1 : 4;
 
-	/* Check index */
-	if (index < 0 || index >= NPCX_BBRAM_SIZE)
-		return EC_ERROR_INVAL;
-
-	/* BBRAM is valid */
-	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR))
+	if (!bbram_valid(index, bytes))
 		return EC_ERROR_INVAL;
 
 	/* Write BBRAM */

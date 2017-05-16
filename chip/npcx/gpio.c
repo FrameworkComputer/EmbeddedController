@@ -356,9 +356,12 @@ int gpio_clear_pending_interrupt(enum gpio_signal signal)
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
-	int is_warm = system_is_reboot_warm();
+	int is_warm;
 	int flags;
 	int i, j;
+
+	system_check_bbram_on_reset();
+	is_warm = system_is_reboot_warm();
 
 #ifdef CHIP_FAMILY_NPCX7
 	/*
