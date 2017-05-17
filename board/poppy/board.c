@@ -181,6 +181,25 @@ static void base_detect_change(enum base_status status)
 static uint64_t pulse_start;
 static uint32_t pulse_width;
 
+static int command_attach_base(int argc, char **argv)
+{
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+	tablet_set_mode(0);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(attachbase, command_attach_base,
+		NULL, "Simulate attach base");
+
+static int command_detach_base(int argc, char **argv)
+{
+	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+	tablet_set_mode(1);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(detachbase, command_detach_base,
+		NULL, "Simulate detach base");
+
+
 static void base_detect_deferred(void)
 {
 	uint64_t time_now = get_time().val;
