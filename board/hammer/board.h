@@ -101,13 +101,14 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_UPDATE	0
 #ifdef SECTION_IS_RW
-#define USB_IFACE_HID_KEYBOARD	1
+#define USB_IFACE_HID_KEYBOARD	0
+#define USB_IFACE_UPDATE	1
 #define USB_IFACE_HID_TOUCHPAD	2
 #define USB_IFACE_I2C		3
 #define USB_IFACE_COUNT		4
 #else
+#define USB_IFACE_UPDATE	0
 #define USB_IFACE_COUNT		1
 #endif
 

@@ -250,7 +250,8 @@ static const uint8_t report_desc[] = {
 	0xC0,              /* End Collection */
 };
 
-const struct usb_hid_descriptor USB_CUSTOM_DESC(USB_IFACE_HID_TOUCHPAD, hid) = {
+const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_TOUCHPAD,
+						hid, hid_desc_tp) = {
 	.bLength = 9,
 	.bDescriptorType = USB_HID_DT_HID,
 	.bcdHID = 0x0100,
@@ -309,6 +310,7 @@ static int hid_touchpad_iface_request(usb_uint *ep0_buf_rx,
 				      usb_uint *ep0_buf_tx)
 {
 	return hid_iface_request(ep0_buf_rx, ep0_buf_tx,
-				 report_desc, sizeof(report_desc));
+				 report_desc, sizeof(report_desc),
+				 &hid_desc_tp);
 }
 USB_DECLARE_IFACE(USB_IFACE_HID_TOUCHPAD, hid_touchpad_iface_request)

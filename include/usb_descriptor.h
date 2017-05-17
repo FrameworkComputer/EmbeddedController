@@ -275,9 +275,12 @@ extern struct usb_string_desc *usb_serialno_desc;
 #endif
 
 /* Use these macros for declaring descriptors, to order them properly */
-#define USB_CONF_DESC(name) CONCAT2(usb_desc_, name)			\
+#define USB_CONF_DESC_VAR(name, varname) varname		\
 	__attribute__((section(".rodata.usb_desc_" STRINGIFY(name))))
+#define USB_CONF_DESC(name) USB_CONF_DESC_VAR(name, CONCAT2(usb_desc_, name))
 #define USB_IFACE_DESC(num) USB_CONF_DESC(CONCAT3(iface, num, _0iface))
+#define USB_CUSTOM_DESC_VAR(i, name, varname)			\
+	USB_CONF_DESC_VAR(CONCAT4(iface, i, _1, name), varname)
 #define USB_CUSTOM_DESC(i, name) USB_CONF_DESC(CONCAT4(iface, i, _1, name))
 #define USB_EP_DESC(i, num) USB_CONF_DESC(CONCAT4(iface, i, _2ep, num))
 

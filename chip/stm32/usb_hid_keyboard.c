@@ -26,6 +26,22 @@
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
+enum hid_protocol {
+	HID_BOOT_PROTOCOL = 0,
+	HID_REPORT_PROTOCOL = 1,
+	HID_PROTOCOL_COUNT = 2,
+};
+
+/* Current protocol, behaviour is identical in both modes. */
+static enum hid_protocol protocol = HID_REPORT_PROTOCOL;
+
+/*
+ * Note: This report format cannot be changed without breaking HID Boot protocol
+ * compatibility (see HID 1.11 "Appendix B: Boot Interface Descriptors").
+ *
+ * If this needs to be extended, we need to use this report in boot protocol
+ * mode, and an alternate one in report protocol mode.
+ */
 struct __attribute__((__packed__)) usb_hid_keyboard_report {
 	uint8_t modifiers; /* bitmap of modifiers 224-231 */
 	uint8_t reserved; /* 0x0 */
@@ -115,7 +131,9 @@ static const uint8_t report_desc[] = {
 	0xC0        /* End Collection */
 };
 
-const struct usb_hid_descriptor USB_CUSTOM_DESC(USB_IFACE_HID_KEYBOARD, hid) = {
+/* HID: HID Descriptor */
+const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD,
+						hid, hid_desc_kb) = {
 	.bLength = 9,
 	.bDescriptorType = USB_HID_DT_HID,
 	.bcdHID = 0x0100,
@@ -199,8 +217,36 @@ USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx, hid_keyboard_tx,
 static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 				      usb_uint *ep0_buf_tx)
 {
-	return hid_iface_request(ep0_buf_rx, ep0_buf_tx,
-				 report_desc, sizeof(report_desc));
+	int ret = hid_iface_request(ep0_buf_rx, ep0_buf_tx,
+				    report_desc, sizeof(report_desc),
+				    &hid_desc_kb);
+	if (ret >= 0)
+		return ret;
+
+	if (ep0_buf_rx[0] == (USB_DIR_OUT | USB_TYPE_CLASS |
+		       USB_RECIP_INTERFACE | (USB_HID_REQ_SET_PROTOCOL << 8))) {
+		uint16_t value = ep0_buf_rx[1];
+
+		if (value >= HID_PROTOCOL_COUNT)
+			return -1;
+
+		protocol = value;
+
+		btable_ep[0].tx_count = 0;
+		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
+		return 0;
+	} else if (ep0_buf_rx[0] == (USB_DIR_IN | USB_TYPE_CLASS |
+		       USB_RECIP_INTERFACE | (USB_HID_REQ_GET_PROTOCOL << 8))) {
+		uint8_t value = protocol;
+
+		memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
+				 &value, sizeof(value));
+		btable_ep[0].tx_count = 1;
+		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
+		return 0;
+	}
+
+	return -1;
 }
 USB_DECLARE_IFACE(USB_IFACE_HID_KEYBOARD, hid_keyboard_iface_request)
 
