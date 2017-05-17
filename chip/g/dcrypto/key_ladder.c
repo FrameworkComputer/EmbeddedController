@@ -17,6 +17,20 @@ static void ladder_init(void)
 	 * the other pending sha flow.
 	 * Hence leave as is and observe the error.
 	 */
+
+	/* Enable random stalls for key-ladder usage.  Note that
+	 * the stall rate used for key-ladder operations is
+	 * 25% (vs. 12% for generic SHA operations).  This distinction
+	 * is made so as to increase the difficulty in characterizng
+	 * the key-ladder engine via random inputs provided over the
+	 * generic SHA interface.
+	 */
+	/* Turn off random nops (which are enabled by default). */
+	GWRITE_FIELD(KEYMGR, SHA_RAND_STALL_CTL, STALL_EN, 0);
+	/* Configure random nop percentage at 25%. */
+	GWRITE_FIELD(KEYMGR, SHA_RAND_STALL_CTL, FREQ, 1);
+	/* Now turn on random nops. */
+	GWRITE_FIELD(KEYMGR, SHA_RAND_STALL_CTL, STALL_EN, 1);
 }
 
 static int ladder_step(uint32_t cert, const uint32_t input[8])

@@ -147,6 +147,13 @@ void dcrypto_sha_init(enum sha_mode mode)
 		val |= GC_KEYMGR_SHA_CFG_EN_SHA1_MASK;
 	GREG32(KEYMGR, SHA_CFG_EN) = val;
 
+	/* Turn off random nops (which are enabled by default). */
+	GWRITE_FIELD(KEYMGR, SHA_RAND_STALL_CTL, STALL_EN, 0);
+	/* Configure random nop percentage at 12%. */
+	GWRITE_FIELD(KEYMGR, SHA_RAND_STALL_CTL, FREQ, 2);
+	/* Now turn on random nops. */
+	GWRITE_FIELD(KEYMGR, SHA_RAND_STALL_CTL, STALL_EN, 1);
+
 	/* Start SHA engine. */
 	GREG32(KEYMGR, SHA_TRIG) = GC_KEYMGR_SHA_TRIG_TRIG_GO_MASK;
 }
