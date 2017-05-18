@@ -1438,6 +1438,14 @@
 #undef CONFIG_I2C_SCL_GATE_GPIO
 
 /*
+ * Some chip supports two owned slave address. The second slave address is used
+ * for other purpose such as board specific i2c commands. This option can be
+ * set if user of the second slave address requires larger host packet buffer
+ * size.
+ */
+#define CONFIG_I2C_EXTRA_PACKET_SIZE 0
+
+/*
  * I2C multi-port controller.
  *
  * If CONFIG_I2C_MULTI_PORT_CONTROLLER is defined, a single on-chip I2C

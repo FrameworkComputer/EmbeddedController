@@ -196,7 +196,8 @@ defined(CONFIG_LOW_POWER_IDLE) && \
  * and result/size on response).  After any protocol-specific headers, the
  * buffers must be 32-bit aligned.
  */
-static uint8_t host_buffer_padded[I2C_MAX_HOST_PACKET_SIZE + 4] __aligned(4);
+static uint8_t host_buffer_padded[I2C_MAX_HOST_PACKET_SIZE + 4 +
+				  CONFIG_I2C_EXTRA_PACKET_SIZE] __aligned(4);
 static uint8_t * const host_buffer = host_buffer_padded + 2;
 static uint8_t params_copy[I2C_MAX_HOST_PACKET_SIZE] __aligned(4);
 static int host_i2c_resp_port;
