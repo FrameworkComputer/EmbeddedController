@@ -27,7 +27,6 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static int throttle_cpu;      /* Throttle CPU? */
 static int forcing_coldreset; /* Forced coldreset in progress? */
 
 void chipset_force_shutdown(void)
@@ -190,11 +189,6 @@ enum power_state _power_handle_state(enum power_state state)
 		 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
 
-		/*
-		 * Throttle CPU if necessary.  This should only be asserted
-		 * when +VCCP is powered (it is by now).
-		 */
-		gpio_set_level(GPIO_CPU_PROCHOT, throttle_cpu);
 		return POWER_S0;
 
 	case POWER_S0:
