@@ -23,12 +23,13 @@
  *
  *     slave address: 1 byte, i2c 7-bit bus address
  *
- *     write count:   1 byte, zero based count of bytes to write
+ *     write count:   1 byte, zero based count of bytes to write. If write
+ *                    count exceed 60 bytes, following packets are expected
+ *                    to continue the payload without header.
  *
  *     read count:    1 byte, zero based count of bytes to read
  *
- *     data:          write payload up to 60 bytes of data to write,
- *                    length must match write count
+ *     data:          payload of data to write.
  *
  * Response:
  *     +-------------+---+---+-----------------------+
@@ -41,7 +42,7 @@
  *         0x0002: Busy, try again
  *             This can happen if someone else has acquired the shared memory
  *             buffer that the I2C driver uses as /dev/null
- *         0x0003: Write count invalid (> 60 bytes, or mismatch with payload)
+ *         0x0003: Write count invalid (mismatch with merged payload)
  *         0x0004: Read count invalid (> 60 bytes)
  *         0x0005: The port specified is invalid.
  *         0x8000: Unknown error mask
@@ -63,10 +64,11 @@ enum usb_i2c_error {
 };
 
 
-#define USB_I2C_MAX_WRITE_COUNT 60
 #define USB_I2C_MAX_READ_COUNT  60
+#define USB_I2C_CONFIG_BUFFER_SIZE \
+	((CONFIG_USB_I2C_MAX_WRITE_COUNT+4) > USB_MAX_PACKET_SIZE ?	\
+		(CONFIG_USB_I2C_MAX_WRITE_COUNT+4) : USB_MAX_PACKET_SIZE)
 
-BUILD_ASSERT(USB_MAX_PACKET_SIZE == (1 + 1 + 1 + 1 + USB_I2C_MAX_WRITE_COUNT));
 BUILD_ASSERT(USB_MAX_PACKET_SIZE == (2 + 1 + 1 + USB_I2C_MAX_READ_COUNT));
 
 /*
@@ -105,7 +107,8 @@ extern struct consumer_ops const usb_i2c_consumer_ops;
 		       INTERFACE_NAME,					\
 		       ENDPOINT)					\
 	static uint16_t							\
-		CONCAT2(NAME, _buffer_)[USB_MAX_PACKET_SIZE/2];		\
+		CONCAT2(NAME, _buffer_)					\
+			[USB_I2C_CONFIG_BUFFER_SIZE / 2];		\
 	static void CONCAT2(NAME, _deferred_)(void);			\
 	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
 	static struct queue const CONCAT2(NAME, _to_usb_);		\
@@ -134,7 +137,7 @@ extern struct consumer_ops const usb_i2c_consumer_ops;
 		QUEUE_DIRECT(USB_MAX_PACKET_SIZE, uint8_t,		\
 		null_producer, CONCAT2(NAME, _usb_).consumer);		\
 	static struct queue const CONCAT3(usb_to_, NAME, _) =		\
-		QUEUE_DIRECT(USB_MAX_PACKET_SIZE, uint8_t,		\
+		QUEUE_DIRECT(CONFIG_USB_I2C_MAX_WRITE_COUNT+4, uint8_t,	\
 		CONCAT2(NAME, _usb_).producer, NAME.consumer);		\
 	static void CONCAT2(NAME, _deferred_)(void)			\
 	{ usb_i2c_deferred(&NAME); }

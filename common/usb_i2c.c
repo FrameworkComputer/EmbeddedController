@@ -50,12 +50,32 @@ static void usb_i2c_write_packet(struct usb_i2c_config const *config,
 	QUEUE_ADD_UNITS(config->tx_queue, config->buffer, count);
 }
 
-void usb_i2c_deferred(struct usb_i2c_config const *config)
+static uint8_t usb_i2c_executable(struct usb_i2c_config const *config)
 {
 	/*
-	 * And if there is a USB packet waiting we process it and generate a
-	 * response.
+	 * In order to support larger write payload, we need to peek
+	 * the queue to see if we need to wait for more data.
 	 */
+
+	uint8_t write_count;
+
+	if (queue_peek_units(config->consumer.queue, &write_count, 2, 1) == 1
+		&& (write_count + 4) > queue_count(config->consumer.queue)) {
+		/*
+		 * Feed me more data, please.
+		 * Reuse the buffer in usb_i2c_config to send ACK packet.
+		 */
+		config->buffer[0] = USB_I2C_SUCCESS;
+		config->buffer[1] = 0;
+		usb_i2c_write_packet(config, 4);
+		return 0;
+	}
+	return 1;
+}
+
+void usb_i2c_execute(struct usb_i2c_config const *config)
+{
+	/* Payload is ready to execute. */
 	uint8_t count      = usb_i2c_read_packet(config);
 	int portindex       = (config->buffer[0] >> 0) & 0xff;
 	/* Convert 7-bit slave address to chromium EC 8-bit address. */
@@ -70,8 +90,8 @@ void usb_i2c_deferred(struct usb_i2c_config const *config)
 	if (!count || (!read_count && !write_count))
 		return;
 
-	if (write_count > USB_I2C_MAX_WRITE_COUNT ||
-	    write_count != (count - 4)) {
+	if (write_count > CONFIG_USB_I2C_MAX_WRITE_COUNT ||
+		write_count != (count - 4)) {
 		config->buffer[0] = USB_I2C_WRITE_COUNT_INVALID;
 	} else if (read_count > USB_I2C_MAX_READ_COUNT) {
 		config->buffer[0] = USB_I2C_READ_COUNT_INVALID;
@@ -86,8 +106,14 @@ void usb_i2c_deferred(struct usb_i2c_config const *config)
 				 (uint8_t *)(config->buffer + 2),
 				 read_count, I2C_XFER_SINGLE));
 	}
-
 	usb_i2c_write_packet(config, read_count + 4);
+}
+
+void usb_i2c_deferred(struct usb_i2c_config const *config)
+{
+	/* Check if we can proceed the queue. */
+	if (usb_i2c_executable(config))
+		usb_i2c_execute(config);
 }
 
 static void usb_i2c_written(struct consumer const *consumer, size_t count)

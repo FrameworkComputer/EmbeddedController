@@ -128,6 +128,10 @@
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_WATCHDOG_HELP
 
+/* Enlarge the allowed write count */
+#undef CONFIG_USB_I2C_MAX_WRITE_COUNT
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT 124
+
 /* No lid switch */
 #undef CONFIG_LID_SWITCH
 
