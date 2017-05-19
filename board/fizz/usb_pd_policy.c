@@ -94,25 +94,31 @@ int pd_snk_is_vbus_provided(int port)
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
 {
-#ifdef CONFIG_CHARGE_MANAGER
 	struct charge_port_info charge;
+
+	/* If the port is already supplying the power, don't reset it */
+	if (charge_manager_get_active_charge_port() == CHARGE_PORT_TYPEC0 &&
+			max_ma == 0 && supply_voltage == 0)
+		return;
 
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
-#endif
 }
 
 void typec_set_input_current_limit(int port, uint32_t max_ma,
 				   uint32_t supply_voltage)
 {
-#ifdef CONFIG_CHARGE_MANAGER
 	struct charge_port_info charge;
+
+	/* If the port is already supplying the power, don't reset it */
+	if (charge_manager_get_active_charge_port() == CHARGE_PORT_TYPEC0 &&
+			max_ma == 0 && supply_voltage == 0)
+		return;
 
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
-#endif
 }
 
 int pd_board_checks(void)
@@ -247,7 +253,7 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 static void board_charge_manager_init(void)
 {
-	int input_voltage;
+	int input_voltage, input_port;
 	int i, j;
 	struct charge_port_info cpi = {
 		.voltage = USB_CHARGER_VOLTAGE_MV,
@@ -261,26 +267,58 @@ static void board_charge_manager_init(void)
 	}
 
 	input_voltage = adc_read_channel(ADC_VBUS);
+	input_port = input_voltage > 5500 ?
+			CHARGE_PORT_BARRELJACK : CHARGE_PORT_TYPEC0;
+	CPRINTS("Power Source: p%d (%dmV)", input_port, input_voltage);
 
 	/* Initialize the power source supplier */
-	if (input_voltage > 5500) {
-		/* Power source is barrel jack */
-		CPRINTF("Source: BJ (%dmV)\n", input_voltage);
+	switch (input_port) {
+	case CHARGE_PORT_BARRELJACK:
 		cpi.voltage = input_voltage;
 		cpi.current = 3330;	/* TODO: Set right value */
 		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY, 1,
 					     &cpi);
 		/* Source only. Disable PD negotiation as a sink */
-	} else {
-		/* Power source is usb-c */
-		CPRINTF("Source: C0 (%dmV)\n", input_voltage);
-		cpi.voltage = input_voltage;
-		cpi.current = 3000;	/* TODO: Set right value */
-		charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, 0, &cpi);
+		break;
+	case CHARGE_PORT_TYPEC0:
+		typec_set_input_current_limit(input_port, 3000, input_voltage);
 		/* Sink only. Disable PD negotiation as a source */
+		break;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_charge_manager_init, HOOK_PRIO_INIT_ADC + 1);
+
+int board_set_active_charge_port(int port)
+{
+	const int active_port = charge_manager_get_active_charge_port();
+
+	if (port < 0 || CHARGE_PORT_COUNT <= port)
+		return EC_ERROR_INVAL;
+
+	if (port == active_port)
+		return EC_SUCCESS;
+
+	/* Don't charge from a source port */
+	if (board_vbus_source_enabled(port))
+		return EC_ERROR_INVAL;
+
+	CPRINTS("New charger p%d", port);
+
+	switch (port) {
+	case CHARGE_PORT_TYPEC0:
+		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
+		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
+		break;
+	case CHARGE_PORT_BARRELJACK :
+		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
+		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	return EC_SUCCESS;
+}
 
 int board_get_battery_soc(void)
 {

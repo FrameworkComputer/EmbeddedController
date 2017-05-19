@@ -368,38 +368,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-int board_set_active_charge_port(int charge_port)
-{
-	const int active_port = charge_manager_get_active_charge_port();
-
-	if (charge_port < 0 || CHARGE_PORT_COUNT <= charge_port)
-		return EC_ERROR_INVAL;
-
-	if (charge_port == active_port)
-		return EC_SUCCESS;
-
-	/* Don't charge from a source port */
-	if (board_vbus_source_enabled(charge_port))
-		return EC_ERROR_INVAL;
-
-	CPRINTS("New charger p%d", charge_port);
-
-	switch (charge_port) {
-	case CHARGE_PORT_TYPEC0:
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
-		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
-		break;
-	case CHARGE_PORT_BARRELJACK :
-		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
-		break;
-	default:
-		return EC_ERROR_INVAL;
-	}
-
-	return EC_SUCCESS;
-}
-
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
