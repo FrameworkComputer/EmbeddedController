@@ -418,11 +418,14 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	alarm_secs = cur_secs + seconds;
 	alarm_secs = alarm_secs & MTC_ALARM_MASK;
 
+	/*
+	 * We should set new alarm (first 25 bits of clock value) first before
+	 * clearing PTO in case issue rtc interrupt immediately.
+	 */
+	NPCX_WTC = alarm_secs;
+
 	/* Reset alarm first */
 	system_reset_rtc_alarm();
-
-	/* Set alarm, use first 25 bits of clock value */
-	NPCX_WTC = alarm_secs;
 
 	/* Enable interrupt mode alarm */
 	SET_BIT(NPCX_WTC, NPCX_WTC_WIE);
