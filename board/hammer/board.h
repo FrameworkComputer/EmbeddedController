@@ -187,6 +187,7 @@
  * Add rollback protection, and independent RW region protection.
  */
 #define CONFIG_ROLLBACK
+#define CONFIG_ROLLBACK_SECRET_SIZE 32
 #define CONFIG_FLASH_PROTECT_RW
 #ifdef SECTION_IS_RW
 #undef CONFIG_ROLLBACK_UPDATE
