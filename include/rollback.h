@@ -25,7 +25,17 @@ int rollback_get_minimum_version(void);
  *
  * @return EC_SUCCESS on success, EC_ERROR_* on error.
  */
-int rollback_update(int32_t next_min_version);
+int rollback_update_version(int32_t next_min_version);
+
+/**
+ * Add entropy to the rollback block.
+ *
+ * @param data	Data to be added to rollback block secret (after hashing)
+ * @param len	data length
+ *
+ * @return EC_SUCCESS on success, EC_ERROR_* on error.
+ */
+int rollback_add_entropy(uint8_t *data, unsigned int len);
 
 /**
  * Lock rollback protection block, reboot if necessary.

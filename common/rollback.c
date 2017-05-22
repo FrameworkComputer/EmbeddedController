@@ -9,6 +9,7 @@
 #include "console.h"
 #include "flash.h"
 #include "rollback.h"
+#include "sha256.h"
 #include "system.h"
 #include "util.h"
 
@@ -23,7 +24,12 @@
  * common/firmware_image.S .image.ROLLBACK section.
  */
 struct rollback_data {
+	int32_t id; /* Incrementing number to indicate which region to use. */
 	int32_t rollback_min_version;
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+	uint8_t secret[CONFIG_ROLLBACK_SECRET_SIZE];
+#endif
+	/* cookie must always be last, as it validates the rest of the data. */
 	uint32_t cookie;
 };
 
@@ -51,33 +57,40 @@ static int read_rollback(int region, struct rollback_data *data)
 /*
  * Get the most recent rollback information.
  *
- * @rollback_min_version: Minimum version to accept for rollback protection,
- *                        or 0 if no rollback information is present.
+ * @data: Returns most recent rollback data block. The data is filled
+ *        with zeros if no valid rollback block is present
  *
  * Return most recent region index on success (>= 0, or 0 if no rollback
  * region is valid), negative value on error.
  */
-static int get_latest_rollback(int32_t *rollback_min_version)
+static int get_latest_rollback(struct rollback_data *data)
 {
 	int region;
-	int min_region = 0;
-
-	*rollback_min_version = 0;
+	int min_region = -1;
+	int max_id = -1;
 
 	for (region = 0; region < ROLLBACK_REGIONS; region++) {
-		struct rollback_data data;
+		struct rollback_data tmp_data;
 
-		if (read_rollback(region, &data))
+		if (read_rollback(region, &tmp_data))
 			return -1;
 
 		/* Check if not initialized or invalid cookie. */
-		if (data.cookie != CROS_EC_ROLLBACK_COOKIE)
+		if (tmp_data.cookie != CROS_EC_ROLLBACK_COOKIE)
 			continue;
 
-		if (data.rollback_min_version > *rollback_min_version) {
+		if (tmp_data.id > max_id) {
 			min_region = region;
-			*rollback_min_version = data.rollback_min_version;
+			max_id = tmp_data.id;
 		}
+	}
+
+	if (min_region >= 0) {
+		if (read_rollback(min_region, data))
+			return -1;
+	} else {
+		min_region = 0;
+		memset(data, 0, sizeof(*data));
 	}
 
 	return min_region;
@@ -85,12 +98,12 @@ static int get_latest_rollback(int32_t *rollback_min_version)
 
 int32_t rollback_get_minimum_version(void)
 {
-	int32_t rollback_min_version;
+	struct rollback_data data;
 
-	if (get_latest_rollback(&rollback_min_version) < 0)
+	if (get_latest_rollback(&data) < 0)
 		return -1;
 
-	return rollback_min_version;
+	return data.rollback_min_version;
 }
 
 int rollback_lock(void)
@@ -120,35 +133,88 @@ int rollback_lock(void)
 }
 
 #ifdef CONFIG_ROLLBACK_UPDATE
-int rollback_update(int32_t next_min_version)
+
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+static void add_entropy(uint8_t *dst, const uint8_t *src,
+			uint8_t *add, unsigned int add_len)
+{
+#ifdef CONFIG_SHA256
+BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
+	struct sha256_ctx ctx;
+	uint8_t *hash;
+
+	SHA256_init(&ctx);
+	SHA256_update(&ctx, src, CONFIG_ROLLBACK_SECRET_SIZE);
+	SHA256_update(&ctx, add, add_len);
+	/* TODO(b:38486828): Add other sources of entropy (e.g. device id) */
+	hash = SHA256_final(&ctx);
+
+	memcpy(dst, hash, CONFIG_ROLLBACK_SECRET_SIZE);
+#else
+#error "Adding entropy to secret in rollback region requires SHA256."
+#endif
+}
+#endif /* CONFIG_ROLLBACK_SECRET_SIZE */
+
+/**
+ * Update rollback block.
+ *
+ * @param next_min_version	Minimum version to update in rollback block. Can
+ *				be a negative value if entropy is provided (in
+ *				that case the current minimum version is kept).
+ * @param entropy		Entropy to be added to rollback block secret
+ *				(can be NULL, in that case no entropy is added).
+ * @param len			entropy length
+ *
+ * @return EC_SUCCESS on success, EC_ERROR_* on error.
+ */
+static int rollback_update(int32_t next_min_version,
+			   uint8_t *entropy, unsigned int length)
 {
 	struct rollback_data data;
 	uintptr_t offset;
 	int region;
-	int32_t current_min_version;
 
 	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW)
 		return EC_ERROR_ACCESS_DENIED;
 
-	region = get_latest_rollback(&current_min_version);
+	region = get_latest_rollback(&data);
 
 	if (region < 0)
 		return EC_ERROR_UNKNOWN;
 
-	/* Do not accept to decrement the value. */
-	if (next_min_version < current_min_version)
-		return EC_ERROR_INVAL;
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+	if (entropy) {
+		/* Do not accept to decrease the value. */
+		if (next_min_version < data.rollback_min_version)
+			next_min_version = data.rollback_min_version;
+	} else
+#endif
+	{
+		/* Do not accept to decrease the value. */
+		if (next_min_version < data.rollback_min_version)
+			return EC_ERROR_INVAL;
 
-	/* No need to update if version is already correct. */
-	if (next_min_version == current_min_version)
-		return EC_SUCCESS;
+		/* No need to update if version is already correct. */
+		if (next_min_version == data.rollback_min_version)
+			return EC_SUCCESS;
+	}
 
 	/* Use the other region. */
 	region = (region + 1) % ROLLBACK_REGIONS;
 
 	offset = get_rollback_offset(region);
 
+	data.id = data.id + 1;
 	data.rollback_min_version = next_min_version;
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+	/*
+	 * If we are provided with some entropy, add it to secret. Otherwise,
+	 * data.secret is left untouched and written back to the other region.
+	 */
+	if (entropy)
+		add_entropy(data.secret, data.secret, entropy, length);
+#endif
 	data.cookie = CROS_EC_ROLLBACK_COOKIE;
 
 	/* Offset should never be part of active image. */
@@ -164,6 +230,16 @@ int rollback_update(int32_t next_min_version)
 	return EC_SUCCESS;
 }
 
+int rollback_update_version(int32_t next_min_version)
+{
+	return rollback_update(next_min_version, NULL, 0);
+}
+
+int rollback_add_entropy(uint8_t *data, unsigned int len)
+{
+	return rollback_update(-1, data, len);
+}
+
 static int command_rollback_update(int argc, char **argv)
 {
 	int32_t min_version;
@@ -177,27 +253,44 @@ static int command_rollback_update(int argc, char **argv)
 	if (*e || min_version < 0)
 		return EC_ERROR_PARAM1;
 
-	return rollback_update(min_version);
+	return rollback_update_version(min_version);
 }
 DECLARE_CONSOLE_COMMAND(rollbackupdate, command_rollback_update,
 			"min_version",
 			"Update rollback info");
+
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+static int command_rollback_add_entropy(int argc, char **argv)
+{
+	int len;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	len = strlen(argv[1]);
+
+	return rollback_add_entropy(argv[1], len);
+}
+DECLARE_CONSOLE_COMMAND(rollbackaddent, command_rollback_add_entropy,
+			"data",
+			"Add entropy to rollback block");
+#endif
 #endif /* CONFIG_ROLLBACK_UPDATE */
 
 static int command_rollback_info(int argc, char **argv)
 {
 	int region, ret, min_region;
-	int32_t rollback_min_version;
 	int32_t rw_rollback_version;
+	struct rollback_data data;
 
-	min_region = get_latest_rollback(&rollback_min_version);
+	min_region = get_latest_rollback(&data);
 
 	if (min_region < 0)
 		return EC_ERROR_UNKNOWN;
 
 	rw_rollback_version = system_get_rollback_version(SYSTEM_IMAGE_RW);
 
-	ccprintf("rollback minimum version: %d\n", rollback_min_version);
+	ccprintf("rollback minimum version: %d\n", data.rollback_min_version);
 	ccprintf("RW rollback version: %d\n", rw_rollback_version);
 
 	for (region = 0; region < ROLLBACK_REGIONS; region++) {
@@ -207,9 +300,19 @@ static int command_rollback_info(int argc, char **argv)
 		if (ret)
 			return ret;
 
-		ccprintf("rollback %d: %08x %08x%s\n",
-			region, data.rollback_min_version, data.cookie,
-			min_region == region ? " *" : "");
+		ccprintf("rollback %d: %08x %08x %08x",
+			region, data.id, data.rollback_min_version,
+			data.cookie);
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+		if (!system_is_locked()) {
+			/* If system is unlocked, show some of the secret. */
+			ccprintf(" [%02x..%02x]", data.secret[0],
+				data.secret[CONFIG_ROLLBACK_SECRET_SIZE-1]);
+		}
+#endif
+		if (min_region == region)
+			ccprintf(" *");
+		ccprintf("\n");
 	}
 
 	return EC_SUCCESS;

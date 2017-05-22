@@ -1142,6 +1142,9 @@
 #undef CONFIG_ROLLBACK_OFF
 #undef CONFIG_ROLLBACK_SIZE
 
+/* If defined, add support for storing some entropy in the rollback region. */
+#undef CONFIG_ROLLBACK_SECRET_SIZE
+
 /* If defined, we can update rollback information (RW can unset this). */
 #define CONFIG_ROLLBACK_UPDATE
 

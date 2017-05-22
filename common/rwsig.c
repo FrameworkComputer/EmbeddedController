@@ -204,7 +204,7 @@ int rwsig_check_signature(void)
 		 * This will fail if the rollback block is protected (RW image
 		 * will unprotect that block later on).
 		 */
-		int ret = rollback_update(rw_rollback_version);
+		int ret = rollback_update_version(rw_rollback_version);
 
 		if (ret == 0) {
 			CPRINTS("Rollback updated to %d",
