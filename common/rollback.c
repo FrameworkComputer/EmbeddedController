@@ -119,6 +119,7 @@ int rollback_lock(void)
 	return ret;
 }
 
+#ifdef CONFIG_ROLLBACK_UPDATE
 int rollback_update(int32_t next_min_version)
 {
 	struct rollback_data data;
@@ -163,6 +164,26 @@ int rollback_update(int32_t next_min_version)
 	return EC_SUCCESS;
 }
 
+static int command_rollback_update(int argc, char **argv)
+{
+	int32_t min_version;
+	char *e;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	min_version = strtoi(argv[1], &e, 0);
+
+	if (*e || min_version < 0)
+		return EC_ERROR_PARAM1;
+
+	return rollback_update(min_version);
+}
+DECLARE_CONSOLE_COMMAND(rollbackupdate, command_rollback_update,
+			"min_version",
+			"Update rollback info");
+#endif /* CONFIG_ROLLBACK_UPDATE */
+
 static int command_rollback_info(int argc, char **argv)
 {
 	int region, ret, min_region;
@@ -196,22 +217,3 @@ static int command_rollback_info(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(rollbackinfo, command_rollback_info,
 			     NULL,
 			     "Print rollback info");
-
-static int command_rollback_update(int argc, char **argv)
-{
-	int32_t min_version;
-	char *e;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	min_version = strtoi(argv[1], &e, 0);
-
-	if (*e || min_version < 0)
-		return EC_ERROR_PARAM1;
-
-	return rollback_update(min_version);
-}
-DECLARE_CONSOLE_COMMAND(rollbackupdate, command_rollback_update,
-			"min_version",
-			"Update rollback info");

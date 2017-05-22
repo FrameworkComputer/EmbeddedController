@@ -1142,6 +1142,9 @@
 #undef CONFIG_ROLLBACK_OFF
 #undef CONFIG_ROLLBACK_SIZE
 
+/* If defined, we can update rollback information (RW can unset this). */
+#define CONFIG_ROLLBACK_UPDATE
+
 /*
  * Current rollback version. Meaningless for RO (but provides the minimum value
  * that will be written to the rollback protection at flash time).
