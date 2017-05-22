@@ -188,6 +188,9 @@
  */
 #define CONFIG_ROLLBACK
 #define CONFIG_FLASH_PROTECT_RW
+#ifdef SECTION_IS_RW
+#undef CONFIG_ROLLBACK_UPDATE
+#endif
 
 #ifndef __ASSEMBLER__
 
