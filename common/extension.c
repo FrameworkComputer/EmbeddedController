@@ -45,8 +45,8 @@ uint32_t usb_extension_route_command(uint16_t command_code,
 	switch (command_code) {
 #ifdef CR50_DEV
 	case VENDOR_CC_IMMEDIATE_RESET:
-	case VENDOR_CC_TURN_UPDATE_ON:
 #endif /* defined(CR50_DEV) */
+	case VENDOR_CC_TURN_UPDATE_ON:
 	case EXTENSION_POST_RESET: /* Always need to be able to reset. */
 		is_allowed = 1;
 		break;
