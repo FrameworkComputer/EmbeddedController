@@ -66,7 +66,7 @@ class Susb(object):
     dev = None
     if self._serialname:
       for d in dev_list:
-        dev_serial = usb.util.get_string(d, d.iSerialNumber)
+        dev_serial = usb.util.get_string(d, 256, d.iSerialNumber)
         if dev_serial == self._serialname:
           dev = d
           break
@@ -74,7 +74,7 @@ class Susb(object):
         raise SusbError('USB device(%s) not found' % self._serialname)
     else:
       try:
-        dev = dev_list.next()
+        dev = dev_list[0]
       except StopIteration:
         raise SusbError('USB device %04x:%04x not found' % (
             self._vendor, self._product))
