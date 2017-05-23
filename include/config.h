@@ -1558,6 +1558,9 @@
  */
 #define CONFIG_KEYBOARD_BOOT_KEYS
 
+/* Add support for the new key. */
+#undef CONFIG_KEYBOARD_NEW_KEY
+
 /*
  * Minimum CPU clocks between scans.  This ensures that keyboard scanning
  * doesn't starve the other EC tasks of CPU when running at a decreased system

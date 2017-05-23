@@ -46,6 +46,10 @@ struct __attribute__((__packed__)) usb_hid_keyboard_report {
 	uint8_t modifiers; /* bitmap of modifiers 224-231 */
 	uint8_t reserved; /* 0x0 */
 	uint8_t keys[6];
+#ifdef CONFIG_KEYBOARD_NEW_KEY
+	uint8_t new_key:1;
+	uint8_t reserved2:7;
+#endif
 };
 
 #define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
@@ -56,8 +60,12 @@ struct __attribute__((__packed__)) usb_hid_keyboard_report {
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
 #define HID_KEYBOARD_MODIFIER_HIGH 0xe7
 
+#define HID_KEYBOARD_NEW_KEY 0xf0
+
 /* The standard Chrome OS keyboard matrix table. See HUT 1.12v2 Table 12 and
  * https://www.w3.org/TR/DOM-Level-3-Events-code .
+ *
+ * NEW_KEY is mapped as 0xf0, but this key code is never actually send.
  */
 const uint8_t keycodes[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	{ 0x00, 0xe3, 0x3a, 0x05, 0x43, 0x87, 0x11, 0x00, 0x2e,
@@ -66,11 +74,12 @@ const uint8_t keycodes[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	  0x42, 0x00, 0x2a, 0x90 },
 	{ 0xe0, 0x2b, 0x3c, 0x17, 0x3f, 0x30, 0x1c, 0x64, 0x2F,
 	  0x41, 0x89, 0x00, 0x00 },
-	{ 0x00, 0x35, 0x3b, 0x22, 0x3e, 0x00, 0x23, 0x00, 0x2d,
+	{ 0xe3, 0x35, 0x3b, 0x22, 0x3e, 0x00, 0x23, 0x00, 0x2d,
 	  0x68, 0x00, 0x31, 0x91 },
 	{ 0xe4, 0x04, 0x07, 0x09, 0x16, 0x0e, 0x0d, 0x00, 0x33,
 	  0x0f, 0x31, 0x28, 0x00 },
-	{ 0x00, 0x1d, 0x06, 0x19, 0x1b, 0x36, 0x10, 0xe1, 0x38,
+	{ HID_KEYBOARD_NEW_KEY,
+	        0x1d, 0x06, 0x19, 0x1b, 0x36, 0x10, 0xe1, 0x38,
 	  0x37, 0x00, 0x2c, 0x00 },
 	{ 0x00, 0x1e, 0x20, 0x21, 0x1f, 0x25, 0x24, 0x00, 0x27,
 	  0x26, 0xe2, 0x51, 0x4f },
@@ -128,6 +137,22 @@ static const uint8_t report_desc[] = {
 	0x19, 0x00, /* Usage Minimum (0) */
 	0x29, 0xa4, /* Usage Maximum (164) */
 	0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
+
+#ifdef CONFIG_KEYBOARD_NEW_KEY
+	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */
+	0x19, 0x18, /* Usage Minimum */
+	0x29, 0x18, /* Usage Maximum */
+	0x15, 0x00, /* Logical Minimum (0) */
+	0x25, 0x01, /* Logical Maximum (1) */
+	0x75, 0x01, /* Report Size (1) */
+	0x95, 0x01, /* Report Count (1) */
+	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
+
+	0x95, 0x01, /* Report Count (1) */
+	0x75, 0x07, /* Report Size (7) */
+	0x81, 0x01, /* Input (Constant), ;7-bit padding */
+#endif
+
 	0xC0        /* End Collection */
 };
 
@@ -264,6 +289,15 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 
 	if (!keycode) {
 		CPRINTF("Unknown key at %d/%d\n", row, col);
+		return;
+
+	}
+
+	if (keycode == HID_KEYBOARD_NEW_KEY) {
+#ifdef CONFIG_KEYBOARD_NEW_KEY
+		report.new_key = is_pressed ? 1 : 0;
+		write_keyboard_report();
+#endif
 		return;
 	}
 
