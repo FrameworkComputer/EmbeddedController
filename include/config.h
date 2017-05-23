@@ -986,6 +986,8 @@
 #undef CONFIG_FLASH_ERASED_VALUE32
 #undef CONFIG_FLASH_ERASE_SIZE
 #undef CONFIG_FLASH_ROW_SIZE
+/* Allow deferred (async) flash erase */
+#undef CONFIG_FLASH_DEFERRED_ERASE
 
 /* Base address of program memory */
 #undef CONFIG_PROGRAM_MEMORY_BASE

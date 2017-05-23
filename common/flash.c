@@ -9,6 +9,7 @@
 #include "console.h"
 #include "flash.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -774,6 +775,21 @@ int flash_set_protect(uint32_t mask, uint32_t flags)
 	return retval;
 }
 
+#ifdef CONFIG_FLASH_DEFERRED_ERASE
+static volatile enum ec_status erase_rc = EC_RES_SUCCESS;
+static struct ec_params_flash_erase_v1 erase_info;
+
+static void flash_erase_deferred(void)
+{
+	erase_rc = EC_RES_BUSY;
+	if (flash_erase(erase_info.params.offset, erase_info.params.size))
+		erase_rc = EC_RES_ERROR;
+	else
+		erase_rc = EC_RES_SUCCESS;
+}
+DECLARE_DEFERRED(flash_erase_deferred);
+#endif
+
 /*****************************************************************************/
 /* Console commands */
 
@@ -1159,17 +1175,29 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 		     flash_command_write,
 		     EC_VER_MASK(0) | EC_VER_MASK(EC_VER_FLASH_WRITE));
 
+#ifndef CONFIG_FLASH_MULTIPLE_REGION
 /*
  * Make sure our image sizes are a multiple of flash block erase size so that
  * the host can erase the entire image.
  */
 BUILD_ASSERT(CONFIG_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 BUILD_ASSERT(CONFIG_RW_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+#endif
 
 static int flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;
-	uint32_t offset = p->offset + EC_FLASH_REGION_START;
+	int rc = EC_RES_SUCCESS, cmd = FLASH_ERASE_SECTOR;
+	uint32_t offset;
+#ifdef CONFIG_FLASH_DEFERRED_ERASE
+	const struct ec_params_flash_erase_v1 *p_1 = args->params;
+
+	if (args->version > 0) {
+		cmd = p_1->cmd;
+		p = &p_1->params;
+	}
+#endif
+	offset = p->offset + EC_FLASH_REGION_START;
 
 	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
@@ -1177,19 +1205,50 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 	if (system_unsafe_to_overwrite(offset, p->size))
 		return EC_RES_ACCESS_DENIED;
 
-	/* Indicate that we might be a while */
+	switch (cmd) {
+	case FLASH_ERASE_SECTOR:
 #if defined(HAS_TASK_HOSTCMD) && defined(CONFIG_HOST_COMMAND_STATUS)
-	args->result = EC_RES_IN_PROGRESS;
-	host_send_response(args);
+		args->result = EC_RES_IN_PROGRESS;
+		host_send_response(args);
 #endif
-	if (flash_erase(offset, p->size))
-		return EC_RES_ERROR;
+		if (flash_erase(offset, p->size))
+			return EC_RES_ERROR;
 
-	return EC_RES_SUCCESS;
+		break;
+#ifdef CONFIG_FLASH_DEFERRED_ERASE
+	case FLASH_ERASE_SECTOR_ASYNC:
+		rc = erase_rc;
+		if (rc == EC_RES_SUCCESS) {
+			memcpy(&erase_info, p_1, sizeof(*p_1));
+			hook_call_deferred(&flash_erase_deferred_data, 0);
+		} else {
+			/*
+			 * Not our job to return the result of
+			 * the previous command.
+			 */
+			rc = EC_RES_BUSY;
+		}
+		break;
+	case FLASH_ERASE_GET_RESULT:
+		rc = erase_rc;
+		if (rc != EC_RES_BUSY)
+			/* Ready for another command */
+			erase_rc = EC_RES_SUCCESS;
+		break;
+#endif
+	default:
+		rc = EC_RES_INVALID_PARAM;
+	}
+	return rc;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE,
-		     flash_command_erase,
-		     EC_VER_MASK(0));
+
+
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE, flash_command_erase,
+		EC_VER_MASK(0)
+#ifdef CONFIG_FLASH_DEFERRED_ERASE
+		| EC_VER_MASK(1)
+#endif
+		);
 
 static int flash_command_protect(struct host_cmd_handler_args *args)
 {
