@@ -49,22 +49,22 @@ enum hid_protocol {
 static enum hid_protocol protocol = HID_REPORT_PROTOCOL;
 
 /*
- * Note: This report format cannot be changed without breaking HID Boot protocol
- * compatibility (see HID 1.11 "Appendix B: Boot Interface Descriptors").
- *
- * If this needs to be extended, we need to use this report in boot protocol
- * mode, and an alternate one in report protocol mode.
+ * Note: This first 8 bytes of this report format cannot be changed, as that
+ * would break HID Boot protocol compatibility (see HID 1.11 "Appendix B: Boot
+ * Interface Descriptors").
  */
 struct usb_hid_keyboard_report {
 	uint8_t modifiers; /* bitmap of modifiers 224-231 */
 	uint8_t reserved; /* 0x0 */
 	uint8_t keys[6];
+	/* Non-boot protocol fields below */
 #ifdef CONFIG_KEYBOARD_NEW_KEY
 	uint8_t new_key:1;
 	uint8_t reserved2:7;
 #endif
 } __packed;
 
+#define HID_KEYBOARD_BOOT_SIZE 8
 #define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
 
 #define HID_KEYBOARD_EP_INTERVAL_MS 16 /* ms */
@@ -257,10 +257,15 @@ static void hid_keyboard_tx(void)
 
 static void hid_keyboard_event(enum usb_ep_event evt)
 {
-	if (evt == USB_EVENT_RESET)
+	if (evt == USB_EVENT_RESET) {
+		protocol = HID_REPORT_PROTOCOL;
+
 		hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf,
 			HID_KEYBOARD_REPORT_SIZE);
-	else if (evt == USB_EVENT_DEVICE_RESUME && queue_count(&key_queue) > 0)
+		return;
+	}
+
+	if (evt == USB_EVENT_DEVICE_RESUME && queue_count(&key_queue) > 0)
 		hook_call_deferred(&keyboard_process_queue_data, 0);
 }
 
@@ -284,6 +289,13 @@ static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 			return -1;
 
 		protocol = value;
+
+		/* Reload endpoint with appropriate tx_count. */
+		btable_ep[USB_EP_HID_KEYBOARD].tx_count =
+			(protocol == HID_BOOT_PROTOCOL) ?
+			HID_KEYBOARD_BOOT_SIZE : HID_KEYBOARD_REPORT_SIZE;
+		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
+				EP_TX_VALID, 0);
 
 		btable_ep[0].tx_count = 0;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
