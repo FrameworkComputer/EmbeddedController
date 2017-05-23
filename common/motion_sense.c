@@ -786,7 +786,8 @@ void motion_sense_task(void)
 			motion_sense_fifo_add_unit(&vector, NULL, 0);
 #endif
 			CPRINTS("double tap!");
-			lightbar_sequence(LIGHTBAR_TAP);
+			/* Call board specific function to process tap */
+			sensor_board_proc_double_tap();
 		}
 #endif
 #ifdef CONFIG_GESTURE_SIGMO

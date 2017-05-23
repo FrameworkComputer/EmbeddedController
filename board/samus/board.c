@@ -267,6 +267,11 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_MCU_RST, 0);
 }
 
+void sensor_board_proc_double_tap(void)
+{
+	lightbar_sequence(LIGHTBAR_TAP);
+}
+
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_USB1_ENABLE,
 	GPIO_USB2_ENABLE,

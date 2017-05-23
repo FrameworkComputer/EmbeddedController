@@ -703,6 +703,11 @@ int board_has_spi_sensors(void)
 	return (ver < 6);
 }
 
+void sensor_board_proc_double_tap(void)
+{
+	lightbar_sequence(LIGHTBAR_TAP);
+}
+
 /****************************************************************************/
 /* Host commands */
 
