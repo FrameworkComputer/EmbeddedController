@@ -88,6 +88,11 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
  */
 void clock_init(void)
 {
+#if defined(CONFIG_CLOCK_SRC_EXTERNAL) && defined(NPCX_EXT32K_OSC_SUPPORT)
+	/* Select external 32kHz crystal oscillator as LFCLK source. */
+	SET_BIT(NPCX_LFCGCTL2, NPCX_LFCGCTL2_XT_OSC_SL_EN);
+#endif
+
 	/*
 	 * Configure frequency multiplier M/N values according to
 	 * the requested OSC_CLK (Unit:Hz).

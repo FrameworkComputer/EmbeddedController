@@ -624,6 +624,12 @@
 /* Indicate if a clock source is connected to stm32f4's "HSE" specific input */
 #undef CONFIG_STM32_CLOCK_HSE_HZ
 
+/*
+ * Chip config for clock source
+ *	 define = external crystal oscillator / undef = internal clock source
+ */
+#undef CONFIG_CLOCK_SRC_EXTERNAL
+
 /*****************************************************************************/
 /* Support curve25519 public key cryptography */
 #undef CONFIG_CURVE25519

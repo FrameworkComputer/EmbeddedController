@@ -65,16 +65,19 @@
 #define DEBUG_ESPI                       0
 
 /* Modules Map */
+#define NPCX_ESPI_BASE_ADDR              0x4000A000
 #define NPCX_MDC_BASE_ADDR               0x4000C000
-#define NPCX_SIB_BASE_ADDR               0x4000E000
 #define NPCX_PMC_BASE_ADDR               0x4000D000
+#define NPCX_SIB_BASE_ADDR               0x4000E000
+#define NPCX_SHI_BASE_ADDR               0x4000F000
 #define NPCX_SHM_BASE_ADDR               0x40010000
+#define NPCX_GDMA_BASE_ADDR              0x40011000
 #define NPCX_FIU_BASE_ADDR               0x40020000
 #define NPCX_KBSCAN_REGS_BASE            0x400A3000
 #define NPCX_GLUE_REGS_BASE              0x400A5000
 #define NPCX_BBRAM_BASE_ADDR             0x400AF000
 #define NPCX_HFCG_BASE_ADDR              0x400B5000
-#define NPCX_SHI_BASE_ADDR               0x4000F000
+#define NPCX_LFCG_BASE_ADDR              0x400B5100
 #define NPCX_MTC_BASE_ADDR               0x400B7000
 #define NPCX_MSWC_BASE_ADDR              0x400C1000
 #define NPCX_SCFG_BASE_ADDR              0x400C3000
@@ -84,8 +87,6 @@
 #define NPCX_SPI_BASE_ADDR               0x400D2000
 #define NPCX_PECI_BASE_ADDR              0x400D4000
 #define NPCX_TWD_BASE_ADDR               0x400D8000
-#define NPCX_ESPI_BASE_ADDR              0x4000A000
-#define NPCX_GDMA_BASE_ADDR              0x40011000
 
 /* Multi-Modules Map */
 #define NPCX_PWM_BASE_ADDR(mdl)          (0x40080000 + ((mdl) * 0x2000L))
@@ -269,6 +270,20 @@
 #define NPCX_HFCGCTRL_LOAD               0
 #define NPCX_HFCGCTRL_LOCK               2
 #define NPCX_HFCGCTRL_CLK_CHNG           7
+
+/******************************************************************************/
+/* Low Frequency Clock Generator (LFCG) registers */
+#define NPCX_LFCGCTL                      REG8(NPCX_LFCG_BASE_ADDR + 0x000)
+#define NPCX_HFRDI                       REG16(NPCX_LFCG_BASE_ADDR + 0x002)
+#define NPCX_HFRDF                       REG16(NPCX_LFCG_BASE_ADDR + 0x004)
+#define NPCX_FRCDIV                      REG16(NPCX_LFCG_BASE_ADDR + 0x006)
+#define NPCX_DIVCOR1                     REG16(NPCX_LFCG_BASE_ADDR + 0x008)
+#define NPCX_DIVCOR2                     REG16(NPCX_LFCG_BASE_ADDR + 0x00A)
+#define NPCX_LFCGCTL2                     REG8(NPCX_LFCG_BASE_ADDR + 0x014)
+
+/* LFCG register fields */
+#define NPCX_LFCGCTL_XTCLK_VAL            7
+#define NPCX_LFCGCTL2_XT_OSC_SL_EN        6
 
 /******************************************************************************/
 /*CR UART Register */
