@@ -345,10 +345,17 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 /* called from anx74xx_set_power_mode() */
 void board_set_tcpc_power_mode(int port, int mode)
 {
-	if (port == 0) {
-		gpio_set_level(GPIO_USB_C0_PD_RST_L, mode);
-		msleep(mode ? 10 : 1);
-		gpio_set_level(GPIO_USB_C0_TCPC_PWR, mode);
+	if (port != 0)
+		return;
+
+	if (mode) {
+		gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
+		msleep(10);
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
+	} else {
+		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
+		msleep(1);
+		gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
 	}
 }
 
