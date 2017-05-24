@@ -48,8 +48,13 @@ struct host_cmd_handler_args {
 	 * command execution is complete. The driver may still override this
 	 * when sending the response back to the host if it detects an error
 	 * in the response or in its own operation.
+	 *
+	 * Note that while this holds an ec_status enum, we are intentionally
+	 * representing this field as a uint16_t, to prevent issues related to
+	 * compiler optimizations affecting the range of values representable
+	 * by this field.
 	 */
-	enum ec_status result;
+	uint16_t result;
 };
 
 /* Args for host packet handler */
@@ -95,8 +100,13 @@ struct host_packet {
 	 * Error from driver; if this is non-zero, host command handler will
 	 * return a properly formatted error response packet rather than
 	 * calling a command handler.
+	 *
+	 * Note that while this holds an ec_status enum, we are intentionally
+	 * representing this field as a uint16_t, to prevent issues related to
+	 * compiler optimizations affecting the range of values representable
+	 * by this field.
 	 */
-	enum ec_status driver_result;
+	uint16_t driver_result;
 };
 
 /* Host command */
@@ -127,9 +137,12 @@ uint8_t *host_get_memmap(int offset);
  * Process a host command and return its response
  *
  * @param args	        Command handler args
- * @return resulting status
+ * @return resulting status. Note that while this returns an ec_status enum, we
+ * are intentionally specifying the return type as a uint16_t, to prevent issues
+ * related to compiler optimizations affecting the range of values returnable
+ * from this function.
  */
-enum ec_status host_command_process(struct host_cmd_handler_args *args);
+uint16_t host_command_process(struct host_cmd_handler_args *args);
 
 #ifdef CONFIG_HOSTCMD_EVENTS
 /**

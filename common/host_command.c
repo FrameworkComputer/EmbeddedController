@@ -599,7 +599,7 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 		CPRINTS("HC 0x%02x", args->command);
 }
 
-enum ec_status host_command_process(struct host_cmd_handler_args *args)
+uint16_t host_command_process(struct host_cmd_handler_args *args)
 {
 	const struct host_command *cmd;
 	int rv;
@@ -854,7 +854,7 @@ static int command_host_command(int argc, char **argv)
 {
 	struct host_cmd_handler_args args;
 	char *cmd_params;
-	enum ec_status res;
+	uint16_t res;
 	char *e;
 	int rv;
 

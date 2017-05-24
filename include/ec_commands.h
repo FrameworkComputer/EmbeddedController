@@ -460,7 +460,9 @@
 #define EC_LPC_STATUS_BUSY_MASK \
 	(EC_LPC_STATUS_FROM_HOST | EC_LPC_STATUS_PROCESSING)
 
-/* Host command response codes */
+/* Host command response codes (16-bit).  Note that response codes should be
+ * stored in a uint16_t rather than directly in a value of this type.
+ */
 enum ec_status {
 	EC_RES_SUCCESS = 0,
 	EC_RES_INVALID_COMMAND = 1,
@@ -477,8 +479,8 @@ enum ec_status {
 	EC_RES_INVALID_HEADER = 12,     /* Header contains invalid data */
 	EC_RES_REQUEST_TRUNCATED = 13,  /* Didn't get the entire request */
 	EC_RES_RESPONSE_TOO_BIG = 14,   /* Response was too big to handle */
-	EC_RES_BUS_ERROR = 15,          /* Communications bus error */
-	EC_RES_BUSY = 16                /* Up but too busy.  Should retry */
+	EC_RES_BUS_ERROR = 15,		/* Communications bus error */
+	EC_RES_BUSY = 16		/* Up but too busy.  Should retry */
 };
 
 /*
