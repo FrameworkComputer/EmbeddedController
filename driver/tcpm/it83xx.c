@@ -271,6 +271,8 @@ static void it83xx_set_data_role(enum usbpd_port port, int pd_role)
 
 static void it83xx_init(enum usbpd_port port, int role)
 {
+	/* bit7: Reload CC parameter setting. */
+	IT83XX_USBPD_CCPSR0(port) |= (1 << 7);
 	/* reset */
 	IT83XX_USBPD_GCR(port) = 0;
 	USBPD_SW_RESET(port);
