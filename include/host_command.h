@@ -161,6 +161,17 @@ void host_clear_events(uint32_t mask);
  * Return the raw event state.
  */
 uint32_t host_get_events(void);
+
+/**
+ * Check a single host event.
+ *
+ * @param event		Event to check
+ * @return true if <event> is set or false otherwise
+ */
+static inline int host_is_event_set(enum host_event_code event)
+{
+	return host_get_events() & EC_HOST_EVENT_MASK(event);
+}
 #endif
 
 /**
