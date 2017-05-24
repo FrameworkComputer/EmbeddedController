@@ -310,6 +310,35 @@ void chip_save_reset_flags(int flags)
 	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, flags);
 }
 
+#ifdef CONFIG_POWER_BUTTON_INIT_IDLE
+/*
+ * Set/clear AP_OFF flag. It's set when the system gracefully shuts down and
+ * it's cleared when the system boots up. The result is the system tries to
+ * go back to the previous state upon AC plug-in. If the system uncleanly
+ * shuts down, it boots immediately. If the system shuts down gracefully,
+ * it'll stay at S5 and wait for power button press.
+ */
+static void board_chipset_startup(void)
+{
+	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+	flags &= ~RESET_FLAG_AP_OFF;
+	chip_save_reset_flags(flags);
+	system_clear_reset_flags(RESET_FLAG_AP_OFF);
+	CPRINTS("Cleared AP_OFF flag");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_shutdown(void)
+{
+	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+	flags |= RESET_FLAG_AP_OFF;
+	chip_save_reset_flags(flags);
+	system_set_reset_flags(RESET_FLAG_AP_OFF);
+	CPRINTS("Set AP_OFF flag");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+#endif
+
 /* Check reset cause */
 void system_check_reset_cause(void)
 {
@@ -317,7 +346,12 @@ void system_check_reset_cause(void)
 	uint32_t flags = bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
 
 	/* Clear saved reset flags in bbram */
+#ifdef CONFIG_POWER_BUTTON_INIT_IDLE
+	/* We'll clear AP_OFF on S5->S3 transition */
+	chip_save_reset_flags(flags & RESET_FLAG_AP_OFF);
+#else
 	chip_save_reset_flags(0);
+#endif
 	/* Clear saved hibernate wake flag in bbram , too */
 	bbram_data_write(BBRM_DATA_INDEX_WAKE, 0);
 

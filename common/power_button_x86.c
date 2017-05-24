@@ -231,12 +231,10 @@ static void set_initial_pwrbtn_state(void)
 		return;
 	}
 
+#ifdef CONFIG_BRINGUP
+	pwrbtn_state = PWRBTN_STATE_IDLE;
+#else
 	pwrbtn_state = PWRBTN_STATE_INIT_ON;
-
-#if defined(CONFIG_BRINGUP) || defined(CONFIG_POWER_BUTTON_INIT_IDLE)
-	if (!power_button_is_pressed() &&
-			!host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY))
-		pwrbtn_state = PWRBTN_STATE_IDLE;
 #endif
 	CPRINTS("PB %s",
 		pwrbtn_state == PWRBTN_STATE_INIT_ON ? "init-on" : "idle");

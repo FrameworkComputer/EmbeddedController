@@ -1835,7 +1835,7 @@
 /* Support sending the power button signal to x86 chipsets */
 #undef CONFIG_POWER_BUTTON_X86
 
-/* Set power button state idle at init */
+/* Set power button state idle at init. Implemented only for npcx. */
 #undef CONFIG_POWER_BUTTON_INIT_IDLE
 
 /*
