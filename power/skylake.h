@@ -33,4 +33,10 @@
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
 
+/*
+ * Board can define this function to indicate to the skylake
+ * power code that it does not have working reset flags.
+ */
+int board_has_working_reset_flags(void);
+
 #endif /* __CROS_EC_SKYLAKE_H */

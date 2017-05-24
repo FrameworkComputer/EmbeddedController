@@ -127,6 +127,12 @@ enum power_state power_handle_state(enum power_state state)
 	return new_state;
 }
 
+/* Workaround for flags getting lost with power cycle */
+__attribute__((weak)) int board_has_working_reset_flags(void)
+{
+	return 1;
+}
+
 #ifdef CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
 static void chipset_handle_reboot(void)
 {
@@ -147,8 +153,15 @@ static void chipset_handle_reboot(void)
 		return;
 
 	/* Preserve AP off request. */
-	if (flags & RESET_FLAG_AP_OFF)
+	if (flags & RESET_FLAG_AP_OFF) {
+		/* Do not issue PMIC reset if board cannot save reset flags */
+		if (!board_has_working_reset_flags()) {
+			ccprintf("Skip PMIC reset due to board issue.\n");
+			cflush();
+			return;
+		}
 		chip_save_reset_flags(RESET_FLAG_AP_OFF);
+	}
 
 	ccprintf("Restarting system with PMIC.\n");
 	/* Flush console */
