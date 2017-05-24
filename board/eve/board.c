@@ -372,6 +372,18 @@ static void board_set_tablet_mode(void)
 	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
 }
 
+int board_has_working_reset_flags(void)
+{
+	int version = board_get_version();
+
+	/* board version >= P1b will lose reset flags on power cycle */
+	if (version >= 3)
+		return 0;
+
+	/* All other board versions should have working reset flags */
+	return 1;
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
