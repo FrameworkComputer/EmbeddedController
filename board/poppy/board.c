@@ -298,6 +298,9 @@ void base_detect_interrupt(enum gpio_signal signal)
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
+#ifdef CONFIG_POWER_S0IX
+	{GPIO_PCH_SLP_S0_L,	1, "SLP_S0_DEASSERTED"},
+#endif
 #ifdef CONFIG_ESPI_VW_SIGNALS
 	{VW_SLP_S3_L,		1, "SLP_S3_DEASSERTED"},
 	{VW_SLP_S4_L,		1, "SLP_S4_DEASSERTED"},

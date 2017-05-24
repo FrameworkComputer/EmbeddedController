@@ -19,6 +19,9 @@ GPIO_INT(USB_C1_PD_INT_ODL,	PIN(B, 1), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_ale
 
 GPIO_INT(USB_C0_CABLE_DET,	PIN(C, 5), GPIO_INT_RISING, anx74xx_cable_det_interrupt)	/* CABLE_DET from ANX3429 */
 
+#ifdef CONFIG_POWER_S0IX
+GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH, power_signal_interrupt) /* SLP_S0_L */
+#endif
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S4_L */
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH, power_signal_interrupt)		/* SLP_S3_L */
 GPIO_INT(SUSPWRNACK,		PIN(7, 2), GPIO_INT_BOTH, power_signal_interrupt)
@@ -69,7 +72,9 @@ GPIO(EC_I2C_POWER_SCL,		PIN(D, 1), GPIO_INPUT)
 
 GPIO(PCH_SMI_L,			PIN(A, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* EC_SMI_ODL */
 GPIO(PCH_SCI_L,			PIN(A, 7), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* EC_SCI_ODL */
+#ifndef CONFIG_POWER_S0IX
 GPIO(PCH_SLP_S0_L,              PIN(7, 5), GPIO_INPUT)				/* SLP_S0_L */
+#endif
 
 /*
  * BRD_ID1 is a an ADC pin which will be used to measure multiple values.

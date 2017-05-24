@@ -13,6 +13,9 @@ GPIO_INT(AC_PRESENT,        PIN(30), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(WP_L,              PIN(33), GPIO_INT_BOTH, switch_interrupt)
 /* Buffered power button input from PMIC / ROP_EC_PWR_BTN_L_R */
 GPIO_INT(POWER_BUTTON_L,    PIN(35), GPIO_INT_BOTH, power_button_interrupt)
+#ifdef CONFIG_POWER_S0IX
+GPIO_INT(PCH_SLP_S0_L,      PIN(211), GPIO_INT_BOTH, power_signal_interrupt)
+#endif
 /* RSMRST from PMIC */
 GPIO_INT(RSMRST_L_PGOOD,    PIN(63),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PCH_SLP_S4_L,      PIN(200), GPIO_INT_BOTH, power_signal_interrupt)
@@ -55,7 +58,9 @@ GPIO(PCH_RSMRST_L,          PIN(143), GPIO_OUT_LOW)
 GPIO(PCH_RTCRST,            PIN(163), GPIO_OUT_LOW)
 GPIO(SYS_RESET_L,           PIN(121), GPIO_ODR_HIGH)
 GPIO(ENTERING_RW,           PIN(41),  GPIO_OUT_LOW)
+#ifndef CONFIG_POWER_S0IX
 GPIO(PCH_SLP_S0_L,          PIN(211), GPIO_INPUT)
+#endif
 
 /* Devices and power */
 GPIO(PP1800_DX_DMIC_EN,     PIN(11),  GPIO_OUT_LOW)

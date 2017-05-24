@@ -240,7 +240,10 @@ enum pwm_channel {
 };
 
 enum power_signal {
-	X86_RSMRST_N = 0,
+#ifdef CONFIG_POWER_S0IX
+	X86_SLP_S0_N,
+#endif
+	X86_RSMRST_N,
 	X86_SLP_S3_N,
 	X86_SLP_S4_N,
 	X86_SUSPWRDNACK,

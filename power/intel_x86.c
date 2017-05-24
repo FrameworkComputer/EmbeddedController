@@ -37,20 +37,24 @@
 
 enum sys_sleep_state {
 	SYS_SLEEP_S3,
-	SYS_SLEEP_S4
+	SYS_SLEEP_S4,
+#ifdef CONFIG_POWER_S0IX
+	SYS_SLEEP_S0IX,
+#endif
 };
 
+static const int sleep_sig[] = {
 #ifdef CONFIG_ESPI_VW_SIGNALS
-static const enum espi_vw_signal espi_vm_sig[] = {
 	[SYS_SLEEP_S3] = VW_SLP_S3_L,
 	[SYS_SLEEP_S4] = VW_SLP_S4_L,
-};
 #else
-static const enum gpio_signal gpio_sig[] = {
 	[SYS_SLEEP_S3] = GPIO_PCH_SLP_S3_L,
 	[SYS_SLEEP_S4] = GPIO_PCH_SLP_S4_L,
-};
 #endif
+#ifdef CONFIG_POWER_S0IX
+	[SYS_SLEEP_S0IX] = GPIO_PCH_SLP_S0_L,
+#endif
+};
 
 static int power_s5_up;       /* Chipset is sequencing up or down */
 
@@ -58,10 +62,11 @@ static int power_s5_up;       /* Chipset is sequencing up or down */
 static inline int chipset_get_sleep_signal(enum sys_sleep_state state)
 {
 #ifdef CONFIG_ESPI_VW_SIGNALS
-	return espi_vw_get_wire(espi_vm_sig[state]);
-#else
-	return gpio_get_level(gpio_sig[state]);
+	if (sleep_sig[state] > VW_SIGNAL_BASE)
+		return espi_vw_get_wire(sleep_sig[state]);
+	else
 #endif
+		return gpio_get_level(sleep_sig[state]);
 }
 
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
@@ -220,8 +225,16 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			/* Power down to next state */
 			return POWER_S0S3;
 #ifdef CONFIG_POWER_S0IX
-		} else if (power_get_host_sleep_state() ==
-			    HOST_SLEEP_EVENT_S0IX_SUSPEND) {
+		/*
+		 * SLP_S0 may assert in system idle scenario without a kernel
+		 * freeze call. This may cause interrupt storm since there is
+		 * no freeze/unfreeze of threads/process in the idle scenario.
+		 * Ignore the SLP_S0 assertions in idle scenario by checking
+		 * the host sleep state.
+		 */
+		} else if (power_get_host_sleep_state()
+					== HOST_SLEEP_EVENT_S0IX_SUSPEND &&
+				chipset_get_sleep_signal(SYS_SLEEP_S0IX) == 0) {
 			return POWER_S0S0ix;
 #endif
 		}
@@ -230,8 +243,8 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 #ifdef CONFIG_POWER_S0IX
 	case POWER_S0ix:
-		if ((power_get_host_sleep_state() ==
-		     HOST_SLEEP_EVENT_S0IX_RESUME) &&
+		/* System in S0 only if SLP_S0 and SLP_S3 are de-asserted */
+		if ((chipset_get_sleep_signal(SYS_SLEEP_S0IX) == 1) &&
 		   (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0ixS0;
 		} else if (!power_has_signals(IN_PGOOD_ALL_CORE)) {

@@ -735,22 +735,6 @@ static int host_command_host_sleep_event(struct host_cmd_handler_args *args)
 
 	host_sleep_state = p->sleep_event;
 
-#ifdef CONFIG_POWER_S0IX
-	if (p->sleep_event == HOST_SLEEP_EVENT_S0IX_SUSPEND) {
-		CPRINTS("S0ix sus evt");
-		task_wake(TASK_ID_CHIPSET);
-	} else if (p->sleep_event == HOST_SLEEP_EVENT_S0IX_RESUME) {
-		CPRINTS("S0ix res evt");
-		/*
-		 * For all scenarios where lid is not open
-		 * this will be trigerred when other wake
-		 * sources like keyboard, trackpad are used.
-		 */
-		if (!chipset_in_state(CHIPSET_STATE_ON))
-			task_wake(TASK_ID_CHIPSET);
-	}
-#endif /* CONFIG_POWER_S0IX */
-
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT,
