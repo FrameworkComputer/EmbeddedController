@@ -162,6 +162,8 @@ enum update_extra_command {
 	UPDATE_EXTRA_CMD_STAY_IN_RO = 2,
 	UPDATE_EXTRA_CMD_UNLOCK_RW = 3,
 	UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK = 4,
+	UPDATE_EXTRA_CMD_INJECT_ENTROPY = 5,
+	UPDATE_EXTRA_CMD_PAIR_CHALLENGE = 6,
 };
 
 void fw_update_command_handler(void *body,

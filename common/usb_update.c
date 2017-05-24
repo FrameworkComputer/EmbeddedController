@@ -11,6 +11,7 @@
 #include "flash.h"
 #include "queue_policies.h"
 #include "host_command.h"
+#include "rollback.h"
 #include "rwsig.h"
 #include "system.h"
 #include "update_fw.h"
@@ -201,7 +202,30 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT, 0);
 			response = EC_RES_SUCCESS;
 			break;
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+#ifdef CONFIG_ROLLBACK_UPDATE
+		case UPDATE_EXTRA_CMD_INJECT_ENTROPY: {
+			/*
+			 * Check that we are provided enough data (header +
+			 * 2 bytes subcommand + secret length).
+			 */
+			int header_size = sizeof(*cmd_buffer) + 2;
+			int entropy_count = count-header_size;
+
+			if (entropy_count < CONFIG_ROLLBACK_SECRET_SIZE) {
+				CPRINTS("Entropy too short");
+				response = EC_RES_INVALID_PARAM;
+				break;
+			}
+
+			CPRINTS("Adding %db of entropy", entropy_count);
+			/* Add the whole buffer to entropy. */
+			rollback_add_entropy(buffer+header_size, entropy_count);
+			break;
+		}
 #endif
+#endif /* CONFIG_ROLLBACK_SECRET_SIZE */
+#endif /* CONFIG_ROLLBACK */
 		default:
 			response = EC_RES_INVALID_COMMAND;
 		}
