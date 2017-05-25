@@ -733,6 +733,7 @@ void sensor_board_proc_double_tap(void)
 {
 	/* TODO: Call led update function */
 	CPRINTS("Call LED status update");
+	led_register_double_tap();
 }
 
 /* Base Sensor mutex */
