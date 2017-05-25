@@ -369,6 +369,8 @@ void gpio_pre_init(void)
 	 * for more information. It will be fixed in next chip.
 	 */
 	SET_BIT(NPCX_DEVCNT, 7);
+	/* Lock VCC_RST# alternative bit in case switch to GPO77 unexpectedly */
+	SET_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_VCC1_RST_LK);
 #endif
 
 	/* Pin_Mux for FIU/SPI (set to GPIO) */

@@ -537,6 +537,7 @@ enum {
 #define NPCX_DEV_CTL4_F_SPI_SLLK         2
 #define NPCX_DEV_CTL4_SPI_SP_SEL         4
 #define NPCX_DEV_CTL4_WP_IF              5
+#define NPCX_DEV_CTL4_VCC1_RST_LK        6
 #define NPCX_DEVPU0_I2C0_0_PUE           0
 #define NPCX_DEVPU0_I2C0_1_PUE           1
 #define NPCX_DEVPU0_I2C1_0_PUE           2
