@@ -253,6 +253,12 @@ static int enable_sensor(const struct motion_sensor_t *s, int reg_val)
 		if (ret != EC_SUCCESS)
 			continue;
 
+#ifdef CONFIG_KX022_ORIENTATION_SENSOR
+		/* Enable tilt orientation mode  if lid sensor */
+		if ((s->location == MOTIONSENSE_LOC_LID) && (V(s) == 0))
+			reg_val |= KX022_CNTL1_TPE;
+#endif
+
 		/* Enable accelerometer based on reg_val value. */
 		ret = raw_write8(s->port, s->addr, reg,
 				reg_val | pc1_field);
@@ -394,6 +400,55 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_KX022_ORIENTATION_SENSOR
+static enum motionsensor_orientation kx022_convert_orientation(
+		const struct motion_sensor_t *s,
+		int orientation)
+{
+	enum motionsensor_orientation res = MOTIONSENSE_ORIENTATION_UNKNOWN;
+
+	switch (orientation) {
+	case KX022_ORIENT_PORTRAIT:
+		res = MOTIONSENSE_ORIENTATION_PORTRAIT;
+		break;
+	case KX022_ORIENT_INVERT_PORTRAIT:
+		res = MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_PORTRAIT;
+		break;
+	case KX022_ORIENT_LANDSCAPE:
+		res = MOTIONSENSE_ORIENTATION_LANDSCAPE;
+		break;
+	case KX022_ORIENT_INVERT_LANDSCAPE:
+		res = MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_LANDSCAPE;
+		break;
+	default:
+		break;
+	}
+	res = motion_sense_remap_orientation(s, res);
+	return res;
+}
+
+static int check_orientation_locked(const struct motion_sensor_t *s)
+{
+	struct kionix_accel_data *data = s->drv_data;
+	int orientation, raw_orientation;
+	int ret;
+
+	ret = raw_read8(s->port, s->addr,
+			KX022_TSCP, &raw_orientation);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* mask off up and down events, we don't care about those */
+	raw_orientation &= KX022_ORIENT_MASK;
+	if (raw_orientation && (raw_orientation != data->raw_orientation)) {
+		data->raw_orientation = raw_orientation;
+		orientation = kx022_convert_orientation(s, raw_orientation);
+		SET_ORIENTATION(s, orientation);
+	}
+	return ret;
+}
+#endif
+
 static int read(const struct motion_sensor_t *s, vector_3_t v)
 {
 	uint8_t acc[6];
@@ -405,6 +460,11 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	reg = KIONIX_XOUT_L(V(s));
 	mutex_lock(s->mutex);
 	ret = raw_read_multi(s->port, s->addr, reg, acc, 6);
+#ifdef CONFIG_KX022_ORIENTATION_SENSOR
+	if ((s->location == MOTIONSENSE_LOC_LID) && (V(s) == 0) &&
+			(ret == EC_SUCCESS))
+		ret = check_orientation_locked(s);
+#endif
 	mutex_unlock(s->mutex);
 
 	if (ret != EC_SUCCESS)

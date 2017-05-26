@@ -99,6 +99,12 @@
 #define BMI160_S_TAP_INT           (1 << 5)
 #define BMI160_ORIENT_INT          (1 << 6)
 #define BMI160_FLAT_INT            (1 << 7)
+#define BMI160_ORIENT_XY_MASK	   0x30
+#define BMI160_ORIENT_PORTRAIT		(0 << 4)
+#define BMI160_ORIENT_PORTRAIT_INVERT	(1 << 4)
+#define BMI160_ORIENT_LANDSCAPE		(2 << 4)
+#define BMI160_ORIENT_LANDSCAPE_INVERT	(3 << 4)
+
 
 #define BMI160_INT_STATUS_1    0x1d
 #define BMI160_HIGHG_INT           (1 << (2 + 8))
@@ -333,8 +339,15 @@ enum fifo_header {
 #define BMI160_TAP_TH(_s, _mg) \
 	 (MIN(((_mg) * 1000) / ((_s)->drv->get_range(_s) * 31250), 0x1f))
 
-#define BMI160_INT_ORIENT_0    0x65
-#define BMI160_INT_ORIENT_1    0x66
+#define BMI160_INT_ORIENT_0				0x65
+
+/* No hysterisis, theta block, int on slope > 0.2 or axis > 1.5, symmetrical */
+#define BMI160_INT_ORIENT_0_INIT_VAL			0x48
+
+#define BMI160_INT_ORIENT_1				0x66
+
+/* no axes remap, no int on up/down, no blocking angle */
+#define BMI160_INT_ORIENT_1_INIT_VAL			0x00
 
 #define BMI160_INT_FLAT_0      0x67
 #define BMI160_INT_FLAT_1      0x68
@@ -449,12 +462,34 @@ struct bmi160_drv_data_t {
 #ifdef CONFIG_MAG_BMI160_BMM150
 	struct bmm150_private_data compass;
 #endif
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+	uint8_t raw_orientation;
+	enum motionsensor_orientation orientation;
+	enum motionsensor_orientation last_orientation;
+#endif
+
 };
 
 #define BMI160_GET_DATA(_s) \
 	((struct bmi160_drv_data_t *)(_s)->drv_data)
 #define BMI160_GET_SAVED_DATA(_s) \
 	(&BMI160_GET_DATA(_s)->saved_data[(_s)->type])
+
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+#define ORIENTATION_CHANGED(_sensor) \
+	(BMI160_GET_DATA(_sensor)->orientation != \
+	BMI160_GET_DATA(_sensor)->last_orientation)
+
+#define GET_ORIENTATION(_sensor) \
+	(BMI160_GET_DATA(_sensor)->orientation)
+
+#define SET_ORIENTATION(_sensor, _val) \
+	(BMI160_GET_DATA(_sensor)->orientation = _val)
+
+#define SET_ORIENTATION_UPDATED(_sensor) \
+	(BMI160_GET_DATA(_sensor)->last_orientation = \
+	BMI160_GET_DATA(_sensor)->orientation)
+#endif
 
 void bmi160_interrupt(enum gpio_signal signal);
 

@@ -2080,6 +2080,15 @@ enum motionsensor_chip {
 	MOTIONSENSE_CHIP_OPT3001 = 10,
 };
 
+/* List of orientation positions */
+enum motionsensor_orientation {
+	MOTIONSENSE_ORIENTATION_LANDSCAPE = 0,
+	MOTIONSENSE_ORIENTATION_PORTRAIT = 1,
+	MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_PORTRAIT = 2,
+	MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_LANDSCAPE = 3,
+	MOTIONSENSE_ORIENTATION_UNKNOWN = 4,
+};
+
 struct __ec_todo_packed ec_response_motion_sensor_data {
 	/* Flags for each sensor. */
 	uint8_t flags;
@@ -2124,6 +2133,7 @@ enum motionsensor_activity {
 	MOTIONSENSE_ACTIVITY_RESERVED = 0,
 	MOTIONSENSE_ACTIVITY_SIG_MOTION = 1,
 	MOTIONSENSE_ACTIVITY_DOUBLE_TAP = 2,
+	MOTIONSENSE_ACTIVITY_ORIENTATION = 3,
 };
 
 struct __ec_todo_unpacked ec_motion_sense_activity {

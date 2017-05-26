@@ -26,11 +26,25 @@
 #include "timer.h"
 #include "task.h"
 #include "util.h"
+#include "accel_kionix.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_MOTION_SENSE, outstr)
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
+
+#ifdef CONFIG_ORIENTATION_SENSOR
+/*
+ * Orientation mode vectors, must match sequential ordering of
+ * known orientations from enum motionsensor_orientation
+ */
+const vector_3_t orientation_modes[] = {
+	[MOTIONSENSE_ORIENTATION_LANDSCAPE] = { 0, -1, 0 },
+	[MOTIONSENSE_ORIENTATION_PORTRAIT] = { 1, 0, 0 },
+	[MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_PORTRAIT] = { -1, 0, 0 },
+	[MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_LANDSCAPE] = { 0, 1, 0 },
+};
+#endif
 
 /*
  * Sampling interval for measuring acceleration and calculating lid angle.
@@ -711,6 +725,115 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	return ret;
 }
 
+#ifdef CONFIG_ORIENTATION_SENSOR
+enum motionsensor_orientation motion_sense_remap_orientation(
+		const struct motion_sensor_t *s,
+		enum motionsensor_orientation orientation)
+{
+	enum motionsensor_orientation rotated_orientation;
+	const vector_3_t *orientation_v;
+	vector_3_t rotated_orientation_v;
+
+	if (orientation == MOTIONSENSE_ORIENTATION_UNKNOWN)
+		return MOTIONSENSE_ORIENTATION_UNKNOWN;
+
+	orientation_v = &orientation_modes[orientation];
+	rotate(*orientation_v, *s->rot_standard_ref, rotated_orientation_v);
+	rotated_orientation = ((2 * rotated_orientation_v[1] +
+			rotated_orientation_v[0] + 4) % 5);
+	return rotated_orientation;
+}
+#endif
+
+#ifdef CONFIG_GESTURE_DETECTION
+static void check_and_queue_gestures(uint32_t *event)
+{
+#ifdef CONFIG_ORIENTATION_SENSOR
+	const struct motion_sensor_t *sensor;
+#endif
+
+#ifdef CONFIG_GESTURE_SW_DETECTION
+	/* Run gesture recognition engine */
+	gesture_calc(event);
+#endif
+#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
+	if (*event & CONFIG_GESTURE_TAP_EVENT) {
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+		struct ec_response_motion_sensor_data vector;
+
+		/*
+		 * Send events to the FIFO
+		 * AP is ignoring double tap event, do no wake up and no
+		 * automatic disable.
+		 */
+		vector.flags = 0;
+		vector.activity = MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
+		vector.state = 1; /* triggered */
+		vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
+		motion_sense_fifo_add_unit(&vector, NULL, 0);
+#endif
+		CPRINTS("double tap!");
+		/* Call board specific function to process tap */
+		sensor_board_proc_double_tap();
+	}
+#endif
+#ifdef CONFIG_GESTURE_SIGMO
+	if (*event & CONFIG_GESTURE_SIGMO_EVENT) {
+		struct motion_sensor_t *activity_sensor;
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+		struct ec_response_motion_sensor_data vector;
+
+		/* Send events to the FIFO */
+		vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
+		vector.activity = MOTIONSENSE_ACTIVITY_SIG_MOTION;
+		vector.state = 1; /* triggered */
+		vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
+		motion_sense_fifo_add_unit(&vector, NULL, 0);
+#endif
+		CPRINTS("significant motion");
+		/* Disable further detection */
+		activity_sensor = &motion_sensors[CONFIG_GESTURE_SIGMO];
+		activity_sensor->drv->manage_activity(
+				activity_sensor,
+				MOTIONSENSE_ACTIVITY_SIG_MOTION,
+				0, NULL);
+	}
+#endif
+
+#ifdef CONFIG_ORIENTATION_SENSOR
+	sensor = &motion_sensors[LID_ACCEL];
+	if (SENSOR_ACTIVE(sensor) && (sensor->state == SENSOR_INITIALIZED)) {
+		struct ec_response_motion_sensor_data vector = {
+			.flags = 0,
+			.activity = MOTIONSENSE_ACTIVITY_ORIENTATION,
+			.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
+		};
+
+		mutex_lock(sensor->mutex);
+		if (ORIENTATION_CHANGED(sensor) && (GET_ORIENTATION(sensor) !=
+				MOTIONSENSE_ORIENTATION_UNKNOWN)) {
+			SET_ORIENTATION_UPDATED(sensor);
+			vector.state = GET_ORIENTATION(sensor);
+			motion_sense_fifo_add_unit(&vector, NULL, 0);
+#ifdef CONFIG_DEBUG_ORIENTATION
+			{
+				static const char * const mode_strs[] = {
+						"Landscape",
+						"Portrait",
+						"Inv_Portrait",
+						"Inv_Landscape",
+						"Unknown"
+				};
+				CPRINTS(mode_strs[GET_ORIENTATION(sensor)]);
+			}
+#endif
+		}
+		mutex_unlock(sensor->mutex);
+	}
+#endif
+}
+#endif
+
 /*
  * Motion Sense Task
  * Requirement: motion_sensors[] are defined in board.c file.
@@ -763,55 +886,8 @@ void motion_sense_task(void *u)
 				ready_status |= (1 << i);
 			}
 		}
-
 #ifdef CONFIG_GESTURE_DETECTION
-#ifdef CONFIG_GESTURE_SW_DETECTION
-		/* Run gesture recognition engine */
-		gesture_calc(&event);
-#endif
-#ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
-		if (event & CONFIG_GESTURE_TAP_EVENT) {
-#ifdef CONFIG_GESTURE_HOST_DETECTION
-			struct ec_response_motion_sensor_data vector;
-
-			/*
-			 * Send events to the FIFO
-			 * AP is ignoring double tap event, do no wake up and no
-			 * automatic disable.
-			 */
-			vector.flags = 0;
-			vector.activity = MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
-			vector.state = 1; /* triggered */
-			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
-			motion_sense_fifo_add_unit(&vector, NULL, 0);
-#endif
-			CPRINTS("double tap!");
-			/* Call board specific function to process tap */
-			sensor_board_proc_double_tap();
-		}
-#endif
-#ifdef CONFIG_GESTURE_SIGMO
-		if (event & CONFIG_GESTURE_SIGMO_EVENT) {
-			struct motion_sensor_t *activity_sensor;
-#ifdef CONFIG_GESTURE_HOST_DETECTION
-			struct ec_response_motion_sensor_data vector;
-
-			/* Send events to the FIFO */
-			vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
-			vector.activity = MOTIONSENSE_ACTIVITY_SIG_MOTION;
-			vector.state = 1; /* triggered */
-			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
-			motion_sense_fifo_add_unit(&vector, NULL, 0);
-#endif
-			CPRINTS("significant motion");
-			/* Disable further detection */
-			activity_sensor = &motion_sensors[CONFIG_GESTURE_SIGMO];
-			activity_sensor->drv->manage_activity(
-					activity_sensor,
-					MOTIONSENSE_ACTIVITY_SIG_MOTION,
-					0, NULL);
-		}
-#endif
+		check_and_queue_gestures(&event);
 #endif
 #ifdef CONFIG_LID_ANGLE
 		/*

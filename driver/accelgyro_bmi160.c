@@ -796,6 +796,16 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	ret = raw_write8(s->port, s->addr, BMI160_INT_TAP_1,
 		BMI160_TAP_TH(s, CONFIG_GESTURE_TAP_THRES_MG));
 #endif
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+	/* only use orientation sensor on the lid sensor */
+	if (s->location == MOTIONSENSE_LOC_LID) {
+		ret = raw_write8(s->port, s->addr, BMI160_INT_ORIENT_0,
+			BMI160_INT_ORIENT_0_INIT_VAL);
+		ret = raw_write8(s->port, s->addr, BMI160_INT_ORIENT_1,
+			BMI160_INT_ORIENT_1_INIT_VAL);
+	}
+#endif
+
 	/*
 	 * Set a 5ms latch to be sure the EC can read the interrupt register
 	 * properly, even when it is running more slowly.
@@ -819,6 +829,11 @@ static int config_interrupt(const struct motion_sensor_t *s)
 #endif
 #ifdef CONFIG_GESTURE_SENSOR_BATTERY_TAP
 	tmp |= BMI160_INT_D_TAP;
+#endif
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+	/* enable orientation interrupt for lid sensor only */
+	if (s->location == MOTIONSENSE_LOC_LID)
+		tmp |= BMI160_INT_ORIENT;
 #endif
 	ret = raw_write8(s->port, s->addr, BMI160_INT_MAP_REG(1), tmp);
 
@@ -859,6 +874,9 @@ static int config_interrupt(const struct motion_sensor_t *s)
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	int interrupt;
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+	int shifted_masked_orientation;
+#endif
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
@@ -873,6 +891,37 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 #ifdef CONFIG_GESTURE_SIGMO
 	if (interrupt & BMI160_SIGMOT_INT)
 		*event |= CONFIG_GESTURE_SIGMO_EVENT;
+#endif
+#ifdef CONFIG_BMI160_ORIENTATION_SENSOR
+	shifted_masked_orientation = (interrupt >> 24) & BMI160_ORIENT_XY_MASK;
+	if (BMI160_GET_DATA(s)->raw_orientation != shifted_masked_orientation) {
+		enum motionsensor_orientation orientation =
+				MOTIONSENSE_ORIENTATION_UNKNOWN;
+
+		BMI160_GET_DATA(s)->raw_orientation =
+				shifted_masked_orientation;
+
+		switch (shifted_masked_orientation) {
+		case BMI160_ORIENT_PORTRAIT:
+			orientation = MOTIONSENSE_ORIENTATION_PORTRAIT;
+			break;
+		case BMI160_ORIENT_PORTRAIT_INVERT:
+			orientation =
+				MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_PORTRAIT;
+			break;
+		case BMI160_ORIENT_LANDSCAPE:
+			orientation = MOTIONSENSE_ORIENTATION_LANDSCAPE;
+			break;
+		case BMI160_ORIENT_LANDSCAPE_INVERT:
+			orientation =
+				MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_LANDSCAPE;
+			break;
+		default:
+			break;
+		}
+		orientation = motion_sense_remap_orientation(s, orientation);
+		SET_ORIENTATION(s, orientation);
+	}
 #endif
 	/*
 	 * No need to read the FIFO here, motion sense task is
