@@ -202,7 +202,7 @@ static int test_switch_outlet(void)
 
 	/*
 	 * Now the user decides to move it to a nearby outlet...actually
-	 * he decides to move it 5 times!
+	 * they decide to move it 5 times!
 	 */
 	for (i = 0; i < 5; ++i) {
 		usleep(SECOND * 20);
@@ -230,8 +230,8 @@ static int test_fast_switch(void)
 	plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 3000);
 
 	/*
-	 * Here comes that naughty user again, and this time he's switching
-	 * outlet really quickly. Fortunately this time he only does it twice.
+	 * Here comes that naughty user again, and this time they are switching
+	 * outlet really quickly. Fortunately this time they only do it twice.
 	 */
 	for (i = 0; i < 2; ++i) {
 		usleep(SECOND * 20);
