@@ -192,6 +192,17 @@ excep_handler:
 	la      $r0, saved_regs + 4
 	smw.bim $r1, [$r0], $r10, 0
 	smw.bim $r15,[$r0], $r15, 0xF
+#ifdef CONFIG_FPU
+	/*
+	 * We have to restore ALU so that we can continue the next
+	 * sequence if arithmetic instructions are used.
+	 * (Apply to floating point division by zero)
+	 */
+	sethi   $r4, 0x80
+	ori     $r4, $r4,0x9
+	mtsr    $r4, $dlmb
+	dsb
+#endif
 	/* put a sane stack pointer */
 	la $sp, stack_end
 	/* add IPC, IPSW to the context */

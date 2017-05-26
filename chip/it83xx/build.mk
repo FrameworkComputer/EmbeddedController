@@ -18,6 +18,7 @@ chip-y=hwtimer.o uart.o gpio.o system.o jtag.o clock.o irq.o intc.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(CONFIG_FANS)+=fan.o pwm.o
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash.o
+chip-$(CONFIG_FPU)+=it83xx_fpu.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_EC2I)+=ec2i.o
