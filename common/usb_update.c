@@ -210,7 +210,7 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			 * 2 bytes subcommand + secret length).
 			 */
 			int header_size = sizeof(*cmd_buffer) + 2;
-			int entropy_count = count-header_size;
+			int entropy_count = count - header_size;
 
 			if (entropy_count < CONFIG_ROLLBACK_SECRET_SIZE) {
 				CPRINTS("Entropy too short");
@@ -219,8 +219,9 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			}
 
 			CPRINTS("Adding %db of entropy", entropy_count);
-			/* Add the whole buffer to entropy. */
-			rollback_add_entropy(buffer+header_size, entropy_count);
+			/* Add the entropy to secret. */
+			rollback_add_entropy(buffer + header_size,
+					     entropy_count);
 			break;
 		}
 #endif
