@@ -4,6 +4,8 @@
  */
 
 /* System module for Chrome EC : common functions */
+#include "battery.h"
+#include "charge_manager.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -1290,3 +1292,31 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_REBOOT_EC,
 		     host_command_reboot,
 		     EC_VER_MASK(0));
+
+int system_can_boot_ap(void)
+{
+	int power_good = 0;
+	int soc = -1;
+	int pow = -1;
+
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+	/* Require a minimum battery level to power on. If battery isn't
+	 * present, battery_state_of_charge_abs returns false. */
+	if (battery_state_of_charge_abs(&soc) == EC_SUCCESS &&
+			soc >= CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
+		power_good = 1;
+#endif
+
+#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
+	if (!power_good) {
+		pow = charge_manager_get_power_limit_uw() / 1000;
+		if (pow >= CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW)
+			power_good = 1;
+	}
+#endif
+	if (!power_good)
+		CPRINTS("Not enough power to boot AP: charge=%d power=%d\n",
+			soc, pow);
+
+	return power_good;
+}

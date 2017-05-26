@@ -529,4 +529,12 @@ static inline void system_print_extended_version_info(void)
 {
 }
 #endif
+
+/**
+ * Check if the system can supply enough power to boot AP
+ *
+ * @return true if the system is powered enough or false otherwise
+ */
+int system_can_boot_ap(void);
+
 #endif  /* __CROS_EC_SYSTEM_H */
