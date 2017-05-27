@@ -176,9 +176,20 @@ struct upgrade_pkt {
 	__be32	length;
 	__be32	ordinal;
 	__be16	subcmd;
-	__be32	digest;
-	__be32	address;
-	char data[0];
+	union {
+		/*
+		 * Upgrade PDUs as opposed to all other vendor and extension
+		 * commands include two additional fields in the header.
+		 */
+		struct {
+			__be32	digest;
+			__be32	address;
+			char data[0];
+		} upgrade;
+		struct {
+			char data[0];
+		} command;
+	};
 } __packed;
 
 #define MAX_BUF_SIZE	(SIGNED_TRANSFER_SIZE + sizeof(struct upgrade_pkt))
@@ -241,26 +252,37 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 {
 	/* Used by transfer to /dev/tpm0 */
 	static uint8_t outbuf[MAX_BUF_SIZE];
-
 	struct upgrade_pkt *out = (struct upgrade_pkt *)outbuf;
 	/* Use the same structure, it will not be filled completely. */
 	int len, done;
-	int response_offset = offsetof(struct upgrade_pkt, digest);
+	int response_offset = offsetof(struct upgrade_pkt, command.data);
+	void *payload;
+	size_t header_size;
 
 	debug("%s: sending to %#x %d bytes\n", __func__, addr, size);
 
-	len = size + sizeof(struct upgrade_pkt);
-
 	out->tag = htobe16(0x8001);
-	out->length = htobe32(len);
+	out->subcmd = htobe16(subcmd);
+
 	if (subcmd <= LAST_EXTENSION_COMMAND)
 		out->ordinal = htobe32(CONFIG_EXTENSION_COMMAND);
 	else
 		out->ordinal = htobe32(TPM_CC_VENDOR_BIT_MASK);
-	out->subcmd = htobe16(subcmd);
-	out->digest = digest;
-	out->address = htobe32(addr);
-	memcpy(out->data, data, size);
+
+	if (subcmd == EXTENSION_FW_UPGRADE) {
+		/* FW Upgrade PDU header includes a couple of extra fields. */
+		out->upgrade.digest = digest;
+		out->upgrade.address = htobe32(addr);
+		header_size = offsetof(struct upgrade_pkt, upgrade.data);
+	} else {
+		header_size = offsetof(struct upgrade_pkt, command.data);
+	}
+
+	payload = outbuf + header_size;
+	len = size + header_size;
+
+	out->length = htobe32(len);
+	memcpy(payload, data, size);
 #ifdef DEBUG
 	{
 		int i;
@@ -1113,7 +1135,6 @@ static void generate_reset_request(struct transfer_descriptor *td)
 			fprintf(stderr, "Failed to request posted reboot\n");
 			exit(update_error);
 		}
-
 	}
 
 	printf("reboot %s\n", subcommand == EXTENSION_POST_RESET ?
