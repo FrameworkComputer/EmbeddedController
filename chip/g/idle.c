@@ -128,8 +128,10 @@ static void prepare_to_sleep(void)
 		GREG32(PMU, PWRDN_SCRATCH17) =
 			GREG32(PMU, PWRDN_SCRATCH17) + 1;
 
+#ifndef CONFIG_NO_PINHOLD
 		/* Latch the pinmux values */
 		GREG32(PINMUX, HOLD) = 1;
+#endif
 
 		/* Clamp the USB pins and shut the PHY down. We have to do this
 		 * in three separate steps, or Bad Things happen. */

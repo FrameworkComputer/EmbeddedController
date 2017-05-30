@@ -1730,6 +1730,9 @@
 /* Support memory protection unit (MPU) */
 #undef CONFIG_MPU
 
+/* Do not try hold I/O pins at frozen level during deep sleep */
+#undef CONFIG_NO_PINHOLD
+
 /* Support one-wire interface */
 #undef CONFIG_ONEWIRE
 
