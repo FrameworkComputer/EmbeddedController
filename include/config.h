@@ -2247,6 +2247,10 @@
 #undef CONFIG_STREAM_USART4
 
 /*****************************************************************************/
+/* U2F config: second factor authentication */
+#undef CONFIG_U2F
+
+/*****************************************************************************/
 /* USB stream config */
 #undef CONFIG_STREAM_USB
 
