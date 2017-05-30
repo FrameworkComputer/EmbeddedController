@@ -20,6 +20,7 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
+#include "vboot.h"
 #include "wireless.h"
 
 /* Chipset specific header files */
@@ -180,7 +181,6 @@ enum power_state power_chipset_init(void)
 
 enum power_state common_intel_x86_power_handle_state(enum power_state state)
 {
-
 	switch (state) {
 	case POWER_G3:
 		break;
@@ -270,6 +270,23 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
+#ifdef CONFIG_VBOOT_EC
+		/*
+		 * We have to test power readiness here (instead of S5->S3)
+		 * because when entering S5, EC enables EC_ROP_SLP_SUS pin
+		 * which causes (short-powered) system to brown out.
+		 */
+		{
+		if (!system_can_boot_ap()) {
+			vboot_ec();
+			while (!system_can_boot_ap())
+				/* LED blinks as HOOK_TICK events trigger.
+				 * We can print percent & power as they
+				 * improve. */
+				msleep(200);
+		}
+		}
+#endif
 		power_s5_up = 1;
 		return POWER_S5;
 

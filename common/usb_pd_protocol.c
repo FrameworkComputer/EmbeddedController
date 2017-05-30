@@ -201,7 +201,7 @@ BUILD_ASSERT(ARRAY_SIZE(pd_state_names) == PD_STATE_COUNT);
 static struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
 #endif
 
-static inline int pd_comm_is_enabled(int port)
+int pd_comm_is_enabled(int port)
 {
 #ifdef CONFIG_COMMON_RUNTIME
 	return pd_comm_enabled[port];
