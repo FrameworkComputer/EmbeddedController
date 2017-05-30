@@ -48,9 +48,13 @@ static int verify_slot(int slot)
 
 static int verify_rw(void)
 {
-	uint8_t slot = VBOOT_EC_SLOT_A;
+	uint8_t slot;
 
 	/* 1. Read BBRAM to decide which slot to verify */
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, &slot)) {
+		CPRINTS("Failed to read try slot");
+		slot = VBOOT_EC_SLOT_A;
+	}
 	/* 2. Verify the slot */
 	return verify_slot(slot);
 }
