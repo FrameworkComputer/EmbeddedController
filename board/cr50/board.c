@@ -647,14 +647,14 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 
 	/* Enable access to the NVRAM partition A region */
 	regions[1].reg_base = CONFIG_MAPPED_STORAGE_BASE +
-		CONFIG_FLASH_NVMEM_OFFSET_A;
-	regions[1].reg_size = NVMEM_PARTITION_SIZE;
+		CFG_TOP_A_OFF;
+	regions[1].reg_size = CFG_TOP_SIZE;
 	regions[1].reg_perms = FLASH_REGION_EN_ALL;
 
 	/* Enable access to the NVRAM partition B region */
 	regions[2].reg_base = CONFIG_MAPPED_STORAGE_BASE +
-		CONFIG_FLASH_NVMEM_OFFSET_B;
-	regions[2].reg_size = NVMEM_PARTITION_SIZE;
+		CFG_TOP_B_OFF;
+	regions[2].reg_size = CFG_TOP_SIZE;
 	regions[2].reg_perms = FLASH_REGION_EN_ALL;
 
 	return 3;
