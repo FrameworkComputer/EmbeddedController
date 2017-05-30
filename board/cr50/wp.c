@@ -393,21 +393,20 @@ static void power_button_poked(void)
 		hook_call_deferred(&unlock_sequence_is_over_data, unlock_beat);
 		CPRINTS("poke: not yet %.6ld", unlock_deadline);
 	}
+}
+
+static void power_button_handler(void)
+{
+	if (unlock_in_progress)
+		power_button_poked();
 
 	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
 }
-DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT, power_button_poked, 1);
+DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT, power_button_handler, 1);
 
 static void start_unlock_process(int total_poking_time, int max_poke_interval)
 {
 	unlock_in_progress = 1;
-
-	/* Clear any leftover power button interrupts */
-	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
-
-	/* Enable power button interrupt */
-	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 1);
-	task_enable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT);
 
 	/* Must poke at least this often */
 	unlock_beat = max_poke_interval;
@@ -422,6 +421,17 @@ static void start_unlock_process(int total_poking_time, int max_poke_interval)
 	/* Check progress after waiting long enough for one button press */
 	hook_call_deferred(&unlock_sequence_is_over_data, unlock_beat);
 }
+
+static void power_button_init(void)
+{
+	/* Clear any leftover power button interrupts */
+	GWRITE_FIELD(RBOX, INT_STATE, INTR_PWRB_IN_FED, 1);
+
+	/* Enable power button interrupt */
+	GWRITE_FIELD(RBOX, INT_ENABLE, INTR_PWRB_IN_FED, 1);
+	task_enable_irq(GC_IRQNUM_RBOX0_INTR_PWRB_IN_FED_INT);
+}
+DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_DEFAULT);
 
 /****************************************************************************/
 /* TPM vendor-specific commands */
