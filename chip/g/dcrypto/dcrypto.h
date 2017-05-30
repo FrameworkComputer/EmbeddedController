@@ -243,10 +243,19 @@ int DCRYPTO_bn_div(struct LITE_BIGNUM *quotient, struct LITE_BIGNUM *remainder,
 		const struct LITE_BIGNUM *divisor);
 
 /*
+ * ASN.1 DER
+ */
+size_t DCRYPTO_asn1_sigp(uint8_t *buf, const p256_int *r, const p256_int *s);
+size_t DCRYPTO_asn1_pubp(uint8_t *buf, const p256_int *x, const p256_int *y);
+
+/*
  *  X509.
  */
 int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
 			const struct RSA *ca_pub_key);
+int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
+			const p256_int *pk_y, const p256_int *serial,
+			uint8_t *cert, const int n);
 
 /*
  * Memory related functions.

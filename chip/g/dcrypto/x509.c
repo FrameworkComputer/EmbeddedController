@@ -10,10 +10,45 @@
 /* Limit the size of long form encoded objects to < 64 kB. */
 #define MAX_ASN1_OBJ_LEN_BYTES 3
 
+/* Reserve space for TLV encoding */
+#define SEQ_SMALL 2  /* < 128 bytes (1B type, 1B 7-bit length) */
+#define SEQ_MEDIUM 3 /* < 256 bytes (1B type, 1B length size, 1B length) */
+#define SEQ_LARGE 4  /* < 65536 bytes (1B type, 1B length size, 2B length) */
+
 /* Tag related constants. */
-#define V_ASN1_CONSTRUCTED 0x20
-#define V_ASN1_SEQUENCE    0x10
-#define V_ASN1_BIT_STRING  0x03
+enum {
+	V_ASN1_INT = 0x02,
+	V_ASN1_BIT_STRING  = 0x03,
+	V_ASN1_BYTES = 0x04,
+	V_ASN1_OBJ = 0x06,
+	V_ASN1_UTF8 = 0x0c,
+	V_ASN1_SEQUENCE    = 0x10,
+	V_ASN1_SET         = 0x11,
+	V_ASN1_ASCII = 0x13,
+	V_ASN1_TIME = 0x18,
+	V_ASN1_CONSTRUCTED = 0x20,
+	/* short helpers */
+	V_BITS = V_ASN1_BIT_STRING,
+	V_SEQ = V_ASN1_CONSTRUCTED | V_ASN1_SEQUENCE,
+	V_SET = V_ASN1_CONSTRUCTED | V_ASN1_SET,
+};
+
+struct asn1 {
+	uint8_t *p;
+	size_t n;
+};
+
+
+#define SEQ_START(X, T, L) \
+	do {                     \
+		int __old = (X).n;       \
+		uint8_t __t = (T);       \
+		int __l = (L);           \
+		(X).n += __l;
+#define SEQ_END(X)                                                             \
+	(X).n = asn1_seq((X).p + __old, __t, __l, (X).n - __old - __l) + __old;\
+	}                                                                      \
+	while (0)
 
 /* The SHA256 OID, from https://tools.ietf.org/html/rfc5754#section-3.2
  * Only the object bytes below, the DER encoding header ([0x30 0x0d])
@@ -22,7 +57,174 @@ static const uint8_t OID_SHA256_WITH_RSA_ENCRYPTION[13] = {
 	0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d,
 	0x01, 0x01, 0x0b, 0x05, 0x00
 };
+static const uint8_t OID_commonName[3] = {0x55, 0x04, 0x03};
+static const uint8_t OID_orgName[3] = {0x55, 0x04, 0x0a};
+static const uint8_t OID_ecdsa_with_SHA256[8] = {0x2A, 0x86, 0x48, 0xCE,
+						 0x3D, 0x04, 0x03, 0x02};
+static const uint8_t OID_id_ecPublicKey[7] = {0x2A, 0x86, 0x48, 0xCE, 0x3D,
+					      0x02, 0x01};
+static const uint8_t OID_prime256v1[8] = {0x2A, 0x86, 0x48, 0xCE,
+					  0x3D, 0x03, 0x01, 0x07};
+static const uint8_t OID_fido_u2f[11] = {0x2B, 0x06, 0x01, 0x04, 0x01, 0x82,
+					 0xE5, 0x1C, 0x02, 0x01, 0x01};
+#define OID(X) sizeof(OID_##X), OID_##X
 
+/* ---- ASN.1 Generation ---- */
+
+/* start a tag and return write ptr */
+static uint8_t *asn1_tag(struct asn1 *ctx, uint8_t tag)
+{
+	ctx->p[(ctx->n)++] = tag;
+	return ctx->p + ctx->n;
+}
+
+/* DER encode length and return encoded size thereof */
+static int asn1_len(uint8_t *p, size_t size)
+{
+	if (size < 128) {
+		p[0] = size;
+		return 1;
+	} else if (size < 256) {
+		p[0] = 0x81;
+		p[1] = size;
+		return 2;
+	} else {
+		p[0] = 0x82;
+		p[1] = size >> 8;
+		p[2] = size;
+		return 3;
+	}
+}
+
+/*
+ * close sequence and move encapsulated data if needed
+ * return total length.
+ */
+static size_t asn1_seq(uint8_t *p, uint8_t tag, size_t l, size_t size)
+{
+	size_t tl;
+
+	p[0] = tag;
+	tl = asn1_len(p + 1, size) + 1;
+	/* TODO: tl > l fail */
+	if (tl < l)
+		memmove(p + tl, p + l, size);
+
+	return tl + size;
+}
+
+/* DER encode (small positive) integer */
+static void asn1_int(struct asn1 *ctx, uint32_t val)
+{
+	uint8_t *p = asn1_tag(ctx, V_ASN1_INT);
+
+	if (!val) {
+		*p++ = 1;
+		*p++ = 0;
+	} else {
+		int nbits = 32 - __builtin_clz(val);
+		int nbytes = (nbits + 7) / 8;
+
+		if ((nbits & 7) == 0) {
+			*p++ = nbytes + 1;
+			*p++ = 0;
+		} else {
+			*p++ = nbytes;
+		}
+		while (nbytes--)
+			*p++ = val >> (nbytes * 8);
+	}
+
+	ctx->n = p - ctx->p;
+}
+
+/* DER encode positive p256_int */
+static void asn1_p256_int(struct asn1 *ctx, const p256_int *n)
+{
+	uint8_t *p = asn1_tag(ctx, V_ASN1_INT);
+	uint8_t bn[P256_NBYTES];
+	int i;
+
+	p256_to_bin(n, bn);
+	for (i = 0; i < P256_NBYTES; ++i) {
+		if (bn[i] != 0)
+			break;
+	}
+	if (bn[i] & 0x80) {
+		*p++ = P256_NBYTES - i + 1;
+		*p++ = 0;
+	} else {
+		*p++ = P256_NBYTES - i;
+	}
+	for (; i < P256_NBYTES; ++i)
+		*p++ = bn[i];
+
+	ctx->n = p - ctx->p;
+}
+
+/* DER encode p256 signature */
+static void asn1_sig(struct asn1 *ctx, const p256_int *r, const p256_int *s)
+{
+	SEQ_START(*ctx, V_SEQ, SEQ_SMALL) {
+		asn1_p256_int(ctx, r);
+		asn1_p256_int(ctx, s);
+	}
+	SEQ_END(*ctx);
+}
+
+/* DER encode printable string */
+static void asn1_string(struct asn1 *ctx, uint8_t tag, const char *s)
+{
+	uint8_t *p = asn1_tag(ctx, tag);
+	size_t n = strlen(s);
+
+	p += asn1_len(p, n);
+	while (n--)
+		*p++ = *s++;
+
+	ctx->n = p - ctx->p;
+}
+
+/* DER encode bytes */
+static void asn1_object(struct asn1 *ctx, size_t n, const uint8_t *b)
+{
+	uint8_t *p = asn1_tag(ctx, V_ASN1_OBJ);
+
+	p += asn1_len(p, n);
+	while (n--)
+		*p++ = *b++;
+
+	ctx->n = p - ctx->p;
+}
+
+/* DER encode p256 pk */
+static void asn1_pub(struct asn1 *ctx, const p256_int *x, const p256_int *y)
+{
+	uint8_t *p = asn1_tag(ctx, 4); /* uncompressed format */
+
+	p256_to_bin(x, p); p += P256_NBYTES;
+	p256_to_bin(y, p); p += P256_NBYTES;
+
+	ctx->n = p - ctx->p;
+}
+
+size_t DCRYPTO_asn1_sigp(uint8_t *buf, const p256_int *r, const p256_int *s)
+{
+	struct asn1 asn1 = {buf, 0};
+
+	asn1_sig(&asn1, r, s);
+	return asn1.n;
+}
+
+size_t DCRYPTO_asn1_pubp(uint8_t *buf, const p256_int *x, const p256_int *y)
+{
+	struct asn1 asn1 = {buf, 0};
+
+	asn1_pub(&asn1, x, y);
+	return asn1.n;
+}
+
+/* ---- ASN.1 Parsing ---- */
 
 /*
  * An ASN.1 DER (Definite Encoding Rules) parser.
@@ -200,4 +402,136 @@ int DCRYPTO_x509_verify(const uint8_t *cert, size_t len,
 	DCRYPTO_SHA256_hash(tbs, tbs_len, digest);
 	return DCRYPTO_rsa_verify(ca_pub_key, digest, sizeof(digest),
 				sig, sig_len, PADDING_MODE_PKCS1, HASH_SHA256);
+}
+
+/* ---- Certificate generation ---- */
+
+static void add_common_name(struct asn1 *ctx, int unique)
+{
+	const char *cname = unique ? STRINGIFY(BOARD) : "U2F";
+
+	SEQ_START(*ctx, V_SEQ, SEQ_SMALL) {
+		SEQ_START(*ctx, V_SET, SEQ_SMALL) {
+			SEQ_START(*ctx, V_SEQ, SEQ_SMALL) {
+				asn1_object(ctx, OID(commonName));
+				asn1_string(ctx, V_ASN1_ASCII, cname);
+			}
+			SEQ_END(*ctx);
+		}
+		SEQ_END(*ctx);
+	}
+	SEQ_END(*ctx);
+}
+
+int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
+			const p256_int *pk_y, const p256_int *serial,
+			uint8_t *cert, const int n)
+{
+	struct asn1 ctx = {cert, 0};
+	HASH_CTX sha;
+	p256_int h, r, s;
+
+	SEQ_START(ctx, V_SEQ, SEQ_LARGE) {  /* outer seq */
+	/*
+	 * Grab current pointer to data to hash later.
+	 * Note this will fail if cert body + cert sign is less
+	 * than 256 bytes (SEQ_MEDIUM) -- not likely.
+	 */
+	uint8_t *body = ctx.p + ctx.n;
+
+	/* Cert body seq */
+	SEQ_START(ctx, V_SEQ, SEQ_MEDIUM) {
+		/* X509 v3 */
+		SEQ_START(ctx, 0xa0, SEQ_SMALL) {
+			asn1_int(&ctx, 2);
+		}
+		SEQ_END(ctx);
+
+		/* Serial number */
+		if (serial)
+			asn1_p256_int(&ctx, serial);
+		else
+			asn1_int(&ctx, 1);
+
+		/* Signature algo */
+		SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
+			asn1_object(&ctx, OID(ecdsa_with_SHA256));
+		}
+		SEQ_END(ctx);
+
+		/* Issuer */
+		add_common_name(&ctx, !!serial);
+
+		/* Expiry */
+		SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
+			asn1_string(&ctx, V_ASN1_TIME, "20000101000000Z");
+			asn1_string(&ctx, V_ASN1_TIME, "20991231235959Z");
+		}
+		SEQ_END(ctx);
+
+		/* Subject */
+		add_common_name(&ctx, !!serial);
+
+		/* Subject pk */
+		SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
+			/* pk parameters */
+			SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
+				asn1_object(&ctx, OID(id_ecPublicKey));
+				asn1_object(&ctx, OID(prime256v1));
+			}
+			SEQ_END(ctx);
+			/* pk bits */
+			SEQ_START(ctx, V_BITS, SEQ_SMALL) {
+				/* No unused bit at the end */
+				asn1_tag(&ctx, 0);
+				asn1_pub(&ctx, pk_x, pk_y);
+			}
+			SEQ_END(ctx);
+		}
+		SEQ_END(ctx);
+
+		/* U2F usb transport indicator extension */
+		SEQ_START(ctx, 0xa3, SEQ_SMALL) {
+			SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
+			SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
+				asn1_object(&ctx, OID(fido_u2f));
+				SEQ_START(ctx, V_ASN1_BYTES, SEQ_SMALL) {
+					SEQ_START(ctx, V_BITS, SEQ_SMALL) {
+						/* 5 zero bits */
+						asn1_tag(&ctx, 5);
+						/* usb transport */
+						asn1_tag(&ctx, 0x20);
+					}
+					SEQ_END(ctx);
+				}
+				SEQ_END(ctx);
+			}
+			SEQ_END(ctx);
+			}
+			SEQ_END(ctx);
+		}
+		SEQ_END(ctx);
+	}
+	SEQ_END(ctx);  /* Cert body */
+
+	/* Sign all of cert body */
+	DCRYPTO_SHA256_init(&sha, 0);
+	HASH_update(&sha, body, (ctx.p + ctx.n) - body);
+	p256_from_bin(HASH_final(&sha), &h);
+	if (!dcrypto_p256_ecdsa_sign(d, &h, &r, &s))
+		return 0;
+
+	/* Append X509 signature */
+	SEQ_START(ctx, V_SEQ, SEQ_SMALL);
+	asn1_object(&ctx, OID(ecdsa_with_SHA256));
+	SEQ_END(ctx);
+	SEQ_START(ctx, V_BITS, SEQ_SMALL) {
+		/* no unused/zero bit at the end */
+		asn1_tag(&ctx, 0);
+		asn1_sig(&ctx, &r, &s);
+	} SEQ_END(ctx);
+
+	} SEQ_END(ctx); /* end of outer seq */
+
+	return ctx.n;
 }
