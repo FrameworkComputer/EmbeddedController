@@ -135,24 +135,34 @@ int rollback_lock(void)
 #ifdef CONFIG_ROLLBACK_UPDATE
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-static void add_entropy(uint8_t *dst, const uint8_t *src,
+static int add_entropy(uint8_t *dst, const uint8_t *src,
 			uint8_t *add, unsigned int add_len)
 {
 #ifdef CONFIG_SHA256
 BUILD_ASSERT(SHA256_DIGEST_SIZE == CONFIG_ROLLBACK_SECRET_SIZE);
 	struct sha256_ctx ctx;
 	uint8_t *hash;
+	uint8_t extra;
+	int i;
 
 	SHA256_init(&ctx);
 	SHA256_update(&ctx, src, CONFIG_ROLLBACK_SECRET_SIZE);
 	SHA256_update(&ctx, add, add_len);
-	/* TODO(b:38486828): Add other sources of entropy (e.g. device id) */
+#ifdef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
+	/* Add some locally produced entropy */
+	for (i = 0; i < CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE; i++) {
+		if (!board_get_entropy(&extra, 1))
+			return 0;
+		SHA256_update(&ctx, &extra, 1);
+	}
+#endif
 	hash = SHA256_final(&ctx);
 
 	memcpy(dst, hash, CONFIG_ROLLBACK_SECRET_SIZE);
 #else
 #error "Adding entropy to secret in rollback region requires SHA256."
 #endif
+	return 1;
 }
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 
@@ -212,8 +222,10 @@ static int rollback_update(int32_t next_min_version,
 	 * If we are provided with some entropy, add it to secret. Otherwise,
 	 * data.secret is left untouched and written back to the other region.
 	 */
-	if (entropy)
-		add_entropy(data.secret, data.secret, entropy, length);
+	if (entropy) {
+		if (!add_entropy(data.secret, data.secret, entropy, length))
+			return EC_ERROR_UNCHANGED;
+	}
 #endif
 	data.cookie = CROS_EC_ROLLBACK_COOKIE;
 

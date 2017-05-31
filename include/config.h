@@ -1159,6 +1159,13 @@
 /* If defined, add support for storing some entropy in the rollback region. */
 #undef CONFIG_ROLLBACK_SECRET_SIZE
 
+/*
+ * If defined, inject some locally generated entropy when secret is updated,
+ * using board_get_entropy function.
+ * Large values may take a long time to generate.
+ */
+#undef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
+
 /* If defined, we can update rollback information (RW can unset this). */
 #define CONFIG_ROLLBACK_UPDATE
 
