@@ -152,15 +152,16 @@ void rdd_attached(void)
 void rdd_detached(void)
 {
 	/*
-	 * Done with case-closed debug mode, therfore re-setup the CCD_MODE_L
-	 * pin as an input.
+	 * Done with case-closed debug mode, therefore re-setup the CCD_MODE_L
+	 * pin as an input only if CCD mode isn't being forced enabled.
 	 *
 	 * NOTE: A pull up is required on this pin, however it was already
 	 * configured during the set up of the pinmux in gpio_pre_init().  The
 	 * chip-specific GPIO module will ignore any pull up/down configuration
 	 * anyways.
 	 */
-	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
+	if (!keep_ccd_enabled)
+		gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
 
 	/* The device state module will handle the disabling of CCD. */
 }
