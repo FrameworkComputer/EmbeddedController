@@ -250,9 +250,26 @@ static uint64_t prev_timestamp;
 
 static int chunk_came_too_soon(uint32_t block_offset)
 {
-	if (!prev_timestamp ||
-	    ((get_time().val - prev_timestamp) > BACKOFF_TIME))
+	int hard_reset = system_get_reset_flags() & RESET_FLAG_HARD;
+
+	/*
+	 * If it has been BACKOFF_TIME since the last time we wrote to a block
+	 * or since the last boot, the write is ok.
+	 */
+	if ((get_time().val - prev_timestamp) > BACKOFF_TIME)
 		return 0;
+
+	if (!prev_timestamp) {
+		/*
+		 * If we just recovered from a hard reset, we have to wait until
+		 * backoff time to accept an update. All other resets can accept
+		 * updates immediately.
+		 */
+		if (hard_reset)
+			CPRINTF("%s: rejecting a write after hard reset\n",
+				__func__);
+		return hard_reset;
+	}
 
 	if (!prev_offset ||
 	    (block_offset >= (prev_offset + SIGNED_TRANSFER_SIZE)))
