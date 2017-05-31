@@ -12,6 +12,8 @@ test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils utils_str
 test-list-$(BOARD_BDS)+=
 test-list-$(BOARD_PIT)+=kb_scan stress
 
+test-list-$(BOARD_HAMMER)+=entropy
+
 # Samus has board-specific chipset code, and the tests don't
 # compile with it. Disable them for now.
 test-list-$(BOARD_SAMUS)=
@@ -85,6 +87,7 @@ charge_manager-y=charge_manager.o
 charge_manager_drp_charging-y=charge_manager.o
 charge_ramp-y+=charge_ramp.o
 console_edit-y=console_edit.o
+entropy-y=entropy.o
 extpwr_gpio-y=extpwr_gpio.o
 fan-y=fan.o
 flash-y=flash.o

@@ -9,12 +9,14 @@
 #include "touchpad_elan.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
+#include "rollback.h"
 #include "task.h"
 #include "timer.h"
 #include "update_fw.h"
@@ -134,4 +136,31 @@ void board_usb_wake(void)
 	udelay(100);
 	gpio_set_flags(GPIO_BASE_DET, GPIO_INPUT);
 	interrupt_enable();
+}
+
+/*
+ * Get entropy based on Clock Recovery System, which is enabled on hammer to
+ * synchronize USB SOF with internal oscillator.
+ */
+int board_get_entropy(void *buffer, int len)
+{
+	int i = 0;
+	uint8_t *data = buffer;
+	uint32_t start;
+	/* We expect one SOF per ms, so wait at most 2ms. */
+	const uint32_t timeout = 2*MSEC;
+
+	for (i = 0; i < len; i++) {
+		STM32_CRS_ICR |= STM32_CRS_ICR_SYNCOKC;
+		start = __hw_clock_source_read();
+		while (!(STM32_CRS_ISR & STM32_CRS_ISR_SYNCOKF)) {
+			if ((__hw_clock_source_read() - start) > timeout)
+				return 0;
+			usleep(500);
+		}
+		/* Pick 8 bits, including FEDIR and 7 LSB of FECAP. */
+		data[i] = STM32_CRS_ISR >> 15;
+	}
+
+	return 1;
 }

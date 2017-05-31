@@ -44,6 +44,19 @@ int rollback_add_entropy(uint8_t *data, unsigned int len);
  */
 int rollback_lock(void);
 
+/**
+ * Obtain some weak entropy (i.e. not guaranteed to be high quality), based on
+ * sensors or timing events.
+ *
+ * Must be defined if CONFIG_ROLLBACK_SECRET_SIZE is set. May sleep.
+ *
+ * @param buffer	Buffer to fill with entropy.
+ * @param len		Buffer length.
+ *
+ * @return true if the buffer was filled, false on error.
+ */
+int board_get_entropy(void *buffer, int len);
+
 #endif
 
 #endif  /* __CROS_EC_ROLLBACK_H */
