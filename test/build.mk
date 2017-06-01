@@ -45,6 +45,7 @@ test-list-host += charge_manager
 test-list-host += charge_manager_drp_charging
 test-list-host += charge_ramp
 test-list-host += console_edit
+test-list-host += entropy
 test-list-host += extpwr_gpio
 test-list-host += fan
 test-list-host += flash

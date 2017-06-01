@@ -67,3 +67,20 @@ const struct i2c_port_t i2c_ports[] = {
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 #endif
+
+#ifdef TEST_BUILD
+/* Poor source of entropy for testing purpose. */
+int board_get_entropy(void *buffer, int len)
+{
+	static uint32_t seed = 0xcafecafe;
+	int i = 0;
+	uint8_t *data = buffer;
+
+	for (i = 0; i < len; i++) {
+		seed *= 7;
+		data[i] = seed + (seed >> 24);
+	}
+
+	return 1;
+}
+#endif
