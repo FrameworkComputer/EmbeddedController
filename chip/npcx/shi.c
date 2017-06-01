@@ -111,14 +111,17 @@
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
  * to handle a request/response header, flash write offset/size, and 512 bytes
- * of flash data.
+ * of flash data:
+ *  sizeof(ec_host_request):          8
+ *  sizoef(ec_params_flash_write):    8
+ *  payload                         512
+ *
  */
 #define SHI_MAX_REQUEST_SIZE 0x220
 
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 /* Make sure SHI_MAX_RESPONSE_SIZE won't exceed 256 bytes */
-#define SHI_MAX_RESPONSE_SIZE (160 + EC_SPI_PAST_END_LENGTH + \
-		EC_SPI_FRAME_START_LENGTH + sizeof(struct ec_host_response))
+#define SHI_MAX_RESPONSE_SIZE (160 + sizeof(struct ec_host_response))
 BUILD_ASSERT(SHI_MAX_RESPONSE_SIZE <= SHI_BYPASS_BOUNDARY);
 #else
 #define SHI_MAX_RESPONSE_SIZE 0x220
@@ -129,9 +132,13 @@ BUILD_ASSERT(SHI_MAX_RESPONSE_SIZE <= SHI_BYPASS_BOUNDARY);
  * message, including protocol overhead.  The pointers after the protocol
  * overhead, as passed to the host command handler, must be 32-bit aligned.
  */
-#define SHI_OUT_PAD ((4 - EC_SPI_FRAME_START_LENGTH) % 4)
-static uint8_t out_msg_padded[SHI_OUT_PAD + SHI_MAX_RESPONSE_SIZE] __aligned(4);
-static uint8_t * const out_msg = out_msg_padded + SHI_OUT_PAD;
+#define SHI_OUT_START_PAD (4 * (EC_SPI_FRAME_START_LENGTH / 4 + 1))
+#define SHI_OUT_END_PAD (4 * (EC_SPI_PAST_END_LENGTH / 4 + 1))
+static uint8_t out_msg_padded[SHI_OUT_START_PAD +
+			      SHI_MAX_RESPONSE_SIZE +
+			      SHI_OUT_END_PAD] __aligned(4);
+static uint8_t * const out_msg =
+	out_msg_padded + SHI_OUT_START_PAD - EC_SPI_FRAME_START_LENGTH;
 static uint8_t in_msg[SHI_MAX_REQUEST_SIZE] __aligned(4);
 
 /* Parameters used by host protocols */
@@ -285,7 +292,7 @@ void shi_handle_host_package(void)
 	shi_packet.response = out_msg + EC_SPI_FRAME_START_LENGTH;
 
 	/* Reserve space for frame start and trailing past-end byte */
-	shi_packet.response_max = SHI_MAX_RESPONSE_SIZE - SHI_PROTO3_OVERHEAD;
+	shi_packet.response_max = SHI_MAX_RESPONSE_SIZE;
 	shi_packet.response_size = 0;
 	shi_packet.driver_result = EC_RES_SUCCESS;
 
