@@ -94,11 +94,8 @@
 #define CONFIG_USB_SUSPEND
 
 #define CONFIG_USB_SERIALNO
-/* TODO(drinkcat): Replace this by proper serial number. Note that according to
- * USB standard, we must either unset this (iSerialNumber = 0), or have a unique
- * serial number per device.
- */
-#define DEFAULT_SERIALNO "Uninitialized"
+/* Replaced at runtime (board_read_serial) by chip unique-id-based number. */
+#define DEFAULT_SERIALNO ""
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #ifdef SECTION_IS_RW

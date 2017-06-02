@@ -13,10 +13,12 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
+#include "printf.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
 #include "rollback.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "update_fw.h"
@@ -163,4 +165,26 @@ int board_get_entropy(void *buffer, int len)
 	}
 
 	return 1;
+}
+
+/*
+ * Generate a USB serial number from unique chip ID.
+ */
+const char *board_read_serial(void)
+{
+	static char str[USB_STRING_LEN];
+
+	if (str[0] == '\0') {
+		uint8_t *id;
+		int pos = 0;
+		int idlen = system_get_chip_unique_id(&id);
+		int i;
+
+		for (i = 0; i < idlen && pos < sizeof(str); i++, pos += 2) {
+			snprintf(&str[pos], sizeof(str)-pos,
+				"%02x", id[i]);
+		}
+	}
+
+	return str;
 }
