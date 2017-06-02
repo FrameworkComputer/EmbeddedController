@@ -230,7 +230,7 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "bcd:fhpsu";
+static char *short_opts = "bcd:fhipsu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	0,   NULL, 'b'},
@@ -239,6 +239,7 @@ static const struct option long_opts[] = {
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
 	{"post_reset",	0,   NULL, 'p'},
+	{"board_id",    2,   NULL, 'i'},
 	{"systemdev",	0,   NULL, 's'},
 	{"upstart",	0,   NULL, 'u'},
 	{},
@@ -364,6 +365,8 @@ static void usage(int errs)
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
+	       "  -i,--board_id [ID[:FLAGS]]\n"
+	       "                           Get or set Info1 board ID fields\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -u,--upstart             "
@@ -1238,6 +1241,112 @@ static int show_headers_versions(const void *image)
 	return 0;
 }
 
+struct board_id {
+	uint32_t type;		/* Board type */
+	uint32_t type_inv;	/* Board type (inverted) */
+	uint32_t flags;		/* Flags */
+};
+
+enum board_id_action {
+	bid_none,
+	bid_get,
+	bid_set
+};
+
+/*
+ * The default flag value will allow to run images built for any hardware
+ * generation of a particular board ID.
+ */
+#define DEFAULT_BOARD_ID_FLAG 0xff00
+static int parse_bid(const char *opt,
+		     struct board_id *bid,
+		     enum board_id_action *bid_action)
+{
+	char *e;
+
+	if (!opt) {
+		*bid_action = bid_get;
+		return 1;
+	}
+
+	bid->type = (uint32_t)strtoul(opt, &e, 0);
+	*bid_action = bid_set;  /* Ignored by caller on errors. */
+
+	if (!e || !*e) {
+		bid->flags = DEFAULT_BOARD_ID_FLAG;
+		return 1;
+	}
+
+	if (*e == ':') {
+		bid->flags = (uint32_t)strtoul(e + 1, &e, 0);
+		if (!e || !*e)
+			return 1;
+	}
+
+	return 0;
+}
+
+static void process_bid(struct transfer_descriptor *td,
+			enum board_id_action bid_action,
+			struct board_id *bid)
+{
+	size_t response_size;
+
+	if (bid_action == bid_get) {
+		struct board_id bid;
+
+		response_size = sizeof(bid);
+		send_vendor_command(td, VENDOR_CC_GET_BOARD_ID,
+				    &bid, sizeof(bid),
+				    &bid, &response_size);
+
+		if (response_size == sizeof(bid)) {
+			printf("Board ID space: %08x:%08x:%08x\n",
+			       be32toh(bid.type), be32toh(bid.type_inv),
+			       be32toh(bid.flags));
+			return;
+
+		}
+		fprintf(stderr, "Error reading board ID: response size %zd,"
+			" first byte %#02x\n", response_size,
+			response_size ? *(uint8_t *)&bid : -1);
+		exit(update_error);
+	}
+
+	if (bid_action == bid_set) {
+		/* Sending just two fields: type and flags. */
+		uint32_t command_body[2];
+		uint8_t response;
+
+		command_body[0] = htobe32(bid->type);
+		command_body[1] = htobe32(bid->flags);
+
+		response_size = sizeof(command_body);
+		send_vendor_command(td, VENDOR_CC_SET_BOARD_ID,
+				    command_body, sizeof(command_body),
+				    command_body, &response_size);
+
+		/*
+		 * Speculative assignment: the response is expected to be one
+		 * byte in size and be placed in the first byte of the buffer.
+		 */
+		response = *((uint8_t *)command_body);
+
+		if (response_size == 1) {
+			if (!response)
+				return; /* Success! */
+
+			fprintf(stderr, "Error %d while setting board id\n",
+				response);
+		} else {
+			fprintf(stderr, "Unexpected response size %zd"
+				" while setting board id\n",
+				response_size);
+		}
+		exit(update_error);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -1251,6 +1360,8 @@ int main(int argc, char *argv[])
 	int binary_vers = 0;
 	int show_fw_ver = 0;
 	int corrupt_inactive_rw = 0;
+	struct board_id bid;
+	enum board_id_action bid_action;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1262,6 +1373,7 @@ int main(int argc, char *argv[])
 	memset(&td, 0, sizeof(td));
 	td.ep_type = usb_xfer;
 
+	bid_action = bid_none;
 	errorcnt = 0;
 	opterr = 0;				/* quiet, you */
 	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
@@ -1271,7 +1383,8 @@ int main(int argc, char *argv[])
 			break;
 		case 'd':
 			if (!parse_vidpid(optarg, &vid, &pid)) {
-				printf("Invalid argument: \"%s\"\n", optarg);
+				printf("Invalid device argument: \"%s\"\n",
+				       optarg);
 				errorcnt++;
 			}
 			break;
@@ -1283,6 +1396,18 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage(errorcnt);
+			break;
+		case 'i':
+			if (!optarg && argv[optind] && argv[optind][0] != '-') {
+				/* optional argument present. */
+				optarg = argv[optind];
+				optind++;
+			}
+			if (!parse_bid(optarg, &bid, &bid_action)) {
+				printf("Invalid board id argument: \"%s\"\n",
+				       optarg);
+				errorcnt++;
+			}
 			break;
 		case 's':
 			td.ep_type = dev_xfer;
@@ -1316,7 +1441,7 @@ int main(int argc, char *argv[])
 	if (errorcnt)
 		usage(errorcnt);
 
-	if (!show_fw_ver && !corrupt_inactive_rw) {
+	if (!show_fw_ver && !corrupt_inactive_rw && (bid_action == bid_none)) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -1350,6 +1475,9 @@ int main(int argc, char *argv[])
 			exit(update_error);
 		}
 	}
+
+	if (bid_action != bid_none)
+		process_bid(&td, bid_action, &bid);
 
 	if (corrupt_inactive_rw)
 		invalidate_inactive_rw(&td);
