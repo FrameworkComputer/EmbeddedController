@@ -344,6 +344,12 @@ const char *system_get_chip_revision(void)
 	return "";
 }
 
+int system_get_chip_unique_id(uint8_t **id)
+{
+	*id = (uint8_t *)STM32_UNIQUE_ID_ADDRESS;
+	return STM32_UNIQUE_ID_LENGTH;
+}
+
 static int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb)
 {
 	*msb = 0;

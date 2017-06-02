@@ -276,6 +276,15 @@ const char *system_get_chip_vendor(void);
 const char *system_get_chip_name(void);
 const char *system_get_chip_revision(void);
 
+/**
+ * Get a unique per-chip id.
+ *
+ * @param id		Set to the address of the unique id data (statically
+ *			allocated, or register-backed).
+ * @return Number of bytes available at the provided address.
+ */
+int system_get_chip_unique_id(uint8_t **id);
+
 /*
  * Common bbram entries. Chips don't necessarily need to implement
  * all of these, error will be returned from system_get/set_bbram if
