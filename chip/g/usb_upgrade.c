@@ -144,6 +144,7 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			  count - offsetof(struct update_frame_header, cmd))) {
 		uint16_t *subcommand;
 		size_t response_size;
+		size_t request_size;
 
 		/* looks good, let's process it. */
 		rv = 1;
@@ -152,10 +153,12 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 		queue_advance_head(consumer->queue, count);
 
 		subcommand = (uint16_t *)(cmd_buffer + 1);
+		request_size = count - sizeof(struct update_frame_header) -
+			sizeof(*subcommand);
+
 		usb_extension_route_command(be16toh(*subcommand),
 					    subcommand + 1,
-					    count -
-					    sizeof(struct update_frame_header),
+					    request_size,
 					    &response_size);
 
 		QUEUE_ADD_UNITS(&upgrade_to_usb, subcommand + 1, response_size);
