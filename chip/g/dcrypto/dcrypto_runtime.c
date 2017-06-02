@@ -10,7 +10,7 @@
 #define DMEM_NUM_WORDS 1024
 #define IMEM_NUM_WORDS 1024
 
-static task_id_t my_task_id;
+static volatile task_id_t my_task_id;
 
 static int dcrypto_is_initialized;
 
@@ -50,7 +50,6 @@ void dcrypto_init(void)
 	GREG32(CRYPTO, INT_STATE) = -1;   /* Reset all the status bits. */
 	GREG32(CRYPTO, INT_ENABLE) = -1;  /* Enable all status bits. */
 
-	my_task_id = task_get_current();
 	task_enable_irq(GC_IRQNUM_CRYPTO0_HOST_CMD_DONE_INT);
 
 	/* Reset. */
@@ -65,7 +64,11 @@ void dcrypto_init(void)
 
 uint32_t dcrypto_call(uint32_t adr)
 {
+	static struct mutex cmd_mutex;
 	uint32_t event;
+
+	mutex_lock(&cmd_mutex);
+	my_task_id = task_get_current();
 
 	do {
 		/* Reset all the status bits. */
@@ -75,7 +78,9 @@ uint32_t dcrypto_call(uint32_t adr)
 	GREG32(CRYPTO, HOST_CMD) = 0x08000000 + adr; /* Call imem:adr. */
 
 	event = task_wait_event_mask(TASK_EVENT_DCRYPTO_DONE,
-				DCRYPTO_CALL_TIMEOUT_US);
+				     DCRYPTO_CALL_TIMEOUT_US);
+	mutex_unlock(&cmd_mutex);
+
 	/* TODO(ngm): switch return value to an enum. */
 	switch (event) {
 	case TASK_EVENT_DCRYPTO_DONE:
