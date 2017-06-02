@@ -40,10 +40,10 @@ typedef enum vendor_cmd_rc (*extension_handler)(enum vendor_cmd_cc code,
  *                     data returned by the handler. A single byte return
  *                     usually indicates an error and contains the error code.
  */
-uint32_t usb_extension_route_command(uint16_t command_code,
-				     void *buffer,
-				     size_t command_size,
-				     size_t *size);
+void usb_extension_route_command(uint16_t command_code,
+				 void *buffer,
+				 size_t command_size,
+				 size_t *size);
 uint32_t tpm_extension_route_command(uint16_t command_code,
 				     void *buffer,
 				     size_t command_size,

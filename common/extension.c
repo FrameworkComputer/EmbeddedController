@@ -7,6 +7,7 @@
 #include "console.h"
 #include "extension.h"
 #include "link_defs.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
 
@@ -35,12 +36,14 @@ static uint32_t extension_route_command(uint16_t command_code,
 	return VENDOR_RC_NO_SUCH_COMMAND;
 }
 
-uint32_t usb_extension_route_command(uint16_t command_code,
-				     void *buffer,
-				     size_t in_size,
-				     size_t *out_size)
+void usb_extension_route_command(uint16_t command_code,
+				 void *buffer,
+				 size_t in_size,
+				 size_t *out_size)
 {
-	int is_allowed = 0;
+	uint32_t rv;
+	uint8_t *buf = buffer;  /* Cache it for easy pointer arithmetics. */
+	size_t buf_size;
 
 	switch (command_code) {
 #ifdef CR50_DEV
@@ -48,21 +51,34 @@ uint32_t usb_extension_route_command(uint16_t command_code,
 #endif /* defined(CR50_DEV) */
 	case VENDOR_CC_TURN_UPDATE_ON:
 	case EXTENSION_POST_RESET: /* Always need to be able to reset. */
-		is_allowed = 1;
+
+		/*
+		 * The return code normally put into the TPM response header
+		 * is not present in the USB response. Vendor command return
+		 * code is guaranteed to fit in a byte. Let's keep space for
+		 * it in the front of the buffer.
+		 */
+		buf_size = *out_size - 1;
+		rv = extension_route_command(command_code, buffer,
+					     in_size, &buf_size);
+		/*
+		 * Copy actual response, if any, one byte up, to free room for
+		 * the return code.
+		 */
+		if (buf_size)
+			memmove(buf + 1, buf, buf_size);
+		*out_size = buf_size + 1;
 		break;
 
 	default:
+		/* Otherwise, we don't allow this command. */
+		CPRINTF("%s: ignoring vendor cmd %d\n", __func__, command_code);
+		*out_size = 1;
+		rv = VENDOR_RC_NO_SUCH_COMMAND;
 		break;
 	}
 
-	if (is_allowed)
-		return extension_route_command(command_code, buffer, in_size,
-					       out_size);
-
-	/* Otherwise, we don't allow this command. */
-	CPRINTF("%s: ignoring vendor cmd %d\n", __func__, command_code);
-	*out_size = 0;
-	return VENDOR_RC_NO_SUCH_COMMAND;
+	buf[0] = rv;  /* We care about LSB only. */
 }
 
 uint32_t tpm_extension_route_command(uint16_t command_code,
