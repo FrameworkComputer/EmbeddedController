@@ -1035,13 +1035,6 @@ static int transfer_image(struct transfer_descriptor *td,
 			num_txed_sections++;
 		}
 
-	/*
-	 * Move USB receiver sate machine to idle state so that vendor
-	 * commands can be processed later, if any.
-	 */
-	if (td->ep_type == usb_xfer)
-		send_done(&td->uep);
-
 	if (!num_txed_sections)
 		printf("nothing to do\n");
 	else
@@ -1358,26 +1351,38 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	setup_connection(&td);
+	if (corrupt_inactive_rw)
+		invalidate_inactive_rw(&td);
 
-	if (show_fw_ver) {
-		printf("Current versions:\n");
-		printf("RO %d.%d.%d\n", targ.shv[0].epoch, targ.shv[0].major,
-		       targ.shv[0].minor);
-		printf("RW %d.%d.%d\n", targ.shv[1].epoch, targ.shv[1].major,
-		       targ.shv[1].minor);
+	if (data || show_fw_ver) {
+
+		setup_connection(&td);
+
+		if (data) {
+			transferred_sections = transfer_image(&td,
+							      data, data_len);
+			free(data);
+		}
+
+		/*
+		 * Move USB updater sate machine to idle state so that vendor
+		 * commands can be processed later, if any.
+		 */
 		if (td.ep_type == usb_xfer)
 			send_done(&td.uep);
-	}
-
-	if (data) {
-		transferred_sections = transfer_image(&td, data, data_len);
-		free(data);
 
 		if (transferred_sections)
 			generate_reset_request(&td);
-	} else if (corrupt_inactive_rw) {
-		invalidate_inactive_rw(&td);
+
+		if (show_fw_ver) {
+			printf("Current versions:\n");
+			printf("RO %d.%d.%d\n", targ.shv[0].epoch,
+			       targ.shv[0].major,
+			       targ.shv[0].minor);
+			printf("RW %d.%d.%d\n", targ.shv[1].epoch,
+			       targ.shv[1].major,
+			       targ.shv[1].minor);
+		}
 	}
 
 	if (td.ep_type == usb_xfer) {
