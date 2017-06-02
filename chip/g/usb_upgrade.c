@@ -145,6 +145,11 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 		uint16_t *subcommand;
 		size_t response_size;
 		size_t request_size;
+		/*
+		 * Should be enough for any vendor command/response. We'll
+		 * generate an error if it is not.
+		 */
+		uint8_t subcommand_body[32];
 
 		/* looks good, let's process it. */
 		rv = 1;
@@ -156,12 +161,22 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 		request_size = count - sizeof(struct update_frame_header) -
 			sizeof(*subcommand);
 
-		usb_extension_route_command(be16toh(*subcommand),
-					    subcommand + 1,
-					    request_size,
-					    &response_size);
+		if (request_size > sizeof(subcommand_body)) {
+			CPRINTS("%s: vendor command payload too big (%d)",
+				__func__, request_size);
+			subcommand_body[0] = VENDOR_RC_REQUEST_TOO_BIG;
+			response_size = 1;
+		} else {
+			memcpy(subcommand_body, subcommand + 1, request_size);
+			response_size = sizeof(subcommand_body);
+			usb_extension_route_command(be16toh(*subcommand),
+						    subcommand_body,
+						    request_size,
+						    &response_size);
+		}
 
-		QUEUE_ADD_UNITS(&upgrade_to_usb, subcommand + 1, response_size);
+		QUEUE_ADD_UNITS(&upgrade_to_usb,
+				subcommand_body, response_size);
 	}
 	shared_mem_release(cmd_buffer);
 
