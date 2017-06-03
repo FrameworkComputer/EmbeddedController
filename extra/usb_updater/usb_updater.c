@@ -258,6 +258,7 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 	int response_offset = offsetof(struct upgrade_pkt, command.data);
 	void *payload;
 	size_t header_size;
+	uint32_t rv;
 
 	debug("%s: sending to %#x %d bytes\n", __func__, addr, size);
 
@@ -327,10 +328,17 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 		return -1;
 	}
 
-	len = MIN(len, *response_size);
-	memcpy(response, outbuf + response_offset, len);
-	*response_size = len;
-	return 0;
+	if (response && response_size) {
+		len = MIN(len, *response_size);
+		memcpy(response, outbuf + response_offset, len);
+		*response_size = len;
+	}
+
+	/* Return the actual return code from the TPM response header. */
+	memcpy(&rv, &((struct upgrade_pkt *)outbuf)->ordinal, sizeof(rv));
+	rv = be32toh(rv);
+
+	return rv;
 }
 
 /* Release USB device and return error to the OS. */
@@ -988,7 +996,9 @@ static int ext_cmd_over_usb(struct usb_endpoint *uep, uint16_t subcommand,
 		    offsetof(struct update_frame_header, cmd.block_base));
 	SHA1_Final(digest, &ctx);
 	memcpy(&ufh->cmd.block_digest, digest, sizeof(ufh->cmd.block_digest));
-	xfer(uep, ufh, usb_msg_size, resp, resp_size ? *resp_size : 0);
+
+	do_xfer(uep, ufh, usb_msg_size, resp,
+		resp_size ? *resp_size : 0, 1, resp_size);
 
 	free(ufh);
 	return 0;
@@ -1007,25 +1017,6 @@ static void send_done(struct usb_endpoint *uep)
 	/* Send stop request, ignoring reply. */
 	out = htobe32(UPGRADE_DONE);
 	xfer(uep, &out, sizeof(out), &out, 1);
-}
-
-/*
- * Corrupt the header of the inactive rw image to make sure the system can't
- * rollback
- */
-static void invalidate_inactive_rw(struct transfer_descriptor *td)
-{
-	/* Corrupt the rw image that is not running. */
-	uint16_t subcommand = VENDOR_CC_INVALIDATE_INACTIVE_RW;
-
-	if (td->ep_type == usb_xfer) {
-		if (protocol_version > 5) {
-			ext_cmd_over_usb(&td->uep, subcommand,
-					 NULL, 0,
-					 NULL, 0);
-			printf("inactive rw corrupted\n");
-		}
-	}
 }
 
 /* Returns number of successfully transmitted image sections. */
@@ -1058,6 +1049,96 @@ static int transfer_image(struct transfer_descriptor *td,
 	return num_txed_sections;
 }
 
+static uint32_t send_vendor_command(struct transfer_descriptor *td,
+				uint16_t subcommand,
+				void *command_body,
+				size_t command_body_size,
+				void *response,
+				size_t *response_size)
+{
+	int32_t rv;
+
+	if (td->ep_type == usb_xfer) {
+		/*
+		 * When communicating over USB the response is always supposed
+		 * to have the result code in the first byte of the response,
+		 * to be stripped from the actual response body by this
+		 * function.
+		 *
+		 * We never expect vendor command response larger than 32 bytes.
+		 */
+		uint8_t temp_response[32];
+		size_t max_response_size;
+
+		if (!response_size) {
+			max_response_size = 1;
+		} else if (*response_size < (sizeof(temp_response))) {
+			max_response_size = *response_size + 1;
+		} else {
+			fprintf(stderr,
+				"Error: Expected response too large (%zd)\n",
+				*response_size);
+			/* Should happen only when debugging. */
+			exit(update_error);
+		}
+
+		ext_cmd_over_usb(&td->uep, subcommand,
+				 command_body, command_body_size,
+				 temp_response, &max_response_size);
+		if (!max_response_size) {
+			/*
+			 * we must be talking to an older Cr50 firmware, which
+			 * does not return the result code in the first byte
+			 * on success, nothing to do.
+			 */
+			if (response_size)
+				*response_size = 0;
+			rv = 0;
+		} else {
+			rv = temp_response[0];
+			if (response_size) {
+				*response_size = max_response_size - 1;
+				memcpy(response,
+				       temp_response + 1, *response_size);
+			}
+		}
+	} else {
+
+		rv = tpm_send_pkt(td->tpm_fd, 0, 0,
+				  command_body, command_body_size,
+				  response, response_size, subcommand);
+
+		if (rv == -1) {
+			fprintf(stderr,
+				"Error: Failed to send vendor command %d\n",
+				subcommand);
+			exit(update_error);
+		}
+	}
+
+	return rv; /* This will be converted into uint32_t */
+}
+
+/*
+ * Corrupt the header of the inactive rw image to make sure the system can't
+ * rollback
+ */
+static void invalidate_inactive_rw(struct transfer_descriptor *td)
+{
+	/* Corrupt the rw image that is not running. */
+	uint32_t rv;
+
+	rv = send_vendor_command(td, VENDOR_CC_INVALIDATE_INACTIVE_RW,
+				 NULL, 0, NULL, NULL);
+	if (!rv) {
+		printf("Inactive header invalidated\n");
+		return;
+	}
+
+	fprintf(stderr, "*%s: Error %#x\n", __func__, rv);
+	exit(update_error);
+}
+
 static struct signed_header_version ver19 = {
 	.epoch = 0,
 	.major = 0,
@@ -1072,6 +1153,8 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	uint8_t command_body[2]; /* Max command body size. */
 	size_t command_body_size;
 	uint32_t background_update_supported;
+	const char *reset_type;
+	int rv;
 
 	if (protocol_version < 6) {
 		if (td->ep_type == usb_xfer) {
@@ -1113,32 +1196,27 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	response_size = 1;
 	if (td->post_reset || td->upstart_mode) {
 		subcommand = EXTENSION_POST_RESET;
+		reset_type = "posted";
 	} else if (background_update_supported) {
 		subcommand = VENDOR_CC_TURN_UPDATE_ON;
 		command_body_size = sizeof(command_body);
 		command_body[0] = 0;
 		command_body[1] = 100;  /* Reset in 100 ms. */
+		reset_type = "requested";
 	} else {
 		response_size = 0;
 		subcommand = VENDOR_CC_IMMEDIATE_RESET;
-	}
-	if (td->ep_type == usb_xfer) {
-		ext_cmd_over_usb(&td->uep, subcommand,
-				 command_body, command_body_size,
-				 &response, &response_size);
-	} else {
-
-		/* Need to send extended command for reboot. */
-		if (tpm_send_pkt(td->tpm_fd, 0, 0,
-				 command_body, command_body_size,
-				 &response, &response_size, subcommand) < 0) {
-			fprintf(stderr, "Failed to request posted reboot\n");
-			exit(update_error);
-		}
+		reset_type = "triggered";
 	}
 
-	printf("reboot %s\n", subcommand == EXTENSION_POST_RESET ?
-	       "request posted" : "triggered");
+	rv = send_vendor_command(td, subcommand, command_body,
+				 command_body_size, &response, &response_size);
+
+	if (rv) {
+		fprintf(stderr, "*%s: Error %#x\n", __func__, rv);
+		exit(update_error);
+	}
+	printf("reboot %s\n", reset_type);
 }
 
 static int show_headers_versions(const void *image)
