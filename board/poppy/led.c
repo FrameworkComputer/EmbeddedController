@@ -43,7 +43,7 @@ static void side_led_set_color(int port, enum led_color color)
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_YELLOW] = 1;
+	brightness_range[EC_LED_COLOR_AMBER] = 1;
 	brightness_range[EC_LED_COLOR_WHITE] = 1;
 }
 
@@ -64,7 +64,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	if (brightness[EC_LED_COLOR_WHITE] != 0)
 		side_led_set_color(port, LED_WHITE);
-	else if (brightness[EC_LED_COLOR_YELLOW] != 0)
+	else if (brightness[EC_LED_COLOR_AMBER] != 0)
 		side_led_set_color(port, LED_AMBER);
 	else
 		side_led_set_color(port, LED_OFF);
@@ -80,8 +80,10 @@ static void set_active_port_color(enum led_color color)
 {
 	int port = charge_manager_get_active_charge_port();
 
-	side_led_set_color(0, (port == 0) ? color : LED_OFF);
-	side_led_set_color(1, (port == 1) ? color : LED_OFF);
+	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+		side_led_set_color(0, (port == 0) ? color : LED_OFF);
+	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+		side_led_set_color(1, (port == 1) ? color : LED_OFF);
 }
 
 static void board_led_set_battery(void)
@@ -101,13 +103,16 @@ static void board_led_set_battery(void)
 		 * TODO(b/37970194): Do we really want to blink on low battery?
 		 * If yes, what's the threshold? In S0 only?
 		 */
-		if (charge_get_percent() < 12)
-			side_led_set_color(0,
-				(battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
-		else
-			side_led_set_color(0, LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
+			if (charge_get_percent() < 12)
+				side_led_set_color(0,
+				   (battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
+			else
+				side_led_set_color(0, LED_OFF);
+		}
 
-		side_led_set_color(1, LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+			side_led_set_color(1, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		set_active_port_color((battery_ticks & 0x2) ?
@@ -132,8 +137,7 @@ static void board_led_set_battery(void)
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		board_led_set_battery();
+	board_led_set_battery();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
@@ -143,14 +147,16 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 		enum led_color color;
 
 		if (state == LED_STATE_RESET) {
-			led_auto_control(EC_LED_ID_BATTERY_LED, 1);
+			led_auto_control(EC_LED_ID_LEFT_LED, 1);
+			led_auto_control(EC_LED_ID_RIGHT_LED, 1);
 			board_led_set_battery();
 			return;
 		}
 
 		color = state ? LED_WHITE : LED_OFF;
 
-		led_auto_control(EC_LED_ID_BATTERY_LED, 0);
+		led_auto_control(EC_LED_ID_LEFT_LED, 0);
+		led_auto_control(EC_LED_ID_RIGHT_LED, 0);
 
 		side_led_set_color(0, color);
 		side_led_set_color(1, color);
