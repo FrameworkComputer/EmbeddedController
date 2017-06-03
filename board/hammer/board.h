@@ -144,11 +144,10 @@
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1020 /* tenth of mm */
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 584 /* tenth of mm */
 #elif defined(BOARD_HAMMER)
-/* TODO(b:35582031): Adjust values to match hardware. */
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 2948
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1600
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 935 /* tenth of mm */
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 508 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3207
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1783
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1018 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 566 /* tenth of mm */
 #else
 #error "No trackpad information for board."
 #endif
