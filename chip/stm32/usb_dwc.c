@@ -1371,13 +1371,20 @@ static int usb_set_serial(const char *serialno)
 	return EC_SUCCESS;
 }
 
+/* By default, read serial number from flash, can be overridden. */
+__attribute__((weak))
+const char *board_read_serial(void)
+{
+	return flash_read_serial();
+}
+
 /* Retrieve serial number from pstate flash. */
 static int usb_load_serial(void)
 {
 	const char *serialno;
 	int rv;
 
-	serialno = flash_read_serial();
+	serialno = board_read_serial();
 	if (!serialno)
 		return EC_ERROR_ACCESS_DENIED;
 

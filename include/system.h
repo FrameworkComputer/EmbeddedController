@@ -285,6 +285,12 @@ const char *system_get_chip_revision(void);
  */
 int system_get_chip_unique_id(uint8_t **id);
 
+/**
+ * Optional board-level callback functions to read a unique serial number per
+ * chip. Default implementation reads from flash (flash_read_serial).
+ */
+const char *board_read_serial(void) __attribute__((weak));
+
 /*
  * Common bbram entries. Chips don't necessarily need to implement
  * all of these, error will be returned from system_get/set_bbram if
