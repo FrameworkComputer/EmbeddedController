@@ -18,7 +18,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/charger/bd99955.h"
+#include "driver/charger/bd9995x.h"
 #include "driver/tcpm/fusb302.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -178,7 +178,8 @@ uint16_t tcpc_get_alert_status(void)
 
 int board_set_active_charge_port(int charge_port)
 {
-	enum bd99955_charge_port bd99955_port;
+	enum bd9995x_charge_port bd9995x_port;
+	int bd9995x_port_select = 1;
 	static int initialized;
 
 	/*
@@ -201,10 +202,11 @@ int board_set_active_charge_port(int charge_port)
 		/* Don't charge from a source port */
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
-		bd99955_port = BD99955_CHARGE_PORT_VBUS;
+		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
 		break;
 	case CHARGE_PORT_NONE:
-		bd99955_port = BD99955_CHARGE_PORT_NONE;
+		bd9995x_port_select = 0;
+		bd9995x_port = BD9995X_CHARGE_PORT_BOTH;
 		break;
 	default:
 		panic("Invalid charge port\n");
@@ -212,10 +214,11 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	initialized = 1;
-	return bd99955_select_input_port(bd99955_port);
+	return bd9995x_select_input_port(bd9995x_port, bd9995x_port_select);
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -230,7 +233,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma)
 	}
 
 	charge_set_input_current_limit(MAX(charge_ma,
-				       CONFIG_CHARGER_INPUT_CURRENT));
+			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int extpower_is_present(void)
@@ -242,7 +245,7 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(0))
 		return 0;
 	else
-		return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_VBUS);
+		return bd9995x_is_vbus_provided(BD9995X_CHARGE_PORT_VBUS);
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -250,7 +253,7 @@ int pd_snk_is_vbus_provided(int port)
 	if (port)
 		panic("Invalid charge port\n");
 
-	return bd99955_is_vbus_provided(BD99955_CHARGE_PORT_VBUS);
+	return bd9995x_is_vbus_provided(BD9995X_CHARGE_PORT_VBUS);
 }
 
 static void board_spi_enable(void)
@@ -403,6 +406,8 @@ int board_get_version(void)
 /* Mutexes */
 static struct mutex g_base_mutex;
 
+struct bmi160_drv_data_t g_bmi160_data;
+
 /* Matrix to rotate accelerometer into standard reference frame */
 const matrix_3x3_t base_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0,  0},
@@ -415,6 +420,8 @@ const matrix_3x3_t lid_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
+
+struct bmp280_drv_data_t bmp280_drv_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	/*

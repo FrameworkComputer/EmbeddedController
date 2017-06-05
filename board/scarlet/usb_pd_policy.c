@@ -7,7 +7,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
-#include "driver/charger/bd99955.h"
+#include "driver/charger/bd9995x.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -81,8 +81,7 @@ static void board_vbus_update_source_current(int port)
 int pd_set_power_supply_ready(int port)
 {
 	/* Ensure we're not charging from this port */
-	if (charge_manager_get_active_charge_port() == port)
-		bd99955_select_input_port(BD99955_CHARGE_PORT_NONE);
+	bd9995x_select_input_port(bd9995x_pd_port_to_chg_port(port), 0);
 
 	/* Ensure we advertise the proper available current quota */
 	charge_manager_source_port(port, 1);

@@ -39,7 +39,7 @@ GPIO_INT(WARM_RESET_REQ,   PIN(7, 3), GPIO_INT_RISING | GPIO_PULL_DOWN,
 GPIO_INT(AP_OVERTEMP,      PIN(7, 4), GPIO_INT_RISING | GPIO_PULL_DOWN,
          overtemp_interrupt)
 GPIO_INT(CHARGER_INT_L,    PIN(3, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
-         bd99955_vbus_interrupt)
+         bd9995x_vbus_interrupt)
 GPIO_INT(BASE_SIXAXIS_INT_L,PIN(4, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          bmi160_interrupt)
 
