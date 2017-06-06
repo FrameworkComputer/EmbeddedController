@@ -27,12 +27,20 @@
 
 #include "gpio_list.h"
 
-#define I2C_PORT_PCA555_PMIC	NPCX_I2C_PORT0_0
-#define I2C_ADDR_PCA555_PMIC	0x42
-#define PMIC_WRITE(reg, data) pca9555_write(I2C_PORT_PCA555_PMIC, \
-		I2C_ADDR_PCA555_PMIC, (reg), (data))
-#define PMIC_READ(reg, data) pca9555_read(I2C_PORT_PCA555_PMIC, \
-		I2C_ADDR_PCA555_PMIC, (reg), (data))
+#define I2C_PORT_PCA555_PMIC_GPIO	NPCX_I2C_PORT0_0
+#define I2C_ADDR_PCA555_PMIC_GPIO	0x42
+#define PCA555_PMIC_GPIO_WRITE(reg, data) \
+		pca9555_write(I2C_PORT_PCA555_PMIC_GPIO, \
+			I2C_ADDR_PCA555_PMIC_GPIO, (reg), (data))
+#define PCA555_PMIC_GPIO_READ(reg, data) \
+		pca9555_read(I2C_PORT_PCA555_PMIC_GPIO, \
+			I2C_ADDR_PCA555_PMIC_GPIO, (reg), (data))
+
+#define I2C_PORT_PCA555_BOARD_ID_GPIO	NPCX_I2C_PORT0_0
+#define I2C_ADDR_PCA555_BOARD_ID_GPIO	0x40
+#define PCA555_BOARD_ID_GPIO_READ(reg, data) \
+		pca9555_read(I2C_PORT_PCA555_BOARD_ID_GPIO, \
+			I2C_ADDR_PCA555_BOARD_ID_GPIO, (reg), (data))
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -67,7 +75,7 @@ static void chipset_pre_init(void)
 {
 	int data;
 
-	if (PMIC_READ(PCA9555_CMD_OUTPUT_PORT_0, &data))
+	if (PCA555_PMIC_GPIO_READ(PCA9555_CMD_OUTPUT_PORT_0, &data))
 		return;
 
 	/*
@@ -80,13 +88,13 @@ static void chipset_pre_init(void)
 
 	/* Enable SOC_3P3_EN_L: Set the Output port O0.1 to low level */
 	data &= ~PCA9555_IO_1;
-	PMIC_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data);
+	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data);
 
 	/* TODO: Find out from the spec */
 	msleep(10);
 
 	/* Enable PMIC_EN: Set the Output port O0.0 to high level */
-	PMIC_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data | PCA9555_IO_0);
+	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data | PCA9555_IO_0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
@@ -113,18 +121,18 @@ void chipset_do_shutdown(void)
 {
 	int data;
 
-	if (PMIC_READ(PCA9555_CMD_OUTPUT_PORT_0, &data))
+	if (PCA555_PMIC_GPIO_READ(PCA9555_CMD_OUTPUT_PORT_0, &data))
 		return;
 
 	/* Disable SOC_3P3_EN_L: Set the Output port O0.1 to high level */
 	data |= PCA9555_IO_1;
-	PMIC_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data);
+	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data);
 
 	/* TODO: Find out from the spec */
 	msleep(10);
 
 	/* Disable PMIC_EN: Set the Output port O0.0 to low level */
-	PMIC_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data & ~PCA9555_IO_0);
+	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data & ~PCA9555_IO_0);
 }
 
 void board_hibernate_late(void)
@@ -149,6 +157,16 @@ void board_hibernate(void)
 		;
 }
 
+int board_get_version(void)
+{
+	int data;
+
+	if (PCA555_BOARD_ID_GPIO_READ(PCA9555_CMD_INPUT_PORT_1, &data))
+		return -1;
+
+	return data & 0x0f;
+}
+
 static void pmic_init(void)
 {
 	/* No need to re-init PMIC since settings are sticky across sysjump. */
@@ -160,7 +178,7 @@ static void pmic_init(void)
 	 * Configure Port O0.0 as Output port - PMIC_EN
 	 * Configure Port O0.1 as Output port - SOC_3P3_EN_L
 	 */
-	PMIC_WRITE(PCA9555_CMD_CONFIGURATION_PORT_0, 0xfc);
+	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_CONFIGURATION_PORT_0, 0xfc);
 
 	/*
 	 * Set the Output port O0.0 to low level - PMIC_EN
@@ -169,6 +187,6 @@ static void pmic_init(void)
 	 * POR of PCA9555 port is input with high impedance hence explicitly
 	 * configure the SOC_3P3_EN_L to high level.
 	 */
-	PMIC_WRITE(PCA9555_CMD_OUTPUT_PORT_0, 0xfe);
+	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_OUTPUT_PORT_0, 0xfe);
 }
 DECLARE_HOOK(HOOK_INIT, pmic_init, HOOK_PRIO_INIT_I2C + 1);
