@@ -358,10 +358,9 @@ static void board_pmic_init(void)
 
 	/*
 	 * Set V085ACNT / V0.85A Control Register:
-	 * Lower power mode = 0.7V.
-	 * Nominal output = 1.0V.
+	 * Nominal output = 0.85V.
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x2a);
 
 	/* VRMODECTRL - disable low-power mode for all rails */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x1f);
