@@ -51,7 +51,11 @@ chip-$(CONFIG_DCRYPTO)+= dcrypto/sha1.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/sha256.o
 ifeq ($(CONFIG_UPTO_SHA512),y)
 chip-$(CONFIG_DCRYPTO)+= dcrypto/sha384.o
+ifeq ($(CONFIG_DCRYPTO_SHA512),y)
+chip-$(CONFIG_DCRYPTO)+= dcrypto/dcrypto_sha512.o
+else
 chip-$(CONFIG_DCRYPTO)+= dcrypto/sha512.o
+endif
 endif
 chip-$(CONFIG_DCRYPTO)+= dcrypto/x509.o
 

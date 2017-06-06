@@ -835,6 +835,13 @@
  * only supported on CR50.
  */
 #undef CONFIG_DCRYPTO
+
+/*
+ * When enabled, accelerate sha512 using the generic crypto engine;
+ * only supported on CR50
+ */
+#undef CONFIG_DCRYPTO_SHA512
+
 /*
  * When enabled build support for SHA-384/512, requires CONFIG_DCRYPTO.
  */
