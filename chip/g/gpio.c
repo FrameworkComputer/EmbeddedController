@@ -51,6 +51,34 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	set_one_gpio_bit(g->port, g->mask, value);
 }
 
+static void configure_wakepin(int bitmask, uint32_t flags)
+{
+	/* not VIOn ! */
+	if (bitmask > GC_PINMUX_EXITEN0_DIOB7_MASK)
+		return;
+
+	if (!(flags & DIO_WAKE_EN0)) {
+		/* Disable the pin */
+		GREG32(PINMUX, EXITEN0) &= ~bitmask;
+		return;
+	}
+
+	/* level (0) or edge sensitive (1) */
+	if (flags & DIO_WAKE_EDGE0)
+		GREG32(PINMUX, EXITEDGE0) |= bitmask;
+	else
+		GREG32(PINMUX, EXITEDGE0) &= ~bitmask;
+
+	/* high/rising (0) or low/falling (1) */
+	if (flags & DIO_WAKE_INV0)
+		GREG32(PINMUX, EXITINV0) |= bitmask;
+	else
+		GREG32(PINMUX, EXITINV0) &= ~bitmask;
+
+	/* Enable the pin */
+	GREG32(PINMUX, EXITEN0) |= bitmask;
+}
+
 int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
 {
 	uint32_t flags = 0;
@@ -121,6 +149,50 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		GR_GPIO_SETINTPOL(port) = mask;
 	}
 	/* No way to trigger on both rising and falling edges, darn it. */
+}
+
+void gpio_set_wakepin(enum gpio_signal signal, uint32_t flags)
+{
+	const struct gpio_info *g = gpio_list + signal;
+	const int gpio_bitnum = GPIO_MASK_TO_NUM(g->mask);
+	const int dio_val = GET_GPIO_SEL_REG(g->port, gpio_bitnum);
+	int dio_mask;
+	int dio_wake_flags;
+
+	/* Can't do anything if the gpio is not connected to a pin */
+	if (!dio_val)
+		return;
+
+	/* Convert the gpio wake flags to the dio wake pin configuration */
+	flags &= GPIO_HIB_WAKE_MASK;
+	switch (flags) {
+	case 0:  /* Disable Wakepin */
+		dio_wake_flags = 0;
+		break;
+	case GPIO_HIB_WAKE_HIGH:
+		dio_wake_flags = DIO_WAKE_HIGH;
+		break;
+	case GPIO_HIB_WAKE_LOW:
+		dio_wake_flags = DIO_WAKE_LOW;
+		break;
+	case GPIO_HIB_WAKE_RISING:
+		dio_wake_flags = DIO_WAKE_RISING;
+		break;
+	case GPIO_HIB_WAKE_FALLING:
+		dio_wake_flags = DIO_WAKE_FALLING;
+		break;
+	default:
+		/* Wake contions cannot be more than one. */
+		return;
+	}
+
+	/*
+	 * GC_PINMUX_{PIN}_SEL values start from 0x1e (DIOM0)
+	 * down to 0x03 (DIOB7). Meanwhile, GC_PINMUX_{wake_cond}_{pin}_MASK
+	 * has BIT(0) for DIOM0 and BIT(27) for DIOB7.
+	 */
+	dio_mask = 1 << (GC_PINMUX_DIOM0_SEL - dio_val);
+	configure_wakepin(dio_mask, dio_wake_flags);
 }
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
@@ -231,7 +303,6 @@ static int connect_dio_to_gpio(struct pinmux const *p)
 
 static void connect_pinmux(struct pinmux const *p)
 {
-	uint32_t bitmask;
 	int is_input;
 
 	if (p->flags & DIO_ENABLE_DIRECT_INPUT) {
@@ -265,24 +336,14 @@ static void connect_pinmux(struct pinmux const *p)
 			      DIO_CTL_PD_LSB, 1);
 
 	/* Enable any wake pins needed to exit low-power modes */
-	if ((p->flags & DIO_WAKE_EN0) &&
-	    (p->dio.offset <= GC_PINMUX_DIOB7_SEL_OFFSET)) { /* not VIOn ! */
-		bitmask = (1 << (p->dio.offset / 8));
+	if (p->flags & DIO_WAKE_EN0) {
+		/*
+		 * p->dio.offset is the offset of GC_PINMUX_*_SEL register.
+		 * The next GC_PINMUX_*_SEL register is 8 byte away.
+		 */
+		const uint32_t dio_mask = (1 << (p->dio.offset / 8));
 
-		/* enable pad as wake source */
-		GREG32(PINMUX, EXITEN0) |= bitmask;
-
-		/* level (0) or edge sensitive (1) */
-		if (p->flags & DIO_WAKE_EDGE0)
-			GREG32(PINMUX, EXITEDGE0) |= bitmask;
-		else
-			GREG32(PINMUX, EXITEDGE0) &= ~bitmask;
-
-		/* high/rising (0) or low/falling (1) */
-		if (p->flags & DIO_WAKE_INV0)
-			GREG32(PINMUX, EXITINV0) |= bitmask;
-		else
-			GREG32(PINMUX, EXITINV0) &= ~bitmask;
+		configure_wakepin(dio_mask, p->flags);
 	}
 }
 

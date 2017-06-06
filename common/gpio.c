@@ -218,4 +218,10 @@ int signal_is_gpio(int signal)
 		&& (signal < GPIO_SIGNAL_START + GPIO_COUNT));
 }
 
+__attribute__((weak)) void gpio_set_wakepin(enum gpio_signal signal,
+					    uint32_t flags)
+{
+	/* Some chips may need their own implementations */
+}
+
 /*****************************************************************************/

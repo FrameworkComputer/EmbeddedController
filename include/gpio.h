@@ -34,9 +34,12 @@
 #define GPIO_SEL_1P8V      BIT(16) /* Support 1.8v */
 #define GPIO_ALTERNATE     BIT(17) /* GPIO used for alternate function. */
 #define GPIO_LOCKED        BIT(18) /* Lock GPIO output and configuration */
-#define GPIO_HIB_WAKE_HIGH BIT(19) /* Hibernate wake on high level */
+#define GPIO_HIB_WAKE_HIGH    BIT(19) /* Hibernate wake on high level */
+#define GPIO_HIB_WAKE_LOW     BIT(20) /* Hibernate wake on low level */
+#define GPIO_HIB_WAKE_RISING  BIT(21) /* Hibernate wake on rising edge */
+#define GPIO_HIB_WAKE_FALLING BIT(22) /* Hibernate wake on falling edge */
 #ifdef CONFIG_GPIO_POWER_DOWN
-#define GPIO_POWER_DOWN    BIT(20) /* Pin and pad is powered off */
+#define GPIO_POWER_DOWN    BIT(23) /* Pin and pad is powered off */
 #endif
 
 /* Common flag combinations */
@@ -53,6 +56,8 @@
 #define GPIO_INT_LEVEL      (GPIO_INT_LOW | GPIO_INT_HIGH)
 #define GPIO_INT_ANY        (GPIO_INT_BOTH | GPIO_INT_LEVEL)
 #define GPIO_INT_BOTH_DSLEEP (GPIO_INT_BOTH | GPIO_INT_DSLEEP)
+#define GPIO_HIB_WAKE_MASK   (GPIO_HIB_WAKE_HIGH | GPIO_HIB_WAKE_LOW | \
+			      GPIO_HIB_WAKE_RISING|GPIO_HIB_WAKE_FALLING)
 
 /* Convert GPIO mask to GPIO number / index. */
 #define GPIO_MASK_TO_NUM(mask) (__fls(mask))
@@ -342,5 +347,16 @@ int gpio_power_down_module(enum module_id id);
  * @return		1 if signal is GPIO else return 0
  */
 int signal_is_gpio(int signal);
+
+/**
+ * Configure a GPIO as wake source on a given condition and enable it, or
+ * disable it.
+ *
+ * @param signal       GPIO to enable to wake Cr50 up
+ * @param flags        Wake condition. Should be one among
+ *                     GPIO_HIB_WAKE_{HIGH, LOW, RISING, FALLING} to enable it
+ *                     as a wake pin. 0 to disable it.
+ */
+void gpio_set_wakepin(enum gpio_signal signal, uint32_t flags);
 
 #endif  /* __CROS_EC_GPIO_H */
