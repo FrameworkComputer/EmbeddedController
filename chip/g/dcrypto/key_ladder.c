@@ -6,6 +6,7 @@
 #include "internal.h"
 #include "endian.h"
 #include "registers.h"
+#include "trng.h"
 
 static void ladder_init(void)
 {
@@ -88,8 +89,11 @@ static int compute_certs(const uint32_t *certs, size_t num_certs)
 #define KEYMGR_CERT_20 20
 #define KEYMGR_CERT_25 25
 #define KEYMGR_CERT_26 26
+#define KEYMGR_CERT_27 27
+#define KEYMGR_CERT_28 28
 #define KEYMGR_CERT_34 34
 #define KEYMGR_CERT_35 35
+#define KEYMGR_CERT_38 38
 
 static const uint32_t FRK2_CERTS_PREFIX[] = {
 	KEYMGR_CERT_0,
@@ -213,4 +217,73 @@ int dcrypto_ladder_compute_usr(enum dcrypto_appid id,
 
 	dcrypto_release_sha_hw();
 	return result;
+}
+
+static void ladder_out(uint32_t output[8])
+{
+	output[0] = GREG32(KEYMGR, SHA_STS_H0);
+	output[1] = GREG32(KEYMGR, SHA_STS_H1);
+	output[2] = GREG32(KEYMGR, SHA_STS_H2);
+	output[3] = GREG32(KEYMGR, SHA_STS_H3);
+	output[4] = GREG32(KEYMGR, SHA_STS_H4);
+	output[5] = GREG32(KEYMGR, SHA_STS_H5);
+	output[6] = GREG32(KEYMGR, SHA_STS_H6);
+	output[7] = GREG32(KEYMGR, SHA_STS_H7);
+}
+
+/*
+ * Stir TRNG entropy into RSR and pull some out.
+ */
+int DCRYPTO_ladder_random(void *output)
+{
+	int error = 1;
+	uint32_t tmp[8];
+	int i;
+
+	if (!dcrypto_grab_sha_hw())
+		goto fail;
+
+	rand_bytes(tmp, sizeof(tmp));
+	error = ladder_step(KEYMGR_CERT_28, tmp);
+	if (error)
+		goto fail;
+
+	if (!compute_certs(FRK2_CERTS_PREFIX, ARRAY_SIZE(FRK2_CERTS_PREFIX)))
+		goto fail;
+	/* USR generation requires running the key-ladder till
+	 * the end (version 0), plus one additional iteration.
+	 */
+	for (i = 0; i < MAX_MAJOR_FW_VERSION - 0 + 1; i++)
+		if (ladder_step(KEYMGR_CERT_25, NULL))
+			goto fail;
+	if (i != MAX_MAJOR_FW_VERSION - 0 + 1)
+		goto fail;
+	if (ladder_step(KEYMGR_CERT_34, ISR_SALT))
+		goto fail;
+
+	rand_bytes(tmp, sizeof(tmp));
+	error = ladder_step(KEYMGR_CERT_27, tmp);
+	if (!error)
+		ladder_out(output);
+
+fail:
+	dcrypto_release_sha_hw();
+	return !error;
+}
+
+int dcrypto_ladder_derive(enum dcrypto_appid appid, const uint32_t salt[8],
+			  const uint32_t input[8], uint32_t output[8])
+{
+	int error;
+
+	if (!dcrypto_grab_sha_hw())
+		return 0;
+
+	GWRITE_FIELD(KEYMGR, SHA_CERT_OVERRIDE, KEY_PTR, 2 * appid);
+	error = ladder_step(KEYMGR_CERT_38, input); /* HMAC */
+	if (!error)
+		ladder_out(output);
+
+	dcrypto_release_sha_hw();
+	return !error;
 }

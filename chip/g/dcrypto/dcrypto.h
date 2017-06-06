@@ -267,7 +267,10 @@ int DCRYPTO_equals(const void *a, const void *b, size_t len);
  */
 enum dcrypto_appid {
 	RESERVED = 0,
-	NVMEM = 1
+	NVMEM = 1,
+	U2F_ATTEST = 2,
+	U2F_ORIGIN = 3,
+	U2F_WRAP = 4,
 	/* This enum value should not exceed 7. */
 };
 
@@ -275,9 +278,12 @@ struct APPKEY_CTX {
 };
 
 int DCRYPTO_ladder_compute_frk2(size_t major_fw_version, uint8_t *frk2);
+int DCRYPTO_ladder_random(void *output);
 
 int DCRYPTO_appkey_init(enum dcrypto_appid id, struct APPKEY_CTX *ctx);
 void DCRYPTO_appkey_finish(struct APPKEY_CTX *ctx);
+int DCRYPTO_appkey_derive(enum dcrypto_appid appid, const uint32_t input[8],
+			  uint32_t output[8]);
 
 /* Number of bytes in the salt object. */
 #define DCRYPTO_CIPHER_SALT_SIZE 16
