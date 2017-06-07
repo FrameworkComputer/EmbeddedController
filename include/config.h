@@ -2050,20 +2050,13 @@
 /* Define the SPI port to use to access the flash */
 #undef CONFIG_SPI_FLASH_PORT
 
-/* Support W25Q40 SPI flash */
-#undef CONFIG_SPI_FLASH_W25Q40
-
-/* Support W25Q64 SPI flash */
-#undef CONFIG_SPI_FLASH_W25Q64
-
-/* Support W25X40 SPI flash */
-#undef CONFIG_SPI_FLASH_W25X40
-
-/* Support GD25Q40 SPI flash */
+/* Select any of the following SPI flash configs that your board uses. */
 #undef CONFIG_SPI_FLASH_GD25LQ40
-
-/* Support GD25Q41B SPI flash */
 #undef CONFIG_SPI_FLASH_GD25Q41B
+#undef CONFIG_SPI_FLASH_W25Q40
+#undef CONFIG_SPI_FLASH_W25Q64
+#undef CONFIG_SPI_FLASH_W25Q80
+#undef CONFIG_SPI_FLASH_W25X40
 
 /* SPI flash part supports SR2 register */
 #undef CONFIG_SPI_FLASH_HAS_SR2
