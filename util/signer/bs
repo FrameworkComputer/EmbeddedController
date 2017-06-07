@@ -120,8 +120,7 @@ if [ -n "${do_prod}" -a -n "${do_b1}" ]; then
   exit 1
 fi
 
-signer_command_params=''
-signer_command_params=" -x ${EC_BIN_ROOT}/fuses.xml"
+signer_command_params="--b -x ${EC_BIN_ROOT}/fuses.xml"
 if [ -z "${do_prod}" ]; then
   signer_command_params+=" -k ${EC_BIN_ROOT}/cr50_rom0-dev-blsign.pem.pub"
 else
