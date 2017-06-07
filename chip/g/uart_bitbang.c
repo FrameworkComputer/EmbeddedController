@@ -17,6 +17,8 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
+#define BITBANG_DEBUG 0 /* Set to 1 to enable debug counters and logs. */
+
 /* Support the "standard" baud rates. */
 #define IS_BAUD_RATE_SUPPORTED(rate) \
 	((rate == 1200) || (rate == 2400) || (rate == 4800) || (rate == 9600) \
@@ -24,33 +26,33 @@
 	 (rate == 115200))
 
 #define RX_BUF_SIZE 8
-#define DISCARD_LOG 8
-
 #define BUF_NEXT(idx) ((idx+1) % RX_BUF_SIZE)
 
 #define TIMEUS_CLK_FREQ 24 /* units: MHz */
 
-/* Bitmask of UARTs with bit banging enabled. */
+/* Flag indicating whether bit banging is enabled or not. */
 static uint8_t bitbang_enabled;
-/* TODO(aaboagye): just a hack for now. */
 static int rx_buf[RX_BUF_SIZE];
-static int parity_err_discard[DISCARD_LOG];
-static int parity_discard_idx;
-static int stop_bit_discard[DISCARD_LOG];
-static int stop_bit_discard_idx;
-
-/* debug counters */
-static int read_char_cnt;
-static int rx_buff_inserted_cnt;
-static int rx_buff_rx_char_cnt;
-static int stop_bit_err_cnt;
-static int parity_err_cnt;
 
 /* Current bitbang context */
 static int tx_pin;
 static int rx_pin;
 static uint32_t bit_period_ticks;
 static uint8_t set_parity;
+
+#if BITBANG_DEBUG
+/* debug counters and log */
+#define DISCARD_LOG 8
+static int read_char_cnt;
+static int rx_buff_inserted_cnt;
+static int rx_buff_rx_char_cnt;
+static int stop_bit_err_cnt;
+static int parity_err_cnt;
+static int parity_err_discard[DISCARD_LOG];
+static int parity_discard_idx;
+static int stop_bit_discard[DISCARD_LOG];
+static int stop_bit_discard_idx;
+#endif /* BITBANG_DEBUG */
 
 static int is_uart_allowed(int uart)
 {
@@ -231,7 +233,9 @@ int uart_bitbang_receive_char(int uart)
 
 	/* Disable interrupts so that we aren't interrupted. */
 	interrupt_disable();
+#if BITBANG_DEBUG
 	rx_buff_rx_char_cnt++;
+#endif /* BITBANG_DEBUG */
 	rv = EC_SUCCESS;
 
 	rx_char = 0;
@@ -280,18 +284,22 @@ int uart_bitbang_receive_char(int uart)
 		break;
 	}
 
+#if BITBANG_DEBUG
 	if (rv != EC_SUCCESS) {
 		parity_err_cnt++;
 		parity_err_discard[parity_discard_idx] = rx_char;
 		parity_discard_idx = (parity_discard_idx + 1) % DISCARD_LOG;
 	}
+#endif /* BITBANG_DEBUG */
 
 	/* Check that the stop bit is valid. */
 	if (stop_bit != 1) {
 		rv = EC_ERROR_CRC;
+#if BITBANG_DEBUG
 		stop_bit_err_cnt++;
 		stop_bit_discard[stop_bit_discard_idx] = rx_char;
 		stop_bit_discard_idx = (stop_bit_discard_idx + 1) % DISCARD_LOG;
+#endif /* BITBANG_DEBUG */
 	}
 
 	if (rv != EC_SUCCESS) {
@@ -305,7 +313,9 @@ int uart_bitbang_receive_char(int uart)
 	if (BUF_NEXT(tail) != head) {
 		rx_buf[tail] = rx_char;
 		bitbang_config.htp.tail = BUF_NEXT(tail);
+#if BITBANG_DEBUG
 		rx_buff_inserted_cnt++;
+#endif /* BITBANG_DEBUG */
 	}
 
 	interrupt_enable();
@@ -326,7 +336,9 @@ int uart_bitbang_read_char(int uart)
 	if (head != bitbang_config.htp.tail)
 		bitbang_config.htp.head = BUF_NEXT(head);
 
+#if BITBANG_DEBUG
 	read_char_cnt++;
+#endif /* BITBANG_DEBUG */
 	return c;
 }
 
@@ -338,6 +350,107 @@ int uart_bitbang_is_char_available(int uart)
 	return bitbang_config.htp.head != bitbang_config.htp.tail;
 }
 
+#if BITBANG_DEBUG
+static int write_test_pattern(int uart, int pattern_idx)
+{
+	if (!uart_bitbang_is_enabled(uart)) {
+		ccprintf("bit banging mode not enabled for UART%d\n", uart);
+		return EC_ERROR_INVAL;
+	}
+
+	switch (pattern_idx) {
+	case 0:
+		uartn_write_char(uart, 'a');
+		uartn_write_char(uart, 'b');
+		uartn_write_char(uart, 'c');
+		uartn_write_char(uart, '\n');
+		ccprintf("wrote: 'abc\\n'\n");
+		break;
+
+	case 1:
+		uartn_write_char(uart, 0xAA);
+		uartn_write_char(uart, 0xCC);
+		uartn_write_char(uart, 0x55);
+		ccprintf("wrote: '0xAA 0xCC 0x55'\n");
+		break;
+
+	default:
+		ccprintf("unknown test pattern\n");
+		return EC_ERROR_INVAL;
+	};
+
+	return EC_SUCCESS;
+}
+#endif /* BITBANG_DEBUG */
+
+static int command_bitbang(int argc, char **argv)
+{
+	int uart;
+	int baud_rate;
+	int parity;
+
+	if (argc > 1) {
+		uart = atoi(argv[1]);
+		if (argc == 3) {
+			if (!strcasecmp("disable", argv[2]))
+				return uart_bitbang_disable(uart);
+			else
+				return EC_ERROR_PARAM2;
+		}
+
+		if (argc == 4) {
+#if BITBANG_DEBUG
+			if (!strncasecmp("test", argv[2], 4))
+				return write_test_pattern(uart, atoi(argv[3]));
+#endif /* BITBANG_DEBUG */
+
+			baud_rate = atoi(argv[2]);
+			if (!strcasecmp("odd", argv[3]))
+				parity = 1;
+			else if (!strcasecmp("even", argv[3]))
+				parity = 2;
+			else if (!strcasecmp("none", argv[3]))
+				parity = 0;
+			else
+				return EC_ERROR_PARAM3;
+
+			return uart_bitbang_enable(uart, baud_rate, parity);
+		}
+
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+	if (!uart_bitbang_is_enabled(bitbang_config.uart)) {
+		ccprintf("bit banging mode disabled.\n");
+	} else {
+		ccprintf("baud rate - parity\n");
+		ccprintf("  %6d    ", bitbang_config.baud_rate);
+		switch (bitbang_config.htp.parity) {
+		case 1:
+			ccprintf("odd\n");
+			break;
+
+		case 2:
+			ccprintf("even\n");
+			break;
+
+		case 0:
+		default:
+			ccprintf("none\n");
+		break;
+		};
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(bitbang, command_bitbang,
+			"<uart> <baud_rate> <odd,even,none> | <uart> disable "
+#if BITBANG_DEBUG
+			"| <uart> test <0, 1>"
+#endif /* BITBANG_DEBUG */
+			, "set bit bang mode");
+
+#if BITBANG_DEBUG
 static int command_bitbang_dump_stats(int argc, char **argv)
 {
 	int i;
@@ -388,3 +501,4 @@ static int command_bitbang_dump_stats(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(bbstats, command_bitbang_dump_stats,
 			"",
 			"dumps bitbang stats");
+#endif /* BITBANG_DEBUG */
