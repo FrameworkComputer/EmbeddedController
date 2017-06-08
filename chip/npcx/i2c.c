@@ -103,25 +103,13 @@ struct i2c_timing {
 
 /* I2C timing setting array of 400K & 1M Hz */
 static const struct i2c_timing i2c_400k_timings[] = {
-	{50, 22, 84, 56},
-	{48, 22, 80, 54},
-	{40, 19, 66, 46},
-	{33, 17, 52, 38},
-	{24, 15, 38, 28},
-	{20, 13, 32, 20},
-	{15, 12, 24, 18},
-	{13, 11, 22, 16},
-	{12, 11, 20, 14},};
+	{20,  7, 32, 22},
+	{15,  7, 24, 18},};
 const unsigned int i2c_400k_timing_used = ARRAY_SIZE(i2c_400k_timings);
 
 static const struct i2c_timing i2c_1m_timings[] = {
-	{50, 13, 32, 24},
-	{48, 13, 30, 24},
-	{40, 12, 26, 20},
-	{33, 11, 20, 16},
-	{24, 10, 16, 12},
-	{20, 10, 14, 10},
-	{15,  9, 10, 10},};
+	{20, 7, 16, 10},
+	{15, 7, 14, 10},};
 const unsigned int i2c_1m_timing_used = ARRAY_SIZE(i2c_1m_timings);
 
 /* IRQ for each port */
