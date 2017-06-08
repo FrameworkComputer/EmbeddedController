@@ -13,3 +13,4 @@ CROSS_COMPILE?=nds32le-cros-elf-
 CFLAGS_CPU+=-march=v3m -Os
 
 core-y=cpu.o init.o panic.o task.o switch.o __muldi3.o math.o
+core-$(CONFIG_FPU)+=__libsoftfpu.o
