@@ -366,7 +366,9 @@ static void usage(int errs)
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
 	       "  -i,--board_id [ID[:FLAGS]]\n"
-	       "                           Get or set Info1 board ID fields\n"
+	       "                           Get or set Info1 board ID fields.\n"
+	       "                           ID could be 32 bit hex or 4 "
+	       "character string.\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -u,--upstart             "
@@ -1263,27 +1265,56 @@ static int parse_bid(const char *opt,
 		     enum board_id_action *bid_action)
 {
 	char *e;
+	const char *param2;
+	size_t param1_length;
 
 	if (!opt) {
 		*bid_action = bid_get;
 		return 1;
 	}
 
-	bid->type = (uint32_t)strtoul(opt, &e, 0);
+	/* Set it here to make bailing out easier later. */
+	bid->flags = DEFAULT_BOARD_ID_FLAG;
+
 	*bid_action = bid_set;  /* Ignored by caller on errors. */
 
-	if (!e || !*e) {
-		bid->flags = DEFAULT_BOARD_ID_FLAG;
-		return 1;
+	/*
+	 * Pointer to the optional second component of the command line
+	 * parameter, when present - separated by a colon.
+	 */
+	param2 = strchr(opt, ':');
+	if (param2) {
+		param1_length = param2 - opt;
+		param2++;
+		if (!*param2)
+			return 0; /* Empty second parameter. */
+	} else {
+		param1_length = strlen(opt);
 	}
 
-	if (*e == ':') {
-		bid->flags = (uint32_t)strtoul(e + 1, &e, 0);
-		if (!e || !*e)
-			return 1;
+	if (!param1_length)
+		return 0; /* Colon is the first character of the string? */
+
+	if (param1_length <= 4) {
+		unsigned i;
+
+		/* Input must be a symbolic board name. */
+		bid->type = 0;
+		for (i = 0; i < param1_length; i++)
+			bid->type = (bid->type << 8) | opt[i];
+	} else {
+		bid->type = (uint32_t)strtoul(opt, &e, 0);
+		if ((param2 && (*e != ':')) || (!param2 && *e))
+			return 0;
 	}
 
-	return 0;
+	if (param2) {
+		bid->flags = (uint32_t)strtoul(param2, &e, 0);
+		if (*e)
+			return 0;
+	}
+
+	return 1;
 }
 
 static void process_bid(struct transfer_descriptor *td,
