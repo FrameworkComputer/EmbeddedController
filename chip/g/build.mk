@@ -128,7 +128,7 @@ SIGNER = $(out)/util/signer
 SIGNER_EXTRAS =
 SIGNER_MANIFEST := $(MANIFEST)
 else
-SIGNER = $(HOME)/bin/codesigner
+SIGNER = sudo $(HOME)/bin/codesigner
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub
 RW_SIGNER_EXTRAS = -x util/signer/fuses.xml
 
