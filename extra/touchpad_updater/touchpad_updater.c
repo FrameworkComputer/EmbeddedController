@@ -28,10 +28,10 @@ static char *firmware_binary = "144.0_2.0.bin";	/* firmware blob */
 #define FW_PAGE_COUNT			768
 #define FW_SIZE				(FW_PAGE_SIZE*FW_PAGE_COUNT)
 
-static unsigned char fw_data[FW_SIZE];
+static uint8_t fw_data[FW_SIZE];
 
 /* Utility functions */
-static int le_bytes_to_int(unsigned char *buf)
+static int le_bytes_to_int(uint8_t *buf)
 {
 	return buf[0] + (int)(buf[1] << 8);
 }
@@ -140,8 +140,8 @@ static void parse_cmdline(int argc, char *argv[])
 }
 
 /* USB transfer related */
-static unsigned char rx_buf[128];
-static unsigned char tx_buf[128];
+static uint8_t rx_buf[128];
+static uint8_t tx_buf[128];
 
 static struct libusb_device_handle *devh;
 static struct libusb_transfer *rx_transfer;
@@ -149,7 +149,6 @@ static struct libusb_transfer *tx_transfer;
 
 static int claimed_iface;
 static int iface_num = -1;
-static int tx_ready;
 static int do_exit;
 
 static void request_exit(const char *format, ...)
@@ -286,11 +285,16 @@ static int check_read_status(int r, int expected, int actual)
 	return r;
 }
 
+#define MAX_USB_PACKET_SIZE		64
+
 static int libusb_single_write_and_read(
 		uint8_t *to_write, uint16_t write_length,
 		uint8_t *to_read, uint8_t read_length)
 {
 	int r;
+	int tx_ready;
+	int remains;
+	int sent_bytes = 0;
 	int actual_length = -1;
 	tx_transfer = rx_transfer = 0;
 
@@ -299,24 +303,36 @@ static int libusb_single_write_and_read(
 	tx_buf[1] = I2C_ADDRESS_ON_HAMMER;
 	tx_buf[2] = write_length;
 	tx_buf[3] = read_length;
-	tx_ready = 4 + write_length;
 
-	r = libusb_bulk_transfer(devh,
-			(ep_num | LIBUSB_ENDPOINT_OUT),
-			tx_buf, tx_ready, &actual_length, 0);
-	if (r == 0 && actual_length == tx_ready) {
+	while (sent_bytes < (4 + write_length)) {
+		tx_ready = remains = (4 + write_length) - sent_bytes;
+		if (tx_ready > MAX_USB_PACKET_SIZE)
+			tx_ready = MAX_USB_PACKET_SIZE;
+
 		r = libusb_bulk_transfer(devh,
-				(ep_num | LIBUSB_ENDPOINT_IN),
-				rx_buf, 1024, &actual_length, 0);
+				(ep_num | LIBUSB_ENDPOINT_OUT),
+				tx_buf + sent_bytes, tx_ready,
+				&actual_length, 0);
+		if (r == 0 && actual_length == tx_ready) {
+			r = libusb_bulk_transfer(devh,
+					(ep_num | LIBUSB_ENDPOINT_IN),
+					rx_buf, 128, &actual_length, 0);
+		}
+		r = check_read_status(
+				r, (remains == tx_ready) ? read_length : 0,
+				actual_length);
+		if (r)
+			break;
+		sent_bytes += tx_ready;
 	}
-	return check_read_status(r, read_length, actual_length);
+	return r;
 }
 
 /* Control Elan trackpad I2C over USB */
 #define ETP_I2C_INF_LENGTH		2
 
 static int elan_write_and_read(
-		int reg, unsigned char *buf, int read_length,
+		int reg, uint8_t *buf, int read_length,
 		int with_cmd, int cmd)
 {
 
@@ -330,14 +346,19 @@ static int elan_write_and_read(
 			tx_buf, with_cmd ? 4 : 2, rx_buf, read_length);
 }
 
-static int elan_read_block(int reg, unsigned char *buf, int read_length)
-
+static int elan_read_block(int reg, uint8_t *buf, int read_length)
+{
 	return elan_write_and_read(reg, buf, read_length, 0, 0);
 }
 
 static int elan_read_cmd(int reg)
 {
 	return elan_read_block(reg, rx_buf, ETP_I2C_INF_LENGTH);
+}
+
+static int elan_write_cmd(int reg, int cmd)
+{
+	return elan_write_and_read(reg, rx_buf, 0, 1, cmd);
 }
 
 /* Elan trackpad firmware information related */
@@ -360,12 +381,12 @@ static int elan_get_checksum(int is_iap)
 	return le_bytes_to_int(rx_buf + 4);
 }
 
-static void get_fw_info(void)
+static uint16_t elan_get_fw_info(void)
 {
 	int iap_version = -1;
 	int fw_version = -1;
-	unsigned int iap_checksum = 0xffff;
-	unsigned int fw_checksum = 0xffff;
+	uint16_t iap_checksum = 0xffff;
+	uint16_t fw_checksum = 0xffff;
 
 	printf("Querying device info...\n");
 	fw_checksum = elan_get_checksum(0);
@@ -376,17 +397,142 @@ static void get_fw_info(void)
 			iap_version, fw_version);
 	printf("IAP checksum: %4x, FW checksum: %4x\n",
 			iap_checksum, fw_checksum);
+	return fw_checksum;
+}
+
+/* Update preparation */
+#define ETP_I2C_IAP_RESET_CMD		0x0314
+#define ETP_I2C_IAP_RESET		0xF0F0
+#define ETP_I2C_IAP_CTRL_CMD		0x0310
+#define ETP_I2C_MAIN_MODE_ON		(1 << 9)
+#define ETP_I2C_IAP_CMD			0x0311
+#define ETP_I2C_IAP_PASSWORD		0x1EA5
+
+static int elan_in_main_mode(void)
+{
+	elan_read_cmd(ETP_I2C_IAP_CTRL_CMD);
+	return le_bytes_to_int(rx_buf + 4) & ETP_I2C_MAIN_MODE_ON;
+}
+
+static void elan_prepare_for_update(void)
+{
+	int initial_mode = elan_in_main_mode();
+	if (!initial_mode) {
+		printf("In IAP mode, reset IC.\n");
+		elan_write_cmd(ETP_I2C_IAP_RESET_CMD, ETP_I2C_IAP_RESET);
+		usleep(30 * 1000);
+	}
+
+	/* Send the passphrase */
+	elan_write_cmd(ETP_I2C_IAP_CMD, ETP_I2C_IAP_PASSWORD);
+	usleep((initial_mode ? 100 : 30) * 1000);
+
+	/* We should be in the IAP mode now */
+	if (elan_in_main_mode())
+		request_exit("Failure to enter IAP mode, still in main mode");
+
+	/* Send the passphrase again */
+	elan_write_cmd(ETP_I2C_IAP_CMD, ETP_I2C_IAP_PASSWORD);
+	usleep(30 * 1000);
+
+	/* Verify the password */
+	if (elan_read_cmd(ETP_I2C_IAP_CMD))
+		request_exit("cannot read iap password.\n");
+	if (le_bytes_to_int(rx_buf + 4) != ETP_I2C_IAP_PASSWORD)
+		request_exit("Got an unexpected IAP password %4x\n",
+			le_bytes_to_int(rx_buf + 4));
+}
+
+/* Firmware block update */
+#define ETP_IAP_START_ADDR		0x0083
+
+static uint16_t elan_calc_checksum(uint8_t *data, int length)
+{
+	uint16_t checksum = 0;
+	for (int i = 0; i < length; i += 2)
+		checksum += ((uint16_t)(data[i+1]) << 8) | (data[i]);
+	return checksum;
+}
+
+static int elan_get_iap_addr(void)
+{
+	return le_bytes_to_int(fw_data + ETP_IAP_START_ADDR * 2) * 2;
+}
+
+#define ETP_I2C_IAP_REG_L		0x01
+#define ETP_I2C_IAP_REG_H		0x06
+
+#define ETP_FW_IAP_PAGE_ERR		(1 << 5)
+#define ETP_FW_IAP_INTF_ERR		(1 << 4)
+
+static int elan_write_fw_block(uint8_t *raw_data, uint16_t checksum)
+{
+	uint8_t page_store[FW_PAGE_SIZE + 4];
+	int rv;
+	page_store[0] = ETP_I2C_IAP_REG_L;
+	page_store[1] = ETP_I2C_IAP_REG_H;
+	memcpy(page_store + 2, raw_data, FW_PAGE_SIZE);
+	page_store[FW_PAGE_SIZE + 2 + 0] = (checksum >> 0) & 0xff;
+	page_store[FW_PAGE_SIZE + 2 + 1] = (checksum >> 8) & 0xff;
+
+	rv = libusb_single_write_and_read(
+			page_store, sizeof(page_store), rx_buf, 0);
+	if (rv)
+		return rv;
+	usleep(20 * 1000);
+	elan_read_cmd(ETP_I2C_IAP_CTRL_CMD);
+	rv = le_bytes_to_int(rx_buf + 4);
+	if (rv & (ETP_FW_IAP_PAGE_ERR | ETP_FW_IAP_INTF_ERR)) {
+		printf("IAP reports failed write : %x\n", rv);
+		return rv;
+	}
+	return 0;
+}
+
+
+static uint16_t elan_update_firmware(void)
+{
+	uint16_t checksum = 0, block_checksum;
+	int rv;
+
+	for (int i = elan_get_iap_addr(); i < FW_SIZE; i += FW_PAGE_SIZE) {
+		block_checksum = elan_calc_checksum(fw_data + i, FW_PAGE_SIZE);
+		rv = elan_write_fw_block(fw_data + i, block_checksum);
+		checksum += block_checksum;
+		printf("\rPage %3d is updated, checksum: %d",
+			i / FW_PAGE_SIZE, checksum);
+		fflush(stdout);
+		if (rv)
+			request_exit("Failed to update.");
+	}
+	return checksum;
 }
 
 int main(int argc, char *argv[])
 {
+	uint16_t local_checksum;
+	uint16_t remote_checksum;
 	parse_cmdline(argc, argv);
 	init_with_libusb();
 	register_sigaction();
-	get_fw_info();
-	/* TODO(itspeter): Update the firmware */
+
+	/*
+	 * It is possible that you are not able to get firmware info. This
+	 * might due to an incomplete update last time
+	 */
+	elan_get_fw_info();
+	/* Get the trackpad ready for receiving update */
+	elan_prepare_for_update();
+
+	local_checksum = elan_update_firmware();
+	/* Wait for a reset */
+	usleep(600 * 1000);
+	remote_checksum = elan_get_checksum(1);
+	if (remote_checksum != local_checksum)
+		printf("checksum diff local=[%04X], remote=[%04X]\n",
+				local_checksum, remote_checksum);
 
 	/* Print the updated firmware information */
-	get_fw_info();
+	elan_get_fw_info();
 	return 0;
 }
