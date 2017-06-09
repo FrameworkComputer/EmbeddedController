@@ -143,22 +143,24 @@ DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
 void led_control(enum ec_led_id led_id, enum ec_led_state state)
 {
-	if (led_id == EC_LED_ID_RECOVERY_HW_REINIT_LED) {
-		enum led_color color;
+	enum led_color color;
 
-		if (state == LED_STATE_RESET) {
-			led_auto_control(EC_LED_ID_LEFT_LED, 1);
-			led_auto_control(EC_LED_ID_RIGHT_LED, 1);
-			board_led_set_battery();
-			return;
-		}
+	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
+	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
+		return;
 
-		color = state ? LED_WHITE : LED_OFF;
-
-		led_auto_control(EC_LED_ID_LEFT_LED, 0);
-		led_auto_control(EC_LED_ID_RIGHT_LED, 0);
-
-		side_led_set_color(0, color);
-		side_led_set_color(1, color);
+	if (state == LED_STATE_RESET) {
+		led_auto_control(EC_LED_ID_LEFT_LED, 1);
+		led_auto_control(EC_LED_ID_RIGHT_LED, 1);
+		board_led_set_battery();
+		return;
 	}
+
+	color = state ? LED_WHITE : LED_OFF;
+
+	led_auto_control(EC_LED_ID_LEFT_LED, 0);
+	led_auto_control(EC_LED_ID_RIGHT_LED, 0);
+
+	side_led_set_color(0, color);
+	side_led_set_color(1, color);
 }
