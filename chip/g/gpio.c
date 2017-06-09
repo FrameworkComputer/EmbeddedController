@@ -97,11 +97,6 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		GR_GPIO_SETINTTYPE(port) = mask;
 		GR_GPIO_SETINTPOL(port) = mask;
 	}
-
-	if (flags & (GPIO_INT_ANY ^ GPIO_INPUT))
-		if (!(flags & GPIO_INT_DISABLE))
-			GR_GPIO_SETINTEN(port) = mask;
-
 	/* No way to trigger on both rising and falling edges, darn it. */
 }
 

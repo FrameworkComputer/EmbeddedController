@@ -33,8 +33,6 @@
 #define GPIO_ALTERNATE     (1 << 17) /* GPIO used for alternate function. */
 #define GPIO_LOCKED        (1 << 18) /* Lock GPIO output and configuration */
 #define GPIO_HIB_WAKE_HIGH (1 << 19) /* Hibernate wake on high level */
-#define GPIO_INT_DISABLE   (1 << 20) /* Don't enable interrupt in */
-				     /* gpio_pre_init */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)
