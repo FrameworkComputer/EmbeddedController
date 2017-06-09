@@ -7210,7 +7210,7 @@ err:
 	free(data);
 	free(r);
 
-	return rv;
+	return rv < 0;
 }
 
 /* NULL-terminated list of commands */
