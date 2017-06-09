@@ -30,7 +30,6 @@ dirs-y += $(BDIR)/tpm2
 
 # Objects that we need to build
 board-y =  board.o
-board-y += board_id.o
 board-${CONFIG_RDD} += rdd.o
 board-${CONFIG_USB_SPI} += usb_spi.o
 board-${CONFIG_USB_I2C} += usb_i2c.o

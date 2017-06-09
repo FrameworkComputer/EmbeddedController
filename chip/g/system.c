@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "config.h"
+#include "board_id.h"
 #include "console.h"
 #include "cpu.h"
 #include "cpu.h"
@@ -687,3 +687,32 @@ void system_get_rollback_bits(char *value, size_t value_size)
 	snprintf(value, value_size, "%d/%d/%d", info_count,
 		 headers[0].count, headers[1].count);
 }
+
+#ifdef CONFIG_EXTENDED_VERSION_INFO
+
+void system_print_extended_version_info(void)
+{
+	int i;
+	struct board_id bid;
+	enum system_image_copy_t rw_images[] = {
+		SYSTEM_IMAGE_RW, SYSTEM_IMAGE_RW_B
+	};
+
+	if (read_board_id(&bid) != EC_SUCCESS) {
+		ccprintf("Board ID read failure!\n");
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(rw_images); i++) {
+		struct SignedHeader *ss = (struct SignedHeader *)
+			get_program_memory_addr(rw_images[i]);
+
+		ccprintf("BID %c:   %08x:%08x:%08x %s\n", 'A' + i,
+			 ss->board_id_type ^ SIGNED_HEADER_PADDING,
+			 ss->board_id_type_mask ^ SIGNED_HEADER_PADDING,
+			 ss->board_id_flags ^ SIGNED_HEADER_PADDING,
+			 check_board_id_vs_header(&bid, ss) ? " No" : "Yes");
+	}
+}
+
+#endif /* CONFIG_EXTENDED_VERSION_INFO */

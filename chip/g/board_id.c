@@ -8,12 +8,11 @@
 #include "endian.h"
 #include "extension.h"
 #include "flash_info.h"
-#include "signed_header.h"
 #include "system.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 /**
  * Return the image header for the current image copy
@@ -24,16 +23,8 @@ const struct SignedHeader *get_current_image_header(void)
 			get_program_memory_addr(system_get_image_copy());
 }
 
-/**
- * Check the current header vs. the supplied Board ID
- *
- * @param board_id	Pointer to a Board ID structure to check
- * @param h		Pointer to the currently running image's header
- *
- * @return 0 if no mismatch, non-zero if mismatch
- */
-static uint32_t check_board_id_vs_header(const struct board_id *id,
-					 const struct SignedHeader *h)
+uint32_t check_board_id_vs_header(const struct board_id *id,
+				  const struct SignedHeader *h)
 {
 	uint32_t mismatch;
 	uint32_t header_board_id_type;
@@ -72,14 +63,7 @@ static uint32_t check_board_id_vs_header(const struct board_id *id,
 	return mismatch;
 }
 
-/**
- * Check board ID from the flash INFO1 space.
- *
- * @param id	Pointer to a Board ID structure to fill
- *
- * @return EC_SUCCESS of an error code in cases of vairous failures to read.
- */
-static int read_board_id(struct board_id *id)
+int read_board_id(struct board_id *id)
 {
 	uint32_t *id_p;
 	int i;

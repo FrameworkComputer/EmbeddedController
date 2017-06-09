@@ -522,4 +522,11 @@ uintptr_t system_get_fw_reset_vector(uintptr_t base);
  */
 int system_is_reboot_warm(void);
 
+#ifdef CONFIG_EXTENDED_VERSION_INFO
+void system_print_extended_version_info(void);
+#else
+static inline void system_print_extended_version_info(void)
+{
+}
+#endif
 #endif  /* __CROS_EC_SYSTEM_H */

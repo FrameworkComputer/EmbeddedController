@@ -247,6 +247,9 @@ enum nvmem_users {
 #define CONFIG_I2C_SLAVE
 #define CONFIG_TPM_I2CS
 
+#define CONFIG_BOARD_ID_SUPPORT
+#define CONFIG_EXTENDED_VERSION_INFO
+
 #define I2C_PORT_MASTER 0
 
 #endif /* __CROS_EC_BOARD_H */

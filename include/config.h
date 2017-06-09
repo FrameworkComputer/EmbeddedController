@@ -2764,6 +2764,18 @@
  */
 #undef CONFIG_PWR_STATE_DISCHARGE_FULL
 
+/*
+ * Define this if a chip needs to add some information to the common 'version'
+ * command output.
+ */
+#undef CONFIG_EXTENDED_VERSION_INFO
+
+/*
+ * Define this if board ID support is required. For g chip based boards it
+ * allows to nail different images to different boards.
+ */
+#undef CONFIG_BOARD_ID_SUPPORT
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

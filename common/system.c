@@ -960,6 +960,7 @@ static int command_version(int argc, char **argv)
 	ccprintf("RW:      %s\n", system_get_version(SYSTEM_IMAGE_RW));
 #endif
 
+	system_print_extended_version_info();
 	print_build_string();
 
 	return EC_SUCCESS;
