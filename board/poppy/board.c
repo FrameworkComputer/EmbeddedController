@@ -894,3 +894,15 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+int board_has_working_reset_flags(void)
+{
+	int version = system_get_board_version();
+
+	/* Boards Rev1 and Rev2 will lose reset flags on power cycle. */
+	if ((version == 1) || (version == 2))
+		return 0;
+
+	/* All other board versions should have working reset flags */
+	return 1;
+}
