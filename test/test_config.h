@@ -67,6 +67,10 @@
 #define CONFIG_RWSIG_TYPE_RWSIG
 #endif
 
+#ifdef TEST_SHA256
+#define CONFIG_SHA256
+#endif
+
 #ifdef TEST_SHMALLOC
 #define CONFIG_MALLOC
 #endif

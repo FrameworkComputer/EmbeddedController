@@ -26,4 +26,7 @@ void SHA256_init(struct sha256_ctx *ctx);
 void SHA256_update(struct sha256_ctx *ctx, const uint8_t *data, uint32_t len);
 uint8_t *SHA256_final(struct sha256_ctx *ctx);
 
+void hmac_SHA256(uint8_t *output, const uint8_t *key, const int key_len,
+		 const uint8_t *message, const int message_len);
+
 #endif  /* __CROS_EC_SHA256_H */

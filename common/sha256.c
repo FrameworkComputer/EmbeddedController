@@ -188,6 +188,23 @@ void SHA256_update(struct sha256_ctx *ctx, const uint8_t *data, uint32_t len)
 	ctx->tot_len += (block_nb + 1) << 6;
 }
 
+/*
+ * Specialized SHA256_init + SHA256_update that takes the first data block of
+ * size SHA256_BLOCK_SIZE as input.
+ */
+static void SHA256_init_1b(struct sha256_ctx *ctx, const uint8_t *data)
+{
+	int i;
+
+	for (i = 0; i < 8; i++)
+		ctx->h[i] = sha256_h0[i];
+
+	SHA256_transform(ctx, data, 1);
+
+	ctx->len = 0;
+	ctx->tot_len = SHA256_BLOCK_SIZE;
+}
+
 uint8_t *SHA256_final(struct sha256_ctx *ctx)
 {
 	unsigned int block_nb;
@@ -211,4 +228,44 @@ uint8_t *SHA256_final(struct sha256_ctx *ctx)
 		UNPACK32(ctx->h[i], &ctx->buf[i << 2]);
 
 	return ctx->buf;
+}
+
+static void hmac_SHA256_step(uint8_t *output, uint8_t mask,
+			const uint8_t *key, const int key_len,
+			const uint8_t *data, const int data_len) {
+	struct sha256_ctx ctx;
+	uint8_t *key_pad = ctx.block;
+	uint8_t *tmp;
+	int i;
+
+	/* key_pad = key (zero-padded) ^ mask */
+	memset(key_pad, mask, SHA256_BLOCK_SIZE);
+	for (i = 0; i < key_len; i++)
+		key_pad[i] ^= key[i];
+
+	/* tmp = hash(key_pad || message) */
+	SHA256_init_1b(&ctx, key_pad);
+	SHA256_update(&ctx, data, data_len);
+	tmp = SHA256_final(&ctx);
+	memcpy(output, tmp, SHA256_DIGEST_SIZE);
+}
+
+void hmac_SHA256(uint8_t *output, const uint8_t *key, const int key_len,
+		 const uint8_t *message, const int message_len) {
+	/* This code does not support key_len > block_size. */
+	ASSERT(key_len <= SHA256_BLOCK_SIZE);
+
+	/*
+	 * i_key_pad = key (zero-padded) ^ 0x36
+	 * output = hash(i_key_pad || message)
+	 * (Use output as temporary buffer)
+	 */
+	hmac_SHA256_step(output, 0x36, key, key_len, message, message_len);
+
+	/*
+	 * o_key_pad = key (zero-padded) ^ 0x5c
+	 * output = hash(o_key_pad || output)
+	 */
+	hmac_SHA256_step(output, 0x5c,
+			 key, key_len, output, SHA256_DIGEST_SIZE);
 }
