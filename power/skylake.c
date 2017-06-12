@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "intel_x86.h"
 #include "lpc.h"
+#include "panic.h"
 #include "power_button.h"
 #include "skylake.h"
 #include "system.h"
@@ -162,6 +163,11 @@ static void chipset_handle_reboot(void)
 		}
 		chip_save_reset_flags(RESET_FLAG_AP_OFF);
 	}
+
+#ifdef CONFIG_CHIP_PANIC_BACKUP
+	/* Ensure panic data if any is backed up. */
+	chip_panic_data_backup();
+#endif
 
 	ccprintf("Restarting system with PMIC.\n");
 	/* Flush console */
