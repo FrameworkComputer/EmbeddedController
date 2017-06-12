@@ -125,6 +125,15 @@ int gpio_config_pin(enum module_id id, enum gpio_signal signal, int enable);
 int gpio_get_level(enum gpio_signal signal);
 
 /**
+ * Read a ternary GPIO input, activating internal pull-down, then pull-up,
+ * to check if the GPIO is high, low, or Hi-Z. Useful for board strappings.
+ *
+ * @param signal	Signal to get
+ * @return 0 if low, 1 if high, 2 if Hi-Z.
+ */
+int gpio_get_ternary(enum gpio_signal signal);
+
+/**
  * Return the name of a given GPIO signal.
  *
  * @param signal	Signal to name

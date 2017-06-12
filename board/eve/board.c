@@ -685,28 +685,6 @@ void board_hibernate(void)
 		;
 }
 
-static int gpio_get_ternary(enum gpio_signal gpio)
-{
-	int pd, pu;
-	int flags = gpio_get_default_flags(gpio);
-
-	/* Read GPIO with internal pull-down */
-	gpio_set_flags(gpio, GPIO_INPUT | GPIO_PULL_DOWN);
-	pd = gpio_get_level(gpio);
-	usleep(100);
-
-	/* Read GPIO with internal pull-up */
-	gpio_set_flags(gpio, GPIO_INPUT | GPIO_PULL_UP);
-	pu = gpio_get_level(gpio);
-	usleep(100);
-
-	/* Reset GPIO flags */
-	gpio_set_flags(gpio, flags);
-
-	/* Check PU and PD readings to determine tristate */
-	return pu && !pd ? 2 : pd;
-}
-
 int board_get_version(void)
 {
 	static int ver;
