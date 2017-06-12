@@ -21,6 +21,11 @@ enum bbram_data_index {
 	BBRM_DATA_INDEX_PD1 = 13,	       /* USB-PD saved port1 state */
 	BBRM_DATA_INDEX_VBNVCNTXT = 16,	       /* VbNvContext for ARM arch */
 	BBRM_DATA_INDEX_RAMLOG = 32,	       /* RAM log for Booter */
+	BBRM_DATA_INDEX_PANIC_FLAGS = 35,      /* Flag to indicate validity of
+						* panic data starting at index
+						* 36.
+						*/
+	BBRM_DATA_INDEX_PANIC_BKUP = 36,       /* Panic data (index 35-63)*/
 };
 
 /* Issue a watchdog reset*/

@@ -81,6 +81,7 @@ static int bbram_is_byte_access(enum bbram_data_index index)
 		|| index == BBRM_DATA_INDEX_PD0
 		|| index == BBRM_DATA_INDEX_PD1
 #endif
+		|| index == BBRM_DATA_INDEX_PANIC_FLAGS
 	;
 }
 
@@ -227,6 +228,82 @@ void system_set_rtc(uint32_t seconds)
 	NPCX_TTC = seconds;
 	udelay(MTC_TTC_LOAD_DELAY_US);
 }
+
+#ifdef CONFIG_CHIP_PANIC_BACKUP
+/*
+ * Following information from panic data is stored in BBRAM:
+ *
+ * index     |       data
+ * ==========|=============
+ *   36      |       MMFS
+ *   40      |       HFSR
+ *   44      |       BFAR
+ *   48      |      LREG1
+ *   52      |      LREG3
+ *   56      |      LREG4
+ *   60      |     reserved
+ *
+ * Above registers are chosen to be saved in case of panic because:
+ * 1. MMFS, HFSR and BFAR seem to provide more information about the fault.
+ * 2. LREG1, LREG3 and LREG4 store exception, reason and info in case of
+ * software panic.
+ */
+#define BKUP_MMFS		(BBRM_DATA_INDEX_PANIC_BKUP + 0)
+#define BKUP_HFSR		(BBRM_DATA_INDEX_PANIC_BKUP + 4)
+#define BKUP_BFAR		(BBRM_DATA_INDEX_PANIC_BKUP + 8)
+#define BKUP_LREG1		(BBRM_DATA_INDEX_PANIC_BKUP + 12)
+#define BKUP_LREG3		(BBRM_DATA_INDEX_PANIC_BKUP + 16)
+#define BKUP_LREG4		(BBRM_DATA_INDEX_PANIC_BKUP + 20)
+
+#define BKUP_PANIC_DATA_VALID	(1 << 0)
+
+void chip_panic_data_backup(void)
+{
+	struct panic_data *d = panic_get_data();
+
+	if (!d)
+		return;
+
+	bbram_data_write(BKUP_MMFS, d->cm.mmfs);
+	bbram_data_write(BKUP_HFSR, d->cm.hfsr);
+	bbram_data_write(BKUP_BFAR, d->cm.dfsr);
+	bbram_data_write(BKUP_LREG1, d->cm.regs[1]);
+	bbram_data_write(BKUP_LREG3, d->cm.regs[3]);
+	bbram_data_write(BKUP_LREG4, d->cm.regs[4]);
+	bbram_data_write(BBRM_DATA_INDEX_PANIC_FLAGS, BKUP_PANIC_DATA_VALID);
+}
+
+static void chip_panic_data_restore(void)
+{
+	struct panic_data *d = PANIC_DATA_PTR;
+
+	/* Ensure BBRAM is valid. */
+	if (!bbram_valid(BKUP_MMFS, 4))
+		return;
+
+	/* Ensure Panic data in BBRAM is valid. */
+	if (!(bbram_data_read(BBRM_DATA_INDEX_PANIC_FLAGS) &
+	      BKUP_PANIC_DATA_VALID))
+		return;
+
+	memset(d, 0, sizeof(*d));
+	d->magic = PANIC_DATA_MAGIC;
+	d->struct_size = sizeof(*d);
+	d->struct_version = 2;
+	d->arch = PANIC_ARCH_CORTEX_M;
+
+	d->cm.mmfs = bbram_data_read(BKUP_MMFS);
+	d->cm.hfsr = bbram_data_read(BKUP_HFSR);
+	d->cm.dfsr = bbram_data_read(BKUP_BFAR);
+
+	d->cm.regs[1] = bbram_data_read(BKUP_LREG1);
+	d->cm.regs[3] = bbram_data_read(BKUP_LREG3);
+	d->cm.regs[4] = bbram_data_read(BKUP_LREG4);
+
+	/* Reset panic data in BBRAM. */
+	bbram_data_write(BBRM_DATA_INDEX_PANIC_FLAGS, 0);
+}
+#endif /* CONFIG_CHIP_PANIC_BACKUP */
 
 void chip_save_reset_flags(int flags)
 {
@@ -559,6 +636,10 @@ void system_pre_init(void)
 	 * and DATA RAM to prevent code execution
 	 */
 	system_mpu_config();
+
+#ifdef CONFIG_CHIP_PANIC_BACKUP
+	chip_panic_data_restore();
+#endif
 }
 
 void system_reset(int flags)
