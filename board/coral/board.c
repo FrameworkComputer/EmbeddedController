@@ -148,6 +148,12 @@ const struct adc_t adc_channels[] = {
 	[ADC_BOARD_ID] = {
 		"BRD_ID", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
 	},
+	[ADC_BOARD_SKU_1] = {
+		"BRD_SKU_1", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
+	[ADC_BOARD_SKU_0] = {
+		"BRD_SKU_0", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -1078,35 +1084,42 @@ struct {
 	enum coral_board_version version;
 	int thresh_mv;
 } const coral_board_versions[] = {
-	/* Vin = 3.3V, R1 = 46.4K, R2 values listed below */
-	{ BOARD_VERSION_1, 328 * 1.03 },  /* 5.11 Kohm */
-	{ BOARD_VERSION_2, 670 * 1.03 },  /* 11.8 Kohm */
-	{ BOARD_VERSION_3, 1012 * 1.03 }, /* 20.5 Kohm */
-	{ BOARD_VERSION_4, 1357 * 1.03 }, /* 32.4 Kohm */
-	{ BOARD_VERSION_5, 1690 * 1.03 }, /* 48.7 Kohm */
-	{ BOARD_VERSION_6, 2020 * 1.03 }, /* 73.2 Kohm */
-	{ BOARD_VERSION_7, 2352 * 1.03 }, /* 115 Kohm */
-	{ BOARD_VERSION_8, 2802 * 1.03 }, /* 261 Kohm */
+	/* Vin = 3.3V, Ideal voltage, R2 values listed below */
+	/* R1 = 51.1 kOhm */
+	{ BOARD_VERSION_1, 200 },  /* 124 mV, 2.0 Kohm */
+	{ BOARD_VERSION_2, 366 },  /* 278 mV, 4.7 Kohm */
+	{ BOARD_VERSION_3, 550 },  /* 456 mV, 8.2  Kohm */
+	{ BOARD_VERSION_4, 752 },  /* 644 mV, 12.4 Kohm */
+	{ BOARD_VERSION_5, 927},   /* 860 mV, 18.0 Kohm */
+	{ BOARD_VERSION_6, 1073 }, /* 993 mV, 22.0 Kohm */
+	{ BOARD_VERSION_7, 1235 }, /* 1152 mV, 27.4 Kohm */
+	{ BOARD_VERSION_8, 1386 }, /* 1318 mV, 34.0 Kohm */
+	{ BOARD_VERSION_9, 1552 }, /* 1453 mV, 40.2 Kohm */
+	/* R1 = 10.0 kOhm */
+	{ BOARD_VERSION_10, 1739 }, /* 1650 mV, 10.0 Kohm */
+	{ BOARD_VERSION_11, 1976 }, /* 1827 mV, 12.4 Kohm */
+	{ BOARD_VERSION_12, 2197 }, /* 2121 mV, 18.0 Kohm */
+	{ BOARD_VERSION_13, 2344 }, /* 2269 mV, 22.0 Kohm */
+	{ BOARD_VERSION_14, 2484 }, /* 2418 mV, 27.4 Kohm */
+	{ BOARD_VERSION_15, 2636 }, /* 2550 mV, 34.0 Kohm */
+	{ BOARD_VERSION_16, 2823 }, /* 2721 mV, 47.0 Kohm */
 };
 BUILD_ASSERT(ARRAY_SIZE(coral_board_versions) == BOARD_VERSION_COUNT);
 
-int board_get_version(void)
+static int board_read_version(enum adc_channel chan)
 {
-	static int version = BOARD_VERSION_UNKNOWN;
-	int mv, i;
+	int mv;
+	int i;
+	int version;
 
-	if (version != BOARD_VERSION_UNKNOWN)
-		return version;
-
-	/* FIXME(dhendrix): enable ADC */
-	gpio_set_flags(GPIO_EC_BRD_ID_EN_ODL, GPIO_ODR_HIGH);
-	gpio_set_level(GPIO_EC_BRD_ID_EN_ODL, 0);
+	/* ID/SKU enable is active high */
+	gpio_set_flags(GPIO_EC_BRD_ID_EN, GPIO_OUT_HIGH);
 	/* Wait to allow cap charge */
 	msleep(1);
-	mv = adc_read_channel(ADC_BOARD_ID);
-	/* FIXME(dhendrix): disable ADC */
-	gpio_set_level(GPIO_EC_BRD_ID_EN_ODL, 1);
-	gpio_set_flags(GPIO_EC_BRD_ID_EN_ODL, GPIO_INPUT);
+	mv = adc_read_channel(chan);
+	CPRINTS("ID/SKU ADC %d = %d mV", chan, mv);
+	/* Disable ID/SKU circuit */
+	gpio_set_flags(GPIO_EC_BRD_ID_EN, GPIO_INPUT);
 
 	if (mv == ADC_READ_ERROR) {
 		version = BOARD_VERSION_UNKNOWN;
@@ -1120,9 +1133,46 @@ int board_get_version(void)
 		}
 	}
 
+	return version;
+}
+
+int board_get_version(void)
+{
+	static int version = BOARD_VERSION_UNKNOWN;
+
+	if (version != BOARD_VERSION_UNKNOWN)
+		return version;
+
+	version = board_read_version(ADC_BOARD_ID);
+
 	CPRINTS("Board version: %d", version);
 	return version;
 }
+
+static int command_board_id(int argc, char **argv)
+{
+	enum adc_channel chan;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "id"))
+		chan = ADC_BOARD_ID;
+	else if (!strcasecmp(argv[1], "sku0"))
+		chan = ADC_BOARD_SKU_0;
+	else if (!strcasecmp(argv[1], "sku1"))
+		chan = ADC_BOARD_SKU_1;
+	else
+		return EC_ERROR_PARAM1;
+
+	ccprintf("Board id|sku: chan %d = %d\n", chan,
+		 board_read_version(chan));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(board_id, command_board_id,
+			"<id|sku0|sku1>",
+			"Get board id or sku");
 
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
