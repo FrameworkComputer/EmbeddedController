@@ -746,6 +746,15 @@
 #undef CONFIG_SOFTWARE_PANIC
 
 /*
+ * Certain platforms(e.g. eve, poppy) cannot retain panic info in data ram since
+ * VCC is powered down on EC reset. On such platforms, panic data needs to be
+ * saved/restored to persistent storage by using chip specific
+ * implementations. This option can be enabled by those platforms that have and
+ * wish to use chip-implemented panic backup/restore functions.
+ */
+#undef CONFIG_CHIP_PANIC_BACKUP
+
+/*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.
  */
