@@ -106,6 +106,32 @@ int32_t rollback_get_minimum_version(void)
 	return data.rollback_min_version;
 }
 
+#ifdef CONFIG_ROLLBACK_SECRET_SIZE
+int rollback_get_secret(uint8_t *secret)
+{
+	struct rollback_data data;
+	uint8_t first;
+	int i = 0;
+
+	if (get_latest_rollback(&data) < 0)
+		return EC_ERROR_UNKNOWN;
+
+	/* Check that secret is not full of 0x00 or 0xff */
+	first = data.secret[0];
+	if (first == 0x00 || first == 0xff) {
+		for (i = 1; i < sizeof(data.secret); i++) {
+			if (data.secret[i] != first)
+				goto good;
+		}
+		return EC_ERROR_UNKNOWN;
+	}
+
+good:
+	memcpy(secret, data.secret, sizeof(data.secret));
+	return EC_SUCCESS;
+}
+#endif
+
 int rollback_lock(void)
 {
 	int ret;

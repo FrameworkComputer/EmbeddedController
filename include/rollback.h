@@ -19,6 +19,16 @@
 int rollback_get_minimum_version(void);
 
 /**
+ * Get device secret from rollback protection block.
+ *
+ * @param secret CONFIG_ROLLBACK_SECRET_SIZE-long buffer to copy the secret to.
+ *
+ * @return EC_SUCCESS on success, EC_ERROR_* on error (e.g. secret is not
+ * initialized)
+ */
+int rollback_get_secret(uint8_t *secret);
+
+/**
  * Update rollback protection block to the version passed as parameter.
  *
  * @param next_min_version	Minimum version to write in rollback block.
