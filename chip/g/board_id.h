@@ -46,6 +46,13 @@ uint32_t check_board_id_vs_header(const struct board_id *id,
  */
 int read_board_id(struct board_id *id);
 
+/**
+ * Check if board ID in the current image matches board ID field in the INFO1.
+ *
+ * Return true if there is a mismatch (the code should not run).
+ */
+uint32_t board_id_mismatch(void);
+
 BUILD_ASSERT((offsetof(struct info1_board_space, bid) & 3) == 0);
 BUILD_ASSERT((INFO_BOARD_ID_SIZE & 3) == 0);
 BUILD_ASSERT(sizeof(struct info1_board_space) <= INFO_BOARD_SPACE_PROTECT_SIZE);

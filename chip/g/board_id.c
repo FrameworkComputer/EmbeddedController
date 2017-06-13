@@ -39,12 +39,6 @@ uint32_t check_board_id_vs_header(const struct board_id *id,
 	header_board_id_mask = SIGNED_HEADER_PADDING ^ h->board_id_type_mask;
 	header_board_id_flags = SIGNED_HEADER_PADDING ^ h->board_id_flags;
 
-	/* Blank header means this is a common image, can run on any device. */
-	if ((header_board_id_type |
-	     header_board_id_mask |
-	     header_board_id_flags) == 0)
-		return 0;
-
 	/*
 	 * Masked bits in header Board ID type must match type and inverse from
 	 * flash.
@@ -92,12 +86,27 @@ int read_board_id(struct board_id *id)
 			 id_p);
 		if (rv != EC_SUCCESS) {
 			CPRINTF("%s: failed to read word %d, error %d\n",
-				i, rv);
+				__func__, i, rv);
 			return rv;
 		}
 		id_p++;
 	}
 	return EC_SUCCESS;
+}
+
+uint32_t board_id_mismatch(void)
+{
+	struct board_id id;
+	const struct SignedHeader *sh;
+
+	/* Get header of the currently running image. */
+	sh = get_current_image_header();
+
+	/* Get Board ID from INFO1. */
+	if (read_board_id(&id) != EC_SUCCESS)
+		return 1;
+
+	return check_board_id_vs_header(&id, sh);
 }
 
 /**
