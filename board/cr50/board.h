@@ -195,6 +195,7 @@ int board_use_plt_rst(void);
 int board_rst_pullup_needed(void);
 int board_tpm_uses_i2c(void);
 int board_tpm_uses_spi(void);
+int board_id_is_mismatched(void);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -2,15 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-#include <endian.h>
-
+#include "board_id.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dcrypto/dcrypto.h"
 #include "device_state.h"
 #include "ec_version.h"
+#include "endian.h"
 #include "extension.h"
 #include "flash.h"
 #include "flash_config.h"
@@ -35,8 +34,8 @@
 #include "uartn.h"
 #include "usb_descriptor.h"
 #include "usb_hid.h"
-#include "usb_spi.h"
 #include "usb_i2c.h"
+#include "usb_spi.h"
 #include "util.h"
 #include "wp.h"
 
@@ -586,6 +585,35 @@ void decrement_retry_counter(void)
 	}
 }
 
+static uint8_t mismatched_board_id;
+
+int board_id_is_mismatched(void)
+{
+	return !!mismatched_board_id;
+}
+
+static void  check_board_id_mismatch(void)
+{
+	if (!board_id_mismatch())
+		return;
+
+	if (system_rollback_detected()) {
+		/*
+		 * We are in a rollback, the other image must be no good.
+		 * Let's keep going with the TPM disabled, only updates will
+		 * be allowed.
+		 */
+		mismatched_board_id = 1;
+		ccprintf("Board ID mismatched, but can not reboot.\n");
+		return;
+	}
+
+	system_ensure_rollback();
+	ccprintf("Rebooting due to board ID mismatch\n");
+	cflush();
+	system_reset(0);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -610,6 +638,8 @@ static void board_init(void)
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
+
+	check_board_id_mismatch();
 
 	/* Enable battery cutoff software support on detachable devices. */
 	if (system_battery_cutoff_support_required())
