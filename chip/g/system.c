@@ -523,6 +523,13 @@ int system_process_retry_counter(void)
 	return corrupt_header(newer_image);
 }
 
+void system_ensure_rollback(void)
+{
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 1);
+	GREG32(PMU, LONG_LIFE_SCRATCH0) = RW_BOOT_MAX_RETRY_COUNT + 1;
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG0, 0);
+}
+
 int system_rolling_reboot_suspected(void)
 {
 	if (GREG32(PMU, LONG_LIFE_SCRATCH0) > 50) {
