@@ -177,14 +177,19 @@
 #define CONFIG_TOUCHPAD_I2C_PORT 0
 #define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)
 
+#define CONFIG_CURVE25519
+
+#define CONFIG_USB_PAIRING
+
 #else /* SECTION_IS_RO */
 /* Sign and switch to RW partition on boot. */
 #define CONFIG_RWSIG
 #define CONFIG_RSA
-#define CONFIG_SHA256
 #define CONFIG_RSA_KEY_SIZE 3072
 #define CONFIG_RSA_EXPONENT_3
 #endif
+
+#define CONFIG_SHA256
 
 #define CONFIG_RWSIG_TYPE_RWSIG
 
