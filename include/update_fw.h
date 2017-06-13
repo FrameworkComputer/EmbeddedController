@@ -166,6 +166,28 @@ enum update_extra_command {
 	UPDATE_EXTRA_CMD_PAIR_CHALLENGE = 6,
 };
 
+/*
+ * Pair challenge (from host), note that the packet, with header, must fit
+ * in a single USB packet (64 bytes), so its maximum length is 50 bytes.
+ */
+struct pair_challenge {
+	uint8_t host_public[32]; /* X22519 public key from host */
+	uint8_t nonce[16]; /* nonce to be used for HMAC */
+};
+
+/*
+ * Pair challenge response (from device).
+ */
+struct pair_challenge_response {
+	uint8_t status; /* = EC_RES_SUCCESS */
+	uint8_t device_public[32]; /* X22519 device public key of device */
+	/*
+	 * Truncated output of
+	 * HMAC_SHA256(x25519(device_private, host_public), nonce)
+	 */
+	uint8_t authenticator[16];
+} __packed;
+
 void fw_update_command_handler(void *body,
 			       size_t cmd_size,
 			       size_t *response_size);

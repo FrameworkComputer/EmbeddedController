@@ -27,6 +27,8 @@
 #define offsetof(type, member)  __builtin_offsetof(type, member)
 #endif
 
+#define member_size(type, member) sizeof(((type *)0)->member)
+
 #define __visible	__attribute__((externally_visible))
 
 #endif /* __CROS_EC_COMPILE_TIME_MACROS_H */
