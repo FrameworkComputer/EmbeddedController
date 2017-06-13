@@ -54,4 +54,12 @@ void power_button_pch_release(void);
  */
 void power_button_pch_pulse(void);
 
+/**
+ * Returns the time when DSW_PWROK was asserted. It should be customized
+ * by each board. See CONFIG_DELAY_DSW_PWROK_TO_PWRBTN for details.
+ *
+ * @return time in usec when DSW_PWROK was asserted.
+ */
+int64_t get_time_dsw_pwrok(void);
+
 #endif  /* __CROS_EC_POWER_BUTTON_H */
