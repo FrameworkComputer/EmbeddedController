@@ -495,3 +495,31 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, power_button_pulse_setting_reset,
 	     HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, power_button_pulse_setting_reset,
 	     HOOK_PRIO_DEFAULT);
+
+#define POWER_BUTTON_SYSJUMP_TAG		0x5042 /* PB */
+#define POWER_BUTTON_HOOK_VERSION		1
+
+static void power_button_pulse_setting_restore_state(void)
+{
+	const int *state;
+	int version, size;
+
+	state = (const int *)system_get_jump_tag(POWER_BUTTON_SYSJUMP_TAG,
+						 &version, &size);
+
+	if (state && (version == POWER_BUTTON_HOOK_VERSION) &&
+	    (size == sizeof(power_button_pulse_enabled)))
+		power_button_pulse_enabled = *state;
+}
+DECLARE_HOOK(HOOK_INIT, power_button_pulse_setting_restore_state,
+	     HOOK_PRIO_INIT_POWER_BUTTON + 1);
+
+static void power_button_pulse_setting_preserve_state(void)
+{
+	system_add_jump_tag(POWER_BUTTON_SYSJUMP_TAG,
+			    POWER_BUTTON_HOOK_VERSION,
+			    sizeof(power_button_pulse_enabled),
+			    &power_button_pulse_enabled);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, power_button_pulse_setting_preserve_state,
+	     HOOK_PRIO_DEFAULT);
