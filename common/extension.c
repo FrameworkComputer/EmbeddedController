@@ -22,6 +22,22 @@ static uint32_t extension_route_command(uint16_t command_code,
 	cmd_p = (struct extension_command *)&__extension_cmds;
 	end_p = (struct extension_command *)&__extension_cmds_end;
 
+#ifdef CONFIG_BOARD_ID_SUPPORT
+	if (board_id_is_mismatched()) {
+		switch (command_code) {
+		case EXTENSION_FW_UPGRADE:
+		case VENDOR_CC_REPORT_TPM_STATE:
+		case VENDOR_CC_TURN_UPDATE_ON:
+		case EXTENSION_POST_RESET:
+			break;
+		default:
+			CPRINTF("%s: ignoring command 0x%x "
+				"due to board ID mismatch\n",
+				__func__, command_code);
+			return VENDOR_RC_NO_SUCH_COMMAND;
+		}
+	}
+#endif
 	while (cmd_p != end_p) {
 		if (cmd_p->command_code == command_code)
 			return cmd_p->handler(command_code, buffer,

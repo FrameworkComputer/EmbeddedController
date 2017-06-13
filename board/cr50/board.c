@@ -639,6 +639,11 @@ static void board_init(void)
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
 
+	/*
+	 * Call the function twice to make it hardde to glitch execution into
+	 * passing the check when not supposed to.
+	 */
+	check_board_id_mismatch();
 	check_board_id_mismatch();
 
 	/* Enable battery cutoff software support on detachable devices. */

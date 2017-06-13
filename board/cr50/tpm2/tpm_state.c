@@ -52,6 +52,12 @@ static enum vendor_cmd_rc report_tpm_state(enum vendor_cmd_cc code,
 
 	memset(state, 0, sizeof(*state));
 
+	if (board_id_is_mismatched()) {
+		s_failCode = 0xbadc0de;
+		s_failLine = __LINE__;
+		memcpy(&s_failFunction, __func__, sizeof(s_failFunction));
+	}
+
 	serialize_u32(&state->version, TPM_STATE_VERSION);
 	serialize_u32(&state->fail_code, s_failCode);
 	serialize_u32(&state->fail_line, s_failLine);
