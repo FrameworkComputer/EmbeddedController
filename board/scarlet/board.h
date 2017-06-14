@@ -91,6 +91,9 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
 
+/* To be able to indicate the device is in tablet mode. */
+#define CONFIG_TABLET_MODE_SWITCH
+
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 256
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
