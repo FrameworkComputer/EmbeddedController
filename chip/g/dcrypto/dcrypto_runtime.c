@@ -10,14 +10,17 @@
 #define DMEM_NUM_WORDS 1024
 #define IMEM_NUM_WORDS 1024
 
+static struct mutex dcrypto_mutex;
 static volatile task_id_t my_task_id;
-
 static int dcrypto_is_initialized;
 
-void dcrypto_init(void)
+void dcrypto_init_and_lock(void)
 {
 	int i;
 	volatile uint32_t *ptr;
+
+	mutex_lock(&dcrypto_mutex);
+	my_task_id = task_get_current();
 
 	if (dcrypto_is_initialized)
 		return;
@@ -59,16 +62,17 @@ void dcrypto_init(void)
 	dcrypto_is_initialized = 1;
 }
 
+void dcrypto_unlock(void)
+{
+	mutex_unlock(&dcrypto_mutex);
+}
+
 #define DCRYPTO_CALL_TIMEOUT_US  (700 * 1000)
 #define TASK_EVENT_DCRYPTO_DONE  TASK_EVENT_CUSTOM(1)
 
 uint32_t dcrypto_call(uint32_t adr)
 {
-	static struct mutex cmd_mutex;
 	uint32_t event;
-
-	mutex_lock(&cmd_mutex);
-	my_task_id = task_get_current();
 
 	do {
 		/* Reset all the status bits. */
@@ -79,8 +83,6 @@ uint32_t dcrypto_call(uint32_t adr)
 
 	event = task_wait_event_mask(TASK_EVENT_DCRYPTO_DONE,
 				     DCRYPTO_CALL_TIMEOUT_US);
-	mutex_unlock(&cmd_mutex);
-
 	/* TODO(ngm): switch return value to an enum. */
 	switch (event) {
 	case TASK_EVENT_DCRYPTO_DONE:

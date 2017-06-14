@@ -490,8 +490,6 @@ static void copy_words(const void *in, uint32_t *dst, size_t nwords)
 
 static void dcrypto_SHA512_setup(void)
 {
-	/* Note both of these cache and are nop if already done */
-	dcrypto_init();
 	dcrypto_imem_load(0, IMEM_dcrypto, ARRAY_SIZE(IMEM_dcrypto));
 }
 
@@ -548,36 +546,38 @@ static void dcrypto_SHA512_update(LITE_SHA512_CTX *ctx, const void *data,
 
 	ctx->count += len;
 
+	dcrypto_init_and_lock();
 	dcrypto_SHA512_setup();
 
 	/* Take fast path for 32-bit aligned 1KB inputs */
 	if (i == 0 && len == 1024 && (((intptr_t) data) & 3) == 0) {
 		dcrypto_SHA512_Transform(ctx, (const uint32_t *) data, 8 * 32);
-		return;
-	}
-
-	if (len <= sizeof(ctx->buf) - i) {
-		memcpy(d, p, len);
-		if (len == sizeof(ctx->buf) - i) {
-			dcrypto_SHA512_Transform(ctx, (uint32_t *) (ctx->buf),
-						 32);
-		}
 	} else {
-		memcpy(d, p, sizeof(ctx->buf) - i);
-		dcrypto_SHA512_Transform(ctx, (uint32_t *) (ctx->buf), 32);
-		d = ctx->buf;
-		len -= (sizeof(ctx->buf) - i);
-		p += (sizeof(ctx->buf) - i);
-		while (len >= sizeof(ctx->buf)) {
-			memcpy(d, p, sizeof(ctx->buf));
-			p += sizeof(ctx->buf);
-			len -= sizeof(ctx->buf);
+		if (len <= sizeof(ctx->buf) - i) {
+			memcpy(d, p, len);
+			if (len == sizeof(ctx->buf) - i) {
+				dcrypto_SHA512_Transform(
+				    ctx, (uint32_t *) (ctx->buf), 32);
+			}
+		} else {
+			memcpy(d, p, sizeof(ctx->buf) - i);
 			dcrypto_SHA512_Transform(ctx, (uint32_t *) (ctx->buf),
 						 32);
+			d = ctx->buf;
+			len -= (sizeof(ctx->buf) - i);
+			p += (sizeof(ctx->buf) - i);
+			while (len >= sizeof(ctx->buf)) {
+				memcpy(d, p, sizeof(ctx->buf));
+				p += sizeof(ctx->buf);
+				len -= sizeof(ctx->buf);
+				dcrypto_SHA512_Transform(
+				    ctx, (uint32_t *) (ctx->buf), 32);
+			}
+			/* Leave remainder in ctx->buf */
+			memcpy(d, p, len);
 		}
-		/* Leave remainder in ctx->buf */
-		memcpy(d, p, len);
 	}
+	dcrypto_unlock();
 }
 
 static const uint8_t *dcrypto_SHA512_final(LITE_SHA512_CTX *ctx)
@@ -589,6 +589,7 @@ static const uint8_t *dcrypto_SHA512_final(LITE_SHA512_CTX *ctx)
 	*p++ = 0x80;
 	i++;
 
+	dcrypto_init_and_lock();
 	dcrypto_SHA512_setup();
 
 	if (i > sizeof(ctx->buf) - 16) {
@@ -622,6 +623,7 @@ static const uint8_t *dcrypto_SHA512_final(LITE_SHA512_CTX *ctx)
 		*p++ = (uint8_t)(tmp >> 0);
 	}
 
+	dcrypto_unlock();
 	return ctx->buf;
 }
 

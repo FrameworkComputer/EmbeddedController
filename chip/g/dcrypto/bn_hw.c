@@ -1052,7 +1052,7 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 	struct DMEM_montmul *montmul;
 
 	/* Initialize hardware; load code page. */
-	dcrypto_init();
+	dcrypto_init_and_lock();
 	dcrypto_imem_load(0, IMEM_dcrypto, ARRAY_SIZE(IMEM_dcrypto));
 
 	/* Point to DMEM. */
@@ -1152,6 +1152,8 @@ void bn_mont_modexp_asm(struct LITE_BIGNUM *output,
 	memcpy(output->d, montmul->out, bn_size(output));
 
 	(void) (result == 0); /* end of errorcode propagation */
+
+	dcrypto_unlock();
 }
 
 /*
@@ -1182,7 +1184,6 @@ static void dcrypto_ecc_init(void)
 	struct DMEM_ecc *pEcc =
 		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 
-	dcrypto_init();
 	dcrypto_imem_load(0, IMEM_dcrypto, ARRAY_SIZE(IMEM_dcrypto));
 
 	pEcc->pK = DMEM_INDEX(pEcc, k);
@@ -1229,6 +1230,7 @@ int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
 	struct DMEM_ecc *pEcc =
 		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 
+	dcrypto_init_and_lock();
 	dcrypto_ecc_init();
 	result = dcrypto_call(CF_p256init_adr);
 
@@ -1255,6 +1257,7 @@ int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
 	cp8w(&pEcc->d, &pEcc->rnd);
 	cp8w(&pEcc->k, &pEcc->rnd);
 
+	dcrypto_unlock();
 	return result == 0;
 }
 
@@ -1264,6 +1267,7 @@ int dcrypto_p256_base_point_mul(const p256_int *k, p256_int *x, p256_int *y)
 	struct DMEM_ecc *pEcc =
 		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 
+	dcrypto_init_and_lock();
 	dcrypto_ecc_init();
 	result = dcrypto_call(CF_p256init_adr);
 
@@ -1280,6 +1284,7 @@ int dcrypto_p256_base_point_mul(const p256_int *k, p256_int *x, p256_int *y)
 	/* Wipe d */
 	cp8w(&pEcc->d, &pEcc->rnd);
 
+	dcrypto_unlock();
 	return result == 0;
 }
 
@@ -1291,6 +1296,7 @@ int dcrypto_p256_point_mul(const p256_int *k,
 	struct DMEM_ecc *pEcc =
 		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 
+	dcrypto_init_and_lock();
 	dcrypto_ecc_init();
 	result = dcrypto_call(CF_p256init_adr);
 
@@ -1311,6 +1317,7 @@ int dcrypto_p256_point_mul(const p256_int *k,
 	cp8w(&pEcc->x, &pEcc->rnd);
 	cp8w(&pEcc->y, &pEcc->rnd);
 
+	dcrypto_unlock();
 	return result == 0;
 }
 
@@ -1322,6 +1329,7 @@ int dcrypto_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
 	struct DMEM_ecc *pEcc =
 		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 
+	dcrypto_init_and_lock();
 	dcrypto_ecc_init();
 	result = dcrypto_call(CF_p256init_adr);
 
@@ -1336,6 +1344,7 @@ int dcrypto_p256_ecdsa_verify(const p256_int *key_x, const p256_int *key_y,
 	for (i = 0; i < 8; ++i)
 		result |= (pEcc->rnd.a[i] ^ r->a[i]);
 
+	dcrypto_unlock();
 	return result == 0;
 }
 
@@ -1345,6 +1354,7 @@ int dcrypto_p256_is_valid_point(const p256_int *x, const p256_int *y)
 	struct DMEM_ecc *pEcc =
 		(struct DMEM_ecc *)GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 
+	dcrypto_init_and_lock();
 	dcrypto_ecc_init();
 	result = dcrypto_call(CF_p256init_adr);
 
@@ -1356,5 +1366,6 @@ int dcrypto_p256_is_valid_point(const p256_int *x, const p256_int *y)
 	for (i = 0; i < 8; ++i)
 		result |= (pEcc->r.a[i] ^ pEcc->s.a[i]);
 
+	dcrypto_unlock();
 	return result == 0;
 }
