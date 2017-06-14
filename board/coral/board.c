@@ -824,9 +824,9 @@ const matrix_3x3_t mag_standard_ref = {
 };
 
 /* sensor private data */
+/* TODO(crbug.com/733352): Remove useless externs and declare these static. */
 struct kionix_accel_data g_kx022_data;
 struct bmi160_drv_data_t g_bmi160_data;
-struct bmp280_drv_data_t bmp280_drv_data;
 struct opt3001_drv_data_t g_opt3001_data = {
 	.attenuation = 5,
 };
@@ -1034,7 +1034,6 @@ static int board_read_version(enum adc_channel chan)
 {
 	int mv;
 	int i;
-	int version;
 
 	/* ID/SKU enable is active high */
 	gpio_set_flags(GPIO_EC_BRD_ID_EN, GPIO_OUT_HIGH);
@@ -1045,19 +1044,14 @@ static int board_read_version(enum adc_channel chan)
 	/* Disable ID/SKU circuit */
 	gpio_set_flags(GPIO_EC_BRD_ID_EN, GPIO_INPUT);
 
-	if (mv == ADC_READ_ERROR) {
-		version = BOARD_VERSION_UNKNOWN;
-		return version;
-	}
+	if (mv == ADC_READ_ERROR)
+		return BOARD_VERSION_UNKNOWN;
 
-	for (i = 0; i < BOARD_VERSION_COUNT; i++) {
-		if (mv < coral_board_versions[i].thresh_mv) {
-			version = coral_board_versions[i].version;
-			break;
-		}
-	}
+	for (i = 0; i < BOARD_VERSION_COUNT; i++)
+		if (mv < coral_board_versions[i].thresh_mv)
+			return coral_board_versions[i].version;
 
-	return version;
+	return BOARD_VERSION_UNKNOWN;
 }
 
 int board_get_version(void)
