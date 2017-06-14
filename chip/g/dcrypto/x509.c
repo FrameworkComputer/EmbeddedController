@@ -490,17 +490,17 @@ int DCRYPTO_x509_gen_u2f_cert(const p256_int *d, const p256_int *pk_x,
 		}
 		SEQ_END(ctx);
 
-		/* U2F usb transport indicator extension */
+		/* U2F transports indicator extension */
 		SEQ_START(ctx, 0xa3, SEQ_SMALL) {
 			SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
 			SEQ_START(ctx, V_SEQ, SEQ_SMALL) {
 				asn1_object(&ctx, OID(fido_u2f));
 				SEQ_START(ctx, V_ASN1_BYTES, SEQ_SMALL) {
 					SEQ_START(ctx, V_BITS, SEQ_SMALL) {
-						/* 5 zero bits */
-						asn1_tag(&ctx, 5);
-						/* usb transport */
-						asn1_tag(&ctx, 0x20);
+						/* 3 zero bits */
+						asn1_tag(&ctx, 3);
+						/* usb-internal transport */
+						asn1_tag(&ctx, 0x08);
 					}
 					SEQ_END(ctx);
 				}
