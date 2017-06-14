@@ -142,7 +142,7 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
  *
  * TODO(b/35585396): Fine-tune these values.
  */
-#define BASE_DETECT_DEBOUNCE_US (5 * MSEC)
+#define BASE_DETECT_DEBOUNCE_US (20 * MSEC)
 
 /*
  * rev0: Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
