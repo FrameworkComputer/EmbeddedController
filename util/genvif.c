@@ -232,7 +232,7 @@ static uint32_t bcddevice_sop(void)
 static uint32_t write_pdo_to_vif(FILE *vif, uint32_t pdo,
 				enum dtype type, uint32_t pnum)
 {
-	uint32_t power;
+	uint32_t power = 0;
 
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
 		uint32_t current = pdo & 0x3ff;
@@ -291,6 +291,8 @@ static uint32_t write_pdo_to_vif(FILE *vif, uint32_t pdo,
 		else
 			fprintf(vif, "Snk_PDO_Op_Current%d: %d\r\n",
 						pnum, current);
+	} else {
+		fprintf(stderr, "ERROR: Invalid PDO_TYPE %d.\n", pdo);
 	}
 
 	return power;
@@ -485,8 +487,8 @@ int main(int argc, char **argv)
 {
 	int nopt;
 	int ret;
-	const char *out;
-	const char *board;
+	const char *out = NULL;
+	const char *board = NULL;
 	const char *vif_producer;
 	DIR *vifdir;
 	char *name;
