@@ -193,7 +193,7 @@ function dut_control() {
 
 function get_servo_type() {
 	if dut_control "servo_type" ; then
-	    $DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
+		$DUT_CONTROL_CMD servo_type | sed -e s/servo_type://
 	fi
 }
 
@@ -277,9 +277,9 @@ servo_sh_hard_reset() {
 }
 
 ec_reset() {
-        stype=${SERVO_TYPE}
-        if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
-            stype=servo
+	stype=${SERVO_TYPE}
+	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
+		stype=servo
 	fi
 
 	eval ${stype}_${MCU}_hard_reset
@@ -291,13 +291,13 @@ toad_ec_boot0() {
 }
 
 servo_ec_boot0() {
-    ## This is a stupid hack.
-    if [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
-	info "Using CCD"
-	dut_control ccd_ec_boot_mode:on
-    else
-	dut_control ec_boot_mode:on
-    fi
+	## This is a stupid hack.
+	if [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
+		info "Using CCD"
+		dut_control ccd_ec_boot_mode:on
+	else
+		dut_control ec_boot_mode:on
+	fi
 }
 
 servo_usbpd_boot0() {
@@ -314,9 +314,9 @@ ec_enable_boot0() {
 		dut_control prog_en:yes
 	fi
 	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
-	    stype=servo
+		stype=servo
 	else
-	    stype=${SERVO_TYPE}
+		stype=${SERVO_TYPE}
 	fi
 	# eval ${SERVO_TYPE}_${MCU}_boot0
 	eval ${stype}_${MCU}_boot0
@@ -423,7 +423,7 @@ esac
 common_servo_VARS="${MCU}_uart_en ${MCU}_uart_parity ${MCU}_uart_baudrate"
 servo_v2_VARS="${common_servo_VARS} jtag_buf_on_flex_en jtag_buf_en dev_mode"
 if [ "${CHIP}" = "stm32" ] ; then
-    servo_v2_VARS+=" ${MCU}_boot_mode"
+	servo_v2_VARS+=" ${MCU}_boot_mode"
 fi
 if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 	servo_v2_VARS+=" prog_en"
@@ -608,10 +608,10 @@ function flash_stm32() {
 	dut_control ${MCU}_uart_parity:even
 
 	if [ "${SERVO_TYPE}" == "servo_v4_with_ccd_cr50" ] ; then
-	    dut_control ${MCU}_uart_baudrate:9600
-	    dut_control ${MCU}_uart_bitbang_en:on
+		dut_control ${MCU}_uart_baudrate:9600
+		dut_control ${MCU}_uart_bitbang_en:on
 	else
-	    dut_control ${MCU}_uart_baudrate:115200
+		dut_control ${MCU}_uart_baudrate:115200
 	fi
 
 	if $(servo_has_warm_reset); then
@@ -730,6 +730,7 @@ function flash_mec1322() {
 	flash_flashrom
 }
 
+SERVO_TYPE="$(get_servo_type)"
 if dut_control boot_mode 2>/dev/null ; then
 	if [[ "${MCU}" != "ec" ]] ; then
 		die "Toad cable can't support non-ec UARTs"
@@ -737,17 +738,16 @@ if dut_control boot_mode 2>/dev/null ; then
 	SERVO_TYPE=toad
 	info "Using a dedicated debug cable"
 fi
+info "Using ${SERVO_TYPE}"
 
 IMG="$(ec_image)"
 info "Using ${MCU} image : ${IMG}"
 
 if ! on_raiden && [ "${NEED_SERVO}" != "no" ] ; then
-  SERVO_TYPE="$(get_servo_type)"
-  info "Using ${SERVO_TYPE}"
-  EC_UART="$(servo_ec_uart)"
-  info "${MCU} UART pty : ${EC_UART}"
+	EC_UART="$(servo_ec_uart)"
+	info "${MCU} UART pty : ${EC_UART}"
 
-  save="$(servo_save)"
+	save="$(servo_save)"
 fi
 
 info "Flashing chip ${CHIP}."
