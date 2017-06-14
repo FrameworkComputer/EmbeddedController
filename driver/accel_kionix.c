@@ -513,68 +513,107 @@ static int init(const struct motion_sensor_t *s)
 	int ret, val, reg, reset_field;
 	uint8_t timeout;
 
-	/* The chip can take up to 10ms to boot */
 	mutex_lock(s->mutex);
-	reg = KIONIX_WHO_AM_I(V(s));
-	timeout = 0;
-	do {
-		msleep(1);
-		/* Read WHO_AM_I to be sure the device has booted */
-		ret = raw_read8(s->port, s->addr, reg, &val);
-		if (ret == EC_SUCCESS)
-			break;
+	if (V(s)) {
+		/* The chip can take up to 10ms to boot */
+		reg = KIONIX_WHO_AM_I(V(s));
+		timeout = 0;
+		do {
+			msleep(1);
+			/* Read WHO_AM_I to be sure the device has booted */
+			ret = raw_read8(s->port, s->addr, reg, &val);
+			if (ret == EC_SUCCESS)
+				break;
 
-		/* Check for timeout. */
-		if (timeout++ > 20) {
-			ret = EC_ERROR_TIMEOUT;
-			break;
+			/* Check for timeout. */
+			if (timeout++ > 20) {
+				ret = EC_ERROR_TIMEOUT;
+				break;
+			}
+		} while (1);
+	} else {
+		/* Write 0x00 to the internal register for KX022 */
+		reg = KX022_INTERNAL;
+		ret = raw_write8(s->port, s->addr, reg, 0x0);
+		if (ret != EC_SUCCESS) {
+			/*
+			 * For I2C communication, if ACK was not received
+			 * from the first address, resend the command using
+			 * the second address.
+			 */
+			if (!KIONIX_IS_SPI(s->addr)) {
+				ret = raw_write8(s->port, s->addr & ~4, reg,
+						 0x0);
+			}
 		}
-	} while (1);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
 	}
 
+	if (ret != EC_SUCCESS)
+		goto reset_failed;
+
+	/* Issue a software reset. */
 	reg = KIONIX_CTRL2_REG(V(s));
 	reset_field = KIONIX_RESET_FIELD(V(s));
 
-	/* Issue a software reset. */
-
-	/* Place the sensor in standby mode to make changes. */
-	ret = disable_sensor(s, &val);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
-	}
-	ret = raw_read8(s->port, s->addr, reg, &val);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
-	}
-	val |= reset_field;
-	ret = raw_write8(s->port, s->addr, reg, val);
-	if (ret != EC_SUCCESS) {
-		mutex_unlock(s->mutex);
-		return ret;
-	}
-
-	/* The SRST will be cleared when reset is complete. */
-	timeout = 0;
-	do {
-		msleep(1);
-
+	if (V(s)) {
+		/* Place the sensor in standby mode to make changes. */
+		ret = disable_sensor(s, &val);
+		if (ret != EC_SUCCESS)
+			goto reset_failed;
 		ret = raw_read8(s->port, s->addr, reg, &val);
-		/* Reset complete. */
-		if ((ret == EC_SUCCESS) && !(val & reset_field))
-			break;
+		if (ret != EC_SUCCESS)
+			goto reset_failed;
 
-		/* Check for timeout. */
-		if (timeout++ > 20) {
-			ret = EC_ERROR_TIMEOUT;
-			mutex_unlock(s->mutex);
-			return ret;
+		val |= reset_field;
+	} else {
+		/* Write 0 to CTRL2 for KX022 */
+		ret = raw_write8(s->port, s->addr, reg, 0x0);
+		if (ret != EC_SUCCESS)
+			goto reset_failed;
+
+		val = reset_field;
+	}
+
+	ret = raw_write8(s->port, s->addr, reg, val);
+	if (ret != EC_SUCCESS)
+		goto reset_failed;
+
+	if (V(s)) {
+		/* The SRST will be cleared when reset is complete. */
+		timeout = 0;
+		do {
+			msleep(1);
+
+			ret = raw_read8(s->port, s->addr, reg, &val);
+			/* Reset complete. */
+			if ((ret == EC_SUCCESS) && !(val & reset_field))
+				break;
+			/* Check for timeout. */
+			if (timeout++ > 20) {
+				ret = EC_ERROR_TIMEOUT;
+				goto reset_failed;
+			}
+		} while (1);
+	} else {
+		/* Wait 2 milliseconds for completion of the software reset. */
+		msleep(2);
+
+		reg = KX022_COTR;
+		ret = raw_read8(s->port, s->addr, reg, &val);
+		if (val != KX022_COTR_VAL_DEFAULT) {
+			CPRINTF("[%s: the software reset failed]\n", s->name);
+			ret = EC_ERROR_HW_INTERNAL;
+			goto reset_failed;
 		}
-	} while (1);
+	}
+
+	reg = KIONIX_WHO_AM_I(V(s));
+	ret = raw_read8(s->port, s->addr, reg, &val);
+	if (ret != EC_SUCCESS || val != KIONIX_WHO_AM_I_VAL(V(s))) {
+		ret = EC_ERROR_HW_INTERNAL;
+		goto reset_failed;
+	}
+
 	mutex_unlock(s->mutex);
 
 	/* Initialize with the desired parameters. */
@@ -586,6 +625,10 @@ static int init(const struct motion_sensor_t *s)
 		return ret;
 
 	return sensor_init_done(s);
+
+reset_failed:
+	mutex_unlock(s->mutex);
+	return ret;
 }
 
 const struct accelgyro_drv kionix_accel_drv = {
