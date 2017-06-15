@@ -824,10 +824,9 @@ const matrix_3x3_t mag_standard_ref = {
 };
 
 /* sensor private data */
-/* TODO(crbug.com/733352): Remove useless externs and declare these static. */
-struct kionix_accel_data g_kx022_data;
-struct bmi160_drv_data_t g_bmi160_data;
-struct opt3001_drv_data_t g_opt3001_data = {
+static struct kionix_accel_data g_kx022_data;
+static struct bmi160_drv_data_t g_bmi160_data;
+static struct opt3001_drv_data_t g_opt3001_data = {
 	.attenuation = 5,
 };
 

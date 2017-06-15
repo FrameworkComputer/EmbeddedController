@@ -647,8 +647,8 @@ const matrix_3x3_t base_standard_ref = {
 };
 #endif
 
-struct kionix_accel_data g_kx022_data;
-struct bmi160_drv_data_t g_bmi160_data;
+static struct kionix_accel_data g_kx022_data;
+static struct bmi160_drv_data_t g_bmi160_data;
 
 struct motion_sensor_t motion_sensors[] = {
 #ifdef CONFIG_ACCELGYRO_BMI160

@@ -588,24 +588,3 @@ const struct accelgyro_drv si114x_drv = {
 	.load_fifo = NULL,
 #endif
 };
-
-struct si114x_drv_data_t g_si114x_data = {
-	.state = SI114X_NOT_READY,
-	.covered = 0,
-	.type_data = {
-		/* Proximity */
-		{
-			.base_data_reg = SI114X_REG_PS1_DATA0,
-			.irq_flags = SI114X_PS_INT_FLAG,
-			.scale = 1,
-			.offset = -256,
-		},
-		/* light */
-		{
-			.base_data_reg = SI114X_REG_ALSVIS_DATA0,
-			.irq_flags = SI114X_ALS_INT_FLAG,
-			.scale = 1,
-			.offset = -256,
-		}
-	}
-};

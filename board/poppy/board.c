@@ -738,8 +738,8 @@ int board_get_version(void)
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
 
-struct bmi160_drv_data_t g_bmi160_data;
-struct bmp280_drv_data_t bmp280_drv_data;
+static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmp280_drv_data_t bmp280_drv_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t mag_standard_ref = {

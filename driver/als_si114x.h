@@ -258,7 +258,6 @@ struct si114x_drv_data_t {
 #define SI114X_GET_TYPED_DATA(_s) \
 	(&SI114X_GET_DATA(_s)->type_data[(_s)->type - MOTIONSENSE_TYPE_PROX])
 
-extern struct si114x_drv_data_t g_si114x_data;
 void si114x_interrupt(enum gpio_signal signal);
 
 #endif	/* __CROS_EC_ALS_SI114X_H */

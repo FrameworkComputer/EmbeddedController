@@ -823,10 +823,10 @@ const matrix_3x3_t mag_standard_ref = {
 };
 
 /* sensor private data */
-struct kionix_accel_data g_kx022_data;
-struct bmi160_drv_data_t g_bmi160_data;
-struct bmp280_drv_data_t bmp280_drv_data;
-struct opt3001_drv_data_t g_opt3001_data = {
+static struct kionix_accel_data g_kx022_data;
+static struct bmi160_drv_data_t g_bmi160_data;
+static struct bmp280_drv_data_t bmp280_drv_data;
+static struct opt3001_drv_data_t g_opt3001_data = {
 	.attenuation = 5,
 };
 

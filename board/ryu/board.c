@@ -269,7 +269,28 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 /* Sensor mutex */
 static struct mutex g_mutex;
 
-struct bmi160_drv_data_t g_bmi160_data;
+static struct bmi160_drv_data_t g_bmi160_data;
+
+static struct si114x_drv_data_t g_si114x_data = {
+	.state = SI114X_NOT_READY,
+	.covered = 0,
+	.type_data = {
+		/* Proximity */
+		{
+			.base_data_reg = SI114X_REG_PS1_DATA0,
+			.irq_flags = SI114X_PS_INT_FLAG,
+			.scale = 1,
+			.offset = -256,
+		},
+		/* light */
+		{
+			.base_data_reg = SI114X_REG_ALSVIS_DATA0,
+			.irq_flags = SI114X_ALS_INT_FLAG,
+			.scale = 1,
+			.offset = -256,
+		}
+	}
+};
 
 /* Matrix to rotate sensor vector into standard reference frame */
 const matrix_3x3_t accelgyro_standard_ref = {

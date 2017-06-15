@@ -456,8 +456,6 @@ struct bmi160_drv_data_t {
 #define BMI160_GET_SAVED_DATA(_s) \
 	(&BMI160_GET_DATA(_s)->saved_data[(_s)->type])
 
-extern struct bmi160_drv_data_t g_bmi160_data;
-
 void bmi160_interrupt(enum gpio_signal signal);
 
 #ifdef CONFIG_MAG_BMI160_BMM150

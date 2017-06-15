@@ -720,8 +720,25 @@ static struct mutex g_base_mutex;
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
 
-struct kionix_accel_data g_kxcj9_data;
-struct bmi160_drv_data_t g_bmi160_data;
+static struct kionix_accel_data g_kxcj9_data;
+static struct bmi160_drv_data_t g_bmi160_data;
+
+static struct si114x_drv_data_t g_si114x_data = {
+	.state = SI114X_NOT_READY,
+	.covered = 0,
+	.type_data = {
+		/* Proximity - unused */
+		{
+		},
+		/* light */
+		{
+			.base_data_reg = SI114X_REG_ALSVIS_DATA0,
+			.irq_flags = SI114X_ALS_INT_FLAG,
+			.scale = 1,
+			.offset = -256,
+		}
+	}
+};
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t mag_standard_ref = {
