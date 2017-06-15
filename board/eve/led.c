@@ -243,7 +243,7 @@ static void eve_led_set_power_battery(void)
 	enum charge_state chg_state = charge_get_state();
 	int side;
 	int percent_chg;
-	enum led_pattern pattern;
+	enum led_pattern pattern = led_pattern;
 	int tap = 0;
 
 	if (double_tap) {
@@ -262,55 +262,57 @@ static void eve_led_set_power_battery(void)
 	/* Get percent charge */
 	percent_chg = charge_get_percent();
 
-	/*
-	 * If a double tap update is underway, let that complete before allowing
-	 * the pattern to change.
-	 */
-	if (!double_tap_tick_count) {
-		if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
-		    ((chg_state == PWR_STATE_DISCHARGE_FULL)
-		     && extpower_is_present())) {
-			pattern = SOLID_GREEN;
-		} else if (chg_state == PWR_STATE_CHARGE) {
-			pattern = SOLID_WHITE;
-		} else {
-			int i;
+	if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
+	    ((chg_state == PWR_STATE_DISCHARGE_FULL)
+	     && extpower_is_present())) {
+		pattern = SOLID_GREEN;
+		double_tap_tick_count = 0;
+	} else if (chg_state == PWR_STATE_CHARGE) {
+		pattern = SOLID_WHITE;
+		double_tap_tick_count = 0;
+	} else if (!double_tap_tick_count) {
+		int i;
 
-			/*
-			 * Not currently charging. Select the pattern based on
-			 * the battery charge level. If there is no double tap
-			 * event to process, then only the low battery patterns
-			 * are relevant.
-			 */
-			for (i = 0; i < ARRAY_SIZE(pattern_tbl); i++) {
-				if (percent_chg <= pattern_tbl[i].max) {
-					pattern = pattern_tbl[i].pattern;
-					break;
-				}
-			}
-			/*
-			 * The patterns used for double tap and for not charging
-			 * state are the same for low battery cases. But, if
-			 * battery charge is high enough to be above SOLID_RED,
-			 * then only display LED pattern if double tap has
-			 * occurred.
-			 */
-			if (tap == 0 && pattern <= WHITE_RED)
-				pattern = OFF;
-			else
-				/* Start double tap LED sequence */
-				double_tap_tick_count = DOUBLE_TAP_TICK_LEN;
-		}
-
-		/* If the LED pattern will change, then reset tick count and set
-		 * new pattern.
+		/*
+		 * Not currently charging. Select the pattern based on
+		 * the battery charge level. If there is no double tap
+		 * event to process, then only the low battery patterns
+		 * are relevant.
 		 */
-		if (pattern != led_pattern) {
-			led_ticks = 0;
-			led_pattern = pattern;
+		for (i = 0; i < ARRAY_SIZE(pattern_tbl); i++) {
+			if (percent_chg <= pattern_tbl[i].max) {
+				pattern = pattern_tbl[i].pattern;
+				break;
+			}
 		}
+		/*
+		 * The patterns used for double tap and for not charging
+		 * state are the same for low battery cases. But, if
+		 * battery charge is high enough to be above SOLID_RED,
+		 * then only display LED pattern if double tap has
+		 * occurred.
+		 */
+		if (tap == 0 && pattern <= WHITE_RED)
+			pattern = OFF;
+		else
+			/* Start double tap LED sequence */
+			double_tap_tick_count = DOUBLE_TAP_TICK_LEN;
 	}
 
+	/* If the LED pattern will change, then reset tick count and set
+	 * new pattern.
+	 */
+	if (pattern != led_pattern) {
+		led_ticks = 0;
+		led_pattern = pattern;
+	}
+	/*
+	 * If external charger is connected, then make sure only the LED that's
+	 * on the side with the charger is turned on.
+	 */
+	if (side != LED_BOTH)
+		set_color(LED_OFF, side ^ 1);
+	/* Update LED pattern */
 	led_manage_pattern(side);
 }
 
@@ -384,7 +386,6 @@ static int command_led(int argc, char **argv)
 		} else if (!strcasecmp(argv[1], "white")) {
 			set_color(LED_WHITE, side);
 		} else {
-			/* maybe handle charger_discharge_on_ac() too? */
 			return EC_ERROR_PARAM1;
 		}
 	}
