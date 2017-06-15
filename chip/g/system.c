@@ -218,6 +218,24 @@ const char *system_get_chip_revision(void)
 	return revision_str;
 }
 
+int system_get_chip_unique_id(uint8_t **id)
+{
+	static uint32_t cached[8];
+
+	if (!cached[3]) { /* generate it if it doesn't exist yet */
+		const struct SignedHeader *ro_hdr = (const void *)
+			get_program_memory_addr(system_get_ro_image_copy());
+		const char *rev = get_revision_str();
+
+		cached[0] = ro_hdr->keyid;
+		cached[1] = GREG32(FUSE, DEV_ID0);
+		cached[2] = GREG32(FUSE, DEV_ID1);
+		strncpy((char *)&cached[3], rev, sizeof(cached[3]));
+	}
+	*id = (uint8_t *)cached;
+	return sizeof(cached);
+}
+
 int system_battery_cutoff_support_required(void)
 {
 	switch (get_fuse_set_id())
