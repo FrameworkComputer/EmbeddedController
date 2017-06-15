@@ -58,7 +58,8 @@ int uart_init_done(void)
 void uart_tx_start(void)
 {
 #if !defined(CONFIG_POLLING_UART)
-	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+
+	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
 	if ( REG8(IER(id) & IER_TDRQ) )
 		return;
@@ -70,14 +71,15 @@ void uart_tx_start(void)
 
 	REG8(IER(id)) |= IER_TDRQ;
 
-	task_trigger_irq(ISH_UART1_IRQ);
+	task_trigger_irq(ISH_DEBUG_UART_IRQ);
+
 #endif
 }
 
 void uart_tx_stop(void)
 {
 #if !defined(CONFIG_POLLING_UART)
-	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
 	/* Re-allow deep sleep */
 	enable_sleep(SLEEP_MASK_UART);
@@ -91,7 +93,7 @@ void uart_tx_stop(void)
 void uart_tx_flush(void)
 {
 #if !defined(CONFIG_POLLING_UART)
-	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
 	while (!(REG8(LSR(id)) & LSR_TEMT) )
 		;
@@ -106,7 +108,7 @@ int uart_tx_ready(void)
 int uart_rx_available(void)
 {
 #if !defined(CONFIG_POLLING_UART)
-	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
 	return REG8(LSR(id)) & LSR_DR;
 #else
@@ -116,7 +118,7 @@ int uart_rx_available(void)
 
 void uart_write_char(char c)
 {
-	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
 	/* Wait till reciever is ready */
 	while ((REG8(LSR(id)) & LSR_TEMT) == 0)
@@ -128,7 +130,7 @@ void uart_write_char(char c)
 #if !defined(CONFIG_POLLING_UART)
 int uart_read_char(void)
 {
-	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+	enum UART_PORT id = ISH_DEBUG_UART; /* UART for ISH */
 
 	return REG8(RBR(id));
 }
@@ -139,7 +141,7 @@ void uart_ec_interrupt(void)
 	uart_process_input();
 	uart_process_output();
 }
-DECLARE_IRQ(ISH_UART1_IRQ, uart_ec_interrupt); /* TODO: 'priority' */
+DECLARE_IRQ(ISH_DEBUG_UART_IRQ, uart_ec_interrupt);
 #endif /* !defined(CONFIG_POLLING_UART) */
 
 static int uart_return_baud_rate_by_id(int baud_rate_id)
@@ -282,8 +284,7 @@ static void uart_drv_init(void)
 
 	REG32(UART2_BASE + UART_REG_ABR) = 0;
 
-	task_enable_irq(ISH_UART0_IRQ);
-	task_enable_irq(ISH_UART1_IRQ);
+	task_enable_irq(ISH_DEBUG_UART_IRQ);
 }
 
 void uart_init(void)
@@ -291,6 +292,7 @@ void uart_init(void)
 
 	uart_drv_init();
 
-	uart_client_init(UART_PORT_1, B115200, 0);
+	uart_client_init(ISH_DEBUG_UART, B115200, 0);
+
 	init_done = 1;
 }
