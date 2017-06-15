@@ -23,6 +23,7 @@ GPIO_INT(RSMRST_L_PGOOD,	PIN(B, 0), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,		PIN(C, 7), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(WP_L,			PIN(9, 3), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(USB_C0_VBUS_WAKE_L,	PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	vbus0_evt)
+GPIO_INT(RECOVERY_L,		PIN(8, 2), GPIO_INT_BOTH, button_interrupt)	/* Recovery button */
 GPIO(PCH_RTCRST,		PIN(E, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC */
 GPIO(WLAN_OFF_L,		PIN(7, 2), GPIO_OUT_LOW)			/* Disable WLAN */
 GPIO(PP3300_DX_WLAN,		PIN(A, 7), GPIO_OUT_LOW)			/* Enable WLAN 3.3V Power */
@@ -42,7 +43,6 @@ GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
 
 /* Fizz specific pins */
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_OUT_HIGH)			/* Ethernet power enabled */
-GPIO(RECOVERY_L,		PIN(8, 2), GPIO_INPUT)				/* Recovery button */
 GPIO(PWR_RED_LED,		PIN(8, 0), GPIO_OUT_HIGH)			/* Power Red LED */
 GPIO(PWR_GRN_LED,		PIN(B, 7), GPIO_OUT_HIGH)			/* Power Green LED */
 

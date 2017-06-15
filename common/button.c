@@ -292,6 +292,8 @@ static int console_command_button(int argc, char **argv)
 		button = button_present(KEYBOARD_BUTTON_VOLUME_UP);
 	else if (!strcasecmp(argv[1], "vdown"))
 		button = button_present(KEYBOARD_BUTTON_VOLUME_DOWN);
+	else if (!strcasecmp(argv[1], "rec"))
+		button = button_present(KEYBOARD_BUTTON_RECOVERY);
 	else
 		return EC_ERROR_PARAM1;
 
@@ -328,6 +330,44 @@ DECLARE_CONSOLE_COMMAND(button, console_command_button,
 #endif
 
 #ifdef CONFIG_EMULATED_SYSRQ
+
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
+
+/*
+ * Simplified sysrq handler
+ *
+ * In simplified sysrq, user can
+ * - press and release recovery button to send one sysrq event to the host
+ * - press and hold recovery button for 4 seconds to reset the AP (warm reset)
+ */
+static void debug_mode_handle(void)
+{
+	static int recovery_button_pressed = 0;
+
+	if (!recovery_button_pressed) {
+		if (is_recovery_button_pressed()) {
+			/* User pressed recovery button. Wait for 4 seconds
+			 * to see if warm reset is requested. */
+			recovery_button_pressed = 1;
+			hook_call_deferred(&debug_mode_handle_data, 4 * SECOND);
+		}
+	} else {
+		/* We come here when recovery button is released or when
+		 * 4 sec elapsed with recovery button still pressed. */
+		if (!is_recovery_button_pressed()) {
+			/* Cancel pending timer */
+			hook_call_deferred(&debug_mode_handle_data, -1);
+			host_send_sysrq('x');
+			CPRINTS("DEBUG MODE: sysrq-x sent");
+		} else {
+			chipset_reset(0);
+			CPRINTS("DEBUG MODE: Warm reset triggered");
+		}
+		recovery_button_pressed = 0;
+	}
+}
+
+#else /* CONFIG_DEDICATED_RECOVERY_BUTTON */
 
 enum debug_state {
 	STATE_DEBUG_NONE,
@@ -616,4 +656,5 @@ static void debug_led_tick(void)
 DECLARE_HOOK(HOOK_TICK, debug_led_tick, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_LED_COMMON */
 
+#endif /* !CONFIG_DEDICATED_RECOVERY_BUTTON */
 #endif /* CONFIG_EMULATED_SYSRQ */
