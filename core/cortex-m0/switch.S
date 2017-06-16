@@ -67,7 +67,7 @@ __task_start:
   adds r2, #17*4          @ put the pointer at the top of the stack
   movs r1, #0             @ __Schedule parameter : re-schedule nothing
   msr  psp, r2            @ setup a thread stack up to the first context switch
-  movs r2, #1
+  movs r2, #1             @ r2 = TASK_SCHEDULER_INIT
   isb                     @ ensure the write is done
   msr control, r3
   movs r3, r0

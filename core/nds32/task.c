@@ -159,6 +159,12 @@ int need_resched;
  * make a call to enable all tasks.
  */
 static uint32_t tasks_ready = (1 << TASK_ID_HOOKS);
+/*
+ * Initially allow only the HOOKS and IDLE task to run, regardless of ready
+ * status, in order for HOOK_INIT to complete before other tasks.
+ * task_enable_all_tasks() will open the flood gates.
+ */
+static uint32_t tasks_enabled = (1 << TASK_ID_HOOKS) | (1 << TASK_ID_IDLE);
 
 static int start_called;  /* Has task swapping started */
 
@@ -285,7 +291,7 @@ void __ram_code syscall_handler(int desched, task_id_t resched, int swirq)
 
 task_ *next_sched_task(void)
 {
-	task_ *new_task = __task_id_to_ptr(__fls(tasks_ready));
+	task_ *new_task = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
 #ifdef CONFIG_TASK_PROFILING
 	if (current_task != new_task) {
@@ -526,8 +532,8 @@ void set_int_ctrl(uint32_t val)
 
 void task_enable_all_tasks(void)
 {
-	/* Mark all tasks are ready to run. */
-	tasks_ready = (1 << TASK_ID_COUNT) - 1;
+	/* Mark all tasks as ready and able to run. */
+	tasks_ready = tasks_enabled = (1 << TASK_ID_COUNT) - 1;
 	/* Reschedule the highest priority task. */
 	__schedule(0, 0, 0);
 }

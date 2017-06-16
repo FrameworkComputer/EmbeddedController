@@ -145,6 +145,12 @@ static int need_resched_or_profiling;
  * make a call to enable all tasks.
  */
 static uint32_t tasks_ready = (1 << TASK_ID_HOOKS);
+/*
+ * Initially allow only the HOOKS and IDLE task to run, regardless of ready
+ * status, in order for HOOK_INIT to complete before other tasks.
+ * task_enable_all_tasks() will open the flood gates.
+ */
+static uint32_t tasks_enabled = (1 << TASK_ID_HOOKS) | (1 << TASK_ID_IDLE);
 
 static int start_called;  /* Has task swapping started */
 
@@ -217,10 +223,6 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	}
 #endif
 
-	/* Stay in hook till task_enable_all_tasks() */
-	if (!task_start_called() && tasks_ready > 3)
-		tasks_ready = 3;
-
 	current = current_task;
 
 #ifdef CONFIG_DEBUG_STACK_OVERFLOW
@@ -242,8 +244,8 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	}
 	tasks_ready |= 1 << resched;
 
-	ASSERT(tasks_ready);
-	next = __task_id_to_ptr(__fls(tasks_ready));
+	ASSERT(tasks_ready & tasks_enabled);
+	next = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
 #ifdef CONFIG_TASK_PROFILING
 	/* Track time in interrupts */
@@ -430,9 +432,10 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 void task_enable_all_tasks(void)
 {
-	/* Mark all tasks as ready to run. */
-	tasks_ready = (1 << TASK_ID_COUNT) - 1;
+	/* Mark all tasks as ready and table to run. */
+	tasks_ready = tasks_enabled = (1 << TASK_ID_COUNT) - 1;
 
+	/* BUG: task_start() was likely already called */
 	start_called = 1;
 
 	/* The host OS driver should wait till the FW completes all hook inits.

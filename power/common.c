@@ -359,8 +359,7 @@ void chipset_exit_hard_off(void)
 	 * pressed. For other states here, to wake the chipset task to trigger
 	 * the event for leaving G3 is necessary.
 	 */
-	if (task_start_called())
-		task_wake(TASK_ID_CHIPSET);
+	task_wake(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
