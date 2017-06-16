@@ -304,7 +304,11 @@ DECLARE_SAFE_CONSOLE_COMMAND(socket, command_socket,
 			     "[enable|disable]",
 			     "Activate and deactivate socket");
 
-
+void post_reboot_request(void)
+{
+	/* This will never return. */
+	system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD);
+}
 
 /* Determine key type based on the key ID. */
 static const char *key_type(uint32_t key_id)

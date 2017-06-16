@@ -43,12 +43,10 @@ board-y += tpm2/hash_data.o
 board-y += tpm2/hkdf.o
 board-y += tpm2/manufacture.o
 board-y += tpm2/platform.o
-board-y += tpm2/post_reset.o
 board-y += tpm2/rsa.o
 board-y += tpm2/stubs.o
 board-y += tpm2/tpm_state.o
 board-y += tpm2/trng.o
-board-y += tpm2/upgrade.o
 board-y += tpm_nvmem_read.o
 board-y += wp.o
 
