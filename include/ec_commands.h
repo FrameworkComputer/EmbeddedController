@@ -8,7 +8,9 @@
 #ifndef __CROS_EC_EC_COMMANDS_H
 #define __CROS_EC_EC_COMMANDS_H
 
+#ifndef __ACPI__
 #include <stdint.h>
+#endif
 
 /*
  * Include common.h for CONFIG_HOSTCMD_ALIGNED, if it's defined. This
@@ -4178,8 +4180,6 @@ struct __ec_align4 ec_params_rwsig_action {
 	uint32_t action;
 };
 
-#endif  /* !__ACPI__ */
-
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 
@@ -4368,5 +4368,7 @@ struct __ec_align4 ec_params_tp_frame_get {
 #define EC_HOST_PARAM_SIZE      EC_PROTO2_MAX_PARAM_SIZE
 #define EC_LPC_ADDR_OLD_PARAM   EC_HOST_CMD_REGION1
 #define EC_OLD_PARAM_SIZE       EC_HOST_CMD_REGION_SIZE
+
+#endif  /* !__ACPI__ */
 
 #endif  /* __CROS_EC_EC_COMMANDS_H */
