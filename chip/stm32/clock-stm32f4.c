@@ -109,10 +109,12 @@ void config_hispeed_clock(void)
 	 * For STM32F412: max 50 MHz
 	 */
 	/* AHB Prescalar */
-	ahbpre = 0x8;   /* AHB = system clock / 2 */
-	/* NOTE: If apbXpre is not 0, timers are x2 clocked. RM0390 Fig. 13 */
-	apb1pre = 0;  /* APB1 = AHB */
-	apb2pre = 0;  /* APB2 = AHB */
+	ahbpre = STM32F4_AHB_PRE;
+	/* NOTE: If apbXpre is not 0, timers are x2 clocked. RM0390 Fig. 13
+	 * One should define STM32F4_TIMER_CLOCK when apbXpre is not 0.
+	 * STM32F4_TIMER_CLOCK is used for hwtimer in EC. */
+	apb1pre = STM32F4_APB1_PRE;
+	apb2pre = STM32F4_APB2_PRE;
 
 #ifdef CONFIG_STM32_CLOCK_HSE_HZ
 	/* RTC clock = 1MHz */
@@ -173,6 +175,11 @@ void config_hispeed_clock(void)
 
 	STM32_RCC_BDCR = STM32_RCC_BDCR_RTCEN | BCDR_RTCSEL(BDCR_SRC_LSI);
 #endif
+}
+
+int clock_get_timer_freq(void)
+{
+	return STM32F4_TIMER_CLOCK;
 }
 
 int clock_get_freq(void)

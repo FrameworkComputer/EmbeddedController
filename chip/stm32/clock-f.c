@@ -153,6 +153,12 @@ void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
+__attribute__((weak))
+int clock_get_timer_freq(void)
+{
+	return clock_get_freq();
+}
+
 void clock_init(void)
 {
 	/*

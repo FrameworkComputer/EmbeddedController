@@ -957,6 +957,11 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32F4_VCO_CLOCK 336000000
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
+#define STM32F4_TIMER_CLOCK STM32F4_IO_CLOCK
+#define STM32F4_AHB_PRE 0x8
+#define STM32F4_APB1_PRE 0x0
+#define STM32F4_APB2_PRE 0x0
+#define STM32_FLASH_ACR_LATENCY     (1 << 0)
 
 #elif defined(CHIP_VARIANT_STM32F412)
 /* Required or recommended clocks for stm32f412 */
@@ -967,6 +972,11 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32F4_VCO_CLOCK 384000000
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
+#define STM32F4_TIMER_CLOCK (STM32F4_IO_CLOCK * 2)
+#define STM32F4_AHB_PRE 0x0
+#define STM32F4_APB1_PRE 0x4
+#define STM32F4_APB2_PRE 0x4
+#define STM32_FLASH_ACR_LATENCY     (3 << 0)
 
 #elif defined(CHIP_VARIANT_STM32F411)
 /* Required or recommended clocks for stm32f411 */
@@ -977,6 +987,11 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32F4_VCO_CLOCK 384000000
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
+#define STM32F4_TIMER_CLOCK STM32F4_IO_CLOCK
+#define STM32F4_AHB_PRE 0x8
+#define STM32F4_APB1_PRE 0x0
+#define STM32F4_APB2_PRE 0x0
+#define STM32_FLASH_ACR_LATENCY     (1 << 0)
 
 #else
 #error "No valid clocks defined"
@@ -1400,7 +1415,6 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_REGS_BASE       0x40023c00
 
 #define STM32_FLASH_ACR             REG32(STM32_FLASH_REGS_BASE + 0x00)
-#define STM32_FLASH_ACR_LATENCY     (1 << 0)
 #define STM32_FLASH_ACR_SHIFT           0
 #define STM32_FLASH_ACR_LAT_MASK        0xf
 #define STM32_FLASH_ACR_PRFTEN          (1 << 8)

@@ -37,6 +37,11 @@ int clock_get_freq(void)
 	return freq;
 }
 
+int clock_get_timer_freq(void)
+{
+	return clock_get_freq();
+}
+
 void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
 {
 	volatile uint32_t dummy __attribute__((unused));

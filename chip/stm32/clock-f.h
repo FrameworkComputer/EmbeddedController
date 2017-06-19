@@ -67,4 +67,7 @@ void clock_init(void);
 /* Init high speed clock config */
 void config_hispeed_clock(void);
 
+/* Get timer clock frequency (for STM32 only) */
+int clock_get_timer_freq(void);
+
 #endif  /* __CROS_EC_CLOCK_F_H */

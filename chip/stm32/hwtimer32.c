@@ -6,6 +6,7 @@
 /* Hardware 32-bit timer driver */
 
 #include "clock.h"
+#include "clock-f.h"
 #include "common.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -135,7 +136,7 @@ static void update_prescaler(void)
 	 * Pre-scaler value :
 	 * the timer is incrementing every microsecond
 	 */
-	STM32_TIM_PSC(TIM_CLOCK32) = (clock_get_freq() / SECOND) - 1;
+	STM32_TIM_PSC(TIM_CLOCK32) = (clock_get_timer_freq() / SECOND) - 1;
 	/*
 	 * Forcing reloading the pre-scaler,
 	 * but try to maintain a sensible time-keeping while triggering
@@ -162,7 +163,8 @@ static void update_prescaler(void)
 
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Watchdog timer runs at 1KHz */
-	STM32_TIM_PSC(TIM_WATCHDOG) = (clock_get_freq() / SECOND * MSEC) - 1;
+	STM32_TIM_PSC(TIM_WATCHDOG) =
+		(clock_get_timer_freq()  / SECOND * MSEC)- 1;
 #endif  /* CONFIG_WATCHDOG_HELP */
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
@@ -188,7 +190,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	STM32_TIM32_ARR(TIM_CLOCK32) = 0xffffffff;
 
 	/* Update prescaler to increment every microsecond */
-	STM32_TIM_PSC(TIM_CLOCK32) = (clock_get_freq() / SECOND) - 1;
+	STM32_TIM_PSC(TIM_CLOCK32) = (clock_get_timer_freq() / SECOND) - 1;
 
 	/* Reload the pre-scaler */
 	STM32_TIM_EGR(TIM_CLOCK32) = 0x0001;
@@ -258,7 +260,8 @@ void hwtimer_setup_watchdog(void)
 	STM32_TIM_ARR(TIM_WATCHDOG) = CONFIG_AUX_TIMER_PERIOD_MS;
 
 	/* Update prescaler: watchdog timer runs at 1KHz */
-	STM32_TIM_PSC(TIM_WATCHDOG) = (clock_get_freq() / SECOND * MSEC) - 1;
+	STM32_TIM_PSC(TIM_WATCHDOG) =
+		(clock_get_timer_freq() / SECOND * MSEC) - 1;
 
 	/* Reload the pre-scaler */
 	STM32_TIM_EGR(TIM_WATCHDOG) = 0x0001;

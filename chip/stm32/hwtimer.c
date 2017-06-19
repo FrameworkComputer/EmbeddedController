@@ -6,6 +6,7 @@
 /* Hardware timers driver */
 
 #include "clock.h"
+#include "clock-f.h"
 #include "common.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -304,7 +305,7 @@ static void update_prescaler(void)
 	 * prescaler counter ticks down, or if forced via EGR).
 	 */
 	STM32_TIM_PSC(TIM_CLOCK_MSB) = 0;
-	STM32_TIM_PSC(TIM_CLOCK_LSB) = (clock_get_freq() / SECOND) - 1;
+	STM32_TIM_PSC(TIM_CLOCK_LSB) = (clock_get_timer_freq() / SECOND) - 1;
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 
