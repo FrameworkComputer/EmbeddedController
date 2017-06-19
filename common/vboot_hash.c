@@ -236,6 +236,17 @@ static void vboot_hash_init(void)
 		data_size = tag->size;
 	} else
 #endif
+#ifdef CONFIG_HOSTCMD_EVENTS
+	/*
+	 * Don't auto-start hash computation if we've asked the host to enter
+	 * recovery mode since we probably won't need the hash. Although
+	 * the host is capable of clearing this host event, the host is
+	 * likely not even up and running yet in the case of cold boot, due to
+	 * the power sequencing task not having run yet.
+	 */
+	if (!(host_get_events() &
+	      EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY)))
+#endif
 	{
 		/* Start computing the hash of RW firmware */
 		vboot_hash_start(CONFIG_EC_WRITABLE_STORAGE_OFF +
@@ -400,7 +411,6 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 		offset = CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 		size = system_get_image_used(SYSTEM_IMAGE_RW);
 	}
-
 	rv = vboot_hash_start(offset, size, p->nonce_data, p->nonce_size);
 
 	if (rv == EC_SUCCESS)
