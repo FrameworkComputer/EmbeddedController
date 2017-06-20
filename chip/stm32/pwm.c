@@ -12,9 +12,11 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
+#include "system.h"
 #include "util.h"
 
-static int using_pwm[PWM_CH_COUNT];
+/* Bitmap of currently active PWM channels. 1 bit per channel. */
+static uint32_t using_pwm;
 
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {
@@ -41,7 +43,7 @@ static void pwm_configure(enum pwm_channel ch)
 	int frequency = pwm->frequency ? pwm->frequency : 100;
 	uint16_t ccer;
 
-	if (using_pwm[ch])
+	if (using_pwm & (1 << ch))
 		return;
 
 	/* Enable timer */
@@ -96,7 +98,10 @@ static void pwm_configure(enum pwm_channel ch)
 	/* Enable auto-reload preload, start counting */
 	tim->cr1 |= (1 << 7) | (1 << 0);
 
-	using_pwm[ch] = 1;
+	atomic_or(&using_pwm, 1 << ch);
+
+	/* Prevent sleep */
+	disable_sleep(SLEEP_MASK_PWM);
 }
 
 static void pwm_disable(enum pwm_channel ch)
@@ -104,7 +109,7 @@ static void pwm_disable(enum pwm_channel ch)
 	const struct pwm_t *pwm = pwm_channels + ch;
 	timer_ctlr_t *tim = (timer_ctlr_t *)(pwm->tim.base);
 
-	if (using_pwm[ch] == 0)
+	if ((using_pwm & (1 << ch)) == 0)
 		return;
 
 	/* Main output disable */
@@ -116,7 +121,14 @@ static void pwm_disable(enum pwm_channel ch)
 	/* Disable timer clock */
 	__hw_timer_enable_clock(pwm->tim.id, 0);
 
-	using_pwm[ch] = 0;
+	/* Allow sleep */
+	enable_sleep(SLEEP_MASK_PWM);
+
+	atomic_clear(&using_pwm, 1 << ch);
+
+	/* Unless another PWM is active... Then prevent sleep */
+	if (using_pwm)
+		disable_sleep(SLEEP_MASK_PWM);
 }
 
 void pwm_enable(enum pwm_channel ch, int enabled)
@@ -129,12 +141,12 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 
 int pwm_get_enabled(enum pwm_channel ch)
 {
-	return using_pwm[ch];
+	return using_pwm & (1 << ch);
 }
 
 static void pwm_reconfigure(enum pwm_channel ch)
 {
-	using_pwm[ch] = 0;
+	atomic_clear(&using_pwm, 1 << ch);
 	pwm_configure(ch);
 }
 
@@ -145,7 +157,7 @@ static void pwm_freq_change(void)
 {
 	int i;
 	for (i = 0; i < PWM_CH_COUNT; ++i)
-		if (using_pwm[i])
+		if (pwm_get_enabled(i))
 			pwm_reconfigure(i);
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, pwm_freq_change, HOOK_PRIO_DEFAULT);
