@@ -30,11 +30,8 @@ struct i2c_test_param_t {
 	int addr;
 	int offset;
 	int data; /* Non-negative represents data to write. -1 to read. */
-} i2c_test_params[] = {
-#if defined(BOARD_PIT)
-	{8, 0, 0x90, 0x19, -1},
-#endif
-};
+} i2c_test_params[];
+
 /* Disable I2C test for boards without test configuration */
 #if defined(BOARD_BDS) || defined(BOARD_AURON)
 #undef CONFIG_I2C

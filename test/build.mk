@@ -10,7 +10,6 @@ test-list-y=pingpong timer_calib timer_dos timer_jump mutex utils utils_str
 #disable: powerdemo
 
 test-list-$(BOARD_BDS)+=
-test-list-$(BOARD_PIT)+=kb_scan stress
 
 test-list-$(BOARD_HAMMER)+=entropy
 

@@ -57,11 +57,6 @@ driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander_pca9534.o
 # Current/Power monitor
 driver-$(CONFIG_INA219)$(CONFIG_INA231)+=ina2xx.o
 
-# Power Management IC
-driver-$(CONFIG_PMU_TPS65090)+=pmu_tps65090.o
-driver-$(CONFIG_CHARGER_TPS65090)+=pmu_tps65090_charger.o
-driver-$(CONFIG_PMU_POWERINFO)+=pmu_tps65090_powerinfo.o
-
 # LED drivers
 driver-$(CONFIG_LED_DRIVER_DS2413)+=led/ds2413.o
 driver-$(CONFIG_LED_DRIVER_LP5562)+=led/lp5562.o
