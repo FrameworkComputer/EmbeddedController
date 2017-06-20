@@ -565,20 +565,22 @@ const char *system_get_build_info(void)
 	return combined_build_info;
 }
 
-void system_update_rollback_mask(void)
+/**
+ * Modify info1 RW rollback mask to match the passed in header(s).
+ *
+ * If both headers' addressses are passed in, the INFO1 rollback mask field is
+ * erased in case both headers have a zero in the appropriate bit. If only one
+ * header address is passed (the other one is set to zero), only the valid
+ * header is considered when updating INFO1.
+ */
+static void update_rollback_mask(const struct SignedHeader *header_a,
+				 const struct SignedHeader *header_b)
 {
 #ifndef CR50_DEV
 	int updated_words_count = 0;
 	int i;
 	int write_enabled = 0;
 	uint32_t header_mask = 0;
-	const struct SignedHeader *header_a;
-	const struct SignedHeader *header_b;
-
-	header_a = (const struct SignedHeader *)
-		get_program_memory_addr(SYSTEM_IMAGE_RW);
-	header_b = (const struct SignedHeader *)
-		get_program_memory_addr(SYSTEM_IMAGE_RW_B);
 
 	/*
 	 * Make sure INFO1 RW map space is readable.
@@ -612,12 +614,16 @@ void system_update_rollback_mask(void)
 		if (!(i % 32)) {
 			/*
 			 * Not to shoot ourselves in the foot, let's zero only
-			 * those words in the INFO1 space which have both A
-			 * and B header's infomap bit set to zero.
+			 * those words in the INFO1 space which are set to
+			 * zero in all headers we are supposed to look at.
 			 */
-			header_mask =
-				header_a->infomap[i/32] |
-				header_b->infomap[i/32];
+			header_mask = 0;
+
+			if (header_a)
+				header_mask |= header_a->infomap[i/32];
+
+			if (header_b)
+				header_mask |= header_b->infomap[i/32];
 		}
 
 		/* Get the next bit value. */
@@ -671,6 +677,21 @@ void system_update_rollback_mask(void)
 	flash_info_write_disable();
 	ccprintf("updated %d info map words\n", updated_words_count);
 #endif  /*  CR50_DEV ^^^^^^^^ NOT defined. */
+}
+
+void system_update_rollback_mask_with_active_img(void)
+{
+	update_rollback_mask((const struct SignedHeader *)
+			     get_program_memory_addr(system_get_image_copy()),
+			     0);
+}
+
+void system_update_rollback_mask_with_both_imgs(void)
+{
+	update_rollback_mask((const struct SignedHeader *)
+			     get_program_memory_addr(SYSTEM_IMAGE_RW),
+			     (const struct SignedHeader *)
+			     get_program_memory_addr(SYSTEM_IMAGE_RW_B));
 }
 
 void system_get_rollback_bits(char *value, size_t value_size)

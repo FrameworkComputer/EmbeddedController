@@ -52,10 +52,11 @@ int system_rollback_detected(void);
 int system_battery_cutoff_support_required(void);
 
 /**
- * Modify info1 RW rollback mask to match currently executing RW image's
- * header.
+ * Functions to update INFO1 rollback mask based on one or both RW image
+ * headers.
  */
-void system_update_rollback_mask(void);
+void system_update_rollback_mask_with_active_img(void);
+void system_update_rollback_mask_with_both_imgs(void);
 
 /**
  * Scan INFO1 rollback map and infomap fields of both RW and RW_B image

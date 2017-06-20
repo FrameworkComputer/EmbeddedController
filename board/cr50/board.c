@@ -634,7 +634,7 @@ static void board_init(void)
 	/* Initialize the persistent storage. */
 	initvars();
 
-	system_update_rollback_mask();
+	system_update_rollback_mask_with_both_imgs();
 
 	/* Indication that firmware is running, for debug purposes. */
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
@@ -1504,6 +1504,9 @@ static enum vendor_cmd_rc vc_invalidate_inactive_rw(enum vendor_cmd_cc code,
 	const char zero[4] = {}; /* value to write to magic. */
 
 	*response_size = 0;
+
+	/* Update INFO1 mask based on the currently active image. */
+	system_update_rollback_mask_with_active_img();
 
 	if (other_rw_is_inactive()) {
 		CPRINTS("%s: Inactive region is disabled", __func__);
