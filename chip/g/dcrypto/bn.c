@@ -326,11 +326,12 @@ static uint32_t bn_compute_nprime(const uint32_t n0)
 	return ~ninv + 1;       /* Two's complement. */
 }
 
-/* Montgomery output = input ^ exp % N. */
 /* TODO(ngm): this implementation not timing or side-channel safe by
  * any measure. */
-void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
-		const struct LITE_BIGNUM *exp, const struct LITE_BIGNUM *N)
+static void bn_modexp_internal(struct LITE_BIGNUM *output,
+				const struct LITE_BIGNUM *input,
+				const struct LITE_BIGNUM *exp,
+				const struct LITE_BIGNUM *N)
 {
 	int i;
 	uint32_t nprime;
@@ -341,14 +342,6 @@ void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
 	struct LITE_BIGNUM RR;
 	struct LITE_BIGNUM acc;
 	struct LITE_BIGNUM aR;
-
-#ifndef CR50_NO_BN_ASM
-	if ((bn_bits(N) & 255) == 0) {
-		/* Use hardware support for standard key sizes. */
-		bn_mont_modexp_asm(output, input, exp, N);
-		return;
-	}
-#endif
 
 	bn_init(&RR, RR_buf, bn_size(N));
 	bn_init(&acc, acc_buf, bn_size(N));
@@ -392,6 +385,56 @@ void bn_mont_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
 	always_memset(RR_buf, 0, sizeof(RR_buf));
 	always_memset(acc_buf, 0, sizeof(acc_buf));
 	always_memset(aR_buf, 0, sizeof(aR_buf));
+}
+
+/* output = input ^ exp % N */
+int bn_modexp(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
+		const struct LITE_BIGNUM *exp, const struct LITE_BIGNUM *N)
+{
+#ifndef CR50_NO_BN_ASM
+	if ((bn_bits(N) & 255) == 0) {
+		/* Use hardware support for standard key sizes. */
+		return dcrypto_modexp(output, input, exp, N);
+	}
+#endif
+	bn_modexp_internal(output, input, exp, N);
+	return 1;
+}
+
+/* output = input ^ exp % N */
+int bn_modexp_word(struct LITE_BIGNUM *output, const struct LITE_BIGNUM *input,
+		uint32_t exp, const struct LITE_BIGNUM *N)
+{
+#ifndef CR50_NO_BN_ASM
+	if ((bn_bits(N) & 255) == 0) {
+		/* Use hardware support for standard key sizes. */
+		return dcrypto_modexp_word(output, input, exp, N);
+	}
+#endif
+	{
+	struct LITE_BIGNUM pubexp;
+
+	DCRYPTO_bn_wrap(&pubexp, &exp, sizeof(exp));
+	bn_modexp_internal(output, input, &pubexp, N);
+	return 1;
+	}
+}
+
+/* output = input ^ exp % N */
+int bn_modexp_blinded(struct LITE_BIGNUM *output,
+			const struct LITE_BIGNUM *input,
+			const struct LITE_BIGNUM *exp,
+			const struct LITE_BIGNUM *N,
+			uint32_t pubexp)
+{
+#ifndef CR50_NO_BN_ASM
+	if ((bn_bits(N) & 255) == 0) {
+		/* Use hardware support for standard key sizes. */
+		return dcrypto_modexp_blinded(output, input, exp, N, pubexp);
+	}
+#endif
+	bn_modexp_internal(output, input, exp, N);
+	return 1;
 }
 
 /* c[] += a * b[] */
@@ -1136,7 +1179,7 @@ static int bn_probable_prime(const struct LITE_BIGNUM *p)
 		}
 
 		/* y = a ^ r mod p */
-		bn_mont_modexp(&y, &A, &r, p);
+		bn_modexp(&y, &A, &r, p);
 		if (bn_eq(&y, &ONE))
 			continue;
 		bn_add(&y, &ONE);
@@ -1147,7 +1190,7 @@ static int bn_probable_prime(const struct LITE_BIGNUM *p)
 		/* y = y ^ 2 mod p */
 		for (i = 0; i < s - 1; i++) {
 			bn_copy(&A, &y);
-			bn_mont_modexp(&y, &A, &TWO, p);
+			bn_modexp(&y, &A, &TWO, p);
 
 			if (bn_eq(&y, &ONE))
 				return 0;
