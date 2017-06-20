@@ -117,8 +117,6 @@ int dcrypto_p256_is_valid_point(const p256_int *x, const p256_int *y)
  * the mutex.
  */
 void dcrypto_init_and_lock(void);
-/* TODO(mschilder): remove once sub projects are updated to avoid build breakages */
-#define crypto_init dcrypto_init_and_lock
 void dcrypto_unlock(void);
 uint32_t dcrypto_call(uint32_t adr) __attribute__((warn_unused_result));
 void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
