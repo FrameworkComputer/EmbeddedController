@@ -85,24 +85,20 @@ static int bbram_is_byte_access(enum bbram_data_index index)
 	;
 }
 
-/* Check and clear BBRAM status on power-on reset */
+/* Check and clear BBRAM status on any reset */
 void system_check_bbram_on_reset(void)
 {
-	/* Check if power on reset */
-	if ((!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) &&
-	    (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))) {
+	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR)) {
 		/*
-		 * Clear IBBR bit because it's default value is 1
-		 * on reset whenever the VBAT supply is powered up.
+		 * If the reset cause is not power-on reset and VBAT has ever
+		 * dropped, print a warning message.
 		 */
-		SET_BIT(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR);
-	} else {
-		/*
-		 * When the reset cause is other than power on reset,
-		 * it is illegal if IBBR is set.
-		 */
-		if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR))
+		if (IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH) ||
+			IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_STS))
 			CPRINTF("VBAT drop!\n");
+
+		/* Clear IBBR bit */
+		SET_BIT(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR);
 	}
 }
 
@@ -115,7 +111,8 @@ static int bbram_valid(enum bbram_data_index index, int bytes)
 
 	/* Check BBRAM is valid */
 	if (IS_BIT_SET(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR)) {
-		CPRINTF("IBBR set: BBRAM corrupted!\n");
+		SET_BIT(NPCX_BKUP_STS, NPCX_BKUP_STS_IBBR);
+		panic_printf("IBBR set: BBRAM corrupted!\n");
 		return 0;
 	}
 	return 1;
