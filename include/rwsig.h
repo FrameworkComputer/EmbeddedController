@@ -77,10 +77,11 @@ void rwsig_jump_now(void);
 #endif /* ! CONFIG_RO_PUBKEY_SIZE */
 #ifndef CONFIG_RO_PUBKEY_ADDR
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-/* The pubkey goes at the end of the RO region */
-#define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
-			       + CONFIG_RO_MEM_OFF		\
-			       + CONFIG_RO_SIZE			\
+/* The pubkey resides at the end of the RO image */
+#define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE		\
+			       + CONFIG_EC_PROTECTED_STORAGE_OFF	\
+			       + CONFIG_RO_STORAGE_OFF			\
+			       + CONFIG_RO_SIZE				\
 			       - CONFIG_RO_PUBKEY_SIZE)
 #else
 /*
@@ -105,10 +106,11 @@ void rwsig_jump_now(void);
 #endif
 #endif /* ! CONFIG_RW_SIG_SIZE */
 #ifndef CONFIG_RW_SIG_ADDR
-/* The signature goes at the end of the RW region */
-#define CONFIG_RW_SIG_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
-			    + CONFIG_RW_MEM_OFF		\
-			    + CONFIG_RW_SIZE		\
+/* The signature resides at the end of the RW image */
+#define CONFIG_RW_SIG_ADDR (CONFIG_PROGRAM_MEMORY_BASE		\
+			    + CONFIG_EC_WRITABLE_STORAGE_OFF	\
+			    + CONFIG_RW_STORAGE_OFF		\
+			    + CONFIG_RW_SIZE			\
 			    - CONFIG_RW_SIG_SIZE)
 #endif /* !CONFIG_RW_SIG_ADDR */
 

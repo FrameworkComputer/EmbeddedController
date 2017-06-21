@@ -27,6 +27,10 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
+#if !defined(CONFIG_MAPPED_STORAGE)
+#error rwsig implementation assumes mem-mapped storage.
+#endif
+
 /* RW firmware reset vector */
 static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);

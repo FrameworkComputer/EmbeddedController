@@ -47,17 +47,20 @@
 #define CONFIG_WP_STORAGE_OFF	CONFIG_EC_PROTECTED_STORAGE_OFF
 #define CONFIG_WP_STORAGE_SIZE	CONFIG_EC_PROTECTED_STORAGE_SIZE
 
-/* RO firmware offset in flash */
+/* RO firmware in program memory - use all of program memory */
 #define CONFIG_RO_MEM_OFF	0
 #define CONFIG_RO_SIZE		NPCX_PROGRAM_MEMORY_SIZE
 
-/* RW firmware offset in flash */
-#define CONFIG_RW_MEM_OFF	CONFIG_EC_WRITABLE_STORAGE_OFF + \
-				CONFIG_RW_STORAGE_OFF
+/*
+ * RW firmware in program memory - Identical to RO, only one image loaded at
+ * a time.
+ */
+#define CONFIG_RW_MEM_OFF	CONFIG_RO_MEM_OFF
 #define CONFIG_RW_SIZE		CONFIG_RO_SIZE
 
-/* The storage offset of ec.R*.flat which is used for firmware_image.lds */
+/* RO image resides at start of protected region, right after header */
 #define CONFIG_RO_STORAGE_OFF	CONFIG_RO_HDR_SIZE
+/* RW image resides at start of writable region */
 #define CONFIG_RW_STORAGE_OFF	0
 
 #endif /* __CROS_EC_CONFIG_FLASH_LAYOUT_H */
