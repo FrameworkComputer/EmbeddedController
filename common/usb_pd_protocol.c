@@ -3166,6 +3166,17 @@ void pd_set_suspend(int port, int enable)
 	}
 }
 
+int pd_is_port_enabled(int port)
+{
+	switch (pd[port].task_state) {
+	case PD_STATE_DISABLED:
+	case PD_STATE_SUSPENDED:
+		return 0;
+	default:
+		return 1;
+	}
+}
+
 #if defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH)
 static int hex8tou32(char *str, uint32_t *val)
 {

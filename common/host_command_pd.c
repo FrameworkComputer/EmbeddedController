@@ -16,6 +16,7 @@
 #include "task.h"
 #include "tcpm.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
@@ -139,7 +140,8 @@ static void pd_service_tcpc_ports(uint16_t port_status)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		if (port_status & (PD_STATUS_TCPC_ALERT_0 << i))
+		if ((port_status & (PD_STATUS_TCPC_ALERT_0 << i)) &&
+		    pd_is_port_enabled(i))
 			tcpc_alert(i);
 	}
 }
