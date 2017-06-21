@@ -351,6 +351,11 @@ static int it83xx_tcpm_init(int port)
 	return EC_SUCCESS;
 }
 
+static int it83xx_tcpm_release(int port)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 static int it83xx_tcpm_get_cc(int port, int *cc1, int *cc2)
 {
 	*cc2 = it83xx_get_cc(port, USBPD_CC_PIN_2);
@@ -504,6 +509,7 @@ static int it83xx_tcpm_get_chip_info(int port, int renew,
 
 const struct tcpm_drv it83xx_tcpm_drv = {
 	.init			= &it83xx_tcpm_init,
+	.release		= &it83xx_tcpm_release,
 	.get_cc			= &it83xx_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= NULL,

@@ -206,4 +206,3 @@ enum fusb302_txfifo_tokens {
 extern const struct tcpm_drv fusb302_tcpm_drv;
 
 #endif /* __CROS_EC_DRIVER_TCPM_FUSB302_H */
-

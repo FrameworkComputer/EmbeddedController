@@ -61,6 +61,11 @@ static int anx7688_init(int port)
 	return rv;
 }
 
+static int anx7688_release(int port)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 static void anx7688_update_hpd_enable(int port)
 {
 	int status, reg, rv;
@@ -178,6 +183,7 @@ static int anx7688_tcpm_get_vbus_level(int port)
 /* ANX7688 is a TCPCI compatible port controller */
 const struct tcpm_drv anx7688_tcpm_drv = {
 	.init			= &anx7688_init,
+	.release		= &anx7688_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &anx7688_tcpm_get_vbus_level,
@@ -200,4 +206,3 @@ const struct usb_mux_driver anx7688_usb_mux_driver = {
 	.get = tcpci_tcpm_mux_get,
 };
 #endif /* CONFIG_USB_PD_TCPM_MUX */
-

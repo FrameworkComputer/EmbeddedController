@@ -1060,8 +1060,14 @@ static int anx74xx_tcpm_init(int port)
 	return EC_SUCCESS;
 }
 
+static int anx74xx_tcpm_release(int port)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 const struct tcpm_drv anx74xx_tcpm_drv = {
 	.init			= &anx74xx_tcpm_init,
+	.release		= &anx74xx_tcpm_release,
 	.get_cc			= &anx74xx_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &anx74xx_tcpm_get_vbus_level,

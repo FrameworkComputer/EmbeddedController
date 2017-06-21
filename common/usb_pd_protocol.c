@@ -2303,22 +2303,39 @@ void pd_task(void)
 						  PD_STATE_SNK_DISCONNECTED);
 			}
 			break;
-		case PD_STATE_SUSPENDED:
+		case PD_STATE_SUSPENDED: {
+#ifndef CONFIG_USB_PD_TCPC
+			int rstatus;
+#endif
 			CPRINTS("TCPC p%d suspended!", port);
 			pd[port].req_suspend_state = 0;
 #ifdef CONFIG_USB_PD_TCPC
 			pd_rx_disable_monitoring(port);
 			pd_hw_release(port);
 			pd_power_supply_reset(port);
+#else
+			rstatus = tcpm_release(port);
+			if (rstatus != 0 && rstatus != EC_ERROR_UNIMPLEMENTED)
+				CPRINTS("TCPC p%d release failed!", port);
 #endif
 			/* Wait for resume */
 			while (pd[port].task_state == PD_STATE_SUSPENDED)
 				task_wait_event(-1);
 #ifdef CONFIG_USB_PD_TCPC
 			pd_hw_init(port, PD_ROLE_DEFAULT(port));
-#endif
 			CPRINTS("TCPC p%d resumed!", port);
+#else
+			if (rstatus != EC_ERROR_UNIMPLEMENTED &&
+			    tcpm_init(port) != 0) {
+				/* stay in PD_STATE_SUSPENDED */
+				CPRINTS("TCPC p%d init failed!", port);
+				break;
+			}
+			set_state(port, PD_DEFAULT_STATE(port));
+			CPRINTS("TCPC p%d resumed!", port);
+#endif
 			break;
+		}
 		case PD_STATE_SNK_DISCONNECTED:
 #ifdef CONFIG_USB_PD_LOW_POWER
 			timeout = drp_state != PD_DRP_TOGGLE_ON ? SECOND

@@ -67,6 +67,16 @@ struct tcpm_drv {
 	int (*init)(int port);
 
 	/**
+	 * Release the TCPM hardware and disconnect the driver.
+	 * Only .init() can be called after .release().
+	 *
+	 * @param port Type-C port number
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*release)(int port);
+
+	/**
 	 * Read the CC line status.
 	 *
 	 * @param port Type-C port number

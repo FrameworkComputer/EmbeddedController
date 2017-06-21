@@ -42,6 +42,11 @@ static int init_alert_mask(int port)
 	return tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
 }
 
+static int clear_alert_mask(int port)
+{
+	return tcpc_write16(port, TCPC_REG_ALERT_MASK, 0);
+}
+
 static int init_power_status_mask(int port)
 {
 	uint8_t mask;
@@ -55,6 +60,11 @@ static int init_power_status_mask(int port)
 	rv = tcpc_write(port, TCPC_REG_POWER_STATUS_MASK , mask);
 
 	return rv;
+}
+
+static int clear_power_status_mask(int port)
+{
+	return tcpc_write(port, TCPC_REG_POWER_STATUS_MASK, 0);
 }
 
 int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2)
@@ -436,6 +446,28 @@ int tcpci_tcpm_init(int port)
 	return EC_SUCCESS;
 }
 
+/*
+ * Dissociate from the TCPC.
+ */
+
+int tcpci_tcpm_release(int port)
+{
+	int error;
+
+	error = clear_alert_mask(port);
+	if (error)
+		return error;
+	error = clear_power_status_mask(port);
+	if (error)
+		return error;
+	/* Clear pending interrupts */
+	error = tcpc_write16(port, TCPC_REG_ALERT, 0xffff);
+	if (error)
+		return error;
+
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_USB_PD_TCPM_MUX
 
 int tcpci_tcpm_mux_init(int i2c_addr)
@@ -498,6 +530,7 @@ const struct usb_mux_driver tcpci_tcpm_usb_mux_driver = {
 
 const struct tcpm_drv tcpci_tcpm_drv = {
 	.init			= &tcpci_tcpm_init,
+	.release		= &tcpci_tcpm_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &tcpci_tcpm_get_vbus_level,

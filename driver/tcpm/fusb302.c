@@ -428,6 +428,11 @@ static int fusb302_tcpm_init(int port)
 	return 0;
 }
 
+static int fusb302_tcpm_release(int port)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 static int fusb302_tcpm_get_cc(int port, int *cc1, int *cc2)
 {
 	if (state[port].pulling_up) {
@@ -926,6 +931,7 @@ void tcpm_set_bist_test_data(int port)
 
 const struct tcpm_drv fusb302_tcpm_drv = {
 	.init			= &fusb302_tcpm_init,
+	.release		= &fusb302_tcpm_release,
 	.get_cc			= &fusb302_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.get_vbus_level		= &fusb302_tcpm_get_vbus_level,
