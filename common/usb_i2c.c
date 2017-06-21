@@ -22,6 +22,8 @@
 
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define MAX_BYTES_IN_ONE_READING 254
+
 
 USB_I2C_CONFIG(i2c,
 	       USB_IFACE_I2C,
@@ -45,7 +47,7 @@ static uint8_t usb_i2c_read_packet(struct usb_i2c_config const *config)
 }
 
 static void usb_i2c_write_packet(struct usb_i2c_config const *config,
-				 uint8_t count)
+				 size_t count)
 {
 	QUEUE_ADD_UNITS(config->tx_queue, config->buffer, count);
 }
@@ -76,16 +78,27 @@ static uint8_t usb_i2c_executable(struct usb_i2c_config const *config)
 void usb_i2c_execute(struct usb_i2c_config const *config)
 {
 	/* Payload is ready to execute. */
-	uint8_t count      = usb_i2c_read_packet(config);
+	uint8_t count       = usb_i2c_read_packet(config);
 	int portindex       = (config->buffer[0] >> 0) & 0xff;
 	/* Convert 7-bit slave address to chromium EC 8-bit address. */
 	uint8_t slave_addr  = (config->buffer[0] >> 7) & 0xfe;
 	int write_count     = (config->buffer[1] >> 0) & 0xff;
 	int read_count      = (config->buffer[1] >> 8) & 0xff;
-	int port;
+	uint8_t *payload    = (uint8_t *)(config->buffer + 2);
+	int xfer_flag       = I2C_XFER_START;
+	int offset          = 0;    /* Offset for extended reading header. */
+	int rv              = 0;
+	int complete_bytes  = 0;
+	int bytes_to_read, port;
 
 	config->buffer[0] = 0;
 	config->buffer[1] = 0;
+
+	if (read_count & 0x80) {
+		read_count = ((config->buffer[2] & 0xff) << 7) |
+			(read_count & 0x7f);
+		offset = 2;
+	}
 
 	if (!count || (!read_count && !write_count))
 		return;
@@ -93,9 +106,9 @@ void usb_i2c_execute(struct usb_i2c_config const *config)
 	if (!usb_i2c_board_is_enabled()) {
 		config->buffer[0] = USB_I2C_DISABLED;
 	} else if (write_count > CONFIG_USB_I2C_MAX_WRITE_COUNT ||
-		write_count != (count - 4)) {
+		write_count != (count - 4 - offset)) {
 		config->buffer[0] = USB_I2C_WRITE_COUNT_INVALID;
-	} else if (read_count > USB_I2C_MAX_READ_COUNT) {
+	} else if (read_count > CONFIG_USB_I2C_MAX_READ_COUNT) {
 		config->buffer[0] = USB_I2C_READ_COUNT_INVALID;
 	} else if (portindex >= i2c_ports_used) {
 		config->buffer[0] = USB_I2C_PORT_INVALID;
@@ -107,12 +120,28 @@ void usb_i2c_execute(struct usb_i2c_config const *config)
 		 * EC_CMD_I2C_PASSTHRU, which can protect ports and ranges.
 		 */
 		port = i2c_ports[portindex].port;
-		config->buffer[0] = usb_i2c_map_error(
-			i2c_xfer(port, slave_addr,
-				 (uint8_t *)(config->buffer + 2),
-				 write_count,
-				 (uint8_t *)(config->buffer + 2),
-				 read_count, I2C_XFER_SINGLE));
+		/*
+		 * Because The I2C_XFER_SINGLE might limit the reading to be
+		 * less than 255 bytes (For example, register design of
+		 * STM32_I2C_CR2 in i2c-stm32f0.c), we hold the STOP bits for
+		 * reading request larger than 255 bytes.
+		 */
+		do {
+			bytes_to_read = read_count - complete_bytes;
+			if (bytes_to_read > MAX_BYTES_IN_ONE_READING)
+				bytes_to_read = MAX_BYTES_IN_ONE_READING;
+			else
+				xfer_flag |= I2C_XFER_STOP;
+			rv = i2c_xfer(
+				port, slave_addr,
+				complete_bytes ? NULL : payload + offset,
+				complete_bytes ? 0 : write_count,
+				payload + complete_bytes,
+				bytes_to_read, xfer_flag);
+			complete_bytes += bytes_to_read;
+			xfer_flag = 0;
+		} while (complete_bytes < read_count && !rv);
+		config->buffer[0] = usb_i2c_map_error(rv);
 	}
 	usb_i2c_write_packet(config, read_count + 4);
 }

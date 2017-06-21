@@ -21,6 +21,7 @@
 static uint16_t vid = 0x18d1;			/* Google */
 static uint16_t pid = 0x5022;			/* Hammer */
 static uint8_t ep_num = 4;			/* console endpoint */
+static uint8_t extended_i2c_exercise;		/* non-zero to exercise */
 static char *firmware_binary = "144.0_2.0.bin";	/* firmware blob */
 
 /* Firmware binary blob related */
@@ -40,7 +41,7 @@ static int le_bytes_to_int(uint8_t *buf)
 
 /* Command line parsing related */
 static char *progname;
-static char *short_opts = ":f:v:p:e:h";
+static char *short_opts = ":f:v:p:e:hd";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"file",     1,   NULL, 'f'},
@@ -48,6 +49,7 @@ static const struct option long_opts[] = {
 	{"pid",      1,   NULL, 'p'},
 	{"ep",       1,   NULL, 'e'},
 	{"help",     0,   NULL, 'h'},
+	{"debug",    0,   NULL, 'd'},
 	{NULL,       0,   NULL, 0},
 };
 
@@ -63,6 +65,8 @@ static void usage(int errs)
 	       "  -v,--vid    HEXVAL      Vendor ID (default %04x)\n"
 	       "  -p,--pid    HEXVAL      Product ID (default %04x)\n"
 	       "  -e,--ep     NUM         Endpoint (default %d)\n"
+	       "  -d,--debug              Exercise extended read I2C over USB\n"
+	       "                          and print verbose debug messages.\n"
 	       "  -h,--help               Show this message\n"
 	       "\n", progname, firmware_binary, vid, pid, ep_num);
 
@@ -107,6 +111,9 @@ static void parse_cmdline(int argc, char *argv[])
 				errorcnt++;
 			}
 			break;
+		case 'd':
+			extended_i2c_exercise = 1;
+			break;
 		case 'h':
 			usage(errorcnt);
 			break;
@@ -136,8 +143,8 @@ static void parse_cmdline(int argc, char *argv[])
 }
 
 /* USB transfer related */
-static uint8_t rx_buf[128];
-static uint8_t tx_buf[128];
+static uint8_t rx_buf[1024];
+static uint8_t tx_buf[1024];
 
 static struct libusb_device_handle *devh;
 static struct libusb_transfer *rx_transfer;
@@ -272,8 +279,8 @@ static int check_read_status(int r, int expected, int actual)
 		printf("Warning: Defined error code (%d) returned.\n", r);
 	}
 
-	if (r) {
-		printf("Dumping the receive buffer:\n");
+	if (r || extended_i2c_exercise) {
+		printf("\nDumping the receive buffer:\n");
 		printf("  Recv %d bytes from USB hosts.\n", actual);
 		for (i = 0; i < actual; ++i)
 			printf("    [%2d]bytes: 0x%0x\n", i, rx_buf[i]);
@@ -282,26 +289,40 @@ static int check_read_status(int r, int expected, int actual)
 }
 
 #define MAX_USB_PACKET_SIZE		64
+#define PRIMITIVE_READING_SIZE		60
 
 static int libusb_single_write_and_read(
 		uint8_t *to_write, uint16_t write_length,
-		uint8_t *to_read, uint8_t read_length)
+		uint8_t *to_read, uint16_t read_length)
 {
 	int r;
 	int tx_ready;
 	int remains;
 	int sent_bytes = 0;
 	int actual_length = -1;
+	int offset = read_length > PRIMITIVE_READING_SIZE ? 6 : 4;
 	tx_transfer = rx_transfer = 0;
 
-	memmove(tx_buf + 4, to_write, write_length);
+	memmove(tx_buf + offset, to_write, write_length);
 	tx_buf[0] = I2C_PORT_ON_HAMMER;
 	tx_buf[1] = I2C_ADDRESS_ON_HAMMER;
 	tx_buf[2] = write_length;
-	tx_buf[3] = read_length;
+	if (read_length > PRIMITIVE_READING_SIZE) {
+		tx_buf[3] = (read_length & 0x7f) | (1 << 7);
+		tx_buf[4] = read_length >> 7;
+		if (extended_i2c_exercise) {
+			printf("Triggering extended reading."
+				"rc:%0x, rc1:%0x\n",
+				tx_buf[3], tx_buf[4]);
+			printf("Expecting %d Bytes.\n",
+				(tx_buf[3] & 0x7f) | (tx_buf[4] << 7));
+		}
+	} else {
+		tx_buf[3] = read_length;
+	}
 
-	while (sent_bytes < (4 + write_length)) {
-		tx_ready = remains = (4 + write_length) - sent_bytes;
+	while (sent_bytes < (offset + write_length)) {
+		tx_ready = remains = (offset + write_length) - sent_bytes;
 		if (tx_ready > MAX_USB_PACKET_SIZE)
 			tx_ready = MAX_USB_PACKET_SIZE;
 
@@ -312,7 +333,8 @@ static int libusb_single_write_and_read(
 		if (r == 0 && actual_length == tx_ready) {
 			r = libusb_bulk_transfer(devh,
 					(ep_num | LIBUSB_ENDPOINT_IN),
-					rx_buf, 128, &actual_length, 0);
+					rx_buf, sizeof(rx_buf),
+					&actual_length, 0);
 		}
 		r = check_read_status(
 				r, (remains == tx_ready) ? read_length : 0,
@@ -526,6 +548,16 @@ static uint16_t elan_update_firmware(void)
 	return checksum;
 }
 
+static void pretty_print_buffer(uint8_t *buf, int len)
+{
+	int i;
+
+	printf("Buffer = 0x");
+	for (i = 0; i < len; ++i)
+		printf("%02X", buf[i]);
+	printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
 	uint16_t local_checksum;
@@ -537,7 +569,7 @@ int main(int argc, char *argv[])
 
 	/*
 	 * Judge IC type  and get page count first.
-	 *Then check the FW file.
+	 * Then check the FW file.
 	 */
 	fw_page_count = elan_get_ic_page_count();
 	fw_size = fw_page_count * FW_PAGE_SIZE;
@@ -545,15 +577,26 @@ int main(int argc, char *argv[])
 
 	/* Read the FW file */
 	FILE *f = fopen(firmware_binary, "rb");
-
-	if (!(f && fread(fw_data, 1, fw_size, f) == (unsigned int)fw_size))
-		printf("Failed to read firmware from %s\n", firmware_binary);
+	if (!f)
+		request_exit("Cannot find binary: %s\n", firmware_binary);
+	if (fread(fw_data, 1, fw_size, f) != (unsigned int)fw_size)
+		request_exit("binary size mismatch, expect %d\n", fw_size);
 
 	/*
 	 * It is possible that you are not able to get firmware info. This
 	 * might due to an incomplete update last time
 	 */
 	elan_get_fw_info();
+
+	if (extended_i2c_exercise) {
+		/*
+		 * Trigger an I2C transaction of expecting reading > 60 bytes.
+		 * source: https://goo.gl/pSxESS
+		 */
+		elan_write_and_read(0x0002, rx_buf, 118, 0, 0);
+		pretty_print_buffer(rx_buf, 118);
+	}
+
 	/* Get the trackpad ready for receiving update */
 	elan_prepare_for_update();
 

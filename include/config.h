@@ -2873,8 +2873,9 @@
 /* USB I2C config */
 #undef CONFIG_USB_I2C
 
-/* Allowed write count for USB over I2C */
+/* Allowed read/write count for USB over I2C */
 #define CONFIG_USB_I2C_MAX_WRITE_COUNT 60
+#define CONFIG_USB_I2C_MAX_READ_COUNT 60
 
 /*****************************************************************************/
 /* USB Power monitoring interface config */

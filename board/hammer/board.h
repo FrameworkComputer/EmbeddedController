@@ -130,9 +130,17 @@
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_WATCHDOG_HELP
 
-/* Enlarge the allowed write count */
+/*
+ * Enlarge the allowed write / read count for trackpad debug
+ * In the extended I2C reading over I2C ( >= 128 bytes ), the header size
+ * have to be 6 bytes instead of 4 bytes for receiving packets. Moreover,
+ * buffer size have to be power of two.
+ */
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT 124
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT (128 - 4) /* 4 is maximum header size */
+
+#undef CONFIG_USB_I2C_MAX_READ_COUNT
+#define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size */
 
 /* No lid switch */
 #undef CONFIG_LID_SWITCH
