@@ -81,8 +81,7 @@ class Board(object):
       List of serials
     """
     usb_args = ['lsusb', '-v', '-d', '0x0483:0x374b']
-    usb_process = sp.Popen(usb_args, stdout=sp.PIPE, shell=False)
-    st_link_info = usb_process.communicate()[0]
+    st_link_info = sp.check_output(usb_args)
     st_serials = []
     for line in st_link_info.split('\n'):
       if 'iSerial' not in line:
@@ -253,6 +252,10 @@ class Board(object):
     flag = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
     return fd
+
+  def close_tty(self):
+    """Close tty"""
+    os.close(self.tty)
 
 
 class TestHarness(Board):
