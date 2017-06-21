@@ -118,6 +118,8 @@ static struct pd_protocol {
 	enum pd_states task_state;
 	/* PD state when we run state handler the last time */
 	enum pd_states last_state;
+	/* bool: request state change to SUSPENDED */
+	uint8_t req_suspend_state;
 	/* The state to go to after timeout */
 	enum pd_states timeout_state;
 	/* Timeout for the current state. Set to 0 for no timeout. */
@@ -1803,6 +1805,10 @@ void pd_task(void)
 			if (!tcpm_get_message(port, payload, &head))
 				handle_request(port, head, payload);
 		}
+
+		if (pd[port].req_suspend_state)
+			set_state(port, PD_STATE_SUSPENDED);
+
 		/* if nothing to do, verify the state of the world in 500ms */
 		this_state = pd[port].task_state;
 		timeout = 500*MSEC;
@@ -2299,6 +2305,7 @@ void pd_task(void)
 			break;
 		case PD_STATE_SUSPENDED:
 			CPRINTS("TCPC p%d suspended!", port);
+			pd[port].req_suspend_state = 0;
 #ifdef CONFIG_USB_PD_TCPC
 			pd_rx_disable_monitoring(port);
 			pd_hw_release(port);
@@ -3108,19 +3115,38 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
+
+/*
+ * (enable=1) request pd_task transition to the suspended state.  hang
+ * around for a while until we observe the state change.  this can
+ * take a while (like 300ms) on startup when pd_task is sleeping in
+ * tcpci_tcpm_init.
+ *
+ * (enable=0) force pd_task out of the suspended state and into the
+ * port's default state.
+ */
+
 void pd_set_suspend(int port, int enable)
 {
-	int tries = 3;
+	int tries = 300;
 
-	do {
-		set_state(port, enable ? PD_STATE_SUSPENDED :
-			  PD_DEFAULT_STATE(port));
+	if (enable) {
+		pd[port].req_suspend_state = 1;
+		do {
+			task_wake(PD_PORT_TO_TASK_ID(port));
+			if (pd[port].task_state == PD_STATE_SUSPENDED)
+				break;
+			msleep(1);
+		} while (--tries != 0);
+		if (!tries)
+			CPRINTS("TCPC p%d set_suspend failed!", port);
+	} else {
+		if (pd[port].task_state != PD_STATE_SUSPENDED)
+			CPRINTS("TCPC p%d suspend disable request "
+				"while not suspended!", port);
+		set_state(port, PD_DEFAULT_STATE(port));
 		task_wake(PD_PORT_TO_TASK_ID(port));
-	} while (enable && pd[port].task_state != PD_STATE_SUSPENDED
-			&& --tries);
-
-	if (!tries)
-		CPRINTS("TCPC p%d set_suspend failed!", port);
+	}
 }
 
 #if defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH)
