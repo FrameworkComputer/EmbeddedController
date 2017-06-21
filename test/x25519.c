@@ -154,14 +154,15 @@ static void test_x25519_speed(void)
 void run_test(void)
 {
 	watchdog_reload();
+	/* do not check speed, just as a benchmark */
+	test_x25519_speed();
+
+	watchdog_reload();
 	if (!test_x25519() || !test_x25519_iterated() ||
 	    !test_x25519_small_order()) {
 		test_fail();
 		return;
 	}
-	watchdog_reload();
-	/* do not check speed, just as a benchmark */
-	test_x25519_speed();
 
 	test_pass();
 }
