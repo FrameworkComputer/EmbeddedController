@@ -36,7 +36,8 @@ test-list-$(BOARD_SAMUS_PD)=
 ifneq ($(TEST_LIST_HOST),)
 test-list-host=$(TEST_LIST_HOST)
 else
-test-list-host = battery_get_params_smart
+test-list-host = base32
+test-list-host += battery_get_params_smart
 test-list-host += bklight_lid
 test-list-host += bklight_passthru
 test-list-host += button
@@ -80,6 +81,7 @@ test-list-host += utils_str
 test-list-host += x25519
 endif
 
+base32-y=base32.o
 battery_get_params_smart-y=battery_get_params_smart.o
 bklight_lid-y=bklight_lid.o
 bklight_passthru-y=bklight_passthru.o
