@@ -284,7 +284,8 @@ class TestHarness(Board):
       return  # serial was already loaded
     try:
       with open(self.serial_path, mode='r') as ser_f:
-        self.hla_serial = ser_f.read()
+        serial = ser_f.read()
+        self.hla_serial = serial.strip()
         return
     except IOError:
       msg = ('Your TH board has not been identified.\n'
@@ -357,9 +358,15 @@ class DeviceUnderTest(Board):
 
     # If len(dut) is 0 then your dut doesn't use an st-link device, so we
     # don't have to worry about its serial number
-    if  len(dut) != 1:
-      msg = ('Your TH serial number is incorrect, or your have'
-             ' too many st-link devices attached.')
+    if not dut:
+      msg = ('Failed to find serial for DUT.\n'
+             'Is ' + self.board + ' connected?')
+      raise RuntimeError(msg)
+    if len(dut) > 1:
+      msg = ('Found multiple DUTs.\n'
+             'You can connect only one DUT at a time. This may be caused by\n'
+             'an incorrect TH serial. Check if ' + self.th.serial_path + '\n'
+             'contains a correct serial.')
       raise RuntimeError(msg)
 
     # Found your other st-link device serial!
