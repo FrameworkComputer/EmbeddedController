@@ -6,9 +6,9 @@
 #include "common.h"
 #include "watchdog.h"
 #include "uart.h"
+#include "task.h"
 #include "timer.h"
 #include "watchdog.h"
-#include "dut_common.h"
 #include "cts_common.h"
 
 enum cts_rc sync_test(void)
@@ -75,22 +75,6 @@ enum cts_rc od_read_high_test(void)
 
 void cts_task(void)
 {
-	enum cts_rc result;
-	int i;
-
-	uart_flush_output();
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		result = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, result);
-		uart_flush_output();
-	}
-
-	CPRINTS("GPIO test suite finished");
-	uart_flush_output();
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "GPIO");
+	task_wait_event(-1);
 }

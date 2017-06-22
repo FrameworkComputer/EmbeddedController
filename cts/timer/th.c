@@ -4,10 +4,10 @@
  */
 
 #include "common.h"
+#include "cts_common.h"
 #include "gpio.h"
 #include "registers.h"
 #include "task.h"
-#include "th_common.h"
 #include "timer.h"
 #include "watchdog.h"
 
@@ -57,22 +57,6 @@ static enum cts_rc timer_calibration_test(void)
 
 void cts_task(void)
 {
-	enum cts_rc rc;
-	int i;
-
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		rc = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, rc);
-		cflush();
-	}
-
-	CPRINTS("Timer test suite finished");
-	cflush();
-
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "Timer");
+	task_wait_event(-1);
 }

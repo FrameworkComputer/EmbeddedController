@@ -7,9 +7,9 @@
 #include "common.h"
 #include "cts_common.h"
 #include "cts_i2c.h"
-#include "dut_common.h"
 #include "i2c.h"
 #include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "watchdog.h"
@@ -61,7 +61,7 @@ static int wait_for_in_flag(uint32_t timeout_ms)
 	return 1;
 }
 
-static void clear_inbox(void)
+void clean_state(void)
 {
 	memset(inbox, 0, sizeof(inbox));
 	data_received = 0;
@@ -146,22 +146,6 @@ enum cts_rc read32_test(void)
 
 void cts_task(void)
 {
-	enum cts_rc result;
-	int i;
-
-	cflush();
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		clear_inbox();
-		sync();
-		result = tests[i].run();
-		CPRINTF("\n%s %d\n", tests[i].name, result);
-		uart_flush_output();
-	}
-
-	CPRINTS("I2C test suite finished");
-	uart_flush_output();
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "I2C");
+	task_wait_event(-1);
 }

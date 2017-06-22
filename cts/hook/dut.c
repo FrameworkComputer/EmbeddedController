@@ -8,8 +8,8 @@
 #include "common.h"
 #include "console.h"
 #include "cts_common.h"
-#include "dut_common.h"
 #include "hooks.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
@@ -160,22 +160,6 @@ static enum cts_rc test_deferred(void)
 
 void cts_task(void)
 {
-	enum cts_rc result;
-	int i;
-
-	cflush();
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		result = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, result);
-		cflush();
-	}
-
-	CPRINTS("Hook test finished");
-	cflush();
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "Hook");
+	task_wait_event(-1);
 }

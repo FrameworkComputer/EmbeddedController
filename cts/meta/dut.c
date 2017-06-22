@@ -4,16 +4,11 @@
  */
 
 #include "common.h"
-#include "uart.h"
-#include "timer.h"
-#include "watchdog.h"
-#include "dut_common.h"
 #include "cts_common.h"
-
-enum cts_rc debug_test(void)
-{
-	return CTS_RC_SUCCESS;
-}
+#include "task.h"
+#include "timer.h"
+#include "uart.h"
+#include "watchdog.h"
 
 enum cts_rc success_test(void)
 {
@@ -55,26 +50,15 @@ enum cts_rc hang_test(void)
 	return CTS_RC_SUCCESS;
 }
 
+enum cts_rc did_not_start_test(void)
+{
+	return CTS_RC_SUCCESS;
+}
+
 #include "cts_testlist.h"
 
 void cts_task(void)
 {
-	enum cts_rc result;
-	int i;
-
-	cflush();
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		result = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, result);
-		cflush();
-	}
-
-	CPRINTS("Meta test finished");
-	cflush();
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "Meta");
+	task_wait_event(-1);
 }

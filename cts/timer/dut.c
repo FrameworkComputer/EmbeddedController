@@ -4,8 +4,9 @@
  */
 
 #include "common.h"
-#include "dut_common.h"
+#include "cts_common.h"
 #include "gpio.h"
+#include "task.h"
 #include "timer.h"
 #include "watchdog.h"
 
@@ -14,7 +15,7 @@ static enum cts_rc timer_calibration_test(void)
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_HIGH);
 
 	sync();
-	usleep(SECOND);
+	sleep(1);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
 
 	return CTS_RC_SUCCESS;
@@ -24,22 +25,6 @@ static enum cts_rc timer_calibration_test(void)
 
 void cts_task(void)
 {
-	enum cts_rc rc;
-	int i;
-
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		rc = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, rc);
-		cflush();
-	}
-
-	CPRINTS("Timer test suite finished");
-	cflush();
-
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "Timer");
+	task_wait_event(-1);
 }

@@ -3,50 +3,50 @@
  * found in the LICENSE file.
  */
 
-/* Currently tests will execute in the order they are listed here */
-
-/* Test should succeed  show the following debug output:
- * You should see #'s 1-4 on sequential lines:
- * 1
- * 2
- * 3
- * 4
- */
-CTS_TEST(debug_test,,,,)
-
-/* Test should succeed if both report success
- * (expected result: success)
+/*
+ * Test SUCCESS from both TH and DUT
  */
 CTS_TEST(success_test,,,,)
 
-/* Test should fail if one reports success and
- * (one reports failure (expected result: failure)
+/*
+ * Test FAILURE from DUT
  */
 CTS_TEST(fail_dut_test,,, CTS_RC_FAILURE,)
 
-/* Test should fail if one reports success and
- * (one reports failure (expected result: failure)
+/*
+ * Test FAILURE from TH
  */
 CTS_TEST(fail_th_test, CTS_RC_FAILURE,,,)
 
-/* Test should fail when both boards report failure
- * (expected result: failure)
+/*
+ * Test failure from both TH and DUT.
  */
 CTS_TEST(fail_both_test, CTS_RC_FAILURE,, CTS_RC_FAILURE,)
 
-/* Test should fail with bad sync if one reports bad
- * sync and the other reports success (expected result:
- * bad_sync)
+/*
+ * Test bad sync for TH
  */
 CTS_TEST(bad_sync_and_success_test, CTS_RC_BAD_SYNC,,,)
 
-/* Test should fail with bad sync if both boards report
- * bad sync (expected result: bad_sync)
+/*
+ * Test should fail with bad sync.
  */
 CTS_TEST(bad_sync_both_test, CTS_RC_BAD_SYNC,, CTS_RC_BAD_SYNC,)
 
-/* Test should be listed as corrupted if one test hangs,
- * regardless of what the other test outputs
- * (expected result: corrupted)
+/*
+ * Test hang on DUT
  */
 CTS_TEST(hang_test, CTS_RC_SUCCESS,, CTS_RC_DID_NOT_END,)
+
+/*
+ * Test CTS_RC_DID_NOT_START
+ *
+ * Since the previous test hung on DUT, this test won't run on DUT. 
+ * TH will wait forever in sync(), thus won't end.
+ */
+ CTS_TEST(did_not_start_test, CTS_RC_DID_NOT_END,, CTS_RC_DID_NOT_START,)
+
+/*
+ * TODO: Add test for expected string
+ * TODO: Make sync() return CTS_RC_BAD_SYNC when it times out.
+ */

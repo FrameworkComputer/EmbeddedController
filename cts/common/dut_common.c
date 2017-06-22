@@ -3,15 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include "gpio.h"
-#include "timer.h"
-#include "watchdog.h"
 #include "cts_common.h"
-#include "dut_common.h"
+#include "gpio.h"
+#include "watchdog.h"
 
-/* Returns unknown because TH could potentially still get stuck
- * even if the DUT completes the sync
- */
 enum cts_rc sync(void)
 {
 	int input_level;
@@ -30,3 +25,4 @@ enum cts_rc sync(void)
 
 	return CTS_RC_SUCCESS;
 }
+

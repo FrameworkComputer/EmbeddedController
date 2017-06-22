@@ -17,6 +17,8 @@ CONFIG_I2C_MASTER=y
 endif
 endif
 
+cts-y+=common/cts_common.o
+
 ifeq ($(BOARD),stm32l476g-eval)
 	cts-y+=$(CTS_MODULE)/th.o
 	cts-y+=common/th_common.o

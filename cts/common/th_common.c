@@ -7,7 +7,6 @@
 #include "timer.h"
 #include "watchdog.h"
 #include "cts_common.h"
-#include "th_common.h"
 
 /* Return SUCCESS if and only if we reach end of function
  * Returning success here means sync was successful

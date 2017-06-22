@@ -15,29 +15,41 @@
 #define CPRINTL(format, args...) CPRINTS("%s:%d: "format, \
 					 __func__, __LINE__, ## args)
 
-#ifdef CTS_DEBUG
-/* These debug tags should not be changed */
-#define CTS_DEBUG_START "\n[DEBUG]\n"
-#define CTS_DEBUG_END "\n[DEBUG_END]\n"
-
-#define CTS_DEBUG_PRINTF(format, args...) \
-	do { \
-		CPRINTF(CTS_DEBUG_START format CTS_DEBUG_END, ## args); \
-		cflush(); \
-	} while (0)
-#else
-#define CTS_DEBUG_PRINTF(format, args...)
-#endif
-
 #define READ_WAIT_TIME_MS		100
 #define CTS_INTERRUPT_TRIGGER_DELAY_US	(250 * MSEC)
-
-/* In a single test, only one board can return unknown, the other must
- * return a useful result (i.e. success, failure, etc)
- */
 
 enum cts_rc {
 	#include "cts.rc"
 };
+
+struct cts_test {
+	enum cts_rc (*run)(void);
+	char *name;
+};
+
+extern const int cts_test_count;
+
+/**
+ * Main loop where each test in a suite is executed
+ *
+ * A test suite can implement its custom loop as needed.
+ *
+ * Args:
+ * @test: List of tests to run
+ * @name: Name of the test to be printed on EC console
+ */
+void cts_main_loop(const struct cts_test* tests, const char *name);
+
+/**
+ * Callback function called at the beginning of the main loop
+ */
+void clean_state(void);
+
+/**
+ * Synchronize DUT and TH
+ *
+ * @return CTS_RC_SUCCESS if sync is successful
+ */
+enum cts_rc sync(void);
 
 #endif

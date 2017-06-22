@@ -13,7 +13,7 @@
 static int repeat_count;
 static int wake_count[3];
 
-void clear_state(void)
+void clean_state(void)
 {
 	wake_count[0] = wake_count[1] = wake_count[2] = 0;
 }
@@ -135,22 +135,7 @@ enum cts_rc test_stack_overflow(void)
 
 void cts_task(void)
 {
-	enum cts_rc rc;
-	int i;
-
 	task_wake(TASK_ID_TICK);
-
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		clear_state();
-		CPRINTF("\n%s start\n", tests[i].name);
-		rc = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, rc);
-		cflush();
-	}
-
-	CPRINTS("Task test suite finished");
-	cflush();
-
-	/* Sleep forever */
+	cts_main_loop(tests, "Task");
 	task_wait_event(-1);
 }

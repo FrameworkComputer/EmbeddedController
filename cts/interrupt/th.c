@@ -4,10 +4,17 @@
  */
 
 #include "common.h"
-#include "th_common.h"
+#include "cts_common.h"
 #include "gpio.h"
+#include "task.h"
 #include "timer.h"
 #include "watchdog.h"
+
+void clean_state(void)
+{
+	gpio_set_level(GPIO_OUTPUT_TEST, 1);
+	gpio_set_level(GPIO_CTS_IRQ2, 1);
+}
 
 static void trigger_interrupt1(void)
 {
@@ -65,26 +72,7 @@ enum cts_rc test_nested_interrupt_high_low(void)
 
 void cts_task(void)
 {
-	enum cts_rc rc;
-	int i;
-
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_HIGH);
-
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		gpio_set_level(GPIO_OUTPUT_TEST, 1);
-		gpio_set_level(GPIO_CTS_IRQ2, 1);
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		rc = tests[i].run();
-		CPRINTF("\n%s end %d\n", tests[i].name, rc);
-		cflush();
-	}
-
-	CPRINTS("Interrupt test suite finished");
-	cflush();
-
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "Interrupt");
+	task_wait_event(-1);
 }

@@ -5,10 +5,10 @@
 
 #include <string.h>
 #include "common.h"
+#include "cts_common.h"
 #include "gpio.h"
 #include "registers.h"
 #include "task.h"
-#include "dut_common.h"
 #include "timer.h"
 #include "watchdog.h"
 
@@ -64,10 +64,11 @@ void cts_irq2(enum gpio_signal signal)
 	state[state_index++] = 'D';
 }
 
-static void clear_state(void)
+void clean_state(void)
 {
 	uint32_t *event;
 
+	interrupt_enable();
 	got_interrupt = 0;
 	wake_me_up = 0;
 	state_index = 0;
@@ -176,27 +177,8 @@ enum cts_rc test_nested_interrupt_high_low(void)
 
 void cts_task(void)
 {
-	enum cts_rc rc;
-	int i;
-
 	gpio_enable_interrupt(GPIO_CTS_IRQ1);
 	gpio_enable_interrupt(GPIO_CTS_IRQ2);
-	interrupt_enable();
-	for (i = 0; i < CTS_TEST_ID_COUNT; i++) {
-		clear_state();
-		sync();
-		CPRINTF("\n%s start\n", tests[i].name);
-		rc = tests[i].run();
-		interrupt_enable();
-		CPRINTF("\n%s end %d\n", tests[i].name, rc);
-		cflush();
-	}
-
-	CPRINTS("Interrupt test suite finished");
-	cflush();
-
-	while (1) {
-		watchdog_reload();
-		sleep(1);
-	}
+	cts_main_loop(tests, "Interrupt");
+	task_wait_event(-1);
 }
