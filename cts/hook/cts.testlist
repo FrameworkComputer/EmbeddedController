@@ -1,0 +1,24 @@
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Test HOOK_INIT
+ */
+CTS_TEST(test_init_hook,,,,)
+
+/*
+ * Test HOOK_TICK and HOOK_SECOND
+ */
+CTS_TEST(test_ticks,,,,)
+
+/*
+ * Test hook priority
+ */ 
+CTS_TEST(test_priority,,,,)
+
+/*
+ * Test deferred calls
+ */
+CTS_TEST(test_deferred,,,,)

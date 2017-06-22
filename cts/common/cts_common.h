@@ -12,6 +12,8 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTL(format, args...) CPRINTS("%s:%d: "format, \
+					 __func__, __LINE__, ## args)
 
 #ifdef CTS_DEBUG
 /* These debug tags should not be changed */

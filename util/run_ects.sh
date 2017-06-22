@@ -13,7 +13,7 @@ RED='\033[0;31m'
 GRN='\033[0;32m'
 
 # List of tests to run.
-TESTS=(meta interrupt gpio task timer)
+TESTS=(meta gpio hook interrupt task timer)
 
 usage() {
   cat <<END
