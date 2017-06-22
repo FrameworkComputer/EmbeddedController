@@ -17,17 +17,9 @@ square256_asm:
     push {r1,r4,r5,r6,r7,r14}
     .syntax unified
     mov r3,r8
-    .syntax divided
-    .syntax unified
     mov r4,r9
-    .syntax divided
-    .syntax unified
     mov r5,r10
-    .syntax divided
-    .syntax unified
     mov r6,r11
-    .syntax divided
-    .syntax unified
     mov r7,r12
     .syntax divided
     push {r3,r4,r5,r6,r7}
@@ -41,8 +33,6 @@ square256_asm:
  // clobbers all registers except for r14
     .syntax unified
     mov r0,r4
-    .syntax divided
-    .syntax unified
     mov r1,r5
     .syntax divided
     sub r0,r6
@@ -54,11 +44,7 @@ square256_asm:
     sbc r1,r2
     .syntax unified
     mov r8,r0
-    .syntax divided
-    .syntax unified
     mov r9,r1
-    .syntax divided
-    .syntax unified
     mov r10,r6
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -144,17 +130,9 @@ square256_asm:
  // Leaves r6 zero.
     .syntax unified
     mov r6,r10
-    .syntax divided
-    .syntax unified
     mov r10,r0
-    .syntax divided
-    .syntax unified
     mov r11,r1
-    .syntax divided
-    .syntax unified
     mov r12,r2
-    .syntax divided
-    .syntax unified
     mov r1,r3
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -247,17 +225,9 @@ square256_asm:
     adc r5,r6
     .syntax unified
     mov r12,r2
-    .syntax divided
-    .syntax unified
     mov r2,r8
-    .syntax divided
-    .syntax unified
     mov r8,r3
-    .syntax divided
-    .syntax unified
     mov r3,r9
-    .syntax divided
-    .syntax unified
     mov r9,r4
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -343,19 +313,13 @@ square256_asm:
  // Returns r4 as zero.
     .syntax unified
     mov r2,r12
-    .syntax divided
-    .syntax unified
     mov r3,r8
-    .syntax divided
-    .syntax unified
     mov r4,r9
     .syntax divided
     sub r2,r6
     sbc r3,r7
     .syntax unified
     mov r6,r4
-    .syntax divided
-    .syntax unified
     mov r7,r5
     .syntax divided
     sbc r4,r0
@@ -401,8 +365,6 @@ square256_asm:
  // clobbers all registers except for r14
     .syntax unified
     mov r0,r4
-    .syntax divided
-    .syntax unified
     mov r1,r5
     .syntax divided
     sub r0,r6
@@ -414,11 +376,7 @@ square256_asm:
     sbc r1,r2
     .syntax unified
     mov r8,r0
-    .syntax divided
-    .syntax unified
     mov r9,r1
-    .syntax divided
-    .syntax unified
     mov r10,r6
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -504,17 +462,9 @@ square256_asm:
  // Leaves r6 zero.
     .syntax unified
     mov r6,r10
-    .syntax divided
-    .syntax unified
     mov r10,r0
-    .syntax divided
-    .syntax unified
     mov r11,r1
-    .syntax divided
-    .syntax unified
     mov r12,r2
-    .syntax divided
-    .syntax unified
     mov r1,r3
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -607,17 +557,9 @@ square256_asm:
     adc r5,r6
     .syntax unified
     mov r12,r2
-    .syntax divided
-    .syntax unified
     mov r2,r8
-    .syntax divided
-    .syntax unified
     mov r8,r3
-    .syntax divided
-    .syntax unified
     mov r3,r9
-    .syntax divided
-    .syntax unified
     mov r9,r4
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -703,19 +645,13 @@ square256_asm:
  // Returns r4 as zero.
     .syntax unified
     mov r2,r12
-    .syntax divided
-    .syntax unified
     mov r3,r8
-    .syntax divided
-    .syntax unified
     mov r4,r9
     .syntax divided
     sub r2,r6
     sbc r3,r7
     .syntax unified
     mov r6,r4
-    .syntax divided
-    .syntax unified
     mov r7,r5
     .syntax divided
     sbc r4,r0
@@ -749,14 +685,8 @@ square256_asm:
  // Result in r0 ... r7
     .syntax unified
     mov r8,r4
-    .syntax divided
-    .syntax unified
     mov r9,r5
-    .syntax divided
-    .syntax unified
     mov r10,r6
-    .syntax divided
-    .syntax unified
     mov r11,r7
     .syntax divided
     pop {r4,r5,r6,r7}
@@ -766,17 +696,9 @@ square256_asm:
     adc r3,r7
     .syntax unified
     mov r4,r8
-    .syntax divided
-    .syntax unified
     mov r5,r9
-    .syntax divided
-    .syntax unified
     mov r6,r10
-    .syntax divided
-    .syntax unified
     mov r7,r11
-    .syntax divided
-    .syntax unified
     mov r8,r0
     .syntax divided
     mov r0,#0
@@ -809,8 +731,6 @@ square256_asm:
  // clobbers all registers except for r14
     .syntax unified
     mov r0,r4
-    .syntax divided
-    .syntax unified
     mov r1,r5
     .syntax divided
     sub r0,r6
@@ -822,11 +742,7 @@ square256_asm:
     sbc r1,r2
     .syntax unified
     mov r8,r0
-    .syntax divided
-    .syntax unified
     mov r9,r1
-    .syntax divided
-    .syntax unified
     mov r10,r6
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -912,17 +828,9 @@ square256_asm:
  // Leaves r6 zero.
     .syntax unified
     mov r6,r10
-    .syntax divided
-    .syntax unified
     mov r10,r0
-    .syntax divided
-    .syntax unified
     mov r11,r1
-    .syntax divided
-    .syntax unified
     mov r12,r2
-    .syntax divided
-    .syntax unified
     mov r1,r3
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -1015,17 +923,9 @@ square256_asm:
     adc r5,r6
     .syntax unified
     mov r12,r2
-    .syntax divided
-    .syntax unified
     mov r2,r8
-    .syntax divided
-    .syntax unified
     mov r8,r3
-    .syntax divided
-    .syntax unified
     mov r3,r9
-    .syntax divided
-    .syntax unified
     mov r9,r4
     .syntax divided
  // START: sqr 64 Refined Karatsuba
@@ -1111,19 +1011,13 @@ square256_asm:
  // Returns r4 as zero.
     .syntax unified
     mov r2,r12
-    .syntax divided
-    .syntax unified
     mov r3,r8
-    .syntax divided
-    .syntax unified
     mov r4,r9
     .syntax divided
     sub r2,r6
     sbc r3,r7
     .syntax unified
     mov r6,r4
-    .syntax divided
-    .syntax unified
     mov r7,r5
     .syntax divided
     sbc r4,r0
@@ -1165,14 +1059,8 @@ square256_asm:
     mvn r7,r7
     .syntax unified
     mov r8,r4
-    .syntax divided
-    .syntax unified
     mov r9,r5
-    .syntax divided
-    .syntax unified
     mov r10,r6
-    .syntax divided
-    .syntax unified
     mov r11,r7
     .syntax divided
     mov r4,#143
@@ -1190,29 +1078,21 @@ square256_asm:
     stm r4!,{r0,r1,r2,r3}
     .syntax unified
     mov r4,r12
-    .syntax divided
-    .syntax unified
     mov r0,r8
     .syntax divided
     adc r0,r4
     .syntax unified
     mov r8,r0
-    .syntax divided
-    .syntax unified
     mov r1,r9
     .syntax divided
     adc r1,r5
     .syntax unified
     mov r9,r1
-    .syntax divided
-    .syntax unified
     mov r2,r10
     .syntax divided
     adc r2,r6
     .syntax unified
     mov r10,r2
-    .syntax divided
-    .syntax unified
     mov r3,r11
     .syntax divided
     adc r3,r7
@@ -1223,8 +1103,6 @@ square256_asm:
     adc r0,r0
     .syntax unified
     mov r12,r0
-    .syntax divided
-    .syntax unified
     mov r0,r14
     .syntax divided
     ldm r0,{r0,r1,r2,r3,r4,r5,r6,r7}
@@ -1237,8 +1115,6 @@ square256_asm:
     stm r4!,{r0,r1,r2,r3}
     .syntax unified
     mov r14,r4
-    .syntax divided
-    .syntax unified
     mov r0,r13
     .syntax divided
     ldm r0!,{r4,r5,r6,r7}
@@ -1278,17 +1154,9 @@ square256_asm:
     pop {r3,r4,r5,r6,r7}
     .syntax unified
     mov r8,r3
-    .syntax divided
-    .syntax unified
     mov r9,r4
-    .syntax divided
-    .syntax unified
     mov r10,r5
-    .syntax divided
-    .syntax unified
     mov r11,r6
-    .syntax divided
-    .syntax unified
     mov r12,r7
     .syntax divided
     pop {r0,r4,r5,r6,r7,r15}

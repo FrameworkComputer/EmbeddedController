@@ -59,4 +59,12 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 void X25519_public_from_private(uint8_t out_public_value[32],
 				const uint8_t private_key[32]);
 
+/*
+ * Low-level x25519 function, defined by either the generic or cortex-m0
+ * implementation. Must not be called directly.
+ */
+void x25519_scalar_mult(uint8_t out[32],
+			const uint8_t scalar[32],
+			const uint8_t point[32]);
+
 #endif /* __CROS_EC_CURVE25519_H */

@@ -21,4 +21,13 @@ endif
 core-y=cpu.o init.o thumb_case.o div.o lmul.o ldivmod.o uldivmod.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
+
+dirs-y += core/$(CORE)/curve25519
+
+core-$(CONFIG_CURVE25519)+=curve25519/mpy121666.o
+core-$(CONFIG_CURVE25519)+=curve25519/reduce25519.o
+core-$(CONFIG_CURVE25519)+=curve25519/mul.o
+core-$(CONFIG_CURVE25519)+=curve25519/scalarmult.o
+core-$(CONFIG_CURVE25519)+=curve25519/sqr.o
+
 core-$(CONFIG_WATCHDOG)+=watchdog.o

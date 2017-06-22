@@ -57,12 +57,14 @@
     Creative Commons CC0 1.0 Universal public domain dedication
   ============================================================================*/
 
-#include <inttypes.h>
+#include "curve25519.h"
+#include "util.h"
 
 // comment out this line if implementing conditional swaps by data moves
 //#define DH_SWAP_BY_POINTERS
 
 // Define the symbol to 0 in order to only use ladder steps
+#define DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS 0
 //#define DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS 1
 
 typedef uint8_t  uint8;
@@ -142,26 +144,17 @@ fe25519_cpy(
     const fe25519* source
 )
 {
-    uint32 ctr;
-
-    for (ctr = 0; ctr < 8; ctr++)
-    {
-        dest->as_uint32[ctr] = source->as_uint32[ctr];
-    }
+    memcpy(dest, source, 32);
 }
 
 static void
 fe25519_unpack(
-    volatile fe25519*            out,
+    fe25519*            out,
     const unsigned char in[32]
 )
 {
-    uint8 ctr;
+    memcpy(out, in, 32);
 
-    for (ctr = 0; ctr < 32; ctr++)
-    {
-        out->as_uint8[ctr] = in[ctr];
-    }
     out->as_uint8[31] &= 0x7f; // make sure that the last bit is cleared.
 }
 
@@ -257,7 +250,7 @@ fe25519_square(
 
 static void
 fe25519_reduceCompletely(
-    volatile fe25519* inout
+    fe25519* inout
 )
 {
     uint32 numberOfTimesToSubstractPrime;
@@ -307,17 +300,12 @@ fe25519_reduceCompletely(
 static void
 fe25519_pack(
     unsigned char out[32],
-    volatile fe25519*      in
+    fe25519*      in
 )
 {
-    uint8 ctr;
-
     fe25519_reduceCompletely(in);
 
-    for (ctr = 0; ctr < 32; ctr++)
-    {
-        out[ctr] = in->as_uint8[ctr];
-    }
+    memcpy(out, in, 32);
 }
 
 // Note, that r and x are allowed to overlap!
@@ -511,7 +499,7 @@ typedef struct _ST_curve25519ladderstepWorkingState
     fe25519 xq;
     fe25519 zq;
 
-    volatile UN_256bitValue s;
+    UN_256bitValue s;
 
     int nextScalarBitToProcess;
     uint8 previousProcessedBit;
@@ -649,11 +637,11 @@ curve25519_doublePointP (ST_curve25519ladderstepWorkingState* pState)
 
 #endif // #ifdef DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS
 
-int
-crypto_scalarmult_curve25519(
-    unsigned char*       r,
-    const unsigned char* s,
-    const unsigned char* p
+void
+x25519_scalar_mult(
+    uint8_t r[32],
+    const uint8_t s[32],
+    const uint8_t p[32]
 )
 {
     ST_curve25519ladderstepWorkingState state;
@@ -741,21 +729,4 @@ crypto_scalarmult_curve25519(
 
     fe25519_pack (r, &state.xp);
 #endif
-
-    return 0;
-}
-
-int
-crypto_scalarmult_curve25519_base(
-    unsigned char*       q,
-    const unsigned char* n
-)
-{
-    static const uint8 base[32] =
-    {
-        9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
-
-    return crypto_scalarmult_curve25519(q, n, base);
 }
