@@ -8,6 +8,7 @@
 
 #include "console.h"
 #include "common.h"
+#include "cts_common.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -50,7 +51,7 @@ int mutex_second_task(void *unused)
 	ccprintf("MTX2: locking...");
 	mutex_lock(&mtx);
 	ccprintf("done\n");
-	task_wake(TASK_ID_MTX1);
+	task_wake(TASK_ID_CTS);
 	ccprintf("MTX2: unlocking...\n");
 	mutex_unlock(&mtx);
 
@@ -59,7 +60,7 @@ int mutex_second_task(void *unused)
 	return EC_SUCCESS;
 }
 
-int mutex_main_task(void *unused)
+static enum cts_rc lock_unlock_test(void)
 {
 	task_id_t id = task_get_current();
 	uint32_t rdelay = (uint32_t)0x0bad1dea;
@@ -67,8 +68,6 @@ int mutex_main_task(void *unused)
 	int i;
 
 	ccprintf("\n[Mutex main task %d]\n", id);
-
-	task_wait_event(0);
 
 	/* --- Lock/Unlock without contention --- */
 	ccprintf("No contention :");
@@ -103,15 +102,14 @@ int mutex_main_task(void *unused)
 		rdelay = prng(rdelay);
 	}
 
-	test_pass();
-	task_wait_event(0);
-
 	return EC_SUCCESS;
 }
+
+#include "cts_testlist.h"
 
 void cts_task(void)
 {
 	wait_for_task_started();
-	task_wake(TASK_ID_MTX1);
+	cts_main_loop(tests, "Mutex");
 	task_wait_event(-1);
 }

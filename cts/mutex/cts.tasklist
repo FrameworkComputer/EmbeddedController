@@ -19,5 +19,4 @@
 	TASK_ALWAYS(MTX3B, mutex_random_task, NULL, 384) \
 	TASK_ALWAYS(MTX3A, mutex_random_task, NULL, 384) \
 	TASK_ALWAYS(MTX2, mutex_second_task, NULL, 384) \
-	TASK_ALWAYS(MTX1, mutex_main_task, NULL, 384) \
 	TASK_ALWAYS(CTS, cts_task, NULL, TASK_STACK_SIZE)
