@@ -52,7 +52,7 @@ void IRQ_HANDLER(GC_IRQNUM_WATCHDOG0_WDOGINT)(void)
 		     "b task_resched_if_needed\n"
 		     : : [irq] "i" (GC_IRQNUM_WATCHDOG0_WDOGINT));
 }
-const struct irq_priority IRQ_PRIORITY(GC_IRQNUM_WATCHDOG0_WDOGINT)
+const struct irq_priority __keep IRQ_PRIORITY(GC_IRQNUM_WATCHDOG0_WDOGINT)
 	__attribute__((section(".rodata.irqprio")))
 		= {GC_IRQNUM_WATCHDOG0_WDOGINT, 0};
 	/* put the watchdog at the highest priority */

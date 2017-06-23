@@ -235,7 +235,7 @@ void IRQ_HANDLER(IRQ_WD)(void)
 		     "bl watchdog_check\n"
 		     "pop {r0,pc}\n");
 }
-const struct irq_priority IRQ_PRIORITY(IRQ_WD)
+const struct irq_priority __keep IRQ_PRIORITY(IRQ_WD)
 	__attribute__((section(".rodata.irqprio")))
 		= {IRQ_WD, 0}; /* put the watchdog at the highest
 					    priority */

@@ -95,7 +95,7 @@ void IRQ_HANDLER(MEC1322_IRQ_TIMER16_0)(void)
 		     "pop {r0, lr}\n"
 		     "b task_resched_if_needed\n");
 }
-const struct irq_priority IRQ_PRIORITY(MEC1322_IRQ_TIMER16_0)
+const struct irq_priority __keep IRQ_PRIORITY(MEC1322_IRQ_TIMER16_0)
 	__attribute__((section(".rodata.irqprio")))
 		= {MEC1322_IRQ_TIMER16_0, 0}; /* put the watchdog at the
 						 highest priority */
