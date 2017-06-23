@@ -30,7 +30,7 @@ enum cts_rc fail_both_test(void)
 	return CTS_RC_FAILURE;
 }
 
-enum cts_rc bad_sync_and_success_test(void)
+enum cts_rc bad_sync_test(void)
 {
 	return CTS_RC_SUCCESS;
 }

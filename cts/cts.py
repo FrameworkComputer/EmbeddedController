@@ -273,7 +273,7 @@ class Cts(object):
     fmt += '{:>' + str(len(' RESULT')) + '}\n'
 
     self.formatted_results = head.format(
-        'test name', 'TH_RETURN_CODE', 'DUT_RETURN_CODE',
+        'TEST NAME', 'TH_RC', 'DUT_RC',
         ' TH_STR', ' DUT_STR', ' RESULT')
     for i, d in enumerate(dut_results):
       th_cn = self.get_return_code_name(th_results[i]['rc'], True)
@@ -286,7 +286,8 @@ class Cts(object):
                                      self.testlist[i]['dut_string'])
       self.formatted_results += fmt.format(
           d['name'], th_cn, dut_cn,
-          th_results[i]['string'], dut_results[i]['string'],
+          'YES' if th_results[i]['string'] else 'NO',
+          'YES' if dut_results[i]['string'] else 'NO',
           'PASS' if th_res and dut_res else 'FAIL')
 
   def evaluate_result(self, result, expected_rc, expected_string):

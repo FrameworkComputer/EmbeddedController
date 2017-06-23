@@ -26,7 +26,7 @@ CTS_TEST(fail_both_test, CTS_RC_FAILURE,, CTS_RC_FAILURE,)
 /*
  * Test bad sync for TH
  */
-CTS_TEST(bad_sync_and_success_test, CTS_RC_BAD_SYNC,,,)
+CTS_TEST(bad_sync_test, CTS_RC_BAD_SYNC,,,)
 
 /*
  * Test should fail with bad sync.
