@@ -1220,7 +1220,8 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 		rc = erase_rc;
 		if (rc == EC_RES_SUCCESS) {
 			memcpy(&erase_info, p_1, sizeof(*p_1));
-			hook_call_deferred(&flash_erase_deferred_data, 0);
+			hook_call_deferred(&flash_erase_deferred_data,
+					   100 * MSEC);
 		} else {
 			/*
 			 * Not our job to return the result of
