@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 # List of tests to run.
-TESTS = ['meta', 'gpio', 'hook', 'interrupt', 'mutex', 'task', 'timer']
+TESTS = ['meta', 'gpio', 'hook', 'i2c', 'interrupt', 'mutex', 'task', 'timer']
 
 
 class CtsRunner(object):

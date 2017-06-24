@@ -3,12 +3,19 @@
  * found in the LICENSE file.
  */
 
-/* Currently tests will execute in the order they are listed here */
-
-/* Test whether sync completes successfully */
+/*
+ * Test i2c write for 8, 16, and 32 bits. DUT runs as a master and TH
+ * runs as a slave.
+ */
 CTS_TEST(write8_test,,,,)
 CTS_TEST(write16_test,,,,)
 CTS_TEST(write32_test,,,,)
+
+/*
+ * Test i2c read for 8, 16, and 32 bits. DUT runs as a master and TH
+ * runs as a slave. You need external pull-ups (10 kohms) on SDL and SDA
+ * to make read16_test and read32_test pass.
+ */
 CTS_TEST(read8_test,,,,)
 CTS_TEST(read16_test,,,,)
 CTS_TEST(read32_test,,,,)
