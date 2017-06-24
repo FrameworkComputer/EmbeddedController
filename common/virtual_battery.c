@@ -71,38 +71,15 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
 			*err_code = 0;
 		} else {
 			sb_cmd_state = READ_VB;
-			/* Test if the reg is cached. */
 			*err_code = virtual_battery_operation(batt_cmd_head,
 						NULL, 0, 0);
 			/*
-			 * If the reg is not cached in the virtual memory,
-			 * we need to physically write the reg index to
-			 * the battery.
+			 * If the reg is not handled by virtual battery, we
+			 * do not support it.
 			 */
-			if (*err_code) {
-				*err_code = i2c_xfer(
-					I2C_PORT_VIRTUAL_BATTERY,
-					VIRTUAL_BATTERY_ADDR,
-					batt_cmd_head,
-					1,
-					NULL,
-					0,
-					I2C_XFER_START);
-				/* sent a stop bit here */
-				if (*err_code) {
-					if (*err_code == EC_ERROR_TIMEOUT) {
-						resp->i2c_status =
-						EC_I2C_STATUS_TIMEOUT;
-					} else {
-						resp->i2c_status =
-						EC_I2C_STATUS_NAK;
-					}
-					reset_parse_state();
-					return EC_ERROR_INVAL;
-				}
-				*err_code = 1;
-			} else
-				cache_hit = 1;
+			if (*err_code)
+				return EC_ERROR_INVAL;
+			cache_hit = 1;
 		}
 		break;
 	case WRITE_VB:
@@ -173,6 +150,25 @@ void reset_parse_state(void)
 	acc_write_len = 0;
 }
 
+/*
+ * Copy memmap string data from offset to dest, up to size len, in the format
+ * expected by SBS (first byte of dest contains strlen).
+ */
+void copy_memmap_string(uint8_t *dest, int offset, int len)
+{
+	uint8_t *memmap_str;
+	uint8_t memmap_strlen;
+
+	if (len == 0)
+		return;
+	memmap_str = host_get_memmap(offset);
+	/* memmap_str might not be NULL terminated */
+	memmap_strlen = *(memmap_str + EC_MEMMAP_TEXT_MAX - 1) == '\0' ?
+			strlen(memmap_str) : EC_MEMMAP_TEXT_MAX;
+	dest[0] = memmap_strlen;
+	memcpy(dest + 1, memmap_str, MIN(memmap_strlen, len - 1));
+}
+
 int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			      uint8_t *dest,
 			      int read_len,
@@ -186,16 +182,14 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	 * Note that we don't update the cached capacity: We do a real-time
 	 * conversion and return the converted values.
 	 */
-	static uint16_t batt_mode_cache;
+	static int batt_mode_cache;
 	const struct batt_params *curr_batt;
-
 	/*
-	 * All of the smart battery reg indexes supported by this virtual
-	 * battery implementation are two bytes long. So we should limit
-	 * the range of memory access accordingly.
+	 * Don't allow host reads into arbitrary memory space, most params
+	 * are two bytes.
 	 */
-	if (read_len > 2)
-		read_len = 2;
+	int bounded_read_len = MIN(read_len, 2);
+
 	curr_batt = charger_current_battery_params();
 	switch (*batt_cmd_head) {
 	case SB_BATTERY_MODE:
@@ -203,69 +197,96 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			batt_mode_cache = batt_cmd_head[1] |
 					  (batt_cmd_head[2] << 8);
 		} else if (read_len > 0) {
-			if (batt_mode_cache == 0) {
+			if (batt_mode_cache == 0)
 				/*
 				 * Read the battery operational mode from
 				 * the battery to initialize batt_mode_cache.
+				 * This may cause an i2c transaction.
 				 */
-				i2c_xfer(I2C_PORT_VIRTUAL_BATTERY,
-					VIRTUAL_BATTERY_ADDR,
-					batt_cmd_head,
-					1,
-					(uint8_t *)&batt_mode_cache,
-					2,
-					I2C_XFER_SINGLE);
-			}
-			memcpy(dest, &batt_mode_cache, read_len);
+				if (battery_get_mode(&batt_mode_cache) ==
+				    EC_ERROR_UNIMPLEMENTED)
+					/*
+					 * Register not supported, choose
+					 * typical SB defaults.
+					 */
+					batt_mode_cache =
+					   MODE_INTERNAL_CHARGE_CONTROLLER |
+					   MODE_ALARM |
+					   MODE_CHARGER;
+
+			memcpy(dest, &batt_mode_cache, bounded_read_len);
 		}
 		break;
 	case SB_SERIAL_NUMBER:
 		val = strtoi(host_get_memmap(EC_MEMMAP_BATT_SERIAL), NULL, 16);
-		memcpy(dest, &val, read_len);
+		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_VOLTAGE:
-		memcpy(dest, &(curr_batt->voltage), read_len);
+		memcpy(dest, &(curr_batt->voltage), bounded_read_len);
 		break;
 	case SB_RELATIVE_STATE_OF_CHARGE:
-		memcpy(dest, &(curr_batt->state_of_charge), read_len);
+		memcpy(dest, &(curr_batt->state_of_charge), bounded_read_len);
 		break;
 	case SB_TEMPERATURE:
-		memcpy(dest, &(curr_batt->temperature), read_len);
+		memcpy(dest, &(curr_batt->temperature), bounded_read_len);
 		break;
 	case SB_CURRENT:
-		memcpy(dest, &(curr_batt->current), read_len);
+		memcpy(dest, &(curr_batt->current), bounded_read_len);
 		break;
 	case SB_FULL_CHARGE_CAPACITY:
 		val = curr_batt->full_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
 			val = val * curr_batt->voltage / 10000;
-		memcpy(dest, &val, read_len);
+		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_BATTERY_STATUS:
-		memcpy(dest, &(curr_batt->status), read_len);
+		memcpy(dest, &(curr_batt->status), bounded_read_len);
 		break;
 	case SB_CYCLE_COUNT:
 		memcpy(dest, (int *)host_get_memmap(EC_MEMMAP_BATT_CCNT),
-			read_len);
+		       bounded_read_len);
 		break;
 	case SB_DESIGN_CAPACITY:
 		val = *(int *)host_get_memmap(EC_MEMMAP_BATT_DCAP);
 		if (batt_mode_cache & MODE_CAPACITY)
 			val = val * curr_batt->voltage / 10000;
-		memcpy(dest, &val, read_len);
+		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_DESIGN_VOLTAGE:
 		memcpy(dest, (int *)host_get_memmap(EC_MEMMAP_BATT_DVLT),
-		       read_len);
+		       bounded_read_len);
 		break;
 	case SB_REMAINING_CAPACITY:
 		val = curr_batt->remaining_capacity;
 		if (batt_mode_cache & MODE_CAPACITY)
 			val = val * curr_batt->voltage / 10000;
-		memcpy(dest, &val, read_len);
+		memcpy(dest, &val, bounded_read_len);
 		break;
+	case SB_MANUFACTURER_NAME:
+		copy_memmap_string(dest, EC_MEMMAP_BATT_MFGR, read_len);
+		break;
+	case SB_DEVICE_NAME:
+		copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL, read_len);
+		break;
+	case SB_AVERAGE_TIME_TO_FULL:
+		/* This may cause an i2c transaction */
+		if (battery_time_to_full(&val))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+	case SB_AVERAGE_TIME_TO_EMPTY:
+		/* This may cause an i2c transaction */
+		if (battery_time_to_empty(&val))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+	case SB_MANUFACTURER_ACCESS:
+		/* No manuf. access reg access allowed over VB interface */
+		return EC_ERROR_INVAL;
 	default:
+		CPRINTS("Unhandled VB reg %x", *batt_cmd_head);
 		return EC_ERROR_INVAL;
 	}
 	return EC_SUCCESS;
 }
+

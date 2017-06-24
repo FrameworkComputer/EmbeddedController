@@ -541,6 +541,7 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	const uint8_t *out;
 	int in_len;
 	int ret, i;
+	int port_is_locked = 0;
 
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
@@ -570,8 +571,6 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	resp->i2c_status = 0;
 	out = args->params + sizeof(*params) + params->num_msgs * sizeof(*msg);
 	in_len = 0;
-
-	i2c_lock(params->port, 1);
 
 	for (resp->num_msgs = 0, msg = params->msg;
 	     resp->num_msgs < params->num_msgs;
@@ -609,10 +608,13 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
 			if (system_is_locked() &&
 			    !board_allow_i2c_passthru(params->port)) {
-				i2c_lock(params->port, 0);
+				if (port_is_locked)
+					i2c_lock(params->port, 0);
 				return EC_RES_ACCESS_DENIED;
 			}
 #endif
+			if (!port_is_locked)
+				i2c_lock(params->port, (port_is_locked = 1));
 			rv = i2c_xfer(params->port, addr, out, write_len,
 				      &resp->data[in_len], read_len, xferflags);
 		}
@@ -632,7 +634,8 @@ static int i2c_command_passthru(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*resp) + in_len;
 
 	/* Unlock port */
-	i2c_lock(params->port, 0);
+	if (port_is_locked)
+		i2c_lock(params->port, 0);
 
 	/*
 	 * Return success even if transfer failed so response is sent.  Host
