@@ -4,11 +4,10 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
-import fcntl
 import os
-import select
 import shutil
 import subprocess as sp
+import serial
 
 
 OCD_SCRIPT_DIR = '/usr/share/openocd/scripts'
@@ -187,11 +186,11 @@ class Board(object):
 
     tty = None
     try:
-      tty = self.open_tty()
-    except (IOError, OSError):
-      raise ValueError('Unable to read ' + self.board + '. If you are running '
-                       'cat on a ttyACMx file, please kill that process and '
-                       'try again')
+      tty = serial.Serial(self.tty_port, 115200, timeout=1)
+    except serial.SerialException:
+      raise ValueError('Failed to open ' + self.tty_port + ' of ' + self.board +
+                       '. Please make sure the port is available and you have' +
+                       ' permission to read it.')
     self.tty = tty
 
   def read_tty(self, max_boot_count=1):
@@ -208,9 +207,8 @@ class Board(object):
     line = []
     boot = 0
     while True:
-      if select.select([self.tty], [], [], 1)[0]:
-        c = os.read(self.tty, 1)
-      else:
+      c = self.tty.read()
+      if not c:
         break
       line.append(c)
       if c == '\n':
@@ -246,16 +244,9 @@ class Board(object):
     # If we get here without returning, something is wrong
     raise RuntimeError('The device dev path could not be found')
 
-  def open_tty(self):
-    """Read available bytes from device dev path."""
-    fd = os.open(self.tty_port, os.O_RDONLY)
-    flag = fcntl.fcntl(fd, fcntl.F_GETFL)
-    fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
-    return fd
-
   def close_tty(self):
-    """Close tty"""
-    os.close(self.tty)
+    """Close tty."""
+    self.tty.close()
 
 
 class TestHarness(Board):
@@ -286,9 +277,9 @@ class TestHarness(Board):
     if self.hla_serial:
       return  # serial was already loaded
     try:
-      with open(self.serial_path, mode='r') as ser_f:
-        serial = ser_f.read()
-        self.hla_serial = serial.strip()
+      with open(self.serial_path, mode='r') as f:
+        s = f.read()
+        self.hla_serial = s.strip()
         return
     except IOError:
       msg = ('Your TH board has not been identified.\n'
@@ -303,19 +294,19 @@ class TestHarness(Board):
              '\nConnect only the test harness and remove other boards.')
       raise RuntimeError(msg)
     if len(serials) < 1:
-      msg = ('No test boards were found.'
-             '\nTry to run the script outside chroot.')
+      msg = ('No test boards were found.\n'
+             'Check boards are connected.')
       raise RuntimeError(msg)
 
-    serial = serials[0]
+    s = serials[0]
     serial_dir = os.path.dirname(self.serial_path)
     if not os.path.exists(serial_dir):
       os.makedirs(serial_dir)
-    with open(self.serial_path, mode='w') as ser_f:
-      ser_f.write(serial)
-      self.hla_serial = serial
+    with open(self.serial_path, mode='w') as f:
+      f.write(s)
+      self.hla_serial = s
 
-    print 'Your TH serial', serial, 'has been saved as', self.serial_path
+    print 'Your TH serial', s, 'has been saved as', self.serial_path
     return
 
 
