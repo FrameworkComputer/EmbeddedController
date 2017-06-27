@@ -7,7 +7,7 @@
 #
 
 # Select Minute-IA bare-metal toolchain
-CROSS_COMPILE=i686-pc-linux-gnu-
+$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_i386),i686-pc-linux-gnu-)
 
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=

@@ -88,3 +88,9 @@ LDFLAGS=-nostdlib -Wl,-X -Wl,--gc-sections -Wl,--build-id=none $(LDFLAGS_EXTRA)
 BUILD_LDFLAGS=$(LIBFTDI_LDLIBS)
 HOST_TEST_LDFLAGS=-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
 		  $(if $(TEST_COVERAGE),-fprofile-arcs,)
+
+# utility function to provide overridable defaults
+# $1: name of variable to set
+# $2: first default to use
+# $3: second default to use
+set-option = $(eval $1?=$$(if $(2),$(2),$(3)))
