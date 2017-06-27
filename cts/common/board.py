@@ -96,7 +96,7 @@ class Board(object):
     """Subclass should implement this."""
     pass
 
-  def send_open_ocd_commands(self, commands):
+  def send_openocd_commands(self, commands):
     """Send a command to the board via openocd.
 
     Args:
@@ -159,7 +159,7 @@ class Board(object):
            'init',
            'reset init',
            'flash write_image erase %s %s' % (image_path, self.flash_offset)]
-    return self.send_open_ocd_commands(cmd)
+    return self.send_openocd_commands(cmd)
 
   def to_string(self):
     s = ('Type: Board\n'
@@ -170,9 +170,13 @@ class Board(object):
          'tty: ' + str(self.tty) + '\n')
     return s
 
-  def reset(self):
+  def reset_halt(self):
     """Reset then halt board."""
-    return self.send_open_ocd_commands(['init', 'reset halt'])
+    return self.send_openocd_commands(['init', 'reset halt'])
+
+  def resume(self):
+    """Resume halting board."""
+    return self.send_openocd_commands(['init', 'resume'])
 
   def setup_tty(self):
     """Call this before calling read_tty for the first time.
@@ -181,7 +185,7 @@ class Board(object):
     this function after serial numbers are setup
     """
     self.get_serial()
-    self.reset()
+    self.reset_halt()
     self.identify_tty_port()
 
     tty = None

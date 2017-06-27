@@ -320,16 +320,16 @@ class Cts(object):
     # both boards must be rest and halted, with the th
     # resuming first, in order for the test suite to run in sync
     print 'Halting TH...'
-    if not self.th.send_open_ocd_commands(['init', 'reset halt']):
+    if not self.th.reset_halt():
       raise RuntimeError('Failed to halt TH')
     print 'Halting DUT...'
-    if not self.dut.send_open_ocd_commands(['init', 'reset halt']):
+    if not self.dut.reset_halt():
       raise RuntimeError('Failed to halt DUT')
     print 'Resuming TH...'
-    if not self.th.send_open_ocd_commands(['init', 'resume']):
+    if not self.th.resume():
       raise RuntimeError('Failed to resume TH')
     print 'Resuming DUT...'
-    if not self.dut.send_open_ocd_commands(['init', 'resume']):
+    if not self.dut.resume():
       raise RuntimeError('Failed to resume DUT')
 
     time.sleep(MAX_SUITE_TIME_SEC)
@@ -342,10 +342,10 @@ class Cts(object):
     self.th.close_tty()
 
     print 'Halting TH...'
-    if not self.th.send_open_ocd_commands(['init', 'reset halt']):
+    if not self.th.reset_halt():
       raise RuntimeError('Failed to halt TH')
     print 'Halting DUT...'
-    if not self.dut.send_open_ocd_commands(['init', 'reset halt']):
+    if not self.dut.reset_halt():
       raise RuntimeError('Failed to halt DUT')
 
     if not dut_output or not th_output:
