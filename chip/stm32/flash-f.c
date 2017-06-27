@@ -445,16 +445,6 @@ static void unprotect_all_blocks(void)
 	write_optb(STM32_FLASH_nWRP_ALL, STM32_FLASH_nWRP_ALL);
 }
 
-int flash_physical_protect_now(int all)
-{
-	if (all) {
-		write_optb(STM32_FLASH_nWRP_ALL, 0);
-		return EC_SUCCESS;
-	}
-	/* No way to protect just the RO flash until next boot */
-	return EC_ERROR_INVAL;
-}
-
 #else   /* CHIP_FAMILY_STM32F4 */
 static int flash_physical_get_protect_at_boot(int block)
 {

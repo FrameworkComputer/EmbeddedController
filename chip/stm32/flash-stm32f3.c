@@ -1,9 +1,9 @@
-/* Copyright 2014 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Flash memory module for Chrome EC */
+/* Flash memory module for stm32f3 and stm32f4 */
 
 #include "common.h"
 #include "flash.h"
@@ -12,17 +12,44 @@
 #include "system.h"
 #include "panic.h"
 
+#ifdef CHIP_FAMILY_STM32F4
+/*****************************************************************************/
+/* Physical layer APIs */
+/*
+ * 8 "erase" sectors : 16KB/16KB/16KB/16KB/64KB/128KB/128KB/128KB
+ */
+struct ec_flash_bank const flash_bank_array[] = {
+	{
+		.count = 4,
+		.size_exp = __fls(SIZE_16KB),
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.erase_size_exp = __fls(SIZE_16KB),
+		.protect_size_exp = __fls(SIZE_16KB),
+	},
+	{
+		.count = 1,
+		.size_exp = __fls(SIZE_64KB),
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.erase_size_exp = __fls(SIZE_64KB),
+		.protect_size_exp = __fls(SIZE_64KB),
+	},
+	{
+		.count = (CONFIG_FLASH_SIZE - SIZE_128KB) / SIZE_128KB,
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.size_exp = __fls(SIZE_128KB),
+		.erase_size_exp = __fls(SIZE_128KB),
+		.protect_size_exp = __fls(SIZE_128KB),
+	},
+};
+#endif
+
 /* Flag indicating whether we have locked down entire flash */
 static int entire_flash_locked;
 
 #define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
 #define FLASH_HOOK_VERSION 1
+
 /* The previous write protect state before sys jump */
-/*
- * TODO(crosbug.com/p/23798): check if STM32L code works here too - that is,
- * check if entire flash is locked by attempting to lock it rather than keeping
- * a global variable.
- */
 struct flash_wp_state {
 	int entire_flash_locked;
 };
@@ -32,7 +59,13 @@ struct flash_wp_state {
 
 int flash_physical_get_protect(int block)
 {
-	return entire_flash_locked || !(STM32_FLASH_WRPR & (1 << block));
+	return (entire_flash_locked ||
+#if defined(CHIP_FAMILY_STM32F3)
+		!(STM32_FLASH_WRPR & (1 << block))
+#elif defined(CHIP_FAMILY_STM32F4)
+		!(STM32_OPTB_WP & STM32_OPTB_nWRP(block))
+#endif
+	       );
 }
 
 uint32_t flash_physical_get_protect_flags(void)
@@ -53,6 +86,11 @@ int flash_physical_protect_now(int all)
 		 * Lock by writing a wrong key to FLASH_KEYR. This triggers a
 		 * bus fault, so we need to disable bus fault handler while
 		 * doing this.
+		 *
+		 * This incorrect key fault causes the flash to become
+		 * permanenlty locked until reset, a correct keyring write
+		 * will not unlock it. In this way we can implement system
+		 * write protect.
 		 */
 		ignore_bus_fault(1);
 		STM32_FLASH_KEYR = 0xffffffff;
@@ -61,10 +99,10 @@ int flash_physical_protect_now(int all)
 		entire_flash_locked = 1;
 
 		return EC_SUCCESS;
-	} else {
-		/* No way to protect just the RO flash until next boot */
-		return EC_ERROR_INVAL;
 	}
+
+	/* No way to protect just the RO flash until next boot */
+	return EC_ERROR_INVAL;
 }
 
 uint32_t flash_physical_get_valid_flags(void)
