@@ -110,6 +110,9 @@ static void button_check_hw_reinit_required(void)
 {
 	timestamp_t deadline;
 	timestamp_t now = get_time();
+#ifdef CONFIG_LED_COMMON
+	uint8_t led_on = 0;
+#endif
 
 	deadline.val = now.val + (20 * SECOND);
 
@@ -119,8 +122,22 @@ static void button_check_hw_reinit_required(void)
 		if (!is_recovery_button_pressed() ||
 		    !power_button_signal_asserted()) {
 			CPRINTS("No HW_REINIT request");
+#ifdef CONFIG_LED_COMMON
+			if (led_on)
+				led_control(EC_LED_ID_RECOVERY_HW_REINIT_LED,
+					    LED_STATE_RESET);
+#endif
 			return;
 		}
+
+#ifdef CONFIG_LED_COMMON
+		if (!led_on) {
+			led_control(EC_LED_ID_RECOVERY_HW_REINIT_LED,
+				    LED_STATE_ON);
+			led_on = 1;
+		}
+#endif
+
 		now = get_time();
 		watchdog_reload();
 	}
