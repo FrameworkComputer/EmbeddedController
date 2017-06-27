@@ -348,8 +348,8 @@ static void led_tick(void)
 	if (led_debug == 1)
 		return;
 
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED) &&
-	    led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED) &&
+	    led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
 		eve_led_set_power_battery();
 		return;
 	}
