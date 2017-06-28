@@ -8,6 +8,12 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#ifdef CTS_MODULE
+/* CTS tests are small. We can use smaller size to expedite flash time. */
+#undef  CONFIG_FLASH_SIZE
+#define CONFIG_FLASH_SIZE 0x00040000	/* 256k */
+#endif
+
 /* Optional features */
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
