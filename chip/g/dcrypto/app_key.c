@@ -49,6 +49,16 @@ const struct {
 			0xcd375bcd,  0x8065e8cc,  0xc892ed69,  0x72436c7d
 		}
 	},
+#ifdef CONFIG_STREAM_SIGNATURE
+	{
+		/* This key signs data from H1's configured by mn50/scribe. */
+		"PERSO_AUTH",
+		{
+			0x2019da34,  0xf1a01a13,  0x0fb9f73f,  0xf2e85f76,
+			0x5ecb7690,  0x09f732c9,  0xe540bf14,  0xcc46799a
+		}
+	},
+#endif
 };
 
 int DCRYPTO_appkey_init(enum dcrypto_appid appid, struct APPKEY_CTX *ctx)

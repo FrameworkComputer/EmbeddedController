@@ -23,6 +23,7 @@
 #include "nvmem_vars.h"
 #include "registers.h"
 #include "signed_header.h"
+#include "signing.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"
@@ -137,9 +138,7 @@ static void board_init(void)
 	/* Enable USB / CCD */
 	usb_release();
 	usb_console_enable(1, 0);
-	usb_spi_enable(&ccd_usb_spi, 1);
 	ccd_phy_init();
-	uartn_enable(UART_AP);
 
 	/* Calibrate INA0 (VBUS) with 1mA/LSB scale */
 	i2cm_init();
@@ -258,6 +257,9 @@ void enable_socket(void)
 
 	/* UART */
 	GWRITE(PINMUX, DIOA7_SEL, GC_PINMUX_UART1_TX_SEL);
+	GWRITE(PINMUX, DIOA3_SEL, GC_PINMUX_UART1_RX_SEL);
+	GWRITE_FIELD(PINMUX, DIOA3_CTL, PU, 1);
+	uartn_enable(UART_AP);
 
 	/* Chip select. */
 	GWRITE_FIELD(PINMUX, DIOA5_CTL, PU, 1);
@@ -281,7 +283,10 @@ void disable_socket(void)
 	GWRITE(PINMUX, DIOA5_SEL, GC_PINMUX_GPIO0_GPIO10_SEL);
 
 	/* UART */
+	uartn_disable(UART_AP);
 	GWRITE(PINMUX, DIOA7_SEL, 0);
+	GWRITE(PINMUX, DIOA3_SEL, 0);
+	GWRITE_FIELD(PINMUX, DIOA3_CTL, PU, 0);
 
 	/* GPIOs as inputs. */
 	gpio_set_flags(GPIO_DUT_BOOT_CFG, GPIO_INPUT);
@@ -318,6 +323,67 @@ static int command_socket(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(socket, command_socket,
 			     "[enable|disable]",
 			     "Activate and deactivate socket");
+
+#ifdef CONFIG_STREAM_SIGNATURE
+/*
+ * This command allows signing the contents of a data stream that passes
+ * through mn50/scribe. This allows critical segments of SPI readouts,
+ * including the haven personalization data to be verified on the server
+ * side as coming from a registered scribe board. (go/haven-registration)
+ *
+ * The actual interface enables capturing data (start command) on a stream
+ * (either SPI or UART), until stopped (sign command), at which point a
+ * signature is printed to the console. An "append" command is available
+ * to manually insert characters for testing, and should be disabled
+ * before release.
+ */
+static int command_signer(int argc, char **argv)
+{
+	static int initted; /* = 0; */
+	char *data;
+
+	if (!initted) {
+		init_signing();
+		initted = 1;
+	}
+
+	if (argc > 2) {
+		enum stream_id id;
+
+		if (!strcasecmp("spi", argv[1]))
+			id = stream_spi;
+		else if (!strcasecmp("uart", argv[1]))
+			id = stream_uart;
+		else
+			return EC_ERROR_PARAM1;
+
+		if (!strcasecmp("sign", argv[2])) {
+			if (argc == 3)
+				return sig_sign(id);
+			else
+				return EC_ERROR_PARAM3;
+		} else if (!strcasecmp("start", argv[2])) {
+			if (argc == 3)
+				return sig_start(id);
+			else
+				return EC_ERROR_PARAM3;
+		} else if (!strcasecmp("append", argv[2])) {
+			if (argc == 4) {
+				data = argv[3];
+				return sig_append(id, data, strlen(data));
+			} else
+				return EC_ERROR_PARAM3;
+		} else
+			return EC_ERROR_PARAM2;
+	} else
+		return EC_ERROR_PARAM1;
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(signer, command_signer,
+			     "[spi|uart] [start|append|sign] data",
+			     "Sign data");
+#endif
 
 void post_reboot_request(void)
 {

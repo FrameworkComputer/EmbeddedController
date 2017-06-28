@@ -2842,6 +2842,14 @@
 /* USB Power monitoring interface config */
 #undef CONFIG_USB_POWER
 
+/*****************************************************************************/
+/*
+ * USB stream signing config. This allows data read over UART or SPI
+ * to have a signature generated that can be used to validate the data
+ * offline based on H1's registered key. Used by mn50.
+ */
+#undef CONFIG_STREAM_SIGNATURE
+
 
 /*****************************************************************************/
 

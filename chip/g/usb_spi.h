@@ -70,6 +70,8 @@ enum usb_spi_request {
 	USB_SPI_REQ_RESET           = 0x0005,
 	USB_SPI_REQ_BOOT_CFG        = 0x0006,
 	USB_SPI_REQ_SOCKET          = 0x0007,
+	USB_SPI_REQ_SIGNING_START   = 0x0008,
+	USB_SPI_REQ_SIGNING_SIGN    = 0x0009,
 };
 
 /* USB SPI device bitmasks */

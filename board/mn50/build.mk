@@ -27,6 +27,7 @@ dirs-y += chip/$(CHIP)/dcrypto
 
 # Objects that we need to build
 board-y =  board.o
+board-${CONFIG_STREAM_SIGNATURE} += signing.o
 board-${CONFIG_USB_SPI} += usb_spi.o
 
 INCLUDE_ROOT := $(abspath ./include)

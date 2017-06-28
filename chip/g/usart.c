@@ -8,25 +8,63 @@
 #include "uartn.h"
 #include "usart.h"
 #include "usb-stream.h"
+#ifdef CONFIG_STREAM_SIGNATURE
+#include "signing.h"
+#endif
 
 #define USE_UART_INTERRUPTS (!(defined(CONFIG_CUSTOMIZED_RO) && \
 defined(SECTION_IS_RO)))
 #define QUEUE_SIZE 64
 
+
 #ifdef CONFIG_STREAM_USART1
 struct usb_stream_config const ap_usb;
 struct usart_config const ap_uart;
 
-static struct queue const ap_uart_to_usb =
+#ifdef CONFIG_STREAM_SIGNATURE
+/*
+ * This code adds the ability to capture UART data received, and
+ * sign it with H1's key. This allows the log output to be verified
+ * as actual UART output from this board.
+ *
+ * This functionality is enabled by redirecting the UART receive queue
+ * to feed into the signing module rather than the usb tx. After being
+ * added to the running hash, the data is then pushed by the signer
+ * into the usb tx queue.
+ */
+struct signer_config const sig;
+static struct queue const ap_uart_output =
+	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_uart.producer, sig.consumer);
+static struct queue const sig_to_usb =
+	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, sig.producer, ap_usb.consumer);
+
+SIGNER_CONFIG(sig, stream_uart, sig_to_usb, ap_uart_output);
+
+#else  /* Not CONFIG_STREAM_SIGNATURE */
+static struct queue const ap_uart_output =
 	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_uart.producer, ap_usb.consumer);
+#endif
+
 static struct queue const ap_usb_to_uart =
 	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_usb.producer, ap_uart.consumer);
 
+/*
+ * AP UART data is sent to the ap_uart_output queue, and received from
+ * the ap_usb_to_uart queue. The ap_uart_output queue is received by the
+ * USB bridge, or if a signer is enabled, received by the signer, which then
+ * passes the data to the USB bridge after processing it.
+ */
 USART_CONFIG(ap_uart,
 	     UART_AP,
-	     ap_uart_to_usb,
+	     ap_uart_output,
 	     ap_usb_to_uart);
 
+/*
+ * The UART USB bridge receives character data from the UART's queue,
+ * unless signing is enabled, in which case it receives data from the
+ * signer's queue, after the signer has received it from the UART and
+ * processed it.
+ */
 USB_STREAM_CONFIG(ap_usb,
 		  USB_IFACE_AP,
 		  USB_STR_AP_NAME,
@@ -34,8 +72,12 @@ USB_STREAM_CONFIG(ap_usb,
 		  USB_MAX_PACKET_SIZE,
 		  USB_MAX_PACKET_SIZE,
 		  ap_usb_to_uart,
-		  ap_uart_to_usb)
+#ifdef CONFIG_STREAM_SIGNATURE
+		  sig_to_usb)
+#else
+		  ap_uart_output)
 #endif
+#endif  /* CONFIG_STREAM_USART1 */
 
 #ifdef CONFIG_STREAM_USART2
 struct usb_stream_config const ec_usb;

@@ -7,6 +7,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "signing.h"
 #include "spi.h"
 #include "system.h"
 #include "timer.h"
@@ -66,6 +67,12 @@ int usb_spi_interface(struct usb_spi_config const *config,
 			enable_socket();
 		else
 			disable_socket();
+		break;
+	case USB_SPI_REQ_SIGNING_START:
+		sig_start(stream_spi);
+		break;
+	case USB_SPI_REQ_SIGNING_SIGN:
+		sig_sign(stream_spi);
 		break;
 	case USB_SPI_REQ_ENABLE_AP:
 	case USB_SPI_REQ_ENABLE:
