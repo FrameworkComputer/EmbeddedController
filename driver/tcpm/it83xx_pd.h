@@ -89,17 +89,6 @@ enum usbpd_power_role {
 	USBPD_POWER_ROLE_PROVIDER_CONSUMER,
 };
 
-struct usbpd_header {
-	uint8_t msg_type     : 4;
-	uint8_t reserved     : 1;
-	uint8_t port_role    : 1;
-	uint8_t spec_ver     : 2;
-	uint8_t power_role   : 1;
-	uint8_t msg_id       : 3;
-	uint8_t data_obj_num : 3;
-	uint8_t reserved2    : 1;
-};
-
 struct usbpd_ctrl_t {
 	volatile uint8_t *cc1;
 	volatile uint8_t *cc2;

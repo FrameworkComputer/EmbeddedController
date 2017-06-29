@@ -95,18 +95,16 @@ static enum tcpc_cc_voltage_status it83xx_get_cc(
 
 static int it83xx_rx_data(enum usbpd_port port, int *head, uint32_t *buf)
 {
-	struct usbpd_header *p_head = (struct usbpd_header *)head;
+	int cnt = PD_HEADER_CNT(IT83XX_USBPD_RMH(port));
 
 	if (!USBPD_IS_RX_DONE(port))
 		return EC_ERROR_UNKNOWN;
 
 	/* store header */
-	*p_head = *((struct usbpd_header *)IT83XX_USBPD_RMH_BASE(port));
+	*head = IT83XX_USBPD_RMH(port);
 	/* check data message */
-	if (p_head->data_obj_num)
-		memcpy(buf,
-			(uint8_t *)IT83XX_USBPD_RDO_BASE(port),
-			p_head->data_obj_num * 4);
+	if (cnt)
+		memcpy(buf, (uint32_t *)&IT83XX_USBPD_RDO0(port), cnt * 4);
 	/*
 	 * Note: clear RX done interrupt after get the data.
 	 * If clear this bit, USBPD receives next packet
@@ -148,7 +146,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 		/* set data length setting */
 		IT83XX_USBPD_MTSR1(port) |= length;
 		/* set data */
-		memcpy((uint8_t *)IT83XX_USBPD_TDO_BASE(port), buf, length * 4);
+		memcpy((uint32_t *)&IT83XX_USBPD_TDO(port), buf, length * 4);
 	}
 
 	for (r = 0; r <= PD_RETRY_COUNT; r++) {
