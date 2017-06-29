@@ -105,13 +105,20 @@ void rwsig_jump_now(void);
 #define CONFIG_RW_SIG_SIZE RSANUMBYTES
 #endif
 #endif /* ! CONFIG_RW_SIG_SIZE */
+/* The signature resides at the end of each RW copy */
+#define RW_SIG_OFFSET		(CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
+#define RW_A_ADDR		(CONFIG_PROGRAM_MEMORY_BASE +		\
+				 CONFIG_EC_WRITABLE_STORAGE_OFF +	\
+				 CONFIG_RW_STORAGE_OFF)
+/* Assume the layout is same as RW_A and it sits right after RW_A */
+#define RW_B_ADDR		(CONFIG_PROGRAM_MEMORY_BASE + \
+				 CONFIG_EC_WRITABLE_STORAGE_OFF + \
+				 CONFIG_RW_B_STORAGE_OFF)
 #ifndef CONFIG_RW_SIG_ADDR
-/* The signature resides at the end of the RW image */
-#define CONFIG_RW_SIG_ADDR (CONFIG_PROGRAM_MEMORY_BASE		\
-			    + CONFIG_EC_WRITABLE_STORAGE_OFF	\
-			    + CONFIG_RW_STORAGE_OFF		\
-			    + CONFIG_RW_SIZE			\
-			    - CONFIG_RW_SIG_SIZE)
-#endif /* !CONFIG_RW_SIG_ADDR */
+#define CONFIG_RW_SIG_ADDR	(RW_A_ADDR + RW_SIG_OFFSET)
+#endif
+#ifndef CONFIG_RW_B_SIG_ADDR
+#define CONFIG_RW_B_SIG_ADDR	(RW_B_ADDR + RW_SIG_OFFSET)
+#endif
 
 #endif /* __CROS_EC_RWSIG_H */

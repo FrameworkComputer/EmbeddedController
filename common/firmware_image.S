@@ -57,6 +57,13 @@
 #endif
 
 #ifdef CONFIG_RW_B
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+.section .image.RW_B, "ax"
+.incbin FW_IMAGE(RW,)
+.section .image.RW_B.sign, "a"
+.incbin FW_IMAGE_SIGN(RW,)
+#else
 .section .image.RW_B, "ax"
 .incbin FW_IMAGE(RW,_B)
+#endif
 #endif

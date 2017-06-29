@@ -252,6 +252,7 @@
 
 /* MDC register fields */
 #define NPCX_FWCTRL_RO_REGION            0
+#define NPCX_FWCTRL_FW_SLOT              1
 
 /******************************************************************************/
 /* High Frequency Clock Generator (HFCG) registers */
