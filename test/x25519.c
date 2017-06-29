@@ -20,6 +20,11 @@
 #include "util.h"
 #include "watchdog.h"
 
+/*
+ * Define this to test 1 million iterations of x25519 (takes up to
+ * a few minutes on host, up to a few days on microcontroller).
+ */
+#undef TEST_X25519_1M_ITERATIONS
 
 static int test_x25519(void)
 {
@@ -103,12 +108,20 @@ static int test_x25519_small_order(void)
 static int test_x25519_iterated(void)
 {
 	/* Taken from https://tools.ietf.org/html/rfc7748#section-5.2 */
-	static const uint8_t expected[32] = {
+	static const uint8_t expected_1K[32] = {
 		0x68, 0x4c, 0xf5, 0x9b, 0xa8, 0x33, 0x09, 0x55,
 		0x28, 0x00, 0xef, 0x56, 0x6f, 0x2f, 0x4d, 0x3c,
 		0x1c, 0x38, 0x87, 0xc4, 0x93, 0x60, 0xe3, 0x87,
 		0x5f, 0x2e, 0xb9, 0x4d, 0x99, 0x53, 0x2c, 0x51,
 	};
+#ifdef TEST_X25519_1M_ITERATIONS
+	static const uint8_t expected_1M[32] = {
+		0x7c, 0x39, 0x11, 0xe0, 0xab, 0x25, 0x86, 0xfd,
+		0x86, 0x44, 0x97, 0x29, 0x7e, 0x57, 0x5e, 0x6f,
+		0x3b, 0xc6, 0x01, 0xc0, 0x88, 0x3c, 0x30, 0xdf,
+		0x5f, 0x4d, 0xd2, 0xd2, 0x4f, 0x66, 0x54, 0x24
+	};
+#endif
 	uint8_t scalar[32] = {9}, point[32] = {9}, out[32];
 	unsigned i;
 
@@ -119,10 +132,26 @@ static int test_x25519_iterated(void)
 		memcpy(scalar, out, sizeof(scalar));
 	}
 
-	if (memcmp(expected, scalar, sizeof(expected)) != 0) {
-		ccprintf("Iterated X25519 test failed\n");
+	if (memcmp(expected_1K, scalar, sizeof(expected_1K)) != 0) {
+		ccprintf("1,000 iterations X25519 test failed\n");
 		return 0;
 	}
+
+#ifdef TEST_X25519_1M_ITERATIONS
+	for (; i < 1000000; i++) {
+		watchdog_reload();
+		X25519(out, scalar, point);
+		memcpy(point, scalar, sizeof(point));
+		memcpy(scalar, out, sizeof(scalar));
+		if ((i % 10000) == 0)
+			ccprints("%d", i);
+	}
+
+	if (memcmp(expected_1M, scalar, sizeof(expected_1M)) != 0) {
+		ccprintf("1,000,000 iterations X25519 test failed\n");
+		return 0;
+	}
+#endif
 
 	return 1;
 }
