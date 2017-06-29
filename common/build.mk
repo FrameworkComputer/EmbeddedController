@@ -45,6 +45,7 @@ common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_CURVE25519)+=curve25519.o
+common-$(CONFIG_DEVICE_EVENT)+=device_event.o
 common-$(CONFIG_DEVICE_STATE)+=device_state.o
 common-$(CONFIG_DPTF)+=dptf.o
 common-$(CONFIG_EXTENSION_COMMAND)+=extension.o

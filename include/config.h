@@ -677,6 +677,7 @@
 #undef  CONFIG_CMD_CLOCKGATES
 #undef  CONFIG_CMD_COMXTEST
 #define CONFIG_CMD_CRASH
+#define CONFIG_CMD_DEVICE_EVENT
 #undef  CONFIG_CMD_ECTEMP
 #define CONFIG_CMD_FASTCHARGE
 #undef  CONFIG_CMD_FLASH
@@ -940,6 +941,9 @@
 #define CONFIG_DEBUG_STACK_OVERFLOW
 
 /*****************************************************************************/
+
+/* Support events from devices attached to the EC */
+#undef CONFIG_DEVICE_EVENT
 
 /* Monitor the states of other devices */
 #undef CONFIG_DEVICE_STATE

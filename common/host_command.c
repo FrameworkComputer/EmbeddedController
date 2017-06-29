@@ -805,6 +805,9 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 #ifdef HAS_TASK_RWSIG
 		| EC_FEATURE_MASK_0(EC_FEATURE_RWSIG)
 #endif
+#ifdef CONFIG_DEVICE_EVENT
+		| EC_FEATURE_MASK_0(EC_FEATURE_DEVICE_EVENT)
+#endif
 		;
 	return EC_RES_SUCCESS;
 }
