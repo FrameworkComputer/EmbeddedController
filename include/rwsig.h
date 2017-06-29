@@ -77,12 +77,14 @@ void rwsig_jump_now(void);
 #endif /* ! CONFIG_RO_PUBKEY_SIZE */
 #ifndef CONFIG_RO_PUBKEY_ADDR
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
+#define CONFIG_RO_PUBKEY_STORAGE_OFF (CONFIG_RO_STORAGE_OFF		\
+				      + CONFIG_RO_SIZE			\
+				      - CONFIG_RO_PUBKEY_SIZE)
+
 /* The pubkey resides at the end of the RO image */
 #define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE		\
 			       + CONFIG_EC_PROTECTED_STORAGE_OFF	\
-			       + CONFIG_RO_STORAGE_OFF			\
-			       + CONFIG_RO_SIZE				\
-			       - CONFIG_RO_PUBKEY_SIZE)
+			       + CONFIG_RO_PUBKEY_STORAGE_OFF)
 #else
 /*
  * usbpd1 type assumes pubkey location at the end of first half of flash,
