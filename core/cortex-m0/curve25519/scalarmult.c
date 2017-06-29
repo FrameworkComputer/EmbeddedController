@@ -60,13 +60,6 @@
 #include "curve25519.h"
 #include "util.h"
 
-// comment out this line if implementing conditional swaps by data moves
-//#define DH_SWAP_BY_POINTERS
-
-// Define the symbol to 0 in order to only use ladder steps
-#define DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS 0
-//#define DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS 1
-
 typedef uint8_t  uint8;
 typedef uint16_t uint16;
 typedef uint32_t uint32;
@@ -428,35 +421,6 @@ fe25519_setone(
     }
 }
 
-/*
-static void
-swapPointersConditionally (void **p1, void **p2, uint8 condition)
-{
-    // Secure version of this code:
-    //
-    // if (condition)
-    // {
-    //     void *temp;
-    //     temp = *p2;
-    //     *p2 = *p1;
-    //     *p1 = temp;
-    // }
-
-    uintptr mask = condition;
-    uintptr val1 = (uintptr) *p1;
-    uintptr val2 = (uintptr) *p2;
-    uintptr temp = val2 ^ val1;
-
-    mask = (uintptr)( - (intptr) mask );
-    temp ^= mask & (temp ^ val1);
-    val1 ^= mask & (val1 ^ val2);
-    val2 ^= mask & (val2 ^ temp);
-
-    *p1 = (void *) val1;
-    *p2 = (void *) val2;
-}
-*/
-
 static void
 fe25519_cswap(
     fe25519* in1,
@@ -503,14 +467,6 @@ typedef struct _ST_curve25519ladderstepWorkingState
 
     int nextScalarBitToProcess;
     uint8 previousProcessedBit;
-
-#ifdef DH_SWAP_BY_POINTERS
-    fe25519 *pXp;
-    fe25519 *pZp;
-    fe25519 *pXq;
-    fe25519 *pZq;
-#endif
-
 } ST_curve25519ladderstepWorkingState;
 
 static void
@@ -535,13 +491,8 @@ curve25519_ladderstep(
 
     fe25519 t1, t2;
 
-    #ifdef DH_SWAP_BY_POINTERS
-    fe25519 *b1=pState->pXp; fe25519 *b2=pState->pZp;
-    fe25519 *b3=pState->pXq; fe25519 *b4=pState->pZq;
-    #else
     fe25519 *b1=&pState->xp; fe25519 *b2=&pState->zp;
     fe25519 *b3=&pState->xq; fe25519 *b4=&pState->zq;
-    #endif
 
     fe25519 *b5= &t1; fe25519 *b6=&t2;
 
@@ -571,71 +522,9 @@ curve25519_cswap(
     uint8                                b
 )
 {
-    #ifdef DH_SWAP_BY_POINTERS
-    swapPointersConditionally ((void **) &state->pXp,(void **) &state->pXq,b);
-    swapPointersConditionally ((void **) &state->pZp,(void **) &state->pZq,b);
-    #else
     fe25519_cswap (&state->xp, &state->xq,b);
     fe25519_cswap (&state->zp, &state->zq,b);
-    #endif
 }
-
-#if DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS
-
-static void
-curve25519_doublePointP (ST_curve25519ladderstepWorkingState* pState)
-{
-    // Implement the doubling formula "dbl-1987-m-3"
-    // from 1987 Montgomery "Speeding the Pollard and elliptic curve methods of factorization",
-    // page 261, sixth display, plus common-subexpression elimination.
-    //
-    // Three operand code:
-    // A = X1+Z1
-    // AA = A^2
-    // B = X1-Z1
-    // BB = B^2
-    // C = AA-BB
-    // X3 = AA*BB
-    // t0 = a24*C
-    // t1 = BB+t0
-    // Z3 = C*t1
-
-    // Double the point input in the state variable "P". Use the State variable "Q" as temporary
-    // for storing A, AA and B, BB. Use the same temporary variable for A and AA respectively and
-    // B, BB respectively.
-    #ifdef DH_SWAP_BY_POINTERS
-    fe25519 *pA = pState->pXq;
-    fe25519 *pB = pState->pZq;
-    fe25519 *pX = pState->pXp;
-    fe25519 *pZ = pState->pZp;
-    #else
-    fe25519 *pA = &pState->xq;
-    fe25519 *pB = &pState->zq;
-    fe25519 *pX = &pState->xp;
-    fe25519 *pZ = &pState->zp;
-    #endif
-
-    // A = X1+Z1
-    fe25519_add(pA, pX, pZ);
-    // AA = A^2
-    fe25519_square (pA,pA);
-    // B = X1-Z1
-    fe25519_sub(pB, pX, pZ);
-    // BB = B^2
-    fe25519_square (pB,pB);
-    // X3 = AA*BB
-    fe25519_mul (pX,pA,pB);
-    // C = AA-BB
-    fe25519_sub (pZ,pA,pB);
-    // t0 = a24*C
-    fe25519_mpyWith121666 (pA,pZ);
-    // t1 = BB+t0
-    fe25519_add (pB,pA,pB);
-    // Z3 = C*t1
-    fe25519_mul (pZ,pZ,pB);
-}
-
-#endif // #ifdef DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS
 
 void
 x25519_scalar_mult(
@@ -653,12 +542,7 @@ x25519_scalar_mult(
     {
         state.s.as_uint8 [i] = s[i];
     }
-#if DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS
-    // Due to explicit final doubling for the last three bits instead of a full ladderstep,
-    // the following line is no longer necessary.
-#else
     state.s.as_uint8 [0] &= 248;
-#endif
     state.s.as_uint8 [31] &= 127;
     state.s.as_uint8 [31] |= 64;
 
@@ -675,23 +559,10 @@ x25519_scalar_mult(
 
     state.nextScalarBitToProcess = 254;
 
-#ifdef DH_SWAP_BY_POINTERS
-    // we need to initially assign the pointers correctly.
-    state.pXp = &state.xp;
-    state.pZp = &state.zp;
-    state.pXq = &state.xq;
-    state.pZq = &state.zq;
-#endif
-
     state.previousProcessedBit = 0;
 
-#if DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS
-    // Process all the bits except for the last three where we explicitly double the result.
-    while (state.nextScalarBitToProcess >= 3)
-#else
     // Process all the bits except for the last three where we explicitly double the result.
     while (state.nextScalarBitToProcess >= 0)
-#endif
     {
     	uint8 byteNo = state.nextScalarBitToProcess >> 3;
     	uint8 bitNo = state.nextScalarBitToProcess & 7;
@@ -708,25 +579,10 @@ x25519_scalar_mult(
 
     curve25519_cswap(&state,state.previousProcessedBit);
 
-#if DH_REPLACE_LAST_THREE_LADDERSTEPS_WITH_DOUBLINGS
-    curve25519_doublePointP (&state);
-    curve25519_doublePointP (&state);
-    curve25519_doublePointP (&state);
-#endif
-
-#ifdef DH_SWAP_BY_POINTERS
-    // optimize for stack usage.
-    fe25519_invert_useProvidedScratchBuffers (state.pZp, state.pZp, state.pXq,state.pZq,&state.x0);
-    fe25519_mul(state.pXp, state.pXp, state.pZp);
-    fe25519_reduceCompletely(state.pXp);
-
-    fe25519_pack (r, state.pXp);
-#else
     // optimize for stack usage.
     fe25519_invert_useProvidedScratchBuffers (&state.zp, &state.zp, &state.xq, &state.zq, &state.x0);
     fe25519_mul(&state.xp, &state.xp, &state.zp);
     fe25519_reduceCompletely(&state.xp);
 
     fe25519_pack (r, &state.xp);
-#endif
 }
