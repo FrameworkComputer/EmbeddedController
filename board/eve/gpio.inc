@@ -25,6 +25,8 @@ GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(9, 3), GPIO_INT_FALLING,			bmi160_interrupt)
 GPIO_INT(TRACKPAD_INT_L,	PIN(7, 1), GPIO_INT_FALLING,			trackpad_interrupt)
+/* DSP IRQ is active low in schematic but DSP treats as active high */
+GPIO_INT(MIC_DSP_IRQ_1V8_L,	PIN(C, 6), GPIO_INT_RISING | GPIO_SEL_1P8V,	dsp_interrupt)
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 GPIO_INT(USB_C0_CABLE_DET,      PIN(D, 2), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 GPIO_INT(USB_C1_CABLE_DET,      PIN(D, 3), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
@@ -67,9 +69,6 @@ GPIO(I2C2_SCL,			PIN(9, 2), GPIO_INPUT)				/* EC_I2C2_SENSOR_3V3_SCL */
 GPIO(I2C2_SDA,			PIN(9, 1), GPIO_INPUT)				/* EC_I2C2_SENSOR_3V3_SDA */
 GPIO(I2C3_SCL,			PIN(D, 1), GPIO_INPUT)				/* EC_I2C3_POWER_SCL */
 GPIO(I2C3_SDA,			PIN(D, 0), GPIO_INPUT)				/* EC_I2C3_POWER_SDA */
-
-/* AP wake sources when in Deep-S3 state */
-GPIO(DSP_WAKE_L,		PIN(C, 6), GPIO_INPUT | GPIO_SEL_1P8V)		/* INT# from DSP Mic */
 
 /*
  * For P1 and prior: 5V enables: INPUT=1.5A, OUT_LOW=OFF, OUT_HIGH=3A

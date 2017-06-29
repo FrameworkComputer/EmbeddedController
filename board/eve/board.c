@@ -15,6 +15,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "device_event.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kxcj9.h"
 #include "driver/accelgyro_bmi160.h"
@@ -90,8 +91,13 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 /* Send event to wake AP based on trackpad input */
 void trackpad_interrupt(enum gpio_signal signal)
 {
-	/* TODO(b/36024430): Use device specific wake event */
-	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
+	device_set_single_event(EC_DEVICE_EVENT_TRACKPAD);
+}
+
+/* Send event to wake AP based on DSP interrupt */
+void dsp_interrupt(enum gpio_signal signal)
+{
+	device_set_single_event(EC_DEVICE_EVENT_DSP);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
@@ -377,8 +383,8 @@ int board_has_working_reset_flags(void)
 {
 	int version = board_get_version();
 
-	/* board version >= P1b will lose reset flags on power cycle */
-	if (version >= 3)
+	/* board version P1b to EVTb will lose reset flags on power cycle */
+	if (version >= 3 && version < 6)
 		return 0;
 
 	/* All other board versions should have working reset flags */
@@ -563,6 +569,17 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	return charger_get_vbus_voltage(port) < BD9995X_BC12_MIN_VOLTAGE;
 }
 
+/* Clear pending interrupts and enable DSP for wake */
+static void dsp_wake_enable(int enable)
+{
+	if (enable) {
+		gpio_clear_pending_interrupt(GPIO_MIC_DSP_IRQ_1V8_L);
+		gpio_enable_interrupt(GPIO_MIC_DSP_IRQ_1V8_L);
+	} else {
+		gpio_disable_interrupt(GPIO_MIC_DSP_IRQ_1V8_L);
+	}
+}
+
 /* Clear pending interrupts and enable trackpad for wake */
 static void trackpad_wake_enable(int enable)
 {
@@ -628,8 +645,9 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
-	/* Disable Trackpad */
+	/* Disable Trackpad and DSP wake in S5 */
 	trackpad_wake_enable(0);
+	dsp_wake_enable(0);
 	gpio_set_level(GPIO_TRACKPAD_SHDN_L, 0);
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
@@ -639,8 +657,14 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
-	if (!tablet_get_mode() && lid_is_open())
-		trackpad_wake_enable(1);
+	if (lid_is_open()) {
+		/* Enable DSP wake if suspended with lid open */
+		dsp_wake_enable(1);
+
+		/* Enable trackpad wake if suspended and not in tablet mode */
+		if (!tablet_get_mode())
+			trackpad_wake_enable(1);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -648,6 +672,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	dsp_wake_enable(0);
 	trackpad_wake_enable(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -655,8 +680,11 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 /* Called on lid change */
 static void board_lid_change(void)
 {
-	if (!lid_is_open())
+	/* Disable trackpad and DSP wake if lid is closed */
+	if (!lid_is_open()) {
 		trackpad_wake_enable(0);
+		dsp_wake_enable(0);
+	}
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, board_lid_change, HOOK_PRIO_DEFAULT);
 
