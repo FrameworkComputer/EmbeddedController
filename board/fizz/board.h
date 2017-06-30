@@ -12,7 +12,8 @@
  * Allow dangerous commands.
  * TODO: Remove this config before production.
  */
-#define CONFIG_SYSTEM_UNLOCKED
+#undef  CONFIG_SYSTEM_UNLOCKED
+#define CONFIG_USB_PD_COMM_LOCKED
 
 /* EC */
 #define CONFIG_ADC
