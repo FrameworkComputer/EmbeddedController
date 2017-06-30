@@ -104,6 +104,7 @@ static unsigned u2f_register(struct apdu apdu, void *buf,
 	int l, m_off; /* msg length and interior offset */
 
 	p256_int r, s;   /* ecdsa signature */
+	struct drbg_ctx ctx;
 	/* Origin keypair */
 	uint8_t od_seed[SHA256_DIGEST_SIZE];
 	p256_int od, opk_x, opk_y;
@@ -197,7 +198,8 @@ static unsigned u2f_register(struct apdu apdu, void *buf,
 	m_off += cert_len;
 
 	/* Sign over the response w/ the attestation key */
-	if (!dcrypto_p256_ecdsa_sign(&att_d, &h, &r, &s)) {
+	drbg_rfc6979_init(&ctx, &att_d, &h);
+	if (!dcrypto_p256_ecdsa_sign(&ctx, &att_d, &h, &r, &s)) {
 		p256_clear(&att_d);
 		p256_clear(&od);
 		CPRINTF("#ERR signing error");
@@ -221,6 +223,7 @@ static unsigned u2f_authenticate(struct apdu apdu, void *buf,
 	U2F_AUTHENTICATE_RESP *resp;
 	uint8_t unwrapped_kh[KH_LEN];
 	uint8_t od_seed[SHA256_DIGEST_SIZE];
+	struct drbg_ctx ctx;
 
 	p256_int origin_d;
 	uint8_t origin[U2F_APPID_SIZE];
@@ -280,7 +283,8 @@ static unsigned u2f_authenticate(struct apdu apdu, void *buf,
 	if (u2f_origin_key(od_seed, &origin_d))
 		return U2F_SW_WTF + 2;
 
-	if (!dcrypto_p256_ecdsa_sign(&origin_d, &h, &r, &s)) {
+	drbg_rfc6979_init(&ctx, &origin_d, &h);
+	if (!dcrypto_p256_ecdsa_sign(&ctx, &origin_d, &h, &r, &s)) {
 		p256_clear(&origin_d);
 		return U2F_SW_WTF + 3;
 	}

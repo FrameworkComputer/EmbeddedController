@@ -40,6 +40,7 @@ chip-$(CONFIG_DCRYPTO)+= dcrypto/dcrypto_bn.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/dcrypto_p256.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/compare.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/dcrypto_runtime.o
+chip-$(CONFIG_DCRYPTO)+= dcrypto/drbg_rfc6979.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/gcm.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/hkdf.o
 chip-$(CONFIG_DCRYPTO)+= dcrypto/hmac.o

@@ -118,10 +118,23 @@ int dcrypto_modexp_blinded(struct LITE_BIGNUM *output,
 			uint32_t pubexp);
 
 /*
+ * RFC6979 based DRBG for ECDSA signature.
+ */
+struct drbg_ctx {
+	uint32_t k[SHA256_DIGEST_WORDS];
+	uint32_t v[SHA256_DIGEST_WORDS];
+};
+void drbg_rfc6979_init(struct drbg_ctx *ctx, const p256_int *key,
+		       const p256_int *message);
+void drbg_rand_init(struct drbg_ctx *ctx);
+void drbg_generate(struct drbg_ctx *ctx, p256_int *k_out);
+void drbg_exit(struct drbg_ctx *ctx);
+
+/*
  * Accelerated p256.
  */
-int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
-		p256_int *r, p256_int *s)
+int dcrypto_p256_ecdsa_sign(struct drbg_ctx *drbg, const p256_int *key,
+			    const p256_int *message, p256_int *r, p256_int *s)
 	__attribute__((warn_unused_result));
 int dcrypto_p256_base_point_mul(const p256_int *k, p256_int *x, p256_int *y)
 	 __attribute__((warn_unused_result));

@@ -227,6 +227,7 @@ CRYPT_RESULT _cpri__SignEcc(
 	const size_t digest_len = MIN(digest->size, sizeof(digest_local));
 	p256_int p256_digest;
 	int result;
+	struct drbg_ctx drbg;
 
 	if (curve_id != TPM_ECC_NIST_P256)
 		return CRYPT_PARAMETER;
@@ -243,7 +244,9 @@ CRYPT_RESULT _cpri__SignEcc(
 
 		reverse_tpm2b(&d->b);
 
-		result = dcrypto_p256_ecdsa_sign((p256_int *) d->b.buffer,
+		drbg_rand_init(&drbg);
+		result = dcrypto_p256_ecdsa_sign(&drbg,
+				(p256_int *) d->b.buffer,
 				&p256_digest,
 				(p256_int *) r->b.buffer,
 				(p256_int *) s->b.buffer);

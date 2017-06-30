@@ -794,8 +794,8 @@ static inline void cp8w(p256_int *dst, const p256_int *src)
 	*dst = tmp;
 }
 
-int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
-			    p256_int *r, p256_int *s)
+int dcrypto_p256_ecdsa_sign(struct drbg_ctx *drbg, const p256_int *key,
+			    const p256_int *message, p256_int *r, p256_int *s)
 {
 	int i, result;
 	struct DMEM_ecc *pEcc =
@@ -807,9 +807,9 @@ int dcrypto_p256_ecdsa_sign(const p256_int *key, const p256_int *message,
 
 	/* Pick uniform 0 < k < R */
 	do {
-		for (i = 0; i < 8; ++i)
-			pEcc->rnd.a[i] ^= rand();
+		drbg_generate(drbg, &pEcc->rnd);
 	} while (p256_cmp(&SECP256r1_nMin2, &pEcc->rnd) < 0);
+	drbg_exit(drbg);
 
 	p256_add_d(&pEcc->rnd, 1, &pEcc->k);
 
