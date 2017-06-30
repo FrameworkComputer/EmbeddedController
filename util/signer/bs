@@ -60,14 +60,15 @@ EOF
 BIN_ROOT="${HOME}/bin"
 
 # This is where the new signed image will be pasted into.
-RESULT_FILE="${RESULT_FILE:=build/cr50/ec.bin}"
+: ${RESULT_FILE=build/cr50/ec.bin}
+TMP_RESULT_FILE="${RESULT_FILE}.tmp"
 
-if [ -z "${CROS_WORKON_SRCROOT}" ]; then
-  echo "$(basename $0): This script must run inside Chrome OS chroot" >&2
+if [[ -z "${CROS_WORKON_SRCROOT}" ]]; then
+  echo "${progname}: This script must run inside Chrome OS chroot" >&2
   exit 1
 fi
 
-H1_DEVIDS=${H1_DEVIDS:=}
+: ${H1_DEVIDS=}
 EC_ROOT="${CROS_WORKON_SRCROOT}/src/platform/ec"
 EC_BIN_ROOT="${EC_ROOT}/util/signer"
 
@@ -80,16 +81,16 @@ cp "${EC_BIN_ROOT}/ec_RW-manifest-dev.json" "${tmpf}"
 
 elves=( build/cr50/RW/ec.RW.elf build/cr50/RW/ec.RW_B.elf )
 cd "${EC_ROOT}"
-while (( "$#" )); do
+while (( $# )); do
   param="${1}"
-  case $param in
+  case "${param}" in
     (hex) do_hex='true';;
     (b1)
       do_b1='true'
       sed -i 's/\(.*FW_DEFINED_DATA_BLK0.*\): 2/\1: 0/' "${tmpf}"
       ;;
     (elves)
-      if [ -z "${2}" -o -z "${3}" ]; then
+      if [[ (( $# < 3 )) ]]; then
         echo "two elf file names are required" >&2
         exit 1
       fi
@@ -110,33 +111,34 @@ while (( "$#" )); do
   shift
 done
 
-if [ -z "${do_hex}" -a ! -f "${RESULT_FILE}" ]; then
+if [[ -z "${do_hex}" && ! -f "${RESULT_FILE}" ]]; then
   echo "${RESULT_FILE} not found. Run 'make BOARD=cr50' first" >&2
   exit 1
 fi
 
-if [ -n "${do_prod}" -a -n "${do_b1}" ]; then
+if [[ -n "${do_prod}" && -n "${do_b1}" ]]; then
   echo "can not build prod images for B1, sorry..."
   exit 1
 fi
 
-signer_command_params="--b -x ${EC_BIN_ROOT}/fuses.xml"
-if [ -z "${do_prod}" ]; then
-  signer_command_params+=" -k ${EC_BIN_ROOT}/cr50_rom0-dev-blsign.pem.pub"
+signer_command_params=()
+signer_command_params+=(--b -x ${EC_BIN_ROOT}/fuses.xml)
+if [[ -z "${do_prod}" ]]; then
+  signer_command_params+=(-k ${EC_BIN_ROOT}/cr50_rom0-dev-blsign.pem.pub)
 else
   cp "${EC_BIN_ROOT}/ec_RW-manifest-prod.json" "${tmpf}"
-  signer_command_params+=" -k ${EC_BIN_ROOT}/cr50_RW-prod.pem.pub"
+  signer_command_params+=(-k ${EC_BIN_ROOT}/cr50_RW-prod.pem.pub)
 fi
-signer_command_params+=" -j ${tmpf}"
+signer_command_params+=(-j ${tmpf})
 
-if [ -n "${do_hex}" ]; then
+if [[ -n "${do_hex}" ]]; then
   dst_suffix='signed.hex'
 else
-  signer_command_params+=' --format=bin'
+  signer_command_params+=(--format=bin)
   dst_suffix='flat'
 fi
 
-if [ -z "${do_prod}" -a -n "${H1_DEVIDS}" ]; then
+if [[ -z "${do_prod}" && -n "${H1_DEVIDS}" ]]; then
   echo "creating a customized DEV image for DEV IDS ${H1_DEVIDS}"
   sub=$(printf "\\\n    \"DEV_ID0\": %d,\\\n    \"DEV_ID1\": %d," ${H1_DEVIDS})
   sed -i "s/\"fuses\": {/\"fuses\": {${sub}/" "${tmpf}"
@@ -144,27 +146,33 @@ fi
 
 count=0
 for elf in ${elves[@]}; do
-  if [ -n "${do_prod}" ]; then
+  if [[ -n "${do_prod}" ]]; then
     if grep -q "DEV/cr50" "${elf}"; then
       echo "Will not sign debug image with prod keys" >&2
       exit 1
     fi
   fi
   signed_file="${count}.${dst_suffix}"
-  sudo ${BIN_ROOT}/codesigner ${signer_command_params} \
+
+  # Make sure this file is not owned by root
+  touch "${signed_file}"
+  sudo ${BIN_ROOT}/codesigner ${signer_command_params[@]} \
     -i ${elf} -o "${signed_file}"
-  if [ ! -s "${signed_file}" ]; then
-    echo "$(basename $0): error: empty signed file ${signed_file}" >&2
+  if [[ ! -s "${signed_file}" ]]; then
+    echo "${progname}: error: empty signed file ${signed_file}" >&2
     exit 1
   fi
-  count=$(( count + 1 ))
+  : $(( count++ ))
 done
 
-if [ -n "${do_hex}" ]; then
-  exit 0  # Hex RW images generated.
+if [[ -z "${do_hex}" ]]; then
+  # Full binary image is required, paste the newly signed blobs into the
+  # output image, preserving it in case dd fails for whatever reason.
+  cp "${RESULT_FILE}" "${TMP_RESULT_FILE}"
+  dd if="0.flat" of="${TMP_RESULT_FILE}" seek=16384 bs=1 conv=notrunc
+  dd if="1.flat" of="${TMP_RESULT_FILE}" seek=278528 bs=1 conv=notrunc
+  rm [01].flat
+  mv "${TMP_RESULT_FILE}" "${RESULT_FILE}"
 fi
 
-# Now paste the newly signed blobs into the output image.
-dd if="0.flat" of="${RESULT_FILE}" seek=16384 bs=1 conv=notrunc
-dd if="1.flat" of="${RESULT_FILE}" seek=278528 bs=1 conv=notrunc
-sudo rm [01].flat
+echo "SUCCESS!!!"
