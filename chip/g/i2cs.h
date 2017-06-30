@@ -50,4 +50,15 @@ size_t i2cs_zero_read_fifo_buffer_depth(void);
  */
 void i2cs_post_read_fill_fifo(uint8_t *buffer, size_t len);
 
+/*
+ * Provide upper layers with information with the I2CS interface
+ * status/statistics. The only piece of information currently provided is the
+ * counter of "hosed" i2c interface occurences, where i2c clocking stopped
+ * while slave was transmitting a zero.
+ */
+struct i2cs_status {
+	uint16_t read_recovery_count;
+};
+void i2cs_get_status(struct i2cs_status *status);
+
 #endif /* ! __CHIP_G_I2CS_H */

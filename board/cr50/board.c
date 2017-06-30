@@ -1604,6 +1604,12 @@ void i2cs_set_pinmux(void)
 	GWRITE_FIELD(PINMUX, DIOA1_CTL, IE, 1);	 /* I2CS_SDA */
 	GWRITE_FIELD(PINMUX, DIOA9_CTL, IE, 1);	 /* I2CS_SCL */
 
+	/*
+	 * Provide access to the SDA line to be able to detect 'hosed i2c
+	 * slave' condition.
+	 */
+	GWRITE(PINMUX, GPIO0_GPIO14_SEL, GC_PINMUX_DIOA1_SEL);
+
 	/* Allow I2CS_SCL to wake from sleep */
 	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA9, 1); /* edge sensitive */
 	GWRITE_FIELD(PINMUX, EXITINV0, DIOA9, 1);  /* wake on low */

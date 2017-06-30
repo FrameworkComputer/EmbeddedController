@@ -229,14 +229,22 @@ DECLARE_HOOK(HOOK_INIT, i2cs_if_register, HOOK_PRIO_LAST);
 
 static int command_i2cs(int argc, char **argv)
 {
+	static uint16_t base_read_recovery_count;
+	struct i2cs_status status;
+
+	i2cs_get_status(&status);
+
 	ccprintf("rd fifo adjust cnt = %d\n", i2cs_fifo_adjust_count);
 	ccprintf("wr mismatch cnt = %d\n", i2cs_write_error_count);
+	ccprintf("read recovered cnt = %d\n", status.read_recovery_count
+		 - base_read_recovery_count);
 	if (argc < 2)
 		return EC_SUCCESS;
 
 	if (!strcasecmp(argv[1], "reset")) {
 		i2cs_fifo_adjust_count = 0;
 		i2cs_write_error_count = 0;
+		base_read_recovery_count = status.read_recovery_count;
 		ccprintf("i2cs error counts reset\n");
 	} else
 		return EC_ERROR_PARAM1;
