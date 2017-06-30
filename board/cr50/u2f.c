@@ -143,7 +143,7 @@ static int _derive_key(enum dcrypto_appid appid, const uint32_t input[8],
 int u2f_origin_keypair(uint8_t *seed, p256_int *d,
 		       p256_int *pk_x, p256_int *pk_y)
 {
-	uint32_t tmp[8];
+	uint32_t tmp[P256_NDIGITS];
 
 	do {
 		if (!DCRYPTO_ladder_random(seed))
@@ -159,7 +159,7 @@ int u2f_origin_keypair(uint8_t *seed, p256_int *d,
 
 int u2f_origin_key(const uint8_t *seed, p256_int *d)
 {
-	uint32_t tmp[8];
+	uint32_t tmp[P256_NDIGITS];
 
 	memcpy(tmp, seed, sizeof(tmp));
 	if (!_derive_key(U2F_ORIGIN, tmp, tmp))
@@ -170,7 +170,7 @@ int u2f_origin_key(const uint8_t *seed, p256_int *d)
 
 int u2f_gen_kek(const uint8_t *origin, uint8_t *kek, size_t key_len)
 {
-	uint32_t buf[8];
+	uint32_t buf[P256_NDIGITS];
 
 	if (key_len != sizeof(buf))
 		return EC_ERROR_UNKNOWN;
@@ -183,7 +183,7 @@ int u2f_gen_kek(const uint8_t *origin, uint8_t *kek, size_t key_len)
 
 int g2f_individual_keypair(p256_int *d, p256_int *pk_x, p256_int *pk_y)
 {
-	uint8_t buf[32];
+	uint8_t buf[SHA256_DIGEST_SIZE];
 
 	/* Incorporate HIK & diversification constant */
 	if (!_derive_key(U2F_ATTEST, salt, (uint32_t *)buf))
@@ -195,7 +195,7 @@ int g2f_individual_keypair(p256_int *d, p256_int *pk_x, p256_int *pk_y)
 
 		DCRYPTO_SHA256_init(&sha, 0);
 		HASH_update(&sha, buf, sizeof(buf));
-		memcpy(buf, HASH_final(&sha), SHA_DIGEST_MAX_BYTES);
+		memcpy(buf, HASH_final(&sha), sizeof(buf));
 	}
 
 	return EC_SUCCESS;
