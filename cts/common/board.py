@@ -79,7 +79,7 @@ class Board(object):
     Returns:
       List of serials
     """
-    usb_args = ['lsusb', '-v', '-d', '0x0483:0x374b']
+    usb_args = ['sudo', 'lsusb', '-v', '-d', '0x0483:0x374b']
     st_link_info = sp.check_output(usb_args)
     st_serials = []
     for line in st_link_info.split('\n'):
@@ -105,7 +105,7 @@ class Board(object):
     Returns:
       True if execution is successful or False otherwise.
     """
-    args = ['openocd', '-s', OCD_SCRIPT_DIR,
+    args = ['sudo', 'openocd', '-s', OCD_SCRIPT_DIR,
             '-f', self.openocd_config, '-c', 'hla_serial ' + self.hla_serial]
 
     for cmd in commands:
@@ -194,7 +194,8 @@ class Board(object):
     except serial.SerialException:
       raise ValueError('Failed to open ' + self.tty_port + ' of ' + self.board +
                        '. Please make sure the port is available and you have' +
-                       ' permission to read it.')
+                       ' permission to read it. Create dialout group and run:' +
+                       ' sudo usermod -a -G dialout <username>.')
     self.tty = tty
 
   def read_tty(self, max_boot_count=1):
