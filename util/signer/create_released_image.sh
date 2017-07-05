@@ -13,7 +13,6 @@
 #
 
 set -u
-set -e
 
 # A very crude RO verification function. The key signature found at a fixed
 # offset into the RO blob must match the RO type. Prod keys have bit D2 set to
@@ -110,6 +109,14 @@ prepare_image() {
 }
 
 # Execution starts here ===========================
+if [ -z "${CROS_WORKON_SRCROOT}" ]; then
+ echo "$(basename $0): This script must run inside Chrome OS chroot" >&2
+  exit 1
+fi
+
+SCRIPT_ROOT="${CROS_WORKON_SRCROOT}/src/scripts"
+. "${SCRIPT_ROOT}/build_library/build_common.sh" || exit 1
+
 TMPD="$(mktemp -d /tmp/$(basename $0).XXXXX)"
 trap "/bin/rm -rf ${TMPD}" SIGINT SIGTERM EXIT
 
@@ -119,15 +126,26 @@ dest_dir=
 IMAGE_SIZE='524288'
 export RESULT_FILE
 
-if [ -z "${CROS_WORKON_SRCROOT}" ]; then
- echo "$(basename $0): This script must run inside Chrome OS chroot" >&2
-  exit 1
-fi
+DEFINE_string cr50_board_id "" \
+  "Optional string representing Board ID field of the Cr50 RW header.
+Consists of three fields separated by colon: <RLZ>:<hex mask>:<hex flags>"
 
+# Do not put this before the DEFINE_ invocations - they routinely experience
+# error return values.
+set -e
+
+FLAGS_HELP="usage: $(basename $0) [flags] <blobs>
+
+blobs are:
+  <prod RO A>.hex <prod RO B>.hex <dev RO A>.hex <dev RO B>.hex \
+ <RW.elf> <RW_B.elf>"
+
+# Parse command line.
+FLAGS "$@" || exit 1
+
+eval set -- "${FLAGS_ARGV}"
 if [ "${#*}" != "6" ]; then
-  echo "six parameters are required: "
-  echo "<prod RO A>.hex " \
-    "<prod RO B>.hex <dev RO A>.hex <dev RO B>.hex <RW.elf> <RW_B.elf>" >&2
+  flags_help
   exit 1
 fi
 
@@ -144,6 +162,9 @@ dev_ro_a="${3}"
 dev_ro_b="${4}"
 rw_a="${5}"
 rw_b="${6}"
+
+# Used by the bs script.
+export CR50_BOARD_ID="${FLAGS_cr50_board_id}"
 
 prepare_image 'dev' "${dev_ro_a}" "${dev_ro_b}" "${rw_a}" "${rw_b}"
 prepare_image 'prod' "${prod_ro_a}" "${prod_ro_b}" "${rw_a}" "${rw_b}"

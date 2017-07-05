@@ -52,8 +52,57 @@ The same values can be obtained in the lsusb command output:
 note that the lsusb reported values are in hex and need to be prefixed with
 0x.
 
+Finally, this script also allows to specify the board ID fields of the RW
+headers. The fields come from the evironment variable CR50_BOARD_ID, which is
+required to include three colon separated fields. The first field is a four
+letter board RLZ code, the second field is board id mask in hex, no 0x prefix,
+and the third field - board ID flags, again, hex, no 0x prefix.
+
+CR50_BOARD_ID='XXYY:12:13' ${progname} [other options, if any]
+
+both H1_DEVIDS and CR50_BOARD_ID can be defined independently.
+
 EOF
   exit "${rv}"
+}
+
+# This function modifies the manifest to include device ID and board ID nodes,
+# if H1_DEVIDS and CR50_BOARD_ID are defined in the environment, respectively,
+tweak_manifest () {
+  local sub
+
+  # If defined, plug in dev ID nodes before the 'fuses' node.
+  if [[ -z "${do_prod}" && -n "${H1_DEVIDS}" ]]; then
+    echo "creating a customized DEV image for DEV IDS ${H1_DEVIDS}"
+    sub=$(printf "\\\n   \"DEV_ID0\": %d,\\\n   \"DEV_ID1\": %d," ${H1_DEVIDS})
+    sed -i "s/\"fuses\": {/\"fuses\": {${sub}/" "${tmpf}"
+  fi
+
+  if [[ -z "${CR50_BOARD_ID}" ]]; then
+    return
+  fi
+
+  # CR50_BOARD_ID is set, let's parse it and plug in the board ID related
+  # nodes into manifest before the 'fuses' node.
+  local bid_params
+  local rlz
+
+  bid_params=( $(echo $CR50_BOARD_ID | sed 's/:/ /g') )
+  # A very basic sanity check: it needs to consist of three colon separated
+  # fields.
+  if [[ ${#bid_params[@]} != 3 ]]; then
+    echo "Wrong board ID string \"$CR50_BOARD_ID\"}" >&2
+    exit 1
+  fi
+
+  # Convert board RLZ code from ASCII to hex
+  rlz="0x$(echo -n ${bid_params[0]} | hexdump -ve '/1 "%02x"')"
+
+  # Prepare text of all three board ID related nodes
+  sub="$(printf "\\\n\"board_id\": %d,\\\n" "${rlz}")"
+  sub+="$(printf "\"board_id_flags\": %d,\\\n" "0x${bid_params[1]}")"
+  sub+="$(printf "\"board_id_mask\": %d,\\\n" "0x${bid_params[2]}")"
+  sed -i "s/\"fuses\": {/${sub}\"fuses\": {/" "${tmpf}"
 }
 
 # This is the suggested location of the codesigner utility.
@@ -68,6 +117,7 @@ if [[ -z "${CROS_WORKON_SRCROOT}" ]]; then
   exit 1
 fi
 
+: ${CR50_BOARD_ID=}
 : ${H1_DEVIDS=}
 EC_ROOT="${CROS_WORKON_SRCROOT}/src/platform/ec"
 EC_BIN_ROOT="${EC_ROOT}/util/signer"
@@ -138,11 +188,7 @@ else
   dst_suffix='flat'
 fi
 
-if [[ -z "${do_prod}" && -n "${H1_DEVIDS}" ]]; then
-  echo "creating a customized DEV image for DEV IDS ${H1_DEVIDS}"
-  sub=$(printf "\\\n    \"DEV_ID0\": %d,\\\n    \"DEV_ID1\": %d," ${H1_DEVIDS})
-  sed -i "s/\"fuses\": {/\"fuses\": {${sub}/" "${tmpf}"
-fi
+tweak_manifest
 
 count=0
 for elf in ${elves[@]}; do
