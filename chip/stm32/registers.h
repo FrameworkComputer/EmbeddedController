@@ -1347,7 +1347,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define  FLASH_CR_LOCK                  (1 << 7)
 #define  FLASH_CR_OPTWRE                (1 << 9)
 #define  FLASH_CR_OBL_LAUNCH            (1 << 13)
-#define STM32_FLASH_OPT_LOCKED      (STM32_FLASH_CR & FLASH_CR_OPTWRE)
+#define STM32_FLASH_OPT_LOCKED      (!(STM32_FLASH_CR & FLASH_CR_OPTWRE))
 #define STM32_FLASH_AR              REG32(STM32_FLASH_REGS_BASE + 0x14)
 #define STM32_FLASH_OBR             REG32(STM32_FLASH_REGS_BASE + 0x1c)
 #define STM32_FLASH_OBR_RDP_MASK        (3 << 1)
