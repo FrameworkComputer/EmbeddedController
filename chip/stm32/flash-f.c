@@ -523,9 +523,6 @@ static int registers_need_reset(void)
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
 	int ro_wp_region_start = WP_BANK_OFFSET;
 	int ro_wp_region_end = WP_BANK_OFFSET + WP_BANK_COUNT;
-#ifdef CONFIG_FLASH_PSTATE
-	ro_wp_region_end += PSTATE_BANK_COUNT;
-#endif
 
 	for (i = ro_wp_region_start; i < ro_wp_region_end; i++)
 		if (flash_physical_get_protect_at_boot(i) != ro_at_boot)
