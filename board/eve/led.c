@@ -21,7 +21,6 @@
 #define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
 
 #define LED_TICKS_PER_BEAT 2
-#define LED_BEATS_PER_PHASE 2
 #define NUM_PHASE 2
 #define DOUBLE_TAP_TICK_LEN (LED_TICKS_PER_BEAT * 8)
 
@@ -123,14 +122,17 @@ struct range_map {
 	uint8_t pattern;
 };
 
+#if (CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC >= 3)
+#error "LED: PULSE_RED_2 battery level <= BLINK_RED level"
+#endif
 static const struct range_map pattern_tbl[] = {
-	{2, BLINK_RED},
-	{4, PULSE_RED_2},
-	{10, PULSE_RED_1},
-	{15, SOLID_RED},
-	{30, WHITE_RED},
-	{90, SOLID_WHITE},
-	{98, WHITE_GREEN},
+	{CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC - 1, BLINK_RED},
+	{3, PULSE_RED_2},
+	{9, PULSE_RED_1},
+	{14, SOLID_RED},
+	{29, WHITE_RED},
+	{89, SOLID_WHITE},
+	{97, WHITE_GREEN},
 	{100, SOLID_GREEN},
 };
 
