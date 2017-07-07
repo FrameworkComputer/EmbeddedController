@@ -1370,7 +1370,7 @@ void usb_init(void)
 #endif
 }
 #ifndef CONFIG_USB_INHIBIT_INIT
-DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, usb_init, HOOK_PRIO_DEFAULT - 2);
 #endif
 
 void usb_release(void)

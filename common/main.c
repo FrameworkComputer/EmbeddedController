@@ -121,16 +121,20 @@ test_mockable __keep int main(void)
 	/* Initialize UART.  Console output functions may now be used. */
 	uart_init();
 
-	if (system_jumped_to_this_image()) {
-		CPRINTS("UART initialized after sysjump");
-	} else {
-		CPUTS("\n\n--- UART initialized after reboot ---\n");
-		CPUTS("[Reset cause: ");
-		system_print_reset_flags();
-		CPUTS("]\n");
+	/* be less verbose if we boot for USB resume to meet spec timings */
+	if (!(system_get_reset_flags() & RESET_FLAG_USB_RESUME)) {
+		if (system_jumped_to_this_image()) {
+			CPRINTS("UART initialized after sysjump");
+		} else {
+			CPUTS("\n\n--- UART initialized after reboot ---\n");
+			CPUTS("[Reset cause: ");
+			system_print_reset_flags();
+			CPUTS("]\n");
+		}
+		CPRINTF("[Image: %s, %s]\n",
+			 system_get_image_copy_string(),
+			 system_get_build_info());
 	}
-	CPRINTF("[Image: %s, %s]\n",
-		 system_get_image_copy_string(), system_get_build_info());
 
 #ifdef CONFIG_BRINGUP
 	ccprintf("\n\nWARNING: BRINGUP BUILD\n\n\n");
