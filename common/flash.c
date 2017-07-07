@@ -98,7 +98,11 @@ BUILD_ASSERT(sizeof(struct persist_state) % CONFIG_FLASH_WRITE_SIZE == 0);
 #endif
 
 const uint32_t pstate_data __attribute__((section(".rodata.pstate"))) =
+#ifdef CONFIG_FLASH_PSTATE_LOCKED
+	PSTATE_MAGIC_LOCKED;
+#else
 	PSTATE_MAGIC_UNLOCKED;
+#endif
 
 #endif /* !CONFIG_FLASH_PSTATE_BANK */
 #endif /* CONFIG_FLASH_PSTATE */

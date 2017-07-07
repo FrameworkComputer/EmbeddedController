@@ -1072,6 +1072,13 @@
  * screw, of course).
  */
 #define CONFIG_FLASH_PSTATE_BANK
+
+/*
+ * Lock the PSTATE by default (currently only supported when
+ * CONFIG_FLASH_PSTATE_BANK is not defined).
+ */
+#undef CONFIG_FLASH_PSTATE_LOCKED
+
 /*
  * For flash that is segemented in different regions.
  */

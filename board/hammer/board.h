@@ -10,6 +10,8 @@
 
 /* TODO: Remove CONFIG_SYSTEM_UNLOCKED prior to building MP FW. */
 #define CONFIG_SYSTEM_UNLOCKED
+/* TODO(b:63378217): Define FLASH_PSTATE_LOCKED prior to building MP FW. */
+#undef CONFIG_FLASH_PSTATE_LOCKED
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
