@@ -5,6 +5,7 @@
  */
 
 #include <asm/byteorder.h>
+#include <ctype.h>
 #include <endian.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -1232,11 +1233,45 @@ static int show_headers_versions(const void *image)
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++) {
 		const struct SignedHeader *h;
+		size_t j;
+		uint32_t bid;
+		uint32_t bid_mask;
+		uint32_t bid_flags;
 
 		h = (const struct SignedHeader *)((uintptr_t)image +
 						  sections[i].offset);
 		printf("%s%s:%d.%d.%d", i ? " " : "", sections[i].name,
 		       h->epoch_, h->major_, h->minor_);
+
+		if (sections[i].name[1] != 'W')
+			continue;
+
+		/*
+		 * For read/write sections print the board ID fields'
+		 * contents, which are stored XORed with a padding value.
+		 */
+		bid = h->board_id_type ^ SIGNED_HEADER_PADDING;
+		bid_mask = h->board_id_type_mask ^ SIGNED_HEADER_PADDING;
+		bid_flags = h->board_id_flags ^ SIGNED_HEADER_PADDING;
+
+		/* Beginning of a board ID section of the string. */
+		printf("[");
+
+		/*
+		 * If board ID is an ASCII string (as it ought to be), print
+		 * it as 4 symbols, otherwise print it as an 8 digit hex.
+		 */
+		for (j = 0; j < sizeof(bid); j++)
+			if (!isalnum(((const char *)&bid)[j]))
+				break;
+
+		if (j == sizeof(bid))
+			printf("%.4s", (const char *)&bid);
+		else
+			printf("%08x", bid);
+
+		/* Print the rest of the board ID fields. */
+		printf(":%08x:%08x]", bid_mask, bid_flags);
 	}
 	printf("\n");
 
