@@ -433,6 +433,8 @@
 #undef CONFIG_CHARGER_BQ25895
 #undef CONFIG_CHARGER_ISL9237
 #undef CONFIG_CHARGER_ISL9238
+#undef CONFIG_CHARGER_RT9466
+#undef CONFIG_CHARGER_RT9467
 
 /*
  * Enable the CHG_EN at initialization to turn-on the BGATE which allows voltage

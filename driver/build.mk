@@ -50,6 +50,8 @@ driver-$(CONFIG_CHARGER_BQ25892)+=charger/bq2589x.o
 driver-$(CONFIG_CHARGER_BQ25895)+=charger/bq2589x.o
 driver-$(CONFIG_CHARGER_ISL9237)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_ISL9238)+=charger/isl923x.o
+driver-$(CONFIG_CHARGER_RT9466)+=charger/rt946x.o
+driver-$(CONFIG_CHARGER_RT9467)+=charger/rt946x.o
 
 # I/O expander
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander_pca9534.o
