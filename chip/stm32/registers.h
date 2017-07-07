@@ -1342,7 +1342,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define  FLASH_CR_PG                    (1 << 0)
 #define  FLASH_CR_PER                   (1 << 1)
 #define  FLASH_CR_OPTPG                 (1 << 4)
-#define  FLASH_CR_OPTSTRT               (1 << 5)
+#define  FLASH_CR_OPTER                 (1 << 5)
 #define  FLASH_CR_STRT                  (1 << 6)
 #define  FLASH_CR_LOCK                  (1 << 7)
 #define  FLASH_CR_OPTWRE                (1 << 9)

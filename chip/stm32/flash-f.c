@@ -82,6 +82,10 @@ static int unlock(int locks)
 
 static void lock(void)
 {
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+	/* FLASH_CR_OPTWRE was set by writing the keys in unlock(). */
+	STM32_FLASH_CR &= ~FLASH_CR_OPTWRE;
+#endif
 	STM32_FLASH_CR |= FLASH_CR_LOCK;
 }
 
@@ -147,10 +151,13 @@ static int erase_optb(void)
 		return rv;
 
 	/* Must be set in 2 separate lines. */
-	STM32_FLASH_CR |= FLASH_CR_OPTSTRT;
+	STM32_FLASH_CR |= FLASH_CR_OPTER;
 	STM32_FLASH_CR |= FLASH_CR_STRT;
 
 	rv = wait_busy();
+
+	STM32_FLASH_CR &= ~FLASH_CR_OPTER;
+
 	if (rv)
 		return rv;
 	lock();
