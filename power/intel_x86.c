@@ -26,6 +26,8 @@
 /* Chipset specific header files */
 #ifdef CONFIG_CHIPSET_APOLLOLAKE
 #include "apollolake.h"
+#elif defined(CONFIG_CHIPSET_CANNONLAKE)
+#include "cannonlake.h"
 #elif defined(CONFIG_CHIPSET_SKYLAKE)
 #include "skylake.h"
 #endif
@@ -431,7 +433,7 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 	/* Only passthrough RSMRST_L de-assertion on power up */
 	if (rsmrst_in && !power_s5_up)
 		return;
-#elif defined(CONFIG_CHIPSET_SKYLAKE)
+#elif defined(CONFIG_CHIPSET_SKYLAKE) || defined(CONFIG_CHIPSET_CANNONLAKE)
 	/*
 	 * Wait at least 10ms between power signals going high
 	 * and deasserting RSMRST to PCH.
