@@ -79,6 +79,7 @@ test-list-host += usb_pd
 test-list-host += usb_pd_giveback
 test-list-host += utils
 test-list-host += utils_str
+test-list-host += vboot
 test-list-host += x25519
 endif
 
@@ -130,4 +131,5 @@ usb_pd-y=usb_pd.o
 usb_pd_giveback-y=usb_pd.o
 utils-y=utils.o
 utils_str-y=utils_str.o
+vboot-y=vboot.o
 x25519-y=x25519.o

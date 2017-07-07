@@ -22,6 +22,7 @@
 #include "vb21_struct.h"
 
 #define CPRINTS(format, args...) cprints(CC_VBOOT, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
 
 enum vboot_ec_slot {
 	VBOOT_EC_SLOT_A,
@@ -47,93 +48,14 @@ static int is_low_power_ap_boot_supported(void)
 	return 0;
 }
 
-static int is_vb21_packed_key_valid(const struct vb21_packed_key *key)
-{
-	if (key->c.magic != VB21_MAGIC_PACKED_KEY)
-		return EC_ERROR_INVAL;
-	if (key->key_size != sizeof(struct rsa_public_key))
-		return EC_ERROR_INVAL;
-	return EC_SUCCESS;
-}
-
-static int is_vb21_signature_valid(const struct vb21_signature *sig,
-				   const struct vb21_packed_key *key)
-{
-	if (sig->c.magic != VB21_MAGIC_SIGNATURE)
-		return EC_ERROR_INVAL;
-	if (sig->sig_size != RSANUMBYTES)
-		return EC_ERROR_INVAL;
-	if (key->sig_alg != sig->sig_alg)
-		return EC_ERROR_INVAL;
-	if (key->hash_alg != sig->hash_alg)
-		return EC_ERROR_INVAL;
-	/* Sanity check signature offset and data size. */
-	if (sig->sig_offset < sizeof(*sig))
-		return EC_ERROR_INVAL;
-	if (sig->sig_offset + RSANUMBYTES > CONFIG_RW_SIG_SIZE)
-		return EC_ERROR_INVAL;
-	if (sig->data_size > CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
-		return EC_ERROR_INVAL;
-	return EC_SUCCESS;
-}
-
-static int is_padding_valid(const uint8_t *data, unsigned int start, int len)
-{
-	const uint32_t *data32 = (const uint32_t *)data;
-	int i;
-
-	if (len < 0)
-		return EC_ERROR_INVAL;
-
-	if ((start % 4) != 0 || (len % 4) != 0)
-		return EC_ERROR_INVAL;
-
-	for (i = start/4; i < len/4; i++) {
-		if (data32[i] != 0xffffffff)
-			return EC_ERROR_INVAL;
-	}
-
-	return EC_SUCCESS;
-}
-
-static int vboot_verify(const uint8_t *data, int len,
-			const struct rsa_public_key *key, const uint8_t *sig)
-{
-	struct sha256_ctx ctx;
-	uint8_t *hash;
-	uint32_t *workbuf;
-	int err = EC_SUCCESS;
-
-	if (shared_mem_acquire(3 * RSANUMBYTES, (char **)&workbuf)) {
-		CPRINTS("Failed to allocate memory");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	/* Compute hash of the RW firmware */
-	SHA256_init(&ctx);
-	SHA256_update(&ctx, data, len);
-	hash = SHA256_final(&ctx);
-
-	/* Verify the data */
-	if (rsa_verify(key, sig, hash, workbuf) != 1) {
-		CPRINTS("Invalid data");
-		err = EC_ERROR_INVAL;
-	}
-
-	shared_mem_release(workbuf);
-
-	return err;
-}
-
 static int verify_slot(int slot)
 {
-	const uint8_t *data;
 	const struct vb21_packed_key *vb21_key;
 	const struct vb21_signature *vb21_sig;
 	const struct rsa_public_key *key;
 	const uint8_t *sig;
+	const uint8_t *data;
 	int len;
-	int rv = EC_ERROR_INVAL;
 
 	CPRINTS("Verifying RW_%c", slot == VBOOT_EC_SLOT_A ? 'A' : 'B');
 
@@ -141,9 +63,9 @@ static int verify_slot(int slot)
 			CONFIG_MAPPED_STORAGE_BASE +
 			CONFIG_EC_PROTECTED_STORAGE_OFF +
 			CONFIG_RO_PUBKEY_STORAGE_OFF);
-	if (is_vb21_packed_key_valid(vb21_key)) {
+	if (vb21_is_packed_key_valid(vb21_key)) {
 		CPRINTS("Invalid key");
-		goto exit;
+		return EC_ERROR_INVAL;
 	}
 	key = (const struct rsa_public_key *)
 		((const uint8_t *)vb21_key + vb21_key->key_offset);
@@ -166,28 +88,25 @@ static int verify_slot(int slot)
 				CONFIG_RW_B_SIGN_STORAGE_OFF);
 	}
 
-	if (is_vb21_signature_valid(vb21_sig, vb21_key)) {
+	if (vb21_is_signature_valid(vb21_sig, vb21_key)) {
 		CPRINTS("Invalid signature");
-		goto exit;
+		return EC_ERROR_INVAL;
 	}
 	sig = (const uint8_t *)vb21_sig + vb21_sig->sig_offset;
 	len = vb21_sig->data_size;
 
-	if (is_padding_valid(data, len,
-			     CONFIG_RW_SIZE - len - CONFIG_RW_SIG_SIZE)) {
+	if (vboot_is_padding_valid(data, len,
+				   CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)) {
 		CPRINTS("Invalid padding");
-		goto exit;
+		return EC_ERROR_INVAL;
 	}
 
 	if (vboot_verify(data, len, key, sig)) {
 		CPRINTS("Invalid data");
-		goto exit;
+		return EC_ERROR_INVAL;
 	}
 
-	rv = EC_SUCCESS;
-
-exit:
-	return rv;
+	return EC_SUCCESS;
 }
 
 static int verify_and_jump(void)
@@ -238,7 +157,7 @@ static int is_manual_recovery(void)
 	return host_get_events() & EC_HOST_EVENT_KEYBOARD_RECOVERY;
 }
 
-void vboot_ec(void)
+void vboot_main(void)
 {
 	int port = charge_manager_get_active_charge_port();
 

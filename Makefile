@@ -196,6 +196,7 @@ $(eval $(call get_sources,ro))
 
 dirs=core/$(CORE) chip/$(CHIP) $(BDIR) common power test cts/common cts/$(CTS_MODULE)
 dirs+= private $(PDIR)
+dirs+=$(shell find common -type d)
 dirs+=$(shell find driver -type d)
 common_dirs=util
 

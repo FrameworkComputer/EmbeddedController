@@ -280,7 +280,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		 */
 		{
 		if (!system_can_boot_ap()) {
-			vboot_ec();
+			vboot_main();
 			while (!system_can_boot_ap())
 				/* LED blinks as HOOK_TICK events trigger.
 				 * We can print percent & power as they
