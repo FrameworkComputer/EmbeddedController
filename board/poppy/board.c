@@ -363,15 +363,14 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	}
 };
 
-struct mutex pericom_mux_lock;
 struct pi3usb9281_config pi3usb9281_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_CHARGER_0,
-		.mux_lock = &pericom_mux_lock,
+		.mux_lock = NULL,
 	},
 	{
 		.i2c_port = I2C_PORT_USB_CHARGER_1,
-		.mux_lock = &pericom_mux_lock,
+		.mux_lock = NULL,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
