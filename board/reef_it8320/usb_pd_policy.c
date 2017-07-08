@@ -10,7 +10,7 @@
 #include "console.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
-#include "driver/tcpm/ps8751.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"

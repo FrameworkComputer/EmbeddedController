@@ -18,7 +18,7 @@
 #include "driver/als_al3010.h"
 #include "driver/accel_kionix.h"
 #include "driver/charger/isl923x.h"
-#include "driver/tcpm/ps8751.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "driver/temp_sensor/g78x.h"
@@ -213,12 +213,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 	{
 		.port_addr = 1,
 		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
 };
 

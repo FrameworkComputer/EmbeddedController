@@ -20,7 +20,7 @@
 #include "console.h"
 #include "driver/pmic_tps650830.h"
 #include "driver/temp_sensor/tmp432.h"
-#include "driver/tcpm/ps8751.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "extpower.h"
@@ -122,7 +122,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
 };
 

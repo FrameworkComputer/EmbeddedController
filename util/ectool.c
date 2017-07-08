@@ -25,7 +25,7 @@
 #include "lock/gec_lock.h"
 #include "misc_util.h"
 #include "panic.h"
-#include "ps8751.h"
+#include "ps8xxx.h"
 #include "usb_pd.h"
 
 /* Command line options */
@@ -7103,7 +7103,7 @@ int cmd_pd_chip_info(int argc, char *argv[])
 
 	switch (r.vendor_id) {
 	case ANX74XX_VENDOR_ID:
-	case PS8751_VENDOR_ID:
+	case PS8XXX_VENDOR_ID:
 		printf("fw_version: 0x%" PRIx64 "\n", r.fw_version_number);
 		break;
 	default:

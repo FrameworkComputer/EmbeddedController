@@ -7,7 +7,7 @@
 
 #include "anx74xx.h"
 #include "ec_commands.h"
-#include "ps8751.h"
+#include "ps8xxx.h"
 #include "task.h"
 #include "tcpci.h"
 #include "tcpm.h"
@@ -385,9 +385,10 @@ int tcpci_get_chip_info(int port, int renew,
 		error = anx74xx_tcpc_get_fw_version(port, &val);
 		break;
 #endif
-#ifdef CONFIG_USB_PD_TCPM_PS8751
-	case PS8751_VENDOR_ID:
-		error = ps8751_tcpc_get_fw_version(port, &val);
+#if defined(CONFIG_USB_PD_TCPM_PS8751) || defined(CONFIG_USB_PD_TCPM_PS8805)
+	/* The PS8751 and PS8805 share the same vendor ID. */
+	case PS8XXX_VENDOR_ID:
+		error = ps8xxx_tcpc_get_fw_version(port, &val);
 		break;
 #endif
 	default:

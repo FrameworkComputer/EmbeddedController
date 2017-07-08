@@ -21,7 +21,7 @@
 #include "driver/als_opt3001.h"
 #include "driver/baro_bmp280.h"
 #include "driver/tcpm/anx74xx.h"
-#include "driver/tcpm/ps8751.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "driver/temp_sensor/bd99992gw.h"
@@ -359,7 +359,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 1,
 		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	}
 };
 

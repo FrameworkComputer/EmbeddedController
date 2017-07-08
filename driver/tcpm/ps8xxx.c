@@ -1,21 +1,32 @@
-/* Copyright 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2017 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Type-C port manager for Parade PS8751 with integrated superspeed muxes */
+/*
+ * Type-C port manager for Parade PS8XXX with integrated superspeed muxes.
+ *
+ * Supported TCPCs:
+ * - PS8751
+ * - PS8805
+ */
 
 #include "common.h"
-#include "ps8751.h"
+#include "ps8xxx.h"
 #include "tcpm.h"
 #include "timer.h"
 #include "usb_pd.h"
+
+#if !defined(CONFIG_USB_PD_TCPM_PS8751) && \
+	!defined(CONFIG_USB_PD_TCPM_PS8805)
+#error "Unsupported PS8xxx TCPC."
+#endif
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI) || \
 	!defined(CONFIG_USB_PD_TCPM_MUX) || \
 	!defined(CONFIG_USBC_SS_MUX)
 
-#error "PS8751 is using a standard TCPCI interface with integrated mux control"
+#error "PS8XXX is using a standard TCPCI interface with integrated mux control"
 #error "Please upgrade your board configuration"
 
 #endif
@@ -31,14 +42,14 @@ static int dp_set_hpd(int port, int enable)
 	int reg;
 	int rv;
 
-	rv = tcpc_read(port, PS8751_REG_CTRL_1, &reg);
+	rv = tcpc_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
 	if (rv)
 		return rv;
 	if (enable)
-		reg |= PS8751_REG_CTRL_1_HPD;
+		reg |= IN_HPD;
 	else
-		reg &= ~PS8751_REG_CTRL_1_HPD;
-	return tcpc_write(port, PS8751_REG_CTRL_1, reg);
+		reg &= ~IN_HPD;
+	return tcpc_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
 }
 
 static int dp_set_irq(int port, int enable)
@@ -47,17 +58,17 @@ static int dp_set_irq(int port, int enable)
 	int reg;
 	int rv;
 
-	rv = tcpc_read(port, PS8751_REG_CTRL_1, &reg);
+	rv = tcpc_read(port, MUX_IN_HPD_ASSERTION_REG, &reg);
 	if (rv)
 		return rv;
 	if (enable)
-		reg |= PS8751_REG_CTRL_1_IRQ;
+		reg |= HPD_IRQ;
 	else
-		reg &= ~PS8751_REG_CTRL_1_IRQ;
-	return tcpc_write(port, PS8751_REG_CTRL_1, reg);
+		reg &= ~HPD_IRQ;
+	return tcpc_write(port, MUX_IN_HPD_ASSERTION_REG, reg);
 }
 
-void ps8751_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
+void ps8xxx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 {
 	dp_set_hpd(port, hpd_lvl);
 
@@ -75,17 +86,17 @@ void ps8751_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 }
 
-int ps8751_tcpc_get_fw_version(int port, int *version)
+int ps8xxx_tcpc_get_fw_version(int port, int *version)
 {
-	return tcpc_read(port, PS8751_REG_VERSION, version);
+	return tcpc_read(port, FW_VER_REG, version);
 }
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
-struct i2c_stress_test_dev ps8751_i2c_stress_test_dev = {
+struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 	.reg_info = {
-		.read_reg = PS8751_REG_VENDOR_ID_L,
-		.read_val = PS8751_VENDOR_ID & 0xFF,
-		.write_reg = PS8751_REG_CTRL_1,
+		.read_reg = PS8XXX_REG_VENDOR_ID_L,
+		.read_val = PS8XXX_VENDOR_ID & 0xFF,
+		.write_reg = MUX_IN_HPD_ASSERTION_REG,
 	},
 	.i2c_read = &tcpc_i2c_read,
 	.i2c_write = &tcpc_i2c_write,

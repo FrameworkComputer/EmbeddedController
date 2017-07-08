@@ -21,7 +21,7 @@
 #include "driver/baro_bmp280.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/tcpm/anx74xx.h"
-#include "driver/tcpm/ps8751.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "extpower.h"
@@ -188,7 +188,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 	{
 		.port = NPCX_I2C_PORT0_1,
 		.addr = 0x16,
-		.i2c_test = &ps8751_i2c_stress_test_dev,
+		.i2c_test = &ps8xxx_i2c_stress_test_dev,
 	},
 #endif
 
@@ -280,7 +280,7 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 static int ps8751_tune_mux(const struct usb_mux *mux)
 {
 	/* 0x98 sets lower EQ of DP port (4.5db) */
-	i2c_write8(NPCX_I2C_PORT0_1, 0x16, PS8751_REG_MUX_DP_EQ_CONFIGURATION,
+	i2c_write8(NPCX_I2C_PORT0_1, 0x16, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION,
 		   0x98);
 	return EC_SUCCESS;
 }
@@ -294,7 +294,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = USB_PD_PORT_PS8751,
 		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8751_tcpc_update_hpd_status,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 		.board_init = &ps8751_tune_mux,
 	}
 };
