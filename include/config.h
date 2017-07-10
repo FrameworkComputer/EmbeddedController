@@ -2251,6 +2251,9 @@
 /*****************************************************************************/
 /* Touchpad config */
 
+/* Enable touchpad, you must pick a driver (currently, only Elan exists) */
+#undef CONFIG_TOUCHPAD
+
 /* Enable Elan driver */
 #undef CONFIG_TOUCHPAD_ELAN
 

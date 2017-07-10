@@ -164,6 +164,7 @@ enum update_extra_command {
 	UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK = 4,
 	UPDATE_EXTRA_CMD_INJECT_ENTROPY = 5,
 	UPDATE_EXTRA_CMD_PAIR_CHALLENGE = 6,
+	UPDATE_EXTRA_CMD_TOUCHPAD_INFO = 7,
 };
 
 /*
@@ -186,6 +187,19 @@ struct pair_challenge_response {
 	 * HMAC_SHA256(x25519(device_private, host_public), nonce)
 	 */
 	uint8_t authenticator[16];
+} __packed;
+
+struct touchpad_info {
+	uint8_t status; /* = EC_RES_SUCCESS */
+	uint8_t reserved; /* padding */
+	uint16_t vendor; /* Vendor USB id */
+
+	/* Vendor specific data. */
+	struct {
+		uint16_t id;
+		uint16_t fw_version;
+		uint16_t fw_checksum;
+	} elan;
 } __packed;
 
 void fw_update_command_handler(void *body,
@@ -212,5 +226,8 @@ enum {
 	UPDATE_RATE_LIMIT_ERROR = 9,
 	UPDATE_RWSIG_BUSY = 10,
 };
+
+/* Obtain touchpad information */
+int touchpad_get_info(struct touchpad_info *tp);
 
 #endif  /* ! __CROS_EC_UPDATE_FW_H */

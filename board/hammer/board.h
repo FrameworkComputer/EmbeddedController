@@ -175,6 +175,7 @@
 #define CONFIG_PWM
 
 /* Enable elan trackpad driver */
+#define CONFIG_TOUCHPAD
 #define CONFIG_TOUCHPAD_ELAN
 #define CONFIG_TOUCHPAD_I2C_PORT 0
 #define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)

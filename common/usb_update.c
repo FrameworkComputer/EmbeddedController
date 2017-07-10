@@ -298,6 +298,26 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 #endif
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 #endif /* CONFIG_ROLLBACK */
+#ifdef CONFIG_TOUCHPAD
+		case UPDATE_EXTRA_CMD_TOUCHPAD_INFO: {
+			struct touchpad_info tp = { 0 };
+
+			if (data_count != 0) {
+				response = EC_RES_INVALID_PARAM;
+				break;
+			}
+
+			response_size = touchpad_get_info(&tp);
+			if (response_size < 1) {
+				response = EC_RES_ERROR;
+				break;
+			}
+
+			QUEUE_ADD_UNITS(&update_to_usb,
+					&tp, response_size);
+			return 1;
+		}
+#endif
 		default:
 			response = EC_RES_INVALID_COMMAND;
 		}

@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
+#include "update_fw.h"
 #include "util.h"
 #include "usb_hid_touchpad.h"
 
@@ -22,16 +23,21 @@
 /* How to talk to the controller */
 /******************************************************************************/
 
+#define ELAN_VENDOR_ID			0x04f3
+
 #define ETP_I2C_RESET			0x0100
 #define ETP_I2C_WAKE_UP			0x0800
 #define ETP_I2C_SLEEP			0x0801
 #define ETP_I2C_STAND_CMD		0x0005
+#define ETP_I2C_UNIQUEID_CMD		0x0101
+#define ETP_I2C_FW_VERSION_CMD		0x0102
 #define ETP_I2C_XY_TRACENUM_CMD		0x0105
 #define ETP_I2C_MAX_X_AXIS_CMD		0x0106
 #define ETP_I2C_MAX_Y_AXIS_CMD		0x0107
 #define ETP_I2C_RESOLUTION_CMD		0x0108
 #define ETP_I2C_PRESSURE_CMD		0x010A
 #define ETP_I2C_SET_CMD			0x0300
+#define ETP_I2C_FW_CHECKSUM_CMD		0x030F
 
 #define ETP_ENABLE_ABS		0x0001
 
@@ -276,6 +282,35 @@ out:
 	CPRINTS("%s:%d", __func__, rv);
 	return rv;
 }
+
+#ifdef CONFIG_USB_UPDATE
+int touchpad_get_info(struct touchpad_info *tp)
+{
+	int rv;
+	uint16_t val;
+
+	tp->status = EC_RES_SUCCESS;
+	tp->vendor = ELAN_VENDOR_ID;
+
+	/* Get unique ID, FW, SM version. */
+	rv = elan_tp_read_cmd(ETP_I2C_UNIQUEID_CMD, &val);
+	if (rv)
+		return -1;
+	tp->elan.id = val;
+
+	rv = elan_tp_read_cmd(ETP_I2C_FW_VERSION_CMD, &val);
+	if (rv)
+		return -1;
+	tp->elan.fw_version = val & 0xff;
+
+	rv = elan_tp_read_cmd(ETP_I2C_FW_CHECKSUM_CMD, &val);
+	if (rv)
+		return -1;
+	tp->elan.fw_checksum = val;
+
+	return sizeof(*tp);
+}
+#endif
 
 void elan_tp_interrupt(enum gpio_signal signal)
 {
