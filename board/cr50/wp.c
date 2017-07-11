@@ -25,6 +25,15 @@
 #define CPRINTS(format, args...) cprints(CC_RBOX, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_RBOX, format, ## args)
 
+/**
+ * Return non-zero if battery is present
+ */
+int board_battery_is_present(void)
+{
+	/* Invert because battery-present signal is active low */
+	return !gpio_get_level(GPIO_BATT_PRES_L);
+}
+
 void set_wp_state(int asserted)
 {
 	/* Enable writing to the long life register */
@@ -60,11 +69,8 @@ static void force_write_protect(int force, int wp_en)
 	} else {
 		/* Stop forcing write protect. */
 		GREG32(PMU, LONG_LIFE_SCRATCH1) &= ~BOARD_FORCING_WP;
-		/*
-		 * Use battery presence as the value for write protect.
-		 * Inverted because the signal is active low.
-		 */
-		wp_en = !gpio_get_level(GPIO_BATT_PRES_L);
+		/* Use battery presence as the value for write protect. */
+		wp_en = board_battery_is_present();
 	}
 
 	/* Disable writing to the long life register */
@@ -177,7 +183,12 @@ static void lock_the_console(void)
 	set_console_lock_state(LOCK_ENABLED);
 }
 
-static void unlock_the_console(void)
+/**
+ * Wipe the TPM
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int board_wipe_tpm(void)
 {
 	int rc;
 
@@ -194,12 +205,26 @@ static void unlock_the_console(void)
 		cflush();
 		system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED |
 			     SYSTEM_RESET_HARD);
+
+		/*
+		 * That should never return, but if it did, pass through the
+		 * error we got.
+		 */
+		return rc;
 	}
 
 	CPRINTS("TPM is erased");
 
 	/* Tell the TPM task to re-enable NvMem commits. */
 	tpm_reinstate_nvmem_commits();
+
+	return EC_SUCCESS;
+}
+
+static void unlock_the_console(void)
+{
+	if (board_wipe_tpm() != EC_SUCCESS)
+		return;
 
 	/* Unlock the console. */
 	set_console_lock_state(!LOCK_ENABLED);
@@ -224,7 +249,7 @@ static void init_console_lock_and_wp(void)
 		set_console_lock_state(console_restricted_state);
 
 		/* Use BATT_PRES_L as the source for write protect. */
-		set_wp_state(!gpio_get_level(GPIO_BATT_PRES_L));
+		set_wp_state(board_battery_is_present());
 		return;
 	}
 
@@ -249,7 +274,7 @@ static void init_console_lock_and_wp(void)
 			set_wp_state(0);
 	} else if (reset_flags & RESET_FLAG_POWER_ON) {
 		/* Use BATT_PRES_L as the source for write protect. */
-		set_wp_state(!gpio_get_level(GPIO_BATT_PRES_L));
+		set_wp_state(board_battery_is_present());
 	}
 }
 /* This must run after initializing the NVMem partitions. */
@@ -324,6 +349,28 @@ void read_fwmp(void)
 	}
 
 	CPRINTS("Console unlock %sallowed", fwmp_allows_unlock ? "" : "not ");
+}
+
+/**
+ * Return non-zero if FWMP allows unlock
+ */
+int board_fwmp_allows_unlock(void)
+{
+	/*
+	 * TODO(rspangler): This doesn't work right for CCD config unlock and
+	 * open, because read_fwmp() isn't called until TPM2_Startup is sent by
+	 * the AP.  But that means if the AP can't boot, it's not possible to
+	 * unlock or open CCD.
+	 *
+	 * CCD config isn't connected to anything else yet, so let's bypass
+	 * the fwmp check for now.  But we need to fix this before we make
+	 * a Cr50 release that could run on a MP device.
+	 */
+#ifdef CR50_DEV
+	return 1;
+#else
+	return fwmp_allows_unlock;
+#endif
 }
 
 int console_is_restricted(void)
@@ -550,7 +597,7 @@ static int command_lock(int argc, char **argv)
 		/* Warn about the side effects of wiping nvmem */
 		ccputs(warning);
 
-		if (gpio_get_level(GPIO_BATT_PRES_L) == 1) {
+		if (!board_battery_is_present()) {
 			/*
 			 * If the battery cable has been disconnected, we only
 			 * need to poke the power button once to prove physical

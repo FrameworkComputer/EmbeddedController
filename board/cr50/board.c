@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 #include "board_id.h"
+#include "case_closed_debug.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -633,6 +634,8 @@ static void board_init(void)
 	nvmem_init();
 	/* Initialize the persistent storage. */
 	initvars();
+	/* Load case-closed debugging config */
+	ccd_config_init();
 
 	system_update_rollback_mask_with_both_imgs();
 
@@ -640,7 +643,7 @@ static void board_init(void)
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
 
 	/*
-	 * Call the function twice to make it hardde to glitch execution into
+	 * Call the function twice to make it harder to glitch execution into
 	 * passing the check when not supposed to.
 	 */
 	check_board_id_mismatch();
@@ -800,6 +803,16 @@ int is_sys_rst_asserted(void)
 		&& (gpio_get_flags(GPIO_SYS_RST_L_OUT) & GPIO_OUTPUT)
 #endif
 		&& (gpio_get_level(GPIO_SYS_RST_L_OUT) == 0);
+}
+
+/**
+ * Reboot the AP
+ */
+void board_reboot_ap(void)
+{
+	assert_sys_rst();
+	msleep(20);
+	deassert_sys_rst();
 }
 
 void assert_ec_rst(void)
@@ -1393,6 +1406,26 @@ void i2cs_set_pinmux(void)
 	GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA1, 1); /* edge sensitive */
 	GWRITE_FIELD(PINMUX, EXITINV0, DIOA1, 1);  /* wake on low */
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 1);   /* enable powerdown exit */
+}
+
+/**
+ * Return non-zero if this is the first boot of a board in the factory.
+ *
+ * This is used to determine whether the default CCD configuration will be RMA
+ * (things are unlocked for factory) or normal (things locked down because not
+ * in factory).
+ *
+ * Suggested checks:
+ * - If the board ID exists, this is not the first boot
+ * - If the TPM is not blank, this is not the first boot
+ */
+int board_is_first_factory_boot(void)
+{
+	/*
+	 * TODO(rspangler): Add checks for factory boot.  For now, always
+	 * return 0 so we're safely locked by default.
+	 */
+	return 0;
 }
 
 /* Determine key type based on the key ID. */

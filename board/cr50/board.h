@@ -102,10 +102,12 @@
 
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG
+#define CONFIG_CASE_CLOSED_DEBUG_V1
 #define CONFIG_PHYSICAL_PRESENCE
 
 #ifdef CR50_DEV
-/* Enable unsafe dev features for physical presence in dev builds */
+/* Enable unsafe dev features for CCD in dev builds */
+#define CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
 #define CONFIG_PHYSICAL_PRESENCE_DEBUG_UNSAFE
 #endif
 
@@ -181,6 +183,7 @@ enum nvmem_vars {
 	NVMEM_VAR_CONSOLE_LOCKED = 0,
 	NVMEM_VAR_TEST_VAR,
 	NVMEM_VAR_U2F_SALT,
+	NVMEM_VAR_CCD_CONFIG,
 
 	NVMEM_VARS_COUNT
 };
@@ -208,6 +211,13 @@ int board_tpm_uses_spi(void);
 int board_id_is_mismatched(void);
 
 void power_button_record(void);
+
+/* Functions needed by CCD config */
+int board_battery_is_present(void);
+int board_fwmp_allows_unlock(void);
+void board_reboot_ap(void);
+int board_wipe_tpm(void);
+int board_is_first_factory_boot(void);
 
 #endif /* !__ASSEMBLER__ */
 

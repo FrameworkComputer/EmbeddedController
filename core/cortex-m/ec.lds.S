@@ -198,6 +198,12 @@ SECTIONS
         KEEP(*(.rodata.HOOK_BATTERY_SOC_CHANGE))
         __hooks_battery_soc_change_end = .;
 
+#ifdef CONFIG_CASE_CLOSED_DEBUG
+        __hooks_ccd_change = .;
+        KEEP(*(.rodata.HOOK_CCD_CHANGE))
+        __hooks_ccd_change_end = .;
+#endif
+
         __hooks_tick = .;
         KEEP(*(.rodata.HOOK_TICK))
         __hooks_tick_end = .;

@@ -33,6 +33,7 @@ common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
 common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CASE_CLOSED_DEBUG)+=case_closed_debug.o
+common-$(CONFIG_CASE_CLOSED_DEBUG_V1)+=ccd_config.o
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 common-$(CONFIG_CHARGE_RAMP)+=charge_ramp.o
 common-$(CONFIG_CHARGER)+=charger.o
