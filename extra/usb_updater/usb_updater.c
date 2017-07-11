@@ -1265,10 +1265,13 @@ static int show_headers_versions(const void *image)
 			if (!isalnum(((const char *)&bid)[j]))
 				break;
 
-		if (j == sizeof(bid))
+		if (j == sizeof(bid)) {
+			/* Convert it for proper string representation. */
+			bid = be32toh(bid);
 			printf("%.4s", (const char *)&bid);
-		else
+		} else {
 			printf("%08x", bid);
+		}
 
 		/* Print the rest of the board ID fields. */
 		printf(":%08x:%08x]", bid_mask, bid_flags);
