@@ -87,7 +87,7 @@ static int device_state_changed(enum device_type device,
 				enum device_state state);
 
 /*  Board specific configuration settings */
-static uint32_t board_properties;
+static uint32_t board_properties; /* Mainly used as a cache for strap config. */
 static uint8_t reboot_request_posted;
 
 /* Which UARTs we'd like to be able to bitbang. */
@@ -1559,7 +1559,12 @@ DECLARE_VENDOR_COMMAND(VENDOR_CC_COMMIT_NVMEM, vc_commit_nvmem);
 
 static int command_board_properties(int argc, char **argv)
 {
-	ccprintf("properties = 0x%x\n", board_properties);
+	/*
+	 * The board properties are stored in LONG_LIFE_SCRATCH1.  Note that we
+	 * don't just simply return board_properties here since that's just a
+	 * cached value from init time.
+	 */
+	ccprintf("properties = 0x%x\n", GREG32(PMU, LONG_LIFE_SCRATCH1));
 
 	return EC_SUCCESS;
 }
