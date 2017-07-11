@@ -324,7 +324,7 @@ static void usb_reset(void)
 /* See RM0091 Reference Manual 30.5.5 Suspend/Resume events */
 static void usb_suspend(void)
 {
-	CPRINTF("USB suspend!\n");
+	CPRINTF("SUS\n");
 
 	/* Set FSUSP bit to activate suspend mode */
 	STM32_USB_CNTR |= STM32_USB_CNTR_FSUSP;
@@ -340,10 +340,7 @@ static void usb_suspend(void)
 
 static void usb_resume(void)
 {
-	int state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
-			>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
-
-	CPRINTF("USB resume %x\n", state);
+	CPRINTF("RSM\n");
 
 	/*
 	 * TODO(crosbug.com/p/63273): Reference manual suggests going back to
@@ -393,7 +390,7 @@ void usb_wake(void)
 	if (!atomic_read_clear(&usb_wake_done))
 		return;
 
-	CPRINTF("USB wake\n");
+	CPRINTF("WAKE\n");
 
 	/*
 	 * Set RESUME bit for 1 to 15 ms, then clear it. We ask the interrupt
@@ -401,7 +398,8 @@ void usb_wake(void)
 	 * 2 and 3 ms.
 	 */
 	esof_count = 3;
-	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME | STM32_USB_CNTR_ESOFM;
+	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME |
+			  STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM;
 
 	/* Try side-band wake as well. */
 	board_usb_wake();
@@ -438,7 +436,8 @@ void usb_interrupt(void)
 	 * per millisecond), then disable RESUME, then wait for resume to
 	 * complete.
 	 */
-	if (status & STM32_USB_ISTR_ESOF && !usb_wake_done) {
+	if (status & (STM32_USB_ISTR_ESOF | STM32_USB_ISTR_SOF) &&
+			!usb_wake_done) {
 		esof_count--;
 
 		/* Clear RESUME bit. */
@@ -448,19 +447,30 @@ void usb_interrupt(void)
 		/* Then count down until state is resumed. */
 		if (esof_count <= 0) {
 			int state;
+			int good;
 
 			state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
 					>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
 
+			/*
+			 * state 2, or receiving an SOF, means resume
+			 * completed successfully.
+			 */
+			good = (status & STM32_USB_ISTR_SOF) || (state == 2);
+
 			/* Either: state is ready, or we timed out. */
-			if (state == 2 || state == 3 ||
+			if (good || state == 3 ||
 			    esof_count <= -USB_RESUME_TIMEOUT_MS) {
-				STM32_USB_CNTR &= ~STM32_USB_CNTR_ESOFM;
+				STM32_USB_CNTR &= ~(STM32_USB_CNTR_ESOFM |
+						    STM32_USB_CNTR_SOFM);
 				usb_wake_done = 1;
-				if (state != 2) {
+				if (!good) {
 					CPRINTF("wake error: cnt=%d state=%d\n",
 						esof_count, state);
 					usb_suspend();
+				} else {
+					CPRINTF("RSMOK%d %d\n",
+						-esof_count, state);
 				}
 			}
 		}
