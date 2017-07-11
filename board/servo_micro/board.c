@@ -5,6 +5,7 @@
 /* Servo micro board configuration */
 
 #include "common.h"
+#include "console.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -52,14 +53,15 @@ static struct usart_config const usart2 =
 		usart2_to_usb,
 		usb_to_usart2);
 
-USB_STREAM_CONFIG(usart2_usb,
+USB_STREAM_CONFIG_USART_IFACE(usart2_usb,
 	USB_IFACE_USART2_STREAM,
 	USB_STR_USART2_STREAM_NAME,
 	USB_EP_USART2_STREAM,
 	USB_STREAM_RX_SIZE,
 	USB_STREAM_TX_SIZE,
 	usb_to_usart2,
-	usart2_to_usb)
+	usart2_to_usb,
+	usart2)
 
 
 /******************************************************************************
@@ -82,14 +84,15 @@ static struct usart_config const usart3 =
 		usart3_to_usb,
 		usb_to_usart3);
 
-USB_STREAM_CONFIG(usart3_usb,
+USB_STREAM_CONFIG_USART_IFACE(usart3_usb,
 	USB_IFACE_USART3_STREAM,
 	USB_STR_USART3_STREAM_NAME,
 	USB_EP_USART3_STREAM,
 	USB_STREAM_RX_SIZE,
 	USB_STREAM_TX_SIZE,
 	usb_to_usart3,
-	usart3_to_usb)
+	usart3_to_usb,
+	usart3)
 
 
 /******************************************************************************
@@ -112,15 +115,56 @@ static struct usart_config const usart4 =
 		usart4_to_usb,
 		usb_to_usart4);
 
-USB_STREAM_CONFIG(usart4_usb,
+USB_STREAM_CONFIG_USART_IFACE(usart4_usb,
 	USB_IFACE_USART4_STREAM,
 	USB_STR_USART4_STREAM_NAME,
 	USB_EP_USART4_STREAM,
 	USB_STREAM_RX_SIZE,
 	USB_STREAM_TX_SIZE,
 	usb_to_usart4,
-	usart4_to_usb)
+	usart4_to_usb,
+	usart4)
 
+/******************************************************************************
+ * Check parity setting on usarts.
+ */
+static int command_uart_parity(int argc, char **argv)
+{
+	int parity, newparity;
+	struct usart_config const *usart;
+	char *e;
+
+	if ((argc < 2) || (argc > 3))
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[1], "usart2"))
+		usart = &usart2;
+	else if (!strcasecmp(argv[1], "usart3"))
+		usart = &usart3;
+	else if (!strcasecmp(argv[1], "usart4"))
+		usart = &usart4;
+	else
+		return EC_ERROR_PARAM1;
+
+	if (argc == 3) {
+		parity = strtoi(argv[2], &e, 0);
+		if (*e || (parity < 0) || (parity > 2))
+			return EC_ERROR_PARAM2;
+
+		usart_set_parity(usart, parity);
+	}
+
+	newparity = usart_get_parity(usart);
+	ccprintf("Parity on %s is %d.\n", argv[1], newparity);
+
+	if ((argc == 3) && (newparity != parity))
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(parity, command_uart_parity,
+			"usart[2|3|4] [0|1|2]",
+			"Set parity on uart");
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.

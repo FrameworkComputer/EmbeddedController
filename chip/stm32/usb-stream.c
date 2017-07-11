@@ -12,6 +12,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "usart.h"
 #include "usb_hw.h"
 #include "usb-stream.h"
 
@@ -142,4 +143,39 @@ void usb_stream_reset(struct usb_stream_config const *config)
 			   (2 <<  4) | /* TX NAK */
 			   (0 <<  9) | /* Bulk EP */
 			   (rx_disabled(config) ? EP_RX_NAK : EP_RX_VALID));
+}
+
+int usb_usart_interface(struct usb_stream_config const *config,
+			struct usart_config const *usart,
+			int interface,
+			usb_uint *rx_buf, usb_uint *tx_buf)
+{
+	struct usb_setup_packet req;
+
+	usb_read_setup_packet(rx_buf, &req);
+
+	if (req.bmRequestType != (USB_DIR_OUT |
+				  USB_TYPE_VENDOR |
+				  USB_RECIP_INTERFACE))
+		return -1;
+
+	if (req.wIndex  != interface ||
+	    req.wLength != 0)
+		return -1;
+
+	switch (req.bRequest) {
+	/* Set parity. */
+	case USB_USART_SET_PARITY:
+		usart_set_parity(usart, req.wValue);
+		break;
+
+	/* TODO(nsanders): support reading parity. */
+	/* TODO(nsanders): support baud. */
+	default:
+		return -1;
+	}
+
+	btable_ep[0].tx_count = 0;
+	STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, EP_STATUS_OUT);
+	return 0;
 }

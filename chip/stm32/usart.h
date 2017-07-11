@@ -198,6 +198,18 @@ void usart_set_baud_f0_l(struct usart_config const *config, int frequency_hz);
 void usart_set_baud_f(struct usart_config const *config, int frequency_hz);
 
 /*
+ * Allow specification of parity for this usart.
+ * parity is 0: none, 1: odd, 2: even.
+ */
+void usart_set_parity(struct usart_config const *config, int parity);
+
+/*
+ * Check parity for this usart.
+ * parity is 0: none, 1: odd, 2: even.
+ */
+int usart_get_parity(struct usart_config const *config);
+
+/*
  * Different families provide different ways of clearing the transmit complete
  * flag.  This function will be provided by the family specific implementation.
  */

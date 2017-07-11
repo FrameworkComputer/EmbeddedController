@@ -16,6 +16,7 @@
 #include "hooks.h"
 #include "producer.h"
 #include "queue.h"
+#include "usart.h"
 #include "usb_descriptor.h"
 #include "usb_hw.h"
 
@@ -230,10 +231,55 @@ extern struct producer_ops const usb_stream_producer_ops;
 			       RX_QUEUE,				\
 			       TX_QUEUE)
 
+/* Declare a utility interface for setting parity/baud. */
+#define USB_USART_IFACE(NAME, INTERFACE, USART_CFG)			\
+	static int CONCAT2(NAME,  _interface_)(usb_uint *rx_buf,	\
+					      usb_uint *tx_buf)		\
+	{ return usb_usart_interface(&NAME, &USART_CFG, INTERFACE,	\
+					rx_buf, tx_buf); }		\
+	USB_DECLARE_IFACE(INTERFACE,					\
+			  CONCAT2(NAME, _interface_))
+
+/* This is a medium version for declaring Google serial endpoints */
+#define USB_STREAM_CONFIG_USART_IFACE(NAME,				\
+				      INTERFACE,			\
+				      INTERFACE_NAME,			\
+				      ENDPOINT,				\
+				      RX_SIZE,				\
+				      TX_SIZE,				\
+				      RX_QUEUE,				\
+				      TX_QUEUE,				\
+				      USART_CFG)			\
+	USB_STREAM_CONFIG_FULL(NAME,					\
+			       INTERFACE,				\
+			       USB_CLASS_VENDOR_SPEC,			\
+			       USB_SUBCLASS_GOOGLE_SERIAL,		\
+			       USB_PROTOCOL_GOOGLE_SERIAL,		\
+			       INTERFACE_NAME,				\
+			       ENDPOINT,				\
+			       RX_SIZE,					\
+			       TX_SIZE,					\
+			       RX_QUEUE,				\
+			       TX_QUEUE);				\
+	USB_USART_IFACE(NAME, INTERFACE, USART_CFG)
+
 /*
  * Handle USB and Queue request in a deferred callback.
  */
 void usb_stream_deferred(struct usb_stream_config const *config);
+
+/*
+ * Handle control interface requests.
+ */
+enum usb_usart {
+	USB_USART_REQ_PARITY = 0,
+	USB_USART_SET_PARITY = 1,
+	USB_USART_REQ_BAUD = 2,
+	USB_USART_SET_BAUD = 3,
+};
+int usb_usart_interface(struct usb_stream_config const *config,
+		    struct usart_config const *usart,
+		    int interface, usb_uint *rx_buf, usb_uint *tx_buf);
 
 /*
  * These functions are used by the trampoline functions defined above to

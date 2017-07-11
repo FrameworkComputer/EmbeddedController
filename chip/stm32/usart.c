@@ -102,6 +102,46 @@ void usart_set_baud_f(struct usart_config const *config, int frequency_hz)
 	STM32_USART_BRR(config->hw->base) = div;
 }
 
+int usart_get_parity(struct usart_config const *config)
+{
+	intptr_t base = config->hw->base;
+
+	if (!(STM32_USART_CR1(base) & STM32_USART_CR1_PCE))
+		return 0;
+	if (STM32_USART_CR1(base) & STM32_USART_CR1_PS)
+		return 1;
+	return 2;
+}
+
+void usart_set_parity(struct usart_config const *config, int parity)
+{
+	uint32_t ue;
+	intptr_t base = config->hw->base;
+
+	if ((parity < 0) || (parity > 2))
+		return;
+
+	/* Record active state and disable the UART. */
+	ue = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
+	STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
+
+	if (parity) {
+		/* Set parity control enable. */
+		STM32_USART_CR1(base) |= STM32_USART_CR1_PCE;
+		/* Set parity select even/odd bit. */
+		if (parity == 2)
+			STM32_USART_CR1(base) &= ~STM32_USART_CR1_PS;
+		else
+			STM32_USART_CR1(base) |= STM32_USART_CR1_PS;
+	} else {
+		STM32_USART_CR1(base) &=
+			~(STM32_USART_CR1_PCE | STM32_USART_CR1_PS);
+	}
+
+	/* Restore active state. */
+	STM32_USART_CR1(base) |= ue;
+}
+
 void usart_interrupt(struct usart_config const *config)
 {
 	config->tx->interrupt(config);
