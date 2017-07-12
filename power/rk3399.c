@@ -34,15 +34,27 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 /* Input state flags */
-#define IN_PGOOD_PP5000        POWER_SIGNAL_MASK(PP5000_PWR_GOOD)
-#define IN_PGOOD_SYS           POWER_SIGNAL_MASK(SYS_PWR_GOOD)
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+	#define IN_PGOOD_PP1800      POWER_SIGNAL_MASK(PP1800_PWR_GOOD)
+	#define IN_PGOOD_PP1250_S3   POWER_SIGNAL_MASK(PP1250_S3_PWR_GOOD)
+	#define IN_PGOOD_PP900_S0    POWER_SIGNAL_MASK(PP900_S0_PWR_GOOD)
+#else
+	#define IN_PGOOD_PP5000      POWER_SIGNAL_MASK(PP5000_PWR_GOOD)
+	#define IN_PGOOD_SYS         POWER_SIGNAL_MASK(SYS_PWR_GOOD)
+#endif
+
 #define IN_PGOOD_AP            POWER_SIGNAL_MASK(AP_PWR_GOOD)
 #define IN_SUSPEND_DEASSERTED  POWER_SIGNAL_MASK(SUSPEND_DEASSERTED)
 
-/* Rails requires for S3 */
-#define IN_PGOOD_S3            (IN_PGOOD_PP5000)
-/* Rails required for S0 */
-#define IN_PGOOD_S0            (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
+/* Rails requires for S3 and S0 */
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+	#define IN_PGOOD_S3    (IN_PGOOD_PP1800 | IN_PGOOD_PP1250_S3)
+	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_PP900_S0 | IN_PGOOD_AP)
+#else
+	#define IN_PGOOD_S3    (IN_PGOOD_PP5000)
+	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
+#endif
+
 /* All inputs in the right state for S0 */
 #define IN_ALL_S0              (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
@@ -68,6 +80,13 @@ BUILD_ASSERT(GPIO_COUNT < 256);
  * to the bottom.
  */
 static const struct power_seq_op s5s3_power_seq[] = {
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+	{ GPIO_PP900_S3_EN, 1, 2 },
+	{ GPIO_SYS_RST_L, 1, 0 },
+	{ GPIO_PP3300_S3_EN, 1, 2 },
+	{ GPIO_PP1800_S3_EN, 1, 2 },
+	{ GPIO_PP1250_S3_EN, 1, 2 },
+#else
 	{ GPIO_PPVAR_LOGIC_EN, 1, 0 },
 	{ GPIO_PP900_AP_EN, 1, 0 },
 	{ GPIO_PP900_PCIE_EN, 1, 2 },
@@ -86,30 +105,53 @@ static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PP1800_LID_EN_L, 0, 0 },
 	{ GPIO_PP1800_SIXAXIS_EN_L, 0, 2},
 	{ GPIO_PP1800_SENSOR_EN_L, 0, 0},
+#endif
 };
 
 /* The power sequence for POWER_S3S0 */
 static const struct power_seq_op s3s0_power_seq[] = {
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+	{ GPIO_PP900_S0_EN, 1, 2 },
+	{ GPIO_PP1800_USB_EN, 1, 2 },
+	{ GPIO_PP3300_S0_EN, 1, 2 },
+	{ GPIO_AP_CORE_EN, 1, 2 },
+	{ GPIO_PP1800_S0_EN, 1, 0},
+#else
 	{ GPIO_PPVAR_CLOGIC_EN, 1, 2 },
 	{ GPIO_PP900_DDRPLL_EN, 1, 2 },
 	{ GPIO_PP1800_AP_AVDD_EN_L, 0, 2 },
 	{ GPIO_AP_CORE_EN, 1, 2 },
 	{ GPIO_PP1800_S0_EN_L, 0, 2 },
 	{ GPIO_PP3300_S0_EN_L, 0, 0 },
+#endif
 };
 
 /* The power sequence for POWER_S0S3 */
 static const struct power_seq_op s0s3_power_seq[] = {
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+	{ GPIO_PP1800_S0_EN, 0, 1 },
+	{ GPIO_AP_CORE_EN, 0, 20 },
+	{ GPIO_PP3300_S0_EN, 0, 20 },
+	{ GPIO_PP1800_USB_EN, 0, 1 },
+	{ GPIO_PP900_S0_EN, 0, 1 },
+#else
 	{ GPIO_PP3300_S0_EN_L, 1, 20 },
 	{ GPIO_PP1800_S0_EN_L, 1, 1 },
 	{ GPIO_AP_CORE_EN, 0, 20 },
 	{ GPIO_PP1800_AP_AVDD_EN_L, 1, 1 },
 	{ GPIO_PP900_DDRPLL_EN, 0, 1 },
 	{ GPIO_PPVAR_CLOGIC_EN, 0, 0 },
+#endif
 };
 
 /* The power sequence for POWER_S3S5 */
 static const struct power_seq_op s3s5_power_seq[] = {
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
+	{ GPIO_PP1250_S3_EN, 0, 2 },
+	{ GPIO_PP1800_S3_EN, 0, 2 },
+	{ GPIO_PP3300_S3_EN, 0, 2 },
+	{ GPIO_PP900_S3_EN, 0, 0 },
+#else
 	{ GPIO_PP1800_SENSOR_EN_L, 1, 0},
 	{ GPIO_PP1800_SIXAXIS_EN_L, 1, 0},
 	{ GPIO_PP1800_LID_EN_L, 1, 0 },
@@ -127,6 +169,7 @@ static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_PP900_PCIE_EN, 0, 0 },
 	{ GPIO_PP900_AP_EN, 0, 0 },
 	{ GPIO_PPVAR_LOGIC_EN, 0, 0 },
+#endif
 };
 
 static int forcing_shutdown;
@@ -264,6 +307,7 @@ enum power_state power_handle_state(enum power_state state)
 		    !(power_get_signals() & IN_SUSPEND_DEASSERTED))
 			return POWER_S0S3;
 
+#if CONFIG_CHIPSET_POWER_SEQ_VERSION != 2
 		/*
 		 * Wait up to PGOOD_AP_DEBOUNCE_TIMEOUT for IN_PGOOD_AP to
 		 * come back before transitioning back to S3. PGOOD_SYS can
@@ -283,6 +327,7 @@ enum power_state power_handle_state(enum power_state state)
 		    forcing_shutdown ||
 		    !(power_get_signals() & IN_SUSPEND_DEASSERTED))
 			return POWER_S0S3;
+#endif
 
 		break;
 
