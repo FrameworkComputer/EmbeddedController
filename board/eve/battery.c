@@ -55,8 +55,8 @@ static const struct battery_info batt_info_lg = {
 	.precharge_current	= 256,	/* mA */
 	.start_charging_min_c	= 0,
 	.start_charging_max_c	= 46,
-	.charging_min_c		= 0,
-	.charging_max_c		= 60,
+	.charging_min_c		= 10,
+	.charging_max_c		= 50,
 	.discharging_min_c	= 0,
 	.discharging_max_c	= 60,
 };
@@ -67,7 +67,7 @@ static const struct battery_info batt_info_lg = {
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lishen = {
-	.voltage_max		= TARGET_WITH_MARGIN(8750, 5), /* mV */
+	.voltage_max		= TARGET_WITH_MARGIN(8800, 5), /* mV */
 	.voltage_normal		= 7700,
 	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
 	.precharge_current	= 256,	/* mA */
@@ -75,8 +75,8 @@ static const struct battery_info batt_info_lishen = {
 	.start_charging_max_c	= 46,
 	.charging_min_c		= 10,
 	.charging_max_c		= 50,
-	.discharging_min_c	= 10,
-	.discharging_max_c	= 50,
+	.discharging_min_c	= 0,
+	.discharging_max_c	= 60,
 };
 
 static const struct board_batt_params info[] = {
