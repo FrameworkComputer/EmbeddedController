@@ -45,7 +45,7 @@
 /* no low power ram in npcx7 series */
 
 /* Use chip variant to specify the size and start address of program memory */
-#if defined(CHIP_VARIANT_NPCX7M6F)
+#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G)
 /* 62KB data ram */
 #define CONFIG_RAM_SIZE    (0x00010000 - NPCX_BTRAM_SIZE)
 /* 192KB RAM for FW code */
@@ -59,7 +59,7 @@
 /* Total RAM size checking for npcx ec */
 #define NPCX_RAM_SIZE (NPCX_BTRAM_SIZE + CONFIG_RAM_SIZE + \
 				NPCX_PROGRAM_MEMORY_SIZE)
-#if defined(CHIP_VARIANT_NPCX7M6F)
+#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G)
 /* 256KB RAM in NPCX7M6F */
 #if (NPCX_RAM_SIZE != 0x40000)
 #error "Wrong memory mapping layout for NPCX7M6F"
