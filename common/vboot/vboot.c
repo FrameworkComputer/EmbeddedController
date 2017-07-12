@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "chipset.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "rsa.h"
 #include "rwsig.h"
@@ -21,8 +22,8 @@
 #include "vboot.h"
 #include "vb21_struct.h"
 
-#define CPRINTS(format, args...) cprints(CC_VBOOT, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_VBOOT, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_VBOOT,"VB " format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_VBOOT,"VB " format, ## args)
 
 enum vboot_ec_slot {
 	VBOOT_EC_SLOT_A,
@@ -145,48 +146,89 @@ static int verify_and_jump(void)
 static void request_power(void)
 {
 	/* TODO: Blink LED */
+	CPRINTS("%s", __func__);
 }
 
 static void request_recovery(void)
 {
 	/* TODO: Blink LED */
+	CPRINTS("%s", __func__);
 }
 
 static int is_manual_recovery(void)
 {
-	return host_get_events() & EC_HOST_EVENT_KEYBOARD_RECOVERY;
+	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 }
 
-void vboot_main(void)
+static void vboot_main(void);
+DECLARE_DEFERRED(vboot_main);
+static void vboot_main(void)
 {
+	const int check_charge_manager_frequency_usec = 10 * MSEC;
 	int port = charge_manager_get_active_charge_port();
 
-	if (port >= CONFIG_USB_PD_PORT_COUNT) {
-		/* AC is not type-c. No chance to boot. */
+	if (port == CHARGE_PORT_NONE) {
+		/* We loop here until charge manager is ready */
+		hook_call_deferred(&vboot_main_data,
+				   check_charge_manager_frequency_usec);
+		return;
+	}
+
+	CPRINTS("Checking power");
+
+	if (system_can_boot_ap()) {
+		/*
+		 * We are here for the two cases:
+		 * 1. Booting on RO with a barrel jack adapter. We can continue
+		 *    to boot AP with EC-RO. We'll jump later in softsync.
+		 * 2. Booting on RW with a type-c charger. PD negotiation is
+		 *    done and we can boot AP.
+		 */
+		CPRINTS("Got enough power");
+		return;
+	}
+
+	if (system_get_image_copy() != SYSTEM_IMAGE_RO || !system_is_locked()) {
+		/*
+		 * If we're here, it means PD negotiation was attempted but
+		 * we didn't get enough power to boot AP. This happens on RW
+		 * or unlocked RO.
+		 *
+		 * This could be caused by a weak type-c charger. If that's
+		 * the case, users need to plug a better charger. We could
+		 * also be here because PD negotiation is still taking place.
+		 * If so, we'll briefly show request power sign but it will
+		 * be immediately corrected.
+		 */
 		request_power();
 		return;
 	}
 
-	if (pd_comm_is_enabled(port))
-		/* Normal RW boot or unlocked RO boot.
-		 * Hoping enough power will be supplied after PD negotiation. */
-		return;
-
-	/* PD communication is disabled. Probably this is RO image */
-	CPRINTS("PD comm disabled");
+	CPRINTS("Booting RO on weak battery/charger");
 
 	if (is_manual_recovery()) {
+		CPRINTS("Manual recovery requested");
 		if (battery_is_present() || has_matrix_keyboard()) {
 			request_power();
 			return;
 		}
-		CPRINTS("Enable C%d PD communication", port);
+		/* We don't request_power because we don't want to assume all
+		 * devices support a non type-c charger. We open up a security
+		 * hole by allowing EC-RO to do PD negotiation but attackers
+		 * don't gain meaningful advantage on devices without a matrix
+		 * keyboard */
+		CPRINTS("Enable C%d PD comm", port);
 		pd_comm_enable(port, 1);
 		/* TODO: Inform PD task and make it negotiate */
 		return;
 	}
 
-	if (!is_vboot_ec_supported() && !is_low_power_ap_boot_supported()) {
+	if (!is_vboot_ec_supported()) {
+		if (is_low_power_ap_boot_supported())
+			/* If a device supports this feature, AP's boot power
+			 * threshold should be set low. That will let EC-RO
+			 * boot AP and softsync take care of RW verification. */
+			return;
 		request_power();
 		return;
 	}
@@ -197,3 +239,5 @@ void vboot_main(void)
 	/* Failed to jump. Need recovery. */
 	request_recovery();
 }
+
+DECLARE_HOOK(HOOK_INIT, vboot_main, HOOK_PRIO_DEFAULT);

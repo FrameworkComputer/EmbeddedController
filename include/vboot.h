@@ -46,14 +46,3 @@ int vboot_is_padding_valid(const uint8_t *data, uint32_t start, uint32_t end);
  */
 int vboot_verify(const uint8_t *data, int len,
 		 const struct rsa_public_key *key, const uint8_t *sig);
-
-/**
- * Verify RW image and jump to it
- *
- * Calling this API results in one of the followings:
- * 1. Returns, expecting PD will provide enough power after negotiation
- * 2. Jumps to RW (no return)
- * 3. Returns, requesting more power
- * 4. Returns, requesting recovery
- */
-void vboot_main(void);
