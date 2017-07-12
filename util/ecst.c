@@ -190,7 +190,8 @@ int main(int argc, char *argv[])
 					"%s",
 					main_str_temp) != 1)) {
 				my_printf(TERR, "\nCannot read chip name, ");
-				my_printf(TERR,	"npcx7m7k, npcx7m6f, npcx7m5g");
+				my_printf(TERR,	"npcx7m7k, npcx7m6f");
+				my_printf(TERR,	", npcx7m6g, npcx7m5g");
 				my_printf(TERR,	", npcx5m5g or npcx5m6g.\n");
 				main_status = FALSE;
 			} else {
@@ -212,8 +213,10 @@ int main(int argc, char *argv[])
 						chip_info[NPCX7M7].ram_addr;
 					g_ram_size =
 						chip_info[NPCX7M7].ram_size;
-				} else if (str_cmp_no_case(main_str_temp,
-					"npcx7m6f") == 0) {
+				} else if ((str_cmp_no_case(main_str_temp,
+					"npcx7m6f") == 0) ||
+					       (str_cmp_no_case(main_str_temp,
+					"npcx7m6g") == 0)) {
 					if ((bin_params.bin_params
 						& BIN_FW_LOAD_START_ADDR) ==
 						0x00000000)
@@ -294,9 +297,9 @@ int main(int argc, char *argv[])
 						  "\nInvalid chip name (%s) ",
 						  main_str_temp);
 					my_printf(TERR, "should be npcx7m7k, ");
-					my_printf(TERR, "npcx7m6f, npcx7m5g, ");
-					my_printf(TERR, "npcx5m5g or ");
-					my_printf(TERR, "npcx5m6g.");
+					my_printf(TERR, "npcx7m6f, npcx7m6g, ");
+					my_printf(TERR, "npcx7m5g, npcx5m5g ");
+					my_printf(TERR, " or npcx5m6g.");
 					main_status = FALSE;
 				}
 
