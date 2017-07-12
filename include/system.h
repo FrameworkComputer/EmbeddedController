@@ -389,6 +389,8 @@ enum {
 	SLEEP_MASK_FAN        = (1 << 8), /* Fan control loop ongoing */
 	SLEEP_MASK_USB_DEVICE = (1 << 9), /* Generic USB device in use */
 	SLEEP_MASK_PWM        = (1 << 10), /* PWM output is enabled */
+	SLEEP_MASK_PHYSICAL_PRESENCE  = (1 << 11), /* Physical presence
+						    * detection ongoing */
 	SLEEP_MASK_FORCE_NO_DSLEEP    = (1 << 15), /* Force disable. */
 
 

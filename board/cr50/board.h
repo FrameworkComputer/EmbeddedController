@@ -102,6 +102,12 @@
 
 /* Enable Case Closed Debugging */
 #define CONFIG_CASE_CLOSED_DEBUG
+#define CONFIG_PHYSICAL_PRESENCE
+
+#ifdef CR50_DEV
+/* Enable unsafe dev features for physical presence in dev builds */
+#define CONFIG_PHYSICAL_PRESENCE_DEBUG_UNSAFE
+#endif
 
 #define CONFIG_USB_PID 0x5014
 #define CONFIG_USB_SELF_POWERED
