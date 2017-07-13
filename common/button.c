@@ -180,6 +180,7 @@ void button_init(void)
 
 #ifdef CONFIG_BUTTON_RECOVERY
 	if (is_recovery_boot()) {
+		system_clear_reset_flags(RESET_FLAG_AP_OFF);
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 		button_check_hw_reinit_required();
 	}
