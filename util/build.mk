@@ -31,7 +31,8 @@ $(out)/util/genvif: $(out)/util/usb_pd_policy.o board/$(BOARD)/board.h \
 			include/usb_pd.h include/usb_pd_tcpm.h
 $(out)/util/genvif: BUILD_LDFLAGS+=$(out)/util/usb_pd_policy.o -flto
 
-STANDALONE_FLAGS=-ffreestanding -fno-builtin -nostdinc -Ibuiltin/ -D"__keep= "
+STANDALONE_FLAGS=-ffreestanding -fno-builtin -nostdinc \
+			-Ibuiltin/ -D"__keep= " -DVIF_BUILD
 $(out)/util/usb_pd_policy.o: board/$(BOARD)/usb_pd_policy.c
 	$(call quiet,c_to_vif,BUILDCC)
 deps += $(out)/util/usb_pd_policy.o.d
