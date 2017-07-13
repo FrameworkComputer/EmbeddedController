@@ -44,7 +44,7 @@
 static int usb_load_serial(void);
 #endif
 
-#define USB_RESUME_TIMEOUT_MS 300
+#define USB_RESUME_TIMEOUT_MS 3000
 
 /* USB Standard Device Descriptor */
 static const struct usb_device_descriptor dev_desc = {
