@@ -655,8 +655,11 @@ static void board_init(void)
 				  BOARD_CCD_STATE) >> BOARD_CCD_SHIFT;
 	}
 
-	/* Load case-closed debugging config */
+	/* Load case-closed debugging config.  Must be after initvars(). */
 	ccd_config_init(ccd_init_state);
+
+	/* Initialize write protect.  Must be after CCD config init. */
+	init_wp_state();
 
 	system_update_rollback_mask_with_both_imgs();
 
