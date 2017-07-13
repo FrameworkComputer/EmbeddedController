@@ -216,9 +216,9 @@
 
 /* Min and Max sampling frequency in mHz */
 #define SI114X_PROX_MIN_FREQ            504
-#define SI114X_PROX_MAX_FREQ            100000
+#define SI114X_PROX_MAX_FREQ            50000
 #define SI114X_LIGHT_MIN_FREQ           504
-#define SI114X_LIGHT_MAX_FREQ           100000
+#define SI114X_LIGHT_MAX_FREQ           50000
 
 extern const struct accelgyro_drv si114x_drv;
 

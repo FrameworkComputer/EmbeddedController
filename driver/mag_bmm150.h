@@ -76,7 +76,7 @@
 
 /* Min and Max sampling frequency in mHz */
 #define BMM150_MAG_MIN_FREQ 781
-#define BMM150_MAG_MAX_FREQ 800000
+#define BMM150_MAG_MAX_FREQ 80000
 
 struct bmm150_comp_registers {
 	/* Local copy of the compensation registers. */
