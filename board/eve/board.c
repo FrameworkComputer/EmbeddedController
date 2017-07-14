@@ -922,7 +922,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_ALS,
 	 .i2c_spi_addr_flags = SI114X_ADDR_FLAGS,
 	 .rot_standard_ref = NULL,
-	 .default_range = 3088, /* 30.88%: int = 0 - frac = 3088/10000 */
+	 .default_range = 6000, /* 60.00%: int = 0 - frac = 6000/10000 */
 	 .min_frequency = SI114X_LIGHT_MIN_FREQ,
 	 .max_frequency = SI114X_LIGHT_MAX_FREQ,
 	 .config = {
