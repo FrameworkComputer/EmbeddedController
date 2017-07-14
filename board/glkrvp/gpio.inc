@@ -13,6 +13,7 @@
  */
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH, power_signal_interrupt)	/* SLP_S4_L */
 GPIO_INT(PCH_SLP_S3_L,		PIN(8, 5), GPIO_INT_BOTH, power_signal_interrupt)	/* SLP_S3_L */
+GPIO_INT(PCH_SLP_S0_L,		PIN(8, 1), GPIO_INT_BOTH, power_signal_interrupt)	/* SLP_S0_L */
 GPIO_INT(RSMRST_L_PGOOD,	PIN(3, 6), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_RSMRST_ODL */
 GPIO_INT(ALL_SYS_PGOOD,		PIN(7, 2), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_PWROK_ODL */
 GPIO_INT(POWER_BUTTON_L,	PIN(A, 6), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
@@ -29,7 +30,6 @@ GPIO(ENTERING_RW,	PIN(A, 7), GPIO_OUTPUT)			/* EC_ENTERING_RW */
 
 GPIO(PCH_RSMRST_L,	PIN(0, 1), GPIO_OUT_LOW)		/* EC_PCH_RSMRST_L */
 GPIO(PCH_RCIN_L,	PIN(0, 0), GPIO_ODR_HIGH)		/* SYS_RST_ODL */
-GPIO(PCH_SLP_S0_L,	PIN(8, 1), GPIO_INPUT)			/* SLP_S0_L */
 GPIO(SMC_SHUTDOWN,	PIN(3, 3), GPIO_OUT_LOW | GPIO_PULL_DOWN)	/* A_RAIL_EN */
 
 /*
