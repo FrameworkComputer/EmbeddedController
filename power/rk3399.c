@@ -50,6 +50,8 @@
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
 	#define IN_PGOOD_S3    (IN_PGOOD_PP1250_S3)
 	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_PP900_S0 | IN_PGOOD_AP)
+	/* This board can optionally wake-on-USB in S3 */
+	#define S3_USB_WAKE
 #else
 	#define IN_PGOOD_S3    (IN_PGOOD_PP5000)
 	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
@@ -111,9 +113,6 @@ static const struct power_seq_op s5s3_power_seq[] = {
 /* The power sequence for POWER_S3S0 */
 static const struct power_seq_op s3s0_power_seq[] = {
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
-	{ GPIO_PP900_S0_EN, 1, 2 },
-	{ GPIO_PP1800_USB_EN, 1, 2 },
-	{ GPIO_PP3300_S0_EN, 1, 2 },
 	{ GPIO_AP_CORE_EN, 1, 2 },
 	{ GPIO_PP1800_S0_EN, 1, 0},
 #else
@@ -126,14 +125,20 @@ static const struct power_seq_op s3s0_power_seq[] = {
 #endif
 };
 
+#ifdef S3_USB_WAKE
+/* Sigs that may already be on in S3, if we need to wake-on-USB */
+static const struct power_seq_op s3s0_usb_wake_power_seq[] = {
+	{ GPIO_PP900_S0_EN, 1, 2 },
+	{ GPIO_PP1800_USB_EN, 1, 2 },
+	{ GPIO_PP3300_S0_EN, 1, 2 },
+};
+#endif
+
 /* The power sequence for POWER_S0S3 */
 static const struct power_seq_op s0s3_power_seq[] = {
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
 	{ GPIO_PP1800_S0_EN, 0, 1 },
 	{ GPIO_AP_CORE_EN, 0, 20 },
-	{ GPIO_PP3300_S0_EN, 0, 20 },
-	{ GPIO_PP1800_USB_EN, 0, 1 },
-	{ GPIO_PP900_S0_EN, 0, 1 },
 #else
 	{ GPIO_PP3300_S0_EN_L, 1, 20 },
 	{ GPIO_PP1800_S0_EN_L, 1, 1 },
@@ -143,6 +148,15 @@ static const struct power_seq_op s0s3_power_seq[] = {
 	{ GPIO_PPVAR_CLOGIC_EN, 0, 0 },
 #endif
 };
+
+#ifdef S3_USB_WAKE
+/* Sigs that need to be left on in S3, if we need to wake-on-USB */
+static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
+	{ GPIO_PP3300_S0_EN, 0, 20 },
+	{ GPIO_PP1800_USB_EN, 0, 1 },
+	{ GPIO_PP900_S0_EN, 0, 1 },
+};
+#endif
 
 /* The power sequence for POWER_S3S5 */
 static const struct power_seq_op s3s5_power_seq[] = {
@@ -282,6 +296,9 @@ static int power_seq_run(const struct power_seq_op *power_seq_ops, int op_count)
 enum power_state power_handle_state(enum power_state state)
 {
 	static int sys_reset_asserted;
+#ifdef S3_USB_WAKE
+	static int usb_wake_enabled;
+#endif
 	int tries = 0;
 
 	switch (state) {
@@ -380,6 +397,13 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S0:
+#ifdef S3_USB_WAKE
+		/* Bring up S3 USB wake rails, if they are down */
+		if (!usb_wake_enabled)
+			power_seq_run(s3s0_usb_wake_power_seq,
+				      ARRAY_SIZE(s3s0_usb_wake_power_seq));
+		usb_wake_enabled = 0;
+#endif
 		power_seq_run(s3s0_power_seq, ARRAY_SIZE(s3s0_power_seq));
 
 		/* Release SYS_RST if we came from S5 */
@@ -415,6 +439,16 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_seq_run(s0s3_power_seq, ARRAY_SIZE(s0s3_power_seq)))
 			return POWER_S3S0;
 
+#ifdef S3_USB_WAKE
+		/* Leave up rails needed for S3 USB wake, if requested */
+		usb_wake_enabled = (power_get_host_sleep_state() ==
+				    HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND);
+		if (!usb_wake_enabled &&
+		    power_seq_run(s0s3_usb_wake_power_seq,
+				  ARRAY_SIZE(s0s3_power_seq)))
+			return POWER_S3S0;
+#endif
+
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
 		 * to go into deep sleep in S3 or lower.
@@ -433,6 +467,15 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+#ifdef S3_USB_WAKE
+		/* Make sure all S3 rails are off */
+		if (usb_wake_enabled) {
+			power_seq_run(s0s3_usb_wake_power_seq,
+				      ARRAY_SIZE(s0s3_power_seq));
+			usb_wake_enabled = 0;
+		}
+#endif
+
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
