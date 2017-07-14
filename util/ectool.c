@@ -409,13 +409,16 @@ int cmd_hostsleepstate(int argc, char *argv[])
 	struct ec_params_host_sleep_event p;
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s [suspend|resume|freeze|thaw]\n",
+		fprintf(stderr, "Usage: %s "
+			"[suspend|wsuspend|resume|freeze|thaw]\n",
 			argv[0]);
 		return -1;
 	}
 
 	if (!strcmp(argv[1], "suspend"))
 		p.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND;
+	else if (!strcmp(argv[1], "wsuspend"))
+		p.sleep_event = HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND;
 	else if (!strcmp(argv[1], "resume"))
 		p.sleep_event = HOST_SLEEP_EVENT_S3_RESUME;
 	else if (!strcmp(argv[1], "freeze"))

@@ -54,8 +54,10 @@ static inline int host_is_sleeping(void)
 	int is_sleeping = !chipset_in_state(CHIPSET_STATE_ON);
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+	enum host_sleep_event sleep_state = power_get_host_sleep_state();
 	is_sleeping |=
-		(power_get_host_sleep_state() == HOST_SLEEP_EVENT_S3_SUSPEND);
+		(sleep_state == HOST_SLEEP_EVENT_S3_SUSPEND ||
+		 sleep_state == HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND);
 #endif
 	return is_sleeping;
 }
