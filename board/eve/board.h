@@ -16,12 +16,6 @@
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
-/*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-
 /* EC */
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
