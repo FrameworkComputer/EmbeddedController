@@ -62,20 +62,10 @@ int board_vbus_source_enabled(int port)
 
 static void board_vbus_update_source_current(int port)
 {
-	/* There is only one usb type-c port on Scarlet. */
-	enum gpio_signal gpio = GPIO_USB_C0_5V_EN;
-	int flags = (vbus_rp == TYPEC_RP_1A5 && vbus_en) ?
-		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
-
 	/*
-	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
-	 * (2x 33k in parallel) on the NX5P3290 load switch ILIM pin,
-	 * setting a minimum OCP current of 3186 mA.
-	 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put a 33k
-	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
+	 * TODO(philipchen): Remove this function and fix wherever
+	 * this function is called after RT946x driver is hooked up.
 	 */
-	gpio_set_level(gpio, vbus_en);
-	gpio_set_flags(gpio, flags);
 }
 
 int pd_set_power_supply_ready(int port)
@@ -171,7 +161,11 @@ int pd_check_data_swap(int port, int data_role)
 
 int pd_check_vconn_swap(int port)
 {
-	return gpio_get_level(GPIO_PP5000_EN);
+	/*
+	 * VCONN is provided directly by the battery (PPVAR_SYS)
+	 * but use the same rules as power swap.
+	 */
+	return pd_get_dual_role() == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 void pd_execute_data_swap(int port, int data_role)

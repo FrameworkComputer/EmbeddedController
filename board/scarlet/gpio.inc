@@ -10,135 +10,90 @@
  * Note: Those with interrupt handlers must be declared first.
  */
 
-
-GPIO_INT(WP_L,             PIN(9, 3), GPIO_INT_BOTH, switch_interrupt)
-GPIO_INT(SHI_CS_L,         PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN,
-         shi_cs_event)
-GPIO_INT(USB_C0_PD_INT_L,  PIN(6, 0), GPIO_INT_FALLING | GPIO_PULL_UP,
+GPIO_INT(SPI1_NSS,         PIN(A, 15), GPIO_INT_BOTH,
+         spi_event)
+GPIO_INT(USB_C0_PD_INT_L,  PIN(C, 13), GPIO_INT_FALLING | GPIO_PULL_UP,
          tcpc_alert_event)
-GPIO_INT(VOLUME_UP_L,      PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(VOLUME_UP_L,      PIN(D, 10), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt)
-GPIO_INT(VOLUME_DOWN_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(VOLUME_DOWN_L,    PIN(E, 11), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt)
-GPIO_INT(POWER_BUTTON_L,   PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(POWER_BUTTON_L,   PIN(A, 0),  GPIO_INT_BOTH | GPIO_PULL_UP,
          power_button_interrupt)
-GPIO_INT(LID_OPEN,         PIN(9, 7), GPIO_INT_BOTH | GPIO_SEL_1P8V,
-         lid_interrupt)
-
-GPIO_INT(PP5000_PG,        PIN(7, 1), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(PP1250_S3_PG,     PIN(D, 8),  GPIO_INT_BOTH | GPIO_PULL_UP,
          power_signal_interrupt)
-GPIO_INT(TPS65261_PG,      PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(PP900_S0_PG,      PIN(D, 9),  GPIO_INT_BOTH | GPIO_PULL_UP,
          power_signal_interrupt)
-/* TODO: Remove PD in S3 for power savings */
-GPIO_INT(AP_EC_S3_S0_L,    PIN(C, 1), GPIO_INT_BOTH | GPIO_PULL_DOWN,
+GPIO_INT(AP_EC_S3_S0_L,    PIN(C, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,
          power_signal_interrupt)
-GPIO_INT(AP_CORE_PG,       PIN(6, 7), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(AP_CORE_PG,       PIN(D, 7),  GPIO_INT_BOTH | GPIO_PULL_UP,
          power_signal_interrupt)
-GPIO_INT(WARM_RESET_REQ,   PIN(7, 3), GPIO_INT_RISING | GPIO_PULL_DOWN,
+GPIO_INT(WARM_RESET_REQ,   PIN(E, 1),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          warm_reset_request_interrupt)
-GPIO_INT(AP_OVERTEMP,      PIN(7, 4), GPIO_INT_RISING | GPIO_PULL_DOWN,
+GPIO_INT(AP_OVERTEMP,      PIN(E, 4),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          overtemp_interrupt)
-GPIO_INT(CHARGER_INT_L,    PIN(3, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
-         bd9995x_vbus_interrupt)
-GPIO_INT(BASE_SIXAXIS_INT_L,PIN(4, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V,
+GPIO_INT(ACCEL_INT_L,      PIN(D, 14), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          bmi160_interrupt)
 
-/* VR EN */
-GPIO(AP_CORE_EN,           PIN(7, 2), GPIO_OUT_LOW)
-GPIO(LPDDR_PWR_EN,         PIN(8, 6), GPIO_OUT_LOW)
-GPIO(PPVAR_CLOGIC_EN,      PIN(C, 5), GPIO_OUT_LOW)
-GPIO(PPVAR_LOGIC_EN,       PIN(8, 5), GPIO_OUT_LOW)
+/* Voltage rails control pins */
+GPIO(PP1800_S0_EN,         PIN(D, 11), GPIO_OUT_LOW)
+GPIO(AP_CORE_EN,           PIN(C, 1),  GPIO_OUT_LOW)
+GPIO(PP3300_S0_EN,         PIN(E, 12), GPIO_OUT_LOW)
+GPIO(PP1800_USB_EN,        PIN(C, 4),  GPIO_OUT_LOW)
+GPIO(PP900_S0_EN,          PIN(E, 8),  GPIO_OUT_LOW)
+GPIO(PP1250_S3_EN,         PIN(D, 13), GPIO_OUT_LOW)
+GPIO(PP1800_S3_EN,         PIN(C, 3),  GPIO_OUT_LOW)
+GPIO(PP3300_S3_EN,         PIN(E, 2),  GPIO_OUT_LOW)
+GPIO(PP900_S3_EN,          PIN(E, 10), GPIO_OUT_LOW)
 
-GPIO(PP900_AP_EN,          PIN(B, 7), GPIO_OUT_LOW)
-GPIO(PP900_DDRPLL_EN,      PIN(C, 0), GPIO_OUT_LOW)
-GPIO(PP900_USB_EN,         PIN(A, 5), GPIO_OUT_LOW)
-GPIO(PP900_PCIE_EN,        PIN(0, 0), GPIO_OUT_LOW)
-
-/* NC */
-GPIO(GPIO81_NC,            PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
-
-GPIO(PP1800_SENSOR_EN_L,   PIN(A, 7), GPIO_OUT_HIGH)
-GPIO(PP1800_USB_EN_L,      PIN(A, 6), GPIO_OUT_HIGH)
-GPIO(PP1800_LID_EN_L,      PIN(B, 0), GPIO_OUT_HIGH)
-GPIO(PP1800_PMU_EN_L,      PIN(5, 1), GPIO_OUT_HIGH)
-GPIO(PP1800_AP_AVDD_EN_L,  PIN(5, 2), GPIO_OUT_HIGH)
-GPIO(PP1800_S0_EN_L,       PIN(5, 0), GPIO_OUT_HIGH)
-GPIO(PP1800_SIXAXIS_EN_L,  PIN(5, 6), GPIO_OUT_HIGH)
-
-GPIO(PP3300_TRACKPAD_EN_L, PIN(3, 2), GPIO_OUT_HIGH)
-GPIO(PP3300_USB_EN_L,      PIN(3, 7), GPIO_OUT_HIGH)
-
-GPIO(PP5000_EN,            PIN(C, 6), GPIO_OUT_LOW)
+GPIO(PP3300_REDUCE_EFF_L,  PIN(D, 12), GPIO_ODR_HIGH)
 
 /*
  * I2C pins should be configured as inputs until I2C module is
  * initialized. This will avoid driving the lines unintentionally.
  */
-GPIO(I2C0_SCL0,            PIN(B, 5), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
-GPIO(I2C0_SDA0,            PIN(B, 4), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
-GPIO(I2C1_SCL,             PIN(9, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
-GPIO(I2C1_SDA,             PIN(8, 7), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
-GPIO(I2C2_SCL,             PIN(9, 2), GPIO_ODR_HIGH)
-GPIO(I2C2_SDA,             PIN(9, 1), GPIO_ODR_HIGH)
-GPIO(I2C3_SCL,             PIN(D, 1), GPIO_ODR_HIGH)
-GPIO(I2C3_SDA,             PIN(D, 0), GPIO_ODR_HIGH)
+GPIO(I2C0_SCL,             PIN(B, 8),  GPIO_INPUT)
+GPIO(I2C0_SDA,             PIN(B, 9),  GPIO_INPUT)
+GPIO(I2C1_SCL,             PIN(B, 13), GPIO_INPUT)
+GPIO(I2C1_SDA,             PIN(B, 14), GPIO_INPUT)
 
-/* Attached to push-pull interrupt pin of accel, but unused */
-GPIO(LID_ACCEL_INT_L,      PIN(C, 7), GPIO_INPUT)
+/* Analog pins */
+GPIO(BOARD_ID,             PIN(C, 0),  GPIO_ANALOG)
 
-GPIO(USB_C0_5V_EN,       PIN(D, 3), GPIO_OUT_LOW | GPIO_PULL_UP)
-
-GPIO(ENTERING_RW,          PIN(7, 6), GPIO_OUT_LOW)
-GPIO(SYS_RST_L,            PIN(6, 1), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(EC_INT_L,             PIN(5, 7), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(EC_BOARD_ID_EN_L,     PIN(3, 5), GPIO_OUT_HIGH)
-
-GPIO(USB_DP_HPD,           PIN(6, 6), GPIO_OUT_LOW)
-GPIO(CHARGER_RESET_L,      PIN(0, 1), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(TPM_ALLOW_RST,        PIN(0, 2), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(EC_BATT_PRES_L,       PIN(3, 4), GPIO_INPUT)
-GPIO(LID_360_L,            PIN(3, 6), GPIO_INPUT | GPIO_SEL_1P8V)
-GPIO(CCD_MODE_ODL,         PIN(6, 3), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(PP3300_S0_EN_L,       PIN(7, 0), GPIO_OUT_HIGH)
-GPIO(SPI_SENSOR_CS_L,      PIN(9, 4), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-
-GPIO(USB_C0_DISCHARGE,     PIN(0, 3), GPIO_OUT_LOW)
-GPIO(USB_C1_DISCHARGE,     PIN(B, 1), GPIO_OUT_LOW)
-
-GPIO(GPIOB6_NC,            PIN(B, 6), GPIO_INPUT | GPIO_PULL_UP)
+/* SPI sensors */
+GPIO(SPI_BARO_CS_L,        PIN(B, 12), GPIO_OUT_LOW)
+GPIO(SPI_ACCEL_CS_L,       PIN(D, 0),  GPIO_OUT_LOW)
 
 /* Scarlet LEDs */
-GPIO(BAT_LED_GREEN,        PIN(C, 3), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(BAT_LED_RED,          PIN(8, 0), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
+GPIO(BAT_LED_GREEN,        PIN(E, 9),  GPIO_ODR_HIGH)
+GPIO(BAT_LED_RED,          PIN(E, 13), GPIO_ODR_HIGH)
 
-/*
- * SPI host interface - enable PDs by default. These will be made functional
- * by the SHI driver when the AP powers up, and restored back to GPIO when
- * the AP powers down.
- */
-GPIO(SHI_SDI,              PIN(4, 6), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(SHI_SDO,              PIN(4, 7), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(SHI_SCLK,             PIN(5, 5), GPIO_INPUT | GPIO_PULL_DOWN)
+/* Other input pins */
+GPIO(WP_L,                 PIN(E, 5),  GPIO_INPUT)
+/* TODO(philipchen): Add an interrupt handler once CCD is fully developed. */
+GPIO(CCD_MODE_ODL,         PIN(C, 5),  GPIO_INPUT | GPIO_PULL_UP)
+/* TODO(b:63772957): Add an interrupt handler for charger rt946x */
+GPIO(CHARGER_INT_L,        PIN(E, 6),  GPIO_INPUT | GPIO_PULL_UP)
+/* TODO(b:63773130): Add an interrupt handler for battery gauge max17055 */
+GPIO(BATTERY_INT_L,        PIN(A, 12), GPIO_INPUT | GPIO_PULL_UP)
 
-/* SPIP_MOSI/SPIP_SCLK GPIOA3/A1 */
-ALTERNATE(PIN_MASK(A, 0x0A), 1,  MODULE_SPI,           0)
-/* SPIP_MISO GPIO95 */
-ALTERNATE(PIN_MASK(9, 0x20), 1,  MODULE_SPI,           0)
-/* I2C0SDA1/I2C0SCL1 GPIOB2/B3 */
-ALTERNATE(PIN_MASK(B, 0x0C), 1,  MODULE_I2C,           0)
-/* I2C0SDA0/I2C0SCL0 GPIOB4/B5 */
-ALTERNATE(PIN_MASK(B, 0x30), 1,  MODULE_I2C,           0)
-/* I2C1SDA GPIO87 */
-ALTERNATE(PIN_MASK(8, 0x80), 1,  MODULE_I2C,           0)
-/* I2C1SCL/I2C2SDA/I2C2SCL GPIO90/91/92 */
-ALTERNATE(PIN_MASK(9, 0x07), 1,  MODULE_I2C,           0)
-/* I2C3SDA/I2C3SCL GPIOD0/D1    */
-ALTERNATE(PIN_MASK(D, 0x03), 1,  MODULE_I2C,           0)
-/* PWM2 / BLPWM */
-ALTERNATE(PIN_MASK(C, 0x10), 1,  MODULE_PWM,           0)
-/* CR_SIN/SOUT GPIO64/65 */
-ALTERNATE(PIN_MASK(6, 0x30), 1,  MODULE_UART,          GPIO_PULL_UP)
-/* ADC0-4 */
-ALTERNATE(PIN_MASK(4, 0x3e), 1,  MODULE_ADC,           0)
-/* External 32KHz input clock - GPIOE7 */
-ALTERNATE(PIN_MASK(E, 0x80), 1,  MODULE_CLOCK,         0)
+/* Other output pins */
+GPIO(ENTERING_RW,          PIN(C, 6),  GPIO_ODR_HIGH)
+GPIO(SYS_RST_L,            PIN(C, 8),  GPIO_ODR_HIGH)
+GPIO(EC_INT_L,             PIN(E, 3),  GPIO_ODR_HIGH)
+GPIO(EC_BOARD_ID_EN_L,     PIN(F, 1),  GPIO_ODR_HIGH)
+GPIO(USB_C0_DISCHARGE,     PIN(A, 11), GPIO_OUT_LOW)
+GPIO(PCA9468_EN,           PIN(E, 15), GPIO_OUT_LOW)
+
+/* USART1: PA9/PA10 */
+ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART,       0)
+/* I2C MASTER: PB8/9 */
+ALTERNATE(PIN_MASK(B, 0x0300), 1, MODULE_I2C,        0)
+/* I2C MASTER: PB13/14 */
+ALTERNATE(PIN_MASK(B, 0x6000), 5, MODULE_I2C,        0)
+/* SPI SLAVE: PB3/4/5 */
+ALTERNATE(PIN_MASK(B, 0x0038), 5, MODULE_SPI,        0)
+/* SPI SLAVE CS: PA15 */
+ALTERNATE(PIN_MASK(A, 0x8000), 5, MODULE_SPI,        0)
+/* SPI MASTER: PD1/3/4 */
+ALTERNATE(PIN_MASK(D, 0x001a), 1, MODULE_SPI_MASTER, 0)

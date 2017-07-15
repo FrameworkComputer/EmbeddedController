@@ -3,18 +3,16 @@
  * found in the LICENSE file.
  */
 
-/* Configuration for Nuvoton M4 EB */
+/* Configuration for Scarlet */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
 /* Optional modules */
 #define CONFIG_ADC
+#undef  CONFIG_ADC_WATCHDOG
 #define CONFIG_CHIPSET_RK3399
 #define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_RTC
-#define CONFIG_HOSTCMD_RTC
-#define CONFIG_HOSTCMD_SPS
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_I2C_VIRTUAL_BATTERY
@@ -22,44 +20,35 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_COMMON
-#define CONFIG_PWM
-#define CONFIG_PWM_DISPLIGHT
 #define CONFIG_SPI
 #define CONFIG_SPI_MASTER
-#define CONFIG_SPI_FLASH_GD25LQ40
-#define CONFIG_SPI_FLASH_REGS
+#define CONFIG_STM_HWTIMER32
+#define CONFIG_SWITCH
+#define CONFIG_WATCHDOG_HELP
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
-/*
- * We are code space-constrained on scarlet, so take 10K that is normally used
- * as data RAM (was 30K, now 22K) and use it for code RAM (was 96K, now 104K)
- */
-#define RAM_SHIFT_SIZE (8 * 1024)
-#undef  CONFIG_RO_SIZE
-#define CONFIG_RO_SIZE (NPCX_PROGRAM_MEMORY_SIZE + RAM_SHIFT_SIZE)
-#undef  CONFIG_RAM_BASE
-#define CONFIG_RAM_BASE (0x200C0000 + RAM_SHIFT_SIZE)
-#undef  CONFIG_RAM_SIZE
-#define CONFIG_RAM_SIZE (0x00008000 - 0x800 - RAM_SHIFT_SIZE)
+#undef  CONFIG_UART_CONSOLE
+#define CONFIG_UART_CONSOLE 1
+
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
 #undef  CONFIG_MPU
 
 /* Enable a different power-on sequence than the one on gru */
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
-#define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
+#define CONFIG_CHIPSET_POWER_SEQ_VERSION 2
 
 /* Optional features */
 #define CONFIG_BOARD_VERSION
 #define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BUTTON_COUNT        2
 #define CONFIG_BUTTON_RECOVERY
-#define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_HOST_COMMAND_STATUS
 /* By default, set hcdebug to off */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
-#define CONFIG_LTO
+#undef CONFIG_LID_SWITCH
+#undef CONFIG_LTO
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_IGNORE_LID
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
@@ -75,7 +64,6 @@
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT 2
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15000
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
-#define CONFIG_USB_CHARGER
 #define CONFIG_USB_MUX_VIRTUAL
 
 /* Increase tx buffer size, as we'd like to stream EC log to AP. */
@@ -87,9 +75,6 @@
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
 #define CONFIG_BARO_BMP280
-/* Temp Sensors */
-#define CONFIG_TEMP_SENSOR
-#define CONFIG_TEMP_SENSOR_TMP432
 
 /* To be able to indicate the device is in tablet mode. */
 #define CONFIG_TABLET_MODE_SWITCH
@@ -124,7 +109,7 @@
 #define CONFIG_USB_PD_COMM_LOCKED
 
 #define CONFIG_BATTERY_CUT_OFF
-#define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
+#define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_RETRY_NACK
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
@@ -141,19 +126,12 @@
 /* Optional features for test commands */
 #define CONFIG_CMD_CHARGER_PSYS
 
-/* Set PSYS gain for 50W max measurement */
-#define BD99955_PSYS_GAIN_SELECT \
-		BD99955_CMD_PMON_IOUT_CTRL_SET_PMON_GAIN_SET_08UAW
+/* Timer selection */
+#define TIM_CLOCK32  2
+#define TIM_WATCHDOG 7
 
-#define CONFIG_UART_HOST                0
-
-/* Optional feature - used by nuvoton */
-#define NPCX_UART_MODULE2    1 /* 0:GPIO10/11 1:GPIO64/65 as UART */
-#define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
-#define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
-/* Enable SHI PU on transition to S0. Disable the PU otherwise for leakage. */
-#define NPCX_SHI_CS_PU
-#define NPCX_SHI_BYPASS_OVER_256B
+/* 48 MHz SYSCLK clock frequency */
+#define CPU_CLOCK 48000000
 
 /* Optional for testing */
 #undef  CONFIG_PECI
@@ -170,30 +148,22 @@
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
 #undef CONFIG_CONSOLE_HISTORY
-/*
- * Remove task profiling to improve SHI interrupt latency.
- * TODO(crosbug.com/p/55710): Re-define once interrupt latency is within
- * tolerance.
- */
-#undef CONFIG_TASK_PROFILING
 
-#define I2C_PORT_TCPC0    NPCX_I2C_PORT0_0
-#define I2C_PORT_BARO    NPCX_I2C_PORT1
-#define I2C_PORT_CHARGER  NPCX_I2C_PORT2
-#define I2C_PORT_THERMAL  NPCX_I2C_PORT2
-#define I2C_PORT_BATTERY  NPCX_I2C_PORT3
+#define CONFIG_TASK_PROFILING
+
+#define I2C_PORT_CHARGER  0
+#define I2C_PORT_BATTERY  0
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
+#define I2C_PORT_TCPC0    1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* SPI master port (SPIP) form BMI160 */
+#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
 
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 /* Define the MKBP events which are allowed to wakeup AP in S3. */
 #define CONFIG_MKBP_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |\
+		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEY_PRESSED) |\
 		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
 #ifndef __ASSEMBLER__
@@ -201,10 +171,6 @@
 enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
-	ADC_PP900_AP,
-	ADC_PP1200_LPDDR,
-	ADC_PPVAR_CLOGIC,
-	ADC_PPVAR_LOGIC,
 	ADC_CH_COUNT
 };
 
@@ -214,26 +180,10 @@ enum button {
 	BUTTON_COUNT
 };
 
-#ifdef CONFIG_TEMP_SENSOR_TMP432
-enum temp_sensor_id {
-	/* TMP432 local and remote sensors */
-	TEMP_SENSOR_I2C_TMP432_LOCAL,
-	TEMP_SENSOR_I2C_TMP432_REMOTE1,
-	TEMP_SENSOR_I2C_TMP432_REMOTE2,
-	TEMP_SENSOR_COUNT
-};
-#endif
-
-enum pwm_channel {
-	PWM_CH_DISPLIGHT,
-	/* Number of PWM channels */
-	PWM_CH_COUNT
-};
-
 /* power signal definitions */
 enum power_signal {
-	PP5000_PWR_GOOD = 0,
-	SYS_PWR_GOOD,
+	PP1250_S3_PWR_GOOD = 0,
+	PP900_S0_PWR_GOOD,
 	AP_PWR_GOOD,
 	SUSPEND_DEASSERTED,
 

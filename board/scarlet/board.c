@@ -24,13 +24,11 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
-#include "shi_chip.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -73,44 +71,24 @@ static void warm_reset_request_interrupt(enum gpio_signal signal)
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {
-		"BOARD_ID", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
-	[ADC_PP900_AP] = {
-		"PP900_AP", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
-	[ADC_PP1200_LPDDR] = {
-		"PP1200_LPDDR", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
-	[ADC_PPVAR_CLOGIC] = {
-		"PPVAR_CLOGIC",
-		NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
-	[ADC_PPVAR_LOGIC] = {
-		"PPVAR_LOGIC", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
+	[ADC_BOARD_ID] = {"BOARD_ID", 16, 4096, 0, STM32_AIN(10)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	/* ArcticSand part on Gru requires >= 2.6KHz */
-	[PWM_CH_DISPLIGHT] = { 2, 0, 2600 },
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"tcpc0",   NPCX_I2C_PORT0_0, 1000, GPIO_I2C0_SCL0, GPIO_I2C0_SDA0},
-	{"sensors", NPCX_I2C_PORT1,    400, GPIO_I2C1_SCL,  GPIO_I2C1_SDA},
-	{"charger", NPCX_I2C_PORT2,    400, GPIO_I2C2_SCL,  GPIO_I2C2_SDA},
-	{"battery", NPCX_I2C_PORT3,    100, GPIO_I2C3_SCL,  GPIO_I2C3_SDA},
+	{"charger", I2C_PORT_CHARGER,   400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{"tcpc0",   I2C_PORT_TCPC0,     1000, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_PP5000_PG,         1, "PP5000_PWR_GOOD"},
-	{GPIO_TPS65261_PG,       1, "SYS_PWR_GOOD"},
-	{GPIO_AP_CORE_PG,        1, "AP_PWR_GOOD"},
-	{GPIO_AP_EC_S3_S0_L,     0, "SUSPEND_DEASSERTED"},
+	{GPIO_PP1250_S3_PG,    1, "PP1250_S3_PWR_GOOD"},
+	{GPIO_PP900_S0_PG,     1, "PP900_S0_PWR_GOOD"},
+	{GPIO_AP_CORE_PG,      1, "AP_PWR_GOOD"},
+	{GPIO_AP_EC_S3_S0_L,   0, "SUSPEND_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -141,14 +119,15 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 /******************************************************************************/
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI_SENSOR_CS_L }
+	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI_ACCEL_CS_L },
+	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI_BARO_CS_L },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_POWER_BUTTON_L, GPIO_CHARGER_INT_L, GPIO_LID_OPEN
+	GPIO_POWER_BUTTON_L, GPIO_CHARGER_INT_L
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
@@ -308,15 +287,12 @@ static void board_init(void)
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
 
-	/* Enable charger interrupt for BC1.2 detection on attach / detach */
-	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
-
 	/* Enable reboot / shutdown control inputs from AP */
 	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
 	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
 
 	/* Enable interrupts from BMI160 sensor. */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	gpio_enable_interrupt(GPIO_ACCEL_INT_L);
 
 	/* Sensor Init */
 	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
@@ -401,7 +377,6 @@ int board_get_version(void)
 	msleep(10);
 	mv = adc_read_channel(ADC_BOARD_ID);
 
-	/* TODO(crosbug.com/p/54971): Fix failure on first ADC conversion. */
 	if (mv == ADC_READ_ERROR)
 		mv = adc_read_channel(ADC_BOARD_ID);
 
@@ -519,8 +494,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmp280_drv,
 	 .drv_data = &bmp280_drv_data,
-	 .port = I2C_PORT_BARO,
-	 .addr = BMP280_I2C_ADDRESS1,
+	 .port = CONFIG_SPI_ACCEL_PORT,
+	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
 	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
 	 .config = {
 		 /* AP: by default shutdown all sensors */
@@ -548,30 +523,6 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif /* defined(HAS_TASK_MOTIONSENSE) */
-
-#define PWM_DISPLIGHT_SYSJUMP_TAG 0x5044 /* "PD" */
-#define PWM_HOOK_VERSION 1
-
-static void pwm_displight_restore_state(void)
-{
-	const int *prev;
-	int version, size;
-
-	prev = (const int *)system_get_jump_tag(PWM_DISPLIGHT_SYSJUMP_TAG,
-						&version, &size);
-	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev))
-		pwm_set_raw_duty(PWM_CH_DISPLIGHT, *prev);
-}
-DECLARE_HOOK(HOOK_INIT, pwm_displight_restore_state, HOOK_PRIO_INIT_PWM + 1);
-
-static void pwm_displight_preserve_state(void)
-{
-	int pwm_displight_duty = pwm_get_raw_duty(PWM_CH_DISPLIGHT);
-
-	system_add_jump_tag(PWM_DISPLIGHT_SYSJUMP_TAG, PWM_HOOK_VERSION,
-			    sizeof(pwm_displight_duty), &pwm_displight_duty);
-}
-DECLARE_HOOK(HOOK_SYSJUMP, pwm_displight_preserve_state, HOOK_PRIO_DEFAULT);
 
 int board_allow_i2c_passthru(int port)
 {

@@ -5,9 +5,10 @@
 #
 # Board specific files build
 #
-
-# the IC is Nuvoton M-Series EC (npcx5m5g, npcx5m6g)
-CHIP:=npcx
-CHIP_VARIANT:=npcx5m5g
+#
+# STmicro STM32F098VC
+CHIP:=stm32
+CHIP_FAMILY:=stm32f0
+CHIP_VARIANT:=stm32f09x
 
 board-y=battery.o board.o usb_pd_policy.o led.o

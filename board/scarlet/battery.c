@@ -34,6 +34,15 @@ const struct battery_info *battery_get_info(void)
 	return &info;
 }
 
+/*
+ * Just a placeholder.
+ * TODO(philipchen): Implement this function in MAX17055 driver.
+ */
+enum battery_present battery_is_present(void)
+{
+	return BP_YES;
+}
+
 int board_cut_off_battery(void)
 {
 	int rv;
