@@ -146,6 +146,7 @@ static const char *ccd_cap_state_names[CCD_CAP_STATE_COUNT] = {
 static enum ccd_state ccd_state = CCD_STATE_LOCKED;
 static struct ccd_config config;
 static uint8_t ccd_config_loaded;
+static uint8_t force_disabled;
 static struct mutex ccd_config_mutex;
 
 /******************************************************************************/
@@ -631,7 +632,7 @@ int ccd_get_flag(enum ccd_flag flag)
 {
 	uint32_t f = raw_get_flags();
 
-	if (!ccd_config_loaded)
+	if (!ccd_config_loaded || force_disabled)
 		return 0;
 
 	return !!(f & flag);
@@ -639,6 +640,9 @@ int ccd_get_flag(enum ccd_flag flag)
 
 int ccd_set_flag(enum ccd_flag flag, int value)
 {
+	if (force_disabled)
+		return EC_ERROR_ACCESS_DENIED;
+
 	/* Fail if trying to set a private flag */
 	if (flag & ~k_public_flags)
 		return EC_ERROR_ACCESS_DENIED;
@@ -657,12 +661,8 @@ int ccd_set_flag(enum ccd_flag flag, int value)
 
 int ccd_is_cap_enabled(enum ccd_capability cap)
 {
-	/* Don't enable any capabilities before we've loaded the config */
-	if (!ccd_config_loaded) {
-		CPRINTS("CCD cap %s checked before load\n",
-			cap_info[cap].name);
+	if (!ccd_config_loaded || force_disabled)
 		return 0;
-	}
 
 	switch (raw_get_cap(cap, 1)) {
 	case CCD_CAP_STATE_ALWAYS:
@@ -680,6 +680,13 @@ enum ccd_state ccd_get_state(void)
 	return ccd_state;
 }
 
+void ccd_disable(void)
+{
+	CPRINTS("CCD disabled");
+	force_disabled = 1;
+	ccd_set_state(CCD_STATE_LOCKED);
+}
+
 /******************************************************************************/
 /* Console commands */
 
@@ -687,7 +694,8 @@ static int command_ccdinfo(int argc, char **argv)
 {
 	int i;
 
-	ccprintf("State: %s\n", ccd_state_names[ccd_state]);
+	ccprintf("State: %s%s\n", ccd_state_names[ccd_state],
+		 force_disabled ? " (Disabled)" : "");
 	ccprintf("Password: %s\n", raw_has_password() ? "set" : "none");
 	ccprintf("Flags: 0x%06x\n", raw_get_flags());
 
@@ -813,6 +821,9 @@ static int command_ccdopen(int argc, char **argv)
 	int need_pp = 1;
 	int rv;
 
+	if (force_disabled)
+		return EC_ERROR_ACCESS_DENIED;
+
 	if (ccd_state == CCD_STATE_OPENED)
 		return EC_SUCCESS;
 
@@ -863,6 +874,9 @@ static int command_ccdunlock(int argc, char **argv)
 {
 	int need_pp = 1;
 	int rv;
+
+	if (force_disabled)
+		return EC_ERROR_ACCESS_DENIED;
 
 	if (ccd_state == CCD_STATE_UNLOCKED)
 		return EC_SUCCESS;
@@ -950,6 +964,9 @@ static int command_testlab(int argc, char **argv)
 {
 	int newflag = 0;
 
+	if (force_disabled)
+		return EC_ERROR_ACCESS_DENIED;
+
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
@@ -990,6 +1007,7 @@ DECLARE_SAFE_CONSOLE_COMMAND(testlab, command_testlab,
 static int command_ccdoops(int argc, char **argv)
 {
 	/* Completely reset CCD config and go to opened state */
+	force_disabled = 0;
 	ccprintf("Aborting physical detect...\n");
 	physical_detect_abort();
 	ccprintf("Resetting CCD config...\n");
@@ -1002,3 +1020,14 @@ DECLARE_SAFE_CONSOLE_COMMAND(ccdoops, command_ccdoops,
 			     "",
 			     "Force-reset CCD config");
 #endif  /* CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE */
+
+#ifdef CONFIG_CMD_CCDDISABLE
+static int command_ccddisable(int argc, char **argv)
+{
+	ccd_disable();
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(ccddisable, command_ccddisable,
+			     "",
+			     "Force disable CCD config");
+#endif  /* CONFIG_CMD_CCDDISABLE */

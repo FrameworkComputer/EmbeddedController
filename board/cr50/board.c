@@ -606,6 +606,10 @@ static void  check_board_id_mismatch(void)
 		 */
 		mismatched_board_id = 1;
 		ccprintf("Board ID mismatched, but can not reboot.\n");
+
+		/* Force CCD disabled */
+		ccd_disable();
+
 		return;
 	}
 

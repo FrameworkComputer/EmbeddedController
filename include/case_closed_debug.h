@@ -183,4 +183,13 @@ int ccd_is_cap_enabled(enum ccd_capability cap);
  */
 enum ccd_state ccd_get_state(void);
 
+/**
+ * Force CCD disabled.
+ *
+ * This should be called if security checks fail and for some reason the board
+ * can't immediately reboot.  It locks CCD and disables all CCD capabilities
+ * until reboot.
+ */
+void ccd_disable(void);
+
 #endif /* __CROS_EC_CASE_CLOSED_DEBUG_H */
