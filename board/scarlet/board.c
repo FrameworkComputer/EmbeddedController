@@ -15,7 +15,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/charger/bd9995x.h"
+#include "driver/charger/rt946x.h"
 #include "driver/baro_bmp280.h"
 #include "driver/tcpm/fusb302.h"
 #include "driver/temp_sensor/tmp432.h"
@@ -173,8 +173,6 @@ uint16_t tcpc_get_alert_status(void)
 
 int board_set_active_charge_port(int charge_port)
 {
-	enum bd9995x_charge_port bd9995x_port;
-	int bd9995x_port_select = 1;
 	static int initialized;
 
 	/*
@@ -197,11 +195,10 @@ int board_set_active_charge_port(int charge_port)
 		/* Don't charge from a source port */
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
-		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
+		rt946x_enable_charger_boost(1);
 		break;
 	case CHARGE_PORT_NONE:
-		bd9995x_port_select = 0;
-		bd9995x_port = BD9995X_CHARGE_PORT_BOTH;
+		rt946x_enable_charger_boost(0);
 		break;
 	default:
 		panic("Invalid charge port\n");
@@ -209,7 +206,7 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	initialized = 1;
-	return bd9995x_select_input_port(bd9995x_port, bd9995x_port_select);
+	return EC_SUCCESS;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
@@ -240,7 +237,7 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(0))
 		return 0;
 	else
-		return bd9995x_is_vbus_provided(BD9995X_CHARGE_PORT_VBUS);
+		return rt946x_is_vbus_ready();
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -248,7 +245,7 @@ int pd_snk_is_vbus_provided(int port)
 	if (port)
 		panic("Invalid charge port\n");
 
-	return bd9995x_is_vbus_provided(BD9995X_CHARGE_PORT_VBUS);
+	return rt946x_is_vbus_ready();
 }
 
 static void board_spi_enable(void)

@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "charge_state.h"
 #include "console.h"
+#include "driver/charger/rt946x.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "util.h"
@@ -45,15 +46,7 @@ enum battery_present battery_is_present(void)
 
 int board_cut_off_battery(void)
 {
-	int rv;
-
-	/* Ship mode command must be sent twice to take effect */
-	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
-	if (rv != EC_SUCCESS)
-		return EC_RES_ERROR;
-
-	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
-	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
+	return rt946x_cutoff_battery();
 }
 
 enum battery_disconnect_state battery_get_disconnect_state(void)
