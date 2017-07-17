@@ -618,6 +618,12 @@ static void  check_board_id_mismatch(void)
 /* Initialize board. */
 static void board_init(void)
 {
+#ifdef CR50_DEV
+	static enum ccd_state ccd_init_state = CCD_STATE_OPENED;
+#else
+	static enum ccd_state ccd_init_state = CCD_STATE_LOCKED;
+#endif
+
 	/*
 	 * Deep sleep resets should be considered valid and should not impact
 	 * the rolling reboot count.
@@ -634,8 +640,19 @@ static void board_init(void)
 	nvmem_init();
 	/* Initialize the persistent storage. */
 	initvars();
+
+	/*
+	 * If this was a low power wake and not a rollback, restore the ccd
+	 * state from the long-life register.
+	 */
+	if ((system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
+	    !system_rollback_detected()) {
+		ccd_init_state = (GREG32(PMU, LONG_LIFE_SCRATCH1) &
+				  BOARD_CCD_STATE) >> BOARD_CCD_SHIFT;
+	}
+
 	/* Load case-closed debugging config */
-	ccd_config_init();
+	ccd_config_init(ccd_init_state);
 
 	system_update_rollback_mask_with_both_imgs();
 
@@ -660,6 +677,20 @@ static void board_init(void)
 	gpio_disable_interrupt(GPIO_EC_TX_CR50_RX);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Hook for CCD config loaded/changed.
+ */
+static void board_ccd_config_changed(void)
+{
+	/* Store the current CCD state so we can restore it after deep sleep */
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
+	GREG32(PMU, LONG_LIFE_SCRATCH1) &= ~BOARD_CCD_STATE;
+	GREG32(PMU, LONG_LIFE_SCRATCH1) |= (ccd_get_state() << BOARD_CCD_SHIFT)
+			& BOARD_CCD_STATE;
+	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+}
+DECLARE_HOOK(HOOK_CCD_CHANGE, board_ccd_config_changed, HOOK_PRIO_DEFAULT);
 
 #if defined(CONFIG_USB)
 const void * const usb_strings[] = {

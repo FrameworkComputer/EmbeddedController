@@ -46,6 +46,16 @@ enum ccd_mode ccd_get_mode(void);
 /******************************************************************************/
 /* New CCD "V1" configuration.  Eventually this will supersede the above code */
 
+/* Case-closed debugging state */
+enum ccd_state {
+	CCD_STATE_LOCKED = 0,
+	CCD_STATE_UNLOCKED,
+	CCD_STATE_OPENED,
+
+	/* Number of CCD states */
+	CCD_STATE_COUNT
+};
+
 /* Flags */
 enum ccd_flag {
 	/* Flags that can only be set internally; fill from bottom up */
@@ -128,8 +138,13 @@ enum ccd_capability {
  * Initialize CCD configuration at boot.
  *
  * This must be called before any command which gets/sets the configuration.
+ *
+ * @param state		Initial case-closed debugging state.  This should be
+ *			CCD_STATE_LOCKED unless this is a debug build, or if
+ *			a previous value is being restored after a low-power
+ *			resume.
  */
-void ccd_config_init(void);
+void ccd_config_init(enum ccd_state state);
 
 /**
  * Get a single CCD flag.
@@ -149,11 +164,23 @@ int ccd_get_flag(enum ccd_flag flag);
 int ccd_set_flag(enum ccd_flag flag, int value);
 
 /**
- * Check if a CCD capability is enabled in the current CCD mode
+ * Check if a CCD capability is enabled in the current CCD mode.
  *
  * @param cap		Capability to check
  * @return 1 if capability is enabled, 0 if disabled
  */
 int ccd_is_cap_enabled(enum ccd_capability cap);
+
+/**
+ * Get the current CCD state.
+ *
+ * This is intended for use by the board if it needs to back up the CCD state
+ * across low-power states and then restore it when calling ccd_config_init().
+ * Do NOT use this to gate debug capabilities; use ccd_is_cap_enabled() or
+ * ccd_get_flag() instead.
+ *
+ * @return The current CCD state.
+ */
+enum ccd_state ccd_get_state(void);
 
 #endif /* __CROS_EC_CASE_CLOSED_DEBUG_H */

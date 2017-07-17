@@ -14,21 +14,13 @@
 #include "nvmem_vars.h"
 #include "physical_presence.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "timer.h"
 #include "trng.h"
 
 #define CPRINTS(format, args...) cprints(CC_CCD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CCD, format, ## args)
-
-enum ccd_state {
-	CCD_STATE_LOCKED = 0,
-	CCD_STATE_UNLOCKED,
-	CCD_STATE_OPENED,
-
-	/* Number of CCD states */
-	CCD_STATE_COUNT
-};
 
 /* Restriction state for ccdunlock when no password is set */
 enum ccd_unlock_restrict {
@@ -151,12 +143,7 @@ static const char *ccd_state_names[CCD_STATE_COUNT] = {
 static const char *ccd_cap_state_names[CCD_CAP_STATE_COUNT] = {
 	"Default", "Always", "UnlessLocked", "IfOpened"};
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
-static enum ccd_state ccd_state = CCD_STATE_OPENED;
-#else
 static enum ccd_state ccd_state = CCD_STATE_LOCKED;
-#endif
-
 static struct ccd_config config;
 static uint8_t ccd_config_loaded;
 static struct mutex ccd_config_mutex;
@@ -630,8 +617,13 @@ static void ccd_testlab_toggle(void)
 /******************************************************************************/
 /* External interface */
 
-void ccd_config_init(void)
+void ccd_config_init(enum ccd_state state)
 {
+	/* Set initial state, after making sure it's a valid one */
+	if (state != CCD_STATE_UNLOCKED && state != CCD_STATE_OPENED)
+		state = CCD_STATE_LOCKED;
+	ccd_state = state;
+
 	ccd_load_config();
 }
 
@@ -681,6 +673,11 @@ int ccd_is_cap_enabled(enum ccd_capability cap)
 	default:
 		return ccd_state == CCD_STATE_OPENED;
 	}
+}
+
+enum ccd_state ccd_get_state(void)
+{
+	return ccd_state;
 }
 
 /******************************************************************************/

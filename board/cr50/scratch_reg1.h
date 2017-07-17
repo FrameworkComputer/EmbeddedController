@@ -38,6 +38,15 @@
 #define BOARD_NO_RO_UART             (1 << 10)
 
 /*
+ * Bits to store current case-closed debug state across deep sleep.
+ *
+ * DO NOT examine these bits to determine the current CCD state.  Call methods
+ * from case_closed_debug.h instead.
+ */
+#define BOARD_CCD_SHIFT              11
+#define BOARD_CCD_STATE              (3 << BOARD_CCD_SHIFT)
+
+/*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
  */
