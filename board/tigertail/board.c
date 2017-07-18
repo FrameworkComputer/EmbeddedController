@@ -122,27 +122,63 @@ static int uart_state = UART_OFF;
 /* State to indicate current autodetect mode. */
 static int uart_detect = UART_DETECT_AUTO;
 
+const char *const uart_state_names[] = {
+	[UART_OFF] = "off",
+	[UART_ON_PP1800] = "on @ 1.8v",
+	[UART_FLIP_PP1800] = "flip @ 1.8v",
+	[UART_ON_PP3300] = "on @ 3.3v",
+	[UART_FLIP_PP3300] = "flip @ 3.3v",
+	[UART_AUTO] = "auto",
+};
+
 /* Set GPIOs to configure UART mode. */
 static void set_uart_gpios(int state)
 {
-	int uart = 0;
+	int uart = GPIO_INPUT;
 	int dir = 0;
-	int enabled = (state == UART_ON) || (state == UART_FLIP);
+	int voltage = 1;  /* 1: 1.8v, 0: 3.3v */
+	int enabled = 0;
 
 	gpio_set_level(GPIO_ST_UART_LVL_DIS, 1);
 
-	uart = GPIO_INPUT;
-
-	if (state == UART_ON) {
+	switch (state) {
+	case UART_ON_PP1800:
 		uart = GPIO_ALTERNATE;
 		dir = 1;
-	}
-	if (state == UART_FLIP) {
+		voltage = 1;
+		enabled = 1;
+		break;
+
+	case UART_FLIP_PP1800:
 		uart = GPIO_ALTERNATE;
 		dir = 0;
+		voltage = 1;
+		enabled = 1;
+		break;
+
+	case UART_ON_PP3300:
+		uart = GPIO_ALTERNATE;
+		dir = 1;
+		voltage = 0;
+		enabled = 1;
+		break;
+
+	case UART_FLIP_PP3300:
+		uart = GPIO_ALTERNATE;
+		dir = 0;
+		voltage = 0;
+		enabled = 1;
+		break;
+
+	default:
+		/* Default to UART_OFF. */
+		uart = GPIO_INPUT;
+		dir = 0;
+		enabled = 0;
 	}
 
-	/* Set level shifter direction. */
+	/* Set level shifter direction and voltage. */
+	gpio_set_level(GPIO_ST_UART_VREF, voltage);
 	gpio_set_level(GPIO_ST_UART_TX_DIR, dir);
 	gpio_set_level(GPIO_ST_UART_TX_DIR_N, !dir);
 
@@ -159,12 +195,29 @@ static void set_uart_gpios(int state)
 	STM32_USART_CR1(STM32_USART1_BASE) |= STM32_USART_CR1_UE;
 
 	/* Enable level shifter. */
+	usleep(1000);
 	gpio_set_level(GPIO_ST_UART_LVL_DIS, !enabled);
 }
 
-/* Detect if a UART is plugged into SBU. Tigertail UART must be off
+/*
+ * Detect if a UART is plugged into SBU. Tigertail UART must be off
  * for this to return useful info.
  */
+static int is_low(int mv)
+{
+	return (mv < 190);
+}
+
+static int is_3300(int mv)
+{
+	return ((mv > 3000) && (mv < 3400));
+}
+
+static int is_1800(int mv)
+{
+	return ((mv > 1600) && (mv < 1900));
+}
+
 static int detect_uart_orientation(void)
 {
 	int sbu1 = adc_read_channel(ADC_SBU1);
@@ -175,10 +228,14 @@ static int detect_uart_orientation(void)
 	 * Here we check if one or the other SBU is 1.8v, as DUT
 	 * TX should idle high.
 	 */
-	if ((sbu1 < 150) && (sbu2 > 1600) && (sbu2 < 1900))
-		state = UART_ON;
-	else if ((sbu2 < 150) && (sbu1 > 1600) && (sbu1 < 1900))
-		state = UART_FLIP;
+	if (is_low(sbu1) && is_1800(sbu2))
+		state = UART_ON_PP1800;
+	else if (is_low(sbu2) && is_1800(sbu1))
+		state = UART_FLIP_PP1800;
+	else if (is_low(sbu1) && is_3300(sbu2))
+		state = UART_ON_PP3300;
+	else if (is_low(sbu2) && is_3300(sbu1))
+		state = UART_FLIP_PP3300;
 	else
 		state = UART_OFF;
 
@@ -195,8 +252,10 @@ static int detect_uart_idle(void)
 	int sbu2 = adc_read_channel(ADC_SBU2);
 	int enabled = 0;
 
-	if ((sbu1 > 1600) && (sbu1 < 1900) &&
-	    (sbu2 > 1600) && (sbu2 < 1900))
+	if (is_1800(sbu1) && is_1800(sbu2))
+		enabled = 1;
+
+	if (is_3300(sbu1) && is_3300(sbu2))
 		enabled = 1;
 
 	return enabled;
@@ -238,7 +297,8 @@ void uart_sbu_tick(void)
 			debounce++;
 			if (debounce > 4) {
 				debounce = 0;
-				CPRINTS("UART autoenable\n");
+				CPRINTS("UART autoenable %s",
+					uart_state_names[state]);
 				uart_state = state;
 				set_uart_gpios(state);
 			}
@@ -251,7 +311,7 @@ void uart_sbu_tick(void)
 			debounce++;
 			if (debounce > 4) {
 				debounce = 0;
-				CPRINTS("UART autodisable\n");
+				CPRINTS("UART autodisable");
 				uart_state = UART_OFF;
 				set_uart_gpios(UART_OFF);
 			}
@@ -264,26 +324,27 @@ DECLARE_HOOK(HOOK_TICK, uart_sbu_tick, HOOK_PRIO_DEFAULT);
 
 static int command_uart(int argc, char **argv)
 {
-	char *uart_state_str = "off";
-	char *uart_detect_str = "manual";
+	const char *uart_state_str = "off";
+	const char *uart_detect_str = "manual";
 
 	if (argc > 1) {
 		if (!strcasecmp("off", argv[1]))
 			set_uart_state(UART_OFF);
-		else if (!strcasecmp("on", argv[1]))
-			set_uart_state(UART_ON);
-		else if (!strcasecmp("flip", argv[1]))
-			set_uart_state(UART_FLIP);
+		else if (!strcasecmp("on18", argv[1]))
+			set_uart_state(UART_ON_PP1800);
+		else if (!strcasecmp("on33", argv[1]))
+			set_uart_state(UART_ON_PP3300);
+		else if (!strcasecmp("flip18", argv[1]))
+			set_uart_state(UART_FLIP_PP1800);
+		else if (!strcasecmp("flip33", argv[1]))
+			set_uart_state(UART_FLIP_PP3300);
 		else if (!strcasecmp("auto", argv[1]))
 			set_uart_state(UART_AUTO);
 		else
 			return EC_ERROR_PARAM1;
 	}
 
-	if (uart_state == UART_ON)
-		uart_state_str = "on";
-	if (uart_state == UART_FLIP)
-		uart_state_str = "flip";
+	uart_state_str = uart_state_names[uart_state];
 	if (uart_detect == UART_DETECT_AUTO)
 		uart_detect_str = "auto";
 	ccprintf("UART mux is: %s, setting: %s\n",
@@ -292,8 +353,9 @@ static int command_uart(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(uart, command_uart,
-	"[off|on|flip|auto]",
-	"Get/set the flip and enable state of the SBU UART");
+	"[off|on18|on33|flip18|flip33|auto]",
+	"Set the sbu uart state\n"
+	"WARNING: 3.3v may damage 1.8v devices.\n");
 
 static void set_led_a(int r, int g, int b)
 {

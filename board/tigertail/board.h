@@ -115,8 +115,10 @@ void set_uart_state(int state);
 
 enum uart_states {
 	UART_OFF = 0,
-	UART_ON,
-	UART_FLIP,
+	UART_ON_PP1800,
+	UART_FLIP_PP1800,
+	UART_ON_PP3300,
+	UART_FLIP_PP3300,
 	UART_AUTO,
 };
 
