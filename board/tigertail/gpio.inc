@@ -5,6 +5,10 @@
  * found in the LICENSE file.
  */
 
+/* Interrupt enables. */
+GPIO_INT(BUTTON_L,			PIN(C, 13), \
+	 GPIO_INT_RISING | GPIO_PULL_UP, button_interrupt)
+
 /* Outputs */
 GPIO(SEL_CC2_A,			PIN(A, 14), GPIO_OUT_LOW)
 GPIO(SEL_VBUS_A,		PIN(A, 15), GPIO_OUT_LOW)

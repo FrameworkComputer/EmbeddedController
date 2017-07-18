@@ -312,6 +312,7 @@ static void set_led_b(int r, int g, int b)
 
 /* State we intend the mux GPIOs to be set. */
 static int mux_state = MUX_OFF;
+static int last_mux_state = MUX_OFF;
 
 /* Set the state variable and GPIO configs to mux as requested. */
 void set_mux_state(int state)
@@ -319,6 +320,9 @@ void set_mux_state(int state)
 	int enabled = (state == MUX_A) || (state == MUX_B);
 	/* dir: 0 -> A, dir: 1 -> B */
 	int dir = (state == MUX_B);
+
+	if (mux_state != state)
+		last_mux_state = mux_state;
 
 	/* Disconnect first. */
 	gpio_set_level(GPIO_USB_C_OE_N, 1);
@@ -352,6 +356,45 @@ void set_mux_state(int state)
 		set_led_b(0, 1, 0);
 	else
 		set_led_b(1, 0, 0);
+}
+
+
+/* On button press, toggle between mux A, B, off. */
+static int button_ready = 1;
+void button_interrupt_deferred(void)
+{
+	switch (mux_state) {
+	case MUX_OFF:
+		if (last_mux_state == MUX_A)
+			set_mux_state(MUX_B);
+		else
+			set_mux_state(MUX_A);
+		break;
+
+	case MUX_A:
+	case MUX_B:
+	default:
+		set_mux_state(MUX_OFF);
+		break;
+	}
+
+	button_ready = 1;
+}
+DECLARE_DEFERRED(button_interrupt_deferred);
+
+/* On button press, toggle between mux A, B, off. */
+void button_interrupt(enum gpio_signal signal)
+{
+	if (!button_ready)
+		return;
+
+	button_ready = 0;
+	/*
+	 * button_ready is not set until set_mux_state completes,
+	 * which has ~100ms settle time for the mux, which also
+	 * provides for debouncing.
+	 */
+	hook_call_deferred(&button_interrupt_deferred_data, 0);
 }
 
 static int command_mux(int argc, char **argv)
@@ -406,5 +449,7 @@ static void board_init(void)
 	ina2xx_init(0, 0x8000, INA2XX_CALIB_1MA(15 /*mOhm*/));
 	ina2xx_init(1, 0x8000, INA2XX_CALIB_1MA(15 /*mOhm*/));
 	ina2xx_init(4, 0x8000, INA2XX_CALIB_1MA(15 /*mOhm*/));
+
+	gpio_enable_interrupt(GPIO_BUTTON_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
