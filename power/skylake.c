@@ -58,29 +58,18 @@ void chipset_reset(int cold_reset)
 {
 	CPRINTS("%s(%d)", __func__, cold_reset);
 
-	if (cold_reset) {
-		if (gpio_get_level(GPIO_SYS_RESET_L) == 0)
-			return;
-		gpio_set_level(GPIO_SYS_RESET_L, 0);
-		/* Debounce time for SYS_RESET_L is 16 ms */
-		udelay(20 * MSEC);
-		gpio_set_level(GPIO_SYS_RESET_L, 1);
-	} else {
-		/*
-		 * Send a RCIN_PCH_RCIN_L
-		 * assert INIT# to the CPU without dropping power or asserting
-		 * PLTRST# to reset the rest of the system.
-		 */
-
-		/* Pulse must be at least 16 PCI clocks long = 500 ns */
-#ifdef CONFIG_ESPI_VW_SIGNALS
-		lpc_host_reset();
-#else
-		gpio_set_level(GPIO_PCH_RCIN_L, 0);
-		udelay(10);
-		gpio_set_level(GPIO_PCH_RCIN_L, 1);
-#endif
-	}
+	/*
+	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
+	 * perform a chipset reset. RCIN# which was used earlier to trigger a
+	 * warm reset is known to not work in certain cases where the CPU is in
+	 * a bad state (crbug.com/721853)
+	 */
+	if (gpio_get_level(GPIO_SYS_RESET_L) == 0)
+		return;
+	gpio_set_level(GPIO_SYS_RESET_L, 0);
+	/* Debounce time for SYS_RESET_L is 16 ms */
+	udelay(20 * MSEC);
+	gpio_set_level(GPIO_SYS_RESET_L, 1);
 }
 
 static void handle_slp_sus(enum power_state state)
