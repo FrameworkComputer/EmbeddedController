@@ -144,6 +144,9 @@
 #define CONFIG_DCRYPTO
 #define CONFIG_UPTO_SHA512
 
+/* Implement custom udelay, due to usec hwtimer imprecision. */
+#define CONFIG_HW_SPECIFIC_UDELAY
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
