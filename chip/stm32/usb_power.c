@@ -458,15 +458,20 @@ static int usb_power_init_inas(struct usb_power_config const *config)
 		/*
 		 * Calculate INA231 Calibration register
 		 * CurrentLSB = uA per div = 80mV / (Rsh * 2^15)
-		 * CurrentLSB uA = 80000000nV / (Rsh mOhm * 0x8000)
+		 * CurrentLSB 100x uA = 100x 80000000nV / (Rsh mOhm * 0x8000)
 		 */
-		ina->scale = 80000000 / (ina->rs * 0x8000);
+		if (ina->rs == 0)
+			return -1;
+
+		ina->scale = (100 * (80000000 / 0x8000)) / ina->rs;
 
 		/*
 		 * CAL = .00512 / (CurrentLSB * Rsh)
 		 * CAL = 5120000 / (uA * mOhm)
 		 */
-		value = 5120000 / (ina->scale * ina->rs);
+		if (ina->scale == 0)
+			return -1;
+		value = (5120000 * 100) / (ina->scale * ina->rs);
 		ret = ina2xx_write(ina->port, ina->addr, INA231_REG_CAL, value);
 		if (ret != EC_SUCCESS) {
 			CPRINTS("[CAP] usb_power_init_inas CAL FAIL: %d", ret);
@@ -478,7 +483,7 @@ static int usb_power_init_inas(struct usb_power_config const *config)
 
 		actual = ina2xx_read(ina->port, ina->addr, INA231_REG_CAL);
 		CPRINTS("[CAP] scale: %d uA/div, %d uW/div, cal:%x act:%x",
-			ina->scale, ina->scale*25, value, actual);
+			ina->scale / 100, ina->scale*25/100, value, actual);
 		}
 #endif
 		/* Conversion time, shunt + bus, set average. */
@@ -586,8 +591,8 @@ static int usb_power_get_samples(struct usb_power_config const *config)
 		int uV = ((int)voltage * 25) / 10;
 		int mV = ((int)bvoltage * 125) / 100;
 		int uA = (uV * 1000) / ina->rs;
-		int CuA = ((int)current * ina->scale);
-		int uW = ((int)power * ina->scale*25);
+		int CuA = (((int)current * ina->scale) / 100);
+		int uW = (((int)power * ina->scale*25)/100);
 
 		CPRINTS("[CAP] %d (%d,0x%02x): %dmV / %dmO = %dmA",
 			i, ina->port, ina->addr, uV/1000, ina->rs, uA/1000);
