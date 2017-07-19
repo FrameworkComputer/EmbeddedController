@@ -14,6 +14,9 @@
 #include "compile_time_macros.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "ec_commands.h"
+#ifdef CONFIG_ESPI_VW_SIGNALS
+#include "espi.h"
+#endif /* defined(CONFIG_ESPI_VW_SIGNALS) */
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -72,9 +75,14 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	/* TODO(aaboagye): consider eSPI VW signals. */
+	{GPIO_PCH_SLP_S0_L,   1, "SLP_S0_DEASSERTED"},
+#ifdef CONFIG_ESPI_VW_SIGNALS
+	{VW_SLP_S3_L,         1, "SLP_S3_DEASSERTED"},
+	{VW_SLP_S4_L,         1, "SLP_S4_DEASSERTED"},
+#else
 	{GPIO_PCH_SLP_S3_L,   1, "SLP_S3_DEASSERTED"},
 	{GPIO_PCH_SLP_S4_L,   1, "SLP_S4_DEASSERTED"},
+#endif /* defined(CONFIG_ESPI_VW_SIGNALS) */
 	{GPIO_PCH_SLP_SUS_L,  1, "SLP_SUS_DEASSERTED"},
 	{GPIO_RSMRST_L_PGOOD, 1, "RSMRST_L_PGOOD"},
 	{GPIO_PMIC_DPWROK,    1, "PMIC_DPWROK"},

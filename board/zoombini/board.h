@@ -9,7 +9,6 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
-#define CONFIG_BRINGUP
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
 
 /* NPCX7 config */
@@ -25,6 +24,7 @@
 /* EC Modules */
 #define CONFIG_ADC
 #define CONFIG_ESPI
+#define CONFIG_ESPI_VW_SIGNALS
 #define CONFIG_I2C
 #define CONFIG_LPC
 #define CONFIG_PWM
@@ -125,6 +125,7 @@ enum pwm_channel {
 };
 
 enum power_signal {
+	X86_SLP_S0_DEASSERTED,
 	X86_SLP_S3_DEASSERTED,
 	X86_SLP_S4_DEASSERTED,
 	X86_SLP_SUS_DEASSERTED,

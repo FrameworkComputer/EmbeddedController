@@ -75,6 +75,7 @@ enum power_state chipset_force_g3(void)
 {
 	CPRINTS("Faking G3.  (NOOP for now.)");
 	/* TODO(aaboagye): Do the right thing for real. */
+	/* TODO(aaboagye): maybe turn off DSW load switch. */
 	return POWER_G3;
 }
 
