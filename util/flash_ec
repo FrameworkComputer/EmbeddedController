@@ -114,6 +114,7 @@ BOARDS_NPCX_SPI=(
 	fizz
 	gru
 	kevin
+	nefario
 	poppy
 	reef
 	scarlet
@@ -139,6 +140,7 @@ BOARDS_SPI_1800MV=(
 	coral
 	gru
 	kevin
+	nefario
 	reef
 	scarlet
 )
@@ -149,6 +151,7 @@ BOARDS_RAIDEN=(
 	fizz
 	gru
 	kevin
+	nefario
 	poppy
 	reef
 	scarlet
