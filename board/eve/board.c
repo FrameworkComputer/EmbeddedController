@@ -646,10 +646,11 @@ static void enable_input_devices(void)
 void lid_angle_peripheral_enable(int enable)
 {
 	/*
-	 * If the lid is in 360 position, ignore the lid angle,
+	 * If suspended and the lid is in 360 position, ignore the lid angle,
 	 * which might be faulty. Disable keyboard and trackpad wake.
 	 */
-	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+	   (tablet_get_mode() && chipset_in_state(CHIPSET_STATE_SUSPEND)))
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 
