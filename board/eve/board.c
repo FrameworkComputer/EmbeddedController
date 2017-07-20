@@ -350,6 +350,9 @@ static void board_pmic_init(void)
 	if (system_jumped_to_this_image())
 		return;
 
+	/* DISCHGCNT2 - enable 100 ohm discharge on V3.3A and V1.8A */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3d, 0x05);
+
 	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x04);
 
