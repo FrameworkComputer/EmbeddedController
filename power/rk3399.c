@@ -82,7 +82,7 @@ BUILD_ASSERT(GPIO_COUNT < 256);
 static const struct power_seq_op s5s3_power_seq[] = {
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
 	{ GPIO_PP900_S3_EN, 1, 2 },
-	{ GPIO_SYS_RST_L, 1, 0 },
+	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP3300_S3_EN, 1, 2 },
 	{ GPIO_PP1800_S3_EN, 1, 2 },
 	{ GPIO_PP1250_S3_EN, 1, 2 },
