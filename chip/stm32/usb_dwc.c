@@ -1359,7 +1359,7 @@ static int usb_set_serial(const char *serialno)
 		return EC_ERROR_INVAL;
 
 	/* Convert into unicode usb string desc. */
-	for (i = 0; i < USB_STRING_LEN; i++) {
+	for (i = 0; i < CONFIG_SERIALNO_LEN; i++) {
 		sd->_data[i] = serialno[i];
 		if (serialno[i] == 0)
 			break;
@@ -1369,13 +1369,6 @@ static int usb_set_serial(const char *serialno)
 	sd->_type = USB_DT_STRING;
 
 	return EC_SUCCESS;
-}
-
-/* By default, read serial number from flash, can be overridden. */
-__attribute__((weak))
-const char *board_read_serial(void)
-{
-	return flash_read_serial();
 }
 
 /* Retrieve serial number from pstate flash. */
@@ -1392,7 +1385,6 @@ static int usb_load_serial(void)
 	return rv;
 }
 
-
 /* Save serial number into pstate region. */
 static int usb_save_serial(const char *serialno)
 {
@@ -1402,7 +1394,7 @@ static int usb_save_serial(const char *serialno)
 		return EC_ERROR_INVAL;
 
 	/* Save this new serial number to flash. */
-	rv = flash_write_serial(serialno);
+	rv = board_write_serial(serialno);
 	if (rv)
 		return rv;
 
@@ -1414,7 +1406,7 @@ static int usb_save_serial(const char *serialno)
 static int command_serialno(int argc, char **argv)
 {
 	struct usb_string_desc *sd = usb_serialno_desc;
-	char buf[USB_STRING_LEN];
+	char buf[CONFIG_SERIALNO_LEN];
 	int rv = EC_SUCCESS;
 	int i;
 
@@ -1431,7 +1423,7 @@ static int command_serialno(int argc, char **argv)
 			return EC_ERROR_INVAL;
 	}
 
-	for (i = 0; i < USB_STRING_LEN; i++)
+	for (i = 0; i < CONFIG_SERIALNO_LEN; i++)
 		buf[i] = sd->_data[i];
 	ccprintf("Serial number: %s\n", buf);
 	return rv;
@@ -1440,5 +1432,4 @@ static int command_serialno(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(serialno, command_serialno,
 	"load/set [value]",
 	"Read and write USB serial number");
-#endif
-
+#endif  /* CONFIG_USB_SERIALNO */

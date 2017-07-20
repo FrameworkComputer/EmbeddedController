@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "otp.h"
 #include "shared_mem.h"
 #include "system.h"
 #include "util.h"
@@ -39,7 +40,6 @@
 /* NOTE: It's not expected that RO and RW will support
  * differing PSTATE versions. */
 #define PERSIST_STATE_VERSION 3  /* Expected persist_state.version */
-#define SERIALNO_MAX 28
 
 /* Flags for persist_state.flags */
 /* Protect persist state and RO firmware at boot */
@@ -52,7 +52,11 @@ struct persist_state {
 	uint8_t flags;              /* Lock flags (PERSIST_FLAG_*) */
 	uint8_t valid_fields;       /* Flags for valid data. */
 	uint8_t reserved;           /* Reserved; set 0 */
-	uint8_t serialno[SERIALNO_MAX]; /* Serial number. */
+#ifdef CONFIG_SERIALNO_LEN
+	uint8_t serialno[CONFIG_SERIALNO_LEN]; /* Serial number. */
+#else
+	uint8_t padding[4 % CONFIG_FLASH_WRITE_SIZE];
+#endif
 };
 /* written with flash_physical_write, need to respect alignment constraints */
 #ifndef CHIP_FAMILY_STM32L /* STM32L1xx is somewhat lying to us */
@@ -216,10 +220,11 @@ static uint32_t flash_read_pstate(void)
 	}
 }
 
+#ifdef CONFIG_SERIALNO_LEN
 /**
  * Read and return persistent serial number.
  */
-static const char *flash_read_pstate_serial(void)
+const char *flash_read_pstate_serial(void)
 {
 	const struct persist_state *pstate =
 		(const struct persist_state *)
@@ -230,8 +235,9 @@ static const char *flash_read_pstate_serial(void)
 		return (const char *)(pstate->serialno);
 	}
 
-	return 0;
+	return NULL;
 }
+#endif
 
 /**
  * Write persistent state after erasing.
@@ -312,13 +318,14 @@ static int flash_write_pstate(uint32_t flags)
 	return flash_write_pstate_data(&newpstate);
 }
 
+#ifdef CONFIG_SERIALNO_LEN
 /**
  * Write persistent serial number to pstate, erasing if necessary.
  *
  * @param serialno		New iascii serial number to set in pstate.
  * @return EC_SUCCESS, or nonzero if error.
  */
-static int flash_write_pstate_serial(const char *serialno)
+int flash_write_pstate_serial(const char *serialno)
 {
 	int i;
 	struct persist_state newpstate;
@@ -335,17 +342,18 @@ static int flash_write_pstate_serial(const char *serialno)
 	validate_pstate_struct(&newpstate);
 
 	/* Copy in serialno. */
-	for (i = 0; i < SERIALNO_MAX - 1; i++) {
+	for (i = 0; i < CONFIG_SERIALNO_LEN - 1; i++) {
 		newpstate.serialno[i] = serialno[i];
 		if (serialno[i] == 0)
 			break;
 	}
-	for (; i < SERIALNO_MAX; i++)
+	for (; i < CONFIG_SERIALNO_LEN; i++)
 		newpstate.serialno[i] = 0;
 	newpstate.valid_fields |= PSTATE_VALID_SERIALNO;
 
 	return flash_write_pstate_data(&newpstate);
 }
+#endif
 
 
 
@@ -513,24 +521,6 @@ int flash_erase(int offset, int size)
 #endif
 
 	return flash_physical_erase(offset, size);
-}
-
-const char *flash_read_serial(void)
-{
-#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
-	return flash_read_pstate_serial();
-#else
-	return 0;
-#endif
-}
-
-int flash_write_serial(const char *serialno)
-{
-#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
-	return flash_write_pstate_serial(serialno);
-#else
-	return EC_ERROR_UNIMPLEMENTED;
-#endif
 }
 
 int flash_protect_at_boot(uint32_t new_flags)

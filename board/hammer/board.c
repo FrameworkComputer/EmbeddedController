@@ -172,7 +172,7 @@ int board_get_entropy(void *buffer, int len)
  */
 const char *board_read_serial(void)
 {
-	static char str[USB_STRING_LEN];
+	static char str[CONFIG_SERIALNO_LEN];
 
 	if (str[0] == '\0') {
 		uint8_t *id;
@@ -188,3 +188,9 @@ const char *board_read_serial(void)
 
 	return str;
 }
+
+int board_write_serial(const char *serialno)
+{
+	return 0;
+}
+

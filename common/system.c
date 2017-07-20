@@ -17,6 +17,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lpc.h"
+#include "otp.h"
 #include "rwsig.h"
 #include "spi_flash.h"
 #ifdef CONFIG_MPU
@@ -1321,3 +1322,34 @@ int system_can_boot_ap(void)
 
 	return power_good;
 }
+
+#ifdef CONFIG_SERIALNO_LEN
+/* By default, read serial number from flash, can be overridden. */
+#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
+__attribute__((weak))
+const char *board_read_serial(void)
+{
+	return flash_read_pstate_serial();
+}
+#elif defined(CONFIG_OTP)
+__attribute__((weak))
+const char *board_read_serial(void)
+{
+	return otp_read_serial();
+}
+#endif
+
+#if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
+__attribute__((weak))
+int board_write_serial(const char *serialno)
+{
+	return flash_write_pstate_serial(serialno);
+}
+#elif defined(CONFIG_OTP)
+__attribute__((weak))
+int board_write_serial(const char *serialno)
+{
+	return otp_write_serial(serialno);
+}
+#endif
+#endif  /* CONFIG_SERIALNO_LEN */

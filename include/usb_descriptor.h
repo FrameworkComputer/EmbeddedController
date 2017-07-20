@@ -258,11 +258,10 @@ struct usb_setup_packet {
 
 #ifdef CONFIG_USB_SERIALNO
 /* String Descriptor for USB, for editable strings. */
-#define USB_STRING_LEN 28
 struct usb_string_desc {
 	uint8_t _len;
 	uint8_t _type;
-	wchar_t _data[USB_STRING_LEN];
+	wchar_t _data[CONFIG_SERIALNO_LEN];
 };
 #define USB_WR_STRING_DESC(str) \
 	(&(struct usb_string_desc) { \

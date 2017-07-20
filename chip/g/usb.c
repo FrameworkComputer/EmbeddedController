@@ -1434,7 +1434,7 @@ static int usb_set_serial(const char *serialno)
 		return EC_ERROR_INVAL;
 
 	/* Convert into unicode usb string desc. */
-	for (i = 0; i < USB_STRING_LEN; i++) {
+	for (i = 0; i < CONFIG_SERIALNO_LEN; i++) {
 		sd->_data[i] = serialno[i];
 		if (serialno[i] == 0)
 			break;
@@ -1460,7 +1460,7 @@ DECLARE_HOOK(HOOK_INIT, usb_load_serialno, HOOK_PRIO_DEFAULT - 1);
 static int command_serialno(int argc, char **argv)
 {
 	struct usb_string_desc *sd = usb_serialno_desc;
-	char buf[USB_STRING_LEN];
+	char buf[CONFIG_SERIALNO_LEN];
 	int rv = EC_SUCCESS;
 	int i;
 
@@ -1469,7 +1469,7 @@ static int command_serialno(int argc, char **argv)
 		rv = usb_set_serial(argv[1]);
 	}
 
-	for (i = 0; i < USB_STRING_LEN; i++)
+	for (i = 0; i < CONFIG_SERIALNO_LEN; i++)
 		buf[i] = sd->_data[i];
 	ccprintf("Serial number: %s\n", buf);
 	return rv;

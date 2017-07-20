@@ -320,17 +320,18 @@ int flash_set_protect(uint32_t mask, uint32_t flags);
  * Get the serial number from flash.
  *
  * @return char * ascii serial number string.
+ *     NULL if error.
  */
-const char *flash_read_serial(void);
+const char *flash_read_pstate_serial(void);
 
 /**
  * Set the serial number in flash.
  *
- * @param serialno	ascii serial number string < 30 char.
+ * @param serialno	ascii serial number string.
  *
  * @return success status.
  */
-int flash_write_serial(const char *serialno);
+int flash_write_pstate_serial(const char *serialno);
 
 /**
  * Lock or unlock HW necessary for mapped storage read.
