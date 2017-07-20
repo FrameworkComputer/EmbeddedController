@@ -32,6 +32,7 @@ driver-$(CONFIG_BARO_BMP280)+=baro_bmp280.o
 driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
 driver-$(CONFIG_BATTERY_BQ27541)+=battery/bq27541.o
 driver-$(CONFIG_BATTERY_BQ27621)+=battery/bq27621_g1.o
+driver-$(CONFIG_BATTERY_MAX17055)+=battery/max17055.o
 driver-$(CONFIG_BATTERY_SMART)+=battery/smart.o
 
 # Battery charger ICs

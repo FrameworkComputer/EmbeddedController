@@ -27,6 +27,7 @@ common-$(CONFIG_BASE32)+=base32.o
 # command?
 common-$(CONFIG_BATTERY_BQ27541)+=battery.o
 common-$(CONFIG_BATTERY_BQ27621)+=battery.o
+common-$(CONFIG_BATTERY_MAX17055)+=battery.o
 common-$(CONFIG_BATTERY_SMART)+=battery.o
 common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
