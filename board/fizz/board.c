@@ -444,3 +444,15 @@ int64_t get_time_dsw_pwrok(void)
 	/* DSW_PWROK is turned on before EC was powered. */
 	return -20 * MSEC;
 }
+
+int board_has_working_reset_flags(void)
+{
+	int version = system_get_board_version();
+
+	/* Board Rev0 will lose reset flags on power cycle. */
+	if (version == 0)
+		return 0;
+
+	/* All other board versions should have working reset flags */
+	return 1;
+}
