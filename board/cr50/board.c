@@ -1641,3 +1641,17 @@ static int command_board_properties(int argc, char **argv)
 }
 DECLARE_SAFE_CONSOLE_COMMAND(brdprop, command_board_properties,
 			     NULL, "Display board properties");
+
+int chip_factory_mode(void)
+{
+	static uint8_t mode_set;
+
+	/*
+	 * Bit 0x2 used to indicate that mode has been set, bit 0x1 is the
+	 * actual indicator of the chip factory mode.
+	 */
+	if (!mode_set)
+		mode_set = 2 | !!gpio_get_level(GPIO_DIOB4);
+
+	return mode_set & 1;
+}

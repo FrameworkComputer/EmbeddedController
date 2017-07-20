@@ -91,6 +91,9 @@ GPIO(SPI_MOSI,        PIN(0, 7), GPIO_INPUT)
 GPIO(SPI_CLK,         PIN(0, 8), GPIO_INPUT)
 GPIO(SPI_CS_L,        PIN(0, 9), GPIO_INPUT)
 
+/* Used during *chip* factory process. */
+GPIO(DIOB4,           PIN(0, 10), GPIO_INPUT | GPIO_PULL_DOWN)
+
 /* GPIOs used for Cr50 strapping options */
 GPIO(STRAP_A0,        PIN(1, 12), GPIO_INPUT)
 GPIO(STRAP_A1,        PIN(1, 13), GPIO_INPUT)
@@ -190,4 +193,8 @@ PINMUX(GPIO(DETECT_SERVO),    B5, DIO_INPUT)
 PINMUX(GPIO(SPI_MOSI),           A4, DIO_OUTPUT)
 PINMUX(GPIO(SPI_CLK),            A8, DIO_OUTPUT)
 PINMUX(GPIO(SPI_CS_L),          A14, DIO_OUTPUT)
+
+PINMUX(GPIO(DIOB4),              B4, DIO_INPUT)
+
+
 #undef PINMUX

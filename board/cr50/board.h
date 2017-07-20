@@ -222,6 +222,9 @@ void board_reboot_ap(void);
 int board_wipe_tpm(void);
 int board_is_first_factory_boot(void);
 
+/* Returns True if chip is brought up in a factory test harness. */
+int chip_factory_mode(void);
+
 #endif /* !__ASSEMBLER__ */
 
 /* USB interface indexes (use define rather than enum to expand them) */
