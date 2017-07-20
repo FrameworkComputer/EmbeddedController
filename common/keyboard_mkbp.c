@@ -247,6 +247,11 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 		mkbp_button_state |= (is_pressed << EC_MKBP_VOL_DOWN);
 		break;
 
+	case KEYBOARD_BUTTON_RECOVERY:
+		mkbp_button_state &= ~(1 << EC_MKBP_RECOVERY);
+		mkbp_button_state |= (is_pressed << EC_MKBP_RECOVERY);
+		break;
+
 	default:
 		/* ignored. */
 		return;
