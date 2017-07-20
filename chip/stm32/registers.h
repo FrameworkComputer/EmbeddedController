@@ -1479,6 +1479,19 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
 #define STM32_OPTB_COMPL_SHIFT      8
 
+#define STM32_OTP_BASE              0x1FFF7800
+#define STM32_OTP_BLOCK_NB              16
+#define STM32_OTP_BLOCK_SIZE            32
+#define STM32_OTP_BLOCK_DATA(_block, _offset) \
+	(STM32_OTP_BASE + STM32_OTP_BLOCK_SIZE * (_block) + (_offset) * 4)
+#define STM32_OTP_UNLOCK_BYTE           0x00
+#define STM32_OTP_LOCK_BYTE             0xFF
+#define STM32_OTP_LOCK_BASE         \
+	(STM32_OTP_BASE + STM32_OTP_BLOCK_NB * STM32_OTP_BLOCK_SIZE)
+#define STM32_OTP_LOCK(_block) \
+	(STM32_OTP_LOCK_BASE + ((_block) / 4) * 4)
+#define STM32_OPT_LOCK_MASK(_block)    ((0xFF << ((_block) % 4) * 8))
+
 #else
 #error Unsupported chip variant
 #endif

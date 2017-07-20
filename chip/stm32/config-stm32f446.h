@@ -54,5 +54,8 @@
 #define CONFIG_FLASH_PSTATE
 #undef CONFIG_FLASH_PSTATE_BANK
 
+/* Use OTP regions */
+#define CONFIG_OTP
+
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT	97
