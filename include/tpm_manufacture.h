@@ -27,6 +27,7 @@ enum manufacturing_status {
 	mnf_rsa_proc = 8,
 	mnf_ecc_proc = 9,
 	mnf_store = 10,
+	mnf_manufactured = 11,
 };
 
 enum manufacturing_status tpm_endorse(void);

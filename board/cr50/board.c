@@ -1355,6 +1355,11 @@ static uint32_t get_properties(void)
 	uint8_t config;
 	uint32_t properties;
 
+	if (chip_factory_mode()) {
+		CPRINTS("Chip factory mode, short circuit to SPI");
+		return BOARD_SLAVE_CONFIG_SPI;
+	}
+
 	if (get_strap_config(&config) != EC_SUCCESS) {
 		/*
 		 * No pullups were detected on any of the strap pins so there

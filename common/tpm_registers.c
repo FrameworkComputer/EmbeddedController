@@ -17,6 +17,7 @@
 #include "nvmem.h"
 #include "printf.h"
 #include "signed_header.h"
+#include "sps.h"
 #include "system.h"
 #include "system_chip.h"
 #include "task.h"
@@ -543,6 +544,12 @@ void tpm_register_interface(interface_restart_func interface_restart)
 
 static void tpm_init(void)
 {
+	/*
+	 * 0xc0 Means successful endorsement. Actual endorsement reasult code
+	 * is added in lower bits to indicate endorsement failure, if any.
+	 */
+	uint8_t underrun_char = 0xc0;
+
 	/* This is more related to TPM task activity than TPM transactions */
 	cprints(CC_TASK, "%s", __func__);
 
@@ -580,6 +587,8 @@ static void tpm_init(void)
 	_TPM_Init();
 
 	if (!tpm_manufactured()) {
+		enum manufacturing_status endorse_result;
+
 		/*
 		 * If tpm has not been manufactured yet - this needs to run on
 		 * every startup. It will wipe out NV RAM, among other things.
@@ -587,13 +596,29 @@ static void tpm_init(void)
 		TPM_Manufacture(1);
 		_TPM_Init();
 		_plat__SetNvAvail();
-		tpm_endorse();
+		endorse_result = tpm_endorse();
+
+		ccprintf("[%T Endorsement %s]\n",
+			 (endorse_result == mnf_success) ?
+			 "succeeded" : "failed");
+
+		if (chip_factory_mode()) {
+			underrun_char |= endorse_result;
+
+			ccprintf("[%T Setting underrun character to 0x%x]\n",
+				 underrun_char);
+			sps_tx_status(underrun_char);
+		}
 	} else {
+		if (chip_factory_mode())
+			sps_tx_status(underrun_char | mnf_manufactured);
+
 		_plat__SetNvAvail();
 	}
 
-	/* Reinitialize TPM interface. */
-	if_restart();
+	/* Reinitialize TPM interface unless in chip factory mode. */
+	if (!chip_factory_mode())
+		if_restart();
 }
 
 size_t tpm_get_burst_size(void)
@@ -759,8 +784,12 @@ static void tpm_reset_now(int wipe_first)
 	 */
 	nvmem_enable_commits();
 
-	/* Prevent NVRAM commits until further notice. */
-	nvmem_disable_commits();
+	/*
+	 * Prevent NVRAM commits until further notice, unless running in
+	 * factory mode.
+	 */
+	if (!chip_factory_mode())
+		nvmem_disable_commits();
 
 	/* Re-initialize our registers */
 	tpm_init();
