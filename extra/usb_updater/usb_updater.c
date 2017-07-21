@@ -23,8 +23,7 @@
 #define __packed __attribute__((packed))
 #endif
 
-#include "config_chip.h"
-#include "board.h"
+#include "config.h"
 
 #include "compile_time_macros.h"
 #include "misc_util.h"
