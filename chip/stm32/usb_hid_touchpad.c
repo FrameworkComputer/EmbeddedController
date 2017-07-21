@@ -53,7 +53,28 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_TOUCHPAD, 81) = {
 	.bInterval = HID_TOUCHPAD_EP_INTERVAL_MS /* polling interval */
 };
 
-#define FINGER_USAGE_X_Y \
+#define FINGER_USAGE \
+	0x09, 0x22,        /*   Usage (Finger) */ \
+	0xA1, 0x02,        /*   Collection (Logical) */ \
+	0x09, 0x42,        /*     Usage (Tip Switch) */ \
+	0x15, 0x00,        /*     Logical Minimum (0) */ \
+	0x25, 0x01,        /*     Logical Maximum (1) */ \
+	0x75, 0x01,        /*     Report Size (1) */ \
+	0x95, 0x01,        /*     Report Count (1) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0x09, 0x32,        /*     Usage (In Range) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0x75, 0x06,        /*     Report Size (6) */ \
+	0x09, 0x51,        /*     Usage (0x51) Contact identifier */ \
+	0x25, 0x1F,        /*     Logical Maximum (31) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0x05, 0x0D,        /*     Usage Page (Digitizer) */ \
+	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */ \
+	0x75, 0x0C,        /*     Report Size (12) */ \
+	0x09, 0x48,        /*     Usage (WIDTH) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0x09, 0x49,        /*     Usage (HEIGHT) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
 	0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */ \
 	0x75, 0x0C,        /*     Report Size (12) */ \
 	0x55, 0x0E,        /*     Unit Exponent (-2) */ \
@@ -74,7 +95,13 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_TOUCHPAD, 81) = {
 	      (CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y >> 8), \
 	                   /*     Physical Maximum (tenth of mm) */ \
 	0x09, 0x31,        /*     Usage (Y) */ \
-	0x81, 0x02         /*     Input (Data,Var,Abs) */
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0x05, 0x0D,        /*     Usage Page (Digitizer) */ \
+	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */ \
+	0x75, 0x08,        /*     Report Size (8) */ \
+	0x09, 0x30,        /*     Usage (Tip pressure) */ \
+	0x81, 0x02,        /*     Input (Data,Var,Abs) */ \
+	0xC0               /*   End Collection */
 
 /*
  * HID: Report Descriptor
@@ -87,150 +114,15 @@ static const uint8_t report_desc[] = {
 	0xA1, 0x01,        /* Collection (Application) */
 	0x85, 0x01,        /*   Report ID (1, Touch) */
 	/* Finger 0 */
-	0x09, 0x22,        /*   Usage (Finger) */
-	0xA1, 0x02,        /*   Collection (Logical) */
-	0x09, 0x42,        /*     Usage (Tip Switch) */
-	0x15, 0x00,        /*     Logical Minimum (0) */
-	0x25, 0x01,        /*     Logical Maximum (1) */
-	0x75, 0x01,        /*     Report Size (1) */
-	0x95, 0x01,        /*     Report Count (1) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x32,        /*     Usage (In Range) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x75, 0x06,        /*     Report Size (6) */
-	0x09, 0x51,        /*     Usage (0x51) Contact identifier */
-	0x25, 0x1F,        /*     Logical Maximum (31) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x09, 0x48,        /*     Usage (WIDTH) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x49,        /*     Usage (HEIGHT) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	FINGER_USAGE_X_Y,
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x08,        /*     Report Size (8) */
-	0x09, 0x30,        /*     Usage (Tip pressure) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0xC0,              /*   End Collection */
+	FINGER_USAGE,
 	/* Finger 1 */
-	0x09, 0x22,        /*   Usage (Finger) */
-	0xA1, 0x02,        /*   Collection (Logical) */
-	0x09, 0x42,        /*     Usage (Tip Switch) */
-	0x15, 0x00,        /*     Logical Minimum (0) */
-	0x25, 0x01,        /*     Logical Maximum (1) */
-	0x75, 0x01,        /*     Report Size (1) */
-	0x95, 0x01,        /*     Report Count (1) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x32,        /*     Usage (In Range) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x75, 0x06,        /*     Report Size (6) */
-	0x09, 0x51,        /*     Usage (0x51) Contact identifier */
-	0x25, 0x1F,        /*     Logical Maximum (31) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x09, 0x48,        /*     Usage (WIDTH) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x49,        /*     Usage (HEIGHT) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	FINGER_USAGE_X_Y,
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x08,        /*     Report Size (8) */
-	0x09, 0x30,        /*     Usage (Tip pressure) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0xC0,              /*   End Collection */
+	FINGER_USAGE,
 	/* Finger 2 */
-	0x09, 0x22,        /*   Usage (Finger) */
-	0xA1, 0x02,        /*   Collection (Logical) */
-	0x09, 0x42,        /*     Usage (Tip Switch) */
-	0x15, 0x00,        /*     Logical Minimum (0) */
-	0x25, 0x01,        /*     Logical Maximum (1) */
-	0x75, 0x01,        /*     Report Size (1) */
-	0x95, 0x01,        /*     Report Count (1) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x32,        /*     Usage (In Range) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x75, 0x06,        /*     Report Size (6) */
-	0x09, 0x51,        /*     Usage (0x51) Contact identifier */
-	0x25, 0x1F,        /*     Logical Maximum (31) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x09, 0x48,        /*     Usage (WIDTH) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x49,        /*     Usage (HEIGHT) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	FINGER_USAGE_X_Y,
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x08,        /*     Report Size (8) */
-	0x09, 0x30,        /*     Usage (Tip pressure) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0xC0,              /*   End Collection */
+	FINGER_USAGE,
 	/* Finger 3 */
-	0x09, 0x22,        /*   Usage (Finger) */
-	0xA1, 0x02,        /*   Collection (Logical) */
-	0x09, 0x42,        /*     Usage (Tip Switch) */
-	0x15, 0x00,        /*     Logical Minimum (0) */
-	0x25, 0x01,        /*     Logical Maximum (1) */
-	0x75, 0x01,        /*     Report Size (1) */
-	0x95, 0x01,        /*     Report Count (1) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x32,        /*     Usage (In Range) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x75, 0x06,        /*     Report Size (6) */
-	0x09, 0x51,        /*     Usage (0x51) Contact identifier */
-	0x25, 0x1F,        /*     Logical Maximum (31) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x09, 0x48,        /*     Usage (WIDTH) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x49,        /*     Usage (HEIGHT) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	FINGER_USAGE_X_Y,
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x08,        /*     Report Size (8) */
-	0x09, 0x30,        /*     Usage (Tip pressure) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0xC0,              /*   End Collection */
+	FINGER_USAGE,
 	/* Finger 4 */
-	0x09, 0x22,        /*   Usage (Finger) */
-	0xA1, 0x02,        /*   Collection (Logical) */
-	0x09, 0x42,        /*     Usage (Tip Switch) */
-	0x15, 0x00,        /*     Logical Minimum (0) */
-	0x25, 0x01,        /*     Logical Maximum (1) */
-	0x75, 0x01,        /*     Report Size (1) */
-	0x95, 0x01,        /*     Report Count (1) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x32,        /*     Usage (In Range) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x75, 0x06,        /*     Report Size (6) */
-	0x09, 0x51,        /*     Usage (0x51) Contact identifier */
-	0x25, 0x1F,        /*     Logical Maximum (31) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x0C,        /*     Report Size (12) */
-	0x09, 0x48,        /*     Usage (WIDTH) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0x09, 0x49,        /*     Usage (HEIGHT) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	FINGER_USAGE_X_Y,
-	0x05, 0x0D,        /*     Usage Page (Digitizer) */
-	0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */
-	0x75, 0x08,        /*     Report Size (8) */
-	0x09, 0x30,        /*     Usage (Tip pressure) */
-	0x81, 0x02,        /*     Input (Data,Var,Abs) */
-	0xC0,              /*   End Collection */
+	FINGER_USAGE,
 	/* Contact count */
 	0x05, 0x0D,        /*   Usage Page (Digitizer) */
 	0x09, 0x54,        /*   Usage (Contact count) */
