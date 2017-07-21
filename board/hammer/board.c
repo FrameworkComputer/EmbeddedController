@@ -127,7 +127,7 @@ void board_config_pre_init(void)
 void board_usb_wake(void)
 {
 	/*
-	 * Poke detection pin for less than 100us, we disable interrupts
+	 * Poke detection pin for about 500us, we disable interrupts
 	 * to make sure that we do not get preempted (setting GPIO high
 	 * for too long would prevent pulse detection on lid EC side from
 	 * working properly, or even kill hammer power if it is held for
@@ -135,7 +135,7 @@ void board_usb_wake(void)
 	 */
 	interrupt_disable();
 	gpio_set_flags(GPIO_BASE_DET, GPIO_OUT_HIGH);
-	udelay(100);
+	udelay(500);
 	gpio_set_flags(GPIO_BASE_DET, GPIO_INPUT);
 	interrupt_enable();
 }

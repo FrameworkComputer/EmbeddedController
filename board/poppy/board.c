@@ -154,11 +154,11 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 #define BASE_DETECT_MAX_MV 200
 
 /*
- * Base EC pulses detection pin for 100 us to signal out of band USB wake (that
+ * Base EC pulses detection pin for 500 us to signal out of band USB wake (that
  * can be used to wake system from deep S3).
  */
-#define BASE_DETECT_PULSE_MIN_US 90
-#define BASE_DETECT_PULSE_MAX_US 120
+#define BASE_DETECT_PULSE_MIN_US 400
+#define BASE_DETECT_PULSE_MAX_US 650
 
 static uint64_t base_detect_debounce_time;
 
