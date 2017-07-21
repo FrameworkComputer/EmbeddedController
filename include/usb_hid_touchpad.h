@@ -11,14 +11,14 @@
 struct __attribute__((__packed__)) usb_hid_touchpad_report {
 	uint8_t id; /* 0x01 */
 	struct __attribute__((__packed__)) {
-		uint8_t tip:1;
-		uint8_t inrange:1;
-		uint8_t id:6;
+		unsigned tip:1;
+		unsigned inrange:1;
+		unsigned id:4;
+		unsigned pressure:10;
 		unsigned width:12;
 		unsigned height:12;
 		unsigned x:12;
 		unsigned y:12;
-		uint8_t pressure;
 	} finger[5];
 	uint8_t count:7;
 	uint8_t button:1;

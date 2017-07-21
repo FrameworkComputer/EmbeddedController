@@ -156,7 +156,7 @@ static int elan_tp_read_report(void)
 
 			width = MIN(4095, width * elan_tp_params.width_x);
 			height = MIN(4095, height * elan_tp_params.width_y);
-			pressure = MIN(255, pressure);
+			pressure = MIN(1023, pressure);
 
 			report.finger[ri].tip = 1;
 			report.finger[ri].inrange = 1;
