@@ -59,7 +59,6 @@ static uint32_t task_switches;   /* Number of times active task changed */
 static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
 #endif
 
-extern void __switchto(task_ *from, task_ *to);
 extern int __task_start(int *task_stack_ready);
 
 #ifndef CONFIG_LOW_POWER_IDLE
@@ -124,7 +123,7 @@ uint8_t task_stacks[0
 /* Reserve space to discard context on first context switch. */
 uint32_t scratchpad[17];
 
-static task_ *current_task = (task_ *)scratchpad;
+task_ *current_task = (task_ *)scratchpad;
 
 /*
  * Bitmap of all tasks ready to be run.
@@ -260,36 +259,12 @@ task_  __attribute__((noinline)) *__svc_handler(int desched, task_id_t resched)
 	return current;
 }
 
-void svc_handler(int desched, task_id_t resched)
-{
-	/*
-	 * The layout of the this routine (and the __svc_handler companion one)
-	 * ensures that we are getting the right tail call optimization from
-	 * the compiler.
-	 */
-	task_ *prev = __svc_handler(desched, resched);
-	if (current_task != prev)
-		__switchto(prev, current_task);
-}
-
 void __schedule(int desched, int resched)
 {
 	register int p0 asm("r0") = desched;
 	register int p1 asm("r1") = resched;
 
 	asm("svc 0" : : "r"(p0), "r"(p1));
-}
-
-void pendsv_handler(void)
-{
-	/* Clear pending flag */
-	CPU_SCB_ICSR = (1 << 27);
-
-	/* ensure we have priority 0 during re-scheduling */
-	__asm__ __volatile__("cpsid i");
-	/* re-schedule the highest priority task */
-	svc_handler(0, 0);
-	__asm__ __volatile__("cpsie i");
 }
 
 #ifdef CONFIG_TASK_PROFILING
