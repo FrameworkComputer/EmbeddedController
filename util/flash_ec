@@ -434,8 +434,8 @@ servo_v4_with_ccd_cr50_VARS=
 # Flashing an STM32 over the UART requires modifying the UART properties along
 # with the boot mode pin.
 if [ "${CHIP}" = "stm32" ] ; then
-	common_stm32_VARS=" ${MCU}_uart_en ${MCU}_uart_parity " \
-			  "${MCU}_uart_baudrate"
+	common_stm32_VARS=" ${MCU}_uart_en ${MCU}_uart_parity"
+	common_stm32_VARS+=" ${MCU}_uart_baudrate"
 	servo_v2_VARS+=$common_stm32_VARS
 	servo_v2_VARS+=" ${MCU}_boot_mode"
 	servo_micro_VARS+=$common_stm32_VARS
