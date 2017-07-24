@@ -487,6 +487,10 @@ static void gpio_interrupt(struct npcx_wui wui_int)
 			wui_mask &= ~pin_mask;
 		}
 	}
+
+	if (wui_mask)
+		/* No ISR for this interrupt, just clear it */
+		NPCX_WKPCL(table, group) = wui_mask;
 }
 
 /**
