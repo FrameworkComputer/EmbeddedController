@@ -1092,6 +1092,9 @@ static int flash_command_get_info(struct host_cmd_handler_args *args)
 #else
 		r_2->flags = 0;
 #endif
+#ifdef CONFIG_FLASH_SELECT_REQUIRED
+		r_2->flags |= EC_FLASH_INFO_SELECT_REQUIRED;
+#endif
 		r_2->write_ideal_size = ideal_size;
 		r_2->num_banks_total = banks_size;
 		r_2->num_banks_desc = MIN(banks_size, p_2->num_banks_desc);
@@ -1117,6 +1120,9 @@ static int flash_command_get_info(struct host_cmd_handler_args *args)
 		r_1->write_ideal_size = ideal_size;
 #if (CONFIG_FLASH_ERASED_VALUE32 == 0)
 		r_1->flags |= EC_FLASH_INFO_ERASE_TO_0;
+#endif
+#ifdef CONFIG_FLASH_SELECT_REQUIRED
+		r_1->flags |= EC_FLASH_INFO_SELECT_REQUIRED;
 #endif
 	}
 	return EC_RES_SUCCESS;
@@ -1332,3 +1338,18 @@ static int flash_command_region_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_REGION_INFO,
 		     flash_command_region_info,
 		     EC_VER_MASK(EC_VER_FLASH_REGION_INFO));
+
+
+#ifdef CONFIG_FLASH_SELECT_REQUIRED
+
+static int flash_command_select(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_flash_select *p = args->params;
+
+	return board_flash_select(p->select);
+}
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_SELECT,
+		     flash_command_select,
+		     EC_VER_MASK(0));
+
+#endif /* CONFIG_FLASH_SELECT_REQUIRED */

@@ -1129,6 +1129,13 @@ struct __ec_align4 ec_response_flash_info {
 /* EC flash erases bits to 0 instead of 1 */
 #define EC_FLASH_INFO_ERASE_TO_0 (1 << 0)
 
+/* Flash must be selected for read/write/erase operations to succeed.  This may
+ * be necessary on a chip where write/erase can be corrupted by other board
+ * activity, or where the chip needs to enable some sort of programming voltage,
+ * or where the read/write/erase operations require cleanly suspending other
+ * chip functionality. */
+#define EC_FLASH_INFO_SELECT_REQUIRED (1 << 1)
+
 /*
  * Version 1 returns the same initial fields as version 0, with additional
  * fields following.
@@ -1398,6 +1405,16 @@ struct __ec_align1 ec_response_flash_spi_info {
 	/* Status registers from command 0x05 and 0x35 */
 	uint8_t sr1, sr2;
 };
+
+
+/* Select flash during flash operations */
+#define EC_CMD_FLASH_SELECT 0x0019
+
+struct __ec_align4 ec_params_flash_select {
+	/* 1 to select flash, 0 to deselect flash */
+	uint8_t select;
+};
+
 
 /*****************************************************************************/
 /* PWM commands */

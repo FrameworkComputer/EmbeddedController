@@ -342,4 +342,14 @@ void flash_lock_mapped_storage(int lock);
 #else
 static inline void flash_lock_mapped_storage(int lock) { };
 #endif /* CONFIG_EXTERNAL_STORAGE */
+
+/**
+ * Select flash for performing flash operations. Board should implement this
+ * if some steps needed be done before flash operation can succeed.
+ *
+ * @param select   1 to select flash, 0 to deselect (disable).
+ * @return EC_RES_* status code.
+ */
+int board_flash_select(int select);
+
 #endif  /* __CROS_EC_FLASH_H */

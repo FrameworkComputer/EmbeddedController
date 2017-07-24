@@ -1030,6 +1030,8 @@
 #undef CONFIG_FLASH_ROW_SIZE
 /* Allow deferred (async) flash erase */
 #undef CONFIG_FLASH_DEFERRED_ERASE
+/* Flash must be selected for write/erase operations to succeed. */
+#undef CONFIG_FLASH_SELECT_REQUIRED
 
 /* Base address of program memory */
 #undef CONFIG_PROGRAM_MEMORY_BASE
