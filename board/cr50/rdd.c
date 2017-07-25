@@ -301,6 +301,9 @@ static int command_sys_rst(int argc, char **argv)
 	int ms = 20;
 
 	if (argc > 1) {
+		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
+			return EC_ERROR_ACCESS_DENIED;
+
 		if (!strcasecmp("pulse", argv[1])) {
 			if (argc == 3) {
 				ms = strtoi(argv[2], &e, 0);
@@ -335,6 +338,9 @@ static int command_ec_rst(int argc, char **argv)
 	int val;
 
 	if (argc > 1) {
+		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
+			return EC_ERROR_ACCESS_DENIED;
+
 		if (!strcasecmp("pulse", argv[1])) {
 			ccprintf("Pulsing EC reset\n");
 			assert_ec_rst();
