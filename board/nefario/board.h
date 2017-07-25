@@ -19,9 +19,6 @@
 #define CONFIG_I2C_VIRTUAL_BATTERY
 #define CONFIG_I2C_PASSTHRU_RESTRICTED
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_POLICY_STD
-#define CONFIG_LED_BAT_ACTIVE_LOW
-#define CONFIG_LED_POWER_ACTIVE_LOW
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_COMMON
 #define CONFIG_PWM
@@ -212,7 +209,9 @@ enum adc_channel {
 };
 
 enum pwm_channel {
+	PWM_CH_LED_RED,
 	PWM_CH_DISPLIGHT,
+	PWM_CH_LED_GREEN,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
