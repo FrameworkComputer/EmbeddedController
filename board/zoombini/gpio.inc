@@ -27,6 +27,7 @@ GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 /* TODO(aaboagye): Internal PU may be needed later on... */
 GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_signal_interrupt)
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(6, 0), GPIO_OUT_HIGH)
