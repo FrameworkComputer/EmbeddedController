@@ -248,6 +248,37 @@ static int battery_init(void)
 }
 
 /*
+ * Check for case where both XCHG and XDSG bits are set indicating that even
+ * though the FG can be read from the battery, the battery is not able to be
+ * charged or discharged. This situation will happen if a battery disconnect was
+ * intiaited via H1 setting the DISCONN signal to the battery. This will put the
+ * battery pack into a sleep state and when power is reconnected, the FG can be
+ * read, but the battery is still not able to provide power to the system. The
+ * calling function returns batt_pres = BP_NO, which instructs the charging
+ * state machine to prevent powering up the AP on battery alone which could lead
+ * to a brownout event when the battery isn't able yet to provide power to the
+ * system. .
+ */
+static int battery_check_disconnect(void)
+{
+	int rv;
+	uint8_t data[6];
+
+	/* Check if battery charging + discharging is disabled. */
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	if (rv)
+		return BATTERY_DISCONNECT_ERROR;
+
+	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
+			BATTERY_CHARGING_DISABLED)) ==
+	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
+		return BATTERY_DISCONNECTED;
+
+	return BATTERY_NOT_DISCONNECTED;
+}
+
+/*
  * Physical detection of battery.
  */
 enum battery_present battery_is_present(void)
@@ -269,8 +300,9 @@ enum battery_present battery_is_present(void)
 	 * The device will wake up when a voltage is applied to PACK.
 	 * Battery status will be inactive until it is initialized.
 	 */
-	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-	    !battery_is_cut_off() && !battery_init()) {
+	if ((batt_pres == BP_YES && batt_pres_prev != batt_pres &&
+	     !battery_is_cut_off() && !battery_init()) ||
+	    battery_check_disconnect() != BATTERY_NOT_DISCONNECTED) {
 		batt_pres = BP_NO;
 	}
 
