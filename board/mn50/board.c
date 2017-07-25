@@ -103,6 +103,11 @@ int usb_i2c_board_enable(void)
 	return EC_SUCCESS;
 }
 
+int usb_i2c_board_is_enabled(void)
+{
+	return 1;
+}
+
 /* Initialize board. */
 static void board_init(void)
 {

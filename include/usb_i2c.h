@@ -45,6 +45,7 @@
  *         0x0003: Write count invalid (mismatch with merged payload)
  *         0x0004: Read count invalid (> 60 bytes)
  *         0x0005: The port specified is invalid.
+ *         0x0006: The I2C interface is disabled.
  *         0x8000: Unknown error mask
  *             The bottom 15 bits will contain the bottom 15 bits from the EC
  *             error code.
@@ -60,6 +61,7 @@ enum usb_i2c_error {
 	USB_I2C_WRITE_COUNT_INVALID = 0x0003,
 	USB_I2C_READ_COUNT_INVALID  = 0x0004,
 	USB_I2C_PORT_INVALID        = 0x0005,
+	USB_I2C_DISABLED            = 0x0006,
 	USB_I2C_UNKNOWN_ERROR       = 0x8000,
 };
 
@@ -149,8 +151,27 @@ void usb_i2c_deferred(struct usb_i2c_config const *config);
 
 /*
  * These functions should be implemented by the board to provide any board
- * specific operations required to enable or disable access to the I2C device.
+ * specific operations required to enable or disable access to the I2C device,
+ * and to return the current board enable state.
+ */
+
+/**
+ * Enable the I2C device
+ *
+ * @return EC_SUCCESS or non-zero error code.
  */
 int usb_i2c_board_enable(void);
+
+/**
+ * Disable the I2C device
+ */
 void usb_i2c_board_disable(void);
+
+/**
+ * Check if the I2C device is enabled
+ *
+ * @return 1 if enabled, 0 if disabled.
+ */
+int usb_i2c_board_is_enabled(void);
+
 #endif  /* __CROS_USB_I2C_H */

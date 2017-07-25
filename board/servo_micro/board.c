@@ -244,6 +244,8 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+int usb_i2c_board_is_enabled(void) { return 1; }
+
 /******************************************************************************
  * Initialize board.
  */

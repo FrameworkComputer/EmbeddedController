@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "case_closed_debug.h"
 #include "console.h"
 #include "device_state.h"
 #include "gpio.h"
@@ -16,7 +17,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-static int i2c_enabled(void)
+int usb_i2c_board_is_enabled(void)
 {
 	return !gpio_get_level(GPIO_EN_PP3300_INA_L);
 }
@@ -64,7 +65,7 @@ static void ina_connect(void)
 
 void usb_i2c_board_disable(void)
 {
-	if (!i2c_enabled())
+	if (!usb_i2c_board_is_enabled())
 		return;
 
 	ina_disconnect();
@@ -78,8 +79,41 @@ int usb_i2c_board_enable(void)
 		return EC_ERROR_BUSY;
 	}
 
-	if (!i2c_enabled())
+	if (ccd_get_mode() != CCD_MODE_ENABLED)
+		return EC_ERROR_BUSY;
+
+	if (!ccd_is_cap_enabled(CCD_CAP_I2C))
+		return EC_ERROR_ACCESS_DENIED;
+
+	if (!usb_i2c_board_is_enabled())
 		ina_connect();
 
 	return EC_SUCCESS;
 }
+
+/**
+ * CCD config change hook
+ */
+static void ccd_change_i2c(void)
+{
+	/*
+	 * If the capability state doesn't match the current I2C enable state,
+	 * try to make them match.
+	 */
+	if (usb_i2c_board_is_enabled() && !ccd_is_cap_enabled(CCD_CAP_I2C)) {
+		/* I2C bridge is enabled, but it's no longer allowed to be */
+		usb_i2c_board_disable();
+	} else if (!usb_i2c_board_is_enabled() &&
+		   ccd_is_cap_enabled(CCD_CAP_I2C)) {
+		/*
+		 * I2C bridge is disabled, but is allowed to be enabled.  Try
+		 * enabling it.  Note that this could fail for several reasons,
+		 * such as CCD not connected, or servo attached.  That's ok;
+		 * those things will also attempt usb_i2c_board_enable() if
+		 * their state changes later.
+		 */
+		usb_i2c_board_enable();
+	}
+}
+
+DECLARE_HOOK(HOOK_CCD_CHANGE, ccd_change_i2c, HOOK_PRIO_DEFAULT);

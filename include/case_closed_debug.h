@@ -130,6 +130,9 @@ enum ccd_capability {
 	/* Allow Cr50 firmware update without wiping TPM data */
 	CCD_CAP_CR50_FW_UPDATE_WITHOUT_TPM_WIPE = 14,
 
+	/* Access to I2C via USB */
+	CCD_CAP_I2C = 15,
+
 	/* Number of currently defined capabilities */
 	CCD_CAP_COUNT
 };

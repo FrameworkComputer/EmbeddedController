@@ -289,6 +289,8 @@ static int command_ccd(int argc, char **argv)
 	ccprintf("AP UART:  %s\nEC UART:  %s\n",
 		uart_tx_is_connected(UART_AP) ? " enabled" : "disabled",
 		uart_tx_is_connected(UART_EC) ? " enabled" : "disabled");
+	ccprintf("I2C:      %s\n",
+		 usb_i2c_board_is_enabled() ? " enabled" : "disabled");
 
 	return EC_SUCCESS;
 }

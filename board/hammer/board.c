@@ -80,6 +80,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 int usb_i2c_board_enable(void) { return EC_SUCCESS; }
 void usb_i2c_board_disable(void) {}
+int usb_i2c_board_is_enabled(void) { return 1; }
 
 #ifdef CONFIG_KEYBOARD_BOARD_CONFIG
 struct keyboard_scan_config keyscan_config = {
