@@ -123,6 +123,8 @@ static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 	group = gpio_wui_table[signal].group;
 	pmask = 1 << gpio_wui_table[signal].bit;
 
+	ASSERT(flags & GPIO_INT_ANY);
+
 	/* Handle interrupt for level trigger */
 	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW)) {
 		/* Set detection mode to level */
@@ -133,17 +135,9 @@ static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 		/* Handle interrupting on level low */
 		else if (flags & GPIO_INT_F_LOW)
 			NPCX_WKEDG(table, group) |= pmask;
-
-		/* Enable wake-up input sources */
-		NPCX_WKINEN(table, group) |= pmask;
-		/*
-		 * Clear pending bit since it might be set
-		 * if WKINEN bit is changed.
-		 */
-		NPCX_WKPCL(table, group) |= pmask;
 	}
 	/* Handle interrupt for edge trigger */
-	else if ((flags & GPIO_INT_F_RISING) || (flags & GPIO_INT_F_FALLING)) {
+	else {
 		/* Set detection mode to edge */
 		NPCX_WKMOD(table, group) &= ~pmask;
 		/* Handle interrupting on both edges */
@@ -164,17 +158,15 @@ static void gpio_interrupt_type_sel(enum gpio_signal signal, uint32_t flags)
 			NPCX_WKAEDG(table, group) &= ~pmask;
 			NPCX_WKEDG(table, group) |= pmask;
 		}
+	}
 
-		/* Enable wake-up input sources */
-		NPCX_WKINEN(table, group) |= pmask;
-		/*
-		 * Clear pending bit since it might be set
-		 * if WKINEN bit is changed.
-		 */
-		NPCX_WKPCL(table, group) |= pmask;
-	} else
-		/* Disable wake-up input sources */
-		NPCX_WKEN(table, group) &= ~pmask;
+	/* Enable wake-up input sources */
+	NPCX_WKINEN(table, group) |= pmask;
+	/*
+	 * Clear pending bit since it might be set
+	 * if WKINEN bit is changed.
+	 */
+	NPCX_WKPCL(table, group) |= pmask;
 
 	/* No support analog mode */
 }
