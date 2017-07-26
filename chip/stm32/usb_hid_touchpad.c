@@ -310,7 +310,7 @@ static void hid_touchpad_event(enum usb_ep_event evt)
 {
 	if (evt == USB_EVENT_RESET)
 		hid_reset(USB_EP_HID_TOUCHPAD, hid_ep_buf,
-			  HID_TOUCHPAD_REPORT_SIZE);
+			  HID_TOUCHPAD_REPORT_SIZE, NULL, 0);
 	else if (evt == USB_EVENT_DEVICE_RESUME &&
 			queue_count(&report_queue) > 0)
 		hook_call_deferred(&hid_touchpad_process_queue_data, 0);

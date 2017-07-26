@@ -2677,6 +2677,9 @@
 /* Support USB HID keyboard interface. */
 #undef CONFIG_USB_HID_KEYBOARD
 
+/* Support USB HID keyboard backlight. */
+#undef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+
 /* Support USB HID touchpad interface. */
 #undef CONFIG_USB_HID_TOUCHPAD
 

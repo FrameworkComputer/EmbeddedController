@@ -5,8 +5,8 @@
  * USB HID definitions.
  */
 
-#ifndef __CROS_EC_USB_HID_KEYBOARD_H
-#define __CROS_EC_USB_HID_KEYBOARD_H
+#ifndef __CROS_EC_USB_HID_TOUCHPAD_H
+#define __CROS_EC_USB_HID_TOUCHPAD_H
 
 #define USB_HID_TOUCHPAD_TIMESTAMP_UNIT 100 /* usec */
 

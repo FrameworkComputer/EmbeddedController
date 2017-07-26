@@ -10,7 +10,8 @@
 
 /* internal callbacks for HID class drivers */
 void hid_tx(int ep);
-void hid_reset(int ep, usb_uint *hid_ep_buf, int len);
+void hid_reset(int ep, usb_uint *hid_ep_tx_buf, int tx_len,
+	       usb_uint *hid_ep_rx_buf, int rx_len);
 int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 		      const uint8_t *report_desc, int report_size,
 		      const struct usb_hid_descriptor *hid_desc);

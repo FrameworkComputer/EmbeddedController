@@ -14,6 +14,7 @@
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
 #include "link_defs.h"
+#include "pwm.h"
 #include "queue.h"
 #include "registers.h"
 #include "task.h"
@@ -64,8 +65,15 @@ struct usb_hid_keyboard_report {
 #endif
 } __packed;
 
+struct usb_hid_keyboard_output_report {
+	uint8_t brightness;
+} __packed;
+
 #define HID_KEYBOARD_BOOT_SIZE 8
+
 #define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
+#define HID_KEYBOARD_OUTPUT_REPORT_SIZE \
+	sizeof(struct usb_hid_keyboard_output_report)
 
 #define HID_KEYBOARD_EP_INTERVAL_MS 16 /* ms */
 
@@ -124,7 +132,11 @@ const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_HID_KEYBOARD) = {
 	.bDescriptorType = USB_DT_INTERFACE,
 	.bInterfaceNumber = USB_IFACE_HID_KEYBOARD,
 	.bAlternateSetting = 0,
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+	.bNumEndpoints = 2,
+#else
 	.bNumEndpoints = 1,
+#endif
 	.bInterfaceClass = USB_CLASS_HID,
 	.bInterfaceSubClass = USB_HID_SUBCLASS_BOOT,
 	.bInterfaceProtocol = USB_HID_PROTOCOL_KEYBOARD,
@@ -138,6 +150,17 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 81) = {
 	.wMaxPacketSize = HID_KEYBOARD_REPORT_SIZE,
 	.bInterval = HID_KEYBOARD_EP_INTERVAL_MS /* ms polling interval */
 };
+
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = USB_EP_HID_KEYBOARD,
+	.bmAttributes = 0x03 /* Interrupt endpoint */,
+	.wMaxPacketSize = HID_KEYBOARD_OUTPUT_REPORT_SIZE,
+	.bInterval = HID_KEYBOARD_EP_INTERVAL_MS
+};
+#endif
 
 /* HID : Report Descriptor */
 static const uint8_t report_desc[] = {
@@ -184,6 +207,18 @@ static const uint8_t report_desc[] = {
 	0x81, 0x01, /* Input (Constant), ;7-bit padding */
 #endif
 
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+	0xA1, 0x02, /* Collection (Logical) */
+	0x05, 0x14, /*   Usage Page (Alphanumeric Display) */
+	0x09, 0x46, /*   Usage (Display Brightness) */
+	0x95, 0x01, /*   Report Count (1) */
+	0x75, 0x08, /*   Report Size (8) */
+	0x15, 0x00, /*   Logical Minimum (0) */
+	0x25, 0x64, /*   Logical Maximum (100) */
+	0x91, 0x02, /*   Output (Data, Variable, Absolute) */
+	0xC0,       /* End Collection */
+#endif
+
 	0xC0        /* End Collection */
 };
 
@@ -201,10 +236,17 @@ const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD,
 	}}
 };
 
-#define EP_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_REPORT_SIZE, 2)
+#define EP_TX_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_REPORT_SIZE, 2)
 
-static usb_uint hid_ep_buf[EP_BUF_SIZE] __usb_ram;
+static usb_uint hid_ep_tx_buf[EP_TX_BUF_SIZE] __usb_ram;
+static volatile int hid_current_buf;
+
 static volatile int hid_ep_data_ready;
+
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+#define EP_RX_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_OUTPUT_REPORT_SIZE, 2)
+static usb_uint hid_ep_rx_buf[EP_RX_BUF_SIZE] __usb_ram;
+#endif
 
 static struct usb_hid_keyboard_report report;
 
@@ -226,7 +268,7 @@ static void write_keyboard_report(void)
 		 * send the buffer: enable TX.
 		 */
 
-		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf),
+		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_tx_buf),
 				&report, sizeof(report));
 		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
 				EP_TX_VALID, 0);
@@ -240,11 +282,29 @@ static void write_keyboard_report(void)
 	usb_wake();
 }
 
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+
+static void hid_keyboard_rx(void)
+{
+	struct usb_hid_keyboard_output_report report;
+	memcpy_from_usbram(&report, (void *) usb_sram_addr(hid_ep_rx_buf),
+			   HID_KEYBOARD_OUTPUT_REPORT_SIZE);
+
+	CPRINTF("Keyboard backlight set to %d%%\n", report.brightness);
+
+	pwm_enable(PWM_CH_KBLIGHT, report.brightness > 0);
+	pwm_set_duty(PWM_CH_KBLIGHT, report.brightness);
+
+	STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
+}
+
+#endif
+
 static void hid_keyboard_tx(void)
 {
 	hid_tx(USB_EP_HID_KEYBOARD);
 	if (hid_ep_data_ready) {
-		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf),
+		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_tx_buf),
 				&report, sizeof(report));
 		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
 				EP_TX_VALID, 0);
@@ -260,8 +320,16 @@ static void hid_keyboard_event(enum usb_ep_event evt)
 	if (evt == USB_EVENT_RESET) {
 		protocol = HID_REPORT_PROTOCOL;
 
-		hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf,
-			HID_KEYBOARD_REPORT_SIZE);
+		hid_reset(USB_EP_HID_KEYBOARD,
+			  hid_ep_tx_buf,
+			  HID_KEYBOARD_REPORT_SIZE,
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+			  hid_ep_rx_buf,
+			  HID_KEYBOARD_OUTPUT_REPORT_SIZE
+#else
+			  NULL, 0
+#endif
+			  );
 		return;
 	}
 
@@ -269,7 +337,12 @@ static void hid_keyboard_event(enum usb_ep_event evt)
 		hook_call_deferred(&keyboard_process_queue_data, 0);
 }
 
-USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx, hid_keyboard_tx,
+USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx,
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+	       hid_keyboard_rx,
+#else
+	       hid_keyboard_tx,
+#endif
 	       hid_keyboard_event);
 
 static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
