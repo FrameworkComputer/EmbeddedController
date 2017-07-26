@@ -124,6 +124,7 @@ BOARDS_NPCX_SPI=(
 )
 
 BOARDS_NPCX_INT_SPI=(
+	zoombini
 )
 
 BOARDS_NRF51=(
