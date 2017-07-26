@@ -72,12 +72,13 @@ enum usb_spi_request {
 	USB_SPI_REQ_SOCKET          = 0x0007,
 };
 
-/* USB SPI device indexes */
+/* USB SPI device bitmasks */
 enum usb_spi {
 	USB_SPI_DISABLE = 0,
-	USB_SPI_AP,
-	USB_SPI_EC,
-	USB_SPI_H1,
+	USB_SPI_AP = (1 << 0),
+	USB_SPI_EC = (1 << 1),
+	USB_SPI_H1 = (1 << 2),
+	USB_SPI_ALL = USB_SPI_AP | USB_SPI_EC | USB_SPI_H1
 };
 
 

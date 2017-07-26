@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "case_closed_debug.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -50,19 +51,21 @@ static void enable_ap_spi(void)
 
 int usb_spi_board_enable(struct usb_spi_config const *config)
 {
-	/* Prevent SPI access if the console is currently locked. */
-	if (console_is_restricted()) {
-		CPRINTS("usb_spi access denied (console is restricted.");
-		return EC_ERROR_ACCESS_DENIED;
-	}
-
 	disable_ec_ap_spi();
 
-	if (config->state->enabled_host == USB_SPI_EC)
+	if (config->state->enabled_host == USB_SPI_EC) {
+		if (!ccd_is_cap_enabled(CCD_CAP_EC_FLASH)) {
+			CPRINTS("EC SPI access denied");
+			return EC_ERROR_ACCESS_DENIED;
+		}
 		enable_ec_spi();
-	else if (config->state->enabled_host == USB_SPI_AP)
+	} else if (config->state->enabled_host == USB_SPI_AP) {
+		if (!ccd_is_cap_enabled(CCD_CAP_AP_FLASH)) {
+			CPRINTS("AP SPI access denied");
+			return EC_ERROR_ACCESS_DENIED;
+		}
 		enable_ap_spi();
-	else {
+	} else {
 		CPRINTS("DEVICE NOT SUPPORTED");
 		return EC_ERROR_INVAL;
 	}
@@ -128,6 +131,7 @@ int usb_spi_interface(struct usb_spi_config const *config,
 		break;
 	case USB_SPI_REQ_ENABLE:
 		CPRINTS("ERROR: Must specify target");
+		/* Fall through... */
 	case USB_SPI_REQ_DISABLE:
 		config->state->enabled_host = USB_SPI_DISABLE;
 		break;

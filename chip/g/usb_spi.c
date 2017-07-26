@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "case_closed_debug.h"
 #include "common.h"
 #include "link_defs.h"
 #include "gpio.h"
@@ -55,8 +56,8 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	 * If our overall enabled state has changed we call the board specific
 	 * enable or disable routines and save our new state.
 	 */
-	int enabled = (config->state->enabled_host &
-		       config->state->enabled_device);
+	int enabled = !!(config->state->enabled_host &
+			 config->state->enabled_device);
 
 	if (enabled ^ config->state->enabled) {
 		if (enabled)
@@ -130,7 +131,17 @@ struct consumer_ops const usb_spi_consumer_ops = {
 
 void usb_spi_enable(struct usb_spi_config const *config, int enabled)
 {
-	config->state->enabled_device = enabled ? 0xf : 0;
+	config->state->enabled_device = 0;
+	if (enabled) {
+#ifdef CONFIG_CASE_CLOSED_DEBUG_V1
+		if (ccd_is_cap_enabled(CCD_CAP_AP_FLASH))
+			config->state->enabled_device |= USB_SPI_AP;
+		if (ccd_is_cap_enabled(CCD_CAP_EC_FLASH))
+			config->state->enabled_device |= USB_SPI_EC;
+#else
+		config->state->enabled_device = USB_SPI_ALL;
+#endif
+	}
 
 	hook_call_deferred(config->deferred, 0);
 }
