@@ -741,7 +741,6 @@ int board_get_version(void)
 static struct mutex g_lid_mutex;
 
 static struct bmi160_drv_data_t g_bmi160_data;
-static struct bmp280_drv_data_t bmp280_drv_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t mag_standard_ref = {
@@ -871,43 +870,6 @@ struct motion_sensor_t motion_sensors[] = {
 			 .odr = 0,
 			 .ec_rate = 0,
 		 },
-	 },
-	},
-
-	[LID_BARO] = {
-	 .name = "Base Baro",
-	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_BMP280,
-	 .type = MOTIONSENSE_TYPE_BARO,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmp280_drv,
-	 .drv_data = &bmp280_drv_data,
-	 .port = I2C_PORT_BARO,
-	 .addr = BMP280_I2C_ADDRESS1,
-	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
-	 .min_frequency = BMP280_BARO_MIN_FREQ,
-	 .max_frequency = BMP280_BARO_MAX_FREQ,
-	 .config = {
-		/* AP: by default shutdown all sensors */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		/* EC does not need in S0 */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		/* Sensor off in S3/S5 */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		/* Sensor off in S3/S5 */
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
 	 },
 	},
 };

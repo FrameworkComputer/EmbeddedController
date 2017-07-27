@@ -124,8 +124,6 @@
 #define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
 #define CONFIG_MAG_CALIBRATE
 
-#define CONFIG_BARO_BMP280
-
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
 
@@ -226,15 +224,11 @@ enum als_id {
  * When reading through IO memory is set up for sensors (LPC is used),
  * the first 2 entries must be accelerometers, then gyroscope.
  * For BMI160, accel, gyro and compass sensors must be next to each other.
- *
- * TODO(crosbug.com/p/61098): Understand how the statement above applies
- * since we only have one accelerometer.
  */
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
 	LID_MAG,
-	LID_BARO,
 };
 
 enum adc_channel {
@@ -271,9 +265,6 @@ enum button {
 int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_BARO)
 
 #endif /* !__ASSEMBLER__ */
 
