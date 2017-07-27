@@ -70,8 +70,6 @@ static uint8_t	shm_memmap[256] __aligned(8);
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static int init_done;
 
-static uint8_t * const cmd_params = (uint8_t *)shm_mem_host_cmd +
-		EC_LPC_ADDR_HOST_PARAM - EC_LPC_ADDR_HOST_ARGS;
 static struct ec_lpc_host_args * const lpc_host_args =
 		(struct ec_lpc_host_args *)shm_mem_host_cmd;
 
