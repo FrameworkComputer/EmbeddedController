@@ -36,7 +36,7 @@ enum led_color {
 
 static void side_led_set_color(int port, enum led_color color)
 {
-	int yellow_c0 = (system_get_board_version() >= 4) ?
+	int yellow_c0 = (system_get_board_version() >= 5) ?
 			GPIO_LED_YELLOW_C0 : GPIO_LED_YELLOW_C0_OLD;
 	gpio_set_level(port ? GPIO_LED_YELLOW_C1 : yellow_c0,
 		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
