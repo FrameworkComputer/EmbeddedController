@@ -45,8 +45,8 @@ int is_utmi_wakeup_allowed(void)
 }
 
 
-/* If the UART TX is enabled the pinmux select will have a non-zero value */
-int uartn_enabled(int uart)
+/* If the UART TX is connected the pinmux select will have a non-zero value */
+int uart_tx_is_connected(int uart)
 {
 	if (uart == UART_AP)
 		return GREAD(PINMUX, DIOA7_SEL);
@@ -93,7 +93,7 @@ void uartn_tx_connect(int uart)
 
 	if (device_get_state(uarts[uart].device) == DEVICE_STATE_ON)
 		uart_select_tx(uart, uarts[uart].tx_signal);
-	else if (!uartn_enabled(uart))
+	else if (!uart_tx_is_connected(uart))
 		CPRINTS("%s is powered off", uarts[uart].name);
 }
 
@@ -283,11 +283,13 @@ static int command_ccd(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("CCD:%14s\nAP UART:  %s\nEC UART:  %s\n",
+	ccprintf("CCD:%14s\n",
 		keep_ccd_enabled ? "forced enable" :
-		ccd_is_enabled() ? " enabled" : "disabled",
-		uartn_enabled(UART_AP) ? " enabled" : "disabled",
-		uartn_enabled(UART_EC) ? " enabled" : "disabled");
+		ccd_is_enabled() ? " enabled" : "disabled");
+	ccprintf("AP UART:  %s\nEC UART:  %s\n",
+		uart_tx_is_connected(UART_AP) ? " enabled" : "disabled",
+		uart_tx_is_connected(UART_EC) ? " enabled" : "disabled");
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccd, command_ccd,

@@ -880,7 +880,7 @@ static int device_state_changed(enum device_type device,
  */
 static int servo_state_unknown(void)
 {
-	if (uartn_enabled(UART_EC)) {
+	if (uart_tx_is_connected(UART_EC)) {
 		device_set_state(DEVICE_SERVO, DEVICE_STATE_UNKNOWN);
 		return 1;
 	}
@@ -900,7 +900,7 @@ static void enable_uart(int uart)
 	uartn_enable(uart);
 
 	/* Connect the TX pin to the UART TX Signal */
-	if (!uartn_enabled(uart))
+	if (!uart_tx_is_connected(uart))
 		uartn_tx_connect(uart);
 }
 

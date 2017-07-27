@@ -74,18 +74,37 @@ void uartn_tx_start(int uart);
  */
 void uartn_tx_stop(int uart);
 
-/* Get UART output status */
-int uartn_enabled(int uart);
+/**
+ * Return non-zero if TX is connected for the UART.
+ *
+ * @param uart		UART to check
+ * @return 1 if TX pin is connected, 0 if disconnected.
+ */
+int uart_tx_is_connected(int uart);
 
-/* Enable UART output */
+/* Connect TX pin for the UART */
 void uartn_tx_connect(int uart);
 
-/* Disable UART output */
+/* Disconnect TX pin for the UART */
 void uartn_tx_disconnect(int uart);
 
-/* Enable TX and RX. Disable HW flow control and loopback */
+/**
+ * Enable TX and RX for the UART. Disable HW flow control and loopback.
+ *
+ * @param uart		UART to enable
+ *
+ * Note that this does NOT connect the TX pin for the UART; that must be done
+ * explicitly via uartn_tx_connect().
+ */
 void uartn_enable(int uart);
 
-/* Disable TX, RX, HW flow control, and loopback */
+/**
+ * Disable TX, RX, HW flow control, and loopback.
+ *
+ * @param uart		UART to disable
+ *
+ * Note that this does NOT disconnect the TX pin for the UART; that must be
+ * done explicitly via uartn_tx_disconnect().
+ */
 void uartn_disable(int uart);
 #endif  /* __CROS_EC_UARTN_H */
