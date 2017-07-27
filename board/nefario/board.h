@@ -47,6 +47,10 @@
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
 #undef  CONFIG_MPU
 
+/* Enable a different power-on sequence than the one on gru */
+#undef CONFIG_CHIPSET_POWER_SEQ_VERSION
+#define CONFIG_CHIPSET_POWER_SEQ_VERSION 3
+
 /* Optional features */
 #define CONFIG_BOARD_VERSION
 #define CONFIG_BOARD_SPECIFIC_VERSION
@@ -201,7 +205,7 @@ enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
 	ADC_PP900_AP,
-	ADC_PP1200_LPDDR,
+	ADC_PPVAR_BIGCPU,
 	ADC_PPVAR_CLOGIC,
 	ADC_PPVAR_LOGIC,
 	ADC_CH_COUNT

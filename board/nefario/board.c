@@ -77,8 +77,8 @@ const struct adc_t adc_channels[] = {
 		"BOARD_ID", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
 	[ADC_PP900_AP] = {
 		"PP900_AP", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
-	[ADC_PP1200_LPDDR] = {
-		"PP1200_LPDDR", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
+	[ADC_PPVAR_BIGCPU] = {
+		"PPVAR_BIGCPU", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
 	[ADC_PPVAR_CLOGIC] = {
 		"PPVAR_CLOGIC",
 		NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0 },
@@ -109,7 +109,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	{GPIO_PP5000_PG,         1, "PP5000_PWR_GOOD"},
-	{GPIO_TPS65261_PG,       1, "SYS_PWR_GOOD"},
+	{GPIO_RT621X_PG,         1, "SYS_PWR_GOOD"},
 	{GPIO_AP_CORE_PG,        1, "AP_PWR_GOOD"},
 	{GPIO_AP_EC_S3_S0_L,     0, "SUSPEND_DEASSERTED"},
 };
