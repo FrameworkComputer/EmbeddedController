@@ -329,7 +329,7 @@ static int gen_vif(const char *name, const char *board,
 	/* Write VIF Header */
 	fprintf(vif, "$VIF_Specification: \"%s\"\r\n", VIF_SPEC);
 	fprintf(vif, "$VIF_Producer: \"%s\"\r\n", vif_producer);
-	fprintf(vif, "$Vendor_name: \"%s\"\r\n", VENDOR_NAME);
+	fprintf(vif, "$Vendor_Name: \"%s\"\r\n", VENDOR_NAME);
 	fprintf(vif, "$Product_Name: \"%s\"\r\n", board);
 
 	fprintf(vif, "PD_Specification_Revision: %d\r\n", PD_SPEC_REV);
