@@ -2590,6 +2590,9 @@
 /* Common USB / BC1.2 charger detection routines */
 #undef CONFIG_USB_CHARGER
 
+/* External BC1.2 charger detection devices. */
+#undef CONFIG_BC12_DETECT_BQ24392
+
 /* Enable USB serial console module. */
 #undef CONFIG_USB_CONSOLE
 
