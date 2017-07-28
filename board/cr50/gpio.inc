@@ -87,8 +87,8 @@ GPIO(CCD_MODE_L,      PIN(0, 5), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(BATT_PRES_L,     PIN(0, 6), GPIO_INPUT)
 
 /* GPIOs used to tristate the SPI bus */
-GPIO(SPI_MOSI,        PIN(0, 7), GPIO_INPUT)
-GPIO(SPI_CLK,         PIN(0, 8), GPIO_INPUT)
+GPIO(SPI_MOSI,        PIN(0, 7), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(SPI_CLK,         PIN(0, 8), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CS_L,        PIN(0, 9), GPIO_INPUT)
 
 /* Used during *chip* factory process. */

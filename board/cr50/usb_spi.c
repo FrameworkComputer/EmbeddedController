@@ -70,6 +70,9 @@ int usb_spi_board_enable(struct usb_spi_config const *config)
 		return EC_ERROR_INVAL;
 	}
 
+	GWRITE_FIELD(PINMUX, DIOA4_CTL, PD, 0);    /* SPI_MOSI */
+	GWRITE_FIELD(PINMUX, DIOA8_CTL, PD, 0);    /* SPI_CLK */
+
 	/* Connect DIO A4, A8, and A14 to the SPI peripheral */
 	GWRITE(PINMUX, DIOA4_SEL, 0); /* SPI_MOSI */
 	GWRITE(PINMUX, DIOA8_SEL, 0); /* SPI_CS_L */
@@ -97,6 +100,9 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 	ASSERT(GREAD(PINMUX, GPIO0_GPIO7_SEL) == GC_PINMUX_DIOA4_SEL);
 	ASSERT(GREAD(PINMUX, GPIO0_GPIO8_SEL) == GC_PINMUX_DIOA8_SEL);
 	ASSERT(GREAD(PINMUX, GPIO0_GPIO9_SEL) == GC_PINMUX_DIOA14_SEL);
+
+	GWRITE_FIELD(PINMUX, DIOA4_CTL, PD, 1);    /* SPI_MOSI */
+	GWRITE_FIELD(PINMUX, DIOA8_CTL, PD, 1);    /* SPI_CLK */
 
 	/* Set SPI MOSI, CLK, and CS_L as inputs */
 	GWRITE(PINMUX, DIOA4_SEL, GC_PINMUX_GPIO0_GPIO7_SEL);
