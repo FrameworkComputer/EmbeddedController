@@ -29,17 +29,6 @@
 #define LED_FRAC_BITS 4
 #define LED_STEP_MSEC 45
 
-static int led_debug;
-static int double_tap;
-static int double_tap_tick_count;
-static int led_pattern;
-static int led_ticks;
-static enum led_color led_current_color;
-
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED};
-const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
-
 /* List of LED colors used */
 enum led_color {
 	LED_OFF = 0,
@@ -73,6 +62,17 @@ enum led_side {
 	LED_RIGHT,
 	LED_BOTH
 };
+
+static int led_debug;
+static int double_tap;
+static int double_tap_tick_count;
+static int led_pattern;
+static int led_ticks;
+static enum led_color led_current_color;
+
+const enum ec_led_id supported_led_ids[] = {
+	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED};
+const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 /*
  * LED patterns are described as two phases. Each phase has an associated LED
