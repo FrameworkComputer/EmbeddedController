@@ -43,6 +43,9 @@ struct board_batt_params {
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
 
+/* Battery may delay reporting battery present */
+static int battery_report_present = 1;
+
 /*
  * Battery info for LG A50. Note that the fields start_charging_min/max and
  * charging_min/max are not used for the Eve charger. The effective temperature
@@ -247,6 +250,14 @@ static int battery_init(void)
 		!!(batt_status & STATUS_INITIALIZED);
 }
 
+/* Allow booting now that the battery has woke up */
+static void battery_now_present(void)
+{
+	CPRINTS("battery will now report present");
+	battery_report_present = 1;
+}
+DECLARE_DEFERRED(battery_now_present);
+
 /*
  * Check for case where both XCHG and XDSG bits are set indicating that even
  * though the FG can be read from the battery, the battery is not able to be
@@ -284,6 +295,7 @@ static int battery_check_disconnect(void)
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;
+	static int battery_report_present_timer_started;
 
 	/* Get the physical hardware status */
 	batt_pres = battery_hw_present();
@@ -300,11 +312,24 @@ enum battery_present battery_is_present(void)
 	 * The device will wake up when a voltage is applied to PACK.
 	 * Battery status will be inactive until it is initialized.
 	 */
-	if ((batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-	     !battery_is_cut_off() && !battery_init()) ||
-	    battery_check_disconnect() != BATTERY_NOT_DISCONNECTED) {
-		batt_pres = BP_NO;
+	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
+	    (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL ||
+	     battery_check_disconnect() != BATTERY_NOT_DISCONNECTED ||
+	     battery_init() == 0)) {
+		battery_report_present = 0;
+	} else if (batt_pres == BP_YES && batt_pres_prev == BP_NO &&
+		   !battery_report_present_timer_started) {
+		/*
+		 * Wait 1 second before reporting present if it was
+		 * previously reported as not present
+		 */
+		battery_report_present_timer_started = 1;
+		battery_report_present = 0;
+		hook_call_deferred(&battery_now_present_data, SECOND);
 	}
+
+	if (!battery_report_present)
+		batt_pres = BP_NO;
 
 	batt_pres_prev = batt_pres;
 
