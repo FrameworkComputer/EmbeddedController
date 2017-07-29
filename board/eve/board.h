@@ -163,6 +163,7 @@
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
+#define CONFIG_USB_PD_TCPC_BOARD_INIT
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_ANX3429
@@ -286,6 +287,7 @@ enum adc_channel {
 int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
+void board_tcpc_init(void);
 void led_register_double_tap(void);
 void board_update_ac_status(void);
 

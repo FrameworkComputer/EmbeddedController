@@ -3978,6 +3978,9 @@
 /* Use TCPC module (type-C port controller) */
 #undef CONFIG_USB_PD_TCPC
 
+/* Board provides specific TCPC init function */
+#undef CONFIG_USB_PD_TCPC_BOARD_INIT
+
 /* Enable TCPC to enter low power mode */
 #undef CONFIG_USB_PD_TCPC_LOW_POWER
 

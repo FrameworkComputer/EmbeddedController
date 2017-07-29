@@ -2955,6 +2955,11 @@ void pd_task(void *u)
 		set_vconn(port, 0);
 #endif
 
+#ifdef CONFIG_USB_PD_TCPC_BOARD_INIT
+	/* Board specific TCPC init */
+	board_tcpc_init();
+#endif
+
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = reset_device_and_notify(port);
 	invalidate_last_message_id(port);
