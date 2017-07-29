@@ -782,8 +782,6 @@ int board_get_version(void)
 
 void sensor_board_proc_double_tap(void)
 {
-	/* TODO: Call led update function */
-	CPRINTS("Call LED status update");
 	led_register_double_tap();
 }
 
