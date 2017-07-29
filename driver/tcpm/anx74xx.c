@@ -1060,9 +1060,13 @@ static int anx74xx_tcpm_init(int port)
 	return EC_SUCCESS;
 }
 
+/*
+ * Dissociate from the TCPC.
+ */
+
 static int anx74xx_tcpm_release(int port)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	return EC_SUCCESS;
 }
 
 const struct tcpm_drv anx74xx_tcpm_drv = {
