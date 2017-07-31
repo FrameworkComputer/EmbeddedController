@@ -72,7 +72,7 @@ static struct first_response_pdu targ;
 static uint16_t protocol_version;
 static uint16_t header_type;
 static char *progname;
-static char *short_opts = "bd:efhjrstuw";
+static char *short_opts = "bd:efhjp:rstuw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	1,   NULL, 'b'},
@@ -81,6 +81,7 @@ static const struct option long_opts[] = {
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
 	{"jump_to_rw",	0,   NULL, 'j'},
+	{"tp_update",	1,   NULL, 'p'},
 	{"reboot",	0,   NULL, 'r'},
 	{"stay_in_ro",	0,   NULL, 's'},
 	{"tp_info",	0,   NULL, 't'},
@@ -113,6 +114,7 @@ static void usage(int errs)
 	       "  -h,--help                Show this message\n"
 	       "  -e,--entropy             Add entropy to device secret\n"
 	       "  -j,--jump_to_rw          Tell EC to jump to RW\n"
+	       "  -p,--tp_update file      Update touchpad FW\n"
 	       "  -r,--reboot              Tell EC to reboot\n"
 	       "  -s,--stay_in_ro          Tell EC to stay in RO\n"
 	       "  -t,--tp_info             Get touchpad information\n"
@@ -392,11 +394,13 @@ static int transfer_block(struct usb_endpoint *uep,
  * data_ptr     - pointer at the section base in the image
  * section_addr - address of the section in the target memory space
  * data_len     - section size
+ * smart_update - non-zero to enable the smart trailing of 0xff.
  */
 static void transfer_section(struct transfer_descriptor *td,
 			     uint8_t *data_ptr,
 			     uint32_t section_addr,
-			     size_t data_len)
+			     size_t data_len,
+			     uint8_t smart_update)
 {
 	/*
 	 * Actually, we can skip trailing chunks of 0xff, as the entire
@@ -404,8 +408,9 @@ static void transfer_section(struct transfer_descriptor *td,
 	 *
 	 * FIXME: We can be smarter than this and skip blocks within the image.
 	 */
-	while (data_len && (data_ptr[data_len - 1] == 0xff))
-		data_len--;
+	if (smart_update)
+		while (data_len && (data_ptr[data_len - 1] == 0xff))
+			data_len--;
 
 	printf("sending 0x%zx bytes to %#x\n", data_len, section_addr);
 	while (data_len) {
@@ -766,7 +771,7 @@ static int transfer_image(struct transfer_descriptor *td,
 			transfer_section(td,
 					 data + sections[i].offset,
 					 sections[i].offset,
-					 sections[i].size);
+					 sections[i].size, 1);
 			num_txed_sections++;
 		}
 
@@ -874,6 +879,7 @@ int main(int argc, char *argv[])
 	int transferred_sections = 0;
 	int binary_vers = 0;
 	int show_fw_ver = 0;
+	int touchpad_update = 0;
 	int extra_command = -1;
 	uint8_t extra_command_data[32];
 	int extra_command_data_len = 0;
@@ -916,6 +922,14 @@ int main(int argc, char *argv[])
 		case 'j':
 			extra_command = UPDATE_EXTRA_CMD_JUMP_TO_RW;
 			break;
+		case 'p':
+			touchpad_update = 1;
+
+			data = get_file_or_die(optarg, &data_len);
+			printf("read %zd(%#zx) bytes from %s\n",
+				data_len, data_len, argv[optind]);
+
+			break;
 		case 'r':
 			extra_command = UPDATE_EXTRA_CMD_IMMEDIATE_RESET;
 			break;
@@ -956,7 +970,7 @@ int main(int argc, char *argv[])
 	if (errorcnt)
 		usage(errorcnt);
 
-	if (!show_fw_ver && extra_command == -1) {
+	if (!show_fw_ver && extra_command == -1 && !touchpad_update) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -986,11 +1000,22 @@ int main(int argc, char *argv[])
 	}
 
 	if (data) {
-		transferred_sections = transfer_image(&td, data, data_len);
-		free(data);
+		if (touchpad_update) {
+			transfer_section(&td,
+					data,
+					0x80000000,
+					data_len, 0);
+			free(data);
 
-		if (transferred_sections)
-			generate_reset_request(&td);
+			send_done(&td.uep);
+		} else {
+			transferred_sections = transfer_image(&td,
+							data, data_len);
+			free(data);
+
+			if (transferred_sections)
+				generate_reset_request(&td);
+		}
 	} else if (extra_command > -1) {
 		send_subcommand(&td, extra_command,
 				extra_command_data, extra_command_data_len,
