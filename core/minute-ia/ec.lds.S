@@ -155,6 +155,9 @@ SECTIONS
 		__bss_size_words = (__bss_end - __bss_start) / 4;
 	}
 
+	#TODO: Adjust __image_size to proper value for core minute-ia later
+	__image_size = . - CONFIG_ISH_BOOT_START;
+
 	def_irq_low  = ABSOLUTE(default_int_handler) & 0xFFFF;
 	def_irq_high = ABSOLUTE(default_int_handler) >> 16;
 }

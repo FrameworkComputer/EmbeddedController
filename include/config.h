@@ -1389,6 +1389,8 @@
 /* H2RAM Host LPC I/O base memory address */
 #undef CONFIG_H2RAM_HOST_LPC_IO_BASE
 
+/* ISH boot start address */
+#undef CONFIG_ISH_BOOT_START
 /*
  * Define the minimal amount of time (in ms) betwen running motion sense task
  * loop.
