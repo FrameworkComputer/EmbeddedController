@@ -1101,6 +1101,17 @@ DECLARE_CONSOLE_COMMAND(board_id, command_board_id,
 			"<id|sku0|sku1>",
 			"Get board id or sku");
 
+uint32_t system_get_sku_id(void)
+{
+	uint8_t sku_id_lower = board_read_version(ADC_BOARD_SKU_0);
+	uint8_t sku_id_higher = board_read_version(ADC_BOARD_SKU_1);
+
+	assert(sku_id_lower < 16);
+	assert(sku_id_higher < 16);
+	return (uint32_t)((sku_id_higher << 4) | sku_id_lower);
+
+}
+
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/*

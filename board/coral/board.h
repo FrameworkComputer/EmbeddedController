@@ -280,6 +280,7 @@ enum sensor_id {
 	LID_ALS,
 };
 
+#define CONFIG_HOSTCMD_SKUID
 enum coral_board_version {
 	BOARD_VERSION_UNKNOWN = -1,
 	BOARD_VERSION_1,

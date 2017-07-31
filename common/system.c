@@ -1173,6 +1173,21 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_VERSION,
 		     host_command_get_version,
 		     EC_VER_MASK(0));
 
+#ifdef CONFIG_HOSTCMD_SKUID
+static int host_command_get_sku_id(struct host_cmd_handler_args *args)
+{
+	struct ec_response_sku_id *r = args->response;
+
+	r->sku_id = system_get_sku_id();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_SKU_ID,
+		     host_command_get_sku_id,
+		     EC_VER_MASK(0));
+#endif
+
 static int host_command_build_info(struct host_cmd_handler_args *args)
 {
 	strzcpy(args->response, system_get_build_info(), args->response_max);

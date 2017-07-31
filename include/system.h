@@ -213,6 +213,14 @@ int32_t system_get_rollback_version(enum system_image_copy_t copy);
 const char *system_get_version(enum system_image_copy_t copy);
 
 /**
+ * Get the SKU ID for a device
+ *
+ * @return A value that identifies the SKU variant of a model. Its meaning and
+ * the number of bits actually used is opaque outside board specific code.
+ */
+uint32_t system_get_sku_id(void);
+
+/**
  * Return the board version number.  The meaning of this number is
  * board-dependent; boards where the code actually cares about this should
  * declare enum board_version in board.h.
