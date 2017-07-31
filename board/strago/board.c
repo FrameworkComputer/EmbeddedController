@@ -130,7 +130,7 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
-	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{

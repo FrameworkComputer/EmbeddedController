@@ -2592,6 +2592,10 @@
 
 /* External BC1.2 charger detection devices. */
 #undef CONFIG_BC12_DETECT_BQ24392
+#undef CONFIG_BC12_DETECT_PI3USB9281
+/* Number of Pericom PI3USB9281 chips present in system */
+#undef CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT
+
 
 /* Enable USB serial console module. */
 #undef CONFIG_USB_CONSOLE
@@ -2703,12 +2707,6 @@
 
 /******************************************************************************/
 /* USB port switch */
-
-/* Support the Pericom PI3USB9281 I2C USB switch */
-#undef CONFIG_USB_SWITCH_PI3USB9281
-
-/* Number of Pericom PI3USB9281 chips present in system */
-#undef CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT
 
 /* Support the Pericom PI3USB30532 USB3.0/DP1.2 Matrix Switch */
 #undef CONFIG_USB_MUX_PI3USB30532

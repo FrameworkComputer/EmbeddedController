@@ -18,6 +18,7 @@ driver-$(CONFIG_ACCEL_LIS2DH)+=accel_lis2dh.o stm_mems_common.o
 
 # BC1.2 Charger Detection Devices
 driver-$(CONFIG_BC12_DETECT_BQ24392)+=bc12/bq24392.o
+driver-$(CONFIG_BC12_DETECT_PI3USB9281)+=bc12/pi3usb9281.o
 
 # Gyrometers
 driver-$(CONFIG_GYRO_L3GD20H)+=gyro_l3gd20h.o
@@ -28,7 +29,7 @@ driver-$(CONFIG_ALS_ISL29035)+=als_isl29035.o
 driver-$(CONFIG_ALS_OPT3001)+=als_opt3001.o
 driver-$(CONFIG_ALS_SI114X)+=als_si114x.o
 
-#Barometers
+# Barometers
 driver-$(CONFIG_BARO_BMP280)+=baro_bmp280.o
 
 # Batteries
@@ -94,9 +95,6 @@ driver-$(CONFIG_USB_PD_TCPM_ANX74XX)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7688)+=tcpm/anx7688.o
 driver-$(CONFIG_USB_PD_TCPM_PS8751)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8805)+=tcpm/ps8xxx.o
-
-# USB switches
-driver-$(CONFIG_USB_SWITCH_PI3USB9281)+=usb_switch_pi3usb9281.o
 
 # USB mux high-level driver
 driver-$(CONFIG_USBC_SS_MUX)+=usb_mux.o

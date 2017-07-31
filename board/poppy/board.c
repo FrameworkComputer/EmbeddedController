@@ -377,7 +377,7 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
-	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
 /* called from anx74xx_set_power_mode() */
 void board_set_tcpc_power_mode(int port, int mode)

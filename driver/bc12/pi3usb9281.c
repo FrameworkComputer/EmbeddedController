@@ -44,7 +44,7 @@ static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
 static void select_chip(int port)
 {
 	struct pi3usb9281_config *chip = &pi3usb9281_chips[port];
-	ASSERT(port < CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+	ASSERT(port < CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
 	if (chip->mux_lock) {
 		mutex_lock(chip->mux_lock);

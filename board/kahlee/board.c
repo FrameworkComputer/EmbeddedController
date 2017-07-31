@@ -177,7 +177,7 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
-	     CONFIG_USB_SWITCH_PI3USB9281_CHIP_COUNT);
+	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[0] = {
