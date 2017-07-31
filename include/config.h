@@ -2289,6 +2289,13 @@
 #undef CONFIG_TOUCHPAD_I2C_PORT
 #undef CONFIG_TOUCHPAD_I2C_ADDR
 
+/*
+ * Enable touchpad FW update over USB update protocol, and define touchpad
+ * virtual address and size.
+ */
+#undef CONFIG_TOUCHPAD_VIRTUAL_OFF
+#undef CONFIG_TOUCHPAD_VIRTUAL_SIZE
+
 /*****************************************************************************/
 /* TPM-like configuration */
 

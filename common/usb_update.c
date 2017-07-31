@@ -313,6 +313,11 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 				break;
 			}
 
+#ifdef CONFIG_TOUCHPAD_VIRTUAL_OFF
+			tp.fw_address = CONFIG_TOUCHPAD_VIRTUAL_OFF;
+			tp.fw_size = CONFIG_TOUCHPAD_VIRTUAL_SIZE;
+#endif
+
 			QUEUE_ADD_UNITS(&update_to_usb,
 					&tp, response_size);
 			return 1;

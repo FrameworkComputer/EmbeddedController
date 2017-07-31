@@ -194,6 +194,13 @@ struct touchpad_info {
 	uint8_t reserved; /* padding */
 	uint16_t vendor; /* Vendor USB id */
 
+	/*
+	 * Virtual address to write to to update TP FW over USB update protocol,
+	 * and FW size. Both are 0 if unsupported.
+	 */
+	uint32_t fw_address;
+	uint32_t fw_size;
+
 	/* Vendor specific data. */
 	struct {
 		uint16_t id;
@@ -229,5 +236,8 @@ enum {
 
 /* Obtain touchpad information */
 int touchpad_get_info(struct touchpad_info *tp);
+
+/* Touchpad FW update: Write a FW block. */
+int touchpad_update_write(int offset, int size, const uint8_t *data);
 
 #endif  /* ! __CROS_EC_UPDATE_FW_H */
