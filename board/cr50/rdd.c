@@ -20,7 +20,7 @@
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
 static int keep_ccd_enabled;
-static int ec_uart_enabled, enable_usb_wakeup;
+static int enable_usb_wakeup;
 static int usb_is_initialized;
 
 struct uart_config {
@@ -79,7 +79,10 @@ static int servo_is_connected(void)
 
 void uartn_tx_connect(int uart)
 {
-	if (uart == UART_EC && !ec_uart_enabled)
+	if (uart == UART_AP && !ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX))
+		return;
+
+	if (uart == UART_EC && !ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX))
 		return;
 
 	if (!ccd_is_enabled())
@@ -99,10 +102,6 @@ void uartn_tx_connect(int uart)
 
 void uartn_tx_disconnect(int uart)
 {
-	/* If servo is connected disable UART */
-	if (servo_is_connected())
-		ec_uart_enabled = 0;
-
 	/* Disconnect the TX pin from UART peripheral */
 	uart_select_tx(uart, 0);
 }
@@ -118,7 +117,9 @@ static void configure_ccd(int enable)
 
 		enable_usb_wakeup = 1;
 
+		/* Attempt to connect UART TX */
 		uartn_tx_connect(UART_AP);
+		uartn_tx_connect(UART_EC);
 
 		/* Turn on 3.3V rail used for INAs and initialize I2CM module */
 		usb_i2c_board_enable();
@@ -128,7 +129,6 @@ static void configure_ccd(int enable)
 		uartn_tx_disconnect(UART_AP);
 
 		enable_usb_wakeup = board_has_ap_usb();
-		ec_uart_enabled = 0;
 
 		/* Disable CCD */
 		ccd_set_mode(CCD_MODE_DISABLED);
@@ -230,6 +230,32 @@ void enable_ap_usb(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_ap_usb, HOOK_PRIO_DEFAULT);
 
+static void rdd_ccd_change_hook(void)
+{
+	if (uart_tx_is_connected(UART_AP) &&
+	    !ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX)) {
+		/* Transmitting to AP, but no longer allowed */
+		uartn_tx_disconnect(UART_AP);
+	} else if (!uart_tx_is_connected(UART_AP) &&
+		   ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX)) {
+		/* Not transmitting to AP, but allowed now */
+		uartn_tx_connect(UART_AP);
+	}
+
+	if (uart_tx_is_connected(UART_EC) &&
+	    !ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX)) {
+		/* Transmitting to EC, but no longer allowed */
+		uartn_tx_disconnect(UART_EC);
+	} else if (!uart_tx_is_connected(UART_EC) &&
+		   ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX)) {
+		/* Not transmitting to EC, but allowed now */
+		uartn_tx_connect(UART_EC);
+	}
+
+
+}
+DECLARE_HOOK(HOOK_CCD_CHANGE, rdd_ccd_change_hook, HOOK_PRIO_DEFAULT);
+
 static void clear_keepalive(void)
 {
 	keep_ccd_enabled = 0;
@@ -245,13 +271,10 @@ static int command_ccd(int argc, char **argv)
 			return argc == 2 ? EC_ERROR_PARAM1 : EC_ERROR_PARAM2;
 
 		if (!strcasecmp("uart", argv[1])) {
-			if (val) {
-				ec_uart_enabled = 1;
+			if (val)
 				uartn_tx_connect(UART_EC);
-			} else {
-				ec_uart_enabled = 0;
+			else
 				uartn_tx_disconnect(UART_EC);
-			}
 		} else if (!strcasecmp("i2c", argv[1])) {
 			if (val)
 				usb_i2c_board_enable();
@@ -283,14 +306,17 @@ static int command_ccd(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("CCD:%14s\n",
+	ccprintf("CCD:     %s\n",
 		keep_ccd_enabled ? "forced enable" :
-		ccd_is_enabled() ? " enabled" : "disabled");
-	ccprintf("AP UART:  %s\nEC UART:  %s\n",
-		uart_tx_is_connected(UART_AP) ? " enabled" : "disabled",
-		uart_tx_is_connected(UART_EC) ? " enabled" : "disabled");
-	ccprintf("I2C:      %s\n",
-		 usb_i2c_board_is_enabled() ? " enabled" : "disabled");
+		ccd_is_enabled() ? "enabled" : "disabled");
+	ccprintf("AP UART: %s\n",
+		 uartn_is_enabled(UART_AP) ?
+		 uart_tx_is_connected(UART_AP) ? "RX+TX" : "RX" : "disabled");
+	ccprintf("EC UART: %s\n",
+		 uartn_is_enabled(UART_EC) ?
+		 uart_tx_is_connected(UART_EC) ? "RX+TX" : "RX" : "disabled");
+	ccprintf("I2C:     %s\n",
+		 usb_i2c_board_is_enabled() ? "enabled" : "disabled");
 
 	return EC_SUCCESS;
 }

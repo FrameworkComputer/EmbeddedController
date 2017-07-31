@@ -91,11 +91,11 @@ enum ccd_flag {
 
 /* Capabilities */
 enum ccd_capability {
-	/* AP and EC UART output and input */
-	CCD_CAP_AP_UART_OUTPUT = 0,
-	CCD_CAP_AP_UART_INPUT = 1,
-	CCD_CAP_EC_UART_OUTPUT = 2,
-	CCD_CAP_EC_UART_INPUT = 3,
+	/* AP and EC UART output (from AP/EC) and input (to AP/EC) */
+	CCD_CAP_AP_TX_CR50_RX = 0,
+	CCD_CAP_AP_RX_CR50_TX = 1,
+	CCD_CAP_EC_TX_CR50_RX = 2,
+	CCD_CAP_EC_RX_CR50_TX = 3,
 
 	/* Access to AP SPI flash */
 	CCD_CAP_AP_FLASH = 4,

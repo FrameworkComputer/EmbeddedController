@@ -89,6 +89,17 @@ void uartn_tx_connect(int uart);
 void uartn_tx_disconnect(int uart);
 
 /**
+ * Return non-zero if TX and RX are enabled for the UART.
+ *
+ * Note that TX won't be connected unless uart_tx_is_connected() is also
+ * non-zero.
+ *
+ * @param uart		UART to check
+ * @return 1 if UART is enabled, 0 if disabled.
+ */
+int uartn_is_enabled(int uart);
+
+/**
  * Enable TX and RX for the UART. Disable HW flow control and loopback.
  *
  * @param uart		UART to enable

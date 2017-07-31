@@ -197,6 +197,11 @@ void uartn_disable(int uart)
 	GR_UART_CTRL(uart) = 0;
 }
 
+int uartn_is_enabled(int uart)
+{
+	return !!(GR_UART_CTRL(uart) & 0x03);
+}
+
 void uartn_init(int uart)
 {
 	long long setting = (16 * (1 << UART_NCO_WIDTH) *

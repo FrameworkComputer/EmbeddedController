@@ -889,11 +889,19 @@ static int servo_state_unknown(void)
 
 static void enable_uart(int uart)
 {
-	/*
-	 * For the EC UART, we can't connect the TX pin to the UART block when
-	 * it's in bit bang mode.
-	 */
-	if ((uart == UART_EC) && uart_bitbang_is_enabled(uart))
+	if (uart == UART_EC) {
+		if (!ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX))
+			return;
+
+		/*
+		 * For the EC UART, we can't connect the TX pin to the UART
+		 * block when it's in bit bang mode.
+		 */
+		if (uart_bitbang_is_enabled(uart))
+			return;
+	}
+
+	if (uart == UART_AP && !ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX))
 		return;
 
 	/* Enable RX and TX on the UART peripheral */
@@ -912,6 +920,30 @@ static void disable_uart(int uart)
 	/* Disconnect the TX pin from the UART peripheral */
 	uartn_tx_disconnect(uart);
 }
+
+static void board_ccd_change_hook(void)
+{
+	if (uartn_is_enabled(UART_AP) &&
+	    !ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX)) {
+		/* Receiving from AP, but no longer allowed */
+		disable_uart(UART_AP);
+	} else if (!uartn_is_enabled(UART_AP) &&
+		   ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX)) {
+		/* Not receiving from AP, but allowed now */
+		enable_uart(UART_AP);
+	}
+
+	if (uartn_is_enabled(UART_EC) &&
+	    !ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX)) {
+		/* Receiving from EC, but no longer allowed */
+		disable_uart(UART_EC);
+	} else if (!uartn_is_enabled(UART_EC) &&
+		   ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX)) {
+		/* Not receiving from EC, but allowed now */
+		enable_uart(UART_EC);
+	}
+}
+DECLARE_HOOK(HOOK_CCD_CHANGE, board_ccd_change_hook, HOOK_PRIO_DEFAULT);
 
 static int device_powered_off(enum device_type device)
 {
