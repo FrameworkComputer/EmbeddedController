@@ -526,8 +526,9 @@ static int cmd_bufrd(int argc, char **argv)
 
 	if (argc >= 2)
 		cnt = strtoi(argv[1], &e, 10);
-		if (*e || idx + cnt > INJ_CMD_COUNT)
-			return EC_ERROR_PARAM3;
+
+	if (*e || idx + cnt > INJ_CMD_COUNT)
+		return EC_ERROR_PARAM3;
 
 	for (i = idx; i < idx + cnt; i++)
 		ccprintf("%08x ", inj_cmds[i]);
