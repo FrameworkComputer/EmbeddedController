@@ -130,7 +130,7 @@ USB_STREAM_CONFIG_USART_IFACE(usart4_usb,
  */
 static int command_uart_parity(int argc, char **argv)
 {
-	int parity, newparity;
+	int parity = 0, newparity;
 	struct usart_config const *usart;
 	char *e;
 

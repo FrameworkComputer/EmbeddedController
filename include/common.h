@@ -59,6 +59,13 @@
 #endif
 
 /*
+ * Define __unused in the same manner.
+ */
+#ifndef __unused
+#define __unused __attribute__((unused))
+#endif
+
+/*
  * Force the toolchain to keep a symbol even with Link Time Optimization
  * activated.
  *

@@ -3891,7 +3891,7 @@ static int pd_control(struct host_cmd_handler_args *args)
 {
 	static int pd_control_disabled;
 	const struct ec_params_pd_control *cmd = args->params;
-	int enable;
+	int enable = 0;
 
 	if (cmd->chip >= CONFIG_USB_PD_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;

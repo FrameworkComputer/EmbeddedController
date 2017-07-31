@@ -96,19 +96,6 @@ const struct usb_config_descriptor USB_CONF_DESC(conf) = {
 	.bMaxPower = (CONFIG_USB_MAXPOWER_MA / 2),
 };
 
-/* Qualifier Descriptor */
-static const struct usb_qualifier_descriptor qualifier_desc = {
-	.bLength = USB_DT_QUALIFIER_SIZE,
-	.bDescriptorType = USB_DT_DEVICE_QUALIFIER,
-	.bcdUSB = USB_DEV_BCDUSB,
-	.bDeviceClass  = USB_DEV_CLASS,
-	.bDeviceSubClass = 0x00,
-	.bDeviceProtocol = 0x00,
-	.bMaxPacketSize0 = USB_MAX_PACKET_SIZE,
-	.bNumConfigurations = 1,
-	.bReserved = 0,
-};
-
 const uint8_t usb_string_desc[] = {
 	4,					/* Descriptor size */
 	USB_DT_STRING,

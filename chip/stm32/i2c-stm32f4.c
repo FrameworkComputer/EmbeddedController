@@ -43,8 +43,7 @@
  */
 #define STM32F4_FMPI2C_PORT	3
 
-
-static const struct dma_option dma_tx_option[I2C_PORT_COUNT] = {
+static const __unused struct dma_option dma_tx_option[I2C_PORT_COUNT] = {
 	{STM32_DMAC_I2C1_TX, (void *)&STM32_I2C_DR(STM32_I2C1_PORT),
 	 STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
 	 STM32_DMA_CCR_CHANNEL(STM32_I2C1_TX_REQ_CH)},
