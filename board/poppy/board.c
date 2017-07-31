@@ -749,11 +749,26 @@ const matrix_3x3_t mag_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+#ifdef BOARD_SORAKA
+const matrix_3x3_t lid_standard_ref = {
+	{ 0,  FLOAT_TO_FP(-1),  0},
+	{FLOAT_TO_FP(1),  0,  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+
+/* For rev3 and older */
+const matrix_3x3_t lid_standard_ref_old = {
+	{FLOAT_TO_FP(-1),  0,  0},
+	{ 0,  FLOAT_TO_FP(-1),  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+#else
 const matrix_3x3_t lid_standard_ref = {
 	{FLOAT_TO_FP(-1),  0,  0},
 	{ 0,  FLOAT_TO_FP(-1),  0},
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
+#endif
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -874,6 +889,20 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+#ifdef BOARD_SORAKA
+static void board_sensor_init(void)
+{
+	/* Old soraka use a different reference matrix */
+	if (system_get_board_version() <= 3) {
+		motion_sensors[LID_ACCEL].rot_standard_ref =
+			&lid_standard_ref_old;
+		motion_sensors[LID_GYRO].rot_standard_ref =
+			&lid_standard_ref_old;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_sensor_init, HOOK_PRIO_DEFAULT);
+#endif
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
