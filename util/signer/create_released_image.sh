@@ -88,7 +88,7 @@ prepare_image() {
   dd if="${TMPD}/0.bin" of="${RESULT_FILE}" conv=notrunc
   dd if="${TMPD}/1.bin" of="${RESULT_FILE}" seek=262144 bs=1 conv=notrunc
 
-  version="$(usb_updater -b "${RESULT_FILE}" |\
+  version="$("${USB_UPDATER}" -b "${RESULT_FILE}" |
      awk '/^RO_A:/ {gsub(/R[OW]_A:/, ""); print "r" $1 ".w" $2}')"
 
   if [ -z "${dest_dir}" ]; then
@@ -127,6 +127,12 @@ RESULT_FILE="${TMPD}/release.bin"
 dest_dir=
 IMAGE_SIZE='524288'
 export RESULT_FILE
+
+USB_UPDATER="${EC_ROOT}/extra/usb_updater/usb_updater"
+if [[ ! -x "${USB_UPDATER}" ]]; then
+  echo "${ME}: usb_updater not found, run \"make -C extra/usb_updater\"" >&2
+  exit 1
+fi
 
 DEFINE_string cr50_board_id "" \
   "Optional string representing Board ID field of the Cr50 RW header.
