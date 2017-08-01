@@ -1931,7 +1931,14 @@
 /* Base address of RAM for the chip */
 #undef CONFIG_RAM_BASE
 
-/* Size of RAM available on the chip, in bytes */
+/*
+ * CONFIG_DATA_RAM_SIZE and CONFIG_RAM_SIZE indicate size of all data RAM
+ * available on the chip in bytes and size of data RAM available for EC in
+ * bytes, respectively.
+ * Usually, CONFIG_DATA_RAM_SIZE = CONFIG_RAM_SIZE but some chips need to
+ * allocate RAM for the mask ROM. Then CONFIG_DATA_RAM_SIZE > CONFIG_RAM_SIZE.
+ */
+#undef CONFIG_DATA_RAM_SIZE
 #undef CONFIG_RAM_SIZE
 
 /* Enable rbox peripheral */
@@ -2863,6 +2870,14 @@
 
 #include "config_chip.h"
 #include "board.h"
+
+/******************************************************************************/
+/*
+ * Set default data ram size unless it's customized by the chip.
+ */
+#ifndef CONFIG_DATA_RAM_SIZE
+#define CONFIG_DATA_RAM_SIZE	CONFIG_RAM_SIZE
+#endif
 
 /******************************************************************************/
 /*

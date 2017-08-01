@@ -27,11 +27,12 @@
 
 /*****************************************************************************/
 /* Memory mapping */
-#define NPCX_BTRAM_SIZE    0x800 /* 2KB data ram used by booter. */
-#define CONFIG_RAM_BASE    0x200C0000 /* memory address of data ram */
-#define CONFIG_RAM_SIZE    (0x0008000 - NPCX_BTRAM_SIZE) /* 30KB data ram */
-#define CONFIG_LPRAM_BASE  0x40001600 /* memory address of lpwr ram */
-#define CONFIG_LPRAM_SIZE  0x00000620 /* 1568B low power ram */
+#define NPCX_BTRAM_SIZE		0x800 /* 2KB data ram used by booter. */
+#define CONFIG_RAM_BASE		0x200C0000 /* memory address of data ram */
+#define CONFIG_DATA_RAM_SIZE	0x00008000 /* Size of data RAM */
+#define CONFIG_RAM_SIZE		(CONFIG_DATA_RAM_SIZE - NPCX_BTRAM_SIZE)
+#define CONFIG_LPRAM_BASE	0x40001600 /* memory address of lpwr ram */
+#define CONFIG_LPRAM_SIZE	0x00000620 /* 1568B low power ram */
 
 /* Use chip variant to specify the size and start address of program memory */
 #if defined(CHIP_VARIANT_NPCX5M5G)
@@ -49,8 +50,7 @@
 #endif
 
 /* Total RAM size checking for npcx ec */
-#define NPCX_RAM_SIZE (NPCX_BTRAM_SIZE + CONFIG_RAM_SIZE + \
-				NPCX_PROGRAM_MEMORY_SIZE)
+#define NPCX_RAM_SIZE (CONFIG_DATA_RAM_SIZE + NPCX_PROGRAM_MEMORY_SIZE)
 #if defined(CHIP_VARIANT_NPCX5M5G)
 /* 128KB RAM in NPCX5M5G */
 #if (NPCX_RAM_SIZE != 0x20000)

@@ -128,7 +128,7 @@ int mpu_protect_ram(void)
 {
 	int ret;
 	ret = mpu_lock_region(REGION_IRAM, CONFIG_RAM_BASE,
-			      CONFIG_RAM_SIZE, MPU_ATTR_INTERNAL_SRAM);
+			      CONFIG_DATA_RAM_SIZE, MPU_ATTR_INTERNAL_SRAM);
 	if (ret != EC_SUCCESS)
 		return ret;
 	ret = mpu_unlock_region(

@@ -47,7 +47,8 @@
 /* Use chip variant to specify the size and start address of program memory */
 #if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G)
 /* 62KB data ram */
-#define CONFIG_RAM_SIZE    (0x00010000 - NPCX_BTRAM_SIZE)
+#define CONFIG_DATA_RAM_SIZE	0x00010000
+#define CONFIG_RAM_SIZE		(CONFIG_DATA_RAM_SIZE - NPCX_BTRAM_SIZE)
 /* 192KB RAM for FW code */
 #define NPCX_PROGRAM_MEMORY_SIZE (192 * 1024)
 /* program memory base address for 192KB Code RAM (ie. 0x100C0000 - 192KB) */
@@ -57,8 +58,7 @@
 #endif
 
 /* Total RAM size checking for npcx ec */
-#define NPCX_RAM_SIZE (NPCX_BTRAM_SIZE + CONFIG_RAM_SIZE + \
-				NPCX_PROGRAM_MEMORY_SIZE)
+#define NPCX_RAM_SIZE (CONFIG_DATA_RAM_SIZE + NPCX_PROGRAM_MEMORY_SIZE)
 #if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G)
 /* 256KB RAM in NPCX7M6F */
 #if (NPCX_RAM_SIZE != 0x40000)
