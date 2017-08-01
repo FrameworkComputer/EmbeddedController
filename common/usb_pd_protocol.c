@@ -3915,6 +3915,9 @@ static int pd_control(struct host_cmd_handler_args *args)
 #else
 		return EC_RES_INVALID_COMMAND;
 #endif
+	} else if (cmd->subcmd == PD_CHIP_ON && board_set_tcpc_power_mode) {
+		board_set_tcpc_power_mode(cmd->chip, 1);
+		return EC_RES_SUCCESS;
 	} else {
 		return EC_RES_INVALID_COMMAND;
 	}

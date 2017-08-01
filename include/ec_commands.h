@@ -4179,7 +4179,8 @@ enum ec_pd_control_cmd {
 	PD_SUSPEND = 0,      /* Suspend the PD chip (EC: stop talking to PD) */
 	PD_RESUME,           /* Resume the PD chip (EC: start talking to PD) */
 	PD_RESET,            /* Force reset the PD chip */
-	PD_CONTROL_DISABLE   /* Disable further calls to this command */
+	PD_CONTROL_DISABLE,  /* Disable further calls to this command */
+	PD_CHIP_ON,          /* Power on the PD chip */
 };
 
 struct __ec_align1 ec_params_pd_control {

@@ -243,6 +243,14 @@ struct tcpc_config_t {
 uint16_t tcpc_get_alert_status(void);
 
 /**
+ * Optional, set the TCPC power mode.
+ *
+ * @param port Type-C port number
+ * @param mode 0: off/sleep, 1: on/awake
+ */
+void board_set_tcpc_power_mode(int port, int mode) __attribute__((weak));
+
+/**
  * Initialize TCPC.
  *
  * @param port Type-C port number
