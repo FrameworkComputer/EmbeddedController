@@ -821,20 +821,26 @@ void tpm_task(void)
 {
 	uint32_t evt;
 
-	/*
-	 * Just in case there is a resume from deep sleep where AP is not out
-	 * of reset, let's not proceed until AP is actually up.
-	 */
-	while (device_get_state(DEVICE_AP) != DEVICE_STATE_ON) {
-		/*
-		 * The only event we should expect at this point would be the
-		 * reset request.
-		 */
-		evt = task_wait_event(-1);
-		if (evt & TPM_EVENT_RESET)
-			break;
 
-		cprints(CC_TASK, "%s: unexpected event %x\n", __func__, evt);
+	if (!chip_factory_mode()) {
+		/*
+		 * Just in case there is a resume from deep sleep where AP is
+		 * not out of reset, let's not proceed until AP is actually
+		 * up. No need to worry about the AP state in chip factory
+		 * mode of course.
+		 */
+		while (device_get_state(DEVICE_AP) != DEVICE_STATE_ON) {
+			/*
+			 * The only event we should expect at this point would
+			 * be the reset request.
+			 */
+			evt = task_wait_event(-1);
+			if (evt & TPM_EVENT_RESET)
+				break;
+
+			cprints(CC_TASK, "%s: unexpected event %x\n",
+				__func__, evt);
+		}
 	}
 
 	tpm_reset_now(0);
