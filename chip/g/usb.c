@@ -1209,6 +1209,15 @@ static void usb_softreset(void)
 		return;
 	}
 	/* TODO: Wait 3 PHY clocks before returning */
+
+#ifdef BOARD_CR50
+	/*
+	 * TODO(b/63867566): This delay is added to get usb to suspend after
+	 * resume from deep sleep. Find out what the root cause is and add a
+	 * fix.
+	 */
+	usleep(100);
+#endif
 }
 
 void usb_connect(void)
