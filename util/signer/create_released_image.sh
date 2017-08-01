@@ -109,15 +109,17 @@ prepare_image() {
 }
 
 # Execution starts here ===========================
+ME="$(basename $0)"
+
 if [ -z "${CROS_WORKON_SRCROOT}" ]; then
- echo "$(basename $0): This script must run inside Chrome OS chroot" >&2
+ echo "${ME}: This script must run inside Chrome OS chroot" >&2
   exit 1
 fi
 
 SCRIPT_ROOT="${CROS_WORKON_SRCROOT}/src/scripts"
 . "${SCRIPT_ROOT}/build_library/build_common.sh" || exit 1
 
-TMPD="$(mktemp -d /tmp/$(basename $0).XXXXX)"
+TMPD="$(mktemp -d /tmp/${ME}.XXXXX)"
 trap "/bin/rm -rf ${TMPD}" SIGINT SIGTERM EXIT
 
 EC_ROOT="${CROS_WORKON_SRCROOT}/src/platform/ec"
@@ -134,7 +136,7 @@ Consists of three fields separated by colon: <RLZ>:<hex mask>:<hex flags>"
 # error return values.
 set -e
 
-FLAGS_HELP="usage: $(basename $0) [flags] <blobs>
+FLAGS_HELP="usage: ${ME} [flags] <blobs>
 
 blobs are:
   <prod RO A>.hex <prod RO B>.hex <dev RO A>.hex <dev RO B>.hex \
