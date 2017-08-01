@@ -1397,15 +1397,17 @@ static int command_usb(int argc, char **argv)
 	int val;
 
 	if (argc > 1) {
-		if (!strcasecmp("a", argv[1]))
-			usb_select_phy(USB_SEL_PHY0);
-		else if (!strcasecmp("b", argv[1]))
-			usb_select_phy(USB_SEL_PHY1);
-		else if (parse_bool(argv[1], &val)) {
+		if (parse_bool(argv[1], &val)) {
 			if (val)
 				usb_init();
 			else
 				usb_release();
+#ifdef CONFIG_USB_SELECT_PHY
+		} else if (!strcasecmp("a", argv[1])) {
+			usb_select_phy(USB_SEL_PHY0);
+		} else if (!strcasecmp("b", argv[1])) {
+			usb_select_phy(USB_SEL_PHY1);
+#endif
 		} else
 			return EC_ERROR_PARAM1;
 	}
@@ -1416,7 +1418,11 @@ static int command_usb(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usb, command_usb,
+#ifdef CONFIG_USB_SELECT_PHY
 			"[<BOOLEAN> | a | b]",
+#else
+			"<BOOLEAN>",
+#endif
 			"Get/set the USB connection state and PHY selection");
 
 #if USE_SERIAL_NUMBER

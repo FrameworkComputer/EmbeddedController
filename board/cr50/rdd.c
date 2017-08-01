@@ -21,7 +21,6 @@
 
 static int keep_ccd_enabled;
 static int enable_usb_wakeup;
-static int usb_is_initialized;
 
 struct uart_config {
 	const char *name;
@@ -178,58 +177,6 @@ void ccd_mode_pin_changed(int pin_level)
 	configure_ccd(enable);
 }
 
-void ccd_phy_init(int enable_ccd)
-{
-	/*
-	 * For boards that have one phy connected to the AP and one to the
-	 * external port PHY0 is for the AP and PHY1 is for CCD.
-	 */
-	uint32_t which_phy = enable_ccd ? USB_SEL_PHY1 : USB_SEL_PHY0;
-
-	/*
-	 * TODO: if both PHYs are connected to the external port select the
-	 * PHY based on the detected polarity
-	 */
-	usb_select_phy(which_phy);
-
-	/*
-	 * If the usb is going to be initialized on the AP PHY, but the AP is
-	 * off, wait until HOOK_CHIPSET_RESUME to initialize usb.
-	 */
-	if (!enable_ccd && device_get_state(DEVICE_AP) != DEVICE_STATE_ON) {
-		usb_is_initialized = 0;
-		return;
-	}
-
-	/*
-	 * If the board has the non-ccd phy connected to the AP initialize the
-	 * phy no matter what. Otherwise only initialize the phy if ccd is
-	 * enabled.
-	 */
-	if (board_has_ap_usb() || enable_ccd) {
-		usb_init();
-		usb_is_initialized = 1;
-	}
-}
-
-void disable_ap_usb(void)
-{
-	if (board_has_ap_usb() && !ccd_is_enabled() && usb_is_initialized) {
-		usb_release();
-		usb_is_initialized = 0;
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_ap_usb, HOOK_PRIO_DEFAULT);
-
-void enable_ap_usb(void)
-{
-	if (board_has_ap_usb() && !ccd_is_enabled() && !usb_is_initialized) {
-		usb_is_initialized = 1;
-		usb_init();
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_ap_usb, HOOK_PRIO_DEFAULT);
-
 static void rdd_ccd_change_hook(void)
 {
 	if (uart_tx_is_connected(UART_AP) &&
@@ -251,8 +198,6 @@ static void rdd_ccd_change_hook(void)
 		/* Not transmitting to EC, but allowed now */
 		uartn_tx_connect(UART_EC);
 	}
-
-
 }
 DECLARE_HOOK(HOOK_CCD_CHANGE, rdd_ccd_change_hook, HOOK_PRIO_DEFAULT);
 
