@@ -55,9 +55,11 @@ verify_ro() {
 # RW version numbers, which is where eventually the ebuild downloading the
 # tarball from the BCS expects the dev and prod images be.
 prepare_image() {
+  local awk_prog
   local count=0
   local extra_param=
   local image_type="${1}"
+  local raw_version
   local ro_a_hex="$(readlink -f "${2}")"
   local ro_b_hex="$(readlink -f "${3}")"
   local rw_a="$(readlink -f "${4}")"
@@ -88,9 +90,44 @@ prepare_image() {
   dd if="${TMPD}/0.bin" of="${RESULT_FILE}" conv=notrunc
   dd if="${TMPD}/1.bin" of="${RESULT_FILE}" seek=262144 bs=1 conv=notrunc
 
-  version="$("${USB_UPDATER}" -b "${RESULT_FILE}" |
-     awk '/^RO_A:/ {gsub(/R[OW]_A:/, ""); print "r" $1 ".w" $2}')"
+  # A typical Cr50 version reported by usb_updater looks as follows:
+  # RO_A:0.0.10 RW_A:0.0.22[ABCD:00000013:00000012] ...(the same for R[OW]_B).
+  #
+  # In case Board ID field is not set in the image, it is reported as
+  # [00000000:00000000:00000000]
+  #
+  # We want the generated tarball file name to include all relevant version
+  # fields. Let's retrieve the version string and process it using awk to
+  # generate the proper file name. Only the RO_A and RW_A version numbers are
+  # used, this script trusts the user to submit for processing a proper image
+  # where both ROs and both RWs are of the same version respectively.
+  #
+  # As a result, blob versions are converted as follows:
+  #     RO_A:0.0.10 RW_A:0.0.22[ABCD:00000013:00000012] into
+  #         r0.0.10.w0.0.22_ABCD_00000013_00000012
+  #
+  #     RO_A:0.0.10 RW_A:0.0.22[00000000:00000000:00000000] into
+  #         r0.0.10.w0.0.22
+  #
+  # The below awk program accomplishes this preprocessing.
+  awk_prog='/^RO_A:/ {
+    # drop the RO_A/RW_A strings
+    gsub(/R[OW]_A:/, "")
+    # Drop default mask value completely.
+    gsub(/\[00000000:00000000:00000000\]/, "")
+    # If there is a non-default mask:
+    # - replace opening brackets and colons with underscores.
+    gsub(/[\[\:]/, "_")
+    #  - drop the trailing bracket.
+    gsub(/\]/, "")
+    # Print filtered out RO_A and RW_A values
+    print "r" $1 ".w" $2
+}'
 
+  raw_version="$("${USB_UPDATER}" -b "${RESULT_FILE}")" ||
+       ( echo "${ME}: Failed to retrieve blob version" >&2 && exit 1 )
+
+  version="$(awk "${awk_prog}" <<< "${raw_version}" )"
   if [ -z "${dest_dir}" ]; then
     # Note that this is a global variable
     dest_dir="cr50.${version}"
