@@ -42,7 +42,7 @@ static enum hid_protocol protocol = HID_REPORT_PROTOCOL;
  * If this needs to be extended, we need to use this report in boot protocol
  * mode, and an alternate one in report protocol mode.
  */
-struct __attribute__((__packed__)) usb_hid_keyboard_report {
+struct usb_hid_keyboard_report {
 	uint8_t modifiers; /* bitmap of modifiers 224-231 */
 	uint8_t reserved; /* 0x0 */
 	uint8_t keys[6];
@@ -50,7 +50,7 @@ struct __attribute__((__packed__)) usb_hid_keyboard_report {
 	uint8_t new_key:1;
 	uint8_t reserved2:7;
 #endif
-};
+} __packed;
 
 #define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
 

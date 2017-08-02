@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_USB_HID_KEYBOARD_H
 #define __CROS_EC_USB_HID_KEYBOARD_H
 
-struct __attribute__((__packed__)) usb_hid_touchpad_report {
+struct usb_hid_touchpad_report {
 	uint8_t id; /* 0x01 */
-	struct __attribute__((__packed__)) {
+	struct {
 		unsigned tip:1;
 		unsigned inrange:1;
 		unsigned id:4;
@@ -19,10 +19,10 @@ struct __attribute__((__packed__)) usb_hid_touchpad_report {
 		unsigned height:12;
 		unsigned x:12;
 		unsigned y:12;
-	} finger[5];
+	} __packed finger[5];
 	uint8_t count:7;
 	uint8_t button:1;
-};
+} __packed;
 
 /* class implementation interfaces */
 void set_touchpad_report(struct usb_hid_touchpad_report *report);
