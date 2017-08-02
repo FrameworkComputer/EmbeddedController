@@ -181,6 +181,14 @@
 #define CONFIG_TOUCHPAD_I2C_PORT 0
 #define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)
 
+/* Virtual address for touchpad FW in USB updater. */
+#define CONFIG_TOUCHPAD_VIRTUAL_OFF	0x80000000
+/* TODO(itspeter): The CONFIG_TOUCHPAD_VIRTUAL_SIZE depends on IC.
+ *                 b/65188846 will address this separately. It will only works
+ *                 for this size as for now.
+ */
+#define CONFIG_TOUCHPAD_VIRTUAL_SIZE	(48*1024)
+
 #define CONFIG_CURVE25519
 
 #define CONFIG_USB_PAIRING
