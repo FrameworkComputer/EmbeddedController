@@ -160,7 +160,7 @@ const char help_str[] =
 	"      Prints saved panic info\n"
 	"  pause_in_s5 [on|off]\n"
 	"      Whether or not the AP should pause in S5 on shutdown\n"
-	"  pdcontrol [suspend|resume|reset|disable]\n"
+	"  pdcontrol [suspend|resume|reset|disable|on]\n"
 	"      Controls the PD chip\n"
 	"  pdchipinfo <port>\n"
 	"      Get PD chip information\n"
@@ -7048,6 +7048,8 @@ int cmd_pd_control(int argc, char *argv[])
 		p.subcmd = PD_RESUME;
 	else if (!strcmp(argv[1], "disable"))
 		p.subcmd = PD_CONTROL_DISABLE;
+	else if (!strcmp(argv[1], "on") || !strcmp(argv[1], "chip_on"))
+		p.subcmd = PD_CHIP_ON;
 	else {
 		fprintf(stderr, "Unknown command: %s\n", argv[1]);
 		return -1;
