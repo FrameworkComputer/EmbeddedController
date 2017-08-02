@@ -171,7 +171,7 @@ else
 DUMMY := $(shell /bin/cp $(MANIFEST) $(SIGNER_MANIFEST))
 endif
 REPLACEMENT := $(shell printf \
-	'\\n    \\"DEV_ID0\\": %d,\\n    \\"DEV_ID1\\": %d,' $(H1_DEVIDS))
+	'\\n    \\"DEV_ID0\\": %s,\\n    \\"DEV_ID1\\": %s,' $(H1_DEVIDS))
 NODE_JSON :=  $(shell sed -i \
 	"s/\"fuses\": {/\"fuses\": {$(REPLACEMENT)/" $(SIGNER_MANIFEST))
 
