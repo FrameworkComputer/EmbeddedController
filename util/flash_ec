@@ -495,6 +495,24 @@ function claim_pty() {
 	done
 }
 
+function get_serial() {
+	if [[ "${SERVO_TYPE}" =~ "servo_v4_with_servo_micro" ]]; then
+		if [[ -z "${BOARD}" ]]; then
+			sn_ctl="servo_micro_"
+		else
+			sn_ctl="servo_micro_for_${BOARD}_"
+		fi
+	elif [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
+		sn_ctl="ccd_"
+	else
+		# If it's none of the above, the main serialname will do.
+		sn_ctl=""
+	fi
+
+	SERIALNAME=$(${DUT_CONTROL_CMD} "${sn_ctl}serialname" | cut -d: -f2)
+	echo $SERIALNAME
+}
+
 # Board specific flashing scripts
 
 # helper function for using servo v2/3 with openocd
@@ -542,15 +560,14 @@ function flash_flashrom() {
 		die "no flashrom util found."
 	fi
 
-	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
-		if ! on_servov3; then
-			SERIALNAME=$(${DUT_CONTROL_CMD} serialname | \
-					 cut -d: -f2)
-			if [[ "$SERIALNAME" != "" ]] ; then
-				FLASHROM_PARAM+="serial=${SERIALNAME}"
-			fi
+	if ! on_servov3; then
+		SERIALNAME=$(get_serial)
+		if [[ "$SERIALNAME" != "" ]] ; then
+			FLASHROM_PARAM+="serial=${SERIALNAME}"
 		fi
+	fi
 
+	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
 		if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
 			SPI_VOLTAGE="pp1800"
 		else
