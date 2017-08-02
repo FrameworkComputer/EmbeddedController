@@ -4041,7 +4041,11 @@ struct __ec_align2 ec_params_charge_port_override {
 	int16_t override_port; /* Override port# */
 };
 
-/* Read (and delete) one entry of PD event log */
+/*
+ * Read (and delete) one entry of PD event log.
+ * TODO(crbug.com/751742): Make this host command more generic to accommodate
+ * future non-PD logs that use the same internal EC event_log.
+ */
 #define EC_CMD_PD_GET_LOG_ENTRY 0x0115
 
 struct __ec_align4 ec_response_pd_log {
