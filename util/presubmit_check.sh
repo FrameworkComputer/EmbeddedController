@@ -11,8 +11,12 @@ fi
 
 changed=$(find ${PRESUBMIT_FILES} -newer .tests-passed)
 ec3po_files=$(echo "${PRESUBMIT_FILES}" | grep util/ec3po/)
-# Filter out ec3po files from changed files.
+# Filter out ec3po files from changed files.  They're handled separately.
 changed=$(echo "${changed}" | grep -v util/ec3po/)
+# Filter out flash_ec since it's not part of any unit tests.
+changed=$(echo "${changed}" | grep -v util/flash_ec)
+# Filter out this file itself.
+changed=$(echo "${changed}" | grep -v util/presubmit_check.sh)
 if [[ -n "${changed}" ]]; then
   echo "Files have changed since last time unit tests passed:"
   echo "${changed}" | sed -e 's/^/  /'
