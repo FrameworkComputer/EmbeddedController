@@ -289,7 +289,9 @@ ec_reset() {
 		stype=servo
 	fi
 
-	eval ${stype}_${MCU}_hard_reset
+	if [[ ! -z "${stype}" ]]; then
+		eval ${stype}_${MCU}_hard_reset
+	fi
 }
 
 # force the EC to boot in serial monitor mode
@@ -412,10 +414,13 @@ function ec_image() {
 
 # Find the EC UART provided by servo.
 function servo_ec_uart() {
-	SERVOD_FAIL="Cannot communicate with servo. is servod running ?"
-	($DUT_CONTROL_CMD raw_${MCU}_uart_pty || \
-	    $DUT_CONTROL_CMD ${MCU}_uart_pty || \
-	    die "${SERVOD_FAIL}") | cut -d: -f2
+	SERVOD_FAIL="Cannot communicate with servod. Is servod running?"
+	PTY=$(($DUT_CONTROL_CMD raw_${MCU}_uart_pty ||
+	       $DUT_CONTROL_CMD ${MCU}_uart_pty) | cut -d: -f2)
+	if [[ -z "${PTY}" ]]; then
+	    die "${SERVOD_FAIL}"
+	fi
+	echo $PTY
 }
 
 # Servo variables management
@@ -471,6 +476,11 @@ function claim_pty() {
 	if grep -q cros_sdk /proc/1/cmdline; then
 		die "You must run this tool in a chroot that was entered with" \
 		    "'cros_sdk --no-ns-pid' (see crbug.com/444931 for details)"
+	fi
+
+	if [[ -z "$1" ]]; then
+		warn "No parameter passed to claim_pty()"
+		return
 	fi
 
 	# Disconnect the EC-3PO interpreter from the UART since it will
