@@ -69,7 +69,7 @@ const struct adc_t adc_channels[] = {
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_RED] =   { 2, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_KB_BL] =     { 3, 0, 100},
+	[PWM_CH_KBLIGHT] =   { 3, 0, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
