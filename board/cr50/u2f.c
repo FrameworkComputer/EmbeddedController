@@ -79,6 +79,8 @@ static int load_state(void)
 		if (setvar(&k_salt, sizeof(k_salt),
 			   (const uint8_t *)salt, sizeof(salt)))
 			return 0;
+		/* really save the new variable to flash */
+		writevars();
 	} else {
 		memcpy(salt, tuple_val(t_salt), sizeof(salt));
 	}
