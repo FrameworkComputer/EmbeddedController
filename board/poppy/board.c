@@ -149,9 +149,21 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
  * value should be around 5.1/(100+5.1)*3300 = 160.
  * >=rev1: Lid has 604K pull-up, base has 30.1K pull-down, so the
  * ADC value should be around 30.1/(604+30.1)*3300 = 156
+ *
+ * We add a significant marging on the maximum value, due to noise on the line,
+ * especially when PWM is active. See b/64193554 for details.
  */
-#define BASE_DETECT_MIN_MV 140
-#define BASE_DETECT_MAX_MV 200
+#define BASE_DETECT_MIN_MV 120
+#define BASE_DETECT_MAX_MV 300
+
+/*
+ * When the base is connected in reverse, it presents a 100K pull-down,
+ * so the ADC value should be around 100/(604+100)*3300 = 469
+ *
+ * TODO(b:64370797): Do something with these values.
+ */
+#define BASE_DETECT_REVERSE_MIN_MV 450
+#define BASE_DETECT_REVERSE_MAX_MV 500
 
 /*
  * Base EC pulses detection pin for 500 us to signal out of band USB wake (that
