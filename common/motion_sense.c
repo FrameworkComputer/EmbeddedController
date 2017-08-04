@@ -718,7 +718,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
  *    1 in the A/B(lid, display) and 1 in the C/D(base, keyboard)
  * Gyro Sensor (optional)
  */
-void motion_sense_task(void)
+void motion_sense_task(void *u)
 {
 	int i, ret, wait_us;
 	timestamp_t ts_begin_task, ts_end_task;

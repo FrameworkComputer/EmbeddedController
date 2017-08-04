@@ -145,7 +145,7 @@ int chg_ramp_is_stable(void)
 	return ramp_st == CHG_RAMP_STABLE;
 }
 
-void chg_ramp_task(void)
+void chg_ramp_task(void *u)
 {
 	int task_wait_time = -1;
 	int i, lim;

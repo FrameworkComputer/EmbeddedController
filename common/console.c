@@ -650,7 +650,7 @@ void console_has_input(void)
 	task_wake(TASK_ID_CONSOLE);
 }
 
-void console_task(void)
+void console_task(void *u)
 {
 	console_init();
 

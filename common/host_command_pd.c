@@ -207,7 +207,7 @@ static void pd_exchange_status(uint32_t ec_state)
 #endif /* USB_TCPM_WITH_OFF_CHIP_TCPC */
 }
 
-void pd_command_task(void)
+void pd_command_task(void *u)
 {
 	/* On startup exchange status with the PD */
 	pd_exchange_status(0);

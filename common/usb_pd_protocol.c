@@ -1640,7 +1640,7 @@ static void pd_init_tasks(void)
 }
 #endif /* CONFIG_COMMON_RUNTIME */
 
-void pd_task(void)
+void pd_task(void *u)
 {
 	int head;
 	int port = TASK_ID_TO_PD_PORT(task_get_current());

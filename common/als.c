@@ -28,7 +28,7 @@ int als_read(enum als_id id, int *lux)
 	return als[id].read(lux, af);
 }
 
-void als_task(void)
+void als_task(void *u)
 {
 	int i, val;
 	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_ALS);

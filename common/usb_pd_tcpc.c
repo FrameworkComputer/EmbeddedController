@@ -858,7 +858,7 @@ int tcpc_run(int port, int evt)
 }
 
 #ifndef CONFIG_USB_POWER_DELIVERY
-void pd_task(void)
+void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 	int timeout = 10*MSEC;

@@ -70,7 +70,7 @@ static int check_rw_valid(void *rw_hash)
 	return 1;
 }
 
-extern void pd_task(void);
+extern void pd_task(void *u);
 
 int main(void)
 {
@@ -97,7 +97,7 @@ int main(void)
 		jump_to_rw();
 
 	/* background loop for PD events */
-	pd_task();
+	pd_task(NULL);
 
 	debug_printf("EXIT!\n");
 	/* we should never reach that point */

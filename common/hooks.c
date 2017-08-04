@@ -162,7 +162,7 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	return EC_SUCCESS;
 }
 
-void hook_task(void)
+void hook_task(void *u)
 {
 	/* Periodic hooks will be called first time through the loop */
 	static uint64_t last_second = -SECOND;

@@ -834,7 +834,7 @@ static void keyboard_special(uint16_t k)
 	}
 }
 
-void keyboard_protocol_task(void)
+void keyboard_protocol_task(void *u)
 {
 	int wait = -1;
 	int retries = 0;

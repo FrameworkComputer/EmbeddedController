@@ -414,7 +414,7 @@ static void host_command_init(void)
 #endif
 }
 
-void host_command_task(void)
+void host_command_task(void *u)
 {
 	timestamp_t t0, t1, t_recess;
 	t_recess.val = 0;

@@ -373,7 +373,7 @@ static void state_machine(uint64_t tnow)
 	}
 }
 
-void power_button_task(void)
+void power_button_task(void *u)
 {
 	uint64_t t;
 	uint64_t tsleep;

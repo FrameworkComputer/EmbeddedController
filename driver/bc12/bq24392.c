@@ -115,8 +115,9 @@ static void detect_or_power_down_ic(const int port)
 		power_down_ic(port);
 }
 
-void usb_charger_task(const int port)
+void usb_charger_task(void *u)
 {
+	const int port = (intptr_t)u;
 	uint32_t evt;
 
 	ASSERT(port >= 0 && port <= 2);

@@ -523,7 +523,7 @@ static void led_init(void)
 /* After pwm_pin_init() */
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
 
-void led_task(void)
+void led_task(void *u)
 {
 	uint32_t start_time;
 	uint32_t task_duration;

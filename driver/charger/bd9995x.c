@@ -1118,7 +1118,7 @@ void bd9995x_vbus_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_USB_CHG);
 }
 
-void usb_charger_task(void)
+void usb_charger_task(void *u)
 {
 	static int initialized;
 	int changed, port, interrupts;

@@ -664,7 +664,7 @@ void keyboard_scan_init(void)
 #endif /* CONFIG_KEYBOARD_BOOT_KEYS */
 }
 
-void keyboard_scan_task(void)
+void keyboard_scan_task(void *u)
 {
 	timestamp_t poll_deadline, start;
 	int wait_time;

@@ -388,7 +388,7 @@ static void bc12_detect(int port)
 	}
 }
 
-void usb_charger_task(void)
+void usb_charger_task(void *u)
 {
 	const int attach_mask = PI3USB9281_INT_ATTACH | PI3USB9281_INT_DETACH;
 	int port = (task_get_current() == TASK_ID_USB_CHG_P0 ? 0 : 1);

@@ -255,7 +255,7 @@ void rwsig_continue(void)
 	task_set_event(TASK_ID_RWSIG, TASK_EVENT_CONTINUE, 0);
 }
 
-void rwsig_task(void)
+void rwsig_task(void *u)
 {
 	uint32_t evt;
 
