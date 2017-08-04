@@ -43,17 +43,16 @@ static const struct bq24392_pins pin_tbl[] = {
  */
 static void bc12_detect(const int port)
 {
-	int is_high_power;
 	struct charge_port_info new_chg;
-	enum gpio_signal chip_enable;
-	enum gpio_signal chg_det;
 
-	chip_enable = pin_tbl[port].chip_enable;
-	chg_det = pin_tbl[port].chg_det;
+	/*
+	 * Enable the IC to begin detection and connect switches if
+	 * necessary.
+	 */
+	gpio_set_level(pin_tbl[port].chip_enable, 1);
 
-	/* Enable the IC to begin detection. */
-	gpio_set_level(chip_enable, 1);
-
+	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
+#if defined(CONFIG_CHARGE_RAMP) || defined(CONFIG_CHARGE_RAMP_HW)
 	/*
 	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
 	 * little bit longer for margin.
@@ -66,11 +65,7 @@ static void bc12_detect(const int port)
 	 * low-power standard downstream port (SDP).  The system will have to
 	 * ramp the current to determine the limit.
 	 */
-	is_high_power = gpio_get_level(chg_det);
-
-	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
-#ifdef CONFIG_CHARGE_RAMP
-	new_chg.current = is_high_power ? 2400 : 500;
+	new_chg.current = gpio_get_level(pin_tbl[port].chg_det) ? 2400 : 500;
 #else
 	/*
 	 * If the board doesn't support charge ramping, then assume the lowest
@@ -78,7 +73,7 @@ static void bc12_detect(const int port)
 	 * charging port (DCP) which can only supply 500mA.
 	 */
 	new_chg.current = 500;
-#endif /* !defined(CONFIG_CHARGE_RAMP) */
+#endif /* !defined(CONFIG_CHARGE_RAMP && CONFIG_CHARGE_RAMP_HW) */
 
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, &new_chg);
 }
@@ -91,10 +86,9 @@ static void bc12_detect(const int port)
 static void power_down_ic(const int port)
 {
 	struct charge_port_info no_chg = { 0 };
-	enum gpio_signal chip_enable = pin_tbl[port].chip_enable;
 
 	/* Turn off the IC. */
-	gpio_set_level(chip_enable, 0);
+	gpio_set_level(pin_tbl[port].chip_enable, 0);
 
 	/* Let charge manager know there's no more charge available. */
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, &no_chg);
