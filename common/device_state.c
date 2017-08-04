@@ -7,23 +7,55 @@
 #include "device_state.h"
 #include "hooks.h"
 
-int device_get_state(enum device_type device)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
+/**
+ * Return text description for a state
+ *
+ * @param state		State
+ * @return String describing that state
+ */
+static const char *state_desc(enum device_state state)
+{
+	return state == DEVICE_STATE_ON ? "on" :
+			state == DEVICE_STATE_OFF ? "off" : "unknown";
+}
+
+enum device_state device_get_state(enum device_type device)
 {
 	return device_states[device].state;
 }
 
 int device_set_state(enum device_type device, enum device_state state)
 {
-	device_states[device].state = state;
+	struct device_config *dc = device_states + device;
 
-	if (state != DEVICE_STATE_UNKNOWN &&
-	    device_states[device].last_known_state != state) {
-		device_states[device].last_known_state = state;
+	/*
+	 * It'd be handy for debugging if we could print to the console when
+	 * device_set_state() is called.  But unfortunately, it'll be called a
+	 * LOT when debouncing UART activity on DETECT_EC or DETECT_AP.  So
+	 * only print when the last known state changes below.
+	 */
+
+	dc->state = state;
+
+	if (state != DEVICE_STATE_UNKNOWN && dc->last_known_state != state) {
+		dc->last_known_state = state;
+		CPRINTS("DEV %s -> %s", dc->name, state_desc(state));
 		return 1;
 	}
+
 	return 0;
 }
 
+/**
+ * Periodic check of device states.
+ *
+ * The board does all the work.
+ *
+ * Note that device states can change outside of this context as well, for
+ * example, from a GPIO interrupt handler.
+ */
 static void check_device_state(void)
 {
 	int i;
@@ -33,19 +65,16 @@ static void check_device_state(void)
 }
 DECLARE_HOOK(HOOK_SECOND, check_device_state, HOOK_PRIO_DEFAULT);
 
-static void print_state(const char *name, enum device_state state)
-{
-	ccprintf("%-9s %s\n", name, state == DEVICE_STATE_ON ? "on" :
-		 state == DEVICE_STATE_OFF ? "off" : "unknown");
-}
-
 static int command_devices(int argc, char **argv)
 {
+	const struct device_config *dc = device_states;
 	int i;
 
-	for (i = 0; i < DEVICE_COUNT; i++)
-		print_state(device_states[i].name,
-			    device_states[i].state);
+	ccprintf("Device    State   LastKnown\n");
+
+	for (i = 0; i < DEVICE_COUNT; i++, dc++)
+		ccprintf("%-9s %-7s %s\n", dc->name, state_desc(dc->state),
+			 state_desc(dc->last_known_state));
 
 	return EC_SUCCESS;
 }
