@@ -439,7 +439,7 @@ static int send_validate_message(int port, uint16_t header,
 static void send_goodcrc(int port, int id)
 {
 	uint16_t header = PD_HEADER(PD_CTRL_GOOD_CRC, pd[port].power_role,
-			pd[port].data_role, id, 0);
+			pd[port].data_role, id, 0, 0, 0);
 	int bit_len = prepare_message(port, header, 0, NULL);
 
 	if (pd_start_tx(port, pd[port].polarity, bit_len) < 0)

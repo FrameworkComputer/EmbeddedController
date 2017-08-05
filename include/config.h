@@ -2538,6 +2538,9 @@
 /* Define if this board, operating as a sink, can give power back to a source */
 #undef CONFIG_USB_PD_GIVE_BACK
 
+/* Enable USB PD Rev3.0 features */
+#undef CONFIG_USB_PD_REV30
+
 /* Major and Minor ChromeOS specific PD device Hardware IDs. */
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR

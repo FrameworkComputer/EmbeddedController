@@ -722,6 +722,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 			payload[0] |= VDO_CMDT(CMDT_RSP_BUSY);
 			rsize = 1;
 		}
+		payload[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port));
 	} else if (cmd_type == CMDT_RSP_ACK) {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 		struct svdm_amode_data *modep;
@@ -798,6 +799,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 		}
 
 		payload[0] |= VDO_CMDT(CMDT_INIT);
+		payload[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port));
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	} else if (cmd_type == CMDT_RSP_BUSY) {
 		switch (cmd) {
