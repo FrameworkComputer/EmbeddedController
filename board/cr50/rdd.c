@@ -144,8 +144,6 @@ void rdd_attached(void)
 	GWRITE(PINMUX, DIOM1_SEL, GC_PINMUX_GPIO0_GPIO5_SEL);
 	/* Indicate case-closed debug mode (active low) */
 	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_OUT_LOW);
-
-	/* The device state module will handle the actual enabling of CCD. */
 }
 
 void rdd_detached(void)
@@ -161,21 +159,23 @@ void rdd_detached(void)
 	 */
 	if (!keep_ccd_enabled)
 		gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
-
-	/* The device state module will handle the disabling of CCD. */
 }
 
-void ccd_mode_pin_changed(int pin_level)
+static void rdd_check_pin(void)
 {
-	/* Inverted because active low. */
-	int enable = pin_level ? 0 : 1;
+	/* The CCD mode pin is active low. */
+	int enable = !gpio_get_level(GPIO_CCD_MODE_L);
 
 	/* Keep CCD enabled if it's being forced enabled. */
-	if (!enable && keep_ccd_enabled)
+	if (keep_ccd_enabled)
+		enable = 1;
+
+	if (enable == ccd_is_enabled())
 		return;
 
 	configure_ccd(enable);
 }
+DECLARE_HOOK(HOOK_SECOND, rdd_check_pin, HOOK_PRIO_DEFAULT);
 
 static void rdd_ccd_change_hook(void)
 {
