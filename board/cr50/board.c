@@ -1081,11 +1081,6 @@ struct device_config device_states[] = {
 		.detect = GPIO_DETECT_EC,
 		.name = "EC"
 	},
-	[DEVICE_BATTERY_PRESENT] = {
-		.deferred = NULL,
-		.detect = GPIO_BATT_PRES_L,
-		.name = "BattPrsnt"
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
 
@@ -1184,37 +1179,6 @@ void device_state_on(enum gpio_signal signal)
 /* Note: This is called for every device once a second from the HOOK task */
 void board_update_device_state(enum device_type device)
 {
-	if (device == DEVICE_BATTERY_PRESENT) {
-		/*
-		 * Battery present pin does not have an interrupt handler, so
-		 * this is the only way the battery present device state
-		 * changes.
-		 *
-		 * This could potentially be moved to a HOOK_SECOND handler
-		 * in wp.c, since nothing else cares.
-		 */
-		int bp = board_battery_is_present();
-
-		/*
-		 * We use BATT_PRES_L as the source for write protect.  However,
-		 * since it can be overridden by a console command, only change
-		 * the write protect state when the battery presence pin has
-		 * changed and we're not forcing it.
-		 */
-		if (device_set_state(device,
-				     bp ?
-				     DEVICE_STATE_ON : DEVICE_STATE_OFF)) {
-			/*
-			 * Only update the write protect state if we're not
-			 * forcing it.
-			 */
-			if ((GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP)
-			    == 0)
-				set_wp_state(bp);
-		}
-		return;
-	}
-
 	if (device == DEVICE_SERVO) {
 		/*
 		 * If we're driving the transmit line to the EC UART, then we

@@ -35,7 +35,12 @@ int board_battery_is_present(void)
 	return !gpio_get_level(GPIO_BATT_PRES_L);
 }
 
-void set_wp_state(int asserted)
+/**
+ * Set the current write protect state in RBOX and long life scratch register.
+ *
+ * @param asserted: 0 to disable write protect, otherwise enable write protect.
+ */
+static void set_wp_state(int asserted)
 {
 	/* Enable writing to the long life register */
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 1);
@@ -51,6 +56,33 @@ void set_wp_state(int asserted)
 	/* Disable writing to the long life register */
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
 }
+
+/**
+ * Return the current WP state
+ *
+ * @return 0 if WP deasserted, 1 if WP asserted
+ */
+static int get_wp_state(void)
+{
+	/* Signal is active low, so invert */
+	return !GREG32(RBOX, EC_WP_L);
+}
+
+static void check_wp_battery_presence(void)
+{
+	int bp = board_battery_is_present();
+
+	/* If we're forcing WP, ignore battery detect */
+	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP)
+		return;
+
+	/* Otherwise, mirror battery */
+	if (bp != get_wp_state()) {
+		CPRINTS("WP %d", bp);
+		set_wp_state(bp);
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, check_wp_battery_presence, HOOK_PRIO_DEFAULT);
 
 /**
  * Force write protect state or follow battery presence.
@@ -78,7 +110,7 @@ static void force_write_protect(int force, int wp_en)
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
 
 	/* Update the WP state. */
-	set_wp_state(!!wp_en);
+	set_wp_state(wp_en);
 }
 
 static int command_wp(int argc, char **argv)
@@ -108,11 +140,9 @@ static int command_wp(int argc, char **argv)
 		}
 	}
 
-	/* Invert, because active low */
-	val = !GREG32(RBOX, EC_WP_L);
 	forced = GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP;
 	ccprintf("Flash WP: %s%s\n", forced ? "forced " : "",
-		 val ? "enabled" : "disabled");
+		 get_wp_state() ? "enabled" : "disabled");
 
 	ccprintf(" at boot: ");
 	if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT))

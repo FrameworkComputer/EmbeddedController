@@ -169,12 +169,11 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
-/* Device indexes */
+/* Device indexes for devices that require debouncing */
 enum device_type {
 	DEVICE_AP = 0,
 	DEVICE_EC,
 	DEVICE_SERVO,
-	DEVICE_BATTERY_PRESENT,
 
 	DEVICE_COUNT
 };

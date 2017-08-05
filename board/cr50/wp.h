@@ -16,13 +16,6 @@
 void init_wp_state(void);
 
 /**
- * Set the current write protect state in RBOX and long life scratch register.
- *
- * @param asserted: 0 to disable write protect, otherwise enable write protect.
- */
-void set_wp_state(int asserted);
-
-/**
  * Read the FWMP value from TPM NVMEM and set the console restriction
  * appropriately.
  */
