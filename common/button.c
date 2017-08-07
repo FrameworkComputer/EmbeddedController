@@ -464,12 +464,6 @@ static void debug_mode_transition(enum debug_state next_state)
 		break;
 	case STATE_DEBUG_CHECK:
 	case STATE_STAGING:
-		/*
-		 * Schedule a deferred call after DEBUG_TIMEOUT to check for
-		 * button state if it does not change during the timeout
-		 * duration.
-		 */
-		hook_call_deferred(&debug_mode_handle_data, DEBUG_TIMEOUT);
 		break;
 	case STATE_DEBUG_MODE_ACTIVE:
 		debug_button_hit_count = 0;
@@ -507,8 +501,15 @@ static void debug_mode_transition(enum debug_state next_state)
 		curr_debug_state = STATE_DEBUG_NONE;
 	}
 
-	if (curr_debug_state != STATE_DEBUG_NONE)
+	if (curr_debug_state != STATE_DEBUG_NONE) {
+		/*
+		 * Schedule a deferred call after DEBUG_TIMEOUT to check for
+		 * button state if it does not change during the timeout
+		 * duration.
+		 */
+		hook_call_deferred(&debug_mode_handle_data, DEBUG_TIMEOUT);
 		return;
+	}
 
 	/* If state machine reached initial state, reset all variables. */
 	CPRINTS("DEBUG MODE: Exit!");
