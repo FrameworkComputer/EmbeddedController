@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_USB_HID_KEYBOARD_H
 #define __CROS_EC_USB_HID_KEYBOARD_H
 
+#define USB_HID_TOUCHPAD_TIMESTAMP_UNIT 100 /* usec */
+
 struct usb_hid_touchpad_report {
 	uint8_t id; /* 0x01 */
 	struct {
@@ -22,6 +24,7 @@ struct usb_hid_touchpad_report {
 	} __packed finger[5];
 	uint8_t count:7;
 	uint8_t button:1;
+	uint16_t timestamp;
 } __packed;
 
 /* class implementation interfaces */

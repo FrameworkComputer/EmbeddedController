@@ -7,6 +7,7 @@
 #include "console.h"
 #include "touchpad_elan.h"
 #include "gpio.h"
+#include "hwtimer.h"
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
@@ -111,6 +112,12 @@ static int elan_tp_write_cmd(uint16_t reg, uint16_t val)
 
 static int finger_status[ETP_MAX_FINGERS] = {0};
 
+/*
+ * Timestamp of last interrupt (32 bits are enough as we divide the value by 100
+ * and then put it in a 16-bit field).
+ */
+static uint32_t irq_ts;
+
 static int elan_tp_read_report(void)
 {
 	int rv;
@@ -120,6 +127,10 @@ static int elan_tp_read_report(void)
 	uint8_t hover_info;
 	uint8_t *finger = tp_buf+ETP_FINGER_DATA_OFFSET;
 	struct usb_hid_touchpad_report report;
+	uint16_t timestamp;
+
+	/* Compute and save timestamp early in case another interrupt comes. */
+	timestamp = irq_ts / USB_HID_TOUCHPAD_TIMESTAMP_UNIT;
 
 	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, CONFIG_TOUCHPAD_I2C_ADDR,
@@ -186,6 +197,7 @@ static int elan_tp_read_report(void)
 	}
 
 	report.count = ri;
+	report.timestamp = timestamp;
 
 	set_touchpad_report(&report);
 
@@ -314,6 +326,8 @@ int touchpad_get_info(struct touchpad_info *tp)
 
 void elan_tp_interrupt(enum gpio_signal signal)
 {
+	irq_ts = __hw_clock_source_read();
+
 	task_wake(TASK_ID_TOUCHPAD);
 }
 

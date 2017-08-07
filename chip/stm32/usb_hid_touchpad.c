@@ -139,6 +139,16 @@ static const uint8_t report_desc[] = {
 	0x75, 0x01,        /*   Report Size (1) */
 	0x95, 0x01,        /*   Report Count (1) */
 	0x81, 0x02,        /*   Input (Data,Var,Abs) */
+	/* Timestamp */
+	0x05, 0x0D,        /*   Usage Page (Digitizer) */
+	0x55, 0x0C,        /*   Unit Exponent (-4) */
+	0x66, 0x01, 0x10,  /*   Unit (System: SI Linear, Time: Seconds) */
+	0x47, 0xFF, 0xFF, 0x00, 0x00,  /*   Physical Maximum (65535) */
+	0x27, 0xFF, 0xFF, 0x00, 0x00,  /*   Logical Maximum (65535) */
+	0x75, 0x10,        /*   Report Size (16) */
+	0x95, 0x01,        /*   Report Count (1) */
+	0x09, 0x56,        /*   Usage (0x56, Relative Scan Time) */
+	0x81, 0x02,        /*   Input (Data,Var,Abs) */
 	0xC0,              /* End Collection */
 };
 
