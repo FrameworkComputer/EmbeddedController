@@ -528,6 +528,8 @@ void led_task(void *u)
 	uint32_t start_time;
 	uint32_t task_duration;
 
+	usleep(SECOND);
+
 	while (1) {
 
 		start_time = get_time().le.lo;
