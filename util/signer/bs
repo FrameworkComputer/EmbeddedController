@@ -58,7 +58,7 @@ required to include three colon separated fields. The first field is a four
 letter board RLZ code, the second field is board id mask in hex, no 0x prefix,
 and the third field - board ID flags, again, hex, no 0x prefix.
 
-CR50_BOARD_ID='XXYY:12:13' ${progname} [other options, if any]
+CR50_BOARD_ID='XXYY:ffffff00:ff00' ${progname} [other options, if any]
 
 both H1_DEVIDS and CR50_BOARD_ID can be defined independently.
 
@@ -100,8 +100,8 @@ tweak_manifest () {
 
   # Prepare text of all three board ID related nodes
   sub="$(printf "\\\n\"board_id\": %s,\\\n" "${rlz}")"
-  sub+="$(printf "\"board_id_flags\": %s,\\\n" "0x${bid_params[1]}")"
-  sub+="$(printf "\"board_id_mask\": %s,\\\n" "0x${bid_params[2]}")"
+  sub+="$(printf "\"board_id_mask\": %s,\\\n" "0x${bid_params[1]}")"
+  sub+="$(printf "\"board_id_flags\": %s,\\\n" "0x${bid_params[2]}")"
   sed -i "s/\"fuses\": {/${sub}\"fuses\": {/" "${tmpf}"
 }
 
