@@ -313,7 +313,7 @@ static enum ec_error_list matrix_callback(int8_t row, int8_t col,
 	ASSERT(scan_code);
 	ASSERT(len);
 
-	if (row > KEYBOARD_ROWS || col > KEYBOARD_COLS)
+	if (row >= KEYBOARD_ROWS || col >= KEYBOARD_COLS)
 		return EC_ERROR_INVAL;
 
 	if (pressed)
