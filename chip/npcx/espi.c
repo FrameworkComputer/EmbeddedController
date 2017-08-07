@@ -273,7 +273,8 @@ void espi_vw_power_signal_interrupt(enum espi_vw_signal signal)
  */
 int espi_vw_set_wire(enum espi_vw_signal signal, uint8_t level)
 {
-	uint8_t offset, sig_idx, value;
+	uint8_t offset, value;
+	int sig_idx;
 
 	/* Get index of vw signal list by signale name */
 	sig_idx = espi_vw_get_signal_index(signal);
@@ -314,7 +315,8 @@ int espi_vw_set_wire(enum espi_vw_signal signal, uint8_t level)
  */
 int espi_vw_get_wire(enum espi_vw_signal signal)
 {
-	uint8_t offset, sig_idx, value;
+	uint8_t offset, value;
+	int sig_idx;
 
 	/* Get index of vw signal list by signale name */
 	sig_idx = espi_vw_get_signal_index(signal);
