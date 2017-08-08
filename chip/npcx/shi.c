@@ -38,8 +38,15 @@
 #endif
 
 /* SHI Bus definition */
+#ifdef NPCX_SHI_V2
+#define SHI_OBUF_FULL_SIZE  128                    /* Full output buffer size */
+#define SHI_IBUF_FULL_SIZE  128                    /* Full input buffer size  */
+/* Configure the IBUFLVL2 = the size of V3 protocol header */
+#define SHI_IBUFLVL2_THRESHOLD (sizeof(struct ec_host_request))
+#else
 #define SHI_OBUF_FULL_SIZE  64                     /* Full output buffer size */
 #define SHI_IBUF_FULL_SIZE  64                     /* Full input buffer size  */
+#endif
 #define SHI_OBUF_HALF_SIZE  (SHI_OBUF_FULL_SIZE/2) /* Half output buffer size */
 #define SHI_IBUF_HALF_SIZE  (SHI_IBUF_FULL_SIZE/2) /* Half input buffer size  */
 
@@ -56,7 +63,7 @@
 #define SHI_OBUF_VALID_OFFSET ((shi_read_buf_pointer() + \
 			SHI_OUT_PREAMBLE_LENGTH) % SHI_OBUF_FULL_SIZE)
 /* Start address of SHI input buffer */
-#define SHI_IBUF_START_ADDR  (volatile uint8_t  *)(NPCX_SHI_BASE_ADDR + 0x060)
+#define SHI_IBUF_START_ADDR  (&NPCX_IBUF(0))
 /* Current address of SHI input buffer */
 #define SHI_IBUF_CUR_ADDR    (SHI_IBUF_START_ADDR + shi_read_buf_pointer())
 
@@ -374,6 +381,30 @@ static void shi_fill_out_status(uint8_t status)
 	interrupt_enable();
 }
 
+#ifdef NPCX_SHI_V2
+ /*
+  * This routine configures at which level the Input Buffer Half Full 2(IBHF2))
+  * event triggers an interrupt to core.
+  */
+static void shi_sec_ibf_int_enable(int enable)
+{
+	if (enable) {
+		/* Setup IBUFLVL2 threshold and enable it */
+		SET_BIT(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2DIS);
+		SET_FIELD(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2,
+				SHI_IBUFLVL2_THRESHOLD);
+		CLEAR_BIT(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2DIS);
+		/* Enable IBHF2 event */
+		SET_BIT(NPCX_EVENABLE2, NPCX_EVENABLE2_IBHF2EN);
+	} else {
+		/* Disable IBHF2 event first */
+		CLEAR_BIT(NPCX_EVENABLE2, NPCX_EVENABLE2_IBHF2EN);
+		/* Disable IBUFLVL2 and set threshold back to zero */
+		SET_BIT(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2DIS);
+		SET_FIELD(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2, 0);
+	}
+}
+#else
 /*
  * This routine makes sure it's valid transaction or glitch on CS bus.
  */
@@ -392,6 +423,7 @@ static int shi_is_cs_glitch(void)
 	/* valid package */
 	return 0;
 }
+#endif
 
 /*
  * This routine write SHI next half output buffer from msg buffer
@@ -557,20 +589,109 @@ static void log_unexpected_state(char *isr_name)
 	last_error_state = state;
 }
 
+static void shi_handle_cs_assert(void)
+{
+	/* If not enabled, ignore glitches on SHI_CS_L */
+	if (state == SHI_STATE_DISABLED)
+		return;
+
+	/* SHI V2 module filters cs glitch by hardware automatically */
+#ifndef NPCX_SHI_V2
+	/*
+	 * IBUFSTAT resets on the 7th clock cycle after CS assertion, which
+	 * may not have happened yet. We use NPCX_IBUFSTAT for calculating
+	 * buffer fill depth, so make sure it's valid before proceeding.
+	 */
+	if (shi_is_cs_glitch()) {
+		CPRINTS("ERR-GTH");
+		shi_reset_prepare();
+		DEBUG_CPRINTF("END\n");
+		return;
+	}
+#endif
+
+	/* NOT_READY should be sent and there're no spi transaction now. */
+	if (state == SHI_STATE_CNL_RESP_NOT_RDY)
+		return;
+
+	/* Chip select is low = asserted */
+	if (state != SHI_STATE_READY_TO_RECV) {
+		/* State machine should be reset in EVSTAT_EOR ISR */
+		CPRINTS("Unexpected state %d in CS ISR", state);
+		return;
+	}
+
+	DEBUG_CPRINTF("CSL-");
+
+	/*
+	 * Clear possible EOR event from previous transaction since it's
+	 * irrelevant now that CS is re-asserted.
+	 */
+	NPCX_EVSTAT = 1 << NPCX_EVSTAT_EOR;
+
+	/* Do not deep sleep during SHI transaction */
+	disable_sleep(SLEEP_MASK_SPI);
+
+#ifndef NPCX_SHI_V2
+	/*
+	 * Enable SHI interrupt - we will either succeed to parse our host
+	 * command or reset on failure from here.
+	 */
+	task_enable_irq(NPCX_IRQ_SHI);
+
+	/* Read first three bytes to parse which protocol is receiving */
+	shi_parse_header();
+#endif
+}
+
 /* This routine handles all interrupts of this module */
 void shi_int_handler(void)
 {
 	uint8_t stat_reg;
+#ifdef NPCX_SHI_V2
+	uint8_t stat2_reg;
+#endif
 
-	/* Read status register and clear interrupt status early*/
+	/* Read status register and clear interrupt status early */
 	stat_reg = NPCX_EVSTAT;
 	NPCX_EVSTAT = stat_reg;
+#ifdef NPCX_SHI_V2
+	stat2_reg = NPCX_EVSTAT2;
+
+	/* SHI CS pin is asserted in EVSTAT2 */
+	if (IS_BIT_SET(stat2_reg, NPCX_EVSTAT2_CSNFE)) {
+		/* clear CSNFE bit */
+		NPCX_EVSTAT2 = (1 << NPCX_EVSTAT2_CSNFE);
+		DEBUG_CPRINTF("CSNFE-");
+		/*
+		 * BUSY bit is set when SHI_CS is asserted. If not, leave it for
+		 * SHI_CS de-asserted event.
+		 */
+		if (!IS_BIT_SET(NPCX_SHICFG2, NPCX_SHICFG2_BUSY)) {
+			DEBUG_CPRINTF("CSNB-");
+			return;
+		}
+		shi_handle_cs_assert();
+	}
+#endif
 
 	/*
 	 * End of data for read/write transaction. ie SHI_CS is deasserted.
 	 * Host completed or aborted transaction
 	 */
+#ifdef NPCX_SHI_V2
+	/*
+	 * EOR has the limitation that it will not be set even if the SHI_CS is
+	 * deasserted without SPI clocks. The new SHI module introduce the
+	 * CSNRE bit which will be set when SHI_CS is deasserted regardless of
+	 * SPI clocks.
+	 */
+	if (IS_BIT_SET(stat2_reg, NPCX_EVSTAT2_CSNRE)) {
+		/* Clear pending bit of CSNRE */
+		NPCX_EVSTAT2 = (1 << NPCX_EVSTAT2_CSNRE);
+#else
 	if (IS_BIT_SET(stat_reg, NPCX_EVSTAT_EOR)) {
+#endif
 		/*
 		 * We're not in proper state.
 		 * Mark not ready to abort next transaction
@@ -604,7 +725,11 @@ void shi_int_handler(void)
 
 		/* Error state for checking*/
 		if (state != SHI_STATE_SENDING)
+#ifdef NPCX_SHI_V2
+			log_unexpected_state("CSNRE");
+#else
 			log_unexpected_state("IBEOR");
+#endif
 
 		/* reset SHI and prepare to next transaction again */
 		shi_reset_prepare();
@@ -652,6 +777,21 @@ void shi_int_handler(void)
 			log_unexpected_state("IBHF");
 	}
 
+#ifdef NPCX_SHI_V2
+	/*
+	 * The size of input buffer reaches the size of
+	 * protocol V3 header(=8) after CS asserted.
+	 */
+	if (IS_BIT_SET(stat2_reg, NPCX_EVSTAT2_IBHF2)) {
+		/* Clear IBHF2 */
+		NPCX_EVSTAT2 = (1 << NPCX_EVSTAT2_IBHF2);
+		DEBUG_CPRINTF("HDR-");
+		/* Disable second IBF interrupt and start to parse header */
+		shi_sec_ibf_int_enable(0);
+		shi_parse_header();
+	}
+#endif
+
 	/*
 	 * Indicate input/output buffer pointer reaches the full buffer size.
 	 * Transaction is processing.
@@ -692,49 +832,19 @@ DECLARE_IRQ(NPCX_IRQ_SHI, shi_int_handler, 1);
 /* Handle an CS assert event on the SHI_CS_L pin */
 void shi_cs_event(enum gpio_signal signal)
 {
-	/* If not enabled, ignore glitches on SHI_CS_L */
-	if (state == SHI_STATE_DISABLED)
-		return;
-
+#ifdef NPCX_SHI_V2
 	/*
-	 * IBUFSTAT resets on the 7th clock cycle after CS assertion, which
-	 * may not have happened yet. We use NPCX_IBUFSTAT for calculating
-	 * buffer fill depth, so make sure it's valid before proceeding.
+	 * New SHI module handles the CS low event in the SHI module interrupt
+	 * handler (checking CSNFE bit) instead of in GPIO(MIWU) interrupt
+	 * handler. But there is still a need to configure the MIWU to generate
+	 * event to wake up EC from deep sleep. Immediately return to bypass
+	 * the CS low interrupt event from MIWU module.
 	 */
-	if (shi_is_cs_glitch()) {
-		CPRINTS("ERR-GTH");
-		shi_reset_prepare();
-		DEBUG_CPRINTF("END\n");
-		return;
-	}
+	return;
+#else
+	shi_handle_cs_assert();
+#endif
 
-	/* NOT_READY should be sent and there're no spi transaction now. */
-	if (state == SHI_STATE_CNL_RESP_NOT_RDY)
-		return;
-
-	/* Chip select is low = asserted */
-	if (state != SHI_STATE_READY_TO_RECV) {
-		/* State machine should be reset in EVSTAT_EOR ISR */
-		CPRINTS("Unexpected state %d in CS ISR", state);
-		return;
-	}
-
-	DEBUG_CPRINTF("CSL-");
-
-	/*
-	 * Clear possible EOR event from previous transaction since it's
-	 * irrelevant now that CS is re-asserted.
-	 */
-	NPCX_EVSTAT = 1 << NPCX_EVSTAT_EOR;
-
-	/*
-	 * Enable SHI interrupt - we will either succeed to parse our host
-	 * command or reset on failure from here.
-	 */
-	task_enable_irq(NPCX_IRQ_SHI);
-
-	/* Read first three bytes to parse which protocol is receiving */
-	shi_parse_header();
 }
 
 /*****************************************************************************/
@@ -783,6 +893,15 @@ static void shi_reset_prepare(void)
 	/* Ready to receive */
 	state = SHI_STATE_READY_TO_RECV;
 	last_error_state = -1;
+
+	/* Setup second IBF interrupt and enable SHI's interrupt */
+#ifdef NPCX_SHI_V2
+	shi_sec_ibf_int_enable(1);
+	task_enable_irq(NPCX_IRQ_SHI);
+#endif
+
+	/* Allow deep sleep at the end of SHI transaction */
+	enable_sleep(SLEEP_MASK_SPI);
 
 	DEBUG_CPRINTF("RDY-");
 }
@@ -862,6 +981,11 @@ static void shi_init(void)
 	/* Power on SHI module first */
 	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_SHI_PD);
 
+#ifdef NPCX_SHI_V2
+	/* Enable SHI module Version 2 */
+	SET_BIT(NPCX_DEVALT(ALT_GROUP_F), NPCX_DEVALTF_SHI_NEW);
+#endif
+
 	/*
 	 * SHICFG1 (SHI Configuration 1) setting
 	 * [7] - IWRAP	= 1: Wrap input buffer to the first address
@@ -900,6 +1024,16 @@ static void shi_init(void)
 	 * [0] - OBEEN  = 0: Output Buffer Empty Interrupt Enable
 	 */
 	NPCX_EVENABLE = 0x1C;
+
+#ifdef NPCX_SHI_V2
+	/*
+	 * EVENABLE2 (Event Enable 2) setting
+	 * [2] - CSNFEEN = 1: SHI_CS Falling Edge Interrupt Enable
+	 * [1] - CSNREEN = 1: SHI_CS Rising Edge Interrupt Enable
+	 * [0] - IBHF2EN = 0: Input Buffer Half Full 2 Interrupt Enable
+	 */
+	NPCX_EVENABLE2 = 0x06;
+#endif
 
 	/* Clear SHI events status register */
 	NPCX_EVSTAT = 0XFF;

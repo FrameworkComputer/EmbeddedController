@@ -683,6 +683,11 @@ enum {
 #define NPCX_DEVALTC_UART_SL2            0
 #define NPCX_DEVALTC_SHI_SL              1
 
+#if defined(CHIP_FAMILY_NPCX7)
+/* SHI module version 2 enable bit */
+#define NPCX_DEVALTF_SHI_NEW             7
+#endif
+
 /* Others bit definitions */
 #define NPCX_LFCGCALCNT_LPREG_CTL_EN     1
 
@@ -694,7 +699,6 @@ enum {
 #define NPCX_DBGFRZEN3                    REG8(NPCX_SCFG_BASE_ADDR + 0x078)
 /* DBG register fields */
 #define NPCX_DBGFRZEN3_GLBL_FRZ_DIS      7
-
 
 /******************************************************************************/
 /* SMBus Registers */
@@ -1348,9 +1352,19 @@ enum ITIM16_MODULE_T {
 #define NPCX_STATUS                       REG8(NPCX_SHI_BASE_ADDR + 0x008)
 #define NPCX_IBUFSTAT                     REG8(NPCX_SHI_BASE_ADDR + 0x00A)
 #define NPCX_OBUFSTAT                     REG8(NPCX_SHI_BASE_ADDR + 0x00B)
-#define NPCX_ADVCFG                       REG8(NPCX_SHI_BASE_ADDR + 0x00E)
+#if defined(CHIP_FAMILY_NPCX5)
 #define NPCX_OBUF(n)                      REG8(NPCX_SHI_BASE_ADDR + 0x020 + (n))
 #define NPCX_IBUF(n)                      REG8(NPCX_SHI_BASE_ADDR + 0x060 + (n))
+#elif defined(CHIP_FAMILY_NPCX7)
+/* Serial Host Interface (SHI) Registers - only available on SHI Version 2 */
+#define NPCX_SHICFG3                      REG8(NPCX_SHI_BASE_ADDR + 0x00C)
+#define NPCX_SHICFG4                      REG8(NPCX_SHI_BASE_ADDR + 0x00D)
+#define NPCX_SHICFG5                      REG8(NPCX_SHI_BASE_ADDR + 0x00E)
+#define NPCX_EVSTAT2                      REG8(NPCX_SHI_BASE_ADDR + 0x00F)
+#define NPCX_EVENABLE2                    REG8(NPCX_SHI_BASE_ADDR + 0x010)
+#define NPCX_OBUF(n)                      REG8(NPCX_SHI_BASE_ADDR + 0x020 + (n))
+#define NPCX_IBUF(n)                      REG8(NPCX_SHI_BASE_ADDR + 0x0A0 + (n))
+#endif
 
 /* SHI register fields */
 #define NPCX_SHICFG1_EN                  0
@@ -1386,6 +1400,18 @@ enum ITIM16_MODULE_T {
 #define NPCX_EVSTAT_IBOR                 7
 #define NPCX_STATUS_OBES                 6
 #define NPCX_STATUS_IBFS                 7
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_SHICFG3_OBUFLVLDIS          7
+#define NPCX_SHICFG4_IBUFLVLDIS          7
+#define NPCX_SHICFG5_IBUFLVL2            FIELD(0, 6)
+#define NPCX_SHICFG5_IBUFLVL2DIS         7
+#define NPCX_EVSTAT2_IBHF2               0
+#define NPCX_EVSTAT2_CSNRE               1
+#define NPCX_EVSTAT2_CSNFE               2
+#define NPCX_EVENABLE2_IBHF2EN           0
+#define NPCX_EVENABLE2_CSNREEN           1
+#define NPCX_EVENABLE2_CSNFEEN           2
+#endif
 
 /******************************************************************************/
 /* Monotonic Counter (MTC) Registers */

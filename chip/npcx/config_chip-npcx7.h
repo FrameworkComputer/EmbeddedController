@@ -38,6 +38,9 @@
 #define I2C_PORT_COUNT 11
 #endif
 
+/* Use SHI module version 2 supported by npcx7 family */
+#define NPCX_SHI_V2
+
 /*****************************************************************************/
 /* Memory mapping */
 #define NPCX_BTRAM_SIZE    0x800 /* 2KB data ram used by booter. */

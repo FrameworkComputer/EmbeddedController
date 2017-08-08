@@ -16,6 +16,9 @@
  * @param signal	GPIO signal that changed
  */
 void shi_cs_event(enum gpio_signal signal);
+#ifdef NPCX_SHI_V2
+void shi_cs_gpio_int(enum gpio_signal signal);
+#endif
 #endif
 
 #endif /* SHI_CHIP_H_ */
