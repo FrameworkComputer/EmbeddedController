@@ -126,10 +126,19 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 int charger_profile_override(struct charge_state_data *curr)
 {
 	const struct battery_info *batt_info;
-	/* battery temp in 0.1 deg C */
-	int bat_temp_c = curr->batt.temperature - 2731;
+	int bat_temp_c;
 
 	batt_info = battery_get_info();
+
+	if ((curr->batt.flags & BATT_FLAG_BAD_ANY) == BATT_FLAG_BAD_ANY) {
+		curr->requested_current = batt_info->precharge_current;
+		curr->requested_voltage = batt_info->voltage_max;
+		return 1000;
+	}
+
+	/* battery temp in 0.1 deg C */
+	bat_temp_c = curr->batt.temperature - 2731;
+
 	/* Don't charge if outside of allowable temperature range */
 	if (bat_temp_c >= batt_info->charging_max_c * 10 ||
 	    bat_temp_c < batt_info->charging_min_c * 10) {
