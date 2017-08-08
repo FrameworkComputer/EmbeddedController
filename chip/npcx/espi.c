@@ -655,7 +655,7 @@ static int command_espi(int argc, char **argv)
 
 		if (*e)
 			return EC_ERROR_PARAM2;
-		if (m < 0 || m > 4)
+		if (m > 4)
 			return EC_ERROR_PARAM2;
 		else if (m == 4)
 			chan = 0x0F;
