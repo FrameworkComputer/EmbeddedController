@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "comm-host.h"
+#include "cros_ec_dev.h"
 #include "ec_commands.h"
 #include "misc_util.h"
 
@@ -96,6 +97,11 @@ int comm_init(int interfaces, const char *device_name)
 	    !comm_init_dev(device_name))
 		goto init_ok;
 
+	/* Do not fallback to other communication methods if target is not a
+	 * cros_ec device */
+	if (strcmp(CROS_EC_DEV_NAME, device_name))
+		goto init_failed;
+
 	/* Fallback to direct LPC on x86 */
 	if ((interfaces & COMM_LPC) && comm_init_lpc && !comm_init_lpc())
 		goto init_ok;
@@ -104,6 +110,7 @@ int comm_init(int interfaces, const char *device_name)
 	if ((interfaces & COMM_I2C) && comm_init_i2c && !comm_init_i2c())
 		goto init_ok;
 
+ init_failed:
 	/* Give up */
 	fprintf(stderr, "Unable to establish host communication\n");
 	return 1;

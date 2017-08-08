@@ -18,6 +18,7 @@
 #include "battery.h"
 #include "comm-host.h"
 #include "compile_time_macros.h"
+#include "cros_ec_dev.h"
 #include "ec_panicinfo.h"
 #include "ec_flash.h"
 #include "ectool.h"
@@ -7335,7 +7336,7 @@ int main(int argc, char *argv[])
 	const struct command *cmd;
 	int dev = 0;
 	int interfaces = COMM_ALL;
-	char device_name[40] = "cros_ec";
+	char device_name[40] = CROS_EC_DEV_NAME;
 	int rv = 1;
 	int parse_error = 0;
 	char *e;
