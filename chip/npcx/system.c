@@ -526,7 +526,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 static char system_to_hex(uint8_t x)
 {
-	if (x >= 0 && x <= 9)
+	if (x <= 9)
 		return '0' + x;
 	return 'a' + x - 10;
 }
