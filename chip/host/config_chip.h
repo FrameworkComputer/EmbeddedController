@@ -32,6 +32,9 @@ extern char __host_flash[CONFIG_FLASH_SIZE];
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 
+/* Default task stack size */
+#define TASK_STACK_SIZE 512
+
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 250
 #define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
