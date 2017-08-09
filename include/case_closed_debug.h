@@ -96,11 +96,11 @@ enum ccd_flag {
 
 /* Capabilities */
 enum ccd_capability {
-	/* AP and EC UART output (from AP/EC) and input (to AP/EC) */
-	CCD_CAP_AP_TX_CR50_RX = 0,
-	CCD_CAP_AP_RX_CR50_TX = 1,
-	CCD_CAP_EC_TX_CR50_RX = 2,
-	CCD_CAP_EC_RX_CR50_TX = 3,
+	/* UARTs to/from AP and EC */
+	CCD_CAP_GSC_RX_AP_TX = 0,
+	CCD_CAP_GSC_TX_AP_RX = 1,
+	CCD_CAP_GSC_RX_EC_TX = 2,
+	CCD_CAP_GSC_TX_EC_RX = 3,
 
 	/* Access to AP SPI flash */
 	CCD_CAP_AP_FLASH = 4,
@@ -114,8 +114,8 @@ enum ccd_capability {
 	/* Reboot EC or AP */
 	CCD_CAP_REBOOT_EC_AP = 7,
 
-	/* Cr50 restricted console commands */
-	CCD_CAP_CR50_RESTRICTED_CONSOLE = 8,
+	/* GSC restricted console commands */
+	CCD_CAP_GSC_RESTRICTED_CONSOLE = 8,
 
 	/* Allow ccd-unlock or ccd-open without AP reboot */
 	CCD_CAP_UNLOCK_WITHOUT_AP_REBOOT = 9,
@@ -132,8 +132,8 @@ enum ccd_capability {
 	/* Allow removing the battery to bypass physical presence requirement */
 	CCD_CAP_REMOVE_BATTERY_BYPASSES_PP = 13,
 
-	/* Allow Cr50 firmware update without wiping TPM data */
-	CCD_CAP_CR50_FW_UPDATE_WITHOUT_TPM_WIPE = 14,
+	/* Allow GSC firmware update without wiping TPM data */
+	CCD_CAP_GSC_FW_UPDATE_WITHOUT_TPM_WIPE = 14,
 
 	/* Access to I2C via USB */
 	CCD_CAP_I2C = 15,

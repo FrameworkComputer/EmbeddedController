@@ -594,17 +594,6 @@ static void configure_board_specific_gpios(void)
 		/* Enable powerdown exit on DIOM0 */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
 	}
-
-	/*
-	 * If the TPM_RST_L signal is already high when cr50 wakes up or
-	 * transitions to high before we are able to configure the gpio then
-	 * we will have missed the edge and the tpm reset isr will not get
-	 * called. Check that we haven't already missed the rising edge. If we
-	 * have alert tpm_rst_isr.
-	 */
-	if (gpio_get_level(GPIO_TPM_RST_L))
-		hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
-
 	if (!board_detect_ap_with_tpm_rst()) {
 		/* Use AP UART TX as the DETECT AP signal. */
 		GWRITE(PINMUX, GPIO1_GPIO1_SEL, GC_PINMUX_DIOA3_SEL);
@@ -708,8 +697,18 @@ static void board_init(void)
 	check_board_id_mismatch();
 	check_board_id_mismatch();
 
-	/* Enable TPM reset GPIO interrupt */
+	/*
+	 * Enable TPM reset GPIO interrupt.
+	 *
+	 * If the TPM_RST_L signal is already high when cr50 wakes up or
+	 * transitions to high before we are able to configure the gpio then we
+	 * will have missed the edge and the tpm reset isr will not get
+	 * called. Check that we haven't already missed the rising edge. If we
+	 * have alert tpm_rst_isr.
+	 */
 	gpio_enable_interrupt(GPIO_TPM_RST_L);
+	if (gpio_get_level(GPIO_TPM_RST_L))
+		hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
 
 	/*
 	 * Start monitoring AC detect to wake Cr50 from deep sleep.  This is
@@ -743,6 +742,9 @@ static void board_ccd_config_changed(void)
 	GREG32(PMU, LONG_LIFE_SCRATCH1) |= (ccd_get_state() << BOARD_CCD_SHIFT)
 			& BOARD_CCD_STATE;
 	GWRITE_FIELD(PMU, LONG_LIFE_SCRATCH_WR_EN, REG1, 0);
+
+	/* Update CCD state */
+	ccd_update_state();
 }
 DECLARE_HOOK(HOOK_CCD_CHANGE, board_ccd_config_changed, HOOK_PRIO_DEFAULT);
 
@@ -926,76 +928,6 @@ int is_ec_rst_asserted(void)
 {
 	return GREAD(RBOX, ASSERT_EC_RST);
 }
-
-void enable_ccd_uart(int uart)
-{
-	/*
-	 * Only enable the UART if we have receive permission, and if the
-	 * processor we're talking to is on.  When the processor is off, its
-	 * transmit line (our receive line) may float, leading to interrupt
-	 * storms.
-	 */
-	if (uart == UART_AP) {
-		if (!ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX))
-			return;
-
-		if (!ap_is_on())
-			return;
-	} else {
-		if (!ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX))
-			return;
-
-		if (!ec_is_on())
-			return;
-
-		/*
-		 * For the EC UART, we can't connect the TX pin to the UART
-		 * block when it's in bit bang mode.
-		 */
-		if (uart_bitbang_is_enabled(uart))
-			return;
-	}
-
-	/* Enable RX and TX on the UART peripheral */
-	uartn_enable(uart);
-
-	/* Connect the TX pin to the UART TX signal */
-	if (!uart_tx_is_connected(uart))
-		uartn_tx_connect(uart);
-}
-
-void disable_ccd_uart(int uart)
-{
-	/* Disable RX and TX on the UART peripheral */
-	uartn_disable(uart);
-
-	/* Disconnect the TX pin from the UART peripheral */
-	uartn_tx_disconnect(uart);
-}
-
-static void board_ccd_change_hook(void)
-{
-	if (uartn_is_enabled(UART_AP) &&
-	    !ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX)) {
-		/* Receiving from AP, but no longer allowed */
-		disable_ccd_uart(UART_AP);
-	} else if (!uartn_is_enabled(UART_AP) &&
-		   ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX)) {
-		/* Not receiving from AP, but allowed now */
-		enable_ccd_uart(UART_AP);
-	}
-
-	if (uartn_is_enabled(UART_EC) &&
-	    !ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX)) {
-		/* Receiving from EC, but no longer allowed */
-		disable_ccd_uart(UART_EC);
-	} else if (!uartn_is_enabled(UART_EC) &&
-		   ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX)) {
-		/* Not receiving from EC, but allowed now */
-		enable_ccd_uart(UART_EC);
-	}
-}
-DECLARE_HOOK(HOOK_CCD_CHANGE, board_ccd_change_hook, HOOK_PRIO_DEFAULT);
 
 /*
  * This function duplicates some of the functionality in chip/g/gpio.c in order

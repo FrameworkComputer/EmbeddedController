@@ -50,7 +50,9 @@ struct uart_bitbang_properties {
 extern struct uart_bitbang_properties bitbang_config;
 
 /**
- * Enable bit banging mode for a UART.
+ * Configure bit banging mode for a UART.
+ *
+ * If configuration succeeds, then call uart_bitbang_enable() on the port.
  *
  * @param uart: Index of UART to enable bit banging mode.
  * @param baud_rate:  desired baud rate.
@@ -58,7 +60,16 @@ extern struct uart_bitbang_properties bitbang_config;
  *
  * @returns EC_SUCCESS on success, otherwise an error.
  */
-int uart_bitbang_enable(int uart, int baud_rate, int parity);
+int uart_bitbang_config(int uart, int baud_rate, int parity);
+
+/**
+ * Enable bit banging mode for a UART.
+ *
+ * The UART must have been configured first.
+ *
+ * @param uart: Index of UART to disable bit banging mode.
+ */
+int uart_bitbang_enable(int uart);
 
 /**
  * Disable bit banging mode for a UART.
@@ -73,6 +84,13 @@ int uart_bitbang_disable(int uart);
  * @param uart: Index of UART to query.
  */
 int uart_bitbang_is_enabled(int uart);
+
+/**
+ * Returns 1 if bit banging mode is wanted for the UART.
+ *
+ * @param uart: Index of UART to query.
+ */
+int uart_bitbang_is_wanted(int uart);
 
 /**
  * TX a character on a UART configured for bit banging mode.

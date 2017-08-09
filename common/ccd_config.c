@@ -118,17 +118,17 @@ static const uint32_t k_public_flags =
 
 /* List of CCD capability info; must be in same order as enum ccd_capability */
 static const struct ccd_capability_info cap_info[CCD_CAP_COUNT] = {
-	{"UartAPTX",		CCD_CAP_STATE_ALWAYS},
-	{"UartAPRX",		CCD_CAP_STATE_ALWAYS},
-	{"UartECTX",		CCD_CAP_STATE_ALWAYS},
-	{"UartECRX",		CCD_CAP_STATE_IF_OPENED},
+	{"UartGscRxAPTx",	CCD_CAP_STATE_ALWAYS},
+	{"UartGscTxAPRx",	CCD_CAP_STATE_ALWAYS},
+	{"UartGscRxECTx",	CCD_CAP_STATE_ALWAYS},
+	{"UartGscTxECRx",	CCD_CAP_STATE_IF_OPENED},
 
 	{"FlashAP",		CCD_CAP_STATE_IF_OPENED},
 	{"FlashEC",		CCD_CAP_STATE_IF_OPENED},
-	{"WPOverride",		CCD_CAP_STATE_IF_OPENED},
+	{"OverrideWP",		CCD_CAP_STATE_IF_OPENED},
 	{"RebootECAP",		CCD_CAP_STATE_IF_OPENED},
 
-	{"Cr50FullConsole",	CCD_CAP_STATE_IF_OPENED},
+	{"GscFullConsole",	CCD_CAP_STATE_IF_OPENED},
 	{"UnlockNoReboot",	CCD_CAP_STATE_ALWAYS},
 	{"UnlockNoShortPP",	CCD_CAP_STATE_ALWAYS},
 	{"OpenNoTPMWipe",	CCD_CAP_STATE_IF_OPENED},
@@ -508,7 +508,7 @@ static int ccd_reset_config(unsigned flags)
 			 * that's kinda meaningless because we set a
 			 * well-defined password below.
 			 */
-			if (i == CCD_CAP_CR50_RESTRICTED_CONSOLE)
+			if (i == CCD_CAP_GSC_RESTRICTED_CONSOLE)
 				continue;
 
 			raw_set_cap(i, CCD_CAP_STATE_ALWAYS);

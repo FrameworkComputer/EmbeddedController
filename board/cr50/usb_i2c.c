@@ -18,12 +18,18 @@
 
 int usb_i2c_board_is_enabled(void)
 {
+	/*
+	 * Note that this signal requires an external pullup, because this is
+	 * one of the real open drain pins; we cannot pull it up or drive it
+	 * high.  On test boards without the pullup, this will mis-detect as
+	 * enabled.
+	 */
 	return !gpio_get_level(GPIO_EN_PP3300_INA_L);
 }
 
 static void ina_disconnect(void)
 {
-	CPRINTS("Disabling I2C");
+	CPRINTS("I2C disconnect");
 
 	/* Disonnect I2C0 SDA/SCL output to B1/B0 pads */
 	GWRITE(PINMUX, DIOB1_SEL, 0);
@@ -38,7 +44,7 @@ static void ina_disconnect(void)
 
 static void ina_connect(void)
 {
-	CPRINTS("Enabling I2C");
+	CPRINTS("I2C connect");
 
 	/* Apply power to INA chips */
 	gpio_set_level(GPIO_EN_PP3300_INA_L, 0);
@@ -89,30 +95,3 @@ int usb_i2c_board_enable(void)
 
 	return EC_SUCCESS;
 }
-
-/**
- * CCD config change hook
- */
-static void ccd_change_i2c(void)
-{
-	/*
-	 * If the capability state doesn't match the current I2C enable state,
-	 * try to make them match.
-	 */
-	if (usb_i2c_board_is_enabled() && !ccd_is_cap_enabled(CCD_CAP_I2C)) {
-		/* I2C bridge is enabled, but it's no longer allowed to be */
-		usb_i2c_board_disable();
-	} else if (!usb_i2c_board_is_enabled() &&
-		   ccd_is_cap_enabled(CCD_CAP_I2C)) {
-		/*
-		 * I2C bridge is disabled, but is allowed to be enabled.  Try
-		 * enabling it.  Note that this could fail for several reasons,
-		 * such as CCD not connected, or servo attached.  That's ok;
-		 * those things will also attempt usb_i2c_board_enable() if
-		 * their state changes later.
-		 */
-		usb_i2c_board_enable();
-	}
-}
-
-DECLARE_HOOK(HOOK_CCD_CHANGE, ccd_change_i2c, HOOK_PRIO_DEFAULT);

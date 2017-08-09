@@ -32,6 +32,9 @@
 
 /* Flag indicating whether bit banging is enabled or not. */
 static uint8_t bitbang_enabled;
+/* Flag indicating bit banging is desired.  Allows async enable/disable. */
+static uint8_t bitbang_wanted;
+
 static int rx_buf[RX_BUF_SIZE];
 
 /* Current bitbang context */
@@ -61,23 +64,28 @@ static int is_uart_allowed(int uart)
 
 int uart_bitbang_is_enabled(int uart)
 {
-	return (is_uart_allowed(uart) && !!bitbang_enabled);
+	return (is_uart_allowed(uart) && bitbang_enabled);
 }
 
-int uart_bitbang_enable(int uart, int baud_rate, int parity)
+int uart_bitbang_is_wanted(int uart)
 {
-	/* We only want to bit bang 1 UART at a time. */
+	return (is_uart_allowed(uart) && bitbang_wanted);
+}
+
+int uart_bitbang_config(int uart, int baud_rate, int parity)
+{
+	/* Can't configure when enabled */
 	if (bitbang_enabled)
 		return EC_ERROR_BUSY;
 
 	if (!is_uart_allowed(uart)) {
-		CPRINTF("bit bang config not found for UART%d", uart);
+		CPRINTF("bit bang config not found for UART%d\n", uart);
 		return EC_ERROR_INVAL;
 	}
 
 	/* Check desired properties. */
 	if (!IS_BAUD_RATE_SUPPORTED(baud_rate)) {
-		CPRINTF("Err: invalid baud rate (%d)", baud_rate);
+		CPRINTF("Err: invalid baud rate (%d)\n", baud_rate);
 		return EC_ERROR_INVAL;
 	}
 	bitbang_config.baud_rate = baud_rate;
@@ -89,13 +97,30 @@ int uart_bitbang_enable(int uart, int baud_rate, int parity)
 		break;
 
 	default:
-		CPRINTF("Err: invalid parity '%d'. (0:N, 1:O, 2:E)", parity);
+		CPRINTF("Err: invalid parity '%d'. (0:N, 1:O, 2:E)\n", parity);
 		return EC_ERROR_INVAL;
 	};
 	bitbang_config.htp.parity = parity;
 
-	/* Select the GPIOs instead of the UART block. */
-	uartn_tx_disconnect(bitbang_config.uart);
+	return EC_SUCCESS;
+}
+
+int uart_bitbang_enable(int uart)
+{
+	/* We only want to bit bang 1 UART at a time */
+	if (bitbang_enabled)
+		return EC_ERROR_BUSY;
+
+	/* UART TX must be disconnected first */
+	if (uart_tx_is_connected(uart))
+		return EC_ERROR_BUSY;
+
+	if (!is_uart_allowed(uart)) {
+		CPRINTS("bit bang config not found for UART%d", uart);
+		return EC_ERROR_INVAL;
+	}
+
+	/* Select the GPIOs instead of the UART block */
 	REG32(bitbang_config.tx_pinmux_reg) =
 		bitbang_config.tx_pinmux_regval;
 	gpio_set_flags(bitbang_config.tx_gpio, GPIO_OUT_HIGH);
@@ -126,7 +151,7 @@ int uart_bitbang_enable(int uart, int baud_rate, int parity)
 
 	bitbang_enabled = 1;
 	gpio_enable_interrupt(bitbang_config.rx_gpio);
-	ccprintf("successfully enabled\n");
+	CPRINTS("Bit bang enabled");
 	return EC_SUCCESS;
 }
 
@@ -151,9 +176,9 @@ int uart_bitbang_disable(int uart)
 	/* Gate the microsecond timer since we're done with it. */
 	pmu_clock_dis(PERIPH_TIMEUS);
 
-	/* Reconnect the GPIO to the UART block. */
+	/* Don't need to watch RX */
 	gpio_disable_interrupt(bitbang_config.rx_gpio);
-	uartn_tx_connect(uart);
+	CPRINTS("Bit bang disabled");
 	return EC_SUCCESS;
 }
 
@@ -388,14 +413,17 @@ static int command_bitbang(int argc, char **argv)
 	int uart;
 	int baud_rate;
 	int parity;
+	int rv;
 
 	if (argc > 1) {
 		uart = atoi(argv[1]);
 		if (argc == 3) {
-			if (!strcasecmp("disable", argv[2]))
-				return uart_bitbang_disable(uart);
-			else
-				return EC_ERROR_PARAM2;
+			if (!strcasecmp("disable", argv[2])) {
+				bitbang_wanted = 0;
+				ccd_update_state();
+				return EC_SUCCESS;
+			}
+			return EC_ERROR_PARAM2;
 		}
 
 		if (argc == 4) {
@@ -414,7 +442,16 @@ static int command_bitbang(int argc, char **argv)
 			else
 				return EC_ERROR_PARAM3;
 
-			return uart_bitbang_enable(uart, baud_rate, parity);
+			rv = uart_bitbang_config(uart, baud_rate, parity);
+			if (rv)
+				return rv;
+
+			if (servo_is_connected())
+				ccprintf("Bit banging superseded by servo\n");
+
+			bitbang_wanted = 1;
+			ccd_update_state();
+			return EC_SUCCESS;
 		}
 
 		return EC_ERROR_PARAM_COUNT;

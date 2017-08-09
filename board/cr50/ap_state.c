@@ -63,7 +63,7 @@ static void set_ap_off(void)
 	 */
 	gpio_set_flags(GPIO_INT_AP_L, GPIO_INPUT);
 
-	disable_ccd_uart(UART_AP);
+	ccd_update_state();
 
 	/*
 	 * We don't enable deep sleep on ARM devices yet, as its processing
@@ -92,7 +92,7 @@ static void set_ap_on(void)
 	gpio_set_flags(GPIO_INT_AP_L, GPIO_OUT_HIGH);
 	gpio_set_level(GPIO_INT_AP_L, 1);
 
-	enable_ccd_uart(UART_AP);
+	ccd_update_state();
 
 	if (board_deep_sleep_allowed())
 		disable_deep_sleep();

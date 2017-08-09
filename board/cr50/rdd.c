@@ -12,6 +12,7 @@
 #include "rdd.h"
 #include "registers.h"
 #include "system.h"
+#include "uart_bitbang.h"
 #include "uartn.h"
 #include "usb_api.h"
 #include "usb_console.h"
@@ -22,6 +23,7 @@
 USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI);
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
 static enum device_state state = DEVICE_STATE_INIT;
 
@@ -68,7 +70,7 @@ void uartn_tx_connect(int uart)
 		return;
 
 	if (uart == UART_AP) {
-		if (!ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX))
+		if (!ccd_is_cap_enabled(CCD_CAP_GSC_TX_AP_RX))
 			return;
 
 		if (!ap_is_on())
@@ -76,7 +78,7 @@ void uartn_tx_connect(int uart)
 
 		uart_select_tx(UART_AP, GC_PINMUX_UART1_TX_SEL);
 	} else {
-		if (!ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX))
+		if (!ccd_is_cap_enabled(CCD_CAP_GSC_TX_EC_RX))
 			return;
 
 		if (!ec_is_on())
@@ -92,7 +94,219 @@ void uartn_tx_disconnect(int uart)
 	uart_select_tx(uart, 0);
 }
 
-static void rdd_check_pin(void)
+/*
+ * Flags for the current CCD device state.  This is used for determining what
+ * hardware devices we've enabled now, and which we want enabled.
+ */
+enum ccd_state_flag {
+	/* Flags for individual devices/ports */
+
+	/* AP UART is enabled.  RX-only, unless TX is also enabled. */
+	CCD_ENABLE_UART_AP		= (1 << 0),
+
+	/* AP UART transmit is enabled.  Requires AP UART enabled. */
+	CCD_ENABLE_UART_AP_TX		= (1 << 1),
+
+	/* EC UART is enabled.  RX-only, unless TX is also enabled. */
+	CCD_ENABLE_UART_EC		= (1 << 2),
+
+	/* EC UART transmit is enabled.  Requires EC UART enabled. */
+	CCD_ENABLE_UART_EC_TX		= (1 << 3),
+
+	/*
+	 * EC UART bit-banging is enabled.  Requires EC UART enabled, and
+	 * blocks EC UART transmit.
+	 */
+	CCD_ENABLE_UART_EC_BITBANG	= (1 << 4),
+
+	/* I2C port is enabled */
+	CCD_ENABLE_I2C			= (1 << 5),
+
+	/* SPI port is enabled for AP and/or EC flash */
+	CCD_ENABLE_SPI			= (1 << 6),
+};
+
+/**
+ * Return the currently enabled state flags (see enum ccd_state_flag).
+ */
+static uint32_t get_state_flags(void)
+{
+	uint32_t flags_now = 0;
+
+	if (uartn_is_enabled(UART_AP))
+		flags_now |= CCD_ENABLE_UART_AP;
+	if (uart_tx_is_connected(UART_AP))
+		flags_now |= CCD_ENABLE_UART_AP_TX;
+	if (uartn_is_enabled(UART_EC))
+		flags_now |= CCD_ENABLE_UART_EC;
+	if (uart_tx_is_connected(UART_EC))
+		flags_now |= CCD_ENABLE_UART_EC_TX;
+
+#ifdef CONFIG_UART_BITBANG
+	if (uart_bitbang_is_enabled(UART_EC))
+		flags_now |= CCD_ENABLE_UART_EC_BITBANG;
+#endif
+
+	if (usb_i2c_board_is_enabled())
+		flags_now |= CCD_ENABLE_I2C;
+
+	if (ccd_usb_spi.state->enabled_device)
+		flags_now |= CCD_ENABLE_SPI;
+
+	return flags_now;
+}
+
+/**
+ * Print the state flags to the specified output channel
+ *
+ * @param channel	Console channel
+ * @param flags		Flags to print
+ */
+static void print_state_flags(enum console_channel channel, uint32_t flags)
+{
+	if (flags & CCD_ENABLE_UART_AP)
+		cprintf(channel, " UARTAP");
+	if (flags & CCD_ENABLE_UART_AP_TX)
+		cprintf(channel, "+TX");
+	if (flags & CCD_ENABLE_UART_EC)
+		cprintf(channel, " UARTEC");
+	if (flags & CCD_ENABLE_UART_EC_TX)
+		cprintf(channel, "+TX");
+	if (flags & CCD_ENABLE_UART_EC_BITBANG)
+		cprintf(channel, "+BB");
+	if (flags & CCD_ENABLE_I2C)
+		cprintf(channel, " I2C");
+	if (flags & CCD_ENABLE_SPI)
+		cprintf(channel, " SPI");
+}
+
+static void ccd_state_change_hook(void)
+{
+	uint32_t flags_now;
+	uint32_t flags_want = 0;
+	uint32_t delta;
+
+	/* Check what's enabled now */
+	flags_now = get_state_flags();
+
+	/* Start out by figuring what flags we might want enabled */
+
+	/* Enable EC/AP UART RX if that device is on */
+	if (ap_is_on())
+		flags_want |= CCD_ENABLE_UART_AP;
+	if (ec_is_rx_allowed())
+		flags_want |= CCD_ENABLE_UART_EC;
+
+#ifdef CONFIG_UART_BITBANG
+	/* EC must be all the way on for bit-banging the EC UART */
+	if (ec_is_on() && uart_bitbang_is_wanted(UART_EC))
+		flags_want |= CCD_ENABLE_UART_EC_BITBANG;
+#endif
+
+	/* External CCD will try to enable all the ports */
+	if (ccd_ext_is_enabled())
+		flags_want |= (CCD_ENABLE_UART_AP_TX | CCD_ENABLE_UART_EC_TX |
+			       CCD_ENABLE_I2C | CCD_ENABLE_SPI);
+
+	/* Then disable flags we can't have */
+
+	/* Servo takes over UART TX, I2C, and SPI */
+	if (servo_is_connected())
+		flags_want &= ~(CCD_ENABLE_UART_AP_TX | CCD_ENABLE_UART_EC_TX |
+				CCD_ENABLE_UART_EC_BITBANG | CCD_ENABLE_I2C |
+				CCD_ENABLE_SPI);
+
+	/* Disable based on capabilities */
+	if (!ccd_is_cap_enabled(CCD_CAP_GSC_RX_AP_TX))
+		flags_want &= ~CCD_ENABLE_UART_AP;
+	if (!ccd_is_cap_enabled(CCD_CAP_GSC_TX_AP_RX))
+		flags_want &= ~CCD_ENABLE_UART_AP_TX;
+	if (!ccd_is_cap_enabled(CCD_CAP_GSC_RX_EC_TX))
+		flags_want &= ~CCD_ENABLE_UART_EC;
+	if (!ccd_is_cap_enabled(CCD_CAP_GSC_TX_EC_RX))
+		flags_want &= ~(CCD_ENABLE_UART_EC_TX |
+				CCD_ENABLE_UART_EC_BITBANG);
+	if (!ccd_is_cap_enabled(CCD_CAP_I2C))
+		flags_want &= ~CCD_ENABLE_I2C;
+
+	/*
+	 * EC and AP flash block on a per-packet basis, but if we don't have
+	 * access to either one, turn off SPI.
+	 */
+	if (!ccd_is_cap_enabled(CCD_CAP_AP_FLASH) &&
+	    !ccd_is_cap_enabled(CCD_CAP_EC_FLASH))
+		flags_want &= ~CCD_ENABLE_SPI;
+
+	/* EC UART TX blocked by bit-banging */
+	if (flags_want & CCD_ENABLE_UART_EC_BITBANG)
+		flags_want &= ~CCD_ENABLE_UART_EC_TX;
+
+	/* UARTs are either RX-only or RX+TX, so no RX implies no TX */
+	if (!(flags_want & CCD_ENABLE_UART_AP))
+		flags_want &= ~CCD_ENABLE_UART_AP_TX;
+	if (!(flags_want & CCD_ENABLE_UART_EC))
+		flags_want &= ~CCD_ENABLE_UART_EC_TX;
+
+	/* If no change, we're done */
+	if (flags_now == flags_want)
+		return;
+
+	CPRINTF("[%T CCD state:");
+	print_state_flags(CC_USB, flags_want);
+	CPRINTF("]\n");
+
+	/* Handle turning things off */
+	delta = flags_now & ~flags_want;
+	if (delta & CCD_ENABLE_UART_AP)
+		uartn_disable(UART_AP);
+	if (delta & CCD_ENABLE_UART_AP_TX)
+		uartn_tx_disconnect(UART_AP);
+	if (delta & CCD_ENABLE_UART_EC)
+		uartn_disable(UART_EC);
+	if (delta & CCD_ENABLE_UART_EC_TX)
+		uartn_tx_disconnect(UART_EC);
+#ifdef CONFIG_UART_BITBANG
+	if (delta & CCD_ENABLE_UART_EC_BITBANG)
+		uart_bitbang_disable(UART_EC);
+#endif
+	if (delta & CCD_ENABLE_I2C)
+		usb_i2c_board_disable();
+	if (delta & CCD_ENABLE_SPI)
+		usb_spi_enable(&ccd_usb_spi, 0);
+
+	/* Handle turning things on */
+	delta = flags_want & ~flags_now;
+	if (delta & CCD_ENABLE_UART_AP)
+		uartn_enable(UART_AP);
+	if (delta & CCD_ENABLE_UART_AP_TX)
+		uartn_tx_connect(UART_AP);
+	if (delta & CCD_ENABLE_UART_EC)
+		uartn_enable(UART_EC);
+	if (delta & CCD_ENABLE_UART_EC_TX)
+		uartn_tx_connect(UART_EC);
+#ifdef CONFIG_UART_BITBANG
+	if (delta & CCD_ENABLE_UART_EC_BITBANG)
+		uart_bitbang_enable(UART_EC);
+#endif
+	if (delta & CCD_ENABLE_I2C)
+		usb_i2c_board_enable();
+	if (delta & CCD_ENABLE_SPI)
+		usb_spi_enable(&ccd_usb_spi, 1);
+}
+DECLARE_DEFERRED(ccd_state_change_hook);
+
+void ccd_update_state(void)
+{
+	/*
+	 * Use a deferred call to serialize changes from CCD config, RDD
+	 * attach/detach, EC/AP startup or shutdown, etc.
+	 */
+	hook_call_deferred(&ccd_state_change_hook_data, 0);
+}
+
+/*****************************************************************************/
+
+static void ccd_ext_detect(void)
 {
 	/* The CCD mode pin is active low. */
 	int enable = !gpio_get_level(GPIO_CCD_MODE_L);
@@ -110,6 +324,8 @@ static void rdd_check_pin(void)
 		 * that also has CCD_MODE_PARTIAL, and the only way to go
 		 * cleanly between ENABLED and PARTIAL is to disable things and
 		 * then re-enable only what's needed?
+		 *
+		 * TODO(rspangler): Figure out whether we can delete this.
 		 */
 		if (state != DEVICE_STATE_DISCONNECTED)
 			usb_release();
@@ -117,80 +333,24 @@ static void rdd_check_pin(void)
 		CPRINTS("CCD EXT enable");
 		state = DEVICE_STATE_CONNECTED;
 
-		usb_console_enable(1, 0);
-		usb_spi_enable(&ccd_usb_spi, 1);
 		usb_init();
-
-		/* Attempt to connect UART TX */
-		uartn_tx_connect(UART_AP);
-		uartn_tx_connect(UART_EC);
-
-		/* Turn on 3.3V rail used for INAs and initialize I2CM module */
-		usb_i2c_board_enable();
+		usb_console_enable(1, 0);
 	} else {
 		CPRINTS("CCD EXT disable");
 		state = DEVICE_STATE_DISCONNECTED;
 
 		usb_release();
 		usb_console_enable(0, 0);
-		usb_spi_enable(&ccd_usb_spi, 0);
-
-		/* Disconnect from AP and EC UART TX peripheral from gpios */
-		uartn_tx_disconnect(UART_EC);
-		uartn_tx_disconnect(UART_AP);
-
-		/* Turn off 3.3V rail to INAs and disconnect I2CM module */
-		usb_i2c_board_disable();
 	}
+
+	ccd_update_state();
 }
-DECLARE_HOOK(HOOK_SECOND, rdd_check_pin, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, ccd_ext_detect, HOOK_PRIO_DEFAULT);
 
-static void rdd_ccd_change_hook(void)
+/*****************************************************************************/
+
+static int command_ccd_state(int argc, char **argv)
 {
-	if (uart_tx_is_connected(UART_AP) &&
-	    !ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX)) {
-		/* Transmitting to AP, but no longer allowed */
-		uartn_tx_disconnect(UART_AP);
-	} else if (!uart_tx_is_connected(UART_AP) &&
-		   ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX)) {
-		/* Not transmitting to AP, but allowed now */
-		uartn_tx_connect(UART_AP);
-	}
-
-	if (uart_tx_is_connected(UART_EC) &&
-	    !ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX)) {
-		/* Transmitting to EC, but no longer allowed */
-		uartn_tx_disconnect(UART_EC);
-	} else if (!uart_tx_is_connected(UART_EC) &&
-		   ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX)) {
-		/* Not transmitting to EC, but allowed now */
-		uartn_tx_connect(UART_EC);
-	}
-}
-DECLARE_HOOK(HOOK_CCD_CHANGE, rdd_ccd_change_hook, HOOK_PRIO_DEFAULT);
-
-static int command_ccd(int argc, char **argv)
-{
-	int val;
-
-	if (argc > 1) {
-		if (!parse_bool(argv[argc - 1], &val))
-			return argc == 2 ? EC_ERROR_PARAM1 : EC_ERROR_PARAM2;
-
-		if (!strcasecmp("uart", argv[1])) {
-			if (val)
-				uartn_tx_connect(UART_EC);
-			else
-				uartn_tx_disconnect(UART_EC);
-		} else if (!strcasecmp("i2c", argv[1])) {
-			if (val)
-				usb_i2c_board_enable();
-			else
-				usb_i2c_board_disable();
-		} else
-			return EC_ERROR_PARAM1;
-	}
-
 	print_ap_state();
 	print_ec_state();
 	print_rdd_state();
@@ -198,20 +358,16 @@ static int command_ccd(int argc, char **argv)
 
 	ccprintf("CCD EXT: %s\n",
 		 ccd_ext_is_enabled() ? "enabled" : "disabled");
-	ccprintf("AP UART: %s\n",
-		 uartn_is_enabled(UART_AP) ?
-		 uart_tx_is_connected(UART_AP) ? "RX+TX" : "RX" : "disabled");
-	ccprintf("EC UART: %s\n",
-		 uartn_is_enabled(UART_EC) ?
-		 uart_tx_is_connected(UART_EC) ? "RX+TX" : "RX" : "disabled");
-	ccprintf("I2C:     %s\n",
-		 usb_i2c_board_is_enabled() ? "enabled" : "disabled");
+
+	ccprintf("State flags:");
+	print_state_flags(CC_COMMAND, get_state_flags());
+	ccprintf("\n");
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
-			"[uart|i2c] [<BOOLEAN>]",
-			"Get/set the case closed debug state");
+DECLARE_CONSOLE_COMMAND(ccdstate, command_ccd_state,
+			"",
+			"Print the case closed debug device state");
 
 static int command_sys_rst(int argc, char **argv)
 {

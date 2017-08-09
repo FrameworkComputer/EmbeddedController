@@ -325,7 +325,7 @@ int board_fwmp_allows_unlock(void)
 
 int console_is_restricted(void)
 {
-	return !ccd_is_cap_enabled(CCD_CAP_CR50_RESTRICTED_CONSOLE);
+	return !ccd_is_cap_enabled(CCD_CAP_GSC_RESTRICTED_CONSOLE);
 }
 
 /****************************************************************************/
