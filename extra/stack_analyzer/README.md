@@ -12,6 +12,7 @@ Make sure the firmware of your target board has been built.
 
 In `src/platform/ec`, run
 ```
-make BOARD=${BOARD} SECTION=${SECTION} analyzestack
+make BOARD=${BOARD} SECTION=${SECTION} ANNOTATION=${ANNOTATION} analyzestack
 ```
-The `${SECTION}` can be `RO` or `RW`.
+The `${SECTION}` can be `RO` or `RW`. The `${ANNOTATION}` is a optional
+annotation file, see the example_annotation.yaml.

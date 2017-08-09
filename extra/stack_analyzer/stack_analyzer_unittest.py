@@ -128,15 +128,21 @@ class StackAnalyzerTest(unittest.TestCase):
     symbols = [sa.Symbol(0x1000, 'F', 0x15C, 'hook_task'),
                sa.Symbol(0x2000, 'F', 0x51C, 'console_task'),
                sa.Symbol(0x3200, 'O', 0x124, '__just_data'),
-               sa.Symbol(0x4000, 'F', 0x11C, 'touchpad_calc')]
+               sa.Symbol(0x4000, 'F', 0x11C, 'touchpad_calc'),
+               sa.Symbol(0x5000, 'F', 0x12C, 'touchpad_calc.constprop.42'),
+               sa.Symbol(0x12000, 'F', 0x13C, 'trackpad_range'),
+               sa.Symbol(0x13000, 'F', 0x200, 'inlined_mul'),
+               sa.Symbol(0x13100, 'F', 0x200, 'inlined_mul'),
+               sa.Symbol(0x13100, 'F', 0x200, 'inlined_mul_alias')]
     tasklist = [sa.Task('HOOKS', 'hook_task', 2048, 0x1000),
                 sa.Task('CONSOLE', 'console_task', 460, 0x2000)]
     options = mock.MagicMock(elf_path='./ec.RW.elf',
-                             export_taskinfo='none',
+                             export_taskinfo='fake',
                              section='RW',
                              objdump='objdump',
-                             addr2line='addr2line')
-    self.analyzer = sa.StackAnalyzer(options, symbols, tasklist)
+                             addr2line='addr2line',
+                             annotation=None)
+    self.analyzer = sa.StackAnalyzer(options, symbols, tasklist, {})
 
   def testParseSymbolText(self):
     symbol_text = (
@@ -190,6 +196,112 @@ class StackAnalyzerTest(unittest.TestCase):
     self.assertEqual(tasklist, expect_ro_tasklist)
     tasklist = sa.LoadTasklist('RW', export_taskinfo, self.analyzer.symbols)
     self.assertEqual(tasklist, expect_rw_tasklist)
+
+  def testResolveAnnotation(self):
+    funcs = {
+        0x1000: sa.Function(0x1000, 'hook_task', 0, []),
+        0x2000: sa.Function(0x2000, 'console_task', 0, []),
+        0x4000: sa.Function(0x4000, 'touchpad_calc', 0, []),
+        0x5000: sa.Function(0x5000, 'touchpad_calc.constprop.42', 0, []),
+        0x13000: sa.Function(0x13000, 'inlined_mul', 0, []),
+        0x13100: sa.Function(0x13100, 'inlined_mul', 0, []),
+    }
+    # Set address_to_line_cache to fake the results of addr2line.
+    self.analyzer.address_to_line_cache = {
+        0x1000: 'a.c:10',
+        0x2000: 'b.c:20',
+        0x4000: './a.c:30',
+        0x5000: 'b.c:40',
+        0x12000: 't.c:10',
+        0x13000: 'x.c:12',
+        0x13100: 'x.c:12',
+    }
+    self.analyzer.annotation = {
+        'add': {
+            'hook_task': ['touchpad_calc[a.c]', 'hook_task'],
+            'console_task': ['touchpad_calc[b.c]', 'inlined_mul_alias'],
+            'hook_task[q.c]': ['hook_task'],
+            'inlined_mul[x.c]': ['inlined_mul'],
+        },
+        'remove': {
+            'touchpad?calc',
+            'touchpad_calc',
+            'touchpad_calc[a.c]',
+            'task_unk[a.c]',
+            'touchpad_calc[../a.c]',
+            'trackpad_range',
+            'inlined_mul',
+        },
+    }
+    signature_set = set(self.analyzer.annotation['remove'])
+    for src_sig, dst_sigs in self.analyzer.annotation['add'].items():
+      signature_set.add(src_sig)
+      signature_set.update(dst_sigs)
+
+    (signature_map, failed_sigs) = self.analyzer.MappingAnnotation(
+        funcs, signature_set)
+    (add_set, remove_set, failed_sigs) = self.analyzer.ResolveAnnotation(funcs)
+
+    expect_signature_map = {
+        'hook_task': {funcs[0x1000]},
+        'touchpad_calc[a.c]': {funcs[0x4000]},
+        'touchpad_calc[b.c]': {funcs[0x5000]},
+        'console_task': {funcs[0x2000]},
+        'inlined_mul_alias': {funcs[0x13100]},
+        'inlined_mul[x.c]': {funcs[0x13000], funcs[0x13100]},
+        'inlined_mul': {funcs[0x13000], funcs[0x13100]},
+    }
+    self.assertEqual(len(signature_map), len(expect_signature_map))
+    for sig, funclist in signature_map.items():
+      self.assertEqual(set(funclist), expect_signature_map[sig])
+
+    self.assertEqual(add_set, {
+        (funcs[0x1000], funcs[0x4000]),
+        (funcs[0x1000], funcs[0x1000]),
+        (funcs[0x2000], funcs[0x5000]),
+        (funcs[0x2000], funcs[0x13100]),
+        (funcs[0x13000], funcs[0x13000]),
+        (funcs[0x13000], funcs[0x13100]),
+        (funcs[0x13100], funcs[0x13000]),
+        (funcs[0x13100], funcs[0x13100]),
+    })
+    self.assertEqual(remove_set, {
+        funcs[0x4000],
+        funcs[0x13000],
+        funcs[0x13100]
+    })
+    self.assertEqual(failed_sigs, {
+        ('touchpad?calc', sa.StackAnalyzer.ANNOTATION_ERROR_INVALID),
+        ('touchpad_calc', sa.StackAnalyzer.ANNOTATION_ERROR_AMBIGUOUS),
+        ('hook_task[q.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
+        ('task_unk[a.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
+        ('touchpad_calc[../a.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
+        ('trackpad_range', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
+    })
+
+  def testPreprocessCallGraph(self):
+    funcs = {
+        0x1000: sa.Function(0x1000, 'hook_task', 0, []),
+        0x2000: sa.Function(0x2000, 'console_task', 0, []),
+        0x4000: sa.Function(0x4000, 'touchpad_calc', 0, []),
+    }
+    funcs[0x1000].callsites = [
+        sa.Callsite(0x1002, 0x1000, False, funcs[0x1000])]
+    funcs[0x2000].callsites = [
+        sa.Callsite(0x2002, 0x1000, False, funcs[0x1000])]
+    add_set = {(funcs[0x2000], funcs[0x4000]), (funcs[0x4000], funcs[0x1000])}
+    remove_set = {funcs[0x1000]}
+
+    self.analyzer.PreprocessCallGraph(funcs, add_set, remove_set)
+
+    expect_funcs = {
+        0x1000: sa.Function(0x1000, 'hook_task', 0, []),
+        0x2000: sa.Function(0x2000, 'console_task', 0, []),
+        0x4000: sa.Function(0x4000, 'touchpad_calc', 0, []),
+    }
+    expect_funcs[0x2000].callsites = [
+        sa.Callsite(None, 0x4000, False, expect_funcs[0x4000])]
+    self.assertEqual(funcs, expect_funcs)
 
   def testAnalyzeDisassembly(self):
     disasm_text = (
@@ -280,22 +392,23 @@ class StackAnalyzerTest(unittest.TestCase):
   @mock.patch('subprocess.check_output')
   def testAddressToLine(self, checkoutput_mock):
     checkoutput_mock.return_value = 'test.c [1]'
-    self.assertEqual(self.analyzer.AddressToLine(0x1000), 'test.c [1]')
+    self.assertEqual(self.analyzer.AddressToLine(0x1234), 'test.c [1]')
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-e', './ec.RW.elf', '1000'])
+        ['addr2line', '-e', './ec.RW.elf', '1234'])
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,
                                  'addr2line failed to resolve lines.'):
       checkoutput_mock.side_effect = subprocess.CalledProcessError(1, '')
-      self.analyzer.AddressToLine(0x1000)
+      self.analyzer.AddressToLine(0x5678)
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,
                                  'Failed to run addr2line.'):
       checkoutput_mock.side_effect = OSError()
-      self.analyzer.AddressToLine(0x1000)
+      self.analyzer.AddressToLine(0x9012)
 
   @mock.patch('subprocess.check_output')
-  def testAnalyze(self, checkoutput_mock):
+  @mock.patch('stack_analyzer.StackAnalyzer.AddressToLine')
+  def testAnalyze(self, addrtoline_mock, checkoutput_mock):
     disasm_text = (
         '\n'
         'Disassembly of section .text:\n'
@@ -311,29 +424,33 @@ class StackAnalyzerTest(unittest.TestCase):
         '   2006:	f00e bd3b\tb.w	53968 <get_program_memory_addr>\n'
     )
 
+    addrtoline_mock.return_value = '??:0'
+    self.analyzer.annotation = {'remove': ['fake_func']}
+
     with mock.patch('__builtin__.print') as print_mock:
-      checkoutput_mock.side_effect = [disasm_text, '?', '?', '?']
+      checkoutput_mock.return_value = disasm_text
       self.analyzer.Analyze()
       print_mock.assert_has_calls([
           mock.call(
               'Task: HOOKS, Max size: 224 (0 + 224), Allocated size: 2048'),
           mock.call('Call Trace:'),
-          mock.call('\thook_task (0) 1000 [?]'),
+          mock.call('\thook_task (0) 1000 [??:0]'),
           mock.call(
               'Task: CONSOLE, Max size: 232 (8 + 224), Allocated size: 460'),
           mock.call('Call Trace:'),
-          mock.call('\tconsole_task (8) 2000 [?]'),
+          mock.call('\tconsole_task (8) 2000 [??:0]'),
+          mock.call('Failed to resolve some annotation signatures:'),
+          mock.call('\tfake_func: function is not found'),
       ])
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,
                                  'Failed to run objdump.'):
-      checkoutput_mock.side_effect = [OSError(), '?', '?', '?']
+      checkoutput_mock.side_effect = OSError()
       self.analyzer.Analyze()
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,
                                  'objdump failed to disassemble.'):
-      checkoutput_mock.side_effect = [subprocess.CalledProcessError(1, ''), '?',
-                                      '?', '?']
+      checkoutput_mock.side_effect = subprocess.CalledProcessError(1, '')
       self.analyzer.Analyze()
 
   @mock.patch('subprocess.check_output')
@@ -342,11 +459,35 @@ class StackAnalyzerTest(unittest.TestCase):
     symbol_text = ('1000 g     F .text  0000015c .hidden hook_task\n'
                    '2000 g     F .text  0000051c .hidden console_task\n')
 
-    parseargs_mock.return_value = mock.MagicMock(elf_path='./ec.RW.elf',
-                                                 export_taskinfo='none',
-                                                 section='RW',
-                                                 objdump='objdump',
-                                                 addr2line='addr2line')
+    args = mock.MagicMock(elf_path='./ec.RW.elf',
+                          export_taskinfo='fake',
+                          section='RW',
+                          objdump='objdump',
+                          addr2line='addr2line',
+                          annotation='fake')
+    parseargs_mock.return_value = args
+
+    with mock.patch('__builtin__.print') as print_mock:
+      sa.main()
+      print_mock.assert_called_once_with(
+          'Error: Failed to open annotation file.')
+
+    with mock.patch('__builtin__.print') as print_mock:
+      with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+        open_mock.return_value.read.side_effect = ['{', '']
+        sa.main()
+        open_mock.assert_called_once_with('fake', 'r')
+        print_mock.assert_called_once_with(
+            'Error: Failed to parse annotation file.')
+
+    with mock.patch('__builtin__.print') as print_mock:
+      with mock.patch('__builtin__.open',
+                      mock.mock_open(read_data='')) as open_mock:
+        sa.main()
+        print_mock.assert_called_once_with(
+            'Error: Invalid annotation file.')
+
+    args.annotation = None
 
     with mock.patch('__builtin__.print') as print_mock:
       checkoutput_mock.return_value = symbol_text

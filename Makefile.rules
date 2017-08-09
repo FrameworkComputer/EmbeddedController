@@ -554,6 +554,7 @@ analyzestack: $(out)/util/export_taskinfo.so
 	fi; \
 	extra/stack_analyzer/stack_analyzer.py --objdump "$(OBJDUMP)" \
 	        --addr2line "$(ADDR2LINE)" --section "$$SECTION" \
+		$(if $(ANNOTATION),--annotation $(ANNOTATION),) \
 		--export_taskinfo "$$EXPORT_TASKINFO" "$$ELF"
 
 .SECONDARY:

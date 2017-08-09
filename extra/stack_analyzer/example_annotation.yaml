@@ -1,0 +1,18 @@
+# Add some missing calls.
+add:
+  # console_task also calls command_display_accel_info and command_accel_init.
+  console_task:
+  - command_display_accel_info
+  - command_accel_init
+
+  # Function name can be followed by [source code path] to indicate where is it
+  # declared (there may be several functions with the same name).
+  motion_lid_calc[common/motion_lid.c]:
+  - get_range[driver/accel_kionix.c]
+
+# Remove some call paths.
+remove:
+# Remove all callsites pointing to panic_assert_fail.
+- panic_assert_fail
+- panic
+- software_panic
