@@ -94,6 +94,7 @@ static const struct power_seq_op s5s3_power_seq[] = {
 #elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
 static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PP900_S3_EN, 1, 2 },
+	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP1800_PMU_EN_L, 0, 2 },
 	{ GPIO_LPDDR_PWR_EN, 1, 2 },
 	{ GPIO_PP1800_USB_EN_L, 0, 2 },
