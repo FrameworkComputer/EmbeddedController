@@ -13,9 +13,8 @@
 #include "registers.h"
 #include "stm32-dma.h"
 #include "usb_descriptor.h"
-#include "usb_dwc_hw.h"
 #include "usb_dwc_console.h"
-
+#include "usb_hw.h"
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.

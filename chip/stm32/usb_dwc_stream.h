@@ -14,7 +14,7 @@
 #include "producer.h"
 #include "queue.h"
 #include "usb_descriptor.h"
-#include "usb_dwc_hw.h"
+#include "usb_hw.h"
 
 /*
  * Compile time Per-USB stream configuration stored in flash.  Instances of this
@@ -173,9 +173,9 @@ extern struct producer_ops const usb_stream_producer_ops;
 	{								\
 		usb_epN_rx(ENDPOINT);					\
 	}								\
-	static void CONCAT2(NAME, _ep_reset)(void)			\
+	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)	\
 	{								\
-		usb_stream_reset(&NAME);				\
+		usb_stream_event(&NAME, evt);				\
 	}								\
 	struct dwc_usb_ep CONCAT2(NAME, _ep_ctl) = {			\
 		.max_packet = USB_MAX_PACKET_SIZE,			\
@@ -196,7 +196,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 	USB_DECLARE_EP(ENDPOINT,					\
 		       CONCAT2(NAME, _ep_tx),				\
 		       CONCAT2(NAME, _ep_rx),				\
-		       CONCAT2(NAME, _ep_reset));
+		       CONCAT2(NAME, _ep_event));
 
 /* This is a short version for declaring Google serial endpoints */
 #define USB_STREAM_CONFIG(NAME,						\
@@ -231,6 +231,7 @@ int tx_stream_handler(struct usb_stream_config const *config);
  */
 void usb_stream_tx(struct usb_stream_config const *config);
 void usb_stream_rx(struct usb_stream_config const *config);
-void usb_stream_reset(struct usb_stream_config const *config);
+void usb_stream_event(struct usb_stream_config const *config,
+		enum usb_ep_event evt);
 
 #endif /* __CROS_EC_USB_STREAM_H */

@@ -188,11 +188,14 @@ struct usb_spi_config {
 	};								\
 	static void CONCAT2(NAME, _ep_tx_)   (void) { usb_spi_tx   (&NAME); } \
 	static void CONCAT2(NAME, _ep_rx_)   (void) { usb_spi_rx   (&NAME); } \
-	static void CONCAT2(NAME, _ep_reset_)(void) { usb_spi_reset(&NAME); } \
+	static void CONCAT2(NAME, _ep_event_)(enum usb_ep_event evt)	\
+	{								\
+		usb_spi_event(&NAME, evt);				\
+	}								\
 	USB_DECLARE_EP(ENDPOINT,					\
 		       CONCAT2(NAME, _ep_tx_),				\
 		       CONCAT2(NAME, _ep_rx_),				\
-		       CONCAT2(NAME, _ep_reset_));			\
+		       CONCAT2(NAME, _ep_event_));			\
 	static int CONCAT2(NAME, _interface_)(usb_uint *rx_buf,		\
 					      usb_uint *tx_buf)		\
 	{ return usb_spi_interface(&NAME, rx_buf, tx_buf); }		\
@@ -222,7 +225,7 @@ void usb_spi_enable(struct usb_spi_config const *config, int enabled);
  */
 void usb_spi_tx(struct usb_spi_config const *config);
 void usb_spi_rx(struct usb_spi_config const *config);
-void usb_spi_reset(struct usb_spi_config const *config);
+void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt);
 int  usb_spi_interface(struct usb_spi_config const *config,
 		       usb_uint *rx_buf,
 		       usb_uint *tx_buf);

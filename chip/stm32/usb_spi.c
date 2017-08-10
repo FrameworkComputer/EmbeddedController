@@ -124,9 +124,14 @@ void usb_spi_rx(struct usb_spi_config const *config)
 	hook_call_deferred(config->deferred, 0);
 }
 
-void usb_spi_reset(struct usb_spi_config const *config)
+void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt)
 {
-	int endpoint = config->endpoint;
+	int endpoint;
+
+	if (evt != USB_EVENT_RESET)
+		return;
+
+	endpoint = config->endpoint;
 
 	btable_ep[endpoint].tx_addr  = usb_sram_addr(config->tx_ram);
 	btable_ep[endpoint].tx_count = 0;

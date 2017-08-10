@@ -292,8 +292,11 @@ error:
 	STM32_TOGGLE_EP(0, EP_TX_MASK, EP_TX_VALID, 0);
 }
 
-static void ep0_reset(void)
+static void ep0_event(enum usb_ep_event evt)
 {
+	if (evt != USB_EVENT_RESET)
+		return;
+
 	STM32_USB_EP(0) = (1 << 9) /* control EP */ |
 			  (2 << 4) /* TX NAK */ |
 			  (3 << 12) /* RX VALID */;
@@ -303,14 +306,14 @@ static void ep0_reset(void)
 	btable_ep[0].rx_count = 0x8000 | ((USB_MAX_PACKET_SIZE/32-1) << 10);
 	btable_ep[0].tx_count = 0;
 }
-USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_reset);
+USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_event);
 
 static void usb_reset(void)
 {
 	int ep;
 
 	for (ep = 0; ep < USB_EP_COUNT; ep++)
-		usb_ep_reset[ep]();
+		usb_ep_event[ep](USB_EVENT_RESET);
 
 	/*
 	 * set the default address : 0
@@ -455,6 +458,8 @@ static void usb_interrupt_handle_wake(uint16_t status)
 
 	/* Either: state is ready, or we timed out. */
 	if (good || state == 3 || esof_count <= -USB_RESUME_TIMEOUT_MS) {
+		int ep;
+
 		STM32_USB_CNTR &= ~(STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM);
 		usb_wake_done = 1;
 		if (!good) {
@@ -465,6 +470,9 @@ static void usb_interrupt_handle_wake(uint16_t status)
 		}
 
 		CPRINTF("RSMOK%d %d\n",	-esof_count, state);
+
+		for (ep = 1; ep < USB_EP_COUNT; ep++)
+			usb_ep_event[ep](USB_EVENT_DEVICE_RESUME);
 	}
 }
 #endif /* CONFIG_USB_SUSPEND && CONFIG_USB_REMOTE_WAKEUP */

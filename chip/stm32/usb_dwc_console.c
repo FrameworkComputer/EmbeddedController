@@ -13,8 +13,8 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "usb_dwc_hw.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
@@ -216,8 +216,11 @@ static void con_ep_tx(void)
 	GR_USB_DIEPINT(USB_EP_CONSOLE) = 0xffffffff;
 }
 
-static void ep_reset(void)
+static void ep_event(enum usb_ep_event evt)
 {
+	if (evt != USB_EVENT_RESET)
+		return;
+
 	epN_reset(USB_EP_CONSOLE);
 
 	is_reset = 1;
@@ -230,7 +233,7 @@ static void ep_reset(void)
 }
 
 
-USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_reset);
+USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_event);
 
 static int usb_wait_console(void)
 {

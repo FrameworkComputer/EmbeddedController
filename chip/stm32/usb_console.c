@@ -91,8 +91,11 @@ static void con_ep_rx(void)
 	console_has_input();
 }
 
-static void ep_reset(void)
+static void ep_event(enum usb_ep_event evt)
 {
+	if (evt != USB_EVENT_RESET)
+		return;
+
 	btable_ep[USB_EP_CONSOLE].tx_addr  = usb_sram_addr(ep_buf_tx);
 	btable_ep[USB_EP_CONSOLE].tx_count = 0;
 
@@ -109,7 +112,7 @@ static void ep_reset(void)
 	is_reset = 1;
 }
 
-USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_reset);
+USB_DECLARE_EP(USB_EP_CONSOLE, con_ep_tx, con_ep_rx, ep_event);
 
 static int __tx_char(void *context, int c)
 {

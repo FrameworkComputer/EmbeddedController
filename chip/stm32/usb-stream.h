@@ -199,14 +199,14 @@ extern struct producer_ops const usb_stream_producer_ops;
 	{								\
 		usb_stream_rx(&NAME);					\
 	}								\
-	static void CONCAT2(NAME, _ep_reset)(void)			\
+	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)	\
 	{								\
-		usb_stream_reset(&NAME);				\
+		usb_stream_event(&NAME, evt);				\
 	}								\
 	USB_DECLARE_EP(ENDPOINT,					\
 		       CONCAT2(NAME, _ep_tx),				\
 		       CONCAT2(NAME, _ep_rx),				\
-		       CONCAT2(NAME, _ep_reset));			\
+		       CONCAT2(NAME, _ep_event));			\
 	static void CONCAT2(NAME, _deferred_)(void)			\
 	{ usb_stream_deferred(&NAME); }
 
@@ -287,7 +287,8 @@ int usb_usart_interface(struct usb_stream_config const *config,
  */
 void usb_stream_tx(struct usb_stream_config const *config);
 void usb_stream_rx(struct usb_stream_config const *config);
-void usb_stream_reset(struct usb_stream_config const *config);
+void usb_stream_event(struct usb_stream_config const *config,
+		      enum usb_ep_event evt);
 
 #endif /* defined(CHIP_FAMILY_STM32F4) */
 #endif /* __CROS_EC_USB_STREAM_H */

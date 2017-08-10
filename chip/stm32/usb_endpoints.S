@@ -66,24 +66,24 @@ endpoint 13 rx
 endpoint 14 rx
 endpoint 15 rx
 
-.global usb_ep_reset
-usb_ep_reset:
-endpoint  0 rst
-endpoint  1 rst
-endpoint  2 rst
-endpoint  3 rst
-endpoint  4 rst
-endpoint  5 rst
-endpoint  6 rst
-endpoint  7 rst
-endpoint  8 rst
-endpoint  9 rst
-endpoint 10 rst
-endpoint 11 rst
-endpoint 12 rst
-endpoint 13 rst
-endpoint 14 rst
-endpoint 15 rst
+.global usb_ep_event
+usb_ep_event:
+endpoint  0 evt
+endpoint  1 evt
+endpoint  2 evt
+endpoint  3 evt
+endpoint  4 evt
+endpoint  5 evt
+endpoint  6 evt
+endpoint  7 evt
+endpoint  8 evt
+endpoint  9 evt
+endpoint 10 evt
+endpoint 11 evt
+endpoint 12 evt
+endpoint 13 evt
+endpoint 14 evt
+endpoint 15 evt
 
 .global usb_iface_request
 usb_iface_request:

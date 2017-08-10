@@ -127,9 +127,15 @@ static usb_uint usb_ep_rx_size(size_t bytes)
 		return 0x8000 | ((bytes - 32) << 5);
 }
 
-void usb_stream_reset(struct usb_stream_config const *config)
+void usb_stream_event(struct usb_stream_config const *config,
+		      enum usb_ep_event evt)
 {
-	int i = config->endpoint;
+	int i;
+
+	if (evt != USB_EVENT_RESET)
+		return;
+
+	i = config->endpoint;
 
 	btable_ep[i].tx_addr  = usb_sram_addr(config->tx_ram);
 	btable_ep[i].tx_count = 0;

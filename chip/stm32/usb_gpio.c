@@ -60,9 +60,14 @@ void usb_gpio_rx(struct usb_gpio_config const *config)
 	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_VALID, 0);
 }
 
-void usb_gpio_reset(struct usb_gpio_config const *config)
+void usb_gpio_event(struct usb_gpio_config const *config, enum usb_ep_event evt)
 {
-	int i = config->endpoint;
+	int i;
+
+	if (evt != USB_EVENT_RESET)
+		return;
+
+	i = config->endpoint;
 
 	btable_ep[i].tx_addr  = usb_sram_addr(config->tx_ram);
 	btable_ep[i].tx_count = USB_GPIO_TX_PACKET_SIZE;

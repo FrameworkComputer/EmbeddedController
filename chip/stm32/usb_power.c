@@ -52,8 +52,12 @@ void usb_power_deferred_tx(struct usb_power_config const *config)
 }
 
 /* Reset stream */
-void usb_power_reset(struct usb_power_config const *config)
+void usb_power_event(struct usb_power_config const *config,
+		enum usb_ep_event evt)
 {
+	if (evt != USB_EVENT_RESET)
+		return;
+
 	config->ep->out_databuffer = config->state->rx_buf;
 	config->ep->out_databuffer_max = sizeof(config->state->rx_buf);
 	config->ep->in_databuffer = config->state->tx_buf;

@@ -6,7 +6,7 @@
 #ifndef __CHIP_STM32_USB_DWC_CONSOLE_H
 #define __CHIP_STM32_USB_DWC_CONSOLE_H
 
-#include "usb_dwc_hw.h"
+#include "usb_hw.h"
 
 extern struct dwc_usb_ep ep_console_ctl;
 

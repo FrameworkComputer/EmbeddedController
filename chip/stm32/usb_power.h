@@ -11,7 +11,7 @@
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "usb_descriptor.h"
-#include "usb_dwc_hw.h"
+#include "usb_hw.h"
 
 /*
  * Command:
@@ -324,14 +324,14 @@ union usb_power_command_data {
 	};								\
 	static void CONCAT2(NAME, _ep_tx_)   (void) { usb_epN_tx(ENDPOINT); } \
 	static void CONCAT2(NAME, _ep_rx_)   (void) { usb_epN_rx(ENDPOINT); } \
-	static void CONCAT2(NAME, _ep_reset_)(void)			\
+	static void CONCAT2(NAME, _ep_event_)(enum usb_ep_event evt)	\
 	{								\
-			usb_power_reset(&NAME);				\
+			usb_power_event(&NAME, evt);			\
 	}								\
 	USB_DECLARE_EP(ENDPOINT,					\
 		       CONCAT2(NAME, _ep_tx_),				\
 		       CONCAT2(NAME, _ep_rx_),				\
-		       CONCAT2(NAME, _ep_reset_));			\
+		       CONCAT2(NAME, _ep_event_));			\
 	static void CONCAT2(NAME, _deferred_tx_)(void)			\
 	{ usb_power_deferred_tx(&NAME); }				\
 	static void CONCAT2(NAME, _deferred_rx_)(void)			\
@@ -353,7 +353,8 @@ void usb_power_deferred_cap(struct usb_power_config const *config);
  */
 void usb_power_tx(struct usb_power_config const *config);
 void usb_power_rx(struct usb_power_config const *config);
-void usb_power_reset(struct usb_power_config const *config);
+void usb_power_event(struct usb_power_config const *config,
+		enum usb_ep_event evt);
 
 
 

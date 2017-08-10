@@ -59,8 +59,12 @@ int tx_stream_handler(struct usb_stream_config const *config)
 }
 
 /* Reset stream */
-void usb_stream_reset(struct usb_stream_config const *config)
+void usb_stream_event(struct usb_stream_config const *config,
+		enum usb_ep_event evt)
 {
+	if (evt != USB_EVENT_RESET)
+		return;
+
 	epN_reset(config->endpoint);
 
 	*(config->is_reset) = 1;

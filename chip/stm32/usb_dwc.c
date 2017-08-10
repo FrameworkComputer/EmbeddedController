@@ -12,7 +12,7 @@
 #include "hooks.h"
 #include "link_defs.h"
 #include "registers.h"
-#include "usb_dwc_hw.h"
+#include "usb_hw.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -967,7 +967,7 @@ static void usb_init_endpoints(void)
 
 	/* Reset the other endpoints */
 	for (ep = 1; ep < USB_EP_COUNT; ep++)
-		usb_ep_reset[ep]();
+		usb_ep_event[ep](USB_EVENT_RESET);
 }
 
 static void usb_reset(void)

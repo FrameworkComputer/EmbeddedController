@@ -221,8 +221,11 @@ static void ep_tx(void)
 	task_set_event(TASK_ID_SNIFFER, 1 << b, 0);
 }
 
-static void ep_reset(void)
+static void ep_event(enum usb_ep_event evt)
 {
+	if (evt != USB_EVENT_RESET)
+		return;
+
 	/* Bulk IN endpoint */
 	btable_ep[USB_EP_SNIFFER].tx_addr = usb_sram_addr(ep_buf[0]);
 	btable_ep[USB_EP_SNIFFER].tx_count = EP_BUF_SIZE;
@@ -231,7 +234,7 @@ static void ep_reset(void)
 				       (0 << 9) /* Bulk EP */ |
 				       (0 << 12) /* RX Disabled */;
 }
-USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_reset);
+USB_DECLARE_EP(USB_EP_SNIFFER, ep_tx, ep_tx, ep_event);
 
 
 /* --- RX operation using comparator linked to timer --- */
