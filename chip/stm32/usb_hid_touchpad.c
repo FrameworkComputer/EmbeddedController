@@ -9,7 +9,9 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "link_defs.h"
+#include "queue.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -23,6 +25,13 @@
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+
+static const int touchpad_debug;
+
+static struct queue const report_queue = QUEUE_NULL(8,
+						struct usb_hid_touchpad_report);
+static struct mutex report_queue_mutex;
 
 #define HID_TOUCHPAD_REPORT_SIZE  sizeof(struct usb_hid_touchpad_report)
 
@@ -31,6 +40,9 @@
  * interrupt interval from the trackpad.
  */
 #define HID_TOUCHPAD_EP_INTERVAL_MS 2 /* ms */
+
+/* Discard TP events older than this time */
+#define EVENT_DISCARD_MAX_TIME (1 * SECOND)
 
 /* HID descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_HID_TOUCHPAD) = {
@@ -167,35 +179,131 @@ const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_TOUCHPAD,
 
 static usb_uint hid_ep_buf[DIV_ROUND_UP(HID_TOUCHPAD_REPORT_SIZE, 2)] __usb_ram;
 
-void set_touchpad_report(struct usb_hid_touchpad_report *report)
+/*
+ * Write a report to EP, must be called with queue mutex held, and caller
+ * must first check that EP is not busy.
+ */
+static void write_touchpad_report(struct usb_hid_touchpad_report *report)
 {
-	/*
-	 * Endpoint is busy. This should rarely happen as we make sure that
-	 * the trackpad interrupt period >= USB interrupt period.
-	 *
-	 * TODO(crosbug.com/p/59083): Figure out how to handle USB suspend.
-	 */
-	int timeout = 20; /* Wait up to 5 EP intervals. */
-
-	while ((STM32_USB_EP(USB_EP_HID_TOUCHPAD) & EP_TX_MASK)
-			== EP_TX_VALID) {
-		msleep(DIV_ROUND_UP(HID_TOUCHPAD_EP_INTERVAL_MS, 4));
-		if (!--timeout)
-			return;
-	}
-
 	memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf),
 			 report, sizeof(*report));
 	/* enable TX */
 	STM32_TOGGLE_EP(USB_EP_HID_TOUCHPAD, EP_TX_MASK, EP_TX_VALID, 0);
 
-	/* Wake up host, if required. */
+	/*
+	 * Wake the host. This is required to prevent a race between EP getting
+	 * reloaded and host suspending the device, as, ideally, we never want
+	 * to have EP loaded during suspend, to avoid reporting stale data.
+	 */
 	usb_wake();
+}
+
+static void hid_touchpad_process_queue(void);
+DECLARE_DEFERRED(hid_touchpad_process_queue);
+
+static void hid_touchpad_process_queue(void)
+{
+	struct usb_hid_touchpad_report report;
+	uint16_t now;
+	int trimming = 0;
+
+	mutex_lock(&report_queue_mutex);
+
+	/* EP is busy, or nothing in queue: do nothing. */
+	if (queue_count(&report_queue) == 0)
+		goto unlock;
+
+	now = __hw_clock_source_read() / USB_HID_TOUCHPAD_TIMESTAMP_UNIT;
+
+	if (usb_is_suspended() ||
+			(STM32_USB_EP(USB_EP_HID_TOUCHPAD) & EP_TX_MASK)
+				== EP_TX_VALID) {
+		usb_wake();
+
+		/* Let's trim old events from the queue, if any. */
+		trimming = 1;
+	} else {
+		hook_call_deferred(&hid_touchpad_process_queue_data, -1);
+	}
+
+	if (touchpad_debug)
+		CPRINTS("TPQ t=%d (%d)", trimming, queue_count(&report_queue));
+
+	while (queue_count(&report_queue) > 0) {
+		int delta;
+
+		queue_peek_units(&report_queue, &report, 0, 1);
+
+		delta = (int)((uint16_t)(now - report.timestamp))
+				* USB_HID_TOUCHPAD_TIMESTAMP_UNIT;
+
+		if (touchpad_debug)
+			CPRINTS("evt t=%d d=%d", report.timestamp, delta);
+
+		/* Drop old events */
+		if (delta > EVENT_DISCARD_MAX_TIME) {
+			queue_advance_head(&report_queue, 1);
+			continue;
+		}
+
+		if (trimming) {
+			/*
+			 * If we stil fail to resume, this will discard the
+			 * event after the timeout expires.
+			 */
+			hook_call_deferred(&hid_touchpad_process_queue_data,
+					   EVENT_DISCARD_MAX_TIME - delta);
+		} else {
+			queue_advance_head(&report_queue, 1);
+			write_touchpad_report(&report);
+		}
+		break;
+	}
+
+unlock:
+	mutex_unlock(&report_queue_mutex);
+}
+
+void set_touchpad_report(struct usb_hid_touchpad_report *report)
+{
+	static int print_full = 1;
+
+	mutex_lock(&report_queue_mutex);
+
+	/* USB/EP ready and nothing in queue, just write the report. */
+	if (!usb_is_suspended() &&
+	    (STM32_USB_EP(USB_EP_HID_TOUCHPAD) & EP_TX_MASK) != EP_TX_VALID
+	    && queue_count(&report_queue) == 0) {
+		write_touchpad_report(report);
+		mutex_unlock(&report_queue_mutex);
+		return;
+	}
+
+	/* Else add to queue, dropping oldest event if needed. */
+	if (touchpad_debug)
+		CPRINTS("sTP t=%d", report->timestamp);
+	if (queue_is_full(&report_queue)) {
+		if (print_full)
+			CPRINTF("TP queue full\n");
+		print_full = 0;
+
+		queue_advance_head(&report_queue, 1);
+	} else {
+		print_full = 1;
+	}
+	queue_add_unit(&report_queue, report);
+
+	mutex_unlock(&report_queue_mutex);
+
+	hid_touchpad_process_queue();
 }
 
 static void hid_touchpad_tx(void)
 {
 	hid_tx(USB_EP_HID_TOUCHPAD);
+
+	if (queue_count(&report_queue) > 0)
+		hook_call_deferred(&hid_touchpad_process_queue_data, 0);
 }
 
 static void hid_touchpad_event(enum usb_ep_event evt)
@@ -203,6 +311,9 @@ static void hid_touchpad_event(enum usb_ep_event evt)
 	if (evt == USB_EVENT_RESET)
 		hid_reset(USB_EP_HID_TOUCHPAD, hid_ep_buf,
 			  HID_TOUCHPAD_REPORT_SIZE);
+	else if (evt == USB_EVENT_DEVICE_RESUME &&
+			queue_count(&report_queue) > 0)
+		hook_call_deferred(&hid_touchpad_process_queue_data, 0);
 }
 
 USB_DECLARE_EP(USB_EP_HID_TOUCHPAD, hid_touchpad_tx, hid_touchpad_tx,
