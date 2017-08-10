@@ -54,7 +54,7 @@ struct usb_hid_keyboard_report {
 
 #define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
 
-#define HID_KEYBOARD_EP_INTERVAL_MS 32 /* ms */
+#define HID_KEYBOARD_EP_INTERVAL_MS 16 /* ms */
 
 /* Modifiers keycode range */
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
@@ -172,41 +172,28 @@ const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD,
 
 #define EP_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_REPORT_SIZE, 2)
 
-static usb_uint hid_ep_buf[2][EP_BUF_SIZE] __usb_ram;
-static volatile int hid_current_buf;
-
+static usb_uint hid_ep_buf[EP_BUF_SIZE] __usb_ram;
 static volatile int hid_ep_data_ready;
 
 static struct usb_hid_keyboard_report report;
 
 static void write_keyboard_report(void)
 {
-	/* Prevent the interrupt handler from sending the data (which would use
-	 * an incomplete buffer).
-	 */
-	hid_ep_data_ready = 0;
-	hid_current_buf = hid_current_buf ? 0 : 1;
-	memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf[hid_current_buf]),
-			 &report, sizeof(report));
-
 	/* Tell the interrupt handler to send the next buffer. */
 	hid_ep_data_ready = 1;
 	if ((STM32_USB_EP(USB_EP_HID_KEYBOARD) & EP_TX_MASK) == EP_TX_VALID) {
-		/* Endpoint is busy: we sneak in an address change to give us a
-		 * chance to send the most updated report. However, there is no
-		 * guarantee that this buffer is the one actually sent, so we
-		 * keep hid_ep_data_ready = 1, which will send a duplicated
-		 * report.
+		/* Endpoint is busy */
+		return;
+	}
+
+	if (atomic_read_clear(&hid_ep_data_ready)) {
+		/*
+		 * Endpoint is not busy, and interrupt handler did not just
+		 * send the buffer: enable TX.
 		 */
-		btable_ep[USB_EP_HID_KEYBOARD].tx_addr =
-			usb_sram_addr(hid_ep_buf[hid_current_buf]);
-		hid_ep_data_ready = 1;
-	} else if (atomic_read_clear(&hid_ep_data_ready)) {
-		/* Endpoint is not busy, and interrupt handler did not just
-		 * send our last buffer: swap buffer, enable TX.
-		 */
-		btable_ep[USB_EP_HID_KEYBOARD].tx_addr =
-			usb_sram_addr(hid_ep_buf[hid_current_buf]);
+
+		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf),
+				&report, sizeof(report));
 		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
 				EP_TX_VALID, 0);
 	}
@@ -219,19 +206,18 @@ static void hid_keyboard_tx(void)
 {
 	hid_tx(USB_EP_HID_KEYBOARD);
 	if (hid_ep_data_ready) {
-		/* swap buffer, enable TX */
-		btable_ep[USB_EP_HID_KEYBOARD].tx_addr =
-			usb_sram_addr(hid_ep_buf[hid_current_buf]);
+		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_buf),
+				&report, sizeof(report));
 		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
 				EP_TX_VALID, 0);
+		hid_ep_data_ready = 0;
 	}
-	hid_ep_data_ready = 0;
 }
 
 static void hid_keyboard_event(enum usb_ep_event evt)
 {
 	if (evt == USB_EVENT_RESET)
-		hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf[hid_current_buf],
+		hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf,
 			HID_KEYBOARD_REPORT_SIZE);
 }
 
