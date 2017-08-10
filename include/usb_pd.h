@@ -942,9 +942,10 @@ int pd_is_valid_input_voltage(int mv);
  * Request a new operating voltage.
  *
  * @param rdo  Request Data Object with the selected operating point.
+ * @param port The port which the request came in on.
  * @return EC_SUCCESS if we can get the requested voltage/OP, <0 else.
  */
-int pd_check_requested_voltage(uint32_t rdo);
+int pd_check_requested_voltage(uint32_t rdo, const int port);
 
 /**
  * Run board specific checks on request message

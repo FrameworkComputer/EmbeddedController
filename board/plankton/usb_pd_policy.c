@@ -55,7 +55,7 @@ void board_set_source_cap(enum board_src_cap cap)
 	pd_src_pdo_idx = cap;
 }
 
-int charge_manager_get_source_pdo(const uint32_t **src_pdo)
+int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	*src_pdo = pd_src_pdo;
 	return pd_src_pdo_cnts[pd_src_pdo_idx];

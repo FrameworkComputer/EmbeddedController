@@ -48,7 +48,7 @@ enum system_image_copy_t system_get_image_copy(void)
 static void init_src_pdos(void)
 {
 #ifdef CONFIG_USB_PD_DYNAMIC_SRC_CAP
-	src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo);
+	src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo, 0);
 #else
 	src_pdo_cnt = pd_src_pdo_cnt;
 	src_pdo = pd_src_pdo;

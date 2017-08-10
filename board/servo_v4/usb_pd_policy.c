@@ -352,7 +352,7 @@ int board_select_rp_value(int port, int rp)
 	return pd_set_rp_rd(port, TYPEC_CC_RP, rp);
 }
 
-int charge_manager_get_source_pdo(const uint32_t **src_pdo)
+int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	int pdo_cnt;
 	/*

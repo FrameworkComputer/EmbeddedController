@@ -441,7 +441,7 @@ static int send_source_cap(int port)
 #if defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
 		defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
 	const uint32_t *src_pdo;
-	const int src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo);
+	const int src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo, port);
 #else
 	const uint32_t *src_pdo = pd_src_pdo;
 	const int src_pdo_cnt = pd_src_pdo_cnt;
@@ -801,7 +801,7 @@ static void handle_data_request(int port, uint16_t head,
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	case PD_DATA_REQUEST:
 		if ((pd[port].power_role == PD_ROLE_SOURCE) && (cnt == 1))
-			if (!pd_check_requested_voltage(payload[0])) {
+			if (!pd_check_requested_voltage(payload[0], port)) {
 				if (send_control(port, PD_CTRL_ACCEPT) < 0)
 					/*
 					 * if we fail to send accept, do

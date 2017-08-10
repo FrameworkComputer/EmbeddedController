@@ -963,20 +963,20 @@ void charge_manager_source_port(int port, int enable)
 	}
 }
 
-int charge_manager_get_source_pdo(const uint32_t **src_pdo)
+int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
-	int p;
-	int count = 0;
+	/* Are there any other connected sinks? */
+	if (source_port_bitmap & ~(1 << port)) {
+		*src_pdo = pd_src_pdo;
+		return pd_src_pdo_cnt;
+	}
 
-	/* count the number of connected sinks */
-	for (p = 0; p < CONFIG_USB_PD_PORT_COUNT; p++)
-		if (source_port_bitmap & (1 << p))
-			count++;
-
-	/* send the maximum current if we are sourcing only on one port */
-	*src_pdo = count <= 1 ? pd_src_pdo_max : pd_src_pdo;
-
-	return count <= 1 ? pd_src_pdo_cnt : pd_src_pdo_max_cnt;
+	/*
+	 * If not, send the maximum current since we're sourcing on only one
+	 * port.
+	 */
+	*src_pdo = pd_src_pdo_max;
+	return pd_src_pdo_max_cnt;
 }
 #endif /* CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT */
 
