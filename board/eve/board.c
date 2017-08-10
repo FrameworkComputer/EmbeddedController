@@ -445,6 +445,10 @@ static void board_pmic_init(void)
 
 	/* Clear power source events */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x04, 0xff);
+
+	/* Disable VCCIO in ALL_SYS_PWRGD for early boards */
+	if (board_get_version() <= BOARD_VERSION_DVTB)
+		i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x18, 0x80);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
