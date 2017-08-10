@@ -29,6 +29,16 @@
 #define LED_FRAC_BITS 4
 #define LED_STEP_MSEC 45
 
+/*
+ * The PWM % on levels to transition from intensity 0 (black) to intensity 1.0
+ * (white) in the HSI color space converted back to RGB space (0 - 255) and
+ * converted to a % for PWM. This table is used for Red <--> White and Green
+ * <--> Transitions. In HSI space white = (0, 0, 1), red = (0, .5, .33), green =
+ * (120, .5, .33). For the transitions of interest only S and I are changed and
+ * they are changed linearly in HSI space.
+ */
+static const uint8_t trans_steps[] = {0, 4, 9, 16, 24, 33, 44, 56, 69, 84, 100};
+
 /* List of LED colors used */
 enum led_color {
 	LED_OFF = 0,
@@ -63,16 +73,19 @@ enum led_side {
 	LED_BOTH
 };
 
-static int led_debug;
-static int double_tap;
-static int double_tap_tick_count;
-static int led_pattern;
-static int led_ticks;
-static enum led_color led_current_color;
-
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED};
-const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
+struct led_info {
+	/* LED pattern manage variables */
+	int ticks;
+	int pattern_sel;
+	int tap_tick_count;
+	enum led_color color;
+	/* Color transition variables */
+	int state;
+	int step;
+	uint8_t rgb_current[3];
+	const uint8_t *rgb_target;
+	uint8_t trans[ARRAY_SIZE(trans_steps)];
+};
 
 /*
  * LED patterns are described as two phases. Each phase has an associated LED
@@ -83,6 +96,15 @@ struct led_phase {
 	uint8_t color[NUM_PHASE];
 	uint8_t len[NUM_PHASE];
 };
+
+static int led_debug;
+static int double_tap;
+static int led_charge_side;
+static struct led_info led[LED_BOTH];
+
+const enum ec_led_id supported_led_ids[] = {
+	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED};
+const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 /*
  * Pattern table. The len field is beats per color. 0 for len indicates that a
@@ -147,16 +169,6 @@ enum led_state_change {
 	LED_STATE_INTENSITY_UP,
 	LED_STATE_DONE,
 };
-
-/*
- * The PWM % on levels to transition from intensity 0 (black) to intensity 1.0
- * (white) in the HSI color space converted back to RGB space (0 - 255) and
- * converted to a % for PWM. This table is used for Red <--> White and Green
- * <--> Transitions. In HSI space white = (0, 0, 1), red = (0, .5, .33), green =
- * (120, .5, .33). For the transitions of interest only S and I are changed and
- * they are changed linearly in HSI space.
- */
-static const uint8_t trans_steps[] = {0, 4, 9, 16, 24, 33, 44, 56, 69, 84, 100};
 
 /**
  * Set LED color
@@ -231,39 +243,33 @@ void led_register_double_tap(void)
 	double_tap = 1;
 }
 
-static void led_change_color(int old_idx, int new_idx, enum led_side side)
+static void led_setup_color_change(int old_idx, int new_idx, enum led_side side)
 {
 	int i;
-	int step;
-	int state;
-	uint8_t rgb_current[3];
-	const uint8_t *rgb_target;
-	uint8_t trans[ARRAY_SIZE(trans_steps)];
 	int increase = 0;
-
 	/*
 	 * Using the color indices, poplulate the current and target R, G, B
 	 * arrays. The arrays are indexed R = 0, G = 1, B = 2. If the target of
 	 * any of the 3 is greater than the current, then this color change is
 	 * an increase in intensity. Otherwise, it's a decrease.
 	 */
-	rgb_target = color_brightness[new_idx];
+	led[side].rgb_target = color_brightness[new_idx];
 	for (i = 0; i < PWM_CHAN_PER_LED; i++) {
-		rgb_current[i] = color_brightness[old_idx][i];
-		if (rgb_current[i] < rgb_target[i]) {
+		led[side].rgb_current[i] = color_brightness[old_idx][i];
+		if (led[side].rgb_current[i] < led[side].rgb_target[i]) {
 			/* increase in color */
 			increase = 1;
 		}
 	}
 	/* Check to see if increasing or decreasing color */
 	if (increase) {
-		state = LED_STATE_INTENSITY_UP;
+		led[side].state = LED_STATE_INTENSITY_UP;
 		/* First entry of transition table == current level */
-		step = 1;
+		led[side].step = 1;
 	} else {
 		/* Last entry of transition table == current level */
-		step = ARRAY_SIZE(trans_steps) - 2;
-		state = LED_STATE_INTENSITY_DOWN;
+		led[side].step = ARRAY_SIZE(trans_steps) - 2;
+		led[side].state = LED_STATE_INTENSITY_DOWN;
 	}
 
 	/*
@@ -277,7 +283,7 @@ static void led_change_color(int old_idx, int new_idx, enum led_side side)
 	 */
 	if (old_idx == LED_WHITE || new_idx == LED_WHITE) {
 		for (i = 0; i < ARRAY_SIZE(trans_steps); i++)
-			trans[i] = trans_steps[i];
+			led[side].trans[i] = trans_steps[i];
 	} else {
 		int delta_per_step;
 		int step_value;
@@ -303,27 +309,27 @@ static void led_change_color(int old_idx, int new_idx, enum led_side side)
 		 * lower to higher. The starting index is adjusted if intensity
 		 * is decreasing.
 		 */
-		start_lvl = rgb_target[rgb_index];
+		start_lvl = led[side].rgb_target[rgb_index];
 
-		if (state == LED_STATE_INTENSITY_UP)
+		if (led[side].state == LED_STATE_INTENSITY_UP)
 			/*
 			 * Increasing in intensity, current level or R/G is
 			 * the starting level.
 			 */
-			start_lvl = rgb_current[rgb_index];
+			start_lvl = led[side].rgb_current[rgb_index];
 
 		/*
 		 * Compute change per step using fractional bits. The step
 		 * change accumulates fractional bits and is truncated after
 		 * rounding before being added to the starting value.
 		 */
-		total_change = ABS(rgb_current[rgb_index] -
-				   rgb_target[rgb_index]);
+		total_change = ABS(led[side].rgb_current[rgb_index] -
+				   led[side].rgb_target[rgb_index]);
 		delta_per_step = (total_change << LED_FRAC_BITS)
 			/ (ARRAY_SIZE(trans_steps) - 1);
 		step_value = 0;
 		for (i = 0; i < ARRAY_SIZE(trans_steps); i++) {
-			trans[i] = start_lvl +
+			led[side].trans[i] = start_lvl +
 				((step_value +
 				  (1 << (LED_FRAC_BITS - 1)))
 				 >> LED_FRAC_BITS);
@@ -331,113 +337,170 @@ static void led_change_color(int old_idx, int new_idx, enum led_side side)
 		}
 	}
 
-	/* Will loop here until the color change is complete. */
-	while (state != LED_STATE_DONE) {
-		int change = 0;
+}
 
-		if (state == LED_STATE_INTENSITY_DOWN) {
-			/*
-			 * Colors are going from higher to lower level. If the
-			 * current level of R, G, or B is higher than both
-			 * the next step in the transition table and and the
-			 * target level, then move to the larger of the two. The
-			 * MAX is used to make sure that it doens't drop below
-			 * the target level.
-			 */
-			for (i = 0; i < PWM_CHAN_PER_LED; i++) {
-				if ((rgb_current[i] > rgb_target[i]) &&
-				    (rgb_current[i] >= trans[step])) {
-					rgb_current[i] = MAX(trans[step],
-							     rgb_target[i]);
-					change = 1;
-				}
-			}
-			/*
-			 * If nothing changed this iteration, or if lowest table
-			 * entry has been used, then the change is complete.
-			 */
-			if (!change || --step < 0)
-				state = LED_STATE_DONE;
+static void led_adjust_color_step(int side)
+{
+	int i;
+	int change = 0;
+	uint8_t lvl = led[side].trans[led[side].step];
+	uint8_t *rgb_c = led[side].rgb_current;
+	const uint8_t *rgb_t = led[side].rgb_target;
 
-		} else if (state == LED_STATE_INTENSITY_UP) {
-			/*
-			 * Colors are going from lower to higher level. If the
-			 * current level of R, G, B is lower than both the
-			 * target level and the transition table entry for a
-			 * given color, then move up to the MIN of next
-			 * transition step and target level.
-			 */
-			for (i = 0; i < PWM_CHAN_PER_LED; i++) {
-				if ((rgb_current[i] < rgb_target[i]) &&
-				    (rgb_current[i] <= trans[step])) {
-					rgb_current[i] = MIN(trans[step],
-							     rgb_target[i]);
-					change = 1;
-				}
+	if (led[side].state == LED_STATE_INTENSITY_DOWN) {
+		/*
+		 * Colors are going from higher to lower level. If the current
+		 * level of R, G, or B is higher than both the next step in the
+		 * transition table and and the target level, then move to
+		 * the larger of the two. The MAX is used to make sure that it
+		 * doens't drop below the target level.
+		 */
+		for (i = 0; i < PWM_CHAN_PER_LED; i++) {
+			if ((rgb_c[i] > rgb_t[i]) && (rgb_c[i] >= lvl)) {
+				rgb_c[i] = MAX(lvl, rgb_t[i]);
+				change = 1;
 			}
-			/*
-			 * If nothing changed this iteration, or if highest
-			 * table entry has been used, then the change is
-			 * complete.
-			 */
-			if (!change || ++step >= ARRAY_SIZE(trans_steps))
-				state = LED_STATE_DONE;
 		}
-		/* Apply current R, G, B levels */
-		set_color(rgb_current, side);
+		/*
+		 * If nothing changed this iteration, or if lowest table entry
+		 * has been used, then the change is complete.
+		 */
+		if (!change || --led[side].step < 0)
+			led[side].state = LED_STATE_DONE;
+
+	} else if (led[side].state == LED_STATE_INTENSITY_UP) {
+		/*
+		 * Colors are going from lower to higher level. If the current
+		 * level of R, G, B is lower than both the target level and the
+		 * transition table entry for a given color, then move up to
+		 * the MIN of next transition step and target level.
+		 */
+		for (i = 0; i < PWM_CHAN_PER_LED; i++) {
+			if ((rgb_c[i] < rgb_t[i]) && (rgb_c[i] <= lvl)) {
+				rgb_c[i] = MIN(lvl, rgb_t[i]);
+				change = 1;
+			}
+		}
+		/*
+		 * If nothing changed this iteration, or if highest table entry
+		 * has been used, then the change is complete.
+		 */
+		if (!change || ++led[side].step >= ARRAY_SIZE(trans_steps))
+			led[side].state = LED_STATE_DONE;
+	}
+	/* Apply current R, G, B levels */
+	set_color(rgb_c, side);
+}
+
+static void led_change_color(void)
+{
+	int i;
+
+	/* Will loop here until the color change is complete. */
+	while (led[LED_LEFT].state != LED_STATE_DONE ||
+	       led[LED_RIGHT].state != LED_STATE_DONE) {
+
+		for (i = 0; i < LED_BOTH; i++) {
+			if (led[i].state != LED_STATE_DONE)
+				/* Move one step in the transition table */
+				led_adjust_color_step(i);
+
+		}
 		msleep(LED_STEP_MSEC);
 	}
 }
 
-static void led_manage_pattern(int side)
+static void led_manage_patterns(enum led_pattern *pattern_desired, int tap)
 {
 	int color;
 	int phase;
+	int i;
+	int color_change = 0;
 
-	/* Determine pattern phase */
-	phase = led_ticks < LED_TICKS_PER_BEAT * pattern[led_pattern].len[0] ?
-		0 : 1;
-	color = pattern[led_pattern].color[phase];
-	/* If color is changing, then manage the transition */
-	if (led_current_color != color) {
-		led_change_color(led_current_color, color, side);
-		led_current_color = color;
+	for (i = 0; i < LED_BOTH; i++) {
+		/* For each led check if the pattern needs to change */
+		if (pattern_desired[i] != led[i].pattern_sel) {
+			/*
+			 * Pattern needs to change, but if double tap sequence
+			 * is active, then need to wait until that
+			 * completes. Unless the pattern change is due to
+			 * external charger state change, make that happen
+			 * immediately.
+			 */
+			if (i == led_charge_side || !led[i].tap_tick_count) {
+				led[i].ticks = 0;
+				led[i].tap_tick_count = tap ?
+					DOUBLE_TAP_TICK_LEN : 0;
+				led[i].pattern_sel = pattern_desired[i];
+			}
+		}
+		/* Determine pattern phase and color for current phase */
+		phase = led[i].ticks < LED_TICKS_PER_BEAT *
+			pattern[led[i].pattern_sel].len[0] ? 0 : 1;
+		color = pattern[led[i].pattern_sel].color[phase];
+		/* If color is changing, then setup the transition. */
+		if (led[i].color != color) {
+			led_setup_color_change(led[i].color, color, i);
+			led[i].color = color;
+			color_change = 1;
+		}
 	}
-	/* Set color for the current phase */
-	set_color(color_brightness[color], side);
 
-	/*
-	 * Update led_ticks. If the len field is 0, then the pattern
-	 * being used is just one color so no need to increase the tick count.
-	 */
-	if (pattern[led_pattern].len[0])
-		if (++led_ticks == LED_TICKS_PER_BEAT *
-		    (pattern[led_pattern].len[0] +
-		     pattern[led_pattern].len[1]))
-			led_ticks = 0;
+	if (color_change)
+		/* Change color is done for both LEDs simultaneously */
+		led_change_color();
 
-	/* If double tap display is active, decrement its counter */
-	if (double_tap_tick_count)
-		double_tap_tick_count--;
+	for (i = 0; i < LED_BOTH; i++) {
+		/* Set color for the current phase */
+		set_color(color_brightness[led[i].color], i);
+
+		/*
+		 * Update led_ticks. If the len field is 0, then the pattern
+		 * being used is just one color so no need to increase the tick
+		 * count.
+		 */
+		if (pattern[led[i].pattern_sel].len[0])
+			if (++led[i].ticks == LED_TICKS_PER_BEAT *
+			    (pattern[led[i].pattern_sel].len[0] +
+			     pattern[led[i].pattern_sel].len[1]))
+				led[i].ticks = 0;
+
+		/* If double tap display is active, decrement its counter */
+		if (led[i].tap_tick_count)
+			led[i].tap_tick_count--;
+	}
 }
 
-static void eve_led_set_power_battery(void)
+static enum led_pattern led_get_double_tap_pattern(int percent_chg)
+{
+	int i;
+	enum led_pattern pattern = OFF;
+
+	for (i = 0; i < ARRAY_SIZE(pattern_tbl); i++) {
+		if (percent_chg <= pattern_tbl[i].max) {
+			pattern = pattern_tbl[i].pattern;
+			break;
+		}
+	}
+
+	return pattern;
+}
+
+static void led_select_pattern(enum led_pattern *pattern_desired, int tap)
 {
 	enum charge_state chg_state = charge_get_state();
 	int side;
 	int percent_chg;
-	enum led_pattern pattern = led_pattern;
-	int tap = 0;
+	enum led_pattern new_pattern;
 
-	if (double_tap) {
-		/* Clear double tap indication */
-		if (!chipset_in_state(CHIPSET_STATE_ON))
-			/* If not in S0, then set tap on */
-			tap = 1;
-		double_tap = 0;
-	}
 	/* Get active charge port which maps directly to left/right LED */
 	side = charge_manager_get_active_charge_port();
+	/*
+	 * Maintain a copy of the side associated with charging. If there is no
+	 * active charging port, then charge_side = -1. This value is used to
+	 * manage the double_tap tick counts on a per LED basis.
+	 */
+	led_charge_side = side;
 	/* Ensure that side can be safely used as an index */
 	if (side < 0 || side >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		side = LED_BOTH;
@@ -445,29 +508,13 @@ static void eve_led_set_power_battery(void)
 	/* Get percent charge */
 	percent_chg = charge_get_percent();
 
-	if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
-	    ((chg_state == PWR_STATE_DISCHARGE_FULL)
-	     && extpower_is_present())) {
-		pattern = SOLID_GREEN;
-		double_tap_tick_count = 0;
-	} else if (chg_state == PWR_STATE_CHARGE) {
-		pattern = SOLID_WHITE;
-		double_tap_tick_count = 0;
-	} else if (!double_tap_tick_count) {
-		int i;
-
+	if (side == LED_BOTH) {
 		/*
-		 * Not currently charging. Select the pattern based on
-		 * the battery charge level. If there is no double tap
-		 * event to process, then only the low battery patterns
-		 * are relevant.
+		 * External charger is not connected. Find the pattern that
+		 * would be used for double tap event.
 		 */
-		for (i = 0; i < ARRAY_SIZE(pattern_tbl); i++) {
-			if (percent_chg <= pattern_tbl[i].max) {
-				pattern = pattern_tbl[i].pattern;
-				break;
-			}
-		}
+		new_pattern = led_get_double_tap_pattern(percent_chg);
+
 		/*
 		 * The patterns used for double tap and for not charging
 		 * state are the same for low battery cases. But, if
@@ -475,32 +522,44 @@ static void eve_led_set_power_battery(void)
 		 * then only display LED pattern if double tap has
 		 * occurred.
 		 */
-		if (tap == 0 && pattern <= WHITE_RED)
-			pattern = OFF;
-		else
-			/* Start double tap LED sequence */
-			double_tap_tick_count = DOUBLE_TAP_TICK_LEN;
-	}
+		if (!tap && new_pattern <= WHITE_RED)
+			new_pattern = OFF;
+		/*
+		 * When external charger is not connected, always apply pattern
+		 * to both LEDs.
+		 */
+		pattern_desired[LED_LEFT] = new_pattern;
+		pattern_desired[LED_RIGHT] = new_pattern;
 
-	/* If the LED pattern will change, then reset tick count and set
-	 * new pattern.
-	 */
-	if (pattern != led_pattern) {
-		led_ticks = 0;
-		led_pattern = pattern;
+	} else {
+		/*
+		 * External charger is connected. First determine pattern for
+		 * charging side LED.
+		 */
+		if (chg_state == PWR_STATE_CHARGE_NEAR_FULL ||
+		    ((chg_state == PWR_STATE_DISCHARGE_FULL)
+		     && extpower_is_present())) {
+			new_pattern = SOLID_GREEN;
+		} else if (chg_state == PWR_STATE_CHARGE) {
+			new_pattern = SOLID_WHITE;
+		} else {
+			new_pattern = OFF;
+		}
+		pattern_desired[side] = new_pattern;
+
+		/* Check for double tap for side not associated with charger */
+		new_pattern = led_get_double_tap_pattern(percent_chg);
+		if (!tap && new_pattern != BLINK_RED)
+			new_pattern = OFF;
+		/* Apply this pattern to the non-charging side LED */
+		pattern_desired[side ^ 1] = new_pattern;
 	}
-	/*
-	 * If external charger is connected, then make sure only the LED that's
-	 * on the side with the charger is turned on.
-	 */
-	if (side != LED_BOTH)
-		set_color(color_brightness[LED_OFF], side ^ 1);
-	/* Update LED pattern */
-	led_manage_pattern(side);
 }
 
 static void led_init(void)
 {
+	int i;
+
 	/*
 	 * Enable PWMs and set to 0% duty cycle.  If they're disabled,
 	 * seems to ground the pins instead of letting them float.
@@ -516,28 +575,52 @@ static void led_init(void)
 	pwm_enable(PWM_CH_LED_R_BLUE, 1);
 
 	set_color(color_brightness[LED_OFF], LED_BOTH);
-	led_pattern = OFF;
-	led_ticks = 0;
-	double_tap_tick_count = 0;
+
+	/*
+	 * Initialize LED descriptors. The members that are used for changing
+	 * colors don't neet to be initialized as they are always computed
+	 * when a color change is required.
+	 */
+	for (i = 0; i < LED_BOTH; i++) {
+		led[i].pattern_sel = OFF;
+		led[i].color = LED_OFF;
+		led[i].ticks = 0;
+		led[i].tap_tick_count = 0;
+		led[i].state = LED_STATE_DONE;
+	}
+
 }
-/* After pwm_pin_init() */
-DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
 
 void led_task(void *u)
 {
 	uint32_t start_time;
 	uint32_t task_duration;
 
+	led_init();
+
 	usleep(SECOND);
 
 	while (1) {
+		enum led_pattern pattern_desired[LED_BOTH];
+		int tap = 0;
 
 		start_time = get_time().le.lo;
+
+		if (double_tap) {
+			/* Clear double tap indication */
+			if (!chipset_in_state(CHIPSET_STATE_ON))
+				/* If not in S0, then set tap on */
+				tap = 1;
+			double_tap = 0;
+		}
 
 		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED) &&
 		    led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED) &&
 		    led_debug != 1) {
-			eve_led_set_power_battery();
+			/* Determine desired LED patterns for both LEDS */
+			led_select_pattern(pattern_desired, tap);
+			/* Update LED patterns/colors (if necessary) */
+			led_manage_patterns(pattern_desired, tap);
 		}
 		/* Compute time for this iteration */
 		task_duration = get_time().le.lo - start_time;
