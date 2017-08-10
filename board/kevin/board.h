@@ -261,6 +261,7 @@ enum adc_channel {
 };
 
 enum pwm_channel {
+/* don't change the order or add anything between, this is ABI to kernel dts! */
 #ifdef BOARD_KEVIN
 	PWM_CH_LED_GREEN,
 #endif
