@@ -297,6 +297,16 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_config_pre_init(void)
+{
+	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
+	/*
+	 * Remap USART1 DMA:
+	 * Ch4 : USART1_TX / Ch5 : USART1_RX
+	 */
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (1 << 15) | (1 << 19);
+}
+
 void board_hibernate(void)
 {
 	int rv;

@@ -2144,7 +2144,8 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #else /* !CHIP_FAMILY_STM32F4 */
 #define STM32_DMA_CCR_CHANNEL(channel)		 (0)
 
-#if defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4)
+#if defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_VARIANT_STM32F09X)
 #define STM32_DMA2_REGS ((stm32_dma_regs_t *)STM32_DMA2_BASE)
 #define STM32_DMA_REGS(channel) \
 	((channel) < STM32_DMAC_PER_CTLR ? STM32_DMA1_REGS : STM32_DMA2_REGS)
