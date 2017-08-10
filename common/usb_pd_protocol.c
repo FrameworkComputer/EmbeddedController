@@ -2162,8 +2162,7 @@ void pd_task(void *u)
 			}
 
 			/* Send get sink cap if haven't received it yet */
-			if (pd[port].last_state != pd[port].task_state &&
-			    !(pd[port].flags & PD_FLAGS_SNK_CAP_RECVD)) {
+			if (!(pd[port].flags & PD_FLAGS_SNK_CAP_RECVD)) {
 				if (++snk_cap_count <= PD_SNK_CAP_RETRIES) {
 					/* Get sink cap to know if dual-role device */
 					send_control(port, PD_CTRL_GET_SINK_CAP);
