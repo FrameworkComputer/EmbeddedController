@@ -16,11 +16,11 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
-#ifdef BOARD_SORAKA
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
 #define SB_SHUTDOWN_DATA        0x0010
 
+#ifdef BOARD_SORAKA
 static const struct battery_info info = {
 	.voltage_max = 8800,
 	.voltage_normal = 7700,
@@ -36,9 +36,6 @@ static const struct battery_info info = {
 	.discharging_max_c = 60,
 };
 #elif defined(BOARD_POPPY)
-/* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHIP_MODE_REG	0x3a
-#define SB_SHUTDOWN_DATA	0xC574
 
 static const struct battery_info info = {
 	.voltage_max = 13200,
