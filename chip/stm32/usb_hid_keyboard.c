@@ -10,9 +10,11 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
 #include "link_defs.h"
+#include "queue.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -25,6 +27,17 @@
 
 /* Console output macro */
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+
+static const int keyboard_debug;
+
+struct key_event {
+	uint32_t time;
+	uint8_t keycode;
+	uint8_t pressed;
+};
+
+static struct queue const key_queue = QUEUE_NULL(16, struct key_event);
+static struct mutex key_queue_mutex;
 
 enum hid_protocol {
 	HID_BOOT_PROTOCOL = 0,
@@ -55,6 +68,24 @@ struct usb_hid_keyboard_report {
 #define HID_KEYBOARD_REPORT_SIZE sizeof(struct usb_hid_keyboard_report)
 
 #define HID_KEYBOARD_EP_INTERVAL_MS 16 /* ms */
+
+/*
+ * Coalesce events happening within some interval. The value must be greater
+ * than EP interval to ensure we cannot have a backlog of keys.
+ * It must also be short enough to ensure that the intended order of key presses
+ * is passed to AP, and that we do not coalesce press and release events (which
+ * would result in lost keys).
+ */
+#define COALESCE_INTERVAL (18 * MSEC)
+
+/*
+ * Discard key events in the FIFO buffer that are older than this amount of
+ * time. Note that we do not fully drop them, we still update the report,
+ * but we do not send the events individually anymore (so an old key press
+ * and release will be dropped altogether, but a single press/release will
+ * still be reported correctly).
+ */
+#define KEY_DISCARD_MAX_TIME (1 * SECOND)
 
 /* Modifiers keycode range */
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
@@ -177,6 +208,9 @@ static volatile int hid_ep_data_ready;
 
 static struct usb_hid_keyboard_report report;
 
+static void keyboard_process_queue(void);
+DECLARE_DEFERRED(keyboard_process_queue);
+
 static void write_keyboard_report(void)
 {
 	/* Tell the interrupt handler to send the next buffer. */
@@ -198,7 +232,11 @@ static void write_keyboard_report(void)
 				EP_TX_VALID, 0);
 	}
 
-	/* Wake up host, if required. */
+	/*
+	 * Wake the host. This is required to prevent a race between EP getting
+	 * reloaded and host suspending the device, as, ideally, we never want
+	 * to have EP loaded during suspend, to avoid reporting stale data.
+	 */
 	usb_wake();
 }
 
@@ -212,6 +250,9 @@ static void hid_keyboard_tx(void)
 				EP_TX_VALID, 0);
 		hid_ep_data_ready = 0;
 	}
+
+	if (queue_count(&key_queue) > 0)
+		hook_call_deferred(&keyboard_process_queue_data, 0);
 }
 
 static void hid_keyboard_event(enum usb_ep_event evt)
@@ -219,6 +260,8 @@ static void hid_keyboard_event(enum usb_ep_event evt)
 	if (evt == USB_EVENT_RESET)
 		hid_reset(USB_EP_HID_KEYBOARD, hid_ep_buf,
 			HID_KEYBOARD_REPORT_SIZE);
+	else if (evt == USB_EVENT_DEVICE_RESUME && queue_count(&key_queue) > 0)
+		hook_call_deferred(&keyboard_process_queue_data, 0);
 }
 
 USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx, hid_keyboard_tx,
@@ -262,64 +305,143 @@ USB_DECLARE_IFACE(USB_IFACE_HID_KEYBOARD, hid_keyboard_iface_request)
 
 void keyboard_clear_buffer(void)
 {
+	mutex_lock(&key_queue_mutex);
+	queue_init(&key_queue);
+	mutex_unlock(&key_queue_mutex);
+
 	memset(&report, 0, sizeof(report));
 	write_keyboard_report();
 }
 
-void keyboard_state_changed(int row, int col, int is_pressed)
+static void keyboard_process_queue(void)
 {
 	int i;
 	uint8_t mask;
+	struct key_event ev;
+	int valid = 0;
+	int trimming = 0;
+	uint32_t now = __hw_clock_source_read();
+	uint32_t first_key_time;
+
+	if (keyboard_debug)
+		CPRINTF("Q%d (s%d ep%d hw%d)\n", queue_count(&key_queue),
+			usb_is_suspended(), hid_ep_data_ready,
+			(STM32_USB_EP(USB_EP_HID_KEYBOARD) & EP_TX_MASK)
+			== EP_TX_VALID);
+	mutex_lock(&key_queue_mutex);
+
+	if (queue_count(&key_queue) == 0) {
+		mutex_unlock(&key_queue_mutex);
+		return;
+	}
+
+	if (usb_is_suspended() || hid_ep_data_ready) {
+		usb_wake();
+
+		if (!queue_is_full(&key_queue)) {
+			/* Queue still has space, let's keep gathering keys. */
+			mutex_unlock(&key_queue_mutex);
+			return;
+		}
+
+		/*
+		 * Queue is full, so we continue, as the code below is
+		 * guaranteed to pop at least one key from the queue, but we do
+		 * not write the report at the end.
+		 */
+		CPRINTF("Trimming queue (%d %d %d)\n", queue_count(&key_queue),
+			usb_is_suspended(), hid_ep_data_ready);
+
+		trimming = 1;
+	}
+
+	/* There is at least one element in the queue. */
+	queue_peek_units(&key_queue, &ev, 0, 1);
+	first_key_time = ev.time;
+
+	/*
+	 * Pick key events from the queue, coalescing events older than events
+	 * within EP interval time to make sure the queue cannot grow, and
+	 * dropping keys that are too old.
+	 */
+	while (queue_count(&key_queue) > 0) {
+		queue_peek_units(&key_queue, &ev, 0, 1);
+		if (keyboard_debug)
+			CPRINTF(" =%02x/%d %d %d\n", ev.keycode, ev.pressed,
+				ev.time - now);
+
+		if ((now - ev.time) <= KEY_DISCARD_MAX_TIME &&
+		    (ev.time - first_key_time) >= COALESCE_INTERVAL)
+			break;
+
+		queue_advance_head(&key_queue, 1);
+
+		if (ev.keycode == HID_KEYBOARD_NEW_KEY) {
+#ifdef CONFIG_KEYBOARD_NEW_KEY
+			report.new_key = ev.pressed ? 1 : 0;
+			valid = 1;
+#endif
+		} else if (ev.keycode >= HID_KEYBOARD_MODIFIER_LOW &&
+		    ev.keycode <= HID_KEYBOARD_MODIFIER_HIGH) {
+			mask = 0x01 << (ev.keycode - HID_KEYBOARD_MODIFIER_LOW);
+			if (ev.pressed)
+				report.modifiers |= mask;
+			else
+				report.modifiers &= ~mask;
+			valid = 1;
+		} else if (ev.pressed) {
+			/*
+			 * Add keycode to the list of keys (does nothing if the
+			 * array is already full).
+			 */
+			for (i = 0; i < ARRAY_SIZE(report.keys); i++) {
+				/* Is key already pressed? */
+				if (report.keys[i] == ev.keycode)
+					break;
+				if (report.keys[i] == 0) {
+					report.keys[i] = ev.keycode;
+					valid = 1;
+					break;
+				}
+			}
+		} else {
+			/*
+			 * Remove keycode from the list of keys (does nothing
+			 * if the key is not in the array).
+			 */
+			for (i = 0; i < ARRAY_SIZE(report.keys); i++) {
+				if (report.keys[i] == ev.keycode) {
+					report.keys[i] = 0;
+					valid = 1;
+					break;
+				}
+			}
+		}
+	}
+
+	mutex_unlock(&key_queue_mutex);
+
+	if (valid && !trimming)
+		write_keyboard_report();
+}
+
+void keyboard_state_changed(int row, int col, int is_pressed)
+{
 	uint8_t keycode = keycodes[row][col];
+	struct key_event ev = {
+		.time = __hw_clock_source_read(),
+		.keycode = keycode,
+		.pressed = is_pressed,
+	};
 
 	if (!keycode) {
 		CPRINTF("Unknown key at %d/%d\n", row, col);
 		return;
-
 	}
 
-	if (keycode == HID_KEYBOARD_NEW_KEY) {
-#ifdef CONFIG_KEYBOARD_NEW_KEY
-		report.new_key = is_pressed ? 1 : 0;
-		write_keyboard_report();
-#endif
-		return;
-	}
+	mutex_lock(&key_queue_mutex);
+	queue_add_unit(&key_queue, &ev);
+	mutex_unlock(&key_queue_mutex);
 
-	if (keycode >= HID_KEYBOARD_MODIFIER_LOW &&
-	    keycode <= HID_KEYBOARD_MODIFIER_HIGH) {
-		mask = 0x01 << (keycode - HID_KEYBOARD_MODIFIER_LOW);
-		if (is_pressed)
-			report.modifiers |= mask;
-		else
-			report.modifiers &= ~mask;
-
-		write_keyboard_report();
-		return;
-	}
-
-	if (is_pressed) {
-		/* Add keycode to the list of keys */
-		for (i = 0; i < ARRAY_SIZE(report.keys); i++) {
-			/* Is key already pressed? */
-			if (report.keys[i] == keycode)
-				return;
-			if (report.keys[i] == 0) {
-				report.keys[i] = keycode;
-				write_keyboard_report();
-				return;
-			}
-		}
-		/* Too many keys, ignoring. */
-	} else {
-		/* Remove keycode from the list of keys */
-		for (i = 0; i < ARRAY_SIZE(report.keys); i++) {
-			if (report.keys[i] == keycode) {
-				report.keys[i] = 0;
-				write_keyboard_report();
-				return;
-			}
-		}
-		/* Couldn't find the key... */
-	}
+	keyboard_process_queue();
 }
