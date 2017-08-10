@@ -26,6 +26,12 @@
 #define CONFIG_DPTF_MULTI_PROFILE
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU
+/* 7 day delay before hibernate */
+#undef  CONFIG_HIBERNATE_DELAY_SEC
+#define CONFIG_HIBERNATE_DELAY_SEC (3600 * 24 * 7)
+/* 1 day delay before hibernate if battery is less than 10% */
+#define CONFIG_HIBERNATE_BATT_PCT 10
+#define CONFIG_HIBERNATE_BATT_SEC (3600 * 24)
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_LED_COMMON
