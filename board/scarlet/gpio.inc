@@ -26,8 +26,6 @@ GPIO_INT(PP900_S0_PG,      PIN(D, 9),  GPIO_INT_BOTH | GPIO_PULL_UP,
          power_signal_interrupt)
 GPIO_INT(AP_EC_S3_S0_L,    PIN(C, 7),  GPIO_INT_BOTH | GPIO_PULL_DOWN,
          power_signal_interrupt)
-GPIO_INT(AP_CORE_PG,       PIN(D, 7),  GPIO_INT_BOTH | GPIO_PULL_UP,
-         power_signal_interrupt)
 GPIO_INT(WARM_RESET_REQ,   PIN(E, 1),  GPIO_INT_RISING | GPIO_PULL_DOWN,
          warm_reset_request_interrupt)
 GPIO_INT(AP_OVERTEMP,      PIN(E, 4),  GPIO_INT_RISING | GPIO_PULL_DOWN,
@@ -76,6 +74,10 @@ GPIO(CCD_MODE_ODL,         PIN(C, 5),  GPIO_INPUT | GPIO_PULL_UP)
 GPIO(CHARGER_INT_L,        PIN(E, 6),  GPIO_INPUT | GPIO_PULL_UP)
 /* TODO(b:63773130): Add an interrupt handler for battery gauge max17055 */
 GPIO(BATTERY_INT_L,        PIN(A, 12), GPIO_INPUT | GPIO_PULL_UP)
+/* Non-INT power signal pin */
+GPIO(AP_CORE_PG,           PIN(D, 7),  GPIO_INPUT | GPIO_PULL_UP)
+
+
 
 /* Other output pins */
 GPIO(ENTERING_RW,          PIN(C, 6),  GPIO_ODR_HIGH)
