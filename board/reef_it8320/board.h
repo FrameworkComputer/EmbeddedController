@@ -143,6 +143,7 @@
 
 /* TODO: There isn't enough space on flash before nds32 toolchain is updated */
 #undef CONFIG_CMD_HASH
+#undef CONFIG_CMD_I2C_XFER
 #undef CONFIG_CMD_IDLE_STATS
 #undef CONFIG_CMD_SLEEPMASK
 #undef CONFIG_CMD_TIMERINFO
