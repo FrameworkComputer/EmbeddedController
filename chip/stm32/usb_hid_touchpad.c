@@ -179,10 +179,8 @@ void set_touchpad_report(struct usb_hid_touchpad_report *report)
 	/* enable TX */
 	STM32_TOGGLE_EP(USB_EP_HID_TOUCHPAD, EP_TX_MASK, EP_TX_VALID, 0);
 
-#ifdef CONFIG_USB_REMOTE_WAKEUP
 	/* Wake up host, if required. */
 	usb_wake();
-#endif
 }
 
 static void hid_touchpad_tx(void)
