@@ -3888,7 +3888,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
 
 static int pd_control(struct host_cmd_handler_args *args)
 {
-	static int pd_control_disabled;
+	static int pd_control_disabled[CONFIG_USB_PD_PORT_COUNT];
 	const struct ec_params_pd_control *cmd = args->params;
 	int enable = 0;
 
@@ -3897,11 +3897,11 @@ static int pd_control(struct host_cmd_handler_args *args)
 
 	/* Always allow disable command */
 	if (cmd->subcmd == PD_CONTROL_DISABLE) {
-		pd_control_disabled = 1;
+		pd_control_disabled[cmd->chip] = 1;
 		return EC_RES_SUCCESS;
 	}
 
-	if (pd_control_disabled)
+	if (pd_control_disabled[cmd->chip])
 		return EC_RES_ACCESS_DENIED;
 
 	if (cmd->subcmd == PD_SUSPEND) {
