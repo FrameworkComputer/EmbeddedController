@@ -235,12 +235,10 @@
 #if defined(CONFIG_CHARGER_RT9466)
 	#define RT946X_CHARGER_NAME	"rt9466"
 	#define RT946X_VENDOR_ID	0x80
-	#define RT946X_CHIP_REV		0x05
 	#define RT946X_ADDR		(0x53 << 1)
 #elif defined(CONFIG_CHARGER_RT9467)
 	#define RT946X_CHARGER_NAME	"rt9467"
 	#define RT946X_VENDOR_ID	0x90
-	#define RT946X_CHIP_REV		0x05
 	#define RT946X_ADDR		(0x5B << 1)
 #endif
 

@@ -699,19 +699,17 @@ static void rt946x_init(void)
 		CPRINTF("RT946X incorrect ID: 0x%02x\n", reg);
 		return;
 	}
-	CPRINTF("Device ID(0x%02X) found\n", RT946X_VENDOR_ID);
-
 
 	/* Check revision id */
-	if (rt946x_chip_rev(&reg) || reg < RT946X_CHIP_REV) {
-		CPRINTF("RT946X incorrect CHIP REV: 0x%02x\n", reg);
+	if (rt946x_chip_rev(&reg)) {
+		CPRINTF("Failed to read RT946X CHIP REV\n");
 		return;
 	}
+	CPRINTF("RT946X CHIP REV: 0x%02x\n", reg);
 
 	if (rt946x_init_setting())
 		return;
-
-	CPRINTF("Device ID(0x%02X) initialized\n", RT946X_VENDOR_ID);
+	CPRINTF("RT946X initialized\n");
 }
 DECLARE_HOOK(HOOK_INIT, rt946x_init, HOOK_PRIO_LAST);
 
