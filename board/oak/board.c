@@ -173,7 +173,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 #else
 	{
 		.port_addr = 0x20,
-		.driver = &ps8740_usb_mux_driver,
+		.driver = &ps874x_usb_mux_driver,
 	},
 #endif
 };
