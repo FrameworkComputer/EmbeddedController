@@ -213,7 +213,7 @@
 #define STM32_USART_REG(base, offset) REG32((base) + (offset))
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32L4)
+	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_VARIANT_STM32F76X)
 #define STM32_USART_CR1(base)      STM32_USART_REG(base, 0x00)
 #define STM32_USART_CR1_UE		(1 << 0)
 #define STM32_USART_CR1_UESM            (1 << 1)
@@ -417,6 +417,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_ALT_TIM9_11             0x3
 #define GPIO_ALT_I2C                 0x4
 #define GPIO_ALT_SPI                 0x5
+#define GPIO_ALT_SPI3                0x6
 #define GPIO_ALT_USART               0x7
 #define GPIO_ALT_I2C_23              0x9
 #define GPIO_ALT_USB                 0xA
@@ -962,6 +963,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
 #define STM32F4_TIMER_CLOCK STM32F4_IO_CLOCK
+#define STM32F4_PLLP_DIV 4
 #define STM32F4_AHB_PRE 0x8
 #define STM32F4_APB1_PRE 0x0
 #define STM32F4_APB2_PRE 0x0
@@ -977,6 +979,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
 #define STM32F4_TIMER_CLOCK (STM32F4_IO_CLOCK * 2)
+#define STM32F4_PLLP_DIV 4
 #define STM32F4_AHB_PRE 0x0
 #define STM32F4_APB1_PRE 0x4
 #define STM32F4_APB2_PRE 0x4
@@ -992,10 +995,27 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
 #define STM32F4_TIMER_CLOCK STM32F4_IO_CLOCK
+#define STM32F4_PLLP_DIV 4
 #define STM32F4_AHB_PRE 0x8
 #define STM32F4_APB1_PRE 0x0
 #define STM32F4_APB2_PRE 0x0
 #define STM32_FLASH_ACR_LATENCY     (1 << 0)
+
+#elif defined(CHIP_VARIANT_STM32F76X)
+/* Required or recommended clocks for stm32f767/769 */
+#define STM32F4_PLL_REQ 2000000
+#define STM32F4_RTC_REQ 1000000
+#define STM32F4_IO_CLOCK 45000000
+#define STM32F4_USB_REQ 45000000 /* not compatible with USB, will use PLLSAI */
+#define STM32F4_VCO_CLOCK 360000000
+#define STM32F4_HSI_CLOCK 16000000
+#define STM32F4_LSI_CLOCK 32000
+#define STM32F4_TIMER_CLOCK (STM32F4_IO_CLOCK * 2)
+#define STM32F4_PLLP_DIV 2   /* sys = VCO/2  = 180 Mhz */
+#define STM32F4_AHB_PRE 0x0  /* AHB = sysclk = 180 Mhz */
+#define STM32F4_APB1_PRE 0x5 /* APB1 = AHB /4 = 45 Mhz */
+#define STM32F4_APB2_PRE 0x5 /* APB2 = AHB /4 = 45 Mhz */
+#define STM32_FLASH_ACR_LATENCY     (5 << 0)
 
 #else
 #error "No valid clocks defined"
@@ -1214,7 +1234,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 /* --- SPI --- */
 #define STM32_SPI1_BASE             0x40013000
 #define STM32_SPI2_BASE             0x40003800
-#define STM32_SPI3_BASE             0x40003c00 /* STM32F373 and STM32L4 */
+#define STM32_SPI3_BASE             0x40003c00 /* STM32F373, STM32L4, STM32F7 */
 
 /* The SPI controller registers */
 struct stm32_spi_regs {
@@ -1872,7 +1892,7 @@ enum dma_channel {
 	/* Legacy naming for uart.c */
 	STM32_DMAC_USART1_TX = STM32_DMAS_USART1_TX,
 	STM32_DMAC_USART1_RX = STM32_DMAS_USART1_RX,
-#if defined(CHIP_VARIANT_STM32F411)
+#if defined(CHIP_VARIANT_STM32F411) || defined(CHIP_VARIANT_STM32F76X)
 	STM32_DMAS_USART2_TX = STM32_DMA1_STREAM6,
 	STM32_DMAS_USART2_RX = STM32_DMA1_STREAM5,
 
@@ -1881,7 +1901,7 @@ enum dma_channel {
 	STM32_DMAC_USART2_RX = STM32_DMAS_USART2_RX,
 #endif
 
-#if defined(CHIP_VARIANT_STM32F411)
+#if defined(CHIP_VARIANT_STM32F411) || defined(CHIP_VARIANT_STM32F76X)
 	STM32_DMAC_I2C1_TX = STM32_DMA1_STREAM1,
 	STM32_DMAC_I2C1_RX = STM32_DMA1_STREAM0,
 
@@ -1909,6 +1929,8 @@ enum dma_channel {
 	STM32_DMAC_SPI1_RX = STM32_DMA2_STREAM0, /* REQ 3 */
 	STM32_DMAC_SPI2_TX = STM32_DMA1_STREAM4, /* REQ 0 */
 	STM32_DMAC_SPI2_RX = STM32_DMA1_STREAM3, /* REQ 0 */
+	STM32_DMAC_SPI3_TX = STM32_DMA1_STREAM7, /* REQ 0 */
+	STM32_DMAC_SPI3_RX = STM32_DMA1_STREAM0, /* REQ 0 */
 
 };
 
@@ -1934,6 +1956,8 @@ enum dma_channel {
 #define STM32_SPI1_RX_REQ_CH 3
 #define STM32_SPI2_TX_REQ_CH 0
 #define STM32_SPI2_RX_REQ_CH 0
+#define STM32_SPI3_TX_REQ_CH 0
+#define STM32_SPI3_RX_REQ_CH 0
 
 #define STM32_DMAS_TOTAL_COUNT 16
 

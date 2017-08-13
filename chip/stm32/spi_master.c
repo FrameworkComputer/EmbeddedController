@@ -16,13 +16,21 @@
 #include "timer.h"
 #include "util.h"
 
+#if defined(CHIP_VARIANT_STM32F373)  || \
+	defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_VARIANT_STM32F76X)
+#define HAS_SPI3
+#else
+#undef  HAS_SPI3
+#endif
+
 /* The second (and third if available) SPI port are used as master */
 static stm32_spi_regs_t *SPI_REGS[] = {
 #ifdef CONFIG_STM32_SPI1_MASTER
 	STM32_SPI1_REGS,
 #endif
 	STM32_SPI2_REGS,
-#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4)
+#ifdef HAS_SPI3
 	STM32_SPI3_REGS,
 #endif
 };
@@ -62,10 +70,11 @@ static const struct dma_option dma_tx_option[] = {
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 		| F4_CHANNEL(STM32_SPI2_TX_REQ_CH)
 	},
-#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4)
+#ifdef HAS_SPI3
 	{
 		STM32_DMAC_SPI3_TX, (void *)&STM32_SPI3_REGS->dr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
+		| F4_CHANNEL(STM32_SPI3_TX_REQ_CH)
 	},
 #endif
 };
@@ -83,10 +92,11 @@ static const struct dma_option dma_rx_option[] = {
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 		| F4_CHANNEL(STM32_SPI2_RX_REQ_CH)
 	},
-#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4)
+#ifdef HAS_SPI3
 	{
 		STM32_DMAC_SPI3_RX, (void *)&STM32_SPI3_REGS->dr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
+		| F4_CHANNEL(STM32_SPI3_RX_REQ_CH)
 	},
 #endif
 };

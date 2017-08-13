@@ -12,9 +12,36 @@
 #include "system.h"
 #include "panic.h"
 
-#ifdef CHIP_FAMILY_STM32F4
 /*****************************************************************************/
 /* Physical layer APIs */
+#ifdef CHIP_VARIANT_STM32F76X
+/*
+ * 8 "erase" sectors : 32KB/32KB/32KB/32KB/128KB/256KB/256KB/256KB
+ */
+struct ec_flash_bank const flash_bank_array[] = {
+	{
+		.count = 4,
+		.size_exp = __fls(SIZE_32KB),
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.erase_size_exp = __fls(SIZE_32KB),
+		.protect_size_exp = __fls(SIZE_32KB),
+	},
+	{
+		.count = 1,
+		.size_exp = __fls(SIZE_128KB),
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.erase_size_exp = __fls(SIZE_128KB),
+		.protect_size_exp = __fls(SIZE_128KB),
+	},
+	{
+		.count = (CONFIG_FLASH_SIZE - SIZE_256KB) / SIZE_256KB,
+		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
+		.size_exp = __fls(SIZE_256KB),
+		.erase_size_exp = __fls(SIZE_256KB),
+		.protect_size_exp = __fls(SIZE_256KB),
+	},
+};
+#elif defined(CHIP_FAMILY_STM32F4)
 /*
  * 8 "erase" sectors : 16KB/16KB/16KB/16KB/64KB/128KB/128KB/128KB
  */

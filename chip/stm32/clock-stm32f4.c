@@ -70,7 +70,7 @@ void config_hispeed_clock(void)
 #endif
 	int plldiv, pllinputclock;
 	int pllmult, vcoclock;
-	int systemdivq, systemclock;
+	int systemclock;
 	int usbdiv;
 	int i2sdiv;
 
@@ -95,8 +95,7 @@ void config_hispeed_clock(void)
 	vcoclock = pllinputclock * pllmult;
 
 	/* CPU/System clock */
-	systemclock = vcoclock / 4;
-	systemdivq = 1;
+	systemclock = vcoclock / STM32F4_PLLP_DIV;
 	/* USB clock = 48MHz exactly */
 	usbdiv = (vcoclock + (STM32F4_USB_REQ / 2)) / STM32F4_USB_REQ;
 	assert(vcoclock / usbdiv == STM32F4_USB_REQ);
@@ -147,7 +146,7 @@ void config_hispeed_clock(void)
 	STM32_RCC_PLLCFGR =
 		PLLCFGR_PLLM(plldiv) |
 		PLLCFGR_PLLN(pllmult) |
-		PLLCFGR_PLLP(systemdivq) |
+		PLLCFGR_PLLP(STM32F4_PLLP_DIV / 2 - 1) |
 #if defined(CONFIG_STM32_CLOCK_HSE_HZ)
 		PLLCFGR_PLLSRC_HSE |
 #else
