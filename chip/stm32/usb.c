@@ -422,6 +422,53 @@ int usb_is_suspended(void)
 }
 #endif /* CONFIG_USB_SUSPEND */
 
+#if defined(CONFIG_USB_SUSPEND) && defined(CONFIG_USB_REMOTE_WAKEUP)
+/*
+ * Called by usb_interrupt when usb_wake is asking us to count esof_count ESOF
+ * interrupts (one per millisecond), then disable RESUME, then wait for resume
+ * to complete.
+ */
+static void usb_interrupt_handle_wake(uint16_t status)
+{
+	int state;
+	int good;
+
+	esof_count--;
+
+	/* Keep counting. */
+	if (esof_count > 0)
+		return;
+
+	/* Clear RESUME bit. */
+	if (esof_count == 0)
+		STM32_USB_CNTR &= ~STM32_USB_CNTR_RESUME;
+
+	/* Then count down until state is resumed. */
+	state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
+				>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
+
+	/*
+	 * state 2, or receiving an SOF, means resume
+	 * completed successfully.
+	 */
+	good = (status & STM32_USB_ISTR_SOF) || (state == 2);
+
+	/* Either: state is ready, or we timed out. */
+	if (good || state == 3 || esof_count <= -USB_RESUME_TIMEOUT_MS) {
+		STM32_USB_CNTR &= ~(STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM);
+		usb_wake_done = 1;
+		if (!good) {
+			CPRINTF("wake error: cnt=%d state=%d\n",
+				esof_count, state);
+			usb_suspend();
+			return;
+		}
+
+		CPRINTF("RSMOK%d %d\n",	-esof_count, state);
+	}
+}
+#endif /* CONFIG_USB_SUSPEND && CONFIG_USB_REMOTE_WAKEUP */
+
 void usb_interrupt(void)
 {
 	uint16_t status = STM32_USB_ISTR;
@@ -431,50 +478,9 @@ void usb_interrupt(void)
 
 #ifdef CONFIG_USB_SUSPEND
 #ifdef CONFIG_USB_REMOTE_WAKEUP
-	/*
-	 * usb_wake is asking us to count esof_count ESOF interrupts (one
-	 * per millisecond), then disable RESUME, then wait for resume to
-	 * complete.
-	 */
 	if (status & (STM32_USB_ISTR_ESOF | STM32_USB_ISTR_SOF) &&
-			!usb_wake_done) {
-		esof_count--;
-
-		/* Clear RESUME bit. */
-		if (esof_count == 0)
-			STM32_USB_CNTR &= ~STM32_USB_CNTR_RESUME;
-
-		/* Then count down until state is resumed. */
-		if (esof_count <= 0) {
-			int state;
-			int good;
-
-			state = (STM32_USB_FNR & STM32_USB_FNR_RXDP_RXDM_MASK)
-					>> STM32_USB_FNR_RXDP_RXDM_SHIFT;
-
-			/*
-			 * state 2, or receiving an SOF, means resume
-			 * completed successfully.
-			 */
-			good = (status & STM32_USB_ISTR_SOF) || (state == 2);
-
-			/* Either: state is ready, or we timed out. */
-			if (good || state == 3 ||
-			    esof_count <= -USB_RESUME_TIMEOUT_MS) {
-				STM32_USB_CNTR &= ~(STM32_USB_CNTR_ESOFM |
-						    STM32_USB_CNTR_SOFM);
-				usb_wake_done = 1;
-				if (!good) {
-					CPRINTF("wake error: cnt=%d state=%d\n",
-						esof_count, state);
-					usb_suspend();
-				} else {
-					CPRINTF("RSMOK%d %d\n",
-						-esof_count, state);
-				}
-			}
-		}
-	}
+			!usb_wake_done)
+		usb_interrupt_handle_wake(status);
 #endif
 
 	if (status & STM32_USB_ISTR_SUSP)
