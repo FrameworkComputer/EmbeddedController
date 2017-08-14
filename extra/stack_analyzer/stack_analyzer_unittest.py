@@ -97,15 +97,16 @@ class StackAnalyzerTest(unittest.TestCase):
                sa.Symbol(0x2000, 'F', 0x51C, 'console_task'),
                sa.Symbol(0x3200, 'O', 0x124, '__just_data'),
                sa.Symbol(0x4000, 'F', 0x11C, 'touchpad_calc')]
-    tasklist = [sa.Task('HOOKS', 'hook_task', '2048', 0x1000),
-                sa.Task('CONSOLE', 'console_task', 'STACK_SIZE', 0x2000)]
+    tasklist = [sa.Task('HOOKS', 'hook_task', 2048, 0x1000),
+                sa.Task('CONSOLE', 'console_task', 460, 0x2000)]
     options = mock.MagicMock(elf_path='./ec.RW.elf',
-                             taskinfo_path='./ec.RW.taskinfo',
+                             export_taskinfo='none',
+                             section='RW',
                              objdump='objdump',
                              addr2line='addr2line')
     self.analyzer = sa.StackAnalyzer(options, symbols, tasklist)
 
-  def testParseSymbolFile(self):
+  def testParseSymbolText(self):
     symbol_text = (
         '0 g     F .text  e8 Foo\n'
         '0000dead  w    F .text  000000e8 .hidden Bar\n'
@@ -113,7 +114,7 @@ class StackAnalyzerTest(unittest.TestCase):
         'deadbee g     O .rodata        00000008 __Hooo_ooo\n'
         'deadbee g       .rodata        00000000 __foo_doo_coo_end\n'
     )
-    symbols = sa.ParseSymbolFile(symbol_text)
+    symbols = sa.ParseSymbolText(symbol_text)
     expect_symbols = [sa.Symbol(0x0, 'F', 0xe8, 'Foo'),
                       sa.Symbol(0xdead, 'F', 0xe8, 'Bar'),
                       sa.Symbol(0xdeadbeef, 'O', 0x4, 'Woooo'),
@@ -121,19 +122,42 @@ class StackAnalyzerTest(unittest.TestCase):
                       sa.Symbol(0xdeadbee, 'O', 0x0, '__foo_doo_coo_end')]
     self.assertEqual(symbols, expect_symbols)
 
-  def testParseTasklist(self):
-    taskinfo_text = (
-        '("HOOKS", hook_task, 2048) '
-        '("WOOKS", hook_task, 4096) '
-        '("CONSOLE", console_task, STACK_SIZE)'
-    )
-    tasklist = sa.ParseTasklistFile(taskinfo_text, self.analyzer.symbols)
-    expect_tasklist = [
-        sa.Task('HOOKS', 'hook_task', '2048', 0x1000),
-        sa.Task('WOOKS', 'hook_task', '4096', 0x1000),
-        sa.Task('CONSOLE', 'console_task', 'STACK_SIZE', 0x2000),
+  def testLoadTasklist(self):
+    def tasklist_to_taskinfos(pointer, tasklist):
+      taskinfos = []
+      for task in tasklist:
+        taskinfos.append(sa.TaskInfo(name=task.name,
+                                     routine=task.routine_name,
+                                     stack_size=task.stack_max_size))
+
+      TaskInfoArray = sa.TaskInfo * len(taskinfos)
+      pointer.contents.contents = TaskInfoArray(*taskinfos)
+      return len(taskinfos)
+
+    def ro_taskinfos(pointer):
+      return tasklist_to_taskinfos(pointer, expect_ro_tasklist)
+
+    def rw_taskinfos(pointer):
+      return tasklist_to_taskinfos(pointer, expect_rw_tasklist)
+
+    expect_ro_tasklist = [
+        sa.Task('HOOKS', 'hook_task', 2048, 0x1000),
     ]
-    self.assertEqual(tasklist, expect_tasklist)
+
+    expect_rw_tasklist = [
+        sa.Task('HOOKS', 'hook_task', 2048, 0x1000),
+        sa.Task('WOOKS', 'hook_task', 4096, 0x1000),
+        sa.Task('CONSOLE', 'console_task', 460, 0x2000),
+    ]
+
+    export_taskinfo = mock.MagicMock(
+        get_ro_taskinfos=mock.MagicMock(side_effect=ro_taskinfos),
+        get_rw_taskinfos=mock.MagicMock(side_effect=rw_taskinfos))
+
+    tasklist = sa.LoadTasklist('RO', export_taskinfo, self.analyzer.symbols)
+    self.assertEqual(tasklist, expect_ro_tasklist)
+    tasklist = sa.LoadTasklist('RW', export_taskinfo, self.analyzer.symbols)
+    self.assertEqual(tasklist, expect_rw_tasklist)
 
   def testAnalyzeDisassembly(self):
     disasm_text = (
@@ -259,10 +283,12 @@ class StackAnalyzerTest(unittest.TestCase):
       checkoutput_mock.side_effect = [disasm_text, '?', '?', '?']
       self.analyzer.Analyze()
       print_mock.assert_has_calls([
-          mock.call('Task: HOOKS, Max size: 224 (0 + 224)'),
+          mock.call(
+              'Task: HOOKS, Max size: 224 (0 + 224), Allocated size: 2048'),
           mock.call('Call Trace:'),
           mock.call('\thook_task (0) 1000 [?]'),
-          mock.call('Task: CONSOLE, Max size: 232 (8 + 224)'),
+          mock.call(
+              'Task: CONSOLE, Max size: 232 (8 + 224), Allocated size: 460'),
           mock.call('Call Trace:'),
           mock.call('\tconsole_task (8) 2000 [?]'),
       ])
@@ -285,14 +311,16 @@ class StackAnalyzerTest(unittest.TestCase):
                    '2000 g     F .text  0000051c .hidden console_task\n')
 
     parseargs_mock.return_value = mock.MagicMock(elf_path='./ec.RW.elf',
-                                                 taskinfo_path='',
+                                                 export_taskinfo='none',
+                                                 section='RW',
                                                  objdump='objdump',
                                                  addr2line='addr2line')
 
     with mock.patch('__builtin__.print') as print_mock:
       checkoutput_mock.return_value = symbol_text
       sa.main()
-      print_mock.assert_called_once_with('Error: Failed to open taskinfo.')
+      print_mock.assert_called_once_with(
+          'Error: Failed to load export_taskinfo.')
 
     with mock.patch('__builtin__.print') as print_mock:
       checkoutput_mock.side_effect = subprocess.CalledProcessError(1, '')

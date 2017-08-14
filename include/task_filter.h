@@ -46,11 +46,5 @@
 CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
 #endif
 
-/* If included directly from Makefile, dump details of task list. */
-#ifdef _MAKEFILE_DUMP_INFO
-#define TASK(n, r, d, s) (#n, r, s)
-CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
-#endif
-
 
 #endif /*  __CROS_EC_TASK_FILTER_H */

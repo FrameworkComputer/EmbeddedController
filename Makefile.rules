@@ -94,10 +94,11 @@ cmd_sharedlib_elf = $(CC) $(libsharedobjs_deps) \
 	-Wl,-T,common/ec.$(SHOBJLIB).ld $(LDFLAGS) \
 	-o $(out)/$(SHOBJLIB)/$(SHOBJLIB).elf \
 	-Wl,-Map,$(out)/$(SHOBJLIB)/$(SHOBJLIB).map
-cmd_taskinfo = $(CPP) -P -DSECTION_IS_$(3) \
-	-I$(BDIR) -DBOARD_$(UC_BOARD) -D_MAKEFILE_DUMP_INFO \
-	-imacros $(PROJECT).tasklist include/task_filter.h \
-	-o $@
+cmd_c_to_taskinfo = $(BUILDCC) \
+	$(filter-out -DSECTION_IS_$(BLD),$(BUILD_CFLAGS)) -DSECTION_IS_$(3) \
+	-MMD -MF $@.d -c $< -flto -o $@
+cmd_link_taskinfo = $(BUILDCC) $(BUILD_CFLAGS) --shared -fPIC $^ \
+	$(BUILD_LDFLAGS) -flto -o $@
 
 # commands for RSA signature: rwsig does not need to sign the whole image
 # (it signs the RW part separately). usbpd1 type needs to sign the final image.
@@ -427,13 +428,6 @@ $(npcx-flash-fw-bin):
 		-Wl,-Map,$(out)/$(npcx-flash-fw).map
 	-@ $(OBJCOPY) -O binary $(out)/$(npcx-flash-fw).elf $@
 
-# Update taskinfo when the ec.tasklist is modified.
-$(out)/RO/%.taskinfo: $(BDIR)/$(PROJECT).tasklist
-	$(call quiet,taskinfo,TSKINFO,RO)
-
-$(out)/RW/%.taskinfo: $(BDIR)/$(PROJECT).tasklist
-	$(call quiet,taskinfo,TSKINFO,RW)
-
 .PHONY: xrefs
 xrefs: $(call targ_if_prog,etags,$(out)/TAGS) \
 	$(call targ_if_prog,ctags,$(out)/tags)
@@ -547,19 +541,20 @@ newsizes:
 # them first is because elf dependencies will cause the elf files be rebuilt for
 # updating date, which shouldn't happen when analyzing the existing firmwares.
 .PHONY: analyzestack
-analyzestack: $(out)/RO/ec.RO.taskinfo $(out)/RW/ec.RW.taskinfo
+analyzestack: $(out)/util/export_taskinfo.so
 	@if [ "$(SECTION)" != "RO" ] && [ "$(SECTION)" != "RW" ]; then \
 		echo "Please specify SECTION=RO or RW. The default is RW."; \
 		SECTION="RW"; \
 	fi; \
 	ELF=$(out)/$$SECTION/ec.$$SECTION.elf; \
-	TASKLIST=$(out)/$$SECTION/ec.$$SECTION.taskinfo; \
+	EXPORT_TASKINFO=$(out)/util/export_taskinfo.so; \
 	if [ ! -f "$$ELF" ]; then \
 		echo "Some files are missing.  Are they built?"; \
 		exit 1; \
 	fi; \
 	extra/stack_analyzer/stack_analyzer.py --objdump "$(OBJDUMP)" \
-	        --addr2line "$(ADDR2LINE)" "$$ELF" "$$TASKLIST"
+	        --addr2line "$(ADDR2LINE)" --section "$$SECTION" \
+		--export_taskinfo "$$EXPORT_TASKINFO" "$$ELF"
 
 .SECONDARY:
 
