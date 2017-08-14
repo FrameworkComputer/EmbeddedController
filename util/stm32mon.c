@@ -32,6 +32,14 @@
 #include <time.h>
 #include <unistd.h>
 
+/*
+ * Some Ubuntu versions do not export SPI_IOC_WR_MODE32 even though
+ * the kernel shipped on those supports it.
+ */
+#ifndef SPI_IOC_WR_MODE32
+#define SPI_IOC_WR_MODE32		_IOW(SPI_IOC_MAGIC, 5, __u32)
+#endif
+
 /* Monitor command set */
 #define CMD_INIT 0x7f    /* Starts the monitor */
 
