@@ -148,3 +148,25 @@ ifneq ($(CONFIG_RSA_OPTIMIZED),)
 $(out)/RW/common/rsa.o: CFLAGS+=-O3
 $(out)/RO/common/rsa.o: CFLAGS+=-O3
 endif
+
+ifneq ($(CONFIG_TOUCHPAD_HASH_FW),)
+$(out)/RO/common/update_fw.o: $(out)/touchpad_fw_hash.h
+$(out)/RW/common/update_fw.o: $(out)/touchpad_fw_hash.h
+
+$(out)/touchpad_fw_hash.h: $(out)/util/gen_touchpad_hash $(out)/.touchpad_fw
+	$(call quiet,tp_hash,TPHASH )
+
+# We only want to recompute the hash if: $(TOUCHPAD_FW) variable value has
+# changed, or the file pointed at by $(TOUCHPAD_FW) has changed. We do this
+# by recording the latest $(TOUCHPAD_FW) file information in .touchpad_fw.
+
+touchpad_fw_ls := $(shell ls -l "$(TOUCHPAD_FW)" 2>&1)
+old_touchpad_fw_ls := $(shell cat $(out)/.touchpad_fw 2>/dev/null)
+
+$(out)/.touchpad_fw: $(TOUCHPAD_FW)
+	@echo "$(touchpad_fw_ls)" > $@
+
+ifneq ($(touchpad_fw_ls),$(old_touchpad_fw_ls))
+.PHONY: $(out)/.touchpad_fw
+endif
+endif

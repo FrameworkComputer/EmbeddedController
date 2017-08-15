@@ -18,6 +18,17 @@
 #include "util.h"
 #include "vb21_struct.h"
 
+#if defined(CONFIG_TOUCHPAD_VIRTUAL_OFF) && defined(CONFIG_TOUCHPAD_HASH_FW)
+#define CONFIG_TOUCHPAD_FW_CHUNKS \
+	(CONFIG_TOUCHPAD_VIRTUAL_SIZE / CONFIG_UPDATE_PDU_SIZE)
+
+#include "touchpad_fw_hash.h"
+
+BUILD_ASSERT(sizeof(touchpad_fw_hashes) ==
+		(CONFIG_TOUCHPAD_FW_CHUNKS * SHA256_DIGEST_SIZE));
+BUILD_ASSERT(sizeof(touchpad_fw_hashes[0]) == SHA256_DIGEST_SIZE);
+#endif
+
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
 /* Section to be updated (i.e. not the current section). */

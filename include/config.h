@@ -2347,6 +2347,12 @@
 #undef CONFIG_TOUCHPAD_VIRTUAL_OFF
 #undef CONFIG_TOUCHPAD_VIRTUAL_SIZE
 
+/*
+ * Include hashes of the touchpad FW in the EC image, passed as TOUCHPAD_FW
+ * parameter to make command.
+ */
+#undef CONFIG_TOUCHPAD_HASH_FW
+
 /*****************************************************************************/
 /* TPM-like configuration */
 

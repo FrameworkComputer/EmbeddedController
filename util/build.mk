@@ -39,6 +39,19 @@ $(out)/util/usb_pd_policy.o: board/$(BOARD)/usb_pd_policy.c
 deps-$(CONFIG_USB_POWER_DELIVERY) += $(out)/util/usb_pd_policy.o.d
 endif # CONFIG_USB_POWER_DELIVERY
 
+ifneq ($(CONFIG_TOUCHPAD_HASH_FW),)
+build-util-bin += gen_touchpad_hash
+
+# Assume RW section (touchpad FW must be identical for both RO+RW)
+$(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += -DSECTION_IS_RW
+
+OPENSSL_CFLAGS := $(shell $(PKG_CONFIG) --libs openssl)
+OPENSSL_LDFLAGS := $(shell $(PKG_CONFIG) --libs openssl)
+
+$(out)/util/gen_touchpad_hash: BUILD_CFLAGS += $(OPENSSL_CFLAGS)
+$(out)/util/gen_touchpad_hash: BUILD_LDFLAGS += $(OPENSSL_LDFLAGS)
+endif # CONFIG_TOUCHPAD_VIRTUAL_OFF
+
 $(out)/util/export_taskinfo.so: $(out)/util/export_taskinfo_ro.o \
 			$(out)/util/export_taskinfo_rw.o
 	$(call quiet,link_taskinfo,BUILDLD)

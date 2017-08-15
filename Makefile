@@ -36,6 +36,10 @@ config=$(out)/.config
 # If no key file is provided, use the default dev key
 PEM ?= $(BDIR)/dev_key.pem
 
+# If CONFIG_TOUCHPAD_HASH_FW is set, include hashes of a touchpad firmware in
+# the EC image (if no touchpad firmware is provided, just output blank hashes).
+TOUCHPAD_FW ?=
+
 include Makefile.toolchain
 
 # Define the traditional first target. The dependencies of this are near the
