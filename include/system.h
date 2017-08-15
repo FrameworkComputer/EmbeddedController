@@ -42,6 +42,7 @@ enum system_image_copy_t {
 	SYSTEM_IMAGE_UNKNOWN = 0,
 	SYSTEM_IMAGE_RO,
 	SYSTEM_IMAGE_RW,
+	SYSTEM_IMAGE_RW_A = SYSTEM_IMAGE_RW,
 	/* Some systems may have these too */
 	SYSTEM_IMAGE_RO_B,
 	SYSTEM_IMAGE_RW_B,
@@ -560,5 +561,19 @@ static inline void system_print_extended_version_info(void)
  * @return true if the system is powered enough or false otherwise
  */
 int system_can_boot_ap(void);
+
+enum flash_rw_slot {
+	/* Must be 0 and 1 because they are converted by 1 - slot_x. */
+	FLASH_RW_SLOT_A = 0,
+	FLASH_RW_SLOT_B = 1,
+};
+
+/**
+ * Get flash offset of a RW slot
+ *
+ * @param slot Slot index to get the flash offset of.
+ * @return     Flash offset of the slot specified by <slot>
+ */
+uint32_t flash_get_rw_offset(enum flash_rw_slot slot);
 
 #endif  /* __CROS_EC_SYSTEM_H */

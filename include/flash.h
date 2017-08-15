@@ -102,6 +102,31 @@ enum flash_region {
 	FLASH_REGION_COUNT
 };
 
+/**
+ * Get active slot
+ *
+ * Active slot contains an image which is being executed or will be executed
+ * after sysjump.
+ *
+ * @return Active slot index
+ */
+enum flash_rw_slot flash_get_active_slot(void);
+
+/**
+ * Get updatable (non-active) slot
+ *
+ * @return Updatable slot index
+ */
+enum flash_rw_slot flash_get_update_slot(void);
+
+/**
+ * Translate slot index to image index
+ *
+ * @param slot Slot index to convert.
+ * @return     Image index converted from <slot>
+ */
+enum system_image_copy_t flash_slot_to_image(enum flash_rw_slot slot);
+
 /*****************************************************************************/
 /* Low-level methods, for use by flash_common. */
 

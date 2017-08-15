@@ -6232,7 +6232,7 @@ int cmd_ec_hash(int argc, char *argv[])
 		p.size = 0;
 		printf("Hashing EC-RO...\n");
 	} else if (!strcasecmp(argv[2], "rw")) {
-		p.offset = EC_VBOOT_HASH_OFFSET_RW;
+		p.offset = EC_VBOOT_HASH_OFFSET_ACTIVE;
 		p.size = 0;
 		printf("Hashing EC-RW...\n");
 	} else if (argc < 4) {

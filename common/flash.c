@@ -1286,6 +1286,28 @@ static int flash_command_protect(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
+enum flash_rw_slot flash_get_active_slot(void)
+{
+	uint8_t slot;
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, &slot))
+		slot = FLASH_RW_SLOT_A;
+	return slot;
+}
+
+enum flash_rw_slot flash_get_update_slot(void)
+{
+#ifdef CONFIG_VBOOT_EFS
+	return 1 - flash_get_active_slot();
+#else
+	return FLASH_RW_SLOT_A;
+#endif
+}
+
+enum system_image_copy_t flash_slot_to_image(enum flash_rw_slot slot)
+{
+	return slot == FLASH_RW_SLOT_A ? SYSTEM_IMAGE_RW_A : SYSTEM_IMAGE_RW_B;
+}
+
 /*
  * TODO(crbug.com/239197) : Adding both versions to the version mask is a
  * temporary workaround for a problem in the cros_ec driver. Drop
@@ -1307,16 +1329,20 @@ static int flash_command_region_info(struct host_cmd_handler_args *args)
 			    EC_FLASH_REGION_START;
 		r->size = CONFIG_RO_SIZE;
 		break;
-	case EC_FLASH_REGION_RW:
-		r->offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-			    CONFIG_RW_STORAGE_OFF -
-			    EC_FLASH_REGION_START;
+	case EC_FLASH_REGION_ACTIVE:
+		r->offset = flash_get_rw_offset(flash_get_active_slot()) -
+				EC_FLASH_REGION_START;
 		r->size = CONFIG_RW_SIZE;
 		break;
 	case EC_FLASH_REGION_WP_RO:
 		r->offset = CONFIG_WP_STORAGE_OFF -
 			    EC_FLASH_REGION_START;
 		r->size = CONFIG_WP_STORAGE_SIZE;
+		break;
+	case EC_FLASH_REGION_UPDATE:
+		r->offset = flash_get_rw_offset(flash_get_update_slot()) -
+				EC_FLASH_REGION_START;
+		r->size = CONFIG_RW_SIZE;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;

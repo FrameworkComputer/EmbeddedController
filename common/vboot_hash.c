@@ -219,6 +219,18 @@ int vboot_hash_invalidate(int offset, int size)
 /*****************************************************************************/
 /* Hooks */
 
+/**
+ * Returns the size of a RW copy to be hashed as expected by Softsync.
+ */
+static uint32_t get_rw_size(void)
+{
+#ifdef CONFIG_VBOOT_EFS
+	return CONFIG_RW_SIZE;
+#else
+	return system_get_image_used(SYSTEM_IMAGE_RW);
+#endif
+}
+
 static void vboot_hash_init(void)
 {
 #ifdef CONFIG_SAVE_VBOOT_HASH
@@ -249,10 +261,8 @@ static void vboot_hash_init(void)
 #endif
 	{
 		/* Start computing the hash of RW firmware */
-		vboot_hash_start(CONFIG_EC_WRITABLE_STORAGE_OFF +
-				 CONFIG_RW_STORAGE_OFF,
-				 system_get_image_used(SYSTEM_IMAGE_RW),
-				 NULL, 0);
+		vboot_hash_start(flash_get_rw_offset(flash_get_active_slot()),
+				 get_rw_size(), NULL, 0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, vboot_hash_init, HOOK_PRIO_INIT_VBOOT_HASH);
@@ -278,6 +288,21 @@ static int vboot_hash_preserve_state(void)
 DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
 
 #endif
+
+/**
+ * Returns the offset of RO or RW image if the either region is specifically
+ * requested otherwise return the current hash offset.
+ */
+static int get_offset(int offset)
+{
+	if (offset == EC_VBOOT_HASH_OFFSET_RO)
+		return CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
+	if (offset == EC_VBOOT_HASH_OFFSET_ACTIVE)
+		return flash_get_rw_offset(flash_get_active_slot());
+	if (offset == EC_VBOOT_HASH_OFFSET_UPDATE)
+		return flash_get_rw_offset(flash_get_update_slot());
+	return offset;
+}
 
 /****************************************************************************/
 /* Console commands */
@@ -311,10 +336,8 @@ static int command_hash(int argc, char **argv)
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[1], "rw")) {
 			return vboot_hash_start(
-				CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_STORAGE_OFF,
-				system_get_image_used(SYSTEM_IMAGE_RW),
-				NULL, 0);
+					get_offset(EC_VBOOT_HASH_OFFSET_ACTIVE),
+					get_rw_size(), NULL, 0);
 		} else if (!strcasecmp(argv[1], "ro")) {
 			return vboot_hash_start(
 				CONFIG_EC_PROTECTED_STORAGE_OFF +
@@ -351,19 +374,6 @@ DECLARE_CONSOLE_COMMAND(hash, command_hash,
 #endif /* CONFIG_CMD_HASH */
 /****************************************************************************/
 /* Host commands */
-
-/**
- * Return the offset of the RO or RW region if the either region is specifically
- * requested otherwise return the current hash offset.
- */
-static int get_offset(int offset)
-{
-	if (offset == EC_VBOOT_HASH_OFFSET_RO)
-		return CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
-	if (offset == EC_VBOOT_HASH_OFFSET_RW)
-		return CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
-	return data_offset;
-}
 
 /* Fill in the response with the current hash status */
 static void fill_response(struct ec_response_vboot_hash *r,
@@ -403,14 +413,12 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 		return EC_RES_INVALID_PARAM;
 
 	/* Handle special offset values */
-	if (offset == EC_VBOOT_HASH_OFFSET_RO) {
-		offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
-			 CONFIG_RO_STORAGE_OFF;
+	if (offset == EC_VBOOT_HASH_OFFSET_RO)
 		size = system_get_image_used(SYSTEM_IMAGE_RO);
-	} else if (p->offset == EC_VBOOT_HASH_OFFSET_RW) {
-		offset = CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
-		size = system_get_image_used(SYSTEM_IMAGE_RW);
-	}
+	else if ((offset == EC_VBOOT_HASH_OFFSET_ACTIVE) ||
+			(offset == EC_VBOOT_HASH_OFFSET_UPDATE))
+		size = get_rw_size();
+	offset = get_offset(offset);
 	rv = vboot_hash_start(offset, size, p->nonce_data, p->nonce_size);
 
 	if (rv == EC_SUCCESS)
