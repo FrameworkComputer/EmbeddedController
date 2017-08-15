@@ -1384,7 +1384,17 @@ int host_command_reboot(struct host_cmd_handler_args *args)
 		/* Cancel pending reboot */
 		reboot_at_shutdown = EC_REBOOT_CANCEL;
 		return EC_RES_SUCCESS;
-	} else if (p.flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN) {
+	}
+
+	if (p.flags & EC_REBOOT_FLAG_SWITCH_RW_SLOT) {
+#ifdef CONFIG_VBOOT_EFS
+		if (system_set_active_copy(system_get_update_copy()))
+			CPRINTS("Failed to set active slot");
+#else
+		return EC_RES_INVALID_PARAM;
+#endif
+	}
+	if (p.flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN) {
 		/* Store request for processing at chipset shutdown */
 		reboot_at_shutdown = p.cmd;
 		return EC_RES_SUCCESS;

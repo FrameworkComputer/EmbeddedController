@@ -3826,6 +3826,7 @@ enum ec_reboot_cmd {
 /* Flags for ec_params_reboot_ec.reboot_flags */
 #define EC_REBOOT_FLAG_RESERVED0      (1 << 0)  /* Was recovery request */
 #define EC_REBOOT_FLAG_ON_AP_SHUTDOWN (1 << 1)  /* Reboot after AP shutdown */
+#define EC_REBOOT_FLAG_SWITCH_RW_SLOT (1 << 2)  /* Switch RW slot */
 
 struct __ec_align1 ec_params_reboot_ec {
 	uint8_t cmd;           /* enum ec_reboot_cmd */
