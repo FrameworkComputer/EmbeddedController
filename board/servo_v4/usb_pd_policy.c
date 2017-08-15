@@ -499,7 +499,8 @@ void pd_check_dr_role(int port, int dr_role, int flags)
 		return;
 
 	/* If DFP, try to switch to UFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP &&
+	    !disable_dts_mode)
 		pd_request_data_swap(port);
 }
 
