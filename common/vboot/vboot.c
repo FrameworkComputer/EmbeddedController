@@ -25,11 +25,6 @@
 #define CPRINTS(format, args...) cprints(CC_VBOOT,"VB " format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_VBOOT,"VB " format, ## args)
 
-enum vboot_ec_slot {
-	VBOOT_EC_SLOT_A,
-	VBOOT_EC_SLOT_B,
-};
-
 static int has_matrix_keyboard(void)
 {
 	return 0;
@@ -49,7 +44,7 @@ static int is_low_power_ap_boot_supported(void)
 	return 0;
 }
 
-static int verify_slot(int slot)
+static int verify_slot(enum system_image_copy_t slot)
 {
 	const struct vb21_packed_key *vb21_key;
 	const struct vb21_signature *vb21_sig;
@@ -59,7 +54,7 @@ static int verify_slot(int slot)
 	int len;
 	int rv;
 
-	CPRINTS("Verifying RW_%c", slot ? 'B' : 'A');
+	CPRINTS("Verifying %s", system_image_copy_t_to_string(slot));
 
 	vb21_key = (const struct vb21_packed_key *)(
 			CONFIG_MAPPED_STORAGE_BASE +
@@ -73,7 +68,7 @@ static int verify_slot(int slot)
 	key = (const struct rsa_public_key *)
 		((const uint8_t *)vb21_key + vb21_key->key_offset);
 
-	if (slot == VBOOT_EC_SLOT_A) {
+	if (slot == SYSTEM_IMAGE_RW_A) {
 		data = (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
 				CONFIG_EC_WRITABLE_STORAGE_OFF +
 				CONFIG_RW_A_STORAGE_OFF);
@@ -111,39 +106,41 @@ static int verify_slot(int slot)
 		return EC_ERROR_INVAL;
 	}
 
-	CPRINTS("Verified RW_%c", slot ? 'B' : 'A');
+	CPRINTS("Verified %s", system_image_copy_t_to_string(slot));
 
 	return EC_SUCCESS;
 }
 
 static int verify_and_jump(void)
 {
-	uint8_t slot;
+	enum system_image_copy_t slot;
 	int rv;
 
 	/* 1. Decide which slot to try */
-	if (system_get_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, &slot)) {
-		CPRINTS("Failed to read try slot");
-		slot = VBOOT_EC_SLOT_A;
-	}
+	slot = system_get_active_copy();
 
 	/* 2. Verify the slot */
 	rv = verify_slot(slot);
 	if (rv) {
-		if (rv != EC_ERROR_INVAL)
-			/* Unknown error. The other slot isn't worth trying. */
+		if (rv == EC_ERROR_VBOOT_KEY)
+			/* Key error. The other slot isn't worth trying. */
 			return rv;
-		/* Verification error. The other slot is worth trying. */
-		slot = 1 - slot;
-		if (verify_slot(slot))
+		slot = system_get_update_copy();
+		/* TODO(chromium:767050): Skip reading key again. */
+		rv = verify_slot(slot);
+		if (rv)
 			/* Both slots failed */
 			return rv;
-		/* Proceed with the other slot. AP will help us fix it. */
+
+		/* Proceed with the other slot. If this slot isn't expected, AP
+		 * will catch it and request recovery after a few attempts. */
+		if (system_set_active_copy(slot))
+			CPRINTS("Failed to activate %s",
+				system_image_copy_t_to_string(slot));
 	}
 
 	/* 3. Jump (and reboot) */
-	rv = system_run_image_copy(slot == VBOOT_EC_SLOT_A ?
-			SYSTEM_IMAGE_RW : SYSTEM_IMAGE_RW_B);
+	rv = system_run_image_copy(slot);
 	CPRINTS("Failed to jump (%d)", rv);
 
 	return rv;
@@ -152,13 +149,13 @@ static int verify_and_jump(void)
 /* Request more power: charging battery or more powerful AC adapter */
 static void request_power(void)
 {
-	/* TODO: Blink LED */
+	/* TODO(crosbug.com/p/37646390): Blink LED */
 	CPRINTS("%s", __func__);
 }
 
 static void request_recovery(void)
 {
-	/* TODO: Blink LED */
+	/* TODO(crosbug.com/p/37646390): Blink LED */
 	CPRINTS("%s", __func__);
 }
 
@@ -226,7 +223,6 @@ static void vboot_main(void)
 		 * keyboard */
 		CPRINTS("Enable C%d PD comm", port);
 		pd_comm_enable(port, 1);
-		/* TODO: Inform PD task and make it negotiate */
 		return;
 	}
 

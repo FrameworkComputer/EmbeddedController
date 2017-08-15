@@ -562,18 +562,37 @@ static inline void system_print_extended_version_info(void)
  */
 int system_can_boot_ap(void);
 
-enum flash_rw_slot {
-	/* Must be 0 and 1 because they are converted by 1 - slot_x. */
-	FLASH_RW_SLOT_A = 0,
-	FLASH_RW_SLOT_B = 1,
-};
+/**
+ * Get active image copy
+ *
+ * Active slot contains an image which is being executed or will be executed
+ * after sysjump.
+ *
+ * @return Active copy index
+ */
+enum system_image_copy_t system_get_active_copy(void);
 
 /**
- * Get flash offset of a RW slot
+ * Get updatable (non-active) image copy
  *
- * @param slot Slot index to get the flash offset of.
- * @return     Flash offset of the slot specified by <slot>
+ * @return Updatable copy index
  */
-uint32_t flash_get_rw_offset(enum flash_rw_slot slot);
+enum system_image_copy_t system_get_update_copy(void);
+
+/**
+ * Set active image copy
+ *
+ * @param copy Copy id to be activated.
+ * @return     Non-zero if error.
+ */
+int system_set_active_copy(enum system_image_copy_t copy);
+
+/**
+ * Get flash offset of a RW copy
+ *
+ * @param copy Copy index to get the flash offset of.
+ * @return     Flash offset of the slot storing <copy>
+ */
+uint32_t flash_get_rw_offset(enum system_image_copy_t copy);
 
 #endif  /* __CROS_EC_SYSTEM_H */

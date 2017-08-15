@@ -412,30 +412,24 @@ test_mockable int system_unsafe_to_overwrite(uint32_t offset, uint32_t size)
 {
 	uint32_t r_offset;
 	uint32_t r_size;
+	enum system_image_copy_t copy = system_get_image_copy();
 
-	switch (system_get_image_copy()) {
+	switch (copy) {
 	case SYSTEM_IMAGE_RO:
-		r_offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
-			   CONFIG_RO_STORAGE_OFF;
 		r_size = CONFIG_RO_SIZE;
 		break;
 	case SYSTEM_IMAGE_RW:
-		r_offset = flash_get_rw_offset(FLASH_RW_SLOT_A);
+	case SYSTEM_IMAGE_RW_B:
 		r_size = CONFIG_RW_SIZE;
 #ifdef CONFIG_RWSIG
 		/* Allow RW sig to be overwritten */
 		r_size -= CONFIG_RW_SIG_SIZE;
 #endif
 		break;
-#ifdef CONFIG_VBOOT_EFS
-	case SYSTEM_IMAGE_RW_B:
-		r_offset = flash_get_rw_offset(FLASH_RW_SLOT_B);
-		r_size = CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE;
-		break;
-#endif
 	default:
 		return 0;
 	}
+	r_offset = flash_get_rw_offset(copy);
 
 	if ((offset >= r_offset && offset < (r_offset + r_size)) ||
 	    (r_offset >= offset && r_offset < (offset + size)))
@@ -619,17 +613,45 @@ int system_run_image_copy(enum system_image_copy_t copy)
 	return EC_ERROR_UNKNOWN;
 }
 
+enum system_image_copy_t system_get_active_copy(void)
+{
+	uint8_t slot;
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, &slot))
+		slot = SYSTEM_IMAGE_RW_A;
+	/* This makes it return RW_A by default. For example, this happens when
+	 * BBRAM isn't initialized. */
+	return slot == SYSTEM_IMAGE_RW_B ? slot : SYSTEM_IMAGE_RW_A;
+}
+
+enum system_image_copy_t system_get_update_copy(void)
+{
+#ifdef CONFIG_VBOOT_EFS
+	return system_get_active_copy() == SYSTEM_IMAGE_RW_A ?
+			SYSTEM_IMAGE_RW_B : SYSTEM_IMAGE_RW_A;
+#else
+	return SYSTEM_IMAGE_RW_A;
+#endif
+}
+
+int system_set_active_copy(enum system_image_copy_t copy)
+{
+	return system_set_bbram(SYSTEM_BBRAM_IDX_TRY_SLOT, copy);
+}
+
 /*
  * This is defined in system.c instead of flash.c because it's called even
  * on the boards which don't include flash.o. (e.g. hadoken, stm32l476g-eval)
  */
-uint32_t flash_get_rw_offset(enum flash_rw_slot slot)
+uint32_t flash_get_rw_offset(enum system_image_copy_t copy)
 {
 #ifdef CONFIG_VBOOT_EFS
-	if (slot == FLASH_RW_SLOT_B)
+	if (copy == SYSTEM_IMAGE_RW_B)
 		return CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_B_STORAGE_OFF;
 #endif
-	return CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
+	if (is_rw_image(copy))
+		return CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
+
+	return CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 }
 
 static const struct image_data *system_get_image_data(
@@ -657,17 +679,7 @@ static const struct image_data *system_get_image_data(
 	 * Read the version information from the proper location
 	 * on storage.
 	 */
-	switch (copy) {
-	case SYSTEM_IMAGE_RW:
-		addr += flash_get_rw_offset(FLASH_RW_SLOT_A);
-		break;
-	case SYSTEM_IMAGE_RW_B:
-		addr += flash_get_rw_offset(FLASH_RW_SLOT_B);
-		break;
-	default:
-		addr += CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
-		break;
-	}
+	addr += flash_get_rw_offset(copy);
 
 #ifdef CONFIG_MAPPED_STORAGE
 	addr += CONFIG_MAPPED_STORAGE_BASE;
@@ -1224,12 +1236,12 @@ DECLARE_CONSOLE_COMMAND(sysrq, command_sysrq,
 static int host_command_get_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_version *r = args->response;
-	enum flash_rw_slot active_slot = flash_get_active_slot();
+	enum system_image_copy_t active_slot = system_get_active_copy();
 
 	strzcpy(r->version_string_ro, system_get_version(SYSTEM_IMAGE_RO),
 		sizeof(r->version_string_ro));
 	strzcpy(r->version_string_rw,
-		system_get_version(flash_slot_to_image(active_slot)),
+		system_get_version(active_slot),
 		sizeof(r->version_string_rw));
 
 	switch (system_get_image_copy()) {

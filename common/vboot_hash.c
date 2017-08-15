@@ -261,7 +261,7 @@ static void vboot_hash_init(void)
 #endif
 	{
 		/* Start computing the hash of RW firmware */
-		vboot_hash_start(flash_get_rw_offset(flash_get_active_slot()),
+		vboot_hash_start(flash_get_rw_offset(system_get_active_copy()),
 				 get_rw_size(), NULL, 0);
 	}
 }
@@ -298,9 +298,9 @@ static int get_offset(int offset)
 	if (offset == EC_VBOOT_HASH_OFFSET_RO)
 		return CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 	if (offset == EC_VBOOT_HASH_OFFSET_ACTIVE)
-		return flash_get_rw_offset(flash_get_active_slot());
+		return flash_get_rw_offset(system_get_active_copy());
 	if (offset == EC_VBOOT_HASH_OFFSET_UPDATE)
-		return flash_get_rw_offset(flash_get_update_slot());
+		return flash_get_rw_offset(system_get_update_copy());
 	return offset;
 }
 
