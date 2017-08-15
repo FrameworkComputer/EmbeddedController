@@ -183,13 +183,13 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[0] = {
 		.i2c_host_port = NPCX_I2C_PORT0_0,
 		.i2c_slave_addr = 0x16,
-		.drv = &tcpci_tcpm_drv,
+		.drv = &ps8xxx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
 	[1] = {
 		.i2c_host_port = NPCX_I2C_PORT0_1,
 		.i2c_slave_addr = 0x16,
-		.drv = &tcpci_tcpm_drv,
+		.drv = &ps8xxx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
 };

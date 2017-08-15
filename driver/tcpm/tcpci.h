@@ -122,6 +122,8 @@
 extern const struct tcpm_drv tcpci_tcpm_drv;
 extern const struct usb_mux_driver tcpci_tcpm_usb_mux_driver;
 
+void tcpci_tcpc_alert(int port);
+int tcpci_tcpm_init(int port);
 int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2);
 int tcpci_tcpm_get_vbus_level(int port);
 int tcpci_tcpm_select_rp_value(int port, int rp);
@@ -133,6 +135,13 @@ int tcpci_tcpm_set_rx_enable(int port, int enable);
 int tcpci_tcpm_get_message(int port, uint32_t *payload, int *head);
 int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 			uint16_t header, const uint32_t *data);
+int tcpci_tcpm_release(int port);
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+int tcpci_tcpc_drp_toggle(int port, int enable);
+#endif
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+void tcpci_tcpc_discharge_vbus(int port, int enable);
+#endif
 
 int tcpci_tcpm_mux_init(int i2c_addr);
 int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);

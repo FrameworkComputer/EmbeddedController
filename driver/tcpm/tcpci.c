@@ -108,7 +108,7 @@ int tcpci_tcpm_select_rp_value(int port, int rp)
 }
 
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-static void tcpci_tcpc_discharge_vbus(int port, int enable)
+void tcpci_tcpc_discharge_vbus(int port, int enable)
 {
 	int reg;
 
@@ -137,7 +137,7 @@ int tcpci_tcpm_set_cc(int port, int pull)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-static int tcpci_tcpc_drp_toggle(int port, int enable)
+int tcpci_tcpc_drp_toggle(int port, int enable)
 {
 	int rv;
 
