@@ -76,6 +76,9 @@ class Task(object):
     Returns:
       True if equal, False if not.
     """
+    if not isinstance(other, Task):
+      return False
+
     return (self.name == other.name and
             self.routine_name == other.routine_name and
             self.stack_max_size == other.stack_max_size and
@@ -116,6 +119,9 @@ class Symbol(object):
     Returns:
       True if equal, False if not.
     """
+    if not isinstance(other, Symbol):
+      return False
+
     return (self.address == other.address and
             self.symtype == other.symtype and
             self.size == other.size and
@@ -156,6 +162,9 @@ class Callsite(object):
     Returns:
       True if equal, False if not.
     """
+    if not isinstance(other, Callsite):
+      return False
+
     if not (self.address == other.address and
             self.target == other.target and
             self.is_tail == other.is_tail):
@@ -217,6 +226,9 @@ class Function(object):
     Returns:
       True if equal, False if not.
     """
+    if not isinstance(other, Function):
+      return False
+
     # TODO(cheyuw): Don't compare SCC node attributes here.
     if not (self.address == other.address and
             self.name == other.name and

@@ -14,6 +14,38 @@ import unittest
 import stack_analyzer as sa
 
 
+class ObjectTest(unittest.TestCase):
+  """Tests for classes of basic objects."""
+
+  def testTask(self):
+    task_a = sa.Task('a', 'a_task', 1234)
+    task_b = sa.Task('b', 'b_task', 5678, 0x1000)
+    self.assertEqual(task_a, task_a)
+    self.assertNotEqual(task_a, task_b)
+    self.assertNotEqual(task_a, None)
+
+  def testSymbol(self):
+    symbol_a = sa.Symbol(0x1234, 'F', 32, 'a')
+    symbol_b = sa.Symbol(0x234, 'O', 42, 'b')
+    self.assertEqual(symbol_a, symbol_a)
+    self.assertNotEqual(symbol_a, symbol_b)
+    self.assertNotEqual(symbol_a, None)
+
+  def testCallsite(self):
+    callsite_a = sa.Callsite(0x1002, 0x3000, False)
+    callsite_b = sa.Callsite(0x1002, 0x3000, True)
+    self.assertEqual(callsite_a, callsite_a)
+    self.assertNotEqual(callsite_a, callsite_b)
+    self.assertNotEqual(callsite_a, None)
+
+  def testFunction(self):
+    func_a = sa.Function(0x100, 'a', 0, [])
+    func_b = sa.Function(0x200, 'b', 0, [])
+    self.assertEqual(func_a, func_a)
+    self.assertNotEqual(func_a, func_b)
+    self.assertNotEqual(func_a, None)
+
+
 class ArmAnalyzerTest(unittest.TestCase):
   """Tests for class ArmAnalyzer."""
 
