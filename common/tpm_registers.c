@@ -11,7 +11,6 @@
 
 #include "byteorder.h"
 #include "console.h"
-#include "device_state.h"
 #include "extension.h"
 #include "link_defs.h"
 #include "nvmem.h"
@@ -829,7 +828,7 @@ void tpm_task(void)
 		 * up. No need to worry about the AP state in chip factory
 		 * mode of course.
 		 */
-		while (device_get_state(DEVICE_AP) != DEVICE_STATE_ON) {
+		while (!ap_is_on()) {
 			/*
 			 * The only event we should expect at this point would
 			 * be the reset request.

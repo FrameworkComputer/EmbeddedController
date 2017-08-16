@@ -219,6 +219,11 @@ void board_reboot_ap(void);
 int board_wipe_tpm(void);
 int board_is_first_factory_boot(void);
 
+int ap_is_on(void);
+int ec_is_on(void);
+int rdd_is_connected(void);
+int servo_is_connected(void);
+
 /* Returns True if chip is brought up in a factory test harness. */
 int chip_factory_mode(void);
 

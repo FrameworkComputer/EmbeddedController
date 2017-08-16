@@ -5,7 +5,6 @@
 
 #include "case_closed_debug.h"
 #include "console.h"
-#include "device_state.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -73,13 +72,13 @@ void usb_i2c_board_disable(void)
 
 int usb_i2c_board_enable(void)
 {
-	if (device_get_state(DEVICE_SERVO) == DEVICE_STATE_ON) {
-		CPRINTS("Servo is attached I2C cannot be enabled");
+	if (servo_is_connected()) {
+		CPRINTS("Servo attached; cannot enable I2C");
 		usb_i2c_board_disable();
 		return EC_ERROR_BUSY;
 	}
 
-	if (ccd_get_mode() != CCD_MODE_ENABLED)
+	if (!rdd_is_connected())
 		return EC_ERROR_BUSY;
 
 	if (!ccd_is_cap_enabled(CCD_CAP_I2C))

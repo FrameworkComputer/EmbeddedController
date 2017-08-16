@@ -7,7 +7,6 @@
 
 #include "console.h"
 #include "dcrypto.h"
-#include "device_state.h"
 #include "extension.h"
 #include "nvmem_vars.h"
 #include "rbox.h"
@@ -30,8 +29,7 @@ static timestamp_t last_press;
 
 void power_button_record(void)
 {
-	if (device_get_state(DEVICE_AP) == DEVICE_STATE_ON &&
-	    rbox_powerbtn_is_pressed())
+	if (ap_is_on() && rbox_powerbtn_is_pressed())
 		last_press = get_time();
 }
 

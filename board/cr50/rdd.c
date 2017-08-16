@@ -33,7 +33,7 @@ static struct uart_config uarts[] = {
 	[UART_EC] = {"EC", DEVICE_EC, GC_PINMUX_UART2_TX_SEL},
 };
 
-static int ccd_is_enabled(void)
+int rdd_is_connected(void)
 {
 	return ccd_get_mode() == CCD_MODE_ENABLED;
 }
@@ -71,7 +71,7 @@ static void uart_select_tx(int uart, int signal)
 	}
 }
 
-static int servo_is_connected(void)
+int servo_is_connected(void)
 {
 	return device_get_state(DEVICE_SERVO) == DEVICE_STATE_ON;
 }
@@ -84,7 +84,7 @@ void uartn_tx_connect(int uart)
 	if (uart == UART_EC && !ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX))
 		return;
 
-	if (!ccd_is_enabled())
+	if (!rdd_is_connected())
 		return;
 
 	if (servo_is_connected()) {
@@ -108,7 +108,7 @@ void uartn_tx_disconnect(int uart)
 static void configure_ccd(int enable)
 {
 	if (enable) {
-		if (ccd_is_enabled())
+		if (rdd_is_connected())
 			return;
 
 		/* Enable CCD */
@@ -170,7 +170,7 @@ static void rdd_check_pin(void)
 	if (keep_ccd_enabled)
 		enable = 1;
 
-	if (enable == ccd_is_enabled())
+	if (enable == rdd_is_connected())
 		return;
 
 	configure_ccd(enable);
@@ -228,7 +228,7 @@ static int command_ccd(int argc, char **argv)
 		} else if (!strcasecmp("keepalive", argv[1])) {
 			if (val) {
 				/* Make sure ccd is enabled */
-				if (!ccd_is_enabled())
+				if (!rdd_is_connected())
 					rdd_attached();
 
 				keep_ccd_enabled = 1;
@@ -253,7 +253,7 @@ static int command_ccd(int argc, char **argv)
 
 	ccprintf("CCD:     %s\n",
 		keep_ccd_enabled ? "forced enable" :
-		ccd_is_enabled() ? "enabled" : "disabled");
+		rdd_is_connected() ? "enabled" : "disabled");
 	ccprintf("AP UART: %s\n",
 		 uartn_is_enabled(UART_AP) ?
 		 uart_tx_is_connected(UART_AP) ? "RX+TX" : "RX" : "disabled");

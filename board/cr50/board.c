@@ -514,6 +514,16 @@ static void init_interrupts(void)
 static void deferred_tpm_rst_isr(void);
 DECLARE_DEFERRED(deferred_tpm_rst_isr);
 
+int ap_is_on(void)
+{
+	return device_get_state(DEVICE_AP) == DEVICE_STATE_ON;
+}
+
+int ec_is_on(void)
+{
+	return device_get_state(DEVICE_EC) == DEVICE_STATE_ON;
+}
+
 static void configure_board_specific_gpios(void)
 {
 	/* Add a pullup to sys_rst_l */
