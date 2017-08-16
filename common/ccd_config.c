@@ -347,7 +347,7 @@ void test_ccd_change_hook(void)
 {
 	CPRINTS("CCD change hook called");
 }
-DECLARE_HOOK(HOOK_CCD_CHANGE, test_ccd_change_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CCD_CHANGE, test_ccd_change_hook, HOOK_PRIO_FIRST);
 #endif
 
 /**
