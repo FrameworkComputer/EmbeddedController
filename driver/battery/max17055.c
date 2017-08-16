@@ -237,7 +237,7 @@ void battery_get_params(struct batt_params *batt)
 	if (max17055_read(REG_TEMPERATURE, &reg))
 		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
 
-	batt->temperature = TEMPERATURE_CONV(reg);
+	batt->temperature = TEMPERATURE_CONV((int16_t)reg);
 
 	if (max17055_read(REG_STATE_OF_CHARGE, &reg) &&
 	    fake_state_of_charge < 0)
@@ -254,7 +254,7 @@ void battery_get_params(struct batt_params *batt)
 	if (max17055_read(REG_AVERAGE_CURRENT, &reg))
 		batt->flags |= BATT_FLAG_BAD_CURRENT;
 
-	batt->current = CURRENT_CONV(reg);
+	batt->current = CURRENT_CONV((int16_t)reg);
 
 	/* Default to not desiring voltage and current */
 	batt->desired_voltage = batt->desired_current = 0;
