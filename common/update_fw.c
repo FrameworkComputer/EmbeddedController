@@ -121,20 +121,32 @@ static void new_chunk_written(uint32_t block_offset)
 static int contents_allowed(uint32_t block_offset,
 			    size_t body_size, void *update_data)
 {
-#ifdef CONFIG_TOUCHPAD_VIRTUAL_OFF
+#if defined(CONFIG_TOUCHPAD_VIRTUAL_OFF) && defined(CONFIG_TOUCHPAD_HASH_FW)
 	if (is_touchpad_block(block_offset, body_size)) {
 		struct sha256_ctx ctx;
 		uint8_t *tmp;
+		uint32_t fw_offset = block_offset - CONFIG_TOUCHPAD_VIRTUAL_OFF;
+		unsigned int chunk = fw_offset / CONFIG_UPDATE_PDU_SIZE;
+		int good = 0;
+
+		if (chunk >= CONFIG_TOUCHPAD_FW_CHUNKS ||
+				(fw_offset % CONFIG_UPDATE_PDU_SIZE) != 0) {
+			CPRINTF("%s: TP invalid offset %08x\n",
+				__func__, fw_offset);
+			return 0;
+		}
 
 		SHA256_init(&ctx);
 		SHA256_update(&ctx, update_data, body_size);
 		tmp = SHA256_final(&ctx);
-		/* TODO(b:63993173): Actually validate the SHA. */
-		CPRINTF("%s: SHA %08x %02x..%02x\n", __func__,
-			block_offset - CONFIG_TOUCHPAD_VIRTUAL_OFF,
-			tmp[0], tmp[31]);
 
-		return 1;
+		good = !memcmp(tmp, touchpad_fw_hashes[chunk],
+				SHA256_DIGEST_SIZE);
+
+		CPRINTF("%s: TP %08x %02x..%02x (%s)\n", __func__,
+			fw_offset, tmp[0], tmp[31], good ? "GOOD" : "BAD");
+
+		return good;
 	}
 #endif
 	return 1;
