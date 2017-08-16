@@ -279,7 +279,7 @@ static int max17055_init_config(void)
 {
 	int reg;
 	int hib_cfg;
-	int retries = 20;
+	int retries = 50;
 
 	if (max17055_write(REG_DESIGN_CAPACITY, BATTERY_MAX17055_DESIGNCAP) ||
 	    max17055_write(REG_DQACC, BATTERY_MAX17055_DESIGNCAP / 32) ||
@@ -304,7 +304,7 @@ static int max17055_init_config(void)
 	if (max17055_write(REG_MODELCFG, (MODELCFG_REFRESH | MODELCFG_VCHG)))
 		return EC_ERROR_UNKNOWN;
 
-	/* Delay up to 200 ms until MODELCFG.REFRESH bit == 0. */
+	/* Delay up to 500 ms until MODELCFG.REFRESH bit == 0. */
 	while (--retries) {
 		if (max17055_read(REG_MODELCFG, &reg))
 			return EC_ERROR_UNKNOWN;
