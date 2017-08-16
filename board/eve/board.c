@@ -415,6 +415,16 @@ static void board_pmic_init(void)
 {
 	board_report_pmic_fault("SYSJUMP");
 
+	/* Clear power source events */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x04, 0xff);
+
+	/* Disable power button shutdown timer */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x14, 0x00);
+
+	/* Disable VCCIO in ALL_SYS_PWRGD for early boards */
+	if (board_get_version() <= BOARD_VERSION_DVTB)
+		i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x18, 0x80);
+
 	if (system_jumped_late())
 		return;
 
@@ -442,16 +452,6 @@ static void board_pmic_init(void)
 
 	/* VRMODECTRL - disable low-power mode for all rails */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x3b, 0x1f);
-
-	/* Clear power source events */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x04, 0xff);
-
-	/* Disable power button shutdown timer */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x14, 0x00);
-
-	/* Disable VCCIO in ALL_SYS_PWRGD for early boards */
-	if (board_get_version() <= BOARD_VERSION_DVTB)
-		i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x18, 0x80);
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
