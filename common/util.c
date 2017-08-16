@@ -7,7 +7,7 @@
 
 #include "util.h"
 
-int strlen(const char *s)
+size_t strlen(const char *s)
 {
 	int len = 0;
 
