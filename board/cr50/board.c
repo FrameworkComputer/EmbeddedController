@@ -288,7 +288,8 @@ enum {
 
 /*
  * ISR reacting to both falling and raising edges of the AC_PRESENT signal.
- * Falling edge indicates pulling out of the charger cable and vice versa.
+ * Falling edge indicates AC no longer present (removal of the charger cable)
+ * and rising edge indicates AP present (insertion of charger cable).
  */
 static void ac_power_state_changed(void)
 {
@@ -298,7 +299,16 @@ static void ac_power_state_changed(void)
 	req = GREG32(RBOX, INT_STATE) & (ac_pres_red | ac_pres_fed);
 	GREG32(RBOX, INT_STATE) = req;
 
-	CPRINTS("%s: status 0x%x", __func__, req);
+	CPRINTS("AC: %c%c",
+		req & ac_pres_red ? 'R' : '-',
+		req & ac_pres_fed ? 'F' : '-');
+
+	/* Delay sleep so RDD state machines can stabilize */
+	delay_sleep_by(5 * SECOND);
+
+	/* The remaining code is only used for battery cutoff */
+	if (!system_battery_cutoff_support_required())
+		return;
 
 	/* Raising edge gets priority, stop timeout timer and go. */
 	if (req & ac_pres_red) {
@@ -324,7 +334,7 @@ DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_AC_PRESENT_RED_INT, ac_power_state_changed, 1);
 DECLARE_IRQ(GC_IRQNUM_RBOX0_INTR_AC_PRESENT_FED_INT, ac_power_state_changed, 1);
 
 /* Enable interrupts on plugging in and yanking out of the charger cable. */
-static void set_up_battery_cutoff_monitor(void)
+static void init_ac_detect(void)
 {
 	/* It is set in idle.c also. */
 	GWRITE_FIELD(RBOX, WAKEUP, ENABLE, 1);
@@ -693,9 +703,12 @@ static void board_init(void)
 	check_board_id_mismatch();
 	check_board_id_mismatch();
 
-	/* Enable battery cutoff software support on detachable devices. */
-	if (system_battery_cutoff_support_required())
-		set_up_battery_cutoff_monitor();
+	/*
+	 * Start monitoring AC detect to wake Cr50 from deep sleep.  This is
+	 * needed to detect RDD cable changes in deep sleep.  AC detect is also
+	 * used for battery cutoff software support on detachable devices.
+	 */
+	init_ac_detect();
 
 	/*
 	 * The interrupt is enabled by default, but we only want it enabled when
