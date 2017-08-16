@@ -71,9 +71,15 @@ DECLARE_SAFE_CONSOLE_COMMAND(idle, command_idle,
 static int utmi_wakeup_is_enabled(void)
 {
 #ifdef CONFIG_RDD
-	return is_utmi_wakeup_allowed();
-#endif
+	/*
+	 * USB is only used for CCD, so only enable UTMI wakeups when RDD
+	 * detects that a debug accessory is attached.
+	 */
+	return rdd_is_connected();
+#else
+	/* USB is used for the host interface, so always enable UTMI wakeups */
 	return 1;
+#endif
 }
 
 static void prepare_to_sleep(void)
@@ -226,7 +232,7 @@ void __idle(void)
 
 	while (1) {
 
-		/* Anyone still busy? */
+		/* Anyone still busy?  (this checks sleep_mask) */
 		sleep_ok = DEEP_SLEEP_ALLOWED;
 
 		/* Wait a bit, just in case */

@@ -13,8 +13,7 @@
  */
 #define BOARD_SLAVE_CONFIG_SPI       (1 << 0)   /* TPM uses SPI interface */
 #define BOARD_SLAVE_CONFIG_I2C       (1 << 1)   /* TPM uses I2C interface */
-#define BOARD_USB_AP                 (1 << 2)   /* One of the USB PHYs is  */
-						/* connected to the AP */
+
 /*
  * The gaps are left to enusre backwards compatibility with the earliest cr50
  * code releases. It will be possible to safely reuse these gaps if and when the
@@ -51,6 +50,6 @@
  * updated if additional strap related properties are added.
  */
 #define BOARD_ALL_PROPERTIES (BOARD_SLAVE_CONFIG_SPI | BOARD_SLAVE_CONFIG_I2C \
-	| BOARD_USB_AP | BOARD_NEEDS_SYS_RST_PULL_UP | BOARD_USE_PLT_RESET)
+	| BOARD_NEEDS_SYS_RST_PULL_UP | BOARD_USE_PLT_RESET)
 
 #endif  /* ! __EC_BOARD_CR50_SCRATCH_REG1_H */
