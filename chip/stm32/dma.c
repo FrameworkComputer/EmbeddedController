@@ -73,20 +73,6 @@ void dma_select_channel(enum dma_channel channel, unsigned char stream)
 	val = STM32_DMA_CSELR(channel) & ~(mask << ch * shift);
 	STM32_DMA_CSELR(channel) = val | (stream << ch * shift);
 }
-#elif defined(CHIP_FAMILY_STM32F4)
-void dma_select_channel(enum dma_channel channel, unsigned char stream)
-{
-	stm32_dma_chan_t *chan = dma_get_channel(channel);
-	uint32_t val;
-
-	ASSERT(channel < STM32_DMAC_COUNT);
-	ASSERT(stream < STM32_DMA_MAX_STREAMS);
-
-	/* Set stream input for channel */
-	val = chan->ccr &
-		~(STM32_DMA_CCR_CHMASK << STM32_DMA_CCR_CHOFF);
-	chan->ccr = val | (stream << STM32_DMA_CCR_CHOFF);
-}
 #endif
 
 void dma_disable(enum dma_channel channel)
@@ -244,7 +230,7 @@ void dma_test(enum dma_channel channel)
 
 void dma_init(void)
 {
-#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32F4)
+#if defined(CHIP_FAMILY_STM32L4)
 	STM32_RCC_AHB1ENR |= STM32_RCC_AHB1ENR_DMA1EN|STM32_RCC_AHB1ENR_DMA2EN;
 #else
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
@@ -258,19 +244,6 @@ void dma_init(void)
 
 int dma_wait(enum dma_channel channel)
 {
-#if defined(CHIP_FAMILY_STM32F4)
-	timestamp_t deadline;
-
-	deadline.val = get_time().val + DMA_TRANSFER_TIMEOUT_US;
-
-	/* Wait for TCIF completion */
-	while ((STM32_DMA_GET_ISR(channel) & STM32_DMA_TCIF) == 0) {
-		if (deadline.val <= get_time().val)
-			return EC_ERROR_TIMEOUT;
-
-		udelay(DMA_POLLING_INTERVAL_US);
-	}
-#else
 	stm32_dma_regs_t *dma = STM32_DMA_REGS(channel);
 	const uint32_t mask = STM32_DMA_ISR_TCIF(channel);
 	timestamp_t deadline;
@@ -282,7 +255,6 @@ int dma_wait(enum dma_channel channel)
 
 		udelay(DMA_POLLING_INTERVAL_US);
 	}
-#endif
 	return EC_SUCCESS;
 }
 
@@ -325,13 +297,9 @@ void dma_disable_tc_interrupt(enum dma_channel channel)
 
 void dma_clear_isr(enum dma_channel channel)
 {
-#if defined(CHIP_FAMILY_STM32F4)
-	STM32_DMA_SET_IFCR(channel, STM32_DMA_ALL);
-#else
 	stm32_dma_regs_t *dma = STM32_DMA_REGS(channel);
 
 	dma->ifcr |= STM32_DMA_ISR_ALL(channel);
-#endif
 }
 
 #ifdef CONFIG_DMA_DEFAULT_HANDLERS
