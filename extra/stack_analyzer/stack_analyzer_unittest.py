@@ -219,13 +219,13 @@ class StackAnalyzerTest(unittest.TestCase):
     }
     # Set address_to_line_cache to fake the results of addr2line.
     self.analyzer.address_to_line_cache = {
-        0x1000: 'a.c:10',
-        0x2000: 'b.c:20',
-        0x4000: './a.c:30',
-        0x5000: 'b.c:40',
-        0x12000: 't.c:10',
-        0x13000: 'x.c:12',
-        0x13100: 'x.c:12',
+        (0x1000, False): [('hook_task', 'a.c', 10)],
+        (0x2000, False): [('console_task', 'b.c', 20)],
+        (0x4000, False): [('toudhpad_calc', './a.c', 20)],
+        (0x5000, False): [('touchpad_calc.constprop.42', 'b.c', 40)],
+        (0x12000, False): [('trackpad_range', 't.c', 10)],
+        (0x13000, False): [('inlined_mul', 'x.c', 12)],
+        (0x13100, False): [('inlined_mul', 'x.c', 12)],
     }
     self.analyzer.annotation = {
         'add': {
@@ -404,15 +404,33 @@ class StackAnalyzerTest(unittest.TestCase):
 
   @mock.patch('subprocess.check_output')
   def testAddressToLine(self, checkoutput_mock):
-    checkoutput_mock.return_value = 'test.c:1'
-    self.assertEqual(self.analyzer.AddressToLine(0x1234), 'test.c:1')
+    checkoutput_mock.return_value = 'fake_func\ntest.c:1'
+    self.assertEqual(self.analyzer.AddressToLine(0x1234),
+                     [('fake_func', 'test.c', 1)])
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-e', './ec.RW.elf', '1234'])
+        ['addr2line', '-f', '-e', './ec.RW.elf', '1234'])
+    checkoutput_mock.reset_mock()
 
-    checkoutput_mock.return_value = 'test.c:1 (discriminator   1289031)'
-    self.assertEqual(self.analyzer.AddressToLine(0x1234), 'test.c:1')
+    checkoutput_mock.return_value = 'fake_func\na.c:1\nbake_func\nb.c:2\n'
+    self.assertEqual(self.analyzer.AddressToLine(0x1234, True),
+                     [('fake_func', 'a.c', 1), ('bake_func', 'b.c', 2)])
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-e', './ec.RW.elf', '1234'])
+        ['addr2line', '-f', '-e', './ec.RW.elf', '1234', '-i'])
+    checkoutput_mock.reset_mock()
+
+    checkoutput_mock.return_value = 'fake_func\ntest.c:1 (discriminator 128)'
+    self.assertEqual(self.analyzer.AddressToLine(0x12345),
+                     [('fake_func', 'test.c', 1)])
+    checkoutput_mock.assert_called_once_with(
+        ['addr2line', '-f', '-e', './ec.RW.elf', '12345'])
+    checkoutput_mock.reset_mock()
+
+    checkoutput_mock.return_value = '??\n:?\nbake_func\nb.c:2\n'
+    self.assertEqual(self.analyzer.AddressToLine(0x123456),
+                     [None, ('bake_func', 'b.c', 2)])
+    checkoutput_mock.assert_called_once_with(
+        ['addr2line', '-f', '-e', './ec.RW.elf', '123456'])
+    checkoutput_mock.reset_mock()
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,
                                  'addr2line failed to resolve lines.'):
@@ -434,15 +452,16 @@ class StackAnalyzerTest(unittest.TestCase):
         '00000900 <wook_task>:\n'
         '	...\n'
         '00001000 <hook_task>:\n'
-        '   1000:	4770\t\tbx	lr\n'
-        '   1004:	00015cfc\t.word	0x00015cfc\n'
+        '   1000:	b508\t\tpush	{r3, lr}\n'
+        '   1002:	4770\t\tbx	lr\n'
+        '   1006:	00015cfc\t.word	0x00015cfc\n'
         '00002000 <console_task>:\n'
         '   2000:	b508\t\tpush	{r3, lr}\n'
         '   2002:	f00e fcc5\tbl	1000 <hook_task>\n'
         '   2006:	f00e bd3b\tb.w	53968 <get_program_memory_addr>\n'
     )
 
-    addrtoline_mock.return_value = '??:0'
+    addrtoline_mock.return_value = [('??', '??', 0)]
     self.analyzer.annotation = {'remove': ['fake_func']}
 
     with mock.patch('__builtin__.print') as print_mock:
@@ -450,15 +469,17 @@ class StackAnalyzerTest(unittest.TestCase):
       self.analyzer.Analyze()
       print_mock.assert_has_calls([
           mock.call(
-              'Task: HOOKS, Max size: 224 (0 + 224), Allocated size: 2048'),
+              'Task: HOOKS, Max size: 232 (8 + 224), Allocated size: 2048'),
           mock.call('Call Trace:'),
-          mock.call('\thook_task (0) 1000 [??:0]'),
+          mock.call('    hook_task (8) [??:0] 1000'),
           mock.call(
-              'Task: CONSOLE, Max size: 232 (8 + 224), Allocated size: 460'),
+              'Task: CONSOLE, Max size: 240 (16 + 224), Allocated size: 460'),
           mock.call('Call Trace:'),
-          mock.call('\tconsole_task (8) 2000 [??:0]'),
+          mock.call('    console_task (8) [??:0] 2000'),
+          mock.call('        -> ?? [??:0] 2002'),
+          mock.call('    hook_task (8) [??:0] 1000'),
           mock.call('Failed to resolve some annotation signatures:'),
-          mock.call('\tfake_func: function is not found'),
+          mock.call('    fake_func: function is not found'),
       ])
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,

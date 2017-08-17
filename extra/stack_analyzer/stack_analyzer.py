@@ -355,6 +355,10 @@ class StackAnalyzer(object):
     Analyze: Run the stack analysis.
   """
 
+  # Example: "driver/accel_kionix.c:321 (discriminator 3)"
+  ADDRTOLINE_RE = re.compile(
+      r'^(?P<path>[^:]+):(?P<linenum>\d+)(\s+\(discriminator\s+\d+\))?$')
+
   # Errors of annotation resolving.
   ANNOTATION_ERROR_INVALID = 'invalid signature'
   ANNOTATION_ERROR_NOTFOUND = 'function is not found'
@@ -375,34 +379,60 @@ class StackAnalyzer(object):
     self.annotation = annotation
     self.address_to_line_cache = {}
 
-  def AddressToLine(self, address):
+  def AddressToLine(self, address, resolve_inline=False):
     """Convert address to line.
 
     Args:
       address: Target address.
+      resolve_inline: Output the stack of inlining.
 
     Returns:
-      line: The corresponding line.
+      lines: List of the corresponding lines.
 
     Raises:
       StackAnalyzerError: If addr2line is failed.
     """
-    if address in self.address_to_line_cache:
-      return self.address_to_line_cache[address]
+    cache_key = (address, resolve_inline)
+    if cache_key in self.address_to_line_cache:
+      return self.address_to_line_cache[cache_key]
 
     try:
-      line_text = subprocess.check_output([self.options.addr2line,
-                                           '-e',
-                                           self.options.elf_path,
-                                           '{:x}'.format(address)])
+      args = [self.options.addr2line,
+              '-f',
+              '-e',
+              self.options.elf_path,
+              '{:x}'.format(address)]
+      if resolve_inline:
+        args.append('-i')
+
+      line_text = subprocess.check_output(args)
     except subprocess.CalledProcessError:
       raise StackAnalyzerError('addr2line failed to resolve lines.')
     except OSError:
       raise StackAnalyzerError('Failed to run addr2line.')
 
-    line_text = line_text.strip()
-    self.address_to_line_cache[address] = line_text
-    return line_text
+    lines = [line.strip() for line in line_text.splitlines()]
+    # Assume the output has at least one pair like "function\nlocation\n", and
+    # they always show up in pairs.
+    # Example: "handle_request\n
+    #           common/usb_pd_protocol.c:1191\n"
+    assert len(lines) >= 2 and len(lines) % 2 == 0
+
+    line_infos = []
+    for index in range(0, len(lines), 2):
+      (function_name, line_text) = lines[index:index + 2]
+      if line_text in ['??:0', ':?']:
+        line_infos.append(None)
+      else:
+        result = self.ADDRTOLINE_RE.match(line_text)
+        # Assume the output is always well-formed.
+        assert result is not None
+        line_infos.append((function_name.strip(),
+                           result.group('path').strip(),
+                           int(result.group('linenum'))))
+
+    self.address_to_line_cache[cache_key] = line_infos
+    return line_infos
 
   def AnalyzeDisassembly(self, disasm_text):
     """Parse the disassembly text, analyze, and build a map of all functions.
@@ -579,18 +609,14 @@ class StackAnalyzer(object):
       Map of signatures to functions, set of signatures which can't be resolved.
     """
     C_FUNCTION_NAME = r'_A-Za-z0-9'
-    ADDRTOLINE_FAILED_SYMBOL = '??'
     # To eliminate the suffix appended by compilers, try to extract the
     # C function name from the prefix of symbol name.
-    # Example: SHA256_transform.constprop.28
+    # Example: "SHA256_transform.constprop.28"
     prefix_name_regex = re.compile(
         r'^(?P<name>[{0}]+)([^{0}].*)?$'.format(C_FUNCTION_NAME))
-    # Example: get_range[driver/accel_kionix.c]
+    # Example: "get_range[driver/accel_kionix.c]"
     annotation_signature_regex = re.compile(
         r'^(?P<name>[{}]+)(\[(?P<path>.+)\])?$'.format(C_FUNCTION_NAME))
-    # Example: driver/accel_kionix.c:321 and ??:0
-    addrtoline_regex = re.compile(
-        r'^(?P<path>[^:]+):\d+(\s+\(discriminator\s+\d+\))?$')
 
     # Build the symbol map indexed by symbol name. If there are multiple symbols
     # with the same name, add them into a set. (e.g. symbols of static function
@@ -631,12 +657,11 @@ class StackAnalyzer(object):
         # resolve needed symbol paths.
         group_map = collections.defaultdict(list)
         for function in functions:
-          result = addrtoline_regex.match(self.AddressToLine(function.address))
-          # Assume the output of addr2line is always well-formed.
-          assert result is not None
-          symbol_path = result.group('path').strip()
-          if symbol_path == ADDRTOLINE_FAILED_SYMBOL:
+          line_info = self.AddressToLine(function.address)[0]
+          if line_info is None:
             continue
+
+          (_, symbol_path, _) = line_info
 
           # Group the functions with the same symbol signature (symbol name +
           # symbol path). Assume they are the same copies and do the same
@@ -849,6 +874,26 @@ class StackAnalyzer(object):
     Raises:
       StackAnalyzerError: If disassembly fails.
     """
+    def PrintInlineStack(address, prefix=''):
+      """Print beautiful inline stack.
+
+      Args:
+        address: Address.
+        prefix: Prefix of each line.
+      """
+      line_texts = []
+      for line_info in reversed(self.AddressToLine(address, True)):
+        if line_info is None:
+          (function_name, path, linenum) = ('??', '??', 0)
+        else:
+          (function_name, path, linenum) = line_info
+
+        line_texts.append('{} [{}:{}]'.format(function_name, path, linenum))
+
+      print('{}-> {} {:x}'.format(prefix, line_texts[0], address))
+      for depth, line_text in enumerate(line_texts[1:]):
+        print('{}   {}- {}'.format(prefix, '  ' * depth, line_text))
+
     # Analyze disassembly.
     try:
       disasm_text = subprocess.check_output([self.options.objdump,
@@ -877,22 +922,39 @@ class StackAnalyzer(object):
       print('Call Trace:')
       curr_func = routine_func
       while curr_func is not None:
-        line = self.AddressToLine(curr_func.address)
-        output = '\t{} ({}) {:x} [{}]'.format(curr_func.name,
-                                              curr_func.stack_frame,
-                                              curr_func.address,
-                                              line)
+        line_info = self.AddressToLine(curr_func.address)[0]
+        if line_info is None:
+          (path, linenum) = ('??', 0)
+        else:
+          (_, path, linenum) = line_info
+
+        output = '    {} ({}) [{}:{}] {:x}'.format(curr_func.name,
+                                                   curr_func.stack_frame,
+                                                   path,
+                                                   linenum,
+                                                   curr_func.address)
         if len(cycle_groups[curr_func.cycle_index]) > 0:
           # If its cycle group isn't empty, it is in a cycle.
           output += ' [cycle]'
 
         print(output)
-        curr_func = curr_func.stack_successor
+
+        succ_func = curr_func.stack_successor
+        if succ_func is not None:
+          for callsite in curr_func.callsites:
+            if callsite.callee is succ_func:
+              indent_prefix = '        '
+              if callsite.address is None:
+                print('{}-> [annotation]'.format(indent_prefix))
+              else:
+                PrintInlineStack(callsite.address, indent_prefix)
+
+        curr_func = succ_func
 
     if len(failed_sigs) > 0:
       print('Failed to resolve some annotation signatures:')
       for sig, error in failed_sigs:
-        print('\t{}: {}'.format(sig, error))
+        print('    {}: {}'.format(sig, error))
 
 
 def ParseArgs():
