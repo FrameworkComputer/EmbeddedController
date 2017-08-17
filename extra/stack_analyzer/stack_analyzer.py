@@ -267,16 +267,20 @@ class ArmAnalyzer(object):
   CONDITION_CODES = ['', 'eq', 'ne', 'cs', 'hs', 'cc', 'lo', 'mi', 'pl', 'vs',
                      'vc', 'hi', 'ls', 'ge', 'lt', 'gt', 'le']
   CONDITION_CODES_RE = '({})'.format('|'.join(CONDITION_CODES))
+  # Assume there is no function name containing ">".
+  IMM_ADDRESS_RE = r'([0-9A-Fa-f]+)\s+<([^>]+)>'
 
   # Fuzzy regular expressions for instruction and operand parsing.
   # Branch instructions.
   JUMP_OPCODE_RE = re.compile(
-      r'^(b{0}|bx{0}|cbz|cbnz)(\.\w)?$'.format(CONDITION_CODES_RE))
+      r'^(b{0}|bx{0})(\.\w)?$'.format(CONDITION_CODES_RE))
   # Call instructions.
   CALL_OPCODE_RE = re.compile(
       r'^(bl{0}|blx{0})(\.\w)?$'.format(CONDITION_CODES_RE))
-  # Assume there is no function name containing ">".
-  CALL_OPERAND_RE = re.compile(r'^([0-9A-Fa-f]+)\s+<([^>]+)>$')
+  CALL_OPERAND_RE = re.compile(r'^{}$'.format(IMM_ADDRESS_RE))
+  CBZ_CBNZ_OPCODE_RE = re.compile(r'^(cbz|cbnz)(\.\w)?$')
+  # Example: "r0, 1009bcbe <host_cmd_motion_sense+0x1d2>"
+  CBZ_CBNZ_OPERAND_RE = re.compile(r'^[^,]+,\s+{}$'.format(IMM_ADDRESS_RE))
   # TODO(cheyuw): Handle conditional versions of following
   #               instructions.
   # TODO(cheyuw): Handle other kinds of stm instructions.
@@ -296,40 +300,29 @@ class ArmAnalyzer(object):
     Returns:
       (stack_frame, callsites): Size of stack frame and callsite list.
     """
-    def DetectCallsite(operand_text):
-      """Check if the instruction is a callsite.
-
-      Args:
-        operand_text: Text of instruction operands.
-
-      Returns:
-        target_address: Target address. None if it isn't a callsite.
-      """
-      result = self.CALL_OPERAND_RE.match(operand_text)
-      if result is None:
-        return None
-
-      target_address = int(result.group(1), 16)
-
-      if (function_symbol.size > 0 and
-          function_symbol.address < target_address <
-          (function_symbol.address + function_symbol.size)):
-        # Filter out the in-function target (branches and in-function calls,
-        # which are actually branches).
-        return None
-
-      return target_address
-
     stack_frame = 0
     callsites = []
     for address, opcode, operand_text in instructions:
       is_jump_opcode = self.JUMP_OPCODE_RE.match(opcode) is not None
       is_call_opcode = self.CALL_OPCODE_RE.match(opcode) is not None
-      if is_jump_opcode or is_call_opcode:
-        target_address = DetectCallsite(operand_text)
-        if target_address is not None:
-          # Maybe it's a callsite.
-          callsites.append(Callsite(address, target_address, is_jump_opcode))
+      is_cbz_cbnz_opcode = self.CBZ_CBNZ_OPCODE_RE.match(opcode) is not None
+      if is_jump_opcode or is_call_opcode or is_cbz_cbnz_opcode:
+        if is_cbz_cbnz_opcode:
+          result = self.CBZ_CBNZ_OPERAND_RE.match(operand_text)
+        else:
+          result = self.CALL_OPERAND_RE.match(operand_text)
+
+        if result is not None:
+          target_address = int(result.group(1), 16)
+          # Filter out the in-function target (branches and in-function calls,
+          # which are actually branches).
+          if not (function_symbol.size > 0 and
+                  function_symbol.address < target_address <
+                  (function_symbol.address + function_symbol.size)):
+            # Maybe it's a callsite.
+            callsites.append(Callsite(address,
+                                      target_address,
+                                      is_jump_opcode or is_cbz_cbnz_opcode))
 
       elif self.PUSH_OPCODE_RE.match(opcode) is not None:
         # Example: "{r4, r5, r6, r7, lr}"
@@ -596,7 +589,8 @@ class StackAnalyzer(object):
     annotation_signature_regex = re.compile(
         r'^(?P<name>[{}]+)(\[(?P<path>.+)\])?$'.format(C_FUNCTION_NAME))
     # Example: driver/accel_kionix.c:321 and ??:0
-    addrtoline_regex = re.compile(r'^(?P<path>.+):\d+$')
+    addrtoline_regex = re.compile(
+        r'^(?P<path>[^:]+):\d+(\s+\(discriminator\s+\d+\))?$')
 
     # Build the symbol map indexed by symbol name. If there are multiple symbols
     # with the same name, add them into a set. (e.g. symbols of static function

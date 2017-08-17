@@ -57,7 +57,7 @@ class ArmAnalyzerTest(unittest.TestCase):
     return rets
 
   def testInstructionMatching(self):
-    jump_list = self.AppendConditionCode(['b', 'bx']) + ['cbz', 'cbnz']
+    jump_list = self.AppendConditionCode(['b', 'bx'])
     jump_list += (list(opcode + '.n' for opcode in jump_list) +
                   list(opcode + '.w' for opcode in jump_list))
     for opcode in jump_list:
@@ -65,6 +65,12 @@ class ArmAnalyzerTest(unittest.TestCase):
 
     self.assertIsNone(sa.ArmAnalyzer.JUMP_OPCODE_RE.match('bl'))
     self.assertIsNone(sa.ArmAnalyzer.JUMP_OPCODE_RE.match('blx'))
+
+    cbz_list = ['cbz', 'cbnz', 'cbz.n', 'cbnz.n', 'cbz.w', 'cbnz.w']
+    for opcode in cbz_list:
+      self.assertIsNotNone(sa.ArmAnalyzer.CBZ_CBNZ_OPCODE_RE.match(opcode))
+
+    self.assertIsNone(sa.ArmAnalyzer.CBZ_CBNZ_OPCODE_RE.match('cbn'))
 
     call_list = self.AppendConditionCode(['bl', 'blx'])
     call_list += list(opcode + '.n' for opcode in call_list)
@@ -77,6 +83,11 @@ class ArmAnalyzerTest(unittest.TestCase):
     self.assertIsNotNone(result)
     self.assertEqual(result.group(1), '53f90')
     self.assertEqual(result.group(2), 'get_time+0x18')
+
+    result = sa.ArmAnalyzer.CBZ_CBNZ_OPERAND_RE.match('r6, 53f90 <get+0x0>')
+    self.assertIsNotNone(result)
+    self.assertEqual(result.group(1), '53f90')
+    self.assertEqual(result.group(2), 'get+0x0')
 
     self.assertIsNotNone(sa.ArmAnalyzer.PUSH_OPCODE_RE.match('push'))
     self.assertIsNone(sa.ArmAnalyzer.PUSH_OPCODE_RE.match('pushal'))
@@ -313,7 +324,8 @@ class StackAnalyzerTest(unittest.TestCase):
         '00001000 <hook_task>:\n'
         '   1000:	dead beef\tfake\n'
         '   1004:	4770\t\tbx	lr\n'
-        '   1006:	00015cfc\t.word	0x00015cfc\n'
+        '   1006:	b113\tcbz	r3, 100929de <flash_command_write>\n'
+        '   1008:	00015cfc\t.word	0x00015cfc\n'
         '00002000 <console_task>:\n'
         '   2000:	b508\t\tpush	{r3, lr} ; malformed comments,; r0, r1 \n'
         '   2002:	f00e fcc5\tbl	1000 <hook_task>\n'
@@ -324,7 +336,8 @@ class StackAnalyzerTest(unittest.TestCase):
         '00010000 <look_task>:'
     )
     function_map = self.analyzer.AnalyzeDisassembly(disasm_text)
-    func_hook_task = sa.Function(0x1000, 'hook_task', 0, [])
+    func_hook_task = sa.Function(0x1000, 'hook_task', 0, [
+        sa.Callsite(0x1006, 0x100929de, True, None)])
     expect_funcmap = {
         0x1000: func_hook_task,
         0x2000: sa.Function(0x2000, 'console_task', 8,
@@ -391,8 +404,13 @@ class StackAnalyzerTest(unittest.TestCase):
 
   @mock.patch('subprocess.check_output')
   def testAddressToLine(self, checkoutput_mock):
-    checkoutput_mock.return_value = 'test.c [1]'
-    self.assertEqual(self.analyzer.AddressToLine(0x1234), 'test.c [1]')
+    checkoutput_mock.return_value = 'test.c:1'
+    self.assertEqual(self.analyzer.AddressToLine(0x1234), 'test.c:1')
+    checkoutput_mock.assert_called_once_with(
+        ['addr2line', '-e', './ec.RW.elf', '1234'])
+
+    checkoutput_mock.return_value = 'test.c:1 (discriminator   1289031)'
+    self.assertEqual(self.analyzer.AddressToLine(0x1234), 'test.c:1')
     checkoutput_mock.assert_called_once_with(
         ['addr2line', '-e', './ec.RW.elf', '1234'])
 
