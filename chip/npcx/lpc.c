@@ -368,6 +368,8 @@ uint8_t lpc_sib_read_kbc_reg(uint8_t io_offset)
 
 	/* Lock host keyboard module */
 	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKHIKBD);
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
 	/* Verify Core read/write to host modules is not in progress */
 	lpc_sib_wait_host_read_done();
 	lpc_sib_wait_host_write_done();
@@ -386,6 +388,8 @@ uint8_t lpc_sib_read_kbc_reg(uint8_t io_offset)
 
 	/* Disable Core access to keyboard module */
 	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_HIKBDAE);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
 	/* unlock host keyboard module */
 	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKHIKBD);
 
@@ -720,6 +724,8 @@ void lpc_sib_write_reg(uint8_t io_offset, uint8_t index_value,
 
 	/* Lock host CFG module */
 	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
 	/* Enable Core access to CFG module */
 	SET_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
 	/* Verify Core read/write to host modules is not in progress */
@@ -742,6 +748,8 @@ void lpc_sib_write_reg(uint8_t io_offset, uint8_t index_value,
 
 	/* Disable Core access to CFG module */
 	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
 	/* unlock host CFG  module */
 	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
 
@@ -758,6 +766,8 @@ uint8_t lpc_sib_read_reg(uint8_t io_offset, uint8_t index_value)
 
 	/* Lock host CFG module */
 	SET_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
 	/* Enable Core access to CFG module */
 	SET_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
 	/* Verify Core read/write to host modules is not in progress */
@@ -782,6 +792,8 @@ uint8_t lpc_sib_read_reg(uint8_t io_offset, uint8_t index_value)
 
 	/* Disable Core access to CFG module */
 	CLEAR_BIT(NPCX_CRSMAE, NPCX_CRSMAE_CFGAE);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
 	/* unlock host CFG  module */
 	CLEAR_BIT(NPCX_LKSIOHA, NPCX_LKSIOHA_LKCFG);
 
@@ -794,9 +806,6 @@ uint8_t lpc_sib_read_reg(uint8_t io_offset, uint8_t index_value)
 /* For LPC host register initial via SIB module */
 void host_register_init(void)
 {
-	/* Enable Core-to-Host Modules Access */
-	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-
 	/* enable ACPI*/
 	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x11);
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
