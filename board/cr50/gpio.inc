@@ -57,7 +57,7 @@
  */
 GPIO_INT(TPM_RST_L,       PIN(1, 0),  GPIO_INT_RISING, tpm_rst_deasserted)
 GPIO_INT(DETECT_AP,       PIN(1, 1),  GPIO_INT_HIGH, device_state_on)
-GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, device_state_on)
+GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
 /*
  * DETECT_SERVO and EC_TX_CR50_RX pins must NOT be changed without also changing
  * the pinmux_regval fields in the bitbang_config in board.c.  The pinmux values

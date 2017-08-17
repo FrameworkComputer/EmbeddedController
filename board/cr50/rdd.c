@@ -21,13 +21,12 @@
 
 struct uart_config {
 	const char *name;
-	enum device_type device;
 	int tx_signal;
 };
 
 static struct uart_config uarts[] = {
-	[UART_AP] = {"AP", DEVICE_AP, GC_PINMUX_UART1_TX_SEL},
-	[UART_EC] = {"EC", DEVICE_EC, GC_PINMUX_UART2_TX_SEL},
+	[UART_AP] = {"AP", GC_PINMUX_UART1_TX_SEL},
+	[UART_EC] = {"EC", GC_PINMUX_UART2_TX_SEL},
 };
 
 int rdd_is_connected(void)
@@ -84,7 +83,7 @@ void uartn_tx_connect(int uart)
 		return;
 	}
 
-	if (device_get_state(uarts[uart].device) == DEVICE_STATE_ON)
+	if (uart == UART_AP ? ap_is_on() : ec_is_on())
 		uart_select_tx(uart, uarts[uart].tx_signal);
 	else if (!uart_tx_is_connected(uart))
 		CPRINTS("%s is powered off", uarts[uart].name);

@@ -174,7 +174,6 @@ enum usb_strings {
 /* Device indexes for devices that require debouncing */
 enum device_type {
 	DEVICE_AP = 0,
-	DEVICE_EC,
 	DEVICE_SERVO,
 
 	DEVICE_COUNT
@@ -194,6 +193,12 @@ enum device_state {
 	 * the device right away so we're debouncing to see if it shows up.
 	 */
 	DEVICE_STATE_INIT_DEBOUNCING,
+
+	/*
+	 * Device was detected at boot, but we can't enable transmit yet
+	 * because that would interfere with detection of another device.
+	 */
+	DEVICE_STATE_INIT_RX_ONLY,
 
 	/* Disconnected or off, because detect is deasserted */
 	DEVICE_STATE_DISCONNECTED,
@@ -230,6 +235,7 @@ enum nvmem_vars {
 void board_configure_deep_sleep_wakepins(void);
 /* Interrupt handler */
 void tpm_rst_deasserted(enum gpio_signal signal);
+void ec_detect_asserted(enum gpio_signal signal);
 void device_state_on(enum gpio_signal signal);
 void post_reboot_request(void);
 void ec_tx_cr50_rx(enum gpio_signal signal);
@@ -260,6 +266,9 @@ int board_fwmp_allows_unlock(void);
 void board_reboot_ap(void);
 int board_wipe_tpm(void);
 int board_is_first_factory_boot(void);
+
+void enable_ccd_uart(int uart);
+void disable_ccd_uart(int uart);
 
 int ap_is_on(void);
 int ec_is_on(void);

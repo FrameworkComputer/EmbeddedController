@@ -29,7 +29,7 @@ dirs-y += chip/$(CHIP)/dcrypto
 dirs-y += $(BDIR)/tpm2
 
 # Objects that we need to build
-board-y =  board.o
+board-y =  board.o ec_state.o
 board-${CONFIG_RDD} += rdd.o
 board-${CONFIG_USB_SPI} += usb_spi.o
 board-${CONFIG_USB_I2C} += usb_i2c.o
