@@ -357,6 +357,20 @@ static void init_ac_detect(void)
 	BUILD_ASSERT(((flags) & GPIO_INT_BOTH) != GPIO_INT_BOTH);
 #include "gpio.wrap"
 
+/**
+ * Reset wake logic
+ *
+ * If any wake pins are edge triggered, the pad logic latches the wakeup. Clear
+ * and restore EXITEN0 to reset the wakeup logic.
+ */
+static void reset_wake_logic(void)
+{
+	uint32_t exiten = GREG32(PINMUX, EXITEN0);
+
+	GREG32(PINMUX, EXITEN0) = 0;
+	GREG32(PINMUX, EXITEN0) = exiten;
+}
+
 static void init_pmu(void)
 {
 	clock_enable_module(MODULE_PMU, 1);
@@ -373,7 +387,7 @@ static void init_pmu(void)
 
 void pmu_wakeup_interrupt(void)
 {
-	int exiten, wakeup_src;
+	int wakeup_src;
 	static uint8_t count;
 	static uint8_t ws;
 	static uint8_t line_length;
@@ -413,13 +427,7 @@ void pmu_wakeup_interrupt(void)
 	}
 
 	if (wakeup_src & GC_PMU_EXITPD_SRC_PIN_PD_EXIT_MASK) {
-		/*
-		 * If any wake pins are edge triggered, the pad logic latches
-		 * the wakeup. Clear EXITEN0 to reset the wakeup logic.
-		 */
-		exiten = GREG32(PINMUX, EXITEN0);
-		GREG32(PINMUX, EXITEN0) = 0;
-		GREG32(PINMUX, EXITEN0) = exiten;
+		reset_wake_logic();
 
 		/*
 		 * Delay sleep long enough for a SPI slave transaction to start
@@ -501,20 +509,6 @@ void board_configure_deep_sleep_wakepins(void)
 	}
 }
 
-static void init_interrupts(void)
-{
-	int i;
-	uint32_t exiten = GREG32(PINMUX, EXITEN0);
-
-	/* Clear wake pin interrupts */
-	GREG32(PINMUX, EXITEN0) = 0;
-	GREG32(PINMUX, EXITEN0) = exiten;
-
-	/* Enable all GPIO interrupts */
-	for (i = 0; i < gpio_ih_count; i++)
-		if (gpio_list[i].flags & GPIO_INT_ANY)
-			gpio_enable_interrupt(i);
-}
 static void deferred_tpm_rst_isr(void);
 DECLARE_DEFERRED(deferred_tpm_rst_isr);
 
@@ -666,7 +660,7 @@ static void board_init(void)
 		decrement_retry_counter();
 	configure_board_specific_gpios();
 	init_pmu();
-	init_interrupts();
+	reset_wake_logic();
 	init_trng();
 	init_jittery_clock(1);
 	init_runlevel(PERMISSION_MEDIUM);
@@ -703,6 +697,12 @@ static void board_init(void)
 	check_board_id_mismatch();
 	check_board_id_mismatch();
 
+	/* Enable GPIO interrupts for device state machines */
+	gpio_enable_interrupt(GPIO_TPM_RST_L);
+	gpio_enable_interrupt(GPIO_DETECT_AP);
+	gpio_enable_interrupt(GPIO_DETECT_EC);
+	gpio_enable_interrupt(GPIO_DETECT_SERVO);
+
 	/*
 	 * Start monitoring AC detect to wake Cr50 from deep sleep.  This is
 	 * needed to detect RDD cable changes in deep sleep.  AC detect is also
@@ -710,12 +710,6 @@ static void board_init(void)
 	 */
 	init_ac_detect();
 	init_rdd_state();
-
-	/*
-	 * The interrupt is enabled by default, but we only want it enabled when
-	 * bit banging mode is active.
-	 */
-	gpio_disable_interrupt(GPIO_EC_TX_CR50_RX);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
