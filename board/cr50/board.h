@@ -180,6 +180,43 @@ enum device_type {
 	DEVICE_COUNT
 };
 
+/*
+ * Device states
+ *
+ * Note that not all states are used by all devices.
+ */
+enum device_state {
+	/* Initial state at boot */
+	DEVICE_STATE_INIT = 0,
+
+	/*
+	 * Detect was not asserted at boot, but we're not willing to give up on
+	 * the device right away so we're debouncing to see if it shows up.
+	 */
+	DEVICE_STATE_INIT_DEBOUNCING,
+
+	/* Disconnected or off, because detect is deasserted */
+	DEVICE_STATE_DISCONNECTED,
+	DEVICE_STATE_OFF,
+
+	/* Device state is not knowable because we're driving detect */
+	DEVICE_STATE_UNDETECTABLE,
+
+	/* Connected or on, because detect is asserted */
+	DEVICE_STATE_CONNECTED,
+	DEVICE_STATE_ON,
+
+	/*
+	 * Device was connected, but we saw detect deasserted and are
+	 * debouncing to see if it stays deasserted - at which point we'll
+	 * decide that it's disconnected.
+	 */
+	DEVICE_STATE_DEBOUNCING,
+
+	/* Device state is unknown.  Used only by legacy device_state code. */
+	DEVICE_STATE_UNKNOWN,
+};
+
 /* NVMem variables. */
 enum nvmem_vars {
 	NVMEM_VAR_CONSOLE_LOCKED = 0,

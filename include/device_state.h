@@ -6,14 +6,6 @@
 #ifndef __CROS_DEVICE_STATE_H
 #define __CROS_DEVICE_STATE_H
 
-/* Device state indexes */
-enum device_state {
-	DEVICE_STATE_UNKNOWN = 0,
-	DEVICE_STATE_OFF,
-	DEVICE_STATE_ON,
-	DEVICE_STATE_COUNT,
-};
-
 enum gpio_signal;
 
 /* Device configuration */

@@ -141,7 +141,13 @@ PINMUX(GPIO(EN_PP3300_INA_L), B7, DIO_INPUT)
  * only change it to an output when we want to assert the signal.
  */
 PINMUX(GPIO(SYS_RST_L_OUT),   M0, DIO_INPUT)
-PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT)
+/*
+ * CCD_MODE_L is an input above, but we need to be able to drive it as
+ * an output if Rdd detects the debug cable.  So set DIO_OUTPUT as
+ * well.  It will be tristated initially, because we don't set
+ * GPIO_OUTPUT above.
+ */
+PINMUX(GPIO(CCD_MODE_L),      M1, DIO_INPUT | DIO_OUTPUT)
 PINMUX(GPIO(BATT_PRES_L),     M2, 0)
 PINMUX(GPIO(I2C_SCL_INA),     B0, DIO_INPUT)
 PINMUX(GPIO(I2C_SDA_INA),     B1, DIO_INPUT)

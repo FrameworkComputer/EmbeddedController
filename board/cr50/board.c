@@ -709,6 +709,7 @@ static void board_init(void)
 	 * used for battery cutoff software support on detachable devices.
 	 */
 	init_ac_detect();
+	init_rdd_state();
 
 	/*
 	 * The interrupt is enabled by default, but we only want it enabled when
@@ -1101,15 +1102,18 @@ DECLARE_DEFERRED(ec_deferred);
 /* Note: this must EXACTLY match enum device_type! */
 struct device_config device_states[] = {
 	[DEVICE_SERVO] = {
+		.state = DEVICE_STATE_UNKNOWN,
 		.deferred = &servo_deferred_data,
 		.detect = GPIO_DETECT_SERVO,
 		.name = "Servo"
 	},
 	[DEVICE_AP] = {
+		.state = DEVICE_STATE_UNKNOWN,
 		.deferred = &ap_deferred_data,
 		.name = "AP"
 	},
 	[DEVICE_EC] = {
+		.state = DEVICE_STATE_UNKNOWN,
 		.deferred = &ec_deferred_data,
 		.detect = GPIO_DETECT_EC,
 		.name = "EC"

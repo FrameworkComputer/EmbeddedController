@@ -19,8 +19,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-static int keep_ccd_enabled;
-
 struct uart_config {
 	const char *name;
 	enum device_type device;
@@ -127,37 +125,10 @@ static void configure_ccd(int enable)
 	CPRINTS("CCD is now %sabled.", enable ? "en" : "dis");
 }
 
-void rdd_attached(void)
-{
-	/* Change CCD_MODE_L to an output which follows the internal GPIO. */
-	GWRITE(PINMUX, DIOM1_SEL, GC_PINMUX_GPIO0_GPIO5_SEL);
-	/* Indicate case-closed debug mode (active low) */
-	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_OUT_LOW);
-}
-
-void rdd_detached(void)
-{
-	/*
-	 * Done with case-closed debug mode, therefore re-setup the CCD_MODE_L
-	 * pin as an input only if CCD mode isn't being forced enabled.
-	 *
-	 * NOTE: A pull up is required on this pin, however it was already
-	 * configured during the set up of the pinmux in gpio_pre_init().  The
-	 * chip-specific GPIO module will ignore any pull up/down configuration
-	 * anyways.
-	 */
-	if (!keep_ccd_enabled)
-		gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
-}
-
 static void rdd_check_pin(void)
 {
 	/* The CCD mode pin is active low. */
 	int enable = !gpio_get_level(GPIO_CCD_MODE_L);
-
-	/* Keep CCD enabled if it's being forced enabled. */
-	if (keep_ccd_enabled)
-		enable = 1;
 
 	if (enable == rdd_is_connected())
 		return;
@@ -190,12 +161,6 @@ static void rdd_ccd_change_hook(void)
 }
 DECLARE_HOOK(HOOK_CCD_CHANGE, rdd_ccd_change_hook, HOOK_PRIO_DEFAULT);
 
-static void clear_keepalive(void)
-{
-	keep_ccd_enabled = 0;
-	ccprintf("Cleared CCD keepalive\n");
-}
-
 static int command_ccd(int argc, char **argv)
 {
 	int val;
@@ -215,34 +180,19 @@ static int command_ccd(int argc, char **argv)
 			else
 				usb_i2c_board_disable();
 		} else if (!strcasecmp("keepalive", argv[1])) {
+			force_rdd_detect(val);
 			if (val) {
-				/* Make sure ccd is enabled */
-				if (!rdd_is_connected())
-					rdd_attached();
-
-				keep_ccd_enabled = 1;
 				ccprintf("Warning CCD will remain "
 					 "enabled until it is "
 					 "explicitly disabled.\n");
-			} else {
-				clear_keepalive();
-			}
-		} else if (argc == 2) {
-			if (val) {
-				rdd_attached();
-			} else {
-				if (keep_ccd_enabled)
-					clear_keepalive();
-
-				rdd_detached();
 			}
 		} else
 			return EC_ERROR_PARAM1;
 	}
 
 	ccprintf("CCD:     %s\n",
-		keep_ccd_enabled ? "forced enable" :
-		rdd_is_connected() ? "enabled" : "disabled");
+		 rdd_detect_is_forced() ? "forced enable" :
+		 rdd_is_connected() ? "enabled" : "disabled");
 	ccprintf("AP UART: %s\n",
 		 uartn_is_enabled(UART_AP) ?
 		 uart_tx_is_connected(UART_AP) ? "RX+TX" : "RX" : "disabled");

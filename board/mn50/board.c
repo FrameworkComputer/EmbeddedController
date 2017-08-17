@@ -10,7 +10,6 @@
 #include "common.h"
 #include "console.h"
 #include "dcrypto/dcrypto.h"
-#include "device_state.h"
 #include "ec_version.h"
 #include "extension.h"
 #include "flash.h"

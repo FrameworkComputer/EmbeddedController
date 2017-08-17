@@ -5,6 +5,7 @@
 
 #include "clock.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "rdd.h"
 #include "registers.h"
@@ -21,9 +22,26 @@
  * debug accessory.
  */
 #define DETECT_DEBUG 0x420
+
+/*
+ * The interrupt only triggers when the debug state is detected.  If we want to
+ * trigger an interrupt when the debug state is *not* detected, we need to
+ * program the bit-inverse.
+ */
 #define DETECT_DISCONNECT (~DETECT_DEBUG & 0xffff)
 
-int debug_cable_is_attached(void)
+/* State of RDD CC detection */
+static enum device_state state = DEVICE_STATE_DISCONNECTED;
+
+/* Force detecting a debug accessory (ignore RDD CC detect hardware) */
+static int force_detected;
+
+/**
+ * Get instantaneous cable detect state
+ *
+ * @return 1 if debug accessory is detected, 0 if not detected
+ */
+static int rdd_is_detected(void)
 {
 	uint8_t cc1 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC1);
 	uint8_t cc2 = GREAD_FIELD(RDD, INPUT_PIN_VALUES, CC2);
@@ -31,58 +49,186 @@ int debug_cable_is_attached(void)
 	return (cc1 == cc2 && (cc1 == 3 || cc1 == 1));
 }
 
-static void rdd_disconnected(void)
+/**
+ * Handle debug accessory disconnecting
+ */
+static void rdd_disconnect(void)
 {
-	CPRINTS("Debug Accessory disconnected");
+	CPRINTS("Debug accessory disconnect");
+	state = DEVICE_STATE_DISCONNECTED;
 
-	rdd_detached();
+	/*
+	 * Stop pulling CCD_MODE_L low.  The internal pullup configured in the
+	 * pinmux will pull the signal back high, unless the EC is also pulling
+	 * it low.
+	 *
+	 * This disables the SBUx muxes, if we were the only one driving
+	 * CCD_MODE_L.
+	 */
+	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_INPUT);
 }
-DECLARE_DEFERRED(rdd_disconnected);
 
-void rdd_interrupt(void)
+/**
+ * Handle debug accessory connecting
+ *
+ * This can be deferred from both rdd_detect() and the interrupt handler, so
+ * it needs to check the current state to determine whether we're already
+ * connected.
+ */
+static void rdd_connect(void)
 {
-	delay_sleep_by(1 * SECOND);
+	/* If we were debouncing, we're done, and still connected */
+	if (state == DEVICE_STATE_DEBOUNCING)
+		state = DEVICE_STATE_CONNECTED;
 
-	if (debug_cable_is_attached()) {
-		/* cancel pending rdd disconnect */
-		hook_call_deferred(&rdd_disconnected_data, -1);
+	/* If we're already connected, done */
+	if (state == DEVICE_STATE_CONNECTED)
+		return;
 
-		CPRINTS("Debug Accessory connected");
+	/* We were previously disconnected, so connect */
+	CPRINTS("Debug accessory connect");
+	state = DEVICE_STATE_CONNECTED;
 
-		/* Detect when debug cable is disconnected */
+	/* Start pulling CCD_MODE_L low to enable the SBUx muxes */
+	gpio_set_flags(GPIO_CCD_MODE_L, GPIO_OUT_LOW);
+}
+DECLARE_DEFERRED(rdd_connect);
+
+/**
+ * Debug accessory detect interrupt
+ */
+static void rdd_interrupt(void)
+{
+	/*
+	 * The Rdd detector is level-sensitive with debounce.  That is, it
+	 * samples the RDCCx pin states.  If they're different, it resets the
+	 * wait counter.  If they're the same, it decrements the wait counter.
+	 * Then if the counter is zero, and the state we're looking for matches
+	 * the map, it fires the interrupt.
+	 *
+	 * Note that the counter *remains* zero until the pin states change.
+	 *
+	 * If we want to be able to wake on Rdd change, then interrupts need to
+	 * remain enabled.  Each time we get an interrupt, we'll toggle the map
+	 * we're looking for to the opposite state.  That stops the interrupt
+	 * from continuing to fire on the current state.  When the pins settle
+	 * into a new state, we'll fire the interrupt again.
+	 *
+	 * Even with that, we can still get a double interrupt now and then,
+	 * because the Rdd module runs on a different clock than we do.  So the
+	 * write we do to change the state map may not be picked up until the
+	 * next clock, when the Rdd module has already generated its next
+	 * interrupt based on the old map.  This is harmless, because we're
+	 * unlikely to actually trigger the deferred function twice, and it
+	 * doesn't care if we do anyway because on the second call it'll
+	 * already be in the connected state.
+	 *
+	 */
+	if (rdd_is_detected()) {
+		/* Accessory detected; toggle to looking for disconnect */
 		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DISCONNECT);
 
-		rdd_attached();
-	} else {
-		/* Detect when debug cable is connected */
-		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DEBUG);
-
 		/*
-		 * Debounce the RDD disconnect for 2 seconds so rdd events
-		 * won't be triggered by any PD negotiation the EC does during
-		 * reset or sysjump.
+		 * Trigger the deferred handler so that we move back into the
+		 * connected state before our debounce interval expires.
 		 */
-		hook_call_deferred(&rdd_disconnected_data, 2 * SECOND);
+		hook_call_deferred(&rdd_connect_data, 0);
+	} else {
+		/*
+		 * Not detected; toggle to looking for connect.  We'll start
+		 * debouncing disconnect the next time HOOK_SECOND triggers
+		 * rdd_detect() below.
+		 */
+		GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DEBUG);
 	}
 
-	/* Clear interrupt */
+	/* Make sure we stay awake long enough to advance the state machine */
+	delay_sleep_by(1 * SECOND);
+
+	/* Clear the interrupt */
 	GWRITE_FIELD(RDD, INT_STATE, INTR_DEBUG_STATE_DETECTED, 1);
 }
 DECLARE_IRQ(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT, rdd_interrupt, 1);
 
-void rdd_init(void)
+/**
+ * RDD CC detect state machine
+ */
+static void rdd_detect(void)
 {
-	/* Enable RDD */
+	/* Handle detecting device */
+	if (force_detected || rdd_is_detected()) {
+		rdd_connect();
+		return;
+	}
+
+	/* CC wasn't detected.  If we're already disconnected, done. */
+	if (state == DEVICE_STATE_DISCONNECTED)
+		return;
+
+	/* If we were debouncing, we're now sure we're disconnected */
+	if (state == DEVICE_STATE_DEBOUNCING) {
+		rdd_disconnect();
+		return;
+	}
+
+	/*
+	 * Otherwise, we were connected but the accessory seems to be
+	 * disconnected right now.  PD negotiation (e.g. during EC reset or
+	 * sysjump) can alter the RDCCx voltages, so we need to debounce this
+	 * signal for longer than the Rdd hardware does to make sure it's
+	 * really disconnected before we deassert CCD_MODE_L.
+	 */
+	state = DEVICE_STATE_DEBOUNCING;
+}
+/*
+ * Bump up priority so this runs before the CCD_MODE_L state machine, because
+ * we can change CCD_MODE_L.
+ */
+DECLARE_HOOK(HOOK_SECOND, rdd_detect, HOOK_PRIO_DEFAULT - 1);
+
+void init_rdd_state(void)
+{
+	/* Enable RDD hardware */
 	clock_enable_module(MODULE_RDD, 1);
 	GWRITE(RDD, POWER_DOWN_B, 1);
 
+	/*
+	 * Note that there is currently (ha, see what I did there) a leakage
+	 * path out of Cr50 into the CC lines.  On some systems, this can cause
+	 * false Rdd detection when the TCPCs are turned off.  This may require
+	 * a software workaround where RDD hardware must be powered down
+	 * whenever the TCPCs are off, and can only be powered up for brief
+	 * periods to do a quick check.  See b/38019839 and b/64582597.
+	 */
+
+	/* Configure to detect accessory connected */
 	GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DEBUG);
 
-	/* Initialize the debug state based on the current cc values */
-	rdd_interrupt();
-
-	/* Enable RDD interrupts */
+	/*
+	 * Enable interrupt for detecting CC.  This minimizes the time before
+	 * we transition to cable-detected at boot, and will cause us to wake
+	 * from deep sleep if a cable is plugged in.
+	 */
 	task_enable_irq(GC_IRQNUM_RDD0_INTR_DEBUG_STATE_DETECTED_INT);
+	GWRITE_FIELD(RDD, INT_STATE, INTR_DEBUG_STATE_DETECTED, 1);
 	GWRITE_FIELD(RDD, INT_ENABLE, INTR_DEBUG_STATE_DETECTED, 1);
 }
-DECLARE_HOOK(HOOK_INIT, rdd_init, HOOK_PRIO_DEFAULT);
+
+void force_rdd_detect(int enable)
+{
+	force_detected = enable;
+
+	/*
+	 * If we're forcing detection, trigger then connect handler early.
+	 *
+	 * Otherwise, we'll revert to the normal logic of checking the RDD
+	 * hardware CC state.
+	 */
+	if (force_detected)
+		hook_call_deferred(&rdd_connect_data, 0);
+}
+
+int rdd_detect_is_forced(void)
+{
+	return force_detected;
+}
