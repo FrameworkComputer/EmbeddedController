@@ -375,6 +375,17 @@ void __idle(void)
 			SET_BIT(NPCX_PDOUT(0), 0);
 #endif
 			idle_sleep_cnt++;
+
+			/*
+			 * Using host access to make sure M4 core clock will
+			 * return when the eSPI accesses the Host modules if
+			 * CSAE bit is set. Please notice this symptom only
+			 * occurs at npcx5.
+			 */
+#if defined(CHIP_FAMILY_NPCX5)
+			/* Enable Host access wakeup */
+			SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
+#endif
 			/*
 			 * Normal idle : wait for interrupt
 			 * TODO (ML): Workaround method for wfi issue.
