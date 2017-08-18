@@ -25,10 +25,12 @@ static char *firmware_binary = "144.0_2.0.bin";	/* firmware blob */
 
 /* Firmware binary blob related */
 #define FW_PAGE_SIZE			64
-#define FW_PAGE_COUNT			768
-#define FW_SIZE				(FW_PAGE_SIZE*FW_PAGE_COUNT)
+#define MAX_FW_PAGE_COUNT	1024
+#define MAX_FW_SIZE			(MAX_FW_PAGE_COUNT*FW_PAGE_SIZE)
 
-static uint8_t fw_data[FW_SIZE];
+static uint8_t fw_data[MAX_FW_SIZE];
+int fw_page_count;
+int fw_size;
 
 /* Utility functions */
 static int le_bytes_to_int(uint8_t *buf)
@@ -71,6 +73,7 @@ static void parse_cmdline(int argc, char *argv[])
 {
 	char *e = 0;
 	int i, errorcnt = 0;
+
 	progname = strrchr(argv[0], '/');
 	if (progname)
 		progname++;
@@ -125,13 +128,6 @@ static void parse_cmdline(int argc, char *argv[])
 			printf("Internal error at %s:%d\n", __FILE__, __LINE__);
 			exit(1);
 		}
-	}
-
-	/* Read the FW file */
-	FILE *f = fopen(firmware_binary, "rb");
-	if (!(f && fread(fw_data, 1, FW_SIZE, f) == FW_SIZE)) {
-		printf("Failed to read firmware from %s\n", firmware_binary);
-		errorcnt++;
 	}
 
 	if (errorcnt)
@@ -366,6 +362,28 @@ static int elan_write_cmd(int reg, int cmd)
 #define ETP_I2C_FW_VERSION_CMD		0x0102
 #define ETP_I2C_IAP_CHECKSUM_CMD	0x0315
 #define ETP_I2C_FW_CHECKSUM_CMD		0x030F
+#define ETP_I2C_OSM_VERSION_CMD		0x0103
+
+static int elan_get_ic_page_count(void)
+{
+	uint8_t ic_type;
+
+	elan_read_cmd(ETP_I2C_OSM_VERSION_CMD);
+
+	ic_type = rx_buf[5];
+
+	switch (ic_type) {
+	case 0x09:
+		return 768;
+	case 0x0D:
+		return 896;
+	case 0x00:
+		return 1024;
+	default:
+		request_exit("The IC type is not supported .\n");
+	}
+	return -1;
+}
 
 static int elan_get_version(int is_iap)
 {
@@ -495,7 +513,7 @@ static uint16_t elan_update_firmware(void)
 	uint16_t checksum = 0, block_checksum;
 	int rv;
 
-	for (int i = elan_get_iap_addr(); i < FW_SIZE; i += FW_PAGE_SIZE) {
+	for (int i = elan_get_iap_addr(); i < fw_size; i += FW_PAGE_SIZE) {
 		block_checksum = elan_calc_checksum(fw_data + i, FW_PAGE_SIZE);
 		rv = elan_write_fw_block(fw_data + i, block_checksum);
 		checksum += block_checksum;
@@ -512,9 +530,24 @@ int main(int argc, char *argv[])
 {
 	uint16_t local_checksum;
 	uint16_t remote_checksum;
+
 	parse_cmdline(argc, argv);
 	init_with_libusb();
 	register_sigaction();
+
+	/*
+	 * Judge IC type  and get page count first.
+	 *Then check the FW file.
+	 */
+	fw_page_count = elan_get_ic_page_count();
+	fw_size = fw_page_count * FW_PAGE_SIZE;
+	printf("IC page count is %04X\n", fw_page_count);
+
+	/* Read the FW file */
+	FILE *f = fopen(firmware_binary, "rb");
+
+	if (!(f && fread(fw_data, 1, fw_size, f) == (unsigned int)fw_size))
+		printf("Failed to read firmware from %s\n", firmware_binary);
 
 	/*
 	 * It is possible that you are not able to get firmware info. This
