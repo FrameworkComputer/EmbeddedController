@@ -123,12 +123,16 @@ class ArmAnalyzerTest(unittest.TestCase):
         (0x2c, 'stmdb', 'sp!, {r4}'),
         (0x30, 'stmdb', 'sp, {r4}'),
         (0x34, 'bx.n', '10 <foo>'),
+        (0x36, 'bx.n', 'r3'),
+        (0x38, 'ldr', 'pc, [r10]'),
     ]
     (size, callsites) = analyzer.AnalyzeFunction(symbol, instructions)
     self.assertEqual(size, 72)
     expect_callsites = [sa.Callsite(0x1e, 0xdeadbeef, False),
                         sa.Callsite(0x22, 0x0, False),
-                        sa.Callsite(0x34, 0x10, True)]
+                        sa.Callsite(0x34, 0x10, True),
+                        sa.Callsite(0x36, None, True),
+                        sa.Callsite(0x38, None, True)]
     self.assertEqual(callsites, expect_callsites)
 
 
@@ -459,6 +463,7 @@ class StackAnalyzerTest(unittest.TestCase):
         '   2000:	b508\t\tpush	{r3, lr}\n'
         '   2002:	f00e fcc5\tbl	1000 <hook_task>\n'
         '   2006:	f00e bd3b\tb.w	53968 <get_program_memory_addr>\n'
+        '   200a:	1234 5678\tb.w  sl\n'
     )
 
     addrtoline_mock.return_value = [('??', '??', 0)]
@@ -478,7 +483,10 @@ class StackAnalyzerTest(unittest.TestCase):
           mock.call('    console_task (8) [??:0] 2000'),
           mock.call('        -> ?? [??:0] 2002'),
           mock.call('    hook_task (8) [??:0] 1000'),
-          mock.call('Failed to resolve some annotation signatures:'),
+          mock.call('Unresolved indirect callsites:'),
+          mock.call('    console_task'),
+          mock.call('        -> ?? [??:0] 200a'),
+          mock.call('Unresolved annotation signatures:'),
           mock.call('    fake_func: function is not found'),
       ])
 

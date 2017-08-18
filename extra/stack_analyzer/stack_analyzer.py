@@ -136,7 +136,7 @@ class Callsite(object):
 
   Attributes:
     address: Address of callsite location. None if it is unknown.
-    target: Callee address.
+    target: Callee address. None if it is unknown.
     is_tail: A bool indicates that it is a tailing call.
     callee: Resolved callee function. None if it hasn't been resolved.
   """
@@ -145,12 +145,14 @@ class Callsite(object):
     """Constructor.
 
     Args:
-      address: Address of callsite location.
-      target: Callee address.
+      address: Address of callsite location. None if it is unknown.
+      target: Callee address. None if it is unknown.
       is_tail: A bool indicates that it is a tailing call. (function jump to
                another function without restoring the stack frame)
       callee: Resolved callee function.
     """
+    # It makes no sense that both address and target are unknown.
+    assert not (address is None and target is None)
     self.address = address
     self.target = target
     self.is_tail = is_tail
@@ -281,8 +283,13 @@ class ArmAnalyzer(object):
   CBZ_CBNZ_OPCODE_RE = re.compile(r'^(cbz|cbnz)(\.\w)?$')
   # Example: "r0, 1009bcbe <host_cmd_motion_sense+0x1d2>"
   CBZ_CBNZ_OPERAND_RE = re.compile(r'^[^,]+,\s+{}$'.format(IMM_ADDRESS_RE))
+  # Ignore lr register because it's for return.
+  INDIRECT_CALL_OPERAND_RE = re.compile(r'^r\d+|sb|sl|fp|ip|sp|pc$')
   # TODO(cheyuw): Handle conditional versions of following
   #               instructions.
+  LDR_OPCODE_RE = re.compile(r'^ldr(\.\w)?$')
+  # Example: "pc, [sp], #4"
+  LDR_PC_OPERAND_RE = re.compile(r'^pc, \[([^\]]+)\]')
   # TODO(cheyuw): Handle other kinds of stm instructions.
   PUSH_OPCODE_RE = re.compile(r'^push$')
   STM_OPCODE_RE = re.compile(r'^stmdb$')
@@ -298,7 +305,7 @@ class ArmAnalyzer(object):
       instructions: Instruction list.
 
     Returns:
-      (stack_frame, callsites): Size of stack frame and callsite list.
+      (stack_frame, callsites): Size of stack frame, callsite list.
     """
     stack_frame = 0
     callsites = []
@@ -307,22 +314,38 @@ class ArmAnalyzer(object):
       is_call_opcode = self.CALL_OPCODE_RE.match(opcode) is not None
       is_cbz_cbnz_opcode = self.CBZ_CBNZ_OPCODE_RE.match(opcode) is not None
       if is_jump_opcode or is_call_opcode or is_cbz_cbnz_opcode:
+        is_tail = is_jump_opcode or is_cbz_cbnz_opcode
+
         if is_cbz_cbnz_opcode:
           result = self.CBZ_CBNZ_OPERAND_RE.match(operand_text)
         else:
           result = self.CALL_OPERAND_RE.match(operand_text)
 
-        if result is not None:
+        if result is None:
+          # Failed to match immediate address, maybe it is an indirect call.
+          # CBZ and CBNZ can't be indirect calls.
+          if (not is_cbz_cbnz_opcode and
+              self.INDIRECT_CALL_OPERAND_RE.match(operand_text) is not None):
+            # Found an indirect call.
+            callsites.append(Callsite(address, None, is_tail))
+
+        else:
           target_address = int(result.group(1), 16)
           # Filter out the in-function target (branches and in-function calls,
           # which are actually branches).
           if not (function_symbol.size > 0 and
                   function_symbol.address < target_address <
                   (function_symbol.address + function_symbol.size)):
-            # Maybe it's a callsite.
-            callsites.append(Callsite(address,
-                                      target_address,
-                                      is_jump_opcode or is_cbz_cbnz_opcode))
+            # Maybe it is a callsite.
+            callsites.append(Callsite(address, target_address, is_tail))
+
+      elif self.LDR_OPCODE_RE.match(opcode) is not None:
+        result = self.LDR_PC_OPERAND_RE.match(operand_text)
+        if result is not None:
+          # Ignore "ldr pc, [sp], xx" because it's usually a return.
+          if result.group(1) != 'sp':
+            # Found an indirect call.
+            callsites.append(Callsite(address, None, True))
 
       elif self.PUSH_OPCODE_RE.match(opcode) is not None:
         # Example: "{r4, r5, r6, r7, lr}"
@@ -593,8 +616,9 @@ class StackAnalyzer(object):
     # Resolve callees of functions.
     for function in function_map.values():
       for callsite in function.callsites:
-        # Remain the callee as None if we can't resolve it.
-        callsite.callee = function_map.get(callsite.target)
+        if callsite.target is not None:
+          # Remain the callee as None if we can't resolve it.
+          callsite.callee = function_map.get(callsite.target)
 
     return function_map
 
@@ -951,10 +975,21 @@ class StackAnalyzer(object):
 
         curr_func = succ_func
 
-    if len(failed_sigs) > 0:
-      print('Failed to resolve some annotation signatures:')
-      for sig, error in failed_sigs:
-        print('    {}: {}'.format(sig, error))
+    print('Unresolved indirect callsites:')
+    for function in function_map.values():
+      indirect_callsites = []
+      for callsite in function.callsites:
+        if callsite.target is None:
+          indirect_callsites.append(callsite.address)
+
+      if len(indirect_callsites) > 0:
+        print('    {}'.format(function.name))
+        for address in indirect_callsites:
+          PrintInlineStack(address, '        ')
+
+    print('Unresolved annotation signatures:')
+    for sig, error in failed_sigs:
+      print('    {}: {}'.format(sig, error))
 
 
 def ParseArgs():

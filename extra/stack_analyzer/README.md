@@ -47,3 +47,5 @@ but it is inlined to the current function and you can follow the trace:
 `usb_pd_protocol.c:1808 -> usb_pd_protocol.c:1191 -> usb_pd_protocol.c:798` to
 find the callsite. The second callsite is at `usb_pd_protocol.c:2672`. And the
 third one is added by annotation.
+
+The unresolved indirect callsites have the similar format to the above.
