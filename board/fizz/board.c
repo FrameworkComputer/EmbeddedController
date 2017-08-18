@@ -60,6 +60,12 @@ static void tcpc_alert_event(enum gpio_signal signal)
 #endif
 }
 
+void adp_in(enum gpio_signal signal)
+{
+	/* TODO: Switch power source from USB-C to BJ only if we're in S5. */
+	CPRINTS("BJ detected");
+}
+
 void vbus0_evt(enum gpio_signal signal)
 {
 	task_wake(TASK_ID_PD_C0);

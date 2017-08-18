@@ -271,22 +271,25 @@ static void board_charge_manager_init(void)
 	}
 
 	input_voltage = adc_read_channel(ADC_VBUS);
-	input_port = input_voltage > 5500 ?
+	if (system_get_board_version() == 0)
+		/* TODO(dnojiri): Remove this case after proto1 is deprecated */
+		input_port = input_voltage > 5500 ?
 			CHARGE_PORT_BARRELJACK : CHARGE_PORT_TYPEC0;
+	else /* proto2 and onward */
+		input_port = gpio_get_level(GPIO_ADP_IN_L) ?
+			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
 	CPRINTS("Power Source: p%d (%dmV)", input_port, input_voltage);
 
 	/* Initialize the power source supplier */
 	switch (input_port) {
-	case CHARGE_PORT_BARRELJACK:
-		cpi.voltage = input_voltage;
-		cpi.current = 3330;	/* TODO: Set right value */
-		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1,
-					     &cpi);
-		/* Source only. Disable PD negotiation as a sink */
-		break;
 	case CHARGE_PORT_TYPEC0:
 		typec_set_input_current_limit(input_port, 3000, input_voltage);
-		/* Sink only. Disable PD negotiation as a source */
+		break;
+	case CHARGE_PORT_BARRELJACK:
+		cpi.voltage = input_voltage;
+		cpi.current = 3330;	/* TODO(dnojiri): Set right value */
+		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1,
+					     &cpi);
 		break;
 	}
 }
