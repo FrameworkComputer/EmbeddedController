@@ -71,6 +71,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tpm_log.h"
 
 #define REGISTER_FILE_SIZE (1 << 6) /* 64 bytes. */
 #define REGISTER_FILE_MASK (REGISTER_FILE_SIZE - 1)
@@ -175,6 +176,11 @@ static void poll_read_state(void)
 				i2cs_read_recovery_count++;
 				i2cs_register_write_complete_handler
 					(write_complete_handler_);
+
+#ifdef CONFIG_TPM_LOGGING
+				tpm_log_event(TPM_I2C_RESET,
+					i2cs_read_recovery_count);
+#endif
 				return;
 			}
 			last_i2cs_read_irq_count = i2cs_read_irq_count;

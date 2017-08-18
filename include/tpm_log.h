@@ -10,7 +10,7 @@
 
 enum tpm_event {
 	TPM_EVENT_INIT,
-	/* TODO: Add log events */
+	TPM_I2C_RESET,
 };
 
 /* Log TPM event of given type with data payload. */
