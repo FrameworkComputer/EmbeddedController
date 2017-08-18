@@ -287,6 +287,7 @@ class ArmAnalyzer(object):
   INDIRECT_CALL_OPERAND_RE = re.compile(r'^r\d+|sb|sl|fp|ip|sp|pc$')
   # TODO(cheyuw): Handle conditional versions of following
   #               instructions.
+  # TODO(cheyuw): Handle other kinds of pc modifying instructions (e.g. mov pc).
   LDR_OPCODE_RE = re.compile(r'^ldr(\.\w)?$')
   # Example: "pc, [sp], #4"
   LDR_PC_OPERAND_RE = re.compile(r'^pc, \[([^\]]+)\]')
@@ -378,9 +379,17 @@ class StackAnalyzer(object):
     Analyze: Run the stack analysis.
   """
 
+  C_FUNCTION_NAME = r'_A-Za-z0-9'
+
+  # Assume there is no ":" in the path.
   # Example: "driver/accel_kionix.c:321 (discriminator 3)"
   ADDRTOLINE_RE = re.compile(
       r'^(?P<path>[^:]+):(?P<linenum>\d+)(\s+\(discriminator\s+\d+\))?$')
+  # To eliminate the suffix appended by compilers, try to extract the
+  # C function name from the prefix of symbol name.
+  # Example: "SHA256_transform.constprop.28"
+  FUNCTION_PREFIX_NAME_RE = re.compile(
+      r'^(?P<name>[{0}]+)([^{0}].*)?$'.format(C_FUNCTION_NAME))
 
   # Errors of annotation resolving.
   ANNOTATION_ERROR_INVALID = 'invalid signature'
@@ -451,7 +460,7 @@ class StackAnalyzer(object):
         # Assume the output is always well-formed.
         assert result is not None
         line_infos.append((function_name.strip(),
-                           result.group('path').strip(),
+                           os.path.realpath(result.group('path').strip()),
                            int(result.group('linenum'))))
 
     self.address_to_line_cache[cache_key] = line_infos
@@ -622,7 +631,7 @@ class StackAnalyzer(object):
 
     return function_map
 
-  def MappingAnnotation(self, function_map, signature_set):
+  def MapAnnotation(self, function_map, signature_set):
     """Map annotation signatures to functions.
 
     Args:
@@ -630,18 +639,8 @@ class StackAnalyzer(object):
       signature_set: Set of annotation signatures.
 
     Returns:
-      Map of signatures to functions, set of signatures which can't be resolved.
+      Map of signatures to functions, map of signatures which can't be resolved.
     """
-    C_FUNCTION_NAME = r'_A-Za-z0-9'
-    # To eliminate the suffix appended by compilers, try to extract the
-    # C function name from the prefix of symbol name.
-    # Example: "SHA256_transform.constprop.28"
-    prefix_name_regex = re.compile(
-        r'^(?P<name>[{0}]+)([^{0}].*)?$'.format(C_FUNCTION_NAME))
-    # Example: "get_range[driver/accel_kionix.c]"
-    annotation_signature_regex = re.compile(
-        r'^(?P<name>[{}]+)(\[(?P<path>.+)\])?$'.format(C_FUNCTION_NAME))
-
     # Build the symbol map indexed by symbol name. If there are multiple symbols
     # with the same name, add them into a set. (e.g. symbols of static function
     # with the same name)
@@ -649,7 +648,7 @@ class StackAnalyzer(object):
     for symbol in self.symbols:
       if symbol.symtype == 'F':
         # Function symbol.
-        result = prefix_name_regex.match(symbol.name)
+        result = self.FUNCTION_PREFIX_NAME_RE.match(symbol.name)
         if result is not None:
           function = function_map.get(symbol.address)
           # Ignore the symbol not in disassembly.
@@ -660,20 +659,14 @@ class StackAnalyzer(object):
 
     # Build the signature map indexed by annotation signature.
     signature_map = {}
-    failed_sigs = set()
+    sig_error_map = {}
     symbol_path_map = {}
     for sig in signature_set:
-      result = annotation_signature_regex.match(sig)
-      if result is None:
-        failed_sigs.add((sig, self.ANNOTATION_ERROR_INVALID))
-        continue
-
-      name = result.group('name').strip()
-      path = result.group('path')
+      (name, path, _) = sig
 
       functions = symbol_map.get(name)
       if functions is None:
-        failed_sigs.add((sig, self.ANNOTATION_ERROR_NOTFOUND))
+        sig_error_map[sig] = self.ANNOTATION_ERROR_NOTFOUND
         continue
 
       if name not in symbol_path_map:
@@ -691,7 +684,7 @@ class StackAnalyzer(object):
           # symbol path). Assume they are the same copies and do the same
           # annotation operations of them because we don't know which copy is
           # indicated by the users.
-          group_map[os.path.realpath(symbol_path)].append(function)
+          group_map[symbol_path].append(function)
 
         symbol_path_map[name] = group_map
 
@@ -702,24 +695,93 @@ class StackAnalyzer(object):
         if path is None:
           if len(group_map) > 1:
             # There is ambiguity but the path isn't specified.
-            failed_sigs.add((sig, self.ANNOTATION_ERROR_AMBIGUOUS))
+            sig_error_map[sig] = self.ANNOTATION_ERROR_AMBIGUOUS
             continue
 
           # No path signature but all symbol signatures of functions are same.
           # Assume they are the same functions, so there is no ambiguity.
           (function_group,) = group_map.values()
         else:
-          function_group = group_map.get(os.path.realpath(path.strip()))
+          function_group = group_map.get(path)
 
       if function_group is None:
-        failed_sigs.add((sig, self.ANNOTATION_ERROR_NOTFOUND))
+        sig_error_map[sig] = self.ANNOTATION_ERROR_NOTFOUND
         continue
 
       # The function_group is a list of all the same functions (according to
       # our assumption) which should be annotated together.
       signature_map[sig] = function_group
 
-    return (signature_map, failed_sigs)
+    return (signature_map, sig_error_map)
+
+  def LoadAnnotation(self):
+    """Load annotation rules.
+
+    Returns:
+      Map of add rules, set of remove rules, set of text signatures which can't
+      be parsed.
+    """
+    # Assume there is no ":" in the path.
+    # Example: "get_range.lto.2501[driver/accel_kionix.c:327]"
+    annotation_signature_regex = re.compile(
+        r'^(?P<name>[^\[]+)(\[(?P<path>[^:]+)(:(?P<linenum>\d+))?\])?$')
+
+    def NormalizeSignature(signature_text):
+      """Parse and normalize the annotation signature.
+
+      Args:
+        signature_text: Text of the annotation signature.
+
+      Returns:
+        (function name, path, line number) of the signature. The path and line
+        number can be None if not exist. None if failed to parse.
+      """
+      result = annotation_signature_regex.match(signature_text.strip())
+      if result is None:
+        return None
+
+      name_result = self.FUNCTION_PREFIX_NAME_RE.match(
+          result.group('name').strip())
+      if name_result is None:
+        return None
+
+      path = result.group('path')
+      if path is not None:
+        path = os.path.realpath(path.strip())
+
+      linenum = result.group('linenum')
+      if linenum is not None:
+        linenum = int(linenum.strip())
+
+      return (name_result.group('name').strip(), path, linenum)
+
+    add_rules = collections.defaultdict(set)
+    remove_rules = set()
+    invalid_sigtxts = set()
+
+    if 'add' in self.annotation and self.annotation['add'] is not None:
+      for src_sigtxt, dst_sigtxts in self.annotation['add'].items():
+        src_sig = NormalizeSignature(src_sigtxt)
+        if src_sig is None:
+          invalid_sigtxts.add(src_sigtxt)
+          continue
+
+        for dst_sigtxt in dst_sigtxts:
+          dst_sig = NormalizeSignature(dst_sigtxt)
+          if dst_sig is None:
+            invalid_sigtxts.add(dst_sigtxt)
+          else:
+            add_rules[src_sig].add(dst_sig)
+
+    if 'remove' in self.annotation and self.annotation['remove'] is not None:
+      for remove_sigtxt in self.annotation['remove']:
+        remove_sig = NormalizeSignature(remove_sigtxt)
+        if remove_sig is None:
+          invalid_sigtxts.add(remove_sigtxt)
+        else:
+          remove_rules.add(remove_sig)
+
+    return (add_rules, remove_rules, invalid_sigtxts)
 
   def ResolveAnnotation(self, function_map):
     """Resolve annotation.
@@ -728,32 +790,64 @@ class StackAnalyzer(object):
       function_map: Function map.
 
     Returns:
-      Set of added call edges, set of invalid paths, set of annotation
-      signatures which can't be resolved.
+      Set of added call edges, set of invalid paths, set of eliminated
+      callsite addresses, set of annotation signatures which can't be resolved.
     """
-    # Collect annotation signatures.
-    annotation_add_map = self.annotation.get('add', {})
-    annotation_remove_list = self.annotation.get('remove', [])
+    (add_rules, remove_rules, invalid_sigtxts) = self.LoadAnnotation()
 
-    signature_set = set(annotation_remove_list)
-    for src_sig, dst_sigs in annotation_add_map.items():
+    signature_set = set(remove_rules)
+    for src_sig, dst_sigs in add_rules.items():
       signature_set.add(src_sig)
       signature_set.update(dst_sigs)
 
-    signature_set = {sig.strip() for sig in signature_set}
-
     # Map signatures to functions.
-    (signature_map, failed_sigs) = self.MappingAnnotation(function_map,
-                                                          signature_set)
+    (signature_map, sig_error_map) = self.MapAnnotation(function_map,
+                                                        signature_set)
+
+    # Build the indirect callsite map indexed by callsite signature.
+    indirect_map = collections.defaultdict(set)
+    for function in function_map.values():
+      for callsite in function.callsites:
+        if callsite.target is not None:
+          continue
+
+        # Found an indirect callsite.
+        line_info = self.AddressToLine(callsite.address)[0]
+        if line_info is None:
+          continue
+
+        (name, path, linenum) = line_info
+        result = self.FUNCTION_PREFIX_NAME_RE.match(name)
+        if result is None:
+          continue
+
+        indirect_map[(result.group('name').strip(), path, linenum)].add(
+            (function, callsite.address))
 
     # Generate the annotation sets.
     add_set = set()
     remove_set = set()
+    eliminated_addrs = set()
 
-    for src_sig, dst_sigs in annotation_add_map.items():
-      src_funcs = signature_map.get(src_sig)
-      if src_funcs is None:
-        continue
+    for src_sig, dst_sigs in add_rules.items():
+      src_funcs = set(signature_map.get(src_sig, []))
+      # Try to match the source signature to the indirect callsites. Even if it
+      # can't be found in disassembly.
+      indirect_calls = indirect_map.get(src_sig)
+      if indirect_calls is not None:
+        for function, callsite_address in indirect_calls:
+          # Add the caller of the indirect callsite to the source functions.
+          src_funcs.add(function)
+          # Assume each callsite can be represented by a unique address.
+          eliminated_addrs.add(callsite_address)
+
+        if src_sig in sig_error_map:
+          # Assume the error is always the not found error. Since the signature
+          # found in indirect callsite map must be a full signature, it can't
+          # happen the ambiguous error.
+          assert sig_error_map[src_sig] == self.ANNOTATION_ERROR_NOTFOUND
+          # Found in inline stack, remove the not found error.
+          del sig_error_map[src_sig]
 
       for dst_sig in dst_sigs:
         dst_funcs = signature_map.get(dst_sig)
@@ -766,24 +860,45 @@ class StackAnalyzer(object):
           for dst_func in dst_funcs:
             add_set.add((src_func, dst_func))
 
-    for remove_sig in annotation_remove_list:
+    for remove_sig in remove_rules:
       remove_funcs = signature_map.get(remove_sig)
       if remove_funcs is not None:
         # Add all the same functions.
         remove_set.update(remove_funcs)
 
-    return add_set, remove_set, failed_sigs
+    failed_sigtxts = set()
+    for sigtxt in invalid_sigtxts:
+      failed_sigtxts.add((sigtxt, self.ANNOTATION_ERROR_INVALID))
 
-  def PreprocessCallGraph(self, function_map, add_set, remove_set):
-    """Preprocess the callgraph.
+    # Translate the tupled failed signatures to text signatures.
+    for sig, error in sig_error_map.items():
+      (name, path, linenum) = sig
+      bracket_text = ''
+      if path is not None:
+        path = os.path.relpath(path)
+        if linenum is None:
+          bracket_text = '[{}]'.format(path)
+        else:
+          bracket_text = '[{}:{}]'.format(path, linenum)
 
-    It will add the missing call edges, and remove simple invalid paths (the
-    paths only have one vertex) from the function_map.
+      failed_sigtxts.add((name + bracket_text, error))
+
+    return (add_set, remove_set, eliminated_addrs, failed_sigtxts)
+
+  def PreprocessAnnotation(self, function_map, add_set, remove_set,
+                           eliminated_addrs):
+    """Preprocess the annotation and callgraph.
+
+    Add the missing call edges, and remove simple invalid paths (the paths only
+    have one vertex) from the function_map.
+
+    Eliminate the annotated indirect callsites.
 
     Args:
       function_map: Function map.
       add_set: Set of missing call edges.
       remove_set: Set of invalid paths.
+      eliminated_addrs: Set of eliminated callsite addresses.
     """
     for src_func, dst_func in add_set:
       # TODO(cheyuw): Support tailing call annotation.
@@ -793,13 +908,18 @@ class StackAnalyzer(object):
     for function in function_map.values():
       cleaned_callsites = []
       for callsite in function.callsites:
-        if callsite.callee not in remove_set:
-          cleaned_callsites.append(callsite)
+        if callsite.callee in remove_set:
+          continue
+
+        if callsite.target is None and callsite.address in eliminated_addrs:
+          continue
+
+        cleaned_callsites.append(callsite)
 
       function.callsites = cleaned_callsites
 
   def AnalyzeCallGraph(self, function_map):
-    """Analyze call graph.
+    """Analyze callgraph.
 
     It will update the max stack size and path for each function.
 
@@ -807,7 +927,7 @@ class StackAnalyzer(object):
       function_map: Function map.
 
     Returns:
-      SCC groups of the call graph.
+      SCC groups of the callgraph.
     """
     def BuildSCC(function):
       """Tarjan's strongly connected components algorithm.
@@ -912,7 +1032,9 @@ class StackAnalyzer(object):
         else:
           (function_name, path, linenum) = line_info
 
-        line_texts.append('{} [{}:{}]'.format(function_name, path, linenum))
+        line_texts.append('{}[{}:{}]'.format(function_name,
+                                             os.path.relpath(path),
+                                             linenum))
 
       print('{}-> {} {:x}'.format(prefix, line_texts[0], address))
       for depth, line_text in enumerate(line_texts[1:]):
@@ -929,8 +1051,11 @@ class StackAnalyzer(object):
       raise StackAnalyzerError('Failed to run objdump.')
 
     function_map = self.AnalyzeDisassembly(disasm_text)
-    (add_set, remove_set, failed_sigs) = self.ResolveAnnotation(function_map)
-    self.PreprocessCallGraph(function_map, add_set, remove_set)
+    result = self.ResolveAnnotation(function_map)
+    (add_set, remove_set, eliminated_addrs, failed_sigtxts) = result
+    self.PreprocessAnnotation(function_map,
+                              add_set, remove_set,
+                              eliminated_addrs)
     cycle_groups = self.AnalyzeCallGraph(function_map)
 
     # Print the results of task-aware stack analysis.
@@ -954,7 +1079,7 @@ class StackAnalyzer(object):
 
         output = '    {} ({}) [{}:{}] {:x}'.format(curr_func.name,
                                                    curr_func.stack_frame,
-                                                   path,
+                                                   os.path.relpath(path),
                                                    linenum,
                                                    curr_func.address)
         if len(cycle_groups[curr_func.cycle_index]) > 0:
@@ -988,8 +1113,8 @@ class StackAnalyzer(object):
           PrintInlineStack(address, '        ')
 
     print('Unresolved annotation signatures:')
-    for sig, error in failed_sigs:
-      print('    {}: {}'.format(sig, error))
+    for sigtxt, error in failed_sigtxts:
+      print('    {}: {}'.format(sigtxt, error))
 
 
 def ParseArgs():
@@ -1112,6 +1237,7 @@ def main():
       except IOError:
         raise StackAnalyzerError('Failed to open annotation file.')
 
+      # TODO(cheyuw): Do complete annotation format verification.
       if not isinstance(annotation, dict):
         raise StackAnalyzerError('Invalid annotation file.')
 

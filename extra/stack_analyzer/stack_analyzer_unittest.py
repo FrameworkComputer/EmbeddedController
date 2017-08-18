@@ -8,6 +8,7 @@
 from __future__ import print_function
 
 import mock
+import os
 import subprocess
 import unittest
 
@@ -213,6 +214,18 @@ class StackAnalyzerTest(unittest.TestCase):
     self.assertEqual(tasklist, expect_rw_tasklist)
 
   def testResolveAnnotation(self):
+    self.analyzer.annotation = {}
+    (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+    self.assertEqual(add_rules, {})
+    self.assertEqual(remove_rules, set())
+    self.assertEqual(invalid_sigtxts, set())
+
+    self.analyzer.annotation = {'add': None, 'remove': None}
+    (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+    self.assertEqual(add_rules, {})
+    self.assertEqual(remove_rules, set())
+    self.assertEqual(invalid_sigtxts, set())
+
     funcs = {
         0x1000: sa.Function(0x1000, 'hook_task', 0, []),
         0x2000: sa.Function(0x2000, 'console_task', 0, []),
@@ -221,50 +234,61 @@ class StackAnalyzerTest(unittest.TestCase):
         0x13000: sa.Function(0x13000, 'inlined_mul', 0, []),
         0x13100: sa.Function(0x13100, 'inlined_mul', 0, []),
     }
+    funcs[0x1000].callsites = [
+        sa.Callsite(0x1002, None, False, None)]
     # Set address_to_line_cache to fake the results of addr2line.
     self.analyzer.address_to_line_cache = {
-        (0x1000, False): [('hook_task', 'a.c', 10)],
-        (0x2000, False): [('console_task', 'b.c', 20)],
-        (0x4000, False): [('toudhpad_calc', './a.c', 20)],
-        (0x5000, False): [('touchpad_calc.constprop.42', 'b.c', 40)],
-        (0x12000, False): [('trackpad_range', 't.c', 10)],
-        (0x13000, False): [('inlined_mul', 'x.c', 12)],
-        (0x13100, False): [('inlined_mul', 'x.c', 12)],
+        (0x1000, False): [('hook_task', os.path.abspath('a.c'), 10)],
+        (0x1002, False): [('toot_calc', os.path.abspath('t.c'), 1234)],
+        (0x2000, False): [('console_task', os.path.abspath('b.c'), 20)],
+        (0x4000, False): [('toudhpad_calc', os.path.abspath('a.c'), 20)],
+        (0x5000, False): [
+            ('touchpad_calc.constprop.42', os.path.abspath('b.c'), 40)],
+        (0x12000, False): [('trackpad_range', os.path.abspath('t.c'), 10)],
+        (0x13000, False): [('inlined_mul', os.path.abspath('x.c'), 12)],
+        (0x13100, False): [('inlined_mul', os.path.abspath('x.c'), 12)],
     }
     self.analyzer.annotation = {
         'add': {
-            'hook_task': ['touchpad_calc[a.c]', 'hook_task'],
+            'hook_task.lto.573': ['touchpad_calc.lto.2501[a.c]'],
             'console_task': ['touchpad_calc[b.c]', 'inlined_mul_alias'],
             'hook_task[q.c]': ['hook_task'],
             'inlined_mul[x.c]': ['inlined_mul'],
+            'toot_calc[t.c:1234]': ['hook_task'],
         },
         'remove': {
-            'touchpad?calc',
+            'touchpad?calc[',
             'touchpad_calc',
             'touchpad_calc[a.c]',
             'task_unk[a.c]',
-            'touchpad_calc[../a.c]',
+            'touchpad_calc[x/a.c]',
             'trackpad_range',
             'inlined_mul',
         },
     }
-    signature_set = set(self.analyzer.annotation['remove'])
-    for src_sig, dst_sigs in self.analyzer.annotation['add'].items():
+
+    (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+    self.assertEqual(invalid_sigtxts, {'touchpad?calc['})
+
+    signature_set = set(remove_rules)
+    for src_sig, dst_sigs in add_rules.items():
       signature_set.add(src_sig)
       signature_set.update(dst_sigs)
 
-    (signature_map, failed_sigs) = self.analyzer.MappingAnnotation(
-        funcs, signature_set)
-    (add_set, remove_set, failed_sigs) = self.analyzer.ResolveAnnotation(funcs)
+    (signature_map, failed_sigs) = self.analyzer.MapAnnotation(funcs,
+                                                               signature_set)
+    result = self.analyzer.ResolveAnnotation(funcs)
+    (add_set, remove_set, eliminated_addrs, failed_sigs) = result
 
     expect_signature_map = {
-        'hook_task': {funcs[0x1000]},
-        'touchpad_calc[a.c]': {funcs[0x4000]},
-        'touchpad_calc[b.c]': {funcs[0x5000]},
-        'console_task': {funcs[0x2000]},
-        'inlined_mul_alias': {funcs[0x13100]},
-        'inlined_mul[x.c]': {funcs[0x13000], funcs[0x13100]},
-        'inlined_mul': {funcs[0x13000], funcs[0x13100]},
+        ('hook_task', None, None): {funcs[0x1000]},
+        ('touchpad_calc', os.path.abspath('a.c'), None): {funcs[0x4000]},
+        ('touchpad_calc', os.path.abspath('b.c'), None): {funcs[0x5000]},
+        ('console_task', None, None): {funcs[0x2000]},
+        ('inlined_mul_alias', None, None): {funcs[0x13100]},
+        ('inlined_mul', os.path.abspath('x.c'), None): {funcs[0x13000],
+                                                        funcs[0x13100]},
+        ('inlined_mul', None, None): {funcs[0x13000], funcs[0x13100]},
     }
     self.assertEqual(len(signature_map), len(expect_signature_map))
     for sig, funclist in signature_map.items():
@@ -285,16 +309,17 @@ class StackAnalyzerTest(unittest.TestCase):
         funcs[0x13000],
         funcs[0x13100]
     })
+    self.assertEqual(eliminated_addrs, {0x1002})
     self.assertEqual(failed_sigs, {
-        ('touchpad?calc', sa.StackAnalyzer.ANNOTATION_ERROR_INVALID),
+        ('touchpad?calc[', sa.StackAnalyzer.ANNOTATION_ERROR_INVALID),
         ('touchpad_calc', sa.StackAnalyzer.ANNOTATION_ERROR_AMBIGUOUS),
         ('hook_task[q.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
         ('task_unk[a.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
-        ('touchpad_calc[../a.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
+        ('touchpad_calc[x/a.c]', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
         ('trackpad_range', sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
     })
 
-  def testPreprocessCallGraph(self):
+  def testPreprocessAnnotation(self):
     funcs = {
         0x1000: sa.Function(0x1000, 'hook_task', 0, []),
         0x2000: sa.Function(0x2000, 'console_task', 0, []),
@@ -303,11 +328,17 @@ class StackAnalyzerTest(unittest.TestCase):
     funcs[0x1000].callsites = [
         sa.Callsite(0x1002, 0x1000, False, funcs[0x1000])]
     funcs[0x2000].callsites = [
-        sa.Callsite(0x2002, 0x1000, False, funcs[0x1000])]
+        sa.Callsite(0x2002, 0x1000, False, funcs[0x1000]),
+        sa.Callsite(0x2006, None, True, None),
+    ]
     add_set = {(funcs[0x2000], funcs[0x4000]), (funcs[0x4000], funcs[0x1000])}
     remove_set = {funcs[0x1000]}
+    eliminated_addrs = {0x2006}
 
-    self.analyzer.PreprocessCallGraph(funcs, add_set, remove_set)
+    self.analyzer.PreprocessAnnotation(funcs,
+                                       add_set,
+                                       remove_set,
+                                       eliminated_addrs)
 
     expect_funcs = {
         0x1000: sa.Function(0x1000, 'hook_task', 0, []),
@@ -408,30 +439,30 @@ class StackAnalyzerTest(unittest.TestCase):
 
   @mock.patch('subprocess.check_output')
   def testAddressToLine(self, checkoutput_mock):
-    checkoutput_mock.return_value = 'fake_func\ntest.c:1'
+    checkoutput_mock.return_value = 'fake_func\n/test.c:1'
     self.assertEqual(self.analyzer.AddressToLine(0x1234),
-                     [('fake_func', 'test.c', 1)])
+                     [('fake_func', '/test.c', 1)])
     checkoutput_mock.assert_called_once_with(
         ['addr2line', '-f', '-e', './ec.RW.elf', '1234'])
     checkoutput_mock.reset_mock()
 
-    checkoutput_mock.return_value = 'fake_func\na.c:1\nbake_func\nb.c:2\n'
+    checkoutput_mock.return_value = 'fake_func\n/a.c:1\nbake_func\n/b.c:2\n'
     self.assertEqual(self.analyzer.AddressToLine(0x1234, True),
-                     [('fake_func', 'a.c', 1), ('bake_func', 'b.c', 2)])
+                     [('fake_func', '/a.c', 1), ('bake_func', '/b.c', 2)])
     checkoutput_mock.assert_called_once_with(
         ['addr2line', '-f', '-e', './ec.RW.elf', '1234', '-i'])
     checkoutput_mock.reset_mock()
 
-    checkoutput_mock.return_value = 'fake_func\ntest.c:1 (discriminator 128)'
+    checkoutput_mock.return_value = 'fake_func\n/test.c:1 (discriminator 128)'
     self.assertEqual(self.analyzer.AddressToLine(0x12345),
-                     [('fake_func', 'test.c', 1)])
+                     [('fake_func', '/test.c', 1)])
     checkoutput_mock.assert_called_once_with(
         ['addr2line', '-f', '-e', './ec.RW.elf', '12345'])
     checkoutput_mock.reset_mock()
 
-    checkoutput_mock.return_value = '??\n:?\nbake_func\nb.c:2\n'
+    checkoutput_mock.return_value = '??\n:?\nbake_func\n/b.c:2\n'
     self.assertEqual(self.analyzer.AddressToLine(0x123456),
-                     [None, ('bake_func', 'b.c', 2)])
+                     [None, ('bake_func', '/b.c', 2)])
     checkoutput_mock.assert_called_once_with(
         ['addr2line', '-f', '-e', './ec.RW.elf', '123456'])
     checkoutput_mock.reset_mock()
@@ -481,11 +512,11 @@ class StackAnalyzerTest(unittest.TestCase):
               'Task: CONSOLE, Max size: 240 (16 + 224), Allocated size: 460'),
           mock.call('Call Trace:'),
           mock.call('    console_task (8) [??:0] 2000'),
-          mock.call('        -> ?? [??:0] 2002'),
+          mock.call('        -> ??[??:0] 2002'),
           mock.call('    hook_task (8) [??:0] 1000'),
           mock.call('Unresolved indirect callsites:'),
           mock.call('    console_task'),
-          mock.call('        -> ?? [??:0] 200a'),
+          mock.call('        -> ??[??:0] 200a'),
           mock.call('Unresolved annotation signatures:'),
           mock.call('    fake_func: function is not found'),
       ])

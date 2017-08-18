@@ -10,6 +10,11 @@ add:
   motion_lid_calc[common/motion_lid.c]:
   - get_range[driver/accel_kionix.c]
 
+  # The full signature (function name[path:line number]) can be used to
+  # eliminate the indirect call (see README.md).
+  tcpm_transmit[driver/tcpm/tcpm.h:142]:
+  - anx74xx_tcpm_transmit
+
 # Remove some call paths.
 remove:
 # Remove all callsites pointing to panic_assert_fail.
