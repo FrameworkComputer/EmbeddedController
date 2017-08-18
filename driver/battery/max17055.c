@@ -256,8 +256,8 @@ void battery_get_params(struct batt_params *batt)
 
 	batt->current = CURRENT_CONV((int16_t)reg);
 
-	/* Default to not desiring voltage and current */
-	batt->desired_voltage = batt->desired_current = 0;
+	batt->desired_voltage = battery_get_info()->voltage_max;
+	batt->desired_current = BATTERY_DESIRED_CHARGING_CURRENT;
 
 	/* If any of those reads worked, the battery is responsive */
 	if ((batt->flags & flags_to_check) != flags_to_check) {
