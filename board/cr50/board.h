@@ -146,6 +146,8 @@
 /* Implement custom udelay, due to usec hwtimer imprecision. */
 #define CONFIG_HW_SPECIFIC_UDELAY
 
+#define CONFIG_TPM_LOGGING
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
