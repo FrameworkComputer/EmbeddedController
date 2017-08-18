@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <dirent.h>
-#include <stdint.h>
 #include <limits.h>
 
 #include "config.h"
