@@ -115,10 +115,11 @@
 #define CONFIG_BATTERY_MAX17055
 
 /* Battery parameters for max17055 ModelGauge m5 algorithm. */
-#define BATTERY_MAX17055_DESIGNCAP 0x1b58
-#define BATTERY_MAX17055_ICHGTERM  0x0220
-#define BATTERY_MAX17055_VEMPTY    0xa561
-#define BATTERY_MAX17055_RSENSE    5     /* m-ohm */
+#define BATTERY_MAX17055_DESIGNCAP          0x1b58
+#define BATTERY_MAX17055_ICHGTERM           0x0220
+#define BATTERY_MAX17055_VEMPTY             0xa561
+#define BATTERY_MAX17055_RSENSE             5     /* m-ohm */
+#define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
 
 #define PD_OPERATING_POWER_MW 15000
 #define PD_MAX_POWER_MW       60000
