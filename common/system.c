@@ -226,6 +226,25 @@ test_mockable uintptr_t system_usable_ram_end(void)
 	return (uintptr_t)jdata - jdata->jump_tag_total;
 }
 
+void system_encode_save_flags(int reset_flags, uint32_t *save_flags)
+{
+	*save_flags = 0;
+
+	/* Save current reset reasons if necessary */
+	if (reset_flags & SYSTEM_RESET_PRESERVE_FLAGS)
+		*save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
+
+	/* Add in AP off flag into saved flags. */
+	if (reset_flags & SYSTEM_RESET_LEAVE_AP_OFF)
+		*save_flags |= RESET_FLAG_AP_OFF;
+
+	/* Save reset flag */
+	if (reset_flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
+		*save_flags |= RESET_FLAG_HARD;
+	else
+		*save_flags |= RESET_FLAG_SOFT;
+}
+
 uint32_t system_get_reset_flags(void)
 {
 	return reset_flags;
@@ -1135,20 +1154,25 @@ static int command_reboot(int argc, char **argv)
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[i], "preserve")) {
 			flags |= SYSTEM_RESET_PRESERVE_FLAGS;
+		} else if (!strcasecmp(argv[i], "wait-ext")) {
+			flags |= SYSTEM_RESET_WAIT_EXT;
 		} else
 			return EC_ERROR_PARAM1 + i - 1;
 	}
 
 	if (flags & SYSTEM_RESET_HARD)
 		ccputs("Hard-");
-	ccputs("Rebooting!\n\n\n");
+	if (flags & SYSTEM_RESET_WAIT_EXT)
+		ccputs("Waiting for ext reset!\n\n\n");
+	else
+		ccputs("Rebooting!\n\n\n");
 	cflush();
 
 	system_reset(flags);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(reboot, command_reboot,
-			"[hard|soft] [preserve] [ap-off] [cancel]",
+			"[hard|soft] [preserve] [ap-off] [wait-ext] [cancel]",
 			"Reboot the EC");
 
 #ifdef CONFIG_CMD_SYSLOCK
