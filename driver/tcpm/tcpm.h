@@ -72,7 +72,17 @@ static inline void tcpc_lock(int port, int lock)
 /* TCPM driver wrapper function */
 static inline int tcpm_init(int port)
 {
-	return tcpc_config[port].drv->init(port);
+	int rv;
+
+	rv = tcpc_config[port].drv->init(port);
+	if (rv)
+		return rv;
+
+	/* Board specific post TCPC init */
+	if (board_tcpc_post_init)
+		rv = board_tcpc_post_init(port);
+
+	return rv;
 }
 
 static inline int tcpm_release(int port)

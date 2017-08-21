@@ -273,4 +273,13 @@ void tcpc_alert_clear(int port);
  */
 int tcpc_run(int port, int evt);
 
+/**
+ * Initialize board specific TCPC functions post TCPC initialization.
+ *
+ * @param port Type-C port number
+ *
+ * @return EC_SUCCESS or error
+ */
+int board_tcpc_post_init(int port) __attribute__((weak));
+
 #endif /* __CROS_EC_USB_PD_TCPM_H */
