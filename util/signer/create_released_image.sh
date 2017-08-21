@@ -5,11 +5,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# This script is a utility which allows to sign dev and prod CR50 images for
-# release and place them in a tarball suitable for uploading to the BCS.
+# This script is a utility which allows to sign prod CR50 images for release
+# and place them in a tarball suitable for uploading to the BCS.
 #
-# Manifests present in the EC directory at the time of signing are used for
-# both prod and dev images.
+# The util/signer/ec_RW-manifest-prod.json manifest present in the EC
+# directory is used for signing.
 #
 
 set -u
@@ -52,8 +52,9 @@ verify_ro() {
 # binaries and sign them.
 #
 # The signed image is placed in the directory named as concatenation of RO and
-# RW version numbers, which is where eventually the ebuild downloading the
-# tarball from the BCS expects the dev and prod images be.
+# RW version numbers and board ID fields, if set to non-default. The ebuild
+# downloading the tarball from the BCS expects the image to be in that
+# directory.
 prepare_image() {
   local awk_prog
   local count=0
@@ -182,14 +183,13 @@ set -e
 FLAGS_HELP="usage: ${ME} [flags] <blobs>
 
 blobs are:
-  <prod RO A>.hex <prod RO B>.hex <dev RO A>.hex <dev RO B>.hex \
- <RW.elf> <RW_B.elf>"
+  <prod RO A>.hex <prod RO B>.hex  <RW.elf> <RW_B.elf>"
 
 # Parse command line.
 FLAGS "$@" || exit 1
 
 eval set -- "${FLAGS_ARGV}"
-if [ "${#*}" != "6" ]; then
+if [ "${#*}" != "4" ]; then
   flags_help
   exit 1
 fi
@@ -203,15 +203,12 @@ fi
 
 prod_ro_a="${1}"
 prod_ro_b="${2}"
-dev_ro_a="${3}"
-dev_ro_b="${4}"
-rw_a="${5}"
-rw_b="${6}"
+rw_a="${3}"
+rw_b="${4}"
 
 # Used by the bs script.
 export CR50_BOARD_ID="${FLAGS_cr50_board_id}"
 
-prepare_image 'dev' "${dev_ro_a}" "${dev_ro_b}" "${rw_a}" "${rw_b}"
 prepare_image 'prod' "${prod_ro_a}" "${prod_ro_b}" "${rw_a}" "${rw_b}"
 tarball="${dest_dir}.tbz2"
 tar jcf  "${tarball}" "${dest_dir}"
