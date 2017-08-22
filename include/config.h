@@ -226,6 +226,14 @@
 #define CONFIG_BATTERY_PRECHARGE_TIMEOUT 30
 
 /*
+ * If defined, the charger will check a board specific function for battery hw
+ * presence as an additional condition to determine if power on is allowed for
+ * factory override, where allowing booting of a bare board with no battery and
+ * no power button press is required.
+ */
+#undef CONFIG_BATTERY_HW_PRESENT_CUSTOM
+
+/*
  * If defined, the charger will check for battery presence before attempting
  * to communicate with it. This avoids the 30 second delay when booting
  * without a battery present. Do not use with CONFIG_BATTERY_PRESENT_GPIO.

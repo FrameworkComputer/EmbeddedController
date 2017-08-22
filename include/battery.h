@@ -142,6 +142,14 @@ void battery_override_params(struct batt_params *batt);
 enum battery_present battery_is_present(void);
 
 /**
+ * Check for physical presence of battery.
+ *
+ * @return Whether there is a battery physically present, but possibly
+ * in a disconnected or cut off state, or if we can't tell;
+ */
+enum battery_present battery_hw_present(void);
+
+/**
  * Check for battery initialization status.
  *
  * @return zero if not initialized.

@@ -115,7 +115,7 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
-static enum battery_present battery_hw_present(void)
+enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_BATTERY_PRESENT_L) ? BP_NO : BP_YES;

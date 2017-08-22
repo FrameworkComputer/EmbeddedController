@@ -173,7 +173,7 @@ static inline int batt_smp_cos4870_is_initialized(void)
 		batt_status & STATUS_INITIALIZED;
 }
 
-static inline enum battery_present battery_hw_present(void)
+enum battery_present battery_hw_present(void)
 {
 	int data;
 	int rv;

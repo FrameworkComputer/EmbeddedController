@@ -226,7 +226,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	return 0;
 }
 
-static inline enum battery_present battery_hw_present(void)
+enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_EC_BATT_PRES_L) ? BP_NO : BP_YES;

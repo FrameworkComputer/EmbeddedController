@@ -1011,9 +1011,14 @@ int charge_prevent_power_on(int power_button_pressed)
 
 	/*
 	 * Factory override: Always allow power on if WP is disabled,
-	 * except when auto-power-on at EC startup.
+	 * except when auto-power-on at EC startup and the battery
+	 * is physically present.
 	 */
-	prevent_power_on &= (system_is_locked() || automatic_power_on);
+	prevent_power_on &= (system_is_locked() || (automatic_power_on
+#ifdef CONFIG_BATTERY_HW_PRESENT_CUSTOM
+				    && battery_hw_present() == BP_YES
+#endif
+				     ));
 #endif
 
 	return prevent_power_on;
