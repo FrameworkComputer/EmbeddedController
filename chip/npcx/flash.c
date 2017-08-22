@@ -730,6 +730,9 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO,
 #endif
 
 #ifdef CONFIG_CMD_FLASH_TRISTATE
+#ifdef NPCX_INT_FLASH_SUPPORT
+#error "Flash tristate is not relevant when internal flash is used."
+#endif
 static void flash_tristate(int enable)
 {
 	/* Enable/Disable FIU pins to tri-state */
