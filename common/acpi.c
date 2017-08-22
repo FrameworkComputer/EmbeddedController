@@ -175,6 +175,32 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #endif
 
+		case EC_ACPI_MEM_DEVICE_FEATURES0:
+		case EC_ACPI_MEM_DEVICE_FEATURES1:
+		case EC_ACPI_MEM_DEVICE_FEATURES2:
+		case EC_ACPI_MEM_DEVICE_FEATURES3: {
+			int off = acpi_addr - EC_ACPI_MEM_DEVICE_FEATURES0;
+			uint32_t val = get_feature_flags0();
+
+			/* Flush EC_FEATURE_LIMITED bit. Having it reset to 0
+			 * means that FEATURES[0-3] are supported in the first
+			 * place, and the other bits are valid.
+			 */
+			val &= ~1;
+
+			result = val >> (8 * off);
+			break;
+			}
+		case EC_ACPI_MEM_DEVICE_FEATURES4:
+		case EC_ACPI_MEM_DEVICE_FEATURES5:
+		case EC_ACPI_MEM_DEVICE_FEATURES6:
+		case EC_ACPI_MEM_DEVICE_FEATURES7: {
+			int off = acpi_addr - EC_ACPI_MEM_DEVICE_FEATURES4;
+			uint32_t val = get_feature_flags1();
+
+			result = val >> (8 * off);
+			break;
+			}
 		default:
 			result = acpi_read(acpi_addr);
 			break;
