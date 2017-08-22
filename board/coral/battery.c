@@ -21,46 +21,326 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
-/* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHUTDOWN_DATA	0xC574
+/* Number of writes needed to invoke battery cutoff command */
+#define SHIP_MODE_WRITES 2
 
 enum battery_type {
 	BATTERY_SANYO,
+	BATTERY_SONY,
+	BATTERY_PANASONIC,
+	BATTERY_CELXPERT,
+	BATTERY_LGC011,
+	BATTERY_SMP011,
+	BATTERY_LGC,
+	BATTERY_BYD,
+	BATTERY_SIMPLO,
 	BATTERY_TYPE_COUNT,
 };
 
-struct board_batt_params {
+struct ship_mode_info {
+	const uint8_t reg_addr;
+	const uint16_t reg_data[SHIP_MODE_WRITES];
+};
+
+struct fet_info {
+	const uint8_t reg_addr;
+	const uint16_t reg_mask;
+	const uint16_t disconnect_val;
+};
+
+struct fuel_gauge_info {
 	const char *manuf_name;
-	const struct battery_info *batt_info;
+	const struct ship_mode_info ship_mode;
+	const struct fet_info fet;
+};
+
+struct board_batt_params {
+	const struct fuel_gauge_info fuel_gauge;
+	const struct battery_info batt_info;
 };
 
 #define DEFAULT_BATTERY_TYPE BATTERY_SANYO
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
 
-/*
- * Battery info for LG A50. Note that the fields start_charging_min/max and
- * charging_min/max are not used for the Eve charger. The effective temperature
- * limits are given by discharging_min/max_c.
- */
-static const struct battery_info batt_info_sanyo = {
-	.voltage_max		= TARGET_WITH_MARGIN(13200, 5), /* mV */
-	.voltage_normal		= 11550, /* mV */
-	.voltage_min		= 9000, /* mV */
-	.precharge_current	= 256,	/* mA */
-	.start_charging_min_c	= 0,
-	.start_charging_max_c	= 46,
-	.charging_min_c		= 0,
-	.charging_max_c		= 60,
-	.discharging_min_c	= 0,
-	.discharging_max_c	= 60,
-};
+/* Battery may delay reporting battery present */
+static int battery_report_present = 1;
 
+/*
+ * Battery info for all Coral battery types. Note that the fields
+ * start_charging_min/max and charging_min/max are not used for the charger.
+ * The effective temperature limits are given by discharging_min/max_c.
+ *
+ * Fuel Gauge (FG) parameters which are used for determing if the battery
+ * is connected, the appropriate ship mode (battery cutoff) command, and the
+ * charge/discharge FETs status.
+ *
+ * Ship mode (battery cutoff) requires 2 writes to the appropirate smart battery
+ * register. For some batteries, the charge/discharge FET bits are set when
+ * charging/discharging is active, in other types, these bits set mean that
+ * charging/discharging is disabled. Therefore, in addition to the mask for
+ * these bits, a disconnect value must be specified. Note that for TI fuel
+ * gauge, the charge/discharge FET status is found in Operation Status (0x54),
+ * but a read of Manufacturer Access (0x00) will return the lower 16 bits of
+ * Operation status which contains the FET status bits.
+ *
+ * The assumption for battery types supported is that the charge/discharge FET
+ * status can be read with a sb_read() command and therefore, only the regsister
+ * address, mask, and disconnect value need to be provided.
+ */
 static const struct board_batt_params info[] = {
+	/* SANYO AC15A3J Battery Information */
 	[BATTERY_SANYO] = {
-		.manuf_name = "SANYO",
-		.batt_info = &batt_info_sanyo,
+		.fuel_gauge = {
+			.manuf_name = "SANYO",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x4000,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 11550, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
 	},
+
+	/* Sony Ap13J4K Battery Information */
+	[BATTERY_SONY] = {
+		.fuel_gauge = {
+			.manuf_name = "SONYCorp",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x8000,
+				.disconnect_val = 0x8000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* Panasonic AP1505L Battery Information */
+	[BATTERY_PANASONIC] = {
+		.fuel_gauge = {
+			.manuf_name = "PANASON",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x4000,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 11550, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* Celxpert Li7C3PG0 Battery Information */
+	[BATTERY_CELXPERT] = {
+		.fuel_gauge = {
+			.manuf_name = "Celxpert",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0, 0x1 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x0018,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 200,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* LGC\011 L17L3PB0 Battery Information */
+	[BATTERY_LGC011] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC\011",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0, 0x1 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x0018,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 500,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* SMP\011 L17M3PB0 Battery Information */
+	[BATTERY_SMP011] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP\011",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0, 0x1 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x0018,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 186,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* LGC DELL Y07HK Battery Information */
+	[BATTERY_LGC] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC-LGC3.553",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 114000, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* BYD DELL FY8XM6C Battery Information */
+	[BATTERY_BYD] = {
+		.fuel_gauge = {
+			.manuf_name = "BYD",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 114000, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
+	/* Simplo () Battery Information */
+	[BATTERY_SIMPLO] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-SDI3.72",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_normal		= 114900, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 60,
+		},
+	},
+
 };
 BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
 
@@ -78,7 +358,7 @@ static int board_get_battery_type(void)
 
 	if (!battery_manufacturer_name(name, sizeof(name))) {
 		for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
-			if (!strcasecmp(name, info[i].manuf_name)) {
+			if (!strcasecmp(name, info[i].fuel_gauge.manuf_name)) {
 				board_battery_type = i;
 				break;
 			}
@@ -98,7 +378,8 @@ static int board_get_battery_type(void)
 static void board_init_battery_type(void)
 {
 	if (board_get_battery_type() != BATTERY_TYPE_COUNT)
-		CPRINTS("found batt:%s", info[board_battery_type].manuf_name);
+		CPRINTS("found batt:%s",
+			info[board_battery_type].fuel_gauge.manuf_name);
 	else
 		CPRINTS("battery not found");
 }
@@ -106,71 +387,31 @@ DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_I2C + 1);
 
 const struct battery_info *battery_get_info(void)
 {
-	return board_get_batt_params()->batt_info;
+	return &board_get_batt_params()->batt_info;
 }
 
 int board_cut_off_battery(void)
 {
 	int rv;
+	int cmd;
+	int data;
+
+	/* If battery type is unknown can't send ship mode command */
+	if (board_get_battery_type() == BATTERY_TYPE_COUNT)
+		return EC_RES_ERROR;
 
 	/* Ship mode command must be sent twice to take effect */
-	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
+	cmd = info[board_battery_type].fuel_gauge.ship_mode.reg_addr;
+	data = info[board_battery_type].fuel_gauge.ship_mode.reg_data[0];
+	rv = sb_write(cmd, data);
 	if (rv != EC_SUCCESS)
 		return EC_RES_ERROR;
 
-	rv = sb_write(SB_MANUFACTURER_ACCESS, SB_SHUTDOWN_DATA);
+	data = info[board_battery_type].fuel_gauge.ship_mode.reg_data[1];
+	rv = sb_write(cmd, data);
+
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
 }
-
-enum battery_disconnect_state battery_get_disconnect_state(void)
-{
-	uint8_t data[6];
-	int rv;
-
-	/*
-	 * Take note if we find that the battery isn't in disconnect state,
-	 * and always return NOT_DISCONNECTED without probing the battery.
-	 * This assumes the battery will not go to disconnect state during
-	 * runtime.
-	 */
-	static int not_disconnected;
-
-	if (not_disconnected)
-		return BATTERY_NOT_DISCONNECTED;
-
-	if (extpower_is_present()) {
-		/* Check if battery charging + discharging is disabled. */
-		rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-				SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
-		if (rv)
-			return BATTERY_DISCONNECT_ERROR;
-
-		if (~data[3] & (BATTERY_DISCHARGING_DISABLED |
-				BATTERY_CHARGING_DISABLED)) {
-			not_disconnected = 1;
-			return BATTERY_NOT_DISCONNECTED;
-		}
-
-		/*
-		 * Battery is neither charging nor discharging. Verify that
-		 * we didn't enter this state due to a safety fault.
-		 */
-		rv = sb_read_mfgacc(PARAM_SAFETY_STATUS,
-				SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
-		if (rv || data[2] || data[3] || data[4] || data[5])
-			return BATTERY_DISCONNECT_ERROR;
-
-		/*
-		 * Battery is present and also the status is initialized and
-		 * no safety fault, battery is disconnected.
-		 */
-		if (battery_is_present() == BP_YES)
-			return BATTERY_DISCONNECTED;
-	}
-	not_disconnected = 1;
-	return BATTERY_NOT_DISCONNECTED;
-}
-
 
 static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 {
@@ -241,13 +482,61 @@ static int battery_init(void)
 		!!(batt_status & STATUS_INITIALIZED);
 }
 
+/* Allow booting now that the battery has woke up */
+static void battery_now_present(void)
+{
+	CPRINTS("battery will now report present");
+	battery_report_present = 1;
+}
+DECLARE_DEFERRED(battery_now_present);
+
+/*
+ * This function checks the charge/dishcarge FET status bits. Each battery type
+ * supported provides the register address, mask, and disconnect value for these
+ * 2 FET status bits. If the FET status matches the disconnected value, then
+ * BATTERY_DISCONNECTED is returned. This function is required to handle the
+ * cases when the fuel gauge is awake and will return a non-zero state of
+ * charge, but is not able yet to provide power (i.e. discharge FET is not
+ * active). By returning BATTERY_DISCONNECTED the AP will not be powered up
+ * until either the external charger is able to provided enough power, or
+ * the battery is able to provide power and thus prevent a brownout when the
+ * AP is powered on by the EC.
+ */
+static int battery_check_disconnect(void)
+{
+	int rv;
+	int reg;
+
+	/* If battery type is not known, can't check CHG/DCHG FETs */
+	if (board_battery_type == BATTERY_TYPE_COUNT) {
+		/* Keep trying to determine the battery type */
+		board_init_battery_type();
+		if (board_battery_type == BATTERY_TYPE_COUNT)
+			/* Still don't know, so return here */
+			return BATTERY_DISCONNECT_ERROR;
+	}
+
+	/* Read the status of charge/discharge FETs */
+	rv = sb_read(info[board_battery_type].fuel_gauge.fet.reg_addr, &reg);
+
+	if (rv)
+		return BATTERY_DISCONNECT_ERROR;
+
+	reg &= info[board_battery_type].fuel_gauge.fet.reg_mask;
+	if (reg == info[board_battery_type].fuel_gauge.fet.disconnect_val)
+		return BATTERY_DISCONNECTED;
+
+	return BATTERY_NOT_DISCONNECTED;
+}
 
 /*
  * Physical detection of battery.
  */
+
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;
+	static int battery_report_present_timer_started;
 
 	/* Get the physical hardware status */
 	batt_pres = battery_hw_present();
@@ -257,17 +546,28 @@ enum battery_present battery_is_present(void)
 	 * success & the battery status is Initialized to find out if it
 	 * is a working battery and it is not in the cut-off mode.
 	 *
-	 * If battery I2C fails but VBATT is high, battery is booting from
-	 * cut-off mode.
-	 *
 	 * FETs are turned off after Power Shutdown time.
 	 * The device will wake up when a voltage is applied to PACK.
 	 * Battery status will be inactive until it is initialized.
 	 */
 	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-	    !battery_is_cut_off() && !battery_init()) {
-		batt_pres = BP_NO;
+	    (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL ||
+	     battery_check_disconnect() != BATTERY_NOT_DISCONNECTED ||
+	     battery_init() == 0)) {
+		battery_report_present = 0;
+	}  else if (batt_pres == BP_YES && batt_pres_prev == BP_NO &&
+		   !battery_report_present_timer_started) {
+		/*
+		 * Wait 1 second before reporting present if it was
+		 * previously reported as not present
+		 */
+		battery_report_present_timer_started = 1;
+		battery_report_present = 0;
+		hook_call_deferred(&battery_now_present_data, SECOND);
 	}
+
+	if (!battery_report_present)
+		batt_pres = BP_NO;
 
 	batt_pres_prev = batt_pres;
 
