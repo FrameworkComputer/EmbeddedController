@@ -340,6 +340,10 @@ static int rt946x_init_setting(void)
 	rv = rt946x_enable_wdt(0);
 	if (rv)
 		return rv;
+	/* Disable battery thermal protection */
+	rv = rt946x_clr_bit(RT946X_REG_CHGCTRL16, RT946X_MASK_JEITA_EN);
+	if (rv)
+		return rv;
 	rv = rt946x_set_mivr(rt946x_charger_init_setting.mivr);
 	if (rv)
 		return rv;

@@ -191,6 +191,11 @@
 #define RT946X_MASK_AICLMEAS	(1 << RT946X_SHIFT_AICLMEAS)
 #define RT946X_MASK_AICLVTH	0x07
 
+/* ========== CHGCTRL16 0x10 ============ */
+#define RT946X_SHIFT_JEITA_EN	4
+
+#define RT946X_MASK_JEITA_EN	(1 << RT946X_SHIFT_JEITA_EN)
+
 /* ========== CHGDPDM1 0x12 ============ */
 #define RT946X_MASK_USBCHGEN	(1 << 7)
 
