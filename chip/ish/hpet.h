@@ -33,6 +33,8 @@
 #define HPET_T_CONF_CAP_BIT		0x4
 
 #define HPET_ENABLE_CNF			(1<<0)
+#define HPET_LEGACY_RT_CNF		(1<<1)
+
 #define HPET_Tn_INT_TYPE_CNF		(1<<1)
 #define HPET_Tn_INT_ENB_CNF		(1<<2)
 #define HPET_Tn_TYPE_CNF		(1<<3)
