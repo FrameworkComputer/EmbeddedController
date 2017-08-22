@@ -20,4 +20,10 @@ remove:
 # Remove all callsites pointing to panic_assert_fail.
 - panic_assert_fail
 - panic
-- software_panic
+- [software_panic]
+# Remove some invalid paths.
+- [pd_send_request_msg, set_state, pd_power_supply_reset]
+- [__tx_char, __tx_char]
+- [pd_send_request_msg, set_state, set_state]
+- [pd_send_request_msg, set_state, set_state, pd_power_supply_reset]
+- [set_state, set_state, set_state]

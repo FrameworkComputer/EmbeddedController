@@ -217,13 +217,13 @@ class StackAnalyzerTest(unittest.TestCase):
     self.analyzer.annotation = {}
     (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
     self.assertEqual(add_rules, {})
-    self.assertEqual(remove_rules, set())
+    self.assertEqual(remove_rules, [])
     self.assertEqual(invalid_sigtxts, set())
 
     self.analyzer.annotation = {'add': None, 'remove': None}
     (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
     self.assertEqual(add_rules, {})
-    self.assertEqual(remove_rules, set())
+    self.assertEqual(remove_rules, [])
     self.assertEqual(invalid_sigtxts, set())
 
     funcs = {
@@ -256,29 +256,35 @@ class StackAnalyzerTest(unittest.TestCase):
             'inlined_mul[x.c]': ['inlined_mul'],
             'toot_calc[t.c:1234]': ['hook_task'],
         },
-        'remove': {
-            'touchpad?calc[',
+        'remove': [
+            ['touchpad?calc['],
             'touchpad_calc',
-            'touchpad_calc[a.c]',
-            'task_unk[a.c]',
-            'touchpad_calc[x/a.c]',
-            'trackpad_range',
-            'inlined_mul',
-        },
+            ['touchpad_calc[a.c]'],
+            ['task_unk[a.c]'],
+            ['touchpad_calc[x/a.c]'],
+            ['trackpad_range'],
+            ['inlined_mul'],
+            ['inlined_mul', 'console_task', 'touchpad_calc[a.c]'],
+            ['inlined_mul', 'inlined_mul_alias', 'console_task'],
+            ['inlined_mul', 'inlined_mul_alias', 'console_task'],
+        ],
     }
 
     (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
     self.assertEqual(invalid_sigtxts, {'touchpad?calc['})
 
-    signature_set = set(remove_rules)
+    signature_set = set()
     for src_sig, dst_sigs in add_rules.items():
       signature_set.add(src_sig)
       signature_set.update(dst_sigs)
 
+    for remove_sigs in remove_rules:
+      signature_set.update(remove_sigs)
+
     (signature_map, failed_sigs) = self.analyzer.MapAnnotation(funcs,
                                                                signature_set)
     result = self.analyzer.ResolveAnnotation(funcs)
-    (add_set, remove_set, eliminated_addrs, failed_sigs) = result
+    (add_set, remove_list, eliminated_addrs, failed_sigs) = result
 
     expect_signature_map = {
         ('hook_task', None, None): {funcs[0x1000]},
@@ -304,11 +310,19 @@ class StackAnalyzerTest(unittest.TestCase):
         (funcs[0x13100], funcs[0x13000]),
         (funcs[0x13100], funcs[0x13100]),
     })
-    self.assertEqual(remove_set, {
-        funcs[0x4000],
-        funcs[0x13000],
-        funcs[0x13100]
-    })
+    expect_remove_list = [
+        [funcs[0x4000]],
+        [funcs[0x13000]],
+        [funcs[0x13100]],
+        [funcs[0x13000], funcs[0x2000], funcs[0x4000]],
+        [funcs[0x13100], funcs[0x2000], funcs[0x4000]],
+        [funcs[0x13000], funcs[0x13100], funcs[0x2000]],
+        [funcs[0x13100], funcs[0x13100], funcs[0x2000]],
+    ]
+    self.assertEqual(len(remove_list), len(expect_remove_list))
+    for remove_path in remove_list:
+      self.assertTrue(remove_path in expect_remove_list)
+
     self.assertEqual(eliminated_addrs, {0x1002})
     self.assertEqual(failed_sigs, {
         ('touchpad?calc[', sa.StackAnalyzer.ANNOTATION_ERROR_INVALID),
@@ -331,14 +345,25 @@ class StackAnalyzerTest(unittest.TestCase):
         sa.Callsite(0x2002, 0x1000, False, funcs[0x1000]),
         sa.Callsite(0x2006, None, True, None),
     ]
-    add_set = {(funcs[0x2000], funcs[0x4000]), (funcs[0x4000], funcs[0x1000])}
-    remove_set = {funcs[0x1000]}
+    add_set = {
+        (funcs[0x2000], funcs[0x2000]),
+        (funcs[0x2000], funcs[0x4000]),
+        (funcs[0x4000], funcs[0x1000]),
+        (funcs[0x4000], funcs[0x2000]),
+    }
+    remove_list = [
+        [funcs[0x1000]],
+        [funcs[0x2000], funcs[0x2000]],
+        [funcs[0x4000], funcs[0x1000]],
+        [funcs[0x2000], funcs[0x4000], funcs[0x2000]],
+        [funcs[0x4000], funcs[0x1000], funcs[0x4000]],
+    ]
     eliminated_addrs = {0x2006}
 
-    self.analyzer.PreprocessAnnotation(funcs,
-                                       add_set,
-                                       remove_set,
-                                       eliminated_addrs)
+    remaining_remove_list = self.analyzer.PreprocessAnnotation(funcs,
+                                                               add_set,
+                                                               remove_list,
+                                                               eliminated_addrs)
 
     expect_funcs = {
         0x1000: sa.Function(0x1000, 'hook_task', 0, []),
@@ -347,7 +372,12 @@ class StackAnalyzerTest(unittest.TestCase):
     }
     expect_funcs[0x2000].callsites = [
         sa.Callsite(None, 0x4000, False, expect_funcs[0x4000])]
+    expect_funcs[0x4000].callsites = [
+        sa.Callsite(None, 0x2000, False, expect_funcs[0x2000])]
     self.assertEqual(funcs, expect_funcs)
+    self.assertEqual(remaining_remove_list, [
+        [funcs[0x2000], funcs[0x4000], funcs[0x2000]],
+    ])
 
   def testAnalyzeDisassembly(self):
     disasm_text = (
@@ -393,14 +423,18 @@ class StackAnalyzerTest(unittest.TestCase):
         0x7000: sa.Function(0x7000, 'task_e', 24, []),
         0x8000: sa.Function(0x8000, 'task_f', 20, []),
         0x9000: sa.Function(0x9000, 'task_g', 20, []),
+        0x10000: sa.Function(0x10000, 'task_x', 16, []),
     }
     funcs[0x1000].callsites = [
         sa.Callsite(0x1002, 0x3000, False, funcs[0x3000]),
         sa.Callsite(0x1006, 0x4000, False, funcs[0x4000])]
     funcs[0x2000].callsites = [
-        sa.Callsite(0x2002, 0x5000, False, funcs[0x5000])]
+        sa.Callsite(0x2002, 0x5000, False, funcs[0x5000]),
+        sa.Callsite(0x2006, 0x2000, False, funcs[0x2000]),
+        sa.Callsite(0x200a, 0x10000, False, funcs[0x10000])]
     funcs[0x3000].callsites = [
-        sa.Callsite(0x3002, 0x4000, False, funcs[0x4000])]
+        sa.Callsite(0x3002, 0x4000, False, funcs[0x4000]),
+        sa.Callsite(0x3006, 0x1000, False, funcs[0x1000])]
     funcs[0x4000].callsites = [
         sa.Callsite(0x4002, 0x6000, True, funcs[0x6000]),
         sa.Callsite(0x4006, 0x7000, False, funcs[0x7000]),
@@ -413,29 +447,68 @@ class StackAnalyzerTest(unittest.TestCase):
         sa.Callsite(0x8002, 0x9000, False, funcs[0x9000])]
     funcs[0x9000].callsites = [
         sa.Callsite(0x9002, 0x4000, False, funcs[0x4000])]
+    funcs[0x10000].callsites = [
+        sa.Callsite(0x10002, 0x2000, False, funcs[0x2000])]
 
-    scc_group = self.analyzer.AnalyzeCallGraph(funcs)
+    cycles = self.analyzer.AnalyzeCallGraph(funcs, [
+        [funcs[0x2000]] * 2,
+        [funcs[0x10000], funcs[0x2000]] * 3,
+        [funcs[0x1000], funcs[0x3000], funcs[0x1000]]
+    ])
 
     expect_func_stack = {
-        0x1000: (148, funcs[0x3000], set()),
-        0x2000: (176, funcs[0x5000], set()),
-        0x3000: (148, funcs[0x4000], set()),
-        0x4000: (136, funcs[0x8000], {funcs[0x4000],
-                                      funcs[0x8000],
-                                      funcs[0x9000]}),
-        0x5000: (168, funcs[0x4000], set()),
-        0x6000: (100, None, set()),
-        0x7000: (24, None, {funcs[0x7000]}),
-        0x8000: (40, funcs[0x9000], {funcs[0x4000],
-                                     funcs[0x8000],
-                                     funcs[0x9000]}),
-        0x9000: (20, None, {funcs[0x4000], funcs[0x8000], funcs[0x9000]}),
+        0x1000: (268, [funcs[0x1000],
+                       funcs[0x3000],
+                       funcs[0x4000],
+                       funcs[0x8000],
+                       funcs[0x9000],
+                       funcs[0x4000],
+                       funcs[0x7000]]),
+        0x2000: (208, [funcs[0x2000],
+                       funcs[0x10000],
+                       funcs[0x2000],
+                       funcs[0x10000],
+                       funcs[0x2000],
+                       funcs[0x5000],
+                       funcs[0x4000],
+                       funcs[0x7000]]),
+        0x3000: (280, [funcs[0x3000],
+                       funcs[0x1000],
+                       funcs[0x3000],
+                       funcs[0x4000],
+                       funcs[0x8000],
+                       funcs[0x9000],
+                       funcs[0x4000],
+                       funcs[0x7000]]),
+        0x4000: (120, [funcs[0x4000], funcs[0x7000]]),
+        0x5000: (152, [funcs[0x5000], funcs[0x4000], funcs[0x7000]]),
+        0x6000: (100, [funcs[0x6000]]),
+        0x7000: (24, [funcs[0x7000]]),
+        0x8000: (160, [funcs[0x8000],
+                       funcs[0x9000],
+                       funcs[0x4000],
+                       funcs[0x7000]]),
+        0x9000: (140, [funcs[0x9000], funcs[0x4000], funcs[0x7000]]),
+        0x10000: (200, [funcs[0x10000],
+                        funcs[0x2000],
+                        funcs[0x10000],
+                        funcs[0x2000],
+                        funcs[0x5000],
+                        funcs[0x4000],
+                        funcs[0x7000]]),
     }
+    expect_cycles = [
+        {funcs[0x4000], funcs[0x8000], funcs[0x9000]},
+        {funcs[0x7000]},
+    ]
     for func in funcs.values():
-      (stack_max_usage, stack_successor, scc) = expect_func_stack[func.address]
+      (stack_max_usage, stack_max_path) = expect_func_stack[func.address]
       self.assertEqual(func.stack_max_usage, stack_max_usage)
-      self.assertEqual(func.stack_successor, stack_successor)
-      self.assertEqual(set(scc_group[func.cycle_index]), scc)
+      self.assertEqual(func.stack_max_path, stack_max_path)
+
+    self.assertEqual(len(cycles), len(expect_cycles))
+    for cycle in cycles:
+      self.assertTrue(cycle in expect_cycles)
 
   @mock.patch('subprocess.check_output')
   def testAddressToLine(self, checkoutput_mock):
@@ -498,7 +571,7 @@ class StackAnalyzerTest(unittest.TestCase):
     )
 
     addrtoline_mock.return_value = [('??', '??', 0)]
-    self.analyzer.annotation = {'remove': ['fake_func']}
+    self.analyzer.annotation = {'remove': [['fake_func']]}
 
     with mock.patch('__builtin__.print') as print_mock:
       checkoutput_mock.return_value = disasm_text
@@ -515,7 +588,7 @@ class StackAnalyzerTest(unittest.TestCase):
           mock.call('        -> ??[??:0] 2002'),
           mock.call('    hook_task (8) [??:0] 1000'),
           mock.call('Unresolved indirect callsites:'),
-          mock.call('    console_task'),
+          mock.call('    In function console_task:'),
           mock.call('        -> ??[??:0] 200a'),
           mock.call('Unresolved annotation signatures:'),
           mock.call('    fake_func: function is not found'),
