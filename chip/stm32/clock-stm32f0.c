@@ -412,6 +412,27 @@ void rtc_init(void)
 	rtc_lock_regs();
 }
 
+void rtc_set(uint32_t sec)
+{
+	rtc_unlock_regs();
+
+	/* Disable alarm */
+	STM32_RTC_CR &= ~STM32_RTC_CR_ALRAE;
+
+	/* Enter RTC initialize mode */
+	STM32_RTC_ISR |= STM32_RTC_ISR_INIT;
+	while (!(STM32_RTC_ISR & STM32_RTC_ISR_INITF))
+		;
+
+	/* Set clock prescalars */
+	STM32_RTC_PRER = (RTC_PREDIV_A << 16) | RTC_PREDIV_S;
+
+	STM32_RTC_TR = sec_to_rtc(sec);
+	/* Start RTC timer */
+	STM32_RTC_ISR &= ~STM32_RTC_ISR_INIT;
+
+	rtc_lock_regs();
+}
 
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_COMMON_RUNTIME)
 #ifdef CONFIG_CMD_IDLE_STATS

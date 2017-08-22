@@ -12,6 +12,7 @@
 #include "console.h"
 #include "cpu.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "hwtimer.h"
 #include "registers.h"
 #include "system.h"
@@ -82,6 +83,16 @@ void rtc_read(uint32_t *rtc, uint32_t *rtcss)
 	} while (*rtc != STM32_RTC_TR);
 }
 
+uint32_t rtc_read_sec(void)
+{
+	uint32_t rtc = 0;
+	uint32_t rtcss = 0;
+
+	rtc_read(&rtc, &rtcss);
+
+	return rtc_to_sec(rtc) + (rtcss_to_us(rtcss) / SECOND);
+}
+
 void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 		      uint32_t *rtc, uint32_t *rtcss)
 {
@@ -125,6 +136,13 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	STM32_RTC_CR |= STM32_RTC_CR_ALRAE;
 
 	rtc_lock_regs();
+}
+
+uint32_t get_rtc_alarm(void)
+{
+	if (!(STM32_RTC_CR & STM32_RTC_CR_ALRAE))
+		return 0;
+	return rtc_to_sec(STM32_RTC_ALRMAR) - rtc_read_sec();
 }
 
 void reset_rtc_alarm(uint32_t *rtc, uint32_t *rtcss)
@@ -198,6 +216,36 @@ DECLARE_HOOK(HOOK_SYSJUMP, reset_flash_cache, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_RTC
+void print_system_rtc(enum console_channel ch)
+{
+	uint32_t sec;
+
+	sec = rtc_read_sec();
+	cprintf(ch, "RTC: 0x%08x (%d.00 s)\n", sec, sec);
+}
+
+static int command_system_rtc(int argc, char **argv)
+{
+	char *e;
+	uint32_t t;
+
+	if (argc == 3 && !strcasecmp(argv[1], "set")) {
+		t = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+		rtc_set(t);
+	} else if (argc > 1)
+		return EC_ERROR_INVAL;
+
+	print_system_rtc(CC_COMMAND);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc,
+		"[set <seconds>]",
+		"Get/set real-time clock");
+
 #ifdef CONFIG_CMD_RTC_ALARM
 static int command_rtc_alarm_test(int argc, char **argv)
 {
@@ -227,4 +275,60 @@ DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
 			"[seconds [microseconds]]",
 			"Test alarm");
 #endif /* CONFIG_CMD_RTC_ALARM */
+#endif /* CONFIG_CMD_RTC */
 
+/*****************************************************************************/
+/* Host commands */
+
+#ifdef CONFIG_HOSTCMD_RTC
+static int system_rtc_get_value(struct host_cmd_handler_args *args)
+{
+	struct ec_response_rtc *r = args->response;
+
+	r->time = rtc_read_sec();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_VALUE,
+		system_rtc_get_value,
+		EC_VER_MASK(0));
+
+static int system_rtc_set_value(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rtc *p = args->params;
+
+	rtc_set(p->time);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
+		system_rtc_set_value,
+		EC_VER_MASK(0));
+
+static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
+{
+	uint32_t rtc;
+	uint32_t rtcss;
+	const struct ec_params_rtc *p = args->params;
+
+	set_rtc_alarm(p->time, 0, &rtc, &rtcss);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM,
+		system_rtc_set_alarm,
+		EC_VER_MASK(0));
+
+static int system_rtc_get_alarm(struct host_cmd_handler_args *args)
+{
+	struct ec_response_rtc *r = args->response;
+
+	r->time = get_rtc_alarm();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM,
+		system_rtc_get_alarm,
+		EC_VER_MASK(0));
+
+#endif /* CONFIG_HOSTCMD_RTC */

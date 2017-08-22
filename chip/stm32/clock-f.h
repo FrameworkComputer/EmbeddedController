@@ -51,12 +51,24 @@ int32_t get_rtc_diff(uint32_t rtc0, uint32_t rtc0ss,
 /* Read RTC values */
 void rtc_read(uint32_t *rtc, uint32_t *rtcss);
 
+/* Set RTC value */
+void rtc_set(uint32_t sec);
+
+/* Return RTC value in seconds */
+uint32_t rtc_read_sec(void);
+
 /* Set RTC wakeup */
 void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 		      uint32_t *rtc, uint32_t *rtcss);
 
 /* Clear RTC wakeup */
 void reset_rtc_alarm(uint32_t *rtc, uint32_t *rtcss);
+
+/*
+ * Return the remaining seconds before the RTC alarm goes off.
+ * Returns 0 if alarm is not set.
+ */
+uint32_t get_rtc_alarm(void);
 
 /* RTC init */
 void rtc_init(void);
