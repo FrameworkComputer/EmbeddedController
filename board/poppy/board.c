@@ -198,6 +198,9 @@ static void base_detect_change(enum base_status status)
 {
 	int connected = (status == BASE_CONNECTED);
 
+	if (current_base_status == status)
+		return;
+
 	CPRINTS("Base %sconnected", connected ? "" : "not ");
 	gpio_set_level(GPIO_PP3300_DX_BASE, connected);
 	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
@@ -260,8 +263,7 @@ static void base_detect_deferred(void)
 		 * other ADC values that do not clearly indicate base
 		 * presence or absence.
 		 */
-		if (current_base_status != BASE_DISCONNECTED)
-			base_detect_change(BASE_DISCONNECTED);
+		base_detect_change(BASE_DISCONNECTED);
 	}
 }
 
