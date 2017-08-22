@@ -471,7 +471,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown();
-			return POWER_S3S0;
+			return POWER_S0S3;
 		}
 
 		/* Call hooks now that rails are up */
