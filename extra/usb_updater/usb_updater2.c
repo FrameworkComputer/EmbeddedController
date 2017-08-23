@@ -72,11 +72,12 @@ static struct first_response_pdu targ;
 static uint16_t protocol_version;
 static uint16_t header_type;
 static char *progname;
-static char *short_opts = "bd:fhjrsuw";
+static char *short_opts = "bd:efhjrsuw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	1,   NULL, 'b'},
 	{"device",	1,   NULL, 'd'},
+	{"entropy",	0,   NULL, 'e'},
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
 	{"jump_to_rw",	0,   NULL, 'j'},
@@ -109,6 +110,7 @@ static void usage(int errs)
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
 	       "  -h,--help                Show this message\n"
+	       "  -e,--entropy             Add entropy to device secret\n"
 	       "  -j,--jump_to_rw          Tell EC to jump to RW\n"
 	       "  -r,--reboot              Tell EC to reboot\n"
 	       "  -s,--stay_in_ro          Tell EC to stay in RO\n"
@@ -738,19 +740,18 @@ static void send_done(struct usb_endpoint *uep)
 	xfer(uep, &out, sizeof(out), &out, 1);
 }
 
-static void send_subcommand(struct transfer_descriptor *td, uint16_t subcommand)
+static void send_subcommand(struct transfer_descriptor *td, uint16_t subcommand,
+			    void *cmd_body, size_t body_size)
 {
 	send_done(&td->uep);
 
-	if (protocol_version > 5) {
-		uint8_t response = -1;
-		size_t response_size = sizeof(response);
+	uint8_t response = -1;
+	size_t response_size = sizeof(response);
 
-		ext_cmd_over_usb(&td->uep, subcommand,
-				NULL, 0,
-				&response, &response_size);
-		printf("sent command %x, resp %x\n", subcommand, response);
-	}
+	ext_cmd_over_usb(&td->uep, subcommand,
+			cmd_body, body_size,
+			&response, &response_size);
+	printf("sent command %x, resp %x\n", subcommand, response);
 }
 
 /* Returns number of successfully transmitted image sections. */
@@ -822,6 +823,31 @@ static void generate_reset_request(struct transfer_descriptor *td)
 	printf("reboot not triggered\n");
 }
 
+static void get_random(uint8_t *data, int len)
+{
+	FILE *fp;
+	int i = 0;
+
+	fp = fopen("/dev/random", "rb");
+	if (!fp) {
+		perror("Can't open /dev/random");
+		exit(update_error);
+	}
+
+	while (i < len) {
+		int ret = fread(data+i, len-i, 1, fp);
+
+		if (ret < 0) {
+			perror("fread");
+			exit(update_error);
+		}
+
+		i += ret;
+	}
+
+	fclose(fp);
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -835,6 +861,8 @@ int main(int argc, char *argv[])
 	int binary_vers = 0;
 	int show_fw_ver = 0;
 	int extra_command = -1;
+	uint8_t extra_command_data[32];
+	int extra_command_data_len = 0;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -863,6 +891,11 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage(errorcnt);
+			break;
+		case 'e':
+			get_random(extra_command_data, 32);
+			extra_command_data_len = 32;
+			extra_command = UPDATE_EXTRA_CMD_INJECT_ENTROPY;
 			break;
 		case 'j':
 			extra_command = UPDATE_EXTRA_CMD_JUMP_TO_RW;
@@ -938,7 +971,8 @@ int main(int argc, char *argv[])
 		if (transferred_sections)
 			generate_reset_request(&td);
 	} else if (extra_command > -1)
-		send_subcommand(&td, extra_command);
+		send_subcommand(&td, extra_command,
+				extra_command_data, extra_command_data_len);
 
 	libusb_close(td.uep.devh);
 	libusb_exit(NULL);
