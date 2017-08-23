@@ -63,6 +63,8 @@
 #define USB_PD_PORT_ANX74XX	0
 #define USB_PD_PORT_PS8751	1
 
+static int sku_id;
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
@@ -545,6 +547,9 @@ static void board_init(void)
 
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
+	/* Need to read SKU ID at least once each boot */
+	sku_id = BOARD_VERSION_UNKNOWN;
 }
 /* PP3300 needs to be enabled before TCPC init hooks */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_FIRST);
@@ -1076,6 +1081,23 @@ int board_get_version(void)
 	return version;
 }
 
+static void board_get_sku_id(void)
+{
+	int sku_id_lower;
+	int sku_id_higher;
+
+	if (sku_id == BOARD_VERSION_UNKNOWN) {
+		sku_id_lower = board_read_version(ADC_BOARD_SKU_0);
+		sku_id_higher = board_read_version(ADC_BOARD_SKU_1);
+		if ((sku_id_lower != BOARD_VERSION_UNKNOWN) &&
+		    (sku_id_higher != BOARD_VERSION_UNKNOWN))
+			sku_id = (sku_id_higher << 4) | sku_id_lower;
+		CPRINTS("SKU ID: %d", sku_id);
+	}
+}
+/* This can't run until after the ADC module has been initialized */
+DECLARE_HOOK(HOOK_INIT, board_get_sku_id, HOOK_PRIO_INIT_ADC + 1);
+
 static int command_board_id(int argc, char **argv)
 {
 	enum adc_channel chan;
@@ -1089,7 +1111,11 @@ static int command_board_id(int argc, char **argv)
 		chan = ADC_BOARD_SKU_0;
 	else if (!strcasecmp(argv[1], "sku1"))
 		chan = ADC_BOARD_SKU_1;
-	else
+	else if (!strcasecmp(argv[1], "sku")) {
+		system_get_sku_id();
+		ccprintf("SKU ID: %d\n", sku_id);
+		return EC_SUCCESS;
+	} else
 		return EC_ERROR_PARAM1;
 
 	ccprintf("Board id|sku: chan %d = %d\n", chan,
@@ -1103,13 +1129,10 @@ DECLARE_CONSOLE_COMMAND(board_id, command_board_id,
 
 uint32_t system_get_sku_id(void)
 {
-	uint8_t sku_id_lower = board_read_version(ADC_BOARD_SKU_0);
-	uint8_t sku_id_higher = board_read_version(ADC_BOARD_SKU_1);
+	if (sku_id == BOARD_VERSION_UNKNOWN)
+		board_get_sku_id();
 
-	assert(sku_id_lower < 16);
-	assert(sku_id_higher < 16);
-	return (uint32_t)((sku_id_higher << 4) | sku_id_lower);
-
+	return (uint32_t)sku_id;
 }
 
 /* Keyboard scan setting */
