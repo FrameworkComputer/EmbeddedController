@@ -546,11 +546,6 @@ void board_configure_deep_sleep_wakepins(void)
 static void deferred_tpm_rst_isr(void);
 DECLARE_DEFERRED(deferred_tpm_rst_isr);
 
-int ap_is_on(void)
-{
-	return device_get_state(DEVICE_AP) == DEVICE_STATE_ON;
-}
-
 static void configure_board_specific_gpios(void)
 {
 	/* Add a pullup to sys_rst_l */
@@ -569,14 +564,8 @@ static void configure_board_specific_gpios(void)
 	 * plt_rst_l is on diom3, and sys_rst_l is on diom0.
 	 */
 	if (board_use_plt_rst()) {
-		/* Use plt_rst_l for device detect purposes. */
-		device_states[DEVICE_AP].detect = GPIO_TPM_RST_L;
-
 		/* Use plt_rst_l as the tpm reset signal. */
 		GWRITE(PINMUX, GPIO1_GPIO0_SEL, GC_PINMUX_DIOM3_SEL);
-
-		/* No interrupts from AP UART TX state change are needed. */
-		gpio_disable_interrupt(GPIO_DETECT_AP);
 
 		/* Enable the input */
 		GWRITE_FIELD(PINMUX, DIOM3_CTL, IE, 1);
@@ -597,9 +586,6 @@ static void configure_board_specific_gpios(void)
 		/* Enable powerdown exit on DIOM3 */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	} else {
-		/* Use AP UART TX for device detect purposes. */
-		device_states[DEVICE_AP].detect = GPIO_DETECT_AP;
-
 		/* Use sys_rst_l as the tpm reset signal. */
 		GWRITE(PINMUX, GPIO1_GPIO0_SEL, GC_PINMUX_DIOM0_SEL);
 		/* Enable the input */
@@ -731,7 +717,6 @@ static void board_init(void)
 
 	/* Enable GPIO interrupts for device state machines */
 	gpio_enable_interrupt(GPIO_TPM_RST_L);
-	gpio_enable_interrupt(GPIO_DETECT_AP);
 	gpio_enable_interrupt(GPIO_DETECT_SERVO);
 
 	/*
@@ -826,18 +811,21 @@ int flash_regions_to_enable(struct g_flash_region *regions,
 	return 3;
 }
 
+/**
+ * Deferred TPM reset interrupt handling
+ *
+ * This is always called from the HOOK task.
+ */
 static void deferred_tpm_rst_isr(void)
 {
 	CPRINTS("%s", __func__);
 
 	/*
-	 * If the board has platform reset, move the AP into DEVICE_STATE_ON.
-	 * If we're transitioning the AP from OFF or UNKNOWN, also trigger the
-	 * resume handler.
+	 * If the board uses TPM reset to detect the AP, connect AP.  This is
+	 * the only way those boards connect; they don't examine AP UART TX.
 	 */
-	if (board_detect_ap_with_tpm_rst() &&
-	    device_state_changed(DEVICE_AP, DEVICE_STATE_ON))
-		hook_notify(HOOK_CHIPSET_RESUME);
+	if (board_detect_ap_with_tpm_rst())
+		set_ap_on_deferred();
 
 	/*
 	 * If no reboot request is posted, OR if the other RW's header is not
@@ -863,7 +851,12 @@ static void deferred_tpm_rst_isr(void)
 	system_reset(SYSTEM_RESET_MANUALLY_TRIGGERED | SYSTEM_RESET_HARD);
 }
 
-/* This is the interrupt handler to react to TPM_RST_L */
+/**
+ * Handle TPM_RST_L deasserting
+ *
+ * This can also be called explicitly from AP detection, if it thinks the
+ * interrupt handler missed the rising edge.
+ */
 void tpm_rst_deasserted(enum gpio_signal signal)
 {
 	hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
@@ -1104,22 +1097,6 @@ static void servo_deferred(void)
 }
 DECLARE_DEFERRED(servo_deferred);
 
-/**
- * Deferred handler for debouncing AP presence detect falling.
- *
- * This is called if DETECT_AP has been low long enough.
- */
-static void ap_deferred(void)
-{
-	/*
-	 * If the AP was still in DEVICE_STATE_UNKNOWN, move it to
-	 * DEVICE_STATE_OFF and trigger the shutdown hook.
-	 */
-	if (device_powered_off(DEVICE_AP))
-		hook_notify(HOOK_CHIPSET_SHUTDOWN);
-}
-DECLARE_DEFERRED(ap_deferred);
-
 /* Note: this must EXACTLY match enum device_type! */
 struct device_config device_states[] = {
 	[DEVICE_SERVO] = {
@@ -1127,11 +1104,6 @@ struct device_config device_states[] = {
 		.deferred = &servo_deferred_data,
 		.detect = GPIO_DETECT_SERVO,
 		.name = "Servo"
-	},
-	[DEVICE_AP] = {
-		.state = DEVICE_STATE_UNKNOWN,
-		.deferred = &ap_deferred_data,
-		.name = "AP"
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
@@ -1169,47 +1141,9 @@ static void servo_attached(void)
  */
 void device_state_on(enum gpio_signal signal)
 {
-	/*
-	 * On boards with plt_rst_l the ap state is detected with tpm_rst_l.
-	 * Make sure we don't disable the tpm reset interrupt
-	 * tpm_rst_deasserted(), which is what actually handles that interrupt.
-	 */
-	if (signal != GPIO_TPM_RST_L)
-		gpio_disable_interrupt(signal);
+	gpio_disable_interrupt(signal);
 
 	switch (signal) {
-	case GPIO_TPM_RST_L:
-		/*
-		 * Boards using tpm_rst_l have no AP state interrupt that will
-		 * trigger device_state_on, so this will only get called when
-		 * we poll the AP state and see that the detect signal is high,
-		 * but the device state is not 'on'.
-		 *
-		 * Boards using tpm_rst_l to detect the AP state use the tpm
-		 * reset handler to set the AP state to 'on'. If we managed to
-		 * get to this point, the tpm reset handler has not run yet.
-		 * This should only happen if there is a race between the board
-		 * state polling and a scheduled call to
-		 * deferred_tpm_rst_isr_data, but it may be because we missed
-		 * the rising edge. Notify the handler again just in case we
-		 * missed the edge to make sure we reset the tpm and update the
-		 * state. If there is already a pending call, then this call
-		 * won't affect it, because subsequent calls to to
-		 * hook_call_deferred just change the delay for the call, and
-		 * we are setting the delay to asap.
-		 */
-		CPRINTS("%s: tpm_rst_isr hasn't set the AP state to 'on'.",
-			__func__);
-		hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
-		break;
-	case GPIO_DETECT_AP:
-		/*
-		 * Turn the AP device on.  If it was previously unknown or
-		 * off, notify the resume hook.
-		 */
-		if (device_state_changed(DEVICE_AP, DEVICE_STATE_ON))
-			hook_notify(HOOK_CHIPSET_RESUME);
-		break;
 	case GPIO_DETECT_SERVO:
 		servo_attached();
 		break;
@@ -1274,19 +1208,8 @@ void board_update_device_state(enum device_type device)
 		 */
 		device_set_state(device, DEVICE_STATE_UNKNOWN);
 
-		/*
-		 * The possible devices at this point are AP, EC, and SERVO.
-		 *
-		 * If the device is AP, it may use the TPM interrupt line as
-		 * presence detect.  In that case, we don't want to mess with
-		 * the interrupt enable; it should already be enabled.
-		 *
-		 * EC and SERVO use UART lines muxed to GPIOs for their detect
-		 * signals; we own those GPIOs, so need to enable their
-		 * interrupts explicitly.
-		 */
-		if ((device != DEVICE_AP) || !board_detect_ap_with_tpm_rst())
-			gpio_enable_interrupt(device_states[device].detect);
+		/* Enable servo detect interrupt */
+		gpio_enable_interrupt(device_states[device].detect);
 
 		/*
 		 * The signal is low now, but this could be just a (EC, AP, or
@@ -1302,57 +1225,6 @@ void board_update_device_state(enum device_type device)
 		hook_call_deferred(device_states[device].deferred, 900 * MSEC);
 	}
 }
-
-/**
- * AP shutdown handler
- *
- * This is triggered by the deferred debounce handler for AP_DETECT when we're
- * sure the AP has actually shut down.
- */
-static void ap_shutdown(void)
-{
-	/*
-	 * If I2C TPM is configured then the INT_AP_L signal is used as
-	 * a low pulse trigger to sync I2C transactions with the
-	 * host. By default Cr50 is driving this line high, but when the
-	 * AP powers off, the 1.8V rail that it's pulled up to will be
-	 * off and cause exessive power to be consumed by the Cr50. Set
-	 * INT_AP_L as an input while the AP is powered off.
-	 */
-	gpio_set_flags(GPIO_INT_AP_L, GPIO_INPUT);
-
-	disable_ccd_uart(UART_AP);
-
-	/*
-	 * We don't enable deep sleep on ARM devices yet, as its processing
-	 * there will require more support on the AP side than is available
-	 * now.
-	 */
-	if (board_deep_sleep_allowed())
-		enable_deep_sleep();
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ap_shutdown, HOOK_PRIO_DEFAULT);
-
-/**
- * AP resume handler
- *
- * This is triggered by AP_DETECT interrupt handler (which may be a GPIO
- * attached to the UART RX line from the AP, or the TPM interrupt signal).
- */
-static void ap_resume(void)
-{
-	/*
-	 * AP is powering up, set the I2C host sync signal to output and set
-	 * it high which is the default level.
-	 */
-	gpio_set_flags(GPIO_INT_AP_L, GPIO_OUT_HIGH);
-	gpio_set_level(GPIO_INT_AP_L, 1);
-
-	enable_ccd_uart(UART_AP);
-
-	disable_deep_sleep();
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, ap_resume, HOOK_PRIO_DEFAULT);
 
 /*
  * This function duplicates some of the functionality in chip/g/gpio.c in order

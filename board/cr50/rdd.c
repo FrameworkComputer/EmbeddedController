@@ -185,6 +185,7 @@ static int command_ccd(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
+	print_ap_state();
 	print_ec_state();
 	print_rdd_state();
 
