@@ -20,7 +20,7 @@ CPPFLAGS += -I$(CRYPTOCLIB)/include
 endif
 
 # Required chip modules
-chip-y = clock.o gpio.o hwtimer.o jtag.o system.o
+chip-y = clock.o gpio.o hwtimer.o jtag.o pre_init.o system.o
 chip-$(CONFIG_BOARD_ID_SUPPORT) += board_id.o
 ifeq ($(CONFIG_POLLING_UART),y)
 chip-y += polling_uart.o

@@ -56,6 +56,10 @@ test_mockable __keep int main(void)
 	board_config_pre_init();
 #endif
 
+#ifdef CONFIG_CHIP_PRE_INIT
+	chip_pre_init();
+#endif
+
 #ifdef CONFIG_MPU
 	mpu_pre_init();
 #endif

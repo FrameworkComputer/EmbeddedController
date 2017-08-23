@@ -67,6 +67,9 @@
 /* We'll have some special commands of our own */
 #define CONFIG_EXTENSION_COMMAND 0xbaccd00a
 
+/* Chip needs to do custom pre-init */
+#define CONFIG_CHIP_PRE_INIT
+
 /*
  * The flash memory is implemented in two halves. The SoC bootrom will look for
  * the first-stage bootloader at the beginning of each of the two halves and

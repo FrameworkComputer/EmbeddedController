@@ -617,6 +617,14 @@
 #undef CONFIG_TRICKLE_CHARGING
 
 /*****************************************************************************/
+
+/*
+ * Chip needs to do pre-init very early in main(), and provides chip_pre_init()
+ * to do so.
+ */
+#undef CONFIG_CHIP_PRE_INIT
+
+/*****************************************************************************/
 /* Chipset config */
 
 /* AP chipset support; pick at most one */

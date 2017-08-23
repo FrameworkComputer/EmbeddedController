@@ -1,6 +1,8 @@
 /* Copyright (c) 2013 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * Extra hooks for board and chip initialization/configuration
  */
 
 #ifndef __CROS_EC_BOARD_CONFIG_H
@@ -47,5 +49,16 @@ void board_config_post_gpio_init(void);
  */
 void board_before_rsmrst(int rsmrst);
 #endif
+
+/**
+ * Configure chip early in main(), just after board_config_pre_init().
+ *
+ * Most chip configuration is not particularly timing critical and can be done
+ * in other chip driver initialization such as system_pre_init() or HOOK_INIT
+ * handlers.  Chip pre-init should be reserved for small amounts of critical
+ * functionality that can't wait that long.  Think very hard before putting
+ * code here.
+ */
+void chip_pre_init(void);
 
 #endif /* __CROS_EC_BOARD_CONFIG_H */
