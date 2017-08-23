@@ -24,6 +24,9 @@
 #include "driver/tcpm/tcpm.h"
 #include "espi.h"
 #include "extpower.h"
+#include "espi.h"
+#include "fan.h"
+#include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -108,6 +111,28 @@ const struct adc_t adc_channels[] = {
 			   ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/******************************************************************************/
+/* Physical fans. These are logically separate from pwm_channels. */
+const struct fan_t fans[] = {
+	[FAN_CH_0] = {
+		.flags = FAN_USE_RPM_MODE,
+		.rpm_min = 1000,
+		.rpm_start = 1000,
+		.rpm_max = 5500,
+		.ch = MFT_CH_0,	/* Use MFT id to control fan */
+		.pgood_gpio = -1,
+		.enable_gpio = GPIO_FAN_PWR_EN,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
+
+/******************************************************************************/
+/* MFT channels. These are logically separate from pwm_channels. */
+const struct mft_t mft_channels[] = {
+	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+};
+BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[]  = {
@@ -462,5 +487,6 @@ int board_has_working_reset_flags(void)
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_RED]   = { 3, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

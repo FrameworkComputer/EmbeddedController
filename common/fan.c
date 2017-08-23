@@ -509,8 +509,11 @@ DECLARE_HOOK(HOOK_SYSJUMP, pwm_fan_preserve_state, HOOK_PRIO_DEFAULT);
 static void pwm_fan_resume(void)
 {
 	int fan;
-	for (fan = 0; fan < CONFIG_FANS; fan++)
+	for (fan = 0; fan < CONFIG_FANS; fan++) {
+		set_thermal_control_enabled(fan, 0);
+		fan_set_rpm_target(fans[fan].ch, fans[fan].rpm_max);
 		set_enabled(fan, 1);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwm_fan_resume, HOOK_PRIO_DEFAULT);
 
