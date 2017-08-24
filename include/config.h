@@ -1010,6 +1010,12 @@
 /* EC capable of sensor speeds up to 200000 mHz */
 #define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 200000
 
+/*
+ * Allow board to override the feature bitmap provided through host command
+ * and ACPI.
+ */
+#undef CONFIG_EC_FEATURE_BOARD_OVERRIDE
+
 /* Support EC chip internal data EEPROM */
 #undef CONFIG_EEPROM
 

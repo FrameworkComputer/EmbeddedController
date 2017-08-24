@@ -6,11 +6,13 @@
 /* Present Chrome EC device features to the outside world */
 
 #include "common.h"
+#include "config.h"
 #include "ec_commands.h"
+#include "board_config.h"
 
 uint32_t get_feature_flags0(void)
 {
-	return 0
+	uint32_t result = 0
 #ifdef CONFIG_FW_LIMITED_IMAGE
 		| EC_FEATURE_MASK_0(EC_FEATURE_LIMITED)
 #endif
@@ -106,9 +108,17 @@ uint32_t get_feature_flags0(void)
 		| EC_FEATURE_MASK_0(EC_FEATURE_DEVICE_EVENT)
 #endif
 		;
+#ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
+	result = board_override_feature_flags0(result);
+#endif
+	return result;
 }
 
 uint32_t get_feature_flags1(void)
 {
-	return 0;
+	uint32_t result = 0;
+#ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
+	result = board_override_feature_flags1(result);
+#endif
+	return result;
 }

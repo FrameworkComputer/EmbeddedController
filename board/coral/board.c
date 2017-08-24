@@ -1170,3 +1170,27 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
+
+uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	uint32_t sku = system_get_sku_id();
+
+	/*
+	 * We always compile in backlight support for coral, but only some
+	 * models come with the hardware. Therefore, check if the current
+	 * device is one of them and return the default value - with backlight
+	 * here.
+	 */
+	if (sku == 8)
+		return flags0;
+
+	// Report that there is no keyboard backlight
+	flags0 &= ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB);
+
+	return flags0;
+}
+
+uint32_t board_override_feature_flags1(uint32_t flags1)
+{
+	return flags1;
+}
