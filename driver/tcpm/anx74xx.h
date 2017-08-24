@@ -186,13 +186,25 @@
 #define ANX74XX_CC_RD_MASK (BIT_VALUE_OF_SRC_CC_RD | \
 			    (BIT_VALUE_OF_SRC_CC_RD << 4))
 
+/*
+ * RESETN low to PWR_EN low delay
+ */
+#define ANX74XX_RST_L_PWR_L_DELAY_MS	1
+/*
+ * minimum power off-to-on delay to reset chip
+ */
+#define ANX74XX_PWR_L_PWR_H_DELAY_MS	10
+/*
+ * parameter T4: PWR_EN high to RESETN high delay
+ */
+#define ANX74XX_PWR_H_RST_H_DELAY_MS	10
+
 extern const struct tcpm_drv anx74xx_tcpm_drv;
 extern const struct usb_mux_driver anx74xx_tcpm_usb_mux_driver;
 void anx74xx_tcpc_set_vbus(int port, int enable);
 void anx74xx_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 void anx74xx_tcpc_clear_hpd_status(int port);
 int anx74xx_tcpc_get_fw_version(int port, int *version);
-void anx74xx_handle_power_mode(int port, int mode);
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 extern struct i2c_stress_test_dev anx74xx_i2c_stress_test_dev;

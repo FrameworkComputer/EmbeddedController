@@ -55,6 +55,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define USB_PD_PORT_ANX74XX	0
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
@@ -408,20 +410,27 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
-/* called from anx74xx_set_power_mode() */
+/**
+ * Power on (or off) a single TCPC.
+ * minimum on/off delays are included.
+ *
+ * @param port	Port number of TCPC.
+ * @param mode	0: power off, 1: power on.
+ */
 void board_set_tcpc_power_mode(int port, int mode)
 {
-	if (port != 0)
+	if (port != USB_PD_PORT_ANX74XX)
 		return;
 
 	if (mode) {
 		gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
-		msleep(10);
+		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 	} else {
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-		msleep(1);
+		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
+		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	}
 }
 
@@ -430,16 +439,14 @@ void board_reset_pd_mcu(void)
 	/* Assert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-	msleep(1);
+
+	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
-	/* Disable power */
+	/* Disable TCPC0 (anx3429) power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
-	msleep(10);
-	/* Enable power */
-	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
-	msleep(10);
-	/* Deassert reset */
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
+
+	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
 
 void board_tcpc_init(void)

@@ -702,7 +702,7 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
-void anx74xx_handle_power_mode(int port, int mode)
+static void anx74xx_handle_power_mode(int port, int mode)
 {
 	if (mode == ANX74XX_STANDBY_MODE) {
 		anx74xx_set_power_mode(port, mode);

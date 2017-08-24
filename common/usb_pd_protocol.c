@@ -1640,6 +1640,17 @@ static void pd_init_tasks(void)
 }
 #endif /* CONFIG_COMMON_RUNTIME */
 
+#ifndef CONFIG_USB_PD_TCPC
+static int pd_restart_tcpc(int port)
+{
+	if (board_set_tcpc_power_mode) {
+		/* force chip reset */
+		board_set_tcpc_power_mode(port, 0);
+	}
+	return tcpm_init(port);
+}
+#endif
+
 void pd_task(void *u)
 {
 	int head;
@@ -2332,9 +2343,9 @@ void pd_task(void *u)
 			CPRINTS("TCPC p%d resumed!", port);
 #else
 			if (rstatus != EC_ERROR_UNIMPLEMENTED &&
-			    tcpm_init(port) != 0) {
+			    pd_restart_tcpc(port) != 0) {
 				/* stay in PD_STATE_SUSPENDED */
-				CPRINTS("TCPC p%d init failed!", port);
+				CPRINTS("TCPC p%d restart failed!", port);
 				break;
 			}
 			set_state(port, PD_DEFAULT_STATE(port));

@@ -227,30 +227,38 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
-/* called from anx74xx_set_power_mode() */
+/**
+ * Power on (or off) a single TCPC.
+ * minimum on/off delays are included.
+ *
+ * @param port	Port number of TCPC.
+ * @param mode	0: power off, 1: power on.
+ */
 void board_set_tcpc_power_mode(int port, int mode)
 {
 	switch (port) {
 	case 0:
 		if (mode) {
 			gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
-			msleep(10);
+			msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 			gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 		} else {
 			gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-			msleep(1);
+			msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 			gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
+			msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		}
 		break;
 	case 1:
 		if (mode) {
 			gpio_set_level(GPIO_USB_C1_TCPC_PWR, 1);
-			msleep(10);
+			msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 			gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 		} else {
 			gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-			msleep(1);
+			msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 			gpio_set_level(GPIO_USB_C1_TCPC_PWR, 0);
+			msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		}
 		break;
 	}
@@ -261,15 +269,15 @@ void board_reset_pd_mcu(void)
 	/* Assert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-	msleep(1);
+	msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 	/* Disable power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
 	gpio_set_level(GPIO_USB_C1_TCPC_PWR, 0);
-	msleep(10);
+	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	/* Enable power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
 	gpio_set_level(GPIO_USB_C1_TCPC_PWR, 1);
-	msleep(10);
+	msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 	/* Deassert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
@@ -990,4 +998,3 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 	&motion_sensors[LID_LIGHT],
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
-

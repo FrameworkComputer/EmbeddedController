@@ -310,7 +310,13 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_USB1_ENABLE,
 };
 
-/* called from anx74xx_set_power_mode() */
+/**
+ * Power on (or off) a single TCPC.
+ * minimum on/off delays are included.
+ *
+ * @param port	Port number of TCPC.
+ * @param mode	0: power off, 1: power on.
+ */
 void board_set_tcpc_power_mode(int port, int mode)
 {
 	if (port != USB_PD_PORT_ANX74XX)
@@ -319,13 +325,14 @@ void board_set_tcpc_power_mode(int port, int mode)
 	switch (mode) {
 	case ANX74XX_NORMAL_MODE:
 		gpio_set_level(GPIO_EN_USB_TCPC_PWR, 1);
-		msleep(10);
+		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 		break;
 	case ANX74XX_STANDBY_MODE:
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-		msleep(1);
+		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
+		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		break;
 	default:
 		break;
@@ -333,32 +340,32 @@ void board_set_tcpc_power_mode(int port, int mode)
 }
 
 /**
- * Reset PD MCU -- currently only called from handle_pending_reboot() in
- * common/power.c just before hard resetting the system. This logic is likely
- * not needed as the PP3300_A rail should be dropped on EC reset.
+ * Reset all system PD/TCPC MCUs -- currently only called from
+ * handle_pending_reboot() in common/power.c just before hard
+ * resetting the system. This logic is likely not needed as the
+ * PP3300_A rail should be dropped on EC reset.
  */
 void board_reset_pd_mcu(void)
 {
-	/* Assert reset to TCPC1 */
+	/* Assert reset to TCPC1 (ps8751) */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
 
-	/* Assert reset to TCPC0 */
-	board_set_tcpc_power_mode(0, 0);
+	/* Assert reset to TCPC0 (anx3429) */
+	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 
 	/* TCPC1 (ps8751) requires 1ms reset down assertion */
-	msleep(1);
+	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
+	/* Disable TCPC0 power */
+	gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
 
 	/*
-	 * TCPC0 requires 10ms reset/power down assertion
-	 * minus the 1ms for the TCPC1.
+	 * anx3429 requires 10ms reset/power down assertion
 	 */
-	msleep(9);
-
-	/* Deassert reset to TCPC0 */
-	board_set_tcpc_power_mode(0, 1);
+	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
 
 void board_tcpc_init(void)
