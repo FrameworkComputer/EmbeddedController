@@ -100,6 +100,11 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* GPIO to enable/disable the USB Type-A port. */
+const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+	GPIO_USB_A_5V_EN,
+};
+
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Extra delay when KSO2 is tied to Cr50. */
