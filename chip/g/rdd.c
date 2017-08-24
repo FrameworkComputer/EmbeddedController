@@ -205,6 +205,13 @@ void init_rdd_state(void)
 	GWRITE(RDD, PROG_DEBUG_STATE_MAP, DETECT_DEBUG);
 
 	/*
+	 * Set the 0.4V comparator reference to 0.3V instead.  The voltage is
+	 * marginal near 0.4V for example with VBUS at 4.75V and a SuzyQable See
+	 * b/64847312.
+	 */
+	GWRITE_FIELD(RDD, REF_ADJ, LVL0P4V, 0x2);
+
+	/*
 	 * Enable interrupt for detecting CC.  This minimizes the time before
 	 * we transition to cable-detected at boot, and will cause us to wake
 	 * from deep sleep if a cable is plugged in.
