@@ -50,7 +50,12 @@
 
 #define TCPC_REG_MEASURE	0x04
 #define TCPC_REG_MEASURE_VBUS		(1<<6)
-#define TCPC_REG_MEASURE_MDAC_MV(mv)	(((mv)/42) & 0x3f)
+/*
+ * MDAC reference voltage step size is 42 mV. Round our thresholds to reduce
+ * maximum error, which also matches suggested thresholds in datasheet
+ * (Table 3. Host Interrupt Summary).
+ */
+#define TCPC_REG_MEASURE_MDAC_MV(mv)	(DIV_ROUND_NEAREST((mv), 42) & 0x3f)
 
 #define TCPC_REG_CONTROL0	0x06
 #define TCPC_REG_CONTROL0_TX_FLUSH	(1<<6)
