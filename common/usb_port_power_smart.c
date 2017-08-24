@@ -30,6 +30,13 @@ static uint8_t charge_mode[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
 /* GPIOs to enable/disable USB ports. Board specific. */
 extern const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT];
 
+#ifdef CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
+/*
+ * If we only support CDP and SDP, the control signals are hard-wired so
+ * there's nothing to do.  The only to do is set ILIM_SEL.
+ */
+static void usb_charge_set_control_mode(int port_id, int mode) {}
+#else /* !defined(CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY) */
 static void usb_charge_set_control_mode(int port_id, int mode)
 {
 #ifdef CONFIG_USB_PORT_POWER_SMART_SIMPLE
@@ -49,8 +56,9 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 		gpio_set_level(GPIO_USB2_CTL2, mode & 0x2);
 		gpio_set_level(GPIO_USB2_CTL3, mode & 0x1);
 	}
-#endif
+#endif /* defined(CONFIG_USB_PORT_POWER_SMART_SIMPLE) */
 }
+#endif /* defined(CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY) */
 
 static void usb_charge_set_enabled(int port_id, int en)
 {
@@ -60,22 +68,22 @@ static void usb_charge_set_enabled(int port_id, int en)
 
 static void usb_charge_set_ilim(int port_id, int sel)
 {
-#if defined(CONFIG_USB_PORT_POWER_SMART_SIMPLE)
-	/* ILIM_SEL signal is shared and inverted */
-	gpio_set_level(GPIO_USB_ILIM_SEL, !sel);
-#elif defined(CONFIG_USB_PORT_POWER_SMART_INVERTED)
-	/* ILIM_SEL signal is per-port and active low */
-	if (port_id == 0)
-		gpio_set_level(GPIO_USB1_ILIM_SEL_L, !sel);
-	else
-		gpio_set_level(GPIO_USB2_ILIM_SEL_L, !sel);
-#else
-	/* ILIM_SEL is per-port and active high */
-	if (port_id == 0)
-		gpio_set_level(GPIO_USB1_ILIM_SEL, sel);
-	else
-		gpio_set_level(GPIO_USB2_ILIM_SEL, sel);
-#endif /* CONFIG_USB_PORT_POWER_SMART_SIMPLE */
+	enum gpio_signal ilim_sel;
+
+#if defined(CONFIG_USB_PORT_POWER_SMART_SIMPLE) ||	\
+	defined(CONFIG_USB_PORT_POWER_SMART_INVERTED)
+	/* ILIM_SEL is inverted. */
+	sel = !sel;
+#endif
+
+	ilim_sel = GPIO_USB1_ILIM_SEL;
+#if !defined(CONFIG_USB_PORT_POWER_SMART_SIMPLE) && \
+	CONFIG_USB_PORT_POWER_SMART_PORT_COUNT == 2
+	if (port_id != 0)
+		ilim_sel = GPIO_USB2_ILIM_SEL;
+#endif
+
+	gpio_set_level(ilim_sel, sel);
 }
 
 static void usb_charge_all_ports_ctrl(enum usb_charge_mode mode)
@@ -107,10 +115,12 @@ int usb_charge_set_mode(int port_id, enum usb_charge_mode mode)
 		usb_charge_set_ilim(port_id, 1);
 		usb_charge_set_enabled(port_id, 1);
 		break;
+#ifndef CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
 	case USB_CHARGE_MODE_DCP_SHORT:
 		usb_charge_set_control_mode(port_id, 4);
 		usb_charge_set_enabled(port_id, 1);
 		break;
+#endif /* !defined(CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY) */
 	default:
 		return EC_ERROR_UNKNOWN;
 	}

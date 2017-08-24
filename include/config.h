@@ -2715,6 +2715,13 @@
 #undef CONFIG_USB_PORT_POWER_SMART
 
 /*
+ * Support smart power control to the device's USB ports, however only CDP and
+ * SDP are supported.  Usually this is the case if all the control lines to the
+ * charging port controller are hard-wired.
+ */
+#undef CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
+
+/*
  * Override the default charging mode for USB smart power control.
  * Value is selected from usb_charge_mode in include/usb_charge.h
  */
