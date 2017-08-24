@@ -247,6 +247,10 @@ int board_rst_pullup_needed(void);
 int board_tpm_uses_i2c(void);
 int board_tpm_uses_spi(void);
 int board_id_is_mismatched(void);
+/* Use TPM_RST_L to detect the AP state instead of the uart */
+int board_detect_ap_with_tpm_rst(void);
+/* Allow for deep sleep to be enabled on AP shutdown */
+int board_deep_sleep_allowed(void);
 
 void power_button_record(void);
 

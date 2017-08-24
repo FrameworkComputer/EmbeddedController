@@ -120,6 +120,16 @@ int board_use_plt_rst(void)
 	return !!(board_properties & BOARD_USE_PLT_RESET);
 }
 
+int board_deep_sleep_allowed(void)
+{
+	return board_use_plt_rst();
+}
+
+int board_detect_ap_with_tpm_rst(void)
+{
+	return board_use_plt_rst();
+}
+
 int board_rst_pullup_needed(void)
 {
 	return !!(board_properties & BOARD_NEEDS_SYS_RST_PULL_UP);
@@ -804,7 +814,7 @@ static void deferred_tpm_rst_isr(void)
 	 * If we're transitioning the AP from OFF or UNKNOWN, also trigger the
 	 * resume handler.
 	 */
-	if (board_use_plt_rst() &&
+	if (board_detect_ap_with_tpm_rst() &&
 	    device_state_changed(DEVICE_AP, DEVICE_STATE_ON))
 		hook_notify(HOOK_CHIPSET_RESUME);
 
@@ -1273,7 +1283,7 @@ void board_update_device_state(enum device_type device)
 		 * signals; we own those GPIOs, so need to enable their
 		 * interrupts explicitly.
 		 */
-		if ((device != DEVICE_AP) || !board_use_plt_rst())
+		if ((device != DEVICE_AP) || !board_detect_ap_with_tpm_rst())
 			gpio_enable_interrupt(device_states[device].detect);
 
 		/*
@@ -1316,7 +1326,7 @@ static void ap_shutdown(void)
 	 * there will require more support on the AP side than is available
 	 * now.
 	 */
-	if (board_use_plt_rst())
+	if (board_deep_sleep_allowed())
 		enable_deep_sleep();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, ap_shutdown, HOOK_PRIO_DEFAULT);
