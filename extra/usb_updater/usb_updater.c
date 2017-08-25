@@ -7,6 +7,7 @@
 #include <asm/byteorder.h>
 #include <ctype.h>
 #include <endian.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <libusb.h>
@@ -220,7 +221,8 @@ struct transfer_descriptor {
 	uint32_t post_reset;
 	enum transfer_type {
 		usb_xfer = 0,
-		dev_xfer = 1
+		dev_xfer = 1,
+		ts_xfer = 2
 	} ep_type;
 	union {
 		struct usb_endpoint uep;
@@ -230,7 +232,7 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "bcd:fhipsu";
+static char *short_opts = "bcd:fhipstu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	0,   NULL, 'b'},
@@ -241,13 +243,142 @@ static const struct option long_opts[] = {
 	{"post_reset",	0,   NULL, 'p'},
 	{"board_id",    2,   NULL, 'i'},
 	{"systemdev",	0,   NULL, 's'},
+	{"trunks_send",	0,   NULL, 't'},
 	{"upstart",	0,   NULL, 'u'},
 	{},
 };
 
-/* Prepare and transfer a block to /dev/tpm0, get a reply. */
-static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
-			const void *data, int size,
+
+
+/* Helpers to convert between binary and hex ascii and back. */
+static char to_hexascii(uint8_t c)
+{
+	if (c <= 9)
+		return '0' + c;
+	return 'a' + c - 10;
+}
+
+static int from_hexascii(char c)
+{
+	/* convert to lower case. */
+	c = tolower(c);
+
+	if (c < '0' || c > 'f' || ((c > '9') && (c < 'a')))
+		return -1; /* Not an ascii character. */
+
+	if (c <= '9')
+		return c - '0';
+
+	return c - 'a' + 10;
+}
+
+/* Functions to communicate with the TPM over the trunks_send --raw channel. */
+
+/* File handle to share between write and read sides. */
+static FILE *tpm_output;
+static int ts_write(const void *out, size_t len)
+{
+	const char *cmd_head = "trunks_send --raw ";
+	size_t head_size = strlen(cmd_head);
+	char full_command[head_size + 2 * len + 1];
+	size_t i;
+
+	strcpy(full_command, cmd_head);
+	/*
+	 * Need to convert binary input into hex ascii output to pass to the
+	 * trunks_send command.
+	 */
+	for (i = 0; i < len; i++) {
+		uint8_t c = ((const uint8_t *)out)[i];
+
+		full_command[head_size + 2 * i] = to_hexascii(c >> 4);
+		full_command[head_size + 2 * i + 1] = to_hexascii(c & 0xf);
+	}
+
+	/* Make it a proper zero terminated string. */
+	full_command[sizeof(full_command) - 1] = 0;
+	debug("cmd: %s\n", full_command);
+	tpm_output = popen(full_command, "r");
+	if (tpm_output)
+		return len;
+
+	fprintf(stderr, "Error: failed to launch trunks_send --raw\n");
+	return -1;
+}
+
+static int ts_read(void *buf, size_t max_rx_size)
+{
+	int i;
+	int pclose_rv;
+	int rv;
+	char response[max_rx_size * 2];
+
+	if (!tpm_output) {
+		fprintf(stderr, "Error: attempt to read empty output\n");
+		return -1;
+	}
+
+	rv = fread(response, 1, sizeof(response), tpm_output);
+	if (rv > 0)
+		rv -= 1; /* Discard the \n character added by trunks_send. */
+
+	debug("response of size %d, max rx size %zd: %s\n",
+	      rv, max_rx_size, response);
+
+	pclose_rv = pclose(tpm_output);
+	if (pclose_rv < 0) {
+		fprintf(stderr,
+			"Error: pclose failed: error %d (%s)\n",
+			errno, strerror(errno));
+		return -1;
+	}
+
+	tpm_output = NULL;
+
+	if (rv & 1) {
+		fprintf(stderr,
+			"Error: trunks_send returned odd number of bytes: %s\n",
+		response);
+		return -1;
+	}
+
+	for (i = 0; i < rv/2; i++) {
+		uint8_t byte;
+		char c;
+		int nibble;
+
+		c = response[2 * i];
+		nibble = from_hexascii(c);
+		if (nibble < 0) {
+			fprintf(stderr,	"Error: "
+				"trunks_send returned non hex character %c\n",
+				c);
+			return -1;
+		}
+		byte = nibble << 4;
+
+		c = response[2 * i + 1];
+		nibble = from_hexascii(c);
+		if (nibble < 0) {
+			fprintf(stderr,	"Error: "
+				"trunks_send returned non hex character %c\n",
+				c);
+			return -1;
+		}
+		byte |= nibble;
+
+		((uint8_t *)buf)[i] = byte;
+	}
+
+	return rv/2;
+}
+
+/*
+ * Prepare and transfer a block to either to /dev/tpm0 or through trunks_send
+ * --raw, get a reply.
+ */
+static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
+			unsigned int addr, const void *data, int size,
 			void *response, size_t *response_size,
 			uint16_t subcmd)
 {
@@ -260,6 +391,8 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 	void *payload;
 	size_t header_size;
 	uint32_t rv;
+	size_t rx_size = sizeof(struct upgrade_pkt) +
+		sizeof(struct first_response_pdu);
 
 	debug("%s: sending to %#x %d bytes\n", __func__, addr, size);
 
@@ -295,7 +428,19 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 		debug("\n");
 	}
 #endif
-	done = write(fd, out, len);
+	switch (td->ep_type) {
+	case dev_xfer:
+		done = write(td->tpm_fd, out, len);
+		break;
+	case ts_xfer:
+		done = ts_write(out, len);
+		break;
+	default:
+		fprintf(stderr, "Error: %s:%d: unknown transfer type %d\n",
+			__func__, __LINE__, td->ep_type);
+		return -1;
+	}
+
 	if (done < 0) {
 		perror("Could not write to TPM");
 		return -1;
@@ -310,8 +455,22 @@ static int tpm_send_pkt(int fd, unsigned int digest, unsigned int addr,
 	 * size of the two structures below is sure enough for any expected
 	 * response size.
 	 */
-	len = read(fd, outbuf, sizeof(struct upgrade_pkt) +
-		   sizeof(struct first_response_pdu));
+	switch (td->ep_type) {
+	case dev_xfer:
+		len = read(td->tpm_fd, outbuf, rx_size);
+		break;
+	case ts_xfer:
+		len = ts_read(outbuf, rx_size);
+		break;
+	default:
+		/*
+		 * This sure will never happen, type is verifed in the
+		 * previous switch statement.
+		 */
+		len = -1;
+		break;
+	}
+
 #ifdef DEBUG
 	debug("Read %d bytes from TPM\n", len);
 	if (len > 0) {
@@ -371,6 +530,8 @@ static void usage(int errs)
 	       "character string.\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
+	       "  -t,--trunks_send         Use `trunks_send --raw' "
+	       "(-d is ignored)\n"
 	       "  -u,--upstart             "
 			"Upstart mode (strict header checks)\n"
 	       "\n", progname, VID, PID);
@@ -715,7 +876,7 @@ static void transfer_section(struct transfer_descriptor *td,
 			 * different amount of data is transferred (which
 			 * would indicate a synchronization problem).
 			 */
-			if (tpm_send_pkt(td->tpm_fd,
+			if (tpm_send_pkt(td,
 					 updu.cmd.block_digest,
 					 block_addr,
 					 data_ptr,
@@ -905,7 +1066,7 @@ static void setup_connection(struct transfer_descriptor *td)
 			sizeof(start_resp), 1, &rxed_size);
 	} else {
 		rxed_size = sizeof(start_resp);
-		if (tpm_send_pkt(td->tpm_fd, 0, 0, NULL, 0,
+		if (tpm_send_pkt(td, 0, 0, NULL, 0,
 				 &start_resp, &rxed_size,
 				 EXTENSION_FW_UPGRADE) < 0) {
 			fprintf(stderr, "Failed to start transfer\n");
@@ -1102,7 +1263,7 @@ static uint32_t send_vendor_command(struct transfer_descriptor *td,
 		}
 	} else {
 
-		rv = tpm_send_pkt(td->tpm_fd, 0, 0,
+		rv = tpm_send_pkt(td, 0, 0,
 				  command_body, command_body_size,
 				  response, response_size, subcommand);
 
@@ -1480,6 +1641,9 @@ int main(int argc, char *argv[])
 		case 's':
 			td.ep_type = dev_xfer;
 			break;
+		case 't':
+			td.ep_type = ts_xfer;
+			break;
 		case 'p':
 			td.post_reset = 1;
 			break;
@@ -1536,7 +1700,7 @@ int main(int argc, char *argv[])
 
 	if (td.ep_type == usb_xfer) {
 		usb_findit(vid, pid, &td.uep);
-	} else {
+	} else if (td.ep_type == dev_xfer) {
 		td.tpm_fd = open("/dev/tpm0", O_RDWR);
 		if (td.tpm_fd < 0) {
 			perror("Could not open TPM");
