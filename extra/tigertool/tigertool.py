@@ -17,6 +17,10 @@ serialno = 'Uninitialized'
 def do_mux(mux, pty):
   """Set mux via ec console 'pty'.
 
+  Args:
+    mux: mux to connect to DUT, 'A', 'B', or 'off'
+    pty: a pty object connected to tigertail
+
   Commands are:
   # > mux A
   # TYPE-C mux is A
@@ -38,8 +42,82 @@ def do_mux(mux, pty):
   c.log('Mux set to %s' % result)
   return True
 
+def do_version(pty):
+  """Check version via ec console 'pty'.
+
+  Args:
+    pty: a pty object connected to tigertail
+
+  Commands are:
+  # > version
+  # Chip:    stm stm32f07x
+  # Board:   0
+  # RO:      tigertail_v1.1.6749-74d1a312e
+  # RW:      tigertail_v1.1.6749-74d1a312e
+  # Build:   tigertail_v1.1.6749-74d1a312e
+  #          2017-07-25 20:08:34 nsanders@meatball.mtv.corp.google.com
+
+  """
+  cmd = '\r\nversion\r\n'
+  regex = 'RO:\s+(\S+)\s+RW:\s+(\S+)\s+Build:\s+(\S+)\s+' \
+          '(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d) (\S+)'
+
+  results = pty._issue_cmd_get_results(cmd, [regex])[0]
+  c.log('Version is %s' % results[3])
+  c.log('RO:    %s' % results[1])
+  c.log('RW:    %s' % results[2])
+  c.log('Date:  %s' % results[4])
+  c.log('Src:   %s' % results[5])
+
+  return True
+
+def do_power(count, bus, pty):
+  """Check power usage via ec console 'pty'.
+
+  Args:
+    count: number of samples to capture
+    bus: rail to monitor, 'vbus', 'cc1', or 'cc2'
+    pty: a pty object connected to tigertail
+
+  Commands are:
+  # > ina 0
+  # Configuration: 4127
+  # Shunt voltage: 02c4 => 1770 uV
+  # Bus voltage  : 1008 => 5130 mV
+  # Power        : 0019 => 625 mW
+  # Current      : 0082 => 130 mA
+  # Calibration  : 0155
+  # Mask/Enable  : 0008
+  # Alert limit  : 0000
+  """
+  if bus == 'vbus':
+    ina = 0
+  if bus == 'cc1':
+    ina = 4
+  if bus == 'cc2':
+    ina = 1
+
+  start = time.time()
+
+  c.log('time,\tmV,\tmW,\tmA')
+
+  cmd = '\r\nina %s\r\n' % ina
+  regex = 'Bus voltage  : \S+ \S+ (\d+) mV\s+' \
+          'Power        : \S+ \S+ (\d+) mW\s+' \
+          'Current      : \S+ \S+ (\d+) mA'
+
+  for i in xrange(0, count):
+    results = pty._issue_cmd_get_results(cmd, [regex])[0]
+    c.log('%.2f,\t%s,\t%s\t%s' % (time.time() - start,
+          results[1], results[2], results[3]))
+
+  return True
+
 def do_reboot(pty):
   """Reboot via ec console pty
+
+  Args:
+    pty: a pty object connected to tigertail
 
   Command is: reboot.
   """
@@ -58,6 +136,10 @@ def do_reboot(pty):
 
 def do_sysjump(region, pty):
   """Set region via ec console 'pty'.
+
+  Args:
+    region: ec code region to execute, 'ro' or 'rw'
+    pty: a pty object connected to tigertail
 
   Commands are:
   # > sysjump rw
@@ -84,15 +166,23 @@ def get_parser():
       description=__doc__)
   parser.add_argument('-s', '--serialno', type=str, default=None,
                       help='serial number of board to use')
+  parser.add_argument('-b', '--bus', type=str, default='vbus',
+                     help='Which rail to log: [vbus|cc1|cc2]')
   group = parser.add_mutually_exclusive_group()
   group.add_argument('--setserialno', type=str, default=None,
                      help='serial number to set on the board.')
   group.add_argument('-m', '--mux', type=str, default=None,
                      help='mux selection')
+  group.add_argument('-p', '--power', action='store_true',
+                     help='check VBUS')
+  group.add_argument('-l', '--powerlog', type=int, default=None,
+                     help='log VBUS')
   group.add_argument('-r', '--sysjump', type=str, default=None,
                      help='region selection')
   group.add_argument('--reboot', action='store_true',
                      help='reboot tigertail')
+  group.add_argument('--check_version', action='store_true',
+                     help='check tigertail version')
   return parser
 
 def main(argv):
@@ -107,7 +197,11 @@ def main(argv):
 
   pty = c.setup_tinyservod(STM_VIDPID, 0, serialno=opts.serialno)
 
-  if opts.setserialno:
+  if opts.bus not in ('vbus', 'cc1', 'cc2'):
+    c.log('Try --bus [vbus|cc1|cc2]')
+    result = False
+
+  elif opts.setserialno:
     try:
       c.do_serialno(opts.setserialno, pty)
     except Exception:
@@ -121,6 +215,15 @@ def main(argv):
 
   elif opts.reboot:
     result &= do_reboot(pty)
+
+  elif opts.check_version:
+    result &= do_version(pty)
+
+  elif opts.power:
+    result &= do_power(1, opts.bus, pty)
+
+  elif opts.powerlog:
+    result &= do_power(opts.powerlog, opts.bus, pty)
 
   if result:
     c.log('PASS')
