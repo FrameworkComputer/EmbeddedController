@@ -5,7 +5,6 @@
 
 #include "case_closed_debug.h"
 #include "console.h"
-#include "device_state.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -49,11 +48,6 @@ static void uart_select_tx(int uart, int signal)
 		/* Remove the pulldown when we are driving the signal */
 		GWRITE_FIELD(PINMUX, DIOB5_CTL, PD, signal ? 0 : 1);
 	}
-}
-
-int servo_is_connected(void)
-{
-	return device_get_state(DEVICE_SERVO) == DEVICE_STATE_ON;
 }
 
 void uartn_tx_connect(int uart)
@@ -188,6 +182,7 @@ static int command_ccd(int argc, char **argv)
 	print_ap_state();
 	print_ec_state();
 	print_rdd_state();
+	print_servo_state();
 
 	ccprintf("CCD:     %s\n", rdd_is_connected() ? "enabled" : "disabled");
 	ccprintf("AP UART: %s\n",

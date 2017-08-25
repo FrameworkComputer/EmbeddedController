@@ -66,6 +66,7 @@ static void set_ec_on(void)
 		CPRINTS("EC RX only");
 		if (!uart_bitbang_is_enabled(UART_EC))
 			uartn_enable(UART_EC);
+
 		set_state(DEVICE_STATE_INIT_RX_ONLY);
 		return;
 	}

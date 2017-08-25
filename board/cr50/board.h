@@ -76,9 +76,6 @@
 /* Allow multiple concurrent memory allocations. */
 #define CONFIG_MALLOC
 
-/* Detect the states of other devices */
-#define CONFIG_DEVICE_STATE
-
 /* Enable debug cable detection */
 #define CONFIG_RDD
 
@@ -171,13 +168,6 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
-/* Device indexes for devices that require debouncing */
-enum device_type {
-	DEVICE_SERVO = 0,
-
-	DEVICE_COUNT
-};
-
 /*
  * Device states
  *
@@ -243,13 +233,13 @@ enum nvmem_vars {
 };
 
 void board_configure_deep_sleep_wakepins(void);
-/* Interrupt handler */
-void tpm_rst_deasserted(enum gpio_signal signal);
 void ap_detect_asserted(enum gpio_signal signal);
 void ec_detect_asserted(enum gpio_signal signal);
-void device_state_on(enum gpio_signal signal);
-void post_reboot_request(void);
 void ec_tx_cr50_rx(enum gpio_signal signal);
+void servo_detect_asserted(enum gpio_signal signal);
+void tpm_rst_deasserted(enum gpio_signal signal);
+
+void post_reboot_request(void);
 
 /* Special controls over EC and AP */
 void assert_sys_rst(void);
@@ -283,6 +273,7 @@ void disable_ccd_uart(int uart);
 
 void print_ap_state(void);
 void print_ec_state(void);
+void print_servo_state(void);
 
 int ap_is_on(void);
 int ec_is_on(void);

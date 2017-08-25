@@ -64,7 +64,7 @@ GPIO_INT(DETECT_EC,       PIN(1, 2),  GPIO_INT_HIGH, ec_detect_asserted)
  * in the config assume the pin definitions here.
  */
 GPIO_INT(DETECT_SERVO,    PIN(1, 3),  GPIO_INT_HIGH | GPIO_PULL_DOWN,
-	 device_state_on)
+	 servo_detect_asserted)
 GPIO_INT(EC_TX_CR50_RX,   PIN(1, 4),  GPIO_INT_FALLING, ec_tx_cr50_rx)
 
 /* Pull this low to interrupt the AP */

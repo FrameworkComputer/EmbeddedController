@@ -8,7 +8,6 @@
 #include "common.h"
 #include "console.h"
 #include "dcrypto/dcrypto.h"
-#include "device_state.h"
 #include "ec_version.h"
 #include "endian.h"
 #include "extension.h"
@@ -83,9 +82,6 @@ uint32_t nvmem_user_sizes[NVMEM_NUM_USERS] = {
 	NVMEM_TPM_SIZE,
 	NVMEM_CR50_SIZE
 };
-
-static int device_state_changed(enum device_type device,
-				enum device_state state);
 
 /*  Board specific configuration settings */
 static uint32_t board_properties; /* Mainly used as a cache for strap config. */
@@ -700,9 +696,6 @@ static void board_init(void)
 	/* Load case-closed debugging config.  Must be after initvars(). */
 	ccd_config_init(ccd_init_state);
 
-	/* Initialize write protect.  Must be after CCD config init. */
-	init_wp_state();
-
 	system_update_rollback_mask_with_both_imgs();
 
 	/* Indication that firmware is running, for debug purposes. */
@@ -715,9 +708,8 @@ static void board_init(void)
 	check_board_id_mismatch();
 	check_board_id_mismatch();
 
-	/* Enable GPIO interrupts for device state machines */
+	/* Enable TPM reset GPIO interrupt */
 	gpio_enable_interrupt(GPIO_TPM_RST_L);
-	gpio_enable_interrupt(GPIO_DETECT_SERVO);
 
 	/*
 	 * Start monitoring AC detect to wake Cr50 from deep sleep.  This is
@@ -726,6 +718,17 @@ static void board_init(void)
 	 */
 	init_ac_detect();
 	init_rdd_state();
+
+	/* Initialize write protect.  Must be after CCD config init. */
+	init_wp_state();
+
+	/*
+	 * Note that the AP, EC, and servo state machines do not have explicit
+	 * init_xxx_state() functions, because they don't need to configure
+	 * registers prior to starting their state machines.  Their state
+	 * machines run in HOOK_SECOND, which first triggers right after
+	 * HOOK_INIT, not at +1.0 seconds.
+	 */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -924,49 +927,6 @@ int is_ec_rst_asserted(void)
 	return GREAD(RBOX, ASSERT_EC_RST);
 }
 
-/**
- * Update device state with a change that has already happened
- *
- * Cancels any deferred call pending for this device.
- *
- * @param device	Device to change
- * @param state		New state
- * @return Passthru from device_set_state().  That is, non-zero if the last
- * known device state has changed to a known and different value.
- */
-static int device_state_changed(enum device_type device,
-				enum device_state state)
-{
-	/* Cancel any deferred call for this device */
-	hook_call_deferred(device_states[device].deferred, -1);
-
-	return device_set_state(device, state);
-}
-
-/**
- * Change the servo device to UNKNOWN if we can't tell if it's connected.
- *
- * @return 1 if we can't tell if servo is connected, 0 if we can tell.
- */
-static int servo_state_unknowable(void)
-{
-	/*
-	 * If we are driving the UART transmit line to the EC, then we can't
-	 * check to see if servo is also doing so.  If so, set the state of the
-	 * servo device to DEVICE_STATE_UNKNOWN.
-	 *
-	 * We also need to check if we're bit-banging the EC UART, because in
-	 * that case, the UART transmit line is directly controlled as a GPIO
-	 * and can be high even if UART TX is disconnected.
-	 */
-	if (uart_tx_is_connected(UART_EC) || uart_bitbang_is_enabled(UART_EC)) {
-		device_set_state(DEVICE_SERVO, DEVICE_STATE_UNKNOWN);
-		return 1;
-	}
-
-	return 0;
-}
-
 void enable_ccd_uart(int uart)
 {
 	/*
@@ -1036,195 +996,6 @@ static void board_ccd_change_hook(void)
 	}
 }
 DECLARE_HOOK(HOOK_CCD_CHANGE, board_ccd_change_hook, HOOK_PRIO_DEFAULT);
-
-/**
- * Move a device from DEVICE_STATE_UNKNOWN to DEVICE_STATE_OFF.
- *
- * @return 1 if the device moved from UNKNOWN->OFF, or 0 (without changing
- * state) for any other requested state transition.
- */
-static int device_powered_off(enum device_type device)
-{
-	/*
-	 * If the device state is on, then leave it there.
-	 *
-	 * When does this happen?  If there's a race condition between a
-	 * state transition to ON in an interrupt handler and a transition to
-	 * OFF in a hook task level function?
-	 *
-	 * If that's the intent, this is *still* race conditiony, because the
-	 * call to device_state_changed() below can still happen after the
-	 * interrupt handler turns the device on.
-	 */
-	if (device_get_state(device) == DEVICE_STATE_ON)
-		return 0;
-
-	/*
-	 * The device state is either unknown or off.
-	 *
-	 * If it's already off, then device_state_changed() will return 0,
-	 * and we'll exit with error unknown.
-	 *
-	 * If it was unknown, we'll change it to off and return success.
-	 */
-	if (!device_state_changed(device, DEVICE_STATE_OFF))
-		return 0;
-
-	return 1;
-}
-
-/**
- * Deferred handler for servo removal debouncing.
- *
- * This will be called if servo has been detached for long enough, as
- * indicated by the UART transmit line to the EC (EC RX) being low.
- */
-static void servo_deferred(void)
-{
-	/*
-	 * If we're already driving the transmit line, we don't know if servo
-	 * has actually been detached.
-	 */
-	if (servo_state_unknowable())
-		return;
-
-	/*
-	 * Otherwise, we're done debouncing servo removal.  If we're still in
-	 * the UNKNOWN state, move it to the OFF state.
-	 */
-	if (device_powered_off(DEVICE_SERVO))
-		uartn_tx_connect(UART_AP);
-}
-DECLARE_DEFERRED(servo_deferred);
-
-/* Note: this must EXACTLY match enum device_type! */
-struct device_config device_states[] = {
-	[DEVICE_SERVO] = {
-		.state = DEVICE_STATE_UNKNOWN,
-		.deferred = &servo_deferred_data,
-		.detect = GPIO_DETECT_SERVO,
-		.name = "Servo"
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(device_states) == DEVICE_COUNT);
-
-static void servo_attached(void)
-{
-	/*
-	 * If we're not actually sure servo is attached because we're driving
-	 * the EC UART's transmit line, then return.
-	 */
-	if (servo_state_unknowable())
-		return;
-
-	/* Update the device state */
-	device_state_changed(DEVICE_SERVO, DEVICE_STATE_ON);
-
-	/*
-	 * Disable UART bit banging.  Note this must be done before
-	 * uartn_tx_disconnect() below, because this call will currently call
-	 * uartn_tx_connect()!
-	 */
-	uart_bitbang_disable(bitbang_config.uart);
-
-	/* Disconnect AP and EC UART when servo is attached */
-	uartn_tx_disconnect(UART_AP);
-	uartn_tx_disconnect(UART_EC);
-
-	/* Disconnect i2cm interface to ina */
-	usb_i2c_board_disable();
-}
-
-/*
- * Note: This is both an interrupt handler AND called from hook_task, and can
- * be re-entrant.
- */
-void device_state_on(enum gpio_signal signal)
-{
-	gpio_disable_interrupt(signal);
-
-	switch (signal) {
-	case GPIO_DETECT_SERVO:
-		servo_attached();
-		break;
-	default:
-		CPRINTS("Device %d not supported", signal);
-		return;
-	}
-}
-
-/* Note: This is called for every device once a second from the HOOK task */
-void board_update_device_state(enum device_type device)
-{
-	if (device == DEVICE_SERVO) {
-		/*
-		 * If we're driving the transmit line to the EC UART, then we
-		 * can't tell if servo is connected.  This check will also move
-		 * the servo device to DEVICE_STATE_UNKNOWN in that case.
-		 */
-		if (servo_state_unknowable())
-			return;
-
-		/* Otherwise, continue to the checks below */
-	}
-
-	/*
-	 * If the device is currently on set its state immediately. If it
-	 * thinks the device is powered off debounce the signal.
-	 */
-	if (gpio_get_level(device_states[device].detect)) {
-		/*
-		 * If the device is already on, return now.
-		 *
-		 * Seems like we could rely on a 0 return value from
-		 * device_set_state() to tell us that, rather than making an
-		 * explicit check here.
-		 */
-		if (device_get_state(device) == DEVICE_STATE_ON)
-			return;
-
-		/*
-		 * Otherwise, immediately call the interrupt handler for the
-		 * pin to move the device to DEVICE_STATE_ON.
-		 *
-		 * Note this may be a race condition.
-		 */
-		device_state_on(device_states[device].detect);
-	} else {
-		/*
-		 * If the device is already off, return now.
-		 *
-		 * Seems like we could rely on a 0 return value from
-		 * device_set_state() to tell us that, rather than making an
-		 * explicit check here.
-		 */
-		if (device_get_state(device) == DEVICE_STATE_OFF)
-			return;
-
-		/*
-		 * Otherwise, move the device to DEVICE_STATE_UNKNOWN.
-		 *
-		 * This is also likely a race condition.
-		 */
-		device_set_state(device, DEVICE_STATE_UNKNOWN);
-
-		/* Enable servo detect interrupt */
-		gpio_enable_interrupt(device_states[device].detect);
-
-		/*
-		 * The signal is low now, but this could be just a (EC, AP, or
-		 * Servo) UART transmitting 0-bits or PLT_RST_L pulsing. Let's
-		 * wait long enough to debounce in both cases, picking duration
-		 * slightly shorter than the (one second) device polling
-		 * interval.
-		 *
-		 * Interrupts from the appropriate source (platform dependent)
-		 * will cancel the deferred function if the signal is
-		 * deasserted within the deferral interval.
-		 */
-		hook_call_deferred(device_states[device].deferred, 900 * MSEC);
-	}
-}
 
 /*
  * This function duplicates some of the functionality in chip/g/gpio.c in order
