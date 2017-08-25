@@ -35,9 +35,9 @@ static int has_matrix_keyboard(void)
 	return 0;
 }
 
-static int is_vboot_ec_supported(void)
+static int is_efs_supported(void)
 {
-#ifdef CONFIG_VBOOT_EC
+#ifdef CONFIG_VBOOT_EFS
 	return 1;
 #else
 	return 0;
@@ -230,7 +230,7 @@ static void vboot_main(void)
 		return;
 	}
 
-	if (!is_vboot_ec_supported()) {
+	if (!is_efs_supported()) {
 		if (is_low_power_ap_boot_supported())
 			/* If a device supports this feature, AP's boot power
 			 * threshold should be set low. That will let EC-RO

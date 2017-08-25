@@ -285,7 +285,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
-#ifdef CONFIG_VBOOT_EC
+#ifdef CONFIG_VBOOT_EFS
 		/*
 		 * We have to test power readiness here (instead of S5->S3)
 		 * because when entering S5, EC enables EC_ROP_SLP_SUS pin

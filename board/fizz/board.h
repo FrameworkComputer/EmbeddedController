@@ -135,7 +135,7 @@
 #define I2C_ADDR_TCPC0		0x16
 
 /* Verify and jump to RW image on boot */
-#define CONFIG_VBOOT_EC
+#define CONFIG_VBOOT_EFS
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1

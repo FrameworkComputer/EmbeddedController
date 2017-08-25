@@ -182,7 +182,7 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
 		return BBRM_DATA_INDEX_PD1;
 #endif
-#ifdef CONFIG_VBOOT_EC
+#ifdef CONFIG_VBOOT_EFS
 	if (idx == SYSTEM_BBRAM_IDX_TRY_SLOT)
 		return BBRM_DATA_INDEX_TRY_SLOT;
 #endif
