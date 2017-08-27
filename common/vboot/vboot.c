@@ -57,16 +57,18 @@ static int verify_slot(int slot)
 	const uint8_t *sig;
 	const uint8_t *data;
 	int len;
+	int rv;
 
-	CPRINTS("Verifying RW_%c", slot == VBOOT_EC_SLOT_A ? 'A' : 'B');
+	CPRINTS("Verifying RW_%c", slot ? 'B' : 'A');
 
 	vb21_key = (const struct vb21_packed_key *)(
 			CONFIG_MAPPED_STORAGE_BASE +
 			CONFIG_EC_PROTECTED_STORAGE_OFF +
 			CONFIG_RO_PUBKEY_STORAGE_OFF);
-	if (vb21_is_packed_key_valid(vb21_key)) {
-		CPRINTS("Invalid key");
-		return EC_ERROR_INVAL;
+	rv = vb21_is_packed_key_valid(vb21_key);
+	if (rv) {
+		CPRINTS("Invalid key (%d)", rv);
+		return EC_ERROR_VBOOT_KEY;
 	}
 	key = (const struct rsa_public_key *)
 		((const uint8_t *)vb21_key + vb21_key->key_offset);
@@ -89,8 +91,9 @@ static int verify_slot(int slot)
 				CONFIG_RW_B_SIGN_STORAGE_OFF);
 	}
 
-	if (vb21_is_signature_valid(vb21_sig, vb21_key)) {
-		CPRINTS("Invalid signature");
+	rv = vb21_is_signature_valid(vb21_sig, vb21_key);
+	if (rv) {
+		CPRINTS("Invalid signature (%d)", rv);
 		return EC_ERROR_INVAL;
 	}
 	sig = (const uint8_t *)vb21_sig + vb21_sig->sig_offset;
@@ -102,10 +105,13 @@ static int verify_slot(int slot)
 		return EC_ERROR_INVAL;
 	}
 
-	if (vboot_verify(data, len, key, sig)) {
-		CPRINTS("Invalid data");
+	rv = vboot_verify(data, len, key, sig);
+	if (rv) {
+		CPRINTS("Invalid data (%d)", rv);
 		return EC_ERROR_INVAL;
 	}
+
+	CPRINTS("Verified RW_%c", slot ? 'B' : 'A');
 
 	return EC_SUCCESS;
 }
@@ -136,10 +142,11 @@ static int verify_and_jump(void)
 	}
 
 	/* 3. Jump (and reboot) */
-	system_run_image_copy(slot == VBOOT_EC_SLOT_A ?
+	rv = system_run_image_copy(slot == VBOOT_EC_SLOT_A ?
 			SYSTEM_IMAGE_RW : SYSTEM_IMAGE_RW_B);
+	CPRINTS("Failed to jump (%d)", rv);
 
-	return EC_ERROR_UNKNOWN;
+	return rv;
 }
 
 /* Request more power: charging battery or more powerful AC adapter */

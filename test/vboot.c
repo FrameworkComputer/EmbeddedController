@@ -63,49 +63,49 @@ static int test_vboot(void)
 	reset_data(&k, &s);
 	k.vb21_key.c.magic = VB21_MAGIC_SIGNATURE;
 	err = vb21_is_packed_key_valid(&k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_KEY_MAGIC);
 
 	/* Invalid key size */
 	reset_data(&k, &s);
 	k.vb21_key.key_size--;
 	err = vb21_is_packed_key_valid(&k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_KEY_SIZE);
 
 	/* Invalid magic */
 	reset_data(&k, &s);
 	s.vb21_sig.c.magic = VB21_MAGIC_PACKED_KEY;
 	err = vb21_is_signature_valid(&s.vb21_sig, &k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_SIG_MAGIC);
 
 	/* Invalid sig size */
 	reset_data(&k, &s);
 	s.vb21_sig.sig_size--;
 	err = vb21_is_signature_valid(&s.vb21_sig, &k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_SIG_SIZE);
 
 	/* Sig algorithm mismatch */
 	reset_data(&k, &s);
 	s.vb21_sig.sig_alg++;
 	err = vb21_is_signature_valid(&s.vb21_sig, &k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_SIG_ALGORITHM);
 
 	/* Hash algorithm mismatch */
 	reset_data(&k, &s);
 	s.vb21_sig.hash_alg++;
 	err = vb21_is_signature_valid(&s.vb21_sig, &k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_HASH_ALGORITHM);
 
 	/* Invalid sig_offset */
 	reset_data(&k, &s);
 	s.vb21_sig.sig_offset--;
 	err = vb21_is_signature_valid(&s.vb21_sig, &k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_SIG_OFFSET);
 
 	/* Invalid data size */
 	reset_data(&k, &s);
 	s.vb21_sig.data_size = CONFIG_RW_SIZE;
 	err = vb21_is_signature_valid(&s.vb21_sig, &k.vb21_key);
-	TEST_ASSERT(err == EC_ERROR_INVAL);
+	TEST_ASSERT(err == EC_ERROR_VBOOT_DATA_SIZE);
 
 	/* Invalid padding */
 	reset_data(&k, &s);

@@ -40,10 +40,8 @@ int vboot_verify(const uint8_t *data, int len,
 	uint32_t *workbuf;
 	int err = EC_SUCCESS;
 
-	if (shared_mem_acquire(3 * RSANUMBYTES, (char **)&workbuf)) {
-		CPRINTS("Failed to allocate memory");
-		return EC_ERROR_UNKNOWN;
-	}
+	if (shared_mem_acquire(3 * RSANUMBYTES, (char **)&workbuf))
+		return EC_ERROR_MEMORY_ALLOCATION;
 
 	/* Compute hash of the RW firmware */
 	SHA256_init(&ctx);
@@ -52,7 +50,7 @@ int vboot_verify(const uint8_t *data, int len,
 
 	/* Verify the data */
 	if (rsa_verify(key, sig, hash, workbuf) != 1)
-		err = EC_ERROR_INVAL;
+		err = EC_ERROR_VBOOT_DATA_VERIFY;
 
 	shared_mem_release(workbuf);
 

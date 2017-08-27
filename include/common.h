@@ -143,6 +143,26 @@ enum ec_error_list {
 	EC_ERROR_NOT_HANDLED = 21,
 	/* Data has not changed */
 	EC_ERROR_UNCHANGED = 22,
+	/* Memory allocation */
+	EC_ERROR_MEMORY_ALLOCATION = 23,
+
+	/* Verified boot errors */
+	EC_ERROR_VBOOT_SIGNATURE = 0x1000, /* 4096 */
+	EC_ERROR_VBOOT_SIG_MAGIC = 0x1001,
+	EC_ERROR_VBOOT_SIG_SIZE = 0x1002,
+	EC_ERROR_VBOOT_SIG_ALGORITHM = 0x1003,
+	EC_ERROR_VBOOT_HASH_ALGORITHM = 0x1004,
+	EC_ERROR_VBOOT_SIG_OFFSET = 0x1005,
+	EC_ERROR_VBOOT_DATA_SIZE = 0x1006,
+
+	/* Verified boot key errors */
+	EC_ERROR_VBOOT_KEY = 0x1100,
+	EC_ERROR_VBOOT_KEY_MAGIC = 0x1101,
+	EC_ERROR_VBOOT_KEY_SIZE = 0x1102,
+
+	/* Verified boot data errors */
+	EC_ERROR_VBOOT_DATA = 0x1200,
+	EC_ERROR_VBOOT_DATA_VERIFY = 0x1201,
 
 	/* Module-internal error codes may use this range.   */
 	EC_ERROR_INTERNAL_FIRST = 0x10000,
