@@ -591,7 +591,7 @@ static inline void set_present(uint8_t *lpc_status)
 /* Update/Write LPC data */
 static inline void update_sense_data(uint8_t *lpc_status, int *psample_id)
 {
-	int i;
+	int s, d, i;
 	uint16_t *lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
 #if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
 	uint16_t *lpc_als = (uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
@@ -619,12 +619,19 @@ static inline void update_sense_data(uint8_t *lpc_status, int *psample_id)
 #else
 	lpc_data[0] = LID_ANGLE_UNRELIABLE;
 #endif
-	/* Assumptions on the list of sensors */
-	for (i = 0; i < MIN(motion_sensor_count, 3); i++) {
-		sensor = &motion_sensors[i];
-		lpc_data[1+3*i] = sensor->xyz[X];
-		lpc_data[2+3*i] = sensor->xyz[Y];
-		lpc_data[3+3*i] = sensor->xyz[Z];
+	/*
+	 * The first 2 entries must be accelerometers, then gyroscope.
+	 * If there is only one accel and one gyro, the entry for the second
+	 * accel is skipped.
+	 */
+	for (s = 0, d = 0; d < 3 && s < motion_sensor_count; s++, d++) {
+		sensor = &motion_sensors[s];
+		if (sensor->type > MOTIONSENSE_TYPE_GYRO)
+			break;
+		else if (sensor->type == MOTIONSENSE_TYPE_GYRO)
+			d = 2;
+		for (i = X; i <= Z; i++)
+			lpc_data[1 + i + 3 * d] = sensor->xyz[i];
 	}
 
 #if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
