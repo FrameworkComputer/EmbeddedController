@@ -154,13 +154,6 @@ static int elan_tp_read_report(void)
 	touch_info = tp_buf[ETP_TOUCH_INFO_OFFSET];
 	hover_info = tp_buf[ETP_HOVER_INFO_OFFSET];
 
-	if (touch_info & 0x01)
-		report.button = 1;
-	if (hover_info & 0x40) {
-		/* TODO(crosbug.com/p/59083): Report hover event */
-		CPRINTF("[TP] hover!\n");
-	}
-
 	for (i = 0; i < ETP_MAX_FINGERS; i++) {
 		int valid = touch_info & (1 << (3+i));
 
@@ -198,6 +191,17 @@ static int elan_tp_read_report(void)
 
 	report.count = ri;
 	report.timestamp = timestamp;
+
+	if (touch_info & 0x01) {
+		/* Do not report zero-finger click events */
+		if (report.count > 0)
+			report.button = 1;
+	}
+
+	if (hover_info & 0x40) {
+		/* TODO(b/35582031): Report hover event */
+		CPRINTF("[TP] hover!\n");
+	}
 
 	set_touchpad_report(&report);
 
