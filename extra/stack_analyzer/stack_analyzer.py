@@ -1439,19 +1439,26 @@ def main():
     # Load annotation config.
     if options.annotation is None:
       annotation = {}
+    elif not os.path.exists(options.annotation):
+      print('Warning: Annotation file {} does not exist.'
+            .format(options.annotation))
+      annotation = {}
     else:
       try:
         with open(options.annotation, 'r') as annotation_file:
           annotation = yaml.safe_load(annotation_file)
 
       except yaml.YAMLError:
-        raise StackAnalyzerError('Failed to parse annotation file.')
+        raise StackAnalyzerError('Failed to parse annotation file {}.'
+                                 .format(options.annotation))
       except IOError:
-        raise StackAnalyzerError('Failed to open annotation file.')
+        raise StackAnalyzerError('Failed to open annotation file {}.'
+                                 .format(options.annotation))
 
       # TODO(cheyuw): Do complete annotation format verification.
       if not isinstance(annotation, dict):
-        raise StackAnalyzerError('Invalid annotation file.')
+        raise StackAnalyzerError('Invalid annotation file {}.'
+                                 .format(options.annotation))
 
     # Generate and parse the symbols.
     try:

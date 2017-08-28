@@ -541,6 +541,7 @@ newsizes:
 # them first is because elf dependencies will cause the elf files be rebuilt for
 # updating date, which shouldn't happen when analyzing the existing firmwares.
 .PHONY: analyzestack
+ANNOTATION ?= ./$(BDIR)/analyzestack.yaml
 analyzestack: $(out)/util/export_taskinfo.so
 	@if [ "$(SECTION)" != "RO" ] && [ "$(SECTION)" != "RW" ]; then \
 		echo "Please specify SECTION=RO or RW. The default is RW."; \
@@ -554,8 +555,8 @@ analyzestack: $(out)/util/export_taskinfo.so
 	fi; \
 	extra/stack_analyzer/stack_analyzer.py --objdump "$(OBJDUMP)" \
 	        --addr2line "$(ADDR2LINE)" --section "$$SECTION" \
-		$(if $(ANNOTATION),--annotation $(ANNOTATION),) \
-		--export_taskinfo "$$EXPORT_TASKINFO" "$$ELF"
+	        --annotation $(ANNOTATION) \
+	        --export_taskinfo "$$EXPORT_TASKINFO" "$$ELF"
 
 .SECONDARY:
 

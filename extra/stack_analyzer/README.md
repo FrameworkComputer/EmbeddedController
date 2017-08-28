@@ -15,7 +15,8 @@ In `src/platform/ec`, run
 make BOARD=${BOARD} SECTION=${SECTION} ANNOTATION=${ANNOTATION} analyzestack
 ```
 The `${SECTION}` can be `RO` or `RW`. The `${ANNOTATION}` is a optional
-annotation file, see the example_annotation.yaml.
+annotation file, see the example_annotation.yaml, by default,
+board/$BOARD/analyzestack.yaml is used.
 
 Output
 ------

@@ -640,25 +640,37 @@ class StackAnalyzerTest(unittest.TestCase):
                           annotation='fake')
     parseargs_mock.return_value = args
 
-    with mock.patch('__builtin__.print') as print_mock:
-      sa.main()
-      print_mock.assert_called_once_with(
-          'Error: Failed to open annotation file.')
+    with mock.patch('os.path.exists') as path_mock:
+      path_mock.return_value = False
+      with mock.patch('__builtin__.print') as print_mock:
+        with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+          sa.main()
+          print_mock.assert_any_call(
+              'Warning: Annotation file fake does not exist.')
 
-    with mock.patch('__builtin__.print') as print_mock:
-      with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
-        open_mock.return_value.read.side_effect = ['{', '']
-        sa.main()
-        open_mock.assert_called_once_with('fake', 'r')
-        print_mock.assert_called_once_with(
-            'Error: Failed to parse annotation file.')
+    with mock.patch('os.path.exists') as path_mock:
+      path_mock.return_value = True
+      with mock.patch('__builtin__.print') as print_mock:
+        with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+          open_mock.side_effect = IOError()
+          sa.main()
+          print_mock.assert_called_once_with(
+              'Error: Failed to open annotation file fake.')
 
-    with mock.patch('__builtin__.print') as print_mock:
-      with mock.patch('__builtin__.open',
-                      mock.mock_open(read_data='')) as open_mock:
-        sa.main()
-        print_mock.assert_called_once_with(
-            'Error: Invalid annotation file.')
+      with mock.patch('__builtin__.print') as print_mock:
+        with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+          open_mock.return_value.read.side_effect = ['{', '']
+          sa.main()
+          open_mock.assert_called_once_with('fake', 'r')
+          print_mock.assert_called_once_with(
+              'Error: Failed to parse annotation file fake.')
+
+      with mock.patch('__builtin__.print') as print_mock:
+        with mock.patch('__builtin__.open',
+                        mock.mock_open(read_data='')) as open_mock:
+          sa.main()
+          print_mock.assert_called_once_with(
+              'Error: Invalid annotation file fake.')
 
     args.annotation = None
 
