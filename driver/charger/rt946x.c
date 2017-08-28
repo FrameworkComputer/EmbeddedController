@@ -602,7 +602,7 @@ int charger_post_init(void)
 	if (rv)
 		return rv;
 	/* Disable ILIM pin */
-	rv = rt946x_enable_ilim(0);
+	rv = rt946x_enable_ilim_pin(0);
 	if (rv)
 		return rv;
 #endif
