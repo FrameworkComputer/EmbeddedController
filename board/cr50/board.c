@@ -115,6 +115,28 @@ void ec_tx_cr50_rx(enum gpio_signal signal)
 	hook_call_deferred(&ec_uart_deferred__data, 0);
 }
 
+const char *device_state_names[] = {
+	"init",
+	"init_debouncing",
+	"init_rx_only",
+	"disconnected",
+	"off",
+	"undetectable",
+	"connected",
+	"on",
+	"debouncing",
+	"unknown"
+};
+BUILD_ASSERT(ARRAY_SIZE(device_state_names) == DEVICE_STATE_COUNT);
+
+const char *device_state_name(enum device_state state)
+{
+	if (state >= 0 && state < DEVICE_STATE_COUNT)
+		return device_state_names[state];
+	else
+		return "?";
+}
+
 int board_use_plt_rst(void)
 {
 	return !!(board_properties & BOARD_USE_PLT_RESET);

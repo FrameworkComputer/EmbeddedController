@@ -49,6 +49,12 @@ static int rdd_is_detected(void)
 	return (cc1 == cc2 && (cc1 == 3 || cc1 == 1));
 }
 
+void print_rdd_state(void)
+{
+	ccprintf("RDD:     %s\n",
+		 force_detected ? "forced enable" : device_state_name(state));
+}
+
 /**
  * Handle debug accessory disconnecting
  */
@@ -233,9 +239,4 @@ void force_rdd_detect(int enable)
 	 */
 	if (force_detected)
 		hook_call_deferred(&rdd_connect_data, 0);
-}
-
-int rdd_detect_is_forced(void)
-{
-	return force_detected;
 }

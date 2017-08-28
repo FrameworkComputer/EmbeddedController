@@ -22,10 +22,8 @@ void init_rdd_state(void);
 void force_rdd_detect(int enable);
 
 /**
- * Check if debug accessory detection is forced.
- *
- * @return 1 if keepalive is enabled, 0 if disabled.
+ * Print debug accessory detect state
  */
-int rdd_detect_is_forced(void);
+void print_rdd_state(void);
 
 #endif  /* __CROS_RDD_H */

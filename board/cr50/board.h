@@ -220,7 +220,18 @@ enum device_state {
 
 	/* Device state is unknown.  Used only by legacy device_state code. */
 	DEVICE_STATE_UNKNOWN,
+
+	/* Number of device states */
+	DEVICE_STATE_COUNT
 };
+
+/**
+ * Return the name of the device state as as string.
+ *
+ * @param state		State to look up
+ * @return Name of the state, or "?" if no match.
+ */
+const char *device_state_name(enum device_state state);
 
 /* NVMem variables. */
 enum nvmem_vars {
@@ -269,6 +280,8 @@ int board_is_first_factory_boot(void);
 
 void enable_ccd_uart(int uart);
 void disable_ccd_uart(int uart);
+
+void print_ec_state(void);
 
 int ap_is_on(void);
 int ec_is_on(void);

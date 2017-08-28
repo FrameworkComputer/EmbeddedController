@@ -15,10 +15,35 @@
 
 static enum device_state state = DEVICE_STATE_INIT;
 
+void print_ec_state(void)
+{
+	ccprintf("EC:      %s\n", device_state_name(state));
+}
+
 int ec_is_on(void)
 {
 	/* Debouncing and on are both still on */
 	return (state == DEVICE_STATE_DEBOUNCING || state == DEVICE_STATE_ON);
+}
+
+/**
+ * Set the EC state.
+ *
+ * Done as a function to make it easier to debug state transitions.  Note that
+ * this ONLY sets the state (and possibly prints debug info), and doesn't do
+ * all the additional transition work that set_ec_on(), etc. do.
+ *
+ * @param new_state	State to set.
+ */
+static void set_state(enum device_state new_state)
+{
+#ifdef CR50_DEBUG_EC_STATE
+	/* Print all state transitions.  May spam the console. */
+	if (state != new_state)
+		CPRINTS("EC %s -> %s",
+			device_state_name(state), device_state_name(new_state));
+#endif
+	state = new_state;
 }
 
 /**
@@ -41,13 +66,13 @@ static void set_ec_on(void)
 		CPRINTS("EC RX only");
 		if (!uart_bitbang_is_enabled(UART_EC))
 			uartn_enable(UART_EC);
-		state = DEVICE_STATE_INIT_RX_ONLY;
+		set_state(DEVICE_STATE_INIT_RX_ONLY);
 		return;
 	}
 
 	/* If we were debouncing ON->OFF, cancel it because we're still on */
 	if (state == DEVICE_STATE_DEBOUNCING)
-		state = DEVICE_STATE_ON;
+		set_state(DEVICE_STATE_ON);
 
 	/* If we're already on, done */
 	if (state == DEVICE_STATE_ON)
@@ -55,7 +80,7 @@ static void set_ec_on(void)
 
 	/* We were previously off */
 	CPRINTS("EC on");
-	state = DEVICE_STATE_ON;
+	set_state(DEVICE_STATE_ON);
 
 	/* Enable UART RX if we're not bit-banging */
 	if (!uart_bitbang_is_enabled(UART_EC))
@@ -94,7 +119,7 @@ static void ec_detect(void)
 	if (state == DEVICE_STATE_DEBOUNCING ||
 	    state == DEVICE_STATE_INIT_DEBOUNCING) {
 		CPRINTS("EC off");
-		state = DEVICE_STATE_OFF;
+		set_state(DEVICE_STATE_OFF);
 		disable_ccd_uart(UART_EC);
 		return;
 	}
@@ -104,9 +129,9 @@ static void ec_detect(void)
 	 * is actually off or just sending a 0-bit.  So start debouncing.
 	 */
 	if (state == DEVICE_STATE_INIT)
-		state = DEVICE_STATE_INIT_DEBOUNCING;
+		set_state(DEVICE_STATE_INIT_DEBOUNCING);
 	else
-		state = DEVICE_STATE_DEBOUNCING;
+		set_state(DEVICE_STATE_DEBOUNCING);
 	gpio_enable_interrupt(GPIO_DETECT_EC);
 }
 DECLARE_HOOK(HOOK_SECOND, ec_detect, HOOK_PRIO_DEFAULT);

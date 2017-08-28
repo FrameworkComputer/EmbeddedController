@@ -189,9 +189,10 @@ static int command_ccd(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("CCD:     %s\n",
-		 rdd_detect_is_forced() ? "forced enable" :
-		 rdd_is_connected() ? "enabled" : "disabled");
+	print_ec_state();
+	print_rdd_state();
+
+	ccprintf("CCD:     %s\n", rdd_is_connected() ? "enabled" : "disabled");
 	ccprintf("AP UART: %s\n",
 		 uartn_is_enabled(UART_AP) ?
 		 uart_tx_is_connected(UART_AP) ? "RX+TX" : "RX" : "disabled");
