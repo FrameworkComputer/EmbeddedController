@@ -281,6 +281,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 
 static void board_init(void)
 {
+	int i;
+	struct charge_port_info charge_none;
+
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
 
@@ -294,6 +297,34 @@ static void board_init(void)
 	/* Sensor Init */
 	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
 		board_spi_enable();
+
+	/*
+	 * Even if we don't support BC 1.2, we still need to initialize
+	 * non-PD/USB-C charge suppliers to make charge manager seeded.
+	 */
+	charge_none.voltage = 0;
+	charge_none.current = 0;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
+		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
+					     i,
+					     &charge_none);
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS,
+					     i,
+					     &charge_none);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
