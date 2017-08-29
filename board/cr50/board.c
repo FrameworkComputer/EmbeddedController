@@ -494,15 +494,6 @@ void board_configure_deep_sleep_wakepins(void)
 		/* enable powerdown exit */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	} else {
-		/*
-		 * DIOA3 is GPIO_DETECT_AP which is used to detect if the AP
-		 * is in S0. If the AP is in s0, cr50 should not be in deep
-		 * sleep so wake up.
-		 */
-		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA3, 0); /* level sensitive */
-		GWRITE_FIELD(PINMUX, EXITINV0, DIOA3, 0);  /* wake on high */
-		GWRITE_FIELD(PINMUX, EXITEN0, DIOA3, 1);
-
 		 /*
 		  * Configure cr50 to wake when sys_rst_l is asserted. It is
 		  * wake on low to make sure that Cr50 is awake to detect the
@@ -516,6 +507,17 @@ void board_configure_deep_sleep_wakepins(void)
 		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 1);  /* wake on low */
 		/* enable powerdown exit */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
+	}
+
+	if (!board_detect_ap_with_tpm_rst()) {
+		/*
+		 * DIOA3 is GPIO_DETECT_AP which is used to detect if the AP
+		 * is in S0. If the AP is in s0, cr50 should not be in deep
+		 * sleep so wake up.
+		 */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOA3, 0); /* level sensitive */
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOA3, 0);  /* wake on high */
+		GWRITE_FIELD(PINMUX, EXITEN0, DIOA3, 1);
 	}
 }
 
@@ -554,7 +556,7 @@ static void configure_board_specific_gpios(void)
 		/* No interrupts from AP UART TX state change are needed. */
 		gpio_disable_interrupt(GPIO_DETECT_AP);
 
-		/* Enbale the input */
+		/* Enable the input */
 		GWRITE_FIELD(PINMUX, DIOM3_CTL, IE, 1);
 
 		/*
@@ -578,13 +580,8 @@ static void configure_board_specific_gpios(void)
 
 		/* Use sys_rst_l as the tpm reset signal. */
 		GWRITE(PINMUX, GPIO1_GPIO0_SEL, GC_PINMUX_DIOM0_SEL);
-		/* Enbale the input */
+		/* Enable the input */
 		GWRITE_FIELD(PINMUX, DIOM0_CTL, IE, 1);
-
-		/* Use AP UART TX as the DETECT AP signal. */
-		GWRITE(PINMUX, GPIO1_GPIO1_SEL, GC_PINMUX_DIOA3_SEL);
-		/* Enbale the input */
-		GWRITE_FIELD(PINMUX, DIOA3_CTL, IE, 1);
 
 		/* Set to be level sensitive */
 		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 0);
@@ -593,6 +590,7 @@ static void configure_board_specific_gpios(void)
 		/* Enable powerdown exit on DIOM0 */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
 	}
+
 	/*
 	 * If the TPM_RST_L signal is already high when cr50 wakes up or
 	 * transitions to high before we are able to configure the gpio then
@@ -602,6 +600,13 @@ static void configure_board_specific_gpios(void)
 	 */
 	if (gpio_get_level(GPIO_TPM_RST_L))
 		hook_call_deferred(&deferred_tpm_rst_isr_data, 0);
+
+	if (!board_detect_ap_with_tpm_rst()) {
+		/* Use AP UART TX as the DETECT AP signal. */
+		GWRITE(PINMUX, GPIO1_GPIO1_SEL, GC_PINMUX_DIOA3_SEL);
+		/* Enable the input */
+		GWRITE_FIELD(PINMUX, DIOA3_CTL, IE, 1);
+	}
 }
 
 void decrement_retry_counter(void)
