@@ -8,14 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* Set the default board revision */
-#ifdef BOARD_SORAKA
-#define POPPY_REV1
-#else
-/* TODO(b/35585396): Deprecate rev0 */
-#define POPPY_REV0
-#endif
-
 /*
  * Allow dangerous commands.
  * TODO: Remove this config before production.

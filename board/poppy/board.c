@@ -1026,9 +1026,6 @@ DECLARE_HOOK(HOOK_INIT, board_sensor_init, HOOK_PRIO_DEFAULT);
 static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
-#ifdef POPPY_REV0
-	gpio_set_level(GPIO_PP3300_DX_CAM, 1);
-#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -1036,9 +1033,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
-#ifdef POPPY_REV0
-	gpio_set_level(GPIO_PP3300_DX_CAM, 0);
-#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
