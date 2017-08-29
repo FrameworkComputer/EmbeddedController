@@ -9,10 +9,14 @@ if [[ ! -e .tests-passed ]]; then
   exit 1
 fi
 
+# Directories that need to be tested by separate unit tests.
+unittest_dirs="util/ec3po/ extra/stack_analyzer/"
+
 changed=$(find ${PRESUBMIT_FILES} -newer .tests-passed)
-ec3po_files=$(echo "${PRESUBMIT_FILES}" | grep util/ec3po/)
-# Filter out ec3po files from changed files.  They're handled separately.
-changed=$(echo "${changed}" | grep -v util/ec3po/)
+# Filter out unittest_dirs files from changed files. They're handled separately.
+for dir in $unittest_dirs; do
+    changed=$(echo "${changed}" | grep -v "${dir}")
+done
 # Filter out flash_ec since it's not part of any unit tests.
 changed=$(echo "${changed}" | grep -v util/flash_ec)
 # Filter out this file itself.
@@ -24,15 +28,22 @@ if [[ -n "${changed}" ]]; then
   exit 1
 fi
 
-if [[ ! -e util/ec3po/.tests-passed ]] && [[ -n "${ec3po_files}" ]]; then
-  echo 'Unit tests have not passed.  Please run "util/ec3po/run_tests.sh".'
-  exit 1
-fi
+for dir in $unittest_dirs; do
+    dir_files=$(echo "${PRESUBMIT_FILES}" | grep "${dir}")
+    if [[ -z "${dir_files}" ]]; then
+        continue
+    fi
 
-changed_ec3po_files=$(find ${ec3po_files} -newer util/ec3po/.tests-passed)
-if [[ -n "${changed_ec3po_files}" ]] && [[ -n "${ec3po_files}" ]]; then
-  echo "Files have changed since last time EC-3PO unit tests passed:"
-  echo "${changed_ec3po_files}" | sed -e 's/^/  /'
-  echo 'Please run "util/ec3po/run_tests.sh".'
-  exit 1
-fi
+    if [[ ! -e "${dir}/.tests-passed" ]]; then
+        echo "Unit tests have not passed.  Please run \"${dir}run_tests.sh\"."
+        exit 1
+    fi
+
+    changed_files=$(find ${dir_files} -newer "${dir}/.tests-passed")
+    if [[ -n "${changed_files}" ]] && [[ -n "${dir_files}" ]]; then
+        echo "Files have changed since last time unit tests passed:"
+        echo "${changed_files}" | sed -e 's/^/  /'
+        echo "Please run \"${dir}run_tests.sh\"."
+        exit 1
+    fi
+done
