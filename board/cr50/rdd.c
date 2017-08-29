@@ -19,16 +19,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-struct uart_config {
-	const char *name;
-	int tx_signal;
-};
-
-static struct uart_config uarts[] = {
-	[UART_AP] = {"AP", GC_PINMUX_UART1_TX_SEL},
-	[UART_EC] = {"EC", GC_PINMUX_UART2_TX_SEL},
-};
-
 int rdd_is_connected(void)
 {
 	return ccd_get_mode() == CCD_MODE_ENABLED;
@@ -68,25 +58,31 @@ int servo_is_connected(void)
 
 void uartn_tx_connect(int uart)
 {
-	if (uart == UART_AP && !ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX))
+	/*
+	 * Don't drive TX unless the debug cable is connected (we have
+	 * something to transmit) and servo is disconnected (we won't be
+	 * drive-fighting with servo).
+	 */
+	if (servo_is_connected() || !rdd_is_connected())
 		return;
 
-	if (uart == UART_EC && !ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX))
-		return;
+	if (uart == UART_AP) {
+		if (!ccd_is_cap_enabled(CCD_CAP_AP_RX_CR50_TX))
+			return;
 
-	if (!rdd_is_connected())
-		return;
+		if (!ap_is_on())
+			return;
 
-	if (servo_is_connected()) {
-		CPRINTS("Servo is attached cannot enable %s UART",
-			uarts[uart].name);
-		return;
+		uart_select_tx(UART_AP, GC_PINMUX_UART1_TX_SEL);
+	} else {
+		if (!ccd_is_cap_enabled(CCD_CAP_EC_RX_CR50_TX))
+			return;
+
+		if (!ec_is_on())
+			return;
+
+		uart_select_tx(UART_EC, GC_PINMUX_UART2_TX_SEL);
 	}
-
-	if (uart == UART_AP ? ap_is_on() : ec_is_on())
-		uart_select_tx(uart, uarts[uart].tx_signal);
-	else if (!uart_tx_is_connected(uart))
-		CPRINTS("%s is powered off", uarts[uart].name);
 }
 
 void uartn_tx_disconnect(int uart)

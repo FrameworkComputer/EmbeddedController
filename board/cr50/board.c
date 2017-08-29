@@ -976,8 +976,23 @@ static int servo_state_unknowable(void)
 
 void enable_ccd_uart(int uart)
 {
-	if (uart == UART_EC) {
+	/*
+	 * Only enable the UART if we have receive permission, and if the
+	 * processor we're talking to is on.  When the processor is off, its
+	 * transmit line (our receive line) may float, leading to interrupt
+	 * storms.
+	 */
+	if (uart == UART_AP) {
+		if (!ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX))
+			return;
+
+		if (!ap_is_on())
+			return;
+	} else {
 		if (!ccd_is_cap_enabled(CCD_CAP_EC_TX_CR50_RX))
+			return;
+
+		if (!ec_is_on())
 			return;
 
 		/*
@@ -988,13 +1003,10 @@ void enable_ccd_uart(int uart)
 			return;
 	}
 
-	if (uart == UART_AP && !ccd_is_cap_enabled(CCD_CAP_AP_TX_CR50_RX))
-		return;
-
 	/* Enable RX and TX on the UART peripheral */
 	uartn_enable(uart);
 
-	/* Connect the TX pin to the UART TX Signal */
+	/* Connect the TX pin to the UART TX signal */
 	if (!uart_tx_is_connected(uart))
 		uartn_tx_connect(uart);
 }
