@@ -14,15 +14,15 @@
 
 #include "config.h"
 
-static void print_hex(FILE *out, uint8_t digest[SHA256_DIGEST_LENGTH])
+static void print_hex(FILE *out, uint8_t *digest, int len, int last)
 {
 	int i;
 
-	fputs("\t{ ", out);
-	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+	fputs("{ ", out);
+	for (i = 0; i < len; i++)
 		fprintf(out, "0x%02x, ", digest[i]);
 
-	fputs("},\n", out);
+	fprintf(out, "}%c\n", last ? ';' : ',');
 }
 
 /* Output blank hashes */
@@ -31,12 +31,18 @@ static int hash_fw_blank(FILE *hashes)
 	uint8_t digest[SHA256_DIGEST_LENGTH] = { 0 };
 	int len;
 
-	fputs("{\n", hashes);
+	fprintf(hashes, "const uint8_t touchpad_fw_hashes[%d][%d] = {\n",
+		CONFIG_TOUCHPAD_VIRTUAL_SIZE / CONFIG_UPDATE_PDU_SIZE,
+		SHA256_DIGEST_LENGTH);
 	for (len = 0; len < CONFIG_TOUCHPAD_VIRTUAL_SIZE;
 				len += CONFIG_UPDATE_PDU_SIZE) {
-		print_hex(hashes, digest);
+		print_hex(hashes, digest, sizeof(digest), 0);
 	}
 	fputs("};\n", hashes);
+
+	fprintf(hashes, "const uint8_t touchpad_fw_full_hash[%d] =\n\t",
+		SHA256_DIGEST_LENGTH);
+	print_hex(hashes, digest, SHA256_DIGEST_LENGTH, 1);
 
 	return 0;
 }
@@ -47,9 +53,13 @@ static int hash_fw(FILE *tp_fw, FILE *hashes)
 	int len = 0;
 	int rb;
 	SHA256_CTX ctx;
+	SHA256_CTX ctx_all;
 	uint8_t digest[SHA256_DIGEST_LENGTH];
 
-	fputs("{\n", hashes);
+	SHA256_Init(&ctx_all);
+	fprintf(hashes, "const uint8_t touchpad_fw_hashes[%d][%d] = {\n",
+		CONFIG_TOUCHPAD_VIRTUAL_SIZE / CONFIG_UPDATE_PDU_SIZE,
+		SHA256_DIGEST_LENGTH);
 	while (1) {
 		rb = fread(buffer, 1, sizeof(buffer), tp_fw);
 		len += rb;
@@ -62,12 +72,19 @@ static int hash_fw(FILE *tp_fw, FILE *hashes)
 		SHA256_Update(&ctx, buffer, rb);
 		SHA256_Final(digest, &ctx);
 
-		print_hex(hashes, digest);
+		SHA256_Update(&ctx_all, buffer, rb);
+
+		print_hex(hashes, digest, sizeof(digest), 0);
 
 		if (rb < sizeof(buffer))
 			break;
 	}
 	fputs("};\n", hashes);
+
+	SHA256_Final(digest, &ctx_all);
+	fprintf(hashes, "const uint8_t touchpad_fw_full_hash[%d] =\n\t",
+		SHA256_DIGEST_LENGTH);
+	print_hex(hashes, digest, SHA256_DIGEST_LENGTH, 1);
 
 	if (!feof(tp_fw) || ferror(tp_fw)) {
 		warn("Error reading input file");
@@ -129,10 +146,6 @@ int main(int argc, char **argv)
 		err(1, "Cannot open output file");
 
 	fputs("#include <stdint.h>\n\n", hashes);
-	fprintf(hashes, "const uint8_t touchpad_fw_hashes[%d][%d] = ",
-		CONFIG_TOUCHPAD_VIRTUAL_SIZE / CONFIG_UPDATE_PDU_SIZE,
-		SHA256_DIGEST_LENGTH);
-
 	if (tp_fw_name) {
 		tp_fw = fopen(tp_fw_name, "re");
 

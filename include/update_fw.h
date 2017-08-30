@@ -201,6 +201,13 @@ struct touchpad_info {
 	uint32_t fw_address;
 	uint32_t fw_size;
 
+	/*
+	 * SHA256 hash of the trackpad FW accepted by this EC image.
+	 * This is used by the updater to make sure we do not attempt to flash
+	 * a touchpad FW that does not match the one shipped by the EC.
+	 */
+	uint8_t allowed_fw_hash[32];
+
 	/* Vendor specific data. */
 	struct {
 		uint16_t id;
@@ -239,5 +246,8 @@ int touchpad_get_info(struct touchpad_info *tp);
 
 /* Touchpad FW update: Write a FW block. */
 int touchpad_update_write(int offset, int size, const uint8_t *data);
+
+/* SHA256 hash of the touchpad firmware expected by this image. */
+extern const uint8_t touchpad_fw_full_hash[32];
 
 #endif  /* ! __CROS_EC_UPDATE_FW_H */
