@@ -72,7 +72,7 @@ static struct first_response_pdu targ;
 static uint16_t protocol_version;
 static uint16_t header_type;
 static char *progname;
-static char *short_opts = "bd:efhjrsuw";
+static char *short_opts = "bd:efhjrstuw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	1,   NULL, 'b'},
@@ -83,6 +83,7 @@ static const struct option long_opts[] = {
 	{"jump_to_rw",	0,   NULL, 'j'},
 	{"reboot",	0,   NULL, 'r'},
 	{"stay_in_ro",	0,   NULL, 's'},
+	{"tp_info",	0,   NULL, 't'},
 	{"unlock_rollback",	0,   NULL, 'u'},
 	{"unlock_rw",	0,   NULL, 'w'},
 	{},
@@ -114,6 +115,7 @@ static void usage(int errs)
 	       "  -j,--jump_to_rw          Tell EC to jump to RW\n"
 	       "  -r,--reboot              Tell EC to reboot\n"
 	       "  -s,--stay_in_ro          Tell EC to stay in RO\n"
+	       "  -t,--tp_info             Get touchpad information\n"
 	       "  -u,--unlock_rollback     Tell EC to unlock the rollback region\n"
 	       "  -w,--unlock_rw           Tell EC to unlock the RW region\n"
 	       "\n", progname, VID, PID);
@@ -741,17 +743,15 @@ static void send_done(struct usb_endpoint *uep)
 }
 
 static void send_subcommand(struct transfer_descriptor *td, uint16_t subcommand,
-			    void *cmd_body, size_t body_size)
+			    void *cmd_body, size_t body_size,
+			    uint8_t *response, size_t response_size)
 {
 	send_done(&td->uep);
 
-	uint8_t response = -1;
-	size_t response_size = sizeof(response);
-
 	ext_cmd_over_usb(&td->uep, subcommand,
 			cmd_body, body_size,
-			&response, &response_size);
-	printf("sent command %x, resp %x\n", subcommand, response);
+			response, &response_size);
+	printf("sent command %x, resp %x\n", subcommand, response[0]);
 }
 
 /* Returns number of successfully transmitted image sections. */
@@ -848,6 +848,20 @@ static void get_random(uint8_t *data, int len)
 	fclose(fp);
 }
 
+static void hexdump(const uint8_t *data, int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		printf("%02x", data[i]);
+		if ((i % 16) == 15)
+			printf("\n");
+	}
+
+	if ((len % 16) != 0)
+		printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -863,6 +877,8 @@ int main(int argc, char *argv[])
 	int extra_command = -1;
 	uint8_t extra_command_data[32];
 	int extra_command_data_len = 0;
+	uint8_t extra_command_answer[64];
+	int extra_command_answer_len = 1;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -905,6 +921,11 @@ int main(int argc, char *argv[])
 			break;
 		case 's':
 			extra_command = UPDATE_EXTRA_CMD_STAY_IN_RO;
+			break;
+		case 't':
+			extra_command = UPDATE_EXTRA_CMD_TOUCHPAD_INFO;
+			extra_command_answer_len =
+				sizeof(struct touchpad_info);
 			break;
 		case 'u':
 			extra_command = UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK;
@@ -970,9 +991,14 @@ int main(int argc, char *argv[])
 
 		if (transferred_sections)
 			generate_reset_request(&td);
-	} else if (extra_command > -1)
+	} else if (extra_command > -1) {
 		send_subcommand(&td, extra_command,
-				extra_command_data, extra_command_data_len);
+				extra_command_data, extra_command_data_len,
+				extra_command_answer, extra_command_answer_len);
+
+		if (extra_command == UPDATE_EXTRA_CMD_TOUCHPAD_INFO)
+			hexdump(extra_command_answer, extra_command_answer_len);
+	}
 
 	libusb_close(td.uep.devh);
 	libusb_exit(NULL);
