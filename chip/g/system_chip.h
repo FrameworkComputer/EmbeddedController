@@ -74,4 +74,20 @@ void system_get_rollback_bits(char *value, size_t value_size);
  */
 void system_ensure_rollback(void);
 
+/**
+ * Enables holding external pins across soft chip resets. Application firmware
+ * is responsible for disengaging pinhold upon reset.
+ */
+void system_pinhold_on_reset_enable(void);
+
+/**
+ * Disables holding external pins across soft chip resets.
+ */
+void system_pinhold_on_reset_disable(void);
+
+/**
+ * Disengages pinhold if engaged.
+ */
+void system_pinhold_disengage(void);
+
 #endif /* __CROS_EC_SYSTEM_CHIP_H */

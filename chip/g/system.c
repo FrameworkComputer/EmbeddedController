@@ -16,6 +16,8 @@
 #include "task.h"
 #include "version.h"
 
+static uint8_t pinhold_on_reset;
+
 static void check_reset_cause(void)
 {
 	uint32_t g_rstsrc = GR_PMU_RSTSRC;
@@ -86,6 +88,21 @@ void system_pre_init(void)
 	GREG32(GLOBALSEC, FLASH_REGION0_CTRL_CFG_EN) = 0;
 }
 
+void system_pinhold_disengage(void)
+{
+	GREG32(PINMUX, HOLD) = 0;
+}
+
+void system_pinhold_on_reset_enable(void)
+{
+	pinhold_on_reset = 1;
+}
+
+void system_pinhold_on_reset_disable(void)
+{
+	pinhold_on_reset = 0;
+}
+
 void system_reset(int flags)
 {
 	/* Disable interrupts to avoid task swaps during reboot */
@@ -106,7 +123,6 @@ void system_reset(int flags)
 	 */
 	GR_PMU_GLOBAL_RESET = GC_PMU_GLOBAL_RESET_KEY;
 #else
-
 	if (flags & SYSTEM_RESET_HARD) {
 		/* Reset the full microcontroller */
 		GR_PMU_GLOBAL_RESET = GC_PMU_GLOBAL_RESET_KEY;
@@ -115,6 +131,9 @@ void system_reset(int flags)
 		 * permission registers to be reset to their initial
 		 * state.  To accomplish this, first register a wakeup
 		 * timer and then enter lower power mode. */
+
+		if (pinhold_on_reset)
+			GREG32(PINMUX, HOLD) = 1;
 
 		/* Low speed timers continue to run in low power mode. */
 		GREG32(TIMELS, TIMER1_CONTROL) = 0x1;
