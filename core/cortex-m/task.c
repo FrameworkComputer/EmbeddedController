@@ -68,6 +68,18 @@ void __idle(void)
 {
 	while (1) {
 #ifdef CHIP_NPCX
+
+		/*
+		 * Using host access to make sure M4 core clock will
+		 * return when the eSPI accesses the Host modules if
+		 * CSAE bit is set. Please notice this symptom only
+		 * occurs at npcx5.
+		 */
+#if defined(CHIP_FAMILY_NPCX5) && defined(CONFIG_ESPI)
+		/* Enable Host access wakeup */
+		SET_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
+#endif
+
 		/*
 		 * TODO (ML): A interrupt that occurs shortly before entering
 		 * idle mode starts getting services while the Core transitions
