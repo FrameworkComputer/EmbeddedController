@@ -12,16 +12,6 @@
 void init_rdd_state(void);
 
 /**
- * Enable/disable forcing debug accessory detection.
- *
- * When enabled, the RDD module will assert CCD_MODE_L even if the CC value
- * does not indicate a debug accessory is present.
- *
- * @param enable	Enable (1) or disable (0) keepalive.
- */
-void force_rdd_detect(int enable);
-
-/**
  * Print debug accessory detect state
  */
 void print_rdd_state(void);

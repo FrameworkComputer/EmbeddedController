@@ -51,8 +51,8 @@ static int rdd_is_detected(void)
 
 void print_rdd_state(void)
 {
-	ccprintf("RDD:     %s\n",
-		 force_detected ? "forced enable" : device_state_name(state));
+	ccprintf("Rdd:     %s\n",
+		 force_detected ? "keepalive" : device_state_name(state));
 }
 
 /**
@@ -60,7 +60,7 @@ void print_rdd_state(void)
  */
 static void rdd_disconnect(void)
 {
-	CPRINTS("Debug accessory disconnect");
+	CPRINTS("Rdd disconnect");
 	state = DEVICE_STATE_DISCONNECTED;
 
 	/*
@@ -92,7 +92,7 @@ static void rdd_connect(void)
 		return;
 
 	/* We were previously disconnected, so connect */
-	CPRINTS("Debug accessory connect");
+	CPRINTS("Rdd connect");
 	state = DEVICE_STATE_CONNECTED;
 
 	/* Start pulling CCD_MODE_L low to enable the SBUx muxes */
@@ -227,16 +227,27 @@ void init_rdd_state(void)
 	GWRITE_FIELD(RDD, INT_ENABLE, INTR_DEBUG_STATE_DETECTED, 1);
 }
 
-void force_rdd_detect(int enable)
+static int command_rdd_keepalive(int argc, char **argv)
 {
-	force_detected = enable;
+	if (argc == 1) {
+		print_rdd_state();
+		return EC_SUCCESS;
+	}
 
-	/*
-	 * If we're forcing detection, trigger then connect handler early.
-	 *
-	 * Otherwise, we'll revert to the normal logic of checking the RDD
-	 * hardware CC state.
-	 */
-	if (force_detected)
+	if (!parse_bool(argv[1], &force_detected))
+		return EC_ERROR_PARAM1;
+
+	if (force_detected) {
+		/* Force Rdd detect */
+		ccprintf("Forcing Rdd detect keepalive\n");
 		hook_call_deferred(&rdd_connect_data, 0);
+	} else {
+		/* Go back to actual hardware state */
+		ccprintf("Using actual Rdd state\n");
+	}
+
+	return EC_SUCCESS;
 }
+DECLARE_CONSOLE_COMMAND(rddkeepalive, command_rdd_keepalive,
+			"[BOOLEAN]",
+			"Get Rdd state or force keepalive");

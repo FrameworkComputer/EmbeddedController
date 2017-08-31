@@ -168,13 +168,6 @@ static int command_ccd(int argc, char **argv)
 				usb_i2c_board_enable();
 			else
 				usb_i2c_board_disable();
-		} else if (!strcasecmp("keepalive", argv[1])) {
-			force_rdd_detect(val);
-			if (val) {
-				ccprintf("Warning CCD will remain "
-					 "enabled until it is "
-					 "explicitly disabled.\n");
-			}
 		} else
 			return EC_ERROR_PARAM1;
 	}
@@ -197,7 +190,7 @@ static int command_ccd(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccd, command_ccd,
-			"[uart|i2c|keepalive] [<BOOLEAN>]",
+			"[uart|i2c] [<BOOLEAN>]",
 			"Get/set the case closed debug state");
 
 static int command_sys_rst(int argc, char **argv)
