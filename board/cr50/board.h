@@ -97,7 +97,6 @@
 #define CONFIG_STREAM_USART2
 
 /* Enable Case Closed Debugging */
-#define CONFIG_CASE_CLOSED_DEBUG
 #define CONFIG_CASE_CLOSED_DEBUG_V1
 #define CONFIG_PHYSICAL_PRESENCE
 

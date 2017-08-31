@@ -14,9 +14,21 @@
 #include "system.h"
 #include "uartn.h"
 #include "usb_api.h"
+#include "usb_console.h"
 #include "usb_i2c.h"
+#include "usb_spi.h"
+
+/* Include the dazzlingly complex macro to instantiate the USB SPI config */
+USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI);
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+
+static enum device_state state = DEVICE_STATE_INIT;
+
+int ccd_ext_is_enabled(void)
+{
+	return state == DEVICE_STATE_CONNECTED;
+}
 
 /* If the UART TX is connected the pinmux select will have a non-zero value */
 int uart_tx_is_connected(int uart)
@@ -80,35 +92,6 @@ void uartn_tx_disconnect(int uart)
 	uart_select_tx(uart, 0);
 }
 
-static void configure_ccd(int enable)
-{
-	if (enable) {
-		if (ccd_ext_is_enabled())
-			return;
-
-		/* Enable CCD */
-		ccd_set_mode(CCD_MODE_ENABLED);
-
-		/* Attempt to connect UART TX */
-		uartn_tx_connect(UART_AP);
-		uartn_tx_connect(UART_EC);
-
-		/* Turn on 3.3V rail used for INAs and initialize I2CM module */
-		usb_i2c_board_enable();
-	} else {
-		/* Disconnect from AP and EC UART TX peripheral from gpios */
-		uartn_tx_disconnect(UART_EC);
-		uartn_tx_disconnect(UART_AP);
-
-		/* Disable CCD */
-		ccd_set_mode(CCD_MODE_DISABLED);
-
-		/* Turn off 3.3V rail to INAs and disconnect I2CM module */
-		usb_i2c_board_disable();
-	}
-	CPRINTS("CCD is now %sabled.", enable ? "en" : "dis");
-}
-
 static void rdd_check_pin(void)
 {
 	/* The CCD mode pin is active low. */
@@ -117,7 +100,48 @@ static void rdd_check_pin(void)
 	if (enable == ccd_ext_is_enabled())
 		return;
 
-	configure_ccd(enable);
+	if (enable) {
+		/*
+		 * If we're not disconnected, release USB to ensure it's in a
+		 * good state before we usb_init().  This matches what
+		 * common/case_closed_debug.c does.
+		 *
+		 * Not sure exactly why this is necessary.  It could be because
+		 * that also has CCD_MODE_PARTIAL, and the only way to go
+		 * cleanly between ENABLED and PARTIAL is to disable things and
+		 * then re-enable only what's needed?
+		 */
+		if (state != DEVICE_STATE_DISCONNECTED)
+			usb_release();
+
+		CPRINTS("CCD EXT enable");
+		state = DEVICE_STATE_CONNECTED;
+
+		usb_console_enable(1, 0);
+		usb_spi_enable(&ccd_usb_spi, 1);
+		usb_init();
+
+		/* Attempt to connect UART TX */
+		uartn_tx_connect(UART_AP);
+		uartn_tx_connect(UART_EC);
+
+		/* Turn on 3.3V rail used for INAs and initialize I2CM module */
+		usb_i2c_board_enable();
+	} else {
+		CPRINTS("CCD EXT disable");
+		state = DEVICE_STATE_DISCONNECTED;
+
+		usb_release();
+		usb_console_enable(0, 0);
+		usb_spi_enable(&ccd_usb_spi, 0);
+
+		/* Disconnect from AP and EC UART TX peripheral from gpios */
+		uartn_tx_disconnect(UART_EC);
+		uartn_tx_disconnect(UART_AP);
+
+		/* Turn off 3.3V rail to INAs and disconnect I2CM module */
+		usb_i2c_board_disable();
+	}
 }
 DECLARE_HOOK(HOOK_SECOND, rdd_check_pin, HOOK_PRIO_DEFAULT);
 
