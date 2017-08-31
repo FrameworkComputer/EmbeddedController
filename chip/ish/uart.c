@@ -63,6 +63,9 @@ void uart_tx_start(void)
 	if ( REG8(IER(id) & IER_TDRQ) )
 		return;
 
+	/* Do not allow deep sleep while transmit in progress */
+	disable_sleep(SLEEP_MASK_UART);
+
 	/* TODO: disable low power mode while transmit */
 
 	REG8(IER(id)) |= IER_TDRQ;
@@ -75,6 +78,9 @@ void uart_tx_stop(void)
 {
 #if !defined(CONFIG_POLLING_UART)
 	enum UART_PORT id = UART_PORT_1; /* UART1 for ISH */
+
+	/* Re-allow deep sleep */
+	enable_sleep(SLEEP_MASK_UART);
 
 	REG8(IER(id)) &= ~IER_TDRQ;
 
