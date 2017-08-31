@@ -23,8 +23,18 @@
 static int last_tx_ok = 1;
 
 static int is_reset;
+
+/*
+ * Start enabled, so we can queue early debug output before the board gets
+ * around to calling usb_console_enable().
+ */
 static int is_enabled = 1;
-static int is_readonly;
+
+/*
+ * But start read-only, so we don't accept console input until we explicitly
+ * decide that we're ready for it.
+ */
+static int is_readonly = 1;
 
 /* USB-Serial descriptors */
 const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_CONSOLE) =
@@ -287,7 +297,7 @@ int usb_getc(void)
 {
 	int c;
 
-	if (!is_enabled)
+	if (is_readonly || !is_enabled)
 		return -1;
 
 	if (QUEUE_REMOVE_UNITS(&rx_q, &c, 1))
@@ -300,7 +310,7 @@ int usb_puts(const char *outstr)
 	int ret;
 	struct queue state;
 
-	if (is_readonly)
+	if (!is_enabled)
 		return EC_SUCCESS;
 
 	ret  = usb_wait_console();
@@ -332,7 +342,7 @@ int usb_vprintf(const char *format, va_list args)
 	int ret;
 	struct queue state;
 
-	if (is_readonly)
+	if (!is_enabled)
 		return EC_SUCCESS;
 
 	ret = usb_wait_console();
