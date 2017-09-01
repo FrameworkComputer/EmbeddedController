@@ -95,6 +95,7 @@ static const struct power_seq_op s5s3_power_seq[] = {
 };
 #elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
 static const struct power_seq_op s5s3_power_seq[] = {
+	{ GPIO_PP900_S0_EN, 1, 2 },
 	{ GPIO_PP900_S3_EN, 1, 2 },
 	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP1800_PMU_EN_L, 0, 2 },
@@ -134,7 +135,7 @@ static const struct power_seq_op s3s0_power_seq[] = {
 };
 #elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
 static const struct power_seq_op s3s0_power_seq[] = {
-	{ GPIO_PP900_S0_EN, 1, 2 },
+	/* TODO(b/65270978): add GPIO_PP900_S0_EN control later. */
 	{ GPIO_PP1800_AP_AVDD_EN_L, 0, 2 },
 	{ GPIO_AP_CORE_EN, 1, 2 },
 	{ GPIO_PP1800_S0_EN_L, 0, 2 },
@@ -158,7 +159,6 @@ static const struct power_seq_op s3s0_power_seq[] = {
 #ifdef S3_USB_WAKE
 /* Sigs that may already be on in S3, if we need to wake-on-USB */
 static const struct power_seq_op s3s0_usb_wake_power_seq[] = {
-	{ GPIO_PP900_S0_EN, 1, 2 },
 	{ GPIO_PP1800_USB_EN, 1, 2 },
 	{ GPIO_PP3300_S0_EN, 1, 2 },
 };
@@ -180,7 +180,6 @@ static const struct power_seq_op s0s3_power_seq[] = {
 	{ GPIO_PP1800_S0_EN_L, 1, 1 },
 	{ GPIO_AP_CORE_EN, 0, 20 },
 	{ GPIO_PP1800_AP_AVDD_EN_L, 1, 1 },
-	{ GPIO_PP900_S0_EN, 0, 0 },
 };
 #else
 static const struct power_seq_op s0s3_power_seq[] = {
@@ -198,7 +197,6 @@ static const struct power_seq_op s0s3_power_seq[] = {
 static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
 	{ GPIO_PP3300_S0_EN, 0, 20 },
 	{ GPIO_PP1800_USB_EN, 0, 1 },
-	{ GPIO_PP900_S0_EN, 0, 1 },
 };
 #endif
 
@@ -218,6 +216,7 @@ static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_LPDDR_PWR_EN, 0, 20 },
 	{ GPIO_PP1800_PMU_EN_L, 1, 2 },
 	{ GPIO_PP900_S3_EN, 0, 0 },
+	{ GPIO_PP900_S0_EN, 0, 0 },
 };
 #else
 static const struct power_seq_op s3s5_power_seq[] = {
