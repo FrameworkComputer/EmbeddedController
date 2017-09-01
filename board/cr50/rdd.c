@@ -18,11 +18,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 
-int rdd_is_connected(void)
-{
-	return ccd_get_mode() == CCD_MODE_ENABLED;
-}
-
 /* If the UART TX is connected the pinmux select will have a non-zero value */
 int uart_tx_is_connected(int uart)
 {
@@ -57,7 +52,7 @@ void uartn_tx_connect(int uart)
 	 * something to transmit) and servo is disconnected (we won't be
 	 * drive-fighting with servo).
 	 */
-	if (servo_is_connected() || !rdd_is_connected())
+	if (servo_is_connected() || !ccd_ext_is_enabled())
 		return;
 
 	if (uart == UART_AP) {
@@ -88,7 +83,7 @@ void uartn_tx_disconnect(int uart)
 static void configure_ccd(int enable)
 {
 	if (enable) {
-		if (rdd_is_connected())
+		if (ccd_ext_is_enabled())
 			return;
 
 		/* Enable CCD */
@@ -119,7 +114,7 @@ static void rdd_check_pin(void)
 	/* The CCD mode pin is active low. */
 	int enable = !gpio_get_level(GPIO_CCD_MODE_L);
 
-	if (enable == rdd_is_connected())
+	if (enable == ccd_ext_is_enabled())
 		return;
 
 	configure_ccd(enable);
@@ -177,7 +172,8 @@ static int command_ccd(int argc, char **argv)
 	print_rdd_state();
 	print_servo_state();
 
-	ccprintf("CCD:     %s\n", rdd_is_connected() ? "enabled" : "disabled");
+	ccprintf("CCD EXT: %s\n",
+		 ccd_ext_is_enabled() ? "enabled" : "disabled");
 	ccprintf("AP UART: %s\n",
 		 uartn_is_enabled(UART_AP) ?
 		 uart_tx_is_connected(UART_AP) ? "RX+TX" : "RX" : "disabled");

@@ -65,3 +65,8 @@ enum ccd_mode ccd_get_mode(void)
 {
 	return current_mode;
 }
+
+int ccd_ext_is_enabled(void)
+{
+	return ccd_get_mode() == CCD_MODE_ENABLED;
+}

@@ -277,7 +277,6 @@ void print_servo_state(void);
 
 int ap_is_on(void);
 int ec_is_on(void);
-int rdd_is_connected(void);
 int servo_is_connected(void);
 
 void set_ap_on_deferred(void);

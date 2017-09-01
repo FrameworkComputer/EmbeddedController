@@ -609,8 +609,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 			if (idx >= USB_STR_COUNT)
 				return -1;
 #ifdef CONFIG_USB_SERIALNO
-			if (idx == USB_STR_SERIALNO &&
-			    ccd_get_mode() == CCD_MODE_ENABLED)
+			if (idx == USB_STR_SERIALNO && ccd_ext_is_enabled())
 				data = usb_serialno_desc;
 			else
 #endif

@@ -78,7 +78,7 @@ int usb_i2c_board_enable(void)
 		return EC_ERROR_BUSY;
 	}
 
-	if (!rdd_is_connected())
+	if (!ccd_ext_is_enabled())
 		return EC_ERROR_BUSY;
 
 	if (!ccd_is_cap_enabled(CCD_CAP_I2C))

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "case_closed_debug.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -75,7 +76,7 @@ static int utmi_wakeup_is_enabled(void)
 	 * USB is only used for CCD, so only enable UTMI wakeups when RDD
 	 * detects that a debug accessory is attached.
 	 */
-	return rdd_is_connected();
+	return ccd_ext_is_enabled();
 #else
 	/* USB is used for the host interface, so always enable UTMI wakeups */
 	return 1;

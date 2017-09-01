@@ -43,6 +43,11 @@ void ccd_phy_init(int enable_ccd);
  */
 enum ccd_mode ccd_get_mode(void);
 
+/**
+ * Return non-zero if the CCD external interface is enabled.
+ */
+int ccd_ext_is_enabled(void);
+
 /******************************************************************************/
 /* New CCD "V1" configuration.  Eventually this will supersede the above code */
 
