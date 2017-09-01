@@ -343,17 +343,87 @@ static void ccd_measure_sbu(void)
 	}
 }
 
+static uint8_t ccd_keepalive_enabled;
+static int command_keepalive(int argc, char **argv)
+{
+	int val;
+
+	if (argc > 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (argc == 2) {
+		if (!parse_bool(argv[1], &val))
+			return EC_ERROR_PARAM1;
+
+		ccd_keepalive_enabled = val;
+	}
+	ccprintf("ccd_keepalive: %sabled\n",
+		 ccd_keepalive_enabled ? "en" : "dis");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(keepalive, command_keepalive, "[enable | disable]",
+			"Enable CCD keepalive.  Prevents SBU sampling.");
+
+static void check_for_disconnect(void);
+DECLARE_DEFERRED(check_for_disconnect);
+static void check_for_disconnect(void)
+{
+	static uint8_t entries;
+	int dut_is_connected = pd_is_connected(1);
+
+	entries++;
+
+	if (dut_is_connected) {
+		entries = 0;
+		return;
+	} else if ((entries < 3) && !dut_is_connected) {
+		/* Hmm, it's still not connected? Let's keep checking. */
+		hook_call_deferred(&check_for_disconnect_data, 100 * MSEC);
+		return;
+	}
+
+	/*
+	 * Hmm, okay.  Maybe the DUT is actually disconnected.  Clear
+	 * the CCD keepalive such that the auto flip orientation
+	 * detection will work upon a plug in.
+	 */
+	CPRINTS("DUT seems disconnected.  Clearing CCD keepalive.");
+	entries = 0;
+	ccd_keepalive_enabled = 0;
+}
+
 void ccd_set_mode(enum ccd_mode new_mode)
 {
 	if (new_mode == CCD_MODE_ENABLED) {
-		/* Allow some time following turning on of VBUS */
-		hook_call_deferred(&ccd_measure_sbu_data,
-				   PD_POWER_SUPPLY_TURN_ON_DELAY);
+		/*
+		 * Unfortunately the polarity detect is designed for real plug
+		 * events, and only accurately detects pre-connect idle. If
+		 * there's active traffic on the line (like while EC is
+		 * rebooting) this could pretty much go either way.  Therefore,
+		 * if CCD keepalive is enabled, let's not measure the SBU lines
+		 * and leave the mux alone.  Most likely nothing has changed.
+		 *
+		 * NOTE: Once CCD keepalive has been enabled, it will remained
+		 * enabled until the DUT is seen disconnected for at least
+		 * 900ms.
+		 */
+		if (!ccd_keepalive_enabled)
+			/* Allow some time following turning on of VBUS */
+			hook_call_deferred(&ccd_measure_sbu_data,
+					   PD_POWER_SUPPLY_TURN_ON_DELAY);
 	} else if (new_mode == CCD_MODE_DISABLED) {
 		/* We are not connected to anything */
 
 		/* Disable ccd_measure_sbu deferred call always */
 		hook_call_deferred(&ccd_measure_sbu_data, -1);
+
+		/*
+		 * In a bit, start checking to see if we're still
+		 * disconnected.
+		 */
+		hook_call_deferred(&check_for_disconnect_data, 600 * MSEC);
+
 		/*
 		 * The DUT port has detected a detach event. Don't want to
 		 * disconnect the SBU mux here so that the H1 USB console can
