@@ -162,7 +162,7 @@ enum hook_type {
 	 */
 	HOOK_BATTERY_SOC_CHANGE,
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG
+#ifdef CONFIG_CASE_CLOSED_DEBUG_V1
 	/*
 	 * Case-closed debugging configuration changed.
 	 *

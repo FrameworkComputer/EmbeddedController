@@ -29,10 +29,7 @@
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
-#define USE_SERIAL_NUMBER (defined(CONFIG_USB_SERIALNO) && \
-			   defined(CONFIG_CASE_CLOSED_DEBUG))
-
-#if !USE_SERIAL_NUMBER
+#ifndef CONFIG_USB_SERIALNO
 #define USB_STR_SERIALNO 0
 #endif
 
@@ -611,7 +608,7 @@ static int handle_setup_with_in_stage(enum table_case tc,
 		case USB_DT_STRING:
 			if (idx >= USB_STR_COUNT)
 				return -1;
-#if USE_SERIAL_NUMBER
+#ifdef CONFIG_USB_SERIALNO
 			if (idx == USB_STR_SERIALNO &&
 			    ccd_get_mode() == CCD_MODE_ENABLED)
 				data = usb_serialno_desc;
@@ -1434,7 +1431,7 @@ DECLARE_CONSOLE_COMMAND(usb, command_usb,
 #endif
 			"Get/set the USB connection state and PHY selection");
 
-#if USE_SERIAL_NUMBER
+#ifdef CONFIG_USB_SERIALNO
 /* This will be subbed into USB_STR_SERIALNO. */
 struct usb_string_desc *usb_serialno_desc =
 	USB_WR_STRING_DESC(DEFAULT_SERIALNO);
