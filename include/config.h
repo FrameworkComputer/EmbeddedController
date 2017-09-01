@@ -447,8 +447,7 @@
 #undef CONFIG_CHARGER_V2
 
 /* Compile charger-specific code for these chargers (pick at most one) */
-#undef CONFIG_CHARGER_BD99955
-#undef CONFIG_CHARGER_BD99956
+#undef CONFIG_CHARGER_BD9995X
 #undef CONFIG_CHARGER_BQ24707A
 #undef CONFIG_CHARGER_BQ24715
 #undef CONFIG_CHARGER_BQ24725

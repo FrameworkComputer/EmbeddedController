@@ -1470,10 +1470,11 @@ static int bd9995x_i2c_write(const int reg, int data)
 	return ch_raw_write16(reg, data, BD9995X_EXTENDED_COMMAND);
 }
 
+/* BD9995X_CMD_CHIP_ID register value may vary by chip. */
 struct i2c_stress_test_dev bd9995x_i2c_stress_test_dev = {
 	.reg_info = {
 		.read_reg = BD9995X_CMD_CHIP_ID,
-		.read_val = BD9995X_CHIP_ID,
+		.read_val = BD99956_CHIP_ID,
 		.write_reg = BD9995X_CMD_ITRICH_SET,
 	},
 	.i2c_read_dev = &bd9995x_i2c_read,

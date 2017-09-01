@@ -40,8 +40,7 @@ driver-$(CONFIG_BATTERY_MAX17055)+=battery/max17055.o
 driver-$(CONFIG_BATTERY_SMART)+=battery/smart.o
 
 # Battery charger ICs
-driver-$(CONFIG_CHARGER_BD99955)+=charger/bd9995x.o
-driver-$(CONFIG_CHARGER_BD99956)+=charger/bd9995x.o
+driver-$(CONFIG_CHARGER_BD9995X)+=charger/bd9995x.o
 driver-$(CONFIG_CHARGER_BQ24192)+=charger/bq24192.o
 driver-$(CONFIG_CHARGER_BQ24707A)+=charger/bq24707a.o
 driver-$(CONFIG_CHARGER_BQ24715)+=charger/bq24715.o

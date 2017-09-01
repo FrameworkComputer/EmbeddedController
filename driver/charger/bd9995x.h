@@ -11,13 +11,9 @@
 #define BD9995X_ADDR		0x12 /* 7bit address 0001_001 */
 #define I2C_ADDR_CHARGER	BD9995X_ADDR
 
-#ifdef CONFIG_CHARGER_BD99955
-#define BD9995X_CHARGER_NAME	"bd99955"
-#define BD9995X_CHIP_ID		0x221
-#elif defined(CONFIG_CHARGER_BD99956)
-#define BD9995X_CHARGER_NAME	"bd99956"
-#define BD9995X_CHIP_ID		0x331
-#endif
+#define BD9995X_CHARGER_NAME	"bd9995x"
+#define BD99955_CHIP_ID		0x221
+#define BD99956_CHIP_ID		0x331
 
 /* BD9995X commands to change the command code map */
 enum bd9995x_command {
