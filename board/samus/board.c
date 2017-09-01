@@ -26,7 +26,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "jtag.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "lightbar.h"
@@ -39,6 +38,7 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "switch.h"
+#include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
@@ -422,3 +422,22 @@ struct motion_sensor_t motion_sensors[] = {
 
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+#ifdef CONFIG_LOW_POWER_IDLE
+void jtag_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * This interrupt is the first sign someone is trying to use
+	 * the JTAG. Disable slow speed sleep so that the JTAG action
+	 * can take place.
+	 */
+	disable_sleep(SLEEP_MASK_JTAG);
+
+	/*
+	 * Once we get this interrupt, disable it from occurring again
+	 * to avoid repeated interrupts when debugging via JTAG.
+	 */
+	gpio_disable_interrupt(GPIO_JTAG_TCK);
+}
+#endif /* CONFIG_LOW_POWER_IDLE */
+

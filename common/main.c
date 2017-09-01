@@ -16,7 +16,6 @@
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "jtag.h"
 #include "keyboard_scan.h"
 #ifdef CONFIG_MPU
 #include "mpu.h"
@@ -64,8 +63,6 @@ test_mockable __keep int main(void)
 	mpu_pre_init();
 #endif
 
-	/* Configure the pin multiplexers and GPIOs */
-	jtag_pre_init();
 	gpio_pre_init();
 
 #ifdef CONFIG_BOARD_POST_GPIO_INIT

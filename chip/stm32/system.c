@@ -175,6 +175,47 @@ static void check_reset_cause(void)
 	system_set_reset_flags(flags);
 }
 
+/* Stop all timers and WDGs we might use when JTAG stops the CPU. */
+void chip_pre_init(void)
+{
+	uint32_t apb1fz_reg = 0;
+	uint32_t apb2fz_reg = 0;
+
+#if defined(CHIP_FAMILY_STM32F0)
+	apb1fz_reg =
+		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM6 |
+		STM32_RCC_PB1_TIM7 | STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	apb2fz_reg = STM32_RCC_PB2_TIM15 | STM32_RCC_PB2_TIM16 |
+		STM32_RCC_PB2_TIM17 | STM32_RCC_PB2_TIM1;
+#elif defined(CHIP_FAMILY_STM32F3)
+	apb1fz_reg =
+		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
+		STM32_RCC_PB1_TIM5 | STM32_RCC_PB1_TIM6 | STM32_RCC_PB1_TIM7 |
+		STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	apb2fz_reg =
+		STM32_RCC_PB2_TIM15 | STM32_RCC_PB2_TIM16 | STM32_RCC_PB2_TIM17;
+#elif defined(CHIP_FAMILY_STM32F4)
+	/* TODO(nsanders): Implement this if someone needs jtag. */
+#elif defined(CHIP_FAMILY_STM32L4)
+	apb1fz_reg =
+		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
+		STM32_RCC_PB1_TIM5 | STM32_RCC_PB1_TIM6 | STM32_RCC_PB1_TIM7 |
+		STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	apb2fz_reg = STM32_RCC_PB2_TIM1 | STM32_RCC_PB2_TIM8;
+#elif defined(CHIP_FAMILY_STM32L)
+	apb1fz_reg =
+		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
+		STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	apb2fz_reg = STM32_RCC_PB2_TIM9 | STM32_RCC_PB2_TIM10 |
+		STM32_RCC_PB2_TIM11;
+#endif
+
+	if (apb1fz_reg)
+		STM32_DBGMCU_APB1FZ |= apb1fz_reg;
+	if (apb2fz_reg)
+		STM32_DBGMCU_APB2FZ |= apb2fz_reg;
+}
+
 void system_pre_init(void)
 {
 #ifdef CONFIG_SOFTWARE_PANIC

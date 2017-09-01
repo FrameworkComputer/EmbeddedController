@@ -12,7 +12,7 @@ CORE:=nds32
 CFLAGS_CPU+=-mno-gp-direct
 
 # Required chip modules
-chip-y=hwtimer.o uart.o gpio.o system.o jtag.o clock.o irq.o intc.o
+chip-y=hwtimer.o uart.o gpio.o system.o clock.o irq.o intc.o
 
 # Optional chip modules
 chip-$(CONFIG_WATCHDOG)+=watchdog.o

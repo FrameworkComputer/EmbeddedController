@@ -198,6 +198,9 @@ void board_reset_pd_mcu(void);
 /* Backboost detected interrupt */
 void bkboost_det_interrupt(enum gpio_signal signal);
 
+/* Interrupt handler for JTAG clock */
+void jtag_interrupt(enum gpio_signal signal);
+
 /* Bit masks for turning on PP5000 rail in G3 */
 #define PP5000_IN_G3_AC       (1 << 0)
 #define PP5000_IN_G3_LIGHTBAR (1 << 1)

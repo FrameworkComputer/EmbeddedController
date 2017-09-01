@@ -98,6 +98,9 @@
 #define CONFIG_SWITCH
 #define CONFIG_MPU
 
+/* Chip needs to do custom pre-init */
+#define CONFIG_CHIP_PRE_INIT
+
 #define GPIO_PIN(port, index) GPIO_##port, (1 << index)
 #define GPIO_PIN_MASK(port, mask) GPIO_##port, (mask)
 

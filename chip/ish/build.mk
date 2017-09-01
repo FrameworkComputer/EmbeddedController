@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+# Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
@@ -17,7 +17,7 @@ include core/$(CORE)/build.mk
 endif
 
 # Required chip modules
-chip-y+=clock.o gpio.o jtag.o system.o hwtimer.o uart.o flash.o
+chip-y+=clock.o gpio.o system.o hwtimer.o uart.o flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_LPC)+=ipc.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o

@@ -7,5 +7,4 @@
 
 #define DISABLED(proto) proto { }
 
-DISABLED(void jtag_pre_init(void));
 DISABLED(void clock_init(void));

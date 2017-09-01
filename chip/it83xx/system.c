@@ -101,6 +101,12 @@ int system_is_reboot_warm(void)
 		return 1;
 }
 
+void chip_pre_init(void)
+{
+	/* bit4, enable debug mode through SMBus */
+	IT83XX_SMB_SLVISELR &= ~(1 << 4);
+}
+
 void system_pre_init(void)
 {
 	/* No initialization required */

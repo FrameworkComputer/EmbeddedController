@@ -11,7 +11,7 @@ CORE:=cortex-m0
 CFLAGS_CPU+=-march=armv6-m -mcpu=cortex-m0
 
 chip-y+=gpio.o system.o uart.o
-chip-y+=jtag.o watchdog.o ppi.o
+chip-y+=watchdog.o ppi.o
 
 chip-$(CONFIG_BLUETOOTH_LE)+=radio.o bluetooth_le.o
 chip-$(CONFIG_BLUETOOTH_LE_RADIO_TEST)+=radio_test.o
