@@ -178,14 +178,15 @@ static int new_is_older(const struct SignedHeader *new,
 }
 
 /*
- * Check if this chunk of data is a rollback attempt, or is unaligned and
+ * Check if this chunk of data is a rollback attempt, or is unaligned, or
  * overlaps RO or RW header.
  *
- * Return False if this is such an attempt or an overlap, when in prod mode;
- * otherwise return True.
+ * Return False if there is any of the above problems and set the passed in
+ * error_code pointer to the proper error_code.
  */
 static int contents_allowed(uint32_t block_offset,
-			    size_t body_size, void *upgrade_data)
+			    size_t body_size, void *upgrade_data,
+			    uint8_t *error_code)
 {
 	/* Pointer to RO or RW header in flash, to compare against. */
 	const struct SignedHeader *header;
@@ -220,6 +221,8 @@ static int contents_allowed(uint32_t block_offset,
 					CPRINTF("%s:"
 						" unaligned block overlaps\n",
 						__func__);
+					*error_code =
+						UPGRADE_UNALIGNED_BLOCK_ERROR;
 					return 0;
 				}
 			}
@@ -231,12 +234,14 @@ static int contents_allowed(uint32_t block_offset,
 	/* This block is a header (ro or rw) of the new image. */
 	if (body_size < sizeof(struct SignedHeader)) {
 		CPRINTF("%s: block too short\n", __func__);
+		*error_code = UPGRADE_TRUNCATED_HEADER_ERROR;
 		return 0;
 	}
 
 	/* upgrade_data is the new header. */
 	if (new_is_older(upgrade_data, header)) {
 		CPRINTF("%s: rejecting an older header.\n", __func__);
+		*error_code = UPGRADE_ROLLBACK_ERROR;
 		return 0;
 	}
 
@@ -295,7 +300,8 @@ static void new_chunk_written(uint32_t block_offset)
 }
 
 static int contents_allowed(uint32_t block_offset,
-			    size_t body_size, void *upgrade_data)
+			    size_t body_size, void *upgrade_data,
+			    uint8_t *error_code)
 {
 	return 1;
 }
@@ -385,10 +391,9 @@ void fw_upgrade_command_handler(void *body,
 	}
 
 	upgrade_data = cmd_body + 1;
-	if (!contents_allowed(block_offset, body_size, upgrade_data)) {
-		*error_code = UPGRADE_ROLLBACK_ERROR;
+	if (!contents_allowed(block_offset, body_size,
+			      upgrade_data, error_code))
 		return;
-	}
 
 	/* Check if the block will fit into the valid area. */
 	*error_code = check_update_chunk(block_offset, body_size);
