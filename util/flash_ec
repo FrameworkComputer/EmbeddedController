@@ -58,6 +58,7 @@ BOARDS_STM32=(
 	big
 	blaze
 	chell_pd
+	coffeecake
 	elm
 	eve_fp
 	glados_pd
