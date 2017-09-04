@@ -91,6 +91,8 @@ enum enhanced_i2c_ctl {
 	E_INT_EN = 0x40,
 	/* 0 : Standard mode , 1 : Receive mode */
 	E_RX_MODE = 0x80,
+	/* Generate stop condition */
+	E_FINISH = (E_INT_EN | E_MODE_SEL | E_ACK | E_STOP | E_HW_RST),
 };
 
 enum i2c_host_status_mask {
@@ -554,13 +556,9 @@ static int enhanced_i2c_tran_write(int p)
 					(pd->addr + 1), 1);
 			} else {
 				if (pd->flags & I2C_XFER_STOP) {
-					/* Stop and finish */
-					IT83XX_I2C_CTR(p) =
-						(E_STOP | E_HW_RST);
-					i2c_reset(p, 0);
-					/* Disable i2c module */
-					IT83XX_I2C_CTR1(p_ch) = 0x00;
-					return 0;
+					IT83XX_I2C_CTR(p_ch) = E_FINISH;
+					/* wait for stop bit interrupt*/
+					return 1;
 				}
 				/* Direct write with direct read */
 				pd->i2ccs = I2C_CH_WAIT_NEXT_XFER;
@@ -643,12 +641,9 @@ static int enhanced_i2c_tran_read(int p)
 					pd->in_size = 0;
 					if (pd->flags & I2C_XFER_STOP) {
 						pd->i2ccs = I2C_CH_NORMAL;
-						/* Stop and finish */
-						IT83XX_I2C_CTR(p_ch) =
-							(E_STOP | E_HW_RST);
-						/* Disable i2c module */
-						IT83XX_I2C_CTR1(p_ch) = 0x00;
-						return 0;
+						IT83XX_I2C_CTR(p_ch) = E_FINISH;
+						/* wait for stop bit interrupt*/
+						return 1;
 					}
 					/* End the transaction */
 					pd->i2ccs = I2C_CH_WAIT_READ;
@@ -700,6 +695,12 @@ static int i2c_transaction(int p)
 			/* i2c read */
 			else if (pd->in_size)
 				return enhanced_i2c_tran_read(p);
+			/* transaction done */
+			if (pd->flags & I2C_XFER_STOP) {
+				/* disable i2c interface */
+				IT83XX_I2C_CTR1(p_ch) = 0;
+				IT83XX_I2C_CTR(p_ch) = 0;
+			}
 		}
 	}
 	/* done doing work */
