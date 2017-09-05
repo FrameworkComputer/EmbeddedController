@@ -36,7 +36,7 @@ STANDALONE_FLAGS=-ffreestanding -fno-builtin -nostdinc \
 			-Ibuiltin/ -D"__keep= " -DVIF_BUILD
 $(out)/util/usb_pd_policy.o: board/$(BOARD)/usb_pd_policy.c
 	$(call quiet,c_to_vif,BUILDCC)
-deps += $(out)/util/usb_pd_policy.o.d
+deps-$(CONFIG_USB_POWER_DELIVERY) += $(out)/util/usb_pd_policy.o.d
 endif # CONFIG_USB_POWER_DELIVERY
 
 $(out)/util/export_taskinfo.so: $(out)/util/export_taskinfo_ro.o \

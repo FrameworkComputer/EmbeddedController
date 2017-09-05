@@ -222,7 +222,7 @@ ro-objs := $(filter-out %_sharedlib.o, $(ro-objs))
 endif
 ro-deps := $(ro-objs:%.o=%.o.d)
 rw-deps := $(rw-objs:%.o=%.o.d)
-deps := $(ro-deps) $(rw-deps)
+deps := $(ro-deps) $(rw-deps) $(deps-y)
 
 .PHONY: ro rw
 $(config): $(out)/$(PROJECT).bin
