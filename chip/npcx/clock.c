@@ -11,6 +11,7 @@
 #include "console.h"
 #include "cpu.h"
 #include "gpio.h"
+#include "gpio_chip.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
@@ -259,7 +260,7 @@ void clock_gpio2uart(void)
 		clock_refresh_console_in_use();
 		/* Disable MIWU for GPIO (UARTRX) */
 		uart_enable_wakeup(0);
-		/* Go back CR_SIN*/
+		/* Go back CR_SIN */
 		npcx_gpio2uart();
 		/* Enable uart again */
 		task_enable_irq(NPCX_IRQ_UART);

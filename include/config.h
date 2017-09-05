@@ -2416,6 +2416,13 @@
 #undef CONFIG_UART_INPUT_FILTER
 
 /*
+ * Allow switching the EC console UART to an alternate pad. This must be
+ * used for short transactions only, and EC is only able to receive data on
+ * that alternate pad after it has been explicitly switched.
+ */
+#undef CONFIG_UART_PAD_SWITCH
+
+/*
  * UART receive buffer size in bytes.  Must be a power of 2 for macros in
  * common/uart_buffering.c to work properly.  Must be larger than
  * CONFIG_CONSOLE_INPUT_LINE_SIZE to copy and paste scripts.

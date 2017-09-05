@@ -32,6 +32,17 @@
 				     NPCX_LVOL_CTRL_##ctrl##_6, \
 				     NPCX_LVOL_CTRL_##ctrl##_7, }
 
+/**
+ * Switch NPCX UART pins back to normal GPIOs.
+ */
+void npcx_uart2gpio(void);
+
+/**
+ * Switch NPCX UART pins to UART mode (depending on the currently selected
+ * pad, see uart.c).
+ */
+void npcx_gpio2uart(void);
+
 /*
  * Include the MIWU, alternative and low-Voltage macro functions for GPIOs
  * depends on Nuvoton chip series.

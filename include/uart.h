@@ -246,4 +246,47 @@ int uart_comx_putc_ok(void);
  */
 void uart_comx_putc(int c);
 
+/*
+ * Functions for pad switching UART, only defined on some chips (npcx), and
+ * if CONFIG_UART_PAD_SWITCH is enabled.
+ */
+enum uart_pad {
+	UART_DEFAULT_PAD = 0,
+	UART_ALTERNATE_PAD = 1,
+};
+
+/**
+ * Reset UART pad to default pad, so that a panic information can be printed
+ * on the EC console.
+ */
+void uart_reset_default_pad_panic(void);
+
+/**
+ * Specialized function to write then read data on UART alternate pad.
+ * The transfer may be interrupted at any time if data is received on the main
+ * pad.
+ *
+ * @param tx		Data to be sent
+ * @param tx_len	Length of data to be sent
+ * @param rx		Buffer to receive data
+ * @param rx_len	Receive buffer length
+ * @param timeout_us	Timeout in microseconds for the transaction to complete.
+ *
+ * @return The number of bytes read back (indicates a timeout if != rx_len).
+ *         - -EC_ERROR_BUSY if the alternate pad cannot be used (e.g. default
+ *           pad is currently being used), or if the transfer was interrupted.
+ *         - -EC_ERROR_TIMEOUT in case tx_len bytes cannot be written in the
+ *           time specified in timeout_us.
+ */
+int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
+			int timeout_us);
+
+/**
+ * Interrupt handler for default UART RX pin transition when UART is switched
+ * to alternate pad.
+ *
+ * @param signal	Signal which triggered the interrupt.
+ */
+void uart_default_pad_rx_interrupt(enum gpio_signal signal);
+
 #endif  /* __CROS_EC_UART_H */
