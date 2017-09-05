@@ -226,6 +226,25 @@ class StackAnalyzerTest(unittest.TestCase):
     self.assertEqual(remove_rules, [])
     self.assertEqual(invalid_sigtxts, set())
 
+    self.analyzer.annotation = {
+        'add': None,
+        'remove': [
+            [['a', 'b'], ['0', '[', '2'], 'x'],
+            [['a', 'b[x:3]'], ['0', '1', '2'], 'x'],
+        ],
+    }
+    (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+    self.assertEqual(add_rules, {})
+    self.assertEqual(remove_rules, [
+        [('a', None, None), ('1', None, None), ('x', None, None)],
+        [('a', None, None), ('0', None, None), ('x', None, None)],
+        [('a', None, None), ('2', None, None), ('x', None, None)],
+        [('b', os.path.abspath('x'), 3), ('1', None, None), ('x', None, None)],
+        [('b', os.path.abspath('x'), 3), ('0', None, None), ('x', None, None)],
+        [('b', os.path.abspath('x'), 3), ('2', None, None), ('x', None, None)],
+    ])
+    self.assertEqual(invalid_sigtxts, {'['})
+
     funcs = {
         0x1000: sa.Function(0x1000, 'hook_task', 0, []),
         0x2000: sa.Function(0x2000, 'console_task', 0, []),

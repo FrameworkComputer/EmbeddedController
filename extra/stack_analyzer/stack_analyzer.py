@@ -765,21 +765,49 @@ class StackAnalyzer(object):
             add_rules[src_sig].add(dst_sig)
 
     if 'remove' in self.annotation and self.annotation['remove'] is not None:
-      for remove_sigtxts in self.annotation['remove']:
-        if isinstance(remove_sigtxts, str):
-          remove_sigtxts = [remove_sigtxts]
+      for sigtxt_path in self.annotation['remove']:
+        if isinstance(sigtxt_path, str):
+          # The path has only one vertex.
+          sigtxt_path = [sigtxt_path]
 
-        remove_path = []
-        for remove_sigtxt in remove_sigtxts:
-          remove_sig = NormalizeSignature(remove_sigtxt)
-          if remove_sig is None:
-            invalid_sigtxts.add(remove_sigtxt)
+        if len(sigtxt_path) == 0:
+          continue
+
+        # Generate multiple remove paths from all the combinations of the
+        # signatures of each vertex.
+        sig_paths = [[]]
+        broken_flag = False
+        for sigtxt_node in sigtxt_path:
+          if isinstance(sigtxt_node, str):
+            # The vertex has only one signature.
+            sigtxt_set = {sigtxt_node}
+          elif isinstance(sigtxt_node, list):
+            # The vertex has multiple signatures.
+            sigtxt_set = set(sigtxt_node)
           else:
-            remove_path.append(remove_sig)
+            # Assume the format of annotation is verified. There should be no
+            # invalid case.
+            assert False
 
-        if len(remove_path) == len(remove_sigtxts):
+          sig_set = set()
+          for sigtxt in sigtxt_set:
+            sig = NormalizeSignature(sigtxt)
+            if sig is None:
+              invalid_sigtxts.add(sigtxt)
+              broken_flag = True
+            elif not broken_flag:
+              sig_set.add(sig)
+
+          if broken_flag:
+            continue
+
+          # Append each signature of the current node to the all previous
+          # remove paths.
+          sig_paths = [path + [sig] for path in sig_paths for sig in sig_set]
+
+        if not broken_flag:
           # All signatures are normalized. The remove path has no error.
-          remove_rules.append(remove_path)
+          remove_rules.extend(sig_paths)
 
     return (add_rules, remove_rules, invalid_sigtxts)
 
@@ -897,21 +925,15 @@ class StackAnalyzer(object):
           skip_flag = True
           break
         else:
-          paths = []
-          for remove_path in remove_paths:
-            # Append each function of the current signature to the all previous
-            # remove paths.
-            for remove_func in remove_funcs:
-              paths.append(remove_path + [remove_func])
-
-          remove_paths = paths
+          # Append each function of the current signature to the all previous
+          # remove paths.
+          remove_paths = [p + [f] for p in remove_paths for f in remove_funcs]
 
       if skip_flag:
         # Ignore the broken remove path.
         continue
 
       for remove_path in remove_paths:
-        skip_flag = False
         # Deduplicate the remove paths.
         if remove_path not in remove_list:
           remove_list.append(remove_path)

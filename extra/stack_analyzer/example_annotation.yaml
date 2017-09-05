@@ -24,6 +24,18 @@ remove:
 # Remove some invalid paths.
 - [pd_send_request_msg, set_state, pd_power_supply_reset]
 - [__tx_char, __tx_char]
-- [pd_send_request_msg, set_state, set_state]
-- [pd_send_request_msg, set_state, set_state, pd_power_supply_reset]
 - [set_state, set_state, set_state]
+
+# Remove two invalid paths with the common prefix.
+- [pd_execute_hard_reset, set_state, [charge_manager_update_dualrole, pd_dfp_exit_mode]]
+# It is equivalent to the following two lines,
+# - [pd_execute_hard_reset, set_state, charge_manager_update_dualrole]
+# - [pd_execute_hard_reset, set_state, pd_dfp_exit_mode]
+
+# Remove four invalid paths with the common segment.
+- [[pd_send_request_msg, pd_request_vconn_swap], set_state, [usb_mux_set, pd_power_supply_reset]]
+# It is equivalent to the following four lines,
+# - [pd_send_request_msg, set_state, usb_mux_set]
+# - [pd_send_request_msg, set_state, pd_power_supply_reset]
+# - [pd_request_vconn_swap, set_state, usb_mux_set]
+# - [pd_request_vconn_swap, set_state, pd_power_supply_reset]
