@@ -41,6 +41,7 @@ The callsites to the next function will be shown like below,
    - handle_request[common/usb_pd_protocol.c:1191]
      - handle_data_request[common/usb_pd_protocol.c:798]
 -> pd_task[common/usb_pd_protocol.c:2672] 1008c222
+-> [annotation]
 ```
 This means one callsite to the next function is at `usb_pd_protocol.c:798`,
 but it is inlined to the current function and you can follow the trace:

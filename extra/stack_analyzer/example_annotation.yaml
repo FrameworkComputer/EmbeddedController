@@ -1,3 +1,6 @@
+# Size of extra stack frame needed by exception context switch.
+exception_frame_size: 64
+
 # Add some missing calls.
 add:
   # console_task also calls command_display_accel_info and command_accel_init.

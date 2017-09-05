@@ -26,9 +26,9 @@ import yaml
 
 SECTION_RO = 'RO'
 SECTION_RW = 'RW'
-# TODO(cheyuw): This should depend on the CPU and build options.
-# The size of extra stack frame needed by interrupts. (on cortex-m with FPU)
-INTERRUPT_EXTRA_STACK_FRAME = 224
+# Default size of extra stack frame needed by exception context switch.
+# This value is for cortex-m with FPU enabled.
+DEFAULT_EXCEPTION_FRAME_SIZE = 224
 
 
 class StackAnalyzerError(Exception):
@@ -1259,13 +1259,15 @@ class StackAnalyzer(object):
     cycle_functions = self.AnalyzeCallGraph(function_map, remove_list)
 
     # Print the results of task-aware stack analysis.
+    extra_stack_frame = self.annotation.get('exception_frame_size',
+                                            DEFAULT_EXCEPTION_FRAME_SIZE)
     for task in self.tasklist:
       routine_func = function_map[task.routine_address]
       print('Task: {}, Max size: {} ({} + {}), Allocated size: {}'.format(
           task.name,
-          routine_func.stack_max_usage + INTERRUPT_EXTRA_STACK_FRAME,
+          routine_func.stack_max_usage + extra_stack_frame,
           routine_func.stack_max_usage,
-          INTERRUPT_EXTRA_STACK_FRAME,
+          extra_stack_frame,
           task.stack_max_size))
 
       print('Call Trace:')

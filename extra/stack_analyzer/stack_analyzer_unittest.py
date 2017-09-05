@@ -590,18 +590,21 @@ class StackAnalyzerTest(unittest.TestCase):
     )
 
     addrtoline_mock.return_value = [('??', '??', 0)]
-    self.analyzer.annotation = {'remove': [['fake_func']]}
+    self.analyzer.annotation = {
+        'exception_frame_size': 64,
+        'remove': [['fake_func']],
+    }
 
     with mock.patch('__builtin__.print') as print_mock:
       checkoutput_mock.return_value = disasm_text
       self.analyzer.Analyze()
       print_mock.assert_has_calls([
           mock.call(
-              'Task: HOOKS, Max size: 232 (8 + 224), Allocated size: 2048'),
+              'Task: HOOKS, Max size: 72 (8 + 64), Allocated size: 2048'),
           mock.call('Call Trace:'),
           mock.call('    hook_task (8) [??:0] 1000'),
           mock.call(
-              'Task: CONSOLE, Max size: 240 (16 + 224), Allocated size: 460'),
+              'Task: CONSOLE, Max size: 80 (16 + 64), Allocated size: 460'),
           mock.call('Call Trace:'),
           mock.call('    console_task (8) [??:0] 2000'),
           mock.call('        -> ??[??:0] 2002'),
