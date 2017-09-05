@@ -101,6 +101,47 @@ static enum ec_reboot_cmd reboot_at_shutdown;
 /* On-going actions preventing going into deep-sleep mode */
 uint32_t sleep_mask;
 
+#ifdef CONFIG_HOSTCMD_AP_SET_SKUID
+static uint32_t ap_sku_id;
+
+uint32_t system_get_sku_id(void)
+{
+	return ap_sku_id;
+}
+
+#define AP_SKUID_SYSJUMP_TAG		0x4153 /* AS */
+#define AP_SKUID_HOOK_VERSION		1
+
+/**
+ * Preserve AP SKUID across a sysjump.
+ */
+
+static void ap_sku_id_preserve_state(void)
+{
+	system_add_jump_tag(AP_SKUID_SYSJUMP_TAG, AP_SKUID_HOOK_VERSION,
+			    sizeof(ap_sku_id), &ap_sku_id);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, ap_sku_id_preserve_state, HOOK_PRIO_DEFAULT);
+
+/**
+ * Restore AP SKUID after a sysjump.
+ */
+static void ap_sku_id_restore_state(void)
+{
+	const uint32_t *prev_ap_sku_id;
+	int size, version;
+
+	prev_ap_sku_id = (const uint32_t *)system_get_jump_tag(
+		AP_SKUID_SYSJUMP_TAG, &version, &size);
+
+	if (prev_ap_sku_id && version == AP_SKUID_HOOK_VERSION &&
+		size == sizeof(prev_ap_sku_id)) {
+		memcpy(&ap_sku_id, prev_ap_sku_id, sizeof(ap_sku_id));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, ap_sku_id_restore_state, HOOK_PRIO_DEFAULT);
+#endif
+
 /**
  * Return the program memory address where the image `copy` begins or should
  * begin. In the case of external storage, the image may or may not currently
@@ -1186,7 +1227,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_VERSION,
 #ifdef CONFIG_HOSTCMD_SKUID
 static int host_command_get_sku_id(struct host_cmd_handler_args *args)
 {
-	struct ec_response_sku_id *r = args->response;
+	struct ec_sku_id_info *r = args->response;
 
 	r->sku_id = system_get_sku_id();
 	args->response_size = sizeof(*r);
@@ -1195,6 +1236,20 @@ static int host_command_get_sku_id(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_SKU_ID,
 		     host_command_get_sku_id,
+		     EC_VER_MASK(0));
+#endif
+
+#ifdef CONFIG_HOSTCMD_AP_SET_SKUID
+static int host_command_set_sku_id(struct host_cmd_handler_args *args)
+{
+	const struct ec_sku_id_info *p = args->params;
+
+	ap_sku_id = p->sku_id;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_SKU_ID,
+		     host_command_set_sku_id,
 		     EC_VER_MASK(0));
 #endif
 

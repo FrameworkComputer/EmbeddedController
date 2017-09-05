@@ -1500,6 +1500,9 @@
 /* EC controls the board's SKU ID and can report that to the AP */
 #undef CONFIG_HOSTCMD_SKUID
 
+/* Set SKU ID from AP */
+#undef CONFIG_HOSTCMD_AP_SET_SKUID
+
 /*****************************************************************************/
 
 /* Enable debugging and profiling statistics for hook functions */
