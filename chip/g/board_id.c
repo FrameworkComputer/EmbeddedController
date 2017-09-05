@@ -94,13 +94,13 @@ int read_board_id(struct board_id *id)
 	return EC_SUCCESS;
 }
 
-uint32_t board_id_mismatch(void)
+uint32_t board_id_mismatch(const struct SignedHeader *sh)
 {
 	struct board_id id;
-	const struct SignedHeader *sh;
 
-	/* Get header of the currently running image. */
-	sh = get_current_image_header();
+	if (!sh)
+		/* Get header of the currently running image. */
+		sh = get_current_image_header();
 
 	/* Get Board ID from INFO1. */
 	if (read_board_id(&id) != EC_SUCCESS)

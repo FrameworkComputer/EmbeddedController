@@ -633,7 +633,7 @@ int board_id_is_mismatched(void)
 
 static void  check_board_id_mismatch(void)
 {
-	if (!board_id_mismatch())
+	if (!board_id_mismatch(NULL))
 		return;
 
 	if (system_rollback_detected()) {
