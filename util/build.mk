@@ -48,3 +48,5 @@ $(out)/util/export_taskinfo_ro.o: util/export_taskinfo.c
 
 $(out)/util/export_taskinfo_rw.o: util/export_taskinfo.c
 	$(call quiet,c_to_taskinfo,BUILDCC,RW)
+
+deps-y += $(out)/util/export_taskinfo_ro.o.d $(out)/util/export_taskinfo_rw.o.d
