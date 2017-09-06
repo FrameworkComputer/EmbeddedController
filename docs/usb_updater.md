@@ -4,10 +4,13 @@ EC update over USB
 chip/g (Cr50) and common code (hammer, servo_micro/v4) update over USB protocols
 share a lot in terms of protocol and ideas, but use different code bases.
 
-chip/g EC-side implementation is found at `chip/g/*upgrade*`, and the userspace
-updater is found in `extra/usb_updater/usb_updater.c`, while common code
-uses implementations in `common/*update*.c` and `include/*update*.h`, and
-`extra/usb_updater/usb_updater2.c` for the userspace updater.
+chip/g EC-side implementation is found in `chip/g/*upgrade*`, and the
+userspace tool which provides updates over USB among with supporting other
+features and interfaces is found in `extra/usb_updater/gsctool.c`.
+
+Common code uses implementations in `common/*update*.c` and
+`include/*update*.h`, and `extra/usb_updater/usb_updater2.c` for the userspace
+updater.
 
 Cr50-specific notes
 -------------------
@@ -24,7 +27,7 @@ is restarted, the new RO and RW are used if they pass verification and are
 logically newer than the existing sections.
 
 There are two ways to communicate with the Cr50 device: USB and `/dev/tpm0`
-(when `usb_updater` is running on a chromebook with the Cr50 device). Originally
+(when `gsctool` is running on a chromebook with the Cr50 device). Originally
 different protocols were used to communicate over different channels,
 starting with version 3 the same protocol is used.
 

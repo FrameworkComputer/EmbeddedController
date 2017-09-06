@@ -91,7 +91,7 @@ prepare_image() {
   dd if="${TMPD}/0.bin" of="${RESULT_FILE}" conv=notrunc
   dd if="${TMPD}/1.bin" of="${RESULT_FILE}" seek=262144 bs=1 conv=notrunc
 
-  # A typical Cr50 version reported by usb_updater looks as follows:
+  # A typical Cr50 version reported by gsctool looks as follows:
   # RO_A:0.0.10 RW_A:0.0.22[ABCD:00000013:00000012] ...(the same for R[OW]_B).
   #
   # In case Board ID field is not set in the image, it is reported as
@@ -125,7 +125,7 @@ prepare_image() {
     print "r" $1 ".w" $2
 }'
 
-  raw_version="$("${USB_UPDATER}" -b "${RESULT_FILE}")" ||
+  raw_version="$("${GSCTOOL}" -b "${RESULT_FILE}")" ||
        ( echo "${ME}: Failed to retrieve blob version" >&2 && exit 1 )
 
   version="$(awk "${awk_prog}" <<< "${raw_version}" )"
@@ -166,9 +166,9 @@ dest_dir=
 IMAGE_SIZE='524288'
 export RESULT_FILE
 
-USB_UPDATER="${EC_ROOT}/extra/usb_updater/usb_updater"
-if [[ ! -x "${USB_UPDATER}" ]]; then
-  echo "${ME}: usb_updater not found, run \"make -C extra/usb_updater\"" >&2
+GSCTOOL="${EC_ROOT}/extra/usb_updater/gsctool"
+if [[ ! -x "${GSCTOOL}" ]]; then
+  echo "${ME}: gsctool not found, run \"make -C extra/usb_updater\"" >&2
   exit 1
 fi
 

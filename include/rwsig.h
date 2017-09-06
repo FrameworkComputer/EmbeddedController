@@ -28,14 +28,14 @@ enum rwsig_status rwsig_get_status(void);
 /*
  * Aborts current verification, also prevents RWSIG task from automatically
  * jumping to RW.
- * This is used by usb_updater when a RW update is required, giving it enough
+ * This is used by usb_updater2 when a RW update is required, giving it enough
  * time to actually perform the update.
  */
 void rwsig_abort(void);
 
 /*
  * Tells RWSIG task to jump to RW immediately, if the signature is correct.
- * This is used by usb_updater when no RW update is required, to speed up
+ * This is used by usb_updater2 when no RW update is required, to speed up
  * boot time.
  */
 void rwsig_continue(void);

@@ -9,7 +9,7 @@
 /*
  * This file includes definitions of extended/vendor TPM2 commands and their
  * return codes. The definitions are shared between the embedded code and the
- * usb_updater utility running on the host.
+ * gsctool utility running on the host.
  */
 
 /* Extension and vendor commands. */

@@ -36,7 +36,7 @@
 
 /*
  * This file contains the source code of a Linux application used to update
- * EC device firmware (common code only, usb_updater takes care of cr50).
+ * EC device firmware (common code only, gsctool takes care of cr50).
  */
 
 #define VID USB_VID_GOOGLE
