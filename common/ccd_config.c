@@ -691,7 +691,7 @@ void ccd_disable(void)
 /******************************************************************************/
 /* Console commands */
 
-static int command_ccdinfo(int argc, char **argv)
+static int command_ccd_info(void)
 {
 	int i;
 
@@ -704,7 +704,7 @@ static int command_ccdinfo(int argc, char **argv)
 	for (i = 0; i < CCD_CAP_COUNT; i++) {
 		int c = raw_get_cap(i, 0);
 
-		ccprintf("%-15s %c %d=%s",
+		ccprintf("  %-15s %c %d=%s",
 			 cap_info[i].name,
 			 ccd_is_cap_enabled(i) ? 'Y' : '-',
 			 c, ccd_cap_state_names[c]);
@@ -717,11 +717,8 @@ static int command_ccdinfo(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdinfo, command_ccdinfo,
-			     "",
-			     "Print CCD state");
 
-static int command_ccdreset(int argc, char **argv)
+static int command_ccd_reset(int argc, char **argv)
 {
 	int flags = 0;
 
@@ -747,11 +744,8 @@ static int command_ccdreset(int argc, char **argv)
 		return EC_ERROR_ACCESS_DENIED;
 	}
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdreset, command_ccdreset,
-			     "[rma]",
-			     "Reset CCD config");
 
-static int command_ccdset(int argc, char **argv)
+static int command_ccd_set(int argc, char **argv)
 {
 	enum ccd_capability cap;
 	enum ccd_capability_state old;
@@ -788,11 +782,8 @@ static int command_ccdset(int argc, char **argv)
 	/* Set new state */
 	return ccd_set_cap(cap, new);
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdset, command_ccdset,
-			     "<cap> <state>",
-			     "Set CCD capability state");
 
-static int command_ccdpassword(int argc, char **argv)
+static int command_ccd_password(int argc, char **argv)
 {
 	/* Only works if unlocked or opened */
 	if (ccd_state == CCD_STATE_LOCKED)
@@ -812,11 +803,8 @@ static int command_ccdpassword(int argc, char **argv)
 	/* Set new password */
 	return ccd_set_password(argv[1]);
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdpassword, command_ccdpassword,
-			     "[<new password> | clear]",
-			     "Set or clear CCD password");
 
-static int command_ccdopen(int argc, char **argv)
+static int command_ccd_open(int argc, char **argv)
 {
 	int is_long = 1;
 	int need_pp = 1;
@@ -867,11 +855,8 @@ static int command_ccdopen(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdopen, command_ccdopen,
-			     "[password]",
-			     "Change CCD state to Opened");
 
-static int command_ccdunlock(int argc, char **argv)
+static int command_ccd_unlock(int argc, char **argv)
 {
 	int need_pp = 1;
 	int rv;
@@ -945,23 +930,17 @@ static int command_ccdunlock(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdunlock, command_ccdunlock,
-			     "[password]",
-			     "Change CCD state to Unlocked");
 
-static int command_ccdlock(int argc, char **argv)
+static int command_ccd_lock(void)
 {
 	/* Lock always works */
 	ccprintf("CCD locked.\n");
 	ccd_set_state(CCD_STATE_LOCKED);
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdlock, command_ccdlock,
-			     "",
-			     "Change CCD state to Locked");
 
 /* NOTE: Testlab command is console-only; no TPM vendor command for this */
-static int command_testlab(int argc, char **argv)
+static int command_ccd_testlab(int argc, char **argv)
 {
 	int newflag = 0;
 
@@ -996,16 +975,12 @@ static int command_testlab(int argc, char **argv)
 		ccprintf("NOTE: THIS WILL MAKE THIS DEVICE INSECURE!!!\n");
 	return physical_detect_start(0, ccd_testlab_toggle);
 }
-DECLARE_SAFE_CONSOLE_COMMAND(testlab, command_testlab,
-			     "<enable | disable | open>",
-			     "Toggle testlab mode or open CCD");
-
 
 #ifdef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
 /**
  * Test command to forcibly reset CCD config
  */
-static int command_ccdoops(int argc, char **argv)
+static int command_ccd_oops(void)
 {
 	/* Completely reset CCD config and go to opened state */
 	force_disabled = 0;
@@ -1017,18 +992,96 @@ static int command_ccdoops(int argc, char **argv)
 	ccd_set_state(CCD_STATE_OPENED);
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccdoops, command_ccdoops,
-			     "",
-			     "Force-reset CCD config");
 #endif  /* CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE */
 
 #ifdef CONFIG_CMD_CCDDISABLE
-static int command_ccddisable(int argc, char **argv)
+static int command_ccd_disable(void)
 {
 	ccd_disable();
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ccddisable, command_ccddisable,
-			     "",
-			     "Force disable CCD config");
 #endif  /* CONFIG_CMD_CCDDISABLE */
+
+static int command_ccd_help(void)
+{
+	int i;
+
+	ccputs("usage: ccd [cmd [args]]\n"
+	       "\n"
+	       "lock\n"
+	       "unlock [password]\n"
+	       "open [password]\n"
+	       "\tSet CCD state\n"
+	       "set <cap> <state>\n"
+	       "\tSet capability to state:");
+	cflush();
+
+	for (i = 0; i < CCD_CAP_STATE_COUNT; i++)
+		ccprintf(" %s", ccd_cap_state_names[i]);
+
+	ccputs("\n"
+	       "password [<new password> | clear]\n"
+	       "\tSet or clear CCD password\n"
+	       "reset [rma]\n"
+	       "\tReset CCD config\n"
+	       "testlab [enable | disable | open]\n"
+	       "\tToggle testlab mode or force CCD open\n");
+	cflush();
+
+#ifdef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
+	ccputs("oops\n"
+	       "\tForce-reset CCD config\n");
+#endif
+#ifdef CONFIG_CMD_CCDDISABLE
+	ccputs("disable\n"
+	       "\tTemporarily disable CCD\n");
+#endif
+
+	return EC_SUCCESS;
+}
+
+/**
+ * Case closed debugging config command.
+ */
+static int command_ccd(int argc, char **argv)
+{
+	/* If no args, print info */
+	if (argc < 2)
+		return command_ccd_info();
+
+	/* Check test lab command first */
+	if (!strcasecmp(argv[1], "testlab"))
+		return command_ccd_testlab(argc - 1, argv + 1);
+
+	/* Commands to set state */
+	if (!strcasecmp(argv[1], "lock"))
+		return command_ccd_lock();
+	if (!strcasecmp(argv[1], "unlock"))
+		return command_ccd_unlock(argc - 1, argv + 1);
+	if (!strcasecmp(argv[1], "open"))
+		return command_ccd_open(argc - 1, argv + 1);
+
+	/* Commands to configure capabilities */
+	if (!strcasecmp(argv[1], "set"))
+		return command_ccd_set(argc - 1, argv + 1);
+	if (!strcasecmp(argv[1], "password"))
+		return command_ccd_password(argc - 1, argv + 1);
+	if (!strcasecmp(argv[1], "reset"))
+		return command_ccd_reset(argc - 1, argv + 1);
+
+	/* Optional commands */
+#ifdef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
+	if (!strcasecmp(argv[1], "oops"))
+		return command_ccd_oops();
+#endif
+#ifdef CONFIG_CMD_CCDDISABLE
+	if (!strcasecmp(argv[1], "disable"))
+		return command_ccd_disable();
+#endif
+
+	/* Anything else (including "help") prints help */
+	return command_ccd_help();
+}
+DECLARE_SAFE_CONSOLE_COMMAND(ccd, command_ccd,
+			     "[help | ...]",
+			     "Configure case-closed debugging");
