@@ -131,12 +131,37 @@ static void SHA256_transform(struct sha256_ctx *ctx, const uint8_t *message,
 		for (j = 0; j < 16; j++)
 			PACK32(&sub_block[j << 2], &w[j]);
 
+#ifdef CONFIG_SHA256_UNROLLED
+		for (j = 16; j < 64; j += 8) {
+			SHA256_SCR(j);
+			SHA256_SCR(j+1);
+			SHA256_SCR(j+2);
+			SHA256_SCR(j+3);
+			SHA256_SCR(j+4);
+			SHA256_SCR(j+5);
+			SHA256_SCR(j+6);
+			SHA256_SCR(j+7);
+		}
+#else
 		for (j = 16; j < 64; j++)
 			SHA256_SCR(j);
+#endif
 
 		for (j = 0; j < 8; j++)
 			wv[j] = ctx->h[j];
 
+#ifdef CONFIG_SHA256_UNROLLED
+		for (j = 0; j < 64; j += 8) {
+			SHA256_EXP(0, 1, 2, 3, 4, 5, 6, 7, j);
+			SHA256_EXP(7, 0, 1, 2, 3, 4, 5, 6, j+1);
+			SHA256_EXP(6, 7, 0, 1, 2, 3, 4, 5, j+2);
+			SHA256_EXP(5, 6, 7, 0, 1, 2, 3, 4, j+3);
+			SHA256_EXP(4, 5, 6, 7, 0, 1, 2, 3, j+4);
+			SHA256_EXP(3, 4, 5, 6, 7, 0, 1, 2, j+5);
+			SHA256_EXP(2, 3, 4, 5, 6, 7, 0, 1, j+6);
+			SHA256_EXP(1, 2, 3, 4, 5, 6, 7, 0, j+7);
+		}
+#else
 		for (j = 0; j < 64; j++) {
 			t1 = wv[7] + SHA256_F2(wv[4]) + CH(wv[4], wv[5], wv[6])
 				+ sha256_k[j] + w[j];
@@ -150,6 +175,7 @@ static void SHA256_transform(struct sha256_ctx *ctx, const uint8_t *message,
 			wv[1] = wv[0];
 			wv[0] = t1 + t2;
 		}
+#endif
 
 		for (j = 0; j < 8; j++)
 			ctx->h[j] += wv[j];

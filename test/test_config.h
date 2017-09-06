@@ -85,6 +85,11 @@
 #define CONFIG_SHA256
 #endif
 
+#ifdef TEST_SHA256_UNROLLED
+#define CONFIG_SHA256
+#define CONFIG_SHA256_UNROLLED
+#endif
+
 #ifdef TEST_SHMALLOC
 #define CONFIG_MALLOC
 #endif
