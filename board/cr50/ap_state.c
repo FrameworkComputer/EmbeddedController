@@ -4,6 +4,7 @@
  *
  * AP state machine
  */
+#include "ccd_config.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

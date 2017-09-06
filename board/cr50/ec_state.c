@@ -2,8 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * EC detect state machine.
+ * EC state machine
  */
+#include "ccd_config.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "case_closed_debug.h"
+#include "case_closed_debug.h"  /* For ccd_ext_is_enabled() */
+#include "ccd_config.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -125,6 +126,11 @@ enum ccd_state_flag {
 	/* SPI port is enabled for AP and/or EC flash */
 	CCD_ENABLE_SPI			= (1 << 6),
 };
+
+int console_is_restricted(void)
+{
+	return !ccd_is_cap_enabled(CCD_CAP_GSC_RESTRICTED_CONSOLE);
+}
 
 /**
  * Return the currently enabled state flags (see enum ccd_state_flag).
@@ -347,8 +353,6 @@ static void ccd_ext_detect(void)
 }
 DECLARE_HOOK(HOOK_SECOND, ccd_ext_detect, HOOK_PRIO_DEFAULT);
 
-/*****************************************************************************/
-
 static int command_ccd_state(int argc, char **argv)
 {
 	print_ap_state();
@@ -369,107 +373,3 @@ DECLARE_CONSOLE_COMMAND(ccdstate, command_ccd_state,
 			"",
 			"Print the case closed debug device state");
 
-static int command_sys_rst(int argc, char **argv)
-{
-	int val;
-	char *e;
-	int ms = 20;
-
-	if (argc > 1) {
-		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
-			return EC_ERROR_ACCESS_DENIED;
-
-		if (!strcasecmp("pulse", argv[1])) {
-			if (argc == 3) {
-				ms = strtoi(argv[2], &e, 0);
-				if (*e)
-					return EC_ERROR_PARAM2;
-			}
-			ccprintf("Pulsing AP reset for %dms\n", ms);
-			assert_sys_rst();
-			msleep(ms);
-			deassert_sys_rst();
-		} else if (parse_bool(argv[1], &val)) {
-			if (val)
-				assert_sys_rst();
-			else
-				deassert_sys_rst();
-		} else
-			return EC_ERROR_PARAM1;
-	}
-
-	ccprintf("SYS_RST_L is %s\n", is_sys_rst_asserted() ?
-		 "asserted" : "deasserted");
-
-	return EC_SUCCESS;
-
-}
-DECLARE_SAFE_CONSOLE_COMMAND(sysrst, command_sys_rst,
-	"[pulse [time] | <BOOLEAN>]",
-	"Assert/deassert SYS_RST_L to reset the AP");
-
-static int command_ec_rst(int argc, char **argv)
-{
-	int val;
-
-	if (argc > 1) {
-		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
-			return EC_ERROR_ACCESS_DENIED;
-
-		if (!strcasecmp("pulse", argv[1])) {
-			ccprintf("Pulsing EC reset\n");
-			assert_ec_rst();
-			usleep(200);
-			deassert_ec_rst();
-		} else if (parse_bool(argv[1], &val)) {
-			if (val)
-				assert_ec_rst();
-			else
-				deassert_ec_rst();
-		} else
-			return EC_ERROR_PARAM1;
-	}
-
-	ccprintf("EC_RST_L is %s\n", is_ec_rst_asserted() ?
-		 "asserted" : "deasserted");
-
-	return EC_SUCCESS;
-}
-DECLARE_SAFE_CONSOLE_COMMAND(ecrst, command_ec_rst,
-	"[pulse | <BOOLEAN>]",
-	"Assert/deassert EC_RST_L to reset the EC (and AP)");
-
-static int command_powerbtn(int argc, char **argv)
-{
-	char *e;
-	int ms = 200;
-
-	if (argc > 1) {
-		if (!strcasecmp("pulse", argv[1])) {
-			if (argc == 3) {
-				ms = strtoi(argv[2], &e, 0);
-				if (*e)
-					return EC_ERROR_PARAM2;
-			}
-
-			ccprintf("Force %dms power button press\n", ms);
-
-			rbox_powerbtn_press();
-			msleep(ms);
-			rbox_powerbtn_release();
-		} else if (!strcasecmp("press", argv[1])) {
-			rbox_powerbtn_press();
-		} else if (!strcasecmp("release", argv[1])) {
-			rbox_powerbtn_release();
-		} else
-			return EC_ERROR_PARAM1;
-	}
-
-	ccprintf("powerbtn: %s\n",
-		 rbox_powerbtn_override_is_enabled() ? "forced press" :
-		 rbox_powerbtn_is_pressed() ? "pressed\n" : "released\n");
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
-			"[pulse [ms] | press | release]",
-			"get/set the state of the power button");

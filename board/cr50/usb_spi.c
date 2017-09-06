@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "case_closed_debug.h"
+#include "ccd_config.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"

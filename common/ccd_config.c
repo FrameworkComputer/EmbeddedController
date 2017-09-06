@@ -5,7 +5,7 @@
  * Case Closed Debug configuration
  */
 
-#include "case_closed_debug.h"
+#include "ccd_config.h"
 #include "common.h"
 #include "console.h"
 #include "cryptoc/sha256.h"

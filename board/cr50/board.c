@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 #include "board_id.h"
-#include "case_closed_debug.h"
+#include "ccd_config.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -915,6 +915,48 @@ void board_reboot_ap(void)
 	deassert_sys_rst();
 }
 
+/**
+ * Console command to toggle system (AP) reset
+ */
+static int command_sys_rst(int argc, char **argv)
+{
+	int val;
+	char *e;
+	int ms = 20;
+
+	if (argc > 1) {
+		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
+			return EC_ERROR_ACCESS_DENIED;
+
+		if (!strcasecmp("pulse", argv[1])) {
+			if (argc == 3) {
+				ms = strtoi(argv[2], &e, 0);
+				if (*e)
+					return EC_ERROR_PARAM2;
+			}
+			ccprintf("Pulsing AP reset for %dms\n", ms);
+			assert_sys_rst();
+			msleep(ms);
+			deassert_sys_rst();
+		} else if (parse_bool(argv[1], &val)) {
+			if (val)
+				assert_sys_rst();
+			else
+				deassert_sys_rst();
+		} else
+			return EC_ERROR_PARAM1;
+	}
+
+	ccprintf("SYS_RST_L is %s\n", is_sys_rst_asserted() ?
+		 "asserted" : "deasserted");
+
+	return EC_SUCCESS;
+
+}
+DECLARE_SAFE_CONSOLE_COMMAND(sysrst, command_sys_rst,
+	"[pulse [time] | <BOOLEAN>]",
+	"Assert/deassert SYS_RST_L to reset the AP");
+
 void assert_ec_rst(void)
 {
 	GWRITE(RBOX, ASSERT_EC_RST, 1);
@@ -928,6 +970,40 @@ int is_ec_rst_asserted(void)
 {
 	return GREAD(RBOX, ASSERT_EC_RST);
 }
+
+/**
+ * Console command to toggle EC reset
+ */
+static int command_ec_rst(int argc, char **argv)
+{
+	int val;
+
+	if (argc > 1) {
+		if (!ccd_is_cap_enabled(CCD_CAP_REBOOT_EC_AP))
+			return EC_ERROR_ACCESS_DENIED;
+
+		if (!strcasecmp("pulse", argv[1])) {
+			ccprintf("Pulsing EC reset\n");
+			assert_ec_rst();
+			usleep(200);
+			deassert_ec_rst();
+		} else if (parse_bool(argv[1], &val)) {
+			if (val)
+				assert_ec_rst();
+			else
+				deassert_ec_rst();
+		} else
+			return EC_ERROR_PARAM1;
+	}
+
+	ccprintf("EC_RST_L is %s\n", is_ec_rst_asserted() ?
+		 "asserted" : "deasserted");
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(ecrst, command_ec_rst,
+	"[pulse | <BOOLEAN>]",
+	"Assert/deassert EC_RST_L to reset the EC (and AP)");
 
 /*
  * This function duplicates some of the functionality in chip/g/gpio.c in order
