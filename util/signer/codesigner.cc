@@ -17,6 +17,8 @@
 #include <common/signed_header.h>
 #ifdef HAVE_JSON
 #include <rapidjson/document.h>
+#else
+#include <pmjp.h>
 #endif
 
 #include <map>
@@ -433,7 +435,9 @@ int main(int argc, char* argv[]) {
   if (jsonFilename.empty()) {
     // Defaults, in case no JSON
     values.insert(make_pair("keyid", key.n0inv()));
-    values.insert(make_pair("epoch", 0x1337));
+    values.insert(make_pair("epoch", MANIFEST_EPOCH));
+    values.insert(make_pair("major", MANIFEST_MAJOR));
+    values.insert(make_pair("minor", MANIFEST_MINOR));
   }
 
   // Hardcoded expectation. Can be overwritten in JSON w/ new explicit value.
