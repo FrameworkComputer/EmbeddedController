@@ -13,6 +13,7 @@
 #include "uart.h"
 #include "uart_defs.h"
 #include "interrupts.h"
+#include "system.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
