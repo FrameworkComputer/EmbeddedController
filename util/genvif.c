@@ -176,8 +176,8 @@ static char *sources_vconn(void)
 static char *battery_powered(void)
 {
 #if defined(CONFIG_BATTERY_BQ20Z453) || defined(CONFIG_BATTERY_BQ27541) || \
-	defined(CONFIG_BATTERY_BQ27621) || defined(CONFIG_BATTERY_RYU) || \
-	defined(CONFIG_BATTERY_SAMUS) || defined(CONFIG_BATTERY_SMART)
+	defined(CONFIG_BATTERY_BQ27621) || defined(CONFIG_BATTERY_SAMUS) || \
+	defined(CONFIG_BATTERY_SMART)
 	return "YES";
 #else
 	return "NO";

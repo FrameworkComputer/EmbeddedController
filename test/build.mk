@@ -17,9 +17,6 @@ test-list-$(BOARD_HAMMER)+=entropy
 # compile with it. Disable them for now.
 test-list-$(BOARD_SAMUS)=
 
-# Ryu has issues when building tests
-test-list-$(BOARD_RYU)=
-
 # llama has issues when building tests
 test-list-$(BOARD_LLAMA)=
 
