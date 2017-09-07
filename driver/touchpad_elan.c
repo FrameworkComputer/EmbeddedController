@@ -214,8 +214,8 @@ static int elan_tp_read_report(void)
 		int valid = touch_info & (1 << (3+i));
 
 		if (valid) {
-			int width = (finger[3] & 0xf0) >> 4;
-			int height = finger[3] & 0x0f;
+			int width = finger[3] & 0x0f;
+			int height = (finger[3] & 0xf0) >> 4;
 			int pressure = finger[4] + elan_tp_params.pressure_adj;
 			pressure = DIV_ROUND_NEAREST(pressure * pressure_mult,
 						pressure_div);
