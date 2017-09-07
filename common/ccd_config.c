@@ -341,15 +341,6 @@ static void raw_set_password(const char *password)
 /******************************************************************************/
 /* Internal methods */
 
-#ifdef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
-/* TODO(rspangler): remove when we wire this up to real capabilities */
-void test_ccd_change_hook(void)
-{
-	CPRINTS("CCD change hook called");
-}
-DECLARE_HOOK(HOOK_CCD_CHANGE, test_ccd_change_hook, HOOK_PRIO_FIRST);
-#endif
-
 /**
  * Set the CCD state.
  *
@@ -718,6 +709,7 @@ static int command_ccd_info(void)
 		cflush();
 	}
 
+	ccputs("Use 'ccd help' to print subcommands\n");
 	return EC_SUCCESS;
 }
 
@@ -1000,47 +992,47 @@ static int command_ccd_oops(void)
 }
 #endif  /* CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE */
 
-#ifdef CONFIG_CMD_CCDDISABLE
+#ifdef CONFIG_CMD_CCD_DISABLE
 static int command_ccd_disable(void)
 {
 	ccd_disable();
 	return EC_SUCCESS;
 }
-#endif  /* CONFIG_CMD_CCDDISABLE */
+#endif  /* CONFIG_CMD_CCD_DISABLE */
 
 static int command_ccd_help(void)
 {
 	int i;
 
-	ccputs("usage: ccd [cmd [args]]\n"
-	       "\n"
+	ccputs("usage: ccd [cmd [args]]\n\n"
+	       "get (or just 'ccd')\n"
+	       "\tPrint current config\n\n"
 	       "lock\n"
 	       "unlock [password]\n"
 	       "open [password]\n"
-	       "\tSet CCD state\n"
-	       "set <cap> <state>\n"
-	       "\tSet capability to state:");
+	       "\tSet CCD state\n\n"
+	       "set <capability> [");
 	cflush();
 
 	for (i = 0; i < CCD_CAP_STATE_COUNT; i++)
-		ccprintf(" %s", ccd_cap_state_names[i]);
-
-	ccputs("\n"
+		ccprintf("%s%s", i ? " | " : "", ccd_cap_state_names[i]);
+	ccputs("]\n"
+	       "\tSet capability to state\n\n"
 	       "password [<new password> | clear]\n"
-	       "\tSet or clear CCD password\n"
+	       "\tSet or clear CCD password\n\n"
 	       "reset [rma]\n"
-	       "\tReset CCD config\n"
+	       "\tReset CCD config\n\n"
 	       "testlab [enable | disable | open]\n"
-	       "\tToggle testlab mode or force CCD open\n");
+	       "\tToggle testlab mode or force CCD open\n\n");
 	cflush();
 
 #ifdef CONFIG_CASE_CLOSED_DEBUG_V1_UNSAFE
 	ccputs("oops\n"
-	       "\tForce-reset CCD config\n");
+	       "\tForce-reset CCD config\n\n");
 #endif
-#ifdef CONFIG_CMD_CCDDISABLE
+#ifdef CONFIG_CMD_CCD_DISABLE
 	ccputs("disable\n"
-	       "\tTemporarily disable CCD\n");
+	       "\tTemporarily disable CCD\n\n");
 #endif
 
 	return EC_SUCCESS;
@@ -1051,8 +1043,8 @@ static int command_ccd_help(void)
  */
 static int command_ccd(int argc, char **argv)
 {
-	/* If no args, print info */
-	if (argc < 2)
+	/* If no args or 'get', print info */
+	if (argc < 2 || !strcasecmp(argv[1], "get"))
 		return command_ccd_info();
 
 	/* Check test lab command first */
@@ -1080,7 +1072,7 @@ static int command_ccd(int argc, char **argv)
 	if (!strcasecmp(argv[1], "oops"))
 		return command_ccd_oops();
 #endif
-#ifdef CONFIG_CMD_CCDDISABLE
+#ifdef CONFIG_CMD_CCD_DISABLE
 	if (!strcasecmp(argv[1], "disable"))
 		return command_ccd_disable();
 #endif
