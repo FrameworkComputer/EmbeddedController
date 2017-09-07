@@ -255,36 +255,6 @@ static inline int pd_is_vbus_present(int port)
 #endif
 }
 
-static int pd_snk_debug_acc_toggle(int port)
-{
-#if defined(CONFIG_CASE_CLOSED_DEBUG) || \
-defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
-#ifdef CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS
-	static int possible_debug_acc[CONFIG_USB_PD_PORT_COUNT];
-	int vbus = pd_is_vbus_present(port);
-	int result;
-
-	/* reset debouncing of Rd/Rd debug accessory presence */
-	if ((pd[port].last_state != PD_STATE_SNK_DISCONNECTED) || !vbus)
-		possible_debug_acc[port] = 0;
-	/* returns if it was possibly present in the previous iteration */
-	result = possible_debug_acc[port];
-	possible_debug_acc[port] = vbus;
-	return result;
-#else /* !CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS */
-	/*
-	 * when we are in SNK_DISCONNECTED and we see VBUS appearing
-	 * (without having seen Rp before), that might be a powered debug
-	 * accessory, let's toggle to source to try to detect it.
-	 */
-	return pd_is_vbus_present(port);
-#endif /* !CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS */
-#else
-	/* Debug accessories not supported, never toggle */
-	return 0;
-#endif
-}
-
 static int pd_debug_acc_plugged(int port)
 {
 #if defined(CONFIG_CASE_CLOSED_DEBUG) || \
@@ -2404,14 +2374,9 @@ void pd_task(void *u)
 				break;
 			}
 
-			/*
-			 * If no source detected, check for role toggle.
-			 * If VBUS is detected, and we are in the debug
-			 * accessory toggle state, then allow toggling.
-			 */
-			if ((drp_state == PD_DRP_TOGGLE_ON &&
-			     get_time().val >= next_role_swap) ||
-			    pd_snk_debug_acc_toggle(port)) {
+			/* If no source detected, check for role toggle. */
+			if (drp_state == PD_DRP_TOGGLE_ON &&
+			    get_time().val >= next_role_swap) {
 				/* Swap roles to source */
 				pd[port].power_role = PD_ROLE_SOURCE;
 				set_state(port, PD_STATE_SRC_DISCONNECTED);

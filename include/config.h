@@ -2541,9 +2541,6 @@
 /* Number of USB PD ports */
 #undef CONFIG_USB_PD_PORT_COUNT
 
-/* Workaround TCPC that takes longer time to update CC status */
-#undef CONFIG_USB_PD_QUIRK_SLOW_CC_STATUS
-
 /* Simple DFP, such as power adapter, will not send discovery VDM on connect */
 #undef CONFIG_USB_PD_SIMPLE_DFP
 
