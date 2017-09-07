@@ -118,10 +118,17 @@ const struct clock_pll_t clock_pll_ctrl[] = {
 	 */
 	/* PLL:24MHz, MCU:24MHz, Fnd(e-flash):24MHz */
 	[PLL_24_MHZ] = {24000000, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0x2},
+#ifdef CONFIG_IT83XX_FLASH_CLOCK_48MHZ
+	/* PLL:48MHz, MCU:48MHz, Fnd:48MHz */
+	[PLL_48_MHZ] = {48000000, 4, 0, 1, 0, 1, 0, 6, 1, 0, 0x5},
+	/* PLL:96MHz, MCU:96MHz, Fnd:48MHz */
+	[PLL_96_MHZ] = {96000000, 7, 1, 3, 1, 3, 1, 6, 3, 1, 0xb},
+#else
 	/* PLL:48MHz, MCU:48MHz, Fnd:24MHz */
 	[PLL_48_MHZ] = {48000000, 4, 1, 1, 0, 1, 0, 2, 1, 0, 0x5},
 	/* PLL:96MHz, MCU:96MHz, Fnd:32MHz */
 	[PLL_96_MHZ] = {96000000, 7, 2, 3, 1, 3, 1, 4, 3, 1, 0xb},
+#endif
 };
 
 static uint8_t pll_div_fnd;
