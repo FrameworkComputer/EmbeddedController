@@ -202,6 +202,7 @@
 
 /* Gru is especially limited on code space */
 #ifdef BOARD_GRU
+#undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_I2C_XFER
 #undef CONFIG_CMD_SHMEM
 #endif
