@@ -29,6 +29,7 @@
 #include "trng.h"
 #include "uartn.h"
 #include "usb_api.h"
+#include "usb_console.h"
 #include "usb_descriptor.h"
 #include "usb_hid.h"
 #include "usb_spi.h"
@@ -86,7 +87,7 @@ void decrement_retry_counter(void)
 	}
 }
 
-void ccd_phy_init(int none)
+void ccd_phy_init(void)
 {
 	usb_select_phy(USB_SEL_PHY1);
 
@@ -106,6 +107,8 @@ int usb_i2c_board_is_enabled(void)
 {
 	return 1;
 }
+
+USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI);
 
 /* Initialize board. */
 static void board_init(void)
@@ -132,7 +135,10 @@ static void board_init(void)
 	GREG32(PMU, PWRDN_SCRATCH16) = 0xCAFECAFE;
 
 	/* Enable USB / CCD */
-	ccd_set_mode(CCD_MODE_ENABLED);
+	usb_release();
+	usb_console_enable(1, 0);
+	usb_spi_enable(&ccd_usb_spi, 1);
+	ccd_phy_init();
 	uartn_enable(UART_AP);
 
 	/* Calibrate INA0 (VBUS) with 1mA/LSB scale */
@@ -142,6 +148,11 @@ static void board_init(void)
 	ina2xx_init(4, 0x8000, INA2XX_CALIB_1MA(150 /*mOhm*/));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+int ccd_ext_is_enabled(void)
+{
+	return 1;
+}
 
 const void * const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,

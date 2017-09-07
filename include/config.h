@@ -408,10 +408,6 @@
  */
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON
 
-/*
- * Enable case close debug (CCD) mode in the EC.
- */
-#undef CONFIG_CASE_CLOSED_DEBUG
 /* The case close debug (CCD) feature is provided by an external chip. */
 #undef CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 /* Support V1 CCD configuration */

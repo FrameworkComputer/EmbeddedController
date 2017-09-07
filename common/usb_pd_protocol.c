@@ -257,8 +257,7 @@ static inline int pd_is_vbus_present(int port)
 
 static int pd_debug_acc_plugged(int port)
 {
-#if defined(CONFIG_CASE_CLOSED_DEBUG) || \
-defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
+#ifdef CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 	return pd[port].task_state == PD_STATE_SRC_ACCESSORY ||
 		pd[port].task_state == PD_STATE_SNK_ACCESSORY;
 #else
@@ -1950,15 +1949,12 @@ void pd_task(void *u)
 				/* Set the USB muxes and the default USB role */
 				pd_set_data_role(port, CONFIG_USB_PD_DEBUG_DR);
 
-#if defined(CONFIG_CASE_CLOSED_DEBUG) || defined(CONFIG_USB_PD_DTS)
+#ifdef CONFIG_USB_PD_DTS
 				if (new_cc_state == PD_CC_DEBUG_ACC) {
 					ccd_set_mode(system_is_locked() ?
 						     CCD_MODE_PARTIAL :
 						     CCD_MODE_ENABLED);
-				}
-#endif
-#ifdef CONFIG_USB_PD_DTS
-				if (new_cc_state == PD_CC_DEBUG_ACC) {
+
 					/* Enable Vbus */
 					pd_set_power_supply_ready(port);
 					/* Captive cable, CC1 always */
@@ -1992,7 +1988,7 @@ void pd_task(void *u)
 			     (cc1 != TYPEC_CC_VOLT_RD ||
 			      cc2 != TYPEC_CC_VOLT_RD))) {
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
-#if defined(CONFIG_CASE_CLOSED_DEBUG) || defined(CONFIG_USB_PD_DTS)
+#ifdef CONFIG_USB_PD_DTS
 				ccd_set_mode(CCD_MODE_DISABLED);
 #endif
 				timeout = 10*MSEC;
@@ -2467,16 +2463,9 @@ void pd_task(void *u)
 					&pd_usb_billboard_deferred_data,
 					PD_T_AME);
 			}
-#if defined(CONFIG_CASE_CLOSED_DEBUG) || \
-defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
-			else if (new_cc_state == PD_CC_DEBUG_ACC) {
-#ifdef CONFIG_CASE_CLOSED_DEBUG
-				ccd_set_mode(system_is_locked() ?
-					     CCD_MODE_PARTIAL :
-					     CCD_MODE_ENABLED);
-#endif
+#ifdef CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
+			else if (new_cc_state == PD_CC_DEBUG_ACC)
 				set_state(port, PD_STATE_SNK_ACCESSORY);
-			}
 			break;
 		case PD_STATE_SNK_ACCESSORY:
 			/* debug accessory state */
@@ -2487,9 +2476,6 @@ defined(CONFIG_CASE_CLOSED_DEBUG_EXTERNAL)
 			/* If accessory becomes detached */
 			if (!cc_is_rp(cc1) || !cc_is_rp(cc2)) {
 				set_state(port, PD_STATE_SNK_DISCONNECTED);
-#ifdef CONFIG_CASE_CLOSED_DEBUG
-				ccd_set_mode(CCD_MODE_DISABLED);
-#endif
 				timeout = 10*MSEC;
 			}
 #endif

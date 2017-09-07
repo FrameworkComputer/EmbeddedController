@@ -81,9 +81,6 @@
 #define CONFIG_STREAM_USB
 #define CONFIG_STREAM_USART1
 
-/* Enable Case Closed Debugging */
-#define CONFIG_CASE_CLOSED_DEBUG
-
 #define CONFIG_USB_PID 0x502a
 #define CONFIG_USB_SELF_POWERED
 
