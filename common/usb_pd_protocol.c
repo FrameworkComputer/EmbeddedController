@@ -332,9 +332,9 @@ static inline void set_state(int port, enum pd_states next_state)
 	}
 
 #ifdef CONFIG_LOW_POWER_IDLE
-	/* If any PD port is connected, then disable deep sleep */
+	/* If a PD device is attached then disable deep sleep */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
-		if (pd_is_connected(i))
+		if (pd[i].flags & PD_FLAGS_PREVIOUS_PD_CONN)
 			break;
 	}
 	if (i == CONFIG_USB_PD_PORT_COUNT)
