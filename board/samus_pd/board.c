@@ -250,7 +250,7 @@ static void board_init(void)
 	/* Set PD MCU system status bits */
 	if (system_jumped_to_this_image())
 		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+	if (system_is_in_rw())
 		pd_status_flags |= PD_STATUS_IN_RW;
 
 #ifdef CONFIG_PWM
@@ -369,8 +369,7 @@ int pd_is_max_request_allowed(void)
 int board_is_ramp_allowed(int supplier)
 {
 	/* Don't allow ramping in RO when write protected */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-	    && system_is_locked())
+	if (!system_is_in_rw() && system_is_locked())
 		return 0;
 	else
 		return supplier == CHARGE_SUPPLIER_BC12_DCP ||

@@ -59,7 +59,7 @@ static void board_init(void)
 	/* Set PD MCU system status bits */
 	if (system_jumped_to_this_image())
 		pd_status_flags |= PD_STATUS_JUMPED_TO_IMAGE;
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+	if (system_is_in_rw())
 		pd_status_flags |= PD_STATUS_IN_RW;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

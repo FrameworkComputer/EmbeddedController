@@ -313,7 +313,7 @@ static int test_overwrite_other(void)
 	uint32_t offset, size;
 
 	/* Test that we can overwrite the other image */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW) {
+	if (system_is_in_rw()) {
 		offset = CONFIG_RO_STORAGE_OFF;
 		size = CONFIG_RO_SIZE;
 	} else {

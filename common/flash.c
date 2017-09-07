@@ -368,7 +368,7 @@ static const uintptr_t get_pstate_addr(void)
 	uintptr_t addr = (uintptr_t)&pstate_data;
 
 	/* Always use the pstate data in RO, even if we're RW */
-	if (system_get_image_copy() == SYSTEM_IMAGE_RW)
+	if (system_is_in_rw())
 		addr += CONFIG_RO_MEM_OFF - CONFIG_RW_MEM_OFF;
 
 	return addr;

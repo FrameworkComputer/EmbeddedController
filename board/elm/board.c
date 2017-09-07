@@ -344,8 +344,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 int board_is_ramp_allowed(int supplier)
 {
 	/* Don't allow ramping in RO when write protected */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-	    && system_is_locked())
+	if (!system_is_in_rw() && system_is_locked())
 		return 0;
 	else
 		return supplier == CHARGE_SUPPLIER_BC12_DCP ||

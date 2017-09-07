@@ -190,8 +190,7 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 int board_is_ramp_allowed(int supplier)
 {
 	/* Don't allow ramping in RO when write protected. */
-	if (system_get_image_copy() != SYSTEM_IMAGE_RW
-	    && system_is_locked())
+	if (!system_is_in_rw() && system_is_locked())
 		return 0;
 
 	/*

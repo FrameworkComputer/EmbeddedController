@@ -497,6 +497,16 @@ static void jump_to_image(uintptr_t init_addr)
 	resetvec();
 }
 
+static int is_rw_image(enum system_image_copy_t copy)
+{
+	return copy == SYSTEM_IMAGE_RW || copy == SYSTEM_IMAGE_RW_B;
+}
+
+int system_is_in_rw(void)
+{
+	return is_rw_image(system_get_image_copy());
+}
+
 int system_run_image_copy(enum system_image_copy_t copy)
 {
 	uintptr_t base;
@@ -515,7 +525,7 @@ int system_run_image_copy(enum system_image_copy_t copy)
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Target image must be RW image */
-		if (copy != SYSTEM_IMAGE_RW)
+		if (!is_rw_image(copy))
 			return EC_ERROR_ACCESS_DENIED;
 
 		/* Jumping must still be enabled */
@@ -588,7 +598,7 @@ static const struct image_data *system_get_image_data(
 	 * Read the version information from the proper location
 	 * on storage.
 	 */
-	addr += (copy == SYSTEM_IMAGE_RW) ?
+	addr += (is_rw_image(copy)) ?
 		CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF :
 		CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_RO_STORAGE_OFF;
 
