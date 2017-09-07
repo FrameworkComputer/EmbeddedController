@@ -138,14 +138,19 @@ int board_use_plt_rst(void)
 	return !!(board_properties & BOARD_USE_PLT_RESET);
 }
 
+/* Allow enabling deep sleep if the board supports it. */
 int board_deep_sleep_allowed(void)
 {
-	return board_use_plt_rst();
+	return !(board_properties & BOARD_DEEP_SLEEP_DISABLED);
 }
 
+/*
+ * If the board doesn't use CR50_RX_AP_TX to determine AP state, it uses
+ * TPM_RST_L.
+ */
 int board_detect_ap_with_tpm_rst(void)
 {
-	return board_use_plt_rst();
+	return !(board_properties & BOARD_DETECT_AP_WITH_UART);
 }
 
 int board_rst_pullup_needed(void)
@@ -231,7 +236,8 @@ const struct strap_desc strap_regs[] = {
 static struct board_cfg board_cfg_table[] = {
 	/* SPI Variants: DIOA12 = 1M PD, DIOA6 = 1M PD */
 	/* Kevin/Gru: DI0A9 = 5k PD, DIOA1 = 1M PU */
-	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP },
+	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP |
+	  BOARD_DEEP_SLEEP_DISABLED | BOARD_DETECT_AP_WITH_UART },
 	/* Poppy: DI0A9 = 1M PU, DIOA1 = 1M PU */
 	{ 0x0A, BOARD_SLAVE_CONFIG_SPI | BOARD_USE_PLT_RESET },
 
@@ -239,7 +245,8 @@ static struct board_cfg board_cfg_table[] = {
 	/* Reef/Eve: DIOA12 = 5k PD, DIOA6 = 1M PU */
 	{ 0x20, BOARD_SLAVE_CONFIG_I2C | BOARD_USE_PLT_RESET },
 	/* Rowan: DIOA12 = 5k PD, DIOA6 = 5k PU */
-	{ 0x30, BOARD_SLAVE_CONFIG_I2C },
+	{ 0x30, BOARD_SLAVE_CONFIG_I2C | BOARD_DEEP_SLEEP_DISABLED |
+	  BOARD_DETECT_AP_WITH_UART },
 };
 
 void post_reboot_request(void)

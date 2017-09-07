@@ -45,6 +45,10 @@
 #define BOARD_CCD_SHIFT              11
 #define BOARD_CCD_STATE              (3 << BOARD_CCD_SHIFT)
 
+/* Prevent Cr50 from entering deep sleep when the AP is off */
+#define BOARD_DEEP_SLEEP_DISABLED    (1 << 13)
+/* Use Cr50_RX_AP_TX to determine if the AP is off or on */
+#define BOARD_DETECT_AP_WITH_UART    (1 << 14)
 /*
  * Macro to capture all properties related to board strapping pins. This must be
  * updated if additional strap related properties are added.
