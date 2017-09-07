@@ -506,7 +506,7 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define DXEPCTL_TXFNUM(n)             ((n) << GC_USB_DIEPCTL1_TXFNUM_LSB)
 #define DXEPCTL_STALL                 (1 << GC_USB_DIEPCTL0_STALL_LSB)
 #define DXEPCTL_CNAK                  (1 << GC_USB_DIEPCTL0_CNAK_LSB)
-#define DXEPCTL_DPID                  (1 << GC_USB_DIEPCTL0_DPID_LSB)
+#define DXEPCTL_DPID                  (1 << GC_USB_DIEPCTL1_DPID_LSB)
 #define DXEPCTL_SNAK                  (1 << GC_USB_DIEPCTL0_SNAK_LSB)
 #define DXEPCTL_NAKSTS                (1 << GC_USB_DIEPCTL0_NAKSTS_LSB)
 #define DXEPCTL_EPENA                 (1 << GC_USB_DIEPCTL0_EPENA_LSB)
@@ -514,6 +514,8 @@ static inline int x_timehs_addr(unsigned int module, unsigned int timer,
 #define DXEPCTL_USBACTEP              (1 << GC_USB_DIEPCTL0_USBACTEP_LSB)
 #define DXEPCTL_MPS64                 (0 << GC_USB_DIEPCTL0_MPS_LSB)
 #define DXEPCTL_MPS(cnt)              ((cnt) << GC_USB_DIEPCTL1_MPS_LSB)
+#define DXEPCTL_SET_D0PID             (1 << 28)
+#define DXEPCTL_SET_D1PID             (1 << 29)
 
 #define DXEPTSIZ_SUPCNT(n)            ((n) << GC_USB_DOEPTSIZ0_SUPCNT_LSB)
 #define DXEPTSIZ_PKTCNT(n)            ((n) << GC_USB_DIEPTSIZ0_PKTCNT_LSB)

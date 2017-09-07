@@ -15,6 +15,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_api.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
@@ -124,13 +125,9 @@ static void prepare_to_sleep(void)
 
 		/* Make sure the usb clock is enabled */
 		clock_enable_module(MODULE_USB, 1);
-		/*
-		 * Preserve some state prior to deep sleep. Pretty much all we
-		 * need is the device address, since everything else can be
-		 * reinitialized on resume.
-		 */
+		/* Preserve some state from USB hardware prior to deep sleep. */
 		if (!GREAD_FIELD(USB, PCGCCTL, RSTPDWNMODULE))
-			GREG32(PMU, PWRDN_SCRATCH18) = GR_USB_DCFG;
+			usb_save_suspended_state();
 
 		/* Increment the deep sleep count */
 		GREG32(PMU, PWRDN_SCRATCH17) =

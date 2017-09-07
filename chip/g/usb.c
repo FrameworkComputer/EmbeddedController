@@ -1231,6 +1231,41 @@ void usb_disconnect(void)
 	configuration_value = 0;
 }
 
+void usb_save_suspended_state(void)
+{
+	int i;
+	uint32_t pid = 0;
+
+	/* Record the state the DATA PIDs toggling on each endpoint. */
+	for (i = 1; i < USB_EP_COUNT; i++) {
+		if (GR_USB_DOEPCTL(i) & DXEPCTL_DPID)
+			pid |= (1 << i);
+		if (GR_USB_DIEPCTL(i) & DXEPCTL_DPID)
+			pid |= (1 << (i + 16));
+	}
+	/* Save the USB device address */
+	GREG32(PMU, PWRDN_SCRATCH18) = GR_USB_DCFG;
+	GREG32(PMU, PWRDN_SCRATCH19) = pid;
+
+}
+
+void usb_restore_suspended_state(void)
+{
+	int i;
+	uint32_t pid;
+
+	/* restore the USB device address (the DEVADDR field). */
+	GR_USB_DCFG = GREG32(PMU, PWRDN_SCRATCH18);
+	/* Restore the DATA PIDs on endpoints. */
+	pid = GREG32(PMU, PWRDN_SCRATCH19);
+	for (i = 1; i < USB_EP_COUNT; i++) {
+		GR_USB_DOEPCTL(i) = pid & (1 << i) ?
+			DXEPCTL_SET_D1PID : DXEPCTL_SET_D0PID;
+		GR_USB_DIEPCTL(i) = pid & (1 << (i + 16)) ?
+			DXEPCTL_SET_D1PID : DXEPCTL_SET_D0PID;
+	}
+}
+
 void usb_init(void)
 {
 	int i, resume;
@@ -1303,10 +1338,7 @@ void usb_init(void)
 		usb_disconnect();
 
 	if (resume)
-		/* DEVADDR is preserved in the USB module during deep sleep,
-		 * but it doesn't show up in USB_DCFG on resume. If we don't
-		 * restore it manually too, it doesn't work. */
-		GR_USB_DCFG = GREG32(PMU, PWRDN_SCRATCH18);
+		usb_restore_suspended_state();
 	else
 		/* Init: USB2 FS, Scatter/Gather DMA, DEVADDR = 0x00 */
 		GR_USB_DCFG |= DCFG_DEVSPD_FS48 | DCFG_DESCDMA;
