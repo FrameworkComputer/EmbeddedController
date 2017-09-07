@@ -280,7 +280,7 @@ static void board_charge_manager_init(void)
 	case CHARGE_PORT_BARRELJACK:
 		cpi.voltage = input_voltage;
 		cpi.current = 3330;	/* TODO: Set right value */
-		charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY, 1,
+		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1,
 					     &cpi);
 		/* Source only. Disable PD negotiation as a sink */
 		break;

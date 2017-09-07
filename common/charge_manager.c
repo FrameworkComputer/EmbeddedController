@@ -31,6 +31,9 @@
 /* Charge supplier priority: lower number indicates higher priority. */
 test_mockable const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_PD] = 0,
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+	[CHARGE_SUPPLIER_DEDICATED] = 0,
+#endif
 	[CHARGE_SUPPLIER_TYPEC] = 1,
 	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
 	[CHARGE_SUPPLIER_BC12_DCP] = 2,
@@ -264,6 +267,7 @@ static void charge_manager_fill_power_info(int port,
 		const int use_ramp_current = 0;
 #endif
 
+		/* TODO: Handle CHARGE_SUPPLIER_DEDICATED */
 		switch (sup) {
 		case CHARGE_SUPPLIER_PD:
 			r->type = USB_CHG_TYPE_PD;
