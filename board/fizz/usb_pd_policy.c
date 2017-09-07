@@ -128,6 +128,9 @@ int pd_board_checks(void)
 
 int pd_check_power_swap(int port)
 {
+	/* If type-c port is supplying power, we never swap PR (to source) */
+	if (port == charge_manager_get_active_charge_port())
+		return 0;
 	/*
 	 * Allow power swap as long as we are acting as a dual role device,
 	 * otherwise assume our role is fixed (not in S0 or console command
@@ -253,7 +256,8 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 
 static void board_charge_manager_init(void)
 {
-	int input_voltage, input_port;
+	int input_voltage;
+	enum charge_port input_port;
 	int i, j;
 	struct charge_port_info cpi = {
 		.voltage = USB_CHARGER_VOLTAGE_MV,
