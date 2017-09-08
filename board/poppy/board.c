@@ -632,6 +632,10 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
 		gpio_set_level(GPIO_USB_C1_CHARGE_L, 1);
 	} else {
+		/*
+		 * TODO(b:67029560): Here, we should make sure that base/lid
+		 * power is diconnected.
+		 */
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :
 					     GPIO_USB_C1_CHARGE_L, 1);

@@ -6076,6 +6076,11 @@ int get_battery_command(int index)
 	if (rv < 0)
 		return -1;
 
+	if (dynamic_r.flags & EC_BATT_FLAG_INVALID_DATA) {
+		printf("  Invalid data (not present?)\n");
+		return -1;
+	}
+
 	if (!is_string_printable(static_r.manufacturer))
 		goto cmd_error;
 	printf("  OEM name:               %s\n", static_r.manufacturer);

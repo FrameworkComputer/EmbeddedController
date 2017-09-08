@@ -6,6 +6,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
+#include "ec_ec_comm_master.h"
 #include "timer.h"
 
 #ifndef __CROS_EC_CHARGE_STATE_V2_H
@@ -41,6 +42,9 @@ struct charge_state_data {
 #ifdef CONFIG_CHARGER_OTG
 	int output_current;
 #endif
+#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+	int input_voltage;
+#endif
 };
 
 /**
@@ -73,6 +77,17 @@ int charge_set_input_current_limit(int ma, int mv);
 #ifdef CONFIG_CHARGE_STATE_DEBUG
 int charge_get_charge_state_debug(int param, uint32_t *value);
 #endif /* CONFIG_CHARGE_STATE_DEBUG */
+
+/**
+ * Board-specific routine to indicate if the base is connected.
+ */
+int board_is_base_connected(void);
+
+/**
+ * Board-specific routine to enable power distribution between lid and base
+ * (current can flow both ways).
+ */
+void board_enable_base_power(int enable);
 
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
 
