@@ -4,6 +4,7 @@
  */
 /* tiny substitute of the runtime layer */
 
+#include "chip/stm32/clock-f.h"
 #include "clock.h"
 #include "common.h"
 #include "cpu.h"
@@ -90,7 +91,7 @@ void tim2_interrupt(void)
 }
 DECLARE_IRQ(STM32_IRQ_TIM2, tim2_interrupt, 1);
 
-static void config_hispeed_clock(void)
+static void zinger_config_hispeed_clock(void)
 {
 	/* Ensure that HSI8 is ON */
 	if (!(STM32_RCC_CR & (1 << 1))) {
@@ -143,7 +144,7 @@ uint32_t task_wait_event(int timeout_us)
 {
 	uint32_t evt;
 	timestamp_t t0, t1;
-	uint32_t rtc0, rtc0ss, rtc1, rtc1ss;
+	struct rtc_time_reg rtc0, rtc1;
 	int rtc_diff;
 
 	t1.val = get_time().val + timeout_us;
@@ -179,17 +180,17 @@ uint32_t task_wait_event(int timeout_us)
 			CPU_SCB_SYSCTRL |= 0x4;
 
 			set_rtc_alarm(0, timeout_us - STOP_MODE_LATENCY,
-				      &rtc0, &rtc0ss);
+				      &rtc0);
 
 			asm volatile("wfi");
 
 			CPU_SCB_SYSCTRL &= ~0x4;
 
-			config_hispeed_clock();
+			zinger_config_hispeed_clock();
 
 			/* fast forward timer according to RTC counter */
-			reset_rtc_alarm(&rtc1, &rtc1ss);
-			rtc_diff = get_rtc_diff(rtc0, rtc0ss, rtc1, rtc1ss);
+			reset_rtc_alarm(&rtc1);
+			rtc_diff = get_rtc_diff(&rtc0, &rtc1);
 			t0.val = t0.val + rtc_diff;
 			force_time(t0);
 		}

@@ -249,10 +249,10 @@ defined(CHIP_VARIANT_STM32F070)
 #ifdef CONFIG_HIBERNATE
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	uint32_t rtc, rtcss;
+	struct rtc_time_reg rtc;
 
 	if (seconds || microseconds)
-		set_rtc_alarm(seconds, microseconds, &rtc, &rtcss);
+		set_rtc_alarm(seconds, microseconds, &rtc);
 
 	/* interrupts off now */
 	asm volatile("cpsid i");
@@ -304,7 +304,7 @@ void __idle(void)
 {
 	timestamp_t t0;
 	int next_delay, margin_us, rtc_diff;
-	uint32_t rtc0, rtc0ss, rtc1, rtc1ss;
+	struct rtc_time_reg rtc0, rtc1;
 
 	while (1) {
 		asm volatile("cpsid i");
@@ -323,7 +323,7 @@ void __idle(void)
 			CPU_SCB_SYSCTRL |= 0x4;
 
 			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY,
-				      &rtc0, &rtc0ss);
+				      &rtc0);
 			asm("wfi");
 
 			CPU_SCB_SYSCTRL &= ~0x4;
@@ -337,8 +337,8 @@ void __idle(void)
 			config_hispeed_clock();
 
 			/* fast forward timer according to RTC counter */
-			reset_rtc_alarm(&rtc1, &rtc1ss);
-			rtc_diff = get_rtc_diff(rtc0, rtc0ss, rtc1, rtc1ss);
+			reset_rtc_alarm(&rtc1);
+			rtc_diff = get_rtc_diff(&rtc0, &rtc1);
 			t0.val = t0.val + rtc_diff;
 			force_time(t0);
 
@@ -412,8 +412,12 @@ void rtc_init(void)
 	rtc_lock_regs();
 }
 
+#if defined(CONFIG_CMD_RTC) || defined(CONFIG_HOSTCMD_RTC)
 void rtc_set(uint32_t sec)
 {
+	struct rtc_time_reg rtc;
+
+	sec_to_rtc(sec, &rtc);
 	rtc_unlock_regs();
 
 	/* Disable alarm */
@@ -427,12 +431,14 @@ void rtc_set(uint32_t sec)
 	/* Set clock prescalars */
 	STM32_RTC_PRER = (RTC_PREDIV_A << 16) | RTC_PREDIV_S;
 
-	STM32_RTC_TR = sec_to_rtc(sec);
+	STM32_RTC_TR = rtc.rtc_tr;
+	STM32_RTC_DR = rtc.rtc_dr;
 	/* Start RTC timer */
 	STM32_RTC_ISR &= ~STM32_RTC_ISR_INIT;
 
 	rtc_lock_regs();
 }
+#endif
 
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_COMMON_RUNTIME)
 #ifdef CONFIG_CMD_IDLE_STATS

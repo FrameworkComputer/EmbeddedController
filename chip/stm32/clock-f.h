@@ -32,41 +32,44 @@ static inline void rtc_unlock_regs(void)
 	STM32_RTC_WPR = 0x53;
 }
 
+struct rtc_time_reg {
+	uint32_t rtc_ssr; /* subseconds */
+	uint32_t rtc_tr; /* hours, minutes, seconds */
+	uint32_t rtc_dr; /* years, months, dates, week days */
+};
+
 /* Convert between RTC regs in BCD and seconds */
-uint32_t rtc_to_sec(uint32_t rtc);
+uint32_t rtc_to_sec(const struct rtc_time_reg *rtc);
 
 /* Convert between seconds and RTC regs */
-uint32_t sec_to_rtc(uint32_t sec);
+void sec_to_rtc(uint32_t sec, struct rtc_time_reg *rtc);
 
-/* Calculate microseconds from rtc clocks. */
+/* Calculate microseconds from rtc sub-second register. */
 int32_t rtcss_to_us(uint32_t rtcss);
 
-/* Calculate rtc clocks from microseconds. */
+/* Calculate rtc sub-second register value from microseconds. */
 uint32_t us_to_rtcss(int32_t us);
 
-/* Return time diff between two rtc readings */
-int32_t get_rtc_diff(uint32_t rtc0, uint32_t rtc0ss,
-		     uint32_t rtc1, uint32_t rtc1ss);
+/* Return sub-10-sec time diff between two rtc readings */
+int32_t get_rtc_diff(const struct rtc_time_reg *rtc0,
+		     const struct rtc_time_reg *rtc1);
 
 /* Read RTC values */
-void rtc_read(uint32_t *rtc, uint32_t *rtcss);
+void rtc_read(struct rtc_time_reg *rtc);
 
 /* Set RTC value */
 void rtc_set(uint32_t sec);
 
-/* Return RTC value in seconds */
-uint32_t rtc_read_sec(void);
-
 /* Set RTC wakeup */
 void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
-		      uint32_t *rtc, uint32_t *rtcss);
+		   struct rtc_time_reg *rtc);
 
 /* Clear RTC wakeup */
-void reset_rtc_alarm(uint32_t *rtc, uint32_t *rtcss);
+void reset_rtc_alarm(struct rtc_time_reg *rtc);
 
 /*
  * Return the remaining seconds before the RTC alarm goes off.
- * Returns 0 if alarm is not set.
+ * Sub-seconds are ignored. Returns 0 if alarm is not set.
  */
 uint32_t get_rtc_alarm(void);
 

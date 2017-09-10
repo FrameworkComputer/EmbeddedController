@@ -34,12 +34,12 @@
 #define RTC_PREDIV_S (RTC_FREQ - 1)
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
 
-int32_t rtcss_to_us(uint32_t rtcss)
+int32_t rtc_ssr_to_us(uint32_t rtcss)
 {
 	return ((RTC_PREDIV_S - rtcss) * US_PER_RTC_TICK);
 }
 
-uint32_t us_to_rtcss(int32_t us)
+uint32_t us_to_rtc_ssr(int32_t us)
 {
 	return (RTC_PREDIV_S - (us / US_PER_RTC_TICK));
 }
