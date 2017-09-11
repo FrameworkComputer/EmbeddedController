@@ -23,16 +23,41 @@ static uint16_t __bss_slow history[HISTORY_LEN];
 static int __bss_slow writes;    /* Number of port 80 writes so far */
 static int last_boot; /* Last code from previous boot */
 static int __bss_slow scroll;
-static int print_in_int = 1;
+
+#ifdef CONFIG_BRINGUP
+#undef CONFIG_PORT80_PRINT_IN_INT
+#define CONFIG_PORT80_PRINT_IN_INT 1
+#endif
+
+static int print_in_int = CONFIG_PORT80_PRINT_IN_INT;
+
+static void port80_dump_buffer(void);
+DECLARE_DEFERRED(port80_dump_buffer);
 
 void port_80_write(int data)
 {
 	/*
-	 * Note that this currently prints from inside the LPC interrupt
-	 * itself.  If you're dropping events, turn print_in_int off.
+	 * By default print_in_int is disabled if:
+	 * 1. CONFIG_BRINGUP is not defined
+	 * 2. CONFIG_PRINT_IN_INT is set to disable by default
+	 *
+	 * This is done to prevent printing in interrupt context. Boards can
+	 * enable this by either defining CONFIG_BRINGUP or enabling
+	 * CONFIG_PRINT_IN_INT in board configs.
+	 *
+	 * If at runtime, print_in_int is disabled, then this function will
+	 * schedule a deferred call 4 seconds after the last port80 write to
+	 * dump the current port80 buffer to EC console. This is to allow
+	 * developers to help debug BIOS progress by tracing port80 messages.
+	 *
+	 * P.S.: Deferred call is not scheduled for special event codes (data >=
+	 * 0x100). This is because only 8-bit port80 messages are assumed to be
+	 * coming from the host.
 	 */
 	if (print_in_int)
 		CPRINTF("%c[%T Port 80: 0x%02x]", scroll ? '\n' : '\r', data);
+	else if (data < 0x100)
+		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
 
 	/* Save current port80 code if system is resetting */
 	if (data == PORT_80_EVENT_RESET && writes) {
@@ -47,36 +72,11 @@ void port_80_write(int data)
 	writes++;
 }
 
-/*****************************************************************************/
-/* Console commands */
-
-static int command_port80(int argc, char **argv)
+static void port80_dump_buffer(void)
 {
-	int head, tail;
 	int printed = 0;
 	int i;
-
-	/*
-	 * 'port80 scroll' toggles whether port 80 output begins with a newline
-	 * (scrolling) or CR (non-scrolling).
-	 */
-	if (argc > 1) {
-		if (!strcasecmp(argv[1], "scroll")) {
-			scroll = !scroll;
-			ccprintf("scroll %sabled\n", scroll ? "en" : "dis");
-			return EC_SUCCESS;
-		} else if (!strcasecmp(argv[1], "intprint")) {
-			print_in_int = !print_in_int;
-			ccprintf("printing in interrupt %sabled\n",
-				 print_in_int ? "en" : "dis");
-			return EC_SUCCESS;
-		} else if (!strcasecmp(argv[1], "flush")) {
-			writes = 0;
-			return EC_SUCCESS;
-		} else {
-			return EC_ERROR_PARAM1;
-		}
-	}
+	int head, tail;
 
 	/*
 	 * Print the port 80 writes so far, clipped to the length of our
@@ -113,6 +113,36 @@ static int command_port80(int argc, char **argv)
 		}
 	}
 	ccputs(" <--new\n");
+}
+
+/*****************************************************************************/
+/* Console commands */
+
+static int command_port80(int argc, char **argv)
+{
+	/*
+	 * 'port80 scroll' toggles whether port 80 output begins with a newline
+	 * (scrolling) or CR (non-scrolling).
+	 */
+	if (argc > 1) {
+		if (!strcasecmp(argv[1], "scroll")) {
+			scroll = !scroll;
+			ccprintf("scroll %sabled\n", scroll ? "en" : "dis");
+			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[1], "intprint")) {
+			print_in_int = !print_in_int;
+			ccprintf("printing in interrupt %sabled\n",
+				 print_in_int ? "en" : "dis");
+			return EC_SUCCESS;
+		} else if (!strcasecmp(argv[1], "flush")) {
+			writes = 0;
+			return EC_SUCCESS;
+		} else {
+			return EC_ERROR_PARAM1;
+		}
+	}
+
+	port80_dump_buffer();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(port80, command_port80,

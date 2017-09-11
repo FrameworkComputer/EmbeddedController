@@ -1920,6 +1920,12 @@
  */
 #undef CONFIG_POLLING_UART
 
+/*
+ * Enable/Disable printing of port80 messages in interrupt context. By default,
+ * this is disabled.
+ */
+#define CONFIG_PORT80_PRINT_IN_INT 0
+
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
