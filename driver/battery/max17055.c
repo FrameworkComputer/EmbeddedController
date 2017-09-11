@@ -101,7 +101,9 @@ static int max17055_probe(void)
 
 int battery_device_name(char *device_name, int buf_size)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	strzcpy(device_name, "<BATT>", buf_size);
+
+	return EC_SUCCESS;
 }
 
 int battery_state_of_charge_abs(int *percent)
@@ -258,6 +260,12 @@ void battery_get_params(struct batt_params *batt)
 
 	batt->desired_voltage = battery_get_info()->voltage_max;
 	batt->desired_current = BATTERY_DESIRED_CHARGING_CURRENT;
+
+	if (battery_remaining_capacity(&batt->remaining_capacity))
+		batt->flags |= BATT_FLAG_BAD_REMAINING_CAPACITY;
+
+	if (battery_full_charge_capacity(&batt->full_capacity))
+		batt->flags |= BATT_FLAG_BAD_FULL_CAPACITY;
 
 	/* If any of those reads worked, the battery is responsive */
 	if ((batt->flags & flags_to_check) != flags_to_check) {
