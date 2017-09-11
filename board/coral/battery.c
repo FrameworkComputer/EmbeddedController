@@ -148,7 +148,7 @@ static const struct board_batt_params info[] = {
 	/* Panasonic AP1505L Battery Information */
 	[BATTERY_PANASONIC] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASON",
+			.manuf_name = "PANASONIC",
 			.ship_mode = {
 				.reg_addr = 0x3A,
 				.reg_data = { 0xC574, 0xC574 },
