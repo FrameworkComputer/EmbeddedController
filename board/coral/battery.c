@@ -179,7 +179,7 @@ static const struct board_batt_params info[] = {
 			.manuf_name = "Celxpert",
 			.ship_mode = {
 				.reg_addr = 0x34,
-				.reg_data = { 0x0, 0x1 },
+				.reg_data = { 0x0, 0x1000 },
 			},
 			.fet = {
 				.reg_addr = 0x0,
@@ -204,10 +204,10 @@ static const struct board_batt_params info[] = {
 	/* LGC\011 L17L3PB0 Battery Information */
 	[BATTERY_LGC011] = {
 		.fuel_gauge = {
-			.manuf_name = "LGC\011",
+			.manuf_name = "LGC",
 			.ship_mode = {
 				.reg_addr = 0x34,
-				.reg_data = { 0x0, 0x1 },
+				.reg_data = { 0x0, 0x1000 },
 			},
 			.fet = {
 				.reg_addr = 0x0,
@@ -232,10 +232,10 @@ static const struct board_batt_params info[] = {
 	/* SMP\011 L17M3PB0 Battery Information */
 	[BATTERY_SMP011] = {
 		.fuel_gauge = {
-			.manuf_name = "SMP\011",
+			.manuf_name = "SMP",
 			.ship_mode = {
 				.reg_addr = 0x34,
-				.reg_data = { 0x0, 0x1 },
+				.reg_data = { 0x0, 0x1000 },
 			},
 			.fet = {
 				.reg_addr = 0x0,
