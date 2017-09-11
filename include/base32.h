@@ -12,13 +12,14 @@
 extern const char base32_map[33];
 
 /**
- * 5-bit CRC
+ * CRC-5-USB Initially created for USB Token Packets. It uses
+ * the generator polynomial X^5 + X^2 + X^0 and is 5-bits.
  *
  * @param sym		New symbol to update CRC with
  * @param previous_crc	Existing CRC value
  * @return The updated CRC.
  */
-uint8_t crc5_sym(int sym, uint8_t previous_crc);
+uint8_t crc5_sym(uint8_t sym, uint8_t previous_crc);
 
 /**
  * base32-encode data into a null-terminated string

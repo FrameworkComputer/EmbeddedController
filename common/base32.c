@@ -9,22 +9,20 @@
 #include "base32.h"
 #include "util.h"
 
-uint8_t crc5_sym(int sym, uint8_t previous_crc)
-{
-	unsigned crc = previous_crc << 8;
-	int i;
+static const unsigned char crc5_table1[] = {
+	0x00, 0x0E, 0x1C, 0x12, 0x11, 0x1F, 0x0D, 0x03,
+	0x0B, 0x05, 0x17, 0x19, 0x1A, 0x14, 0x06, 0x08
+};
 
-	/*
-	 * This is a modified CRC-8 which only folds in a 5-bit
-	 * symbol, and it only keeps the bottom 5 bits of the CRC.
-	 */
-	crc ^= (sym << 11);
-	for (i = 5; i; i--) {
-		if (crc & 0x8000)
-			crc ^= (0x1070 << 3);
-		crc <<= 1;
-	}
-	return (uint8_t)((crc >> 8) & 0x1f);
+static const unsigned char crc5_table0[] = {
+	0x00, 0x16, 0x05, 0x13, 0x0A, 0x1C, 0x0F, 0x19,
+	0x14, 0x02, 0x11, 0x07, 0x1E, 0x08, 0x1B, 0x0D
+};
+
+uint8_t crc5_sym(uint8_t sym, uint8_t previous_crc)
+{
+	uint8_t tmp = sym ^ previous_crc;
+	return crc5_table1[tmp & 0x0F] ^ crc5_table0[(tmp >> 4) & 0x0F];
 }
 
 /* A-Z0-9 with I,O,0,1 removed */
