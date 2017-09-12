@@ -66,6 +66,8 @@ static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
 /* Battery may delay reporting battery present */
 static int battery_report_present = 1;
 
+static int disch_on_ac;
+
 /*
  * Battery info for all Coral battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -455,7 +457,7 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	int disch_on_ac = charger_should_discharge_on_ac(curr);
+	disch_on_ac = charger_should_discharge_on_ac(curr);
 
 	charger_discharge_on_ac(disch_on_ac);
 
@@ -582,11 +584,22 @@ int board_battery_initialized(void)
 
 /* Customs options controllable by host command. */
 #define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
+#define PARAM_LEARN_MODE	0x10001
+#define PARAM_DISCONNECT_STATE	0x10002
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value)
 {
-	return EC_RES_INVALID_PARAM;
+	switch (param) {
+	case PARAM_LEARN_MODE:
+		*value = disch_on_ac;
+		return EC_SUCCESS;
+	case PARAM_DISCONNECT_STATE:
+		*value = battery_check_disconnect();
+		return EC_SUCCESS;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
 }
 
 enum ec_status charger_profile_override_set_param(uint32_t param,
