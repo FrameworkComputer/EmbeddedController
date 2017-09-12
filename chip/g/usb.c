@@ -619,6 +619,8 @@ static int handle_setup_with_in_stage(enum table_case tc,
 		case USB_DT_DEVICE_QUALIFIER:
 			/* We're not high speed */
 			return -1;
+		case USB_DT_DEBUG:
+			return -1;
 		default:
 			report_error(type);
 			return -1;
