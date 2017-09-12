@@ -184,8 +184,8 @@ static void showregs(void)
 /* Standard USB stuff */
 
 #ifdef CONFIG_USB_BOS
-/* v2.01 (vs 2.00) BOS Descriptor provided */
-#define USB_DEV_BCDUSB 0x0201
+/* v2.10 (vs 2.00) BOS Descriptor provided */
+#define USB_DEV_BCDUSB 0x0210
 #else
 #define USB_DEV_BCDUSB 0x0200
 #endif
@@ -818,6 +818,20 @@ static void handle_setup(enum table_case tc)
 			print_later("  iface returned %d", bytes, 0, 0, 0, 0);
 		}
 	} else {
+#ifdef CONFIG_WEBUSB_URL
+		if (data_phase_in &&
+		    ((req->bmRequestType & USB_TYPE_MASK) == USB_TYPE_VENDOR)) {
+			if (req->bRequest == 0x01 &&
+			    req->wIndex == WEBUSB_REQ_GET_URL) {
+				bytes = *(uint8_t *)webusb_url;
+				bytes = MIN(req->wLength, bytes);
+				if (load_in_fifo(webusb_url, bytes) < 0)
+					bytes = -1;
+			} else {
+				report_error(-1);
+			}
+		} else
+#endif
 		/* Something we need to add support for? */
 		report_error(-1);
 	}

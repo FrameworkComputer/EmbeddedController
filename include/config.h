@@ -2888,6 +2888,18 @@
 #define CONFIG_AUX_TIMER_PERIOD_MS (CONFIG_WATCHDOG_PERIOD_MS - 500)
 
 /*****************************************************************************/
+/* WebUSB config */
+
+/*
+ * Enable the WebUSB support and define its URL.
+ * Export a WebUSB Platform Descriptor in the Binary Object Store descriptor.
+ * The WebUSB landing page URL is equal to 'CONFIG_WEBUSB_URL' plus the
+ * https:// prefix.
+ * This requires CONFIG_USB_BOS.
+ */
+#undef CONFIG_WEBUSB_URL
+
+/*****************************************************************************/
 
 /*
  * Support controlling power to WiFi, WWAN (3G/LTE), and/or bluetooth modules.

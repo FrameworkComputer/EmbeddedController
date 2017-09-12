@@ -119,6 +119,29 @@ void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet)
 	packet->wLength       = buffer[3];
 }
 
+static void ep0_send_descriptor(const uint8_t *desc, int len,
+				uint16_t fixup_size)
+{
+	/* do not send more than what the host asked for */
+	len = MIN(ep0_buf_rx[3], len);
+	/*
+	 * if we cannot transmit everything at once,
+	 * keep the remainder for the next IN packet
+	 */
+	if (len >= USB_MAX_PACKET_SIZE) {
+		desc_left = len - USB_MAX_PACKET_SIZE;
+		desc_ptr = desc + USB_MAX_PACKET_SIZE;
+		len = USB_MAX_PACKET_SIZE;
+	}
+	memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc, len);
+	if (fixup_size) /* set the real descriptor size */
+		ep0_buf_tx[1] = fixup_size;
+	btable_ep[0].tx_count = len;
+	/* send the null OUT transaction if the transfer is complete */
+	STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
+			desc_left ? 0 : EP_STATUS_OUT);
+}
+
 /* Requests on the control endpoint (aka EP0) */
 static void ep0_rx(void)
 {
@@ -141,6 +164,21 @@ static void ep0_rx(void)
 				iface_next = iface;
 			return;
 		}
+	}
+	/* vendor specific request */
+	if ((req & USB_TYPE_MASK) == USB_TYPE_VENDOR) {
+#ifdef CONFIG_WEBUSB_URL
+		uint8_t b_req = req >> 8; /* bRequest in the transfer */
+		uint16_t idx = ep0_buf_rx[2]; /* wIndex in the transfer */
+
+		if (b_req == 0x01 && idx == WEBUSB_REQ_GET_URL) {
+			int len = *(uint8_t *)webusb_url;
+
+			ep0_send_descriptor(webusb_url, len, 0);
+			return;
+		}
+#endif
+		goto unknown_req;
 	}
 
 	/* TODO check setup bit ? */
@@ -183,25 +221,8 @@ static void ep0_rx(void)
 		default: /* unhandled descriptor */
 			goto unknown_req;
 		}
-		/* do not send more than what the host asked for */
-		len = MIN(ep0_buf_rx[3], len);
-		/*
-		 * if we cannot transmit everything at once,
-		 * keep the remainder for the next IN packet
-		 */
-		if (len >= USB_MAX_PACKET_SIZE) {
-			desc_left = len - USB_MAX_PACKET_SIZE;
-			desc_ptr = desc + USB_MAX_PACKET_SIZE;
-			len = USB_MAX_PACKET_SIZE;
-		}
-		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc, len);
-		if (type == USB_DT_CONFIGURATION)
-			/* set the real descriptor size */
-			ep0_buf_tx[1] = USB_DESC_SIZE;
-		btable_ep[0].tx_count = len;
-		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
-				desc_left ? 0 : EP_STATUS_OUT);
-		/* send the null OUT transaction if the transfer is complete */
+		ep0_send_descriptor(desc, len, type == USB_DT_CONFIGURATION ?
+						USB_DESC_SIZE : 0);
 	} else if (req == (USB_DIR_IN | (USB_REQ_GET_STATUS << 8))) {
 		uint16_t data = 0;
 		/* Get status */

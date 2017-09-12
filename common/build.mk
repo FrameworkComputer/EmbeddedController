@@ -120,6 +120,7 @@ common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o
 common-$(CONFIG_VBOOT_EFS)+=vboot/vboot.o
 common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
 common-$(CONFIG_VSTORE)+=vstore.o
+common-$(CONFIG_WEBUSB_URL)+=webusb_desc.o
 common-$(CONFIG_WIRELESS)+=wireless.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o
 common-$(HAS_TASK_CONSOLE)+=console.o console_output.o uart_buffering.o

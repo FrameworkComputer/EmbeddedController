@@ -86,6 +86,24 @@ struct usb_contid_caps_descriptor {
 #define USB_DC_DTYPE_BILLBOARD 0x0d
 /* RESERVED 0x00, 0xOe - 0xff */
 
+/* Platform descriptor */
+struct usb_platform_descriptor {
+	uint8_t  bLength;
+	uint8_t  bDescriptorType;     /* USB_DT_DEVICE_CAPABILITY */
+	uint8_t  bDevCapabilityType;  /* USB_DC_DTYPE_PLATFORM */
+	uint8_t  bReserved;           /* SBZ */
+	uint8_t  PlatformCapUUID[16]; /* USB_PLAT_CAP_xxx */
+	uint16_t bcdVersion;          /* 0x0100 */
+	uint8_t  bVendorCode;
+	uint8_t  iLandingPage;
+} __packed;
+#define USB_DT_PLATFORM_SIZE   24
+
+/* Platform Capability UUIDs */
+#define USB_PLAT_CAP_WEBUSB /*{3408b638-09a9-47a0-8bfd-a0768815b665}*/ \
+	{0x38, 0xB6, 0x08, 0x34, 0xA9, 0x09, 0xA0, 0x47,               \
+	 0x8B, 0xFD, 0xA0, 0x76, 0x88, 0x15, 0xB6, 0x65}
+
 /* Qualifier Descriptor */
 struct usb_qualifier_descriptor {
 	uint8_t  bLength;
@@ -227,6 +245,35 @@ struct usb_endpoint_descriptor {
 #define USB_REQ_SET_INTERFACE      0x0B
 #define USB_REQ_SYNCH_FRAME        0x0C
 
+/* WebUSB URL descriptors */
+#define WEBUSB_REQ_GET_URL         0x02
+#define USB_DT_WEBUSB_URL          0x03
+
+#define USB_URL_SCHEME_HTTP       0x00
+#define USB_URL_SCHEME_HTTPS      0x01
+#define USB_URL_SCHEME_NONE       0xff
+
+/*
+ * URL descriptor helper.
+ * (similar to string descriptor but UTF-8 instead of UTF-16)
+ */
+#define USB_URL_DESC(scheme, str) \
+	(const void *)&(const struct { \
+		uint8_t _len; \
+		uint8_t _type; \
+		uint8_t _scheme; \
+		char _data[sizeof(str)]; \
+	}) { \
+		/* Total size of the descriptor is : \
+		 * size of the UTF-8 text plus the len/type fields \
+		 * minus the string 0-termination \
+		 */ \
+		sizeof(str) + 3 - 1, \
+		USB_DT_WEBUSB_URL, \
+		USB_URL_SCHEME_##scheme, \
+		str \
+	}
+
 /* Setup Packet */
 struct usb_setup_packet {
 	uint8_t  bmRequestType;
@@ -294,5 +341,6 @@ extern const uint8_t usb_string_desc[];
 /* USB string descriptor with the firmware version */
 extern const void * const usb_fw_version;
 extern const struct bos_context bos_ctx;
+extern const void *webusb_url;
 
 #endif /* __CROS_EC_USB_DESCRIPTOR_H */
