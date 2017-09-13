@@ -28,7 +28,7 @@ dirty_marker='+'
 # "no_version"
 
 get_tree_version() {
-  local dirty
+  local marker
   local ghash
   local numcommits
   local tag
@@ -54,9 +54,11 @@ get_tree_version() {
     git status > /dev/null 2>&1
 
     if [ -n "$(git diff-index --name-only HEAD 2>/dev/null)" ]; then
-      dirty="${dirty_marker}"
+      marker="${dirty_marker}"
+    else
+      marker="-"
     fi
-    vbase="${ver_major}.${ver_branch}.${numcommits}-${ghash}${dirty}"
+    vbase="${ver_major}.${ver_branch}.${numcommits}${marker}${ghash}"
   else
     # Fall back to the VCSID provided by the packaging system if available.
     if ghash=${VCSID##*-}; then
@@ -66,7 +68,11 @@ get_tree_version() {
       vbase="no_version"
     fi
   fi
-  echo "${vbase}${dc}${dirty}"
+  if [[ "${marker}" == "${dirty_marker}" ]]; then
+      echo "${vbase}${dc}${marker}"
+  else
+      echo "${vbase}${dc}"
+  fi
 }
 
 
