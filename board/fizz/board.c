@@ -14,7 +14,6 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charge_ramp.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"

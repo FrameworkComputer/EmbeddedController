@@ -35,12 +35,14 @@ test_mockable const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_DEDICATED] = 0,
 #endif
 	[CHARGE_SUPPLIER_TYPEC] = 1,
+#ifdef CHARGE_MANAGER_BC12
 	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
 	[CHARGE_SUPPLIER_BC12_DCP] = 2,
 	[CHARGE_SUPPLIER_BC12_CDP] = 3,
 	[CHARGE_SUPPLIER_BC12_SDP] = 4,
 	[CHARGE_SUPPLIER_OTHER] = 5,
 	[CHARGE_SUPPLIER_VBUS] = 6
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
 
@@ -274,6 +276,7 @@ static void charge_manager_fill_power_info(int port,
 		case CHARGE_SUPPLIER_TYPEC:
 			r->type = USB_CHG_TYPE_C;
 			break;
+#ifdef CHARGE_MANAGER_BC12
 		case CHARGE_SUPPLIER_PROPRIETARY:
 			r->type = USB_CHG_TYPE_PROPRIETARY;
 			break;
@@ -289,6 +292,7 @@ static void charge_manager_fill_power_info(int port,
 		case CHARGE_SUPPLIER_VBUS:
 			r->type = USB_CHG_TYPE_VBUS;
 			break;
+#endif
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 		case CHARGE_SUPPLIER_DEDICATED:
 			r->type = USB_CHG_TYPE_DEDICATED;
