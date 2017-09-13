@@ -144,6 +144,9 @@
 /* Virtual address for touchpad FW in USB updater. */
 #define CONFIG_TOUCHPAD_VIRTUAL_OFF	0x80000000
 
+/* Include touchpad FW hashes in image */
+#define CONFIG_TOUCHPAD_HASH_FW
+
 /* Touchpad firmware size and dimension difference */
 #ifdef BOARD_STAFF
 /* TODO(b:38277869): Adjust values to match hardware. */
