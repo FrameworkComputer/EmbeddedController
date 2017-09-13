@@ -605,7 +605,7 @@ static void ccd_testlab_toggle(void)
 	mutex_unlock(&ccd_config_mutex);
 
 	if (ccd_save_config() == EC_SUCCESS)
-		CPRINTS("CCD test lab mode %sbled", v ? "ena" : "dis");
+		CPRINTS("CCD test lab mode %sbled", v ? "ena" : "disa");
 	else
 		CPRINTS("Error setting CCD test lab mode!");
 }
@@ -943,8 +943,8 @@ static int command_ccd_testlab(int argc, char **argv)
 		return EC_ERROR_ACCESS_DENIED;
 
 	if (argc < 2) {
-		ccprintf("CCD test lab mode %sbled",
-			ccd_get_flag(CCD_FLAG_TEST_LAB) ? "ena" : "dis");
+		ccprintf("CCD test lab mode %sbled\n",
+			ccd_get_flag(CCD_FLAG_TEST_LAB) ? "ena" : "disa");
 		return EC_SUCCESS;
 	}
 
