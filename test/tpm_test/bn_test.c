@@ -114,6 +114,16 @@ fail:
 	return result;
 }
 
+void *always_memset(void *s, int c, size_t n)
+{
+	memset(s, c, n);
+	return s;
+}
+
+void watchdog_reload(void)
+{
+}
+
 int main(void)
 {
 	assert(test_bn_modinv() == 0);

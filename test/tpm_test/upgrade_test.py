@@ -36,7 +36,7 @@ def upgrade(tpm):
   if len(base_str) < 4:
     raise subcmd.TpmTestError('Initialization error %d' %
                               ord(base_str[0]))
-  base = struct.unpack('>I', base_str)[0]
+  base = struct.unpack_from('>4I', base_str)[3]
   if base == 0x84000:
     fname = 'build/cr50/RW/ec.RW_B.flat'
   elif base == 0x44000:
@@ -44,7 +44,7 @@ def upgrade(tpm):
   else:
     raise subcmd.TpmTestError('Unknown base address 0x%x' % base)
   fname = os.path.join(os.path.dirname(__file__), '../..', fname)
-  data = open(fname, 'r').read()
+  data = open(fname, 'r').read()[:2000]
   transferred = 0
   block_size = 1024
 
