@@ -886,13 +886,14 @@ static void i2c_test_status(struct i2c_test_results *i2c_test, int test_dev)
 static int command_i2ctest(int argc, char **argv)
 {
 	char *e;
-	int i, j, rv, rand;
+	int i, j, rv;
+	uint32_t rand;
 	int data, data_verify;
 	int port, addr;
 	int count = 10000;
 	int udelay = 100;
 	int test_dev = i2c_test_dev_used;
-	struct i2c_stress_test_dev *i2c_s_test;
+	struct i2c_stress_test_dev *i2c_s_test = NULL;
 	struct i2c_test_reg_info *reg_s_info;
 	struct i2c_test_results *test_s_results;
 
