@@ -179,7 +179,7 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 	 * To overcome this issue enable the battery learning operation
 	 * and suspend USB charging and DC/DC converter.
 	 */
-	if ((board_get_version() < 5) && !battery_is_cut_off() &&
+	if (!battery_is_cut_off() &&
 		!(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
 		(curr->batt.status & STATUS_FULLY_CHARGED))
 		return 1;
