@@ -190,17 +190,28 @@ static void process_start(TPM_ALG_ID alg, int handle, void *response_body,
 	}
 
 	if (!hash_test_db.max_contexts) {
+		size_t buffer_size;
+
 		/* Check how many contexts could possible fit. */
 		hash_test_db.max_contexts = shared_mem_size() /
 			sizeof(struct test_context);
+
+		buffer_size = sizeof(struct test_context) *
+			hash_test_db.max_contexts;
+
+		if (shared_mem_acquire(buffer_size,
+				       (char **)&hash_test_db.contexts) !=
+		    EC_SUCCESS) {
+			/* Must be out of memory. */
+			hash_test_db.max_contexts = 0;
+			*response = EXC_HASH_TOO_MANY_HANDLES;
+			*response_size = 1;
+			return;
+		}
+		memset(hash_test_db.contexts, 0, buffer_size);
 	}
 
-	if (!hash_test_db.contexts)
-		shared_mem_acquire(shared_mem_size(),
-				   (char **)&hash_test_db.contexts);
-
-	if (!hash_test_db.contexts ||
-	    (hash_test_db.current_context_count == hash_test_db.max_contexts)) {
+	if (hash_test_db.current_context_count == hash_test_db.max_contexts) {
 		*response = EXC_HASH_TOO_MANY_HANDLES;
 		*response_size = 1;
 		return;
@@ -246,6 +257,7 @@ static void process_finish(int handle, void *response_body,
 	hash_test_db.current_context_count--;
 	if (!hash_test_db.current_context_count) {
 		shared_mem_release(hash_test_db.contexts);
+		hash_test_db.max_contexts = 0;
 		return;
 	}
 
