@@ -267,7 +267,6 @@ static void charge_manager_fill_power_info(int port,
 		const int use_ramp_current = 0;
 #endif
 
-		/* TODO: Handle CHARGE_SUPPLIER_DEDICATED */
 		switch (sup) {
 		case CHARGE_SUPPLIER_PD:
 			r->type = USB_CHG_TYPE_PD;
@@ -290,6 +289,11 @@ static void charge_manager_fill_power_info(int port,
 		case CHARGE_SUPPLIER_VBUS:
 			r->type = USB_CHG_TYPE_VBUS;
 			break;
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+		case CHARGE_SUPPLIER_DEDICATED:
+			r->type = USB_CHG_TYPE_DEDICATED;
+			break;
+#endif
 		default:
 			r->type = USB_CHG_TYPE_OTHER;
 		}
