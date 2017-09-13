@@ -230,6 +230,10 @@ enum nvmem_vars {
 #define CONFIG_FLASH_NVMEM_VARS_USER_SIZE 600
 #endif	/* TEST_NVMEM_VARS */
 
+#ifdef TEST_RTC
+#define CONFIG_HOSTCMD_RTC
+#endif
+
 #ifdef TEST_VBOOT
 #define CONFIG_RWSIG
 #define CONFIG_SHA256
