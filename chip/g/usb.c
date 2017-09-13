@@ -388,7 +388,7 @@ static void got_RX_packet(void)
 int load_in_fifo(const void *source, uint32_t len)
 {
 	uint8_t *buffer = ep0_in_buf;
-	int zero_packet = !len;
+	int zero_packet = (len % USB_MAX_PACKET_SIZE) == 0;
 	int d, l;
 
 	/* Copy the data into our FIFO buffer */
