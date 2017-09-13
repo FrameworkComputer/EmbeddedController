@@ -46,8 +46,7 @@ enum led_color {
 	LED_GREEN,
 	LED_BLUE,
 	LED_WHITE,
-	LED_RED_2_3,
-	LED_RED_1_3,
+	LED_RED_HALF,
 
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
@@ -55,15 +54,14 @@ enum led_color {
 
 /* List of supported LED patterns */
 enum led_pattern {
-	SOLID_GREEN = 0,
+	OFF = 0,
+	SOLID_GREEN,
 	WHITE_GREEN,
 	SOLID_WHITE,
 	WHITE_RED,
 	SOLID_RED,
-	PULSE_RED_1,
-	PULSE_RED_2,
+	PULSE_RED,
 	BLINK_RED,
-	OFF,
 	LED_NUM_PATTERNS,
 };
 
@@ -95,6 +93,7 @@ struct led_info {
 struct led_phase {
 	uint8_t color[NUM_PHASE];
 	uint8_t len[NUM_PHASE];
+	uint8_t tap_len;
 };
 
 static int led_debug;
@@ -111,15 +110,16 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
  * particular pattern never changes from the first phase.
  */
 static const struct led_phase pattern[LED_NUM_PATTERNS] = {
-	{ {LED_GREEN, LED_GREEN}, {0, 0} },
-	{ {LED_WHITE, LED_GREEN}, {2, 4} },
-	{ {LED_WHITE, LED_WHITE}, {0, 0} },
-	{ {LED_WHITE, LED_RED}, {2, 4} },
-	{ {LED_RED, LED_RED}, {0, 0} },
-	{ {LED_RED, LED_RED_2_3}, {4, 4} },
-	{ {LED_RED, LED_RED_1_3}, {2, 4} },
-	{ {LED_RED, LED_OFF}, {1, 6} },
-	{ {LED_OFF, LED_OFF}, {0, 0} },
+	{ {LED_OFF, LED_OFF}, {0, 0}, DOUBLE_TAP_TICK_LEN },
+	{ {LED_GREEN, LED_GREEN}, {0, 0}, DOUBLE_TAP_TICK_LEN },
+	{ {LED_WHITE, LED_GREEN}, {2, 4}, DOUBLE_TAP_TICK_LEN },
+	{ {LED_WHITE, LED_WHITE}, {0, 0}, DOUBLE_TAP_TICK_LEN },
+	{ {LED_WHITE, LED_RED}, {2, 4}, DOUBLE_TAP_TICK_LEN },
+	{ {LED_RED, LED_RED}, {0, 0},  DOUBLE_TAP_TICK_LEN},
+	{ {LED_RED, LED_RED_HALF}, {4, 4}, DOUBLE_TAP_TICK_LEN * 2 +
+	  DOUBLE_TAP_TICK_LEN / 2},
+	{ {LED_RED, LED_OFF}, {1, 5}, DOUBLE_TAP_TICK_LEN * 3 +
+	  DOUBLE_TAP_TICK_LEN / 2},
 };
 
 /*
@@ -134,8 +134,7 @@ static const uint8_t color_brightness[LED_COLOR_COUNT][PWM_CHAN_PER_LED] = {
 	[LED_GREEN] = {0, 80, 0},
 	[LED_BLUE] = {0, 0, 80},
 	[LED_WHITE]  = {100, 100, 100},
-	[LED_RED_2_3]  = {40, 0, 0},
-	[LED_RED_1_3]  = {20, 0, 0},
+	[LED_RED_HALF]  = {40, 0, 0},
 };
 
 /*
@@ -151,16 +150,15 @@ struct range_map {
 };
 
 #if (CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC >= 3)
-#error "LED: PULSE_RED_2 battery level <= BLINK_RED level"
+#error "LED: PULSE_RED battery level <= BLINK_RED level"
 #endif
 static const struct range_map pattern_tbl[] = {
 	{CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC - 1, BLINK_RED},
-	{3, PULSE_RED_2},
-	{9, PULSE_RED_1},
-	{14, SOLID_RED},
-	{29, WHITE_RED},
-	{89, SOLID_WHITE},
-	{97, WHITE_GREEN},
+	{5, PULSE_RED},
+	{15, SOLID_RED},
+	{25, WHITE_RED},
+	{75, SOLID_WHITE},
+	{95, WHITE_GREEN},
 	{100, SOLID_GREEN},
 };
 
@@ -430,7 +428,7 @@ static void led_manage_patterns(enum led_pattern *pattern_desired, int tap)
 			if (i == led_charge_side || !led[i].tap_tick_count) {
 				led[i].ticks = 0;
 				led[i].tap_tick_count = tap ?
-					DOUBLE_TAP_TICK_LEN : 0;
+					pattern[pattern_desired[i]].tap_len : 0;
 				led[i].pattern_sel = pattern_desired[i];
 			}
 		}
