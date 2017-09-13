@@ -141,19 +141,25 @@
 #define CONFIG_USB_HID_KEYBOARD_BACKLIGHT
 #define CONFIG_USB_HID_TOUCHPAD
 
+/* Virtual address for touchpad FW in USB updater. */
+#define CONFIG_TOUCHPAD_VIRTUAL_OFF	0x80000000
+
+/* Touchpad firmware size and dimension difference */
 #ifdef BOARD_STAFF
 /* TODO(b:38277869): Adjust values to match hardware. */
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3214
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1840
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1020 /* tenth of mm */
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 584 /* tenth of mm */
+#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (56*1024)
 #elif defined(BOARD_HAMMER)
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3207
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1783
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1018 /* tenth of mm */
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 566 /* tenth of mm */
+#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (48*1024)
 #else
-#error "No trackpad information for board."
+#error "No touchpad information for board."
 #endif
 
 #define CONFIG_KEYBOARD_DEBUG
@@ -175,19 +181,11 @@
 /* Enable PWM */
 #define CONFIG_PWM
 
-/* Enable elan trackpad driver */
+/* Enable Elan touchpad driver */
 #define CONFIG_TOUCHPAD
 #define CONFIG_TOUCHPAD_ELAN
 #define CONFIG_TOUCHPAD_I2C_PORT 0
 #define CONFIG_TOUCHPAD_I2C_ADDR (0x15 << 1)
-
-/* Virtual address for touchpad FW in USB updater. */
-#define CONFIG_TOUCHPAD_VIRTUAL_OFF	0x80000000
-/* TODO(itspeter): The CONFIG_TOUCHPAD_VIRTUAL_SIZE depends on IC.
- *                 b/65188846 will address this separately. It will only works
- *                 for this size as for now.
- */
-#define CONFIG_TOUCHPAD_VIRTUAL_SIZE	(48*1024)
 
 #define CONFIG_CURVE25519
 
