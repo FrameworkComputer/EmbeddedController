@@ -31,7 +31,7 @@ static enum pwm_channel led_pwm_ch_map[EC_LED_ID_COUNT] = {
 
 static void set_led_state(enum led_id id, int on)
 {
-	pwm_set_duty(led_pwm_ch_map[id], on ? 80 : 0);
+	pwm_set_duty(led_pwm_ch_map[id], on ? 20 : 100);
 }
 
 static uint8_t power_led_is_pulsing;
