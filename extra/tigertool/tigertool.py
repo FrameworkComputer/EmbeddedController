@@ -214,9 +214,9 @@ def main(argv):
 
   # Let's make sure there's a tigertail
   # If nothing found in 5 seconds, fail.
-  c.wait_for_usb(STM_VIDPID, 5.)
+  c.wait_for_usb(STM_VIDPID, timeout=5., serialname=opts.serialno)
 
-  pty = c.setup_tinyservod(STM_VIDPID, 0, serialno=opts.serialno)
+  pty = c.setup_tinyservod(STM_VIDPID, 0, serialname=opts.serialno)
 
   if opts.bus not in ('vbus', 'cc1', 'cc2'):
     c.log('Try --bus [vbus|cc1|cc2]')

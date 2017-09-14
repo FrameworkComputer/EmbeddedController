@@ -30,16 +30,25 @@ def log(output):
   sys.stdout.write('\n')
   sys.stdout.flush()
 
-def check_usb(vidpid):
+def check_usb(vidpid, serialname=None):
   """Check if |vidpid| is present on the system's USB.
 
   Args:
     vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
+    serialname: serialname if specified.
 
-  Returns: True if found, Flase, otherwise.
+  Returns: True if found, False, otherwise.
   """
-  if subprocess.call(['lsusb', '-d', vidpid], stdout=open('/dev/null', 'w')):
+  if serialname:
+    output = subprocess.check_output(['lsusb', '-v', '-d', vidpid])
+    m = re.search(r'^\s*iSerial\s+\d+\s+%s$' % serialname, output, flags=re.M)
+    if m:
+      return True
+
     return False
+  else:
+    if subprocess.call(['lsusb', '-d', vidpid], stdout=open('/dev/null', 'w')):
+      return False
   return True
 
 def check_usb_sn(vidpid):
@@ -57,22 +66,24 @@ def check_usb_sn(vidpid):
   output = subprocess.check_output(['lsusb', '-v', '-d', vidpid])
   m = re.search(r'^\s*iSerial\s+(.*)$', output, flags=re.M)
   if m:
-   return m.group(1)
+    return m.group(1)
 
   return None
 
-def wait_for_usb_remove(vidpid, timeout=None):
+def wait_for_usb_remove(vidpid, serialname=None, timeout=None):
   """Wait for USB device with vidpid to be removed.
 
   Wrapper for wait_for_usb below
   """
-  wait_for_usb(vidpid, timeout=timeout, desiredpresence=False)
+  wait_for_usb(vidpid, serialname=serialname,
+               timeout=timeout, desiredpresence=False)
 
-def wait_for_usb(vidpid, timeout=None, desiredpresence=True):
+def wait_for_usb(vidpid, serialname=None, timeout=None, desiredpresence=True):
   """Wait for usb device with vidpid to be present/absent.
 
   Args:
     vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
+    serialname: serialname if specificed.
     timeout: timeout in seconds, None for no timeout.
     desiredpresence: True for present, False for not present.
 
@@ -81,7 +92,7 @@ def wait_for_usb(vidpid, timeout=None, desiredpresence=True):
   """
   if timeout:
     finish = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-  while check_usb(vidpid) != desiredpresence:
+  while check_usb(vidpid, serialname) != desiredpresence:
     time.sleep(.1)
     if timeout:
       if datetime.datetime.now() > finish:
@@ -118,7 +129,7 @@ def do_serialno(serialno, pty):
         'Serial Number',
         'Serial number set to %s but saved as %s.' % (serialno, sn))
 
-def setup_tinyservod(vidpid, interface, serialno=None):
+def setup_tinyservod(vidpid, interface, serialname=None, debuglog=False):
   """Set up a pty
 
   Set up a pty to the ec console in order
@@ -127,7 +138,8 @@ def setup_tinyservod(vidpid, interface, serialno=None):
   Args:
     vidpid: string vidpid of device to access.
     interface: not used.
-    serialno: string serial no of device requested, optional.
+    serialname: string serial name of device requested, optional.
+    debuglog: chatty printout (boolean)
 
   Returns: pty object
 
@@ -138,7 +150,8 @@ def setup_tinyservod(vidpid, interface, serialno=None):
   vid = int(vidstr, 16)
   pid = int(pidstr, 16)
   suart = stm32uart.Suart(vendor=vid, product=pid,
-                          interface=interface, serialname=serialno)
+                          interface=interface, serialname=serialname,
+                          debuglog=debuglog)
   suart.run()
   pty = pty_driver.ptyDriver(suart, [])
 

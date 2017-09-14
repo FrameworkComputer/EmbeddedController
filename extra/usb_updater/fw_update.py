@@ -5,6 +5,8 @@
 
 # Upload firmware over USB
 
+from __future__ import print_function
+
 import argparse
 import array
 import json
@@ -19,10 +21,10 @@ import usb
 debug = False
 def debuglog(msg):
   if debug:
-    print msg
+    print(msg)
 
-def logoutput(msg):
-  print msg
+def log(msg):
+  print(msg)
   sys.stdout.flush()
 
 
@@ -189,7 +191,7 @@ class Supdate(object):
     read = self.wr_command(cmd, read_count=4)
 
     if len(read) == 4:
-      print "Finished flashing"
+      log("Finished flashing")
       return
 
     raise Exception("Update", "Stop failed [%s]" % read)
@@ -212,7 +214,7 @@ class Supdate(object):
           region, self._brdcfg['regions'][region][0], offset))
 
     length = self._brdcfg['regions'][region][1]
-    print "Sending"
+    log("Sending")
 
     # Go to the correct region in the ec.bin file.
     self._binfile.seek(offset)
@@ -246,7 +248,7 @@ class Supdate(object):
             self.wr_command(data, read_count=0)
             break
           except:
-            print "Timeout fail"
+            log("Timeout fail")
         todo -= packetsize
       # Done with this packet, move to the next one.
       length -= pagesize
@@ -285,8 +287,8 @@ class Supdate(object):
       raise Exception("Update", "Protocol version 0 not supported")
     elif len(read) == expected:
       base, version = struct.unpack(">II", read)
-      print "Update protocol v. %d" % version
-      print "Available flash region base: %x" % base
+      log("Update protocol v. %d" % version)
+      log("Available flash region base: %x" % base)
     else:
       raise Exception("Update", "Start command returned %d bytes" % len(read))
 
@@ -302,7 +304,7 @@ class Supdate(object):
       if (self._offset >= self._brdcfg['regions'][region][0]) and \
          (self._offset < (self._brdcfg['regions'][region][0] + \
           self._brdcfg['regions'][region][1])):
-        print "Active region: %s" % region
+        log("Active region: %s" % region)
         self._region = region
 
 
@@ -333,26 +335,26 @@ class Supdate(object):
     if debug:
       pprint(data)
 
-    print "Board is %s" % self._brdcfg['board']
+    log("Board is %s" % self._brdcfg['board'])
     # Cast hex strings to int.
     self._brdcfg['flash'] = int(self._brdcfg['flash'], 0)
     self._brdcfg['vid'] = int(self._brdcfg['vid'], 0)
     self._brdcfg['pid'] = int(self._brdcfg['pid'], 0)
 
-    print "Flash Base is %x" % self._brdcfg['flash']
+    log("Flash Base is %x" % self._brdcfg['flash'])
     self._flashsize = 0
     for region in self._brdcfg['regions']:
       base = int(self._brdcfg['regions'][region][0], 0)
       length = int(self._brdcfg['regions'][region][1], 0)
-      print "region %s\tbase:0x%08x size:0x%08x" % (
-          region, base, length)
+      log("region %s\tbase:0x%08x size:0x%08x" % (
+          region, base, length))
       self._flashsize += length
 
       # Convert these to int because json doesn't support hex.
       self._brdcfg['regions'][region][0] = base
       self._brdcfg['regions'][region][1] = length
 
-    print "Flash Size: 0x%x" % self._flashsize
+    log("Flash Size: 0x%x" % self._flashsize)
 
   def load_file(self, binfile):
     """Open and verify size of the target ec.bin file.
@@ -405,11 +407,11 @@ def main():
   # Start transfer and erase.
   p.start()
   # Upload the bin file
-  print "Uploading %s" % binfile
+  log("Uploading %s" % binfile)
   p.write_file()
 
   # Finalize
-  print "Done. Finalizing."
+  log("Done. Finalizing.")
   p.stop()
 
 if __name__ == "__main__":

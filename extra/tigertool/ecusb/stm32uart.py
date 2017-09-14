@@ -4,6 +4,8 @@
 
 """Allow creation of uart/console interface via stm32 usb endpoint."""
 
+from __future__ import print_function
+
 import os
 import select
 import sys
@@ -33,7 +35,7 @@ class SuartError(Exception):
 class Suart(object):
   """Provide interface to stm32 serial usb endpoint."""
   def __init__(self, vendor=0x18d1, product=0x501a, interface=0,
-               serialname=None, ftdi_context=None):
+               serialname=None, debuglog=False):
     """Suart contstructor.
 
     Initializes stm32 USB stream interface.
@@ -42,8 +44,8 @@ class Suart(object):
       vendor: usb vendor id of stm32 device
       product: usb product id of stm32 device
       interface: interface number of stm32 device to use
-      serialname: n/a. Defaults to None.
-      ftdi_context: n/a. Defaults to None.
+      serialname: serial name to target. Defaults to None.
+      debuglog: chatty output. Defaults to False.
 
     Raises:
       SuartError: If init fails
@@ -53,6 +55,7 @@ class Suart(object):
     self._ptyname = None
     self._rx_thread = None
     self._tx_thread = None
+    self._debuglog = debuglog
     self._susb = stm32usb.Susb(vendor=vendor, product=product,
                                interface=interface, serialname=serialname)
     self._running = False
@@ -83,6 +86,8 @@ class Suart(object):
           try:
             r = self._susb._read_ep.read(64, self._susb.TIMEOUT_MS)
             if r:
+              if self._debuglog:
+                print(''.join([chr(x) for x in r]), end='')
               os.write(self._ptym, r)
 
           # If we miss some characters on pty disconnect, that's fine.
