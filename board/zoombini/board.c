@@ -92,7 +92,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* I2C port map. */
 const struct i2c_port_t i2c_ports[] = {
-	{"power",   I2C_PORT_POWER,  400, GPIO_I2C0_SCL,  GPIO_I2C0_SDA},
+	{"power",   I2C_PORT_POWER,  100, GPIO_I2C0_SCL,  GPIO_I2C0_SDA},
 	{"pmic",    I2C_PORT_PMIC,   400, GPIO_I2C3_SCL,  GPIO_I2C3_SDA},
 	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_I2C7_SCL,  GPIO_I2C7_SDA},
 	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_TCPC0_SCL,  GPIO_TCPC0_SDA},
