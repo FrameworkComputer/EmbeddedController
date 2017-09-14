@@ -67,7 +67,8 @@ TAG="v1.${TAG_BASE}.0"
 BASE_SHA="$(git rev-list --ancestry-path "${BRANCH_POINT}".."${UPSTREAM}" |
     tail -1)"
 
-if git tag -a -m 'firmware branch ${TAG}' "${TAG}" "${BASE_SHA}"; then
+echo "Will run git tag -a -m \"firmware branch ${TAG}\" ${TAG} ${BASE_SHA}"
+if git tag -a -m "firmware branch ${TAG}" "${TAG}" "${BASE_SHA}"; then
   cat <<EOF
 
 A new tag '$TAG' has been set. Use the following command
