@@ -15,7 +15,8 @@
 #include "timer.h"
 #include "util.h"
 
-static int led_debug;
+const enum ec_led_id supported_led_ids[] = {EC_LED_ID_POWER_LED};
+const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
@@ -114,7 +115,7 @@ void led_task(void *u)
 
 	while (1) {
 		start = get_time().le.lo;
-		if (!led_debug)
+		if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 			led_set_power();
 		interval = get_time().le.lo - start;
 		if (task_frequency_us > interval)
@@ -135,7 +136,8 @@ static void led_init(void)
 	set_task_frequency(40 * MSEC);
 
 	/* From users' perspective, system-on means AP-on */
-	set_color(EC_LED_ID_POWER_LED, LED_OFF, 0);
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		set_color(EC_LED_ID_POWER_LED, LED_OFF, 0);
 }
 /* After pwm_pin_init() */
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
@@ -148,8 +150,8 @@ static int command_led(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	if (!strcasecmp(argv[1], "debug")) {
-		led_debug ^= 1;
-		ccprintf("led_debug %s\n", led_debug ? "on" : "off");
+		led_auto_control(id, !led_auto_control_is_enabled(id));
+		ccprintf("o%s\n", led_auto_control_is_enabled(id) ? "ff" : "n");
 	} else if (!strcasecmp(argv[1], "off")) {
 		set_color(id, LED_OFF, 0);
 	} else if (!strcasecmp(argv[1], "red")) {
@@ -171,3 +173,22 @@ DECLARE_CONSOLE_COMMAND(led, command_led,
 			"[debug|red|green|amber|off|num]",
 			"Turn on/off LED. If a number is given, it changes led"
 			"task frequency (msec).");
+
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+{
+	brightness_range[EC_LED_COLOR_RED] = 100;
+	brightness_range[EC_LED_COLOR_GREEN] = 100;
+	brightness_range[EC_LED_COLOR_AMBER] = 100;
+}
+
+int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
+{
+	if (brightness[EC_LED_COLOR_RED])
+		return set_color(id, LED_RED, brightness[EC_LED_COLOR_RED]);
+	else if (brightness[EC_LED_COLOR_GREEN])
+		return set_color(id, LED_GREEN, brightness[EC_LED_COLOR_GREEN]);
+	else if (brightness[EC_LED_COLOR_AMBER])
+		return set_color(id, LED_AMBER, brightness[EC_LED_COLOR_AMBER]);
+	else
+		return set_color(id, LED_OFF, 0);
+}
