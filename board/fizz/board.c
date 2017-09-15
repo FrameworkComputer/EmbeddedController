@@ -23,6 +23,7 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
+#include "espi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -32,6 +33,8 @@
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -44,7 +47,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -461,3 +463,9 @@ int board_has_working_reset_flags(void)
 	/* All other board versions should have working reset flags */
 	return 1;
 }
+
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_LED_RED]   = { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 100 },
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

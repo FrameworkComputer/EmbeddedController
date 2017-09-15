@@ -44,8 +44,6 @@ GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
 
 /* Fizz specific pins */
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_OUT_HIGH)			/* Ethernet power enabled */
-GPIO(PWR_RED_LED,		PIN(8, 0), GPIO_OUT_HIGH)			/* Power Red LED */
-GPIO(PWR_GRN_LED,		PIN(B, 7), GPIO_OUT_HIGH)			/* Power Green LED */
 
 /* TODO(crosbug.com/p/61098): Make use of these GPIOs */
 GPIO(PP3300_USB_PD,		PIN(6, 7), GPIO_OUTPUT)
@@ -104,3 +102,6 @@ ALTERNATE(PIN_MASK(9, 0x06), 1, MODULE_I2C, 0)		/* GPIO91-92 */		/* EC_I2C2_PMIC
 ALTERNATE(PIN_MASK(B, 0x30), 1, MODULE_I2C, 0)		/* GPIOB4-B5 */		/* EC_I2C0_0_USBC_3V3_SDA/SCL */
 ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, 0)		/* GPOPB2-B3 */		/* EC_I2C0_1_3V3_SDA/SCL */
 ALTERNATE(PIN_MASK(D, 0x03), 1, MODULE_I2C, 0)		/* GPIOD0-D1 */		/* EC_I2C3_SENSOR_1V8_SDA/SCL */
+/* Alternate functions for LED PWM */
+ALTERNATE(PIN_MASK(8, 0x01), 1, MODULE_PWM, 0)		/* GPIO80 PWM3 Red*/
+ALTERNATE(PIN_MASK(B, 0x80), 1, MODULE_PWM, 0)		/* GPOB7 PWM5 Green*/

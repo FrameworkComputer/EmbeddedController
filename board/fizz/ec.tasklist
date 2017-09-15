@@ -22,6 +22,7 @@
 
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, 2048) \
+	TASK_ALWAYS(LED, led_task, NULL, TASK_STACK_SIZE) \
 	/* Larger stack for RW verification (i.e. sha256, rsa) */ \
 	TASK_NOTEST(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
 	TASK_NOTEST(PDCMD, pd_command_task, NULL, TASK_STACK_SIZE) \

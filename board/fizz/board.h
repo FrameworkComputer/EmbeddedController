@@ -31,6 +31,7 @@
 #define CONFIG_I2C_MASTER
 #undef  CONFIG_LID_SWITCH
 #define CONFIG_POWER_BUTTON_IGNORE_LID
+#define CONFIG_PWM
 #define CONFIG_LTO
 #define CONFIG_CHIP_PANIC_BACKUP
 #define CONFIG_SPI_FLASH_REGS
@@ -204,6 +205,12 @@ enum adc_channel {
 enum button {
 	BUTTON_RECOVERY = 0,
 	BUTTON_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_LED_RED,
+	PWM_CH_LED_GREEN,
+	PWM_CH_COUNT
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
