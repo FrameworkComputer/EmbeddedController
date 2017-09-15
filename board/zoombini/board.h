@@ -9,6 +9,7 @@
 #define __CROS_EC_BOARD_H
 
 /* Optional features */
+#define CONFIG_HIBERNATE_PSL
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
 
 /* NPCX7 config */

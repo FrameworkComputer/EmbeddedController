@@ -14,8 +14,8 @@ GPIO_INT(USB_C2_PD_INT_L, PIN(9, 5), GPIO_INT_FALLING, tcpc_alert_event)
 
 GPIO_INT(POWER_BUTTON_L,  PIN(0, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_button_interrupt)
 GPIO_INT(WP_L,            PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
-GPIO_INT(LID_OPEN,        PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)
-GPIO_INT(AC_PRESENT,      PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
+GPIO_INT(LID_OPEN,        PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
+GPIO_INT(AC_PRESENT,      PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
 /* Power Signals. */
 GPIO_INT(PCH_SLP_S0_L,    PIN(A, 4), GPIO_INT_BOTH, power_signal_interrupt)
@@ -31,7 +31,6 @@ GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_sign
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(6, 0), GPIO_OUT_HIGH)
-GPIO(EN_PP3300_EC_TCPC_DX, PIN(8, 5), GPIO_OUT_HIGH)
 GPIO(EN_PP3300_TRACKPAD,   PIN(B, 7), GPIO_OUT_LOW)
 GPIO(EN_PP3300_WLAN,       PIN(C, 0), GPIO_OUT_LOW)
 GPIO(EN_PP3300_WWAN,       PIN(D, 7), GPIO_OUT_LOW)
@@ -116,3 +115,7 @@ ALTERNATE(PIN_MASK(C, 0x18), 1, MODULE_PWM, 0) /* LED 1 & 2 */
 ALTERNATE(PIN_MASK(8, 0x01), 1, MODULE_PWM, 0) /* KB Backlight */
 /* ADC */
 ALTERNATE(PIN_MASK(4, 0x30), 1, MODULE_ADC, 0) /* ADC0-1 */
+
+/* Power Switch Logic (PSL) inputs */
+ALTERNATE(PIN_MASK(0, 0x03), 1, MODULE_PMU, 0) /* GPIO00, GPIO01 */
+ALTERNATE(PIN_MASK(D, 0x04), 1, MODULE_PMU, 0) /* GPIOD2 */

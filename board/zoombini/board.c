@@ -48,7 +48,6 @@ static void tcpc_alert_event(enum gpio_signal s)
 
 #include "gpio_list.h"
 
-/* TODO(aaboagye): Handle PSL? */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
