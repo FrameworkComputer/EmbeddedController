@@ -82,7 +82,17 @@ static int power_signal_get_level(enum gpio_signal signal)
 	return gpio_get_level(signal);
 }
 
-static int power_signal_enable_interrupt(enum gpio_signal signal)
+int power_signal_disable_interrupt(enum gpio_signal signal)
+{
+#ifdef CONFIG_ESPI_VW_SIGNALS
+	/* Check signal is from GPIOs or VWs */
+	if ((int)signal > VW_SIGNAL_BASE)
+		return espi_vw_disable_wire_int(signal);
+#endif
+	return gpio_disable_interrupt(signal);
+}
+
+int power_signal_enable_interrupt(enum gpio_signal signal)
 {
 #ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */

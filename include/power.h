@@ -83,6 +83,16 @@ uint32_t power_get_signals(void);
 int power_signal_is_asserted(const struct power_signal_info *s);
 
 /**
+ * Enable interrupt for provided input signal.
+ */
+int power_signal_enable_interrupt(enum gpio_signal signal);
+
+/**
+ * Disable interrupt for provided input signal.
+ */
+int power_signal_disable_interrupt(enum gpio_signal signal);
+
+/**
  * Check for required inputs
  *
  * @param want		Mask of signals which must be present (one or more
