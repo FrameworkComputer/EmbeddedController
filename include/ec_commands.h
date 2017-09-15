@@ -4674,6 +4674,72 @@ struct __ec_align4 ec_params_tp_frame_get {
 };
 
 /*****************************************************************************/
+/* EC-EC communication commands: range 0x0600-0x06FF */
+
+#define EC_COMM_TEXT_MAX 8
+
+/*
+ * Get battery static information, i.e. information that never changes, or
+ * very infrequently.
+ */
+#define EC_CMD_BATTERY_GET_STATIC 0x0600
+
+struct __ec_align_size1 ec_params_battery_static_info {
+	uint8_t index; /* Battery index. */
+};
+
+struct __ec_align4 ec_response_battery_static_info {
+	uint16_t design_capacity; /* Battery Design Capacity (mAh) */
+	uint16_t design_voltage; /* Battery Design Voltage (mV) */
+	char manufacturer[EC_COMM_TEXT_MAX]; /* Battery Manufacturer String */
+	char model[EC_COMM_TEXT_MAX]; /* Battery Model Number String */
+	char serial[EC_COMM_TEXT_MAX]; /* Battery Serial Number String */
+	char type[EC_COMM_TEXT_MAX]; /* Battery Type String */
+	/* TODO(crbug.com/795991): Consider moving to dynamic structure. */
+	uint32_t cycle_count; /* Battery Cycle Count */
+};
+
+/*
+ * Get battery dynamic information, i.e. information that is likely to change
+ * every time it is read.
+ */
+#define EC_CMD_BATTERY_GET_DYNAMIC 0x0601
+
+struct __ec_align_size1 ec_params_battery_dynamic_info {
+	uint8_t index; /* Battery index. */
+};
+
+struct __ec_align2 ec_response_battery_dynamic_info {
+	int16_t voltage; /* Battery voltage (mV) */
+	int16_t current; /* Battery current (mA); negative=discharging */
+	int16_t remaining_capacity; /* Remaining capacity (mAh) */
+	int16_t full_capacity; /* Capacity (mAh, might change occasionally) */
+	int16_t flags; /* Flags, see BATT_FLAG_* in battery.h */
+	int16_t desired_voltage; /* Charging voltage desired by battery (mV) */
+	int16_t desired_current; /* Charging current desired by battery (mA) */
+};
+
+/*
+ * Control charger chip. Used to control charger chip on the slave.
+ */
+#define EC_CMD_CHARGER_CONTROL 0x0602
+
+struct __ec_align_size1 ec_params_charger_control {
+	/*
+	 * Charger current (mA). Positive to allow base to draw up to
+	 * max_current and (possibly) charge battery, negative to request
+	 * current from base (OTG).
+	 */
+	int16_t max_current;
+
+	/* Voltage (mV) to use in OTG mode, ignored if max_current is >= 0. */
+	uint16_t otg_voltage;
+
+	/* Allow base battery charging (only makes sense if max_current > 0). */
+	uint8_t allow_charging;
+};
+
+/*****************************************************************************/
 /*
  * Reserve a range of host commands for board-specific, experimental, or
  * special purpose features. These can be (re)used without updating this file.
