@@ -109,15 +109,15 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Extra delay when KSO2 is tied to Cr50. */
-	.output_settle_us = 60, /* TODO(aaboagye): verify this is sufficient. */
+	.output_settle_us = 60,
 	.debounce_down_us = 6 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 1500,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = SECOND,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xc8  /* full set with lock key */
+		0x3c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
 
