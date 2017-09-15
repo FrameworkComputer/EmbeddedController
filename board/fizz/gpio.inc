@@ -36,11 +36,13 @@ GPIO(PCH_PWRBTN_L,		PIN(7, 4), GPIO_ODR_HIGH)			/* Power Button to SOC */
 GPIO(EC_PLATFORM_RST,		PIN(A, 6), GPIO_OUT_LOW)			/* EC Reset to LDO_EN */
 GPIO(SYS_RESET_L,		PIN(6, 1), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
 GPIO(PMIC_SLP_SUS_L,		PIN(8, 5), GPIO_OUT_LOW)			/* SLP_SUS# to PMIC */
-GPIO(BATTERY_PRESENT_L,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)		/* Battery Present */
 GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)			/* H1 Reset */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
 GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
+GPIO(U42_P,			PIN(3, 3), GPIO_OUTPUT | GPIO_PULL_DOWN)
+GPIO(U22_C,			PIN(3, 4), GPIO_OUTPUT | GPIO_PULL_DOWN)
+GPIO(POWER_RATE,		PIN(7, 1), GPIO_INPUT)				/* High: i3/5/7. Low: Celeron */
 
 /* Fizz specific pins */
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_OUT_HIGH)			/* Ethernet power enabled */

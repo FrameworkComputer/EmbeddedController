@@ -287,7 +287,10 @@ static void board_charge_manager_init(void)
 		break;
 	case CHARGE_PORT_BARRELJACK:
 		cpi.voltage = input_voltage;
-		cpi.current = 3330;	/* TODO(dnojiri): Set right value */
+		if (gpio_get_level(GPIO_POWER_RATE))
+			cpi.current = 4620;
+		else
+			cpi.current = 3330;
 		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1,
 					     &cpi);
 		break;

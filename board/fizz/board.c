@@ -379,50 +379,32 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	charger_set_input_current(charge_ma);
-}
-
-/**
- * Return whether ramping is allowed for given supplier
- */
-int board_is_ramp_allowed(int supplier)
-{
-	/* Don't allow ramping in RO when write protected */
-	if (!system_is_in_rw() && system_is_locked())
-		return 0;
-	else
-		return (supplier == CHARGE_SUPPLIER_BC12_DCP ||
-			supplier == CHARGE_SUPPLIER_BC12_SDP ||
-			supplier == CHARGE_SUPPLIER_BC12_CDP ||
-			supplier == CHARGE_SUPPLIER_OTHER);
-}
-
-/**
- * Return the maximum allowed input current
- */
-int board_get_ramp_current_limit(int supplier, int sup_curr)
-{
-	switch (supplier) {
-	case CHARGE_SUPPLIER_BC12_DCP:
-		return 2000;
-	case CHARGE_SUPPLIER_BC12_SDP:
-		return 1000;
-	case CHARGE_SUPPLIER_BC12_CDP:
-	case CHARGE_SUPPLIER_PROPRIETARY:
-		return sup_curr;
-	default:
-		return 500;
+	/*
+	 * We have two FETs connected to two registers: PR257 & PR258.
+	 * These control thresholds of the over current monitoring system.
+	 *
+	 *                              PR257, PR258
+	 * For 4.62A (90W BJ adapter),     on,   off
+	 * For 3.33A (65W BJ adapter),    off,    on
+	 * For 3.00A (Type-C adapter),    off,   off
+	 *
+	 * The over current monitoring system doesn't support less than 3A
+	 * (e.g. 2.25A, 2.00A). These current most likely won't be enough to
+	 * power the system. However, if they're needed, EC can monitor
+	 * PMON_PSYS and trigger H_PROCHOT by itself.
+	 */
+	if (charge_ma >= 4620) {
+		gpio_set_level(GPIO_U42_P, 1);
+		gpio_set_level(GPIO_U22_C, 0);
+	} else if (charge_ma >= 3330) {
+		gpio_set_level(GPIO_U42_P, 0);
+		gpio_set_level(GPIO_U22_C, 1);
+	} else if (charge_ma >= 3000) {
+		gpio_set_level(GPIO_U42_P, 0);
+		gpio_set_level(GPIO_U22_C, 0);
+	} else {
+		CPRINTS("Current %dmA not supported", charge_mv);
 	}
-}
-
-/**
- * Return if board is consuming full amount of input current
- */
-int board_is_consuming_full_charge(void)
-{
-	int chg_perc = charge_get_percent();
-
-	return chg_perc > 2 && chg_perc < 95;
 }
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
