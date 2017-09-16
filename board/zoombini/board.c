@@ -187,6 +187,15 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 		return 500;
 }
 
+static void board_init(void)
+{
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C2_PD_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
 int board_is_ramp_allowed(int supplier)
 {
 	/* Don't allow ramping in RO when write protected. */
@@ -275,3 +284,41 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
+
+/* TODO(aaboagye): Remove if not needed later. */
+static int command_tcpc_dump_reg(int argc, char **argv)
+{
+	int port;
+	int regval;
+	int reg;
+	int rv;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = atoi(argv[1]);
+
+	if (port < 0 || port > 2)
+		return EC_ERROR_PARAM1;
+
+	/* Dump the regs for the queried TCPC port. */
+	regval = 0;
+
+	cflush();
+	ccprintf("TCPC %d reg dump:\n", port);
+
+	for (reg = 0; reg <= 0xff; reg++) {
+		regval = 0;
+		ccprintf("[0x%02x] = ", reg);
+		rv = tcpc_read(port, reg, &regval);
+		if (!rv)
+			ccprintf("0x%02x\n", regval);
+		else
+			ccprintf("ERR (%d)\n", rv);
+		cflush();
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(tcpcdump, command_tcpc_dump_reg, "<port>",
+			"Dumps TCPCI regs 0-ff");
