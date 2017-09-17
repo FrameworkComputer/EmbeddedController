@@ -131,7 +131,7 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_VBUS = 0,
+	ADC_VBUS = -1,
 	ADC_TEMP_SENSOR_SOC,
 	ADC_TEMP_SENSOR_CHARGER,
 	ADC_CH_COUNT
