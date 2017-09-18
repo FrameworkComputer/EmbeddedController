@@ -75,6 +75,7 @@ BOARDS_STM32=(
 	scarlet
 	staff
 	strago_pd
+	wand
 	whiskers
 	zinger
 )

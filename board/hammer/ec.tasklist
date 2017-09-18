@@ -16,9 +16,20 @@
  * 'd' in an opaque parameter passed to the routine at startup
  * 's' is the stack size in bytes; must be a multiple of 8
  */
+#ifdef BOARD_WAND
+#define CONFIG_TASK_LIST \
+	TASK_ALWAYS_RO(RWSIG,    rwsig_task,   NULL, 1280) \
+	TASK_ALWAYS   (HOOKS,    hook_task,    NULL, 2048) \
+	TASK_ALWAYS_RW(TOUCHPAD, touchpad_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS_RW(CHARGER,  charger_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS   (CONSOLE,  console_task, NULL, 1024) \
+	TASK_ALWAYS_RW(ECCOMM,   ec_ec_comm_slave_task, NULL, TASK_STACK_SIZE) \
+	TASK_NOTEST_RW(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
+#else
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS_RO(RWSIG,    rwsig_task,   NULL, 1280) \
 	TASK_ALWAYS   (HOOKS,    hook_task,    NULL, 2048) \
 	TASK_ALWAYS_RW(TOUCHPAD, touchpad_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS   (CONSOLE,  console_task, NULL, 1024) \
 	TASK_NOTEST_RW(KEYSCAN,  keyboard_scan_task, NULL, TASK_STACK_SIZE)
+#endif

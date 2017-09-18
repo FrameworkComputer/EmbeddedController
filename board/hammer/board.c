@@ -6,7 +6,7 @@
 
 #include "common.h"
 #include "ec_version.h"
-#include "touchpad.h"
+#include "ec_ec_comm_slave.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -16,10 +16,13 @@
 #include "printf.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "queue.h"
+#include "queue_policies.h"
 #include "registers.h"
 #include "rollback.h"
 #include "system.h"
 #include "task.h"
+#include "touchpad.h"
 #include "timer.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
@@ -60,10 +63,15 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  */
 
 #ifdef SECTION_IS_RW
+
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 400,
-		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{"touchpad", I2C_PORT_TOUCHPAD, 400,
+		GPIO_TOUCHPAD_I2C_SCL, GPIO_TOUCHPAD_I2C_SDA},
+#ifdef BOARD_WAND
+	{"charger", I2C_PORT_CHARGER, 100,
+		GPIO_CHARGER_I2C_SCL, GPIO_CHARGER_I2C_SDA},
+#endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -101,6 +109,32 @@ struct keyboard_scan_config keyscan_config = {
 #endif
 #endif
 
+#if defined(BOARD_WAND) && defined(SECTION_IS_RW)
+struct consumer const ec_ec_usart_consumer;
+static struct usart_config const ec_ec_usart;
+
+struct queue const ec_ec_comm_slave_input = QUEUE_DIRECT(64, uint8_t,
+				ec_ec_usart.producer, ec_ec_usart_consumer);
+struct queue const ec_ec_comm_slave_output = QUEUE_DIRECT(64, uint8_t,
+				null_producer, ec_ec_usart.consumer);
+
+struct consumer const ec_ec_usart_consumer = {
+	.queue = &ec_ec_comm_slave_input,
+	.ops   = &((struct consumer_ops const) {
+		.written = ec_ec_comm_slave_written,
+	}),
+};
+
+static struct usart_config const ec_ec_usart =
+	USART_CONFIG(EC_EC_UART,
+		usart_rx_interrupt,
+		usart_tx_interrupt,
+		115200,
+		USART_CONFIG_FLAG_HDSEL,
+		ec_ec_comm_slave_input,
+		ec_ec_comm_slave_output);
+#endif /* BOARD_WAND && SECTION_IS_RW */
+
 /******************************************************************************
  * Initialize board.
  */
@@ -127,6 +161,15 @@ static void board_init(void)
 			       GPIO_PULL_DOWN | GPIO_INPUT);
 	}
 #endif /* BOARD_STAFF */
+
+#if defined(BOARD_WAND) && defined(SECTION_IS_RW)
+	/* USB to serial queues */
+	queue_init(&ec_ec_comm_slave_input);
+	queue_init(&ec_ec_comm_slave_output);
+
+	/* UART init */
+	usart_init(&ec_ec_usart);
+#endif
 }
 /* This needs to happen before PWM is initialized. */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_PWM - 1);
@@ -156,6 +199,9 @@ int board_has_keyboard_backlight(void)
  */
 void board_usb_wake(void)
 {
+#ifdef BOARD_WAND
+	/* FIXME: Implement side-band wake for wand. */
+#else
 	/*
 	 * Poke detection pin for about 500us, we disable interrupts
 	 * to make sure that we do not get preempted (setting GPIO high
@@ -168,6 +214,7 @@ void board_usb_wake(void)
 	udelay(500);
 	gpio_set_flags(GPIO_BASE_DET, GPIO_INPUT);
 	interrupt_enable();
+#endif
 }
 
 /*
@@ -224,3 +271,10 @@ int board_write_serial(const char *serialno)
 	return 0;
 }
 
+#ifdef BOARD_WAND
+/* TODO(b:66575472): This assumes external power is always present. */
+int extpower_is_present(void)
+{
+	return 1;
+}
+#endif
