@@ -752,7 +752,7 @@ function claim_pty() {
 	    warn "hdctools cannot disconnect the EC-3PO interpreter from" \
 	    "the UART."
 
-	pids=$(lsof -FR 2>/dev/null -- $1 | tr -d 'pR')
+	pids=$(lsof -FR 2>/dev/null -- $1 | grep -v '^f' | tr -d 'pR')
 	FROZEN_PIDS=""
 
 	# reverse order to SIGSTOP parents before children
