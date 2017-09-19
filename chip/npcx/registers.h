@@ -1434,7 +1434,7 @@ enum ITIM16_MODULE_T {
 #define NPCX_ESPICFG                REG32(NPCX_ESPI_BASE_ADDR + 0X04)
 #define NPCX_ESPISTS                REG32(NPCX_ESPI_BASE_ADDR + 0X08)
 #define NPCX_ESPIIE                 REG32(NPCX_ESPI_BASE_ADDR + 0X0C)
-#define NPCX_ESPIIWE                REG32(NPCX_ESPI_BASE_ADDR + 0X10)
+#define NPCX_ESPIWE                 REG32(NPCX_ESPI_BASE_ADDR + 0X10)
 #define NPCX_VWREGIDX               REG32(NPCX_ESPI_BASE_ADDR + 0X14)
 #define NPCX_VWREGDATA              REG32(NPCX_ESPI_BASE_ADDR + 0X18)
 #define NPCX_OOBCTL                 REG32(NPCX_ESPI_BASE_ADDR + 0X24)
@@ -1447,9 +1447,6 @@ enum ITIM16_MODULE_T {
 /* eSPI Virtual Wire channel registers */
 #define NPCX_VWEVSM(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x100 + (4*(n)))
 #define NPCX_VWEVMS(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x140 + (4*(n)))
-#define NPCX_VWGPSM(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x180 + (4*(n)))
-#define NPCX_VWGPMS(n)              REG32(NPCX_ESPI_BASE_ADDR + 0x1C0 + (4*(n)))
-#define NPCX_VWPING                 REG32(NPCX_ESPI_BASE_ADDR + 0x2F8)
 #define NPCX_VWCTL                  REG32(NPCX_ESPI_BASE_ADDR + 0x2FC)
 
 /* eSPI register fields */
@@ -1474,12 +1471,28 @@ enum ITIM16_MODULE_T {
 #define NPCX_ESPIIE_VWUPDIE              8
 #define NPCX_ESPIIE_ESPIRSTIE            9
 #define NPCX_ESPIIE_PLTRSTIE             10
-#define NPCX_ESPIIE_VW1IE                11
-#define NPCX_ESPIIE_VW2IE                12
-#define NPCX_ESPIIE_VW3IE                13
-#define NPCX_ESPIIE_VW4IE                14
 #define NPCX_ESPIIE_AMERRIE              15
 #define NPCX_ESPIIE_AMDONEIE             16
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_ESPIIE_BMTXDONEIE           19
+#define NPCX_ESPIIE_PBMRXIE              20
+#define NPCX_ESPIIE_PMSGRXIE             21
+#define NPCX_ESPIIE_BMBURSTERRIE         22
+#define NPCX_ESPIIE_BMBURSTDONEIE        23
+#endif
+#define NPCX_ESPIWE_IBRSTWE              0
+#define NPCX_ESPIWE_CFGUPDWE             1
+#define NPCX_ESPIWE_BERRWE               2
+#define NPCX_ESPIWE_OOBRXWE              3
+#define NPCX_ESPIWE_FLASHRXWE            4
+#define NPCX_ESPIWE_PERACCWE             6
+#define NPCX_ESPIWE_DFRDWE               7
+#define NPCX_ESPIWE_VWUPDWE              8
+#define NPCX_ESPIWE_ESPIRSTWE            9
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_ESPIWE_PBMRXWE              20
+#define NPCX_ESPIWE_PMSGRXWE             21
+#endif
 #define NPCX_ESPISTS_IBRST               0
 #define NPCX_ESPISTS_CFGUPD              1
 #define NPCX_ESPISTS_BERR                2
@@ -1491,12 +1504,17 @@ enum ITIM16_MODULE_T {
 #define NPCX_ESPISTS_VWUPD               8
 #define NPCX_ESPISTS_ESPIRST             9
 #define NPCX_ESPISTS_PLTRST              10
-#define NPCX_ESPISTS_VW1                 11
-#define NPCX_ESPISTS_VW2                 12
-#define NPCX_ESPISTS_VW3                 13
-#define NPCX_ESPISTS_VW4                 14
 #define NPCX_ESPISTS_AMERR               15
 #define NPCX_ESPISTS_AMDONE              16
+#if defined(CHIP_FAMILY_NPCX7)
+#define NPCX_ESPISTS_VWUPDW              17
+#define NPCX_ESPISTS_BMTXDONE            19
+#define NPCX_ESPISTS_PBMRX               20
+#define NPCX_ESPISTS_PMSGRX              21
+#define NPCX_ESPISTS_BMBURSTERR          22
+#define NPCX_ESPISTS_BMBURSTDONE         23
+#define NPCX_ESPISTS_ESPIRST_LVL         24
+#endif
 /* eSPI Virtual Wire channel register fields */
 #define NPCX_VWEVSM_WIRE                 FIELD(0, 4)
 #define NPCX_VWEVMS_WIRE                 FIELD(0, 4)
@@ -1514,7 +1532,7 @@ enum ITIM16_MODULE_T {
 #define ESPI_SUPP_CH_OOB                 (1 << NPCX_ESPICFG_OOBCHN_SUPP)
 #define ESPI_SUPP_CH_FLASH               (1 << NPCX_ESPICFG_FLASHCHN_SUPP)
 #define ESPI_SUPP_CH_ALL                 (ESPI_SUPP_CH_PC | ESPI_SUPP_CH_VM | \
-					ESPI_SUPP_CH_OOB | ESPI_SUPP_CH_FLASH)
+					  ESPI_SUPP_CH_OOB | ESPI_SUPP_CH_FLASH)
 /* ESPI Interrupts Enable Definitions */
 #define ESPIIE_IBRST                     (1 << NPCX_ESPIIE_IBRSTIE)
 #define ESPIIE_CFGUPD                    (1 << NPCX_ESPIIE_CFGUPDIE)
@@ -1527,29 +1545,48 @@ enum ITIM16_MODULE_T {
 #define ESPIIE_VWUPD                     (1 << NPCX_ESPIIE_VWUPDIE)
 #define ESPIIE_ESPIRST                   (1 << NPCX_ESPIIE_ESPIRSTIE)
 #define ESPIIE_PLTRST                    (1 << NPCX_ESPIIE_PLTRSTIE)
-#define ESPIIE_VW1                       (1 << NPCX_ESPIIE_VW1IE)
-#define ESPIIE_VW2                       (1 << NPCX_ESPIIE_VW2IE)
-#define ESPIIE_VW3                       (1 << NPCX_ESPIIE_VW3IE)
-#define ESPIIE_VW4                       (1 << NPCX_ESPIIE_VW4IE)
 #define ESPIIE_AMERR                     (1 << NPCX_ESPIIE_AMERRIE)
 #define ESPIIE_AMDONE                    (1 << NPCX_ESPIIE_AMDONEIE)
+#if defined(CHIP_FAMILY_NPCX7)
+#define ESPIIE_BMTXDONE                  (1 << NPCX_ESPIIE_BMTXDONEIE)
+#define ESPIIE_PBMRX                     (1 << NPCX_ESPIIE_PBMRXIE)
+#define ESPIIE_PMSGRX                    (1 << NPCX_ESPIIE_PMSGRXIE)
+#define ESPIIE_BMBURSTERR                (1 << NPCX_ESPIIE_BMBURSTERRIE)
+#define ESPIIE_BMBURSTDONE               (1 << NPCX_ESPIIE_BMBURSTDONEIE)
+#endif
 /* eSPI Interrupts for VW */
-#define ESPIIE_VW                    (ESPIIE_VWUPD | ESPIIE_VW1 | ESPIIE_VW2 | \
-				ESPIIE_VW3 | ESPIIE_VW4 | ESPIIE_PLTRST)
+#define ESPIIE_VW                        (ESPIIE_VWUPD | ESPIIE_PLTRST)
 /* eSPI Interrupts for Generic */
-#define ESPIIE_GENERIC               (ESPIIE_IBRST | ESPIIE_CFGUPD | \
-				ESPIIE_BERR | ESPIIE_ESPIRST)
-
+#define ESPIIE_GENERIC                   (ESPIIE_IBRST | ESPIIE_CFGUPD | \
+					  ESPIIE_BERR | ESPIIE_ESPIRST)
+/* ESPI Wake-up Enable Definitions */
+#define ESPIWE_IBRST                     (1 << NPCX_ESPIWE_IBRSTWE)
+#define ESPIWE_CFGUPD                    (1 << NPCX_ESPIWE_CFGUPDWE)
+#define ESPIWE_BERR                      (1 << NPCX_ESPIWE_BERRWE)
+#define ESPIWE_OOBRX                     (1 << NPCX_ESPIWE_OOBRXWE)
+#define ESPIWE_FLASHRX                   (1 << NPCX_ESPIWE_FLASHRXWE)
+#define ESPIWE_PERACC                    (1 << NPCX_ESPIWE_PERACCWE)
+#define ESPIWE_DFRD                      (1 << NPCX_ESPIWE_DFRDWE)
+#define ESPIWE_VWUPD                     (1 << NPCX_ESPIWE_VWUPDWE)
+#define ESPIWE_ESPIRST                   (1 << NPCX_ESPIWE_ESPIRSTWE)
+#if defined(CHIP_FAMILY_NPCX7)
+#define ESPIWE_PBMRX                     (1 << NPCX_ESPIWE_PBMRXWE)
+#define ESPIWE_PMSGRX                    (1 << NPCX_ESPIWE_PMSGRXWE)
+#endif
+/* eSPI  Wake-up enable for VW */
+#define ESPIWE_VW                        ESPIWE_VWUPD
+/* eSPI  Wake-up enable for Generic */
+#define ESPIWE_GENERIC                   (ESPIWE_IBRST | ESPIWE_CFGUPD | \
+					  ESPIWE_BERR | ESPIWE_ESPIRST)
 /* Macro functions for eSPI VW */
 #define ESPI_VWEVMS_NUM                  12
 #define ESPI_VWEVSM_NUM                  10
-#define ESPI_VWGPMS_NUM                  16
 #define ESPI_VW_IDX_WIRE_NUM             4
 /* Determine Virtual Wire type */
-#define VM_TYPE(i)               ((i >= 0  && i <=  1) ? ESPI_VW_TYPE_INT_EV : \
-				(i >= 2  && i <=    7) ? ESPI_VW_TYPE_SYS_EV : \
-				(i >= 64  && i <= 127) ? ESPI_VW_TYPE_PLT : \
-				(i >= 128 && i <= 255) ? ESPI_VW_TYPE_GPIO : \
+#define VM_TYPE(i)              ((i >= 0   && i <=  1) ? ESPI_VW_TYPE_INT_EV : \
+				 (i >= 2   && i <=  7) ? ESPI_VW_TYPE_SYS_EV : \
+				 (i >= 64  && i <= 127) ? ESPI_VW_TYPE_PLT : \
+				 (i >= 128 && i <= 255) ? ESPI_VW_TYPE_GPIO : \
 							ESPI_VW_TYPE_NONE)
 
 /* Bit filed manipulation for VWEVMS Value */
@@ -1558,8 +1595,14 @@ enum ITIM16_MODULE_T {
 #define VWEVMS_PLTRST_EN(p)          ((p<<17) & 0x00020000)
 #define VWEVMS_INT_EN(e)             ((e<<18) & 0x00040000)
 #define VWEVMS_ESPIRST_EN(r)         ((r<<19) & 0x00080000)
+#if defined(CHIP_FAMILY_NPCX7)
+#define VWEVMS_WK_EN(e)              ((e<<20) & 0x00100000)
+#define VWEVMS_INTWK_EN(e)           (VWEVMS_INT_EN(e) | VWEVMS_WK_EN(e))
+#elif defined(CHIP_FAMILY_NPCX5)
+#define VWEVMS_INTWK_EN              VWEVMS_INT_EN
+#endif
 #define VWEVMS_FIELD(i, n, p, e, r)  (VWEVMS_INX(i) | VWEVMS_INX_EN(n) | \
-				VWEVMS_PLTRST_EN(p) | VWEVMS_INT_EN(e) | \
+				VWEVMS_PLTRST_EN(p) | VWEVMS_INTWK_EN(e) | \
 				VWEVMS_ESPIRST_EN(r))
 #define VWEVMS_IDX_GET(reg)          (((reg & 0x00007F00)>>8))
 
@@ -1574,14 +1617,6 @@ enum ITIM16_MODULE_T {
 				VWEVSM_VALID_N(v) | VWEVSM_PLTRST_EN(p) |\
 				VWEVSM_CDRST_EN(c))
 #define VWEVSM_IDX_GET(reg)          (((reg & 0x00007F00)>>8))
-
-/* Bit filed manpulation for VWGPMS Value */
-#define VWGPMS_INX_EN(n)             (((n<<15) & 0x00008000))
-#define VWGPMS_MODIFIED(m)           (((m<<16) & 0x00010000))
-#define VWGPMS_PLTRST_EN(p)          (((p<<17) & 0x00020000))
-#define VWGPMS_INT_EN(e)             (((e<<18) & 0x00040000))
-#define VWGPMS_FIELD(n, m, p, e)     (VMGPMS_INX_EN(n) | VWGPMS_MODIFIED(m) | \
-				VWGPMS_PLTRST_EN(p) | VWGPMS_INT_EN(e))
 
 /* define macro to handle SMI/SCI Virtual Wire */
 /* Read SMI VWire status from VWEVSM(offset 2) register. */
