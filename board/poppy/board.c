@@ -540,6 +540,50 @@ const struct button_config *recovery_buttons[] = {
 };
 const int recovery_buttons_count = ARRAY_SIZE(recovery_buttons);
 
+/*
+ * Check if PMIC fault registers indicate VR fault. If yes, print out fault
+ * register info to console. Additionally, set panic reason so that the OS can
+ * check for fault register info by looking at offset 0x14(PWRSTAT1) and
+ * 0x15(PWRSTAT2) in cros ec panicinfo.
+ */
+static void board_report_pmic_fault(const char *str)
+{
+	int vrfault, pwrstat1 = 0, pwrstat2 = 0;
+	uint32_t info;
+
+	/* RESETIRQ1 -- Bit 4: VRFAULT */
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, &vrfault)
+	    != EC_SUCCESS)
+		return;
+
+	if (!(vrfault & (1 << 4)))
+		return;
+
+	/* VRFAULT has occurred, print VRFAULT status bits. */
+
+	/* PWRSTAT1 */
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, &pwrstat1);
+
+	/* PWRSTAT2 */
+	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, &pwrstat2);
+
+	CPRINTS("PMIC VRFAULT: %s", str);
+	CPRINTS("PMIC VRFAULT: PWRSTAT1=0x%02x PWRSTAT2=0x%02x", pwrstat1,
+		pwrstat2);
+
+	/* Clear all faults -- Write 1 to clear. */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, (1 << 4));
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, pwrstat1);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, pwrstat2);
+
+	/*
+	 * Status of the fault registers can be checked in the OS by looking at
+	 * offset 0x14(PWRSTAT1) and 0x15(PWRSTAT2) in cros ec panicinfo.
+	 */
+	info = ((pwrstat2 & 0xFF) << 8) | (pwrstat1 & 0xFF);
+	panic_set_reason(PANIC_SW_PMIC_FAULT, info, 0);
+}
+
 static void board_pmic_disable_slp_s0_vr_decay(void)
 {
 	/*
@@ -628,6 +672,8 @@ void power_board_handle_host_sleep_event(enum host_sleep_event state)
 
 static void board_pmic_init(void)
 {
+	board_report_pmic_fault("SYSJUMP");
+
 	if (system_jumped_to_this_image())
 		return;
 
@@ -1051,6 +1097,12 @@ static void board_sensor_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_sensor_init, HOOK_PRIO_DEFAULT);
 #endif
+
+static void board_chipset_reset(void)
+{
+	board_report_pmic_fault("CHIPSET RESET");
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, board_chipset_reset, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
