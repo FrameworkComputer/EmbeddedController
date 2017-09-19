@@ -18,8 +18,13 @@
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_ADC
 #define CONFIG_BOARD_PRE_INIT
+#define CONFIG_CMD_CHARGER
+#define CONFIG_CMD_GPIO_EXTENDED
 #define CONFIG_CMD_SPI_FLASH
+#define CONFIG_CHARGER_SY21612
 #define CONFIG_HW_CRC
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
 #define CONFIG_RSA
 #define CONFIG_RWSIG
 #define CONFIG_RWSIG_TYPE_USBPD1
@@ -75,6 +80,9 @@
 /* ADC signal */
 enum adc_channel {
 	ADC_CH_CC1_PD = 0,
+	ADC_VBUS_MON,
+	ADC_DAC_REF_TP28,
+	ADC_DAC_VOLT,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -90,15 +98,25 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
-/* we are never a source : don't care about power supply */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  0 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 0 /* us */
+/* 3.0A Rp */
+#define PD_SRC_VNC            PD_SRC_3_0_VNC_MV
+#define PD_SRC_RD_THRESHOLD   PD_SRC_3_0_RD_THRESH_MV
+
+/* delay necessary for the voltage transition on the power supply */
+/* TODO (code.google.com/p/chrome-os-partner/issues/detail?id=37078)
+ * Need to measure these and adjust for honeybuns.
+ */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 1000
-#define PD_MAX_POWER_MW       1500
-#define PD_MAX_CURRENT_MA     300
-#define PD_MAX_VOLTAGE_MV     5000
+#define PD_MAX_POWER_MW       60000
+#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_VOLTAGE_MV     15000
+
+/* Board interfaces */
+void board_set_usb_output_voltage(int mv);
 
 #endif /* !__ASSEMBLER__ */
 
@@ -111,5 +129,8 @@ enum usb_strings {
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL   0
 #define USB_EP_COUNT     1
+
+/* I2C ports */
+#define I2C_PORT_SY21612 0
 
 #endif /* __CROS_EC_BOARD_H */

@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "board.h"
+#include "charger/sy21612.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -22,15 +23,28 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#define PDO_FIXED_FLAGS PDO_FIXED_COMM_CAP
+#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
+			 PDO_FIXED_COMM_CAP)
 
-/* Source PDOs */
-const uint32_t pd_src_pdo[] = {};
+
+/* Voltage indexes for the PDOs */
+enum volt_idx {
+	PDO_IDX_5V  = 0,
+	PDO_IDX_9V  = 1,
+	/* TODO: add PPS support */
+	PDO_IDX_COUNT
+};
+
+/* PDOs */
+const uint32_t pd_src_pdo[] = {
+	[PDO_IDX_5V]  = PDO_FIXED(5000,  3000, PDO_FIXED_FLAGS),
+	[PDO_IDX_9V]  = PDO_FIXED(9000,  3000, PDO_FIXED_FLAGS),
+};
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
+BUILD_ASSERT(ARRAY_SIZE(pd_src_pdo) == PDO_IDX_COUNT);
 
-/* Fake PDOs : we just want our pre-defined voltages */
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
@@ -52,16 +66,35 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_transition_voltage(int idx)
 {
-	/* No operation: sink only */
+	/* TODO: discharge, PPS */
+	switch (idx - 1) {
+	case PDO_IDX_9V:
+		board_set_usb_output_voltage(9000);
+		break;
+	case PDO_IDX_5V:
+	default:
+		board_set_usb_output_voltage(5000);
+		break;
+	}
 }
 
 int pd_set_power_supply_ready(int port)
 {
+	sy21612_set_sink_mode(1);
+	sy21612_set_vbus_volt(SY21612_VBUS_9V);
+	sy21612_set_adc_mode(1);
+	sy21612_enable_adc(1);
+	sy21612_set_vbus_discharge(1);
 	return EC_SUCCESS;
 }
 
 void pd_power_supply_reset(int port)
 {
+	sy21612_set_sink_mode(0);
+	sy21612_set_vbus_volt(SY21612_VBUS_9V);
+	sy21612_set_adc_mode(1);
+	sy21612_enable_adc(1);
+	sy21612_set_vbus_discharge(1);
 }
 
 int pd_snk_is_vbus_provided(int port)
@@ -82,21 +115,26 @@ int pd_check_power_swap(int port)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/* Always refuse data swap */
-	return 0;
+	/* We can swap to UFP */
+	return data_role == PD_ROLE_DFP;
 }
 
 void pd_execute_data_swap(int port, int data_role)
 {
-	/* Do nothing */
+	/* TODO: turn on pp5000, pp3300 */
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
 {
+	if (pr_role == PD_ROLE_UFP && !gpio_get_level(GPIO_AC_PRESENT_L))
+		pd_request_power_swap(port);
+
 }
 
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
+		pd_request_data_swap(port);
 }
 /* ----------------- Vendor Defined Messages ------------------ */
 const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */

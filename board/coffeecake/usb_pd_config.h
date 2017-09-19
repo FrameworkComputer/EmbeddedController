@@ -9,7 +9,7 @@
 #define __CROS_EC_USB_PD_CONFIG_H
 
 /* Timer selection for baseband PD communication */
-#define TIM_CLOCK_PD_TX_C0 17
+#define TIM_CLOCK_PD_TX_C0 16
 #define TIM_CLOCK_PD_RX_C0 1
 
 #define TIM_CLOCK_PD_TX(p) TIM_CLOCK_PD_TX_C0
@@ -80,19 +80,18 @@ static inline void pd_tx_enable(int port, int polarity)
 {
 	/* PB4 is SPI1_MISO */
 	gpio_set_alternate_function(GPIO_B, 0x0010, 0);
-
-	gpio_set_level(GPIO_PD_CC1_TX_EN, 1);
+	/* USB_C_CC1_PD: PA1 output low */
+	gpio_set_flags(GPIO_USB_C_CC1_PD, GPIO_OUTPUT);
+	gpio_set_level(GPIO_USB_C_CC1_PD, 0);
 }
 
 /* Put the TX driver in Hi-Z state */
 static inline void pd_tx_disable(int port, int polarity)
 {
-	/* output low on SPI TX (PB4) to disable the FET */
-	STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-				   & ~(3 << (2*4)))
-				   |  (1 << (2*4));
+	/* SPI TX (PB4) Hi-Z */
+	gpio_set_flags(GPIO_PD_CC1_TX_DATA, GPIO_INPUT);
 	/* put the low level reference in Hi-Z */
-	gpio_set_level(GPIO_PD_CC1_TX_EN, 0);
+	gpio_set_flags(GPIO_USB_C_CC1_PD, GPIO_ANALOG);
 }
 
 static inline void pd_select_polarity(int port, int polarity)
@@ -111,7 +110,17 @@ static inline void pd_tx_init(void)
 	gpio_config_module(MODULE_USB_PD, 1);
 }
 
-static inline void pd_set_host_mode(int port, int enable) {}
+static inline void pd_set_host_mode(int port, int enable)
+{
+	if (enable) {
+		gpio_set_level(GPIO_PD_CC1_ODL, 1);
+		gpio_set_flags(GPIO_PD_CC1_HOST_HIGH, GPIO_OUTPUT);
+		gpio_set_level(GPIO_PD_CC1_HOST_HIGH, 1);
+	} else {
+		gpio_set_flags(GPIO_PD_CC1_HOST_HIGH, GPIO_INPUT);
+		gpio_set_level(GPIO_PD_CC1_ODL, 0);
+	}
+}
 
 static inline void pd_config_init(int port, uint8_t power_role)
 {
@@ -121,8 +130,16 @@ static inline void pd_config_init(int port, uint8_t power_role)
 
 static inline int pd_adc_read(int port, int cc)
 {
-	/* only one CC line, assume other one is always low */
-	return (cc == 0) ? adc_read_channel(ADC_CH_CC1_PD) : 0;
+	if (cc == 0)
+		return adc_read_channel(ADC_CH_CC1_PD);
+	/*
+	 * Check HOST_HIGH Rp setting.
+	 * Return 3300mV on host mode.
+	 */
+	if ((STM32_GPIO_MODER(GPIO_B) & (3 << (2*5))) == (1 << (2*5)))
+		return 3300;
+	else
+		return 0;
 }
 
 #endif /* __CROS_EC_USB_PD_CONFIG_H */

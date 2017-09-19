@@ -6,11 +6,14 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "charger/sy21612.h"
+#include "clock.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "mcdp28x0.h"
 #include "registers.h"
 #include "task.h"
@@ -25,6 +28,12 @@ static volatile int hpd_prev_level;
 
 void hpd_event(enum gpio_signal signal);
 #include "gpio_list.h"
+
+/* I2C ports */
+const struct i2c_port_t i2c_ports[] = {
+	{"charger", I2C_PORT_SY21612, 400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /**
  * Hotplug detect deferred task
@@ -93,11 +102,39 @@ void hpd_event(enum gpio_signal signal)
 	hpd_prev_level = level;
 }
 
+/* USB C VBUS output selection */
+void board_set_usb_output_voltage(int mv)
+{
+	const int ra = 40200;
+	const int rb = 10000;
+	const int rc = 6650;
+	int dac_mv;
+	uint32_t dac_val;
+
+	/* vbat = 1.0 * ra/rb + 1.0 - (vdac - 1.0) * ra/rc */
+	dac_mv = 1000 + (1000 * rc / rb) + ((1000 - mv) * rc / ra);
+	if (dac_mv < 0)
+		dac_mv = 0;
+
+	/* Set voltage Vout=Vdac with Vref = 3.3v */
+	/* TODO: use Vdda instead */
+	dac_val = dac_mv * 4096 / 3300;
+	STM32_DAC_DHR12RD = dac_val | (dac_val << 16);
+}
+
 /* Initialize board. */
 void board_config_pre_init(void)
 {
-	/* enable SYSCFG clock */
+	/* Enable SYSCFG clock */
 	STM32_RCC_APB2ENR |= 1 << 0;
+	/* Enable DAC interface clock. */
+	STM32_RCC_APB1ENR |= (1 << 29);
+	/* Delay 1 APB clock cycle after the clock is enabled */
+	clock_wait_bus_cycles(BUS_APB, 1);
+	/* Start DAC channel 1 & 2 */
+	STM32_DAC_CR = STM32_DAC_CR_EN1 | STM32_DAC_CR_EN2;
+	/* Set 5Vsafe Vdac */
+	board_set_usb_output_voltage(5000);
 	/* Remap USART DMA to match the USART driver */
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10);/* Remap USART1 RX/TX DMA */
 }
@@ -144,7 +181,6 @@ static void factory_validation_deferred(void)
 	/* test mcdp via serial to validate function */
 	if (!mcdp_get_info(&info) && (MCDP_FAMILY(info.family) == 0x0010) &&
 	(MCDP_CHIPID(info.chipid) == 0x2850)) {
-		gpio_set_level(GPIO_MCDP_READY, 1);
 		pd_log_event(PD_EVENT_VIDEO_CODEC,
 			     PD_LOG_PORT_SIZE(0, sizeof(info)),
 			     0, &info);
@@ -153,6 +189,18 @@ static void factory_validation_deferred(void)
 	mcdp_disable();
 }
 DECLARE_DEFERRED(factory_validation_deferred);
+
+static void board_post_init(void)
+{
+	sy21612_enable_regulator(1);
+	/*
+	 * AC powered  - DRP SOURCE
+	 * DUT powered - DRP SINK
+	 */
+	pd_set_dual_role(gpio_get_level(GPIO_AC_PRESENT_L) ?
+			 PD_DRP_FORCE_SINK : PD_DRP_FORCE_SOURCE);
+}
+DECLARE_DEFERRED(board_post_init);
 
 /* Initialize board. */
 static void board_init(void)
@@ -166,9 +214,10 @@ static void board_init(void)
 	hpd_prev_ts = now.val;
 	gpio_enable_interrupt(GPIO_DP_HPD);
 
-	gpio_set_level(GPIO_STM_READY, 1); /* factory test only */
 	/* Delay needed to allow HDMI MCU to boot. */
 	hook_call_deferred(&factory_validation_deferred_data, 200*MSEC);
+	/* Initialize buck-boost converter */
+	hook_call_deferred(&board_post_init_data, 0);
 }
 
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -176,7 +225,10 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CH_CC1_PD] = {"USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
+	[ADC_CH_CC1_PD]    = {"USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
+	[ADC_VBUS_MON]     = {"VBUS_MON", 13200, 4096, 0, STM32_AIN(2)},
+	[ADC_DAC_REF_TP28] = {"DAC_REF_TP28", 3300, 4096, 0, STM32_AIN(4)},
+	[ADC_DAC_VOLT]     = {"DAC_VOLT", 3300, 4096, 0, STM32_AIN(5)},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
