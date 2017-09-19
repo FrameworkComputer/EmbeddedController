@@ -232,9 +232,9 @@ static void board_pmic_init(void)
 {
 	int err;
 	int error_count = 0;
+	static uint8_t pmic_initialized = 0;
 
-	/* No need to re-init PMIC since settings are sticky across sysjump */
-	if (system_jumped_to_this_image())
+	if (pmic_initialized)
 		return;
 
 	/* Read vendor ID */
@@ -349,12 +349,18 @@ static void board_pmic_init(void)
 		goto pmic_error;
 
 	CPRINTS("PMIC init done");
+	pmic_initialized = 1;
 	return;
 
 pmic_error:
 	CPRINTS("PMIC init failed");
 }
-DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void chipset_pre_init(void)
+{
+	board_pmic_init();
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
 /**
  * Notify the AC presence GPIO to the PCH.

@@ -277,6 +277,16 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		}
 #endif
 
+#ifdef CONFIG_VBOOT_EFS
+		/*
+		 * We have to test power readiness here (instead of S5->S3)
+		 * because when entering S5, EC enables EC_ROP_SLP_SUS pin
+		 * which causes (short-powered) system to brown out.
+		 */
+		while (!system_can_boot_ap())
+			msleep(200);
+#endif
+
 		/* Call hooks to initialize PMIC */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
@@ -285,18 +295,6 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
-#ifdef CONFIG_VBOOT_EFS
-		/*
-		 * We have to test power readiness here (instead of S5->S3)
-		 * because when entering S5, EC enables EC_ROP_SLP_SUS pin
-		 * which causes (short-powered) system to brown out.
-		 */
-		while (!system_can_boot_ap())
-			/* LED blinks as HOOK_TICK events trigger.
-			 * We can print percent & power as they
-			 * improve. */
-			msleep(200);
-#endif
 		power_s5_up = 1;
 		return POWER_S5;
 
