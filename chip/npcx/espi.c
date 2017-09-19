@@ -527,7 +527,15 @@ void espi_interrupt(void)
 	int chan;
 	uint32_t mask, status;
 
+#if defined(CHIP_FAMILY_NPCX7)
+	/*
+	 * Bit 17 of ESPIIE is reserved. We need to set the same bit in mask
+	 * in case bit 17 in ESPISTS of npcx7 is not cleared in ISR.
+	 */
+	mask = NPCX_ESPIIE | (1 << NPCX_ESPISTS_VWUPDW);
+#else
 	mask = NPCX_ESPIIE;
+#endif
 	status = NPCX_ESPISTS & mask;
 
 	while (status) {
