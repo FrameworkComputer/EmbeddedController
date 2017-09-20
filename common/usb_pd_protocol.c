@@ -1701,7 +1701,12 @@ void pd_task(void *u)
 	pd[port].power_role = PD_ROLE_DEFAULT(port);
 	pd[port].vdm_state = VDM_STATE_DONE;
 	set_state(port, this_state);
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	ASSERT(PD_ROLE_DEFAULT(port) == PD_ROLE_SINK);
+	tcpm_select_rp_value(port, CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT);
+#else
 	tcpm_select_rp_value(port, CONFIG_USB_PD_PULLUP);
+#endif
 	tcpm_set_cc(port, PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE ?
 		    TYPEC_CC_RP : TYPEC_CC_RD);
 
