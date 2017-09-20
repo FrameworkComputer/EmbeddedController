@@ -14,6 +14,9 @@
 #define CONFIG_SPI
 #define CONFIG_LPC
 #define CONFIG_I2C
+/* Features of eSPI */
+#define CONFIG_ESPI /* Use eSPI protocol for host interface of x86 CPU */
+#define CONFIG_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
 
 /* Optional features */
 #define CONFIG_BOARD_VERSION
