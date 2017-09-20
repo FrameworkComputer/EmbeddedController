@@ -313,6 +313,17 @@ void __idle(void)
 		next_delay = __hw_clock_event_get() - t0.le.lo;
 
 		if (DEEP_SLEEP_ALLOWED &&
+#ifdef CONFIG_HOSTCMD_RTC
+		    /*
+		     * Don't go to deep sleep mode when the host is using
+		     * RTC alarm otherwise the wake point for the host
+		     * would be overwritten.
+		     *
+		     * TODO(chromium:769503): Find a smart way to enable deep
+		     * sleep mode even when the host is using stm32 rtc alarm.
+		     */
+		    !(STM32_RTC_CR & STM32_RTC_CR_ALRAE) &&
+#endif
 		    (next_delay > (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY))) {
 			/* deep-sleep in STOP mode */
 			idle_dsleep_cnt++;

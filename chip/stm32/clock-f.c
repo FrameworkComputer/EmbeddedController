@@ -72,6 +72,8 @@ static uint32_t sec_to_rtc_tr(uint32_t sec)
 }
 
 #ifdef CONFIG_HOSTCMD_RTC
+static uint8_t host_rtc_alarm_set;
+
 static uint32_t rtc_dr_to_sec(uint32_t rtc_dr)
 {
 	struct calendar_date time;
@@ -247,6 +249,13 @@ void __rtc_alarm_irq(void)
 	struct rtc_time_reg rtc;
 
 	reset_rtc_alarm(&rtc);
+#ifdef CONFIG_HOSTCMD_RTC
+	/* Do not wake up the host if the alarm was not set by the host */
+	if (host_rtc_alarm_set) {
+		host_set_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC));
+		host_rtc_alarm_set = 0;
+	}
+#endif
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
@@ -392,6 +401,7 @@ static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
 	struct rtc_time_reg rtc;
 	const struct ec_params_rtc *p = args->params;
 
+	host_rtc_alarm_set = 1;
 	set_rtc_alarm(p->time, 0, &rtc);
 	return EC_RES_SUCCESS;
 }
