@@ -76,71 +76,92 @@ static int set_color(enum ec_led_id id, enum led_color color, int duty)
 	}
 }
 
-/* led task increments brightness by <duty_inc> every <task_frequency_us> to go
- * from 0% to 100% in <LED_PULSE_US>. Then it decreases brightness likewise in
- * <LED_PULSE_US>. So, total time for one cycle is <LED_PULSE_US> x 2. */
-#define LED_PULSE_US	(2 * SECOND)
-static uint32_t task_frequency_us;
-static int duty_inc;
+#define LED_PULSE_US		(2 * SECOND)
+/* 40 msec for nice and smooth transition. */
+#define LED_PULSE_TICK_US	(40 * MSEC)
 
-static void set_task_frequency(uint32_t usec)
+/* When pulsing is enabled, brightness is incremented by <duty_inc> every
+ * <interval> usec from 0 to 100% in LED_PULSE_US usec. Then it's decremented
+ * likewise in LED_PULSE_US usec. */
+static struct {
+	uint32_t interval;
+	int duty_inc;
+	enum led_color color;
+} led_pulse;
+
+#define CONFIG_TICK(interval, color) \
+	config_tick((interval), 100 / (LED_PULSE_US / (interval)), (color))
+
+static void config_tick(uint32_t interval, int duty_inc, enum led_color color)
 {
-	task_frequency_us = usec;
-	duty_inc = 100 / (LED_PULSE_US / task_frequency_us);
+	led_pulse.interval = interval;
+	led_pulse.duty_inc = duty_inc;
+	led_pulse.color = color;
 }
 
-static void led_set_power(void)
+static void pulse_power_led(enum led_color color)
 {
 	static int duty = 0;
 
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 100);
-	else if (chipset_in_state(
-			CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY))
-		set_color(EC_LED_ID_POWER_LED, LED_AMBER, duty);
-	else
-		set_color(EC_LED_ID_POWER_LED, LED_OFF, 0);
-
-	if (duty + duty_inc > 100)
-		duty_inc = duty_inc * -1;
-	else if (duty + duty_inc < 0)
-		duty_inc = duty_inc * -1;
-	duty += duty_inc;
+	set_color(EC_LED_ID_POWER_LED, color, duty);
+	if (duty + led_pulse.duty_inc > 100)
+		led_pulse.duty_inc = led_pulse.duty_inc * -1;
+	else if (duty + led_pulse.duty_inc < 0)
+		led_pulse.duty_inc = led_pulse.duty_inc * -1;
+	duty += led_pulse.duty_inc;
 }
 
-void led_task(void *u)
+static void led_tick(void);
+DECLARE_DEFERRED(led_tick);
+static void led_tick(void)
 {
-	uint32_t interval;
-	uint32_t start;
+	uint32_t elapsed;
+	uint32_t next = 0;
+	uint32_t start = get_time().le.lo;
+	static uint8_t pwm_enabled = 0;
 
-	while (1) {
-		start = get_time().le.lo;
-		if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-			led_set_power();
-		interval = get_time().le.lo - start;
-		if (task_frequency_us > interval)
-			usleep(task_frequency_us - interval);
+	if (!pwm_enabled) {
+		pwm_enable(PWM_CH_LED_RED, 1);
+		pwm_enable(PWM_CH_LED_GREEN, 1);
+		pwm_enabled = 1;
 	}
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		pulse_power_led(led_pulse.color);
+	elapsed = get_time().le.lo - start;
+	next = led_pulse.interval > elapsed ? led_pulse.interval - elapsed : 0;
+	hook_call_deferred(&led_tick_data, next);
 }
 
-static void led_init(void)
+static void led_suspend(void)
 {
-	/*
-	 * Enable PWMs and set to 0% duty cycle.  If they're disabled,
-	 * seems to ground the pins instead of letting them float.
-	 */
-	pwm_enable(PWM_CH_LED_RED, 1);
-	pwm_enable(PWM_CH_LED_GREEN, 1);
+	CONFIG_TICK(LED_PULSE_TICK_US, LED_AMBER);
+	led_tick();
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, led_suspend, HOOK_PRIO_DEFAULT);
 
-	/* 40 msec for nice and smooth transition */
-	set_task_frequency(40 * MSEC);
-
-	/* From users' perspective, system-on means AP-on */
+static void led_shutdown(void)
+{
+	hook_call_deferred(&led_tick_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		set_color(EC_LED_ID_POWER_LED, LED_OFF, 0);
 }
-/* After pwm_pin_init() */
-DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, led_shutdown, HOOK_PRIO_DEFAULT);
+
+static void led_resume(void)
+{
+	/* Assume there is no race condition with led_tick, which also
+	 * runs in hook_task. */
+	hook_call_deferred(&led_tick_data, -1);
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 100);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, led_resume, HOOK_PRIO_DEFAULT);
+
+void led_alert(void)
+{
+	CONFIG_TICK(LED_PULSE_US, LED_RED);
+	led_tick();
+}
 
 static int command_led(int argc, char **argv)
 {
@@ -160,19 +181,16 @@ static int command_led(int argc, char **argv)
 		set_color(id, LED_GREEN, 100);
 	} else if (!strcasecmp(argv[1], "amber")) {
 		set_color(id, LED_AMBER, 100);
+	} else if (!strcasecmp(argv[1], "alert")) {
+		led_alert();
 	} else {
-		char *e;
-		uint32_t msec = strtoi(argv[1], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM1;
-		set_task_frequency(msec * MSEC);
+		return EC_ERROR_PARAM1;
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|amber|off|num]",
-			"Turn on/off LED. If a number is given, it changes led"
-			"task frequency (msec).");
+			"[debug|red|green|amber|off]",
+			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
