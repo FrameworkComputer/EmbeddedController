@@ -729,11 +729,19 @@ DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
 
+void __attribute__((weak))
+power_chipset_handle_host_sleep_event(enum host_sleep_event state)
+{
+	/* Default weak implementation -- no action required. */
+}
+
 static int host_command_host_sleep_event(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_host_sleep_event *p = args->params;
 
 	host_sleep_state = p->sleep_event;
+
+	power_chipset_handle_host_sleep_event(host_sleep_state);
 
 	return EC_RES_SUCCESS;
 }

@@ -143,6 +143,22 @@ void power_set_pause_in_s5(int pause);
  */
 enum host_sleep_event power_get_host_sleep_state(void);
 
+/**
+ * Provide callback to allow chipset to take any action on host sleep event
+ * command.
+ *
+ * @param state Current host sleep state updated by the host.
+ */
+void power_chipset_handle_host_sleep_event(enum host_sleep_event state);
+
+/**
+ * Provide callback to allow board to take any action on host sleep event
+ * command.
+ *
+ * @param state Current host sleep state updated by the host.
+ */
+void power_board_handle_host_sleep_event(enum host_sleep_event state);
+
 #ifdef CONFIG_POWER_S0IX
 /**
  * Reset the sleep state reported by the host.
