@@ -71,6 +71,25 @@ def do_version(pty):
 
   return True
 
+def do_check_serial(pty):
+  """Check serial via ec console 'pty'.
+
+  Args:
+    pty: a pty object connected to tigertail
+
+  Commands are:
+  # > serialno
+  # Serial number: number
+  """
+  cmd = '\r\nserialno\r\n'
+  regex = 'Serial number: ([^\n\r]+)'
+
+  results = pty._issue_cmd_get_results(cmd, [regex])[0]
+  c.log('Serial is %s' % results[1])
+
+  return True
+
+
 def do_power(count, bus, pty):
   """Check power usage via ec console 'pty'.
 
@@ -171,6 +190,8 @@ def get_parser():
   group = parser.add_mutually_exclusive_group()
   group.add_argument('--setserialno', type=str, default=None,
                      help='serial number to set on the board.')
+  group.add_argument('--check_serial', action='store_true',
+                     help='check serial number set on the board.')
   group.add_argument('-m', '--mux', type=str, default=None,
                      help='mux selection')
   group.add_argument('-p', '--power', action='store_true',
@@ -218,6 +239,9 @@ def main(argv):
 
   elif opts.check_version:
     result &= do_version(pty)
+
+  elif opts.check_serial:
+    result &= do_check_serial(pty)
 
   elif opts.power:
     result &= do_power(1, opts.bus, pty)
