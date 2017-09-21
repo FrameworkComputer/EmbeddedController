@@ -16,7 +16,9 @@
 
 /* Optional features */
 #define CONFIG_USB
+#define CONFIG_USB_BOS
 #define CONFIG_USB_CONSOLE
+#define CONFIG_WEBUSB_URL "storage.googleapis.com/webtwinkie.org/tool.html"
 
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_DUAL_ROLE
