@@ -16,6 +16,8 @@
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
+#define BATT_MODE_UNINITIALIZED -1
+
 /*
  * The state machine used to parse smart battery command
  * to support virtual battery.
@@ -182,7 +184,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	 * Note that we don't update the cached capacity: We do a real-time
 	 * conversion and return the converted values.
 	 */
-	static int batt_mode_cache;
+	static int batt_mode_cache = BATT_MODE_UNINITIALIZED;
 	const struct batt_params *curr_batt;
 	/*
 	 * Don't allow host reads into arbitrary memory space, most params
@@ -197,7 +199,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			batt_mode_cache = batt_cmd_head[1] |
 					  (batt_cmd_head[2] << 8);
 		} else if (read_len > 0) {
-			if (batt_mode_cache == 0)
+			if (batt_mode_cache == BATT_MODE_UNINITIALIZED)
 				/*
 				 * Read the battery operational mode from
 				 * the battery to initialize batt_mode_cache.
