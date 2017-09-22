@@ -25,7 +25,8 @@
 /* EC Modules */
 #define CONFIG_ADC
 #define CONFIG_ESPI
-#define CONFIG_ESPI_VW_SIGNALS
+/* TODO(aaboagye): Uncomment when Si arrives. */
+/* #define CONFIG_ESPI_VW_SIGNALS */
 #define CONFIG_I2C
 #define CONFIG_LPC
 #define CONFIG_PWM
