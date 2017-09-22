@@ -59,33 +59,33 @@ static int dsleep_recovery_margin_us = 1000000;
 #endif /* CONFIG_LOW_POWER_IDLE */
 
 /*
- * RTC clock frequency (connected to LSI clock)
+ * RTC clock frequency (By default connected to LSI clock)
  *
- * TODO(crosbug.com/p/12281): Calibrate LSI frequency on a per-chip basis.  The
- * LSI on any given chip can be between 30 kHz to 60 kHz.  Without calibration,
- * LSI frequency may be off by as much as 50%.  Fortunately, we don't do any
- * high-precision delays based solely on LSI.
+ * The LSI on any given chip can be between 30 kHz to 60 kHz.
+ * Without calibration, LSI frequency may be off by as much as 50%.
+ *
+ * Set synchronous clock freq to (RTC clock source / 2) to maximize
+ * subsecond resolution. Set asynchronous clock to 1 Hz.
  */
-/*
- * Set synchronous clock freq to LSI/2 (20kHz) to maximize subsecond
- * resolution. Set asynchronous clock to 1 Hz.
- */
-#define RTC_FREQ (40000 / 2) /* Hz */
+
+#ifdef CONFIG_STM32_CLOCK_LSE
+#define RTC_FREQ (32768 / (RTC_PREDIV_A + 1)) /* Hz */
+#else /* LSI clock, 40kHz-ish */
+#define RTC_FREQ (40000 / (RTC_PREDIV_A + 1)) /* Hz */
+#endif
 #define RTC_PREDIV_S (RTC_FREQ - 1)
 #define RTC_PREDIV_A 1
 #define US_PER_RTC_TICK (1000000 / RTC_FREQ)
 
-
 int32_t rtcss_to_us(uint32_t rtcss)
 {
-	return ((RTC_PREDIV_S - rtcss) * US_PER_RTC_TICK);
+	return ((RTC_PREDIV_S - (rtcss & 0x7fff)) * US_PER_RTC_TICK);
 }
 
 uint32_t us_to_rtcss(int32_t us)
 {
 	return (RTC_PREDIV_S - (us / US_PER_RTC_TICK));
 }
-
 
 void config_hispeed_clock(void)
 {

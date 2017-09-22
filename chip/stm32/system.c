@@ -18,6 +18,18 @@
 #include "version.h"
 #include "watchdog.h"
 
+#ifdef CONFIG_STM32_CLOCK_LSE
+#define BDCR_SRC BDCR_SRC_LSE
+#define BDCR_RDY STM32_RCC_BDCR_LSERDY
+#else
+#define BDCR_SRC BDCR_SRC_LSI
+#define BDCR_RDY 0
+#endif
+#define BDCR_ENABLE_VALUE (STM32_RCC_BDCR_RTCEN | BDCR_RTCSEL(BDCR_SRC) | \
+			BDCR_RDY)
+#define BDCR_ENABLE_MASK (BDCR_ENABLE_VALUE | BDCR_RTCSEL_MASK | \
+			STM32_RCC_BDCR_BDRST)
+
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
@@ -249,18 +261,26 @@ void system_pre_init(void)
 	/* re-configure RTC if needed */
 #ifdef CHIP_FAMILY_STM32L
 	if ((STM32_RCC_CSR & 0x00C30000) != 0x00420000) {
-		/* the RTC settings are bad, we need to reset it */
+		/* The RTC settings are bad, we need to reset it */
 		STM32_RCC_CSR |= 0x00800000;
 		/* Enable RTC and use LSI as clock source */
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
 	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32F4)
-	if ((STM32_RCC_BDCR & 0x00018300) != 0x00008200) {
-		/* the RTC settings are bad, we need to reset it */
-		STM32_RCC_BDCR |= 0x00010000;
-		/* Enable RTC and use LSI as clock source */
-		STM32_RCC_BDCR = (STM32_RCC_BDCR & ~0x00018300) | 0x00008200;
+	if ((STM32_RCC_BDCR & BDCR_ENABLE_MASK) != BDCR_ENABLE_VALUE) {
+		/* The RTC settings are bad, we need to reset it */
+		STM32_RCC_BDCR |= STM32_RCC_BDCR_BDRST;
+		STM32_RCC_BDCR = STM32_RCC_BDCR & ~BDCR_ENABLE_MASK;
+#ifdef CONFIG_STM32_CLOCK_LSE
+		/* Turn on LSE */
+		STM32_RCC_BDCR |= STM32_RCC_BDCR_LSEON;
+		/* Wait for LSE to be ready */
+		while (!(STM32_RCC_BDCR & STM32_RCC_BDCR_LSERDY))
+			;
+#endif
+		/* Select clock source and enable RTC */
+		STM32_RCC_BDCR |= BDCR_RTCSEL(BDCR_SRC) | STM32_RCC_BDCR_RTCEN;
 	}
 #else
 #error "Unsupported chip family"

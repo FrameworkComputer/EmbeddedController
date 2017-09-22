@@ -1109,11 +1109,6 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RCC_APB2LPENR             REG32(STM32_RCC_BASE + 0x64)
 
 #define STM32_RCC_BDCR                  REG32(STM32_RCC_BASE + 0x70)
-#define STM32_RCC_BDCR_BDRST		(1 << 16)
-#define STM32_RCC_BDCR_RTCEN		(1 << 15)
-#define  BCDR_RTCSEL(source)		(((source) & 0x3) << 8)
-#define  BDCR_SRC_HSE			0x3
-#define  BDCR_SRC_LSI			0x2
 #define STM32_RCC_CSR                   REG32(STM32_RCC_BASE + 0x74)
 #define STM32_RCC_CSR_LSION		(1 << 0)
 #define STM32_RCC_CSR_LSIRDY		(1 << 1)
@@ -1140,6 +1135,17 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #else
 #error Unsupported chip variant
 #endif
+
+/* RTC domain control register */
+#define STM32_RCC_BDCR_BDRST		(1 << 16)
+#define STM32_RCC_BDCR_RTCEN		(1 << 15)
+#define STM32_RCC_BDCR_LSERDY		(1 << 1)
+#define STM32_RCC_BDCR_LSEON		(1 << 0)
+#define  BDCR_RTCSEL_MASK		((0x3) << 8)
+#define  BDCR_RTCSEL(source)		(((source) << 8) & BDCR_RTCSEL_MASK)
+#define  BDCR_SRC_LSE			0x1
+#define  BDCR_SRC_LSI			0x2
+#define  BDCR_SRC_HSE			0x3
 
 /* Peripheral bits for RCC_APB/AHB and DBGMCU regs */
 #define STM32_RCC_PB1_TIM2		(1 << 0)
