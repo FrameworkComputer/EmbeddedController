@@ -216,9 +216,22 @@ int board_set_active_charge_port(int port)
 {
 	int is_real_port = (port >= 0 &&
 			    port < CONFIG_USB_PD_PORT_COUNT);
+	static int initialized;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
+
+	/*
+	 * Reject charge port none if our battery is critical and we
+	 * have yet to initialize a charge port - continue to charge using
+	 * charger ROM / POR settings.
+	 */
+	if (!initialized &&
+	    port == CHARGE_PORT_NONE &&
+	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
+		CPRINTS("Bat critical, don't stop charging");
+		return -1;
+	}
 
 	CPRINTS("New chg p%d", port);
 
@@ -227,6 +240,7 @@ int board_set_active_charge_port(int port)
 		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
 		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
 		gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, 1);
+		initialized = 1;
 		return EC_SUCCESS;
 	}
 
@@ -242,6 +256,7 @@ int board_set_active_charge_port(int port)
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, port != 0);
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, port != 1);
 	gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, port != 2);
+	initialized = 1;
 
 	return EC_SUCCESS;
 }
