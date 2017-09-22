@@ -85,10 +85,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_PP1250_S3_PG,    1, "PP1250_S3_PWR_GOOD"},
-	{GPIO_PP900_S0_PG,     1, "PP900_S0_PWR_GOOD"},
-	{GPIO_AP_CORE_PG,      1, "AP_PWR_GOOD"},
-	{GPIO_AP_EC_S3_S0_L,   0, "SUSPEND_DEASSERTED"},
+	{GPIO_PP1250_S3_PG,    POWER_SIGNAL_ACTIVE_HIGH, "PP1250_S3_PWR_GOOD"},
+	{GPIO_PP900_S0_PG,     POWER_SIGNAL_ACTIVE_HIGH, "PP900_S0_PWR_GOOD"},
+	{GPIO_AP_CORE_PG,      POWER_SIGNAL_ACTIVE_HIGH, "AP_PWR_GOOD"},
+	{GPIO_AP_EC_S3_S0_L,   POWER_SIGNAL_ACTIVE_LOW, "SUSPEND_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 

@@ -85,10 +85,10 @@ void usb1_evt(enum gpio_signal signal)
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_PCH_SLP_S3_L,       1, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S5_L,       1, "SLP_S5_DEASSERTED"},
-	{GPIO_SPOK,	          1, "SPOK_DEASSERTED"},
-	{GPIO_P095VALW_PG,        1, "0.95VALW_DEASSERTED"},
+	{GPIO_PCH_SLP_S3_L, POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
+	{GPIO_PCH_SLP_S5_L, POWER_SIGNAL_ACTIVE_HIGH, "SLP_S5_DEASSERTED"},
+	{GPIO_SPOK,	    POWER_SIGNAL_ACTIVE_HIGH, "SPOK_DEASSERTED"},
+	{GPIO_P095VALW_PG,  POWER_SIGNAL_ACTIVE_HIGH, "0.95VALW_DEASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 

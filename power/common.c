@@ -92,6 +92,12 @@ static int power_signal_enable_interrupt(enum gpio_signal signal)
 	return gpio_enable_interrupt(signal);
 }
 
+int power_signal_is_asserted(const struct power_signal_info *s)
+{
+	return power_signal_get_level(s->gpio) ==
+		!!(s->flags & POWER_SIGNAL_ACTIVE_STATE);
+}
+
 /**
  * Update input signals mask
  */
@@ -102,7 +108,7 @@ static void power_update_signals(void)
 	int i;
 
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
-		if (power_signal_get_level(s->gpio) == s->level)
+		if (power_signal_is_asserted(s))
 			inew |= 1 << i;
 	}
 

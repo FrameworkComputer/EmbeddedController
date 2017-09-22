@@ -593,7 +593,7 @@ static void power_signal_changed(void)
 		if (s->gpio < GPIO_IH_COUNT)
 			continue;
 
-		if (gpio_get_level(s->gpio) == s->level)
+		if (power_signal_is_asserted(s))
 			inew |= 1 << i;
 	}
 

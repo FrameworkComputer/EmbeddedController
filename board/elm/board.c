@@ -76,8 +76,8 @@ void usb_evt(enum gpio_signal signal)
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_SOC_POWER_GOOD, 1, "POWER_GOOD"},	/* Active high */
-	{GPIO_SUSPEND_L, 0, "SUSPEND#_ASSERTED"},	/* Active low */
+	{GPIO_SOC_POWER_GOOD, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD"},
+	{GPIO_SUSPEND_L, POWER_SIGNAL_ACTIVE_LOW, "SUSPEND#_ASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 

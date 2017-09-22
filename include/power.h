@@ -36,10 +36,26 @@ enum power_state {
 #endif
 };
 
+/*
+ * Power signal flags:
+ *
+ * +-----------------+------------------------------------+
+ * |     Bit #       |           Description              |
+ * +------------------------------------------------------+
+ * |       0         |      Active level (low/high)       |
+ * +------------------------------------------------------+
+ * |     1 : 32      |            Reserved                |
+ * +-----------------+------------------------------------+
+ */
+
+#define POWER_SIGNAL_ACTIVE_STATE	(1 << 0)
+#define POWER_SIGNAL_ACTIVE_LOW	(0 << 0)
+#define POWER_SIGNAL_ACTIVE_HIGH	(1 << 0)
+
 /* Information on an power signal */
 struct power_signal_info {
 	enum gpio_signal gpio;	/* GPIO for signal */
-	int level;		/* GPIO level which sets signal bit */
+	uint32_t flags;		/* See POWER_SIGNAL_* macros */
 	const char *name;	/* Name of signal */
 };
 
@@ -56,6 +72,15 @@ extern const struct power_signal_info power_signal_list[];
  * Return current input signal state (one or more POWER_SIGNAL_MASK()s).
  */
 uint32_t power_get_signals(void);
+
+/**
+ * Check if provided power signal is currently asserted.
+ *
+ * @param s		Power signal that needs to be checked.
+ *
+ * @return 1 if power signal is asserted, 0 otherwise.
+ */
+int power_signal_is_asserted(const struct power_signal_info *s);
 
 /**
  * Check for required inputs

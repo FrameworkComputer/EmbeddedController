@@ -27,8 +27,8 @@
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_SOC_POWER_GOOD, 1, "POWER_GOOD"},
-	{GPIO_SUSPEND_L,      1, "SUSPEND#_ASSERTED"},
+	{GPIO_SOC_POWER_GOOD, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD"},
+	{GPIO_SUSPEND_L,      POWER_SIGNAL_ACTIVE_HIGH, "SUSPEND#_ASSERTED"},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
