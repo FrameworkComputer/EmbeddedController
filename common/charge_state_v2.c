@@ -119,6 +119,7 @@ static void problem(enum problem_type p, int v)
 	problems_exist = 1;
 }
 
+#ifdef HAS_TASK_HOSTCMD
 /* Returns zero if every item was updated. */
 static int update_static_battery_info(void)
 {
@@ -263,6 +264,15 @@ static void update_dynamic_battery_info(void)
 	if (send_batt_status_event)
 		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
 }
+#else
+/* No AP to inform. */
+static int update_static_battery_info(void)
+{
+	return EC_RES_SUCCESS;
+}
+
+static void update_dynamic_battery_info(void) {}
+#endif
 
 static const char * const state_list[] = {
 	"idle", "discharge", "charge", "precharge"
@@ -534,8 +544,10 @@ static void shutdown_on_critical_battery(void)
 	if (!shutdown_warning_time.val) {
 		CPRINTS("charge warn shutdown due to critical battery");
 		shutdown_warning_time = get_time();
+#ifdef CONFIG_HOSTCMD_EVENTS
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			host_set_single_event(EC_HOST_EVENT_BATTERY_SHUTDOWN);
+#endif
 	} else if (get_time().val > shutdown_warning_time.val +
 		   CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
@@ -570,6 +582,7 @@ static void notify_host_of_low_battery(void)
 	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
 		return;
 
+#ifdef CONFIG_HOSTCMD_EVENTS
 	if (curr.batt.state_of_charge <= BATTERY_LEVEL_LOW &&
 	    prev_charge > BATTERY_LEVEL_LOW)
 		host_set_single_event(EC_HOST_EVENT_BATTERY_LOW);
@@ -577,6 +590,7 @@ static void notify_host_of_low_battery(void)
 	if (curr.batt.state_of_charge <= BATTERY_LEVEL_CRITICAL &&
 	    prev_charge > BATTERY_LEVEL_CRITICAL)
 		host_set_single_event(EC_HOST_EVENT_BATTERY_CRITICAL);
+#endif
 }
 
 const struct batt_params *charger_current_battery_params(void)
