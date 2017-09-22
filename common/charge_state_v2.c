@@ -297,6 +297,7 @@ static void dump_charge_state(void)
 	DUMP_CHG(status, "0x%x");
 	DUMP_CHG(option, "0x%x");
 	DUMP_CHG(flags, "0x%x");
+	cflush();
 	ccprintf("batt.*:\n");
 	ccprintf("\ttemperature = %dC\n",
 		 DECI_KELVIN_TO_CELSIUS(curr.batt.temperature));
@@ -309,6 +310,7 @@ static void dump_charge_state(void)
 	DUMP_BATT(remaining_capacity, "%dmAh");
 	DUMP_BATT(full_capacity, "%dmAh");
 	ccprintf("\tis_present = %s\n", batt_pres[curr.batt.is_present]);
+	cflush();
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
 	ccprintf("chg_ctl_mode = %d\n", chg_ctl_mode);
