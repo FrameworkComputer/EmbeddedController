@@ -464,6 +464,13 @@ power_board_handle_host_sleep_event(enum host_sleep_event state)
 void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 {
 	power_board_handle_host_sleep_event(state);
+
+#ifdef CONFIG_POWER_S0IX
+	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
+		power_signal_enable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
+	else
+		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
+#endif
 }
 
 #endif
