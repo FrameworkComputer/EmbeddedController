@@ -435,7 +435,10 @@ static void power_common_init(void)
 
 	/* Enable interrupts for input signals */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++)
-		power_signal_enable_interrupt(s->gpio);
+		if (s->flags & POWER_SIGNAL_DISABLE_AT_BOOT)
+			power_signal_disable_interrupt(s->gpio);
+		else
+			power_signal_enable_interrupt(s->gpio);
 
 	/*
 	 * Update input state again since there is a small window
