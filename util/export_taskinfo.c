@@ -30,7 +30,7 @@ struct taskinfo {
 	.routine = #r,		\
 	.stack_size = s,	\
 },
-static const struct taskinfo const taskinfos[] = {
+static const struct taskinfo taskinfos[] = {
 	CONFIG_TASK_LIST
 };
 #undef TASK
