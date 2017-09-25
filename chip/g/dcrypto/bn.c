@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+#ifdef PRINT_PRIMES
+#include "console.h"
+#endif
+
 #include "dcrypto.h"
 #include "internal.h"
 
@@ -1210,6 +1214,27 @@ static int bn_probable_prime(const struct LITE_BIGNUM *p)
 	return 1;
 }
 
+/* #define PRINT_PRIMES to enable printing predefined prime numbers' set. */
+static void print_primes(uint16_t prime)
+{
+#ifdef PRINT_PRIMES
+	static uint16_t num_per_line;
+	static uint16_t max_printed;
+
+	if (prime <=  max_printed)
+		return;
+
+	if (!(num_per_line++ % 8)) {
+		if (num_per_line == 1)
+			ccprintf("Prime numbers:");
+		ccprintf("\n");
+		cflush();
+	}
+	max_printed = prime;
+	ccprintf(" %6d", prime);
+#endif
+}
+
 int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p)
 {
 	int i;
@@ -1232,6 +1257,7 @@ int DCRYPTO_bn_generate_prime(struct LITE_BIGNUM *p)
 		uint16_t rem;
 
 		prime += (PRIME_DELTAS[i] << 1);
+		print_primes(prime);
 		rem = bn_mod_word16(p, prime);
 		/* Skip marking odd offsets (i.e. even candidates). */
 		for (j = (rem == 0) ? 0 : prime - rem;
