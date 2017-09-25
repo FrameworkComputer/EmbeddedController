@@ -154,8 +154,8 @@ static void request_power(void)
 
 static void request_recovery(void)
 {
-	/* TODO(crosbug.com/p/37646390): Blink LED */
 	CPRINTS("%s", __func__);
+	led_critical();
 }
 
 static int is_manual_recovery(void)

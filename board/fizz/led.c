@@ -174,6 +174,13 @@ void led_alert(int enable)
 	}
 }
 
+void led_critical(void)
+{
+	hook_call_deferred(&led_tick_data, -1);
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		set_color(EC_LED_ID_POWER_LED, LED_RED, 100);
+}
+
 static int command_led(int argc, char **argv)
 {
 	enum ec_led_id id = EC_LED_ID_POWER_LED;
@@ -194,13 +201,15 @@ static int command_led(int argc, char **argv)
 		set_color(id, LED_AMBER, 100);
 	} else if (!strcasecmp(argv[1], "alert")) {
 		led_alert(1);
+	} else if (!strcasecmp(argv[1], "crit")) {
+		led_critical();
 	} else {
 		return EC_ERROR_PARAM1;
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|amber|off|alert]",
+			"[debug|red|green|amber|off|alert|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
