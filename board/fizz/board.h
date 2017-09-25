@@ -63,8 +63,7 @@
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
 
-/* TODO(dnojiri): Set this right */
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 20000
+#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 50000
 
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_EXTPOWER_GPIO
@@ -232,6 +231,7 @@ int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 int board_get_battery_soc(void);
+void led_alert(int enable);
 
 #endif /* !__ASSEMBLER__ */
 

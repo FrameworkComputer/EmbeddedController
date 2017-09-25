@@ -378,6 +378,13 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
+	/* Turn on/off power shortage alert. Performs the same check as
+	 * system_can_boot_ap(). It's repeated here because charge_manager
+	 * hasn't updated charge_current/voltage when board_set_charge_limit
+	 * is called. */
+	led_alert(charge_ma * charge_mv <
+			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000);
+
 	/*
 	 * We have two FETs connected to two registers: PR257 & PR258.
 	 * These control thresholds of the over current monitoring system.
@@ -402,7 +409,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		gpio_set_level(GPIO_U42_P, 0);
 		gpio_set_level(GPIO_U22_C, 0);
 	} else {
-		CPRINTS("Current %dmA not supported", charge_mv);
+		/* TODO(http://crosbug.com/p/65013352) */
+		CPRINTS("Current %dmA not supported", charge_ma);
 	}
 }
 

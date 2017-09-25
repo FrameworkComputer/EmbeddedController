@@ -87,6 +87,7 @@ static struct {
 	uint32_t interval;
 	int duty_inc;
 	enum led_color color;
+	int duty;
 } led_pulse;
 
 #define CONFIG_TICK(interval, color) \
@@ -97,18 +98,17 @@ static void config_tick(uint32_t interval, int duty_inc, enum led_color color)
 	led_pulse.interval = interval;
 	led_pulse.duty_inc = duty_inc;
 	led_pulse.color = color;
+	led_pulse.duty = 0;
 }
 
 static void pulse_power_led(enum led_color color)
 {
-	static int duty = 0;
-
-	set_color(EC_LED_ID_POWER_LED, color, duty);
-	if (duty + led_pulse.duty_inc > 100)
+	set_color(EC_LED_ID_POWER_LED, color, led_pulse.duty);
+	if (led_pulse.duty + led_pulse.duty_inc > 100)
 		led_pulse.duty_inc = led_pulse.duty_inc * -1;
-	else if (duty + led_pulse.duty_inc < 0)
+	else if (led_pulse.duty + led_pulse.duty_inc < 0)
 		led_pulse.duty_inc = led_pulse.duty_inc * -1;
-	duty += led_pulse.duty_inc;
+	led_pulse.duty += led_pulse.duty_inc;
 }
 
 static void led_tick(void);
@@ -134,7 +134,7 @@ static void led_tick(void)
 
 static void led_suspend(void)
 {
-	CONFIG_TICK(LED_PULSE_TICK_US, LED_AMBER);
+	CONFIG_TICK(LED_PULSE_TICK_US, LED_GREEN);
 	led_tick();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, led_suspend, HOOK_PRIO_DEFAULT);
@@ -157,10 +157,21 @@ static void led_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, led_resume, HOOK_PRIO_DEFAULT);
 
-void led_alert(void)
+void led_alert(int enable)
 {
-	CONFIG_TICK(LED_PULSE_US, LED_RED);
-	led_tick();
+	if (enable) {
+		/* Overwrite the current signal */
+		CONFIG_TICK(LED_PULSE_US, LED_RED);
+		led_tick();
+	} else {
+		/* Restore the previous signal */
+		if (chipset_in_state(CHIPSET_STATE_ON))
+			led_resume();
+		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+			led_suspend();
+		else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			led_shutdown();
+	}
 }
 
 static int command_led(int argc, char **argv)
@@ -182,14 +193,14 @@ static int command_led(int argc, char **argv)
 	} else if (!strcasecmp(argv[1], "amber")) {
 		set_color(id, LED_AMBER, 100);
 	} else if (!strcasecmp(argv[1], "alert")) {
-		led_alert();
+		led_alert(1);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|amber|off]",
+			"[debug|red|green|amber|off|alert]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
