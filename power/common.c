@@ -777,6 +777,7 @@ enum host_sleep_event power_get_host_sleep_state(void)
 void power_reset_host_sleep_state(enum host_sleep_event sleep_event)
 {
 	host_sleep_state = sleep_event;
+	power_chipset_handle_host_sleep_event(host_sleep_state);
 }
 #endif /* CONFIG_POWER_S0IX */
 
