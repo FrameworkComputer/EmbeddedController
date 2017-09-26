@@ -437,7 +437,11 @@ static int host_command_vboot_hash(struct host_cmd_handler_args *args)
 
 	switch (p->cmd) {
 	case EC_VBOOT_HASH_GET:
-		fill_response(r, p->offset);
+		if (p->offset || p->size)
+			fill_response(r, p->offset);
+		else
+			fill_response(r, data_offset);
+
 		args->response_size = sizeof(*r);
 		return EC_RES_SUCCESS;
 

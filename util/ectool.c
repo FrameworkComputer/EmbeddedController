@@ -6193,6 +6193,7 @@ int cmd_ec_hash(int argc, char *argv[])
 	char *e;
 	int rv;
 
+	memset(&p, 0, sizeof(p));
 	if (argc < 2) {
 		/* Get hash status */
 		p.cmd = EC_VBOOT_HASH_GET;
