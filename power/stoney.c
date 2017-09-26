@@ -28,12 +28,16 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 static int forcing_coldreset; /* Forced coldreset in progress? */
+static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 void chipset_force_shutdown(void)
 {
 	CPRINTS("%s()", __func__);
 
-	/* TODO: shutdown */
+	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+		forcing_shutdown = 1;
+		power_button_pch_press();
+	}
 }
 
 void chipset_reset(int cold_reset)
@@ -111,6 +115,11 @@ static void handle_pass_through(enum power_state state,
 
 enum power_state _power_handle_state(enum power_state state)
 {
+	if (state == POWER_S5 && forcing_shutdown) {
+		power_button_pch_release();
+		forcing_shutdown = 0;
+	}
+
 	switch (state) {
 	case POWER_G3:
 		break;
