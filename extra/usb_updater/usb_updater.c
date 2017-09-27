@@ -237,16 +237,17 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "bcd:fhipstu";
+static char *short_opts = "bcd:fhiprstu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	0,   NULL, 'b'},
+	{"board_id",    2,   NULL, 'i'},
 	{"corrupt",	0,   NULL, 'c'},
 	{"device",	1,   NULL, 'd'},
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
 	{"post_reset",	0,   NULL, 'p'},
-	{"board_id",    2,   NULL, 'i'},
+	{"rma_auth",	0,   NULL, 'r'},
 	{"systemdev",	0,   NULL, 's'},
 	{"trunks_send",	0,   NULL, 't'},
 	{"upstart",	0,   NULL, 'u'},
@@ -538,6 +539,7 @@ static void usage(int errs)
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
+	       "  -r,--rma_auth            Process RMA challenge-response\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -t,--trunks_send         Use `trunks_send --raw' "
 	       "(-d is ignored)\n"
@@ -1232,10 +1234,8 @@ static uint32_t send_vendor_command(struct transfer_descriptor *td,
 		 * to have the result code in the first byte of the response,
 		 * to be stripped from the actual response body by this
 		 * function.
-		 *
-		 * We never expect vendor command response larger than 32 bytes.
 		 */
-		uint8_t temp_response[32];
+		uint8_t temp_response[MAX_BUF_SIZE];
 		size_t max_response_size;
 
 		if (!response_size) {
@@ -1585,6 +1585,60 @@ static void process_bid(struct transfer_descriptor *td,
 	}
 }
 
+/*
+ * Retrieve the RMA authentication challenge from the Cr50, print out the
+ * challenge on the console, then prompt the user for the authentication code,
+ * and send the code back to Cr50. The Cr50 would report if the code matched
+ * its expectations or not.
+ */
+static void process_rma(struct transfer_descriptor *td)
+{
+	char rma_response[81];
+	size_t response_size = sizeof(rma_response);
+	size_t i;
+	char *authcode = NULL;
+	size_t auth_size = 0;
+
+	send_vendor_command(td, VENDOR_CC_RMA_CHALLENGE_RESPONSE,
+			    NULL, 0, rma_response, &response_size);
+
+	if (response_size == 1) {
+		printf("error %d\n", rma_response[0]);
+		if (td->ep_type == usb_xfer)
+			shut_down(&td->uep);
+		exit(update_error);
+	}
+
+	printf("Challenge:");
+	for (i = 0; i < response_size; i++) {
+		if (!(i % 5)) {
+			if (!(i % 40))
+				printf("\n");
+			printf(" ");
+		}
+		printf("%c", rma_response[i]);
+	}
+	printf("\nNow enter response: ");
+	auth_size = getline(&authcode, &auth_size, stdin);
+	if (auth_size > 0) {
+
+		response_size = sizeof(rma_response);
+
+		send_vendor_command(td, VENDOR_CC_RMA_CHALLENGE_RESPONSE,
+				    authcode, auth_size - 1, /* drop the '\n' */
+				    rma_response, &response_size);
+
+		if (response_size == 1) {
+			printf("\nrma unlock failed, code %d\n",
+			       *rma_response);
+			if (td->ep_type == usb_xfer)
+				shut_down(&td->uep);
+			exit(update_error);
+		}
+		printf("RMA unlock succeeded.\n");
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -1597,6 +1651,7 @@ int main(int argc, char *argv[])
 	int transferred_sections = 0;
 	int binary_vers = 0;
 	int show_fw_ver = 0;
+	int rma = 0;
 	int corrupt_inactive_rw = 0;
 	struct board_id bid;
 	enum board_id_action bid_action;
@@ -1647,6 +1702,9 @@ int main(int argc, char *argv[])
 				errorcnt++;
 			}
 			break;
+		case 'r':
+			rma = 1;
+			break;
 		case 's':
 			td.ep_type = dev_xfer;
 			break;
@@ -1682,7 +1740,10 @@ int main(int argc, char *argv[])
 	if (errorcnt)
 		usage(errorcnt);
 
-	if (!show_fw_ver && !corrupt_inactive_rw && (bid_action == bid_none)) {
+	if (!show_fw_ver &&
+	    !corrupt_inactive_rw &&
+	    (bid_action == bid_none) &&
+	    !rma) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -1719,6 +1780,9 @@ int main(int argc, char *argv[])
 
 	if (bid_action != bid_none)
 		process_bid(&td, bid_action, &bid);
+
+	if (rma)
+		process_rma(&td);
 
 	if (corrupt_inactive_rw)
 		invalidate_inactive_rw(&td);
