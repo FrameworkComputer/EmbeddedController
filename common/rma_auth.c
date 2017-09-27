@@ -10,11 +10,15 @@
 #include "chip/g/board_id.h"
 #include "curve25519.h"
 #include "rma_auth.h"
-#include "sha256.h"
 #include "system.h"
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_DCRYPTO
+#include "dcrypto.h"
+#else
+#include "sha256.h"
+#endif
 /* Minimum time since system boot or last challenge before making a new one */
 #define CHALLENGE_INTERVAL (10 * SECOND)
 
@@ -29,6 +33,21 @@ static char challenge[RMA_CHALLENGE_BUF_SIZE];
 static char authcode[RMA_AUTHCODE_BUF_SIZE];
 static int tries_left;
 static uint64_t last_challenge_time;
+
+static void get_hmac_sha256(void *hmac_out, const uint8_t *secret,
+			    size_t secret_size, const void *ch_ptr,
+			    size_t ch_size)
+{
+#ifdef CONFIG_DCRYPTO
+	LITE_HMAC_CTX hmac;
+
+	DCRYPTO_HMAC_SHA256_init(&hmac, secret, secret_size);
+	HASH_update(&hmac.hash, ch_ptr, ch_size);
+	memcpy(hmac_out, DCRYPTO_HMAC_final(&hmac), 32);
+#else
+	hmac_SHA256(hmac_out, secret, secret_size, ch_ptr, ch_size);
+#endif
+}
 
 /**
  * Create a new RMA challenge/response
@@ -83,7 +102,7 @@ int rma_create_challenge(void)
 	 * and DeviceID.  Those are all in the right order in the challenge
 	 * struct, after the version/key id byte.
 	 */
-	hmac_SHA256(temp, secret, sizeof(secret), cptr + 1, sizeof(c) - 1);
+	get_hmac_sha256(temp, secret, sizeof(secret), cptr + 1, sizeof(c) - 1);
 	if (base32_encode(authcode, sizeof(authcode), temp,
 			  RMA_AUTHCODE_CHARS * 5, 0))
 		return EC_ERROR_UNKNOWN;
