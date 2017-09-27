@@ -434,6 +434,13 @@ void gpio_pre_init(void)
 	/* To prevent cc pins leakage if we don't use pd module */
 	for (i = 0; i < USBPD_PORT_COUNT; i++) {
 		IT83XX_USBPD_CCGCR(i) = 0x1f;
+		/*
+		 * bit7 and bit3: Dis-connect CC with UP/RD/DET/TX/RX.
+		 * bit6 and bit2: Dis-connect CC with 5.1K resister to GND.
+		 * bit5 and bit1: Disable CC voltage detector.
+		 * bit4 and bit0: Disable CC.
+		 */
+		IT83XX_USBPD_CCCSR(i) = 0xff;
 		IT83XX_USBPD_CCPSR(i) = 0x66;
 	}
 #endif
