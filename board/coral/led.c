@@ -14,45 +14,115 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
+#include "system.h"
 #include "util.h"
 
-#define BAT_LED_ON 0
-#define BAT_LED_OFF 1
-
-#define CRITICAL_LOW_BATTERY_PERCENTAGE 3
-#define LOW_BATTERY_PERCENTAGE 10
-
-#define LED_TOTAL_4SECS_TICKS 4
-#define LED_TOTAL_2SECS_TICKS 2
-#define LED_ON_1SEC_TICKS 1
-#define LED_ON_2SECS_TICKS 2
+#define LED_ON_LVL 0
+#define LED_OFF_LVL 1
+#define LED_INDEFINITE -1
+#define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
+#define LED_CHARGE_LEVEL_1_DEFAULT 100
+#define LED_CHARGE_LEVEL_1_ROBO 5
 
 const enum ec_led_id supported_led_ids[] = {
 			EC_LED_ID_BATTERY_LED};
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+#define GPIO_LED_COLOR_1 GPIO_BAT_LED_AMBER
+#define GPIO_LED_COLOR_2 GPIO_BAT_LED_BLUE
+#define GPIO_LED_COLOR_3 GPIO_POW_LED
+
+enum led_phase {
+	LED_PHASE_0,
+	LED_PHASE_1,
+	LED_NUM_PHASES
+};
+
 enum led_color {
-	LED_OFF = 0,
-	LED_BLUE,
-	LED_AMBER,
+	LED_OFF,
+	LED_COLOR_1,
+	LED_COLOR_2,
+	LED_COLOR_BOTH,
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
+
+enum led_states {
+	STATE_CHARGING_LVL_1,
+	STATE_CHARGING_LVL_2,
+	STATE_CHARGING_LVL_3,
+	STATE_DISCHARGE_S0,
+	STATE_DISCHARGE_S3,
+	STATE_DISCHARGE_S5,
+	STATE_BATTERY_ERROR,
+	STATE_FACTORY_TEST,
+	LED_NUM_STATES
+};
+
+struct led_descriptor {
+	int8_t color;
+	int8_t time;
+};
+
+struct led_info {
+	enum led_states state;
+	uint8_t charge_lvl_1;
+	const struct led_descriptor (*state_table)[LED_NUM_PHASES];
+	void (*update_power)(void);
+};
+
+/*
+ * LED state tables describe the desired LED behavior for a each possible
+ * state. The LED state is based on both chip power state and the battery charge
+ * level. The first parameter is the color and the 2nd parameter is the time in
+ * ticks, where each tick is 200 msec. If the time parameter is set to -1, that
+ * means it is a non-blinking pattern.
+ */
+
+/* COLOR_1 = Amber, COLOR_2 = Blue */
+static const struct led_descriptor led_default_state_table[][LED_NUM_PHASES] = {
+	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_COLOR_1, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_1, 1 * LED_ONE_SEC}, {LED_COLOR_2, 1 * LED_ONE_SEC} },
+	{ {LED_COLOR_1, 2 * LED_ONE_SEC}, {LED_COLOR_2, 2 * LED_ONE_SEC} },
+};
+
+/* COLOR_1 = Green, COLOR_2 = Red */
+static const struct led_descriptor led_robo_state_table[][LED_NUM_PHASES] = {
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_BOTH, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
+	{ {LED_COLOR_2, 2 * LED_ONE_SEC}, {LED_COLOR_1, 2 * LED_ONE_SEC} },
+};
+
+static struct led_info led;
 
 static int led_set_color_battery(enum led_color color)
 {
 	switch (color) {
 	case LED_OFF:
-		gpio_set_level(GPIO_BAT_LED_BLUE, BAT_LED_OFF);
-		gpio_set_level(GPIO_BAT_LED_AMBER, BAT_LED_OFF);
+		gpio_set_level(GPIO_LED_COLOR_1, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_COLOR_2, LED_OFF_LVL);
 		break;
-	case LED_BLUE:
-		gpio_set_level(GPIO_BAT_LED_BLUE, BAT_LED_ON);
-		gpio_set_level(GPIO_BAT_LED_AMBER, BAT_LED_OFF);
+	case LED_COLOR_1:
+		gpio_set_level(GPIO_LED_COLOR_1, LED_ON_LVL);
+		gpio_set_level(GPIO_LED_COLOR_2, LED_OFF_LVL);
 		break;
-	case LED_AMBER:
-		gpio_set_level(GPIO_BAT_LED_BLUE, BAT_LED_OFF);
-		gpio_set_level(GPIO_BAT_LED_AMBER, BAT_LED_ON);
+	case LED_COLOR_2:
+		gpio_set_level(GPIO_LED_COLOR_1, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_COLOR_2, LED_ON_LVL);
+		break;
+	case LED_COLOR_BOTH:
+		gpio_set_level(GPIO_LED_COLOR_1, LED_ON_LVL);
+		gpio_set_level(GPIO_LED_COLOR_2, LED_ON_LVL);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -64,93 +134,137 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	brightness_range[EC_LED_COLOR_BLUE] = 1;
 	brightness_range[EC_LED_COLOR_AMBER] = 1;
-}
-
-static int led_set_color(enum ec_led_id led_id, enum led_color color)
-{
-	int rv;
-	switch (led_id) {
-	case EC_LED_ID_BATTERY_LED:
-		rv = led_set_color_battery(color);
-		break;
-	default:
-		return EC_ERROR_UNKNOWN;
-	}
-	return rv;
+	brightness_range[EC_LED_COLOR_RED] = 1;
+	brightness_range[EC_LED_COLOR_GREEN] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (brightness[EC_LED_COLOR_BLUE] != 0)
-		led_set_color(led_id, LED_BLUE);
+		led_set_color_battery(GPIO_LED_COLOR_2);
 	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color(led_id, LED_AMBER);
+		led_set_color_battery(GPIO_LED_COLOR_1);
+	else if (brightness[EC_LED_COLOR_RED] != 0)
+		led_set_color_battery(GPIO_LED_COLOR_2);
+	else if (brightness[EC_LED_COLOR_RED] != 0)
+		led_set_color_battery(GPIO_LED_COLOR_1);
 	else
-		led_set_color(led_id, LED_OFF);
+		led_set_color_battery(LED_OFF);
 
 	return EC_SUCCESS;
 }
 
-static void led_set_battery(void)
+static enum led_states led_get_state(void)
 {
-	static int battery_ticks;
-	static int suspend_ticks;
+	int  charge_lvl;
+	enum led_states new_state = LED_NUM_STATES;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		led_set_color_battery(LED_AMBER);
+		/* Get percent charge */
+		charge_lvl = charge_get_percent();
+		/* Determine which charge state to use */
+		new_state = charge_lvl <= led.charge_lvl_1 ?
+			STATE_CHARGING_LVL_1 : STATE_CHARGING_LVL_2;
 		break;
 	case PWR_STATE_DISCHARGE_FULL:
 		if (extpower_is_present()) {
-			led_set_color_battery(LED_BLUE);
+			new_state = STATE_CHARGING_LVL_3;
 			break;
 		}
 		/* Intentional fall-through */
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
-		if (chipset_in_state(CHIPSET_STATE_ON)) {
-			led_set_color_battery(LED_BLUE);
-		} else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-					    CHIPSET_STATE_STANDBY)) {
-			/* Blink once every four seconds. */
-			led_set_color_battery(
-				(suspend_ticks % LED_TOTAL_4SECS_TICKS)
-				< LED_ON_1SEC_TICKS ? LED_AMBER : LED_OFF);
-		} else {
-			led_set_color_battery(LED_OFF);
-		}
+		if (chipset_in_state(CHIPSET_STATE_ON))
+			new_state = STATE_DISCHARGE_S0;
+		else if (chipset_in_state(CHIPSET_STATE_SUSPEND) |
+			 chipset_in_state(CHIPSET_STATE_STANDBY))
+			new_state = STATE_DISCHARGE_S3;
+		else
+			new_state = STATE_DISCHARGE_S5;
 		break;
 	case PWR_STATE_ERROR:
-		led_set_color_battery(
-			(battery_ticks % LED_TOTAL_2SECS_TICKS <
-			 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+		new_state = STATE_BATTERY_ERROR;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		led_set_color_battery(LED_BLUE);
+		new_state = STATE_CHARGING_LVL_3;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
-			led_set_color_battery(
-				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_2SECS_TICKS) ? LED_AMBER : LED_BLUE);
+			new_state = STATE_FACTORY_TEST;
 		else
-			led_set_color_battery(LED_BLUE);
+			new_state = STATE_DISCHARGE_S0;
 		break;
 	default:
 		/* Other states don't alter LED behavior */
 		break;
 	}
-	battery_ticks++;
-	suspend_ticks++;
+
+	return new_state;
+}
+
+static void led_update_battery(void)
+{
+	static int ticks;
+	int phase;
+	enum led_states desired_state = led_get_state();
+
+	/* Get updated state based on power state and charge level */
+	if (desired_state < LED_NUM_STATES && desired_state != led.state) {
+		/* State is changing */
+		led.state = desired_state;
+		/* Reset ticks counter when state changes */
+		ticks = 0;
+	}
+
+	/*
+	 * Determine the which phase of the state table to use. Assume it's
+	 * phase 0. If the time values for both phases of the current state are
+	 * not -1, then this state uses some blinking pattern. The phase is then
+	 * determined by taking the modulo of ticks by the blinking pattern
+	 * period.
+	 */
+	phase = 0;
+	if ((led.state_table[led.state][LED_PHASE_0].time != LED_INDEFINITE) &&
+	    (led.state_table[led.state][LED_PHASE_1].time != LED_INDEFINITE)) {
+		int period;
+
+		period = led.state_table[led.state][LED_PHASE_0].time +
+			led.state_table[led.state][LED_PHASE_1].time;
+		if (period)
+			phase = ticks % period <
+				led.state_table[led.state][LED_PHASE_0].time ?
+				0 : 1;
+	}
+
+	/* Set the color for the given state and phase */
+	led_set_color_battery(led.state_table[led.state][phase].color);
+	ticks++;
 }
 
 /* Called by hook task every 1 sec */
-static void led_second(void)
+static void led_update(void)
 {
-	/*
-	 * Reference board only has one LED, so overload it to act as both
-	 * power LED and battery LED.
-	 */
+	/* Update battery LED */
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		led_set_battery();
+		led_update_battery();
 }
-DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, led_update, HOOK_PRIO_DEFAULT);
+
+static void led_init(void)
+{
+	int sku = system_get_sku_id();
+
+	if ((sku >= 70 && sku <= 79) || (sku >= 124 && sku <= 125) ||
+	    (sku >= 144 && sku <= 145)) {
+		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_ROBO;
+		led.state_table = led_robo_state_table;
+		led.update_power = NULL;
+	} else {
+		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_DEFAULT;
+		led.state_table = led_default_state_table;
+		led.update_power = NULL;
+	}
+	led_set_color_battery(LED_OFF);
+}
+/* Make sure this comes after SKU ID hook */
+DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT + 2);
