@@ -193,7 +193,12 @@ struct upgrade_pkt {
 	};
 } __packed;
 
-#define MAX_BUF_SIZE	(SIGNED_TRANSFER_SIZE + sizeof(struct upgrade_pkt))
+
+/*
+ * This by far exceeds the largest vendor command response size we ever
+ * expect.
+ */
+#define MAX_BUF_SIZE	500
 
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
@@ -385,14 +390,12 @@ static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
 	/* Used by transfer to /dev/tpm0 */
 	static uint8_t outbuf[MAX_BUF_SIZE];
 	struct upgrade_pkt *out = (struct upgrade_pkt *)outbuf;
-	/* Use the same structure, it will not be filled completely. */
 	int len, done;
 	int response_offset = offsetof(struct upgrade_pkt, command.data);
 	void *payload;
 	size_t header_size;
 	uint32_t rv;
-	size_t rx_size = sizeof(struct upgrade_pkt) +
-		sizeof(struct first_response_pdu);
+	const size_t rx_size = sizeof(outbuf);
 
 	debug("%s: sending to %#x %d bytes\n", __func__, addr, size);
 
@@ -450,15 +453,21 @@ static int tpm_send_pkt(struct transfer_descriptor *td, unsigned int digest,
 		return -1;
 	}
 
-	/*
-	 * Let's reuse the output buffer as the receve buffer; the combined
-	 * size of the two structures below is sure enough for any expected
-	 * response size.
-	 */
 	switch (td->ep_type) {
-	case dev_xfer:
-		len = read(td->tpm_fd, outbuf, rx_size);
+	case dev_xfer: {
+		int read_count;
+
+		len = 0;
+		do {
+			uint8_t *rx_buf = outbuf + len;
+			size_t rx_to_go = rx_size - len;
+
+			read_count = read(td->tpm_fd, rx_buf, rx_to_go);
+
+			len += read_count;
+		} while (read_count);
 		break;
+	}
 	case ts_xfer:
 		len = ts_read(outbuf, rx_size);
 		break;
