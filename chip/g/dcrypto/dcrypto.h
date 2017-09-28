@@ -9,7 +9,7 @@
 #ifndef __EC_CHIP_G_DCRYPTO_DCRYPTO_H
 #define __EC_CHIP_G_DCRYPTO_DCRYPTO_H
 
-#ifdef CR50_DEV
+#if defined(CR50_DEV) && (CR50_DEV) > 1
 #define CRYPTO_TEST_SETUP
 #endif
 

@@ -13,7 +13,9 @@
 #undef CONFIG_WATCHDOG_PERIOD_MS
 #define CONFIG_WATCHDOG_PERIOD_MS 5000
 
-#define CR50_DEV
+#ifndef CR50_DEV
+#define CR50_DEV 1
+#endif
 
 /* Features that we don't want */
 #undef CONFIG_CMD_LID_ANGLE
