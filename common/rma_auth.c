@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "base32.h"
+#include "byteorder.h"
 #include "chip/g/board_id.h"
 #include "curve25519.h"
 #include "rma_auth.h"
@@ -49,6 +50,18 @@ static void get_hmac_sha256(void *hmac_out, const uint8_t *secret,
 #endif
 }
 
+static void hash_buffer(void *dest, size_t dest_size,
+			const void *buffer, size_t buf_size)
+{
+	/* We know that the destination is no larger than 32 bytes. */
+	uint8_t temp[32];
+
+	get_hmac_sha256(temp, buffer, buf_size, buffer, buf_size);
+
+	/* Or should we do XOR of the temp modulo dest size? */
+	memcpy(dest, temp, dest_size);
+}
+
 /**
  * Create a new RMA challenge/response
  *
@@ -64,6 +77,7 @@ int rma_create_challenge(void)
 	uint8_t *device_id;
 	uint8_t *cptr = (uint8_t *)&c;
 	uint64_t t;
+	int unique_device_id_size;
 
 	/* Clear the current challenge and authcode, if any */
 	memset(challenge, 0, sizeof(challenge));
@@ -81,11 +95,26 @@ int rma_create_challenge(void)
 
 	if (read_board_id(&bid))
 		return EC_ERROR_UNKNOWN;
+
+	/* The server wants this as a string, not a number. */
+	bid.type = htobe32(bid.type);
 	memcpy(c.board_id, &bid.type, sizeof(c.board_id));
 
-	if (system_get_chip_unique_id(&device_id) != sizeof(c.device_id))
-		return EC_ERROR_UNKNOWN;
-	memcpy(c.device_id, device_id, sizeof(c.device_id));
+	unique_device_id_size = system_get_chip_unique_id(&device_id);
+
+	/* Smaller unique device IDs will fill c.device_id only partially. */
+	if (unique_device_id_size <= sizeof(c.device_id)) {
+		/* The size matches, let's just copy it as is. */
+		memcpy(c.device_id, device_id, unique_device_id_size);
+	} else {
+		/*
+		 * The unique device ID size exceeds space allotted in
+		 * rma_challenge:device_id, let's use first few bytes of
+		 * its hash.
+		 */
+		hash_buffer(c.device_id, sizeof(c.device_id),
+			    device_id, unique_device_id_size);
+	}
 
 	/* Calculate a new ephemeral key pair */
 	X25519_keypair(c.device_pub_key, temp);
