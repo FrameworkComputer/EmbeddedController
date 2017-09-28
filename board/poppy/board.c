@@ -199,6 +199,16 @@ const struct adc_t adc_channels[] = {
 	 */
 	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
 			   ADC_READ_MAX+1, 0},
+#ifdef BOARD_LUX
+	/*
+	 * ISL9238 PSYS output is 1.44 uA/W over 12.4K resistor, to read
+	 * 0.8V @ 45 W, i.e. 56250 uW/mV. Using ADC_MAX_VOLT*56250 and
+	 * ADC_READ_MAX+1 as multiplier/divider leads to overflows, so we
+	 * only divide by 2 (enough to avoid precision issues).
+	 */
+	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3,
+		      ADC_MAX_VOLT*56250*2/(ADC_READ_MAX+1), 2, 0},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

@@ -23,7 +23,7 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 #define SB_SHUTDOWN_DATA	0x0010
 #define SB_REVIVE_DATA		0x23a7
 
-#ifdef BOARD_SORAKA
+#if defined(BOARD_SORAKA) || defined(BOARD_LUX)
 static const struct battery_info info = {
 	.voltage_max = 8800,
 	.voltage_normal = 7700,
