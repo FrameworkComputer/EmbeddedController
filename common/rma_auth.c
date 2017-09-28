@@ -9,10 +9,13 @@
 #include "base32.h"
 #include "byteorder.h"
 #include "chip/g/board_id.h"
+#include "console.h"
 #include "curve25519.h"
+#include "extension.h"
 #include "rma_auth.h"
 #include "system.h"
 #include "timer.h"
+#include "tpm_vendor_cmds.h"
 #include "util.h"
 
 #ifdef CONFIG_DCRYPTO
@@ -20,6 +23,9 @@
 #else
 #include "sha256.h"
 #endif
+
+#define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
+
 /* Minimum time since system boot or last challenge before making a new one */
 #define CHALLENGE_INTERVAL (10 * SECOND)
 
@@ -153,6 +159,10 @@ int rma_try_authcode(const char *code)
 	if (!tries_left)
 		return EC_ERROR_ACCESS_DENIED;
 
+	/* Fail if auth code has not been calculated yet. */
+	if (!*authcode)
+		return EC_ERROR_ACCESS_DENIED;
+
 	if (safe_memcmp(authcode, code, RMA_AUTHCODE_CHARS)) {
 		/* Mismatch */
 		tries_left--;
@@ -169,3 +179,97 @@ int rma_try_authcode(const char *code)
 
 	return rv;
 }
+
+/*
+ * Trigger generating of the new challenge/authcode pair. If successful, store
+ * the challenge in the vendor command response buffer and send it to the
+ * sender. If not successful - return the error value to the sender.
+ */
+static enum vendor_cmd_rc get_challenge(uint8_t *buf, size_t *buf_size)
+{
+	int rv;
+	size_t i;
+
+	if (*buf_size < sizeof(challenge)) {
+		*buf_size = 1;
+		buf[0] = VENDOR_RC_RESPONSE_TOO_BIG;
+		return buf[0];
+	}
+
+	rv = rma_create_challenge();
+	if (rv != EC_SUCCESS) {
+		*buf_size = 1;
+		buf[0] = rv;
+		return buf[0];
+	}
+
+	*buf_size = sizeof(challenge) - 1;
+	memcpy(buf, rma_get_challenge(), *buf_size);
+
+	CPRINTF("%s: generated challenge:\n", __func__);
+	for (i = 0; i < *buf_size; i++)
+		CPRINTF("%c", ((uint8_t *)buf)[i]);
+	CPRINTF("\n");
+
+	CPRINTF("%s: expected authcode: ", __func__);
+	for (i = 0; i < RMA_AUTHCODE_CHARS; i++)
+		CPRINTF("%c", authcode[i]);
+	CPRINTF("\n");
+
+	return VENDOR_RC_SUCCESS;
+}
+
+/*
+ * Compare response sent by the operator with the pre-compiled auth code.
+ * Return error code or success depending on the comparison results.
+ */
+static enum vendor_cmd_rc process_response(uint8_t *buf,
+					   size_t input_size,
+					   size_t *response_size)
+{
+	int rv;
+
+	*response_size = 1; /* Just in case there is an error. */
+
+	if (input_size != RMA_AUTHCODE_CHARS) {
+		CPRINTF("%s: authcode size %d\n",
+			__func__, input_size);
+		buf[0] = VENDOR_RC_BOGUS_ARGS;
+		return buf[0];
+	}
+
+	rv = rma_try_authcode(buf);
+
+	if (rv == EC_SUCCESS) {
+		CPRINTF("%s: success!\n", __func__);
+		*response_size = 0;
+		return VENDOR_RC_SUCCESS;
+	}
+
+	CPRINTF("%s: authcode mismatch\n", __func__);
+	buf[0] = VENDOR_RC_INTERNAL_ERROR;
+	return buf[0];
+}
+
+/*
+ * Handle the VENDOR_CC_RMA_CHALLENGE_RESPONSE command. When received with
+ * empty payload - this is a request to generate a new challenge, when
+ * received with a payload, this is a request to check if the payload matches
+ * the previously calculated auth code.
+ */
+static enum vendor_cmd_rc rma_challenge_response(enum vendor_cmd_cc code,
+						 void *buf,
+						 size_t input_size,
+						 size_t *response_size)
+{
+	if (!input_size)
+		/*
+		 * This is a request for the challenge, get it and send it
+		 * back.
+		 */
+		return get_challenge(buf, response_size);
+
+	return process_response(buf, input_size, response_size);
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_RMA_CHALLENGE_RESPONSE,
+		       rma_challenge_response);
