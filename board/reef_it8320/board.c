@@ -311,11 +311,21 @@ static void chipset_pre_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
+static void board_set_tablet_mode(void)
+{
+	/*
+	 * Always report device isn't in tablet mode because
+	 * our id is clamshell and no TABLET_MODE_L pin
+	 */
+	tablet_set_mode(0);
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
 	int port;
 
+	board_set_tablet_mode();
 	/* Enable charger interrupts */
 	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
 
