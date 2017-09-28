@@ -15,12 +15,17 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
+/* Vendor CTO command parameter */
+#define SB_VENDOR_PARAM_CTO_DISABLE 0
+/* Flash address of Enabled Protections C Regsiter */
+#define SB_VENDOR_ENABLED_PROTECT_C 0x482C
 
 enum battery_type {
 	BATTERY_LG,
@@ -45,6 +50,13 @@ static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
 
 /* Battery may delay reporting battery present */
 static int battery_report_present = 1;
+
+/*
+ * Battery protect_c register value.
+ * Because this value can only be read when the battery is unsealed, the read of
+ * this register is only done if the value is changed.
+ */
+static int protect_c_reg = -1;
 
 /*
  * Battery info for LG A50. Note that the fields start_charging_min/max and
@@ -339,4 +351,241 @@ enum battery_present battery_is_present(void)
 int board_battery_initialized(void)
 {
 	return battery_hw_present() == batt_pres_prev;
+}
+
+static int board_battery_sb_write(uint8_t access, int cmd)
+{
+	int rv;
+	uint8_t buf[1 + sizeof(uint16_t)];
+
+	/*
+	 * Note, the i2c_lock must be handled by the calling function. The
+	 * battery unseal operation requires two writes without any other access
+	 * taking place. Therefore the calling function handles when to
+	 * grab/release the lock.
+	 */
+
+	buf[0] = access;
+	buf[1] = cmd & 0xff;
+	buf[2] = (cmd >> 8) & 0xff;
+
+	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
+		      buf, 1 + sizeof(uint16_t), NULL, 0);
+
+	return rv;
+}
+
+int board_battery_read_mfgacc(int offset, int access,
+				      uint8_t *buf, int len)
+{
+	int rv;
+	uint8_t block_len, reg;
+
+	/* start read */
+	i2c_lock(I2C_PORT_BATTERY, 1);
+
+	/* Send write block */
+	rv = board_battery_sb_write(SB_MANUFACTURER_ACCESS, offset);
+	if (rv) {
+		i2c_lock(I2C_PORT_BATTERY, 0);
+		return rv;
+	}
+
+	reg = access;
+	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, &reg, 1,
+	    &block_len, 1, I2C_XFER_START);
+	if (rv) {
+		i2c_lock(I2C_PORT_BATTERY, 0);
+		return rv;
+	}
+
+	/* Compare block length to desired read length */
+	if (len && (block_len > len))
+		block_len = len;
+
+	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, NULL, 0,
+	    buf, block_len, I2C_XFER_STOP);
+	i2c_lock(I2C_PORT_BATTERY, 0);
+
+	return rv;
+}
+
+static int board_battery_unseal(uint32_t param)
+{
+	int rv;
+	uint8_t data[6];
+
+	/* Get Operation Status */
+	rv = board_battery_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
+	if ((data[3] & 0x3) == 0x3) {
+		/*
+		 * Hold the lock for both writes to ensure that no other
+		 * manufactuer access opertion can take place.
+		 */
+		i2c_lock(I2C_PORT_BATTERY, 1);
+		rv = board_battery_sb_write(SB_MANUFACTURER_ACCESS,
+					    param & 0xffff);
+		if (rv)
+			goto unseal_fail;
+
+		rv = board_battery_sb_write(SB_MANUFACTURER_ACCESS,
+					    (param >> 16) & 0xffff);
+		if (rv)
+			goto unseal_fail;
+
+		i2c_lock(I2C_PORT_BATTERY, 0);
+
+		/* Verify that battery is unsealed */
+		rv = board_battery_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+		if (rv || ((data[3] & 0x3) != 0x2))
+			return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+
+unseal_fail:
+	i2c_lock(I2C_PORT_BATTERY, 0);
+	return EC_RES_ERROR;
+}
+
+static int board_battery_seal(void)
+{
+	int rv;
+
+	i2c_lock(I2C_PORT_BATTERY, 1);
+	rv = board_battery_sb_write(SB_MANUFACTURER_ACCESS,  0x0030);
+	i2c_lock(I2C_PORT_BATTERY, 0);
+
+	if (rv != EC_SUCCESS)
+		return EC_RES_ERROR;
+
+	return EC_SUCCESS;
+}
+
+static int board_battery_write_flash(int addr, uint32_t data, int len)
+{
+	int rv;
+	uint8_t buf[sizeof(uint32_t) + 4];
+
+	if (len > 4)
+		return EC_ERROR_INVAL;
+
+	buf[0] = SB_ALT_MANUFACTURER_ACCESS;
+	/* Number of bytes to write, including the address */
+	buf[1] = len + 2;
+	/* Put in the flash address */
+	buf[2] = addr & 0xff;
+	buf[3] = (addr >> 8) & 0xff;
+
+	/* Add data to be written */
+	buf[4] = data & 0xff;
+	buf[5] = (data >> 8) & 0xff;
+	buf[6] = (data >> 16) & 0xff;
+	buf[7] = (data >> 24) & 0xff;
+	/* Account for command, length, and address */
+	len += 4;
+
+	i2c_lock(I2C_PORT_BATTERY, 1);
+	rv = i2c_xfer(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf,
+		      len, NULL, 0);
+	i2c_lock(I2C_PORT_BATTERY, 0);
+
+	return rv;
+}
+
+static int board_battery_read_flash(int block, int len, uint8_t *buf)
+{
+	uint8_t data[6];
+	int rv;
+	int i;
+
+	if (len > 4)
+		len = 4;
+	rv = board_battery_read_mfgacc(block,
+			    SB_ALT_MANUFACTURER_ACCESS, data, len + 2);
+	if (rv)
+		return EC_RES_ERROR;
+
+	for (i = 0; i < len; i++)
+		buf[i] = data[i+2];
+
+	return EC_SUCCESS;
+}
+
+static int board_battery_disable_cto(uint32_t value)
+{
+	uint8_t protect_c;
+
+	if (board_battery_unseal(value))
+		return EC_RES_ERROR;
+
+	/* Check CTO enable */
+	if (board_battery_read_flash(SB_VENDOR_ENABLED_PROTECT_C, 1,
+				     &protect_c)) {
+		board_battery_seal();
+		return EC_RES_ERROR;
+	}
+
+	if (protect_c != 0x5) {
+		board_battery_write_flash(SB_VENDOR_ENABLED_PROTECT_C, 0x5, 1);
+		/* After flash write, allow time for it to complete */
+		msleep(100);
+		/* Read the current protect_c register value */
+		if (board_battery_read_flash(SB_VENDOR_ENABLED_PROTECT_C, 1,
+					     &protect_c) == EC_SUCCESS)
+			protect_c_reg = protect_c;
+	} else {
+		protect_c_reg = protect_c;
+	}
+
+	if (board_battery_seal()) {
+		/* If failed, then wait one more time and seal again */
+		msleep(100);
+		if (board_battery_seal())
+			return EC_RES_ERROR;
+	}
+
+	return EC_SUCCESS;
+}
+
+int battery_get_vendor_param(uint32_t param, uint32_t *value)
+{
+	if (param == SB_VENDOR_PARAM_CTO_DISABLE) {
+		/*
+		 * This register can't be read directly because the flash area
+		 * of the battery is protected, unless it's been
+		 * unsealed. The key is only able to be passed in the set
+		 * function. The get function is always called following the set
+		 * function. Therefore when the set function is called, this
+		 * register value is read and saved to protect_c_reg. If this
+		 * value is < 0, then the set function wasn't called and
+		 * therefore the value can't be known.
+		 */
+		if (protect_c_reg >= 0) {
+			*value = protect_c_reg;
+			return EC_SUCCESS;
+		} else {
+			return EC_RES_ERROR;
+		}
+	} else {
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+}
+
+int battery_set_vendor_param(uint32_t param, uint32_t value)
+{
+	if (param == SB_VENDOR_PARAM_CTO_DISABLE) {
+		if (board_battery_disable_cto(value))
+			return EC_ERROR_UNKNOWN;
+
+		return EC_SUCCESS;
+	} else {
+		return EC_ERROR_INVAL;
+	}
 }
