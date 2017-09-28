@@ -489,7 +489,7 @@ class powerlog(object):
   """
 
   def __init__(self, brdfile, cfgfile, serial_a=None, serial_b=None,
-               sync_date=False, use_ms=False, print_stats=False,
+               sync_date=False, use_ms=False, use_mW=False, print_stats=False,
                save_stats=False, save_raw_data=False):
     """
     Args:
@@ -503,6 +503,7 @@ class powerlog(object):
     self._data = StatsManager()
     self._pwr = {}
     self._use_ms = use_ms
+    self._use_mW = use_mW
     self._print_stats = print_stats
     self._save_stats = save_stats
     self._save_raw_data = save_raw_data
@@ -570,7 +571,8 @@ class powerlog(object):
     # CSV header
     title = "ts:%dus" % integration_us
     for name in self._names:
-      title += ", %s uW" % name
+      unit = "mW" if self._use_mW else "uW"
+      title += ", %s %s" % (name, unit)
     title += ", status"
     logoutput(title)
 
@@ -608,8 +610,10 @@ class powerlog(object):
             csv = "%f" % aggregate_record["ts"]
             for name in self._names:
               if name in aggregate_record:
-                csv += ", %.2f" % aggregate_record[name]
-                self._data.AddValue(name, aggregate_record[name])
+                multiplier = 0.001 if self._use_mW else 1
+                power = aggregate_record[name] * multiplier
+                csv += ", %.2f" % power
+                self._data.AddValue(name, power)
               else:
                 csv += ", "
             csv += ", %d" % aggregate_record["status"]
@@ -657,6 +661,9 @@ def main():
       help="Sync logged timestamp to host date", action="store_true")
   parser.add_argument('--ms', default=False,
       help="Print timestamp as milliseconds", action="store_true")
+  parser.add_argument('--mW', default=False,
+      help="Print power as milliwatts, otherwise default to microwatts",
+      action="store_true")
   parser.add_argument('--slow', default=False,
       help="Intentionally overflow", action="store_true")
   parser.add_argument('--print_stats', default=False,
@@ -690,6 +697,7 @@ def main():
   serial_b = args.serial_b
   sync_date = args.date
   use_ms = args.ms
+  use_mW = args.mW
   print_stats = args.print_stats
   save_stats = args.save_stats
   save_raw_data = args.save_raw_data
@@ -702,7 +710,7 @@ def main():
 
   # Set up logging interface.
   powerlogger = powerlog(brdfile, cfgfile, serial_a=serial_a,
-      serial_b=serial_b, sync_date=sync_date, use_ms=use_ms,
+      serial_b=serial_b, sync_date=sync_date, use_ms=use_ms, use_mW=use_mW,
       print_stats=print_stats, save_stats=save_stats,
       save_raw_data=save_raw_data)
 
