@@ -28,6 +28,26 @@ USB_SPI_CONFIG(ccd_usb_spi, USB_IFACE_SPI, USB_EP_SPI);
 
 static enum device_state state = DEVICE_STATE_INIT;
 
+/* Flags for CCD blocking */
+enum ccd_block_flags {
+	/*
+	 * UARTs.  Disabling these can be helpful if the AP or EC is doing
+	 * something which creates an interrupt storm on these ports.
+	 */
+	CCD_BLOCK_AP_UART = (1 << 0),
+	CCD_BLOCK_EC_UART = (1 << 1),
+
+	/*
+	 * Any ports shared with servo.  Disabling these will stop CCD from
+	 * interfering with servo, in the case where both CCD and servo is
+	 * connected but servo isn't properly detected.
+	 */
+	CCD_BLOCK_SERVO_SHARED = (1 << 2)
+};
+
+/* Which UARTs are blocked by console command */
+static uint8_t ccd_block;
+
 int ccd_ext_is_enabled(void)
 {
 	return state == DEVICE_STATE_CONNECTED;
@@ -217,7 +237,7 @@ static void ccd_state_change_hook(void)
 	/* Then disable flags we can't have */
 
 	/* Servo takes over UART TX, I2C, and SPI */
-	if (servo_is_connected())
+	if (servo_is_connected() || (ccd_block & CCD_BLOCK_SERVO_SHARED))
 		flags_want &= ~(CCD_ENABLE_UART_AP_TX | CCD_ENABLE_UART_EC_TX |
 				CCD_ENABLE_UART_EC_BITBANG | CCD_ENABLE_I2C |
 				CCD_ENABLE_SPI);
@@ -246,6 +266,12 @@ static void ccd_state_change_hook(void)
 	/* EC UART TX blocked by bit-banging */
 	if (flags_want & CCD_ENABLE_UART_EC_BITBANG)
 		flags_want &= ~CCD_ENABLE_UART_EC_TX;
+
+	/* UARTs can be specifically blocked by console command */
+	if (ccd_block & CCD_BLOCK_AP_UART)
+		flags_want &= ~CCD_ENABLE_UART_AP;
+	if (ccd_block & CCD_BLOCK_EC_UART)
+		flags_want &= ~CCD_ENABLE_UART_EC;
 
 	/* UARTs are either RX-only or RX+TX, so no RX implies no TX */
 	if (!(flags_want & CCD_ENABLE_UART_AP))
@@ -353,6 +379,21 @@ static void ccd_ext_detect(void)
 }
 DECLARE_HOOK(HOOK_SECOND, ccd_ext_detect, HOOK_PRIO_DEFAULT);
 
+static void print_ccd_ports_blocked(void)
+{
+	/* Regardless, print current state */
+	ccputs("CCD ports blocked:");
+	if (ccd_block & CCD_BLOCK_AP_UART)
+		ccputs(" AP");
+	if (ccd_block & CCD_BLOCK_EC_UART)
+		ccputs(" EC");
+	if (ccd_block & CCD_BLOCK_SERVO_SHARED)
+		ccputs(" SERVO");
+	if (!ccd_block)
+		ccputs(" (none)");
+	ccputs("\n");
+}
+
 static int command_ccd_state(int argc, char **argv)
 {
 	print_ap_state();
@@ -367,9 +408,45 @@ static int command_ccd_state(int argc, char **argv)
 	print_state_flags(CC_COMMAND, get_state_flags());
 	ccprintf("\n");
 
+	print_ccd_ports_blocked();
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ccdstate, command_ccd_state,
 			"",
 			"Print the case closed debug device state");
 
+static int command_ccd_block(int argc, char **argv)
+{
+	uint8_t block_flag = 0;
+	int new_state;
+
+	if (argc == 3) {
+		if (!strcasecmp(argv[1], "AP"))
+			block_flag = CCD_BLOCK_AP_UART;
+		else if (!strcasecmp(argv[1], "EC"))
+			block_flag = CCD_BLOCK_EC_UART;
+		else if (!strcasecmp(argv[1], "SERVO"))
+			block_flag = CCD_BLOCK_SERVO_SHARED;
+		else
+			return EC_ERROR_PARAM1;
+
+		if (!parse_bool(argv[2], &new_state))
+			return EC_ERROR_PARAM2;
+
+		if (new_state)
+			ccd_block |= block_flag;
+		else
+			ccd_block &= ~block_flag;
+
+		/* Update blocked state in deferred function */
+		ccd_update_state();
+	}
+
+	print_ccd_ports_blocked();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ccdblock, command_ccd_block,
+			"[<AP | EC | SERVO> [BOOLEAN]]",
+			"Force CCD ports disabled");
