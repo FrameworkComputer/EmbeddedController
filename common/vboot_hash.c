@@ -345,6 +345,7 @@ static int command_hash(int argc, char **argv)
 				system_get_image_used(SYSTEM_IMAGE_RO),
 				NULL, 0);
 		}
+		return EC_ERROR_PARAM2;
 	}
 
 	if (argc >= 3) {
