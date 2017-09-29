@@ -167,6 +167,11 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 {
 	uint32_t alarm_sec, alarm_us;
 
+	if (delay_s == EC_RTC_ALARM_CLEAR && !delay_us) {
+		reset_rtc_alarm(rtc);
+		return;
+	}
+
 	/* Alarm must be within 1 day (86400 seconds) */
 
 	ASSERT((delay_s + delay_us / SECOND) < SECS_PER_DAY);
