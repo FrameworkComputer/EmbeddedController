@@ -224,10 +224,7 @@ static void board_charge_manager_init(void)
 	int input_voltage;
 	enum charge_port input_port;
 	int i, j;
-	struct charge_port_info cpi = {
-		.voltage = USB_CHARGER_VOLTAGE_MV,
-		.current = 0,
-	};
+	struct charge_port_info cpi = { 0 };
 
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
@@ -236,12 +233,7 @@ static void board_charge_manager_init(void)
 	}
 
 	input_voltage = adc_read_channel(ADC_VBUS);
-	if (system_get_board_version() == 0)
-		/* TODO(dnojiri): Remove this case after proto1 is deprecated */
-		input_port = input_voltage > 5500 ?
-			CHARGE_PORT_BARRELJACK : CHARGE_PORT_TYPEC0;
-	else /* proto2 and onward */
-		input_port = gpio_get_level(GPIO_ADP_IN_L) ?
+	input_port = gpio_get_level(GPIO_ADP_IN_L) ?
 			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
 	CPRINTS("Power Source: p%d (%dmV)", input_port, input_voltage);
 
@@ -283,10 +275,12 @@ int board_set_active_charge_port(int port)
 	case CHARGE_PORT_TYPEC0:
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
+		gpio_enable_interrupt(GPIO_ADP_IN_L);
 		break;
 	case CHARGE_PORT_BARRELJACK :
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
+		gpio_disable_interrupt(GPIO_ADP_IN_L);
 		break;
 	default:
 		return EC_ERROR_INVAL;
