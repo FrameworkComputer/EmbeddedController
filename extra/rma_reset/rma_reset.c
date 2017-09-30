@@ -94,6 +94,7 @@ int rma_create_challenge(void)
 	uint8_t secret[32];
 	struct rma_challenge c;
 	uint8_t *cptr = (uint8_t *)&c;
+	uint32_t bid;
 
 	/* Clear the current challenge and authcode, if any */
 	memset(challenge, 0, sizeof(challenge));
@@ -103,7 +104,10 @@ int rma_create_challenge(void)
 	c.version_key_id = RMA_CHALLENGE_VKID_BYTE(
 		RMA_CHALLENGE_VERSION, server_key_id);
 
-	memcpy(c.board_id, board_id, sizeof(c.board_id));
+	memcpy(&bid, board_id, sizeof(bid));
+	bid = be32toh(bid);
+	memcpy(c.board_id, &bid, sizeof(c.board_id));
+
 	memcpy(c.device_id, device_id, sizeof(c.device_id));
 
 	/* Calculate a new ephemeral key pair */
@@ -356,6 +360,7 @@ int main(int argc, char **argv)
 				return 1;
 			}
 			w_flag = 1;
+			break;
 		case 'h':
 			usage();
 			return 0;
