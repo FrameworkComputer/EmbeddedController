@@ -162,6 +162,7 @@ static struct usart_config const usart3 =
 		usart_rx_interrupt,
 		usart_tx_interrupt,
 		115200,
+		0,
 		usart3_to_usb,
 		usb_to_usart3);
 
@@ -192,6 +193,7 @@ static struct usart_config const usart4 =
 		usart_rx_interrupt,
 		usart_tx_interrupt,
 		9600,
+		0,
 		usart4_to_usb,
 		usb_to_usart4);
 

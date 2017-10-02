@@ -55,6 +55,7 @@ static struct usart_config const loopback_usart =
 		     loopback_rx_dma.usart_rx,
 		     loopback_tx_dma.usart_tx,
 		     115200,
+		     0,
 		     loopback_queue,
 		     loopback_queue);
 

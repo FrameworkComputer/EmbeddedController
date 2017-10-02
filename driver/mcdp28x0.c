@@ -53,6 +53,7 @@ static struct usart_config const usart_mcdp = USART_CONFIG(CONFIG_MCDP28X0,
 							   usart_rx_interrupt,
 							   usart_tx_interrupt,
 							   115200,
+							   0,
 							   usart_mcdp_rx_queue,
 							   usart_mcdp_tx_queue);
 

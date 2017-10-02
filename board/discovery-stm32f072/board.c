@@ -65,6 +65,7 @@ static struct usart_config const loopback_usart =
 		     loopback_rx_dma.usart_rx,
 		     loopback_tx_dma.usart_tx,
 		     115200,
+		     0,
 		     loopback_queue,
 		     loopback_queue);
 
@@ -89,6 +90,7 @@ static struct usart_config const forward_usart =
 		     usart_rx_interrupt,
 		     forward_tx_dma.usart_tx,
 		     115200,
+		     0,
 		     usart_to_usb,
 		     usb_to_usart);
 

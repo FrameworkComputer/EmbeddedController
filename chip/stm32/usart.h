@@ -133,6 +133,11 @@ struct usart_config {
 	 */
 	int baud;
 
+	/* Other flags. */
+#define USART_CONFIG_FLAG_RX_INV (1 << 0)
+#define USART_CONFIG_FLAG_TX_INV (1 << 1)
+	unsigned int flags;
+
 	struct consumer consumer;
 	struct producer producer;
 };
@@ -154,21 +159,22 @@ struct usart_config {
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
  */
-#define USART_CONFIG(HW, RX, TX, BAUD, RX_QUEUE, TX_QUEUE)	\
-	((struct usart_config const) {				\
-		.hw       = &HW,				\
-		.rx       = &RX,				\
-		.tx       = &TX,				\
-		.state    = &((struct usart_state){}),		\
-		.baud     = BAUD,				\
-		.consumer = {					\
-			.queue = &TX_QUEUE,			\
-			.ops   = &TX.consumer_ops,		\
-		},						\
-		.producer = {					\
-			.queue = &RX_QUEUE,			\
-			.ops   = &RX.producer_ops,		\
-		},						\
+#define USART_CONFIG(HW, RX, TX, BAUD, FLAGS, RX_QUEUE, TX_QUEUE)	\
+	((struct usart_config const) {					\
+		.hw       = &HW,					\
+		.rx       = &RX,					\
+		.tx       = &TX,					\
+		.state    = &((struct usart_state){}),			\
+		.baud     = BAUD,					\
+		.flags    = FLAGS,					\
+		.consumer = {						\
+			.queue = &TX_QUEUE,				\
+			.ops   = &TX.consumer_ops,			\
+		},							\
+		.producer = {						\
+			.queue = &RX_QUEUE,				\
+			.ops   = &RX.producer_ops,			\
+		},							\
 	})
 
 /*

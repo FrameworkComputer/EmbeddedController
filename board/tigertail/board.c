@@ -55,6 +55,7 @@ static struct usart_config const usart1 =
 		usart_rx_interrupt,
 		usart_tx_interrupt,
 		115200,
+		0,
 		usart1_to_usb,
 		usb_to_usart1);
 
