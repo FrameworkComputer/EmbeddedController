@@ -13,8 +13,10 @@
 #include "curve25519.h"
 #include "extension.h"
 #include "rma_auth.h"
+#include "shared_mem.h"
 #include "system.h"
 #include "timer.h"
+#include "tpm_registers.h"
 #include "tpm_vendor_cmds.h"
 #include "util.h"
 
@@ -178,6 +180,7 @@ int rma_try_authcode(const char *code)
 	return rv;
 }
 
+#ifndef TEST_BUILD
 /*
  * Trigger generating of the new challenge/authcode pair. If successful, store
  * the challenge in the vendor command response buffer and send it to the
@@ -186,7 +189,6 @@ int rma_try_authcode(const char *code)
 static enum vendor_cmd_rc get_challenge(uint8_t *buf, size_t *buf_size)
 {
 	int rv;
-	size_t i;
 
 	if (*buf_size < sizeof(challenge)) {
 		*buf_size = 1;
@@ -204,15 +206,21 @@ static enum vendor_cmd_rc get_challenge(uint8_t *buf, size_t *buf_size)
 	*buf_size = sizeof(challenge) - 1;
 	memcpy(buf, rma_get_challenge(), *buf_size);
 
-	CPRINTF("%s: generated challenge:\n", __func__);
-	for (i = 0; i < *buf_size; i++)
-		CPRINTF("%c", ((uint8_t *)buf)[i]);
-	CPRINTF("\n");
+#ifdef CR50_DEV
+	{
+		size_t i;
 
-	CPRINTF("%s: expected authcode: ", __func__);
-	for (i = 0; i < RMA_AUTHCODE_CHARS; i++)
-		CPRINTF("%c", authcode[i]);
-	CPRINTF("\n");
+		CPRINTF("%s: generated challenge:\n", __func__);
+		for (i = 0; i < *buf_size; i++)
+			CPRINTF("%c", ((uint8_t *)buf)[i]);
+		CPRINTF("\n");
+
+		CPRINTF("%s: expected authcode: ", __func__);
+		for (i = 0; i < RMA_AUTHCODE_CHARS; i++)
+			CPRINTF("%c", authcode[i]);
+		CPRINTF("\n");
+	}
+#endif
 
 	return VENDOR_RC_SUCCESS;
 }
@@ -271,3 +279,67 @@ static enum vendor_cmd_rc rma_challenge_response(enum vendor_cmd_cc code,
 }
 DECLARE_VENDOR_COMMAND(VENDOR_CC_RMA_CHALLENGE_RESPONSE,
 		       rma_challenge_response);
+
+
+#define RMA_CMD_BUF_SIZE (sizeof(struct tpm_cmd_header) + \
+			  RMA_CHALLENGE_BUF_SIZE)
+static int rma_auth_cmd(int argc, char **argv)
+{
+	struct tpm_cmd_header *tpmh;
+	int rv;
+
+	if (argc > 2) {
+		ccprintf("Error: the only accepted parameter is"
+			 " the auth code to check\n");
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+	if (argc == 2) {
+		if (rma_try_authcode(argv[1]) != EC_SUCCESS) {
+			ccprintf("Auth code does not match.\n");
+			return EC_ERROR_PARAM1;
+		}
+		ccprintf("Auth code match!\n");
+		return EC_SUCCESS;
+	}
+
+	rv = shared_mem_acquire(RMA_CMD_BUF_SIZE, (char **)&tpmh);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	/* Build the extension command to request RMA AUTH challenge. */
+	tpmh->tag = htobe16(0x8001); /* TPM_ST_NO_SESSIONS */
+	tpmh->size = htobe32(sizeof(struct tpm_cmd_header));
+	tpmh->command_code = htobe32(TPM_CC_VENDOR_BIT_MASK);
+	tpmh->subcommand_code = htobe16(VENDOR_CC_RMA_CHALLENGE_RESPONSE);
+
+	tpm_alt_extension(tpmh, RMA_CMD_BUF_SIZE);
+
+	/* Return status in the command code field now. */
+	if (tpmh->command_code) {
+		ccprintf("RMA Auth error 0x%x\n", be32toh(tpmh->command_code));
+		rv = EC_ERROR_UNKNOWN;
+	} else {
+		/* Success, let's print out the challenge. */
+		int i;
+		char *challenge = (char *)(tpmh + 1);
+
+		for (i = 0; i < RMA_CHALLENGE_CHARS; i++) {
+			if (!(i % 5)) {
+				if (!(i % 20))
+					ccprintf("\n");
+				ccprintf(" ");
+			}
+			ccprintf("%c", challenge[i]);
+		}
+		ccprintf("\n");
+	}
+
+	shared_mem_release(tpmh);
+	return EC_SUCCESS;
+}
+
+DECLARE_SAFE_CONSOLE_COMMAND(rma_auth, rma_auth_cmd, NULL,
+			     "rma_auth [auth code] - "
+			"Generate RMA challenge or check auth code match\n");
+#endif
