@@ -673,6 +673,68 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 /* Event (to TPM task) to request reset, or (from TPM task) on completion. */
 #define TPM_EVENT_RESET TASK_EVENT_CUSTOM(1 << 0)
 #define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(1 << 1)
+#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM(1 << 2)
+
+/*
+ * Result of executing of the TPM command on the alternative path, could have
+ * been interrupted by a reset.
+ */
+enum alt_process_result {
+	ALT_PROCESS_WAITING,
+	ALT_PROCESS_DONE,
+	ALT_PROCESS_INTERRUPTED
+};
+
+/*
+ * This structure stores the context of the alternative TPM command execution
+ * path.
+ *
+ * The command and response share the buffer, when TPM task finishes
+ * processing the command it sets the 'process_result' field to a non-zero
+ * value.
+ *
+ * The mutex ensures that only one alternative TPM command execution is active
+ * at a time.
+ */
+static struct alt_tpm_interface {
+	struct tpm_cmd_header *alt_hdr;
+	size_t alt_buffer_size;
+	uint32_t process_result;
+	struct mutex if_mutex;
+} alt_if;
+
+void tpm_alt_extension(struct tpm_cmd_header *command, size_t buffer_size)
+{
+	mutex_lock(&alt_if.if_mutex);
+	memset(&alt_if, 0, sizeof(alt_if));
+
+	alt_if.alt_hdr = command;
+	alt_if.alt_buffer_size = buffer_size;
+
+	do {
+		alt_if.process_result = ALT_PROCESS_WAITING;
+
+		task_set_event(TASK_ID_TPM, TPM_EVENT_ALT_EXTENSION, 0);
+
+		/*
+		 * This is not very elegant, but simple and acceptable for
+		 * this TPM command execution path, as in most cases it would
+		 * be drven by a human operator.
+		 *
+		 * Use REG32 to make sure that the field is treated as
+		 * volatile.
+		 */
+		while (REG32(&alt_if.process_result) == ALT_PROCESS_WAITING)
+			msleep(10);
+
+		/*
+		 * Repeat the request if command execution was interrupted by
+		 * a TPM reset.
+		 */
+	} while (REG32(&alt_if.process_result) != ALT_PROCESS_DONE);
+
+	mutex_unlock(&alt_if.if_mutex);
+}
 
 /* Calling task (singular) to notify when the TPM reset has completed */
 static __initialized task_id_t waiting_for_reset = TASK_ID_INVALID;
@@ -825,7 +887,6 @@ void tpm_task(void)
 {
 	uint32_t evt;
 
-
 	if (!chip_factory_mode()) {
 		/*
 		 * Just in case there is a resume from deep sleep where AP is
@@ -842,22 +903,34 @@ void tpm_task(void)
 			if (evt & TPM_EVENT_RESET)
 				break;
 
-			cprints(CC_TASK, "%s: unexpected event %x\n",
-				__func__, evt);
+			cprints(CC_TASK, "%s:%d unexpected event %x",
+				__func__, __LINE__, evt);
 		}
 	}
 
+	evt = 0;
 	tpm_reset_now(0);
 	while (1) {
 		uint8_t *response;
 		unsigned response_size;
 		uint32_t command_code;
 		struct tpm_cmd_header *tpmh;
+		size_t buffer_size;
+		uint8_t alt_if_command;
 
-		/* Wait for the next command event */
-		evt = task_wait_event(-1);
+		/* Process unprocessed events or wait for the next event */
+		if (!evt)
+			evt = task_wait_event(-1);
+
 		if (evt & TPM_EVENT_RESET) {
 			tpm_reset_now(wipe_requested);
+			if (evt & TPM_EVENT_ALT_EXTENSION) {
+				/*
+				 * Need to tell the waiting task that
+				 * processing was interrupted.
+				 */
+				alt_if.process_result = ALT_PROCESS_INTERRUPTED;
+			}
 			/*
 			 * There is no point in looking at other events in
 			 * this situation: the nvram will be committed by TPM
@@ -866,16 +939,34 @@ void tpm_task(void)
 			 * Let's just continue. This could change if there are
 			 * other events added to the set.
 			 */
+			evt = 0;
 			continue;
 		}
 
-		if (evt & TPM_EVENT_COMMIT)
+		if (evt & TPM_EVENT_COMMIT) {
+			evt &= ~TPM_EVENT_COMMIT;
 			nvmem_enable_commits();
+		}
 
-		if (!(evt & TASK_EVENT_WAKE))
+		if (evt & TASK_EVENT_WAKE) {
+			evt &= ~TASK_EVENT_WAKE;
+			tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;
+			buffer_size = sizeof(tpm_.regs.data_fifo);
+			alt_if_command = 0;
+		} else if (evt & TPM_EVENT_ALT_EXTENSION) {
+			evt &= ~TPM_EVENT_ALT_EXTENSION;
+			tpmh = alt_if.alt_hdr;
+			buffer_size = alt_if.alt_buffer_size;
+			alt_if_command = 1;
+		} else {
+			if (evt) {
+				cprints(CC_TASK, "%s:%d unexpected event %x",
+					__func__, __LINE__, evt);
+				evt = 0;
+			}
 			continue;
+		}
 
-		tpmh = (struct tpm_cmd_header *)tpm_.regs.data_fifo;
 		command_code = be32toh(tpmh->command_code);
 		CPRINTF("%s: received fifo command 0x%04x\n",
 			__func__, command_code);
@@ -884,7 +975,7 @@ void tpm_task(void)
 
 #ifdef CONFIG_EXTENSION_COMMAND
 		if (IS_CUSTOM_CODE(command_code)) {
-			response_size = sizeof(tpm_.regs.data_fifo);
+			response_size = buffer_size;
 			call_extension_command(tpmh, &response_size);
 		} else
 #endif
@@ -897,20 +988,20 @@ void tpm_task(void)
 				};
 				CPRINTF("%s: Ignoring TPM commands\n",
 					__func__);
-				response = tpm_.regs.data_fifo;
+				response = (uint8_t *)tpmh;
 				response_size = sizeof(tpm_broken_response);
 				memcpy(response, tpm_broken_response,
 				       response_size);
 			} else {
 				ExecuteCommand(tpm_.fifo_write_index,
-					       tpm_.regs.data_fifo,
+					       (uint8_t *)tpmh,
 					       &response_size,
 					       &response);
 			}
 		}
 		CPRINTF("got %d bytes in response\n", response_size);
 		if (response_size &&
-		    (response_size <= sizeof(tpm_.regs.data_fifo))) {
+		    (response_size <= buffer_size)) {
 			uint32_t tpm_sts;
 			/*
 			 * TODO(vbendeb): revisit this when
@@ -930,8 +1021,12 @@ void tpm_task(void)
 				 * Extension commands reuse FIFO buffer, the
 				 * rest need to copy.
 				 */
-				memcpy(tpm_.regs.data_fifo,
-				       response, response_size);
+				memcpy(tpmh, response, response_size);
+			}
+			if (alt_if_command) {
+				alt_if.process_result = ALT_PROCESS_DONE;
+				/* No need to manage TPM registers. */
+				continue;
 			}
 			tpm_.fifo_read_index = 0;
 			tpm_.fifo_write_index = response_size;
