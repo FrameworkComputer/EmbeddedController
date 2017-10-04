@@ -406,7 +406,8 @@ static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
 	struct rtc_time_reg rtc;
 	const struct ec_params_rtc *p = args->params;
 
-	host_rtc_alarm_set = 1;
+	if (p->time != EC_RTC_ALARM_CLEAR)
+		host_rtc_alarm_set = 1;
 	set_rtc_alarm(p->time, 0, &rtc);
 	return EC_RES_SUCCESS;
 }
