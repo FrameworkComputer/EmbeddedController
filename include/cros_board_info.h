@@ -144,4 +144,13 @@ struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag);
  */
 int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size);
 
+#ifdef TEST_BUILD
+/**
+ * Test only declarations. Firmware shouldn't need them.
+ */
+int cbi_create(void);
+int cbi_write(void);
+void cbi_invalidate_cache(void);
+#endif
+
 #endif /* __CROS_EC_CROS_BOARD_INFO_H */

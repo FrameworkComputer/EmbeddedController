@@ -12,6 +12,7 @@
 /* Default-yes, override to no by including fake_battery module. */
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #undef CONFIG_CMD_PD
+#define CONFIG_CROS_BOARD_INFO
 #define CONFIG_EXTPOWER_GPIO
 #undef CONFIG_FMAP
 #define CONFIG_POWER_BUTTON
@@ -85,5 +86,12 @@ enum {
 
 #define CONFIG_RNG
 void fps_event(enum gpio_signal signal);
+
+#define CONFIG_CRC8
+
+#define CONFIG_I2C
+#define CONFIG_I2C_MASTER
+#define I2C_PORT_EEPROM		0
+#define I2C_ADDR_EEPROM_FLAGS	0x50
 
 #endif /* __CROS_EC_BOARD_H */
