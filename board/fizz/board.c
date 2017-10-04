@@ -17,6 +17,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -449,6 +450,10 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 /* Initialize board. */
 static void board_init(void)
 {
+	uint32_t version;
+	if (cbi_get_board_version(&version) == EC_SUCCESS)
+		CPRINTS("Board Version: 0x%04x", version);
+
 	/* Provide AC status to the PCH */
 	board_extpower();
 

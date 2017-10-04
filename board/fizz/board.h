@@ -18,6 +18,9 @@
 /* EC */
 #define CONFIG_ADC
 #define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_SPECIFIC_VERSION
+#define CONFIG_CRC8
+#define CONFIG_CROS_BOARD_INFO
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
 #define CONFIG_EMULATED_SYSRQ
 #define CONFIG_LED_COMMON
@@ -130,6 +133,7 @@
 
 /* I2C addresses */
 #define I2C_ADDR_TCPC0		0x16
+#define I2C_ADDR_EEPROM		0xa0
 
 /* Verify and jump to RW image on boot */
 #define CONFIG_VBOOT_EFS
