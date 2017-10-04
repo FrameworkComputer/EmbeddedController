@@ -102,8 +102,6 @@ int rma_create_challenge(void)
 	if (read_board_id(&bid))
 		return EC_ERROR_UNKNOWN;
 
-	/* The server wants this as a string, not a number. */
-	bid.type = htobe32(bid.type);
 	memcpy(c.board_id, &bid.type, sizeof(c.board_id));
 
 	unique_device_id_size = system_get_chip_unique_id(&device_id);

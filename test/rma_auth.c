@@ -63,7 +63,6 @@ int rma_server_side(char *out_auth_code, const char *challenge)
 	uint8_t hmac[32];
 	struct rma_challenge c;
 	uint8_t *cptr = (uint8_t *)&c;
-	uint32_t inverted_board_id;
 
 	/* Convert the challenge back into binary */
 	if (base32_decode(cptr, 8 * sizeof(c), challenge, 9) != 8 * sizeof(c)) {
@@ -102,9 +101,7 @@ int rma_server_side(char *out_auth_code, const char *challenge)
 	 * Since this is just a test, here we'll just make sure the BoardID
 	 * and DeviceID match what we expected.
 	 */
-	memcpy(&inverted_board_id, dummy_board_id, sizeof(inverted_board_id));
-	inverted_board_id = be32toh(inverted_board_id);
-	if (memcmp(c.board_id, &inverted_board_id, sizeof(c.board_id))) {
+	if (memcmp(c.board_id, dummy_board_id, sizeof(c.board_id))) {
 		printf("BoardID mismatch\n");
 		return -1;
 	}
