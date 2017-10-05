@@ -916,12 +916,12 @@ int verify_flash(struct ftdi_context *ftdi, const char *filename,
 	}
 
 	file_size = fread(buffer, 1, flash_size, hnd);
+	fclose(hnd);
 	if (file_size <= 0) {
 		fprintf(stderr, "Cannot read %s\n", filename);
 		res = -EIO;
 		goto exit;
 	}
-	fclose(hnd);
 
 	printf("Verify %d bytes at 0x%08x\n", file_size, offset);
 	res = command_read_pages(ftdi, offset, flash_size, buffer2);
