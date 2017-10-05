@@ -651,6 +651,14 @@ DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
+	 * whenever the EC is not doing SPI flash transactions. This avoids
+	 * floating SPI buffer input (MISO), which causes power leakage (see
+	 * b/64797021).
+	 */
+	NPCX_PUPD_EN1 |= (1 << NPCX_DEVPU1_F_SPI_PUD_EN);
+
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
