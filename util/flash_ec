@@ -113,6 +113,7 @@ BOARDS_NPCX_SPI=(
 	glkrvp
 	gru
 	kevin
+	nautilus
 	nefario
 	poppy
 	reef
@@ -150,6 +151,7 @@ BOARDS_RAIDEN=(
 	fizz
 	gru
 	kevin
+	nautilus
 	nefario
 	poppy
 	reef
