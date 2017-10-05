@@ -17,25 +17,6 @@ enum chg_ramp_vbus_state {
 };
 
 /**
- * Check if ramping is allowed for given supplier
- *
- * @supplier Supplier to check
- *
- * @return Ramping is allowed for given supplier
- */
-int board_is_ramp_allowed(int supplier);
-
-/**
- * Get the maximum current limit that we are allowed to ramp to
- *
- * @supplier Active supplier type
- * @sup_curr Input current limit based on supplier
- *
- * @return Maximum current in mA
- */
-int board_get_ramp_current_limit(int supplier, int sup_curr);
-
-/**
  * Check if board is consuming full input current
  *
  * @return Board is consuming full input current
@@ -51,6 +32,25 @@ int board_is_consuming_full_charge(void);
  * @return VBUS is sagging low
  */
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state);
+
+/**
+ * Check if ramping is allowed for given supplier
+ *
+ * @supplier Supplier to check
+ *
+ * @return Ramping is allowed for given supplier
+ */
+int chg_ramp_allowed(int supplier);
+
+/**
+ * Get the maximum current limit that we are allowed to ramp to
+ *
+ * @supplier Active supplier type
+ * @sup_curr Input current limit based on supplier
+ *
+ * @return Maximum current in mA
+ */
+int chg_ramp_max(int supplier, int sup_curr);
 
 /**
  * Get the input current limit set by ramp module

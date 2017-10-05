@@ -52,7 +52,7 @@ static void bc12_detect(const int port)
 	gpio_set_level(pin_tbl[port].chip_enable, 1);
 
 	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
-#if defined(CONFIG_CHARGE_RAMP) || defined(CONFIG_CHARGE_RAMP_HW)
+#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 	/*
 	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
 	 * little bit longer for margin.
@@ -73,7 +73,7 @@ static void bc12_detect(const int port)
 	 * charging port (DCP) which can only supply 500mA.
 	 */
 	new_chg.current = 500;
-#endif /* !defined(CONFIG_CHARGE_RAMP && CONFIG_CHARGE_RAMP_HW) */
+#endif /* !defined(CONFIG_CHARGE_RAMP_SW && CONFIG_CHARGE_RAMP_HW) */
 
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, &new_chg);
 }
@@ -136,3 +136,24 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 {
 	/* The BQ24392 automatically sets up the USB 2.0 high-speed switches. */
 }
+
+#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
+int usb_charger_ramp_allowed(int supplier)
+{
+	/*
+	 * Due to the limitations in the application of the BQ24392, we
+	 * don't quite know exactly what we're plugged into.  Therefore,
+	 * the supplier type will be CHARGE_SUPPLIER_OTHER.
+	 */
+	return supplier == CHARGE_SUPPLIER_OTHER;
+}
+
+int usb_charger_ramp_max(int supplier, int sup_curr)
+{
+	/* Use the current limit that was decided by the BQ24392. */
+	if (supplier == CHARGE_SUPPLIER_OTHER)
+		return sup_curr;
+	else
+		return 500;
+}
+#endif /* CONFIG_CHARGE_RAMP_SW || CONFIG_CHARGE_RAMP_HW */

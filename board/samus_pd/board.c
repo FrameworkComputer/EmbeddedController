@@ -361,39 +361,6 @@ int pd_is_max_request_allowed(void)
 }
 
 /**
- * Return whether ramping is allowed for given supplier
- */
-int board_is_ramp_allowed(int supplier)
-{
-	/* Don't allow ramping in RO when write protected */
-	if (!system_is_in_rw() && system_is_locked())
-		return 0;
-	else
-		return supplier == CHARGE_SUPPLIER_BC12_DCP ||
-		       supplier == CHARGE_SUPPLIER_BC12_SDP ||
-		       supplier == CHARGE_SUPPLIER_BC12_CDP ||
-		       supplier == CHARGE_SUPPLIER_PROPRIETARY;
-}
-
-/**
- * Return the maximum allowed input current
- */
-int board_get_ramp_current_limit(int supplier, int sup_curr)
-{
-	switch (supplier) {
-	case CHARGE_SUPPLIER_BC12_DCP:
-		return 2000;
-	case CHARGE_SUPPLIER_BC12_SDP:
-		return 1000;
-	case CHARGE_SUPPLIER_BC12_CDP:
-	case CHARGE_SUPPLIER_PROPRIETARY:
-		return sup_curr;
-	default:
-		return 500;
-	}
-}
-
-/**
  * Return if board is consuming full amount of input current
  */
 int board_is_consuming_full_charge(void)

@@ -88,4 +88,22 @@ void usb_charger_set_switches(int port, enum usb_switch setting);
  */
 void usb_charger_vbus_change(int port, int vbus_level);
 
+/**
+ * Check if ramping is allowed for given supplier
+ *
+ * @supplier Supplier to check
+ *
+ * @return Ramping is allowed for given supplier
+ */
+int usb_charger_ramp_allowed(int supplier);
+
+/**
+ * Get the maximum current limit that we are allowed to ramp to
+ *
+ * @supplier Active supplier type
+ * @sup_curr Input current limit based on supplier
+ *
+ * @return Maximum current in mA
+ */
+int usb_charger_ramp_max(int supplier, int sup_curr);
 #endif  /* __CROS_EC_USB_CHARGE_H */

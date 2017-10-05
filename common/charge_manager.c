@@ -324,10 +324,10 @@ static void charge_manager_fill_power_info(int port,
 			 * If ramp is not allowed, max current is just the
 			 * available charge current.
 			 */
-			if (board_is_ramp_allowed(sup)) {
+			if (chg_ramp_allowed(sup)) {
 				r->meas.current_max = chg_ramp_is_stable() ?
 					r->meas.current_lim :
-					board_get_ramp_current_limit(
+					chg_ramp_max(
 					  sup,
 					  available_charge[sup][port].current);
 			} else {
@@ -591,10 +591,10 @@ static void charge_manager_refresh(void)
 		 * Allow to set the maximum current value, so the hardware can
 		 * know the range of acceptable current values for its ramping.
 		 */
-		if (board_is_ramp_allowed(new_supplier))
+		if (chg_ramp_allowed(new_supplier))
 			new_charge_current_uncapped =
-				board_get_ramp_current_limit(new_supplier,
-						 new_charge_current_uncapped);
+				chg_ramp_max(new_supplier,
+					     new_charge_current_uncapped);
 #endif /* CONFIG_CHARGE_RAMP_HW */
 		/* Enforce port charge ceiling. */
 		ceil = charge_manager_get_ceil(new_port);
@@ -619,7 +619,7 @@ static void charge_manager_refresh(void)
 #else
 #ifdef CONFIG_CHARGE_RAMP_HW
 		/* Enable or disable charge ramp */
-		charger_set_hw_ramp(board_is_ramp_allowed(new_supplier));
+		charger_set_hw_ramp(chg_ramp_allowed(new_supplier));
 #endif
 		board_set_charge_limit(new_port, new_supplier,
 					new_charge_current,

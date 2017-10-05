@@ -36,10 +36,32 @@ static int charge_limit_ma;
 
 /* Mock functions */
 
-int board_is_ramp_allowed(int supplier)
+/* Override test_mockable implementations in charge_ramp module */
+int chg_ramp_allowed(int supplier)
 {
 	/* Ramp for TEST4-TEST8 */
 	return supplier > CHARGE_SUPPLIER_TEST3;
+}
+
+int chg_ramp_max(int supplier, int sup_curr)
+{
+	if (supplier == CHARGE_SUPPLIER_TEST7)
+		return 1600;
+	else if (supplier == CHARGE_SUPPLIER_TEST8)
+		return 2400;
+	else
+		return 3000;
+}
+
+/* These usb_charger functions are unused, but necessary to link */
+int usb_charger_ramp_allowed(int supplier)
+{
+	return 0;
+}
+
+int usb_charger_ramp_max(int supplier, int sup_curr)
+{
+	return 0;
 }
 
 int board_is_consuming_full_charge(void)
@@ -59,16 +81,6 @@ void board_set_charge_limit(int port, int supplier, int limit_ma,
 	charge_limit_ma = limit_ma;
 	if (charge_limit_ma > overcurrent_current_ma)
 		task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_OVERCURRENT, 0);
-}
-
-int board_get_ramp_current_limit(int supplier, int sup_curr)
-{
-	if (supplier == CHARGE_SUPPLIER_TEST7)
-		return 1600;
-	else if (supplier == CHARGE_SUPPLIER_TEST8)
-		return 2400;
-	else
-		return 3000;
 }
 
 /* Test utilities */

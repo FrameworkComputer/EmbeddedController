@@ -434,11 +434,11 @@
 /* Handle the external power limit host command in charge manager */
 #undef CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
 
-/* Compile input current ramping support */
-#undef CONFIG_CHARGE_RAMP
-
 /* The hardware has some input current ramping/back-off mechanism */
 #undef CONFIG_CHARGE_RAMP_HW
+
+/* Compile input current ramping support using software control */
+#undef CONFIG_CHARGE_RAMP_SW
 
 /*****************************************************************************/
 /* Charger config */

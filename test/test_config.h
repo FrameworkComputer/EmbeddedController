@@ -195,7 +195,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #endif
 
 #ifdef TEST_CHARGE_RAMP
-#define CONFIG_CHARGE_RAMP
+#define CONFIG_CHARGE_RAMP_SW
 #define CONFIG_USB_PD_PORT_COUNT 2
 #endif
 

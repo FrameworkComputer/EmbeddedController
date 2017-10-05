@@ -180,15 +180,6 @@ static void board_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-int board_get_ramp_current_limit(int supplier, int sup_curr)
-{
-	/* Use the current limit that was decided by the BQ24392 driver. */
-	if (supplier == CHARGE_SUPPLIER_OTHER)
-		return sup_curr;
-	else
-		return 500;
-}
-
 static void board_init(void)
 {
 	/* Enable TCPC interrupts. */
@@ -197,20 +188,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C2_PD_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-int board_is_ramp_allowed(int supplier)
-{
-	/* Don't allow ramping in RO when write protected. */
-	if (!system_is_in_rw() && system_is_locked())
-		return 0;
-
-	/*
-	 * Due to the limitations in the application of the BQ24392, we
-	 * don't quite know exactly what we're plugged into.  Therefore,
-	 * the supplier type will be CHARGE_SUPPLIER_OTHER.
-	 */
-	return supplier == CHARGE_SUPPLIER_OTHER;
-}
 
 void board_reset_pd_mcu(void)
 {
