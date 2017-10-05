@@ -903,6 +903,8 @@ int verify_flash(struct ftdi_context *ftdi, const char *filename,
 
 	if (!buffer || !buffer2) {
 		fprintf(stderr, "Cannot allocate %d bytes\n", flash_size);
+		free(buffer);
+		free(buffer2);
 		return -ENOMEM;
 	}
 
