@@ -72,41 +72,6 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
-void pd_set_input_current_limit(int port, uint32_t max_ma,
-				uint32_t supply_voltage)
-{
-#ifdef CONFIG_CHARGE_MANAGER
-	struct charge_port_info charge;
-	charge.current = max_ma;
-	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
-#endif
-	/*
-	 * move power info change notification to board_set_charge_limit(),
-	 * board_set_charge_limit() will be executed in call stack of
-	 * charge_manager_update_charge() if the "charge limit" or "charge port"
-	 * or supplier if is changed.
-	 */
-}
-
-void typec_set_input_current_limit(int port, uint32_t max_ma,
-				   uint32_t supply_voltage)
-{
-#ifdef CONFIG_CHARGE_MANAGER
-	struct charge_port_info charge;
-	charge.current = max_ma;
-	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
-#endif
-	/*
-	 * move power info change notification to board_set_charge_limit(),
-	 * board_set_charge_limit() will be executed in call stack of
-	 * charge_manager_update_charge() if the "charge limit" or "charge port"
-	 * or supplier if is changed.
-	 */
-}
-
-
 int pd_board_checks(void)
 {
 #if BOARD_REV <= OAK_REV3

@@ -125,30 +125,6 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
-void pd_set_input_current_limit(int port, uint32_t max_ma,
-				uint32_t supply_voltage)
-{
-#ifdef CONFIG_CHARGE_MANAGER
-	struct charge_port_info charge;
-
-	charge.current = max_ma;
-	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
-#endif
-}
-
-void typec_set_input_current_limit(int port, uint32_t max_ma,
-				   uint32_t supply_voltage)
-{
-#ifdef CONFIG_CHARGE_MANAGER
-	struct charge_port_info charge;
-
-	charge.current = max_ma;
-	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
-#endif
-}
-
 void typec_set_source_current_limit(int port, int rp)
 {
 	vbus_rp[port] = rp;

@@ -37,16 +37,6 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
-void pd_set_input_current_limit(int port, uint32_t max_ma,
-				uint32_t supply_voltage)
-{
-}
-
-void typec_set_input_current_limit(int port, uint32_t max_ma,
-				   uint32_t supply_voltage)
-{
-}
-
 int pd_is_max_request_allowed(void)
 {
 	/* max voltage request allowed */

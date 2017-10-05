@@ -823,6 +823,26 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 		hook_call_deferred(&charge_manager_refresh_data, 0);
 }
 
+void pd_set_input_current_limit(int port, uint32_t max_ma,
+				uint32_t supply_voltage)
+{
+	struct charge_port_info charge;
+
+	charge.current = max_ma;
+	charge.voltage = supply_voltage;
+	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
+}
+
+void typec_set_input_current_limit(int port, uint32_t max_ma,
+				   uint32_t supply_voltage)
+{
+	struct charge_port_info charge;
+
+	charge.current = max_ma;
+	charge.voltage = supply_voltage;
+	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
+}
+
 void charge_manager_update_charge(int supplier,
 				  int port,
 				  struct charge_port_info *charge)

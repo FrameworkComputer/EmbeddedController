@@ -91,36 +91,6 @@ int pd_snk_is_vbus_provided(int port)
 	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
 }
 
-void pd_set_input_current_limit(int port, uint32_t max_ma,
-				uint32_t supply_voltage)
-{
-	struct charge_port_info charge;
-
-	/* If the port is already supplying the power, don't reset it */
-	if (charge_manager_get_active_charge_port() == CHARGE_PORT_TYPEC0 &&
-			max_ma == 0 && supply_voltage == 0)
-		return;
-
-	charge.current = max_ma;
-	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
-}
-
-void typec_set_input_current_limit(int port, uint32_t max_ma,
-				   uint32_t supply_voltage)
-{
-	struct charge_port_info charge;
-
-	/* If the port is already supplying the power, don't reset it */
-	if (charge_manager_get_active_charge_port() == CHARGE_PORT_TYPEC0 &&
-			max_ma == 0 && supply_voltage == 0)
-		return;
-
-	charge.current = max_ma;
-	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
-}
-
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;
