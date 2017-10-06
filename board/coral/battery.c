@@ -387,9 +387,9 @@ static const struct board_batt_params info[] = {
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0003,
+				.disconnect_val = 0x0000,
 			}
 		},
 		.batt_info = {
@@ -605,6 +605,9 @@ static int battery_check_disconnect(void)
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
+	CPRINTS("Battery FET: reg 0x%04x mask 0x%04x disc 0x%04x", reg,
+		info[board_battery_type].fuel_gauge.fet.reg_mask,
+		info[board_battery_type].fuel_gauge.fet.disconnect_val);
 	reg &= info[board_battery_type].fuel_gauge.fet.reg_mask;
 	if (reg == info[board_battery_type].fuel_gauge.fet.disconnect_val)
 		return BATTERY_DISCONNECTED;
