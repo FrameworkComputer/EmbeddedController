@@ -271,7 +271,7 @@ static void battery_now_present(void)
 DECLARE_DEFERRED(battery_now_present);
 
 /*
- * Check for case where both XCHG and XDSG bits are set indicating that even
+ * Check for case where XDSG bit is set indicating that even
  * though the FG can be read from the battery, the battery is not able to be
  * charged or discharged. This situation will happen if a battery disconnect was
  * intiaited via H1 setting the DISCONN signal to the battery. This will put the
@@ -287,15 +287,13 @@ static int battery_check_disconnect(void)
 	int rv;
 	uint8_t data[6];
 
-	/* Check if battery charging + discharging is disabled. */
+	/* Check if battery discharging is disabled. */
 	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
 			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
-			BATTERY_CHARGING_DISABLED)) ==
-	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
+	if (data[3] & BATTERY_DISCHARGING_DISABLED)
 		return BATTERY_DISCONNECTED;
 
 	return BATTERY_NOT_DISCONNECTED;
