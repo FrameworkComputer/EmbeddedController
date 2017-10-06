@@ -40,6 +40,7 @@ static struct mutex flash_lock;
 
 /*****************************************************************************/
 /* flash internal functions */
+#if !defined(NPCX_INT_FLASH_SUPPORT)
 static void flash_pinmux(int enable)
 {
 	/* Select pin-mux for FIU*/
@@ -57,6 +58,7 @@ static void flash_pinmux(int enable)
 		CLEAR_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_F_SPI_CS1_2);
 	}
 }
+#endif
 
 static void flash_execute_cmd(uint8_t code, uint8_t cts)
 {
@@ -683,8 +685,10 @@ int flash_pre_init(void)
 	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
 #endif
 
+#if !defined(NPCX_INT_FLASH_SUPPORT)
 	/* Enable FIU interface */
 	flash_pinmux(1);
+#endif
 
 #ifdef CONFIG_EXTERNAL_STORAGE
 	/* Disable tristate all the time */

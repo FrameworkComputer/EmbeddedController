@@ -367,7 +367,9 @@ void gpio_pre_init(void)
 
 	/* Pin_Mux for FIU/SPI (set to GPIO) */
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_GPIO_NO_SPIP);
+#if defined(NPCX_INT_FLASH_SUPPORT)
 	SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_NO_F_SPI);
+#endif
 
 	/* Pin_Mux for PWRGD */
 	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_NO_PWRGD);
