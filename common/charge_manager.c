@@ -35,6 +35,7 @@ test_mockable const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_DEDICATED] = 0,
 #endif
 	[CHARGE_SUPPLIER_TYPEC] = 1,
+	[CHARGE_SUPPLIER_TYPEC_DTS] = 1,
 #ifdef CHARGE_MANAGER_BC12
 	[CHARGE_SUPPLIER_PROPRIETARY] = 1,
 	[CHARGE_SUPPLIER_BC12_DCP] = 2,
@@ -282,6 +283,7 @@ static void charge_manager_fill_power_info(int port,
 			r->type = USB_CHG_TYPE_PD;
 			break;
 		case CHARGE_SUPPLIER_TYPEC:
+		case CHARGE_SUPPLIER_TYPEC_DTS:
 			r->type = USB_CHG_TYPE_C;
 			break;
 #ifdef CHARGE_MANAGER_BC12
@@ -841,14 +843,36 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
 }
 
-void typec_set_input_current_limit(int port, uint32_t max_ma,
+void typec_set_input_current_limit(int port, typec_current_t max_ma,
 				   uint32_t supply_voltage)
 {
 	struct charge_port_info charge;
+	int dts = !!(max_ma & TYPEC_CURRENT_DTS_MASK);
 
-	charge.current = max_ma;
+	charge.current = max_ma & TYPEC_CURRENT_ILIM_MASK;
 	charge.voltage = supply_voltage;
-	charge_manager_update_charge(CHARGE_SUPPLIER_TYPEC, port, &charge);
+#if !defined(HAS_TASK_CHG_RAMP) && !defined(CONFIG_CHARGE_RAMP_HW)
+	/*
+	 * DTS sources such as suzy-q may not be able to actually deliver
+	 * their advertised current, so limit it to reduce chance of OC,
+	 * if we can't ramp.
+	 */
+	if (dts)
+		charge.current = MIN(charge.current, 500);
+#endif
+	charge_manager_update_charge(dts ? CHARGE_SUPPLIER_TYPEC_DTS :
+					   CHARGE_SUPPLIER_TYPEC,
+					   port, &charge);
+
+	/*
+	 * Zero TYPEC / TYPEC-DTS when zero'ing the other, since they are
+	 * mutually exclusive and DTS status of port partner will no longer
+	 * be reflected on disconnect.
+	 */
+	if (max_ma == 0 || supply_voltage == 0)
+		charge_manager_update_charge(dts ? CHARGE_SUPPLIER_TYPEC :
+						   CHARGE_SUPPLIER_TYPEC_DTS,
+						   port, &charge);
 }
 
 void charge_manager_update_charge(int supplier,

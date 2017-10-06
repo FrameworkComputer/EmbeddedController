@@ -1027,6 +1027,11 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
  */
 void pd_update_contract(int port);
 
+/* Encode DTS status of port partner in current limit parameter */
+typedef uint32_t typec_current_t;
+#define TYPEC_CURRENT_DTS_MASK (1 << 31)
+#define TYPEC_CURRENT_ILIM_MASK (~TYPEC_CURRENT_DTS_MASK)
+
 /**
  * Set the type-C input current limit.
  *
@@ -1034,7 +1039,7 @@ void pd_update_contract(int port);
  * @param max_ma Maximum current limit
  * @param supply_voltage Voltage at which current limit is applied
  */
-void typec_set_input_current_limit(int port, uint32_t max_ma,
+void typec_set_input_current_limit(int port, typec_current_t max_ma,
 				   uint32_t supply_voltage);
 
 /**
