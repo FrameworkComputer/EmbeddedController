@@ -71,8 +71,51 @@ static uint32_t sec_to_rtc_tr(uint32_t sec)
 	return rtc_tr;
 }
 
+/* Register setup before RTC alarm is allowed for update */
+static void pre_work_set_rtc_alarm(void)
+{
+	rtc_unlock_regs();
+
+	/* Make sure alarm is disabled */
+	STM32_RTC_CR &= ~STM32_RTC_CR_ALRAE;
+	while (!(STM32_RTC_ISR & STM32_RTC_ISR_ALRAWF))
+		;
+	STM32_RTC_ISR &= ~STM32_RTC_ISR_ALRAF;
+}
+
+/* Register setup after RTC alarm is updated */
+static void post_work_set_rtc_alarm(void)
+{
+	STM32_EXTI_PR = EXTI_RTC_ALR_EVENT;
+
+	/* Enable alarm and alarm interrupt */
+	STM32_EXTI_IMR |= EXTI_RTC_ALR_EVENT;
+	STM32_RTC_CR |= STM32_RTC_CR_ALRAE;
+
+	rtc_lock_regs();
+}
+
 #ifdef CONFIG_HOSTCMD_RTC
-static uint8_t host_rtc_alarm_set;
+static struct wake_time host_wake_time;
+
+int is_host_wake_alarm_expired(timestamp_t ts)
+{
+	return host_wake_time.ts.val &&
+	       timestamp_expired(host_wake_time.ts, &ts);
+}
+
+void restore_host_wake_alarm(void)
+{
+	if (!host_wake_time.ts.val)
+		return;
+
+	pre_work_set_rtc_alarm();
+
+	/* Set alarm time */
+	STM32_RTC_ALRMAR = host_wake_time.rtc_alrmar;
+
+	post_work_set_rtc_alarm();
+}
 
 static uint32_t rtc_dr_to_sec(uint32_t rtc_dr)
 {
@@ -163,7 +206,7 @@ void rtc_read(struct rtc_time_reg *rtc)
 }
 
 void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
-		   struct rtc_time_reg *rtc)
+		   struct rtc_time_reg *rtc, uint8_t save_alarm)
 {
 	uint32_t alarm_sec = 0;
 	uint32_t alarm_us = 0;
@@ -176,14 +219,7 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	/* Alarm timeout must be within 1 day (86400 seconds) */
 	ASSERT((delay_s + delay_us / SECOND) < SECS_PER_DAY);
 
-	rtc_unlock_regs();
-
-	/* Make sure alarm is disabled */
-	STM32_RTC_CR &= ~STM32_RTC_CR_ALRAE;
-	while (!(STM32_RTC_ISR & STM32_RTC_ISR_ALRAWF))
-		;
-	STM32_RTC_ISR &= ~STM32_RTC_ISR_ALRAF;
-
+	pre_work_set_rtc_alarm();
 	rtc_read(rtc);
 
 	/* Calculate alarm time */
@@ -216,12 +252,17 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	STM32_RTC_ALRMASSR = delay_us ?
 			     (us_to_rtcss(alarm_us) | 0x0f000000) : 0;
 
-	/* Enable alarm and alarm interrupt */
-	STM32_EXTI_PR = EXTI_RTC_ALR_EVENT;
-	STM32_EXTI_IMR |= EXTI_RTC_ALR_EVENT;
-	STM32_RTC_CR |= STM32_RTC_CR_ALRAE;
-
-	rtc_lock_regs();
+#ifdef CONFIG_HOSTCMD_RTC
+	/*
+	 * If alarm is set by the host, preserve the wake time timestamp
+	 * and alarm registers.
+	 */
+	if (save_alarm) {
+		host_wake_time.ts.val = delay_s * SECOND + get_time().val;
+		host_wake_time.rtc_alrmar = STM32_RTC_ALRMAR;
+	}
+#endif
+	post_work_set_rtc_alarm();
 }
 
 uint32_t get_rtc_alarm(void)
@@ -266,13 +307,13 @@ void reset_rtc_alarm(struct rtc_time_reg *rtc)
 void __rtc_alarm_irq(void)
 {
 	struct rtc_time_reg rtc;
-
 	reset_rtc_alarm(&rtc);
+
 #ifdef CONFIG_HOSTCMD_RTC
-	/* Do not wake up the host if the alarm was not set by the host */
-	if (host_rtc_alarm_set) {
+	/* Wake up the host if there is a saved rtc wake alarm. */
+	if (host_wake_time.ts.val) {
+		host_wake_time.ts.val = 0;
 		host_set_single_event(EC_HOST_EVENT_RTC);
-		host_rtc_alarm_set = 0;
 	}
 #endif
 }
@@ -331,6 +372,7 @@ void print_system_rtc(enum console_channel ch)
 
 	rtc_read(&rtc);
 	sec = rtc_to_sec(&rtc);
+
 	cprintf(ch, "RTC: 0x%08x (%d.00 s)\n", sec, sec);
 }
 
@@ -376,7 +418,7 @@ static int command_rtc_alarm_test(int argc, char **argv)
 			return EC_ERROR_PARAM2;
 	}
 
-	set_rtc_alarm(s, us, &rtc);
+	set_rtc_alarm(s, us, &rtc, 0);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
@@ -424,10 +466,7 @@ static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
 	if (p->time >= SECS_PER_DAY)
 		return EC_RES_INVALID_PARAM;
 
-	if (p->time != EC_RTC_ALARM_CLEAR)
-		host_rtc_alarm_set = 1;
-
-	set_rtc_alarm(p->time, 0, &rtc);
+	set_rtc_alarm(p->time, 0, &rtc, 1);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM,

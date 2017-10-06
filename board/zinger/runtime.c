@@ -180,7 +180,7 @@ uint32_t task_wait_event(int timeout_us)
 			CPU_SCB_SYSCTRL |= 0x4;
 
 			set_rtc_alarm(0, timeout_us - STOP_MODE_LATENCY,
-				      &rtc0);
+				      &rtc0, 0);
 
 			asm volatile("wfi");
 

@@ -38,6 +38,12 @@ struct rtc_time_reg {
 	uint32_t rtc_dr; /* years, months, dates, week days */
 };
 
+/* Save the RTC alarm wake time */
+struct wake_time {
+	timestamp_t ts;
+	uint32_t rtc_alrmar; /* the value of register STM32_RTC_ALRMAR */
+};
+
 /* Convert between RTC regs in BCD and seconds */
 uint32_t rtc_to_sec(const struct rtc_time_reg *rtc);
 
@@ -60,9 +66,9 @@ void rtc_read(struct rtc_time_reg *rtc);
 /* Set RTC value */
 void rtc_set(uint32_t sec);
 
-/* Set RTC wakeup */
+/* Set RTC wakeup, save alarm wakeup time when save_alarm != 0 */
 void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
-		   struct rtc_time_reg *rtc);
+		   struct rtc_time_reg *rtc, uint8_t save_alarm);
 
 /* Clear RTC wakeup */
 void reset_rtc_alarm(struct rtc_time_reg *rtc);
@@ -84,5 +90,14 @@ void config_hispeed_clock(void);
 
 /* Get timer clock frequency (for STM32 only) */
 int clock_get_timer_freq(void);
+
+/*
+ * Return 1 if host_wake_time is nonzero and the saved host_wake_time
+ * is expired at a given time, ts.
+ */
+int is_host_wake_alarm_expired(timestamp_t ts);
+
+/* Set RTC wakeup based on the value saved in host_wake_time */
+void restore_host_wake_alarm(void);
 
 #endif  /* __CROS_EC_CLOCK_F_H */
