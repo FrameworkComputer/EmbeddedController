@@ -162,6 +162,13 @@ int charge_manager_get_power_limit_uw(void);
  */
 int charge_manager_get_charger_current(void);
 
+/**
+ * Get the charger voltage (mV) value.
+ *
+ * @return	Charger voltage (mV) or CHARGE_VOLTAGE_UNINITIALIZED.
+ */
+int charge_manager_get_charger_voltage(void);
+
 #ifdef CONFIG_USB_PD_LOGGING
 /* Save power state log entry for the given port */
 void charge_manager_save_log(int port);

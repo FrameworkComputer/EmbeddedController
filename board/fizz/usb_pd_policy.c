@@ -289,6 +289,14 @@ int board_set_active_charge_port(int port)
 		break;
 	case CHARGE_PORT_BARRELJACK :
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
+		/* If this is switching from type-c to BJ, we have to wait until
+		 * PU3 comes up to keep the system continuously powered.
+		 * NX20P5090 datasheet says turn-on time for 20V is 29 msec. */
+		if (active_port == CHARGE_PORT_TYPEC0)
+			msleep(30);
+		/* We don't check type-c voltage here. If it's higher than
+		 * BJ voltage, we'll brown out due to the reverse current
+		 * protection of PU3. */
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
 		gpio_disable_interrupt(GPIO_ADP_IN_L);
 		break;

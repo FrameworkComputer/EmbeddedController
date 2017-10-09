@@ -71,20 +71,38 @@ static void tcpc_alert_event(enum gpio_signal signal)
  */
 static int adp_in_state = 1;
 
+static void adp_in_deferred(void);
+DECLARE_DEFERRED(adp_in_deferred);
 static void adp_in_deferred(void)
 {
-	/* TODO: Switch power source from USB-C to BJ only if we're in S5. */
-	struct charge_port_info cpi;
+	struct charge_port_info pi = { 0 };
 	int level = gpio_get_level(GPIO_ADP_IN_L);
 
 	/* Debounce */
 	if (level == adp_in_state)
 		return;
-	/* High = unplugged. Low = plugged. TODO: Set appropriate voltage. */
-	cpi.voltage = level ? 0 : 19000;
-	/* Set to 0 to ensure charge manager will ignore it. */
-	cpi.current = 0;
-	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1, &cpi);
+	if (!level) {
+		/* BJ is inserted but the voltage isn't effective because PU3
+		 * is still disabled. */
+		pi.voltage = 19000;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			/* If type-c voltage is higher than BJ voltage, PU3 will
+			 * shut down due to reverse current protection. So, we
+			 * need to lower the voltage first. */
+			if (charge_manager_get_charger_voltage() > pi.voltage) {
+				pd_set_external_voltage_limit(
+						CHARGE_PORT_TYPEC0, pi.voltage);
+				hook_call_deferred(&adp_in_deferred_data,
+						   ADP_DEBOUNCE_MS * MSEC);
+				return;
+			}
+			if (gpio_get_level(GPIO_POWER_RATE))
+				pi.current = 4620;
+			else
+				pi.current = 3330;
+		}
+	}
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1, &pi);
 	/*
 	 * Explicitly notifies the host that BJ is plugged or unplugged
 	 * (when running on a type-c adapter).
@@ -92,7 +110,6 @@ static void adp_in_deferred(void)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 	adp_in_state = level;
 }
-DECLARE_DEFERRED(adp_in_deferred);
 
 /* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
 void adp_in(enum gpio_signal signal)
