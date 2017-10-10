@@ -8,14 +8,113 @@
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "lpc.h"
 #include "mkbp_event.h"
+#include "system.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_EVENTS, outstr)
 #define CPRINTS(format, args...) cprints(CC_EVENTS, format, ## args)
+
+#ifdef CONFIG_LPC
+
+#define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
+#define LPC_SYSJUMP_VERSION 1
+
+static uint32_t lpc_host_events;
+static uint32_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];
+
+void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
+{
+	lpc_host_event_mask[type] = mask;
+	lpc_update_host_event_status();
+}
+
+uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
+{
+	return lpc_host_event_mask[type];
+}
+
+static void lpc_set_host_event_state(uint32_t events)
+{
+	if (events == lpc_host_events)
+		return;
+
+	lpc_host_events = events;
+	lpc_update_host_event_status();
+}
+
+uint32_t lpc_get_host_events_by_type(enum lpc_host_event_type type)
+{
+	return lpc_host_events & lpc_get_host_event_mask(type);
+}
+
+uint32_t lpc_get_host_events(void)
+{
+	return lpc_host_events;
+}
+
+int lpc_get_next_host_event(void)
+{
+	int evt_index = 0;
+	int i;
+	const uint32_t any_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI) |
+		lpc_get_host_event_mask(LPC_HOST_EVENT_SCI) |
+		lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE);
+
+	for (i = 0; i < 32; i++) {
+		const uint32_t e = (1 << i);
+
+		if (lpc_host_events & e) {
+			host_clear_events(e);
+
+			/*
+			 * If host hasn't unmasked this event, drop it.  We do
+			 * this at query time rather than event generation time
+			 * so that the host has a chance to unmask events
+			 * before they're dropped by a query.
+			 */
+			if (!(e & any_mask))
+				continue;
+
+			evt_index = i + 1;	/* Events are 1-based */
+			break;
+		}
+	}
+
+	return evt_index;
+}
+
+static void lpc_sysjump_save_mask(void)
+{
+	system_add_jump_tag(LPC_SYSJUMP_TAG, LPC_SYSJUMP_VERSION,
+			    sizeof(lpc_host_event_mask), lpc_host_event_mask);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump_save_mask, HOOK_PRIO_DEFAULT);
+
+static void lpc_post_sysjump_restore_mask(void)
+{
+	const uint32_t *prev_mask;
+	int size, version;
+
+	prev_mask = (const uint32_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
+			&version, &size);
+	if (!prev_mask || version != LPC_SYSJUMP_VERSION ||
+		size != sizeof(lpc_host_event_mask))
+		return;
+
+	memcpy(lpc_host_event_mask, prev_mask, sizeof(lpc_host_event_mask));
+}
+/*
+ * This hook is required to run before chip gets to initialize LPC because
+ * update host events will need the masks to be correctly restored.
+ */
+DECLARE_HOOK(HOOK_INIT, lpc_post_sysjump_restore_mask, HOOK_PRIO_INIT_LPC - 1);
+
+#endif
 
 /*
  * Maintain two copies of the events that are set.

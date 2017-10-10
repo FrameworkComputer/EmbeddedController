@@ -142,7 +142,7 @@ static void s0ix_lpc_disable_wake_mask(void)
 		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, mask);
 
 		/* clear host events */
-		while (lpc_query_host_event_state() != 0)
+		while (lpc_get_next_host_event() != 0)
 			;
 	}
 }

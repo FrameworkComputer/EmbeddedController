@@ -30,8 +30,6 @@
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
 
-#define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
-
 /* LPC PM channels */
 enum lpc_pm_ch {
 	LPC_PM1 = 0,
@@ -57,8 +55,6 @@ static uint8_t acpi_ec_memmap[EC_MEMMAP_SIZE]
 static uint8_t host_cmd_memmap[256]
 			__attribute__((section(".h2ram.pool.hostcmd")));
 
-static uint32_t host_events;     /* Currently pending SCI/SMI events */
-static uint32_t event_mask[3];   /* Event masks for each type */
 static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
 static uint8_t host_cmd_flags;   /* Flags from host command */
@@ -213,7 +209,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	pm_set_status(LPC_HOST_CMD, EC_LPC_STATUS_PROCESSING, 0);
 }
 
-static void update_host_event_status(void)
+void lpc_update_host_event_status(void)
 {
 	int need_sci = 0;
 	int need_smi = 0;
@@ -224,7 +220,7 @@ static void update_host_event_status(void)
 	/* Disable PMC1 interrupt while updating status register */
 	task_disable_irq(IT83XX_IRQ_PMC_IN);
 
-	if (host_events & event_mask[LPC_HOST_EVENT_SMI]) {
+	if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SMI)) {
 		/* Only generate SMI for first event */
 		if (!(pm_get_status(LPC_ACPI_CMD) & EC_LPC_STATUS_SMI_PENDING))
 			need_smi = 1;
@@ -233,7 +229,7 @@ static void update_host_event_status(void)
 		pm_set_status(LPC_ACPI_CMD, EC_LPC_STATUS_SMI_PENDING, 0);
 	}
 
-	if (host_events & event_mask[LPC_HOST_EVENT_SCI]) {
+	if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SCI)) {
 		/* Generate SCI for every event */
 		need_sci = 1;
 		pm_set_status(LPC_ACPI_CMD, EC_LPC_STATUS_SCI_PENDING, 1);
@@ -242,12 +238,13 @@ static void update_host_event_status(void)
 	}
 
 	/* Copy host events to mapped memory */
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = host_events;
+	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
+				lpc_get_host_events();
 
 	task_enable_irq(IT83XX_IRQ_PMC_IN);
 
 	/* Process the wake events. */
-	lpc_update_wake(host_events & event_mask[LPC_HOST_EVENT_WAKE]);
+	lpc_update_wake(lpc_get_host_events_by_type(LPC_HOST_EVENT_WAKE));
 
 	/* Send pulse on SMI signal if needed */
 	if (need_smi)
@@ -356,54 +353,6 @@ void lpc_keyboard_resume_irq(void)
 
 		task_enable_irq(IT83XX_IRQ_KBC_OUT);
 	}
-}
-
-void lpc_set_host_event_state(uint32_t mask)
-{
-	if (mask != host_events) {
-		host_events = mask;
-		update_host_event_status();
-	}
-}
-
-int lpc_query_host_event_state(void)
-{
-	const uint32_t any_mask = event_mask[0] | event_mask[1] | event_mask[2];
-	int evt_index = 0;
-	int i;
-
-	for (i = 0; i < 32; i++) {
-		const uint32_t e = (1 << i);
-
-		if (host_events & e) {
-			host_clear_events(e);
-
-			/*
-			 * If host hasn't unmasked this event, drop it.  We do
-			 * this at query time rather than event generation time
-			 * so that the host has a chance to unmask events
-			 * before they're dropped by a query.
-			 */
-			if (!(e & any_mask))
-				continue;
-
-			evt_index = i + 1;	/* Events are 1-based */
-			break;
-		}
-	}
-
-	return evt_index;
-}
-
-void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
-{
-	event_mask[type] = mask;
-	update_host_event_status();
-}
-
-uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
-{
-	return event_mask[type];
 }
 
 void lpc_set_acpi_status_mask(uint8_t mask)
@@ -600,32 +549,6 @@ void pm5_ibf_interrupt(void)
 	task_clear_pending_irq(IT83XX_IRQ_PMC5_IN);
 }
 
-/**
- * Preserve event masks across a sysjump.
- */
-static void lpc_sysjump(void)
-{
-	system_add_jump_tag(LPC_SYSJUMP_TAG, 1,
-				sizeof(event_mask), event_mask);
-}
-DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump, HOOK_PRIO_DEFAULT);
-
-/**
- * Restore event masks after a sysjump.
- */
-static void lpc_post_sysjump(void)
-{
-	const uint32_t *prev_mask;
-	int size, version;
-
-	prev_mask = (const uint32_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
-							  &version, &size);
-	if (!prev_mask || version != 1 || size != sizeof(event_mask))
-		return;
-
-	memcpy(event_mask, prev_mask, sizeof(event_mask));
-}
-
 static void lpc_init(void)
 {
 	enum ec2i_message ec2i_r;
@@ -761,14 +684,11 @@ static void lpc_init(void)
 	task_clear_pending_irq(IT83XX_IRQ_PMC3_IN);
 	task_enable_irq(IT83XX_IRQ_PMC3_IN);
 
-	/* Restore event masks if needed */
-	lpc_post_sysjump();
-
 	/* Sufficiently initialized */
 	init_done = 1;
 
 	/* Update host events now that we can copy them to memmap */
-	update_host_event_status();
+	lpc_update_host_event_status();
 }
 /*
  * Set prio to higher than default; this way LPC memory mapped data is ready

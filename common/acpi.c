@@ -266,7 +266,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		}
 	} else if (acpi_cmd == EC_CMD_ACPI_QUERY_EVENT && !acpi_data_count) {
 		/* Clear and return the lowest host event */
-		int evt_index = lpc_query_host_event_state();
+		int evt_index = lpc_get_next_host_event();
 		CPRINTS("ACPI query = %d", evt_index);
 		*resultptr = evt_index;
 		retval = 1;

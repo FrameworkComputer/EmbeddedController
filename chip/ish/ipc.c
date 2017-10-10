@@ -235,17 +235,8 @@ static void ipc_send_response_packet(struct host_packet *pkt)
 	ipc_write(IPC_PEER_HOST_ID, pkt->response, pkt->response_size);
 }
 
-void lpc_set_host_event_state(uint32_t mask)
+void lpc_update_host_event_status(void)
 {
-}
-
-void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
-{
-}
-
-uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
-{
-	return 0;
 }
 
 void lpc_clear_acpi_status_mask(uint8_t mask)
