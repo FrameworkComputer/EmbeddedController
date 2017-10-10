@@ -166,9 +166,10 @@ dest_dir=
 IMAGE_SIZE='524288'
 export RESULT_FILE
 
-GSCTOOL="${EC_ROOT}/extra/usb_updater/gsctool"
+GSCTOOL="/usr/sbin/gsctool"
 if [[ ! -x "${GSCTOOL}" ]]; then
-  echo "${ME}: gsctool not found, run \"make -C extra/usb_updater\"" >&2
+  emerge_command="USE=cr50_onboard sudo -E emerge ec-utils"
+  echo "${ME}: gsctool not found, run \"${emerge_command}\"" >&2
   exit 1
 fi
 
