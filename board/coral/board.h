@@ -208,6 +208,7 @@
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
@@ -278,7 +279,7 @@ enum temp_sensor_id {
  * For BMI160, accel, gyro and compass sensors must be next to each other.
  */
 enum sensor_id {
-	LID_ACCEL = 0,
+	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
 	LID_ALS,

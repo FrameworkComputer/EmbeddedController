@@ -38,6 +38,7 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "sku.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -987,7 +988,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 },
 	},
 };
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
 const struct motion_sensor_t *motion_als_sensors[] = {
@@ -1011,6 +1012,21 @@ void board_hibernate(void)
 
 	/* Turn BGATE OFF for saving the power */
 	bd9995x_set_power_save_mode(BD9995X_PWR_SAVE_MAX);
+}
+
+static void board_set_motion_sensor_count(uint8_t sku_id)
+{
+	/*
+	 * There are two possible sensor configurations. Clamshell device will
+	 * not have any of the motion sensors populated, while convertible
+	 * devices have the BMI160 Accel/Gryo and Kionx KX022 lid acceleration
+	 * sensor. If a new SKU id is used that is not in the table, then the
+	 * number of motion sensors will remain as ARRAY_SIZE(motion_sensors).
+	 */
+	motion_sensor_count = SKU_IS_CONVERTIBLE(sku_id) ?
+		ARRAY_SIZE(motion_sensors) : 0;
+
+	CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
 }
 
 struct {
@@ -1088,39 +1104,75 @@ static void board_get_sku_id(void)
 		    (sku_id_higher != BOARD_VERSION_UNKNOWN))
 			sku_id = (sku_id_higher << 4) | sku_id_lower;
 		CPRINTS("SKU ID: %d", sku_id);
+		/* Use sku_id to set motion sensor count */
+		board_set_motion_sensor_count(sku_id);
 	}
 }
 /* This can't run until after the ADC module has been initialized */
 DECLARE_HOOK(HOOK_INIT, board_get_sku_id, HOOK_PRIO_INIT_ADC + 1);
 
-static int command_board_id(int argc, char **argv)
+static void print_form_factor_list(int low, int high)
+{
+	int id;
+	int count = 0;
+
+	if (high > 255)
+		high = 255;
+	for (id = low; id <= high; id++) {
+		ccprintf("SKU ID %03d: %s\n", id, SKU_IS_CONVERTIBLE(id) ?
+			 "Convertible" : "Clamshell");
+		/* Don't print too many lines at once */
+		if (!(++count % 5))
+			msleep(20);
+	}
+}
+
+static int command_sku(int argc, char **argv)
 {
 	enum adc_channel chan;
 
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	if (!strcasecmp(argv[1], "id"))
-		chan = ADC_BOARD_ID;
-	else if (!strcasecmp(argv[1], "sku0"))
-		chan = ADC_BOARD_SKU_0;
-	else if (!strcasecmp(argv[1], "sku1"))
-		chan = ADC_BOARD_SKU_1;
-	else if (!strcasecmp(argv[1], "sku")) {
+	if (argc < 2) {
 		system_get_sku_id();
 		ccprintf("SKU ID: %d\n", sku_id);
 		return EC_SUCCESS;
-	} else
+	}
+
+	if (!strcasecmp(argv[1], "form")) {
+		if (argc >= 4) {
+			char *e;
+			int low, high;
+
+			low = strtoi(argv[2], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM1;
+
+			high = strtoi(argv[3], &e, 10);
+			if (*e)
+				return EC_ERROR_PARAM2;
+			print_form_factor_list(low, high);
+			return EC_SUCCESS;
+		} else {
+			return EC_ERROR_PARAM_COUNT;
+		}
+	}
+
+	if (!strcasecmp(argv[1], "board"))
+		chan = ADC_BOARD_ID;
+	else if (!strcasecmp(argv[1], "line0"))
+		chan = ADC_BOARD_SKU_0;
+	else if (!strcasecmp(argv[1], "line1"))
+		chan = ADC_BOARD_SKU_1;
+	else
 		return EC_ERROR_PARAM1;
 
-	ccprintf("Board id|sku: chan %d = %d\n", chan,
-		 board_read_version(chan));
+	ccprintf("sku: %s = %d, adc %d\n", argv[1], board_read_version(chan),
+		 chan);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(board_id, command_board_id,
-			"<id|sku0|sku1>",
-			"Get board id or sku");
+DECLARE_CONSOLE_COMMAND(sku, command_sku,
+			"<board|line0|line1|form [low high]>",
+			"Get board id, sku, form factor");
 
 uint32_t system_get_sku_id(void)
 {
