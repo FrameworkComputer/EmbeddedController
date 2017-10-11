@@ -701,6 +701,39 @@ static void board_init(void)
 	 */
 	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
 		base_enable();
+
+	/*
+	 * Set unused GPIO_LED_YELLO_C0[_OLD] as INPUT | PULL_UP
+	 * for better S0ix/S3 power
+	 */
+	if (system_get_board_version() >= 5)
+		gpio_set_flags(GPIO_LED_YELLOW_C0_OLD,
+			GPIO_INPUT | GPIO_PULL_UP);
+	else
+		gpio_set_flags(GPIO_LED_YELLOW_C0,
+			GPIO_INPUT | GPIO_PULL_UP);
+
+#ifdef BOARD_SORAKA
+	/*
+	 * TODO(b/64503543): Add proper options(#ifdef ) for Non-LTE SKU
+	 * Set unused LTE related pins as INPUT | PULL_UP
+	 * for better S0ix/S3 power
+	 */
+	if (system_get_board_version() >= 4) {
+		gpio_set_flags(GPIO_WLAN_PE_RST,
+			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_PP3300_DX_LTE,
+			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_GPS_OFF_L,
+			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_BODY_SAR_L,
+			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_WAKE_L,
+			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_OFF_ODL,
+			GPIO_INPUT | GPIO_PULL_UP);
+	}
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
