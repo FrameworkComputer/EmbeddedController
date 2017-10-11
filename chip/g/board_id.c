@@ -103,8 +103,17 @@ uint32_t board_id_mismatch(const struct SignedHeader *sh)
 		sh = get_current_image_header();
 
 	/* Get Board ID from INFO1. */
-	if (read_board_id(&id) != EC_SUCCESS)
-		return 1;
+	if (read_board_id(&id) != EC_SUCCESS) {
+		/*
+		 * On failure, set id fields to 0.  This will only match an
+		 * unrestricted image header (board_id_mask=board_id_flags=0),
+		 * which would run on any Board ID.
+		 *
+		 * Don't return error, because that would prevent all images
+		 * from running.
+		 */
+		id.type = id.type_inv = id.flags = 0;
+	}
 
 	return check_board_id_vs_header(&id, sh);
 }
