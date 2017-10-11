@@ -433,9 +433,9 @@ esac
 
 # Not every control is supported on every servo type.  Therefore, define which
 # controls are supported by each servo type.
-servo_v2_VARS="jtag_buf_on_flex_en jtag_buf_en"
-servo_micro_VARS=
-servo_v4_with_ccd_cr50_VARS=
+servo_v2_VARS="jtag_buf_on_flex_en jtag_buf_en cold_reset spi1_vref"
+servo_micro_VARS="cold_reset spi1_vref"
+servo_v4_with_ccd_cr50_VARS="cold_reset"
 # Flashing an STM32 over the UART requires modifying the UART properties along
 # with the boot mode pin.
 if [ "${CHIP}" = "stm32" ] ; then
@@ -453,6 +453,9 @@ if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 fi
 toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
 
+if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
+	servo_v2_VARS+=" fw_up"
+fi
 # Some servo boards use the same controls.
 servo_v3_VARS="${servo_v2_VARS}"
 servo_v4_with_servo_micro_VARS="${servo_micro_VARS}"
