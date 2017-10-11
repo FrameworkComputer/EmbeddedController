@@ -124,6 +124,7 @@ static int is_connected(int port)
  * @return	1 when we need to override the a non-dedicated charger
  *		to be a dedicated one, 0 otherwise.
  */
+#ifdef CONFIG_BATTERY
 static int charge_manager_spoof_dualrole_capability(void)
 {
 	int spoof_dualrole =  (system_get_image_copy() == SYSTEM_IMAGE_RO &&
@@ -135,6 +136,13 @@ static int charge_manager_spoof_dualrole_capability(void)
 #endif
 	return spoof_dualrole;
 }
+#else /* CONFIG_BATTERY */
+/* No battery, so always charge from input port. */
+static inline int charge_manager_spoof_dualrole_capability(void)
+{
+	return 1;
+}
+#endif /* CONFIG_BATTERY */
 
 /**
  * Initialize available charge. Run before board init, so board init can

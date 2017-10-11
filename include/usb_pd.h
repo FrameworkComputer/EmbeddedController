@@ -1271,7 +1271,11 @@ extern const int pd_snk_pdo_cnt;
  *
  * @param mask host event mask.
  */
+#if defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD)
 void pd_send_host_event(int mask);
+#else
+static inline void pd_send_host_event(int mask) { }
+#endif
 
 /**
  * Determine if in alternate mode or not.
