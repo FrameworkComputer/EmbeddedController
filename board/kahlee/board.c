@@ -448,11 +448,6 @@ static void board_chipset_startup(void)
 
 	/* Enable Codec */
 	gpio_set_level(GPIO_EN_ALC_CLK, 1);
-
-	/*
-	 * TODO: Remove after thermal control table is provided
-	 */
-	fan_set_duty(0, 75);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
