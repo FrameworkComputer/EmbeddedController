@@ -46,8 +46,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_TEMP_SENSOR
 		| EC_FEATURE_MASK_0(EC_FEATURE_THERMAL)
 #endif
-/* Hack to uniquely identify Samus ec */
-#if (defined CONFIG_BACKLIGHT_LID) || (defined CONFIG_BATTERY_SAMUS)
+#if (defined CONFIG_BACKLIGHT_LID) || (defined CONFIG_BACKLIGHT_REQ_GPIO)
 		| EC_FEATURE_MASK_0(EC_FEATURE_BKLIGHT_SWITCH)
 #endif
 #ifdef CONFIG_WIRELESS
@@ -65,7 +64,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_CHARGER
 		| EC_FEATURE_MASK_0(EC_FEATURE_CHARGER)
 #endif
-#if (defined CONFIG_BATTERY) || (defined CONFIG_BATTERY_SMART)
+#if (defined CONFIG_BATTERY)
 		| EC_FEATURE_MASK_0(EC_FEATURE_BATTERY)
 #endif
 #ifdef CONFIG_BATTERY_SMART

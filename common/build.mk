@@ -21,14 +21,7 @@ common-$(HAS_TASK_ALS)+=als.o
 common-$(CONFIG_AP_HANG_DETECT)+=ap_hang_detect.o
 common-$(CONFIG_BACKLIGHT_LID)+=backlight_lid.o
 common-$(CONFIG_BASE32)+=base32.o
-# TODO(crosbug.com/p/23821): Why do these include battery_common but
-# the other batteries don't?  Perhaps should use CONFIG_CMD_BATTERY
-# instead, since all that's in battery.c is the battery console
-# command?
-common-$(CONFIG_BATTERY_BQ27541)+=battery.o
-common-$(CONFIG_BATTERY_BQ27621)+=battery.o
-common-$(CONFIG_BATTERY_MAX17055)+=battery.o
-common-$(CONFIG_BATTERY_SMART)+=battery.o
+common-$(CONFIG_BATTERY)+=battery.o
 common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
 common-$(CONFIG_BUTTON_COUNT)+=button.o

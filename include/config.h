@@ -211,12 +211,14 @@
  * Note that some boards have their own unique battery constants / functions.
  * In this case, those are provided in board/(boardname)/battery.c, and none of
  * these are defined.
+ * Defining one of these will automatically define CONFIG_BATTERY near the end
+ * of this file. If you add a new config here, you'll need to update that
+ * check.
  */
 #undef CONFIG_BATTERY_BQ20Z453
 #undef CONFIG_BATTERY_BQ27541
 #undef CONFIG_BATTERY_BQ27621
 #undef CONFIG_BATTERY_MAX17055
-#undef CONFIG_BATTERY_SAMUS
 
 /* Compile mock battery support; used by tests. */
 #undef CONFIG_BATTERY_MOCK
@@ -3048,6 +3050,16 @@
 #error CONFIG_ACCEL_FIFO must be defined to use hw orientation sensor support
 #endif
 #define CONFIG_ORIENTATION_SENSOR
+#endif
+
+/*****************************************************************************/
+/* Define CONFIG_BATTERY if board has a battery. */
+#if defined(CONFIG_BATTERY_BQ20Z453) || \
+	defined(CONFIG_BATTERY_BQ27541) || \
+	defined(CONFIG_BATTERY_BQ27621) || \
+	defined(CONFIG_BATTERY_MAX17055) || \
+	defined(CONFIG_BATTERY_SMART)
+#define CONFIG_BATTERY
 #endif
 
 /*****************************************************************************/
