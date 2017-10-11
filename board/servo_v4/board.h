@@ -70,6 +70,9 @@
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 
+/* Remove console commands / features for flash / RAM savings */
+#undef CONFIG_CONSOLE_CMDHELP
+
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
 #define CONFIG_I2C
@@ -85,6 +88,7 @@
  */
 #undef CONFIG_TASK_PROFILING
 
+#define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_DTS
 #define CONFIG_CMD_PD
@@ -151,6 +155,7 @@ enum usb_strings {
 
 /* ADC signal */
 enum adc_channel {
+	ADC_VBUS = -1,
 	ADC_CHG_CC1_PD = 0,
 	ADC_CHG_CC2_PD,
 	ADC_DUT_CC1_PD,

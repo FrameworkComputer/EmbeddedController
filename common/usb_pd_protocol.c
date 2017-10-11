@@ -1532,7 +1532,7 @@ static inline int get_snk_polarity(int cc1, int cc2)
 	return (cc2 > cc1);
 }
 
-#if defined(CONFIG_CHARGE_MANAGER) || defined(CONFIG_USB_PD_DTS)
+#if defined(CONFIG_CHARGE_MANAGER)
 /**
  * Returns type C current limit (mA) based upon cc_voltage (mV).
  */
@@ -1637,7 +1637,7 @@ void pd_task(void *u)
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	const int auto_toggle_supported = tcpm_auto_toggle_supported(port);
 #endif
-#if defined(CONFIG_CHARGE_MANAGER) || defined(CONFIG_USB_PD_DTS)
+#if defined(CONFIG_CHARGE_MANAGER)
 	int typec_curr = 0, typec_curr_change = 0;
 #endif /* CONFIG_CHARGE_MANAGER */
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
@@ -2442,7 +2442,7 @@ void pd_task(void *u)
 			pd[port].msg_id = 0;
 			/* initial data role for sink is UFP */
 			pd_set_data_role(port, PD_ROLE_UFP);
-#if defined(CONFIG_CHARGE_MANAGER) || defined(CONFIG_USB_PD_DTS)
+#if defined(CONFIG_CHARGE_MANAGER)
 			typec_curr = get_typec_current_limit(pd[port].polarity,
 							     cc1, cc2);
 			typec_set_input_current_limit(
@@ -2572,7 +2572,7 @@ void pd_task(void *u)
 						  get_time().val +
 						  PD_T_NO_RESPONSE,
 						  PD_STATE_SNK_DISCONNECTED);
-#if defined(CONFIG_CHARGE_MANAGER) || defined(CONFIG_USB_PD_DTS)
+#if defined(CONFIG_CHARGE_MANAGER)
 				/*
 				 * If we didn't come from disconnected, must
 				 * have come from some path that did not set
@@ -2585,7 +2585,7 @@ void pd_task(void *u)
 #endif
 			}
 
-#if defined(CONFIG_CHARGE_MANAGER) || defined(CONFIG_USB_PD_DTS)
+#if defined(CONFIG_CHARGE_MANAGER)
 			timeout = PD_T_SINK_ADJ - PD_T_DEBOUNCE;
 
 			/* Check if CC pull-up has changed */

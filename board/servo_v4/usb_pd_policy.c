@@ -55,7 +55,7 @@ struct vbus_prop {
 	int ma;
 };
 static struct vbus_prop vbus[CONFIG_USB_PD_PORT_COUNT];
-static struct vbus_prop vbus_pend;
+static int charge_port_is_active;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 static int disable_dts_mode;
 
@@ -124,17 +124,13 @@ static void board_manage_dut_port(void)
 		pd_update_contract(DUT);
 }
 
-static void board_manage_chg_port(void)
+static void update_ports(void)
 {
-	/* Update the voltage/current values for CHG port */
-	vbus[CHG].mv = vbus_pend.mv;
-	vbus[CHG].ma = vbus_pend.ma;
-
 	/*
 	 * CHG Vbus has changed states, update PDO that reflects CHG port
 	 * state
 	 */
-	if (!vbus[CHG].mv) {
+	if (!vbus[CHG].mv || !charge_port_is_active) {
 		/* CHG Vbus has dropped, so always source DUT Vbus from host */
 		gpio_set_level(GPIO_HOST_OR_CHG_CTL, 0);
 		chg_pdo_cnt = 0;
@@ -161,31 +157,28 @@ static void board_manage_chg_port(void)
 	/* Call DUT port manager to update Rp and possible PD contract */
 	board_manage_dut_port();
 }
-DECLARE_DEFERRED(board_manage_chg_port);
 
-static void board_update_chg_vbus(int max_ma, int vbus_mv)
+int board_set_active_charge_port(int charge_port)
 {
-	/*
-	 * Determine if vbus from CHG port has changed values and if the current
-	 * state of CHG vbus is on or off. If the change is on, then schedule a
-	 * deferred callback. If the change is off, then act immediately.
-	 */
-	if (VBUS_UNCHANGED(vbus[CHG].mv, vbus_pend.mv, vbus_mv) &&
-	    VBUS_UNCHANGED(vbus[CHG].ma, vbus_pend.ma, max_ma))
-		/* No change in CHG VBUS detected, nothing else to do. */
+	if (charge_port == DUT)
+		return -1;
+
+	charge_port_is_active = (charge_port == CHG);
+	update_ports();
+
+	return 0;
+}
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	if (port != CHG)
 		return;
 
-	/* CHG port voltage and current values are now pending */
-	vbus_pend.mv = vbus_mv;
-	vbus_pend.ma = max_ma;
-
-	if (vbus_mv)
-		/* Wait enough time for PD contract to be established */
-		hook_call_deferred(&board_manage_chg_port_data,
-				  PD_T_SINK_WAIT_CAP * 3);
-	else
-		/* Update CHG port status now since vbus is off */
-		hook_call_deferred(&board_manage_chg_port_data, 0);
+	/* Update the voltage/current values for CHG port */
+	vbus[CHG].mv = charge_mv;
+	vbus[CHG].ma = charge_ma;
+	update_ports();
 }
 
 int pd_tcpc_cc_nc(int port, int cc_volt, int cc_sel)
@@ -355,11 +348,12 @@ int board_select_rp_value(int port, int rp)
 int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	int pdo_cnt;
+
 	/*
 	 * If CHG is providing VBUS, then advertise what's available on the CHG
 	 * port, otherwise used the fixed value that matches host capabilities.
 	 */
-	if (vbus[CHG].mv) {
+	if (vbus[CHG].mv && charge_port_is_active) {
 		*src_pdo =  pd_src_chg_pdo;
 		pdo_cnt = chg_pdo_cnt;
 	} else {
@@ -432,20 +426,6 @@ void pd_power_supply_reset(int port)
 	/* Host vbus is always 5V/500mA */
 	vbus[DUT].mv = 0;
 	vbus[DUT].ma = 0;
-}
-
-void pd_set_input_current_limit(int port, uint32_t max_ma,
-				uint32_t supply_voltage)
-{
-	if (port == CHG)
-		board_update_chg_vbus(max_ma, supply_voltage);
-}
-
-void typec_set_input_current_limit(int port, uint32_t max_ma,
-				   uint32_t supply_voltage)
-{
-	if (port == CHG)
-		board_update_chg_vbus(max_ma, supply_voltage);
 }
 
 int pd_snk_is_vbus_provided(int port)
