@@ -189,7 +189,6 @@
 /* I2C ports */
 #define I2C_PORT_GYRO			NPCX_I2C_PORT1
 #define I2C_PORT_LID_ACCEL		NPCX_I2C_PORT2
-#define I2C_PORT_ALS			NPCX_I2C_PORT2
 #define I2C_PORT_BATTERY		NPCX_I2C_PORT3
 #define I2C_PORT_CHARGER		NPCX_I2C_PORT3
 /* Accelerometer and Gyroscope are the same device. */
@@ -203,7 +202,6 @@
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
 #define CONFIG_MAG_CALIBRATE
 #define CONFIG_ACCEL_KX022
-#define CONFIG_ALS_OPT3001
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
@@ -265,14 +263,6 @@ enum temp_sensor_id {
 };
 
 /*
- * For backward compatibility, to report ALS via ACPI,
- * Define the number of ALS sensors: motion_sensor copy the data to the ALS
- * memmap region.
- */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-
-/*
  * Motion sensors:
  * When reading through IO memory is set up for sensors (LPC is used),
  * the first 2 entries must be accelerometers, then gyroscope.
@@ -282,7 +272,6 @@ enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
-	LID_ALS,
 };
 
 #define CONFIG_HOSTCMD_SKUID
@@ -334,8 +323,7 @@ void board_set_tcpc_power_mode(int port, int mode);
 void board_tcpc_init(void);
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	((1 << LID_ACCEL) | (1 << LID_ALS))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 #endif /* !__ASSEMBLER__ */
 
