@@ -29,15 +29,10 @@
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			 PDO_FIXED_COMM_CAP)
 
-/* TODO(crosbug.com/p/61098): fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
-	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-const uint32_t pd_src_pdo_max[] = {
-		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
-};
-const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
 const uint32_t pd_snk_pdo[] = {
 	PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
