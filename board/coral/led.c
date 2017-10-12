@@ -23,6 +23,10 @@
 #define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
 #define LED_CHARGE_LEVEL_1_DEFAULT 100
 #define LED_CHARGE_LEVEL_1_ROBO 5
+#define LED_POWER_BLINK_ON_MSEC 3000
+#define LED_POWER_BLINK_OFF_MSEC 600
+#define LED_POWER_ON_TICKS (LED_POWER_BLINK_ON_MSEC / HOOK_TICK_INTERVAL_MS)
+#define LED_POWER_OFF_TICKS (LED_POWER_BLINK_OFF_MSEC / HOOK_TICK_INTERVAL_MS)
 
 const enum ec_led_id supported_led_ids[] = {
 			EC_LED_ID_BATTERY_LED};
@@ -128,6 +132,11 @@ static int led_set_color_battery(enum led_color color)
 		return EC_ERROR_UNKNOWN;
 	}
 	return EC_SUCCESS;
+}
+
+static void led_set_color_power(int level)
+{
+	gpio_set_level(GPIO_POWER_LED, level);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -241,12 +250,45 @@ static void led_update_battery(void)
 	ticks++;
 }
 
-/* Called by hook task every 1 sec */
+static void led_robo_update_power(void)
+{
+	int level;
+	static int ticks;
+
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		/* In S0 power LED is always on */
+		level = LED_ON_LVL;
+		ticks = 0;
+	} else if ((chipset_in_state(CHIPSET_STATE_SUSPEND) |
+		   chipset_in_state(CHIPSET_STATE_STANDBY)) &&
+		   led.state <= STATE_CHARGING_LVL_3) {
+		int period;
+
+		/*
+		 * If in suspend/standby and the device is charging, then the
+		 * power LED is off for 600 msec, on for 3 seconds.
+		 */
+		period = LED_POWER_ON_TICKS + LED_POWER_OFF_TICKS;
+		level = ticks % period < LED_POWER_OFF_TICKS ?
+			LED_OFF_LVL : LED_ON_LVL;
+		ticks++;
+	} else {
+		level = LED_OFF_LVL;
+		ticks = 0;
+	}
+
+	led_set_color_power(level);
+}
+
+/* Called by hook task every hook tick (200 msec) */
 static void led_update(void)
 {
 	/* Update battery LED */
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 		led_update_battery();
+		if (led.update_power != NULL)
+			(*led.update_power)();
+	}
 }
 DECLARE_HOOK(HOOK_TICK, led_update, HOOK_PRIO_DEFAULT);
 
@@ -258,7 +300,7 @@ static void led_init(void)
 	    (sku >= 144 && sku <= 145)) {
 		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_ROBO;
 		led.state_table = led_robo_state_table;
-		led.update_power = NULL;
+		led.update_power = led_robo_update_power;
 	} else {
 		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_DEFAULT;
 		led.state_table = led_default_state_table;
