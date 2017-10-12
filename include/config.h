@@ -410,8 +410,6 @@
  */
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON
 
-/* The case close debug (CCD) feature is provided by an external chip. */
-#undef CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 /* Support V1 CCD configuration */
 #undef CONFIG_CASE_CLOSED_DEBUG_V1
 /* Allow unsafe debugging functionality in V1 configuration */
@@ -2508,9 +2506,6 @@
  * using PD discharge registers.
  */
 #undef CONFIG_USB_PD_DISCHARGE_TCPC
-
-/* Define if this board is acting as a Debug Test System (DTS) */
-#undef CONFIG_USB_PD_DTS
 
 /* Define if this board can act as a dual-role PD port (source and sink) */
 #undef CONFIG_USB_PD_DUAL_ROLE

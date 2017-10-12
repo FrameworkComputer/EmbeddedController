@@ -639,7 +639,6 @@ enum pd_states {
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 	PD_STATE_SNK_DISCONNECTED,
 	PD_STATE_SNK_DISCONNECTED_DEBOUNCE,
-	PD_STATE_SNK_ACCESSORY,
 	PD_STATE_SNK_HARD_RESET_RECOVER,
 	PD_STATE_SNK_DISCOVERY,
 	PD_STATE_SNK_REQUESTED,
@@ -655,7 +654,6 @@ enum pd_states {
 
 	PD_STATE_SRC_DISCONNECTED,
 	PD_STATE_SRC_DISCONNECTED_DEBOUNCE,
-	PD_STATE_SRC_ACCESSORY,
 	PD_STATE_SRC_HARD_RESET_RECOVER,
 	PD_STATE_SRC_STARTUP,
 	PD_STATE_SRC_DISCOVERY,
@@ -711,6 +709,7 @@ enum pd_states {
 #define PD_FLAGS_TRY_SRC           (1 << 13)/* Try.SRC states are active */
 #define PD_FLAGS_PARTNER_USB_COMM  (1 << 14)/* port partner is USB comms */
 #define PD_FLAGS_UPDATE_SRC_CAPS   (1 << 15)/* send new source capabilities */
+#define PD_FLAGS_TS_DTS_PARTNER    (1 << 16)/* partner has rp/rp or rd/rd */
 /* Flags to clear on a disconnect */
 #define PD_FLAGS_RESET_ON_DISCONNECT_MASK (PD_FLAGS_PARTNER_DR_POWER | \
 					   PD_FLAGS_PARTNER_DR_DATA | \
@@ -725,8 +724,8 @@ enum pd_states {
 					   PD_FLAGS_VCONN_ON | \
 					   PD_FLAGS_TRY_SRC | \
 					   PD_FLAGS_PARTNER_USB_COMM | \
-					   PD_FLAGS_UPDATE_SRC_CAPS)
-
+					   PD_FLAGS_UPDATE_SRC_CAPS | \
+					   PD_FLAGS_TS_DTS_PARTNER)
 
 enum pd_cc_states {
 	PD_CC_NONE,
@@ -1612,6 +1611,14 @@ void pd_prepare_reset(void);
  * @param port USB-C port number
  */
 void pd_set_new_power_request(int port);
+
+/**
+ * Return true if partner port is a DTS or TS capable of entering debug
+ * mode (eg. is presenting Rp/Rp or Rd/Rd).
+ *
+ * @param port USB-C port number
+ */
+int pd_ts_dts_plugged(int port);
 
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING

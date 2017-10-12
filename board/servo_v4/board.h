@@ -90,7 +90,6 @@
 
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_DTS
 #define CONFIG_CMD_PD
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DYNAMIC_SRC_CAP
@@ -219,5 +218,11 @@ int pd_set_rp_rd(int port, int cc_pull, int rp_value);
  */
 int board_get_version(void);
 
+/**
+ * Enable or disable CCD
+ *
+ * @param enable Enable CCD if true, otherwise disable
+ */
+void ccd_enable(int enable);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

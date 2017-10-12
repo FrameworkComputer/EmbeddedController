@@ -409,6 +409,10 @@ int pd_set_power_supply_ready(int port)
 	vbus[DUT].mv = 5000;
 	vbus[DUT].ma = 500;
 
+	/* Enable CCD, if debuggable TS attached */
+	if (pd_ts_dts_plugged(DUT))
+		ccd_enable(1);
+
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -417,6 +421,8 @@ void pd_power_supply_reset(int port)
 	/* Port 0 can never provide vbus. */
 	if (port == CHG)
 		return;
+
+	ccd_enable(0);
 
 	/* Disable VBUS */
 	gpio_set_level(GPIO_DUT_CHG_EN, 0);

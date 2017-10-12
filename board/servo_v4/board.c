@@ -6,7 +6,6 @@
 
 #include "adc.h"
 #include "adc_chip.h"
-#include "case_closed_debug.h"
 #include "common.h"
 #include "console.h"
 #include "ec_version.h"
@@ -395,9 +394,9 @@ static void check_for_disconnect(void)
 	ccd_keepalive_enabled = 0;
 }
 
-void ccd_set_mode(enum ccd_mode new_mode)
+void ccd_enable(int enable)
 {
-	if (new_mode == CCD_MODE_ENABLED) {
+	if (enable) {
 		/*
 		 * Unfortunately the polarity detect is designed for real plug
 		 * events, and only accurately detects pre-connect idle. If
@@ -414,7 +413,7 @@ void ccd_set_mode(enum ccd_mode new_mode)
 			/* Allow some time following turning on of VBUS */
 			hook_call_deferred(&ccd_measure_sbu_data,
 					   PD_POWER_SUPPLY_TURN_ON_DELAY);
-	} else if (new_mode == CCD_MODE_DISABLED) {
+	} else {
 		/* We are not connected to anything */
 
 		/* Disable ccd_measure_sbu deferred call always */
