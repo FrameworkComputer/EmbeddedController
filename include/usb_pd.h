@@ -743,9 +743,15 @@ enum pd_cc_states {
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 enum pd_dual_role_states {
+	/* While disconnected, toggle between src and sink */
 	PD_DRP_TOGGLE_ON,
+	/* Stay in src until disconnect, then stay in sink forever */
 	PD_DRP_TOGGLE_OFF,
+	/* Stay in current power role, don't switch. No auto-toggle support */
+	PD_DRP_FREEZE,
+	/* Switch to sink */
 	PD_DRP_FORCE_SINK,
+	/* Switch to source */
 	PD_DRP_FORCE_SOURCE,
 };
 /**

@@ -2518,6 +2518,9 @@
 /* Define if this board can used TCPC-controlled DRP toggle */
 #undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 
+/* Initial DRP / toggle policy */
+#define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_TOGGLE_OFF
+
 /*
  * Define if VBUS source GPIOs (GPIO_USB_C*_5V_EN) are active-low (and named
  * (..._L) rather than default active-high.

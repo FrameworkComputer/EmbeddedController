@@ -4414,7 +4414,8 @@ int cmd_usb_mux(int argc, char *argv[])
 
 int cmd_usb_pd(int argc, char *argv[])
 {
-	const char *role_str[] = {"", "toggle", "toggle-off", "sink", "source"};
+	const char *role_str[] = {"", "toggle", "toggle-off", "sink", "source",
+				  "freeze"};
 	const char *mux_str[] = {"", "none", "usb", "dp", "dock", "auto"};
 	const char *swap_str[] = {"", "dr_swap", "pr_swap", "vconn_swap"};
 	struct ec_params_usb_pd_control p;

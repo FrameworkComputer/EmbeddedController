@@ -104,6 +104,10 @@
 /* Override PD_ROLE_DEFAULT in usb_pd.h */
 #define PD_ROLE_DEFAULT(port) ((port) ? PD_ROLE_SOURCE : PD_ROLE_SINK)
 
+/* Don't automatically change roles */
+#undef CONFIG_USB_PD_INITIAL_DRP_STATE
+#define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_FREEZE
+
 /* Variable-current Rp no connect and Ra attach macros */
 #define CC_NC(port, cc, sel)  (pd_tcpc_cc_nc(port, cc, sel))
 #define CC_RA(port, cc, sel)  (pd_tcpc_cc_ra(port, cc, sel))
