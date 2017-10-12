@@ -231,9 +231,7 @@ enum adc_channel {
 };
 
 enum pwm_channel {
-	PWM_CH_LED_GREEN = 0,
-	PWM_CH_LED_RED,
-	PWM_CH_KBLIGHT,
+	PWM_CH_KBLIGHT = 0,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
