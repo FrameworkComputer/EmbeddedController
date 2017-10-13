@@ -48,8 +48,11 @@ char *read_file(const char *filename, int *size)
 	fseek(f, 0, SEEK_END);
 	*size = ftell(f);
 	rewind(f);
-	if (*size > 0x100000) {
-		fprintf(stderr, "File seems unreasonably large\n");
+	if ((*size > 0x100000) || (*size < 0)) {
+		if (*size < 0)
+			perror("ftell failed");
+		else
+			fprintf(stderr, "File seems unreasonably large\n");
 		fclose(f);
 		return NULL;
 	}
