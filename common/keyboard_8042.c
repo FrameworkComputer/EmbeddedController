@@ -424,22 +424,11 @@ static void keystroke_enable(int enable)
 
 static void keyboard_enable(int enable)
 {
-	if (!keyboard_enabled && enable) {
+	if (!keyboard_enabled && enable)
 		CPRINTS("KB enable");
-	} else if (keyboard_enabled && !enable) {
+	else if (keyboard_enabled && !enable)
 		CPRINTS("KB disable");
-		reset_rate_and_delay();
-		typematic_len = 0;  /* stop typematic */
 
-		/* Disable keystroke as well in case the BIOS doesn't
-		 * disable keystroke where repeated strokes are queued
-		 * before kernel initializes keyboard. Hence the kernel
-		 * is unable to get stable CTR read (get key codes
-		 * instead).
-		 */
-		keystroke_enable(0);
-		keyboard_clear_buffer();
-	}
 	keyboard_enabled = enable;
 }
 
@@ -688,6 +677,9 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 	case I8042_DIS_KB:
 		update_ctl_ram(0, read_ctl_ram(0) | I8042_KBD_DIS);
+		reset_rate_and_delay();
+		typematic_len = 0;  /* stop typematic */
+		keyboard_clear_buffer();
 		break;
 
 	case I8042_ENA_KB:
