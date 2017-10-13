@@ -71,6 +71,7 @@ enum lpc_host_event_type {
 	LPC_HOST_EVENT_SMI = 0,
 	LPC_HOST_EVENT_SCI,
 	LPC_HOST_EVENT_WAKE,
+	LPC_HOST_EVENT_ALWAYS_REPORT,
 	LPC_HOST_EVENT_COUNT,
 };
 
@@ -140,5 +141,12 @@ void lpc_enable_acpi_interrupts(void);
  * update or when a new host event is set or cleared.
  */
 void lpc_update_host_event_status(void);
+
+/*
+ * This is a weak function defined in host_events_commands.c to override the
+ * LPC_HOST_EVENT_ALWAYS_REPORT mask. It can be implemented by boards if there
+ * is a need to use custom mask.
+ */
+uint32_t lpc_override_always_report_mask(void);
 
 #endif  /* __CROS_EC_LPC_H */

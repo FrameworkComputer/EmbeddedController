@@ -115,7 +115,7 @@ uint32_t get_feature_flags0(void)
 
 uint32_t get_feature_flags1(void)
 {
-	uint32_t result = 0;
+	uint32_t result = EC_FEATURE_MASK_1(EC_FEATURE_UNIFIED_WAKE_MASKS);
 #ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
 	result = board_override_feature_flags1(result);
 #endif
