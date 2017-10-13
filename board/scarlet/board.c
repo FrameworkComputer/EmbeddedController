@@ -250,6 +250,15 @@ int pd_snk_is_vbus_provided(int port)
 
 static void board_spi_enable(void)
 {
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
+
 	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
@@ -274,6 +283,11 @@ static void board_spi_disable(void)
 		msleep(10);
 
 	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+
+	/* Disable clocks to SPI2 module */
+	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
+
+	gpio_config_module(MODULE_SPI_MASTER, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 	     board_spi_disable,
@@ -291,6 +305,10 @@ static void board_init(void)
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACCEL_INT_L);
 
+	/* Set SPI2 pins to high speed */
+	/* pins D0/D1/D3/D4 */
+	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000003cf;
+
 	/* Sensor Init */
 	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
 		board_spi_enable();
@@ -301,10 +319,14 @@ void board_config_pre_init(void)
 {
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
 	/*
-	 * Remap USART1 DMA:
-	 * Ch4 : USART1_TX / Ch5 : USART1_RX
+	 * Remap USART1 and SPI2 DMA:
+	 *
+	 * Ch4: USART1_TX / Ch5: USART1_RX
+	 * Ch6: SPI2_RX / Ch7: SPI2_TX
 	 */
-	STM32_DMA_CSELR(STM32_DMAC_CH4) = (1 << 15) | (1 << 19);
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (1 << 15) | (1 << 19) |
+					  (1 << 20) | (1 << 21) |
+					  (1 << 24) | (1 << 25);
 }
 
 void board_hibernate(void)
