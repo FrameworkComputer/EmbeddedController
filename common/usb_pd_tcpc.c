@@ -362,9 +362,11 @@ static int send_validate_message(int port, uint16_t header,
 	static uint32_t payload[7];
 	uint8_t expected_msg_id = PD_HEADER_ID(header);
 	uint8_t cnt = PD_HEADER_CNT(header);
+	int retries = PD_HEADER_TYPE(header) == PD_DATA_SOURCE_CAP ?
+		      0 : PD_RETRY_COUNT;
 
 	/* retry 3 times if we are not getting a valid answer */
-	for (r = 0; r <= PD_RETRY_COUNT; r++) {
+	for (r = 0; r <= retries; r++) {
 		int bit_len, head;
 		/* write the encoded packet in the transmission buffer */
 		bit_len = prepare_message(port, header, cnt, data);
