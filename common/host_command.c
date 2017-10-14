@@ -715,6 +715,7 @@ static int host_command_get_features(struct host_cmd_handler_args *args)
 
 	memset(r, 0, sizeof(*r));
 	r->flags[0] = get_feature_flags0();
+	r->flags[1] = get_feature_flags1();
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_FEATURES,
