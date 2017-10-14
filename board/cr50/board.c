@@ -1504,3 +1504,17 @@ int chip_factory_mode(void)
 
 	return mode_set & 1;
 }
+
+#ifdef CR50_DEV
+static int command_rollback(int argc, char **argv)
+{
+	system_ensure_rollback();
+	ccprintf("Rebooting to alternate RW due to manual request\n");
+	cflush();
+	system_reset(0);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rollback, command_rollback,
+	"", "Force rollback to escape DEV image.");
+#endif
