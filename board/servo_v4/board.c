@@ -245,23 +245,31 @@ int usb_i2c_board_is_enabled(void) { return 1; }
  * Initialize board.
  */
 
+/*
+ * Support tca6416 I2C ioexpander.
+ */
+#define GPIOX_I2C_ADDR		0x40
+#define GPIOX_IN_PORT_A		0x0
+#define GPIOX_IN_PORT_B		0x1
+#define GPIOX_OUT_PORT_A	0x2
+#define GPIOX_OUT_PORT_B	0x3
+#define GPIOX_DIR_PORT_A	0x6
+#define GPIOX_DIR_PORT_B	0x7
+
+
 /* Write a GPIO output on the tca6416 I2C ioexpander. */
 static void write_ioexpander(int bank, int gpio, int val)
 {
 	int tmp;
 
 	/* Read output port register */
-	i2c_read8(1, 0x40, 0x2 + bank, &tmp);
+	i2c_read8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A + bank, &tmp);
 	if (val)
 		tmp |= (1 << gpio);
 	else
 		tmp &= ~(1 << gpio);
 	/* Write back modified output port register */
-	i2c_write8(1, 0x40, 0x2 + bank, tmp);
-
-	/* Set Configuration port to output/0 */
-	i2c_read8(1, 0x40, 0x6 + bank, &tmp);
-	i2c_write8(1, 0x40, 0x6 + bank, tmp & ~(1 << gpio));
+	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A + bank, tmp);
 }
 
 /* Read a single GPIO input on the tca6416 I2C ioexpander. */
@@ -270,11 +278,8 @@ static int read_ioexpander_bit(int bank, int bit)
 	int tmp;
 	int mask = 1 << bit;
 
-	/* Configure GPIO for this bit as an input */
-	i2c_read8(1, 0x40, 0x6 + bank, &tmp);
-	i2c_write8(1, 0x40, 0x6 + bank, tmp | mask);
 	/* Read input port register */
-	i2c_read8(1, 0x40, bank, &tmp);
+	i2c_read8(1, GPIOX_I2C_ADDR, GPIOX_IN_PORT_A + bank, &tmp);
 
 	return (tmp & mask) >> bit;
 }
@@ -303,11 +308,15 @@ static void init_usb3_port(void)
 static void init_ioexpander(void)
 {
 	/* Write all GPIO to output 0 */
-	i2c_write8(1, 0x40, 0x2, 0x0);
-	i2c_write8(1, 0x40, 0x3, 0x0);
-	/* Write all GPIO to output direction */
-	i2c_write8(1, 0x40, 0x6, 0x0);
-	i2c_write8(1, 0x40, 0x7, 0x0);
+	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_A, 0x0);
+	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_OUT_PORT_B, 0x0);
+
+	/*
+	 * Write GPIO direction: strap resistors to input,
+	 * all others to output.
+	 */
+	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_A, 0x0);
+	i2c_write8(1, GPIOX_I2C_ADDR, GPIOX_DIR_PORT_B, 0x18);
 }
 
 /* Define voltage thresholds for SBU USB detection */
