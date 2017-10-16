@@ -12,6 +12,7 @@
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
+#include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "ec_commands.h"
 #ifdef CONFIG_ESPI_VW_SIGNALS
@@ -101,6 +102,13 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc2",   I2C_PORT_TCPC2, 1000, GPIO_TCPC2_SCL,  GPIO_TCPC2_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* TODO(aaboagye): Add the other ports. */
+const struct sn5s330_config sn5s330_chips[] = {
+	{I2C_PORT_TCPC0, SN5S330_ADDR0},
+};
+const unsigned int sn5s330_cnt = ARRAY_SIZE(sn5s330_chips);
+
 
 /* GPIO to enable/disable the USB Type-A port. */
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
@@ -217,6 +225,7 @@ int board_set_active_charge_port(int port)
 	int is_real_port = (port >= 0 &&
 			    port < CONFIG_USB_PD_PORT_COUNT);
 	static int initialized;
+	int i;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
@@ -230,7 +239,7 @@ int board_set_active_charge_port(int port)
 	    port == CHARGE_PORT_NONE &&
 	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
 		CPRINTS("Bat critical, don't stop charging");
-		return -1;
+		return EC_ERROR_BUSY;
 	}
 
 	CPRINTS("New chg p%d", port);
@@ -257,6 +266,16 @@ int board_set_active_charge_port(int port)
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, port != 1);
 	gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, port != 2);
 	initialized = 1;
+
+	/*
+	 * Turn on the PP2 FET such that power actually flows and turn off the
+	 * non-charge ports' PP2 FETs.
+	 */
+	for (i = 0; i < sn5s330_cnt; i++) {
+		if (sn5s330_pp_fet_enable(i, SN5S330_PP2, port == i))
+			CPRINTF("%sabling C%d PP2 FET failed.",
+				port == i ? "En" : "Dis", port);
+	}
 
 	return EC_SUCCESS;
 }
