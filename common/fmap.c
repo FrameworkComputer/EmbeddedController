@@ -73,10 +73,16 @@ struct fmap_area_header {
 #else
 #define NUM_EC_FMAP_AREAS_ROLLBACK 0
 #endif
+#ifdef CONFIG_RW_B
+#define NUM_EC_FMAP_AREAS_RW_B     1
+#else
+#define NUM_EC_FMAP_AREAS_RW_B     0
+#endif
 
 #define NUM_EC_FMAP_AREAS (7 + \
 			NUM_EC_FMAP_AREAS_RWSIG + \
-			NUM_EC_FMAP_AREAS_ROLLBACK)
+			NUM_EC_FMAP_AREAS_ROLLBACK + \
+			NUM_EC_FMAP_AREAS_RW_B)
 
 const struct _ec_fmap {
 	struct fmap_header header;
@@ -214,6 +220,18 @@ const struct _ec_fmap {
 				FMAP_REGION_START + CONFIG_RW_SIG_ADDR -
 				CONFIG_PROGRAM_MEMORY_BASE,
 			.area_size = CONFIG_RW_SIG_SIZE,
+			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
+		},
+#endif
+#ifdef CONFIG_RW_B
+		/* RW Firmware */
+		{
+			 /* The range of RW firmware to be auto-updated. */
+			.area_name = "EC_RW_B",
+			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
+				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
+				CONFIG_RW_SIZE,
+			.area_size = CONFIG_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 #endif
