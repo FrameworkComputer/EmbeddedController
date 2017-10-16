@@ -1139,7 +1139,7 @@ static void setup_connection(struct transfer_descriptor *td)
  * if it is - of what maximum size.
  */
 static int ext_cmd_over_usb(struct usb_endpoint *uep, uint16_t subcommand,
-			    void *cmd_body, size_t body_size,
+			    const void *cmd_body, size_t body_size,
 			    void *resp, size_t *resp_size)
 {
 	struct update_frame_header *ufh;
@@ -1221,7 +1221,7 @@ static int transfer_image(struct transfer_descriptor *td,
 
 static uint32_t send_vendor_command(struct transfer_descriptor *td,
 				uint16_t subcommand,
-				void *command_body,
+				const void *command_body,
 				size_t command_body_size,
 				void *response,
 				size_t *response_size)
