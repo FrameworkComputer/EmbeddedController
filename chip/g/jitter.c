@@ -137,10 +137,10 @@ static void timer_sof_calibration_underrun_int(void)
 {
 	unsigned coarseTrimValue = GREG32(XO, CLK_TIMER_RC_COARSE_ATE_TRIM);
 
-	CPRINTS("%s: 0x%02x", __func__, coarseTrimValue);
-
-	if (coarseTrimValue > 0x00)
+	if (coarseTrimValue > 0x00) {
+		CPRINTS("%s: 0x%02x", __func__, coarseTrimValue);
 		GREG32(XO, CLK_TIMER_RC_COARSE_ATE_TRIM) = coarseTrimValue - 1;
+	}
 
 	GREG32(XO, DXO_INT_STATE) =
 		GC_XO_DXO_INT_STATE_SLOW_CALIB_UNDERRUN_MASK;
@@ -154,17 +154,12 @@ DECLARE_IRQ(GC_IRQNUM_XO0_SLOW_CALIB_UNDERRUN_INT,
 static void timer_sof_calibration_overflow_int(void)
 {
 	unsigned coarseTrimValue = GREG32(XO, CLK_TIMER_RC_COARSE_ATE_TRIM);
-	unsigned max;
 
-	CPRINTS("%s: 0x%02x", __func__, coarseTrimValue);
-
-	if (GREAD_FIELD(XO, CLK_TIMER_CALIB_TRIM_CTRL, MAX_TRIM_SEL))
-		max = 0x1f;
-	else
-		max = 0xff;
-
-	if (coarseTrimValue < max)
+	/* Coarse trim range is 0..0xff. */
+	if (coarseTrimValue < 0xff) {
+		CPRINTS("%s: 0x%02x", __func__, coarseTrimValue);
 		GREG32(XO, CLK_TIMER_RC_COARSE_ATE_TRIM) = coarseTrimValue + 1;
+	}
 
 	GREG32(XO, DXO_INT_STATE) =
 		GC_XO_DXO_INT_STATE_SLOW_CALIB_OVERFLOW_MASK;
