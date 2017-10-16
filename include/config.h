@@ -759,6 +759,7 @@
 #define CONFIG_CMD_POWERINDEBUG
 #undef  CONFIG_CMD_POWERLED
 #define CONFIG_CMD_POWER_AP
+#undef  CONFIG_CMD_PPC_DUMP
 #define CONFIG_CMD_REGULATOR
 #undef  CONFIG_CMD_RTC
 #undef  CONFIG_CMD_RTC_ALARM
@@ -2642,6 +2643,9 @@
 
 /* USB Product ID. */
 #undef CONFIG_USB_PID
+
+/* USB Type-C Power Path Controllers (PPC) */
+#undef CONFIG_USBC_PPC_SN5S330
 
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX

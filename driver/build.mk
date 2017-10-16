@@ -104,6 +104,9 @@ driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux_ps874x.o
 driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux_ps874x.o
 driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux_virtual.o
 
+# Type-C Power Path Controllers (PPC)
+driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
+
 # Firmware Update
 driver-$(CONFIG_SB_FIRMWARE_UPDATE)+=battery/sb_fw_update.o
 
