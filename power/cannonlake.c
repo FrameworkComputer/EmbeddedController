@@ -12,6 +12,7 @@
 #include "intel_x86.h"
 #include "power.h"
 #include "power_button.h"
+#include "task.h"
 #include "timer.h"
 
 /* Console output macros */
@@ -104,11 +105,19 @@ enum power_state power_handle_state(enum power_state state)
 		 * In S3, enable 5V rail.  Wireless rails are handled by common
 		 * x86 chipset code.
 		 */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+		power_5v_enable(task_get_current(), 1);
+#else
 		gpio_set_level(GPIO_EN_PP5000, 1);
+#endif
 		break;
 
 	case POWER_S3S5:
+#ifdef CONFIG_POWER_PP5000_CONTROL
+		power_5v_enable(task_get_current(), 0);
+#else
 		gpio_set_level(GPIO_EN_PP5000, 0);
+#endif
 		break;
 
 	default:

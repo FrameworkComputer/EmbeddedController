@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "gpio.h"
+#include "task_id.h"
 
 enum power_state {
 	/* Steady states */
@@ -208,5 +209,19 @@ void power_board_handle_host_sleep_event(enum host_sleep_event state);
 void power_reset_host_sleep_state(enum host_sleep_event sleep_event);
 #endif /* CONFIG_POWER_S0IX */
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
+
+/**
+ * Enable/Disable the PP5000 rail.
+ *
+ * This function will turn on the 5V rail immediately if requested.  However,
+ * the rail will not turn off until all tasks want it off.
+ *
+ * NOTE: Be careful when calling from deferred functions, as they will all be
+ * executed within the same task context! (The HOOKS task).
+ *
+ * @param tid: The caller's task ID.
+ * @param enable: 1 to turn on the rail, 0 to request the rail to be turned off.
+ */
+void power_5v_enable(task_id_t tid, int enable);
 
 #endif  /* __CROS_EC_POWER_H */
