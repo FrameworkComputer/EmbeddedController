@@ -55,7 +55,9 @@ struct vbus_prop {
 	int ma;
 };
 static struct vbus_prop vbus[CONFIG_USB_PD_PORT_COUNT];
-static int charge_port_is_active;
+static struct vbus_prop src_pdo_charge[2];
+static int active_charge_port = CHARGE_PORT_NONE;
+static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 static int disable_dts_mode;
 
@@ -84,6 +86,24 @@ static int pd_src_rd_threshold[TYPEC_RP_RESERVED] = {
 	PD_SRC_3_0_RD_THRESH_MV,
 };
 
+/*
+ * Set the USB PD max voltage to value appropriate for the board version.
+ * The red/blue versions of servo_v4 have an ESD between VBUS and CC1/CC2
+ * that has a breakdown voltage of 11V.
+ */
+#define MAX_MV_RED_BLUE 9000
+
+static uint32_t max_supported_voltage(void)
+{
+	return board_get_version() >= BOARD_VERSION_BLACK ?
+		PD_MAX_VOLTAGE_MV : MAX_MV_RED_BLUE;
+}
+
+static int charge_port_is_active(void)
+{
+	return active_charge_port == CHG && vbus[CHG].mv > 0;
+}
+
 static void board_manage_dut_port(void)
 {
 	int rp;
@@ -97,7 +117,7 @@ static void board_manage_dut_port(void)
 
 	/* Assume the default value of Rp */
 	rp = TYPEC_RP_USB;
-	if (vbus[CHG].mv == 5000) {
+	if (vbus[CHG].mv == PD_MIN_MV && charge_port_is_active()) {
 		/* Only advertise higher current via Rp if vbus == 5V */
 		if (vbus[CHG].ma >= 3000)
 			/* CHG port is connected and DUt can advertise 3A */
@@ -112,50 +132,65 @@ static void board_manage_dut_port(void)
 		tcpm_select_rp_value(DUT, rp);
 
 	/*
-	 * If CHG vbus voltage/current doesn't match the DUT port value, then
-	 * update the contract. If DUT port is not in the correct state, then
-	 * this call does nothing.
+	 * Update PD contract to reflect new available CHG
+	 * voltage/current values.
 	 */
-	if (vbus[CHG].mv != vbus[DUT].mv || vbus[CHG].ma != vbus[DUT].ma)
-		/*
-		 * Update PD contract to reflect new available CHG
-		 * voltage/current values.
-		 */
-		pd_update_contract(DUT);
+	pd_update_contract(DUT);
 }
 
 static void update_ports(void)
 {
+	int v5_ma, pdo_index;
+	uint32_t pdo, max_ma, max_mv;
+
 	/*
 	 * CHG Vbus has changed states, update PDO that reflects CHG port
 	 * state
 	 */
-	if (!vbus[CHG].mv || !charge_port_is_active) {
+	if (!charge_port_is_active()) {
 		/* CHG Vbus has dropped, so always source DUT Vbus from host */
-		gpio_set_level(GPIO_HOST_OR_CHG_CTL, 0);
 		chg_pdo_cnt = 0;
 	} else {
-		int v5_ma = vbus[CHG].mv > 5000 ? 500 : vbus[CHG].ma;
+		/* 5V PDO */
+		v5_ma = vbus[CHG].mv > PD_MIN_MV ? 500 : vbus[CHG].ma;
 
-		pd_src_chg_pdo[0] = PDO_FIXED_VOLT(5000) |
+		pd_src_chg_pdo[0] = PDO_FIXED_VOLT(PD_MIN_MV) |
 			PDO_FIXED_CURR(v5_ma) | DUT_PDO_FIXED_FLAGS |
 			PDO_FIXED_EXTERNAL;
+		src_pdo_charge[0].mv = PD_MIN_MV;
+		src_pdo_charge[0].ma = v5_ma;
 
-		chg_pdo_cnt = 1;
-		if (vbus[CHG].mv > 5000) {
-			/*
-			 * CHG vbus is > 5V so need an entry for vSafe5V and an
-			 * entry that reflects CHG VBUS
-			 */
-			pd_src_chg_pdo[1] = PDO_FIXED_VOLT(vbus[CHG].mv) |
-				PDO_FIXED_CURR(vbus[CHG].ma) |
-				DUT_PDO_FIXED_FLAGS | PDO_FIXED_EXTERNAL;
-			chg_pdo_cnt = 2;
+		/*
+		 * Check if a CHG partner non-vSafe5v PDO is available and
+		 * advertise it to the DUT.
+		 */
+		if (active_charge_supplier == CHARGE_SUPPLIER_PD) {
+			max_mv = max_supported_voltage();
+			pdo_index = pd_find_pdo_index(CHG, max_mv, &pdo);
+			if (pdo_index > 0) {
+				pd_extract_pdo_power(pdo, &max_ma, &max_mv);
+				pd_src_chg_pdo[1] =
+					PDO_FIXED_VOLT(max_mv) |
+					PDO_FIXED_CURR(max_ma) |
+					DUT_PDO_FIXED_FLAGS |
+					PDO_FIXED_EXTERNAL;
+				src_pdo_charge[1].mv = max_mv;
+				src_pdo_charge[1].ma = max_ma;
+				chg_pdo_cnt = 2;
+			}
+		} else {
+			chg_pdo_cnt = 1;
 		}
 	}
 
 	/* Call DUT port manager to update Rp and possible PD contract */
 	board_manage_dut_port();
+
+	/*
+	 * Supply VBUS from the CHG port if available. This may glitch VBUS
+	 * on the DUT during switchover.
+	 */
+	gpio_set_level(GPIO_HOST_OR_CHG_CTL, chg_pdo_cnt > 0);
 }
 
 int board_set_active_charge_port(int charge_port)
@@ -163,8 +198,12 @@ int board_set_active_charge_port(int charge_port)
 	if (charge_port == DUT)
 		return -1;
 
-	charge_port_is_active = (charge_port == CHG);
+	active_charge_port = charge_port;
 	update_ports();
+
+	if (!charge_port_is_active())
+		/* Don't negotiate > 5V, except in lockstep with DUT */
+		pd_set_external_voltage_limit(CHG, PD_MIN_MV);
 
 	return 0;
 }
@@ -175,9 +214,11 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	if (port != CHG)
 		return;
 
+	active_charge_supplier = supplier;
+
 	/* Update the voltage/current values for CHG port */
-	vbus[CHG].mv = charge_mv;
 	vbus[CHG].ma = charge_ma;
+	vbus[CHG].mv = charge_mv;
 	update_ports();
 }
 
@@ -353,7 +394,7 @@ int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 	 * If CHG is providing VBUS, then advertise what's available on the CHG
 	 * port, otherwise used the fixed value that matches host capabilities.
 	 */
-	if (vbus[CHG].mv && charge_port_is_active) {
+	if (charge_port_is_active()) {
 		*src_pdo =  pd_src_chg_pdo;
 		pdo_cnt = chg_pdo_cnt;
 	} else {
@@ -372,25 +413,34 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_transition_voltage(int idx)
 {
-	/*
-	 * Up to this point, VBUS will have been supplied by host. If
-	 * vbus[CHG].mv is set, then that means the CHG port is in a steady
-	 * state condition and its voltage/current values have been communicated
-	 * to the DUT in the SRC_CAP message. If CHG vbus > 5V then 2
-	 * chg_src_pdo entries will have been sent. Only allow pass through
-	 * charging from CHG vbus if the pdo idx requested by the DUT matches
-	 * the number of chg_src_pdo entries.
-	 *
-	 */
-	if (vbus[CHG].mv && idx == chg_pdo_cnt) {
-		gpio_set_level(GPIO_HOST_OR_CHG_CTL, 1);
+	timestamp_t deadline;
+	uint32_t mv = src_pdo_charge[idx - 1].mv;
+
+	/* Is this a transition to a new voltage? */
+	if (charge_port_is_active() && vbus[CHG].mv != mv) {
 		/*
-		 * VBUS being provided by CHG port now. Update DUT port's vbus
-		 * info with the CHG port's values.
+		 * Remove voltage limit on charge port, this should cause
+		 * the port to select the desired PDO.
 		 */
-		vbus[DUT].mv = vbus[CHG].mv;
-		vbus[DUT].ma = vbus[CHG].ma;
+		pd_set_external_voltage_limit(CHG, max_supported_voltage());
+
+		/* Wait for CHG transition */
+		deadline.val = get_time().val + PD_T_PS_TRANSITION;
+		CPRINTS("Waiting for CHG port transition");
+		while (vbus[CHG].mv != mv && get_time().val < deadline.val)
+			msleep(10);
+
+		if (vbus[CHG].mv != mv) {
+			CPRINTS("Missed CHG transition, resetting DUT");
+			pd_power_supply_reset(DUT);
+			return;
+		}
+
+		CPRINTS("CHG transitioned");
 	}
+
+	vbus[DUT].mv = vbus[CHG].mv;
+	vbus[DUT].ma = vbus[CHG].ma;
 }
 
 int pd_set_power_supply_ready(int port)
@@ -399,15 +449,21 @@ int pd_set_power_supply_ready(int port)
 	if (port == CHG)
 		return EC_ERROR_INVAL;
 
-	/* Only ever allow host vbus at this point */
-	gpio_set_level(GPIO_HOST_OR_CHG_CTL, 0);
-
 	/* Enable VBUS */
 	gpio_set_level(GPIO_DUT_CHG_EN, 1);
 
-	/* Host vbus is always 5V/500mA */
-	vbus[DUT].mv = 5000;
-	vbus[DUT].ma = 500;
+	if (charge_port_is_active()) {
+		if (vbus[CHG].mv != PD_MIN_MV)
+			CPRINTS("ERROR, CHG port voltage %d != PD_MIN_MV",
+				vbus[CHG].mv);
+
+		vbus[DUT].mv = vbus[CHG].mv;
+		vbus[DUT].ma = vbus[CHG].mv;
+	} else {
+		/* Host vbus is always 5V/500mA */
+		vbus[DUT].mv = PD_MIN_MV;
+		vbus[DUT].ma = 500;
+	}
 
 	/* Enable CCD, if debuggable TS attached */
 	if (pd_ts_dts_plugged(DUT))
@@ -426,12 +482,13 @@ void pd_power_supply_reset(int port)
 
 	/* Disable VBUS */
 	gpio_set_level(GPIO_DUT_CHG_EN, 0);
-	/* Set default VBUS source to Host */
-	gpio_set_level(GPIO_HOST_OR_CHG_CTL, 0);
 
 	/* Host vbus is always 5V/500mA */
 	vbus[DUT].mv = 0;
 	vbus[DUT].ma = 0;
+
+	/* DUT is lost, back to 5V limit on CHG */
+	pd_set_external_voltage_limit(CHG, PD_MIN_MV);
 }
 
 int pd_snk_is_vbus_provided(int port)

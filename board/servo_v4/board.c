@@ -483,11 +483,9 @@ static void board_init(void)
 	gpio_set_level(GPIO_SBU_MUX_EN, 1);
 
 	/*
-	 * Set the USB PD max voltage to value appropriate for the board
-	 * version. The red/blue versions of servo_v4 have an ESD between VBUS
-	 * and CC1/CC2 that has a breakdown voltage of 11V.
+	 * Voltage transition needs to occur in lockstep between the CHG and
+	 * DUT ports, so initially limit voltage to 5V.
 	 */
-	pd_set_max_voltage(board_get_version() >= BOARD_VERSION_BLACK ?
-			   PD_MAX_VOLTAGE_MV : 9000);
+	pd_set_max_voltage(PD_MIN_MV);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
