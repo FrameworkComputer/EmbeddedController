@@ -105,8 +105,9 @@ static void lpc_task_enable_irq(void)
 	task_enable_irq(NPCX_IRQ_WKINTA_2);
 	/* Virtual Wire: HOST_RST_WARN, SUS_WARN, SUS_PWRDN_ACK, SLP_A */
 	task_enable_irq(NPCX_IRQ_WKINTB_2);
-	/* Enable eSPI module interrupts */
+	/* Enable eSPI module interrupts and wake-up functionalities */
 	NPCX_ESPIIE |= (ESPIIE_GENERIC | ESPIIE_VW);
+	NPCX_ESPIWE |= (ESPIWE_GENERIC | ESPIWE_VW);
 #endif
 }
 
@@ -121,8 +122,9 @@ static void lpc_task_disable_irq(void)
 	task_disable_irq(NPCX_IRQ_WKINTA_2);
 	/* Virtual Wire: HOST_RST_WARN,SUS_WARN, SUS_PWRDN_ACK, SLP_A */
 	task_disable_irq(NPCX_IRQ_WKINTB_2);
-	/* Disable eSPI module interrupts */
+	/* Disable eSPI module interrupts and wake-up functionalities */
 	NPCX_ESPIIE &= ~(ESPIIE_GENERIC | ESPIIE_VW);
+	NPCX_ESPIWE &= ~(ESPIWE_GENERIC | ESPIWE_VW);
 #endif
 }
 /**
