@@ -128,7 +128,6 @@ static void s0ix_lpc_enable_wake_mask(void)
  * the chipset_resume hook is called.
  *
  * During S0ix exit, the wake mask for lid open and tablet mode is disabled.
- * All pending events are cleared
  */
 static void s0ix_lpc_disable_wake_mask(void)
 {
@@ -140,10 +139,6 @@ static void s0ix_lpc_disable_wake_mask(void)
 			~EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE);
 
 		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, mask);
-
-		/* clear host events */
-		while (lpc_get_next_host_event() != 0)
-			;
 	}
 }
 
@@ -468,8 +463,12 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 #ifdef CONFIG_POWER_S0IX
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		power_signal_enable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
-	else
+	else if (state == HOST_SLEEP_EVENT_S0IX_RESUME) {
+		/* clear host events */
+		while (lpc_get_next_host_event() != 0)
+			;
 		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
+	}
 #endif
 }
 
