@@ -96,10 +96,6 @@ enum vdm_states {
 /* Port dual-role state */
 enum pd_dual_role_states drp_state = CONFIG_USB_PD_INITIAL_DRP_STATE;
 
-/* Last received source cap */
-static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_COUNT][PDO_MAX_OBJECTS];
-static int pd_src_cap_cnt[CONFIG_USB_PD_PORT_COUNT];
-
 /* Enable variable for Try.SRC states */
 static uint8_t pd_try_src_enable;
 #endif
@@ -602,15 +598,6 @@ void pd_soft_reset(void)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-static void pd_store_src_cap(int port, int cnt, uint32_t *src_caps)
-{
-	int i;
-
-	pd_src_cap_cnt[port] = cnt;
-	for (i = 0; i < cnt; i++)
-		pd_src_caps[port][i] = *src_caps++;
-}
-
 /*
  * Request desired charge voltage from source.
  * Returns EC_SUCCESS on success or non-zero on failure.
@@ -640,8 +627,7 @@ static int pd_send_request_msg(int port, int always_send_request)
 	 * If this port is not actively charging or we are not allowed to
 	 * request the max voltage, then select vSafe5V
 	 */
-	res = pd_build_request(pd_src_cap_cnt[port], pd_src_caps[port],
-			       &rdo, &curr_limit, &supply_voltage,
+	res = pd_build_request(port, &rdo, &curr_limit, &supply_voltage,
 			       charging && max_request_allowed ?
 					PD_REQUEST_MAX : PD_REQUEST_VSAFE5V);
 
@@ -754,12 +740,11 @@ static void handle_data_request(int port, uint16_t head,
 			/* Port partner is now known to be PD capable */
 			pd[port].flags |= PD_FLAGS_PREVIOUS_PD_CONN;
 
-			pd_store_src_cap(port, cnt, payload);
 			/* src cap 0 should be fixed PDO */
 			pd_update_pdo_flags(port, payload[0]);
 
-			pd_process_source_cap(port, pd_src_cap_cnt[port],
-					      pd_src_caps[port]);
+			pd_process_source_cap(port, cnt, payload);
+
 			/* Source will resend source cap on failure */
 			pd_send_request_msg(port, 1);
 		}
