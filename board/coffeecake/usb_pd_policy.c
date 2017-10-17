@@ -93,6 +93,7 @@ int pd_set_power_supply_ready(int port)
 
 void pd_power_supply_reset(int port)
 {
+	board_set_usb_output_voltage(5000);
 	sy21612_set_sink_mode(0);
 	sy21612_set_vbus_volt(SY21612_VBUS_9V);
 	sy21612_set_adc_mode(1);
