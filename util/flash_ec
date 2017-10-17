@@ -602,6 +602,13 @@ function flash_flashrom() {
 			# Servo micro doesn't support this control.
 			dut_control spi1_buf_on_flex_en:on
 		fi
+
+		# b/65694390: Zoombini takes enough power that when flashing
+		# without power, the SPI Vref voltage dips for a little bit.
+		# Therefore, wait 1 second to let the voltage stabilize.
+		if [[ "${BOARD}" == "zoombini" ]]; then
+			sleep 1
+		fi
 	else
 		# Temp layout
 		L=/tmp/flash_spi_layout_$$
