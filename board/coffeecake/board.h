@@ -63,7 +63,7 @@
 #undef CONFIG_TASK_PROFILING
 
 /* USB configuration */
-#define CONFIG_USB_PID 0x5010
+#define CONFIG_USB_PID 0x502f
 #define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
 
 /* No Write-protect GPIO, force the write-protection */
