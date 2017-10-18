@@ -162,8 +162,13 @@ int usb_pdu_valid(struct upgrade_command *cmd_body,  size_t cmd_size)
 	return 1;
 }
 
-#ifndef CR50_DEV
+#ifdef CR50_DEV
+#ifndef CONFIG_IGNORE_G_UPDATE_CHECKS
+#define CONFIG_IGNORE_G_UPDATE_CHECKS
+#endif
+#endif
 
+#ifndef CONFIG_IGNORE_G_UPDATE_CHECKS
 /* Compare two versions, return True if the new version is older. */
 static int new_is_older(const struct SignedHeader *new,
 			const struct SignedHeader *old)
