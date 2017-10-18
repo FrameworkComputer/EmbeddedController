@@ -111,9 +111,9 @@ enum usb_strings {
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 1000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     15000
+#define PD_MAX_POWER_MW       22500
+#define PD_MAX_CURRENT_MA     2500
+#define PD_MAX_VOLTAGE_MV     9000
 
 /* Board interfaces */
 void board_set_usb_output_voltage(int mv);
