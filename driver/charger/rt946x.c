@@ -47,7 +47,7 @@ struct charger_init_setting {
 
 static const struct charger_init_setting rt946x_charger_init_setting = {
 	.eoc_current = 250,
-	.mivr = 4400,
+	.mivr = 4000,
 	.ircmp_vclamp = 32,
 	.ircmp_res = 25,
 	.boost_voltage = 5050,
