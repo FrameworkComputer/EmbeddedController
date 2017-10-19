@@ -139,12 +139,14 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 }
 #endif
 
-/*
- * Base detection and debouncing
- *
- * TODO(b/35585396): Fine-tune these values.
- */
+/* Base detection and debouncing */
 #define BASE_DETECT_DEBOUNCE_US (20 * MSEC)
+
+/*
+ * If the base status is unclear (i.e. not within expected ranges, read
+ * the ADC value again every 500ms.
+ */
+#define BASE_DETECT_RETRY_US (500 * MSEC)
 
 /*
  * rev0: Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
@@ -166,6 +168,9 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
  */
 #define BASE_DETECT_REVERSE_MIN_MV 450
 #define BASE_DETECT_REVERSE_MAX_MV 500
+
+/* Minimum ADC value to indicate base is disconnected for sure */
+#define BASE_DETECT_DISCONNECT_MIN_MV 1500
 
 /*
  * Base EC pulses detection pin for 500 us to signal out of band USB wake (that
@@ -259,13 +264,15 @@ static void base_detect_deferred(void)
 			CPRINTS("Sending event to AP");
 			host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 		}
-	} else {
-		/*
-		 * TODO(b/35585396): Figure out what to do with
-		 * other ADC values that do not clearly indicate base
-		 * presence or absence.
-		 */
+	} else if ((v >= BASE_DETECT_REVERSE_MIN_MV &&
+		    v <= BASE_DETECT_REVERSE_MAX_MV) ||
+		   v >= BASE_DETECT_DISCONNECT_MIN_MV) {
+		/* TODO(b/35585396): Handle reverse connection separately. */
 		base_detect_change(BASE_DISCONNECTED);
+	} else {
+		/* Unclear base status, schedule again in a while. */
+		hook_call_deferred(&base_detect_deferred_data,
+				   BASE_DETECT_RETRY_US);
 	}
 }
 
