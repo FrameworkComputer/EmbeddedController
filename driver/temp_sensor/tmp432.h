@@ -13,6 +13,7 @@
 #define TMP432_IDX_LOCAL	0
 #define TMP432_IDX_REMOTE1	1
 #define TMP432_IDX_REMOTE2	2
+#define TMP432_IDX_COUNT	3
 
 /* Chip-specific registers */
 #define TMP432_LOCAL			0x00

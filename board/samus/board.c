@@ -181,21 +181,21 @@ BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 struct ec_thermal_config thermal_params[] = {
 	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
 	{{C_TO_K(95), C_TO_K(101), C_TO_K(104)},
-	 C_TO_K(55), C_TO_K(90)},		/* PECI */
-	{{0, 0, 0}, 0, 0},			/* EC */
-	{{0, 0, 0}, C_TO_K(41), C_TO_K(55)},	/* Charger die */
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, C_TO_K(35), C_TO_K(49)},	/* CPU die */
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},			/* Left C die */
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},			/* Right C die */
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},			/* Right D die */
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, C_TO_K(43), C_TO_K(54)},	/* Left D die */
-	{{0, 0, 0}, 0, 0},
-	{{0, 0, 0}, 0, 0},			/* Battery */
+	 {0, 0, 0}, C_TO_K(55), C_TO_K(90)},		/* PECI */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},			/* EC */
+	{{0, 0, 0}, {0, 0, 0}, C_TO_K(41), C_TO_K(55)},	/* Charger die */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},
+	{{0, 0, 0}, {0, 0, 0}, C_TO_K(35), C_TO_K(49)},	/* CPU die */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},			/* Left C die */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},			/* Right C die */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},			/* Right D die */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},
+	{{0, 0, 0}, {0, 0, 0}, C_TO_K(43), C_TO_K(54)},	/* Left D die */
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},
+	{{0, 0, 0}, {0, 0, 0}, 0, 0},			/* Battery */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

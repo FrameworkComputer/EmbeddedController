@@ -80,12 +80,17 @@ static void thermal_control(void)
 		/* check all the limits */
 		for (j = 0; j < EC_TEMP_THRESH_COUNT; j++) {
 			int limit = thermal_params[i].temp_host[j];
+			int release = thermal_params[i].temp_host_release[j];
 			if (limit) {
 				num_valid_limits[j]++;
-				if (t > limit)
+				if (t > limit) {
 					count_over[j]++;
-				else if (t < limit)
+				} else if (release) {
+					if (t < release)
+						count_under[j]++;
+				} else if (t < limit) {
 					count_under[j]++;
+				}
 			}
 		}
 
@@ -129,7 +134,6 @@ static void thermal_control(void)
 		else if (count_under[j] == num_valid_limits[j])
 			cond_set_false(&cond_hot[j]);
 	}
-
 
 	/* What do we do about it? (note hard-coded logic). */
 

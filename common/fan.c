@@ -510,7 +510,11 @@ static void pwm_fan_resume(void)
 {
 	int fan;
 	for (fan = 0; fan < CONFIG_FANS; fan++) {
+#ifdef CONFIG_FAN_RPM_CUSTOM
+		set_thermal_control_enabled(fan, 1);
+#else
 		set_thermal_control_enabled(fan, 0);
+#endif
 		fan_set_rpm_target(fans[fan].ch, fans[fan].rpm_max);
 		set_enabled(fan, 1);
 	}
