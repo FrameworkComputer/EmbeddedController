@@ -33,12 +33,16 @@
 #define VBUS_UNCHANGED(curr, pend, new) (curr == new && pend == new)
 
 /*
- * Dynamic PDO that reflects capabilities present on the CHG port. Allow for two
- * entries so that can offer greater than 5V charging. The 1st entry will be
- * fixed 5V, but its current value may change based on the CHG port vbus
- * info. The 2nd entry is used for when offering vbus greater than 5V.
+ * Dynamic PDO that reflects capabilities present on the CHG port. Allow for
+ * multiple entries so that we can offer greater than 5V charging. The 1st
+ * entry will be fixed 5V, but its current value may change based on the CHG
+ * port vbus info. Subsequent entries are used for when offering vbus greater
+ * than 5V.
  */
-static uint32_t pd_src_chg_pdo[2];
+static const uint16_t pd_src_voltages_mv[] = {
+		5000, 9000, 12000, 15000, 20000,
+};
+static uint32_t pd_src_chg_pdo[ARRAY_SIZE(pd_src_voltages_mv)];
 static uint8_t chg_pdo_cnt;
 static const uint32_t pd_src_host_pdo[] = {
 		PDO_FIXED(5000, 500, DUT_PDO_FIXED_FLAGS),
@@ -140,7 +144,7 @@ static void board_manage_dut_port(void)
 
 static void update_ports(void)
 {
-	int v5_ma, pdo_index;
+	int pdo_index, src_index, snk_index, i;
 	uint32_t pdo, max_ma, max_mv;
 
 	/*
@@ -151,34 +155,46 @@ static void update_ports(void)
 		/* CHG Vbus has dropped, so always source DUT Vbus from host */
 		chg_pdo_cnt = 0;
 	} else {
-		/* 5V PDO */
-		v5_ma = vbus[CHG].mv > PD_MIN_MV ? 500 : vbus[CHG].ma;
-
-		pd_src_chg_pdo[0] = PDO_FIXED_VOLT(PD_MIN_MV) |
-			PDO_FIXED_CURR(v5_ma) | DUT_PDO_FIXED_FLAGS |
-			PDO_FIXED_EXTERNAL;
-		src_pdo_charge[0].mv = PD_MIN_MV;
-		src_pdo_charge[0].ma = v5_ma;
-
-		/*
-		 * Check if a CHG partner non-vSafe5v PDO is available and
-		 * advertise it to the DUT.
-		 */
+		/* Advertise the 'best' PDOs at various discrete voltages */
 		if (active_charge_supplier == CHARGE_SUPPLIER_PD) {
-			max_mv = max_supported_voltage();
-			pdo_index = pd_find_pdo_index(CHG, max_mv, &pdo);
-			if (pdo_index > 0) {
+			src_index = 0;
+			snk_index = -1;
+
+			for (i = 0; i < ARRAY_SIZE(pd_src_voltages_mv); ++i) {
+				/* Adhere to board voltage limits */
+				if (pd_src_voltages_mv[i] >
+				    max_supported_voltage())
+					break;
+				/* Find the 'best' PDO <= voltage */
+				pdo_index = pd_find_pdo_index(
+					CHG, pd_src_voltages_mv[i], &pdo);
+				/* Don't duplicate PDOs */
+				if (pdo_index == snk_index)
+					continue;
+				/* Skip battery / variable PDOs */
+				if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+					continue;
+
+				snk_index = pdo_index;
 				pd_extract_pdo_power(pdo, &max_ma, &max_mv);
-				pd_src_chg_pdo[1] =
+				pd_src_chg_pdo[src_index] =
 					PDO_FIXED_VOLT(max_mv) |
 					PDO_FIXED_CURR(max_ma) |
 					DUT_PDO_FIXED_FLAGS |
 					PDO_FIXED_EXTERNAL;
-				src_pdo_charge[1].mv = max_mv;
-				src_pdo_charge[1].ma = max_ma;
-				chg_pdo_cnt = 2;
+				src_pdo_charge[src_index].mv = max_mv;
+				src_pdo_charge[src_index++].ma = max_ma;
 			}
+			chg_pdo_cnt = src_index;
 		} else {
+			/* 5V PDO */
+			pd_src_chg_pdo[0] = PDO_FIXED_VOLT(PD_MIN_MV) |
+				PDO_FIXED_CURR(vbus[CHG].ma) |
+				DUT_PDO_FIXED_FLAGS |
+				PDO_FIXED_EXTERNAL;
+			src_pdo_charge[0].mv = PD_MIN_MV;
+			src_pdo_charge[0].ma = vbus[CHG].ma;
+
 			chg_pdo_cnt = 1;
 		}
 	}
@@ -419,15 +435,17 @@ void pd_transition_voltage(int idx)
 	/* Is this a transition to a new voltage? */
 	if (charge_port_is_active() && vbus[CHG].mv != mv) {
 		/*
-		 * Remove voltage limit on charge port, this should cause
+		 * Alter voltage limit on charge port, this should cause
 		 * the port to select the desired PDO.
 		 */
-		pd_set_external_voltage_limit(CHG, max_supported_voltage());
+		pd_set_external_voltage_limit(CHG, mv);
 
 		/* Wait for CHG transition */
 		deadline.val = get_time().val + PD_T_PS_TRANSITION;
 		CPRINTS("Waiting for CHG port transition");
-		while (vbus[CHG].mv != mv && get_time().val < deadline.val)
+		while (charge_port_is_active() &&
+		       vbus[CHG].mv != mv &&
+		       get_time().val < deadline.val)
 			msleep(10);
 
 		if (vbus[CHG].mv != mv) {
