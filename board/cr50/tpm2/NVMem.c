@@ -18,21 +18,22 @@
 #include "nvmem.h"
 
 /* Local state */
+static struct {
 #ifndef CONFIG_FLASH_NVMEM
-static unsigned char s_NV[NV_MEMORY_SIZE];
+	uint8_t s_NV[NV_MEMORY_SIZE];
 #endif
-static BOOL s_NvIsAvailable;
-static BOOL s_NV_unrecoverable;
-static BOOL s_NV_recoverable;
-
+	BOOL s_NvIsAvailable;
+	BOOL s_NV_unrecoverable;
+	BOOL s_NV_recoverable;
+} local_state  __attribute__((section("Tpm2_common.bss")));
 /*
  * This function is used by the simulator to set the error flags in the NV
  * subsystem to simulate an error in the NV loading process.
  */
 void _plat__NvErrors(BOOL recoverable, BOOL unrecoverable)
 {
-	s_NV_unrecoverable = unrecoverable;
-	s_NV_recoverable = recoverable;
+	local_state.s_NV_unrecoverable = unrecoverable;
+	local_state.s_NV_recoverable = recoverable;
 }
 
 /*
@@ -52,8 +53,8 @@ void _plat__NvErrors(BOOL recoverable, BOOL unrecoverable)
  */
 int _plat__NVEnable(void *platParameter)
 {
-	s_NV_unrecoverable = FALSE;
-	s_NV_recoverable = FALSE;
+	local_state.s_NV_unrecoverable = FALSE;
+	local_state.s_NV_recoverable = FALSE;
 
 #ifdef CONFIG_FLASH_NVMEM
 	/* TODO: Need to define what is recoverable and unrecoverable
@@ -63,12 +64,12 @@ int _plat__NVEnable(void *platParameter)
 	 * determines that NvMem is fully erased and configures  a valid
 	 * partition. Setting both variables TRUE if NvMem is not available
 	 */
-	s_NV_recoverable = nvmem_get_error_state() != 0;
-	s_NV_unrecoverable = s_NV_recoverable;
+	local_state.s_NV_recoverable = nvmem_get_error_state() != 0;
+	local_state.s_NV_unrecoverable = local_state.s_NV_recoverable;
 #endif
-	if (s_NV_unrecoverable)
+	if (local_state.s_NV_unrecoverable)
 		return -1;
-	return s_NV_recoverable;
+	return local_state.s_NV_recoverable;
 }
 
 void _plat__NVDisable(void)
@@ -96,10 +97,10 @@ int _plat__IsNvAvailable(void)
 	 * the on chip NvMem area must be in the correct state for NvMem
 	 * to be in 'NV is available' state.
 	 */
-	rv = !s_NvIsAvailable || nvmem_get_error_state();
+	rv = !local_state.s_NvIsAvailable || nvmem_get_error_state();
 	return rv;
 #else
-	if (!s_NvIsAvailable)
+	if (!local_state.s_NvIsAvailable)
 		return 1;
 
 	return 0;
@@ -118,7 +119,7 @@ void _plat__NvMemoryRead(unsigned int startOffset,
 #ifdef CONFIG_FLASH_NVMEM
 	nvmem_read(startOffset, size, data, NVMEM_TPM);
 #else
-	memcpy(data, &s_NV[startOffset], size);
+	memcpy(data, &local_state.s_NV[startOffset], size);
 #endif
 	return;
 }
@@ -135,7 +136,7 @@ _plat__NvIsDifferent(unsigned int startOffset,
 #ifdef CONFIG_FLASH_NVMEM
 	return (nvmem_is_different(startOffset, size, data, NVMEM_TPM) != 0);
 #else
-	return !DCRYPTO_equals(&s_NV[startOffset], data, size);
+	return !DCRYPTO_equals(&local_state.s_NV[startOffset], data, size);
 #endif
 }
 
@@ -153,7 +154,7 @@ void _plat__NvMemoryWrite(unsigned int startOffset,
 #ifdef CONFIG_FLASH_NVMEM
 	nvmem_write(startOffset, size, data, NVMEM_TPM);
 #else
-	memcpy(&s_NV[startOffset], data, size);
+	memcpy(&local_state.s_NV[startOffset], data, size);
 #endif
 }
 
@@ -171,7 +172,8 @@ void _plat__NvMemoryMove(unsigned int sourceOffset,
 	nvmem_move(sourceOffset, destOffset, size, NVMEM_TPM);
 #else
 	/* Move data in RAM */
-	memmove(&s_NV[destOffset], &s_NV[sourceOffset], size);
+	memmove(&local_state.s_NV[destOffset],
+		&local_state.s_NV[sourceOffset], size);
 #endif
 	return;
 }
@@ -199,7 +201,7 @@ int _plat__NvCommit(void)
  */
 void _plat__SetNvAvail(void)
 {
-	s_NvIsAvailable = TRUE;
+	local_state.s_NvIsAvailable = TRUE;
 	return;
 }
 
@@ -209,6 +211,6 @@ void _plat__SetNvAvail(void)
  */
 void _plat__ClearNvAvail(void)
 {
-	s_NvIsAvailable = FALSE;
+	local_state.s_NvIsAvailable = FALSE;
 	return;
 }
