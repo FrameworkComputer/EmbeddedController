@@ -8,10 +8,12 @@
 #include "common.h"
 #include "base32.h"
 #include "byteorder.h"
+#include "ccd_config.h"
 #include "chip/g/board_id.h"
 #include "console.h"
 #include "curve25519.h"
 #include "extension.h"
+#include "hooks.h"
 #include "rma_auth.h"
 #include "shared_mem.h"
 #include "system.h"
@@ -225,6 +227,78 @@ static enum vendor_cmd_rc get_challenge(uint8_t *buf, size_t *buf_size)
 	return VENDOR_RC_SUCCESS;
 }
 
+static uint8_t ccd_hook_active;
+
+static void ccd_config_changed(void)
+{
+	if (!ccd_hook_active)
+		return;
+
+	CPRINTF("%s: CCD change saved, rebooting\n", __func__);
+	cflush();
+	system_reset(SYSTEM_RESET_HARD);
+}
+DECLARE_HOOK(HOOK_CCD_CHANGE, ccd_config_changed, HOOK_PRIO_LAST);
+
+static void rma_reset_failed(void)
+{
+	ccd_hook_active = 0;
+	CPRINTF("%s: CCD RMA reset failed\n");
+	deassert_ec_rst();
+}
+DECLARE_DEFERRED(rma_reset_failed);
+
+/* The below time constants are way longer than should be required in practice:
+ *
+ * Time it takes to finish processing TPM command which provided valid RMA
+ * authentication code.
+ */
+#define TPM_PROCESSING_TIME (1 * SECOND)
+
+/*
+ * Time it takse TPM reset function to wipe out the NVMEM and reboot the
+ * device.
+ */
+#define TPM_RESET_TIME (10 * SECOND)
+
+/* Total time deep sleep should not be allowed. */
+#define DISABLE_SLEEP_TIME (TPM_PROCESSING_TIME + TPM_RESET_TIME)
+
+static void enter_rma_mode(void)
+{
+	int rv;
+
+	CPRINTF("%s: resetting TPM\n", __func__);
+
+	/*
+	 * Let's make sure the rest of the system is out of the way while TPM
+	 * is being wiped out.
+	 */
+	assert_ec_rst();
+
+	if (tpm_reset_request(1, 1) != EC_SUCCESS) {
+		CPRINTF("%s: TPM reset attempt failed\n", __func__);
+		deassert_ec_rst();
+		return;
+	}
+
+	tpm_reinstate_nvmem_commits();
+
+	CPRINTF("%s: TPM reset succeeded, RMA resetting CCD\n", __func__);
+
+	ccd_hook_active = 1;
+	rv = ccd_reset_config(CCD_RESET_RMA);
+	if (rv != EC_SUCCESS)
+		rma_reset_failed();
+
+	/*
+	 * Make sure we never end up with the EC held in reset, no matter what
+	 * prevents the proper RMA flow from succeeding.
+	 */
+	hook_call_deferred(&rma_reset_failed_data, TPM_RESET_TIME);
+}
+DECLARE_DEFERRED(enter_rma_mode);
+
 /*
  * Compare response sent by the operator with the pre-compiled auth code.
  * Return error code or success depending on the comparison results.
@@ -249,6 +323,8 @@ static enum vendor_cmd_rc process_response(uint8_t *buf,
 	if (rv == EC_SUCCESS) {
 		CPRINTF("%s: success!\n", __func__);
 		*response_size = 0;
+		delay_sleep_by(DISABLE_SLEEP_TIME);
+		hook_call_deferred(&enter_rma_mode_data, TPM_PROCESSING_TIME);
 		return VENDOR_RC_SUCCESS;
 	}
 

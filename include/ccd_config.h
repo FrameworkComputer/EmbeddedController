@@ -156,4 +156,24 @@ enum ccd_state ccd_get_state(void);
  */
 void ccd_disable(void);
 
+/* Flags for ccd_reset_config() */
+enum ccd_reset_config_flags {
+	/* Also reset test lab flag */
+	CCD_RESET_TEST_LAB = (1 << 0),
+
+	/* Only reset Always/UnlessLocked settings */
+	CCD_RESET_UNLOCKED_ONLY = (1 << 1),
+
+	/* Use RMA/factory defaults */
+	CCD_RESET_RMA = (1 << 2)
+};
+
+/**
+ * Reset CCD config to the desired state.
+ *
+ * @param flags		Reset flags (see enum ccd_reset_config_flags)
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int ccd_reset_config(unsigned int flags);
+
 #endif /* __CROS_EC_CCD_CONFIG_H */

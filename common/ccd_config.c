@@ -93,21 +93,6 @@ struct ccd_capability_info {
 	enum ccd_capability_state default_state;
 };
 
-/* Flags for ccd_reset_config() */
-enum ccd_reset_config_flags {
-	/* Also reset test lab flag */
-	CCD_RESET_TEST_LAB = (1 << 0),
-
-	/* Only reset Always/UnlessLocked settings */
-	CCD_RESET_UNLOCKED_ONLY = (1 << 1),
-
-	/* Use RMA/factory defaults */
-	CCD_RESET_RMA = (1 << 2)
-};
-
-/* Forward declarations of static functions */
-static int ccd_reset_config(unsigned flags);
-
 /* Nvmem variable name for CCD config */
 static const uint8_t k_ccd_config = NVMEM_VAR_CCD_CONFIG;
 
@@ -454,13 +439,7 @@ static int ccd_set_cap(enum ccd_capability cap, enum ccd_capability_state state)
 	return ccd_save_config();
 }
 
-/**
- * Reset CCD config to defaults.
- *
- * @param flags		Reset flags (see enum ccd_reset_config_flags)
- * @return EC_SUCCESS, or non-zero if error.
- */
-static int ccd_reset_config(unsigned flags)
+int ccd_reset_config(unsigned int flags)
 {
 	int old_lab = ccd_get_flag(CCD_FLAG_TEST_LAB);
 
