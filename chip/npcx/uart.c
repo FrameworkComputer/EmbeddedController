@@ -58,11 +58,7 @@ static const enum uart_pad pad = UART_DEFAULT_PAD;
 /* This routine switches the functionality from UART rx to GPIO */
 void npcx_uart2gpio(void)
 {
-#if NPCX_UART_MODULE2
-	UPDATE_BIT(NPCX_WKEDG(1, 6), 4, 1);
-#else
-	UPDATE_BIT(NPCX_WKEDG(1, 1), 0, 1);
-#endif
+	/* Switch both pads back to GPIO mode. */
 	CLEAR_BIT(NPCX_DEVALT(0x0C), NPCX_DEVALTC_UART_SL2);
 	CLEAR_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
 }
@@ -78,24 +74,21 @@ void npcx_uart2gpio(void)
  */
 void npcx_gpio2uart(void)
 {
-	if ((NPCX_UART_MODULE2 && (pad == UART_DEFAULT_PAD)) ||
-	    (!NPCX_UART_MODULE2 && (pad == UART_ALTERNATE_PAD))) {
-		SET_BIT(NPCX_DEVALT(0x0C), NPCX_DEVALTC_UART_SL2);
-		CLEAR_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
-	} else {
-		SET_BIT(NPCX_DEVALT(0x0A), NPCX_DEVALTA_UART_SL1);
-		CLEAR_BIT(NPCX_DEVALT(0x0C), NPCX_DEVALTC_UART_SL2);
-
-		if (pad == UART_DEFAULT_PAD) {
-#if defined(CHIP_FAMILY_NPCX7)
-			/*
-			 * UART module 1 belongs to KSO since wake-up
-			 * functionality in npcx7.
-			 */
-			CLEAR_BIT(NPCX_DEVALT(0x09), NPCX_DEVALT9_NO_KSO09_SL);
-#endif
-		}
+#ifdef CONFIG_UART_PAD_SWITCH
+	if (pad == UART_ALTERNATE_PAD) {
+		SET_BIT(NPCX_UART_ALT_DEVALT, NPCX_UART_ALT_DEVALT_SL);
+		CLEAR_BIT(NPCX_UART_DEVALT, NPCX_UART_DEVALT_SL);
+		return;
 	}
+#endif
+
+	SET_BIT(NPCX_UART_DEVALT, NPCX_UART_DEVALT_SL);
+	CLEAR_BIT(NPCX_UART_ALT_DEVALT, NPCX_UART_ALT_DEVALT_SL);
+
+#if !NPCX_UART_MODULE2 && defined(CHIP_FAMILY_NPCX7)
+	/* UART module 1 belongs to KSO since wake-up functionality in npcx7. */
+	CLEAR_BIT(NPCX_DEVALT(0x09), NPCX_DEVALT9_NO_KSO09_SL);
+#endif
 }
 
 int uart_init_done(void)
@@ -361,18 +354,16 @@ static void uart_config(void)
 	gpio_config_module(MODULE_UART, 1);
 
 	/* Enable MIWU IRQ of UART */
-#if NPCX_UART_MODULE2
-	task_enable_irq(NPCX_IRQ_WKINTG_1);
-#else
-	task_enable_irq(NPCX_IRQ_WKINTB_1);
-#endif
+	task_enable_irq(NPCX_UART_MIWU_IRQ);
+
+#ifdef CONFIG_LOW_POWER_IDLE
 	/*
 	 * Configure the UART wake-up event triggered from a falling edge
 	 * on CR_SIN pin.
 	 */
-#if defined(CHIP_FAMILY_NPCX7) && defined(CONFIG_LOW_POWER_IDLE)
-	SET_BIT(NPCX_WKEDG(MIWU_TABLE_1, MIWU_GROUP_8), 7);
+	SET_BIT(NPCX_WKEDG(1, NPCX_UART_WK_GROUP), NPCX_UART_WK_BIT);
 #endif
+
 	/*
 	 * If apb2's clock is not 15MHz, we need to find the other optimized
 	 * values of UPSR and UBAUD for baud rate 115200.
