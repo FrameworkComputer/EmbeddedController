@@ -196,6 +196,13 @@
 
 #define RT946X_MASK_JEITA_EN	(1 << RT946X_SHIFT_JEITA_EN)
 
+/* ========== CHGADC 0x11 ============ */
+#define RT946X_SHIFT_ADC_IN_SEL	4
+#define RT946X_SHIFT_ADC_START	0
+
+#define RT946X_MASK_ADC_IN_SEL	0xF0
+#define RT946X_MASK_ADC_START	(1 << RT946X_SHIFT_ADC_START)
+
 /* ========== CHGDPDM1 0x12 ============ */
 #define RT946X_MASK_USBCHGEN	(1 << 7)
 
@@ -212,8 +219,10 @@
 
 /* ========== CHGSTAT 0x42 ============ */
 #define RT946X_SHIFT_CHG_STAT	6
+#define RT946X_SHIFT_ADC_STAT	0
 
 #define RT946X_MASK_CHG_STAT	0xC0
+#define RT946X_MASK_ADC_STAT	(1 << RT946X_SHIFT_ADC_STAT)
 
 /* ========== CHGNTC 0x43 ============ */
 #define RT946X_SHIFT_BATNTC_FAULT	4
