@@ -136,9 +136,6 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
-/* Optional features for test commands */
-#define CONFIG_CMD_CHARGER_PSYS
-
 /* Timer selection */
 #define TIM_CLOCK32  2
 #define TIM_WATCHDOG 7
