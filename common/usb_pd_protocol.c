@@ -1531,7 +1531,7 @@ static typec_current_t get_typec_current_limit(int polarity, int cc1, int cc2)
 	else
 		charge = 0;
 
-	if (cc_alt != TYPEC_CC_OPEN)
+	if (cc_is_rp(cc_alt))
 		charge |= TYPEC_CURRENT_DTS_MASK;
 
 	return charge;
