@@ -208,19 +208,6 @@ int board_set_active_charge_port(int charge_port)
 {
 	enum bd9995x_charge_port bd9995x_port;
 	int bd9995x_port_select = 1;
-	static int initialized;
-
-	/*
-	 * Reject charge port disable if our battery is critical and we
-	 * have yet to initialize a charge port - continue to charge using
-	 * charger ROM / POR settings.
-	 */
-	if (!initialized &&
-	    charge_port == CHARGE_PORT_NONE &&
-	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-		CPRINTS("Bat critical, don't stop charging");
-		return -1;
-	}
 
 	switch (charge_port) {
 	case 0: case 1:
@@ -240,7 +227,6 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	CPRINTS("New chg p%d", charge_port);
-	initialized = 1;
 
 	return bd9995x_select_input_port(bd9995x_port, bd9995x_port_select);
 }
@@ -248,17 +234,6 @@ int board_set_active_charge_port(int charge_port)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	/*
-	 * Ignore lower charge ceiling on PD transition if our battery is
-	 * critical, as we may brownout.
-	 */
-	if (supplier == CHARGE_SUPPLIER_PD &&
-	    charge_ma < 1500 &&
-	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-		CPRINTS("Using max ilim %d", max_ma);
-		charge_ma = max_ma;
-	}
-
 	charge_set_input_current_limit(MAX(charge_ma,
 			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

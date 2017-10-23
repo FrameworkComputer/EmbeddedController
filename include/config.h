@@ -434,6 +434,12 @@
 /* Handle the external power limit host command in charge manager */
 #undef CONFIG_CHARGE_MANAGER_EXTERNAL_POWER_LIMIT
 
+/* Initially enter safe mode, with relaxed port / current selection rules */
+#define CONFIG_CHARGE_MANAGER_SAFE_MODE
+
+/* Leave safe mode when battery pct meets or exceeds this value */
+#define CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT 2
+
 /* The hardware has some input current ramping/back-off mechanism */
 #undef CONFIG_CHARGE_RAMP_HW
 

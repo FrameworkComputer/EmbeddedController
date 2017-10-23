@@ -748,7 +748,6 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
  */
 int board_set_active_charge_port(int charge_port)
 {
-	static uint8_t initialized;
 	/* charge port is a physical port */
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
@@ -759,13 +758,6 @@ int board_set_active_charge_port(int charge_port)
 	if (is_real_port && source) {
 		CPRINTF("Skip enable p%d", charge_port);
 		return EC_ERROR_INVAL;
-	}
-
-	if (!initialized &&
-	    charge_port == CHARGE_PORT_NONE &&
-	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-		CPRINTS("Bat critical, don't stop charging");
-		return -1;
 	}
 
 	CPRINTF("New chg p%d", charge_port);
@@ -783,7 +775,6 @@ int board_set_active_charge_port(int charge_port)
 					     GPIO_USB_C0_CHARGE_L, 0);
 	}
 
-	initialized = 1;
 	return EC_SUCCESS;
 }
 

@@ -585,17 +585,6 @@ int board_set_active_charge_port(int charge_port)
 {
 	enum bd9995x_charge_port bd9995x_port;
 	int bd9995x_port_select = 1;
-	static int initialized;
-
-	/*
-	 * Reject charge port disable if our battery is critical and we
-	 * have yet to initialize a charge port - continue to charge using
-	 * charger ROM / POR settings.
-	 */
-	if (!initialized &&
-	    charge_port == CHARGE_PORT_NONE &&
-	    charge_get_percent() < 2)
-		return -1;
 
 	switch (charge_port) {
 	case USB_PD_PORT_ANX74XX:
@@ -624,7 +613,6 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	CPRINTS("New chg p%d", charge_port);
-	initialized = 1;
 
 	return bd9995x_select_input_port(bd9995x_port, bd9995x_port_select);
 }

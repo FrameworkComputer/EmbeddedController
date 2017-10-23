@@ -86,6 +86,28 @@ static volatile uint32_t source_port_bitmap;
 BUILD_ASSERT(sizeof(source_port_bitmap)*8 >= CONFIG_USB_PD_PORT_COUNT);
 static uint8_t source_port_last_rp[CONFIG_USB_PD_PORT_COUNT];
 
+/*
+ * charge_manager initially operates in safe mode until asked to leave (through
+ * charge_manager_leave_safe_mode()). While in safe mode, the following
+ * behavior is altered:
+ *
+ * 1) All chargers are considered dedicated (and thus are valid charge source
+ *    candidates) for the purpose of port selection.
+ * 2) Charge ceilings are ignored. Most significantly, ILIM won't drop on PD
+ *    voltage transition. If current load is high during transition, some
+ *    chargers may brown-out.
+ * 3) CHARGE_PORT_NONE will not be selected (POR default charge port will
+ *    remain selected rather than CHARGE_PORT_NONE).
+ *
+ * After leaving safe mode, charge_manager reverts to its normal behavior and
+ * immediately selects charge port and current using standard rules.
+ */
+#ifdef CONFIG_CHARGE_MANAGER_SAFE_MODE
+static int left_safe_mode;
+#else
+static const int left_safe_mode = 1;
+#endif
+
 enum charge_manager_change_type {
 	CHANGE_CHARGE,
 	CHANGE_DUALROLE,
@@ -112,8 +134,9 @@ static int is_connected(int port)
 		return 1;
 	return pd_is_connected(port);
 }
-#endif
+#endif /* !TEST_BUILD */
 
+#ifndef CONFIG_CHARGE_MANAGER_DRP_CHARGING
 /**
  * In certain cases we need to override the default behavior of not charging
  * from non-dedicated chargers. If the system is in RO and locked, we have no
@@ -125,25 +148,13 @@ static int is_connected(int port)
  * @return	1 when we need to override the a non-dedicated charger
  *		to be a dedicated one, 0 otherwise.
  */
-#ifdef CONFIG_BATTERY
 static int charge_manager_spoof_dualrole_capability(void)
 {
-	int spoof_dualrole =  (system_get_image_copy() == SYSTEM_IMAGE_RO &&
-			       system_is_locked()) ||
-			       (battery_is_present() != BP_YES);
-#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-	spoof_dualrole |= (battery_get_disconnect_state() !=
-			   BATTERY_NOT_DISCONNECTED);
-#endif
-	return spoof_dualrole;
+	return (system_get_image_copy() == SYSTEM_IMAGE_RO &&
+		system_is_locked()) || !left_safe_mode;
+
 }
-#else /* CONFIG_BATTERY */
-/* No battery, so always charge from input port. */
-static inline int charge_manager_spoof_dualrole_capability(void)
-{
-	return 1;
-}
-#endif /* CONFIG_BATTERY */
+#endif /* !CONFIG_CHARGE_MANAGER_DRP_CHARGING */
 
 /**
  * Initialize available charge. Run before board init, so board init can
@@ -152,7 +163,6 @@ static inline int charge_manager_spoof_dualrole_capability(void)
 static void charge_manager_init(void)
 {
 	int i, j;
-	int spoof_capability = charge_manager_spoof_dualrole_capability();
 
 	for (i = 0; i < CHARGE_PORT_COUNT; ++i) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; ++j) {
@@ -163,7 +173,7 @@ static void charge_manager_init(void)
 		}
 		for (j = 0; j < CEIL_REQUESTOR_COUNT; ++j)
 			charge_ceil[i][j] = CHARGE_CEIL_NONE;
-		if (spoof_capability || !is_pd_port(i))
+		if (!is_pd_port(i))
 			dualrole_capability[i] = CAP_DEDICATED;
 		if (is_pd_port(i))
 			source_port_last_rp[i] = CONFIG_USB_PD_PULLUP;
@@ -492,7 +502,8 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				 * it is our override port.
 				 */
 				if (dualrole_capability[j] != CAP_DEDICATED &&
-				    override_port != j)
+				    override_port != j &&
+				    !charge_manager_spoof_dualrole_capability())
 					continue;
 #endif
 
@@ -550,6 +561,9 @@ static void charge_manager_refresh(void)
 	while (1) {
 		charge_manager_get_best_charge_port(&new_port, &new_supplier);
 
+		if (!left_safe_mode && new_port == CHARGE_PORT_NONE)
+			return;
+
 		/*
 		 * If the port or supplier changed, make an attempt to switch to
 		 * the port. We will re-set the active port on a supplier change
@@ -563,14 +577,8 @@ static void charge_manager_refresh(void)
 		     board_set_active_charge_port(new_port) == EC_SUCCESS)
 			break;
 
-		/*
-		 * Allow 'Dont charge' request to be rejected only if it
-		 * is our initial selection.
-		 */
-		if (new_port == CHARGE_PORT_NONE) {
-			ASSERT(!active_charge_port_initialized);
-			return;
-		}
+		/* 'Dont charge' request must be accepted. */
+		ASSERT(new_port != CHARGE_PORT_NONE);
 
 		/*
 		 * Zero the available charge on the rejected port so that
@@ -608,7 +616,7 @@ static void charge_manager_refresh(void)
 #endif /* CONFIG_CHARGE_RAMP_HW */
 		/* Enforce port charge ceiling. */
 		ceil = charge_manager_get_ceil(new_port);
-		if (ceil != CHARGE_CEIL_NONE)
+		if (left_safe_mode && ceil != CHARGE_CEIL_NONE)
 			new_charge_current = MIN(ceil,
 						 new_charge_current_uncapped);
 		else
@@ -884,15 +892,24 @@ void charge_manager_update_charge(int supplier,
 
 void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 {
-	if (charge_manager_spoof_dualrole_capability())
-		cap = CAP_DEDICATED;
-
 	/* Ignore when capability is unchanged */
 	if (cap != dualrole_capability[port]) {
 		dualrole_capability[port] = cap;
 		charge_manager_make_change(CHANGE_DUALROLE, 0, port, NULL);
 	}
 }
+
+#ifdef CONFIG_CHARGE_MANAGER_SAFE_MODE
+void charge_manager_leave_safe_mode(void)
+{
+	if (left_safe_mode)
+		return;
+
+	left_safe_mode = 1;
+	if (charge_manager_is_seeded())
+		hook_call_deferred(&charge_manager_refresh_data, 0);
+}
+#endif
 
 void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 {
@@ -909,7 +926,7 @@ void charge_manager_force_ceil(int port, int ceil)
 	 * Force our input current to ceil if we're exceeding it, without
 	 * waiting for our deferred task to run.
 	 */
-	if (port == charge_port && ceil < charge_current)
+	if (left_safe_mode && port == charge_port && ceil < charge_current)
 		board_set_charge_limit(port, CHARGE_SUPPLIER_PD, ceil,
 				       charge_current_uncapped, charge_voltage);
 
@@ -1178,11 +1195,12 @@ DECLARE_CONSOLE_COMMAND(chglim, command_external_power_limit,
 #ifdef CONFIG_CMD_CHARGE_SUPPLIER_INFO
 static int charge_supplier_info(int argc, char **argv)
 {
-	ccprintf("port=%d, type=%d, cur=%dmA, vtg=%dmV\n",
+	ccprintf("port=%d, type=%d, cur=%dmA, vtg=%dmV, lsm=%d\n",
 			charge_manager_get_active_charge_port(),
 			charge_supplier,
 			charge_current,
-			charge_voltage);
+			charge_voltage,
+			left_safe_mode);
 
 	return 0;
 }

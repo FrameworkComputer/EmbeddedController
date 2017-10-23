@@ -475,6 +475,8 @@ static void board_update_battery_soc(int soc)
 {
 	if (batt_soc != soc) {
 		batt_soc = soc;
+		if (batt_soc >= CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT)
+			charge_manager_leave_safe_mode();
 		board_update_charge_limit(desired_charge_rate_ma);
 		hook_notify(HOOK_BATTERY_SOC_CHANGE);
 	}

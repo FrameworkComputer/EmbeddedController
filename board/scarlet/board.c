@@ -166,21 +166,6 @@ uint16_t tcpc_get_alert_status(void)
 
 int board_set_active_charge_port(int charge_port)
 {
-	static int initialized;
-
-	/*
-	 * Reject charge port disable if our battery is critical and we
-	 * have yet to initialize a charge port - continue to charge using
-	 * charger ROM / POR settings.
-	 */
-	if (!initialized &&
-	    charge_port == CHARGE_PORT_NONE &&
-	    (charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON ||
-	    battery_get_disconnect_state() == BATTERY_DISCONNECTED)) {
-		CPRINTS("Bat critical, don't stop charging");
-		return -1;
-	}
-
 	CPRINTS("New chg p%d", charge_port);
 
 	switch (charge_port) {
@@ -198,25 +183,12 @@ int board_set_active_charge_port(int charge_port)
 		break;
 	}
 
-	initialized = 1;
 	return EC_SUCCESS;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	/*
-	 * Ignore lower charge ceiling on PD transition if our battery is
-	 * critical, as we may brownout.
-	 */
-	if (supplier == CHARGE_SUPPLIER_PD &&
-	    charge_ma < 1500 &&
-	    (charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON ||
-	    battery_get_disconnect_state() == BATTERY_DISCONNECTED)) {
-		CPRINTS("Using max ilim %d", max_ma);
-		charge_ma = max_ma;
-	}
-
 	charge_set_input_current_limit(MAX(charge_ma,
 			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

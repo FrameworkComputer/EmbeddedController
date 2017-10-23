@@ -256,23 +256,10 @@ int board_set_active_charge_port(int port)
 {
 	int is_real_port = (port >= 0 &&
 			    port < CONFIG_USB_PD_PORT_COUNT);
-	static int initialized;
 	int i;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
-
-	/*
-	 * Reject charge port none if our battery is critical and we
-	 * have yet to initialize a charge port - continue to charge using
-	 * charger ROM / POR settings.
-	 */
-	if (!initialized &&
-	    port == CHARGE_PORT_NONE &&
-	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-		CPRINTS("Bat critical, don't stop charging");
-		return EC_ERROR_BUSY;
-	}
 
 	CPRINTS("New chg p%d", port);
 
@@ -281,7 +268,6 @@ int board_set_active_charge_port(int port)
 		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
 		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
 		gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, 1);
-		initialized = 1;
 		return EC_SUCCESS;
 	}
 
@@ -297,7 +283,6 @@ int board_set_active_charge_port(int port)
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, port != 0);
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, port != 1);
 	gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, port != 2);
-	initialized = 1;
 
 	/*
 	 * Turn on the PP2 FET such that power actually flows and turn off the
@@ -315,18 +300,6 @@ int board_set_active_charge_port(int port)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	/*
-	 * Ignore lower charge ceiling on PD transition if our battery is
-	 * critical, as we may brownout.
-	 */
-	if (supplier == CHARGE_SUPPLIER_PD &&
-	    charge_ma < 1500 &&
-	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-		CPRINTS("Using max ilim %d", max_ma);
-		charge_ma = max_ma;
-	}
-
-
 	/*
 	 * To protect the charge inductor, at voltages above 18V we should
 	 * set the current limit to 2.7A.

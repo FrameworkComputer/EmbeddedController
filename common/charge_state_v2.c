@@ -875,6 +875,13 @@ wait_for_it:
 		}
 #endif
 
+#ifdef CONFIG_CHARGE_MANAGER
+		if (curr.batt.state_of_charge >=
+		    CONFIG_CHARGE_MANAGER_BAT_PCT_SAFE_MODE_EXIT &&
+		    !battery_seems_to_be_disconnected)
+			charge_manager_leave_safe_mode();
+#endif
+
 		/* Keep the AP informed */
 		if (need_static)
 			need_static = update_static_battery_info();
