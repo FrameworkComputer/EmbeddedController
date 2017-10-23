@@ -189,6 +189,14 @@ int board_wipe_tpm(void)
 {
 	int rc;
 
+	/*
+	 * Blindly zapping the TPM space while the AP is awake and poking at
+	 * it will bork the TPM task and the AP itself, so force the whole
+	 * system off by holding the EC in reset.
+	 */
+	CPRINTS("%s: force EC off", __func__);
+	assert_ec_rst();
+
 	/* Wipe the TPM's memory and reset the TPM task. */
 	rc = tpm_reset_request(1, 1);
 	if (rc != EC_SUCCESS) {
@@ -204,9 +212,10 @@ int board_wipe_tpm(void)
 			     SYSTEM_RESET_HARD);
 
 		/*
-		 * That should never return, but if it did, pass through the
-		 * error we got.
+		 * That should never return, but if it did, release EC reset
+		 * and pass through the error we got.
 		 */
+		deassert_ec_rst();
 		return rc;
 	}
 
@@ -214,6 +223,10 @@ int board_wipe_tpm(void)
 
 	/* Tell the TPM task to re-enable NvMem commits. */
 	tpm_reinstate_nvmem_commits();
+
+	/* Let the rest of the system boot. */
+	CPRINTS("%s: release EC reset", __func__);
+	deassert_ec_rst();
 
 	return EC_SUCCESS;
 }

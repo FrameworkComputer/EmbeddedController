@@ -815,20 +815,11 @@ static void tpm_reset_now(int wipe_first)
 	/* This is more related to TPM task activity than TPM transactions */
 	cprints(CC_TASK, "%s(%d)", __func__, wipe_first);
 
-	if (wipe_first) {
-		/*
-		 * Blindly zapping the TPM space while the AP is awake and
-		 * poking at it will bork the TPM task and the AP itself, so
-		 * force the whole system off by holding the EC in reset.
-		 */
-		cprints(CC_TASK, "%s: force EC off", __func__);
-		assert_ec_rst();
-
+	if (wipe_first)
 		/* Now wipe the TPM's nvmem */
 		wipe_result = nvmem_erase_user_data(NVMEM_TPM);
-	} else {
+	else
 		wipe_result = EC_SUCCESS;
-	}
 
 	/*
 	 * Clear the TPM library's zero-init data.  Note that the linker script
@@ -864,12 +855,6 @@ static void tpm_reset_now(int wipe_first)
 		/* Wake the waiting task, if any */
 		task_set_event(waiting_for_reset, TPM_EVENT_RESET, 0);
 		waiting_for_reset = TASK_ID_INVALID;
-	}
-
-	if (wipe_first) {
-		/* Allow AP & EC to boot again */
-		cprints(CC_TASK, "%s: allow EC to boot", __func__);
-		deassert_ec_rst();
 	}
 
 	cprints(CC_TASK, "%s: done", __func__);

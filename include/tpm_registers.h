@@ -37,8 +37,8 @@ void tpm_register_interface(interface_restart_func interface_restart);
  * returns EC_SUCCESS after the reset has completed, or an error code on
  * failure.
  *
- * If wipe_nvmem_first is true, the EC and AP will be forced off and TPM memory
- * will be erased before the TPM task is reset.
+ * If wipe_nvmem_first is true, the caller is expected to keep the rest of the
+ * system in reset until TPM wipeout is completed.
  */
 int tpm_reset_request(int wait_until_done, int wipe_nvmem_first);
 
