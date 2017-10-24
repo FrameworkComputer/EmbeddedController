@@ -28,12 +28,11 @@ GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signa
 GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(PP5000_PGOOD,    PIN(C, 0), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(EN_PP3300_TRACKPAD,   PIN(B, 7), GPIO_OUT_LOW)
-GPIO(EN_PP3300_WLAN,       PIN(C, 0), GPIO_OUT_LOW)
-GPIO(EN_PP3300_WWAN,       PIN(D, 7), GPIO_OUT_LOW)
 GPIO(EN_PP5000,            PIN(7, 3), GPIO_OUT_LOW)
 
 GPIO(ENTERING_RW,         PIN(E, 1), GPIO_OUT_LOW)
