@@ -132,8 +132,12 @@ void uart_tx_stop(void)	/* Disable TX interrupt */
 {
 	NPCX_UICTRL &= ~0x20;
 
-	/* Re-allow deep sleep */
-	enable_sleep(SLEEP_MASK_UART);
+	/*
+	 * Re-allow deep sleep when transmiting on the default pad (deep sleep
+	 * is always disabled when alternate pad is selected).
+	 */
+	if (pad == UART_DEFAULT_PAD)
+		enable_sleep(SLEEP_MASK_UART);
 }
 
 void uart_tx_flush(void)
@@ -161,7 +165,7 @@ int uart_rx_available(void)
 {
 	int rx_available = NPCX_UICTRL & 0x02;
 
-	if (rx_available) {
+	if (rx_available && pad == UART_DEFAULT_PAD) {
 #ifdef CONFIG_LOW_POWER_IDLE
 		/*
 		 * Activity seen on UART RX pin while UART was disabled for deep
@@ -172,8 +176,7 @@ int uart_rx_available(void)
 		clock_refresh_console_in_use();
 #endif
 #ifdef CONFIG_UART_PAD_SWITCH
-		if (pad == UART_DEFAULT_PAD)
-			last_default_pad_rx_time = get_time();
+		last_default_pad_rx_time = get_time();
 #endif
 	}
 	return rx_available; /* If RX FIFO is empty return '0'. */
@@ -259,6 +262,15 @@ static void uart_set_pad(enum uart_pad newpad)
 	uart_tx_flush();
 	uart_tx_stop();
 
+	/*
+	 * Allow deep sleep when default pad is selected (sleep is inhibited
+	 * during TX). Disallow deep sleep when alternate pad is selected.
+	 */
+	if (newpad == UART_DEFAULT_PAD)
+		enable_sleep(SLEEP_MASK_UART);
+	else
+		disable_sleep(SLEEP_MASK_UART);
+
 	pad = newpad;
 
 	/* Configure new pad. */
@@ -286,8 +298,13 @@ void uart_default_pad_rx_interrupt(enum gpio_signal signal)
 	 * transaction and switch back.
 	 */
 	gpio_disable_interrupt(GPIO_UART_MAIN_RX);
-	uart_set_pad(UART_DEFAULT_PAD);
+
+#ifdef CONFIG_LOW_POWER_IDLE
+	clock_refresh_console_in_use();
+#endif
 	last_default_pad_rx_time = get_time();
+
+	uart_set_pad(UART_DEFAULT_PAD);
 }
 
 int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
