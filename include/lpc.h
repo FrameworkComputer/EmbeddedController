@@ -149,4 +149,7 @@ void lpc_update_host_event_status(void);
  */
 uint32_t lpc_override_always_report_mask(void);
 
+/* Initialize LPC masks. */
+void lpc_init_mask(void);
+
 #endif  /* __CROS_EC_LPC_H */
