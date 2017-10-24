@@ -50,6 +50,9 @@
 #define STATUS_POR                  0x0002
 #define STATUS_BST                  0x0008
 
+/* Config reg (0x1d) flags */
+#define CONF_TSEL                   0x8000
+
 /* FStat reg (0x3d) flags */
 #define FSTAT_DNR                   0x0001
 
@@ -375,6 +378,16 @@ static void max17055_init(void)
 	}
 	if (max17055_write(REG_STATUS, (reg & ~STATUS_POR))) {
 		CPRINTS("%s: failed to write reg %02x", __func__, REG_STATUS);
+		return;
+	}
+
+	/* Set CONFIG.TSEL to measure temperature using external thermistor */
+	if (max17055_read(REG_CONFIG, &reg)) {
+		CPRINTS("%s: failed to read reg %02x", __func__, REG_CONFIG);
+		return;
+	}
+	if (max17055_write(REG_CONFIG, (reg | CONF_TSEL))) {
+		CPRINTS("%s: failed to write reg %02x", __func__, REG_CONFIG);
 		return;
 	}
 
