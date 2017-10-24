@@ -125,13 +125,6 @@ const struct spi_device_t spi_devices[] = {
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
-/* Wake-up pins for hibernate */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_POWER_BUTTON_L, GPIO_CHARGER_INT_L
-};
-const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
-/******************************************************************************/
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	[BUTTON_VOLUME_DOWN] = {"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN,
 				GPIO_VOLUME_DOWN_L, 30 * MSEC, 0},
@@ -327,23 +320,6 @@ void board_config_pre_init(void)
 	STM32_DMA_CSELR(STM32_DMAC_CH4) = (1 << 15) | (1 << 19) |
 					  (1 << 20) | (1 << 21) |
 					  (1 << 24) | (1 << 25);
-}
-
-void board_hibernate(void)
-{
-	int rv;
-
-	/*
-	 * Disable the power enables for the TCPCs since we're going into
-	 * hibernate.  The charger VBUS interrupt will wake us up and reset the
-	 * EC.  Upon init, we'll reinitialize the TCPCs to be at full power.
-	 */
-	CPRINTS("Set TCPCs to low power");
-	rv = tcpc_write(0, TCPC_REG_POWER, TCPC_REG_POWER_PWR_LOW);
-	if (rv)
-		CPRINTS("Error setting TCPC %d", 0);
-
-	cflush();
 }
 
 enum scarlet_board_version {
