@@ -12,6 +12,7 @@
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
+#include "driver/pmic_tps650x30.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "ec_commands.h"
@@ -212,6 +213,36 @@ static void board_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_pmic_init(void)
+{
+	/* No need to re-initialize the PMIC on sysjumps. */
+	if (system_jumped_to_this_image())
+		return;
+
+	/*
+	 * The PMIC_EN has been de-asserted since gpio_pre_init.  Make sure
+	 * it's de-asserted for at least 30ms.
+	 *
+	 * TODO(aaboagye): Characterize the discharge times for the power rails
+	 * to see if we can shorten this delay.
+	 */
+	while (get_time().val < 30 * MSEC)
+		;
+	gpio_set_level(GPIO_PMIC_EN, 1);
+
+	/*
+	 * PGMASK1 : Mask VCCIO and 5V from Power Good Tree
+	 * [7] : 1b MVCCIOPG is masked.
+	 * [2] : 1b MV5APG is masked.
+	 */
+	if (i2c_write8(I2C_PORT_PMIC, PMIC_I2C_ADDR, TPS650X30_REG_PGMASK1,
+		       (1 << 7) | (1 << 2)))
+		cprints(CC_SYSTEM, "PMIC init failed!");
+	else
+		cprints(CC_SYSTEM, "PMIC init'd");
+}
+DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_INIT_I2C+1);
 
 void board_reset_pd_mcu(void)
 {

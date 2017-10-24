@@ -38,6 +38,7 @@ GPIO(EN_PP5000,            PIN(7, 3), GPIO_OUT_LOW)
 GPIO(ENTERING_RW,         PIN(E, 1), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,        PIN(E, 3), GPIO_INPUT)  /* Case Closed Debug mode. */
 GPIO(KB_BL_EN,            PIN(8, 6), GPIO_OUT_LOW)
+GPIO(PMIC_EN,             PIN(D, 7), GPIO_ODR_LOW)
 
 GPIO(PCH_DSW_PWROK,    PIN(3, 7), GPIO_OUT_LOW)  /* EC_PCH_DSW_PWROK */
 GPIO(PCH_RSMRST_L,     PIN(C, 2), GPIO_OUT_LOW)  /* EC_PCH_RSMRST_L */
