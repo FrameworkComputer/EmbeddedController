@@ -483,6 +483,7 @@ void mutex_lock(struct mutex *mtx)
 	atomic_or(&mtx->waiters, id);
 
 	do {
+		old_val = 0;
 		__asm__ __volatile__(
 				"lock; cmpxchg %1, %2\n"
 				: "=a" (old_val)
