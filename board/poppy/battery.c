@@ -14,11 +14,14 @@
 #include "gpio.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA        0x0010
+#define SB_SHUTDOWN_DATA	0x0010
+#define SB_REVIVE_DATA		0x23a7
 
 #ifdef BOARD_SORAKA
 static const struct battery_info info = {
@@ -160,12 +163,58 @@ static int battery_check_disconnect(void)
 	return BATTERY_NOT_DISCONNECTED;
 }
 
+#ifdef BOARD_SORAKA
+/*
+ * In case of soraka, battery enters an "emergency shutdown" mode when hardware
+ * button combo is used to cutoff battery. In order to get out of this mode, EC
+ * needs to send SB_REVIVE_DATA.
+ *
+ * Do not send revive data if:
+ * 1. It has already been sent during this boot or
+ * 2. Battery was/is in a state other than "BATTERY_DISCONNECTED".
+ *
+ * Try upto ten times to send the revive data command and if it fails every
+ * single time, give up and continue booting on AC power.
+ */
+static void battery_revive(void)
+{
+#define MAX_REVIVE_TRIES 10
+	static int battery_revive_done;
+	int tries = MAX_REVIVE_TRIES;
+
+	if (battery_revive_done)
+		return;
+
+	battery_revive_done = 1;
+
+	while (tries--) {
+		if (battery_check_disconnect() != BATTERY_DISCONNECTED)
+			return;
+
+		CPRINTS("Battery is disconnected! Try#%d to revive",
+			MAX_REVIVE_TRIES - tries);
+
+		if (sb_write(SB_MANUFACTURER_ACCESS, SB_REVIVE_DATA) ==
+		    EC_SUCCESS)
+			return;
+	}
+
+	if (battery_check_disconnect() == BATTERY_DISCONNECTED)
+		CPRINTS("Battery is still disconnected! Giving up!");
+}
+#endif
+
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;
 
 	/* Get the physical hardware status */
 	batt_pres = battery_hw_present();
+
+#ifdef BOARD_SORAKA
+	if (batt_pres)
+		battery_revive();
+#endif
 
 	/*
 	 * Make sure battery status is implemented, I2C transactions are
