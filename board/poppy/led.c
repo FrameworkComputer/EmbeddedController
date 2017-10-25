@@ -102,12 +102,8 @@ static void board_led_set_battery(void)
 		set_active_port_color(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE:
-		/*
-		 * TODO(b/37970194): Do we really want to blink on low battery?
-		 * If yes, what's the threshold? In S0 only?
-		 */
 		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
-			if (charge_get_percent() < 12)
+			if (charge_get_percent() <= 10)
 				side_led_set_color(0,
 				   (battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
 			else
