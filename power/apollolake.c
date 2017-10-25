@@ -42,6 +42,10 @@ enum power_state chipset_force_g3(void)
 	return POWER_G3;
 }
 
+void chipset_handle_espi_reset_assert(void)
+{
+}
+
 void chipset_reset(int cold_reset)
 {
 	CPRINTS("%s(%d)", __func__, cold_reset);
