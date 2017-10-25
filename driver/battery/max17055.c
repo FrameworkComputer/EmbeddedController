@@ -78,6 +78,24 @@
 /* Percentage reg value to 1% */
 #define PERCENTAGE_CONV(REG)    (REG >> 8)
 
+/* Useful macros */
+#define MAX17055_READ_DEBUG(offset, ptr_reg) \
+	do { \
+		if (max17055_read(offset, ptr_reg)) { \
+			CPRINTS("%s: failed to read reg %02x", \
+				__func__, offset); \
+			return; \
+		} \
+	} while (0)
+#define MAX17055_WRITE_DEBUG(offset, reg) \
+	do { \
+		if (max17055_write(offset, reg)) { \
+			CPRINTS("%s: failed to read reg %02x", \
+				__func__, offset); \
+			return; \
+		} \
+	} while (0)
+
 static int fake_state_of_charge = -1;
 
 static int max17055_read(int offset, int *data)
@@ -341,20 +359,14 @@ static void max17055_init(void)
 		CPRINTS("Wrong max17055 id!");
 		return;
 	}
-	if (max17055_read(REG_STATUS, &reg)) {
-		CPRINTS("%s: failed to read reg %02x", __func__, REG_STATUS);
-		return;
-	}
+
+	MAX17055_READ_DEBUG(REG_STATUS, &reg);
 
 	/* Check for POR */
 	if (STATUS_POR & reg) {
 		/* Delay up to 800 ms until FSTAT.DNR bit == 0. */
 		while (--retries) {
-			if (max17055_read(REG_FSTAT, &reg)) {
-				CPRINTS("%s: failed to read reg %02x",
-					__func__, REG_FSTAT);
-				return;
-			}
+			MAX17055_READ_DEBUG(REG_FSTAT, &reg);
 			if (!(FSTAT_DNR & reg))
 				break;
 			msleep(10);
@@ -372,24 +384,12 @@ static void max17055_init(void)
 	}
 
 	/* Clear POR bit */
-	if (max17055_read(REG_STATUS, &reg)) {
-		CPRINTS("%s: failed to read reg %02x", __func__, REG_STATUS);
-		return;
-	}
-	if (max17055_write(REG_STATUS, (reg & ~STATUS_POR))) {
-		CPRINTS("%s: failed to write reg %02x", __func__, REG_STATUS);
-		return;
-	}
+	MAX17055_READ_DEBUG(REG_STATUS, &reg);
+	MAX17055_WRITE_DEBUG(REG_STATUS, (reg & ~STATUS_POR));
 
 	/* Set CONFIG.TSEL to measure temperature using external thermistor */
-	if (max17055_read(REG_CONFIG, &reg)) {
-		CPRINTS("%s: failed to read reg %02x", __func__, REG_CONFIG);
-		return;
-	}
-	if (max17055_write(REG_CONFIG, (reg | CONF_TSEL))) {
-		CPRINTS("%s: failed to write reg %02x", __func__, REG_CONFIG);
-		return;
-	}
+	MAX17055_READ_DEBUG(REG_CONFIG, &reg);
+	MAX17055_WRITE_DEBUG(REG_CONFIG, (reg | CONF_TSEL));
 
 	CPRINTS("max17055 configuration succeeded!");
 }
