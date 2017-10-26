@@ -5,18 +5,24 @@
  * Case Closed Debug configuration
  */
 
-#include "ccd_config.h"
 #include "common.h"
+#include "byteorder.h"
+#include "ccd_config.h"
 #include "console.h"
 #include "cryptoc/sha256.h"
+#include "cryptoc/util.h"
 #include "dcrypto.h"
+#include "extension.h"
 #include "hooks.h"
 #include "nvmem_vars.h"
 #include "physical_presence.h"
+#include "shared_mem.h"
 #include "system.h"
 #include "system_chip.h"
 #include "task.h"
 #include "timer.h"
+#include "tpm_registers.h"
+#include "tpm_vendor_cmds.h"
 #include "trng.h"
 
 #define CPRINTS(format, args...) cprints(CC_CCD, format, ## args)
@@ -61,6 +67,9 @@ enum ccd_capability_state {
 /* Size of password salt and digest in bytes */
 #define CCD_PASSWORD_SALT_SIZE 4
 #define CCD_PASSWORD_DIGEST_SIZE 16
+
+/* Way longer than practical. */
+#define CCD_MAX_PASSWORD_SIZE 40
 
 struct ccd_config {
 	/* Version (CCD_CONFIG_VERSION) */
@@ -757,25 +766,69 @@ static int command_ccd_set(int argc, char **argv)
 	return ccd_set_cap(cap, new);
 }
 
-static int command_ccd_password(int argc, char **argv)
+static int do_ccd_password(char *password)
 {
 	/* Only works if unlocked or opened */
 	if (ccd_state == CCD_STATE_LOCKED)
 		return EC_ERROR_ACCESS_DENIED;
-
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
 
 	/* If password was set from Opened, can't change if just Unlocked */
 	if (raw_has_password() && ccd_state == CCD_STATE_UNLOCKED &&
 	    !ccd_get_flag(CCD_FLAG_PASSWORD_SET_WHEN_UNLOCKED))
 		return EC_ERROR_ACCESS_DENIED;
 
-	if (!strcasecmp(argv[1], "clear"))
+	if (!strcasecmp(password, "clear"))
 		return ccd_reset_password();
 
 	/* Set new password */
-	return ccd_set_password(argv[1]);
+	return ccd_set_password(password);
+}
+
+static int command_ccd_password(int argc, char **argv)
+{
+	struct tpm_cmd_header *tpmh;
+	int rv;
+	size_t password_size;
+	size_t command_size;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	password_size = strlen(argv[1]);
+
+	if (password_size > CCD_MAX_PASSWORD_SIZE) {
+		ccprintf("Password can not be longer than %d characters\n",
+			 CCD_MAX_PASSWORD_SIZE);
+		return EC_ERROR_PARAM1;
+	}
+
+	command_size = sizeof(struct tpm_cmd_header) + password_size;
+	rv = shared_mem_acquire(command_size, (char **)&tpmh);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	/* Build the extension command to set/clear CCD password. */
+	tpmh->tag = htobe16(0x8001); /* TPM_ST_NO_SESSIONS */
+	tpmh->size = htobe32(command_size);
+	tpmh->command_code = htobe32(TPM_CC_VENDOR_BIT_MASK);
+	tpmh->subcommand_code = htobe16(VENDOR_CC_CCD_PASSWORD);
+	memcpy(tpmh + 1, argv[1], password_size);
+	tpm_alt_extension(tpmh, command_size);
+
+	/*
+	 * Return status in the command code field now, in case of error,
+	 * error code is the first byte after the header.
+	 */
+	if (tpmh->command_code) {
+		ccprintf("Password setting error %d\n",
+			 ((uint8_t *)(tpmh + 1))[0]);
+		rv = EC_ERROR_UNKNOWN;
+	} else {
+		rv = EC_SUCCESS;
+	}
+
+	shared_mem_release(tpmh);
+	return EC_SUCCESS;
 }
 
 static int command_ccd_open(int argc, char **argv)
@@ -1062,3 +1115,41 @@ static int command_ccd(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(ccd, command_ccd,
 			     "[help | ...]",
 			     "Configure case-closed debugging");
+
+/*
+ * Handle the VENDOR_CC_CCD_PASSWORD command.
+ *
+ * The payload of the command is a text string to use to set the password. The
+ * text string set to 'clear' has a special effect though, it clears the
+ * password instead of setting it.
+ */
+static enum vendor_cmd_rc ccd_password(enum vendor_cmd_cc code,
+				       void *buf,
+				       size_t input_size,
+				       size_t *response_size)
+{
+	int rv = EC_SUCCESS;
+	char password[CCD_MAX_PASSWORD_SIZE + 1];
+
+	if (!input_size || (input_size >= sizeof(password))) {
+		rv = EC_ERROR_PARAM1;
+	} else {
+		memcpy(password, buf, input_size);
+		password[input_size] = '\0';
+	}
+
+	if (rv == EC_SUCCESS) {
+		rv = do_ccd_password(password);
+		always_memset(password, 0, input_size);
+	}
+
+	if (rv != EC_SUCCESS) {
+		((uint8_t *)buf)[0] = (uint8_t)rv;
+		*response_size = 1;
+		return VENDOR_RC_INTERNAL_ERROR;
+	}
+
+	*response_size = 0;
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_CCD_PASSWORD, ccd_password);
