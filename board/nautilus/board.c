@@ -976,7 +976,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .default_range = 1 << 11, /* 16LSB / uT, fixed */
 	 .rot_standard_ref = &mag_standard_ref,
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
-	 .max_frequency = BMM150_MAG_MAX_FREQ,
+	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {

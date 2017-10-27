@@ -76,7 +76,16 @@
 
 /* Min and Max sampling frequency in mHz */
 #define BMM150_MAG_MIN_FREQ 781
-#define BMM150_MAG_MAX_FREQ 80000
+
+/*
+ * From Section 4.2.4, max frequency depends on the preset.
+ *
+ *  Fmax ~= 1 / (145us * nXY + 500us * nZ + 980us)
+ *
+ *  To be safe, declare only 75% of the value.
+ */
+#define BMM150_MAG_MAX_FREQ(_preset) (750000000 / \
+	(145 * BMM150_REP(_preset, XY) + 500 *  BMM150_REP(_preset, Z) + 980))
 
 struct bmm150_comp_registers {
 	/* Local copy of the compensation registers. */
