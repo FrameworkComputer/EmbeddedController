@@ -17,6 +17,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <termios.h>
 #include <unistd.h>
 
 
@@ -237,7 +238,7 @@ struct transfer_descriptor {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "bcd:fhiprstu";
+static char *short_opts = "bcd:fhiPprstu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	0,   NULL, 'b'},
@@ -246,6 +247,7 @@ static const struct option long_opts[] = {
 	{"device",	1,   NULL, 'd'},
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
+	{"password",	0,   NULL, 'P'},
 	{"post_reset",	0,   NULL, 'p'},
 	{"rma_auth",	2,   NULL, 'r'},
 	{"systemdev",	0,   NULL, 's'},
@@ -543,6 +545,9 @@ static void usage(int errs)
 	       "                           Get or set Info1 board ID fields\n"
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
+	       "  -P,--password <password>\n"
+	       "                           Set or clear CCD password. Use\n"
+	       "                           'clear' to clear it.\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
 	       "  -r,--rma_auth [auth_code]\n"
 	       "                           Request RMA challenge or process "
@@ -1531,6 +1536,70 @@ static int parse_bid(const char *opt,
 	return 1;
 }
 
+static void process_password(struct transfer_descriptor *td)
+{
+	size_t response_size;
+	uint8_t response;
+	uint32_t rv;
+	char *password = NULL;
+	char *password_copy = NULL;
+	size_t copy_len = 0;
+	size_t len = 0;
+	struct termios oldattr, newattr;
+
+	/* Suppress command line echo while password is being entered. */
+	tcgetattr(STDIN_FILENO, &oldattr);
+	newattr = oldattr;
+	newattr.c_lflag &= ~ECHO;
+	newattr.c_lflag |= (ICANON | ECHONL);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newattr);
+
+	/* With command line echo suppressed request password entry twice. */
+	printf("Enter password:");
+	len = getline(&password, &len, stdin);
+	printf("Re-enter password:");
+	getline(&password_copy, &copy_len, stdin);
+
+	/* Restore command line echo. */
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
+
+	/* Empty password will still have the newline. */
+	if ((len <= 1) || !password_copy) {
+		if (password)
+			free(password);
+		if (password_copy)
+			free(password_copy);
+		fprintf(stderr, "Error reading password\n");
+		exit(update_error);
+	}
+
+	/* Compare the two inputs. */
+	if (strcmp(password, password_copy)) {
+		fprintf(stderr, "Entered passwords don't match\n");
+		free(password);
+		free(password_copy);
+		exit(update_error);
+	}
+
+	/*
+	 * Ok, we have a password, let's drop the newline in the end and send
+	 * it down.
+	 */
+	password[--len] = '\0';
+	response_size = sizeof(response);
+	rv = send_vendor_command(td, VENDOR_CC_CCD_PASSWORD,
+				 password, len,
+				 &response, &response_size);
+	free(password);
+	free(password_copy);
+	if (!rv)
+		return;
+
+	fprintf(stderr, "Error setting password: rv %d, response %d\n",
+		rv, response_size ? 0 : response);
+	exit(update_error);
+}
+
 static void process_bid(struct transfer_descriptor *td,
 			enum board_id_action bid_action,
 			struct board_id *bid)
@@ -1664,6 +1733,7 @@ int main(int argc, char *argv[])
 	int corrupt_inactive_rw = 0;
 	struct board_id bid;
 	enum board_id_action bid_action;
+	int password = 0;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1728,6 +1798,9 @@ int main(int argc, char *argv[])
 		case 'p':
 			td.post_reset = 1;
 			break;
+		case 'P':
+			password = 1;
+			break;
 		case 'u':
 			td.upstart_mode = 1;
 			break;
@@ -1757,7 +1830,8 @@ int main(int argc, char *argv[])
 	if (!show_fw_ver &&
 	    !corrupt_inactive_rw &&
 	    (bid_action == bid_none) &&
-	    !rma) {
+	    !rma &&
+	    !password) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -1791,6 +1865,9 @@ int main(int argc, char *argv[])
 			exit(update_error);
 		}
 	}
+
+	if (password)
+		process_password(&td);
 
 	if (bid_action != bid_none)
 		process_bid(&td, bid_action, &bid);
