@@ -158,7 +158,8 @@ void system_reset(int flags)
 #endif  /* ^^^^^^^ CHIP_FAMILY_CR50 Not defined */
 
 	/* Wait for reboot; should never return  */
-	asm("wfi");
+	while (1)
+		asm("wfi");
 }
 
 const char *system_get_chip_vendor(void)

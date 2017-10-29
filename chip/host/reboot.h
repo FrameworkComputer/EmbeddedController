@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_REBOOT_H
 #define __CROS_EC_REBOOT_H
 
+__attribute__((noreturn))
 void emulator_reboot(void);
 
 #endif

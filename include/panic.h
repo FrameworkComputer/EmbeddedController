@@ -129,12 +129,12 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
  *
  * @param msg	Panic message
  */
-void panic(const char *msg);
+void panic(const char *msg) __attribute__((noreturn));
 
 /**
  * Display a default message and reset
  */
-void panic_reboot(void);
+void panic_reboot(void) __attribute__((noreturn));
 
 #ifdef CONFIG_SOFTWARE_PANIC
 /**

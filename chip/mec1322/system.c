@@ -98,6 +98,7 @@ void chip_save_reset_flags(int flags)
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = flags;
 }
 
+__attribute__((noreturn))
 void _system_reset(int flags, int wake_from_hibernate)
 {
 	uint32_t save_flags = 0;

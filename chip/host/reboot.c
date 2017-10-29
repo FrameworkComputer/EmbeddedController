@@ -12,9 +12,12 @@
 #include "reboot.h"
 #include "test_util.h"
 
+__attribute__((noreturn))
 void emulator_reboot(void)
 {
 	char *argv[] = {strdup(__get_prog_name()), NULL};
 	emulator_flush();
 	execv(__get_prog_name(), argv);
+	while (1)
+		;
 }

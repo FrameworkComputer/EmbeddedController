@@ -267,7 +267,7 @@ const char *system_get_build_info(void);
  *
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
-void system_reset(int flags);
+void system_reset(int flags) __attribute__((noreturn));
 
 /**
  * Set a scratchpad register to the specified value.
