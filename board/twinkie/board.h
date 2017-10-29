@@ -28,13 +28,6 @@
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO
 #define CONFIG_PD_USE_DAC_AS_REF
-/*
- * use #define CONFIG_USBC_SNIFFER_HEADER_V1
- * if you do not want twinkie to send out vbus info;
- * use #define CONFIG_USBC_SNIFFER_HEADER_V2
- * if you want twinkie to send out vbus info.
- */
-#define CONFIG_USBC_SNIFFER_HEADER_V1
 #define CONFIG_HW_CRC
 
 #ifndef HAS_TASK_PD_C0 /* PD sniffer mode */
