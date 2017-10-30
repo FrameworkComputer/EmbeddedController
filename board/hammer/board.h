@@ -202,6 +202,9 @@
 #endif
 
 #define CONFIG_SHA256
+#ifdef SECTION_IS_RO
+#define CONFIG_SHA256_UNROLLED
+#endif
 
 #define CONFIG_RWSIG_TYPE_RWSIG
 
