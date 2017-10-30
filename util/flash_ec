@@ -677,11 +677,13 @@ fi
 function flash_stm32() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
+	EC_UART="$(servo_ec_uart)"
 	if [ ! -x "$STM32MON" ]; then
 		die "no stm32mon util found."
 	fi
 
 	info "Using serial flasher : ${STM32MON}"
+	info "${MCU} UART pty : ${EC_UART}"
 	claim_pty ${EC_UART}
 
 	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
@@ -826,9 +828,6 @@ IMG="$(ec_image)"
 info "Using ${MCU} image : ${IMG}"
 
 if ! on_raiden && [ "${NEED_SERVO}" != "no" ] ; then
-	EC_UART="$(servo_ec_uart)"
-	info "${MCU} UART pty : ${EC_UART}"
-
 	save="$(servo_save)"
 fi
 
