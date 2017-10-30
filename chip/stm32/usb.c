@@ -456,8 +456,12 @@ void usb_wake(void)
 	 * 2 and 3 ms.
 	 */
 	esof_count = 3;
+
+	/* STM32_USB_CNTR can also be updated from interrupt context. */
+	interrupt_disable();
 	STM32_USB_CNTR |= STM32_USB_CNTR_RESUME |
-			  STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM;
+		STM32_USB_CNTR_ESOFM | STM32_USB_CNTR_SOFM;
+	interrupt_enable();
 
 	/* Try side-band wake as well. */
 	board_usb_wake();
