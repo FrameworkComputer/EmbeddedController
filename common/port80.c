@@ -16,10 +16,7 @@
 
 #define CPRINTF(format, args...) cprintf(CC_PORT80, format, ## args)
 
-#define HISTORY_LEN 128
-#define PORT80_POLL_PERIOD MSEC
-
-static uint16_t __bss_slow history[HISTORY_LEN];
+static uint16_t __bss_slow history[CONFIG_PORT80_HISTORY_LEN];
 static int __bss_slow writes;    /* Number of port 80 writes so far */
 static int last_boot; /* Last code from previous boot */
 static int __bss_slow scroll;
