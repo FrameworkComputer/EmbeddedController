@@ -2836,6 +2836,9 @@
 /******************************************************************************/
 /* USB port switch */
 
+/* Support the ITE IT5205 Type-C USB alternate mode mux. */
+#undef CONFIG_USB_MUX_IT5205
+
 /* Support the Pericom PI3USB30532 USB3.0/DP1.2 Matrix Switch */
 #undef CONFIG_USB_MUX_PI3USB30532
 

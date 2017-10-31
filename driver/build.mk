@@ -99,6 +99,7 @@ driver-$(CONFIG_USB_PD_TCPM_PS8805)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USBC_SS_MUX)+=usb_mux.o
 
 # USB muxes
+driver-$(CONFIG_USB_MUX_IT5205)+=usb_mux_it5205.o
 driver-$(CONFIG_USB_MUX_PI3USB30532)+=usb_mux_pi3usb30532.o
 driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux_ps874x.o
 driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux_ps874x.o
