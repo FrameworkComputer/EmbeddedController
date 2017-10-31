@@ -107,6 +107,17 @@ static const struct led_descriptor led_robo_state_table[][LED_NUM_PHASES] = {
 	{ {LED_COLOR_2, 2 * LED_ONE_SEC}, {LED_COLOR_1, 2 * LED_ONE_SEC} },
 };
 
+static const struct led_descriptor led_nasher_state_table[][LED_NUM_PHASES] = {
+	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_COLOR_1, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_2, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
+	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_1, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
+	{ {LED_COLOR_1, 2 * LED_ONE_SEC}, {LED_COLOR_2, 2 * LED_ONE_SEC} },
+};
+
 static struct led_info led;
 
 static int led_set_color_battery(enum led_color color)
@@ -301,6 +312,10 @@ static void led_init(void)
 		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_ROBO;
 		led.state_table = led_robo_state_table;
 		led.update_power = led_robo_update_power;
+	} else if (sku >= 160 && sku <= 166) {
+		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_DEFAULT;
+		led.state_table = led_nasher_state_table;
+		led.update_power = NULL;
 	} else {
 		led.charge_lvl_1 = LED_CHARGE_LEVEL_1_DEFAULT;
 		led.state_table = led_default_state_table;
