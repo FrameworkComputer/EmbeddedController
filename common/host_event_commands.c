@@ -156,6 +156,13 @@ void lpc_init_mask(void)
 			lpc_override_always_report_mask();
 }
 
+void lpc_s3_resume_clear_masks(void)
+{
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
+}
+
 #endif
 
 /*

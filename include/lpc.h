@@ -152,4 +152,10 @@ uint32_t lpc_override_always_report_mask(void);
 /* Initialize LPC masks. */
 void lpc_init_mask(void);
 
+/*
+ * Clear LPC masks for SMI, SCI and wake upon resume from S3. This is done to
+ * mask these events until host unmasks them itself.
+ */
+void lpc_s3_resume_clear_masks(void);
+
 #endif  /* __CROS_EC_LPC_H */

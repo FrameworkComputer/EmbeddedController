@@ -720,16 +720,6 @@ void lpc_disable_acpi_interrupts(void)
 
 static void lpc_resume(void)
 {
-#ifdef CONFIG_POWER_S0IX
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_ON))
-#endif
-	{
-		/* Mask all host events until the host unmasks them itself.  */
-		lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, 0);
-		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
-		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, 0);
-	}
-
 	/* Store port 80 event so we know where resume happened */
 	port_80_write(PORT_80_EVENT_RESUME);
 }

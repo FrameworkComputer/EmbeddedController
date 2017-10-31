@@ -344,6 +344,8 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		/* Enable wireless */
 		wireless_set_state(WIRELESS_ON);
 
+		lpc_s3_resume_clear_masks();
+
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
