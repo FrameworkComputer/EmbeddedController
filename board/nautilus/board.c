@@ -807,36 +807,6 @@ void board_hibernate(void)
 		;
 }
 
-int board_get_version(void)
-{
-	static int ver = -1;
-	uint8_t id4;
-
-	if (ver != -1)
-		return ver;
-
-	ver = 0;
-
-	/* First 3 strappings are binary. */
-	if (gpio_get_level(GPIO_BOARD_VERSION1))
-		ver |= 0x01;
-	if (gpio_get_level(GPIO_BOARD_VERSION2))
-		ver |= 0x02;
-	if (gpio_get_level(GPIO_BOARD_VERSION3))
-		ver |= 0x04;
-
-	/*
-	 * 4th bit is using tristate strapping, ternary encoding:
-	 * Hi-Z (id4=2) => 0, (id4=0) => 1, (id4=1) => 2
-	 */
-	id4 = gpio_get_ternary(GPIO_BOARD_VERSION4);
-	ver |= ((id4 + 1) % 3) * 0x08;
-
-	CPRINTS("Board ID = %d", ver);
-
-	return ver;
-}
-
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
 
