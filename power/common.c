@@ -774,9 +774,9 @@ enum host_sleep_event power_get_host_sleep_state(void)
 }
 
 #ifdef CONFIG_POWER_S0IX
-void power_reset_host_sleep_state(enum host_sleep_event sleep_event)
+void power_reset_host_sleep_state(void)
 {
-	host_sleep_state = sleep_event;
+	host_sleep_state = HOST_SLEEP_EVENT_DEFAULT_RESET;
 	power_chipset_handle_host_sleep_event(host_sleep_state);
 }
 #endif /* CONFIG_POWER_S0IX */

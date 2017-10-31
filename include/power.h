@@ -200,13 +200,21 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state);
  */
 void power_board_handle_host_sleep_event(enum host_sleep_event state);
 
+/*
+ * This is the default state of host sleep event. Calls to
+ * power_reset_host_sleep_state will set host sleep event to this
+ * value. EC components listening to host sleep event updates can check for this
+ * special value to know if the state was reset.
+ */
+#define HOST_SLEEP_EVENT_DEFAULT_RESET		0
+
 #ifdef CONFIG_POWER_S0IX
 /**
  * Reset the sleep state reported by the host.
  *
  * @param sleep_event Reset sleep state.
  */
-void power_reset_host_sleep_state(enum host_sleep_event sleep_event);
+void power_reset_host_sleep_state(void);
 #endif /* CONFIG_POWER_S0IX */
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 

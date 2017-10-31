@@ -164,7 +164,7 @@ static void handle_chipset_reset(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
 		CPRINTS("chipset reset: exit s0ix");
-		power_reset_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
+		power_reset_host_sleep_state();
 		task_wake(TASK_ID_CHIPSET);
 	}
 }
@@ -330,7 +330,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		 * Clearing the S0ix flag on the path to S0
 		 * to handle any reset conditions.
 		 */
-		power_reset_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
+		power_reset_host_sleep_state();
 #endif
 		return POWER_S3;
 
@@ -378,7 +378,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 #ifdef CONFIG_POWER_S0IX
 		/* re-init S0ix flag */
-		power_reset_host_sleep_state(HOST_SLEEP_EVENT_S0IX_RESUME);
+		power_reset_host_sleep_state();
 #endif
 		return POWER_S3;
 
@@ -504,6 +504,8 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 		/* clear host events */
 		while (lpc_get_next_host_event() != 0)
 			;
+		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
+	} else if (state == HOST_SLEEP_EVENT_DEFAULT_RESET) {
 		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
 	}
 #endif
