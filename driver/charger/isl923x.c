@@ -307,7 +307,17 @@ int charger_post_init(void)
 
 	return charger_set_option(reg);
 #else
-	/* ISL9238 default input voltage regulation is 4096 mV. */
+	/*
+	 * For the ISL9238, set the input voltage regulation to 4.439V.  Note,
+	 * the voltage is set in 341.3 mV steps.
+	 */
+	reg = (4439 / ISL9238_INPUT_VOLTAGE_REF_STEP)
+		<< ISL9238_INPUT_VOLTAGE_REF_SHIFT;
+
+	rv = raw_write16(ISL9238_REG_INPUT_VOLTAGE, reg);
+	if (rv)
+		return rv;
+
 	return EC_SUCCESS;
 #endif
 #else

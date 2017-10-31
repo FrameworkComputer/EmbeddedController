@@ -221,6 +221,10 @@
 #define ISL923X_OTG_CURRENT_STEP 128
 #define ISL923X_OTG_CURRENT_SHIFT 7
 
+/* Input voltage regulation voltage reference */
+#define ISL9238_INPUT_VOLTAGE_REF_STEP 341
+#define ISL9238_INPUT_VOLTAGE_REF_SHIFT 8
+
 /* Info register fields */
 #define ISL9237_INFO_PROG_RESISTOR_MASK 0xf
 #define ISL923X_INFO_TRICKLE_ACTIVE_MASK (1 << 4)
