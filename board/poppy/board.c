@@ -632,14 +632,6 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
 }
 
-void power_board_handle_host_sleep_event(enum host_sleep_event state)
-{
-	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
-		board_pmic_enable_slp_s0_vr_decay();
-	else if (state == HOST_SLEEP_EVENT_S0IX_RESUME)
-		board_pmic_disable_slp_s0_vr_decay();
-}
-
 static void board_pmic_init(void)
 {
 	if (system_jumped_to_this_image())
@@ -1043,6 +1035,7 @@ DECLARE_HOOK(HOOK_INIT, board_sensor_init, HOOK_PRIO_DEFAULT);
 static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	board_pmic_disable_slp_s0_vr_decay();
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -1050,6 +1043,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	board_pmic_enable_slp_s0_vr_decay();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
