@@ -192,14 +192,6 @@ enum host_sleep_event power_get_host_sleep_state(void);
  */
 void power_chipset_handle_host_sleep_event(enum host_sleep_event state);
 
-/**
- * Provide callback to allow board to take any action on host sleep event
- * command.
- *
- * @param state Current host sleep state updated by the host.
- */
-void power_board_handle_host_sleep_event(enum host_sleep_event state);
-
 /*
  * This is the default state of host sleep event. Calls to
  * power_reset_host_sleep_state will set host sleep event to this
