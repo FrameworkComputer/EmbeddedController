@@ -1045,13 +1045,6 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
-static void lpc_resume(void)
-{
-	/* Store port 80 event so we know where resume happened */
-	port_80_write(PORT_80_EVENT_RESUME);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
-
 /* Get protocol information */
 static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 {

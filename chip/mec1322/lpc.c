@@ -261,13 +261,6 @@ static void setup_lpc(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, setup_lpc, HOOK_PRIO_FIRST);
 
-static void lpc_resume(void)
-{
-	/* Store port 80 event so we know where resume happened */
-	port_80_write(PORT_80_EVENT_RESUME);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
-
 static void lpc_init(void)
 {
 	/* Activate LPC interface */

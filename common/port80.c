@@ -196,3 +196,10 @@ int port80_command_read(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PORT80_READ,
 		port80_command_read,
 		EC_VER_MASK(0) | EC_VER_MASK(1));
+
+static void port80_log_resume(void)
+{
+	/* Store port 80 event so we know where resume happened */
+	port_80_write(PORT_80_EVENT_RESUME);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, port80_log_resume, HOOK_PRIO_DEFAULT);

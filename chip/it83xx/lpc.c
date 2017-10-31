@@ -718,13 +718,6 @@ void lpc_disable_acpi_interrupts(void)
 	task_disable_irq(IT83XX_IRQ_PMC_IN);
 }
 
-static void lpc_resume(void)
-{
-	/* Store port 80 event so we know where resume happened */
-	port_80_write(PORT_80_EVENT_RESUME);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, lpc_resume, HOOK_PRIO_DEFAULT);
-
 /* Get protocol information */
 static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 {
