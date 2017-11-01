@@ -1019,6 +1019,13 @@ static void board_get_sku_id(void)
 		CPRINTS("SKU ID: %d", sku_id);
 		/* Use sku_id to set motion sensor count */
 		board_set_motion_sensor_count(sku_id);
+
+		if (0 == SKU_IS_CONVERTIBLE(sku_id)) {
+			CPRINTS("Disable tablet mode interrupt");
+			gpio_disable_interrupt(GPIO_TABLET_MODE_L);
+			/* Enfore device in laptop mode */
+			tablet_set_mode(0);
+		}
 	}
 }
 /* This can't run until after the ADC module has been initialized */
