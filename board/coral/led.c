@@ -98,8 +98,8 @@ static const struct led_descriptor led_default_state_table[][LED_NUM_PHASES] = {
 /* COLOR_1 = Green, COLOR_2 = Red */
 static const struct led_descriptor led_robo_state_table[][LED_NUM_PHASES] = {
 	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
 	{ {LED_COLOR_BOTH, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
+	{ {LED_COLOR_1, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
 	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
 	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
 	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
