@@ -795,17 +795,6 @@ int board_get_ramp_current_limit(int supplier, int sup_curr)
 	}
 }
 
-/**
- * Return if board is consuming full amount of input current
- */
-int board_is_consuming_full_charge(void)
-{
-	int chg_perc = charge_get_percent();
-
-	return chg_perc > 2 && chg_perc < 95;
-}
-
-
 void board_hibernate(void)
 {
 	CPRINTS("Triggering PMIC shutdown.");

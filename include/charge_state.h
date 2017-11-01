@@ -92,6 +92,16 @@ uint32_t charge_get_flags(void);
 int charge_get_percent(void);
 
 /**
+ * Check if board is consuming full input current
+ *
+ * This returns true if the battery charge percentage is between 2% and 95%
+ * exclusive.
+ *
+ * @return Board is consuming full input current
+ */
+int charge_is_consuming_full_input_current(void);
+
+/**
  * Return non-zero if discharging and battery so low we should shut down.
  */
 int charge_want_shutdown(void);

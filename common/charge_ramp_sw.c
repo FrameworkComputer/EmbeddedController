@@ -7,6 +7,7 @@
 
 #include "charge_manager.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -224,7 +225,7 @@ void chg_ramp_task(void *u)
 			 * If we are not drawing full charge, then don't ramp,
 			 * just wait in this state, until we are.
 			 */
-			if (!board_is_consuming_full_charge()) {
+			if (!charge_is_consuming_full_input_current()) {
 				task_wait_time = CURRENT_DRAW_DELAY;
 				break;
 			}
@@ -258,7 +259,7 @@ void chg_ramp_task(void *u)
 			task_wait_time = RAMP_CURR_DELAY;
 
 			/* Pause ramping if we are not drawing full current */
-			if (!board_is_consuming_full_charge()) {
+			if (!charge_is_consuming_full_input_current()) {
 				task_wait_time = CURRENT_DRAW_DELAY;
 				break;
 			}

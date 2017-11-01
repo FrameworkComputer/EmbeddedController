@@ -663,16 +663,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 }
 
 /**
- * Return if board is consuming full amount of input current
- */
-int board_is_consuming_full_charge(void)
-{
-	int chg_perc = charge_get_percent();
-
-	return chg_perc > 2 && chg_perc < 95;
-}
-
-/**
  * Return if VBUS is sagging too low
  */
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)

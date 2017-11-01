@@ -802,17 +802,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
-/**
- * Return if board is consuming full amount of input current
- */
-int board_is_consuming_full_charge(void)
-{
-	int chg_perc = charge_get_percent();
-
-	return chg_perc > 2 && chg_perc < 95;
-}
-
-
 void board_hibernate(void)
 {
     CPRINTS("Triggering PMIC shutdown.");

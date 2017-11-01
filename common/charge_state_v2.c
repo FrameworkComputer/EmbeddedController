@@ -1101,6 +1101,13 @@ int charge_get_battery_temp(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
+int charge_is_consuming_full_input_current(void)
+{
+	int chg_pct = charge_get_percent();
+
+	return chg_pct > 2 && chg_pct < 95;
+}
+
 int charge_set_input_current_limit(int ma, int mv)
 {
 	/*

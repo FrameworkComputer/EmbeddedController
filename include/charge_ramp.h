@@ -17,13 +17,6 @@ enum chg_ramp_vbus_state {
 };
 
 /**
- * Check if board is consuming full input current
- *
- * @return Board is consuming full input current
- */
-int board_is_consuming_full_charge(void);
-
-/**
  * Check if VBUS is too low
  *
  * @param port Charge ramp port

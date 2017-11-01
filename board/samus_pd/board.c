@@ -363,7 +363,7 @@ int pd_is_max_request_allowed(void)
 /**
  * Return if board is consuming full amount of input current
  */
-int board_is_consuming_full_charge(void)
+int charge_is_consuming_full_input_current(void)
 {
 	return batt_soc >= 1 && batt_soc < HIGH_BATT_THRESHOLD;
 }

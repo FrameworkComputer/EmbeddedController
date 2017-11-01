@@ -20,13 +20,3 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
 	return charger_get_vbus_voltage(port) < BD9995X_BC12_MIN_VOLTAGE;
 }
-
-/**
- * Return if board is consuming full amount of input current
- */
-int board_is_consuming_full_charge(void)
-{
-	int chg_pct = charge_get_percent();
-
-	return chg_pct > 2 && chg_pct < 95;
-}
