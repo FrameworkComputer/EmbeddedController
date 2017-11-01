@@ -26,9 +26,13 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size);
 /* Get the current value of the burst size field of the status register. */
 size_t tpm_get_burst_size(void);
 
-/* Register a function to restart TPM communications layer. */
-typedef void (*interface_restart_func)(void);
-void tpm_register_interface(interface_restart_func interface_restart);
+/*
+ * Register functions to start and stop TPM communications layer. The
+ * communications layer should be kept down while TPM is being reset.
+ */
+typedef void (*interface_control_func)(void);
+void tpm_register_interface(interface_control_func interface_start,
+			    interface_control_func interface_stop);
 
 /*
  * This requests the TPM task to reset itself.

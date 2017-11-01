@@ -215,6 +215,9 @@ int sps_register_rx_handler(enum sps_mode mode, rx_handler_f rx_handler,
 	task_disable_irq(GC_IRQNUM_SPS0_RXFIFO_LVL_INTR);
 	task_disable_irq(GC_IRQNUM_SPS0_CS_DEASSERT_INTR);
 
+	if (!rx_handler)
+		return 0;
+
 	if (!rx_fifo_threshold)
 		rx_fifo_threshold = 8;  /* This is a sensible default. */
 	sps_rx_handler = rx_handler;

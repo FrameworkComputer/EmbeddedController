@@ -265,14 +265,20 @@ static void tpm_rx_handler(uint8_t *data, size_t data_size, int cs_disabled)
 		init_new_cycle();
 }
 
-static void sps_tpm_enable(void)
+static void sps_if_stop(void)
+{
+	/* Let's shut down the interface while TPM is being reset. */
+	sps_register_rx_handler(0, NULL, 0);
+}
+
+static void sps_if_start(void)
 {
 	/*
-	 * Let's make sure we get an interrupt as soon as the header is
-	 * received.
+	 * Threshold of 3 makes sure we get an interrupt as soon as the header
+	 * is received.
 	 */
-	sps_register_rx_handler(SPS_GENERIC_MODE, tpm_rx_handler, 3);
 	init_new_cycle();
+	sps_register_rx_handler(SPS_GENERIC_MODE, tpm_rx_handler, 3);
 }
 
 
@@ -281,6 +287,6 @@ static void sps_if_register(void)
 	if (!board_tpm_uses_spi())
 		return;
 
-	tpm_register_interface(sps_tpm_enable);
+	tpm_register_interface(sps_if_start, sps_if_stop);
 }
 DECLARE_HOOK(HOOK_INIT, sps_if_register, HOOK_PRIO_LAST);

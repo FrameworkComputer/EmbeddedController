@@ -536,10 +536,13 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 	CPRINTF("\n");
 }
 
-static __preserved interface_restart_func if_restart;
-void tpm_register_interface(interface_restart_func interface_restart)
+static __preserved interface_control_func if_start;
+static __preserved interface_control_func if_stop;
+void tpm_register_interface(interface_control_func interface_start,
+			    interface_control_func interface_stop)
 {
-	if_restart = interface_restart;
+	if_start = interface_start;
+	if_stop = interface_stop;
 }
 
 static void tpm_init(void)
@@ -615,10 +618,6 @@ static void tpm_init(void)
 
 		_plat__SetNvAvail();
 	}
-
-	/* Reinitialize TPM interface unless in chip factory mode. */
-	if (!chip_factory_mode())
-		if_restart();
 }
 
 size_t tpm_get_burst_size(void)
@@ -812,6 +811,10 @@ void tpm_reinstate_nvmem_commits(void)
 
 static void tpm_reset_now(int wipe_first)
 {
+	/* TPM is not running in factory mode. */
+	if (!chip_factory_mode())
+		if_stop();
+
 	/* This is more related to TPM task activity than TPM transactions */
 	cprints(CC_TASK, "%s(%d)", __func__, wipe_first);
 
@@ -866,6 +869,14 @@ static void tpm_reset_now(int wipe_first)
 	hook_call_deferred(&reinstate_nvmem_commits_data, 3 * SECOND);
 
 	reset_in_progress = 0;
+
+	/*
+	 * In chip factory mode SPI idle byte sent on MISO is used for
+	 * progress reporting. TPM flow control messes it up, do not start TPM
+	 * in factory mode.
+	 */
+	if (!chip_factory_mode())
+		if_start();
 }
 
 void tpm_task(void)

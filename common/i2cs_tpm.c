@@ -211,7 +211,12 @@ static void wr_complete_handler(void *i2cs_data, size_t i2cs_data_size)
 	gpio_set_level(GPIO_INT_AP_L, 1);
 }
 
-static void i2cs_tpm_enable(void)
+static void i2cs_if_stop(void)
+{
+	i2cs_register_write_complete_handler(NULL);
+}
+
+static void i2cs_if_start(void)
 {
 	i2cs_register_write_complete_handler(wr_complete_handler);
 }
@@ -221,7 +226,7 @@ static void i2cs_if_register(void)
 	if (!board_tpm_uses_i2c())
 		return;
 
-	tpm_register_interface(i2cs_tpm_enable);
+	tpm_register_interface(i2cs_if_start, i2cs_if_stop);
 	i2cs_fifo_adjust_count = 0;
 	i2cs_write_error_count = 0;
 }
