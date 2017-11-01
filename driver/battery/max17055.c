@@ -294,6 +294,16 @@ void battery_get_params(struct batt_params *batt)
 		batt->is_present = BP_YES;
 	} else
 		batt->is_present = BP_NOT_SURE;
+
+	/*
+	 * Charging allowed if both desired voltage and current are nonzero
+	 * and battery isn't full (and we read them all correctly).
+	 */
+	if (!(batt->flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
+	    batt->desired_voltage &&
+	    batt->desired_current &&
+	    batt->state_of_charge < BATTERY_LEVEL_FULL)
+		batt->flags |= BATT_FLAG_WANT_CHARGE;
 }
 
 /* Wait until battery is totally stable. */
