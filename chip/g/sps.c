@@ -60,6 +60,9 @@ static uint32_t sps_tx_count, sps_rx_count, tx_empty_count, max_rx_batch;
 #define CPUTS(outstr) cputs(CC_SPS, outstr)
 #define CPRINTS(format, args...) cprints(CC_SPS, format, ## args)
 
+/* Flag indicating if there has been any data received while CS was asserted. */
+static uint8_t seen_data;
+
 void sps_tx_status(uint8_t byte)
 {
 	GREG32(SPS, DUMMY_WORD) = byte;
@@ -198,6 +201,8 @@ static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode,
 
 	GWRITE_FIELD(SPS, ICTRL, RXFIFO_LVL, 1);
 
+	seen_data = 0;
+
 	/* Use CS_DEASSERT to retrieve all remaining bytes from RX FIFO. */
 	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
 	GWRITE_FIELD(SPS, ICTRL, CS_DEASSERT, 1);
@@ -306,8 +311,6 @@ static void sps_advance_rx(int port, int data_size)
  */
 static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 {
-	static uint8_t seen_data;
-
 	for (;;) {
 		uint8_t *received_data = NULL;
 		size_t data_size;
@@ -329,14 +332,14 @@ static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 	}
 
 	if (cs_deasserted) {
-		sps_rx_handler(NULL, 0, 1);
-
 		if (seen_data) {
 			/*
 			 * SPI does not provide inherent flow control. Let's
 			 * use this pin to signal the AP that the device has
 			 * finished processing received data.
 			 */
+
+			sps_rx_handler(NULL, 0, 1);
 			gpio_set_level(GPIO_INT_AP_L, 0);
 			gpio_set_level(GPIO_INT_AP_L, 1);
 			seen_data = 0;
