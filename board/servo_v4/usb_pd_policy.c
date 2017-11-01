@@ -59,7 +59,6 @@ struct vbus_prop {
 	int ma;
 };
 static struct vbus_prop vbus[CONFIG_USB_PD_PORT_COUNT];
-static struct vbus_prop src_pdo_charge[2];
 static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
@@ -177,13 +176,11 @@ static void update_ports(void)
 
 				snk_index = pdo_index;
 				pd_extract_pdo_power(pdo, &max_ma, &max_mv);
-				pd_src_chg_pdo[src_index] =
+				pd_src_chg_pdo[src_index++] =
 					PDO_FIXED_VOLT(max_mv) |
 					PDO_FIXED_CURR(max_ma) |
 					DUT_PDO_FIXED_FLAGS |
 					PDO_FIXED_EXTERNAL;
-				src_pdo_charge[src_index].mv = max_mv;
-				src_pdo_charge[src_index++].ma = max_ma;
 			}
 			chg_pdo_cnt = src_index;
 		} else {
@@ -192,8 +189,6 @@ static void update_ports(void)
 				PDO_FIXED_CURR(vbus[CHG].ma) |
 				DUT_PDO_FIXED_FLAGS |
 				PDO_FIXED_EXTERNAL;
-			src_pdo_charge[0].mv = PD_MIN_MV;
-			src_pdo_charge[0].ma = vbus[CHG].ma;
 
 			chg_pdo_cnt = 1;
 		}
@@ -430,8 +425,9 @@ int pd_is_valid_input_voltage(int mv)
 void pd_transition_voltage(int idx)
 {
 	timestamp_t deadline;
-	uint32_t mv = src_pdo_charge[idx - 1].mv;
+	uint32_t ma, mv;
 
+	pd_extract_pdo_power(pd_src_chg_pdo[idx - 1], &ma, &mv);
 	/* Is this a transition to a new voltage? */
 	if (charge_port_is_active() && vbus[CHG].mv != mv) {
 		/*
