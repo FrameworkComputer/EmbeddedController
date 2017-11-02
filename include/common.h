@@ -147,6 +147,8 @@ enum ec_error_list {
 	EC_ERROR_MEMORY_ALLOCATION = 23,
 	/* Invalid to configure in the current module mode/stage */
 	EC_ERROR_INVALID_CONFIG = 24,
+	/* something wrong in a HW */
+	EC_ERROR_HW_INTERNAL = 25,
 
 	/* Verified boot errors */
 	EC_ERROR_VBOOT_SIGNATURE = 0x1000, /* 4096 */
