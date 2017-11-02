@@ -34,7 +34,7 @@ void chipset_force_shutdown(void)
 {
 	CPRINTS("%s()", __func__);
 
-	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		forcing_shutdown = 1;
 		power_button_pch_press();
 	}
