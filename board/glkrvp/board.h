@@ -57,6 +57,7 @@
 
 /* UART */
 #define NPCX_UART_MODULE2    1 /* 0:GPIO10/11 1:GPIO64/65 as UART */
+#define NPCX7_PWM1_SEL       0 /* GPIO C2 is not used as PWM1. */
 
 /* USB-A config */
 
@@ -119,9 +120,9 @@
 #define NPCX_TACH_SEL2       0 /* 0:GPIO40/A4 1:GPIO93/D3 as TACH */
 
 /* I2C ports */
-#define I2C_PORT_CHARGER	NPCX_I2C_PORT3
-#define I2C_PORT_BATTERY	NPCX_I2C_PORT3
-#define I2C_PORT_USB_MUX	NPCX_I2C_PORT0_1
+#define I2C_PORT_CHARGER	NPCX_I2C_PORT3_0
+#define I2C_PORT_BATTERY	NPCX_I2C_PORT3_0
+#define I2C_PORT_USB_MUX	NPCX_I2C_PORT7_0
 
 /* EC exclude modules */
 #undef CONFIG_ADC
@@ -138,6 +139,7 @@ enum power_signal {
 	X86_SLP_S0_N,
 	X86_SLP_S3_N,
 	X86_SLP_S4_N,
+	X86_SUSPWRDNACK,
 
 	X86_ALL_SYS_PG,		/* PMIC_EC_PWROK_OD */
 
