@@ -46,7 +46,7 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE	0
-#define USB_IFACE_GPIO		1
+#define USB_IFACE_EMPTY		1
 #define USB_IFACE_I2C		2
 #define USB_IFACE_USART3_STREAM	3
 #define USB_IFACE_USART4_STREAM	4
@@ -56,15 +56,13 @@
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_CONSOLE		1
-#define USB_EP_GPIO		2
+#define USB_EP_EMPTY		2
 #define USB_EP_I2C		3
 #define USB_EP_USART3_STREAM	4
 #define USB_EP_USART4_STREAM	5
 #define USB_EP_UPDATE		6
 #define USB_EP_COUNT		7
 
-/* Enable control of GPIOs over USB */
-#define CONFIG_USB_GPIO
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
 

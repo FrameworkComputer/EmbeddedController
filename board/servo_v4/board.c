@@ -28,6 +28,8 @@
 #include "usb-stream.h"
 #include "util.h"
 
+#include "gpio_list.h"
+
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /******************************************************************************
@@ -64,60 +66,6 @@ void board_config_pre_init(void)
 	/* Remap SPI2 Tx from DMA channel 5 to channel 7 */
 	STM32_SYSCFG_CFGR1 |= (1 << 24);
 }
-
-/******************************************************************************
- * Build GPIO tables and expose a subset of the GPIOs over USB.
- */
-
-#include "gpio_list.h"
-
-static enum gpio_signal const usb_gpio_list[] = {
-/* Outputs */
-GPIO_DUT_CHG_EN,		/* 0 */
-GPIO_HOST_OR_CHG_CTL,
-GPIO_DP_HPD,
-GPIO_SBU_UART_SEL,
-GPIO_HOST_USB_HUB_RESET_L,
-GPIO_FASTBOOT_DUTHUB_MUX_SEL,	/* 5 */
-GPIO_SBU_MUX_EN,
-GPIO_FASTBOOT_DUTHUB_MUX_EN_L,
-GPIO_DUT_HUB_USB_RESET_L,
-GPIO_ATMEL_HWB_L,
-GPIO_CMUX_EN,			/* 10 */
-GPIO_EMMC_MUX_EN_L,
-GPIO_EMMC_PWR_EN,
-
-
-/* Inputs */
-GPIO_USERVO_FAULT_L,
-GPIO_USB_FAULT_L,
-GPIO_DONGLE_DET,		/* 15 */
-
-GPIO_USB_DET_PP_DUT,
-GPIO_USB_DET_PP_CHG,
-
-GPIO_USB_DUT_CC2_RPUSB,
-GPIO_USB_DUT_CC2_RD,
-GPIO_USB_DUT_CC2_RA,		/* 20 */
-GPIO_USB_DUT_CC1_RP3A0,
-GPIO_USB_DUT_CC1_RP1A5,
-GPIO_USB_DUT_CC1_RPUSB,
-GPIO_USB_DUT_CC1_RD,
-GPIO_USB_DUT_CC1_RA,		/* 25 */
-GPIO_USB_DUT_CC2_RP3A0,
-GPIO_USB_DUT_CC2_RP1A5,
-
-};
-
-/*
- * This instantiates struct usb_gpio_config const usb_gpio, plus several other
- * variables, all named something beginning with usb_gpio_
- */
-USB_GPIO_CONFIG(usb_gpio,
-		usb_gpio_list,
-		USB_IFACE_GPIO,
-		USB_EP_GPIO);
-
 
 /******************************************************************************
  * Set up USB PD
