@@ -165,6 +165,15 @@ int sps_transmit(uint8_t *data, size_t data_size)
 	return bytes_sent;
 }
 
+static int sps_cs_asserted(void)
+{
+	/*
+	 * Read the current value on the SPS CS line and return the iversion
+	 * of it (CS is active low).
+	 */
+	return !GREAD_FIELD(SPS, VAL, CSB);
+}
+
 /** Configure the data transmission format
  *
  *  @param mode Clock polarity and phase mode (0 - 3)
@@ -185,7 +194,7 @@ static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode,
 	/* xfer 0xff when tx fifo is empty */
 	GREG32(SPS, DUMMY_WORD) = GC_SPS_DUMMY_WORD_DEFAULT;
 
-	if (!GREAD_FIELD(SPS, VAL, CSB)) {
+	if (sps_cs_asserted()) {
 		/*
 		 * Reset while the external controller is mid SPI
 		 * transaction.
@@ -195,7 +204,7 @@ static void sps_configure(enum sps_mode mode, enum spi_clock_mode clk_mode,
 		 * Wait for external controller to deassert CS before
 		 * continuing.
 		 */
-		while (!GREAD_FIELD(SPS, VAL, CSB))
+		while (sps_cs_asserted())
 			;
 	}
 
@@ -364,6 +373,33 @@ static void sps_rx_interrupt(uint32_t port, int cs_deasserted)
 static void sps_cs_deassert_interrupt(uint32_t port)
 {
 	/* Make sure the receive FIFO is drained. */
+
+	if (sps_cs_asserted()) {
+		/*
+		 * we must have been slow, this is the next CS assertion after
+		 * the 'wake up' pulse, but we have not processed the wake up
+		 * interrupt yet.
+		 *
+		 * There would be no other out of order CS assertions, as all
+		 * the 'real' ones (as opposed to the wake up pulses) are
+		 * confirmed by the H1 pulsing the AP interrupt line
+		 */
+
+		/*
+		 * Make sure we react to the next deassertion when it
+		 * happens.
+		 */
+		GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
+		GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 0);
+		if (sps_cs_asserted())
+			return;
+
+		/*
+		 * The CS went away while we were processing this interrupt,
+		 * this was the 'real' CS, need to process data.
+		 */
+	}
+
 	sps_rx_interrupt(port, 1);
 	GWRITE_FIELD(SPS, ISTATE_CLR, CS_DEASSERT, 1);
 	GWRITE_FIELD(SPS, FIFO_CTRL, TXFIFO_EN, 0);
