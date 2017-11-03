@@ -654,6 +654,15 @@ enum battery_present battery_is_present(void)
 
 	if (!battery_report_present)
 		batt_pres = BP_NO;
+	/*
+	 * If battery was present, but has been disabled or removed, then reset
+	 * the timer_started variable, so when battery is reconnected it can
+	 * report as present.
+	 */
+	if (batt_pres_prev == BP_YES && batt_pres == BP_NO) {
+		battery_report_present_timer_started = 0;
+		CPRINTS("Battery was present, but is now disconnected");
+	}
 
 	batt_pres_prev = batt_pres;
 
