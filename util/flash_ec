@@ -121,11 +121,11 @@ BOARDS_NPCX_SPI=(
 	soraka
 	wheatley
 	kahlee
-	grunt
 )
 
 BOARDS_NPCX_INT_SPI=(
 	zoombini
+	grunt
 )
 
 BOARDS_NRF51=(
