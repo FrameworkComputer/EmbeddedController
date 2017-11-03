@@ -69,6 +69,7 @@
 
 enum pwm_channel {
 	PWM_CH_FAN,
+	PWM_CH_WITH_DSLEEP_FLAG,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };

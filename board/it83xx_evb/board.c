@@ -101,6 +101,7 @@ void pd_task(void)
  */
 const struct pwm_t pwm_channels[] = {
 	{7, 0,                     30000, PWM_PRESCALER_C4},
+	{0, PWM_CONFIG_DSLEEP,     100,   PWM_PRESCALER_C6},
 };
 
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

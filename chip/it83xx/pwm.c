@@ -15,7 +15,7 @@
 #include "util.h"
 #include "math_util.h"
 
-#define PWM_CTRX_MIN 120
+#define PWM_CTRX_MIN 100
 #define PWM_EC_FREQ  8000000
 
 const struct pwm_ctrl_t pwm_ctrl_regs[] = {
@@ -202,14 +202,16 @@ static int pwm_ch_freq(enum pwm_channel ch)
 {
 	int actual_freq = -1, targe_freq, deviation;
 	int pcfsr, ctr, pcfsr_sel, pcs_shift, pcs_mask;
+	int pwm_clk_src = (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP) ?
+							32768 : PWM_EC_FREQ;
 
 	targe_freq = pwm_channels[ch].freq_hz;
 	deviation = (targe_freq / 100) + 1;
 
-	for (ctr = 0xFF; ctr > PWM_CTRX_MIN; ctr--) {
-		pcfsr = (PWM_EC_FREQ / (ctr + 1) / targe_freq) - 1;
+	for (ctr = 0xFF; ctr >= PWM_CTRX_MIN; ctr--) {
+		pcfsr = (pwm_clk_src / (ctr + 1) / targe_freq) - 1;
 		if (pcfsr >= 0) {
-			actual_freq = PWM_EC_FREQ / (ctr + 1) / (pcfsr + 1);
+			actual_freq = pwm_clk_src / (ctr + 1) / (pcfsr + 1);
 			if (ABS(actual_freq - targe_freq) < deviation)
 				break;
 		}
@@ -220,9 +222,21 @@ static int pwm_ch_freq(enum pwm_channel ch)
 	} else {
 		pcfsr_sel = pwm_channels[ch].pcfsr_sel;
 		*pwm_clock_ctrl_regs[pcfsr_sel].pwm_cycle_time = ctr;
-		/* ec clock 8MHz */
-		*pwm_clock_ctrl_regs[pcfsr_sel].pwm_pcfsr_reg |=
-			pwm_clock_ctrl_regs[pcfsr_sel].pwm_pcfsr_ctrl;
+
+		if (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP)
+			/*
+			 * Select 32.768KHz as PWM clock source.
+]			 *
+			 * NOTE:
+			 * For pwm_channels[], the maximum supported pwm output
+			 * signal frequency is 324 Hz (32768/(PWM_CTRX_MIN+1)).
+			 */
+			*pwm_clock_ctrl_regs[pcfsr_sel].pwm_pcfsr_reg &=
+				~pwm_clock_ctrl_regs[pcfsr_sel].pwm_pcfsr_ctrl;
+		else
+			/* ec clock 8MHz */
+			*pwm_clock_ctrl_regs[pcfsr_sel].pwm_pcfsr_reg |=
+				pwm_clock_ctrl_regs[pcfsr_sel].pwm_pcfsr_ctrl;
 
 		/* pwm channel mapping */
 		ch = pwm_channels[ch].channel;
