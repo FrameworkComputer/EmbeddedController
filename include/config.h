@@ -1015,8 +1015,11 @@
 /* Support EC to Internal bus bridge. */
 #undef CONFIG_EC2I
 
-/* EC capable of sensor speeds up to 200000 mHz */
-#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 200000
+/* Usually, EC capable of sensor speeds up to 200000 mHz */
+#define CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ 200000
+
+/* Maximal EC sampling rate */
+#undef CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ
 
 /*
  * Allow board to override the feature bitmap provided through host command
@@ -3135,4 +3138,8 @@
 #define CONFIG_SERIALNO_LEN 28
 #endif
 
+#ifndef CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ
+#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ \
+	CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ
+#endif
 #endif  /* __CROS_EC_CONFIG_H */
