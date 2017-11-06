@@ -23,6 +23,12 @@ enum bd9995x_command {
 	BD9995X_INVALID_COMMAND
 };
 
+/*
+ * BD9995X has two external VBUS inputs (named VBUS and VCC) and two sets
+ * of registers / bits for control. This entire driver is written under the
+ * assumption that the physical VBUS port corresponds to PD port 0, and the
+ * physical VCC port corresponds to PD port 1.
+ */
 enum bd9995x_charge_port {
 	BD9995X_CHARGE_PORT_VBUS,
 	BD9995X_CHARGE_PORT_VCC,
@@ -326,16 +332,6 @@ enum bd9995x_charge_port {
 #define BD9995X_PWR_SAVE_MAX		0x6
 #define BD9995X_CMD_DEBUG_MODE_SET	0x7F
 
-/* Map PD port number to charge port number */
-static inline enum bd9995x_charge_port bd9995x_pd_port_to_chg_port(int port)
-{
-#ifdef CONFIG_BD9995X_PRIMARY_CHARGE_PORT_VCC
-	return port ? BD9995X_CHARGE_PORT_VBUS : BD9995X_CHARGE_PORT_VCC;
-#else
-	return port ? BD9995X_CHARGE_PORT_VCC : BD9995X_CHARGE_PORT_VBUS;
-#endif
-}
-
 /*
  * Non-standard interface functions - bd9995x integrates additional
  * functionality not part of the standard charger interface.
@@ -346,7 +342,7 @@ int bd9995x_is_vbus_provided(enum bd9995x_charge_port port);
 /* Select or deselect input port from {VCC, VBUS, VCC&VBUS}. */
 int bd9995x_select_input_port(enum bd9995x_charge_port port, int select);
 /* Enable/Disable charging triggered by BC1.2 */
-int bd9995x_bc12_enable_charging(enum bd9995x_charge_port port, int enable);
+int bd9995x_bc12_enable_charging(int port, int enable);
 /* Interrupt handler for USB charger VBUS */
 void bd9995x_vbus_interrupt(enum gpio_signal signal);
 /* Read temperature measurement value (in Celsius) */

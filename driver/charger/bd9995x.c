@@ -308,7 +308,7 @@ static int bd9995x_get_charger_op_status(int *status)
 #ifdef HAS_TASK_USB_CHG
 static int bc12_detected_type[CONFIG_USB_PD_PORT_COUNT];
 
-static int bd9995x_get_bc12_device_type(enum bd9995x_charge_port port)
+static int bd9995x_get_bc12_device_type(int port)
 {
 	int rv;
 	int reg;
@@ -337,8 +337,7 @@ static int bd9995x_get_bc12_device_type(enum bd9995x_charge_port port)
 	}
 }
 
-static int bd9995x_enable_usb_switch(enum bd9995x_charge_port port,
-					enum usb_switch setting)
+static int bd9995x_enable_usb_switch(int port, enum usb_switch setting)
 {
 	int rv;
 	int reg;
@@ -363,9 +362,8 @@ static int bd9995x_bc12_check_type(int port)
 {
 	int bc12_type;
 	struct charge_port_info charge;
-	int chg_port = bd9995x_pd_port_to_chg_port(port);
 	int vbus_provided = bd9995x_is_vbus_provided(port) &&
-			    !usb_charger_port_is_sourcing_vbus(chg_port);
+			    !usb_charger_port_is_sourcing_vbus(port);
 
 	/*
 	 * If vbus is no longer provided, then no need to continue. Return 0 so
@@ -475,14 +473,13 @@ static int bd9995x_get_interrupts(int port)
 	return reg;
 }
 
-static int usb_charger_process(enum bd9995x_charge_port port)
+static int usb_charger_process(int port)
 {
-	int chg_port = bd9995x_pd_port_to_chg_port(port);
 	int vbus_provided = bd9995x_is_vbus_provided(port) &&
-			    !usb_charger_port_is_sourcing_vbus(chg_port);
+			    !usb_charger_port_is_sourcing_vbus(port);
 
 	/* Inform other modules about VBUS level */
-	usb_charger_vbus_change(chg_port, vbus_provided);
+	usb_charger_vbus_change(port, vbus_provided);
 
 	/* Do BC1.2 detection */
 	if (vbus_provided) {
@@ -970,9 +967,8 @@ int charger_get_vbus_voltage(int port)
 	uint8_t read_reg;
 	int voltage;
 
-	read_reg = (bd9995x_pd_port_to_chg_port(port) ==
-		    BD9995X_CHARGE_PORT_VBUS) ? BD9995X_CMD_VBUS_VAL :
-						BD9995X_CMD_VCC_VAL;
+	read_reg = (port == BD9995X_CHARGE_PORT_VBUS) ? BD9995X_CMD_VBUS_VAL :
+							BD9995X_CMD_VCC_VAL;
 
 	return ch_raw_read16(read_reg, &voltage, BD9995X_EXTENDED_COMMAND) ?
 			     0 : voltage;
@@ -1075,7 +1071,7 @@ int bd9995x_get_battery_voltage(void)
 }
 
 #ifdef HAS_TASK_USB_CHG
-int bd9995x_bc12_enable_charging(enum bd9995x_charge_port port, int enable)
+int bd9995x_bc12_enable_charging(int port, int enable)
 {
 	int rv;
 	int reg;
@@ -1178,8 +1174,7 @@ void usb_charger_task(void *u)
 					voltage = 0;
 
 				/* Set discharge accordingly */
-				pd_set_vbus_discharge(
-					bd9995x_pd_port_to_chg_port(port),
+				pd_set_vbus_discharge(port,
 					voltage < BD9995X_VBUS_DISCHARGE_TH);
 				changed = 1;
 			}

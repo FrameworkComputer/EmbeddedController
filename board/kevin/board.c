@@ -215,7 +215,7 @@ int board_set_active_charge_port(int charge_port)
 		if (board_vbus_source_enabled(charge_port))
 			return -1;
 
-		bd9995x_port = bd9995x_pd_port_to_chg_port(charge_port);
+		bd9995x_port = charge_port;
 		break;
 	case CHARGE_PORT_NONE:
 		bd9995x_port_select = 0;
@@ -253,26 +253,17 @@ int extpower_is_present(void)
 	else if (!p0_src && !p1_src)
 		port = BD9995X_CHARGE_PORT_BOTH;
 	else
-		port = bd9995x_pd_port_to_chg_port(p0_src);
+		port = p0_src;
 
 	return bd9995x_is_vbus_provided(port);
 }
 
 int pd_snk_is_vbus_provided(int port)
 {
-	enum bd9995x_charge_port bd9995x_port;
-
-	switch (port) {
-	case 0:
-	case 1:
-		bd9995x_port = bd9995x_pd_port_to_chg_port(port);
-		break;
-	default:
+	if (port != 0 && port != 1)
 		panic("Invalid charge port\n");
-		break;
-	}
 
-	return bd9995x_is_vbus_provided(bd9995x_port);
+	return bd9995x_is_vbus_provided(port);
 }
 
 static void board_spi_enable(void)

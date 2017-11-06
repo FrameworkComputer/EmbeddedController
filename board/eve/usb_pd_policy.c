@@ -112,7 +112,7 @@ void typec_set_source_current_limit(int port, int rp)
 int pd_set_power_supply_ready(int port)
 {
 	/* Ensure we're not charging from this port */
-	bd9995x_select_input_port(bd9995x_pd_port_to_chg_port(port), 0);
+	bd9995x_select_input_port(port, 0);
 
 	/* Ensure we advertise the proper available current quota */
 	charge_manager_source_port(port, 1);

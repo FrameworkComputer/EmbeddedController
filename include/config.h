@@ -477,13 +477,6 @@
 #undef CONFIG_CHARGER_BD9995X_CHGEN
 
 /*
- * BD9995X PD port to charger port mapping.
- * By default VBUS is selected as primary port.
- * Define only if the VCC is the primary port.
- */
-#undef CONFIG_BD9995X_PRIMARY_CHARGE_PORT_VCC
-
-/*
  * BD9995X Power Save Mode
  *
  * Which power save mode should the charger enter when VBUS is removed.  Check
