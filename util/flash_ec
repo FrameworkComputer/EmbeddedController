@@ -224,7 +224,6 @@ elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
 	CHIP="stm32"
 elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
 	CHIP="stm32_dfu"
-	NEED_SERVO="no"
 elif $(in_array "${BOARDS_NPCX_5M5G_JTAG[@]}" "${BOARD}"); then
 	CHIP="npcx_5m5g_jtag"
 elif $(in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"); then
@@ -241,7 +240,6 @@ elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
 	CHIP="mec1322"
 elif $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
 	CHIP="it83xx"
-	NEED_SERVO="no"
 elif [ -n "${FLAGS_chip}" ]; then
 	CHIP="${FLAGS_chip}"
 else
@@ -250,6 +248,10 @@ fi
 
 if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
 	die "board ${BOARD} doesn't use chip ${FLAGS_chip}"
+fi
+
+if [ "${CHIP}" = "stm32_dfu" -o "${CHIP}" = "it83xx" ]; then
+	NEED_SERVO="no"
 fi
 
 servo_has_warm_reset() {
