@@ -1739,6 +1739,13 @@ void pd_set_new_power_request(int port);
  */
 int pd_ts_dts_plugged(int port);
 
+/**
+ * Return true if partner port is known to be PD capable.
+ *
+ * @param port USB-C port number
+ */
+int pd_capable(int port);
+
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING
 /**
