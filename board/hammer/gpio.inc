@@ -8,14 +8,22 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+#ifdef BOARD_WHISKERS
+GPIO_INT(TOUCHPAD_INT, PIN(B, 9), GPIO_INT_FALLING, elan_tp_interrupt)
+#else
 GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, elan_tp_interrupt)
+#endif
 
 /* Keyboard inputs */
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
 #define GPIO_KB_OUTPUT GPIO_ODR_HIGH
 
 GPIO_INT(KB_IN00, PIN(A, 4),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
+#ifdef BOARD_WHISKERS
+GPIO_INT(KB_IN01, PIN(A, 8),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
+#else
 GPIO_INT(KB_IN01, PIN(B, 3),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
+#endif
 GPIO_INT(KB_IN02, PIN(B, 0),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN03, PIN(A, 7),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 GPIO_INT(KB_IN04, PIN(B, 12), GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
@@ -43,13 +51,26 @@ GPIO(KB_OUT12,			PIN(C, 13), GPIO_KB_OUTPUT)
 GPIO(MASTER_I2C_SCL,		PIN(B, 6), GPIO_INPUT)
 GPIO(MASTER_I2C_SDA,		PIN(B, 7), GPIO_INPUT)
 /* TODO(crosbug.com/p/59083): Disable trackpad when appropriate */
+#ifdef BOARD_WHISKERS
+GPIO(EN_PP3300_TP,		PIN(A, 14), GPIO_OUT_HIGH)
+#else
 GPIO(EN_PP3300_TP_ODL,		PIN(A, 14), GPIO_OUT_LOW)
+#endif
 
+#ifdef BOARD_WHISKERS
+GPIO(KEYBOARD_BACKLIGHT,	PIN(B, 8), GPIO_OUT_LOW)
+#else
 GPIO(KEYBOARD_BACKLIGHT,	PIN(B, 9), GPIO_OUT_LOW)
+#endif
 
 GPIO(WP_L,			PIN(A, 13), GPIO_INPUT | GPIO_PULL_UP)
 
 GPIO(BASE_DET,			PIN(A, 15), GPIO_INPUT)
+
+#ifdef BOARD_WHISKERS
+GPIO(TP_BOOT0,			PIN(B, 4), GPIO_INPUT)
+GPIO(TP_RESET,			PIN(B, 5), GPIO_INPUT)
+#endif
 
 /* Unimplemented signals since we are not an EC */
 UNIMPLEMENTED(ENTERING_RW)
@@ -58,4 +79,8 @@ ALTERNATE(PIN_MASK(A, 0x0600), 1, MODULE_UART, GPIO_PULL_UP) /* USART1: PA09/PA1
 
 ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C, 0) /* I2C MASTER:PB6/7 GPIO_ODR_HIGH */
 
+#ifdef BOARD_WHISKERS
+ALTERNATE(PIN_MASK(B, 0x0100), 2, MODULE_PWM, GPIO_PULL_DOWN) /* PWM: PB8 */
+#else
 ALTERNATE(PIN_MASK(B, 0x0200), 2, MODULE_PWM, GPIO_PULL_DOWN) /* PWM: PB9 */
+#endif

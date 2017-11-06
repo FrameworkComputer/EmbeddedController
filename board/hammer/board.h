@@ -80,10 +80,12 @@
 
 /* USB Configuration */
 #define CONFIG_USB
-#ifdef BOARD_STAFF
-#define CONFIG_USB_PID 0x502b
-#elif defined(BOARD_HAMMER)
+#ifdef BOARD_HAMMER
 #define CONFIG_USB_PID 0x5022
+#elif defined(BOARD_STAFF)
+#define CONFIG_USB_PID 0x502b
+#elif defined(BOARD_WHISKERS)
+#define CONFIG_USB_PID 0x5030
 #else
 #error "Invalid board"
 #endif
@@ -148,17 +150,24 @@
 #define CONFIG_TOUCHPAD_HASH_FW
 
 /* Touchpad firmware size and dimension difference */
-#ifdef BOARD_STAFF
+#ifdef BOARD_HAMMER
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3207
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1783
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1018 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 566 /* tenth of mm */
+#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (48*1024)
+#elif defined(BOARD_STAFF)
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3206
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1832
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1017 /* tenth of mm */
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 581 /* tenth of mm */
 #define CONFIG_TOUCHPAD_VIRTUAL_SIZE (56*1024)
-#elif defined(BOARD_HAMMER)
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3207
-#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1783
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1018 /* tenth of mm */
-#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 566 /* tenth of mm */
+#elif defined(BOARD_WHISKERS)
+/* TODO(b:68934906): Add support for touchpad and replace these values. */
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3000
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1500
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1000 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 500 /* tenth of mm */
 #define CONFIG_TOUCHPAD_VIRTUAL_SIZE (48*1024)
 #else
 #error "No touchpad information for board."
@@ -167,7 +176,7 @@
 #define CONFIG_KEYBOARD_DEBUG
 #undef CONFIG_KEYBOARD_BOOT_KEYS
 #undef CONFIG_KEYBOARD_RUNTIME_KEYS
-#ifdef BOARD_HAMMER
+#if defined(BOARD_HAMMER) || defined(BOARD_WHISKERS)
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_NEW_KEY
 #endif
@@ -223,8 +232,13 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
+#ifdef BOARD_WHISKERS
+#define TIM_KBLIGHT 16
+#define TIM_WATCHDOG 17
+#else
 #define TIM_WATCHDOG 16
 #define TIM_KBLIGHT 17
+#endif
 
 #include "gpio_signal.h"
 

@@ -75,6 +75,7 @@ BOARDS_STM32=(
 	scarlet
 	staff
 	strago_pd
+	whiskers
 	zinger
 )
 BOARDS_STM32_PROG_EN=(
