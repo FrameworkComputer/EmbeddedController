@@ -6,6 +6,7 @@
 """Program to fetch power logging data from a sweetberry device
    or other usb device that exports a USB power logging interface.
 """
+
 from __future__ import print_function
 import argparse
 import array
@@ -271,7 +272,7 @@ class Spower(object):
   def reset(self):
     """Try resetting the USB interface until success
 
-    Throws:
+    Raises:
       Exception on failure.
     """
     count = 10
@@ -394,7 +395,7 @@ class Spower(object):
   def read_line(self):
     """Read a line of data from the setup INAs
 
-    Return:
+    Returns:
       list of dicts of the values read, otherwise None.
       [{ts:100, vbat:450}, {ts:200, vbat:440}]
     """
@@ -436,7 +437,7 @@ class Spower(object):
     Output:
       stdout of the record in csv format.
 
-    Return:
+    Returns:
       dict containing name, value of recorded data.
     """
     status, size = struct.unpack("<BB", data[0:2])
@@ -490,8 +491,9 @@ class powerlog(object):
 
   def __init__(self, brdfile, cfgfile, serial_a=None, serial_b=None,
                sync_date=False, use_ms=False, use_mW=False, print_stats=False,
-               save_stats=False, save_raw_data=False):
-    """
+               stats_dir=None, print_raw_data=True, raw_data_dir=None):
+    """Init the powerlog class and set the variables.
+
     Args:
       brdfile: string name of json file containing board layout.
       cfgfile: string name of json containing list of rails to read.
@@ -499,14 +501,23 @@ class powerlog(object):
       serial_b: serial number of sweetberry B.
       sync_date: report timestamps synced with host datetime.
       use_ms: report timestamps in ms rather than us.
+      use_mW: report power as milliwatts, otherwise default to microwatts.
+      print_stats: print statistics for sweetberry readings at the end.
+      stats_dir: directory to save sweetberry readings statistics; if None then
+                 do not save the statistics.
+      print_raw_data: print sweetberry readings raw data in real time, default
+                      is to print.
+      raw_data_dir: directory to save sweetberry readings raw data; if None then
+                    do not save the raw data.
     """
     self._data = StatsManager()
     self._pwr = {}
     self._use_ms = use_ms
     self._use_mW = use_mW
     self._print_stats = print_stats
-    self._save_stats = save_stats
-    self._save_raw_data = save_raw_data
+    self._stats_dir = stats_dir
+    self._print_raw_data = print_raw_data
+    self._raw_data_dir = raw_data_dir
 
     if not serial_a and not serial_b:
       self._pwr['A'] = Spower('A')
@@ -548,8 +559,7 @@ class powerlog(object):
         self._pwr[key].set_time(0)
 
   def start(self, integration_us_request, seconds, sync_speed=.8):
-    """
-    Starts sampling.
+    """Starts sampling.
 
     Args:
       integration_us_request: requested interval between sample values.
@@ -569,12 +579,13 @@ class powerlog(object):
       integration_us = integration_us_new
 
     # CSV header
-    title = "ts:%dus" % integration_us
-    for name in self._names:
-      unit = "mW" if self._use_mW else "uW"
-      title += ", %s %s" % (name, unit)
-    title += ", status"
-    logoutput(title)
+    if self._print_raw_data:
+      title = "ts:%dus" % integration_us
+      for name in self._names:
+        unit = "mW" if self._use_mW else "uW"
+        title += ", %s %s" % (name, unit)
+      title += ", status"
+      logoutput(title)
 
     forever = False
     if not seconds:
@@ -617,7 +628,8 @@ class powerlog(object):
               else:
                 csv += ", "
             csv += ", %d" % aggregate_record["status"]
-            logoutput(csv)
+            if self._print_raw_data:
+              logoutput(csv)
 
             aggregate_record = {"boards": set()}
             for r in range(0, len(self._pwr)):
@@ -632,16 +644,18 @@ class powerlog(object):
       self._data.CalculateStats()
       if self._print_stats:
         self._data.PrintSummary()
-      save_dir = datetime.datetime.now().strftime('Sweetberry%Y%m%d%H%M%S')
-      save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                              save_dir)
-      if self._save_stats:
-        self._data.SaveSummary(save_dir)
-      if self._save_raw_data:
-        self._data.SaveRawData(save_dir)
+      save_dir = datetime.datetime.now().strftime('sweetberry%Y%m%d%H%M%S')
+      if self._stats_dir:
+        stats_dir = os.path.join(self._stats_dir, save_dir)
+        self._data.SaveSummary(stats_dir)
+      if self._raw_data_dir:
+        raw_data_dir = os.path.join(self._raw_data_dir, save_dir)
+        self._data.SaveRawData(raw_data_dir)
 
 
-def main():
+def main(argv=None):
+  if argv is None:
+    argv = sys.argv[1:]
   # Command line argument description.
   parser = argparse.ArgumentParser(
       description="Gather CSV data from sweetberry")
@@ -656,7 +670,7 @@ def main():
   parser.add_argument('-t', '--integration_us', type=int,
       help="Target integration time for samples", default=100000)
   parser.add_argument('-s', '--seconds', type=float,
-      help="Seconds to run capture. Overrides -n", default=0.)
+      help="Seconds to run capture", default=0.)
   parser.add_argument('--date', default=False,
       help="Sync logged timestamp to host date", action="store_true")
   parser.add_argument('--ms', default=False,
@@ -666,19 +680,32 @@ def main():
       action="store_true")
   parser.add_argument('--slow', default=False,
       help="Intentionally overflow", action="store_true")
-  parser.add_argument('--print_stats', default=False,
-      help="Print statistics for sweetberry readings at the end",
-      action="store_true")
-  parser.add_argument('--save_stats', default=False,
-      help="Save statistics for sweetberry readings",
-      action="store_true")
-  parser.add_argument('--save_raw_data', default=False,
-      help="Save raw data for sweetberry readings",
-      action="store_true")
+  parser.add_argument('--print_stats', default=False, action="store_true",
+      help="Print statistics for sweetberry readings at the end")
+  parser.add_argument('--save_stats', type=str, nargs='?',
+      dest='stats_dir', metavar='STATS_DIR',
+      const=os.path.dirname(os.path.abspath(__file__)), default=None,
+      help="Save statistics for sweetberry readings to %(metavar)s if \
+      %(metavar)s is specified, %(metavar)s will be created if it does not \
+      exist; if %(metavar)s is not specified but the flag is set, stats will \
+      be saved to where %(prog)s is located; if this flag is not set, then do \
+      not save stats")
+  parser.add_argument('--no_print_raw_data',
+      dest='print_raw_data', default=True, action="store_false",
+      help="Not print raw sweetberry readings at real time, default is to \
+      print")
+  parser.add_argument('--save_raw_data', type=str, nargs='?',
+      dest='raw_data_dir', metavar='RAW_DATA_DIR',
+      const=os.path.dirname(os.path.abspath(__file__)), default=None,
+      help="Save raw data for sweetberry readings to %(metavar)s if \
+      %(metavar)s is specified, %(metavar)s will be created if it does not \
+      exist; if %(metavar)s is not specified but the flag is set, raw data \
+      will be saved to where %(prog)s is located; if this flag is not set, \
+      then do not save raw data")
   parser.add_argument('-v', '--verbose', default=False,
       help="Very chatty printout", action="store_true")
 
-  args = parser.parse_args()
+  args = parser.parse_args(argv)
 
   global debug
   if args.verbose:
@@ -699,8 +726,9 @@ def main():
   use_ms = args.ms
   use_mW = args.mW
   print_stats = args.print_stats
-  save_stats = args.save_stats
-  save_raw_data = args.save_raw_data
+  stats_dir = args.stats_dir
+  print_raw_data = args.print_raw_data
+  raw_data_dir = args.raw_data_dir
 
   boards = []
 
@@ -709,10 +737,10 @@ def main():
     sync_speed = 1.2
 
   # Set up logging interface.
-  powerlogger = powerlog(brdfile, cfgfile, serial_a=serial_a,
-      serial_b=serial_b, sync_date=sync_date, use_ms=use_ms, use_mW=use_mW,
-      print_stats=print_stats, save_stats=save_stats,
-      save_raw_data=save_raw_data)
+  powerlogger = powerlog(brdfile, cfgfile, serial_a=serial_a, serial_b=serial_b,
+      sync_date=sync_date, use_ms=use_ms, use_mW=use_mW,
+      print_stats=print_stats, stats_dir=stats_dir,
+      print_raw_data=print_raw_data,raw_data_dir=raw_data_dir)
 
   # Start logging.
   powerlogger.start(integration_us_request, seconds, sync_speed=sync_speed)
@@ -720,5 +748,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-
-
