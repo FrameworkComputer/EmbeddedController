@@ -180,9 +180,14 @@ enum bd9995x_charge_port {
 #define BD9995X_CMD_IOUT_DACIN_VAL	0x27
 #define BD9995X_CMD_VCC_UCD_SET		0x28
 /* Bits for both VCC_UCD_SET and VBUS_UCD_SET regs */
-#define BD9995X_CMD_UCD_SET_BCSRETRY           (1 << 12)
-#define BD9995X_CMD_UCD_SET_USBDETEN           (1 << 7)
-#define BD9995X_CMD_UCD_SET_USB_SW_EN          (1 << 1)
+/*  Retry BC1.2 detection on set */
+#define BD9995X_CMD_UCD_SET_BCSRETRY	(1 << 12)
+/* Enable BC1.2 detection, will automatically occur on VBUS detect */
+#define BD9995X_CMD_UCD_SET_USBDETEN	(1 << 7)
+/* USB switch state auto-control */
+#define BD9995X_CMD_UCD_SET_USB_SW_EN	(1 << 1)
+/* USB switch state, 1 = ON, only meaningful when USB_SW_EN = 0 */
+#define BD9995X_CMD_UCD_SET_USB_SW	(1 << 0)
 
 #define BD9995X_CMD_VCC_UCD_STATUS	0x29
 /* Bits for both VCC_UCD_STATUS and VBUS_UCD_STATUS regs */

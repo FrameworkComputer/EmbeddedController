@@ -52,6 +52,7 @@ static const struct charger_info bd9995x_charger_info = {
 /* Charge command code map */
 static enum bd9995x_command charger_map_cmd = BD9995X_INVALID_COMMAND;
 
+/* Mutex for active register set control. */
 static struct mutex bd9995x_map_mutex;
 
 #ifdef HAS_TASK_USB_CHG
@@ -307,6 +308,8 @@ static int bd9995x_get_charger_op_status(int *status)
 
 #ifdef HAS_TASK_USB_CHG
 static int bc12_detected_type[CONFIG_USB_PD_PORT_COUNT];
+/* Mutex for UCD_SET regsiters, lock before read / mask / write. */
+static struct mutex ucd_set_mutex[BD9995X_CHARGE_PORT_COUNT];
 
 static int bd9995x_get_bc12_device_type(int port)
 {
@@ -337,25 +340,32 @@ static int bd9995x_get_bc12_device_type(int port)
 	}
 }
 
-static int bd9995x_enable_usb_switch(int port, enum usb_switch setting)
+/*
+ * Do safe read / mask / write of BD9995X_CMD_*_UCD_SET register.
+ * The USB charger task owns all bits of this register, except for bit 0
+ * (BD9995X_CMD_UCD_SET_USB_SW), which is controlled by
+ * usb_charger_set_switches().
+ */
+static int bd9995x_update_ucd_set_reg(int port, uint16_t mask, int set)
 {
 	int rv;
 	int reg;
-	int port_reg;
-
-	port_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
+	int port_reg = (port == BD9995X_CHARGE_PORT_VBUS) ?
 		BD9995X_CMD_VBUS_UCD_SET : BD9995X_CMD_VCC_UCD_SET;
 
+	mutex_lock(&ucd_set_mutex[port]);
 	rv = ch_raw_read16(port_reg, &reg, BD9995X_EXTENDED_COMMAND);
-	if (rv)
-		return rv;
+	if (!rv) {
+		if (set)
+			reg |= mask;
+		else
+			reg &= ~mask;
 
-	if (setting == USB_SWITCH_CONNECT)
-		reg |= BD9995X_CMD_UCD_SET_USB_SW_EN;
-	else
-		reg &= ~BD9995X_CMD_UCD_SET_USB_SW_EN;
+		rv = ch_raw_write16(port_reg, reg, BD9995X_EXTENDED_COMMAND);
+	}
 
-	return ch_raw_write16(port_reg, reg, BD9995X_EXTENDED_COMMAND);
+	mutex_unlock(&ucd_set_mutex[port]);
+	return rv;
 }
 
 static int bd9995x_bc12_check_type(int port)
@@ -473,6 +483,20 @@ static int bd9995x_get_interrupts(int port)
 	return reg;
 }
 
+/*
+ * Set or clear registers necessary to do one-time BC1.2 detection.
+ * Pass enable = 1 to trigger BC1.2 detection, and enable = 0 once
+ * BC1.2 detection has completed.
+ */
+static int bd9995x_bc12_detect(int port, int enable)
+{
+	return bd9995x_update_ucd_set_reg(port,
+					  BD9995X_CMD_UCD_SET_BCSRETRY |
+					  BD9995X_CMD_UCD_SET_USBDETEN |
+					  BD9995X_CMD_UCD_SET_USB_SW_EN,
+					  enable);
+}
+
 static int usb_charger_process(int port)
 {
 	int vbus_provided = bd9995x_is_vbus_provided(port) &&
@@ -481,8 +505,12 @@ static int usb_charger_process(int port)
 	/* Inform other modules about VBUS level */
 	usb_charger_vbus_change(port, vbus_provided);
 
-	/* Do BC1.2 detection */
-	if (vbus_provided) {
+	/*
+	 * Do BC1.2 detection, if we have VBUS and our port is not known
+	 * to speak PD.
+	 */
+	if (vbus_provided && !pd_capable(port)) {
+		bd9995x_bc12_detect(port, 1);
 		/*
 		 * Need to give the charger time (~312 mSec) before the
 		 * bc12_type is available. The main task loop will schedule a
@@ -490,6 +518,9 @@ static int usb_charger_process(int port)
 		 */
 		return 1;
 	}
+
+	/* Reset BC1.2 regs so we don't do auto-detection. */
+	bd9995x_bc12_detect(port, 0);
 
 	/*
 	 * VBUS is no longer being provided, if the bc12_type had been
@@ -817,24 +848,6 @@ static void bd9995x_init(void)
 {
 	int reg;
 
-	/* Enable BC1.2 detection on VCC */
-	if (ch_raw_read16(BD9995X_CMD_VCC_UCD_SET, &reg,
-			  BD9995X_EXTENDED_COMMAND))
-		return;
-	reg |= BD9995X_CMD_UCD_SET_USBDETEN;
-	reg &= ~BD9995X_CMD_UCD_SET_USB_SW_EN;
-	ch_raw_write16(BD9995X_CMD_VCC_UCD_SET, reg,
-		       BD9995X_EXTENDED_COMMAND);
-
-	/* Enable BC1.2 detection on VBUS */
-	if (ch_raw_read16(BD9995X_CMD_VBUS_UCD_SET, &reg,
-			  BD9995X_EXTENDED_COMMAND))
-		return;
-	reg |= BD9995X_CMD_UCD_SET_USBDETEN;
-	reg &= ~BD9995X_CMD_UCD_SET_USB_SW_EN;
-	ch_raw_write16(BD9995X_CMD_VBUS_UCD_SET, reg,
-		       BD9995X_EXTENDED_COMMAND);
-
 	/*
 	 * Disable charging trigger by BC1.2 on VCC & VBUS and
 	 * automatic limitation of the input current.
@@ -1119,7 +1132,8 @@ void usb_charger_set_switches(int port, enum usb_switch setting)
 		? CONFIG_BD9995X_POWER_SAVE_MODE : BD9995X_PWR_SAVE_OFF);
 #endif
 
-	bd9995x_enable_usb_switch(port, usb_switch_state[port]);
+	bd9995x_update_ucd_set_reg(port, BD9995X_CMD_UCD_SET_USB_SW,
+		usb_switch_state[port] == USB_SWITCH_CONNECT);
 }
 
 void bd9995x_vbus_interrupt(enum gpio_signal signal)
@@ -1191,6 +1205,8 @@ void usb_charger_task(void *u)
 				bc12_det_mark[port] =
 					bd9995x_bc12_check_type(port) ?
 					get_time().val + 100 * MSEC : 0;
+				/* Reset BC1.2 regs to skip auto-detection. */
+				bd9995x_bc12_detect(port, 0);
 			}
 
 			/*
