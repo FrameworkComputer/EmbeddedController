@@ -91,6 +91,7 @@ common-$(CONFIG_SHA1)+= sha1.o
 common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SMBUS)+= smbus.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
+common-$(CONFIG_SOFTWARE_CTZ)+=ctz.o
 common-$(CONFIG_CMD_SPI_XFER)+=spi_commands.o
 common-$(CONFIG_SPI_FLASH)+=spi_flash.o spi_flash_reg.o
 common-$(CONFIG_SPI_FLASH_REGS)+=spi_flash_reg.o
