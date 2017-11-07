@@ -342,11 +342,10 @@ void __idle(void)
 			 * Workaround: Apply the same bypass of idle.
 			 */
 			asm ("push {r0-r5}\n"
-			     "ldr r0, =0x100A8000\n"
 			     "wfi\n"
-			     "ldm r0, {r0-r5}\n"
+			     "ldm %0, {r0-r5}\n"
 			     "pop {r0-r5}\n"
-			     "isb\n"
+			     "isb\n" :: "r" (0x100A8000)
 			);
 
 			/* Get time delay cause of deep idle */
@@ -393,11 +392,10 @@ void __idle(void)
 			 * Please see task.c for more detail
 			 */
 			asm ("push {r0-r5}\n"
-			     "ldr r0, =0x100A8000\n"
 			     "wfi\n"
-			     "ldm r0, {r0-r5}\n"
+			     "ldm %0, {r0-r5}\n"
 			     "pop {r0-r5}\n"
-			     "isb\n"
+			     "isb\n" :: "r" (0x100A8000)
 			);
 		}
 
