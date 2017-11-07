@@ -219,6 +219,16 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
+/*
+ * Since fizz has no battery, it must source all of its power from either
+ * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
+ * mode (charge_manager_leave_safe_mode() will never be called), which
+ * modifies port / ILIM selection as follows:
+ *
+ * - Dual-role / dedicated capability of the port partner is ignored.
+ * - Charge ceiling on PD voltage transition is ignored.
+ * - CHARGE_PORT_NONE will never be selected.
+ */
 static void board_charge_manager_init(void)
 {
 	int input_voltage;
