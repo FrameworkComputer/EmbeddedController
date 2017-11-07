@@ -1193,9 +1193,6 @@ static int charge_command_charge_control(struct host_cmd_handler_args *args)
 	const struct ec_params_charge_control *p = args->params;
 	int rv;
 
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
 	rv = set_chg_ctrl_mode(p->mode);
 	if (rv != EC_SUCCESS)
 		return EC_RES_ERROR;
@@ -1313,6 +1310,9 @@ static int charge_command_charge_state(struct host_cmd_handler_args *args)
 		break;
 
 	case CHARGE_STATE_CMD_SET_PARAM:
+		if (system_is_locked())
+			return EC_RES_ACCESS_DENIED;
+
 		val = in->set_param.value;
 #ifdef CONFIG_CHARGER_PROFILE_OVERRIDE
 		/* custom profile params */
