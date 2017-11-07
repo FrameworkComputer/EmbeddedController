@@ -669,10 +669,13 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 }
 #endif
 
-/* Event (to TPM task) to request reset, or (from TPM task) on completion. */
-#define TPM_EVENT_RESET TASK_EVENT_CUSTOM(1 << 0)
-#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(1 << 1)
-#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM(1 << 2)
+/*
+ * Events used on the TPM task context. Make sure there is no collision with
+ * event(s) defined in chip/g/dcrypto/dcrypto_runtime.c
+ */
+#define TPM_EVENT_RESET TASK_EVENT_CUSTOM(1 << 1)
+#define TPM_EVENT_COMMIT TASK_EVENT_CUSTOM(1 << 2)
+#define TPM_EVENT_ALT_EXTENSION TASK_EVENT_CUSTOM(1 << 3)
 
 /*
  * Result of executing of the TPM command on the alternative path, could have
