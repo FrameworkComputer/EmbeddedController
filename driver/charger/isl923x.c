@@ -270,43 +270,54 @@ int charger_set_voltage(int voltage)
 
 int charger_post_init(void)
 {
-	int rv, reg;
+	/*
+	 * charger_post_init() is called every time AC becomes present in the
+	 * system.  It's called this frequently because there are some charger
+	 * ICs which become unpowered when AC is not present.  Therefore, upon
+	 * AC becoming present again, the chargers need to be reinitialized.
+	 * The ISL9237/8 can be powered from VSYS and therefore do not need to
+	 * be reinitialized everytime.  This is why isl923x_init() is called
+	 * once at HOOK_INIT time.
+	 */
+	return EC_SUCCESS;
+}
+
+static void isl923x_init(void)
+{
+	int reg;
 
 #ifdef CONFIG_TRICKLE_CHARGING
 	const struct battery_info *bi = battery_get_info();
 
-	rv = raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, bi->voltage_min);
-	if (rv)
-		return rv;
+	if (raw_write16(ISL923X_REG_SYS_VOLTAGE_MIN, bi->voltage_min))
+		goto init_fail;
 #endif
 
 	/*
 	 * [10:9]: Prochot# Debounce time
 	 *         11b: 1ms
 	 */
-	rv = raw_read16(ISL923X_REG_CONTROL2, &reg);
-	if (rv)
-		return rv;
+	if (raw_read16(ISL923X_REG_CONTROL2, &reg))
+		goto init_fail;
 
-	rv = raw_write16(ISL923X_REG_CONTROL2,
+	if (raw_write16(ISL923X_REG_CONTROL2,
 			reg |
 			ISL923X_C2_PROCHOT_DEBOUNCE_1000 |
-			ISL923X_C2_ADAPTER_DEBOUNCE_150);
-	if (rv)
-		return rv;
+			ISL923X_C2_ADAPTER_DEBOUNCE_150))
+		goto init_fail;
 
 #ifdef CONFIG_CHARGE_RAMP_HW
 #ifdef CONFIG_CHARGER_ISL9237
-	rv = charger_get_option(&reg);
-	if (rv)
-		return rv;
+	if (charger_get_option(&reg))
+		goto init_fail;
 
 	/* Set input voltage regulation reference voltage for charge ramp */
 	reg &= ~ISL9237_C0_VREG_REF_MASK;
 	reg |= ISL9237_C0_VREG_REF_4200;
 
-	return charger_set_option(reg);
-#else
+	if (charger_set_option(reg))
+		goto init_fail;
+#else /* !defined(CONFIG_CHARGER_ISL9237) */
 	/*
 	 * For the ISL9238, set the input voltage regulation to 4.439V.  Note,
 	 * the voltage is set in 341.3 mV steps.
@@ -314,23 +325,25 @@ int charger_post_init(void)
 	reg = (4439 / ISL9238_INPUT_VOLTAGE_REF_STEP)
 		<< ISL9238_INPUT_VOLTAGE_REF_SHIFT;
 
-	rv = raw_write16(ISL9238_REG_INPUT_VOLTAGE, reg);
-	if (rv)
-		return rv;
-
-	return EC_SUCCESS;
-#endif
-#else
-	rv = charger_get_option(&reg);
-	if (rv)
-		return rv;
+	if (raw_write16(ISL9238_REG_INPUT_VOLTAGE, reg))
+		goto init_fail;
+#endif /* defined(CONFIG_CHARGER_ISL9237) */
+#else /* !defined(CONFIG_CHARGE_RAMP_HW) */
+	if (charger_get_option(&reg))
+		goto init_fail;
 
 	/* Disable voltage regulation loop to disable charge ramp */
 	reg |= ISL923X_C0_DISABLE_VREG;
 
-	return charger_set_option(reg);
-#endif
+	if (charger_set_option(reg))
+		goto init_fail;
+#endif /* defined(CONFIG_CHARGE_RAMP_HW) */
+
+	return;
+init_fail:
+	CPRINTF("isl923x_init failed!");
 }
+DECLARE_HOOK(HOOK_INIT, isl923x_init, HOOK_PRIO_INIT_I2C + 1);
 
 int charger_discharge_on_ac(int enable)
 {
