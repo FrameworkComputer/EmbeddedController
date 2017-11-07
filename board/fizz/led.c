@@ -161,7 +161,7 @@ void led_alert(int enable)
 {
 	if (enable) {
 		/* Overwrite the current signal */
-		CONFIG_TICK(LED_PULSE_US, LED_RED);
+		config_tick(1 * SECOND, 100, LED_RED);
 		led_tick();
 	} else {
 		/* Restore the previous signal */
