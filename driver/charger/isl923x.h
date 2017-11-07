@@ -210,6 +210,12 @@
 /* Control3: PSYS gain in uA/W (ISL9238 only) */
 #define ISL9238_C3_PSYS_GAIN (1 << 9)
 
+/* Control3: Don't reload ACLIM on ACIN. */
+#define ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN (1 << 14)
+
+/* Control3: Don't reread PROG pin. */
+#define ISL9238_C3_NO_REREAD_PROG_PIN (1 << 15)
+
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864
 #define ISL9237_OTG_VOLTAGE_MAX 5376

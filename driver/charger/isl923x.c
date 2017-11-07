@@ -339,6 +339,24 @@ static void isl923x_init(void)
 		goto init_fail;
 #endif /* defined(CONFIG_CHARGE_RAMP_HW) */
 
+#ifdef CONFIG_CHARGER_ISL9238
+	/*
+	 * Don't reread the prog pin and don't reload the ILIM on ACIN.
+	 */
+	if (raw_read16(ISL9238_REG_CONTROL3, &reg))
+		goto init_fail;
+	reg |= ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN |
+		ISL9238_C3_NO_REREAD_PROG_PIN;
+	if (raw_write16(ISL9238_REG_CONTROL3, reg))
+		goto init_fail;
+
+	/*
+	 * Initialize the input current limit to the board's default.
+	 */
+	if (charger_set_input_current(CONFIG_CHARGER_INPUT_CURRENT))
+		goto init_fail;
+#endif /* defined(CONFIG_CHARGER_ISL9238) */
+
 	return;
 init_fail:
 	CPRINTF("isl923x_init failed!");
