@@ -16,22 +16,26 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
-/* Shutdown mode parameter to write to manufacturer access register */
+/*
+ * TODO(philipchen): Check if these parameters are valid for Nautilus battery.
+ *
+ * Shutdown mode parameter to write to manufacturer access register
+ */
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
 #define SB_SHUTDOWN_DATA        0x0010
 
 static const struct battery_info info = {
-	.voltage_max = 13200,
-	.voltage_normal = 11550,
-	.voltage_min = 9100,
+	.voltage_max = 8800,
+	.voltage_normal = 7700,
+	.voltage_min = 6000,
 	/* Pre-charge values. */
-	.precharge_current = 256, /* mA */
+	.precharge_current = 152, /* mA */
 
-	.start_charging_min_c = 0,
-	.start_charging_max_c = 50,
-	.charging_min_c = 0,
-	.charging_max_c = 60,
-	.discharging_min_c = 0,
+	.start_charging_min_c = -5,
+	.start_charging_max_c = 55,
+	.charging_min_c = -5,
+	.charging_max_c = 55,
+	.discharging_min_c = -20,
 	.discharging_max_c = 60,
 };
 
@@ -132,6 +136,7 @@ static int battery_check_disconnect(void)
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
+	/* TODO(philipchen): Verify if Nautilus battery supports this check. */
 	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
 			BATTERY_CHARGING_DISABLED)) ==
 	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
