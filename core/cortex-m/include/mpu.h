@@ -10,6 +10,26 @@
 
 #include "common.h"
 
+/*
+ * Region assignment. 7 as the highest, a higher index has a higher priority.
+ * For example, using 7 for .iram.text allows us to mark entire RAM XN except
+ * .iram.text, which is used for hibernation.
+ * Region assignment is currently wasteful and can be changed if more
+ * regions are needed in the future. For example, a second region may not
+ * be necessary for all types, and REGION_CODE_RAM / REGION_STORAGE can be
+ * made mutually exclusive.
+ */
+enum mpu_region {
+	REGION_DATA_RAM = 0,		/* For internal data RAM */
+	REGION_DATA_RAM2 = 1,		/* Second region for unaligned size */
+	REGION_CODE_RAM = 2,		/* For internal code RAM */
+	REGION_CODE_RAM2 = 3,		/* Second region for unaligned size */
+	REGION_STORAGE = 4,		/* For mapped internal storage */
+	REGION_STORAGE2 = 5,		/* Second region for unaligned size */
+	REGION_DATA_RAM_TEXT = 6,	/* Exempt region of data RAM */
+	REGION_CHIP_RESERVED = 7,	/* Reserved for use in chip/ */
+};
+
 #define MPU_TYPE		REG32(0xe000ed90)
 #define MPU_CTRL		REG32(0xe000ed94)
 #define MPU_NUMBER		REG32(0xe000ed98)
@@ -60,10 +80,15 @@ extern char __iram_text_end;
 /**
  * Protect RAM from code execution
  */
-int mpu_protect_ram(void);
+int mpu_protect_data_ram(void);
 
 /**
- * Protect flash memory from code execution
+ * Protect code RAM from being overwritten
+ */
+int mpu_protect_code_ram(void);
+
+/**
+ * Protect internal mapped flash memory from code execution
  */
 int mpu_lock_ro_flash(void);
 int mpu_lock_rw_flash(void);

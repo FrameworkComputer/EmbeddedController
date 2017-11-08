@@ -41,9 +41,9 @@
 #undef  CONFIG_RAM_BASE
 #define CONFIG_RAM_BASE (0x200C0000 + RAM_SHIFT_SIZE)
 #undef  CONFIG_RAM_SIZE
-#define CONFIG_RAM_SIZE (0x00008000 - 0x800 - RAM_SHIFT_SIZE)
-/* Region sizes are no longer a power of 2 so we can't enable MPU */
-#undef  CONFIG_MPU
+#undef  CONFIG_DATA_RAM_SIZE
+#define CONFIG_DATA_RAM_SIZE (0x00008000 - RAM_SHIFT_SIZE)
+#define CONFIG_RAM_SIZE (CONFIG_DATA_RAM_SIZE - 0x800)
 
 /* Optional features */
 #define CONFIG_BOARD_VERSION
