@@ -57,6 +57,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
+/* TODO(aaboagye): Add the additional Mewoth temps sensors */
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_SOC] = {
 		"SOC", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
@@ -68,6 +69,7 @@ const struct adc_t adc_channels[] = {
 };
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+/* TODO(aaboagye): Add the additional Meowth LEDs */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_RED] =   { 2, PWM_CONFIG_DSLEEP, 100 },
@@ -81,8 +83,8 @@ const struct power_signal_info power_signal_list[] = {
 		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
 		"SLP_S0_DEASSERTED"},
 #ifdef CONFIG_ESPI_VW_SIGNALS
-	{VW_SLP_S3_L,         POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{VW_SLP_S4_L,         POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
+	{VW_SLP_S3_L,	      POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
+	{VW_SLP_S4_L,	      POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
 #else
 	{GPIO_PCH_SLP_S3_L,   POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
 	{GPIO_PCH_SLP_S4_L,   POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
@@ -90,11 +92,14 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PCH_SLP_SUS_L,  POWER_SIGNAL_ACTIVE_HIGH, "SLP_SUS_DEASSERTED"},
 	{GPIO_RSMRST_L_PGOOD, POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L_PGOOD"},
 	{GPIO_PMIC_DPWROK,    POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
+#ifdef BOARD_ZOOMBINI
 	{GPIO_PP5000_PGOOD,   POWER_SIGNAL_ACTIVE_HIGH, "PP5000_A_PGOOD"},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* I2C port map. */
+#ifdef BOARD_ZOOMBINI
 const struct i2c_port_t i2c_ports[] = {
 	{"power",   I2C_PORT_POWER,  100, GPIO_I2C0_SCL,  GPIO_I2C0_SDA},
 	{"pmic",    I2C_PORT_PMIC,   400, GPIO_I2C3_SCL,  GPIO_I2C3_SDA},
@@ -103,20 +108,33 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_TCPC1_SCL,  GPIO_TCPC1_SDA},
 	{"tcpc2",   I2C_PORT_TCPC2, 1000, GPIO_TCPC2_SCL,  GPIO_TCPC2_SDA},
 };
+#else
+const struct i2c_port_t i2c_ports[] = {
+	{"battery", I2C_PORT_BATTERY,  100, GPIO_I2C0_SCL,  GPIO_I2C0_SDA},
+	{"charger", I2C_PORT_CHARGER,  100, GPIO_I2C4_SCL,  GPIO_I2C4_SDA},
+	{"pmic",    I2C_PORT_PMIC,   400, GPIO_I2C3_SCL,  GPIO_I2C3_SDA},
+	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_I2C7_SCL,  GPIO_I2C7_SDA},
+	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_TCPC0_SCL,  GPIO_TCPC0_SDA},
+	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_TCPC1_SCL,  GPIO_TCPC1_SDA},
+};
+#endif
+
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* TODO(aaboagye): Add the other ports. */
+/* TODO(aaboagye): Add the other ports. 3 for Zoombini, 2 for Meowth */
 const struct sn5s330_config sn5s330_chips[] = {
 	{I2C_PORT_TCPC0, SN5S330_ADDR0},
 };
 const unsigned int sn5s330_cnt = ARRAY_SIZE(sn5s330_chips);
 
-
+#ifdef BOARD_ZOOMBINI
 /* GPIO to enable/disable the USB Type-A port. */
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_USB_A_5V_EN,
 };
+#endif
 
+#ifdef BOARD_ZOOMBINI
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Extra delay when KSO2 is tied to Cr50. */
@@ -131,6 +149,7 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
+#endif
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{
@@ -147,12 +166,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
 
+#ifdef BOARD_ZOOMBINI
 	{
 		.i2c_host_port = I2C_PORT_TCPC2,
 		.i2c_slave_addr = 0x16,
 		.drv = &tcpci_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
+#endif
 };
 
 /* The port_addr members are PD port numbers, not I2C port numbers. */
@@ -169,37 +190,50 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 
+#ifdef BOARD_ZOOMBINI
 	{
 		.port_addr = 2,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
+#endif
 };
 
 static void board_chipset_startup(void)
 {
+#ifdef BOARD_ZOOMBINI
 	/* Enable trackpad. */
 	gpio_set_level(GPIO_EN_PP3300_TRACKPAD, 1);
+#endif
+	/* TODO(aaboagye): Remove Trackpad function in P1 - moved to AP */
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_shutdown(void)
 {
+#ifdef BOARD_ZOOMBINI
 	/* Disable trackpad. */
 	gpio_set_level(GPIO_EN_PP3300_TRACKPAD, 0);
+#endif
+	/* TODO(aaboagye): Remove Trackpad function in P1 - moved to AP */
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 static void board_init(void)
 {
+#ifdef BOARD_ZOOMBINI
 	struct charge_port_info chg;
 	int i;
+#endif
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
+#ifdef BOARD_ZOOMBINI
 	gpio_enable_interrupt(GPIO_USB_C2_PD_INT_L);
+#endif
 
+#ifdef BOARD_ZOOMBINI
 	/* Initialize VBUS suppliers. */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		if (tcpm_get_vbus_level(i)) {
@@ -211,6 +245,7 @@ static void board_init(void)
 		}
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, i, &chg);
 	}
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -263,6 +298,7 @@ int board_set_active_charge_port(int port)
 
 	CPRINTS("New chg p%d", port);
 
+#ifdef BOARD_ZOOMBINI
 	if (port == CHARGE_PORT_NONE) {
 		/* Disable all ports. */
 		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
@@ -283,6 +319,13 @@ int board_set_active_charge_port(int port)
 	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, port != 0);
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, port != 1);
 	gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, port != 2);
+
+#endif
+	/*
+	 * TODO(aaboagye): Remove manual charge enabling on P1 -
+	 *  switched to sn5s330
+	 */
+
 
 	/*
 	 * Turn on the PP2 FET such that power actually flows and turn off the
@@ -320,8 +363,10 @@ uint16_t tcpc_get_alert_status(void)
 		status |= PD_STATUS_TCPC_ALERT_0;
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_1;
+#ifdef BOARD_ZOOMBINI
 	if (!gpio_get_level(GPIO_USB_C2_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_2;
+#endif
 
 	return status;
 }

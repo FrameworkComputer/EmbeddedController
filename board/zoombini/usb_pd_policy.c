@@ -104,6 +104,7 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_power_supply_reset(int port)
 {
+#ifdef BOARD_ZOOMBINI
 	/* Disable VBUS. */
 	switch (port) {
 	case 0:
@@ -121,6 +122,9 @@ void pd_power_supply_reset(int port)
 	default:
 		return;
 	};
+#else
+	/*TODO(aaboagye): Implement sn5s330 PPC for both Zoombini and Meowth */
+#endif
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -128,6 +132,7 @@ void pd_power_supply_reset(int port)
 
 int pd_set_power_supply_ready(int port)
 {
+#ifdef BOARD_ZOOMBINI
 	switch (port) {
 	case 0:
 		/* Disable charging. */
@@ -159,6 +164,9 @@ int pd_set_power_supply_ready(int port)
 	default:
 		break;
 	};
+#else
+	/*TODO(aaboagye): Implement sn5s330 PPC for both Zoombini and Meowth */
+#endif
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -299,8 +307,8 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
 	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
-				1,             /* DPv1.3 signaling */
-				2);            /* UFP connected */
+				1,	       /* DPv1.3 signaling */
+				2);	       /* UFP connected */
 	return 2;
 };
 
