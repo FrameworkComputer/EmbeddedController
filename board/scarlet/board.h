@@ -83,7 +83,6 @@
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
-#define CONFIG_BARO_BMP280
 
 /* To be able to indicate the device is in tablet mode. */
 #define CONFIG_TABLET_MODE_SWITCH
@@ -91,9 +90,6 @@
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 256
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
-
-/* Sensors without hardware FIFO are in forced mode. */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_BARO)
 
 /* USB PD config */
 #define CONFIG_CHARGE_MANAGER
@@ -207,7 +203,6 @@ enum power_signal {
 enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
-	LID_BARO,
 };
 
 #include "gpio_signal.h"

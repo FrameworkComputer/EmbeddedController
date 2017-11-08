@@ -59,7 +59,6 @@ GPIO(I2C1_SDA,             PIN(B, 11), GPIO_INPUT)
 GPIO(BOARD_ID,             PIN(C, 0),  GPIO_ANALOG)
 
 /* SPI sensors */
-GPIO(SPI_BARO_CS_L,        PIN(B, 12), GPIO_OUT_HIGH)
 GPIO(SPI_ACCEL_CS_L,       PIN(D, 0),  GPIO_OUT_HIGH)
 
 /* Scarlet LEDs */

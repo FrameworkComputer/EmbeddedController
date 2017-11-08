@@ -16,7 +16,6 @@
 #include "ec_commands.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/charger/rt946x.h"
-#include "driver/baro_bmp280.h"
 #include "driver/tcpm/fusb302.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "extpower.h"
@@ -120,7 +119,6 @@ BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI_ACCEL_CS_L },
-	{ CONFIG_SPI_ACCEL_PORT, 1, GPIO_SPI_BARO_CS_L },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -368,8 +366,6 @@ const matrix_3x3_t base_standard_ref = {
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
-static struct bmp280_drv_data_t bmp280_drv_data;
-
 struct motion_sensor_t motion_sensors[] = {
 	/*
 	 * Note: bmi160: supports accelerometer and gyro sensor
@@ -449,42 +445,6 @@ struct motion_sensor_t motion_sensors[] = {
 		 [SENSOR_CONFIG_EC_S5] = {
 			 .odr = 0,
 			 .ec_rate = 0,
-		 },
-	 },
-	},
-	[LID_BARO] = {
-	 .name = "Baro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMP280,
-	 .type = MOTIONSENSE_TYPE_BARO,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmp280_drv,
-	 .drv_data = &bmp280_drv_data,
-	 .port = CONFIG_SPI_ACCEL_PORT,
-	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
-	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
-	 .min_frequency = BMP280_BARO_MIN_FREQ,
-	 .max_frequency = BMP280_BARO_MAX_FREQ,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
 		 },
 	 },
 	},
