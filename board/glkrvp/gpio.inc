@@ -42,8 +42,10 @@ GPIO(SMC_SHUTDOWN,	PIN(3, 3), GPIO_OUT_LOW | GPIO_PULL_DOWN)	/* A_RAIL_EN */
  * normally driven by the PMIC. The EC can also drive this signal in the event
  * that the ambient or charger temperature sensors exceeds their thresholds.
  */
-GPIO(CPU_PROCHOT,	PIN(A, 3), GPIO_INPUT)			/* PCH_PROCHOT_ODL */
-GPIO(EC_PCH_RTCRST,	PIN(B, 7), GPIO_INPUT)			/* EC_PCH_RTCRST TODO: Not used yet */
+GPIO(CPU_PROCHOT,	PIN(A, 3), GPIO_INPUT)		/* PCH_PROCHOT_ODL */
+GPIO(EC_PCH_RTCRST,	PIN(B, 7), GPIO_INPUT)		/* EC_PCH_RTCRST TODO: Not used yet */
+
+GPIO(DC_JACK_PRESENT_L,	PIN(7, 0), GPIO_INPUT)		/* DC Jack presence coming from +V3P3_A_KBC */
 
 /*
  * I2C pins should be configured as inputs until I2C module is
@@ -75,7 +77,6 @@ GPIO(NC_60,	PIN(6, 0), GPIO_INPUT)
 GPIO(NC_61,	PIN(6, 1), GPIO_INPUT)
 GPIO(NC_67,	PIN(6, 7), GPIO_INPUT)
 
-GPIO(NC_70,	PIN(7, 0), GPIO_INPUT)
 GPIO(NC_71,	PIN(7, 1), GPIO_INPUT)
 GPIO(NC_73,	PIN(7, 3), GPIO_INPUT)
 GPIO(NC_74,	PIN(7, 4), GPIO_INPUT)

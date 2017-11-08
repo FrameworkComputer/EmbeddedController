@@ -61,7 +61,20 @@ static const struct battery_info batt_info_smp_ca445 = {
 
 const struct battery_info *battery_get_info(void)
 {
-	return &batt_info_smp_ca445;
+	static struct battery_info batt_info;
+
+	if (battery_is_present() == BP_YES)
+		return &batt_info_smp_ca445;
+
+	/*
+	 * In no battery condition, to avoid voltage drop on VBATA set
+	 * the battery minimum voltage to the battery maximum voltage.
+	 */
+
+	batt_info = batt_info_smp_ca445;
+	batt_info.voltage_min = batt_info.voltage_max;
+
+	return &batt_info;
 }
 
 static const struct fast_charge_profile fast_charge_smp_ca445_info[] = {

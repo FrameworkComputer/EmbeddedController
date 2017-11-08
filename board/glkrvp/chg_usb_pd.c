@@ -24,6 +24,12 @@
 #define PTN5110_EXT_GPIO_EN_SNK1		(1 << 4)
 #define PTN5110_EXT_GPIO_IILIM_5V_VBUS_L	(1 << 3)
 
+enum glkrvp_charge_ports {
+	TYPE_C_PORT_0,
+	TYPE_C_PORT_1,
+	DC_JACK_PORT_0,
+};
+
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{NPCX_I2C_PORT0_1, 0xA0, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
 	{NPCX_I2C_PORT0_1, 0xA4, &tcpci_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
@@ -129,11 +135,54 @@ void board_reset_pd_mcu(void)
 	/* TODO: Add reset logic */
 }
 
+static inline int board_dc_jack_present(void)
+{
+	return !gpio_get_level(GPIO_DC_JACK_PRESENT_L);
+}
+
+static void board_dc_jack_handle(void)
+{
+	struct charge_port_info charge_dc_jack;
+
+	/* System is booted from DC Jack */
+	if (board_dc_jack_present()) {
+		charge_dc_jack.current = (PD_MAX_POWER_MW * 1000) /
+					DC_JACK_MAX_VOLTAGE_MV;
+		charge_dc_jack.voltage = DC_JACK_MAX_VOLTAGE_MV;
+	} else {
+		charge_dc_jack.current = 0;
+		charge_dc_jack.voltage = USB_CHARGER_VOLTAGE_MV;
+	}
+
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				DC_JACK_PORT_0, &charge_dc_jack);
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_dc_jack_handle, HOOK_PRIO_FIRST);
+
+static void board_charge_init(void)
+{
+	int port, supplier;
+	struct charge_port_info charge_init = {
+		.current = 0,
+		.voltage = USB_CHARGER_VOLTAGE_MV,
+	};
+
+	/* Initialize all charge suppliers to seed the charge manager */
+	for (port = 0; port < CHARGE_PORT_COUNT; port++) {
+		for (supplier = 0; supplier < CHARGE_SUPPLIER_COUNT; supplier++)
+			charge_manager_update_charge(supplier, port,
+				&charge_init);
+	}
+
+	board_dc_jack_handle();
+}
+DECLARE_HOOK(HOOK_INIT, board_charge_init, HOOK_PRIO_DEFAULT);
+
 int board_set_active_charge_port(int port)
 {
 	/* charge port is a realy physical port */
 	int is_real_port = (port >= 0 &&
-			port < CONFIG_USB_PD_PORT_COUNT);
+			port < CHARGE_PORT_COUNT);
 	/* check if we are source vbus on that port */
 	int source = board_charger_port_is_sourcing_vbus(port);
 
@@ -142,16 +191,33 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_INVAL;
 	}
 
-	CPRINTS("New chg p%d", port);
+	/*
+	 * Do not enable Type-C port if the DC Jack is present.
+	 * When the Type-C is active port, hardware circuit will
+	 * block DC jack from enabling +VADP_OUT.
+	 */
+	if (port != DC_JACK_PORT_0 && board_dc_jack_present()) {
+		CPRINTS("DC Jack present, Skip enable p%d", port);
+		return EC_ERROR_INVAL;
+	}
 
-	if (port != CHARGE_PORT_NONE) {
-		/* Make sure non-charging port is disabled */
-		board_charging_enable(port, 1);
-		board_charging_enable(!port, 0);
-	} else {
-		/* Disable both ports */
-		board_charging_enable(0, 0);
-		board_charging_enable(1, 0);
+	/* Make sure non-charging port is disabled */
+	switch (port) {
+	case TYPE_C_PORT_0:
+		board_charging_enable(TYPE_C_PORT_1, 0);
+		board_charging_enable(TYPE_C_PORT_0, 1);
+		break;
+	case TYPE_C_PORT_1:
+		board_charging_enable(TYPE_C_PORT_0, 0);
+		board_charging_enable(TYPE_C_PORT_1, 1);
+		break;
+	case DC_JACK_PORT_0:
+	case CHARGE_PORT_NONE:
+	default:
+		/* Disable both Type-C ports */
+		board_charging_enable(TYPE_C_PORT_0, 0);
+		board_charging_enable(TYPE_C_PORT_1, 0);
+		break;
 	}
 
 	return EC_SUCCESS;
