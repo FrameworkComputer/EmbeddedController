@@ -25,29 +25,6 @@
 
 void system_mpu_config(void)
 {
-	/* Enable MPU */
-	CPU_MPU_CTRL = 0x7;
-
-	/* Create a new MPU Region for data ram */
-	CPU_MPU_RNR  = 0;                         /* Select region number 0 */
-	CPU_MPU_RASR = CPU_MPU_RASR & 0xFFFFFFFE; /* Disable region */
-	CPU_MPU_RBAR = CONFIG_RAM_BASE;           /* Set region base address */
-	/*
-	 * Set region size & attribute and enable region
-	 * [31:29] - Reserved.
-	 * [28]    - XN (Execute Never) = 1
-	 * [27]    - Reserved.
-	 * [26:24] - AP                 = 011 (Full access)
-	 * [23:22] - Reserved.
-	 * [21:19,18,17,16] - TEX,S,C,B = 001000 (Normal memory)
-	 * [15:8]  - SRD                = 0 (Subregions enabled)
-	 * [7:6]   - Reserved.
-	 * [5:1]   - SIZE               = 01111 (64KB in NPCX796F)
-	 * [0]     - ENABLE             = 1 (enabled)
-	 */
-	/* TODO: Add the configurations for the other npcx7 series. */
-	CPU_MPU_RASR = 0x1308001F;
-
 }
 
 #ifdef CONFIG_HIBERNATE_PSL
