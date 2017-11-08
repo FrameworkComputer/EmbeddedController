@@ -8,8 +8,9 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
-GPIO_INT(DP_HPD,       PIN(A, 0),  GPIO_INT_BOTH, hpd_event)
-GPIO_INT(CHARGER_INT,  PIN(C, 13), GPIO_INT_FALLING, sy21612_int)
+GPIO_INT(DP_HPD,           PIN(A, 0),  GPIO_INT_BOTH, hpd_event)
+GPIO_INT(CHARGER_INT,      PIN(C, 13), GPIO_INT_FALLING, sy21612_int)
+GPIO_INT(USB_C_VBUS_DET_L, PIN(C, 14), GPIO_INT_BOTH, vbus_event)
 
 GPIO(USB_C_CC1_PD,     PIN(A, 1),  GPIO_ANALOG)
 GPIO(VBUS_DIV4_MON,    PIN(A, 2),  GPIO_ANALOG)
@@ -35,7 +36,6 @@ GPIO(I2C0_SDA,         PIN(B, 7),  GPIO_INPUT)
 GPIO(LED_ORANGE,       PIN(B, 9),  GPIO_OUT_LOW)
 GPIO(PD_MCDP_SPI_CS_L, PIN(B, 12), GPIO_INPUT)
 
-GPIO(USB_C_VBUS_DET_L, PIN(C, 14), GPIO_INPUT)
 GPIO(AC_PRESENT_L,     PIN(C, 15), GPIO_INPUT)
 
 GPIO(EN_PP5000,        PIN(F,  0), GPIO_OUT_HIGH)

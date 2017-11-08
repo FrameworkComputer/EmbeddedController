@@ -83,19 +83,25 @@ void pd_transition_voltage(int idx)
 
 int pd_set_power_supply_ready(int port)
 {
+	/* Turn on DAC and adjust feedback to get 5V output */
+	board_set_usb_output_voltage(5000);
+	/* Enable Vsys to USBC Vbus charging */
 	sy21612_set_sink_mode(1);
-	sy21612_set_vbus_volt(SY21612_VBUS_9V);
 	sy21612_set_adc_mode(1);
 	sy21612_enable_adc(1);
-	sy21612_set_vbus_discharge(1);
+	sy21612_set_vbus_discharge(0);
 	return EC_SUCCESS;
 }
 
 void pd_power_supply_reset(int port)
 {
-	board_set_usb_output_voltage(5000);
+	/* Turn off DAC output */
+	board_set_usb_output_voltage(-1);
+	/* Turn off USBC VBUS output */
 	sy21612_set_sink_mode(0);
+	/* Set boost Vsys output 9V */
 	sy21612_set_vbus_volt(SY21612_VBUS_9V);
+	/* Turn on buck-boost converter ADC */
 	sy21612_set_adc_mode(1);
 	sy21612_enable_adc(1);
 	sy21612_set_vbus_discharge(1);

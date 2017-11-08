@@ -27,6 +27,7 @@ static volatile uint64_t hpd_prev_ts;
 static volatile int hpd_prev_level;
 
 void hpd_event(enum gpio_signal signal);
+void vbus_event(enum gpio_signal signal);
 #include "gpio_list.h"
 
 /* I2C ports */
@@ -102,6 +103,13 @@ void hpd_event(enum gpio_signal signal)
 	hpd_prev_level = level;
 }
 
+/* Proto 0 workaround */
+void vbus_event(enum gpio_signal signal)
+{
+	/* Discharge VBUS on DET_L high */
+	gpio_set_level(GPIO_PD_DISCHARGE, gpio_get_level(signal));
+}
+
 /* USB C VBUS output selection */
 void board_set_usb_output_voltage(int mv)
 {
@@ -111,15 +119,21 @@ void board_set_usb_output_voltage(int mv)
 	int dac_mv;
 	uint32_t dac_val;
 
-	/* vbat = 1.0 * ra/rb + 1.0 - (vdac - 1.0) * ra/rc */
-	dac_mv = 1000 + (1000 * rc / rb) + ((1000 - mv) * rc / ra);
-	if (dac_mv < 0)
-		dac_mv = 0;
+	if (mv >= 0) {
+		/* vbat = 1.0 * ra/rb + 1.0 - (vdac - 1.0) * ra/rc */
+		dac_mv = 1000 + (1000 * rc / rb) + ((1000 - mv) * rc / ra);
+		if (dac_mv < 0)
+			dac_mv = 0;
 
-	/* Set voltage Vout=Vdac with Vref = 3.3v */
-	/* TODO: use Vdda instead */
-	dac_val = dac_mv * 4096 / 3300;
-	STM32_DAC_DHR12RD = dac_val | (dac_val << 16);
+		/* Set voltage Vout=Vdac with Vref = 3.3v */
+		/* TODO: use Vdda instead */
+		dac_val = dac_mv * 4096 / 3300;
+		/* Start DAC channel 2 */
+		STM32_DAC_DHR12RD = dac_val << 16;
+		STM32_DAC_CR = STM32_DAC_CR_EN2;
+	} else {
+		STM32_DAC_CR = 0;
+	}
 }
 
 /* Initialize board. */
@@ -131,8 +145,6 @@ void board_config_pre_init(void)
 	STM32_RCC_APB1ENR |= (1 << 29);
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
-	/* Start DAC channel 1 & 2 */
-	STM32_DAC_CR = STM32_DAC_CR_EN1 | STM32_DAC_CR_EN2;
 	/* Set 5Vsafe Vdac */
 	board_set_usb_output_voltage(5000);
 	/* Remap USART DMA to match the USART driver */
@@ -213,6 +225,10 @@ static void board_init(void)
 	hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
 	hpd_prev_ts = now.val;
 	gpio_enable_interrupt(GPIO_DP_HPD);
+	gpio_enable_interrupt(GPIO_CHARGER_INT);
+	gpio_enable_interrupt(GPIO_USB_C_VBUS_DET_L);
+	/* Set PD_DISCHARGE initial state */
+	gpio_set_level(GPIO_PD_DISCHARGE, gpio_get_level(GPIO_USB_C_VBUS_DET_L));
 
 	/* Delay needed to allow HDMI MCU to boot. */
 	hook_call_deferred(&factory_validation_deferred_data, 200*MSEC);
