@@ -230,23 +230,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 	     board_spi_enable,
 	     MOTION_SENSE_HOOK_PRIO - 1);
 
-/*
- * Don't yank our SPI pins until we know HOOK_INIT has completed, since we
- * do sensor initialization from HOOK_INIT.
- */
-static int hook_init_done;
-
-static void hook_init_last(void)
-{
-	hook_init_done = 1;
-}
-DECLARE_HOOK(HOOK_INIT, hook_init_last, HOOK_PRIO_LAST + 1);
-
 static void board_spi_disable(void)
 {
-	while (!hook_init_done)
-		msleep(10);
-
 	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
 
 	/* Disable clocks to SPI2 module */
