@@ -35,7 +35,6 @@ GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,			usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(3, 3), GPIO_INT_FALLING,			usb1_evt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 6), GPIO_INT_FALLING,			bmi160_interrupt)
 GPIO_INT(BASE_DET_A,		PIN(4, 5), GPIO_INT_BOTH,			base_detect_interrupt)
-GPIO_INT(USB_C0_CABLE_DET,      PIN(D, 2), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
 
 GPIO(PCH_RTCRST,		PIN(2, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC (>= rev4) */
 GPIO(ENABLE_BACKLIGHT,		PIN(2, 6), GPIO_OUT_LOW)			/* Enable Backlight */
@@ -58,6 +57,9 @@ GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
 GPIO(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INPUT)
 #endif
 
+/* NC pins */
+GPIO(GPIOD2_NC,			PIN(D, 2), GPIO_INPUT | GPIO_PULL_UP)
+
 /* Sensor interrupts, not implemented yet */
 GPIO(ALS_INT_L,			PIN(2, 5), GPIO_INPUT)
 
@@ -79,8 +81,8 @@ GPIO(PP3300_DX_BASE,		PIN(1, 1), GPIO_OUT_LOW)
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_0_SCL,		PIN(B, 5), GPIO_INPUT)				/* EC_I2C0_0_USBC_3V3_SCL */
 GPIO(I2C0_0_SDA,		PIN(B, 4), GPIO_INPUT)				/* EC_I2C0_0_USBC_3V3_SDA */
-GPIO(I2C0_1_SCL,		PIN(B, 3), GPIO_INPUT)				/* EC_I2C0_1_3V3_SCL */
-GPIO(I2C0_1_SDA,		PIN(B, 2), GPIO_INPUT)				/* EC_I2C0_1_3V3_SDA */
+GPIO(I2C0_1_SCL,		PIN(B, 3), GPIO_INPUT)				/* EC_I2C0_1_USBC_3V3_SCL */
+GPIO(I2C0_1_SDA,		PIN(B, 2), GPIO_INPUT)				/* EC_I2C0_1_USBC_3V3_SDA */
 GPIO(I2C1_SCL,			PIN(9, 0), GPIO_INPUT)				/* EC_I2C1_3V3_SCL */
 GPIO(I2C1_SDA,			PIN(8, 7), GPIO_INPUT)				/* EC_I2C1_3V3_SDA */
 GPIO(I2C2_SCL,			PIN(9, 2), GPIO_INPUT)				/* EC_I2C2_PMIC_3V3_SCL */
