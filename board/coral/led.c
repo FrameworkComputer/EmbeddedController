@@ -161,13 +161,13 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (brightness[EC_LED_COLOR_BLUE] != 0)
-		led_set_color_battery(GPIO_LED_COLOR_2);
+		led_set_color_battery(LED_COLOR_2);
 	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color_battery(GPIO_LED_COLOR_1);
+		led_set_color_battery(LED_COLOR_1);
 	else if (brightness[EC_LED_COLOR_RED] != 0)
-		led_set_color_battery(GPIO_LED_COLOR_2);
-	else if (brightness[EC_LED_COLOR_RED] != 0)
-		led_set_color_battery(GPIO_LED_COLOR_1);
+		led_set_color_battery(LED_COLOR_2);
+	else if (brightness[EC_LED_COLOR_GREEN] != 0)
+		led_set_color_battery(LED_COLOR_1);
 	else
 		led_set_color_battery(LED_OFF);
 
