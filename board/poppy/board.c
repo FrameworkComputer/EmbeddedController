@@ -536,8 +536,12 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /* ALS instances. Must be in same order as enum als_id. */
 struct als_t als[] = {
-	/* TODO(crosbug.com/p/61098): verify attenuation_factor */
-	{"TI", opt3001_init, opt3001_read_lux, 5},
+	/*
+	 * attenuation_factor is set to 1 because there would be a calibration
+	 * in iio framework of kernel which would be configured in factory
+	 * flow.
+	 */
+	{"TI", opt3001_init, opt3001_read_lux, 1},
 };
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
