@@ -787,6 +787,7 @@ DECLARE_DEFERRED(flash_erase_deferred);
 /*****************************************************************************/
 /* Console commands */
 
+#ifdef CONFIG_CMD_FLASHINFO
 static int command_flash_info(int argc, char **argv)
 {
 	int i, flags;
@@ -855,6 +856,7 @@ static int command_flash_info(int argc, char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(flashinfo, command_flash_info,
 			     NULL,
 			     "Print flash info");
+#endif /* CONFIG_CMD_FLASHINFO */
 
 #ifdef CONFIG_CMD_FLASH
 static int command_flash_erase(int argc, char **argv)
