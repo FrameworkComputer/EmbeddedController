@@ -57,6 +57,8 @@
 #elif defined(CHIP_VARIANT_STM32F03X)
 /* STM32F03x */
 #include "config-stm32f03x.h"
+#elif defined(CHIP_VARIANT_STM32H7X3)
+#include "config-stm32h7x3.h"
 #else
 #error "Unsupported chip variant"
 #endif
@@ -70,7 +72,9 @@
 /* Program is run directly from storage */
 #define CONFIG_MAPPED_STORAGE_BASE CONFIG_PROGRAM_MEMORY_BASE
 
-#if !defined(CHIP_FAMILY_STM32F4) && !defined(CHIP_VARIANT_STM32F09X)
+#if !defined(CHIP_FAMILY_STM32F4) && \
+	!defined(CHIP_FAMILY_STM32H7) && \
+	!defined(CHIP_VARIANT_STM32F09X)
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 #endif

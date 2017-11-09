@@ -16,6 +16,11 @@ else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f3 stm32l4 stm32f4))
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
 CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32h7))
+# STM32FH7xx family has a Cortex-M7 ARM core
+CORE:=cortex-m
+# Allow the full Cortex-M4 instruction set (identical to M7)
+CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 else
 # other STM32 SoCs have a Cortex-M3 ARM core
 CORE:=cortex-m
@@ -25,7 +30,7 @@ endif
 
 # Select between 16-bit and 32-bit timer for clock source
 TIMER_TYPE=$(if $(CONFIG_STM_HWTIMER32),32,)
-DMA_TYPE=$(if $(CHIP_FAMILY_STM32F4),-stm32f4,)
+DMA_TYPE=$(if $(CHIP_FAMILY_STM32F4)$(CHIP_FAMILY_STM32H7),-stm32f4,)
 
 chip-$(CONFIG_DMA)+=dma$(DMA_TYPE).o
 chip-$(CONFIG_COMMON_RUNTIME)+=system.o

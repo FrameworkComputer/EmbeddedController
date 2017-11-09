@@ -232,6 +232,8 @@ static void uart_freq_change(void)
 	 * up from sleep
 	 */
 	freq = 8000000;
+#elif defined(CHIP_FAMILY_STM32H7)
+	freq = 64000000; /* from 64 Mhz HSI */
 #else
 	/* UART clocked from the main clock */
 	freq = clock_get_freq();
@@ -277,6 +279,12 @@ void uart_init(void)
 	STM32_RCC_CFGR3 |= 0x0003;   /* USART1 clock source from HSI(8MHz) */
 #elif (UARTN == 2)
 	STM32_RCC_CFGR3 |= 0x030000; /* USART2 clock source from HSI(8MHz) */
+#endif /* UARTN */
+#elif defined(CHIP_FAMILY_STM32H7) /* Clocked from 64 Mhz HSI */
+#if ((UARTN == 1) || (UARTN == 6))
+	STM32_RCC_D2CCIP2R |= STM32_RCC_D2CCIP2_USART16SEL_HSI;
+#else
+	STM32_RCC_D2CCIP2R |= STM32_RCC_D2CCIP2_USART234578SEL_HSI;
 #endif /* UARTN */
 #elif defined(CHIP_FAMILY_STM32L4)
 	/* USART1 clock source from SYSCLK */

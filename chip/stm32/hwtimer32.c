@@ -73,7 +73,7 @@ void __hw_timer_enable_clock(int n, int enable)
 	 * Mapping of timers to reg/mask is split into a few different ranges,
 	 * some specific to individual chips.
 	 */
-#if defined(CHIP_FAMILY_STM32F0)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32H7)
 	if (n == 1) {
 		reg = &STM32_RCC_APB2ENR;
 		mask = STM32_RCC_PB2_TIM1;
@@ -85,25 +85,28 @@ void __hw_timer_enable_clock(int n, int enable)
 	}
 #endif
 
-#if defined(CHIP_FAMILY_STM32F0)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32H7)
 	if (n >= 15 && n <= 17) {
 		reg = &STM32_RCC_APB2ENR;
 		mask = STM32_RCC_PB2_TIM15 << (n - 15);
 	}
 #endif
 
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
+defined(CHIP_FAMILY_STM32H7)
 	if (n == 14) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM14;
 	}
 #endif
 
-#if defined(CHIP_FAMILY_STM32F3)
+#if defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32H7)
 	if (n == 12 || n == 13) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM12 << (n - 12);
 	}
+#endif
+#if defined(CHIP_FAMILY_STM32F3)
 	if (n == 18) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM18;

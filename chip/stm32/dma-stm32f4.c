@@ -54,6 +54,13 @@ stm32_dma_stream_t *dma_get_channel(enum dma_channel stream)
 	return &dma->stream[stream % STM32_DMAS_COUNT];
 }
 
+#ifdef CHIP_FAMILY_STM32H7
+void dma_select_channel(enum dma_channel channel, uint8_t req)
+{
+	STM2_DMAMUX_CxCR(DMAMUX1, channel) = req;
+}
+#endif
+
 void dma_disable(enum dma_channel ch)
 {
 	stm32_dma_stream_t *stream = dma_get_channel(ch);
