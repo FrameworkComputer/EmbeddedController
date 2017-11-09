@@ -55,7 +55,16 @@ static uint32_t fifo_start;	/* first entry */
 static uint32_t fifo_end;	/* last entry */
 static uint32_t fifo_entries;	/* number of existing entries */
 static struct ec_response_get_next_event fifo[FIFO_DEPTH];
-static struct mutex fifo_mutex;
+/*
+ * Mutex for critical sections of mkbp_fifo_add(), which is called
+ * from various tasks.
+ */
+static struct mutex fifo_add_mutex;
+/*
+ * Mutex for critical sections of fifo_remove(), which is called from the
+ * hostcmd task and from keyboard_clear_buffer().
+ */
+static struct mutex fifo_remove_mutex;
 
 /* Button and switch state. */
 static uint32_t mkbp_button_state;
@@ -111,6 +120,7 @@ static int fifo_remove(uint8_t *buffp)
 {
 	int size;
 
+	mutex_lock(&fifo_remove_mutex);
 	if (!fifo_entries) {
 		/* no entry remaining in FIFO : return last known state */
 		int last = (fifo_start + FIFO_DEPTH - 1) % FIFO_DEPTH;
@@ -118,6 +128,7 @@ static int fifo_remove(uint8_t *buffp)
 		size = get_data_size(fifo[last].event_type);
 
 		memcpy(buffp, &fifo[last].data, size);
+		mutex_unlock(&fifo_remove_mutex);
 
 		/*
 		 * Bail out without changing any FIFO indices and let the
@@ -128,12 +139,15 @@ static int fifo_remove(uint8_t *buffp)
 	}
 
 	/* Return just the event data. */
-	size = get_data_size(fifo[fifo_start].event_type);
-	memcpy(buffp, &fifo[fifo_start].data, size); /* skip over event_type. */
+	if (buffp) {
+		size = get_data_size(fifo[fifo_start].event_type);
+		/* skip over event_type. */
+		memcpy(buffp, &fifo[fifo_start].data, size);
+	}
 
 	fifo_start = (fifo_start + 1) % FIFO_DEPTH;
-
 	atomic_sub(&fifo_entries, 1);
+	mutex_unlock(&fifo_remove_mutex);
 
 	return EC_SUCCESS;
 }
@@ -152,11 +166,22 @@ void mkbp_clear_fifo(void)
 
 	CPRINTS("clear MKBP fifo");
 
+	/*
+	 * Order of these locks is important to prevent deadlock since
+	 * mkbp_fifo_add() may call fifo_remove().
+	 */
+	mutex_lock(&fifo_add_mutex);
+	mutex_lock(&fifo_remove_mutex);
+
 	fifo_start = 0;
 	fifo_end = 0;
+	/* This assignment is safe since both mutexes are held. */
 	fifo_entries = 0;
 	for (i = 0; i < FIFO_DEPTH; i++)
 		memset(&fifo[i], 0, sizeof(struct ec_response_get_next_event));
+
+	mutex_unlock(&fifo_remove_mutex);
+	mutex_unlock(&fifo_add_mutex);
 }
 
 test_mockable int keyboard_fifo_add(const uint8_t *buffp)
@@ -176,7 +201,9 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	    (event_type == EC_MKBP_EVENT_KEY_MATRIX))
 		return EC_SUCCESS;
 
+	mutex_lock(&fifo_add_mutex);
 	if (fifo_entries >= config.fifo_max_depth) {
+		mutex_unlock(&fifo_add_mutex);
 		CPRINTS("MKBP common FIFO depth %d reached",
 			config.fifo_max_depth);
 
@@ -184,7 +211,6 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	}
 
 	size = get_data_size(event_type);
-	mutex_lock(&fifo_mutex);
 	fifo[fifo_end].event_type = event_type;
 	memcpy(&fifo[fifo_end].data, buffp, size);
 	fifo_end = (fifo_end + 1) % FIFO_DEPTH;
@@ -196,9 +222,9 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	 * another event just woke the host (and wake is already in progress).
 	 */
 	if (!mkbp_send_event(event_type) && fifo_entries == 1)
-		mkbp_clear_fifo();
+		fifo_remove(NULL);
 
-	mutex_unlock(&fifo_mutex);
+	mutex_unlock(&fifo_add_mutex);
 	return EC_SUCCESS;
 }
 
