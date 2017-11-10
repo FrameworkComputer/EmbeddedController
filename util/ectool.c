@@ -1624,7 +1624,7 @@ int cmd_temperature(int argc, char *argv[])
 					id);
 				break;
 			default:
-				printf("%d: %d\n", id,
+				printf("%d: %d K\n", id,
 				       rv + EC_TEMP_SENSOR_OFFSET);
 			}
 		}
@@ -1660,7 +1660,7 @@ int cmd_temperature(int argc, char *argv[])
 		fprintf(stderr, "Sensor not calibrated\n");
 		return -1;
 	default:
-		printf("%d\n", rv + EC_TEMP_SENSOR_OFFSET);
+		printf("%d K\n", rv + EC_TEMP_SENSOR_OFFSET);
 		return 0;
 	}
 }
