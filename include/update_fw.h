@@ -165,6 +165,7 @@ enum update_extra_command {
 	UPDATE_EXTRA_CMD_INJECT_ENTROPY = 5,
 	UPDATE_EXTRA_CMD_PAIR_CHALLENGE = 6,
 	UPDATE_EXTRA_CMD_TOUCHPAD_INFO = 7,
+	UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG = 8,
 };
 
 /*
@@ -246,6 +247,23 @@ int touchpad_get_info(struct touchpad_info *tp);
 
 /* Touchpad FW update: Write a FW block. */
 int touchpad_update_write(int offset, int size, const uint8_t *data);
+
+/**
+ * Touchpad debugging interface, called whenever UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG
+ * is received. Behaviour is touchpad-vendor dependent, with the following
+ * restrictions: data must be allocated statically, and must not be larger than
+ * 64 bytes.
+ *
+ * @param param        Data passed as parameter to command.
+ * @param param_size   Number of bytes passed as parameter.
+ * @param data         Data to write back to host, needs to be allocated
+ *                     statically by touchpad handler.
+ * @param data_size    Amount of data to write back to host (up to 64 bytes).
+ *
+ * @return EC_RES_SUCCESS on success, any other EC_RES_* status on error.
+ */
+int touchpad_debug(const uint8_t *param, unsigned int param_size,
+		   uint8_t **data, unsigned int *data_size);
 
 /* SHA256 hash of the touchpad firmware expected by this image. */
 extern const uint8_t touchpad_fw_full_hash[32];

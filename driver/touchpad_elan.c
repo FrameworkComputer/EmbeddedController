@@ -505,6 +505,13 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 	}
 	return EC_SUCCESS;
 }
+
+/* TODO(b:63993891): Implement debugging mode for Elan touchpad. */
+int touchpad_debug(const uint8_t *param, unsigned int param_size,
+		   uint8_t **data, unsigned int *data_size)
+{
+	return EC_RES_INVALID_COMMAND;
+}
 #endif
 
 void elan_tp_interrupt(enum gpio_signal signal)

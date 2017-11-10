@@ -326,6 +326,31 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 					&tp, response_size);
 			return 1;
 		}
+		case UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG: {
+			uint8_t *data = NULL;
+			unsigned int write_count = 0;
+
+			/*
+			 * Let the touchpad driver decide what it wants to do
+			 * with the payload data, and put the response in data.
+			 */
+			response = touchpad_debug(buffer + header_size,
+					data_count, &data, &write_count);
+
+			/*
+			 * On error, or if there is no data to write back, just
+			 * write back response.
+			 */
+			if (response != EC_RES_SUCCESS || write_count == 0)
+				break;
+
+			/* Check that we can write all the data to the queue. */
+			if (write_count > queue_space(&update_to_usb))
+				return EC_RES_BUSY;
+
+			QUEUE_ADD_UNITS(&update_to_usb, data, write_count);
+			return 1;
+		}
 #endif
 		default:
 			response = EC_RES_INVALID_COMMAND;
