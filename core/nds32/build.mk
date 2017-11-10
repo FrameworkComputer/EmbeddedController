@@ -6,8 +6,11 @@
 # Andestar v3m architecture core OS files build
 #
 
+# Set coreboot-sdk as the default toolchain for nds32
+NDS32_DEFAULT_COMPILE=/opt/coreboot-sdk/bin/nds32le-elf-
+
 # Select Andes bare-metal toolchain
-$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_nds32),nds32le-cros-elf-)
+$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_nds32),$(NDS32_DEFAULT_COMPILE))
 
 # CPU specific compilation flags
 CFLAGS_CPU+=-march=v3m -Os
