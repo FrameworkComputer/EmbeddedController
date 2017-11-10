@@ -121,7 +121,7 @@ GPIO(USB1_ENABLE,		PIN(0, 0), GPIO_OUT_HIGH)
 GPIO(EN_USB_TCPC_PWR,		PIN(C, 3), GPIO_OUT_LOW)
 
 GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_OUT_LOW)		/* USB_C0_PD_RST_L */
-GPIO(USB_C1_PD_RST_ODL,		PIN(7, 4), GPIO_ODR_LOW)
+GPIO(USB_C1_PD_RST_ODL,		PIN(7, 4), GPIO_ODR_HIGH)
 
 /*
  * Configure as input to enable @ 1.5A, output-low to turn off, or output-high
