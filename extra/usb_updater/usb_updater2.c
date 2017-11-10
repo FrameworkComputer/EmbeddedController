@@ -72,13 +72,14 @@ static struct first_response_pdu targ;
 static uint16_t protocol_version;
 static uint16_t header_type;
 static char *progname;
-static char *short_opts = "bd:efhjp:rstuw";
+static char *short_opts = "bd:efg:hjp:rstuw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	1,   NULL, 'b'},
 	{"device",	1,   NULL, 'd'},
 	{"entropy",	0,   NULL, 'e'},
 	{"fwver",	0,   NULL, 'f'},
+	{"tp_debug",	1,   NULL, 'g'},
 	{"help",	0,   NULL, 'h'},
 	{"jump_to_rw",	0,   NULL, 'j'},
 	{"tp_update",	1,   NULL, 'p'},
@@ -111,6 +112,7 @@ static void usage(int errs)
 				"RW and RO, do not update\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions.\n"
+	       "  -g,--tp_debug <hex data> Touchpad debug command\n"
 	       "  -h,--help                Show this message\n"
 	       "  -e,--entropy             Add entropy to device secret\n"
 	       "  -j,--jump_to_rw          Tell EC to jump to RW\n"
@@ -123,6 +125,52 @@ static void usage(int errs)
 	       "\n", progname, VID, PID);
 
 	exit(errs ? update_error : noop);
+}
+
+static void str2hex(const char *str, uint8_t *data, int *len)
+{
+	int i;
+	int slen = strlen(str);
+
+	if (slen/2 > *len) {
+		fprintf(stderr, "Hex string too long.\n");
+		exit(update_error);
+	}
+
+	if (slen % 2 != 0) {
+		fprintf(stderr, "Hex string length not a multiple of 2.\n");
+		exit(update_error);
+	}
+
+	for (i = 0, *len = 0; i < slen; i += 2, (*len)++) {
+		char *end;
+		char tmp[3];
+
+		tmp[0] = str[i];
+		tmp[1] = str[i+1];
+		tmp[2] = 0;
+
+		data[*len] = strtol(tmp, &end, 16);
+
+		if (*end != 0) {
+			fprintf(stderr, "Invalid hex string.\n");
+			exit(update_error);
+		}
+	}
+}
+
+static void hexdump(const uint8_t *data, int len)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		printf("%02x", data[i]);
+		if ((i % 16) == 15)
+			printf("\n");
+	}
+
+	if ((len % 16) != 0)
+		printf("\n");
 }
 
 /* Read file into buffer */
@@ -210,6 +258,7 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		if ((actual != inlen) && !allow_less) {
 			fprintf(stderr, "%s:%d, only received %d/%d bytes\n",
 				__FILE__, __LINE__, actual, inlen);
+			hexdump(inbuf, actual);
 			shut_down(uep);
 		}
 
@@ -853,20 +902,6 @@ static void get_random(uint8_t *data, int len)
 	fclose(fp);
 }
 
-static void hexdump(const uint8_t *data, int len)
-{
-	int i;
-
-	for (i = 0; i < len; i++) {
-		printf("%02x", data[i]);
-		if ((i % 16) == 15)
-			printf("\n");
-	}
-
-	if ((len % 16) != 0)
-		printf("\n");
-}
-
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -910,6 +945,15 @@ int main(int argc, char *argv[])
 			break;
 		case 'f':
 			show_fw_ver = 1;
+			break;
+		case 'g':
+			extra_command = UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG;
+			/* Maximum length. */
+			extra_command_data_len = 32;
+			str2hex(optarg,
+				extra_command_data, &extra_command_data_len);
+			hexdump(extra_command_data, extra_command_data_len);
+			extra_command_answer_len = 64;
 			break;
 		case 'h':
 			usage(errorcnt);
@@ -1021,7 +1065,8 @@ int main(int argc, char *argv[])
 				extra_command_data, extra_command_data_len,
 				extra_command_answer, extra_command_answer_len);
 
-		if (extra_command == UPDATE_EXTRA_CMD_TOUCHPAD_INFO)
+		if (extra_command == UPDATE_EXTRA_CMD_TOUCHPAD_INFO ||
+			extra_command == UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG)
 			hexdump(extra_command_answer, extra_command_answer_len);
 	}
 
