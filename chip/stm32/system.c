@@ -199,6 +199,9 @@ void chip_pre_init(void)
 		STM32_RCC_PB1_TIM7 | STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
 	apb2fz_reg = STM32_RCC_PB2_TIM15 | STM32_RCC_PB2_TIM16 |
 		STM32_RCC_PB2_TIM17 | STM32_RCC_PB2_TIM1;
+
+	/* enable clock to debug module before writing */
+	STM32_RCC_APB2ENR |= STM32_RCC_DBGMCUEN;
 #elif defined(CHIP_FAMILY_STM32F3)
 	apb1fz_reg =
 		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
