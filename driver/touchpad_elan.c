@@ -5,13 +5,13 @@
 
 #include "common.h"
 #include "console.h"
-#include "touchpad_elan.h"
 #include "gpio.h"
 #include "hwtimer.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
+#include "touchpad.h"
 #include "update_fw.h"
 #include "util.h"
 #include "usb_hid_touchpad.h"
@@ -514,14 +514,14 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 }
 #endif
 
-void elan_tp_interrupt(enum gpio_signal signal)
+void touchpad_interrupt(enum gpio_signal signal)
 {
 	irq_ts = __hw_clock_source_read();
 
 	task_wake(TASK_ID_TOUCHPAD);
 }
 
-void elan_tp_task(void *u)
+void touchpad_task(void *u)
 {
 	elan_tp_init();
 

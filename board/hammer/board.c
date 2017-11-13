@@ -6,7 +6,7 @@
 
 #include "common.h"
 #include "ec_version.h"
-#include "touchpad_elan.h"
+#include "touchpad.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"

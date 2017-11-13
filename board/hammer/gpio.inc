@@ -8,11 +8,13 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+#ifdef SECTION_IS_RW
 #ifdef BOARD_WHISKERS
-GPIO_INT(TOUCHPAD_INT, PIN(B, 9), GPIO_INT_FALLING, elan_tp_interrupt)
+GPIO_INT(TOUCHPAD_INT, PIN(B, 9), GPIO_INT_FALLING, touchpad_interrupt)
 #else
-GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, elan_tp_interrupt)
+GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, touchpad_interrupt)
 #endif
+#endif /* SECTION_IS_RW */
 
 /* Keyboard inputs */
 #define GPIO_KB_INPUT  (GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH)
