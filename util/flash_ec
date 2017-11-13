@@ -70,6 +70,7 @@ BOARDS_STM32=(
 	oak_pd
 	pit
 	plankton
+	rainier
 	samus_pd
 	scarlet
 	staff
