@@ -3,6 +3,7 @@
   "board": "servo v4",
   "vid": "0x18d1",
   "pid": "0x501b",
+  "console": "0",
   "Comment on flash": "This is the base address of writeable flash",
   "flash": "0x8000000",
   "Comment on region format": "name: [baseoffset, length]",

@@ -33,7 +33,7 @@ def flash(brdfile, serialno, binfile):
   p.stop()
 
 
-def select(vidpid, serialno, region, debuglog=False):
+def select(vidpid, iface, serialno, region, debuglog=False):
   if region not in ["rw", "ro"]:
     raise Exception("Region must be ro or rw")
 
@@ -41,7 +41,8 @@ def select(vidpid, serialno, region, debuglog=False):
   c.wait_for_usb(vidpid, serialname=serialno)
 
   # make a console
-  pty = c.setup_tinyservod(vidpid, 0, serialname=serialno, debuglog=debuglog)
+  pty = c.setup_tinyservod(vidpid, iface,
+            serialname=serialno, debuglog=debuglog)
 
   cmd = "sysjump %s\nreboot" % region
   pty._issue_cmd(cmd)
@@ -71,12 +72,13 @@ def main():
       data = json.load(data_file)
 
   vidpid = "%04x:%04x" % (int(data['vid'], 0), int(data['pid'], 0))
+  iface = int(data['console'], 0)
 
-  select(vidpid, serialno, "ro", debuglog=debuglog)
+  select(vidpid, iface, serialno, "ro", debuglog=debuglog)
 
   flash(brdfile, serialno, binfile)
 
-  select(vidpid, serialno, "rw", debuglog=debuglog)
+  select(vidpid, iface, serialno, "rw", debuglog=debuglog)
 
   flash(brdfile, serialno, binfile)
 
