@@ -103,23 +103,11 @@
  */
 #undef CONFIG_ACCEL_STD_REF_FRAME_OLD
 
-/*
- * Define the event to raise when BMI160 interrupt.
- * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
- */
-#undef CONFIG_ACCELGYRO_BMI160_INT_EVENT
-
 /* Set when INT2 is an ouptut */
 #undef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
 
 /* Specify type of Gyrometers attached. */
 #undef CONFIG_GYRO_L3GD20H
-
-/*
- * Define the event to raise when LIS2DH  interrupt.
- * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
- */
-#undef CONFIG_ACCEL_LIS2DH_INT_EVENT
 
 /* Sync event driver */
 #undef CONFIG_SYNC
@@ -176,10 +164,14 @@
 #undef CONFIG_ALS_SI114X
 /* Check if the device revision is supported */
 #undef CONFIG_ALS_SI114X_CHECK_REVISION
+
 /*
- * Define the event to raise when BMI160 interrupt.
+ * Define the event to raise when a sensor interrupt triggers.
  * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
  */
+#undef CONFIG_ACCELGYRO_BMI160_INT_EVENT
+#undef CONFIG_ACCEL_LSM6DSM_INT_EVENT
+#undef CONFIG_ACCEL_LIS2DH_INT_EVENT
 #undef CONFIG_ALS_SI114X_INT_EVENT
 
 /*
