@@ -93,6 +93,8 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
+#define CONFIG_VBOOT_HASH
+
 #ifdef BOARD_ZOOMBINI
 /* USB Type-A Port BC1.2 support */
 #define CONFIG_USB_PORT_POWER_SMART
