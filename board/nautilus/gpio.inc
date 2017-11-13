@@ -95,8 +95,8 @@ GPIO(USB_C0_CHARGE_L,		PIN(C, 0), GPIO_OUT_LOW)			/* C0 Charge enable */
 GPIO(USB_C1_5V_EN,		PIN(B, 1), GPIO_OUT_LOW)			/* C1 5V Enable */
 GPIO(USB_C1_3A_EN,		PIN(3, 5), GPIO_OUT_LOW)			/* C1 3A Enable */
 GPIO(USB_C1_CHARGE_L,		PIN(C, 3), GPIO_OUT_LOW)			/* C1 Charge enable */
-GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_OUT_LOW)			/* C0 PD Reset */
-GPIO(USB_C1_PD_RST_L,		PIN(7, 4), GPIO_OUT_LOW)			/* C1 PD Reset */
+GPIO(USB_C0_PD_RST_L,		PIN(0, 3), GPIO_ODR_HIGH)			/* C0 PD Reset */
+GPIO(USB_C1_PD_RST_L,		PIN(7, 4), GPIO_ODR_HIGH)			/* C1 PD Reset */
 GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */
 GPIO(USB_C1_DP_HPD,		PIN(A, 5), GPIO_INPUT)				/* C1 DP Hotplug Detect */
 GPIO(USB_C0_TCPC_PWR,		PIN(8, 4), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
