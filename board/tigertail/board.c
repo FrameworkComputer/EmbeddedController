@@ -99,8 +99,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 
 /******************************************************************************
- * Support I2C bridging over USB, this requires usb_i2c_board_enable and
- * usb_i2c_board_disable to be defined to enable and disable the SPI bridge.
+ * Support I2C bridging over USB.
  */
 
 /* I2C ports */
@@ -110,8 +109,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int usb_i2c_board_enable(void) {return EC_SUCCESS; }
-void usb_i2c_board_disable(void) {}
 int usb_i2c_board_is_enabled(void) { return 1; }
 
 /******************************************************************************

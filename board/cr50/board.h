@@ -274,6 +274,9 @@ void board_reboot_ap(void);
 int board_wipe_tpm(void);
 int board_is_first_factory_boot(void);
 
+int usb_i2c_board_enable(void);
+void usb_i2c_board_disable(void);
+
 void print_ap_state(void);
 void print_ec_state(void);
 void print_servo_state(void);

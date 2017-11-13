@@ -236,8 +236,7 @@ void usb_spi_board_disable(struct usb_spi_config const *config)
 USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI);
 
 /******************************************************************************
- * Support I2C bridging over USB, this requires usb_i2c_board_enable and
- * usb_i2c_board_disable to be defined to enable and disable the SPI bridge.
+ * Support I2C bridging over USB.
  */
 
 /* I2C ports */

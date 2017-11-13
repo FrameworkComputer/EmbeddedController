@@ -156,18 +156,6 @@ void usb_i2c_deferred(struct usb_i2c_config const *config);
  */
 
 /**
- * Enable the I2C device
- *
- * @return EC_SUCCESS or non-zero error code.
- */
-int usb_i2c_board_enable(void);
-
-/**
- * Disable the I2C device
- */
-void usb_i2c_board_disable(void);
-
-/**
  * Check if the I2C device is enabled
  *
  * @return 1 if enabled, 0 if disabled.

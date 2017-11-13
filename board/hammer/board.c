@@ -54,8 +54,7 @@ const void *const usb_strings[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /******************************************************************************
- * Support I2C bridging over USB, this requires usb_i2c_board_enable and
- * usb_i2c_board_disable to be defined to enable and disable the I2C bridge.
+ * Support I2C bridging over USB.
  */
 
 #ifdef SECTION_IS_RW
@@ -77,9 +76,6 @@ const struct pwm_t pwm_channels[] = {
 	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, KBLIGHT_PWM_FREQ},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-int usb_i2c_board_enable(void) { return EC_SUCCESS; }
-void usb_i2c_board_disable(void) {}
 
 int usb_i2c_board_is_enabled(void)
 {

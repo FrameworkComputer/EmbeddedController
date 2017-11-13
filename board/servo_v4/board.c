@@ -176,8 +176,7 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 
 /******************************************************************************
- * Support I2C bridging over USB, this requires usb_i2c_board_enable and
- * usb_i2c_board_disable to be defined to enable and disable the SPI bridge.
+ * Support I2C bridging over USB.
  */
 
 /* I2C ports */
