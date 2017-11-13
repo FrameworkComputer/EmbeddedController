@@ -373,7 +373,7 @@ static int init(const struct motion_sensor_t *s)
 
 	ret = raw_read8(s->port, s->addr, L3GD20_WHO_AM_I_REG, &tmp);
 	if (ret)
-		return EC_ERROR_UNKNOWN;
+		return ret;
 
 	if (tmp != L3GD20_WHO_AM_I)
 		return EC_ERROR_ACCESS_DENIED;
@@ -381,33 +381,27 @@ static int init(const struct motion_sensor_t *s)
 	/* All axes are enabled */
 	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG1, 0x0f);
 	if (ret)
-		return EC_ERROR_UNKNOWN;
+		return ret;
 
 	mutex_lock(s->mutex);
 	ret = raw_read8(s->port, s->addr, L3GD20_CTRL_REG4, &tmp);
 	if (ret) {
 		mutex_unlock(s->mutex);
-		return EC_ERROR_UNKNOWN;
+		return ret;
 	}
 
 	tmp |= L3GD20_BDU_ENABLE;
 	ret = raw_write8(s->port, s->addr, L3GD20_CTRL_REG4, tmp);
 	mutex_unlock(s->mutex);
 	if (ret)
-		return EC_ERROR_UNKNOWN;
+		return ret;
 
 	/* Config GYRO ODR */
 	ret = set_data_rate(s, s->default_range, 1);
 	if (ret)
-		return EC_ERROR_UNKNOWN;
+		return ret;
 
-	/* Config GYRO Range */
-	ret = set_range(s, s->default_range, 1);
-	if (ret)
-		return EC_ERROR_UNKNOWN;
-
-	sensor_init_done(s, get_range(s));
-	return ret;
+	return sensor_init_done(s);
 }
 
 const struct accelgyro_drv l3gd20h_drv = {

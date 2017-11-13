@@ -322,9 +322,12 @@ static int bmp280_init(const struct motion_sensor_t *s)
 	if (ret)
 		return ret;
 
-	bmp280_set_range(s, s->default_range, 0);
 	/* Read bmp280 calibration parameter */
-	return bmp280_get_calib_param(s);
+	ret = bmp280_get_calib_param(s);
+	if (ret)
+		return ret;
+
+	return sensor_init_done(s);
 }
 
 static int bmp280_read(const struct motion_sensor_t *s, vector_3_t v)

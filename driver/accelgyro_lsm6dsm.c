@@ -325,10 +325,7 @@ static int init(const struct motion_sensor_t *s)
 		mutex_unlock(s->mutex);
 	}
 
-	ret = set_range(s, s->default_range, 1);
-
-	sensor_init_done(s, get_range(s));
-	return ret;
+	return sensor_init_done(s);
 
 err_unlock:
 	mutex_unlock(s->mutex);

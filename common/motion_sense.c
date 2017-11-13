@@ -442,6 +442,27 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
 }
 
 /*
+ * sensor_init_done
+ *
+ * Called by init routine of each sensors when successful.
+ */
+int sensor_init_done(const struct motion_sensor_t *s)
+{
+	int ret;
+
+	ret = s->drv->set_range(s, s->default_range, 0);
+	if (ret == EC_RES_SUCCESS) {
+#ifdef CONFIG_CONSOLE_VERBOSE
+		CPRINTS("%s: MS Done Init type:0x%X range:%d",
+				s->name, s->type, s->drv->get_range(s));
+#else
+		CPRINTS("%c%d InitDone r:%d", s->name[0], s->type,
+				s->drv->get_range(s));
+#endif
+	}
+	return ret;
+}
+/*
  * motion_sense_switch_sensor_rate
  *
  * Suspend all sensors that are not needed.

@@ -1269,7 +1269,6 @@ static int init(const struct motion_sensor_t *s)
 	 * so set data rate to 0.
 	 */
 	data->odr = 0;
-	set_range(s, s->default_range, 0);
 
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
 #ifdef CONFIG_ACCEL_INTERRUPTS
@@ -1277,8 +1276,7 @@ static int init(const struct motion_sensor_t *s)
 #endif
 	}
 
-	sensor_init_done(s, get_range(s));
-	return ret;
+	return sensor_init_done(s);
 }
 
 const struct accelgyro_drv bmi160_drv = {

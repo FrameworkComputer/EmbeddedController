@@ -193,13 +193,13 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 #endif
 
 /**
- * Take actions at end of sensor initialization (currently only printing
- * init done status to console).
+ * Take actions at end of sensor initialization:
+ * - print init done status to console,
+ * - set default range.
  *
  * @param sensor sensor which was just initialized
- * @param range  range of sensor
  */
-void sensor_init_done(const struct motion_sensor_t *sensor, int range);
+int sensor_init_done(const struct motion_sensor_t *sensor);
 
 /**
  * Board specific function that is called when a double_tap event is detected.

@@ -575,10 +575,6 @@ static int init(const struct motion_sensor_t *s)
 	mutex_unlock(s->mutex);
 
 	/* Initialize with the desired parameters. */
-	ret = set_range(s, s->default_range, 1);
-	if (ret != EC_SUCCESS)
-		return ret;
-
 	if (V(s))
 		ret = set_resolution(s, 12, 1);
 	else
@@ -586,10 +582,7 @@ static int init(const struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	sensor_init_done(s, get_range(s));
-
-	mutex_unlock(s->mutex);
-	return ret;
+	return sensor_init_done(s);
 }
 
 const struct accelgyro_drv kionix_accel_drv = {

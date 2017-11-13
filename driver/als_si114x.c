@@ -557,16 +557,13 @@ static int init(const struct motion_sensor_t *s)
 		resol = 5;
 	}
 
-	set_range(s, s->default_range, 0);
 	/*
 	 * Sensor is most likely behind a glass.
 	 * Max out the gain to get correct measurement
 	 */
 	set_resolution(s, resol, 0);
 
-	sensor_init_done(s, get_range(s));
-
-	return EC_SUCCESS;
+	return sensor_init_done(s);
 }
 
 const struct accelgyro_drv si114x_drv = {

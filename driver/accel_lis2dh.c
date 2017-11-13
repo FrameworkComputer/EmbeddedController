@@ -16,6 +16,7 @@
 #include "task.h"
 #include "util.h"
 #include "driver/accel_lis2dh.h"
+#include "driver/stm_mems_common.h"
 
 #ifdef CONFIG_ACCEL_FIFO
 /**
@@ -324,7 +325,7 @@ static int init(const struct motion_sensor_t *s)
 
 	ret = raw_read8(s->port, s->addr, LIS2DH_WHO_AM_I_REG, &tmp);
 	if (ret != EC_SUCCESS)
-		return EC_ERROR_UNKNOWN;
+		return ret;
 
 	if (tmp != LIS2DH_WHO_AM_I)
 		return EC_ERROR_ACCESS_DENIED;
@@ -367,26 +368,22 @@ static int init(const struct motion_sensor_t *s)
 
 	mutex_unlock(s->mutex);
 
-	/* Config initial Acc Range */
-	ret = set_range(s, s->default_range, 0);
-	if (ret != EC_SUCCESS)
-		return ret;
-
 	/* Set default resolution */
 	data->resol = LIS2DH_RESOLUTION;
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	ret = config_interrupt(s);
+	if (ret != EC_SUCCESS)
+		return ret;
 #endif
 
-	sensor_init_done(s, get_range(s));
-	return ret;
+	return sensor_init_done(s);
 
 err_unlock:
 	CPRINTF("[%T %s: MS Init type:0x%X Error]\n", s->name, s->type);
 	mutex_unlock(s->mutex);
 
-	return EC_ERROR_UNKNOWN;
+	return ret;
 }
 
 const struct accelgyro_drv lis2dh_drv = {

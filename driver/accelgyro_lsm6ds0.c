@@ -411,28 +411,15 @@ static int init(const struct motion_sensor_t *s)
 		mutex_unlock(s->mutex);
 
 		if (ret)
-			return EC_ERROR_UNKNOWN;
+			return ret;
 
 		/* Power Down Gyro */
 		ret = raw_write8(s->port, s->addr,
 			LSM6DS0_CTRL_REG1_G, 0x0);
 		if (ret)
-			return EC_ERROR_UNKNOWN;
-
-		ret = set_range(s, s->default_range, 1);
-		if (ret)
-			return EC_ERROR_UNKNOWN;
+			return ret;
 	}
-
-	if (MOTIONSENSE_TYPE_GYRO == s->type) {
-		/* Config GYRO Range */
-		ret = set_range(s, s->default_range, 1);
-		if (ret)
-			return EC_ERROR_UNKNOWN;
-	}
-
-	sensor_init_done(s, get_range(s));
-	return ret;
+	return sensor_init_done(s);
 }
 
 const struct accelgyro_drv lsm6ds0_drv = {

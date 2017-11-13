@@ -8,8 +8,6 @@
 #ifndef __CROS_EC_ACCEL_LIS2DH_H
 #define __CROS_EC_ACCEL_LIS2DH_H
 
-#include "driver/stm_mems_common.h"
-
 #define LIS2DH_I2C_ADDR(__x)	(__x << 1)
 
 /* 7-bit address is 000110Xb. Where 'X' is determined
