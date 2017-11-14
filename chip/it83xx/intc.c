@@ -106,6 +106,15 @@ void intc_cpu_int_group_12(void)
 		peci_interrupt();
 		break;
 #endif
+#ifdef CONFIG_ESPI
+	case IT83XX_IRQ_ESPI:
+		espi_interrupt();
+		break;
+
+	case IT83XX_IRQ_ESPI_VW:
+		espi_vw_interrupt();
+		break;
+#endif
 #ifdef CONFIG_USB_PD_TCPM_ITE83XX
 	case IT83XX_IRQ_USBPD0:
 		chip_pd_irq(USBPD_PORT_A);

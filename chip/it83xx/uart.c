@@ -205,6 +205,12 @@ void uart_deepsleep_interrupt(enum gpio_signal signal)
 
 void uart_init(void)
 {
+	/*
+	 * bit3: uart1 belongs to the EC side.
+	 * This is necessary for enabling eSPI module.
+	 */
+	IT83XX_GCTRL_RSTDMMC |= (1 << 3);
+
 	/* reset uart before config it */
 	IT83XX_GCTRL_RSTC4 |= (1 << 1);
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -37,6 +37,7 @@ enum espi_vw_signal {
 	VW_SLP_A_L,
 	VW_SLP_LAN,                     /* index 42h (In)  */
 	VW_SLP_WLAN,
+	VW_SIGNAL_BASE_END,
 };
 
 /**

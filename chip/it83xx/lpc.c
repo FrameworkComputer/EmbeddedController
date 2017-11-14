@@ -11,9 +11,11 @@
 #include "common.h"
 #include "console.h"
 #include "ec2i_chip.h"
+#include "espi.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "intc.h"
 #include "irq_chip.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
@@ -363,10 +365,12 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 	pm_set_status(LPC_ACPI_CMD, mask, 0);
 }
 
+#ifndef CONFIG_ESPI_VW_SIGNALS
 int lpc_get_pltrst_asserted(void)
 {
 	return !gpio_get_level(GPIO_PCH_PLTRST_L);
 }
+#endif
 
 /* KBC and PMC control modules */
 void lpc_kbc_ibf_interrupt(void)
@@ -663,7 +667,9 @@ static void lpc_init(void)
 	 */
 	IT83XX_GCTRL_SPCTRL1 |= 0xC2;
 
+#ifndef CONFIG_ESPI_VW_SIGNALS
 	gpio_enable_interrupt(GPIO_PCH_PLTRST_L);
+#endif
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_OUT);
 	task_disable_irq(IT83XX_IRQ_KBC_OUT);
@@ -682,6 +688,9 @@ static void lpc_init(void)
 	task_clear_pending_irq(IT83XX_IRQ_PMC3_IN);
 	task_enable_irq(IT83XX_IRQ_PMC3_IN);
 
+#ifdef CONFIG_ESPI
+	espi_init();
+#endif
 	/* Sufficiently initialized */
 	init_done = 1;
 
@@ -694,6 +703,21 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
+void lpc_host_reset(void)
+{
+	/* Host Reset Control will assert RCIN# */
+#ifdef CONFIG_ESPI_VW_SIGNALS
+	espi_vw_set_wire(VW_RCIN_L, 0);
+	udelay(10);
+	espi_vw_set_wire(VW_RCIN_L, 1);
+#else
+	gpio_set_level(GPIO_PCH_RCIN_L, 0);
+	udelay(10);
+	gpio_set_level(GPIO_PCH_RCIN_L, 1);
+#endif
+}
+
+#ifndef CONFIG_ESPI_VW_SIGNALS
 void lpcrst_interrupt(enum gpio_signal signal)
 {
 	if (lpc_get_pltrst_asserted())
@@ -703,6 +727,7 @@ void lpcrst_interrupt(enum gpio_signal signal)
 	CPRINTS("LPC RESET# %sasserted",
 		lpc_get_pltrst_asserted() ? "" : "de");
 }
+#endif
 
 /* Enable LPC ACPI-EC interrupts */
 void lpc_enable_acpi_interrupts(void)

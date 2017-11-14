@@ -23,5 +23,8 @@ void i2c_interrupt(int port);
 void clock_sleep_mode_wakeup_isr(void);
 int clock_ec_wake_from_sleep(void);
 void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
+void espi_interrupt(void);
+void espi_vw_interrupt(void);
+void espi_init(void);
 
 #endif /* __CROS_EC_INTC_H */

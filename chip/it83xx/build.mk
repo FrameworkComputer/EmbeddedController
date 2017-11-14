@@ -21,6 +21,7 @@ chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_EC2I)+=ec2i.o
 chip-$(CONFIG_LPC)+=lpc.o
+chip-$(CONFIG_ESPI)+=espi.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o

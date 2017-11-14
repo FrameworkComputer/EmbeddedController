@@ -761,6 +761,7 @@ enum clock_gate_offsets {
 #define IT83XX_GCTRL_RSTS         REG8(IT83XX_GCTRL_BASE+0x06)
 #define IT83XX_GCTRL_BADRSEL      REG8(IT83XX_GCTRL_BASE+0x0A)
 #define IT83XX_GCTRL_SPCTRL1      REG8(IT83XX_GCTRL_BASE+0x0D)
+#define IT83XX_GCTRL_RSTDMMC      REG8(IT83XX_GCTRL_BASE+0x10)
 #define IT83XX_GCTRL_RSTC4        REG8(IT83XX_GCTRL_BASE+0x11)
 #define IT83XX_GCTRL_SPCTRL4      REG8(IT83XX_GCTRL_BASE+0x1C)
 #define IT83XX_GCTRL_MCCR         REG8(IT83XX_GCTRL_BASE+0x30)
@@ -1202,6 +1203,75 @@ enum usbpd_port {
 };
 
 #define USB_VID_ITE 0x048d
+
+#define IT83XX_ESPI_BASE  0x00F03100
+
+/* eSPI VW */
+#define IT83XX_ESPI_VW_BASE  0x00F03200
+#define IT83XX_ESPI_VWIDX(i)   REG8(IT83XX_ESPI_VW_BASE+(i))
+
+#define VW_LEVEL_FIELD(f)          ((f) << 0)
+#define VW_VALID_FIELD(f)          ((f) << 4)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_2 0x2
+#define VW_IDX_2_SLP_S3            (1 << 0)
+#define VW_IDX_2_SLP_S4            (1 << 1)
+#define VW_IDX_2_SLP_S5            (1 << 2)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_3 0x3
+#define VW_IDX_3_SUS_STAT          (1 << 0)
+#define VW_IDX_3_PLTRST            (1 << 1)
+#define VW_IDX_3_OOB_RST_WARN      (1 << 2)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_4 0x4
+#define VW_IDX_4_OOB_RST_ACK       (1 << 0)
+#define VW_IDX_4_WAKE              (1 << 2)
+#define VW_IDX_4_PME               (1 << 3)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_5 0x5
+#define VW_IDX_5_SLAVE_BTLD_DONE   (1 << 0)
+#define VW_IDX_5_FATAL             (1 << 1)
+#define VW_IDX_5_NON_FATAL         (1 << 2)
+#define VW_IDX_5_SLAVE_BTLD_STATUS (1 << 3)
+#define VW_IDX_5_BTLD_STATUS_DONE  (VW_IDX_5_SLAVE_BTLD_DONE | \
+					VW_IDX_5_SLAVE_BTLD_STATUS)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_6 0x6
+#define VW_IDX_6_SCI               (1 << 0)
+#define VW_IDX_6_SMI               (1 << 1)
+#define VW_IDX_6_RCIN              (1 << 2)
+#define VW_IDX_6_HOST_RST_ACK      (1 << 3)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_7 0x7
+#define VW_IDX_7_HOST_RST_WARN     (1 << 0)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_40 0x40
+#define VW_IDX_40_SUS_ACK           (1 << 0)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_41 0x41
+#define VW_IDX_41_SUS_WARN          (1 << 0)
+#define VW_IDX_41_SUS_PWRDN_ACK     (1 << 1)
+#define VW_IDX_41_SLP_A             (1 << 3)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_42 0x42
+#define VW_IDX_42_SLP_LAN           (1 << 0)
+#define VW_IDX_42_SLP_WLAN          (1 << 1)
+
+#define ESPI_SYSTEM_EVENT_VW_IDX_43 0x43
+#define ESPI_SYSTEM_EVENT_VW_IDX_44 0x44
+#define ESPI_SYSTEM_EVENT_VW_IDX_47 0x47
+
+#define IT83XX_ESPI_VWCTRL0    REG8(IT83XX_ESPI_VW_BASE+0x90)
+#define IT83XX_ESPI_VWCTRL1    REG8(IT83XX_ESPI_VW_BASE+0x91)
+#define IT83XX_ESPI_VWCTRL2    REG8(IT83XX_ESPI_VW_BASE+0x92)
+#define IT83XX_ESPI_VWCTRL3    REG8(IT83XX_ESPI_VW_BASE+0x93)
+
+/* eSPI Queue 0 */
+#define IT83XX_ESPI_QUEUE_BASE  0x00F03300
+/* PUT_PC data byte 0 - 63 */
+#define IT83XX_ESPI_QUEUE_PUT_PC(i)  REG8(IT83XX_ESPI_QUEUE_BASE+(i))
+/* PUT_OOB data byte 0 - 79 */
+#define IT83XX_ESPI_QUEUE_PUT_OOB(i) REG8(IT83XX_ESPI_QUEUE_BASE+0x80+(i))
 
 /* Wake pin definitions, defined at board-level */
 extern const enum gpio_signal hibernate_wake_pins[];
