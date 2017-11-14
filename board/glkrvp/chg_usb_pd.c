@@ -27,7 +27,7 @@
 enum glkrvp_charge_ports {
 	TYPE_C_PORT_0,
 	TYPE_C_PORT_1,
-	DC_JACK_PORT_0,
+	DC_JACK_PORT_0 = DEDICATED_CHARGE_PORT,
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {

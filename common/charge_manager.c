@@ -1103,6 +1103,33 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE,
 		     hc_charge_port_override,
 		     EC_VER_MASK(0));
 
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
+static int hc_override_dedicated_charger_limit(
+		struct host_cmd_handler_args *args)
+{
+	const struct ec_params_dedicated_charger_limit *p = args->params;
+	struct charge_port_info ci = {
+		.current = p->current_lim,
+		.voltage = p->voltage_lim,
+	};
+
+	/*
+	 * Allow a change only if the dedicated charge port is used. Host needs
+	 * to apply a change every time a dedicated charger is plugged.
+	 */
+	if (charge_port != DEDICATED_CHARGE_PORT)
+		return EC_RES_UNAVAILABLE;
+
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &ci);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_OVERRIDE_DEDICATED_CHARGER_LIMIT,
+		     hc_override_dedicated_charger_limit,
+		     EC_VER_MASK(0));
+#endif
+
 static int command_charge_port_override(int argc, char **argv)
 {
 	int port = OVERRIDE_OFF;

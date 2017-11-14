@@ -101,6 +101,10 @@ enum ceil_requestor {
 
 #define CHARGE_PORT_COUNT \
 		(CONFIG_USB_PD_PORT_COUNT + CONFIG_DEDICATED_CHARGE_PORT_COUNT)
+#if (CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0) && !defined(DEDICATED_CHARGE_PORT)
+#error "DEDICATED_CHARGE_PORT must be defined"
+#endif
+
 
 /**
  * Update charge ceiling for a given port. The ceiling can be set independently

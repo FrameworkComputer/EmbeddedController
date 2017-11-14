@@ -258,8 +258,8 @@ static void board_charge_manager_init(void)
 			cpi.current = 4620;
 		else
 			cpi.current = 3330;
-		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1,
-					     &cpi);
+		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+					     DEDICATED_CHARGE_PORT, &cpi);
 		break;
 	}
 }

@@ -102,7 +102,8 @@ static void adp_in_deferred(void)
 				pi.current = 3330;
 		}
 	}
-	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, 1, &pi);
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &pi);
 	/*
 	 * Explicitly notifies the host that BJ is plugged or unplugged
 	 * (when running on a type-c adapter).
