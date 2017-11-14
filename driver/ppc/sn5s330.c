@@ -146,6 +146,7 @@ static int init_sn5s330(int idx)
 	int retries;
 	int i2c_port;
 	int i2c_addr;
+	int reg;
 
 	i2c_port = sn5s330_chips[idx].i2c_port;
 	i2c_addr = sn5s330_chips[idx].i2c_addr;
@@ -261,11 +262,98 @@ static int init_sn5s330(int idx)
 		CPRINTS("Failed to turn off PP1 FET!");
 	}
 
-	/* Don't touch the PP2 FET yet if we're sysjumping. */
+	/*
+	 * Don't proceed with the rest of initialization if we're sysjumping.
+	 * We would have already done this before.
+	 */
 	if (system_jumped_to_this_image())
 		return EC_SUCCESS;
 
-	/* For PP2, check to see if we booted in dead battery mode. */
+	/* Clear the digital reset bit. */
+	status = i2c_read8(i2c_port, i2c_addr, SN5S330_INT_STATUS_REG4,
+			   &regval);
+	if (status) {
+		CPRINTS("Failed to read INT_STATUS_REG4!");
+		return status;
+	}
+	regval |= SN5S330_DIG_RES;
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_STATUS_REG4,
+			    regval);
+	if (status) {
+		CPRINTS("Failed to write INT_STATUS_REG4!");
+		return status;
+	}
+
+	/*
+	 * Before turning on the PP2 FET, let's mask off all interrupts except
+	 * for the PP1 overcurrent condition and then clear all pending
+	 * interrupts.
+	 *
+	 * TODO(aaboagye): Unmask fast-role swap events once fast-role swap is
+	 * implemented in the PD stack.
+	 */
+
+	regval = ~SN5S330_ILIM_PP1_RISE_MASK;
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_RISE_REG1,
+			    regval);
+	if (status) {
+		CPRINTS("Failed to write INT_MASK_RISE1!");
+		return status;
+	}
+
+	regval = ~SN5S330_ILIM_PP1_FALL_MASK;
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_FALL_REG1,
+			    regval);
+	if (status) {
+		CPRINTS("Failed to write INT_MASK_FALL1!");
+		return status;
+	}
+
+	/* Now mask all the other interrupts. */
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_RISE_REG2,
+			    0xFF);
+	if (status) {
+		CPRINTS("Failed to write INT_MASK_RISE2!");
+		return status;
+	}
+
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_FALL_REG2,
+			    0xFF);
+	if (status) {
+		CPRINTS("Failed to write INT_MASK_FALL2!");
+		return status;
+	}
+
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_RISE_REG3,
+			    0xFF);
+	if (status) {
+		CPRINTS("Failed to write INT_MASK_RISE3!");
+		return status;
+	}
+
+	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_FALL_REG3,
+			    0xFF);
+	if (status) {
+		CPRINTS("Failed to write INT_MASK_FALL3!");
+		return status;
+	}
+
+	/* Now clear any pending interrupts. */
+	for (reg = SN5S330_INT_TRIP_RISE_REG1;
+	     reg <= SN5S330_INT_TRIP_FALL_REG3;
+	     reg++) {
+		status = i2c_write8(i2c_port, i2c_addr, reg, 0xFF);
+		if (status) {
+			CPRINTS("Failed to write reg 0x%2x!");
+			return status;
+		}
+	}
+
+
+	/*
+	 * For PP2, check to see if we booted in dead battery mode.  If we
+	 * booted in dead battery mode, the PP2 FET will already be enabled.
+	 */
 	status = i2c_read8(i2c_port, i2c_addr, SN5S330_INT_STATUS_REG4,
 			   &regval);
 	if (status) {
