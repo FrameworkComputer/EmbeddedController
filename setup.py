@@ -57,3 +57,18 @@ setup(
     },
     description="Sweetberry power logger.",
 )
+
+setup(
+    name="console",
+    version="1.0",
+    author="Nick Sanders",
+    author_email="nsanders@chromium.org",
+    url="https://www.chromium.org/chromium-os/ec-development",
+    package_dir={"" : "extra/usb_serial"},
+    py_modules=["console"],
+    entry_points = {
+        "console_scripts": ["usb_console=console:main"],
+    },
+    description="Tool to open the usb console on servo, cr50.",
+)
+
