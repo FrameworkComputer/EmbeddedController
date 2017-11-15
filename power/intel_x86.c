@@ -473,10 +473,19 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 	CPRINTS("Pass through GPIO_RSMRST_L_PGOOD: %d", rsmrst_in);
 }
 
-#if defined(CONFIG_POWER_TRACK_HOST_SLEEP_STATE) && defined(CONFIG_POWER_S0IX)
+#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+
+void __attribute__((weak))
+power_board_handle_host_sleep_event(enum host_sleep_event state)
+{
+	/* Default weak implementation -- no action required. */
+}
 
 void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 {
+	power_board_handle_host_sleep_event(state);
+
+#ifdef CONFIG_POWER_S0IX
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND) {
 		/*
 		 * Indicate to power state machine that a new host event for
@@ -499,6 +508,7 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 	} else if (state == HOST_SLEEP_EVENT_DEFAULT_RESET) {
 		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
 	}
+#endif
 }
 
 #endif
