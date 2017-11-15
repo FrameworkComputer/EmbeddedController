@@ -36,12 +36,35 @@ static uint64_t __bss_slow next_deferred_time;
 #ifdef CONFIG_CMD_BUTTON
 static int siml_btn_presd;
 
-static int simulated_button_pressed(void)
+/*
+ * Flip state of associated button type in sim_button_state bitmask.
+ * In bitmask, if bit is 1, button is pressed.  If bit is 0, button is
+ * released.
+ *
+ * Returns the appropriate GPIO value based on table below:
+ * +----------+--------+--------+
+ * |  state   | active | return |
+ * +----------+--------+--------+
+ * | pressed  |  high  |   1    |
+ * | pressed  |  low   |   0    |
+ * | released |  high  |   0    |
+ * | released |  low   |   1    |
+ * +----------+--------+--------+
+ */
+static int simulated_button_pressed(const struct button_config *button)
 {
-	static int button = 1;
+	/* bitmask to keep track of simulated state of each button */
+	static int sim_button_state;
+	int button_mask = 1 << button->type;
+	int ret_val;
 
-	button = !button;
-	return button;
+	/* flip the state of the button */
+	sim_button_state = sim_button_state ^ button_mask;
+	ret_val = !!(sim_button_state & button_mask);
+	/* adjustment for active high/lo */
+	if (!(button->flags & BUTTON_FLAG_ACTIVE_HIGH))
+		ret_val = !ret_val;
+	return ret_val;
 }
 #endif
 
@@ -53,10 +76,9 @@ static int raw_button_pressed(const struct button_config *button)
 	int raw_value =
 #ifdef CONFIG_CMD_BUTTON
 			siml_btn_presd ?
-			simulated_button_pressed() :
+			simulated_button_pressed(button) :
 #endif
 			gpio_get_level(button->gpio);
-
 	return button->flags & BUTTON_FLAG_ACTIVE_HIGH ?
 				       raw_value : !raw_value;
 }
@@ -300,47 +322,62 @@ static void button_interrupt_simulate(int button)
 
 static int console_command_button(int argc, char **argv)
 {
-	int button;
 	int press_ms = 50;
 	char *e;
+	int argv_idx;
+	int button;
+	int button_idx;
+	uint32_t button_mask = 0;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strcasecmp(argv[1], "vup"))
-		button = button_present(KEYBOARD_BUTTON_VOLUME_UP);
-	else if (!strcasecmp(argv[1], "vdown"))
-		button = button_present(KEYBOARD_BUTTON_VOLUME_DOWN);
-	else if (!strcasecmp(argv[1], "rec"))
-		button = button_present(KEYBOARD_BUTTON_RECOVERY);
-	else
-		return EC_ERROR_PARAM1;
+	for (argv_idx = 1; argv_idx < argc; argv_idx++) {
+		if (!strcasecmp(argv[argv_idx], "vup"))
+			button = button_present(KEYBOARD_BUTTON_VOLUME_UP);
+		else if (!strcasecmp(argv[argv_idx], "vdown"))
+			button = button_present(KEYBOARD_BUTTON_VOLUME_DOWN);
+		else if (!strcasecmp(argv[argv_idx], "rec"))
+			button = button_present(KEYBOARD_BUTTON_RECOVERY);
+		else {
+			/* If last parameter check if it is an integer. */
+			if (argv_idx == argc - 1) {
+				press_ms = strtoi(argv[argv_idx], &e, 0);
+				/* If integer, break out of the loop. */
+				if (!*e)
+					break;
+			}
+			button = BUTTON_COUNT;
+		}
 
-	if (button == BUTTON_COUNT)
-		return EC_ERROR_PARAM1;
+		if (button == BUTTON_COUNT)
+			return EC_ERROR_PARAM1 + argv_idx - 1;
 
-	if (argc > 2) {
-		press_ms = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM2;
+		button_mask |= (1 << button);
 	}
+
+	if (!button_mask)
+		return EC_SUCCESS;
 
 	siml_btn_presd = 1;
 
-	/* Press the button */
-	button_interrupt_simulate(button);
+	/* Press the button(s) */
+	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)
+		if (button_mask & (1 << button_idx))
+			button_interrupt_simulate(button_idx);
 
-	/* Hold the button */
+	/* Hold the button(s) */
 	msleep(press_ms);
 
-	/* Release the button */
-	button_interrupt_simulate(button);
+	/* Release the button(s) */
+	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++)
+		if (button_mask & (1 << button_idx))
+			button_interrupt_simulate(button_idx);
 
 	/* Wait till button processing is finished */
 	msleep(100);
 
 	siml_btn_presd = 0;
-
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(button, console_command_button,
