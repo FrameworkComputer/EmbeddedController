@@ -153,6 +153,45 @@ int strtoi(const char *nptr, char **endptr, int base)
 	return neg ? -result : result;
 }
 
+uint64_t strtoul(const char *nptr, char **endptr, int base)
+{
+	uint64_t result = 0;
+	int c = '\0';
+
+	if (endptr)
+		*endptr = (char *)nptr;
+
+	while ((c = *nptr++) && isspace(c))
+		;
+
+	if (c == '0' && *nptr == 'x') {
+		base = 16;
+		c = nptr[1];
+		nptr += 2;
+	} else if (base == 0) {
+		base = 10;
+		if (c == '-')
+			return result;
+	}
+
+	while (c) {
+		if (c >= '0' && c < '0' + MIN(base, 10))
+			result = result * base + (c - '0');
+		else if (c >= 'A' && c < 'A' + base - 10)
+			result = result * base + (c - 'A' + 10);
+		else if (c >= 'a' && c < 'a' + base - 10)
+			result = result * base + (c - 'a' + 10);
+		else
+			break;
+
+		if (endptr)
+			*endptr = (char *)nptr;
+		c = *nptr++;
+	}
+
+	return result;
+}
+
 int parse_bool(const char *s, int *dest)
 {
 	/* off, disable, false, no */

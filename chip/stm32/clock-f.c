@@ -257,7 +257,7 @@ void __rtc_alarm_irq(void)
 #ifdef CONFIG_HOSTCMD_RTC
 	/* Do not wake up the host if the alarm was not set by the host */
 	if (host_rtc_alarm_set) {
-		host_set_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC));
+		host_set_single_event(EC_HOST_EVENT_RTC);
 		host_rtc_alarm_set = 0;
 	}
 #endif

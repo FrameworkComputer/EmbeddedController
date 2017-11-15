@@ -149,7 +149,7 @@ static inline void keyboard_irq_assert(void)
  */
 static void lpc_generate_smi(void)
 {
-	uint32_t smi;
+	host_event_t smi;
 
 	/* Enforce signal-high for long enough to debounce high */
 	gpio_set_level(GPIO_PCH_SMI_L, 1);
@@ -162,7 +162,7 @@ static void lpc_generate_smi(void)
 
 	smi = lpc_get_host_events_by_type(LPC_HOST_EVENT_SMI);
 	if (smi)
-		CPRINTS("smi 0x%08x", smi);
+		HOST_EVENT_CPRINTS("smi", smi);
 }
 
 /**
@@ -170,7 +170,7 @@ static void lpc_generate_smi(void)
  */
 static void lpc_generate_sci(void)
 {
-	uint32_t sci;
+	host_event_t sci;
 
 #ifdef CONFIG_SCI_GPIO
 	/* Enforce signal-high for long enough to debounce high */
@@ -187,7 +187,7 @@ static void lpc_generate_sci(void)
 
 	sci = lpc_get_host_events_by_type(LPC_HOST_EVENT_SCI);
 	if (sci)
-		CPRINTS("sci 0x%08x", sci);
+		HOST_EVENT_CPRINTS("sci", sci);
 }
 
 /**
@@ -195,7 +195,7 @@ static void lpc_generate_sci(void)
  *
  * @param wake_events	Currently asserted wake events
  */
-static void lpc_update_wake(uint32_t wake_events)
+static void lpc_update_wake(uint64_t wake_events)
 {
 	/*
 	 * Mask off power button event, since the AP gets that through a
@@ -368,7 +368,7 @@ void lpc_update_host_event_status(void)
 		LM4_LPC_ST(LPC_CH_ACPI) &= ~LM4_LPC_ST_SCI;
 
 	/* Copy host events to mapped memory */
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
 				lpc_get_host_events();
 
 	task_enable_irq(LM4_IRQ_LPC);

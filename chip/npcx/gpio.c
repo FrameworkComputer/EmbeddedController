@@ -536,7 +536,7 @@ void __gpio_rtc_interrupt(void)
 	if (NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_4) & 0x80) {
 		/* Clear pending bit for WUI */
 		SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_4), 7);
-		host_set_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC));
+		host_set_single_event(EC_HOST_EVENT_RTC);
 	} else
 #endif
 	{

@@ -77,6 +77,7 @@ int strncmp(const char *s1, const char *s2, size_t n);
 
 /* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
+uint64_t strtoul(const char *nptr, char **endptr, int base);
 
 /* Like strncpy(), but guarantees null termination. */
 char *strzcpy(char *dest, const char *src, int len);

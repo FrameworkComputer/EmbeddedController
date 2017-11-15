@@ -93,7 +93,7 @@ static void lpc_generate_sci(void)
  *
  * @param wake_events	Currently asserted wake events
  */
-static void lpc_update_wake(uint32_t wake_events)
+static void lpc_update_wake(host_event_t wake_events)
 {
 	/*
 	 * Mask off power button event, since the AP gets that through a
@@ -151,7 +151,7 @@ void lpc_update_host_event_status(void)
 	}
 
 	/* Copy host events to mapped memory */
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
 				lpc_get_host_events();
 
 	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);

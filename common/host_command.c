@@ -411,7 +411,7 @@ static void host_command_init(void)
 
 #ifdef CONFIG_HOSTCMD_EVENTS
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
-	CPRINTS("hostcmd init 0x%x", host_get_events());
+	HOST_EVENT_CPRINTS("hostcmd init", host_get_events());
 #endif
 }
 

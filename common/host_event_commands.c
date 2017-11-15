@@ -5,7 +5,6 @@
 
 /* Host event commands for Chrome EC */
 
-#include "atomic.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -13,11 +12,30 @@
 #include "lpc.h"
 #include "mkbp_event.h"
 #include "system.h"
+#include "task.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_EVENTS, outstr)
 #define CPRINTS(format, args...) cprints(CC_EVENTS, format, ## args)
+
+/*
+ * This is used to avoid 64-bit shifts which might require a new library
+ * function.
+ */
+#define HOST_EVENT_32BIT_MASK(x)	(1UL << ((x) - 1))
+static void host_event_set_bit(host_event_t *ev, uint8_t bit)
+{
+	uint32_t *ptr = (uint32_t *)ev;
+
+	*ev = 0;
+#ifdef CONFIG_HOST_EVENT64
+	if (bit >= 32)
+		*(ptr + 1) = HOST_EVENT_32BIT_MASK(bit - 32);
+	else
+#endif
+		*ptr = HOST_EVENT_32BIT_MASK(bit);
+}
 
 #ifdef CONFIG_LPC
 
@@ -54,23 +72,23 @@
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_MKBP) |			\
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT))
 
-static uint32_t lpc_host_events;
-static uint32_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];
+static host_event_t lpc_host_events;
+static host_event_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];
 
-void lpc_set_host_event_mask(enum lpc_host_event_type type, uint32_t mask)
+void lpc_set_host_event_mask(enum lpc_host_event_type type, host_event_t mask)
 {
 	lpc_host_event_mask[type] = mask;
 	lpc_update_host_event_status();
 }
 
-uint32_t lpc_get_host_event_mask(enum lpc_host_event_type type)
+host_event_t lpc_get_host_event_mask(enum lpc_host_event_type type)
 {
 	return lpc_host_event_mask[type];
 }
 
-static uint32_t lpc_get_all_host_event_masks(void)
+static host_event_t lpc_get_all_host_event_masks(void)
 {
-	uint32_t or_mask = 0;
+	host_event_t or_mask = 0;
 	int i;
 
 	for (i = 0; i < LPC_HOST_EVENT_COUNT; i++)
@@ -79,7 +97,7 @@ static uint32_t lpc_get_all_host_event_masks(void)
 	return or_mask;
 }
 
-static void lpc_set_host_event_state(uint32_t events)
+static void lpc_set_host_event_state(host_event_t events)
 {
 	if (events == lpc_host_events)
 		return;
@@ -88,22 +106,25 @@ static void lpc_set_host_event_state(uint32_t events)
 	lpc_update_host_event_status();
 }
 
-uint32_t lpc_get_host_events_by_type(enum lpc_host_event_type type)
+host_event_t lpc_get_host_events_by_type(enum lpc_host_event_type type)
 {
 	return lpc_host_events & lpc_get_host_event_mask(type);
 }
 
-uint32_t lpc_get_host_events(void)
+host_event_t lpc_get_host_events(void)
 {
 	return lpc_host_events;
 }
 
 int lpc_get_next_host_event(void)
 {
+	host_event_t ev;
 	int evt_idx =  __builtin_ffs(lpc_host_events);
 
-	if (evt_idx)
-		host_clear_events(1 << (evt_idx - 1));
+	if (evt_idx) {
+		host_event_set_bit(&ev, evt_idx);
+		host_clear_events(ev);
+	}
 	return evt_idx;
 }
 
@@ -124,10 +145,10 @@ DECLARE_HOOK(HOOK_SYSJUMP, lpc_sysjump_save_mask, HOOK_PRIO_DEFAULT);
  */
 static int lpc_post_sysjump_restore_mask(void)
 {
-	const uint32_t *prev_mask;
+	const host_event_t *prev_mask;
 	int size, version;
 
-	prev_mask = (const uint32_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
+	prev_mask = (const host_event_t *)system_get_jump_tag(LPC_SYSJUMP_TAG,
 			&version, &size);
 	if (!prev_mask || size != sizeof(lpc_host_event_mask) ||
 	    (version != LPC_SYSJUMP_VERSION &&
@@ -139,7 +160,7 @@ static int lpc_post_sysjump_restore_mask(void)
 	return version == LPC_SYSJUMP_VERSION;
 }
 
-uint32_t __attribute__((weak)) lpc_override_always_report_mask(void)
+host_event_t __attribute__((weak)) lpc_override_always_report_mask(void)
 {
 	return LPC_HOST_EVENT_ALWAYS_REPORT_DEFAULT_MASK;
 }
@@ -178,18 +199,58 @@ void lpc_s3_resume_clear_masks(void)
  *
  * Setting an event sets both copies.  Copies are cleared separately.
  */
-static uint32_t events;
-static uint32_t events_copy_b;
+static host_event_t events;
+static host_event_t events_copy_b;
 
-uint32_t host_get_events(void)
+static void host_events_atomic_or(host_event_t *e, host_event_t m)
+{
+	uint32_t *ptr = (uint32_t *)e;
+
+	atomic_or(ptr, (uint32_t)m);
+#ifdef CONFIG_HOST_EVENT64
+	atomic_or(ptr + 1, (uint32_t)(m >> 32));
+#endif
+}
+
+static void host_events_atomic_clear(host_event_t *e, host_event_t m)
+{
+	uint32_t *ptr = (uint32_t *)e;
+
+	atomic_clear(ptr, (uint32_t)m);
+#ifdef CONFIG_HOST_EVENT64
+	atomic_clear(ptr + 1, (uint32_t)(m >> 32));
+#endif
+}
+
+#if !defined(CONFIG_LPC) && defined(CONFIG_MKBP_EVENT)
+static void host_events_send_mkbp_event(host_event_t e)
+{
+#ifdef CONFIG_HOST_EVENT64
+	/*
+	 * If event bits in the upper 32-bit are set, indicate 64-bit host
+	 * event.
+	 */
+	if (!(uint32_t)e)
+		mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT64);
+	else
+#endif
+		mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+}
+#endif
+
+host_event_t host_get_events(void)
 {
 	return events;
 }
 
-void host_set_events(uint32_t mask)
+void host_set_events(host_event_t mask)
 {
 	/* ignore host events the rest of board doesn't care about */
+#ifdef CONFIG_HOST_EVENT64
+	mask &= CONFIG_HOST_EVENT64_REPORT_MASK;
+#else
 	mask &= CONFIG_HOST_EVENT_REPORT_MASK;
+#endif
 
 #ifdef CONFIG_LPC
 	/*
@@ -207,43 +268,63 @@ void host_set_events(uint32_t mask)
 	if (!((events & mask) != mask || (events_copy_b & mask) != mask))
 		return;
 
-	CPRINTS("event set 0x%08x", mask);
+	HOST_EVENT_CPRINTS("event set", mask);
 
-	atomic_or(&events, mask);
-	atomic_or(&events_copy_b, mask);
+	host_events_atomic_or(&events, mask);
+	host_events_atomic_or(&events_copy_b, mask);
 
 #ifdef CONFIG_LPC
 	lpc_set_host_event_state(events);
 #else
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #ifdef CONFIG_MKBP_EVENT
 #ifdef CONFIG_MKBP_USE_HOST_EVENT
 #error "Config error: MKBP must not be on top of host event"
 #endif
-	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+	host_events_send_mkbp_event(events);
 #endif  /* CONFIG_MKBP_EVENT */
 #endif  /* !CONFIG_LPC */
 }
 
-void host_clear_events(uint32_t mask)
+void host_set_single_event(enum host_event_code event)
+{
+	host_event_t ev = 0;
+
+	host_event_set_bit(&ev, event);
+	host_set_events(ev);
+}
+
+int host_is_event_set(enum host_event_code event)
+{
+	host_event_t ev = 0;
+
+	host_event_set_bit(&ev, event);
+	return events & ev;
+}
+
+void host_clear_events(host_event_t mask)
 {
 	/* ignore host events the rest of board doesn't care about */
+#ifdef CONFIG_HOST_EVENT64
+	mask &= CONFIG_HOST_EVENT64_REPORT_MASK;
+#else
 	mask &= CONFIG_HOST_EVENT_REPORT_MASK;
+#endif
 
 	/* return early if nothing changed */
 	if (!(events & mask))
 		return;
 
-	CPRINTS("event clear 0x%08x", mask);
+	HOST_EVENT_CPRINTS("event clear", mask);
 
-	atomic_clear(&events, mask);
+	host_events_atomic_clear(&events, mask);
 
 #ifdef CONFIG_LPC
 	lpc_set_host_event_state(events);
 #else
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #ifdef CONFIG_MKBP_EVENT
-	mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
+	host_events_send_mkbp_event(events);
 #endif
 #endif  /* !CONFIG_LPC */
 }
@@ -251,13 +332,26 @@ void host_clear_events(uint32_t mask)
 #ifndef CONFIG_LPC
 static int host_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = events;
+	uint32_t event_out = (uint32_t)events;
 	memcpy(out, &event_out, sizeof(event_out));
-	atomic_clear(&events, event_out);
-	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
+	host_events_atomic_clear(&events, event_out);
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 	return sizeof(event_out);
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT, host_get_next_event);
+
+#ifdef CONFIG_HOST_EVENT64
+static int host_get_next_event64(uint8_t *out)
+{
+	host_event_t event_out = events;
+
+	memcpy(out, &event_out, sizeof(event_out));
+	host_events_atomic_clear(&events, event_out);
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
+	return sizeof(event_out);
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT64, host_get_next_event64);
+#endif
 #endif
 
 /**
@@ -266,13 +360,13 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT, host_get_next_event);
  * @param mask          Event bits to clear (use EC_HOST_EVENT_MASK()).
  *                      Write 1 to a bit to clear it.
  */
-static void host_clear_events_b(uint32_t mask)
+static void host_clear_events_b(host_event_t mask)
 {
 	/* Only print if something's about to change */
 	if (events_copy_b & mask)
-		CPRINTS("event clear B 0x%08x", mask);
+		HOST_EVENT_CPRINTS("event clear B", mask);
 
-	atomic_clear(&events_copy_b, mask);
+	host_events_atomic_clear(&events_copy_b, mask);
 }
 
 /**
@@ -295,7 +389,7 @@ static int command_host_event(int argc, char **argv)
 	/* Handle sub-commands */
 	if (argc == 3) {
 		char *e;
-		int i = strtoi(argv[2], &e, 0);
+		host_event_t i = strtoul(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
 
@@ -321,16 +415,16 @@ static int command_host_event(int argc, char **argv)
 	}
 
 	/* Print current SMI/SCI status */
-	ccprintf("Events:    0x%08x\n", host_get_events());
-	ccprintf("Events-B:  0x%08x\n", events_copy_b);
+	HOST_EVENT_CCPRINTF("Events:             ", host_get_events());
+	HOST_EVENT_CCPRINTF("Events-B:           ", events_copy_b);
 #ifdef CONFIG_LPC
-	ccprintf("SMI mask:  0x%08x\n",
+	HOST_EVENT_CCPRINTF("SMI mask:           ",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_SMI));
-	ccprintf("SCI mask:  0x%08x\n",
+	HOST_EVENT_CCPRINTF("SCI mask:           ",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_SCI));
-	ccprintf("Wake mask: 0x%08x\n",
+	HOST_EVENT_CCPRINTF("Wake mask:          ",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE));
-	ccprintf("Always report mask: 0x%08x\n",
+	HOST_EVENT_CCPRINTF("Always report mask: ",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_ALWAYS_REPORT));
 #endif
 	return EC_SUCCESS;
@@ -348,7 +442,7 @@ static int host_event_get_smi_mask(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_mask *r = args->response;
 
-	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+	r->mask = (uint32_t)lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -361,7 +455,7 @@ static int host_event_get_sci_mask(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_mask *r = args->response;
 
-	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+	r->mask = (uint32_t)lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -374,7 +468,7 @@ static int host_event_get_wake_mask(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_mask *r = args->response;
 
-	r->mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE);
+	r->mask = (uint32_t)lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE);
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;

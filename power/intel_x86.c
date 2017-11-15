@@ -131,7 +131,7 @@ static void s0ix_transition(int check_state, int hook_id)
 static void s0ix_lpc_enable_wake_mask(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_STANDBY | CHIPSET_STATE_ON)) {
-		uint32_t mask;
+		host_event_t mask;
 
 		mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE) |
 			EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |
@@ -150,7 +150,7 @@ static void s0ix_lpc_enable_wake_mask(void)
 static void s0ix_lpc_disable_wake_mask(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_STANDBY | CHIPSET_STATE_ON)) {
-		uint32_t mask;
+		host_event_t mask;
 
 		mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE) &
 			~EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) &
