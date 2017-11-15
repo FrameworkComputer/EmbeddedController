@@ -124,8 +124,9 @@ BOARDS_NPCX_SPI=(
 )
 
 BOARDS_NPCX_INT_SPI=(
-	zoombini
 	grunt
+	meowth
+	zoombini
 )
 
 BOARDS_NRF51=(
