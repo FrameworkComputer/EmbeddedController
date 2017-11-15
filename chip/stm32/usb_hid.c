@@ -107,8 +107,7 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 			return report_left ? 1 : 0;
 		} else if (ep0_buf_rx[1] == (USB_HID_DT_HID << 8)) {
 			/* Setup : HID specific : Get HID descriptor */
-			memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
-					hid_desc, sizeof(*hid_desc));
+			memcpy_to_usbram_ep0_patch(hid_desc, sizeof(*hid_desc));
 			btable_ep[0].tx_count = sizeof(*hid_desc);
 			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID,
 					EP_STATUS_OUT);

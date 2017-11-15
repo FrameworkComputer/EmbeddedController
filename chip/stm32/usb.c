@@ -119,6 +119,40 @@ void usb_read_setup_packet(usb_uint *buffer, struct usb_setup_packet *packet)
 	packet->wLength       = buffer[3];
 }
 
+struct usb_descriptor_patch {
+	const void *address;
+	uint16_t data;
+};
+
+static struct usb_descriptor_patch desc_patches[USB_DESC_PATCH_COUNT];
+
+void set_descriptor_patch(enum usb_desc_patch_type type,
+			  const void *address, uint16_t data)
+{
+	desc_patches[type].address = address;
+	desc_patches[type].data = data;
+}
+
+void *memcpy_to_usbram_ep0_patch(const void *src, size_t n)
+{
+	int i;
+	void *ret;
+
+	ret = memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx), src, n);
+
+	for (i = 0; i < USB_DESC_PATCH_COUNT; i++) {
+		unsigned int offset = desc_patches[i].address - src;
+
+		if (offset >= n)
+			continue;
+
+		memcpy_to_usbram((void *)(usb_sram_addr(ep0_buf_tx) + offset),
+			&desc_patches[i].data, sizeof(desc_patches[i].data));
+	}
+
+	return ret;
+}
+
 static void ep0_send_descriptor(const uint8_t *desc, int len,
 				uint16_t fixup_size)
 {
@@ -133,7 +167,7 @@ static void ep0_send_descriptor(const uint8_t *desc, int len,
 		desc_ptr = desc + USB_MAX_PACKET_SIZE;
 		len = USB_MAX_PACKET_SIZE;
 	}
-	memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc, len);
+	memcpy_to_usbram_ep0_patch(desc, len);
 	if (fixup_size) /* set the real descriptor size */
 		ep0_buf_tx[1] = fixup_size;
 	btable_ep[0].tx_count = len;
