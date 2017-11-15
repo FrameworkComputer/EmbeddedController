@@ -38,7 +38,7 @@
 
 #ifdef BOARD_ZOOMBINI
 #define CONFIG_BC12_DETECT_BQ24392
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
 #define CONFIG_CHARGE_MANAGER
@@ -50,7 +50,7 @@
 #ifdef BOARD_ZOOMBINI
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_USB_CHARGER
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 #define CONFIG_CHIPSET_CANNONLAKE
 #define CONFIG_CHIPSET_RESET_HOOK
@@ -71,7 +71,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_SWITCH
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
@@ -80,7 +80,7 @@
 #define CONFIG_USB_PD_PORT_COUNT 3
 #else
 #define CONFIG_USB_PD_PORT_COUNT 2
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
 /* TODO(aaboagye): What about CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT? */
@@ -100,7 +100,7 @@
 #define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_SMART_CDP_SDP_ONLY
 #define GPIO_USB1_ILIM_SEL GPIO_USB_A_HIGH_POWER_EN
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 /* Define typical operating power and max power. */
 #define PD_MAX_VOLTAGE_MV 20000
@@ -148,7 +148,7 @@
 #define GPIO_TCPC0_SDA GPIO_I2C5_SDA
 #define GPIO_TCPC1_SCL GPIO_I2C1_SCL
 #define GPIO_TCPC1_SDA GPIO_I2C1_SDA
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 #define PMIC_I2C_ADDR TPS650X30_I2C_ADDR1
 
@@ -157,7 +157,7 @@
 #else
 #define PP5000_PGOOD_POWER_SIGNAL_MASK \
 POWER_SIGNAL_MASK(PP5000_PGOOD)
-#endif
+#endif /* defined(BOARD_MEOWTH) */
 
 #ifndef __ASSEMBLER__
 
@@ -188,7 +188,7 @@ enum power_signal {
 	X86_PMIC_DPWROK,
 #ifdef BOARD_ZOOMBINI
 	PP5000_PGOOD,
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 	POWER_SIGNAL_COUNT
 };
 

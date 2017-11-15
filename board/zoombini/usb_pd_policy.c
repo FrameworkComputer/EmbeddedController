@@ -124,7 +124,7 @@ void pd_power_supply_reset(int port)
 	};
 #else
 	/*TODO(aaboagye): Implement sn5s330 PPC for both Zoombini and Meowth */
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -166,7 +166,7 @@ int pd_set_power_supply_ready(int port)
 	};
 #else
 	/*TODO(aaboagye): Implement sn5s330 PPC for both Zoombini and Meowth */
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);

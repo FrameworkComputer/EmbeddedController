@@ -57,7 +57,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
-/* TODO(aaboagye): Add the additional Mewoth temps sensors */
+/* TODO(aaboagye): Add the additional Meowth temps sensors */
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_SOC] = {
 		"SOC", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
@@ -94,7 +94,7 @@ const struct power_signal_info power_signal_list[] = {
 	{GPIO_PMIC_DPWROK,    POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
 #ifdef BOARD_ZOOMBINI
 	{GPIO_PP5000_PGOOD,   POWER_SIGNAL_ACTIVE_HIGH, "PP5000_A_PGOOD"},
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -132,9 +132,7 @@ const unsigned int sn5s330_cnt = ARRAY_SIZE(sn5s330_chips);
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_USB_A_5V_EN,
 };
-#endif
 
-#ifdef BOARD_ZOOMBINI
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Extra delay when KSO2 is tied to Cr50. */
@@ -149,7 +147,7 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{
@@ -173,7 +171,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 		.drv = &tcpci_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 };
 
 /* The port_addr members are PD port numbers, not I2C port numbers. */
@@ -196,7 +194,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 };
 
 static void board_chipset_startup(void)
@@ -204,7 +202,7 @@ static void board_chipset_startup(void)
 #ifdef BOARD_ZOOMBINI
 	/* Enable trackpad. */
 	gpio_set_level(GPIO_EN_PP3300_TRACKPAD, 1);
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 	/* TODO(aaboagye): Remove Trackpad function in P1 - moved to AP */
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
@@ -214,7 +212,7 @@ static void board_chipset_shutdown(void)
 #ifdef BOARD_ZOOMBINI
 	/* Disable trackpad. */
 	gpio_set_level(GPIO_EN_PP3300_TRACKPAD, 0);
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 	/* TODO(aaboagye): Remove Trackpad function in P1 - moved to AP */
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
@@ -224,16 +222,14 @@ static void board_init(void)
 #ifdef BOARD_ZOOMBINI
 	struct charge_port_info chg;
 	int i;
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
 #ifdef BOARD_ZOOMBINI
 	gpio_enable_interrupt(GPIO_USB_C2_PD_INT_L);
-#endif
 
-#ifdef BOARD_ZOOMBINI
 	/* Initialize VBUS suppliers. */
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
 		if (tcpm_get_vbus_level(i)) {
@@ -245,7 +241,7 @@ static void board_init(void)
 		}
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, i, &chg);
 	}
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -320,7 +316,7 @@ int board_set_active_charge_port(int port)
 	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, port != 1);
 	gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, port != 2);
 
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 	/*
 	 * TODO(aaboagye): Remove manual charge enabling on P1 -
 	 *  switched to sn5s330
@@ -366,7 +362,7 @@ uint16_t tcpc_get_alert_status(void)
 #ifdef BOARD_ZOOMBINI
 	if (!gpio_get_level(GPIO_USB_C2_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_2;
-#endif
+#endif /* defined(BOARD_ZOOMBINI) */
 
 	return status;
 }
