@@ -199,10 +199,11 @@
 #undef CONFIG_CONSOLE_HISTORY
 #undef CONFIG_EC_CMD_PD_CHIP_INFO
 
-/* Gru is especially limited on code space */
-#ifdef BOARD_GRU
 #undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_FLASHINFO
+
+/* Gru is especially limited on code space */
+#ifdef BOARD_GRU
 #undef CONFIG_CMD_I2C_XFER
 #undef CONFIG_CMD_SHMEM
 #undef CONFIG_CMD_USBMUX
