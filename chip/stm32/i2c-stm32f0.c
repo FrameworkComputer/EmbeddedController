@@ -330,9 +330,13 @@ static void i2c_event_handler(int port)
 
 		/* Clear ADDR bit by writing to ADDRCF bit */
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_ADDRCF;
-		/* Inhibit stop mode when addressed until STOPF flag is set */
+		/* Inhibit sleep mode when addressed until STOPF flag is set */
 		disable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
+
+	/* Receiver full event */
+	if (i2c_isr & STM32_I2C_ISR_RXNE)
+		host_buffer[buf_idx++] = STM32_I2C_RXDR(port);
 
 	/* Stop condition on bus */
 	if (i2c_isr & STM32_I2C_ISR_STOP) {
@@ -358,10 +362,6 @@ static void i2c_event_handler(int port)
 		/* No longer inhibit deep sleep after stop condition */
 		enable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
-
-	/* Receiver full event */
-	if (i2c_isr & STM32_I2C_ISR_RXNE)
-		host_buffer[buf_idx++] = STM32_I2C_RXDR(port);
 
 	/* Master requested STOP or RESTART */
 	if (i2c_isr & STM32_I2C_ISR_NACK) {
