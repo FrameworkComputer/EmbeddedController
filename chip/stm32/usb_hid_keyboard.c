@@ -162,65 +162,95 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
 };
 #endif
 
-/* HID : Report Descriptor */
-static const uint8_t report_desc[] = {
-	0x05, 0x01, /* Usage Page (Generic Desktop) */
-	0x09, 0x06, /* Usage (Keyboard) */
-	0xA1, 0x01, /* Collection (Application) */
-
-	/* Modifiers */
-	0x05, 0x07, /* Usage Page (Key Codes) */
-	0x19, HID_KEYBOARD_MODIFIER_LOW, /* Usage Minimum */
-	0x29, HID_KEYBOARD_MODIFIER_HIGH, /* Usage Maximum */
-	0x15, 0x00, /* Logical Minimum (0) */
-	0x25, 0x01, /* Logical Maximum (1) */
-	0x75, 0x01, /* Report Size (1) */
-	0x95, 0x08, /* Report Count (8) */
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
-
-	0x95, 0x01, /* Report Count (1) */
-	0x75, 0x08, /* Report Size (8) */
-	0x81, 0x01, /* Input (Constant), ;Reserved byte */
-
-	/* Normal keys */
-	0x95, 0x06, /* Report Count (6) */
-	0x75, 0x08, /* Report Size (8) */
-	0x15, 0x00, /* Logical Minimum (0) */
-	0x25, 0xa4, /* Logical Maximum (164) */
-	0x05, 0x07, /* Usage Page (Key Codes) */
-	0x19, 0x00, /* Usage Minimum (0) */
-	0x29, 0xa4, /* Usage Maximum (164) */
+#define KEYBOARD_BASE_DESC						\
+	0x05, 0x01, /* Usage Page (Generic Desktop) */			\
+	0x09, 0x06, /* Usage (Keyboard) */				\
+	0xA1, 0x01, /* Collection (Application) */			\
+									\
+	/* Modifiers */							\
+	0x05, 0x07, /* Usage Page (Key Codes) */			\
+	0x19, HID_KEYBOARD_MODIFIER_LOW, /* Usage Minimum */		\
+	0x29, HID_KEYBOARD_MODIFIER_HIGH, /* Usage Maximum */		\
+	0x15, 0x00, /* Logical Minimum (0) */				\
+	0x25, 0x01, /* Logical Maximum (1) */				\
+	0x75, 0x01, /* Report Size (1) */				\
+	0x95, 0x08, /* Report Count (8) */				\
+	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */ \
+									\
+	0x95, 0x01, /* Report Count (1) */				\
+	0x75, 0x08, /* Report Size (8) */				\
+	0x81, 0x01, /* Input (Constant), ;Reserved byte */		\
+									\
+	/* Normal keys */						\
+	0x95, 0x06, /* Report Count (6) */				\
+	0x75, 0x08, /* Report Size (8) */				\
+	0x15, 0x00, /* Logical Minimum (0) */				\
+	0x25, 0xa4, /* Logical Maximum (164) */				\
+	0x05, 0x07, /* Usage Page (Key Codes) */			\
+	0x19, 0x00, /* Usage Minimum (0) */				\
+	0x29, 0xa4, /* Usage Maximum (164) */				\
 	0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
 
-#ifdef CONFIG_KEYBOARD_NEW_KEY
-	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */
-	0x19, 0x18, /* Usage Minimum */
-	0x29, 0x18, /* Usage Maximum */
-	0x15, 0x00, /* Logical Minimum (0) */
-	0x25, 0x01, /* Logical Maximum (1) */
-	0x75, 0x01, /* Report Size (1) */
-	0x95, 0x01, /* Report Count (1) */
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
-
-	0x95, 0x01, /* Report Count (1) */
-	0x75, 0x07, /* Report Size (7) */
+#define KEYBOARD_NEW_KEY_DESC						\
+	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */	\
+	0x19, 0x18, /* Usage Minimum */					\
+	0x29, 0x18, /* Usage Maximum */					\
+	0x15, 0x00, /* Logical Minimum (0) */				\
+	0x25, 0x01, /* Logical Maximum (1) */				\
+	0x75, 0x01, /* Report Size (1) */				\
+	0x95, 0x01, /* Report Count (1) */				\
+	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */ \
+									\
+	0x95, 0x01, /* Report Count (1) */				\
+	0x75, 0x07, /* Report Size (7) */				\
 	0x81, 0x01, /* Input (Constant), ;7-bit padding */
-#endif
 
-#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
-	0xA1, 0x02, /* Collection (Logical) */
-	0x05, 0x14, /*   Usage Page (Alphanumeric Display) */
-	0x09, 0x46, /*   Usage (Display Brightness) */
-	0x95, 0x01, /*   Report Count (1) */
-	0x75, 0x08, /*   Report Size (8) */
-	0x15, 0x00, /*   Logical Minimum (0) */
-	0x25, 0x64, /*   Logical Maximum (100) */
-	0x91, 0x02, /*   Output (Data, Variable, Absolute) */
+#define KEYBOARD_BACKLIGHT_DESC \
+	0xA1, 0x02, /* Collection (Logical) */				\
+	0x05, 0x14, /*   Usage Page (Alphanumeric Display) */		\
+	0x09, 0x46, /*   Usage (Display Brightness) */			\
+	0x95, 0x01, /*   Report Count (1) */				\
+	0x75, 0x08, /*   Report Size (8) */				\
+	0x15, 0x00, /*   Logical Minimum (0) */				\
+	0x25, 0x64, /*   Logical Maximum (100) */			\
+	0x91, 0x02, /*   Output (Data, Variable, Absolute) */		\
 	0xC0,       /* End Collection */
+
+/*
+ * To allow dynamic detection of keyboard backlights, we define two descriptors.
+ * One has keyboard backlight, and the other one does not.
+ */
+
+/* HID : Report Descriptor */
+static const uint8_t report_desc[] = {
+
+	KEYBOARD_BASE_DESC
+
+#ifdef CONFIG_KEYBOARD_NEW_KEY
+	KEYBOARD_NEW_KEY_DESC
 #endif
 
 	0xC0        /* End Collection */
 };
+
+
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+
+/* HID : Report Descriptor with keyboard backlight */
+static const uint8_t report_desc_with_backlight[] = {
+
+	KEYBOARD_BASE_DESC
+
+#ifdef CONFIG_KEYBOARD_NEW_KEY
+	KEYBOARD_NEW_KEY_DESC
+#endif
+
+	KEYBOARD_BACKLIGHT_DESC
+
+	0xC0        /* End Collection */
+};
+
+#endif
 
 /* HID: HID Descriptor */
 const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD,
@@ -348,9 +378,19 @@ USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx,
 static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 				      usb_uint *ep0_buf_tx)
 {
-	int ret = hid_iface_request(ep0_buf_rx, ep0_buf_tx,
-				    report_desc, sizeof(report_desc),
-				    &hid_desc_kb);
+	int ret;
+	const uint8_t *desc = report_desc;
+	uint32_t size = sizeof(report_desc);
+
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+	if (board_has_keyboard_backlight()) {
+		desc = report_desc_with_backlight;
+		size = sizeof(report_desc_with_backlight);
+	}
+#endif
+
+	ret = hid_iface_request(ep0_buf_rx, ep0_buf_tx,
+				desc, size, &hid_desc_kb);
 	if (ret >= 0)
 		return ret;
 
@@ -530,3 +570,16 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 
 	keyboard_process_queue();
 }
+
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+void usb_hid_keyboard_init(void)
+{
+	if (board_has_keyboard_backlight()) {
+		set_descriptor_patch(USB_DESC_KEYBOARD_BACKLIGHT,
+			&hid_desc_kb.desc[0].wDescriptorLength,
+			sizeof(report_desc_with_backlight));
+	}
+}
+/* This needs to happen before usb_init (HOOK_PRIO_DEFAULT) */
+DECLARE_HOOK(HOOK_INIT, usb_hid_keyboard_init, HOOK_PRIO_DEFAULT - 1);
+#endif

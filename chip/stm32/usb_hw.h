@@ -69,6 +69,9 @@ void *memcpy_from_usbram(void *dest, const void *src, size_t n);
  */
 
 enum usb_desc_patch_type {
+#ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
+	USB_DESC_KEYBOARD_BACKLIGHT,
+#endif
 	USB_DESC_PATCH_COUNT,
 };
 
