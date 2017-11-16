@@ -278,21 +278,6 @@ void base_detect_interrupt(enum gpio_signal signal)
 	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
 }
 
-static void base_enable(void)
-{
-	/* Enable base detection interrupt. */
-	base_detect_debounce_time = get_time().val;
-	hook_call_deferred(&base_detect_deferred_data, 0);
-	gpio_enable_interrupt(GPIO_BASE_DET_A);
-}
-
-static void base_disable(void)
-{
-	/* Disable base detection interrupt and disable power to base. */
-	gpio_disable_interrupt(GPIO_BASE_DET_A);
-	base_detect_change(BASE_DISCONNECTED);
-}
-
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */
@@ -872,7 +857,7 @@ static void board_chipset_startup(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x41, 0x01);
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x2a, 0x02);
 
-	base_enable();
+	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -887,7 +872,7 @@ static void board_chipset_shutdown(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x41, 0x0);
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x2a, 0x0);
 
-	base_disable();
+	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 

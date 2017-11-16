@@ -23,8 +23,6 @@ GPIO_INT(RSMRST_L_PGOOD,	PIN(B, 0), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,		PIN(C, 7), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,	power_button_interrupt)
 GPIO_INT(LID_OPEN,		PIN(6, 7), GPIO_INT_BOTH,			lid_interrupt)
-/* TODO(b/35585396): Make use of reverse dock signal. */
-GPIO_INT(REVERSE_DOCK,		PIN(B, 7), GPIO_INT_BOTH,			lid_interrupt)
 GPIO_INT(VOLUME_DOWN_L,		PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUME_UP_L,		PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(WP_L,			PIN(4, 0), GPIO_INT_BOTH,			switch_interrupt)
@@ -34,10 +32,10 @@ GPIO_INT(USB_C1_VBUS_WAKE_L,	PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	vbus1_evt)
 GPIO_INT(USB_C0_BC12_INT_L,	PIN(D, 3), GPIO_INT_FALLING,			usb0_evt)
 GPIO_INT(USB_C1_BC12_INT_L,	PIN(3, 3), GPIO_INT_FALLING,			usb1_evt)
 GPIO_INT(ACCELGYRO3_INT_L,	PIN(3, 6), GPIO_INT_FALLING,			bmi160_interrupt)
-GPIO_INT(BASE_DET_A,		PIN(4, 5), GPIO_INT_BOTH,			base_detect_interrupt)
 
+GPIO(ENABLE_TOUCHPAD,		PIN(4, 5), GPIO_OUT_LOW)
 GPIO(PCH_RTCRST,		PIN(2, 7), GPIO_OUT_LOW)			/* RTCRST# to SOC (>= rev4) */
-GPIO(ENABLE_BACKLIGHT,		PIN(2, 6), GPIO_OUT_LOW)			/* Enable Backlight */
+GPIO(ENABLE_BACKLIGHT,		PIN(5, 6), GPIO_OUT_LOW)			/* Enable Backlight */
 GPIO(WLAN_OFF_L,		PIN(7, 2), GPIO_OUT_LOW)			/* Disable WLAN */
 GPIO(PP3300_DX_WLAN,		PIN(A, 7), GPIO_OUT_LOW)			/* Enable WLAN 3.3V Power */
 GPIO(CPU_PROCHOT,		PIN(8, 1), GPIO_OUT_HIGH)			/* PROCHOT# to SOC */
