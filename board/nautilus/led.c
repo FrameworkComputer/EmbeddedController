@@ -20,150 +20,114 @@
 #define BAT_LED_ON 1
 #define BAT_LED_OFF 0
 
+#define LED_TOTAL_TICKS 16
+#define LED_ON_TICKS 8
+
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_LEFT_LED,
-	EC_LED_ID_RIGHT_LED,
-};
+	EC_LED_ID_POWER_LED,
+	EC_LED_ID_BATTERY_LED};
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
-	LED_AMBER,
-	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_RED,
+	LED_GREEN,
+	LED_BLUE,
+
+	/* Number of colors, not a color itself */
+	LED_COLOR_COUNT
 };
 
-static void side_led_set_color(int port, enum led_color color)
+/**
+ * Set LED color
+ *
+ * @param color         Enumerated color value
+ */
+static void set_color(enum led_color color)
 {
-	int yellow_c0 = (system_get_board_version() >= 5) ?
-			GPIO_LED_YELLOW_C0 : GPIO_LED_YELLOW_C0_OLD;
-	gpio_set_level(port ? GPIO_LED_YELLOW_C1 : yellow_c0,
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
-	gpio_set_level(port ? GPIO_LED_WHITE_C1 : GPIO_LED_WHITE_C0,
-		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
+	gpio_set_level(GPIO_POWER_LED, !(color == LED_BLUE));
+	gpio_set_level(GPIO_LED_ACIN, !(color == LED_GREEN));
+	gpio_set_level(GPIO_LED_CHARGE, !(color == LED_RED));
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
-	brightness_range[EC_LED_COLOR_WHITE] = 1;
+	brightness_range[EC_LED_COLOR_RED] = 1;
+	brightness_range[EC_LED_COLOR_BLUE] = 1;
+	brightness_range[EC_LED_COLOR_GREEN] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	int port;
-
-	switch (led_id) {
-	case EC_LED_ID_LEFT_LED:
-		port = 0;
-		break;
-	case EC_LED_ID_RIGHT_LED:
-		port = 1;
-		break;
-	default:
-		return EC_ERROR_PARAM1;
-	}
-
-	if (brightness[EC_LED_COLOR_WHITE] != 0)
-		side_led_set_color(port, LED_WHITE);
-	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		side_led_set_color(port, LED_AMBER);
-	else
-		side_led_set_color(port, LED_OFF);
+	gpio_set_level(GPIO_POWER_LED, !brightness[EC_LED_COLOR_BLUE]);
+	gpio_set_level(GPIO_LED_ACIN, !brightness[EC_LED_COLOR_GREEN]);
+	gpio_set_level(GPIO_LED_CHARGE, !brightness[EC_LED_COLOR_RED]);
 
 	return EC_SUCCESS;
 }
 
-/*
- * Set active charge port color to the parameter, turn off all others.
- * If no port is active (-1), turn off all LEDs.
- */
-static void set_active_port_color(enum led_color color)
+
+static void nautilus_led_set_power_battery(void)
 {
-	int port = charge_manager_get_active_charge_port();
+	static unsigned int power_ticks;
+	enum led_color cur_led_color = LED_RED;
+	enum charge_state chg_state = charge_get_state();
+	int charge_percent = charge_get_percent();
 
-	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
-		side_led_set_color(0, (port == 0) ? color : LED_OFF);
-	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
-		side_led_set_color(1, (port == 1) ? color : LED_OFF);
-}
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		set_color(LED_BLUE);
+		return;
+	}
 
-static void board_led_set_battery(void)
-{
-	static int battery_ticks;
-	uint32_t chflags = charge_get_flags();
+	/* Flash red on critical battery, which usually inhibits AP power-on. */
+	if (battery_is_present() != BP_YES ||
+		charge_percent < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
+			set_color(((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
+						  LED_RED : LED_OFF);
+		return;
+	}
 
-	battery_ticks++;
-
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
-		/* Always indicate when charging, even in suspend. */
-		set_active_port_color(LED_AMBER);
-		break;
+	/* CHIPSET_STATE_OFF */
+	switch (chg_state) {
 	case PWR_STATE_DISCHARGE:
-		/*
-		 * TODO(b/37970194): Do we really want to blink on low battery?
-		 * If yes, what's the threshold? In S0 only?
-		 */
-		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
-			if (charge_get_percent() < 12)
-				side_led_set_color(0,
-				   (battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
-			else
-				side_led_set_color(0, LED_OFF);
-		}
-
-		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
-			side_led_set_color(1, LED_OFF);
+		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
+			charge_percent >= BATTERY_LEVEL_NEAR_FULL)
+			cur_led_color = LED_GREEN;
+		else
+			cur_led_color = LED_OFF;
+		break;
+	case PWR_STATE_CHARGE:
+		cur_led_color = LED_RED;
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				LED_WHITE : LED_OFF);
+		cur_led_color = ((power_ticks++ % LED_TOTAL_TICKS)
+					  < LED_ON_TICKS) ? LED_RED : LED_GREEN;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		set_active_port_color(LED_WHITE);
-		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks & 0x4) ?
-					LED_AMBER : LED_OFF);
-		else
-			set_active_port_color(LED_WHITE);
+	case PWR_STATE_IDLE: /* External power connected in IDLE. */
+		cur_led_color = LED_GREEN;
 		break;
 	default:
-		/* Other states don't alter LED behavior */
+		cur_led_color = LED_RED;
 		break;
 	}
+
+	set_color(cur_led_color);
+
+	if (chg_state != PWR_STATE_ERROR)
+		power_ticks = 0;
 }
 
-/* Called by hook task every TICK */
+/**
+ * Called by hook task every 250 ms
+ */
 static void led_tick(void)
 {
-	board_led_set_battery();
-}
-DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
-
-void led_control(enum ec_led_id led_id, enum ec_led_state state)
-{
-	enum led_color color;
-
-	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
-	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
-		return;
-
-	if (state == LED_STATE_RESET) {
-		led_auto_control(EC_LED_ID_LEFT_LED, 1);
-		led_auto_control(EC_LED_ID_RIGHT_LED, 1);
-		board_led_set_battery();
-		return;
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED) &&
+		led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+			nautilus_led_set_power_battery();
 	}
-
-	color = state ? LED_WHITE : LED_OFF;
-
-	led_auto_control(EC_LED_ID_LEFT_LED, 0);
-	led_auto_control(EC_LED_ID_RIGHT_LED, 0);
-
-	side_led_set_color(0, color);
-	side_led_set_color(1, color);
 }
+
+DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
