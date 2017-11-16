@@ -398,9 +398,6 @@ void board_tcpc_init(void)
 
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image()) {
-		gpio_set_level(GPIO_PP3300_USB_PD, 1);
-		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
-		msleep(10);
 		board_reset_pd_mcu();
 	}
 
@@ -413,6 +410,7 @@ void board_tcpc_init(void)
 	 *
 	 * NOTE: PS8751 A3 will wake on any I2C access.
 	 */
+	i2c_read8(NPCX_I2C_PORT0_0, 0x10, 0xA0, &reg);
 	i2c_read8(NPCX_I2C_PORT0_1, 0x10, 0xA0, &reg);
 
 	/* Enable TCPC interrupts */
@@ -593,36 +591,15 @@ static void board_init(void)
 
 	/* Enable sensors power supply */
 	gpio_set_level(GPIO_PP1800_DX_SENSOR, 1);
-	gpio_set_level(GPIO_PP3300_DX_SENSOR, 1);
 
 	/* Enable VBUS interrupt */
-	if (system_get_board_version() == 0) {
-		/*
-		 * crosbug.com/p/61929: rev0 does not have VBUS detection,
-		 * force detection on both ports.
-		 */
-		gpio_set_flags(GPIO_USB_C0_VBUS_WAKE_L,
-			GPIO_INPUT | GPIO_PULL_DOWN);
-		gpio_set_flags(GPIO_USB_C1_VBUS_WAKE_L,
-			GPIO_INPUT | GPIO_PULL_DOWN);
-
-		vbus0_evt(GPIO_USB_C0_VBUS_WAKE_L);
-		vbus1_evt(GPIO_USB_C1_VBUS_WAKE_L);
-	} else {
-		gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
-		gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
-	}
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
 
 	/* Enable pericom BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
-	/*
-	 * If we jumped to this image and chipset is already in S0, enable
-	 * base.
-	 */
-	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
-		base_enable();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
