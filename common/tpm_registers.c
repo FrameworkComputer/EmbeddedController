@@ -484,9 +484,6 @@ void tpm_register_get(uint32_t regaddr, uint8_t *dest, uint32_t data_size)
 {
 	int i;
 
-	if (reset_in_progress)
-		return;
-
 	CPRINTF("%s(0x%06x, %d)", __func__, regaddr, data_size);
 	switch (regaddr) {
 	case TPM_DID_VID:
