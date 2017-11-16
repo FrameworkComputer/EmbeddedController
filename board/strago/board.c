@@ -167,14 +167,6 @@ struct als_t als[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
-const struct button_config buttons[] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN,
-		30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP,
-		30 * MSEC, 0},
-};
-BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
-
 /**
  * Reset PD MCU
  */

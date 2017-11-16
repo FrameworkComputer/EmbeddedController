@@ -45,16 +45,6 @@ test_mockable void button_interrupt(enum gpio_signal signal)
 {
 };
 
-#ifdef CONFIG_BUTTON_COUNT
-const struct button_config buttons[] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_BUTTON_VOLUME_DOWN_L,
-	 30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_BUTTON_VOLUME_UP,
-	 60 * MSEC, BUTTON_FLAG_ACTIVE_HIGH},
-};
-BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
-#endif
-
 #ifdef CONFIG_I2C
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

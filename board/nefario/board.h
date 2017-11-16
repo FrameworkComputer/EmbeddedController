@@ -51,7 +51,6 @@
 /* Optional features */
 #define CONFIG_BOARD_VERSION
 #define CONFIG_BOARD_SPECIFIC_VERSION
-#define CONFIG_BUTTON_COUNT        2
 #define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_HOST_COMMAND_STATUS
 /* By default, set hcdebug to off */
@@ -66,6 +65,7 @@
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_SOFTWARE_PANIC
 #define CONFIG_VBOOT_HASH
+#define CONFIG_VOLUME_BUTTONS
 
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_BD9995X

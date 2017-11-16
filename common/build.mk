@@ -24,7 +24,6 @@ common-$(CONFIG_BASE32)+=base32.o
 common-$(CONFIG_BATTERY)+=battery.o
 common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
-common-$(CONFIG_BUTTON_COUNT)+=button.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CASE_CLOSED_DEBUG_V1)+=ccd_config.o
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
@@ -43,6 +42,7 @@ common-$(CONFIG_CURVE25519)+=curve25519.o
 ifneq ($(CORE),cortex-m0)
 common-$(CONFIG_CURVE25519)+=curve25519-generic.o
 endif
+common-$(CONFIG_DEDICATED_RECOVERY_BUTTON)+=button.o
 common-$(CONFIG_DEVICE_EVENT)+=device_event.o
 common-$(CONFIG_DEVICE_STATE)+=device_state.o
 common-$(CONFIG_DPTF)+=dptf.o
@@ -114,6 +114,7 @@ common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
 common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o
 common-$(CONFIG_VBOOT_EFS)+=vboot/vboot.o
 common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
+common-$(CONFIG_VOLUME_BUTTONS)+=button.o
 common-$(CONFIG_VSTORE)+=vstore.o
 common-$(CONFIG_WEBUSB_URL)+=webusb_desc.o
 common-$(CONFIG_WIRELESS)+=wireless.o

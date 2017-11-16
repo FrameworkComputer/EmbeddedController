@@ -8,6 +8,7 @@
 #include "button.h"
 #include "chipset.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -28,7 +29,7 @@ struct button_state_t {
 	int debounced_pressed;
 };
 
-static struct button_state_t __bss_slow state[CONFIG_BUTTON_COUNT];
+static struct button_state_t __bss_slow state[BUTTON_COUNT];
 
 static uint64_t __bss_slow next_deferred_time;
 
@@ -172,7 +173,7 @@ void button_init(void)
 
 	CPRINTS("init buttons");
 	next_deferred_time = 0;
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++) {
+	for (i = 0; i < BUTTON_COUNT; i++) {
 		state[i].debounced_pressed = raw_button_pressed(&buttons[i]);
 		state[i].debounce_time = 0;
 		gpio_enable_interrupt(buttons[i].gpio);
@@ -207,7 +208,7 @@ static void button_change_deferred(void)
 	uint64_t soonest_debounce_time = 0;
 	uint64_t time_now = get_time().val;
 
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++) {
+	for (i = 0; i < BUTTON_COUNT; i++) {
 		/* Skip this button if we are not waiting to debounce */
 		if (state[i].debounce_time == 0)
 			continue;
@@ -263,7 +264,7 @@ void button_interrupt(enum gpio_signal signal)
 	int i;
 	uint64_t time_now = get_time().val;
 
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++) {
+	for (i = 0; i < BUTTON_COUNT; i++) {
 		if (buttons[i].gpio != signal)
 			continue;
 
@@ -283,7 +284,7 @@ static int button_present(enum keyboard_button_type type)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++)
+	for (i = 0; i < BUTTON_COUNT; i++)
 		if (buttons[i].type == type)
 			break;
 
@@ -315,7 +316,7 @@ static int console_command_button(int argc, char **argv)
 	else
 		return EC_ERROR_PARAM1;
 
-	if (button == CONFIG_BUTTON_COUNT)
+	if (button == BUTTON_COUNT)
 		return EC_ERROR_PARAM1;
 
 	if (argc > 2) {
@@ -677,3 +678,33 @@ DECLARE_HOOK(HOOK_TICK, debug_led_tick, HOOK_PRIO_DEFAULT);
 
 #endif /* !CONFIG_DEDICATED_RECOVERY_BUTTON */
 #endif /* CONFIG_EMULATED_SYSRQ */
+
+const struct button_config buttons[BUTTON_COUNT] = {
+#ifdef CONFIG_VOLUME_BUTTONS
+	[BUTTON_VOLUME_UP] = {
+		.name = "Volume Up",
+		.type = KEYBOARD_BUTTON_VOLUME_UP,
+		.gpio = GPIO_VOLUME_UP_L,
+		.debounce_us = 30 * MSEC,
+		.flags = 0,
+	},
+
+	[BUTTON_VOLUME_DOWN] = {
+		.name = "Volume Down",
+		.type = KEYBOARD_BUTTON_VOLUME_DOWN,
+		.gpio = GPIO_VOLUME_DOWN_L,
+		.debounce_us = 30 * MSEC,
+		.flags = 0,
+	},
+#endif /* defined(CONFIG_VOLUME_BUTTONS) */
+
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
+	[BUTTON_RECOVERY] = {
+		.name = "Recovery",
+		.type = KEYBOARD_BUTTON_RECOVERY,
+		.gpio = GPIO_RECOVERY_L,
+		.debounce_us = 30 * MSEC,
+		.flags = 0,
+	}
+#endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
+};

@@ -123,13 +123,6 @@ const struct spi_device_t spi_devices[] = {
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
-const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	[BUTTON_VOLUME_DOWN] = {"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN,
-				GPIO_VOLUME_DOWN_L, 30 * MSEC, 0},
-	[BUTTON_VOLUME_UP] = {"Volume Up", KEYBOARD_BUTTON_VOLUME_UP,
-			      GPIO_VOLUME_UP_L, 30 * MSEC, 0},
-};
-
 const struct button_config *recovery_buttons[] = {
 	&buttons[BUTTON_VOLUME_DOWN],
 	&buttons[BUTTON_VOLUME_UP],

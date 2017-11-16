@@ -38,9 +38,18 @@ struct button_config {
 	int flags;
 };
 
-/*
- * Defined in board.c. Should be CONFIG_BUTTON_COUNT elements long.
- */
+enum button {
+#ifdef CONFIG_VOLUME_BUTTONS
+	BUTTON_VOLUME_UP,
+	BUTTON_VOLUME_DOWN,
+#endif /* defined(CONFIG_VOLUME_BUTTONS) */
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
+	BUTTON_RECOVERY,
+#endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
+	BUTTON_COUNT,
+};
+
+/* Table of buttons for the board. */
 extern const struct button_config buttons[];
 
 /*

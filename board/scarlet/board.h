@@ -46,7 +46,6 @@
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BOARD_VERSION
-#define CONFIG_BUTTON_COUNT        2
 #define CONFIG_BUTTON_RECOVERY
 #define CONFIG_CHARGER_ILIM_PIN_DISABLED
 #define CONFIG_FORCE_CONSOLE_RESUME
@@ -62,6 +61,7 @@
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_SOFTWARE_PANIC
 #define CONFIG_VBOOT_HASH
+#define CONFIG_VOLUME_BUTTONS
 
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_RT9467
@@ -180,12 +180,6 @@ enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
 	ADC_CH_COUNT
-};
-
-enum button {
-	BUTTON_VOLUME_DOWN = 0,
-	BUTTON_VOLUME_UP = 1,
-	BUTTON_COUNT
 };
 
 /* power signal definitions */

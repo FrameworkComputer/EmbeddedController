@@ -346,13 +346,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
-	 30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
-	 30 * MSEC, 0},
-};
-
 static void board_pmic_init(void)
 {
 	if (system_jumped_to_this_image())

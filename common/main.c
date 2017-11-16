@@ -164,9 +164,9 @@ test_mockable __keep int main(void)
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
-#ifdef CONFIG_BUTTON_COUNT
+#if defined(CONFIG_DEDICATED_RECOVERY_BUTTON) || defined(CONFIG_VOLUME_BUTTONS)
 	button_init();
-#endif
+#endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON | CONFIG_VOLUME_BUTTONS) */
 
 #if !defined(CONFIG_VBOOT_EFS) && \
 	defined(CONFIG_RWSIG) && !defined(HAS_TASK_RWSIG)

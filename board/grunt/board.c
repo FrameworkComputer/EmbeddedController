@@ -72,13 +72,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLDN_BTN_ODL,
-	 30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUP_BTN_ODL,
-	 30 * MSEC, 0},
-};
-
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Extra delay when KSO2 is tied to Cr50. */

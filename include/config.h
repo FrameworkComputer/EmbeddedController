@@ -394,12 +394,6 @@
 /*****************************************************************************/
 
 /*
- * Number of extra buttons not on the keyboard scan matrix. Doesn't include
- * the power button, which has its own handler.
- */
-#undef CONFIG_BUTTON_COUNT
-
-/*
  * Support for entering recovery mode using volume buttons. You need to
  * list the buttons in recovery_buttons.
  */
@@ -409,6 +403,12 @@
  * Indicates there is a dedicated recovery button.
  */
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON
+
+/*
+ * The board has volume up and volume down buttons.  Note, these are *buttons*
+ * and not keys in the keyboard matrix.
+ */
+#undef CONFIG_VOLUME_BUTTONS
 
 /* Support V1 CCD configuration */
 #undef CONFIG_CASE_CLOSED_DEBUG_V1

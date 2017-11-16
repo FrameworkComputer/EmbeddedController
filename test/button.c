@@ -18,14 +18,13 @@
 #include "timer.h"
 #include "keyboard_protocol.h"
 
-#define INDEX_VOL_DOWN 0
-#define INDEX_VOL_UP 1
 #define UNCHANGED -1
 
-static const struct button_config *button_vol_down = &buttons[INDEX_VOL_DOWN];
-static const struct button_config *button_vol_up = &buttons[INDEX_VOL_UP];
+static const struct button_config *button_vol_down =
+	&buttons[BUTTON_VOLUME_DOWN];
+static const struct button_config *button_vol_up = &buttons[BUTTON_VOLUME_UP];
 
-static int button_state[CONFIG_BUTTON_COUNT];
+static int button_state[BUTTON_COUNT];
 
 /*
  * Callback from the button handling logic.
@@ -35,7 +34,7 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 {
 	int i;
 
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++) {
+	for (i = 0; i < BUTTON_COUNT; i++) {
 		if (buttons[i].type == button) {
 			button_state[i] = is_pressed;
 			break;
@@ -48,7 +47,7 @@ static int test_button_press(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
 	msleep(100);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 
 	return EC_SUCCESS;
 }
@@ -56,11 +55,11 @@ static int test_button_press(void)
 /* Test releasing a button */
 static int test_button_release(void)
 {
-	gpio_set_level(button_vol_up->gpio, 1);
-	msleep(100);
 	gpio_set_level(button_vol_up->gpio, 0);
 	msleep(100);
-	TEST_ASSERT(button_state[INDEX_VOL_UP] == 0);
+	gpio_set_level(button_vol_up->gpio, 1);
+	msleep(100);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 0);
 
 	return EC_SUCCESS;
 }
@@ -72,7 +71,7 @@ static int test_button_debounce_short_press(void)
 	msleep(10);
 	gpio_set_level(button_vol_down->gpio, 1);
 	msleep(100);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 
 	return EC_SUCCESS;
 }
@@ -82,15 +81,15 @@ static int test_button_debounce_short_bounce(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
 	msleep(10);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 1);
 	msleep(10);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 0);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 
 	return EC_SUCCESS;
 }
@@ -100,24 +99,24 @@ static int test_button_debounce_stability(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 1);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 0);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	msleep(60);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	gpio_set_level(button_vol_down->gpio, 1);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	msleep(20);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 0);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
 	msleep(60);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 0);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
 
 	return EC_SUCCESS;
 }
@@ -127,15 +126,15 @@ static int test_button_press_both(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
 	msleep(10);
-	gpio_set_level(button_vol_up->gpio, 1);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == UNCHANGED);
-	TEST_ASSERT(button_state[INDEX_VOL_UP] == UNCHANGED);
+	gpio_set_level(button_vol_up->gpio, 0);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == UNCHANGED);
 	msleep(30);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
-	TEST_ASSERT(button_state[INDEX_VOL_UP] == UNCHANGED);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == UNCHANGED);
 	msleep(40);
-	TEST_ASSERT(button_state[INDEX_VOL_DOWN] == 1);
-	TEST_ASSERT(button_state[INDEX_VOL_UP] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
+	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 1);
 
 	return EC_SUCCESS;
 }
@@ -145,12 +144,12 @@ static void button_test_init(void)
 	int i;
 
 	ccprintf("[%T Setting button GPIOs to inactive state.]\n");
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++)
+	for (i = 0; i < BUTTON_COUNT; i++)
 		gpio_set_level(buttons[i].gpio,
 			       !(buttons[i].flags & BUTTON_FLAG_ACTIVE_HIGH));
 
 	msleep(100);
-	for (i = 0; i < CONFIG_BUTTON_COUNT; i++)
+	for (i = 0; i < BUTTON_COUNT; i++)
 		button_state[i] = UNCHANGED;
 }
 

@@ -74,24 +74,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
-const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	{
-		.name = "Volume Up",
-		.type = KEYBOARD_BUTTON_VOLUME_UP,
-		.gpio = GPIO_EC_VOLUP_BTN_ODL,
-		.debounce_us = 30 * MSEC,
-		.flags = 0,
-	},
-	{
-		.name = "Volume Down",
-		.type = KEYBOARD_BUTTON_VOLUME_DOWN,
-		.gpio = GPIO_EC_VOLDN_BTN_ODL,
-		.debounce_us = 30 * MSEC,
-		.flags = 0,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(buttons) == CONFIG_BUTTON_COUNT);
-
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
 {
