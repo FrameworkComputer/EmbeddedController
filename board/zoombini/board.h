@@ -73,6 +73,13 @@
 #define CONFIG_SWITCH
 #endif /* defined(BOARD_ZOOMBINI) */
 
+/* TODO(aaboagye): Eventually, enable MKBP for zoombini as well. */
+#ifdef BOARD_MEOWTH
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#endif /* defined(BOARD_MEOWTH) */
+
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
