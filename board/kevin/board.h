@@ -204,7 +204,9 @@
 
 /* Gru is especially limited on code space */
 #ifdef BOARD_GRU
+#undef CONFIG_CMD_IDLE_STATS
 #undef CONFIG_CMD_I2C_XFER
+#undef CONFIG_USB_PD_LOGGING
 #undef CONFIG_CMD_SHMEM
 #undef CONFIG_CMD_USBMUX
 #undef CONFIG_CMD_TYPEC
