@@ -641,28 +641,28 @@ enum battery_present battery_is_present(void)
 	     battery_check_disconnect() != BATTERY_NOT_DISCONNECTED ||
 	     battery_init() == 0)) {
 		battery_report_present = 0;
+		/*
+		 * When this path is taken, the _timer_started flag must be
+		 * reset so the 'else if' path will be entered and the
+		 * battery_report_present flag can be set by the deferred
+		 * call. This handles the case of the battery being disconected
+		 * and reconnected while running or if battery_init() returns an
+		 * error due to a failed sb_read.
+		 */
+		battery_report_present_timer_started = 0;
 	}  else if (batt_pres == BP_YES && batt_pres_prev == BP_NO &&
 		   !battery_report_present_timer_started) {
 		/*
-		 * Wait 1 second before reporting present if it was
+		 * Wait 1/2 second before reporting present if it was
 		 * previously reported as not present
 		 */
 		battery_report_present_timer_started = 1;
 		battery_report_present = 0;
-		hook_call_deferred(&battery_now_present_data, SECOND);
+		hook_call_deferred(&battery_now_present_data, 500 * MSEC);
 	}
 
 	if (!battery_report_present)
 		batt_pres = BP_NO;
-	/*
-	 * If battery was present, but has been disabled or removed, then reset
-	 * the timer_started variable, so when battery is reconnected it can
-	 * report as present.
-	 */
-	if (batt_pres_prev == BP_YES && batt_pres == BP_NO) {
-		battery_report_present_timer_started = 0;
-		CPRINTS("Battery was present, but is now disconnected");
-	}
 
 	batt_pres_prev = batt_pres;
 
