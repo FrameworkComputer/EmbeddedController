@@ -7,7 +7,6 @@
 
 #include "adc.h"
 #include "adc_chip.h"
-#include "als.h"
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
@@ -18,7 +17,6 @@
 #include "chipset.h"
 #include "console.h"
 #include "driver/accelgyro_bmi160.h"
-#include "driver/als_opt3001.h"
 #include "driver/baro_bmp280.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -456,13 +454,6 @@ const struct temp_sensor_t temp_sensors[] = {
 	 BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-/* ALS instances. Must be in same order as enum als_id. */
-struct als_t als[] = {
-	/* TODO(crosbug.com/p/61098): verify attenuation_factor */
-	{"TI", opt3001_init, opt3001_read_lux, 5},
-};
-BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 
 const struct button_config *recovery_buttons[] = {
 	&buttons[BUTTON_VOLUME_DOWN],
