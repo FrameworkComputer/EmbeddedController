@@ -5,6 +5,7 @@
  * TI OPT3001 light sensor driver
  */
 
+#include "common.h"
 #include "driver/als_opt3001.h"
 #include "i2c.h"
 
@@ -144,17 +145,14 @@ int opt3001_read_lux(const struct motion_sensor_t *s, vector_3_t v)
 		return ret;
 
 	/*
-	 * The default power-on values will give 12 bits of precision:
-	 * 0x0000-0x0fff indicates 0 to 1310.40 lux. We multiply the sensor
-	 * value by a scaling factor to account for attenuation by glass,
-	 * tinting, etc.
-	 */
-
-	/*
 	 * lux = 2EXP[3:0] × R[11:0] / 100
 	 */
-	v[0] = ((1 << ((data & 0xF000) >> 12)) * (data & 0x0FFF) *
-		drv_data->attenuation) / 100;
+	data = (1 << (data >> 12)) * (data & 0x0FFF) / 100;
+	data += drv_data->offset;
+	if (data < 0)
+		data = 1;
+
+	v[0] = data * drv_data->scale + data * drv_data->uscale / 10000;
 	v[1] = 0;
 	v[2] = 0;
 
@@ -164,32 +162,19 @@ int opt3001_read_lux(const struct motion_sensor_t *s, vector_3_t v)
 	 */
 	if (v[0] == drv_data->last_value)
 		return EC_ERROR_UNCHANGED;
-	else
+	else {
+		drv_data->last_value = v[0];
 		return EC_SUCCESS;
+	}
 }
 
 static int opt3001_set_range(const struct motion_sensor_t *s, int range,
 			     int rnd)
 {
-	int rv;
-	int reg;
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 
-	if (range < 0 || range > OPT3001_RANGE_AUTOMATIC_FULL_SCALE)
-		return EC_ERROR_INVAL;
-
-	rv = opt3001_i2c_read(s->port, s->addr, OPT3001_REG_CONFIGURE, &reg);
-	if (rv)
-		return rv;
-
-	rv = opt3001_i2c_write(s->port, s->addr, OPT3001_REG_CONFIGURE,
-			       (reg & OPT3001_RANGE_MASK) |
-			       (range << OPT3001_RANGE_OFFSET));
-	if (rv)
-		return rv;
-
-	drv_data->range = range;
-
+	drv_data->scale = range >> 16;
+	drv_data->uscale = range & 0xffff;
 	return EC_SUCCESS;
 }
 
@@ -197,7 +182,7 @@ static int opt3001_get_range(const struct motion_sensor_t *s)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 
-	return drv_data->range;
+	return (drv_data->scale << 16) | (drv_data->uscale);
 }
 
 static int opt3001_set_data_rate(const struct motion_sensor_t *s,
@@ -248,14 +233,23 @@ static int opt3001_set_offset(const struct motion_sensor_t *s,
 			const int16_t *offset,
 			int16_t    temp)
 {
-	return EC_RES_INVALID_COMMAND;
+	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
+
+	drv_data->offset = offset[X];
+	return EC_SUCCESS;
 }
 
 static int opt3001_get_offset(const struct motion_sensor_t *s,
 			int16_t   *offset,
 			int16_t    *temp)
 {
-	return EC_RES_INVALID_COMMAND;
+	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
+
+	offset[X] = drv_data->offset;
+	offset[Y] = 0;
+	offset[Z] = 0;
+	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
+	return EC_SUCCESS;
 }
 /**
  * Initialise OPT3001 light sensor.
@@ -278,11 +272,15 @@ static int opt3001_init(const struct motion_sensor_t *s)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/*
+	 * [15-12]: 1100b Automatic full-scale setting mode
 	 * [11]   : 1b    Conversion time 800ms
 	 * [4]    : 1b    Latched window-style comparison operation
 	 */
-	 opt3001_i2c_write(s->port, s->addr, OPT3001_REG_CONFIGURE, 0x810);
-	 return opt3001_set_range(s, s->default_range, 0);
+	opt3001_i2c_write(s->port, s->addr, OPT3001_REG_CONFIGURE, 0xC810);
+
+	opt3001_set_range(s, s->default_range, 0);
+
+	return EC_SUCCESS;
 }
 
 const struct accelgyro_drv opt3001_drv = {

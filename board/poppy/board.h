@@ -102,6 +102,7 @@
 /* Sensor */
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
+#define ALS_COUNT 1
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
@@ -208,11 +209,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum als_id {
-	ALS_OPT3001,
-	ALS_COUNT
-};
-
 /*
  * Motion sensors:
  * When reading through IO memory is set up for sensors (LPC is used),
@@ -223,6 +219,7 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	LID_GYRO,
 	LID_MAG,
+	LID_ALS,
 };
 
 enum adc_channel {

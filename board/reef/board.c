@@ -783,7 +783,9 @@ static struct kionix_accel_data g_kx022_data;
 static struct bmi160_drv_data_t g_bmi160_data;
 static struct bmp280_drv_data_t bmp280_drv_data;
 static struct opt3001_drv_data_t g_opt3001_data = {
-	.attenuation = 5,
+	.scale = 1,
+	.uscale = 0,
+	.offset = 0,
 };
 
 /* FIXME(dhendrix): Copied from Amenia, probably need to tweak for Reef */
@@ -990,7 +992,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_ALS,
 	 .addr = OPT3001_I2C_ADDR1,
 	 .rot_standard_ref = NULL,
-	 .default_range = OPT3001_RANGE_AUTOMATIC_FULL_SCALE,
+	 .default_range = 0x10000, /* scale = 1; uscale = 0 */
 	 .min_frequency = OPT3001_LIGHT_MIN_FREQ,
 	 .max_frequency = OPT3001_LIGHT_MAX_FREQ,
 	 .config = {

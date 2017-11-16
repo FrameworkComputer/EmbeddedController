@@ -44,30 +44,15 @@ enum opt3001_mode {
 int opt3001_init(void);
 int opt3001_read_lux(int *lux, int af);
 #else
-/* OPT3001 Full-Scale Range */
-enum opt3001_range {
-	OPT3001_RANGE_40P95_LUX,
-	OPT3001_RANGE_81P90_LUX,
-	OPT3001_RANGE_163P80_LUX,
-	OPT3001_RANGE_327P60_LUX,
-	OPT3001_RANGE_655P20_LUX,
-	OPT3001_RANGE_1310P40_LUX,
-	OPT3001_RANGE_2620P80_LUX,
-	OPT3001_RANGE_5241P60_LUX,
-	OPT3001_RANGE_10483P20_LUX,
-	OPT3001_RANGE_20966P40_LUX,
-	OPT3001_RANGE_41932P80_LUX,
-	OPT3001_RANGE_83865P60_LUX,
-	OPT3001_RANGE_AUTOMATIC_FULL_SCALE,
-};
-
 #define OPT3001_GET_DATA(_s)	((struct opt3001_drv_data_t *)(_s)->drv_data)
 
 struct opt3001_drv_data_t {
-	enum opt3001_range range;
 	int rate;
 	int last_value;
-	int attenuation;
+	/* the coef is scale.uscale */
+	int16_t scale;
+	uint16_t uscale;
+	int16_t offset;
 };
 
 extern const struct accelgyro_drv opt3001_drv;
