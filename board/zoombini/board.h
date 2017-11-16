@@ -171,6 +171,9 @@ enum adc_channel {
 	ADC_VBUS = -1,
 	ADC_TEMP_SENSOR_SOC,
 	ADC_TEMP_SENSOR_CHARGER,
+#ifdef BOARD_MEOWTH
+	ADC_TEMP_SENSOR_WIFI,
+#endif /* defined(BOARD_MEOWTH) */
 	ADC_CH_COUNT
 };
 

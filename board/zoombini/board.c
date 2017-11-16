@@ -57,15 +57,28 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
-/* TODO(aaboagye): Add the additional Meowth temps sensors */
 const struct adc_t adc_channels[] = {
+#ifdef BOARD_ZOOMBINI
 	[ADC_TEMP_SENSOR_SOC] = {
-		"SOC", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
+		"SOC", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
 	},
 
 	[ADC_TEMP_SENSOR_CHARGER] = {
-		"CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
+		"CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
 	},
+#else /* defined(BOARD_MEOWTH) */
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		"CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
+
+	[ADC_TEMP_SENSOR_SOC] = {
+		"SOC", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
+
+	[ADC_TEMP_SENSOR_WIFI] = {
+		"WIFI", NPCX_ADC_CH8, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
+	},
+#endif /* defined(BOARD_ZOOMBINI) */
 };
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
