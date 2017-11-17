@@ -8,6 +8,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
+#include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -27,7 +28,7 @@
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			 PDO_FIXED_COMM_CAP)
 
-/* TODO: fill in correct source and sink capabilities */
+/* TODO(ecgh): fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
 	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
@@ -64,19 +65,7 @@ int board_vbus_source_enabled(int port)
 
 static void board_vbus_update_source_current(int port)
 {
-	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
-		(GPIO_INPUT | GPIO_PULL_UP) : (GPIO_OUTPUT | GPIO_PULL_UP);
-
-	/*
-	 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
-	 * (2x 33k in parallel) on the NX5P3290 load switch ILIM pin,
-	 * setting a minimum OCP current of 3186 mA.
-	 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put a 33k
-	 * resistor on ILIM, setting a minimum OCP current of 1505 mA.
-	 */
-	gpio_set_level(gpio, vbus_en[port]);
-	gpio_set_flags(gpio, flags);
+	/* TODO(ecgh): how to set VBUS on/off and 1.5/3.0 A? */
 }
 
 void typec_set_source_current_limit(int port, int rp)
@@ -89,17 +78,14 @@ void typec_set_source_current_limit(int port, int rp)
 
 int pd_set_power_supply_ready(int port)
 {
-	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
-	enum gpio_signal gpio_AC = port ?
-		GPIO_USB_C1_20V_EN : GPIO_USB_C0_20V_EN;
-	/* Ensure we're not charging from this port */
-	gpio_set_level(gpio, 0);
-	gpio_set_level(gpio_AC, 0);
+	/* Disable charging */
+	/* TODO(ecgh): how to disable charging? */
 
 	/* Ensure we advertise the proper available current quota */
 	charge_manager_source_port(port, 1);
 
 	pd_set_vbus_discharge(port, 0);
+
 	/* Provide VBUS */
 	vbus_en[port] = 1;
 	board_vbus_update_source_current(port);
@@ -148,8 +134,15 @@ int pd_check_power_swap(int port)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/* Allow data swap if we are a UFP, otherwise don't allow */
-	return (data_role == PD_ROLE_UFP) ? 1 : 0;
+	/*
+	 * Allow data swap if we are a UFP, otherwise don't allow.
+	 *
+	 * When we are still in the Read-Only firmware, avoid swapping roles
+	 * so we don't jump in RW as a SNK/DFP and potentially confuse the
+	 * power supply by sending a soft-reset with wrong data role.
+	 */
+	return (data_role == PD_ROLE_UFP) &&
+	       (system_get_image_copy() != SYSTEM_IMAGE_RO) ? 1 : 0;
 }
 
 int pd_check_vconn_swap(int port)
@@ -187,7 +180,9 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) &&
+			dr_role == PD_ROLE_UFP &&
+			system_get_image_copy() != SYSTEM_IMAGE_RO)
 		pd_request_data_swap(port);
 }
 /* ----------------- Vendor Defined Messages ------------------ */
@@ -227,7 +222,6 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 							 is_rw ?
 							 SYSTEM_IMAGE_RW :
 							 SYSTEM_IMAGE_RO);
-
 			/*
 			 * Send update host event unless our RW hash is
 			 * already known to be the latest update RW.

@@ -23,6 +23,7 @@
 #include "tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 #include "util.h"
 
 struct bq24392_pins {
