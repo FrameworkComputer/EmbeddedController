@@ -287,7 +287,10 @@ int board_set_active_charge_port(int port)
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
 		gpio_enable_interrupt(GPIO_ADP_IN_L);
 		break;
-	case CHARGE_PORT_BARRELJACK :
+	case CHARGE_PORT_BARRELJACK:
+		/* Make sure BJ adapter is sourcing power */
+		if (gpio_get_level(GPIO_ADP_IN_L))
+			return EC_ERROR_INVAL;
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
 		/* If this is switching from type-c to BJ, we have to wait until
 		 * PU3 comes up to keep the system continuously powered.
