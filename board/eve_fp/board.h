@@ -20,12 +20,16 @@
 #define CONFIG_HOST_COMMAND_STATUS
 #undef  CONFIG_LID_SWITCH
 #define CONFIG_MKBP_EVENT
+#define CONFIG_FPU
 #define CONFIG_SPI
 #define CONFIG_SPI_MASTER
 #define CONFIG_STM_HWTIMER32
+#define CONFIG_WATCHDOG_HELP
 
-
+/* Fingerprint configuration */
 #define CONFIG_SPI_FP_PORT    1  /* SPI3: second SPI master port */
+#define CONFIG_FP_SENSOR_FPC1145
+#define CONFIG_CMD_FPSENSOR_DEBUG
 
 /* Timer selection */
 #define TIM_CLOCK32     2

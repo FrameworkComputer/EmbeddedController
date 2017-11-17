@@ -29,7 +29,7 @@ CONSOLE_CHANNEL(CC_CLOCK,        "clock")
 CONSOLE_CHANNEL(CC_DMA,          "dma")
 #endif
 CONSOLE_CHANNEL(CC_EVENTS,       "events")
-#ifdef HAS_TASK_FPC1140
+#ifdef HAS_TASK_FPSENSOR
 CONSOLE_CHANNEL(CC_FP,           "fingerprint")
 #endif
 #ifdef CONFIG_GESTURE_SW_DETECTION

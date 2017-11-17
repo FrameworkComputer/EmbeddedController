@@ -111,6 +111,3 @@ driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
 
 # video converters
 driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o
-
-# Fingerprint sensor
-driver-$(HAS_TASK_FPC1140)+=fpc1140.o
