@@ -1070,13 +1070,11 @@ static int bn_probable_prime(const struct LITE_BIGNUM *p)
 	int s = 0;
 
 	uint32_t ONE_buf = 1;
-	uint32_t TWO_buf = 2;
 	uint8_t r_buf[RSA_MAX_BYTES / 2];
 	uint8_t A_buf[RSA_MAX_BYTES / 2];
 	uint8_t y_buf[RSA_MAX_BYTES / 2];
 
 	struct LITE_BIGNUM ONE;
-	struct LITE_BIGNUM TWO;
 	struct LITE_BIGNUM r;
 	struct LITE_BIGNUM A;
 	struct LITE_BIGNUM y;
@@ -1105,7 +1103,6 @@ static int bn_probable_prime(const struct LITE_BIGNUM *p)
 
 	DCRYPTO_bn_wrap(&A, A_buf, bn_size(p));
 	DCRYPTO_bn_wrap(&y, y_buf, bn_size(p));
-	DCRYPTO_bn_wrap(&TWO, &TWO_buf, sizeof(TWO_buf));
 	for (j = 0; j < rounds; j++) {
 		int i;
 
@@ -1130,7 +1127,7 @@ static int bn_probable_prime(const struct LITE_BIGNUM *p)
 		/* y = y ^ 2 mod p */
 		for (i = 0; i < s - 1; i++) {
 			bn_copy(&A, &y);
-			bn_modexp(&y, &A, &TWO, p);
+			bn_modexp_word(&y, &A, 2, p);
 
 			if (bn_eq(&y, &ONE))
 				return 0;
