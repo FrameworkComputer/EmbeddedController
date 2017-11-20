@@ -20,6 +20,7 @@
 #define CONFIG_BOARD_VERSION
 #define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 #define CONFIG_DPTF
+#define CONFIG_DPTF_DEVICE_ORIENTATION
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
@@ -107,11 +108,16 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
 #define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_MAG_BMI160_BMM150
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
-#define BMM150_I2C_ADDRESS BMM150_ADDR0	/* 8-bit address */
-#define CONFIG_MAG_CALIBRATE
+#define CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
+#define CONFIG_ACCEL_BMA255
+#define CONFIG_ACCEL_INTERRUPTS
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_TABLET_MODE
+#define CONFIG_LID_ANGLE_INVALID_CHECK
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
@@ -204,10 +210,11 @@ enum temp_sensor_id {
  * the first 2 entries must be accelerometers, then gyroscope.
  * For BMI160, accel, gyro and compass sensors must be next to each other.
  */
+
 enum sensor_id {
-	LID_ACCEL = 0,
-	LID_GYRO,
-	LID_MAG,
+    BASE_ACCEL = 0,
+    BASE_GYRO,
+    LID_ACCEL,
 };
 
 enum adc_channel {
