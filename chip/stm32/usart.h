@@ -133,9 +133,10 @@ struct usart_config {
 	 */
 	int baud;
 
-	/* Other flags. */
+	/* Other flags (rx/tx inversion, half-duplex). */
 #define USART_CONFIG_FLAG_RX_INV (1 << 0)
 #define USART_CONFIG_FLAG_TX_INV (1 << 1)
+#define USART_CONFIG_FLAG_HDSEL (1 << 2)
 	unsigned int flags;
 
 	struct consumer consumer;

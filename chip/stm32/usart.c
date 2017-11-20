@@ -17,7 +17,7 @@
 void usart_init(struct usart_config const *config)
 {
 	intptr_t base = config->hw->base;
-	uint32_t cr2;
+	uint32_t cr2, cr3;
 
 	/*
 	 * Enable clock to USART, this must be done first, before attempting
@@ -43,6 +43,7 @@ void usart_init(struct usart_config const *config)
 	 */
 
 	cr2 = 0x0000;
+	cr3 = 0x0000;
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
     defined(CHIP_FAMILY_STM32L4)
 	if (config->flags & USART_CONFIG_FLAG_RX_INV)
@@ -50,10 +51,12 @@ void usart_init(struct usart_config const *config)
 	if (config->flags & USART_CONFIG_FLAG_TX_INV)
 		cr2 |= (1 << 17);
 #endif
+	if (config->flags & USART_CONFIG_FLAG_HDSEL)
+		cr3 |= (1 << 3);
 
 	STM32_USART_CR1(base) = 0x0000;
 	STM32_USART_CR2(base) = cr2;
-	STM32_USART_CR3(base) = 0x0000;
+	STM32_USART_CR3(base) = cr3;
 
 	/*
 	 * Enable the RX, TX, and variant specific HW.
