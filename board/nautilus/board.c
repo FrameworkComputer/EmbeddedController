@@ -206,24 +206,12 @@ void board_reset_pd_mcu(void)
 
 void board_tcpc_init(void)
 {
-	int port, reg;
+	int port;
 
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image()) {
 		board_reset_pd_mcu();
 	}
-
-	/*
-	 * TODO: Remove when Poppy is updated with PS8751 A3.
-	 *
-	 * Force PS8751 A2 to wake from low power mode.
-	 * If PS8751 remains in low power mode after sysjump,
-	 * TCPM_INIT will fail due to not able to access PS8751.
-	 *
-	 * NOTE: PS8751 A3 will wake on any I2C access.
-	 */
-	i2c_read8(NPCX_I2C_PORT0_0, 0x10, 0xA0, &reg);
-	i2c_read8(NPCX_I2C_PORT0_1, 0x10, 0xA0, &reg);
 
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
