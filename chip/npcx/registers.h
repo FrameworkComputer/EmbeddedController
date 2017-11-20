@@ -1577,7 +1577,7 @@ enum ITIM16_MODULE_T {
 #define ESPIWE_VW                        ESPIWE_VWUPD
 /* eSPI  Wake-up enable for Generic */
 #define ESPIWE_GENERIC                   (ESPIWE_IBRST | ESPIWE_CFGUPD | \
-					  ESPIWE_BERR | ESPIWE_ESPIRST)
+					  ESPIWE_BERR)
 /* Macro functions for eSPI VW */
 #define ESPI_VWEVMS_NUM                  12
 #define ESPI_VWEVSM_NUM                  10

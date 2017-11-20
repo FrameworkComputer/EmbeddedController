@@ -86,7 +86,7 @@ static const struct vwevsm_config_t espi_out_list[] = {
 /* eSPI interrupts used in MIWU */
 static const struct host_wui_item espi_vw_int_list[] = {
 	/* ESPI_RESET  */
-	{MIWU_TABLE_0, MIWU_GROUP_5, 5, MIWU_EDGE_RISING},
+	{MIWU_TABLE_0, MIWU_GROUP_5, 5, MIWU_EDGE_FALLING},
 	/* SLP_S3 */
 	{MIWU_TABLE_2, MIWU_GROUP_1, 0, MIWU_EDGE_ANYING},
 	/* SLP_S4 */
