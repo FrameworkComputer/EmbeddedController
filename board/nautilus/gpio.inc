@@ -68,8 +68,6 @@ GPIO(LTE_WAKE_L,		PIN(7, 1), GPIO_INPUT)
 GPIO(LTE_OFF_ODL,		PIN(8, 0), GPIO_ODR_LOW)
 /* end of TODO */
 
-GPIO(PP3300_DX_BASE,		PIN(1, 1), GPIO_OUT_LOW)
-
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_0_SCL,		PIN(B, 5), GPIO_INPUT)				/* EC_I2C0_0_USBC_3V3_SCL */
 GPIO(I2C0_0_SDA,		PIN(B, 4), GPIO_INPUT)				/* EC_I2C0_0_USBC_3V3_SDA */
