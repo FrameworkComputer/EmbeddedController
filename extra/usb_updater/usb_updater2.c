@@ -916,7 +916,7 @@ int main(int argc, char *argv[])
 	int show_fw_ver = 0;
 	int touchpad_update = 0;
 	int extra_command = -1;
-	uint8_t extra_command_data[32];
+	uint8_t extra_command_data[50];
 	int extra_command_data_len = 0;
 	uint8_t extra_command_answer[64];
 	int extra_command_answer_len = 1;
@@ -949,7 +949,7 @@ int main(int argc, char *argv[])
 		case 'g':
 			extra_command = UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG;
 			/* Maximum length. */
-			extra_command_data_len = 32;
+			extra_command_data_len = 50;
 			str2hex(optarg,
 				extra_command_data, &extra_command_data_len);
 			hexdump(extra_command_data, extra_command_data_len);
