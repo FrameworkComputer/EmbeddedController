@@ -22,7 +22,8 @@ enum {
 	/* speed mode values */
 	I2C_SPEED_STD = 0,
 	I2C_SPEED_FAST = 1,
-	I2C_SPEED_HIGH = 2,
+	I2C_SPEED_FAST_PLUS = 2,
+	I2C_SPEED_HIGH = 3,
 	/* freq mode values */
 	I2C_FREQ_25 = 0,
 	I2C_FREQ_50 = 1,
@@ -107,6 +108,7 @@ enum {
 	MASTER_MODE_VAL = (MASTER_MODE << MASTER_MODE_OFFSET),
 	STD_SPEED_VAL = (STD_SPEED << SPEED_OFFSET),
 	FAST_SPEED_VAL = (FAST_SPEED << SPEED_OFFSET),
+	FAST_PLUS_SPEED_VAL = (FAST_SPEED << SPEED_OFFSET),
 	HIGH_SPEED_VAL = (HIGH_SPEED << SPEED_OFFSET),
 	SPEED_MASK = (0x3 << SPEED_OFFSET),
 	IC_RESTART_EN_VAL = (IC_RESTART_EN << IC_RESTART_EN_OFFSET),
@@ -173,6 +175,7 @@ struct i2c_bus_info {
 	uint8_t bus_id;
 	struct i2c_bus_data std_speed;
 	struct i2c_bus_data fast_speed;
+	struct i2c_bus_data fast_plus_speed;
 	struct i2c_bus_data high_speed;
 } __attribute__ ((__packed__));
 

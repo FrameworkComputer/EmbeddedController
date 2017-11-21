@@ -1613,6 +1613,10 @@
  */
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER
 
+#undef CONFI_ISH_I2C_PORT0_SPEED
+#undef CONFI_ISH_I2C_PORT1_SPEED
+#undef CONFI_ISH_I2C_PORT2_SPEED
+
 /*****************************************************************************/
 /* Current/Power monitor */
 

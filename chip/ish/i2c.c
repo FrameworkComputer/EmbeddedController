@@ -24,6 +24,18 @@
 #define I2C_FLAG_REPEATED_START_DISABLED	0
 #define EVENT_FLAG_I2C_TIMEOUT			TASK_EVENT_CUSTOM(1 << 1)
 
+#ifndef CONFI_ISH_I2C_PORT0_SPEED
+#define CONFI_ISH_I2C_PORT0_SPEED I2C_SPEED_FAST
+#endif
+
+#ifndef CONFI_ISH_I2C_PORT1_SPEED
+#define CONFI_ISH_I2C_PORT1_SPEED I2C_SPEED_FAST
+#endif
+
+#ifndef CONFI_ISH_I2C_PORT2_SPEED
+#define CONFI_ISH_I2C_PORT2_SPEED I2C_SPEED_FAST
+#endif
+/*25MHz,50MHz,100MHz,120MHz,40MHz,20MHz,37MHz*/
 static uint16_t default_hcnt_scl_100[] = {
 	4000, 4420, 4920, 4400, 4000, 4000, 4300
 };
@@ -40,11 +52,19 @@ static uint16_t default_lcnt_scl_400[] = {
 	1320, 1380, 1300, 1300, 1300, 1200, 1250
 };
 
+static uint16_t default_hcnt_scl_1000[] = {
+	260, 260, 260, 260, 260, 260, 260
+};
+
+static uint16_t default_lcnt_scl_1000[] = {
+	500, 500, 500, 500, 500, 500, 500
+};
+
 static uint16_t default_hcnt_scl_hs[] = { 160, 300, 160, 166, 175, 150, 162 };
 static uint16_t default_lcnt_scl_hs[] = { 320, 340, 320, 325, 325, 300, 297 };
 
 static uint8_t speed_val_arr[] = {
-	STD_SPEED_VAL, FAST_SPEED_VAL, HIGH_SPEED_VAL };
+	STD_SPEED_VAL, FAST_SPEED_VAL, FAST_PLUS_SPEED_VAL, HIGH_SPEED_VAL};
 
 static uint8_t bus_freq[ISH_I2C_PORT_COUNT] = {
 	I2C_FREQ_120, I2C_FREQ_120, I2C_FREQ_120
@@ -54,17 +74,17 @@ static struct i2c_context i2c_ctxs[ISH_I2C_PORT_COUNT] = {
 	{
 		.bus = 0,
 		.base = (uint32_t *) ISH_I2C0_BASE,
-		.speed = I2C_SPEED_FAST,
+		.speed = CONFI_ISH_I2C_PORT0_SPEED,
 	},
 	{
 		.bus = 1,
 		.base = (uint32_t *) ISH_I2C1_BASE,
-		.speed = I2C_SPEED_FAST,
+		.speed = CONFI_ISH_I2C_PORT1_SPEED,
 	},
 	{
 		.bus = 2,
 		.base = (uint32_t *) ISH_I2C2_BASE,
-		.speed = I2C_SPEED_FAST,
+		.speed = CONFI_ISH_I2C_PORT2_SPEED,
 	},
 };
 
@@ -73,18 +93,21 @@ static struct i2c_bus_info board_config[ISH_I2C_PORT_COUNT] = {
 		.bus_id = 0,
 		.std_speed.sda_hold = DEFAULT_SDA_HOLD,
 		.fast_speed.sda_hold = DEFAULT_SDA_HOLD,
+		.fast_plus_speed.sda_hold = DEFAULT_SDA_HOLD,
 		.high_speed.sda_hold = DEFAULT_SDA_HOLD,
 	},
 	{
 		.bus_id = 1,
 		.std_speed.sda_hold = DEFAULT_SDA_HOLD,
 		.fast_speed.sda_hold = DEFAULT_SDA_HOLD,
+		.fast_plus_speed.sda_hold = DEFAULT_SDA_HOLD,
 		.high_speed.sda_hold = DEFAULT_SDA_HOLD,
 	},
 	{
 		.bus_id = 2,
 		.std_speed.sda_hold = DEFAULT_SDA_HOLD,
 		.fast_speed.sda_hold = DEFAULT_SDA_HOLD,
+		.fast_plus_speed.sda_hold = DEFAULT_SDA_HOLD,
 		.high_speed.sda_hold = DEFAULT_SDA_HOLD,
 	 },
 };
@@ -181,6 +204,19 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 					     clk_in_val));
 		i2c_mmio_write(base, IC_SDA_HOLD,
 			       NS_2_COUNTERS(bus_info->fast_speed.sda_hold,
+					     clk_in_val));
+		break;
+
+
+	case I2C_SPEED_FAST_PLUS:
+		i2c_mmio_write(base, IC_FS_SCL_HCNT,
+			       NS_2_COUNTERS(bus_info->fast_plus_speed.hcnt,
+					     clk_in_val));
+		i2c_mmio_write(base, IC_FS_SCL_LCNT,
+			       NS_2_COUNTERS(bus_info->fast_plus_speed.lcnt,
+					     clk_in_val));
+		i2c_mmio_write(base, IC_SDA_HOLD,
+			       NS_2_COUNTERS(bus_info->fast_plus_speed.sda_hold,
 					     clk_in_val));
 		break;
 
@@ -387,8 +423,13 @@ static void i2c_initial_board_config(struct i2c_context *ctx)
 
 	bus_info->std_speed.hcnt = default_hcnt_scl_100[freq];
 	bus_info->std_speed.lcnt = default_lcnt_scl_100[freq];
+
 	bus_info->fast_speed.hcnt = default_hcnt_scl_400[freq];
 	bus_info->fast_speed.lcnt = default_lcnt_scl_400[freq];
+
+	bus_info->fast_plus_speed.hcnt = default_hcnt_scl_1000[freq];
+	bus_info->fast_plus_speed.lcnt = default_lcnt_scl_1000[freq];
+
 	bus_info->high_speed.hcnt = default_hcnt_scl_hs[freq];
 	bus_info->high_speed.lcnt = default_lcnt_scl_hs[freq];
 }
