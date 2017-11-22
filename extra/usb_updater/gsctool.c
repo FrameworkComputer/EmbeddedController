@@ -549,9 +549,9 @@ static void usage(int errs)
 	       "                           Set or clear CCD password. Use\n"
 	       "                           'clear' to clear it.\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
-	       "  -r,--rma_auth [auth_code]\n"
-	       "                           Request RMA challenge or process "
-	       "RMA authentication code\n"
+	       "  -r,--rma_auth [[auth_code|\"disable\"]\n"
+	       "                           Request RMA challenge, process "
+	       "RMA authentication code or disable RMA state\n"
 	       "  -s,--systemdev           Use /dev/tpm0 (-d is ignored)\n"
 	       "  -t,--trunks_send         Use `trunks_send --raw' "
 	       "(-d is ignored)\n"
@@ -1695,6 +1695,18 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 			printf("%c", rma_response[i]);
 		}
 		printf("\n");
+		return;
+	}
+
+	if (!strcmp(authcode, "disable")) {
+		printf("Disabling RMA mode\n");
+		send_vendor_command(td, VENDOR_CC_DISABLE_RMA, NULL, 0,
+				    rma_response, &response_size);
+		if (response_size) {
+			fprintf(stderr, "Failed disabling RMA, error %d\n",
+				rma_response[0]);
+			exit(update_error);
+		}
 		return;
 	}
 
