@@ -11,6 +11,7 @@
 #include "host_command.h"
 #include "lpc.h"
 #include "mkbp_event.h"
+#include "power.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
@@ -83,10 +84,17 @@ static void host_event_set_bit(host_event_t *ev, uint8_t bit)
 static host_event_t lpc_host_events;
 static host_event_t lpc_host_event_mask[LPC_HOST_EVENT_COUNT];
 
+/* Indicates if active wake mask set by host */
+static uint8_t active_wm_set_by_host;
+
 void lpc_set_host_event_mask(enum lpc_host_event_type type, host_event_t mask)
 {
 	lpc_host_event_mask[type] = mask;
 	lpc_update_host_event_status();
+
+	/* mask 0 indicates wake mask not set by host */
+	if ((type == LPC_HOST_EVENT_WAKE) && (mask == 0))
+		active_wm_set_by_host = 0;
 }
 
 host_event_t lpc_get_host_event_mask(enum lpc_host_event_type type)
@@ -209,6 +217,17 @@ void lpc_s3_resume_clear_masks(void)
  */
 static host_event_t events;
 static host_event_t events_copy_b;
+
+/* Lazy wake masks */
+#ifdef CONFIG_LPC
+static struct lazy_wake_masks {
+	host_event_t s3_lazy_wm;
+	host_event_t s5_lazy_wm;
+#ifdef CONFIG_POWER_S0IX
+	host_event_t s0ix_lazy_wm;
+#endif
+} lazy_wm;
+#endif
 
 static void host_events_atomic_or(host_event_t *e, host_event_t m)
 {
@@ -512,11 +531,17 @@ static int host_event_set_wake_mask(struct host_cmd_handler_args *args)
 	const struct ec_params_host_event_mask *p = args->params;
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, p->mask);
+	active_wm_set_by_host = !!p->mask;
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_SET_WAKE_MASK,
 		     host_event_set_wake_mask,
 		     EC_VER_MASK(0));
+
+uint8_t lpc_is_active_wm_set_by_host(void)
+{
+	return active_wm_set_by_host;
+}
 
 #endif  /* CONFIG_LPC */
 
@@ -554,3 +579,188 @@ static int host_event_clear_b(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_CLEAR_B,
 		     host_event_clear_b,
 		     EC_VER_MASK(0));
+
+static int host_event_action_get(struct host_cmd_handler_args *args)
+{
+	struct ec_response_host_event *r = args->response;
+	const struct ec_params_host_event *p = args->params;
+	int result = EC_RES_SUCCESS;
+
+	args->response_size = sizeof(*r);
+	memset(r, 0, sizeof(*r));
+
+	switch (p->mask_type) {
+	case EC_HOST_EVENT_B:
+		r->value = events_copy_b;
+		break;
+#ifdef CONFIG_LPC
+	case EC_HOST_EVENT_SCI_MASK:
+		r->value = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
+		break;
+	case EC_HOST_EVENT_SMI_MASK:
+		r->value = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+		break;
+	case EC_HOST_EVENT_ALWAYS_REPORT_MASK:
+		r->value = lpc_get_host_event_mask
+				(LPC_HOST_EVENT_ALWAYS_REPORT);
+		break;
+	case EC_HOST_EVENT_ACTIVE_WAKE_MASK:
+		r->value = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE);
+		break;
+#ifdef CONFIG_POWER_S0IX
+	case EC_HOST_EVENT_LAZY_WAKE_MASK_S0IX:
+		r->value = lazy_wm.s0ix_lazy_wm;
+		break;
+#endif
+	case EC_HOST_EVENT_LAZY_WAKE_MASK_S3:
+		r->value = lazy_wm.s3_lazy_wm;
+		break;
+	case EC_HOST_EVENT_LAZY_WAKE_MASK_S5:
+		r->value = lazy_wm.s5_lazy_wm;
+		break;
+#endif
+	default:
+		result = EC_RES_INVALID_PARAM;
+		break;
+	}
+
+	return result;
+}
+
+static int host_event_action_set(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_host_event *p = args->params;
+	int result = EC_RES_SUCCESS;
+	host_event_t mask_value __unused = (host_event_t)(p->value);
+
+	switch (p->mask_type) {
+#ifdef CONFIG_LPC
+	case EC_HOST_EVENT_SCI_MASK:
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, mask_value);
+		break;
+	case EC_HOST_EVENT_SMI_MASK:
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, mask_value);
+		break;
+	case EC_HOST_EVENT_ALWAYS_REPORT_MASK:
+		lpc_set_host_event_mask(LPC_HOST_EVENT_ALWAYS_REPORT,
+						mask_value);
+		break;
+	case EC_HOST_EVENT_ACTIVE_WAKE_MASK:
+		active_wm_set_by_host = !!mask_value;
+		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, mask_value);
+		break;
+#ifdef CONFIG_POWER_S0IX
+	case EC_HOST_EVENT_LAZY_WAKE_MASK_S0IX:
+		lazy_wm.s0ix_lazy_wm = mask_value;
+		break;
+#endif
+	case EC_HOST_EVENT_LAZY_WAKE_MASK_S3:
+		lazy_wm.s3_lazy_wm = mask_value;
+		break;
+	case EC_HOST_EVENT_LAZY_WAKE_MASK_S5:
+		lazy_wm.s5_lazy_wm = mask_value;
+		break;
+#endif
+	default:
+		result = EC_RES_INVALID_PARAM;
+		break;
+	}
+
+	return result;
+}
+
+static int host_event_action_clear(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_host_event *p = args->params;
+	int result = EC_RES_SUCCESS;
+	host_event_t mask_value = (host_event_t)(p->value);
+
+	switch (p->mask_type) {
+	case EC_HOST_EVENT_MAIN:
+		host_clear_events(mask_value);
+		break;
+	case EC_HOST_EVENT_B:
+		host_clear_events_b(mask_value);
+		break;
+	default:
+		result = EC_RES_INVALID_PARAM;
+	}
+
+	return result;
+}
+
+static int host_command_host_event(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_host_event *p = args->params;
+
+	args->response_size = 0;
+
+	switch (p->action) {
+	case EC_HOST_EVENT_GET:
+		return host_event_action_get(args);
+	case EC_HOST_EVENT_SET:
+		return host_event_action_set(args);
+	case EC_HOST_EVENT_CLEAR:
+		return host_event_action_clear(args);
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT,
+		     host_command_host_event,
+		     EC_VER_MASK(0));
+
+#define LAZY_WAKE_MASK_SYSJUMP_TAG		0x4C4D /* LM - Lazy Mask*/
+#define LAZY_WAKE_MASK_HOOK_VERSION		1
+
+#ifdef CONFIG_LPC
+int get_lazy_wake_mask(enum power_state state, host_event_t *mask)
+{
+	int ret = EC_SUCCESS;
+
+	switch (state) {
+	case POWER_S5:
+		*mask = lazy_wm.s5_lazy_wm;
+		break;
+	case POWER_S3:
+		*mask = lazy_wm.s3_lazy_wm;
+		break;
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ix:
+		*mask = lazy_wm.s0ix_lazy_wm;
+		break;
+#endif
+	default:
+		*mask = 0;
+		ret = EC_ERROR_INVAL;
+	}
+
+	return ret;
+}
+
+static void preserve_lazy_wm(void)
+{
+	system_add_jump_tag(LAZY_WAKE_MASK_SYSJUMP_TAG,
+			    LAZY_WAKE_MASK_HOOK_VERSION,
+			    sizeof(lazy_wm),
+			    &lazy_wm);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, preserve_lazy_wm, HOOK_PRIO_DEFAULT);
+
+static void restore_lazy_wm(void)
+{
+	const struct lazy_wake_masks *wm_state;
+	int version, size;
+
+	wm_state = (const struct lazy_wake_masks *)
+			system_get_jump_tag(LAZY_WAKE_MASK_SYSJUMP_TAG,
+				 &version, &size);
+
+	if (wm_state && (version == LAZY_WAKE_MASK_HOOK_VERSION) &&
+	    (size == sizeof(lazy_wm))) {
+		lazy_wm = *wm_state;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, restore_lazy_wm, HOOK_PRIO_INIT_CHIPSET + 1);
+#endif

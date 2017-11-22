@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lpc.h"
 #include "power.h"
 #include "system.h"
 #include "task.h"
@@ -195,6 +196,43 @@ void power_set_state(enum power_state new_state)
 	if (state == POWER_S5S3)
 		want_g3_exit = 0;
 }
+
+#ifdef CONFIG_LPC
+
+/* If host doesn't program s0ix lazy wake mask, use default s0ix mask */
+#define DEFAULT_WAKE_MASK_S0IX  (EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
+				EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
+ /*
+  * Set wake mask on edge of sleep state entry
+  * 1. On transition to S0, wake mask is reset.
+  * 2. In non-S0 states, active mask set by host gets a higher preference.
+  * 3. If host has not set any active mask, then check if a lazy mask exists
+  *    for the current power state.
+  * 4. If state is S0ix and no lazy or active wake mask is set, then use default
+  *    S0ix mask to be compatible with older BIOS versions.
+  *
+  * @param state New sleep state
+  */
+static void power_set_active_wake_mask(enum power_state state)
+{
+	host_event_t wake_mask;
+
+	if (state == POWER_S0)
+		wake_mask = 0;
+	else if (lpc_is_active_wm_set_by_host())
+		return;
+	else if (get_lazy_wake_mask(state, &wake_mask))
+		return;
+#ifdef CONFIG_POWER_S0IX
+	if ((state == POWER_S0ix) && (wake_mask == 0))
+		wake_mask = DEFAULT_WAKE_MASK_S0IX;
+#endif
+
+	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
+}
+#else
+static void power_set_active_wake_mask(enum power_state state) { }
+#endif
 
 /**
  * Common handler for steady states
@@ -414,8 +452,10 @@ void chipset_task(void *u)
 			new_state = power_common_state(state);
 
 		/* Handle state changes */
-		if (new_state != state)
+		if (new_state != state) {
 			power_set_state(new_state);
+			power_set_active_wake_mask(new_state);
+		}
 	}
 }
 

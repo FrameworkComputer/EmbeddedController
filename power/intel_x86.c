@@ -155,47 +155,6 @@ static void s0ix_transition(int check_state, int hook_id)
 	s0ix_notify = S0IX_NOTIFY_NONE;
 }
 
-/*
- * In AP S0 -> S3 & S0ix transitions,
- * the chipset_suspend is called.
- *
- * The chipset_in_state(CHIPSET_STATE_STANDBY | CHIPSET_STATE_ON)
- * is used to detect the S0ix transiton.
- *
- * During S0ix entry, the wake mask for lid open and tablet mode is enabled.
- */
-static void s0ix_lpc_enable_wake_mask(void)
-{
-	if (chipset_in_state(CHIPSET_STATE_STANDBY | CHIPSET_STATE_ON)) {
-		host_event_t mask;
-
-		mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE) |
-			EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |
-			EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE);
-
-		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, mask);
-	}
-}
-
-/*
- * In AP S0ix & S3 -> S0 transitions,
- * the chipset_resume hook is called.
- *
- * During S0ix exit, the wake mask for lid open and tablet mode is disabled.
- */
-static void s0ix_lpc_disable_wake_mask(void)
-{
-	if (chipset_in_state(CHIPSET_STATE_STANDBY | CHIPSET_STATE_ON)) {
-		host_event_t mask;
-
-		mask = lpc_get_host_event_mask(LPC_HOST_EVENT_WAKE) &
-			~EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) &
-			~EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE);
-
-		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, mask);
-	}
-}
-
 static void handle_chipset_reset(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
@@ -428,9 +387,6 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 #ifdef CONFIG_POWER_S0IX
 	case POWER_S0S0ix:
-
-		s0ix_lpc_enable_wake_mask();
-
 		/*
 		 * Call hooks only if we haven't notified listeners of S0ix
 		 * suspend.
@@ -442,13 +398,9 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		 * to go into deep sleep in S0ix.
 		 */
 		enable_sleep(SLEEP_MASK_AP_RUN);
-
 		return POWER_S0ix;
 
-
 	case POWER_S0ixS0:
-		s0ix_lpc_disable_wake_mask();
-
 		/*
 		 * Disable idle task deep sleep. This means that the low
 		 * power idle task will not go into deep sleep while in S0.
