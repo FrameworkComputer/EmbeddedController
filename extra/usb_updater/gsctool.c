@@ -1165,8 +1165,8 @@ static int ext_cmd_over_usb(struct usb_endpoint *uep, uint16_t subcommand,
 
 	ufh = malloc(usb_msg_size);
 	if (!ufh) {
-		printf("%s: failed to allocate %zd bytes\n",
-		       __func__, usb_msg_size);
+		fprintf(stderr, "%s: failed to allocate %zd bytes\n",
+			__func__, usb_msg_size);
 		return -1;
 	}
 
@@ -1679,7 +1679,7 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 				    NULL, 0, rma_response, &response_size);
 
 		if (response_size == 1) {
-			printf("error %d\n", rma_response[0]);
+			fprintf(stderr, "error %d\n", rma_response[0]);
 			if (td->ep_type == usb_xfer)
 				shut_down(&td->uep);
 			exit(update_error);
@@ -1707,8 +1707,8 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 			    rma_response, &response_size);
 
 	if (response_size == 1) {
-		printf("\nrma unlock failed, code %d\n",
-		       *rma_response);
+		fprintf(stderr, "\nrma unlock failed, code %d\n",
+			*rma_response);
 		if (td->ep_type == usb_xfer)
 			shut_down(&td->uep);
 		exit(update_error);
@@ -1734,6 +1734,8 @@ int main(int argc, char *argv[])
 	struct board_id bid;
 	enum board_id_action bid_action;
 	int password = 0;
+	const char *exclusive_opt_error =
+		"Options -s and -t are mutually exclusive\n";
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1755,8 +1757,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'd':
 			if (!parse_vidpid(optarg, &vid, &pid)) {
-				printf("Invalid device argument: \"%s\"\n",
-				       optarg);
+				fprintf(stderr,
+					"Invalid device argument: \"%s\"\n",
+					optarg);
 				errorcnt++;
 			}
 			break;
@@ -1775,8 +1778,9 @@ int main(int argc, char *argv[])
 				optarg = argv[optind++];
 
 			if (!parse_bid(optarg, &bid, &bid_action)) {
-				printf("Invalid board id argument: \"%s\"\n",
-				       optarg);
+				fprintf(stderr,
+					"Invalid board id argument: \"%s\"\n",
+					optarg);
 				errorcnt++;
 			}
 			break;
@@ -1790,9 +1794,19 @@ int main(int argc, char *argv[])
 			rma_auth_code = optarg;
 			break;
 		case 's':
+			if (td.ep_type) {
+				errorcnt++;
+				fprintf(stderr, "%s", exclusive_opt_error);
+				break;
+			}
 			td.ep_type = dev_xfer;
 			break;
 		case 't':
+			if (td.ep_type) {
+				errorcnt++;
+				fprintf(stderr, "%s", exclusive_opt_error);
+				break;
+			}
 			td.ep_type = ts_xfer;
 			break;
 		case 'p':
@@ -1808,18 +1822,21 @@ int main(int argc, char *argv[])
 			break;
 		case '?':
 			if (optopt)
-				printf("Unrecognized option: -%c\n", optopt);
+				fprintf(stderr, "Unrecognized option: -%c\n",
+					optopt);
 			else
-				printf("Unrecognized option: %s\n",
-				       argv[optind - 1]);
+				fprintf(stderr, "Unrecognized option: %s\n",
+					argv[optind - 1]);
 			errorcnt++;
 			break;
 		case ':':
-			printf("Missing argument to %s\n", argv[optind - 1]);
+			fprintf(stderr, "Missing argument to %s\n",
+				argv[optind - 1]);
 			errorcnt++;
 			break;
 		default:
-			printf("Internal error at %s:%d\n", __FILE__, __LINE__);
+			fprintf(stderr, "Internal error at %s:%d\n",
+				__FILE__, __LINE__);
 			exit(update_error);
 		}
 	}
