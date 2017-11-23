@@ -53,7 +53,7 @@ GPIO(BATTERY_PRESENT_L,		PIN(3, 4), GPIO_INPUT)				/* Battery Present */
 GPIO(CCD_MODE_ODL,		PIN(6, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(EC_HAVEN_RESET_ODL,	PIN(0, 2), GPIO_ODR_HIGH)			/* H1 Reset */
 GPIO(ENTERING_RW,		PIN(7, 6), GPIO_OUTPUT)				/* EC Entering RW */
-GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT)				/* PMIC interrupt */
+GPIO(PMIC_INT_L,		PIN(6, 0), GPIO_INPUT | GPIO_PULL_UP)		/* PMIC interrupt */
 #ifndef CONFIG_POWER_S0IX
 GPIO(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INPUT)
 #endif
