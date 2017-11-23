@@ -1032,31 +1032,12 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_startup(void)
 {
-	/*
-	 * Enable V5A in deep sleep state:
-	 *   VREN (bit 0) : EC_DS4 enable
-	 *      - Enables V5A voltage regulator in deep Sx states
-	 *   V5ADS3CNT (bits 1:0) : AUTO
-	 *      - Control to the VR (0 = off, 1 = PFM, 2 = AUTO, 3 = Forced PWM)
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x41, 0x01);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x2a, 0x02);
-
 	base_enable();
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_shutdown(void)
 {
-	/*
-	 * V5A VREN needs to be reset when chipset is shutdown. This is required
-	 * because VREN keeps the V5A powered in all deep Sx states including
-	 * deep S5. There is no need to power this rail in deep S5 as wake from
-	 * base is not required.
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x41, 0x0);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x2a, 0x0);
-
 	base_disable();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
