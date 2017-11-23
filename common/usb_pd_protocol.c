@@ -1974,7 +1974,7 @@ static void pd_init_tasks(void)
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		drp_state = PD_DRP_FORCE_SINK;
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 		drp_state = PD_DRP_TOGGLE_OFF;
 	else /* CHIPSET_STATE_ON */
 		drp_state = PD_DRP_TOGGLE_ON;

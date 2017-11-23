@@ -959,7 +959,7 @@ wait_for_it:
 			    curr.state == ST_DISCHARGE) {
 				/* If AP is off, we can sleep a long time */
 				if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-						     CHIPSET_STATE_SUSPEND))
+						     CHIPSET_STATE_ANY_SUSPEND))
 					sleep_usec =
 						CHARGE_POLL_PERIOD_VERY_LONG;
 				else

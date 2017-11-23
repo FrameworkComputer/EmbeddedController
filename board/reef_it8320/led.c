@@ -110,8 +110,7 @@ static void led_set_battery(void)
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON)) {
 			led_set_color_battery(LED_BLUE);
-		} else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-					    CHIPSET_STATE_STANDBY)) {
+		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 			/* Blink once every four seconds. */
 			led_set_color_battery(
 				(suspend_ticks % LED_TOTAL_4SECS_TICKS)

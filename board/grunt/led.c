@@ -157,7 +157,7 @@ static void led_set_power(void)
 
 	suspend_ticks++;
 
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		if (!previous_state_suspend)
 			suspend_ticks = 0;
 		/* Blink once every four seconds. */

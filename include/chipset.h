@@ -34,6 +34,9 @@ enum chipset_state_mask {
 	/* Common combinations */
 	CHIPSET_STATE_ANY_OFF = (CHIPSET_STATE_HARD_OFF |
 				 CHIPSET_STATE_SOFT_OFF),  /* Any off state */
+	/* This combination covers any kind of suspend i.e. S3 or S0ix. */
+	CHIPSET_STATE_ANY_SUSPEND = (CHIPSET_STATE_SUSPEND |
+				     CHIPSET_STATE_STANDBY),
 };
 
 #ifdef HAS_TASK_CHIPSET

@@ -196,8 +196,7 @@ static enum led_states led_get_state(void)
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			new_state = STATE_DISCHARGE_S0;
-		else if (chipset_in_state(CHIPSET_STATE_SUSPEND) |
-			 chipset_in_state(CHIPSET_STATE_STANDBY))
+		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 			new_state = STATE_DISCHARGE_S3;
 		else
 			new_state = STATE_DISCHARGE_S5;
@@ -270,8 +269,7 @@ static void led_robo_update_power(void)
 		/* In S0 power LED is always on */
 		level = LED_ON_LVL;
 		ticks = 0;
-	} else if ((chipset_in_state(CHIPSET_STATE_SUSPEND) |
-		   chipset_in_state(CHIPSET_STATE_STANDBY)) &&
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
 		   led.state <= STATE_CHARGING_LVL_3) {
 		int period;
 

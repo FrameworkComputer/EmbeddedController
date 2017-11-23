@@ -64,8 +64,7 @@ static void power_led_update(void)
 		power_led_is_pulsing = 0;
 		/* The power LED must be on in the Active state. */
 		set_led_state(EC_LED_ID_POWER, 1);
-	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-				    CHIPSET_STATE_STANDBY)) {
+	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		/* The power LED must pulse in the Suspend state. */
 		if (!power_led_is_pulsing) {
 			power_led_is_pulsing = 1;
