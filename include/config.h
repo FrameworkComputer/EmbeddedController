@@ -152,6 +152,12 @@
 #undef CONFIG_ALS
 #endif
 #undef CONFIG_ALS_AL3010
+#undef CONFIG_ALS_BH1730
+/*
+ * If defined, BH1730 uses board specific lux calculation formula parameters.
+ * If not defined, BH1730 uses default parameters to calculate lux.
+ */
+#undef CONFIG_ALS_BH1730_LUXTH_PARAMS
 #undef CONFIG_ALS_ISL29035
 #undef CONFIG_ALS_OPT3001
 /* Define the exact model ID present on the board: SI1141 = 41, SI1142 = 42, */
