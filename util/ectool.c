@@ -258,6 +258,8 @@ const char help_str[] =
 	"      Get USB PD power information\n"
 	"  version\n"
 	"      Prints EC version\n"
+	"  waitevent <type> [<timeout>]\n"
+	"      Wait for the MKBP event of type and display it\n"
 	"  wireless <flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
 	"      Enable/disable WLAN/Bluetooth radio\n"
 	"";
@@ -1264,7 +1266,7 @@ int cmd_fp_mode(int argc, char *argv[])
 	if (r.mode & FP_MODE_CAPTURE)
 		printf("capture ");
 	printf("\n");
-	return rv;
+	return 0;
 }
 
 int cmd_fp_info(int argc, char *argv[])
@@ -7592,6 +7594,55 @@ err:
 	return rv < 0;
 }
 
+int cmd_wait_event(int argc, char *argv[])
+{
+	int rv, i;
+	struct ec_response_get_next_event buffer;
+	long timeout = 5000;
+	long event_type;
+	char *e;
+
+	if (!ec_pollevent) {
+		fprintf(stderr, "Polling for MKBP event not supported\n");
+		return -EINVAL;
+	}
+
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <type> [<timeout>]\n",
+			argv[0]);
+		return -1;
+	}
+
+	event_type = strtol(argv[1], &e, 0);
+	if ((e && *e) || event_type < 0 || event_type >= EC_MKBP_EVENT_COUNT) {
+		fprintf(stderr, "Bad event type '%s'.\n", argv[1]);
+		return -1;
+	}
+	if (argc >= 3) {
+		timeout = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad timeout value '%s'.\n", argv[2]);
+			return -1;
+		}
+	}
+
+	rv = ec_pollevent(1 << event_type, &buffer, sizeof(buffer), timeout);
+	if (rv == 0) {
+		fprintf(stderr, "Timeout waitout for MKBP event\n");
+		return -ETIMEDOUT;
+	} else if (rv < 0) {
+		perror("Error polling for MKBP event\n");
+		return -EIO;
+	}
+
+	printf("MKBP event %d data: ", buffer.event_type);
+	for (i = 0; i < rv - 1; ++i)
+		printf("%02x ", buffer.data.key_matrix[i]);
+	printf("\n");
+
+	return 0;
+}
+
 /* NULL-terminated list of commands */
 const struct command commands[] = {
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
@@ -7701,6 +7752,7 @@ const struct command commands[] = {
 	{"usbpdmuxinfo", cmd_usb_pd_mux_info},
 	{"usbpdpower", cmd_usb_pd_power},
 	{"version", cmd_version},
+	{"waitevent", cmd_wait_event},
 	{"wireless", cmd_wireless},
 	{NULL, NULL}
 };

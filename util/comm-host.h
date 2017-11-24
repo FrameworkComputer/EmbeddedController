@@ -75,4 +75,14 @@ extern int (*ec_command_proto)(int command, int version,
  */
 extern int (*ec_readmem)(int offset, int bytes, void *dest);
 
+/**
+ * Wait for a MKBP event matching 'mask' for at most 'timeout' milliseconds.
+ * Then read the incoming event content in 'buffer' (or at most
+ * 'buf_size' bytes of it).
+ * Return the size of the event read on success, 0 in case of timeout,
+ * or a negative value in case of error.
+ */
+extern int (*ec_pollevent)(unsigned long mask, void *buffer, size_t buf_size,
+			   int timeout);
+
 #endif /* __UTIL_COMM_HOST_H */

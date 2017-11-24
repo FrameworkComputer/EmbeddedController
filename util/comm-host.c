@@ -21,6 +21,9 @@ int (*ec_command_proto)(int command, int version,
 
 int (*ec_readmem)(int offset, int bytes, void *dest);
 
+int (*ec_pollevent)(unsigned long mask, void *buffer, size_t buf_size,
+		    int timeout);
+
 int ec_max_outsize, ec_max_insize;
 void *ec_outbuf;
 void *ec_inbuf;
