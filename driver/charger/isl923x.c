@@ -557,7 +557,7 @@ static int print_amon_bmon(enum amon_bmon amon, int direction,
 
 	adc = adc_read_channel(ADC_AMON_BMON);
 	curr = adc / resistor;
-	CPRINTF("%s: %d uV, %d mA\n", text, adc, curr);
+	ccprintf("%s: %d uV, %d mA\n", text, adc, curr);
 
 	return ret;
 }
