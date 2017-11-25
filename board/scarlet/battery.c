@@ -16,6 +16,19 @@
 #include "gpio.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+/*
+ * AE-Tech battery pack has two charging phases when operating
+ * between 10 and 20C
+ */
+#define CHARGE_PHASE_CHANGE_TRIP_VOLTAGE_MV 4200
+#define CHARGE_PHASE_CHANGE_HYSTERESIS_MV 50
+#define CHARGE_PHASE_CHANGED_CURRENT_MA 1800
+
+#define TEMP_OUT_OF_RANGE TEMP_ZONE_COUNT
+
 static uint8_t batt_id = 0xff;
 
 /* Do not change the enum values. We directly use strap gpio level to index. */
@@ -110,29 +123,109 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	const struct battery_info *batt_info = battery_get_info();
-	int now_discharging;
-
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
 
-	if (curr->state == ST_CHARGE) {
-		/* Don't charge if outside of allowable temperature range */
-		if (bat_temp_c >= batt_info->charging_max_c * 10 ||
-		    bat_temp_c < batt_info->charging_min_c * 10) {
-			curr->requested_current = curr->requested_voltage = 0;
-			curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
-			curr->state = ST_IDLE;
-			now_discharging = 0;
-		/* Don't start charging if battery is nearly full */
-		} else if (curr->batt.status & STATUS_FULLY_CHARGED) {
-			curr->requested_current = curr->requested_voltage = 0;
-			curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
-			curr->state = ST_DISCHARGE;
-			now_discharging = 1;
-		} else
-			now_discharging = 0;
-		charger_discharge_on_ac(now_discharging);
+	/*
+	 * Keep track of battery temperature range:
+	 *
+	 *        ZONE_0   ZONE_1     ZONE_2
+	 * -----+--------+--------+------------+----- Temperature (C)
+	 *      t0       t1       t2           t3
+	 */
+	enum {
+		TEMP_ZONE_0, /* t0 < bat_temp_c <= t1 */
+		TEMP_ZONE_1, /* t1 < bat_temp_c <= t2 */
+		TEMP_ZONE_2, /* t2 < bat_temp_c <= t3 */
+		TEMP_ZONE_COUNT
+	} temp_zone;
+
+	static const struct {
+		int temp_min; /* 0.1 deg C */
+		int temp_max; /* 0.1 deg C */
+		int desired_current; /* mA */
+		int desired_voltage; /* mV */
+	} temp_zones[BATTERY_COUNT][TEMP_ZONE_COUNT] = {
+		[BATTERY_SIMPLO] = {
+			{0, 150, 1772, 4400}, /* TEMP_ZONE_0 */
+			{150, 450, 4000, 4400}, /* TEMP_ZONE_1 */
+			{450, 600, 4000, 4100}, /* TEMP_ZONE_2 */
+		},
+		[BATTERY_AETECH] = {
+			{0, 100, 900, 4200}, /* TEMP_ZONE_0 */
+			{100, 200, 2700, 4350}, /* TEMP_ZONE_1 */
+			/*
+			 * TODO(b:70287349): Limit the charging current to
+			 * 2A unless AE-Tech fix their battery pack.
+			 */
+			{200, 450, 2000, 4350}, /* TEMP_ZONE_2 */
+		}
+	};
+	BUILD_ASSERT(ARRAY_SIZE(temp_zones[0]) == TEMP_ZONE_COUNT);
+	BUILD_ASSERT(ARRAY_SIZE(temp_zones) == BATTERY_COUNT);
+
+	static int charge_phase = 1;
+
+	if (batt_id >= BATTERY_COUNT)
+		batt_id = gpio_get_level(GPIO_BATT_ID);
+
+	if ((curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE) ||
+	    (bat_temp_c < temp_zones[batt_id][0].temp_min) ||
+	    (bat_temp_c >= temp_zones[batt_id][TEMP_ZONE_COUNT - 1].temp_max))
+		temp_zone = TEMP_OUT_OF_RANGE;
+	else {
+		for (temp_zone = 0; temp_zone < TEMP_ZONE_COUNT; temp_zone++) {
+			if (bat_temp_c <
+				temp_zones[batt_id][temp_zone].temp_max)
+				break;
+		}
+	}
+
+	if (curr->state != ST_CHARGE) {
+		charge_phase = 1;
+		return 0;
+	}
+
+	switch (temp_zone) {
+	case TEMP_ZONE_0:
+	case TEMP_ZONE_2:
+		curr->requested_current =
+			temp_zones[batt_id][temp_zone].desired_current;
+		curr->requested_voltage =
+			temp_zones[batt_id][temp_zone].desired_voltage;
+		break;
+	case TEMP_ZONE_1:
+		/* No phase change for Simplo battery pack */
+		if (batt_id == BATTERY_SIMPLO)
+			charge_phase = 0;
+		/*
+		 * If AE-Tech battery pack is used and the voltage reading
+		 * is bad, let's be conservative and assume change_phase == 1.
+		 */
+		else if (curr->batt.flags & BATT_FLAG_BAD_VOLTAGE)
+			charge_phase = 1;
+		else {
+			if (curr->batt.voltage <
+			    (CHARGE_PHASE_CHANGE_TRIP_VOLTAGE_MV -
+			     CHARGE_PHASE_CHANGE_HYSTERESIS_MV))
+				charge_phase = 0;
+			else if (curr->batt.voltage >
+				 CHARGE_PHASE_CHANGE_TRIP_VOLTAGE_MV)
+				charge_phase = 1;
+		}
+
+		curr->requested_voltage =
+			temp_zones[batt_id][temp_zone].desired_voltage;
+
+		curr->requested_current = (charge_phase) ?
+			CHARGE_PHASE_CHANGED_CURRENT_MA :
+			temp_zones[batt_id][temp_zone].desired_current;
+		break;
+	case TEMP_OUT_OF_RANGE:
+		curr->requested_current = curr->requested_voltage = 0;
+		curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
+		curr->state = ST_IDLE;
+		break;
 	}
 
 	return 0;
