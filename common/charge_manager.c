@@ -370,7 +370,7 @@ static void charge_manager_fill_power_info(int port,
 		if (r->role == USB_PD_PORT_POWER_SINK_NOT_CHARGING)
 			r->meas.voltage_now = 5000;
 		else {
-#ifdef CONFIG_USB_PD_VBUS_DETECT_CHARGER
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 			r->meas.voltage_now = charger_get_vbus_voltage(port);
 #else
 			if (ADC_VBUS >= 0)

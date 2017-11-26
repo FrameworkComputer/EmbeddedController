@@ -3096,6 +3096,17 @@
 
 /*****************************************************************************/
 /*
+ * Define CONFIG_USB_PD_VBUS_MEASURE_CHARGER if the charger on the board
+ * supports VBUS measurement.
+ */
+#if defined(CONFIG_CHARGER_BD9995X) || \
+	defined(CONFIG_CHARGER_RT9466) || \
+	defined(CONFIG_CHARGER_RT9467)
+#define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#endif
+
+/*****************************************************************************/
+/*
  * Handle task-dependent configs.
  *
  * This prevent sub-modules from being compiled when the task and parent module
