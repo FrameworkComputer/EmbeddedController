@@ -21,7 +21,6 @@
 #include "i2c.h"
 #include "math_util.h"
 #include "printf.h"
-#include "sb_fw_update.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -654,13 +653,6 @@ void charger_task(void *u)
 	curr.desired_input_current = get_desired_input_current(prev_bp, info);
 
 	while (1) {
-
-#ifdef CONFIG_SB_FIRMWARE_UPDATE
-		if (sb_fw_update_in_progress()) {
-			task_wait_event(CHARGE_MAX_SLEEP_USEC);
-			continue;
-		}
-#endif
 
 		/* Let's see what's going on... */
 		curr.ts = get_time();
