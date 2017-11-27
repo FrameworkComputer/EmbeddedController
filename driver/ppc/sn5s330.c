@@ -22,6 +22,28 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+static int read_reg(uint8_t chip_idx, int reg, int *regval)
+{
+	if (chip_idx >= sn5s330_cnt)
+		return EC_ERROR_INVAL;
+
+	return i2c_read8(sn5s330_chips[chip_idx].i2c_port,
+			   sn5s330_chips[chip_idx].i2c_addr,
+			   reg,
+			   regval);
+}
+
+static int write_reg(uint8_t chip_idx, int reg, int regval)
+{
+	if (chip_idx >= sn5s330_cnt)
+		return EC_ERROR_INVAL;
+
+	return i2c_write8(sn5s330_chips[chip_idx].i2c_port,
+			  sn5s330_chips[chip_idx].i2c_addr,
+			  reg,
+			  regval);
+}
+
 #ifdef CONFIG_CMD_PPC_DUMP
 static int command_sn5s330_dump(int argc, char **argv)
 {
@@ -99,13 +121,23 @@ DECLARE_CONSOLE_COMMAND(ppc_dump, command_sn5s330_dump,
 			"<Type-C port>", "dump the SN5S330 regs");
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
 
-int sn5s330_pp_fet_enable(uint8_t chip_idx, enum sn5s330_pp_idx pp, int enable)
+static int get_func_set3(uint8_t chip_idx, int *regval)
 {
-	int regval;
 	int status;
+
+	status = read_reg(chip_idx, SN5S330_FUNC_SET3, regval);
+	if (status)
+		CPRINTS("Failed to read FUNC_SET3!");
+
+	return status;
+}
+
+int sn5s330_is_pp_fet_enabled(uint8_t chip_idx, enum sn5s330_pp_idx pp,
+			     int *is_enabled)
+{
 	int pp_bit;
-	int port;
-	int addr;
+	int status;
+	int regval;
 
 	if (pp == SN5S330_PP1) {
 		pp_bit = SN5S330_PP1_EN;
@@ -116,21 +148,38 @@ int sn5s330_pp_fet_enable(uint8_t chip_idx, enum sn5s330_pp_idx pp, int enable)
 		return EC_ERROR_INVAL;
 	}
 
-	port = sn5s330_chips[chip_idx].i2c_port;
-	addr = sn5s330_chips[chip_idx].i2c_addr;
-
-	status = i2c_read8(port, addr, SN5S330_FUNC_SET3, &regval);
-	if (status) {
-		CPRINTS("Failed to read FUNC_SET3!");
+	status = get_func_set3(chip_idx, &regval);
+	if (status)
 		return status;
-	}
+
+	*is_enabled = !!(pp_bit & regval);
+
+	return EC_SUCCESS;
+}
+
+int sn5s330_pp_fet_enable(uint8_t chip_idx, enum sn5s330_pp_idx pp, int enable)
+{
+	int regval;
+	int status;
+	int pp_bit;
+
+	if (pp == SN5S330_PP1)
+		pp_bit = SN5S330_PP1_EN;
+	else if (pp == SN5S330_PP2)
+		pp_bit = SN5S330_PP2_EN;
+	else
+		return EC_ERROR_INVAL;
+
+	status = get_func_set3(chip_idx, &regval);
+	if (status)
+		return status;
 
 	if (enable)
 		regval |= pp_bit;
 	else
 		regval &= ~pp_bit;
 
-	status = i2c_write8(port, addr, SN5S330_FUNC_SET3, regval);
+	status = write_reg(chip_idx, SN5S330_FUNC_SET3, regval);
 	if (status) {
 		CPRINTS("Failed to set FUNC_SET3!");
 		return status;
@@ -208,7 +257,7 @@ static int init_sn5s330(int idx)
 		return status;
 	}
 
-	/* TODO(aaboagye): What about Vconn */
+	/* TODO(aaboagye): What about Vconn? */
 
 	/*
 	 * Indicate we are using PP2 configuration 2 and enable OVP comparator
@@ -293,7 +342,7 @@ static int init_sn5s330(int idx)
 	 * implemented in the PD stack.
 	 */
 
-	regval = ~SN5S330_ILIM_PP1_RISE_MASK;
+	regval = ~SN5S330_ILIM_PP1_MASK;
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_RISE_REG1,
 			    regval);
 	if (status) {
@@ -301,7 +350,6 @@ static int init_sn5s330(int idx)
 		return status;
 	}
 
-	regval = ~SN5S330_ILIM_PP1_FALL_MASK;
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_FALL_REG1,
 			    regval);
 	if (status) {
@@ -390,4 +438,4 @@ static void sn5s330_init(void)
 			CPRINTS("C%d: SN5S330 init failed! (%d)", i, rv);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, sn5s330_init, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, sn5s330_init, HOOK_PRIO_INIT_I2C + 1);
