@@ -11,6 +11,7 @@
 /* Optional features */
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
+#define CONFIG_CMD_PPC_DUMP
 
 /* NPCX7 config */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */

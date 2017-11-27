@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
+#include "driver/ppc/sn5s330.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "system.h"
@@ -104,27 +105,8 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_power_supply_reset(int port)
 {
-#ifdef BOARD_ZOOMBINI
 	/* Disable VBUS. */
-	switch (port) {
-	case 0:
-		gpio_set_level(GPIO_USB_C0_5V_EN, 0);
-		break;
-
-	case 1:
-		gpio_set_level(GPIO_USB_C1_5V_EN, 0);
-		break;
-
-	case 2:
-		gpio_set_level(GPIO_USB_C2_5V_EN, 0);
-		break;
-
-	default:
-		return;
-	};
-#else
-	/*TODO(aaboagye): Implement sn5s330 PPC for both Zoombini and Meowth */
-#endif /* defined(BOARD_ZOOMBINI) */
+	sn5s330_pp_fet_enable(port, SN5S330_PP1, 0);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -132,41 +114,20 @@ void pd_power_supply_reset(int port)
 
 int pd_set_power_supply_ready(int port)
 {
-#ifdef BOARD_ZOOMBINI
-	switch (port) {
-	case 0:
-		/* Disable charging. */
-		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
+	int rv;
 
-		/* Provide VBUS. */
-		gpio_set_level(GPIO_USB_C0_5V_EN, 1);
+	if (port >= sn5s330_cnt)
+		return EC_ERROR_INVAL;
 
-		break;
+	/* Disable charging. */
+	rv = sn5s330_pp_fet_enable(port, SN5S330_PP2, 0);
+	if (rv)
+		return rv;
 
-	case 1:
-		/* Disable charging. */
-		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
-
-		/* Provide VBUS. */
-		gpio_set_level(GPIO_USB_C1_5V_EN, 1);
-
-		break;
-
-	case 2:
-		/* Disable charging. */
-		gpio_set_level(GPIO_USB_C2_CHARGE_EN_L, 1);
-
-		/* Provide VBUS. */
-		gpio_set_level(GPIO_USB_C2_5V_EN, 1);
-
-		break;
-
-	default:
-		break;
-	};
-#else
-	/*TODO(aaboagye): Implement sn5s330 PPC for both Zoombini and Meowth */
-#endif /* defined(BOARD_ZOOMBINI) */
+	/* Provide Vbus. */
+	rv = sn5s330_pp_fet_enable(port, SN5S330_PP1, 1);
+	if (rv)
+		return rv;
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
