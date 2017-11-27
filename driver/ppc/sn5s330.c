@@ -17,6 +17,7 @@
 #include "i2c.h"
 #include "system.h"
 #include "timer.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -180,15 +181,24 @@ static int sn5s330_init(int port)
 	const int i2c_port  = ppc_chips[port].i2c_port;
 	const int i2c_addr = ppc_chips[port].i2c_addr;
 
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 	/* Set the sourcing current limit value. */
-#if defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) &&			\
-	(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT == TYPEC_RP_3A0)
-	/* Set current limit to ~3A. */
-	regval = SN5S330_ILIM_3_06;
-#else
-	/* Set current limit to ~1.5A. */
+	switch (CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) {
+	case TYPEC_RP_3A0:
+		/* Set current limit to ~3A. */
+		regval = SN5S330_ILIM_3_06;
+		break;
+
+	case TYPEC_RP_1A5:
+	default:
+		/* Set current limit to ~1.5A. */
+		regval = SN5S330_ILIM_1_62;
+		break;
+	}
+#else /* !defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
+	/* Default SRC current limit to ~1.5A. */
 	regval = SN5S330_ILIM_1_62;
-#endif
+#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
 
 	/*
 	 * It seems that sometimes setting the FUNC_SET1 register fails
