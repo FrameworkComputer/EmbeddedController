@@ -38,8 +38,8 @@
 /* Standard USB stuff */
 
 #ifdef CONFIG_USB_BOS
-/* v2.01 (vs 2.00) BOS Descriptor provided */
-#define USB_DEV_BCDUSB 0x0201
+/* v2.10 (vs 2.00) BOS Descriptor provided */
+#define USB_DEV_BCDUSB 0x0210
 #else
 #define USB_DEV_BCDUSB 0x0200
 #endif
