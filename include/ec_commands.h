@@ -583,12 +583,6 @@ enum host_event_code {
 	EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT = 30,
 
 	/*
-	 * Reserve this last bit to indicate that at least one bit in a
-	 * secondary host event word is set.  See crbug.com/633646.
-	 */
-	EC_HOST_EVENT_EXTENDED = 31,
-
-	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
 	 * considered invalid by the host.  This can happen when reading the
