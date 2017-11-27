@@ -3097,6 +3097,12 @@
 #endif
 
 /*****************************************************************************/
+/* Define CONFIG_USBC_PPC if board has a USB Type-C Power Path Controller. */
+#if defined(CONFIG_USBC_PPC_SN5S330)
+#define CONFIG_USBC_PPC
+#endif /* "has a PPC" */
+
+/*****************************************************************************/
 /*
  * Define CONFIG_USB_PD_VBUS_MEASURE_CHARGER if the charger on the board
  * supports VBUS measurement.

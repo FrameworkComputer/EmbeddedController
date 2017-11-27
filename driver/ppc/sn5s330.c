@@ -439,3 +439,28 @@ static void sn5s330_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, sn5s330_init, HOOK_PRIO_INIT_I2C + 1);
+
+int ppc_is_sourcing_vbus(int port)
+{
+	int is_sourcing_vbus;
+	int rv;
+
+	rv = sn5s330_is_pp_fet_enabled(port, SN5S330_PP1, &is_sourcing_vbus);
+	if (rv) {
+		CPRINTS("C%d: Failed to determine source FET status! (%d)",
+			port, rv);
+		return 0;
+	}
+
+	return is_sourcing_vbus;
+}
+
+int ppc_vbus_sink_enable(int port, int enable)
+{
+	return sn5s330_pp_fet_enable(port, SN5S330_PP2, !!enable);
+}
+
+int ppc_vbus_source_enable(int port, int enable)
+{
+	return sn5s330_pp_fet_enable(port, SN5S330_PP1, !!enable);
+}
