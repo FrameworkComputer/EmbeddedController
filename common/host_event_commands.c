@@ -29,8 +29,16 @@ static void host_event_set_bit(host_event_t *ev, uint8_t bit)
 	uint32_t *ptr = (uint32_t *)ev;
 
 	*ev = 0;
+
+	/*
+	 * Host events are 1-based, so return early if event 0 is requested to
+	 * be set.
+	 */
+	if (bit == 0)
+		return;
+
 #ifdef CONFIG_HOST_EVENT64
-	if (bit >= 32)
+	if (bit > 32)
 		*(ptr + 1) = HOST_EVENT_32BIT_MASK(bit - 32);
 	else
 #endif
