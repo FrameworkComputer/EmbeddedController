@@ -588,13 +588,16 @@ int main(int argc, char *argv[])
 	 */
 	elan_get_fw_info();
 
+	/* Trigger an I2C transaction of expecting reading of 633 bytes. */
 	if (extended_i2c_exercise) {
-		/*
-		 * Trigger an I2C transaction of expecting reading > 60 bytes.
-		 * source: https://goo.gl/pSxESS
-		 */
-		elan_write_and_read(0x0002, rx_buf, 118, 0, 0);
-		pretty_print_buffer(rx_buf, 118);
+		tx_buf[0] = 0x05;
+		tx_buf[1] = 0x00;
+		tx_buf[2] = 0x3C;
+		tx_buf[3] = 0x02;
+		tx_buf[4] = 0x06;
+		tx_buf[5] = 0x00;
+		libusb_single_write_and_read(tx_buf, 6, rx_buf, 633);
+		pretty_print_buffer(rx_buf, 637);
 	}
 
 	/* Get the trackpad ready for receiving update */

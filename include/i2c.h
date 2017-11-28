@@ -89,7 +89,9 @@ extern const int i2c_test_dev_used;
 #define I2C_XFER_SINGLE (I2C_XFER_START | I2C_XFER_STOP)  /* One transaction */
 
 /**
- * Transmit one block of raw data, then receive one block of raw data.
+ * Transmit one block of raw data, then receive one block of raw data. However,
+ * received data might be capped at CONFIG_I2C_CHIP_MAX_READ_SIZE if
+ * CONFIG_I2C_XFER_LARGE_READ is not defined.
  *
  * This is a wrapper function for chip_i2c_xfer(), a low-level chip-dependent
  * function. It must be called between i2c_lock(port, 1) and i2c_lock(port, 0).

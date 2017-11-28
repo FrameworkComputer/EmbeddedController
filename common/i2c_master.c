@@ -50,6 +50,34 @@ const struct i2c_port_t *get_i2c_port(int port)
 	return NULL;
 }
 
+#ifdef CONFIG_I2C_XFER_LARGE_READ
+/*
+ * Internal function that splits reading into multiple chip_i2c_xfer() calls
+ * if in_size exceeds CONFIG_I2C_CHIP_MAX_READ_SIZE.
+ */
+static int i2c_xfer_no_retry(int port, int slave_addr, const uint8_t *out,
+			     int out_size, uint8_t *in, int in_size, int flags)
+{
+	int ret;
+	int out_flags = flags & I2C_XFER_START;
+	int in_chunk_size = MIN(in_size, CONFIG_I2C_CHIP_MAX_READ_SIZE);
+
+	in_size -= in_chunk_size;
+	out_flags |= !in_size ? (flags & I2C_XFER_STOP) : 0;
+	ret = chip_i2c_xfer(port, slave_addr, out, out_size, in, in_chunk_size,
+		out_flags);
+	in += in_chunk_size;
+	while (in_size && ret == EC_SUCCESS) {
+		in_chunk_size = MIN(in_size, CONFIG_I2C_CHIP_MAX_READ_SIZE);
+		in_size -= in_chunk_size;
+		ret = chip_i2c_xfer(port, slave_addr, NULL, 0, in,
+			in_chunk_size, !in_size ? (flags & I2C_XFER_STOP) : 0);
+		in += in_chunk_size;
+	}
+	return ret;
+}
+#endif /* CONFIG_I2C_XFER_LARGE_READ */
+
 int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     uint8_t *in, int in_size, int flags)
 {
@@ -57,8 +85,13 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	int ret = EC_SUCCESS;
 
 	for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
+#ifdef CONFIG_I2C_XFER_LARGE_READ
+		ret = i2c_xfer_no_retry(port, slave_addr, out, out_size, in,
+			in_size, flags);
+#else
 		ret = chip_i2c_xfer(port, slave_addr, out, out_size, in,
 			in_size, flags);
+#endif /* CONFIG_I2C_XFER_LARGE_READ */
 		if (ret != EC_ERROR_BUSY)
 			break;
 	}
