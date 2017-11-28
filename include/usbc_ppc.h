@@ -123,4 +123,11 @@ int ppc_vbus_sink_enable(int port, int enable);
  */
 int ppc_vbus_source_enable(int port, int enable);
 
+/**
+ * Board specific callback when a port overcurrents.
+ *
+ * @param port: The Type-C port which overcurrented.
+ */
+void board_overcurrent_event(int port);
+
 #endif /* !defined(__CROS_EC_USBC_PPC_H) */

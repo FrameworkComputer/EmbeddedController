@@ -24,6 +24,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
@@ -450,6 +452,44 @@ static int sn5s330_vbus_sink_enable(int port, int enable)
 static int sn5s330_vbus_source_enable(int port, int enable)
 {
 	return sn5s330_pp_fet_enable(port, SN5S330_PP1, !!enable);
+}
+
+static void sn5s330_handle_interrupt(int port)
+{
+	int rise = 0;
+	int fall = 0;
+
+	/*
+	 * The only interrupts that should be enabled are the PP1 overcurrent
+	 * condition.
+	 */
+	read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
+	read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
+
+	/* Let the board know about the overcurrent event. */
+	if (rise & SN5S330_ILIM_PP1_MASK)
+		board_overcurrent_event(port);
+
+	/* Clear the interrupt sources. */
+	write_reg(port, SN5S330_INT_TRIP_RISE_REG1, rise);
+	write_reg(port, SN5S330_INT_TRIP_FALL_REG1, fall);
+}
+
+static void sn5s330_irq_deferred(void)
+{
+	int i;
+	uint32_t pending = atomic_read_clear(&irq_pending);
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		if ((1 << i) & pending)
+			sn5s330_handle_interrupt(i);
+}
+DECLARE_DEFERRED(sn5s330_irq_deferred);
+
+void sn5s330_interrupt(int port)
+{
+	atomic_or(&irq_pending, (1 << port));
+	hook_call_deferred(&sn5s330_irq_deferred_data, 0);
 }
 
 const struct ppc_drv sn5s330_drv = {
