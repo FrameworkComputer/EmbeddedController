@@ -516,7 +516,7 @@ DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 enum amon_bmon { AMON, BMON };
 
 static int print_amon_bmon(enum amon_bmon amon, int direction,
-			   int resistor, char *text)
+			   int resistor)
 {
 	int adc, curr, reg, ret;
 
@@ -557,7 +557,8 @@ static int print_amon_bmon(enum amon_bmon amon, int direction,
 
 	adc = adc_read_channel(ADC_AMON_BMON);
 	curr = adc / resistor;
-	ccprintf("%s: %d uV, %d mA\n", text, adc, curr);
+	ccprintf("%cMON(%sharging): %d uV, %d mA\n", amon == AMON ? 'A' : 'B',
+		direction ? "Disc" : "C", adc, curr);
 
 	return ret;
 }
@@ -568,29 +569,47 @@ static int print_amon_bmon(enum amon_bmon amon, int direction,
 static int console_command_amon_bmon(int argc, char **argv)
 {
 	int ret = EC_SUCCESS;
+	int print_ac = 1;
+	int print_battery = 1;
+	int print_charge = 1;
+	int print_discharge = 1;
 
-	if (argc == 1 || (argc >= 2 && argv[1][0] == 'a'))
-		ret |= print_amon_bmon(AMON, 0,
-				       CONFIG_CHARGER_SENSE_RESISTOR_AC,
-				       "AMON");
-
-	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b' &&
-			 (argv[1][1] == '\0' || argv[1][1] == 'd')))
-		ret |= print_amon_bmon(BMON, 1,
-				       CONFIG_CHARGER_SENSE_RESISTOR,
-				       "BMON(discharging)");
-
+	if (argc >= 2) {
+		print_ac = (argv[1][0] == 'a');
+		print_battery = (argv[1][0] == 'b');
 #ifdef CONFIG_CHARGER_ISL9238
-	if (argc == 1 || (argc >= 2 && argv[1][0] == 'b' &&
-				(argv[1][1] == '\0' || argv[1][1] == 'c')))
-		ret |= print_amon_bmon(BMON, 0,
-				       /*
-					* charging current monitor has
-					* 2x amplification factor
-					*/
-				       2*CONFIG_CHARGER_SENSE_RESISTOR,
-				       "BMON(charging)");
+		if (argv[1][1] != '\0') {
+			print_charge = (argv[1][1] == 'c');
+			print_discharge = (argv[1][1] == 'd');
+		}
 #endif
+	}
+
+	if (print_ac) {
+		if (print_charge)
+			ret |= print_amon_bmon(AMON, 0,
+					CONFIG_CHARGER_SENSE_RESISTOR_AC);
+#ifdef CONFIG_CHARGER_ISL9238
+		if (print_discharge)
+			ret |= print_amon_bmon(AMON, 1,
+					CONFIG_CHARGER_SENSE_RESISTOR_AC);
+#endif
+	}
+
+	if (print_battery) {
+#ifdef CONFIG_CHARGER_ISL9238
+		if (print_charge)
+			ret |= print_amon_bmon(BMON, 0,
+					/*
+					 * charging current monitor has
+					 * 2x amplification factor
+					 */
+					2*CONFIG_CHARGER_SENSE_RESISTOR);
+#endif
+		if (print_discharge)
+			ret |= print_amon_bmon(BMON, 1,
+					CONFIG_CHARGER_SENSE_RESISTOR);
+	}
 
 	return ret;
 }
@@ -598,7 +617,7 @@ DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
 #ifdef CONFIG_CHARGER_ISL9237
 			"amonbmon [a|b]",
 #else
-			"amonbmon [a|b[c|d]]",
+			"amonbmon [a[c|d]|b[c|d]]",
 #endif
 			"Get charger AMON/BMON voltage diff, current");
 #endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */
