@@ -56,6 +56,8 @@
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3_0
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
 
+#define CONFIG_BRINGUP /* TODO(teravest): Remove this later. */
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
