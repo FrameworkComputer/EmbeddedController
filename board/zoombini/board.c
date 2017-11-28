@@ -50,6 +50,43 @@ static void tcpc_alert_event(enum gpio_signal s)
 #endif
 }
 
+#ifdef BOARD_MEOWTH
+/*
+ * Meowth shares the TCPC Alert# line with the TI SN5S330's interrupt line.
+ * Therefore, we need to also check on that part.
+ */
+static void usb_c_interrupt(enum gpio_signal s)
+{
+	int port = (s == GPIO_USB_C0_PD_INT_L) ? 0 : 1;
+
+	tcpc_alert_event(s);
+	sn5s330_interrupt(port);
+}
+#endif /* defined(BOARD_MEOWTH) */
+
+#ifdef BOARD_ZOOMBINI
+static void ppc_interrupt(enum gpio_signal s)
+{
+	switch (s) {
+	case GPIO_USB_C0_PPC_INT_L:
+		sn5s330_interrupt(0);
+		break;
+
+	case GPIO_USB_C1_PPC_INT_L:
+		sn5s330_interrupt(1);
+		break;
+
+	case GPIO_USB_C2_PPC_INT_L:
+		sn5s330_interrupt(2);
+		break;
+
+	default:
+		break;
+
+	};
+}
+#endif /* defined(BOARD_ZOOMBINI) */
+
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -253,6 +290,13 @@ static void board_init(void)
 	int i;
 #endif /* defined(BOARD_ZOOMBINI) */
 
+#ifdef BOARD_ZOOMBINI
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C2_PPC_INT_L);
+#endif /* defined(BOARD_ZOOMBINI) */
+
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_L);
@@ -273,6 +317,36 @@ static void board_init(void)
 #endif /* defined(BOARD_ZOOMBINI) */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+void board_overcurrent_event(int port)
+{
+	/* Sanity check the port. */
+	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_COUNT))
+		return;
+
+	/* Note that the levels are inverted because the pin is active low. */
+	switch (port) {
+	case 0:
+		gpio_set_level(GPIO_USB_C0_OC_L, 0);
+		break;
+
+	case 1:
+		gpio_set_level(GPIO_USB_C1_OC_L, 0);
+		break;
+
+#ifdef BOARD_ZOOMBINI
+	case 2:
+		gpio_set_level(GPIO_USB_C2_OC_L, 0);
+		break;
+#endif /* defined(BOARD_ZOOMBINI) */
+
+	default:
+		return;
+	};
+
+	/* TODO(aaboagye): Write a PD log entry for the OC event. */
+	CPRINTS("C%d: overcurrent!", port);
+}
 
 static void board_pmic_init(void)
 {
@@ -382,12 +456,34 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
+#ifdef BOARD_MEOWTH
+	int regval;
 
+	/*
+	 * For Meowth, the interrupt line is shared between the TCPC and PPC.
+	 * Therefore, go out and actually read the alert registers to report the
+	 * alert status.
+	 */
+	if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
+		/* The TCPCI spec says to ignore bits 14:12. */
+		regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+
+		if (regval)
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
+		/* TCPCI spec says to ignore bits 14:12. */
+		regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+
+		if (regval)
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+#else
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_0;
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_1;
-#ifdef BOARD_ZOOMBINI
 	if (!gpio_get_level(GPIO_USB_C2_PD_INT_L))
 		status |= PD_STATUS_TCPC_ALERT_2;
 #endif /* defined(BOARD_ZOOMBINI) */
