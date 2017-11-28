@@ -74,6 +74,16 @@ struct batt_params {
 	int flags;            /* Flags */
 };
 
+/*
+ * Provide a 1 minute average of the current and voltage on the battery.
+ * Does not check for flags or whether those values are bad readings.
+ * See driver/battery/[your_driver].h/c for details on implementation and
+ * how the average is calculated.
+ */
+
+int battery_get_avg_current(void); /* in mA */
+int battery_get_avg_voltage(void); /* in mV */
+
 /* Flags for batt_params */
 
 /* Battery wants to be charged */

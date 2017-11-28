@@ -783,6 +783,7 @@
 #undef  CONFIG_CMD_PMU
 #define CONFIG_CMD_POWERINDEBUG
 #undef  CONFIG_CMD_POWERLED
+#define CONFIG_CMD_PWR_AVG
 #define CONFIG_CMD_POWER_AP
 #undef  CONFIG_CMD_PPC_DUMP
 #define CONFIG_CMD_REGULATOR
@@ -3279,6 +3280,13 @@
 
 #ifndef HAS_TASK_PDCMD
 #undef CONFIG_HOSTCMD_PD
+#endif
+
+/*
+ * Power Average task only works when there's a battery to talk to.
+ */
+#ifndef CONFIG_BATTERY
+#undef CONFIG_CMD_PWR_AVG
 #endif
 
 /*****************************************************************************/

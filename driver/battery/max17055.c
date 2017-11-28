@@ -263,6 +263,20 @@ void battery_get_params(struct batt_params *batt)
 		batt->flags |= BATT_FLAG_WANT_CHARGE;
 }
 
+#ifdef CONFIG_CMD_PWR_AVG
+int battery_get_avg_current(void)
+{
+	/* TODO(crbug.com/752320) implement this */
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
+int battery_get_avg_voltage(void)
+{
+	/* TODO(crbug.com/752320) implement this */
+	return -EC_ERROR_UNIMPLEMENTED;
+}
+#endif /* CONFIG_CMD_PWR_AVG */
+
 /* Wait until battery is totally stable. */
 int battery_wait_for_stable(void)
 {
