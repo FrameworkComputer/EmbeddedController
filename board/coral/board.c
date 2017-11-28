@@ -1120,7 +1120,7 @@ uint32_t board_override_feature_flags0(uint32_t flags0)
 	 * device is one of them and return the default value - with backlight
 	 * here.
 	 */
-	if (sku == 8)
+	if (sku == 8 || sku == 11)
 		return flags0;
 
 	// Report that there is no keyboard backlight
