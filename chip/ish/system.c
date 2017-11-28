@@ -46,6 +46,8 @@ void _system_reset(int flags, int wake_from_hibernate)
 void system_reset(int flags)
 {
 	_system_reset(flags, 0);
+	while(1)
+		;
 }
 
 const char *system_get_chip_vendor(void)
