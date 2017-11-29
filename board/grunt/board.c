@@ -5,6 +5,7 @@
 
 /* Grunt board-specific configuration */
 
+#include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
@@ -30,6 +31,8 @@
 #include "system.h"
 #include "task.h"
 #include "tcpci.h"
+#include "temp_sensor.h"
+#include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
@@ -301,3 +304,54 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
+
+/*
+ * We use 11 as the scaling factor so that the maximum mV value below (2761)
+ * can be compressed to fit in a uint8_t.
+ */
+#define THERMISTOR_SCALING_FACTOR 11
+
+/*
+ * Values are calculated from the "Resistance VS. Temperature" table on the
+ * Murata page for part NCP15WB473F03RC. Vdd=3.3V, R=30.9Kohm.
+ */
+static const struct thermistor_data_pair thermistor_data[] = {
+	{ 2761 / THERMISTOR_SCALING_FACTOR, 0},
+	{ 2492 / THERMISTOR_SCALING_FACTOR, 10},
+	{ 2167 / THERMISTOR_SCALING_FACTOR, 20},
+	{ 1812 / THERMISTOR_SCALING_FACTOR, 30},
+	{ 1462 / THERMISTOR_SCALING_FACTOR, 40},
+	{ 1146 / THERMISTOR_SCALING_FACTOR, 50},
+	{ 878 / THERMISTOR_SCALING_FACTOR, 60},
+	{ 665 / THERMISTOR_SCALING_FACTOR, 70},
+	{ 500 / THERMISTOR_SCALING_FACTOR, 80},
+	{ 434 / THERMISTOR_SCALING_FACTOR, 85},
+	{ 376 / THERMISTOR_SCALING_FACTOR, 90},
+	{ 326 / THERMISTOR_SCALING_FACTOR, 95},
+	{ 283 / THERMISTOR_SCALING_FACTOR, 100}
+};
+
+static const struct thermistor_info thermistor_info = {
+	.scaling_factor = THERMISTOR_SCALING_FACTOR,
+	.num_pairs = ARRAY_SIZE(thermistor_data),
+	.data = thermistor_data,
+};
+
+static int board_get_temp(int idx, int *temp_k)
+{
+	int mv = adc_read_channel(idx ? NPCX_ADC_CH1 : NPCX_ADC_CH0);
+	int temp_c;
+
+	if (mv < 0)
+		return -1;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return 0;
+}
+
+const struct temp_sensor_t temp_sensors[] = {
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0, 1},
+	{"SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1, 5},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
