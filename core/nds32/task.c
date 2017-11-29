@@ -256,7 +256,8 @@ int get_sw_int(void)
  *
  * Also includes emulation of software triggering interrupt vector
  */
-void __ram_code syscall_handler(int desched, task_id_t resched, int swirq)
+void __ram_code __keep syscall_handler(int desched, task_id_t resched,
+								int swirq)
 {
 	/* are we emulating an interrupt ? */
 	if (swirq) {
@@ -416,7 +417,7 @@ void end_irq_handler(void)
 #endif
 }
 
-static uint32_t __wait_evt(int timeout_us, task_id_t resched)
+static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 {
 	task_ *tsk = current_task;
 	task_id_t me = tsk - tasks;

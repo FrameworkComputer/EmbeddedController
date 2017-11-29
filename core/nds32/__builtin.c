@@ -10,7 +10,7 @@
  * Returns one plus the index of the least significant 1-bit of x,
  * or if x is zero, returns zero.
  */
-int __ffssi2(int x)
+int __keep __ffssi2(int x)
 {
 	return 32 - __builtin_clz(x & -x);
 }
