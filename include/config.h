@@ -2641,6 +2641,7 @@
  * - Some TCPCs can detect and report the presence of VBUS.
  * - In some configurations, charger ICs can report the presence of VBUS.
  * - On some boards, dedicated VBUS interrupt pins are available.
+ * - Some power path controllers (PPC) can report the presence of VBUS.
  *
  * Exactly one of these should be defined for all boards that run the PD
  * state machine.
@@ -2648,6 +2649,7 @@
 #undef CONFIG_USB_PD_VBUS_DETECT_TCPC
 #undef CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #undef CONFIG_USB_PD_VBUS_DETECT_GPIO
+#undef CONFIG_USB_PD_VBUS_DETECT_PPC
 #undef CONFIG_USB_PD_VBUS_DETECT_NONE
 
 

@@ -122,14 +122,12 @@ static int sn5s330_is_pp_fet_enabled(uint8_t port, enum sn5s330_pp_idx pp,
 	int status;
 	int regval;
 
-	if (pp == SN5S330_PP1) {
+	if (pp == SN5S330_PP1)
 		pp_bit = SN5S330_PP1_EN;
-	} else if (pp == SN5S330_PP2) {
+	else if (pp == SN5S330_PP2)
 		pp_bit = SN5S330_PP2_EN;
-	} else {
-		CPRINTF("bad PP idx(%d)!", pp);
+	else
 		return EC_ERROR_INVAL;
-	}
 
 	status = get_func_set3(port, &regval);
 	if (status)
@@ -415,6 +413,20 @@ static int sn5s330_init(int port)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+static int sn5s330_is_vbus_present(int port, int *vbus_present)
+{
+	int regval;
+	int rv;
+
+	rv = read_reg(port, SN5S330_INT_STATUS_REG3, &regval);
+	if (!rv)
+		*vbus_present = !!(regval & SN5S330_VBUS_GOOD);
+
+	return rv;
+}
+#endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
+
 static int sn5s330_is_sourcing_vbus(int port)
 {
 	int is_sourcing_vbus = 0;
@@ -448,4 +460,7 @@ const struct ppc_drv sn5s330_drv = {
 #ifdef CONFIG_CMD_PPC_DUMP
 	.reg_dump = &sn5s330_dump,
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+	.is_vbus_present = &sn5s330_is_vbus_present,
+#endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 };

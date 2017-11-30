@@ -100,6 +100,9 @@ enum sn5s330_pp_idx {
 #define SN5S330_PP2_CONFIG (1 << 2)
 #define SN5S330_OVP_EN_CC (1 << 4)
 
+/* INT_STATUS_REG3 */
+#define SN5S330_VBUS_GOOD (1 << 0)
+
 /* INT_STATUS_REG4 */
 #define SN5S330_DIG_RES (1 << 0)
 #define SN5S330_DB_BOOT (1 << 1)
