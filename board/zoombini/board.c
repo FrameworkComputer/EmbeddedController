@@ -404,12 +404,21 @@ static void board_pmic_init(void)
 	gpio_set_level(GPIO_PMIC_EN, 1);
 
 	/*
+	 * Mask COMP_C fault.  Meowth has the enable connected, but no PGOOD.
+	 * Zoombini has the enable grounded, so it's fine to mask it for
+	 * zoombini as well.
+	 */
+	if (i2c_write8(I2C_PORT_PMIC, PMIC_I2C_ADDR,
+		       TPS650X30_REG_PWFAULT_MASK2, 1))
+		cprints(CC_SYSTEM, "failed to mask pwfault_mask2");
+
+	/*
 	 * PGMASK1 : Mask VCCIO and 5V from Power Good Tree
 	 * [7] : 1b MVCCIOPG is masked.
-	 * [2] : 1b MV5APG is masked.
+	 * [6] : 1b MV5APG is masked.
 	 */
 	if (i2c_write8(I2C_PORT_PMIC, PMIC_I2C_ADDR, TPS650X30_REG_PGMASK1,
-		       (1 << 7) | (1 << 2)))
+		       ((1 << 7) | (1 << 6))))
 		cprints(CC_SYSTEM, "PMIC init failed!");
 	else
 		cprints(CC_SYSTEM, "PMIC init'd");
