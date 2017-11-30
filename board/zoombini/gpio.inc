@@ -24,12 +24,12 @@ GPIO_INT(LID_OPEN,        PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_int
 GPIO_INT(AC_PRESENT,      PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
 /* Power Signals. */
-GPIO_INT(PCH_SLP_S0_L,    PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S0_L,    PIN(A, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_ESPI_VW_SIGNALS
-GPIO_INT(PCH_SLP_S3_L,    PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
-GPIO_INT(PCH_SLP_S4_L,    PIN(A, 3), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S3_L,    PIN(A, 6), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S4_L,    PIN(A, 3), GPIO_INT_BOTH, power_signal_interrupt)
 #endif /* defined(CONFIG_ESPI_VW_SIGNALS) */
-GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
+GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 /* TODO(aaboagye): Internal PU may be needed later on... */
 GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
@@ -141,10 +141,10 @@ GPIO_INT(LID_OPEN,        PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_int
 GPIO_INT(AC_PRESENT,      PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
 /* Power Signals. */
-GPIO_INT(PCH_SLP_S0_L,    PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
-GPIO_INT(PCH_SLP_S3_L,    PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
-GPIO_INT(PCH_SLP_S4_L,    PIN(A, 3), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
-GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S0_L,    PIN(A, 4), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S3_L,    PIN(A, 6), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PCH_SLP_S4_L,    PIN(A, 3), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 /* TODO(aaboagye): Internal PU may be needed later on... */
 GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
