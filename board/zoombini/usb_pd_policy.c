@@ -7,12 +7,12 @@
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
-#include "driver/ppc/sn5s330.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -106,7 +106,7 @@ int pd_is_valid_input_voltage(int mv)
 void pd_power_supply_reset(int port)
 {
 	/* Disable VBUS. */
-	sn5s330_pp_fet_enable(port, SN5S330_PP1, 0);
+	ppc_vbus_source_enable(port, 0);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -116,16 +116,16 @@ int pd_set_power_supply_ready(int port)
 {
 	int rv;
 
-	if (port >= sn5s330_cnt)
+	if (port >= ppc_cnt)
 		return EC_ERROR_INVAL;
 
 	/* Disable charging. */
-	rv = sn5s330_pp_fet_enable(port, SN5S330_PP2, 0);
+	rv = ppc_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 
 	/* Provide Vbus. */
-	rv = sn5s330_pp_fet_enable(port, SN5S330_PP1, 1);
+	rv = ppc_vbus_source_enable(port, 1);
 	if (rv)
 		return rv;
 

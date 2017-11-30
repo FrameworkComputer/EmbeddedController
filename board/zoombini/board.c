@@ -35,6 +35,7 @@
 #include "tcpci.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -135,10 +136,14 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* TODO(aaboagye): Add the other ports. 3 for Zoombini, 2 for Meowth */
-const struct sn5s330_config sn5s330_chips[] = {
-	{I2C_PORT_TCPC0, SN5S330_ADDR0},
+const struct ppc_config_t ppc_chips[] = {
+	{
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv
+	},
 };
-const unsigned int sn5s330_cnt = ARRAY_SIZE(sn5s330_chips);
+const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 #ifdef BOARD_ZOOMBINI
 /* GPIO to enable/disable the USB Type-A port. */
@@ -306,7 +311,6 @@ int board_set_active_charge_port(int port)
 			    port < CONFIG_USB_PD_PORT_COUNT);
 	int i;
 	int rv;
-	int is_enabled;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
@@ -315,10 +319,10 @@ int board_set_active_charge_port(int port)
 
 	if (port == CHARGE_PORT_NONE) {
 		/* Disable all ports. */
-		for (i = 0; i < sn5s330_cnt; i++) {
-			rv = sn5s330_pp_fet_enable(i, SN5S330_PP2, 0);
+		for (i = 0; i < ppc_cnt; i++) {
+			rv = ppc_vbus_sink_enable(i, 0);
 			if (rv) {
-				CPRINTS("Disabling C%d PP2 FET failed.", i);
+				CPRINTS("Disabling p%d sink path failed.", i);
 				return rv;
 			}
 		}
@@ -327,29 +331,26 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Check if the port is sourcing VBUS. */
-	if (sn5s330_is_pp_fet_enabled(port, SN5S330_PP1, &is_enabled))
-		return EC_ERROR_UNKNOWN;
-
-	if (is_enabled) {
+	if (ppc_is_sourcing_vbus(port)) {
 		CPRINTF("Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
 
 	/*
-	 * Turn off the other ports' PP2 FET, before enabling the requested
-	 * charge port.
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
 	 */
-	for (i = 0; i < sn5s330_cnt; i++) {
+	for (i = 0; i < ppc_cnt; i++) {
 		if (i == port)
 			continue;
 
-		if (sn5s330_pp_fet_enable(i, SN5S330_PP2, 0))
-			CPRINTS("C%d: PP2 disable failed.", i);
+		if (ppc_vbus_sink_enable(i, 0))
+			CPRINTS("p%d: sink path disable failed.", i);
 	}
 
 	/* Enable requested charge port. */
-	if (sn5s330_pp_fet_enable(port, SN5S330_PP2, 1)) {
-		CPRINTS("C%d: PP2 enable failed.");
+	if (ppc_vbus_sink_enable(port, 1)) {
+		CPRINTS("p%d: sink path enable failed.");
 		return EC_ERROR_UNKNOWN;
 	}
 
