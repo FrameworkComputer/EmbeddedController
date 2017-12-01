@@ -1596,7 +1596,7 @@ static void process_password(struct transfer_descriptor *td)
 		return;
 
 	fprintf(stderr, "Error setting password: rv %d, response %d\n",
-		rv, response_size ? 0 : response);
+		rv, response_size ? response : 0);
 	exit(update_error);
 }
 
