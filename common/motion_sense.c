@@ -189,7 +189,7 @@ static void motion_sense_get_fifo_info(
 	fifo_info->count = fifo_queue_count;
 	fifo_info->total_lost = motion_sense_fifo_lost;
 	mutex_unlock(&g_sensor_mutex);
-	fifo_info->timestamp = __hw_clock_source_read();
+	fifo_info->timestamp = mkbp_last_event_time;
 }
 #endif
 

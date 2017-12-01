@@ -2323,7 +2323,9 @@ struct __ec_todo_packed ec_response_motion_sense_fifo_info {
 	uint16_t size;
 	/* Amount of space used in the fifo */
 	uint16_t count;
-	/* Timestamp recorded in us */
+	/* Timestamp recorded in us.
+	 * aka accurate timestamp when host event was triggered.
+	 */
 	uint32_t timestamp;
 	/* Total amount of vector lost */
 	uint16_t total_lost;

@@ -9,12 +9,14 @@
 #include "chipset.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "hwtimer.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
 #include "power.h"
 #include "util.h"
 
 static uint32_t events;
+uint32_t mkbp_last_event_time;
 
 static void set_event(uint8_t event_type)
 {
@@ -36,6 +38,13 @@ static int event_is_set(uint8_t event_type)
  */
 static void set_host_interrupt(int active)
 {
+	static int old_active;
+
+	interrupt_disable();
+
+	if (old_active == 0 && active == 1)
+		mkbp_last_event_time = __hw_clock_source_read();
+
 	/* interrupt host by using active low EC_INT signal */
 #ifdef CONFIG_MKBP_USE_HOST_EVENT
 	if (active)
@@ -43,6 +52,9 @@ static void set_host_interrupt(int active)
 #else
 	gpio_set_level(GPIO_EC_INT_L, !active);
 #endif
+
+	old_active = active;
+	interrupt_enable();
 }
 
 /**

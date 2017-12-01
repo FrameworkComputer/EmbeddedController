@@ -9,6 +9,15 @@
 #define __CROS_EC_MKBP_EVENT_H
 
 /*
+ * Last time the host received an interrupt.
+ *
+ * Retrieved via __hw_clock_source_read() as close as possible
+ * to the interrupt source. Intended to be virtually the same time the
+ * first line of the AP hard irq for the EC interrupt.
+ */
+extern uint32_t mkbp_last_event_time;
+
+/*
  * Sends an event to the AP.
  *
  * When this is called, the event data must be ready for query.  Otherwise,
