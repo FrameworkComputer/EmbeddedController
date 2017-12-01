@@ -176,4 +176,10 @@ enum ccd_reset_config_flags {
  */
 int ccd_reset_config(unsigned int flags);
 
+/**
+ * Inform CCD about TPM reset so that the password management state machine
+ * can be restarted.
+ */
+void ccd_tpm_reset_callback(void);
+
 #endif /* __CROS_EC_CCD_CONFIG_H */

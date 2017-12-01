@@ -1127,6 +1127,104 @@ DECLARE_SAFE_CONSOLE_COMMAND(ccd, command_ccd,
 			     "Configure case-closed debugging");
 
 /*
+ * Password handling on Cr50 passes the following states:
+ *
+ * - password setting is not allowed after Cr50 reset until an upstart (as
+ *   opposed to resume) TPM startup happens, as signalled by the TPM callback.
+ *   After the proper TPM reset the state changes to 'POST_RESET_STATE' which
+ *   means that the device was just reset/rebooted (not resumed) and no user
+ *   logged in yet.
+ *
+ *  - if the owner logs in in this state, the state changes to
+ *    'PASSWORD_ALLOWED_STATE'. The owner can open crosh session and set the
+ *    password.
+ *
+ *   - when the owner logs out or any user but the owner logs in, the state
+ *     changes to PASSWORD_NOT_ALLOWED_STATE and does not change until TPM is
+ *     reset. This makes sure that password can be set only by the owner and
+ *     only before anybody else logged in.
+ */
+enum password_reset_phase {
+	POST_RESET_STATE,
+	PASSWORD_ALLOWED_STATE,
+	PASSWORD_NOT_ALLOWED_STATE
+};
+
+static uint8_t password_state = PASSWORD_NOT_ALLOWED_STATE;
+
+void ccd_tpm_reset_callback(void)
+{
+	CPRINTS("%s: TPM Startup processed", __func__);
+	password_state = POST_RESET_STATE;
+}
+
+/*
+ * Handle the VENDOR_CC_MANAGE_CCD_PASSWORD command.
+ *
+ * The payload of the command is a single byte Boolean which sets the controls
+ * if CCD password can be set or not.
+ *
+ * After reset the pasword can not be set using VENDOR_CC_CCD_PASSWORD; once
+ * this command is received with value of True, the phase stars when the
+ * password can be set. As soon as this command is received with a value of
+ * False, the password can not be set any more until device is rebooted, even
+ * if this command is re-sent with the value of True.
+ */
+static enum vendor_cmd_rc manage_ccd_password(enum vendor_cmd_cc code,
+					      void *buf,
+					      size_t input_size,
+					      size_t *response_size)
+{
+	uint8_t prev_state = password_state;
+	/* The vendor command status code. */
+	enum vendor_cmd_rc rv = VENDOR_RC_SUCCESS;
+	/* Actual error code. */
+	uint8_t error_code = EC_SUCCESS;
+
+	do {
+		int value;
+
+		if (input_size != 1) {
+			rv = VENDOR_RC_INTERNAL_ERROR;
+			error_code = EC_ERROR_PARAM1;
+			break;
+		}
+
+		value = *((uint8_t *)buf);
+
+		if (!value) {
+			/* No more password setting allowed. */
+			password_state = PASSWORD_NOT_ALLOWED_STATE;
+			break;
+		}
+
+		if (password_state == POST_RESET_STATE) {
+			/* The only way to allow password setting. */
+			password_state = PASSWORD_ALLOWED_STATE;
+			break;
+		}
+
+		password_state = PASSWORD_NOT_ALLOWED_STATE;
+		rv = VENDOR_RC_BOGUS_ARGS;
+		error_code = EC_ERROR_INVAL;
+	} while (0);
+
+	if (prev_state != password_state)
+		CPRINTF("%s: state change from %d to %d\n",
+			__func__, prev_state, password_state);
+
+	if (rv == VENDOR_RC_SUCCESS) {
+		*response_size = 0;
+	} else {
+		*response_size = 1;
+		((uint8_t *)buf)[0] = error_code;
+	}
+
+	return rv;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_MANAGE_CCD_PWD, manage_ccd_password);
+
+/*
  * Handle the VENDOR_CC_CCD_PASSWORD command.
  *
  * The payload of the command is a text string to use to set the password. The
@@ -1140,21 +1238,25 @@ static enum vendor_cmd_rc ccd_password(enum vendor_cmd_cc code,
 {
 	int rv = EC_SUCCESS;
 	char password[CCD_MAX_PASSWORD_SIZE + 1];
+	char *response = buf;
+
+	if (password_state != PASSWORD_ALLOWED_STATE) {
+		*response_size = 1;
+		*response = EC_ERROR_ACCESS_DENIED;
+		return VENDOR_RC_NOT_ALLOWED;
+	}
 
 	if (!input_size || (input_size >= sizeof(password))) {
 		rv = EC_ERROR_PARAM1;
 	} else {
 		memcpy(password, buf, input_size);
 		password[input_size] = '\0';
-	}
-
-	if (rv == EC_SUCCESS) {
 		rv = do_ccd_password(password);
 		always_memset(password, 0, input_size);
 	}
 
 	if (rv != EC_SUCCESS) {
-		((uint8_t *)buf)[0] = (uint8_t)rv;
+		*response = rv;
 		*response_size = 1;
 		return VENDOR_RC_INTERNAL_ERROR;
 	}

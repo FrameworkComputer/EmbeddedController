@@ -6,6 +6,7 @@
 #include "Platform.h"
 #include "TPM_Types.h"
 
+#include "ccd_config.h"
 #include "trng.h"
 #include "util.h"
 #include "version.h"
@@ -59,4 +60,9 @@ void   _plat__GetFwVersion(uint32_t *firmwareV1, uint32_t *firmwareV2)
 		return;
 
 	*firmwareV2 = strtoi(ver_str, NULL, 16);
+}
+
+void _plat__ResetCallback(void)
+{
+	ccd_tpm_reset_callback();
 }
