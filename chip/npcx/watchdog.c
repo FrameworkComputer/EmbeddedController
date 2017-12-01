@@ -59,7 +59,6 @@ static uint8_t watchdog_count(void)
 void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
 	int  wd_cnt;
-	uint32_t panic_info;
 
 	/* Clear timeout status for event */
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_TO_STS);
@@ -78,19 +77,6 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 		/* Print panic info */
 		watchdog_trace(excep_lr, excep_sp);
 		cflush();
-
-		/*
-		 * Log the panic PC if watchdog occurred in exception context
-		 * or the watchdog task # otherwise.
-		 */
-		panic_info = ((excep_lr & 0xf) == 1) ?
-			((uint32_t *)excep_sp)[6] : task_get_current();
-		/*
-		 * panic_reboot() will be called by software_panic(), so this
-		 * typically will not return, and panic reason will appear
-		 * as "soft".
-		 */
-		software_panic(PANIC_SW_WATCHDOG, panic_info);
 
 		/* Trigger watchdog immediately */
 		system_watchdog_reset();

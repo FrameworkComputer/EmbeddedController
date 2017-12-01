@@ -788,12 +788,19 @@ void system_common_pre_init(void)
 
 #ifdef CONFIG_SOFTWARE_PANIC
 	/*
-	 * Log panic cause if watchdog caused reset. This
-	 * must happen before calculating jump_data address
-	 * because it might change panic pointer.
+	 * Log panic cause if watchdog caused reset and panic cause
+	 * was not already logged. This must happen before calculating
+	 * jump_data address because it might change panic pointer.
 	 */
-	if (system_get_reset_flags() & RESET_FLAG_WATCHDOG)
-		panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
+	if (system_get_reset_flags() & RESET_FLAG_WATCHDOG) {
+		uint32_t reason;
+		uint32_t info;
+		uint8_t exception;
+
+		panic_get_reason(&reason, &info, &exception);
+		if (reason != PANIC_SW_WATCHDOG)
+			panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
+	}
 #endif
 
 	/*
