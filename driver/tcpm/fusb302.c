@@ -394,6 +394,14 @@ static int fusb302_tcpm_init(int port)
 	reg &= ~TCPC_REG_MASK_COLLISION;
 	/* misc alert */
 	reg &= ~TCPC_REG_MASK_ALERT;
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+	/* TODO(crbug.com/791109): Clean up VBUS notification. */
+#ifdef CONFIG_USB_CHARGER
+#error "Use CONFIG_USB_PD_VBUS_DETECT_CHARGER instead"
+#endif
+	/* VBUS threshold crossed (~4.0V) */
+	reg &= ~TCPC_REG_MASK_VBUSOK;
+#endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC */
 	tcpc_write(port, TCPC_REG_MASK, reg);
 
 	reg = 0xFF;
@@ -866,6 +874,13 @@ void fusb302_tcpc_alert(int port)
 		/* packet sending collided */
 		pd_transmit_complete(port, TCPC_TX_COMPLETE_FAILED);
 	}
+
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+	if (interrupt & TCPC_REG_INTERRUPT_VBUSOK) {
+		/* VBUS crossed threshold */
+		task_wake(PD_PORT_TO_TASK_ID(port));
+	}
+#endif
 
 	/* GoodCRC was received, our FIFO is now non-empty */
 	if (interrupta & TCPC_REG_INTERRUPTA_TX_SUCCESS) {
