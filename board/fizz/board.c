@@ -153,12 +153,6 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing (1/10 voltage divider). */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	/*
-	 * Adapter current output or battery charging/discharging current (uV)
-	 * 18x amplification on charger side.
-	 */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
-			   ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
