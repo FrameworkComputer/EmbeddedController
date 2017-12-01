@@ -34,8 +34,9 @@
 #define RESET_FLAG_RBOX        (1 << 16)  /* Fixed Reset Functionality */
 #define RESET_FLAG_SECURITY    (1 << 17)  /* Security threat */
 
-/* Per chip implementation to save raw RESET_FLAG_ flags. */
+/* Per chip implementation to save/read raw RESET_FLAG_ flags. */
 void chip_save_reset_flags(int flags);
+uint32_t chip_read_reset_flags(void);
 
 /* System images */
 enum system_image_copy_t {

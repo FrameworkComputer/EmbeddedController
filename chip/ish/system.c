@@ -39,6 +39,11 @@ void chip_save_reset_flags(int flags)
 {
 }
 
+uint32_t chip_read_reset_flags(void)
+{
+	return 0;
+}
+
 void _system_reset(int flags, int wake_from_hibernate)
 {
 }

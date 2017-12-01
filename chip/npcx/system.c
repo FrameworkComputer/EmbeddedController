@@ -312,6 +312,11 @@ void chip_save_reset_flags(int flags)
 	bbram_data_write(BBRM_DATA_INDEX_SAVED_RESET_FLAGS, flags);
 }
 
+uint32_t chip_read_reset_flags(void)
+{
+	return bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
+}
+
 #ifdef CONFIG_POWER_BUTTON_INIT_IDLE
 /*
  * Set/clear AP_OFF flag. It's set when the system gracefully shuts down and
@@ -338,7 +343,10 @@ static void board_chipset_shutdown(void)
 	system_set_reset_flags(RESET_FLAG_AP_OFF);
 	CPRINTS("Set AP_OFF flag");
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
+	     /* Slightly higher than handle_pending_reboot because
+	      * it may clear AP_OFF flag. */
+	     HOOK_PRIO_DEFAULT - 1);
 #endif
 
 /* Check reset cause */

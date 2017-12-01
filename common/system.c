@@ -890,6 +890,13 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		system_disable_jump();
 		return EC_SUCCESS;
 #ifdef CONFIG_HIBERNATE
+	case EC_REBOOT_HIBERNATE_CLEAR_AP_OFF:
+#ifdef CONFIG_POWER_BUTTON_INIT_IDLE
+		CPRINTS("Clearing AP_OFF");
+		chip_save_reset_flags(
+				chip_read_reset_flags() & ~RESET_FLAG_AP_OFF);
+#endif
+		/* Intentional fall-through */
 	case EC_REBOOT_HIBERNATE:
 		CPRINTS("system hibernating");
 		system_hibernate(0, 0);
