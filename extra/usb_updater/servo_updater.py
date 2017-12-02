@@ -8,8 +8,10 @@ from __future__ import print_function
 import argparse
 import errno
 import os
+import re
 import subprocess
 import time
+import tempfile
 
 import json
 import fw_update
@@ -38,6 +40,26 @@ def flash(brdfile, serialno, binfile):
   print("Done. Finalizing.")
   p.stop()
 
+def connect(vidpid, iface, serialno, debuglog=False):
+  """Connect to console.
+
+  Args:
+    vidpid: vidpid of desired device.
+    iface: interface to connect.
+    serialno: serial number, to differentiate multiple devices.
+    debuglog: do chatty log.
+
+  Returns:
+    a connected pty object.
+  """
+  # Make sure device is up.
+  c.wait_for_usb(vidpid, serialname=serialno)
+
+  # make a console.
+  pty = c.setup_tinyservod(vidpid, iface,
+            serialname=serialno, debuglog=debuglog)
+
+  return pty
 
 def select(vidpid, iface, serialno, region, debuglog=False):
   """Ensure the servo is in the expected ro/rw partition."""
@@ -45,18 +67,36 @@ def select(vidpid, iface, serialno, region, debuglog=False):
   if region not in ["rw", "ro"]:
     raise Exception("Region must be ro or rw")
 
-  # Make sure device is up
-  c.wait_for_usb(vidpid, serialname=serialno)
-
-  # make a console
-  pty = c.setup_tinyservod(vidpid, iface,
-            serialname=serialno, debuglog=debuglog)
+  pty = connect(vidpid, iface, serialno)
 
   cmd = "sysjump %s\nreboot" % region
   pty._issue_cmd(cmd)
   time.sleep(1)
   pty.close()
 
+def do_version(vidpid, iface, serialno):
+  """Check version via ec console 'pty'.
+
+  Args:
+    see connect()
+
+  Returns:
+    detected version number
+
+  Commands are:
+  # > version
+  # ...
+  # Build:   tigertail_v1.1.6749-74d1a312e
+  """
+  pty = connect(vidpid, iface, serialno)
+
+  cmd = '\r\nversion\r\n'
+  regex = 'Build:\s+(\S+)'
+
+  results = pty._issue_cmd_get_results(cmd, [regex])[0]
+  pty.close()
+
+  return results[1].strip(' \t\r\n\0')
 
 def findfiles(cname, fname):
   """Select config and firmware binary files.
@@ -100,6 +140,25 @@ def findfiles(cname, fname):
 
   return cname, fname
 
+def find_available_version(boardname, binfile):
+  """Find the version string from the binary file.
+
+  Args:
+    boardname: the name of the board, eg. "servo_micro"
+    binfile: the binary to search
+
+  Returns:
+    the version string.
+  """
+  rawstrings = subprocess.check_output(
+      ['cbfstool', binfile, 'read', '-r', 'RO_FRID', '-f', '/dev/stdout'])
+  m = re.match(r'%s_v\S+' % boardname, rawstrings)
+  if m:
+    newvers = m.group(0).strip(' \t\r\n\0')
+  else:
+    raise ServoUpdaterException("Can't find version from file: %s." % binfile)
+
+  return newvers
 
 def main():
   parser = argparse.ArgumentParser(description="Image a servo micro device")
@@ -109,6 +168,8 @@ def main():
       help="Board configuration json file", default="servo_v4")
   parser.add_argument('-f', '--file', type=str,
       help="Complete ec.bin file", default=None)
+  parser.add_argument('--force', action="store_true",
+      help="Update even if version match", default=False)
   parser.add_argument('-v', '--verbose', action="store_true",
       help="Chatty output")
 
@@ -124,6 +185,21 @@ def main():
 
   vidpid = "%04x:%04x" % (int(data['vid'], 0), int(data['pid'], 0))
   iface = int(data['console'], 0)
+  boardname = data['board']
+
+  if not args.force:
+    vers = do_version(vidpid, iface, serialno)
+    print("Current %s version is   %s" % (boardname, vers))
+
+    newvers = find_available_version(boardname, binfile)
+    print("Available %s version is %s" % (boardname, newvers))
+
+    if newvers == vers:
+      print("No version update needed")
+      return
+    else:
+      print("Updating to recommended version.")
+
 
   select(vidpid, iface, serialno, "ro", debuglog=debuglog)
 
