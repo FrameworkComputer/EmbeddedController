@@ -448,7 +448,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = CONFIG_SPI_ACCEL_PORT,
 	 .addr = BMI160_SET_SPI_ADDRESS(CONFIG_SPI_ACCEL_PORT),
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .rot_standard_ref = &base_standard_ref,
 	 .config = {
 		 /* AP: by default shutdown all sensors */
 		 [SENSOR_CONFIG_AP] = {
