@@ -125,7 +125,7 @@ const struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-void board_overcurrent_event(int port)
+void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* TODO(b/78344554): pass this signal upstream once hardware reworked */
 	cprints(CC_USBPD, "p%d: overcurrent!", port);

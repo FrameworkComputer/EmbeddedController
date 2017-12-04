@@ -129,7 +129,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 static void usb1_oc_evt_deferred(void)
 {
 	/* Only port-1 has overcurrent GPIO interrupt */
-	board_overcurrent_event(0);
+	board_overcurrent_event(0, 1);
 }
 DECLARE_DEFERRED(usb1_oc_evt_deferred);
 
@@ -509,7 +509,7 @@ int board_is_sourcing_vbus(int port)
 	return EC_ERROR_INVAL;
 }
 
-void board_overcurrent_event(int port)
+void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* TODO(b/120231371): Notify AP */
 	CPRINTS("p%d: overcurrent!", port);

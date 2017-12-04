@@ -48,6 +48,7 @@ enum pd_rx_errors {
  */
 #define PD_EVENT_DEVICE_ACCESSED    (1<<7)
 #define PD_EVENT_POWER_STATE_CHANGE (1<<8) /* Chipset power state changed */
+#define PD_EVENT_SEND_HARD_RESET    (1<<9) /* Issue a Hard Reset. */
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \
@@ -1767,6 +1768,14 @@ int pd_get_polarity(int port);
  * @param port USB-C port number
  */
 int pd_get_partner_data_swap_capable(int port);
+
+/**
+ * Handle an overcurrent protection event.  The port acting as a source has
+ * reported an overcurrent event.
+ *
+ * @param port: USB-C port number.
+ */
+void pd_handle_overcurrent(int port);
 
 /**
  * Request power swap command to be issued

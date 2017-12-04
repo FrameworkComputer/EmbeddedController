@@ -572,28 +572,29 @@ static void board_quirks(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_quirks, HOOK_PRIO_DEFAULT);
 
-void board_overcurrent_event(int port)
+void board_overcurrent_event(int port, int is_overcurrented)
 {
+	int lvl;
+
 	/* Sanity check the port. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_COUNT))
 		return;
 
 	/* Note that the levels are inverted because the pin is active low. */
+	lvl = is_overcurrented ? 0 : 1;
+
 	switch (port) {
 	case 0:
-		gpio_set_level(GPIO_USB_C0_OC_ODL, 0);
+		gpio_set_level(GPIO_USB_C0_OC_ODL, lvl);
 		break;
 
 	case 1:
-		gpio_set_level(GPIO_USB_C1_OC_ODL, 0);
+		gpio_set_level(GPIO_USB_C1_OC_ODL, lvl);
 		break;
 
 	default:
 		return;
 	};
-
-	/* TODO(b/69935262): Write a PD log entry for the OC event. */
-	CPRINTS("C%d: overcurrent!", port);
 }
 
 static int read_gyro_sensor_temp(int idx, int *temp_ptr)

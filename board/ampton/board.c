@@ -316,7 +316,7 @@ void board_hibernate_late(void)
 	gpio_set_flags_by_mask(GPIO_KSI, 0xff, GPIO_INPUT);
 }
 
-void board_overcurrent_event(int port)
+void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* TODO(b/78344554): pass this signal upstream once hardware reworked */
 	cprints(CC_USBPD, "p%d: overcurrent!", port);

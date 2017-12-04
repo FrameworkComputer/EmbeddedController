@@ -116,12 +116,14 @@ void board_update_sensor_config_from_sku(void)
 	}
 }
 
-void board_overcurrent_event(int port)
+void board_overcurrent_event(int port, int is_overcurrented)
 {
 	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
 					      : GPIO_USB_C1_OC_L;
+	/* Note that the levels are inverted because the pin is active low. */
+	int lvl = is_overcurrented ? 0 : 1;
 
-	gpio_set_level(signal, 0);
+	gpio_set_level(signal, lvl);
 
 	CPRINTS("p%d: overcurrent!", port);
 }

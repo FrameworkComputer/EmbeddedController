@@ -11,6 +11,18 @@
 
 /* Common APIs for USB Type-C Power Path Controllers (PPC) */
 
+/*
+ * Number of times a port may overcurrent before we latch off the port until a
+ * physical disconnect is detected.
+ */
+#define PPC_OC_CNT_THRESH 3
+
+/*
+ * Number of seconds until a latched-off port is re-enabled for sourcing after
+ * detecting a physical disconnect.
+ */
+#define PPC_OC_COOLDOWN_DELAY_US (2 * SECOND)
+
 struct ppc_drv {
 	/**
 	 * Initialize the PPC.
@@ -127,12 +139,53 @@ extern struct ppc_config_t ppc_chips[];
 extern unsigned int ppc_cnt;
 
 /**
+ * Increment the overcurrent event counter.
+ *
+ * @param port: The Type-C port that has overcurrented.
+ * @return EC_SUCCESS on success, EC_ERROR_INVAL if non-existent port.
+ */
+int ppc_add_oc_event(int port);
+
+/**
+ * Clear the overcurrent event counter.
+ *
+ * @param port: The Type-C port's counter to clear.
+ * @return EC_SUCCESS on success, EC_ERROR_INVAL if non-existent port.
+ */
+int ppc_clear_oc_event_counter(int port);
+
+/**
+ * Discharge PD VBUS on src/sink disconnect & power role swap
+ *
+ * @param port: The Type-C port number.
+ * @param enable: 1 -> discharge vbus, 0 -> stop discharging vbus
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+int ppc_discharge_vbus(int port, int enable);
+
+/**
  * Initializes the PPC for the specified port.
  *
  * @param port: The Type-C port number.
  * @return EC_SUCCESS on success, error otherwise.
  */
 int ppc_init(int port);
+
+/**
+ * Is the port latched off due to multiple overcurrent events in succession?
+ *
+ * @param port: The Type-C port number.
+ * @return 1 if the port is latched off, 0 if it is not latched off.
+ */
+int ppc_is_port_latched_off(int port);
+
+/**
+ * Is the port sourcing Vbus?
+ *
+ * @param port: The Type-C port number.
+ * @return 1 if sourcing Vbus, 0 if not.
+ */
+int ppc_is_sourcing_vbus(int port);
 
 /**
  * Determine if VBUS is present or not.
@@ -143,12 +196,15 @@ int ppc_init(int port);
 int ppc_is_vbus_present(int port);
 
 /**
- * Is the port sourcing Vbus?
+ * Inform the PPC module that a sink is connected.
  *
+ * This is used such that it can determine when to clear the overcurrent events
+ * counter for a port.
  * @param port: The Type-C port number.
- * @return 1 if sourcing Vbus, 0 if not.
+ * @param is_connected: 1: if sink is connected on this port, 0: if not
+ *                      connected.
  */
-int ppc_is_sourcing_vbus(int port);
+void ppc_sink_is_connected(int port, int is_connected);
 
 /**
  * Inform the PPC of the polarity of the CC pins.
@@ -177,15 +233,6 @@ int ppc_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
 int ppc_set_vconn(int port, int enable);
 
 /**
- * Discharge PD VBUS on src/sink disconnect & power role swap
- *
- * @param port: The Type-C port number.
- * @param enable: 1 -> discharge vbus, 0 -> stop discharging vbus
- * @return EC_SUCCESS on success, error otherwise.
- */
-int ppc_discharge_vbus(int port, int enable);
-
-/**
  * Turn on/off the charge path FET, such that current flows into the
  * system.
  *
@@ -209,8 +256,9 @@ int ppc_vbus_source_enable(int port, int enable);
  * Board specific callback when a port overcurrents.
  *
  * @param port: The Type-C port which overcurrented.
+ * @param is_overcurrented: 1 if port overcurrented, 0 if the condition is gone.
  */
-void board_overcurrent_event(int port);
+void board_overcurrent_event(int port, int is_overcurrented);
 
 /**
  * Put the PPC into its lowest power state. In this state it should still fire

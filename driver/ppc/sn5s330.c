@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -641,9 +642,9 @@ static void sn5s330_handle_interrupt(int port)
 		read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
 		read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
 
-		/* Let the board know about the overcurrent event. */
+		/* Notify the system about the overcurrent event. */
 		if (rise & SN5S330_ILIM_PP1_MASK)
-			board_overcurrent_event(port);
+			pd_handle_overcurrent(port);
 
 		/* Clear the interrupt sources. */
 		write_reg(port, SN5S330_INT_TRIP_RISE_REG1, rise);
