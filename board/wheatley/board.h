@@ -146,6 +146,8 @@
 #undef CONFIG_CMD_TEMP_SENSOR
 #undef CONFIG_CMD_TIMERINFO
 #undef CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CMD_I2C_SCAN
+#undef CONFIG_CONSOLE_HISTORY
 
 /* Features of eSPI */
 #undef CONFIG_ESPI       /* Use eSPI protocol for host interface of x86 CPU */
