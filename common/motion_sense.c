@@ -104,9 +104,12 @@ struct queue motion_sense_fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO,
 		struct ec_response_motion_sensor_data);
 static int motion_sense_fifo_lost;
 
-static void motion_sense_insert_timestamp(void);
-
-void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
+/*
+ * Do not use this function directly if you just want to add sensor data, use
+ * motion_sense_fifo_add_data instead to get a proper timestamp too.
+ */
+static void motion_sense_fifo_add_unit(
+				struct ec_response_motion_sensor_data *data,
 				struct motion_sensor_t *sensor,
 				int valid_data)
 {
@@ -139,11 +142,6 @@ void motion_sense_fifo_add_unit(struct ec_response_motion_sensor_data *data,
 	}
 	mutex_unlock(&g_sensor_mutex);
 	if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP) {
-		/*
-		 * Fist, send a timestamp to be sure the event will not
-		 * be tied to an old one.
-		 */
-		motion_sense_insert_timestamp();
 		wake_up_needed = 1;
 	}
 #ifdef CONFIG_TABLET_MODE
@@ -166,13 +164,21 @@ static void motion_sense_insert_flush(struct motion_sensor_t *sensor)
 	motion_sense_fifo_add_unit(&vector, sensor, 0);
 }
 
-static void motion_sense_insert_timestamp(void)
+static void motion_sense_insert_timestamp(uint32_t timestamp)
 {
 	struct ec_response_motion_sensor_data vector;
 	vector.flags = MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
-	vector.timestamp = __hw_clock_source_read();
+	vector.timestamp = timestamp;
 	vector.sensor_num = 0;
 	motion_sense_fifo_add_unit(&vector, NULL, 0);
+}
+
+void motion_sense_fifo_add_data(struct ec_response_motion_sensor_data *data,
+				struct motion_sensor_t *sensor,
+				int valid_data,
+				uint32_t time) {
+	motion_sense_insert_timestamp(time);
+	motion_sense_fifo_add_unit(data, sensor, valid_data);
 }
 
 static void motion_sense_get_fifo_info(
@@ -732,7 +738,8 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 				vector.data[X] = v[X];
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
-				motion_sense_fifo_add_unit(&vector, sensor, 3);
+				motion_sense_fifo_add_data(&vector, sensor, 3,
+						   __hw_clock_source_read());
 			}
 			sensor->last_collection = ts->le.lo;
 		} else {
@@ -812,7 +819,8 @@ static void check_and_queue_gestures(uint32_t *event)
 		vector.activity = MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
 		vector.state = 1; /* triggered */
 		vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
-		motion_sense_fifo_add_unit(&vector, NULL, 0);
+		motion_sense_fifo_add_data(&vector, NULL, 0,
+					   __hw_clock_source_read());
 #endif
 		/* Call board specific function to process tap */
 		sensor_board_proc_double_tap();
@@ -829,7 +837,8 @@ static void check_and_queue_gestures(uint32_t *event)
 		vector.activity = MOTIONSENSE_ACTIVITY_SIG_MOTION;
 		vector.state = 1; /* triggered */
 		vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
-		motion_sense_fifo_add_unit(&vector, NULL, 0);
+		motion_sense_fifo_add_data(&vector, NULL, 0,
+					   __hw_clock_source_read());
 #endif
 		/* Disable further detection */
 		activity_sensor = &motion_sensors[CONFIG_GESTURE_SIGMO];
@@ -854,7 +863,8 @@ static void check_and_queue_gestures(uint32_t *event)
 				MOTIONSENSE_ORIENTATION_UNKNOWN)) {
 			SET_ORIENTATION_UPDATED(sensor);
 			vector.state = GET_ORIENTATION(sensor);
-			motion_sense_fifo_add_unit(&vector, NULL, 0);
+			motion_sense_fifo_add_data(&vector, NULL, 0,
+						   __hw_clock_source_read());
 #ifdef CONFIG_DEBUG_ORIENTATION
 			{
 				static const char * const mode_strs[] = {
@@ -973,7 +983,8 @@ void motion_sense_task(void *u)
 		     time_after(ts_end_task.le.lo,
 				ts_last_int.le.lo + motion_int_interval))) {
 			if (!fifo_flush_needed)
-				motion_sense_insert_timestamp();
+				motion_sense_insert_timestamp(
+					__hw_clock_source_read());
 			fifo_flush_needed = 0;
 			ts_last_int = ts_end_task;
 			/*
@@ -1194,7 +1205,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			 * Send an event to have a timestamp inserted in the
 			 * FIFO.
 			 */
-			motion_sense_insert_timestamp();
+			motion_sense_insert_timestamp(__hw_clock_source_read());
 #endif
 			sensor->config[SENSOR_CONFIG_AP].odr =
 				in->sensor_odr.data |

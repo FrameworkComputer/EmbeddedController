@@ -11,6 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "task.h"
@@ -197,7 +198,12 @@ static int load_fifo(struct motion_sensor_t *s)
 			vect.data[2] = axis[2];
 			vect.flags = 0;
 			vect.sensor_num = 0;
-			motion_sense_fifo_add_unit(&vect, s, 3);
+			motion_sense_fifo_add_data(&vect, s, 3,
+						   __hw_clock_source_read());
+			/*
+			 * TODO: get time at a more accurate spot.
+			 * Like in lis2dh_interrupt
+			 */
 		}
 	} while(!done);
 
