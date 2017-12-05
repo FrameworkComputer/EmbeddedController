@@ -203,7 +203,8 @@ const char help_str[] =
 	"      Set 16 bit duty cycle of given PWM\n"
 	"  readtest <patternoffset> <size>\n"
 	"      Reads a pattern from the EC via LPC\n"
-	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> [at-shutdown]\n"
+	"  reboot_ec <RO|RW|cold|hibernate|disable-jump> "
+			"[at-shutdown|switch-slot]\n"
 	"      Reboot EC to RO or RW\n"
 	"  rtcget\n"
 	"      Print real-time clock\n"
@@ -733,9 +734,11 @@ int cmd_reboot_ec(int argc, char *argv[])
 	/* Parse flags, if any */
 	p.flags = 0;
 	for (i = 2; i < argc; i++) {
-		if (!strcmp(argv[i], "at-shutdown"))
+		if (!strcmp(argv[i], "at-shutdown")) {
 			p.flags |= EC_REBOOT_FLAG_ON_AP_SHUTDOWN;
-		else {
+		} else if (!strcmp(argv[i], "switch-slot")) {
+			p.flags |= EC_REBOOT_FLAG_SWITCH_RW_SLOT;
+		} else {
 			fprintf(stderr, "Unknown flag: %s\n", argv[i]);
 			return -1;
 		}
