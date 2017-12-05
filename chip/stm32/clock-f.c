@@ -172,8 +172,7 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 		return;
 	}
 
-	/* Alarm must be within 1 day (86400 seconds) */
-
+	/* Alarm timeout must be within 1 day (86400 seconds) */
 	ASSERT((delay_s + delay_us / SECOND) < SECS_PER_DAY);
 
 	rtc_unlock_regs();
@@ -195,8 +194,8 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	 * If seconds is greater than 1 day, subtract by 1 day to deal with
 	 * 24-hour rollover.
 	 */
-	if (alarm_sec >= 86400)
-		alarm_sec -= 86400;
+	if (alarm_sec >= SECS_PER_DAY)
+		alarm_sec -= SECS_PER_DAY;
 
 	/* Set alarm time */
 	STM32_RTC_ALRMAR = sec_to_rtc_tr(alarm_sec);
@@ -406,8 +405,13 @@ static int system_rtc_set_alarm(struct host_cmd_handler_args *args)
 	struct rtc_time_reg rtc;
 	const struct ec_params_rtc *p = args->params;
 
+	/* Alarm timeout must be within 1 day (86400 seconds) */
+	if (p->time >= SECS_PER_DAY)
+		return EC_RES_INVALID_PARAM;
+
 	if (p->time != EC_RTC_ALARM_CLEAR)
 		host_rtc_alarm_set = 1;
+
 	set_rtc_alarm(p->time, 0, &rtc);
 	return EC_RES_SUCCESS;
 }
