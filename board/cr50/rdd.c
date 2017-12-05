@@ -412,9 +412,9 @@ static int command_ccd_state(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ccdstate, command_ccd_state,
-			"",
-			"Print the case closed debug device state");
+DECLARE_SAFE_CONSOLE_COMMAND(ccdstate, command_ccd_state,
+			     "",
+			     "Print the case closed debug device state");
 
 static int command_ccd_block(int argc, char **argv)
 {
