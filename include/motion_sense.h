@@ -146,13 +146,13 @@ struct motion_sensor_t {
 	 * For sensor without FIFO, time since the last event was collect
 	 * from sensor registers.
 	 */
-	 uint32_t last_collection;
+	uint32_t last_collection;
 
-	 /* Minimum supported sampling frequency in miliHertz for this sensor */
-	 uint32_t min_frequency;
+	/* Minimum supported sampling frequency in miliHertz for this sensor */
+	uint32_t min_frequency;
 
-	 /* Maximum supported sampling frequency in miliHertz for this sensor */
-	 uint32_t max_frequency;
+	/* Maximum supported sampling frequency in miliHertz for this sensor */
+	uint32_t max_frequency;
 };
 
 /* Defined at board level. */
