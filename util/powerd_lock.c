@@ -34,7 +34,8 @@
  * Path to a file containing flashrom's PID. While present, powerd avoids
  * suspending or shutting down the system.
  */
-static const char lock_file_path[] = "/run/lock/battery_tool_powerd.lock";
+static const char lock_file_path[] =
+	"/run/lock/power_override/battery_tool.lock";
 
 int disable_power_management()
 {
