@@ -5,6 +5,7 @@
 """Unit tests for StatsManager."""
 
 from __future__ import print_function
+import json
 import os
 import shutil
 import tempfile
@@ -81,6 +82,15 @@ class TestStatsManager(unittest.TestCase):
       self.assertEqual(
           '@@      B      3       2.50    0.82       3.50      1.50\n',
           f.readline())
+
+  def test_SaveSummaryJSON(self):
+    fname = 'unittest_summary.json'
+    self.data.SaveSummaryJSON(self.tempdir, fname)
+    fname = os.path.join(self.tempdir, fname)
+    with open(fname, 'r') as f:
+      mean_json = json.load(f)
+      self.assertAlmostEqual(100000.0, mean_json['A'])
+      self.assertAlmostEqual(2.5, mean_json['B'])
 
 
 if __name__ == '__main__':

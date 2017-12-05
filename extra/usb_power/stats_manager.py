@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 import collections
+import json
 import numpy
 import os
 
@@ -113,6 +114,24 @@ class StatsManager(object):
     fname = os.path.join(directory, fname)
     with open(fname, 'w') as f:
       f.write(summary_str)
+
+  def SaveSummaryJSON(self, directory, fname='summary.json'):
+    """Save summary (only MEAN) into a JSON file.
+
+    Args:
+      directory: directory to save the JSON summary in.
+      fname: filename to save summary under.
+    """
+    data = {
+        domain: self._summary[domain]['mean']
+        for domain in sorted(self._summary.keys())
+        if not domain.startswith(NOSHOW_PREFIX)
+    }
+    if not os.path.exists(directory):
+      os.makedirs(directory)
+    fname = os.path.join(directory, fname)
+    with open(fname, 'w') as f:
+      json.dump(data, f)
 
   def GetRawData(self):
     """Getter for all raw_data."""

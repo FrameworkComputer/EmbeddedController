@@ -114,3 +114,19 @@ under the directory which powerlog.py is in:
 <directory of powerlog.py>/sweetberry<timestemp>/raw_data/
 
 If --save_raw_data flag is not set, raw data will not be saved.
+
+Example 3:
+./powerlog.py -b board/eve_dvt2_loc/eve_dvt2_loc.board -c board/eve_dvt2_loc/eve_dvt2_loc.scenario --save_stats_json [<directory>]
+
+If <directory> is specified, this will save MEANS in json as:
+<directory>/sweetberry<timestemp>/summary.json
+If <directory> does not exist, it will be created.
+
+If <directory> is not specified but the flag is set, this will save MEANS in
+json under the directory which powerlog.py is in:
+<directory of powerlog.py>/sweetberry<timestemp>/summary.json
+
+If --save_stats flag is not set, stats will not be saved.
+
+--save_stats_json is designed for power_telemetry_logger for easy reading and
+writing.

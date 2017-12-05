@@ -491,7 +491,8 @@ class powerlog(object):
 
   def __init__(self, brdfile, cfgfile, serial_a=None, serial_b=None,
                sync_date=False, use_ms=False, use_mW=False, print_stats=False,
-               stats_dir=None, print_raw_data=True, raw_data_dir=None):
+               stats_dir=None, stats_json_dir=None, print_raw_data=True,
+               raw_data_dir=None):
     """Init the powerlog class and set the variables.
 
     Args:
@@ -505,6 +506,8 @@ class powerlog(object):
       print_stats: print statistics for sweetberry readings at the end.
       stats_dir: directory to save sweetberry readings statistics; if None then
                  do not save the statistics.
+      stats_json_dir: directory to save means of sweetberry readings in json
+                      format; if None then do not save the statistics.
       print_raw_data: print sweetberry readings raw data in real time, default
                       is to print.
       raw_data_dir: directory to save sweetberry readings raw data; if None then
@@ -516,6 +519,7 @@ class powerlog(object):
     self._use_mW = use_mW
     self._print_stats = print_stats
     self._stats_dir = stats_dir
+    self._stats_json_dir = stats_json_dir
     self._print_raw_data = print_raw_data
     self._raw_data_dir = raw_data_dir
 
@@ -648,6 +652,9 @@ class powerlog(object):
       if self._stats_dir:
         stats_dir = os.path.join(self._stats_dir, save_dir)
         self._data.SaveSummary(stats_dir)
+      if self._stats_json_dir:
+        stats_json_dir = os.path.join(self._stats_json_dir, save_dir)
+        self._data.SaveSummaryJSON(stats_json_dir)
       if self._raw_data_dir:
         raw_data_dir = os.path.join(self._raw_data_dir, save_dir)
         self._data.SaveRawData(raw_data_dir)
@@ -685,23 +692,31 @@ def main(argv=None):
   parser.add_argument('--save_stats', type=str, nargs='?',
       dest='stats_dir', metavar='STATS_DIR',
       const=os.path.dirname(os.path.abspath(__file__)), default=None,
-      help="Save statistics for sweetberry readings to %(metavar)s if \
-      %(metavar)s is specified, %(metavar)s will be created if it does not \
-      exist; if %(metavar)s is not specified but the flag is set, stats will \
-      be saved to where %(prog)s is located; if this flag is not set, then do \
-      not save stats")
+      help="Save statistics for sweetberry readings to %(metavar)s if "
+           "%(metavar)s is specified, %(metavar)s will be created if it does "
+           "not exist; if %(metavar)s is not specified but the flag is set, "
+           "stats will be saved to where %(prog)s is located; if this flag is "
+           "not set, then do not save stats")
+  parser.add_argument('--save_stats_json', type=str, nargs='?',
+      dest='stats_json_dir', metavar='STATS_JSON_DIR',
+      const=os.path.dirname(os.path.abspath(__file__)), default=None,
+      help="Save means for sweetberry readings in json to %(metavar)s if "
+           "%(metavar)s is specified, %(metavar)s will be created if it does "
+           "not exist; if %(metavar)s is not specified but the flag is set, "
+           "stats will be saved to where %(prog)s is located; if this flag is "
+           "not set, then do not save stats")
   parser.add_argument('--no_print_raw_data',
       dest='print_raw_data', default=True, action="store_false",
-      help="Not print raw sweetberry readings at real time, default is to \
-      print")
+      help="Not print raw sweetberry readings at real time, default is to "
+           "print")
   parser.add_argument('--save_raw_data', type=str, nargs='?',
       dest='raw_data_dir', metavar='RAW_DATA_DIR',
       const=os.path.dirname(os.path.abspath(__file__)), default=None,
-      help="Save raw data for sweetberry readings to %(metavar)s if \
-      %(metavar)s is specified, %(metavar)s will be created if it does not \
-      exist; if %(metavar)s is not specified but the flag is set, raw data \
-      will be saved to where %(prog)s is located; if this flag is not set, \
-      then do not save raw data")
+      help="Save raw data for sweetberry readings to %(metavar)s if "
+           "%(metavar)s is specified, %(metavar)s will be created if it does "
+           "not exist; if %(metavar)s is not specified but the flag is set, "
+           "raw data will be saved to where %(prog)s is located; if this flag "
+           "is not set, then do not save raw data")
   parser.add_argument('-v', '--verbose', default=False,
       help="Very chatty printout", action="store_true")
 
@@ -727,6 +742,7 @@ def main(argv=None):
   use_mW = args.mW
   print_stats = args.print_stats
   stats_dir = args.stats_dir
+  stats_json_dir = args.stats_json_dir
   print_raw_data = args.print_raw_data
   raw_data_dir = args.raw_data_dir
 
@@ -740,6 +756,7 @@ def main(argv=None):
   powerlogger = powerlog(brdfile, cfgfile, serial_a=serial_a, serial_b=serial_b,
       sync_date=sync_date, use_ms=use_ms, use_mW=use_mW,
       print_stats=print_stats, stats_dir=stats_dir,
+      stats_json_dir=stats_json_dir,
       print_raw_data=print_raw_data,raw_data_dir=raw_data_dir)
 
   # Start logging.
