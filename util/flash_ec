@@ -178,6 +178,8 @@ DEFINE_boolean raiden "${FLAGS_FALSE}" \
 	"Use raiden_debug_spi programmer"
 DEFINE_boolean ro "${FLAGS_FALSE}" \
 	"Write only the read-only partition"
+DEFINE_boolean verbose "${FLAGS_FALSE}" \
+	"Verbose hw control logging"
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -196,6 +198,10 @@ fi
 DUT_CONTROL_CMD="dut-control --port=${FLAGS_port}"
 
 function dut_control() {
+	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
+		echo "$DUT_CONTROL_CMD $@" 1>&2
+	fi
+
 	$DUT_CONTROL_CMD "$@" >/dev/null
 }
 
@@ -627,7 +633,12 @@ function flash_flashrom() {
 
 
 	# flashrom should report the image size at the end of the output.
-	SPI_SIZE=$(sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size 2>/dev/null |\
+	FLASHROM_CMDLINE="sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size"
+	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
+		echo "Running flashrom:" 1>&2
+		echo " ${FLASHROM_CMDLINE}" 1>&2
+	fi
+	SPI_SIZE=$(sudo ${FLASHROM_CMDLINE} 2>/dev/null |\
 		       grep -oe '[0-9]\+$') || \
 		die "Failed to determine chip size!"
 
@@ -637,7 +648,7 @@ function flash_flashrom() {
 	# Temp image
 	T=/tmp/flash_spi_$$
 
-if [ "${CHIP}" = "npcx_spi" ] ; then
+	if [ "${CHIP}" = "npcx_spi" ] ; then
 	{	# Patch temp image up to SPI_SIZE
 		cat $IMG
 		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
@@ -645,7 +656,7 @@ if [ "${CHIP}" = "npcx_spi" ] ; then
 				tr '\0' '\377'
 		fi
 	} > $T
-else
+	else
 	{	# Patch temp image up to SPI_SIZE
 		if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
 			dd if=/dev/zero bs=${PATCH_SIZE} count=1 | \
@@ -653,9 +664,18 @@ else
 		fi
 		cat $IMG
 	} > $T
-fi
+	fi
+
+	# Generate the correct flashrom command to write the ec.
+	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_PARAM}"
+	FLASHROM_CMDLINE+="${FLASHROM_OPTIONS} -w ${T}"
+
+	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
+		echo "Running flashrom:" 1>&2
+		echo " ${FLASHROM_CMDLINE}" 1>&2
+	fi
 	sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
-		${FLASHROM} ${FLASHROM_PARAM} ${FLASHROM_OPTIONS} -w "${T}"
+		${FLASHROM_CMDLINE}
 
 	rm $T
 
