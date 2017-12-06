@@ -27,6 +27,8 @@
 #define CONFIG_ADC
 #define CONFIG_I2C
 #define CONFIG_LPC
+#define CONFIG_PWM
+#define CONFIG_PWM_KBLIGHT
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR_NCP15WB
 
@@ -150,6 +152,11 @@ enum temp_sensor_id {
 	TEMP_SENSOR_CHARGER = 0,
 	TEMP_SENSOR_SOC,
 	TEMP_SENSOR_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT,
+	PWM_CH_COUNT
 };
 
 void board_reset_pd_mcu(void);
