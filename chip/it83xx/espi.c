@@ -380,6 +380,11 @@ void espi_init(void)
 	for (i = 0; i < CHIP_ESPI_VW_INTERRUPT_NUM; i++)
 		vw_index_flag[i] = IT83XX_ESPI_VWIDX(vw_isr_list[i].vw_index);
 
+	/*
+	 * bit[3]: The reset source of PNPCFG is RSTPNP bit in RSTCH
+	 * register and WRST#.
+	 */
+	IT83XX_GCTRL_RSTS &= ~(1 << 3);
 	task_clear_pending_irq(IT83XX_IRQ_ESPI_VW);
 	/* bit7: VW interrupt enable */
 	IT83XX_ESPI_VWCTRL0 |= (1 << 7);
