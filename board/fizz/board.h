@@ -232,11 +232,12 @@ enum mft_channel {
 /* delay to turn on/off vconn */
 #define PD_VCONN_SWAP_DELAY		5000   /* us */
 
-/* Define typical operating power and max power */
-#define PD_OPERATING_POWER_MW		15000
-#define PD_MAX_POWER_MW			100000
-#define PD_MAX_CURRENT_MA		5000
-#define PD_MAX_VOLTAGE_MV		20000
+/* Define typical operating power. Since Fizz doesn't have a battery to charge,
+ * we're not interested in any power lower than the AP power-on threshold. */
+#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
+#define PD_MAX_POWER_MW		100000
+#define PD_MAX_CURRENT_MA	5000
+#define PD_MAX_VOLTAGE_MV	20000
 
 /* Board specific handlers */
 int board_get_version(void);
