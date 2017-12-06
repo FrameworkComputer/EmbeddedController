@@ -216,6 +216,13 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 #endif /* defined(BOARD_ZOOMBINI) */
 };
 
+static void board_chipset_resume(void)
+{
+	/* Enable display backlight. */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
 static void board_chipset_startup(void)
 {
 #ifdef BOARD_ZOOMBINI
@@ -239,6 +246,13 @@ static void board_chipset_shutdown(void)
 #endif /* defined(BOARD_ZOOMBINI) */
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	/* Disable display backlight. */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void board_init(void)
 {
