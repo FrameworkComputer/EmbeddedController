@@ -648,7 +648,7 @@ class powerlog(object):
       self._data.CalculateStats()
       if self._print_stats:
         self._data.PrintSummary()
-      save_dir = datetime.datetime.now().strftime('sweetberry%Y%m%d%H%M%S')
+      save_dir = datetime.datetime.now().strftime('sweetberry%Y%m%d%H%M%S.%f')
       if self._stats_dir:
         stats_dir = os.path.join(self._stats_dir, save_dir)
         self._data.SaveSummary(stats_dir)
