@@ -6,6 +6,7 @@
 /* Zoombini board-specific configuration */
 
 #include "adc_chip.h"
+#include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"

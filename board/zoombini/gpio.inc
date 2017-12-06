@@ -31,6 +31,8 @@ GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_signal_interrupt)
 GPIO_INT(PP5000_PGOOD,    PIN(C, 0), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(VOLUME_UP_L,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(VOLUME_DOWN_L,   PIN(4, 1), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(6, 0), GPIO_OUT_HIGH)
@@ -139,6 +141,8 @@ GPIO_INT(PCH_SLP_SUS_L,   PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signa
 GPIO_INT(RSMRST_L_PGOOD,  PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(VOLUME_UP_L,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(VOLUME_DOWN_L,   PIN(6, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(8, 2), GPIO_OUT_HIGH)
