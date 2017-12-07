@@ -497,39 +497,31 @@ void board_configure_deep_sleep_wakepins(void)
 	GWRITE_FIELD(PINMUX, DIOB5_CTL, IE, 0);
 
 	/*
+	 * Configure the TPM_RST_L signal as wake on high. There is a
+	 * requirement the tpm reset has to remain asserted when cr50 should
+	 * be in deep sleep, so cr50 should not wake up until it goes high.
+	 *
 	 * Whether it is a short pulse or long one waking on the high level is
-	 * fine because the goal of the system reset signal is to reset the
-	 * TPM and after resuming from deep sleep the TPM will be reset. Cr50
-	 * doesn't need to read the low value and then reset.
+	 * fine, because the goal of TPM_RST_L is to reset the TPM and after
+	 * resuming from deep sleep the TPM will be reset. Cr50 doesn't need to
+	 * read the low value and then reset.
 	 */
 	if (board_use_plt_rst()) {
-		/*
-		 * If the board includes plt_rst_l, configure Cr50 to resume on
-		 * the rising edge of this signal.
-		 */
+		/* Configure plt_rst_l to wake on high */
 		/* Disable plt_rst_l as a wake pin */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 0);
-		/*
-		 * Reconfigure it to be level sensitive so that we are
-		 * guaranteed to wake up if the level turns up, no need to
-		 * worry about missing the rising edge.
-		 */
-		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 0);
+		/* Reconfigure the pin */
+		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM3, 0); /* level sensitive */
 		GWRITE_FIELD(PINMUX, EXITINV0, DIOM3, 0);  /* wake on high */
 		/* enable powerdown exit */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM3, 1);
 	} else {
-		 /*
-		  * Configure cr50 to wake when sys_rst_l is asserted. It is
-		  * wake on low to make sure that Cr50 is awake to detect the
-		  * rising edge of sys_rst_l. This will keep Cr50 awake the
-		  * entire time sys_rst_l is asserted.
-		  */
+		/* Configure plt_rst_l to wake on high */
 		/* Disable sys_rst_l as a wake pin */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 0);
-		/* Reconfigure and reenable it. */
+		/* Reconfigure the pin */
 		GWRITE_FIELD(PINMUX, EXITEDGE0, DIOM0, 0); /* level sensitive */
-		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 1);  /* wake on low */
+		GWRITE_FIELD(PINMUX, EXITINV0, DIOM0, 0);  /* wake on high */
 		/* enable powerdown exit */
 		GWRITE_FIELD(PINMUX, EXITEN0, DIOM0, 1);
 	}
