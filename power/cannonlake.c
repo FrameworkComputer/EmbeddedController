@@ -74,11 +74,21 @@ void chipset_reset(int cold_reset)
 
 enum power_state chipset_force_g3(void)
 {
+	int timeout = 50;
 	chipset_force_shutdown();
 
-	CPRINTS("Faking G3.  (NOOP for now.)");
-	/* TODO(aaboagye): Do the right thing for real. */
-	/* TODO(aaboagye): maybe turn off DSW load switch. */
+	/* Turn off DSW load switch. */
+	gpio_set_level(GPIO_EN_PP3300_DSW, 0);
+
+	/* Now wait for DSW_PWROK to go away. */
+	while (gpio_get_level(GPIO_PMIC_DPWROK) && (timeout > 0)) {
+		msleep(1);
+		timeout--;
+	};
+
+	if (!timeout)
+		CPRINTS("DSW_PWROK didn't go low!  Assuming G3.");
+
 	return POWER_G3;
 }
 
@@ -86,10 +96,14 @@ enum power_state power_handle_state(enum power_state state)
 {
 	enum power_state new_state;
 	int dswpwrok_in = gpio_get_level(GPIO_PMIC_DPWROK);
+	static int dswpwrok_out = -1;
 
 	/* Pass-through DSW_PWROK to CNL. */
-	gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
-	CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
+	if (dswpwrok_in != dswpwrok_out) {
+		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
+		gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
+		dswpwrok_out = dswpwrok_in;
+	}
 
 	common_intel_x86_handle_rsmrst(state);
 
@@ -98,26 +112,34 @@ enum power_state power_handle_state(enum power_state state)
 		forcing_shutdown = 0;
 	}
 
-	/* TODO(aaboagye): Enable 3300_DSW in Deep Sx only. */
 	switch (state) {
-	case POWER_S5S3:
-		/*
-		 * In S3, enable 5V rail.  Wireless rails are handled by common
-		 * x86 chipset code.
-		 */
+	case POWER_G3S5:
+		/* Turn on the PP3300_DSW rail. */
+		gpio_set_level(GPIO_EN_PP3300_DSW, 1);
+		if (power_wait_signals(IN_PGOOD_ALL_CORE))
+			break;
+
+		/* Pass thru DSWPWROK again since we changed it. */
+		dswpwrok_in = gpio_get_level(GPIO_PMIC_DPWROK);
+		gpio_set_level(GPIO_PCH_DSW_PWROK, dswpwrok_in);
+		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
+		dswpwrok_out = dswpwrok_in;
+
+		/* Enable the 5V rail. */
 #ifdef CONFIG_POWER_PP5000_CONTROL
 		power_5v_enable(task_get_current(), 1);
-#else
+#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
 		gpio_set_level(GPIO_EN_PP5000, 1);
-#endif
+#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 		break;
 
-	case POWER_S3S5:
+	case POWER_S5G3:
+		/* Turn off the 5V rail. */
 #ifdef CONFIG_POWER_PP5000_CONTROL
 		power_5v_enable(task_get_current(), 0);
-#else
+#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
 		gpio_set_level(GPIO_EN_PP5000, 0);
-#endif
+#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 		break;
 
 	default:
