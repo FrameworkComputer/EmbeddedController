@@ -24,12 +24,20 @@
  */
 #define CYCLE_PER_FLASH_LOOP 10
 
+/*
+ * While flash write / erase is in progress, the stm32 CPU core is mostly
+ * non-functional, due to the inability to fetch instructions from flash.
+ * This may greatly increase interrupt latency.
+ */
+
 /* Flash page programming timeout.  This is 2x the datasheet max. */
-#define FLASH_TIMEOUT_US 16000
+#define FLASH_WRITE_TIMEOUT_US 16000
+/* 20ms < tERASE < 40ms on F0/F3, for 1K / 2K sector size. */
+#define FLASH_ERASE_TIMEOUT_US 40000
 
 static inline int calculate_flash_timeout(void)
 {
-	return (FLASH_TIMEOUT_US *
+	return (FLASH_WRITE_TIMEOUT_US *
 		(clock_get_freq() / SECOND) / CYCLE_PER_FLASH_LOOP);
 }
 
@@ -353,7 +361,7 @@ int flash_physical_erase(int offset, int size)
 		timeout_us = sector_size * 4 / CONFIG_FLASH_WRITE_SIZE;
 #else
 		sector_size = CONFIG_FLASH_ERASE_SIZE;
-		timeout_us = FLASH_TIMEOUT_US;
+		timeout_us = FLASH_ERASE_TIMEOUT_US;
 #endif
 		/* Do nothing if already erased */
 		if (flash_is_erased(offset, sector_size))
