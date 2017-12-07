@@ -21,11 +21,12 @@
 #include "util.h"
 #include "wireless.h"
 #include "registers.h"
-#include "stoney.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+
+#define IN_SPOK POWER_SIGNAL_MASK(X86_SPOK)
 
 static int forcing_coldreset; /* Forced coldreset in progress? */
 static int forcing_shutdown;  /* Forced shutdown in progress? */
@@ -107,6 +108,13 @@ static void handle_pass_through(enum power_state state,
 	/* Nothing to do. */
 	if (in_level == out_level)
 		return;
+
+	/*
+	 * SOC requires a delay of 1ms with stable power before
+	 * asserting PWR_GOOD.
+	 */
+	if ((pin_in == GPIO_VGATE) && in_level)
+		msleep(1);
 
 	gpio_set_level(pin_out, in_level);
 
@@ -257,10 +265,8 @@ enum power_state power_handle_state(enum power_state state)
 {
 	enum power_state new_state;
 
-	/* Process RSMRST_L state changes. */
 	handle_pass_through(state, GPIO_SPOK, GPIO_PCH_RSMRST_L);
 
-	/* Process ALL_SYS_PGOOD state changes. */
 	handle_pass_through(state, GPIO_VGATE, GPIO_PCH_SYS_PWROK);
 
 	new_state = _power_handle_state(state);
