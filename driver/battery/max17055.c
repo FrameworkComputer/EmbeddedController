@@ -10,55 +10,12 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "max17055.h"
 #include "timer.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
-
-#define MAX17055_ADDR               0x6c
-#define MAX17055_DEVICE_ID          0x4010
-
-#define REG_STATUS                  0x00
-#define REG_AT_RATE                 0x04
-#define REG_REMAINING_CAPACITY      0x05
-#define REG_STATE_OF_CHARGE         0x06
-#define REG_TEMPERATURE             0x08
-#define REG_VOLTAGE                 0x09
-#define REG_CURRENT                 0x0a
-#define REG_AVERAGE_CURRENT         0x0b
-#define REG_FULL_CHARGE_CAPACITY    0x10
-#define REG_TIME_TO_EMPTY           0x11
-#define REG_CONFIG                  0x1D
-#define REG_AVERAGE_TEMPERATURE     0x16
-#define REG_CYCLE_COUNT             0x17
-#define REG_DESIGN_CAPACITY         0x18
-#define REG_AVERAGE_VOLTAGE         0x19
-#define REG_CHARGE_TERM_CURRENT     0x1e
-#define REG_TIME_TO_FULL            0x20
-#define REG_DEVICE_NAME             0x21
-#define REG_EMPTY_VOLTAGE           0x3a
-#define REG_FSTAT                   0x3d
-#define REG_DQACC                   0x45
-#define REG_DPACC                   0x46
-#define REG_STATUS2                 0xb0
-#define REG_HIBCFG                  0xba
-#define REG_CONFIG2                 0xbb
-#define REG_MODELCFG                0xdb
-
-/* Status reg (0x00) flags */
-#define STATUS_POR                  0x0002
-#define STATUS_BST                  0x0008
-
-/* Config reg (0x1d) flags */
-#define CONF_TSEL                   0x8000
-
-/* FStat reg (0x3d) flags */
-#define FSTAT_DNR                   0x0001
-
-/* ModelCfg reg (0xdb) flags */
-#define MODELCFG_REFRESH            0x8000
-#define MODELCFG_VCHG               0x0400
 
 /*
  * Convert the register values to the units that match
@@ -318,13 +275,34 @@ static int max17055_init_config(void)
 {
 	int reg;
 	int hib_cfg;
+	int dqacc;
+	int dpacc;
+
 	int retries = 50;
 
-	if (max17055_write(REG_DESIGN_CAPACITY, BATTERY_MAX17055_DESIGNCAP) ||
-	    max17055_write(REG_DQACC, BATTERY_MAX17055_DESIGNCAP / 32) ||
-	    max17055_write(REG_CHARGE_TERM_CURRENT, BATTERY_MAX17055_ICHGTERM)
-	    || max17055_write(REG_EMPTY_VOLTAGE, BATTERY_MAX17055_VEMPTY))
+	const struct max17055_batt_profile *config;
+
+	config = max17055_get_batt_profile();
+
+	if (config->is_ez_config) {
+		dqacc = config->design_cap / 32;
+		/* Choose the model for charge voltage > 4.275V. */
+		dpacc = dqacc * 51200 / config->design_cap;
+	} else {
+		dqacc = config->design_cap / 16;
+		dpacc = config->dpacc;
+	}
+
+	if (max17055_write(REG_DESIGN_CAPACITY, config->design_cap) ||
+	    max17055_write(REG_DQACC, dqacc) ||
+	    max17055_write(REG_CHARGE_TERM_CURRENT, config->ichg_term) ||
+	    max17055_write(REG_EMPTY_VOLTAGE, config->v_empty_detect))
 		return EC_ERROR_UNKNOWN;
+
+	if (!config->is_ez_config) {
+		if (max17055_write(REG_LEARNCFG, config->learn_cfg))
+			return EC_ERROR_UNKNOWN;
+	}
 
 	/* Store the original HibCFG value. */
 	if (max17055_read(REG_HIBCFG, &hib_cfg))
@@ -336,11 +314,8 @@ static int max17055_init_config(void)
 	    max17055_write(0x60, 0))
 		return EC_ERROR_UNKNOWN;
 
-	/* Choose the model for charge voltage > 4.275V. */
-	if (max17055_write(REG_DPACC, (BATTERY_MAX17055_DESIGNCAP / 32) *
-			   51200 / BATTERY_MAX17055_DESIGNCAP))
-		return EC_ERROR_UNKNOWN;
-	if (max17055_write(REG_MODELCFG, (MODELCFG_REFRESH | MODELCFG_VCHG)))
+	if (max17055_write(REG_DPACC, dpacc) ||
+	    max17055_write(REG_MODELCFG, (MODELCFG_REFRESH | MODELCFG_VCHG)))
 		return EC_ERROR_UNKNOWN;
 
 	/* Delay up to 500 ms until MODELCFG.REFRESH bit == 0. */
@@ -353,6 +328,16 @@ static int max17055_init_config(void)
 	}
 	if (!retries)
 		return EC_ERROR_TIMEOUT;
+
+	if (!config->is_ez_config) {
+		if (max17055_write(REG_RCOMP0, config->rcomp0) ||
+		    max17055_write(REG_TEMPCO, config->tempco) ||
+		    max17055_write(REG_QR_TABLE00, config->qr_table00) ||
+		    max17055_write(REG_QR_TABLE10, config->qr_table10) ||
+		    max17055_write(REG_QR_TABLE20, config->qr_table20) ||
+		    max17055_write(REG_QR_TABLE30, config->qr_table30))
+			return EC_ERROR_UNKNOWN;
+	}
 
 	/* Restore the original HibCFG value. */
 	if (max17055_write(REG_HIBCFG, hib_cfg))
