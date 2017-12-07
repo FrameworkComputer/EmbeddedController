@@ -271,5 +271,22 @@ static void board_init(void)
 
 	/* Structured enpoints */
 	usb_spi_enable(&usb_spi, 1);
+
+	/* Enable UARTs by default. */
+	gpio_set_level(GPIO_UART1_EN_L, 0);
+	gpio_set_level(GPIO_UART2_EN_L, 0);
+	/* Disable power output. */
+	gpio_set_level(GPIO_SPI1_VREF_18, 0);
+	gpio_set_level(GPIO_SPI1_VREF_33, 0);
+	gpio_set_level(GPIO_SPI2_VREF_18, 0);
+	gpio_set_level(GPIO_SPI2_VREF_33, 0);
+	/* Enable UART3 routing. */
+	gpio_set_level(GPIO_SPI1_MUX_SEL, 1);
+	gpio_set_level(GPIO_SPI1_BUF_EN_L, 1);
+	gpio_set_level(GPIO_JTAG_BUFIN_EN_L, 0);
+	gpio_set_level(GPIO_SERVO_JTAG_TDO_BUFFER_EN, 1);
+	gpio_set_level(GPIO_SERVO_JTAG_TDO_SEL, 1);
+	gpio_set_flags(GPIO_UART3_RX_JTAG_BUFFER_TO_SERVO_TDO, GPIO_ALTERNATE);
+	gpio_set_flags(GPIO_UART3_TX_SERVO_JTAG_TCK, GPIO_ALTERNATE);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
