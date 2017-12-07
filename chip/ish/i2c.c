@@ -24,18 +24,7 @@
 #define I2C_FLAG_REPEATED_START_DISABLED	0
 #define EVENT_FLAG_I2C_TIMEOUT			TASK_EVENT_CUSTOM(1 << 1)
 
-#ifndef CONFI_ISH_I2C_PORT0_SPEED
-#define CONFI_ISH_I2C_PORT0_SPEED I2C_SPEED_FAST
-#endif
-
-#ifndef CONFI_ISH_I2C_PORT1_SPEED
-#define CONFI_ISH_I2C_PORT1_SPEED I2C_SPEED_FAST
-#endif
-
-#ifndef CONFI_ISH_I2C_PORT2_SPEED
-#define CONFI_ISH_I2C_PORT2_SPEED I2C_SPEED_FAST
-#endif
-/*25MHz,50MHz,100MHz,120MHz,40MHz,20MHz,37MHz*/
+/*25MHz, 50MHz, 100MHz, 120MHz, 40MHz, 20MHz, 37MHz*/
 static uint16_t default_hcnt_scl_100[] = {
 	4000, 4420, 4920, 4400, 4000, 4000, 4300
 };
@@ -74,17 +63,20 @@ static struct i2c_context i2c_ctxs[ISH_I2C_PORT_COUNT] = {
 	{
 		.bus = 0,
 		.base = (uint32_t *) ISH_I2C0_BASE,
-		.speed = CONFI_ISH_I2C_PORT0_SPEED,
+		.speed = I2C_SPEED_FAST,
+		.int_pin = ISH_I2C0_IRQ,
 	},
 	{
 		.bus = 1,
 		.base = (uint32_t *) ISH_I2C1_BASE,
-		.speed = CONFI_ISH_I2C_PORT1_SPEED,
+		.speed = I2C_SPEED_FAST,
+		.int_pin = ISH_I2C1_IRQ,
 	},
 	{
 		.bus = 2,
 		.base = (uint32_t *) ISH_I2C2_BASE,
-		.speed = CONFI_ISH_I2C_PORT2_SPEED,
+		.speed = I2C_SPEED_FAST,
+		.int_pin = ISH_I2C2_IRQ,
 	},
 };
 
@@ -394,6 +386,20 @@ static void i2c_isr_bus2(void)
 }
 DECLARE_IRQ(ISH_I2C2_IRQ, i2c_isr_bus2);
 
+static void  i2c_config_speed(struct i2c_context *ctx, int kbps)
+{
+
+	if (kbps > 1000)
+		ctx->speed = I2C_SPEED_HIGH;
+	else if (kbps > 400)
+		ctx->speed = I2C_SPEED_FAST_PLUS;
+	else if (kbps > 100)
+		ctx->speed = I2C_SPEED_FAST;
+	else
+		ctx->speed = I2C_SPEED_STD;
+
+}
+
 static void i2c_init_hardware(struct i2c_context *ctx)
 {
 	uint32_t *base = ctx->base;
@@ -438,14 +444,15 @@ static void i2c_init(void)
 {
 	int i;
 
-	for (i = 0; i < ISH_I2C_PORT_COUNT; i++) {
-		i2c_initial_board_config(&i2c_ctxs[i]);
-		i2c_init_hardware(&i2c_ctxs[i]);
-	}
+	for (i = 0; i < i2c_ports_used; i++) {
+		int port = i2c_ports[i].port;
+		i2c_initial_board_config(&i2c_ctxs[port]);
+		/* Config speed from i2c_ports[] defined in board.c */
+		i2c_config_speed(&i2c_ctxs[port], i2c_ports[i].kbps);
+		i2c_init_hardware(&i2c_ctxs[port]);
 
-	task_enable_irq(ISH_I2C0_IRQ);
-	task_enable_irq(ISH_I2C1_IRQ);
-	task_enable_irq(ISH_I2C2_IRQ);
+		task_enable_irq((&i2c_ctxs[port])->int_pin);
+	}
 
 	CPRINTS("Done i2c_init");
 }
