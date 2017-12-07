@@ -772,13 +772,23 @@ static int do_ccd_password(char *password)
 	if (ccd_state == CCD_STATE_LOCKED)
 		return EC_ERROR_ACCESS_DENIED;
 
-	/* If password was set from Opened, can't change if just Unlocked */
-	if (raw_has_password() && ccd_state == CCD_STATE_UNLOCKED &&
-	    !ccd_get_flag(CCD_FLAG_PASSWORD_SET_WHEN_UNLOCKED))
-		return EC_ERROR_ACCESS_DENIED;
+	if (raw_has_password()) {
+		const char clear_prefix[] = {'c', 'l', 'e', 'a', 'r', ':'};
 
-	if (!strcasecmp(password, "clear"))
+		/*
+		 * The only allowed action at this point is to clear the
+		 * password. To do it the user is supposed to enter
+		 * 'clear:<passwd>'
+		 */
+		if (strncasecmp(password, clear_prefix, sizeof(clear_prefix)))
+			return EC_ERROR_ACCESS_DENIED;
+
+		if (raw_check_password(password + sizeof(clear_prefix)) !=
+		    EC_SUCCESS)
+			return EC_ERROR_ACCESS_DENIED;
+
 		return ccd_reset_password();
+	}
 
 	/* Set new password */
 	return ccd_set_password(password);
