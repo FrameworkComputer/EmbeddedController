@@ -431,6 +431,14 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
+	/* Level of sensor's I2C and interrupt are 3.3V on proto board */
+	if(system_get_board_version() < 2) {
+		/* ACCELGYRO3_INT_L */
+		gpio_set_flags(GPIO_ACCELGYRO3_INT_L, GPIO_INT_FALLING | GPIO_PULL_DOWN);
+		/* I2C3_SCL / I2C3_SDA */
+		gpio_set_flags(GPIO_I2C3_SCL, GPIO_INPUT);
+		gpio_set_flags(GPIO_I2C3_SDA, GPIO_INPUT);
+        }
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
