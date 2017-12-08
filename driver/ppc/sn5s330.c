@@ -444,6 +444,42 @@ static int sn5s330_is_sourcing_vbus(int port)
 	return is_sourcing_vbus;
 }
 
+static int sn5s330_set_vbus_source_current_limit(int port,
+						 enum tcpc_rp_value rp)
+{
+	int regval;
+	int status;
+
+	status = read_reg(port, SN5S330_FUNC_SET1, &regval);
+	if (status)
+		return status;
+
+	/*
+	 * Note that we chose the lowest current limit setting that is just
+	 * above indicated Rp value.  This is because these are minimum values
+	 * and we must be able to provide the current that we advertise.
+	 */
+	regval &= ~0x1F; /* The current limit settings are 4:0. */
+	switch (rp) {
+	case TYPEC_RP_3A0:
+		regval |= SN5S330_ILIM_3_06;
+		break;
+
+	case TYPEC_RP_1A5:
+		regval |= SN5S330_ILIM_1_62;
+		break;
+
+	case TYPEC_RP_USB:
+	default:
+		regval |= SN5S330_ILIM_0_63;
+		break;
+	};
+
+	status = write_reg(port, SN5S330_FUNC_SET1, regval);
+
+	return status;
+}
+
 static int sn5s330_vbus_sink_enable(int port, int enable)
 {
 	return sn5s330_pp_fet_enable(port, SN5S330_PP2, !!enable);
@@ -503,4 +539,5 @@ const struct ppc_drv sn5s330_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 	.is_vbus_present = &sn5s330_is_vbus_present,
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
+	.set_vbus_source_current_limit = &sn5s330_set_vbus_source_current_limit,
 };

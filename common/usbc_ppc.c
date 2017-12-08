@@ -26,6 +26,14 @@ int ppc_is_sourcing_vbus(int port)
 	return ppc_chips[port].drv->is_sourcing_vbus(port);
 }
 
+int ppc_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	if ((port < 0) || (port >= ppc_cnt))
+		return EC_ERROR_INVAL;
+
+	return ppc_chips[port].drv->set_vbus_source_current_limit(port, rp);
+}
+
 int ppc_vbus_sink_enable(int port, int enable)
 {
 	if ((port < 0) || (port >= ppc_cnt))

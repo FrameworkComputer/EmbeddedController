@@ -7,6 +7,7 @@
 #define __CROS_EC_USBC_PPC_H
 
 #include "common.h"
+#include "usb_pd_tcpm.h"
 
 /* Common APIs for USB Type-C Power Path Controllers (PPC) */
 
@@ -46,6 +47,15 @@ struct ppc_drv {
 	 * @return EC_SUCCESS on success, error otherwise.
 	 */
 	int (*vbus_source_enable)(int port, int enable);
+
+	/**
+	 * Set the Vbus source path current limit
+	 *
+	 * @param port: The Type-C port number.
+	 * @param rp: The Rp value which to approximately set the current limit.
+	 * @return EC_SUCCESS on success, error otherwise.
+	 */
+	int (*set_vbus_source_current_limit)(int port, enum tcpc_rp_value rp);
 
 #ifdef CONFIG_CMD_PPC_DUMP
 	/**
@@ -102,6 +112,15 @@ int ppc_is_vbus_present(int port, int *vbus_present);
  * @return 1 if sourcing Vbus, 0 if not.
  */
 int ppc_is_sourcing_vbus(int port);
+
+/**
+ * Set the Vbus source path current limit
+ *
+ * @param port: The Type-C port number.
+ * @param rp: The Rp value which to approximately set the current limit.
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+int ppc_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
 
 /**
  * Turn on/off the charge path FET, such that current flows into the
