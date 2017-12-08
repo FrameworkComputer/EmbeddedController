@@ -1856,13 +1856,17 @@ struct __ec_todo_unpacked lightbar_program {
 struct __ec_todo_packed ec_params_lightbar {
 	uint8_t cmd;		      /* Command (see enum lightbar_command) */
 	union {
-		struct __ec_todo_unpacked {
-			/* no args */
-		} dump, off, on, init, get_seq, get_params_v0, get_params_v1,
-			version, get_brightness, get_demo, suspend, resume,
-			get_params_v2_timing, get_params_v2_tap,
-			get_params_v2_osc, get_params_v2_bright,
-			get_params_v2_thlds, get_params_v2_colors;
+		/*
+		 * The following commands have no args:
+		 *
+		 * dump, off, on, init, get_seq, get_params_v0, get_params_v1,
+		 * version, get_brightness, get_demo, suspend, resume,
+		 * get_params_v2_timing, get_params_v2_tap, get_params_v2_osc,
+		 * get_params_v2_bright, get_params_v2_thlds,
+		 * get_params_v2_colors
+		 *
+		 * Don't use an empty struct, because C++ hates that.
+		 */
 
 		struct __ec_todo_unpacked {
 			uint8_t num;
@@ -1932,14 +1936,15 @@ struct __ec_todo_packed ec_response_lightbar {
 			uint8_t red, green, blue;
 		} get_rgb;
 
-		struct __ec_todo_unpacked {
-			/* no return params */
-		} off, on, init, set_brightness, seq, reg, set_rgb,
-			demo, set_params_v0, set_params_v1,
-			set_program, manual_suspend_ctrl, suspend, resume,
-			set_v2par_timing, set_v2par_tap,
-			set_v2par_osc, set_v2par_bright, set_v2par_thlds,
-			set_v2par_colors;
+		/*
+		 * The following commands have no response:
+		 *
+		 * off, on, init, set_brightness, seq, reg, set_rgb, demo,
+		 * set_params_v0, set_params_v1, set_program,
+		 * manual_suspend_ctrl, suspend, resume, set_v2par_timing,
+		 * set_v2par_tap, set_v2par_osc, set_v2par_bright,
+		 * set_v2par_thlds, set_v2par_colors
+		 */
 	};
 };
 
@@ -2446,8 +2451,7 @@ struct __ec_todo_packed ec_params_motion_sense {
 		} sensor_offset;
 
 		/* Used for MOTIONSENSE_CMD_FIFO_INFO */
-		struct __ec_todo_unpacked {
-		} fifo_info;
+		/* (no params) */
 
 		/* Used for MOTIONSENSE_CMD_FIFO_READ */
 		struct __ec_todo_unpacked {
@@ -2461,8 +2465,7 @@ struct __ec_todo_packed ec_params_motion_sense {
 		struct ec_motion_sense_activity set_activity;
 
 		/* Used for MOTIONSENSE_CMD_LID_ANGLE */
-		struct __ec_todo_unpacked {
-		} lid_angle;
+		/* (no params) */
 
 		/* Used for MOTIONSENSE_CMD_FIFO_INT_ENABLE */
 		struct __ec_todo_unpacked {
@@ -2571,8 +2574,7 @@ struct __ec_todo_packed ec_response_motion_sense {
 			uint32_t disabled;
 		} list_activities;
 
-		struct __ec_todo_unpacked {
-		} set_activity;
+		/* No params for set activity */
 
 		/* Used for MOTIONSENSE_CMD_LID_ANGLE */
 		struct __ec_todo_unpacked {
@@ -3746,9 +3748,7 @@ enum charge_state_params {
 struct __ec_todo_packed ec_params_charge_state {
 	uint8_t cmd;				/* enum charge_state_command */
 	union {
-		struct __ec_align1 {
-			/* no args */
-		} get_state;
+		/* get_state has no args */
 
 		struct __ec_todo_unpacked {
 			uint32_t param;		/* enum charge_state_param */
@@ -3774,9 +3774,8 @@ struct __ec_align4 ec_response_charge_state {
 		struct __ec_align4 {
 			uint32_t value;
 		} get_param;
-		struct __ec_align4 {
-			/* no return values */
-		} set_param;
+
+		/* set_param returns no args */
 	};
 };
 
@@ -3989,9 +3988,7 @@ struct __ec_align4 ec_params_sb_fw_update {
 		/* EC_SB_FW_UPDATE_END      = 0x4 */
 		/* EC_SB_FW_UPDATE_STATUS   = 0x5 */
 		/* EC_SB_FW_UPDATE_PROTECT  = 0x6 */
-		struct __ec_align4 {
-			/* no args */
-		} dummy;
+		/* Those have no args */
 
 		/* EC_SB_FW_UPDATE_WRITE    = 0x3 */
 		struct __ec_align4 {

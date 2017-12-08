@@ -1375,7 +1375,7 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		}
 		if (ret != EC_RES_SUCCESS)
 			return ret;
-		args->response_size = sizeof(out->set_activity);
+		args->response_size = 0;
 		break;
 	}
 #endif /* defined(CONFIG_GESTURE_HOST_DETECTION) */

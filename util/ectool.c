@@ -2324,54 +2324,58 @@ static const char * const lightbar_cmds[] = {
 };
 #undef LBMSG
 
-/* This needs to match the values defined in lightbar.h. I'd like to
- * define this in one and only one place, but I can't think of a good way to do
- * that without adding bunch of complexity. This will do for now.
- */
-#define LB_SIZES(SUBCMD) { \
-		sizeof(((struct ec_params_lightbar *)0)->SUBCMD) \
-		+ sizeof(((struct ec_params_lightbar *)0)->cmd), \
-		sizeof(((struct ec_response_lightbar *)0)->SUBCMD) }
+/* Size of field <FLD> in structure <ST> */
+#define ST_FLD_SIZE(ST, FLD) sizeof(((struct ST *)0)->FLD)
+
+#define ST_CMD_SIZE ST_FLD_SIZE(ec_params_lightbar, cmd)
+#define ST_PRM_SIZE(SUBCMD) \
+	(ST_CMD_SIZE + ST_FLD_SIZE(ec_params_lightbar, SUBCMD))
+#define ST_RSP_SIZE(SUBCMD) ST_FLD_SIZE(ec_response_lightbar, SUBCMD)
+
 static const struct {
 	uint8_t insize;
 	uint8_t outsize;
 } lb_command_paramcount[] = {
-	LB_SIZES(dump),
-	LB_SIZES(off),
-	LB_SIZES(on),
-	LB_SIZES(init),
-	LB_SIZES(set_brightness),
-	LB_SIZES(seq),
-	LB_SIZES(reg),
-	LB_SIZES(set_rgb),
-	LB_SIZES(get_seq),
-	LB_SIZES(demo),
-	LB_SIZES(get_params_v0),
-	LB_SIZES(set_params_v0),
-	LB_SIZES(version),
-	LB_SIZES(get_brightness),
-	LB_SIZES(get_rgb),
-	LB_SIZES(get_demo),
-	LB_SIZES(get_params_v1),
-	LB_SIZES(set_params_v1),
-	LB_SIZES(set_program),
-	LB_SIZES(manual_suspend_ctrl),
-	LB_SIZES(suspend),
-	LB_SIZES(resume),
-	LB_SIZES(get_params_v2_timing),
-	LB_SIZES(set_v2par_timing),
-	LB_SIZES(get_params_v2_tap),
-	LB_SIZES(set_v2par_tap),
-	LB_SIZES(get_params_v2_osc),
-	LB_SIZES(set_v2par_osc),
-	LB_SIZES(get_params_v2_bright),
-	LB_SIZES(set_v2par_bright),
-	LB_SIZES(get_params_v2_thlds),
-	LB_SIZES(set_v2par_thlds),
-	LB_SIZES(get_params_v2_colors),
-	LB_SIZES(set_v2par_colors),
+	{ ST_CMD_SIZE, ST_RSP_SIZE(dump) },
+	{ ST_CMD_SIZE, 0 },
+	{ ST_CMD_SIZE, 0 },
+	{ ST_CMD_SIZE, 0 },
+	{ ST_PRM_SIZE(set_brightness), 0},
+	{ ST_PRM_SIZE(seq), 0},
+	{ ST_PRM_SIZE(reg), 0},
+	{ ST_PRM_SIZE(set_rgb), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_seq) },
+	{ ST_PRM_SIZE(demo), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v0) },
+	{ ST_PRM_SIZE(set_params_v0), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(version) },
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_brightness) },
+	{ ST_PRM_SIZE(get_rgb), ST_RSP_SIZE(get_rgb) },
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_demo) },
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v1) },
+	{ ST_PRM_SIZE(set_params_v1), 0},
+	{ ST_PRM_SIZE(set_program), 0},
+	{ ST_PRM_SIZE(manual_suspend_ctrl), 0},
+	{ ST_CMD_SIZE, 0 },
+	{ ST_CMD_SIZE, 0 },
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v2_timing) },
+	{ ST_PRM_SIZE(set_v2par_timing), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v2_tap) },
+	{ ST_PRM_SIZE(set_v2par_tap), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v2_osc) },
+	{ ST_PRM_SIZE(set_v2par_osc), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v2_bright) },
+	{ ST_PRM_SIZE(set_v2par_bright), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v2_thlds) },
+	{ ST_PRM_SIZE(set_v2par_thlds), 0},
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_params_v2_colors) },
+	{ ST_PRM_SIZE(set_v2par_colors), 0},
 };
-#undef LB_SIZES
+BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
+
+#undef ST_CMD_SIZE
+#undef ST_PRM_SIZE
+#undef ST_RSP_SIZE
 
 static int lb_help(const char *cmd)
 {
@@ -3567,53 +3571,55 @@ static int cmd_lightbar(int argc, char **argv)
 }
 
 /* Create an array to store sizes of motion sense param and response structs. */
-#define MS_SIZES(SUBCMD) { \
-		sizeof(((struct ec_params_motion_sense *)0)->SUBCMD) \
-		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
-		sizeof(((struct ec_response_motion_sense *)0)->SUBCMD) }
+#define ST_CMD_SIZE ST_FLD_SIZE(ec_params_motion_sense, cmd)
+#define ST_PRM_SIZE(SUBCMD) \
+	(ST_CMD_SIZE + ST_FLD_SIZE(ec_params_motion_sense, SUBCMD))
+#define ST_RSP_SIZE(SUBCMD) ST_FLD_SIZE(ec_response_motion_sense, SUBCMD)
+#define ST_BOTH_SIZES(SUBCMD) { ST_PRM_SIZE(SUBCMD), ST_RSP_SIZE(SUBCMD) }
+
 /*
- * For ectool only, assume no more than 16 sensors.
- * More advanced implementation would allocate the right amount of
- * memory depending on the number of sensors.
+ * For ectool only, assume no more than 16 sensors.  More advanced
+ * implementation would allocate the right amount of memory depending on the
+ * number of sensors.
  */
 #define ECTOOL_MAX_SENSOR 16
-#define MS_DUMP_SIZE() { \
-		sizeof(((struct ec_params_motion_sense *)0)->dump) \
-		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
-		sizeof(((struct ec_response_motion_sense *)0)->dump) \
-		+ sizeof(struct ec_response_motion_sensor_data) * \
-		  ECTOOL_MAX_SENSOR}
-
-#define MS_FIFO_INFO_SIZE() { \
-		sizeof(((struct ec_params_motion_sense *)0)->fifo_info) \
-		+ sizeof(((struct ec_params_motion_sense *)0)->cmd), \
-		sizeof(((struct ec_response_motion_sense *)0)->fifo_info) \
-		+ sizeof(uint16_t) * ECTOOL_MAX_SENSOR}
 
 static const struct {
 	uint8_t outsize;
 	uint8_t insize;
 } ms_command_sizes[] = {
-	MS_DUMP_SIZE(),
-	MS_SIZES(info_3),
-	MS_SIZES(ec_rate),
-	MS_SIZES(sensor_odr),
-	MS_SIZES(sensor_range),
-	MS_SIZES(kb_wake_angle),
-	MS_SIZES(data),
-	MS_FIFO_INFO_SIZE(),
-	MS_SIZES(fifo_flush),
-	MS_SIZES(fifo_read),
-	MS_SIZES(perform_calib),
-	MS_SIZES(sensor_offset),
-	MS_SIZES(list_activities),
-	MS_SIZES(set_activity),
-	MS_SIZES(lid_angle),
-	MS_SIZES(fifo_int_enable),
-	MS_SIZES(spoof),
+	{
+		ST_PRM_SIZE(dump),
+		ST_RSP_SIZE(dump) +
+		sizeof(struct ec_response_motion_sensor_data) *
+		ECTOOL_MAX_SENSOR
+	},
+	ST_BOTH_SIZES(info_3),
+	ST_BOTH_SIZES(ec_rate),
+	ST_BOTH_SIZES(sensor_odr),
+	ST_BOTH_SIZES(sensor_range),
+	ST_BOTH_SIZES(kb_wake_angle),
+	ST_BOTH_SIZES(data),
+	{
+		ST_CMD_SIZE,
+		ST_RSP_SIZE(fifo_info) + sizeof(uint16_t) * ECTOOL_MAX_SENSOR
+	},
+	ST_BOTH_SIZES(fifo_flush),
+	ST_BOTH_SIZES(fifo_read),
+	ST_BOTH_SIZES(perform_calib),
+	ST_BOTH_SIZES(sensor_offset),
+	ST_BOTH_SIZES(list_activities),
+	{ ST_PRM_SIZE(set_activity), 0 },
+	{ ST_CMD_SIZE, ST_RSP_SIZE(lid_angle) },
+	ST_BOTH_SIZES(fifo_int_enable),
+	ST_BOTH_SIZES(spoof),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
-#undef MS_SIZES
+
+#undef ST_CMD_SIZE
+#undef ST_PRM_SIZE
+#undef ST_RSP_SIZE
+#undef ST_BOTH_SIZES
 
 static int ms_help(const char *cmd)
 {
@@ -5630,23 +5636,26 @@ int cmd_charge_control(int argc, char *argv[])
 }
 
 
+#define ST_CMD_SIZE ST_FLD_SIZE(ec_params_charge_state, cmd)
+#define ST_PRM_SIZE(SUBCMD) \
+	(ST_CMD_SIZE + ST_FLD_SIZE(ec_params_charge_state, SUBCMD))
+#define ST_RSP_SIZE(SUBCMD) ST_FLD_SIZE(ec_response_charge_state, SUBCMD)
 
 /* Table of subcommand sizes for EC_CMD_CHARGE_STATE */
-#define CB_SIZES(SUBCMD) { \
-		sizeof(((struct ec_params_charge_state *)0)->SUBCMD) \
-		+ sizeof(((struct ec_params_charge_state *)0)->cmd), \
-		sizeof(((struct ec_response_charge_state *)0)->SUBCMD) }
 static const struct {
 	uint8_t to_ec_size;
 	uint8_t from_ec_size;
 } cs_paramcount[] = {
 	/* Order must match enum charge_state_command */
-	CB_SIZES(get_state),
-	CB_SIZES(get_param),
-	CB_SIZES(set_param),
+	{ ST_CMD_SIZE, ST_RSP_SIZE(get_state) },
+	{ ST_PRM_SIZE(get_param), ST_RSP_SIZE(get_param) },
+	{ ST_PRM_SIZE(set_param), 0},
 };
-#undef CB_SIZES
 BUILD_ASSERT(ARRAY_SIZE(cs_paramcount) == CHARGE_STATE_NUM_CMDS);
+
+#undef ST_CMD_SIZE
+#undef ST_PRM_SIZE
+#undef ST_RSP_SIZE
 
 static int cs_do_cmd(struct ec_params_charge_state *to_ec,
 		     struct ec_response_charge_state *from_ec)
