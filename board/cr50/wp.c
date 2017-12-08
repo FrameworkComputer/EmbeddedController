@@ -259,6 +259,7 @@ struct RollbackSpaceFwmp {
 	uint8_t dev_key_hash[FWMP_HASH_SIZE];
 } __packed;
 
+#ifndef CR50_DEV
 static int lock_enforced(const struct RollbackSpaceFwmp *fwmp)
 {
 	uint8_t crc;
@@ -279,51 +280,36 @@ static int lock_enforced(const struct RollbackSpaceFwmp *fwmp)
 
 	return !!(fwmp->flags & FWMP_DEV_DISABLE_CCD_UNLOCK);
 }
+#endif
 
-static int fwmp_allows_unlock;
-void read_fwmp(void)
+int board_fwmp_allows_unlock(void)
 {
+#ifdef CR50_DEV
+	return 1;
+#else
 	/* Let's see if FWMP disables console activation. */
 	struct RollbackSpaceFwmp fwmp;
+	int allows_unlock;
 
 	switch (read_tpm_nvmem(FWMP_NV_INDEX,
 			       sizeof(struct RollbackSpaceFwmp), &fwmp)) {
 	default:
 		/* Something is messed up, let's not allow console unlock. */
-		fwmp_allows_unlock = 0;
+		allows_unlock = 0;
 		break;
 
 	case tpm_read_not_found:
-		fwmp_allows_unlock = 1;
+		allows_unlock = 1;
 		break;
 
 	case tpm_read_success:
-		fwmp_allows_unlock = !lock_enforced(&fwmp);
+		allows_unlock = !lock_enforced(&fwmp);
 		break;
 	}
 
-	CPRINTS("Console unlock %sallowed", fwmp_allows_unlock ? "" : "not ");
-}
+	CPRINTS("Console unlock %sallowed", allows_unlock ? "" : "not ");
 
-/**
- * Return non-zero if FWMP allows unlock
- */
-int board_fwmp_allows_unlock(void)
-{
-	/*
-	 * TODO(rspangler): This doesn't work right for CCD config unlock and
-	 * open, because read_fwmp() isn't called until TPM2_Startup is sent by
-	 * the AP.  But that means if the AP can't boot, it's not possible to
-	 * unlock or open CCD.
-	 *
-	 * CCD config isn't connected to anything else yet, so let's bypass
-	 * the fwmp check for now.  But we need to fix this before we make
-	 * a Cr50 release that could run on a MP device.
-	 */
-#ifdef CR50_DEV
-	return 1;
-#else
-	return fwmp_allows_unlock;
+	return allows_unlock;
 #endif
 }
 
