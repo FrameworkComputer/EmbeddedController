@@ -68,23 +68,33 @@ static int dsleep_recovery_margin_us = 1000000;
  * subsecond resolution. Set asynchronous clock to 1 Hz.
  */
 
+#define RTC_PREDIV_A 1
 #ifdef CONFIG_STM32_CLOCK_LSE
 #define RTC_FREQ (32768 / (RTC_PREDIV_A + 1)) /* Hz */
+/* GCD(RTC_FREQ, 1000000) */
+#define RTC_GCD 64
 #else /* LSI clock, 40kHz-ish */
 #define RTC_FREQ (40000 / (RTC_PREDIV_A + 1)) /* Hz */
+/* GCD(RTC_FREQ, 1000000) */
+#define RTC_GCD 20000
 #endif
 #define RTC_PREDIV_S (RTC_FREQ - 1)
-#define RTC_PREDIV_A 1
-#define US_PER_RTC_TICK (1000000 / RTC_FREQ)
+
+/*
+ * There are (1000000 / RTC_FREQ) us per RTC tick, take GCD of both terms
+ * for conversion calculations to fit in 32 bits.
+ */
+#define US_GCD (1000000 / RTC_GCD)
+#define RTC_FREQ_GCD (RTC_FREQ / RTC_GCD)
 
 int32_t rtcss_to_us(uint32_t rtcss)
 {
-	return ((RTC_PREDIV_S - (rtcss & 0x7fff)) * US_PER_RTC_TICK);
+	return ((RTC_PREDIV_S - (rtcss & 0x7fff)) * US_GCD) / RTC_FREQ_GCD;
 }
 
 uint32_t us_to_rtcss(int32_t us)
 {
-	return (RTC_PREDIV_S - (us / US_PER_RTC_TICK));
+	return RTC_PREDIV_S - us * RTC_FREQ_GCD / US_GCD;
 }
 
 void config_hispeed_clock(void)
