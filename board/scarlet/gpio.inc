@@ -75,6 +75,8 @@ GPIO(CHARGER_INT_L,        PIN(E, 6),  GPIO_INPUT | GPIO_PULL_UP)
 GPIO(BATTERY_INT_L,        PIN(A, 12), GPIO_INPUT | GPIO_PULL_UP)
 /* Non-INT power signal pin */
 GPIO(AP_CORE_PG,           PIN(D, 7),  GPIO_INPUT | GPIO_PULL_UP)
+/* Battery ID strap pin */
+GPIO(BATT_ID,              PIN(C, 2),  GPIO_INPUT | GPIO_PULL_UP)
 
 
 
