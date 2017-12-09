@@ -434,7 +434,7 @@ static void board_init(void)
 	/* Level of sensor's I2C and interrupt are 3.3V on proto board */
 	if(system_get_board_version() < 2) {
 		/* ACCELGYRO3_INT_L */
-		gpio_set_flags(GPIO_ACCELGYRO3_INT_L, GPIO_INT_FALLING | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_ACCELGYRO3_INT_L, GPIO_INT_FALLING);
 		/* I2C3_SCL / I2C3_SDA */
 		gpio_set_flags(GPIO_I2C3_SCL, GPIO_INPUT);
 		gpio_set_flags(GPIO_I2C3_SDA, GPIO_INPUT);
