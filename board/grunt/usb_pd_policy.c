@@ -3,24 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include "atomic.h"
-#include "extpower.h"
 #include "charge_manager.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
-#include "driver/tcpm/anx74xx.h"
-#include "driver/tcpm/ps8xxx.h"
+#include "ec_commands.h"
 #include "gpio.h"
-#include "hooks.h"
-#include "host_command.h"
-#include "registers.h"
 #include "system.h"
-#include "task.h"
-#include "timer.h"
-#include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
-#include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -34,7 +27,7 @@ const uint32_t pd_src_pdo[] = {
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 const uint32_t pd_src_pdo_max[] = {
-		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
@@ -45,91 +38,9 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
-int pd_is_valid_input_voltage(int mv)
-{
-	return 1;
-}
-
-void pd_transition_voltage(int idx)
-{
-	/* No-operation: we are always 5V */
-}
-
-static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
-
-int board_vbus_source_enabled(int port)
-{
-	return vbus_en[port];
-}
-
-static void board_vbus_update_source_current(int port)
-{
-	/* TODO(ecgh): how to set VBUS on/off and 1.5/3.0 A? */
-}
-
-void typec_set_source_current_limit(int port, int rp)
-{
-	vbus_rp[port] = rp;
-
-	/* change the GPIO driving the load switch if needed */
-	board_vbus_update_source_current(port);
-}
-
-int pd_set_power_supply_ready(int port)
-{
-	/* Disable charging */
-	/* TODO(ecgh): how to disable charging? */
-
-	/* Ensure we advertise the proper available current quota */
-	charge_manager_source_port(port, 1);
-
-	pd_set_vbus_discharge(port, 0);
-
-	/* Provide VBUS */
-	vbus_en[port] = 1;
-	board_vbus_update_source_current(port);
-
-	/* notify host of power info change */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-
-	return EC_SUCCESS; /* we are ready */
-}
-
-void pd_power_supply_reset(int port)
-{
-	int prev_en;
-
-	prev_en = vbus_en[port];
-
-	/* Disable VBUS */
-	vbus_en[port] = 0;
-	board_vbus_update_source_current(port);
-
-	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
-		pd_set_vbus_discharge(port, 1);
-
-	/* Give back the current quota we are no longer using */
-	charge_manager_source_port(port, 0);
-
-	/* notify host of power info change */
-	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-}
-
 int pd_board_checks(void)
 {
 	return EC_SUCCESS;
-}
-
-int pd_check_power_swap(int port)
-{
-	/*
-	 * Allow power swap as long as we are acting as a dual role device,
-	 * otherwise assume our role is fixed (not in S0 or console command
-	 * to fix our role).
-	 */
-	return pd_get_dual_role() == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 int pd_check_data_swap(int port, int data_role)
@@ -145,15 +56,23 @@ int pd_check_data_swap(int port, int data_role)
 	       (system_get_image_copy() != SYSTEM_IMAGE_RO) ? 1 : 0;
 }
 
-int pd_check_vconn_swap(int port)
+void pd_check_dr_role(int port, int dr_role, int flags)
 {
-	/* in G3, do not allow vconn swap since 5V rail is off */
-	return gpio_get_level(GPIO_SPOK);
+	/* If UFP, try to switch to DFP */
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) &&
+			dr_role == PD_ROLE_UFP &&
+			system_get_image_copy() != SYSTEM_IMAGE_RO)
+		pd_request_data_swap(port);
 }
 
-void pd_execute_data_swap(int port, int data_role)
+int pd_check_power_swap(int port)
 {
-	/* Do nothing */
+	/*
+	 * Allow power swap as long as we are acting as a dual role device,
+	 * otherwise assume our role is fixed (not in S0 or console command
+	 * to fix our role).
+	 */
+	return pd_get_dual_role() == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
@@ -177,14 +96,96 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 	}
 }
 
-void pd_check_dr_role(int port, int dr_role, int flags)
+int pd_check_vconn_swap(int port)
 {
-	/* If UFP, try to switch to DFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) &&
-			dr_role == PD_ROLE_UFP &&
-			system_get_image_copy() != SYSTEM_IMAGE_RO)
-		pd_request_data_swap(port);
+	/* in G3, do not allow vconn swap since 5V rail is off */
+	return gpio_get_level(GPIO_SPOK);
 }
+
+void pd_execute_data_swap(int port, int data_role)
+{
+	/* Do nothing */
+}
+
+int pd_is_valid_input_voltage(int mv)
+{
+	return 1;
+}
+
+void pd_power_supply_reset(int port)
+{
+	int prev_en;
+
+	prev_en = ppc_is_sourcing_vbus(port);
+
+	/* Disable VBUS. */
+	ppc_vbus_source_enable(port, 0);
+
+	/* Enable discharge if we were previously sourcing 5V */
+	if (prev_en)
+		pd_set_vbus_discharge(port, 1);
+
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+}
+
+int pd_set_power_supply_ready(int port)
+{
+	int rv;
+
+	/* Disable charging. */
+	rv = ppc_vbus_sink_enable(port, 0);
+	if (rv)
+		return rv;
+
+	/* Ensure we advertise the proper available current quota */
+	charge_manager_source_port(port, 1);
+
+	pd_set_vbus_discharge(port, 0);
+
+	/* Provide Vbus. */
+	rv = ppc_vbus_source_enable(port, 1);
+	if (rv)
+		return rv;
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
+	return EC_SUCCESS;
+}
+
+void pd_transition_voltage(int idx)
+{
+	/* No-operation: we are always 5V */
+}
+
+void typec_set_source_current_limit(int port, int rp)
+{
+	/* TODO(ecgh): call ppc_set_vbus_source_current_limit */
+}
+
+int pd_snk_is_vbus_provided(int port)
+{
+	int vbus_present = 0;
+	int rv;
+
+	rv = ppc_is_vbus_present(port, &vbus_present);
+	if (rv) {
+		CPRINTS("p%d: VBUS present error (%d)", port, rv);
+		return 0;
+	}
+
+	return vbus_present;
+}
+
+int board_vbus_source_enabled(int port)
+{
+	return ppc_is_sourcing_vbus(port);
+}
+
 /* ----------------- Vendor Defined Messages ------------------ */
 const struct svdm_response svdm_rsp = {
 	.identity = NULL,

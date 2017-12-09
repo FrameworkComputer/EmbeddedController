@@ -37,7 +37,11 @@
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -168,11 +172,19 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	}
 };
 
-const struct sn5s330_config sn5s330_chips[] = {
-	{I2C_PORT_TCPC0, SN5S330_ADDR0},
-	{I2C_PORT_TCPC1, SN5S330_ADDR0},
+const struct ppc_config_t ppc_chips[] = {
+	{
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv
+	},
+	{
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv
+	},
 };
-const unsigned int sn5s330_cnt = ARRAY_SIZE(sn5s330_chips);
+const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_EN_USB_A0_5V,
@@ -262,17 +274,55 @@ void board_tcpc_init(void)
 	}
 }
 
-int pd_snk_is_vbus_provided(int port)
+void board_overcurrent_event(int port)
 {
-	/* TODO(ecgh): Detect VBUS via SWCTL_INT and I2C to SN5S330 */
-	return 0;
+	/* TODO(ecgh): assert GPIO to notify SOC */
 }
 
 int board_set_active_charge_port(int port)
 {
-	/* TODO(ecgh): how to disable/enable charge ports? */
-	/* TODO(ecgh): how to check if port sourcing VBUS? */
-	/* TODO(ecgh): disable/enable SN5S330 FETs? */
+	int i;
+	int rv;
+
+	CPRINTS("New chg p%d", port);
+
+	if (port == CHARGE_PORT_NONE) {
+		/* Disable all ports. */
+		for (i = 0; i < ppc_cnt; i++) {
+			rv = ppc_vbus_sink_enable(i, 0);
+			if (rv) {
+				CPRINTS("Disabling p%d sink path failed.", i);
+				return rv;
+			}
+		}
+
+		return EC_SUCCESS;
+	}
+
+	/* Check if the port is sourcing VBUS. */
+	if (ppc_is_sourcing_vbus(port)) {
+		CPRINTF("Skip enable p%d", port);
+		return EC_ERROR_INVAL;
+	}
+
+	/*
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
+	 */
+	for (i = 0; i < ppc_cnt; i++) {
+		if (i == port)
+			continue;
+
+		if (ppc_vbus_sink_enable(i, 0))
+			CPRINTS("p%d: sink path disable failed.", i);
+	}
+
+	/* Enable requested charge port. */
+	if (ppc_vbus_sink_enable(port, 1)) {
+		CPRINTS("p%d: sink path enable failed.");
+		return EC_ERROR_UNKNOWN;
+	}
+
 	return EC_SUCCESS;
 }
 
