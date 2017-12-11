@@ -49,4 +49,9 @@ static inline void keyboard_state_changed(int row, int col, int is_pressed) {}
 void keyboard_state_changed(int row, int col, int is_pressed);
 #endif
 
+/**
+ * Returns true if keyboard backlight is present/detected.
+ */
+int board_has_keyboard_backlight(void);
+
 #endif  /* __CROS_EC_KEYBOARD_PROTOCOL_H */

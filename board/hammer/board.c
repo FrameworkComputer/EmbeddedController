@@ -37,6 +37,8 @@
 #define CROS_EC_SECTION "RO"
 #endif
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
@@ -102,11 +104,32 @@ struct keyboard_scan_config keyscan_config = {
 /******************************************************************************
  * Initialize board.
  */
+static int has_keyboard_backlight;
+
 static void board_init(void)
 {
+	/* Detect keyboard backlight: pull-down means it is present. */
+	has_keyboard_backlight = !gpio_get_level(GPIO_KEYBOARD_BACKLIGHT);
 
+	CPRINTS("Backlight%s present", has_keyboard_backlight ? "" : " not");
+
+#ifdef BOARD_STAFF
+	if (!has_keyboard_backlight) {
+		/*
+		 * Earlier staff boards have both PU and PD stuffed, and end up
+		 * being detected as not have keyboard backlight. However, we
+		 * need to enable internal PD on the pin, otherwise backlight
+		 * will always be on.
+		 * TODO(b:67722756): Remove this hack when old boards are
+		 * deprecated.
+		 */
+		gpio_set_flags(GPIO_KEYBOARD_BACKLIGHT,
+			       GPIO_PULL_DOWN | GPIO_INPUT);
+	}
+#endif /* BOARD_STAFF */
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+/* This needs to happen before PWM is initialized. */
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_PWM - 1);
 
 void board_config_pre_init(void)
 {
@@ -120,6 +143,11 @@ void board_config_pre_init(void)
 	 *  Chan 5 : USART1_RX
 	 */
 	STM32_SYSCFG_CFGR1 |= (1 << 9) | (1 << 10); /* Remap USART1 RX/TX DMA */
+}
+
+int board_has_keyboard_backlight(void)
+{
+	return has_keyboard_backlight;
 }
 
 /*
