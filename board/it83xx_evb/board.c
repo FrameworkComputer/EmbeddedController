@@ -244,8 +244,12 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"ADC_VBUSSA", 3000, 1024, 0, 0}, /*GPI0*/
-	{"ADC_VBUSSB", 3000, 1024, 0, 1}, /*GPI1*/
+	{"ADC_VBUSSA", 3000, 1024, 0, CHIP_ADC_CH0}, /* GPI0, ADC0 */
+	{"ADC_VBUSSB", 3000, 1024, 0, CHIP_ADC_CH1}, /* GPI1, ADC1 */
+	{"ADC_EVB_CH_13", 3000, 1024, 0, CHIP_ADC_CH13}, /* GPL0, ADC13 */
+	{"ADC_EVB_CH_14", 3000, 1024, 0, CHIP_ADC_CH14}, /* GPL1, ADC14 */
+	{"ADC_EVB_CH_15", 3000, 1024, 0, CHIP_ADC_CH15}, /* GPL2, ADC15 */
+	{"ADC_EVB_CH_16", 3000, 1024, 0, CHIP_ADC_CH16}, /* GPL3, ADC16 */
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

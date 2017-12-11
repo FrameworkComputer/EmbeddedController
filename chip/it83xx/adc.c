@@ -40,11 +40,20 @@ const struct adc_ctrl_t adc_ctrl_regs[] = {
 		&IT83XX_GPIO_GPCRI6},
 	{&IT83XX_ADC_VCH7CTL, &IT83XX_ADC_VCH7DATM, &IT83XX_ADC_VCH7DATL,
 		&IT83XX_GPIO_GPCRI7},
+	{&IT83XX_ADC_VCH13CTL, &IT83XX_ADC_VCH13DATM, &IT83XX_ADC_VCH13DATL,
+		&IT83XX_GPIO_GPCRL0},
+	{&IT83XX_ADC_VCH14CTL, &IT83XX_ADC_VCH14DATM, &IT83XX_ADC_VCH14DATL,
+		&IT83XX_GPIO_GPCRL1},
+	{&IT83XX_ADC_VCH15CTL, &IT83XX_ADC_VCH15DATM, &IT83XX_ADC_VCH15DATL,
+		&IT83XX_GPIO_GPCRL2},
+	{&IT83XX_ADC_VCH16CTL, &IT83XX_ADC_VCH16DATM, &IT83XX_ADC_VCH16DATL,
+		&IT83XX_GPIO_GPCRL3},
 };
+BUILD_ASSERT(ARRAY_SIZE(adc_ctrl_regs) == CHIP_ADC_COUNT);
 
 static void adc_enable_channel(int ch)
 {
-	if (ch < 4)
+	if (ch < CHIP_ADC_CH4)
 		/*
 		 * for channel 0, 1, 2, and 3
 		 * bit4 ~ bit0 : indicates voltage channel[x]
@@ -55,8 +64,8 @@ static void adc_enable_channel(int ch)
 		*adc_ctrl_regs[ch].adc_ctrl = 0xa0 + ch;
 	else
 		/*
-		 * for channel 4, 5, 6, and 7
-		 * bit4 : voltage channel enable (ch 4~7 only)
+		 * for channel 4 ~ 7 and 13 ~ 16.
+		 * bit4 : voltage channel enable (ch 4~7 and 13 ~ 16)
 		 * bit5 : data valid interrupt of adc.
 		 * bit7 : W/C data valid flag
 		 */
@@ -71,7 +80,7 @@ static void adc_enable_channel(int ch)
 
 static void adc_disable_channel(int ch)
 {
-	if (ch < 4)
+	if (ch < CHIP_ADC_CH4)
 		/*
 		 * for channel 0, 1, 2, and 3
 		 * bit4 ~ bit0 : indicates voltage channel[x]
@@ -81,8 +90,8 @@ static void adc_disable_channel(int ch)
 		*adc_ctrl_regs[ch].adc_ctrl = 0x9F;
 	else
 		/*
-		 * for channel 4, 5, 6, and 7
-		 * bit4 : voltage channel disable (ch 4~7 only)
+		 * for channel 4 ~ 7 and 13 ~ 16.
+		 * bit4 : voltage channel disable (ch 4~7 and 13 ~ 16)
 		 * bit7 : W/C data valid flag
 		 */
 		*adc_ctrl_regs[ch].adc_ctrl = 0x80;
@@ -91,6 +100,13 @@ static void adc_disable_channel(int ch)
 	IT83XX_ADC_ADCCFG &= ~0x01;
 
 	task_disable_irq(IT83XX_IRQ_ADC);
+}
+
+static int adc_data_valid(enum chip_adc_channel adc_ch)
+{
+	return (adc_ch <= CHIP_ADC_CH7) ?
+		(IT83XX_ADC_ADCDVSTS & (1 << adc_ch)) :
+		(IT83XX_ADC_ADCDVSTS2 & (1 << (adc_ch - CHIP_ADC_CH13)));
 }
 
 int adc_read_channel(enum adc_channel ch)
@@ -115,13 +131,17 @@ int adc_read_channel(enum adc_channel ch)
 
 	if (events & TASK_EVENT_ADC_DONE) {
 		/* data valid of adc channel[x] */
-		if (IT83XX_ADC_ADCDVSTS & (1 << adc_ch)) {
+		if (adc_data_valid(adc_ch)) {
 			/* read adc raw data msb and lsb */
 			adc_raw_data = (*adc_ctrl_regs[adc_ch].adc_datm << 8) +
 				*adc_ctrl_regs[adc_ch].adc_datl;
 
 			/* W/C data valid flag */
-			IT83XX_ADC_ADCDVSTS = (1 << adc_ch);
+			if (adc_ch <= CHIP_ADC_CH7)
+				IT83XX_ADC_ADCDVSTS = (1 << adc_ch);
+			else
+				IT83XX_ADC_ADCDVSTS2 =
+					(1 << (adc_ch - CHIP_ADC_CH13));
 
 			mv = adc_raw_data * adc_channels[ch].factor_mul /
 				adc_channels[ch].factor_div +

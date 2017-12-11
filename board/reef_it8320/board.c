@@ -80,9 +80,9 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"CHARGER",     3000, 1024, 0, 1}, /* GPI1 */
-	{"AMBIENT",     3000, 1024, 0, 2}, /* GPI2 */
-	{"BRD_ID",      3000, 1024, 0, 3}, /* GPI3 */
+	{"CHARGER",     3000, 1024, 0, CHIP_ADC_CH1}, /* GPI1 */
+	{"AMBIENT",     3000, 1024, 0, CHIP_ADC_CH2}, /* GPI2 */
+	{"BRD_ID",      3000, 1024, 0, CHIP_ADC_CH3}, /* GPI3 */
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 

@@ -19,6 +19,23 @@
  */
 #define ADC_TIMEOUT_US 248
 
+/* List of ADC channels. */
+enum chip_adc_channel {
+	CHIP_ADC_CH0 = 0,
+	CHIP_ADC_CH1,
+	CHIP_ADC_CH2,
+	CHIP_ADC_CH3,
+	CHIP_ADC_CH4,
+	CHIP_ADC_CH5,
+	CHIP_ADC_CH6,
+	CHIP_ADC_CH7,
+	CHIP_ADC_CH13,
+	CHIP_ADC_CH14,
+	CHIP_ADC_CH15,
+	CHIP_ADC_CH16,
+	CHIP_ADC_COUNT,
+};
+
 /* Data structure to define ADC channel control registers. */
 struct adc_ctrl_t {
 	volatile uint8_t *adc_ctrl;
@@ -33,7 +50,7 @@ struct adc_t {
 	int factor_mul;
 	int factor_div;
 	int shift;
-	int channel;
+	enum chip_adc_channel channel;
 };
 
 /*
