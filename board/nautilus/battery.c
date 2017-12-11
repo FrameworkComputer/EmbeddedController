@@ -25,16 +25,16 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 #define SB_SHUTDOWN_DATA        0x0010
 
 static const struct battery_info info = {
-	.voltage_max = 8800,
+	.voltage_max = 8700,
 	.voltage_normal = 7700,
 	.voltage_min = 6000,
 	/* Pre-charge values. */
 	.precharge_current = 152, /* mA */
 
-	.start_charging_min_c = -5,
-	.start_charging_max_c = 55,
-	.charging_min_c = -5,
-	.charging_max_c = 55,
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 45,
+	.charging_min_c = 0,
+	.charging_max_c = 50,
 	.discharging_min_c = -20,
 	.discharging_max_c = 60,
 };
