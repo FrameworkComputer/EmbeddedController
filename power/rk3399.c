@@ -55,6 +55,12 @@
 	#define S3_USB_WAKE
 	/* This board has non-INT power signal pins */
 	#define POWER_SIGNAL_POLLING
+	/*
+	 * If AP_PWR_GOOD assertion does not trigger an interrupt, poll the
+	 * signal every 5ms, up to 200 times (~ 1 second timeout).
+	 */
+	#define PGOOD_S0_POLL_TIMEOUT  (5 * MSEC)
+	#define PGOOD_S0_POLL_TRIES    200
 #else
 	#define IN_PGOOD_S3    (IN_PGOOD_PP5000)
 	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
@@ -437,10 +443,6 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		sys_reset_asserted = 1;
 
-		/*
-		 * TODO: Consider ADC_PP900_AP / ADC_PP1200_LPDDR analog
-		 * voltage levels for state transition.
-		 */
 		if (power_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
 			return POWER_S3S5;
@@ -470,7 +472,24 @@ enum power_state power_handle_state(enum power_state state)
 			sys_reset_asserted = 0;
 		}
 
+#ifdef POWER_SIGNAL_POLLING
+		/*
+		 * Poll power signals every PGOOD_S0_POLL_TIMEOUT us, since
+		 * AP_PWR_GOOD assertion doesn't trigger a power signal
+		 * interrupt.
+		 */
+		while (power_wait_signals_timeout(IN_PGOOD_S0,
+		       PGOOD_S0_POLL_TIMEOUT) == EC_ERROR_TIMEOUT &&
+		       ++tries < PGOOD_S0_POLL_TRIES)
+			;
+
+		if (tries >= PGOOD_S0_POLL_TRIES) {
+			CPRINTS("power timeout on input; "
+				"wanted 0x%04x, got 0x%04x",
+				IN_PGOOD_S0, power_get_signals() & IN_PGOOD_S0);
+#else
 		if (power_wait_signals(IN_PGOOD_S0)) {
+#endif /* POWER_SIGNAL_POLLING */
 			chipset_force_shutdown();
 			return POWER_S0S3;
 		}
