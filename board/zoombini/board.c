@@ -189,6 +189,18 @@ const struct ppc_config_t ppc_chips[] = {
 		.i2c_addr = SN5S330_ADDR0,
 		.drv = &sn5s330_drv
 	},
+#ifdef BOARD_ZOOMBINI
+	{
+	       .i2c_port = I2C_PORT_TCPC1,
+	       .i2c_addr = SN5S330_ADDR0,
+	       .drv = &sn5s330_drv
+	},
+	{
+	      .i2c_port = I2C_PORT_TCPC2,
+	      .i2c_addr = SN5S330_ADDR0,
+	      .drv = &sn5s330_drv
+	}
+#endif /* defined(BOARD_ZOOMBINI) */
 };
 const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
