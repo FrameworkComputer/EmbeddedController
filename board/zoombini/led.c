@@ -25,13 +25,25 @@ enum led_id {
 };
 
 static enum pwm_channel led_pwm_ch_map[EC_LED_ID_COUNT] = {
+#ifdef BOARD_MEOWTH
+	[EC_LED_ID_POWER] = PWM_CH_DB0_LED_GREEN,
+	[EC_LED_ID_BATTERY] = PWM_CH_DB0_LED_RED,
+#else /* !defined(BOARD_MEOWTH) */
 	[EC_LED_ID_POWER] = PWM_CH_LED_GREEN,
 	[EC_LED_ID_BATTERY] = PWM_CH_LED_RED,
+#endif /* defined(BOARD_MEOWTH) */
 };
 
 static void set_led_state(enum led_id id, int on)
 {
-	pwm_set_duty(led_pwm_ch_map[id], on ? 20 : 100);
+	int val;
+#ifdef BOARD_MEOWTH
+	val = on ? 98 : 100;
+#else /* !defined(BOARD_MEOWTH) */
+	val = on ? 90 : 100;
+#endif /* defined(BOARD_MEOWTH) */
+
+	pwm_set_duty(led_pwm_ch_map[id], val);
 }
 
 static uint8_t power_led_is_pulsing;

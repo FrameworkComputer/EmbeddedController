@@ -123,9 +123,18 @@ const struct adc_t adc_channels[] = {
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 /* TODO(aaboagye): Add the additional Meowth LEDs */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED_RED] =   { 2, PWM_CONFIG_DSLEEP, 100 },
+#ifdef BOARD_MEOWTH
+	[PWM_CH_DB0_LED_RED] =   { 3, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_DB0_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_DB0_LED_BLUE] =  { 2, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_DB1_LED_RED] =   { 7, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_DB1_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_DB1_LED_BLUE] =  { 6, PWM_CONFIG_DSLEEP, 120 },
+#else /* !defined(BOARD_MEOWTH) */
+	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_LED_RED] =   { 2, PWM_CONFIG_DSLEEP, 120 },
 	[PWM_CH_KBLIGHT] =   { 3, 0, 100 },
+#endif /* defined(BOARD_MEOWTH) */
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -289,6 +298,14 @@ static void board_init(void)
 	struct charge_port_info chg;
 	int i;
 #endif /* defined(BOARD_ZOOMBINI) */
+
+#ifdef BOARD_MEOWTH
+	/* TODO(aaboagye): Eventually do something with these LEDs. */
+	pwm_set_duty(PWM_CH_DB0_LED_BLUE, 100);
+	pwm_set_duty(PWM_CH_DB1_LED_RED, 100);
+	pwm_set_duty(PWM_CH_DB1_LED_GREEN, 100);
+	pwm_set_duty(PWM_CH_DB1_LED_BLUE, 100);
+#endif /* defined(BOARD_MEOWTH) */
 
 #ifdef BOARD_ZOOMBINI
 	/* Enable PPC interrupts. */

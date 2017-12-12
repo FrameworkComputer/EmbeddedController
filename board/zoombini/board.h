@@ -189,9 +189,18 @@ enum adc_channel {
 };
 
 enum pwm_channel {
+#ifdef BOARD_MEOWTH
+	PWM_CH_DB0_LED_RED = 0,
+	PWM_CH_DB0_LED_GREEN,
+	PWM_CH_DB0_LED_BLUE,
+	PWM_CH_DB1_LED_RED,
+	PWM_CH_DB1_LED_GREEN,
+	PWM_CH_DB1_LED_BLUE,
+#else /* !defined(BOARD_MEOWTH) */
 	PWM_CH_LED_GREEN = 0,
 	PWM_CH_LED_RED,
 	PWM_CH_KBLIGHT,
+#endif /* defined(BOARD_MEOWTH) */
 	PWM_CH_COUNT
 };
 
