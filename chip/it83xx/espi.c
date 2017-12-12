@@ -367,11 +367,6 @@ void espi_init(void)
 {
 	int i;
 
-	/* TODO: PLL change won't success if eSPI chip select is low. */
-#if (PLL_CLOCK != 48000000)
-#error "Not support PLL change if eSPI module is enabled. "
-#endif
-
 	for (i = 0; i < ARRAY_SIZE(vw_init_setting); i++)
 		IT83XX_ESPI_VWIDX(vw_init_setting[i].index) =
 			(vw_init_setting[i].level_mask |

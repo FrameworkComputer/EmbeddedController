@@ -193,8 +193,20 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ,
 				1, 1, 5, 1, 0);
 		task_clear_pending_irq(et_ctrl_regs[LOW_POWER_EXT_TIMER].irq);
+#ifdef CONFIG_ESPI
+		/*
+		 * Workaround for (b:70537592):
+		 * We have to set chip select pin as input mode in order to
+		 * change PLL.
+		 */
+		IT83XX_GPIO_GPCRM5 = (IT83XX_GPIO_GPCRM5 & ~0xc0) | (1 << 7);
+#endif
 		/* Update PLL settings. */
 		clock_pll_changed();
+#ifdef CONFIG_ESPI
+		/* (b:70537592) Change back to ESPI CS# function. */
+		IT83XX_GPIO_GPCRM5 &= ~0xc0;
+#endif
 	}
 
 	/* Get new/current setting of PLL frequency */
