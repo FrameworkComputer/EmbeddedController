@@ -16,6 +16,19 @@
 defined(SECTION_IS_RO)))
 #define QUEUE_SIZE 64
 
+#ifdef CONFIG_STREAM_SIGNATURE
+/*
+ * When signing over streaming data, up the relevant queue sizes.
+ */
+#define QUEUE_SIZE_SIG_IN  1024
+#define QUEUE_SIZE_USB_IN  8192
+#define QUEUE_SIZE_UART_IN 1024
+#else
+#define QUEUE_SIZE_SIG_IN  QUEUE_SIZE
+#define QUEUE_SIZE_USB_IN  QUEUE_SIZE
+#define QUEUE_SIZE_UART_IN QUEUE_SIZE
+#endif
+
 
 #ifdef CONFIG_STREAM_USART1
 struct usb_stream_config const ap_usb;
@@ -34,9 +47,11 @@ struct usart_config const ap_uart;
  */
 struct signer_config const sig;
 static struct queue const ap_uart_output =
-	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_uart.producer, sig.consumer);
+	QUEUE_DIRECT(QUEUE_SIZE_SIG_IN, uint8_t, ap_uart.producer,
+		     sig.consumer);
 static struct queue const sig_to_usb =
-	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, sig.producer, ap_usb.consumer);
+	QUEUE_DIRECT(QUEUE_SIZE_USB_IN, uint8_t, sig.producer,
+		     ap_usb.consumer);
 
 SIGNER_CONFIG(sig, stream_uart, sig_to_usb, ap_uart_output);
 
@@ -46,7 +61,8 @@ static struct queue const ap_uart_output =
 #endif
 
 static struct queue const ap_usb_to_uart =
-	QUEUE_DIRECT(QUEUE_SIZE, uint8_t, ap_usb.producer, ap_uart.consumer);
+	QUEUE_DIRECT(QUEUE_SIZE_UART_IN, uint8_t, ap_usb.producer,
+		     ap_uart.consumer);
 
 /*
  * AP UART data is sent to the ap_uart_output queue, and received from

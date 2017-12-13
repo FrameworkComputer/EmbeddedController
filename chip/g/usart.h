@@ -7,9 +7,21 @@
 #include "producer.h"
 #include "registers.h"
 #include "task.h"
+#include "board.h"
 
 #ifndef __CROS_FORWARD_UART_H
 #define __CROS_FORWARD_UART_H
+
+#ifdef CONFIG_STREAM_SIGNATURE
+/*
+ * When configured for signing over streaming data, call the consumer handler
+ * directly to help avoid incoming uart overruns.
+ * Note this will run under interrupt handler so consumer beware.
+ */
+#define CONFIGURE_INTERRUPTS__rx_int(NAME) send_data_to_usb(&NAME)
+#else
+#define CONFIGURE_INTERRUPTS__rx_int(NAME) hook_call_deferred(NAME.deferred, 0)
+#endif
 
 struct usart_config {
 	int uart;
@@ -43,7 +55,7 @@ extern struct producer_ops const uart_producer_ops;
 		GR_UART_ISTATECLR(NAME.uart) =				\
 			GC_UART_ISTATECLR_RX_MASK;			\
 		/* Read input FIFO until empty */			\
-		hook_call_deferred(NAME.deferred, 0);			\
+		CONFIGURE_INTERRUPTS__rx_int(NAME);			\
 	}
 
 
