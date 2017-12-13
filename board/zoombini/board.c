@@ -13,6 +13,7 @@
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
+#include "driver/als_opt3001.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -26,6 +27,7 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -182,6 +184,60 @@ const struct i2c_port_t i2c_ports[] = {
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+static struct opt3001_drv_data_t g_opt3001_data = {
+	.scale = 1,
+	.uscale = 0,
+	.offset = 0,
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	[LID_ALS] = {
+	 .name = "Light",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_OPT3001,
+	 .type = MOTIONSENSE_TYPE_LIGHT,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &opt3001_drv,
+	 .drv_data = &g_opt3001_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = OPT3001_I2C_ADDR,
+	 .rot_standard_ref = NULL,
+	 .default_range = 0x10000, /* scale = 1; uscale = 0 */
+	 .min_frequency = OPT3001_LIGHT_MIN_FREQ,
+	 .max_frequency = OPT3001_LIGHT_MAX_FREQ,
+	 .config = {
+		 /* AP: by default shutdown all sensors */
+		 [SENSOR_CONFIG_AP] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Run ALS sensor in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 1000,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+		 /* Sensor off in S3/S5 */
+		 [SENSOR_CONFIG_EC_S5] = {
+			 .odr = 0,
+			 .ec_rate = 0,
+		 },
+	 },
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
+const struct motion_sensor_t *motion_als_sensors[] = {
+	&motion_sensors[LID_ALS],
+};
+BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
+
+/* TODO(aaboagye): Add the other ports. 3 for Zoombini, 2 for Meowth */
 const struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,

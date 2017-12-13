@@ -33,6 +33,11 @@
 #define CONFIG_LPC
 #define CONFIG_PWM
 
+/* TODO(aaboagye): Verify the right address. */
+#define CONFIG_ALS_OPT3001
+#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
+#define ALS_COUNT 1
+
 #define CONFIG_BACKLIGHT_LID
 
 #define CONFIG_BATTERY_CUT_OFF
@@ -222,6 +227,12 @@ enum power_signal {
 #endif /* defined(BOARD_ZOOMBINI) */
 	POWER_SIGNAL_COUNT
 };
+
+enum sensor_id {
+	LID_ALS,
+};
+
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
 
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
