@@ -882,6 +882,20 @@
 /* Enable verbose output to UART console and extra timestamp print precision. */
 #define CONFIG_CONSOLE_VERBOSE
 
+/*****************************************************************************/
+/* Support for EC-EC communication */
+
+/*
+ * Board is master or slave in EC-EC communication.
+ */
+#undef CONFIG_EC_EC_COMM_MASTER
+#undef CONFIG_EC_EC_COMM_SLAVE
+
+/*
+ * Board support battery-related functions in EC-EC communication.
+ */
+#undef CONFIG_EC_EC_COMM_BATTERY
+
 /*
  * Enable the experimental console.
  *
