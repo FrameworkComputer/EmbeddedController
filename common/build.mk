@@ -46,6 +46,7 @@ common-$(CONFIG_DEDICATED_RECOVERY_BUTTON)+=button.o
 common-$(CONFIG_DEVICE_EVENT)+=device_event.o
 common-$(CONFIG_DEVICE_STATE)+=device_state.o
 common-$(CONFIG_DPTF)+=dptf.o
+common-$(CONFIG_EC_EC_COMM_MASTER)+=ec_ec_comm_master.o
 common-$(CONFIG_EC_EC_COMM_SLAVE)+=ec_ec_comm_slave.o
 common-$(CONFIG_ESPI)+=espi.o
 common-$(CONFIG_EXTENSION_COMMAND)+=extension.o
