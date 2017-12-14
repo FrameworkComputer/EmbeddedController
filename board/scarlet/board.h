@@ -35,6 +35,7 @@
 
 #undef  CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
+#define CONFIG_UART_RX_DMA
 
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
 #undef  CONFIG_MPU
