@@ -9,6 +9,7 @@ source [find mem_helper.tcl]
 
 proc flash_npcx {image_path cram_addr image_offset image_size spifw_image} {
 	set UPLOAD_FLAG 0x200C4000;
+	set UUT_TAG 0x200C3000;
 
 	echo "*** NPCX Reset and halt CPU first ***"
 	reset halt
@@ -19,7 +20,7 @@ proc flash_npcx {image_path cram_addr image_offset image_size spifw_image} {
 	load_image $image_path $cram_addr
 
 	# Upload program spi image FW to lower 16KB Data RAM
-	load_image $spifw_image 0x200C0000
+	load_image $spifw_image 0x200C3020
 
 	# Set sp to upper 16KB Data RAM
 	reg sp 0x200C8000
@@ -28,9 +29,12 @@ proc flash_npcx {image_path cram_addr image_offset image_size spifw_image} {
 	# Set spi program size of uploaded image
 	reg r1 $image_size
 	# Set pc to start of spi program function
-	reg pc 0x200C0001
+	reg pc 0x200C3021
 	# Clear upload flag
 	mww $UPLOAD_FLAG 0x0
+
+	# Clear UUT Tag
+	mww $UUT_TAG 0x0
 
 	echo "*** Program ...  ***"
 	# Start to program spi flash
@@ -88,7 +92,7 @@ proc flash_npcx_ro {chip_name image_dir image_offset} {
 
 	# images path
 	set ro_image_path $image_dir/RO/ec.RO.flat
-	set spifw_image	$image_dir/chip/npcx/spiflashfw/ec_npcxflash.bin
+	set spifw_image $image_dir/chip/npcx/spiflashfw/npcx_monitor.bin
 
 	# Halt CPU first
 	halt
@@ -118,7 +122,7 @@ proc flash_npcx_all {chip_name image_dir image_offset} {
 	# images path
 	set ro_image_path $image_dir/RO/ec.RO.flat
 	set rw_image_path $image_dir/RW/ec.RW.bin
-	set spifw_image	$image_dir/chip/npcx/spiflashfw/ec_npcxflash.bin
+	set spifw_image $image_dir/chip/npcx/spiflashfw/npcx_monitor.bin
 
 	# Halt CPU first
 	halt
