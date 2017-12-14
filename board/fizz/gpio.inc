@@ -47,9 +47,6 @@ GPIO(POWER_RATE,		PIN(7, 1), GPIO_INPUT)				/* High: i3/5/7. Low: Celeron */
 /* Fizz specific pins */
 GPIO(LAN_PWR_EN,		PIN(8, 3), GPIO_OUT_HIGH)			/* Ethernet power enabled */
 
-/* TODO(crosbug.com/p/61098): Make use of these GPIOs */
-GPIO(PP3300_USB_PD,		PIN(6, 7), GPIO_OUTPUT)
-
 GPIO(PP5000_DX_NFC,		PIN(1, 5), GPIO_OUTPUT)
 
 GPIO(PP3300_DX_CAM,		PIN(1, 0), GPIO_OUT_HIGH)

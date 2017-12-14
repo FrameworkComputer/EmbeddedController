@@ -221,14 +221,9 @@ void board_tcpc_init(void)
 {
 	int port, reg;
 
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
-		/* Power on PS8751 */
-		gpio_set_level(GPIO_PP3300_USB_PD, 1);
-		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
-		msleep(10);
+	/* Only reset TCPC in RO boot. */
+	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
-	}
 
 	/*
 	 * Wake up PS8751. If PS8751 remains in low power mode after sysjump,
