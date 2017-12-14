@@ -2,12 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * NPCX5M5G SoC spi flash update tool
+ * NPCX SoC spi flash update tool - monitor firmware
  */
 
 #include <stdint.h>
-
 #include "config.h"
+#include "npcx_monitor.h"
 #include "registers.h"
 #include "util.h"
 
@@ -258,17 +258,33 @@ int sspi_flash_get_image_used(const char *fw_base)
 
 }
 
-volatile __attribute__((section(".up_flag"))) uint32_t flag_upload;
 
 /* Entry function of spi upload function */
-void __attribute__ ((section(".startup_text"), noreturn))
+uint32_t  __attribute__ ((section(".startup_text")))
 sspi_flash_upload(int spi_offset, int spi_size)
 {
 	/*
 	 * Flash image has been uploaded to Code RAM
 	 */
-	const char *image_base = (const char *)CONFIG_PROGRAM_MEMORY_BASE;
-	uint32_t sz_image = spi_size;
+	uint32_t sz_image;
+	uint32_t uut_tag;
+	const char *image_base;
+	uint32_t *flag_upload = (uint32_t *)SPI_PROGRAMMING_FLAG;
+	struct monitor_header_tag *monitor_header =
+		(struct monitor_header_tag *)NPCX_MONITOR_HEADER_ADDR;
+
+	*flag_upload = 0;
+
+	uut_tag = monitor_header->tag;
+	/* If it is UUT tag, read required parameters from header */
+	if (uut_tag == NPCX_MONITOR_UUT_TAG) {
+		sz_image = monitor_header->size;
+		spi_offset = monitor_header->dest_addr;
+		image_base = (const char *)(monitor_header->src_addr);
+	} else {
+		sz_image = spi_size;
+		image_base = (const char *)CONFIG_PROGRAM_MEMORY_BASE;
+	}
 
 	/* Unlock & stop watchdog */
 	NPCX_WDSDM = 0x87;
@@ -295,14 +311,18 @@ sspi_flash_upload(int spi_offset, int spi_size)
 
 		/* Verify data */
 		if (sspi_flash_verify(spi_offset, sz_image, image_base))
-			flag_upload |= 0x02;
+			*flag_upload |= 0x02;
 
 		/* Disable pinmux */
 		sspi_flash_pinmux(0);
 	}
 
 	/* Mark we have finished upload work */
-	flag_upload |= 0x01;
+	*flag_upload |= 0x01;
+
+	/* Return the status back to ROM code is required for UUT */
+	if (uut_tag == NPCX_MONITOR_UUT_TAG)
+		return *flag_upload;
 
 	/* Infinite loop */
 	for (;;)
