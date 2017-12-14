@@ -129,6 +129,9 @@ BOARDS_NPCX_INT_SPI=(
 	zoombini
 )
 
+BOARDS_NPCX_UUT=(
+)
+
 BOARDS_NRF51=(
 	hadoken
 )
@@ -240,6 +243,8 @@ elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 	CHIP="npcx_spi"
 elif $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
 	CHIP="npcx_spi"
+elif $(in_array "${BOARDS_NPCX_UUT[@]}" "${BOARD}"); then
+	CHIP="npcx_uut"
 elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
 	CHIP="nrf51"
 elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
@@ -814,6 +819,82 @@ function flash_npcx_jtag() {
 	ec_reset
 
 	flash_openocd
+}
+
+function flash_npcx_uut() {
+	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
+	NPCX_UUT=$(PATH="${TOOL_PATH}" which Uartupdatetool)
+	EC_UART="$(servo_ec_uart)"
+
+	BUILD_PATH="${EC_DIR}/build/${BOARD}"
+	MONITOR_PATH="${BUILD_PATH}/chip/npcx/spiflashfw"
+	IMG_RO="${BUILD_PATH}/RO/ec.RO.flat"
+	IMG_RW="${BUILD_PATH}/RW/ec.RW.bin"
+	MON="${MONITOR_PATH}/npcx_monitor.bin"
+	MON_HDR_RO="${MONITOR_PATH}/monitor_hdr_ro.bin"
+	MON_HDR_RW="${MONITOR_PATH}/monitor_hdr_rw.bin"
+	# The start address to restore monitor header binary
+	MON_HDR_ADDR="0x200C3000"
+	# The start address to restore monitor firmware binary
+	MON_ADDR="0x200C3020"
+	# Read the address where the EC image should be loaded from monitor header.
+	# Default: It is equilvalant to the beginning of code RAM address.
+	EC_IMG_ADDR="0x"$(xxd -e ${MON_HDR_RO} | cut -d' ' -f4)
+
+	if [ ! -x "$NPCX_UUT" ]; then
+		die "no NPCX UART Update Tool found."
+	fi
+
+	info "Using: NPCX UART Update Tool"
+	info "${MCU} UART pty : ${EC_UART}"
+	claim_pty ${EC_UART}
+
+	# Remove the prefix "/dev/" because Uartupdatetool will add it.
+	EC_UART=${EC_UART#/dev/}
+	MON_PARAMS="-port ${EC_UART} -baudrate 115200"
+
+	# Read the RO image size
+	EC_IMG_SIZE=$(printf "%08X" $(stat -c "%s" ${IMG_RO}))
+	# Covert RO image size to little endian
+	EC_IMG_SIZE_LE=${EC_IMG_SIZE:6:2}${EC_IMG_SIZE:4:2}${EC_IMG_SIZE:2:2}${EC_IMG_SIZE:0:2}
+	# Replace the filed of image size in monitor header with the actual RO image size.
+	T=/tmp/mon_hdr_ro.$$
+	xxd -g4 ${MON_HDR_RO} | awk -v s="$EC_IMG_SIZE_LE" 'NR==1 {$3=s}1' | xxd -r > ${T}
+
+	info "Start to flash RO image.."
+	# Start to program EC RO image
+	# Load monitor header binary to address 0x200C3000
+	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_HDR_ADDR} -file ${T}
+	# Load monitor binary to address 0x200C3020
+	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_ADDR} -file ${MON}
+	# Load RO image to Code RAM range.
+	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${EC_IMG_ADDR} -file ${IMG_RO}
+	# Execute the monitor to program RO image on SPI flash
+	${NPCX_UUT} ${MON_PARAMS} -opr call -addr ${MON_ADDR}
+
+	# Read the RW image size
+	EC_IMG_SIZE=$(printf "%08X" $(stat -c "%s" ${IMG_RW}))
+	# Covert RW image size to little endian
+	EC_IMG_SIZE_LE=${EC_IMG_SIZE:6:2}${EC_IMG_SIZE:4:2}${EC_IMG_SIZE:2:2}${EC_IMG_SIZE:0:2}
+	# Replace the filed of image size in monitor header with the actual RW image size.
+	T=/tmp/mon_hdr_rw.$$
+	xxd -g4 ${MON_HDR_RW} | awk -v s="$EC_IMG_SIZE_LE" 'NR==1 {$3=s}1' | xxd -r > ${T}
+
+	info "Start to flash RW image.."
+	# Start to program EC RW image
+	# Load monitor header binary to address 0x200C3000
+	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_HDR_ADDR} -file ${T}
+	# Load monitor binary to address 0x200C3020
+	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_ADDR} -file ${MON}
+	# Load RW image to Code RAM range.
+	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${EC_IMG_ADDR} -file ${IMG_RW}
+	# Execute the monitor to program RW image on SPI flash
+	${NPCX_UUT} ${MON_PARAMS} -opr call -addr ${MON_ADDR}
+
+	# Reconnect the EC-3PO interpreter to the UART.
+	dut_control ${MCU}_ec3po_interp_connect:on || \
+		warn "hdctools cannot reconnect the EC-3PO interpreter to" \
+		"the UART."
 }
 
 function flash_npcx_5m5g_jtag() {
