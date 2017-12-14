@@ -141,11 +141,6 @@ static void usb_i2c_written(struct consumer const *consumer, size_t count)
 	hook_call_deferred(config->deferred, 0);
 }
 
-static void usb_i2c_flush(struct consumer const *consumer)
-{
-}
-
 struct consumer_ops const usb_i2c_consumer_ops = {
 	.written = usb_i2c_written,
-	.flush   = usb_i2c_flush,
 };

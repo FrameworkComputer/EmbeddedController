@@ -78,22 +78,12 @@ static void usb_written(struct consumer const *consumer, size_t count)
 	hook_call_deferred(config->deferred, 0);
 }
 
-static void usb_flush(struct consumer const *consumer)
-{
-	struct usb_stream_config const *config =
-		DOWNCAST(consumer, struct usb_stream_config, consumer);
-
-	while (tx_valid(config) || queue_count(consumer->queue))
-		;
-}
-
 struct producer_ops const usb_stream_producer_ops = {
 	.read = usb_read,
 };
 
 struct consumer_ops const usb_stream_consumer_ops = {
 	.written = usb_written,
-	.flush   = usb_flush,
 };
 
 void usb_stream_deferred(struct usb_stream_config const *config)

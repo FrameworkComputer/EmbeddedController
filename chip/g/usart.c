@@ -158,21 +158,12 @@ static void uart_written(struct consumer const *consumer, size_t count)
 		uartn_tx_start(config->uart);
 }
 
-static void uart_flush(struct consumer const *consumer)
-{
-	struct usart_config const *config =
-		DOWNCAST(consumer, struct usart_config, consumer);
-
-	uartn_tx_flush(config->uart);
-}
-
 struct producer_ops const uart_producer_ops = {
 	.read = uart_read,
 };
 
 struct consumer_ops const uart_consumer_ops = {
 	.written = uart_written,
-	.flush   = uart_flush,
 };
 
 #if USE_UART_INTERRUPTS

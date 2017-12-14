@@ -32,21 +32,6 @@ static void usart_written(struct consumer const *consumer, size_t count)
 		STM32_USART_CR1(config->hw->base) |= STM32_USART_CR1_TXEIE;
 }
 
-static void usart_flush(struct consumer const *consumer)
-{
-	struct usart_config const *config =
-		DOWNCAST(consumer, struct usart_config, consumer);
-
-	/*
-	 * Enable USART interrupt.  This causes the USART interrupt handler to
-	 * start fetching from the TX queue if it wasn't already.
-	 */
-	STM32_USART_CR1(config->hw->base) |= STM32_USART_CR1_TXEIE;
-
-	while (queue_count(consumer->queue))
-		;
-}
-
 static void usart_tx_interrupt_handler(struct usart_config const *config)
 {
 	intptr_t base = config->hw->base;
@@ -82,7 +67,6 @@ static void usart_tx_interrupt_handler(struct usart_config const *config)
 struct usart_tx const usart_tx_interrupt = {
 	.consumer_ops = {
 		.written = usart_written,
-		.flush   = usart_flush,
 	},
 
 	.init      = usart_tx_init,

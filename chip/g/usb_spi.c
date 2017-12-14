@@ -133,13 +133,8 @@ static void usb_spi_written(struct consumer const *consumer, size_t count)
 	hook_call_deferred(config->deferred, 0);
 }
 
-static void usb_spi_flush(struct consumer const *consumer)
-{
-}
-
 struct consumer_ops const usb_spi_consumer_ops = {
 	.written = usb_spi_written,
-	.flush   = usb_spi_flush,
 };
 
 void usb_spi_enable(struct usb_spi_config const *config, int enabled)

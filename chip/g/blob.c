@@ -61,14 +61,9 @@ static void blob_written(struct consumer const *consumer, size_t count)
 	CPRINTS("Sending: count=%d buf=((%s))", count, buf);
 }
 
-static void blob_flush(struct consumer const *consumer)
-{
-}
-
 struct consumer const blob_consumer = {
 	.queue = &usb_to_blob,
 	.ops   = &((struct consumer_ops const) {
 		.written = blob_written,
-		.flush   = blob_flush,
 	}),
 };

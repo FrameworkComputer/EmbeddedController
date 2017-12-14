@@ -34,7 +34,6 @@
 		.usart_tx = {					\
 			.consumer_ops = {			\
 				.written = usart_tx_dma_written,\
-				.flush   = usart_tx_dma_flush,	\
 			},					\
 								\
 			.init      = usart_tx_dma_init,		\

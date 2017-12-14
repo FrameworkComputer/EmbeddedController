@@ -38,6 +38,5 @@ struct consumer const null_consumer = {
 	.queue = NULL,
 	.ops   = &((struct consumer_ops const) {
 		.written = NULL,
-		.flush   = NULL,
 	}),
 };

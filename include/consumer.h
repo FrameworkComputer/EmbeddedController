@@ -27,12 +27,6 @@ struct consumer_ops {
 	 * no need for this information it can set this to NULL.
 	 */
 	void (*written)(struct consumer const *consumer, size_t count);
-
-	/*
-	 * Flush (read) everything from the associated queue.  This call blocks
-	 * until the consumer has flushed the queue.
-	 */
-	void (*flush)(struct consumer const *consumer);
 };
 
 struct consumer {

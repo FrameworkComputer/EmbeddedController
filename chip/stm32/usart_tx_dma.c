@@ -19,21 +19,6 @@ void usart_tx_dma_written(struct consumer const *consumer, size_t count)
 	task_trigger_irq(config->hw->irq);
 }
 
-void usart_tx_dma_flush(struct consumer const *consumer)
-{
-	struct usart_config const *config =
-		DOWNCAST(consumer, struct usart_config, consumer);
-
-	/*
-	 * Enable the USART interrupt.  This causes the USART interrupt handler
-	 * to start fetching from the TX queue if it wasn't already.
-	 */
-	task_trigger_irq(config->hw->irq);
-
-	while (queue_count(consumer->queue))
-		;
-}
-
 void usart_tx_dma_init(struct usart_config const *config)
 {
 	struct usart_tx_dma const *dma_config =

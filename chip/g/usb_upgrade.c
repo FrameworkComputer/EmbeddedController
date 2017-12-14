@@ -400,14 +400,9 @@ static void upgrade_out_handler(struct consumer const *consumer, size_t count)
 	block_buffer = NULL;
 }
 
-static void upgrade_flush(struct consumer const *consumer)
-{
-}
-
 struct consumer const upgrade_consumer = {
 	.queue = &usb_to_upgrade,
 	.ops   = &((struct consumer_ops const) {
 		.written = upgrade_out_handler,
-		.flush   = upgrade_flush,
 	}),
 };

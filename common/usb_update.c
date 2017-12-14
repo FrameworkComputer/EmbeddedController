@@ -552,14 +552,9 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 	rx_state_ = rx_outside_block;
 }
 
-static void update_flush(struct consumer const *consumer)
-{
-}
-
 struct consumer const update_consumer = {
 	.queue = &usb_to_update,
 	.ops   = &((struct consumer_ops const) {
 		.written = update_out_handler,
-		.flush   = update_flush,
 	}),
 };
