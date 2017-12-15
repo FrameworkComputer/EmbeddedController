@@ -182,23 +182,22 @@ const struct i2c_port_t i2c_ports[] = {
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* TODO(aaboagye): Add the other ports. 3 for Zoombini, 2 for Meowth */
 const struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr = SN5S330_ADDR0,
 		.drv = &sn5s330_drv
 	},
+	{
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv,
+	},
 #ifdef BOARD_ZOOMBINI
 	{
-	       .i2c_port = I2C_PORT_TCPC1,
-	       .i2c_addr = SN5S330_ADDR0,
-	       .drv = &sn5s330_drv
-	},
-	{
-	      .i2c_port = I2C_PORT_TCPC2,
-	      .i2c_addr = SN5S330_ADDR0,
-	      .drv = &sn5s330_drv
+		.i2c_port = I2C_PORT_TCPC2,
+		.i2c_addr = SN5S330_ADDR0,
+		.drv = &sn5s330_drv
 	}
 #endif /* defined(BOARD_ZOOMBINI) */
 };
