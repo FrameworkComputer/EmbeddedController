@@ -9,11 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 #ifdef SECTION_IS_RW
-#ifdef BOARD_WHISKERS
-GPIO_INT(TOUCHPAD_INT, PIN(B, 9), GPIO_INT_FALLING, touchpad_interrupt)
-#else
 GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, touchpad_interrupt)
-#endif
 #endif /* SECTION_IS_RW */
 
 /* Keyboard inputs */
@@ -22,7 +18,7 @@ GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, touchpad_interrupt)
 
 GPIO_INT(KB_IN00, PIN(A, 4),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 #ifdef BOARD_WHISKERS
-GPIO_INT(KB_IN01, PIN(A, 8),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
+GPIO_INT(KB_IN01, PIN(B, 10),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 #else
 GPIO_INT(KB_IN01, PIN(B, 3),  GPIO_KB_INPUT, keyboard_raw_gpio_interrupt)
 #endif
@@ -55,8 +51,8 @@ GPIO(KB_OUT12,			PIN(C, 13), GPIO_KB_OUTPUT)
 
 /* I2C pins should be configured as inputs until I2C module is    */
 /* initialized. This will avoid driving the lines unintentionally.*/
-GPIO(TOUCHPAD_I2C_SCL,		PIN(B, 6), GPIO_INPUT)
-GPIO(TOUCHPAD_I2C_SDA,		PIN(B, 7), GPIO_INPUT)
+GPIO(MASTER_I2C_SCL,		PIN(B, 6), GPIO_INPUT)
+GPIO(MASTER_I2C_SDA,		PIN(B, 7), GPIO_INPUT)
 /* TODO(crosbug.com/p/59083): Disable trackpad when appropriate */
 #ifdef BOARD_WHISKERS
 GPIO(EN_PP3300_TP,		PIN(A, 14), GPIO_OUT_HIGH)
@@ -64,18 +60,9 @@ GPIO(EN_PP3300_TP,		PIN(A, 14), GPIO_OUT_HIGH)
 GPIO(EN_PP3300_TP_ODL,		PIN(A, 14), GPIO_OUT_LOW)
 #endif
 
-#ifdef BOARD_WHISKERS
-GPIO(KEYBOARD_BACKLIGHT,	PIN(B, 8), GPIO_INPUT)
-#else
 GPIO(KEYBOARD_BACKLIGHT,	PIN(B, 9), GPIO_INPUT)
-#endif
 
 GPIO(WP_L,			PIN(A, 13), GPIO_INPUT | GPIO_PULL_UP)
-
-#ifdef BOARD_WHISKERS
-GPIO(TP_BOOT0,			PIN(B, 4), GPIO_INPUT)
-GPIO(TP_RESET,			PIN(B, 5), GPIO_INPUT)
-#endif
 
 #ifdef BOARD_WAND
 GPIO(BASE_UART_TX_RX,		PIN(A, 2), GPIO_ODR_HIGH | GPIO_PULL_UP)
@@ -85,6 +72,12 @@ GPIO(CHARGER_I2C_SDA,		PIN(B, 11), GPIO_INPUT)
 
 GPIO(SWITCH_STATUS,		PIN(A, 15), GPIO_INPUT)
 GPIO(EN_OTG,			PIN(B, 5), GPIO_INPUT)
+#elif defined(BOARD_WHISKERS)
+GPIO(DETECT_PATH_DISABLE_L,	PIN(A, 8), GPIO_ODR_HIGH)
+GPIO(SPI1_NSS,			PIN(A, 15), GPIO_OUT_HIGH)
+
+/* TODO(b:68934906): Enable interrupt on this pin */
+GPIO(LID_OPEN,			PIN(B, 11), GPIO_INPUT | GPIO_PULL_UP)
 #else
 GPIO(BASE_DET,			PIN(A, 15), GPIO_INPUT)
 #endif
@@ -99,10 +92,10 @@ ALTERNATE(PIN_MASK(A, 0x0004), 1, MODULE_UART, GPIO_ODR_HIGH) /* USART2: PA2 - E
 ALTERNATE(PIN_MASK(B, 0x0c00), 1, MODULE_I2C, 0) /* I2C CHARGER: PB10/11  GPIO_ODR_HIGH */
 #endif
 
+#ifdef BOARD_WHISKERS
+ALTERNATE(PIN_MASK(B, 0x0038), 0, MODULE_SPI_MASTER, 0) /* SPI MASTER:PB3/4/5 */
+#endif
+
 ALTERNATE(PIN_MASK(B, 0x00c0), 1, MODULE_I2C, 0) /* I2C TOUCHPAD: PB6/7 GPIO_ODR_HIGH */
 
-#ifdef BOARD_WHISKERS
-ALTERNATE(PIN_MASK(B, 0x0100), 2, MODULE_PWM, GPIO_PULL_DOWN) /* PWM: PB8 */
-#else
 ALTERNATE(PIN_MASK(B, 0x0200), 2, MODULE_PWM, GPIO_PULL_DOWN) /* PWM: PB9 */
-#endif

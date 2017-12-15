@@ -66,8 +66,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"touchpad", I2C_PORT_TOUCHPAD, 400,
-		GPIO_TOUCHPAD_I2C_SCL, GPIO_TOUCHPAD_I2C_SDA},
+	{"master", I2C_PORT_MASTER, 400,
+		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
 #ifdef BOARD_WAND
 	{"charger", I2C_PORT_CHARGER, 100,
 		GPIO_CHARGER_I2C_SCL, GPIO_CHARGER_I2C_SDA},
@@ -199,7 +199,7 @@ int board_has_keyboard_backlight(void)
  */
 void board_usb_wake(void)
 {
-#ifdef BOARD_WAND
+#if defined(BOARD_WAND) || defined(BOARD_WHISKERS)
 	/* FIXME: Implement side-band wake for wand. */
 #else
 	/*
