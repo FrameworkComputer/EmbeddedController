@@ -488,11 +488,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	}
 }
 
-const struct button_config *recovery_buttons[] = {
-	&buttons[BUTTON_RECOVERY],
-};
-const int recovery_buttons_count = ARRAY_SIZE(recovery_buttons);
-
 enum battery_present battery_is_present(void)
 {
 	/* The GPIO is low when the battery is present */

@@ -156,12 +156,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const struct button_config *recovery_buttons[] = {
-	&buttons[BUTTON_VOLUME_DOWN],
-	&buttons[BUTTON_VOLUME_UP],
-};
-const int recovery_buttons_count = ARRAY_SIZE(recovery_buttons);
-
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0, /* port idx */

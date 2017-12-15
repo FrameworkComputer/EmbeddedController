@@ -534,12 +534,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const struct button_config *recovery_buttons[] = {
-	&buttons[BUTTON_VOLUME_DOWN],
-	&buttons[BUTTON_VOLUME_UP],
-};
-const int recovery_buttons_count = ARRAY_SIZE(recovery_buttons);
-
 /*
  * Check if PMIC fault registers indicate VR fault. If yes, print out fault
  * register info to console. Additionally, set panic reason so that the OS can

@@ -400,13 +400,17 @@
 /*****************************************************************************/
 
 /*
- * Support for entering recovery mode using volume buttons. You need to
- * list the buttons in recovery_buttons.
+ * Support for entering recovery mode using the volume buttons or a dedicated
+ * recovery button.  Note that these are *buttons* and not keys in the keyboard
+ * matrix.
  */
-#undef CONFIG_BUTTON_RECOVERY
+#undef CONFIG_BUTTON_TRIGGERED_RECOVERY
 
 /*
- * Indicates there is a dedicated recovery button.
+ * Indicates there is a dedicated recovery button.  Note, that if there are
+ * volume buttons, a dedicated recovery button is not needed.  This is intended
+ * because if a board has volume buttons, they can do everything a dedicated
+ * recovery button can do.
  */
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON
 
@@ -3128,6 +3132,15 @@
 	defined(CONFIG_CHARGER_RT9467)
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 #endif
+
+/*****************************************************************************/
+/*
+ * Define CONFIG_BUTTON_TRIGGERED_RECOVERY if a board has a dedicated recovery
+ * button.
+ */
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
+#define CONFIG_BUTTON_TRIGGERED_RECOVERY
+#endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
 
 /*****************************************************************************/
 /*

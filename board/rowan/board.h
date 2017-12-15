@@ -17,7 +17,7 @@
 #define CONFIG_CMD_GPIO_EXTENDED
 
 /* Button */
-#define CONFIG_BUTTON_RECOVERY
+#define CONFIG_BUTTON_TRIGGERED_RECOVERY
 #define CONFIG_VOLUME_BUTTONS
 
 /* Accelero meter and gyro sensor */

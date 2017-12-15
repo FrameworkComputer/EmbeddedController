@@ -123,12 +123,6 @@ const struct spi_device_t spi_devices[] = {
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
-const struct button_config *recovery_buttons[] = {
-	&buttons[BUTTON_VOLUME_DOWN],
-	&buttons[BUTTON_VOLUME_UP],
-	};
-const int recovery_buttons_count = ARRAY_SIZE(recovery_buttons);
-
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{I2C_PORT_TCPC0, FUSB302_I2C_SLAVE_ADDR, &fusb302_tcpm_drv},
 };
