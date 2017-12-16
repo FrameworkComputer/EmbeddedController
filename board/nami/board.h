@@ -12,30 +12,35 @@
  * Allow dangerous commands.
  * TODO: Remove this config before production.
  */
-#undef  CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_USB_PD_COMM_LOCKED
+#define CONFIG_SYSTEM_UNLOCKED
 
 /* EC */
 #define CONFIG_ADC
+#define CONFIG_BACKLIGHT_LID
 #define CONFIG_BOARD_VERSION
-#define CONFIG_DEDICATED_RECOVERY_BUTTON
-#define CONFIG_EMULATED_SYSRQ
-#define CONFIG_LED_COMMON
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_CASE_CLOSED_DEBUG_EXTERNAL
 #define CONFIG_DPTF
+#define CONFIG_DPTF_DEVICE_ORIENTATION
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
-#undef  CONFIG_LID_SWITCH
-#define CONFIG_POWER_BUTTON_IGNORE_LID
-#define CONFIG_PWM
+#define CONFIG_KEYBOARD_COL2_INVERTED
+#define CONFIG_KEYBOARD_PROTOCOL_8042
+#define CONFIG_LED_COMMON
+#define CONFIG_LID_SWITCH
+#define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LTO
 #define CONFIG_CHIP_PANIC_BACKUP
+#define CONFIG_SOFTWARE_PANIC
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25X40
 #define CONFIG_UART_HOST 0
+#define CONFIG_VBOOT_HASH
+#define CONFIG_SHA256_UNROLLED
+#define CONFIG_VOLUME_BUTTONS
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_WIRELESS
 #define CONFIG_WIRELESS_SUSPEND \
@@ -43,48 +48,89 @@
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_DX_WLAN
 #define WIRELESS_GPIO_WWAN GPIO_PP3300_DX_LTE
-#define CONFIG_FANS 1
-#define CONFIG_FAN_RPM_CUSTOM
-#define CONFIG_THROTTLE_AP
-#define CONFIG_CHIPSET_CAN_THROTTLE
-#define CONFIG_PWM
 
 /* EC console commands */
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BUTTON
+
+/* Port80 */
+#undef CONFIG_PORT80_HISTORY_LEN
+#define CONFIG_PORT80_HISTORY_LEN 256
 
 /* SOC */
 #define CONFIG_CHIPSET_SKYLAKE
 #define CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
 #define CONFIG_CHIPSET_RESET_HOOK
-#undef  CONFIG_PECI
 #define CONFIG_ESPI
-/* Eve and Poppy all have wires from GPIO to PCH but CONFIG_ESPI_VW_SIGNALS
- * is defined. So, those GPIOs are not used by EC. */
 #define CONFIG_ESPI_VW_SIGNALS
 #define CONFIG_LPC
+#undef CONFIG_PECI
+
+/* Battery */
+#define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_HW_PRESENT_CUSTOM
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
+#define CONFIG_BATTERY_SMART
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
+#define CONFIG_CHARGE_RAMP_HW /* This, or just RAMP? */
 
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 50000
-
+#define CONFIG_CHARGER
+#define CONFIG_CHARGER_V2
+#define CONFIG_CHARGER_ISL9238
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 2
+#define CONFIG_CHARGER_NARROW_VDC
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
+#define CONFIG_CHARGER_PSYS
+#define CONFIG_CHARGER_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
+#define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_EXTPOWER_GPIO
-#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
-#define CONFIG_EXTPOWER_DEBOUNCE_MS 1000
+#undef   CONFIG_EXTPOWER_DEBOUNCE_MS
+#define  CONFIG_EXTPOWER_DEBOUNCE_MS 1000
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
-#define CONFIG_POWER_BUTTON_INIT_IDLE
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD 30
-#define CONFIG_DELAY_DSW_PWROK_TO_PWRBTN
+#define CONFIG_POWER_S0IX
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
 /* Sensor */
 #define CONFIG_TEMP_SENSOR
-#define CONFIG_TEMP_SENSOR_TMP432
+#define CONFIG_TEMP_SENSOR_BD99992GW
+/* TODO(crosbug.com/p/61098): Is this the correct thermistor? */
+#define CONFIG_THERMISTOR_NCP15WB
+
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
+#define CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
+#define CONFIG_ACCEL_BMA255
+#define CONFIG_ACCEL_INTERRUPTS
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_TABLET_MODE
+#define CONFIG_LID_ANGLE_INVALID_CHECK
+
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 1024
+
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_MODE_SWITCH
 
 /* USB */
-#undef  CONFIG_USB_CHARGER		/* dnojiri: verify */
+#define CONFIG_USB_CHARGER
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_VDM
@@ -93,7 +139,8 @@
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_LOGGING
-#define CONFIG_USB_PD_PORT_COUNT 1
+#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
+#define CONFIG_USB_PD_PORT_COUNT 2
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_MUX
@@ -106,78 +153,42 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
-/* Charge ports */
-#undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
-#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define DEDICATED_CHARGE_PORT 1
-
-/* USB-A config */
-#define CONFIG_USB_PORT_POWER_DUMB
-#define USB_PORT_COUNT 5
+/* BC 1.2 charger */
+#define CONFIG_BC12_DETECT_PI3USB9281
+#define CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT 2
 
 /* Optional feature to configure npcx chip */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2	0 /* 0:GPIO21/17/16/20 as JTAG */
-#define NPCX_TACH_SEL2		1 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
+#define NPCX_TACH_SEL2		0 /* 0:GPIO40/73 as TACH */
 
 /* I2C ports */
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
-#define I2C_PORT_EEPROM		NPCX_I2C_PORT0_1
-#define I2C_PORT_BATTERY	NPCX_I2C_PORT1
+#define I2C_PORT_TCPC1		NPCX_I2C_PORT0_1
+#define I2C_PORT_USB_CHARGER_1	NPCX_I2C_PORT0_1
+#define I2C_PORT_USB_CHARGER_0	NPCX_I2C_PORT1
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT1
+#define I2C_PORT_BATTERY	NPCX_I2C_PORT1
 #define I2C_PORT_PMIC		NPCX_I2C_PORT2
-#define I2C_PORT_THERMAL	NPCX_I2C_PORT3
+#define I2C_PORT_MP2949		NPCX_I2C_PORT2
+#define I2C_PORT_GYRO		NPCX_I2C_PORT3
+#define I2C_PORT_BARO		NPCX_I2C_PORT3
+#define I2C_PORT_ACCEL		I2C_PORT_GYRO
+#define I2C_PORT_THERMAL	I2C_PORT_PMIC
 
 /* I2C addresses */
-#define I2C_ADDR_TCPC0		0x16
-
-/* Verify and jump to RW image on boot */
-#define CONFIG_VBOOT_EFS
-#define CONFIG_VBOOT_HASH
-#define CONFIG_VSTORE
-#define CONFIG_VSTORE_SLOT_COUNT 1
-
-/*
- * Flash layout. Since config_flash_layout.h is included before board.h,
- * we can only overwrite (=undef/define) these parameters here.
- *
- * Flash stores 3 images: RO, RW_A, RW_B. We divide the flash by 4.
- * A public key is stored at the end of RO. Signatures are stored at the
- * end of RW_A and RW_B, respectively.
- */
-#define CONFIG_RW_B
-#define CONFIG_RW_B_MEM_OFF		CONFIG_RO_MEM_OFF
-#undef  CONFIG_RO_SIZE
-#define CONFIG_RO_SIZE			(CONFIG_FLASH_SIZE / 4)
-#undef  CONFIG_RW_SIZE
-#define CONFIG_RW_SIZE			CONFIG_RO_SIZE
-#define CONFIG_RW_A_STORAGE_OFF		CONFIG_RW_STORAGE_OFF
-#define CONFIG_RW_B_STORAGE_OFF		(CONFIG_RW_A_STORAGE_OFF + \
-					 CONFIG_RW_SIZE)
-#define CONFIG_RW_A_SIGN_STORAGE_OFF	(CONFIG_RW_A_STORAGE_OFF + \
-					 CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
-#define CONFIG_RW_B_SIGN_STORAGE_OFF	(CONFIG_RW_B_STORAGE_OFF + \
-					 CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
-
-#define CONFIG_RWSIG
-#define CONFIG_RWSIG_TYPE_RWSIG
-#define CONFIG_RSA
-#define CONFIG_SHA256
-#define CONFIG_RSA_KEY_SIZE 3072
-#define CONFIG_RSA_EXPONENT_3
+#define I2C_ADDR_BD99992	0x60
+#define I2C_ADDR_MP2949		0x40
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "registers.h"
 
-enum charge_port {
-	CHARGE_PORT_TYPEC0,
-	CHARGE_PORT_BARRELJACK,
-};
-
 enum power_signal {
+#ifdef CONFIG_POWER_S0IX
 	X86_SLP_S0_DEASSERTED,
+#endif
 	X86_SLP_S3_DEASSERTED,
 	X86_SLP_S4_DEASSERTED,
 	X86_SLP_SUS_DEASSERTED,
@@ -186,37 +197,32 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+/* Nautilus doesn't have systherm0 and systherm3 */
 enum temp_sensor_id {
+	TEMP_SENSOR_BATTERY,	/* BD99956GW TSENSE */
 	TEMP_SENSOR_CHARGER,	/* BD99992GW SYSTHERM1 */
 	TEMP_SENSOR_DRAM,	/* BD99992GW SYSTHERM2 */
-	TEMP_SENSOR_EMMC,	/* BD99992GW SYSTHERM3 */
 	TEMP_SENSOR_COUNT
 };
 
+/*
+ * Motion sensors:
+ * When reading through IO memory is set up for sensors (LPC is used),
+ * the first 2 entries must be accelerometers, then gyroscope.
+ * For BMI160, accel, gyro and compass sensors must be next to each other.
+ */
+
+enum sensor_id {
+    BASE_ACCEL = 0,
+    BASE_GYRO,
+    LID_ACCEL,
+};
+
 enum adc_channel {
+	ADC_BASE_DET,
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_CH_COUNT
-};
-
-enum pwm_channel {
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
-	PWM_CH_FAN,
-	/* Number of PWM channels */
-	PWM_CH_COUNT
-};
-
-enum fan_channel {
-	FAN_CH_0,
-	/* Number of FAN channels */
-	FAN_CH_COUNT
-};
-
-enum mft_channel {
-	MFT_CH_0,
-	/* Number of MFT channels */
-	MFT_CH_COUNT
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
@@ -232,8 +238,7 @@ enum mft_channel {
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW		15000
-#define PD_MAX_POWER_MW			60000
-/* We can't go above the cable capacity until we add e-marked cable detection */
+#define PD_MAX_POWER_MW			45000
 #define PD_MAX_CURRENT_MA		3000
 #define PD_MAX_VOLTAGE_MV		20000
 
@@ -241,9 +246,6 @@ enum mft_channel {
 int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
-int board_get_battery_soc(void);
-void led_alert(int enable);
-void led_critical(void);
 
 #endif /* !__ASSEMBLER__ */
 

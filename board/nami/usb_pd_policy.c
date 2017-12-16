@@ -3,13 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include "adc.h"
 #include "atomic.h"
 #include "extpower.h"
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
-#include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -29,10 +27,15 @@
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			 PDO_FIXED_COMM_CAP)
 
+/* TODO(crosbug.com/p/61098): fill in correct source and sink capabilities */
 const uint32_t pd_src_pdo[] = {
-	PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
+const uint32_t pd_src_pdo_max[] = {
+		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
+};
+const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
 const uint32_t pd_snk_pdo[] = {
 	PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
@@ -51,20 +54,71 @@ void pd_transition_voltage(int idx)
 	/* No-operation: we are always 5V */
 }
 
+static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
+static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
+
 int board_vbus_source_enabled(int port)
 {
-	if (port != 0)
-		return 0;
-	return gpio_get_level(GPIO_USB_C0_5V_EN);
+	return vbus_en[port];
+}
+
+static void board_vbus_update_source_current(int port)
+{
+	enum gpio_signal gpio_5v_en = port ? GPIO_USB_C1_5V_EN :
+					     GPIO_USB_C0_5V_EN;
+	enum gpio_signal gpio_3a_en = port ? GPIO_USB_C1_3A_EN :
+					     GPIO_USB_C0_3A_EN;
+
+	if (system_get_board_version() >= 1) {
+		/*
+		 * For rev1 and beyond, 1.5 vs 3.0 A limit is controlled by a
+		 * dedicated gpio where high = 3.0A and low = 1.5A. VBUS on/off
+		 * is controlled by GPIO_USB_C0/1_5V_EN. Both of these signals
+		 * can remain outputs.
+		 */
+		gpio_set_level(gpio_3a_en, vbus_rp[port] == TYPEC_RP_3A0 ?
+				1 : 0);
+		gpio_set_level(gpio_5v_en, vbus_en[port]);
+	} else {
+		/*
+		 * Driving USB_Cx_5V_EN high, actually put a 16.5k resistance
+		 * (2x 33k in parallel) on the NX5P3290 load switch ILIM pin,
+		 * setting a minimum OCP current of 3186 mA.
+		 * Putting an internal pull-up on USB_Cx_5V_EN, effectively put
+		 * a 33k resistor on ILIM, setting a minimum OCP current of
+		 * 1505 mA.
+		 */
+		int flags = (vbus_rp[port] == TYPEC_RP_1A5 && vbus_en[port]) ?
+			(GPIO_INPUT | GPIO_PULL_UP) :
+			(GPIO_OUTPUT | GPIO_PULL_UP);
+		gpio_set_level(gpio_5v_en, vbus_en[port]);
+		gpio_set_flags(gpio_5v_en, flags);
+	}
+}
+
+void typec_set_source_current_limit(int port, int rp)
+{
+	vbus_rp[port] = rp;
+
+	/* change the GPIO driving the load switch if needed */
+	board_vbus_update_source_current(port);
 }
 
 int pd_set_power_supply_ready(int port)
 {
 	/* Disable charging */
-	gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
+	gpio_set_level(port ? GPIO_USB_C1_CHARGE_L :
+			      GPIO_USB_C0_CHARGE_L, 1);
 
-	/* Enable VBUS source */
-	gpio_set_level(GPIO_USB_C0_5V_EN, 1);
+	/* Ensure we advertise the proper available current quota */
+	charge_manager_source_port(port, 1);
+
+	/* Provide VBUS */
+	vbus_en[port] = 1;
+	board_vbus_update_source_current(port);
+
+	if (system_get_board_version() >= 2)
+		pd_set_vbus_discharge(port, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -74,8 +128,20 @@ int pd_set_power_supply_ready(int port)
 
 void pd_power_supply_reset(int port)
 {
-	/* Disable VBUS source */
-	gpio_set_level(GPIO_USB_C0_5V_EN, 0);
+	int prev_en;
+
+	prev_en = vbus_en[port];
+
+	/* Disable VBUS */
+	vbus_en[port] = 0;
+	board_vbus_update_source_current(port);
+
+	/* Enable discharge if we were previously sourcing 5V */
+	if (system_get_board_version() >= 2 && prev_en)
+		pd_set_vbus_discharge(port, 1);
+
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -83,7 +149,8 @@ void pd_power_supply_reset(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
+	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
+				      GPIO_USB_C0_VBUS_WAKE_L);
 }
 
 int pd_board_checks(void)
@@ -93,9 +160,6 @@ int pd_board_checks(void)
 
 int pd_check_power_swap(int port)
 {
-	/* If type-c port is supplying power, we never swap PR (to source) */
-	if (port == charge_manager_get_active_charge_port())
-		return 0;
 	/*
 	 * Allow power swap as long as we are acting as a dual role device,
 	 * otherwise assume our role is fixed (not in S0 or console command
@@ -106,8 +170,15 @@ int pd_check_power_swap(int port)
 
 int pd_check_data_swap(int port, int data_role)
 {
-	/* Allow data swap if we are a UFP, otherwise don't allow */
-	return (data_role == PD_ROLE_UFP) ? 1 : 0;
+	/*
+	 * Allow data swap if we are a UFP, otherwise don't allow.
+	 *
+	 * When we are still in the Read-Only firmware, avoid swapping roles
+	 * so we don't jump in RW as a SNK/DFP and potentially confuse the
+	 * power supply by sending a soft-reset with wrong data role.
+	 */
+	return (data_role == PD_ROLE_UFP) &&
+	       (system_get_image_copy() != SYSTEM_IMAGE_RO) ? 1 : 0;
 }
 
 int pd_check_vconn_swap(int port)
@@ -145,7 +216,9 @@ void pd_check_pr_role(int port, int pr_role, int flags)
 void pd_check_dr_role(int port, int dr_role, int flags)
 {
 	/* If UFP, try to switch to DFP */
-	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
+	if ((flags & PD_FLAGS_PARTNER_DR_DATA) &&
+			dr_role == PD_ROLE_UFP &&
+			system_get_image_copy() != SYSTEM_IMAGE_RO)
 		pd_request_data_swap(port);
 }
 /* ----------------- Vendor Defined Messages ------------------ */
@@ -217,99 +290,6 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	}
 
 	return 0;
-}
-
-/*
- * Since fizz has no battery, it must source all of its power from either
- * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
- * mode (charge_manager_leave_safe_mode() will never be called), which
- * modifies port / ILIM selection as follows:
- *
- * - Dual-role / dedicated capability of the port partner is ignored.
- * - Charge ceiling on PD voltage transition is ignored.
- * - CHARGE_PORT_NONE will never be selected.
- */
-static void board_charge_manager_init(void)
-{
-	int input_voltage;
-	enum charge_port input_port;
-	int i, j;
-	struct charge_port_info cpi = { 0 };
-
-	/* Initialize all charge suppliers to 0 */
-	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
-		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
-			charge_manager_update_charge(j, i, &cpi);
-	}
-
-	input_voltage = adc_read_channel(ADC_VBUS);
-	input_port = gpio_get_level(GPIO_ADP_IN_L) ?
-			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
-	CPRINTS("Power Source: p%d (%dmV)", input_port, input_voltage);
-
-	/* Initialize the power source supplier */
-	switch (input_port) {
-	case CHARGE_PORT_TYPEC0:
-		typec_set_input_current_limit(input_port, 3000, input_voltage);
-		break;
-	case CHARGE_PORT_BARRELJACK:
-		cpi.voltage = input_voltage;
-		if (gpio_get_level(GPIO_POWER_RATE))
-			cpi.current = 4620;
-		else
-			cpi.current = 3330;
-		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-					     DEDICATED_CHARGE_PORT, &cpi);
-		break;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_charge_manager_init, HOOK_PRIO_INIT_ADC + 1);
-
-int board_set_active_charge_port(int port)
-{
-	const int active_port = charge_manager_get_active_charge_port();
-
-	if (port < 0 || CHARGE_PORT_COUNT <= port)
-		return EC_ERROR_INVAL;
-
-	if (port == active_port)
-		return EC_SUCCESS;
-
-	/* Don't charge from a source port */
-	if (board_vbus_source_enabled(port))
-		return EC_ERROR_INVAL;
-
-	CPRINTS("New charger p%d", port);
-
-	switch (port) {
-	case CHARGE_PORT_TYPEC0:
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
-		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
-		gpio_enable_interrupt(GPIO_ADP_IN_L);
-		break;
-	case CHARGE_PORT_BARRELJACK :
-		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
-		/* If this is switching from type-c to BJ, we have to wait until
-		 * PU3 comes up to keep the system continuously powered.
-		 * NX20P5090 datasheet says turn-on time for 20V is 29 msec. */
-		if (active_port == CHARGE_PORT_TYPEC0)
-			msleep(30);
-		/* We don't check type-c voltage here. If it's higher than
-		 * BJ voltage, we'll brown out due to the reverse current
-		 * protection of PU3. */
-		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
-		gpio_disable_interrupt(GPIO_ADP_IN_L);
-		break;
-	default:
-		return EC_ERROR_INVAL;
-	}
-
-	return EC_SUCCESS;
-}
-
-int board_get_battery_soc(void)
-{
-	return 100;
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
