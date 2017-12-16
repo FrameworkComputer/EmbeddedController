@@ -31,10 +31,6 @@ const uint32_t pd_src_pdo[] = {
 		PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-const uint32_t pd_src_pdo_max[] = {
-		PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
-};
-const int pd_src_pdo_max_cnt = ARRAY_SIZE(pd_src_pdo_max);
 
 const uint32_t pd_snk_pdo[] = {
 		PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
@@ -66,8 +62,6 @@ int board_vbus_source_enabled(int port)
 
 int pd_set_power_supply_ready(int port)
 {
-	/* Ensure we advertise the proper available current quota */
-	charge_manager_source_port(port, 1);
 
 	pd_set_vbus_discharge(port, 0);
 	/* Provide VBUS */
@@ -91,9 +85,6 @@ void pd_power_supply_reset(int port)
 	/* Enable discharge if we were previously sourcing 5V */
 	if (prev_en)
 		pd_set_vbus_discharge(port, 1);
-
-	/* Give back the current quota we are no longer using */
-	charge_manager_source_port(port, 0);
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
