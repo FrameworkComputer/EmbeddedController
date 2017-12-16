@@ -17,7 +17,7 @@
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /*
- * TODO(philipchen): Check if these parameters are valid for Nautilus battery.
+ * TODO(dnojiri): Check if these parameters are valid for battery.
  *
  * Shutdown mode parameter to write to manufacturer access register
  */
@@ -136,7 +136,7 @@ static int battery_check_disconnect(void)
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	/* TODO(philipchen): Verify if Nautilus battery supports this check. */
+	/* TODO(dnojiri): Verify if battery supports this check. */
 	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
 			BATTERY_CHARGING_DISABLED)) ==
 	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))

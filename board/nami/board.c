@@ -7,7 +7,6 @@
 
 #include "adc.h"
 #include "adc_chip.h"
-#include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
 #include "charge_manager.h"
@@ -16,13 +15,13 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "driver/pmic_tps650x30.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/baro_bmp280.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
-#include "driver/temp_sensor/bd99992gw.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -36,6 +35,8 @@
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "switch.h"
 #include "system.h"
@@ -53,6 +54,14 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+int board_get_version(void)
+{
+	static int version = 0;
+	/* dnojiri: Read version from EEPROM */
+	CPRINTS("Board version: %d", version);
+	return version;
+}
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -72,12 +81,8 @@ static void tcpc_alert_event(enum gpio_signal signal)
 /* Set PD discharge whenever VBUS detection is high (i.e. below threshold). */
 static void vbus_discharge_handler(void)
 {
-	if (system_get_board_version() >= 2) {
-		pd_set_vbus_discharge(0,
-				gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
-		pd_set_vbus_discharge(1,
-				gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
-	}
+	pd_set_vbus_discharge(0, gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+	pd_set_vbus_discharge(1, gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
 }
 DECLARE_DEFERRED(vbus_discharge_handler);
 
@@ -86,7 +91,6 @@ void vbus0_evt(enum gpio_signal signal)
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(0, !gpio_get_level(signal));
 	task_wake(TASK_ID_PD_C0);
-
 	hook_call_deferred(&vbus_discharge_handler_data, 0);
 }
 
@@ -95,7 +99,6 @@ void vbus1_evt(enum gpio_signal signal)
 	/* VBUS present GPIO is inverted */
 	usb_charger_vbus_change(1, !gpio_get_level(signal));
 	task_wake(TASK_ID_PD_C1);
-
 	hook_call_deferred(&vbus_discharge_handler_data, 0);
 }
 
@@ -118,13 +121,8 @@ const struct power_signal_info power_signal_list[] = {
 		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
 		"SLP_S0_DEASSERTED"},
 #endif
-#ifdef CONFIG_ESPI_VW_SIGNALS
 	{VW_SLP_S3_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
 	{VW_SLP_S4_L,		POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-#else
-	{GPIO_PCH_SLP_S3_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S4_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S4_DEASSERTED"},
-#endif
 	{GPIO_PCH_SLP_SUS_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_SUS_DEASSERTED"},
 	{GPIO_RSMRST_L_PGOOD,	POWER_SIGNAL_ACTIVE_HIGH, "RSMRST_L_PGOOD"},
 	{GPIO_PMIC_DPWROK,	POWER_SIGNAL_ACTIVE_HIGH, "PMIC_DPWROK"},
@@ -134,16 +132,14 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /* Hibernate wake configuration */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,
+	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	/* Base detection */
-	[ADC_BASE_DET] = {"BASE_DET", NPCX_ADC_CH0,
-			  ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	/* Vbus sensing (10x voltage divider). */
+	/* Vbus sensing (10x voltage divider). PPVAR_BOOSTIN_SENSE */
 	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
@@ -158,9 +154,11 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct i2c_port_t i2c_ports[]  = {
 	{"tcpc0",     NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"tcpc1",     NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"charger",   NPCX_I2C_PORT1,   100, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
+	{"battery",   NPCX_I2C_PORT1,   400, GPIO_I2C1_SCL,   GPIO_I2C1_SDA}, /* dnojiri:verify */
+	{"charger",   NPCX_I2C_PORT2,   100, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"pmic",      NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"accelgyro", NPCX_I2C_PORT3,   400, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
+	/* dnojiri: Add KB backlight, ALS, G-sensor, Thermal sensor, BC1.2 Detectors. */
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -250,161 +248,148 @@ uint16_t tcpc_get_alert_status(void)
 
 const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
-
-	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1, 4},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
+	/* dnojiri: Add temp sensors */
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * Check if PMIC fault registers indicate VR fault. If yes, print out fault
- * register info to console. Additionally, set panic reason so that the OS can
- * check for fault register info by looking at offset 0x14(PWRSTAT1) and
- * 0x15(PWRSTAT2) in cros ec panicinfo.
- */
-static void board_report_pmic_fault(const char *str)
-{
-	int vrfault, pwrstat1 = 0, pwrstat2 = 0;
-	uint32_t info;
-
-	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, &vrfault)
-	    != EC_SUCCESS)
-		return;
-
-	if (!(vrfault & (1 << 4)))
-		return;
-
-	/* VRFAULT has occurred, print VRFAULT status bits. */
-
-	/* PWRSTAT1 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, &pwrstat1);
-
-	/* PWRSTAT2 */
-	i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, &pwrstat2);
-
-	CPRINTS("PMIC VRFAULT: %s", str);
-	CPRINTS("PMIC VRFAULT: PWRSTAT1=0x%02x PWRSTAT2=0x%02x", pwrstat1,
-		pwrstat2);
-
-	/* Clear all faults -- Write 1 to clear. */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x8, (1 << 4));
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x16, pwrstat1);
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x17, pwrstat2);
-
-	/*
-	 * Status of the fault registers can be checked in the OS by looking at
-	 * offset 0x14(PWRSTAT1) and 0x15(PWRSTAT2) in cros ec panicinfo.
-	 */
-	info = ((pwrstat2 & 0xFF) << 8) | (pwrstat1 & 0xFF);
-	panic_set_reason(PANIC_SW_PMIC_FAULT, info, 0);
-}
-
-static void board_pmic_disable_slp_s0_vr_decay(void)
-{
-	/*
-	 * VCCIOCNT:
-	 * Bit 6    (0)   - Disable decay of VCCIO on SLP_S0# assertion
-	 * Bits 5:4 (00)  - Nominal output voltage: 0.975V
-	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10)  - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0xa);
-
-	/*
-	 * V18ACNT:
-	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (10) - Nominal voltage set to 1.8V
-	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10) - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x2a);
-
-	/*
-	 * V100ACNT:
-	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (01) - Nominal voltage 1.0V
-	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10) - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x1a);
-
-	/*
-	 * V085ACNT:
-	 * Bits 7:6 (00) - Disable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (11) - Nominal voltage 1.0V
-	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10) - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x3a);
-}
-
-static void board_pmic_enable_slp_s0_vr_decay(void)
-{
-	/*
-	 * VCCIOCNT:
-	 * Bit 6    (1)   - Enable decay of VCCIO on SLP_S0# assertion
-	 * Bits 5:4 (00)  - Nominal output voltage: 0.975V
-	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10)  - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x4a);
-
-	/*
-	 * V18ACNT:
-	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (10) - Nominal voltage set to 1.8V
-	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10) - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x34, 0x6a);
-
-	/*
-	 * V100ACNT:
-	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (01) - Nominal voltage 1.0V
-	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10) - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x5a);
-
-	/*
-	 * V085ACNT:
-	 * Bits 7:6 (01) - Enable low power mode on SLP_S0# assertion
-	 * Bits 5:4 (11) - Nominal voltage 1.0V
-	 * Bits 3:2 (10) - VR set to AUTO on SLP_S0# de-assertion
-	 * Bits 1:0 (10) - VR set to AUTO operating mode
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
-}
-
-void power_board_handle_host_sleep_event(enum host_sleep_event state)
-{
-	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
-		board_pmic_enable_slp_s0_vr_decay();
-	else if (state == HOST_SLEEP_EVENT_S0IX_RESUME)
-		board_pmic_disable_slp_s0_vr_decay();
-}
+#define I2C_PMIC_READ(reg, data) \
+		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
+#define I2C_PMIC_WRITE(reg, data) \
+		i2c_write8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
 
 static void board_pmic_init(void)
 {
-	board_report_pmic_fault("SYSJUMP");
+	int err;
+	int error_count = 0;
+	static uint8_t pmic_initialized = 0;
 
-	if (system_jumped_to_this_image())
+	if (pmic_initialized)
 		return;
 
-	/* DISCHGCNT3 - enable 100 ohm discharge on V1.00A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3e, 0x04);
+	/* Read vendor ID */
+	while (1) {
+		int data;
+		err = I2C_PMIC_READ(TPS650X30_REG_VENDORID, &data);
+		if (!err && data == TPS650X30_VENDOR_ID)
+			break;
+		else if (error_count > 5)
+			goto pmic_error;
+		error_count++;
+	}
 
-	board_pmic_disable_slp_s0_vr_decay();
+	/*
+	 * VCCIOCNT register setting
+	 * [6] : CSDECAYEN
+	 * otherbits: default
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_VCCIOCNT, 0x4A);
+	if (err)
+		goto pmic_error;
 
-	/* VRMODECTRL - disable low-power mode for all rails */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x1f);
+	/*
+	 * VRMODECTRL:
+	 * [4] : VCCIOLPM clear
+	 * otherbits: default
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_VRMODECTRL, 0x2F);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * PGMASK1 : Exclude VCCIO from Power Good Tree
+	 * [7] : MVCCIOPG clear
+	 * otherbits: default
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_PGMASK1, 0x80);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * PWFAULT_MASK1 Register settings
+	 * [7] : 1b V4 Power Fault Masked
+	 * [4] : 1b V7 Power Fault Masked
+	 * [2] : 1b V9 Power Fault Masked
+	 * [0] : 1b V13 Power Fault Masked
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_PWFAULT_MASK1, 0x95);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * Discharge control 4 register configuration
+	 * [7:6] : 00b Reserved
+	 * [5:4] : 01b V3.3S discharge resistance (V6S), 100 Ohm
+	 * [3:2] : 01b V18S discharge resistance (V8S), 100 Ohm
+	 * [1:0] : 01b V100S discharge resistance (V11S), 100 Ohm
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_DISCHCNT4, 0x15);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * Discharge control 3 register configuration
+	 * [7:6] : 01b V1.8U_2.5U discharge resistance (V9), 100 Ohm
+	 * [5:4] : 01b V1.2U discharge resistance (V10), 100 Ohm
+	 * [3:2] : 01b V100A discharge resistance (V11), 100 Ohm
+	 * [1:0] : 01b V085A discharge resistance (V12), 100 Ohm
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_DISCHCNT3, 0x55);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * Discharge control 2 register configuration
+	 * [7:6] : 01b V5ADS3 discharge resistance (V5), 100 Ohm
+	 * [5:4] : 01b V33A_DSW discharge resistance (V6), 100 Ohm
+	 * [3:2] : 01b V33PCH discharge resistance (V7), 100 Ohm
+	 * [1:0] : 01b V18A discharge resistance (V8), 100 Ohm
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_DISCHCNT2, 0x55);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * Discharge control 1 register configuration
+	 * [7:2] : 00b Reserved
+	 * [1:0] : 01b VCCIO discharge resistance (V4), 100 Ohm
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_DISCHCNT1, 0x01);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * Increase Voltage
+	 *  [7:0] : 0x2a default
+	 *  [5:4] : 10b default
+	 *  [5:4] : 01b 5.1V (0x1a)
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_V5ADS3CNT, 0x1a);
+	if (err)
+		goto pmic_error;
+
+	/*
+	 * PBCONFIG Register configuration
+	 *   [7] :      1b Power button debounce, 0ms (no debounce)
+	 *   [6] :      0b Power button reset timer logic, no action (default)
+	 * [5:0] : 011111b Force an Emergency reset time, 31s (default)
+	 */
+	err = I2C_PMIC_WRITE(TPS650X30_REG_PBCONFIG, 0x9F);
+	if (err)
+		goto pmic_error;
+
+	CPRINTS("PMIC init done");
+	pmic_initialized = 1;
+	return;
+
+pmic_error:
+	CPRINTS("PMIC init failed: %d", err);
 }
-DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
+
+static void chipset_pre_init(void)
+{
+	board_pmic_init();
+}
+DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
 /* Initialize board. */
 static void board_init(void)
@@ -418,10 +403,10 @@ static void board_init(void)
 	NPCX_PUPD_EN1 |= (1 << NPCX_DEVPU1_F_SPI_PUD_EN);
 
 	/* Provide AC status to the PCH */
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());
 
 	/* Enable sensors power supply */
-	gpio_set_level(GPIO_PP1800_DX_SENSOR, 1);
+	/* dnojiri: how do we enable it? */
 
 	/* Enable VBUS interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
@@ -430,15 +415,6 @@ static void board_init(void)
 	/* Enable pericom BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-
-	/* Level of sensor's I2C and interrupt are 3.3V on proto board */
-	if(system_get_board_version() < 2) {
-		/* ACCELGYRO3_INT_L */
-		gpio_set_flags(GPIO_ACCELGYRO3_INT_L, GPIO_INT_FALLING);
-		/* I2C3_SCL / I2C3_SDA */
-		gpio_set_flags(GPIO_I2C3_SCL, GPIO_INPUT);
-		gpio_set_flags(GPIO_I2C3_SDA, GPIO_INPUT);
-        }
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -447,29 +423,23 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
  */
 static void board_extpower(void)
 {
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
-/**
- * Set active charge port -- only one port can be active at a time.
- *
- * @param charge_port   Charge port to enable.
- *
- * Returns EC_SUCCESS if charge port is accepted and made active,
- * EC_ERROR_* otherwise.
- */
+/* Set active charge port -- only one port can be active at a time. */
 int board_set_active_charge_port(int charge_port)
 {
 	/* charge port is a physical port */
 	int is_real_port = (charge_port >= 0 &&
 			    charge_port < CONFIG_USB_PD_PORT_COUNT);
-	/* check if we are source VBUS on the port */
-	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
-						       GPIO_USB_C1_5V_EN);
+	/* check if we are sourcing VBUS on the port */
+	/* dnojiri: revisit */
+	int is_source = gpio_get_level(charge_port == 0 ?
+			GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN);
 
-	if (is_real_port && source) {
-		CPRINTF("Skip enable p%d", charge_port);
+	if (is_real_port && is_source) {
+		CPRINTF("No charging on source port p%d is ", charge_port);
 		return EC_ERROR_INVAL;
 	}
 
@@ -481,6 +451,8 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_USB_C1_CHARGE_L, 1);
 	} else {
 		/* Make sure non-charging port is disabled */
+		/* dnojiri: revisit. there is always this assumption that
+		 * battery is present. If not, this may cause brownout. */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :
 					     GPIO_USB_C1_CHARGE_L, 1);
 		/* Enable charging port */
@@ -491,79 +463,32 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-        /*
-         * Limit the input current to 96% negotiated limit,
-         * to account for the charger chip margin.
-         */
+	/*
+	 * Limit the input current to 96% negotiated limit,
+	 * to account for the charger chip margin.
+	 */
 	charge_ma = charge_ma * 96 / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-
-/**
- * Return whether ramping is allowed for given supplier
- */
-int board_is_ramp_allowed(int supplier)
-{
-	/* Don't allow ramping in RO when write protected */
-	if (!system_is_in_rw() && system_is_locked())
-		return 0;
-	else
-		return (supplier == CHARGE_SUPPLIER_BC12_DCP ||
-			supplier == CHARGE_SUPPLIER_BC12_SDP ||
-			supplier == CHARGE_SUPPLIER_BC12_CDP ||
-			supplier == CHARGE_SUPPLIER_OTHER);
-}
-
-/**
- * Return the maximum allowed input current
- */
-int board_get_ramp_current_limit(int supplier, int sup_curr)
-{
-	switch (supplier) {
-	case CHARGE_SUPPLIER_BC12_DCP:
-		return 2000;
-	case CHARGE_SUPPLIER_BC12_SDP:
-		return 1000;
-	case CHARGE_SUPPLIER_BC12_CDP:
-	case CHARGE_SUPPLIER_PROPRIETARY:
-		return sup_curr;
-	default:
-		return 500;
-	}
+	charge_set_input_current_limit(
+			MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT),
+			charge_mv);
 }
 
 void board_hibernate(void)
 {
 	CPRINTS("Triggering PMIC shutdown.");
 	uart_flush_output();
-
-    /* Trigger PMIC shutdown. */
-	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x01)) {
-		/*
-		 * If we can't tell the PMIC to shutdown, instead reset
-		 * and don't start the AP. Hopefully we'll be able to
-		 * communicate with the PMIC next time.
-		 */
-		CPRINTS("PMIC i2c failed.");
-		system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
-	}
-
-	/* Await shutdown. */
-	while (1)
-		;
+	/* dnojiri: revisit */
 }
+
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_LED_RED]   = { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
@@ -717,12 +642,6 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-static void board_chipset_reset(void)
-{
-	board_report_pmic_fault("CHIPSET RESET");
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESET, board_chipset_reset, HOOK_PRIO_DEFAULT);
-
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
@@ -736,15 +655,3 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_startup(void)
-{
-	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_shutdown(void)
-{
-	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
