@@ -92,8 +92,9 @@ static const uint8_t rt946x_irq_maskall[RT946X_IRQ_COUNT] = {
 #endif
 };
 
+/* Must be in ascending order */
 static const uint16_t rt946x_boost_current[] = {
-	500, 700, 1100, 1300, 1800, 2100, 2400, 3000,
+	500, 700, 1100, 1300, 1800, 2100, 2400,
 };
 
 static int rt946x_read8(int reg, int *val)
@@ -161,19 +162,6 @@ static inline uint8_t rt946x_closest_reg(uint16_t min, uint16_t max,
 	if (target >= max)
 		return ((max - min) / step);
 	return (target - min) / step;
-}
-
-static uint8_t rt946x_closest_reg_via_tbl(const uint16_t *tbl, uint16_t target)
-{
-	int i = 0;
-
-	if (target < tbl[0])
-		return 0;
-	for (i = 0; i < ARRAY_SIZE(tbl) - 1; i++) {
-		if (target >= tbl[i] && target < tbl[i + 1])
-			return i;
-	}
-	return ARRAY_SIZE(tbl) - 1;
 }
 
 static int rt946x_chip_rev(int *chip_rev)
@@ -276,15 +264,23 @@ static int rt946x_set_boost_voltage(unsigned int voltage)
 
 static int rt946x_set_boost_current(unsigned int current)
 {
-	uint8_t reg_current = 0;
+	int i;
 
-	reg_current = rt946x_closest_reg_via_tbl(rt946x_boost_current, current);
+	/*
+	 * Find the smallest output current threshold which can support
+	 * our requested output current. Use the greatest achievable
+	 * boost current (2.4A) if requested current is too large.
+	 */
+	for (i = 0; i < ARRAY_SIZE(rt946x_boost_current) - 1; i++) {
+		if (current < rt946x_boost_current[i])
+			break;
+	}
 
-	CPRINTF("%s current = %d(0x%02X)\n", __func__, current, reg_current);
+	CPRINTF("%s current = %d(0x%02X)\n", __func__, current, i);
 
 	return rt946x_update_bits(RT946X_REG_CHGCTRL10,
 		RT946X_MASK_BOOST_CURRENT,
-		reg_current << RT946X_SHIFT_BOOST_CURRENT);
+		i << RT946X_SHIFT_BOOST_CURRENT);
 }
 
 static int rt946x_set_ircmp_vclamp(unsigned int vclamp)
