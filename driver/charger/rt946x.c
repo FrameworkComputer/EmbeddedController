@@ -51,7 +51,7 @@ static const struct charger_init_setting rt946x_charger_init_setting = {
 	.ircmp_vclamp = 32,
 	.ircmp_res = 25,
 	.boost_voltage = 5050,
-	.boost_current = 500,
+	.boost_current = 1500,
 };
 
 enum rt946x_ilmtsel {
