@@ -253,11 +253,9 @@ static void board_charge_manager_init(void)
 		typec_set_input_current_limit(input_port, 3000, input_voltage);
 		break;
 	case CHARGE_PORT_BARRELJACK:
-		cpi.voltage = input_voltage;
-		if (gpio_get_level(GPIO_POWER_RATE))
-			cpi.current = 4620;
-		else
-			cpi.current = 3330;
+		/* Set it to the default. Will be updated by AP. */
+		cpi.voltage = 19000;
+		cpi.current = 3330;
 		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 					     DEDICATED_CHARGE_PORT, &cpi);
 		break;

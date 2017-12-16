@@ -96,10 +96,8 @@ static void adp_in_deferred(void)
 						   ADP_DEBOUNCE_MS * MSEC);
 				return;
 			}
-			if (gpio_get_level(GPIO_POWER_RATE))
-				pi.current = 4620;
-			else
-				pi.current = 3330;
+			/* Set it to the default. Will be updated by AP. */
+			pi.current = 3330;
 		}
 	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
