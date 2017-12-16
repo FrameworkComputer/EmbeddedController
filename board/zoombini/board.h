@@ -11,6 +11,7 @@
 /* Optional features */
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
+#define CONFIG_CMD_BUTTON
 #define CONFIG_CMD_PPC_DUMP
 
 /* NPCX7 config */
@@ -38,6 +39,10 @@
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 
 #define CONFIG_BOARD_VERSION
+
+#ifdef BOARD_MEOWTH
+#define CONFIG_BUTTON_TRIGGERED_RECOVERY
+#endif /* defined(BOARD_MEOWTH) */
 
 #ifdef BOARD_ZOOMBINI
 #define CONFIG_BC12_DETECT_BQ24392
