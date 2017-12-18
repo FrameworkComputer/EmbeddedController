@@ -311,14 +311,6 @@ static void board_init(void)
 	int i;
 #endif /* defined(BOARD_ZOOMBINI) */
 
-#ifdef BOARD_MEOWTH
-	/* TODO(aaboagye): Eventually do something with these LEDs. */
-	pwm_set_duty(PWM_CH_DB0_LED_BLUE, 100);
-	pwm_set_duty(PWM_CH_DB1_LED_RED, 100);
-	pwm_set_duty(PWM_CH_DB1_LED_GREEN, 100);
-	pwm_set_duty(PWM_CH_DB1_LED_BLUE, 100);
-#endif /* defined(BOARD_MEOWTH) */
-
 #ifdef BOARD_ZOOMBINI
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_L);
@@ -346,6 +338,24 @@ static void board_init(void)
 #endif /* defined(BOARD_ZOOMBINI) */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_init_leds_off(void)
+{
+	/* Initialize the LEDs off. */
+#ifdef BOARD_MEOWTH
+	/* TODO(aaboagye): Eventually do something with these LEDs. */
+	pwm_set_duty(PWM_CH_DB0_LED_RED, 100);
+	pwm_set_duty(PWM_CH_DB0_LED_GREEN, 100);
+	pwm_set_duty(PWM_CH_DB0_LED_BLUE, 100);
+	pwm_set_duty(PWM_CH_DB1_LED_RED, 100);
+	pwm_set_duty(PWM_CH_DB1_LED_GREEN, 100);
+	pwm_set_duty(PWM_CH_DB1_LED_BLUE, 100);
+#else /* !defined(BOARD_MEOWTH) */
+	pwm_set_duty(PWM_CH_LED_RED, 100);
+	pwm_set_duty(PWM_CH_LED_GREEN, 100);
+#endif /* defined(BOARD_MEOWTH) */
+}
+DECLARE_HOOK(HOOK_INIT, board_init_leds_off, HOOK_PRIO_INIT_PWM + 1);
 
 void board_overcurrent_event(int port)
 {
