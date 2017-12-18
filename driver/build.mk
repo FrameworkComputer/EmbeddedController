@@ -78,6 +78,7 @@ driver-$(CONFIG_TEMP_SENSOR_BD99992GW)+=temp_sensor/bd99992gw.o
 driver-$(CONFIG_TEMP_SENSOR_EC_ADC)+=temp_sensor/ec_adc.o
 driver-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor/g78x.o
 driver-$(CONFIG_TEMP_SENSOR_G782)+=temp_sensor/g78x.o
+driver-$(CONFIG_TEMP_SENSOR_SB_TSI)+=temp_sensor/sb_tsi.o
 driver-$(CONFIG_TEMP_SENSOR_TMP006)+=temp_sensor/tmp006.o
 driver-$(CONFIG_TEMP_SENSOR_TMP112)+=temp_sensor/tmp112.o
 driver-$(CONFIG_TEMP_SENSOR_TMP411)+=temp_sensor/tmp411.o
