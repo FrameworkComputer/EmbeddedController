@@ -12,7 +12,6 @@
  * Version 1: Control signals PP900_PLL_EN and PP900_PMU_EN
  *	      are merged with PP900_USB_EN.
  * Version 2: Simplified power tree, fewer control signals.
- * Version 3: Close to version 1 but more components disabled in S3.
  */
 
 #include "charge_state.h"
@@ -100,17 +99,6 @@ static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PP1800_S3_EN, 1, 2 },
 	{ GPIO_PP1250_S3_EN, 1, 2 },
 };
-#elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
-static const struct power_seq_op s5s3_power_seq[] = {
-	{ GPIO_PP900_S0_EN, 1, 2 },
-	{ GPIO_PP900_S3_EN, 1, 2 },
-	{ GPIO_SYS_RST_L, 0, 0 },
-	{ GPIO_PP1800_PMU_EN_L, 0, 2 },
-	{ GPIO_LPDDR_PWR_EN, 1, 2 },
-	{ GPIO_PP1800_USB_EN_L, 0, 2 },
-	{ GPIO_PP3300_USB_EN_L, 0, 2 },
-	{ GPIO_PP5000_EN, 1, 2 },
-};
 #else
 static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PPVAR_LOGIC_EN, 1, 0 },
@@ -140,18 +128,6 @@ static const struct power_seq_op s3s0_power_seq[] = {
 	{ GPIO_AP_CORE_EN, 1, 2 },
 	{ GPIO_PP1800_S0_EN, 1, 0 },
 };
-#elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
-static const struct power_seq_op s3s0_power_seq[] = {
-	/* TODO(b/65270978): add GPIO_PP900_S0_EN control later. */
-	{ GPIO_PP1800_AP_AVDD_EN_L, 0, 2 },
-	{ GPIO_AP_CORE_EN, 1, 2 },
-	{ GPIO_PP1800_S0_EN_L, 0, 2 },
-	{ GPIO_PP3300_S0_EN_L, 0, 2 },
-	{ GPIO_PP3300_TRACKPAD_EN_L, 0, 1 },
-	{ GPIO_PP1800_LID_EN_L, 0, 0 },
-	{ GPIO_PP1800_SIXAXIS_EN_L, 0, 2 },
-	{ GPIO_PP1800_SENSOR_EN_L, 0, 0 },
-};
 #else
 static const struct power_seq_op s3s0_power_seq[] = {
 	{ GPIO_PPVAR_CLOGIC_EN, 1, 2 },
@@ -176,17 +152,6 @@ static const struct power_seq_op s3s0_usb_wake_power_seq[] = {
 static const struct power_seq_op s0s3_power_seq[] = {
 	{ GPIO_PP1800_S0_EN, 0, 1 },
 	{ GPIO_AP_CORE_EN, 0, 20 },
-};
-#elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
-static const struct power_seq_op s0s3_power_seq[] = {
-	{ GPIO_PP1800_SENSOR_EN_L, 1, 0 },
-	{ GPIO_PP1800_SIXAXIS_EN_L, 1, 0 },
-	{ GPIO_PP1800_LID_EN_L, 1, 0 },
-	{ GPIO_PP3300_TRACKPAD_EN_L, 1, 0 },
-	{ GPIO_PP3300_S0_EN_L, 1, 20 },
-	{ GPIO_PP1800_S0_EN_L, 1, 1 },
-	{ GPIO_AP_CORE_EN, 0, 20 },
-	{ GPIO_PP1800_AP_AVDD_EN_L, 1, 1 },
 };
 #else
 static const struct power_seq_op s0s3_power_seq[] = {
@@ -213,16 +178,6 @@ static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_PP1250_S3_EN, 0, 2 },
 	{ GPIO_PP1800_S3_EN, 0, 2 },
 	{ GPIO_PP3300_S3_EN, 0, 2 },
-	{ GPIO_PP900_S3_EN, 0, 0 },
-	{ GPIO_PP900_S0_EN, 0, 0 },
-};
-#elif CONFIG_CHIPSET_POWER_SEQ_VERSION == 3
-static const struct power_seq_op s3s5_power_seq[] = {
-	{ GPIO_PP5000_EN, 0, 0 },
-	{ GPIO_PP3300_USB_EN_L, 1, 20 },
-	{ GPIO_PP1800_USB_EN_L, 1, 10 },
-	{ GPIO_LPDDR_PWR_EN, 0, 20 },
-	{ GPIO_PP1800_PMU_EN_L, 1, 2 },
 	{ GPIO_PP900_S3_EN, 0, 0 },
 	{ GPIO_PP900_S0_EN, 0, 0 },
 };
