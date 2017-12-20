@@ -475,7 +475,7 @@ enum power_state power_handle_state(enum power_state state)
 				    HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND);
 		if (!usb_wake_enabled &&
 		    power_seq_run(s0s3_usb_wake_power_seq,
-				  ARRAY_SIZE(s0s3_power_seq)))
+				  ARRAY_SIZE(s0s3_usb_wake_power_seq)))
 			return POWER_S3S0;
 #endif
 
@@ -501,7 +501,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Make sure all S3 rails are off */
 		if (usb_wake_enabled) {
 			power_seq_run(s0s3_usb_wake_power_seq,
-				      ARRAY_SIZE(s0s3_power_seq));
+				      ARRAY_SIZE(s0s3_usb_wake_power_seq));
 			usb_wake_enabled = 0;
 		}
 #endif
