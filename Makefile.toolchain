@@ -40,6 +40,7 @@ COMMON_WARN = -Wall -Werror -Wundef -Wno-trigraphs -fno-strict-aliasing \
 CFLAGS_WARN = $(COMMON_WARN) $(C_WARN)
 CXXFLAGS_WARN = $(COMMON_WARN)
 CFLAGS_DEBUG= -g
+CFLAGS_DEBUG+=$(CFLAGS_DEBUG_CHIP)
 CFLAGS_INCLUDE=$(foreach i,$(includes),-I$(i) ) -I.
 CFLAGS_TEST=$(if $(TEST_BUILD),-DTEST_BUILD \
                                -DTEST_TASKFILE=$(PROJECT).tasklist,) \
