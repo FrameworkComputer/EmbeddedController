@@ -77,7 +77,7 @@ static int power_signal_get_level(enum gpio_signal signal)
 {
 #ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */
-	if ((int)signal > VW_SIGNAL_BASE)
+	if (espi_signal_is_vw(signal))
 		return espi_vw_get_wire(signal);
 #endif
 	return gpio_get_level(signal);
@@ -87,7 +87,7 @@ int power_signal_disable_interrupt(enum gpio_signal signal)
 {
 #ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */
-	if ((int)signal > VW_SIGNAL_BASE)
+	if (espi_signal_is_vw(signal))
 		return espi_vw_disable_wire_int(signal);
 #endif
 	return gpio_disable_interrupt(signal);
@@ -97,7 +97,7 @@ int power_signal_enable_interrupt(enum gpio_signal signal)
 {
 #ifdef CONFIG_ESPI_VW_SIGNALS
 	/* Check signal is from GPIOs or VWs */
-	if ((int)signal > VW_SIGNAL_BASE)
+	if (espi_signal_is_vw(signal))
 		return espi_vw_enable_wire_int(signal);
 #endif
 	return gpio_enable_interrupt(signal);
@@ -108,6 +108,18 @@ int power_signal_is_asserted(const struct power_signal_info *s)
 	return power_signal_get_level(s->gpio) ==
 		!!(s->flags & POWER_SIGNAL_ACTIVE_STATE);
 }
+
+#ifdef CONFIG_BRINGUP
+static const char *power_signal_get_name(enum gpio_signal signal)
+{
+#ifdef CONFIG_ESPI_VW_SIGNALS
+	/* Check signal is from GPIOs or VWs */
+	if (espi_signal_is_vw(signal))
+		return espi_vw_get_wire_name(signal);
+#endif
+	return gpio_get_name(signal);
+}
+#endif
 
 /**
  * Update input signals mask
@@ -515,10 +527,6 @@ DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
 /*****************************************************************************/
 /* Interrupts */
 
-#if defined(CONFIG_BRINGUP) && defined(CONFIG_ESPI_VW_SIGNALS)
-#error "Not support CONFIG_BRINGUP since gpio_get_name func"
-#endif
-
 #ifdef CONFIG_BRINGUP
 #define MAX_SIGLOG_ENTRIES 24
 
@@ -538,7 +546,7 @@ static void siglog_deferred(void)
 
 	/* Disable interrupts for input signals while we print stuff.*/
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
-		gpio_disable_interrupt(power_signal_list[i].gpio);
+		power_signal_disable_interrupt(power_signal_list[i].gpio);
 
 	CPRINTF("%d signal changes:\n", siglog_entries);
 	for (i = 0; i < siglog_entries; i++) {
@@ -546,7 +554,7 @@ static void siglog_deferred(void)
 			tdiff.val = siglog[i].time.val - siglog[i-1].time.val;
 		CPRINTF("  %.6ld  +%.6ld  %s => %d\n",
 			siglog[i].time.val, tdiff.val,
-			gpio_get_name(siglog[i].signal),
+			power_signal_get_name(siglog[i].signal),
 			siglog[i].level);
 	}
 	if (siglog_truncated)
@@ -555,7 +563,7 @@ static void siglog_deferred(void)
 
 	/* Okay, turn 'em on again. */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
-		gpio_enable_interrupt(power_signal_list[i].gpio);
+		power_signal_disable_interrupt(power_signal_list[i].gpio);
 }
 DECLARE_DEFERRED(siglog_deferred);
 
@@ -568,7 +576,7 @@ static void siglog_add(enum gpio_signal signal)
 
 	siglog[siglog_entries].time = get_time();
 	siglog[siglog_entries].signal = signal;
-	siglog[siglog_entries].level = gpio_get_level(signal);
+	siglog[siglog_entries].level = power_signal_get_level(signal);
 	siglog_entries++;
 
 	hook_call_deferred(&siglog_deferred_data, SECOND);

@@ -98,7 +98,7 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, power_up_inhibited_cb, HOOK_PRIO_DEFAULT);
 static inline int chipset_get_sleep_signal(enum sys_sleep_state state)
 {
 #ifdef CONFIG_ESPI_VW_SIGNALS
-	if (sleep_sig[state] > VW_SIGNAL_BASE)
+	if (espi_signal_is_vw(sleep_sig[state]))
 		return espi_vw_get_wire(sleep_sig[state]);
 	else
 #endif

@@ -40,6 +40,8 @@ enum espi_vw_signal {
 	VW_SIGNAL_BASE_END,
 };
 
+#define VW_SIGNAL_COUNT (VW_SIGNAL_BASE_END - VW_SIGNAL_BASE - 1)
+
 /**
  * Set eSPI Virtual-Wire signal to Host
  *
@@ -72,5 +74,21 @@ int espi_vw_enable_wire_int(enum espi_vw_signal signal);
  * @return EC_SUCCESS, or non-zero if error.
  */
 int espi_vw_disable_wire_int(enum espi_vw_signal signal);
+
+/**
+ * Return pointer to constant eSPI virtual wire signal name
+ *
+ * @param signal virtual wire enum
+ * @return pointer to string or NULL if signal out of range
+ */
+const char *espi_vw_get_wire_name(enum espi_vw_signal signal);
+
+/**
+ * Check if signal is an eSPI virtual wire
+ * @param signal is gpio_signal or espi_vw_signal enum casted to int
+ * @return 1 if signal is virtual wire else returns 0.
+ */
+int espi_signal_is_vw(int signal);
+
 
 #endif  /* __CROS_EC_ESPI_H */
