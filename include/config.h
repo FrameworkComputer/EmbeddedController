@@ -2253,6 +2253,7 @@
 /* Select any of the following SPI flash configs that your board uses. */
 #undef CONFIG_SPI_FLASH_GD25LQ40
 #undef CONFIG_SPI_FLASH_GD25Q41B
+#undef CONFIG_SPI_FLASH_W25Q128
 #undef CONFIG_SPI_FLASH_W25Q40
 #undef CONFIG_SPI_FLASH_W25Q64
 #undef CONFIG_SPI_FLASH_W25Q80

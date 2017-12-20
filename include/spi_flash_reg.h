@@ -38,6 +38,11 @@
 #define CONFIG_SPI_FLASH_HAS_SR2
 #endif
 
+/* W25Q128 16 Mbyte SPI flash for testing */
+#ifdef CONFIG_SPI_FLASH_W25Q128
+#define CONFIG_SPI_FLASH_HAS_SR2
+#endif
+
 /**
  * Computes block write protection range from registers
  * Returns start == len == 0 for no protection
