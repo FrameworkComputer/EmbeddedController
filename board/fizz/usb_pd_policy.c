@@ -219,6 +219,29 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
+#define CHARGE_PORT_SYSJUMP_TAG 0x4350 /* "CP" - Charge Port */
+#define CHARGE_PORT_HOOK_VERSION 1
+
+static int restore_active_charge_port(struct charge_port_info *cpi)
+{
+	int version, size;
+	const struct charge_port_info *prev;
+
+	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP))
+		return EC_ERROR_UNCHANGED;
+
+	prev = (const struct charge_port_info *)system_get_jump_tag(
+				CHARGE_PORT_SYSJUMP_TAG, &version, &size);
+	if (!prev || version != CHARGE_PORT_HOOK_VERSION ||
+			size != sizeof(*prev))
+		return EC_ERROR_INVAL;
+
+	cpi->current = prev->current;
+	cpi->voltage = prev->voltage;
+
+	return EC_SUCCESS;
+}
+
 /*
  * Since fizz has no battery, it must source all of its power from either
  * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
@@ -253,15 +276,36 @@ static void board_charge_manager_init(void)
 		typec_set_input_current_limit(input_port, 3000, input_voltage);
 		break;
 	case CHARGE_PORT_BARRELJACK:
-		/* Set it to the default. Will be updated by AP. */
-		cpi.voltage = 19000;
-		cpi.current = 3330;
+		if (restore_active_charge_port(&cpi)) {
+			/* Set it to the default. Will be updated by AP. */
+			CPRINTS("Previous charge info not found. Use default.");
+			cpi.voltage = 19000;
+			cpi.current = 3330;
+		}
 		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 					     DEDICATED_CHARGE_PORT, &cpi);
 		break;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_charge_manager_init, HOOK_PRIO_INIT_ADC + 1);
+
+static void preserve_active_charge_port(void)
+{
+	struct charge_port_info cpi;
+
+	/* If it's not a dedicated charge port, we don't bother. Saving &
+	 * restoring PD charger info is a much bigger problem. */
+	if (charge_manager_get_active_charge_port() != DEDICATED_CHARGE_PORT)
+		return;
+	cpi.current = charge_manager_get_charger_current();
+	cpi.voltage = charge_manager_get_charger_voltage();
+	CPRINTS("Saving charge port info: %dmA %dmV", cpi.current, cpi.voltage);
+	cflush();
+
+	system_add_jump_tag(CHARGE_PORT_SYSJUMP_TAG, CHARGE_PORT_HOOK_VERSION,
+			    sizeof(cpi), &cpi);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, preserve_active_charge_port, HOOK_PRIO_DEFAULT);
 
 int board_set_active_charge_port(int port)
 {
