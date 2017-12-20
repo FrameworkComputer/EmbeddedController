@@ -73,13 +73,15 @@ driver-$(CONFIG_LED_DRIVER_LP5562)+=led/lp5562.o
 driver-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 
 # Temperature sensors
+driver-$(CONFIG_TEMP_SENSOR_ADT7481)+=temp_sensor/adt7481.o
 driver-$(CONFIG_TEMP_SENSOR_BD99992GW)+=temp_sensor/bd99992gw.o
 driver-$(CONFIG_TEMP_SENSOR_EC_ADC)+=temp_sensor/ec_adc.o
 driver-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor/g78x.o
 driver-$(CONFIG_TEMP_SENSOR_G782)+=temp_sensor/g78x.o
 driver-$(CONFIG_TEMP_SENSOR_TMP006)+=temp_sensor/tmp006.o
-driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 driver-$(CONFIG_TEMP_SENSOR_TMP112)+=temp_sensor/tmp112.o
+driver-$(CONFIG_TEMP_SENSOR_TMP411)+=temp_sensor/tmp411.o
+driver-$(CONFIG_TEMP_SENSOR_TMP432)+=temp_sensor/tmp432.o
 
 # Touchpads
 driver-$(CONFIG_TOUCHPAD_ELAN)+=touchpad_elan.o
