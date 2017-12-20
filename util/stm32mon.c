@@ -98,6 +98,7 @@ struct stm32_def {
 };
 
 #define DEFAULT_TIMEOUT 4 /* seconds */
+#define EXT_ERASE_TIMEOUT 20 /* seconds */
 #define DEFAULT_BAUDRATE B38400
 #define PAGE_SIZE 256
 #define INVALID_I2C_ADAPTER -1
@@ -378,11 +379,14 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 		}
 
 		/* Wait for the ACK */
-		if (wait_for_ack(fd) < 0) {
-			fprintf(stderr, "payload %d ACK failed for CMD%02x\n",
+		res = wait_for_ack(fd);
+		if (res < 0) {
+			if (res != -ETIMEDOUT)
+				fprintf(stderr,
+					"payload %d ACK failed for CMD%02x\n",
 					c, cmd);
 			free(data);
-			return -1;
+			return res;
 		}
 		free(data);
 	}
@@ -600,6 +604,7 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 	uint16_t count_be = htons(count);
 	payload_t load = { 2, (uint8_t *)&count_be };
 	uint16_t *pages = NULL;
+	int retries = EXT_ERASE_TIMEOUT / DEFAULT_TIMEOUT;
 
 	if (count < 0xfff0) {
 		int i;
@@ -614,7 +619,11 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 			pages[i+1] = htons(start + i);
 	}
 
+	printf("Erasing...\n");
 	res = send_command(fd, CMD_EXTERASE, &load, 1, NULL, 0, 1);
+	/* Erase can take long time (e.g. 13s+ on STM32H7) */
+	while ((res == -ETIMEDOUT) && --retries)
+		res = wait_for_ack(fd);
 	if (res >= 0)
 		printf("Flash erased.\n");
 
