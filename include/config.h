@@ -829,6 +829,12 @@
 #undef CONFIG_COMMON_GPIO_SHORTNAMES
 
 /*
+ * EC's supporting powering down GPIO pins.
+ * Add flag GPIO_POWER_DOWN and additional API's.
+ */
+#undef CONFIG_GPIO_POWER_DOWN
+
+/*
  * Provide common runtime layer code (tasks, hooks ...)
  * You want this unless you are doing a really tiny firmware.
  */

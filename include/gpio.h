@@ -33,6 +33,9 @@
 #define GPIO_ALTERNATE     (1 << 17) /* GPIO used for alternate function. */
 #define GPIO_LOCKED        (1 << 18) /* Lock GPIO output and configuration */
 #define GPIO_HIB_WAKE_HIGH (1 << 19) /* Hibernate wake on high level */
+#ifdef CONFIG_GPIO_POWER_DOWN
+#define GPIO_POWER_DOWN    (1 << 20) /* Pin and pad is powered off */
+#endif
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)
@@ -265,5 +268,15 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
  *			GPIOs for normal GPIO operation.
  */
 void gpio_set_alternate_function(uint32_t port, uint32_t mask, int func);
+
+#ifdef CONFIG_GPIO_POWER_DOWN
+/**
+ * Power down all GPIO pins in a module.
+ *
+ * @param id		Module ID to initialize
+ * @return EC_SUCCESS, or non-zero if module_id is not found.
+ */
+int gpio_power_down_module(enum module_id id);
+#endif
 
 #endif  /* __CROS_EC_GPIO_H */
