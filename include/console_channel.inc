@@ -78,6 +78,9 @@ CONSOLE_CHANNEL(CC_TOUCHPAD,     "touchpad")
 #ifdef CONFIG_DPTF
 CONSOLE_CHANNEL(CC_DPTF,         "dptf")
 #endif
+#ifdef CONFIG_ALS
+CONSOLE_CHANNEL(CC_ALS,		 "als")
+#endif
 CONSOLE_CHANNEL(CC_THERMAL,      "thermal")
 CONSOLE_CHANNEL(CC_TPM,          "tpm")
 CONSOLE_CHANNEL(CC_USB,          "usb")

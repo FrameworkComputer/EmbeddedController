@@ -18,6 +18,11 @@
 #include "timer.h"
 #include "util.h"
 
+#define CPUTS(outstr) cputs(CC_ALS, outstr)
+#define CPRINTS(format, args...) cprints(CC_ALS, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ALS, format, ## args)
+
+
 #define ALS_POLL_PERIOD SECOND
 
 static int task_timeout = -1;
@@ -58,7 +63,7 @@ static void als_task_enable(void)
 		err = als[i].init();
 		if (err) {
 			fail_count++;
-			ccprintf("%s ALS sensor failed to initialize, err=%d\n",
+			CPRINTF("%s ALS sensor failed to initialize, err=%d\n",
 				als[i].name, err);
 		}
 	}
