@@ -113,6 +113,12 @@ enum power_state power_handle_state(enum power_state state)
 	}
 
 	switch (state) {
+	case POWER_G3:
+		/* If SLP_SUS_L is deasserted, we're no longer in G3. */
+		if (power_has_signals(IN_PCH_SLP_SUS_DEASSERTED))
+			return POWER_S5;
+		break;
+
 	case POWER_G3S5:
 		/* Turn on the PP3300_DSW rail. */
 		gpio_set_level(GPIO_EN_PP3300_DSW, 1);
