@@ -88,6 +88,8 @@ int spi_transaction(const struct spi_device_t *spi_device,
 /* Similar to spi_transaction(), but hands over to DMA for reading response.
  * Must call spi_transaction_flush() after this to make sure the response is
  * received.
+ * Contrary the regular spi_transaction(), this function does NOT lock the
+ * SPI port, it's up to the caller to ensure proper mutual exclusion if needed.
  */
 int spi_transaction_async(const struct spi_device_t *spi_device,
 			  const uint8_t *txdata, int txlen,

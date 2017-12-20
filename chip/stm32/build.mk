@@ -31,6 +31,7 @@ endif
 # Select between 16-bit and 32-bit timer for clock source
 TIMER_TYPE=$(if $(CONFIG_STM_HWTIMER32),32,)
 DMA_TYPE=$(if $(CHIP_FAMILY_STM32F4)$(CHIP_FAMILY_STM32H7),-stm32f4,)
+SPI_TYPE=$(if $(CHIP_FAMILY_STM32H7),-stm32h7,)
 
 chip-$(CONFIG_DMA)+=dma$(DMA_TYPE).o
 chip-$(CONFIG_COMMON_RUNTIME)+=system.o
@@ -39,7 +40,7 @@ ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f0 stm32f3 stm32f4))
 chip-y+=clock-f.o
 endif
 chip-$(CONFIG_SPI)+=spi.o
-chip-$(CONFIG_SPI_MASTER)+=spi_master.o
+chip-$(CONFIG_SPI_MASTER)+=spi_master$(SPI_TYPE).o
 chip-$(CONFIG_COMMON_GPIO)+=gpio.o gpio-$(CHIP_FAMILY).o
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer$(TIMER_TYPE).o
 chip-$(CONFIG_I2C)+=i2c-$(CHIP_FAMILY).o
