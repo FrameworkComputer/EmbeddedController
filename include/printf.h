@@ -44,6 +44,7 @@
  *           So "%.8h" prints 8 bytes of binary data
  *   - 'p' - pointer
  *   - 'd' - signed integer
+ *   - 'i' - signed integer if CONFIG_PRINTF_LEGACY_LI_FORMAT is set (ignore l)
  *   - 'u' - unsigned integer
  *   - 'x' - unsigned integer, print as lower-case hexadecimal
  *   - 'X' - unsigned integer, print as upper-case hexadecimal

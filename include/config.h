@@ -2043,6 +2043,13 @@
  * actually reflecting the new state.
  */
 #undef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+
+/*
+ * Implement the '%li' printf format as a *32-bit* integer format,
+ * as it might be expected by non-EC code.
+ */
+#undef CONFIG_PRINTF_LEGACY_LI_FORMAT
+
 /*****************************************************************************/
 /* Support PWM control */
 #undef CONFIG_PWM

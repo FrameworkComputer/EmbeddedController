@@ -207,6 +207,12 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 #endif
 
 			switch (c) {
+#ifdef CONFIG_PRINTF_LEGACY_LI_FORMAT
+			case 'i':
+				/* force 32-bit for compatibility */
+				flags &= ~PF_64BIT;
+				/* fall-through */
+#endif /* CONFIG_PRINTF_LEGACY_LI_FORMAT */
 			case 'd':
 				if (flags & PF_64BIT) {
 					if ((int64_t)v < 0) {
