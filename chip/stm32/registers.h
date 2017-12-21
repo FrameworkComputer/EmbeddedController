@@ -1597,6 +1597,7 @@ struct stm32_spi_regs {
 	uint32_t crcpoly;
 	uint32_t rxcrcr;
 	uint32_t txcrcr;
+	uint32_t udrdr;
 #else  /* !CHIP_FAMILY_STM32H7 */
 	uint16_t cr1;
 	uint16_t _pad0;
@@ -1628,6 +1629,12 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_CR1_DIV(div)		((div) << 28)
 #define STM32_SPI_CFG1_DATASIZE(n)	(((n) - 1) << 0)
 #define STM32_SPI_CFG1_FTHLV(n)		(((n) - 1) << 5)
+#define STM32_SPI_CFG1_UDRCFG_CONST	(0 << 9)
+#define STM32_SPI_CFG1_UDRCFG_LAST_RX	(1 << 9)
+#define STM32_SPI_CFG1_UDRCFG_LAST_TX	(2 << 9)
+#define STM32_SPI_CFG1_UDRDET_BEGIN_FRM	(0 << 11)
+#define STM32_SPI_CFG1_UDRDET_END_FRM	(1 << 11)
+#define STM32_SPI_CFG1_UDRDET_BEGIN_SS	(2 << 11)
 #define STM32_SPI_CFG1_RXDMAEN		(1 << 14)
 #define STM32_SPI_CFG1_TXDMAEN		(1 << 15)
 #define STM32_SPI_CFG1_CRCSIZE(n)	(((n) - 1) << 16)
@@ -1636,6 +1643,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_CFG2_AFCNTR		(1 << 31)
 
 #define STM32_SPI_SR_RXNE		(1 << 0)
+#define STM32_SPI_SR_UDR		(1 << 5)
 #define STM32_SPI_SR_FRLVL		(3 << 13)
 #define STM32_SPI_SR_TXC		(1 << 12)
 #else  /* !CHIP_FAMILY_STM32H7 */
