@@ -103,7 +103,6 @@
 /* Sensor */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
-/* TODO(crosbug.com/p/61098): Is this the correct thermistor? */
 #define CONFIG_THERMISTOR_NCP15WB
 
 #define CONFIG_MKBP_EVENT
