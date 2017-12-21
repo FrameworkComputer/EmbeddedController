@@ -1072,6 +1072,14 @@ wait_for_it:
 				curr.batt.voltage + info->voltage_step);
 			curr.requested_current = -1;
 #endif
+#ifdef CONFIG_EC_EC_COMM_BATTERY_SLAVE
+			/*
+			 * On EC-EC slave, do not charge if curr.ac is 0: there
+			 * might still be some external power available but we
+			 * do not want to use it for charging.
+			 */
+			curr.requested_current = 0;
+#endif
 		}
 		charge_request(curr.requested_voltage, curr.requested_current);
 

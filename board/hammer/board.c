@@ -270,11 +270,3 @@ int board_write_serial(const char *serialno)
 {
 	return 0;
 }
-
-#ifdef BOARD_WAND
-/* TODO(b:66575472): This assumes external power is always present. */
-int extpower_is_present(void)
-{
-	return 1;
-}
-#endif
