@@ -91,7 +91,7 @@ static const struct led_descriptor led_default_state_table[][LED_NUM_PHASES] = {
 	{ {LED_COLOR_2, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
 	{ {LED_COLOR_1, 1 * LED_ONE_SEC }, {LED_OFF, 3 * LED_ONE_SEC} },
 	{ {LED_OFF, LED_INDEFINITE}, {LED_OFF, LED_INDEFINITE} },
-	{ {LED_COLOR_1, 1 * LED_ONE_SEC}, {LED_COLOR_2, 1 * LED_ONE_SEC} },
+	{ {LED_COLOR_1, 1 * LED_ONE_SEC}, {LED_OFF, 1 * LED_ONE_SEC} },
 	{ {LED_COLOR_1, 2 * LED_ONE_SEC}, {LED_COLOR_2, 2 * LED_ONE_SEC} },
 };
 
