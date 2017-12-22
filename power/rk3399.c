@@ -94,7 +94,6 @@ BUILD_ASSERT(GPIO_COUNT < 256);
 
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
 static const struct power_seq_op s5s3_power_seq[] = {
-	{ GPIO_PP900_S0_EN, 1, 2 },
 	{ GPIO_PP900_S3_EN, 1, 2 },
 	{ GPIO_PP3300_S3_EN, 1, 2 },
 	{ GPIO_PP1800_S3_EN, 1, 2 },
@@ -143,6 +142,7 @@ static const struct power_seq_op s3s0_power_seq[] = {
 #ifdef S3_USB_WAKE
 /* Sigs that may already be on in S3, if we need to wake-on-USB */
 static const struct power_seq_op s3s0_usb_wake_power_seq[] = {
+	{ GPIO_PP900_S0_EN, 1, 2 },
 	{ GPIO_PP1800_USB_EN, 1, 2 },
 	{ GPIO_PP3300_S0_EN, 1, 2 },
 };
@@ -170,6 +170,7 @@ static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
 	{ GPIO_PP3300_S0_EN, 0, 20 },
 	{ GPIO_PP1800_S0_EN, 0, 1 },
 	{ GPIO_PP1800_USB_EN, 0, 1 },
+	{ GPIO_PP900_S0_EN, 0, 0 },
 };
 #endif
 
@@ -181,7 +182,6 @@ static const struct power_seq_op s3s5_power_seq[] = {
 	{ GPIO_PP1800_S3_EN, 0, 2 },
 	{ GPIO_PP3300_S3_EN, 0, 2 },
 	{ GPIO_PP900_S3_EN, 0, 0 },
-	{ GPIO_PP900_S0_EN, 0, 0 },
 };
 #else
 static const struct power_seq_op s3s5_power_seq[] = {
