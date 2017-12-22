@@ -82,8 +82,6 @@
 /* Sensor */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
-/* TODO(crosbug.com/p/61098): Is this the correct thermistor? */
-#define CONFIG_THERMISTOR_NCP15WB
 
 /* USB */
 #undef  CONFIG_USB_CHARGER		/* dnojiri: verify */
