@@ -78,6 +78,7 @@
 #define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15000
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_OTG
 #define CONFIG_USB_MUX_VIRTUAL
 
 /* Increase tx buffer size, as we'd like to stream EC log to AP. */

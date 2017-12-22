@@ -587,6 +587,12 @@
 #undef CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
 
 /*
+ * Enable charger's OTG functions, i.e. make it possible to supply output power
+ * from battery.
+ */
+#undef CONFIG_CHARGER_OTG
+
+/*
  * Charger should call battery_override_params() to limit/correct the voltage
  * and current requested by the battery pack before acting on the request.
  *

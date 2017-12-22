@@ -70,6 +70,7 @@ static int bq24192_set_terminate_current(int current)
 	return bq24192_write(BQ24192_REG_PRE_CHG_CURRENT, reg_val);
 }
 
+#ifdef CONFIG_CHARGER_OTG
 int charger_enable_otg_power(int enabled)
 {
 	int val, rv;
@@ -81,6 +82,7 @@ int charger_enable_otg_power(int enabled)
 	val = (val & ~0x30) | (enabled ? 0x20 : 0x10);
 	return bq24192_write(BQ24192_REG_POWER_ON_CFG, val);
 }
+#endif
 
 int charger_set_input_current(int input_current)
 {

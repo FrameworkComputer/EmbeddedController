@@ -81,6 +81,7 @@ static int bq2589x_set_terminate_current(int current)
 	return bq2589x_write(BQ2589X_REG_PRE_CHG_CURR, reg_val);
 }
 
+#ifdef CONFIG_CHARGER_OTG
 int charger_enable_otg_power(int enabled)
 {
 	int val, rv;
@@ -92,6 +93,7 @@ int charger_enable_otg_power(int enabled)
 	    | (enabled ? BQ2589X_CFG2_OTG_CONFIG : BQ2589X_CFG2_CHG_CONFIG);
 	return bq2589x_write(BQ2589X_REG_CFG2, val);
 }
+#endif
 
 int charger_set_input_current(int input_current)
 {

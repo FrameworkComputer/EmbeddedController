@@ -368,11 +368,13 @@ static int rt946x_init_setting(void)
 	return rt946x_init_irq();
 }
 
+#ifdef CONFIG_CHARGER_OTG
 int charger_enable_otg_power(int enabled)
 {
 	return (enabled ? rt946x_set_bit : rt946x_clr_bit)
 		(RT946X_REG_CHGCTRL1, RT946X_MASK_OPA_MODE);
 }
+#endif
 
 int charger_set_input_current(int input_current)
 {

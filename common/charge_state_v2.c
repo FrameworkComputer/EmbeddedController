@@ -442,6 +442,9 @@ static void dump_charge_state(void)
 	cflush();
 	DUMP(requested_voltage, "%dmV");
 	DUMP(requested_current, "%dmA");
+#ifdef CONFIG_CHARGER_OTG
+	DUMP(output_current, "%dmA");
+#endif
 	ccprintf("chg_ctl_mode = %d\n", chg_ctl_mode);
 	ccprintf("manual_mode = %d\n", manual_mode);
 	ccprintf("user_current_limit = %dmA\n", user_current_limit);
@@ -1092,9 +1095,18 @@ wait_for_it:
 			if (!curr.ac &&
 			    (curr.state == ST_IDLE ||
 			    curr.state == ST_DISCHARGE)) {
-				/* If AP is off, we can sleep a long time */
+#ifdef CONFIG_CHARGER_OTG
+				int output_current = curr.output_current;
+#else
+				int output_current = 0;
+#endif
+				/*
+				 * If AP is off and we do not provide power, we
+				 * can sleep a long time.
+				 */
 				if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-						     CHIPSET_STATE_ANY_SUSPEND))
+						     CHIPSET_STATE_ANY_SUSPEND)
+						&& output_current == 0)
 					sleep_usec =
 						CHARGE_POLL_PERIOD_VERY_LONG;
 				else
@@ -1280,6 +1292,28 @@ int charge_is_consuming_full_input_current(void)
 
 	return chg_pct > 2 && chg_pct < 95;
 }
+
+#ifdef CONFIG_CHARGER_OTG
+int charge_set_output_current_limit(int ma, int mv)
+{
+	int ret;
+	int enable = ma > 0;
+
+	if (enable) {
+		ret = charger_set_otg_current_voltage(ma, mv);
+		if (ret != EC_SUCCESS)
+			return ret;
+	}
+
+	ret = charger_enable_otg_power(enable);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	curr.output_current = ma;
+
+	return EC_SUCCESS;
+}
+#endif
 
 int charge_set_input_current_limit(int ma, int mv)
 {

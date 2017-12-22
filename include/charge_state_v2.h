@@ -38,7 +38,20 @@ struct charge_state_data {
 	int requested_voltage;
 	int requested_current;
 	int desired_input_current;
+#ifdef CONFIG_CHARGER_OTG
+	int output_current;
+#endif
 };
+
+/**
+ * Set the output current limit and voltage. This is used to provide power from
+ * the charger chip ("OTG" mode).
+ *
+ * @param ma Maximum current to provide in mA (0 to disable output).
+ * @param mv Voltage in mV (ignored if ma == 0).
+ * @return EC_SUCCESS or error
+ */
+int charge_set_output_current_limit(int ma, int mv);
 
 /**
  * Set the charge input current limit. This value is stored and sent every

@@ -97,7 +97,7 @@ int charger_get_input_current(int *input_current)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_CHARGER_ISL9238
+#if defined(CONFIG_CHARGER_OTG) && defined(CONFIG_CHARGER_ISL9238)
 int charger_enable_otg_power(int enabled)
 {
 	int rv, control1;
@@ -138,7 +138,7 @@ int charger_set_otg_current_voltage(int output_current, int output_voltage)
 	/* Set current. */
 	return raw_write16(ISL923X_REG_OTG_CURRENT, current_reg);
 }
-#endif /* CONFIG_CHARGER_ISL9238 */
+#endif /* CONFIG_CHARGER_OTG && CONFIG_CHARGER_ISL9238 */
 
 int charger_manufacturer_id(int *id)
 {
