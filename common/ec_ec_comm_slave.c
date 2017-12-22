@@ -14,6 +14,7 @@
 #include "ec_ec_comm_slave.h"
 #include "extpower.h"
 #include "hwtimer.h"
+#include "hooks.h"
 #include "queue.h"
 #include "queue_policies.h"
 #include "task.h"
@@ -134,6 +135,7 @@ static void handle_cmd_charger_control(
 	int data_len, int seq)
 {
 	int ret = EC_RES_SUCCESS;
+	int prev_charging_allowed = charging_allowed;
 
 	if (data_len != sizeof(*params)) {
 		ret = EC_RES_INVALID_COMMAND;
@@ -160,6 +162,9 @@ static void handle_cmd_charger_control(
 		charger_enable_otg_power(1);
 		charging_allowed = 0;
 	}
+
+	if (prev_charging_allowed != charging_allowed)
+		hook_notify(HOOK_AC_CHANGE);
 
 out:
 	write_response(ret, seq, NULL, 0);

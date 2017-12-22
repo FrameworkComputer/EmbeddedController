@@ -91,14 +91,11 @@ void power_interrupt(enum gpio_signal signal);
 void chipset_handle_espi_reset_assert(void);
 
 #else /* !HAS_TASK_CHIPSET */
-/*
- * Allow other modules to compile if the chipset module is disabled.  This is
- * commonly done during early stages of board bringup.
- */
 
+/* When no chipset is present, assume it is always off. */
 static inline int chipset_in_state(int state_mask)
 {
-	return 0;
+	return state_mask & CHIPSET_STATE_ANY_OFF;
 }
 
 static inline void chipset_exit_hard_off(void) { }
