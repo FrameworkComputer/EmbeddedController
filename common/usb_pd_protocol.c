@@ -3403,7 +3403,7 @@ void pd_task(void *u)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-static void dual_role_on(void)
+static void pd_chipset_resume(void)
 {
 	int i;
 
@@ -3413,29 +3413,36 @@ static void dual_role_on(void)
 #endif
 			pd[i].flags |= PD_FLAGS_CHECK_PR_ROLE |
 				       PD_FLAGS_CHECK_DR_ROLE;
-
-		pd[i].flags |= PD_FLAGS_CHECK_IDENTITY;
 	}
 
 	pd_set_dual_role(PD_DRP_TOGGLE_ON);
-	CPRINTS("chipset -> S0");
+	CPRINTS("PD:S3->S0");
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, dual_role_on, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_chipset_resume, HOOK_PRIO_DEFAULT);
 
-static void dual_role_off(void)
+static void pd_chipset_suspend(void)
 {
 	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
-	CPRINTS("chipset -> S3");
+	CPRINTS("PD:S0->S3");
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, dual_role_off, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, dual_role_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-static void dual_role_force_sink(void)
+static void pd_chipset_startup(void)
+{
+	int i;
+	pd_set_dual_role(PD_DRP_TOGGLE_OFF);
+	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
+		pd[i].flags |= PD_FLAGS_CHECK_IDENTITY;
+	CPRINTS("PD:S5->S3");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pd_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void pd_chipset_shutdown(void)
 {
 	pd_set_dual_role(PD_DRP_FORCE_SINK);
-	CPRINTS("chipset -> S5");
+	CPRINTS("PD:S3->S5");
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, dual_role_force_sink, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
