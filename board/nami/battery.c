@@ -16,8 +16,6 @@
 #include "hooks.h"
 #include "util.h"
 
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
-
 /*
  * TODO(dnojiri): Check if these parameters are valid for battery.
  *
@@ -185,33 +183,58 @@ static int battery_check_disconnect(void)
 	return BATTERY_NOT_DISCONNECTED;
 }
 
-enum battery_present battery_is_present(void)
+static enum battery_present batt_pres_prev; /* Default BP_NO (=0) */
+
+static enum battery_present battery_check_present_status(void)
 {
 	enum battery_present batt_pres;
+	int batt_disconnect_status;
 
 	/* Get the physical hardware status */
 	batt_pres = battery_hw_present();
 
 	/*
-	 * Make sure battery status is implemented, I2C transactions are
-	 * success & the battery status is Initialized to find out if it
-	 * is a working battery and it is not in the cut-off mode.
-	 *
-	 * If battery I2C fails but VBATT is high, battery is booting from
-	 * cut-off mode.
-	 *
-	 * FETs are turned off after Power Shutdown time.
-	 * The device will wake up when a voltage is applied to PACK.
-	 * Battery status will be inactive until it is initialized.
+	 * If the battery is not physically connected, then no need to perform
+	 * any more checks.
 	 */
-	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-	    (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL ||
-	     battery_check_disconnect() != BATTERY_NOT_DISCONNECTED ||
-	     battery_init() == 0)) {
-		batt_pres = BP_NO;
-	}
+	if (batt_pres != BP_YES)
+		return batt_pres;
 
-	batt_pres_prev = batt_pres;
-	return batt_pres;
+	/*
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
+	 */
+	if (batt_pres == batt_pres_prev)
+		return batt_pres;
+
+	/*
+	 * Check battery disconnect status. If we are unable to read battery
+	 * disconnect status, then return BP_NOT_SURE. Battery could be in ship
+	 * mode and might require pre-charge current to wake it up. BP_NO is not
+	 * returned here because charger state machine will not provide
+	 * pre-charge current assuming that battery is not present.
+	 */
+	batt_disconnect_status = battery_check_disconnect();
+	if (batt_disconnect_status == BATTERY_DISCONNECT_ERROR)
+		return BP_NOT_SURE;
+
+	/*
+	 * Ensure that battery is:
+	 * 1. Not in cutoff
+	 * 2. Not disconnected
+	 * 3. Initialized
+	 */
+	if (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL ||
+	    batt_disconnect_status != BATTERY_NOT_DISCONNECTED ||
+	    battery_init() == 0)
+		return BP_NO;
+
+	return BP_YES;
+}
+
+enum battery_present battery_is_present(void)
+{
+	batt_pres_prev = battery_check_present_status();
+	return batt_pres_prev;
 }
 
