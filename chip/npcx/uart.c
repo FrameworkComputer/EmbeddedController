@@ -326,6 +326,13 @@ int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
 	altpad_tx_pos = 0;
 	altpad_tx_len = tx_len;
 
+	/*
+	 * Turn on additional pull-up during transaction: that prevents the line
+	 * from going low in case the base gets disconnected during the
+	 * transaction. See b/68954760.
+	 */
+	gpio_set_flags(GPIO_EC_COMM_PU, GPIO_OUTPUT | GPIO_HIGH);
+
 	uart_set_pad(UART_ALTERNATE_PAD);
 	gpio_clear_pending_interrupt(GPIO_UART_MAIN_RX);
 	gpio_enable_interrupt(GPIO_UART_MAIN_RX);
@@ -354,6 +361,8 @@ int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
 		ret = -EC_ERROR_TIMEOUT;
 
 out:
+	gpio_set_flags(GPIO_EC_COMM_PU, GPIO_INPUT);
+
 	altpad_rx_len = 0;
 	altpad_rx_pos = 0;
 	altpad_rx_buf = NULL;
