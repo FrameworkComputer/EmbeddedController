@@ -78,7 +78,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 #ifdef BOARD_STAFF
 #define KBLIGHT_PWM_FREQ 100 /* Hz */
 #else
-#define KBLIGHT_PWM_FREQ 10000 /* Hz */
+#define KBLIGHT_PWM_FREQ 50000 /* Hz */
 #endif
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
