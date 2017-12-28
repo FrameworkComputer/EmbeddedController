@@ -125,7 +125,7 @@ GPIO(LED_WHITE_C1,		PIN(3, 0), GPIO_OUT_LOW)
 GPIO(BOARD_VERSION1,		PIN(C, 4), GPIO_INPUT)				/* Board ID bit0 */
 GPIO(BOARD_VERSION2,		PIN(C, 2), GPIO_INPUT)				/* Board ID bit1 */
 GPIO(BOARD_VERSION3,		PIN(1, 3), GPIO_INPUT)				/* Board ID bit2 */
-GPIO(BOARD_VERSION4,		PIN(1, 7), GPIO_INPUT | GPIO_PULL_UP)		/* Board ID strap 3 (ternary) */
+GPIO(BOARD_VERSION4,		PIN(1, 7), GPIO_INPUT)				/* Board ID strap 3 (ternary) */
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 1, MODULE_UART, 0)		/* GPIO64-65 */		/* UART from EC to Servo */
