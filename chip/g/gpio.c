@@ -38,6 +38,16 @@ static void set_one_gpio_bit(uint32_t port, uint16_t mask, int value)
 void gpio_set_level(enum gpio_signal signal, int value)
 {
 	const struct gpio_info *g = gpio_list + signal;
+
+	if (g->flags & GPIO_OPEN_DRAIN) {
+		if (value) {
+			GR_GPIO_CLRDOUTEN(g->port) = g->mask;
+			/* Don't ever set ODR output to HIGH. */
+			return;
+		}
+		GR_GPIO_SETDOUTEN(g->port) = g->mask;
+	}
+
 	set_one_gpio_bit(g->port, g->mask, value);
 }
 
@@ -68,17 +78,30 @@ int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
 
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
-	/* Only matters for outputs */
-	if (flags & GPIO_LOW)
-		set_one_gpio_bit(port, mask, 0);
-	else if (flags & GPIO_HIGH)
-		set_one_gpio_bit(port, mask, 1);
+	/* Output must be enabled when needed, input is always enabled */
+	if (flags & GPIO_OUTPUT) {
 
-	/* Output must be enabled; input is always enabled */
-	if (flags & GPIO_OUTPUT)
-		GR_GPIO_SETDOUTEN(port) = mask;
-	else
+		if (flags & GPIO_LOW)
+			set_one_gpio_bit(port, mask, 0);
+		else if ((flags & GPIO_HIGH) && !(flags & GPIO_OPEN_DRAIN))
+			/* Set to HIGH only if not open drain. */
+			set_one_gpio_bit(port, mask, 1);
+
+		if (!(flags & GPIO_OPEN_DRAIN) || (flags & GPIO_LOW))
+			/*
+			 * Enable output for push-pull (high or low), or
+			 * open-drain low.
+			 */
+			GR_GPIO_SETDOUTEN(port) = mask;
+		else if (flags & GPIO_OPEN_DRAIN)
+			/*
+			 * Disable output for other open-drain cases to get a
+			 * high-Z pin.
+			 */
+			GR_GPIO_CLRDOUTEN(port) = mask;
+	} else {
 		GR_GPIO_CLRDOUTEN(port) = mask;
+	}
 
 	/* Interrupt types */
 	if (flags & GPIO_INT_F_LOW) {
