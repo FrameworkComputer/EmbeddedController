@@ -71,23 +71,7 @@ struct pi3usb9281_config {
 /* Configuration struct defined at board level */
 extern struct pi3usb9281_config pi3usb9281_chips[];
 
-/* TODO: Make many of these functions static after Oak board changes. */
-/* Initialize chip and enable interrupts */
-void pi3usb9281_init(int port);
-
 /* Enable interrupts. */
 int pi3usb9281_enable_interrupts(int port);
-
-/* Disable all interrupts. */
-int pi3usb9281_disable_interrupts(int port);
-
-/* Get and clear current interrupt status. */
-int pi3usb9281_get_interrupts(int port);
-
-/* Get attached device type. */
-int pi3usb9281_get_device_type(int port);
-
-/* Get attached charger status. */
-int pi3usb9281_get_charger_status(int port);
 
 #endif /* __CROS_EC_PI3USB9281_H */

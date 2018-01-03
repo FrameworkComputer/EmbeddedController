@@ -42,6 +42,7 @@ static int usb_switch_state[CONFIG_USB_PD_PORT_COUNT];
 static struct mutex usb_switch_lock[CONFIG_USB_PD_PORT_COUNT];
 
 static int pi3usb9281_reset(int port);
+static int pi3usb9281_get_interrupts(int port);
 
 static void select_chip(int port)
 {
@@ -139,7 +140,7 @@ static int pi3usb9281_set_interrupt_mask(int port, uint8_t mask)
 	return pi3usb9281_write(port, PI3USB9281_REG_INT_MASK, ~mask);
 }
 
-void pi3usb9281_init(int port)
+static void pi3usb9281_init(int port)
 {
 	uint8_t dev_id;
 
@@ -164,7 +165,7 @@ int pi3usb9281_enable_interrupts(int port)
 	return pi3usb9281_write_ctrl(port, ctrl & ~PI3USB9281_CTRL_INT_DIS);
 }
 
-int pi3usb9281_disable_interrupts(int port)
+static int pi3usb9281_disable_interrupts(int port)
 {
 	uint8_t ctrl = pi3usb9281_read(port, PI3USB9281_REG_CONTROL);
 	int rv;
@@ -177,17 +178,17 @@ int pi3usb9281_disable_interrupts(int port)
 	return rv;
 }
 
-int pi3usb9281_get_interrupts(int port)
+static int pi3usb9281_get_interrupts(int port)
 {
 	return pi3usb9281_read(port, PI3USB9281_REG_INT);
 }
 
-int pi3usb9281_get_device_type(int port)
+static int pi3usb9281_get_device_type(int port)
 {
 	return pi3usb9281_read(port, PI3USB9281_REG_DEV_TYPE) & 0x77;
 }
 
-int pi3usb9281_get_charger_status(int port)
+static int pi3usb9281_get_charger_status(int port)
 {
 	return pi3usb9281_read(port, PI3USB9281_REG_CHG_STATUS) & 0x1f;
 }
