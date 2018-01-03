@@ -452,6 +452,8 @@ int chg_ramp_get_current_limit(void)
 
 
 #ifdef CONFIG_CHARGER_PSYS
+static int psys_enabled;
+
 static void charger_enable_psys(void)
 {
 	int val;
@@ -461,11 +463,17 @@ static void charger_enable_psys(void)
 	/*
 	 * enable system power monitor PSYS function
 	 */
-	if (!raw_read16(ISL923X_REG_CONTROL1, &val)) {
-		val |= ISL923X_C1_ENABLE_PSYS;
-		raw_write16(ISL923X_REG_CONTROL1, val);
-	}
+	if (raw_read16(ISL923X_REG_CONTROL1, &val))
+		goto out;
 
+	val |= ISL923X_C1_ENABLE_PSYS;
+
+	if (raw_write16(ISL923X_REG_CONTROL1, val))
+		goto out;
+
+	psys_enabled = 1;
+
+out:
 	mutex_unlock(&control1_mutex);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, charger_enable_psys, HOOK_PRIO_DEFAULT);
@@ -479,61 +487,52 @@ static void charger_disable_psys(void)
 	/*
 	 * disable system power monitor PSYS function
 	 */
-	if (!raw_read16(ISL923X_REG_CONTROL1, &val)) {
-		val &= ~ISL923X_C1_ENABLE_PSYS;
-		raw_write16(ISL923X_REG_CONTROL1, val);
-	}
+	if (raw_read16(ISL923X_REG_CONTROL1, &val))
+		goto out;
 
+	val &= ~ISL923X_C1_ENABLE_PSYS;
+
+	if (raw_write16(ISL923X_REG_CONTROL1, val))
+		goto out;
+
+	psys_enabled = 0;
+
+out:
 	mutex_unlock(&control1_mutex);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
 
-#ifdef CONFIG_CMD_CHARGER_PSYS
-/* TODO(crosbug.com/p/61166): This dead code is ISL9237-specific. */
-#define PSYS_ADC_READ_COUNT 100
-static int charger_get_system_power(void)
+#ifdef CONFIG_CHARGER_PSYS_READ
+int charger_get_system_power(void)
 {
-	int adc = 0;
-	int i;
-	int ret;
-	int val;
-
-	ret = raw_read16(ISL923X_REG_CONTROL2, &val);
-	if (ret)
-		return ret;
-
-	/* Read ADC */
-	for (i = 0; i < PSYS_ADC_READ_COUNT; i++) {
-		adc += adc_read_channel(ADC_PSYS);
-		usleep(10);
-	}
+	int adc;
 
 	/*
-	 * Calculate the power in mW (Power = adc * gain)
-	 *
-	 * System power monitor PSYS output gain
-	 * [0]: 0 = 1.44 uA/W
-	 *      1 = 0.36 uA/W
-	 *
-	 * Do not divide the constants first to ensure precision is not lost.
+	 * If PSYS is not enabled, AP is probably off, and the value is usually
+	 * too small to be measured acurately anyway.
 	 */
-	if (val & ISL923X_C2_PSYS_GAIN)
-		return ((adc * ISL923X_C2_PSYS_GAIN_0_36) /
-				PSYS_ADC_READ_COUNT);
-	else
-		return ((adc * ISL923X_C2_PSYS_GAIN_1_44) /
-				PSYS_ADC_READ_COUNT);
+	if (!psys_enabled)
+		return -1;
+
+	/*
+	 * We assume that the output gain is always left to the default
+	 * 1.44 uA/W, and that the ADC scaling values are setup accordingly in
+	 * board file, so that the value is indicated in uW.
+	 */
+	adc = adc_read_channel(ADC_PSYS);
+
+	return adc;
 }
 
 static int console_command_psys(int argc, char **argv)
 {
-	CPRINTF("system power = %d mW\n", charger_get_system_power());
+	ccprintf("PSYS = %d uW\n", charger_get_system_power());
 	return 0;
 }
 DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 			NULL,
 			"Get the system power in mW");
-#endif /* CONFIG_CMD_CHARGER_PSYS */
+#endif /* CONFIG_CHARGER_PSYS_READ */
 #endif /* CONFIG_CHARGER_PSYS */
 
 #ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON

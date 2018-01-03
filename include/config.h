@@ -521,8 +521,17 @@
  */
 #undef CONFIG_CHARGER_CURRENT_LIMIT
 
-/* Enable/disable system power monitor PSYS function */
+/*
+ * Enable/disable system power monitor PSYS function: this enables output
+ * from charger chip to SoC.
+ */
 #undef CONFIG_CHARGER_PSYS
+
+/*
+ * Enable reading PSYS (system power) value, either via "psys" console command,
+ * or via charger_get_system_power function.
+ */
+#undef CONFIG_CHARGER_PSYS_READ
 
 /*
  * Board specific charging current termination limit, in mA.  If defined and
@@ -729,7 +738,6 @@
 #undef  CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #undef  CONFIG_CMD_CHARGER_PROFILE_OVERRIDE
 #undef  CONFIG_CMD_CHARGER_PROFILE_OVERRIDE_TEST
-#undef  CONFIG_CMD_CHARGER_PSYS
 #define CONFIG_CMD_CHARGE_SUPPLIER_INFO
 #undef  CONFIG_CMD_CHGRAMP
 #undef  CONFIG_CMD_CLOCKGATES

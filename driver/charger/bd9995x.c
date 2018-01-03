@@ -1328,7 +1328,7 @@ DECLARE_CONSOLE_COMMAND(bd9995x, console_command_bd9995x,
 			"Read or write a charger register");
 #endif /* CONFIG_CMD_CHARGER */
 
-#ifdef CONFIG_CMD_CHARGER_PSYS
+#ifdef CONFIG_CHARGER_PSYS_READ
 static int bd9995x_psys_charger_adc(void)
 {
 	int i;
@@ -1375,6 +1375,11 @@ static int bd9995x_enable_psys(void)
 
 /**
  * Get system power.
+ *
+ * TODO(b:71520677): Implement charger_get_system_power, disable psys readout
+ * when not needed (the code below leaves it enabled after the first access),
+ * update "psys" console command to use charger_get_system_power and move it
+ * to some common code.
  */
 static int console_command_psys(int argc, char **argv)
 {
@@ -1392,7 +1397,7 @@ static int console_command_psys(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 			NULL,
 			"Get the system power in mW");
-#endif /* CONFIG_CMD_CHARGER_PSYS */
+#endif /* CONFIG_CHARGER_PSYS_READ */
 
 #ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
 static int bd9995x_amon_bmon_chg_adc(void)

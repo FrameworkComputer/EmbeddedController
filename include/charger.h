@@ -121,6 +121,12 @@ int charger_get_vbus_voltage(int port);
 /* Custom board function to discharge battery when on AC power */
 int board_discharge_on_ac(int enable);
 
+/*
+ * Read the current total system power in uW (usually from PSYS).
+ * Can be negative if the PSYS output is not currently enabled (e.g. AP is off).
+ */
+int charger_get_system_power(void);
+
 /* Other parameters that may be charger-specific, but are common so far. */
 int charger_set_input_current(int input_current);
 int charger_get_input_current(int *input_current);
