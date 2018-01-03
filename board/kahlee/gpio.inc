@@ -27,8 +27,8 @@ GPIO(LID_ACCEL_INT_L,		PIN(C, 7), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(ALS_INT_L,			PIN(0, 2), GPIO_INPUT | GPIO_PULL_UP)
 
 /* I2C GPIOs will be set to alt. function later. */
-GPIO(EC_I2C_THERMAL_SDA,	PIN(8, 7), GPIO_INPUT)	/* Thermel sensor & APU */
-GPIO(EC_I2C_THERMAL_SCL,	PIN(9, 0), GPIO_INPUT)	/* Thermel sensor & APU */
+GPIO(EC_I2C_THERMAL_SDA,	PIN(8, 7), GPIO_INPUT | GPIO_SEL_1P8V)	/* Thermel sensor & APU */
+GPIO(EC_I2C_THERMAL_SCL,	PIN(9, 0), GPIO_INPUT | GPIO_SEL_1P8V)	/* Thermel sensor & APU */
 GPIO(EC_I2C_SENSOR_SDA,		PIN(9, 1), GPIO_INPUT)	/* Sensor board ( G-sensor, light sensor ) */
 GPIO(EC_I2C_SENSOR_SCL,		PIN(9, 2), GPIO_INPUT)	/* Sensor board ( G-sensor, light sensor ) */
 GPIO(EC_I2C_USB_C0_PD_SDA,	PIN(B, 4), GPIO_INPUT)	/* PD1 */
