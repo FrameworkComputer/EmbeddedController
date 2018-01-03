@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "isl923x.h"
+#include "task.h"
 #include "timer.h"
 #include "util.h"
 
@@ -30,6 +31,9 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
 static int learn_mode;
+
+/* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
+static struct mutex control1_mutex;
 
 /* Charger parameters */
 static const struct charger_info isl9237_charger_info = {
@@ -102,16 +106,23 @@ int charger_enable_otg_power(int enabled)
 {
 	int rv, control1;
 
+	mutex_lock(&control1_mutex);
+
 	rv = raw_read16(ISL923X_REG_CONTROL1, &control1);
 	if (rv)
-		return rv;
+		goto out;
 
 	if (enabled)
 		control1 |= ISL923X_C1_OTG;
 	else
 		control1 &= ~ISL923X_C1_OTG;
 
-	return raw_write16(ISL923X_REG_CONTROL1, control1);
+	rv = raw_write16(ISL923X_REG_CONTROL1, control1);
+
+out:
+	mutex_unlock(&control1_mutex);
+
+	return rv;
 }
 
 /*
@@ -308,14 +319,14 @@ static void isl923x_init(void)
 
 #ifdef CONFIG_CHARGE_RAMP_HW
 #ifdef CONFIG_CHARGER_ISL9237
-	if (charger_get_option(&reg))
+	if (raw_read16(ISL923X_REG_CONTROL0, &reg))
 		goto init_fail;
 
 	/* Set input voltage regulation reference voltage for charge ramp */
 	reg &= ~ISL9237_C0_VREG_REF_MASK;
 	reg |= ISL9237_C0_VREG_REF_4200;
 
-	if (charger_set_option(reg))
+	if (raw_write16(ISL923X_REG_CONTROL0, reg))
 		goto init_fail;
 #else /* !defined(CONFIG_CHARGER_ISL9237) */
 	/*
@@ -329,13 +340,13 @@ static void isl923x_init(void)
 		goto init_fail;
 #endif /* defined(CONFIG_CHARGER_ISL9237) */
 #else /* !defined(CONFIG_CHARGE_RAMP_HW) */
-	if (charger_get_option(&reg))
+	if (raw_read16(ISL923X_REG_CONTROL0, &reg))
 		goto init_fail;
 
 	/* Disable voltage regulation loop to disable charge ramp */
 	reg |= ISL923X_C0_DISABLE_VREG;
 
-	if (charger_set_option(reg))
+	if (raw_write16(ISL923X_REG_CONTROL0, reg))
 		goto init_fail;
 #endif /* defined(CONFIG_CHARGE_RAMP_HW) */
 
@@ -368,9 +379,11 @@ int charger_discharge_on_ac(int enable)
 	int rv;
 	int control1;
 
+	mutex_lock(&control1_mutex);
+
 	rv = raw_read16(ISL923X_REG_CONTROL1, &control1);
 	if (rv)
-		return rv;
+		goto out;
 
 	control1 &= ~ISL923X_C1_LEARN_MODE_AUTOEXIT;
 	if (enable)
@@ -381,6 +394,9 @@ int charger_discharge_on_ac(int enable)
 	rv = raw_write16(ISL923X_REG_CONTROL1, control1);
 
 	learn_mode = !rv && enable;
+
+out:
+	mutex_unlock(&control1_mutex);
 	return rv;
 }
 
@@ -392,7 +408,7 @@ int charger_set_hw_ramp(int enable)
 {
 	int rv, reg;
 
-	rv = charger_get_option(&reg);
+	rv = raw_read16(ISL923X_REG_CONTROL0, &reg);
 	if (rv)
 		return rv;
 
@@ -402,7 +418,7 @@ int charger_set_hw_ramp(int enable)
 	else
 		reg |= ISL923X_C0_DISABLE_VREG;
 
-	return charger_set_option(reg);
+	return raw_write16(ISL923X_REG_CONTROL0, reg);
 }
 
 int chg_ramp_is_stable(void)
@@ -440,6 +456,8 @@ static void charger_enable_psys(void)
 {
 	int val;
 
+	mutex_lock(&control1_mutex);
+
 	/*
 	 * enable system power monitor PSYS function
 	 */
@@ -447,12 +465,16 @@ static void charger_enable_psys(void)
 		val |= ISL923X_C1_ENABLE_PSYS;
 		raw_write16(ISL923X_REG_CONTROL1, val);
 	}
+
+	mutex_unlock(&control1_mutex);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, charger_enable_psys, HOOK_PRIO_DEFAULT);
 
 static void charger_disable_psys(void)
 {
 	int val;
+
+	mutex_lock(&control1_mutex);
 
 	/*
 	 * disable system power monitor PSYS function
@@ -461,6 +483,8 @@ static void charger_disable_psys(void)
 		val &= ~ISL923X_C1_ENABLE_PSYS;
 		raw_write16(ISL923X_REG_CONTROL1, val);
 	}
+
+	mutex_unlock(&control1_mutex);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
 
@@ -537,21 +561,25 @@ static int print_amon_bmon(enum amon_bmon amon, int direction,
 		return ret;
 #endif
 
+	mutex_lock(&control1_mutex);
+
 	ret = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
 			 ISL923X_REG_CONTROL1, &reg);
-	if (ret)
-		return ret;
+	if (!ret) {
+		/* Switch between AMON/BMON */
+		if (amon == AMON)
+			reg &= ~ISL923X_C1_SELECT_BMON;
+		else
+			reg |= ISL923X_C1_SELECT_BMON;
 
-	/* Switch between AMON/BMON */
-	if (amon == AMON)
-		reg &= ~ISL923X_C1_SELECT_BMON;
-	else
-		reg |= ISL923X_C1_SELECT_BMON;
+		/* Enable monitor */
+		reg &= ~ISL923X_C1_DISABLE_MON;
+		ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
+				ISL923X_REG_CONTROL1, reg);
+	}
 
-	/* Enable monitor */
-	reg &= ~ISL923X_C1_DISABLE_MON;
-	ret = i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER,
-			ISL923X_REG_CONTROL1, reg);
+	mutex_unlock(&control1_mutex);
+
 	if (ret)
 		return ret;
 
