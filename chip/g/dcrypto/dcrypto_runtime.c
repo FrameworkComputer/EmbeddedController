@@ -67,7 +67,9 @@ void dcrypto_unlock(void)
 	mutex_unlock(&dcrypto_mutex);
 }
 
+#ifndef DCRYPTO_CALL_TIMEOUT_US
 #define DCRYPTO_CALL_TIMEOUT_US  (700 * 1000)
+#endif
 /*
  * When running on Cr50 this event belongs in the TPM task event space. Make
  * sure there is no collision with events defined in ./common/tpm_regsters.c.
