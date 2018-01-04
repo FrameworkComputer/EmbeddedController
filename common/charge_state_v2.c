@@ -357,10 +357,10 @@ static void update_dynamic_battery_info(void)
 	}
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
-		base_battery_dynamic.voltage = curr.batt.voltage;
+		base_battery_dynamic.actual_voltage = curr.batt.voltage;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))
-		base_battery_dynamic.current = curr.batt.current;
+		base_battery_dynamic.actual_current = curr.batt.current;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_DESIRED_VOLTAGE))
 		base_battery_dynamic.desired_voltage =

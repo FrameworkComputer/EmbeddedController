@@ -4710,8 +4710,8 @@ struct __ec_align_size1 ec_params_battery_dynamic_info {
 };
 
 struct __ec_align2 ec_response_battery_dynamic_info {
-	int16_t voltage; /* Battery voltage (mV) */
-	int16_t current; /* Battery current (mA); negative=discharging */
+	int16_t actual_voltage; /* Battery voltage (mV) */
+	int16_t actual_current; /* Battery current (mA); negative=discharging */
 	int16_t remaining_capacity; /* Remaining capacity (mAh) */
 	int16_t full_capacity; /* Capacity (mAh, might change occasionally) */
 	int16_t flags; /* Flags, see BATT_FLAG_* in battery.h */
