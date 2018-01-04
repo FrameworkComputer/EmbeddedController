@@ -299,6 +299,10 @@ servo_sh_hard_reset() {
 	dut_control sh_reset:off
 }
 
+ccd_cr50_ec_hard_reset() {
+	servo_ec_hard_reset
+}
+
 ec_reset() {
 	stype=${SERVO_TYPE}
 	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
@@ -354,6 +358,7 @@ on_servov3() {
 error_reported=  # Avoid double printing the error message.
 on_raiden() {
 	if [[ "${SERVO_TYPE}" =~ "servo_v4" ]] || \
+	   [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] || \
 	   [[ "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 		return 0
 	fi
@@ -385,7 +390,7 @@ cleanup() {
 		kill -CONT ${pid}
 	done
 
-	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
+	if ! on_raiden || $(servo_has_cold_reset); then
 		ec_reset
 	fi
 }
@@ -589,6 +594,17 @@ function flash_flashrom() {
 		die "no flashrom util found."
 	fi
 
+	# Check whether the SPI flash is internal to the NPCX's EC.
+	#
+	# If the in_array function return non-zero, the script will exit.
+	# Therefore, temporarily ignore errors so we can capture the return
+	# value.
+	set +e
+	local board_is_npcx_internal_spi
+	$(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}")
+	board_is_npcx_internal_spi=$?
+	set -e # Okay, don't ignore errors anymore.
+
 	if ! on_servov3; then
 		SERIALNAME=$(get_serial)
 		if [[ "$SERIALNAME" != "" ]] ; then
@@ -606,7 +622,7 @@ function flash_flashrom() {
 		dut_control cold_reset:on
 
 		# If spi flash is in npcx's ec, enable gang programer mode
-		if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
+		if [ $board_is_npcx_internal_spi -eq 0 ]; then
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.1
@@ -627,6 +643,17 @@ function flash_flashrom() {
 			sleep 1
 		fi
 	else
+		if [ $board_is_npcx_internal_spi -eq 0 ]; then
+			# Set GP_SEL# as low then start ec
+			dut_control cold_reset:on
+			dut_control fw_up:on
+			# sleep 0.1
+			dut_control cold_reset:off
+		else
+			# Assert EC reset.
+			dut_control cold_reset:on
+		fi
+
 		# Temp layout
 		L=/tmp/flash_spi_layout_$$
 
@@ -635,7 +662,6 @@ function flash_flashrom() {
 		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --ignore-fmap \
 			--fast-verify"
 	fi
-
 
 	# flashrom should report the image size at the end of the output.
 	FLASHROM_CMDLINE="sudo ${FLASHROM} ${FLASHROM_PARAM} --get-size"
@@ -673,7 +699,7 @@ function flash_flashrom() {
 
 	# Generate the correct flashrom command to write the ec.
 	FLASHROM_CMDLINE="${FLASHROM} ${FLASHROM_PARAM}"
-	FLASHROM_CMDLINE+="${FLASHROM_OPTIONS} -w ${T}"
+	FLASHROM_CMDLINE+=" ${FLASHROM_OPTIONS} -w ${T}"
 
 	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
 		echo "Running flashrom:" 1>&2
@@ -684,6 +710,11 @@ function flash_flashrom() {
 
 	rm $T
 
+	# Set GP_SEL# as default to disable GP mode when ec reboots
+	if [ $board_is_npcx_internal_spi -eq 0 ]; then
+		dut_control fw_up:off
+	fi
+
 	if  ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
 		# Turn off SPI1 interface on servo
 		dut_control spi1_vref:off spi1_buf_en:off
@@ -691,10 +722,6 @@ function flash_flashrom() {
 			dut_control spi1_buf_on_flex_en:off
 		fi
 
-		# Set GP_SEL# as default to disable GP mode when ec reboots
-		if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
-			dut_control fw_up:off
-		fi
 	else
 		rm $L
 	fi
