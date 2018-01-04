@@ -287,7 +287,7 @@ static int from_hexascii(char c)
 static FILE *tpm_output;
 static int ts_write(const void *out, size_t len)
 {
-	const char *cmd_head = "trunks_send --raw ";
+	const char *cmd_head = "PATH=\"${PATH}:/usr/sbin\" trunks_send --raw ";
 	size_t head_size = strlen(cmd_head);
 	char full_command[head_size + 2 * len + 1];
 	size_t i;
