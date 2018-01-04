@@ -144,7 +144,9 @@ void DCRYPTO_bn_wrap(struct LITE_BIGNUM *b, void *buf, size_t len);
 #define RSA_BYTES_4K    512
 #define RSA_WORDS_2K    (RSA_BYTES_2K / sizeof(uint32_t))
 #define RSA_WORDS_4K    (RSA_BYTES_4K / sizeof(uint32_t))
+#ifndef RSA_MAX_BYTES
 #define RSA_MAX_BYTES   RSA_BYTES_2K
+#endif
 #define RSA_MAX_WORDS   (RSA_MAX_BYTES / sizeof(uint32_t))
 #define RSA_F4          65537
 
