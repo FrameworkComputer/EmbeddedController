@@ -79,6 +79,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 #endif  /* CONFIG_SPI_MASTER_NO_CS_GPIOS */
 
 	/* Initiate the transaction. */
+	GWRITE_FIELD_I(SPI, port, ISTATE_CLR, TXDONE, 1);
 	GWRITE_FIELD_I(SPI, port, XACT, SIZE, transaction_size - 1);
 	GWRITE_FIELD_I(SPI, port, XACT, START, 1);
 
@@ -87,6 +88,11 @@ int spi_transaction(const struct spi_device_t *spi_device,
 	while (!GREAD_FIELD_I(SPI, port, ISTATE, TXDONE)) {
 		/* Give up if the deadline has been exceeded. */
 		if (get_time().val > timeout.val) {
+			/* Might have been pre-empted by other task.
+			 * Check ISTATE.TXDONE again for legit timeout.
+			 */
+			if (GREAD_FIELD_I(SPI, port, ISTATE, TXDONE))
+				break;
 			rv = EC_ERROR_TIMEOUT;
 			goto err_cs_high;
 		}
