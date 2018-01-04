@@ -4,7 +4,11 @@
  * found in the LICENSE file.
  */
 
-/* Include */
+/*
+ * This utility is used to generate/modify the firmware header which holds
+ * data used by NPCX ROM code (booter).
+ */
+
 #include "ecst.h"
 
 /* Global Variables */
@@ -21,17 +25,16 @@ FILE *arg_file_pointer;
 FILE *api_file_pointer;
 FILE *g_hdr_pointer;
 void *gh_console;
-unsigned short	g_text_atrib;
-unsigned short	g_bg_atrib;
-enum calc_type	g_calc_type;
-unsigned int	ptr_fw_addr;
-unsigned int	fw_offset;
-int		is_ptr_merge;
-unsigned int	g_ram_start_address;
-unsigned int	g_ram_size;
-unsigned int	api_file_size_bytes;
+unsigned short g_text_atrib;
+unsigned short g_bg_atrib;
+enum calc_type g_calc_type;
+unsigned int ptr_fw_addr;
+unsigned int fw_offset;
+int is_ptr_merge;
+unsigned int g_ram_start_address;
+unsigned int g_ram_size;
+unsigned int api_file_size_bytes;
 int is_mrider15 = FALSE;
-
 
 /* Chips information, RAM start address and RAM size. */
 struct chip_info chip_info[] = {{NPCX5M5G_RAM_ADDR, NPCX5M5G_RAM_SIZE},
@@ -71,8 +74,8 @@ int main(int argc, char *argv[])
 	/* Following variables: common to all modes */
 	int main_status = TRUE;
 	unsigned int  main_temp = 0L;
-	char		  main_str_temp[TMP_STR_SIZE];
-	char		  *end_ptr;
+	char main_str_temp[TMP_STR_SIZE];
+	char *end_ptr;
 
 	int arg_num;
 	int arg_ind;
@@ -86,11 +89,11 @@ int main(int argc, char *argv[])
 
 	bin_params.bin_params = 0;
 
-	input_file_name[0]	= '\0';
+	input_file_name[0] = '\0';
 	memset(input_file_name, 0, NAME_SIZE);
-	output_file_name[0]	  = '\0';
+	output_file_name[0] = '\0';
 	memset(output_file_name, 0, NAME_SIZE);
-	arg_file_name[0]	  = '\0';
+	arg_file_name[0] = '\0';
 	memset(arg_file_name, 0, NAME_SIZE);
 	g_hdr_input_name[0] = '\0';
 	memset(g_hdr_input_name, 0, NAME_SIZE);
@@ -190,13 +193,14 @@ int main(int argc, char *argv[])
 					"%s",
 					main_str_temp) != 1)) {
 				my_printf(TERR, "\nCannot read chip name, ");
-				my_printf(TERR,	"npcx7m7k, npcx7m6f");
-				my_printf(TERR,	", npcx7m6g, npcx7m5g");
-				my_printf(TERR,	", npcx5m5g or npcx5m6g.\n");
+				my_printf(TERR, "npcx7m7w");
+				my_printf(TERR, "npcx7m6xb, npcx7m6f");
+				my_printf(TERR, ", npcx7m6g, npcx7m5g");
+				my_printf(TERR, ", npcx5m5g or npcx5m6g.\n");
 				main_status = FALSE;
 			} else {
 				if (str_cmp_no_case(main_str_temp,
-					"npcx7m7k") == 0) {
+					"npcx7m7w") == 0) {
 					if ((bin_params.bin_params
 						& BIN_FW_LOAD_START_ADDR) ==
 						0x00000000)
@@ -215,6 +219,8 @@ int main(int argc, char *argv[])
 						chip_info[NPCX7M7].ram_size;
 				} else if ((str_cmp_no_case(main_str_temp,
 					"npcx7m6f") == 0) ||
+					       (str_cmp_no_case(main_str_temp,
+					"npcx7m6xb") == 0) ||
 					       (str_cmp_no_case(main_str_temp,
 					"npcx7m6g") == 0)) {
 					if ((bin_params.bin_params
@@ -296,10 +302,11 @@ int main(int argc, char *argv[])
 					my_printf(TERR,
 						  "\nInvalid chip name (%s) ",
 						  main_str_temp);
-					my_printf(TERR, "should be npcx7m7k, ");
+					my_printf(TERR, "should be npcx7m7w, ");
+					my_printf(TERR, "npcx7m6xb, ");
 					my_printf(TERR, "npcx7m6f, npcx7m6g, ");
-					my_printf(TERR, "npcx7m5g, npcx5m5g ");
-					my_printf(TERR, " or npcx5m6g.");
+					my_printf(TERR, "npcx7m5g, npcx5m5g, ");
+					my_printf(TERR, "or npcx5m6g.");
 					main_status = FALSE;
 				}
 
@@ -383,7 +390,7 @@ int main(int argc, char *argv[])
 					  "\nMissing Output File Name.\n");
 				main_status = FALSE;
 			}
-		  /* -usearmrst	get FW entry point from FW image offset 4.*/
+		  /* -usearmrst get FW entry point from FW image offset 4.*/
 		} else if (str_cmp_no_case(hdr_args[arg_ind],
 					   "-usearmrst") == 0) {
 			if ((bin_params.bin_params &
@@ -395,7 +402,7 @@ int main(int argc, char *argv[])
 			} else
 				bin_params.bin_params |=
 							BIN_FW_USER_ARM_RESET;
-		/* -nohcrs	disable header CRC*/
+		/* -nohcrs disable header CRC*/
 		} else if (str_cmp_no_case(hdr_args[arg_ind], "-nohcrc") == 0)
 			bin_params.bin_params |=
 							BIN_FW_HDR_CRC_DISABLE;
@@ -485,14 +492,14 @@ int main(int argc, char *argv[])
 			}
 
 		}
-		/* -unlimburst	enable unlimited burst */
+		/* -unlimburst enable unlimited burst */
 		else if (str_cmp_no_case(hdr_args[arg_ind], "-unlimburst") == 0)
 			bin_params.bin_params |= BIN_UNLIM_BURST_ENABLE;
-		/* -nofcrc	disable FW CRC. */
+		/* -nofcrc disable FW CRC. */
 		else if (str_cmp_no_case(hdr_args[arg_ind], "-nofcrc") == 0)
 			bin_params.bin_params |= BIN_FW_CRC_DISABLE;
 
-		/* -fwloadaddr,	 Get the FW load address. */
+		/* -fwloadaddr,  Get the FW load address. */
 		else if (str_cmp_no_case(hdr_args[arg_ind],
 					 "-fwloadaddr") == 0) {
 			arg_ind++;
@@ -774,8 +781,6 @@ int main(int argc, char *argv[])
 			exit_with_usage();
 	}
 
-
-
 	/* Be sure there's no open file before you leave */
 	if (input_file_pointer)
 		fclose(input_file_pointer);
@@ -790,20 +795,19 @@ int main(int argc, char *argv[])
 	/* Say Bye Bye */
 	if (main_status) {
 		my_printf(TPAS, "\n\n******************************");
-		my_printf(TPAS,	  "\n***	SUCCESS		***");
-		my_printf(TPAS,	  "\n******************************\n");
+		my_printf(TPAS,   "\n***    SUCCESS     ***");
+		my_printf(TPAS,   "\n******************************\n");
 
 		exit(EXIT_SUCCESS);
 	} else {
 		my_printf(TERR, "\n\n******************************");
-		my_printf(TERR,	  "\n***	FAILED		***");
-		my_printf(TERR,	  "\n******************************\n");
+		my_printf(TERR,   "\n***    FAILED      ***");
+		my_printf(TERR,   "\n******************************\n");
 
 		exit(EXIT_FAILURE);
 	}
 
 }
-
 
 /*
  *-----------------------------------------------------------------------
@@ -824,83 +828,84 @@ void exit_with_usage(void)
 	my_printf(TUSG, "\n ECST -mode <bt|bh|api> -i <filename> [Flags]");
 	my_printf(TUSG, "\n ");
 	my_printf(TUSG, "\nOperation Modes: ");
-	my_printf(TUSG, "\n bt	- BootLoader Table");
-	my_printf(TUSG, "\n bh	- BootLoader Header");
-	my_printf(TUSG, "\n api	- Download from Flash API");
+	my_printf(TUSG, "\n bt  - BootLoader Table");
+	my_printf(TUSG, "\n bh  - BootLoader Header");
+	my_printf(TUSG, "\n api - Download from Flash API");
 	my_printf(TUSG, "\n ");
 	my_printf(TUSG, "\nCommon flags:");
-	my_printf(TUSG, "\n -mode <type>		- Operation mode: ");
+	my_printf(TUSG, "\n -mode <type>        - Operation mode: ");
 	my_printf(TUSG, "bt|bh|api (default is bt)");
-	my_printf(TUSG, "\n -i <filename>		- Input file name; ");
+	my_printf(TUSG, "\n -i <filename>       - Input file name; ");
 	my_printf(TUSG, "must differ from the output file name");
-	my_printf(TUSG, "\n -o <filename>		- Output file name ");
+	my_printf(TUSG, "\n -o <filename>       - Output file name ");
 	my_printf(TUSG, "(default is out_<input_filename>.bin)");
-	my_printf(TUSG, "\n -argfile <filename>	- Arguments file name; ");
+	my_printf(TUSG, "\n -argfile <filename> - Arguments file name; ");
 	my_printf(TUSG, "includes multiple flags");
-	my_printf(TUSG, "\n -chip <name>		- EC Chip Name: ");
-	my_printf(TUSG, "npcx7m7k|npcx7m6f|npcx7m5g|npcx5m5g|npcx5m6g");
+	my_printf(TUSG, "\n -chip <name>        - EC Chip Name: ");
+	my_printf(TUSG, "npcx7m7w|npcx7m6f|npcx7m6xb|npcx7m6g|npcx7m5g|");
+	my_printf(TUSG, "npcx5m5g|npcx5m6g");
 	my_printf(TUSG, " (default is npcx5m5g)");
-	my_printf(TUSG,	"\n -v			- Verbose; prints ");
-	my_printf(TUSG,	"information messages");
-	my_printf(TUSG, "\n -vv			- Super Verbose; prints ");
+	my_printf(TUSG, "\n -v          - Verbose; prints ");
+	my_printf(TUSG, "information messages");
+	my_printf(TUSG, "\n -vv         - Super Verbose; prints ");
 	my_printf(TUSG, "intermediate calculations");
-	my_printf(TUSG, "\n -h			- Show this help screen");
+	my_printf(TUSG, "\n -h          - Show this help screen");
 	my_printf(TUSG, "\n ");
 	my_printf(TUSG, "\nBootLoader Table mode flags:");
-	my_printf(TUSG, "\n -nohcrc		- Disable CRC on header ");
+	my_printf(TUSG, "\n -nohcrc     - Disable CRC on header ");
 	my_printf(TUSG, "(default is ON)");
-	my_printf(TUSG, "\n -nofcrc		- Disable CRC on firmware ");
+	my_printf(TUSG, "\n -nofcrc     - Disable CRC on firmware ");
 	my_printf(TUSG, "(default is ON)");
-	my_printf(TUSG, "\n -spimaxclk <val>	- SPI Flash Maximum Clock, in");
+	my_printf(TUSG, "\n -spimaxclk <val>    - SPI Flash Maximum Clock, in");
 	my_printf(TUSG, " MHz: 20|25|33|40|50 (default is 20)");
 	my_printf(TUSG, "\n -spiclkratio <val>  - Core Clock / SPI Flash ");
 	my_printf(TUSG, "Clocks Ratio: 1 | 2 (default is 1)");
 	my_printf(TUSG, "\n                       ");
 	my_printf(TUSG, "Note: Not relevant for npcx5mng chips family");
-	my_printf(TUSG, "\n -spireadmode <type>	- SPI Flash Read Mode: ");
+	my_printf(TUSG, "\n -spireadmode <type> - SPI Flash Read Mode: ");
 	my_printf(TUSG, "normal|fast|dual|quad (default is normal)");
 	my_printf(TUSG, "\n -unlimburst         - Enable FIU Unlimited ");
 	my_printf(TUSG, "\n                       ");
 	my_printf(TUSG, "Note: Not relevant for npcx5mng chips family");
 	my_printf(TUSG, "Burst for SPI Flash Accesses (default is disable).");
-	my_printf(TUSG, "\n -fwloadaddr <addr>	- Firmware load start ");
+	my_printf(TUSG, "\n -fwloadaddr <addr>  - Firmware load start ");
 	my_printf(TUSG, "address (default is Start-of-RAM)");
-	my_printf(TUSG, "\n			  Located in code RAM, ");
+	my_printf(TUSG, "\n           Located in code RAM, ");
 	my_printf(TUSG, "16-bytes aligned, hex format");
-	my_printf(TUSG, "\n -usearmrst		- Use the ARM reset table ");
+	my_printf(TUSG, "\n -usearmrst      - Use the ARM reset table ");
 	my_printf(TUSG, "entry as the Firmware Entry Point");
-	my_printf(TUSG, "\n			  Can't be used with -fwep");
-	my_printf(TUSG, "\n -fwep <addr>		- Firmware entry ");
+	my_printf(TUSG, "\n           Can't be used with -fwep");
+	my_printf(TUSG, "\n -fwep <addr>        - Firmware entry ");
 	my_printf(TUSG, "point (default is Firmware Entry Point)");
-	my_printf(TUSG, "\n			  Located in firmware area,");
+	my_printf(TUSG, "\n           Located in firmware area,");
 	my_printf(TUSG, " hex format");
-	my_printf(TUSG, "\n -crcstart <offset>	- Firmware CRC start offset ");
+	my_printf(TUSG, "\n -crcstart <offset>  - Firmware CRC start offset ");
 	my_printf(TUSG, "(default is 00000000)");
-	my_printf(TUSG, "\n			  Offset from firmware image,");
+	my_printf(TUSG, "\n           Offset from firmware image,");
 	my_printf(TUSG, " 4B-aligned, for partial CRC, hex format");
-	my_printf(TUSG, "\n -crcsize <val>		- Firmware CRC size ");
+	my_printf(TUSG, "\n -crcsize <val>      - Firmware CRC size ");
 	my_printf(TUSG, "(default is entire firmware size)");
-	my_printf(TUSG, "\n			  4B-aligned, for partial ");
+	my_printf(TUSG, "\n           4B-aligned, for partial ");
 	my_printf(TUSG, "CRC, hex format");
-	my_printf(TUSG, "\n -fwlen <val>		- Firmware length, ");
+	my_printf(TUSG, "\n -fwlen <val>        - Firmware length, ");
 	my_printf(TUSG, "16B-aligned, hex format (default is file size).");
-	my_printf(TUSG, "\n -flashsize <val>	- Flash size, in MB: ");
+	my_printf(TUSG, "\n -flashsize <val>    - Flash size, in MB: ");
 	my_printf(TUSG, "1|2|4|8|16 (default is 16)");
-	my_printf(TUSG, "\n -ph <offset>		- Paste the Firmware ");
+	my_printf(TUSG, "\n -ph <offset>        - Paste the Firmware ");
 	my_printf(TUSG, "Header in the input file copy at the selected");
-	my_printf(TUSG, "\n			  offset ");
+	my_printf(TUSG, "\n           offset ");
 	my_printf(TUSG, "(default is 00000000), hex format.");
-	my_printf(TUSG, "\n			  The firmware itself is ");
+	my_printf(TUSG, "\n           The firmware itself is ");
 	my_printf(TUSG, "expected to start at offset + 64 bytes.");
 	my_printf(TUSG, "\n ");
 	my_printf(TUSG, "\nBootLoader Header mode flags:");
-	my_printf(TUSG, "\n -pointer <offset>	- BootLoader Table location");
+	my_printf(TUSG, "\n -pointer <offset>   - BootLoader Table location");
 	my_printf(TUSG, " in the flash, hex format");
-	my_printf(TUSG, "\n -bhoffset <offset>	- BootLoader Header Offset");
+	my_printf(TUSG, "\n -bhoffset <offset>  - BootLoader Header Offset");
 	my_printf(TUSG, " in file, hex format (BH location in BT)");
 	my_printf(TUSG, "\n ");
 	my_printf(TUSG, "\nAPI mode flags:");
-	my_printf(TUSG, "\n -apisign <type>	- Signature type: ");
+	my_printf(TUSG, "\n -apisign <type> - Signature type: ");
 	my_printf(TUSG, "crc|checksum (default is OFF)");
 	my_printf(TUSG, "\n\n");
 
@@ -925,12 +930,12 @@ int copy_file_to_file(char *dst_file_name,
 		      int  origin)
 {
 
-	int		index;
-	int		result = 0;
-	unsigned char	local_val;
-	int		src_file_size;
-	FILE		*dst_file;
-	FILE		*src_file;
+	int index;
+	int result = 0;
+	unsigned char local_val;
+	int src_file_size;
+	FILE *dst_file;
+	FILE *src_file;
 
 	/* Open the destination file for append. */
 	dst_file = fopen(dst_file_name, "r+b");
@@ -949,8 +954,8 @@ int copy_file_to_file(char *dst_file_name,
 	/* Get the source file length in bytes. */
 	src_file_size = get_file_length(src_file);
 
-	/* Point to the end of the destination file, and to the start	*/
-	/* of the source file.						*/
+	/* Point to the end of the destination file, and to the start */
+	/* of the source file. */
 	fseek(dst_file, offset, origin);
 	fseek(src_file, 0, SEEK_SET);
 
@@ -960,7 +965,7 @@ int copy_file_to_file(char *dst_file_name,
 		result = (int)(fread(&local_val, 1, 1, src_file));
 
 		/* If byte reading pass than write it to the destination, */
-		/* else exit from the reading loop.			  */
+		/* else exit from the reading loop. */
 		if (result)
 			/* Read pass, so write it to destination file.*/
 			result = fwrite(&local_val, 1, 1, dst_file);
@@ -1012,7 +1017,7 @@ void my_printf(int error_level, char *fmt, ...)
 int write_to_file(unsigned int write_value,
 		  unsigned int offset,
 		  unsigned char num_of_bytes,
-		  char		*print_string)
+		  char *print_string)
 {
 
 	int result = 0;
@@ -1055,7 +1060,7 @@ int write_to_file(unsigned int write_value,
 		break;
 	}
 
-	my_printf(TINF, "\nIn write_to_file	 - %s", print_string);
+	my_printf(TINF, "\nIn write_to_file  - %s", print_string);
 
 	if (result) {
 		my_printf(TINF,
@@ -1080,10 +1085,10 @@ int write_to_file(unsigned int write_value,
  * Description : Reads from open BIN file
  *--------------------------------------------------------------------------
  */
-int read_from_file(unsigned int	offset,
-				   unsigned char	size_to_read,
-				   unsigned int	*read_value,
-				   char				*print_string)
+int read_from_file(unsigned int offset,
+				   unsigned char size_to_read,
+				   unsigned int *read_value,
+				   char *print_string)
 {
 	int result;
 	unsigned int localValue4;
@@ -1231,8 +1236,8 @@ int str_cmp_no_case(const char *s1, const char *s2)
  */
 int get_file_length(FILE *stream)
 {
-	int	curent_position;
-	int	file_len;
+	int curent_position;
+	int file_len;
 
 	/* Store current position. */
 	curent_position = ftell(stream);
@@ -1268,7 +1273,7 @@ int main_bin(struct tbinparams binary_params)
 	char dir_name[NAME_SIZE];
 	char *file_name_ptr = NULL;
 	char *tmp_str_ptr;
-	int	  dir_name_len;
+	int   dir_name_len;
 	unsigned int bin_file_size_bytes;
 	unsigned int bin_fw_offset = 0;
 	unsigned int tmp_param;
@@ -1320,7 +1325,8 @@ int main_bin(struct tbinparams binary_params)
 		my_printf(TERR,
 			  " range of 0 and file size (%d).\n",
 			  binary_params.fw_hdr_offset,
-			  bin_file_size_bytes);		return FALSE;
+			  bin_file_size_bytes);
+		return FALSE;
 	}
 
 	/* Get the input directory and input file name. */
@@ -1896,7 +1902,6 @@ int calc_firmware_csum_bin(unsigned int *p_cksum,
 	unsigned char g_fw_array[BUFF_SIZE];
 	int line_print_size = 32;
 
-
 	calc_num_of_bytes_to_read = fw_length;
 	calc_curr_position = fw_offset;
 
@@ -1905,7 +1910,7 @@ int calc_firmware_csum_bin(unsigned int *p_cksum,
 			  "\nFW Error Detect Start Dddress: 0x%08x",
 			  calc_curr_position);
 		my_printf(TINF,
-			  "\nFW Error Detect End Dddress:	  0x%08x",
+			  "\nFW Error Detect End Dddress: 0x%08x",
 			  calc_curr_position + calc_num_of_bytes_to_read - 1);
 		my_printf(TINF,
 			  "\nFW Error Detect Size:  %d (0x%X)",
@@ -1981,8 +1986,8 @@ int main_hdr(void)
 {
 	int result = 0;
 	char tmp_file_name[NAME_SIZE];
-	unsigned int	tmp_long_val;
-	unsigned int	bin_file_size_bytes;
+	unsigned int tmp_long_val;
+	unsigned int bin_file_size_bytes;
 
 	if (is_ptr_merge) {
 		if (strlen(input_file_name) == 0) {
@@ -2054,10 +2059,10 @@ int main_hdr(void)
 				  "\nBootLoader Header file: %s\n",
 				  tmp_file_name);
 			my_printf(TINF,
-				  "	Offset: 0x%08X,	 Signature: 0x%08X,",
+				  " Offset: 0x%08X,  Signature: 0x%08X,",
 				  fw_offset, HDR_PTR_SIGNATURE);
 			my_printf(TINF,
-				  "	 Pointer: 0x%08X\n",
+				  " Pointer: 0x%08X\n",
 				  ptr_fw_addr);
 		} else {
 			my_printf(TERR,
@@ -2145,12 +2150,12 @@ int main_hdr(void)
 int main_api(void)
 {
 
-	char	dir_name[NAME_SIZE];
-	char	*file_name_ptr = NULL;
-	char	*tmp_str_ptr;
-	int		dir_name_len;
-	char	tmp_file_name[NAME_SIZE];
-	int		result = 0;
+	char dir_name[NAME_SIZE];
+	char *file_name_ptr = NULL;
+	char *tmp_str_ptr;
+	int dir_name_len;
+	char tmp_file_name[NAME_SIZE];
+	int result = 0;
 	unsigned int crc_checksum;
 
 	api_file_size_bytes = 0;
@@ -2213,7 +2218,6 @@ int main_api(void)
 		  api_file_size_bytes,
 		  api_file_size_bytes);
 
-
 	crc_checksum = calc_api_csum_bin();
 
 	fseek(api_file_pointer, 0L, SEEK_SET);
@@ -2246,7 +2250,6 @@ int main_api(void)
 }
 
 
-
 /*
  *******************************************************************
  * Function: calc_api_csum_bin
@@ -2266,7 +2269,6 @@ unsigned int calc_api_csum_bin(void)
 	unsigned int calc_fw_checksum_crc = 0;
 	unsigned char g_fw_array[BUFF_SIZE];
 	int line_print_size = 32;
-
 
 	calc_num_of_bytes_to_read = api_file_size_bytes;
 	calc_curr_position = 0;
@@ -2331,7 +2333,6 @@ unsigned int calc_api_csum_bin(void)
 
 }
 
-
 /*
  **************************************************************************
  *			CRC Handler
@@ -2349,7 +2350,7 @@ unsigned int calc_api_csum_bin(void)
  *******************************************************************
  */
 
-#define	P_32		0xEDB88320L
+#define P_32        0xEDB88320L
 
 /*
  *******************************************************************
@@ -2369,8 +2370,8 @@ unsigned int calc_api_csum_bin(void)
  *
  *******************************************************************
  */
-static int		crc_tab32_init = FALSE;
-static unsigned int	crc_tab32[256];
+static int crc_tab32_init = FALSE;
+static unsigned int crc_tab32[256];
 
 /*
  ********************************************************************
@@ -2383,15 +2384,15 @@ static unsigned int	crc_tab32[256];
  *******************************************************************
  */
 
-static void	init_crc32_tab(void);
+static void init_crc32_tab(void);
 
 /*
  *******************************************************************
  *
  * unsigned int initialize_crc_32( void );
  *
- * The function update_crc_32 calculates a	 new  CRC-32  value
- * based  on  the	previous value of the CRC and the next byte
+ * The function update_crc_32 calculates a new  CRC-32  value
+ * based  on  the previous value of the CRC and the next byte
  * of the data to be checked.
  *
  *******************************************************************
@@ -2402,14 +2403,13 @@ unsigned int initialize_crc_32(void)
 	return 0xffffffffL;
 }  /* initialize_crc_32 */
 
-
 /*
  *******************************************************************
  *
  * unsigned int update_crc_32( unsigned int crc, char c );
  *
- * The function update_crc_32 calculates a	 new  CRC-32  value
- * based  on  the	previous value of the CRC and the next byte
+ * The function update_crc_32 calculates a new  CRC-32  value
+ * based  on  the previous value of the CRC and the next byte
  * of the data to be checked.
  *
  *******************************************************************
@@ -2432,14 +2432,12 @@ unsigned int update_crc_32(unsigned int crc, char c)
 
 }  /* update_crc_32 */
 
-
-
 /*
  *******************************************************************
  *
  *	static void init_crc32_tab( void );
  *
- *	The function init_crc32_tab() is used  to  fill	 the  array
+ *	The function init_crc32_tab() is used  to  fill the  array
  *	for calculation of the CRC-32 with values.
  *
  *******************************************************************
