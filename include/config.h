@@ -121,6 +121,18 @@
  */
 #undef CONFIG_ACCEL_LIS2DH_INT_EVENT
 
+/* Sync event driver */
+#undef CONFIG_SYNC
+
+/* Simulate command for sync */
+#undef CONFIG_SYNC_COMMAND
+
+/*
+ * Define the event to raise when the sync event happens.
+ * Must be within TASK_EVENT_MOTION_INTERRUPT_MASK.
+ */
+#undef CONFIG_SYNC_INT_EVENT
+
 /* Compile chip support for analog-to-digital convertor */
 #undef CONFIG_ADC
 
