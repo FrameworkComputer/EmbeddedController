@@ -1218,6 +1218,8 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				in->sensor_range.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
+		if (!sensor->drv->set_range || !sensor->drv->get_range)
+			return EC_RES_INVALID_COMMAND;
 
 		/* Set new range if the data arg has a value. */
 		if (in->sensor_range.data != EC_MOTION_SENSE_NO_VALUE) {
@@ -1239,6 +1241,8 @@ static int host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				in->sensor_offset.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
+		if (!sensor->drv->set_offset || !sensor->drv->get_offset)
+			return EC_RES_INVALID_COMMAND;
 
 		/* Set new range if the data arg has a value. */
 		if (in->sensor_offset.flags & MOTION_SENSE_SET_OFFSET) {
