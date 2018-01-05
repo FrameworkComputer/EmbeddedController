@@ -257,7 +257,7 @@ SECTIONS
 	Tpm2_*(.bss)
 	/* TPM registers should be cleared at the same time */
         STRINGIFY(OUTDIR/common/tpm_registers.o*)(.bss)
-	 *(Tpm2_common.bss)
+	 *(.bss.Tpm2_common)
 	__bss_libtpm2_end = .;
 
         *(.bss)

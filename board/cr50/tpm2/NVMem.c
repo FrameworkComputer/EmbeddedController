@@ -25,7 +25,7 @@ static struct {
 	BOOL s_NvIsAvailable;
 	BOOL s_NV_unrecoverable;
 	BOOL s_NV_recoverable;
-} local_state  __attribute__((section("Tpm2_common.bss")));
+} local_state  __attribute__((section(".bss.Tpm2_common")));
 /*
  * This function is used by the simulator to set the error flags in the NV
  * subsystem to simulate an error in the NV loading process.
