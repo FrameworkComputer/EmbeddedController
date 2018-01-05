@@ -192,11 +192,20 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 			TCPC_ALERT_ACTIVE_LOW},
 };
 
+static int ps8751_tune_mux(const struct usb_mux *mux)
+{
+	/* 0x98 sets lower EQ of DP port (4.5db) */
+	i2c_write8(I2C_PORT_TCPC0, I2C_ADDR_TCPC0,
+			   PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	return EC_SUCCESS;
+}
+
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.board_init = &ps8751_tune_mux,
 	}
 };
 
