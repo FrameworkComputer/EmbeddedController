@@ -250,6 +250,8 @@ int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 
+void base_detect_interrupt(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

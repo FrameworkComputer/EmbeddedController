@@ -139,86 +139,6 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 }
 #endif
 
-/* Base detection and debouncing */
-#define BASE_DETECT_DEBOUNCE_US (20 * MSEC)
-
-/*
- * If the base status is unclear (i.e. not within expected ranges, read
- * the ADC value again every 500ms.
- */
-#define BASE_DETECT_RETRY_US (500 * MSEC)
-
-/*
- * rev0: Lid has 100K pull-up, base has 5.1K pull-down, so the ADC
- * value should be around 5.1/(100+5.1)*3300 = 160.
- * >=rev1: Lid has 604K pull-up, base has 30.1K pull-down, so the
- * ADC value should be around 30.1/(604+30.1)*3300 = 156
- *
- * We add a significant marging on the maximum value, due to noise on the line,
- * especially when PWM is active. See b/64193554 for details.
- */
-#define BASE_DETECT_MIN_MV 120
-#define BASE_DETECT_MAX_MV 300
-
-/*
- * When the base is connected in reverse, it presents a 100K pull-down,
- * so the ADC value should be around 100/(604+100)*3300 = 469
- *
- * TODO(b:64370797): Do something with these values.
- */
-#define BASE_DETECT_REVERSE_MIN_MV 450
-#define BASE_DETECT_REVERSE_MAX_MV 500
-
-/* Minimum ADC value to indicate base is disconnected for sure */
-#define BASE_DETECT_DISCONNECT_MIN_MV 1500
-
-/*
- * Base EC pulses detection pin for 500 us to signal out of band USB wake (that
- * can be used to wake system from deep S3).
- */
-#define BASE_DETECT_PULSE_MIN_US 400
-#define BASE_DETECT_PULSE_MAX_US 650
-
-static uint64_t base_detect_debounce_time;
-
-static void base_detect_deferred(void);
-DECLARE_DEFERRED(base_detect_deferred);
-
-enum base_status {
-	BASE_UNKNOWN = 0,
-	BASE_DISCONNECTED = 1,
-	BASE_CONNECTED = 2,
-};
-
-static enum base_status current_base_status;
-
-/*
- * This function is called whenever there is a change in the base detect
- * status. Actions taken include:
- * 1. Change in power to base
- * 2. Indicate mode change to host.
- * 3. Indicate tablet mode to host. Current assumption is that if base is
- * disconnected then the system is in tablet mode, else if the base is
- * connected, then the system is not in tablet mode.
- */
-static void base_detect_change(enum base_status status)
-{
-	int connected = (status == BASE_CONNECTED);
-
-	if (current_base_status == status)
-		return;
-
-	CPRINTS("Base %sconnected", connected ? "" : "not ");
-	gpio_set_level(GPIO_PP3300_DX_BASE, connected);
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
-	tablet_set_mode(!connected);
-	current_base_status = status;
-}
-
-/* Measure detection pin pulse duration (used to wake AP from deep S3). */
-static uint64_t pulse_start;
-static uint32_t pulse_width;
-
 static int command_attach_base(int argc, char **argv)
 {
 	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
@@ -236,109 +156,6 @@ static int command_detach_base(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(detachbase, command_detach_base,
 		NULL, "Simulate detach base");
-
-static void print_base_detect_value(int v, int tmp_pulse_width)
-{
-	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name,
-			v, tmp_pulse_width);
-}
-
-static void base_detect_deferred(void)
-{
-	uint64_t time_now = get_time().val;
-	int v;
-	uint32_t tmp_pulse_width = pulse_width;
-
-	if (base_detect_debounce_time > time_now) {
-		hook_call_deferred(&base_detect_deferred_data,
-				   base_detect_debounce_time - time_now);
-		return;
-	}
-
-	v = adc_read_channel(ADC_BASE_DET);
-	if (v == ADC_READ_ERROR)
-		return;
-
-	if (v >= BASE_DETECT_MIN_MV && v <= BASE_DETECT_MAX_MV) {
-		if (current_base_status != BASE_CONNECTED) {
-			print_base_detect_value(v, tmp_pulse_width);
-			base_detect_change(BASE_CONNECTED);
-		} else if (tmp_pulse_width >= BASE_DETECT_PULSE_MIN_US &&
-			   tmp_pulse_width <= BASE_DETECT_PULSE_MAX_US) {
-			print_base_detect_value(v, tmp_pulse_width);
-			CPRINTS("Sending event to AP");
-			host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
-		}
-	} else if ((v >= BASE_DETECT_REVERSE_MIN_MV &&
-		    v <= BASE_DETECT_REVERSE_MAX_MV) ||
-		   v >= BASE_DETECT_DISCONNECT_MIN_MV) {
-		/* TODO(b/35585396): Handle reverse connection separately. */
-
-		print_base_detect_value(v, tmp_pulse_width);
-
-		base_detect_change(BASE_DISCONNECTED);
-	} else {
-		/* Unclear base status, schedule again in a while. */
-		hook_call_deferred(&base_detect_deferred_data,
-				   BASE_DETECT_RETRY_US);
-	}
-}
-
-static inline int detect_pin_connected(enum gpio_signal det_pin)
-{
-	return gpio_get_level(det_pin) == 0;
-}
-
-void base_detect_interrupt(enum gpio_signal signal)
-{
-	uint64_t time_now = get_time().val;
-
-	if (base_detect_debounce_time <= time_now) {
-		/*
-		 * Detect and measure detection pin pulse, when base is
-		 * connected. Only a single pulse is measured over a debounce
-		 * period. If no pulse, or multiple pulses are detected,
-		 * pulse_width is set to 0.
-		 */
-		if (current_base_status == BASE_CONNECTED &&
-		    !detect_pin_connected(signal)) {
-			pulse_start = time_now;
-		} else {
-			pulse_start = 0;
-		}
-		pulse_width = 0;
-
-		hook_call_deferred(&base_detect_deferred_data,
-				   BASE_DETECT_DEBOUNCE_US);
-	} else {
-		if (current_base_status == BASE_CONNECTED &&
-		    detect_pin_connected(signal) && !pulse_width &&
-		    pulse_start) {
-			/* First pulse within period. */
-			pulse_width = time_now - pulse_start;
-		} else {
-			pulse_start = 0;
-			pulse_width = 0;
-		}
-	}
-
-	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
-}
-
-static void base_enable(void)
-{
-	/* Enable base detection interrupt. */
-	base_detect_debounce_time = get_time().val;
-	hook_call_deferred(&base_detect_deferred_data, 0);
-	gpio_enable_interrupt(GPIO_BASE_DET_A);
-}
-
-static void base_disable(void)
-{
-	/* Disable base detection interrupt and disable power to base. */
-	gpio_disable_interrupt(GPIO_BASE_DET_A);
-	base_detect_change(BASE_DISCONNECTED);
-}
 
 #include "gpio_list.h"
 
@@ -730,13 +547,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
 	/*
-	 * If we jumped to this image and chipset is already in S0, enable
-	 * base.
-	 */
-	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
-		base_enable();
-
-	/*
 	 * Set unused GPIO_LED_YELLO_C0[_OLD] as INPUT | PULL_UP
 	 * for better S0ix/S3 power
 	 */
@@ -1119,18 +929,6 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_startup(void)
-{
-	base_enable();
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_shutdown(void)
-{
-	base_disable();
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 int board_has_working_reset_flags(void)
 {
