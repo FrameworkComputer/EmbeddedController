@@ -27,6 +27,7 @@
 
 #include "config.h"
 
+#include "ccd_config.h"
 #include "compile_time_macros.h"
 #include "misc_util.h"
 #include "signed_header.h"
@@ -1585,12 +1586,13 @@ static void process_password(struct transfer_descriptor *td)
 	}
 
 	/*
-	 * Ok, we have a password, let's drop the newline in the end and send
-	 * it down.
+	 * Ok, we have a password, let's move it in the buffer to overwrite
+	 * the newline and free a byte to prepend the subcommand code.
 	 */
-	password[--len] = '\0';
+	memmove(password + 1, password, len  - 1);
+	password[0] = CCDV_PASSWORD;
 	response_size = sizeof(response);
-	rv = send_vendor_command(td, VENDOR_CC_CCD_PASSWORD,
+	rv = send_vendor_command(td, VENDOR_CC_CCD,
 				 password, len,
 				 &response, &response_size);
 	free(password);

@@ -44,9 +44,12 @@ enum vendor_cmd_cc {
 	VENDOR_CC_POP_LOG_ENTRY = 28,
 	VENDOR_CC_GET_REC_BTN = 29,
 	VENDOR_CC_RMA_CHALLENGE_RESPONSE = 30,
-	VENDOR_CC_CCD_PASSWORD = 31,
+
+	/* A gap left for the no longer supported CCD password command. */
+
 	VENDOR_CC_DISABLE_RMA = 32,
 	VENDOR_CC_MANAGE_CCD_PWD = 33,
+	VENDOR_CC_CCD = 34,
 
 	LAST_VENDOR_COMMAND = 65535,
 };
@@ -69,6 +72,7 @@ enum vendor_cmd_rc {
 	VENDOR_RC_RESPONSE_TOO_BIG = 5,
 	VENDOR_RC_INTERNAL_ERROR = 6,
 	VENDOR_RC_NOT_ALLOWED = 7,
+	VENDOR_RC_NO_SUCH_SUBCOMMAND = 8,
 	/* Only 7 bits available; max is 127 */
 	VENDOR_RC_NO_SUCH_COMMAND = 127,
 };
