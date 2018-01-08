@@ -104,13 +104,14 @@ void dma_disable_all(void)
  *				STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR for tx
  *				0 for rx
  */
-static void prepare_channel(stm32_dma_chan_t *chan, unsigned count,
+static void prepare_channel(enum dma_channel channel, unsigned count,
 		void *periph, void *memory, unsigned flags)
 {
+	stm32_dma_chan_t *chan = dma_get_channel(channel);
 	uint32_t ccr = STM32_DMA_CCR_PL_VERY_HIGH;
 
-	if (chan->ccr & STM32_DMA_CCR_EN)
-		chan->ccr &= ~STM32_DMA_CCR_EN;
+	dma_disable(channel);
+	dma_clear_isr(channel);
 
 	/* Following the order in Doc ID 15965 Rev 5 p194 */
 	chan->cpar = (uint32_t)periph;
@@ -133,13 +134,11 @@ void dma_go(stm32_dma_chan_t *chan)
 void dma_prepare_tx(const struct dma_option *option, unsigned count,
 		    const void *memory)
 {
-	stm32_dma_chan_t *chan = dma_get_channel(option->channel);
-
 	/*
 	 * Cast away const for memory pointer; this is ok because we know
 	 * we're preparing the channel for transmit.
 	 */
-	prepare_channel(chan, count, option->periph, (void *)memory,
+	prepare_channel(option->channel, count, option->periph, (void *)memory,
 			STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR |
 			option->flags);
 }
@@ -148,8 +147,7 @@ void dma_start_rx(const struct dma_option *option, unsigned count,
 		  void *memory)
 {
 	stm32_dma_chan_t *chan = dma_get_channel(option->channel);
-
-	prepare_channel(chan, count, option->periph, memory,
+	prepare_channel(option->channel, count, option->periph, memory,
 			STM32_DMA_CCR_MINC | option->flags);
 	dma_go(chan);
 }

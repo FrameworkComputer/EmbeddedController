@@ -9,6 +9,7 @@
 #include "common.h"
 #include "dma.h"
 #include "gpio.h"
+#include "hwtimer.h"
 #include "shared_mem.h"
 #include "spi.h"
 #include "stm32-dma.h"
@@ -103,6 +104,45 @@ static const struct dma_option dma_rx_option[] = {
 
 static uint8_t spi_enabled[ARRAY_SIZE(SPI_REGS)];
 
+static int spi_tx_done(stm32_spi_regs_t *spi)
+{
+	return !(spi->sr & (STM32_SPI_SR_FTLVL | STM32_SPI_SR_BSY));
+}
+
+static int spi_rx_done(stm32_spi_regs_t *spi)
+{
+	return !(spi->sr & (STM32_SPI_SR_FRLVL | STM32_SPI_SR_RXNE));
+}
+
+/* Read until RX FIFO is empty (i.e. RX done) */
+static int spi_clear_rx_fifo(stm32_spi_regs_t *spi)
+{
+	uint8_t dummy __attribute__((unused));
+	uint32_t start = __hw_clock_source_read(), delta;
+
+	while (!spi_rx_done(spi)) {
+		dummy = spi->dr;  /* Read one byte from FIFO */
+		delta = __hw_clock_source_read() - start;
+		if (delta >= SPI_TRANSACTION_TIMEOUT_USEC)
+			return EC_ERROR_TIMEOUT;
+	}
+	return EC_SUCCESS;
+}
+
+/* Wait until TX FIFO is empty (i.e. TX done) */
+static int spi_clear_tx_fifo(stm32_spi_regs_t *spi)
+{
+	uint32_t start = __hw_clock_source_read(), delta;
+
+	while (!spi_tx_done(spi)) {
+		/* wait for TX complete */
+		delta = __hw_clock_source_read() - start;
+		if (delta >= SPI_TRANSACTION_TIMEOUT_USEC)
+			return EC_ERROR_TIMEOUT;
+	}
+	return EC_SUCCESS;
+}
+
 /**
  * Initialize SPI module, registers, and clocks
  *
@@ -133,10 +173,11 @@ static int spi_master_initialize(int port)
 	 * and enable NSS output
 	 */
 	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_RXDMAEN |
-			   STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
+			STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
 
-	/* Enable SPI */
-	spi->cr1 |= STM32_SPI_CR1_SPE;
+#ifdef CONFIG_SPI_HALFDUPLEX
+	spi->cr1 |= STM32_SPI_CR1_BIDIMODE | STM32_SPI_CR1_BIDIOE;
+#endif
 
 	for (i = 0; i < spi_devices_used; i++) {
 		if (spi_devices[i].port != port)
@@ -159,7 +200,6 @@ static int spi_master_shutdown(int port)
 	int rv = EC_SUCCESS;
 
 	stm32_spi_regs_t *spi = SPI_REGS[port];
-	char dummy __attribute__((unused));
 
 	/* Set flag */
 	spi_enabled[port] = 0;
@@ -171,9 +211,7 @@ static int spi_master_shutdown(int port)
 	/* Disable SPI */
 	spi->cr1 &= ~STM32_SPI_CR1_SPE;
 
-	/* Read until FRLVL[1:0] is empty */
-	while (spi->sr & (STM32_SPI_SR_FTLVL | STM32_SPI_SR_RXNE))
-		dummy = spi->dr;
+	spi_clear_rx_fifo(spi);
 
 	/* Disable DMA buffers */
 	spi->cr2 &= ~(STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_RXDMAEN);
@@ -192,7 +230,7 @@ int spi_enable(int port, int enable)
 }
 
 static int spi_dma_start(int port, const uint8_t *txdata,
-		uint8_t *rxdata, int len)
+			 uint8_t *rxdata, int len)
 {
 	dma_chan_t *txdma;
 
@@ -210,7 +248,7 @@ static int spi_dma_start(int port, const uint8_t *txdata,
 	return EC_SUCCESS;
 }
 
-static inline int dma_is_enabled(const struct dma_option *option)
+static int dma_is_enabled(const struct dma_option *option)
 {
 	/* dma_bytes_done() returns 0 if channel is not enabled */
 	return dma_bytes_done(dma_get_channel(option->channel), -1);
@@ -218,42 +256,37 @@ static inline int dma_is_enabled(const struct dma_option *option)
 
 static int spi_dma_wait(int port)
 {
-	timestamp_t timeout;
-	stm32_spi_regs_t *spi = SPI_REGS[port];
 	int rv = EC_SUCCESS;
 
 	/* Wait for DMA transmission to complete */
 	if (dma_is_enabled(&dma_tx_option[port])) {
+		/*
+		 * In TX mode, SPI only generates clock when we write to FIFO.
+		 * Therefore, even though `dma_wait` polls with interval 0.1ms,
+		 * we won't send extra bytes.
+		 */
 		rv = dma_wait(dma_tx_option[port].channel);
 		if (rv)
 			return rv;
-
-		timeout.val = get_time().val + SPI_TRANSACTION_TIMEOUT_USEC;
-		/* Wait for FIFO empty and BSY bit clear */
-		while (spi->sr & (STM32_SPI_SR_FTLVL | STM32_SPI_SR_BSY))
-			if (get_time().val > timeout.val)
-				return EC_ERROR_TIMEOUT;
-
 		/* Disable TX DMA */
 		dma_disable(dma_tx_option[port].channel);
 	}
 
 	/* Wait for DMA reception to complete */
 	if (dma_is_enabled(&dma_rx_option[port])) {
+		/*
+		 * Because `dma_wait` polls with interval 0.1ms, we will read at
+		 * least ~100 bytes (with 8MHz clock).  If you don't want this
+		 * overhead, you can use interrupt handler
+		 * (`dma_enable_tc_interrupt_callback`) and disable SPI
+		 * interface in callback function.
+		 */
 		rv = dma_wait(dma_rx_option[port].channel);
 		if (rv)
 			return rv;
-
-		timeout.val = get_time().val + SPI_TRANSACTION_TIMEOUT_USEC;
-		/* Wait for FRLVL[1:0] to indicate FIFO empty */
-		while (spi->sr & STM32_SPI_SR_FRLVL)
-			if (get_time().val > timeout.val)
-				return EC_ERROR_TIMEOUT;
-
 		/* Disable RX DMA */
 		dma_disable(dma_rx_option[port].channel);
 	}
-
 	return rv;
 }
 
@@ -282,17 +315,16 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	/* Drive SS low */
 	gpio_set_level(spi_device->gpio_cs, 0);
 
-	/* Clear out the FIFO. */
-	while (spi->sr & (STM32_SPI_SR_FRLVL | STM32_SPI_SR_RXNE))
-		(void) (uint8_t) spi->dr;
+	spi_clear_rx_fifo(spi);
 
-#ifdef CONFIG_SPI_HALFDUPLEX
-	/* Enable bidirection mode and select output direction  */
-	spi->cr1 |= STM32_SPI_CR1_BIDIMODE | STM32_SPI_CR1_BIDIOE;
-#endif
 	rv = spi_dma_start(port, txdata, buf, txlen);
 	if (rv != EC_SUCCESS)
 		goto err_free;
+
+#ifdef CONFIG_SPI_HALFDUPLEX
+	spi->cr1 |= STM32_SPI_CR1_BIDIOE;
+#endif
+	spi->cr1 |= STM32_SPI_CR1_SPE;
 
 	if (full_readback)
 		return EC_SUCCESS;
@@ -301,14 +333,18 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	if (rv != EC_SUCCESS)
 		goto err_free;
 
+	spi_clear_tx_fifo(spi);
+
+	spi->cr1 &= ~STM32_SPI_CR1_SPE;
+
 	if (rxlen) {
-#ifdef CONFIG_SPI_HALFDUPLEX
-		/* Select input direction  */
-		spi->cr1 &= ~STM32_SPI_CR1_BIDIOE;
-#endif
 		rv = spi_dma_start(port, buf, rxdata, rxlen);
 		if (rv != EC_SUCCESS)
 			goto err_free;
+#ifdef CONFIG_SPI_HALFDUPLEX
+		spi->cr1 &= ~STM32_SPI_CR1_BIDIOE;
+#endif
+		spi->cr1 |= STM32_SPI_CR1_SPE;
 	}
 
 err_free:
@@ -319,18 +355,12 @@ err_free:
 	return rv;
 }
 
-#define SPI_BUSY (STM32_SPI_SR_FRLVL | STM32_SPI_SR_FTLVL | STM32_SPI_SR_BSY | \
-		  STM32_SPI_SR_RXNE)
-
 int spi_transaction_flush(const struct spi_device_t *spi_device)
 {
 	int rv = spi_dma_wait(spi_device->port);
+	stm32_spi_regs_t *spi = SPI_REGS[spi_device->port];
 
-#ifdef CONFIG_SPI_HALFDUPLEX
-	/* Disable receive-only mode by turning off CR1 BIDIMODE */
-	SPI_REGS[spi_device->port]->cr1 &= ~STM32_SPI_CR1_BIDIMODE;
-#endif
-
+	spi->cr1 &= ~STM32_SPI_CR1_SPE;
 	/* Drive SS high */
 	gpio_set_level(spi_device->gpio_cs, 1);
 
