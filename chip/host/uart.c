@@ -132,12 +132,16 @@ void uart_inject_char(char *s, int sz)
 	}
 }
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t uart_monitor_initialized = PTHREAD_COND_INITIALIZER;
+
 void *uart_monitor_stdin(void *d)
 {
 	struct termios org_settings, new_settings;
 	char buf[INPUT_BUFFER_SIZE];
 	int rv;
 
+	pthread_mutex_lock(&mutex);
 	tcgetattr(0, &org_settings);
 	new_settings = org_settings;
 	new_settings.c_lflag &= ~(ECHO | ICANON);
@@ -145,6 +149,9 @@ void *uart_monitor_stdin(void *d)
 	new_settings.c_cc[VMIN] = 1;
 
 	printf("Console input initialized\n");
+	/* Allow uart_init to proceed now that UART monitor is initialized. */
+	pthread_cond_signal(&uart_monitor_initialized);
+	pthread_mutex_unlock(&mutex);
 	while (1) {
 		tcsetattr(0, TCSANOW, &new_settings);
 		rv = read(0, buf, INPUT_BUFFER_SIZE);
@@ -166,7 +173,12 @@ void *uart_monitor_stdin(void *d)
 
 void uart_init(void)
 {
+	/* Create UART monitor thread and wait for it to initialize. */
+	pthread_mutex_lock(&mutex);
 	pthread_create(&input_thread, NULL, uart_monitor_stdin, NULL);
+	pthread_cond_wait(&uart_monitor_initialized, &mutex);
+	pthread_mutex_unlock(&mutex);
+
 	stopped = 1;  /* Not transmitting yet */
 	init_done = 1;
 }
