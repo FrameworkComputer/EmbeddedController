@@ -163,6 +163,8 @@
 #define EC_BATT_FLAG_DISCHARGING  0x04
 #define EC_BATT_FLAG_CHARGING     0x08
 #define EC_BATT_FLAG_LEVEL_CRITICAL 0x10
+/* Set if some of the dynamic data is invalid (or outdated). */
+#define EC_BATT_FLAG_INVALID_DATA 0x20
 
 /* Switch flags at EC_MEMMAP_SWITCHES */
 #define EC_SWITCH_LID_OPEN               0x01
@@ -4724,7 +4726,7 @@ struct __ec_align2 ec_response_battery_dynamic_info {
 	int16_t actual_current; /* Battery current (mA); negative=discharging */
 	int16_t remaining_capacity; /* Remaining capacity (mAh) */
 	int16_t full_capacity; /* Capacity (mAh, might change occasionally) */
-	int16_t flags; /* Flags, see BATT_FLAG_* in battery.h */
+	int16_t flags; /* Flags, see EC_BATT_FLAG_* */
 	int16_t desired_voltage; /* Charging voltage desired by battery (mV) */
 	int16_t desired_current; /* Charging current desired by battery (mA) */
 };

@@ -218,6 +218,9 @@ static void update_dynamic_battery_info(void)
 		batt_present = 0;
 	}
 
+	if (curr.batt.flags & EC_BATT_FLAG_INVALID_DATA)
+		tmp |= EC_BATT_FLAG_INVALID_DATA;
+
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
 		*memmap_volt = curr.batt.voltage;
 
@@ -355,6 +358,9 @@ static void update_dynamic_battery_info(void)
 			tmp |= EC_BATT_FLAG_BATT_PRESENT;
 		batt_present = 0;
 	}
+
+	if (curr.batt.flags & EC_BATT_FLAG_INVALID_DATA)
+		tmp |= EC_BATT_FLAG_INVALID_DATA;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
 		base_battery_dynamic.actual_voltage = curr.batt.voltage;
