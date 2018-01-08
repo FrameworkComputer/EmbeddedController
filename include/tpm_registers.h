@@ -55,6 +55,12 @@ int tpm_reset_request(int wait_until_done, int wipe_nvmem_first);
 void tpm_reinstate_nvmem_commits(void);
 
 /*
+ * To be called by functions running on the TPM task context. Returns
+ * EC_SUCCESS on successful reset.
+ */
+int tpm_sync_reset(int wipe_first);
+
+/*
  * This structure describes the header of all commands and responses sent and
  * received over TPM FIFO.
  *

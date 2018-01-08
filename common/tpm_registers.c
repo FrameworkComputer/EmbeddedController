@@ -879,6 +879,13 @@ static void tpm_reset_now(int wipe_first)
 		if_start();
 }
 
+int tpm_sync_reset(int wipe_first)
+{
+	tpm_reset_now(wipe_first);
+
+	return wipe_result;
+}
+
 void tpm_task(void)
 {
 	uint32_t evt;
