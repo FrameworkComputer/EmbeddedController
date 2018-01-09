@@ -6,8 +6,7 @@
 
 /* Interrupts */
 GPIO_INT(FPS_INT,         PIN(A, 0), GPIO_INT_RISING, fps_event)
-/* interrupt not yet in use */
-GPIO(SPI1_NSS,            PIN(A, 4), GPIO_INPUT)
+GPIO_INT(SPI1_NSS,        PIN(A, 4), GPIO_INPUT, spi_event)
 
 /* Outputs */
 GPIO(EC_INT_L,            PIN(A, 1),  GPIO_INPUT) /* Enabled when PCH is up */

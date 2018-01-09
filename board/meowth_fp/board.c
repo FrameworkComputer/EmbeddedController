@@ -38,5 +38,8 @@ static void spi_configure(void)
 static void board_init(void)
 {
 	spi_configure();
+
+	/* pretend the AP is up, when available do it using GPIO_SLP_S3_L */
+	hook_notify(HOOK_CHIPSET_RESUME);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
