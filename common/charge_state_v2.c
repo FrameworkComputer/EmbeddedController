@@ -546,7 +546,11 @@ static int charge_request(int voltage, int current)
 	if (!voltage || !current) {
 #ifdef CONFIG_CHARGER_NARROW_VDC
 		current = 0;
-		/* With NVDC charger, keep VSYS voltage higher than battery */
+		/*
+		 * With NVDC charger, keep VSYS voltage higher than battery,
+		 * otherwise the BGATE FET body diode would conduct and
+		 * discharge the battery.
+		 */
 		voltage = charger_closest_voltage(
 			curr.batt.voltage + charger_get_info()->voltage_step);
 		/* If the battery is full, request the max voltage. */

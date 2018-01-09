@@ -18,6 +18,10 @@
 #include "timer.h"
 #include "util.h"
 
+#ifndef CONFIG_CHARGER_NARROW_VDC
+#error "ISL9237/8 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
+#endif
+
 #define DEFAULT_R_AC 20
 #define DEFAULT_R_SNS 10
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
