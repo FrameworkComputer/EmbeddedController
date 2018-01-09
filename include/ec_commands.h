@@ -4561,6 +4561,13 @@ struct __ec_align4 ec_params_rwsig_action {
 	uint32_t action;
 };
 
+/* Run verification on a slot */
+#define EC_CMD_EFS_VERIFY	0x011E
+
+struct __ec_align1 ec_params_efs_verify {
+	uint8_t region;		/* enum ec_flash_region */
+};
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 

@@ -111,6 +111,25 @@ static int verify_slot(enum system_image_copy_t slot)
 	return EC_SUCCESS;
 }
 
+static int hc_verify_slot(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_efs_verify *p = args->params;
+	enum system_image_copy_t slot;
+
+	switch (p->region) {
+	case EC_FLASH_REGION_ACTIVE:
+		slot = system_get_active_copy();
+		break;
+	case EC_FLASH_REGION_UPDATE:
+		slot = system_get_update_copy();
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+	return verify_slot(slot) ? EC_RES_ERROR : EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_EFS_VERIFY, hc_verify_slot, EC_VER_MASK(0));
+
 static int verify_and_jump(void)
 {
 	enum system_image_copy_t slot;
