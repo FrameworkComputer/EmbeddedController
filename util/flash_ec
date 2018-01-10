@@ -109,6 +109,9 @@ BOARDS_NPCX_7M6X_JTAG=(
 	npcx7_evb
 )
 
+BOARDS_NPCX_7M7X_JTAG=(
+)
+
 BOARDS_NPCX_SPI=(
 	coral
 	eve
@@ -241,6 +244,8 @@ elif $(in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"); then
 	CHIP="npcx_5m6g_jtag"
 elif $(in_array "${BOARDS_NPCX_7M6X_JTAG[@]}" "${BOARD}"); then
 	CHIP="npcx_7m6x_jtag"
+elif $(in_array "${BOARDS_NPCX_7M7X_JTAG[@]}" "${BOARD}"); then
+	CHIP="npcx_7m7x_jtag"
 elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 	CHIP="npcx_spi"
 elif $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
@@ -935,6 +940,10 @@ function flash_npcx_5m6g_jtag() {
 }
 
 function flash_npcx_7m6x_jtag() {
+	flash_npcx_jtag
+}
+
+function flash_npcx_7m7x_jtag() {
 	flash_npcx_jtag
 }
 
