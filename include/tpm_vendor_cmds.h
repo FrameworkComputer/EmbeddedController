@@ -73,6 +73,8 @@ enum vendor_cmd_rc {
 	VENDOR_RC_INTERNAL_ERROR = 6,
 	VENDOR_RC_NOT_ALLOWED = 7,
 	VENDOR_RC_NO_SUCH_SUBCOMMAND = 8,
+	VENDOR_RC_IN_PROGRESS = 9,
+
 	/* Only 7 bits available; max is 127 */
 	VENDOR_RC_NO_SUCH_COMMAND = 127,
 };
