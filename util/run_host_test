@@ -7,6 +7,7 @@
 from cStringIO import StringIO
 import pexpect
 import signal
+import subprocess
 import sys
 import time
 
@@ -18,6 +19,8 @@ RESULT_ID_FAIL = 2
 RESULT_ID_EOF = 3
 
 EXPECT_LIST = [pexpect.TIMEOUT, 'Pass!', 'Fail!', pexpect.EOF]
+
+PS_ARGS = ['ps', '--no-headers', '-o', 'stat', '--pid']
 
 class Tee(object):
   def __init__(self, target):
@@ -39,6 +42,10 @@ def RunOnce(test_name, log):
     return child.expect(EXPECT_LIST)
   finally:
     if child.isalive():
+      ps_cmd = PS_ARGS + ['%d' % (child.pid)]
+      ps_stat = subprocess.check_output(ps_cmd).strip()
+      log.write('\n*** test %s process %d in state %s ***\n' %
+                (test_name, child.pid, ps_stat))
       child.kill(signal.SIGTERM)
     child.read()
 
