@@ -823,7 +823,10 @@ enum {
 #define NPCX_ENIDL_CTL                 REG8(NPCX_PMC_BASE_ADDR + 0x003)
 #define NPCX_DISIDL_CTL                REG8(NPCX_PMC_BASE_ADDR + 0x004)
 #define NPCX_DISIDL_CTL1               REG8(NPCX_PMC_BASE_ADDR + 0x005)
-#define NPCX_PWDWN_CTL(offset)         REG8(NPCX_PMC_BASE_ADDR + 0x008 + offset)
+#define NPCX_PWDWN_CTL_ADDR(offset)    (((offset) < 6) ? \
+			(NPCX_PMC_BASE_ADDR + 0x008 + (offset)) : \
+			(NPCX_PMC_BASE_ADDR + 0x024))
+#define NPCX_PWDWN_CTL(offset)         REG8(NPCX_PWDWN_CTL_ADDR(offset))
 #if defined(CHIP_FAMILY_NPCX7)
 #define NPCX_RAM_PD(offset)            REG8(NPCX_PMC_BASE_ADDR + 0x020 + offset)
 #endif
@@ -1150,7 +1153,11 @@ enum PM_CHANNEL_T {
 
 /* BBRAM register fields */
 #define NPCX_BKUP_STS_IBBR               7
+#if defined(CHIP_VARIANT_NPCX7M7W) || defined(CHIP_VARIANT_NPCX7M6XB)
+#define NPCX_BBRAM_SIZE                 128  /* Size of BBRAM */
+#else
 #define NPCX_BBRAM_SIZE                  64  /* Size of BBRAM */
+#endif
 
 /******************************************************************************/
 /* Timer Watch Dog (TWD) Registers */

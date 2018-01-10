@@ -3065,6 +3065,9 @@
 /* WiFi power control signal is active-low. */
 #undef CONFIG_WLAN_POWER_ACTIVE_LOW
 
+/* Support Wake-on-Voice */
+#undef CONFIG_WAKE_ON_VOICE
+
 /*
  * Write protect signal is active-high.  If this is defined, there must be a
  * GPIO named GPIO_WP; if not defined, there must be a GPIO names GPIO_WP_L.

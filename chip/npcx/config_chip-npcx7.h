@@ -18,10 +18,15 @@
 /* Hardware features */
 
 /* The optional hardware features depend on chip variant */
-#if defined(CHIP_VARIANT_NPCX7M6F)
+#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M7W) || \
+	defined(CHIP_VARIANT_NPCX7M6XB)
 #define NPCX_INT_FLASH_SUPPORT /* Internal flash support */
 #define NPCX_PSL_MODE_SUPPORT /* Power switch logic mode for ultra-low power */
 #define NPCX_EXT32K_OSC_SUPPORT /* External 32KHz crytal osc. input support */
+#endif
+
+#ifdef CHIP_VARIANT_NPCX7M7W
+#define NPCX_WOV_SUPPORT /* Audio front-end for Wake-on-Voice support */
 #endif
 
 /*
@@ -43,28 +48,40 @@
 
 /*****************************************************************************/
 /* Memory mapping */
-#define NPCX_BTRAM_SIZE    0x800 /* 2KB data ram used by booter. */
+#define NPCX_BTRAM_SIZE    0x400 /* 1KB data ram used by booter. */
 #define CONFIG_RAM_BASE    0x200C0000 /* memory address of data ram */
+/* 63KB data RAM */
+#define CONFIG_DATA_RAM_SIZE    0x00010000
+#define CONFIG_RAM_SIZE         (CONFIG_DATA_RAM_SIZE - NPCX_BTRAM_SIZE)
 /* no low power ram in npcx7 series */
 
 /* Use chip variant to specify the size and start address of program memory */
-#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G)
-/* 62KB data ram */
-#define CONFIG_DATA_RAM_SIZE	0x00010000
-#define CONFIG_RAM_SIZE		(CONFIG_DATA_RAM_SIZE - NPCX_BTRAM_SIZE)
+#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G) || \
+	defined(CHIP_VARIANT_NPCX7M6XB)
 /* 192KB RAM for FW code */
 #define NPCX_PROGRAM_MEMORY_SIZE (192 * 1024)
 /* program memory base address for 192KB Code RAM (ie. 0x100C0000 - 192KB) */
 #define CONFIG_PROGRAM_MEMORY_BASE 0x10090000
+#elif defined(CHIP_VARIANT_NPCX7M7W)
+/* 320 RAM for FW code */
+#define NPCX_PROGRAM_MEMORY_SIZE (320 * 1024)
+/* program memory base address for 320KB Code RAM (ie. 0x100C0000 - 320KB) */
+#define CONFIG_PROGRAM_MEMORY_BASE 0x10070000
 #else
 #error "Unsupported chip variant"
 #endif
 
 /* Total RAM size checking for npcx ec */
 #define NPCX_RAM_SIZE (CONFIG_DATA_RAM_SIZE + NPCX_PROGRAM_MEMORY_SIZE)
-#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G)
-/* 256KB RAM in NPCX7M6F */
+#if defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6G) || \
+	defined(CHIP_VARIANT_NPCX7M6XB)
+/* 256KB RAM in NPCX7M6F/NPCX7M6G/NPCX7M6XB */
 #if (NPCX_RAM_SIZE != 0x40000)
+#error "Wrong memory mapping layout for NPCX7M6F"
+#endif
+#elif defined(CHIP_VARIANT_NPCX7M7W)
+/* 384KB RAM in NPCX7M7W */
+#if (NPCX_RAM_SIZE != 0x60000)
 #error "Wrong memory mapping layout for NPCX7M6F"
 #endif
 #endif
