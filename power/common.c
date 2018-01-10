@@ -563,7 +563,7 @@ static void siglog_deferred(void)
 
 	/* Okay, turn 'em on again. */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
-		power_signal_disable_interrupt(power_signal_list[i].gpio);
+		power_signal_enable_interrupt(power_signal_list[i].gpio);
 }
 DECLARE_DEFERRED(siglog_deferred);
 
