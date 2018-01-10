@@ -36,7 +36,8 @@
 
 enum pp_detect_state {
 	PP_DETECT_IDLE = 0,
-	PP_DETECT_IN_PROGRESS,
+	PP_DETECT_AWAITING_PRESS,
+	PP_DETECT_BETWEEN_PRESSES,
 	PP_DETECT_FINISHING,
 	PP_DETECT_ABORT
 };
@@ -55,6 +56,12 @@ static uint64_t pp_last_press;  /* Time of last press */
  * hook task.
  */
 static struct mutex pp_mutex;
+
+static int pp_detect_in_progress(void)
+{
+	return ((pp_detect_state == PP_DETECT_AWAITING_PRESS) ||
+		(pp_detect_state == PP_DETECT_BETWEEN_PRESSES));
+}
 
 /******************************************************************************/
 /*
@@ -80,7 +87,7 @@ static void physical_detect_done(void)
 	 */
 	mutex_lock(&pp_mutex);
 
-	if (pp_detect_state != PP_DETECT_IN_PROGRESS) {
+	if (!pp_detect_in_progress()) {
 		CPRINTF("\nPhysical presence check aborted.\n");
 		pp_detect_callback = NULL;
 	} else if (pp_press_count < pp_press_count_needed) {
@@ -118,6 +125,7 @@ DECLARE_DEFERRED(physical_detect_done);
  */
 static void physical_detect_prompt(void)
 {
+	pp_detect_state = PP_DETECT_AWAITING_PRESS;
 	CPRINTF("\n\nPress the physical button now!\n\n");
 }
 DECLARE_DEFERRED(physical_detect_prompt);
@@ -137,7 +145,7 @@ static void physical_detect_check_press(void)
 	CPRINTS("PP press dt=%.6ld", dt);
 
 	/* If we no longer care about presses, ignore them */
-	if (pp_detect_state != PP_DETECT_IN_PROGRESS)
+	if (!pp_detect_in_progress())
 		goto pdpress_exit;
 
 	/* Ignore extra presses we don't need */
@@ -167,6 +175,7 @@ static void physical_detect_check_press(void)
 
 	/* Ok, we need this press */
 	CPRINTS("PP press counted!");
+	pp_detect_state = PP_DETECT_BETWEEN_PRESSES;
 	pp_last_press = now;
 	pp_press_count++;
 
@@ -211,7 +220,7 @@ int physical_detect_start(int is_long, void (*callback)(void))
 	pp_press_count = 0;
 	pp_last_press = get_time().val;
 	pp_detect_callback = callback;
-	pp_detect_state = PP_DETECT_IN_PROGRESS;
+	pp_detect_state = PP_DETECT_BETWEEN_PRESSES;
 	mutex_unlock(&pp_mutex);
 
 	/* Start capturing button presses */
@@ -237,7 +246,7 @@ int physical_detect_busy(void)
 void physical_detect_abort(void)
 {
 	mutex_lock(&pp_mutex);
-	if (pp_detect_state == PP_DETECT_IN_PROGRESS) {
+	if (pp_detect_in_progress()) {
 		CPRINTS("PP abort");
 		pp_detect_state = PP_DETECT_ABORT;
 		/* Speed up call to done */
