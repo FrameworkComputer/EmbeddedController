@@ -1367,6 +1367,67 @@ static enum vendor_cmd_rc ccd_password(void *buf,
 	return VENDOR_RC_SUCCESS;
 }
 
+static enum vendor_cmd_rc ccd_pp_poll(void *buf,
+				      size_t input_size,
+				      size_t *response_size)
+{
+	char *buffer = buf;
+
+	if ((ccd_state == CCD_STATE_OPENED) ||
+	    (ccd_state == CCD_STATE_UNLOCKED)) {
+		buffer[0] = CCD_PP_DONE;
+	} else {
+		switch (physical_presense_fsm_state()) {
+		case PP_AWAITING_PRESS:
+			buffer[0] = CCD_PP_AWAITING_PRESS;
+			break;
+		case PP_BETWEEN_PRESSES:
+			buffer[0] = CCD_PP_BETWEEN_PRESSES;
+			break;
+		default:
+			buffer[0] = CCD_PP_CLOSED;
+			break;
+		}
+	}
+	*response_size = 1;
+	return VENDOR_RC_SUCCESS;
+}
+
+static enum vendor_cmd_rc ccd_pp_poll_unlock(void *buf,
+					     size_t input_size,
+					     size_t *response_size)
+{
+	char *buffer;
+
+	if ((ccd_state != CCD_STATE_OPENED) &&
+	    (ccd_state != CCD_STATE_UNLOCKED))
+		return ccd_pp_poll(buf, input_size, response_size);
+
+
+	buffer = buf;
+	*response_size = 1;
+	buffer[0] = CCD_PP_DONE;
+
+	return VENDOR_RC_SUCCESS;
+}
+
+static enum vendor_cmd_rc ccd_pp_poll_open(void *buf,
+					   size_t input_size,
+					   size_t *response_size)
+{
+	char *buffer;
+
+	if (ccd_state != CCD_STATE_OPENED)
+		return ccd_pp_poll(buf, input_size, response_size);
+
+
+	buffer = buf;
+	*response_size = 1;
+	buffer[0] = CCD_PP_DONE;
+
+	return VENDOR_RC_SUCCESS;
+}
+
 /*
  * Common TPM Vendor command handler used to demultiplex various CCD commands
  * which need to be available both throuh CLI and over /dev/tpm0.
@@ -1403,6 +1464,14 @@ static enum vendor_cmd_rc ccd_vendor(enum vendor_cmd_cc code,
 
 	case CCDV_LOCK:
 		handler = ccd_lock;
+		break;
+
+	case CCDV_PP_POLL_UNLOCK:
+		handler = ccd_pp_poll_unlock;
+		break;
+
+	case CCDV_PP_POLL_OPEN:
+		handler = ccd_pp_poll_open;
 		break;
 
 	default:
