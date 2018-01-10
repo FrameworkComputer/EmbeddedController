@@ -196,6 +196,10 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
+const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+        GPIO_USB1_ENABLE,
+};
+
 void board_reset_pd_mcu(void)
 {
 	/* Assert reset */
@@ -739,12 +743,18 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_startup(void)
 {
+        /* Enable USB-A port. */
+        gpio_set_level(GPIO_USB1_ENABLE, 1);
+
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_shutdown(void)
 {
+        /* Disable USB-A port. */
+        gpio_set_level(GPIO_USB1_ENABLE, 0);
+
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
