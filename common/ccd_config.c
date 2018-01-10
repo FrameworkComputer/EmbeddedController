@@ -1182,8 +1182,13 @@ static int command_ccd_body(int argc, char **argv)
 	/* Commands to set state */
 	if (!strcasecmp(argv[1], "lock"))
 		return ccd_command_wrapper(0, NULL, CCDV_LOCK);
-	if (!strcasecmp(argv[1], "unlock"))
+	if (!strcasecmp(argv[1], "unlock")) {
+		if (!raw_has_password()) {
+			ccprintf("Unlock only allowed after password is set\n");
+			return EC_ERROR_ACCESS_DENIED;
+		}
 		return ccd_command_wrapper(argc - 1, argv[2], CCDV_UNLOCK);
+	}
 	if (!strcasecmp(argv[1], "open"))
 		return ccd_command_wrapper(argc - 1, argv[2], CCDV_OPEN);
 
