@@ -268,6 +268,20 @@ int physical_detect_press(void)
 	return EC_SUCCESS;
 }
 
+enum pp_fsm_state physical_presense_fsm_state(void)
+{
+	switch (pp_detect_state) {
+	case PP_DETECT_AWAITING_PRESS:
+		return PP_AWAITING_PRESS;
+	case PP_DETECT_BETWEEN_PRESSES:
+		return PP_BETWEEN_PRESSES;
+	default:
+		break;
+	}
+
+	return PP_OTHER;
+}
+
 #ifdef CONFIG_PHYSICAL_PRESENCE_DEBUG_UNSAFE
 
 /**

@@ -61,4 +61,16 @@ int physical_detect_press(void);
  */
 void board_physical_presence_enable(int enable);
 
+/**
+ * An API to report physical presence FSM state to an external entity. Of
+ * interest are states when key press is currently required or is expected
+ * soon.
+ */
+enum pp_fsm_state {
+	PP_OTHER = 0,
+	PP_AWAITING_PRESS = 1,
+	PP_BETWEEN_PRESSES = 2,
+};
+enum pp_fsm_state physical_presense_fsm_state(void);
+
 #endif /* __CROS_EC_PHYSICAL_PRESENCE_H */
