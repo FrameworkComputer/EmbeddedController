@@ -152,6 +152,7 @@ static struct ccd_config config;
 static uint8_t ccd_config_loaded;
 static uint8_t force_disabled;
 static struct mutex ccd_config_mutex;
+static uint8_t ccd_console_active; /* CCD console command is in progress. */
 
 /******************************************************************************/
 /* Raw config accessors */
@@ -1163,7 +1164,7 @@ static int command_ccd_help(void)
 /**
  * Case closed debugging config command.
  */
-static int command_ccd(int argc, char **argv)
+static int command_ccd_body(int argc, char **argv)
 {
 	/* If no args or 'get', print info */
 	if (argc < 2 || !strcasecmp(argv[1], "get"))
@@ -1204,6 +1205,17 @@ static int command_ccd(int argc, char **argv)
 
 	/* Anything else (including "help") prints help */
 	return command_ccd_help();
+}
+
+static int command_ccd(int argc, char **argv)
+{
+	int rv;
+
+	ccd_console_active = 1;
+	rv = command_ccd_body(argc, argv);
+	ccd_console_active = 0;
+
+	return rv;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(ccd, command_ccd,
 			     "[help | ...]",
