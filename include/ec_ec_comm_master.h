@@ -11,10 +11,6 @@
 #include <stdint.h>
 #include "config.h"
 
-#if defined(CONFIG_EC_EC_COMM_MASTER) && defined(CONFIG_EC_EC_COMM_BATTERY)
-#define CONFIG_EC_EC_COMM_BATTERY_MASTER
-#endif
-
 /*
  * TODO(b:65697620): Move these to some other C file, depending on a config
  * option.

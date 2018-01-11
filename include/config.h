@@ -3236,6 +3236,20 @@
 
 /*****************************************************************************/
 /*
+ * Define derived configuration options for EC-EC communication
+ */
+#ifdef CONFIG_EC_EC_COMM_BATTERY
+#ifdef CONFIG_EC_EC_COMM_MASTER
+#define CONFIG_EC_EC_COMM_BATTERY_MASTER
+#endif
+
+#ifdef CONFIG_EC_EC_COMM_SLAVE
+#define CONFIG_EC_EC_COMM_BATTERY_SLAVE
+#endif
+#endif /* CONFIG_EC_EC_COMM_BATTERY */
+
+/*****************************************************************************/
+/*
  * Handle task-dependent configs.
  *
  * This prevent sub-modules from being compiled when the task and parent module
