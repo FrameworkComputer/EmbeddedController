@@ -567,22 +567,43 @@ static int ccd_set_password(const char *password)
 /******************************************************************************/
 /* Handlers for state changes requiring physical presence */
 
-static void ccd_open_done(void)
+/*
+ * Could be invoked synchronously on the TPM task context, or asynchronously,
+ * after physical presence is established, on the hooks task context.
+ *
+ * The appropriate TPM reset entry point needs to be invoked. Also, make sure
+ * that the board is always rebooted when TPM is reset.
+ *
+ * @param sync   Non-zero to invoke synchronously.
+ */
+static void ccd_open_done(int sync)
 {
+	int rv;
+
 	if (!ccd_is_cap_enabled(CCD_CAP_OPEN_WITHOUT_TPM_WIPE)) {
 		/* Can't open unless wipe succeeds */
-		if (tpm_sync_reset(1) != EC_SUCCESS) {
+		if (sync)
+			rv = tpm_sync_reset(1);
+		else
+			rv = board_wipe_tpm();
+
+		if (rv != EC_SUCCESS) {
 			CPRINTS("CCD open TPM wipe failed");
 			return;
 		}
 	}
 
 	if (!ccd_is_cap_enabled(CCD_CAP_UNLOCK_WITHOUT_AP_REBOOT) ||
-	    !ccd_is_cap_enabled(CCD_CAP_OPEN_WITHOUT_TPM_WIPE))
+	    (!ccd_is_cap_enabled(CCD_CAP_OPEN_WITHOUT_TPM_WIPE) && sync))
 		board_reboot_ap();
 
 	CPRINTS("CCD opened");
 	ccd_set_state(CCD_STATE_OPENED);
+}
+
+static void ccd_open_done_async(void)
+{
+	ccd_open_done(0);
 }
 
 static void ccd_unlock_done(void)
@@ -858,8 +879,7 @@ static int ccd_command_wrapper(int argc, char *password,
 	 */
 	return_code = be32toh(vch->tpm_header.command_code);
 	if (return_code && (return_code != VENDOR_RC_IN_PROGRESS)) {
-		ccprintf("Command error %d\n", vch->ccd_subcommand);
-		rv = EC_ERROR_UNKNOWN;
+		rv = vch->ccd_subcommand;
 	} else {
 		rv = EC_SUCCESS;
 	}
@@ -933,7 +953,7 @@ static enum vendor_cmd_rc ccd_open(void *buf,
 	if (need_pp) {
 		/* Start physical presence detect */
 		ccprintf("Starting CCD open...\n");
-		rv = physical_detect_start(is_long, ccd_open_done);
+		rv = physical_detect_start(is_long, ccd_open_done_async);
 		if (rv != EC_SUCCESS) {
 			*response_size = 1;
 			buffer[0] = rv;
@@ -943,7 +963,7 @@ static enum vendor_cmd_rc ccd_open(void *buf,
 	}
 
 	/* No physical presence required; go straight to done */
-	ccd_open_done();
+	ccd_open_done(1);
 
 	return VENDOR_RC_SUCCESS;
 }
