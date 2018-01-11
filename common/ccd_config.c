@@ -910,7 +910,7 @@ static enum vendor_cmd_rc ccd_open(void *buf,
 		if (!input_size) {
 			*response_size = 1;
 			buffer[0] = EC_ERROR_PARAM_COUNT;
-			return VENDOR_RC_INTERNAL_ERROR;
+			return VENDOR_RC_PASSWORD_REQUIRED;
 		}
 
 		/*
@@ -995,7 +995,7 @@ static enum vendor_cmd_rc ccd_unlock(void *buf,
 		if (!input_size) {
 			*response_size = 1;
 			buffer[0] = EC_ERROR_PARAM_COUNT;
-			return VENDOR_RC_INTERNAL_ERROR;
+			return VENDOR_RC_PASSWORD_REQUIRED;
 		}
 
 		/*
