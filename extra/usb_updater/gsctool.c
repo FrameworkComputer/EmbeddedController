@@ -132,7 +132,7 @@
  * modes, among other things.
  *
  * Protocol version 6 does not change the format of the first PDU response,
- * but it indicates the target's ablitiy to channel TPM venfor commands
+ * but it indicates the target's ablitiy to channel TPM vendor commands
  * through USB connection.
  *
  * When channeling TPM vendor commands the USB frame looks as follows:
@@ -1540,7 +1540,8 @@ static int parse_bid(const char *opt,
 	return 1;
 }
 
-static void process_password(struct transfer_descriptor *td)
+static uint32_t common_process_password(struct transfer_descriptor *td,
+					enum ccd_vendor_subcommands subcmd)
 {
 	size_t response_size;
 	uint8_t response;
@@ -1590,18 +1591,26 @@ static void process_password(struct transfer_descriptor *td)
 	 * the newline and free a byte to prepend the subcommand code.
 	 */
 	memmove(password + 1, password, len  - 1);
-	password[0] = CCDV_PASSWORD;
+	password[0] = subcmd;
 	response_size = sizeof(response);
 	rv = send_vendor_command(td, VENDOR_CC_CCD,
 				 password, len,
 				 &response, &response_size);
 	free(password);
 	free(password_copy);
-	if (!rv)
+
+	if ((rv != VENDOR_RC_SUCCESS) && (rv != VENDOR_RC_IN_PROGRESS))
+		fprintf(stderr, "Error sending password: rv %d, response %d\n",
+			rv, response_size ? response : 0);
+
+	return rv;
+}
+
+static void process_password(struct transfer_descriptor *td)
+{
+	if (common_process_password(td, CCDV_PASSWORD) == VENDOR_RC_SUCCESS)
 		return;
 
-	fprintf(stderr, "Error setting password: rv %d, response %d\n",
-		rv, response_size ? response : 0);
 	exit(update_error);
 }
 
