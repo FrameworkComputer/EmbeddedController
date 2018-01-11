@@ -819,7 +819,20 @@ function flash_it83xx() {
 	if [ ! -x "$ITEFLASH" ]; then
 		die "no iteflash util found."
 	fi
+
+	dut_control i2c_mux_en:on
+	dut_control i2c_mux:remote_adc
+
+	info "Close connection to ftdi_i2c interface"
+	dut_control --ftdii2c close
+
+	info "Run iteflash..."
 	sudo ${ITEFLASH} -w ${IMG}
+
+	info "Reinitialize ftdi_i2c interface"
+	dut_control --ftdii2c init
+	dut_control --ftdii2c open
+	dut_control --ftdii2c setclock
 }
 
 function flash_lm4() {
