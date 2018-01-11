@@ -150,7 +150,6 @@ static const struct power_seq_op s3s0_usb_wake_power_seq[] = {
 /* The power sequence for POWER_S0S3 */
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
 static const struct power_seq_op s0s3_power_seq[] = {
-	{ GPIO_PP1800_S0_EN, 0, 1 },
 	{ GPIO_AP_CORE_EN, 0, 20 },
 };
 #else
@@ -168,6 +167,7 @@ static const struct power_seq_op s0s3_power_seq[] = {
 /* Sigs that need to be left on in S3, if we need to wake-on-USB */
 static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
 	{ GPIO_PP3300_S0_EN, 0, 20 },
+	{ GPIO_PP1800_S0_EN, 0, 1 },
 	{ GPIO_PP1800_USB_EN, 0, 1 },
 };
 #endif
