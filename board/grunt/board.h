@@ -118,6 +118,8 @@
 #define I2C_PORT_TCPC1		NPCX_I2C_PORT2_0
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3_0
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
+/* Accelerometer and Gyroscope are the same device. */
+#define I2C_PORT_ACCEL		I2C_PORT_SENSOR
 
 #define CONFIG_BRINGUP /* TODO(teravest): Remove this later. */
 
