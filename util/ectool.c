@@ -60,7 +60,7 @@ const char help_str[] =
 	"  boardversion\n"
 	"      Prints the board version\n"
 	"  cbi\n"
-	"      Get Cros Board Info\n"
+	"      Get/Set Cros Board Info\n"
 	"  chargecurrentlimit\n"
 	"      Set the maximum battery charging current\n"
 	"  chargecontrol\n"
@@ -6231,10 +6231,14 @@ static void cmd_cbi_help(char *cmd)
 {
 	fprintf(stderr,
 		"  Usage: %s get <type>\n"
+		"  Usage: %s set <type> value [flag]\n"
 		"    <type> is one of:\n"
 		"      0: BOARD_VERSION\n"
 		"      1: OEM_ID\n"
-		"      2: SKU_ID\n", cmd);
+		"      2: SKU_ID\n"
+		"    [flag] is combination of:\n"
+		"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
+		"      10b: Set all fields to defaults first\n", cmd, cmd);
 }
 
 /*
@@ -6280,6 +6284,34 @@ static int cmd_cbi(int argc, char *argv[])
 		} else {
 			fprintf(stderr, "Invalid type: %x\n", type);
 			return -1;
+		}
+		return 0;
+	} else if (!strcasecmp(argv[1], "set")) {
+		struct ec_params_set_cbi p;
+		if (argc < 4) {
+			fprintf(stderr, "Invalid number of params\n");
+			cmd_cbi_help(argv[0]);
+			return -1;
+		}
+		memset(&p, 0, sizeof(p));
+		p.type = type;
+		p.data = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad value\n");
+			return -1;
+		}
+		if (argc > 4) {
+			p.flag = strtol(argv[4], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad flag\n");
+				return -1;
+			}
+		}
+		rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0, &p, sizeof(p),
+				NULL, 0);
+		if (rv < 0) {
+			fprintf(stderr, "Error code: %d\n", rv);
+			return rv;
 		}
 		return 0;
 	}
