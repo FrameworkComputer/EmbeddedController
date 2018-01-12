@@ -192,8 +192,6 @@ enum power_state _power_handle_state(enum power_state state)
 			return POWER_S3S5;
 		}
 
-		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
-
 		/* Enable wireless */
 		wireless_set_state(WIRELESS_ON);
 
@@ -221,8 +219,6 @@ enum power_state _power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-
-		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 
 		/* Suspend wireless */
 		wireless_set_state(WIRELESS_SUSPEND);

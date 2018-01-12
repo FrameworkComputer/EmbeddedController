@@ -203,6 +203,20 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_chipset_resume(void)
+{
+	/* Turn on display backlight (active low GPIO). */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT_L, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	/* Turn off display backlight (active low GPIO). */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT_L, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
 /**
  * Power on (or off) a single TCPC.
  * minimum on/off delays are included.

@@ -445,6 +445,20 @@ static void board_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
+static void board_chipset_resume(void)
+{
+	/* Turn on display backlight. */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	/* Turn off display backlight. */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
 void chipset_do_shutdown(void)
 {
 
