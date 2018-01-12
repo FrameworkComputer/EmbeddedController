@@ -9,6 +9,7 @@
 #include "console.h"
 #include "crc8.h"
 #include "cros_board_info.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "util.h"
 
@@ -125,3 +126,31 @@ int board_get_version(void)
 		return -1;
 	return version;
 }
+
+static int hc_cbi_get(struct host_cmd_handler_args *args)
+{
+	const struct __ec_align4 ec_params_get_cbi *p = args->params;
+
+	if (read_board_info())
+		return EC_RES_ERROR;
+
+	switch (p->type) {
+	case CBI_DATA_BOARD_VERSION:
+		*(uint32_t *)args->response = bi.version;
+		break;
+	case CBI_DATA_OEM_ID:
+		*(uint32_t *)args->response = bi.oem_id;
+		break;
+	case CBI_DATA_SKU_ID:
+		*(uint32_t *)args->response = bi.sku_id;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+	args->response_size = sizeof(uint32_t);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
+		     hc_cbi_get,
+		     EC_VER_MASK(0));

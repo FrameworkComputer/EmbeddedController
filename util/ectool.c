@@ -59,6 +59,8 @@ const char help_str[] =
 	"      Read or write board-specific battery parameter\n"
 	"  boardversion\n"
 	"      Prints the board version\n"
+	"  cbi\n"
+	"      Get Cros Board Info\n"
 	"  chargecurrentlimit\n"
 	"      Set the maximum battery charging current\n"
 	"  chargecontrol\n"
@@ -6225,6 +6227,69 @@ int cmd_board_version(int argc, char *argv[])
 	return rv;
 }
 
+static void cmd_cbi_help(char *cmd)
+{
+	fprintf(stderr,
+		"  Usage: %s get <type>\n"
+		"    <type> is one of:\n"
+		"      0: BOARD_VERSION\n"
+		"      1: OEM_ID\n"
+		"      2: SKU_ID\n", cmd);
+}
+
+/*
+ * Write value to CBI
+ *
+ * TODO: Support asynchronous write
+ */
+static int cmd_cbi(int argc, char *argv[])
+{
+	enum cbi_data_type type;
+	char *e;
+	int rv;
+
+	if (argc < 3) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_cbi_help(argv[0]);
+		return -1;
+	}
+
+	/* Type */
+	type = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad type\n");
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "get")) {
+		struct ec_params_get_cbi p;
+		uint32_t r;
+		p.type = type;
+		rv = ec_command(EC_CMD_GET_CROS_BOARD_INFO, 0, &p, sizeof(p),
+				&r, sizeof(r));
+		if (rv < 0) {
+			fprintf(stderr, "Error code: %d\n", rv);
+			return rv;
+		}
+		if (type < CBI_FIRST_STRING_PARAM) { 	/* integer fields */
+			if (rv < sizeof(uint32_t)) {
+				fprintf(stderr, "Invalid size: %d\n", rv);
+				return -1;
+			}
+			printf("%u (0x%x)\n", r, r);
+		} else {
+			fprintf(stderr, "Invalid type: %x\n", type);
+			return -1;
+		}
+		return 0;
+	}
+
+	fprintf(stderr, "Invalid sub command: %s\n", argv[1]);
+	cmd_cbi_help(argv[0]);
+
+	return -1;
+}
+
 int cmd_chipinfo(int argc, char *argv[])
 {
 	struct ec_response_get_chip_info info;
@@ -7363,6 +7428,7 @@ const struct command commands[] = {
 	{"batterycutoff", cmd_battery_cut_off},
 	{"batteryparam", cmd_battery_vendor_param},
 	{"boardversion", cmd_board_version},
+	{"cbi", cmd_cbi},
 	{"chargecurrentlimit", cmd_charge_current_limit},
 	{"chargecontrol", cmd_charge_control},
 	{"chargeoverride", cmd_charge_port_override},
