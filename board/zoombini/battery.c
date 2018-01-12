@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "common.h"
 #include "ec_commands.h"
+#include "extpower.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
@@ -70,4 +71,48 @@ int board_cut_off_battery(void)
 const struct battery_info *battery_get_info(void)
 {
 	return &info;
+}
+
+enum battery_disconnect_state battery_get_disconnect_state(void)
+{
+	uint8_t data[6];
+	int rv;
+
+	/*
+	 * Take note if we find that the battery isn't in disconnect state,
+	 * and always return NOT_DISCONNECTED without probing the battery.
+	 * This assumes the battery will not go to disconnect state during
+	 * runtime.
+	 */
+	static int not_disconnected;
+
+	if (not_disconnected)
+		return BATTERY_NOT_DISCONNECTED;
+
+	if (extpower_is_present()) {
+		/* Check if battery charging + discharging is disabled. */
+		rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+				SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+		if (rv)
+			return BATTERY_DISCONNECT_ERROR;
+		if (~data[3] & (BATTERY_DISCHARGING_DISABLED |
+				BATTERY_CHARGING_DISABLED)) {
+			not_disconnected = 1;
+			return BATTERY_NOT_DISCONNECTED;
+		}
+
+		/*
+		 * Battery is neither charging nor discharging. Verify that
+		 * we didn't enter this state due to a safety fault.
+		 */
+		rv = sb_read_mfgacc(PARAM_SAFETY_STATUS,
+				SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+		if (rv || data[2] || data[3] || data[4] || data[5])
+			return BATTERY_DISCONNECT_ERROR;
+
+		/* No safety fault, battery is disconnected */
+		return BATTERY_DISCONNECTED;
+	}
+	not_disconnected = 1;
+	return BATTERY_NOT_DISCONNECTED;
 }
