@@ -133,6 +133,9 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
+/* Thermal */
+#define CONFIG_TEMP_SENSOR_SB_TSI
+
 /* FIFO size is a power of 2. */
 #define CONFIG_ACCEL_FIFO 1024  /* TODO(teravest): Check this value. */
 
@@ -162,6 +165,7 @@ enum power_signal {
 enum temp_sensor_id {
 	TEMP_SENSOR_CHARGER = 0,
 	TEMP_SENSOR_SOC,
+	TEMP_SENSOR_CPU,
 	TEMP_SENSOR_COUNT
 };
 

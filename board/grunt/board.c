@@ -20,6 +20,7 @@
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -415,6 +416,7 @@ static int board_get_temp(int idx, int *temp_k)
 const struct temp_sensor_t temp_sensors[] = {
 	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0, 1},
 	{"SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1, 5},
+	{"CPU", TEMP_SENSOR_TYPE_CPU, sb_tsi_get_val, 0, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
