@@ -196,6 +196,13 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
 	GPIO_EN_USB_A1_5V,
 };
 
+static void board_init(void)
+{
+	/* Enable Gyro interrupts */
+	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
 /**
  * Power on (or off) a single TCPC.
  * minimum on/off delays are included.

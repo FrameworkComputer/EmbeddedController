@@ -21,6 +21,7 @@ GPIO_INT(WP_L,			PIN(A, 1), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLUME_DOWN_L,		PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUME_UP_L,		PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(USB_C0_CABLE_DET,	PIN(3, 7), GPIO_INT_RISING,			anx74xx_cable_det_interrupt)
+GPIO_INT(6AXIS_INT_L,		PIN(8, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V,	bmi160_interrupt)
 
 GPIO(EN_PWR_A,			PIN(E, 2), GPIO_OUT_HIGH)			/* Enable Power */
 GPIO(EN_PP1800_SENSOR,		PIN(6, 7), GPIO_OUT_HIGH)			/* Enable Power */
@@ -37,7 +38,6 @@ GPIO(EC_APU_RST,		PIN(E, 4), GPIO_INPUT)				/* Reset to SOC */
 GPIO(CPU_PROCHOT,		PIN(3, 4), GPIO_INPUT | GPIO_SEL_1P8V)		/* PROCHOT to SOC */
 GPIO(APU_ALERT_L,		PIN(A, 2), GPIO_INPUT)				/* Alert to SOC */
 GPIO(3AXIS_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)		/* 3 Axis Accel */
-GPIO(6AXIS_INT_L,		PIN(8, 6), GPIO_INPUT | GPIO_SEL_1P8V)		/* 6 Axis Accel */
 GPIO(KB_BL_EN,			PIN(F, 2), GPIO_OUT_LOW)			/* Enable KB Backlight */
 
 /* We don't have 5V rail control but the BQ24392 driver expects the GPIO */
