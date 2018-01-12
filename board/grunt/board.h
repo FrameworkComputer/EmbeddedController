@@ -172,7 +172,9 @@ enum temp_sensor_id {
 };
 
 enum pwm_channel {
-	PWM_CH_KBLIGHT,
+	PWM_CH_KBLIGHT = 0,
+	PWM_CH_LED1_ORANGE,
+	PWM_CH_LED2_BLUE,
 	PWM_CH_COUNT
 };
 
