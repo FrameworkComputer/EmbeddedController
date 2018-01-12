@@ -102,6 +102,12 @@
 
 /* Sensor */
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_F75303
+
+#define CONFIG_ALS
+#define CONFIG_ALS_OPT3001
+#define ALS_COUNT 1
+#define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HOST_EVENT
@@ -171,6 +177,7 @@
 #define I2C_PORT_GYRO		NPCX_I2C_PORT3
 #define I2C_PORT_ACCEL		NPCX_I2C_PORT3
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3
+#define I2C_PORT_ALS		NPCX_I2C_PORT3
 /* dnojiri: ALS, G-sensor */
 
 /* I2C addresses */
@@ -190,12 +197,14 @@ enum power_signal {
 	X86_SLP_SUS_DEASSERTED,
 	X86_RSMRST_L_PGOOD,
 	X86_PMIC_DPWROK,
-	POWER_SIGNAL_COUNT
+	POWER_SIGNAL_COUNT,
 };
 
 enum temp_sensor_id {
+	TEMP_SENSOR_I2C_F75303_LOCAL = 0,
+	TEMP_SENSOR_I2C_F75303_REMOTE,
 	TEMP_SENSOR_BATTERY,
-	TEMP_SENSOR_COUNT
+	TEMP_SENSOR_COUNT,
 };
 
 /*
@@ -206,16 +215,17 @@ enum temp_sensor_id {
  */
 
 enum sensor_id {
-    BASE_ACCEL = 0,
-    BASE_GYRO,
-    LID_ACCEL,
+	BASE_ACCEL = 0,
+	BASE_GYRO,
+	LID_ACCEL,
+	LID_ALS,
 };
 
 enum adc_channel {
 	ADC_BASE_DET,
 	ADC_VBUS,
 	ADC_AMON_BMON,
-	ADC_CH_COUNT
+	ADC_CH_COUNT,
 };
 
 enum pwm_channel {
@@ -223,7 +233,7 @@ enum pwm_channel {
 	PWM_CH_LED_GREEN,
 	PWM_CH_FAN,
 	/* Number of PWM channels */
-	PWM_CH_COUNT
+	PWM_CH_COUNT,
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
