@@ -9,6 +9,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "ec_ec_comm_master.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -431,3 +432,43 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_VENDOR_PARAM,
 		     host_command_battery_vendor_param,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_BATTERY_VENDOR_PARAM */
+
+#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+/*
+ * TODO(b:65697620): Add support for returning main battery information through
+ * these commands, as well.
+ */
+static int host_command_battery_get_static(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_battery_static_info *p = args->params;
+	struct ec_response_battery_static_info *r = args->response;
+
+	if (p->index != 1)
+		return EC_RES_INVALID_PARAM;
+
+	args->response_size = sizeof(*r);
+	memcpy(r, &base_battery_static, sizeof(*r));
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_STATIC,
+		     host_command_battery_get_static,
+		     EC_VER_MASK(0));
+
+static int host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_battery_dynamic_info *p = args->params;
+	struct ec_response_battery_dynamic_info *r = args->response;
+
+	if (p->index != 1)
+		return EC_RES_INVALID_PARAM;
+
+	args->response_size = sizeof(*r);
+	memcpy(r, &base_battery_dynamic, sizeof(*r));
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_DYNAMIC,
+		     host_command_battery_get_dynamic,
+		     EC_VER_MASK(0));
+#endif /* CONFIG_EC_EC_COMM_BATTERY */

@@ -5901,11 +5901,132 @@ int cmd_gpio_set(int argc, char *argv[])
 	return 0;
 }
 
+void print_battery_flags(int flags)
+{
+	printf("  Flags                   0x%02x", flags);
+	if (flags & EC_BATT_FLAG_AC_PRESENT)
+		printf(" AC_PRESENT");
+	if (flags & EC_BATT_FLAG_BATT_PRESENT)
+		printf(" BATT_PRESENT");
+	if (flags & EC_BATT_FLAG_DISCHARGING)
+		printf(" DISCHARGING");
+	if (flags & EC_BATT_FLAG_CHARGING)
+		printf(" CHARGING");
+	if (flags & EC_BATT_FLAG_LEVEL_CRITICAL)
+		printf(" LEVEL_CRITICAL");
+	printf("\n");
+}
+
+int get_battery_command(int index)
+{
+	struct ec_params_battery_static_info static_p;
+	struct ec_response_battery_static_info static_r;
+	struct ec_params_battery_dynamic_info dynamic_p;
+	struct ec_response_battery_dynamic_info dynamic_r;
+	int rv;
+
+	printf("Battery %d info:\n", index);
+
+	static_p.index = index;
+	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 0,
+			&static_p, sizeof(static_p),
+			&static_r, sizeof(static_r));
+	if (rv < 0)
+		return -1;
+
+	dynamic_p.index = index;
+	rv = ec_command(EC_CMD_BATTERY_GET_DYNAMIC, 0,
+			&dynamic_p, sizeof(dynamic_p),
+			&dynamic_r, sizeof(dynamic_r));
+	if (rv < 0)
+		return -1;
+
+	if (!is_string_printable(static_r.manufacturer))
+		goto cmd_error;
+	printf("  OEM name:               %s\n", static_r.manufacturer);
+
+	if (!is_string_printable(static_r.model))
+		goto cmd_error;
+	printf("  Model number:           %s\n", static_r.model);
+
+	if (!is_string_printable(static_r.type))
+		goto cmd_error;
+	printf("  Chemistry   :           %s\n", static_r.type);
+
+	if (!is_string_printable(static_r.serial))
+		goto cmd_error;
+	printf("  Serial number:          %s\n", static_r.serial);
+
+	if (!is_battery_range(static_r.design_capacity))
+		goto cmd_error;
+	printf("  Design capacity:        %u mAh\n", static_r.design_capacity);
+
+	if (!is_battery_range(dynamic_r.full_capacity))
+		goto cmd_error;
+	printf("  Last full charge:       %u mAh\n", dynamic_r.full_capacity);
+
+	if (!is_battery_range(static_r.design_voltage))
+		goto cmd_error;
+	printf("  Design output voltage   %u mV\n", static_r.design_voltage);
+
+	if (!is_battery_range(static_r.cycle_count))
+		goto cmd_error;
+	printf("  Cycle count             %u\n", static_r.cycle_count);
+
+	if (!is_battery_range(dynamic_r.actual_voltage))
+		goto cmd_error;
+	printf("  Present voltage         %u mV\n", dynamic_r.actual_voltage);
+
+	if (!is_battery_range(dynamic_r.actual_current))
+		goto cmd_error;
+	printf("  Present current         %u mA\n", dynamic_r.actual_current);
+
+	if (!is_battery_range(dynamic_r.remaining_capacity))
+		goto cmd_error;
+	printf("  Remaining capacity      %u mAh\n",
+						dynamic_r.remaining_capacity);
+
+	if (!is_battery_range(dynamic_r.desired_voltage))
+		goto cmd_error;
+	printf("  Desired voltage         %u mV\n", dynamic_r.desired_voltage);
+
+	if (!is_battery_range(dynamic_r.desired_current))
+		goto cmd_error;
+	printf("  Desired current         %u mA\n", dynamic_r.desired_current);
+
+	print_battery_flags(dynamic_r.flags);
+	return 0;
+
+cmd_error:
+	fprintf(stderr, "Bad battery info value.\n");
+	return -1;
+}
 
 int cmd_battery(int argc, char *argv[])
 {
 	char batt_text[EC_MEMMAP_TEXT_MAX];
 	int rv, val;
+	char *e;
+	int index = 0;
+
+	if (argc > 2) {
+		fprintf(stderr, "Usage: %s [index]\n", argv[0]);
+		return -1;
+	} else if (argc == 2) {
+		index = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad battery index.\n");
+			return -1;
+		}
+
+		if (index > 0)
+			return get_battery_command(index);
+	}
+
+	/*
+	 * TODO(b:65697620): When supported/required, read battery 0 information
+	 * through EC commands as well.
+	 */
 
 	val = read_mapped_mem8(EC_MEMMAP_BATTERY_VERSION);
 	if (val < 1) {
@@ -5973,18 +6094,7 @@ int cmd_battery(int argc, char *argv[])
 	printf("  Remaining capacity      %u mAh\n", val);
 
 	val = read_mapped_mem8(EC_MEMMAP_BATT_FLAG);
-	printf("  Flags                   0x%02x", val);
-	if (val & EC_BATT_FLAG_AC_PRESENT)
-		printf(" AC_PRESENT");
-	if (val & EC_BATT_FLAG_BATT_PRESENT)
-		printf(" BATT_PRESENT");
-	if (val & EC_BATT_FLAG_DISCHARGING)
-		printf(" DISCHARGING");
-	if (val & EC_BATT_FLAG_CHARGING)
-		printf(" CHARGING");
-	if (val & EC_BATT_FLAG_LEVEL_CRITICAL)
-		printf(" LEVEL_CRITICAL");
-	printf("\n");
+	print_battery_flags(val);
 
 	return 0;
 cmd_error:
