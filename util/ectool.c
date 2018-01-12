@@ -7502,6 +7502,8 @@ int main(int argc, char *argv[])
 				interfaces = COMM_LPC;
 			} else if (!strcasecmp(optarg, "i2c")) {
 				interfaces = COMM_I2C;
+			} else if (!strcasecmp(optarg, "servo")) {
+				interfaces = COMM_SERVO;
 			} else {
 				fprintf(stderr, "Invalid --interface\n");
 				parse_error = 1;

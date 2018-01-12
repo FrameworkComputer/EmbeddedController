@@ -30,6 +30,7 @@ enum comm_interface {
 	COMM_DEV = (1 << 0),
 	COMM_LPC = (1 << 1),
 	COMM_I2C = (1 << 2),
+	COMM_SERVO = (1 << 3),
 	COMM_ALL = -1
 };
 
