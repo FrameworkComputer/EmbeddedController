@@ -54,6 +54,8 @@
 	#define S3_USB_WAKE
 	/* This board has non-INT power signal pins */
 	#define POWER_SIGNAL_POLLING
+	/* This board supports CR50 deep sleep mode */
+	#define CR50_DEEP_SLEEP
 	/*
 	 * If AP_PWR_GOOD assertion does not trigger an interrupt, poll the
 	 * signal every 5ms, up to 200 times (~ 1 second timeout).
@@ -94,7 +96,6 @@ BUILD_ASSERT(GPIO_COUNT < 256);
 static const struct power_seq_op s5s3_power_seq[] = {
 	{ GPIO_PP900_S0_EN, 1, 2 },
 	{ GPIO_PP900_S3_EN, 1, 2 },
-	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP3300_S3_EN, 1, 2 },
 	{ GPIO_PP1800_S3_EN, 1, 2 },
 	{ GPIO_PP1250_S3_EN, 1, 2 },
@@ -175,6 +176,7 @@ static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
 /* The power sequence for POWER_S3S5 */
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 2
 static const struct power_seq_op s3s5_power_seq[] = {
+	{ GPIO_SYS_RST_L, 0, 0 },
 	{ GPIO_PP1250_S3_EN, 0, 2 },
 	{ GPIO_PP1800_S3_EN, 0, 2 },
 	{ GPIO_PP3300_S3_EN, 0, 2 },
@@ -312,7 +314,9 @@ static int power_seq_run(const struct power_seq_op *power_seq_ops, int op_count)
 
 enum power_state power_handle_state(enum power_state state)
 {
+#ifndef CR50_DEEP_SLEEP
 	static int sys_reset_asserted;
+#endif
 #ifdef S3_USB_WAKE
 	static int usb_wake_enabled;
 #endif
@@ -392,11 +396,13 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5S3:
 		power_seq_run(s5s3_power_seq, ARRAY_SIZE(s5s3_power_seq));
 
+#ifndef CR50_DEEP_SLEEP
 		/*
 		 * Assert SYS_RST now, to be released in S3S0, to avoid
 		 * resetting the TPM soon after power-on.
 		 */
 		sys_reset_asserted = 1;
+#endif
 
 		if (power_wait_signals(IN_PGOOD_S3)) {
 			chipset_force_shutdown();
@@ -419,13 +425,17 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 		power_seq_run(s3s0_power_seq, ARRAY_SIZE(s3s0_power_seq));
 
+#ifndef CR50_DEEP_SLEEP
 		/* Release SYS_RST if we came from S5 */
 		if (sys_reset_asserted) {
+#endif
 			msleep(10);
 			gpio_set_level(GPIO_SYS_RST_L, 1);
 
+#ifndef CR50_DEEP_SLEEP
 			sys_reset_asserted = 0;
 		}
+#endif
 
 #ifdef POWER_SIGNAL_POLLING
 		/*

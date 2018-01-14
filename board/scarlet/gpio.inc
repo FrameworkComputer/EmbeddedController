@@ -82,7 +82,7 @@ GPIO(BATT_ID,              PIN(C, 2),  GPIO_INPUT | GPIO_PULL_UP)
 
 /* Other output pins */
 GPIO(ENTERING_RW,          PIN(C, 6),  GPIO_ODR_HIGH)
-GPIO(SYS_RST_L,            PIN(C, 8),  GPIO_ODR_HIGH)
+GPIO(SYS_RST_L,            PIN(C, 8),  GPIO_ODR_LOW)
 GPIO(EC_INT_L,             PIN(E, 3),  GPIO_ODR_HIGH)
 GPIO(EC_BOARD_ID_EN_L,     PIN(F, 1),  GPIO_ODR_HIGH)
 GPIO(USB_C0_DISCHARGE,     PIN(A, 11), GPIO_OUT_LOW)
