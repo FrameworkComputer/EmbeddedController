@@ -308,18 +308,14 @@ void board_overcurrent_event(int port)
 int board_set_active_charge_port(int port)
 {
 	int i;
-	int rv;
 
 	CPRINTS("New chg p%d", port);
 
 	if (port == CHARGE_PORT_NONE) {
 		/* Disable all ports. */
 		for (i = 0; i < ppc_cnt; i++) {
-			rv = ppc_vbus_sink_enable(i, 0);
-			if (rv) {
-				CPRINTS("Disabling p%d sink path failed.", i);
-				return rv;
-			}
+			if (ppc_vbus_sink_enable(i, 0))
+				CPRINTS("p%d: sink disable failed.", i);
 		}
 
 		return EC_SUCCESS;
@@ -340,12 +336,12 @@ int board_set_active_charge_port(int port)
 			continue;
 
 		if (ppc_vbus_sink_enable(i, 0))
-			CPRINTS("p%d: sink path disable failed.", i);
+			CPRINTS("p%d: sink disable failed.", i);
 	}
 
 	/* Enable requested charge port. */
 	if (ppc_vbus_sink_enable(port, 1)) {
-		CPRINTS("p%d: sink path enable failed.");
+		CPRINTS("p%d: sink enable failed.");
 		return EC_ERROR_UNKNOWN;
 	}
 
