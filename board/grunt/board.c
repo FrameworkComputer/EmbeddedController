@@ -91,6 +91,13 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 }
 #endif
 
+static void ppc_interrupt(enum gpio_signal signal)
+{
+	int port = (signal == GPIO_USB_C0_SWCTL_INT_ODL) ? 0 : 1;
+
+	sn5s330_interrupt(port);
+}
+
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -200,6 +207,14 @@ static void board_init(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -302,7 +317,12 @@ void board_tcpc_init(void)
 
 void board_overcurrent_event(int port)
 {
-	/* TODO(ecgh): assert GPIO to notify SOC */
+	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
+					      : GPIO_USB_C1_OC_L;
+
+	gpio_set_level(signal, 0);
+
+	CPRINTS("p%d: overcurrent!", port);
 }
 
 int board_set_active_charge_port(int port)
