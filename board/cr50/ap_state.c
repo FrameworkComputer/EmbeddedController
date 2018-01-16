@@ -181,6 +181,14 @@ static void ap_detect(void)
 		}
 
 		return;
+	} else if (!board_detect_ap_with_tpm_rst()) {
+		/*
+		 * If the signal is low, cr50 will enter the debouncing state or
+		 * off. Either way, cr50 is waiting for the signal to go high.
+		 * Reenable the interrupt, so cr50 can immediately detect it
+		 * instead of relying on the 1s polling.
+		 */
+		gpio_enable_interrupt(GPIO_DETECT_AP);
 	}
 
 	/* AP wasn't detected.  If we're already off, done. */
@@ -204,9 +212,5 @@ static void ap_detect(void)
 		set_state(DEVICE_STATE_INIT_DEBOUNCING);
 	else
 		set_state(DEVICE_STATE_DEBOUNCING);
-
-	/* If we're using AP UART RX for detect, enable its interrupt */
-	if (!board_detect_ap_with_tpm_rst())
-		gpio_enable_interrupt(GPIO_DETECT_AP);
 }
 DECLARE_HOOK(HOOK_SECOND, ap_detect, HOOK_PRIO_DEFAULT);
