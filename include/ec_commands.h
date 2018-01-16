@@ -4674,21 +4674,44 @@ struct __ec_align2 ec_params_fp_sensor_config {
 #define FP_MODE_FINGER_UP     (1<<2)
 /* Capture the current finger image */
 #define FP_MODE_CAPTURE       (1<<3)
+/* Capture types defined in bits [30..28] */
+#define FP_MODE_CAPTURE_TYPE_SHIFT 28
+#define FP_MODE_CAPTURE_TYPE_MASK  0x7
+/* Full blown vendor-defined capture (produces 'frame_size' bytes) */
+#define FP_CAPTURE_VENDOR_FORMAT 0
+/* Simple raw image capture (produces width x height x bpp bits) */
+#define FP_CAPTURE_SIMPLE_IMAGE  1
+/* Self test pattern (e.g. checkerboard) */
+#define FP_CAPTURE_PATTERN0      2
+/* Self test pattern (e.g. inverted checkerboard) */
+#define FP_CAPTURE_PATTERN1      3
+/* Extracts the capture type from the sensor 'mode' word */
+#define FP_CAPTURE_TYPE(mode) (((mode) >> FP_MODE_CAPTURE_TYPE_SHIFT) \
+					& FP_MODE_CAPTURE_TYPE_MASK)
 /* special value: don't change anything just read back current mode */
 #define FP_MODE_DONT_CHANGE   (1<<31)
 
 struct __ec_align4 ec_params_fp_mode {
 	uint32_t mode; /* as defined by FP_MODE_ constants */
-	/* TBD */
 };
 
 struct __ec_align4 ec_response_fp_mode {
 	uint32_t mode; /* as defined by FP_MODE_ constants */
-	/* TBD */
 };
 
 /* Retrieve Fingerprint sensor information */
 #define EC_CMD_FP_INFO 0x0403
+
+/* Number of dead pixels detected on the last maintenance */
+#define FP_ERROR_DEAD_PIXELS(errors) ((errors) & 0x3FF)
+/* No interrupt from the sensor */
+#define FP_ERROR_NO_IRQ    (1 << 12)
+/* SPI communication error */
+#define FP_ERROR_SPI_COMM  (1 << 13)
+/* Invalid sensor Hardware ID */
+#define FP_ERROR_BAD_HWID  (1 << 14)
+/* Sensor initialization failed */
+#define FP_ERROR_INIT_FAIL (1 << 15)
 
 struct __ec_align2 ec_response_fp_info {
 	/* Sensor identification */
@@ -4702,9 +4725,10 @@ struct __ec_align2 ec_response_fp_info {
 	uint16_t width;
 	uint16_t height;
 	uint16_t bpp;
+	uint16_t errors; /* see FP_ERROR_ flags above */
 };
 
-/* Get the last captured finger frame: TODO: will be AES-encrypted */
+/* Get the last captured finger frame */
 #define EC_CMD_FP_FRAME 0x0404
 
 struct __ec_align4 ec_params_fp_frame {

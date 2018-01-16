@@ -33,6 +33,11 @@ static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE];
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
 
+/* raw image offset inside the acquired frame */
+#ifndef FP_SENSOR_IMAGE_OFFSET
+#define FP_SENSOR_IMAGE_OFFSET 0
+#endif
+
 /* Events for the FPSENSOR task */
 #define TASK_EVENT_SENSOR_IRQ     TASK_EVENT_CUSTOM(1)
 #define TASK_EVENT_UPDATE_CONFIG  TASK_EVENT_CUSTOM(2)
@@ -51,6 +56,15 @@ static uint32_t sensor_mode;
 void fps_event(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_SENSOR_IRQ, 0);
+}
+
+static inline int is_test_capture(uint32_t mode)
+{
+	int capture_type = FP_CAPTURE_TYPE(mode);
+
+	return (mode & FP_MODE_CAPTURE)
+		&& (capture_type == FP_CAPTURE_PATTERN0
+		    || capture_type == FP_CAPTURE_PATTERN1);
 }
 
 static void send_mkbp_event(uint32_t event)
@@ -80,9 +94,16 @@ void fp_task(void)
 
 		if (evt & TASK_EVENT_UPDATE_CONFIG) {
 			gpio_disable_interrupt(GPIO_FPS_INT);
-			if (sensor_mode & FP_MODE_ANY_DETECT_FINGER)
+			if (is_test_capture(sensor_mode)) {
+				fp_sensor_acquire_image_with_mode(fp_buffer,
+					FP_CAPTURE_TYPE(sensor_mode));
+				sensor_mode &= ~FP_MODE_CAPTURE;
+				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
+				continue;
+			} else if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
 				/* wait for a finger on the sensor */
 				fp_sensor_configure_detect();
+			}
 			if (sensor_mode & FP_MODE_DEEPSLEEP)
 				/* Shutdown the sensor */
 				fp_sensor_low_power();
@@ -113,7 +134,9 @@ void fp_task(void)
 
 			if (st == FINGER_PRESENT &&
 			    sensor_mode & FP_MODE_CAPTURE) {
-				int res = fp_sensor_acquire_image(fp_buffer);
+				int res = fp_sensor_acquire_image_with_mode(
+						fp_buffer,
+						FP_CAPTURE_TYPE(sensor_mode));
 
 				if (!res) {
 					sensor_mode &= ~FP_MODE_CAPTURE;
@@ -220,12 +243,16 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_frame *params = args->params;
 	void *out = args->response;
+	uint32_t offset = params->offset;
 
-	if (params->offset + params->size > sizeof(fp_buffer) ||
+	if (FP_CAPTURE_TYPE(sensor_mode) != FP_CAPTURE_VENDOR_FORMAT)
+		offset += FP_SENSOR_IMAGE_OFFSET;
+
+	if (offset + params->size > sizeof(fp_buffer) ||
 	    params->size > args->response_max)
 		return EC_RES_INVALID_PARAM;
 
-	memcpy(out, fp_buffer + params->offset, params->size);
+	memcpy(out, fp_buffer + offset, params->size);
 
 	args->response_size = params->size;
 	return EC_RES_SUCCESS;
@@ -234,11 +261,6 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_FRAME, fp_command_frame, EC_VER_MASK(0));
 
 #ifdef CONFIG_CMD_FPSENSOR_DEBUG
 /* --- Debug console commands --- */
-
-/* raw image offset inside the acquired frame */
-#ifndef FP_SENSOR_IMAGE_OFFSET
-#define FP_SENSOR_IMAGE_OFFSET 0
-#endif
 
 /*
  * Send the current Fingerprint buffer to the host
@@ -286,9 +308,19 @@ static void upload_pgm_image(uint8_t *frame)
 int command_fptest(int argc, char **argv)
 {
 	int tries = 200;
+	int capture_type = FP_CAPTURE_SIMPLE_IMAGE;
+
+	if (argc >= 2) {
+		char *e;
+
+		capture_type = strtoi(argv[1], &e, 0);
+		if (*e || capture_type < 0 || capture_type > 3)
+			return EC_ERROR_PARAM1;
+	}
 
 	ccprintf("Waiting for finger ...\n");
-	sensor_mode = FP_MODE_CAPTURE;
+	sensor_mode = FP_MODE_CAPTURE |
+		(capture_type << FP_MODE_CAPTURE_TYPE_SHIFT);
 	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
 
 	while (tries--) {

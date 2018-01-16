@@ -115,6 +115,8 @@ const char help_str[] =
 	"      Reads from EC flash to a file\n"
 	"  flashwrite <offset> <infile>\n"
 	"      Writes to EC flash from a file\n"
+	"  fpcheckpixels\n"
+	"      Count the number of dead pixels on the sensor\n"
 	"  fpframe\n"
 	"      Retrieve the finger image as a PGM image\n"
 	"  fpinfo\n"
@@ -1079,16 +1081,155 @@ int cmd_rwsig_action(int argc, char *argv[])
 	return ec_command(EC_CMD_RWSIG_ACTION, 0, &req, sizeof(req), NULL, 0);
 }
 
+static void *fp_download_frame(struct ec_response_fp_info *info)
+{
+	struct ec_params_fp_frame p;
+	int rv = 0;
+	size_t stride, size;
+	void *buffer;
+	uint8_t *ptr;
+
+	rv = ec_command(EC_CMD_FP_INFO, 0, NULL, 0, info, sizeof(*info));
+	if (rv < 0)
+		return NULL;
+
+	stride = (size_t)info->width * info->bpp/8;
+	if (stride > ec_max_insize) {
+		fprintf(stderr, "Not implemented for line size %zu B "
+			"(%u pixels) > EC transfer size %d\n",
+			stride, info->width, ec_max_insize);
+		return NULL;
+	}
+	if (info->bpp != 8) {
+		fprintf(stderr, "Not implemented for BPP = %d != 8\n",
+			info->bpp);
+		return NULL;
+	}
+
+	size = stride * info->height;
+	buffer = malloc(size);
+	if (!buffer) {
+		fprintf(stderr, "Cannot allocate memory for the image\n");
+		return NULL;
+	}
+
+	ptr = buffer;
+	p.offset = 0;
+	p.size = stride;
+	while (size) {
+		rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p),
+				ptr, stride);
+		if (rv < 0) {
+			free(buffer);
+			return NULL;
+		}
+		p.offset += stride;
+		size -= stride;
+		ptr += stride;
+	}
+
+	return buffer;
+}
+
+static int fp_pattern_frame(int capt_type, const char *title, int inv)
+{
+	struct ec_response_fp_info info;
+	struct ec_params_fp_mode p;
+	struct ec_response_fp_mode r;
+	void *pattern;
+	uint8_t *ptr;
+	int rv;
+	int bad = 0;
+	int64_t cnt = 0, lo_sum = 0, hi_sum = 0;
+	int64_t lo_sum_squares = 0, hi_sum_squares = 0;
+	int x, y;
+
+	p.mode = FP_MODE_CAPTURE | (capt_type << FP_MODE_CAPTURE_TYPE_SHIFT);
+	rv = ec_command(EC_CMD_FP_MODE, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return -1;
+	/* ensure the capture has happened without using event support */
+	usleep(50000);
+	pattern = fp_download_frame(&info);
+	if (!pattern)
+		return -1;
+
+	ptr = pattern;
+	for (y = 0; y < info.height; y++)
+		for (x = 0; x < info.width; x++, ptr++) {
+			uint8_t v = *ptr;
+			int hi = !!(v & 128);
+
+			/*
+			 * Verify whether the captured image matches the expected
+			 * checkerboard pattern.
+			 */
+			if ((hi ^ inv) == ((x & 1) ^ (y & 1))) {
+				bad++;
+			} else {
+				/*
+				 * For all black pixels and all white pixels of
+				 * the checkerboard pattern, we will compute
+				 * their average and their variance in order to
+				 * have quality metrics later.
+				 * Do the sum and the sum of squares for each
+				 * category here, we will finalize the
+				 * computations outside of the loop.
+				 */
+				cnt++;
+				if (hi) {
+					hi_sum += v;
+					hi_sum_squares += v * v;
+				} else {
+					lo_sum += v;
+					lo_sum_squares += v * v;
+				}
+			}
+		}
+	printf("%s: bad %d\n", title, bad);
+	/*
+	 * For each category of pixels: black aka 'lo' and white aka 'hi',
+	 * the variance is: Avg[v^2] - Avg[v]^2
+	 * which is equivalent to  Sum(v^2) / cnt - Sum(v) * Sum(v) / cnt / cnt
+	 * where v is the pixel grayscale value.
+	 */
+	if (cnt)
+		printf("%s: distribution average %" PRId64 "/%" PRId64
+		       " variance %" PRId64 "/%" PRId64 "\n",
+		       title, lo_sum / cnt, hi_sum / cnt,
+		       (lo_sum_squares / cnt - lo_sum * lo_sum / cnt / cnt),
+		       (hi_sum_squares / cnt - hi_sum * hi_sum / cnt / cnt));
+	free(pattern);
+	return bad;
+}
+
+int cmd_fp_check_pixels(int argc, char *argv[])
+{
+	int bad0, bad1;
+
+	bad0 = fp_pattern_frame(FP_CAPTURE_PATTERN0, "Checkerboard", 0);
+	bad1 = fp_pattern_frame(FP_CAPTURE_PATTERN1, "Inv. Checkerboard", 1);
+	if (bad0 < 0 || bad1 < 0) {
+		fprintf(stderr, "Failed to acquire FP patterns\n");
+		return -1;
+	}
+	printf("Defects: dead %d (pattern0 %d pattern1 %d)\n",
+	       bad0 + bad1, bad0, bad1);
+	return 0;
+}
+
 int cmd_fp_mode(int argc, char *argv[])
 {
 	struct ec_params_fp_mode p;
 	struct ec_response_fp_mode r;
 	uint32_t mode = 0;
+	uint32_t capture_type = FP_CAPTURE_SIMPLE_IMAGE;
 	int i, rv;
 
 	if (argc == 1)
 		mode = FP_MODE_DONT_CHANGE;
 	for (i = 1; i < argc; i++) {
+		/* modes */
 		if (!strncmp(argv[i], "deepsleep", 9))
 			mode |= FP_MODE_DEEPSLEEP;
 		else if (!strncmp(argv[i], "fingerdown", 10))
@@ -1097,7 +1238,16 @@ int cmd_fp_mode(int argc, char *argv[])
 			mode |= FP_MODE_FINGER_UP;
 		else if (!strncmp(argv[i], "capture", 7))
 			mode |= FP_MODE_CAPTURE;
+		/* capture types */
+		else if (!strncmp(argv[i], "vendor", 6))
+			capture_type = FP_CAPTURE_VENDOR_FORMAT;
+		else if (!strncmp(argv[i], "pattern0", 8))
+			capture_type = FP_CAPTURE_PATTERN0;
+		else if (!strncmp(argv[i], "pattern1", 8))
+			capture_type = FP_CAPTURE_PATTERN1;
 	}
+	if (mode & FP_MODE_CAPTURE)
+		mode |= capture_type << FP_MODE_CAPTURE_TYPE_SHIFT;
 
 	p.mode = mode;
 	rv = ec_command(EC_CMD_FP_MODE, 0, &p, sizeof(p), &r, sizeof(r));
@@ -1129,6 +1279,12 @@ int cmd_fp_info(int argc, char *argv[])
 	printf("Fingerprint sensor: vendor %x product %x model %x version %x\n",
 		r.vendor_id, r.product_id, r.model_id, r.version);
 	printf("Image: size %dx%d %d bpp\n", r.width, r.height, r.bpp);
+	printf("Error flags: %s%s%s%s\nDead pixels: %u\n",
+	       r.errors & FP_ERROR_NO_IRQ ? "NO_IRQ " : "",
+	       r.errors & FP_ERROR_SPI_COMM ? "SPI_COMM " : "",
+	       r.errors & FP_ERROR_BAD_HWID ? "BAD_HWID " : "",
+	       r.errors & FP_ERROR_INIT_FAIL ? "INIT_FAIL " : "",
+	       FP_ERROR_DEAD_PIXELS(r.errors));
 
 	return 0;
 }
@@ -1136,50 +1292,25 @@ int cmd_fp_info(int argc, char *argv[])
 int cmd_fp_frame(int argc, char *argv[])
 {
 	struct ec_response_fp_info r;
-	struct ec_params_fp_frame p;
-	int rv = 0;
-	size_t stride, size;
-	uint8_t *buffer8 = ec_inbuf;
+	void *buffer = fp_download_frame(&r);
+	uint8_t *ptr = buffer;
+	int x, y;
 
-	rv = ec_command(EC_CMD_FP_INFO, 0, NULL, 0, &r, sizeof(r));
-	if (rv < 0)
-		return rv;
-
-	stride = (size_t)r.width * r.bpp/8;
-	if (stride > ec_max_insize) {
-		fprintf(stderr, "Not implemented for line size %zu B "
-			"(%u pixels) > EC transfer size %d\n",
-			stride, r.width, ec_max_insize);
+	if (!buffer) {
+		fprintf(stderr, "Failed to get FP sensor frame\n");
 		return -1;
 	}
-	if (r.bpp != 8) {
-		fprintf(stderr, "Not implemented for BPP = %d != 8\n", r.bpp);
-		return -1;
-	}
-
-	size = stride * r.height;
 
 	/* Print 8-bpp PGM ASCII header */
 	printf("P2\n%d %d\n%d\n", r.width, r.height, (1 << r.bpp) - 1);
 
-	p.offset = 0;
-	p.size = stride;
-	while (size) {
-		int x;
-
-		rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p),
-				ec_inbuf, stride);
-		if (rv < 0)
-			return rv;
-		p.offset += stride;
-		size -= stride;
-
-		for (x = 0; x < stride; x++)
-			printf("%d ", buffer8[x]);
+	for (y = 0; y < r.height; y++) {
+		for (x = 0; x < r.width; x++, ptr++)
+			printf("%d ", *ptr);
 		printf("\n");
 	}
 	printf("# END OF FILE\n");
-
+	free(buffer);
 	return 0;
 }
 
@@ -7498,6 +7629,7 @@ const struct command commands[] = {
 	{"flashspiinfo", cmd_flash_spi_info},
 	{"flashpd", cmd_flash_pd},
 	{"forcelidopen", cmd_force_lid_open},
+	{"fpcheckpixels", cmd_fp_check_pixels},
 	{"fpframe", cmd_fp_frame},
 	{"fpinfo", cmd_fp_info},
 	{"fpmode", cmd_fp_mode},
