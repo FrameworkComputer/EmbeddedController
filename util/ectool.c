@@ -5977,9 +5977,8 @@ int get_battery_command(int index)
 		goto cmd_error;
 	printf("  Present voltage         %u mV\n", dynamic_r.actual_voltage);
 
-	if (!is_battery_range(dynamic_r.actual_current))
-		goto cmd_error;
-	printf("  Present current         %u mA\n", dynamic_r.actual_current);
+	/* current can be negative */
+	printf("  Present current         %d mA\n", dynamic_r.actual_current);
 
 	if (!is_battery_range(dynamic_r.remaining_capacity))
 		goto cmd_error;
