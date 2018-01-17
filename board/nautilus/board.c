@@ -443,6 +443,9 @@ static void board_init(void)
 		gpio_set_flags(GPIO_I2C3_SCL, GPIO_INPUT);
 		gpio_set_flags(GPIO_I2C3_SDA, GPIO_INPUT);
         }
+
+	/* Enable Gyro interrupts */
+	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
