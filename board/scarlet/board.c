@@ -187,7 +187,7 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(0))
 		return 0;
 	else
-		return rt946x_is_vbus_ready();
+		return tcpm_get_vbus_level(0);
 }
 
 int pd_snk_is_vbus_provided(int port)

@@ -760,6 +760,10 @@ int rt946x_enable_charger_boost(int en)
 		(RT946X_REG_CHGCTRL2, RT946X_MASK_CHG_EN);
 }
 
+/*
+ * rt946x reports VBUS ready after VBUS is up for ~500ms.
+ * Check if this works for the use case before calling this function.
+ */
 int rt946x_is_vbus_ready(void)
 {
 	int val = 0;
