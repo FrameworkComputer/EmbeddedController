@@ -879,6 +879,7 @@ void fusb302_tcpc_alert(int port)
 	if (interrupt & TCPC_REG_INTERRUPT_VBUSOK) {
 		/* VBUS crossed threshold */
 		task_wake(PD_PORT_TO_TASK_ID(port));
+		hook_notify(HOOK_AC_CHANGE);
 	}
 #endif
 
