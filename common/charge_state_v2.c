@@ -1280,12 +1280,14 @@ void charger_task(void *u)
 		}
 
 		if (base_connected) {
-			/*
-			 * TODO(b:71881017): Be smart about static info and do
-			 * not fetch it over and over again.
-			 */
-			ec_ec_master_base_get_static_info();
+			int old_flags = base_battery_dynamic.flags;
+
 			ec_ec_master_base_get_dynamic_info();
+
+			/* Fetch static information when flags change. */
+			if (old_flags != base_battery_dynamic.flags)
+				ec_ec_master_base_get_static_info();
+
 			charge_base = charge_get_base_percent();
 		}
 #endif
