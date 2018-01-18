@@ -22,4 +22,9 @@ void backlight_interrupt(enum gpio_signal signal);
 static inline void backlight_interrupt(enum gpio_signal signal) { }
 #endif /* !CONFIG_BACKLIGHT_REQ_GPIO */
 
+/**
+ * Activate/Deactivate the backlight GPIO pin considering active high or low.
+ */
+void enable_backlight(int enabled);
+
 #endif  /* __CROS_EC_BACKLIGHT_H */

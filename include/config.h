@@ -189,11 +189,20 @@
 
 /* Allow proprietary communication protocols' extensions. */
 #undef CONFIG_EXTENSION_COMMAND
+
 /*
  * Support controlling the display backlight based on the state of the lid
  * switch.  The EC will disable the backlight when the lid is closed.
+ *
+ * The GPIO should be named GPIO_BACKLIGHT_ENABLED if active high, or
+ * GPIO_BACKLIGHT_ENABLED_L if active low. See CONFIG_BACKLIGHT_LID_ACTIVE_LOW.
  */
 #undef CONFIG_BACKLIGHT_LID
+
+/*
+ * The backlight GPIO pin is active low and named GPIO_BACKLIGHT_ENABLED_L
+ */
+#undef CONFIG_BACKLIGHT_LID_ACTIVE_LOW
 
 /*
  * If defined, EC will enable the backlight signal only if this GPIO is
