@@ -24,6 +24,8 @@
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
 #define CONFIG_ADC
+#define CONFIG_BACKLIGHT_LID
+#define CONFIG_BACKLIGHT_LID_ACTIVE_LOW
 #define CONFIG_BOARD_VERSION
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
