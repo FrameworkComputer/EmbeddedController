@@ -172,6 +172,9 @@ static int hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;
 
+	if (p->flag & CBI_GET_RELOAD)
+		cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
+
 	if (read_board_info())
 		return EC_RES_ERROR;
 

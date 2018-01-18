@@ -6230,13 +6230,15 @@ int cmd_board_version(int argc, char *argv[])
 static void cmd_cbi_help(char *cmd)
 {
 	fprintf(stderr,
-		"  Usage: %s get <type>\n"
-		"  Usage: %s set <type> value [flag]\n"
+		"  Usage: %s get <type> [get_flag]\n"
+		"  Usage: %s set <type> value [set_flag]\n"
 		"    <type> is one of:\n"
 		"      0: BOARD_VERSION\n"
 		"      1: OEM_ID\n"
 		"      2: SKU_ID\n"
-		"    [flag] is combination of:\n"
+		"    [get_flag] is combination of:\n"
+		"      01b: Invalidate cache and reload data from EEPROM\n"
+		"    [set_flag] is combination of:\n"
 		"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
 		"      10b: Set all fields to defaults first\n", cmd, cmd);
 }
@@ -6269,6 +6271,13 @@ static int cmd_cbi(int argc, char *argv[])
 		struct ec_params_get_cbi p;
 		uint32_t r;
 		p.type = type;
+		if (argc > 3) {
+			p.flag = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad flag\n");
+				return -1;
+			}
+		}
 		rv = ec_command(EC_CMD_GET_CROS_BOARD_INFO, 0, &p, sizeof(p),
 				&r, sizeof(r));
 		if (rv < 0) {

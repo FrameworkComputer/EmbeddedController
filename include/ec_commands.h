@@ -4592,8 +4592,17 @@ enum cbi_data_type {
 	CBI_DATA_COUNT,
 };
 
+/*
+ * Flags to control read operation
+ *
+ * RELOAD:  Invalidate cache and read data from EEPROM. Useful to verify
+ *          write was successful without reboot.
+ */
+#define CBI_GET_RELOAD		(1 << 0)
+
 struct __ec_align4 ec_params_get_cbi {
 	uint32_t type;		/* enum cbi_data_type */
+	uint32_t flag;		/* CBI_GET_* */
 };
 
 /*
@@ -4609,7 +4618,7 @@ struct __ec_align4 ec_params_get_cbi {
 
 struct __ec_align1 ec_params_set_cbi {
 	uint32_t type;		/* enum cbi_data_type */
-	uint8_t flag;		/* CBI_SET_* */
+	uint32_t flag;		/* CBI_SET_* */
 	uint32_t data;		/* For numeric value */
 	uint8_t raw[];		/* For string and raw data */
 };
