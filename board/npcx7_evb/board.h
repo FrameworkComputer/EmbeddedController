@@ -8,12 +8,20 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/*
+ * npcx7 EVB version:
+ * 1 - for EVB version 1 which supports npcx7m6f/npcx7m6g
+ * 2 - for EVB version 2 which supports npcx7m7w/npcx7m6xb
+ */
+#define BOARD_VERSION  2
+
 /* EC modules */
 #define CONFIG_ADC
 #define CONFIG_PWM
 #define CONFIG_SPI
 #define CONFIG_LPC
 #define CONFIG_I2C
+#undef CONFIG_PECI
 /* Features of eSPI */
 #define CONFIG_ESPI /* Use eSPI protocol for host interface of x86 CPU */
 #define CONFIG_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
@@ -59,11 +67,23 @@
 
 /* New features on npcx7 ec */
 #define CONFIG_KEYBOARD_KSO_HIGH_DRIVE /* Quasi-bidirectional buf for KSOs */
+#if (BOARD_VERSION == 2)
+#define CONFIG_HIBERNATE_PSL /* Use PSL (Power Switch Logic) for hibernate */
+#define CONFIG_CLOCK_SRC_EXTERNAL /* Use external 32kHz OSC as LFCLK source */
+#define CONFIG_WAKE_ON_VOICE /* Use Audio front-end for Wake-on-Voice */
+#undef CONFIG_FANS /* Remove fan application */
+#define CONFIG_FANS 0
+#else
 #undef CONFIG_HIBERNATE_PSL /* Use PSL (Power Switch Logic) for hibernate */
 #undef CONFIG_CLOCK_SRC_EXTERNAL /* Use external 32kHz OSC as LFCLK source */
+#endif
 
 /* Optional feature to configure npcx7 chip */
-#define NPCX_UART_MODULE2  0 /* 0:GPIO10/11 1:GPIO64/65 as UART */
+#if (BOARD_VERSION == 2)
+#define NPCX_UART_MODULE2  1 /* 1:GPIO64/65 as UART1 */
+#else
+#define NPCX_UART_MODULE2  0 /* 0:GPIO10/11 as UART1 */
+#endif
 #define NPCX_JTAG_MODULE2  0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG */
 #define NPCX_TACH_SEL2     0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 #define NPCX7_PWM1_SEL     0 /* 0:GPIOC2 as I2CSCL0 1:as PWM1 (only in npcx7) */
