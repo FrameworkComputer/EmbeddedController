@@ -67,6 +67,7 @@ chip-y+= jitter.o
 chip-y+= pmu.o
 chip-y+= trng.o
 chip-y+= runlevel.o
+chip-$(CONFIG_ENABLE_H1_ALERTS)+= alerts.o
 chip-$(CONFIG_USB_FW_UPDATE)+= usb_upgrade.o
 chip-$(CONFIG_NON_HC_FW_UPDATE)+= upgrade_fw.o post_reset.o upgrade.o
 chip-$(CONFIG_SPS)+= sps.o

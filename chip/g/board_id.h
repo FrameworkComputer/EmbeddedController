@@ -47,6 +47,11 @@ uint32_t check_board_id_vs_header(const struct board_id *id,
 int read_board_id(struct board_id *id);
 
 /**
+ * Return the image header for the current image copy
+ */
+const struct SignedHeader *get_current_image_header(void);
+
+/**
  * Check if board ID in the image matches board ID field in the INFO1.
  *
  * Pass the pointer to the image header to check. If the pointer is set to

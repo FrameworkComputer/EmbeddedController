@@ -968,6 +968,16 @@
  */
 #undef CONFIG_IGNORE_G_UPDATE_CHECKS
 
+/*
+ * When enabled hardware alerts statistics provided via VendorCommand extension.
+ */
+#undef CONFIG_ENABLE_H1_ALERTS
+
+/*
+ * Enable console shell command 'alerts' that prints chip alerts statistics.
+ */
+#undef CONFIG_ENABLE_H1_ALERTS_CONSOLE
+
 /*****************************************************************************/
 /*
  * Debugging config
