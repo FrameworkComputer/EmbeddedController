@@ -144,6 +144,12 @@ static int finger_status[ETP_MAX_FINGERS] = {0};
  */
 static uint32_t irq_ts;
 
+/*
+ * Read touchpad report.
+ * Returns 0 on success, positive (EC_RES_*) value on I2C error, and a negative
+ * value if the I2C transaction is successful but the data is invalid (fairly
+ * common).
+ */
 static int elan_tp_read_report(void)
 {
 	int rv;
@@ -164,7 +170,7 @@ static int elan_tp_read_report(void)
 	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
 
 	if (rv) {
-		CPRINTS("read report error");
+		CPRINTS("read report error (%d)", rv);
 		return rv;
 	}
 
@@ -637,6 +643,31 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 }
 #endif
 
+/*
+ * Try to read touchpad report up to 3 times, reset the touchpad if we still
+ * fail.
+ */
+void elan_tp_read_report_retry(void)
+{
+	int ret;
+	int retry = 3;
+
+	while (retry--) {
+		ret = elan_tp_read_report();
+
+		if (ret <= 0)
+			return;
+
+		/* Try again */
+		msleep(1);
+	}
+
+	/* Failed to read data, reset the touchpad. */
+	CPRINTF("Resetting TP.\n");
+	board_touchpad_reset();
+	elan_tp_init();
+}
+
 void touchpad_interrupt(enum gpio_signal signal)
 {
 	irq_ts = __hw_clock_source_read();
@@ -651,6 +682,6 @@ void touchpad_task(void *u)
 	while (1) {
 		task_wait_event(-1);
 
-		elan_tp_read_report();
+		elan_tp_read_report_retry();
 	}
 }

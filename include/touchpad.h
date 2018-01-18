@@ -8,4 +8,7 @@
 
 void touchpad_interrupt(enum gpio_signal signal);
 
+/* Reset the touchpad, mainly used to recover it from malfunction. */
+void board_touchpad_reset(void);
+
 #endif

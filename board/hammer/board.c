@@ -217,6 +217,22 @@ void board_usb_wake(void)
 #endif
 }
 
+/* Reset the touchpad, mainly used to recover it from malfunction. */
+void board_touchpad_reset(void)
+{
+#ifdef BOARD_WHISKERS
+	gpio_set_level(GPIO_EN_PP3300_TP, 0);
+	msleep(10);
+	gpio_set_level(GPIO_EN_PP3300_TP, 1);
+	msleep(10);
+#else
+	gpio_set_level(GPIO_EN_PP3300_TP_ODL, 1);
+	msleep(10);
+	gpio_set_level(GPIO_EN_PP3300_TP_ODL, 0);
+	msleep(10);
+#endif
+}
+
 /*
  * Get entropy based on Clock Recovery System, which is enabled on hammer to
  * synchronize USB SOF with internal oscillator.
