@@ -55,6 +55,11 @@ static enum bd9995x_command charger_map_cmd = BD9995X_INVALID_COMMAND;
 /* Mutex for active register set control. */
 static struct mutex bd9995x_map_mutex;
 
+/* Tracks the state of VSYS_PRIORITY */
+static int vsys_priority;
+/* Mutex for VIN_CTRL_SET register */
+static struct mutex bd9995x_vin_mutex;
+
 #ifdef HAS_TASK_USB_CHG
 /* USB switch */
 static enum usb_switch usb_switch_state[BD9995X_CHARGE_PORT_COUNT] = {
@@ -772,6 +777,36 @@ int charger_set_current(int current)
 
 int charger_get_voltage(int *voltage)
 {
+	if (vsys_priority) {
+		int batt_volt_measured;
+		int reg;
+		int rv;
+
+		/* Get battery voltage as reported by charger */
+		batt_volt_measured = bd9995x_get_battery_voltage();
+		if (batt_volt_measured > (battery_get_info()->voltage_min +
+					  BD9995X_VSYS_PRECHARGE_OFFSET_MV)) {
+			/*
+			 * Battery is not deeply discharged. Clear the
+			 * VSYS_PRIORITY bit to ensure that input current limit
+			 * is always active.
+			 */
+			mutex_lock(&bd9995x_vin_mutex);
+			if (!ch_raw_read16(BD9995X_CMD_VIN_CTRL_SET, &reg,
+					   BD9995X_EXTENDED_COMMAND)) {
+				reg &= ~BD9995X_CMD_VIN_CTRL_SET_VSYS_PRIORITY;
+				rv = ch_raw_write16(BD9995X_CMD_VIN_CTRL_SET,
+						    reg,
+						    BD9995X_EXTENDED_COMMAND);
+
+				/* Mirror the state of this bit */
+				if (!rv)
+					vsys_priority = 0;
+			}
+			mutex_unlock(&bd9995x_vin_mutex);
+		}
+	}
+
 	return ch_raw_read16(BD9995X_CMD_CHG_VOLTAGE, voltage,
 				BD9995X_BAT_CHG_COMMAND);
 }
@@ -911,6 +946,8 @@ static void bd9995x_init(void)
 	reg |= BD9995X_CMD_VIN_CTRL_SET_VSYS_PRIORITY;
 	ch_raw_write16(BD9995X_CMD_VIN_CTRL_SET, reg,
 		       BD9995X_EXTENDED_COMMAND);
+	/* Mirror the state of this bit */
+	vsys_priority = 1;
 
 	/* Define battery charging profile */
 	bd9995x_battery_charging_profile_settings();
@@ -1016,10 +1053,11 @@ int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
 	int rv;
 	int reg;
 
+	mutex_lock(&bd9995x_vin_mutex);
 	rv = ch_raw_read16(BD9995X_CMD_VIN_CTRL_SET, &reg,
 			   BD9995X_EXTENDED_COMMAND);
 	if (rv)
-		return rv;
+		goto select_input_port_exit;
 
 	if (select) {
 		if (port == BD9995X_CHARGE_PORT_VBUS) {
@@ -1048,8 +1086,11 @@ int bd9995x_select_input_port(enum bd9995x_charge_port port, int select)
 			panic("Invalid charge port");
 	}
 
-	return ch_raw_write16(BD9995X_CMD_VIN_CTRL_SET, reg,
+	rv = ch_raw_write16(BD9995X_CMD_VIN_CTRL_SET, reg,
 			      BD9995X_EXTENDED_COMMAND);
+select_input_port_exit:
+	mutex_unlock(&bd9995x_vin_mutex);
+	return rv;
 }
 
 #ifdef CONFIG_CHARGER_BATTERY_TSENSE
