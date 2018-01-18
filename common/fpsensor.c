@@ -17,7 +17,8 @@
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
-#ifdef HAVE_PRIVATE
+#if defined(HAVE_PRIVATE) && !defined(TEST_BUILD)
+#define HAVE_FP_PRIVATE_DRIVER
 #define PRIV_HEADER(header) STRINGIFY(header)
 #include PRIV_HEADER(FP_SENSOR_PRIVATE)
 #else
@@ -66,7 +67,7 @@ void fp_task(void)
 	gpio_config_module(MODULE_SPI_MASTER, 1);
 	spi_enable(CONFIG_SPI_FP_PORT, 1);
 
-#ifdef HAVE_PRIVATE
+#ifdef HAVE_FP_PRIVATE_DRIVER
 	/* Reset and initialize the sensor IC */
 	fp_sensor_init();
 
@@ -125,13 +126,13 @@ void fp_task(void)
 			}
 		}
 	}
-#else /* !HAVE_PRIVATE */
+#else /* !HAVE_FP_PRIVATE_DRIVER */
 	while (1) {
 		uint32_t evt = task_wait_event(timeout_us);
 
 		send_mkbp_event(evt);
 	}
-#endif /* !HAVE_PRIVATE */
+#endif /* !HAVE_FP_PRIVATE_DRIVER */
 }
 
 static int fp_get_next_event(uint8_t *out)
@@ -205,7 +206,7 @@ static int fp_command_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_fp_info *r = args->response;
 
-#ifdef HAVE_PRIVATE
+#ifdef HAVE_FP_PRIVATE_DRIVER
 	if (fp_sensor_get_info(r) < 0)
 #endif
 		return EC_RES_UNAVAILABLE;
