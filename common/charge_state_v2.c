@@ -63,10 +63,13 @@ static timestamp_t precharge_start_time;
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 static int base_connected;
-static int prev_base_connected;
+/* Base has responded to one of our commands already. */
+static int base_responsive;
 static int charge_base;
 static int prev_charge_base;
 static int prev_current_base;
+static int prev_allow_charge_base;
+static int prev_current_lid;
 #else
 static const int base_connected;
 #endif
@@ -228,6 +231,35 @@ static int charge_get_base_percent(void)
 }
 
 /**
+ * Setup current settings for base, and record previous values, if the base
+ * is responsive.
+ *
+ * @param current_base Current to be drawn by base (negative to provide power)
+ * @param allow_charge_base Whether base battery should be charged (only makes
+ *                          sense with positive current)
+ */
+static int set_base_current(int current_base, int allow_charge_base)
+{
+	/* "OTG" voltage from base to lid. */
+	const int otg_voltage = db_policy.otg_voltage;
+	int ret;
+
+	ret = ec_ec_master_base_charge_control(current_base,
+					otg_voltage, allow_charge_base);
+	if (ret) {
+		/* Ignore errors until the base is responsive. */
+		if (base_responsive)
+			return ret;
+	} else {
+		base_responsive = 1;
+		prev_current_base = current_base;
+		prev_allow_charge_base = allow_charge_base;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+/**
  * Setup current settings for lid and base, in a safe way.
  *
  * @param current_base Current to be drawn by base (negative to provide power)
@@ -239,11 +271,8 @@ static int charge_get_base_percent(void)
 static void set_base_lid_current(int current_base, int allow_charge_base,
 				 int current_lid, int allow_charge_lid)
 {
-	/* "OTG" voltage from base to lid or from lid to base. */
+	/* "OTG" voltage from lid to base. */
 	const int otg_voltage = db_policy.otg_voltage;
-
-	static int prev_allow_charge_base;
-	static int prev_current_lid;
 
 	int lid_first;
 	int ret;
@@ -272,8 +301,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 		lid_first = 0; /* All other cases: control the base first */
 
 	if (!lid_first && base_connected) {
-		ret = ec_ec_master_base_charge_control(current_base,
-						otg_voltage, allow_charge_base);
+		ret = set_base_current(current_base, allow_charge_base);
 		if (ret)
 			return;
 	}
@@ -298,16 +326,20 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 	if (ret)
 		return;
 
+	prev_current_lid = current_lid;
+
 	if (lid_first && base_connected) {
-		ret = ec_ec_master_base_charge_control(current_base,
-						otg_voltage, allow_charge_base);
+		ret = set_base_current(current_base, allow_charge_base);
 		if (ret)
 			return;
 	}
 
-	prev_current_base = current_base;
-	prev_allow_charge_base = allow_charge_base;
-	prev_current_lid = current_lid;
+	/*
+	 * Make sure cross-power is enabled (it might not be enabled right after
+	 * plugging the base, or when an adapter just got connected).
+	 */
+	if (base_connected)
+		board_enable_base_power(1);
 }
 
 /**
@@ -1204,8 +1236,10 @@ void charger_task(void *u)
 	shutdown_warning_time.val = 0UL;
 	battery_seems_to_be_dead = 0;
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
-	prev_base_connected = -1;
+	base_responsive = 0;
 	curr.input_voltage = CHARGE_VOLTAGE_UNINITIALIZED;
+	base_battery_dynamic.flags = EC_BATT_FLAG_INVALID_DATA;
+	charge_base = -1;
 #endif
 
 	/*
@@ -1231,7 +1265,7 @@ void charger_task(void *u)
 		 * TODO(b:71723024): Fix extpower_is_present() in hardware
 		 * instead.
 		 */
-		if (base_connected && prev_current_base < 0)
+		if (base_responsive && prev_current_base < 0)
 			curr.ac = 0;
 #endif
 		if (curr.ac != prev_ac) {
@@ -1266,22 +1300,14 @@ void charger_task(void *u)
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 		base_connected = board_is_base_connected();
 
-		if (prev_base_connected != base_connected) {
+		if (!base_connected) {
 			/* Invalidate static/dynamic information */
 			base_battery_dynamic.flags = EC_BATT_FLAG_INVALID_DATA;
 			charge_base = -1;
-
-			if (base_connected) {
-				/* Redo power allocation (e.g. enable OTG). */
-				charge_allocate_input_current_limit();
-				/* Apply power to the base */
-				board_enable_base_power(1);
-			}
-
-			prev_base_connected = base_connected;
-		}
-
-		if (base_connected) {
+			base_responsive = 0;
+			prev_current_base = 0;
+			prev_allow_charge_base = 0;
+		} else if (base_responsive) {
 			int old_flags = base_battery_dynamic.flags;
 
 			ec_ec_master_base_get_dynamic_info();
