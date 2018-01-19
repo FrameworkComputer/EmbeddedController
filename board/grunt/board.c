@@ -208,14 +208,6 @@ static void board_init(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
-
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -299,10 +291,12 @@ void board_tcpc_init(void)
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
 
-	/* Enable TCPC0 interrupt */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
 
-	/* Enable TCPC1 interrupt */
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
