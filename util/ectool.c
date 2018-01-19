@@ -6457,7 +6457,10 @@ static int cmd_cbi(int argc, char *argv[])
 		rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0, &p, sizeof(p),
 				NULL, 0);
 		if (rv < 0) {
-			fprintf(stderr, "Error code: %d\n", rv);
+			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
+				fprintf(stderr, "Write failed. WP enabled?\n");
+			else
+				fprintf(stderr, "Error code: %d\n", rv);
 			return rv;
 		}
 		return 0;

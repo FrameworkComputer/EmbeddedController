@@ -202,6 +202,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
 static int hc_cbi_set(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_set_cbi *p = args->params;
+	int rv;
 
 	if (p->flag & CBI_SET_INIT) {
 		memset(&bi, 0, sizeof(bi));
@@ -243,8 +244,10 @@ static int hc_cbi_set(struct host_cmd_handler_args *args)
 	if (p->flag & CBI_SET_NO_SYNC)
 		return EC_RES_SUCCESS;
 
-	if (write_board_info())
-		return EC_RES_ERROR;
+	rv = write_board_info();
+	if (rv)
+		return (rv == EC_ERROR_ACCESS_DENIED) ?
+				EC_RES_ACCESS_DENIED : EC_RES_ERROR;
 
 	return EC_RES_SUCCESS;
 }
