@@ -645,13 +645,13 @@ void lid_angle_peripheral_enable(int enable)
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT_L, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
