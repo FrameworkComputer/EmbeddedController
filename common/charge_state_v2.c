@@ -67,6 +67,8 @@ static int prev_base_connected;
 static int charge_base;
 static int prev_charge_base;
 static int prev_current_base;
+#else
+static const int base_connected;
 #endif
 
 /* Is battery connected but unresponsive after precharge? */
@@ -1168,7 +1170,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, charge_wakeup, HOOK_PRIO_DEFAULT);
 static int get_desired_input_current(enum battery_present batt_present,
 				     const struct charger_info * const info)
 {
-	if (batt_present == BP_YES || system_is_locked()) {
+	if (batt_present == BP_YES || system_is_locked() || base_connected) {
 #ifdef CONFIG_CHARGE_MANAGER
 		int ilim = charge_manager_get_charger_current();
 		return ilim == CHARGE_CURRENT_UNINITIALIZED ?
@@ -1801,13 +1803,17 @@ int charge_set_output_current_limit(int ma, int mv)
 
 int charge_set_input_current_limit(int ma, int mv)
 {
+#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+	curr.input_voltage = mv;
+#endif
 	/*
-	 * If battery is not present and we are not locked, then allow system
-	 * to pull as much input current as needed. Yes, we might overcurrent
-	 * the charger but this is no worse then browning out due to
-	 * insufficient input current.
+	 * If battery is not present, we are not locked, and base is not
+	 * connected then allow system to pull as much input current as needed.
+	 * Yes, we might overcurrent the charger but this is no worse than
+	 * browning out due to insufficient input current.
 	 */
-	if (curr.batt.is_present != BP_YES && !system_is_locked()) {
+	if (curr.batt.is_present != BP_YES && !system_is_locked() &&
+		!base_connected) {
 #ifdef CONFIG_USB_POWER_DELIVERY
 #if ((PD_MAX_POWER_MW * 1000) / PD_MAX_VOLTAGE_MV != PD_MAX_CURRENT_MA)
 		/*
@@ -1834,7 +1840,6 @@ int charge_set_input_current_limit(int ma, int mv)
 #endif
 	curr.desired_input_current = ma;
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
-	curr.input_voltage = mv;
 	/* Wake up charger task to allocate current between lid and base. */
 	charge_wakeup();
 	return EC_SUCCESS;
