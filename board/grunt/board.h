@@ -23,6 +23,13 @@
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
+/*
+ * Enable 1 slot of secure temporary storage to support
+ * suspend/resume with read/write memory training.
+ */
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID_ACTIVE_LOW
