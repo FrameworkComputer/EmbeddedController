@@ -144,6 +144,9 @@
 /* Thermal */
 #define CONFIG_TEMP_SENSOR_SB_TSI
 
+/* KB backlight driver */
+#define CONFIG_LED_DRIVER_LM3630A
+
 /* FIFO size is a power of 2. */
 #define CONFIG_ACCEL_FIFO 1024  /* TODO(teravest): Check this value. */
 

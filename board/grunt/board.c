@@ -17,6 +17,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/led/lm3630a.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -226,6 +227,13 @@ static void board_chipset_resume(void)
 {
 	/* Allow display backlight to turn on. See above backlight comment */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT_L, 0);
+
+	/*
+	 * Enable keyboard backlight. This needs to be done here because
+	 * the chip doesn't have power until PP3300_S0 comes up.
+	 */
+	gpio_set_level(GPIO_KB_BL_EN, 1);
+	lm3630a_poweron();
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
