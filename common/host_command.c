@@ -560,6 +560,22 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 		     host_command_get_cmd_versions,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
+extern uint16_t host_command_suppressed[];
+/* Default suppress list. Define yours in board.c. */
+static uint32_t suppressed_count;
+
+static int host_command_is_suppressed(uint16_t cmd)
+{
+#ifdef CONFIG_SUPPRESS_HOST_COMMANDS
+	uint16_t *p = host_command_suppressed;
+	while (*p != HOST_COMMAND_SUPPRESS_DELIMITER) {
+		if (*p++ == cmd)
+			return 1;
+	}
+#endif
+	return 0;
+}
+
 /**
  * Print debug output for the host command request, before it's processed.
  *
@@ -578,6 +594,10 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 	 */
 	if (hcdebug == HCDEBUG_NORMAL) {
 		uint64_t t = get_time().val;
+		if (host_command_is_suppressed(args->command)) {
+			suppressed_count++;
+			return;
+		}
 		if (args->command == hc_prev_cmd &&
 		    t - hc_prev_time < HCDEBUG_MAX_REPEAT_DELAY) {
 			hc_prev_count++;
@@ -846,6 +866,7 @@ static int command_hcdebug(int argc, char **argv)
 
 	ccprintf("Host command debug mode is %s\n",
 		 hcdebug_mode_names[hcdebug]);
+	ccprintf("%u suppressed\n", suppressed_count);
 
 	return EC_SUCCESS;
 }

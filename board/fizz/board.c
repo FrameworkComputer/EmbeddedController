@@ -54,6 +54,12 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+uint16_t host_command_suppressed[] = {
+	EC_CMD_CONSOLE_SNAPSHOT,
+	EC_CMD_CONSOLE_READ,
+	HOST_COMMAND_SUPPRESS_DELIMITER,
+};
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if (!gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
