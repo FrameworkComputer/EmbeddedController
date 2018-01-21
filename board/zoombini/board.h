@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Zoombini board configuration */
+/* Meowth/Zoombini board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -222,6 +222,8 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_CHARGER,
 #ifdef BOARD_MEOWTH
 	ADC_TEMP_SENSOR_WIFI,
+	ADC_BASE_ATTACH,
+	ADC_BASE_DETACH,
 #endif /* defined(BOARD_MEOWTH) */
 	ADC_CH_COUNT
 };
@@ -268,6 +270,9 @@ enum sensor_id {
 #ifdef BOARD_MEOWTH
 int board_get_version(void);
 #endif /* defined(BOARD_MEOWTH) */
+
+void base_pwr_fault_interrupt(enum gpio_signal s);
+
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 

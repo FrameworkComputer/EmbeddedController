@@ -154,12 +154,14 @@ GPIO_INT(PMIC_DPWROK,     PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_signal_interrupt)
 GPIO_INT(VOLUME_UP_L,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(VOLUME_DOWN_L,   PIN(6, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(BASE_PWR_FLT_L,  PIN(2, 4), GPIO_INT_FALLING, base_pwr_fault_interrupt)
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(8, 2), GPIO_OUT_LOW)
 GPIO(EN_PP5000,            PIN(7, 3), GPIO_OUT_LOW)
 GPIO(EN_PP1800_U,          PIN(A, 0), GPIO_OUT_LOW)
 GPIO(EN_PP3300_WLAN,       PIN(8, 3), GPIO_OUT_HIGH)
+GPIO(BASE_PWR_EN,          PIN(2, 2), GPIO_OUT_LOW)
 
 GPIO(ENTERING_RW,         PIN(E, 1), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,        PIN(E, 3), GPIO_INPUT)  /* Case Closed Debug mode. */
@@ -219,7 +221,7 @@ ALTERNATE(PIN_MASK(C, 0x01), 1, MODULE_PWM, 0) /* DB1 Blue LED (M) */
 
 /* ADC */
 ALTERNATE(PIN_MASK(4, 0x32), 1, MODULE_ADC, 0) /* ADC0-1,4 */
-ALTERNATE(PIN_MASK(F, 0x02), 1, MODULE_ADC, 0) /* ADC8 */
+ALTERNATE(PIN_MASK(F, 0x03), 1, MODULE_ADC, 0) /* ADC8-9 */
 
 /* Power Switch Logic (PSL) inputs */
 ALTERNATE(PIN_MASK(0, 0x03), 1, MODULE_PMU, 0) /* GPIO00, GPIO01 */
