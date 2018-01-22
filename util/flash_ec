@@ -119,6 +119,7 @@ BOARDS_NPCX_SPI=(
 	gru
 	kevin
         lux
+	nami
 	nautilus
 	poppy
 	reef
@@ -159,6 +160,7 @@ BOARDS_RAIDEN=(
 	fizz
 	gru
 	kevin
+	nami
 	nautilus
 	poppy
 	reef
