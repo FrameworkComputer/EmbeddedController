@@ -124,18 +124,25 @@ const struct adc_t adc_channels[] = {
 };
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-/* TODO(aaboagye): Add the additional Meowth LEDs */
 const struct pwm_t pwm_channels[] = {
 #ifdef BOARD_MEOWTH
-	[PWM_CH_DB0_LED_RED] =   { 3, PWM_CONFIG_DSLEEP, 120 },
-	[PWM_CH_DB0_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 120 },
-	[PWM_CH_DB0_LED_BLUE] =  { 2, PWM_CONFIG_DSLEEP, 120 },
-	[PWM_CH_DB1_LED_RED] =   { 7, PWM_CONFIG_DSLEEP, 120 },
-	[PWM_CH_DB1_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 120 },
-	[PWM_CH_DB1_LED_BLUE] =  { 6, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_DB0_LED_RED] =   { 3, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
+	[PWM_CH_DB0_LED_GREEN] = { 0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
+	[PWM_CH_DB0_LED_BLUE] =  { 2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
+	[PWM_CH_DB1_LED_RED] =   { 7, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
+	[PWM_CH_DB1_LED_GREEN] = { 5, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
+	[PWM_CH_DB1_LED_BLUE] =  { 6, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				   2400 },
 #else /* !defined(BOARD_MEOWTH) */
-	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_DSLEEP, 120 },
-	[PWM_CH_LED_RED] =   { 2, PWM_CONFIG_DSLEEP, 120 },
+	[PWM_CH_LED_GREEN] = { 0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+			       2400 },
+	[PWM_CH_LED_RED] =   { 2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+			       2400 },
 	[PWM_CH_KBLIGHT] =   { 3, 0, 100 },
 #endif /* defined(BOARD_MEOWTH) */
 };
@@ -395,24 +402,6 @@ static void board_init(void)
 #endif /* defined(BOARD_ZOOMBINI) */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-static void board_init_leds_off(void)
-{
-	/* Initialize the LEDs off. */
-#ifdef BOARD_MEOWTH
-	/* TODO(aaboagye): Eventually do something with these LEDs. */
-	pwm_set_duty(PWM_CH_DB0_LED_RED, 100);
-	pwm_set_duty(PWM_CH_DB0_LED_GREEN, 100);
-	pwm_set_duty(PWM_CH_DB0_LED_BLUE, 100);
-	pwm_set_duty(PWM_CH_DB1_LED_RED, 100);
-	pwm_set_duty(PWM_CH_DB1_LED_GREEN, 100);
-	pwm_set_duty(PWM_CH_DB1_LED_BLUE, 100);
-#else /* !defined(BOARD_MEOWTH) */
-	pwm_set_duty(PWM_CH_LED_RED, 100);
-	pwm_set_duty(PWM_CH_LED_GREEN, 100);
-#endif /* defined(BOARD_MEOWTH) */
-}
-DECLARE_HOOK(HOOK_INIT, board_init_leds_off, HOOK_PRIO_INIT_PWM + 1);
 
 void board_overcurrent_event(int port)
 {

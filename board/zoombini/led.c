@@ -3,120 +3,112 @@
  * found in the LICENSE file.
  */
 
-/* Zoombini LED control to conform to Chrome OS LED behaviour specification. */
+/* Zoombini/Meowth specific LED settings. */
 
-/*
- * TODO(crbug.com/752553): This should be turned into common code such that
- * boards that use PWM controlled LEDs can share code to follow the Chrome OS
- * LED behaviour spec.  If possible, tie into led_policy_std.c.
- */
-
-#include "charge_state.h"
-#include "chipset.h"
 #include "common.h"
-#include "hooks.h"
+#include "ec_commands.h"
+#include "led_pwm.h"
 #include "pwm.h"
-#include "timer.h"
+#include "util.h"
 
-enum led_id {
-	EC_LED_ID_POWER = 0,
-	EC_LED_ID_BATTERY,
-	EC_LED_ID_COUNT,
-};
-
-static enum pwm_channel led_pwm_ch_map[EC_LED_ID_COUNT] = {
+const enum ec_led_id supported_led_ids[] = {
 #ifdef BOARD_MEOWTH
-	[EC_LED_ID_POWER] = PWM_CH_DB0_LED_GREEN,
-	[EC_LED_ID_BATTERY] = PWM_CH_DB0_LED_RED,
-#else /* !defined(BOARD_MEOWTH) */
-	[EC_LED_ID_POWER] = PWM_CH_LED_GREEN,
-	[EC_LED_ID_BATTERY] = PWM_CH_LED_RED,
+	EC_LED_ID_LEFT_LED,
+	EC_LED_ID_RIGHT_LED,
+#else
+	EC_LED_ID_POWER_LED,
 #endif /* defined(BOARD_MEOWTH) */
 };
+const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-static void set_led_state(enum led_id id, int on)
+#ifdef BOARD_MEOWTH
+/* Meowth LED definitions */
+/* We won't be using the blue channel long term. */
+struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
+				/* Red, Green, Blue */
+	[EC_LED_COLOR_RED]    = {   8,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,   8,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0,   0 },
+	[EC_LED_COLOR_YELLOW] = {   8,  24,   0 },
+	[EC_LED_COLOR_WHITE]  = {   0,   0,   0 },
+	[EC_LED_COLOR_AMBER]  = {  12,   9,   0 },
+};
+
+/* Two tri-color LEDs with red, green, and blue channels. */
+struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
+	{
+		PWM_CH_DB0_LED_RED,
+		PWM_CH_DB0_LED_GREEN,
+		PWM_CH_DB0_LED_BLUE,
+	},
+
+	{
+		PWM_CH_DB1_LED_RED,
+		PWM_CH_DB1_LED_GREEN,
+		PWM_CH_DB1_LED_BLUE,
+	},
+};
+#else
+/* Zoombini LED definitions. */
+struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
+				/* Red, Green, Blue */
+	[EC_LED_COLOR_RED]    = { 100,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0, 100,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0,   0 },
+	[EC_LED_COLOR_YELLOW] = { 100,  50,   0 },
+	[EC_LED_COLOR_WHITE]  = {   0,   0,   0 },
+	[EC_LED_COLOR_AMBER]  = { 100,  10,   0 },
+};
+
+/* A single bi-color LED with red and green channels. */
+struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
+	{
+		.ch0 = PWM_CH_LED_RED,
+		.ch1 = PWM_CH_LED_GREEN,
+		.ch2 = PWM_LED_NO_CHANNEL,
+	},
+};
+#endif /* !defined(BOARD_MEOWTH) */
+
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	int val;
-#ifdef BOARD_MEOWTH
-	val = on ? 98 : 100;
-#else /* !defined(BOARD_MEOWTH) */
-	val = on ? 90 : 100;
-#endif /* defined(BOARD_MEOWTH) */
-
-	pwm_set_duty(led_pwm_ch_map[id], val);
+	brightness_range[EC_LED_COLOR_RED] = 100;
+	brightness_range[EC_LED_COLOR_GREEN] = 100;
+	brightness_range[EC_LED_COLOR_YELLOW] = 100;
+	brightness_range[EC_LED_COLOR_AMBER] = 100;
+	/* Zoombini has no blue channel; it's also going away for Meowth. */
+	brightness_range[EC_LED_COLOR_BLUE] = 0;
+	brightness_range[EC_LED_COLOR_WHITE] = 0;
 }
 
-static uint8_t power_led_is_pulsing;
-
-static void pulse_power_led(void);
-DECLARE_DEFERRED(pulse_power_led);
-static void pulse_power_led(void)
+int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	static uint8_t tick_count;
+	enum pwm_led_id pwm_id;
 
-	if (!power_led_is_pulsing) {
-		tick_count = 0;
-		return;
-	}
-
-	if (tick_count == 0)
-		set_led_state(EC_LED_ID_POWER, 1);
+	/* Convert ec_led_id to pwm_led_id. */
+#ifdef BOARD_MEOWTH
+	if (led_id == EC_LED_ID_LEFT_LED)
+		pwm_id = PWM_LED0;
+	else if (led_id == EC_LED_ID_RIGHT_LED)
+		pwm_id = PWM_LED1;
+#else
+	if (led_id == EC_LED_ID_POWER_LED)
+		pwm_id = PWM_LED0;
+#endif /* defined(BOARD_MEOWTH) */
 	else
-		set_led_state(EC_LED_ID_POWER, 0);
+		return EC_ERROR_UNKNOWN;
 
-	/* 4 second period, 25% duty cycle. */
-	tick_count = (tick_count + 1) % 4;
-	hook_call_deferred(&pulse_power_led_data, SECOND);
+	if (brightness[EC_LED_COLOR_RED])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
+	else if (brightness[EC_LED_COLOR_GREEN])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
+	else if (brightness[EC_LED_COLOR_YELLOW])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
+	else if (brightness[EC_LED_COLOR_AMBER])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
+	else
+		/* Otherwise, the "color" is "off". */
+		set_pwm_led_color(pwm_id, -1);
+
+	return EC_SUCCESS;
 }
-
-static void power_led_update(void)
-{
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		/* Make sure we stop pulsing. */
-		power_led_is_pulsing = 0;
-		/* The power LED must be on in the Active state. */
-		set_led_state(EC_LED_ID_POWER, 1);
-	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-		/* The power LED must pulse in the Suspend state. */
-		if (!power_led_is_pulsing) {
-			power_led_is_pulsing = 1;
-			pulse_power_led();
-		}
-	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		/* Make sure we stop pulsing. */
-		power_led_is_pulsing = 0;
-		/* The power LED must be off in the Deep Sleep state. */
-		set_led_state(EC_LED_ID_POWER, 0);
-	}
-}
-
-static void battery_led_update(void)
-{
-	enum charge_state chg_st = charge_get_state();
-
-	switch (chg_st) {
-	case PWR_STATE_DISCHARGE:
-	case PWR_STATE_IDLE:
-		set_led_state(EC_LED_ID_BATTERY, 0);
-		break;
-
-	/*
-	 * We don't have another color to distingush full, so make it
-	 * the same as charging.
-	 */
-	case PWR_STATE_CHARGE_NEAR_FULL:
-	case PWR_STATE_CHARGE:
-		set_led_state(EC_LED_ID_BATTERY, 1);
-		break;
-
-	default:
-		break;
-	}
-}
-
-static void update_leds(void)
-{
-	power_led_update();
-	battery_led_update();
-}
-DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
