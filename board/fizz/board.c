@@ -518,18 +518,6 @@ int64_t get_time_dsw_pwrok(void)
 	return -20 * MSEC;
 }
 
-int board_has_working_reset_flags(void)
-{
-	int version = system_get_board_version();
-
-	/* Board Rev0 will lose reset flags on power cycle. */
-	if (version == 0)
-		return 0;
-
-	/* All other board versions should have working reset flags */
-	return 1;
-}
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_RED]   = { 3, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 100 },
