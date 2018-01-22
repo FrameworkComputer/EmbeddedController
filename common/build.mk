@@ -72,6 +72,7 @@ common-$(CONFIG_KEYBOARD_PROTOCOL_MKBP)+=keyboard_mkbp.o
 common-$(CONFIG_KEYBOARD_TEST)+=keyboard_test.o
 common-$(CONFIG_LED_COMMON)+=led_common.o
 common-$(CONFIG_LED_POLICY_STD)+=led_policy_std.o
+common-$(CONFIG_LED_PWM)+=led_pwm.o
 common-$(CONFIG_LID_ANGLE)+=motion_lid.o math_util.o
 common-$(CONFIG_LID_ANGLE_UPDATE)+=lid_angle.o
 common-$(CONFIG_LID_SWITCH)+=lid_switch.o
