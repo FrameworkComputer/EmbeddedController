@@ -88,6 +88,15 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 
+/*
+ * On power-on, H1 releases the EC from reset but then quickly asserts and
+ * releases the reset a second time. This means the EC sees 2 resets:
+ * (1) power-on reset, (2) reset-pin reset. If we add a delay between reset (1)
+ * and configuring GPIO output levels, then reset (2) will happen before the
+ * end of the delay so we avoid extra output toggles.
+ */
+#define CONFIG_GPIO_INIT_POWER_ON_DELAY_MS 100
+
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
