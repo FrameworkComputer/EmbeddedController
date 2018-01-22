@@ -313,6 +313,7 @@ void board_tcpc_init(void)
 		mux->hpd_update(port, 0, 0);
 	}
 }
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 void board_overcurrent_event(int port)
 {
