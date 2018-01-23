@@ -15,6 +15,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_bma2x2.h"
@@ -56,14 +57,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
-int board_get_version(void)
-{
-	static int version = 0;
-	/* dnojiri: Read version from EEPROM */
-	CPRINTS("Board version: %d", version);
-	return version;
-}
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -394,6 +387,11 @@ DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 /* Initialize board. */
 static void board_init(void)
 {
+	uint32_t version;
+
+	if (cbi_get_board_version(&version) == EC_SUCCESS)
+		CPRINTS("Board Version: 0x%04x", version);
+
 	/*
 	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
 	 * whenever the EC is not doing SPI flash transactions. This avoids
