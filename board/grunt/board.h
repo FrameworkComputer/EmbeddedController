@@ -127,8 +127,6 @@
 /* Accelerometer and Gyroscope are the same device. */
 #define I2C_PORT_ACCEL		I2C_PORT_SENSOR
 
-#define CONFIG_BRINGUP /* TODO(teravest): Remove this later. */
-
 /* Sensors */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT TASK_EVENT_CUSTOM(4)
