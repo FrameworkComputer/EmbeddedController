@@ -139,7 +139,6 @@ static void servo_detect(void)
 		servo_connect();
 		return;
 	}
-
 	/*
 	 * If servo has become detectable but wasn't detected above, assume
 	 * it's disconnected.
@@ -152,8 +151,15 @@ static void servo_detect(void)
 	 * debouncing state below, because we want to give priority to servo
 	 * being able to drive it again.
 	 */
-	if (state == DEVICE_STATE_UNDETECTABLE)
+	if (state == DEVICE_STATE_UNDETECTABLE) {
 		set_state(DEVICE_STATE_DISCONNECTED);
+		return;
+	}
+	/*
+	 * Make sure the interrupt is enabled. We will need to detect the on
+	 * transition if we enter the off or debouncing state
+	 */
+	gpio_enable_interrupt(GPIO_DETECT_SERVO);
 
 	/* Servo wasn't detected.  If we're already disconnected, done. */
 	if (state == DEVICE_STATE_DISCONNECTED)
@@ -180,7 +186,6 @@ static void servo_detect(void)
 		set_state(DEVICE_STATE_INIT_DEBOUNCING);
 	else
 		set_state(DEVICE_STATE_DEBOUNCING);
-	gpio_enable_interrupt(GPIO_DETECT_SERVO);
 }
 /*
  * Do this at slightly elevated priority so it runs before rdd_check_pin() and

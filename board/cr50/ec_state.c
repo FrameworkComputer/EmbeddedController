@@ -112,6 +112,11 @@ static void ec_detect(void)
 		set_ec_on();
 		return;
 	}
+	/*
+	 * Make sure the interrupt is enabled. We will need to detect the on
+	 * transition if we enter the off or debouncing state
+	 */
+	gpio_enable_interrupt(GPIO_DETECT_EC);
 
 	/* EC wasn't detected.  If we're already off, done. */
 	if (state == DEVICE_STATE_OFF)
@@ -134,6 +139,5 @@ static void ec_detect(void)
 		set_state(DEVICE_STATE_INIT_DEBOUNCING);
 	else
 		set_state(DEVICE_STATE_DEBOUNCING);
-	gpio_enable_interrupt(GPIO_DETECT_EC);
 }
 DECLARE_HOOK(HOOK_SECOND, ec_detect, HOOK_PRIO_DEFAULT);
