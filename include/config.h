@@ -1865,6 +1865,7 @@
 
 /* Support for LED driver chip(s) */
 #undef CONFIG_LED_DRIVER_DS2413  /* Maxim DS2413, on one-wire interface */
+#undef CONFIG_LED_DRIVER_LM3630A /* LM3630A, on I2C interface */
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
 
 /* Offset in flash where little firmware will live. */
