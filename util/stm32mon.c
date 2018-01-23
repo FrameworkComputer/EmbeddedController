@@ -568,7 +568,8 @@ int command_read_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 
 int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 {
-	int res;
+	int res = 0;
+	int i;
 	uint32_t remaining = size;
 	uint32_t addr_be;
 	uint32_t cnt;
@@ -580,17 +581,22 @@ int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 
 	while (remaining) {
 		cnt = (remaining > PAGE_SIZE) ? PAGE_SIZE : remaining;
-		addr_be = htonl(address);
-		outbuf[0] = cnt - 1;
-		loads[1].size = cnt + 1;
-		memcpy(outbuf + 1, buffer, cnt);
+		/* skip empty blocks to save time */
+		for (i = 0; i < cnt && buffer[i] == 0xff; i++)
+			;
+		if (i != cnt) {
+			addr_be = htonl(address);
+			outbuf[0] = cnt - 1;
+			loads[1].size = cnt + 1;
+			memcpy(outbuf + 1, buffer, cnt);
 
-		draw_spinner(remaining, size);
-		fflush(stdout);
-		res = send_command(fd, CMD_WRITEMEM, loads, 2, NULL, 0, 1);
-		if (res < 0)
-			return -EIO;
-
+			draw_spinner(remaining, size);
+			fflush(stdout);
+			res = send_command(fd, CMD_WRITEMEM, loads, 2,
+					   NULL, 0, 1);
+			if (res < 0)
+				return -EIO;
+		}
 		buffer += cnt;
 		address += cnt;
 		remaining -= cnt;
