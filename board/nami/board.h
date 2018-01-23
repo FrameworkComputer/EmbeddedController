@@ -126,6 +126,9 @@
 #define CONFIG_LID_ANGLE_TABLET_MODE
 #define CONFIG_LID_ANGLE_INVALID_CHECK
 
+/* KB backlight driver */
+#define CONFIG_LED_DRIVER_LM3509
+
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
 
@@ -176,12 +179,11 @@
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT1
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT1
 #define I2C_PORT_PMIC		NPCX_I2C_PORT2
-/* dnojiri: KB backlight */
+#define I2C_PORT_KBLIGHT	NPCX_I2C_PORT2
 #define I2C_PORT_GYRO		NPCX_I2C_PORT3
 #define I2C_PORT_ACCEL		NPCX_I2C_PORT3
 #define I2C_PORT_THERMAL	NPCX_I2C_PORT3
 #define I2C_PORT_ALS		NPCX_I2C_PORT3
-/* dnojiri: ALS, G-sensor */
 
 /* I2C addresses */
 #define I2C_ADDR_MP2949		0x40
