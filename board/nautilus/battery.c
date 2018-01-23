@@ -16,13 +16,17 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
-/*
- * TODO(philipchen): Check if these parameters are valid for Nautilus battery.
- *
- * Shutdown mode parameter to write to manufacturer access register
- */
+/* Shutdown mode parameters to write to manufacturer access register */
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA        0x0010
+#define SB_SHUTDOWN_DATA	0x0010
+
+/*
+ * Unlike other smart batteries, Nautilus battery uses different bit fields
+ * in manufacturer access register for the conditions of the CHG/DSG FETs.
+ */
+#define BATFETS_SHIFT		(14)
+#define BATFETS_MASK		(0x3)
+#define BATFETS_DISABLED	(0x2)
 
 static const struct battery_info info = {
 	.voltage_max = 8700,
@@ -116,30 +120,26 @@ static int battery_init(void)
 /*
  * Check for case where both XCHG and XDSG bits are set indicating that even
  * though the FG can be read from the battery, the battery is not able to be
- * charged or discharged. This situation will happen if a battery disconnect was
- * intiaited via H1 setting the DISCONN signal to the battery. This will put the
- * battery pack into a sleep state and when power is reconnected, the FG can be
+ * charged or discharged. This situation might happen when power is reconnected
+ * to a battery pack in sleep mode. In this transient siuation, the FG can be
  * read, but the battery is still not able to provide power to the system. The
  * calling function returns batt_pres = BP_NO, which instructs the charging
  * state machine to prevent powering up the AP on battery alone which could lead
  * to a brownout event when the battery isn't able yet to provide power to the
- * system. .
+ * system.
  */
 static int battery_check_disconnect(void)
 {
 	int rv;
-	uint8_t data[6];
+	int batt_mfgacc;
 
 	/* Check if battery charging + discharging is disabled. */
-	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read(SB_MANUFACTURER_ACCESS, &batt_mfgacc);
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	/* TODO(philipchen): Verify if Nautilus battery supports this check. */
-	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
-			BATTERY_CHARGING_DISABLED)) ==
-	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
+	if (((batt_mfgacc >> BATFETS_SHIFT) & BATFETS_MASK) ==
+	    BATFETS_DISABLED)
 		return BATTERY_DISCONNECTED;
 
 	return BATTERY_NOT_DISCONNECTED;
@@ -154,7 +154,7 @@ enum battery_present battery_is_present(void)
 
 	/*
 	 * Make sure battery status is implemented, I2C transactions are
-	 * success & the battery status is Initialized to find out if it
+	 * successful & the battery status is initialized to find out if it
 	 * is a working battery and it is not in the cut-off mode.
 	 *
 	 * If battery I2C fails but VBATT is high, battery is booting from
