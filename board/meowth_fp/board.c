@@ -15,6 +15,12 @@
 
 #include "gpio_list.h"
 
+#ifndef HAS_TASK_FPSENSOR
+void fps_event(enum gpio_signal signal)
+{
+}
+#endif
+
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor (SCLK at 4Mhz) */

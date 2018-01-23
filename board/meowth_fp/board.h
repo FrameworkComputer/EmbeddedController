@@ -13,6 +13,8 @@
 #define CONFIG_UART_CONSOLE 1
 #define CONFIG_UART_TX_DMA
 #define CONFIG_UART_TX_DMA_PH DMAMUX1_REQ_USART1_TX
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 2048
 
 /* Optional features */
 #undef CONFIG_ADC
@@ -23,24 +25,40 @@
 #undef CONFIG_LID_SWITCH
 #define CONFIG_MKBP_EVENT
 #define CONFIG_PRINTF_LEGACY_LI_FORMAT
+#define CONFIG_SHA256
+#define CONFIG_SHA256_UNROLLED
 #define CONFIG_SPI
 #define CONFIG_STM_HWTIMER32
 #undef CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_WP_ALWAYS
 
-/* Temporary */
-#undef CONFIG_FLASH
-#undef CONFIG_FLASH_PHYSICAL
-
-#define CONFIG_CMD_FLASH
-
 /* SPI configuration for the fingerprint sensor */
 #define CONFIG_SPI_MASTER
 #define CONFIG_SPI_FP_PORT  2 /* SPI4: third master config */
+#ifdef SECTION_IS_RW
 #define CONFIG_FP_SENSOR_FPC1145
 #define CONFIG_CMD_FPSENSOR_DEBUG
+/*
+ * Use the malloc code only in the RW section (for the private library),
+ * we cannot enable it in RO since it is not compatible with the RW verification
+ * (shared_mem_init done too late).
+ */
+#define CONFIG_MALLOC
+/* we are doing slow compute */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 10000
 
+#else /* SECTION_IS_RO */
+/* RO verifies the RW partition signature */
+#define CONFIG_RSA
+#define CONFIG_RSA_KEY_SIZE 3072
+#define CONFIG_RSA_EXPONENT_3
+#define CONFIG_RWSIG
+#endif
+#define CONFIG_RWSIG_TYPE_RWSIG
+
+#define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SPI_XFER
 
 #ifndef __ASSEMBLER__
