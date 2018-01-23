@@ -33,6 +33,11 @@
 #define CONFIG_LPC
 #define CONFIG_PWM
 
+/* KB backlight driver */
+#ifdef BOARD_ZOOMBINI
+#define CONFIG_LED_DRIVER_LM3630A
+#endif /* defined(BOARD_ZOOMBINI) */
+
 /* TODO(aaboagye): Verify the right address. */
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1

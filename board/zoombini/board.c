@@ -14,6 +14,7 @@
 #include "console.h"
 #include "compile_time_macros.h"
 #include "driver/als_opt3001.h"
+#include "driver/led/lm3630a.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -481,6 +482,22 @@ static void board_pmic_init(void)
 		cprints(CC_SYSTEM, "PMIC init'd");
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_INIT_I2C+1);
+
+#ifdef BOARD_ZOOMBINI
+static void board_kblight_init(void)
+{
+	gpio_set_level(GPIO_KB_BL_EN, 1);
+	lm3630a_poweron();
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_kblight_init, HOOK_PRIO_DEFAULT);
+
+static void board_kblight_stop(void)
+{
+	lm3630a_poweroff();
+	gpio_set_level(GPIO_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_kblight_stop, HOOK_PRIO_DEFAULT);
+#endif /* defined(BOARD_ZOOMBINI) */
 
 void board_reset_pd_mcu(void)
 {
