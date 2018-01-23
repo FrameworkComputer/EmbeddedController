@@ -2042,11 +2042,6 @@ void pd_task(void *u)
 	/* Ensure the power supply is in the default state */
 	pd_power_supply_reset(port);
 
-#ifdef CONFIG_USB_PD_TCPC_BOARD_INIT
-	/* Board specific TCPC init */
-	board_tcpc_init();
-#endif
-
 	/* Initialize TCPM driver and wait for TCPC to be ready */
 	res = tcpm_init(port);
 

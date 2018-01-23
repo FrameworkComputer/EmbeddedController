@@ -195,7 +195,6 @@ enum sensor_id {
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 void board_reset_pd_mcu(void);
-void board_tcpc_init(void);
 
 #endif /* !__ASSEMBLER__ */
 

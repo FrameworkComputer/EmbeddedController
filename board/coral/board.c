@@ -362,7 +362,7 @@ void board_reset_pd_mcu(void)
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
 
-void board_tcpc_init(void)
+static void board_tcpc_init(void)
 {
 	int port, reg;
 	int count = 0;
@@ -411,6 +411,7 @@ void board_tcpc_init(void)
 		mux->hpd_update(port, 0, 0);
 	}
 }
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_DEFAULT);
 
 /*
  * Data derived from Seinhart-Hart equation in a resistor divider circuit with
