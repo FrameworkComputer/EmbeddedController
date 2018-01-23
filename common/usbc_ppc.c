@@ -16,6 +16,22 @@
 
 /* Simple wrappers to dispatch to the drivers. */
 
+int ppc_init(int port)
+{
+	int rv;
+
+	if (port >= ppc_cnt)
+		return EC_ERROR_INVAL;
+
+	rv = ppc_chips[port].drv->init(port);
+	if (rv)
+		CPRINTS("p%d: PPC init failed! (%d)", port, rv);
+	else
+		CPRINTS("p%d: PPC init'd.", port);
+
+	return rv;
+}
+
 int ppc_is_sourcing_vbus(int port)
 {
 	if ((port < 0) || (port >= ppc_cnt)) {
@@ -60,20 +76,6 @@ int ppc_is_vbus_present(int port, int *vbus_present)
 }
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 
-static void ppc_init(void)
-{
-	int i;
-	int rv;
-
-	for (i = 0; i < ppc_cnt; i++) {
-		rv = ppc_chips[i].drv->init(i);
-		if (rv)
-			CPRINTS("p%d: PPC init failed! (%d)", i, rv);
-		else
-			CPRINTS("p%d: PPC init'd.", i);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, ppc_init, HOOK_PRIO_INIT_I2C + 1);
 
 #ifdef CONFIG_CMD_PPC_DUMP
 static int command_ppc_dump(int argc, char **argv)

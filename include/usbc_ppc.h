@@ -96,6 +96,14 @@ extern const struct ppc_config_t ppc_chips[];
 extern const unsigned int ppc_cnt;
 
 /**
+ * Initializes the PPC for the specified port.
+ *
+ * @param port: The Type-C port number.
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+int ppc_init(int port);
+
+/**
  * Determine if VBUS is present or not.
  *
  * @param port: The Type-C port number.

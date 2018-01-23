@@ -24,6 +24,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
 #include "tcpm.h"
 #include "version.h"
 
@@ -2100,6 +2101,16 @@ void pd_task(void *u)
 #endif
 	tcpm_set_cc(port, PD_ROLE_DEFAULT(port) == PD_ROLE_SOURCE ?
 		    TYPEC_CC_RP : TYPEC_CC_RD);
+
+#ifdef CONFIG_USBC_PPC
+	/*
+	 * Wait to initialize the PPC after setting the correct Rd values in
+	 * the TCPC otherwise the TCPC might not be pulling the CC lines down
+	 * when the PPC connects the CC lines from the USB connector to the
+	 * TCPC cause the source to drop Vbus causing a brown out.
+	 */
+	ppc_init(port);
+#endif
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	/* Initialize PD Policy engine */
