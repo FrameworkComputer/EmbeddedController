@@ -60,7 +60,6 @@ BOARDS_STM32=(
 	chell_pd
 	coffeecake
 	elm
-	eve_fp
 	glados_pd
 	hammer
 	jerry
@@ -453,7 +452,7 @@ function servo_ec_uart() {
 case "${BOARD}" in
 	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	eve_fp|meowth_fp ) MCU="usbpd" ;;
+	meowth_fp ) MCU="usbpd" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD="true" ; MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
