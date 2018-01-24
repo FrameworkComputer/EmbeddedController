@@ -173,6 +173,7 @@ PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)	/* EC console */
  * driving the cr50 uart TX at the same time as servo is driving those pins may
  * damage both servo and cr50.
  */
+PINMUX(GPIO(DETECT_AP),       A3, DIO_INPUT)
 PINMUX(GPIO(DETECT_EC),       B6, DIO_INPUT)
 PINMUX(GPIO(EC_TX_CR50_RX),   B6, DIO_INPUT)
 PINMUX(GPIO(DETECT_SERVO),    B5, DIO_INPUT)

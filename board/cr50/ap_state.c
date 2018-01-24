@@ -81,7 +81,7 @@ static void set_ap_off(void)
 /**
  * Move the AP to the ON state
  */
-static void set_ap_on(void)
+void set_ap_on(void)
 {
 	CPRINTS("AP on");
 	set_state(DEVICE_STATE_ON);
@@ -100,98 +100,43 @@ static void set_ap_on(void)
 }
 
 /**
- * Handle moving the AP to the OFF state from a deferred interrupt handler.
- *
- * Needs to make additional state checks to avoid double-on in case ap_detect()
- * has run in the meantime.
- */
-void set_ap_on_deferred(void)
-{
-	/* If we were debouncing ON->OFF, cancel it because we're still on */
-	if (state == DEVICE_STATE_DEBOUNCING)
-		set_state(DEVICE_STATE_ON);
-
-	/* If AP isn't already on, make it so */
-	if (state != DEVICE_STATE_ON)
-		set_ap_on();
-}
-DECLARE_DEFERRED(set_ap_on_deferred);
-
-/**
- * Interrupt handler for AP detect asserted
- */
-void ap_detect_asserted(enum gpio_signal signal)
-{
-	gpio_disable_interrupt(GPIO_DETECT_AP);
-	hook_call_deferred(&set_ap_on_deferred_data, 0);
-}
-
-/**
  * Detect state machine
  */
 static void ap_detect(void)
 {
-	int detect;
-
-	if (board_detect_ap_with_tpm_rst()) {
-		/* AP is detected if platform reset is deasserted */
-		detect = gpio_get_level(GPIO_TPM_RST_L);
-	} else {
-		/* Disable interrupts if we had them on for debouncing */
-		gpio_disable_interrupt(GPIO_DETECT_AP);
-
-		/* AP is detected if it's driving its UART TX signal */
-		detect = gpio_get_level(GPIO_DETECT_AP);
-	}
-
 	/* Handle detecting device */
-	if (detect) {
+	if (gpio_get_level(GPIO_TPM_RST_L)) {
 		/*
+		 * It is important to check if the AP is already 'on' here, so
+		 * we don't call tpm_rst_deasserted() when the AP is already on.
+		 *
 		 * If we were debouncing ON->OFF, cancel debouncing and go back
 		 * to the ON state.
 		 */
 		if (state == DEVICE_STATE_DEBOUNCING)
 			set_state(DEVICE_STATE_ON);
-
-		/* If we're already ON, done */
+		/* If AP is already on, nothing needs to be done */
 		if (state == DEVICE_STATE_ON)
 			return;
 
-		if (board_detect_ap_with_tpm_rst()) {
-			/*
-			 * The platform reset handler has not run yet;
-			 * otherwise, it would have already turned the AP on
-			 * and we wouldn't get here.
-			 *
-			 * This can happen if the hook task calls ap_detect()
-			 * before deferred_tpm_rst_isr().  In this case, the
-			 * deferred handler is already pending so calling the
-			 * ISR has no effect.
-			 *
-			 * But we may actually have missed the edge.  In that
-			 * case, calling the ISR makes sure we don't miss the
-			 * reset.  It will call set_ap_on_deferred() to move
-			 * the AP to the ON state.
-			 */
-			CPRINTS("AP detect calling tpm_rst_deasserted()");
-			tpm_rst_deasserted(GPIO_TPM_RST_L);
-		} else {
-			/* We're responsible for setting the AP state to ON */
-			set_ap_on();
-		}
-
-		return;
-	} else if (!board_detect_ap_with_tpm_rst()) {
 		/*
-		 * If the signal is low, cr50 will enter the debouncing state or
-		 * off. Either way, cr50 is waiting for the signal to go high.
-		 * Reenable the interrupt, so cr50 can immediately detect it
-		 * instead of relying on the 1s polling.
+		 * The platform reset handler has not run yet; otherwise, it
+		 * would have already turned the AP on and we wouldn't get here.
+		 *
+		 * This can happen if the hook task calls ap_detect() before
+		 * deferred_tpm_rst_isr(). In this case, the deferred handler is
+		 * already pending so calling the ISR has no effect.
+		 *
+		 * But we may actually have missed the edge. In that case,
+		 * calling the ISR makes sure we don't miss the reset. It will
+		 * call set_ap_on() to move the AP to the ON state.
 		 */
-		gpio_enable_interrupt(GPIO_DETECT_AP);
+		CPRINTS("AP detect calling tpm_rst_deasserted()");
+		tpm_rst_deasserted(GPIO_TPM_RST_L);
+		return;
 	}
 
-	/* AP wasn't detected.  If we're already off, done. */
+	/* TPM_RST_L is asserted.  If we're already off, done. */
 	if (state == DEVICE_STATE_OFF)
 		return;
 
@@ -203,10 +148,9 @@ static void ap_detect(void)
 	}
 
 	/*
-	 * Otherwise, we were on before and haven't detected the AP.  But we
-	 * don't know if that's because the AP is actually off, or because the
-	 * AP UART is sending a 0-bit or temporarily asserting platform reset.
-	 * So start debouncing.
+	 * Otherwise, we were on before and haven't detected the AP off.  We
+	 * don't know if thats because the AP is actually off, or because the
+	 * TPM_RST_L signal is being pulsed for a short reset. Start debouncing.
 	 */
 	if (state == DEVICE_STATE_INIT)
 		set_state(DEVICE_STATE_INIT_DEBOUNCING);

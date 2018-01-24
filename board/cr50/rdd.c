@@ -94,7 +94,7 @@ void uartn_tx_connect(int uart)
 		if (!ccd_is_cap_enabled(CCD_CAP_GSC_TX_AP_RX))
 			return;
 
-		if (!ap_is_on())
+		if (!ap_uart_is_on())
 			return;
 
 		uart_select_tx(UART_AP, GC_PINMUX_UART1_TX_SEL);
@@ -218,7 +218,7 @@ static void ccd_state_change_hook(void)
 	/* Start out by figuring what flags we might want enabled */
 
 	/* Enable EC/AP UART RX if that device is on */
-	if (ap_is_on())
+	if (ap_uart_is_on())
 		flags_want |= CCD_ENABLE_UART_AP;
 	if (ec_is_rx_allowed())
 		flags_want |= CCD_ENABLE_UART_EC;
@@ -397,6 +397,7 @@ static void print_ccd_ports_blocked(void)
 static int command_ccd_state(int argc, char **argv)
 {
 	print_ap_state();
+	print_ap_uart_state();
 	print_ec_state();
 	print_rdd_state();
 	print_servo_state();

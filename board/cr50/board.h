@@ -260,8 +260,6 @@ int board_rst_pullup_needed(void);
 int board_tpm_uses_i2c(void);
 int board_tpm_uses_spi(void);
 int board_id_is_mismatched(void);
-/* Use TPM_RST_L to detect the AP state instead of the uart */
-int board_detect_ap_with_tpm_rst(void);
 /* Allow for deep sleep to be enabled on AP shutdown */
 int board_deep_sleep_allowed(void);
 
@@ -278,15 +276,17 @@ int usb_i2c_board_enable(void);
 void usb_i2c_board_disable(void);
 
 void print_ap_state(void);
+void print_ap_uart_state(void);
 void print_ec_state(void);
 void print_servo_state(void);
 
 int ap_is_on(void);
+int ap_uart_is_on(void);
 int ec_is_on(void);
 int ec_is_rx_allowed(void);
 int servo_is_connected(void);
 
-void set_ap_on_deferred(void);
+void set_ap_on(void);
 
 /* Returns True if chip is brought up in a factory test harness. */
 int chip_factory_mode(void);
