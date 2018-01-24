@@ -85,31 +85,16 @@ enum lsm6dsm_odr {
 #define LSM6DSM_ACCEL_FS_8G_VAL		0x03
 #define LSM6DSM_ACCEL_FS_16G_VAL	0x01
 
-#define LSM6DSM_ACCEL_FS_2G_GAIN	61
-#define LSM6DSM_ACCEL_FS_4G_GAIN	122
-#define LSM6DSM_ACCEL_FS_8G_GAIN	244
-#define LSM6DSM_ACCEL_FS_16G_GAIN	488
-
 #define LSM6DSM_ACCEL_FS_MAX_VAL	16
-
-/* Accel Gain value from selected Full Scale */
-#define LSM6DSM_ACCEL_FS_GAIN(_fs) \
-	(_fs == 16 ? LSM6DSM_ACCEL_FS_16G_GAIN : \
-	LSM6DSM_ACCEL_FS_2G_GAIN << __fls(_fs / 2))
-
-/* Accel FS Full Scale value from Gain */
-#define LSM6DSM_ACCEL_GAIN_FS(_gain) \
-	(1 << (32 - __builtin_clz(_gain / LSM6DSM_ACCEL_FS_2G_GAIN)))
 
 /* Accel Reg value from Full Scale */
 #define LSM6DSM_ACCEL_FS_REG(_fs) \
 	(_fs == 2 ? LSM6DSM_ACCEL_FS_2G_VAL : \
 	_fs == 16 ? LSM6DSM_ACCEL_FS_16G_VAL : \
-	(32 - __builtin_clz(_fs / 2)))
+	__fls(_fs))
 
 /* Accel normalized FS value from Full Scale */
-#define LSM6DSM_ACCEL_NORMALIZE_FS(_fs) \
-	(1 << (32 - __builtin_clz(_fs / 2)))
+#define LSM6DSM_ACCEL_NORMALIZE_FS(_fs) (1 << __fls(_fs))
 
 /* Full Scale range value and gain for Gyro */
 #define LSM6DSM_GYRO_FS_ADDR		0x11
