@@ -464,6 +464,16 @@ static void charge_allocate_input_current_limit(void)
 		prev_lid_system_power = -1;
 		prev_lid_battery_power = -1;
 
+		/*
+		 * System is suspended/off, let the lid and base run on their
+		 * own power.
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
+					CHIPSET_STATE_ANY_SUSPEND)) {
+			set_base_lid_current(0, 0, 0, 0);
+			return;
+		}
+
 		if (charge_base > db_policy.min_charge_base_otg) {
 			int lid_current = db_policy.max_base_to_lid_current;
 			int base_current = add_margin(lid_current,
