@@ -1567,10 +1567,14 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_RTC_BACKUP(n)         REG32(STM32_RTC_BASE + 0x50 + 4 * (n))
 
 #define STM32_BKP_DATA(n)           STM32_RTC_BACKUP(n)
-#if defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32H7)
-#define STM32_BKP_ENTRIES           32
+#if defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4)
+#define STM32_BKP_BYTES             128
+#elif defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32L)
+#define STM32_BKP_BYTES             80
+#elif defined(CHIP_FAMILY_STM32F3)
+#define STM32_BKP_BYTES             64
 #else
-#define STM32_BKP_ENTRIES           20
+#define STM32_BKP_BYTES             20
 #endif
 
 #else
