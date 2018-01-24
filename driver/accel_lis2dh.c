@@ -53,25 +53,25 @@ static int enable_fifo(const struct motion_sensor_t *s, int mode, int en_dis)
  */
 static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 {
-	int err, normalized_rate;
+	int err, normalized_range;
 	struct stprivate_data *data = s->drv_data;
 	int val;
 
 	val = LIS2DH_FS_TO_REG(range);
-	normalized_rate = LIS2DH_FS_TO_NORMALIZE(range);
+	normalized_range = ST_NORMALIZE_RATE(range);
 
-	if (rnd && (range < normalized_rate))
+	if (rnd && (range < normalized_range))
 		val++;
 
 	/* Adjust rounded values */
 	if (val > LIS2DH_FS_16G_VAL) {
 		val = LIS2DH_FS_16G_VAL;
-		normalized_rate = 16;
+		normalized_range = 16;
 	}
 
 	if (val < LIS2DH_FS_2G_VAL) {
 		val = LIS2DH_FS_2G_VAL;
-		normalized_rate = 2;
+		normalized_range = 2;
 	}
 
 	/* Lock accel resource to prevent another task from attempting
@@ -82,7 +82,7 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	/* Save Gain in range for speed up data path */
 	if (err == EC_SUCCESS)
-		data->base.range = LIS2DH_FS_TO_GAIN(normalized_rate);
+		data->base.range = normalized_range;
 
 	mutex_unlock(s->mutex);
 	return EC_SUCCESS;
