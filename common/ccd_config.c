@@ -141,6 +141,7 @@ static const struct ccd_capability_info cap_info[CCD_CAP_COUNT] = {
 	{"BatteryBypassPP",	CCD_CAP_STATE_ALWAYS},
 	{"UpdateNoTPMWipe",	CCD_CAP_STATE_ALWAYS},
 	{"I2C",			CCD_CAP_STATE_IF_OPENED},
+	{"FlashRead",		CCD_CAP_STATE_ALWAYS},
 };
 
 static const char *ccd_state_names[CCD_STATE_COUNT] = {

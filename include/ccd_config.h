@@ -94,6 +94,9 @@ enum ccd_capability {
 	/* Access to I2C via USB */
 	CCD_CAP_I2C = 15,
 
+	/* Read-only access to hash or dump EC or AP flash */
+	CCD_CAP_FLASH_READ = 16,
+
 	/* Number of currently defined capabilities */
 	CCD_CAP_COUNT
 };
