@@ -254,3 +254,12 @@ static int hc_cbi_set(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
 		     hc_cbi_set,
 		     EC_VER_MASK(0));
+
+static int command_dump_cbi(int argc, char **argv)
+{
+	ccprintf("BOARD_VERSION: %u (0x%x)\n", bi.version, bi.version);
+	ccprintf("OEM_ID: %u (0x%x)\n", bi.oem_id, bi.oem_id);
+	ccprintf("SKU_ID: %u (0x%x)\n", bi.sku_id, bi.sku_id);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(cbi, command_dump_cbi, NULL, NULL);
