@@ -1829,9 +1829,9 @@ static void pd_partner_port_reset(int port)
 	   (RESET_FLAG_BROWNOUT | RESET_FLAG_POWER_ON))
 		return;
 
-	/* Provide Rp for 100 msec. or until we no longer have VBUS. */
+	/* Provide Rp for 200 msec. or until we no longer have VBUS. */
 	tcpm_set_cc(port, TYPEC_CC_RP);
-	timeout = get_time().val + 100 * MSEC;
+	timeout = get_time().val + 200 * MSEC;
 
 	while (get_time().val < timeout && pd_is_vbus_present(port))
 		msleep(10);
