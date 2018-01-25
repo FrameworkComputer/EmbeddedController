@@ -21,6 +21,7 @@
 #include "util.h"
 #include "usb_api.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 #include "version.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -1035,6 +1036,8 @@ void pd_set_vbus_discharge(int port, int enable)
 #endif /* CONFIG_USB_PD_PORT_COUNT */
 #elif defined(CONFIG_USB_PD_DISCHARGE_TCPC)
 	tcpc_discharge_vbus(port, enable);
+#elif defined(CONFIG_USB_PD_DISCHARGE_PPC)
+	ppc_discharge_vbus(port, enable);
 #else
 #error "PD discharge implementation not defined"
 #endif

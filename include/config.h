@@ -2634,21 +2634,19 @@
 /*
  * Define if this board can enable VBUS discharge (eg. through a GPIO-controlled
  * discharge circuit, or through port controller registers) to discharge VBUS
- * rapidly on disconnect.
+ * rapidly on disconnect. Will be defined automatically when one of the below
+ * options is defined.
  */
 #undef CONFIG_USB_PD_DISCHARGE
 
-/*
- * Define (along with CONFIG_USB_PD_DISCHARGE) if discharge circuit is
- * EC GPIO-controlled.
- */
+/* Define if discharge circuit is EC GPIO-controlled. */
 #undef CONFIG_USB_PD_DISCHARGE_GPIO
 
-/*
- * Define (along with CONFIG_USB_PD_DISCHARGE) if discharge circuit is
- * using PD discharge registers.
- */
+/* Define if discharge circuit is using PD discharge registers on TCPC. */
 #undef CONFIG_USB_PD_DISCHARGE_TCPC
+
+/* Define if discharge circuit is using PD discharge registers on PPC. */
+#undef CONFIG_USB_PD_DISCHARGE_PPC
 
 /* Define if this board can act as a dual-role PD port (source and sink) */
 #undef CONFIG_USB_PD_DUAL_ROLE
@@ -3272,6 +3270,14 @@
 #define CONFIG_EC_EC_COMM_BATTERY_SLAVE
 #endif
 #endif /* CONFIG_EC_EC_COMM_BATTERY */
+
+/*****************************************************************************/
+/* Define derived USB PD Discharge common path */
+#if defined(CONFIG_USB_PD_DISCHARGE_GPIO) || \
+	defined(CONFIG_USB_PD_DISCHARGE_TCPC) || \
+	defined(CONFIG_USB_PD_DISCHARGE_PPC)
+#define CONFIG_USB_PD_DISCHARGE
+#endif
 
 /*****************************************************************************/
 /*

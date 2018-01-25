@@ -50,6 +50,14 @@ int ppc_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 	return ppc_chips[port].drv->set_vbus_source_current_limit(port, rp);
 }
 
+int ppc_discharge_vbus(int port, int enable)
+{
+	if ((port < 0) || (port >= ppc_cnt))
+		return EC_ERROR_INVAL;
+
+	return ppc_chips[port].drv->discharge_vbus(port, enable);
+}
+
 int ppc_vbus_sink_enable(int port, int enable)
 {
 	if ((port < 0) || (port >= ppc_cnt))

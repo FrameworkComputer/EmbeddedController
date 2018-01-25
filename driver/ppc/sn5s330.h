@@ -91,6 +91,7 @@ enum sn5s330_pp_idx {
 /* FUNC_SET_3 */
 #define SN5S330_PP1_EN (1 << 0)
 #define SN5S330_PP2_EN (1 << 1)
+#define SN5S330_VBUS_DISCH_EN (1 << 2)
 #define SN5S330_SET_RCP_MODE_PP1 (1 << 5)
 #define SN5S330_SET_RCP_MODE_PP2 (1 << 6)
 

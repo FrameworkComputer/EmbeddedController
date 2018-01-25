@@ -480,6 +480,29 @@ static int sn5s330_set_vbus_source_current_limit(int port,
 	return status;
 }
 
+static int sn5s330_discharge_vbus(int port, int enable)
+{
+	int regval;
+	int status;
+
+	status = get_func_set3(port, &regval);
+	if (status)
+		return status;
+
+	if (enable)
+		regval |= SN5S330_VBUS_DISCH_EN;
+	else
+		regval &= ~SN5S330_VBUS_DISCH_EN;
+
+	status = write_reg(port, SN5S330_FUNC_SET3, regval);
+	if (status) {
+		CPRINTS("Failed to %s vbus", enable ? "enable" : "disable");
+		return status;
+	}
+
+	return EC_SUCCESS;
+}
+
 static int sn5s330_vbus_sink_enable(int port, int enable)
 {
 	return sn5s330_pp_fet_enable(port, SN5S330_PP2, !!enable);
@@ -540,4 +563,5 @@ const struct ppc_drv sn5s330_drv = {
 	.is_vbus_present = &sn5s330_is_vbus_present,
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 	.set_vbus_source_current_limit = &sn5s330_set_vbus_source_current_limit,
+	.discharge_vbus = &sn5s330_discharge_vbus,
 };

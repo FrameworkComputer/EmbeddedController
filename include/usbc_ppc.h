@@ -57,6 +57,15 @@ struct ppc_drv {
 	 */
 	int (*set_vbus_source_current_limit)(int port, enum tcpc_rp_value rp);
 
+	/**
+	 * Discharge PD VBUS on src/sink disconnect & power role swap
+	 *
+	 * @param port: The Type-C port number.
+	 * @param enable: 1 -> discharge vbus, 0 -> stop discharging vbus
+	 * @return EC_SUCCESS on success, error otherwise.
+	 */
+	int (*discharge_vbus)(int port, int enable);
+
 #ifdef CONFIG_CMD_PPC_DUMP
 	/**
 	 * Perform a register dump of the PPC.
@@ -129,6 +138,15 @@ int ppc_is_sourcing_vbus(int port);
  * @return EC_SUCCESS on success, error otherwise.
  */
 int ppc_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
+
+/**
+ * Discharge PD VBUS on src/sink disconnect & power role swap
+ *
+ * @param port: The Type-C port number.
+ * @param enable: 1 -> discharge vbus, 0 -> stop discharging vbus
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+int ppc_discharge_vbus(int port, int enable);
 
 /**
  * Turn on/off the charge path FET, such that current flows into the
