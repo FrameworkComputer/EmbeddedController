@@ -3218,9 +3218,32 @@ struct __ec_align2 ec_response_keyboard_factory_test {
 
 /* Fingerprint events in 'fp_events' for EC_MKBP_EVENT_FINGERPRINT */
 #define EC_MKBP_FP_RAW_EVENT(fp_events) ((fp_events) & 0x00FFFFFF)
+#define EC_MKBP_FP_ERRCODE(fp_events)   ((fp_events) & 0x0000000F)
+#define EC_MKBP_FP_ENROLL_PROGRESS_OFFSET 4
+#define EC_MKBP_FP_ENROLL_PROGRESS(fpe) (((fpe) & 0x00000FF0) \
+					 >> EC_MKBP_FP_ENROLL_PROGRESS_OFFSET)
+#define EC_MKBP_FP_ENROLL               (1 << 27)
+#define EC_MKBP_FP_MATCH                (1 << 28)
 #define EC_MKBP_FP_FINGER_DOWN          (1 << 29)
 #define EC_MKBP_FP_FINGER_UP            (1 << 30)
 #define EC_MKBP_FP_IMAGE_READY          (1 << 31)
+/* code given by EC_MKBP_FP_ERRCODE() when EC_MKBP_FP_ENROLL is set */
+#define EC_MKBP_FP_ERR_ENROLL_OK               0
+#define EC_MKBP_FP_ERR_ENROLL_LOW_QUALITY      1
+#define EC_MKBP_FP_ERR_ENROLL_IMMOBILE         2
+#define EC_MKBP_FP_ERR_ENROLL_LOW_COVERAGE     3
+#define EC_MKBP_FP_ERR_ENROLL_INTERNAL         5
+/* Can be used to detect if image was usable for enrollment or not. */
+#define EC_MKBP_FP_ERR_ENROLL_PROBLEM_MASK     1
+/* code given by EC_MKBP_FP_ERRCODE() when EC_MKBP_FP_MATCH is set */
+#define EC_MKBP_FP_ERR_MATCH_NO                0
+#define EC_MKBP_FP_ERR_MATCH_NO_INTERNAL       6
+#define EC_MKBP_FP_ERR_MATCH_NO_LOW_QUALITY    2
+#define EC_MKBP_FP_ERR_MATCH_NO_LOW_COVERAGE   4
+#define EC_MKBP_FP_ERR_MATCH_YES               1
+#define EC_MKBP_FP_ERR_MATCH_YES_UPDATED       3
+#define EC_MKBP_FP_ERR_MATCH_YES_UPDATE_FAILED 5
+
 
 /*****************************************************************************/
 /* Temperature sensor commands */
@@ -4694,8 +4717,14 @@ struct __ec_align2 ec_params_fp_sensor_config {
 /* Extracts the capture type from the sensor 'mode' word */
 #define FP_CAPTURE_TYPE(mode) (((mode) >> FP_MODE_CAPTURE_TYPE_SHIFT) \
 					& FP_MODE_CAPTURE_TYPE_MASK)
+/* Finger enrollment session on-going */
+#define FP_MODE_ENROLL_SESSION (1<<4)
+/* Enroll the current finger image */
+#define FP_MODE_ENROLL_IMAGE   (1<<5)
+/* Try to match the current finger image */
+#define FP_MODE_MATCH          (1<<6)
 /* special value: don't change anything just read back current mode */
-#define FP_MODE_DONT_CHANGE   (1<<31)
+#define FP_MODE_DONT_CHANGE    (1<<31)
 
 struct __ec_align4 ec_params_fp_mode {
 	uint32_t mode; /* as defined by FP_MODE_ constants */
@@ -4719,7 +4748,7 @@ struct __ec_align4 ec_response_fp_mode {
 /* Sensor initialization failed */
 #define FP_ERROR_INIT_FAIL (1 << 15)
 
-struct __ec_align2 ec_response_fp_info {
+struct __ec_align4 ec_response_fp_info_v0 {
 	/* Sensor identification */
 	uint32_t vendor_id;
 	uint32_t product_id;
@@ -4734,12 +4763,71 @@ struct __ec_align2 ec_response_fp_info {
 	uint16_t errors; /* see FP_ERROR_ flags above */
 };
 
-/* Get the last captured finger frame */
+struct __ec_align4 ec_response_fp_info {
+	/* Sensor identification */
+	uint32_t vendor_id;
+	uint32_t product_id;
+	uint32_t model_id;
+	uint32_t version;
+	/* Image frame characteristics */
+	uint32_t frame_size;
+	uint32_t pixel_format; /* using V4L2_PIX_FMT_ */
+	uint16_t width;
+	uint16_t height;
+	uint16_t bpp;
+	uint16_t errors; /* see FP_ERROR_ flags above */
+	/* Template/finger current information */
+	uint32_t template_size;  /* max template size in bytes */
+	uint16_t template_max;   /* maximum number of fingers/templates */
+	uint16_t template_valid; /* number of valid fingers/templates */
+	uint32_t template_dirty; /* bitmap of templates with MCU side changes */
+};
+
+/* Get the last captured finger frame or a template content */
 #define EC_CMD_FP_FRAME 0x0404
 
+/* constants defining the 'offset' field which also contains the frame index */
+#define FP_FRAME_INDEX_SHIFT       28
+#define FP_FRAME_INDEX_RAW_IMAGE    0
+#define FP_FRAME_TEMPLATE_INDEX(offset) ((offset) >> FP_FRAME_INDEX_SHIFT)
+#define FP_FRAME_OFFSET_MASK       0x0FFFFFFF
+
 struct __ec_align4 ec_params_fp_frame {
+	/*
+	 * The offset contains the template index or FP_FRAME_INDEX_RAW_IMAGE
+	 * in the high nibble, and the real offset within the frame in
+	 * FP_FRAME_OFFSET_MASK.
+	 */
 	uint32_t offset;
 	uint32_t size;
+};
+
+/* Load a template into the MCU */
+#define EC_CMD_FP_TEMPLATE 0x0405
+
+/* Flag in the 'size' field indicating that the full template has been sent */
+#define FP_TEMPLATE_COMMIT 0x80000000
+
+struct __ec_align4 ec_params_fp_template {
+	uint32_t offset;
+	uint32_t size;
+	uint8_t data[];
+};
+
+/* Clear the current fingerprint user context and set a new one */
+#define EC_CMD_FP_CONTEXT 0x0406
+
+#define FP_CONTEXT_USERID_WORDS (32 / sizeof(uint32_t))
+#define FP_CONTEXT_NONCE_WORDS (32 / sizeof(uint32_t))
+
+struct __ec_align4 ec_params_fp_context {
+	uint32_t userid[FP_CONTEXT_USERID_WORDS];
+	/* TODO(b/73337313) mostly a placeholder, details to be implemented */
+	uint32_t nonce[FP_CONTEXT_NONCE_WORDS];
+};
+
+struct __ec_align4 ec_response_fp_context {
+	uint32_t nonce[FP_CONTEXT_NONCE_WORDS];
 };
 
 /*****************************************************************************/
