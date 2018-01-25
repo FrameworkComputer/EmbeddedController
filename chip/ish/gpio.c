@@ -31,4 +31,12 @@ static void gpio_init(void)
 {
 	/* TBD */
 }
+
+static void gpio_interrupt(void)
+{
+	/*TODO*/
+}
+
+DECLARE_IRQ(ISH_GPIO_IRQ, gpio_interrupt);
+
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
