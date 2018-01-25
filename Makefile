@@ -47,6 +47,14 @@ include Makefile.toolchain
 .PHONY: all
 all:
 
+# Returns the opposite of a configuration variable
+# y  ->
+# ro -> rw
+# rw -> ro
+#    -> y
+# usage: common-$(call not_cfg,$(CONFIG_FOO))+=bar.o
+not_cfg = $(subst ro rw,y,$(filter-out $(1:y=ro rw),ro rw))
+
 # The board makefile sets $CHIP and the chip makefile sets $CORE.
 # Include those now, since they must be defined for _flag_cfg below.
 include $(BDIR)/build.mk
