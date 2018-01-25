@@ -27,6 +27,7 @@
 #include "usbc_ppc.h"
 #include "tcpm.h"
 #include "version.h"
+#include "vboot.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -2010,6 +2011,10 @@ static void pd_init_tasks(void)
 	/* Disable PD communication at init if we're in RO and locked. */
 	if (!system_is_in_rw() && system_is_locked())
 		enable = 0;
+#ifdef CONFIG_VBOOT_EFS
+	if (vboot_need_pd_comm())
+		enable = 1;
+#endif
 #endif
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++)
 		pd_comm_enabled[i] = enable;

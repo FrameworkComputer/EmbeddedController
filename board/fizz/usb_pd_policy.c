@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "adc.h"
 #include "atomic.h"
 #include "extpower.h"
 #include "charge_manager.h"
@@ -254,10 +253,9 @@ static int restore_active_charge_port(struct charge_port_info *cpi)
  */
 static void board_charge_manager_init(void)
 {
-	int input_voltage;
-	enum charge_port input_port;
-	int i, j;
+	enum charge_port port;
 	struct charge_port_info cpi = { 0 };
+	int i, j;
 
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
@@ -265,17 +263,19 @@ static void board_charge_manager_init(void)
 			charge_manager_update_charge(j, i, &cpi);
 	}
 
-	input_voltage = adc_read_channel(ADC_VBUS);
-	input_port = gpio_get_level(GPIO_ADP_IN_L) ?
+	port = gpio_get_level(GPIO_ADP_IN_L) ?
 			CHARGE_PORT_TYPEC0 : CHARGE_PORT_BARRELJACK;
-	CPRINTS("Power Source: p%d (%dmV)", input_port, input_voltage);
+	CPRINTS("Power source is p%d (%s)", port,
+		port == CHARGE_PORT_TYPEC0 ? "USB-C" : "BJ");
 
 	/* Initialize the power source supplier */
-	switch (input_port) {
+	switch (port) {
 	case CHARGE_PORT_TYPEC0:
-		typec_set_input_current_limit(input_port, 3000, input_voltage);
+		typec_set_input_current_limit(port, 3000, 5000);
 		break;
 	case CHARGE_PORT_BARRELJACK:
+		/* TODO: Once transition from GPIO to CBI completes, get BJ
+		 * adapter info locally. No need to save & restore it. */
 		if (restore_active_charge_port(&cpi)) {
 			/* Set it to the default. Will be updated by AP. */
 			CPRINTS("Previous charge info not found. Use default.");
@@ -287,7 +287,8 @@ static void board_charge_manager_init(void)
 		break;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, board_charge_manager_init, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
+	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
 
 static void preserve_active_charge_port(void)
 {

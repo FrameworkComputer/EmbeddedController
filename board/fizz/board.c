@@ -236,9 +236,10 @@ void board_tcpc_init(void)
 {
 	int port, reg;
 
-	/* Only reset TCPC in RO boot. */
-	if (!system_jumped_to_this_image())
-		board_reset_pd_mcu();
+	/* This needs to be executed only once per boot. It could be run by RO
+	 * if we boot in recovery mode. It could be run by RW if we boot in
+	 * normal or dev mode. Note EFS makes RO jump to RW before HOOK_INIT. */
+	board_reset_pd_mcu();
 
 	/*
 	 * Wake up PS8751. If PS8751 remains in low power mode after sysjump,

@@ -46,3 +46,15 @@ int vboot_is_padding_valid(const uint8_t *data, uint32_t start, uint32_t end);
  */
 int vboot_verify(const uint8_t *data, int len,
 		 const struct rsa_public_key *key, const uint8_t *sig);
+
+/**
+ * Entry point of EC EFS
+ */
+void vboot_main(void);
+
+/**
+ * Get if vboot requires PD comm to be enabled or not
+ *
+ * @return 1: need PD communication. 0: PD communication is not needed.
+ */
+int vboot_need_pd_comm(void);

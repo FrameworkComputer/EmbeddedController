@@ -182,33 +182,16 @@ static int is_manual_recovery(void)
 	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 }
 
-static void vboot_main(void);
-DECLARE_DEFERRED(vboot_main);
-static void vboot_main(void)
+static int pd_comm_enabled;
+
+int vboot_need_pd_comm(void)
 {
-	const int check_charge_manager_frequency_usec = 10 * MSEC;
-	int port = charge_manager_get_active_charge_port();
+	return pd_comm_enabled;
+}
 
-	if (port == CHARGE_PORT_NONE) {
-		/* We loop here until charge manager is ready */
-		hook_call_deferred(&vboot_main_data,
-				   check_charge_manager_frequency_usec);
-		return;
-	}
-
-	CPRINTS("Checking power");
-
-	if (system_can_boot_ap()) {
-		/*
-		 * We are here for the two cases:
-		 * 1. Booting on RO with a barrel jack adapter. We can continue
-		 *    to boot AP with EC-RO. We'll jump later in softsync.
-		 * 2. Booting on RW with a type-c charger. PD negotiation is
-		 *    done and we can boot AP.
-		 */
-		CPRINTS("Got enough power");
-		return;
-	}
+void vboot_main(void)
+{
+	CPRINTS("Main");
 
 	if (system_is_in_rw() || !system_is_locked()) {
 		/*
@@ -217,23 +200,18 @@ static void vboot_main(void)
 		 * or unlocked RO.
 		 *
 		 * This could be caused by a weak type-c charger. If that's
-		 * the case, users need to plug a better charger. We could
-		 * also be here because PD negotiation is still taking place.
-		 * If so, we'll briefly show request power sign but it will
-		 * be immediately corrected.
+		 * the case, users need to plug a better charger.
 		 *
-		 * We can also get here because we called system_can_boot_ap too
-		 * early. Power will be requested but it should be cancelled by
-		 * board_set_charge_limit as soon as a PD contract is made.
+		 * We could also be here because PD negotiation is still taking
+		 * place. If so, we'll end up showing request power signal but
+		 * it will be immediately corrected.
 		 */
 		request_power();
 		return;
 	}
 
-	CPRINTS("Booting RO on weak battery/charger");
-
 	if (is_manual_recovery()) {
-		CPRINTS("Manual recovery requested");
+		CPRINTS("Manual recovery");
 		if (battery_is_present() || has_matrix_keyboard()) {
 			request_power();
 			return;
@@ -243,8 +221,8 @@ static void vboot_main(void)
 		 * hole by allowing EC-RO to do PD negotiation but attackers
 		 * don't gain meaningful advantage on devices without a matrix
 		 * keyboard */
-		CPRINTS("Enable C%d PD comm", port);
-		pd_comm_enable(port, 1);
+		CPRINTS("Enable PD comm");
+		pd_comm_enabled = 1;
 		return;
 	}
 
@@ -264,5 +242,3 @@ static void vboot_main(void)
 	/* Failed to jump. Need recovery. */
 	request_recovery();
 }
-
-DECLARE_HOOK(HOOK_INIT, vboot_main, HOOK_PRIO_DEFAULT);
