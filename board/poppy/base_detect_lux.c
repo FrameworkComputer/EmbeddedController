@@ -123,7 +123,6 @@ static void base_detect_change(enum base_status status)
 	task_wake(TASK_ID_CHARGER);
 
 	tablet_set_mode(!connected);
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
 	current_base_status = status;
 }
 

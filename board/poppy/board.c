@@ -141,7 +141,6 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 
 static int command_attach_base(int argc, char **argv)
 {
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
 	tablet_set_mode(0);
 	return EC_SUCCESS;
 }
@@ -150,7 +149,6 @@ DECLARE_CONSOLE_COMMAND(attachbase, command_attach_base,
 
 static int command_detach_base(int argc, char **argv)
 {
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
 	tablet_set_mode(1);
 	return EC_SUCCESS;
 }
