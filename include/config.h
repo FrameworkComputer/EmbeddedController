@@ -736,6 +736,7 @@
 #undef  CONFIG_CMD_ACCEL_FIFO
 #undef  CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_ACCELSPOOF
+#define CONFIG_CMD_ADC
 #undef  CONFIG_CMD_ALS
 #define CONFIG_CMD_APTHROTTLE
 #undef  CONFIG_CMD_BATDEBUG
@@ -3305,11 +3306,13 @@
 #undef CONFIG_HOSTCMD_PD
 #endif
 
-/*
- * Power Average task only works when there's a battery to talk to.
- */
+/* Certain console cmds are irrelevant without parent modules. */
 #ifndef CONFIG_BATTERY
 #undef CONFIG_CMD_PWR_AVG
+#endif
+
+#ifndef CONFIG_ADC
+#undef CONFIG_CMD_ADC
 #endif
 
 /*****************************************************************************/
