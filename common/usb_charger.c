@@ -75,7 +75,8 @@ void usb_charger_vbus_change(int port, int vbus_level)
 	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_VBUS, 0);
 #endif
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_CHARGER
+#if (defined(CONFIG_USB_PD_VBUS_DETECT_CHARGER) \
+	|| defined(CONFIG_USB_PD_VBUS_DETECT_PPC))
 	/* USB PD task */
 	task_wake(PD_PORT_TO_TASK_ID(port));
 #endif

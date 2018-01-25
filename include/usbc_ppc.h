@@ -77,21 +77,13 @@ struct ppc_drv {
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
-	/*
-	 * TODO(aaboagye): In order for VBUS detection to work properly for our
-	 * system, we need to enable VBUS interrupts and send the appropriate
-	 * notifications.
-	 */
-
 	/**
 	 * Determine if VBUS is present or not.
 	 *
 	 * @param port: The Type-C port number.
-	 * @param vbus_present: 1: VBUS is present. 0: VBUS is not present.
-	 * @return EC_SUCCESS if able to determine VBUS status, otherwise an
-	 *         error.
+	 * @return 1 if VBUS is present, 0 if not.
 	 */
-	int (*is_vbus_present)(int port, int *vbus_present);
+	int (*is_vbus_present)(int port);
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 };
 
@@ -116,11 +108,9 @@ int ppc_init(int port);
  * Determine if VBUS is present or not.
  *
  * @param port: The Type-C port number.
- * @param vbus_present: 1: VBUS is present. 0: VBUS is not present.
- * @return EC_SUCCESS if able to determine VBUS status, otherwise an
- *         error.
+ * @return 1 if VBUS is present, 0 if not.
  */
-int ppc_is_vbus_present(int port, int *vbus_present);
+int ppc_is_vbus_present(int port);
 
 /**
  * Is the port sourcing Vbus?

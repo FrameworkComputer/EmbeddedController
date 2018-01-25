@@ -173,16 +173,7 @@ void typec_set_source_current_limit(int port, int rp)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	int vbus_present = 0;
-	int rv;
-
-	rv = ppc_is_vbus_present(port, &vbus_present);
-	if (rv) {
-		CPRINTS("p%d: VBUS present error (%d)", port, rv);
-		return 0;
-	}
-
-	return vbus_present;
+	return ppc_is_vbus_present(port);
 }
 
 int board_vbus_source_enabled(int port)

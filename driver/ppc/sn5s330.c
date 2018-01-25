@@ -17,6 +17,7 @@
 #include "i2c.h"
 #include "system.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -326,7 +327,8 @@ static int sn5s330_init(int port)
 	/*
 	 * Before turning on the PP2 FET, let's mask off all interrupts except
 	 * for the PP1 overcurrent condition and then clear all pending
-	 * interrupts.
+	 * interrupts. If PPC is being used to detect VBUS, then also enable
+	 * interrupts for VBUS presence.
 	 *
 	 * TODO(aaboagye): Unmask fast-role swap events once fast-role swap is
 	 * implemented in the PD stack.
@@ -362,15 +364,22 @@ static int sn5s330_init(int port)
 		return status;
 	}
 
+#if defined(CONFIG_USB_PD_VBUS_DETECT_PPC) && defined(CONFIG_USB_CHARGER)
+	/* If PPC is being used to detect VBUS, enable VBUS interrupts. */
+	regval = ~SN5S330_VBUS_GOOD_MASK;
+#else
+	regval = 0xFF;
+#endif  /* CONFIG_USB_PD_VBUS_DETECT_PPC && CONFIG_USB_CHARGER */
+
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_RISE_REG3,
-			    0xFF);
+			    regval);
 	if (status) {
 		CPRINTS("Failed to write INT_MASK_RISE3!");
 		return status;
 	}
 
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_MASK_FALL_REG3,
-			    0xFF);
+			    regval);
 	if (status) {
 		CPRINTS("Failed to write INT_MASK_FALL3!");
 		return status;
@@ -416,16 +425,18 @@ static int sn5s330_init(int port)
 }
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
-static int sn5s330_is_vbus_present(int port, int *vbus_present)
+static int sn5s330_is_vbus_present(int port)
 {
 	int regval;
 	int rv;
 
 	rv = read_reg(port, SN5S330_INT_STATUS_REG3, &regval);
-	if (!rv)
-		*vbus_present = !!(regval & SN5S330_VBUS_GOOD);
+	if (rv) {
+		CPRINTS("p%d: VBUS present error (%d)", port, rv);
+		return 0;
+	}
 
-	return rv;
+	return !!(regval & SN5S330_VBUS_GOOD);
 }
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 
@@ -436,7 +447,7 @@ static int sn5s330_is_sourcing_vbus(int port)
 
 	rv = sn5s330_is_pp_fet_enabled(port, SN5S330_PP1, &is_sourcing_vbus);
 	if (rv) {
-		CPRINTS("C%d: Failed to determine source FET status! (%d)",
+		CPRINTS("p%d: Failed to determine source FET status! (%d)",
 			port, rv);
 		return 0;
 	}
@@ -520,7 +531,7 @@ static void sn5s330_handle_interrupt(int port)
 
 	/*
 	 * The only interrupts that should be enabled are the PP1 overcurrent
-	 * condition.
+	 * condition, and for VBUS_GOOD if PPC is being used to detect VBUS.
 	 */
 	read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
 	read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
@@ -532,6 +543,20 @@ static void sn5s330_handle_interrupt(int port)
 	/* Clear the interrupt sources. */
 	write_reg(port, SN5S330_INT_TRIP_RISE_REG1, rise);
 	write_reg(port, SN5S330_INT_TRIP_FALL_REG1, fall);
+
+#if defined(CONFIG_USB_PD_VBUS_DETECT_PPC) && defined(CONFIG_USB_CHARGER)
+	read_reg(port, SN5S330_INT_TRIP_RISE_REG3, &rise);
+	read_reg(port, SN5S330_INT_TRIP_FALL_REG3, &fall);
+
+	/* Inform other modules about VBUS level */
+	if (rise & SN5S330_VBUS_GOOD_MASK
+	    || fall & SN5S330_VBUS_GOOD_MASK)
+		usb_charger_vbus_change(port, sn5s330_is_vbus_present(port));
+
+	/* Clear the interrupt sources. */
+	write_reg(port, SN5S330_INT_TRIP_RISE_REG3, rise);
+	write_reg(port, SN5S330_INT_TRIP_FALL_REG3, fall);
+#endif  /* CONFIG_USB_PD_VBUS_DETECT_PPC && CONFIG_USB_CHARGER */
 }
 
 static void sn5s330_irq_deferred(void)

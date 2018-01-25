@@ -75,12 +75,14 @@ int ppc_vbus_source_enable(int port, int enable)
 }
 
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
-int ppc_is_vbus_present(int port, int *vbus_present)
+int ppc_is_vbus_present(int port)
 {
-	if (port >= ppc_cnt)
-		return EC_ERROR_INVAL;
+	if ((port < 0) || (port >= ppc_cnt)) {
+		CPRINTS("%s(%d) Invalid port!", __func__, port);
+		return 0;
+	}
 
-	return ppc_chips[port].drv->is_vbus_present(port, vbus_present);
+	return ppc_chips[port].drv->is_vbus_present(port);
 }
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 
