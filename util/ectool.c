@@ -1151,7 +1151,7 @@ static int fp_pattern_frame(int capt_type, const char *title, int inv)
 	if (rv < 0)
 		return -1;
 	/* ensure the capture has happened without using event support */
-	usleep(50000);
+	usleep(200000);
 	pattern = fp_download_frame(&info);
 	if (!pattern)
 		return -1;
