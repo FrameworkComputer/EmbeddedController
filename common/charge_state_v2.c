@@ -219,13 +219,15 @@ static const struct dual_battery_policy db_policy = {
 
 static int charge_get_base_percent(void)
 {
-	if (base_battery_dynamic.flags & (BATT_FLAG_BAD_FULL_CAPACITY |
-					  BATT_FLAG_BAD_REMAINING_CAPACITY))
+	const struct ec_response_battery_dynamic_info *const bd =
+		&battery_dynamic[BATT_IDX_BASE];
+
+	if (bd->flags & (BATT_FLAG_BAD_FULL_CAPACITY |
+			 BATT_FLAG_BAD_REMAINING_CAPACITY))
 		return -1;
 
-	if (base_battery_dynamic.full_capacity > 0)
-		return 100 * base_battery_dynamic.remaining_capacity
-			/ base_battery_dynamic.full_capacity;
+	if (bd->full_capacity > 0)
+		return 100 * bd->remaining_capacity / bd->full_capacity;
 
 	return 0;
 }
@@ -396,6 +398,10 @@ static void charge_allocate_input_current_limit(void)
 
 	int charge_lid = charge_get_percent();
 
+	const struct ec_response_battery_dynamic_info *const base_bd =
+		&battery_dynamic[BATT_IDX_BASE];
+
+
 	if (!base_connected) {
 		set_base_lid_current(0, 0, curr.desired_input_current, 1);
 		prev_base_battery_power = -1;
@@ -480,11 +486,11 @@ static void charge_allocate_input_current_limit(void)
 	lid_battery_power = MIN(lid_battery_power, lid_battery_power_max);
 
 	/* Estimate base battery power. */
-	if (!(base_battery_dynamic.flags & EC_BATT_FLAG_INVALID_DATA)) {
-		base_battery_power = base_battery_dynamic.actual_current *
-				     base_battery_dynamic.actual_voltage / 1000;
-		base_battery_power_max = base_battery_dynamic.desired_current *
-				    base_battery_dynamic.desired_voltage / 1000;
+	if (!(base_bd->flags & EC_BATT_FLAG_INVALID_DATA)) {
+		base_battery_power = base_bd->actual_current *
+				     base_bd->actual_voltage / 1000;
+		base_battery_power_max = base_bd->desired_current *
+					 base_bd->desired_voltage / 1000;
 	}
 	if (base_battery_power < prev_base_battery_power)
 		base_battery_power = smooth_value(prev_base_battery_power,
@@ -548,7 +554,7 @@ static void charge_allocate_input_current_limit(void)
 }
 #endif /* CONFIG_EC_EC_COMM_BATTERY_MASTER */
 
-#ifdef HAS_TASK_HOSTCMD
+#ifndef CONFIG_BATTERY_V2
 /* Returns zero if every item was updated. */
 static int update_static_battery_info(void)
 {
@@ -696,12 +702,7 @@ static void update_dynamic_battery_info(void)
 	if (send_batt_status_event)
 		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
 }
-#elif defined(CONFIG_EC_EC_COMM_BATTERY_SLAVE)
-/*
- * TODO(b:65697620): Make this depend on a separate config option instead, so
- * that, even on systems that would typically use memmap, we can decide to use
- * these structures, and pass battery information via a host command instead.
- */
+#else /* CONFIG_BATTERY_V2 */
 static int update_static_battery_info(void)
 {
 	int batt_serial;
@@ -712,48 +713,48 @@ static int update_static_battery_info(void)
 	 */
 	int rv, ret;
 
+	struct ec_response_battery_static_info *const bs =
+		&battery_static[BATT_IDX_MAIN];
+
 	/* Clear all static information. */
-	memset(&base_battery_static, 0, sizeof(base_battery_static));
+	memset(bs, 0, sizeof(*bs));
 
 	/* Smart battery serial number is 16 bits */
 	rv = battery_serial_number(&batt_serial);
 	if (!rv)
-		snprintf(base_battery_static.serial,
-			sizeof(base_battery_static.serial),
-			"%04X", batt_serial);
+		snprintf(bs->serial, sizeof(bs->serial), "%04X", batt_serial);
 
 	/* Design Capacity of Full */
 	ret = battery_design_capacity(&val);
 	if (!ret)
-		base_battery_static.design_capacity = val;
+		bs->design_capacity = val;
 	rv |= ret;
 
 	/* Design Voltage */
 	ret = battery_design_voltage(&val);
 	if (!ret)
-		base_battery_static.design_voltage = val;
+		bs->design_voltage = val;
 	rv |= ret;
 
 	/* Cycle Count */
 	ret = battery_cycle_count(&val);
 	if (!ret)
-		base_battery_static.cycle_count = val;
+		bs->cycle_count = val;
 	rv |= ret;
 
 	/* Battery Manufacturer string */
-	rv |= battery_manufacturer_name(base_battery_static.manufacturer,
-				sizeof(base_battery_static.manufacturer));
+	rv |= battery_manufacturer_name(bs->manufacturer,
+					sizeof(bs->manufacturer));
 
 	/* Battery Model string */
-	rv |= battery_device_name(base_battery_static.model,
-				sizeof(base_battery_static.model));
+	rv |= battery_device_name(bs->model, sizeof(bs->model));
 
 	/* Battery Type string */
-	rv |= battery_device_chemistry(base_battery_static.type,
-				sizeof(base_battery_static.type));
+	rv |= battery_device_chemistry(bs->type, sizeof(bs->type));
 
 	/* Zero the dynamic entries. They'll come next. */
-	memset(&base_battery_dynamic, 0, sizeof(base_battery_dynamic));
+	memset(&battery_dynamic[BATT_IDX_MAIN], 0,
+	       sizeof(battery_dynamic[BATT_IDX_MAIN]));
 
 	if (rv)
 		problem(PR_STATIC_UPDATE, rv);
@@ -770,6 +771,9 @@ static void update_dynamic_battery_info(void)
 {
 	static int __bss_slow batt_present;
 	uint8_t tmp;
+
+	struct ec_response_battery_dynamic_info *const bd =
+		&battery_dynamic[BATT_IDX_MAIN];
 
 	tmp = 0;
 	if (curr.ac)
@@ -792,18 +796,16 @@ static void update_dynamic_battery_info(void)
 		tmp |= EC_BATT_FLAG_INVALID_DATA;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
-		base_battery_dynamic.actual_voltage = curr.batt.voltage;
+		bd->actual_voltage = curr.batt.voltage;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))
-		base_battery_dynamic.actual_current = curr.batt.current;
+		bd->actual_current = curr.batt.current;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_DESIRED_VOLTAGE))
-		base_battery_dynamic.desired_voltage =
-			curr.batt.desired_voltage;
+		bd->desired_voltage = curr.batt.desired_voltage;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_DESIRED_CURRENT))
-		base_battery_dynamic.desired_current =
-			curr.batt.desired_current;
+		bd->desired_current = curr.batt.desired_current;
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
 		/*
@@ -812,18 +814,17 @@ static void update_dynamic_battery_info(void)
 		 * to Chrome OS powerd.
 		 */
 		if (curr.batt.remaining_capacity == 0 && !curr.batt_is_charging)
-			base_battery_dynamic.remaining_capacity = 1;
+			bd->remaining_capacity = 1;
 		else
-			base_battery_dynamic.remaining_capacity =
-				curr.batt.remaining_capacity;
+			bd->remaining_capacity = curr.batt.remaining_capacity;
 	}
 
 	if (!(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
 		(curr.batt.full_capacity <=
-		   (base_battery_dynamic.full_capacity - LFCC_EVENT_THRESH) ||
+			(bd->full_capacity - LFCC_EVENT_THRESH) ||
 		 curr.batt.full_capacity >=
-		   (base_battery_dynamic.full_capacity + LFCC_EVENT_THRESH))) {
-		base_battery_dynamic.full_capacity = curr.batt.full_capacity;
+			(bd->full_capacity + LFCC_EVENT_THRESH))) {
+		bd->full_capacity = curr.batt.full_capacity;
 	}
 
 	if (curr.batt.is_present == BP_YES &&
@@ -834,9 +835,9 @@ static void update_dynamic_battery_info(void)
 	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
 				       EC_BATT_FLAG_DISCHARGING;
 
-	base_battery_dynamic.flags = tmp;
+	bd->flags = tmp;
 }
-#endif
+#endif /* CONFIG_BATTERY_V2 */
 
 static const char * const state_list[] = {
 	"idle", "discharge", "charge", "precharge"
@@ -1238,7 +1239,7 @@ void charger_task(void *u)
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 	base_responsive = 0;
 	curr.input_voltage = CHARGE_VOLTAGE_UNINITIALIZED;
-	base_battery_dynamic.flags = EC_BATT_FLAG_INVALID_DATA;
+	battery_dynamic[BATT_IDX_BASE].flags = EC_BATT_FLAG_INVALID_DATA;
 	charge_base = -1;
 #endif
 
@@ -1302,18 +1303,19 @@ void charger_task(void *u)
 
 		if (!base_connected) {
 			/* Invalidate static/dynamic information */
-			base_battery_dynamic.flags = EC_BATT_FLAG_INVALID_DATA;
+			battery_dynamic[BATT_IDX_BASE].flags =
+				EC_BATT_FLAG_INVALID_DATA;
 			charge_base = -1;
 			base_responsive = 0;
 			prev_current_base = 0;
 			prev_allow_charge_base = 0;
 		} else if (base_responsive) {
-			int old_flags = base_battery_dynamic.flags;
+			int old_flags = battery_dynamic[BATT_IDX_BASE].flags;
 
 			ec_ec_master_base_get_dynamic_info();
 
 			/* Fetch static information when flags change. */
-			if (old_flags != base_battery_dynamic.flags)
+			if (old_flags != battery_dynamic[BATT_IDX_BASE].flags)
 				ec_ec_master_base_get_static_info();
 
 			charge_base = charge_get_base_percent();

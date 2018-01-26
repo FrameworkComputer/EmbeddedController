@@ -9,6 +9,20 @@
 #define __CROS_EC_BATTERY_H
 
 #include "common.h"
+#include "host_command.h"
+
+/* Battery index, only used with CONFIG_BATTERY_V2. */
+enum battery_index {
+	BATT_IDX_MAIN,
+	BATT_IDX_BASE,
+};
+
+#ifdef CONFIG_BATTERY_V2
+extern struct ec_response_battery_static_info
+	battery_static[CONFIG_BATTERY_COUNT];
+extern struct ec_response_battery_dynamic_info
+	battery_dynamic[CONFIG_BATTERY_COUNT];
+#endif
 
 /* Stop charge when charging and battery level >= this percentage */
 #define BATTERY_LEVEL_FULL		100

@@ -11,19 +11,12 @@
 #include <stdint.h>
 #include "config.h"
 
-/*
- * TODO(b:65697620): Move these to some other C file, depending on a config
- * option.
- */
-extern struct ec_response_battery_static_info base_battery_static;
-extern struct ec_response_battery_dynamic_info base_battery_dynamic;
-
 /**
  * Sends EC_CMD_BATTERY_GET_DYNAMIC command to slave, and writes the
- * battery dynamic information into base_battery_dynamic.
+ * battery dynamic information into battery_dynamic[BATT_IDX_BASE].
  *
- * Leaves base_battery_dynamic intact on error: it is the callers responsability
- * to clear the data or ignore it.
+ * Leaves battery_dynamic[BATT_IDX_BASE] intact on error: it is the callers
+ * responsibility to clear the data or ignore it.
 
  * @return EC_RES_SUCCESS on success, EC_RES_ERROR on communication error,
  * else forwards the error code from the slave.
@@ -32,10 +25,10 @@ int ec_ec_master_base_get_dynamic_info(void);
 
 /**
  * Sends EC_CMD_BATTERY_GET_STATIC command to slave, and writes the
- * battery static information into base_static_dynamic.
+ * battery static information into battery_static[BATT_IDX_BASE].
  *
- * Leaves base_battery_static intact on error: it is the callers responsability
- * to clear the data or ignore it.
+ * Leaves battery_static[BATT_IDX_BASE] intact on error: it is the callers
+ * responsibility to clear the data or ignore it.
  *
  * @return EC_RES_SUCCESS on success, EC_RES_ERROR on communication error,
  * else forwards the error code from the slave.

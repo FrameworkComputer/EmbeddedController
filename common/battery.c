@@ -21,6 +21,15 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
+#ifdef CONFIG_BATTERY_V2
+/*
+ * Store battery information in these 2 structures. Main (lid) battery is always
+ * at index 0, and secondary (base) battery at index 1.
+ */
+struct ec_response_battery_static_info battery_static[CONFIG_BATTERY_COUNT];
+struct ec_response_battery_dynamic_info battery_dynamic[CONFIG_BATTERY_COUNT];
+#endif
+
 #ifdef CONFIG_BATTERY_CUT_OFF
 
 #ifndef CONFIG_BATTERY_CUTOFF_DELAY_US
@@ -433,21 +442,20 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_VENDOR_PARAM,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_BATTERY_VENDOR_PARAM */
 
-#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
-/*
- * TODO(b:65697620): Add support for returning main battery information through
- * these commands, as well.
- */
+#ifdef CONFIG_HOSTCMD_BATTERY_V2
+#ifndef CONFIG_BATTERY_V2
+#error "CONFIG_HOSTCMD_BATTERY_V2 cannot be set without CONFIG_BATTERY_V2."
+#endif
 static int host_command_battery_get_static(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_static_info *p = args->params;
 	struct ec_response_battery_static_info *r = args->response;
 
-	if (p->index != 1)
+	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	args->response_size = sizeof(*r);
-	memcpy(r, &base_battery_static, sizeof(*r));
+	memcpy(r, &battery_static[p->index], sizeof(*r));
 
 	return EC_RES_SUCCESS;
 }
@@ -460,15 +468,15 @@ static int host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
 	const struct ec_params_battery_dynamic_info *p = args->params;
 	struct ec_response_battery_dynamic_info *r = args->response;
 
-	if (p->index != 1)
+	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
 
 	args->response_size = sizeof(*r);
-	memcpy(r, &base_battery_dynamic, sizeof(*r));
+	memcpy(r, &battery_dynamic[p->index], sizeof(*r));
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_DYNAMIC,
 		     host_command_battery_get_dynamic,
 		     EC_VER_MASK(0));
-#endif /* CONFIG_EC_EC_COMM_BATTERY */
+#endif /* CONFIG_HOSTCMD_BATTERY_V2 */

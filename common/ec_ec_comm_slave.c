@@ -26,13 +26,6 @@
 /* Print extra debugging information */
 #undef EXTRA_DEBUG
 
-/*
- * TODO(b:65697620): Move these to some other C file, depending on a config
- * option.
- */
-struct ec_response_battery_static_info base_battery_static;
-struct ec_response_battery_dynamic_info base_battery_dynamic;
-
 /* Set if the master allows the slave to charge the battery. */
 static int charging_allowed;
 
@@ -274,14 +267,14 @@ void ec_ec_comm_slave_task(void *u)
 		case EC_CMD_BATTERY_GET_STATIC:
 			/* Note that we ignore the battery index parameter. */
 			write_response(EC_RES_SUCCESS, seq,
-				&base_battery_static,
-				sizeof(base_battery_static));
+				&battery_static[BATT_IDX_MAIN],
+				sizeof(battery_static[BATT_IDX_MAIN]));
 			break;
 		case EC_CMD_BATTERY_GET_DYNAMIC:
 			/* Note that we ignore the battery index parameter. */
 			write_response(EC_RES_SUCCESS, seq,
-				&base_battery_dynamic,
-				sizeof(base_battery_dynamic));
+				&battery_dynamic[BATT_IDX_MAIN],
+				sizeof(battery_dynamic[BATT_IDX_MAIN]));
 			break;
 		case EC_CMD_CHARGER_CONTROL: {
 			handle_cmd_charger_control((void *)params,

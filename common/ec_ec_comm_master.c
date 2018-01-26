@@ -5,6 +5,7 @@
  * EC-EC communication, functions and definitions for master.
  */
 
+#include "battery.h"
 #include "common.h"
 #include "console.h"
 #include "crc8.h"
@@ -16,13 +17,6 @@
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-
-/*
- * TODO(b:65697620): Move these to some the second position of some battery
- * array, depending on a config option.
- */
-struct ec_response_battery_static_info base_battery_static;
-struct ec_response_battery_dynamic_info base_battery_dynamic;
 
 /*
  * TODO(b:65697962): The packed structures below do not play well if we force EC
@@ -281,8 +275,8 @@ int ec_ec_master_base_get_dynamic_info(void)
 	CPRINTF("I-desired:  %d mA\n", data.resp.info.desired_current);
 #endif
 
-	memcpy(&base_battery_dynamic, &data.resp.info,
-				sizeof(base_battery_dynamic));
+	memcpy(&battery_dynamic[BATT_IDX_BASE], &data.resp.info,
+				sizeof(battery_dynamic[BATT_IDX_BASE]));
 	return EC_RES_SUCCESS;
 }
 
@@ -321,8 +315,8 @@ int ec_ec_master_base_get_static_info(void)
 	CPRINTF("C-count:    %d\n", data.resp.info.cycle_count);
 #endif
 
-	memcpy(&base_battery_static, &data.resp.info,
-				sizeof(base_battery_static));
+	memcpy(&battery_static[BATT_IDX_BASE], &data.resp.info,
+				sizeof(battery_static[BATT_IDX_BASE]));
 	return EC_RES_SUCCESS;
 }
 

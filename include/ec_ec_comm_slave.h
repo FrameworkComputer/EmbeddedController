@@ -12,10 +12,6 @@
 #include "consumer.h"
 #include "queue.h"
 
-/* TODO(b:65697620): Move these to battery.h, depending on a config option. */
-extern struct ec_response_battery_static_info base_battery_static;
-extern struct ec_response_battery_dynamic_info base_battery_dynamic;
-
 extern struct queue const ec_ec_comm_slave_input;
 extern struct queue const ec_ec_comm_slave_output;
 

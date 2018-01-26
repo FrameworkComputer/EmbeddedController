@@ -335,6 +335,23 @@
 #undef CONFIG_BATTERY_LEVEL_NEAR_FULL
 
 /*
+ * Use an alternative method to store battery information: Instead of writing
+ * directly to host memory mapped region, this keeps the battery information in
+ * ec_response_battery_static/dynamic_info structures, that can then be fetched
+ * using host commands, or via EC_ACPI_MEM_BATTERY_INDEX command, which tells
+ * the EC to update the shared memory.
+ *
+ * This is required on dual-battery systems, and on on hostless bases with a
+ * battery.
+ */
+#undef CONFIG_BATTERY_V2
+
+/*
+ * Number of batteries, only matters when CONFIG_BATTERY_V2 is used.
+ */
+#undef CONFIG_BATTERY_COUNT
+
+/*
  * Expose some data when it is needed.
  * For example, battery disconnect state
  */
@@ -1545,6 +1562,13 @@
  * much more efficient code on ARM.
  */
 #undef CONFIG_HOSTCMD_ALIGNED
+
+/*
+ * Include host commands to fetch battery information from
+ * ec_response_battery_static/dynamic_info structures, only makes sense when
+ * CONFIG_BATTERY_V2 is enabled.
+ */
+#undef CONFIG_HOSTCMD_BATTERY_V2
 
 /* Default hcdebug mode, e.g. HCDEBUG_OFF or HCDEBUG_NORMAL */
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_NORMAL
@@ -3303,10 +3327,14 @@
 #ifdef CONFIG_EC_EC_COMM_BATTERY
 #ifdef CONFIG_EC_EC_COMM_MASTER
 #define CONFIG_EC_EC_COMM_BATTERY_MASTER
+#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_COUNT 2
 #endif
 
 #ifdef CONFIG_EC_EC_COMM_SLAVE
 #define CONFIG_EC_EC_COMM_BATTERY_SLAVE
+#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_COUNT 1
 #endif
 #endif /* CONFIG_EC_EC_COMM_BATTERY */
 
