@@ -442,10 +442,8 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_VENDOR_PARAM,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_BATTERY_VENDOR_PARAM */
 
+#ifdef CONFIG_BATTERY_V2
 #ifdef CONFIG_HOSTCMD_BATTERY_V2
-#ifndef CONFIG_BATTERY_V2
-#error "CONFIG_HOSTCMD_BATTERY_V2 cannot be set without CONFIG_BATTERY_V2."
-#endif
 static int host_command_battery_get_static(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_static_info *p = args->params;
@@ -480,3 +478,79 @@ DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_DYNAMIC,
 		     host_command_battery_get_dynamic,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_BATTERY_V2 */
+
+#ifdef HAS_TASK_HOSTCMD
+static void battery_update(enum battery_index i)
+{
+	char *batt_str;
+	int *memmap_dcap = (int *)host_get_memmap(EC_MEMMAP_BATT_DCAP);
+	int *memmap_dvlt = (int *)host_get_memmap(EC_MEMMAP_BATT_DVLT);
+	int *memmap_ccnt = (int *)host_get_memmap(EC_MEMMAP_BATT_CCNT);
+	int *memmap_volt = (int *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
+	int *memmap_rate = (int *)host_get_memmap(EC_MEMMAP_BATT_RATE);
+	int *memmap_cap = (int *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	int *memmap_lfcc = (int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	uint8_t *memmap_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
+
+	/* Smart battery serial number is 16 bits */
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_SERIAL);
+	memcpy(batt_str, battery_static[i].serial, EC_MEMMAP_TEXT_MAX);
+
+	/* Design Capacity of Full */
+	*memmap_dcap = battery_static[i].design_capacity;
+
+	/* Design Voltage */
+	*memmap_dvlt = battery_static[i].design_voltage;
+
+	/* Cycle Count */
+	*memmap_ccnt = battery_static[i].cycle_count;
+
+	/* Battery Manufacturer string */
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MFGR);
+	memcpy(batt_str, battery_static[i].manufacturer, EC_MEMMAP_TEXT_MAX);
+
+	/* Battery Model string */
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MODEL);
+	memcpy(batt_str, battery_static[i].model, EC_MEMMAP_TEXT_MAX);
+
+	/* Battery Type string */
+	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_TYPE);
+	memcpy(batt_str, battery_static[i].type, EC_MEMMAP_TEXT_MAX);
+
+	*memmap_volt = battery_dynamic[i].actual_voltage;
+	*memmap_rate = battery_dynamic[i].actual_current;
+	*memmap_cap = battery_dynamic[i].remaining_capacity;
+	*memmap_lfcc = battery_dynamic[i].full_capacity;
+	*memmap_flags = battery_dynamic[i].flags;
+}
+
+void battery_memmap_refresh(enum battery_index index)
+{
+	if (*host_get_memmap(EC_MEMMAP_BATT_INDEX) == index)
+		battery_update(index);
+}
+
+void battery_memmap_set_index(enum battery_index index)
+{
+	if (*host_get_memmap(EC_MEMMAP_BATT_INDEX) == index)
+		return;
+
+	*host_get_memmap(EC_MEMMAP_BATT_INDEX) = BATT_IDX_INVALID;
+	if (index < 0 || index >= CONFIG_BATTERY_COUNT)
+		return;
+
+	battery_update(index);
+	*host_get_memmap(EC_MEMMAP_BATT_INDEX) = index;
+}
+
+static void battery_init(void)
+{
+	*host_get_memmap(EC_MEMMAP_BATT_INDEX) = BATT_IDX_INVALID;
+	*host_get_memmap(EC_MEMMAP_BATT_COUNT) = CONFIG_BATTERY_COUNT;
+	*host_get_memmap(EC_MEMMAP_BATTERY_VERSION) = 2;
+
+	battery_memmap_set_index(BATT_IDX_MAIN);
+}
+DECLARE_HOOK(HOOK_INIT, battery_init, HOOK_PRIO_DEFAULT);
+#endif /* HAS_TASK_HOSTCMD */
+#endif /* CONFIG_BATTERY_V2 */

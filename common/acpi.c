@@ -4,6 +4,7 @@
  */
 
 #include "acpi.h"
+#include "battery.h"
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
@@ -216,6 +217,12 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 		case EC_ACPI_MEM_TEST:
 			acpi_mem_test = data;
 			break;
+#ifdef CONFIG_BATTERY_V2
+		case EC_ACPI_MEM_BATTERY_INDEX:
+			CPRINTS("ACPI battery %d", data);
+			battery_memmap_set_index(data);
+			break;
+#endif
 #ifdef CONFIG_PWM_KBLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
 			/*
