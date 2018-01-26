@@ -105,8 +105,11 @@ static void nautilus_led_set_power_battery(void)
 					  < LED_ON_TICKS) ? LED_RED : LED_GREEN;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-	case PWR_STATE_IDLE: /* External power connected in IDLE. */
-		cur_led_color = LED_GREEN;
+	case PWR_STATE_IDLE:
+		if(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
+			cur_led_color = LED_GREEN;
+		else
+			cur_led_color = LED_OFF;
 		break;
 	default:
 		cur_led_color = LED_RED;
