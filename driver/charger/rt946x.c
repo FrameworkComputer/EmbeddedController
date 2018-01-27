@@ -107,11 +107,6 @@ static int rt946x_write8(int reg, int val)
 	return i2c_write8(I2C_PORT_CHARGER, RT946X_ADDR, reg, val);
 }
 
-static int rt946x_block_read(int reg, uint8_t *val, int len)
-{
-	return i2c_read_string(I2C_PORT_CHARGER, RT946X_ADDR, reg, val, len);
-}
-
 static int rt946x_block_write(int reg, const uint8_t *val, int len)
 {
 	int rv;
@@ -313,17 +308,22 @@ static int rt946x_set_ircmp_res(unsigned int res)
 static int rt946x_init_irq(void)
 {
 	int rv = 0;
-	uint8_t dummy[RT946X_IRQ_COUNT] = {0};
+	int dummy;
+	int i;
 
 	/* Mask all interrupts */
 	rv = rt946x_block_write(RT946X_REG_CHGSTATCCTRL, rt946x_irq_maskall,
 				RT946X_IRQ_COUNT);
 	if (rv)
 		return rv;
+
 	/* Clear all interrupt flags */
-	rv = rt946x_block_read(RT946X_REG_CHGSTATC, dummy, RT946X_IRQ_COUNT);
-	if (rv)
-		return rv;
+	for (i = 0; i < RT946X_IRQ_COUNT; i++) {
+		rv = rt946x_read8(RT946X_REG_CHGSTATC + i, &dummy);
+		if (rv)
+			return rv;
+	}
+
 	/* Init interrupt */
 	return rt946x_block_write(RT946X_REG_CHGSTATCCTRL, rt946x_irqmask,
 				  ARRAY_SIZE(rt946x_irqmask));
