@@ -333,6 +333,12 @@ static int rt946x_init_setting(void)
 {
 	int rv = 0;
 
+#ifdef CONFIG_CHARGER_OTG
+	/*  Disable boost-mode output voltage */
+	rv = charger_enable_otg_power(0);
+	if (rv)
+		return rv;
+#endif
 	/* Disable BC12 detection */
 	rv = rt946x_enable_bc12_detection(0);
 	if (rv)
@@ -365,6 +371,7 @@ static int rt946x_init_setting(void)
 	rv = rt946x_set_ircmp_res(rt946x_charger_init_setting.ircmp_res);
 	if (rv)
 		return rv;
+
 	return rt946x_init_irq();
 }
 
