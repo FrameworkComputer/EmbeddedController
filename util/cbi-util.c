@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 	int mode = OPT_MODE_NONE;
 	const char *cbi_filename = NULL;
 	struct board_info bi;
-	uint32_t size;
+	uint32_t size = 0;
 	uint8_t erase = 0xff;
 	int show_all = 0;
 	int parse_error = 0;
