@@ -16,9 +16,6 @@
 #include "gpio.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
 /*
  * AE-Tech battery pack has two charging phases when operating
  * between 10 and 20C
