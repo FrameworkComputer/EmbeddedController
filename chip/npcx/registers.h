@@ -47,7 +47,6 @@
 /* Switcher of features */
 #define SUPPORT_LCT                      1
 #define SUPPORT_WDG                      1
-#define SUPPORT_HIB                      1
 #define SUPPORT_P80_SEG                  0 /* Note: it uses KSO10 & KSO11 */
 /* Switcher of debugging */
 #define DEBUG_GPIO                       0

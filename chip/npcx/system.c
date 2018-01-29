@@ -422,7 +422,8 @@ void system_check_reset_cause(void)
 /**
  * Chip-level function to set GPIOs and wake-up inputs for hibernate.
  */
-void system_set_gpios_and_wakeup_inputs_hibernate(void)
+#ifdef CONFIG_SUPPORT_CHIP_HIBERNATION
+static void system_set_gpios_and_wakeup_inputs_hibernate(void)
 {
 	int table, i;
 
@@ -534,6 +535,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	__hibernate_npcx_series();
 
 }
+#endif /* CONFIG_SUPPORT_CHIP_HIBERNATION */
 
 static char system_to_hex(uint8_t x)
 {
@@ -637,7 +639,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	if (board_hibernate)
 		board_hibernate();
 
-#if SUPPORT_HIB
+#ifdef CONFIG_SUPPORT_CHIP_HIBERNATION
 	/* Add additional hibernate operations here */
 	__enter_hibernate(seconds, microseconds);
 #endif

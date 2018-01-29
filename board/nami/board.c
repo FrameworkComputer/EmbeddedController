@@ -131,14 +131,6 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-/* Hibernate wake configuration */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_AC_PRESENT,
-	GPIO_LID_OPEN,
-	GPIO_POWER_BUTTON_L,
-};
-const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing (10x voltage divider). PPVAR_BOOSTIN_SENSE */
@@ -488,7 +480,9 @@ void board_hibernate(void)
 {
 	CPRINTS("Triggering PMIC shutdown.");
 	uart_flush_output();
-	/* dnojiri: revisit */
+	gpio_set_level(GPIO_EC_HIBERNATE, 1);
+	while (1)
+		;
 }
 
 const struct pwm_t pwm_channels[] = {

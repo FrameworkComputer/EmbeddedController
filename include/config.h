@@ -1676,6 +1676,12 @@
 #undef CONFIG_HIBERNATE_WAKEUP_PINS
 
 /*
+ * If defined, chip hibernation is used. Your board needs to define wake-up
+ * signals. Undefine this to use board hibernation capability.
+ */
+#define CONFIG_SUPPORT_CHIP_HIBERNATION
+
+/*
  * Use PSL (Power Switch Logic) for hibernating. It turns off VCC power rail
  * for ultra-low power consumption and uses PSL inputs rely on VSBY power rail
  * to wake up ec and the whole system.
