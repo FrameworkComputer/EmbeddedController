@@ -205,10 +205,15 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_MASTER 0
+#define I2C_PORT_KBLIGHT 0
 #define I2C_PORT_CHARGER 1
 
 /* Enable PWM */
 #define CONFIG_PWM
+
+#ifdef BOARD_WHISKERS
+#define CONFIG_LED_DRIVER_LM3630A
+#endif
 
 /* Enable Elan touchpad driver */
 #define CONFIG_TOUCHPAD

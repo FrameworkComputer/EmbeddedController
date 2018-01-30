@@ -5,6 +5,7 @@
 /* Hammer board configuration */
 
 #include "common.h"
+#include "driver/led/lm3630a.h"
 #include "ec_version.h"
 #include "ec_ec_comm_slave.h"
 #include "gpio.h"
@@ -162,14 +163,20 @@ static void board_init(void)
 	}
 #endif /* BOARD_STAFF */
 
-#if defined(BOARD_WAND) && defined(SECTION_IS_RW)
+#ifdef SECTION_IS_RW
+#ifdef BOARD_WAND
 	/* USB to serial queues */
 	queue_init(&ec_ec_comm_slave_input);
 	queue_init(&ec_ec_comm_slave_output);
 
 	/* UART init */
 	usart_init(&ec_ec_usart);
-#endif
+#endif /* BOARD_WAND */
+
+#ifdef BOARD_WHISKERS
+	lm3630a_poweron();
+#endif /* BOARD_WHISKERS */
+#endif /* SECTION_IS_RW */
 }
 /* This needs to happen before PWM is initialized. */
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_PWM - 1);
