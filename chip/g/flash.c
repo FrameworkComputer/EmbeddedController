@@ -46,10 +46,14 @@
 #include "flash_info.h"
 #include "registers.h"
 #include "shared_mem.h"
+#include "task.h"
 #include "timer.h"
 #include "watchdog.h"
 
 #define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
+
+/* Mutex to prevent concurrent accesses to flash engine. */
+static struct mutex flash_mtx;
 
 int flash_pre_init(void)
 {
@@ -283,6 +287,9 @@ static int write_batch(int byte_offset, int is_info_bank,
 	volatile uint32_t *fsh_wr_data = GREG32_ADDR(FLASH, FSH_WR_DATA0);
 	uint32_t val;
 	int i;
+	int rv;
+
+	mutex_lock(&flash_mtx);
 
 	/* Load the write buffer. */
 	for (i = 0; i < words; i++) {
@@ -300,7 +307,11 @@ static int write_batch(int byte_offset, int is_info_bank,
 		fsh_wr_data++;
 	}
 
-	return do_flash_op(OP_WRITE_BLOCK, is_info_bank, byte_offset, words);
+	rv = do_flash_op(OP_WRITE_BLOCK, is_info_bank, byte_offset, words);
+
+	mutex_unlock(&flash_mtx);
+
+	return rv;
 }
 
 static int flash_physical_write_internal(int byte_offset, int is_info_bank,
@@ -348,12 +359,15 @@ int flash_physical_info_read_word(int byte_offset, uint32_t *dst)
 	if (byte_offset % CONFIG_FLASH_WRITE_SIZE)
 		return EC_ERROR_INVAL;
 
-	ret = do_flash_op(OP_READ_BLOCK, 1, byte_offset, 1);
-	if (ret != EC_SUCCESS)
-		return ret;
+	mutex_lock(&flash_mtx);
 
-	*dst = GREG32(FLASH, FSH_DOUT_VAL1);
-	return EC_SUCCESS;
+	ret = do_flash_op(OP_READ_BLOCK, 1, byte_offset, 1);
+	if (ret == EC_SUCCESS)
+		*dst = GREG32(FLASH, FSH_DOUT_VAL1);
+
+	mutex_unlock(&flash_mtx);
+
+	return ret;
 }
 
 /*
@@ -434,11 +448,17 @@ int flash_physical_erase(int byte_offset, int num_bytes)
 		return EC_ERROR_INVAL;
 
 	while (num_bytes) {
+
+		mutex_lock(&flash_mtx);
+
 		/* We may be asked to erase multiple banks */
 		ret = do_flash_op(OP_ERASE_BLOCK,
 				  0,              /* not the INFO bank */
 				  byte_offset,
 				  num_bytes / 4); /* word count */
+
+		mutex_unlock(&flash_mtx);
+
 		if (ret) {
 			CPRINTF("Failed to erase block at %x\n", byte_offset);
 			return ret;
@@ -494,7 +514,13 @@ static int command_erase_flash_info(int argc, char **argv)
 		}
 	}
 
-	if (do_flash_op(OP_ERASE_BLOCK, 1, 0, 512) != EC_SUCCESS) {
+	mutex_lock(&flash_mtx);
+
+	rv = do_flash_op(OP_ERASE_BLOCK, 1, 0, 512);
+
+	mutex_unlock(&flash_mtx);
+
+	if (rv != EC_SUCCESS) {
 		ccprintf("Failed to erase info space!\n");
 		goto exit;
 	}
