@@ -770,8 +770,8 @@ int board_has_working_reset_flags(void)
 {
 	int version = system_get_board_version();
 
-	/* Boards Rev1 and Rev2 will lose reset flags on power cycle. */
-	if ((version == 1) || (version == 2))
+	/* Boards Rev1, Rev2 and Rev3 will lose reset flags on power cycle. */
+	if ((version == 1) || (version == 2) || (version == 3))
 		return 0;
 
 	/* All other board versions should have working reset flags */
