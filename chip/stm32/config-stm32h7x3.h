@@ -4,7 +4,17 @@
  */
 
 /* Memory mapping */
-#define CONFIG_FLASH_SIZE       (1048 * 1024)
+#define CONFIG_FLASH_SIZE       (2048 * 1024)
+#define CONFIG_FLASH_ERASE_SIZE (128 * 1024)  /* erase bank size */
+/* always use 256-bit writes due to ECC */
+#define CONFIG_FLASH_WRITE_SIZE          32   /* minimum write size */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE    32
+
+/*
+ * What the code is calling 'bank' is really the size of the block used for
+ * write-protected, here it's 128KB sector (same as erase size).
+ */
+#define CONFIG_FLASH_BANK_SIZE  (128 * 1024)
 
 /* Erasing 128K can take up to 2s, need to defer erase. */
 #define CONFIG_FLASH_DEFERRED_ERASE
@@ -22,8 +32,8 @@
 
 #define CONFIG_RO_MEM_OFF	0
 #define CONFIG_RO_SIZE		(128 * 1024)
-#define CONFIG_RW_MEM_OFF	(128 * 1024)
-#define CONFIG_RW_SIZE		(896 * 1024)
+#define CONFIG_RW_MEM_OFF	(CONFIG_FLASH_SIZE / 2)
+#define CONFIG_RW_SIZE		(512 * 1024)
 
 #define CONFIG_RO_STORAGE_OFF	0
 #define CONFIG_RW_STORAGE_OFF	0
@@ -40,8 +50,11 @@
 #undef I2C_PORT_COUNT
 #define I2C_PORT_COUNT	4
 
-/* Use PSTATE embedded in the RO image, not in its own erase block */
-#define CONFIG_FLASH_PSTATE
+/*
+ * Cannot use PSTATE:
+ * 128kB blocks are too large and ECC prevents re-writing PSTATE word.
+ */
+#undef CONFIG_FLASH_PSTATE
 #undef CONFIG_FLASH_PSTATE_BANK
 
 /* Number of IRQ vectors on the NVIC */

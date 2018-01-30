@@ -425,5 +425,10 @@ void bus_fault_handler(void)
 
 void ignore_bus_fault(int ignored)
 {
+	/*
+	 * Flash code might call this before cpu_init(),
+	 * ensure that the bus faults really go through our handler.
+	 */
+	CPU_NVIC_SHCSR |= CPU_NVIC_SHCSR_BUSFAULTENA;
 	bus_fault_ignored = ignored;
 }

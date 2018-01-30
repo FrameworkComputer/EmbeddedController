@@ -146,8 +146,8 @@ static void clock_set_osc(enum clock_osc osc)
 		/* Adjust flash latency */
 		val = STM32_FLASH_ACR_WRHIGHFREQ_185MHZ |
 				(2 << STM32_FLASH_ACR_LATENCY_SHIFT);
-		STM32_FLASH_ACR = val;
-		while (val != STM32_FLASH_ACR)
+		STM32_FLASH_ACR(0) = val;
+		while (val != STM32_FLASH_ACR(0))
 			;
 
 		/* Switch to PLL */

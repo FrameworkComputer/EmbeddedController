@@ -125,8 +125,10 @@
  */
 #define CONFIG_UART_TX_DMA
 
+#ifndef CHIP_FAMILY_STM32H7
 /* Flash protection applies to the next boot, not the current one */
 #define CONFIG_FLASH_PROTECT_NEXT_BOOT
+#endif /* !CHIP_FAMILY_STM32H7 */
 
 /* Chip needs to do custom pre-init */
 #define CONFIG_CHIP_PRE_INIT
