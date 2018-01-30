@@ -99,9 +99,9 @@ GPIO(USB_A_ILIM_SEL,		PIN(0, 0), GPIO_OUT_LOW)
 GPIO(USB1_ENABLE,		PIN(0, 1), GPIO_OUT_LOW)
 
 /* LEDs (2 colors on each port) */
-GPIO(LED_ACIN,			PIN(B, 6), GPIO_OUT_LOW)			/* ACIN LED */
-GPIO(POWER_LED,			PIN(B, 7), GPIO_OUT_LOW)			/* Power LED */
-GPIO(LED_CHARGE,		PIN(C, 6), GPIO_OUT_LOW)			/* Charge LED */
+GPIO(LED_ACIN,			PIN(B, 6), GPIO_OUT_HIGH)			/* ACIN LED */
+GPIO(POWER_LED,			PIN(B, 7), GPIO_OUT_HIGH)			/* Power LED */
+GPIO(LED_CHARGE,		PIN(C, 6), GPIO_OUT_HIGH)			/* Charge LED */
 
 /* Board ID */
 GPIO(BOARD_VERSION1,		PIN(8, 6), GPIO_INPUT)				/* Board ID bit0 */
