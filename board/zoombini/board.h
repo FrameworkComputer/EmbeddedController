@@ -11,6 +11,8 @@
 /* Optional features */
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BUTTON
 #define CONFIG_CMD_PPC_DUMP
 
@@ -38,6 +40,7 @@
 #define CONFIG_LED_DRIVER_LM3630A
 #endif /* defined(BOARD_ZOOMBINI) */
 
+#define CONFIG_ACCELGYRO_LSM6DSM
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
@@ -253,10 +256,14 @@ enum power_signal {
 };
 
 enum sensor_id {
+	LID_ACCEL,
+	LID_GYRO,
 	LID_ALS,
 };
 
-#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
+/* TODO(gwendal): Currently LSM6DSM does not use interrupt. */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	((1 << LID_ACCEL) || (1 << LID_GYRO) || (1 << LID_ALS))
 
 #ifdef BOARD_MEOWTH
 int board_get_version(void);

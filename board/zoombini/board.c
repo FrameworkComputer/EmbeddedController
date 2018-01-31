@@ -13,6 +13,7 @@
 #include "common.h"
 #include "console.h"
 #include "compile_time_macros.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/als_opt3001.h"
 #include "driver/bc12/bq24392.h"
 #include "driver/led/lm3630a.h"
@@ -37,6 +38,7 @@
 #include "registers.h"
 #include "system.h"
 #include "switch.h"
+#include "task.h"
 #include "tcpci.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -200,36 +202,113 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 	.offset = 0,
 };
 
+/* Base Sensor mutex */
+static struct mutex g_base_mutex;
+
+/*
+ * Motion Sense
+ */
+
+struct stprivate_data lsm6dsm_a_data;
+struct stprivate_data lsm6dsm_g_data;
+struct stprivate_data lsm6dsm_m_data;
+
 struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+		.name = "LSM6DSL ACC",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &lsm6dsm_a_data,
+		.port = I2C_PORT_SENSOR,
+		.addr = LSM6DSM_ADDR0,
+		.rot_standard_ref = NULL,
+		.default_range = 2, /* g, enough for laptop. */
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.config = {
+			/* AP: by default use EC settings */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 13000,
+				.ec_rate = 13 * MSEC,
+			},
+			/* Sensor off in S5 */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 0,
+				.ec_rate = 0
+			},
+			/* Sensor off in S5 */
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0
+			},
+		},
+	},
+	[LID_GYRO] = {
+		.name = "LSM6DSL GYRO",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &lsm6dsm_g_data,
+		.port = I2C_PORT_SENSOR,
+		.addr = LSM6DSM_ADDR0,
+		.default_range = 245, /* dps */
+		.rot_standard_ref = NULL,
+		.config = {
+			/* AP: by default shutdown all sensors */
+			[SENSOR_CONFIG_AP] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* EC does not need in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 13000,
+				.ec_rate = 0,
+			},
+			/* Sensor off in S3/S5 */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+			/* Sensor off in S3/S5 */
+			[SENSOR_CONFIG_EC_S5] = {
+				.odr = 0,
+				.ec_rate = 0,
+			},
+		},
+	},
 	[LID_ALS] = {
-	 .name = "Light",
-	 .active_mask = SENSOR_ACTIVE_S0,
-	 .chip = MOTIONSENSE_CHIP_OPT3001,
-	 .type = MOTIONSENSE_TYPE_LIGHT,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &opt3001_drv,
-	 .drv_data = &g_opt3001_data,
-	 .port = I2C_PORT_SENSOR,
-	 .addr = OPT3001_I2C_ADDR,
-	 .rot_standard_ref = NULL,
-	 .default_range = 0x10000, /* scale = 1; uscale = 0 */
-	 .min_frequency = OPT3001_LIGHT_MIN_FREQ,
-	 .max_frequency = OPT3001_LIGHT_MAX_FREQ,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-		 },
-		 /* Run ALS sensor in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 1000,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-		 },
-	 },
+		.name = "Light",
+		.active_mask = SENSOR_ACTIVE_S0,
+		.chip = MOTIONSENSE_CHIP_OPT3001,
+		.type = MOTIONSENSE_TYPE_LIGHT,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &opt3001_drv,
+		.drv_data = &g_opt3001_data,
+		.port = I2C_PORT_SENSOR,
+		.addr = OPT3001_I2C_ADDR,
+		.rot_standard_ref = NULL,
+		.default_range = 0x10000, /* scale = 1; uscale = 0 */
+		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
+		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
+		.config = {
+			/* Run ALS sensor in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 1000,
+				.ec_rate = 0,
+			},
+		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
