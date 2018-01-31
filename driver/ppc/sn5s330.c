@@ -507,7 +507,8 @@ static int sn5s330_discharge_vbus(int port, int enable)
 
 	status = write_reg(port, SN5S330_FUNC_SET3, regval);
 	if (status) {
-		CPRINTS("Failed to %s vbus", enable ? "enable" : "disable");
+		CPRINTS("Failed to %s vbus discharge",
+			enable ? "enable" : "disable");
 		return status;
 	}
 
