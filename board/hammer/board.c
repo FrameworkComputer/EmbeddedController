@@ -14,6 +14,7 @@
 #include "i2c.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
+#include "lid_switch.h"
 #include "printf.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -29,6 +30,7 @@
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usb_api.h"
 #include "usb_descriptor.h"
 #include "usb_i2c.h"
 #include "util.h"
@@ -239,6 +241,18 @@ void board_touchpad_reset(void)
 	msleep(10);
 #endif
 }
+
+#if defined(SECTION_IS_RW) && defined(BOARD_WHISKERS)
+static void lid_change(void)
+{
+	if (lid_is_open())
+		usb_connect();
+	else
+		usb_disconnect();
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, lid_change, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, lid_change, HOOK_PRIO_DEFAULT + 1);
+#endif
 
 /*
  * Get entropy based on Clock Recovery System, which is enabled on hammer to

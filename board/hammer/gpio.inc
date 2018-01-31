@@ -10,6 +10,9 @@
 
 #ifdef SECTION_IS_RW
 GPIO_INT(TOUCHPAD_INT, PIN(B, 8), GPIO_INT_FALLING, touchpad_interrupt)
+#ifdef BOARD_WHISKERS
+GPIO_INT(LID_OPEN, PIN(B, 11), GPIO_PULL_UP | GPIO_INT_BOTH, lid_interrupt)
+#endif /* BOARD_WHISKERS */
 #endif /* SECTION_IS_RW */
 
 /* Keyboard inputs */
@@ -75,9 +78,6 @@ GPIO(EN_OTG,			PIN(B, 5), GPIO_INPUT)
 #elif defined(BOARD_WHISKERS)
 GPIO(DETECT_PATH_DISABLE_L,	PIN(A, 8), GPIO_ODR_HIGH)
 GPIO(SPI1_NSS,			PIN(A, 15), GPIO_OUT_HIGH)
-
-/* TODO(b:68934906): Enable interrupt on this pin */
-GPIO(LID_OPEN,			PIN(B, 11), GPIO_INPUT | GPIO_PULL_UP)
 #else
 GPIO(BASE_DET,			PIN(A, 15), GPIO_INPUT)
 #endif
