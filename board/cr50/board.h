@@ -358,4 +358,7 @@ enum nvmem_users {
 
 #define CONFIG_ENABLE_H1_ALERTS
 
+/* Enable hardware backed brute force resistance feature */
+#define CONFIG_PINWEAVER
+
 #endif /* __CROS_EC_BOARD_H */

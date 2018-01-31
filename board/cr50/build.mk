@@ -99,3 +99,5 @@ $(out)/tpm2/libtpm2.a:
 	$(MAKE) obj=$(realpath $(out))/tpm2 EMBEDDED_MODE=1 OBJ_PREFIX=Tpm2_ -C $(EXTLIB)
 
 endif   # BOARD_MK_INCLUDED_ONCE is nonempty
+
+board-$(CONFIG_PINWEAVER)+=pinweaver_tpm_imports.o

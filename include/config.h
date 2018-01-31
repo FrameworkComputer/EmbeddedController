@@ -2149,6 +2149,13 @@
 #undef CONFIG_PHYSICAL_PRESENCE_DEBUG_UNSAFE
 
 /*****************************************************************************/
+/* PinWeaver config
+ * A feature which exchanges a low entropy secret with rate limits for a high
+ * entropy secret. This enables a set of vendor specific commands for Cr50.
+ */
+#undef CONFIG_PINWEAVER
+
+/*****************************************************************************/
 /* PMU config */
 
 /*
