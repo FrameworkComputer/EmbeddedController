@@ -31,7 +31,7 @@ GPIO(ENABLE_BACKLIGHT_L,	PIN(D, 3), GPIO_OUT_HIGH)			/* Enable Backlight */
 GPIO(PCH_RSMRST_L,		PIN(C, 2), GPIO_OUT_LOW)			/* RSMRST# to SOC */
 GPIO(PCH_PWRBTN_L,		PIN(C, 1), GPIO_OUT_HIGH)			/* Power Button to SOC */
 GPIO(PCH_WAKE_L,		PIN(7, 4), GPIO_OUT_HIGH)			/* Wake SOC */
-GPIO(PCH_RCIN_L,		PIN(0, 2), GPIO_OUT_HIGH)			/* Cold Reset to SOC */
+GPIO(PCH_RCIN_L,		PIN(0, 2), GPIO_ODR_HIGH)			/* Cold Reset to SOC */
 GPIO(CCD_MODE_ODL,		PIN(E, 3), GPIO_INPUT)				/* Case Closed Debug Mode */
 GPIO(ENTERING_RW,		PIN(E, 1), GPIO_OUT_LOW)			/* EC Entering RW */
 GPIO(EC_BATT_PRES_ODL,		PIN(E, 5), GPIO_INPUT)				/* Battery Present */
