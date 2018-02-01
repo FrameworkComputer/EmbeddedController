@@ -49,6 +49,13 @@ void usb_release(void);
 int usb_is_suspended(void);
 
 /*
+ * Returns true if USB remote wakeup is currently enabled by host.
+ * Requires CONFIG_USB_SUSPEND to be defined, always return 0 if
+ * CONFIG_USB_REMOTE_WAKEUP is not defined.
+ */
+int usb_is_remote_wakeup_enabled(void);
+
+/*
  * Preserve in non-volatile memory the state of the USB hardware registers
  * which cannot be simply re-initialized when powered up again.
  */

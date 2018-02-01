@@ -171,6 +171,16 @@ enum hook_type {
 	HOOK_CCD_CHANGE,
 #endif
 
+#ifdef CONFIG_USB_SUSPEND
+	/*
+	 * Called when there is a change in USB power management status
+	 * (suspended or resumed).
+	 *
+	 * Hook routines are called from HOOKS task.
+	 */
+	HOOK_USB_PM_CHANGE,
+#endif
+
 	/*
 	 * Periodic tick, every HOOK_TICK_INTERVAL.
 	 *

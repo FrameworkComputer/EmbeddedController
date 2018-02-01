@@ -379,10 +379,16 @@ static void usb_reset(void)
 }
 
 #ifdef CONFIG_USB_SUSPEND
+static void usb_pm_change_notify_hooks(void)
+{
+	hook_notify(HOOK_USB_PM_CHANGE);
+}
+DECLARE_DEFERRED(usb_pm_change_notify_hooks);
+
 /* See RM0091 Reference Manual 30.5.5 Suspend/Resume events */
 static void usb_suspend(void)
 {
-	CPRINTF("SUS\n");
+	CPRINTF("SUS%d\n", remote_wakeup_enabled);
 
 	/*
 	 * usb_suspend can be called from hook task, make sure no interrupt is
@@ -400,6 +406,8 @@ static void usb_suspend(void)
 
 	/* USB is not in use anymore, we can (hopefully) sleep now. */
 	enable_sleep(SLEEP_MASK_USB_DEVICE);
+
+	hook_call_deferred(&usb_pm_change_notify_hooks_data, 0);
 }
 
 static void usb_resume_deferred(void)
@@ -410,6 +418,8 @@ static void usb_resume_deferred(void)
 	CPRINTF("RSMd %d %04x\n", state, STM32_USB_CNTR);
 	if (state == 2 || state == 3)
 		usb_suspend();
+	else
+		hook_call_deferred(&usb_pm_change_notify_hooks_data, 0);
 }
 DECLARE_DEFERRED(usb_resume_deferred);
 
@@ -440,6 +450,8 @@ static void usb_resume(void)
 	 */
 	if (state == 2 || state == 3)
 		hook_call_deferred(&usb_resume_deferred_data, 3 * MSEC);
+	else
+		hook_call_deferred(&usb_pm_change_notify_hooks_data, 0);
 }
 
 #ifdef CONFIG_USB_REMOTE_WAKEUP
@@ -535,6 +547,15 @@ int usb_is_suspended(void)
 #endif
 
 	return 0;
+}
+
+int usb_is_remote_wakeup_enabled(void)
+{
+#ifdef CONFIG_USB_REMOTE_WAKEUP
+	return remote_wakeup_enabled;
+#else
+	return 0;
+#endif
 }
 #endif /* CONFIG_USB_SUSPEND */
 

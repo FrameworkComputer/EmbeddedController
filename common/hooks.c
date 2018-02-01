@@ -50,6 +50,9 @@ static const struct hook_ptrs hook_list[] = {
 #ifdef CONFIG_CASE_CLOSED_DEBUG_V1
 	{__hooks_ccd_change, __hooks_ccd_change_end},
 #endif
+#ifdef CONFIG_USB_SUSPEND
+	{__hooks_usb_change, __hooks_usb_change_end},
+#endif
 	{__hooks_tick, __hooks_tick_end},
 	{__hooks_second, __hooks_second_end},
 };

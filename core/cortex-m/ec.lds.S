@@ -204,6 +204,12 @@ SECTIONS
         __hooks_ccd_change_end = .;
 #endif
 
+#ifdef CONFIG_USB_SUSPEND
+	__hooks_usb_change = .;
+	KEEP(*(.rodata.HOOK_USB_PM_CHANGE))
+	__hooks_usb_change_end = .;
+#endif
+
         __hooks_tick = .;
         KEEP(*(.rodata.HOOK_TICK))
         __hooks_tick_end = .;
