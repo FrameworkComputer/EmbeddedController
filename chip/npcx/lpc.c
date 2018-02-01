@@ -338,7 +338,7 @@ static void lpc_sib_wait_host_read_done(void)
 	deadline.val = get_time().val + LPC_HOST_TRANSACTION_TIMEOUT_US;
 	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD)) {
 		if (timestamp_expired(deadline, NULL)) {
-			ccprintf("Unexpected time of host read transaction\n");
+			CPRINTS("Unexpected time of host read transaction");
 			break;
 		}
 	}
@@ -354,7 +354,7 @@ static void lpc_sib_wait_host_write_done(void)
 	deadline.val = get_time().val + LPC_HOST_TRANSACTION_TIMEOUT_US;
 	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR)) {
 		if (timestamp_expired(deadline, NULL)) {
-			ccprintf("Unexpected time of host write transaction\n");
+			CPRINTS("Unexpected time of host write transaction");
 			break;
 		}
 	}
@@ -833,8 +833,7 @@ void lpc_lreset_pltrst_handler(void)
 
 	pltrst_asserted = lpc_get_pltrst_asserted();
 
-	ccprintf("LPC RESET# %sasserted",
-		pltrst_asserted ? "" : "de");
+	CPRINTS("LPC RESET# %sasserted", pltrst_asserted ? "" : "de");
 
 	/*
 	 * Once LRESET is de-asserted (low -> high), we need to initialize lpc
