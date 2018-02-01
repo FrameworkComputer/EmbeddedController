@@ -87,6 +87,7 @@ enum kb_scan_disable_masks {
 	KB_SCAN_DISABLE_LID_CLOSED   = (1<<0),
 	KB_SCAN_DISABLE_POWER_BUTTON = (1<<1),
 	KB_SCAN_DISABLE_LID_ANGLE    = (1<<2),
+	KB_SCAN_DISABLE_USB_SUSPENDED = (1<<3),
 };
 
 #ifdef HAS_TASK_KEYSCAN

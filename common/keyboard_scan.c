@@ -20,6 +20,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_api.h"
 #include "util.h"
 
 /* Console output macros */
@@ -775,6 +776,21 @@ static void keyboard_lid_change(void)
 DECLARE_HOOK(HOOK_LID_CHANGE, keyboard_lid_change, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_INIT, keyboard_lid_change, HOOK_PRIO_INIT_LID + 1);
 
+#endif
+
+#ifdef CONFIG_USB_SUSPEND
+static void keyboard_usb_pm_change(void)
+{
+	/*
+	 * If USB interface is suspended, and host is not asking us to do remote
+	 * wakeup, we can turn off the key scanning.
+	 */
+	if (usb_is_suspended() && !usb_is_remote_wakeup_enabled())
+		keyboard_scan_enable(0, KB_SCAN_DISABLE_USB_SUSPENDED);
+	else
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_USB_SUSPENDED);
+}
+DECLARE_HOOK(HOOK_USB_PM_CHANGE, keyboard_usb_pm_change, HOOK_PRIO_DEFAULT);
 #endif
 
 /*****************************************************************************/

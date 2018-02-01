@@ -571,6 +571,9 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 	keyboard_process_queue();
 }
 
+void clear_typematic_key(void)
+{ }
+
 #ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
 void usb_hid_keyboard_init(void)
 {
