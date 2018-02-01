@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "isl923x.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -364,6 +365,13 @@ static void isl923x_init(void)
 		ISL9238_C3_NO_REREAD_PROG_PIN;
 	if (raw_write16(ISL9238_REG_CONTROL3, reg))
 		goto init_fail;
+
+	/*
+	 * No need to proceed with the rest of init if we sysjump'd to this
+	 * image as the input current limit has already been set.
+	 */
+	if (system_jumped_to_this_image())
+		return;
 
 	/*
 	 * Initialize the input current limit to the board's default.
