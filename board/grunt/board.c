@@ -410,7 +410,7 @@ struct keyboard_scan_config keyscan_config = {
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] =     { 5, 0, 100 },
-	[PWM_CH_LED1_ORANGE] = {
+	[PWM_CH_LED1_AMBER] = {
 		0, PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_ACTIVE_LOW |
 		PWM_CONFIG_DSLEEP, 100
 	},
@@ -616,7 +616,7 @@ static void board_init_leds_off(void)
 {
 	/* Initialize the LEDs off. */
 	/* TODO(sjg): Eventually do something with these LEDs. */
-	pwm_set_duty(PWM_CH_LED1_ORANGE, 0);
+	pwm_set_duty(PWM_CH_LED1_AMBER, 0);
 	pwm_set_duty(PWM_CH_LED2_BLUE, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init_leds_off, HOOK_PRIO_INIT_PWM + 1);
