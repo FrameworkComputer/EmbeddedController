@@ -878,7 +878,8 @@ static int ccd_command_wrapper(int argc, char *password,
 	 * error code is the first byte after the header.
 	 */
 	return_code = be32toh(vch->tpm_header.command_code);
-	if (return_code && (return_code != VENDOR_RC_IN_PROGRESS)) {
+	if ((return_code != EC_SUCCESS) &&
+	    (return_code != VENDOR_RC_IN_PROGRESS)) {
 		rv = vch->ccd_subcommand;
 	} else {
 		rv = EC_SUCCESS;
@@ -1457,7 +1458,7 @@ static enum vendor_cmd_rc ccd_vendor(enum vendor_cmd_cc code,
 				     size_t input_size,
 				     size_t *response_size)
 {
-	enum vendor_cmd_rc (*handler)(void *x, size_t y, size_t *t);
+	enum vendor_cmd_rc (*handler)(void *x, size_t y, size_t *t) = NULL;
 	char *buffer;
 	enum vendor_cmd_rc rc;
 
@@ -1523,7 +1524,7 @@ static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
 					  size_t input_size,
 					  size_t *response_size)
 {
-	int rv;
+	int rv = EC_SUCCESS;
 	int error_line;
 
 	do {
@@ -1555,6 +1556,7 @@ static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
 				CPRINTF("Capability %d is not present\n",
 					required_capabilities[i]);
 				error_line = __LINE__;
+				rv = EC_ERROR_ACCESS_DENIED;
 				break;
 			}
 		}
