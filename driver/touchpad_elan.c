@@ -16,12 +16,16 @@
 #include "touchpad.h"
 #include "update_fw.h"
 #include "util.h"
+#include "usb_api.h"
 #include "usb_hid_touchpad.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_TOUCHPAD, outstr)
 #define CPRINTF(format, args...) cprintf(CC_TOUCHPAD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
+
+#define TASK_EVENT_POWERON  TASK_EVENT_CUSTOM(1)
+#define TASK_EVENT_POWEROFF  TASK_EVENT_CUSTOM(2)
 
 /******************************************************************************/
 /* How to talk to the controller */
@@ -43,9 +47,12 @@
 #define ETP_I2C_RESOLUTION_CMD		0x0108
 #define ETP_I2C_PRESSURE_CMD		0x010A
 #define ETP_I2C_SET_CMD			0x0300
+#define ETP_I2C_POWER_CMD		0x0307
 #define ETP_I2C_FW_CHECKSUM_CMD		0x030F
 
 #define ETP_ENABLE_ABS		0x0001
+
+#define ETP_DISABLE_POWER	0x0001
 
 #define ETP_I2C_REPORT_LEN	34
 
@@ -133,6 +140,35 @@ static int elan_tp_write_cmd(uint16_t reg, uint16_t val)
 		      buf, sizeof(buf), NULL, 0, I2C_XFER_SINGLE);
 	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
 
+	return rv;
+}
+
+/* Power is on by default. */
+static int elan_tp_power = 1;
+
+static int elan_tp_set_power(int enable)
+{
+	int rv;
+	uint16_t val;
+
+	if ((enable && elan_tp_power) || (!enable && !elan_tp_power))
+		return EC_SUCCESS;
+
+	CPRINTS("elan TP power %s", enable ? "on" : "off");
+
+	rv = elan_tp_read_cmd(ETP_I2C_POWER_CMD, &val);
+	if (rv)
+		goto out;
+
+	if (enable)
+		val &= ~ETP_DISABLE_POWER;
+	else
+		val |= ETP_DISABLE_POWER;
+
+	rv = elan_tp_write_cmd(ETP_I2C_POWER_CMD, val);
+
+	elan_tp_power = enable;
+out:
 	return rv;
 }
 
@@ -677,11 +713,34 @@ void touchpad_interrupt(enum gpio_signal signal)
 
 void touchpad_task(void *u)
 {
+	uint32_t event;
+
 	elan_tp_init();
 
 	while (1) {
-		task_wait_event(-1);
+		event = task_wait_event(-1);
 
-		elan_tp_read_report_retry();
+		if (event & TASK_EVENT_WAKE)
+			elan_tp_read_report_retry();
+
+		if (event & TASK_EVENT_POWERON)
+			elan_tp_set_power(1);
+		else if (event & TASK_EVENT_POWEROFF)
+			elan_tp_set_power(0);
 	}
 }
+
+#ifdef CONFIG_USB_SUSPEND
+static void touchpad_usb_pm_change(void)
+{
+	/*
+	 * If USB interface is suspended, and host is not asking us to do remote
+	 * wakeup, we can turn off the touchpad.
+	 */
+	if (usb_is_suspended() && !usb_is_remote_wakeup_enabled())
+		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWEROFF, 0);
+	else
+		task_set_event(TASK_ID_TOUCHPAD, TASK_EVENT_POWERON, 0);
+}
+DECLARE_HOOK(HOOK_USB_PM_CHANGE, touchpad_usb_pm_change, HOOK_PRIO_DEFAULT);
+#endif
