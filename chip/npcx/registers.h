@@ -64,6 +64,7 @@
 #define DEBUG_CLK                        0
 #define DEBUG_LPC                        0
 #define DEBUG_ESPI                       0
+#define DEBUG_WOV                        0
 
 /* Modules Map */
 #define NPCX_ESPI_BASE_ADDR              0x4000A000
@@ -75,10 +76,13 @@
 #define NPCX_GDMA_BASE_ADDR              0x40011000
 #define NPCX_FIU_BASE_ADDR               0x40020000
 #define NPCX_KBSCAN_REGS_BASE            0x400A3000
+#define NPCX_WOV_BASE_ADDR               0x400A4000
+#define NPCX_APM_BASE_ADDR               0x400A4800
 #define NPCX_GLUE_REGS_BASE              0x400A5000
 #define NPCX_BBRAM_BASE_ADDR             0x400AF000
 #define NPCX_HFCG_BASE_ADDR              0x400B5000
 #define NPCX_LFCG_BASE_ADDR              0x400B5100
+#define NPCX_FMUL2_BASE_ADDR             0x400B5200
 #define NPCX_MTC_BASE_ADDR               0x400B7000
 #define NPCX_MSWC_BASE_ADDR              0x400C1000
 #define NPCX_SCFG_BASE_ADDR              0x400C3000
@@ -202,7 +206,7 @@
 #define NPCX_IRQ_SMB5                    NPCX_IRQ_19
 #define NPCX_IRQ_SMB6                    NPCX_IRQ_20
 #define NPCX_IRQ_PS2                     NPCX_IRQ_21
-#define NPCX_IRQ22_NOUSED                NPCX_IRQ_22
+#define NPCX_IRQ_WOV                     NPCX_IRQ_22
 #define NPCX_IRQ_MFT_2                   NPCX_IRQ_23
 #define NPCX_IRQ_SHM                     NPCX_IRQ_24
 #define NPCX_IRQ_KBC_IBF                 NPCX_IRQ_25
@@ -689,6 +693,12 @@ enum {
 #define NPCX_DEVALTF_SHI_NEW             7
 #endif
 
+/* pin-mux for WoV */
+#ifdef NPCX_WOV_SUPPORT
+#define NPCX_DEVALTE_WOV_SL              0
+#define NPCX_DEVALTE_I2S_SL              1
+#endif
+
 /* Others bit definitions */
 #define NPCX_LFCGCALCNT_LPREG_CTL_EN     1
 
@@ -890,6 +900,7 @@ enum {
 #define NPCX_PWDWN_CTL7_SMB5_PD          0
 #define NPCX_PWDWN_CTL7_SMB6_PD          1
 #define NPCX_PWDWN_CTL7_SMB7_PD          2
+#define NPCX_PWDWN_CTL7_WOV_PD           7
 #endif
 
 /*
@@ -911,6 +922,9 @@ enum {
 	CGC_OFFSET_ESPI   = 5,
 #if defined(CHIP_FAMILY_NPCX7)
 	CGC_OFFSET_I2C2   = 6,
+#endif
+#ifdef NPCX_WOV_SUPPORT
+	CGC_OFFSET_WOV   = 6,
 #endif
 };
 
@@ -947,6 +961,9 @@ enum NPCX_PMC_PWDWN_CTL_T {
 #define CGC_I2C_MASK2    ((1 << NPCX_PWDWN_CTL7_SMB5_PD) | \
 			 (1 << NPCX_PWDWN_CTL7_SMB6_PD) | \
 			 (1 << NPCX_PWDWN_CTL7_SMB7_PD))
+#endif
+#ifdef NPCX_WOV_SUPPORT
+#define CGC_WOV_MASK     (1 << NPCX_PWDWN_CTL7_WOV_PD)
 #endif
 #define CGC_ADC_MASK     (1 << NPCX_PWDWN_CTL4_ADC_PD)
 #define CGC_PECI_MASK    (1 << NPCX_PWDWN_CTL4_PECI_PD)
@@ -1822,6 +1839,179 @@ enum {
 				| MASK(C_SIZE) | D_SIZE_2)
 #define MASK_CMD_WR_ADR         (MASK(EXEC_DONE) | FLASH_SEL | MASK(RD_WR) \
 				| MASK(A_SIZE))
+
+/******************************************************************************/
+/* APM (Audio Processing Module) Registers */
+#define NPCX_APM_SR                 REG8(NPCX_APM_BASE_ADDR + 0x000)
+#define NPCX_APM_SR2                REG8(NPCX_APM_BASE_ADDR + 0x004)
+#define NPCX_APM_ICR                REG8(NPCX_APM_BASE_ADDR + 0x008)
+#define NPCX_APM_IMR                REG8(NPCX_APM_BASE_ADDR + 0x00C)
+#define NPCX_APM_IFR                REG8(NPCX_APM_BASE_ADDR + 0x010)
+#define NPCX_APM_CR_APM             REG8(NPCX_APM_BASE_ADDR + 0x014)
+#define NPCX_APM_CR_CK              REG8(NPCX_APM_BASE_ADDR + 0x018)
+#define NPCX_APM_AICR_ADC           REG8(NPCX_APM_BASE_ADDR + 0x01C)
+#define NPCX_APM_FCR_ADC            REG8(NPCX_APM_BASE_ADDR + 0x020)
+#define NPCX_APM_CR_DMIC            REG8(NPCX_APM_BASE_ADDR + 0x02C)
+#define NPCX_APM_CR_ADC             REG8(NPCX_APM_BASE_ADDR + 0x030)
+#define NPCX_APM_CR_MIX             REG8(NPCX_APM_BASE_ADDR + 0x034)
+#define NPCX_APM_DR_MIX             REG8(NPCX_APM_BASE_ADDR + 0x038)
+#define NPCX_APM_GCR_ADCL           REG8(NPCX_APM_BASE_ADDR + 0x03C)
+#define NPCX_APM_GCR_ADCR           REG8(NPCX_APM_BASE_ADDR + 0x040)
+#define NPCX_APM_GCR_MIXADCL        REG8(NPCX_APM_BASE_ADDR + 0x044)
+#define NPCX_APM_GCR_MIXADCR        REG8(NPCX_APM_BASE_ADDR + 0x048)
+#define NPCX_APM_CR_ADC_AGC         REG8(NPCX_APM_BASE_ADDR + 0x04C)
+#define NPCX_APM_DR_ADC_AGC         REG8(NPCX_APM_BASE_ADDR + 0x050)
+#define NPCX_APM_SR_ADC_AGCDGL      REG8(NPCX_APM_BASE_ADDR + 0x054)
+#define NPCX_APM_SR_ADC_AGCDGR      REG8(NPCX_APM_BASE_ADDR + 0x058)
+#define NPCX_APM_CR_VAD             REG8(NPCX_APM_BASE_ADDR + 0x05C)
+#define NPCX_APM_DR_VAD             REG8(NPCX_APM_BASE_ADDR + 0x060)
+#define NPCX_APM_CR_VAD_CMD         REG8(NPCX_APM_BASE_ADDR + 0x064)
+#define NPCX_APM_CR_TR              REG8(NPCX_APM_BASE_ADDR + 0x068)
+#define NPCX_APM_DR_TR              REG8(NPCX_APM_BASE_ADDR + 0x06C)
+#define NPCX_APM_SR_TR1             REG8(NPCX_APM_BASE_ADDR + 0x070)
+#define NPCX_APM_SR_TR_SRCADC       REG8(NPCX_APM_BASE_ADDR + 0x074)
+
+/******************************************************************************/
+/* APM register fields */
+#define NPCX_APM_SR_IRQ_PEND                    6
+#define NPCX_APM_SR2_SMUTEIP                    6
+#define NPCX_APM_ICR_INTR_MODE                  FIELD(6, 2)
+#define NPCX_APM_IMR_VAD_DTC_MASK               6
+#define NPCX_APM_IFR_VAD_DTC                    6
+#define NPCX_APM_CR_APM_PD                      0
+#define NPCX_APM_CR_APM_AGC_DIS                 FIELD(1, 2)
+#define NPCX_APM_CR_CK_MCLK_FREQ                FIELD(0, 2)
+#define NPCX_APM_AICR_ADC_ADC_AUDIOIF           FIELD(0, 2)
+#define NPCX_APM_AICR_ADC_PD_AICR_ADC           4
+#define NPCX_APM_AICR_ADC_ADC_ADWL              FIELD(6, 2)
+#define NPCX_APM_FCR_ADC_ADC_FREQ               FIELD(0, 4)
+#define NPCX_APM_FCR_ADC_ADC_WNF                FIELD(4, 2)
+#define NPCX_APM_FCR_ADC_ADC_HPF                6
+#define NPCX_APM_CR_DMIC_ADC_DMIC_SEL_RIGHT     FIELD(0, 2)
+#define NPCX_APM_CR_DMIC_ADC_DMIC_SEL_LEFT      FIELD(2, 2)
+#define NPCX_APM_CR_DMIC_ADC_DMIC_RATE          FIELD(4, 3)
+#define NPCX_APM_CR_DMIC_PD_DMIC                7
+#define NPCX_APM_CR_ADC_ADC_SOFT_MUTE           7
+#define NPCX_APM_CR_MIX_MIX_ADD                 FIELD(0, 6)
+#define NPCX_APM_CR_MIX_MIX_LOAD                6
+#define NPCX_APM_DR_MIX_MIX_DATA                FIELD(0, 8)
+#define NPCX_APM_MIX_2_AIADCR_SEL               FIELD(4, 2)
+#define NPCX_APM_MIX_2_AIADCL_SEL               FIELD(6, 2)
+#define NPCX_APM_GCR_ADCL_GIDL                  FIELD(0, 6)
+#define NPCX_APM_GCR_ADCL_LRGID                 7
+#define NPCX_APM_GCR_ADCR_GIDR                  FIELD(0, 6)
+#define NPCX_APM_GCR_MIXADCL_GIMIXL             FIELD(0, 6)
+#define NPCX_APM_GCR_MIXADCR_GIMIXR             FIELD(0, 6)
+#define NPCX_APM_CR_ADC_AGC_ADC_AGC_ADD         FIELD(0, 6)
+#define NPCX_APM_CR_ADC_AGC_ADC_AGC_LOAD        6
+#define NPCX_APM_CR_ADC_AGC_ADC_AGC_EN          7
+#define NPCX_APM_DR_ADC_AGC_ADC_AGC_DATA        FIELD(0, 8)
+#define NPCX_ADC_AGC_0_AGC_TARGET               FIELD(2, 4)
+#define NPCX_ADC_AGC_0_AGC_STEREO               6
+#define NPCX_ADC_AGC_1_HOLD                     FIELD(0, 4)
+#define NPCX_ADC_AGC_1_NG_THR                   FIELD(4, 3)
+#define NPCX_ADC_AGC_1_NG_EN                    7
+#define NPCX_ADC_AGC_2_DCY                      FIELD(0, 4)
+#define NPCX_ADC_AGC_2_ATK                      FIELD(4, 4)
+#define NPCX_ADC_AGC_3_AGC_MAX                  FIELD(0, 5)
+#define NPCX_ADC_AGC_4_AGC_MIN                  FIELD(0, 5)
+#define NPCX_APM_CR_VAD_VAD_ADD                 FIELD(0, 6)
+#define NPCX_APM_CR_VAD_VAD_LOAD                6
+#define NPCX_APM_CR_VAD_VAD_EN                  7
+#define NPCX_APM_DR_VAD_VAD_DATA                FIELD(0, 8)
+#define NPCX_APM_CR_VAD_CMD_VAD_RESTART         0
+#define NPCX_APM_CR_TR_FAST_ON                  7
+#define NPCX_VAD_0_VAD_INSEL                    FIELD(0, 2)
+#define NPCX_VAD_0_VAD_DMIC_FREQ                FIELD(2, 3)
+#define NPCX_VAD_0_VAD_ADC_WAKEUP               5
+#define NPCX_VAD_0_ZCD_EN                       6
+#define NPCX_VAD_1_VAD_POWER_SENS               FIELD(0, 5)
+#define NPCX_APM_CONTROL_ADD                    FIELD(0, 6)
+#define NPCX_APM_CONTROL_LOAD                   6
+
+/******************************************************************************/
+/* FMUL2 (Frequency Multiplier Module 2) Registers */
+#define NPCX_FMUL2_FM2CTRL          REG8(NPCX_FMUL2_BASE_ADDR + 0x000)
+#define NPCX_FMUL2_FM2ML            REG8(NPCX_FMUL2_BASE_ADDR + 0x002)
+#define NPCX_FMUL2_FM2MH            REG8(NPCX_FMUL2_BASE_ADDR + 0x004)
+#define NPCX_FMUL2_FM2N             REG8(NPCX_FMUL2_BASE_ADDR + 0x006)
+#define NPCX_FMUL2_FM2P             REG8(NPCX_FMUL2_BASE_ADDR + 0x008)
+#define NPCX_FMUL2_FM2_VER          REG8(NPCX_FMUL2_BASE_ADDR + 0x00A)
+
+/******************************************************************************/
+/* FMUL2 register fields */
+#define NPCX_FMUL2_FM2CTRL_LOAD2                0
+#define NPCX_FMUL2_FM2CTRL_LOCK2                2
+#define NPCX_FMUL2_FM2CTRL_FMUL2_DIS            5
+#define NPCX_FMUL2_FM2CTRL_TUNE_DIS             6
+#define NPCX_FMUL2_FM2CTRL_CLK2_CHNG            7
+#define NPCX_FMUL2_FM2N_FM2N                    FIELD(0, 6)
+#define NPCX_FMUL2_FM2P_WFPRED                  FIELD(4, 4)
+
+/******************************************************************************/
+/* WOV (Wake-on-Voice) Registers */
+#define NPCX_WOV_CLOCK_CNTL         REG32(NPCX_WOV_BASE_ADDR + 0x000)
+#define NPCX_WOV_PLL_CNTL1          REG32(NPCX_WOV_BASE_ADDR + 0x004)
+#define NPCX_WOV_PLL_CNTL2          REG32(NPCX_WOV_BASE_ADDR + 0x008)
+#define NPCX_WOV_FIFO_CNT           REG32(NPCX_WOV_BASE_ADDR + 0x00C)
+#define NPCX_WOV_FIFO_OUT           REG32(NPCX_WOV_BASE_ADDR + 0x010)
+#define NPCX_WOV_STATUS             REG32(NPCX_WOV_BASE_ADDR + 0x014)
+#define NPCX_WOV_WOV_INTEN          REG32(NPCX_WOV_BASE_ADDR + 0x018)
+#define NPCX_WOV_APM_CTRL           REG32(NPCX_WOV_BASE_ADDR + 0x01C)
+#define NPCX_WOV_I2S_CNTL(n)        REG32(NPCX_WOV_BASE_ADDR + 0x020 + (4*n))
+#define NPCX_WOV_VERSION            REG32(NPCX_WOV_BASE_ADDR + 0x030)
+
+/******************************************************************************/
+/* WOV register fields */
+#define NPCX_WOV_CLOCK_CNT_CLK_SEL              0
+#define NPCX_WOV_CLOCK_CNT_DMIC_EN              3
+#define NPCX_WOV_CLOCK_CNT_PLL_EDIV_SEL         7
+#define NPCX_WOV_CLOCK_CNT_PLL_EDIV             FIELD(8, 7)
+#define NPCX_WOV_CLOCK_CNT_PLL_EDIV_DC          FIELD(16, 7)
+#define NPCX_WOV_CLOCK_CNT_DMIC_CKDIV_EN        24
+#define NPCX_WOV_CLOCK_CNT_DMIC_CKDIV_SEL       25
+#define NPCX_WOV_FIFO_CNT_FIFO_ITHRSH           FIELD(0, 6)
+#define NPCX_WOV_FIFO_CNT_FIFO_WTHRSH           FIELD(6, 6)
+#define NPCX_WOV_FIFO_CNT_I2S_FFRST             13
+#define NPCX_WOV_FIFO_CNT_CORE_FFRST            14
+#define NPCX_WOV_FIFO_CNT_CFIFO_ISEL            FIELD(16, 3)
+#define NPCX_WOV_STATUS_CFIFO_CNT               FIELD(0, 8)
+#define NPCX_WOV_STATUS_CFIFO_NE                8
+#define NPCX_WOV_STATUS_CFIFO_OIT               9
+#define NPCX_WOV_STATUS_CFIFO_OWT               10
+#define NPCX_WOV_STATUS_CFIFO_OVRN              11
+#define NPCX_WOV_STATUS_I2S_FIFO_OVRN           12
+#define NPCX_WOV_STATUS_I2S_FIFO_UNDRN          13
+#define NPCX_WOV_STATUS_BITS			FIELD(9, 6)
+#define NPCX_WOV_INTEN_VAD_INTEN                0
+#define NPCX_WOV_INTEN_VAD_WKEN                 1
+#define NPCX_WOV_INTEN_CFIFO_NE_IE              8
+#define NPCX_WOV_INTEN_CFIFO_OIT_IE             9
+#define NPCX_WOV_INTEN_CFIFO_OWT_WE             10
+#define NPCX_WOV_INTEN_CFIFO_OVRN_IE            11
+#define NPCX_WOV_INTEN_I2S_FIFO_OVRN_IE         12
+#define NPCX_WOV_INTEN_I2S_FIFO_UNDRN_IE        13
+#define NPCX_WOV_APM_CTRL_APM_RST               0
+#define NPCX_WOV_PLL_CNTL1_PLL_PWDEN            0
+#define NPCX_WOV_PLL_CNTL1_PLL_OTDV1            FIELD(4, 4)
+#define NPCX_WOV_PLL_CNTL1_PLL_OTDV2            FIELD(8, 4)
+#define NPCX_WOV_PLL_CNTL1_PLL_LOCKI            15
+#define NPCX_WOV_PLL_CNTL2_PLL_FBDV             FIELD(0, 12)
+#define NPCX_WOV_PLL_CNTL2_PLL_INDV             FIELD(12, 4)
+#define NPCX_WOV_I2S_CNTL_I2S_BCNT              FIELD(0, 5)
+#define NPCX_WOV_I2S_CNTL_I2S_TRIG              5
+#define NPCX_WOV_I2S_CNTL_I2S_LBHIZ             6
+#define NPCX_WOV_I2S_CNTL_I2S_ST_DEL            FIELD(7, 9)
+#define NPCX_WOV_I2S_CNTL_I2S_CHAN              FIELD(0, 16)
+#define NPCX_WOV_I2S_CNTL0_I2S_HIZD             16
+#define NPCX_WOV_I2S_CNTL0_I2S_HIZ              17
+#define NPCX_WOV_I2S_CNTL0_I2S_SCLK_INV         18
+#define NPCX_WOV_I2S_CNTL0_I2S_OPS              19
+#define NPCX_WOV_I2S_CNTL0_I2S_OPE              20
+#define NPCX_WOV_I2S_CNTL0_I2S_IPS              21
+#define NPCX_WOV_I2S_CNTL0_I2S_IPE              22
+#define NPCX_WOV_I2S_CNTL0_I2S_TST              23
+#define NPCX_WOV_I2S_CNTL1_I2S_CHN1_DIS         24
 
 /******************************************************************************/
 /* UART registers and functions */

@@ -313,6 +313,20 @@
 #define NPCX_ALT_PSL_IN4 /* NO PSL in NPCX7mnG series */
 #endif
 
+/* WOV module */
+#ifdef NPCX_WOV_SUPPORT
+#define NPCX_ALT_I2S_SYNC ALT(A, 5, NPCX_ALT(E, I2S_SL)) /* I2S_SYNC */
+#define NPCX_ALT_I2S_SCLK ALT(A, 7, NPCX_ALT(E, I2S_SL)) /* I2S_SCLK */
+#define NPCX_ALT_I2S_SDAT ALT(B, 0, NPCX_ALT(E, I2S_SL)) /* I2S_DATA */
+#define NPCX_ALT_DMIC_CLK ALT(9, 4, NPCX_ALT(E, WOV_SL)) /* DMIC_CLK */
+#define NPCX_ALT_DMIC_IN  ALT(9, 7, NPCX_ALT(E, WOV_SL)) /* DMIC_IN  */
+#else
+#define NPCX_ALT_I2S_SYNC
+#define NPCX_ALT_I2S_SCLK
+#define NPCX_ALT_I2S_SDAT
+#define NPCX_ALT_DMIC_CLK
+#define NPCX_ALT_DMIC_IN
+#endif
 #define NPCX_ALT_TABLE { \
 	NPCX_ALT_I2C0SDA0 \
 	NPCX_ALT_I2C0SCL0 \
@@ -393,7 +407,13 @@
 	NPCX_ALT_PSL_IN1 \
 	NPCX_ALT_PSL_IN2 \
 	NPCX_ALT_PSL_IN3 \
-	NPCX_ALT_PSL_IN4 }
+	NPCX_ALT_PSL_IN4 \
+	NPCX_ALT_I2S_SYNC \
+	NPCX_ALT_I2S_SCLK \
+	NPCX_ALT_I2S_SDAT \
+	NPCX_ALT_DMIC_CLK \
+	NPCX_ALT_DMIC_IN \
+}
 
 /*****************************************************************************/
 /* Macro functions for Low-Voltage mapping table */

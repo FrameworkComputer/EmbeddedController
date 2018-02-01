@@ -51,6 +51,7 @@ enum module_id {
 	MODULE_VBOOT,
 	MODULE_MCO,
 	MODULE_TFDP,
+	MODULE_WOV,
 
 	/* Module count; not an actual module */
 	MODULE_COUNT

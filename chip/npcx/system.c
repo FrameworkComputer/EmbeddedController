@@ -695,7 +695,11 @@ void system_pre_init(void)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = pwdwn6;
 
 #if defined(CHIP_FAMILY_NPCX7)
+#if defined(CHIP_VARIANT_NPCX7M7W) || defined(CHIP_VARIANT_NPCX7M6XB)
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xE7;
+#else
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
+#endif
 #endif
 
 	/* Following modules can be powered down automatically in npcx7 */
@@ -794,6 +798,8 @@ const char *system_get_chip_name(void)
 #elif defined(CHIP_FAMILY_NPCX7)
 	case 0x21:
 		return "NPCX796F";
+	case 0x24:
+		return "NPCX797W";
 #endif
 	default:
 		*p       = system_to_hex((chip_id & 0xF0) >> 4);
