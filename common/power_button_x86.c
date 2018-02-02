@@ -310,13 +310,24 @@ static void state_machine(uint64_t tnow)
 		break;
 	case PWRBTN_STATE_INIT_ON:
 		/*
-		 * Don't do anything until the charger knows the battery level.
-		 * Otherwise we could power on the AP only to shut it right
-		 * back down due to insufficient battery.
+		 * Before attempting to power the system on, we need to wait for
+		 * charger and battery to be ready to supply sufficient power.
+		 * Check every 100 milliseconds, and give up after 1 second.
 		 */
-#ifdef HAS_TASK_CHARGER
-		if (charge_get_state() == PWR_STATE_INIT)
+		if (tnow > 1 * SECOND) {
+			pwrbtn_state = PWRBTN_STATE_IDLE;
 			break;
+		}
+
+#ifdef CONFIG_CHARGER
+		/*
+		 * If not able to power on, try again later, to allow time for
+		 * charger, battery and USB-C PD initialization.
+		 */
+		if (charge_prevent_power_on(0)) {
+			tnext_state = tnow + 100 * MSEC;
+			break;
+		}
 #endif
 
 		/*
