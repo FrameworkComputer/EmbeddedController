@@ -92,21 +92,14 @@ static void adp_in_deferred(void)
 	if (!level) {
 		/* BJ is inserted but the voltage isn't effective because PU3
 		 * is still disabled. */
-		pi.voltage = 19000;
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			/* If type-c voltage is higher than BJ voltage, PU3 will
-			 * shut down due to reverse current protection. So, we
-			 * need to lower the voltage first. */
-			if (charge_manager_get_charger_voltage() > pi.voltage) {
-				pd_set_external_voltage_limit(
-						CHARGE_PORT_TYPEC0, pi.voltage);
-				hook_call_deferred(&adp_in_deferred_data,
-						   ADP_DEBOUNCE_MS * MSEC);
-				return;
-			}
-			/* Set it to the default. Will be updated by AP. */
+		pi.voltage = 19500;
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			/*
+			 * It doesn't matter what we set here because we'll
+			 * brown out anyway when charge_manager switches
+			 * input.
+			 */
 			pi.current = 3330;
-		}
 	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
@@ -469,16 +462,15 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	/* Turn on/off power shortage alert. Performs the same check as
-	 * system_can_boot_ap(). It's repeated here because charge_manager
-	 * hasn't updated charge_current/voltage when board_set_charge_limit
-	 * is called. */
-	led_alert(charge_ma * charge_mv <
-			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000);
+/* Mapping to the old schematics */
+#define GPIO_U42_P GPIO_TYPE_C_60W
+#define GPIO_U22_C GPIO_TYPE_C_65W
 
+/*
+ * Board version 2.1 or before uses a different current monitoring circuitry.
+ */
+static void set_charge_limit(int charge_ma)
+{
 	/*
 	 * We have two FETs connected to two registers: PR257 & PR258.
 	 * These control thresholds of the over current monitoring system.
@@ -506,6 +498,81 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		/* TODO(http://crosbug.com/p/65013352) */
 		CPRINTS("Current %dmA not supported", charge_ma);
 	}
+}
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	uint32_t brd_ver = 0;
+	int p87w = 0, p65w = 0, p60w = 0;
+
+	/*
+	 * Turn on/off power shortage alert. Performs the same check as
+	 * system_can_boot_ap(). It's repeated here because charge_manager
+	 * hasn't updated charge_current/voltage when board_set_charge_limit
+	 * is called.
+	 */
+	led_alert(charge_ma * charge_mv <
+			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000);
+
+	/*
+	 * In terms of timing, this should always work because
+	 * HOOK_PRIO_CHARGE_MANAGER_INIT is notified after HOOK_PRIO_INIT_I2C.
+	 * If CBI isn't initialized or contains invalid data, we assume it's
+	 * a new board.
+	 */
+	if (cbi_get_board_version(&brd_ver) == EC_SUCCESS && brd_ver < 0x0202)
+		return set_charge_limit(charge_ma);
+	/*
+	 * We have three FETs connected to three registers: PR257, PR258,
+	 * PR7824. These control the thresholds of the current monitoring
+	 * system.
+	 *
+	 *                               PR257  PR7824 PR258
+	 *   For BJ (65W or 90W)           off     off   off
+	 *   For 4.35A (87W)                on     off   off
+	 *   For 3.25A (65W)               off     off    on
+	 *   For 3.00A (60W)               off      on   off
+	 *
+	 * The system power consumption is capped by PR259, which is stuffed
+	 * differently depending on the SKU (65W v.s. 90W or U42 v.s. U22).
+	 * So, we only need to monitor type-c adapters. For example:
+	 *
+	 *   a 90W system powered by 65W type-c charger
+	 *   b 65W system powered by 60W type-c charger
+	 *   c 65W system powered by 87W type-c charger
+	 *
+	 * In a case such as (c), we actually do not need to monitor the current
+	 * because the max is capped by PR259.
+	 *
+	 * AP is expected to read type-c adapter wattage from EC and control
+	 * power consumption to avoid over-current or system browns out.
+	 *
+	 */
+	if (supplier != CHARGE_SUPPLIER_DEDICATED) {
+		/* Apple 87W charger offers 4.3A @20V. */
+		if (charge_ma >= 4300) {
+			p87w = 1;
+		} else if (charge_ma >= 3250) {
+			p65w = 1;
+		} else if (charge_ma >= 3000) {
+			p60w = 1;
+		} else {
+			/*
+			 * TODO:http://crosbug.com/p/65013352.
+	 		 * The current monitoring system doesn't support lower
+	 		 * current. These currents are most likely not enough to
+	 		 * power the system. However, if they're needed, EC can
+	 		 * monitor PMON_PSYS and trigger H_PROCHOT by itself.
+	 		 */
+			p60w = 1;
+			CPRINTS("Current %dmA not supported", charge_ma);
+		}
+	}
+
+	gpio_set_level(GPIO_TYPE_C_87W, p87w);
+	gpio_set_level(GPIO_TYPE_C_65W, p65w);
+	gpio_set_level(GPIO_TYPE_C_60W, p60w);
 }
 
 enum battery_present battery_is_present(void)

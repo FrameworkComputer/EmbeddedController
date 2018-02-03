@@ -218,29 +218,6 @@ int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	return 0;
 }
 
-#define CHARGE_PORT_SYSJUMP_TAG 0x4350 /* "CP" - Charge Port */
-#define CHARGE_PORT_HOOK_VERSION 1
-
-static int restore_active_charge_port(struct charge_port_info *cpi)
-{
-	int version, size;
-	const struct charge_port_info *prev;
-
-	if (!(system_get_reset_flags() & RESET_FLAG_SYSJUMP))
-		return EC_ERROR_UNCHANGED;
-
-	prev = (const struct charge_port_info *)system_get_jump_tag(
-				CHARGE_PORT_SYSJUMP_TAG, &version, &size);
-	if (!prev || version != CHARGE_PORT_HOOK_VERSION ||
-			size != sizeof(*prev))
-		return EC_ERROR_INVAL;
-
-	cpi->current = prev->current;
-	cpi->voltage = prev->voltage;
-
-	return EC_SUCCESS;
-}
-
 /*
  * Since fizz has no battery, it must source all of its power from either
  * USB-C or the barrel jack (preferred). Fizz operates in continuous safe
@@ -274,14 +251,8 @@ static void board_charge_manager_init(void)
 		typec_set_input_current_limit(port, 3000, 5000);
 		break;
 	case CHARGE_PORT_BARRELJACK:
-		/* TODO: Once transition from GPIO to CBI completes, get BJ
-		 * adapter info locally. No need to save & restore it. */
-		if (restore_active_charge_port(&cpi)) {
-			/* Set it to the default. Will be updated by AP. */
-			CPRINTS("Previous charge info not found. Use default.");
-			cpi.voltage = 19000;
-			cpi.current = 3330;
-		}
+		cpi.voltage = 19500;
+		cpi.current = 3330;
 		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 					     DEDICATED_CHARGE_PORT, &cpi);
 		break;
@@ -289,24 +260,6 @@ static void board_charge_manager_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
 	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
-
-static void preserve_active_charge_port(void)
-{
-	struct charge_port_info cpi;
-
-	/* If it's not a dedicated charge port, we don't bother. Saving &
-	 * restoring PD charger info is a much bigger problem. */
-	if (charge_manager_get_active_charge_port() != DEDICATED_CHARGE_PORT)
-		return;
-	cpi.current = charge_manager_get_charger_current();
-	cpi.voltage = charge_manager_get_charger_voltage();
-	CPRINTS("Saving charge port info: %dmA %dmV", cpi.current, cpi.voltage);
-	cflush();
-
-	system_add_jump_tag(CHARGE_PORT_SYSJUMP_TAG, CHARGE_PORT_HOOK_VERSION,
-			    sizeof(cpi), &cpi);
-}
-DECLARE_HOOK(HOOK_SYSJUMP, preserve_active_charge_port, HOOK_PRIO_DEFAULT);
 
 int board_set_active_charge_port(int port)
 {
@@ -326,6 +279,7 @@ int board_set_active_charge_port(int port)
 
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
+		/* This is connected to TP on board version 2.2+ thus no-op */
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 0);
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 1);
 		gpio_enable_interrupt(GPIO_ADP_IN_L);
@@ -334,15 +288,11 @@ int board_set_active_charge_port(int port)
 		/* Make sure BJ adapter is sourcing power */
 		if (gpio_get_level(GPIO_ADP_IN_L))
 			return EC_ERROR_INVAL;
+		/* This will cause brown out when switching from type-c on
+		 * board version 2.2+ thus the rest of the code is no-op. */
 		gpio_set_level(GPIO_AC_JACK_CHARGE_L, 0);
-		/* If this is switching from type-c to BJ, we have to wait until
-		 * PU3 comes up to keep the system continuously powered.
-		 * NX20P5090 datasheet says turn-on time for 20V is 29 msec. */
-		if (active_port == CHARGE_PORT_TYPEC0)
-			msleep(30);
-		/* We don't check type-c voltage here. If it's higher than
-		 * BJ voltage, we'll brown out due to the reverse current
-		 * protection of PU3. */
+		/* If type-c voltage > BJ voltage, we'll brown out due to the
+		 * reverse current protection of PU3 but it's intended. */
 		gpio_set_level(GPIO_USB_C0_CHARGE_L, 1);
 		gpio_disable_interrupt(GPIO_ADP_IN_L);
 		break;
