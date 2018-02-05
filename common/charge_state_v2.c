@@ -217,19 +217,39 @@ static const struct dual_battery_policy db_policy = {
 	(total_power) -= val_capped;				\
 } while (0)
 
-static int charge_get_base_percent(void)
+static void update_base_battery_info(void)
 {
-	const struct ec_response_battery_dynamic_info *const bd =
+	struct ec_response_battery_dynamic_info *const bd =
 		&battery_dynamic[BATT_IDX_BASE];
 
-	if (bd->flags & (BATT_FLAG_BAD_FULL_CAPACITY |
-			 BATT_FLAG_BAD_REMAINING_CAPACITY))
-		return -1;
+	base_connected = board_is_base_connected();
 
-	if (bd->full_capacity > 0)
-		return 100 * bd->remaining_capacity / bd->full_capacity;
+	if (!base_connected) {
+		/* Invalidate static/dynamic information */
+		bd->flags = EC_BATT_FLAG_INVALID_DATA;
+		charge_base = -1;
+		base_responsive = 0;
+		prev_current_base = 0;
+		prev_allow_charge_base = 0;
+	} else if (base_responsive) {
+		int old_flags = bd->flags;
 
-	return 0;
+		ec_ec_master_base_get_dynamic_info();
+
+		/* Fetch static information when flags change. */
+		if (old_flags != bd->flags)
+			ec_ec_master_base_get_static_info();
+
+		/* Update charge_base */
+		if (bd->flags & (BATT_FLAG_BAD_FULL_CAPACITY |
+				 BATT_FLAG_BAD_REMAINING_CAPACITY))
+			charge_base = -1;
+		else if (bd->full_capacity > 0)
+			charge_base = 100 * bd->remaining_capacity
+						/ bd->full_capacity;
+		else
+			charge_base = 0;
+	}
 }
 
 /**
@@ -1299,27 +1319,7 @@ void charger_task(void *u)
 		}
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
-		base_connected = board_is_base_connected();
-
-		if (!base_connected) {
-			/* Invalidate static/dynamic information */
-			battery_dynamic[BATT_IDX_BASE].flags =
-				EC_BATT_FLAG_INVALID_DATA;
-			charge_base = -1;
-			base_responsive = 0;
-			prev_current_base = 0;
-			prev_allow_charge_base = 0;
-		} else if (base_responsive) {
-			int old_flags = battery_dynamic[BATT_IDX_BASE].flags;
-
-			ec_ec_master_base_get_dynamic_info();
-
-			/* Fetch static information when flags change. */
-			if (old_flags != battery_dynamic[BATT_IDX_BASE].flags)
-				ec_ec_master_base_get_static_info();
-
-			charge_base = charge_get_base_percent();
-		}
+		update_base_battery_info();
 #endif
 
 		charger_get_params(&curr.chg);
