@@ -96,7 +96,9 @@ static void keyboard_irq_assert(void)
 
 static void lpc_task_enable_irq(void)
 {
+#ifdef HAS_TASK_KEYPROTO
 	task_enable_irq(NPCX_IRQ_KBC_IBF);
+#endif
 	task_enable_irq(NPCX_IRQ_PM_CHAN_IBF);
 	task_enable_irq(NPCX_IRQ_PORT80);
 #ifdef CONFIG_ESPI
@@ -113,7 +115,9 @@ static void lpc_task_enable_irq(void)
 
 static void lpc_task_disable_irq(void)
 {
+#ifdef HAS_TASK_KEYPROTO
 	task_disable_irq(NPCX_IRQ_KBC_IBF);
+#endif
 	task_disable_irq(NPCX_IRQ_PM_CHAN_IBF);
 	task_disable_irq(NPCX_IRQ_PORT80);
 #ifdef CONFIG_ESPI
@@ -738,8 +742,10 @@ void host_register_init(void)
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
 	/* enable KBC*/
+#ifdef HAS_TASK_KEYPROTO
 	lpc_sib_write_reg(SIO_OFFSET, 0x07, 0x06);
 	lpc_sib_write_reg(SIO_OFFSET, 0x30, 0x01);
+#endif
 
 	/* Setting PMC2 */
 	/* LDN register = 0x12(PMC2) */
@@ -954,8 +960,10 @@ static void lpc_init(void)
 	 * IBF(K&M) INT enable, OBE(K&M) empty INT enable ,
 	 * OBF Mouse Full INT enable and OBF KB Full INT enable
 	 */
+#ifdef HAS_TASK_KEYPROTO
 	lpc_keyboard_clear_buffer();
 	NPCX_HICTRL = 0x0F;
+#endif
 
 	/*
 	 * Turn on enhance mode on PM channel-1,
