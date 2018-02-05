@@ -5,6 +5,7 @@
  * Richtek rt946x battery charger driver.
  */
 
+#include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
 #include "common.h"
@@ -305,6 +306,19 @@ static int rt946x_set_ircmp_res(unsigned int res)
 		reg_res << RT946X_SHIFT_IRCMP_RES);
 }
 
+static int rt946x_set_iprec(unsigned int iprec)
+{
+	uint8_t reg_iprec = 0;
+
+	reg_iprec = rt946x_closest_reg(RT946X_IPREC_MIN, RT946X_IPREC_MAX,
+		RT946X_IPREC_STEP, iprec);
+
+	CPRINTF("%s: iprec = %d(0x%02X)\n", __func__, iprec, reg_iprec);
+
+	return rt946x_update_bits(RT946X_REG_CHGCTRL8, RT946X_MASK_IPREC,
+		reg_iprec << RT946X_SHIFT_IPREC);
+}
+
 static int rt946x_init_irq(void)
 {
 	int rv = 0;
@@ -332,6 +346,7 @@ static int rt946x_init_irq(void)
 static int rt946x_init_setting(void)
 {
 	int rv = 0;
+	const struct battery_info *batt_info = battery_get_info();
 
 #ifdef CONFIG_CHARGER_OTG
 	/*  Disable boost-mode output voltage */
@@ -369,6 +384,9 @@ static int rt946x_init_setting(void)
 	if (rv)
 		return rv;
 	rv = rt946x_set_ircmp_res(rt946x_charger_init_setting.ircmp_res);
+	if (rv)
+		return rv;
+	rv = rt946x_set_iprec(batt_info->precharge_current);
 	if (rv)
 		return rv;
 

@@ -109,6 +109,11 @@
 #define RT946X_IRCMP_VCLAMP_MAX		224
 #define RT946X_IRCMP_VCLAMP_STEP	32
 
+/* Pre-charge current */
+#define RT946X_IPREC_MIN		100
+#define RT946X_IPREC_MAX		850
+#define RT946X_IPREC_STEP		50
+
 /* AICLVTH */
 #define RT946X_AICLVTH_MIN	4100
 #define RT946X_AICLVTH_MAX	4800
@@ -168,6 +173,11 @@
 #define RT946X_SHIFT_ICHG	2
 
 #define RT946X_MASK_ICHG	0xFC
+
+/* ========== CHGCTRL8 0x08 ============ */
+#define RT946X_SHIFT_IPREC	0
+
+#define RT946X_MASK_IPREC	0xF0
 
 /* ========== CHGCTRL9 0x09 ============ */
 #define RT946X_SHIFT_IEOC	4
