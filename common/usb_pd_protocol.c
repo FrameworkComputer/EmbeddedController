@@ -591,7 +591,7 @@ static int send_control(int port, int type)
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, NULL);
 	if (debug_level >= 2)
-		CPRINTF("CTRL[%d]>%d\n", type, bit_len);
+		CPRINTF("C%d CTRL[%d]>%d\n", port, type, bit_len);
 
 	return bit_len;
 }
@@ -621,7 +621,7 @@ static int send_source_cap(int port)
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, src_pdo);
 	if (debug_level >= 2)
-		CPRINTS("C%d srcCAP>%d", port, bit_len);
+		CPRINTF("C%d srcCAP>%d\n", port, bit_len);
 
 	return bit_len;
 }
@@ -708,7 +708,7 @@ static int send_battery_cap(int port, uint32_t *payload)
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, (uint32_t *)msg);
 	if (debug_level >= 2)
-		CPRINTF("batCap>%d\n", bit_len);
+		CPRINTF("C%d batCap>%d\n", port, bit_len);
 	return bit_len;
 }
 
@@ -775,7 +775,7 @@ static int send_battery_status(int port,  uint32_t *payload)
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &msg);
 	if (debug_level >= 2)
-		CPRINTF("batStat>%d\n", bit_len);
+		CPRINTF("C%d batStat>%d\n", port, bit_len);
 
 	return bit_len;
 }
@@ -791,7 +791,7 @@ static void send_sink_cap(int port)
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, pd_snk_pdo);
 	if (debug_level >= 2)
-		CPRINTF("snkCAP>%d\n", bit_len);
+		CPRINTF("C%d snkCAP>%d\n", port, bit_len);
 }
 
 static int send_request(int port, uint32_t rdo)
@@ -803,7 +803,7 @@ static int send_request(int port, uint32_t rdo)
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &rdo);
 	if (debug_level >= 2)
-		CPRINTF("REQ%d>\n", bit_len);
+		CPRINTF("C%d REQ>%d\n", port, bit_len);
 
 	return bit_len;
 }
@@ -839,7 +839,7 @@ static int send_bist_cmd(int port)
 			pd_get_rev(port), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &bdo);
-	CPRINTF("BIST>%d\n", bit_len);
+	CPRINTF("C%d BIST>%d\n", port, bit_len);
 
 	return bit_len;
 }
@@ -884,8 +884,8 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 		return;
 	}
 	if (debug_level >= 2)
-		CPRINTF("Unhandled VDM VID %04x CMD %04x\n",
-			PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
+		CPRINTF("C%d Unhandled VDM VID %04x CMD %04x\n",
+			port, PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
 
 void pd_execute_hard_reset(int port)
@@ -1012,7 +1012,7 @@ static int pd_send_request_msg(int port, int always_send_request)
 #endif
 	}
 
-	CPRINTF("Req C%d [%d] %dmV %dmA", port, RDO_POS(rdo),
+	CPRINTF("C%d Req [%d] %dmV %dmA", port, RDO_POS(rdo),
 		supply_voltage, curr_limit);
 	if (rdo & RDO_CAP_MISMATCH)
 		CPRINTF(" Mismatch");
@@ -1194,7 +1194,7 @@ static void handle_data_request(int port, uint16_t head,
 		handle_vdm_request(port, cnt, payload);
 		break;
 	default:
-		CPRINTF("Unhandled data message type %d\n", type);
+		CPRINTF("C%d Unhandled data message type %d\n", port, type);
 	}
 }
 
@@ -1507,7 +1507,7 @@ static void handle_ctrl_request(int port, uint16_t head,
 #ifdef CONFIG_USB_PD_REV30
 		send_control(port, PD_CTRL_NOT_SUPPORTED);
 #endif
-		CPRINTF("Unhandled ctrl message type %d\n", type);
+		CPRINTF("C%d Unhandled ctrl message type %d\n", port, type);
 	}
 }
 
@@ -1540,7 +1540,7 @@ static void handle_request(int port, uint16_t head,
 	/* dump received packet content (only dump ping at debug level 3) */
 	if ((debug_level == 2 && PD_HEADER_TYPE(head) != PD_CTRL_PING) ||
 	    debug_level >= 3) {
-		CPRINTF("RECV %04x/%d ", head, cnt);
+		CPRINTF("C%d RECV %04x/%d ", port, head, cnt);
 		for (p = 0; p < cnt; p++)
 			CPRINTF("[%d]%08x ", p, payload[p]);
 		CPRINTF("\n");
@@ -1570,7 +1570,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 		 int count)
 {
 	if (count > VDO_MAX_SIZE - 1) {
-		CPRINTF("VDM over max size\n");
+		CPRINTF("C%d VDM over max size\n", port);
 		return;
 	}
 
@@ -2542,7 +2542,7 @@ void pd_task(void *u)
 					break;
 				} else if (debug_level >= 2 &&
 					   snk_cap_count == PD_SNK_CAP_RETRIES+1) {
-					CPRINTF("ERR SNK_CAP\n");
+					CPRINTF("C%d ERR SNK_CAP\n", port);
 				}
 			}
 
