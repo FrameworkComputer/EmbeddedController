@@ -45,10 +45,16 @@ Scenario files:
 Scenario files contain the set of rails to monitor in this session. The
 file format is simply a list of rail names from the board file.
 
+Optionally, you can specify the type of measurement, from the set of
+"POWER", "BUSV", "CURRENT", "SHUNTV". If not specified, the default is
+power.
+
 example.scenario:
 [
 "railname",
 "another_railname",
+["railname", "BUSV"],
+["railname", "CURRENT"],
 ...
 ]
 
@@ -82,6 +88,7 @@ VBAT uW:	microwatt reading from this rail, generated on the INA
 		voltage.
 ... uW:		Further microwatt entry columns for each rail specified in
 		your scenario file.
+... xX:		Measurement in uW, mW, mV, uA, uV as per config.
 
 
 Calculate stats and store data and stats:
