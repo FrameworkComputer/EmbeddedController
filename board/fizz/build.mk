@@ -13,7 +13,7 @@ board-y=board.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
 board-y+=led.o
 
-brd_ver = 0
+brd_ver = 0x0202
 
 # Build CBI blob for one model
 # $1: Prefix for output files
