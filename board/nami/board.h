@@ -52,6 +52,9 @@
 	(EC_WIRELESS_SWITCH_WLAN | EC_WIRELESS_SWITCH_WLAN_POWER)
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_DX_WLAN
 #undef CONFIG_SUPPORT_CHIP_HIBERNATION
+#define CONFIG_FANS 1
+#define CONFIG_THROTTLE_AP
+#define CONFIG_CHIPSET_CAN_THROTTLE
 
 /* EC console commands */
 #define CONFIG_CMD_ACCELS
@@ -168,7 +171,7 @@
 /* Optional feature to configure npcx chip */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 as UART */
 #define NPCX_JTAG_MODULE2	0 /* 0:GPIO21/17/16/20 as JTAG */
-#define NPCX_TACH_SEL2		0 /* 0:GPIO40/73 as TACH */
+#define NPCX_TACH_SEL2		1 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 
 /* I2C ports */
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT0_0
@@ -239,6 +242,18 @@ enum pwm_channel {
 	PWM_CH_FAN,
 	/* Number of PWM channels */
 	PWM_CH_COUNT,
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
+};
+
+enum mft_channel {
+	MFT_CH_0 = 0,
+	/* Number of MFT channels */
+	MFT_CH_COUNT,
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */

@@ -52,7 +52,7 @@ enum tacho_fan_mode {
 	/* FAN rpm mode */
 	TACHO_FAN_RPM = 0,
 	/* FAN duty mode */
-	TACHO_FAN_DUTY = 0,
+	TACHO_FAN_DUTY,
 };
 
 /* Fan status data structure */

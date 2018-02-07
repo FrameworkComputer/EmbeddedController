@@ -55,6 +55,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 #include "espi.h"
+#include "fan.h"
+#include "fan_chip.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -137,6 +139,28 @@ const struct adc_t adc_channels[] = {
 			   ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/******************************************************************************/
+/* Physical fans. These are logically separate from pwm_channels. */
+const struct fan_t fans[] = {
+	[FAN_CH_0] = {
+		.flags = FAN_USE_RPM_MODE,
+		.rpm_min = 2800,
+		.rpm_start = 3000,
+		.rpm_max = 6000,
+		.ch = MFT_CH_0,	/* Use MFT id to control fan */
+		.pgood_gpio = -1,
+		.enable_gpio = -1,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
+
+/******************************************************************************/
+/* MFT channels. These are logically separate from pwm_channels. */
+const struct mft_t mft_channels[] = {
+	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+};
+BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[]  = {
@@ -235,15 +259,33 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /*
- * F75303_Remote1 is near CPU, and F75303_Remote2 is near 5V power ic.
+ * F75303_Remote1 is near CPU, and F75303_Remote2 is near 5V power IC.
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"F75303_Remote1", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
+	{"F75303_Remote1", TEMP_SENSOR_TYPE_CPU, f75303_get_val,
 		F75303_IDX_REMOTE1, 4},
 	{"F75303_Remote2", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
 		F75303_IDX_REMOTE2, 4},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/*
+ * Thermal limits for each temp sensor. All temps are in degrees K.  Must be in
+ * same order as enum temp_sensor_id. To always ignore any temp, use 0.
+ */
+struct ec_thermal_config thermal_params[] = {
+	/* {Twarn, Thigh, Thalt}, <on>
+	 * {Twarn, Thigh, X    }, <off>
+	 * fan_off, fan_max
+	 */
+	{{C_TO_K(80), C_TO_K(85), C_TO_K(88)},
+	{C_TO_K(75), C_TO_K(80), C_TO_K(83)},
+	C_TO_K(40), C_TO_K(80)},	/* TEMP_SENSOR_I2C_F75303_REMOTE1*/
+	{{C_TO_K(75), C_TO_K(80), C_TO_K(83)},
+	{C_TO_K(70), C_TO_K(75), C_TO_K(78)},
+	C_TO_K(35), C_TO_K(75)},	/* TEMP_SENSOR_I2C_F75303_REMOTE2*/
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 #define I2C_PMIC_READ(reg, data) \
 		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
