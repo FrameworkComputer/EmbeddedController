@@ -341,6 +341,7 @@ enum system_bbram_idx {
 	/* PD state for CONFIG_USB_PD_DUAL_ROLE uses one byte per port */
 	SYSTEM_BBRAM_IDX_PD0,
 	SYSTEM_BBRAM_IDX_PD1,
+	SYSTEM_BBRAM_IDX_PD2,
 	SYSTEM_BBRAM_IDX_TRY_SLOT,
 };
 

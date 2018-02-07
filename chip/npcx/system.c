@@ -182,7 +182,11 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 		return BBRM_DATA_INDEX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
 		return BBRM_DATA_INDEX_PD1;
-#endif
+#if CONFIG_USB_PD_PORT_COUNT >= 3
+	if (idx == SYSTEM_BBRAM_IDX_PD2)
+		return BBRM_DATA_INDEX_PD2;
+#endif /* CONFIG_USB_PD_PORT_COUNT >= 3 */
+#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
 #ifdef CONFIG_VBOOT_EFS
 	if (idx == SYSTEM_BBRAM_IDX_TRY_SLOT)
 		return BBRM_DATA_INDEX_TRY_SLOT;
