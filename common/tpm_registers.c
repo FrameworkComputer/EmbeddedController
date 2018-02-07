@@ -768,6 +768,13 @@ int tpm_reset_request(int wait_until_done, int wipe_nvmem_first)
 	/* We can't change our minds about wiping. */
 	wipe_requested |= wipe_nvmem_first;
 
+	if (wait_until_done)
+		/*
+		 * Completion could take a while, if other things have
+		 * higher priority.
+		 */
+		waiting_for_reset = task_get_current();
+
 	/* Ask the TPM task to reset itself */
 	task_set_event(TASK_ID_TPM, TPM_EVENT_RESET, 0);
 
@@ -775,11 +782,11 @@ int tpm_reset_request(int wait_until_done, int wipe_nvmem_first)
 		return EC_SUCCESS;
 
 	if (in_interrupt_context() ||
-	    task_get_current() == TASK_ID_TPM)
+	    task_get_current() == TASK_ID_TPM) {
+		waiting_for_reset = TASK_ID_INVALID;
 		return EC_ERROR_BUSY;	    /* Can't sleep. Clown'll eat me. */
+	}
 
-	/* Completion could take a while, if other things have priority */
-	waiting_for_reset = task_get_current();
 	evt = task_wait_event_mask(TPM_EVENT_RESET, 5 * SECOND);
 
 	/* We were notified of completion */
