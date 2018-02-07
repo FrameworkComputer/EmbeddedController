@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
+#include "charge_manager.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "config.h"
@@ -18,6 +19,7 @@
 #include "rt946x.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_charge.h"
 #include "util.h"
 
 /* Console output macros */
@@ -82,7 +84,7 @@ enum rt946x_irq {
 static uint8_t rt946x_irqmask[RT946X_IRQ_COUNT] = {
 	0xF0, 0xF0, 0xFF, 0xFF, 0xFF, 0xFF,
 #ifdef CONFIG_CHARGER_RT9467
-	0xFF,
+	0xFC,
 #endif
 };
 
@@ -354,8 +356,12 @@ static int rt946x_init_setting(void)
 	if (rv)
 		return rv;
 #endif
-	/* Disable BC12 detection */
+	/* Enable/Disable BC 1.2 detection */
+#ifdef HAS_TASK_USB_CHG
+	rv = rt946x_enable_bc12_detection(1);
+#else
 	rv = rt946x_enable_bc12_detection(0);
+#endif
 	if (rv)
 		return rv;
 	/* Disable WDT */
@@ -782,6 +788,78 @@ static void rt946x_init(void)
 	CPRINTF("RT946X init succeeded\n");
 }
 DECLARE_HOOK(HOOK_INIT, rt946x_init, HOOK_PRIO_INIT_I2C + 1);
+
+#ifdef HAS_TASK_USB_CHG
+static int rt946x_get_bc12_device_type(void)
+{
+	int reg;
+
+	if (rt946x_read8(RT946X_REG_DPDM1, &reg))
+		return CHARGE_SUPPLIER_NONE;
+
+	switch (reg & RT946X_MASK_BC12_TYPE) {
+	case RT946X_MASK_SDP:
+		return CHARGE_SUPPLIER_BC12_SDP;
+	case RT946X_MASK_CDP:
+		return CHARGE_SUPPLIER_BC12_CDP;
+	case RT946X_MASK_DCP:
+		return CHARGE_SUPPLIER_BC12_DCP;
+	default:
+		return CHARGE_SUPPLIER_NONE;
+	}
+}
+
+static int rt946x_get_bc12_ilim(int charge_supplier)
+{
+	switch (charge_supplier) {
+	case CHARGE_SUPPLIER_BC12_CDP:
+	case CHARGE_SUPPLIER_BC12_DCP:
+		return 1500;
+	case CHARGE_SUPPLIER_BC12_SDP:
+	default:
+		return USB_CHARGER_MIN_CURR_MA;
+	}
+}
+
+void rt946x_interrupt(enum gpio_signal signal)
+{
+	task_wake(TASK_ID_USB_CHG);
+}
+
+void usb_charger_task(void *u)
+{
+	struct charge_port_info charge;
+	int bc12_type = CHARGE_SUPPLIER_NONE;
+	int reg = 0;
+
+	charge.voltage = USB_CHARGER_VOLTAGE_MV;
+
+	while (1) {
+		rt946x_read8(RT946X_REG_DPDMIRQ, &reg);
+
+		/* VBUS attach event */
+		if (reg & RT946X_MASK_DPDMIRQ_ATTACH) {
+			bc12_type = rt946x_get_bc12_device_type();
+			if (bc12_type != CHARGE_SUPPLIER_NONE) {
+				charge.current =
+					rt946x_get_bc12_ilim(bc12_type);
+				charge_manager_update_charge(bc12_type,
+							     0, &charge);
+				rt946x_enable_bc12_detection(0);
+			}
+		}
+
+		/* VBUS detach event */
+		if (reg & RT946X_MASK_DPDMIRQ_DETACH) {
+			charge.current = 0;
+			charge_manager_update_charge(bc12_type, 0, &charge);
+			rt946x_enable_bc12_detection(1);
+		}
+
+		task_wait_event(-1);
+	}
+}
+#endif /* HAS_TASK_USB_CHG */
 
 /* Non-standard interface functions */
 

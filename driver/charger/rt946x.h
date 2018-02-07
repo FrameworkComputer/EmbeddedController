@@ -219,7 +219,19 @@
 #define RT946X_MASK_ADC_START	(1 << RT946X_SHIFT_ADC_START)
 
 /* ========== CHGDPDM1 0x12 ============ */
-#define RT946X_MASK_USBCHGEN	(1 << 7)
+#define RT946X_SHIFT_USBCHGEN	7
+#define RT946X_SHIFT_DCP	2
+#define RT946X_SHIFT_CDP	1
+#define RT946X_SHIFT_SDP	0
+
+#define RT946X_MASK_USBCHGEN	(1 << RT946X_SHIFT_USBCHGEN)
+#define RT946X_MASK_DCP		(1 << RT946X_SHIFT_DCP)
+#define RT946X_MASK_CDP		(1 << RT946X_SHIFT_CDP)
+#define RT946X_MASK_SDP		(1 << RT946X_SHIFT_SDP)
+
+#define RT946X_MASK_BC12_TYPE	(RT946X_MASK_DCP | \
+				 RT946X_MASK_CDP | \
+				 RT946X_MASK_SDP)
 
 /* ========== CHGCTRL18 0x1A ============ */
 #define RT946X_SHIFT_IRCMP_RES		3
@@ -260,6 +272,12 @@
 #define RT946X_MASK_CHG_VBATOV	(1 << RT946X_SHIFT_CHG_VBATOV)
 #define RT946X_MASK_CHG_VBUSOV	(1 << RT946X_SHIFT_CHG_VBUSOV)
 
+/* ========== DPDMIRQ 0x66 ============ */
+#ifdef CONFIG_CHARGER_RT9467
+#define RT946X_MASK_DPDMIRQ_ATTACH	0x01
+#define RT946X_MASK_DPDMIRQ_DETACH	0x02
+#endif
+
 /* ========== Variant-specific configuration ============ */
 #if defined(CONFIG_CHARGER_RT9466)
 	#define RT946X_CHARGER_NAME	"rt9466"
@@ -272,6 +290,9 @@
 #endif
 
 /* RT946x specific interface functions */
+
+/* Interrupt handler for rt946x */
+void rt946x_interrupt(enum gpio_signal signal);
 
 /* Enable/Disable rt946x (in charger or boost mode) */
 int rt946x_enable_charger_boost(int en);
