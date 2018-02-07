@@ -238,6 +238,9 @@ static void board_init(void)
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_L);
 
+	/* Enable charger interrupts */
+	gpio_enable_interrupt(GPIO_CHARGER_INT_L);
+
 	/* Enable reboot / shutdown control inputs from AP */
 	gpio_enable_interrupt(GPIO_WARM_RESET_REQ);
 	gpio_enable_interrupt(GPIO_AP_OVERTEMP);
@@ -461,4 +464,14 @@ int tablet_get_mode(void)
 {
 	/* Always in tablet mode */
 	return 1;
+}
+
+void usb_charger_set_switches(int port, enum usb_switch setting)
+{
+	/*
+	 * There is no USB2 switch anywhere on this board. But based
+	 * on the discussion in b:65446459, RK3399's USB PHY is powered
+	 * off when USB charging port detection is going on, so things
+	 * should mostly work without a USB2 switch.
+	 */
 }
