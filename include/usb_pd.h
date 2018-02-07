@@ -734,6 +734,9 @@ enum pd_states {
 					   PD_FLAGS_UPDATE_SRC_CAPS | \
 					   PD_FLAGS_TS_DTS_PARTNER)
 
+/* Per-port battery backed RAM flags */
+#define PD_BBRMFLG_EXPLICIT_CONTRACT (1 << 0)
+
 enum pd_cc_states {
 	PD_CC_NONE,
 

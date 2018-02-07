@@ -343,6 +343,56 @@ static void set_vconn(int port, int enable)
 }
 #endif /* defined(CONFIG_USBC_VCONN) */
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+static int get_bbram_idx(int port)
+{
+	switch (port) {
+	case 2:
+		return SYSTEM_BBRAM_IDX_PD2;
+
+	case 1:
+		return SYSTEM_BBRAM_IDX_PD1;
+
+	case 0:
+		return SYSTEM_BBRAM_IDX_PD0;
+
+	default:
+		return -1;
+	}
+}
+
+static int pd_get_saved_port_flags(int port, uint8_t *flags)
+{
+	if (system_get_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
+		CPRINTS("PD NVRAM FAIL");
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+
+static void pd_set_saved_port_flags(int port, uint8_t flags)
+{
+	if (system_set_bbram(get_bbram_idx(port), flags) != EC_SUCCESS)
+		CPRINTS("PD NVRAM FAIL");
+}
+
+static void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t val)
+{
+	uint8_t saved_flags;
+
+	if (pd_get_saved_port_flags(port, &saved_flags) != EC_SUCCESS)
+		return;
+
+	if (val)
+		saved_flags |= flag;
+	else
+		saved_flags &= ~flag;
+
+	pd_set_saved_port_flags(port, saved_flags);
+}
+#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
+
 static inline void set_state(int port, enum pd_states next_state)
 {
 	enum pd_states last_state = pd[port].task_state;
@@ -383,6 +433,8 @@ static inline void set_state(int port, enum pd_states next_state)
 #ifdef CONFIG_USBC_VCONN
 		set_vconn(port, 0);
 #endif /* defined(CONFIG_USBC_VCONN) */
+		pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT,
+					   0);
 #else /* CONFIG_USB_PD_DUAL_ROLE */
 	if (next_state == PD_STATE_SRC_DISCONNECTED) {
 #endif
@@ -810,24 +862,6 @@ static int send_request(int port, uint32_t rdo)
 	return bit_len;
 }
 
-static int pd_get_saved_active(int port)
-{
-	uint8_t val;
-
-	if (system_get_bbram(port ? SYSTEM_BBRAM_IDX_PD1 :
-				    SYSTEM_BBRAM_IDX_PD0, &val)) {
-		CPRINTS("PD NVRAM FAIL");
-		return 0;
-	}
-	return !!val;
-}
-
-static void pd_set_saved_active(int port, int val)
-{
-	if (system_set_bbram(port ? SYSTEM_BBRAM_IDX_PD1 :
-				    SYSTEM_BBRAM_IDX_PD0, val))
-		CPRINTS("PD NVRAM FAIL");
-}
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -1142,6 +1176,10 @@ static void handle_data_request(int port, uint16_t head,
 
 				/* explicit contract is now in place */
 				pd[port].flags |= PD_FLAGS_EXPLICIT_CONTRACT;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+				pd_update_saved_port_flags(
+					port, PD_BBRMFLG_EXPLICIT_CONTRACT, 1);
+#endif /* CONFIG_USB_PD_DUAL_ROLE */
 #ifdef CONFIG_USB_PD_REV30
 				/*
 				 * Start Source-coordinated collision
@@ -1150,9 +1188,6 @@ static void handle_data_request(int port, uint16_t head,
 				if (pd[port].rev == PD_REV30 &&
 					pd[port].power_role == PD_ROLE_SOURCE)
 					sink_can_xmit(port, SINK_TX_OK);
-#endif
-#ifdef CONFIG_USB_PD_DUAL_ROLE
-				pd_set_saved_active(port, 1);
 #endif
 				pd[port].requested_idx = RDO_POS(payload[0]);
 				set_state(port, PD_STATE_SRC_ACCEPTED);
@@ -1439,15 +1474,23 @@ static void handle_ctrl_request(int port, uint16_t head,
 		} else if (pd[port].task_state == PD_STATE_SRC_SWAP_INIT) {
 			/* explicit contract goes away for power swap */
 			pd[port].flags &= ~PD_FLAGS_EXPLICIT_CONTRACT;
+			pd_update_saved_port_flags(port,
+						   PD_BBRMFLG_EXPLICIT_CONTRACT,
+						   0);
 			set_state(port, PD_STATE_SRC_SWAP_SNK_DISABLE);
 		} else if (pd[port].task_state == PD_STATE_SNK_SWAP_INIT) {
 			/* explicit contract goes away for power swap */
 			pd[port].flags &= ~PD_FLAGS_EXPLICIT_CONTRACT;
+			pd_update_saved_port_flags(port,
+						   PD_BBRMFLG_EXPLICIT_CONTRACT,
+						   0);
 			set_state(port, PD_STATE_SNK_SWAP_SNK_DISABLE);
 		} else if (pd[port].task_state == PD_STATE_SNK_REQUESTED) {
 			/* explicit contract is now in place */
 			pd[port].flags |= PD_FLAGS_EXPLICIT_CONTRACT;
-			pd_set_saved_active(port, 1);
+			pd_update_saved_port_flags(port,
+						   PD_BBRMFLG_EXPLICIT_CONTRACT,
+						   1);
 			set_state(port, PD_STATE_SNK_TRANSITION);
 #endif
 		}
@@ -1846,13 +1889,18 @@ static int pd_is_power_swapping(int port)
 static void pd_partner_port_reset(int port)
 {
 	uint64_t timeout;
+	int explicit_contract_in_place;
+	uint8_t flags;
+
+	pd_get_saved_port_flags(port, &flags);
+	explicit_contract_in_place = (flags & PD_BBRMFLG_EXPLICIT_CONTRACT);
 
 	/*
 	 * Check our battery-backed previous port state. If PD comms were
 	 * active, and we didn't just lose power, make sure we
 	 * don't boot into RO with a pre-existing power contract.
 	 */
-	if (!pd_get_saved_active(port) ||
+	if (!explicit_contract_in_place ||
 	   system_get_image_copy() != SYSTEM_IMAGE_RO ||
 	   system_get_reset_flags() &
 	   (RESET_FLAG_BROWNOUT | RESET_FLAG_POWER_ON))
@@ -1862,7 +1910,7 @@ static void pd_partner_port_reset(int port)
 	 * Clear the active contract bit before we apply Rp in case we
 	 * intentionally brown out because we cut off our only power supply.
 	 */
-	pd_set_saved_active(port, 0);
+	pd_update_saved_port_flags(port, PD_BBRMFLG_EXPLICIT_CONTRACT, 0);
 
 	/* Provide Rp for 200 msec. or until we no longer have VBUS. */
 	tcpm_set_cc(port, TYPEC_CC_RP);
