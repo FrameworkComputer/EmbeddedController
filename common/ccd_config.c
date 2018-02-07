@@ -24,6 +24,7 @@
 #include "tpm_registers.h"
 #include "tpm_vendor_cmds.h"
 #include "trng.h"
+#include "wp.h"
 
 #define CPRINTS(format, args...) cprints(CC_CCD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CCD, format, ## args)
@@ -1530,6 +1531,7 @@ static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
 	do {
 		if (raw_has_password()) {
 			error_line = __LINE__;
+			rv = EC_ERROR_ACCESS_DENIED;
 			break;
 		}
 
@@ -1571,6 +1573,17 @@ static enum vendor_cmd_rc ccd_disable_rma(enum vendor_cmd_cc code,
 
 
 		ccd_lock(NULL, 0, NULL);
+
+		/*
+		 * We do it here to make sure that the device comes out of RMA
+		 * with WP enabled, but in general CCD reset needs to enforce
+		 * WP state.
+		 *
+		 * TODO(rspangler): sort out CCD state and WP correlation,
+		 * b/73075443.
+		 */
+		set_wp_follow_ccd_config();
+
 		*response_size = 0;
 		return VENDOR_RC_SUCCESS;
 	} while (0);

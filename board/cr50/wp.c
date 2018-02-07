@@ -152,6 +152,18 @@ DECLARE_SAFE_CONSOLE_COMMAND(wp, command_wp,
 			     "[<BOOLEAN>/follow_batt_pres [atboot]]",
 			     "Get/set the flash HW write-protect signal");
 
+void set_wp_follow_ccd_config(void)
+{
+	if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT)) {
+		/* Reset to at-boot state specified by CCD */
+		force_write_protect(1, ccd_get_flag
+				    (CCD_FLAG_OVERRIDE_WP_STATE_ENABLED));
+	} else {
+		/* Reset to WP based on battery-present (val is ignored) */
+		force_write_protect(0, 1);
+	}
+}
+
 void init_wp_state(void)
 {
 	/* Check system reset flags after CCD config is initially loaded */
@@ -170,13 +182,8 @@ void init_wp_state(void)
 			/* Write protected if battery is present */
 			set_wp_state(board_battery_is_present());
 		}
-	} else if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT)) {
-		/* Reset to at-boot state specified by CCD */
-		force_write_protect(1, ccd_get_flag(
-		    CCD_FLAG_OVERRIDE_WP_STATE_ENABLED));
 	} else {
-		/* Reset to WP based on battery-present (val is ignored) */
-		force_write_protect(0, 1);
+		set_wp_follow_ccd_config();
 	}
 }
 
