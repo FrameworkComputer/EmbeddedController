@@ -13,6 +13,7 @@
  */
 
 #include "charge_manager.h"
+#include "charger.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -39,15 +40,15 @@ static void update_vbus_supplier(int port, int vbus_level)
 	}
 }
 
-#ifndef CONFIG_USBC_PPC
-#ifdef CONFIG_USB_PD_5V_EN_ACTIVE_LOW
+#ifdef CONFIG_USBC_PPC
+#define USB_5V_EN(port) ppc_is_sourcing_vbus(port)
+#elif defined(CONFIG_USB_PD_5V_CHARGER_CTRL)
+#define USB_5V_EN(port) charger_is_sourcing_otg_power(port)
+#elif defined(CONFIG_USB_PD_5V_EN_ACTIVE_LOW)
 #define USB_5V_EN(port) !gpio_get_level(GPIO_USB_C##port##_5V_EN_L)
 #else
 #define USB_5V_EN(port) gpio_get_level(GPIO_USB_C##port##_5V_EN)
 #endif
-#else /* defined(CONFIG_USBC_PPC) */
-#define USB_5V_EN(port) ppc_is_sourcing_vbus(port)
-#endif /* !defined(CONFIG_USBC_PPC) */
 
 int usb_charger_port_is_sourcing_vbus(int port)
 {

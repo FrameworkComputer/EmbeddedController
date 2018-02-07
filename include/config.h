@@ -2734,6 +2734,9 @@
  */
 #undef CONFIG_USB_PD_5V_EN_ACTIVE_LOW
 
+/* Ask charger if VBUS is enabled on a source port, instead of using GPIO */
+#undef CONFIG_USB_PD_5V_CHARGER_CTRL
+
 /* Dynamic USB PD source capability */
 #undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
 

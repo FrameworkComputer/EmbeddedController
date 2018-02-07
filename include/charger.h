@@ -87,6 +87,14 @@ int charger_enable_otg_power(int enabled);
 int charger_set_otg_current_voltage(int output_current, int output_voltage);
 
 /**
+ * Is the charger sourcing VBUS / OTG power?
+ *
+ * @param port The Type-C port number.
+ * @return 1 if sourcing VBUS, 0 if not.
+ */
+int charger_is_sourcing_otg_power(int port);
+
+/**
  * Return the closest match the charger can supply to the requested current.
  *
  * @param current	Requested current in mA.
