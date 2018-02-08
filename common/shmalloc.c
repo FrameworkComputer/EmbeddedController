@@ -17,7 +17,7 @@
 
 static struct mutex shmem_lock;
 
-#ifndef TEST_BUILD
+#ifndef TEST_SHMALLOC
 #define set_map_bit(x)
 #define TEST_GLOBAL static
 #else

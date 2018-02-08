@@ -58,7 +58,7 @@ struct shm_buffer {
 	size_t buffer_size;
 };
 
-#ifdef TEST_BUILD
+#ifdef TEST_SHMALLOC
 
 /*
  * When in test mode, all possible paths in the allocation/free functions set
