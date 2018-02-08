@@ -610,9 +610,9 @@ void espi_init(void)
 	SET_FIELD(NPCX_ESPICFG, NPCX_ESPICFG_IOMODE_FILED,
 		NPCX_ESPI_IO_MODE_ALL);
 
-	/* Max freq 66 MHz of eSPI */
+	/* Set eSPI speed to max supported */
 	SET_FIELD(NPCX_ESPICFG, NPCX_ESPICFG_MAXFREQ_FILED,
-			NPCX_ESPI_MAXFREQ_66);
+		  NPCX_ESPI_MAXFREQ_MAX);
 
 	/* Configure Master-to-Slave Virtual Wire indexes (Inputs) */
 	for (i = 0; i < ARRAY_SIZE(espi_in_list); i++)
@@ -682,4 +682,3 @@ static int command_espi(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(espi, command_espi,
 			"cfg/vms/vsm/en/dis [channel]",
 			"eSPI configurations");
-

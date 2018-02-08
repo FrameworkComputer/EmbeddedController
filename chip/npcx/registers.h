@@ -1666,9 +1666,19 @@ enum {
 	NPCX_ESPI_MAXFREQ_25   = 1,
 	NPCX_ESPI_MAXFREQ_33   = 2,
 	NPCX_ESPI_MAXFREQ_50   = 3,
+#if defined(CHIP_FAMILY_NPCX5)
 	NPCX_ESPI_MAXFREQ_66   = 4,
+#endif
 	NPCX_ESPI_MAXFREQ_NOOE = 0xFF
 };
+
+#if defined(CHIP_FAMILY_NPCX5)
+#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_66
+#elif defined(CHIP_FAMILY_NPCX7)
+#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_50
+#else
+#error "Please define NPCX_ESPI_MAXFREQ_MAX for your chip."
+#endif
 
 /* VW types */
 enum {
