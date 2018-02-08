@@ -309,14 +309,12 @@ static int sn5s330_init(int port)
 	if (system_jumped_to_this_image())
 		return EC_SUCCESS;
 
-	/* Clear the digital reset bit. */
-	status = i2c_read8(i2c_port, i2c_addr, SN5S330_INT_STATUS_REG4,
-			   &regval);
-	if (status) {
-		CPRINTS("Failed to read INT_STATUS_REG4!");
-		return status;
-	}
-	regval |= SN5S330_DIG_RES;
+	/*
+	 * Clear the digital reset bit, and mask off and clear vSafe0V
+	 * interrupts. Leave the dead battery mode bit unchanged since it
+	 * is checked below.
+	 */
+	regval = SN5S330_DIG_RES | SN5S330_VSAFE0V_MASK;
 	status = i2c_write8(i2c_port, i2c_addr, SN5S330_INT_STATUS_REG4,
 			    regval);
 	if (status) {
@@ -409,9 +407,12 @@ static int sn5s330_init(int port)
 	}
 
 	if (regval & SN5S330_DB_BOOT) {
-		/* Clear the bit. */
+		/*
+		 * Clear the bit by writing 1 and keep vSafe0V_MASK
+		 * unchanged.
+		 */
 		i2c_write8(i2c_port, i2c_addr, SN5S330_INT_STATUS_REG4,
-			   SN5S330_DB_BOOT);
+			   regval);
 
 		/* Turn on PP2 FET. */
 		status = sn5s330_pp_fet_enable(port, SN5S330_PP2, 1);
