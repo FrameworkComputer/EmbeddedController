@@ -868,9 +868,6 @@ static void lpc_init(void)
 	clock_enable_peripheral(CGC_OFFSET_LPC, CGC_LPC_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
 #ifdef CONFIG_ESPI
-	/* Enable clock for eSPI peripheral */
-	clock_enable_peripheral(CGC_OFFSET_ESPI, CGC_ESPI_MASK,
-		CGC_MODE_RUN | CGC_MODE_SLEEP);
 	/* Initialize eSPI IP */
 	espi_init();
 #else

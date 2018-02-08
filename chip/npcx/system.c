@@ -668,6 +668,8 @@ void chip_pre_init(void)
 
 void system_pre_init(void)
 {
+	uint8_t pwdwn6;
+
 	/*
 	 * Add additional initialization here
 	 * EC should be initialized in Booter
@@ -683,7 +685,15 @@ void system_pre_init(void)
 #endif
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = 0xF5; /* Skip ITIM5_PD */
+
+	pwdwn6 = 0x70 |
+		(1 << NPCX_PWDWN_CTL6_ITIM6_PD) |
+		(1 << NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
+#if !defined(CONFIG_ESPI)
+	pwdwn6 |= 1 << NPCX_PWDWN_CTL6_ESPI_PD;
+#endif
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = pwdwn6;
+
 #if defined(CHIP_FAMILY_NPCX7)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
 #endif
