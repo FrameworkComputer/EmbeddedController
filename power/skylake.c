@@ -124,7 +124,7 @@ __attribute__((weak)) int board_has_working_reset_flags(void)
 }
 
 #ifdef CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
-static void chipset_handle_reboot(void)
+void chipset_handle_reboot(void)
 {
 	int flags;
 
@@ -167,5 +167,7 @@ static void chipset_handle_reboot(void)
 	while (1)
 		; /* wait here */
 }
+#ifndef CONFIG_VBOOT_EFS
 DECLARE_HOOK(HOOK_INIT, chipset_handle_reboot, HOOK_PRIO_FIRST);
 #endif
+#endif /* CONFIG_CHIPSET_HAS_PLATFORM_RESET */

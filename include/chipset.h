@@ -104,6 +104,7 @@ static inline void chipset_force_shutdown(void) { }
 static inline void chipset_reset(int cold_reset) { }
 static inline void power_interrupt(enum gpio_signal signal) { }
 static inline void chipset_handle_espi_reset_assert(void) { }
+static inline void chipset_handle_reboot(void) { }
 
 #endif /* !HAS_TASK_CHIPSET */
 
@@ -114,4 +115,8 @@ static inline void chipset_handle_espi_reset_assert(void) { }
  */
 int chipset_pltrst_is_valid(void) __attribute__((weak));
 
+/**
+ * Execute chipset-specific reboot.
+ */
+void chipset_handle_reboot(void);
 #endif  /* __CROS_EC_CHIPSET_H */
