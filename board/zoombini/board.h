@@ -108,7 +108,9 @@
 #define CONFIG_LED_PWM_COUNT 1
 #endif /* defined(BOARD_MEOWTH) */
 
+/* USB PD config */
 #define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_CMD_PD_CONTROL
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #ifdef BOARD_ZOOMBINI
