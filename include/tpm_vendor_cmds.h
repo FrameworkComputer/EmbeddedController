@@ -51,6 +51,7 @@ enum vendor_cmd_cc {
 	VENDOR_CC_MANAGE_CCD_PWD = 33,
 	VENDOR_CC_CCD = 34,
 	VENDOR_CC_GET_ALERTS_DATA = 35,
+	VENDOR_CC_SPI_HASH = 36,
 
 	LAST_VENDOR_COMMAND = 65535,
 };
@@ -108,5 +109,36 @@ enum vendor_cmd_rc {
  */
 #define VENDOR_RC_ERR 0x00000500
 
+/*** Structures and constants for VENDOR_CC_SPI_HASH ***/
+
+enum vendor_cc_spi_hash_request_subcmd {
+	/* Relinquish the bus */
+	SPI_HASH_SUBCMD_DISABLE = 0,
+	/* Acquire the bus for AP SPI */
+	SPI_HASH_SUBCMD_AP = 1,
+	/* Acquire the bus for EC SPI */
+	SPI_HASH_SUBCMD_EC = 2,
+	/* Hash SPI data */
+	SPI_HASH_SUBCMD_SHA256 = 4,
+	/* Read SPI data */
+	SPI_HASH_SUBCMD_DUMP = 5,
+};
+
+enum vendor_cc_spi_hash_request_flags {
+	/* EC uses gang programmer mode */
+	SPI_HASH_FLAG_EC_GANG = (1 << 0),
+};
+
+/* Structure for VENDOR_CC_SPI_HASH request which follows tpm_header */
+struct vendor_cc_spi_hash_request {
+	uint8_t subcmd;		/* See vendor_cc_spi_hash_request_subcmd */
+	uint8_t flags;		/* See vendor_cc_spi_hash_request_flags */
+	/* Offset and size used by SHA256 and DUMP; ignored by other subcmds */
+	uint32_t offset;	/* Offset in flash to hash/read */
+	uint32_t size;		/* Size in bytes to hash/read */
+} __packed;
+
+/* Maximum size of a response = SHA-256 hash or 1-32 bytes of data */
+#define SPI_HASH_MAX_RESPONSE_BYTES 32
 
 #endif /* __INCLUDE_TPM_VENDOR_CMDS_H */

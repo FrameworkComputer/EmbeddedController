@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "byteorder.h"
 #include "ccd_config.h"
 #include "cryptoc/sha256.h"
 #include "console.h"
 #include "dcrypto.h"
+#include "extension.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "physical_presence.h"
@@ -16,6 +18,8 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "tpm_registers.h"
+#include "tpm_vendor_cmds.h"
 #include "usb_spi.h"
 
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
@@ -192,7 +196,7 @@ static void enable_spi_pinmux(void)
 	/* Set SPI_CS to be an internal pull up */
 	GWRITE_FIELD(PINMUX, DIOA14_CTL, PU, 1);
 
-	CPRINTS("usb_spi enable %s",
+	CPRINTS("%s: %s", __func__,
 		gpio_get_level(GPIO_AP_FLASH_SELECT) ? "AP" : "EC");
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
@@ -232,21 +236,21 @@ int usb_spi_board_enable(struct usb_spi_config const *config)
 	/* Make sure we're allowed to enable the requested device */
 	if (host == USB_SPI_EC) {
 		if (!ccd_is_cap_enabled(CCD_CAP_EC_FLASH)) {
-			CPRINTS("EC SPI access denied");
+			CPRINTS("%s: EC access denied", __func__);
 			return EC_ERROR_ACCESS_DENIED;
 		}
 	} else if (host == USB_SPI_AP) {
 		if (!ccd_is_cap_enabled(CCD_CAP_AP_FLASH)) {
-			CPRINTS("AP SPI access denied");
+			CPRINTS("%s: AP access denied", __func__);
 			return EC_ERROR_ACCESS_DENIED;
 		}
 	} else {
-		CPRINTS("SPI device not supported");
+		CPRINTS("%s: device %d not supported", __func__, host);
 		return EC_ERROR_INVAL;
 	}
 
 	if (set_spi_bus_user(SPI_BUS_USER_USB, 1) != EC_SUCCESS) {
-		CPRINTS("SPI bus in use");
+		CPRINTS("%s: bus in use", __func__);
 		return EC_ERROR_BUSY;
 	}
 
@@ -267,7 +271,7 @@ int usb_spi_board_enable(struct usb_spi_config const *config)
 
 void usb_spi_board_disable(struct usb_spi_config const *config)
 {
-	CPRINTS("usb_spi disable");
+	CPRINTS("%s", __func__);
 
 	/* Only disable the SPI bus if we own it */
 	if (get_spi_bus_user() != SPI_BUS_USER_USB)
@@ -302,7 +306,7 @@ int usb_spi_interface(struct usb_spi_config const *config,
 		config->state->enabled_host = USB_SPI_EC;
 		break;
 	case USB_SPI_REQ_ENABLE:
-		CPRINTS("ERROR: Must specify target");
+		CPRINTS("%s: Must specify target", __func__);
 		/* Fall through... */
 	case USB_SPI_REQ_DISABLE:
 		config->state->enabled_host = USB_SPI_DISABLE;
@@ -377,13 +381,16 @@ static void spi_hash_stop_ec_device(void)
 /**
  * Disable SPI hashing mode.
  *
- * @return EC_SUCCESS or non-zero error code.
+ * @return Vendor command return code.
  */
-static int spi_hash_disable(void)
+static enum vendor_cmd_rc spi_hash_disable(void)
 {
+	if (spi_hash_device == USB_SPI_DISABLE)
+		return VENDOR_RC_SUCCESS;
+
 	/* Can't disable SPI if we don't own it */
 	if (get_spi_bus_user() != SPI_BUS_USER_HASH)
-		return EC_ERROR_ACCESS_DENIED;
+		return VENDOR_RC_NOT_ALLOWED;
 
 	/* Disable the SPI bus and chip select */
 	disable_spi_pinmux();
@@ -401,8 +408,8 @@ static int spi_hash_disable(void)
 	/* Disable inactivity timer to turn hashing mode off */
 	hook_call_deferred(&spi_hash_inactive_timeout_data, -1);
 
-	CPRINTS("SPI hash device: disable\n");
-	return EC_SUCCESS;
+	CPRINTS("%s", __func__);
+	return VENDOR_RC_SUCCESS;
 }
 
 /**
@@ -420,7 +427,7 @@ static void spi_hash_pp_done(void)
 {
 	/* Acquire the bus */
 	if (set_spi_bus_user(SPI_BUS_USER_HASH, 1)) {
-		CPRINTS("spihdev: bus busy");
+		CPRINTS("%s: bus busy", __func__);
 		return;
 	}
 
@@ -459,167 +466,257 @@ static void spi_hash_pp_done(void)
 	hook_call_deferred(&spi_hash_inactive_timeout_data,
 			   SPI_HASH_TIMEOUT_US);
 
-	CPRINTS("SPI hash device: %s",
+	CPRINTS("%s: %s", __func__,
 		(spi_hash_device == USB_SPI_AP ? "AP" : "EC"));
 }
 
-static int command_spi_hash_set_device(int argc, char **argv)
+/**
+ * Set the SPI hashing device.
+ *
+ * @param dev		Device (enum usb_spi)
+ * @param gang_mode	If non-zero, EC uses gang mode
+ *
+ * @return Vendor command return code
+ */
+static enum vendor_cmd_rc spi_hash_set_device(int dev, int gang_mode)
 {
-	new_device = spi_hash_device;
-	new_gang_mode = 0;
+	if (dev == spi_hash_device)
+		return VENDOR_RC_SUCCESS;
 
-	/* See if user wants to change the hash device */
-	if (argc >= 2) {
-		if (!strcasecmp(argv[1], "AP"))
-			new_device = USB_SPI_AP;
-		else if (!strcasecmp(argv[1], "EC"))
-			new_device = USB_SPI_EC;
-		else if (!strcasecmp(argv[1], "disable"))
-			new_device = USB_SPI_DISABLE;
-		else
-			return EC_ERROR_PARAM1;
-	}
+	/* Enabling requires permission */
+	if (!(ccd_is_cap_enabled(CCD_CAP_FLASH_READ)))
+		return VENDOR_RC_NOT_ALLOWED;
 
-	/* Check for whether to use NPCX gang programmer mode */
-	if (argc >= 3) {
-		if (new_device == USB_SPI_EC && !strcasecmp(argv[2], "gang"))
-			new_gang_mode = 1;
-		else
-			return EC_ERROR_PARAM2;
-	}
+	new_device = dev;
+	new_gang_mode = gang_mode;
 
-	if (new_device != spi_hash_device) {
-		/* If we don't have permission, only allow disabling */
-		if (new_device != USB_SPI_DISABLE &&
-		    !(ccd_is_cap_enabled(CCD_CAP_FLASH_READ)))
-			return EC_ERROR_ACCESS_DENIED;
-
-		if (new_device == USB_SPI_DISABLE) {
-			/* Disable SPI hashing */
-			return spi_hash_disable();
-		}
-
-		if (spi_hash_device == USB_SPI_DISABLE &&
-		    !(ccd_is_cap_enabled(CCD_CAP_AP_FLASH) &&
-		      ccd_is_cap_enabled(CCD_CAP_EC_FLASH))) {
-			/*
-			 * We were disabled, and CCD does not grant permission
-			 * to both flash chips.  So we need physical presence
-			 * to take the SPI bus.  That prevents a malicious
-			 * peripheral from using this to reset the device.
-			 *
-			 * Technically, we could track the chips separately,
-			 * and only require physical presence the first time we
-			 * check a chip which CCD doesn't grant access to.  But
-			 * that's more bookkeeping, so for now the only way to
-			 * skip physical presence is to have access to both.
-			 */
-			return physical_detect_start(0, spi_hash_pp_done);
-		}
-
+	/* Handle enabling */
+	if (spi_hash_device == USB_SPI_DISABLE &&
+	    !(ccd_is_cap_enabled(CCD_CAP_AP_FLASH) &&
+	      ccd_is_cap_enabled(CCD_CAP_EC_FLASH))) {
 		/*
-		 * If we're still here, we already own the SPI bus, and are
-		 * changing which chip we're looking at.  Update hash device
-		 * directly; no new physical presence required.
+		 * We were disabled, and CCD does not grant permission
+		 * to both flash chips.  So we need physical presence
+		 * to take the SPI bus.  That prevents a malicious
+		 * peripheral from using this to reset the device.
+		 *
+		 * Technically, we could track the chips separately,
+		 * and only require physical presence the first time we
+		 * check a chip which CCD doesn't grant access to.  But
+		 * that's more bookkeeping, so for now the only way to
+		 * skip physical presence is to have access to both.
 		 */
-		spi_hash_pp_done();
-		return EC_SUCCESS;
+		return physical_detect_start(0, spi_hash_pp_done);
 	}
 
-	ccprintf("SPI hash device: %s\n",
-		 (spi_hash_device ?
-		  (spi_hash_device == USB_SPI_AP ? "AP" : "EC") : "disable"));
-	return EC_SUCCESS;
+	/*
+	 * If we're still here, we already own the SPI bus, and are
+	 * changing which chip we're looking at.  Update hash device
+	 * directly; no new physical presence required.
+	 */
+	spi_hash_pp_done();
+	return VENDOR_RC_SUCCESS;
 }
 
-static int command_spi_hash(int argc, char **argv)
+static enum vendor_cmd_rc spi_hash_dump(uint8_t *dest, uint32_t offset,
+					uint32_t size)
 {
-	HASH_CTX sha;
-	int offset = -1;
-	int chunk_size = SPI_HASH_CHUNK_SIZE;
-	int size = 256;
-	int rv = EC_SUCCESS;
-	uint8_t data[SPI_HASH_CHUNK_SIZE];
-	int dump = 0;
-	int chunks = 0;
-	int i;
-
-	/* Handle setting/printing the active device */
-	if (argc == 1 ||
-	    !strcasecmp(argv[1], "AP") ||
-	    !strcasecmp(argv[1], "EC") ||
-	    !strcasecmp(argv[1], "disable"))
-		return command_spi_hash_set_device(argc, argv);
-
 	/* Fail if we don't own the bus */
 	if (get_spi_bus_user() != SPI_BUS_USER_HASH) {
-		ccprintf("SPI hash not enabled\n");
-		return EC_ERROR_ACCESS_DENIED;
+		CPRINTS("%s: not enabled", __func__);
+		return VENDOR_RC_NOT_ALLOWED;
 	}
 
 	/* Bump inactivity timer to turn hashing mode off */
 	hook_call_deferred(&spi_hash_inactive_timeout_data,
 			   SPI_HASH_TIMEOUT_US);
 
-	/* Parse args */
-	// TODO: parse offset and size directly, since we want them both
-	rv = parse_offset_size(argc, argv, 1, &offset, &size);
-	if (rv)
-		return rv;
-	if (argc > 3 && !strcasecmp(argv[3], "dump"))
-		dump = 1;
+	if (size > SPI_HASH_MAX_RESPONSE_BYTES)
+		return VENDOR_RC_BOGUS_ARGS;
 
-	if (size < 0 || size > MAX_SPI_HASH_SIZE)
-		return EC_ERROR_INVAL;
+	if (spi_read_chunk(dest, offset, size) != EC_SUCCESS) {
+		CPRINTS("%s: read error at 0x%x", __func__, offset);
+		return VENDOR_RC_READ_FLASH_FAIL;
+	}
+
+	return VENDOR_RC_SUCCESS;
+}
+
+static enum vendor_cmd_rc spi_hash_sha256(uint8_t *dest, uint32_t offset,
+					  uint32_t size)
+{
+	HASH_CTX sha;
+	uint8_t data[SPI_HASH_CHUNK_SIZE];
+	int chunk_size = SPI_HASH_CHUNK_SIZE;
+	int chunks = 0;
+
+	/* Fail if we don't own the bus */
+	if (get_spi_bus_user() != SPI_BUS_USER_HASH) {
+		CPRINTS("%s: not enabled", __func__);
+		return VENDOR_RC_NOT_ALLOWED;
+	}
+
+	/* Bump inactivity timer to turn hashing mode off */
+	hook_call_deferred(&spi_hash_inactive_timeout_data,
+			   SPI_HASH_TIMEOUT_US);
+
+	if (size > MAX_SPI_HASH_SIZE)
+		return VENDOR_RC_BOGUS_ARGS;
+
+	CPRINTS("%s: 0x%x 0x%x", __func__, offset, size);
 
 	DCRYPTO_SHA256_init(&sha, 0);
 
 	for (chunks = 0; size > 0; chunks++) {
 		int this_chunk = MIN(size, chunk_size);
-
 		/* Read the data */
-		rv = spi_read_chunk(data, offset, this_chunk);
-		if (rv) {
-			ccprintf("Read error at 0x%x\n", offset);
-			return rv;
+		if (spi_read_chunk(data, offset, this_chunk) != EC_SUCCESS) {
+			CPRINTS("%s: read error at 0x%x", __func__, offset);
+			return VENDOR_RC_READ_FLASH_FAIL;
 		}
 
 		/* Update hash */
 		HASH_update(&sha, data, this_chunk);
 
-		if (dump) {
-			/* Also dump it */
-			for (i = 0; i < this_chunk; i++) {
-				if ((offset + i) % 16) {
-					ccprintf(" %02x", data[i]);
-				} else {
-					ccprintf("\n%08x: %02x",
-						 offset + i, data[i]);
-					cflush();
-				}
-			}
-			ccputs("\n");
+		/* Give other things a chance to happen */
+		if (!(chunks % 128))
 			msleep(1);
-		} else {
-			/* Print often at first then slow down */
-			if (chunks < 16 || !(chunks % 64)) {
-				ccputs(".");
-				msleep(1);
-			}
-		}
 
 		size -= this_chunk;
 		offset += this_chunk;
 	}
 
-	if (!dump) {
-		cflush();  /* Make sure there's space for the hash to print */
-		ccputs("\n");
+	memcpy(dest, HASH_final(&sha), SHA256_DIGEST_SIZE);
+
+	CPRINTS("%s: done", __func__);
+	return VENDOR_RC_SUCCESS;
+}
+
+/*
+ * TPM Vendor command handler for SPI hash commands which need to be available
+ * both through CLI and over /dev/tpm0.
+ */
+static enum vendor_cmd_rc spi_hash_vendor(enum vendor_cmd_cc code,
+					  void *buf,
+					  size_t input_size,
+					  size_t *response_size)
+{
+	const struct vendor_cc_spi_hash_request *req = buf;
+	enum vendor_cmd_rc rc;
+
+	/* Default to no response data */
+	*response_size = 0;
+
+	/* Pick what to do based on subcommand. */
+	switch (req->subcmd) {
+	case SPI_HASH_SUBCMD_DISABLE:
+		/* Handle disabling */
+		return spi_hash_disable();
+	case SPI_HASH_SUBCMD_AP:
+		return spi_hash_set_device(USB_SPI_AP, 0);
+	case SPI_HASH_SUBCMD_EC:
+		return spi_hash_set_device(USB_SPI_EC,
+					   !!(req->flags &
+					      SPI_HASH_FLAG_EC_GANG));
+	case SPI_HASH_SUBCMD_SHA256:
+		*response_size = SHA256_DIGEST_SIZE;
+		rc = spi_hash_sha256(buf, req->offset, req->size);
+		if (rc != VENDOR_RC_SUCCESS)
+			*response_size = 0;
+		return rc;
+	case SPI_HASH_SUBCMD_DUMP:
+		/* Save size before we overwrite it with data */
+		*response_size = req->size;
+		rc = spi_hash_dump(buf, req->offset, req->size);
+		if (rc != VENDOR_RC_SUCCESS)
+			*response_size = 0;
+		return rc;
+	default:
+		CPRINTS("%s:%d - unknown subcommand", __func__, __LINE__);
+		*response_size = 0;
+		return VENDOR_RC_NO_SUCH_SUBCOMMAND;
+	}
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_SPI_HASH, spi_hash_vendor);
+
+/**
+ * Wrapper for hash commands which are passed through the TPM task context.
+ */
+static int hash_command_wrapper(int argc, char *argv[])
+{
+	int rv;
+	struct vendor_cc_spi_hash_request req;
+	struct tpm_cmd_header *tpm_header;
+	const size_t command_size = sizeof(*tpm_header) +
+			MAX(sizeof(req), SPI_HASH_MAX_RESPONSE_BYTES);
+	uint8_t buf[command_size];
+	uint8_t *p;
+	uint32_t return_code;
+
+	/* If no args, just return */
+	if (argc < 2) {
+		ccprintf("SPI hash device: %s\n",
+			 (spi_hash_device ?
+			  (spi_hash_device == USB_SPI_AP ? "AP" : "EC") :
+			  "disable"));
+		return EC_SUCCESS;
 	}
 
-	ccprintf("Hash = %.32h\n", HASH_final(&sha));
-	return EC_SUCCESS;
+	/* Parse args into stack-based struct */
+	memset(&req, 0, sizeof(req));
+	if (!strcasecmp(argv[1], "AP")) {
+		req.subcmd = SPI_HASH_SUBCMD_AP;
+	} else if (!strcasecmp(argv[1], "EC")) {
+		req.subcmd = SPI_HASH_SUBCMD_EC;
+		if (argc > 2 && !strcasecmp(argv[2], "gang"))
+			req.flags |= SPI_HASH_FLAG_EC_GANG;
+	} else if (!strcasecmp(argv[1], "disable")) {
+		req.subcmd = SPI_HASH_SUBCMD_DISABLE;
+	} else if (argc == 3) {
+		req.subcmd = SPI_HASH_SUBCMD_SHA256;
+		rv = parse_offset_size(argc, argv, 1, &req.offset, &req.size);
+		if (rv)
+			return rv;
+	} else if (argc == 4 && !strcasecmp(argv[1], "dump")) {
+		req.subcmd = SPI_HASH_SUBCMD_DUMP;
+		rv = parse_offset_size(argc, argv, 2, &req.offset, &req.size);
+		if (rv)
+			return rv;
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+
+	/* Build the extension command */
+	tpm_header = (struct tpm_cmd_header *)buf;
+	tpm_header->tag = htobe16(0x8001); /* TPM_ST_NO_SESSIONS */
+	tpm_header->size = htobe32(command_size);
+	tpm_header->command_code = htobe32(TPM_CC_VENDOR_BIT_MASK);
+	tpm_header->subcommand_code = htobe16(VENDOR_CC_SPI_HASH);
+	/* Copy request data */
+	p = (uint8_t *)(tpm_header + 1);
+	memcpy(p, &req, sizeof(req));
+
+	tpm_alt_extension(tpm_header, command_size);
+
+	/*
+	 * Return status in the command code field now, in case of error,
+	 * error code is the first byte after the header.
+	 */
+	return_code = be32toh(tpm_header->command_code);
+	if ((return_code != EC_SUCCESS) &&
+	    (return_code != VENDOR_RC_IN_PROGRESS)) {
+		rv = p[0];
+	} else {
+		rv = EC_SUCCESS;
+
+		if (req.subcmd == SPI_HASH_SUBCMD_DUMP)
+			ccprintf("data: %.*h\n", req.size, p);
+		else if (req.subcmd == SPI_HASH_SUBCMD_SHA256)
+			ccprintf("hash: %.32h\n", p);
+	}
+
+	return rv;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(spihash, command_spi_hash,
-		     "ap | ec [gang] | disable | <offset> <size> [dump]",
-		     "Hash SPI flash");
+DECLARE_SAFE_CONSOLE_COMMAND(spihash, hash_command_wrapper,
+		     "ap | ec [gang] | disable | [dump] <offset> <size>",
+		     "Hash SPI flash via TPM vendor command");
