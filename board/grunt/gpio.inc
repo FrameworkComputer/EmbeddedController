@@ -61,8 +61,11 @@ GPIO(I2C5_SDA,			PIN(3, 6), GPIO_INPUT)				/* EC_I2C_EEPROM_SDA and
 GPIO(I2C7_SCL,			PIN(B, 3), GPIO_INPUT | GPIO_SEL_1P8V)		/* EC_I2C_SENSOR_SCL */
 GPIO(I2C7_SDA,			PIN(B, 2), GPIO_INPUT | GPIO_SEL_1P8V)		/* EC_I2C_SENSOR_SDA */
 
-GPIO(PCH_SCI_ODL,		PIN(7, 6), GPIO_ODR_HIGH)
-GPIO(PCH_SMI_ODL,		PIN(C, 6), GPIO_ODR_HIGH)
+/*
+ * The NPCX LPC driver configures and controls SCI and SMI,
+ * so PCH_SCI_ODL [PIN(7, 6)] and PCH_SMI_ODL [PIN(C, 6)] are
+ * not defined here as GPIOs.
+ */
 GPIO(PCH_SLP_S0_L,		PIN(A, 4), GPIO_INPUT)
 
 GPIO(EN_USB_A0_5V,		PIN(6, 1), GPIO_OUT_LOW)			/* Enable A0 5V Charging */
