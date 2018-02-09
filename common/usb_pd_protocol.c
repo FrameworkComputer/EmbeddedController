@@ -2353,25 +2353,34 @@ void pd_task(void *u)
 					pd[port].flags |=
 						PD_FLAGS_TS_DTS_PARTNER;
 
+#ifdef CONFIG_USBC_VCONN
+				/*
+				 * Start sourcing Vconn before Vbus to ensure
+				 * we are within USB Type-C Spec 1.3 tVconnON
+				 */
+				set_vconn(port, 1);
+				pd[port].flags |= PD_FLAGS_VCONN_ON;
+#endif
+
 #ifndef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 				/* Enable VBUS */
 				if (pd_set_power_supply_ready(port)) {
+#ifdef CONFIG_USBC_VCONN
+					/* Stop sourcing Vconn if Vbus failed */
+					set_vconn(port, 0);
+					pd[port].flags &= ~PD_FLAGS_VCONN_ON;
+#endif /* CONFIG_USBC_VCONN */
 #ifdef CONFIG_USBC_SS_MUX
 					usb_mux_set(port, TYPEC_MUX_NONE,
 						    USB_SWITCH_DISCONNECT,
 						    pd[port].polarity);
-#endif
+#endif /* CONFIG_USBC_SS_MUX */
 					break;
 				}
-#endif
+#endif /* CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP */
 				/* If PD comm is enabled, enable TCPC RX */
 				if (pd_comm_is_enabled(port))
 					tcpm_set_rx_enable(port, 1);
-
-#ifdef CONFIG_USBC_VCONN
-				set_vconn(port, 1);
-				pd[port].flags |= PD_FLAGS_VCONN_ON;
-#endif
 
 				pd[port].flags |= PD_FLAGS_CHECK_PR_ROLE |
 						  PD_FLAGS_CHECK_DR_ROLE;
