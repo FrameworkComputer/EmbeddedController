@@ -20,6 +20,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
+#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ## args)
 
 #define TASK_EVENT_CMD_PENDING TASK_EVENT_CUSTOM(1)
@@ -77,6 +78,16 @@ static struct host_cmd_handler_args args0;
 
 /* Current host command packet from host, for protocol version 3+ */
 static struct host_packet *pkt0;
+
+/*
+ * Host command suppress
+ */
+#ifdef CONFIG_SUPPRESSED_HOST_COMMANDS
+#define SUPPRESSED_CMD_INTERVAL (60UL * 60 * SECOND)
+static timestamp_t suppressed_cmd_deadline;
+static const uint16_t hc_suppressed_cmd[] = { CONFIG_SUPPRESSED_HOST_COMMANDS };
+static uint32_t hc_suppressed_cnt[ARRAY_SIZE(hc_suppressed_cmd)];
+#endif
 
 uint8_t *host_get_memmap(int offset)
 {
@@ -413,6 +424,10 @@ static void host_command_init(void)
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
 	HOST_EVENT_CPRINTS("hostcmd init", host_get_events());
 #endif
+
+#ifdef CONFIG_SUPPRESSED_HOST_COMMANDS
+	suppressed_cmd_deadline.val = get_time().val + SUPPRESSED_CMD_INTERVAL;
+#endif
 }
 
 void host_command_task(void *u)
@@ -560,21 +575,55 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CMD_VERSIONS,
 		     host_command_get_cmd_versions,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
-extern uint16_t host_command_suppressed[];
-/* Default suppress list. Define yours in board.c. */
-static uint32_t suppressed_count;
-
 static int host_command_is_suppressed(uint16_t cmd)
 {
-#ifdef CONFIG_SUPPRESS_HOST_COMMANDS
-	uint16_t *p = host_command_suppressed;
-	while (*p != HOST_COMMAND_SUPPRESS_DELIMITER) {
-		if (*p++ == cmd)
+#ifdef CONFIG_SUPPRESSED_HOST_COMMANDS
+	int i;
+	for (i = 0; i < ARRAY_SIZE(hc_suppressed_cmd); i++) {
+		if (hc_suppressed_cmd[i] == cmd) {
+			hc_suppressed_cnt[i]++;
 			return 1;
+		}
 	}
 #endif
 	return 0;
 }
+
+/*
+ * Print & reset suppressed command counters. It should be called periodically
+ * and on important events (e.g. shutdown, sysjump, etc.).
+ */
+static void dump_host_command_suppressed(int force)
+{
+#ifdef CONFIG_SUPPRESSED_HOST_COMMANDS
+	int i;
+
+	if (!force && !timestamp_expired(suppressed_cmd_deadline, NULL))
+		return;
+
+	CPRINTF("[%T HC Suppressed:");
+	for (i = 0; i < ARRAY_SIZE(hc_suppressed_cmd); i++) {
+		CPRINTF(" 0x%x=%d", hc_suppressed_cmd[i], hc_suppressed_cnt[i]);
+		hc_suppressed_cnt[i] = 0;
+	}
+	CPRINTF("]\n");
+	cflush();
+
+	/* Reset the timer */
+	suppressed_cmd_deadline.val = get_time().val + SUPPRESSED_CMD_INTERVAL;
+}
+
+static void dump_host_command_suppressed_(void)
+{
+	dump_host_command_suppressed(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
+	     dump_host_command_suppressed_, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SYSJUMP,
+	     dump_host_command_suppressed_, HOOK_PRIO_DEFAULT);
+#else
+}
+#endif /* CONFIG_SUPPRESSED_HOST_COMMANDS */
 
 /**
  * Print debug output for the host command request, before it's processed.
@@ -595,7 +644,7 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 	if (hcdebug == HCDEBUG_NORMAL) {
 		uint64_t t = get_time().val;
 		if (host_command_is_suppressed(args->command)) {
-			suppressed_count++;
+			dump_host_command_suppressed(0);
 			return;
 		}
 		if (args->command == hc_prev_cmd &&
@@ -866,7 +915,7 @@ static int command_hcdebug(int argc, char **argv)
 
 	ccprintf("Host command debug mode is %s\n",
 		 hcdebug_mode_names[hcdebug]);
-	ccprintf("%u suppressed\n", suppressed_count);
+	dump_host_command_suppressed(1);
 
 	return EC_SUCCESS;
 }

@@ -1637,8 +1637,8 @@
 /* Set SKU ID from AP */
 #undef CONFIG_HOSTCMD_AP_SET_SKUID
 
-/* Suppress debug output for commands in host_command_suppressed */
-#undef CONFIG_SUPPRESS_HOST_COMMANDS
+/* List of host commands whose debug output will be suppressed */
+#undef CONFIG_SUPPRESSED_HOST_COMMANDS
 
 /*****************************************************************************/
 
