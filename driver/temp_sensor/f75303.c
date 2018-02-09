@@ -13,6 +13,7 @@
 
 static int temp_val_local;
 static int temp_val_remote1;
+static int temp_val_remote2;
 
 /**
  * Read 8 bits register from temp sensor.
@@ -41,8 +42,11 @@ int f75303_get_val(int idx, int *temp_ptr)
 	case F75303_IDX_LOCAL:
 		*temp_ptr = temp_val_local;
 		break;
-	case F75303_IDX_REMOTE:
+	case F75303_IDX_REMOTE1:
 		*temp_ptr = temp_val_remote1;
+		break;
+	case F75303_IDX_REMOTE2:
+		*temp_ptr = temp_val_remote2;
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -56,8 +60,11 @@ static void f75303_sensor_poll(void)
 	get_temp(F75303_TEMP_LOCAL, &temp_val_local);
 	temp_val_local = C_TO_K(temp_val_local);
 
-	get_temp(F75303_TEMP_REMOTE, &temp_val_remote1);
+	get_temp(F75303_TEMP_REMOTE1, &temp_val_remote1);
 	temp_val_remote1 = C_TO_K(temp_val_remote1);
+
+	get_temp(F75303_TEMP_REMOTE2, &temp_val_remote2);
+	temp_val_remote2 = C_TO_K(temp_val_remote2);
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 

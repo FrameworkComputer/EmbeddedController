@@ -12,12 +12,14 @@
 
 enum f75303_index {
 	F75303_IDX_LOCAL = 0,
-	F75303_IDX_REMOTE,
+	F75303_IDX_REMOTE1,
+	F75303_IDX_REMOTE2,
 };
 
 /* F75303 register */
 #define F75303_TEMP_LOCAL		0x00
-#define F75303_TEMP_REMOTE		0x01
+#define F75303_TEMP_REMOTE1		0x01
+#define F75303_TEMP_REMOTE2		0x23
 
 /**
  * Get the last polled value of a sensor.
