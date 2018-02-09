@@ -36,6 +36,11 @@ SPI_READ_CMD_LIST = [0x3, 0xb, 0x3b, 0x6b]
 CRC_TABLE = [0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15,
              0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d]
 
+def dummy_print(*args, **kwargs):
+  pass
+
+debug_print = dummy_print
+
 def Crc8(crc, data):
   """Update CRC8 value."""
   data_bytes = map(lambda b: ord(b) if isinstance(b, str) else b, data)
@@ -183,7 +188,7 @@ def HashByteArray(data):
 # Signature is SHA256 of data with 32 0 bytes appended
 #
 def SignByteArray(data):
-  print("Signature is SHA-256 of data")
+  debug_print("Signature is SHA-256 of data")
   sigb = HashByteArray(data)
   sigb.extend("\0" * 32)
   return sigb
@@ -240,8 +245,6 @@ def PacklfwRoImage(rorw_file, loader_file, image_size):
 
 def parseargs():
   rpath = os.path.dirname(os.path.relpath(__file__))
-  # debug
-  print("CWD = {0}".format(rpath))
 
   parser = argparse.ArgumentParser()
   parser.add_argument("-i", "--input",
@@ -277,42 +280,57 @@ def parseargs():
   parser.add_argument("--test_spi", action='store_true',
                       help="Test SPI data integrity by adding CRC32 in last 4-bytes of RO/RW binaries",
                       default=False)
+  parser.add_argument("--verbose", action='store_true',
+                      help="Enable verbose output",
+                      default=False)
+
   return parser.parse_args()
 
 # Debug helper routine
 def dumpsects(spi_list):
   for s in spi_list:
-    #print "%x %d %s\n"%(s[0],len(s[1]),s[2])
-    print("0x{0:x} 0x{1:x} {2:s}".format(s[0],len(s[1]),s[2]))
+    debug_print("0x{0:x} 0x{1:x} {2:s}".format(s[0],len(s[1]),s[2]))
 
 def printByteArrayAsHex(ba, title):
-  print(title,"= ")
+  debug_print(title,"= ")
   count = 0
   for b in ba:
     count = count + 1
-    print("0x{0:02x}, ".format(b),end="")
+    debug_print("0x{0:02x}, ".format(b),end="")
     if (count % 8) == 0:
-      print("")
-  print("\n")
+      debug_print("")
+  debug_print("\n")
 
 def print_args(args):
-  print("parsed arguments:")
-  print(".input  = ", args.input)
-  print(".output = ", args.output)
-  print(".loader_file = ", args.loader_file)
-  print(".spi_size (KB) = ", hex(args.spi_size))
-  print(".image_size = ", hex(args.image_size))
-  print(".header_loc = ", hex(args.header_loc))
-  print(".payload_offset = ", hex(args.payload_offset))
-  print(".rwheader_loc = ", hex(args.rwheader_loc))
-  print(".spi_clock = ", args.spi_clock)
-  print(".spi_read_cmd = ", args.spi_read_cmd)
-  print(".test_spi = ", args.test_spi)
+  debug_print("parsed arguments:")
+  debug_print(".input  = ", args.input)
+  debug_print(".output = ", args.output)
+  debug_print(".loader_file = ", args.loader_file)
+  debug_print(".spi_size (KB) = ", hex(args.spi_size))
+  debug_print(".image_size = ", hex(args.image_size))
+  debug_print(".header_loc = ", hex(args.header_loc))
+  debug_print(".payload_offset = ", hex(args.payload_offset))
+  debug_print(".rwheader_loc = ", hex(args.rwheader_loc))
+  debug_print(".spi_clock = ", args.spi_clock)
+  debug_print(".spi_read_cmd = ", args.spi_read_cmd)
+  debug_print(".test_spi = ", args.test_spi)
+  debug_print(".verbose = ", args.verbose)
 
 #
+# Handle quiet mode build from Makefile
+# Quiet mode when V is unset or V=0
+# Verbose mode when V=1
+#
 def main():
-  print("Begin MEC17xx pack_ec.py script")
+  global debug_print
+
   args = parseargs()
+
+  if args.verbose:
+    debug_print = print
+
+  debug_print("Begin MEC17xx pack_ec.py script")
+
 
   # MEC17xx maximum 192KB each for RO & RW
   # mec1701 chip Makefile sets args.spi_size = 512
@@ -321,7 +339,7 @@ def main():
   print_args(args)
 
   spi_size = args.spi_size * 1024
-  print("SPI Flash image size in bytes =", hex(spi_size))
+  debug_print("SPI Flash image size in bytes =", hex(spi_size))
 
   # !!! IMPORTANT !!!
   # These values MUST match chip/mec1701/config_flash_layout.h
@@ -334,15 +352,16 @@ def main():
 
   spi_list = []
 
-  print("args.input = ",args.input)
-  print("args.loader_file = ",args.loader_file)
-  print("args.image_size = ",hex(args.image_size))
+  debug_print("args.input = ",args.input)
+  debug_print("args.loader_file = ",args.loader_file)
+  debug_print("args.image_size = ",hex(args.image_size))
+
   rorofile=PacklfwRoImage(args.input, args.loader_file, args.image_size)
 
   payload = GetPayload(rorofile)
   payload_len = len(payload)
   # debug
-  print("EC_LFW + EC_RO length = ",hex(payload_len))
+  debug_print("EC_LFW + EC_RO length = ",hex(payload_len))
 
   # SPI image integrity test
   # compute CRC32 of EC_RO except for last 4 bytes
@@ -351,7 +370,7 @@ def main():
   if args.test_spi == True:
     crc = zlib.crc32(bytes(payload[LFW_SIZE:(payload_len - 4)]))
     crc_ofs = payload_len - 4
-    print("EC_RO CRC32 = 0x{0:08x} @ 0x{1:08x}".format(crc, crc_ofs))
+    debug_print("EC_RO CRC32 = 0x{0:08x} @ 0x{1:08x}".format(crc, crc_ofs))
     for i in range(4):
       payload[crc_ofs + i] = crc & 0xff
       crc = crc >> 8
@@ -381,22 +400,25 @@ def main():
   # offset may be different due to Header size and other changes
   # MCHP we want to append a SHA-256 to the end of the actual payload
   # to test SPI read routines.
-  print("Call to GetPayloadFromOffset")
-  print("args.input = ", args.input)
-  print("args.image_size = ", hex(args.image_size))
+  debug_print("Call to GetPayloadFromOffset")
+  debug_print("args.input = ", args.input)
+  debug_print("args.image_size = ", hex(args.image_size))
+
   payload_rw = GetPayloadFromOffset(args.input, args.image_size)
-  print("type(payload_rw) is ", type(payload_rw))
-  print("len(payload_rw) is ", hex(len(payload_rw)))
+  debug_print("type(payload_rw) is ", type(payload_rw))
+  debug_print("len(payload_rw) is ", hex(len(payload_rw)))
+
   # truncate to args.image_size
   rw_len = args.image_size
   payload_rw = payload_rw[:rw_len]
   payload_rw_len = len(payload_rw)
-  print("Truncated size of EC_RW = ", hex(payload_rw_len))
+  debug_print("Truncated size of EC_RW = ", hex(payload_rw_len))
 
   payload_entry_tuple = struct.unpack_from('<I', payload_rw, 4)
-  print("payload_entry_tuple = ", payload_entry_tuple)
+  debug_print("payload_entry_tuple = ", payload_entry_tuple)
+
   payload_entry = payload_entry_tuple[0]
-  print("payload_entry = ", hex(payload_entry))
+  debug_print("payload_entry = ", hex(payload_entry))
 
   # SPI image integrity test
   # compute CRC32 of EC_RW except for last 4 bytes
@@ -404,7 +426,7 @@ def main():
   if args.test_spi == True:
     crc = zlib.crc32(bytes(payload_rw[:(payload_rw_len - 32)]))
     crc_ofs = payload_rw_len - 4
-    print("EC_RW CRC32 = 0x{0:08x} at offset 0x{1:08x}".format(crc, crc_ofs))
+    debug_print("EC_RW CRC32 = 0x{0:08x} at offset 0x{1:08x}".format(crc, crc_ofs))
     for i in range(4):
       payload_rw[crc_ofs + i] = crc & 0xff
       crc = crc >> 8
@@ -458,21 +480,22 @@ def main():
   # MEC17xx Boot-ROM locates TAG at SPI offset 0 instead of end of SPI.
   #
   with open(args.output, 'wb') as f:
-    print("Write spi list to file", args.output)
+    debug_print("Write spi list to file", args.output)
     addr = 0
     for s in spi_list:
       if addr < s[0]:
-        print("Offset ",hex(addr)," Length", hex(s[0]-addr),
-              "fill with 0xff")
+        debug_print("Offset ",hex(addr)," Length", hex(s[0]-addr),
+                "fill with 0xff")
         f.write('\xff' * (s[0] - addr))
         addr = s[0]
-      print("Offset ",hex(addr), " Length", hex(len(s[1])), "write data")
+        debug_print("Offset ",hex(addr), " Length", hex(len(s[1])), "write data")
+
       f.write(s[1])
       addr += len(s[1])
 
     if addr < spi_size:
-      print("Offset ",hex(addr), " Length", hex(spi_size - addr),
-            "fill with 0xff")
+      debug_print("Offset ",hex(addr), " Length", hex(spi_size - addr),
+              "fill with 0xff")
       f.write('\xff' * (spi_size - addr))
 
     f.flush()

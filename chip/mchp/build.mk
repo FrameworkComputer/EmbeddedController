@@ -6,6 +6,12 @@
 # Microchip(MCHP) MEC chip specific files build
 #
 
+# pass verbose build setting to SPI image generation script
+SCRIPTVERBOSE=
+ifeq ($(V),1)
+SCRIPTVERBOSE=--verbose
+endif
+
 # MCHP MEC SoC's have a Cortex-M4 ARM core
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
@@ -57,7 +63,7 @@ cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $< $@.tmp1 ; \
 		 ${SCRIPTDIR}/pack_ec.py -o $@.tmp -i $@.tmp1 \
 		--loader_file $(chip-lfw-flat) ${TEST_SPI} \
 		--spi_size ${CHIP_SPI_SIZE_KB} \
-		--image_size $(_rw_size) ; rm -f $@.tmp1
+		--image_size $(_rw_size) ${SCRIPTVERBOSE}; rm -f $@.tmp1
 
 chip-lfw = chip/${CHIP}/lfw/ec_lfw
 chip-lfw-flat = $(out)/RW/$(chip-lfw)-lfw.flat
