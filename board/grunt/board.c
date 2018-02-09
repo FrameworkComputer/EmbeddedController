@@ -237,6 +237,24 @@ static void board_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
+static void board_chipset_startup(void)
+{
+	/*
+	 * Enable sensor power (lid accel, gyro) in S3 for calculating the lid
+	 * angle (needed on convertibles to disable resume from keyboard in
+	 * tablet mode).
+	 */
+	gpio_set_level(GPIO_EN_PP1800_SENSOR, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_shutdown(void)
+{
+	/* Disable sensor power (lid accel, gyro) in S5. */
+	gpio_set_level(GPIO_EN_PP1800_SENSOR, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
 /**
  * Power on (or off) a single TCPC.
  * minimum on/off delays are included.
