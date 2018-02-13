@@ -92,7 +92,8 @@ GPIO(SKU_ID1,			PIN(F, 0), GPIO_INPUT)
 GPIO(SKU_ID2,			PIN(4, 1), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
-ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, GPIO_PULL_UP)			/* UART from EC to Servo */
+/* Cr50 requires no pull-ups on UART pins. */
+ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)					/* UART from EC to Servo */
 ALTERNATE(PIN_MASK(B, 0x30), 1, MODULE_I2C, 0)					/* I2C0 */
 ALTERNATE(PIN_MASK(9, 0x07), 1, MODULE_I2C, 0)					/* I2C1 SCL / I2C2 */
 ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)					/* I2C1 SDA */
