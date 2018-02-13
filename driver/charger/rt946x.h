@@ -189,6 +189,11 @@
 
 #define RT946X_MASK_BOOST_CURRENT	0x07
 
+/* ========== CHGCTRL12 0x0C ============ */
+#define RT946X_SHIFT_TMR_EN	1
+
+#define RT946X_MASK_TMR_EN	(1 << RT946X_SHIFT_TMR_EN)
+
 /* ========== CHGCTRL13 0x0D ============ */
 #define RT946X_SHIFT_WDT_EN	7
 
