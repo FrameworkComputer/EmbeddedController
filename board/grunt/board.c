@@ -630,15 +630,6 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-static void board_init_leds_off(void)
-{
-	/* Initialize the LEDs off. */
-	/* TODO(sjg): Eventually do something with these LEDs. */
-	pwm_set_duty(PWM_CH_LED1_AMBER, 0);
-	pwm_set_duty(PWM_CH_LED2_BLUE, 0);
-}
-DECLARE_HOOK(HOOK_INIT, board_init_leds_off, HOOK_PRIO_INIT_PWM + 1);
-
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {
