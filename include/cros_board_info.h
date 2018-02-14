@@ -8,9 +8,11 @@
 #define __CROS_EC_CROS_BOARD_INFO_H
 
 #include "common.h"
+#include "ec_commands.h"
 
-#define CBI_VERSION_MAJOR 0
-#define CBI_VERSION_MINOR 0
+#define CBI_VERSION_MAJOR	0
+#define CBI_VERSION_MINOR	0
+#define CBI_EEPROM_SIZE		256
 static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 };  /* 'C' 'B' 'I' */
 
 struct cbi_header {
@@ -29,22 +31,14 @@ struct cbi_header {
 	/* Total size of data. It can be larger than sizeof(struct board_info)
 	 * if future versions add additional fields. */
 	uint16_t total_size;
+	/* List of data items (i.e. struct cbi_data[]) */
+	uint8_t data[];
 } __attribute__((packed));
 
-struct board_info {
-	struct cbi_header head;
-	/* Board version */
-	union {
-		struct {
-			uint8_t minor_version;
-			uint8_t major_version;
-		};
-		uint16_t version;
-	};
-	/* OEM ID */
-	uint8_t oem_id;
-	/* SKU ID */
-	uint8_t sku_id;
+struct cbi_data {
+	uint8_t tag;		/* enum cbi_data_tag */
+	uint8_t size;		/* size of value[] */
+	uint8_t value[];	/* data value */
 } __attribute__((packed));
 
 /**
@@ -56,5 +50,16 @@ struct board_info {
 int cbi_get_board_version(uint32_t *version);
 int cbi_get_sku_id(uint32_t *sku_id);
 int cbi_get_oem_id(uint32_t *oem_id);
+
+/**
+ * Primitive accessors
+ *
+ * @param tag   Tag of the target data.
+ * @param buf   Buffer where data is passed.
+ * @param size  (IN) Size of <buf>. (OUT) Size of the data returned.
+ * @return EC_SUCCESS on success or EC_ERROR_* otherwise.
+ */
+int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size);
+int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size);
 
 #endif /* __CROS_EC_CROS_BOARD_INFO_H */

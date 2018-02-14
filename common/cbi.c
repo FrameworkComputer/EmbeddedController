@@ -12,18 +12,23 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ## args)
 
 #define EEPROM_PAGE_WRITE_SIZE	16
+#define EEPROM_PAGE_WRITE_MS	5
 #define EC_ERROR_CBI_CACHE_INVALID	EC_ERROR_INTERNAL_FIRST
-static struct board_info bi;
-static int cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
 
-static uint8_t cbi_crc8(const struct board_info *bi)
+static int cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
+static uint8_t cbi[CBI_EEPROM_SIZE];
+static struct cbi_header * const head = (struct cbi_header *)cbi;
+
+static uint8_t cbi_crc8(const struct cbi_header *h)
 {
-	return crc8((uint8_t *)&bi->head.crc + 1, bi->head.total_size - 4);
+	return crc8((uint8_t *)&h->crc + 1,
+		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
 }
 
 /*
@@ -31,7 +36,6 @@ static uint8_t cbi_crc8(const struct board_info *bi)
  */
 static int do_read_board_info(void)
 {
-	uint8_t buf[256];
 	uint8_t offset;
 
 	CPRINTS("Reading board info");
@@ -39,69 +43,121 @@ static int do_read_board_info(void)
 	/* Read header */
 	offset = 0;
 	if (i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM,
-		     &offset, 1, buf, sizeof(bi.head), I2C_XFER_SINGLE)) {
+		     &offset, 1, cbi, sizeof(*head), I2C_XFER_SINGLE)) {
 		CPRINTS("Failed to read header");
 		return EC_ERROR_INVAL;
 	}
-	memcpy(&bi.head, buf, sizeof(bi.head));
 
 	/* Check magic */
-	if (memcmp(bi.head.magic, cbi_magic, sizeof(bi.head.magic))) {
+	if (memcmp(head->magic, cbi_magic, sizeof(head->magic))) {
 		CPRINTS("Bad magic");
 		return EC_ERROR_INVAL;
 	}
 
 	/* check version */
-	if (bi.head.major_version > CBI_VERSION_MAJOR) {
+	if (head->major_version > CBI_VERSION_MAJOR) {
 		CPRINTS("Version mismatch");
 		return EC_ERROR_INVAL;
 	}
 
 	/* Check the data size. It's expected to support up to 64k but our
 	 * buffer has practical limitation. */
-	if (bi.head.total_size < sizeof(bi) ||
-			bi.head.total_size > sizeof(buf)) {
-		CPRINTS("Bad size: %d", bi.head.total_size);
+	if (head->total_size < sizeof(*head) ||
+			sizeof(cbi) < head->total_size) {
+		CPRINTS("Bad size: %d", head->total_size);
 		return EC_ERROR_OVERFLOW;
 	}
 
-	/* Read the rest */
-	offset = sizeof(bi.head);
+	/* Read the data */
+	offset = sizeof(*head);
 	if (i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM, &offset, 1,
-		     buf + sizeof(bi.head),
-		     bi.head.total_size - sizeof(bi.head),
+		     head->data, head->total_size - sizeof(*head),
 		     I2C_XFER_SINGLE)) {
 		CPRINTS("Failed to read body");
 		return EC_ERROR_INVAL;
 	}
 
 	/* Check CRC. This supports new fields unknown to this parser. */
-	if (cbi_crc8((struct board_info *)&buf) != bi.head.crc) {
+	if (cbi_crc8(head) != head->crc) {
 		CPRINTS("Bad CRC");
 		return EC_ERROR_INVAL;
 	}
-
-	/* Save only the data we understand. */
-	memcpy(&bi.head + 1, &buf[sizeof(bi.head)],
-	       sizeof(bi) - sizeof(bi.head));
-	/* If we're handling previous version, clear all new fields */
 
 	return EC_SUCCESS;
 }
 
 static int read_board_info(void)
 {
-	if (cached_read_result != EC_ERROR_CBI_CACHE_INVALID)
-		/* We already tried and know the result. Return the cached
-		 * error code immediately to avoid wasteful reads. */
-		return cached_read_result;
-
-	cached_read_result = do_read_board_info();
-	if (cached_read_result)
-		/* On error (I2C or bad contents), retry a read */
+	if (cached_read_result == EC_ERROR_CBI_CACHE_INVALID) {
 		cached_read_result = do_read_board_info();
-
+		if (cached_read_result)
+			/* On error (I2C or bad contents), retry a read */
+			cached_read_result = do_read_board_info();
+	}
+	/* Else, we already tried and know the result. Return the cached
+	 * error code immediately to avoid wasteful reads. */
 	return cached_read_result;
+}
+
+static struct cbi_data *find_tag(enum cbi_data_tag tag)
+{
+	struct cbi_data *d;
+	uint8_t *p;
+	for (p = head->data; p + sizeof(*d) < cbi + head->total_size;) {
+		d = (struct cbi_data *)p;
+		if (d->tag == tag)
+			return d;
+		p += sizeof(*d) + d->size;
+	}
+	return NULL;
+}
+
+int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
+{
+	const struct cbi_data *d;
+
+	if (read_board_info())
+		return EC_ERROR_UNKNOWN;
+
+	d = find_tag(tag);
+	if (!d)
+		/* Not found */
+		return EC_ERROR_UNKNOWN;
+	if (*size < d->size)
+		/* Insufficient buffer size */
+		return EC_ERROR_INVAL;
+
+	/* Clear the buffer in case len < *size */
+	memset(buf, 0, *size);
+	/* Copy the value */
+	memcpy(buf, d->value, d->size);
+	*size = d->size;
+	return EC_SUCCESS;
+}
+
+int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
+{
+	struct cbi_data *d;
+
+	d = find_tag(tag);
+	if (!d) {
+		/* Not found. Check if new item would fit */
+		if (sizeof(cbi) < head->total_size + sizeof(*d) + size)
+			return EC_ERROR_OVERFLOW;
+		/* Append new item */
+		d = (struct cbi_data *)&cbi[head->total_size];
+		d->tag = tag;
+		d->size = size;
+		memcpy(d->value, buf, d->size);
+		head->total_size += (sizeof(*d) + size);
+		return EC_SUCCESS;
+	}
+	/* No expand or shrink. Items are tightly packed. */
+	if (d->size != size)
+		return EC_ERROR_INVAL;
+	/* Overwrite existing item */
+	memcpy(d->value, buf, d->size);
+	return EC_SUCCESS;
 }
 
 static int eeprom_is_write_protected(void)
@@ -111,13 +167,12 @@ static int eeprom_is_write_protected(void)
 
 static int write_board_info(void)
 {
-	uint8_t buf[sizeof(bi) + 1];
 	/* The code is only tested for ST M24C02, whose page size for a single
 	 * write is 16 byte. To support different EEPROMs, you may need to
 	 * craft the i2c packets accordingly. */
-	_Static_assert(sizeof(bi) <= EEPROM_PAGE_WRITE_SIZE,
-		       "struct board_info exceeds page write size");
-	int rv;
+	uint8_t buf[EEPROM_PAGE_WRITE_SIZE + 1];  /* '1' for offset byte */
+	uint8_t *p = cbi;
+	int rest = head->total_size;
 
 	if (eeprom_is_write_protected()) {
 		CPRINTS("Failed to write for WP");
@@ -125,74 +180,68 @@ static int write_board_info(void)
 	}
 
 	buf[0] = 0;	/* Offset 0 */
-	memcpy(&buf[1], &bi, sizeof(bi));
-	rv = i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM, buf,
-		     sizeof(bi) + 1, NULL, 0, I2C_XFER_SINGLE);
-	if (rv) {
-		CPRINTS("Failed to write for %d", rv);
-		return rv;
+	while (rest > 0) {
+		int size = MIN(EEPROM_PAGE_WRITE_SIZE, rest);
+		int rv;
+		rest -= size;
+		memcpy(&buf[1], p, size);
+		rv = i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM, buf, size + 1,
+			      NULL, 0, I2C_XFER_SINGLE);
+		if (rv) {
+			CPRINTS("Failed to write for %d", rv);
+			return rv;
+		}
+		/* Wait for internal write cycle completion */
+		msleep(EEPROM_PAGE_WRITE_MS);
+		buf[0] += size;
+		p += size;
 	}
 
 	return EC_SUCCESS;
 }
 
-int cbi_get_board_version(uint32_t *version)
+int cbi_get_board_version(uint32_t *ver)
 {
-	if (read_board_info())
-		return EC_ERROR_UNKNOWN;
-	*version = bi.version;
-	return EC_SUCCESS;
+	uint8_t size = sizeof(*ver);
+	return cbi_get_board_info(CBI_TAG_BOARD_VERSION, (uint8_t *)ver, &size);
 }
 
-int cbi_get_sku_id(uint32_t *sku_id)
+int cbi_get_sku_id(uint32_t *id)
 {
-	if (read_board_info())
-		return EC_ERROR_UNKNOWN;
-	*sku_id = bi.sku_id;
-	return EC_SUCCESS;
+	uint8_t size = sizeof(*id);
+	return cbi_get_board_info(CBI_TAG_SKU_ID, (uint8_t *)id, &size);
 }
 
-int cbi_get_oem_id(uint32_t *oem_id)
+int cbi_get_oem_id(uint32_t *id)
 {
-	if (read_board_info())
-		return EC_ERROR_UNKNOWN;
-	*oem_id = bi.oem_id;
-	return EC_SUCCESS;
+	uint8_t size = sizeof(*id);
+	return cbi_get_board_info(CBI_TAG_OEM_ID, (uint8_t *)id, &size);
 }
 
+/*
+ * For backward compatibility. New code should use cbi_get_board_version.
+ */
 int board_get_version(void)
 {
-	uint32_t version;
-	if (cbi_get_board_version(&version))
+	uint32_t ver;
+	uint8_t size = sizeof(ver);
+	if (cbi_get_board_info(CBI_TAG_BOARD_VERSION, (uint8_t *)&ver, &size))
 		return -1;
-	return version;
+	return ver;
 }
 
 static int hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;
+	uint8_t size = MIN(args->response_max, UINT8_MAX);
 
 	if (p->flag & CBI_GET_RELOAD)
 		cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
 
-	if (read_board_info())
-		return EC_RES_ERROR;
-
-	switch (p->type) {
-	case CBI_DATA_BOARD_VERSION:
-		*(uint32_t *)args->response = bi.version;
-		break;
-	case CBI_DATA_OEM_ID:
-		*(uint32_t *)args->response = bi.oem_id;
-		break;
-	case CBI_DATA_SKU_ID:
-		*(uint32_t *)args->response = bi.sku_id;
-		break;
-	default:
+	if (cbi_get_board_info(p->tag, args->response, &size))
 		return EC_RES_INVALID_PARAM;
-	}
-	args->response_size = sizeof(uint32_t);
 
+	args->response_size = size;
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
@@ -205,40 +254,23 @@ static int hc_cbi_set(struct host_cmd_handler_args *args)
 	int rv;
 
 	if (p->flag & CBI_SET_INIT) {
-		memset(&bi, 0, sizeof(bi));
-		memcpy(&bi.head.magic, cbi_magic, sizeof(cbi_magic));
+		memset(cbi, 0, sizeof(cbi));
+		memcpy(head->magic, cbi_magic, sizeof(cbi_magic));
+		head->total_size = sizeof(*head);
 		cached_read_result = EC_SUCCESS;
 	} else {
 		if (read_board_info())
 			return EC_RES_ERROR;
 	}
 
-	switch (p->type) {
-	case CBI_DATA_BOARD_VERSION:
-		if (p->data > UINT16_MAX)
-			return EC_RES_INVALID_PARAM;
-		bi.version = p->data;
-		break;
-	case CBI_DATA_OEM_ID:
-		if (p->data > UINT8_MAX)
-			return EC_RES_INVALID_PARAM;
-		bi.oem_id = p->data;
-		break;
-	case CBI_DATA_SKU_ID:
-		if (p->data > UINT8_MAX)
-			return EC_RES_INVALID_PARAM;
-		bi.sku_id = p->data;
-		break;
-	default:
+	if (cbi_set_board_info(p->tag, p->data, p->size))
 		return EC_RES_INVALID_PARAM;
-	}
 
 	/* Whether we're modifying existing data or creating new one,
 	 * we take over the format. */
-	bi.head.major_version = CBI_VERSION_MAJOR;
-	bi.head.minor_version = CBI_VERSION_MINOR;
-	bi.head.total_size = sizeof(bi);
-	bi.head.crc = cbi_crc8(&bi);
+	head->major_version = CBI_VERSION_MAJOR;
+	head->minor_version = CBI_VERSION_MINOR;
+	head->crc = cbi_crc8(head);
 
 	/* Skip write if client asks so. */
 	if (p->flag & CBI_SET_NO_SYNC)
@@ -255,11 +287,42 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
 		     hc_cbi_set,
 		     EC_VER_MASK(0));
 
+static void dump_cbi(void)
+{
+	int i;
+	for (i = 0; i < head->total_size; i++) {
+		ccprintf(" %02x", cbi[i]);
+		if (i % 16 == 15)
+			ccprintf("\n");
+	}
+	ccprintf("\n");
+}
+
 static int command_dump_cbi(int argc, char **argv)
 {
-	ccprintf("BOARD_VERSION: %u (0x%x)\n", bi.version, bi.version);
-	ccprintf("OEM_ID: %u (0x%x)\n", bi.oem_id, bi.oem_id);
-	ccprintf("SKU_ID: %u (0x%x)\n", bi.sku_id, bi.sku_id);
+	uint32_t val;
+
+	ccprintf("CBI_VERSION: 0x%04x\n", head->version);
+	ccprintf("TOTAL_SIZE: %u\n", head->total_size);
+	ccprintf("BOARD_VERSION: ");
+	if (cbi_get_board_version(&val) == EC_SUCCESS)
+		ccprintf("%u (0x%x)\n", val, val);
+	else
+		ccprintf("UNKNOWN\n");
+
+	ccprintf("OEM_ID: ");
+	if (cbi_get_oem_id(&val) == EC_SUCCESS)
+		ccprintf("%u (0x%x)\n", val, val);
+	else
+		ccprintf("UNKNOWN\n");
+
+	ccprintf("SKU_ID: ");
+	if (cbi_get_sku_id(&val) == EC_SUCCESS)
+		ccprintf("%u (0x%x)\n", val, val);
+	else
+		ccprintf("UNKNOWN\n");
+
+	dump_cbi();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cbi, command_dump_cbi, NULL, NULL);

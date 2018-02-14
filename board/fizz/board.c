@@ -503,7 +503,7 @@ static void set_charge_limit(int charge_ma)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	uint32_t brd_ver = 0;
+	uint32_t ver = 0;
 	int p87w = 0, p65w = 0, p60w = 0;
 
 	/*
@@ -521,7 +521,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * If CBI isn't initialized or contains invalid data, we assume it's
 	 * a new board.
 	 */
-	if (cbi_get_board_version(&brd_ver) == EC_SUCCESS && brd_ver < 0x0202)
+	if (cbi_get_board_version(&ver) == EC_SUCCESS && ver < 0x0202)
 		return set_charge_limit(charge_ma);
 	/*
 	 * We have three FETs connected to three registers: PR257, PR258,
