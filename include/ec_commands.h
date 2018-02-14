@@ -4690,6 +4690,8 @@ struct __ec_align2 ec_params_fp_sensor_config {
 #define FP_CAPTURE_PATTERN0      2
 /* Self test pattern (e.g. inverted checkerboard) */
 #define FP_CAPTURE_PATTERN1      3
+/* Capture for Quality test with fixed contrast */
+#define FP_CAPTURE_QUALITY_TEST  4
 /* Extracts the capture type from the sensor 'mode' word */
 #define FP_CAPTURE_TYPE(mode) (((mode) >> FP_MODE_CAPTURE_TYPE_SHIFT) \
 					& FP_MODE_CAPTURE_TYPE_MASK)

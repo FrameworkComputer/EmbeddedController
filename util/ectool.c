@@ -1083,7 +1083,7 @@ int cmd_rwsig_action(int argc, char *argv[])
 	return ec_command(EC_CMD_RWSIG_ACTION, 0, &req, sizeof(req), NULL, 0);
 }
 
-static void *fp_download_frame(struct ec_response_fp_info *info)
+static void *fp_download_frame(struct ec_response_fp_info *info, int all)
 {
 	struct ec_params_fp_frame p;
 	int rv = 0;
@@ -1095,20 +1095,11 @@ static void *fp_download_frame(struct ec_response_fp_info *info)
 	if (rv < 0)
 		return NULL;
 
-	stride = (size_t)info->width * info->bpp/8;
-	if (stride > ec_max_insize) {
-		fprintf(stderr, "Not implemented for line size %zu B "
-			"(%u pixels) > EC transfer size %d\n",
-			stride, info->width, ec_max_insize);
-		return NULL;
-	}
-	if (info->bpp != 8) {
-		fprintf(stderr, "Not implemented for BPP = %d != 8\n",
-			info->bpp);
-		return NULL;
-	}
+	if (all)
+		size = info->frame_size;
+	else
+		size = (size_t)info->width * info->bpp/8 * info->height;
 
-	size = stride * info->height;
 	buffer = malloc(size);
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate memory for the image\n");
@@ -1117,8 +1108,9 @@ static void *fp_download_frame(struct ec_response_fp_info *info)
 
 	ptr = buffer;
 	p.offset = 0;
-	p.size = stride;
 	while (size) {
+		stride = MIN(ec_max_insize, size);
+		p.size = stride;
 		rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p),
 				ptr, stride);
 		if (rv < 0) {
@@ -1152,7 +1144,7 @@ static int fp_pattern_frame(int capt_type, const char *title, int inv)
 		return -1;
 	/* ensure the capture has happened without using event support */
 	usleep(200000);
-	pattern = fp_download_frame(&info);
+	pattern = fp_download_frame(&info, 0);
 	if (!pattern)
 		return -1;
 
@@ -1247,6 +1239,8 @@ int cmd_fp_mode(int argc, char *argv[])
 			capture_type = FP_CAPTURE_PATTERN0;
 		else if (!strncmp(argv[i], "pattern1", 8))
 			capture_type = FP_CAPTURE_PATTERN1;
+		else if (!strncmp(argv[i], "qual", 4))
+			capture_type = FP_CAPTURE_QUALITY_TEST;
 	}
 	if (mode & FP_MODE_CAPTURE)
 		mode |= capture_type << FP_MODE_CAPTURE_TYPE_SHIFT;
@@ -1294,13 +1288,19 @@ int cmd_fp_info(int argc, char *argv[])
 int cmd_fp_frame(int argc, char *argv[])
 {
 	struct ec_response_fp_info r;
-	void *buffer = fp_download_frame(&r);
+	int raw = (argc == 2 && !strcasecmp(argv[1], "raw"));
+	void *buffer = fp_download_frame(&r, raw);
 	uint8_t *ptr = buffer;
 	int x, y;
 
 	if (!buffer) {
 		fprintf(stderr, "Failed to get FP sensor frame\n");
 		return -1;
+	}
+
+	if (raw) {
+		fwrite(buffer, r.frame_size, 1, stdout);
+		goto frame_done;
 	}
 
 	/* Print 8-bpp PGM ASCII header */
@@ -1312,6 +1312,7 @@ int cmd_fp_frame(int argc, char *argv[])
 		printf("\n");
 	}
 	printf("# END OF FILE\n");
+frame_done:
 	free(buffer);
 	return 0;
 }

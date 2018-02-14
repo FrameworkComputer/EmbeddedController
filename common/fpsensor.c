@@ -67,6 +67,14 @@ static inline int is_test_capture(uint32_t mode)
 		    || capture_type == FP_CAPTURE_PATTERN1);
 }
 
+static inline int is_raw_capture(uint32_t mode)
+{
+	int capture_type = FP_CAPTURE_TYPE(mode);
+
+	return (capture_type == FP_CAPTURE_VENDOR_FORMAT
+	     || capture_type == FP_CAPTURE_QUALITY_TEST);
+}
+
 static void send_mkbp_event(uint32_t event)
 {
 	atomic_or(&fp_events, event);
@@ -245,7 +253,7 @@ static int fp_command_frame(struct host_cmd_handler_args *args)
 	void *out = args->response;
 	uint32_t offset = params->offset;
 
-	if (FP_CAPTURE_TYPE(sensor_mode) != FP_CAPTURE_VENDOR_FORMAT)
+	if (!is_raw_capture(sensor_mode))
 		offset += FP_SENSOR_IMAGE_OFFSET;
 
 	if (offset + params->size > sizeof(fp_buffer) ||
