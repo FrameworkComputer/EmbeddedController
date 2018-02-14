@@ -164,17 +164,22 @@ int command_ledtest(int argc, char **argv)
 	int pwm_led_id;
 	int led_id;
 
-	if (argc < 3)
+	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
-
-	if (!parse_bool(argv[2], &enable))
-		return EC_ERROR_PARAM2;
 
 	pwm_led_id = atoi(argv[1]);
 	if ((pwm_led_id < 0) || (pwm_led_id >= CONFIG_LED_PWM_COUNT))
 		return EC_ERROR_PARAM1;
-
 	led_id = supported_led_ids[pwm_led_id];
+
+	if (argc == 2) {
+		ccprintf("PWM LED %d: led_id=%d, auto_control=%d\n",
+			 pwm_led_id, led_id,
+			 led_auto_control_is_enabled(led_id) != 0);
+		return EC_SUCCESS;
+	}
+	if (!parse_bool(argv[2], &enable))
+		return EC_ERROR_PARAM2;
 
 	/* Inverted because this drives auto control. */
 	led_auto_control(led_id, !enable);
