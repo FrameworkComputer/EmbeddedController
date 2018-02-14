@@ -424,9 +424,6 @@ static void board_init(void)
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
-	/* Enable sensors power supply */
-	gpio_set_level(GPIO_PP1800_DX_SENSOR, 1);
-
 	/* Enable VBUS interrupt */
 	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
 	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
@@ -752,6 +749,8 @@ static void board_chipset_startup(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 1);
+
+	gpio_set_level(GPIO_PP1800_DX_SENSOR, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -763,6 +762,8 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, 0);
+
+	gpio_set_level(GPIO_PP1800_DX_SENSOR, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 

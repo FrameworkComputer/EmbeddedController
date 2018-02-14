@@ -61,7 +61,7 @@ GPIO(GPIO80_NC,			PIN(8, 0), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(GPIOD2_NC,			PIN(D, 2), GPIO_INPUT | GPIO_PULL_UP)
 
 /* Sensor Power */
-GPIO(PP1800_DX_SENSOR,		PIN(E, 7), GPIO_OUTPUT)
+GPIO(PP1800_DX_SENSOR,		PIN(E, 7), GPIO_OUT_LOW)
 
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(I2C0_0_SCL,		PIN(B, 5), GPIO_INPUT)				/* EC_I2C0_0_USBC_3V3_SCL */
