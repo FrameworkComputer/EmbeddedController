@@ -8,6 +8,12 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+/*
+ * TODO(b/73337313) remove this config,
+ * once the write-protection scheme is decided and validated.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* the UART console is on USART1 */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
@@ -31,7 +37,7 @@
 #define CONFIG_STM_HWTIMER32
 #undef CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
-#define CONFIG_WP_ALWAYS
+#define CONFIG_WP_ACTIVE_HIGH
 
 /* SPI configuration for the fingerprint sensor */
 #define CONFIG_SPI_MASTER
