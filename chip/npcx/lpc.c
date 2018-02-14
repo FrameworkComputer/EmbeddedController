@@ -765,14 +765,9 @@ void host_register_init(void)
 	/* WIN1&2 mapping to IO */
 	lpc_sib_write_reg(SIO_OFFSET, 0xF1,
 			lpc_sib_read_reg(SIO_OFFSET, 0xF1) | 0x30);
-	/* Host Command on the IO:0x0800 */
-	lpc_sib_write_reg(SIO_OFFSET, 0xF7, 0x00);
-	lpc_sib_write_reg(SIO_OFFSET, 0xF6, 0x00);
+	/* WIN1 as Host Command on the IO:0x0800 */
 	lpc_sib_write_reg(SIO_OFFSET, 0xF5, 0x08);
 	lpc_sib_write_reg(SIO_OFFSET, 0xF4, 0x00);
-	/* WIN1 as Host Command on the IO:0x0800 */
-	lpc_sib_write_reg(SIO_OFFSET, 0xFB, 0x00);
-	lpc_sib_write_reg(SIO_OFFSET, 0xFA, 0x00);
 	/* WIN2 as MEMMAP on the IO:0x900 */
 	lpc_sib_write_reg(SIO_OFFSET, 0xF9, 0x09);
 	lpc_sib_write_reg(SIO_OFFSET, 0xF8, 0x00);
