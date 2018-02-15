@@ -695,7 +695,7 @@ enum alt_process_result {
  * The mutex ensures that only one alternative TPM command execution is active
  * at a time.
  */
-static struct alt_tpm_interface {
+static __preserved struct alt_tpm_interface {
 	struct tpm_cmd_header *alt_hdr;
 	size_t alt_buffer_size;
 	uint32_t process_result;
@@ -895,7 +895,7 @@ int tpm_sync_reset(int wipe_first)
 
 void tpm_task(void)
 {
-	uint32_t evt;
+	uint32_t evt = 0;
 
 	if (!chip_factory_mode()) {
 		/*
@@ -906,19 +906,27 @@ void tpm_task(void)
 		 */
 		while (!ap_is_on()) {
 			/*
-			 * The only event we should expect at this point would
-			 * be the reset request.
+			 * The only events we should expect at this point
+			 * would be the reset request or a command routed
+			 * through TPM task context to make use of the large
+			 * stack.
 			 */
 			evt = task_wait_event(-1);
-			if (evt & TPM_EVENT_RESET)
+			if (evt & (TPM_EVENT_RESET | TPM_EVENT_ALT_EXTENSION)) {
+				/*
+				 * No need to remember the reset request: tpm
+				 * reset will happen as soon as we break out
+				 * from this while loop,
+				 */
+				evt &= TPM_EVENT_ALT_EXTENSION;
 				break;
+			}
 
 			cprints(CC_TASK, "%s:%d unexpected event %x",
 				__func__, __LINE__, evt);
 		}
 	}
 
-	evt = 0;
 	tpm_reset_now(0);
 	while (1) {
 		uint8_t *response;
