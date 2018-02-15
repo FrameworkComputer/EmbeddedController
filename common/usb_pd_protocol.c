@@ -1353,8 +1353,11 @@ static void handle_ctrl_request(int port, uint16_t head,
 #endif
 	case PD_CTRL_REJECT:
 	case PD_CTRL_WAIT:
-		if (pd[port].task_state == PD_STATE_DR_SWAP)
+		if (pd[port].task_state == PD_STATE_DR_SWAP) {
+			if (type == PD_CTRL_WAIT) /* try again ... */
+				pd[port].flags |= PD_FLAGS_CHECK_DR_ROLE;
 			set_state(port, READY_RETURN_STATE(port));
+		}
 #ifdef CONFIG_USBC_VCONN_SWAP
 		else if (pd[port].task_state == PD_STATE_VCONN_SWAP_SEND)
 			set_state(port, READY_RETURN_STATE(port));
