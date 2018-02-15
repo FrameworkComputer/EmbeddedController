@@ -5,6 +5,7 @@
  * Cros Board Info utility
  */
 
+#include <compile_time_macros.h>
 #include <errno.h>
 #include <dirent.h>
 #include <getopt.h>
@@ -64,6 +65,14 @@ static const struct option long_opts[] = {
 	{"help", 0, 0, OPT_HELP},
 	{NULL, 0, 0, 0}
 };
+
+static const char *field_name[] = {
+	/* Same order as enum cbi_data_tag */
+	"BOARD_VERSION",
+	"OEM_ID",
+	"SKU_ID",
+};
+BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 
 static int write_file(const char *filename, const char *buf, int size)
 {
@@ -200,12 +209,38 @@ static struct cbi_data *find_tag(const uint8_t *cbi, enum cbi_data_tag tag)
 	return NULL;
 }
 
+static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
+{
+	uint32_t v;
+	struct cbi_data *d = find_tag(buf, tag);
+	const char *name = d->tag < CBI_TAG_COUNT ? field_name[d->tag] : "???";
+
+	if (!d)
+		return;
+
+	switch (d->size) {
+	case 1:
+		v = *(uint8_t *)d->value;
+		break;
+	case 2:
+		v = *(uint16_t *)d->value;
+		break;
+	case 4:
+		v = *(uint32_t *)d->value;
+		break;
+	default:
+		printf("    %s: Integer of size %d not supported\n",
+		       name, d->size);
+		return;
+	}
+	printf("    %s: %u (0x%x, %u, %u)\n", name, v, v, d->tag, d->size);
+}
+
 static int do_show(const char *cbi_filename, int show_all)
 {
 	uint8_t *buf;
 	uint32_t size;
 	struct cbi_header *h;
-	struct cbi_data *d;
 
 	if (!cbi_filename) {
 		fprintf(stderr, "Missing arguments\n");
@@ -233,18 +268,10 @@ static int do_show(const char *cbi_filename, int show_all)
 
 	printf("  TOTAL_SIZE: %u\n", h->total_size);
 	printf("  CBI_VERSION: %u\n", h->version);
-	d = find_tag(buf, CBI_TAG_BOARD_VERSION);
-	if (d)
-		printf("  BOARD_VERSION: %u (0x%x)\n",
-		       *(uint16_t *)d->value, *(uint16_t *)d->value);
-	d = find_tag(buf, CBI_TAG_OEM_ID);
-	if (d)
-		printf("  OEM_ID: %u (0x%x)\n",
-		       *(uint8_t *)d->value, *(uint8_t *)d->value);
-	d = find_tag(buf, CBI_TAG_SKU_ID);
-	if (d)
-		printf("  SKU_ID: %u (0x%x)\n",
-		       *(uint8_t *)d->value, *(uint8_t *)d->value);
+	printf("  Data Field: name: value (hex, tag, size)\n");
+	print_integer(buf, CBI_TAG_BOARD_VERSION);
+	print_integer(buf, CBI_TAG_OEM_ID);
+	print_integer(buf, CBI_TAG_SKU_ID);
 
 	printf("Data validated successfully\n");
 	return 0;
@@ -253,7 +280,7 @@ static int do_show(const char *cbi_filename, int show_all)
 /* Print help and return error */
 static void print_help(int argc, char *argv[])
 {
-	printf("\nUsage: cbi %s <--create|--show>\n"
+	printf("\nUsage: %s <--create|--show>\n"
 	       "\n"
 	       "Utility for managing Cros Board Info (CBIs).\n"
 	       "\n"
