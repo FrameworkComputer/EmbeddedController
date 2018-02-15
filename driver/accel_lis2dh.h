@@ -99,6 +99,10 @@ enum lis2dh_odr {
 	LIS2DH_ODR_LIST_NUM
 };
 
+/* Absolute maximum rate for sensor */
+#define LIS2DH_ODR_MIN_VAL		1000
+#define LIS2DH_ODR_MAX_VAL		400000
+
 /* Return ODR reg value based on data rate set */
 #define LIS2DH_ODR_TO_REG(_odr) \
 	(_odr <= 1000) ? LIS2DH_ODR_1HZ_VAL : \

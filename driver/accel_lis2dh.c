@@ -129,10 +129,10 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	/* Adjust rounded value */
 	if (reg_val > LIS2DH_ODR_400HZ_VAL) {
 		reg_val = LIS2DH_ODR_400HZ_VAL;
-		normalized_rate = 400000;
+		normalized_rate = LIS2DH_ODR_MAX_VAL;
 	} else if (reg_val < LIS2DH_ODR_1HZ_VAL) {
 		reg_val = LIS2DH_ODR_1HZ_VAL;
-		normalized_rate = 1000;
+		normalized_rate = LIS2DH_ODR_MIN_VAL;
 	}
 
 	/*
