@@ -31,6 +31,12 @@
 				 REQUIRED_MASK_FILENAME)
 #define REQUIRED_MASK_SHOW	(REQUIRED_MASK_FILENAME)
 
+struct board_info {
+	uint16_t version;
+	uint8_t oem_id;
+	uint8_t sku_id;
+} __attribute__((packed));
+
 /* Command line options */
 enum {
 	/* mode options */
@@ -122,9 +128,20 @@ static uint8_t *read_file(const char *filename, uint32_t *size_ptr)
 	return buf;
 }
 
-static int cbi_crc8(const struct board_info *bi)
+static int cbi_crc8(const struct cbi_header *h)
 {
-	return crc8((uint8_t *)&bi->head.crc + 1, bi->head.total_size - 4);
+	return crc8((uint8_t *)&h->crc + 1,
+		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
+}
+
+static uint8_t *set_data(uint8_t *p, enum cbi_data_tag tag, void *buf, int size)
+{
+	struct cbi_data *d = (struct cbi_data *)p;
+	d->tag = tag;
+	d->size = size;
+	memcpy(d->value, buf, size);
+	p += sizeof(*d) + size;
+	return p;
 }
 
 /*
@@ -133,25 +150,32 @@ static int cbi_crc8(const struct board_info *bi)
 static int do_create(const char *cbi_filename, uint32_t size, uint8_t erase,
 		     struct board_info *bi)
 {
+	uint8_t *cbi;
+	struct cbi_header *h;
 	int rv;
-	uint8_t *buf;
+	uint8_t *p;
 
-	buf = malloc(size);
-	if (!buf) {
+	cbi = malloc(size);
+	if (!cbi) {
 		fprintf(stderr, "Failed to allocate memory\n");
 		return -1;
 	}
-	memset(buf, erase, size);
+	memset(cbi, erase, size);
 
-	memcpy(bi->head.magic, cbi_magic, sizeof(bi->head.magic));
-	bi->head.major_version = CBI_VERSION_MAJOR;
-	bi->head.minor_version = CBI_VERSION_MINOR;
-	bi->head.total_size = sizeof(*bi);
-	bi->head.crc = cbi_crc8(bi);
-	memcpy(buf, bi, sizeof(*bi));
+	h = (struct cbi_header *)cbi;
+	memcpy(h->magic, cbi_magic, sizeof(cbi_magic));
+	h->major_version = CBI_VERSION_MAJOR;
+	h->minor_version = CBI_VERSION_MINOR;
+	p = h->data;
+	p = set_data(p, CBI_TAG_BOARD_VERSION,
+		     &bi->version, sizeof(bi->version));
+	p = set_data(p, CBI_TAG_OEM_ID, &bi->oem_id, sizeof(bi->oem_id));
+	p = set_data(p, CBI_TAG_SKU_ID, &bi->sku_id, sizeof(bi->sku_id));
+	h->total_size = p - cbi;
+	h->crc = cbi_crc8(h);
 
 	/* Output blob */
-	rv = write_file(cbi_filename, buf, size);
+	rv = write_file(cbi_filename, cbi, size);
 	if (rv) {
 		fprintf(stderr, "Unable to write CBI blob\n");
 		return rv;
@@ -162,11 +186,26 @@ static int do_create(const char *cbi_filename, uint32_t size, uint8_t erase,
 	return 0;
 }
 
+static struct cbi_data *find_tag(const uint8_t *cbi, enum cbi_data_tag tag)
+{
+	struct cbi_data *d;
+	const struct cbi_header *h = (const struct cbi_header *)cbi;
+	const uint8_t *p;
+	for (p = h->data; p + sizeof(*d) < cbi + h->total_size;) {
+		d = (struct cbi_data *)p;
+		if (d->tag == tag)
+			return d;
+		p += sizeof(*d) + d->size;
+	}
+	return NULL;
+}
+
 static int do_show(const char *cbi_filename, int show_all)
 {
 	uint8_t *buf;
 	uint32_t size;
-	struct board_info *bi;
+	struct cbi_header *h;
+	struct cbi_data *d;
 
 	if (!cbi_filename) {
 		fprintf(stderr, "Missing arguments\n");
@@ -179,23 +218,33 @@ static int do_show(const char *cbi_filename, int show_all)
 		return -1;
 	}
 
-	bi = (struct board_info *)buf;
+	h = (struct cbi_header *)buf;
 	printf("CBI blob: %s\n", cbi_filename);
-	printf("  BOARD_VERSION: %d.%d (0x%02x.%02x)\n",
-	       bi->major_version, bi->minor_version,
-	       bi->major_version, bi->minor_version);
-	printf("  OEM_ID: %d (0x%02x)\n", bi->oem_id, bi->oem_id);
-	printf("  SKU_ID: %d (0x%02x)\n", bi->sku_id, bi->sku_id);
 
-	if (memcmp(bi->head.magic, cbi_magic, sizeof(cbi_magic))) {
+	if (memcmp(h->magic, cbi_magic, sizeof(cbi_magic))) {
 		fprintf(stderr, "Invalid Magic\n");
 		return -1;
 	}
 
-	if (cbi_crc8(bi) != bi->head.crc) {
+	if (cbi_crc8(h) != h->crc) {
 		fprintf(stderr, "Invalid CRC\n");
 		return -1;
 	}
+
+	printf("  TOTAL_SIZE: %u\n", h->total_size);
+	printf("  CBI_VERSION: %u\n", h->version);
+	d = find_tag(buf, CBI_TAG_BOARD_VERSION);
+	if (d)
+		printf("  BOARD_VERSION: %u (0x%x)\n",
+		       *(uint16_t *)d->value, *(uint16_t *)d->value);
+	d = find_tag(buf, CBI_TAG_OEM_ID);
+	if (d)
+		printf("  OEM_ID: %u (0x%x)\n",
+		       *(uint8_t *)d->value, *(uint8_t *)d->value);
+	d = find_tag(buf, CBI_TAG_SKU_ID);
+	if (d)
+		printf("  SKU_ID: %u (0x%x)\n",
+		       *(uint8_t *)d->value, *(uint8_t *)d->value);
 
 	printf("Data validated successfully\n");
 	return 0;
