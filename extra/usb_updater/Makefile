@@ -41,9 +41,16 @@ LIBS_common  = -lfmap
 
 all: $(PROGRAMS)
 
+GSCTOOL_SOURCES := gsctool.c
+GSCTOOL_OBJS := $(patsubst %.c,%.o,$(GSCTOOL_SOURCES))
+DEPS := $(patsubst %.c,%.d,$(GSCTOOL_SOURCES))
+
 # chip/g updater
-gsctool: gsctool.c Makefile
-	$(CC) $(CFLAGS) $(CFLAGS_g) $< $(LFLAGS) $(LIBS) $(LIBS_g) -o $@
+gsctool: $(GSCTOOL_OBJS) Makefile
+	$(CC) $(GSCTOOL_OBJS) $(LFLAGS) $(LIBS) $(LIBS_g) -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CFLAGS_g) -c -MMD -MF $(basename $@).d -o $@ $<
 
 # common EC code USB updater
 usb_updater2: usb_updater2.c Makefile
@@ -52,4 +59,6 @@ usb_updater2: usb_updater2.c Makefile
 .PHONY: clean
 
 clean:
-	rm -rf $(PROGRAMS) *~
+	rm -rf $(PROGRAMS) *~ *.o *.d
+
+-include $(DEPS)
