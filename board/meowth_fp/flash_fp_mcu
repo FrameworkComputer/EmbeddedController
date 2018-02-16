@@ -8,7 +8,7 @@ SPIDEV="/dev/spidev1.0"
 # Cannonlake PCH GPIOs
 GPIOCHIP="gpiochip268"
 # GSPI1 ACPI device for FP MCU
-SPIID="spi-PRP0001:00"
+SPIID="spi-PRP0001:01"
 # FPMCU RST_ODL is on GPP_A23 = 268 + 23 = 291
 GPIO_NRST=291
 # FPMCU BOOT0 is on GPP_A21 = 268 + 21 = 289
@@ -39,13 +39,15 @@ echo "out" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 # Reset sequence to enter bootloader mode
 echo 1 > /sys/class/gpio/gpio${GPIO_BOOT0}/value
 echo 0 > /sys/class/gpio/gpio${GPIO_NRST}/value
-echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
-
-echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 
 # load spidev (fail on cros-ec-spi first to change modalias)
 echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
 echo "${SPIID}" > /sys/bus/spi/drivers/spidev/bind
+
+# Release reset as the SPI bus is now ready
+echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
+
+echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 
 stm32mon -s ${SPIDEV} -e -w $1
 
