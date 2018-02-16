@@ -115,7 +115,7 @@ struct accelgyro_drv {
 	 */
 	int (*load_fifo)(struct motion_sensor_t *s);
 #endif
-#ifdef CONFIG_GESTURE_HOST_DETECTION
+#ifdef CONFIG_GESTURE_DETECTION
 	/**
 	 * handler for setting/getting activity information.
 	 * Manage the high level activity detection of the chip.
