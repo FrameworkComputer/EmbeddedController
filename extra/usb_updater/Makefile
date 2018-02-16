@@ -41,7 +41,7 @@ LIBS_common  = -lfmap
 
 all: $(PROGRAMS)
 
-GSCTOOL_SOURCES := gsctool.c
+GSCTOOL_SOURCES := gsctool.c desc_parser.c
 GSCTOOL_OBJS := $(patsubst %.c,%.o,$(GSCTOOL_SOURCES))
 DEPS := $(patsubst %.c,%.d,$(GSCTOOL_SOURCES))
 
@@ -59,6 +59,9 @@ usb_updater2: usb_updater2.c Makefile
 .PHONY: clean
 
 clean:
-	rm -rf $(PROGRAMS) *~ *.o *.d
+	rm -rf $(PROGRAMS) *~ *.o *.d dp
+
+parser_debug: desc_parser.c
+	gcc -g -O0  -DTEST_PARSER desc_parser.c -o dp
 
 -include $(DEPS)

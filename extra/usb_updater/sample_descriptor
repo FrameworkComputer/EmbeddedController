@@ -1,0 +1,87 @@
+# Copyright 2018 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# Hash descriptor database file consists of sections for various Chrome OS
+# boards. Each board description section starts with a line of 4 characters
+# which is the board ID (the same as the board's RLZ code).
+#
+# Each board description section includes variable number of range
+# descriptor entries, each entry consisting of semicolon separated fields:
+#
+# {a|e|g}:{h|d}:base_addr:size[:value[:value[:value...]]]]
+#
+# Where
+#
+#  - the first sindgle character field defines the way the range is accessed:
+#     a - AP flash
+#     e - EC flash
+#     g - EC flash requiring gang programming mode
+#  - the second single character field defines the range type
+#     h - Cr50 returns the hash of the range
+#     d - Cr50 returns actual contents of the range (hex dump)
+#   - the third and and forth fields are base address and size of the range
+#   - ranges of type 'h' include one or more values for the hash of the range.
+#
+# Descriptor entries can be split along multiple lines. Each entry is
+# terminated by an empty line. Board description section is completed when
+# another board ID or end of file is encountered.
+#
+# All values are expressed in hex. Repeating empty lines and lines starting
+# with '#' are ignored.
+#
+
+QZUX
+
+# 1: Valid hash section.
+a:h:0:10000:
+756c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf3503:
+336c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf3503:
+446c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf3503
+
+# 2: Valid dump section.
+a:d:10:10
+
+# 3: Valid hash section.
+e:h:0:100:
+55d262badc1116520a7ae1d3fda380c0382b4b87f0db10de6495053ba3aadb87:
+444442badc1116520a7ae1d3fda380c0382b4b87f0db10de6495053ba3aadb87:
+443322badc1116520a7ae1d3fda380c0382b4b87f0db10de6495053ba3aadb87
+
+# 4: Invalid dump section (includes hash)
+a:d:20:10:55d262badc1116520a7ae1d3fda380c0382b4b87f0db10de6495053ba3aadb87
+
+# 5: Invalid hash section (does not include hash)
+e:h:0:100:
+
+# 6: Another invalid hash section (does not include hash)
+e:h:0:100:
+
+# extra empty lines
+
+
+# 7: Invalid hash section (hash too short)
+e:h:0:100:
+55d262badc1116520a7ae1d3fda380c0382b4b87f0db10de6495053ba3aadb8
+
+# 8: Invalid hash section (hash too long)
+a:h:0:10000:
+756c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf35034:
+336c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf3503
+
+# 9: Invalid hash section (hash includes non-hex value)
+a:h:0:10000:
+756c41b90ac9aa23a6c98ce13549dccd7xe0a83f8537eb834d9cfc3d12bf3503:
+336c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf3505
+
+# 10: Invalid hash section (hash does not include 3 variants)
+a:h:0:10000:
+756c41b90ac9aa23a6c98ce13549dccd75e0a83f8537eb834d9cfc3d12bf3503:
+336c41b90ac9aa23a6c98ce13549dccd72e0a83f8537eb834d9cfc3d12bf3505
+
+# 11: Invalid dump section (size includes non hex character)
+a:d:10:10x
+
+ABCD
+
+a:d:10:10
