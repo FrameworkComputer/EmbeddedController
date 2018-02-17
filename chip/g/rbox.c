@@ -10,34 +10,9 @@
 
 #define POWER_BUTTON 2
 
-static uint8_t val;
-
 int rbox_powerbtn_is_pressed(void)
 {
 	return !GREAD_FIELD(RBOX, CHECK_OUTPUT, PWRB_OUT);
-}
-
-int rbox_powerbtn_override_is_enabled(void)
-{
-	return GREAD_FIELD(RBOX, OVERRIDE_OUTPUT, EN) & (1 << POWER_BUTTON);
-}
-
-void rbox_powerbtn_release(void)
-{
-	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, EN, 0);
-	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, OEN, 0);
-	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, VAL, val);
-}
-
-void rbox_powerbtn_press(void)
-{
-	if (rbox_powerbtn_override_is_enabled())
-		return;
-
-	val = GREAD_FIELD(RBOX, OVERRIDE_OUTPUT, VAL);
-	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, VAL, ~(1 << POWER_BUTTON) & val);
-	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, OEN, 1 << POWER_BUTTON);
-	GWRITE_FIELD(RBOX, OVERRIDE_OUTPUT, EN, 1 << POWER_BUTTON);
 }
 
 static void rbox_release_ec_reset(void)

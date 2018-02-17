@@ -84,35 +84,9 @@ void board_physical_presence_enable(int enable)
 
 static int command_powerbtn(int argc, char **argv)
 {
-	char *e;
-	int ms = 200;
-
-	if (argc > 1) {
-		if (!strcasecmp("pulse", argv[1])) {
-			if (argc == 3) {
-				ms = strtoi(argv[2], &e, 0);
-				if (*e)
-					return EC_ERROR_PARAM2;
-			}
-
-			ccprintf("Force %dms power button press\n", ms);
-
-			rbox_powerbtn_press();
-			msleep(ms);
-			rbox_powerbtn_release();
-		} else if (!strcasecmp("press", argv[1])) {
-			rbox_powerbtn_press();
-		} else if (!strcasecmp("release", argv[1])) {
-			rbox_powerbtn_release();
-		} else
-			return EC_ERROR_PARAM1;
-	}
-
 	ccprintf("powerbtn: %s\n",
-		 rbox_powerbtn_override_is_enabled() ? "forced press" :
 		 rbox_powerbtn_is_pressed() ? "pressed\n" : "released\n");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
-			"[pulse [ms] | press | release]",
-			"get/set the state of the power button");
+DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn, "",
+			"get the state of the power button");
