@@ -100,7 +100,7 @@ static void rbox_init(void)
 	       0x0 << GC_RBOX_DEBUG_TERM_KEY0_OUT_LSB |
 	       0x1 << GC_RBOX_DEBUG_TERM_KEY1_IN_LSB |
 	       0x0 << GC_RBOX_DEBUG_TERM_KEY1_OUT_LSB);
-	/* DEBUG_BLOCK_OUTPUT value should be 0x157 */
+	/* DEBUG_DRIVE value should be 0x157 */
 	GWRITE(RBOX, DEBUG_DRIVE,
 	       0x3 << GC_RBOX_DEBUG_DRIVE_PWRB_OUT_LSB |
 	       0x1 << GC_RBOX_DEBUG_DRIVE_KEY0_OUT_LSB |
