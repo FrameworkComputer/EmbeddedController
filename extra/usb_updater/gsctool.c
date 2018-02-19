@@ -1719,19 +1719,17 @@ static void process_bid(struct transfer_descriptor *td,
 	size_t response_size;
 
 	if (bid_action == bid_get) {
-		struct board_id bid;
 
-		response_size = sizeof(bid);
+		response_size = sizeof(*bid);
 		send_vendor_command(td, VENDOR_CC_GET_BOARD_ID,
-				    &bid, sizeof(bid),
-				    &bid, &response_size);
+				    bid, sizeof(*bid),
+				    bid, &response_size);
 
-		if (response_size == sizeof(bid)) {
+		if (response_size == sizeof(*bid)) {
 			printf("Board ID space: %08x:%08x:%08x\n",
-			       be32toh(bid.type), be32toh(bid.type_inv),
-			       be32toh(bid.flags));
+			       be32toh(bid->type), be32toh(bid->type_inv),
+			       be32toh(bid->flags));
 			return;
-
 		}
 		fprintf(stderr, "Error reading board ID: response size %zd,"
 			" first byte %#02x\n", response_size,
