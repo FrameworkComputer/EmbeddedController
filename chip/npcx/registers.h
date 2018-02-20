@@ -9,6 +9,8 @@
 #define __CROS_EC_REGISTERS_H
 
 #include "common.h"
+#include "clock_chip.h"
+
 /******************************************************************************/
 /*
  * Macro Functions
@@ -1673,9 +1675,23 @@ enum {
 };
 
 #if defined(CHIP_FAMILY_NPCX5)
-#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_66
-#elif defined(CHIP_FAMILY_NPCX7)
+
+#if (FMCLK <= 33000000)
+#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_33
+#elif (FMCLK <= 48000000)
 #define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_50
+#else
+#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_66
+#endif
+
+#elif defined(CHIP_FAMILY_NPCX7)
+
+#if (FMCLK <= 33000000)
+#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_33
+#else
+#define NPCX_ESPI_MAXFREQ_MAX	NPCX_ESPI_MAXFREQ_50
+#endif
+
 #else
 #error "Please define NPCX_ESPI_MAXFREQ_MAX for your chip."
 #endif
