@@ -191,6 +191,14 @@ void clock_enable_module(enum module_id module, int enable)
 
 void clock_init(void)
 {
+	/*
+	 * STM32H743 Errata 2.2.15:
+	 * 'Reading from AXI SRAM might lead to data read corruption'
+	 *
+	 * limit concurrent read access on AXI master to 1.
+	 */
+	STM32_AXI_TARG_FN_MOD(7) |= READ_ISS_OVERRIDE;
+
 #if 0 /* Keep default for now: HSI at 64 Mhz */
 	clock_set_osc(OSC_PLL);
 #endif

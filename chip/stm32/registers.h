@@ -368,6 +368,8 @@
 
 #else  /* CHIP_FAMILY_STM32H7 */
 
+#define STM32_GPV_BASE              0x51000000
+
 #define STM32_DBGMCU_BASE           0x5C001000
 
 #define STM32_BDMA_BASE             0x58025400
@@ -2946,6 +2948,14 @@ enum dmamux1_request {
 #define STM32_RNG_SR                REG32(STM32_RNG_BASE + 0x4)
 #define STM32_RNG_SR_DRDY           (1<<0)
 #define STM32_RNG_DR                REG32(STM32_RNG_BASE + 0x8)
+
+/* --- AXI interconnect --- */
+
+/* STM32H7: AXI_TARGx_FN_MOD exists for masters x = 1, 2 and 7 */
+#define STM32_AXI_TARG_FN_MOD(x)    REG32(STM32_GPV_BASE + 0x1108 + \
+					  0x1000 * (x))
+#define  WRITE_ISS_OVERRIDE         (1 << 1)
+#define  READ_ISS_OVERRIDE          (1 << 0)
 
 /* --- MISC --- */
 #define STM32_UNIQUE_ID_ADDRESS     REG32_ADDR(STM32_UNIQUE_ID_BASE)
