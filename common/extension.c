@@ -69,6 +69,7 @@ void usb_extension_route_command(uint16_t command_code,
 #endif /* defined(CR50_DEV) */
 	case EXTENSION_POST_RESET: /* Always need to be able to reset. */
 	case VENDOR_CC_GET_BOARD_ID:
+	case VENDOR_CC_SPI_HASH:   /* This will require physical presence. */
 	case VENDOR_CC_TURN_UPDATE_ON:
 
 		/*
