@@ -21,6 +21,7 @@
 #include "cros_ec_dev.h"
 #include "ec_panicinfo.h"
 #include "ec_flash.h"
+#include "ec_version.h"
 #include "ectool.h"
 #include "lightbar.h"
 #include "lock/gec_lock.h"
@@ -608,15 +609,16 @@ int cmd_version(int argc, char *argv[])
 	rv = ec_command(EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r));
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_GET_VERSION failed: %d\n", rv);
-		return rv;
+		goto exit;
 	}
 	rv = ec_command(EC_CMD_GET_BUILD_INFO, 0,
 			NULL, 0, ec_inbuf, ec_max_insize);
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_GET_BUILD_INFO failed: %d\n",
 				rv);
-		return rv;
+		goto exit;
 	}
+	rv = 0;
 
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
@@ -630,8 +632,10 @@ int cmd_version(int argc, char *argv[])
 	       (r.current_image < ARRAY_SIZE(image_names) ?
 		image_names[r.current_image] : "?"));
 	printf("Build info:    %s\n", build_string);
+exit:
+	printf("Tool version:  %s %s %s\n", CROS_EC_VERSION, DATE, BUILDER);
 
-	return 0;
+	return rv;
 }
 
 
