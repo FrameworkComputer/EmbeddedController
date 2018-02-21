@@ -6,10 +6,13 @@
 #include <common.h>
 #include <console.h>
 #include <dcrypto.h>
+#include <extension.h>
+#include <hooks.h>
 #include <pinweaver.h>
 #include <pinweaver_tpm_imports.h>
 #include <pinweaver_types.h>
 #include <timer.h>
+#include <tpm_vendor_cmds.h>
 #include <trng.h>
 #include <tpm_registers.h>
 #include <util.h>
@@ -35,13 +38,13 @@ BUILD_ASSERT(PW_MAX_MESSAGE_SIZE >=
 	     sizeof(struct leaf_sensitive_data_t) +
 	     PW_MAX_PATH_SIZE);
 
+#define PW_MAX_RESPONSE_SIZE (sizeof(struct pw_response_header_t) + \
+		sizeof(union {struct pw_response_insert_leaf_t insert_leaf; \
+			struct pw_response_try_auth_t try_auth; \
+			struct pw_response_reset_auth_t reset_auth; }) + \
+		PW_LEAF_PAYLOAD_SIZE)
 /* Verify that the request structs will fit into the message. */
-BUILD_ASSERT(PW_MAX_MESSAGE_SIZE >=
-	     sizeof(struct pw_response_header_t) +
-	     sizeof(union {struct pw_response_insert_leaf_t insert_leaf;
-		     struct pw_response_try_auth_t try_auth;
-		     struct pw_response_reset_auth_t reset_auth; }) +
-	     PW_LEAF_PAYLOAD_SIZE);
+BUILD_ASSERT(PW_MAX_MESSAGE_SIZE >= PW_MAX_RESPONSE_SIZE);
 /* Make sure the largest possible message would fit in
  * (struct tpm_register_file).data_fifo.
  */
@@ -786,6 +789,55 @@ static int pw_handle_reset_auth(struct merkle_tree_t *merkle_tree,
 
 	return ret;
 }
+
+struct merkle_tree_t pw_merkle_tree;
+
+/*
+ * Handle the VENDOR_CC_PINWEAVER command.
+ */
+static enum vendor_cmd_rc pw_vendor_specific_command(enum vendor_cmd_cc code,
+						     void *buf,
+						     size_t input_size,
+						     size_t *response_size)
+{
+	const struct pw_request_t *request = buf;
+	struct pw_response_t *response = buf;
+
+	if (input_size < sizeof(request->header)) {
+		ccprintf("PinWeaver: message smaller than a header (%d).\n",
+			 input_size);
+		return VENDOR_RC_INTERNAL_ERROR;
+	}
+
+	if (input_size != request->header.data_length +
+			  sizeof(request->header)) {
+		ccprintf("PinWeaver: header size mismatch %d != %d.\n",
+			 input_size, request->header.data_length +
+				     sizeof(request->header));
+		return VENDOR_RC_REQUEST_TOO_BIG;
+	}
+
+	/* The response_size is validated by compile time checks. */
+
+	/* The return value of this function call is intentionally unused. */
+	pw_handle_request(&pw_merkle_tree, request, response);
+
+	*response_size = response->header.data_length +
+			 sizeof(response->header);
+
+	/* The response is only sent for EC_SUCCESS so it is used even for
+	 * errors which are reported through header.return_code.
+	 */
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_PINWEAVER,
+		pw_vendor_specific_command);
+
+static void pinweaver_init(void)
+{
+	/* TODO(allenwebb) load merkle_tree from flash here. */
+}
+DECLARE_HOOK(HOOK_INIT, pinweaver_init, HOOK_PRIO_LAST);
 
 /******************************************************************************/
 /* Non-static functions.
