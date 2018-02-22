@@ -20,11 +20,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-
-#ifndef __packed
-#define __packed __attribute__((packed))
-#endif
-
 #include "config.h"
 
 #include "ccd_config.h"

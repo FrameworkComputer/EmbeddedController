@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#include "common.h"  /* For __packed. */
+
 /* Current challenge protocol version */
 #define RMA_CHALLENGE_VERSION 0
 

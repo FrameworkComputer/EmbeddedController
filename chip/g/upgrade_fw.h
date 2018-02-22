@@ -8,6 +8,7 @@
 
 #include <stddef.h>
 
+#include "common.h"  /* For __packed. */
 
 /*
  * This file contains structures used to facilitate cr50 firmware updates,

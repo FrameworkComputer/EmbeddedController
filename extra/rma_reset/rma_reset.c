@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#define __packed __attribute__((packed))
+
 #include "rma_auth.h"
 #include "curve25519.h"
 #include "sha256.h"

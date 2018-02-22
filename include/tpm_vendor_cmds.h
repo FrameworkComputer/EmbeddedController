@@ -6,6 +6,8 @@
 #ifndef __INCLUDE_TPM_VENDOR_CMDS_H
 #define __INCLUDE_TPM_VENDOR_CMDS_H
 
+#include "common.h"  /* For __packed. */
+
 /*
  * This file includes definitions of extended/vendor TPM2 commands and their
  * return codes. The definitions are shared between the embedded code and the
