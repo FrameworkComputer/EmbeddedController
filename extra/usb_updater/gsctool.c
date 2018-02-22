@@ -24,6 +24,7 @@
 
 #include "ccd_config.h"
 #include "compile_time_macros.h"
+#include "gsctool.h"
 #include "misc_util.h"
 #include "signed_header.h"
 #include "tpm_vendor_cmds.h"
@@ -158,13 +159,6 @@
 #define SUBCLASS USB_SUBCLASS_GOOGLE_CR50
 #define PROTOCOL USB_PROTOCOL_GOOGLE_CR50_NON_HC_FW_UPDATE
 
-enum exit_values {
-	noop = 0,	  /* All up to date, no update needed. */
-	all_updated = 1,  /* Update completed, reboot required. */
-	rw_updated  = 2,  /* RO was not updated, reboot required. */
-	update_error = 3  /* Something went wrong. */
-};
-
 /*
  * Need to create an entire TPM PDU when upgrading over /dev/tpm0 and need to
  * have space to prepare the entire PDU.
@@ -196,41 +190,6 @@ struct upgrade_pkt {
  * expect.
  */
 #define MAX_BUF_SIZE	500
-
-struct usb_endpoint {
-	struct libusb_device_handle *devh;
-	uint8_t ep_num;
-	int     chunk_len;
-};
-
-struct transfer_descriptor {
-	/*
-	 * Set to true for use in an upstart script. Do not reboot after
-	 * transfer, and do not transfer RW if versions are the same.
-	 *
-	 * When using in development environment it is beneficial to transfer
-	 * RW images with the same version, as they get started based on the
-	 * header timestamp.
-	 */
-	uint32_t upstart_mode;
-
-	/*
-	 * offsets of RO and WR sections available for update (not currently
-	 * active).
-	 */
-	uint32_t ro_offset;
-	uint32_t rw_offset;
-	uint32_t post_reset;
-	enum transfer_type {
-		usb_xfer = 0,
-		dev_xfer = 1,
-		ts_xfer = 2
-	} ep_type;
-	union {
-		struct usb_endpoint uep;
-		int tpm_fd;
-	};
-};
 
 static uint32_t protocol_version;
 static char *progname;
@@ -1240,12 +1199,12 @@ static int transfer_image(struct transfer_descriptor *td,
 	return num_txed_sections;
 }
 
-static uint32_t send_vendor_command(struct transfer_descriptor *td,
-				uint16_t subcommand,
-				const void *command_body,
-				size_t command_body_size,
-				void *response,
-				size_t *response_size)
+uint32_t send_vendor_command(struct transfer_descriptor *td,
+			     uint16_t subcommand,
+			     const void *command_body,
+			     size_t command_body_size,
+			     void *response,
+			     size_t *response_size)
 {
 	int32_t rv;
 
@@ -1471,18 +1430,6 @@ static int show_headers_versions(const void *image)
 	return 0;
 }
 
-struct board_id {
-	uint32_t type;		/* Board type */
-	uint32_t type_inv;	/* Board type (inverted) */
-	uint32_t flags;		/* Flags */
-};
-
-enum board_id_action {
-	bid_none,
-	bid_get,
-	bid_set
-};
-
 /*
  * The default flag value will allow to run images built for any hardware
  * generation of a particular board ID.
@@ -1619,17 +1566,9 @@ static void process_password(struct transfer_descriptor *td)
 	exit(update_error);
 }
 
-/*
- * This function can be used to retrieve the current PP status from Cr50 and
- * prompt the user when a PP press is required.
- *
- * Physical presence can be required by different gsctool options, for which
- * Cr50 behavior also differs. The 'command' and 'poll_type' parameters are
- * used by Cr50 to tell what the host is polling for.
- */
-static void poll_for_pp(struct transfer_descriptor *td,
-			uint16_t command,
-			uint8_t poll_type)
+void poll_for_pp(struct transfer_descriptor *td,
+		 uint16_t command,
+		 uint8_t poll_type)
 {
 	uint8_t response;
 	uint8_t prev_response;
@@ -1726,9 +1665,9 @@ static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
 		poll_for_pp(td, VENDOR_CC_CCD, CCDV_PP_POLL_OPEN);
 }
 
-static void process_bid(struct transfer_descriptor *td,
-			enum board_id_action bid_action,
-			struct board_id *bid)
+void process_bid(struct transfer_descriptor *td,
+		 enum board_id_action bid_action,
+		 struct board_id *bid)
 {
 	size_t response_size;
 
