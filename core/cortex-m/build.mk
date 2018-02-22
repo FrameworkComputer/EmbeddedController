@@ -22,7 +22,7 @@ CFLAGS_CPU+=-flto
 LDFLAGS_EXTRA+=-flto
 endif
 
-core-y=cpu.o init.o ldivmod.o uldivmod.o
+core-y=cpu.o init.o ldivmod.o llsr.o uldivmod.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
 core-$(CONFIG_WATCHDOG)+=watchdog.o

@@ -1973,6 +1973,12 @@
  */
 #undef CONFIG_LIGHTBAR_TAP_DIM_LAST_SEGMENT
 
+/*
+ * Adds a console command for testing the long long shift right ABI on Cortex-m4
+ * (Cr50).
+ */
+#undef CONFIG_LLSR_TEST
+
 /* Program memory offset for little firmware loader. */
 #undef CONFIG_LOADER_MEM_OFF
 
