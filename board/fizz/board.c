@@ -54,6 +54,10 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static uint16_t board_version;
+static uint8_t oem;
+static uint8_t sku;
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if (!gpio_get_level(GPIO_USB_C0_PD_RST_ODL))
@@ -158,6 +162,12 @@ const struct fan_conf fan_conf_0 = {
 };
 
 const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 2200,
+	.rpm_start = 2200,
+	.rpm_max = 5600,
+};
+
+const struct fan_rpm fan_rpm_1 = {
 	.rpm_min = 2800,
 	.rpm_start = 2800,
 	.rpm_max = 5600,
@@ -454,20 +464,6 @@ static void board_extpower(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
-/* Initialize board. */
-static void board_init(void)
-{
-	uint32_t version;
-	if (cbi_get_board_version(&version) == EC_SUCCESS)
-		CPRINTS("Board Version: 0x%04x", version);
-
-	/* Provide AC status to the PCH */
-	board_extpower();
-
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 /* Mapping to the old schematics */
 #define GPIO_U42_P GPIO_TYPE_C_60W
 #define GPIO_U22_C GPIO_TYPE_C_65W
@@ -509,7 +505,6 @@ static void set_charge_limit(int charge_ma)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	uint32_t ver = 0;
 	int p87w = 0, p65w = 0, p60w = 0;
 
 	/*
@@ -527,7 +522,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * If CBI isn't initialized or contains invalid data, we assume it's
 	 * a new board.
 	 */
-	if (cbi_get_board_version(&ver) == EC_SUCCESS && ver < 0x0202)
+	if (0 < board_version && board_version < 0x0202)
 		return set_charge_limit(charge_ma);
 	/*
 	 * We have three FETs connected to three registers: PR257, PR258,
@@ -606,6 +601,8 @@ struct fan_step {
 	int rpm;
 };
 
+static const struct fan_step *fan_table;
+
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
 	{.on =  0, .off =  1, .rpm = 0},
@@ -627,22 +624,74 @@ static const struct fan_step fan_table1[] = {
 	{.on = 88, .off = 83, .rpm = 5200},
 	{.on = 98, .off = 91, .rpm = 5600},
 };
+static const struct fan_step fan_table2[] = {
+	{.on =  0, .off =  1, .rpm = 0},
+	{.on = 36, .off =  1, .rpm = 2200},
+	{.on = 63, .off = 56, .rpm = 2900},
+	{.on = 69, .off = 65, .rpm = 3000},
+	{.on = 75, .off = 70, .rpm = 3300},
+	{.on = 80, .off = 76, .rpm = 3600},
+	{.on = 87, .off = 81, .rpm = 3900},
+	{.on = 98, .off = 91, .rpm = 5000},
+};
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
 BUILD_ASSERT(ARRAY_SIZE(fan_table1) == NUM_FAN_LEVELS);
+BUILD_ASSERT(ARRAY_SIZE(fan_table2) == NUM_FAN_LEVELS);
 
-/* Default uses table0 due to its smaller active point */
-static const struct fan_step *fan_tables[] = {
-	fan_table0,	/* Kench & Default */
-	fan_table0,	/* Teemo */
-	fan_table1,	/* Sion */
-};
+static void cbi_init(void)
+{
+	uint32_t val;
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+		board_version = val;
+	CPRINTS("Board Version: 0x%04x", board_version);
 
-static int get_custom_rpm(int fan, int pct, int oem_id)
+	if (cbi_get_oem_id(&val) == EC_SUCCESS && val < OEM_COUNT)
+		oem = val;
+	CPRINTS("OEM: %d", oem);
+
+	if (cbi_get_sku_id(&val) == EC_SUCCESS && val <= UINT8_MAX)
+		sku = val;
+	CPRINTS("SKU: 0x%02x", sku);
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void setup_fan(void)
+{
+	/* Configure Fan */
+	switch (oem) {
+	case OEM_KENCH:
+	case OEM_TEEMO:
+	default:
+		fans[FAN_CH_0].rpm = &fan_rpm_1;
+		fan_table = fan_table0;
+		break;
+	case OEM_SION:
+		fans[FAN_CH_0].rpm = &fan_rpm_1;
+		fan_table = fan_table1;
+		break;
+	case OEM_WUKONG:
+		fans[FAN_CH_0].rpm = &fan_rpm_0;
+		fan_table = fan_table2;
+		break;
+	}
+}
+
+static void board_init(void)
+{
+	setup_fan();
+
+	/* Provide AC status to the PCH */
+	board_extpower();
+
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+int fan_percent_to_rpm(int fan, int pct)
 {
 	static int current_level;
 	static int previous_pct;
-	const struct fan_step *fan_table = fan_tables[oem_id];
 	int i;
 
 	/*
@@ -678,16 +727,6 @@ static int get_custom_rpm(int fan, int pct, int oem_id)
 			fan_table[current_level].rpm);
 
 	return fan_table[current_level].rpm;
-}
-
-int fan_percent_to_rpm(int fan, int pct)
-{
-	uint32_t oem_id;
-	if (cbi_get_oem_id(&oem_id) || oem_id >= ARRAY_SIZE(fan_tables)) {
-		CPRINTF("Fan OEM%d not supported or failed to get OEM", oem_id);
-		oem_id = 0;
-	}
-	return get_custom_rpm(fan, pct, oem_id);
 }
 
 void board_rtc_reset(void)
