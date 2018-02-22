@@ -31,19 +31,21 @@ static uint8_t cbi_crc8(const struct cbi_header *h)
 		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
 }
 
+static int read_eeprom(uint8_t offset, uint8_t *in, int in_size)
+{
+	return i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM,
+			&offset, 1, in, in_size, I2C_XFER_SINGLE);
+}
+
 /*
  * Get board information from EEPROM
  */
 static int do_read_board_info(void)
 {
-	uint8_t offset;
-
 	CPRINTS("Reading board info");
 
 	/* Read header */
-	offset = 0;
-	if (i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM,
-		     &offset, 1, cbi, sizeof(*head), I2C_XFER_SINGLE)) {
+	if (read_eeprom(0, cbi, sizeof(*head))) {
 		CPRINTS("Failed to read header");
 		return EC_ERROR_INVAL;
 	}
@@ -69,10 +71,8 @@ static int do_read_board_info(void)
 	}
 
 	/* Read the data */
-	offset = sizeof(*head);
-	if (i2c_xfer(I2C_PORT_EEPROM, I2C_ADDR_EEPROM, &offset, 1,
-		     head->data, head->total_size - sizeof(*head),
-		     I2C_XFER_SINGLE)) {
+	if (read_eeprom(sizeof(*head), head->data,
+			head->total_size - sizeof(*head))) {
 		CPRINTS("Failed to read body");
 		return EC_ERROR_INVAL;
 	}
@@ -289,16 +289,21 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
 
 static void dump_cbi(void)
 {
+	uint8_t buf[16];
 	int i;
-	for (i = 0; i < head->total_size; i++) {
-		ccprintf(" %02x", cbi[i]);
-		if (i % 16 == 15)
-			ccprintf("\n");
+	for (i = 0; i < CBI_EEPROM_SIZE; i += sizeof(buf)) {
+		int j;
+		if (read_eeprom(i, buf, sizeof(buf))) {
+			ccprintf("\nFailed to read EEPROM\n");
+			return;
+		}
+		for (j = 0; j < sizeof(buf); j++)
+			ccprintf(" %02x", buf[j]);
+		ccprintf("\n");
 	}
-	ccprintf("\n");
 }
 
-static int command_dump_cbi(int argc, char **argv)
+static int cc_cbi(int argc, char **argv)
 {
 	uint32_t val;
 
@@ -325,4 +330,4 @@ static int command_dump_cbi(int argc, char **argv)
 	dump_cbi();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(cbi, command_dump_cbi, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, NULL, NULL);
