@@ -470,6 +470,32 @@ static void spi_hash_pp_done(void)
 		(spi_hash_device == USB_SPI_AP ? "AP" : "EC"));
 }
 
+/* Process vendor subcommand dealing with Physical presence polling. */
+static enum vendor_cmd_rc spihash_pp_poll(void *buf,
+					  size_t input_size,
+					  size_t *response_size)
+{
+	char *buffer = buf;
+
+	if (spi_hash_device != USB_SPI_DISABLE) {
+		buffer[0] = CCD_PP_DONE;
+	} else {
+		switch (physical_presense_fsm_state()) {
+		case PP_AWAITING_PRESS:
+			buffer[0] = CCD_PP_AWAITING_PRESS;
+			break;
+		case PP_BETWEEN_PRESSES:
+			buffer[0] = CCD_PP_BETWEEN_PRESSES;
+			break;
+		default:
+			buffer[0] = CCD_PP_CLOSED;
+			break;
+		}
+	}
+	*response_size = 1;
+	return VENDOR_RC_SUCCESS;
+}
+
 /**
  * Set the SPI hashing device.
  *
@@ -478,8 +504,12 @@ static void spi_hash_pp_done(void)
  *
  * @return Vendor command return code
  */
-static enum vendor_cmd_rc spi_hash_set_device(int dev, int gang_mode)
+static enum vendor_cmd_rc spi_hash_set_device(int dev, int gang_mode,
+					      uint8_t *response_buf,
+					      size_t *response_size)
 {
+	*response_size = 0;
+
 	if (dev == spi_hash_device)
 		return VENDOR_RC_SUCCESS;
 
@@ -506,7 +536,15 @@ static enum vendor_cmd_rc spi_hash_set_device(int dev, int gang_mode)
 		 * that's more bookkeeping, so for now the only way to
 		 * skip physical presence is to have access to both.
 		 */
-		return physical_detect_start(0, spi_hash_pp_done);
+		int rv = physical_detect_start(0, spi_hash_pp_done);
+
+		if (rv == EC_SUCCESS)
+			return VENDOR_RC_IN_PROGRESS;
+
+		*response_size = 1;
+		response_buf[0] = rv;
+
+		return VENDOR_RC_INTERNAL_ERROR;
 	}
 
 	/*
@@ -613,11 +651,12 @@ static enum vendor_cmd_rc spi_hash_vendor(enum vendor_cmd_cc code,
 		/* Handle disabling */
 		return spi_hash_disable();
 	case SPI_HASH_SUBCMD_AP:
-		return spi_hash_set_device(USB_SPI_AP, 0);
+		return spi_hash_set_device(USB_SPI_AP, 0, buf, response_size);
 	case SPI_HASH_SUBCMD_EC:
 		return spi_hash_set_device(USB_SPI_EC,
 					   !!(req->flags &
-					      SPI_HASH_FLAG_EC_GANG));
+					      SPI_HASH_FLAG_EC_GANG),
+					   buf, response_size);
 	case SPI_HASH_SUBCMD_SHA256:
 		*response_size = SHA256_DIGEST_SIZE;
 		rc = spi_hash_sha256(buf, req->offset, req->size);
@@ -631,8 +670,12 @@ static enum vendor_cmd_rc spi_hash_vendor(enum vendor_cmd_cc code,
 		if (rc != VENDOR_RC_SUCCESS)
 			*response_size = 0;
 		return rc;
+	case SPI_HASH_PP_POLL:
+		return spihash_pp_poll(buf, input_size, response_size);
+
 	default:
-		CPRINTS("%s:%d - unknown subcommand", __func__, __LINE__);
+		CPRINTS("%s:%d - unknown subcommand %d",
+			__func__, __LINE__, req->subcmd);
 		*response_size = 0;
 		return VENDOR_RC_NO_SUCH_SUBCOMMAND;
 	}
@@ -703,8 +746,9 @@ static int hash_command_wrapper(int argc, char *argv[])
 	 * error code is the first byte after the header.
 	 */
 	return_code = be32toh(tpm_header->command_code);
+
 	if ((return_code != EC_SUCCESS) &&
-	    (return_code != VENDOR_RC_IN_PROGRESS)) {
+	    ((return_code - VENDOR_RC_ERR) != VENDOR_RC_IN_PROGRESS)) {
 		rv = p[0];
 	} else {
 		rv = EC_SUCCESS;

@@ -124,6 +124,8 @@ enum vendor_cc_spi_hash_request_subcmd {
 	SPI_HASH_SUBCMD_SHA256 = 4,
 	/* Read SPI data */
 	SPI_HASH_SUBCMD_DUMP = 5,
+	/* Poll spi hash PP state. */
+	SPI_HASH_PP_POLL = 6,
 };
 
 enum vendor_cc_spi_hash_request_flags {
