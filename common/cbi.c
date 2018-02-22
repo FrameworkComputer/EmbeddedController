@@ -13,7 +13,52 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "timer.h"
+
+#ifdef HOST_TOOLS_BUILD
+#include <string.h>
+#else
 #include "util.h"
+#endif
+
+/*
+ * Functions and variables defined here shared with host tools (e.g. cbi-util).
+ * TODO: Move these to common/cbi/cbi.c and common/cbi/utils.c if they grow.
+ */
+uint8_t cbi_crc8(const struct cbi_header *h)
+{
+	return crc8((uint8_t *)&h->crc + 1,
+		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
+}
+
+uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
+		      const void *buf, int size)
+{
+	struct cbi_data *d = (struct cbi_data *)p;
+	d->tag = tag;
+	d->size = size;
+	memcpy(d->value, buf, size);
+	p += sizeof(*d) + size;
+	return p;
+}
+
+struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag)
+{
+	struct cbi_data *d;
+	const struct cbi_header *h = cbi;
+	const uint8_t *p;
+	for (p = h->data; p + sizeof(*d) < (uint8_t *)cbi + h->total_size;) {
+		d = (struct cbi_data *)p;
+		if (d->tag == tag)
+			return d;
+		p += sizeof(*d) + d->size;
+	}
+	return NULL;
+}
+
+/*
+ * Functions and variables specific to EC firmware
+ */
+#ifndef HOST_TOOLS_BUILD
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ## args)
 
@@ -24,12 +69,6 @@
 static int cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
 static uint8_t cbi[CBI_EEPROM_SIZE];
 static struct cbi_header * const head = (struct cbi_header *)cbi;
-
-static uint8_t cbi_crc8(const struct cbi_header *h)
-{
-	return crc8((uint8_t *)&h->crc + 1,
-		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
-}
 
 static int read_eeprom(uint8_t offset, uint8_t *in, int in_size)
 {
@@ -99,19 +138,6 @@ static int read_board_info(void)
 	return cached_read_result;
 }
 
-static struct cbi_data *find_tag(enum cbi_data_tag tag)
-{
-	struct cbi_data *d;
-	uint8_t *p;
-	for (p = head->data; p + sizeof(*d) < cbi + head->total_size;) {
-		d = (struct cbi_data *)p;
-		if (d->tag == tag)
-			return d;
-		p += sizeof(*d) + d->size;
-	}
-	return NULL;
-}
-
 int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 {
 	const struct cbi_data *d;
@@ -119,7 +145,7 @@ int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
 	if (read_board_info())
 		return EC_ERROR_UNKNOWN;
 
-	d = find_tag(tag);
+	d = cbi_find_tag(cbi, tag);
 	if (!d)
 		/* Not found */
 		return EC_ERROR_UNKNOWN;
@@ -139,16 +165,13 @@ int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
 {
 	struct cbi_data *d;
 
-	d = find_tag(tag);
+	d = cbi_find_tag(cbi, tag);
 	if (!d) {
 		/* Not found. Check if new item would fit */
 		if (sizeof(cbi) < head->total_size + sizeof(*d) + size)
 			return EC_ERROR_OVERFLOW;
 		/* Append new item */
-		d = (struct cbi_data *)&cbi[head->total_size];
-		d->tag = tag;
-		d->size = size;
-		memcpy(d->value, buf, d->size);
+		cbi_set_data(&cbi[head->total_size], tag, buf, size);
 		head->total_size += (sizeof(*d) + size);
 		return EC_SUCCESS;
 	}
@@ -331,3 +354,4 @@ static int cc_cbi(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, NULL, NULL);
+#endif /* !HOST_TOOLS_BUILD */

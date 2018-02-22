@@ -137,22 +137,6 @@ static uint8_t *read_file(const char *filename, uint32_t *size_ptr)
 	return buf;
 }
 
-static int cbi_crc8(const struct cbi_header *h)
-{
-	return crc8((uint8_t *)&h->crc + 1,
-		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
-}
-
-static uint8_t *set_data(uint8_t *p, enum cbi_data_tag tag, void *buf, int size)
-{
-	struct cbi_data *d = (struct cbi_data *)p;
-	d->tag = tag;
-	d->size = size;
-	memcpy(d->value, buf, size);
-	p += sizeof(*d) + size;
-	return p;
-}
-
 /*
  * Create a CBI blob
  */
@@ -176,10 +160,10 @@ static int do_create(const char *cbi_filename, uint32_t size, uint8_t erase,
 	h->major_version = CBI_VERSION_MAJOR;
 	h->minor_version = CBI_VERSION_MINOR;
 	p = h->data;
-	p = set_data(p, CBI_TAG_BOARD_VERSION,
+	p = cbi_set_data(p, CBI_TAG_BOARD_VERSION,
 		     &bi->version, sizeof(bi->version));
-	p = set_data(p, CBI_TAG_OEM_ID, &bi->oem_id, sizeof(bi->oem_id));
-	p = set_data(p, CBI_TAG_SKU_ID, &bi->sku_id, sizeof(bi->sku_id));
+	p = cbi_set_data(p, CBI_TAG_OEM_ID, &bi->oem_id, sizeof(bi->oem_id));
+	p = cbi_set_data(p, CBI_TAG_SKU_ID, &bi->sku_id, sizeof(bi->sku_id));
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);
 
@@ -195,24 +179,10 @@ static int do_create(const char *cbi_filename, uint32_t size, uint8_t erase,
 	return 0;
 }
 
-static struct cbi_data *find_tag(const uint8_t *cbi, enum cbi_data_tag tag)
-{
-	struct cbi_data *d;
-	const struct cbi_header *h = (const struct cbi_header *)cbi;
-	const uint8_t *p;
-	for (p = h->data; p + sizeof(*d) < cbi + h->total_size;) {
-		d = (struct cbi_data *)p;
-		if (d->tag == tag)
-			return d;
-		p += sizeof(*d) + d->size;
-	}
-	return NULL;
-}
-
 static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 {
 	uint32_t v;
-	struct cbi_data *d = find_tag(buf, tag);
+	struct cbi_data *d = cbi_find_tag(buf, tag);
 	const char *name = d->tag < CBI_TAG_COUNT ? field_name[d->tag] : "???";
 
 	if (!d)

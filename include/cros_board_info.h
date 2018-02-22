@@ -62,4 +62,39 @@ int cbi_get_oem_id(uint32_t *oem_id);
 int cbi_get_board_info(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size);
 int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size);
 
+/*
+ * Utility functions
+ */
+
+/**
+ * Calculate 8-bit CRC of CBI
+ *
+ * @param h	Pointer to CBI header
+ * @return	CRC value
+ */
+uint8_t cbi_crc8(const struct cbi_header *h);
+
+/**
+ * Store data in memory in CBI data format
+ *
+ * @param p	Pointer to the buffer where a new data item will be stored. It
+ * 		should be pointing to the data section of CBI.
+ * @param tag	Tag of the data item
+ * @param buf	Pointer to the buffer containing the data being copied.
+ * @param size	Size of the data
+ * @return	Address of the byte following the stored data in the
+ * 		destination buffer
+ */
+uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
+		      const void *buf, int size);
+
+/**
+ * Find a data field in CBI
+ *
+ * @param cbi	Buffer containing CBI struct
+ * @param tag	Tag of the data field to search
+ * @return	Pointer to the data or NULL if not found.
+ */
+struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag);
+
 #endif /* __CROS_EC_CROS_BOARD_INFO_H */
