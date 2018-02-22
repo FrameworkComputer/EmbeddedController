@@ -1619,12 +1619,72 @@ static void process_password(struct transfer_descriptor *td)
 	exit(update_error);
 }
 
+/*
+ * This function can be used to retrieve the current PP status from Cr50 and
+ * prompt the user when a PP press is required.
+ *
+ * Physical presence can be required by different gsctool options, for which
+ * Cr50 behavior also differs. The 'command' and 'poll_type' parameters are
+ * used by Cr50 to tell what the host is polling for.
+ */
+static void poll_for_pp(struct transfer_descriptor *td,
+			uint16_t command,
+			uint8_t poll_type)
+{
+	uint8_t response;
+	uint8_t prev_response;
+	size_t response_size;
+	int rv;
+
+	prev_response = ~0; /* Guaranteed invalid value. */
+
+	while (1) {
+		response_size = sizeof(response);
+		rv = send_vendor_command(td, command,
+					 &poll_type, sizeof(poll_type),
+					 &response, &response_size);
+
+		if (((rv != VENDOR_RC_SUCCESS) && (rv != VENDOR_RC_IN_PROGRESS))
+		    || (response_size != 1)) {
+			fprintf(stderr, "Error: rv %d, response %d\n",
+				rv, response_size ? response : 0);
+			exit(update_error);
+		}
+
+		if (response == CCD_PP_DONE) {
+			printf("PP Done!\n");
+			return;
+		}
+
+		if (response == CCD_PP_CLOSED) {
+			fprintf(stderr,
+				"Error: Physical presence check timeout!\n");
+			exit(update_error);
+		}
+
+
+		if (response == CCD_PP_AWAITING_PRESS) {
+			printf("Press PP button now!\n");
+		} else if (response == CCD_PP_BETWEEN_PRESSES) {
+			if (prev_response != response)
+				printf("Another press will be required!\n");
+		} else {
+			fprintf(stderr, "Error: unknown poll result %d\n",
+				response);
+			exit(update_error);
+		}
+		prev_response = response;
+
+		usleep(500 * 1000); /* Poll every half a second. */
+	}
+
+}
+
 static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
 			      int ccd_open, int ccd_lock)
 {
 	uint8_t payload;
 	uint8_t response;
-	uint8_t prev_response;
 	size_t response_size;
 	int rv;
 
@@ -1661,50 +1721,9 @@ static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
 	 * asked for. Only two subcommands would return 'IN_PROGRESS'.
 	 */
 	if (ccd_unlock)
-		payload = CCDV_PP_POLL_UNLOCK;
+		poll_for_pp(td, VENDOR_CC_CCD, CCDV_PP_POLL_UNLOCK);
 	else
-		payload = CCDV_PP_POLL_OPEN;
-
-	prev_response = ~0; /* Guaranteed invalid value. */
-	while (1) {
-		response_size = sizeof(response);
-		rv = send_vendor_command(td, VENDOR_CC_CCD,
-					 &payload, sizeof(payload),
-					 &response, &response_size);
-
-		if (((rv != VENDOR_RC_SUCCESS) && (rv != VENDOR_RC_IN_PROGRESS))
-		    || (response_size != 1)) {
-			fprintf(stderr, "Error: rv %d, response %d\n",
-				rv, response_size ? response : 0);
-			exit(update_error);
-		}
-
-		if (response == CCD_PP_DONE) {
-			printf("PP Done!\n");
-			return;
-		}
-
-		if (response == CCD_PP_CLOSED) {
-			fprintf(stderr,
-				"Error: Physical presence check timeout!\n");
-			exit(update_error);
-		}
-
-
-		if (response == CCD_PP_AWAITING_PRESS) {
-			printf("Press PP button now!\n");
-		} else if (response == CCD_PP_BETWEEN_PRESSES) {
-			if (prev_response != response)
-				printf("Another press will be required!\n");
-		} else {
-			fprintf(stderr, "Error: unknown poll result %d\n",
-				response);
-			exit(update_error);
-		}
-		prev_response = response;
-
-		usleep(500 * 1000); /* Poll every half a second. */
-	}
+		poll_for_pp(td, VENDOR_CC_CCD, CCDV_PP_POLL_OPEN);
 }
 
 static void process_bid(struct transfer_descriptor *td,
