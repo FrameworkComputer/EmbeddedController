@@ -30,6 +30,7 @@
 #include "tpm_vendor_cmds.h"
 #include "upgrade_fw.h"
 #include "usb_descriptor.h"
+#include "verify_ro.h"
 
 #ifdef DEBUG
 #define debug printf
@@ -193,7 +194,7 @@ struct upgrade_pkt {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:fhikoPprstUu";
+static char *short_opts = "abcd:fhikO:oPprstUu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		0,   NULL, 'a'},
@@ -206,6 +207,7 @@ static const struct option long_opts[] = {
 	{"device",	1,   NULL, 'd'},
 	{"fwver",	0,   NULL, 'f'},
 	{"help",	0,   NULL, 'h'},
+	{"openbox_rma", 1,   NULL, 'O'},
 	{"password",	0,   NULL, 'P'},
 	{"post_reset",	0,   NULL, 'p'},
 	{"rma_auth",	2,   NULL, 'r'},
@@ -511,10 +513,14 @@ static void usage(int errs)
 	       "                           ID could be 32 bit hex or 4 "
 	       "character string.\n"
 	       "  -k,--ccd_lock            Lock CCD\n"
+	       "  -O,--openbox_rma <desc_file>\n"
+	       "                           Verify other device's RO integrity\n"
+	       "                           using information provided in "
+	       "<desc file>\n"
 	       "  -o,--ccd_open            Start CCD open sequence\n"
 	       "  -P,--password <password>\n"
 	       "                           Set or clear CCD password. Use\n"
-	       "                           'clear:<cur password>' to clear it.\n"
+	       "                           'clear:<cur password>' to clear it\n"
 	       "  -p,--post_reset          Request post reset after transfer\n"
 	       "  -r,--rma_auth [[auth_code|\"disable\"]\n"
 	       "                           Request RMA challenge, process "
@@ -1815,6 +1821,7 @@ int main(int argc, char *argv[])
 	int try_all_transfer = 0;
 	const char *exclusive_opt_error =
 		"Options -a, -s and -t are mutually exclusive\n";
+	const char *openbox_desc_file = NULL;
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -1875,6 +1882,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'k':
 			ccd_lock = 1;
+			break;
+		case 'O':
+			openbox_desc_file = optarg;
 			break;
 		case 'o':
 			ccd_open = 1;
@@ -1949,7 +1959,8 @@ int main(int argc, char *argv[])
 	    !corrupt_inactive_rw &&
 	    !password &&
 	    !rma &&
-	    !show_fw_ver) {
+	    !show_fw_ver &&
+	    !openbox_desc_file) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -1975,8 +1986,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (((bid_action != bid_none) + !!rma + !!password +
-	     !!ccd_open + !!ccd_unlock + !!ccd_lock) > 2) {
-		fprintf(stderr, "ERROR: options -i, -k, -o, -P, -r, and -u "
+	     !!ccd_open + !!ccd_unlock + !!ccd_lock +
+	     !!openbox_desc_file) > 2) {
+		fprintf(stderr, "ERROR: options -i, -k, -O, -o, -P, -r, and -u "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
@@ -1993,6 +2005,9 @@ int main(int argc, char *argv[])
 			td.ep_type = ts_xfer;
 		}
 	}
+
+	if (openbox_desc_file)
+		return verify_ro(&td, openbox_desc_file);
 
 	if (ccd_unlock || ccd_open || ccd_lock)
 		process_ccd_state(&td, ccd_unlock, ccd_open, ccd_lock);

@@ -41,7 +41,7 @@ LIBS_common  = -lfmap
 
 all: $(PROGRAMS)
 
-GSCTOOL_SOURCES := gsctool.c desc_parser.c
+GSCTOOL_SOURCES := gsctool.c desc_parser.c verify_ro.c
 GSCTOOL_OBJS := $(patsubst %.c,%.o,$(GSCTOOL_SOURCES))
 DEPS := $(patsubst %.c,%.d,$(GSCTOOL_SOURCES))
 
