@@ -49,7 +49,7 @@ echo 1 > /sys/class/gpio/gpio${GPIO_NRST}/value
 
 echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 
-stm32mon -s ${SPIDEV} -e -w $1
+stm32mon -p -s ${SPIDEV} -e -w $1
 
 # unload spidev
 echo "${SPIID}" > /sys/bus/spi/drivers/spidev/unbind
@@ -66,8 +66,8 @@ echo "in" > /sys/class/gpio/gpio${GPIO_NRST}/direction
 echo ${GPIO_BOOT0} > /sys/class/gpio/unexport
 echo ${GPIO_NRST} > /sys/class/gpio/unexport
 
-# wait for FP MCU to come back up
-sleep 1
+# wait for FP MCU to come back up (including RWSIG delay)
+sleep 2
 # Put back cros_fp driver
 echo "${SPIID}" > /sys/bus/spi/drivers/cros-ec-spi/bind
 # Test it
