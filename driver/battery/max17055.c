@@ -206,10 +206,6 @@ enum battery_present battery_is_present(void)
 void battery_get_params(struct batt_params *batt)
 {
 	int reg = 0;
-	const uint32_t flags_to_check = BATT_FLAG_BAD_TEMPERATURE |
-					BATT_FLAG_BAD_STATE_OF_CHARGE |
-					BATT_FLAG_BAD_VOLTAGE |
-					BATT_FLAG_BAD_CURRENT;
 
 	/* Reset flags */
 	batt->flags = 0;
@@ -245,12 +241,14 @@ void battery_get_params(struct batt_params *batt)
 	if (battery_full_charge_capacity(&batt->full_capacity))
 		batt->flags |= BATT_FLAG_BAD_FULL_CAPACITY;
 
-	/* If any of those reads worked, the battery is responsive */
-	if ((batt->flags & flags_to_check) != flags_to_check) {
+	/*
+	 * Assuming the battery is responsive as long as
+	 * max17055 finds battery is present.
+	 */
+	batt->is_present = battery_is_present();
+
+	if (batt->is_present == BP_YES)
 		batt->flags |= BATT_FLAG_RESPONSIVE;
-		batt->is_present = BP_YES;
-	} else
-		batt->is_present = BP_NOT_SURE;
 
 	/*
 	 * Charging allowed if both desired voltage and current are nonzero
@@ -369,6 +367,14 @@ static void max17055_init(void)
 		return;
 	}
 
+	/*
+	 * Set CONFIG.TSEL to measure temperature using external thermistor.
+	 * Set it as early as possible because max17055 takes up to 1000ms to
+	 * have the first reliable external temperature reading.
+	 */
+	MAX17055_READ_DEBUG(REG_CONFIG, &reg);
+	MAX17055_WRITE_DEBUG(REG_CONFIG, (reg | CONF_TSEL));
+
 	MAX17055_READ_DEBUG(REG_STATUS, &reg);
 
 	/* Check for POR */
@@ -395,10 +401,6 @@ static void max17055_init(void)
 	/* Clear POR bit */
 	MAX17055_READ_DEBUG(REG_STATUS, &reg);
 	MAX17055_WRITE_DEBUG(REG_STATUS, (reg & ~STATUS_POR));
-
-	/* Set CONFIG.TSEL to measure temperature using external thermistor */
-	MAX17055_READ_DEBUG(REG_CONFIG, &reg);
-	MAX17055_WRITE_DEBUG(REG_CONFIG, (reg | CONF_TSEL));
 
 	CPRINTS("max17055 configuration succeeded!");
 }
