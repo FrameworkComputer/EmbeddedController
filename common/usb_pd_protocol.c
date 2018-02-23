@@ -329,15 +329,17 @@ static void set_polarity(int port, int polarity)
 #ifdef CONFIG_USBC_VCONN
 static void set_vconn(int port, int enable)
 {
-#ifdef CONFIG_USBC_PPC
 	/*
-	 * USB-C PPCs can source their own Vconn.  No need to tell the TCPC
-	 * to source its own.
+	 * We always need to tell the TCPC to enable Vconn first, otherwise some
+	 * TCPCs get confused and think the CC line is in over voltage mode and
+	 * immediately disconnects. If there is a PPC, both devices will
+	 * potentially source Vconn, but that should be okay since Vconn has
+	 * "make before break" electrical requirements when swapping anyway.
 	 */
-	ppc_set_vconn(port, enable);
-#else /* !defined(CONFIG_USBC_PPC) */
 	tcpm_set_vconn(port, enable);
-#endif /* defined(CONFIG_USBC_PPC) */
+#ifdef CONFIG_USBC_PPC
+	ppc_set_vconn(port, enable);
+#endif
 }
 #endif /* defined(CONFIG_USBC_VCONN) */
 
