@@ -50,7 +50,9 @@ struct SignedHeader {
 	 * words of _pad[] may be used by a second FIPS-compliant signature,
 	 * so don't put anything there.
 	 */
-	uint32_t _pad[24];
+	uint32_t _pad[23];
+	/* Field for managing updates between RW product families. */
+	uint32_t rw_product_family_;
 	/* Board ID type, mask, flags (stored ^SIGNED_HEADER_PADDING) */
 	uint32_t board_id_type;
 	uint32_t board_id_type_mask;
