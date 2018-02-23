@@ -63,15 +63,20 @@ static const struct battery_info info[] = {
 };
 
 static const struct max17055_batt_profile batt_profile[] = {
-	/*
-	 * TODO(philipchen): Update the battery profile for Simplo
-	 * battery once we have the characterization result.
-	 */
 	[BATTERY_SIMPLO] = {
-		.is_ez_config		= 1,
-		.design_cap		= MAX17055_DESIGNCAP_REG(9120),
-		.ichg_term		= MAX17055_ICHGTERM_REG(180),
-		.v_empty_detect		= MAX17055_VEMPTY_REG(2700, 3280),
+		.is_ez_config		= 0,
+		.design_cap		= 0x221e, /* 8734mAh */
+		.ichg_term		= 0x589, /* 443 mA */
+		/* Empty voltage = 3000mV, Recovery voltage = 3600mV */
+		.v_empty_detect		= 0x965a,
+		.learn_cfg		= 0x4406,
+		.dpacc			= 0x0c7a,
+		.rcomp0			= 0x0062,
+		.tempco			= 0x1327,
+		.qr_table00		= 0x1680,
+		.qr_table10		= 0x0900,
+		.qr_table20		= 0x0280,
+		.qr_table30		= 0x0280,
 	},
 	[BATTERY_AETECH] = {
 		.is_ez_config		= 0,
