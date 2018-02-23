@@ -117,6 +117,7 @@ BOARDS_NPCX_SPI=(
 	fizz
 	glkrvp
 	gru
+	kahlee
 	kevin
         lux
 	nami
@@ -125,7 +126,6 @@ BOARDS_NPCX_SPI=(
 	reef
 	soraka
 	wheatley
-	kahlee
 )
 
 BOARDS_NPCX_INT_SPI=(
