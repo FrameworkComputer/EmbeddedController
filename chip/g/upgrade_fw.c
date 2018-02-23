@@ -318,6 +318,23 @@ static int contents_allowed(uint32_t block_offset,
 			    size_t body_size, void *upgrade_data,
 			    uint8_t *error_code)
 {
+#ifndef CR50_DEV
+#ifdef CONFIG_BOARD_ID_SUPPORT
+	if (block_offset == valid_sections.rw_base_offset) {
+		/* This block is a rw header of the new image. */
+		if (body_size < sizeof(struct SignedHeader)) {
+			CPRINTF("%s: block too short\n", __func__);
+			*error_code = UPGRADE_TRUNCATED_HEADER_ERROR;
+			return 0;
+		}
+		if (board_id_mismatch(upgrade_data)) {
+			CPRINTF("%s: rejecting Board ID mismatch.\n", __func__);
+			*error_code = UPGRADE_BOARD_ID_ERROR;
+			return 0;
+		}
+	}
+#endif
+#endif
 	return 1;
 }
 #endif
