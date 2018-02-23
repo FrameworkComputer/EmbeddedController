@@ -28,12 +28,15 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 #define BATFETS_MASK		(0x3)
 #define BATFETS_DISABLED	(0x2)
 
+#define CHARGING_VOLTAGE_MV_SAFE	8400
+#define CHARGING_CURRENT_MA_SAFE	1500
+
 static const struct battery_info info = {
 	.voltage_max = 8700,
 	.voltage_normal = 7700,
 	.voltage_min = 6000,
 	/* Pre-charge values. */
-	.precharge_current = 152, /* mA */
+	.precharge_current = 200, /* mA */
 
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
@@ -63,28 +66,72 @@ int board_cut_off_battery(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	const struct battery_info *batt_info;
+	int current;
+	int voltage;
+	/* battery temp in 0.1 deg C */
 	int bat_temp_c;
 
-	batt_info = battery_get_info();
+	/*
+	 * Keep track of battery temperature range:
+	 *
+	 *     ZONE_0  ZONE_1   ZONE_2  ZONE_3
+	 * ---+------+--------+--------+------+--- Temperature (C)
+	 *    0      5        12       45     50
+	 */
+	enum {
+		TEMP_ZONE_0, /* 0 <= bat_temp_c <= 5 */
+		TEMP_ZONE_1, /* 5 < bat_temp_c <= 12 */
+		TEMP_ZONE_2, /* 12 < bat_temp_c <= 45 */
+		TEMP_ZONE_3, /* 45 < bat_temp_c <= 50 */
+		TEMP_ZONE_COUNT,
+		TEMP_OUT_OF_RANGE = TEMP_ZONE_COUNT
+	} temp_zone;
 
-	if ((curr->batt.flags & BATT_FLAG_BAD_ANY) == BATT_FLAG_BAD_ANY) {
-		curr->requested_current = batt_info->precharge_current;
-		curr->requested_voltage = batt_info->voltage_max;
-		return 1000;
-	}
-
-	/* battery temp in 0.1 deg C */
+	current = curr->requested_current;
+	voltage = curr->requested_voltage;
 	bat_temp_c = curr->batt.temperature - 2731;
 
-	/* Don't charge if outside of allowable temperature range */
-	if (bat_temp_c >= batt_info->charging_max_c * 10 ||
-	    bat_temp_c < batt_info->charging_min_c * 10) {
-		curr->requested_current = 0;
-		curr->requested_voltage = 0;
+	/*
+	 * If the temperature reading is bad, assume the temperature
+	 * is out of allowable range.
+	 */
+	if ((curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE) ||
+	    (bat_temp_c < 0) || (bat_temp_c > 500))
+		temp_zone = TEMP_OUT_OF_RANGE;
+	else if (bat_temp_c <= 50)
+		temp_zone = TEMP_ZONE_0;
+	else if (bat_temp_c <= 120)
+		temp_zone = TEMP_ZONE_1;
+	else if (bat_temp_c <= 450)
+		temp_zone = TEMP_ZONE_2;
+	else
+		temp_zone = TEMP_ZONE_3;
+
+	switch (temp_zone) {
+	case TEMP_ZONE_0:
+		voltage = CHARGING_VOLTAGE_MV_SAFE;
+		current = CHARGING_CURRENT_MA_SAFE;
+		break;
+	case TEMP_ZONE_1:
+		current = CHARGING_CURRENT_MA_SAFE;
+		break;
+	case TEMP_ZONE_2:
+		break;
+	case TEMP_ZONE_3:
+		voltage = CHARGING_VOLTAGE_MV_SAFE;
+		break;
+	case TEMP_OUT_OF_RANGE:
+		/* Don't charge if outside of allowable temperature range */
+		current = 0;
+		voltage = 0;
 		curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
 		curr->state = ST_IDLE;
+		break;
 	}
+
+	curr->requested_voltage = MIN(curr->requested_voltage, voltage);
+	curr->requested_current = MIN(curr->requested_current, current);
+
 	return 0;
 }
 
