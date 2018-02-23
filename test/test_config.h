@@ -84,6 +84,10 @@
 
 #endif
 
+#ifdef TEST_CRC32
+#define CONFIG_SW_CRC
+#endif
+
 #ifdef TEST_RSA
 #define CONFIG_RSA
 #define CONFIG_RSA_KEY_SIZE 2048
