@@ -131,6 +131,7 @@ BOARDS_NPCX_SPI=(
 BOARDS_NPCX_INT_SPI=(
 	grunt
 	meowth
+	yorp
 	zoombini
 )
 
