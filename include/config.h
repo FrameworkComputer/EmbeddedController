@@ -2911,6 +2911,12 @@
 /* Enable USB serial console module. */
 #undef CONFIG_USB_CONSOLE
 
+/*
+ * Enable USB serial console crc32 computation.
+ * Also makes console output block on overrun.
+ */
+#undef CONFIG_USB_CONSOLE_CRC
+
 /* Support USB HID interface. */
 #undef CONFIG_USB_HID
 

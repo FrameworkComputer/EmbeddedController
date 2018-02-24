@@ -44,6 +44,16 @@ int usb_putc(int c);
 int usb_getc(void);
 
 /**
+ * Reset the usb console output crc32 accumulator.
+ */
+void usb_console_crc_init(void);
+
+/**
+ * Get the current usb console output crc32 accumulator.
+ */
+uint32_t usb_console_crc(void);
+
+/**
  * Enable and Disable the USB console.
  *
  * By default the console is enabled, this should not be a problem since it

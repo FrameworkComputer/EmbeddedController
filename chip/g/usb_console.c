@@ -6,6 +6,7 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "crc.h"
 #include "link_defs.h"
 #include "printf.h"
 #include "queue.h"
@@ -278,6 +279,21 @@ static int usb_wait_console(void)
 		return EC_SUCCESS;
 	}
 }
+
+#ifdef CONFIG_USB_CONSOLE_CRC
+static uint32_t usb_tx_crc_ctx;
+
+void usb_console_crc_init(void)
+{
+	crc32_ctx_init(&usb_tx_crc_ctx);
+}
+
+uint32_t usb_console_crc(void)
+{
+	return crc32_ctx_result(&usb_tx_crc_ctx);
+}
+#endif
+
 static int __tx_char(void *context, int c)
 {
 	struct queue *state =
@@ -286,7 +302,14 @@ static int __tx_char(void *context, int c)
 	if (c == '\n' && __tx_char(state, '\r'))
 		return 1;
 
+#ifdef CONFIG_USB_CONSOLE_CRC
+	crc32_ctx_hash8(&usb_tx_crc_ctx, c);
+
+	while (QUEUE_ADD_UNITS(state, &c, 1) != 1)
+		usleep(500);
+#else
 	QUEUE_ADD_UNITS(state, &c, 1);
+#endif
 	return 0;
 }
 
