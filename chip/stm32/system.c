@@ -388,9 +388,9 @@ void system_reset(int flags)
 		STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
 #else
 		/* Ask the watchdog to trigger a hard reboot */
-		STM32_IWDG_KR = 0x5555;
+		STM32_IWDG_KR = STM32_IWDG_KR_UNLOCK;
 		STM32_IWDG_RLR = 0x1;
-		STM32_IWDG_KR = 0xcccc;
+		STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
 #endif
 		/* wait for the chip to reboot */
 		while (1)
