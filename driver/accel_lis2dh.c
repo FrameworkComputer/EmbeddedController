@@ -398,9 +398,6 @@ const struct accelgyro_drv lis2dh_drv = {
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
 	.perform_calib = NULL,
-#ifdef CONFIG_ACCEL_FIFO
-	.load_fifo = load_fifo,
-#endif /* CONFIG_ACCEL_FIFO */
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = irq_handler,
 #endif /* CONFIG_ACCEL_INTERRUPTS */

@@ -766,6 +766,187 @@ int list_activities(const struct motion_sensor_t *s,
 #endif
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
+
+#ifdef CONFIG_ACCEL_FIFO
+enum fifo_state {
+	FIFO_HEADER,
+	FIFO_DATA_SKIP,
+	FIFO_DATA_TIME,
+	FIFO_DATA_CONFIG,
+};
+
+
+#define BMI160_FIFO_BUFFER 64
+static uint8_t bmi160_buffer[BMI160_FIFO_BUFFER];
+#define BUFFER_END(_buffer) ((_buffer) + sizeof(_buffer))
+/*
+ * Decode the header from the fifo.
+ * Return 0 if we need further processing.
+ * Sensor mutex must be held during processing, to protect the fifos.
+ *
+ * @s: base sensor
+ * @hdr: the header to decode
+ * @bp: current pointer in the buffer, updated when processing the header.
+ */
+static int bmi160_decode_header(struct motion_sensor_t *s,
+		enum fifo_header hdr, uint8_t **bp)
+{
+	if ((hdr & BMI160_FH_MODE_MASK) == BMI160_EMPTY &&
+			(hdr & BMI160_FH_PARM_MASK) != 0) {
+		int i, size = 0;
+		/* Check if there is enough space for the data frame */
+		for (i = MOTIONSENSE_TYPE_MAG; i >= MOTIONSENSE_TYPE_ACCEL;
+		     i--) {
+			if (hdr & (1 << (i + BMI160_FH_PARM_OFFSET)))
+				size += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
+		}
+		if (*bp + size > BUFFER_END(bmi160_buffer)) {
+			/* frame is not complete, it will be retransmitted. */
+			*bp = BUFFER_END(bmi160_buffer);
+			return 1;
+		}
+		for (i = MOTIONSENSE_TYPE_MAG; i >= MOTIONSENSE_TYPE_ACCEL;
+		     i--) {
+			if (hdr & (1 << (i + BMI160_FH_PARM_OFFSET))) {
+				struct ec_response_motion_sensor_data vector;
+				int *v = (s + i)->raw_xyz;
+				vector.flags = 0;
+				normalize(s + i, v, *bp);
+#ifdef CONFIG_ACCEL_SPOOF_MODE
+				if ((s+i)->in_spoof_mode)
+					v = (s+i)->spoof_xyz;
+#endif  /* defined(CONFIG_ACCEL_SPOOF_MODE) */
+				vector.data[X] = v[X];
+				vector.data[Y] = v[Y];
+				vector.data[Z] = v[Z];
+				vector.sensor_num = i + (s - motion_sensors);
+				motion_sense_fifo_add_unit(&vector, s + i, 3);
+				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
+			}
+		}
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/**
+ * Retrieve hardware FIFO from sensor,
+ * - put data in Sensor Hub fifo.
+ * - update sensor raw_xyz vector with the last information.
+ * We put raw data in hub fifo and process data from there.
+ * @s Pointer to sensor data.
+ *
+ * NOTE: If a new driver supports this function, be sure to add a check
+ * for spoof_mode in order to load the sensor stack with the spoofed
+ * data.  See accelgyro_bmi160.c::load_fifo for an example.
+ */
+static int load_fifo(struct motion_sensor_t *s)
+{
+	int done = 0;
+	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
+
+	if (s->type != MOTIONSENSE_TYPE_ACCEL)
+		return EC_SUCCESS;
+
+	do {
+		enum fifo_state state = FIFO_HEADER;
+		uint8_t *bp = bmi160_buffer;
+		uint32_t beginning;
+
+		if (!(data->flags &
+		      (BMI160_FIFO_ALL_MASK << BMI160_FIFO_FLAG_OFFSET))) {
+			/*
+			 * The FIFO was disable while were processing it.
+			 *
+			 * Flush potential left over:
+			 * When sensor is resumed, we won't read old data.
+			 */
+			raw_write8(s->port, s->addr, BMI160_CMD_REG,
+				   BMI160_CMD_FIFO_FLUSH);
+			return EC_SUCCESS;
+		}
+
+		raw_read_n(s->port, s->addr, BMI160_FIFO_DATA, bmi160_buffer,
+				sizeof(bmi160_buffer));
+		beginning = *(uint32_t *)bmi160_buffer;
+		/*
+		 * FIFO is invalid when reading while the sensors are all
+		 * suspended.
+		 * Instead of returning the empty frame, it can return a
+		 * pattern that looks like a valid header: 84 or 40.
+		 * If we see those, assume the sensors have been disabled
+		 * while this thread was running.
+		 */
+		if (beginning == 0x84848484 ||
+		    (beginning & 0xdcdcdcdc) == 0x40404040) {
+			CPRINTS("Suspended FIFO: accel ODR/rate: %d/%d: 0x%08x",
+				BASE_ODR(s->config[SENSOR_CONFIG_AP].odr),
+				get_data_rate(s),
+				beginning);
+			return EC_SUCCESS;
+		}
+
+		while (!done && bp != BUFFER_END(bmi160_buffer)) {
+			switch (state) {
+			case FIFO_HEADER: {
+				enum fifo_header hdr = *bp++;
+				if (bmi160_decode_header(s, hdr, &bp))
+					continue;
+				/* Other cases */
+				hdr &= 0xdc;
+				switch (hdr) {
+				case BMI160_EMPTY:
+					done = 1;
+					break;
+				case BMI160_SKIP:
+					state = FIFO_DATA_SKIP;
+					break;
+				case BMI160_TIME:
+					state = FIFO_DATA_TIME;
+					break;
+				case BMI160_CONFIG:
+					state = FIFO_DATA_CONFIG;
+					break;
+				default:
+					CPRINTS("Unknown header: 0x%02x @ %d",
+						hdr, bp - bmi160_buffer);
+					raw_write8(s->port, s->addr,
+						   BMI160_CMD_REG,
+						   BMI160_CMD_FIFO_FLUSH);
+					done = 1;
+				}
+				break;
+			}
+			case FIFO_DATA_SKIP:
+				CPRINTS("skipped %d frames", *bp++);
+				state = FIFO_HEADER;
+				break;
+			case FIFO_DATA_CONFIG:
+				CPRINTS("config change: 0x%02x", *bp++);
+				state = FIFO_HEADER;
+				break;
+			case FIFO_DATA_TIME:
+				if (bp + 3 > BUFFER_END(bmi160_buffer)) {
+					bp = BUFFER_END(bmi160_buffer);
+					continue;
+				}
+				/* We are not requesting timestamp */
+				CPRINTS("timestamp %d", (bp[2] << 16) |
+					(bp[1] << 8) | bp[0]);
+				state = FIFO_HEADER;
+				bp += 3;
+				break;
+			default:
+				CPRINTS("Unknown data: 0x%02x", *bp++);
+				state = FIFO_HEADER;
+			}
+		}
+	} while (!done);
+	return EC_SUCCESS;
+}
+#endif  /* CONFIG_ACCEL_FIFO */
+
 /**
  * bmi160_interrupt - called when the sensor activates the interrupt line.
  *
@@ -878,7 +1059,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 #endif
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-	    (!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
+			(!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
 	raw_read32(s->port, s->addr, BMI160_INT_STATUS_0, &interrupt);
@@ -890,6 +1071,10 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 #ifdef CONFIG_GESTURE_SIGMO
 	if (interrupt & BMI160_SIGMOT_INT)
 		*event |= CONFIG_GESTURE_SIGMO_EVENT;
+#endif
+#ifdef CONFIG_ACCEL_FIFO
+	if (interrupt & (BMI160_FWM_INT | BMI160_FFULL_INT))
+		load_fifo(s);
 #endif
 #ifdef CONFIG_BMI160_ORIENTATION_SENSOR
 	shifted_masked_orientation = (interrupt >> 24) & BMI160_ORIENT_XY_MASK;
@@ -929,175 +1114,6 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	return EC_SUCCESS;
 }
 #endif  /* CONFIG_ACCEL_INTERRUPTS */
-
-#ifdef CONFIG_ACCEL_FIFO
-enum fifo_state {
-	FIFO_HEADER,
-	FIFO_DATA_SKIP,
-	FIFO_DATA_TIME,
-	FIFO_DATA_CONFIG,
-};
-
-
-#define BMI160_FIFO_BUFFER 64
-static uint8_t bmi160_buffer[BMI160_FIFO_BUFFER];
-#define BUFFER_END(_buffer) ((_buffer) + sizeof(_buffer))
-/*
- * Decode the header from the fifo.
- * Return 0 if we need further processing.
- * Sensor mutex must be held during processing, to protect the fifos.
- *
- * @s: base sensor
- * @hdr: the header to decode
- * @bp: current pointer in the buffer, updated when processing the header.
- */
-static int bmi160_decode_header(struct motion_sensor_t *s,
-		enum fifo_header hdr, uint8_t **bp)
-{
-	if ((hdr & BMI160_FH_MODE_MASK) == BMI160_EMPTY &&
-			(hdr & BMI160_FH_PARM_MASK) != 0) {
-		int i, size = 0;
-		/* Check if there is enough space for the data frame */
-		for (i = MOTIONSENSE_TYPE_MAG; i >= MOTIONSENSE_TYPE_ACCEL;
-		     i--) {
-			if (hdr & (1 << (i + BMI160_FH_PARM_OFFSET)))
-				size += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
-		}
-		if (*bp + size > BUFFER_END(bmi160_buffer)) {
-			/* frame is not complete, it will be retransmitted. */
-			*bp = BUFFER_END(bmi160_buffer);
-			return 1;
-		}
-		for (i = MOTIONSENSE_TYPE_MAG; i >= MOTIONSENSE_TYPE_ACCEL;
-		     i--) {
-			if (hdr & (1 << (i + BMI160_FH_PARM_OFFSET))) {
-				struct ec_response_motion_sensor_data vector;
-				int *v = (s + i)->raw_xyz;
-				vector.flags = 0;
-				normalize(s + i, v, *bp);
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-				if ((s+i)->in_spoof_mode)
-					v = (s+i)->spoof_xyz;
-#endif  /* defined(CONFIG_ACCEL_SPOOF_MODE) */
-				vector.data[X] = v[X];
-				vector.data[Y] = v[Y];
-				vector.data[Z] = v[Z];
-				vector.sensor_num = i + (s - motion_sensors);
-				motion_sense_fifo_add_unit(&vector, s + i, 3);
-				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
-			}
-		}
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-static int load_fifo(struct motion_sensor_t *s)
-{
-	int done = 0;
-	struct bmi160_drv_data_t *data = BMI160_GET_DATA(s);
-
-	if (s->type != MOTIONSENSE_TYPE_ACCEL)
-		return EC_SUCCESS;
-
-	do {
-		enum fifo_state state = FIFO_HEADER;
-		uint8_t *bp = bmi160_buffer;
-		uint32_t beginning;
-
-		if (!(data->flags &
-		      (BMI160_FIFO_ALL_MASK << BMI160_FIFO_FLAG_OFFSET))) {
-			/*
-			 * The FIFO was disable while were processing it.
-			 *
-			 * Flush potential left over:
-			 * When sensor is resumed, we won't read old data.
-			 */
-			raw_write8(s->port, s->addr, BMI160_CMD_REG,
-				   BMI160_CMD_FIFO_FLUSH);
-			return EC_SUCCESS;
-		}
-
-		raw_read_n(s->port, s->addr, BMI160_FIFO_DATA, bmi160_buffer,
-				sizeof(bmi160_buffer));
-		beginning = *(uint32_t *)bmi160_buffer;
-		/*
-		 * FIFO is invalid when reading while the sensors are all
-		 * suspended.
-		 * Instead of returning the empty frame, it can return a
-		 * pattern that looks like a valid header: 84 or 40.
-		 * If we see those, assume the sensors have been disabled
-		 * while this thread was running.
-		 */
-		if (beginning == 0x84848484 ||
-		    (beginning & 0xdcdcdcdc) == 0x40404040) {
-			CPRINTS("Suspended FIFO: accel ODR/rate: %d/%d: 0x%08x",
-				BASE_ODR(s->config[SENSOR_CONFIG_AP].odr),
-				get_data_rate(s),
-				beginning);
-			return EC_SUCCESS;
-		}
-
-		while (!done && bp != BUFFER_END(bmi160_buffer)) {
-			switch (state) {
-			case FIFO_HEADER: {
-				enum fifo_header hdr = *bp++;
-				if (bmi160_decode_header(s, hdr, &bp))
-					continue;
-				/* Other cases */
-				hdr &= 0xdc;
-				switch (hdr) {
-				case BMI160_EMPTY:
-					done = 1;
-					break;
-				case BMI160_SKIP:
-					state = FIFO_DATA_SKIP;
-					break;
-				case BMI160_TIME:
-					state = FIFO_DATA_TIME;
-					break;
-				case BMI160_CONFIG:
-					state = FIFO_DATA_CONFIG;
-					break;
-				default:
-					CPRINTS("Unknown header: 0x%02x @ %d",
-						hdr, bp - bmi160_buffer);
-					raw_write8(s->port, s->addr,
-						   BMI160_CMD_REG,
-						   BMI160_CMD_FIFO_FLUSH);
-					done = 1;
-				}
-				break;
-			}
-			case FIFO_DATA_SKIP:
-				CPRINTS("skipped %d frames", *bp++);
-				state = FIFO_HEADER;
-				break;
-			case FIFO_DATA_CONFIG:
-				CPRINTS("config change: 0x%02x", *bp++);
-				state = FIFO_HEADER;
-				break;
-			case FIFO_DATA_TIME:
-				if (bp + 3 > BUFFER_END(bmi160_buffer)) {
-					bp = BUFFER_END(bmi160_buffer);
-					continue;
-				}
-				/* We are not requesting timestamp */
-				CPRINTS("timestamp %d", (bp[2] << 16) |
-					(bp[1] << 8) | bp[0]);
-				state = FIFO_HEADER;
-				bp += 3;
-				break;
-			default:
-				CPRINTS("Unknown data: 0x%02x", *bp++);
-				state = FIFO_HEADER;
-			}
-		}
-	} while (!done);
-	return EC_SUCCESS;
-}
-#endif  /* CONFIG_ACCEL_FIFO */
 
 
 static int read(const struct motion_sensor_t *s, vector_3_t v)
@@ -1292,9 +1308,6 @@ const struct accelgyro_drv bmi160_drv = {
 	.perform_calib = perform_calib,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = irq_handler,
-#endif
-#ifdef CONFIG_ACCEL_FIFO
-	.load_fifo = load_fifo,
 #endif
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 	.manage_activity = manage_activity,

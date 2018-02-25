@@ -581,7 +581,4 @@ const struct accelgyro_drv si114x_drv = {
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = irq_handler,
 #endif
-#ifdef CONFIG_ACCEL_FIFO
-	.load_fifo = NULL,
-#endif
 };

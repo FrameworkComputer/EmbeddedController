@@ -363,7 +363,7 @@ static int read(const struct motion_sensor_t *s, vector_3_t v)
 	}
 
 	for (i = X; i <= Z; i++)
-		v[i] = ((int16_t)((raw[i * 2 + 1] << 8) | raw[i * 2]));
+		v[i] = (int16_t)((raw[i * 2 + 1] << 8) | raw[i * 2]);
 
 	rotate(v, *s->rot_standard_ref, v);
 
