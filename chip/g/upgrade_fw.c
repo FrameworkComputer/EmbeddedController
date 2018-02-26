@@ -454,8 +454,7 @@ void fw_upgrade_command_handler(void *body,
 		header->image_size |= TOP_IMAGE_SIZE_BIT;
 	}
 
-	CPRINTF("%s: programming at address 0x%x\n", __func__,
-		block_offset + CONFIG_PROGRAM_MEMORY_BASE);
+	CPRINTF("at 0x%x\n", block_offset + CONFIG_PROGRAM_MEMORY_BASE);
 	if (flash_physical_write(block_offset, body_size, upgrade_data)
 	    != EC_SUCCESS) {
 		*error_code = UPGRADE_WRITE_FAILURE;
