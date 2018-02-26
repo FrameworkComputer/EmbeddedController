@@ -528,13 +528,23 @@ int command_get_commands(int fd, struct stm32_def *chip)
 	return -1;
 }
 
+static int use_progressbar;
 static int windex;
 static const char wheel[] = {'|', '/', '-', '\\' };
 static void draw_spinner(uint32_t remaining, uint32_t size)
 {
 	int percent = (size - remaining)*100/size;
-	printf("\r%c%3d%%", wheel[windex++], percent);
-	windex %= sizeof(wheel);
+	if (use_progressbar) {
+		int dots = percent / 4;
+
+		while (dots > windex) {
+			putchar('#');
+			windex++;
+		}
+	} else {
+		printf("\r%c%3d%%", wheel[windex++], percent);
+		windex %= sizeof(wheel);
+	}
 }
 
 int command_read_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
@@ -897,6 +907,7 @@ static const struct option longopts[] = {
 	{"spi", 1, 0, 's'},
 	{"length", 1, 0, 'n'},
 	{"offset", 1, 0, 'o'},
+	{"progressbar", 0, 0, 'p'},
 	{NULL, 0, 0, 0}
 };
 
@@ -905,7 +916,7 @@ void display_usage(char *program)
 	fprintf(stderr,
 		"Usage: %s [-a <i2c_adapter> [-l address ]] | [-s]"
 		" [-d <tty>] [-b <baudrate>]] [-u] [-e] [-U]"
-		" [-r <file>] [-w <file>] [-o offset] [-l length] [-g]\n",
+		" [-r <file>] [-w <file>] [-o offset] [-l length] [-g] [-p]\n",
 		program);
 	fprintf(stderr, "Can access the controller via serial port or i2c\n");
 	fprintf(stderr, "Serial port mode:\n");
@@ -927,6 +938,8 @@ void display_usage(char *program)
 	fprintf(stderr, "--o[ffset] : offset to read/write/start from/to\n");
 	fprintf(stderr, "--n[length] : amount to read/write\n");
 	fprintf(stderr, "--g[o] : jump to execute flash entrypoint\n");
+	fprintf(stderr, "--p[rogressbar] : use a progress bar instead of "
+			"the spinner\n");
 
 	exit(2);
 }
@@ -990,6 +1003,9 @@ int parse_parameters(int argc, char **argv)
 			break;
 		case 'o':
 			offset = strtol(optarg, NULL, 0);
+			break;
+		case 'p':
+			use_progressbar = 1;
 			break;
 		case 'r':
 			input_filename = optarg;
