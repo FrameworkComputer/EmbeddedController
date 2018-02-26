@@ -555,6 +555,7 @@ int cmd_inventory(int argc, char *argv[])
 		for (j = 0; j < 32; j++, idx++) {
 			if (r.flags[i] & (1 << j)) {
 				if (idx >= ARRAY_SIZE(ec_feature_names) ||
+				    !ec_feature_names[idx] ||
 				    strlen(ec_feature_names[idx]) == 0)
 					printf("%-4d: Unknown feature\n", idx);
 				else

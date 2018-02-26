@@ -105,8 +105,10 @@ _tsk_cfg:= $(filter $(_tsk_cfg_ro), $(_tsk_cfg_rw))
 _tsk_cfg_ro:= $(filter-out $(_tsk_cfg), $(_tsk_cfg_ro))
 _tsk_cfg_rw:= $(filter-out $(_tsk_cfg), $(_tsk_cfg_rw))
 
-CPPFLAGS_RO+=$(foreach t,$(_tsk_cfg_ro),-D$(t))
-CPPFLAGS_RW+=$(foreach t,$(_tsk_cfg_rw),-D$(t))
+CPPFLAGS_RO+=$(foreach t,$(_tsk_cfg_ro),-D$(t)) \
+		$(foreach t,$(_tsk_cfg_rw),-D$(t)_RW)
+CPPFLAGS_RW+=$(foreach t,$(_tsk_cfg_rw),-D$(t)) \
+		$(foreach t,$(_tsk_cfg_ro),-D$(t)_RO)
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
 
 _flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
