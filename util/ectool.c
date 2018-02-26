@@ -537,8 +537,12 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_VSTORE] = "Temporary secure vstore",
 	[EC_FEATURE_USBC_SS_MUX_VIRTUAL] = "Host-controlled USB-C SS mux",
 	[EC_FEATURE_RTC] = "Real-time clock",
+	[EC_FEATURE_FINGERPRINT] = "Fingerprint",
 	[EC_FEATURE_TOUCHPAD] = "Touchpad",
 	[EC_FEATURE_RWSIG] = "RWSIG task",
+	[EC_FEATURE_DEVICE_EVENT] = "Device events reporting",
+	[EC_FEATURE_UNIFIED_WAKE_MASKS] = "Unified wake masks for LPC/eSPI",
+	[EC_FEATURE_HOST_EVENT64] = "64-bit host events",
 };
 
 int cmd_inventory(int argc, char *argv[])
