@@ -268,14 +268,12 @@ void system_pre_init(void)
 #endif
 	/* Delay 1 APB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_APB, 1);
-#ifndef CHIP_FAMILY_STM32H7
 	/* Enable access to RCC CSR register and RTC backup registers */
 	STM32_PWR_CR |= 1 << 8;
 #ifdef CHIP_VARIANT_STM32L476
 	/* Enable Vddio2 */
 	STM32_PWR_CR2 |= 1 << 9;
 #endif
-#endif /* !CHIP_FAMILY_STM32H7 */
 
 	/* switch on LSI */
 	STM32_RCC_CSR |= 1 << 0;
