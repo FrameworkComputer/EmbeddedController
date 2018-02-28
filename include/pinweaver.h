@@ -23,6 +23,8 @@
  */
 #define HEIGHT_MAX(logk) ((sizeof(struct label_t) * 8) / logk)
 
+#define PW_LOG_ENTRY_COUNT 2
+
 /* Persistent information used by this feature. */
 struct merkle_tree_t {
 	/* log2(Fan out). */
@@ -43,8 +45,28 @@ struct merkle_tree_t {
 	uint8_t PW_ALIGN_TO_WRD wrap_key[32];
 };
 
+/* Long term flash storage for tree metadata. */
+struct PW_PACKED pw_long_term_storage_t {
+	uint16_t storage_version;
+
+	/* log2(Fan out). */
+	struct bits_per_level_t bits_per_level;
+	/* Height of the tree or param_l / bits_per_level. */
+	struct height_t height;
+
+	/* Random bits used as part of the key derivation process. */
+	uint8_t key_derivation_nonce[16];
+};
+
+struct PW_PACKED pw_log_storage_t {
+	uint16_t storage_version;
+	uint32_t restart_count;
+	struct pw_get_log_entry_t entries[PW_LOG_ENTRY_COUNT];
+};
+
 /* Do not remove fields within the same PW_LEAF_MAJOR_VERSION. */
-/* Unencrypted part of the leaf data. */
+/* Unencrypted part of the leaf data.
+ */
 struct PW_PACKED leaf_public_data_t {
 	struct label_t label;
 	struct delay_schedule_entry_t delay_schedule[PW_SCHED_COUNT];
@@ -55,7 +77,8 @@ struct PW_PACKED leaf_public_data_t {
 };
 
 /* Do not remove fields within the same PW_LEAF_MAJOR_VERSION. */
-/* Encrypted part of the leaf data. */
+/* Encrypted part of the leaf data.
+ */
 struct PW_PACKED PW_ALIGN_TO_BLK leaf_sensitive_data_t {
 	uint8_t low_entropy_secret[PW_SECRET_SIZE];
 	uint8_t high_entropy_secret[PW_SECRET_SIZE];
@@ -99,6 +122,21 @@ struct leaf_data_t {
 	struct leaf_sensitive_data_t sec;
 };
 
+/* Key names for nvmem_vars */
+#define PW_TREE_VAR "pwT0"
+#define PW_LOG_VAR0 "pwL0"
+/* The maximum key-value pair space allowed for the values of PinWeaver until
+ * the Cr50 NVRAM implementation is updated to use a separate object per
+ * key value pair.
+ */
+#define PW_MAX_VAR_USAGE 192
+
+/* Initializes the PinWeaver feature.
+ *
+ * This needs to be called prior to handling any messages.
+ */
+void pinweaver_init(void);
+
 /* Handler for incoming messages after they have been reconstructed.
  *
  * merkle_tree->root needs to be updated with new_root outside of this function.
@@ -138,5 +176,17 @@ void compute_hash(const uint8_t hashes[][PW_HASH_SIZE], uint16_t num_hashes,
 		  struct index_t location,
 		  const uint8_t child_hash[PW_HASH_SIZE],
 		  uint8_t result[PW_HASH_SIZE]);
+
+/* This should only be used in tests. */
+void force_restart_count(uint32_t mock_value);
+
+/* NV RAM log functions exported for use in test code. */
+int store_log_data(const struct pw_log_storage_t *log);
+int store_merkle_tree(const struct merkle_tree_t *merkle_tree);
+int log_insert_leaf(struct label_t label, const uint8_t root[PW_HASH_SIZE],
+		    const uint8_t hmac[PW_HASH_SIZE]);
+int log_remove_leaf(struct label_t label, const uint8_t root[PW_HASH_SIZE]);
+int log_auth(struct label_t label, const uint8_t root[PW_HASH_SIZE], int code,
+	     struct pw_timestamp_t timestamp);
 
 #endif  /* __CROS_EC_INCLUDE_PINWEAVER_H */

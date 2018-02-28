@@ -7,6 +7,7 @@
 #include "TPM_Types.h"
 
 #include "ccd_config.h"
+#include "pinweaver.h"
 #include "trng.h"
 #include "util.h"
 #include "version.h"
@@ -64,5 +65,6 @@ void   _plat__GetFwVersion(uint32_t *firmwareV1, uint32_t *firmwareV2)
 
 void _plat__ResetCallback(void)
 {
+	pinweaver_init();
 	ccd_tpm_reset_callback();
 }

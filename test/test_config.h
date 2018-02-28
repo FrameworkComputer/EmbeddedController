@@ -262,7 +262,7 @@ enum nvmem_vars {
 #ifdef TEST_PINWEAVER
 #define CONFIG_PINWEAVER
 #define CONFIG_SHA256
-#endif
+#endif /* TEST_PINWEAVER */
 
 #ifdef TEST_RTC
 #define CONFIG_HOSTCMD_RTC

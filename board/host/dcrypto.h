@@ -4,7 +4,9 @@
  */
 
 /* Provides the minimal declarations needed by pinweaver to build on
- * CHIP_HOST.
+ * CHIP_HOST. While it might be preferable to simply use the original dcrypto.h,
+ * That would require incorporating additional headers / dependencies such as
+ * cryptoc.
  */
 
 #ifndef __CROS_EC_DCRYPTO_HOST_H
@@ -30,6 +32,9 @@ enum dcrypto_appid {
 	/* This enum value should not exceed 7. */
 };
 
+/* Used as a replacement for declarations in cryptoc that are used by Cr50, but
+ * add unnecessary complexity to the test code.
+ */
 struct dcrypto_mock_ctx_t {
 	struct HASH_CTX hash;
 };

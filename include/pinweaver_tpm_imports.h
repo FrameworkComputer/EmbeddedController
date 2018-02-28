@@ -16,8 +16,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-uint32_t get_restart_count(void);
-
 /* This is used to get the storage seed from the TPM implementation so
  * TPM_Clear() will break the keys used by PinWeaver so that any metadata
  * that persists on the machine storage is unusable by attackers.
