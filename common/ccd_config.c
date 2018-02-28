@@ -493,17 +493,8 @@ int ccd_reset_config(unsigned int flags)
 		int i;
 
 		/* Allow all capabilities all the time */
-		for (i = 0; i < CCD_CAP_COUNT; i++) {
-			/*
-			 * Restricted console commands are still IfOpened, but
-			 * that's kinda meaningless because we set a
-			 * well-defined password below.
-			 */
-			if (i == CCD_CAP_GSC_RESTRICTED_CONSOLE)
-				continue;
-
+		for (i = 0; i < CCD_CAP_COUNT; i++)
 			raw_set_cap(i, CCD_CAP_STATE_ALWAYS);
-		}
 
 		/* Force WP disabled at boot */
 		raw_set_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT, 1);
