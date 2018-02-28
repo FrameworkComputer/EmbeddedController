@@ -346,8 +346,7 @@ void fan_tick_func(void)
 		/* Make sure rpm mode is enabled */
 		if (p_status->fan_mode != TACHO_FAN_RPM) {
 			p_status->auto_status = FAN_STATUS_STOPPED;
-			/* Why isn't this 'continue'? */
-			return;
+			continue;
 		}
 		if (!fan_get_enabled(ch))
 			continue;
