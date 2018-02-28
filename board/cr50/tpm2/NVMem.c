@@ -20,9 +20,6 @@
 
 /* Local state */
 static struct {
-#ifndef CONFIG_FLASH_NVMEM
-	uint8_t s_NV[NV_MEMORY_SIZE];
-#endif
 	BOOL s_NvIsAvailable;
 	BOOL s_NV_unrecoverable;
 	BOOL s_NV_recoverable;
@@ -57,7 +54,6 @@ int _plat__NVEnable(void *platParameter)
 	local_state.s_NV_unrecoverable = FALSE;
 	local_state.s_NV_recoverable = FALSE;
 
-#ifdef CONFIG_FLASH_NVMEM
 	/* TODO: Need to define what is recoverable and unrecoverable
 	 * conditions with regards to NvMem module. For now, the only
 	 * requirement is that at Cr50 board initialization time, the
@@ -67,7 +63,7 @@ int _plat__NVEnable(void *platParameter)
 	 */
 	local_state.s_NV_recoverable = nvmem_get_error_state() != 0;
 	local_state.s_NV_unrecoverable = local_state.s_NV_recoverable;
-#endif
+
 	if (local_state.s_NV_unrecoverable)
 		return -1;
 	return local_state.s_NV_recoverable;
@@ -90,8 +86,8 @@ void _plat__NVDisable(void)
 int _plat__IsNvAvailable(void)
 {
 
-#ifdef CONFIG_FLASH_NVMEM
 	int rv;
+
 	/*
 	 * sNv_IsAvailable is a state variable that can be accesed by the
 	 * simmulator to control access to NvMemory. This variable and
@@ -100,12 +96,6 @@ int _plat__IsNvAvailable(void)
 	 */
 	rv = !local_state.s_NvIsAvailable || nvmem_get_error_state();
 	return rv;
-#else
-	if (!local_state.s_NvIsAvailable)
-		return 1;
-
-	return 0;
-#endif
 }
 
 /*
@@ -122,11 +112,7 @@ void _plat__NvMemoryRead(unsigned int startOffset,
 
 	assert(startOffset + size <= NV_MEMORY_SIZE);
 	/* Copy the data from the NV image */
-#ifdef CONFIG_FLASH_NVMEM
 	nvmem_read(startOffset, size, data, NVMEM_TPM);
-#else
-	memcpy(data, &local_state.s_NV[startOffset], size);
-#endif
 	return;
 }
 
@@ -139,11 +125,7 @@ _plat__NvIsDifferent(unsigned int startOffset,
 		     unsigned int size,
 		     void *data)
 {
-#ifdef CONFIG_FLASH_NVMEM
 	return (nvmem_is_different(startOffset, size, data, NVMEM_TPM) != 0);
-#else
-	return !DCRYPTO_equals(&local_state.s_NV[startOffset], data, size);
-#endif
 }
 
 /*
@@ -157,11 +139,7 @@ void _plat__NvMemoryWrite(unsigned int startOffset,
 {
 	assert(startOffset + size <= NV_MEMORY_SIZE);
 	/* Copy the data to the NV image */
-#ifdef CONFIG_FLASH_NVMEM
 	nvmem_write(startOffset, size, data, NVMEM_TPM);
-#else
-	memcpy(&local_state.s_NV[startOffset], data, size);
-#endif
 }
 
 /*
@@ -174,13 +152,7 @@ void _plat__NvMemoryMove(unsigned int sourceOffset,
 {
 	assert(sourceOffset + size <= NV_MEMORY_SIZE);
 	assert(destOffset + size <= NV_MEMORY_SIZE);
-#ifdef CONFIG_FLASH_NVMEM
 	nvmem_move(sourceOffset, destOffset, size, NVMEM_TPM);
-#else
-	/* Move data in RAM */
-	memmove(&local_state.s_NV[destOffset],
-		&local_state.s_NV[sourceOffset], size);
-#endif
 	return;
 }
 
@@ -194,11 +166,7 @@ void _plat__NvMemoryMove(unsigned int sourceOffset,
  */
 int _plat__NvCommit(void)
 {
-#ifdef CONFIG_FLASH_NVMEM
 	return nvmem_commit();
-#else
-	return 0;
-#endif
 }
 
 /*
