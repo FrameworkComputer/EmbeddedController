@@ -18,27 +18,35 @@
 #define STM32_HSI_CLOCK 64000000
 /*
  * PLL1 configuration:
- * CPU freq = VCO / (DIVP + 1) = HSI / DIVM * DIVN / (DIVP + 1)
- *          = 64 * 4 * 50 / (4 + 1)
- *          = 160 Mhz
+ * CPU freq = VCO / DIVP = HSI / DIVM * DIVN / DIVP
+ *          = 64 / 4 * 50 / 2
+ *          = 400 Mhz
+ * System clock = 400 Mhz
+ *  HPRE = /2  => AHB/Timer clock = 200 Mhz
  */
 #if !defined(PLL1_DIVM) && !defined(PLL1_DIVN) && !defined(PLL1_DIVP)
 #define PLL1_DIVM 4
 #define PLL1_DIVN 50
-#define PLL1_DIVP 4
+#define PLL1_DIVP 2
 #endif
-#define PLL1_FREQ (STM32_HSI_CLOCK / PLL1_DIVM * PLL1_DIVN / (PLL1_DIVP+1))
+#define PLL1_FREQ (STM32_HSI_CLOCK / PLL1_DIVM * PLL1_DIVN / PLL1_DIVP)
+
+/* Flash latency settings for AHB/ACLK at 64 Mhz and Vcore in VOS1 range */
+#define FLASH_ACLK_64MHZ (STM32_FLASH_ACR_WRHIGHFREQ_85MHZ | \
+			  (0 << STM32_FLASH_ACR_LATENCY_SHIFT))
+/* Flash latency settings for AHB/ACLK at 200 Mhz and Vcore in VOS1 range */
+#define FLASH_ACLK_200MHZ (STM32_FLASH_ACR_WRHIGHFREQ_285MHZ | \
+			   (2 << STM32_FLASH_ACR_LATENCY_SHIFT))
 
 enum clock_osc {
-	OSC_INIT = 0,	/* Uninitialized */
-	OSC_HSI,	/* High-speed internal oscillator */
+	OSC_HSI = 0,	/* High-speed internal oscillator */
 	OSC_CSI,	/* Multi-speed internal oscillator: NOT IMPLEMENTED */
 	OSC_HSE,	/* High-speed external oscillator: NOT IMPLEMENTED */
 	OSC_PLL,	/* PLL */
 };
 
 static int freq = STM32_HSI_CLOCK;
-static int current_osc;
+static int current_osc = OSC_HSI;
 
 int clock_get_freq(void)
 {
@@ -61,6 +69,13 @@ void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
 		while (cycles--)
 			dummy = STM32_USART_BRR(STM32_USART1_BASE);
 	}
+}
+
+static void clock_flash_latency(uint32_t target_acr)
+{
+	STM32_FLASH_ACR(0) = target_acr;
+	while (STM32_FLASH_ACR(0) != target_acr)
+		;
 }
 
 static void clock_enable_osc(enum clock_osc osc)
@@ -113,20 +128,24 @@ static void clock_switch_osc(enum clock_osc osc)
 
 static void clock_set_osc(enum clock_osc osc)
 {
-	uint32_t val;
-
 	if (osc == current_osc)
 		return;
 
-	if (current_osc != OSC_INIT)
-		hook_notify(HOOK_PRE_FREQ_CHANGE);
+	hook_notify(HOOK_PRE_FREQ_CHANGE);
 
 	switch (osc) {
 	case OSC_HSI:
 		/* Switch to HSI */
 		clock_switch_osc(osc);
-
 		freq = STM32_HSI_CLOCK;
+		/* Restore /1 HPRE (AHB prescaler) */
+		STM32_RCC_D1CFGR = STM32_RCC_D1CFGR_HPRE_DIV1
+				 | STM32_RCC_D1CFGR_D1PPRE_DIV1
+				 | STM32_RCC_D1CFGR_D1CPRE_DIV1;
+		/* Use more optimized flash latency settings for 64-MHz ACLK */
+		clock_flash_latency(FLASH_ACLK_64MHZ);
+		/* Turn off the PLL1 to save power */
+		STM32_RCC_CR &= ~STM32_RCC_CR_PLL1ON;
 		break;
 
 	case OSC_PLL:
@@ -141,15 +160,13 @@ static void clock_set_osc(enum clock_osc osc)
 				| STM32_RCC_PLLDIV_DIVN(PLL1_DIVN);
 		/* turn on PLL1 and wait that it's ready */
 		clock_enable_osc(OSC_PLL);
-		freq = PLL1_FREQ;
-
-		/* Adjust flash latency */
-		val = STM32_FLASH_ACR_WRHIGHFREQ_185MHZ |
-				(2 << STM32_FLASH_ACR_LATENCY_SHIFT);
-		STM32_FLASH_ACR(0) = val;
-		while (val != STM32_FLASH_ACR(0))
-			;
-
+		/* Put /2 on HPRE (AHB prescaler) to keep at the 200Mhz max */
+		STM32_RCC_D1CFGR = STM32_RCC_D1CFGR_HPRE_DIV2
+				 | STM32_RCC_D1CFGR_D1PPRE_DIV1
+				 | STM32_RCC_D1CFGR_D1CPRE_DIV1;
+		freq = PLL1_FREQ / 2;
+		/* Increase flash latency before transition the clock */
+		clock_flash_latency(FLASH_ACLK_200MHZ);
 		/* Switch to PLL */
 		clock_switch_osc(OSC_PLL);
 		break;
@@ -157,13 +174,8 @@ static void clock_set_osc(enum clock_osc osc)
 		break;
 	}
 
-	/* Notify modules of frequency change unless we're initializing */
-	if (current_osc != OSC_INIT) {
-		current_osc = osc;
-		hook_notify(HOOK_FREQ_CHANGE);
-	} else {
-		current_osc = osc;
-	}
+	current_osc = osc;
+	hook_notify(HOOK_FREQ_CHANGE);
 }
 
 void clock_enable_module(enum module_id module, int enable)
@@ -198,6 +210,20 @@ void clock_init(void)
 	 * limit concurrent read access on AXI master to 1.
 	 */
 	STM32_AXI_TARG_FN_MOD(7) |= READ_ISS_OVERRIDE;
+
+	/*
+	 * Ensure the SPI is always clocked at the same frequency
+	 * by putting it on the fixed 64-Mhz HSI clock.
+	 * per_ck is clocked directly by the HSI (as per the default settings).
+	 */
+	STM32_RCC_D2CCIP1R = (STM32_RCC_D2CCIP1R &
+		~(STM32_RCC_D2CCIP1R_SPI123SEL_MASK |
+		  STM32_RCC_D2CCIP1R_SPI45SEL_MASK))
+		| STM32_RCC_D2CCIP1R_SPI123SEL_PERCK
+		| STM32_RCC_D2CCIP1R_SPI45SEL_HSI;
+
+	/* Use more optimized flash latency settings for ACLK = HSI = 64 Mhz */
+	clock_flash_latency(FLASH_ACLK_64MHZ);
 
 #if 0 /* Keep default for now: HSI at 64 Mhz */
 	clock_set_osc(OSC_PLL);
