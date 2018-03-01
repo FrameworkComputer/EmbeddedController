@@ -359,7 +359,7 @@ static int command_shmem(int argc, char **argv)
 
 	mutex_lock(&shmem_lock);
 
-	for (buf = free_buf_chain; buf; buf = free_buf_chain->next_buffer) {
+	for (buf = free_buf_chain; buf; buf = buf->next_buffer) {
 		size_t buf_room;
 
 		buf_room = buf->buffer_size;
@@ -370,7 +370,7 @@ static int command_shmem(int argc, char **argv)
 	}
 
 	for (buf = allocced_buf_chain; buf;
-	     buf = allocced_buf_chain->next_buffer)
+	     buf = buf->next_buffer)
 		allocated_size += buf->buffer_size;
 
 	mutex_unlock(&shmem_lock);
