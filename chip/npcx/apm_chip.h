@@ -1,9 +1,7 @@
-/* Copyright (c) 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-/* NPCX-specific APM module for Chrome EC */
 
 #ifndef __CROS_EC_APM_CHIP_H
 #define __CROS_EC_APM_CHIP_H
@@ -67,9 +65,12 @@ enum apm_dmic_src {
 
 /* ADC digital microphone rate. */
 enum apm_dmic_rate {
-	APM_DMIC_RATE_3_0 = 0,   /* 3.0 -3.25 MHz (default).        */
-	APM_DMIC_RATE_2_4,       /* 2.4 -2.6 MHz.                   */
-	APM_DMIC_RATE_1_0        /* 1.0 -1.08 MHz.                  */
+	/* 3.0, 2.4 & 1.0 must be 0, 1 & 2 respectively */
+	APM_DMIC_RATE_3_0 = 0,   /* 3.0 -3.25 MHz (default). */
+	APM_DMIC_RATE_2_4,       /* 2.4 -2.6 MHz.            */
+	APM_DMIC_RATE_1_0,       /* 1.0 -1.08 MHz.           */
+	APM_DMIC_RATE_1_2,       /* 1.2 MHz.                        */
+	APM_DMIC_RATE_0_75       /* 750 KHz.                 */
 };
 
 /* Digitla mixer output. */
@@ -212,7 +213,8 @@ enum apm_adc_data_length {
 
 struct apm_config {
 	enum apm_dmic_rate vad_dmic_rate;
-	enum apm_dmic_rate adc_dmic_rate;
+	enum apm_dmic_rate adc_ram_dmic_rate;
+	enum apm_dmic_rate adc_i2s_dmic_rate;
 	enum apm_adc_gain_coupling gain_coupling;
 	uint8_t left_chan_gain;
 	uint8_t right_chan_gain;
@@ -229,13 +231,40 @@ struct apm_auto_gain_config {
 	enum apm_gain_values gain_min;
 };
 
+/*****************************************************************************/
+/* IC specific low-level driver */
+enum wov_modes;
 /**
- * Sets the ADC DMIC rate.
+ * Sets the RAM ADC DMIC rate.
  *
  * @param   rate      - ADC digital microphone rate
  * @return  None
  */
-void apm_set_adc_dmic_config(enum apm_dmic_rate rate);
+void apm_set_adc_ram_dmic_config(enum apm_dmic_rate rate);
+
+/**
+ * Gets the RAM ADC DMIC rate.
+ *
+ * @param   None
+ * @return  ADC digital microphone rate code.
+ */
+enum apm_dmic_rate apm_get_adc_ram_dmic_rate(void);
+
+/**
+ * Sets the ADC I2S DMIC rate.
+ *
+ * @param   rate      - ADC digital microphone rate
+ * @return  None
+ */
+void apm_set_adc_i2s_dmic_config(enum apm_dmic_rate rate);
+
+/**
+ * Gets the ADC I2S DMIC rate.
+ *
+ * @param   None
+ * @return  ADC digital microphone rate code.
+ */
+enum apm_dmic_rate apm_get_adc_i2s_dmic_rate(void);
 
 /**
  * Sets VAD DMIC rate.
@@ -246,9 +275,23 @@ void apm_set_adc_dmic_config(enum apm_dmic_rate rate);
  */
 void apm_set_vad_dmic_rate(enum apm_dmic_rate rate);
 
-/*****************************************************************************/
-/* IC specific low-level driver */
-enum wov_modes;
+/**
+ * Gets VAD DMIC rate.
+ *
+ * @param   None
+ *
+ * @return  ADC digital microphone rate code.
+ */
+enum apm_dmic_rate apm_get_vad_dmic_rate(void);
+
+/**
+ * Gets the ADC DMIC rate.
+ *
+ * @param   None
+ * @return  ADC digital microphone rate code.
+ */
+enum apm_dmic_rate apm_get_adc_dmic_rate(void);
+
 /**
  * Initiate APM module local parameters..
  *

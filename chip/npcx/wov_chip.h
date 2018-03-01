@@ -1,9 +1,7 @@
-/* Copyright (c) 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2018 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-/* NPCX-specific WOV module for Chrome EC */
 
 #ifndef __CROS_EC_WOV_CHIP_H
 #define __CROS_EC_WOV_CHIP_H
@@ -572,15 +570,6 @@ void wov_stop_i2s_capture(void);
  * @return	None
  */
 void wov_cfifo_read_handler(uint32_t num_elements);
-
-/**
- * WoV interrupt handler.
- *
- * @param	None
- *
- * @return	None
- */
-void wov_interrupt_handler(void);
 
 /**
  * Sets data buffer for reading from core FIFO

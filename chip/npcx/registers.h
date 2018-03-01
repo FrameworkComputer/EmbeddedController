@@ -747,6 +747,7 @@ enum {
 #ifdef NPCX_WOV_SUPPORT
 #define NPCX_DEVALTE_WOV_SL              0
 #define NPCX_DEVALTE_I2S_SL              1
+#define NPCX_DEVALTE_DMCLK_FAST          2
 #endif
 
 /* Others bit definitions */
