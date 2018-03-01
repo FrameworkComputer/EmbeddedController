@@ -59,3 +59,6 @@
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT	150
+
+/* the Cortex-M7 core has 'standard' ARMv7-M caches */
+#define CONFIG_ARMV7M_CACHE

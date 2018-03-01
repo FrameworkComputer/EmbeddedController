@@ -205,6 +205,10 @@ void chip_pre_init(void)
 	uint32_t apb1fz_reg = 0;
 	uint32_t apb2fz_reg = 0;
 
+#ifdef CONFIG_ARMV7M_CACHE
+	cpu_enable_icache();
+#endif
+
 #if defined(CHIP_FAMILY_STM32F0)
 	apb1fz_reg =
 		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM6 |

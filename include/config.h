@@ -187,6 +187,12 @@
 /* Support AP Warm reset Interrupt. */
 #undef CONFIG_AP_WARM_RESET_INTERRUPT
 
+/*
+ * Enable support for CPU caches behaving according to the ARMv7-M ISA.
+ * (so far, only the Cortex-M7 has such caches)
+ */
+#undef CONFIG_ARMV7M_CACHE
+
 /* Allow proprietary communication protocols' extensions. */
 #undef CONFIG_EXTENSION_COMMAND
 

@@ -41,6 +41,8 @@ enum {
 	CPU_NVIC_MMFS_BFARVALID		= 1 << 15,
 	CPU_NVIC_MMFS_MFARVALID		= 1 << 7,
 
+	CPU_NVIC_CCR_ICACHE		= 1 << 17,
+	CPU_NVIC_CCR_DCACHE		= 1 << 16,
 	CPU_NVIC_CCR_DIV_0_TRAP		= 1 << 4,
 	CPU_NVIC_CCR_UNALIGN_TRAP	= 1 << 3,
 
@@ -53,7 +55,15 @@ enum {
 	CPU_NVIC_SHCSR_USGFAULTENA	= 1 << 18,
 };
 
+/* System Control Block: cache registers */
+#define CPU_SCB_CCSIDR         CPUREG(0xe000ed80)
+#define CPU_SCB_CCSELR         CPUREG(0xe000ed84)
+#define CPU_SCB_ICIALLU        CPUREG(0xe000ef50)
+#define CPU_SCB_DCISW          CPUREG(0xe000ef60)
+
 /* Set up the cpu to detect faults */
 void cpu_init(void);
+/* Enable the CPU instruction cache if it is not already enabled */
+void cpu_enable_icache(void);
 
 #endif /* __CROS_EC_CPU_H */
