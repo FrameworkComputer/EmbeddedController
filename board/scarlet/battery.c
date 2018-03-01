@@ -142,7 +142,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		TEMP_ZONE_COUNT
 	} temp_zone;
 
-	static const struct {
+	static struct {
 		int temp_min; /* 0.1 deg C */
 		int temp_max; /* 0.1 deg C */
 		int desired_current; /* mA */
@@ -150,8 +150,8 @@ int charger_profile_override(struct charge_state_data *curr)
 	} temp_zones[BATTERY_COUNT][TEMP_ZONE_COUNT] = {
 		[BATTERY_SIMPLO] = {
 			{0, 150, 1772, 4400}, /* TEMP_ZONE_0 */
-			{150, 450, 3000, 4400}, /* TEMP_ZONE_1 */
-			{450, 600, 3000, 4100}, /* TEMP_ZONE_2 */
+			{150, 450, 4000, 4400}, /* TEMP_ZONE_1 */
+			{450, 600, 4000, 4100}, /* TEMP_ZONE_2 */
 		},
 		[BATTERY_AETECH] = {
 			{0, 100, 900, 4200}, /* TEMP_ZONE_0 */
@@ -167,6 +167,17 @@ int charger_profile_override(struct charge_state_data *curr)
 	BUILD_ASSERT(ARRAY_SIZE(temp_zones) == BATTERY_COUNT);
 
 	static int charge_phase = 1;
+	static uint8_t quirk_batt_update;
+
+	/*
+	 * This is a quirk for old Simplo battery to clamp
+	 * charging current to 3A.
+	 */
+	if ((board_get_version() <= 4) && !quirk_batt_update) {
+		temp_zones[BATTERY_SIMPLO][TEMP_ZONE_1].desired_current = 3000;
+		temp_zones[BATTERY_SIMPLO][TEMP_ZONE_2].desired_current = 3000;
+		quirk_batt_update = 1;
+	}
 
 	if (batt_id >= BATTERY_COUNT)
 		batt_id = gpio_get_level(GPIO_BATT_ID);
