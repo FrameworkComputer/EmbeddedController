@@ -284,6 +284,16 @@ int adc_read_channel(enum adc_channel ch)
 	return value * adc->factor_mul / adc->factor_div + adc->shift;
 }
 
+void adc_disable(void)
+{
+	STM32_ADC_CR |= STM32_ADC_CR_ADDIS;
+	/*
+	 * Note that the ADC is not in OFF state immediately.
+	 * Once the ADC is effectively put into OFF state,
+	 * STM32_ADC_CR_ADDIS bit will be cleared by hardware.
+	 */
+}
+
 static void adc_init(void)
 {
 	/*

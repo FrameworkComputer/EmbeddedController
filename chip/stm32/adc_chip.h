@@ -24,6 +24,9 @@ struct adc_t {
  */
 extern const struct adc_t adc_channels[];
 
+/* Disable ADC module when we don't need it anymore. */
+void adc_disable(void);
+
 /* Minimum and maximum values returned by adc_read_channel(). */
 #define ADC_READ_MIN 0
 #define ADC_READ_MAX 4095

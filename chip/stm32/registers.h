@@ -2059,6 +2059,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 
 #define STM32_ADC_CR               REG32(STM32_ADC1_BASE + 0x08)
 #define STM32_ADC_CR_ADEN          (1 << 0)
+#define STM32_ADC_CR_ADDIS         (1 << 1)
 #define STM32_ADC_CR_ADCAL         (1 << 31)
 #define STM32_ADC_CFGR1            REG32(STM32_ADC1_BASE + 0x0C)
 /* Analog watchdog channel selection */
