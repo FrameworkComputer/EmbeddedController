@@ -190,8 +190,8 @@ static void espi_vw_config_out(const struct vwevsm_config_t *config)
 			index = VWEVSM_IDX_GET(NPCX_VWEVSM(i));
 			/* Set VW output register */
 			if (index == config->idx) {
-				/* Get Wire field */
-				val = NPCX_VWEVSM(i) & 0x0F;
+				/* Preserve WIRE(3-0) and HW_WIRE (27-24). */
+				val = NPCX_VWEVSM(i) & 0x0F00000F;
 				val |= VWEVSM_FIELD(config->idx,
 						config->idx_en,
 						config->valid,
