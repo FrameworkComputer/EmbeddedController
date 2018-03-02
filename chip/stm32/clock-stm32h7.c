@@ -180,25 +180,9 @@ static void clock_set_osc(enum clock_osc osc)
 
 void clock_enable_module(enum module_id module, int enable)
 {
-	static uint32_t clock_mask;
-	int new_mask;
-
-	if (enable)
-		new_mask = clock_mask | (1 << module);
-	else
-		new_mask = clock_mask & ~(1 << module);
-
-	/* Only change clock if needed */
-	if ((!!new_mask) != (!!clock_mask)) {
-
-		/* Flush UART before switching clock speed */
-		cflush();
-#if 0 /* Power management policy: TODO(b/67081508) not implemented for now */
-		clock_set_osc(new_mask ? OSC_PLL : OSC_CSI);
-#endif
-	}
-
-	clock_mask = new_mask;
+	/* Assume we have a single task using MODULE_FAST_CPU */
+	if (module == MODULE_FAST_CPU)
+		clock_set_osc(enable ? OSC_PLL : OSC_HSI);
 }
 
 void clock_init(void)
@@ -224,10 +208,6 @@ void clock_init(void)
 
 	/* Use more optimized flash latency settings for ACLK = HSI = 64 Mhz */
 	clock_flash_latency(FLASH_ACLK_64MHZ);
-
-#if 0 /* Keep default for now: HSI at 64 Mhz */
-	clock_set_osc(OSC_PLL);
-#endif
 }
 
 static int command_clock(int argc, char **argv)
