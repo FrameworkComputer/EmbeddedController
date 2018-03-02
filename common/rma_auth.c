@@ -370,25 +370,44 @@ static int rma_auth_cmd(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 	}
 
-	if (argc == 2) {
-		if (rma_try_authcode(argv[1]) != EC_SUCCESS) {
-			ccprintf("Auth code does not match.\n");
-			return EC_ERROR_PARAM1;
-		}
-		ccprintf("Auth code match!\n");
-		return EC_SUCCESS;
-	}
-
 	rv = shared_mem_acquire(RMA_CMD_BUF_SIZE, (char **)&tpmh);
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	/* Build the extension command to request RMA AUTH challenge. */
+	/* Common fields of the RMA AUTH challenge/response vendor command. */
 	tpmh->tag = htobe16(0x8001); /* TPM_ST_NO_SESSIONS */
-	tpmh->size = htobe32(sizeof(struct tpm_cmd_header));
 	tpmh->command_code = htobe32(TPM_CC_VENDOR_BIT_MASK);
 	tpmh->subcommand_code = htobe16(VENDOR_CC_RMA_CHALLENGE_RESPONSE);
 
+	if (argc == 2) {
+		/*
+		 * The user entered a value, must be the auth code, build and
+		 * send vendor command to check it.
+		 */
+		const char *authcode = argv[1];
+
+		if (strlen(authcode) != RMA_AUTHCODE_CHARS) {
+			ccprintf("Wrong auth code size.\n");
+			return EC_ERROR_PARAM1;
+		}
+
+		tpmh->size = htobe32(sizeof(struct tpm_cmd_header) +
+				     RMA_AUTHCODE_CHARS);
+
+		memcpy(tpmh + 1, authcode, RMA_AUTHCODE_CHARS);
+
+		tpm_alt_extension(tpmh, RMA_CMD_BUF_SIZE);
+
+		if (tpmh->command_code) {
+			ccprintf("Auth code does not match.\n");
+			return EC_ERROR_PARAM1;
+		}
+		ccprintf("Auth code match, reboot might be coming!\n");
+		return EC_SUCCESS;
+	}
+
+	/* Prepare and send the request to get RMA auth challenge. */
+	tpmh->size = htobe32(sizeof(struct tpm_cmd_header));
 	tpm_alt_extension(tpmh, RMA_CMD_BUF_SIZE);
 
 	/* Return status in the command code field now. */
