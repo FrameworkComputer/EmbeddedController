@@ -676,6 +676,16 @@
 /*****************************************************************************/
 
 /*
+ * The chip needs to define special SRAM memory regions as linker sections.
+ * Those regions are defined in the special-purpose preprocessed file in
+ * chip/<chip_name>/memory_regions.inc using the following macro:
+ * REGION(name, attributes, start_address, size)
+ *
+ * Note: these 'special' regions are NOT cleared at startup contrary to .bss.
+ */
+#undef CONFIG_CHIP_MEMORY_REGIONS
+
+/*
  * Chip needs to do pre-init very early in main(), and provides chip_pre_init()
  * to do so.
  */

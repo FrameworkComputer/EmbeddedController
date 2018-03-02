@@ -104,4 +104,11 @@ extern const void *__ro_end;
 extern const void *__data_start;
 extern const void *__data_end;
 
+/* Helper for special chip-specific memory sections */
+#ifdef CONFIG_CHIP_MEMORY_REGIONS
+#define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
+#else
+#define __SECTION(name)
+#endif /* CONFIG_MEMORY_REGIONS */
+
 #endif /* __CROS_EC_LINK_DEFS_H */

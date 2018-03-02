@@ -57,6 +57,12 @@ MEMORY
         ORIGIN = CONFIG_USB_RAM_BASE, \
         LENGTH = CONFIG_USB_RAM_SIZE * CONFIG_USB_RAM_ACCESS_SIZE / 2
 #endif
+#ifdef CONFIG_CHIP_MEMORY_REGIONS
+#define REGION(name, attr, start, size) \
+    name(attr) : ORIGIN = (start), LENGTH = (size)
+#include "memory_regions.inc"
+#undef REGION
+#endif /* CONFIG_MEMORY_REGIONS */
 }
 SECTIONS
 {
@@ -378,6 +384,16 @@ SECTIONS
         *(.usb_ram.data)
     } > USB_RAM
 #endif
+#ifdef CONFIG_CHIP_MEMORY_REGIONS
+#define REGION(name, attr, start, size) \
+    .name(NOLOAD) : { \
+        __##name##_start = .; \
+        *(SORT(.name.*)) \
+    } > name
+#include "memory_regions.inc"
+#undef REGION
+#endif /* CONFIG_CHIP_MEMORY_REGIONS */
+
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
     /DISCARD/ : {
               *(.google)
