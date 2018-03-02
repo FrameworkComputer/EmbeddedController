@@ -24,7 +24,7 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SWITCH, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
 /*
  * Default timeout in us; if we've been waiting this long for an input
