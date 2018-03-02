@@ -79,6 +79,9 @@
 #include "config_std_internal_flash.h"
 #endif
 
+/* Additional special purpose regions (USB RAM and other special SRAMs) */
+#define CONFIG_CHIP_MEMORY_REGIONS
+
 /* System stack size */
 #if defined(CHIP_VARIANT_STM32F05X)
 #define CONFIG_STACK_SIZE 768

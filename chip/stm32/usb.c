@@ -90,8 +90,7 @@ const uint8_t usb_string_desc[] = {
 };
 
 /* Endpoint table in USB controller RAM */
-struct stm32_endpoint btable_ep[USB_EP_COUNT]
-	__attribute__((section(".usb_ram.btable")));
+struct stm32_endpoint btable_ep[USB_EP_COUNT] __aligned(8) __usb_btable;
 /* Control endpoint (EP0) buffers */
 static usb_uint ep0_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
 static usb_uint ep0_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;

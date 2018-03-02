@@ -29,7 +29,7 @@ typedef CONFIG_USB_RAM_ACCESS_TYPE usb_uint;
 extern usb_uint __usb_ram_start[];
 
 /* Attribute to define a buffer variable in USB RAM */
-#define __usb_ram __attribute__((section(".usb_ram.data")))
+#define __usb_ram __attribute__((section(".usb_ram.99_data")))
 
 struct stm32_endpoint {
 	volatile usb_uint tx_addr;
@@ -41,7 +41,7 @@ struct stm32_endpoint {
 extern struct stm32_endpoint btable_ep[];
 
 /* Attribute to put the endpoint table in USB RAM */
-#define __usb_btable __attribute__((section(".usb_ram.btable")))
+#define __usb_btable __attribute__((section(".usb_ram.00_btable")))
 
 /* Read from USB RAM into a usb_setup_packet struct */
 struct usb_setup_packet;
