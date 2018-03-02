@@ -10,6 +10,7 @@
 #include "fpsensor.h"
 #include "gpio.h"
 #include "host_command.h"
+#include "link_defs.h"
 #include "mkbp_event.h"
 #include "spi.h"
 #include "system.h"
@@ -27,8 +28,13 @@
 #define FP_SENSOR_RES_Y 0
 #endif
 
+/* if no special memory regions are defined, fallback on regular SRAM */
+#ifndef FP_FRAME_SECTION
+#define FP_FRAME_SECTION
+#endif
+
 /* Last acquired frame */
-static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE];
+static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION;
 
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
