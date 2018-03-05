@@ -52,9 +52,6 @@
 #define I2C_PORT_MASTER NPCX_I2C_PORT0_0
 #define I2C_PORT_HOST   0
 
-/* LPC UART */
-#define CONFIG_UART_HOST 0
-
 /* Fans for testing */
 #define CONFIG_FANS 1
 

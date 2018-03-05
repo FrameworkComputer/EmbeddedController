@@ -40,7 +40,6 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_LPC
-#define CONFIG_UART_HOST                0
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 #define CONFIG_LID_ANGLE

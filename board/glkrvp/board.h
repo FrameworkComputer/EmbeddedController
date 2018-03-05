@@ -97,7 +97,6 @@
 
 #define CONFIG_LID_SWITCH
 #define CONFIG_LTO
-#define CONFIG_UART_HOST 0
 
 #define CONFIG_LOW_POWER_IDLE
 

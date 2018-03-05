@@ -39,7 +39,6 @@
 #define CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_I2CWEDGE
 
-#define CONFIG_UART_HOST                0
 #define CONFIG_FANS                     1
 
 /* Optional feature - used by nuvoton */
