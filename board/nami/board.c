@@ -429,41 +429,6 @@ static void chipset_pre_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
-/* Initialize board. */
-static void board_init(void)
-{
-	uint32_t version;
-
-	if (cbi_get_board_version(&version) == EC_SUCCESS)
-		CPRINTS("Board Version: 0x%04x", version);
-
-	/*
-	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
-	 * whenever the EC is not doing SPI flash transactions. This avoids
-	 * floating SPI buffer input (MISO), which causes power leakage (see
-	 * b/64797021).
-	 */
-	NPCX_PUPD_EN1 |= (1 << NPCX_DEVPU1_F_SPI_PUD_EN);
-
-	/* Provide AC status to the PCH */
-	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());
-
-	/* Enable sensors power supply */
-	/* dnojiri: how do we enable it? */
-
-	/* Enable VBUS interrupt */
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
-	//gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
-
-	/* Enable pericom BC1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-
-	/* Enable Gyro interrupt for BMI160 */
-	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 /**
  * Buffer the AC present GPIO to the PCH.
  */
@@ -659,8 +624,11 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
+	/* Please make sure the LID_ALS is the last device in
+	 * motion_sensors array.
+	 */
 };
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
 const struct motion_sensor_t *motion_als_sensors[] = {
@@ -707,3 +675,56 @@ static void lm3509_kblight_lid_change(void)
 		lm3509_poweroff();
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, lm3509_kblight_lid_change, HOOK_PRIO_DEFAULT);
+
+static void board_set_motion_sensor_count(void)
+{
+	/* There are two possible sensor configurations.
+	 * Vayne(Dell) is without ALS sensor
+	 * Nami is with ALS sensor
+	 * Use the oem id to different them.
+	 */
+	uint32_t oem_id;
+
+	if (cbi_get_oem_id(&oem_id) == EC_SUCCESS) {
+		if (oem_id == PROJECT_VAYNE)
+			motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
+	}
+}
+
+/* Initialize board. */
+static void board_init(void)
+{
+	uint32_t version;
+
+	if (cbi_get_board_version(&version) == EC_SUCCESS)
+		CPRINTS("Board Version: 0x%04x", version);
+
+	/*
+	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
+	 * whenever the EC is not doing SPI flash transactions. This avoids
+	 * floating SPI buffer input (MISO), which causes power leakage (see
+	 * b/64797021).
+	 */
+	NPCX_PUPD_EN1 |= (1 << NPCX_DEVPU1_F_SPI_PUD_EN);
+
+	/* Provide AC status to the PCH */
+	gpio_set_level(GPIO_PCH_ACPRESENT, extpower_is_present());
+
+	/* Enable sensors power supply */
+	/* dnojiri: how do we enable it? */
+
+	/* Enable VBUS interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
+	//gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
+
+	/* Enable pericom BC1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+
+	/* Enable Gyro interrupt for BMI160 */
+	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
+
+	/* Update motion_sensor_count  */
+	board_set_motion_sensor_count();
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
