@@ -203,7 +203,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 	case POWER_S5:
 #ifdef CONFIG_BOARD_HAS_RTC_RESET
-		/* Wait for S5 exit and attempt RTC reset it supported */
+		/* Wait for S5 exit and attempt RTC reset if supported */
 		if (power_s5_up)
 			return power_wait_s5_rtc_reset();
 #endif
