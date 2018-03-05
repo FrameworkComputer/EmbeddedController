@@ -8,17 +8,22 @@
 #include "fan.h"
 #include "util.h"
 
-const struct fan_t fans[] = {
-	{.flags = FAN_USE_RPM_MODE,
-	 .rpm_min = 1000,
-	 .rpm_start = 1500,
-	 .rpm_max = 5000,
-	 .ch = 0,
-	 .pgood_gpio = -1,
-	 .enable_gpio = -1,
-	},
+const struct fan_conf fan_conf_0 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = 0,
+	.pgood_gpio = -1,
+	.enable_gpio = -1,
 };
-BUILD_ASSERT(ARRAY_SIZE(fans) == CONFIG_FANS);
+
+const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 1000,
+	.rpm_start = 1500,
+	.rpm_max = 5000,
+};
+
+struct fan_t fans[CONFIG_FANS] = {
+	{ .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+};
 
 static int mock_enabled;
 void fan_set_enabled(int ch, int enabled)

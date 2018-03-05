@@ -8,19 +8,27 @@
 #ifndef __CROS_EC_FAN_H
 #define __CROS_EC_FAN_H
 
-/* Characteristic of each physical fan */
-struct fan_t {
+struct fan_conf {
 	unsigned int flags;
-	/* rpm_min is to keep turning. rpm_start is to begin turning */
-	int rpm_min;
-	int rpm_start;
-	int rpm_max;
 	/* Hardware channel number (the meaning is chip-specific) */
 	int ch;
 	/* Active-high power_good input GPIO, or -1 if none */
 	int pgood_gpio;
 	/* Active-high power_enable output GPIO, or -1 if none */
 	int enable_gpio;
+};
+
+struct fan_rpm {
+	/* rpm_min is to keep turning. rpm_start is to begin turning */
+	int rpm_min;
+	int rpm_start;
+	int rpm_max;
+};
+
+/* Characteristic of each physical fan */
+struct fan_t {
+	const struct fan_conf *conf;
+	const struct fan_rpm *rpm;
 };
 
 /* Values for .flags field */
@@ -30,8 +38,10 @@ struct fan_t {
 #define FAN_USE_FAST_START (1 << 1)
 
 /* The list of fans is instantiated in board.c. */
-extern const struct fan_t fans[];
+extern struct fan_t fans[];
 
+/* For convenience */
+#define FAN_CH(fan)	fans[fan].conf->ch
 
 /**
  * Set the amount of active cooling needed. The thermal control task will call

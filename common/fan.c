@@ -37,8 +37,8 @@ int fan_percent_to_rpm(int fan, int pct)
 	if (!pct) {
 		rpm = 0;
 	} else {
-		min = fans[fan].rpm_min;
-		max = fans[fan].rpm_max;
+		min = fans[fan].rpm->rpm_min;
+		max = fans[fan].rpm->rpm_max;
 		rpm = ((pct - 1) * max + (100 - pct) * min) / 99;
 	}
 
@@ -62,25 +62,25 @@ test_mockable void fan_set_percent_needed(int fan, int pct)
 #endif
 
 	new_rpm = fan_percent_to_rpm(fan, pct);
-	actual_rpm = fan_get_rpm_actual(fans[fan].ch);
+	actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
 
 	/* If we want to turn and the fans are currently significantly below
 	 * the minimum turning speed, we should turn at least as fast as the
 	 * necessary start speed instead. */
 	if (new_rpm &&
-	    actual_rpm < fans[fan].rpm_min * 9 / 10 &&
-	    new_rpm < fans[fan].rpm_start)
-		new_rpm = fans[fan].rpm_start;
+	    actual_rpm < fans[fan].rpm->rpm_min * 9 / 10 &&
+	    new_rpm < fans[fan].rpm->rpm_start)
+		new_rpm = fans[fan].rpm->rpm_start;
 
-	fan_set_rpm_target(fans[fan].ch, new_rpm);
+	fan_set_rpm_target(FAN_CH(fan), new_rpm);
 }
 
 static void set_enabled(int fan, int enable)
 {
-	fan_set_enabled(fans[fan].ch, enable);
+	fan_set_enabled(FAN_CH(fan), enable);
 
-	if (fans[fan].enable_gpio >= 0)
-		gpio_set_level(fans[fan].enable_gpio, enable);
+	if (fans[fan].conf->enable_gpio >= 0)
+		gpio_set_level(fans[fan].conf->enable_gpio, enable);
 }
 
 static void set_thermal_control_enabled(int fan, int enable)
@@ -89,13 +89,13 @@ static void set_thermal_control_enabled(int fan, int enable)
 
 	/* If controlling the fan, need it in RPM-control mode */
 	if (enable)
-		fan_set_rpm_mode(fans[fan].ch, 1);
+		fan_set_rpm_mode(FAN_CH(fan), 1);
 }
 
 static void set_duty_cycle(int fan, int percent)
 {
 	/* Move the fan to manual control */
-	fan_set_rpm_mode(fans[fan].ch, 0);
+	fan_set_rpm_mode(FAN_CH(fan), 0);
 
 	/* enable the fan when non-zero duty */
 	set_enabled(fan, (percent > 0) ? 1 : 0);
@@ -104,7 +104,7 @@ static void set_duty_cycle(int fan, int percent)
 	set_thermal_control_enabled(fan, 0);
 
 	/* Set the duty cycle */
-	fan_set_duty(fans[fan].ch, percent);
+	fan_set_duty(FAN_CH(fan), percent);
 }
 
 /*****************************************************************************/
@@ -140,11 +140,11 @@ static int is_powered(int fan)
 	int is_pgood = -1;
 
 	/* If we have an enable output, see if it's on or off. */
-	if (fans[fan].enable_gpio >= 0)
-		is_pgood = gpio_get_level(fans[fan].enable_gpio);
+	if (fans[fan].conf->enable_gpio >= 0)
+		is_pgood = gpio_get_level(fans[fan].conf->enable_gpio);
 	/* If we have a pgood input, it overrides any enable output. */
-	if (fans[fan].pgood_gpio >= 0)
-		is_pgood = gpio_get_level(fans[fan].pgood_gpio);
+	if (fans[fan].conf->pgood_gpio >= 0)
+		is_pgood = gpio_get_level(fans[fan].conf->pgood_gpio);
 
 	return is_pgood;
 }
@@ -163,20 +163,20 @@ static int cc_faninfo(int argc, char **argv)
 		if (fan)
 			ccprintf("\n");
 		ccprintf("%sActual: %4d rpm\n", leader,
-			 fan_get_rpm_actual(fans[fan].ch));
+			 fan_get_rpm_actual(FAN_CH(fan)));
 		ccprintf("%sTarget: %4d rpm\n", leader,
-			 fan_get_rpm_target(fans[fan].ch));
+			 fan_get_rpm_target(FAN_CH(fan)));
 		ccprintf("%sDuty:   %d%%\n", leader,
-			 fan_get_duty(fans[fan].ch));
-		tmp = fan_get_status(fans[fan].ch);
+			 fan_get_duty(FAN_CH(fan)));
+		tmp = fan_get_status(FAN_CH(fan));
 		ccprintf("%sStatus: %d (%s)\n", leader,
 			 tmp, human_status[tmp]);
 		ccprintf("%sMode:   %s\n", leader,
-			 fan_get_rpm_mode(fans[fan].ch) ? "rpm" : "duty");
+			 fan_get_rpm_mode(FAN_CH(fan)) ? "rpm" : "duty");
 		ccprintf("%sAuto:   %s\n", leader,
 			 thermal_control_enabled[fan] ? "yes" : "no");
 		ccprintf("%sEnable: %s\n", leader,
-			 fan_get_enabled(fans[fan].ch) ? "yes" : "no");
+			 fan_get_enabled(FAN_CH(fan)) ? "yes" : "no");
 		is_pgood = is_powered(fan);
 		if (is_pgood >= 0)
 			ccprintf("%sPower:  %s\n", leader,
@@ -223,7 +223,7 @@ static int cc_fanset(int argc, char **argv)
 	}
 
 	/* Move the fan to automatic control */
-	fan_set_rpm_mode(fans[fan].ch, 1);
+	fan_set_rpm_mode(FAN_CH(fan), 1);
 
 	/* enable the fan when non-zero rpm */
 	set_enabled(fan, (rpm > 0) ? 1 : 0);
@@ -231,7 +231,7 @@ static int cc_fanset(int argc, char **argv)
 	/* Disable thermal engine automatic fan control. */
 	set_thermal_control_enabled(fan, 0);
 
-	fan_set_rpm_target(fans[fan].ch, rpm);
+	fan_set_rpm_target(FAN_CH(fan), rpm);
 
 	ccprintf("Setting fan %d rpm target to %d\n", fan, rpm);
 
@@ -283,10 +283,10 @@ int dptf_get_fan_duty_target(void)
 {
 	int fan = 0;				/* TODO(crosbug.com/p/23803) */
 
-	if (thermal_control_enabled[fan] || fan_get_rpm_mode(fans[fan].ch))
+	if (thermal_control_enabled[fan] || fan_get_rpm_mode(FAN_CH(fan)))
 		return -1;
 
-	return fan_get_duty(fans[fan].ch);
+	return fan_get_duty(FAN_CH(fan));
 }
 
 /* 0-100% sets duty, out of range means let the EC drive */
@@ -314,7 +314,7 @@ static int hc_pwm_get_fan_target_rpm(struct host_cmd_handler_args *args)
 	int fan = 0;
 
 	/* TODO(crosbug.com/p/23803) */
-	r->rpm = fan_get_rpm_target(fans[fan].ch);
+	r->rpm = fan_get_rpm_target(FAN_CH(fan));
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -335,8 +335,8 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 			set_enabled(fan, (p_v0->rpm > 0) ? 1 : 0);
 
 			set_thermal_control_enabled(fan, 0);
-			fan_set_rpm_mode(fans[fan].ch, 1);
-			fan_set_rpm_target(fans[fan].ch, p_v0->rpm);
+			fan_set_rpm_mode(FAN_CH(fan), 1);
+			fan_set_rpm_target(FAN_CH(fan), p_v0->rpm);
 		}
 
 		return EC_RES_SUCCESS;
@@ -350,8 +350,8 @@ static int hc_pwm_set_fan_target_rpm(struct host_cmd_handler_args *args)
 	set_enabled(fan, (p_v1->rpm > 0) ? 1 :0);
 
 	set_thermal_control_enabled(fan, 0);
-	fan_set_rpm_mode(fans[fan].ch, 1);
-	fan_set_rpm_target(fans[fan].ch, p_v1->rpm);
+	fan_set_rpm_mode(FAN_CH(fan), 1);
+	fan_set_rpm_target(FAN_CH(fan), p_v1->rpm);
 
 	return EC_RES_SUCCESS;
 }
@@ -436,21 +436,21 @@ static void pwm_fan_init(void)
 	int fan = 0;
 
 	for (fan = 0; fan < CONFIG_FANS; fan++)
-		fan_channel_setup(fans[fan].ch, fans[fan].flags);
+		fan_channel_setup(FAN_CH(fan), fans[fan].conf->flags);
 
 	prev = (const struct pwm_fan_state *)
 		system_get_jump_tag(PWMFAN_SYSJUMP_TAG, &version, &size);
 	if (prev && version == PWM_HOOK_VERSION && size == sizeof(*prev)) {
 		/* Restore previous state. */
 		for (fan = 0; fan < CONFIG_FANS; fan++) {
-			fan_set_enabled(fans[fan].ch, prev->fan_en);
-			fan_set_rpm_target(fans[fan].ch, prev->fan_rpm);
+			fan_set_enabled(FAN_CH(fan), prev->fan_en);
+			fan_set_rpm_target(FAN_CH(fan), prev->fan_rpm);
 		}
 	} else {
 		/* Set initial fan speed */
 		for (fan = 0; fan < CONFIG_FANS; fan++)
-			fan_set_rpm_target(fans[fan].ch,
-				fan_percent_to_rpm(fans[fan].ch,
+			fan_set_rpm_target(FAN_CH(fan),
+				fan_percent_to_rpm(FAN_CH(fan),
 				CONFIG_FAN_INIT_SPEED));
 	}
 
@@ -472,12 +472,12 @@ static void pwm_fan_second(void)
 	int fan;
 
 	for (fan = 0; fan < CONFIG_FANS; fan++) {
-		if (fan_is_stalled(fans[fan].ch)) {
+		if (fan_is_stalled(FAN_CH(fan))) {
 			rpm = EC_FAN_SPEED_STALLED;
 			stalled = 1;
 			cprints(CC_PWM, "Fan %d stalled!", fan);
 		} else {
-			rpm = fan_get_rpm_actual(fans[fan].ch);
+			rpm = fan_get_rpm_actual(FAN_CH(fan));
 		}
 
 		mapped[fan] = rpm;
@@ -498,8 +498,8 @@ static void pwm_fan_preserve_state(void)
 	int fan = 0;
 
 	/* TODO(crosbug.com/p/23530): Still treating all fans as one. */
-	state.fan_en = fan_get_enabled(fans[fan].ch);
-	state.fan_rpm = fan_get_rpm_target(fans[fan].ch);
+	state.fan_en = fan_get_enabled(FAN_CH(fan));
+	state.fan_rpm = fan_get_rpm_target(FAN_CH(fan));
 
 	system_add_jump_tag(PWMFAN_SYSJUMP_TAG, PWM_HOOK_VERSION,
 			    sizeof(state), &state);
@@ -515,7 +515,7 @@ static void pwm_fan_resume(void)
 #else
 		set_thermal_control_enabled(fan, 0);
 #endif
-		fan_set_rpm_target(fans[fan].ch, fans[fan].rpm_max);
+		fan_set_rpm_target(FAN_CH(fan), fans[fan].rpm->rpm_max);
 		set_enabled(fan, 1);
 	}
 }
@@ -533,7 +533,7 @@ static void pwm_fan_S3_S5(void)
 		 * again if we need active cooling during heavy battery
 		 * charging or something.
 		 */
-		fan_set_rpm_target(fans[fan].ch, 0);
+		fan_set_rpm_target(FAN_CH(fan), 0);
 		set_enabled(fan, 0); /* crosbug.com/p/8097 */
 	}
 }

@@ -150,16 +150,21 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
-const struct fan_t fans[] = {
-	[FAN_CH_0] = {
-		.flags = FAN_USE_RPM_MODE,
-		.rpm_min = 2800,
-		.rpm_start = 2800,
-		.rpm_max = 5600,
-		.ch = MFT_CH_0,	/* Use MFT id to control fan */
-		.pgood_gpio = -1,
-		.enable_gpio = GPIO_FAN_PWR_EN,
-	},
+const struct fan_conf fan_conf_0 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = GPIO_FAN_PWR_EN,
+};
+
+const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 2800,
+	.rpm_start = 2800,
+	.rpm_max = 5600,
+};
+
+struct fan_t fans[] = {
+	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
@@ -660,7 +665,7 @@ static int get_custom_rpm(int fan, int pct, int oem_id)
 	previous_pct = pct;
 
 	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(fans[fan].ch))
+		fan_get_rpm_target(FAN_CH(fan)))
 		cprintf(CC_THERMAL, "[%T Setting fan RPM to %d]\n",
 			fan_table[current_level].rpm);
 

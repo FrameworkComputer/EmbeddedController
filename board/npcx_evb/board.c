@@ -55,26 +55,36 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
-const struct fan_t fans[] = {
-	[FAN_CH_0] = {
-		.flags = FAN_USE_RPM_MODE,
-		.rpm_min = 1000,
-		.rpm_start = 1000,
-		.rpm_max = 5200,
-		.ch = 0,/* Use MFT id to control fan */
-		.pgood_gpio = GPIO_PGOOD_FAN,
-		.enable_gpio = -1,
-	},
+const struct fan_conf fan_conf_0 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = 0,	/* Use MFT id to control fan */
+	.pgood_gpio = GPIO_PGOOD_FAN,
+	.enable_gpio = -1,
+};
+
+const struct fan_conf fan_conf_1 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = 1,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = -1,
+};
+
+const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 1000,
+	.rpm_start = 1000,
+	.rpm_max = 5200,
+};
+
+const struct fan_rpm fan_rpm_1 = {
+	.rpm_min = 1000,
+	.rpm_start = 1000,
+	.rpm_max = 4300,
+};
+
+struct fan_t fans[] = {
+	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 #if (CONFIG_FANS == 2)
-	[FAN_CH_1] = {
-		.flags = FAN_USE_RPM_MODE,
-		.rpm_min = 1000,
-		.rpm_start = 1000,
-		.rpm_max = 4300,
-		.ch = 1,/* Use MFT id to control fan */
-		.pgood_gpio = -1,
-		.enable_gpio = -1,
-	},
+	[FAN_CH_1] = { .conf = &fan_conf_1, .rpm = &fan_rpm_1, },
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);

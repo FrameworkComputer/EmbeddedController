@@ -491,10 +491,10 @@ void fan_set_rpm_target(int ch, int rpm)
 	/* If rpm = 0, disable PWM */
 	if (rpm == 0)
 		fan_set_duty(ch, 0);
-	else if (rpm > fans[ch].rpm_max)
-		rpm = fans[ch].rpm_max;
-	else if (rpm < fans[ch].rpm_min)
-		rpm = fans[ch].rpm_min;
+	else if (rpm > fans[ch].rpm->rpm_max)
+		rpm = fans[ch].rpm->rpm_max;
+	else if (rpm < fans[ch].rpm->rpm_min)
+		rpm = fans[ch].rpm->rpm_min;
 
 	/* Set target rpm */
 	fan_status[ch].rpm_target = rpm;
