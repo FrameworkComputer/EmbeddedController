@@ -91,7 +91,7 @@ static int get_hex_value(char *input, char **output)
 		*output = NULL;
 
 	value = strtol(input, &e, 16);
-	if (e && *e) {
+	if ((e && *e) || (strlen(input) > 8)) {
 		fprintf(stderr, "Invalid hex value %s in section %d\n",
 			input, section_count_);
 		return -EINVAL;
