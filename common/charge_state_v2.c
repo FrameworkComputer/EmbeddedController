@@ -195,7 +195,7 @@ struct dual_battery_policy {
 };
 
 static const struct dual_battery_policy db_policy = {
-	.otg_voltage = 15000, /* mV */
+	.otg_voltage = 12000, /* mV */
 	.max_base_to_lid_current = 1800, /* mA, about 2000mA with margin. */
 	.lid_to_base_current_charge_base_low = 200, /* mA, so about 3W. */
 	.margin_otg_current = 13, /* /128 = 10.1% */
