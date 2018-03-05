@@ -51,8 +51,8 @@
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 
 #define CONFIG_BOARD_VERSION
-
 #ifdef BOARD_MEOWTH
+#define CONFIG_BOARD_SPECIFIC_VERSION
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 #endif /* defined(BOARD_MEOWTH) */
 
@@ -251,6 +251,9 @@ enum sensor_id {
 
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
 
+#ifdef BOARD_MEOWTH
+int board_get_version(void);
+#endif /* defined(BOARD_MEOWTH) */
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 

@@ -368,6 +368,28 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
+#ifdef BOARD_MEOWTH
+int board_get_version(void)
+{
+	static int board_version = -1;
+
+	if (board_version == -1) {
+		board_version = 0;
+		/* BD_ID3 is LSb. */
+		if (gpio_get_level(GPIO_BOARD_VERSION3))
+			board_version |= 0x1;
+		if (gpio_get_level(GPIO_BOARD_VERSION2))
+			board_version |= 0x2;
+		if (gpio_get_level(GPIO_BOARD_VERSION1))
+			board_version |= 0x4;
+		if (gpio_get_level(GPIO_BOARD_VERSION0))
+			board_version |= 0x8;
+	}
+
+	return board_version;
+}
+#endif /* BOARD_MEOWTH */
+
 static void board_init(void)
 {
 #ifdef BOARD_ZOOMBINI
