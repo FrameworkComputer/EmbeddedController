@@ -23,7 +23,21 @@
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q128 /* Internal SPI flash type. */
 
+/* SoC / PCH */
+/* GEMINILAKE reuses apollo lake power seq */
+#define CONFIG_CHIPSET_APOLLOLAKE
+#define CONFIG_CHIPSET_RESET_HOOK
+#define CONFIG_ESPI
+/* TODO(b/74123961): Enable Virtual Wires after bringup */
+#define CONFIG_LPC
+#define CONFIG_POWER_COMMON
+#define CONFIG_POWER_S0IX
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_POWER_BUTTON
+#define CONFIG_POWER_BUTTON_X86
+#define CONFIG_EXTPOWER_GPIO
+/* TODO(b/73811887), increase CONFIG_EXTPOWER_DEBOUNCE_MS from 30 to 1000? */
+
 
 #ifndef __ASSEMBLER__
 
@@ -33,6 +47,23 @@
 /* TODO(b/73811887): Fill out correctly */
 enum adc_channel {
 	ADC_CH_COUNT
+};
+
+enum power_signal {
+#ifdef CONFIG_POWER_S0IX
+	X86_SLP_S0_N,		/* PCH  -> SLP_S0_L */
+#endif
+	X86_SLP_S3_N,		/* PCH  -> SLP_S3_L */
+	X86_SLP_S4_N,		/* PCH  -> SLP_S4_L */
+	X86_SUSPWRDNACK,	/* PCH  -> SUSPWRDNACK */
+
+	X86_ALL_SYS_PG,		/* PMIC -> PMIC_EC_PWROK_OD */
+	X86_RSMRST_N,		/* PMIC -> PMIC_EC_RSMRST_ODL */
+	X86_PGOOD_PP3300,	/* PMIC -> PP3300_PG_OD */
+	X86_PGOOD_PP5000,	/* PMIC -> PP5000_PG_OD */
+
+	/* Number of X86 signals */
+	POWER_SIGNAL_COUNT
 };
 
 #endif /* !__ASSEMBLER__ */
