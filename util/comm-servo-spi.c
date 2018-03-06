@@ -236,7 +236,7 @@ static int get_response(uint8_t *bodydest, size_t bodylen)
 		return -EC_RES_ERROR;
 	}
 
-	return 0;
+	return hdr.result ? -EECRESULT - hdr.result : 0;
 
 read_error:
 	fprintf(stderr, "Read failed: %s\n", ftdi_get_error_string(&ftdi));
@@ -256,9 +256,8 @@ static int ec_command_servo_spi(int cmd, int version,
 		return -EC_RES_ERROR;
 	}
 
-	if (send_request(cmd, version, outdata, outsize) == 0 &&
-	    get_response(indata, insize) == 0)
-		ret = 0;
+	if (send_request(cmd, version, outdata, outsize) == 0)
+		ret = get_response(indata, insize);
 
 	if (mpsse_set_pins(CS_L) != 0) {
 		fprintf(stderr, "Stop failed: %s\n",
