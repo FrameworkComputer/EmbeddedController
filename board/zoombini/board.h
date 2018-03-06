@@ -108,6 +108,11 @@
 #define CONFIG_LED_PWM_COUNT 1
 #endif /* defined(BOARD_MEOWTH) */
 
+#ifdef BOARD_MEOWTH
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_MODE_SWITCH
+#endif /* defined(BOARD_MEOWTH) */
+
 /* USB PD config */
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_CMD_PD_CONTROL
