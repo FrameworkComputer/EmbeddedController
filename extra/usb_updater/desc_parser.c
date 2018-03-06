@@ -18,6 +18,12 @@ static FILE *hash_file_;
 static int line_count_;
 static int section_count_;
 
+/*
+ * This is used to verify consistency of the description database, namely that
+ * all hash sections include the same number of hash variants.
+ */
+static size_t variant_count;
+
 /* Size of the retrieved string or negative OS error value. */
 static ssize_t get_next_line(char *next_line, size_t line_size)
 {
@@ -239,13 +245,6 @@ int parser_get_next_range(struct addr_range **range)
 	int rv;
 
 	/*
-	 * This is used to verify consistency of the description database,
-	 * namely that all hash sections include the same numger of hash
-	 * variants.
-	 */
-	static size_t variant_count;
-
-	/*
 	 * We come here after hash descriptor database file was opened and the
 	 * current board's section has been found. Just in case check if the
 	 * file has been opened.
@@ -308,11 +307,13 @@ int parser_find_board(const char *hash_file_name, const char *board_id)
 	char next_line[1000]; /* Should be enough for the largest descriptor. */
 	ssize_t id_len = strlen(board_id);
 
-	hash_file_ = fopen(hash_file_name, "r");
 	if (!hash_file_) {
-		fprintf(stderr, "Error:%s can not open file '%s'\n",
-			strerror(errno), hash_file_name);
-		return errno;
+		hash_file_ = fopen(hash_file_name, "r");
+		if (!hash_file_) {
+			fprintf(stderr, "Error:%s can not open file '%s'\n",
+				strerror(errno), hash_file_name);
+			return errno;
+		}
 	}
 
 	while (1) {
@@ -320,18 +321,17 @@ int parser_find_board(const char *hash_file_name, const char *board_id)
 
 		entry_size = get_next_line(next_line, sizeof(next_line));
 		if (entry_size < 0) {
-			fclose(hash_file_);
 			return entry_size;
 		}
 
 		if ((entry_size == id_len) &&
-		    !memcmp(next_line, board_id, id_len))
+		    !memcmp(next_line, board_id, id_len)) {
+			variant_count = 0;
 			return 0;
+		}
 	}
 
-	fclose(hash_file_);
-	hash_file_ = NULL;
-	return errno;
+	return -ENODATA;
 }
 
 void parser_done(void)

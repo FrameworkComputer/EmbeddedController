@@ -15,6 +15,8 @@
 #include "tpm_vendor_cmds.h"
 #include "verify_ro.h"
 
+/* Index of the matching hash variant. */
+static ssize_t matching_variant;
 
 /*
  * Print out passed in buffer contents in hex, 16 bytes per line, each line
@@ -114,13 +116,12 @@ static int set_new_range(struct transfer_descriptor *td,
  * pointer structure req has the range offset and size already initialized.
  *
  * Make sure that matching hashes are at the same index in the hash variants
- * array in all hash sections.
+ * arrays within the same board section.
  */
 static int verify_hash_section(struct transfer_descriptor *td,
 			       struct vendor_cc_spi_hash_request *req,
 			       struct addr_range *range)
 {
-	static ssize_t matching_range = -1;
 	size_t i;
 	uint8_t response[sizeof(range->variants->expected_result)];
 	size_t response_size;
@@ -145,14 +146,14 @@ static int verify_hash_section(struct transfer_descriptor *td,
 		return -EINVAL;
 	}
 
-	if (matching_range < 0) {
+	if (matching_variant < 0) {
 		/* This is the first hash range to be processed. */
 		struct result_node *variant = range->variants;
 
 		for (i = 0; i < range->variant_count; i++) {
 			if (!memcmp(variant->expected_result,
 				    response, response_size)) {
-				matching_range = i;
+				matching_variant = i;
 				return 0;
 			}
 			variant++;
@@ -163,7 +164,7 @@ static int verify_hash_section(struct transfer_descriptor *td,
 		return -EINVAL;
 	}
 
-	if (!memcmp(range->variants[matching_range].expected_result,
+	if (!memcmp(range->variants[matching_variant].expected_result,
 		    response, response_size))
 		return 0;
 
@@ -286,21 +287,7 @@ static int process_descriptor_sections(struct transfer_descriptor *td)
 	if (range)
 		free(range);
 
-	parser_done();
-
-	if (rv)
-		return rv;
-
-	memset(&req, 0, sizeof(req));
-	req.subcmd = SPI_HASH_SUBCMD_DISABLE;
-	rv = send_vendor_command(td, VENDOR_CC_SPI_HASH, &req,
-				    sizeof(req), 0, NULL);
-	if (rv) {
-		fprintf(stderr,
-			"%s: spi hash disable TPM error %d\n", __func__, rv);
-		return -EINVAL;
-	}
-	return 0;
+	return rv;
 }
 
 int verify_ro(struct transfer_descriptor *td,
@@ -309,6 +296,8 @@ int verify_ro(struct transfer_descriptor *td,
 	/* First find out board ID of the target. */
 	struct board_id bid;
 	char rlz_code[sizeof(bid.type) + 1];
+	int section_count = 0;
+	int rv = 0;
 
 	/*
 	 * Find out what Board ID is the device we are talking to. This
@@ -329,12 +318,43 @@ int verify_ro(struct transfer_descriptor *td,
 	memcpy(rlz_code, &bid.type, sizeof(rlz_code) - 1);
 	rlz_code[sizeof(rlz_code) - 1] = '\0';
 
-	if (!parser_find_board(desc_file_name, rlz_code)) {
-		/* Opened the file and found descriptors for DUT. */
-		printf("Processing sections for board ID %s\n", rlz_code);
-		return process_descriptor_sections(td);
+	while (!parser_find_board(desc_file_name, rlz_code)) {
+
+		/*
+		 * Each board section might have different index of the
+		 * matching hash variant.
+		 */
+		matching_variant = -1;
+
+		section_count++;
+		rv = process_descriptor_sections(td);
+		if (rv)
+			break;
 	}
 
-	printf("No description for board ID %s found\n", rlz_code);
-	return -1;
+	if (section_count != 2) {
+		printf("Found wrong number of sections (%d) for board ID %s\n",
+		       section_count, rlz_code);
+		rv = -EINVAL;
+	} else if (!rv) {
+		/*
+		 * Check was successful, send command to exit verification
+		 * mode.
+		 */
+		struct vendor_cc_spi_hash_request req;
+
+		memset(&req, 0, sizeof(req));
+		req.subcmd = SPI_HASH_SUBCMD_DISABLE;
+		rv = send_vendor_command(td, VENDOR_CC_SPI_HASH, &req,
+					 sizeof(req), 0, NULL);
+		if (rv) {
+			fprintf(stderr,
+				"%s: spi hash disable TPM error %d\n",
+				__func__, rv);
+			rv = -EINVAL;
+		}
+	}
+
+	parser_done();
+	return rv;
 }
