@@ -33,9 +33,9 @@
 #define REQUIRED_MASK_SHOW	(REQUIRED_MASK_FILENAME)
 
 struct board_info {
-	uint16_t version;
-	uint8_t oem_id;
-	uint8_t sku_id;
+	uint32_t version;
+	uint32_t oem_id;
+	uint32_t sku_id;
 } __attribute__((packed));
 
 /* Command line options */
@@ -125,7 +125,7 @@ static uint8_t *read_file(const char *filename, uint32_t *size_ptr)
 	}
 
 	if (1 != fread(buf, size, 1, f)) {
-		fprintf(stderr, "Unable to read file %s\n", filename);
+		fprintf(stderr, "Unable to read from %s\n", filename);
 		fclose(f);
 		free(buf);
 		return NULL;
@@ -137,10 +137,19 @@ static uint8_t *read_file(const char *filename, uint32_t *size_ptr)
 	return buf;
 }
 
+static int get_field_size(uint32_t value)
+{
+	if (value <= UINT8_MAX)
+		return 1;
+	if (value <= UINT16_MAX)
+		return 2;
+	return 4;
+}
+
 /*
  * Create a CBI blob
  */
-static int do_create(const char *cbi_filename, uint32_t size, uint8_t erase,
+static int do_create(const char *filename, uint32_t size, uint8_t erase,
 		     struct board_info *bi)
 {
 	uint8_t *cbi;
@@ -161,16 +170,18 @@ static int do_create(const char *cbi_filename, uint32_t size, uint8_t erase,
 	h->minor_version = CBI_VERSION_MINOR;
 	p = h->data;
 	p = cbi_set_data(p, CBI_TAG_BOARD_VERSION,
-		     &bi->version, sizeof(bi->version));
-	p = cbi_set_data(p, CBI_TAG_OEM_ID, &bi->oem_id, sizeof(bi->oem_id));
-	p = cbi_set_data(p, CBI_TAG_SKU_ID, &bi->sku_id, sizeof(bi->sku_id));
+			 &bi->version, get_field_size(bi->version));
+	p = cbi_set_data(p, CBI_TAG_OEM_ID,
+			 &bi->oem_id, get_field_size(bi->oem_id));
+	p = cbi_set_data(p, CBI_TAG_SKU_ID,
+			 &bi->sku_id, get_field_size(bi->sku_id));
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);
 
 	/* Output blob */
-	rv = write_file(cbi_filename, cbi, size);
+	rv = write_file(filename, cbi, size);
 	if (rv) {
-		fprintf(stderr, "Unable to write CBI blob\n");
+		fprintf(stderr, "Unable to write CBI blob to %s\n", filename);
 		return rv;
 	}
 
@@ -206,25 +217,25 @@ static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 	printf("    %s: %u (0x%x, %u, %u)\n", name, v, v, d->tag, d->size);
 }
 
-static int do_show(const char *cbi_filename, int show_all)
+static int do_show(const char *filename, int show_all)
 {
 	uint8_t *buf;
 	uint32_t size;
 	struct cbi_header *h;
 
-	if (!cbi_filename) {
+	if (!filename) {
 		fprintf(stderr, "Missing arguments\n");
 		return -1;
 	}
 
-	buf = read_file(cbi_filename, &size);
+	buf = read_file(filename, &size);
 	if (!buf) {
 		fprintf(stderr, "Unable to read CBI blob\n");
 		return -1;
 	}
 
 	h = (struct cbi_header *)buf;
-	printf("CBI blob: %s\n", cbi_filename);
+	printf("CBI blob: %s\n", filename);
 
 	if (memcmp(h->magic, cbi_magic, sizeof(cbi_magic))) {
 		fprintf(stderr, "Invalid Magic\n");
@@ -254,19 +265,23 @@ static void print_help(int argc, char *argv[])
 	       "\n"
 	       "Utility for managing Cros Board Info (CBIs).\n"
 	       "\n"
-	       "For '--create <cbi_file> [OPTIONS]', required OPTIONS are:\n"
-	       "  --board_version <uint16>    Board version\n"
-	       "  --oem_id <uint8>            OEM ID\n"
-	       "  --sku_id <uint8>            SKU ID\n"
-	       "  --size <uint16>             Size of output file\n"
+	       "'--create <file> [OPTIONS]' creates an EEPROM image file.\n"
+	       "Required OPTIONS are:\n"
+	       "  --board_version <value>     Board version\n"
+	       "  --oem_id <value>            OEM ID\n"
+	       "  --sku_id <value>            SKU ID\n"
+	       "  --size <size>               Size of output file in bytes\n"
+	       "<value> must be a positive integer <= 0XFFFFFFFF\n"
+	       "and <size> must be a positive integer <= 0XFFFF.\n"
 	       "Optional OPTIONS are:\n"
 	       "  --erase_byte <uint8>        Byte used for empty space\n"
 	       "  --format_version <uint16>   Data format version\n"
 	       "\n"
-	       "For '--show <cbi_file> [OPTIONS]', OPTIONS are:\n"
+	       "'--show <file> [OPTIONS]' shows data in an EEPROM image file.\n"
+	       "OPTIONS are:\n"
 	       "  --all                       Dump all information\n"
-	       "  It also validates the contents against the checksum and\n"
-	       "  returns non-zero if validation fails.\n"
+	       "It also validates the contents against the checksum and\n"
+	       "returns non-zero if validation fails.\n"
 	       "\n",
 	       argv[0]);
 }
@@ -312,7 +327,7 @@ int main(int argc, char **argv)
 			break;
 		case OPT_BOARD_VERSION:
 			val = strtoul(optarg, &e, 0);
-			if (val > USHRT_MAX || !*optarg || (e && *e)) {
+			if (val > UINT32_MAX || !*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --board_version\n");
 				parse_error = 1;
 			}
@@ -321,7 +336,7 @@ int main(int argc, char **argv)
 			break;
 		case OPT_OEM_ID:
 			val = strtoul(optarg, &e, 0);
-			if (val > UCHAR_MAX || !*optarg || (e && *e)) {
+			if (val > UINT32_MAX || !*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --oem_id\n");
 				parse_error = 1;
 			}
@@ -330,7 +345,7 @@ int main(int argc, char **argv)
 			break;
 		case OPT_SKU_ID:
 			val = strtoul(optarg, &e, 0);
-			if (val > UCHAR_MAX || !*optarg || (e && *e)) {
+			if (val > UINT32_MAX || !*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --sku_id\n");
 				parse_error = 1;
 			}
@@ -339,7 +354,7 @@ int main(int argc, char **argv)
 			break;
 		case OPT_SIZE:
 			val = strtoul(optarg, &e, 0);
-			if (val > USHRT_MAX || !*optarg || (e && *e)) {
+			if (val > UINT16_MAX || !*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --size\n");
 				parse_error = 1;
 			}
