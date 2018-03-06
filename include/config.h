@@ -1844,8 +1844,8 @@
  */
 #define CONFIG_KEYBOARD_BOOT_KEYS
 
-/* Add support for the new key. */
-#undef CONFIG_KEYBOARD_NEW_KEY
+/* Add support for the assistant key. */
+#undef CONFIG_KEYBOARD_ASSISTANT_KEY
 
 /*
  * Minimum CPU clocks between scans.  This ensures that keyboard scanning

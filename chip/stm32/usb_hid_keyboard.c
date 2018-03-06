@@ -59,8 +59,8 @@ struct usb_hid_keyboard_report {
 	uint8_t reserved; /* 0x0 */
 	uint8_t keys[6];
 	/* Non-boot protocol fields below */
-#ifdef CONFIG_KEYBOARD_NEW_KEY
-	uint8_t new_key:1;
+#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
+	uint8_t assistant:1;
 	uint8_t reserved2:7;
 #endif
 } __packed;
@@ -99,12 +99,12 @@ struct usb_hid_keyboard_output_report {
 #define HID_KEYBOARD_MODIFIER_LOW 0xe0
 #define HID_KEYBOARD_MODIFIER_HIGH 0xe7
 
-#define HID_KEYBOARD_NEW_KEY 0xf0
+#define HID_KEYBOARD_ASSISTANT_KEY 0xf0
 
 /* The standard Chrome OS keyboard matrix table. See HUT 1.12v2 Table 12 and
  * https://www.w3.org/TR/DOM-Level-3-Events-code .
  *
- * NEW_KEY is mapped as 0xf0, but this key code is never actually send.
+ * Assistant key is mapped as 0xf0, but this key code is never actually send.
  */
 const uint8_t keycodes[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	{ 0x00, 0xe3, 0x3a, 0x05, 0x43, 0x87, 0x11, 0x00, 0x2e,
@@ -117,7 +117,7 @@ const uint8_t keycodes[KEYBOARD_ROWS][KEYBOARD_COLS] = {
 	  0x68, 0x00, 0x31, 0x91 },
 	{ 0xe4, 0x04, 0x07, 0x09, 0x16, 0x0e, 0x0d, 0x00, 0x33,
 	  0x0f, 0x31, 0x28, 0x00 },
-	{ HID_KEYBOARD_NEW_KEY,
+	{ HID_KEYBOARD_ASSISTANT_KEY,
 	        0x1d, 0x06, 0x19, 0x1b, 0x36, 0x10, 0xe1, 0x38,
 	  0x37, 0x00, 0x2c, 0x00 },
 	{ 0x00, 0x1e, 0x20, 0x21, 0x1f, 0x25, 0x24, 0x00, 0x27,
@@ -191,7 +191,7 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
 	0x29, 0xa4, /* Usage Maximum (164) */				\
 	0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
 
-#define KEYBOARD_NEW_KEY_DESC						\
+#define KEYBOARD_ASSISTANT_KEY_DESC					\
 	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */	\
 	0x19, 0x18, /* Usage Minimum */					\
 	0x29, 0x18, /* Usage Maximum */					\
@@ -226,8 +226,8 @@ static const uint8_t report_desc[] = {
 
 	KEYBOARD_BASE_DESC
 
-#ifdef CONFIG_KEYBOARD_NEW_KEY
-	KEYBOARD_NEW_KEY_DESC
+#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
+	KEYBOARD_ASSISTANT_KEY_DESC
 #endif
 
 	0xC0        /* End Collection */
@@ -241,8 +241,8 @@ static const uint8_t report_desc_with_backlight[] = {
 
 	KEYBOARD_BASE_DESC
 
-#ifdef CONFIG_KEYBOARD_NEW_KEY
-	KEYBOARD_NEW_KEY_DESC
+#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
+	KEYBOARD_ASSISTANT_KEY_DESC
 #endif
 
 	KEYBOARD_BACKLIGHT_DESC
@@ -501,9 +501,9 @@ static void keyboard_process_queue(void)
 
 		queue_advance_head(&key_queue, 1);
 
-		if (ev.keycode == HID_KEYBOARD_NEW_KEY) {
-#ifdef CONFIG_KEYBOARD_NEW_KEY
-			report.new_key = ev.pressed ? 1 : 0;
+		if (ev.keycode == HID_KEYBOARD_ASSISTANT_KEY) {
+#ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
+			report.assistant = ev.pressed ? 1 : 0;
 			valid = 1;
 #endif
 		} else if (ev.keycode >= HID_KEYBOARD_MODIFIER_LOW &&
