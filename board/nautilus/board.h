@@ -63,7 +63,6 @@
 #define CONFIG_ESPI
 #define CONFIG_ESPI_VW_SIGNALS
 #define CONFIG_LPC
-#undef CONFIG_PECI
 
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF

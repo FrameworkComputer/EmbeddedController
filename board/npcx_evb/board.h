@@ -13,6 +13,7 @@
 #define CONFIG_PWM
 #define CONFIG_SPI
 #define CONFIG_LPC /* Used in Intel-based platform for host interface */
+#define CONFIG_PECI
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */

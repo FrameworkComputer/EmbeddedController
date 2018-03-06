@@ -125,7 +125,6 @@
 
 /* EC exclude modules */
 #undef CONFIG_ADC
-#undef CONFIG_PECI
 #undef CONFIG_WATCHDOG
 
 #ifndef __ASSEMBLER__

@@ -60,7 +60,6 @@
 #define CONFIG_CHIPSET_SKYLAKE
 #define CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
 #define CONFIG_CHIPSET_RESET_HOOK
-#undef  CONFIG_PECI
 #define CONFIG_ESPI
 /* Eve and Poppy all have wires from GPIO to PCH but CONFIG_ESPI_VW_SIGNALS
  * is defined. So, those GPIOs are not used by EC. */

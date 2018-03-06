@@ -49,7 +49,6 @@
 #define NPCX_SHI_BYPASS_OVER_256B
 
 /* Optional for testing */
-#undef  CONFIG_PECI
 #undef  CONFIG_PSTORE
 #undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
 
