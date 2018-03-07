@@ -16,7 +16,17 @@
 #include "system.h"
 #include "util.h"
 
-/* Must come after other header files. */
+static void tcpc_alert_event(enum gpio_signal signal)
+{
+	/* TODO(b/74127309): Flesh out USB code */
+}
+
+static void ppc_interrupt(enum gpio_signal signal)
+{
+	/* TODO(b/74127309): Flesh out USB code*/
+}
+
+/* Must come after other header files and GPIO interrupts*/
 #include "gpio_list.h"
 
 const enum gpio_signal hibernate_wake_pins[] = {
