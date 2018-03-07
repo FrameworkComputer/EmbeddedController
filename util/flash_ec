@@ -918,7 +918,7 @@ function flash_npcx_jtag() {
 
 function flash_npcx_uut() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
-	NPCX_UUT=$(PATH="${TOOL_PATH}" which Uartupdatetool)
+	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
 	EC_UART="$(servo_ec_uart)"
 
 	BUILD_PATH="${EC_DIR}/build/${BOARD}"
@@ -944,9 +944,9 @@ function flash_npcx_uut() {
 	info "${MCU} UART pty : ${EC_UART}"
 	claim_pty ${EC_UART}
 
-	# Remove the prefix "/dev/" because Uartupdatetool will add it.
+	# Remove the prefix "/dev/" because uartupdatetool will add it.
 	EC_UART=${EC_UART#/dev/}
-	MON_PARAMS="-port ${EC_UART} -baudrate 115200"
+	MON_PARAMS="--port ${EC_UART} --baudrate 115200"
 
 	# Read the RO image size
 	EC_IMG_SIZE=$(printf "%08X" $(stat -c "%s" ${IMG_RO}))
@@ -959,13 +959,13 @@ function flash_npcx_uut() {
 	info "Start to flash RO image.."
 	# Start to program EC RO image
 	# Load monitor header binary to address 0x200C3000
-	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_HDR_ADDR} -file ${T}
+	${NPCX_UUT} ${MON_PARAMS} --opr wr --addr ${MON_HDR_ADDR} --file ${T}
 	# Load monitor binary to address 0x200C3020
-	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_ADDR} -file ${MON}
+	${NPCX_UUT} ${MON_PARAMS} --opr wr --addr ${MON_ADDR} --file ${MON}
 	# Load RO image to Code RAM range.
-	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${EC_IMG_ADDR} -file ${IMG_RO}
+	${NPCX_UUT} ${MON_PARAMS} --opr wr --addr ${EC_IMG_ADDR} --file ${IMG_RO}
 	# Execute the monitor to program RO image on SPI flash
-	${NPCX_UUT} ${MON_PARAMS} -opr call -addr ${MON_ADDR}
+	${NPCX_UUT} ${MON_PARAMS} --opr call --addr ${MON_ADDR}
 
 	# Read the RW image size
 	EC_IMG_SIZE=$(printf "%08X" $(stat -c "%s" ${IMG_RW}))
@@ -978,13 +978,13 @@ function flash_npcx_uut() {
 	info "Start to flash RW image.."
 	# Start to program EC RW image
 	# Load monitor header binary to address 0x200C3000
-	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_HDR_ADDR} -file ${T}
+	${NPCX_UUT} ${MON_PARAMS} --opr wr --addr ${MON_HDR_ADDR} --file ${T}
 	# Load monitor binary to address 0x200C3020
-	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${MON_ADDR} -file ${MON}
+	${NPCX_UUT} ${MON_PARAMS} --opr wr --addr ${MON_ADDR} --file ${MON}
 	# Load RW image to Code RAM range.
-	${NPCX_UUT} ${MON_PARAMS} -opr wr -addr ${EC_IMG_ADDR} -file ${IMG_RW}
+	${NPCX_UUT} ${MON_PARAMS} --opr wr --addr ${EC_IMG_ADDR} --file ${IMG_RW}
 	# Execute the monitor to program RW image on SPI flash
-	${NPCX_UUT} ${MON_PARAMS} -opr call -addr ${MON_ADDR}
+	${NPCX_UUT} ${MON_PARAMS} --opr call --addr ${MON_ADDR}
 
 	# Reconnect the EC-3PO interpreter to the UART.
 	dut_control ${MCU}_ec3po_interp_connect:on || \

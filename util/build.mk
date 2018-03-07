@@ -13,6 +13,10 @@ build-util-art+=util/export_taskinfo.so
 ifeq ($(CHIP),npcx)
 build-util-bin+=ecst
 endif
+host-util-bin+=uartupdatetool
+uartupdatetool-objs=uut/main.o uut/cmd.o uut/opr.o uut/l_com_port.o \
+	uut/lib_crc.o
+$(out)/util/uartupdatetool: HOST_CFLAGS+=-Iutil/
 # Build on a limited subset of boards to save build time
 ifeq ($(BOARD),meowth_fp)
 build-util-bin+=ectool_servo

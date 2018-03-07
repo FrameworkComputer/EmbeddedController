@@ -14,7 +14,7 @@ build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
 host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
 build-art := $(foreach u,$(build-util-art),$(out)/$(u))
 build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
-host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) util/$(u).c))
+host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
 
 # Don't do a build test on the following boards:
 skip_boards = OWNERS host
@@ -80,7 +80,7 @@ cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 cmd_c_to_vif = $(BUILDCC) $(BUILD_CFLAGS) $(STANDALONE_FLAGS) \
 		-MMD -MF $@.d -c $< -flto -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -MMD -MF $@.d  -o $@ \
-	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $*.c)
+	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c))
 cmd_cxx_to_host = $(HOSTCXX) -std=c++0x $(COMMON_WARN) $(HOST_CXXFLAGS)\
 	-I ./$($(notdir $@)_ROOT) -o $@ $(filter %.cc,$^) $($(notdir $@)_LIBS)
 cmd_host_test = ./util/run_host_test $* $(silent)
