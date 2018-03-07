@@ -240,6 +240,7 @@ class TestConsoleEditingMethods(unittest.TestCase):
     # to the interpreter.
     dummy_pipe_end_0, dummy_pipe_end_1 = multiprocessing.Pipe()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
+                                   tempfile.TemporaryFile(),
                                    dummy_pipe_end_0, dummy_pipe_end_1)
 
     # Console editing methods are only valid for enhanced EC images, therefore
@@ -1146,6 +1147,7 @@ class TestConsoleCompatibility(unittest.TestCase):
     # Mock out the pipes.
     dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
+                                   tempfile.TemporaryFile(),
                                    dummy_pipe_end_0, dummy_pipe_end_1)
 
   @mock.patch('console.Console.CheckForEnhancedECImage')
@@ -1415,6 +1417,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
     # Mock out the pipes.
     dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
+                                   tempfile.TemporaryFile(),
                                    dummy_pipe_end_0, dummy_pipe_end_1)
     self.console.oobm_queue = mock.MagicMock()
 

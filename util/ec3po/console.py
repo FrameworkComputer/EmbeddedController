@@ -13,6 +13,7 @@ session-persistent command history.
 from __future__ import print_function
 
 import argparse
+import ctypes
 import binascii
 # pylint: disable=cros-logging-import
 import logging
@@ -128,13 +129,15 @@ class Console(object):
       interrogations are performed with the EC or not and how often.
   """
 
-  def __init__(self, master_pty, user_pty, cmd_pipe, dbg_pipe):
+  def __init__(self, master_pty, user_pty, interface_pty, cmd_pipe, dbg_pipe):
     """Initalises a Console object with the provided arguments.
 
     Args:
     master_pty: File descriptor to the master side of the PTY.  Used for driving
       output to the user and receiving user input.
     user_pty: A string representing the PTY name of the served console.
+    interface_pty: A string representing the PTY name of the served command
+      interface.
     cmd_pipe: A multiprocessing.Connection object which represents the console
       side of the command pipe.  This must be a bidirectional pipe.  Console
       commands and responses utilize this pipe.
@@ -146,6 +149,7 @@ class Console(object):
     self.logger = interpreter.LoggerAdapter(logger, {'pty': user_pty})
     self.master_pty = master_pty
     self.user_pty = user_pty
+    self.interface_pty = interface_pty
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
     self.oobm_queue = multiprocessing.Queue()
@@ -169,6 +173,7 @@ class Console(object):
     string = []
     string.append('master_pty: %s' % self.master_pty)
     string.append('user_pty: %s' % self.user_pty)
+    string.append('interface_pty: %s' % self.interface_pty)
     string.append('cmd_pipe: %s' % self.cmd_pipe)
     string.append('dbg_pipe: %s' % self.dbg_pipe)
     string.append('oobm_queue: %s' % self.oobm_queue)
@@ -811,27 +816,43 @@ def IsPrintable(byte):
   """
   return byte >= ord(' ') and byte <= ord('~')
 
-
-def StartLoop(console):
+def StartLoop(console, command_active):
   """Starts the infinite loop of console processing.
 
   Args:
     console: A Console object that has been properly initialzed.
+    command_active: multiprocessing.Value indicating if servod owns
+        the console, or user owns the console. This prevents input collisions.
   """
-  console.logger.info('EC Console is being served on %s.', console.user_pty)
+  console.logger.debug('Console is being served on %s.', console.user_pty)
+  console.logger.debug('Console master is on %s.', console.master_pty)
+  console.logger.debug('Command interface is being served on %s.',
+      console.interface_pty)
   console.logger.debug(console)
   try:
     while True:
       # Check to see if pipes or the console are ready for reading.
-      read_list = [console.master_pty, console.cmd_pipe, console.dbg_pipe]
+      read_list = [console.master_pty, console.interface_pty,
+                   console.cmd_pipe, console.dbg_pipe]
       ready_for_reading = select.select(read_list, [], [])[0]
 
       for obj in ready_for_reading:
-        if obj is console.master_pty:
-          console.logger.debug('Input from user')
+        if obj is console.master_pty and not command_active.value:
           # Convert to bytes so we can look for non-printable chars such as
           # Ctrl+A, Ctrl+E, etc.
           line = bytearray(os.read(console.master_pty, CONSOLE_MAX_READ))
+          console.logger.debug('Input from user: %s, locked:%s',
+              str(line).strip(), command_active.value)
+          for i in line:
+            # Handle each character as it arrives.
+            console.HandleChar(i)
+
+        if obj is console.interface_pty and command_active.value:
+          # Convert to bytes so we can look for non-printable chars such as
+          # Ctrl+A, Ctrl+E, etc.
+          line = bytearray(os.read(console.interface_pty, CONSOLE_MAX_READ))
+          console.logger.debug('Input from interface: %s, locked:%s',
+              str(line).strip(), command_active.value)
           for i in line:
             # Handle each character as it arrives.
             console.HandleChar(i)
@@ -839,8 +860,10 @@ def StartLoop(console):
         elif obj is console.cmd_pipe:
           data = console.cmd_pipe.recv()
           # Write it to the user console.
-          console.logger.debug('|CMD|->\'%s\'', data)
+          console.logger.debug('|CMD|->\'%s\'', data.strip())
           os.write(console.master_pty, data)
+          if command_active.value:
+            os.write(console.interface_pty, data)
 
         elif obj is console.dbg_pipe:
           data = console.dbg_pipe.recv()
@@ -848,8 +871,11 @@ def StartLoop(console):
             # Search look buffer for enhanced EC image string.
             console.CheckBufferForEnhancedImage(data)
           # Write it to the user console.
-          console.logger.debug('|DBG|->\'%s\'', data)
+          if len(data) > 1:
+            console.logger.debug('|DBG|->\'%s\'', data.strip())
           os.write(console.master_pty, data)
+          if command_active.value:
+            os.write(console.interface_pty, data)
 
       while not console.oobm_queue.empty():
         console.logger.debug('OOBM queue ready for reading.')
@@ -861,6 +887,8 @@ def StartLoop(console):
     console.cmd_pipe.close()
     # Close file descriptor.
     os.close(console.master_pty)
+    os.close(console.interface_pty)
+    console.logger.debug('Exit ec3po console loop for %s', console.user_pty)
     # Exit.
     sys.exit(0)
 
@@ -935,7 +963,8 @@ def main(argv):
   console = Console(master_pty, os.ttyname(user_pty), cmd_pipe_interactive,
                     dbg_pipe_interactive)
   # Start serving the console.
-  StartLoop(console)
+  v = multiprocessing.Value(ctypes.c_bool, False)
+  StartLoop(console, v)
 
 
 if __name__ == '__main__':
