@@ -147,12 +147,15 @@ int opt3001_read_lux(const struct motion_sensor_t *s, vector_3_t v)
 	/*
 	 * lux = 2EXP[3:0] × R[11:0] / 100
 	 */
-	data = (1 << (data >> 12)) * (data & 0x0FFF) / 100;
-	data += drv_data->offset;
+	data = (1 << (data >> 12)) * (data & 0x0FFF);
+	data += drv_data->offset * 100;
+	data = data * drv_data->scale + data * drv_data->uscale / 10000;
+	data /= 100;
+
 	if (data < 0)
 		data = 1;
 
-	v[0] = data * drv_data->scale + data * drv_data->uscale / 10000;
+	v[0] = data;
 	v[1] = 0;
 	v[2] = 0;
 
