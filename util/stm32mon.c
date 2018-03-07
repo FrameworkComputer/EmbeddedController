@@ -971,7 +971,7 @@ int parse_parameters(int argc, char **argv)
 	int opt, idx;
 	int flags = 0;
 
-	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghn:o:r:s:w:uU?",
+	while ((opt = getopt_long(argc, argv, "a:l:b:d:eghn:o:pr:s:w:uU?",
 				  longopts, &idx)) != -1) {
 		switch (opt) {
 		case 'a':
