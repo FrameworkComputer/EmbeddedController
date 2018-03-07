@@ -459,6 +459,7 @@
 #define STM32_USART_CR1_TXEIE		(1 << 7)
 #define STM32_USART_CR1_PS		(1 << 9)
 #define STM32_USART_CR1_PCE		(1 << 10)
+#define STM32_USART_CR1_M		(1 << 12)
 #define STM32_USART_CR1_OVER8		(1 << 15)
 #define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x04)
 #define STM32_USART_CR2_SWAP		(1 << 15)
@@ -504,6 +505,7 @@
 #define STM32_USART_CR1_TXEIE		(1 << 7)
 #define STM32_USART_CR1_PS		(1 << 9)
 #define STM32_USART_CR1_PCE		(1 << 10)
+#define STM32_USART_CR1_M		(1 << 12)
 #define STM32_USART_CR1_UE		(1 << 13)
 #define STM32_USART_CR1_OVER8		(1 << 15) /* STM32L only */
 #define STM32_USART_CR2(base)      STM32_USART_REG(base, 0x10)

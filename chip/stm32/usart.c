@@ -127,6 +127,11 @@ int usart_get_parity(struct usart_config const *config)
 	return 2;
 }
 
+/*
+ * We only allow 8 bit word. CR1_PCE modifies parity enable,
+ * CR1_PS modifies even/odd, CR1_M modifies total word length
+ * to make room for parity.
+ */
 void usart_set_parity(struct usart_config const *config, int parity)
 {
 	uint32_t ue;
@@ -141,7 +146,8 @@ void usart_set_parity(struct usart_config const *config, int parity)
 
 	if (parity) {
 		/* Set parity control enable. */
-		STM32_USART_CR1(base) |= STM32_USART_CR1_PCE;
+		STM32_USART_CR1(base) |=
+			(STM32_USART_CR1_PCE | STM32_USART_CR1_M);
 		/* Set parity select even/odd bit. */
 		if (parity == 2)
 			STM32_USART_CR1(base) &= ~STM32_USART_CR1_PS;
@@ -149,7 +155,8 @@ void usart_set_parity(struct usart_config const *config, int parity)
 			STM32_USART_CR1(base) |= STM32_USART_CR1_PS;
 	} else {
 		STM32_USART_CR1(base) &=
-			~(STM32_USART_CR1_PCE | STM32_USART_CR1_PS);
+			~(STM32_USART_CR1_PCE | STM32_USART_CR1_PS |
+			  STM32_USART_CR1_M);
 	}
 
 	/* Restore active state. */
