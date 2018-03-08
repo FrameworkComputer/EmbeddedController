@@ -11,3 +11,5 @@ CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m6f
 
 board-y=board.o
+board-$(CONFIG_BATTERY_SMART)+=battery.o
+board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o

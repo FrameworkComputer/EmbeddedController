@@ -5,16 +5,30 @@
 
 /* Yorp board-specific configuration */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "common.h"
+#include "driver/charger/bd9995x.h"
+#include "driver/tcpm/anx74xx.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tcpm.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
 #include "system.h"
+#include "tcpci.h"
+#include "usb_mux.h"
+#include "usbc_ppc.h"
 #include "util.h"
+
+#define USB_PD_PORT_ANX74XX	0
+#define USB_PD_PORT_PS8751	1
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -23,18 +37,30 @@ static void tcpc_alert_event(enum gpio_signal signal)
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
-	/* TODO(b/74127309): Flesh out USB code*/
+	/* TODO(b/74127309): Flesh out USB code */
 }
 
 /* Must come after other header files and GPIO interrupts*/
 #include "gpio_list.h"
 
+/* Wake pins */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
 	GPIO_POWER_BUTTON_L
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
+	[ADC_VBUS_C0] = {
+		"VBUS_C0", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
+	[ADC_VBUS_C1] = {
+		"VBUS_C1", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 
 /* Power signal list.  Must match order of enum power_signal. */
@@ -56,6 +82,17 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+/* I2C port map. */
+const struct i2c_port_t i2c_ports[] = {
+/* TODO(b/74387239): increase I2C bus speeds after bringup. */
+	{"battery", I2C_PORT_BATTERY, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{"tcpc0",   I2C_PORT_TCPC0,   100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"tcpc1",   I2C_PORT_TCPC1,   100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
+	{"eeprom",  I2C_PORT_EEPROM,  100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{"charger", I2C_PORT_CHARGER, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{"sensor",  I2C_PORT_SENSOR,  100, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
@@ -85,3 +122,78 @@ void chipset_do_shutdown(void)
 	       gpio_get_level(GPIO_PP3300_PG))
 		;
 }
+
+/**
+ * Reset all system PD/TCPC MCUs -- currently only called from
+ * handle_pending_reboot() in common/power.c just before hard
+ * resetting the system. This logic is likely not needed as the
+ * PP3300_A rail should be dropped on EC reset.
+ */
+void board_reset_pd_mcu(void)
+{
+	/* TODO(b/74127309): Flesh out USB code */
+}
+
+int board_set_active_charge_port(int port)
+{
+	/* TODO(b/74127309): Flesh out USB code */
+	return EC_SUCCESS;
+}
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	/* TODO(b/74127309): Flesh out USB code */
+}
+
+uint16_t tcpc_get_alert_status(void)
+{
+	/* TODO(b/74127309): Flesh out USB code */
+	return 0;
+}
+
+
+/* Drivers */
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_ANX74XX] = {
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = 0x50,
+		.drv = &anx74xx_tcpm_drv,
+		.pol = TCPC_ALERT_ACTIVE_LOW,
+	},
+	[USB_PD_PORT_PS8751] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = 0x16,
+		.drv = &ps8xxx_tcpm_drv,
+		.pol = TCPC_ALERT_ACTIVE_LOW,
+	},
+};
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_ANX74XX] = {
+		.port_addr = USB_PD_PORT_ANX74XX,
+		.driver = &anx74xx_tcpm_usb_mux_driver,
+		.hpd_update = &anx74xx_tcpc_update_hpd_status,
+	},
+	[USB_PD_PORT_PS8751] = {
+		.port_addr = USB_PD_PORT_PS8751,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	}
+};
+
+const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
+	[USB_PD_PORT_ANX74XX] = {
+		.i2c_port = I2C_PORT_TCPC0,
+		/* TODO(b/74206647): Write PPC driver */
+		.i2c_addr = 0,
+		.drv = 0
+	},
+	[USB_PD_PORT_PS8751] = {
+		.i2c_port = I2C_PORT_TCPC1,
+		/* TODO(b/74206647): Write PPC driver */
+		.i2c_addr = 0,
+		.drv = 0
+	},
+};
+const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);

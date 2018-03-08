@@ -54,6 +54,8 @@ GPIO(PMIC_EN,		 PIN(D, 7), GPIO_OUT_LOW)	/* Enable A Rails via PMIC */
 GPIO(PCH_RSMRST_L,	 PIN(C, 2), GPIO_OUT_LOW)	/* RSMRST# to SOC. All _A rails now up. */
 GPIO(PCH_SYS_PWROK,	 PIN(B, 7), GPIO_OUT_LOW)	/* EC_PCH_PWROK. All S0 rails now up. */
 
+GPIO(EC_BATT_PRES_L, 	 PIN(E, 5), GPIO_INPUT)
+
 /*
  * PCH_PROCHOT_ODL is primarily for monitoring the PROCHOT# signal which is
  * normally driven by the PMIC. The EC can also drive this signal in the event
