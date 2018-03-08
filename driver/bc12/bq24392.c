@@ -12,6 +12,7 @@
  * the system will have to charge ramp.
  */
 
+#include "bq24392.h"
 #include "cannonlake.h"
 #include "charge_manager.h"
 #include "chipset.h"
@@ -26,20 +27,35 @@
 #include "usb_pd.h"
 #include "util.h"
 
-struct bq24392_pins {
-	enum gpio_signal chip_enable_l;
-	enum gpio_signal chg_det;
-};
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-static const struct bq24392_pins pin_tbl[] = {
-	{ GPIO_USB_C0_BC12_VBUS_ON_L, GPIO_USB_C0_BC12_CHG_DET },
-#ifdef HAS_TASK_USB_CHG_P1
-	{ GPIO_USB_C1_BC12_VBUS_ON_L, GPIO_USB_C1_BC12_CHG_DET },
-#endif
-#ifdef HAS_TASK_USB_CHG_P2
-	{ GPIO_USB_C2_BC12_VBUS_ON_L, GPIO_USB_C2_BC12_CHG_DET },
-#endif
-};
+/**
+ * Returns true if the charger detect pin is activated.
+ *
+ * @parm cfg driver for chip to read the charger detect pin for.
+ * @return 1 if charger detect is activated (high when active high or
+ *	low with active low), otherwise 0.
+ */
+static int is_chg_det_activated(const struct bq24392_config_t * const cfg)
+{
+	return !!gpio_get_level(cfg->chg_det_pin) ^
+		!!(cfg->flags & BQ24392_FLAGS_CHG_DET_ACTIVE_LOW);
+}
+
+/**
+ * Activates the Chip Enable GPIO based on the enabled value.
+ *
+ * @param cfg driver for chip that will set chip enable gpio.
+ * @param enable 1 to activate gpio (high for active high and low for active
+ *	low).
+ */
+static void activate_chip_enable(
+	const struct bq24392_config_t * const cfg, const int enable)
+{
+	gpio_set_level(
+		cfg->chip_enable_pin,
+		!!enable ^ !!(cfg->flags & BQ24392_FLAGS_ENABLE_ACTIVE_LOW));
+}
 
 /**
  * Perform BC1.2 detection and update charge manager.
@@ -48,13 +64,13 @@ static const struct bq24392_pins pin_tbl[] = {
  */
 static void bc12_detect(const int port)
 {
+	const struct bq24392_config_t * const cfg = &bq24392_config[port];
 	struct charge_port_info new_chg;
 
 	/*
-	 * Enable the IC to begin detection and connect switches if
-	 * necessary.  Note, the value is 0 because the enable is active low.
+	 * Enable the IC to begin detection and connect switches if necessary.
 	 */
-	gpio_set_level(pin_tbl[port].chip_enable_l, 0);
+	activate_chip_enable(cfg, 1);
 
 	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -66,11 +82,11 @@ static void bc12_detect(const int port)
 
 	/*
 	 * The driver assumes that CHG_AL_N and SW_OPEN are not connected,
-	 * therefore the value of CHG_DET indicates whether the source is NOT a
-	 * low-power standard downstream port (SDP).  The system will have to
+	 * therefore an activated CHG_DET indicates whether the source is NOT a
+	 * low-power standard downstream port (SDP). The system will have to
 	 * ramp the current to determine the limit.
 	 */
-	new_chg.current = gpio_get_level(pin_tbl[port].chg_det) ? 2400 : 500;
+	new_chg.current = is_chg_det_activated(cfg) ? 2400 : 500;
 #else
 	/*
 	 * If the board doesn't support charge ramping, then assume the lowest
@@ -90,10 +106,11 @@ static void bc12_detect(const int port)
  */
 static void power_down_ic(const int port)
 {
+	const struct bq24392_config_t * const cfg = &bq24392_config[port];
 	struct charge_port_info no_chg = { 0 };
 
 	/* Turn off the IC. */
-	gpio_set_level(pin_tbl[port].chip_enable_l, 1);
+	activate_chip_enable(cfg, 0);
 
 	/* Let charge manager know there's no more charge available. */
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, &no_chg);
@@ -138,7 +155,7 @@ void usb_charger_task(void *u)
 	const int port = (intptr_t)u;
 	uint32_t evt;
 
-	ASSERT(port >= 0 && port <= 2);
+	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_COUNT);
 
 	detect_or_power_down_ic(port);
 

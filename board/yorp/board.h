@@ -11,12 +11,6 @@
 /* TODO, Fast follow: make a new config option that uses port */
 #define ADC_VBUS ADC_VBUS_C0
 
-/* TODO, Fast follow: update BC 1.2 driver to handle inverted signals */
-#define GPIO_USB_C0_BC12_VBUS_ON_L GPIO_USB_C0_BC12_VBUS_ON
-#define GPIO_USB_C0_BC12_CHG_DET GPIO_USB_C0_BC12_CHG_DET_L
-#define GPIO_USB_C1_BC12_VBUS_ON_L GPIO_USB_C1_BC12_VBUS_ON
-#define GPIO_USB_C1_BC12_CHG_DET GPIO_USB_C1_BC12_CHG_DET_L
-
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
