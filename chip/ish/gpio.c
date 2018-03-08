@@ -14,27 +14,128 @@
 #include "timer.h"
 #include "util.h"
 
+#define ISH_TOTAL_GPIO_PINS 8
+
 test_mockable int gpio_get_level(enum gpio_signal signal)
 {
-	return 0;
+	return  !!(ISH_GPIO_GPLR & gpio_list[signal].mask);
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
+	const struct gpio_info *g = gpio_list + signal;
+	if (value)
+		ISH_GPIO_GPSR |= g->mask;
+	else
+		ISH_GPIO_GPCR |= g->mask;
+}
+
+void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
+{
+	/* GPSR/GPCR Output high/low */
+	if (flags & GPIO_HIGH) /* Output high */
+		ISH_GPIO_GPSR |= mask;
+	else if (flags & GPIO_LOW)  /* output low */
+		ISH_GPIO_GPCR |= mask;
+
+	/* GPDR pin direction 1 = output, 0 = input*/
+	if (flags & GPIO_OUTPUT)
+		ISH_GPIO_GPDR |= mask;
+	else /* GPIO_INPUT or un-configured */
+		ISH_GPIO_GPDR &= ~mask;
+
+	/* GRER/GFER interrupt trigger */
+#ifdef CONFIG_ISH_30
+	/* ISH 3 can't support both rising and falling edge */
+	if (((flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) ||
+		((flags & GPIO_INT_F_HIGH) && (flags & GPIO_INT_F_LOW))) {
+		ccprintf("ISH 2/3 not support both rising&falling edge\n");
+	}
+#endif
+	/* Interrupt is asserted on rising edge/active high */
+	if (flags & GPIO_INT_F_RISING)
+		ISH_GPIO_GRER |= mask;
+	else
+		ISH_GPIO_GRER &= ~mask;
+
+	/* Interrupt is asserted on falling edge/active low */
+	if (flags & GPIO_INT_F_FALLING)
+		ISH_GPIO_GFER |= mask;
+	else
+		ISH_GPIO_GFER &= ~mask;
+}
+
+int gpio_enable_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	ISH_GPIO_GIMR |= g->mask;
+	return EC_SUCCESS;
+}
+
+int gpio_disable_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	ISH_GPIO_GIMR &= ~g->mask;
+	return EC_SUCCESS;
+}
+
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	const struct gpio_info *g = gpio_list + signal;
+
+	ISH_GPIO_GISR = g->mask;
+	return EC_SUCCESS;
 }
 
 void gpio_pre_init(void)
 {
+	int i;
+	int flags;
+	int is_warm = system_is_reboot_warm();
+	const struct gpio_info *g = gpio_list;
+
+	for (i = 0; i < GPIO_COUNT; i++, g++) {
+
+		flags = g->flags;
+
+		if (flags & GPIO_DEFAULT)
+			continue;
+
+		/*
+		 * If this is a warm reboot, don't set the output levels
+		 * or we'll shut off the AP.
+		 */
+		if (is_warm)
+			flags &= ~(GPIO_LOW | GPIO_HIGH);
+
+		gpio_set_flags_by_mask(g->port, g->mask, flags);
+	}
 }
 
 static void gpio_init(void)
 {
-	/* TBD */
+	task_enable_irq(ISH_GPIO_IRQ);
 }
 
 static void gpio_interrupt(void)
 {
-	/*TODO*/
+	int i;
+	const struct gpio_info *g = gpio_list;
+	uint32_t gisr = ISH_GPIO_GISR;
+	uint32_t gimr = ISH_GPIO_GIMR;
+
+	/* mask off any not enabled pins */
+	gisr &= gimr;
+
+	for (i = 0; i < GPIO_IH_COUNT; i++, g++) {
+		if (gisr & g->mask) {
+			/* write 1 to clear interrupt status bit */
+			ISH_GPIO_GISR = g->mask;
+			gpio_irq_handlers[i](i);
+		}
+	}
 }
 
 DECLARE_IRQ(ISH_GPIO_IRQ, gpio_interrupt);

@@ -35,6 +35,7 @@ enum ish_i2c_port {
 #define ISH_I2C1_BASE     0x00102000
 #define ISH_I2C2_BASE     0x00105000
 #define ISH_UART_BASE     0x00103000
+#define ISH_GPIO_BASE     0x001F0000
 #define ISH_IPC_BASE      0x00B00000
 #define ISH_IOAPIC_BASE   0xFEC00000
 #define ISH_HPET_BASE     0xFED00000
@@ -59,6 +60,21 @@ enum ish_i2c_port {
 #define USER_VEC_START   32
 /* Map IRQs to vectors after offset 10 for certain APIC interrupts */
 #define IRQ_TO_VEC(irq)  (irq + USER_VEC_START + 10)
+
+/* ISH GPIO Registers */
+#define ISH_GPIO_GCCR REG32(ISH_GPIO_BASE + 0x000) /* Direction lock */
+#define ISH_GPIO_GPLR REG32(ISH_GPIO_BASE + 0x004) /* Pin level */
+#define ISH_GPIO_GPDR REG32(ISH_GPIO_BASE + 0x01C) /* Pin direction */
+#define ISH_GPIO_GPSR REG32(ISH_GPIO_BASE + 0x034) /* Output set */
+#define ISH_GPIO_GPCR REG32(ISH_GPIO_BASE + 0x04C) /* Output clear */
+#define ISH_GPIO_GRER REG32(ISH_GPIO_BASE + 0x064) /* Rising edge detect */
+#define ISH_GPIO_GFER REG32(ISH_GPIO_BASE + 0x07C) /* Falling edge detect */
+#define ISH_GPIO_GFBR REG32(ISH_GPIO_BASE + 0x094) /* Glitch Filter disable */
+#define ISH_GPIO_GIMR REG32(ISH_GPIO_BASE + 0x0AC) /* Interrupt Enable */
+#define ISH_GPIO_GISR REG32(ISH_GPIO_BASE + 0x0C4) /* Interrupt Source */
+#define ISH_GPIO_GWMR REG32(ISH_GPIO_BASE + 0x100) /* Wake Enable */
+#define ISH_GPIO_GWSR REG32(ISH_GPIO_BASE + 0x118) /* Wake Source */
+#define ISH_GPIO_GSEC REG32(ISH_GPIO_BASE + 0x130) /* Secure Input */
 
 /* APIC interrupt vectors */
 #define ISH_TS_VECTOR              0x20  /* Task switch vector */
