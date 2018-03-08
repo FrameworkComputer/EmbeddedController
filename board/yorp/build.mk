@@ -9,6 +9,7 @@
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m6f
+BASEBOARD:=octopus
 
 board-y=board.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
