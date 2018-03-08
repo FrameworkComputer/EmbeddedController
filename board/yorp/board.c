@@ -124,6 +124,11 @@ void chipset_do_shutdown(void)
 		;
 }
 
+enum adc_channel board_get_vbus_adc(int port)
+{
+	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;
+}
+
 /**
  * Reset all system PD/TCPC MCUs -- currently only called from
  * handle_pending_reboot() in common/power.c just before hard

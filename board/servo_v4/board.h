@@ -100,6 +100,7 @@
 #define CONFIG_USB_PD_TCPM_STUB
 #undef CONFIG_USB_PD_PULLUP
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
+#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 
 /* Override PD_ROLE_DEFAULT in usb_pd.h */
 #define PD_ROLE_DEFAULT(port) ((port) ? PD_ROLE_SOURCE : PD_ROLE_SINK)
@@ -159,8 +160,7 @@ enum usb_strings {
 
 /* ADC signal */
 enum adc_channel {
-	ADC_VBUS = -1,
-	ADC_CHG_CC1_PD = 0,
+	ADC_CHG_CC1_PD,
 	ADC_CHG_CC2_PD,
 	ADC_DUT_CC1_PD,
 	ADC_DUT_CC2_PD,

@@ -370,15 +370,17 @@ static void charge_manager_fill_power_info(int port,
 		if (r->role == USB_PD_PORT_POWER_SINK_NOT_CHARGING)
 			r->meas.voltage_now = 5000;
 		else {
-#ifdef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+#if defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
 			r->meas.voltage_now = charger_get_vbus_voltage(port);
+#elif defined(CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT)
+			r->meas.voltage_now =
+				adc_read_channel(board_get_vbus_adc(port));
+#elif defined(CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT)
+			/* No VBUS ADC channel - voltage is unknown */
+			r->meas.voltage_now = 0;
 #else
-			if (ADC_VBUS >= 0)
-				r->meas.voltage_now =
-					adc_read_channel(ADC_VBUS);
-			else
-				/* No VBUS ADC channel - voltage is unknown */
-				r->meas.voltage_now = 0;
+			/* There is a single ADC that measures joint Vbus */
+			r->meas.voltage_now = adc_read_channel(ADC_VBUS);
 #endif
 		}
 	}

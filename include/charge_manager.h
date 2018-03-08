@@ -227,4 +227,14 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
  */
 int board_vbus_source_enabled(int port);
 
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
+/**
+ * Gets the adc_channel for the specified port.
+ *
+ * @param port PD port.
+ * @return adc_channel that measures the Vbus voltage.
+ */
+enum adc_channel board_get_vbus_adc(int port);
+#endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */
+
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* TODO, Fast follow: make a new config option that uses port */
-#define ADC_VBUS ADC_VBUS_C0
-
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
@@ -74,6 +71,7 @@
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_BC12_DETECT_BQ24392
+#define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 
 /* TODO(b/74388692): Adding USB-A BC 1.2 charging support */
 
