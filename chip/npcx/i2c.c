@@ -652,11 +652,14 @@ int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 	     p_status->oper_state != SMB_WRITE_SUSPEND &&
 	     (i2c_bus_busy(ctrl)
 	     || (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
+		int ret;
 
-		/* Attempt to unwedge the i2c port. */
-		i2c_unwedge(port);
+		/* Attempt to unwedge the i2c port */
+		ret = i2c_unwedge(port);
+		if (ret)
+			return ret;
 		p_status->err_code = SMB_BUS_BUSY;
-		/* recovery i2c controller */
+		/* recover i2c controller */
 		i2c_recovery(ctrl, p_status);
 		/* Select port again for recovery */
 		i2c_select_port(port);
