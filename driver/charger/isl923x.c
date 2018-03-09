@@ -139,7 +139,8 @@ int charger_set_otg_current_voltage(int output_current, int output_voltage)
 	int rv;
 	uint16_t volt_reg = (output_voltage / ISL9238_OTG_VOLTAGE_STEP)
 			<< ISL9238_OTG_VOLTAGE_SHIFT;
-	uint16_t current_reg = (output_current / ISL923X_OTG_CURRENT_STEP)
+	uint16_t current_reg =
+		DIV_ROUND_UP(output_current, ISL923X_OTG_CURRENT_STEP)
 			<< ISL923X_OTG_CURRENT_SHIFT;
 
 	if (output_current < 0 || output_current > ISL923X_OTG_CURRENT_MAX ||

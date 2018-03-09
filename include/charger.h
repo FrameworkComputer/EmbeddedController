@@ -79,8 +79,10 @@ int charger_enable_otg_power(int enabled);
  * to reset the value before enabling OTG power to ensure one does not provide
  * excessive voltage to a device.
  *
- * @param output_current	Requested current limit in mA.
- * @param output_voltage	Requested voltage in mV.
+ * @param output_current	Requested current limit in mA, driver should
+ *                              round the value up.
+ * @param output_voltage	Requested voltage in mV, driver should round the
+ *                              the value down.
  *
  * @return EC_SUCCESS on success, an error otherwise.
  */
