@@ -55,7 +55,7 @@ void pd_transition_voltage(int idx)
 }
 
 static uint8_t vbus_en[CONFIG_USB_PD_PORT_COUNT];
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, TYPEC_RP_1A5};
+static uint8_t vbus_rp[CONFIG_USB_PD_PORT_COUNT] = {TYPEC_RP_1A5, /*TYPEC_RP_1A5*/};
 
 int board_vbus_source_enabled(int port)
 {
@@ -122,8 +122,7 @@ void pd_power_supply_reset(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_WAKE_L :
-				      GPIO_USB_C0_VBUS_WAKE_L);
+	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
 }
 
 int pd_board_checks(void)
