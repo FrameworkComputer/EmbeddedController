@@ -458,6 +458,9 @@ static void charge_allocate_input_current_limit(void)
 	 * but the value is currently wrong, especially during transitions.
 	 */
 	if (total_power <= 0) {
+		int base_critical = charge_base >= 0 &&
+			charge_base < db_policy.max_charge_base_batt_to_batt;
+
 		/* Discharging */
 		prev_base_battery_power = -1;
 		prev_lid_system_power = -1;
@@ -465,10 +468,14 @@ static void charge_allocate_input_current_limit(void)
 
 		/*
 		 * System is suspended/off, let the lid and base run on their
-		 * own power.
+		 * own power. However, if the base battery is critically low, we
+		 * still want to provide power to the base, to make sure it
+		 * stays alive to be able to wake the system on keyboard or
+		 * touchpad events.
 		 */
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-					CHIPSET_STATE_ANY_SUSPEND)) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+				(chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+				 !base_critical)) {
 			set_base_lid_current(0, 0, 0, 0);
 			return;
 		}
@@ -485,9 +492,10 @@ static void charge_allocate_input_current_limit(void)
 			 * Base battery is too low, apply power to it, and allow
 			 * it to charge if it is critically low.
 			 *
-			 * TODO(b:71881017): This will make the battery charge
-			 * oscillate between 3 and 4 percent, which might not be
-			 * great for battery life. We need some hysteresis.
+			 * TODO(b:71881017): When suspended, this will make the
+			 * battery charge oscillate between 3 and 4 percent,
+			 * which might not be great for battery life. We need
+			 * some hysteresis.
 			 */
 			/*
 			 * TODO(b:71881017): Precompute (ideally, at build time)
@@ -500,10 +508,7 @@ static void charge_allocate_input_current_limit(void)
 			int lid_current = add_margin(base_current,
 						db_policy.margin_otg_current);
 
-			int allow_charge = charge_base >= 0 &&
-			   charge_base < db_policy.max_charge_base_batt_to_batt;
-
-			set_base_lid_current(base_current, allow_charge,
+			set_base_lid_current(base_current, base_critical,
 					     -lid_current, 0);
 		}
 
