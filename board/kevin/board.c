@@ -422,7 +422,7 @@ static struct bmi160_drv_data_t g_bmi160_data;
 
 #ifdef BOARD_KEVIN
 /* BMA255 private data */
-static struct bma2x2_accel_data g_bma255_data;
+static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const matrix_3x3_t base_standard_ref = {

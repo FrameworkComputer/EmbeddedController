@@ -599,9 +599,10 @@ static int set_offset(const struct motion_sensor_t *s,
 	return ret;
 }
 
-int perform_calib(const struct motion_sensor_t *s)
+static int perform_calib(const struct motion_sensor_t *s)
 {
-	int ret, val, en_flag, status, timeout = 0, rate;
+	int ret, val, en_flag, status, rate;
+	timestamp_t deadline;
 
 	rate = get_data_rate(s);
 	/*
@@ -635,8 +636,9 @@ int perform_calib(const struct motion_sensor_t *s)
 	ret = raw_write8(s->port, s->addr, BMI160_FOC_CONF, val);
 	ret = raw_write8(s->port, s->addr, BMI160_CMD_REG,
 			 BMI160_CMD_START_FOC);
+	deadline.val = get_time().val + 400;
 	do {
-		if (timeout > 400) {
+		if (timestamp_expired(deadline, NULL)) {
 			ret = EC_RES_TIMEOUT;
 			goto end_perform_calib;
 		}
@@ -644,7 +646,6 @@ int perform_calib(const struct motion_sensor_t *s)
 		ret = raw_read8(s->port, s->addr, BMI160_STATUS, &status);
 		if (ret != EC_SUCCESS)
 			goto end_perform_calib;
-		timeout += 50;
 	} while ((status & BMI160_FOC_RDY) == 0);
 
 	/* Calibration is successful, and loaded, use the result */

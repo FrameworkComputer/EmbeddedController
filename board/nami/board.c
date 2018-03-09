@@ -551,7 +551,7 @@ static struct mutex g_base_mutex;
 static struct bmi160_drv_data_t g_bmi160_data;
 
 /* BMA255 private data */
-static struct bma2x2_accel_data g_bma255_data;
+static struct accelgyro_saved_data_t g_bma255_data;
 
 static struct opt3001_drv_data_t g_opt3001_data = {
 	.scale = 1,

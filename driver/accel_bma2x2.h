@@ -8,19 +8,6 @@
 #ifndef __CROS_EC_ACCEL_BMA2x2_H
 #define __CROS_EC_ACCEL_BMA2x2_H
 
-enum bma2x2_accel {
-	BMA255,
-	SUPPORTED_BOSCH_ACCELS,
-};
-
-struct bma2x2_accel_data {
-	/* Current range of accelerometer. */
-	int sensor_range;
-	/* Current output data rate of accelerometer. */
-	int sensor_datarate;
-	int16_t offset[3];
-};
-
 extern const struct accelgyro_drv bma2x2_accel_drv;
 
 /* I2C ADDRESS DEFINITIONS    */
