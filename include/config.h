@@ -1737,6 +1737,14 @@
  */
 #undef CONFIG_I2C_XFER_LARGE_READ
 
+/*
+ * If defined, makes i2c_xfer callback into board-provided functions before the
+ * start and after the end of every I2C transaction. This can be used by boards
+ * to implement any I2C device specific quirks e.g. requiring minimum bus-free
+ * time between every I2C transaction with a device.
+ */
+#undef CONFIG_I2C_XFER_BOARD_CALLBACK
+
 /* EC uses an I2C master interface */
 #undef CONFIG_I2C_MASTER
 

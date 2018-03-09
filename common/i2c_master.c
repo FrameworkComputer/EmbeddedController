@@ -50,6 +50,26 @@ const struct i2c_port_t *get_i2c_port(int port)
 	return NULL;
 }
 
+static int chip_i2c_xfer_with_notify(int port, int slave_addr,
+				     const uint8_t *out, int out_size,
+				     uint8_t *in, int in_size, int flags)
+{
+	int ret;
+
+#ifdef CONFIG_I2C_XFER_CALLBACK
+	i2c_start_xfer_notify(port, slave_addr);
+#endif
+
+	ret = chip_i2c_xfer(port, slave_addr, out, out_size, in, in_size,
+			    flags);
+
+#ifdef CONFIG_I2C_XFER_CALLBACK
+	i2c_end_xfer_notify(port, slave_addr);
+#endif
+
+	return ret;
+}
+
 #ifdef CONFIG_I2C_XFER_LARGE_READ
 /*
  * Internal function that splits reading into multiple chip_i2c_xfer() calls
@@ -64,13 +84,13 @@ static int i2c_xfer_no_retry(int port, int slave_addr, const uint8_t *out,
 
 	in_size -= in_chunk_size;
 	out_flags |= !in_size ? (flags & I2C_XFER_STOP) : 0;
-	ret = chip_i2c_xfer(port, slave_addr, out, out_size, in, in_chunk_size,
-		out_flags);
+	ret = chip_i2c_xfer_with_notify(port, slave_addr, out, out_size, in,
+					in_chunk_size, out_flags);
 	in += in_chunk_size;
 	while (in_size && ret == EC_SUCCESS) {
 		in_chunk_size = MIN(in_size, CONFIG_I2C_CHIP_MAX_READ_SIZE);
 		in_size -= in_chunk_size;
-		ret = chip_i2c_xfer(port, slave_addr, NULL, 0, in,
+		ret = chip_i2c_xfer_with_notify(port, slave_addr, NULL, 0, in,
 			in_chunk_size, !in_size ? (flags & I2C_XFER_STOP) : 0);
 		in += in_chunk_size;
 	}
@@ -89,8 +109,8 @@ int i2c_xfer(int port, int slave_addr, const uint8_t *out, int out_size,
 		ret = i2c_xfer_no_retry(port, slave_addr, out, out_size, in,
 			in_size, flags);
 #else
-		ret = chip_i2c_xfer(port, slave_addr, out, out_size, in,
-			in_size, flags);
+		ret = chip_i2c_xfer_with_notify(port, slave_addr, out, out_size,
+						in, in_size, flags);
 #endif /* CONFIG_I2C_XFER_LARGE_READ */
 		if (ret != EC_ERROR_BUSY)
 			break;
