@@ -150,8 +150,6 @@ struct dual_battery_policy {
 	uint16_t otg_voltage;
 	/* Maximum current to apply from base to lid (mA) */
 	uint16_t max_base_to_lid_current;
-	/* When base battery is low, current to provide from lid to base (mA) */
-	uint16_t lid_to_base_current_charge_base_low;
 	/*
 	 * Margin to apply between provided OTG output current and input current
 	 * limit, to make sure that input charger does not overcurrent output
@@ -170,7 +168,9 @@ struct dual_battery_policy {
 	uint8_t max_charge_lid_batt_to_batt;
 
 	/*** Policies when AC is connected. ***/
-	/* Minimum power to allocate to base (mW) */
+	/* Minimum power to allocate to base (mW), includes some margin to allow
+	 * base to charge when critically low.
+	 */
 	uint16_t min_base_system_power;
 
 	/* Smoothing factor for lid power (/128) */
@@ -197,12 +197,11 @@ struct dual_battery_policy {
 static const struct dual_battery_policy db_policy = {
 	.otg_voltage = 12000, /* mV */
 	.max_base_to_lid_current = 1800, /* mA, about 2000mA with margin. */
-	.lid_to_base_current_charge_base_low = 200, /* mA, so about 3W. */
 	.margin_otg_current = 13, /* /128 = 10.1% */
 	.min_charge_base_otg = 5, /* % */
 	.max_charge_base_batt_to_batt = 4, /* % */
 	.max_charge_lid_batt_to_batt = 10, /* % */
-	.min_base_system_power = 1100, /* mW */
+	.min_base_system_power = 1300, /* mW */
 	.lid_system_power_smooth = 32, /* 32/128 = 0.25 */
 	.battery_power_smooth = 1, /* 1/128 = 0.008 */
 	.margin_base_battery_power = 32, /* 32/128 = 0.25 */
@@ -484,14 +483,20 @@ static void charge_allocate_input_current_limit(void)
 		} else {
 			/*
 			 * Base battery is too low, apply power to it, and allow
-			 * it to charge if it connected, and it is critically
-			 * low.
+			 * it to charge if it is critically low.
 			 *
 			 * TODO(b:71881017): This will make the battery charge
 			 * oscillate between 3 and 4 percent, which might not be
 			 * great for battery life. We need some hysteresis.
 			 */
-			int base_current = db_policy.min_base_system_power;
+			/*
+			 * TODO(b:71881017): Precompute (ideally, at build time)
+			 * the base_current, so we do not need to do a division
+			 * here.
+			 */
+			int base_current =
+				(db_policy.min_base_system_power * 1000) /
+				db_policy.otg_voltage;
 			int lid_current = add_margin(base_current,
 						db_policy.margin_otg_current);
 
