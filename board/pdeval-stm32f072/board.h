@@ -26,12 +26,21 @@
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_VDM
 #define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_PORT_COUNT 2
+#define CONFIG_USB_PD_PORT_COUNT 1
 #define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_TCPM_ANX7447
+#define CONFIG_USB_PD_TCPM_MUX
+
+#undef CONFIG_USB_PD_INITIAL_DRP_STATE
+#define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_TOGGLE_ON
+
+#undef CONFIG_USB_PD_PULLUP
+#define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
 
 /* fake board specific type-C power constants */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 650000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
@@ -43,11 +52,12 @@
 #define I2C_PORT_TCPC 0
 #define I2C_PORT_PD_MCU 0
 
-/* TCPC I2C slave addresses */
-#define TCPC1_I2C_ADDR 0x9c
-#define TCPC2_I2C_ADDR 0x9e
-
 /* Timer selection */
+
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
 
 /* USB Configuration */
 #define CONFIG_USB

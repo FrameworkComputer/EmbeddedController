@@ -104,6 +104,7 @@ driver-$(CONFIG_USB_PD_TCPM_ANX3429)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX740X)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX741X)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7688)+=tcpm/anx7688.o
+driver-$(CONFIG_USB_PD_TCPM_ANX7447)+=tcpm/anx7447.o
 driver-$(CONFIG_USB_PD_TCPM_PS8751)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8805)+=tcpm/ps8xxx.o
 

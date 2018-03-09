@@ -1,0 +1,393 @@
+/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* ANX7447 port manager */
+
+#include "anx7447.h"
+#include "console.h"
+#include "ec_version.h"
+#include "hooks.h"
+#include "tcpci.h"
+#include "tcpm.h"
+#include "timer.h"
+#include "usb_mux.h"
+#include "usb_pd.h"
+#include "util.h"
+
+#define ANX7447_VENDOR_ALERT    (1 << 15)
+
+#define ANX7447_REG_STATUS      0x82
+#define ANX7447_REG_STATUS_LINK (1 << 0)
+
+#define ANX7447_REG_HPD         0x83
+#define ANX7447_REG_HPD_HIGH    (1 << 0)
+#define ANX7447_REG_HPD_IRQ     (1 << 1)
+#define ANX7447_REG_HPD_ENABLE  (1 << 2)
+
+#define vsafe5v_min (3800/25)
+#define vsafe0v_max (800/25)
+#define is_equal_greater_safe5v(port) \
+		(((anx7447_get_vbus_voltage(port))) > vsafe5v_min)
+#define is_equal_greater_safe0v(port) \
+		(((anx7447_get_vbus_voltage(port))) > vsafe0v_max)
+
+struct anx_state {
+	int i2c_slave_addr;
+	int mux_state;
+};
+
+static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
+
+/*
+ * ANX7447 has two co-existence I2C slave addresses, TCPC slave address and
+ * SPI slave address. The registers of TCPC slave address are partly compliant
+ * with standard USB TCPC specification, and the registers in SPI slave
+ * address controls the other functions (ex, hpd_level, mux_switch, and
+ * so on). It can't use tcpc_read() and tcpc_write() to access SPI slave
+ * address because its slave address has been set as TCPC in the structure
+ * tcpc_config_t.
+ * anx7447_reg_write() and anx7447_reg_read() are implemented here to access
+ * ANX7447 SPI slave address.
+ */
+const struct anx7447_i2c_addr anx7447_i2c_addrs[] = {
+	{AN7447_TCPC0_I2C_ADDR, AN7447_SPI0_I2C_ADDR},
+	{AN7447_TCPC1_I2C_ADDR, AN7447_SPI1_I2C_ADDR},
+	{AN7447_TCPC2_I2C_ADDR, AN7447_SPI2_I2C_ADDR},
+	{AN7447_TCPC3_I2C_ADDR, AN7447_SPI3_I2C_ADDR}
+};
+
+static inline int anx7447_reg_write(int port, int reg, int val)
+{
+	return i2c_write8(tcpc_config[port].i2c_host_port,
+			  anx[port].i2c_slave_addr,
+			  reg, val);
+}
+
+static inline int anx7447_reg_read(int port, int reg, int *val)
+{
+	return i2c_read8(tcpc_config[port].i2c_host_port,
+			 anx[port].i2c_slave_addr,
+			 reg, val);
+}
+
+void anx7447_hpd_mode_en(int port)
+{
+	int reg, rv;
+
+	rv = anx7447_reg_read(port, ANX7447_REG_HPD_CTRL_0, &reg);
+	if (rv)
+		return;
+
+	reg |= ANX7447_REG_HPD_MODE;
+	anx7447_reg_write(port, ANX7447_REG_HPD_CTRL_0, reg);
+}
+
+void anx7447_hpd_output_en(int port)
+{
+	int reg, rv;
+
+	rv = anx7447_reg_read(port, ANX7447_REG_HPD_DEGLITCH_H, &reg);
+	if (rv)
+		return;
+
+	reg |= ANX7447_REG_HPD_OEN;
+	anx7447_reg_write(port, ANX7447_REG_HPD_DEGLITCH_H, reg);
+}
+
+void anx7447_set_hpd_level(int port, int hpd_lvl)
+{
+	int reg, rv;
+
+	rv = anx7447_reg_read(port, ANX7447_REG_HPD_CTRL_0, &reg);
+	if (rv)
+		return;
+
+	if (hpd_lvl)
+		reg |= ANX7447_REG_HPD_OUT;
+	else
+		reg &= ~ANX7447_REG_HPD_OUT;
+	anx7447_reg_write(port, ANX7447_REG_HPD_CTRL_0, reg);
+}
+
+static int anx7447_init(int port)
+{
+	int rv, reg, i;
+
+	memset(&anx[port], 0, sizeof(struct anx_state));
+
+	/*
+	 * find corresponding anx7447 SPI slave address according to
+	 * specified TCPC slave address
+	 */
+	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs); i++) {
+		if (tcpc_config[port].i2c_slave_addr ==
+				anx7447_i2c_addrs[i].tcpc_slave_addr) {
+			anx[port].i2c_slave_addr =
+					anx7447_i2c_addrs[i].spi_slave_addr;
+			break;
+		}
+	}
+	if (!anx[port].i2c_slave_addr) {
+		ccprintf("TCPC I2C slave addr 0x%x is invalid for ANX7447\n",
+			  tcpc_config[port].i2c_slave_addr);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	rv = tcpci_tcpm_init(port);
+	if (rv)
+		return rv;
+
+	/*
+	 * 7447 has a physical pin to detect the presence of VBUS, VBUS_SENSE
+	 * , and 7447 has a VBUS current protection mechanism through another
+	 * pin input VBUS_OCP. To enable VBUS OCP, OVP protection, driver needs
+	 * to set the threshold to the registers VBUS_VOLTAGE_ALARM_HI_CFG
+	 * (0x76 & 0x77) and VBUS_OCP_HI_THRESHOLD (0xDD &0xDE). These values
+	 * could be customized based on different platform design.
+	 * Disable VBUS protection here since the default values of
+	 * VBUS_VOLTAGE_ALARM_HI_CFG and VBUS_OCP_HI_THRESHOLD are zero.
+	 */
+	rv = tcpc_read(port, ANX7447_REG_TCPC_CTRL_2, &reg);
+	if (rv)
+		return rv;
+	reg &= ~ANX7447_REG_ENABLE_VBUS_PROTECT;
+	rv = tcpc_write(port, ANX7447_REG_TCPC_CTRL_2, reg);
+	if (rv)
+		return rv;
+
+	/* ADC enable, use to monitor VBUS voltage */
+	rv = tcpc_read(port, ANX7447_REG_ADC_CTRL_1, &reg);
+	if (rv)
+		return rv;
+	reg |= ANX7447_REG_ADCFSM_EN;
+	rv = tcpc_write(port, ANX7447_REG_ADC_CTRL_1, reg);
+	if (rv)
+		return rv;
+
+	/* init hpd status */
+	anx7447_hpd_mode_en(port);
+	anx7447_set_hpd_level(port, 0);
+	anx7447_hpd_output_en(port);
+
+	return rv;
+}
+
+static int anx7447_release(int port)
+{
+	return EC_SUCCESS;
+}
+
+static void anx7447_update_hpd_enable(int port)
+{
+	int status, reg, rv;
+
+	rv = tcpc_read(port, ANX7447_REG_STATUS, &status);
+	rv |= tcpc_read(port, ANX7447_REG_HPD, &reg);
+	if (rv)
+		return;
+
+	if (!(reg & ANX7447_REG_HPD_ENABLE) ||
+	    !(status & ANX7447_REG_STATUS_LINK)) {
+		reg &= ~ANX7447_REG_HPD_IRQ;
+		tcpc_write(port, ANX7447_REG_HPD,
+			   (status & ANX7447_REG_STATUS_LINK)
+			   ? reg | ANX7447_REG_HPD_ENABLE
+			   : reg & ~ANX7447_REG_HPD_ENABLE);
+	}
+}
+
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+static int anx7447_get_vbus_voltage(int port)
+{
+	int vbus_volt = 0;
+
+	tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &vbus_volt);
+
+	return vbus_volt;
+}
+
+static int anx7447_tcpm_get_vbus_level(int port)
+{
+	return is_equal_greater_safe5v(port);
+}
+
+int anx7447_set_power_supply_ready(int port)
+{
+	int count = 0;
+
+	while (is_equal_greater_safe0v(port)) {
+		if (count >= 10)
+			break;
+		msleep(100);
+		count++;
+	}
+
+	return tcpc_write(port, TCPC_REG_COMMAND, 0x77);
+}
+#endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC */
+
+int anx7447_power_supply_reset(int port)
+{
+	return tcpc_write(port, TCPC_REG_COMMAND, 0x66);
+}
+
+int anx7447_board_charging_enable(int port, int enable)
+{
+	return tcpc_write(port, TCPC_REG_COMMAND, enable ? 0x55 : 0x44);
+}
+
+static void anx7447_tcpc_alert(int port)
+{
+	int alert, rv;
+
+	rv = tcpc_read16(port, TCPC_REG_ALERT, &alert);
+	/* process and clear alert status */
+	tcpci_tcpc_alert(port);
+
+	if (!rv && (alert & ANX7447_VENDOR_ALERT))
+		anx7447_update_hpd_enable(port);
+}
+
+/*
+ * timestamp of the next possible toggle to ensure the 2-ms spacing
+ * between IRQ_HPD.
+ */
+static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
+
+void anx7447_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq)
+{
+	int reg = 0;
+
+	anx7447_set_hpd_level(port, hpd_lvl);
+
+	if (hpd_irq) {
+		uint64_t now = get_time().val;
+		/* wait for the minimum spacing between IRQ_HPD if needed */
+		if (now < hpd_deadline[port])
+			usleep(hpd_deadline[port] - now);
+
+		anx7447_reg_read(port, ANX7447_REG_HPD_CTRL_0, &reg);
+		reg &= ~ANX7447_REG_HPD_OUT;
+		anx7447_reg_write(port, ANX7447_REG_HPD_CTRL_0, reg);
+		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+		reg |= ANX7447_REG_HPD_OUT;
+		anx7447_reg_write(port, ANX7447_REG_HPD_CTRL_0, reg);
+	}
+	/* enforce 2-ms delay between HPD pulses */
+	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+}
+
+void anx7447_tcpc_clear_hpd_status(int port)
+{
+	anx7447_hpd_output_en(port);
+	anx7447_set_hpd_level(port, 0);
+}
+
+#ifdef CONFIG_USB_PD_TCPM_MUX
+static int anx7447_mux_init(int port)
+{
+	/* Nothing to do here, ANX initializes its muxes
+	 * as (MUX_USB_ENABLED | MUX_DP_ENABLED)
+	 */
+	anx[port].mux_state = MUX_USB_ENABLED | MUX_DP_ENABLED;
+
+	return EC_SUCCESS;
+}
+
+static int anx7447_mux_set(int port, mux_state_t mux_state)
+{
+	int cc_direction;
+	mux_state_t mux_type;
+	int sw_sel = 0x30, aux_sw = 0x00;
+	int rv = EC_SUCCESS;
+
+	cc_direction = mux_state & MUX_POLARITY_INVERTED;
+	mux_type = mux_state & TYPEC_MUX_DOCK;
+	ccprintf("mux_state = 0x%x, mux_type = 0x%x\n", mux_state, mux_type);
+
+	if (mux_type == TYPEC_MUX_NONE) {
+		/* set MUX control as no connection */
+		sw_sel = 0x00;
+	}
+
+	/* type-C interface detect cable plug direction
+	 * is positive orientation
+	 */
+	/* CC1_CONNECTED */
+	if (cc_direction == 0) {
+		/* cc1 connection */
+		if (mux_type == TYPEC_MUX_DOCK) {
+			/* L0-a10/11,L1-b2/b3, sstx-a2/a3, ssrx-b10/11 */
+			sw_sel = 0x21;
+			aux_sw = 0x03;
+		} else if (mux_type == TYPEC_MUX_DP) {
+			/* L0-a10/11,L1-b2/b3, L2-a2/a3, L3-b10/11 */
+			sw_sel = 0x09;
+			aux_sw = 0x03;
+		}
+	} else {
+		/* cc2 connection */
+		if (mux_type == TYPEC_MUX_DOCK) {
+			/* L0-b10/11,L1-a2/b3, sstx-b2/a3, ssrx-a10/11 */
+			sw_sel = 0x12;
+			aux_sw = 0x0C;
+		} else if (mux_type == TYPEC_MUX_DP) {
+			/* L0-b10/11,L1-a2/b3, L2-b2/a3, L3-a10/11 */
+			sw_sel = 0x06;
+			aux_sw = 0x0C;
+		}
+	}
+	rv = tcpc_write(port, ANX7447_REG_TCPC_SWITCH_0, sw_sel);
+	rv |= tcpc_write(port, ANX7447_REG_TCPC_SWITCH_1, sw_sel);
+	rv |= tcpc_write(port, ANX7447_REG_TCPC_AUX_SWITCH, aux_sw);
+
+	anx[port].mux_state = mux_state;
+
+	return rv;
+}
+
+/* current mux state */
+static int anx7447_mux_get(int port, mux_state_t *mux_state)
+{
+	*mux_state = anx[port].mux_state;
+
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_TCPM_MUX */
+
+/* ANX7447 is a TCPCI compatible port controller */
+const struct tcpm_drv anx7447_tcpm_drv = {
+	.init			= &anx7447_init,
+	.release		= &anx7447_release,
+	.get_cc			= &tcpci_tcpm_get_cc,
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+	.get_vbus_level		= &anx7447_tcpm_get_vbus_level,
+#endif
+	.select_rp_value	= &tcpci_tcpm_select_rp_value,
+	.set_cc			= &tcpci_tcpm_set_cc,
+	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.set_vconn		= &tcpci_tcpm_set_vconn,
+	.set_msg_header		= &tcpci_tcpm_set_msg_header,
+	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
+	.get_message		= &tcpci_tcpm_get_message,
+	.transmit		= &tcpci_tcpm_transmit,
+	.tcpc_alert		= &anx7447_tcpc_alert,
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
+	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+#endif
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+#endif
+	.get_chip_info		= &tcpci_get_chip_info,
+};
+
+#ifdef CONFIG_USB_PD_TCPM_MUX
+const struct usb_mux_driver anx7447_usb_mux_driver = {
+	.init = anx7447_mux_init,
+	.set = anx7447_mux_set,
+	.get = anx7447_mux_get,
+};
+#endif /* CONFIG_USB_PD_TCPM_MUX */
+
