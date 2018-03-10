@@ -9,6 +9,7 @@
 #include "adc_chip.h"
 #include "bd99992gw.h"
 #include "board_config.h"
+#include "battery_smart.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -732,4 +733,38 @@ int board_has_working_reset_flags(void)
 
 	/* All other board versions should have working reset flags */
 	return 1;
+}
+
+/*
+ * I2C callbacks to ensure bus free time for battery I2C transactions is at
+ * least 5ms.
+ */
+#define BATTERY_FREE_MIN_DELTA_US		(5 * MSEC)
+static timestamp_t battery_last_i2c_time;
+
+static int is_battery_i2c(int port, int slave_addr)
+{
+	return (port == I2C_PORT_BATTERY) && (slave_addr == BATTERY_ADDR);
+}
+
+void i2c_start_xfer_notify(int port, int slave_addr)
+{
+	unsigned int time_delta_us;
+
+	if (!is_battery_i2c(port, slave_addr))
+		return;
+
+	time_delta_us = time_since32(battery_last_i2c_time);
+	if (time_delta_us >= BATTERY_FREE_MIN_DELTA_US)
+		return;
+
+	usleep(BATTERY_FREE_MIN_DELTA_US - time_delta_us);
+}
+
+void i2c_end_xfer_notify(int port, int slave_addr)
+{
+	if (!is_battery_i2c(port, slave_addr))
+		return;
+
+	battery_last_i2c_time = get_time();
 }
