@@ -49,7 +49,7 @@ struct charger_init_setting {
 };
 
 static const struct charger_init_setting rt946x_charger_init_setting = {
-	.eoc_current = 250,
+	.eoc_current = 400,
 	.mivr = 4000,
 	.ircmp_vclamp = 32,
 	.ircmp_res = 25,
@@ -397,6 +397,10 @@ static int rt946x_init_setting(void)
 	if (rv)
 		return rv;
 	rv = rt946x_set_iprec(batt_info->precharge_current);
+	if (rv)
+		return rv;
+	/* Enable charge current termination */
+	rv = rt946x_set_bit(RT946X_REG_CHGCTRL2, RT946X_MASK_TE);
 	if (rv)
 		return rv;
 
