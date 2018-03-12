@@ -13,13 +13,39 @@
 #include "task.h"
 #include "util.h"
 
-#include "gpio_list.h"
-
 #ifndef HAS_TASK_FPSENSOR
 void fps_event(enum gpio_signal signal)
 {
 }
 #endif
+
+static void ap_deferred(void)
+{
+	/*
+	 * in S3, SLP_S3_L is 0 (and SLP_S0_L is X).
+	 * in S0, SLP_S3_L is 1 and SLP_S0_L is 1.
+	 * in S5/G3, the FP MCU should not be running.
+	 */
+	int running = gpio_get_level(GPIO_PCH_SLP_S3_L)
+			&& gpio_get_level(GPIO_PCH_SLP_S0_L);
+
+	if (running) { /* S0 */
+		gpio_set_flags(GPIO_EC_INT_L,   GPIO_ODR_HIGH | GPIO_PULL_UP);
+		hook_notify(HOOK_CHIPSET_RESUME);
+	} else { /* S3 */
+		gpio_set_flags(GPIO_EC_INT_L,   GPIO_INPUT);
+		hook_notify(HOOK_CHIPSET_SUSPEND);
+	}
+}
+DECLARE_DEFERRED(ap_deferred);
+
+/* PCH power state changes */
+void slp_event(enum gpio_signal signal)
+{
+	hook_call_deferred(&ap_deferred_data, 0);
+}
+
+#include "gpio_list.h"
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
@@ -45,7 +71,10 @@ static void board_init(void)
 {
 	spi_configure();
 
-	/* pretend the AP is up, when available do it using GPIO_SLP_S3_L */
-	hook_notify(HOOK_CHIPSET_RESUME);
+	/* Enable interrupt on PCH power signals */
+	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
+	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
+	/* enable the SPI slave interface if the PCH is up */
+	hook_call_deferred(&ap_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
