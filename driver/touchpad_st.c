@@ -36,6 +36,7 @@ static struct st_tp_system_info_t system_info;
 static int st_tp_read_all_events(void);
 static int st_tp_send_ack(void);
 static int st_tp_start_scan(void);
+static int st_tp_stop_scan(void);
 static int st_tp_read_host_buffer_header(void);
 
 /*
@@ -282,6 +283,17 @@ static int st_tp_read_host_data_memory(uint16_t addr, void *rx_buf, int len) {
 	return spi_transaction(SPI, tx_buf, sizeof(tx_buf), rx_buf, len);
 }
 
+static int st_tp_stop_scan(void)
+{
+	int new_state = 0;
+	int mask = SYSTEM_STATE_ACTIVE_MODE;
+	int ret;
+
+	ret = st_tp_update_system_state(new_state, mask);
+	st_tp_enable_interrupt(0);
+	return ret;
+}
+
 static int st_tp_load_host_data(uint8_t mem_id)
 {
 	uint8_t tx_buf[] = {
@@ -388,6 +400,7 @@ static void st_tp_init(void)
 
 	st_tp_start_scan();
 }
+DECLARE_DEFERRED(st_tp_init);
 
 #ifdef CONFIG_USB_UPDATE
 int touchpad_get_info(struct touchpad_info *tp)
@@ -415,6 +428,190 @@ int touchpad_get_info(struct touchpad_info *tp)
 }
 
 /*
+ * Helper functions for firmware update
+ *
+ * There is no documentation about ST_TP_CMD_WRITE_HW_REG (0xFA).
+ * All implementations below are based on sample code from ST.
+ */
+static int write_hwreg_cmd32(uint32_t address, uint32_t data)
+{
+	uint8_t tx_buf[] = {
+		ST_TP_CMD_WRITE_HW_REG,
+		(address >> 24) & 0xFF,
+		(address >> 16) & 0xFF,
+		(address >> 8) & 0xFF,
+		(address >> 0) & 0xFF,
+		(data >> 24) & 0xFF,
+		(data >> 16) & 0xFF,
+		(data >> 8) & 0xFF,
+		(data >> 0) & 0xFF,
+	};
+
+	return spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
+}
+
+static int write_hwreg_cmd8(uint32_t address, uint8_t data)
+{
+	uint8_t tx_buf[] = {
+		ST_TP_CMD_WRITE_HW_REG,
+		(address >> 24) & 0xFF,
+		(address >> 16) & 0xFF,
+		(address >> 8) & 0xFF,
+		(address >> 0) & 0xFF,
+		data,
+	};
+
+	return spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
+}
+
+static int wait_for_flash_ready(uint8_t type)
+{
+	uint8_t tx_buf[] = {
+		ST_TP_CMD_READ_HW_REG,
+		0x20, 0x00, 0x00, type,
+	};
+	int ret = EC_SUCCESS, retry = 200;
+
+	while (retry--) {
+		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf),
+				      (uint8_t *)&rx_buf, 2);
+		if (ret == EC_SUCCESS && !(rx_buf.bytes[0] & 0x80))
+			break;
+		usleep(50 * MSEC);
+	}
+	return retry >= 0 ? ret : EC_ERROR_TIMEOUT;
+}
+
+static int erase_flash(void)
+{
+	int ret;
+
+	/* Erase everything, except CX */
+	ret = write_hwreg_cmd32(0x20000128, 0xFFFFFF83);
+	if (ret)
+		return ret;
+	ret = write_hwreg_cmd8(0x2000006B, 0x00);
+	if (ret)
+		return ret;
+	ret = write_hwreg_cmd8(0x2000006A, 0xA0);
+	if (ret)
+		return ret;
+	return wait_for_flash_ready(0x6A);
+}
+
+static int st_tp_prepare_for_update(void)
+{
+	/* hold m3 */
+	write_hwreg_cmd8(0x20000024, 0x01);
+	/* unlock flash */
+	write_hwreg_cmd8(0x20000025, 0x20);
+	/* unlock flash erase */
+	write_hwreg_cmd8(0x200000DE, 0x03);
+	erase_flash();
+
+	return EC_SUCCESS;
+}
+
+static int st_tp_start_flash_dma(void)
+{
+	int ret;
+
+	ret = write_hwreg_cmd8(0x20000071, 0xC0);
+	if (ret)
+		return ret;
+	ret = wait_for_flash_ready(0x71);
+	return ret;
+}
+
+static int st_tp_write_one_chunk(const uint8_t *head,
+				 uint32_t addr, uint32_t chunk_size)
+{
+	uint8_t tx_buf[ST_TP_DMA_CHUNK_SIZE + 5];
+	uint32_t index = 0;
+	int ret;
+
+	index = 0;
+
+	tx_buf[index++] = ST_TP_CMD_WRITE_HW_REG;
+	tx_buf[index++] = (addr >> 24) & 0xFF;
+	tx_buf[index++] = (addr >> 16) & 0xFF;
+	tx_buf[index++] = (addr >> 8) & 0xFF;
+	tx_buf[index++] = (addr >> 0) & 0xFF;
+	memcpy(tx_buf + index, head, chunk_size);
+	ret = spi_transaction(SPI, tx_buf, chunk_size + 5, NULL, 0);
+
+	return ret;
+}
+
+/*
+ * @param offset: offset in memory to copy the data (in bytes).
+ * @param size: length of data (in bytes).
+ * @param data: pointer to data bytes.
+ */
+static int st_tp_write_flash(int offset, int size, const uint8_t *data)
+{
+	uint8_t tx_buf[12] = {0};
+	const uint8_t *head = data, *tail = data + size;
+	uint32_t addr, index, chunk_size;
+	uint32_t flash_buffer_size;
+	int ret;
+
+	offset >>= 2;  /* offset should be count in words */
+	/*
+	 * To write to flash, the data has to be separated into several chunks.
+	 * Each chunk will be no more than `ST_TP_DMA_CHUNK_SIZE` bytes.
+	 * The chunks will first be saved into a buffer, the buffer can only
+	 * holds `ST_TP_FLASH_BUFFER_SIZE` bytes.  We have to flush the buffer
+	 * when the capacity is reached.
+	 */
+	while (head < tail) {
+		addr = 0x00100000;
+		flash_buffer_size = 0;
+		while (flash_buffer_size < ST_TP_FLASH_BUFFER_SIZE) {
+			chunk_size = MIN(ST_TP_DMA_CHUNK_SIZE, tail - head);
+			ret = st_tp_write_one_chunk(head, addr, chunk_size);
+			if (ret)
+				return ret;
+
+			flash_buffer_size += chunk_size;
+			addr += chunk_size;
+			head += chunk_size;
+
+			if (head >= tail)
+				break;
+		}
+
+		/* configuring the DMA */
+		flash_buffer_size = flash_buffer_size / 4 - 1;
+		index = 0;
+
+		tx_buf[index++] = ST_TP_CMD_WRITE_HW_REG;
+		tx_buf[index++] = 0x20;
+		tx_buf[index++] = 0x00;
+		tx_buf[index++] = 0x00;
+		tx_buf[index++] = 0x72;  /* flash DMA config */
+		tx_buf[index++] = 0x00;
+		tx_buf[index++] = 0x00;
+
+		tx_buf[index++] = offset & 0xFF;
+		tx_buf[index++] = (offset >> 8) & 0xFF;
+		tx_buf[index++] = flash_buffer_size & 0xFF;
+		tx_buf[index++] = (flash_buffer_size >> 8) & 0xFF;
+		tx_buf[index++] = 0x00;
+
+		ret = spi_transaction(SPI, tx_buf, index, NULL, 0);
+		if (ret)
+			return ret;
+		ret = st_tp_start_flash_dma();
+		if (ret)
+			return ret;
+
+		offset += ST_TP_FLASH_BUFFER_SIZE / 4;
+	}
+	return EC_SUCCESS;
+}
+
+/*
  * @param offset: should be address between 0 to 1M, aligned with
  *	ST_TP_DMA_CHUNK_SIZE.
  * @param size: length of `data` array.
@@ -422,9 +619,43 @@ int touchpad_get_info(struct touchpad_info *tp)
  */
 int touchpad_update_write(int offset, int size, const uint8_t *data)
 {
-	CPRINTS("%s %08x %d", __func__, offset, size);
+	int ret;
+	uint8_t tx_buf[] = { ST_TP_CMD_WRITE_SYSTEM_COMMAND, 0x00, 0x03 };
 
-	return EC_RES_INVALID_COMMAND;
+	CPRINTS("%s %08x %d", __func__, offset, size);
+	if (offset == 0) {
+		/* stop scanning, interrupt, etc... */
+		st_tp_stop_scan();
+
+		ret = st_tp_prepare_for_update();
+		if (ret)
+			return ret;
+	}
+
+	if (offset % ST_TP_DMA_CHUNK_SIZE)
+		return EC_ERROR_INVAL;
+
+	if (offset >= ST_TP_FLASH_OFFSET_CX &&
+	    offset < ST_TP_FLASH_OFFSET_CONFIG)
+		/* don't update CX section */
+		return EC_SUCCESS;
+
+	ret = st_tp_write_flash(offset, size, data);
+	if (ret)
+		return ret;
+
+	if (offset + size == CONFIG_TOUCHPAD_VIRTUAL_SIZE) {
+		CPRINTS("%s: End update, wait for reset.", __func__);
+
+		board_touchpad_reset();
+
+		/* Full panel initialization */
+		spi_transaction(SPI, tx_buf, sizeof(tx_buf), NULL, 0);
+
+		hook_call_deferred(&st_tp_init_data, 10 * MSEC);
+	}
+
+	return EC_SUCCESS;
 }
 
 int touchpad_debug(const uint8_t *param, unsigned int param_size,
