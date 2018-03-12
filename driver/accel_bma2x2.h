@@ -14,13 +14,10 @@ enum bma2x2_accel {
 };
 
 struct bma2x2_accel_data {
-	/* Note, the following are indicies into their respective tables. */
 	/* Current range of accelerometer. */
 	int sensor_range;
 	/* Current output data rate of accelerometer. */
 	int sensor_datarate;
-	/* Current resolution of accelerometer. */
-	int sensor_resolution;
 	int16_t offset[3];
 };
 
@@ -79,6 +76,14 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 #define BMA2x2_RANGE_8G                 8
 #define BMA2x2_RANGE_16G                12
 
+#define BMA2x2_RANGE_TO_REG(_range) \
+	((_range) < 8 ? BMA2x2_RANGE_2G + ((_range) / 4) * 2 : \
+			BMA2x2_RANGE_8G + ((_range) / 16) * 4)
+
+#define BMA2x2_REG_TO_RANGE(_reg) \
+	((_reg) < BMA2x2_RANGE_8G ? 2 + (_reg) - BMA2x2_RANGE_2G : \
+				    8 + ((_reg) - BMA2x2_RANGE_8G) * 2)
+
 #define BMA2x2_BW_SELECT_ADDR               0x10
 #define BMA2x2_BW_MSK                   0x1F
 #define BMA2x2_BW_7_81HZ                0x08 /* LowPass 7.81HZ */
@@ -89,6 +94,14 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 #define BMA2x2_BW_250HZ                 0x0D /* LowPass 250HZ */
 #define BMA2x2_BW_500HZ                 0x0E /* LowPass 500HZ */
 #define BMA2x2_BW_1000HZ                0x0F /* LowPass 1000HZ */
+
+#define BMA2x2_BW_TO_REG(_bw) \
+	((_bw) < 125000 ? BMA2x2_BW_7_81HZ + __fls((_bw) / 7810) : \
+			  BMA2x2_BW_125HZ + __fls((_bw) / 125000))
+
+#define  BMA2x2_REG_TO_BW(_reg) \
+	((_reg) < BMA2x2_BW_125HZ ? 7810 << ((_reg) - BMA2x2_BW_7_81HZ) : \
+				    125000 << ((_reg) - BMA2x2_BW_125HZ))
 
 #define BMA2x2_MODE_CTRL_ADDR               0x11
 #define BMA2x2_LOW_NOISE_CTRL_ADDR          0x12

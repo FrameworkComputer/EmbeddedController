@@ -25,67 +25,11 @@
 /* Number of times to attempt to enable sensor before giving up. */
 #define SENSOR_ENABLE_ATTEMPTS 5
 
-/*
- * Struct for pairing an engineering value with the register value for a
- * parameter.
- */
-struct accel_param_pair {
-	int val; /* Value in engineering units. */
-	int reg; /* Corresponding register value. */
-};
-
-/* List of range values in +/-G's and their associated register values. */
-static const struct accel_param_pair ranges[] = {
-	{2, BMA2x2_RANGE_2G},
-	{4, BMA2x2_RANGE_4G},
-	{8, BMA2x2_RANGE_8G},
-	{16, BMA2x2_RANGE_16G},
-};
-
-/* List of ODR values in mHz and their associated register values. */
-static const struct accel_param_pair datarates[] = {
-	{781,     BMA2x2_BW_7_81HZ},
-	{1563,    BMA2x2_BW_15_63HZ},
-	{3125,    BMA2x2_BW_31_25HZ},
-	{6250,    BMA2x2_BW_62_50HZ},
-	{12500,   BMA2x2_BW_125HZ},
-	{25000,   BMA2x2_BW_250HZ},
-	{50000,   BMA2x2_BW_500HZ},
-	{100000,  BMA2x2_BW_1000HZ},
-};
-
-/**
- * Find index into a accel_param_pair that matches the given engineering value
- * passed in. The round_up flag is used to specify whether to round up or down.
- * Note, this function always returns a valid index. If the request is
- * outside the range of values, it returns the closest valid index.
- */
-static int find_param_index(const int eng_val, const int round_up,
-			const struct accel_param_pair *pairs,
-			const int size)
-{
-	int i = 0;
-
-	/* match first index */
-	if (eng_val <= pairs[i].val)
-		return i;
-
-	/* Linear search for index to match. */
-	while (++i < size) {
-		if (eng_val < pairs[i].val)
-			return round_up ? i : i - 1;
-		else if (eng_val == pairs[i].val)
-			return i;
-	}
-
-	return i - 1;
-}
-
 /**
  * Read register from accelerometer.
  */
-static int raw_read8(const int port, const int addr, const int reg,
-					 int *data_ptr)
+static inline int raw_read8(const int port, const int addr, const int reg,
+			    int *data_ptr)
 {
 	return i2c_read8(port, addr, reg, data_ptr);
 }
@@ -93,7 +37,8 @@ static int raw_read8(const int port, const int addr, const int reg,
 /**
  * Write register from accelerometer.
  */
-static int raw_write8(const int port, const int addr, const int reg, int data)
+static inline int raw_write8(const int port, const int addr, const int reg,
+			     int data)
 {
 	return i2c_write8(port, addr, reg, data);
 }
@@ -113,29 +58,28 @@ static int raw_read_multi(const int port, int addr, uint8_t reg,
 
 static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 {
-	int ret,  index, reg, range_val, reg_val, range_reg_val;
+	int ret,  range_val, reg_val, range_reg_val;
 	struct bma2x2_accel_data *data = s->drv_data;
 
-	/* Find index for interface pair matching the specified range. */
-	index = find_param_index(range, rnd, ranges, ARRAY_SIZE(ranges));
-
-	reg = BMA2x2_RANGE_SELECT_ADDR;
-	range_val = ranges[index].reg;
+	range_val = BMA2x2_RANGE_TO_REG(range);
+	if ((BMA2x2_RANGE_TO_REG(range_val) < range) && rnd)
+		range_val = BMA2x2_RANGE_TO_REG(range * 2);
 
 	mutex_lock(s->mutex);
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = raw_read8(s->port, s->addr, reg, &range_reg_val);
+	ret = raw_read8(s->port, s->addr, BMA2x2_RANGE_SELECT_ADDR,
+			&range_reg_val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
 	}
 	reg_val = (range_reg_val & ~BMA2x2_RANGE_SELECT_MSK) | range_val;
-	ret = raw_write8(s->port, s->addr, reg, reg_val);
+	ret = raw_write8(s->port, s->addr, BMA2x2_RANGE_SELECT_ADDR, reg_val);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS)
-		data->sensor_range = index;
+		data->sensor_range = BMA2x2_REG_TO_RANGE(range_val);
 
 	mutex_unlock(s->mutex);
 
@@ -146,7 +90,7 @@ static int get_range(const struct motion_sensor_t *s)
 {
 	struct bma2x2_accel_data *data = s->drv_data;
 
-	return ranges[data->sensor_range].val;
+	return data->sensor_range;
 }
 
 static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
@@ -162,30 +106,28 @@ static int get_resolution(const struct motion_sensor_t *s)
 
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
-	int ret, index, odr_val, odr_reg_val, reg_val, reg;
+	int ret, odr_val, odr_reg_val, reg_val;
 	struct bma2x2_accel_data *data = s->drv_data;
 
-	/* Find index for interface pair matching the specified rate. */
-	index = find_param_index(rate, rnd, datarates, ARRAY_SIZE(datarates));
-
-	odr_val = datarates[index].reg;
-	reg = BMA2x2_BW_SELECT_ADDR;
+	odr_val = BMA2x2_BW_TO_REG(rate);
+	if ((BMA2x2_REG_TO_BW(odr_val) < rate) && rnd)
+		odr_val = BMA2x2_BW_TO_REG(rate * 2);
 
 	mutex_lock(s->mutex);
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = raw_read8(s->port, s->addr, reg, &odr_reg_val);
+	ret = raw_read8(s->port, s->addr, BMA2x2_BW_SELECT_ADDR, &odr_reg_val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
 	}
 	reg_val = (odr_reg_val & ~BMA2x2_BW_MSK) | odr_val;
 	/* Set output data rate. */
-	ret = raw_write8(s->port, s->addr, reg, reg_val);
+	ret = raw_write8(s->port, s->addr, BMA2x2_BW_SELECT_ADDR, reg_val);
 
 	/* If successfully written, then save the new data rate. */
 	if (ret == EC_SUCCESS)
-		data->sensor_datarate = index;
+		data->sensor_datarate = BMA2x2_REG_TO_BW(odr_val);
 
 	mutex_unlock(s->mutex);
 	return ret;
@@ -195,7 +137,7 @@ static int get_data_rate(const struct motion_sensor_t *s)
 {
 	struct bma2x2_accel_data *data = s->drv_data;
 
-	return datarates[data->sensor_datarate].val;
+	return data->sensor_datarate;
 }
 
 static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
