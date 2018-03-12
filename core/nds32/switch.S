@@ -92,6 +92,7 @@ __task_start:
 	addi $sp, $r3, 4 * 18
 	/* we are ready to re-schedule */
 	swi.gp  $r4, [ + need_resched]
+	swi.gp  $r4, [ + start_called]
 
 	/* trigger scheduling to execute the task with the highest priority */
 	syscall 0

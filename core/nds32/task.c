@@ -166,7 +166,7 @@ static uint32_t tasks_ready = (1 << TASK_ID_HOOKS);
  */
 static uint32_t tasks_enabled = (1 << TASK_ID_HOOKS) | (1 << TASK_ID_IDLE);
 
-static int start_called;  /* Has task swapping started */
+int start_called;  /* Has task swapping started */
 
 /* interrupt number of sw interrupt */
 static int sw_int_num;
@@ -457,7 +457,8 @@ uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event, int wait)
 	if (in_interrupt_context()) {
 		/* The receiver might run again */
 		atomic_or(&tasks_ready, 1 << tskid);
-		need_resched = 1;
+		if (start_called)
+			need_resched = 1;
 	} else {
 		if (wait)
 			return __wait_evt(-1, tskid);
@@ -781,7 +782,6 @@ int task_start(void)
 #ifdef CONFIG_TASK_PROFILING
 	task_start_time = exc_end_time = get_time().val;
 #endif
-	start_called = 1;
 
 	return __task_start();
 }
