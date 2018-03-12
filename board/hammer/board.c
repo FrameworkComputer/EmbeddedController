@@ -4,6 +4,7 @@
  */
 /* Hammer board configuration */
 
+#include "clock.h"
 #include "common.h"
 #include "driver/led/lm3630a.h"
 #include "ec_version.h"
@@ -22,6 +23,7 @@
 #include "queue_policies.h"
 #include "registers.h"
 #include "rollback.h"
+#include "spi.h"
 #include "system.h"
 #include "task.h"
 #include "touchpad.h"
@@ -33,6 +35,7 @@
 #include "usb_api.h"
 #include "usb_descriptor.h"
 #include "usb_i2c.h"
+#include "usb_spi.h"
 #include "util.h"
 
 #include "gpio_list.h"
@@ -66,6 +69,18 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  */
 
 #ifdef SECTION_IS_RW
+#ifdef BOARD_WHISKERS
+/* SPI devices */
+const struct spi_device_t spi_devices[] = {
+	[SPI_ST_TP_DEVICE_ID] = { CONFIG_SPI_TOUCHPAD_PORT, 2, GPIO_SPI1_NSS },
+};
+const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
+
+USB_SPI_CONFIG(usb_spi, USB_IFACE_I2C_SPI, USB_EP_I2C_SPI);
+/* SPI interface is always enabled, no need to do anything. */
+void usb_spi_board_enable(struct usb_spi_config const *config) {}
+void usb_spi_board_disable(struct usb_spi_config const *config) {}
+#endif  /* !BOARD_WHISKERS */
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
@@ -177,6 +192,26 @@ static void board_init(void)
 
 #ifdef BOARD_WHISKERS
 	lm3630a_poweron();
+	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 0);
+
+	/* Disable SPI passthrough when the system is locked */
+	usb_spi_enable(&usb_spi, system_is_locked());
+
+	/* Set all four SPI pins to high speed */
+	/* pins B3/5, A15 */
+	STM32_GPIO_OSPEEDR(GPIO_B) |= 0x00000cc0;
+	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xc0000000;
+
+	/* Reset SPI1 */
+	STM32_RCC_APB2RSTR |= STM32_RCC_PB2_SPI1;
+	STM32_RCC_APB2RSTR &= ~STM32_RCC_PB2_SPI1;
+	/* Enable clocks to SPI1 module */
+	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
+
+	clock_wait_bus_cycles(BUS_APB, 1);
+	/* Enable SPI for touchpad */
+	gpio_config_module(MODULE_SPI_MASTER, 1);
+	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 1);
 #endif /* BOARD_WHISKERS */
 #endif /* SECTION_IS_RW */
 }
@@ -231,9 +266,9 @@ void board_touchpad_reset(void)
 {
 #ifdef BOARD_WHISKERS
 	gpio_set_level(GPIO_EN_PP3300_TP, 0);
-	msleep(10);
+	msleep(100);
 	gpio_set_level(GPIO_EN_PP3300_TP, 1);
-	msleep(10);
+	msleep(100);
 #else
 	gpio_set_level(GPIO_EN_PP3300_TP_ODL, 1);
 	msleep(10);
