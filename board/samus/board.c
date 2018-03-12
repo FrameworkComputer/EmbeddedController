@@ -330,11 +330,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = LSM6DS0_ACCEL_MIN_FREQ,
 	 .max_frequency = LSM6DS0_ACCEL_MAX_FREQ,
 	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 119000 | ROUND_UP_FLAG,
@@ -367,24 +362,10 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = KXCJ9_ACCEL_MIN_FREQ,
 	 .max_frequency = KXCJ9_ACCEL_MAX_FREQ,
 	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 100000 | ROUND_UP_FLAG,
 			 .ec_rate = 100 * MSEC,
-		 },
-		 /* unused */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
 		 },
 	 },
 	},
@@ -403,27 +384,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .default_range = 2000,  /* g, enough for laptop. */
 	 .min_frequency = LSM6DS0_GYRO_MIN_FREQ,
 	 .max_frequency = LSM6DS0_GYRO_MAX_FREQ,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 119000 | ROUND_UP_FLAG,
-			 .ec_rate = 100 * MSEC,
-		 },
-		 /* unused */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 }
 	},
 
 };

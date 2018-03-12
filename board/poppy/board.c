@@ -774,25 +774,10 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
 	 .config = {
-		 /* AP: by default use EC settings */
-		 [SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
 			.ec_rate = 100 * MSEC,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0
 		 },
 	 },
 	},
@@ -812,28 +797,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = &lid_standard_ref,
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* EC does not need in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-	 },
 	},
 
 	[LID_MAG] = {
@@ -851,28 +814,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = &mag_standard_ref,
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
 	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* EC does not need in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
 	},
 	[LID_ALS] = {
 	 .name = "Light",
@@ -889,24 +830,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = OPT3001_LIGHT_MIN_FREQ,
 	 .max_frequency = OPT3001_LIGHT_MAX_FREQ,
 	 .config = {
-		/* AP: by default shutdown all sensors */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
 		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 1000,
-			.ec_rate = 0,
-		},
-		/* Sensor off in S3/S5 */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		/* Sensor off in S3/S5 */
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
 		},
 	 },
 	},

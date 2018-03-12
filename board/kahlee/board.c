@@ -523,23 +523,9 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = KXCJ9_ACCEL_MIN_FREQ,
 	 .max_frequency = KXCJ9_ACCEL_MAX_FREQ,
 	 .config = {
-		/* AP: by default use EC settings */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
 		/* Setup for AP for rotation detection */
 		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
-		},
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
 		},
 	 },
 	},

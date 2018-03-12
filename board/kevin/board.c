@@ -483,11 +483,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI160_ACCEL_MAX_FREQ,
 	 .config = {
-		 /* AP: by default use EC settings */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
@@ -496,12 +491,6 @@ struct motion_sensor_t motion_sensors[] = {
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0
 		 },
 	 },
 	},
@@ -524,28 +513,6 @@ struct motion_sensor_t motion_sensors[] = {
 #endif
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* EC does not need in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			 .odr = 0,
-			 .ec_rate = 0,
-		 },
-	 },
 	},
 #ifdef BOARD_KEVIN
 	[LID_ACCEL] = {
@@ -564,24 +531,13 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMA255_ACCEL_MIN_FREQ,
 	 .max_frequency = BMA255_ACCEL_MAX_FREQ,
 	 .config = {
-		/* AP: by default use EC settings */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
 		},
 		 /* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
-		},
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
 		},
 	 },
 	},
@@ -602,24 +558,13 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = KX022_ACCEL_MIN_FREQ,
 	 .max_frequency = KX022_ACCEL_MAX_FREQ,
 	 .config = {
-		/* AP: by default use EC settings */
-		[SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		},
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
 		},
 		 /* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
-		},
-		[SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
 		},
 	 },
 	},
@@ -636,28 +581,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .default_range = 1 << 18, /*  1bit = 4 Pa, 16bit ~= 2600 hPa */
 	 .min_frequency = BMP280_BARO_MIN_FREQ,
 	 .max_frequency = BMP280_BARO_MAX_FREQ,
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* EC does not need in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-			.odr = 0,
-			.ec_rate = 0,
-		 },
-	 },
 	},
 #endif /* BOARD_KEVIN */
 };
