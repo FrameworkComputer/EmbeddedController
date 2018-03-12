@@ -211,11 +211,18 @@ struct touchpad_info {
 	uint8_t allowed_fw_hash[32];
 
 	/* Vendor specific data. */
-	struct {
-		uint16_t id;
-		uint16_t fw_version;
-		uint16_t fw_checksum;
-	} elan;
+	union {
+		struct {
+			uint16_t id;
+			uint16_t fw_version;
+			uint16_t fw_checksum;
+		} elan __packed;
+		struct {
+			uint16_t id;
+			uint16_t fw_version;
+			uint16_t fw_checksum;
+		} st __packed;
+	} __packed;
 } __packed;
 
 /*
