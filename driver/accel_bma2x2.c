@@ -119,7 +119,7 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 	/* Find index for interface pair matching the specified range. */
 	index = find_param_index(range, rnd, ranges, ARRAY_SIZE(ranges));
 
-	reg = BMA2x2_RANGE_SELECT_REG;
+	reg = BMA2x2_RANGE_SELECT_ADDR;
 	range_val = ranges[index].reg;
 
 	mutex_lock(s->mutex);
@@ -169,7 +169,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	index = find_param_index(rate, rnd, datarates, ARRAY_SIZE(datarates));
 
 	odr_val = datarates[index].reg;
-	reg = BMA2x2_BW_REG;
+	reg = BMA2x2_BW_SELECT_ADDR;
 
 	mutex_lock(s->mutex);
 
