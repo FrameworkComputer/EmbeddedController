@@ -43,7 +43,7 @@ static const struct battery_info info = {
 	.charging_min_c = 0,
 	.charging_max_c = 50,
 	.discharging_min_c = -20,
-	.discharging_max_c = 60,
+	.discharging_max_c = 70,
 };
 
 const struct battery_info *battery_get_info(void)
