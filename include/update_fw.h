@@ -8,6 +8,7 @@
 
 #include <stddef.h>
 
+#include "compile_time_macros.h"
 
 /*
  * This file contains structures used to facilitate EC firmware updates
@@ -216,6 +217,14 @@ struct touchpad_info {
 		uint16_t fw_checksum;
 	} elan;
 } __packed;
+
+/*
+ * The response message must not exceed 64 bytes.
+ * And our protocol has a 14 bytes header.
+ * So the size of `struct touchpad_info` must be less
+ * than or equal to 50 bytes
+ */
+BUILD_ASSERT(sizeof(struct touchpad_info) <= 50);
 
 void fw_update_command_handler(void *body,
 			       size_t cmd_size,
