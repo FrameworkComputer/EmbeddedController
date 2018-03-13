@@ -34,6 +34,8 @@
 #define TEMPERATURE_CONV(REG)   (((REG * 10) >> 8) + 2731)
 /* Percentage reg value to 1% */
 #define PERCENTAGE_CONV(REG)    (REG >> 8)
+/* Cycle count reg value (LSB = 1%) to absolute count (100%) */
+#define CYCLE_COUNT_CONV(REG)	((REG * 5) >> 9)
 
 /* Useful macros */
 #define MAX17055_READ_DEBUG(offset, ptr_reg) \
@@ -135,7 +137,13 @@ int battery_time_to_full(int *minutes)
 
 int battery_cycle_count(int *count)
 {
-	return max17055_read(REG_CYCLE_COUNT, count);
+	int rv;
+	int reg;
+
+	rv = max17055_read(REG_CYCLE_COUNT, &reg);
+	if (!rv)
+		*count = CYCLE_COUNT_CONV(reg);
+	return rv;
 }
 
 int battery_design_capacity(int *capacity)
