@@ -320,14 +320,15 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	ret = set_value(s, reg, range_val, range_field);
 	if (ret == EC_SUCCESS)
-		data->sensor_range = index;
+		data->base.range = ranges[T(s)][index].val;
 	return ret;
 }
 
 static int get_range(const struct motion_sensor_t *s)
 {
 	struct kionix_accel_data *data = s->drv_data;
-	return ranges[T(s)][data->sensor_range].val;
+
+	return data->base.range;
 }
 
 static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
@@ -344,14 +345,15 @@ static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
 
 	ret = set_value(s, reg, res_val, res_field);
 	if (ret == EC_SUCCESS)
-		data->sensor_resolution = index;
+		data->sensor_resolution = resolutions[T(s)][index].val;
 	return ret;
 }
 
 static int get_resolution(const struct motion_sensor_t *s)
 {
 	struct kionix_accel_data *data = s->drv_data;
-	return resolutions[T(s)][data->sensor_resolution].val;
+
+	return data->sensor_resolution;
 }
 
 static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
@@ -368,14 +370,15 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 
 	ret = set_value(s, reg, odr_val, odr_field);
 	if (ret == EC_SUCCESS)
-		data->sensor_datarate = index;
+		data->base.odr =  datarates[T(s)][index].val;
 	return ret;
 }
 
 static int get_data_rate(const struct motion_sensor_t *s)
 {
 	struct kionix_accel_data *data = s->drv_data;
-	return datarates[T(s)][data->sensor_datarate].val;
+
+	return data->base.odr;
 }
 
 static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
