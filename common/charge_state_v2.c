@@ -70,6 +70,18 @@ static int prev_charge_base;
 static int prev_current_base;
 static int prev_allow_charge_base;
 static int prev_current_lid;
+
+/*
+ * In debugging mode, with AC, input current to allocate to base. Negative
+ * value disables manual mode.
+ */
+static int manual_ac_current_base = -1;
+/*
+ * In debugging mode, when discharging, current to transfer from lid to base
+ * (negative to transfer from base to lid). Only valid when enabled is true.
+ */
+static int manual_noac_enabled;
+static int manual_noac_current_base;
 #else
 static const int base_connected;
 #endif
@@ -466,6 +478,26 @@ static void charge_allocate_input_current_limit(void)
 		prev_lid_system_power = -1;
 		prev_lid_battery_power = -1;
 
+		/* Manual control */
+		if (manual_noac_enabled) {
+			int lid_current, base_current;
+
+			if (manual_noac_current_base > 0) {
+				base_current = -manual_noac_current_base;
+				lid_current =
+					add_margin(manual_noac_current_base,
+						db_policy.margin_otg_current);
+			} else {
+				lid_current = manual_noac_current_base;
+				base_current =
+					add_margin(-manual_noac_current_base,
+						db_policy.margin_otg_current);
+			}
+
+			set_base_lid_current(base_current, 0, lid_current, 0);
+			return;
+		}
+
 		/*
 		 * System is suspended/off, let the lid and base run on their
 		 * own power. However, if the base battery is critically low, we
@@ -512,6 +544,21 @@ static void charge_allocate_input_current_limit(void)
 					     -lid_current, 0);
 		}
 
+		return;
+	}
+
+	/* Manual control */
+	if (manual_ac_current_base >= 0) {
+		int current_base = manual_ac_current_base;
+		int current_lid =
+			curr.desired_input_current - manual_ac_current_base;
+
+		if (current_lid < 0) {
+			current_base = curr.desired_input_current;
+			current_lid = 0;
+		}
+
+		set_base_lid_current(current_base, 1, current_lid, 1);
 		return;
 	}
 
@@ -2200,6 +2247,57 @@ static int command_chgstate(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(chgstate, command_chgstate,
 			"[idle|discharge|debug on|off]",
 			"Get/set charge state machine status");
+
+#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+static int command_chgdualdebug(int argc, char **argv)
+{
+	int val;
+	char *e;
+
+	if (argc > 1) {
+		if (argv[1][0] == 'c') {
+			if (argc <= 2)
+				return EC_ERROR_PARAM_COUNT;
+
+			if (!strcasecmp(argv[2], "auto")) {
+				val = -1;
+			} else {
+				val = strtoi(argv[2], &e, 0);
+				if (*e || val < 0)
+					return EC_ERROR_PARAM2;
+			}
+
+			manual_ac_current_base = val;
+			charge_wakeup();
+		} else if (argv[1][0] == 'd') {
+			if (argc <= 2)
+				return EC_ERROR_PARAM_COUNT;
+
+			if (!strcasecmp(argv[2], "auto")) {
+				manual_noac_enabled = 0;
+			} else {
+				val = strtoi(argv[2], &e, 0);
+				if (*e)
+					return EC_ERROR_PARAM2;
+				manual_noac_current_base = val;
+				manual_noac_enabled = 1;
+			}
+			charge_wakeup();
+		} else {
+			return EC_ERROR_PARAM1;
+		}
+	} else {
+		ccprintf("Base/Lid: %d%s/%d mA\n",
+			 prev_current_base, prev_allow_charge_base ? "+" : "",
+			 prev_current_lid);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(chgdualdebug, command_chgdualdebug,
+			"[charge (auto|<current>)|discharge (auto|<current>)]",
+			"Manually control dual-battery charging algorithm.");
+#endif
 
 #ifdef CONFIG_CHARGE_STATE_DEBUG
 int charge_get_charge_state_debug(int param, uint32_t *value)
