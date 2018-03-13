@@ -8,6 +8,8 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "common.h"
+#include "driver/accel_kionix.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/bq24392.h"
 #include "driver/charger/bd9995x.h"
 #include "driver/ppc/nx20p3483.h"
@@ -19,7 +21,9 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"
@@ -184,8 +188,107 @@ uint16_t tcpc_get_alert_status(void)
 	return 0;
 }
 
+/* Motion sensors */
+/* Mutexes */
+static struct mutex g_lid_mutex;
+static struct mutex g_base_mutex;
+
+/* Matrix to rotate accelrator into standard reference frame */
+const matrix_3x3_t base_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(1), 0,  0},
+	{ 0, 0,  FLOAT_TO_FP(1)}
+};
+
+/* sensor private data */
+static struct kionix_accel_data g_kx022_data;
+static struct stprivate_data g_lsm6dsm_data;
 
 /* Drivers */
+/* TODO(b/74602071): Tune sensor cfg after the board is received */
+struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+	 .name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_KX022,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &kionix_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_kx022_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = KX022_ADDR1,
+	 .rot_standard_ref = NULL, /* Identity matrix. */
+	 .default_range = 4, /* g */
+	 .config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		 /* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	 },
+	},
+
+	[BASE_ACCEL] = {
+	 .name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &lsm6dsm_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_lsm6dsm_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = LSM6DSM_ADDR0,
+	 .rot_standard_ref = &base_standard_ref,
+	 .default_range = 4,  /* g */
+	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
+	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+	 .config = {
+		 /* EC use accel for angle detection */
+		 [SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		 },
+		 /* Sensor on for angle detection */
+		 [SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		 },
+	 },
+	},
+
+	[BASE_GYRO] = {
+	 .name = "Base Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &lsm6dsm_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_lsm6dsm_data,
+	 .port = I2C_PORT_SENSOR,
+	 .addr = LSM6DSM_ADDR0,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &base_standard_ref,
+	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
+	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+	},
+};
+
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+#ifndef TEST_BUILD
+/* This callback disables keyboard when convertibles are fully open */
+void lid_angle_peripheral_enable(int enable)
+{
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
+#endif
+
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
 		.i2c_host_port = I2C_PORT_TCPC0,

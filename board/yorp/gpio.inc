@@ -31,6 +31,10 @@ GPIO_INT(RSMRST_L_PGOOD, PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)	/* PM
 GPIO_INT(ALL_SYS_PGOOD,	 PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_PWROK_OD */
 GPIO_INT(AC_PRESENT, 	 PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)		/* ACOK_OD */
 
+/* TODO(b/74932344): Make it as an interrupt after driver supports this */
+GPIO(BASE_SIXAXIS_INT_L,	PIN(5, 6), GPIO_INPUT | GPIO_SEL_1P8V)
+GPIO(LID_ACCEL_INT_L,		PIN(5, 0), GPIO_INPUT | GPIO_SEL_1P8V)
+
 /* Define PCH_SLP_S0_L after all interrupts if CONFIG_POWER_S0IX not defined. */
 #ifndef CONFIG_POWER_S0IX
 GPIO(PCH_SLP_S0_L,	 PIN(A, 4), GPIO_INPUT)		/* SLP_S0_L */
