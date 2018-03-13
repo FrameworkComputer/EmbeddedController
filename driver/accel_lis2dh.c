@@ -397,7 +397,6 @@ const struct accelgyro_drv lis2dh_drv = {
 	.read = read,
 	.set_range = set_range,
 	.get_range = get_range,
-	.set_resolution = st_set_resolution,
 	.get_resolution = st_get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = st_get_data_rate,

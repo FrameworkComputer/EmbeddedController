@@ -177,14 +177,6 @@ static int get_range(const struct motion_sensor_t *s)
 	return data->base.range;
 }
 
-static int set_resolution(const struct motion_sensor_t *s,
-				int res,
-				int rnd)
-{
-	/* Only one resolution, L3GD20_RESOLUTION, so nothing to do. */
-	return EC_SUCCESS;
-}
-
 static int get_resolution(const struct motion_sensor_t *s)
 {
 	return L3GD20_RESOLUTION;
@@ -409,11 +401,9 @@ const struct accelgyro_drv l3gd20h_drv = {
 	.read = read,
 	.set_range = set_range,
 	.get_range = get_range,
-	.set_resolution = set_resolution,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
-	.perform_calib = NULL,
 };

@@ -59,13 +59,6 @@ static int accel_get_range(const struct motion_sensor_t *s)
 	return 0;
 }
 
-static int accel_set_resolution(const struct motion_sensor_t *s,
-				const int res,
-				const int rnd)
-{
-	return EC_SUCCESS;
-}
-
 static int accel_get_resolution(const struct motion_sensor_t *s)
 {
 	return 0;
@@ -91,7 +84,6 @@ const struct accelgyro_drv test_motion_sense = {
 	.read = accel_read,
 	.set_range = accel_set_range,
 	.get_range = accel_get_range,
-	.set_resolution = accel_set_resolution,
 	.get_resolution = accel_get_resolution,
 	.set_data_rate = accel_set_data_rate,
 	.get_data_rate = accel_get_data_rate,

@@ -93,12 +93,6 @@ static int get_range(const struct motion_sensor_t *s)
 	return data->sensor_range;
 }
 
-static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
-{
-	/* Only one resolution, BMA2x2_RESOLUTION, so nothing to do. */
-	return EC_SUCCESS;
-}
-
 static int get_resolution(const struct motion_sensor_t *s)
 {
 	return BMA2x2_RESOLUTION;
@@ -252,11 +246,6 @@ static int init(const struct motion_sensor_t *s)
 	} while (1);
 	mutex_unlock(s->mutex);
 
-	/* Initialize with the desired parameters. */
-	ret = set_resolution(s, 12, 1);
-	if (ret != EC_SUCCESS)
-		return ret;
-
 	return sensor_init_done(s);
 }
 
@@ -265,7 +254,6 @@ const struct accelgyro_drv bma2x2_accel_drv = {
 	.read = read,
 	.set_range = set_range,
 	.get_range = get_range,
-	.set_resolution = set_resolution,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,

@@ -124,12 +124,6 @@ static int get_range(const struct motion_sensor_t *s)
 	return LSM6DSM_GYRO_GAIN_FS(data->base.range);
 }
 
-static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
-{
-	/* Only one resolution, LSM6DSM_RESOLUTION, so nothing to do. */
-	return EC_SUCCESS;
-}
-
 static int get_resolution(const struct motion_sensor_t *s)
 {
 	/* Only one resolution, LSM6DSM_RESOLUTION, so nothing to do. */
@@ -338,11 +332,9 @@ const struct accelgyro_drv lsm6dsm_drv = {
 	.read = read,
 	.set_range = set_range,
 	.get_range = get_range,
-	.set_resolution = set_resolution,
 	.get_resolution = get_resolution,
 	.set_data_rate = set_data_rate,
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
-	.perform_calib = NULL,
 };

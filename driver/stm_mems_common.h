@@ -61,14 +61,6 @@ int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 			 uint8_t mask, uint8_t data);
 
  /**
- * set_resolution - Set bit resolution
- * @s: Motion sensor pointer
- * @res: Bit resolution
- * @rnd: Round bit
- */
-int st_set_resolution(const struct motion_sensor_t *s, int res, int rnd);
-
- /**
  * get_resolution - Get bit resolution
  * @s: Motion sensor pointer
  *

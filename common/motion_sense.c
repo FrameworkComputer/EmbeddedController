@@ -1560,7 +1560,8 @@ static int command_accelresolution(int argc, char **argv)
 		 * Write new resolution, if it returns invalid arg, then
 		 * return a parameter error.
 		 */
-		if (sensor->drv->set_resolution(sensor, data, round)
+		if (sensor->drv->set_resolution &&
+		    sensor->drv->set_resolution(sensor, data, round)
 			== EC_ERROR_INVAL)
 			return EC_ERROR_PARAM2;
 	} else {
