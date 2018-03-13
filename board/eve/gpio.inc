@@ -84,7 +84,7 @@ GPIO(USB_C0_DP_HPD,		PIN(9, 4), GPIO_INPUT)				/* C0 DP Hotplug Detect */
 GPIO(USB_C1_DP_HPD,		PIN(A, 5), GPIO_INPUT)				/* C1 DP Hotplug Detect */
 GPIO(USB_C0_TCPC_PWR,		PIN(8, 4), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
 GPIO(USB_C1_TCPC_PWR,		PIN(0, 0), GPIO_OUT_LOW)			/* Enable C1 TCPC Power */
-GPIO(USB2_OTG_ID,		PIN(A, 1), GPIO_ODR_LOW)			/* OTG ID */
+GPIO(USB2_OTG_ID,		PIN(A, 1), GPIO_OUT_LOW)			/* OTG ID */
 GPIO(USB2_OTG_VBUSSENSE,	PIN(9, 5), GPIO_OUT_LOW)			/* OTG VBUS Sense */
 
 /* Board ID */
