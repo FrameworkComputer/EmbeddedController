@@ -11,6 +11,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -194,6 +195,13 @@ void base_detect_interrupt(enum gpio_signal signal)
 				   BASE_DETECT_DEBOUNCE_US);
 
 	base_detect_debounce_time = time_now + BASE_DETECT_DEBOUNCE_US;
+}
+
+void board_base_reset(void)
+{
+	CPRINTS("Resetting base.");
+	base_detect_change(BASE_UNKNOWN);
+	hook_call_deferred(&base_detect_deferred_data, BASE_DETECT_RETRY_US);
 }
 
 static void base_init(void)

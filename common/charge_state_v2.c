@@ -393,7 +393,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 	 * Make sure cross-power is enabled (it might not be enabled right after
 	 * plugging the base, or when an adapter just got connected).
 	 */
-	if (base_connected)
+	if (base_connected && current_base != 0)
 		board_enable_base_power(1);
 }
 
@@ -500,15 +500,30 @@ static void charge_allocate_input_current_limit(void)
 		}
 
 		/*
-		 * System is suspended/off, let the lid and base run on their
+		 * System is off, cut power to the base. We'll reset the base
+		 * when system restarts, or when AC is plugged.
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			set_base_lid_current(0, 0, 0, 0);
+			if (base_responsive) {
+				/* Base still responsive, put it to sleep. */
+				CPRINTF("Hibernating base\n");
+				ec_ec_master_hibernate();
+				base_responsive = 0;
+				board_enable_base_power(0);
+			}
+			return;
+		}
+
+		/*
+		 * System is suspended, let the lid and base run on their
 		 * own power. However, if the base battery is critically low, we
 		 * still want to provide power to the base, to make sure it
 		 * stays alive to be able to wake the system on keyboard or
 		 * touchpad events.
 		 */
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
-				(chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-				 !base_critical)) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+					!base_critical) {
 			set_base_lid_current(0, 0, 0, 0);
 			return;
 		}
@@ -1337,6 +1352,10 @@ static void charge_wakeup(void)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_wakeup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, charge_wakeup, HOOK_PRIO_DEFAULT);
 
+#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+/* Reset the base on S5->S0 transition. */
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_base_reset, HOOK_PRIO_DEFAULT);
+#endif
 
 static int get_desired_input_current(enum battery_present batt_present,
 				     const struct charger_info * const info)
@@ -1406,6 +1425,11 @@ void charger_task(void *u)
 		 */
 		if (base_responsive && prev_current_base < 0)
 			curr.ac = 0;
+
+		/* System is off: if AC gets connected, reset the base. */
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+				!prev_ac && curr.ac)
+			board_base_reset();
 #endif
 		if (curr.ac != prev_ac) {
 			if (curr.ac) {

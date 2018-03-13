@@ -89,5 +89,11 @@ int board_is_base_connected(void);
  */
 void board_enable_base_power(int enable);
 
+/**
+ * Board-specific routine to reset the base (in case it is unresponsive, e.g.
+ * if we told it to hibernate).
+ */
+void board_base_reset(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
 
