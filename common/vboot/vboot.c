@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "chipset.h"
 #include "console.h"
+#include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "rsa.h"
@@ -193,7 +194,8 @@ void vboot_main(void)
 {
 	CPRINTS("Main");
 
-	if (system_is_in_rw() || !system_is_locked()) {
+	if (system_is_in_rw() || !(flash_get_protect() &
+			EC_FLASH_PROTECT_GPIO_ASSERTED)) {
 		/*
 		 * If we're here, it means PD negotiation was attempted but
 		 * we didn't get enough power to boot AP. This happens on RW
