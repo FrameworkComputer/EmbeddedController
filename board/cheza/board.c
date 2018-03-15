@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "lid_switch.h"
 #include "pi3usb9281.h"
+#include "power.h"
 #include "power_button.h"
 #include "switch.h"
 
@@ -32,6 +33,26 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 const struct adc_t adc_channels[] = {};
+
+/* Power signal list. Must match order of enum power_signal. */
+/*
+ * PMIC pulls up the AP_RST_L signal to power-on AP. Once AP is up, it then
+ * pulls up the PS_HOLD signal.
+ *
+ *      +--> GPIO_AP_RST_L >--+
+ *   PMIC                     AP
+ *      +--< GPIO_PS_HOLD <---+
+ *
+ * When AP initiates shutdown, it pulls down the PS_HOLD signal to notify
+ * PMIC. PMIC then pulls down the AP_RST_L.
+ *
+ * TODO(b/78455067): By far, we use the AP_RST_L signal to indicate AP in a
+ * good state. Address the issue of AP-initiated warm reset.
+ */
+const struct power_signal_info power_signal_list[] = {
+	{GPIO_AP_RST_L, POWER_SIGNAL_ACTIVE_HIGH, "POWER_GOOD"},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {

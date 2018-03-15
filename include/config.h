@@ -730,6 +730,7 @@
 /* TODO: Rename below config to CONFIG_CHIPSET_RK32XX */
 #undef CONFIG_CHIPSET_ROCKCHIP		/* Rockchip rk32xx */
 #undef CONFIG_CHIPSET_SKYLAKE		/* Intel Skylake (x86) */
+#undef CONFIG_CHIPSET_SDM845            /* Qualcomm SDM845 */
 #undef CONFIG_CHIPSET_STONEY		/* AMD Stoney (x86)*/
 
 /* Shared chipset support; automatically gets defined below. */

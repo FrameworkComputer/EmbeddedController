@@ -36,6 +36,10 @@
 #define CONFIG_LID_SWITCH
 #define CONFIG_EXTPOWER_GPIO
 
+#define CONFIG_CHIPSET_SDM845
+#define CONFIG_CHIPSET_RESET_HOOK
+#define CONFIG_POWER_COMMON
+
 /* NPCX Features */
 #define CONFIG_HIBERNATE_PSL
 
@@ -52,6 +56,12 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+enum power_signal {
+	SDM845_POWER_GOOD = 0,
+	/* Number of power signals */
+	POWER_SIGNAL_COUNT
+};
 
 enum adc_channel {
 	ADC_VBUS = -1,

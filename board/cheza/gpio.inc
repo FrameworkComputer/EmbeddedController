@@ -13,6 +13,8 @@ GPIO_INT(VOLUME_DOWN_L,     PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO_INT(VOLUME_UP_L,       PIN(1, 1), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* EC_VOLUP_BTN_ODL */
 GPIO_INT(WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* EC_WP_ODL */
 GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPEN_EC */
+/* AP_RST_L is used for PMIC and AP negotiation. Don't change its state. */
+GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, power_signal_interrupt)
 
 /*
  * Should always make it low, to prevent AP unexpected up.
@@ -21,8 +23,7 @@ GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPE
 GPIO(AC_PRESENT,            PIN(0, 0), GPIO_OUT_LOW)   /* ACOK_OD: PMIC power-on trigger PON_1 */
 GPIO(EC_SELF_RST,           PIN(E, 0), GPIO_OUT_LOW)   /* Self-reset EC */
 GPIO(SYS_RST_L,             PIN(0, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
-/* AP_RST_L and PS_HOLD are used for PMIC and AP negotiation. Don't change their states. */
-GPIO(AP_RST_L,              PIN(C, 1), GPIO_INPUT)     /* AP reset trigger, controlled by PMIC only */
+/* PS_HOLD is used for PMIC and AP negotiation. Don't change its state. */
 GPIO(PS_HOLD,               PIN(D, 4), GPIO_INPUT)     /* Indicate when AP triggers reset/shutdown */
 GPIO(ENTERING_RW,           PIN(E, 1), GPIO_OUT_LOW)   /* EC_ENTERING_RW: Indicate when EC is entering RW code */
 GPIO(CCD_MODE_ODL,          PIN(E, 3), GPIO_INPUT)     /* Case Closed Debug Mode */
