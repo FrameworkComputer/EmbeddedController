@@ -11,11 +11,12 @@
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(A, 0), GPIO_INT_FALLING,			tcpc_alert_event)
 GPIO_INT(USB_C1_PD_INT_ODL,	PIN(F, 5), GPIO_INT_FALLING,			tcpc_alert_event)
 GPIO_INT(USB_C0_SWCTL_INT_ODL,	PIN(0, 3), GPIO_INT_FALLING,			ppc_interrupt)
-GPIO_INT(USB_C1_SWCTL_INT_ODL,	PIN(0, 4), GPIO_INT_FALLING,			ppc_interrupt)
+GPIO_INT(USB_C1_SWCTL_INT_ODL_V0, PIN(0, 4), GPIO_INT_FALLING,			ppc_interrupt)
+GPIO_INT(USB_C1_SWCTL_INT_ODL_V2, PIN(D, 4), GPIO_INT_FALLING,			ppc_interrupt)
 GPIO_INT(PCH_SLP_S3_L,		PIN(A, 6), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(PCH_SLP_S5_L,		PIN(A, 3), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(VGATE,			PIN(F, 4), GPIO_INT_BOTH,			power_signal_interrupt)
-GPIO_INT(SPOK,			PIN(6, 3), GPIO_INT_BOTH,			power_signal_interrupt)
+GPIO_INT(SPOK,			PIN(6, 3), GPIO_INT_BOTH | GPIO_PULL_UP,	power_signal_interrupt)
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 1), GPIO_INT_BOTH,			power_button_interrupt)
 GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)
 GPIO_INT(AC_PRESENT,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_interrupt)
@@ -70,14 +71,15 @@ GPIO(PCH_SLP_S0_L,		PIN(A, 4), GPIO_INPUT)
 
 GPIO(EN_USB_A0_5V,		PIN(6, 1), GPIO_OUT_LOW)			/* Enable A0 5V Charging */
 GPIO(EN_USB_A1_5V,		PIN(C, 0), GPIO_OUT_LOW)			/* Enable A1 5V Charging */
-GPIO(USB_A0_CHARGE_EN_L,	PIN(4, 0), GPIO_OUT_HIGH)			/* Enable A0 1.5A Charging */
-GPIO(USB_A1_CHARGE_EN_L,	PIN(D, 4), GPIO_OUT_HIGH)			/* Enable A1 1.5A Charging */
 GPIO(EN_USB_C0_TCPC_PWR,	PIN(6, 0), GPIO_OUT_LOW)			/* Enable C0 TCPC Power */
 GPIO(USB_C0_OC_L,		PIN(7, 3), GPIO_OUT_HIGH)			/* C0 Over Current */
-GPIO(USB_C1_OC_L,		PIN(D, 7), GPIO_OUT_HIGH)			/* C1 Over Current */
-GPIO(USB_C0_PD_RST_L,		PIN(F, 1), GPIO_OUT_HIGH)			/* C0 PD Reset */
+GPIO(USB_C1_OC_L_V0,		PIN(D, 7), GPIO_INPUT)				/* C1 Over Current */
+GPIO(USB_C1_OC_L_V2,		PIN(7, 2), GPIO_INPUT)				/* C1 Over Current */
+GPIO(USB_C0_PD_RST_L_V0,	PIN(F, 1), GPIO_INPUT)				/* C0 PD Reset */
+GPIO(USB_C0_PD_RST_L_V2,	PIN(3, 2), GPIO_INPUT)				/* C0 PD Reset */
 GPIO(USB_C1_PD_RST_L,		PIN(D, 5), GPIO_OUT_HIGH)			/* C1 PD Reset */
-GPIO(USB_C0_BC12_VBUS_ON_L,	PIN(8, 2), GPIO_ODR_HIGH)			/* C0 BC1.2 Power */
+GPIO(USB_C0_BC12_VBUS_ON_L_V0,	PIN(8, 2), GPIO_INPUT)				/* C0 BC1.2 Power */
+GPIO(USB_C0_BC12_VBUS_ON_L_V2,	PIN(4, 0), GPIO_ODR_HIGH)			/* C0 BC1.2 Power */
 GPIO(USB_C1_BC12_VBUS_ON_L,	PIN(B, 1), GPIO_ODR_HIGH)			/* C1 BC1.2 Power */
 GPIO(USB_C0_BC12_CHG_DET,	PIN(6, 2), GPIO_INPUT)				/* C0 BC1.2 Detect */
 GPIO(USB_C1_BC12_CHG_DET,	PIN(8, 3), GPIO_INPUT)				/* C1 BC1.2 Detect */

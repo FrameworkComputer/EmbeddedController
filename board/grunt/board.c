@@ -47,13 +47,20 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
+/*
+ * These GPIOs change pins depending on board version. They are configured
+ * in board_init.
+ */
+static enum gpio_signal gpio_usb_c1_oc_l = GPIO_USB_C1_OC_L_V2;
+static enum gpio_signal gpio_usb_c0_pd_rst_l = GPIO_USB_C0_PD_RST_L_V2;
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
-			!gpio_get_level(GPIO_USB_C0_PD_RST_L))
+			!gpio_get_level(gpio_usb_c0_pd_rst_l))
 		return;
 
 	if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
@@ -70,7 +77,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void anx74xx_cable_det_handler(void)
 {
 	int cable_det = gpio_get_level(GPIO_USB_C0_CABLE_DET);
-	int reset_n = gpio_get_level(GPIO_USB_C0_PD_RST_L);
+	int reset_n = gpio_get_level(gpio_usb_c0_pd_rst_l);
 
 	/*
 	 * A cable_det low->high transition was detected. If following the
@@ -116,7 +123,11 @@ const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_SOC] = {
 		"SOC", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
 	},
+	[ADC_VBUS] = {
+		"VBUS", NPCX_ADC_CH8, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0
+	},
 };
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -161,7 +172,7 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
+		if (gpio_get_level(gpio_usb_c0_pd_rst_l))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
@@ -204,7 +215,7 @@ const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /* BC 1.2 chip Configuration */
 const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
-		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_L,
+		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON_L_V2,
 		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET,
 		.flags = BQ24392_FLAGS_ENABLE_ACTIVE_LOW,
 	},
@@ -215,13 +226,31 @@ const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
 	},
 };
 
-const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
+const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
 };
 
 static void board_init(void)
 {
+	if (system_get_board_version() < 2) {
+		/*
+		 * These GPIOs change pins depending on board version. Change
+		 * them here from the V2 pin to the V0 pin.
+		 */
+		gpio_usb_c1_oc_l = GPIO_USB_C1_OC_L_V0;
+		gpio_usb_c0_pd_rst_l = GPIO_USB_C0_PD_RST_L_V0;
+	} else {
+		/* Alternate functions for board version 2 only. */
+		gpio_set_alternate_function(GPIO_F, 0x02, 1); /* ADC8 */
+		gpio_set_alternate_function(GPIO_0, 0x10, 0); /* KSO_13 */
+		gpio_set_alternate_function(GPIO_8, 0x04, 0); /* KSO_14 */
+	}
+
+	/* Now that we know which pin to use, set the correct output mode. */
+	gpio_set_flags(gpio_usb_c1_oc_l, GPIO_OUT_HIGH);
+	gpio_set_flags(gpio_usb_c0_pd_rst_l, GPIO_OUT_HIGH);
+
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 }
@@ -286,10 +315,10 @@ void board_set_tcpc_power_mode(int port, int mode)
 	case ANX74XX_NORMAL_MODE:
 		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 1);
 		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
-		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
+		gpio_set_level(gpio_usb_c0_pd_rst_l, 1);
 		break;
 	case ANX74XX_STANDBY_MODE:
-		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
+		gpio_set_level(gpio_usb_c0_pd_rst_l, 0);
 		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 0);
 		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
@@ -305,7 +334,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 
 	/* Assert reset to TCPC0 (anx3429) */
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
+	gpio_set_level(gpio_usb_c0_pd_rst_l, 0);
 
 	/* TCPC1 (ps8751) requires 1ms reset down assertion */
 	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
@@ -342,7 +371,10 @@ void board_tcpc_init(void)
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL);
+	if (system_get_board_version() < 2)
+		gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL_V0);
+	else
+		gpio_enable_interrupt(GPIO_USB_C1_SWCTL_INT_ODL_V2);
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -367,7 +399,7 @@ DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 void board_overcurrent_event(int port)
 {
 	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
-					      : GPIO_USB_C1_OC_L;
+					      : gpio_usb_c1_oc_l;
 
 	gpio_set_level(signal, 0);
 
