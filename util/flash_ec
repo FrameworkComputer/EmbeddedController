@@ -130,6 +130,7 @@ BOARDS_NPCX_SPI=(
 )
 
 BOARDS_NPCX_INT_SPI=(
+	atlas
 	grunt
 	meowth
 	yorp
