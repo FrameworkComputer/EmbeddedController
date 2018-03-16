@@ -387,17 +387,20 @@ class StackAnalyzer(object):
   ANNOTATION_ERROR_NOTFOUND = 'function is not found'
   ANNOTATION_ERROR_AMBIGUOUS = 'signature is ambiguous'
 
-  def __init__(self, options, symbols, tasklist, annotation):
+  def __init__(self, options, symbols, rodata, tasklist, annotation):
     """Constructor.
 
     Args:
       options: Namespace from argparse.parse_args().
       symbols: Symbol list.
+      rodata: Content of .rodata section (offset, data)
       tasklist: Task list.
       annotation: Annotation config.
     """
     self.options = options
     self.symbols = symbols
+    self.rodata_offset = rodata[0]
+    self.rodata = rodata[1]
     self.tasklist = tasklist
     self.annotation = annotation
     self.address_to_line_cache = {}
@@ -746,6 +749,57 @@ class StackAnalyzer(object):
 
       return (name_result.group('name').strip(), path, linenum)
 
+    def ExpandArray(dic):
+      """Parse and expand a symbol array
+
+      Args:
+        dic: Dictionary for the array annotation
+
+      Returns:
+        array of (symbol name, None, None).
+      """
+      # TODO(drinkcat): This function is quite inefficient, as it goes through
+      # the symbol table multiple times.
+
+      begin_name = dic['name']
+      end_name = dic['name'] + "_end"
+      offset = dic['offset'] if 'offset' in dic else 0
+      stride = dic['stride']
+
+      begin_address = None
+      end_address = None
+
+      for symbol in self.symbols:
+        if (symbol.name == begin_name):
+          begin_address = symbol.address
+        if (symbol.name == end_name):
+          end_address = symbol.address
+
+      if (not begin_address or not end_address):
+        return None
+
+      output = []
+      # TODO(drinkcat): This is inefficient as we go from address to symbol
+      # object then to symbol name, and later on we'll go back from symbol name
+      # to symbol object.
+      for addr in range(begin_address+offset, end_address, stride):
+        # TODO(drinkcat): Not all architectures need to drop the first bit.
+        val = self.rodata[(addr-self.rodata_offset)/4] & 0xfffffffe
+        name = None
+        for symbol in self.symbols:
+          if (symbol.address == val):
+            result = self.FUNCTION_PREFIX_NAME_RE.match(symbol.name)
+            name = result.group('name')
+            break
+
+        if not name:
+          raise StackAnalyzerError('Cannot find function for address %s.',
+                                   hex(val))
+
+        output.append((name, None, None))
+
+      return output
+
     add_rules = collections.defaultdict(set)
     remove_rules = list()
     invalid_sigtxts = set()
@@ -758,11 +812,18 @@ class StackAnalyzer(object):
           continue
 
         for dst_sigtxt in dst_sigtxts:
-          dst_sig = NormalizeSignature(dst_sigtxt)
-          if dst_sig is None:
-            invalid_sigtxts.add(dst_sigtxt)
+          if isinstance(dst_sigtxt, dict):
+            dst_sig = ExpandArray(dst_sigtxt)
+            if dst_sig is None:
+              invalid_sigtxts.add(str(dst_sigtxt))
+            else:
+              add_rules[src_sig].update(dst_sig)
           else:
-            add_rules[src_sig].add(dst_sig)
+            dst_sig = NormalizeSignature(dst_sigtxt)
+            if dst_sig is None:
+              invalid_sigtxts.add(dst_sigtxt)
+            else:
+              add_rules[src_sig].add(dst_sig)
 
     if 'remove' in self.annotation and self.annotation['remove'] is not None:
       for sigtxt_path in self.annotation['remove']:
@@ -1385,6 +1446,54 @@ def ParseSymbolText(symbol_text):
   return symbols
 
 
+def ParseRoDataText(rodata_text):
+  """Parse the content of rodata
+
+  Args:
+    symbol_text: Text of the rodata dump.
+
+  Returns:
+    symbols: Symbol list.
+  """
+  # Examples: 8018ab0 00040048 00010000 10020000 4b8e0108  ...H........K...
+  #           100a7294 00000000 00000000 01000000           ............
+
+  base_offset = None
+  offset = None
+  rodata = []
+  for line in rodata_text.splitlines():
+    line = line.strip()
+    space = line.find(' ')
+    if space < 0:
+        continue
+    try:
+      address = int(line[0:space], 16)
+    except ValueError:
+      continue
+
+    if not base_offset:
+      base_offset = address
+      offset = address
+    elif address != offset:
+      raise StackAnalyzerError('objdump of rodata not contiguous.')
+
+    for i in range(0, 4):
+      num = line[(space + 1 + i*9):(space + 9 + i*9)]
+      if len(num.strip()) > 0:
+        val = int(num, 16)
+      else:
+        val = 0
+      # TODO(drinkcat): Not all platforms are necessarily big-endian
+      rodata.append((val & 0x000000ff) << 24 |
+                    (val & 0x0000ff00) << 8 |
+                    (val & 0x00ff0000) >> 8 |
+                    (val & 0xff000000) >> 24)
+
+    offset = offset + 4*4
+
+  return (base_offset, rodata)
+
+
 def LoadTasklist(section, export_taskinfo, symbols):
   """Load the task information.
 
@@ -1465,12 +1574,17 @@ def main():
       symbol_text = subprocess.check_output([options.objdump,
                                              '-t',
                                              options.elf_path])
+      rodata_text = subprocess.check_output([options.objdump,
+                                             '-s',
+                                             '-j', '.rodata',
+                                             options.elf_path])
     except subprocess.CalledProcessError:
-      raise StackAnalyzerError('objdump failed to dump symbol table.')
+      raise StackAnalyzerError('objdump failed to dump symbol table or rodata.')
     except OSError:
       raise StackAnalyzerError('Failed to run objdump.')
 
     symbols = ParseSymbolText(symbol_text)
+    rodata = ParseRoDataText(rodata_text)
 
     # Load the tasklist.
     try:
@@ -1480,7 +1594,7 @@ def main():
 
     tasklist = LoadTasklist(options.section, export_taskinfo, symbols)
 
-    analyzer = StackAnalyzer(options, symbols, tasklist, annotation)
+    analyzer = StackAnalyzer(options, symbols, rodata, tasklist, annotation)
     analyzer.Analyze()
   except StackAnalyzerError as e:
     print('Error: {}'.format(e))

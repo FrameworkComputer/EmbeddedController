@@ -72,3 +72,31 @@ add:
 ```
 The source `tcpm_transmit[driver/tcpm/tcpm.h:142]` must be a full signature (function_name[path:line number]).
 So the resolver can know which indirect call you want to annotate and eliminate (even if it is inlined).
+
+Annotating arrays (hooks, console commands, host commands)
+----------------------------------------------------------
+
+When a callsite calls a number of functions based on values from an constant
+array (in `.rodata` section), one can use the following syntax:
+
+```
+  hook_task[common/hooks.c:197]:
+    - { name: __deferred_funcs, stride: 4, offset: 0 }
+    - { name: __hooks_second, stride: 8, offset: 0 }
+    - { name: __hooks_tick, stride: 8, offset: 0 }
+```
+
+Where `name` is the symbol name for the start of the array (the end of the array
+is `<name>_end`), stride is the array element size, and offset is the offset of
+the function pointer in the structure. For example, above, `__deferred_funcs` is
+a simple array of function pointers, while `__hooks_tick` is an array of
+`struct hook_data` (size 8, pointer at offset 0):
+
+```
+struct hook_data {
+        /* Hook processing routine. */
+        void (*routine)(void);
+        /* Priority; low numbers = higher priority. */
+        int priority;
+};
+```

@@ -149,16 +149,22 @@ class StackAnalyzerTest(unittest.TestCase):
                sa.Symbol(0x12000, 'F', 0x13C, 'trackpad_range'),
                sa.Symbol(0x13000, 'F', 0x200, 'inlined_mul'),
                sa.Symbol(0x13100, 'F', 0x200, 'inlined_mul'),
-               sa.Symbol(0x13100, 'F', 0x200, 'inlined_mul_alias')]
+               sa.Symbol(0x13100, 'F', 0x200, 'inlined_mul_alias'),
+               sa.Symbol(0x20000, 'O', 0x0, '__array'),
+               sa.Symbol(0x20010, 'O', 0x0, '__array_end'),
+    ]
     tasklist = [sa.Task('HOOKS', 'hook_task', 2048, 0x1000),
                 sa.Task('CONSOLE', 'console_task', 460, 0x2000)]
+    # Array at 0x20000 that contains pointers to hook_task and console_task,
+    # with stride=8, offset=4
+    rodata = (0x20000, [ 0xDEAD1000, 0x00001000, 0xDEAD2000, 0x00002000 ])
     options = mock.MagicMock(elf_path='./ec.RW.elf',
                              export_taskinfo='fake',
                              section='RW',
                              objdump='objdump',
                              addr2line='addr2line',
                              annotation=None)
-    self.analyzer = sa.StackAnalyzer(options, symbols, tasklist, {})
+    self.analyzer = sa.StackAnalyzer(options, symbols, rodata, tasklist, {})
 
   def testParseSymbolText(self):
     symbol_text = (
@@ -175,6 +181,17 @@ class StackAnalyzerTest(unittest.TestCase):
                       sa.Symbol(0xdeadbee, 'O', 0x8, '__Hooo_ooo'),
                       sa.Symbol(0xdeadbee, 'O', 0x0, '__foo_doo_coo_end')]
     self.assertEqual(symbols, expect_symbols)
+
+  def testParseRoData(self):
+    rodata_text = (
+        '\n'
+        'Contents of section .rodata:\n'
+        ' 20000 dead1000 00100000 dead2000 00200000  He..f.He..s.\n'
+    )
+    rodata = sa.ParseRoDataText(rodata_text)
+    expect_rodata = (0x20000,
+                     [ 0x0010adde, 0x00001000, 0x0020adde, 0x00002000 ])
+    self.assertEqual(rodata, expect_rodata)
 
   def testLoadTasklist(self):
     def tasklist_to_taskinfos(pointer, tasklist):
@@ -235,15 +252,25 @@ class StackAnalyzerTest(unittest.TestCase):
     }
     (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
     self.assertEqual(add_rules, {})
-    self.assertEqual(remove_rules, [
+    self.assertEqual(list.sort(remove_rules), list.sort([
         [('a', None, None), ('1', None, None), ('x', None, None)],
         [('a', None, None), ('0', None, None), ('x', None, None)],
         [('a', None, None), ('2', None, None), ('x', None, None)],
         [('b', os.path.abspath('x'), 3), ('1', None, None), ('x', None, None)],
         [('b', os.path.abspath('x'), 3), ('0', None, None), ('x', None, None)],
         [('b', os.path.abspath('x'), 3), ('2', None, None), ('x', None, None)],
-    ])
+    ]))
     self.assertEqual(invalid_sigtxts, {'['})
+
+    self.analyzer.annotation = {
+        'add': {
+          'touchpad_calc': [ dict(name='__array', stride=8, offset=4) ],
+        }
+    }
+    (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+    self.assertEqual(add_rules, {
+      ('touchpad_calc', None, None):
+        set([('console_task', None, None), ('hook_task', None, None)])})
 
     funcs = {
         0x1000: sa.Function(0x1000, 'hook_task', 0, []),
@@ -288,7 +315,6 @@ class StackAnalyzerTest(unittest.TestCase):
             ['inlined_mul', 'inlined_mul_alias', 'console_task'],
         ],
     }
-
     (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
     self.assertEqual(invalid_sigtxts, {'touchpad?calc['})
 
@@ -631,6 +657,11 @@ class StackAnalyzerTest(unittest.TestCase):
   def testMain(self, parseargs_mock, checkoutput_mock):
     symbol_text = ('1000 g     F .text  0000015c .hidden hook_task\n'
                    '2000 g     F .text  0000051c .hidden console_task\n')
+    rodata_text = (
+        '\n'
+        'Contents of section .rodata:\n'
+        ' 20000 dead1000 00100000 dead2000 00200000  He..f.He..s.\n'
+    )
 
     args = mock.MagicMock(elf_path='./ec.RW.elf',
                           export_taskinfo='fake',
@@ -675,7 +706,7 @@ class StackAnalyzerTest(unittest.TestCase):
     args.annotation = None
 
     with mock.patch('__builtin__.print') as print_mock:
-      checkoutput_mock.return_value = symbol_text
+      checkoutput_mock.side_effect = [symbol_text, rodata_text]
       sa.main()
       print_mock.assert_called_once_with(
           'Error: Failed to load export_taskinfo.')
@@ -684,7 +715,7 @@ class StackAnalyzerTest(unittest.TestCase):
       checkoutput_mock.side_effect = subprocess.CalledProcessError(1, '')
       sa.main()
       print_mock.assert_called_once_with(
-          'Error: objdump failed to dump symbol table.')
+          'Error: objdump failed to dump symbol table or rodata.')
 
     with mock.patch('__builtin__.print') as print_mock:
       checkoutput_mock.side_effect = OSError()
