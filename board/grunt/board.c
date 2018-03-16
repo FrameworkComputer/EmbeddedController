@@ -126,6 +126,12 @@ const struct adc_t adc_channels[] = {
 	[ADC_VBUS] = {
 		"VBUS", NPCX_ADC_CH8, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0
 	},
+	[ADC_SKU_ID1] = {
+		"SKU1", NPCX_ADC_CH9, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
+	},
+	[ADC_SKU_ID2] = {
+		"SKU2", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -643,3 +649,60 @@ void lid_angle_peripheral_enable(int enable)
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
+
+static const int sku_thresh_mv[] = {
+	/* Vin = 3.3V, Ideal voltage, R2 values listed below */
+	/* R1 = 51.1 kOhm */
+	200,  /* 124 mV, 2.0 Kohm */
+	366,  /* 278 mV, 4.7 Kohm */
+	550,  /* 456 mV, 8.2  Kohm */
+	752,  /* 644 mV, 12.4 Kohm */
+	927,  /* 860 mV, 18.0 Kohm */
+	1073, /* 993 mV, 22.0 Kohm */
+	1235, /* 1152 mV, 27.4 Kohm */
+	1386, /* 1318 mV, 34.0 Kohm */
+	1552, /* 1453 mV, 40.2 Kohm */
+	/* R1 = 10.0 kOhm */
+	1739, /* 1650 mV, 10.0 Kohm */
+	1976, /* 1827 mV, 12.4 Kohm */
+	2197, /* 2121 mV, 18.0 Kohm */
+	2344, /* 2269 mV, 22.0 Kohm */
+	2484, /* 2418 mV, 27.4 Kohm */
+	2636, /* 2550 mV, 34.0 Kohm */
+	2823, /* 2721 mV, 47.0 Kohm */
+};
+
+static int board_read_sku_adc(enum adc_channel chan)
+{
+	int mv;
+	int i;
+
+	mv = adc_read_channel(chan);
+
+	if (mv == ADC_READ_ERROR)
+		return -1;
+
+	for (i = 0; i < ARRAY_SIZE(sku_thresh_mv); i++)
+		if (mv < sku_thresh_mv[i])
+			return i;
+
+	return -1;
+}
+
+uint32_t system_get_sku_id(void)
+{
+	static uint32_t sku_id = -1;
+	int sku_id1, sku_id2;
+
+	if (sku_id != -1)
+		return sku_id;
+
+	sku_id1 = board_read_sku_adc(ADC_SKU_ID1);
+	sku_id2 = board_read_sku_adc(ADC_SKU_ID2);
+
+	if (sku_id1 < 0 || sku_id2 < 0)
+		return 0;
+
+	sku_id = (sku_id2 << 4) | sku_id1;
+	return sku_id;
+}
