@@ -278,24 +278,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * Thermal limits for each temp sensor. All temps are in degrees K.  Must be in
- * same order as enum temp_sensor_id. To always ignore any temp, use 0.
- */
-struct ec_thermal_config thermal_params[] = {
-	/* {Twarn, Thigh, Thalt}, <on>
-	 * {Twarn, Thigh, X    }, <off>
-	 * fan_off, fan_max
-	 */
-	{{C_TO_K(80), C_TO_K(85), C_TO_K(88)},
-	{C_TO_K(75), C_TO_K(80), C_TO_K(83)},
-	C_TO_K(40), C_TO_K(80)},	/* TEMP_SENSOR_I2C_F75303_REMOTE1*/
-	{{C_TO_K(75), C_TO_K(80), C_TO_K(83)},
-	{C_TO_K(70), C_TO_K(75), C_TO_K(78)},
-	C_TO_K(35), C_TO_K(75)},	/* TEMP_SENSOR_I2C_F75303_REMOTE2*/
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 #define I2C_PMIC_READ(reg, data) \
 		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1, (reg), (data))
 #define I2C_PMIC_WRITE(reg, data) \
