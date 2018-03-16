@@ -2894,8 +2894,15 @@
 /* USB Product ID. */
 #undef CONFIG_USB_PID
 
+/* PPC needs to be informed of CC polarity */
+#undef CONFIG_USBC_PPC_POLARITY
+
 /* USB Type-C Power Path Controllers (PPC) */
+#undef CONFIG_USBC_PPC_NX20P3483
 #undef CONFIG_USBC_PPC_SN5S330
+
+/* PPC is capable of providing VCONN */
+#undef CONFIG_USBC_PPC_VCONN
 
 /* Support for USB type-c superspeed mux */
 #undef CONFIG_USBC_SS_MUX
@@ -3344,9 +3351,15 @@
 
 /*****************************************************************************/
 /* Define CONFIG_USBC_PPC if board has a USB Type-C Power Path Controller. */
-#if defined(CONFIG_USBC_PPC_SN5S330)
+#if defined(CONFIG_USBC_PPC_SN5S330) || defined(CONFIG_USBC_PPC_NX20P3483)
 #define CONFIG_USBC_PPC
 #endif /* "has a PPC" */
+
+/* The TI SN5S330 supports VCONN and needs to be informed of CC polarity */
+#if defined(CONFIG_USBC_PPC_SN5S330)
+#define CONFIG_USBC_PPC_POLARITY
+#define CONFIG_USBC_PPC_VCONN
+#endif
 
 /*****************************************************************************/
 /*

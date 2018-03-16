@@ -48,6 +48,7 @@ struct ppc_drv {
 	 */
 	int (*vbus_source_enable)(int port, int enable);
 
+#ifdef CONFIG_USBC_PPC_POLARITY
 	/**
 	 * Inform the PPC of the polarity of the CC pins.
 	 *
@@ -56,6 +57,7 @@ struct ppc_drv {
 	 * @return EC_SUCCESS on success, error otherwise.
 	 */
 	int (*set_polarity)(int port, int polarity);
+#endif
 
 	/**
 	 * Set the Vbus source path current limit
@@ -75,6 +77,7 @@ struct ppc_drv {
 	 */
 	int (*discharge_vbus)(int port, int enable);
 
+#ifdef CONFIG_USBC_PPC_VCONN
 	/**
 	 * Turn on/off the VCONN FET.
 	 *
@@ -82,6 +85,7 @@ struct ppc_drv {
 	 * @param enable: 1: enable VCONN FET 0: disable VCONN FET.
 	 */
 	int (*set_vconn)(int port, int enable);
+#endif
 
 #ifdef CONFIG_CMD_PPC_DUMP
 	/**
@@ -104,9 +108,18 @@ struct ppc_drv {
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 };
 
+
+/* PPC SNK/SRC switch control driven by EC GPIO */
+#define PPC_CFG_FLAGS_GPIO_CONTROL (1 << 0)
+
 struct ppc_config_t {
+	/* Used for PPC_CFG_FLAGS_* defined above */
+	uint32_t flags;
 	int i2c_port;
 	int i2c_addr;
+	/* snk|src_gpio only required if PPC_CFG_FLAGS_GPIO_CONTROL is set */
+	enum gpio_signal snk_gpio;
+	enum gpio_signal src_gpio;
 	const struct ppc_drv *drv;
 };
 

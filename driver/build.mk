@@ -116,6 +116,7 @@ driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux_virtual.o
 
 # Type-C Power Path Controllers (PPC)
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
+driver-$(CONFIG_USBC_PPC_NX20P3483)+=ppc/nx20p3483.o
 
 # video converters
 driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o

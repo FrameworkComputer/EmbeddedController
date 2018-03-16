@@ -456,6 +456,7 @@ static int sn5s330_is_sourcing_vbus(int port)
 	return is_sourcing_vbus;
 }
 
+#ifdef CONFIG_USBC_PPC_POLARITY
 static int sn5s330_set_polarity(int port, int polarity)
 {
 	int regval;
@@ -472,6 +473,7 @@ static int sn5s330_set_polarity(int port, int polarity)
 
 	return write_reg(port, SN5S330_FUNC_SET4, regval);
 }
+#endif
 
 static int sn5s330_set_vbus_source_current_limit(int port,
 						 enum tcpc_rp_value rp)
@@ -533,6 +535,7 @@ static int sn5s330_discharge_vbus(int port, int enable)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_USBC_PPC_VCONN
 static int sn5s330_set_vconn(int port, int enable)
 {
 	int regval;
@@ -549,6 +552,7 @@ static int sn5s330_set_vconn(int port, int enable)
 
 	return write_reg(port, SN5S330_FUNC_SET4, regval);
 }
+#endif
 
 static int sn5s330_vbus_sink_enable(int port, int enable)
 {
@@ -623,8 +627,12 @@ const struct ppc_drv sn5s330_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 	.is_vbus_present = &sn5s330_is_vbus_present,
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
+#ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &sn5s330_set_polarity,
+#endif
 	.set_vbus_source_current_limit = &sn5s330_set_vbus_source_current_limit,
 	.discharge_vbus = &sn5s330_discharge_vbus,
+#ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &sn5s330_set_vconn,
+#endif
 };

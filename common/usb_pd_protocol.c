@@ -321,9 +321,9 @@ static inline int pd_is_vbus_present(int port)
 static void set_polarity(int port, int polarity)
 {
 	tcpm_set_polarity(port, polarity);
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USBC_PPC_POLARITY
 	ppc_set_polarity(port, polarity);
-#endif /* defined(CONFIG_USBC_PPC) */
+#endif /* defined(CONFIG_USBC_PPC_POLARITY) */
 }
 
 #ifdef CONFIG_USBC_VCONN
@@ -337,7 +337,7 @@ static void set_vconn(int port, int enable)
 	 * "make before break" electrical requirements when swapping anyway.
 	 */
 	tcpm_set_vconn(port, enable);
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USBC_PPC_VCONN
 	ppc_set_vconn(port, enable);
 #endif
 }
