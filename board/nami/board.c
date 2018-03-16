@@ -173,7 +173,7 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 const struct i2c_port_t i2c_ports[]  = {
 	{"tcpc0",     NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
 	{"tcpc1",     NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"battery",   NPCX_I2C_PORT1,   400, GPIO_I2C1_SCL,   GPIO_I2C1_SDA}, /* dnojiri:verify */
+	{"battery",   NPCX_I2C_PORT1,   100, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
 	{"charger",   NPCX_I2C_PORT2,   100, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"pmic",      NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
 	{"accelgyro", NPCX_I2C_PORT3,   400, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
