@@ -22,10 +22,20 @@
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define SB_SHUTDOWN_DATA	0x0010
+
 /* Vendor CTO command parameter */
 #define SB_VENDOR_PARAM_CTO_DISABLE 0
 /* Flash address of Enabled Protections C Regsiter */
 #define SB_VENDOR_ENABLED_PROTECT_C 0x482C
+/* Expected CTO disable value */
+#define EXPECTED_CTO_DISABLE_VALUE 0x05
+
+/* Vendor OTD Recovery Temperature command parameter */
+#define SB_VENDOR_PARAM_OTD_RECOVERY_TEMP 1
+/* Flash address of OTD Recovery Temperature Register */
+#define SB_VENDOR_OTD_RECOVERY_TEMP 0x486F
+/* Expected OTD recovery temperature in 0.1C */
+#define EXPECTED_OTD_RECOVERY_TEMP 400
 
 enum battery_type {
 	BATTERY_LG,
@@ -57,6 +67,13 @@ static int battery_report_present = 1;
  * this register is only done if the value is changed.
  */
 static int protect_c_reg = -1;
+
+/*
+ * Battery OTD recovery temperature register value.
+ * Because this value can only be read when the battery is unsealed, the read of
+ * this register is only done if the value is changed.
+ */
+static int otd_recovery_temp_reg = -1;
 
 /*
  * Battery info for LG A50. Note that the fields start_charging_min/max and
@@ -530,8 +547,9 @@ static int board_battery_disable_cto(uint32_t value)
 		return EC_RES_ERROR;
 	}
 
-	if (protect_c != 0x5) {
-		board_battery_write_flash(SB_VENDOR_ENABLED_PROTECT_C, 0x5, 1);
+	if (protect_c != EXPECTED_CTO_DISABLE_VALUE) {
+		board_battery_write_flash(SB_VENDOR_ENABLED_PROTECT_C,
+					  EXPECTED_CTO_DISABLE_VALUE, 1);
 		/* After flash write, allow time for it to complete */
 		msleep(100);
 		/* Read the current protect_c register value */
@@ -552,38 +570,87 @@ static int board_battery_disable_cto(uint32_t value)
 	return EC_SUCCESS;
 }
 
+static int board_battery_fix_otd_recovery_temp(uint32_t value)
+{
+	int16_t otd_recovery_temp;
+
+	if (board_battery_unseal(value))
+		return EC_RES_ERROR;
+
+	/* Check current OTD recovery temp */
+	if (board_battery_read_flash(SB_VENDOR_OTD_RECOVERY_TEMP, 2,
+				     (uint8_t *)&otd_recovery_temp)) {
+		board_battery_seal();
+		return EC_RES_ERROR;
+	}
+
+	if (otd_recovery_temp != EXPECTED_OTD_RECOVERY_TEMP) {
+		board_battery_write_flash(SB_VENDOR_OTD_RECOVERY_TEMP,
+					  EXPECTED_OTD_RECOVERY_TEMP, 2);
+		/* After flash write, allow time for it to complete */
+		msleep(100);
+		/* Read the current OTD recovery temperature */
+		if (!board_battery_read_flash(SB_VENDOR_OTD_RECOVERY_TEMP, 2,
+					      (uint8_t *)&otd_recovery_temp))
+			otd_recovery_temp_reg = otd_recovery_temp;
+	} else {
+			otd_recovery_temp_reg = otd_recovery_temp;
+	}
+
+	if (board_battery_seal()) {
+		/* If failed, then wait one more time and seal again */
+		msleep(100);
+		if (board_battery_seal())
+			return EC_RES_ERROR;
+	}
+
+	return EC_SUCCESS;
+}
+
 int battery_get_vendor_param(uint32_t param, uint32_t *value)
 {
-	if (param == SB_VENDOR_PARAM_CTO_DISABLE) {
-		/*
-		 * This register can't be read directly because the flash area
-		 * of the battery is protected, unless it's been
-		 * unsealed. The key is only able to be passed in the set
-		 * function. The get function is always called following the set
-		 * function. Therefore when the set function is called, this
-		 * register value is read and saved to protect_c_reg. If this
-		 * value is < 0, then the set function wasn't called and
-		 * therefore the value can't be known.
-		 */
+	/*
+	 * These registers can't be read directly because the flash area
+	 * of the battery is protected, unless it's been
+	 * unsealed. The key is only able to be passed in the set
+	 * function. The get function is always called following the set
+	 * function. Therefore when the set function is called, this
+	 * register value is read and saved to protect_c_reg. If this
+	 * value is < 0, then the set function wasn't called and
+	 * therefore the value can't be known.
+	 */
+	switch (param) {
+	case SB_VENDOR_PARAM_CTO_DISABLE:
 		if (protect_c_reg >= 0) {
 			*value = protect_c_reg;
 			return EC_SUCCESS;
-		} else {
-			return EC_RES_ERROR;
 		}
-	} else {
+		break;
+	case SB_VENDOR_PARAM_OTD_RECOVERY_TEMP:
+		if (otd_recovery_temp_reg >= 0) {
+			*value = otd_recovery_temp_reg;
+			return EC_SUCCESS;
+		}
+		break;
+	default:
 		return EC_ERROR_UNIMPLEMENTED;
 	}
+	return EC_RES_ERROR;
 }
 
 int battery_set_vendor_param(uint32_t param, uint32_t value)
 {
-	if (param == SB_VENDOR_PARAM_CTO_DISABLE) {
+	switch (param) {
+	case SB_VENDOR_PARAM_CTO_DISABLE:
 		if (board_battery_disable_cto(value))
 			return EC_ERROR_UNKNOWN;
-
-		return EC_SUCCESS;
-	} else {
+		break;
+	case SB_VENDOR_PARAM_OTD_RECOVERY_TEMP:
+		if (board_battery_fix_otd_recovery_temp(value))
+			return EC_ERROR_UNKNOWN;
+		break;
+	default:
 		return EC_ERROR_INVAL;
 	}
+	return EC_SUCCESS;
 }
