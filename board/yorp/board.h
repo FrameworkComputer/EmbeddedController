@@ -26,6 +26,7 @@
 /* EC Features */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_VBOOT_HASH
 
 /* Charger Configuration */
 #define CONFIG_CHARGE_MANAGER
