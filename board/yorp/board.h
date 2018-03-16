@@ -10,6 +10,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#define CONFIG_CMD_PPC_DUMP
 
 /* NPCX7 config */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
@@ -58,7 +59,6 @@
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_DISCHARGE_PPC
-#define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_ANX74XX	/* C0 TCPC: ANX7447QN */
 #define CONFIG_USB_PD_TCPM_PS8751	/* C1 TCPC: PS8751 */
@@ -67,7 +67,8 @@
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
-#define CONFIG_USBC_PPC /* TODO(b/74206647): Remove this one have real driver */
+#define CONFIG_USBC_PPC_NX20P3483
+/* TODO (b/75975215): Add correct VBUS_DETECT config option here */
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_CMD_PD_CONTROL

@@ -10,6 +10,7 @@
 #include "common.h"
 #include "driver/bc12/bq24392.h"
 #include "driver/charger/bd9995x.h"
+#include "driver/ppc/nx20p3483.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -38,7 +39,18 @@ static void tcpc_alert_event(enum gpio_signal signal)
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
-	/* TODO(b/74127309): Flesh out USB code */
+	switch (signal) {
+	case GPIO_USB_PD_C0_INT_L:
+		nx20p3483_interrupt(0);
+		break;
+
+	case GPIO_USB_PD_C1_INT_L:
+		nx20p3483_interrupt(1);
+		break;
+
+	default:
+		break;
+	}
 }
 
 /* Must come after other header files and GPIO interrupts*/
@@ -124,6 +136,14 @@ void chipset_do_shutdown(void)
 		;
 }
 
+static void board_init(void)
+{
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_L);
+	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_L);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
 enum adc_channel board_get_vbus_adc(int port)
 {
 	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;
@@ -191,15 +211,16 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
 		.i2c_port = I2C_PORT_TCPC0,
-		/* TODO(b/74206647): Write PPC driver */
-		.i2c_addr = 0,
-		.drv = 0
+		.i2c_addr = NX20P3483_ADDR0,
+		.drv = &nx20p3483_drv,
 	},
 	[USB_PD_PORT_PS8751] = {
 		.i2c_port = I2C_PORT_TCPC1,
-		/* TODO(b/74206647): Write PPC driver */
-		.i2c_addr = 0,
-		.drv = 0
+		.i2c_addr = NX20P3483_ADDR0,
+		.drv = &nx20p3483_drv,
+		.flags = PPC_CFG_FLAGS_GPIO_CONTROL,
+		.snk_gpio = GPIO_USB_C1_CHARGE_ON,
+		.src_gpio = GPIO_EN_USB_C1_5V_OUT,
 	},
 };
 const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
