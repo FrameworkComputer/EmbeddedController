@@ -325,6 +325,8 @@ static int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
 	/* Only enter mode if device is DFP_D capable */
 	if (mode_caps & MODE_DP_SNK) {
+		pd_log_event(PD_EVENT_VIDEO_DP_MODE,
+			     PD_LOG_PORT_SIZE(port, 0), 1, NULL);
 		svdm_safe_dp_mode(port);
 		return 0;
 	}
@@ -401,6 +403,8 @@ static void svdm_exit_dp_mode(int port)
 {
 	const struct usb_mux *mux = &usb_muxes[port];
 
+	pd_log_event(PD_EVENT_VIDEO_DP_MODE,
+		     PD_LOG_PORT_SIZE(port, 0), 0, NULL);
 	svdm_safe_dp_mode(port);
 	mux->hpd_update(port, 0, 0);
 }
