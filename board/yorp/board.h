@@ -96,8 +96,7 @@
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
 
 /* SoC / PCH */
-/* GEMINILAKE reuses apollo lake power seq */
-#define CONFIG_CHIPSET_APOLLOLAKE
+#define CONFIG_CHIPSET_GEMINILAKE
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_ESPI
 /* TODO(b/74123961): Enable Virtual Wires after bringup */

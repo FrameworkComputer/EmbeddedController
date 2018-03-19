@@ -699,16 +699,20 @@
 /* Chipset config */
 
 /* AP chipset support; pick at most one */
-#undef CONFIG_CHIPSET_APOLLOLAKE/* Intel Apollolake (x86) */
-#undef CONFIG_CHIPSET_BRASWELL  /* Intel Braswell (x86) */
-#undef CONFIG_CHIPSET_CANNONLAKE /* Intel Cannonlake (x86) */
-#undef CONFIG_CHIPSET_ECDRIVEN  /* Dummy power module */
-#undef CONFIG_CHIPSET_MEDIATEK  /* MediaTek MT81xx */
-#undef CONFIG_CHIPSET_RK3399    /* Rockchip rk3399 */
+#undef CONFIG_CHIPSET_APOLLOLAKE	/* Intel Apollolake (x86) */
+#undef CONFIG_CHIPSET_BRASWELL		/* Intel Braswell (x86) */
+#undef CONFIG_CHIPSET_CANNONLAKE	/* Intel Cannonlake (x86) */
+#undef CONFIG_CHIPSET_ECDRIVEN		/* Dummy power module */
+#undef CONFIG_CHIPSET_GEMINILAKE	/* Intel Geminilake (x86) */
+#undef CONFIG_CHIPSET_MEDIATEK		/* MediaTek MT81xx */
+#undef CONFIG_CHIPSET_RK3399		/* Rockchip rk3399 */
 /* TODO: Rename below config to CONFIG_CHIPSET_RK32XX */
-#undef CONFIG_CHIPSET_ROCKCHIP  /* Rockchip rk32xx */
-#undef CONFIG_CHIPSET_SKYLAKE   /* Intel Skylake (x86) */
-#undef CONFIG_CHIPSET_STONEY     /* AMD Stoney (x86)*/
+#undef CONFIG_CHIPSET_ROCKCHIP		/* Rockchip rk32xx */
+#undef CONFIG_CHIPSET_SKYLAKE		/* Intel Skylake (x86) */
+#undef CONFIG_CHIPSET_STONEY		/* AMD Stoney (x86)*/
+
+/* Shared chipset support; automatically gets defined below. */
+#undef CONFIG_CHIPSET_APL_GLK		/* Apollolake & Geminilake */
 
 /* Support chipset throttling */
 #undef CONFIG_CHIPSET_CAN_THROTTLE
@@ -3408,6 +3412,7 @@
 #undef CONFIG_CHIPSET_APOLLOLAKE
 #undef CONFIG_CHIPSET_BRASWELL
 #undef CONFIG_CHIPSET_CANNONLAKE
+#undef CONFIG_CHIPSET_GEMINILAKE
 #undef CONFIG_CHIPSET_MEDIATEK
 #undef CONFIG_CHIPSET_RK3399
 #undef CONFIG_CHIPSET_ROCKCHIP
@@ -3437,6 +3442,14 @@
 #ifndef CONFIG_ADC
 #undef CONFIG_CMD_ADC
 #endif
+
+/*****************************************************************************/
+/* Define derived Chipset configs */
+#if defined(CONFIG_CHIPSET_APOLLOLAKE) || \
+	defined(CONFIG_CHIPSET_GEMINILAKE)
+#define CONFIG_CHIPSET_APL_GLK
+#endif
+
 
 /*****************************************************************************/
 /*

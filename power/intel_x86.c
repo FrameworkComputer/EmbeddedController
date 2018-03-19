@@ -24,7 +24,8 @@
 #include "wireless.h"
 
 /* Chipset specific header files */
-#ifdef CONFIG_CHIPSET_APOLLOLAKE
+/* Geminilake and apollolake use same power sequencing. */
+#ifdef CONFIG_CHIPSET_APL_GLK
 #include "apollolake.h"
 #elif defined(CONFIG_CHIPSET_CANNONLAKE)
 #include "cannonlake.h"
@@ -451,7 +452,7 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 	board_before_rsmrst(rsmrst_in);
 #endif
 
-#ifdef CONFIG_CHIPSET_APOLLOLAKE
+#ifdef CONFIG_CHIPSET_APL_GLK
 	/* Only passthrough RSMRST_L de-assertion on power up */
 	if (rsmrst_in && !power_s5_up)
 		return;

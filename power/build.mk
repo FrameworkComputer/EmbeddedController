@@ -6,7 +6,7 @@
 # Power management for application processor and peripherals
 #
 
-power-$(CONFIG_CHIPSET_APOLLOLAKE)+=apollolake.o intel_x86.o
+power-$(CONFIG_CHIPSET_APL_GLK)+=apollolake.o intel_x86.o
 power-$(CONFIG_CHIPSET_BRASWELL)+=braswell.o
 power-$(CONFIG_CHIPSET_CANNONLAKE)+=cannonlake.o intel_x86.o
 power-$(CONFIG_CHIPSET_ECDRIVEN)+=ec_driven.o
