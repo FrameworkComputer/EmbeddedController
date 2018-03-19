@@ -197,7 +197,24 @@ int battery_get_mode(int *mode)
 
 int battery_status(int *status)
 {
-	return EC_ERROR_UNIMPLEMENTED;
+	int rv;
+	int reg;
+
+	*status = 0;
+
+	rv = max17055_read(REG_FSTAT, &reg);
+	if (rv)
+		return rv;
+	if (reg & FSTAT_FQ)
+		*status |= BATTERY_FULLY_CHARGED;
+
+	rv = max17055_read(REG_CURRENT, &reg);
+	if (rv)
+		return rv;
+	if (reg >> 15)
+		*status |= BATTERY_DISCHARGING;
+
+	return EC_SUCCESS;
 }
 
 enum battery_present battery_is_present(void)
@@ -267,6 +284,9 @@ void battery_get_params(struct batt_params *batt)
 	    batt->desired_current &&
 	    batt->state_of_charge < BATTERY_LEVEL_FULL)
 		batt->flags |= BATT_FLAG_WANT_CHARGE;
+
+	if (battery_status(&batt->status))
+		batt->flags |= BATT_FLAG_BAD_STATUS;
 }
 
 #ifdef CONFIG_CMD_PWR_AVG

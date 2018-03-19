@@ -54,10 +54,15 @@
 
 /* FStat reg (0x3d) flags */
 #define FSTAT_DNR                   0x0001
+#define FSTAT_FQ                    0x0080
 
 /* ModelCfg reg (0xdb) flags */
 #define MODELCFG_REFRESH            0x8000
 #define MODELCFG_VCHG               0x0400
+
+/* Smart battery status bits (sbs reg 0x16) */
+#define BATTERY_DISCHARGING         0x40
+#define BATTERY_FULLY_CHARGED       0x20
 
 /*
  * Before we have the battery fully characterized, we use these macros to
