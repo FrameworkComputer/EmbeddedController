@@ -419,11 +419,11 @@ static void board_pmic_disable_slp_s0_vr_decay(void)
 	/*
 	 * VCCIOCNT:
 	 * Bit 6    (0)   - Disable decay of VCCIO on SLP_S0# assertion
-	 * Bits 5:4 (00)  - Nominal output voltage: 0.975V
+	 * Bits 5:4 (00)  - Nominal output voltage: 0.850V
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0xa);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x3a);
 
 	/*
 	 * V18ACNT:
@@ -458,11 +458,11 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	/*
 	 * VCCIOCNT:
 	 * Bit 6    (1)   - Enable decay of VCCIO on SLP_S0# assertion
-	 * Bits 5:4 (00)  - Nominal output voltage: 0.975V
+	 * Bits 5:4 (00)  - Nominal output voltage: 0.850V
 	 * Bits 3:2 (10)  - VR set to AUTO on SLP_S0# de-assertion
 	 * Bits 1:0 (10)  - VR set to AUTO operating mode
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x4a);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x7a);
 
 	/*
 	 * V18ACNT:
