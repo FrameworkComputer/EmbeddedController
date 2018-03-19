@@ -101,7 +101,7 @@
 #define CONFIG_BARO_BMP280
 #endif
 /* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 256
+#define CONFIG_ACCEL_FIFO 128
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
 /* Sensors without hardware FIFO are in forced mode */

@@ -39,16 +39,16 @@
 #define CONFIG_STACK_SIZE       1024
 
 /* non-standard task stack sizes */
-#define IDLE_TASK_STACK_SIZE		512
-#define LARGER_TASK_STACK_SIZE		640
-#define VENTI_TASK_STACK_SIZE		768
+#define IDLE_TASK_STACK_SIZE		672
+#define LARGER_TASK_STACK_SIZE		800
+#define VENTI_TASK_STACK_SIZE		928
 
-#define CHARGER_TASK_STACK_SIZE		640
-#define HOOKS_TASK_STACK_SIZE		640
-#define CONSOLE_TASK_STACK_SIZE		640
+#define CHARGER_TASK_STACK_SIZE		800
+#define HOOKS_TASK_STACK_SIZE		800
+#define CONSOLE_TASK_STACK_SIZE		800
 
 /* Default task stack size */
-#define TASK_STACK_SIZE			512
+#define TASK_STACK_SIZE			672
 
 /* Address of RAM log used by Booter */
 #define ADDR_BOOT_RAMLOG        0x100C7FC0
