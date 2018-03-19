@@ -862,7 +862,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = BMI160_GYRO_MIN_FREQ,
 	 .max_frequency = BMI160_GYRO_MAX_FREQ,
 	},
-
 	[BASE_MAG] = {
 	 .name = "Base Mag",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -878,22 +877,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = &mag_standard_ref,
 	 .min_frequency = BMM150_MAG_MIN_FREQ,
 	 .max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
-	 .config = {
-		 /* AP: by default shutdown all sensors */
-		 [SENSOR_CONFIG_AP] = {
-		 },
-		 /* EC does not need in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S3] = {
-		 },
-		 /* Sensor off in S3/S5 */
-		 [SENSOR_CONFIG_EC_S5] = {
-		 },
-	 },
 	},
-
 	[BASE_BARO] = {
 	 .name = "Base Baro",
 	 .active_mask = SENSOR_ACTIVE_S0,

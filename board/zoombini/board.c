@@ -238,25 +238,10 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 		.config = {
-			/* AP: by default use EC settings */
-			[SENSOR_CONFIG_AP] = {
-				.odr = 0,
-				.ec_rate = 0,
-			},
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 13000,
 				.ec_rate = 13 * MSEC,
-			},
-			/* Sensor off in S5 */
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 0,
-				.ec_rate = 0
-			},
-			/* Sensor off in S5 */
-			[SENSOR_CONFIG_EC_S5] = {
-				.odr = 0,
-				.ec_rate = 0
 			},
 		},
 	},
@@ -273,28 +258,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.addr = LSM6DSM_ADDR0,
 		.default_range = 245, /* dps */
 		.rot_standard_ref = NULL,
-		.config = {
-			/* AP: by default shutdown all sensors */
-			[SENSOR_CONFIG_AP] = {
-				.odr = 0,
-				.ec_rate = 0,
-			},
-			/* EC does not need in S0 */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000,
-				.ec_rate = 0,
-			},
-			/* Sensor off in S3/S5 */
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 0,
-				.ec_rate = 0,
-			},
-			/* Sensor off in S3/S5 */
-			[SENSOR_CONFIG_EC_S5] = {
-				.odr = 0,
-				.ec_rate = 0,
-			},
-		},
 	},
 	[LID_ALS] = {
 		.name = "Light",
@@ -314,7 +277,6 @@ struct motion_sensor_t motion_sensors[] = {
 			/* Run ALS sensor in S0 */
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 1000,
-				.ec_rate = 0,
 			},
 		},
 	},
