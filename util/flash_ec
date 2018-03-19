@@ -46,6 +46,7 @@ die() {
 
 
 BOARDS_IT83XX=(
+	bip
 	it83xx_evb
 	reef_it8320
 )
