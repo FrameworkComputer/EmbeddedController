@@ -110,7 +110,7 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_EXTPOWER_GPIO
-/* TODO(b/73811887), increase CONFIG_EXTPOWER_DEBOUNCE_MS from 30 to 1000? */
+/* TODO(b/75974377), increase CONFIG_EXTPOWER_DEBOUNCE_MS from 30 to 1000? */
 
 
 #ifndef __ASSEMBLER__
@@ -118,7 +118,6 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-/* TODO(b/73811887): Fill out correctly */
 enum adc_channel {
 	ADC_VBUS_C0,
 	ADC_VBUS_C1,
