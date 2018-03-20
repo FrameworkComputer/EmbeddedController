@@ -352,8 +352,19 @@ static int snprintf_addchar(void *context, int c)
 
 int snprintf(char *str, int size, const char *format, ...)
 {
-	struct snprintf_context ctx;
 	va_list args;
+	int rv;
+
+	va_start(args, format);
+	rv = vsnprintf(str, size, format, args);
+	va_end(args);
+
+	return rv;
+}
+
+int vsnprintf(char *str, int size, const char *format, va_list args)
+{
+	struct snprintf_context ctx;
 	int rv;
 
 	if (!str || !size)
@@ -362,9 +373,7 @@ int snprintf(char *str, int size, const char *format, ...)
 	ctx.str = str;
 	ctx.size = size - 1;  /* Reserve space for terminating '\0' */
 
-	va_start(args, format);
 	rv = vfnprintf(snprintf_addchar, &ctx, format, args);
-	va_end(args);
 
 	/* Terminate string */
 	*ctx.str = '\0';

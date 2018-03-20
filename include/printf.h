@@ -83,4 +83,17 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
  */
 int snprintf(char *str, int size, const char *format, ...);
 
+/**
+ * Print formatted outut to a string.
+ *
+ * Guarantees null-termination if size!=0.
+ *
+ * @param str		Destination string
+ * @param size		Size of destination in bytes
+ * @param format	Format string
+ * @param args		Parameters
+ * @return EC_SUCCESS, or non-zero if output was truncated.
+ */
+int vsnprintf(char *str, int size, const char *format, va_list args);
+
 #endif  /* __CROS_EC_PRINTF_H */
