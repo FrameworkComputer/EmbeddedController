@@ -32,10 +32,10 @@ LIBS    += $(shell $(PKG_CONFIG) --libs   libusb-1.0)
 CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
 CFLAGS  += -I../../include -I../../util -I../../test
 
-BOARD ?= cr50
+BOARD := cr50
 LIBS_g  = $(shell $(PKG_CONFIG) --libs   libcrypto)
 CFLAGS_g = $(shell $(PKG_CONFIG) --cflags libcrypto)
-CFLAGS_g  += -I../../board/$(BOARD) -I ../../chip/g
+CFLAGS_g  += -I../../board/cr50 -I ../../chip/g
 
 LIBS_common  = -lfmap
 
