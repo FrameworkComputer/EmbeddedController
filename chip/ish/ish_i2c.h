@@ -13,10 +13,18 @@
 #define I2C_CALIB_ADDRESS		0x3
 #define I2C_INTERRUPT_TIMEOUT		(TICKFREQ / 20)
 #define NS_IN_SEC			1000
-#define DEFAULT_SDA_HOLD		133
+#define DEFAULT_SDA_HOLD		240
+#define DEFAULT_SDA_HOLD_STD		2400
+#define DEFAULT_SDA_HOLD_FAST		600
+#define DEFAULT_SDA_HOLD_FAST_PLUS	300
+#define DEFAULT_SDA_HOLD_HIGH		140
 #define NS_2_COUNTERS(ns, clk)		((ns * clk)/NS_IN_SEC)
 #define COUNTERS_2_NS(counters, clk)	(counters * (NANOSECONDS_IN_SEC / \
 					(clk * HZ_IN_MEGAHZ)))
+#define I2C_TX_FLUSH_TIMEOUT_USEC	200
+
+#define ISH_I2C_FIFO_SIZE 64
+
 
 enum {
 	/* speed mode values */
@@ -92,6 +100,7 @@ enum {
 	IC_ENABLE_DISABLE = 0,
 	/* IC_STATUS OFFSETS */
 	IC_STATUS_MASTER_ACTIVITY = 5,
+	IC_STATUS_TFE = 2,
 	/* IC_CON OFFSETS */
 	MASTER_MODE_OFFSET = 0,
 	SPEED_OFFSET = 1,

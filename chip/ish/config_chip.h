@@ -23,6 +23,8 @@
 /* Maximum number of deferrable functions */
 #define DEFERRABLE_MAX_COUNT	8
 
+/* this macro causes 'pause' and reduces loop counts inside loop. */
+#define CPU_RELAX() asm volatile("rep; nop" ::: "memory")
 
 /****************************************************************************/
 /* Memory mapping */
