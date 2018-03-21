@@ -14,8 +14,6 @@
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static int forcing_coldreset; /* Forced coldreset in progress? */
-
 __attribute__((weak)) void chipset_do_shutdown(void)
 {
 	/* Need to implement board specific shutdown */
@@ -23,8 +21,7 @@ __attribute__((weak)) void chipset_do_shutdown(void)
 
 void chipset_force_shutdown(void)
 {
-	if (!forcing_coldreset)
-		CPRINTS("%s()", __func__);
+	CPRINTS("%s()", __func__);
 
 	chipset_do_shutdown();
 }
@@ -32,12 +29,6 @@ void chipset_force_shutdown(void)
 enum power_state chipset_force_g3(void)
 {
 	chipset_force_shutdown();
-
-	/* Power up the platform again for forced cold reset */
-	if (forcing_coldreset) {
-		forcing_coldreset = 0;
-		return POWER_G3S5;
-	}
 
 	return POWER_G3;
 }
@@ -48,23 +39,14 @@ void chipset_handle_espi_reset_assert(void)
 
 void chipset_reset(int cold_reset)
 {
-	CPRINTS("%s(%d)", __func__, cold_reset);
-	if (cold_reset) {
-		/*
-		 * Perform chipset_force_shutdown and mark forcing_coldreset.
-		 * Once in S5G3 state, check forcing_coldreset to power up.
-		 */
-		forcing_coldreset = 1;
+	CPRINTS("%s", __func__);
 
-		chipset_force_shutdown();
-	} else {
-		/*
-		 * Send a pulse to SOC PMU_RSTBTN_N to trigger a warm reset.
-		 */
-		gpio_set_level(GPIO_SYS_RESET_L, 0);
-		usleep(32 * MSEC);
-		gpio_set_level(GPIO_SYS_RESET_L, 1);
-	}
+	/*
+	 * Send a pulse to SOC PMU_RSTBTN_N to trigger a warm reset.
+	 */
+	gpio_set_level(GPIO_SYS_RESET_L, 0);
+	usleep(32 * MSEC);
+	gpio_set_level(GPIO_SYS_RESET_L, 1);
 }
 
 static void handle_all_sys_pgood(enum power_state state)
@@ -99,9 +81,6 @@ enum power_state power_handle_state(enum power_state state)
 		new_state = POWER_S5G3;
 		goto rsmrst_handle;
 
-	} else if (state == POWER_G3S5) {
-		/* Platform is powering up, clear forcing_coldreset */
-		forcing_coldreset = 0;
 	}
 
 	new_state = common_intel_x86_power_handle_state(state);
