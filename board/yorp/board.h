@@ -75,7 +75,9 @@
 #define CONFIG_BC12_DETECT_BQ24392
 #define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 
-/* TODO(b/74388692): Adding USB-A BC 1.2 charging support */
+/* USB-A Configuration */
+#define CONFIG_USB_PORT_POWER_DUMB
+#define USB_PORT_COUNT 1 /* TODO(b/74388692): Make 2 after hardware fix. */
 
 /* TODO(b/74244817): Use correct PD delay values */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */

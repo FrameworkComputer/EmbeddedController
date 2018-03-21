@@ -107,6 +107,12 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* USB-A port configuration */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A_5V,
+	/* TODO(b/74388692): Add second port control after hardware fix. */
+};
+
 /* Called by APL power state machine when transitioning from G3 to S5 */
 static void chipset_pre_init(void)
 {
