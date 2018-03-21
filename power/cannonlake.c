@@ -52,26 +52,6 @@ void chipset_handle_espi_reset_assert(void)
 	}
 }
 
-void chipset_reset(int cold_reset)
-{
-	/*
-	 * The EC cannot control warm vs cold reset of the chipset using
-	 * SYS_RESET_L;  it's more of a request.
-	 */
-	CPRINTS("%s()", __func__);
-
-	if (gpio_get_level(GPIO_SYS_RESET_L) == 0)
-		return;
-
-	/*
-	 * Debounce time for SYS_RESET_L is 16 ms.  Wait twice that period to be
-	 * safe.
-	 */
-	gpio_set_level(GPIO_SYS_RESET_L, 0);
-	udelay(32 * MSEC);
-	gpio_set_level(GPIO_SYS_RESET_L, 1);
-}
-
 enum power_state chipset_force_g3(void)
 {
 	int timeout = 50;

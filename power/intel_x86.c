@@ -509,3 +509,34 @@ void power_chipset_handle_host_sleep_event(enum host_sleep_event state)
 }
 
 #endif
+
+void chipset_reset(int cold_reset)
+{
+	/*
+	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
+	 * perform a chipset reset. RCIN# which was used earlier to trigger
+	 * a warm reset is known to not work in certain cases where the CPU
+	 * is in a bad state (crbug.com/721853).
+	 *
+	 * The EC cannot control warm vs cold reset of the chipset using
+	 * SYS_RESET_L; it's more of a request.
+	 */
+	CPRINTS("%s", __func__);
+
+	/*
+	 * Toggling SYS_RESET_L will not have any impact when it's already
+	 * low (i,e. Chipset is in reset state).
+	 */
+	if (gpio_get_level(GPIO_SYS_RESET_L) == 0) {
+		CPRINTS("Chipset is in reset state");
+		return;
+	}
+
+	gpio_set_level(GPIO_SYS_RESET_L, 0);
+	/*
+	 * Debounce time for SYS_RESET_L is 16 ms. Wait twice that period
+	 * to be safe.
+	 */
+	udelay(32 * MSEC);
+	gpio_set_level(GPIO_SYS_RESET_L, 1);
+}

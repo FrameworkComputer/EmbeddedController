@@ -54,24 +54,6 @@ enum power_state chipset_force_g3(void)
 	return POWER_G3;
 }
 
-void chipset_reset(int cold_reset)
-{
-	CPRINTS("%s(%d)", __func__, cold_reset);
-
-	/*
-	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
-	 * perform a chipset reset. RCIN# which was used earlier to trigger a
-	 * warm reset is known to not work in certain cases where the CPU is in
-	 * a bad state (crbug.com/721853)
-	 */
-	if (gpio_get_level(GPIO_SYS_RESET_L) == 0)
-		return;
-	gpio_set_level(GPIO_SYS_RESET_L, 0);
-	/* Debounce time for SYS_RESET_L is 16 ms */
-	udelay(20 * MSEC);
-	gpio_set_level(GPIO_SYS_RESET_L, 1);
-}
-
 static void handle_slp_sus(enum power_state state)
 {
 	/* If we're down or going down don't do anythin with SLP_SUS_L. */

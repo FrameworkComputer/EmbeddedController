@@ -37,18 +37,6 @@ void chipset_handle_espi_reset_assert(void)
 {
 }
 
-void chipset_reset(int cold_reset)
-{
-	CPRINTS("%s", __func__);
-
-	/*
-	 * Send a pulse to SOC PMU_RSTBTN_N to trigger a warm reset.
-	 */
-	gpio_set_level(GPIO_SYS_RESET_L, 0);
-	usleep(32 * MSEC);
-	gpio_set_level(GPIO_SYS_RESET_L, 1);
-}
-
 static void handle_all_sys_pgood(enum power_state state)
 {
 	/*
