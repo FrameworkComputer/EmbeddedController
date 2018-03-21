@@ -380,7 +380,9 @@ int tcpci_get_chip_info(int port, int renew,
 	i->device_id = val;
 
 	switch (i->vendor_id) {
-#ifdef CONFIG_USB_PD_TCPM_ANX74XX
+#if  defined(CONFIG_USB_PD_TCPM_ANX3429) || \
+	defined(CONFIG_USB_PD_TCPM_ANX740X) || \
+	defined(CONFIG_USB_PD_TCPM_ANX741X)
 	case ANX74XX_VENDOR_ID:
 		error = anx74xx_tcpc_get_fw_version(port, &val);
 		break;
