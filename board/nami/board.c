@@ -640,6 +640,12 @@ struct motion_sensor_t motion_sensors[] = {
 		.default_range = 0x10000, /* scale = 1; uscale = 0 */
 		.min_frequency = OPT3001_LIGHT_MIN_FREQ,
 		.max_frequency = OPT3001_LIGHT_MAX_FREQ,
+		.config = {
+			/* Sensor on in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 1000,
+			},
+		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
