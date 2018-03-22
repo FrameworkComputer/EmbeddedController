@@ -182,7 +182,9 @@ ifdef CTS_MODULE
 include cts/build.mk
 endif
 include $(BASEDIR)/build.mk
+ifneq ($(BASEDIR),$(BDIR))
 include $(BDIR)/build.mk
+endif
 include chip/$(CHIP)/build.mk
 include core/$(CORE)/build.mk
 include common/build.mk
