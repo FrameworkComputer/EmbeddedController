@@ -252,7 +252,7 @@ void battery_get_params(struct batt_params *batt)
 
 	batt->voltage = VOLTAGE_CONV(reg);
 
-	if (max17055_read(REG_AVERAGE_CURRENT, &reg))
+	if (max17055_read(REG_CURRENT, &reg))
 		batt->flags |= BATT_FLAG_BAD_CURRENT;
 
 	batt->current = CURRENT_CONV((int16_t)reg);
