@@ -11,6 +11,9 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+/* ITE Config */
+#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ /* Flash clock must be > (50Mhz / 2) */
+
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
