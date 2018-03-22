@@ -711,9 +711,9 @@ void lpc_host_reset(void)
 	udelay(10);
 	espi_vw_set_wire(VW_RCIN_L, 1);
 #else
-	gpio_set_level(GPIO_PCH_RCIN_L, 0);
+	gpio_set_level(GPIO_SYS_RESET_L, 0);
 	udelay(10);
-	gpio_set_level(GPIO_PCH_RCIN_L, 1);
+	gpio_set_level(GPIO_SYS_RESET_L, 1);
 #endif
 }
 

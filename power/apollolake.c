@@ -61,9 +61,9 @@ void chipset_reset(int cold_reset)
 		/*
 		 * Send a pulse to SOC PMU_RSTBTN_N to trigger a warm reset.
 		 */
-		gpio_set_level(GPIO_PCH_RCIN_L, 0);
+		gpio_set_level(GPIO_SYS_RESET_L, 0);
 		usleep(32 * MSEC);
-		gpio_set_level(GPIO_PCH_RCIN_L, 1);
+		gpio_set_level(GPIO_SYS_RESET_L, 1);
 	}
 }
 

@@ -41,10 +41,10 @@ GPIO(PCH_SLP_S0_L,	 PIN(A, 4), GPIO_INPUT)		/* SLP_S0_L */
 #endif
 
 /*
- * TODO(b/74123961): Move PLT_RST_L and PCH_RCIN_L to virtual wires over eSPI
+ * TODO(b/74123961): Move PLT_RST_L and SYS_RESET_L to virtual wires over eSPI
  */
 GPIO(PLT_RST_L,		 PIN(C, 7), GPIO_INPUT)		/* Platform Reset from SoC */
-GPIO(PCH_RCIN_L,	 PIN(0, 2), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
+GPIO(SYS_RESET_L,	 PIN(0, 2), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
 
 GPIO(ENTERING_RW,	 PIN(8, 0), GPIO_OUT_LOW)	/* EC_ENTERING_RW */
 GPIO(PCH_WAKE_L,	 PIN(7, 4), GPIO_ODR_HIGH)	/* EC_PCH_WAKE_ODL */

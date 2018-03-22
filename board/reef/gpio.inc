@@ -121,7 +121,7 @@ GPIO(USB2_OTG_VBUSSENSE,	PIN(9, 5), GPIO_OUTPUT)
  * be used. Set as input for now, we'll set it as an output when we want to use
  * it. Has external pull-down resistor. */
 GPIO(EC_PCH_RTCRST,		PIN(B, 7), GPIO_INPUT)
-GPIO(PCH_RCIN_L,		PIN(6, 1), GPIO_ODR_HIGH)		/* SYS_RST_ODL */
+GPIO(SYS_RESET_L,		PIN(6, 1), GPIO_ODR_HIGH)		/* SYS_RST_ODL */
 
 /* FIXME: What, if anything, to do about EC_RST_ODL on VCC1_RST#? */
 
