@@ -466,24 +466,6 @@ DECLARE_DEFERRED(lpc_chipset_reset);
 #endif
 
 
-#ifdef CONFIG_ESPI
-/*
- * Called from power/skylake.c chipset_reset()
- * For LPC it doesn't call here, instead it pulses RCIN# low for 10 us
- */
-void lpc_host_reset(void)
-{
-	/* Host Reset Control will assert KBRST# (LPC) or RCIN# VW (eSPI) */
-#ifdef CONFIG_ESPI_VW_SIGNALS
-	espi_vw_pulse_wire(VW_RCIN_L, 0);
-#else
-	gpio_set_level(GPIO_PCH_RCIN_L, 0);
-	udelay(10);
-	gpio_set_level(GPIO_PCH_RCIN_L, 1);
-#endif
-}
-#endif /* #ifdef CONFIG_ESPI */
-
 void lpc_set_init_done(int val)
 {
 	init_done = val;

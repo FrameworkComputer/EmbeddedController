@@ -125,11 +125,6 @@ void lpc_clear_acpi_status_mask(uint8_t mask);
  */
 int lpc_get_pltrst_asserted(void);
 
-/**
- * Reset the host with KBRST# or RCIN#
- */
-void lpc_host_reset(void);
-
 /* Disable LPC ACPI interrupts */
 void lpc_disable_acpi_interrupts(void);
 

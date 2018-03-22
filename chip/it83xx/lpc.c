@@ -703,20 +703,6 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
-void lpc_host_reset(void)
-{
-	/* Host Reset Control will assert RCIN# */
-#ifdef CONFIG_ESPI_VW_SIGNALS
-	espi_vw_set_wire(VW_RCIN_L, 0);
-	udelay(10);
-	espi_vw_set_wire(VW_RCIN_L, 1);
-#else
-	gpio_set_level(GPIO_SYS_RESET_L, 0);
-	udelay(10);
-	gpio_set_level(GPIO_SYS_RESET_L, 1);
-#endif
-}
-
 #ifndef CONFIG_ESPI_VW_SIGNALS
 void lpcrst_interrupt(enum gpio_signal signal)
 {
