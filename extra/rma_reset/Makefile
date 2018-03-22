@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+CC ?= gcc
 PROGRAM := rma_reset
 SOURCE  := $(PROGRAM).c
 OBJS    := curve25519.o curve25519-generic.o sha256.o base32.o
@@ -30,20 +31,20 @@ STANDALONE_FLAGS=${INCLUDE} -ffreestanding -fno-builtin \
                         -Ibuiltin/ -D"__keep= "
 
 $(PROGRAM): $(SOURCE) $(OBJS) Makefile
-	gcc $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) $(OBJS) -o $@
 
 curve25519-generic.o: ../../common/curve25519-generic.c
-	gcc $(STANDALONE_FLAGS) -c -o curve25519-generic.o \
+	$(CC) $(STANDALONE_FLAGS) -c -o curve25519-generic.o \
 				../../common/curve25519-generic.c
 
 curve25519.o: ../../common/curve25519.c
-	gcc $(STANDALONE_FLAGS) -c -o curve25519.o ../../common/curve25519.c
+	$(CC) $(STANDALONE_FLAGS) -c -o curve25519.o ../../common/curve25519.c
 
 sha256.o: ../../common/sha256.c
-	gcc $(STANDALONE_FLAGS) -c -o sha256.o ../../common/sha256.c
+	$(CC) $(STANDALONE_FLAGS) -c -o sha256.o ../../common/sha256.c
 
 base32.o: ../../common/base32.c
-	gcc $(STANDALONE_FLAGS) -c -o base32.o ../../common/base32.c
+	$(CC) $(STANDALONE_FLAGS) -c -o base32.o ../../common/base32.c
 
 .PHONY: clean
 
