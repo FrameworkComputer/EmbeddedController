@@ -452,6 +452,7 @@ int main(int argc, char **argv)
 	if (a_flag) {
 		FILE *acode;
 		char verify_authcode[RMA_AUTHCODE_BUF_SIZE];
+		int rv;
 
 		acode = fopen("/tmp/authcode", "r");
 		if (acode == NULL) {
@@ -459,7 +460,11 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		fread(verify_authcode, 1, RMA_AUTHCODE_BUF_SIZE, acode);
+		rv = fread(verify_authcode, 1, RMA_AUTHCODE_BUF_SIZE, acode);
+		if (rv != RMA_AUTHCODE_BUF_SIZE) {
+			printf("Error reading saved authcode\n");
+			return 1;
+		}
 		if (strcmp(verify_authcode, authcode) == 0)
 			printf("Code Accepted\n");
 		else
