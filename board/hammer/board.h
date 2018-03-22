@@ -117,6 +117,11 @@
 /* Replaced at runtime (board_read_serial) by chip unique-id-based number. */
 #define DEFAULT_SERIALNO ""
 
+#if defined(BOARD_WHISKERS) && defined(SECTION_IS_RW)
+/* Enable to send heatmap to AP */
+#define CONFIG_USB_ISOCHRONOUS
+#endif  /* !(BOARD_WHISKERS && SECTION_IS_RW) */
+
 /* USB interface indexes (use define rather than enum to expand them) */
 #ifdef SECTION_IS_RW
 #define USB_IFACE_HID_KEYBOARD	0
@@ -124,11 +129,16 @@
 #define USB_IFACE_HID_TOUCHPAD	2
 /* Can be either I2C or SPI passthrough, depending on the board. */
 #define USB_IFACE_I2C_SPI	3
+#if defined(BOARD_WHISKERS) && defined(CONFIG_USB_ISOCHRONOUS)
+#define USB_IFACE_ST_TOUCHPAD	4
+#define USB_IFACE_COUNT		5
+#else  /* !(BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS) */
 #define USB_IFACE_COUNT		4
-#else
+#endif  /* BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS */
+#else  /* !SECTION_IS_RW */
 #define USB_IFACE_UPDATE	0
 #define USB_IFACE_COUNT		1
-#endif
+#endif  /* SECTION_IS_RW */
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
@@ -138,10 +148,16 @@
 #define USB_EP_HID_TOUCHPAD	3
 /* Can be either I2C or SPI passthrough, depending on the board. */
 #define USB_EP_I2C_SPI		4
+#if defined(BOARD_WHISKERS) && defined(CONFIG_USB_ISOCHRONOUS)
+#define USB_EP_ST_TOUCHPAD	5
+#define USB_EP_ST_TOUCHPAD_INT	6
+#define USB_EP_COUNT		7
+#else /* !(BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS) */
 #define USB_EP_COUNT		5
-#else
+#endif /* BOARD_WHISKERS && CONFIG_USB_ISOCHRONOUS */
+#else  /* !SECTION_IS_RW */
 #define USB_EP_COUNT		2
-#endif
+#endif  /* SECTION_IS_RW */
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
