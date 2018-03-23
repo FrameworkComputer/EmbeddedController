@@ -9,8 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* Wake Source interrupts */
-GPIO_INT(LID_OPEN,	 PIN(E, 2), GPIO_INT_BOTH |
-				    GPIO_HIB_WAKE_HIGH, lid_interrupt)
+GPIO_INT(LID_OPEN,	 PIN(E, 2), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(WP_L,		 PIN(I, 4), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 
