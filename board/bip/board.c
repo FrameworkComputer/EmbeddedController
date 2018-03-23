@@ -11,6 +11,7 @@
 #include "lid_switch.h"
 #include "power_button.h"
 #include "spi.h"
+#include "uart.h"
 #include "switch.h"
 #include "system.h"
 #include "util.h"

@@ -12,6 +12,10 @@
 GPIO_INT(LID_OPEN,	 PIN(E, 2), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(WP_L,		 PIN(I, 4), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
+#ifdef CONFIG_LOW_POWER_IDLE
+/* Used to wake up the EC from Doze mode when writing to console */
+GPIO_INT(UART1_RX,	 PIN(B, 0), GPIO_INT_FALLING, uart_deepsleep_interrupt)	/* UART_SERVO_TX_EC_RX */
+#endif
 
 /*
  * TODO(b/76023457): Move below 4 signals to virtual wires over eSPI
@@ -67,6 +71,3 @@ ALTERNATE(PIN_MASK(A, 0x30), 0, MODULE_I2C, 0)		/* I2C5 */
 ALTERNATE(PIN_MASK(I, 0x03), 0, MODULE_ADC, 0)		/* ADC0 & ADC1: BRD_ID1 & BRD_ID2 */
 ALTERNATE(PIN_MASK(L, 0x03), 0, MODULE_ADC, 0)		/* ADC13 & ADC14: ADC_USB_C0_VBUS & ADC_USB_C1_VBUS */
 ALTERNATE(PIN_MASK(A, 0x48), 0, MODULE_PWM, 0)		/* LED_1_L & LED_2_L */
-
-/* TODO(b/76022415): Determine if low power mode really needs interrupt here */
-UNIMPLEMENTED(UART1_RX)
