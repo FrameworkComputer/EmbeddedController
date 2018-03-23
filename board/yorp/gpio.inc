@@ -41,7 +41,8 @@ GPIO(PCH_SLP_S0_L,	 PIN(A, 4), GPIO_INPUT)		/* SLP_S0_L */
 #endif
 
 /*
- * TODO(b/74123961): Move PLT_RST_L and SYS_RESET_L to virtual wires over eSPI
+ * PLT_RST_L isn't used since there is a Virtual Wire on eSPI for it. It is here
+ * only for debugging purposes.
  */
 GPIO(PLT_RST_L,		 PIN(C, 7), GPIO_INPUT)		/* Platform Reset from SoC */
 GPIO(SYS_RESET_L,	 PIN(0, 2), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
