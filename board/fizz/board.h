@@ -69,7 +69,7 @@
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
 
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 50000
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 50000
 
 #define CONFIG_CMD_PD_CONTROL
 #define CONFIG_EXTPOWER_GPIO
@@ -233,7 +233,7 @@ enum mft_channel {
 
 /* Define typical operating power. Since Fizz doesn't have a battery to charge,
  * we're not interested in any power lower than the AP power-on threshold. */
-#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW
+#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
 #define PD_MAX_POWER_MW		100000
 #define PD_MAX_CURRENT_MA	5000
 #define PD_MAX_VOLTAGE_MV	20000

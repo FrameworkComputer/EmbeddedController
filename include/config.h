@@ -626,6 +626,9 @@
 /* Minimum battery percentage for power on */
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 
+/* Minimum charger power (in mW) required for powering on. */
+#undef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+
 /* Set this option when using a Narrow VDC (NVDC) charger, such as ISL9237/8. */
 #undef CONFIG_CHARGER_NARROW_VDC
 
@@ -3451,6 +3454,24 @@
 #undef CONFIG_POWER_COMMON
 #undef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #endif
+
+/*
+ * If a board has a chipset task, set the minimum charger power required for
+ * powering on to 15W.  This is also the highest power discovered over Type-C.
+ * The EC normally does not communicate using USB PD when the system is locked
+ * and in RO, so it would not be able to tell if higher power is available.
+ * However, if a 15W charger is discovered, it's likely that the charger does
+ * speak USB PD and we would be able to negotiate more power after booting the
+ * AP and jumping to EC RW.
+ *
+ * If a board needs more or less power to power on, they can re-define this
+ * value in their board.h file.
+ */
+#ifdef HAS_TASK_CHIPSET
+#ifndef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15000
+#endif /* !defined(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON) */
+#endif /* defined(HAS_TASK_CHIPSET) */
 
 #ifndef HAS_TASK_KEYPROTO
 #undef CONFIG_KEYBOARD_PROTOCOL_8042

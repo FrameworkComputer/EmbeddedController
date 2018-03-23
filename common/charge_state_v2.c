@@ -41,9 +41,6 @@
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
 #define LFCC_EVENT_THRESH 5 /* Full-capacity change reqd for host event */
 
-/* Prior to negotiating PD, most PD chargers advertise 15W */
-#define LIKELY_PD_USBC_POWER_MW 15000
-
 static int charge_request(int voltage, int current);
 
 /*
@@ -1821,24 +1818,22 @@ int charge_prevent_power_on(int power_button_pressed)
 		battery_get_params(&params);
 		current_batt_params = &params;
 	}
+
 	/* Require a minimum battery level to power on */
 	if (current_batt_params->is_present != BP_YES ||
 	    current_batt_params->state_of_charge <
 	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
 
-#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
-	/*
-	 * Allow power-on if our charger advertises more than
-	 * LIKELY_PD_USBC_POWER_MW since it may speak PD and provide
-	 * sufficient power once we enable PD communication.
-	 */
+#ifdef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#ifdef CONFIG_CHARGE_MANAGER
+	/* However, we can power on if a sufficient charger is present. */
 	if (prevent_power_on)
 		if (charge_manager_get_power_limit_uw() >=
-		    MIN(LIKELY_PD_USBC_POWER_MW * 1000,
-			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000))
+		    CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000)
 			prevent_power_on = 0;
-#endif
+#endif /* defined(CONFIG_CHARGE_MANAGER) */
+#endif /* defined(CONFIG_CHARGER_MIN_POWER_FOR_POWER_ON) */
 
 	/*
 	 * Factory override: Always allow power on if WP is disabled,
@@ -1861,19 +1856,17 @@ int charge_prevent_power_on(int power_button_pressed)
 #ifdef CONFIG_BATTERY_HW_PRESENT_CUSTOM
 	/*
 	 * If battery is NOT physically present then prevent power on until
-	 * charge manager provides at least LIKELY_PD_USBC_POWER_MW.
+	 * a sufficient charger is present.
 	 */
-	if (extpower_is_present() && battery_hw_present() == BP_NO &&
-	    charge_manager_get_power_limit_uw() <
-#ifdef CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT
-	    MIN(LIKELY_PD_USBC_POWER_MW * 1000,
-		CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000))
-#else
-	    (LIKELY_PD_USBC_POWER_MW * 1000))
-#endif
+	if (extpower_is_present() && battery_hw_present() == BP_NO
+#ifdef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+	    && charge_manager_get_power_limit_uw() <
+		CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000
+#endif /* CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON */
+	    )
 		prevent_power_on = 1;
-#endif
-#endif
+#endif /* CONFIG_BATTERY_HW_PRESENT_CUSTOM */
+#endif /* CONFIG_CHARGE_MANAGER */
 	return prevent_power_on;
 }
 

@@ -511,7 +511,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * is called.
 	 */
 	led_alert(charge_ma * charge_mv <
-			CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW * 1000);
+			CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000);
 
 	/*
 	 * In terms of timing, this should always work because
