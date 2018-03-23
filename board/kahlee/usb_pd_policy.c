@@ -155,7 +155,7 @@ int pd_check_data_swap(int port, int data_role)
 int pd_check_vconn_swap(int port)
 {
 	/* in G3, do not allow vconn swap since 5V rail is off */
-	return gpio_get_level(GPIO_SPOK);
+	return gpio_get_level(GPIO_S5_PGOOD);
 }
 
 void pd_execute_data_swap(int port, int data_role)

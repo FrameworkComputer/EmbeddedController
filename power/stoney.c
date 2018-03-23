@@ -26,7 +26,7 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-#define IN_SPOK POWER_SIGNAL_MASK(X86_SPOK)
+#define IN_S5_PGOOD POWER_SIGNAL_MASK(X86_S5_PGOOD)
 
 static int forcing_coldreset; /* Forced coldreset in progress? */
 static int forcing_shutdown;  /* Forced shutdown in progress? */
@@ -96,7 +96,7 @@ enum power_state power_chipset_init(void)
 	 * through G3.
 	 */
 	if (system_jumped_to_this_image()) {
-		if (gpio_get_level(GPIO_VGATE)) {
+		if (gpio_get_level(GPIO_S0_PGOOD)) {
 			/* Disable idle task deep sleep when in S0. */
 			disable_sleep(SLEEP_MASK_AP_RUN);
 
@@ -121,10 +121,10 @@ static void handle_pass_through(enum gpio_signal pin_in,
 	int out_level = gpio_get_level(pin_out);
 
 	/*
-	 * Only pass through high VGATE (S0 power) when SPOK (system power, S5)
-	 * is also high (VGATE is pulled high in G3 when SPOK is low).
+	 * Only pass through high S0_PGOOD (S0 power) when S5_PGOOD (S5 power)
+	 * is also high (S0_PGOOD is pulled high in G3 when S5_PGOOD is low).
 	 */
-	if ((pin_in == GPIO_VGATE) && !gpio_get_level(GPIO_SPOK))
+	if ((pin_in == GPIO_S0_PGOOD) && !gpio_get_level(GPIO_S5_PGOOD))
 		in_level = 0;
 
 	/* Nothing to do. */
@@ -135,7 +135,7 @@ static void handle_pass_through(enum gpio_signal pin_in,
 	 * SOC requires a delay of 1ms with stable power before
 	 * asserting PWR_GOOD.
 	 */
-	if ((pin_in == GPIO_VGATE) && in_level)
+	if ((pin_in == GPIO_S0_PGOOD) && in_level)
 		msleep(1);
 
 	gpio_set_level(pin_out, in_level);
@@ -145,9 +145,9 @@ static void handle_pass_through(enum gpio_signal pin_in,
 
 enum power_state power_handle_state(enum power_state state)
 {
-	handle_pass_through(GPIO_SPOK, GPIO_PCH_RSMRST_L);
+	handle_pass_through(GPIO_S5_PGOOD, GPIO_PCH_RSMRST_L);
 
-	handle_pass_through(GPIO_VGATE, GPIO_PCH_SYS_PWROK);
+	handle_pass_through(GPIO_S0_PGOOD, GPIO_PCH_SYS_PWROK);
 
 	if (state == POWER_S5 && forcing_shutdown) {
 		power_button_pch_release();
@@ -171,7 +171,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks to initialize PMIC */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-		if (power_wait_signals(IN_SPOK)) {
+		if (power_wait_signals(IN_S5_PGOOD)) {
 			chipset_force_g3();
 			return POWER_G3;
 		}
@@ -181,7 +181,7 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5:
-		if (!power_has_signals(IN_SPOK)) {
+		if (!power_has_signals(IN_S5_PGOOD)) {
 			/* Required rail went away */
 			return POWER_S5G3;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S5_L) == 1) {
@@ -191,7 +191,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5S3:
-		if (!power_has_signals(IN_SPOK)) {
+		if (!power_has_signals(IN_S5_PGOOD)) {
 			/* Required rail went away */
 			return POWER_S5G3;
 		}
@@ -202,7 +202,7 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3:
-		if (!power_has_signals(IN_SPOK)) {
+		if (!power_has_signals(IN_S5_PGOOD)) {
 			/* Required rail went away */
 			return POWER_S5G3;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1) {
@@ -215,7 +215,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S3S0:
-		if (!power_has_signals(IN_SPOK)) {
+		if (!power_has_signals(IN_S5_PGOOD)) {
 			/* Required rail went away */
 			return POWER_S5G3;
 		}
@@ -235,7 +235,7 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S0;
 
 	case POWER_S0:
-		if (!power_has_signals(IN_SPOK)) {
+		if (!power_has_signals(IN_S5_PGOOD)) {
 			/* Required rail went away */
 			return POWER_S5G3;
 		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {

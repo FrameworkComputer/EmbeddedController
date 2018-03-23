@@ -182,8 +182,8 @@ enum adc_channel {
 enum power_signal {
 	X86_SLP_S3_N,
 	X86_SLP_S5_N,
-	X86_VGATE,
-	X86_SPOK,
+	X86_S0_PGOOD,
+	X86_S5_PGOOD,
 	POWER_SIGNAL_COUNT
 };
 

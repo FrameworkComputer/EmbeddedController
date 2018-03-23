@@ -220,7 +220,7 @@ enum mft_channel {
 enum power_signal {
 	X86_SLP_S3_N = 0,
 	X86_SLP_S5_N,
-	X86_SPOK,
+	X86_S5_PGOOD,
 	X86_ALW_PG,
 
 	/* Number of X86 signals */
