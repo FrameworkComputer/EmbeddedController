@@ -661,7 +661,8 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 void lid_angle_peripheral_enable(int enable)
 {
 	/* If the lid is in 360 position, ignore the lid angle,
-	 * which might be faulty. Disable keyboard and touchpad. */
+	 * which might be faulty. Disable keyboard.
+	 */
 	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
