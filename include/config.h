@@ -1831,6 +1831,13 @@
 #undef CONFIG_KEYBOARD_COL2_INVERTED
 
 /*
+ * Keyboards with the assistant key also move the refresh key matrix to row 3
+ * instead of row 2.  This is used by the boot key detection code to determine
+ * if the refresh key is held down at boot.
+ */
+#undef CONFIG_KEYBOARD_REFRESH_ROW3
+
+/*
  * Config KSO to start from a different KSO pin. This is to allow some chips
  * to use alternate functions on KSO pins.
  */
