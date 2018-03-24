@@ -32,6 +32,7 @@ GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPE
 GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN, chipset_reset_request_interrupt)  /* Reset request from AP */
 /* AP_RST_L is used for PMIC and AP negotiation. Don't change its state. */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, chipset_power_signal_interrupt)
+GPIO_INT(SHI_CS_L,          PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)
 
 GPIO(EC_SELF_RST,           PIN(E, 0), GPIO_OUT_LOW)   /* Self-reset EC */
 GPIO(SYS_RST_L,             PIN(0, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
@@ -42,7 +43,7 @@ GPIO(CCD_MODE_ODL,          PIN(E, 3), GPIO_INPUT)     /* Case Closed Debug Mode
 GPIO(BATT_PRES_ODL,         PIN(E, 5), GPIO_INPUT)     /* EC_BATT_PRES_ODL: Battery Present */
 GPIO(PMIC_FAULT_L,          PIN(7, 6), GPIO_INPUT)     /* Any PMIC fault? */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_OUT_HIGH)  /* TP10, rework jumps to PMIC power button */
-GPIO(AP_EC_INT_L,           PIN(A, 2), GPIO_INPUT)     /* Interrupt line between AP and EC */
+GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between AP and EC */
 
 /* Power enables */
 GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_OUT_HIGH)  /* Enable switch cap. XXX: It's active-high */

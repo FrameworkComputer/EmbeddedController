@@ -23,6 +23,7 @@
 #include "power.h"
 #include "power_button.h"
 #include "system.h"
+#include "shi_chip.h"
 #include "switch.h"
 #include "task.h"
 #include "usb_charge.h"
