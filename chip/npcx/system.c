@@ -367,10 +367,8 @@ void system_check_reset_cause(void)
 
 	/* Use scratch bit to check power on reset or VCC1_RST reset */
 	if (!IS_BIT_SET(NPCX_RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) {
-#if defined(BOARD_WHEATLEY) || defined(BOARD_EVE) || defined(BOARD_POPPY) || defined(BOARD_SORAKA)\
-	|| defined(BOARD_NAUTILUS) || defined(BOARD_NAMI)
-
-		/* TODO(crosbug.com/p/61028): Remove workaround for Eve */
+#ifdef CONFIG_BOARD_FORCE_RESET_PIN
+		/* Treat all resets as RESET_PIN */
 		flags |= RESET_FLAG_RESET_PIN;
 #else
 		/* Check for VCC1 reset */

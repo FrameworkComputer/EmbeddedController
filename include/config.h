@@ -420,6 +420,12 @@
 /* EC responses to a board defined I2C slave address */
 #undef CONFIG_BOARD_I2C_SLAVE_ADDR
 
+/*
+ * The board is unable to distinguish EC reset from power-on so it should treat
+ * all resets as triggered by RESET_PIN even if it is a POWER_ON reset.
+ */
+#undef CONFIG_BOARD_FORCE_RESET_PIN
+
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
 
