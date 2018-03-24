@@ -636,7 +636,7 @@ static int perform_calib(const struct motion_sensor_t *s)
 	ret = raw_write8(s->port, s->addr, BMI160_FOC_CONF, val);
 	ret = raw_write8(s->port, s->addr, BMI160_CMD_REG,
 			 BMI160_CMD_START_FOC);
-	deadline.val = get_time().val + 400;
+	deadline.val = get_time().val + 400 * MSEC;
 	do {
 		if (timestamp_expired(deadline, NULL)) {
 			ret = EC_RES_TIMEOUT;

@@ -235,7 +235,7 @@ static int perform_calib(const struct motion_sensor_t *s)
 		 * The sensor needs 16 samples. At 100Hz/10ms, it needs 160ms to
 		 * complete. Set 400ms to have some margin.
 		 */
-		deadline.val = get_time().val + 400;
+		deadline.val = get_time().val + 400 * MSEC;
 		do {
 			if (timestamp_expired(deadline, NULL)) {
 				ret = EC_RES_TIMEOUT;
