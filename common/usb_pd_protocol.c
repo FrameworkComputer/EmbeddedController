@@ -924,6 +924,34 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload)
 			port, PD_VDO_VID(payload[0]), payload[0] & 0xFFFF);
 }
 
+static void pd_set_data_role(int port, int role)
+{
+	pd[port].data_role = role;
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+	pd_update_saved_port_flags(port, PD_BBRMFLG_DATA_ROLE, role);
+#endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
+	pd_execute_data_swap(port, role);
+
+#ifdef CONFIG_USBC_SS_MUX
+#ifdef CONFIG_USBC_SS_MUX_DFP_ONLY
+	/*
+	 * Need to connect SS mux for if new data role is DFP.
+	 * If new data role is UFP, then disconnect the SS mux.
+	 */
+	if (role == PD_ROLE_DFP)
+		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+			    pd[port].polarity);
+	else
+		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
+			    pd[port].polarity);
+#else
+	usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
+		    pd[port].polarity);
+#endif
+#endif
+	pd_update_roles(port);
+}
+
 void pd_execute_hard_reset(int port)
 {
 	if (pd[port].last_state == PD_STATE_HARD_RESET_SEND)
@@ -957,6 +985,8 @@ void pd_execute_hard_reset(int port)
 		pd_power_supply_reset(port);
 	}
 
+	/* Set initial data role (matching power role) */
+	pd_set_data_role(port, pd[port].power_role);
 	if (pd[port].power_role == PD_ROLE_SINK) {
 		/* Clear the input current limit */
 		pd_set_input_current_limit(port, 0, 0);
@@ -1277,31 +1307,6 @@ void pd_request_data_swap(int port)
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-static void pd_set_data_role(int port, int role)
-{
-	pd[port].data_role = role;
-	pd_execute_data_swap(port, role);
-
-#ifdef CONFIG_USBC_SS_MUX
-#ifdef CONFIG_USBC_SS_MUX_DFP_ONLY
-	/*
-	 * Need to connect SS mux for if new data role is DFP.
-	 * If new data role is UFP, then disconnect the SS mux.
-	 */
-	if (role == PD_ROLE_DFP)
-		usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-			    pd[port].polarity);
-	else
-		usb_mux_set(port, TYPEC_MUX_NONE, USB_SWITCH_DISCONNECT,
-			    pd[port].polarity);
-#else
-	usb_mux_set(port, TYPEC_MUX_USB, USB_SWITCH_CONNECT,
-		    pd[port].polarity);
-#endif
-#endif
-	pd_update_roles(port);
-}
-
 static void pd_set_power_role(int port, int role)
 {
 	pd[port].power_role = role;
@@ -1591,6 +1596,7 @@ static void handle_request(int port, uint16_t head,
 		uint32_t *payload)
 {
 	int cnt = PD_HEADER_CNT(head);
+	int data_role = PD_HEADER_DROLE(head);
 	int p;
 
 	/* dump received packet content (only dump ping at debug level 3) */
@@ -1608,6 +1614,36 @@ static void handle_request(int port, uint16_t head,
 	 */
 	if (!pd_is_connected(port))
 		set_state(port, PD_STATE_HARD_RESET_SEND);
+
+	/*
+	 * When a data role conflict is detected, USB-C ErrorRecovery
+	 * actions shall be performed, and transitioning to unattached state
+	 * is one such legal action.
+	 */
+	if (pd[port].data_role == data_role) {
+		CPRINTF("C%d DR conflict!\n", port);
+		/*
+		 * If the port doesn't support removing the terminations, just
+		 * go to the unattached state.
+		 */
+		if (tcpm_set_cc(port, TYPEC_CC_OPEN) == EC_SUCCESS) {
+			/* Do not drive VBUS or VCONN. */
+			pd_power_supply_reset(port);
+#ifdef CONFIG_USBC_VCONN
+			set_vconn(port, 0);
+#endif /* defined(CONFIG_USBC_VCONN) */
+			usleep(PD_T_ERROR_RECOVERY);
+
+			/* Restore terminations. */
+			tcpm_set_cc(port, DUAL_ROLE_IF_ELSE(port, TYPEC_CC_RD,
+							    TYPEC_CC_RP));
+		}
+		set_state(port,
+			  DUAL_ROLE_IF_ELSE(port,
+					    PD_STATE_SNK_DISCONNECTED,
+					    PD_STATE_SRC_DISCONNECTED));
+		return;
+	}
 
 #ifdef CONFIG_USB_PD_REV30
 	/* Check if this is an extended chunked data message. */
