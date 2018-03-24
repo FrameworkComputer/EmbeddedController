@@ -736,6 +736,7 @@ enum pd_states {
 
 /* Per-port battery backed RAM flags */
 #define PD_BBRMFLG_EXPLICIT_CONTRACT (1 << 0)
+#define PD_BBRMFLG_POWER_ROLE        (1 << 1)
 
 enum pd_cc_states {
 	PD_CC_NONE,
