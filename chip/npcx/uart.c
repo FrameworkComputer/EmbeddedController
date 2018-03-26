@@ -234,7 +234,7 @@ void uart_ec_interrupt(void)
 	uart_process_input();
 	uart_process_output();
 }
-DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 0);
+DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 1);
 
 #ifdef CONFIG_UART_PAD_SWITCH
 /*

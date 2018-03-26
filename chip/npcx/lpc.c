@@ -588,7 +588,7 @@ void lpc_kbc_ibf_interrupt(void)
 	CPRINTS("ibf isr %02x", NPCX_HIKMDI);
 	task_wake(TASK_ID_KEYPROTO);
 }
-DECLARE_IRQ(NPCX_IRQ_KBC_IBF, lpc_kbc_ibf_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_KBC_IBF, lpc_kbc_ibf_interrupt, 4);
 
 /* KB controller output buffer empty ISR */
 void lpc_kbc_obe_interrupt(void)
@@ -600,7 +600,7 @@ void lpc_kbc_obe_interrupt(void)
 	CPRINTS("obe isr %02x", NPCX_HIKMST);
 	task_wake(TASK_ID_KEYPROTO);
 }
-DECLARE_IRQ(NPCX_IRQ_KBC_OBE, lpc_kbc_obe_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_KBC_OBE, lpc_kbc_obe_interrupt, 4);
 #endif
 
 /* PM channel input buffer full ISR */
@@ -614,13 +614,13 @@ void lpc_pmc_ibf_interrupt(void)
 	else if (NPCX_HIPMST(PMC_HOST_CMD) & 0x02)
 		handle_host_write((NPCX_HIPMST(PMC_HOST_CMD)&0x08) ? 1 : 0);
 }
-DECLARE_IRQ(NPCX_IRQ_PM_CHAN_IBF, lpc_pmc_ibf_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_PM_CHAN_IBF, lpc_pmc_ibf_interrupt, 4);
 
 /* PM channel output buffer empty ISR */
 void lpc_pmc_obe_interrupt(void)
 {
 }
-DECLARE_IRQ(NPCX_IRQ_PM_CHAN_OBE, lpc_pmc_obe_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_PM_CHAN_OBE, lpc_pmc_obe_interrupt, 4);
 
 void lpc_port80_interrupt(void)
 {
@@ -637,7 +637,7 @@ void lpc_port80_interrupt(void)
 	/* Clear pending bit of host writing */
 	SET_BIT(NPCX_DP80STS, 5);
 }
-DECLARE_IRQ(NPCX_IRQ_PORT80, lpc_port80_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_PORT80, lpc_port80_interrupt, 4);
 
 /**
  * Preserve event masks across a sysjump.

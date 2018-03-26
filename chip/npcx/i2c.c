@@ -581,15 +581,15 @@ void i2c6_interrupt(void) { handle_interrupt(6); }
 void i2c7_interrupt(void) { handle_interrupt(7); }
 #endif
 
-DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_SMB2, i2c1_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_SMB3, i2c2_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 4);
+DECLARE_IRQ(NPCX_IRQ_SMB2, i2c1_interrupt, 4);
+DECLARE_IRQ(NPCX_IRQ_SMB3, i2c2_interrupt, 4);
+DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 4);
 #if defined(CHIP_FAMILY_NPCX7)
-DECLARE_IRQ(NPCX_IRQ_SMB5, i2c4_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_SMB6, i2c5_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_SMB7, i2c6_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_SMB8, i2c7_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_SMB5, i2c4_interrupt, 4);
+DECLARE_IRQ(NPCX_IRQ_SMB6, i2c5_interrupt, 4);
+DECLARE_IRQ(NPCX_IRQ_SMB7, i2c6_interrupt, 4);
+DECLARE_IRQ(NPCX_IRQ_SMB8, i2c7_interrupt, 4);
 #endif
 
 /*****************************************************************************/

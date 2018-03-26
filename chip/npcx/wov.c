@@ -581,7 +581,7 @@ void wov_interrupt_handler(void)
 	SET_FIELD(NPCX_WOV_STATUS, NPCX_WOV_STATUS_BITS, wov_status);
 }
 
-DECLARE_IRQ(NPCX_IRQ_WOV, wov_interrupt_handler, 3);
+DECLARE_IRQ(NPCX_IRQ_WOV, wov_interrupt_handler, 4);
 
 /**
  * Enable FMUL2.

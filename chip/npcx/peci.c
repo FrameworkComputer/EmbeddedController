@@ -278,7 +278,7 @@ void peci_done_interrupt(void){
 	SET_BIT(NPCX_PECI_CTL_STS, NPCX_PECI_CTL_STS_CRC_ERR);
 	SET_BIT(NPCX_PECI_CTL_STS, NPCX_PECI_CTL_STS_ABRT_ERR);
 }
-DECLARE_IRQ(NPCX_IRQ_PECI, peci_done_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_PECI, peci_done_interrupt, 4);
 
 /*****************************************************************************/
 /* Console commands */

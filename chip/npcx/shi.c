@@ -827,7 +827,7 @@ void shi_int_handler(void)
 			log_unexpected_state("IBF");
 	}
 }
-DECLARE_IRQ(NPCX_IRQ_SHI, shi_int_handler, 1);
+DECLARE_IRQ(NPCX_IRQ_SHI, shi_int_handler, 2);
 
 /* Handle an CS assert event on the SHI_CS_L pin */
 void shi_cs_event(enum gpio_signal signal)

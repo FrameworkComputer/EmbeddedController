@@ -161,7 +161,7 @@ void adc_interrupt(void)
 			task_set_event(task_waiting, TASK_EVENT_ADC_DONE, 0);
 	}
 }
-DECLARE_IRQ(NPCX_IRQ_ADC, adc_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_ADC, adc_interrupt, 4);
 
 /**
  * ADC initial.
