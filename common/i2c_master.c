@@ -451,7 +451,8 @@ int i2c_unwedge(int port)
 				 * If we get here, a slave is holding the clock
 				 * low and there is nothing we can do.
 				 */
-				CPUTS("I2C unwedge failed, SCL is being held low");
+				CPRINTS("I2C%d unwedge failed, "
+					"SCL is held low", port);
 				ret = EC_ERROR_UNKNOWN;
 				goto unwedge_done;
 			}
@@ -464,7 +465,7 @@ int i2c_unwedge(int port)
 	if (i2c_raw_get_sda(port))
 		goto unwedge_done;
 
-	CPUTS("I2C unwedge called with SDA held low");
+	CPRINTS("I2C%d unwedge called with SDA held low", port);
 
 	/* Keep trying to unwedge the SDA line until we run out of attempts. */
 	for (i = 0; i < UNWEDGE_SDA_ATTEMPTS; i++) {
@@ -499,11 +500,11 @@ int i2c_unwedge(int port)
 	}
 
 	if (!i2c_raw_get_sda(port)) {
-		CPUTS("I2C unwedge failed, SDA still low");
+		CPRINTS("I2C%d unwedge failed, SDA still low", port);
 		ret = EC_ERROR_UNKNOWN;
 	}
 	if (!i2c_raw_get_scl(port)) {
-		CPUTS("I2C unwedge failed, SCL still low");
+		CPRINTS("I2C%d unwedge failed, SCL still low", port);
 		ret = EC_ERROR_UNKNOWN;
 	}
 
