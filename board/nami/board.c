@@ -495,8 +495,8 @@ void board_hibernate(void)
 }
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_RED]   = { 3, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED_GREEN] = { 5, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED1]   = { 3, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED2] = { 5, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

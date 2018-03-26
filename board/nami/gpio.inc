@@ -94,6 +94,9 @@ GPIO(USB2_OTG_ID,		PIN(5, 7), GPIO_ODR_LOW)	/* OTG ID */
 /* Trackpad */
 GPIO(TP_INT_EN,			PIN(A, 1), GPIO_OUT_LOW)
 
+/* LED */
+GPIO(LED1,			PIN(A, 7), GPIO_OUT_LOW)
+
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 1, MODULE_UART, 0)	/* GPIO64-65 UART from EC to Servo */
 ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)	/* GPIO87 EC_I2C1_3V3_SDA */

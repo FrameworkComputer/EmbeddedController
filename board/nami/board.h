@@ -77,6 +77,7 @@
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_SMART
+#define CONFIG_PWR_STATE_DISCHARGE_FULL
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
@@ -237,8 +238,8 @@ enum adc_channel {
 };
 
 enum pwm_channel {
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
+	PWM_CH_LED1,
+	PWM_CH_LED2,
 	PWM_CH_FAN,
 	/* Number of PWM channels */
 	PWM_CH_COUNT,
