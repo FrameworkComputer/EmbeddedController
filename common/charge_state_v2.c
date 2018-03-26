@@ -52,6 +52,7 @@ static int charge_request(int voltage, int current);
  */
 static const struct battery_info *batt_info;
 static struct charge_state_data curr;
+static enum charge_state_v2 prev_state;
 static int prev_ac, prev_charge, prev_full;
 static enum battery_present prev_bp;
 static int is_full; /* battery not accepting current */
@@ -1307,6 +1308,12 @@ static void notify_host_of_low_battery(void)
 #endif
 }
 
+static void set_charge_state(enum charge_state_v2 state)
+{
+	prev_state = curr.state;
+	curr.state = state;
+}
+
 const struct batt_params *charger_current_battery_params(void)
 {
 	return &curr.batt;
@@ -1486,7 +1493,7 @@ void charger_task(void *u)
 		if (curr.batt.is_present == BP_NO) {
 			if (!curr.ac)
 				CPRINTS("running with no battery and no AC");
-			curr.state = ST_IDLE;
+			set_charge_state(ST_IDLE);
 			curr.batt_is_charging = 0;
 			battery_was_removed = 1;
 			goto wait_for_it;
@@ -1512,7 +1519,7 @@ void charger_task(void *u)
 		battery_critical = shutdown_on_critical_battery();
 
 		if (!curr.ac) {
-			curr.state = ST_DISCHARGE;
+			set_charge_state(ST_DISCHARGE);
 			goto wait_for_it;
 		}
 
@@ -1520,7 +1527,7 @@ void charger_task(void *u)
 
 		/* Used for factory tests. */
 		if (chg_ctl_mode != CHARGE_CONTROL_NORMAL) {
-			curr.state = ST_IDLE;
+			set_charge_state(ST_IDLE);
 			goto wait_for_it;
 		}
 
@@ -1528,7 +1535,7 @@ void charger_task(void *u)
 		if (!(curr.batt.flags & BATT_FLAG_RESPONSIVE)) {
 			if (battery_seems_to_be_dead || battery_is_cut_off()) {
 				/* It's dead, do nothing */
-				curr.state = ST_IDLE;
+				set_charge_state(ST_IDLE);
 				curr.requested_voltage = 0;
 				curr.requested_current = 0;
 			} else if (curr.state == ST_PRECHARGE &&
@@ -1537,7 +1544,7 @@ void charger_task(void *u)
 				/* We've tried long enough, give up */
 				CPRINTS("battery seems to be dead");
 				battery_seems_to_be_dead = 1;
-				curr.state = ST_IDLE;
+				set_charge_state(ST_IDLE);
 				curr.requested_voltage = 0;
 				curr.requested_current = 0;
 			} else {
@@ -1547,7 +1554,7 @@ void charger_task(void *u)
 					precharge_start_time = get_time();
 					need_static = 1;
 				}
-				curr.state = ST_PRECHARGE;
+				set_charge_state(ST_PRECHARGE);
 				curr.requested_voltage =
 					batt_info->voltage_max;
 				curr.requested_current =
@@ -1601,7 +1608,7 @@ void charger_task(void *u)
 			    }
 
 			battery_seems_to_be_dead = battery_was_removed = 0;
-			curr.state = ST_CHARGE;
+			set_charge_state(ST_CHARGE);
 		}
 
 wait_for_it:
@@ -1635,7 +1642,8 @@ wait_for_it:
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 		    (charge_base != prev_charge_base) ||
 #endif
-		    (is_full != prev_full)) {
+		    (is_full != prev_full) ||
+		    (curr.state != prev_state)) {
 			show_charging_progress();
 			prev_charge = curr.batt.state_of_charge;
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
