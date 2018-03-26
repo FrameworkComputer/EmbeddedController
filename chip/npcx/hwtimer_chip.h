@@ -32,4 +32,7 @@ uint16_t __hw_clock_event_count(void);
 /* Returns time delay because of deep idle */
 uint32_t __hw_clock_get_sleep_time(uint16_t pre_evt_cnt);
 
+/* Handle ITIM32 overflow if interrupt is disabled */
+void __hw_clock_handle_overflow(uint32_t clksrc_high);
+
 #endif /* __CROS_EC_HWTIMER_CHIP_H */

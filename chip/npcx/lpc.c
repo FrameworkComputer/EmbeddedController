@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "hwtimer_chip.h"
 #include "keyboard_protocol.h"
 #include "lpc.h"
 #include "lpc_chip.h"
@@ -337,14 +338,17 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
  */
 static void lpc_sib_wait_host_read_done(void)
 {
-	timestamp_t deadline;
+	timestamp_t deadline, start;
 
-	deadline.val = get_time().val + LPC_HOST_TRANSACTION_TIMEOUT_US;
+	start = get_time();
+	deadline.val = start.val + LPC_HOST_TRANSACTION_TIMEOUT_US;
 	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD)) {
 		if (timestamp_expired(deadline, NULL)) {
 			CPRINTS("Unexpected time of host read transaction");
 			break;
 		}
+		/* Handle ITIM32 overflow condition */
+		__hw_clock_handle_overflow(start.le.hi);
 	}
 }
 
@@ -353,14 +357,17 @@ static void lpc_sib_wait_host_read_done(void)
  */
 static void lpc_sib_wait_host_write_done(void)
 {
-	timestamp_t deadline;
+	timestamp_t deadline, start;
 
-	deadline.val = get_time().val + LPC_HOST_TRANSACTION_TIMEOUT_US;
+	start = get_time();
+	deadline.val = start.val + LPC_HOST_TRANSACTION_TIMEOUT_US;
 	while (IS_BIT_SET(NPCX_SIBCTRL, NPCX_SIBCTRL_CSWR)) {
 		if (timestamp_expired(deadline, NULL)) {
 			CPRINTS("Unexpected time of host write transaction");
 			break;
 		}
+		/* Handle ITIM32 overflow condition */
+		__hw_clock_handle_overflow(start.le.hi);
 	}
 }
 
