@@ -210,8 +210,18 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	{I2C_PORT_TCPC0, 0x50, &anx74xx_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
-	{I2C_PORT_TCPC1, 0x50, &anx74xx_tcpm_drv, TCPC_ALERT_ACTIVE_LOW},
+	{
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = ANX74XX_I2C_ADDR1,
+		.drv = &anx74xx_tcpm_drv,
+		.pol = TCPC_ALERT_ACTIVE_LOW,
+	},
+	{
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = ANX74XX_I2C_ADDR1,
+		.drv = &anx74xx_tcpm_drv,
+		.pol = TCPC_ALERT_ACTIVE_LOW,
+	},
 };
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {

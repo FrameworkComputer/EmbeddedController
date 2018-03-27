@@ -8,7 +8,9 @@
 #ifndef __CROS_EC_USB_MUX_IT5205_H
 #define __CROS_EC_USB_MUX_IT5205_H
 
-/* 8 bit i2c slave address is 0xb0 or 0x90 depends on address setting pin. */
+/* I2C interface */
+#define IT5205_I2C_ADDR1 (0x48 << 1)
+#define IT5205_I2C_ADDR2 (0x58 << 1)
 
 /* Chip ID registers */
 #define IT5205_REG_CHIP_ID3 0x4

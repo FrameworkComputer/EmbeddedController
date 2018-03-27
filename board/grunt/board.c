@@ -161,13 +161,13 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
 		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = 0x50,
+		.i2c_slave_addr = ANX74XX_I2C_ADDR1,
 		.drv = &anx74xx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
 	[USB_PD_PORT_PS8751] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = 0x16,
+		.i2c_slave_addr = PS8751_I2C_ADDR1,
 		.drv = &ps8xxx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
