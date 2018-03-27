@@ -25,7 +25,9 @@ ec.RW_B.elf in build/cr50/RW as inputs and util/signer/ec_RW-manifest-dev.json
 as the manifest, and places the newly signed images into build/cr50/ec.bin.
 
 The only outside dependency of this script is the signing utility itself,
-which is expected to be available as \$HOME/bin/codesigner.
+which is expected to be available as /usr/bin/cr50-codesigner.
+
+The utility can be installed by running 'sudo emerge cr50-utils',
 
 The following command line options are accepted:
 
@@ -105,8 +107,11 @@ tweak_manifest () {
   sed -i "s/\"fuses\": {/${sub}\"fuses\": {/" "${tmpf}"
 }
 
-# This is the suggested location of the codesigner utility.
-BIN_ROOT="${HOME}/bin"
+SIGNER="cr50-codesigner"
+if ! sudo which "${SIGNER}" 2>/dev/null > /dev/null; then
+  echo "${SIGNER} is not available, try running 'sudo emerge cr50-utils'" >&2
+  exit 1
+fi
 
 # This is where the new signed image will be pasted into.
 : ${RESULT_FILE=build/cr50/ec.bin}
@@ -202,7 +207,7 @@ for elf in ${elves[@]}; do
 
   # Make sure this file is not owned by root
   touch "${signed_file}"
-  sudo ${BIN_ROOT}/codesigner ${signer_command_params[@]} \
+  sudo "${SIGNER}" ${signer_command_params[@]} \
     -i ${elf} -o "${signed_file}"
   if [[ ! -s "${signed_file}" ]]; then
     echo "${progname}: error: empty signed file ${signed_file}" >&2
