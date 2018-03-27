@@ -77,9 +77,12 @@
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_DISCHARGE_PPC
-#define CONFIG_USB_PD_TCPC_LOW_POWER
-/* TODO(b/74127309): Replace below config once cl:956790 lands */
-#define CONFIG_USB_PD_TCPM_ANX3429	/* C0 TCPC: ANX7447QN */
+/*
+ * TODO(b/77544959): This mode doe not work with ANX7447 currently and floods
+ * the EC console with low power mode messages.
+ */
+#undef CONFIG_USB_PD_TCPC_LOW_POWER
+#define CONFIG_USB_PD_TCPM_ANX7447	/* C0 TCPC: ANX7447QN */
 #define CONFIG_USB_PD_TCPM_PS8751	/* C1 TCPC: PS8751 */
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_TCPCI
