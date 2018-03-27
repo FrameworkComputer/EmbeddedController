@@ -166,6 +166,7 @@ static inline int x_uart_addr(int ch, int offset)
 #define GR_UART_ISTATECLR(ch)         X_UARTREG(ch, GC_UART_ISTATECLR_OFFSET)
 #define GR_UART_FIFO(ch)              X_UARTREG(ch, GC_UART_FIFO_OFFSET)
 #define GR_UART_RFIFO(ch)             X_UARTREG(ch, GC_UART_RFIFO_OFFSET)
+#define GR_UART_VAL(ch)               X_UARTREG(ch, GC_UART_VAL_OFFSET)
 
 /*
  * Our ARM core doesn't have GPIO alternate functions, but it does have a full
