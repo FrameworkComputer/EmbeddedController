@@ -143,6 +143,8 @@
 
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VOLUME_BUTTONS
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
 
 #ifdef BOARD_ZOOMBINI
 /* USB Type-A Port BC1.2 support */
