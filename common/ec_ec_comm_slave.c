@@ -17,6 +17,7 @@
 #include "hooks.h"
 #include "queue.h"
 #include "queue_policies.h"
+#include "system.h"
 #include "task.h"
 #include "util.h"
 
@@ -120,6 +121,32 @@ static int read_data(void *buffer, size_t len, uint32_t start)
 	QUEUE_REMOVE_UNITS(&ec_ec_comm_slave_input, buffer, len);
 
 	return EC_SUCCESS;
+}
+
+static void handle_cmd_reboot_ec(
+	const struct ec_params_reboot_ec *params,
+	int data_len, int seq)
+{
+	int ret = EC_RES_SUCCESS;
+
+	if (data_len != sizeof(*params)) {
+		ret = EC_RES_INVALID_COMMAND;
+		goto out;
+	}
+
+	/* Only handle hibernate */
+	if (params->cmd != EC_REBOOT_HIBERNATE) {
+		ret = EC_RES_INVALID_PARAM;
+		goto out;
+	}
+
+	CPRINTS("Hibernating...");
+
+	system_hibernate(0, 0);
+	/* We should not be able to write back the response. */
+
+out:
+	write_response(ret, seq, NULL, 0);
 }
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY
@@ -276,12 +303,15 @@ void ec_ec_comm_slave_task(void *u)
 				&battery_dynamic[BATT_IDX_MAIN],
 				sizeof(battery_dynamic[BATT_IDX_MAIN]));
 			break;
-		case EC_CMD_CHARGER_CONTROL: {
+		case EC_CMD_CHARGER_CONTROL:
 			handle_cmd_charger_control((void *)params,
 						header.data_len, seq);
 			break;
-		}
 #endif
+		case EC_CMD_REBOOT_EC:
+			handle_cmd_reboot_ec((void *)params,
+						header.data_len, seq);
+			break;
 		default:
 			write_response(EC_RES_INVALID_COMMAND, seq,
 				NULL, 0);

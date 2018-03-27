@@ -345,4 +345,26 @@ int ec_ec_master_base_charge_control(int max_current,
 
 	return handle_error(__func__, ret, data.resp.head.result);
 }
+
+int ec_ec_master_hibernate(void)
+{
+	int ret;
+	struct {
+		struct {
+			struct ec_host_request4 head;
+			struct ec_params_reboot_ec param;
+		} req;
+		struct {
+			struct ec_host_response4 head;
+		} resp;
+	} __packed data;
+
+	data.req.param.cmd = EC_REBOOT_HIBERNATE;
+	data.req.param.flags = 0;
+
+	ret = write_command(EC_CMD_REBOOT_EC,
+		(void *)&data, sizeof(data.req.param), 0, 30 * MSEC);
+
+	return handle_error(__func__, ret, data.resp.head.result);
+}
 #endif /* CONFIG_EC_EC_COMM_BATTERY */

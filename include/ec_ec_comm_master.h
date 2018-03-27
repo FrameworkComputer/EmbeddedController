@@ -46,4 +46,13 @@ int ec_ec_master_base_charge_control(int max_current,
 				     int otg_voltage,
 				     int allow_charging);
 
+/**
+ * Sends EC_CMD_REBOOT_EC command to slave, with EC_REBOOT_HIBERNATE parameter.
+ *
+ * @return EC_RES_ERROR on communication error (should always be the case if the
+ * slave successfully hibernates, as it will not be able to write back the
+ * response, else forwards the error code from the slave.
+ */
+int ec_ec_master_hibernate(void);
+
 #endif /* EC_EC_COMM_MASTER_H_ */
