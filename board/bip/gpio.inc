@@ -13,15 +13,31 @@ GPIO_INT(LID_OPEN,	 PIN(E, 2), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(WP_L,		 PIN(I, 4), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 #ifdef CONFIG_LOW_POWER_IDLE
-/* Used to wake up the EC from Doze mode when writing to console */
+/* Used to wake up the EC from Deep Doze mode when writing to console */
 GPIO_INT(UART1_RX,	 PIN(B, 0), GPIO_INT_FALLING, uart_deepsleep_interrupt)	/* UART_SERVO_TX_EC_RX */
 #endif
 
-/*
- * TODO(b/76023457): Move below 4 signals to virtual wires over eSPI
- */
+/* USB-C interrupts */
+GPIO_INT(USB_C0_PD_INT_ODL, PIN(H, 6), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C1_PD_INT_ODL, PIN(H, 5), GPIO_INT_FALLING, ppc_interrupt)
+
+/* Power State interrupts */
+#ifdef CONFIG_POWER_S0IX
+GPIO_INT(PCH_SLP_S0_L,	 PIN(G, 6), GPIO_INT_BOTH, power_signal_interrupt)	/* SLP_S0_L */
+#endif
+GPIO_INT(PCH_SLP_S4_L,	 PIN(F, 3), GPIO_INT_BOTH, power_signal_interrupt)	/* SLP_S4_L */
+GPIO_INT(PCH_SLP_S3_L,	 PIN(F, 2), GPIO_INT_BOTH, power_signal_interrupt)	/* SLP_S3_L */
+GPIO_INT(SUSPWRDNACK,	 PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)	/* SUSPWRDNACK */
+GPIO_INT(RSMRST_L_PGOOD, PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_RSMRST_ODL */
+GPIO_INT(ALL_SYS_PGOOD,	 PIN(F, 0), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_PWROK_OD */
+GPIO_INT(AC_PRESENT, 	 PIN(A, 7), GPIO_INT_BOTH, extpower_interrupt)		/* ACOK_OD */
+
+
 GPIO(PCH_PLTRST_L,	 PIN(E, 3), GPIO_INPUT)		/* PLT_RST_L: Platform Reset from SoC */
 GPIO(SYS_RESET_L,	 PIN(B, 6), GPIO_ODR_HIGH)	/* SYS_RST_ODL */
+/*
+ * TODO(b/76023457): Move below 2 signals to virtual wires over eSPI
+ */
 GPIO(PCH_SMI_L,		 PIN(D, 4), GPIO_OUT_LOW)	/* EC_SMI_R_ODL */
 GPIO(PCH_SCI_L,		 PIN(D, 3), GPIO_OUT_LOW)	/* EC_SCI_R_ODL */
 
@@ -53,12 +69,26 @@ GPIO(I2C1_SCL,		 PIN(C, 1), GPIO_INPUT |
 				    GPIO_SEL_1P8V)	/* EC_I2C_SENSOR_U_SCL */
 GPIO(I2C1_SDA,		 PIN(C, 2), GPIO_INPUT |
 				    GPIO_SEL_1P8V)	/* EC_I2C_SENSOR_U_SDA */
-GPIO(I2C2_SCL,		 PIN(F, 6), GPIO_INPUT)		/* EC_I2C_USBC_MUX_SCL */
-GPIO(I2C2_SDA,		 PIN(F, 7), GPIO_INPUT)		/* EC_I2C_USBC_MUX_SDA */
-GPIO(I2C4_SCL,		 PIN(E, 0), GPIO_INPUT)		/* EC_I2C_USB_PD_SCL */
-GPIO(I2C4_SDA,		 PIN(E, 7), GPIO_INPUT)		/* EC_I2C_USB_PD_SDA */
+GPIO(I2C2_SCL,		 PIN(F, 6), GPIO_INPUT)		/* EC_I2C_USB_C0_MUX_SCL */
+GPIO(I2C2_SDA,		 PIN(F, 7), GPIO_INPUT)		/* EC_I2C_USB_C0_MUX_SDA */
+GPIO(I2C4_SCL,		 PIN(E, 0), GPIO_INPUT)		/* EC_I2C_USB_C1_MUX_SCL */
+GPIO(I2C4_SDA,		 PIN(E, 7), GPIO_INPUT)		/* EC_I2C_USB_C1_MUX_SDA */
 GPIO(I2C5_SCL,		 PIN(A, 4), GPIO_INPUT)		/* EC_I2C_PROG_SCL */
 GPIO(I2C5_SDA,		 PIN(A, 5), GPIO_INPUT)		/* EC_I2C_PROG_SDA */
+
+/* USB pins */
+GPIO(EN_USB_A0_5V,	 PIN(B, 7), GPIO_OUT_LOW)	/* Enable A0 5V Charging */
+GPIO(EN_USB_A1_5V,	 PIN(H, 3), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
+GPIO(USB_A0_CHARGE_EN_L, PIN(K, 0), GPIO_OUT_HIGH)	/* Enable A0 1.5A Charging */
+GPIO(USB_A1_CHARGE_EN_L, PIN(K, 6), GPIO_OUT_HIGH)	/* Enable A1 1.5A Charging */
+GPIO(USB_C0_HPD_1V8_ODL, PIN(J, 0), GPIO_ODR_HIGH |
+				    GPIO_SEL_1P8V)	/* C0 DP Hotplug Detect */
+GPIO(USB_C1_HPD_1V8_ODL, PIN(J, 1), GPIO_ODR_HIGH |
+				    GPIO_SEL_1P8V)	/* C1 DP Hotplug Detect */
+GPIO(USB_C0_BC12_CHG_DET_L, PIN(A, 0), GPIO_INPUT)	/* C0 BC1.2 Detect */
+GPIO(USB_C1_BC12_CHG_DET_L, PIN(A, 1), GPIO_INPUT)	/* C1 BC1.2 Detect */
+GPIO(USB_C0_BC12_VBUS_ON,   PIN(J, 4), GPIO_OUT_LOW)	/* C0 BC1.2 Power */
+GPIO(USB_C1_BC12_VBUS_ON,   PIN(J, 5), GPIO_OUT_LOW)	/* C1 BC1.2 Power */
 
 /* Alternate functions GPIO definitions */
 /* Cr50 requires no pull-ups on UART pins. */
