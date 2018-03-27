@@ -319,6 +319,7 @@ static void isl923x_init(void)
 
 	if (raw_write16(ISL923X_REG_CONTROL2,
 			reg |
+			ISL923X_C2_OTG_DEBOUNCE_150 |
 			ISL923X_C2_PROCHOT_DEBOUNCE_1000 |
 			ISL923X_C2_ADAPTER_DEBOUNCE_150))
 		goto init_fail;
