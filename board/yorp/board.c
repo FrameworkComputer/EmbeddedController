@@ -320,12 +320,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {
 		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr = NX20P3483_ADDR0,
+		.i2c_addr = NX20P3483_ADDR2,
 		.drv = &nx20p3483_drv,
 	},
 	[USB_PD_PORT_PS8751] = {
 		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr = NX20P3483_ADDR0,
+		.i2c_addr = NX20P3483_ADDR2,
 		.drv = &nx20p3483_drv,
 		.flags = PPC_CFG_FLAGS_GPIO_CONTROL,
 		.snk_gpio = GPIO_USB_C1_CHARGE_ON,
