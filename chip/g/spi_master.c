@@ -12,6 +12,10 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_STREAM_SIGNATURE
+#include "signing.h"
+#endif
+
 /* Not defined in the hardware register spec, the RX and TX buffers are 128B. */
 #define SPI_BUF_SIZE 0x80
 
@@ -69,6 +73,13 @@ int spi_transaction(const struct spi_device_t *spi_device,
 	/* Grab the port's mutex. */
 	mutex_lock(&spi_mutex[port]);
 
+#ifdef CONFIG_STREAM_SIGNATURE
+	/*
+	 * This hook allows mn50 to sniff data written to target
+	 * manufactured H1 devices.
+	 */
+	sig_append(stream_spiflash, txdata, txlen);
+#endif
 
 	/* Copy the txdata into the 128B Transmit Buffer. */
 	memmove((uint8_t *)GREG32_ADDR_I(SPI, port, TX_DATA), txdata, txlen);
