@@ -19,6 +19,11 @@
  */
 #define ADC_TIMEOUT_US 248
 
+/* Minimum and maximum values returned by adc_read_channel(). */
+#define ADC_READ_MIN 0
+#define ADC_READ_MAX 1023
+#define ADC_MAX_MVOLT 3000
+
 /* List of ADC channels. */
 enum chip_adc_channel {
 	CHIP_ADC_CH0 = 0,
