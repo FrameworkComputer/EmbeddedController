@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "battery.h"
 #include "common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -38,7 +39,14 @@
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
-	/* TODO(b/74127309): Flesh out USB code */
+	if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
+	    !gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+		return;
+
+#ifdef HAS_TASK_PDCMD
+	/* Exchange status with TCPCs */
+	host_command_pd_send_status(PD_CHARGE_NO_CHANGE);
+#endif
 }
 
 static void ppc_interrupt(enum gpio_signal signal)
@@ -148,9 +156,7 @@ void chipset_do_shutdown(void)
 
 static void board_init(void)
 {
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_L);
-	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_L);
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -182,10 +188,59 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	/* TODO(b/74127309): Flesh out USB code */
 }
 
+void board_tcpc_init(void)
+{
+	int count = 0;
+	int port;
+
+	/* Wait for disconnected battery to wake up */
+	while (battery_hw_present() == BP_YES &&
+	       battery_is_present() == BP_NO) {
+		usleep(100 * MSEC);
+		/* Give up waiting after 1 second */
+		if (++count > 10) {
+			ccprintf("TCPC_init: 1 second w/no battery\n");
+			break;
+		}
+	}
+
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_to_this_image())
+		board_reset_pd_mcu();
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_L);
+	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_L);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+	/*
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		const struct usb_mux *mux = &usb_muxes[port];
+
+		mux->hpd_update(port, 0, 0);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+
 uint16_t tcpc_get_alert_status(void)
 {
-	/* TODO(b/74127309): Flesh out USB code */
-	return 0;
+	uint16_t status = 0;
+
+	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_0;
+
+	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
 }
 
 /* Motion sensors */
