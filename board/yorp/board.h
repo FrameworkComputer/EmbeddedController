@@ -28,6 +28,8 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define CONFIG_VBOOT_HASH
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
 
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
