@@ -39,7 +39,11 @@ void system_decrement_retry_counter(void);
 int system_rolling_reboot_suspected(void);
 
 /**
- * Compare the rw headers to check if there was a rollback.
+ * Returns True if a rollback was detected during system_preinit.
+ *
+ * system_rollback_detected only returns True from rollback until the AP boots
+ * and then enters deep sleep. The system won't know that it rolled back on
+ * resume from deep sleep.
  *
  * @return a boolean, set to True if a rollback is detected.
  */
