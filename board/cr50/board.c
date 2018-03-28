@@ -1314,7 +1314,7 @@ static int command_sysinfo(int argc, char **argv)
 	ccprintf("Reset flags: 0x%08x (", system_get_reset_flags());
 	system_print_reset_flags();
 	ccprintf(")\n");
-	if (reset_count > 6)
+	if (system_rollback_detected())
 		ccprintf("Rollback detected\n");
 	ccprintf("Reset count: %d\n", reset_count);
 
