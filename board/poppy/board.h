@@ -132,13 +132,16 @@
 #define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 100000
 
 /* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO 1024
+#define CONFIG_ACCEL_FIFO 512
 
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
 
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
+
+#undef  CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
 
 /* USB */
 #define CONFIG_USB_CHARGER
