@@ -30,6 +30,8 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
+#define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_SPECIFIC_VERSION
 
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
@@ -141,6 +143,8 @@
 enum adc_channel {
 	ADC_VBUS_C0,
 	ADC_VBUS_C1,
+	ADC_BRD_ID1,
+	ADC_BRD_ID2,
 	ADC_CH_COUNT
 };
 
@@ -170,7 +174,9 @@ enum sensor_id {
 	SENSOR_COUNT
 };
 
+/* Forward declare board-specific functions */
 void board_reset_pd_mcu(void);
+int board_get_version(void);
 
 #endif /* !__ASSEMBLER__ */
 

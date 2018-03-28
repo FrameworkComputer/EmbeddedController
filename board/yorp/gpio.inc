@@ -106,6 +106,9 @@ GPIO(USB_C1_HPD_1V8_ODL, PIN(C, 6), GPIO_ODR_HIGH |	/* C1 DP Hotplug Detect */
 GPIO(BAT_LED_ORANGE_L,		PIN(C, 3), GPIO_OUT_HIGH)	/* LED_1_L */
 GPIO(BAT_LED_BLUE_L,		PIN(C, 4), GPIO_OUT_HIGH)	/* LED_2_L */
 
+/* Board IDs */
+GPIO(EC_BRD_ID_EN, 	 PIN(9, 6), GPIO_OUT_LOW)
+
 /* Alternate functions GPIO definitions */
 /* Cr50 requires no pull-ups on UART pins. */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)		/* UART from EC to Servo */
