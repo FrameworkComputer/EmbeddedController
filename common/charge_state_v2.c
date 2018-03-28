@@ -1877,6 +1877,19 @@ int charge_prevent_power_on(int power_button_pressed)
 	return prevent_power_on;
 }
 
+static int battery_near_full(void)
+{
+	if (curr.batt.state_of_charge < BATTERY_LEVEL_NEAR_FULL)
+		return 0;
+
+#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+	if (charge_base > -1 && charge_base < BATTERY_LEVEL_NEAR_FULL)
+		return 0;
+#endif
+
+	return 1;
+}
+
 enum charge_state charge_get_state(void)
 {
 	switch (curr.state) {
@@ -1886,14 +1899,14 @@ enum charge_state charge_get_state(void)
 		return PWR_STATE_IDLE;
 	case ST_DISCHARGE:
 #ifdef CONFIG_PWR_STATE_DISCHARGE_FULL
-		if (curr.batt.state_of_charge >= BATTERY_LEVEL_NEAR_FULL)
+		if (battery_near_full())
 			return PWR_STATE_DISCHARGE_FULL;
 		else
 #endif
 			return PWR_STATE_DISCHARGE;
 	case ST_CHARGE:
 		/* The only difference here is what the LEDs display. */
-		if (curr.batt.state_of_charge >= BATTERY_LEVEL_NEAR_FULL)
+		if (battery_near_full())
 			return PWR_STATE_CHARGE_NEAR_FULL;
 		else
 			return PWR_STATE_CHARGE;
