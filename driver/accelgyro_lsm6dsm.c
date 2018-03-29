@@ -120,7 +120,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	}
 
 	reg_val = LSM6DSM_ODR_TO_REG(rate);
-	normalized_rate = LSM6DSM_ODR_TO_NORMALIZE(rate);
+	normalized_rate = LSM6DSM_REG_TO_ODR(rate);
 
 	if (rnd && (normalized_rate < rate)) {
 		reg_val++;

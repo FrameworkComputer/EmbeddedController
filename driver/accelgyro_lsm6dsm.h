@@ -67,12 +67,10 @@ enum lsm6dsm_odr {
 #define LSM6DSM_ODR_MAX_VAL		416000
 
 /* ODR reg value from selected data rate in mHz */
-#define LSM6DSM_ODR_TO_REG(_odr) \
-	__fls(_odr / LSM6DSM_ODR_MIN_VAL)
+#define LSM6DSM_ODR_TO_REG(_odr) (__fls(_odr / LSM6DSM_ODR_MIN_VAL) + 1)
 
 /* normalized ODR value from selected data rate in mHz */
-#define LSM6DSM_ODR_TO_NORMALIZE(_odr) \
-	(LSM6DSM_ODR_MIN_VAL << __fls(_odr/LSM6DSM_ODR_MIN_VAL))
+#define LSM6DSM_REG_TO_ODR(_reg) (LSM6DSM_ODR_MIN_VAL << (_reg - 1))
 
 /* Full Scale range value and gain for Acc */
 #define LSM6DSM_FS_LIST_NUM		4
