@@ -8,6 +8,14 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/*
+ * By default, enable all console messages excepted HC, ACPI and event:
+ * The sensor stack is generating a lot of activity.
+ */
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#undef CONFIG_HOSTCMD_DEBUG_MODE
+#define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
+
 /* Optional features */
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
@@ -41,10 +49,23 @@
 #endif /* defined(BOARD_ZOOMBINI) */
 
 #define CONFIG_ACCELGYRO_LSM6DSM
+#define CONFIG_SPI_FLASH_W25Q80
 #define CONFIG_ALS
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 #define ALS_COUNT 1
+
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO 1024
+
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+
+/* Interrupt management. */
+#define CONFIG_ACCEL_INTERRUPTS
+
+/* Custom sensor option. */
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT		TASK_EVENT_CUSTOM(4)
 
 #define CONFIG_BACKLIGHT_LID
 
@@ -265,9 +286,7 @@ enum sensor_id {
 	LID_ALS,
 };
 
-/* TODO(gwendal): Currently LSM6DSM does not use interrupt. */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	((1 << LID_ACCEL) || (1 << LID_GYRO) || (1 << LID_ALS))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)
 
 #ifdef BOARD_MEOWTH
 int board_get_version(void);

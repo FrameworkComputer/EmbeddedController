@@ -217,7 +217,7 @@ static struct mutex g_base_mutex;
  * Motion Sense
  */
 
-struct stprivate_data lsm6dsm_a_data;
+struct lsm6dsm_data lsm6dsm_a_data;
 struct stprivate_data lsm6dsm_g_data;
 struct stprivate_data lsm6dsm_m_data;
 
@@ -234,7 +234,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
 		.rot_standard_ref = NULL,
-		.default_range = 2, /* g, enough for laptop. */
+		.default_range = 4, /* g, enough for laptop. */
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 		.config = {
@@ -256,8 +256,10 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &lsm6dsm_g_data,
 		.port = I2C_PORT_SENSOR,
 		.addr = LSM6DSM_ADDR0,
-		.default_range = 245, /* dps */
 		.rot_standard_ref = NULL,
+		.default_range = 1000, /* dps */
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
 	[LID_ALS] = {
 		.name = "Light",
@@ -464,6 +466,8 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C2_PPC_INT_L);
+#else
+	gpio_enable_interrupt(GPIO_SIXAXIS_INT_L);
 #endif /* defined(BOARD_ZOOMBINI) */
 
 	/* Enable TCPC interrupts. */

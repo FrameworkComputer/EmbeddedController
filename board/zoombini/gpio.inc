@@ -132,8 +132,7 @@ ALTERNATE(PIN_MASK(4, 0x30), 1, MODULE_ADC, 0) /* ADC0-1 */
 ALTERNATE(PIN_MASK(0, 0x03), 1, MODULE_PMU, 0) /* GPIO00, GPIO01 */
 ALTERNATE(PIN_MASK(D, 0x04), 1, MODULE_PMU, 0) /* GPIOD2 */
 
-/* Meowth GPIOs */
-#else
+#else  /* defined(BOARD_ZOOMBINI) */
 
 GPIO_INT(USB_C0_PD_INT_L, PIN(6, 1), GPIO_INT_FALLING, usb_c_interrupt)
 GPIO_INT(USB_C1_PD_INT_L, PIN(F, 5), GPIO_INT_FALLING, usb_c_interrupt)
@@ -155,6 +154,11 @@ GPIO_INT(PMIC_INT_L,      PIN(D, 5), GPIO_INT_FALLING | GPIO_PULL_UP, power_sign
 GPIO_INT(VOLUME_UP_L,     PIN(7, 5), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(VOLUME_DOWN_L,   PIN(6, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(BASE_PWR_FLT_L,  PIN(2, 4), GPIO_INT_FALLING, base_pwr_fault_interrupt)
+
+/* MEMS Sensors. */
+GPIO_INT(SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, lsm6dsm_interrupt)
+GPIO(ALS_INT_L,           PIN(5, 0), GPIO_INPUT)
+
 
 /* Power Enables. */
 GPIO(EN_PP3300_DSW,        PIN(8, 2), GPIO_OUT_LOW)
@@ -232,4 +236,4 @@ ALTERNATE(PIN_MASK(F, 0x03), 1, MODULE_ADC, 0) /* ADC8-9 */
 ALTERNATE(PIN_MASK(0, 0x03), 1, MODULE_PMU, 0) /* GPIO00, GPIO01 */
 ALTERNATE(PIN_MASK(D, 0x04), 1, MODULE_PMU, 0) /* GPIOD2 */
 
-#endif /* defined(BOARD_ZOOMBINI) */
+#endif  /* defined(BOARD_ZOOMBINI) */
