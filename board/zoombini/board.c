@@ -19,6 +19,7 @@
 #include "driver/led/lm3630a.h"
 #include "driver/pmic_tps650x30.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "ec_commands.h"
 #ifdef CONFIG_ESPI_VW_SIGNALS
@@ -282,6 +283,17 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
+	[VSYNC] = {
+	 .name = "Camera vsync",
+	 .active_mask = SENSOR_ACTIVE_S0,
+	 .chip = MOTIONSENSE_CHIP_GPIO,
+	 .type = MOTIONSENSE_TYPE_SYNC,
+	 .location = MOTIONSENSE_LOC_CAMERA,
+	 .drv = &sync_drv,
+	 .default_range = 0,
+	 .min_frequency = 0,
+	 .max_frequency = 1,
+	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
@@ -468,6 +480,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C2_PPC_INT_L);
 #else
 	gpio_enable_interrupt(GPIO_SIXAXIS_INT_L);
+	gpio_enable_interrupt(GPIO_RCAM_VSYNC);
 #endif /* defined(BOARD_ZOOMBINI) */
 
 	/* Enable TCPC interrupts. */

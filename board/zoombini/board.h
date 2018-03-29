@@ -54,6 +54,7 @@
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 #define ALS_COUNT 1
+#define CONFIG_SYNC
 
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
@@ -66,6 +67,7 @@
 
 /* Custom sensor option. */
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT		TASK_EVENT_CUSTOM(4)
+#define CONFIG_SYNC_INT_EVENT			TASK_EVENT_CUSTOM(8)
 
 #define CONFIG_BACKLIGHT_LID
 
@@ -284,6 +286,7 @@ enum sensor_id {
 	LID_ACCEL,
 	LID_GYRO,
 	LID_ALS,
+	VSYNC,
 };
 
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ALS)

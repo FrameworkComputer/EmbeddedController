@@ -157,6 +157,7 @@ GPIO_INT(BASE_PWR_FLT_L,  PIN(2, 4), GPIO_INT_FALLING, base_pwr_fault_interrupt)
 
 /* MEMS Sensors. */
 GPIO_INT(SIXAXIS_INT_L,   PIN(5, 6), GPIO_INT_FALLING, lsm6dsm_interrupt)
+GPIO_INT(RCAM_VSYNC,      PIN(E, 0), GPIO_INT_FALLING, sync_interrupt)
 GPIO(ALS_INT_L,           PIN(5, 0), GPIO_INPUT)
 
 
