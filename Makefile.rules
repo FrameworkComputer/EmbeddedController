@@ -463,6 +463,10 @@ flash_ec: $(out)/ec.bin
 flash_dfu: $(out)/ec.bin
 	sudo ./$(BDIR)/dfu $(out)/ec.bin
 
+.PHONY: print-baseboard
+print-baseboard:
+	@echo "${BASEBOARD}"
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)

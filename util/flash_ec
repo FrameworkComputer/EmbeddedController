@@ -222,7 +222,6 @@ function get_servo_type() {
 }
 
 BOARD=${FLAGS_board}
-BOARD_ROOT=/build/${BOARD}
 
 in_array() {
 	local n=$#
@@ -412,11 +411,19 @@ else
 	EC_FILE=ec.bin
 fi
 
-EMERGE_BUILD=${BOARD_ROOT}/firmware/${EC_FILE}
 
 LOCAL_BUILD=
 if [[ -n "${EC_DIR}" ]]; then
 	LOCAL_BUILD="${EC_DIR}/build/${BOARD}/${EC_FILE}"
+fi
+
+# Get baseboard from build system if present
+BASEBOARD=$(make --quiet -C ${EC_DIR} BOARD=${BOARD} print-baseboard)
+
+if [[ -n "${BASEBOARD}" ]]; then
+	EMERGE_BUILD=/build/${BASEBOARD}/firmware/${BOARD}/${EC_FILE}
+else
+	EMERGE_BUILD=/build/${BOARD}/firmware/${EC_FILE}
 fi
 
 # Find the EC image to use
