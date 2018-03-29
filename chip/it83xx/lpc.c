@@ -372,6 +372,7 @@ int lpc_get_pltrst_asserted(void)
 }
 #endif
 
+#ifdef HAS_TASK_KEYPROTO
 /* KBC and PMC control modules */
 void lpc_kbc_ibf_interrupt(void)
 {
@@ -385,9 +386,7 @@ void lpc_kbc_ibf_interrupt(void)
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_IN);
 
-#ifdef HAS_TASK_KEYPROTO
 	task_wake(TASK_ID_KEYPROTO);
-#endif
 }
 
 void lpc_kbc_obe_interrupt(void)
@@ -404,10 +403,9 @@ void lpc_kbc_obe_interrupt(void)
 	}
 #endif
 
-#ifdef HAS_TASK_KEYPROTO
 	task_wake(TASK_ID_KEYPROTO);
-#endif
 }
+#endif /* HAS_TASK_KEYPROTO */
 
 void pm1_ibf_interrupt(void)
 {

@@ -9,8 +9,6 @@
 #define __CROS_EC_INTC_H
 
 int intc_get_ec_int(void);
-void lpc_kbc_ibf_interrupt(void);
-void lpc_kbc_obe_interrupt(void);
 void pm1_ibf_interrupt(void);
 void pm2_ibf_interrupt(void);
 void pm3_ibf_interrupt(void);
@@ -26,5 +24,10 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds);
 void espi_interrupt(void);
 void espi_vw_interrupt(void);
 void espi_init(void);
+
+#ifdef HAS_TASK_KEYPROTO
+void lpc_kbc_ibf_interrupt(void);
+void lpc_kbc_obe_interrupt(void);
+#endif
 
 #endif /* __CROS_EC_INTC_H */

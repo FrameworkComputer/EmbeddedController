@@ -47,7 +47,7 @@ void intc_cpu_int_group_5(void)
 	int intc_group_5 = intc_get_ec_int();
 
 	switch (intc_group_5) {
-#ifdef CONFIG_LPC
+#if defined(CONFIG_LPC) && defined(HAS_TASK_KEYPROTO)
 	case IT83XX_IRQ_KBC_OUT:
 		lpc_kbc_obe_interrupt();
 		break;
