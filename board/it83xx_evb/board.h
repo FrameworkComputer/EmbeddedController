@@ -22,9 +22,12 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LOW_POWER_S0
+#define CONFIG_PECI
 #define CONFIG_PECI_TJMAX 100
 #define CONFIG_POWER_BUTTON
+#define CONFIG_PWM
 /* Use CS0 of SSPI */
+#define CONFIG_SPI
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_UART_HOST
 
@@ -42,7 +45,6 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
-#undef CONFIG_UART_HOST
 #endif
 
 /* Optional console commands */

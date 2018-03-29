@@ -137,12 +137,6 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
-/* modules we want to exclude */
-#undef CONFIG_PECI
-#undef CONFIG_PWM
-#undef CONFIG_SPI
-#undef CONFIG_UART_HOST
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 #undef CONFIG_UART_RX_BUF_SIZE

@@ -104,9 +104,6 @@
 #define CONFIG_ADC
 #define CONFIG_EC2I
 #define CONFIG_LPC
-#define CONFIG_PECI
-#define CONFIG_PWM
-#define CONFIG_SPI
 #define CONFIG_SWITCH
 
 /* Chip needs to do custom pre-init */
