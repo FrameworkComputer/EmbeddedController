@@ -686,7 +686,7 @@ static void board_set_motion_sensor_count(void)
 	uint32_t oem_id;
 
 	if (cbi_get_oem_id(&oem_id) == EC_SUCCESS) {
-		if (oem_id == PROJECT_VAYNE)
+		if (oem_id == PROJECT_VAYNE || oem_id == PROJECT_SONA)
 			motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
 	}
 }
