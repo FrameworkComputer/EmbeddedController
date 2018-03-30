@@ -37,12 +37,14 @@
 #define REG_TEMPCO                  0x39
 #define REG_EMPTY_VOLTAGE           0x3a
 #define REG_FSTAT                   0x3d
+#define REG_TIMER                   0x3e
 #define REG_QR_TABLE30              0x42
 #define REG_DQACC                   0x45
 #define REG_DPACC                   0x46
 #define REG_STATUS2                 0xb0
 #define REG_HIBCFG                  0xba
 #define REG_CONFIG2                 0xbb
+#define REG_TIMERH                  0xbe
 #define REG_MODELCFG                0xdb
 
 /* Status reg (0x00) flags */

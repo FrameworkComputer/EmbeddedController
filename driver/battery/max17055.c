@@ -18,6 +18,12 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 /*
+ * For max17055 to finish battery presence detection, this is the minimal time
+ * we have to wait since the last POR. LSB = 175ms.
+ */
+#define RELIABLE_BATT_DETECT_TIME	0x10
+
+/*
  * Convert the register values to the units that match
  * smart battery protocol.
  */
@@ -219,12 +225,38 @@ int battery_status(int *status)
 
 enum battery_present battery_is_present(void)
 {
-	int status = 0;
+	int reg = 0;
+	static uint8_t batt_pres_sure;
 
-	if (max17055_read(REG_STATUS, &status))
+	if (max17055_read(REG_STATUS, &reg))
 		return BP_NOT_SURE;
-	if (status & STATUS_BST)
+
+	if (reg & STATUS_BST)
 		return BP_NO;
+
+	if (!batt_pres_sure) {
+		/*
+		 * The battery detection result is not reliable within
+		 * ~2.8 secs since POR.
+		 */
+		if (!max17055_read(REG_TIMERH, &reg)) {
+			/*
+			 * The LSB of TIMERH reg is 3.2 hrs. If the reg has a
+			 * nonzero value, battery detection must have been
+			 * settled.
+			 */
+			if (reg) {
+				batt_pres_sure = 1;
+				return BP_YES;
+			}
+			if (!max17055_read(REG_TIMER, &reg) &&
+			    ((uint32_t)reg > RELIABLE_BATT_DETECT_TIME)) {
+				batt_pres_sure = 1;
+				return BP_YES;
+			}
+		}
+		return BP_NOT_SURE;
+	}
 	return BP_YES;
 }
 
