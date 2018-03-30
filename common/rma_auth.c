@@ -37,8 +37,15 @@
 #define MAX_AUTHCODE_TRIES 3
 
 /* Server public key and key ID */
-static const uint8_t server_pub_key[32] = CONFIG_RMA_AUTH_SERVER_PUBLIC_KEY;
-static const uint8_t server_key_id = CONFIG_RMA_AUTH_SERVER_KEY_ID;
+static const struct  {
+	uint8_t server_pub_key[32];
+	uint8_t server_key_id;
+} __packed rma_key_blob = {
+	CONFIG_RMA_AUTH_SERVER_PUBLIC_KEY,
+	CONFIG_RMA_AUTH_SERVER_KEY_ID
+};
+
+BUILD_ASSERT(sizeof(rma_key_blob) == 33);
 
 static char challenge[RMA_CHALLENGE_BUF_SIZE];
 static char authcode[RMA_AUTHCODE_BUF_SIZE];
@@ -101,7 +108,7 @@ int rma_create_challenge(void)
 
 	memset(&c, 0, sizeof(c));
 	c.version_key_id = RMA_CHALLENGE_VKID_BYTE(
-	    RMA_CHALLENGE_VERSION, server_key_id);
+	    RMA_CHALLENGE_VERSION, rma_key_blob.server_key_id);
 
 	if (read_board_id(&bid))
 		return EC_ERROR_UNKNOWN;
@@ -132,7 +139,7 @@ int rma_create_challenge(void)
 		return EC_ERROR_UNKNOWN;
 
 	/* Calculate the shared secret */
-	X25519(secret, temp, server_pub_key);
+	X25519(secret, temp, rma_key_blob.server_pub_key);
 
 	/*
 	 * Auth code is a truncated HMAC of the ephemeral public key, BoardID,
