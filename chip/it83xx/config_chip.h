@@ -102,7 +102,6 @@
 /* Optional features present on this chip */
 #define CHIP_FAMILY_IT83XX
 #define CONFIG_ADC
-#define CONFIG_EC2I
 #define CONFIG_LPC
 #define CONFIG_SWITCH
 

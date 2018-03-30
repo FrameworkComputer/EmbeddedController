@@ -1126,9 +1126,6 @@
 /* Compile extra debugging and tests for the DMA module */
 #undef CONFIG_DMA_HELP
 
-/* Support EC to Internal bus bridge. */
-#undef CONFIG_EC2I
-
 /* Usually, EC capable of sensor speeds up to 200000 mHz */
 #define CONFIG_EC_MAX_SENSOR_FREQ_DEFAULT_MILLIHZ 200000
 
