@@ -25,7 +25,7 @@ void espi_interrupt(void);
 void espi_vw_interrupt(void);
 void espi_init(void);
 
-#ifdef HAS_TASK_KEYPROTO
+#if defined(CONFIG_LPC) && defined(HAS_TASK_KEYPROTO)
 void lpc_kbc_ibf_interrupt(void);
 void lpc_kbc_obe_interrupt(void);
 #endif

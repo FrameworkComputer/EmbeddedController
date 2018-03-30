@@ -669,11 +669,13 @@ static void lpc_init(void)
 	gpio_enable_interrupt(GPIO_PCH_PLTRST_L);
 #endif
 
+#ifdef HAS_TASK_KEYPROTO
 	task_clear_pending_irq(IT83XX_IRQ_KBC_OUT);
 	task_disable_irq(IT83XX_IRQ_KBC_OUT);
 
 	task_clear_pending_irq(IT83XX_IRQ_KBC_IN);
 	task_enable_irq(IT83XX_IRQ_KBC_IN);
+#endif
 
 	task_clear_pending_irq(IT83XX_IRQ_PMC_IN);
 	pm_set_status(LPC_ACPI_CMD, EC_LPC_STATUS_PROCESSING, 0);
