@@ -36,6 +36,9 @@
 struct anx_state {
 	int i2c_slave_addr;
 	int mux_state;
+#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
+	int flash_checked_once;
+#endif
 };
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
@@ -111,6 +114,94 @@ void anx7447_set_hpd_level(int port, int hpd_lvl)
 	anx7447_reg_write(port, ANX7447_REG_HPD_CTRL_0, reg);
 }
 
+#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
+static inline void anx7447_reg_write_and(int port, int reg, int v_and)
+{
+	int val;
+
+	if (!anx7447_reg_read(port, reg, &val))
+		anx7447_reg_write(port, reg, (val & v_and));
+}
+
+static inline void anx7447_reg_write_or(int port, int reg, int v_or)
+{
+	int val;
+
+	if (!anx7447_reg_read(port, reg, &val))
+		anx7447_reg_write(port, reg, (val | v_or));
+}
+
+static void anx7447_flash_write_en(int port)
+{
+	int r;
+
+	anx7447_reg_write(port, ANX7447_REG_FLASH_INST_TYPE,
+			  ANX7447_FLASH_INST_TYPE_WRITEENABLE);
+	anx7447_reg_write_or(port, ANX7447_REG_R_FLASH_RW_CTRL,
+			     ANX7447_R_FLASH_RW_CTRL_GENERAL_INST_EN);
+	do {
+		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
+	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+}
+
+static void anx7447_flash_op_init(int port)
+{
+	int r;
+
+	anx7447_reg_write_or(port, ANX7447_REG_OCM_CTRL_0,
+			     ANX7447_OCM_CTRL_OCM_RESET);
+	anx7447_reg_write_or(port, ANX7447_REG_ADDR_GPIO_CTRL_0,
+			     ANX7447_ADDR_GPIO_CTRL_0_SPI_WP);
+
+	anx7447_flash_write_en(port);
+
+	anx7447_reg_write_and(port, ANX7447_REG_R_FLASH_STATUS_0,
+			      ANX7447_FLASH_STATUS_SPI_STATUS_0);
+	anx7447_reg_write_or(port, ANX7447_REG_R_FLASH_RW_CTRL,
+			     ANX7447_R_FLASH_RW_CTRL_WRITE_STATUS_EN);
+
+	do {
+		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
+	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+}
+
+static int anx7447_flash_is_empty(int port)
+{
+	int r;
+
+	anx7447_reg_read(port, ANX7447_REG_OCM_VERSION, &r);
+	anx7447_reg_write(port, ANX7447_REG_OCM_VERSION, 0);
+
+	return ((r == 0) ? 1 : 0);
+}
+
+static void anx7447_flash_check(int port)
+{
+	int r;
+
+	tcpc_read(port, TCPC_REG_COMMAND, &r);
+	usleep(ANX7447_DELAY_IN_US);
+
+	if (anx7447_flash_is_empty(port) == 1)
+		return;
+
+	anx7447_flash_op_init(port);
+
+	usleep(ANX7447_DELAY_IN_US);
+
+	anx7447_flash_write_en(port);
+	anx7447_reg_write(port, ANX7447_REG_FLASH_ERASE_TYPE,
+			  ANX7447_FLASH_ERASE_TYPE_CHIPERASE);
+	anx7447_reg_write_or(port, ANX7447_REG_R_FLASH_RW_CTRL,
+			     ANX7447_R_FLASH_RW_CTRL_FLASH_ERASE_EN);
+	do {
+		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
+	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+
+	ccprintf("anx7447: OCM flash checked and erased\n");
+}
+#endif
+
 static int anx7447_init(int port)
 {
 	int rv, reg, i;
@@ -135,6 +226,20 @@ static int anx7447_init(int port)
 		return EC_ERROR_UNKNOWN;
 	}
 
+#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
+	/*
+	 * The ANX7447 has an on chip microcontroller (OCM) that can provide USB
+	 * PD functionality. If the OCM is active, then it can interfere with
+	 * getting alerts from the TCPC when PD messages are received. Check to
+	 * see if the flash is not erased, and if not, then erase the OCM
+	 * flash. This status is saved in a static variable so this check only
+	 * happens once per EC reboot.
+	 */
+	if (anx[port].flash_checked_once == 0) {
+		anx7447_flash_check(port);
+		anx[port].flash_checked_once = 1;
+	}
+#endif
 	rv = tcpci_tcpm_init(port);
 	if (rv)
 		return rv;
