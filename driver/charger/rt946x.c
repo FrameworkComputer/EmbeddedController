@@ -399,10 +399,6 @@ static int rt946x_init_setting(void)
 	rv = rt946x_set_iprec(batt_info->precharge_current);
 	if (rv)
 		return rv;
-	/* Enable charge current termination */
-	rv = rt946x_set_bit(RT946X_REG_CHGCTRL2, RT946X_MASK_TE);
-	if (rv)
-		return rv;
 
 	return rt946x_init_irq();
 }
@@ -902,4 +898,10 @@ int rt946x_is_vbus_ready(void)
 int rt946x_cutoff_battery(void)
 {
 	return rt946x_set_bit(RT946X_REG_CHGCTRL2, RT946X_MASK_SHIP_MODE);
+}
+
+int rt946x_enable_charge_termination(int en)
+{
+	return (en ? rt946x_set_bit : rt946x_clr_bit)
+		(RT946X_REG_CHGCTRL2, RT946X_MASK_TE);
 }

@@ -311,4 +311,7 @@ int rt946x_is_vbus_ready(void);
  */
 int rt946x_cutoff_battery(void);
 
+/* Enable/Disable charge temination */
+int rt946x_enable_charge_termination(int en);
+
 #endif /* __CROS_EC_RT946X_H */

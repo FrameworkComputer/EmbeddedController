@@ -14,6 +14,7 @@
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "util.h"
 
 /*
@@ -243,6 +244,19 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	return 0;
 }
+
+static void board_charge_termination(void)
+{
+	static uint8_t te;
+	/* Enable charge termination when we are sure battery is present. */
+	if (!te && battery_is_present() == BP_YES) {
+		if (!rt946x_enable_charge_termination(1))
+			te = 1;
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
+	     board_charge_termination,
+	     HOOK_PRIO_DEFAULT);
 
 /* Customs options controllable by host command. */
 #define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
