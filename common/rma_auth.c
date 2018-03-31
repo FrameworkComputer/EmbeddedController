@@ -22,6 +22,10 @@
 #include "tpm_vendor_cmds.h"
 #include "util.h"
 
+#ifndef TEST_BUILD
+#include "rma_key_from_blob.h"
+#endif
+
 #ifdef CONFIG_DCRYPTO
 #include "dcrypto.h"
 #else
@@ -38,11 +42,15 @@
 
 /* Server public key and key ID */
 static const struct  {
-	uint8_t server_pub_key[32];
-	uint8_t server_key_id;
+	union {
+		uint8_t raw_blob[33];
+		struct {
+			uint8_t server_pub_key[32];
+			uint8_t server_key_id;
+		};
+	};
 } __packed rma_key_blob = {
-	CONFIG_RMA_AUTH_SERVER_PUBLIC_KEY,
-	CONFIG_RMA_AUTH_SERVER_KEY_ID
+	.raw_blob = RMA_KEY_BLOB
 };
 
 BUILD_ASSERT(sizeof(rma_key_blob) == 33);

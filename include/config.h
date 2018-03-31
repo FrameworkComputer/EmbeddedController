@@ -2264,9 +2264,6 @@
 
 /* Support RMA auth challenge-response */
 #undef CONFIG_RMA_AUTH
-/* If that's defined, the server public key and ID must also be defined */
-#undef CONFIG_RMA_AUTH_SERVER_PUBLIC_KEY  /* 32 bytes: {0xNN, 0xNN, ... 0xNN} */
-#undef CONFIG_RMA_AUTH_SERVER_KEY_ID      /* 6-bit key ID, 0xMM */
 
 /* Enable hardware Random Number generator support */
 #undef CONFIG_RNG
