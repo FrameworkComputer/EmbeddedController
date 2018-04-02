@@ -137,6 +137,15 @@ int lpc_get_next_host_event(void)
 	host_event_t ev;
 	int evt_idx =  __builtin_ffs(lpc_host_events);
 
+#ifdef CONFIG_HOST_EVENT64
+	if (evt_idx == 0) {
+		int evt_idx_high = __builtin_ffs(lpc_host_events >> 32);
+
+		if (evt_idx_high)
+			evt_idx = 32 + evt_idx_high;
+	}
+#endif
+
 	if (evt_idx) {
 		host_event_set_bit(&ev, evt_idx);
 		host_clear_events(ev);
