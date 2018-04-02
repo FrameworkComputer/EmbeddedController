@@ -343,7 +343,7 @@ int battery_wait_for_stable(void)
 }
 
 /* Configured MAX17055 with the battery parameters for optimal performance. */
-static int max17055_init_config(void)
+static int max17055_load_batt_model(void)
 {
 	int reg;
 	int hib_cfg;
@@ -452,15 +452,32 @@ static void max17055_init(void)
 			return;
 		}
 
-		if (max17055_init_config()) {
+		if (max17055_load_batt_model()) {
 			CPRINTS("max17055 configuration failed!");
 			return;
 		}
-	}
 
-	/* Clear POR bit */
-	MAX17055_READ_DEBUG(REG_STATUS, &reg);
-	MAX17055_WRITE_DEBUG(REG_STATUS, (reg & ~STATUS_POR));
+		/* Clear POR bit */
+		MAX17055_READ_DEBUG(REG_STATUS, &reg);
+		MAX17055_WRITE_DEBUG(REG_STATUS, (reg & ~STATUS_POR));
+	} else {
+		const struct max17055_batt_profile *config;
+
+		config = max17055_get_batt_profile();
+		MAX17055_READ_DEBUG(REG_DESIGN_CAPACITY, &reg);
+
+		/*
+		 * Reload the battery model if the current running one
+		 * is wrong.
+		 */
+		if (config->design_cap != reg) {
+			CPRINTS("max17055 reconfig...");
+			if (max17055_load_batt_model()) {
+				CPRINTS("max17055 configuration failed!");
+				return;
+			}
+		}
+	}
 
 	CPRINTS("max17055 configuration succeeded!");
 }
