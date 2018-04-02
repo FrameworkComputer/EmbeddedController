@@ -149,6 +149,11 @@ int board_rst_pullup_needed(void)
 	return !!(board_properties & BOARD_NEEDS_SYS_RST_PULL_UP);
 }
 
+int board_needs_s3_term(void)
+{
+	return !!(board_properties & BOARD_NEEDS_S3_TERM);
+}
+
 int board_tpm_uses_i2c(void)
 {
 	return !!(board_properties & BOARD_SLAVE_CONFIG_I2C);

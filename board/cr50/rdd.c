@@ -145,6 +145,9 @@ enum ccd_state_flag {
 
 	/* SPI port is enabled for AP and/or EC flash */
 	CCD_ENABLE_SPI			= (1 << 6),
+
+	/* S3 Terminations are enabled */
+	CCD_ENABLE_S3_TERM		= (1 << 7),
 };
 
 int console_is_restricted(void)
@@ -179,6 +182,9 @@ static uint32_t get_state_flags(void)
 	if (ccd_usb_spi.state->enabled_device)
 		flags_now |= CCD_ENABLE_SPI;
 
+	if (board_s3_term_is_enabled())
+		flags_now |= CCD_ENABLE_S3_TERM;
+
 	return flags_now;
 }
 
@@ -204,6 +210,8 @@ static void print_state_flags(enum console_channel channel, uint32_t flags)
 		cprintf(channel, " I2C");
 	if (flags & CCD_ENABLE_SPI)
 		cprintf(channel, " SPI");
+	if (flags & CCD_ENABLE_S3_TERM)
+		cprintf(channel, " S3_TERM");
 }
 
 static void ccd_state_change_hook(void)
@@ -241,6 +249,10 @@ static void ccd_state_change_hook(void)
 		flags_want &= ~(CCD_ENABLE_UART_AP_TX | CCD_ENABLE_UART_EC_TX |
 				CCD_ENABLE_UART_EC_BITBANG | CCD_ENABLE_I2C |
 				CCD_ENABLE_SPI);
+
+	/* Enable S3 Terminations */
+	if (ap_is_suspended() && board_needs_s3_term())
+		flags_want |= CCD_ENABLE_S3_TERM;
 
 	/* Disable based on capabilities */
 	if (!ccd_is_cap_enabled(CCD_CAP_GSC_RX_AP_TX))
@@ -305,6 +317,8 @@ static void ccd_state_change_hook(void)
 		usb_i2c_board_disable();
 	if (delta & CCD_ENABLE_SPI)
 		usb_spi_enable(&ccd_usb_spi, 0);
+	if (delta & CCD_ENABLE_S3_TERM)
+		board_s3_term(0);
 
 	/* Handle turning things on */
 	delta = flags_want & ~flags_now;
@@ -324,6 +338,8 @@ static void ccd_state_change_hook(void)
 		usb_i2c_board_enable();
 	if (delta & CCD_ENABLE_SPI)
 		usb_spi_enable(&ccd_usb_spi, 1);
+	if (delta & CCD_ENABLE_S3_TERM)
+		board_s3_term(1);
 }
 DECLARE_DEFERRED(ccd_state_change_hook);
 

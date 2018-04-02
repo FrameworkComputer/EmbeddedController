@@ -21,6 +21,12 @@ void print_ap_uart_state(void)
 	ccprintf("AP UART: %s\n", device_state_name(state));
 }
 
+int ap_is_suspended(void)
+{
+	/* When the AP uart is off, that means the device is suspended. */
+	return state == DEVICE_STATE_OFF;
+}
+
 int ap_uart_is_on(void)
 {
 	/* Debouncing and on are both still on */
