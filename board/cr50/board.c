@@ -232,7 +232,8 @@ const struct strap_desc strap_regs[] = {
 static struct board_cfg board_cfg_table[] = {
 	/* SPI Variants: DIOA12 = 1M PD, DIOA6 = 1M PD */
 	/* Kevin/Gru: DI0A9 = 5k PD, DIOA1 = 1M PU */
-	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP },
+	{ 0x02, BOARD_SLAVE_CONFIG_SPI | BOARD_NEEDS_SYS_RST_PULL_UP |
+	  BOARD_NEEDS_S3_TERM },
 	/* Poppy: DI0A9 = 1M PU, DIOA1 = 1M PU */
 	{ 0x0A, BOARD_SLAVE_CONFIG_SPI | BOARD_USE_PLT_RESET },
 
