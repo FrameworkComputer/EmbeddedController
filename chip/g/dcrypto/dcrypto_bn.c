@@ -524,8 +524,13 @@ static int setup_and_lock(const struct LITE_BIGNUM *N,
 	ctx->mul_ptrs = ctx->in_ptrs;
 	ctx->out_ptrs = ctx->in_ptrs;
 
-	dcrypto_dmem_load(DMEM_INDEX(ctx, mod), N->d, bn_words(N));
 	dcrypto_dmem_load(DMEM_INDEX(ctx, in), input->d, bn_words(input));
+	if (dcrypto_dmem_load(DMEM_INDEX(ctx, mod), N->d, bn_words(N)) == 0) {
+		/*
+		 * No change detected; assume modulus precomputation is cached.
+		 */
+		return 0;
+	}
 
 	/* Calculate RR and d0inv. */
 	return dcrypto_call(CF_modload_adr);

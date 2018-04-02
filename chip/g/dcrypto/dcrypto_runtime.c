@@ -120,12 +120,13 @@ void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
 	}
 }
 
-void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words)
+uint32_t dcrypto_dmem_load(size_t offset, const void *words, size_t n_words)
 {
 	size_t i;
 	volatile uint32_t *ptr = GREG32_ADDR(CRYPTO, DMEM_DUMMY);
 	const uint32_t *src = (const uint32_t *) words;
 	struct access_helper *word_accessor = (struct access_helper *) src;
+	uint32_t diff = 0;
 
 	ptr += offset * 8;  /* Offset is in 256 bit addresses. */
 	for (i = 0; i < n_words; ++i) {
@@ -134,6 +135,10 @@ void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words)
 		 * is unaligned. DMEM on the other hand requires writes to be
 		 * aligned, so do a word-by-word copy manually here.
 		 */
-		ptr[i] = word_accessor[i].udata;
+		uint32_t v = word_accessor[i].udata;
+
+		diff |= (ptr[i] ^ v);
+		ptr[i] = v;
 	}
+	return diff;
 }

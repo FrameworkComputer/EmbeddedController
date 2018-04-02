@@ -161,7 +161,10 @@ void dcrypto_unlock(void);
 uint32_t dcrypto_call(uint32_t adr) __attribute__((warn_unused_result));
 void dcrypto_imem_load(size_t offset, const uint32_t *opcodes,
 		       size_t n_opcodes);
-void dcrypto_dmem_load(size_t offset, const void *words, size_t n_words);
+/*
+ * Returns 0 iff no difference was observed between existing and new content.
+ */
+uint32_t dcrypto_dmem_load(size_t offset, const void *words, size_t n_words);
 
 /*
  * Key ladder.
