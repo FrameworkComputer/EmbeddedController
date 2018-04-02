@@ -115,12 +115,46 @@ int pd_is_valid_input_voltage(int mv)
 
 void pd_power_supply_reset(int port)
 {
-	/* TODO(b/74127309): Flesh out USB code */
+	int prev_en;
+
+	prev_en = ppc_is_sourcing_vbus(port);
+
+	/* Disable VBUS. */
+	ppc_vbus_source_enable(port, 0);
+
+	/* Enable discharge if we were previously sourcing 5V */
+	if (prev_en)
+		pd_set_vbus_discharge(port, 1);
+
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	/* Give back the current quota we are no longer using */
+	charge_manager_source_port(port, 0);
+#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_set_power_supply_ready(int port)
 {
-	/* TODO(b/74127309): Flesh out USB code */
+	int rv;
+
+	/* Disable charging. */
+	rv = ppc_vbus_sink_enable(port, 0);
+	if (rv)
+		return rv;
+
+	pd_set_vbus_discharge(port, 0);
+
+	/* Provide Vbus. */
+	rv = ppc_vbus_source_enable(port, 1);
+	if (rv)
+		return rv;
+
+#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
+	/* Ensure we advertise the proper available current quota */
+	charge_manager_source_port(port, 1);
+#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -135,19 +169,12 @@ void pd_transition_voltage(int idx)
 
 void typec_set_source_current_limit(int port, int rp)
 {
-	/* TODO(b/74127309): Flesh out USB code */
-}
-
-int pd_snk_is_vbus_provided(int port)
-{
-	/* TODO(b/74127309): Flesh out USB code */
-	return 0;
+	ppc_set_vbus_source_current_limit(port, rp);
 }
 
 int board_vbus_source_enabled(int port)
 {
-	/* TODO(b/74127309): Flesh out USB code */
-	return 0;
+	return ppc_is_sourcing_vbus(port);
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */
