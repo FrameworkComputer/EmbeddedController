@@ -418,7 +418,15 @@ if [[ -n "${EC_DIR}" ]]; then
 fi
 
 # Get baseboard from build system if present
-BASEBOARD=$(make --quiet -C ${EC_DIR} BOARD=${BOARD} print-baseboard)
+BASEBOARD=
+if [[ -n "${EC_DIR}" ]]; then
+	BASEBOARD=$(make --quiet -C ${EC_DIR} BOARD=${BOARD} print-baseboard)
+elif [[ -d "${HOME}/trunk/src/platform/ec" ]]; then
+	BASEBOARD=$(make --quiet -C ${HOME}/trunk/src/platform/ec \
+		BOARD=${BOARD} print-baseboard)
+else
+	info "Could not find ec build folder to calculate baseboard."
+fi
 
 if [[ -n "${BASEBOARD}" ]]; then
 	EMERGE_BUILD=/build/${BASEBOARD}/firmware/${BOARD}/${EC_FILE}
