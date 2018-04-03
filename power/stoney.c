@@ -52,30 +52,21 @@ static void chipset_force_g3(void)
 #endif
 }
 
-void chipset_reset(int cold_reset)
+void chipset_reset(void)
 {
-	CPRINTS("%s(%d)", __func__, cold_reset);
+	CPRINTS("%s", __func__);
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		CPRINTS("Can't reset: SOC is off");
 		return;
 	}
 
-	if (cold_reset) {
-		/*
-		 * Perform chipset_force_shutdown and mark forcing_coldreset.
-		 * Once in S5G3 state, check forcing_coldreset to power up.
-		 */
-		forcing_coldreset = 1;
-		chipset_force_shutdown();
-	} else {
-		/*
-		 * Send a pulse to SYS_RST to trigger a warm reset.
-		 */
-		gpio_set_level(GPIO_PCH_RCIN_L, 0);
-		usleep(32 * MSEC);
-		gpio_set_level(GPIO_PCH_RCIN_L, 1);
-	}
+	/*
+	 * Send a pulse to SYS_RST to trigger a warm reset.
+	 */
+	gpio_set_level(GPIO_PCH_RCIN_L, 0);
+	usleep(32 * MSEC);
+	gpio_set_level(GPIO_PCH_RCIN_L, 1);
 }
 
 void chipset_throttle_cpu(int throttle)

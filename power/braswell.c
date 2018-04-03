@@ -68,38 +68,19 @@ void chipset_force_shutdown(void)
 	forcing_shutdown = 1;
 }
 
-void chipset_reset(int cold_reset)
+void chipset_reset(void)
 {
-	CPRINTS("%s(%d)", __func__, cold_reset);
-	if (cold_reset) {
-		/*
-		 * Drop and restore PWROK.  This causes the PCH to reboot,
-		 * regardless of its after-G3 setting.  This type of reboot
-		 * causes the PCH to assert PLTRST#, SLP_S3#, and SLP_S5#, so
-		 * we actually drop power to the rest of the system (hence, a
-		 * "cold" reboot).
-		 */
+	CPRINTS("%s", __func__);
 
-		/* Ignore if PWROK is already low */
-		if (gpio_get_level(GPIO_PCH_SYS_PWROK) == 0)
-			return;
-
-		/* PWROK must deassert for at least 3 RTC clocks = 91 us */
-		gpio_set_level(GPIO_PCH_SYS_PWROK, 0);
-		udelay(100);
-		gpio_set_level(GPIO_PCH_SYS_PWROK, 1);
-
-	} else {
-		/*
-		 * Send a reset pulse to the PCH.  This just causes it to
-		 * assert INIT# to the CPU without dropping power or asserting
-		 * PLTRST# to reset the rest of the system.  The PCH uses a 16
-		 * ms debounce time, so assert the signal for twice that.
-		 */
-		gpio_set_level(GPIO_PCH_RCIN_L, 0);
-		usleep(32 * MSEC);
-		gpio_set_level(GPIO_PCH_RCIN_L, 1);
-	}
+	/*
+	 * Send a reset pulse to the PCH.  This just causes it to
+	 * assert INIT# to the CPU without dropping power or asserting
+	 * PLTRST# to reset the rest of the system.  The PCH uses a 16
+	 * ms debounce time, so assert the signal for twice that.
+	 */
+	gpio_set_level(GPIO_PCH_RCIN_L, 0);
+	usleep(32 * MSEC);
+	gpio_set_level(GPIO_PCH_RCIN_L, 1);
 }
 
 void chipset_throttle_cpu(int throttle)

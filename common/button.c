@@ -416,7 +416,7 @@ static void debug_mode_handle(void)
 			host_send_sysrq('x');
 			CPRINTS("DEBUG MODE: sysrq-x sent");
 		} else {
-			chipset_reset(0);
+			chipset_reset();
 			CPRINTS("DEBUG MODE: Warm reset triggered");
 		}
 		recovery_button_pressed = 0;
@@ -531,7 +531,7 @@ static void debug_mode_transition(enum debug_state next_state)
 		break;
 	case STATE_WARM_RESET_EXEC:
 		/* Warm reset the host and transition to STATE_NONE. */
-		chipset_reset(0);
+		chipset_reset();
 		CPRINTS("DEBUG MODE: Warm reset triggered");
 		curr_debug_state = STATE_DEBUG_NONE;
 		break;

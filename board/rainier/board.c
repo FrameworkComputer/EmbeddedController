@@ -61,7 +61,7 @@ static void overtemp_interrupt(enum gpio_signal signal)
 static void warm_reset_request_interrupt(enum gpio_signal signal)
 {
 	CPRINTS("AP wants warm reset");
-	chipset_reset(0);
+	chipset_reset();
 }
 
 #include "gpio_list.h"

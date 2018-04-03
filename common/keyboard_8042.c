@@ -729,7 +729,7 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 		break;
 
 	case I8042_SYSTEM_RESET:
-		chipset_reset(0);
+		chipset_reset();
 		break;
 
 	default:

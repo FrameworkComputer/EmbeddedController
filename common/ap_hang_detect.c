@@ -41,7 +41,7 @@ static void hang_detect_deferred(void)
 	if (timeout_will_reboot) {
 		CPRINTS("hang detect triggering warm reboot");
 		host_set_single_event(EC_HOST_EVENT_HANG_REBOOT);
-		chipset_reset(0);
+		chipset_reset();
 		active = 0;
 		return;
 	}

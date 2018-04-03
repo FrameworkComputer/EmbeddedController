@@ -220,14 +220,13 @@ void chipset_force_shutdown(void)
 }
 
 #define SYS_RST_HOLD_US (1 * MSEC)
-void chipset_reset(int cold_reset)
+void chipset_reset(void)
 {
 #ifdef CONFIG_CMD_RTC
 	/* Print out the RTC to help correlate resets in logs. */
 	print_system_rtc(CC_CHIPSET);
 #endif
-	/* TODO: handle cold_reset */
-	CPRINTS("%s(%d)", __func__, cold_reset);
+	CPRINTS("%s", __func__);
 
 	/* Pulse SYS_RST */
 	gpio_set_level(GPIO_SYS_RST_L, 0);

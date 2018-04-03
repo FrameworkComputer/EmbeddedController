@@ -80,7 +80,7 @@ void system_hibernate(uint32_t s, uint32_t us)
 	hibernated = 1;
 }
 
-void chipset_reset(int cold_reset)
+void chipset_reset(void)
 {
 	reset_called = 1;
 }

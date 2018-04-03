@@ -74,11 +74,8 @@ void chipset_force_shutdown(void);
 
 /**
  * Reset the CPU and/or chipset.
- *
- * @param cold_reset	If !=0, force a cold reset of the CPU and chipset;
- *			if 0, just pulse the reset line to the CPU.
  */
-void chipset_reset(int cold_reset);
+void chipset_reset(void);
 
 /**
  * Interrupt handler to power GPIO inputs.
@@ -101,7 +98,7 @@ static inline int chipset_in_state(int state_mask)
 static inline void chipset_exit_hard_off(void) { }
 static inline void chipset_throttle_cpu(int throttle) { }
 static inline void chipset_force_shutdown(void) { }
-static inline void chipset_reset(int cold_reset) { }
+static inline void chipset_reset(void) { }
 static inline void power_interrupt(enum gpio_signal signal) { }
 static inline void chipset_handle_espi_reset_assert(void) { }
 static inline void chipset_handle_reboot(void) { }

@@ -418,7 +418,7 @@ enum power_state power_chipset_init(void)
 		 * The warm reset triggers AP into the recovery mode (
 		 * flash SPI from USB).
 		 */
-		chipset_reset(0);
+		chipset_reset();
 
 		init_power_state = POWER_G3;
 	} else {
@@ -638,23 +638,13 @@ static void power_on(void)
 	CPRINTS("AP running ...");
 }
 
-void chipset_reset(int is_cold)
+void chipset_reset(void)
 {
-	if (is_cold) {
-		CPRINTS("EC triggered cold reboot");
-		set_system_power(0);
-		usleep(PMIC_COLD_RESET_L_HOLD_TIME);
-		/* Press the PMIC power button */
-		set_pmic_pwron(1);
-		hook_call_deferred(&release_pmic_pwron_deferred_data,
-				   PMIC_PWRON_PRESS_TIME);
-	} else {
-		CPRINTS("EC triggered warm reboot");
-		set_warm_reset(1);
-		usleep(PMIC_WARM_RESET_H_HOLD_TIME);
-		/* deassert the reset signals */
-		set_warm_reset(0);
-	}
+	CPRINTS("EC triggered warm reboot");
+	set_warm_reset(1);
+	usleep(PMIC_WARM_RESET_H_HOLD_TIME);
+	/* deassert the reset signals */
+	set_warm_reset(0);
 }
 
 enum power_state power_handle_state(enum power_state state)

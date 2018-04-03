@@ -20,20 +20,13 @@
 #ifdef CONFIG_CMD_POWER_AP
 static int command_apreset(int argc, char **argv)
 {
-	int is_cold = 1;
-
-	if (argc > 1 && !strcasecmp(argv[1], "cold"))
-		is_cold = 1;
-	else if (argc > 1 && !strcasecmp(argv[1], "warm"))
-		is_cold = 0;
-
 	/* Force the chipset to reset */
-	ccprintf("Issuing AP %s reset...\n", is_cold ? "cold" : "warm");
-	chipset_reset(is_cold);
+	ccprintf("Issuing AP reset...\n");
+	chipset_reset();
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(apreset, command_apreset,
-			"[warm | cold]",
+			NULL,
 			"Issue AP reset");
 
 static int command_apshutdown(int argc, char **argv)

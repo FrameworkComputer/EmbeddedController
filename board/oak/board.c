@@ -426,7 +426,7 @@ static void check_ap_reset_second(void)
 		return;
 
 	if (warm_reset)
-		chipset_reset(0); /* Warm reset AP */
+		chipset_reset(); /* Warm reset AP */
 
 	last = warm_reset;
 }
