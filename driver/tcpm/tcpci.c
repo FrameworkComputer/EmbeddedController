@@ -18,8 +18,6 @@
 #include "usb_pd_tcpc.h"
 #include "util.h"
 
-static int tcpc_vbus[CONFIG_USB_PD_PORT_COUNT];
-
 /* Save the selected rp value */
 static int selected_rp[CONFIG_USB_PD_PORT_COUNT];
 
@@ -96,10 +94,12 @@ int tcpci_tcpm_get_cc(int port, int *cc1, int *cc2)
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 static int tcpci_tcpm_get_power_status(int port, int *status)
 {
 	return tcpc_read(port, TCPC_REG_POWER_STATUS, status);
 }
+#endif /* #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC */
 
 int tcpci_tcpm_select_rp_value(int port, int rp)
 {
@@ -203,7 +203,12 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 int tcpci_tcpm_get_vbus_level(int port)
 {
-	return tcpc_vbus[port];
+	int reg;
+
+	/* Read Power Status register */
+	tcpci_tcpm_get_power_status(port, &reg);
+	/* Update VBUS status */
+	return reg & TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 }
 #endif
 
@@ -301,15 +306,13 @@ void tcpci_tcpc_alert(int port)
 			 */
 			task_set_event(PD_PORT_TO_TASK_ID(port),
 				       PD_EVENT_TCPC_RESET, 0);
+#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 		} else {
 			/* Read Power Status register */
 			tcpci_tcpm_get_power_status(port, &reg);
-			/* Update VBUS status */
-			tcpc_vbus[port] = reg &
-				TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
-#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
 			/* Update charge manager with new VBUS state */
-			usb_charger_vbus_change(port, tcpc_vbus[port]);
+			usb_charger_vbus_change(port,
+				reg & TCPC_REG_POWER_STATUS_VBUS_PRES);
 			task_wake(PD_PORT_TO_TASK_ID(port));
 #endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
 		}
@@ -433,12 +436,12 @@ int tcpci_tcpm_init(int port)
 		msleep(10);
 	}
 
+	/* Set Power Status mask */
+	init_power_status_mask(port);
+
+	/* Clear alert request and set alert mask */
 	tcpc_write16(port, TCPC_REG_ALERT, 0xffff);
 	/* Initialize power_status_mask */
-	init_power_status_mask(port);
-	/* Update VBUS status */
-	tcpc_vbus[port] = power_status &
-			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 	error = init_alert_mask(port);
 	if (error)
 		return error;
