@@ -25,6 +25,7 @@
 #include "printf.h"
 #include "system.h"
 #include "task.h"
+#include "throttle_ap.h"
 #include "timer.h"
 #include "util.h"
 
@@ -40,6 +41,20 @@
 	(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT * SECOND)
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
 #define LFCC_EVENT_THRESH 5 /* Full-capacity change reqd for host event */
+
+#ifdef CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+#ifndef CONFIG_HOSTCMD_EVENTS
+#error "CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT needs CONFIG_HOSTCMD_EVENTS"
+#endif /* CONFIG_HOSTCMD_EVENTS */
+#define BAT_OCP_TIMEOUT_US (60 * SECOND)
+/* BAT_OCP_HYSTERESIS_PCT can be optionally overridden in board.h. */
+#ifndef BAT_OCP_HYSTERESIS_PCT
+#define BAT_OCP_HYSTERESIS_PCT	10
+#endif /* BAT_OCP_HYSTERESIS_PCT */
+#define BAT_OCP_HYSTERESIS \
+	(BAT_MAX_DISCHG_CURRENT * BAT_OCP_HYSTERESIS_PCT / 100) /* mA */
+static timestamp_t ocp_throttle_start_time;
+#endif /* CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT */
 
 static int charge_request(int voltage, int current);
 
@@ -1326,6 +1341,33 @@ static void set_charge_state(enum charge_state_v2 state)
 	curr.state = state;
 }
 
+static void notify_host_of_over_current(struct batt_params *batt)
+{
+#ifdef CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+	if (batt->flags & BATT_FLAG_BAD_CURRENT)
+		return;
+
+	if ((!ocp_throttle_start_time.val &&
+	     (batt->current < -BAT_MAX_DISCHG_CURRENT)) ||
+	    (ocp_throttle_start_time.val &&
+	     (batt->current < -BAT_MAX_DISCHG_CURRENT + BAT_OCP_HYSTERESIS))) {
+		ocp_throttle_start_time = get_time();
+		throttle_ap(THROTTLE_ON, THROTTLE_SOFT,
+			    THROTTLE_SRC_BAT_DISCHG_CURRENT);
+	} else if (ocp_throttle_start_time.val &&
+		   (get_time().val > ocp_throttle_start_time.val +
+		    BAT_OCP_TIMEOUT_US)) {
+		/*
+		 * Clear the timer and notify AP to stop throttling if
+		 * we haven't seen over current for BAT_OCP_TIMEOUT_US.
+		 */
+		ocp_throttle_start_time.val = 0;
+		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT,
+			    THROTTLE_SRC_BAT_DISCHG_CURRENT);
+	}
+#endif
+}
+
 const struct batt_params *charger_current_battery_params(void)
 {
 	return &curr.batt;
@@ -1499,6 +1541,8 @@ void charger_task(void *u)
 				curr.batt.state_of_charge);
 			curr.batt.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 		}
+
+		notify_host_of_over_current(&curr.batt);
 
 		/*
 		 * Now decide what we want to do about it. We'll normally just

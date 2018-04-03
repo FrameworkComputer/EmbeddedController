@@ -107,6 +107,7 @@ common-$(CONFIG_SW_CRC)+=crc.o
 common-$(CONFIG_TABLET_MODE)+=tablet_mode.o
 common-$(CONFIG_TEMP_SENSOR)+=temp_sensor.o
 common-$(CONFIG_THROTTLE_AP)+=thermal.o throttle_ap.o
+common-$(CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT)+=throttle_ap.o
 common-$(CONFIG_TPM_I2CS)+=i2cs_tpm.o
 common-$(CONFIG_TPM_LOGGING)+=event_log.o tpm_log.o
 common-$(CONFIG_U2F)+=u2f.o

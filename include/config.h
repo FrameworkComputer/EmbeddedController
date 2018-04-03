@@ -2616,6 +2616,13 @@
 
 /* Compile common code for throttling the CPU based on the temp sensors */
 #undef CONFIG_THROTTLE_AP
+
+/*
+ * Throttle the CPU when battery discharge current is too high. When
+ * this feature is enabled, BAT_MAX_DISCHG_CURRENT must be defined in board.h.
+ */
+#undef CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+
 /*
  * If defined, dptf is enabled to manage thermals.
  *
@@ -3416,8 +3423,8 @@
 
 /******************************************************************************/
 /*
- * Throttle AP must have temperature sensor enabled to get the readings for
- * thermal throttling.
+ * Thermal throttling AP must have temperature sensor enabled to get
+ * the temperature readings.
  */
 #if defined(CONFIG_THROTTLE_AP) && !defined(CONFIG_TEMP_SENSOR)
 #define CONFIG_TEMP_SENSOR
