@@ -1746,6 +1746,13 @@ int pd_ts_dts_plugged(int port);
  */
 int pd_capable(int port);
 
+/**
+ * Return true if vbus is present on the specified port.
+ *
+ * @param port USB-C port number
+ */
+int pd_is_vbus_present(int port);
+
 /* ----- Logging ----- */
 #ifdef CONFIG_USB_PD_LOGGING
 /**

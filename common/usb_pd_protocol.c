@@ -307,8 +307,9 @@ void pd_vbus_low(int port)
 {
 	pd[port].flags &= ~PD_FLAGS_VBUS_NEVER_LOW;
 }
+#endif
 
-static inline int pd_is_vbus_present(int port)
+int pd_is_vbus_present(int port)
 {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	return tcpm_get_vbus_level(port);
@@ -316,7 +317,6 @@ static inline int pd_is_vbus_present(int port)
 	return pd_snk_is_vbus_provided(port);
 #endif
 }
-#endif
 
 static void set_polarity(int port, int polarity)
 {

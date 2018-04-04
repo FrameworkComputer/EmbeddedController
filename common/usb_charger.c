@@ -88,7 +88,7 @@ static void usb_charger_init(void)
 	int i;
 	struct charge_port_info charge_none;
 
-	/* Initialize all charge suppliers to 0 */
+	/* Initialize all charge suppliers */
 	charge_none.voltage = USB_CHARGER_VOLTAGE_MV;
 	charge_none.current = 0;
 	for (i = 0; i < CONFIG_USB_PD_PORT_COUNT; i++) {
@@ -107,15 +107,8 @@ static void usb_charger_init(void)
 		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
 					     i,
 					     &charge_none);
-
-#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
-		/*
-		 * Initialize VBUS supplier based on whether VBUS is present.
-		 * For CONFIG_USB_PD_VBUS_DETECT_TCPC, usb_charger_vbus_change()
-		 * will be called directly from TCPC alert.
-		 */
-		update_vbus_supplier(i, pd_snk_is_vbus_provided(i));
-#endif
+		/* Initialize VBUS supplier based on whether VBUS is present. */
+		update_vbus_supplier(i, pd_is_vbus_present(i));
 	}
 }
 DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
