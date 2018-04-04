@@ -1235,7 +1235,9 @@
 
 /*
  * EC code can reside on internal or external storage. Only one of these
- * CONFIGs should be defined.
+ * CONFIGs should be defined. CONFIG_INTERNAL_STORAGE implies XIP
+ * (eXecute-In-Place) semantics. i.e. code is being fetched directly from
+ * storage media.
  */
 #undef CONFIG_EXTERNAL_STORAGE
 #undef CONFIG_INTERNAL_STORAGE
