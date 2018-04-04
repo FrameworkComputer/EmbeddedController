@@ -798,8 +798,12 @@ function flash_stm32() {
 		ec_reset
 	fi
 	# Unprotect flash, erase, and write
+	STM32MON_COMMAND="${STM32MON} -d ${EC_UART} -U -u -e -w"
+	if [ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]; then
+		echo "${STM32MON_COMMAND}" "${IMG}"
+	fi
 	timeout -k 10 -s 9 "${FLAGS_timeout}" \
-		${STM32MON} -d ${EC_UART} -U -u -e -w "${IMG}"
+		${STM32MON_COMMAND} "${IMG}"
 	# Remove the Application processor reset
 	# TODO(crosbug.com/p/30738): we cannot rely on servo_VARS to restore it
 	if $(servo_has_warm_reset); then
