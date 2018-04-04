@@ -56,14 +56,14 @@ static int chip_i2c_xfer_with_notify(int port, int slave_addr,
 {
 	int ret;
 
-#ifdef CONFIG_I2C_XFER_CALLBACK
+#ifdef CONFIG_I2C_XFER_BOARD_CALLBACK
 	i2c_start_xfer_notify(port, slave_addr);
 #endif
 
 	ret = chip_i2c_xfer(port, slave_addr, out, out_size, in, in_size,
 			    flags);
 
-#ifdef CONFIG_I2C_XFER_CALLBACK
+#ifdef CONFIG_I2C_XFER_BOARD_CALLBACK
 	i2c_end_xfer_notify(port, slave_addr);
 #endif
 
