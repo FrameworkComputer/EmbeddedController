@@ -186,6 +186,11 @@ ifeq ($(CHIP_MK_INCLUDED_ONCE),)
 CHIP_MK_INCLUDED_ONCE=1
 else
 
+ifneq ($(CR50_SWAP_RMA_KEYS),)
+RMA_KEY_BASE := board/$(BOARD)/rma_key_blob
+RW_SIGNER_EXTRAS += --swap $(RMA_KEY_BASE).test,$(RMA_KEY_BASE).prod
+endif
+
 $(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
 $(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
 
