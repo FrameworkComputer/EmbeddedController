@@ -206,9 +206,11 @@ int tcpci_tcpm_get_vbus_level(int port)
 	int reg;
 
 	/* Read Power Status register */
-	tcpci_tcpm_get_power_status(port, &reg);
-	/* Update VBUS status */
-	return reg & TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+	if (tcpci_tcpm_get_power_status(port, &reg) == EC_SUCCESS)
+		return reg & TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+
+	/* If read failed, report that Vbus is off */
+	return 0;
 }
 #endif
 
