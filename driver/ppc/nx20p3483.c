@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
+#include "tcpm.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -129,6 +130,10 @@ static int nx20p3483_vbus_sink_enable(int port, int enable)
 
 		/* Set SNK mode based on enable */
 		gpio_set_level(ppc_chips[port].snk_gpio, enable);
+	} else {
+		rv = tcpm_set_snk_ctrl(port, enable);
+		if (rv)
+			return rv;
 	}
 
 	/* Verify switch status register */
@@ -158,6 +163,10 @@ static int nx20p3483_vbus_source_enable(int port, int enable)
 
 		/* Set SRC mode based on enable */
 		gpio_set_level(ppc_chips[port].src_gpio, enable);
+	} else {
+		rv = tcpm_set_src_ctrl(port, enable);
+		if (rv)
+			return rv;
 	}
 
 	/* Verify switch status register */

@@ -220,6 +220,28 @@ struct tcpm_drv {
 	 */
 	int (*get_chip_info)(int port, int renew,
 			struct ec_response_pd_chip_info **info);
+
+#ifdef CONFIG_USBC_PPC
+	/**
+	 * Send SinkVBUS or DisableSinkVBUS command
+	 *
+	 * @param port Type-C port number
+	 * @enable true for enable, false for disable
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*set_snk_ctrl)(int port, int enable);
+
+	/**
+	 * Send SourceVBUS or DisableSourceVBUS command
+	 *
+	 * @param port Type-C port number
+	 * @enable true for enable, false for disable
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*set_src_ctrl)(int port, int enable);
+#endif
 };
 
 enum tcpc_alert_polarity {

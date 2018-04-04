@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "i2c.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 	!defined(CONFIG_USB_PD_DUAL_ROLE)
@@ -141,6 +142,24 @@ static inline int tcpm_transmit(int port, enum tcpm_transmit_type type,
 {
 	return tcpc_config[port].drv->transmit(port, type, header, data);
 }
+
+#ifdef CONFIG_USBC_PPC
+static inline int tcpm_set_snk_ctrl(int port, int enable)
+{
+	if (tcpc_config[port].drv->set_snk_ctrl != NULL)
+		return tcpc_config[port].drv->set_snk_ctrl(port, enable);
+	else
+		return EC_ERROR_UNIMPLEMENTED;
+}
+
+static inline int tcpm_set_src_ctrl(int port, int enable)
+{
+	if (tcpc_config[port].drv->set_snk_ctrl != NULL)
+		return tcpc_config[port].drv->set_src_ctrl(port, enable);
+	else
+		return EC_ERROR_UNIMPLEMENTED;
+}
+#endif
 
 static inline void tcpc_alert(int port)
 {

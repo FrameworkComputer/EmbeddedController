@@ -169,6 +169,24 @@ int tcpci_tcpm_set_polarity(int port, int polarity)
 			  TCPC_REG_TCPC_CTRL_SET(polarity));
 }
 
+#ifdef CONFIG_USBC_PPC
+int tcpci_tcpm_set_snk_ctrl(int port, int enable)
+{
+	int cmd = enable ? TCPC_REG_COMMAND_SNK_CTRL_HIGH :
+		TCPC_REG_COMMAND_SNK_CTRL_LOW;
+
+	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
+}
+
+int tcpci_tcpm_set_src_ctrl(int port, int enable)
+{
+	int cmd = enable ? TCPC_REG_COMMAND_SRC_CTRL_HIGH :
+		TCPC_REG_COMMAND_SRC_CTRL_LOW;
+
+	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
+}
+#endif
+
 int tcpci_tcpm_set_vconn(int port, int enable)
 {
 	int reg, rv;
@@ -559,4 +577,8 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
+#ifdef CONFIG_USBC_PPC
+	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
+	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+#endif
 };

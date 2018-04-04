@@ -81,6 +81,10 @@
 #define TCPC_REG_FAULT_STATUS      0x1f
 
 #define TCPC_REG_COMMAND           0x23
+#define TCPC_REG_COMMAND_SNK_CTRL_LOW		0x44
+#define TCPC_REG_COMMAND_SNK_CTRL_HIGH		0x55
+#define TCPC_REG_COMMAND_SRC_CTRL_LOW		0x66
+#define TCPC_REG_COMMAND_SRC_CTRL_HIGH		0x77
 #define TCPC_REG_COMMAND_LOOK4CONNECTION	0x99
 #define TCPC_REG_COMMAND_I2CIDLE		0xFF
 
@@ -148,5 +152,9 @@ int tcpci_tcpm_mux_set(int i2c_addr, mux_state_t mux_state);
 int tcpci_tcpm_mux_get(int i2c_addr, mux_state_t *mux_state);
 int tcpci_get_chip_info(int port, int renew,
 			struct ec_response_pd_chip_info **chip_info);
+#ifdef CONFIG_USBC_PPC
+int tcpci_tcpm_set_snk_ctrl(int port, int enable);
+int tcpci_tcpm_set_src_ctrl(int port, int enable);
+#endif
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */
