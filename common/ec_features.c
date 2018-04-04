@@ -119,6 +119,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_HOST_EVENT64
 		| EC_FEATURE_MASK_1(EC_FEATURE_HOST_EVENT64)
 #endif
+#ifdef CONFIG_EXTERNAL_STORAGE
+		| EC_FEATURE_MASK_1(EC_FEATURE_EXEC_IN_RAM)
+#endif
 		;
 #ifdef CONFIG_EC_FEATURE_BOARD_OVERRIDE
 	result = board_override_feature_flags1(result);

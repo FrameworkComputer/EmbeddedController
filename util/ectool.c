@@ -545,6 +545,7 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_DEVICE_EVENT] = "Device events reporting",
 	[EC_FEATURE_UNIFIED_WAKE_MASKS] = "Unified wake masks for LPC/eSPI",
 	[EC_FEATURE_HOST_EVENT64] = "64-bit host events",
+	[EC_FEATURE_EXEC_IN_RAM] = "Execute code in RAM",
 };
 
 int cmd_inventory(int argc, char *argv[])
