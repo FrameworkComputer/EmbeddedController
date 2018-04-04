@@ -194,20 +194,25 @@ void vboot_main(void)
 {
 	CPRINTS("Main");
 
-	if (system_is_in_rw() || !(flash_get_protect() &
-			EC_FLASH_PROTECT_GPIO_ASSERTED)) {
+	if (system_is_in_rw()) {
 		/*
-		 * If we're here, it means PD negotiation was attempted but
-		 * we didn't get enough power to boot AP. This happens on RW
-		 * or unlocked RO.
-		 *
-		 * This could be caused by a weak type-c charger. If that's
-		 * the case, users need to plug a better charger.
-		 *
-		 * We could also be here because PD negotiation is still taking
-		 * place. If so, we'll end up showing request power signal but
-		 * it will be immediately corrected.
+		 * We come here and immediately return. LED shows power shortage
+		 * but it will be immediately corrected if the adapter can
+		 * provide enough power.
 		 */
+		CPRINTS("Already in RW. Wait for power...");
+		request_power();
+		return;
+	}
+
+	if (!(flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
+		/*
+		 * If hardware WP is disabled, PD communication is enabled.
+		 * We can return and wait for more power.
+		 * Note: If software WP is disabled, we still perform EFS even
+		 * though PD communication is enabled.
+		 */
+		CPRINTS("HW-WP not asserted.");
 		request_power();
 		return;
 	}
