@@ -46,7 +46,7 @@ static const struct  {
 		uint8_t raw_blob[33];
 		struct {
 			uint8_t server_pub_key[32];
-			uint8_t server_key_id;
+			volatile uint8_t server_key_id;
 		};
 	};
 } __packed rma_key_blob = {
