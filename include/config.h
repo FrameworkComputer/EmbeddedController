@@ -2731,9 +2731,6 @@
  */
 #undef CONFIG_USB_PD_COMM_LOCKED
 
-/* Respond to custom vendor-defined messages over PD */
-#undef CONFIG_USB_PD_CUSTOM_VDM
-
 /* Default USB data role when a USB PD debug accessory is seen */
 #define CONFIG_USB_PD_DEBUG_DR PD_ROLE_DFP
 
