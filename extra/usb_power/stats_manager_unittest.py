@@ -13,6 +13,7 @@ import unittest
 
 from stats_manager import StatsManager
 
+
 class TestStatsManager(unittest.TestCase):
   """Test to verify StatsManager methods work as expected.
 
@@ -27,9 +28,12 @@ class TestStatsManager(unittest.TestCase):
     self.data.AddValue('A', 99999.5)
     self.data.AddValue('A', 100000.5)
     self.data.AddValue('A', 'ERROR')
+    self.data.SetUnit('A', 'uW')
+    self.data.SetUnit('A', 'mW')
     self.data.AddValue('B', 1.5)
     self.data.AddValue('B', 2.5)
     self.data.AddValue('B', 3.5)
+    self.data.SetUnit('B', 'mV')
     self.data.CalculateStats()
 
   def tearDown(self):
@@ -58,8 +62,8 @@ class TestStatsManager(unittest.TestCase):
     dirname = 'unittest_raw_data'
     self.data.SaveRawData(self.tempdir, dirname)
     dirname = os.path.join(self.tempdir, dirname)
-    fileA = os.path.join(dirname, 'A.txt')
-    fileB = os.path.join(dirname, 'B.txt')
+    fileA = os.path.join(dirname, 'A_mW.txt')
+    fileB = os.path.join(dirname, 'B_mV.txt')
     with open(fileA, 'r') as fA:
       self.assertEqual('99999.50', fA.readline().strip())
       self.assertEqual('100000.50', fA.readline().strip())
@@ -77,10 +81,10 @@ class TestStatsManager(unittest.TestCase):
           '@@   NAME  COUNT       MEAN  STDDEV        MAX       MIN\n',
           f.readline())
       self.assertEqual(
-          '@@      A      2  100000.00    0.50  100000.50  99999.50\n',
+          '@@   A_mW      2  100000.00    0.50  100000.50  99999.50\n',
           f.readline())
       self.assertEqual(
-          '@@      B      3       2.50    0.82       3.50      1.50\n',
+          '@@   B_mV      3       2.50    0.82       3.50      1.50\n',
           f.readline())
 
   def test_SaveSummaryJSON(self):
@@ -88,9 +92,11 @@ class TestStatsManager(unittest.TestCase):
     self.data.SaveSummaryJSON(self.tempdir, fname)
     fname = os.path.join(self.tempdir, fname)
     with open(fname, 'r') as f:
-      mean_json = json.load(f)
-      self.assertAlmostEqual(100000.0, mean_json['A'])
-      self.assertAlmostEqual(2.5, mean_json['B'])
+      summary = json.load(f)
+      self.assertAlmostEqual(100000.0, summary['A']['mean'])
+      self.assertEqual('milliwatt', summary['A']['unit'])
+      self.assertAlmostEqual(2.5, summary['B']['mean'])
+      self.assertEqual('millivolt', summary['B']['unit'])
 
 
 if __name__ == '__main__':

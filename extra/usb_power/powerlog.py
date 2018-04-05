@@ -10,7 +10,7 @@
 from __future__ import print_function
 import argparse
 import array
-import datetime
+from distutils import sysconfig
 import json
 import os
 import struct
@@ -23,6 +23,9 @@ import usb
 
 from stats_manager import StatsManager
 
+LIB_DIR = os.path.join(sysconfig.get_python_lib(standard_lib=False), 'servo',
+                       'data')
+
 # This can be overridden by -v.
 debug = False
 def debuglog(msg):
@@ -32,6 +35,40 @@ def debuglog(msg):
 def logoutput(msg):
   print(msg)
   sys.stdout.flush()
+
+def process_filename(filename):
+  """Find the file path from the filename.
+
+  If filename is already the complete path, return that directly. If filename is
+  just the short name, look for the file in the current working directory, in
+  the directory of the current .py file, and then in the directory installed by
+  hdctools. If the file is found, return the complete path of the file.
+
+  Args:
+      filename: complete file path or short file name.
+
+  Returns:
+      a complete file path.
+
+  Raises:
+      IOError if filename does not exist.
+  """
+  # Check if filename is absolute path.
+  if os.path.isabs(filename) and os.path.isfile(filename):
+    return filename
+  # Check if filename is relative to current working directory.
+  cwd = os.path.join(os.getcwd(), filename)
+  if os.path.isfile(cwd):
+    return cwd
+  # Check if filename is relative to same directory as current .py file.
+  sd = os.path.join(os.path.dirname(os.path.realpath(__file__)), filename)
+  if os.path.isfile(sd):
+    return sd
+  # Check if file is installed by hdctools.
+  hdc = os.path.join(LIB_DIR, filename)
+  if os.path.isfile(hdc):
+    return hdc
+  raise IOError('No such file or directory: \'%s\'' % filename)
 
 
 class Spower(object):
@@ -51,6 +88,10 @@ class Spower(object):
   INA_BUSV      = 2
   INA_CURRENT   = 3
   INA_SHUNTV    = 4
+  # INA_SUFFIX is used to differentiate multiple ina types for the same power
+  # rail. No suffix for when ina type is 0 (non-existent) and when ina type is 1
+  # (power, no suffix for backward compatibility).
+  INA_SUFFIX      = ['', '', '_busv', '_cur', '_shuntv']
 
   # usb power commands
   CMD_RESET   = 0x0000
@@ -503,7 +544,7 @@ class Spower(object):
     Args:
       brdfile:	Filename of a json file decribing the INA wiring of this board.
     """
-    with open(brdfile) as data_file:
+    with open(process_filename(brdfile)) as data_file:
         data = json.load(data_file)
 
     #TODO: validate this.
@@ -519,7 +560,8 @@ class powerlog(object):
     obj = powerlog()
 
   Instance Variables:
-    _data: records sweetberries readings and calculates statistics.
+    _data: a StatsManager object that records sweetberry readings and calculates
+           statistics.
     _pwr[]: Spower objects for individual sweetberries.
   """
 
@@ -564,7 +606,7 @@ class powerlog(object):
     if serial_b:
       self._pwr['B'] = Spower('B', serialname=serial_b)
 
-    with open(cfgfile) as data_file:
+    with open(process_filename(cfgfile)) as data_file:
       names = json.load(data_file)
     self._names = self.process_scenario(names)
 
@@ -648,22 +690,24 @@ class powerlog(object):
       integration_us = integration_us_new
 
     # CSV header
+    title = "ts:%dus" % integration_us
+    for name_tuple in self._names:
+      name, ina_type = name_tuple
+
+      if ina_type == Spower.INA_POWER:
+        unit = "mW" if self._use_mW else "uW"
+      elif ina_type == Spower.INA_BUSV:
+        unit = "mV"
+      elif ina_type == Spower.INA_CURRENT:
+        unit = "uA"
+      elif ina_type == Spower.INA_SHUNTV:
+        unit = "uV"
+
+      title += ", %s %s" % (name, unit)
+      name_type = name + Spower.INA_SUFFIX[ina_type]
+      self._data.SetUnit(name_type, unit)
+    title += ", status"
     if self._print_raw_data:
-      title = "ts:%dus" % integration_us
-      for name_tuple in self._names:
-        name, ina_type = name_tuple
-
-        if ina_type == Spower.INA_POWER:
-          unit = "mW" if self._use_mW else "uW"
-        elif ina_type == Spower.INA_BUSV:
-          unit = "mV"
-        elif ina_type == Spower.INA_CURRENT:
-          unit = "uA"
-        elif ina_type == Spower.INA_SHUNTV:
-          unit = "uV"
-
-        title += ", %s %s" % (name, unit)
-      title += ", status"
       logoutput(title)
 
     forever = False
@@ -704,7 +748,8 @@ class powerlog(object):
                     name[1]==Spower.INA_POWER) else 1
                 value = aggregate_record[name] * multiplier
                 csv += ", %.2f" % value
-                self._data.AddValue(name, value)
+                name_type = name[0] + Spower.INA_SUFFIX[name[1]]
+                self._data.AddValue(name_type, value)
               else:
                 csv += ", "
             csv += ", %d" % aggregate_record["status"]
@@ -724,7 +769,7 @@ class powerlog(object):
       self._data.CalculateStats()
       if self._print_stats:
         self._data.PrintSummary()
-      save_dir = datetime.datetime.now().strftime('sweetberry%Y%m%d%H%M%S.%f')
+      save_dir = 'sweetberry%s' % time.time()
       if self._stats_dir:
         stats_dir = os.path.join(self._stats_dir, save_dir)
         self._data.SaveSummary(stats_dir)

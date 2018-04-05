@@ -16,12 +16,22 @@ KEY_PREFIX = '__'
 # as timeline keys.
 NOSHOW_PREFIX = '!!'
 
+LONG_UNIT = {
+    'mW': 'milliwatt',
+    'uW': 'microwatt',
+    'mV': 'millivolt',
+    'uA': 'microamp',
+    'uV': 'microvolt'
+}
+
+
 class StatsManager(object):
   """Calculates statistics for several lists of data(float)."""
 
   def __init__(self):
     """Initialize infrastructure for data and their statistics."""
     self._data = collections.defaultdict(list)
+    self._unit = {}
     self._summary = {}
 
   def AddValue(self, domain, value):
@@ -39,6 +49,21 @@ class StatsManager(object):
     print('Warning: value %s for domain %s is not a number, thus ignored.' %
           (value, domain))
 
+  def SetUnit(self, domain, unit):
+    """Set the unit for a domain.
+
+    There can be only one unit for each domain. Setting unit twice will
+    overwrite the original unit.
+
+    Args:
+      domain: the domain name.
+      unit: unit of the domain.
+    """
+    if domain in self._unit:
+      print('Warning: overwriting the unit of %s, old unit is %s, new unit is '
+            '%s.' % (domain, self._unit[domain], unit))
+    self._unit[domain] = unit
+
   def CalculateStats(self):
     """Calculate stats for all domain-data pairs.
 
@@ -48,11 +73,11 @@ class StatsManager(object):
     for domain, data in self._data.iteritems():
       data_np = numpy.array(data)
       self._summary[domain] = {
-          'mean'     : data_np.mean(),
-          'min'      : data_np.min(),
-          'max'      : data_np.max(),
-          'stddev'   : data_np.std(),
-          'count'    : data_np.size,
+          'mean': data_np.mean(),
+          'min': data_np.min(),
+          'max': data_np.max(),
+          'stddev': data_np.std(),
+          'count': data_np.size,
       }
 
   def _SummaryToString(self, prefix=STATS_PREFIX):
@@ -67,7 +92,9 @@ class StatsManager(object):
       if domain.startswith(NOSHOW_PREFIX):
         continue
       stats = self._summary[domain]
-      row = [domain.lstrip(KEY_PREFIX)]
+      unit = self._unit[domain]
+      domain_unit = domain.lstrip(KEY_PREFIX) + '_' + unit
+      row = [domain_unit]
       row.append(str(stats['count']))
       for entry in headers[2:]:
         row.append('%.2f' % stats[entry.lower()])
@@ -122,11 +149,13 @@ class StatsManager(object):
       directory: directory to save the JSON summary in.
       fname: filename to save summary under.
     """
-    data = {
-        domain: self._summary[domain]['mean']
-        for domain in sorted(self._summary.keys())
-        if not domain.startswith(NOSHOW_PREFIX)
-    }
+    data = {}
+    for domain in self._summary:
+      if domain.startswith(NOSHOW_PREFIX):
+        continue
+      unit = LONG_UNIT.get(self._unit[domain], self._unit[domain])
+      data_entry = {'mean': self._summary[domain]['mean'], 'unit': unit}
+      data[domain] = data_entry
     if not os.path.exists(directory):
       os.makedirs(directory)
     fname = os.path.join(directory, fname)
@@ -150,7 +179,7 @@ class StatsManager(object):
     if not os.path.exists(dirname):
       os.makedirs(dirname)
     for domain, data in self._data.iteritems():
-      fname = domain + '.txt'
+      fname = domain + '_' + self._unit[domain] + '.txt'
       fname = os.path.join(dirname, fname)
       with open(fname, 'w') as f:
         f.write('\n'.join('%.2f' % value for value in data) + '\n')
