@@ -202,14 +202,23 @@ static int nx20p3483_init(int port)
 	read_reg(port, NX20P3483_INTERRUPT1_REG, &reg);
 	read_reg(port, NX20P3483_INTERRUPT2_REG, &reg);
 
-	/* Make sure that dead battery mode is exited */
+	/* Check for dead battery mode */
 	rv = read_reg(port, NX20P3483_DEVICE_CONTROL_REG, &reg);
 	if (rv)
 		return rv;
-	reg |= NX20P3483_CTRL_DB_EXIT;
-	rv = write_reg(port, NX20P3483_DEVICE_CONTROL_REG, reg);
-	if (rv)
-		return rv;
+
+	/* If in dead battery mode switch to SNK mode before exiting */
+	if (!(reg & ~NX20P3483_CTRL_DB_EXIT)) {
+		rv = nx20p3483_vbus_sink_enable(port, 1);
+		if (rv)
+			return rv;
+
+		/* Exit dead battery mode. */
+		reg |= NX20P3483_CTRL_DB_EXIT;
+		rv = write_reg(port, NX20P3483_DEVICE_CONTROL_REG, reg);
+		if (rv)
+			return rv;
+	}
 
 	return EC_SUCCESS;
 }
