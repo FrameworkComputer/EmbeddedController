@@ -1165,8 +1165,10 @@ static int flash_command_write(struct host_cmd_handler_args *args)
 	if (p->size + sizeof(*p) > args->params_size)
 		return EC_RES_INVALID_PARAM;
 
+#ifdef CONFIG_INTERNAL_STORAGE
 	if (system_unsafe_to_overwrite(offset, p->size))
 		return EC_RES_ACCESS_DENIED;
+#endif
 
 	if (flash_write(offset, p->size, (const uint8_t *)(p + 1)))
 		return EC_RES_ERROR;
@@ -1204,8 +1206,10 @@ static int flash_command_erase(struct host_cmd_handler_args *args)
 	if (flash_get_protect() & EC_FLASH_PROTECT_ALL_NOW)
 		return EC_RES_ACCESS_DENIED;
 
+#ifdef CONFIG_INTERNAL_STORAGE
 	if (system_unsafe_to_overwrite(offset, p->size))
 		return EC_RES_ACCESS_DENIED;
+#endif
 
 	switch (cmd) {
 	case FLASH_ERASE_SECTOR:
