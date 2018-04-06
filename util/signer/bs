@@ -13,6 +13,8 @@ set -u
 
 progname=$(basename $0)
 
+OD="/usr/bin/od"
+
 tmpf="/tmp/bs_manifest.$$"
 trap "{ rm -rf [01].flat ${tmpf} ; }" EXIT
 
@@ -107,6 +109,40 @@ tweak_manifest () {
   sed -i "s/\"fuses\": {/${sub}\"fuses\": {/" "${tmpf}"
 }
 
+# This function accepts two arguments, names of two binary files.
+#
+# It searches the first passed in file for the first 8 bytes of the second
+# passed in file. The od utility is used to generate full hex dump of the
+# first file (16 bytes per line) and the first 8 bytes of the second file.
+#
+# grep is used to check if the pattern is present in the full dump. If the
+# pattern is not found, the first file is dumped again, this time with an 8
+# byte offset into the file. This makes sure that if the match is present, but
+# is spanning two lines of the original hex dump, it is in a single dump line
+# the second time around.
+find_blob_in_blob() {
+  local main_blob="${1}"
+  local pattern_blob="${2}"
+  local pattern
+  local od_options="-An -tx1"
+
+  # Get the first 8 bytes of the pattern blob.
+  pattern="$(${OD} ${od_options} -N8 "${pattern_blob}")"
+
+  if "${OD}" ${od_options} "${main_blob}" | grep "${pattern}" > /dev/null; then
+    return 0
+  fi
+
+  # Just in case pattern was wrapped in the previous od output, let's do it
+  # again with an 8 bytes offset
+  if "${OD}" ${od_options} -j8 "${main_blob}" |
+      grep "${pattern}" > /dev/null; then
+    return 0
+  fi
+
+  return 1
+}
+
 SIGNER="cr50-codesigner"
 if ! which "${SIGNER}" 2>/dev/null > /dev/null; then
   echo "${SIGNER} is not available, try running 'sudo emerge cr50-utils'" >&2
@@ -176,6 +212,8 @@ if [[ -n "${do_prod}" && -n "${do_b1}" ]]; then
   exit 1
 fi
 
+RMA_KEY_BASE="${EC_ROOT}/board/cr50/rma_key_blob"
+
 signer_command_params=()
 signer_command_params+=(--b -x ${EC_BIN_ROOT}/fuses.xml)
 if [[ -z "${do_prod}" ]]; then
@@ -183,6 +221,8 @@ if [[ -z "${do_prod}" ]]; then
 else
   cp "${EC_BIN_ROOT}/ec_RW-manifest-prod.json" "${tmpf}"
   signer_command_params+=(-k ${EC_BIN_ROOT}/cr50_RW-prod.pem.pub)
+  # Swap test public RMA server key with the prod version.
+  signer_command_params+=(-S "${RMA_KEY_BASE}.test","${RMA_KEY_BASE}.prod")
 fi
 signer_command_params+=(-j ${tmpf})
 
@@ -210,6 +250,18 @@ for elf in ${elves[@]}; do
   if ! "${SIGNER}" ${signer_command_params[@]} \
        -i ${elf} -o "${signed_file}"; then
     echo "${progname}: ${SIGNER} failed" >&2
+    exit 1
+  fi
+
+  if find_blob_in_blob  "${signed_file}" "${RMA_KEY_BASE}.test"; then
+    echo "${progname}: test RMA key in the signed image!" >&2
+    rm *."${dst_suffix}"
+    exit 1
+  fi
+
+  if ! find_blob_in_blob "${signed_file}" "${RMA_KEY_BASE}.prod"; then
+    echo "${progname}: prod RMA key not in the signed image!" >&2
+    rm *."${dst_suffix}"
     exit 1
   fi
   : $(( count++ ))
