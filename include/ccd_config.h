@@ -7,6 +7,9 @@
 #ifndef __CROS_EC_CCD_CONFIG_H
 #define __CROS_EC_CCD_CONFIG_H
 
+#include <common.h>
+#include <stdint.h>
+
 /* Case-closed debugging state */
 enum ccd_state {
 	CCD_STATE_LOCKED = 0,
@@ -101,6 +104,58 @@ enum ccd_capability {
 	CCD_CAP_COUNT
 };
 
+/* Capability states */
+enum ccd_capability_state {
+	/* Default value */
+	CCD_CAP_STATE_DEFAULT = 0,
+
+	/* Always available (state >= CCD_STATE_LOCKED) */
+	CCD_CAP_STATE_ALWAYS = 1,
+
+	/* Unless locked (state >= CCD_STATE_UNLOCKED) */
+	CCD_CAP_STATE_UNLESS_LOCKED = 2,
+
+	/* Only if opened (state >= CCD_STATE_OPENED) */
+	CCD_CAP_STATE_IF_OPENED = 3,
+
+	/* Number of capability states */
+	CCD_CAP_STATE_COUNT
+};
+
+struct ccd_capability_info {
+	/* Capability name */
+	const char *name;
+
+	/* Default state, if config set to CCD_CAP_STATE_DEFAULT */
+	enum ccd_capability_state default_state;
+};
+
+#define CAP_INFO_DATA {					  \
+	{"UartGscRxAPTx",	CCD_CAP_STATE_ALWAYS},	  \
+	{"UartGscTxAPRx",	CCD_CAP_STATE_ALWAYS},	  \
+	{"UartGscRxECTx",	CCD_CAP_STATE_ALWAYS},	  \
+	{"UartGscTxECRx",	CCD_CAP_STATE_IF_OPENED}, \
+							  \
+	{"FlashAP",		CCD_CAP_STATE_IF_OPENED}, \
+	{"FlashEC",		CCD_CAP_STATE_IF_OPENED}, \
+	{"OverrideWP",		CCD_CAP_STATE_IF_OPENED}, \
+	{"RebootECAP",		CCD_CAP_STATE_IF_OPENED}, \
+							  \
+	{"GscFullConsole",	CCD_CAP_STATE_IF_OPENED}, \
+	{"UnlockNoReboot",	CCD_CAP_STATE_ALWAYS},	  \
+	{"UnlockNoShortPP",	CCD_CAP_STATE_ALWAYS},	  \
+	{"OpenNoTPMWipe",	CCD_CAP_STATE_IF_OPENED}, \
+							  \
+	{"OpenNoLongPP",	CCD_CAP_STATE_IF_OPENED}, \
+	{"BatteryBypassPP",	CCD_CAP_STATE_ALWAYS},	  \
+	{"UpdateNoTPMWipe",	CCD_CAP_STATE_ALWAYS},	  \
+	{"I2C",			CCD_CAP_STATE_IF_OPENED}, \
+	{"FlashRead",		CCD_CAP_STATE_ALWAYS},	  \
+	}
+
+#define CCD_STATE_NAMES { "Locked", "Unlocked", "Opened" }
+#define CCD_CAP_STATE_NAMES { "Default", "Always", "UnlessLocked", "IfOpened" }
+
 /*
  * Subcommand code, used to pass different CCD commands using the same TPM
  * vendor command.
@@ -112,6 +167,7 @@ enum ccd_vendor_subcommands {
 	CCDV_LOCK = 3,
 	CCDV_PP_POLL_UNLOCK = 4,
 	CCDV_PP_POLL_OPEN = 5,
+	CCDV_GET_INFO = 6
 };
 
 enum ccd_pp_state {
@@ -120,6 +176,17 @@ enum ccd_pp_state {
 	CCD_PP_BETWEEN_PRESSES = 2,
 	CCD_PP_DONE = 3
 };
+
+/* Structure to communicate information about CCD state. */
+#define CCD_CAPS_WORDS ((CCD_CAP_COUNT * 2 + 31)/32)
+struct ccd_info_response {
+	uint32_t ccd_caps_current[CCD_CAPS_WORDS];
+	uint32_t ccd_caps_defaults[CCD_CAPS_WORDS];
+	uint32_t ccd_flags;
+	uint8_t ccd_state;
+	uint8_t ccd_force_disabled;
+	uint8_t ccd_has_password;
+} __packed;
 
 /**
  * Initialize CCD configuration at boot.

@@ -29,6 +29,9 @@
 #define CPRINTS(format, args...) cprints(CC_CCD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CCD, format, ## args)
 
+/* Let's make sure that CCD capability state enum fits into two bits. */
+BUILD_ASSERT(CCD_CAP_STATE_COUNT <= 4);
+
 /* Restriction state for ccdunlock when no password is set */
 enum ccd_unlock_restrict {
 	/* Unrestricted */
@@ -46,24 +49,6 @@ enum ccd_unlock_restrict {
 
 /* Current version of case-closed debugging configuration struct */
 #define CCD_CONFIG_VERSION 0x10
-
-/* Capability states */
-enum ccd_capability_state {
-	/* Default value */
-	CCD_CAP_STATE_DEFAULT = 0,
-
-	/* Always available (state >= CCD_STATE_LOCKED) */
-	CCD_CAP_STATE_ALWAYS = 1,
-
-	/* Unless locked (state >= CCD_STATE_UNLOCKED) */
-	CCD_CAP_STATE_UNLESS_LOCKED = 2,
-
-	/* Only if opened (state >= CCD_STATE_OPENED) */
-	CCD_CAP_STATE_IF_OPENED = 3,
-
-	/* Number of capability states */
-	CCD_CAP_STATE_COUNT
-};
 
 /*
  * CCD command header; including the subcommand code used to demultiplex
@@ -104,14 +89,6 @@ struct ccd_config {
 	uint8_t password_digest[CCD_PASSWORD_DIGEST_SIZE];
 };
 
-struct ccd_capability_info {
-	/* Capability name */
-	const char *name;
-
-	/* Default state, if config set to CCD_CAP_STATE_DEFAULT */
-	enum ccd_capability_state default_state;
-};
-
 /* Nvmem variable name for CCD config */
 static const uint8_t k_ccd_config = NVMEM_VAR_CCD_CONFIG;
 
@@ -121,33 +98,11 @@ static const uint32_t k_public_flags =
 		CCD_FLAG_OVERRIDE_WP_STATE_ENABLED;
 
 /* List of CCD capability info; must be in same order as enum ccd_capability */
-static const struct ccd_capability_info cap_info[CCD_CAP_COUNT] = {
-	{"UartGscRxAPTx",	CCD_CAP_STATE_ALWAYS},
-	{"UartGscTxAPRx",	CCD_CAP_STATE_ALWAYS},
-	{"UartGscRxECTx",	CCD_CAP_STATE_ALWAYS},
-	{"UartGscTxECRx",	CCD_CAP_STATE_IF_OPENED},
+static const struct ccd_capability_info cap_info[CCD_CAP_COUNT] = CAP_INFO_DATA;
 
-	{"FlashAP",		CCD_CAP_STATE_IF_OPENED},
-	{"FlashEC",		CCD_CAP_STATE_IF_OPENED},
-	{"OverrideWP",		CCD_CAP_STATE_IF_OPENED},
-	{"RebootECAP",		CCD_CAP_STATE_IF_OPENED},
-
-	{"GscFullConsole",	CCD_CAP_STATE_IF_OPENED},
-	{"UnlockNoReboot",	CCD_CAP_STATE_ALWAYS},
-	{"UnlockNoShortPP",	CCD_CAP_STATE_ALWAYS},
-	{"OpenNoTPMWipe",	CCD_CAP_STATE_IF_OPENED},
-
-	{"OpenNoLongPP",	CCD_CAP_STATE_IF_OPENED},
-	{"BatteryBypassPP",	CCD_CAP_STATE_ALWAYS},
-	{"UpdateNoTPMWipe",	CCD_CAP_STATE_ALWAYS},
-	{"I2C",			CCD_CAP_STATE_IF_OPENED},
-	{"FlashRead",		CCD_CAP_STATE_ALWAYS},
-};
-
-static const char *ccd_state_names[CCD_STATE_COUNT] = {
-	"Locked", "Unlocked", "Opened"};
-static const char *ccd_cap_state_names[CCD_CAP_STATE_COUNT] = {
-	"Default", "Always", "UnlessLocked", "IfOpened"};
+static const char *ccd_state_names[CCD_STATE_COUNT] = CCD_STATE_NAMES;
+static const char *ccd_cap_state_names[CCD_CAP_STATE_COUNT] =
+	CCD_CAP_STATE_NAMES;
 
 static enum ccd_state ccd_state = CCD_STATE_LOCKED;
 static struct ccd_config config;
@@ -1442,6 +1397,42 @@ static enum vendor_cmd_rc ccd_pp_poll_open(void *buf,
 	return VENDOR_RC_SUCCESS;
 }
 
+static enum vendor_cmd_rc ccd_get_info(void *buf,
+				       size_t input_size,
+				       size_t *response_size)
+{
+	int i;
+	struct ccd_info_response response = {};
+
+	for (i = 0; i < CCD_CAP_COUNT; i++) {
+		int index;
+		int shift;
+
+		/* Each capability takes 2 bits. */
+		index = i / (32/2);
+		shift = (i % (32/2)) * 2;
+		response.ccd_caps_current[index] |= raw_get_cap(i, 1) << shift;
+		response.ccd_caps_defaults[index] |=
+			cap_info[i].default_state << shift;
+	}
+
+	response.ccd_flags = htobe32(raw_get_flags());
+	response.ccd_state = ccd_get_state();
+	response.ccd_has_password = raw_has_password();
+	response.ccd_force_disabled = force_disabled;
+	for (i = 0; i < ARRAY_SIZE(response.ccd_caps_current); i++) {
+		response.ccd_caps_current[i] =
+			htobe32(response.ccd_caps_current[i]);
+		response.ccd_caps_defaults[i] =
+			htobe32(response.ccd_caps_defaults[i]);
+	}
+
+	*response_size = sizeof(response);
+	memcpy(buf, &response, sizeof(response));
+
+	return VENDOR_RC_SUCCESS;
+}
+
 /*
  * Common TPM Vendor command handler used to demultiplex various CCD commands
  * which need to be available both throuh CLI and over /dev/tpm0.
@@ -1488,13 +1479,24 @@ static enum vendor_cmd_rc ccd_vendor(enum vendor_cmd_cc code,
 		handler = ccd_pp_poll_open;
 		break;
 
+	case CCDV_GET_INFO:
+		handler = ccd_get_info;
+		break;
+
 	default:
 		CPRINTS("%s:%d - unknown subcommand\n", __func__, __LINE__);
 		break;
 	}
 
 	if (handler) {
-		*response_size = 0;  /* Let's be optimistic: 0 means success. */
+		/*
+		 * Let's be optimistic: 0 usually means success.
+		 *
+		 * We know the buffer is large enough to accommodate any CCD
+		 * subcommand response, so there is no size checks in the
+		 * processing functions.
+		 */
+		*response_size = 0;
 
 		rc = handler(buf + 1, input_size - 1, response_size);
 
