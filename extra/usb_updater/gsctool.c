@@ -194,12 +194,13 @@ struct upgrade_pkt {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:fhikO:oPprstUu";
+static char *short_opts = "abcd:fhIikO:oPprstUu";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		0,   NULL, 'a'},
 	{"binvers",	0,   NULL, 'b'},
 	{"board_id",    2,   NULL, 'i'},
+	{"ccd_info",    0,   NULL, 'I'},
 	{"ccd_lock",    0,   NULL, 'k'},
 	{"ccd_open",    0,   NULL, 'o'},
 	{"ccd_unlock",  0,   NULL, 'U'},
@@ -508,6 +509,7 @@ static void usage(int errs)
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
 	       "  -f,--fwver               Report running firmware versions\n"
 	       "  -h,--help                Show this message\n"
+	       "  -I,--ccd_info            Get information about CCD state\n"
 	       "  -i,--board_id [ID[:FLAGS]]\n"
 	       "                           Get or set Info1 board ID fields\n"
 	       "                           ID could be 32 bit hex or 4 "
@@ -1625,11 +1627,91 @@ void poll_for_pp(struct transfer_descriptor *td,
 
 }
 
+static void print_ccd_info(void *response, size_t response_size)
+{
+	struct ccd_info_response ccd_info;
+	size_t i;
+	const struct ccd_capability_info cap_info[] = CAP_INFO_DATA;
+	const char *state_names[] = CCD_STATE_NAMES;
+	const char *cap_state_names[] = CCD_CAP_STATE_NAMES;
+	uint32_t caps_bitmap = 0;
+
+	if (response_size != sizeof(ccd_info)) {
+		fprintf(stderr, "Unexpected CCD info response size %zd\n",
+			response_size);
+		exit(update_error);
+	}
+
+	memcpy(&ccd_info, response, sizeof(ccd_info));
+
+	/* Convert it back to host endian format. */
+	ccd_info.ccd_flags = be32toh(ccd_info.ccd_flags);
+	for (i = 0; i < ARRAY_SIZE(ccd_info.ccd_caps_current); i++) {
+		ccd_info.ccd_caps_current[i] =
+			be32toh(ccd_info.ccd_caps_current[i]);
+		ccd_info.ccd_caps_defaults[i] =
+			be32toh(ccd_info.ccd_caps_defaults[i]);
+	}
+
+	/* Now report CCD state on the console. */
+	printf("State: %s\n", ccd_info.ccd_state > ARRAY_SIZE(state_names) ?
+	       "Error" : state_names[ccd_info.ccd_state]);
+	printf("Password: %s\n", ccd_info.ccd_has_password ? "Set" : "None");
+	printf("Flags: %#06x\n", ccd_info.ccd_flags);
+	printf("Capabilities, current and default:\n");
+	for (i = 0; i < CCD_CAP_COUNT; i++) {
+		int is_enabled;
+		int index;
+		int shift;
+		int cap_current;
+		int cap_default;
+
+		index = i / (32/2);
+		shift = (i % (32/2)) * 2;
+
+		cap_current = (ccd_info.ccd_caps_current[index] >> shift) & 3;
+		cap_default = (ccd_info.ccd_caps_defaults[index] >> shift) & 3;
+
+		if (ccd_info.ccd_force_disabled) {
+			is_enabled = 0;
+		} else {
+			switch (cap_current) {
+			case CCD_CAP_STATE_ALWAYS:
+				is_enabled = 1;
+				break;
+			case CCD_CAP_STATE_UNLESS_LOCKED:
+				is_enabled = (ccd_info.ccd_state !=
+					      CCD_STATE_LOCKED);
+				break;
+			default:
+				is_enabled = (ccd_info.ccd_state ==
+					      CCD_STATE_OPENED);
+				break;
+			}
+		}
+
+		printf("  %-15s %c %s",
+		       cap_info[i].name,
+		       is_enabled ? 'Y' : '-',
+		       cap_state_names[cap_current]);
+
+		if (cap_current != cap_default)
+			printf("  (%s)", cap_state_names[cap_default]);
+
+		printf("\n");
+
+		if (is_enabled)
+			caps_bitmap |= (1 << i);
+	}
+	printf("CCD caps bitmap: %#x\n", caps_bitmap);
+}
+
 static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
-			      int ccd_open, int ccd_lock)
+			      int ccd_open, int ccd_lock, int ccd_info)
 {
 	uint8_t payload;
-	uint8_t response;
+	 /* Max possible response size is when ccd_info is requested. */
+	uint8_t response[sizeof(struct ccd_info_response)];
 	size_t response_size;
 	int rv;
 
@@ -1637,8 +1719,10 @@ static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
 		payload = CCDV_UNLOCK;
 	else if (ccd_open)
 		payload = CCDV_OPEN;
-	else
+	else if (ccd_lock)
 		payload = CCDV_LOCK;
+	else
+		payload = CCDV_GET_INFO;
 
 	response_size = sizeof(response);
 	rv = send_vendor_command(td, VENDOR_CC_CCD,
@@ -1652,12 +1736,15 @@ static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
 	if (rv == VENDOR_RC_PASSWORD_REQUIRED)
 		rv = common_process_password(td, payload);
 
-	if (rv == VENDOR_RC_SUCCESS)
+	if (rv == VENDOR_RC_SUCCESS) {
+		if (ccd_info)
+			print_ccd_info(response, response_size);
 		return;
+	}
 
 	if (rv != VENDOR_RC_IN_PROGRESS) {
 		fprintf(stderr, "Error: rv %d, response %d\n",
-			rv, response_size ? response : 0);
+			rv, response_size ? response[0] : 0);
 		exit(update_error);
 	}
 
@@ -1818,6 +1905,7 @@ int main(int argc, char *argv[])
 	int ccd_open = 0;
 	int ccd_unlock = 0;
 	int ccd_lock = 0;
+	int ccd_info = 0;
 	int try_all_transfer = 0;
 	const char *exclusive_opt_error =
 		"Options -a, -s and -t are mutually exclusive\n";
@@ -1867,6 +1955,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			usage(errorcnt);
+			break;
+		case 'I':
+			ccd_info = 1;
 			break;
 		case 'i':
 			if (!optarg && argv[optind] && argv[optind][0] != '-')
@@ -1953,6 +2044,7 @@ int main(int argc, char *argv[])
 		usage(errorcnt);
 
 	if ((bid_action == bid_none) &&
+	    !ccd_info &&
 	    !ccd_lock &&
 	    !ccd_open &&
 	    !ccd_unlock &&
@@ -1986,9 +2078,10 @@ int main(int argc, char *argv[])
 	}
 
 	if (((bid_action != bid_none) + !!rma + !!password +
-	     !!ccd_open + !!ccd_unlock + !!ccd_lock +
+	     !!ccd_open + !!ccd_unlock + !!ccd_lock + !!ccd_info +
 	     !!openbox_desc_file) > 2) {
-		fprintf(stderr, "ERROR: options -i, -k, -O, -o, -P, -r, and -u "
+		fprintf(stderr, "ERROR: "
+			"options -I -i, -k, -O, -o, -P, -r, and -u "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
@@ -2009,8 +2102,9 @@ int main(int argc, char *argv[])
 	if (openbox_desc_file)
 		return verify_ro(&td, openbox_desc_file);
 
-	if (ccd_unlock || ccd_open || ccd_lock)
-		process_ccd_state(&td, ccd_unlock, ccd_open, ccd_lock);
+	if (ccd_unlock || ccd_open || ccd_lock || ccd_info)
+		process_ccd_state(&td, ccd_unlock, ccd_open,
+				  ccd_lock, ccd_info);
 
 	if (password)
 		process_password(&td);
