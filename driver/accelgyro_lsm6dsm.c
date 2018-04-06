@@ -410,6 +410,8 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 			reg_val++;
 			normalized_rate *= 2;
 		}
+		if (normalized_rate == 0)
+			return EC_RES_INVALID_PARAM;
 	} else {
 		reg_val = 0;
 		normalized_rate = 0;
