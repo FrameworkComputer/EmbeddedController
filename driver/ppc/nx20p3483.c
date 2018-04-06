@@ -208,7 +208,7 @@ static int nx20p3483_init(int port)
 		return rv;
 
 	/* If in dead battery mode switch to SNK mode before exiting */
-	if (!(reg & ~NX20P3483_CTRL_DB_EXIT)) {
+	if (!(reg & NX20P3483_CTRL_DB_EXIT)) {
 		rv = nx20p3483_vbus_sink_enable(port, 1);
 		if (rv)
 			return rv;
