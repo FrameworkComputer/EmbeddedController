@@ -292,7 +292,7 @@ static void pending_cutoff_deferred(void)
 
 	rv = board_cut_off_battery();
 
-	if (rv == EC_SUCCESS)
+	if (rv == EC_RES_SUCCESS)
 		CPRINTF("[%T Battery cut off succeeded.]\n");
 	else
 		CPRINTF("[%T Battery cut off failed!]\n");
@@ -323,7 +323,7 @@ static int battery_command_cutoff(struct host_cmd_handler_args *args)
 	}
 
 	rv = board_cut_off_battery();
-	if (!rv) {
+	if (rv == EC_RES_SUCCESS) {
 		CPRINTS("Battery cut off is successful.");
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
 	} else {
@@ -360,12 +360,13 @@ static int command_cutoff(int argc, char **argv)
 	}
 
 	rv = board_cut_off_battery();
-	if (!rv) {
+	if (rv == EC_RES_SUCCESS) {
 		ccprintf("[%T Battery cut off]\n");
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+		return EC_SUCCESS;
 	}
 
-	return rv;
+	return EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff,
 		"[at-shutdown]",
