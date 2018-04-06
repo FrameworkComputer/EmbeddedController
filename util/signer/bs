@@ -108,7 +108,7 @@ tweak_manifest () {
 }
 
 SIGNER="cr50-codesigner"
-if ! sudo which "${SIGNER}" 2>/dev/null > /dev/null; then
+if ! which "${SIGNER}" 2>/dev/null > /dev/null; then
   echo "${SIGNER} is not available, try running 'sudo emerge cr50-utils'" >&2
   exit 1
 fi
@@ -198,19 +198,18 @@ tweak_manifest
 count=0
 for elf in ${elves[@]}; do
   if [[ -n "${do_prod}" ]]; then
-    if grep -q "DEV/cr50" "${elf}"; then
+    if strings "${elf}" | grep -q "DBG/cr50"; then
       echo "Will not sign debug image with prod keys" >&2
       exit 1
     fi
   fi
   signed_file="${count}.${dst_suffix}"
 
-  # Make sure this file is not owned by root
+  # Make sure output file is not owned by root
   touch "${signed_file}"
-  sudo "${SIGNER}" ${signer_command_params[@]} \
-    -i ${elf} -o "${signed_file}"
-  if [[ ! -s "${signed_file}" ]]; then
-    echo "${progname}: error: empty signed file ${signed_file}" >&2
+  if ! "${SIGNER}" ${signer_command_params[@]} \
+       -i ${elf} -o "${signed_file}"; then
+    echo "${progname}: ${SIGNER} failed" >&2
     exit 1
   fi
   : $(( count++ ))
