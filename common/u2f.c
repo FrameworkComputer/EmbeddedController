@@ -333,7 +333,7 @@ unsigned u2f_apdu_rcv(uint8_t *buf, unsigned in_len, unsigned max_len)
 
 	CPRINTF("%T/%d U2F APDU ", apdu.len);
 	/* Is the APDU well-formed including its payload ? */
-	if (in_len < 5 || (apdu.len > in_len - (apdu.data - buf))) {
+	if (in_len < 4 || (apdu.len > in_len - (apdu.data - buf))) {
 		sw = U2F_SW_WRONG_LENGTH;
 		goto ret_status;
 	}
