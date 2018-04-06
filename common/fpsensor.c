@@ -514,8 +514,8 @@ int command_fpcapture(int argc, char **argv)
 
 	if (argc >= 2) {
 		char *e;
-		int capture_type = strtoi(argv[1], &e, 0);
 
+		capture_type = strtoi(argv[1], &e, 0);
 		if (*e || capture_type < 0)
 			return EC_ERROR_PARAM1;
 	}
