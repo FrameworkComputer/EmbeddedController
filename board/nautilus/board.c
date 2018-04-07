@@ -580,6 +580,34 @@ void board_hibernate(void)
 		;
 }
 
+int board_get_version(void)
+{
+	static int ver = -1;
+	uint8_t id3;
+
+	if (ver != -1)
+		return ver;
+
+	ver = 0;
+
+	/* First 2 strappings are binary. */
+	if (gpio_get_level(GPIO_BOARD_VERSION1))
+		ver |= 0x01;
+	if (gpio_get_level(GPIO_BOARD_VERSION2))
+		ver |= 0x02;
+
+	/*
+	 * The 3rd strapping pin is tristate.
+	 * id3 = 2 if Hi-Z, id3 = 1 if high, and id3 = 0 if low.
+	 */
+	id3 = gpio_get_ternary(GPIO_BOARD_VERSION3);
+	ver |= id3 * 0x04;
+
+	CPRINTS("Board ID = %d", ver);
+
+	return ver;
+}
+
 /* Lid Sensor mutex */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
