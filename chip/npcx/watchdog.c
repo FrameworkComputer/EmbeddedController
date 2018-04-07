@@ -123,6 +123,10 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 int watchdog_init(void)
 {
 #if SUPPORT_WDG
+	/* Touch watchdog before init if it is already running */
+	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WD_RUN))
+		NPCX_WDSDM = 0x5C;
+
 	/* Keep prescaler ratio timer0 clock to 1:1024 */
 	NPCX_TWCP = 0x0A;
 	/* Keep prescaler ratio watchdog clock to 1:1 */
