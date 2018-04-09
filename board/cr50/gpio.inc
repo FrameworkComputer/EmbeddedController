@@ -116,6 +116,12 @@ GPIO(I2C_SDA_INA,     PIN(0, 13), GPIO_INPUT)
  * up the pinmux in board.c will have to change as well.
  */
 GPIO(I2CS_SDA,        PIN(0, 14), GPIO_INPUT)
+/*
+ * Fake open drain on EC_TX_CR50_RX_OUT. When asserted, the signal can be used
+ * to enable UART programming mode on the EC. The signal needs to fake open
+ * drain so it can still be used as the cr50 rx signal when it is deasserted.
+ */
+GPIO(EC_TX_CR50_RX_OUT, PIN(0, 15), GPIO_ODR_HIGH)
 
 /* Unimplemented signals which we need to emulate for now */
 /* TODO(wfrichar): Half the boards don't use this signal. Take it out. */
@@ -173,10 +179,11 @@ PINMUX(FUNC(UART2_RX),        B6, DIO_INPUT)	/* EC console */
  * driving the cr50 uart TX at the same time as servo is driving those pins may
  * damage both servo and cr50.
  */
-PINMUX(GPIO(DETECT_AP),       A3, DIO_INPUT)
-PINMUX(GPIO(DETECT_EC),       B6, DIO_INPUT)
-PINMUX(GPIO(EC_TX_CR50_RX),   B6, DIO_INPUT)
-PINMUX(GPIO(DETECT_SERVO),    B5, DIO_INPUT)
+PINMUX(GPIO(DETECT_AP),         A3, DIO_INPUT)
+PINMUX(GPIO(DETECT_EC),         B6, DIO_INPUT)
+PINMUX(GPIO(EC_TX_CR50_RX),     B6, DIO_INPUT)
+PINMUX(GPIO(EC_TX_CR50_RX_OUT), B6, DIO_INPUT)
+PINMUX(GPIO(DETECT_SERVO),      B5, DIO_INPUT)
 
 /*
  * I2CS pins are bi-directional and would be configured here as shown. However,
