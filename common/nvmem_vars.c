@@ -33,7 +33,7 @@ int get_local_copy(void)
 	if (rbuf)
 		return EC_SUCCESS;
 
-	rv = shared_mem_acquire(CONFIG_FLASH_NVMEM_VARS_USER_SIZE,
+	rv = SHARED_MEM_ACQUIRE_CHECK(CONFIG_FLASH_NVMEM_VARS_USER_SIZE,
 				(char **)&rbuf);
 
 	if (rv == EC_SUCCESS) {

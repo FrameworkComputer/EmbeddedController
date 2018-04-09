@@ -34,6 +34,9 @@ struct vboot_hash_tag {
 #define CHUNK_SIZE 1024       /* Bytes to hash per deferred call */
 #define WORK_INTERVAL_US 100  /* Delay between deferred calls */
 
+/* Check that CHUNK_SIZE fits in shared memory. */
+SHARED_MEM_CHECK_SIZE(CHUNK_SIZE);
+
 static uint32_t data_offset;
 static uint32_t data_size;
 static uint32_t curr_pos;

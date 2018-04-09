@@ -220,6 +220,10 @@ SECTIONS
 
     } > IRAM
 
+    ASSERT((__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE) <=
+               (CONFIG_RAM_BASE + CONFIG_RAM_SIZE),
+           "Not enough space for shared memory.")
+
     __image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 
 #ifdef CONFIG_LPC

@@ -131,7 +131,7 @@ int rwsig_check_signature(void)
 #endif
 
 	/* Large buffer for RSA computation : could be re-use afterwards... */
-	res = shared_mem_acquire(3 * RSANUMBYTES, (char **)&rsa_workbuf);
+	res = SHARED_MEM_ACQUIRE_CHECK(3 * RSANUMBYTES, (char **)&rsa_workbuf);
 	if (res) {
 		CPRINTS("No memory for RW verification");
 		goto out;

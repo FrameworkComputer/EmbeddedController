@@ -26,6 +26,9 @@
  */
 int shared_mem_size(void);
 
+#define SHARED_MEM_CHECK_SIZE(size) \
+	BUILD_ASSERT((size) <= CONFIG_SHAREDMEM_MINIMUM_SIZE)
+
 /*
  * Acquires a shared memory area of the requested size in bytes.
  *
@@ -42,6 +45,12 @@ int shared_mem_size(void);
  * other non-zero error code.
  */
 int shared_mem_acquire(int size, char **dest_ptr);
+
+#define SHARED_MEM_ACQUIRE_CHECK(size, dest_ptr) \
+	({ \
+		SHARED_MEM_CHECK_SIZE(size);				\
+		shared_mem_acquire((size), (dest_ptr));			\
+	})
 
 /**
  * Releases a shared memory area previously allocated via shared_mem_acquire().

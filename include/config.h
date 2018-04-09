@@ -3345,6 +3345,36 @@
 
 /******************************************************************************/
 /*
+ * Set minimum shared memory size, unless it is defined in board file.
+ */
+#ifndef CONFIG_SHAREDMEM_MINIMUM_SIZE
+#ifdef CONFIG_COMMON_RUNTIME
+/* If RWSIG is used, we may need more space. */
+#if defined(CONFIG_RWSIG)
+#define CONFIG_SHAREDMEM_MINIMUM_SIZE_RWSIG (CONFIG_RSA_KEY_SIZE / 8 * 3)
+#else
+#define CONFIG_SHAREDMEM_MINIMUM_SIZE_RWSIG 0
+#endif
+
+/*
+ * We can't use the "MAX" function here, as it is too smart and BUILD_ASSERT
+ * calls do not allow it as parameter. BUILD_MAX below works for both compiler
+ * and linker.
+ */
+#define BUILD_MAX(x, y) ((x) > (y) ? (x) : (y))
+
+/* Minimum: 1kb */
+#define CONFIG_SHAREDMEM_MINIMUM_SIZE \
+	BUILD_MAX(1024, CONFIG_SHAREDMEM_MINIMUM_SIZE_RWSIG)
+#else /* !CONFIG_COMMON_RUNTIME */
+/* Without common runtime, we do not have support for shared memory. */
+#define CONFIG_SHAREDMEM_MINIMUM_SIZE 0
+#endif
+#endif /* !CONFIG_SHAREDMEM_MINIMUM_SIZE */
+
+
+/******************************************************************************/
+/*
  * Disable the built-in console history if using the experimental console.
  *
  * The experimental console keeps its own session-persistent history which

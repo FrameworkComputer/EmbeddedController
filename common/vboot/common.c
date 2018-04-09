@@ -40,7 +40,7 @@ int vboot_verify(const uint8_t *data, int len,
 	uint32_t *workbuf;
 	int err = EC_SUCCESS;
 
-	if (shared_mem_acquire(3 * RSANUMBYTES, (char **)&workbuf))
+	if (SHARED_MEM_ACQUIRE_CHECK(3 * RSANUMBYTES, (char **)&workbuf))
 		return EC_ERROR_MEMORY_ALLOCATION;
 
 	/* Compute hash of the RW firmware */
