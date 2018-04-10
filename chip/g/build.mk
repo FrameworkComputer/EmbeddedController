@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 #
 
-SIGNED_IMAGES = 1
-
 CORE:=cortex-m
 CFLAGS_CPU+=-march=armv7-m -mcpu=cortex-m3
 
@@ -126,7 +124,11 @@ endif
 
 MANIFEST := util/signer/ec_RW-manifest-dev.json
 CR50_RO_KEY ?= rom-testkey-A.pem
-SIGNER = /usr/bin/cr50-codesigner
+REAL_SIGNER = /usr/bin/cr50-codesigner
+ifneq ($(wildcard $(REAL_SIGNER)),)
+SIGNED_IMAGES = 1
+SIGNER := $(REAL_SIGNER)
+endif
 
 ifeq ($(H1_DEVIDS),)
 CR50_RW_KEY = loader-testkey-A.pem
