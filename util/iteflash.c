@@ -83,7 +83,7 @@ enum {
 static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 			     uint8_t *ptr, uint8_t *tbuf, int tcnt)
 {
-	int ret, i, j;
+	int ret, i, j, remaining_data, ack_idx;
 	int tx_buffered = 0;
 	static uint8_t ack[TX_BUFFER_LIMIT];
 	uint8_t *b = ptr;
@@ -117,7 +117,18 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 			}
 
 			/* read ACK bits */
-			ret = ftdi_read_data(ftdi, &ack[0], tx_buffered);
+			remaining_data = tx_buffered;
+			ack_idx = 0;
+			do {
+				ret = ftdi_read_data(ftdi, &ack[ack_idx],
+					remaining_data);
+				if (ret < 0) {
+					fprintf(stderr, "read ACK failed\n");
+					return ret;
+				}
+				remaining_data -= ret;
+				ack_idx += ret;
+			} while (remaining_data);
 			for (j = 0; j < tx_buffered; j++) {
 				if ((ack[j] & 0x80) != 0)
 					failed_ack = ack[j];
@@ -143,7 +154,7 @@ static int i2c_add_send_byte(struct ftdi_context *ftdi, uint8_t *buf,
 static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 			     uint8_t *ptr, uint8_t *rbuf, int rcnt)
 {
-	int ret, i;
+	int ret, i, rbuf_idx;
 	uint8_t *b = ptr;
 
 	for (i = 0; i < rcnt; i++) {
@@ -170,9 +181,18 @@ static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 		fprintf(stderr, "failed to prepare read\n");
 		return ret;
 	}
-	ret = ftdi_read_data(ftdi, rbuf, rcnt);
-	if (ret < 0)
-		fprintf(stderr, "read byte failed\n");
+
+	rbuf_idx = 0;
+	do {
+		ret = ftdi_read_data(ftdi, &rbuf[rbuf_idx], rcnt);
+		if (ret < 0) {
+			fprintf(stderr, "read byte failed\n");
+			break;
+		}
+		rcnt -= ret;
+		rbuf_idx += ret;
+	} while (rcnt);
+
 	return ret;
 }
 
@@ -587,7 +607,7 @@ static const char wheel[] = {'|', '/', '-', '\\' };
 static void draw_spinner(uint32_t remaining, uint32_t size)
 {
 	int percent = (size - remaining)*100/size;
-	printf("\r%c%3d%%", wheel[windex++], percent);
+	fprintf(stderr, "\r%c%3d%%", wheel[windex++], percent);
 	windex %= sizeof(wheel);
 }
 
@@ -723,6 +743,7 @@ int command_write_pages(struct ftdi_context *ftdi, uint32_t address,
 		address += cnt;
 		remaining -= cnt;
 	}
+	draw_spinner(remaining, size);
 	/* No error so far */
 	res = size;
 failed_write:
@@ -801,6 +822,7 @@ wait_busy_cleared:
 		}
 	}
 	/* No error so far */
+	printf("\n\rErasing Done.\n");
 	res = 0;
 failed_erase:
 	if (spi_flash_command_short(ftdi, SPI_CMD_WRITE_DISABLE,
@@ -809,8 +831,6 @@ failed_erase:
 
 	if (spi_flash_follow_mode_exit(ftdi, "erase") < 0)
 		res = -EIO;
-
-	printf("\n");
 
 	return res;
 }
@@ -885,7 +905,7 @@ int write_flash(struct ftdi_context *ftdi, const char *filename,
 		free(buffer);
 		return -EIO;
 	}
-	printf("\rDone.\n");
+	printf("\n\rWriting Done.\n");
 
 	free(buffer);
 	return 0;
@@ -927,12 +947,7 @@ int verify_flash(struct ftdi_context *ftdi, const char *filename,
 	res = command_read_pages(ftdi, offset, flash_size, buffer2);
 	draw_spinner(flash_size-res, flash_size);
 	res = memcmp(buffer, buffer2, file_size);
-	if (res != 0) {
-		fprintf(stderr, "Verify Error!! ");
-		goto exit;
-	}
-
-	printf("\n\rVerify Done.\n");
+	printf("\n\rVerify %s\n", res ? "Failed!" : "Done.");
 exit:
 
 	free(buffer);

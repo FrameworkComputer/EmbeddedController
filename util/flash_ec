@@ -399,6 +399,13 @@ cleanup() {
 		kill -CONT ${pid}
 	done
 
+	if [ "${CHIP}" == "it83xx" ] ; then
+		info "Reinitialize ftdi_i2c interface"
+		dut_control --ftdii2c init
+		dut_control --ftdii2c open
+		dut_control --ftdii2c setclock
+	fi
+
 	if ! on_raiden || $(servo_has_cold_reset); then
 		ec_reset
 	fi
@@ -847,11 +854,6 @@ function flash_it83xx() {
 
 	info "Run iteflash..."
 	sudo ${ITEFLASH} -w ${IMG}
-
-	info "Reinitialize ftdi_i2c interface"
-	dut_control --ftdii2c init
-	dut_control --ftdii2c open
-	dut_control --ftdii2c setclock
 }
 
 function flash_lm4() {
