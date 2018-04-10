@@ -528,7 +528,7 @@ static void board_pmic_init(void)
 	/* Disable power button shutdown timer. */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x14, 0x00);
 }
-DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(board_pmic_init);
 
 /* Initialize board. */
 static void board_init(void)
@@ -605,6 +605,9 @@ static void board_init(void)
 
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
+
+	/* Initialize PMIC */
+	hook_call_deferred(&board_pmic_init_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
