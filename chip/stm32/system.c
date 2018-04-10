@@ -398,6 +398,15 @@ void system_reset(int flags)
 		while (1)
 			;
 	} else {
+		if (flags & SYSTEM_RESET_WAIT_EXT) {
+			int i;
+
+			/* Wait 10 seconds for external reset */
+			for (i = 0; i < 1000; i++) {
+				watchdog_reload();
+				udelay(10000);
+			}
+		}
 		CPU_NVIC_APINT = 0x05fa0004;
 	}
 
