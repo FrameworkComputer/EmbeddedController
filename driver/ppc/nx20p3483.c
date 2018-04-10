@@ -42,6 +42,26 @@ static int write_reg(uint8_t port, int reg, int regval)
 			  regval);
 }
 
+static int nx20p3483_set_ovp_limit(int port)
+{
+	int rv;
+	int reg;
+
+	/* Set VBUS over voltage threshold (OVLO) */
+	rv = read_reg(port, NX20P3483_OVLO_THRESHOLD_REG, &reg);
+	if (rv)
+		return rv;
+	/* OVLO threshold is 3 bit field */
+	reg &= ~NX20P3483_OVLO_THRESHOLD_MASK;
+	/* Set SNK OVP to 23.0 V */
+	reg |= NX20P3483_OVLO_23_0;
+	rv = write_reg(port, NX20P3483_OVLO_THRESHOLD_REG, reg);
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
 static int nx20p3483_is_sourcing_vbus(int port)
 {
 	int mode;
@@ -115,6 +135,8 @@ static int nx20p3483_vbus_sink_enable(int port, int enable)
 {
 	int status;
 	int rv;
+	int desired_mode = enable ? NX20P3483_MODE_HV_SNK :
+		NX20P3483_MODE_STANDBY;
 
 	enable = !!enable;
 	/*
@@ -136,18 +158,21 @@ static int nx20p3483_vbus_sink_enable(int port, int enable)
 			return rv;
 	}
 
-	/* Verify switch status register */
-	rv = read_reg(port, NX20P3483_SWITCH_STATUS_REG, &status);
+	/* Read device status register to get mode */
+	rv = read_reg(port, NX20P3483_DEVICE_STATUS_REG, &status);
 	if (rv)
 		return rv;
-	status = !!(status & NX20P3483_HVSNK_STS);
-	return (status == enable) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
+
+	return ((status & NX20P3483_DEVICE_MODE_MASK) == desired_mode) ?
+		EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 static int nx20p3483_vbus_source_enable(int port, int enable)
 {
 	int status;
 	int rv;
+	int desired_mode = enable ? NX20P3483_MODE_5V_SRC :
+		NX20P3483_MODE_STANDBY;
 
 	enable = !!enable;
 	/*
@@ -169,31 +194,21 @@ static int nx20p3483_vbus_source_enable(int port, int enable)
 			return rv;
 	}
 
-	/* Verify switch status register */
-	rv = read_reg(port, NX20P3483_SWITCH_STATUS_REG, &status);
+	/* Read device status register to get mode */
+	rv = read_reg(port, NX20P3483_DEVICE_STATUS_REG, &status);
 	if (rv)
 		return rv;
-	status = !!(status & NX20P3483_5VSRC_STS);
-	return (status == enable) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
+
+	return ((status & NX20P3483_DEVICE_MODE_MASK) == desired_mode) ?
+		EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 static int nx20p3483_init(int port)
 {
 	int reg;
 	int mask;
+	int mode;
 	int rv;
-
-	/* Set VBUS over voltage threshold (OVLO) */
-	rv = read_reg(port, NX20P3483_OVLO_THRESHOLD_REG, &reg);
-	if (rv)
-		return rv;
-	/* OVLO threshold is 3 bit field */
-	reg &= ~NX20P3483_OVLO_THRESHOLD_MASK;
-	/* Set SNK OVP to 23.0 V */
-	reg |= NX20P3483_OVLO_23_0;
-	rv = write_reg(port, NX20P3483_OVLO_THRESHOLD_REG, reg);
-	if (rv)
-		return rv;
 
 	/* Mask interrupts for interrupt 2 register */
 	mask = ~NX20P3483_INT2_EN_ERR;
@@ -211,23 +226,39 @@ static int nx20p3483_init(int port)
 	read_reg(port, NX20P3483_INTERRUPT1_REG, &reg);
 	read_reg(port, NX20P3483_INTERRUPT2_REG, &reg);
 
-	/* Check for dead battery mode */
-	rv = read_reg(port, NX20P3483_DEVICE_CONTROL_REG, &reg);
+	/* Get device  mode */
+	rv = read_reg(port, NX20P3483_DEVICE_STATUS_REG, &mode);
 	if (rv)
 		return rv;
+	mode &= NX20P3483_DEVICE_MODE_MASK;
 
-	/* If in dead battery mode switch to SNK mode before exiting */
-	if (!(reg & NX20P3483_CTRL_DB_EXIT)) {
-		rv = nx20p3483_vbus_sink_enable(port, 1);
-		if (rv)
-			return rv;
+	/* Check if dead battery mode is active. */
+	if (mode == NX20P3483_MODE_DEAD_BATTERY) {
+		/*
+		 * If in dead battery mode, must enable HV SNK mode prior to
+		 * exiting dead battery mode or VBUS path will get cut off and
+		 * system will lose power. Before DB mode is exited, the device
+		 * mode will not reflect the correct value and therefore the
+		 * return value isn't useful here.
+		 */
+		nx20p3483_vbus_sink_enable(port, 1);
 
 		/* Exit dead battery mode. */
+		rv = read_reg(port, NX20P3483_DEVICE_CONTROL_REG, &reg);
+		if (rv)
+			return rv;
 		reg |= NX20P3483_CTRL_DB_EXIT;
 		rv = write_reg(port, NX20P3483_DEVICE_CONTROL_REG, reg);
 		if (rv)
 			return rv;
 	}
+
+	/*
+	 * Set VBUS over voltage threshold (OVLO). Note that while the PPC is in
+	 * dead battery mode, OVLO is forced to 6.8V, so this setting must be
+	 * done after dead battery mode is exited.
+	 */
+	nx20p3483_set_ovp_limit(port);
 
 	return EC_SUCCESS;
 }
@@ -265,6 +296,12 @@ static void nx20p3483_handle_interrupt(int port)
 		read_reg(port, NX20P3483_DEVICE_CONTROL_REG, &control_reg);
 		reg |= NX20P3483_CTRL_DB_EXIT;
 		write_reg(port, NX20P3483_DEVICE_CONTROL_REG, control_reg);
+		/*
+		 * If DB exit mode failed, then the OVP limit setting done in
+		 * the init routine will not be successful. Set the OVP limit
+		 * again here.
+		 */
+		nx20p3483_set_ovp_limit(port);
 	}
 
 	/* Check for 5V OC interrupt */
