@@ -187,9 +187,13 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 
 	/* Calculate alarm time */
 	alarm_sec = rtc_tr_to_sec(rtc->rtc_tr) + delay_s;
-	alarm_us = rtcss_to_us(rtc->rtc_ssr) + delay_us;
-	alarm_sec = alarm_sec + alarm_us / SECOND;
-	alarm_us = alarm_us % SECOND;
+
+	if (delay_us) {
+		alarm_us = rtcss_to_us(rtc->rtc_ssr) + delay_us;
+		alarm_sec = alarm_sec + alarm_us / SECOND;
+		alarm_us = alarm_us % SECOND;
+	}
+
 	/*
 	 * If seconds is greater than 1 day, subtract by 1 day to deal with
 	 * 24-hour rollover.
@@ -197,12 +201,19 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	if (alarm_sec >= SECS_PER_DAY)
 		alarm_sec -= SECS_PER_DAY;
 
-	/* Set alarm time */
-	STM32_RTC_ALRMAR = sec_to_rtc_tr(alarm_sec);
-	STM32_RTC_ALRMASSR = us_to_rtcss(alarm_us);
-	/* Check for match on hours, minutes, seconds, and subsecond */
-	STM32_RTC_ALRMAR |= 0xc0000000;
-	STM32_RTC_ALRMASSR |= 0x0f000000;
+	/*
+	 * Set alarm time in seconds and check for match on
+	 * hours, minutes, and seconds.
+	 */
+	STM32_RTC_ALRMAR = sec_to_rtc_tr(alarm_sec) | 0xc0000000;
+
+	/*
+	 * Set alarm time in subseconds and check for match on subseconds.
+	 * If the caller doesn't specify subsecond delay (e.g. host command),
+	 * just align the alarm time to second.
+	 */
+	STM32_RTC_ALRMASSR = delay_us ?
+			     (us_to_rtcss(alarm_us) | 0x0f000000) : 0;
 
 	/* Enable alarm and alarm interrupt */
 	STM32_EXTI_PR = EXTI_RTC_ALR_EVENT;
