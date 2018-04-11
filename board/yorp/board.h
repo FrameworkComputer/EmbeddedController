@@ -143,7 +143,12 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_EXTPOWER_GPIO
-/* TODO(b/75974377), increase CONFIG_EXTPOWER_DEBOUNCE_MS from 30 to 1000? */
+#undef	CONFIG_EXTPOWER_DEBOUNCE_MS
+/*
+ * ISL923x driver sets "Adapter insertion to Switching Debounce"
+ * CONTROL2 REG 0x3DH <Bit 11> to 1 which is 150 ms
+ */
+#define	CONFIG_EXTPOWER_DEBOUNCE_MS 200
 
 
 #ifndef __ASSEMBLER__
