@@ -310,7 +310,7 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
 		     hc_cbi_set,
 		     EC_VER_MASK(0));
 
-static void dump_cbi(void)
+static void dump_flash(void)
 {
 	uint8_t buf[16];
 	int i;
@@ -326,32 +326,41 @@ static void dump_cbi(void)
 	}
 }
 
-static int cc_cbi(int argc, char **argv)
+static void print_tag(const char * const tag, int rv, const uint32_t *val)
+{
+	ccprintf(tag);
+	if (rv == EC_SUCCESS && val)
+		ccprintf(": %u (0x%x)\n", *val, *val);
+	else
+		ccprintf(": (Error %d)\n", rv);
+}
+
+static void dump_cbi(void)
 {
 	uint32_t val;
 
+	/* Ensure we read the latest data from flash. */
+	cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
+	read_board_info();
+
+	if (cached_read_result != EC_SUCCESS) {
+		ccprintf("Cannot Read CBI (Error %d)\n", cached_read_result);
+		return;
+	}
+
 	ccprintf("CBI_VERSION: 0x%04x\n", head->version);
 	ccprintf("TOTAL_SIZE: %u\n", head->total_size);
-	ccprintf("BOARD_VERSION: ");
-	if (cbi_get_board_version(&val) == EC_SUCCESS)
-		ccprintf("%u (0x%x)\n", val, val);
-	else
-		ccprintf("UNKNOWN\n");
 
-	ccprintf("OEM_ID: ");
-	if (cbi_get_oem_id(&val) == EC_SUCCESS)
-		ccprintf("%u (0x%x)\n", val, val);
-	else
-		ccprintf("UNKNOWN\n");
+	print_tag("BOARD_VERSION", cbi_get_board_version(&val), &val);
+	print_tag("OEM_ID", cbi_get_oem_id(&val), &val);
+	print_tag("SKU_ID", cbi_get_sku_id(&val), &val);
+}
 
-	ccprintf("SKU_ID: ");
-	if (cbi_get_sku_id(&val) == EC_SUCCESS)
-		ccprintf("%u (0x%x)\n", val, val);
-	else
-		ccprintf("UNKNOWN\n");
-
+static int cc_cbi(int argc, char **argv)
+{
 	dump_cbi();
+	dump_flash();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, NULL, NULL);
+DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, NULL, "Print Cros Board Info from flash");
 #endif /* !HOST_TOOLS_BUILD */
