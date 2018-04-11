@@ -89,12 +89,6 @@ const struct adc_t adc_channels[] = {
 	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
 	[ADC_VBUS_C1] = {
 		"VBUS_C1", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	/* Board ID 1. Least Significant nibble */
-	[ADC_BRD_ID1] = {
-		"BRD_ID1", NPCX_ADC_CH6, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	/* Board ID 2. Most Significant nibble */
-	[ADC_BRD_ID2] = {
-		"BRD_ID2", NPCX_ADC_CH7, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -325,82 +319,6 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	return status;
-}
-
-static const int UNKNOWN_BRD_ID = -1;
-static const int board_id_thresh_mv[] = {
-	/* Vin = 3.3V, Ideal voltage, R2 values listed below */
-	/* R1 = 51.1 kOhm */
-	200,  /* 124 mV, 2.0 Kohm */
-	366,  /* 278 mV, 4.7 Kohm */
-	550,  /* 456 mV, 8.2  Kohm */
-	752,  /* 644 mV, 12.4 Kohm */
-	927,  /* 860 mV, 18.0 Kohm */
-	1073, /* 993 mV, 22.0 Kohm */
-	1235, /* 1152 mV, 27.4 Kohm */
-	1386, /* 1318 mV, 34.0 Kohm */
-	1552, /* 1453 mV, 40.2 Kohm */
-	/* R1 = 10.0 kOhm */
-	1739, /* 1650 mV, 10.0 Kohm */
-	1976, /* 1827 mV, 12.4 Kohm */
-	2197, /* 2121 mV, 18.0 Kohm */
-	2344, /* 2269 mV, 22.0 Kohm */
-	2484, /* 2418 mV, 27.4 Kohm */
-	2636, /* 2550 mV, 34.0 Kohm */
-	2823, /* 2721 mV, 47.0 Kohm */
-};
-
-static int read_board_id_adc(enum adc_channel chan)
-{
-	int mv;
-	int i;
-
-	mv = adc_read_channel(chan);
-	cprints(CC_SYSTEM, "BOARD ID ADC %d = %d mV",
-		chan == ADC_BRD_ID1 ? 1 : 2, mv);
-
-	if (mv == ADC_READ_ERROR)
-		return UNKNOWN_BRD_ID;
-
-	for (i = 0; i < ARRAY_SIZE(board_id_thresh_mv); i++)
-		if (mv < board_id_thresh_mv[i])
-			return i;
-
-	return UNKNOWN_BRD_ID;
-}
-
-
-int board_get_version(void)
-{
-	static int version = UNKNOWN_BRD_ID;
-	int level;
-
-	if (version != UNKNOWN_BRD_ID)
-		return version;
-
-	/* Enabled Board ID circuit and wait for it to stabilize. */
-	gpio_set_level(GPIO_EC_BRD_ID_EN, 1);
-	msleep(1);
-
-	level = read_board_id_adc(ADC_BRD_ID1);
-	if (level == UNKNOWN_BRD_ID)
-		goto error;
-	version = level & 0x0F;
-
-	level = read_board_id_adc(ADC_BRD_ID2);
-	if (level == UNKNOWN_BRD_ID)
-		goto error;
-	version = version | ((level & 0x0F) << 4);
-
-	gpio_set_level(GPIO_EC_BRD_ID_EN, 0);
-	cprints(CC_SYSTEM, "Board version: %d", version);
-	return version;
-
-error:
-	gpio_set_level(GPIO_EC_BRD_ID_EN, 0);
-	cprints(CC_SYSTEM, "Board version unknown!");
-	version = UNKNOWN_BRD_ID;
-	return version;
 }
 
 /* Keyboard scan setting */
