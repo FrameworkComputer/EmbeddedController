@@ -525,6 +525,7 @@ int command_get_commands(int fd, struct stm32_def *chip)
 		return 0;
 	}
 
+	fprintf(stderr, "Cannot get bootloader command list.\n");
 	return -1;
 }
 
@@ -1060,7 +1061,8 @@ int main(int argc, char **argv)
 	if (!chip)
 		goto terminate;
 
-	command_get_commands(ser, chip);
+	if (command_get_commands(ser, chip) < 0)
+		goto terminate;
 
 	if (flags & FLAG_READ_UNPROTECT)
 		command_read_unprotect(ser);
