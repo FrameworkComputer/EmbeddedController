@@ -164,8 +164,6 @@ struct ec2i_t {
 	uint8_t data_port;
 };
 
-extern const struct ec2i_t pnpcfg_settings[];
-
 /* EC2I write */
 enum ec2i_message ec2i_write(enum host_pnpcfg_index index, uint8_t data);
 
