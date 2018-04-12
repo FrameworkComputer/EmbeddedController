@@ -342,6 +342,8 @@ static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
 
 static void svdm_dp_post_config(int port)
 {
+	const struct usb_mux *mux = &usb_muxes[port];
+
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
@@ -350,6 +352,8 @@ static void svdm_dp_post_config(int port)
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
+
+	mux->hpd_update(port, 1, 0);
 }
 
 static int svdm_dp_attention(int port, uint32_t *payload)
@@ -358,6 +362,7 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	enum gpio_signal hpd = PORT_TO_HPD(port);
+	const struct usb_mux *mux = &usb_muxes[port];
 
 	cur_lvl = gpio_get_level(hpd);
 	dp_status[port] = payload[1];
@@ -390,14 +395,18 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
 		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	}
+	mux->hpd_update(port, lvl, irq);
 	/* ack */
 	return 1;
 }
 
 static void svdm_exit_dp_mode(int port)
 {
+	const struct usb_mux *mux = &usb_muxes[port];
+
 	svdm_safe_dp_mode(port);
 	gpio_set_level(PORT_TO_HPD(port), 0);
+	mux->hpd_update(port, 0, 0);
 }
 
 static int svdm_enter_gfu_mode(int port, uint32_t mode_caps)

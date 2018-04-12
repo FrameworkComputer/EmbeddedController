@@ -173,10 +173,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 	{
 		.port_addr = 0,
 		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 	{
 		.port_addr = 1,
 		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 };
 
@@ -189,12 +191,24 @@ void board_reset_pd_mcu(void)
 
 void board_tcpc_init(void)
 {
+	int port;
+
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
 
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+	/*
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		const struct usb_mux *mux = &usb_muxes[port];
+
+		mux->hpd_update(port, 0, 0);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
