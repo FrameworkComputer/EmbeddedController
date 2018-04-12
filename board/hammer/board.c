@@ -237,30 +237,6 @@ int board_has_keyboard_backlight(void)
 	return has_keyboard_backlight;
 }
 
-/*
- * Side-band USB wake, to be able to wake lid even in deep S3, when USB
- * controller is off.
- */
-void board_usb_wake(void)
-{
-#if defined(BOARD_WAND) || defined(BOARD_WHISKERS)
-	/* FIXME: Implement side-band wake for wand. */
-#else
-	/*
-	 * Poke detection pin for about 500us, we disable interrupts
-	 * to make sure that we do not get preempted (setting GPIO high
-	 * for too long would prevent pulse detection on lid EC side from
-	 * working properly, or even kill hammer power if it is held for
-	 * longer than debounce time).
-	 */
-	interrupt_disable();
-	gpio_set_flags(GPIO_BASE_DET, GPIO_OUT_HIGH);
-	udelay(500);
-	gpio_set_flags(GPIO_BASE_DET, GPIO_INPUT);
-	interrupt_enable();
-#endif
-}
-
 /* Reset the touchpad, mainly used to recover it from malfunction. */
 void board_touchpad_reset(void)
 {
