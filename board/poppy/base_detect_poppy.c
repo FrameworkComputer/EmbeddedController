@@ -71,6 +71,7 @@ enum base_status {
 	BASE_UNKNOWN = 0,
 	BASE_DISCONNECTED = 1,
 	BASE_CONNECTED = 2,
+	BASE_CONNECTED_REVERSE = 3,
 };
 
 static enum base_status current_base_status;
@@ -112,6 +113,7 @@ static void base_detect_deferred(void)
 	uint64_t time_now = get_time().val;
 	int v;
 	uint32_t tmp_pulse_width = pulse_width;
+	static int reverse_debounce = 1;
 
 	if (base_detect_debounce_time > time_now) {
 		hook_call_deferred(&base_detect_deferred_data,
@@ -123,29 +125,49 @@ static void base_detect_deferred(void)
 	if (v == ADC_READ_ERROR)
 		return;
 
+	print_base_detect_value(v, tmp_pulse_width);
+
+	if (v >= BASE_DETECT_REVERSE_MIN_MV &&
+	    v <= BASE_DETECT_REVERSE_MAX_MV) {
+		/*
+		 * If we are unlucky when we sample the ADC, we may think that
+		 * the base is connected in reverse, while this may just be a
+		 * transient. Force debouncing a little longer in that case.
+		 */
+		if (current_base_status == BASE_CONNECTED_REVERSE)
+			return;
+
+		if (reverse_debounce == 0) {
+			base_detect_change(BASE_CONNECTED_REVERSE);
+			return;
+		}
+
+		reverse_debounce = 0;
+		hook_call_deferred(&base_detect_deferred_data,
+				   BASE_DETECT_DEBOUNCE_US);
+		return;
+	}
+	/* Reset reverse debounce */
+	reverse_debounce = 1;
+
 	if (v >= BASE_DETECT_MIN_MV && v <= BASE_DETECT_MAX_MV) {
 		if (current_base_status != BASE_CONNECTED) {
-			print_base_detect_value(v, tmp_pulse_width);
 			base_detect_change(BASE_CONNECTED);
 		} else if (tmp_pulse_width >= BASE_DETECT_PULSE_MIN_US &&
 			   tmp_pulse_width <= BASE_DETECT_PULSE_MAX_US) {
-			print_base_detect_value(v, tmp_pulse_width);
 			CPRINTS("Sending event to AP");
 			host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 		}
-	} else if ((v >= BASE_DETECT_REVERSE_MIN_MV &&
-		    v <= BASE_DETECT_REVERSE_MAX_MV) ||
-		   v >= BASE_DETECT_DISCONNECT_MIN_MV) {
-		/* TODO(b/35585396): Handle reverse connection separately. */
-
-		print_base_detect_value(v, tmp_pulse_width);
-
-		base_detect_change(BASE_DISCONNECTED);
-	} else {
-		/* Unclear base status, schedule again in a while. */
-		hook_call_deferred(&base_detect_deferred_data,
-				   BASE_DETECT_RETRY_US);
+		return;
 	}
+
+	if (v >= BASE_DETECT_DISCONNECT_MIN_MV) {
+		base_detect_change(BASE_DISCONNECTED);
+		return;
+	}
+
+	/* Unclear base status, schedule again in a while. */
+	hook_call_deferred(&base_detect_deferred_data, BASE_DETECT_RETRY_US);
 }
 
 static inline int detect_pin_connected(enum gpio_signal det_pin)
