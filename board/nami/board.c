@@ -676,14 +676,15 @@ DECLARE_HOOK(HOOK_LID_CHANGE, lm3509_kblight_lid_change, HOOK_PRIO_DEFAULT);
 static void board_set_motion_sensor_count(void)
 {
 	/* There are two possible sensor configurations.
-	 * Vayne(Dell) is without ALS sensor
+	 * Vayne/Sona/Pantheon are without ALS sensor
 	 * Nami is with ALS sensor
 	 * Use the oem id to different them.
 	 */
 	uint32_t oem_id;
 
 	if (cbi_get_oem_id(&oem_id) == EC_SUCCESS) {
-		if (oem_id == PROJECT_VAYNE || oem_id == PROJECT_SONA)
+		if (oem_id == PROJECT_VAYNE || oem_id == PROJECT_SONA
+			|| oem_id == PROJECT_PANTHEON)
 			motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
 	}
 }
