@@ -189,7 +189,7 @@ int charger_get_option(int *option)
 	uint32_t controls;
 	int reg;
 
-	rv = raw_read8(ISL923X_REG_CONTROL0, &reg);
+	rv = raw_read16(ISL923X_REG_CONTROL0, &reg);
 	if (rv)
 		return rv;
 
