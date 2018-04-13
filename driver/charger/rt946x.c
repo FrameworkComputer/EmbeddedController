@@ -63,6 +63,13 @@ enum rt946x_ilmtsel {
 	RT946X_ILMTSEL_LOWER_LEVEL, /* lower of above two */
 };
 
+enum rt946x_chg_stat {
+	RT946X_CHGSTAT_READY = 0,
+	RT946X_CHGSTAT_IN_PROGRESS,
+	RT946X_CHGSTAT_DONE,
+	RT946X_CHGSTAT_FAULT,
+};
+
 enum rt946x_adc_in_sel {
 	RT946X_ADC_VBUS_DIV5 = 1,
 	RT946X_ADC_VBUS_DIV2,
@@ -909,6 +916,18 @@ int rt946x_is_vbus_ready(void)
 
 	return rt946x_read8(RT946X_REG_CHGSTATC, &val) ?
 	       0 : !!(val & RT946X_MASK_PWR_RDY);
+}
+
+int rt946x_is_charge_done(void)
+{
+	int val = 0;
+
+	if (rt946x_read8(RT946X_REG_CHGSTAT, &val))
+		return 0;
+
+	val = (val & RT946X_MASK_CHG_STAT) >> RT946X_SHIFT_CHG_STAT;
+
+	return val == RT946X_CHGSTAT_DONE;
 }
 
 int rt946x_cutoff_battery(void)

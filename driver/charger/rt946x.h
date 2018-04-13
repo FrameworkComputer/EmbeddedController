@@ -315,6 +315,9 @@ int rt946x_enable_charger_boost(int en);
  */
 int rt946x_is_vbus_ready(void);
 
+/* Return 1 if rt946x triggers charge termination due to full charge. */
+int rt946x_is_charge_done(void);
+
 /*
  * Cut off the battery (force BATFET to turn off).
  * Return 0 if it succeeds.
