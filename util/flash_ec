@@ -713,6 +713,7 @@ function flash_flashrom() {
 	SPI_SIZE=$(sudo ${FLASHROM_CMDLINE} 2>/dev/null |\
 		       grep -oe '[0-9]\+$') || \
 		die "Failed to determine chip size!"
+	(( SPI_SIZE == 0 )) && die "Chip size is 0!"
 
 	IMG_SIZE=$(stat -c%s "$IMG")
 	PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
