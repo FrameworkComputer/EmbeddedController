@@ -292,7 +292,7 @@
 #define NPCX_LFCGCTL2_XT_OSC_SL_EN        6
 
 /******************************************************************************/
-/*CR UART Register */
+/* CR UART Register */
 #define NPCX_UTBUF                        REG8(NPCX_CR_UART_BASE_ADDR + 0x000)
 #define NPCX_URBUF                        REG8(NPCX_CR_UART_BASE_ADDR + 0x002)
 #define NPCX_UICTRL                       REG8(NPCX_CR_UART_BASE_ADDR + 0x004)
@@ -301,6 +301,36 @@
 #define NPCX_UMDSL                        REG8(NPCX_CR_UART_BASE_ADDR + 0x00A)
 #define NPCX_UBAUD                        REG8(NPCX_CR_UART_BASE_ADDR + 0x00C)
 #define NPCX_UPSR                         REG8(NPCX_CR_UART_BASE_ADDR + 0x00E)
+#ifdef NPCX_UART_FIFO_SUPPORT
+ /* UART registers only used for FIFO mode */
+#define NPCX_UFTSTS                        REG8(NPCX_CR_UART_BASE_ADDR + 0x020)
+#define NPCX_UFRSTS                        REG8(NPCX_CR_UART_BASE_ADDR + 0x022)
+#define NPCX_UFTCTL                        REG8(NPCX_CR_UART_BASE_ADDR + 0x024)
+#define NPCX_UFRCTL                        REG8(NPCX_CR_UART_BASE_ADDR + 0x026)
+
+/* UART FIFO register fields */
+#define NPCX_UMDSL_FIFO_MD                0
+
+#define NPCX_UFTSTS_TEMPTY_LVL            FIELD(0, 5)
+#define NPCX_UFTSTS_TEMPTY_LVL_STS        5
+#define NPCX_UFTSTS_TFIFO_EMPTY_STS       6
+#define NPCX_UFTSTS_NXMIP                 7
+
+#define NPCX_UFRSTS_RFULL_LVL_STS         5
+#define NPCX_UFRSTS_RFIFO_NEMPTY_STS      6
+#define NPCX_UFRSTS_ERR                   7
+
+#define NPCX_UFTCTL_TEMPTY_LVL_SEL        FIELD(0, 5)
+#define NPCX_UFTCTL_TEMPTY_LVL_EN         5
+#define NPCX_UFTCTL_TEMPTY_EN             6
+#define NPCX_UFTCTL_NXIMPEN               7
+
+#define NPCX_UFRCTL_RFULL_LVL_SEL         FIELD(0, 5)
+#define NPCX_UFRCTL_RFULL_LVL_EN          5
+#define NPCX_UFRCTL_RNEMPTY_EN            6
+#define NPCX_UFRCTL_ERR_EN                7
+
+#endif
 
 /******************************************************************************/
 /* KBSCAN registers */

@@ -25,6 +25,10 @@
 #define NPCX_EXT32K_OSC_SUPPORT /* External 32KHz crytal osc. input support */
 #endif
 
+#if defined(CHIP_VARIANT_NPCX7M7W) || defined(CHIP_VARIANT_NPCX7M6XB)
+#define NPCX_UART_FIFO_SUPPORT
+#endif
+
 #ifdef CHIP_VARIANT_NPCX7M7W
 #define NPCX_WOV_SUPPORT /* Audio front-end for Wake-on-Voice support */
 #endif

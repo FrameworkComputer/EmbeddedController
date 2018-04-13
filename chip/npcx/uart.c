@@ -20,6 +20,57 @@
 #include "uart.h"
 #include "util.h"
 
+#ifdef NPCX_UART_FIFO_SUPPORT
+/* Enable UART Tx FIFO empty interrupt */
+#define NPCX_UART_TX_EMPTY_INT_EN()      \
+			(SET_BIT(NPCX_UFTCTL, NPCX_UFTCTL_TEMPTY_EN))
+/* True if UART Tx FIFO empty interrupt is enabled */
+#define NPCX_UART_TX_EMPTY_INT_IS_EN()   \
+			(IS_BIT_SET(NPCX_UFTCTL, NPCX_UFTCTL_TEMPTY_EN))
+/* Disable UART Tx FIFO empty interrupt */
+#define NPCX_UART_TX_EMPTY_INT_DIS()     \
+			(CLEAR_BIT(NPCX_UFTCTL, NPCX_UFTCTL_TEMPTY_EN))
+/* True if the Tx FIFO is not completely full */
+#define NPCX_UART_TX_IS_READY()          \
+			(!(GET_FIELD(NPCX_UFTSTS, NPCX_UFTSTS_TEMPTY_LVL) == 0))
+/*
+ * True if Tx is in progress
+ * (i.e. FIFO is not empty or last byte in TSFT (Transmit Shift register)
+ * is not sent)
+ */
+#define NPCX_UART_TX_IN_XMIT()           \
+			(!IS_BIT_SET(NPCX_UFTSTS, NPCX_UFTSTS_NXMIP))
+
+/*
+ * Enable to generate interrupt when there is at least one byte
+ * in the receive FIFO
+ */
+#define NPCX_UART_RX_INT_EN()            \
+			(SET_BIT(NPCX_UFRCTL, NPCX_UFRCTL_RNEMPTY_EN))
+/* True if at least one byte is in the receive FIFO */
+#define NPCX_UART_RX_IS_AVAILABLE()      \
+			(IS_BIT_SET(NPCX_UFRSTS, NPCX_UFRSTS_RFIFO_NEMPTY_STS))
+#else
+/* Enable UART Tx buffer empty interrupt */
+#define NPCX_UART_TX_EMPTY_INT_EN()      (NPCX_UICTRL |= 0x20)
+/* True if UART Tx buffer empty interrupt is enabled */
+#define NPCX_UART_TX_EMPTY_INT_IS_EN()   (NPCX_UICTRL & 0x20)
+/* Disable UART Tx buffer empty interrupt */
+#define NPCX_UART_TX_EMPTY_INT_DIS()     (NPCX_UICTRL &= ~0x20)
+/* True if 1-byte Tx buffer is empty */
+#define NPCX_UART_TX_IS_READY()          (NPCX_UICTRL & 0x01)
+/*
+ * True if Tx is in progress
+ * (i.e. Tx buffer is not empty or last byte in TSFT (Transmit Shift register)
+ * is not sent)
+ */
+#define NPCX_UART_TX_IN_XMIT()           (NPCX_USTAT & 0x40)
+ /* Enable to generate interrupt when there is data in the receive buffer */
+#define NPCX_UART_RX_INT_EN()            (NPCX_UICTRL = 0x40)
+/* True if there is data in the 1-byte Receive buffer */
+#define NPCX_UART_RX_IS_AVAILABLE()      (NPCX_UICTRL & 0x02)
+#endif
+
 static int init_done;
 
 #ifdef CONFIG_UART_PAD_SWITCH
@@ -111,7 +162,7 @@ void uart_tx_start(void)
 #endif
 
 	/* If interrupt is already enabled, nothing to do */
-	if (NPCX_UICTRL & 0x20)
+	if (NPCX_UART_TX_EMPTY_INT_IS_EN())
 		return;
 
 	/* Do not allow deep sleep while transmit in progress */
@@ -123,14 +174,15 @@ void uart_tx_start(void)
 	 * UART where the FIFO only triggers the interrupt when its
 	 * threshold is _crossed_, not just met.
 	 */
-	NPCX_UICTRL |= 0x20;
+	NPCX_UART_TX_EMPTY_INT_EN();
 
 	task_trigger_irq(NPCX_IRQ_UART);
 }
 
-void uart_tx_stop(void)	/* Disable TX interrupt */
+void uart_tx_stop(void)
 {
-	NPCX_UICTRL &= ~0x20;
+	/* Disable TX interrupt */
+	NPCX_UART_TX_EMPTY_INT_DIS();
 
 	/*
 	 * Re-allow deep sleep when transmiting on the default pad (deep sleep
@@ -142,28 +194,24 @@ void uart_tx_stop(void)	/* Disable TX interrupt */
 
 void uart_tx_flush(void)
 {
-	/* Wait for transmit FIFO empty */
-	while (!(NPCX_UICTRL & 0x01))
-		;
-	/* Wait for transmitting completed */
-	while (NPCX_USTAT & 0x40)
+	/* Wait for transmit FIFO empty and last byte is sent */
+	while (NPCX_UART_TX_IN_XMIT())
 		;
 }
 
 int uart_tx_ready(void)
 {
-	return NPCX_UICTRL & 0x01;	/*if TX FIFO is empty return 1*/
+	return NPCX_UART_TX_IS_READY();
 }
 
 int uart_tx_in_progress(void)
 {
-	/* Transmit is in progress if the TX busy bit is set. */
-	return NPCX_USTAT & 0x40;	/*BUSY bit , if busy return 1*/
+	return NPCX_UART_TX_IN_XMIT();
 }
 
 int uart_rx_available(void)
 {
-	int rx_available = NPCX_UICTRL & 0x02;
+	int rx_available = NPCX_UART_RX_IS_AVAILABLE();
 
 	if (rx_available && pad == UART_DEFAULT_PAD) {
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -201,7 +249,7 @@ void uart_clear_rx_fifo(int channel)
 	int scratch __attribute__ ((unused));
 	if (channel == 0) { /* suppose '0' is EC UART*/
 		/*if '1' that mean have a RX data on the FIFO register*/
-		while ((NPCX_UICTRL & 0x02))
+		while (NPCX_UART_RX_IS_AVAILABLE())
 			scratch = NPCX_URBUF;
 	}
 }
@@ -234,7 +282,11 @@ void uart_ec_interrupt(void)
 	uart_process_input();
 	uart_process_output();
 }
+#ifdef NPCX_UART_FIFO_SUPPORT
+DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 4);
+#else
 DECLARE_IRQ(NPCX_IRQ_UART, uart_ec_interrupt, 1);
+#endif
 
 #ifdef CONFIG_UART_PAD_SWITCH
 /*
@@ -255,7 +307,12 @@ void uart_reset_default_pad_panic(void)
 
 static void uart_set_pad(enum uart_pad newpad)
 {
+#ifdef NPCX_UART_FIFO_SUPPORT
+	NPCX_UFTCTL &= ~0xE0;
+	NPCX_UFRCTL &= ~0xE0;
+#else
 	NPCX_UICTRL = 0x00;
+#endif
 	task_disable_irq(NPCX_IRQ_UART);
 
 	/* Flush the last byte */
@@ -277,7 +334,7 @@ static void uart_set_pad(enum uart_pad newpad)
 	npcx_gpio2uart();
 
 	/* Re-enable receive interrupt. */
-	NPCX_UICTRL = 0x40;
+	NPCX_UART_RX_INT_EN();
 
 	/*
 	 * If pad is switched while a byte is being received, the last byte may
@@ -374,6 +431,19 @@ out:
 }
 #endif
 
+#ifdef NPCX_UART_FIFO_SUPPORT
+static void uart_set_fifo_mode(void)
+{
+	/* Enable the UART FIFO mode */
+	SET_BIT(NPCX_UMDSL, NPCX_UMDSL_FIFO_MD);
+	/* Disable all Tx interrupts */
+	NPCX_UFTCTL &= ~((1 << NPCX_UFTCTL_TEMPTY_LVL_EN) |
+					(1 << NPCX_UFTCTL_TEMPTY_EN) |
+					(1 << NPCX_UFTCTL_NXIMPEN));
+}
+
+#endif
+
 static void uart_config(void)
 {
 	/* Configure pins from GPIOs to CR_UART */
@@ -410,7 +480,10 @@ static void uart_config(void)
 	 * the divisor for the new divisor to take effect.
 	 */
 	NPCX_UFRS = 0x00;
-	NPCX_UICTRL = 0x40; /* receive int enable only */
+#ifdef NPCX_UART_FIFO_SUPPORT
+	uart_set_fifo_mode();
+#endif
+	NPCX_UART_RX_INT_EN();
 }
 
 void uart_init(void)
