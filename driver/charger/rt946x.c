@@ -308,6 +308,19 @@ static int rt946x_set_ircmp_res(unsigned int res)
 		reg_res << RT946X_SHIFT_IRCMP_RES);
 }
 
+static int rt946x_set_vprec(unsigned int vprec)
+{
+	uint8_t reg_vprec = 0;
+
+	reg_vprec = rt946x_closest_reg(RT946X_VPREC_MIN, RT946X_VPREC_MAX,
+		RT946X_VPREC_STEP, vprec);
+
+	CPRINTF("%s: vprec = %d(0x%02X)\n", __func__, vprec, reg_vprec);
+
+	return rt946x_update_bits(RT946X_REG_CHGCTRL8, RT946X_MASK_VPREC,
+		reg_vprec << RT946X_SHIFT_VPREC);
+}
+
 static int rt946x_set_iprec(unsigned int iprec)
 {
 	uint8_t reg_iprec = 0;
@@ -394,6 +407,9 @@ static int rt946x_init_setting(void)
 	if (rv)
 		return rv;
 	rv = rt946x_set_ircmp_res(rt946x_charger_init_setting.ircmp_res);
+	if (rv)
+		return rv;
+	rv = rt946x_set_vprec(batt_info->voltage_min);
 	if (rv)
 		return rv;
 	rv = rt946x_set_iprec(batt_info->precharge_current);
