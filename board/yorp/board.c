@@ -134,7 +134,9 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 static void chipset_pre_init(void)
 {
 	/* Enable 5.0V and 3.3V rails, and wait for Power Good */
-	gpio_set_level(GPIO_EN_PP5000, 1);
+#ifdef HAS_TASK_CHIPSET
+	power_5v_enable(task_get_current(), 1);
+#endif
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	while (!gpio_get_level(GPIO_PP5000_PG) ||
 	       !gpio_get_level(GPIO_PP3300_PG))
@@ -168,7 +170,9 @@ void chipset_do_shutdown(void)
 	gpio_set_level(GPIO_PMIC_EN, 0);
 
 	/* Disable 5.0V and 3.3V rails, and wait until they power down. */
-	gpio_set_level(GPIO_EN_PP5000, 0);
+#ifdef HAS_TASK_CHIPSET
+	power_5v_enable(task_get_current(), 0);
+#endif
 	gpio_set_level(GPIO_EN_PP3300, 0);
 	while (gpio_get_level(GPIO_PP5000_PG) ||
 	       gpio_get_level(GPIO_PP3300_PG))

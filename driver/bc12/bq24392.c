@@ -133,7 +133,7 @@ static void detect_or_power_down_ic(const int port)
 
 	if (vbus_present) {
 		/* Turn on the 5V rail to allow the chip to be powered. */
-#ifdef CONFIG_POWER_PP5000_CONTROL
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
 		power_5v_enable(task_get_current(), 1);
 #else
 		gpio_set_level(GPIO_EN_PP5000, 1);
@@ -141,8 +141,8 @@ static void detect_or_power_down_ic(const int port)
 		bc12_detect(port);
 	} else {
 		power_down_ic(port);
-#ifdef CONFIG_POWER_PP5000_CONTROL
 		/* Issue a request to turn off the rail. */
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
 		power_5v_enable(task_get_current(), 0);
 #else
 		gpio_set_level(GPIO_EN_PP5000, 0);
