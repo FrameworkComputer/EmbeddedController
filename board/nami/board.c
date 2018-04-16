@@ -161,10 +161,25 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = -1,
 };
 
+/* Default, Nami, Vayne */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2800,
-	.rpm_start = 3000,
+	.rpm_min = 3100,
+	.rpm_start = 3100,
+	.rpm_max = 6900,
+};
+
+/* Sona */
+const struct fan_rpm fan_rpm_1 = {
+	.rpm_min = 2700,
+	.rpm_start = 2700,
 	.rpm_max = 6000,
+};
+
+/* Pantheon */
+const struct fan_rpm fan_rpm_2 = {
+	.rpm_min = 2100,
+	.rpm_start = 2300,
+	.rpm_max = 5100,
 };
 
 struct fan_t fans[FAN_CH_COUNT] = {
@@ -715,6 +730,17 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
+static void setup_fans(void)
+{
+	if (oem == PROJECT_SONA)
+		fans[FAN_CH_0].rpm = &fan_rpm_1;
+	else if (oem == PROJECT_PANTHEON)
+		fans[FAN_CH_0].rpm = &fan_rpm_2;
+}
+
+/*
+ * Read CBI from i2c eeprom and initialize variables for board variants
+ */
 static void cbi_init(void)
 {
 	uint32_t val;
@@ -734,6 +760,8 @@ static void cbi_init(void)
 	if (board_version < 0x300)
 		/* Previous boards have GPIO42 connected to TP_INT_CONN */
 		gpio_set_flags(GPIO_USB2_ID, GPIO_INPUT);
+
+	setup_fans();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
