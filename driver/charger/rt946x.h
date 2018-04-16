@@ -179,7 +179,7 @@
 /* ========== CHGCTRL8 0x08 ============ */
 #define RT946X_SHIFT_IPREC	0
 
-#define RT946X_MASK_IPREC	0xF0
+#define RT946X_MASK_IPREC	0x0F
 
 /* ========== CHGCTRL9 0x09 ============ */
 #define RT946X_SHIFT_IEOC	4
