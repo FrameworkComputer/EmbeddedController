@@ -288,12 +288,37 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 	return rv;
 }
 
+/* Returns true if TCPC has reset based on reading mask registers. */
+static int register_mask_reset(int port)
+{
+	int mask;
+
+	mask = 0;
+	tcpc_read16(port, TCPC_REG_ALERT_MASK, &mask);
+	if (mask == TCPC_REG_ALERT_MASK_ALL)
+		return 1;
+
+	mask = 0;
+	tcpc_read(port, TCPC_REG_POWER_STATUS_MASK, &mask);
+	if (mask == TCPC_REG_POWER_STATUS_MASK_ALL)
+		return 1;
+
+	return 0;
+}
+
 void tcpci_tcpc_alert(int port)
 {
 	int status;
 
 	/* Read the Alert register from the TCPC */
 	tcpm_alert_status(port, &status);
+	/*
+	 * Check registers to see if we can tell that the TCPC has reset. If
+	 * so, perform tcpc_init inline.
+	 */
+	if (register_mask_reset(port))
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			PD_EVENT_TCPC_RESET, 0);
 
 	/*
 	 * Clear alert status for everything except RX_STATUS, which shouldn't
@@ -309,28 +334,16 @@ void tcpci_tcpc_alert(int port)
 	}
 	if (status & TCPC_REG_ALERT_POWER_STATUS) {
 		int reg = 0;
-
-		tcpc_read(port, TCPC_REG_POWER_STATUS_MASK, &reg);
-
-		if (reg == TCPC_REG_POWER_STATUS_MASK_ALL) {
-			/*
-			 * If power status mask has been reset, then the TCPC
-			 * has reset.
-			 */
-			task_set_event(PD_PORT_TO_TASK_ID(port),
-				       PD_EVENT_TCPC_RESET, 0);
-		} else {
-			/* Read Power Status register */
-			tcpci_tcpm_get_power_status(port, &reg);
-			/* Update VBUS status */
-			tcpc_vbus[port] = reg &
-				TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+		/* Read Power Status register */
+		tcpci_tcpm_get_power_status(port, &reg);
+		/* Update VBUS status */
+		tcpc_vbus[port] = reg &
+			TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 #if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) && defined(CONFIG_USB_CHARGER)
-			/* Update charge manager with new VBUS state */
-			usb_charger_vbus_change(port, tcpc_vbus[port]);
-			task_wake(PD_PORT_TO_TASK_ID(port));
+		/* Update charge manager with new VBUS state */
+		usb_charger_vbus_change(port, tcpc_vbus[port]);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 #endif /* CONFIG_USB_PD_VBUS_DETECT_TCPC && CONFIG_USB_CHARGER */
-		}
 	}
 	if (status & TCPC_REG_ALERT_RX_STATUS) {
 		/* message received */
