@@ -13,7 +13,7 @@
 
 /* Optional features */
 #define CONFIG_BATTERY_SMART
-#define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_VERSION_GPIO
 #define CONFIG_FANS 1
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER

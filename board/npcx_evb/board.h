@@ -29,7 +29,7 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_VBOOT_HASH
 #define CONFIG_PWM_KBLIGHT
-#define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_VERSION_GPIO
 
 /* Optional features for test commands */
 #define CONFIG_CMD_TASKREADY

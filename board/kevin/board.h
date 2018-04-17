@@ -48,8 +48,7 @@
 #define CONFIG_RAM_SIZE (CONFIG_DATA_RAM_SIZE - 0x800)
 
 /* Optional features */
-#define CONFIG_BOARD_VERSION
-#define CONFIG_BOARD_SPECIFIC_VERSION
+#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_FLASH_SIZE          0x00080000 /* 512KB spi flash */
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_HOSTCMD_SECTION_SORTED /* Host commands are sorted. */

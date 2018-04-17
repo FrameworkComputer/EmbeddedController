@@ -17,8 +17,7 @@
 
 /* EC */
 #define CONFIG_ADC
-#define CONFIG_BOARD_VERSION
-#define CONFIG_BOARD_SPECIFIC_VERSION
+#define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
@@ -239,7 +238,6 @@ enum mft_channel {
 #define PD_MAX_VOLTAGE_MV	20000
 
 /* Board specific handlers */
-int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 int board_get_battery_soc(void);

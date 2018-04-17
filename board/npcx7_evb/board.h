@@ -26,7 +26,7 @@
 #define CONFIG_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
 
 /* Optional features */
-#define CONFIG_BOARD_VERSION
+#define CONFIG_BOARD_VERSION_GPIO
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_I2C_MASTER
 #define CONFIG_KEYBOARD_BOARD_CONFIG

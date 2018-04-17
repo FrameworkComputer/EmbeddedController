@@ -18,8 +18,7 @@
 #define CONFIG_ADC
 #define CONFIG_BACKLIGHT_LID
 #define CONFIG_BACKLIGHT_LID_ACTIVE_LOW
-#define CONFIG_BOARD_VERSION
-#define CONFIG_BOARD_SPECIFIC_VERSION
+#define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_BOARD_FORCE_RESET_PIN
 #define CONFIG_CRC8
 #define CONFIG_CROS_BOARD_INFO
@@ -282,7 +281,6 @@ enum oem_id {
 #define PD_MAX_VOLTAGE_MV		20000
 
 /* Board specific handlers */
-int board_get_version(void);
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 

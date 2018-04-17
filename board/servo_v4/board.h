@@ -15,8 +15,7 @@
  * id from previous versions.
  */
 #define BOARD_VERSION_BLACK 3
-#define CONFIG_BOARD_VERSION
-#define CONFIG_BOARD_SPECIFIC_VERSION
+#define CONFIG_BOARD_VERSION_CUSTOM
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
