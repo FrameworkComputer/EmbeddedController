@@ -662,3 +662,38 @@ DECLARE_CONSOLE_COMMAND(amonbmon, console_command_amon_bmon,
 #endif
 			"Get charger AMON/BMON voltage diff, current");
 #endif /* CONFIG_CMD_CHARGER_ADC_AMON_BMON */
+
+#ifdef CONFIG_CMD_CHARGER_DUMP
+static void dump_reg_range(int low, int high)
+{
+	int reg;
+	int regval;
+	int rv;
+
+	for (reg = low; reg <= high; reg++) {
+		CPRINTF("[%Xh] = ", reg);
+		rv = i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER, reg,
+				&regval);
+		if (!rv)
+			CPRINTF("0x%04x\n", regval);
+		else
+			CPRINTF("ERR (%d)\n", rv);
+		cflush();
+	}
+}
+
+static int command_isl923x_dump(int argc, char **argv)
+{
+	dump_reg_range(0x14, 0x15);
+	dump_reg_range(0x38, 0x3F);
+	dump_reg_range(0x47, 0x4A);
+#ifdef CONFIG_CHARGER_ISL9238
+	dump_reg_range(0x4B, 0x4E);
+#endif /* CONFIG_CHARGER_ISL9238 */
+	dump_reg_range(0xFE, 0xFF);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(charger_dump, command_isl923x_dump, "",
+			"Dumps ISL923x registers");
+#endif /* CONFIG_CMD_CHARGER_DUMP */

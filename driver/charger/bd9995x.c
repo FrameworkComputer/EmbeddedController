@@ -1284,8 +1284,7 @@ void usb_charger_task(void *u)
 
 
 /*** Console commands ***/
-
-#ifdef CONFIG_CMD_CHARGER
+#ifdef CONFIG_CMD_CHARGER_DUMP
 static int read_bat(uint8_t cmd)
 {
 	int read = 0;
@@ -1320,10 +1319,12 @@ static int console_bd9995x_dump_regs(int argc, char **argv)
 
 	return 0;
 }
-DECLARE_CONSOLE_COMMAND(bd9995x_dump, console_bd9995x_dump_regs,
+DECLARE_CONSOLE_COMMAND(charger_dump, console_bd9995x_dump_regs,
 			NULL,
 			"Dump all charger registers");
+#endif /* CONFIG_CMD_CHARGER_DUMP */
 
+#ifdef CONFIG_CMD_CHARGER
 static int console_command_bd9995x(int argc, char **argv)
 {
 	int rv, reg, data, val;
