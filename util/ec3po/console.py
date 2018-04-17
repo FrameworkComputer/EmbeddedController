@@ -24,6 +24,7 @@ import re
 import select
 import stat
 import sys
+import traceback
 
 import interpreter
 
@@ -829,23 +830,43 @@ def StartLoop(console, command_active):
   console.logger.debug('Command interface is being served on %s.',
       console.interface_pty)
   console.logger.debug(console)
+
   try:
+    # This checks for HUP to indicate if the user has connected to the pty.
+    ep = select.epoll()
+    ep.register(console.master_pty, select.EPOLLHUP)
+
     while True:
+      # Check to see if pts is connected to anything
+      events = ep.poll(0)
+      master_connected = not events
+
       # Check to see if pipes or the console are ready for reading.
-      read_list = [console.master_pty, console.interface_pty,
+      read_list = [console.interface_pty,
                    console.cmd_pipe, console.dbg_pipe]
-      ready_for_reading = select.select(read_list, [], [])[0]
+      if master_connected:
+        read_list.append(console.master_pty)
+
+      # Check if any input is ready, or wait for .1 sec and re-poll if
+      # a user has connected to the pts.
+      select_output = select.select(read_list, [], [], .1)
+      if not select_output:
+        continue
+      ready_for_reading = select_output[0]
 
       for obj in ready_for_reading:
         if obj is console.master_pty and not command_active.value:
           # Convert to bytes so we can look for non-printable chars such as
           # Ctrl+A, Ctrl+E, etc.
-          line = bytearray(os.read(console.master_pty, CONSOLE_MAX_READ))
-          console.logger.debug('Input from user: %s, locked:%s',
-              str(line).strip(), command_active.value)
-          for i in line:
-            # Handle each character as it arrives.
-            console.HandleChar(i)
+          try:
+            line = bytearray(os.read(console.master_pty, CONSOLE_MAX_READ))
+            console.logger.debug('Input from user: %s, locked:%s',
+                str(line).strip(), command_active.value)
+            for i in line:
+              # Handle each character as it arrives.
+              console.HandleChar(i)
+          except OSError:
+            console.logger.debug('Ptm read failed, probably user disconnect.')
 
         if obj is console.interface_pty and command_active.value:
           # Convert to bytes so we can look for non-printable chars such as
@@ -860,8 +881,11 @@ def StartLoop(console, command_active):
         elif obj is console.cmd_pipe:
           data = console.cmd_pipe.recv()
           # Write it to the user console.
-          console.logger.debug('|CMD|->\'%s\'', data.strip())
-          os.write(console.master_pty, data)
+          console.logger.debug('|CMD|-%s->\'%s\'',
+              ('u' if master_connected else '') +
+              ('i' if command_active.value else ''), data.strip())
+          if master_connected:
+            os.write(console.master_pty, data)
           if command_active.value:
             os.write(console.interface_pty, data)
 
@@ -872,16 +896,24 @@ def StartLoop(console, command_active):
             console.CheckBufferForEnhancedImage(data)
           # Write it to the user console.
           if len(data) > 1:
-            console.logger.debug('|DBG|->\'%s\'', data.strip())
-          os.write(console.master_pty, data)
+            console.logger.debug('|DBG|-%s->\'%s\'',
+                ('u' if master_connected else '') +
+                ('i' if command_active.value else ''), data.strip())
+          if master_connected:
+            os.write(console.master_pty, data)
           if command_active.value:
             os.write(console.interface_pty, data)
 
       while not console.oobm_queue.empty():
         console.logger.debug('OOBM queue ready for reading.')
         console.ProcessOOBMQueue()
-
+  except KeyboardInterrupt:
+    pass
+  except:
+    traceback.print_exc()
   finally:
+    # Unregister poll.
+    ep.unregister(console.master_pty)
     # Close pipes.
     console.dbg_pipe.close()
     console.cmd_pipe.close()
