@@ -358,7 +358,8 @@ const matrix_3x3_t base_standard_ref = {
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
-static struct stprivate_data g_lsm6dsm_data;
+static struct stprivate_data lsm6dsm_g_data;
+static struct stprivate_data lsm6dsm_a_data;
 
 /* Drivers */
 /* TODO(b/74602071): Tune sensor cfg after the board is received */
@@ -396,7 +397,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &lsm6dsm_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_lsm6dsm_data,
+	 .drv_data = &lsm6dsm_a_data,
 	 .port = I2C_PORT_SENSOR,
 	 .addr = LSM6DSM_ADDR0,
 	 .rot_standard_ref = &base_standard_ref,
@@ -406,7 +407,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .config = {
 		 /* EC use accel for angle detection */
 		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
+			.odr = 13000 | ROUND_UP_FLAG,
 			.ec_rate = 100 * MSEC,
 		 },
 		 /* Sensor on for angle detection */
@@ -425,7 +426,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &lsm6dsm_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_lsm6dsm_data,
+	 .drv_data = &lsm6dsm_g_data,
 	 .port = I2C_PORT_SENSOR,
 	 .addr = LSM6DSM_ADDR0,
 	 .default_range = 1000, /* dps */
