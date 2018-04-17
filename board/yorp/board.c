@@ -172,9 +172,12 @@ void chipset_do_shutdown(void)
 #ifdef HAS_TASK_CHIPSET
 	power_5v_enable(task_get_current(), 0);
 #endif
+	/*
+	 * Shutdown the 3.3V rail and wait for it to go down. We cannot wait
+	 * for the 5V rail since other tasks may be using it.
+	 */
 	gpio_set_level(GPIO_EN_PP3300, 0);
-	while (gpio_get_level(GPIO_PP5000_PG) ||
-	       gpio_get_level(GPIO_PP3300_PG))
+	while (gpio_get_level(GPIO_PP3300_PG))
 		;
 }
 
