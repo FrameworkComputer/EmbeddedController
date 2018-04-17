@@ -13,6 +13,10 @@ import subprocess
 import sys
 import time
 
+SCRIPT_VERSION = 1
+CCD_IS_UNRESTRICTED = 1 << 0
+WP_IS_DISABLED = 1 << 1
+RMA_OPENED = CCD_IS_UNRESTRICTED | WP_IS_DISABLED
 URL = 'https://www.google.com/chromeos/partner/console/cr50reset?' \
     'challenge=%s&hwid=%s'
 RMA_SUPPORT = '0.3.3'
@@ -43,6 +47,11 @@ challenge url
 Go to the URL from by that command to generate an authcode. Once you have
 the authcode, you can use it to open cr50.
     sudo python cr50_rma_open.py -a $AUTHCODE
+
+If for some reason hardware write protect doesn't get disabled during rma
+open or gets enabled at some point the script can be used to disable
+write protect.
+    sudo python cr50_rma_open.py -w
 """
 
 DEBUG_MISSING_USB = """
@@ -105,6 +114,10 @@ parser = argparse.ArgumentParser(
     description=HELP_INFO, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('-g', '--generate_challenge', action='store_true',
         help='Generate Cr50 challenge. Must be used in combination with -i')
+parser.add_argument('-p', '--print_caps', action='store_true',
+        help='Print the ccd output when checking the capabilities')
+parser.add_argument('-w', '--wp_disable', action='store_true',
+        help='Disable write protect')
 parser.add_argument('-c', '--check_connection', action='store_true',
         help='Check cr50 console connection works')
 parser.add_argument('-s', '--serialname', type=str, default='',
@@ -127,7 +140,8 @@ def info(string):
 class RMAOpen(object):
     """Used to find the cr50 console and run RMA open"""
 
-    def __init__(self, device=None, usb_serial=None):
+    def __init__(self, device=None, usb_serial=None, print_caps=False):
+        self.print_caps = print_caps
         if device:
             self.set_cr50_device(device)
         else:
@@ -136,6 +150,7 @@ class RMAOpen(object):
         self.check_version()
         self.print_platform_info()
         info('Cr50 setup ok')
+        self.update_ccd_state()
 
 
     def set_cr50_device(self, device):
@@ -205,49 +220,73 @@ class RMAOpen(object):
 
 
     def try_authcode(self, authcode):
-        """Try opening cr50 with the authcode"""
+        """Try opening cr50 with the authcode
+
+        Raises:
+            ValueError if there was no authcode match and ccd isn't open
+        """
         # rma_auth may cause the system to reboot. Don't wait to read all that
         # output. Read the first 300 bytes and call it a day.
         output = self.send_cmd_get_output('rma_auth ' + authcode, nbytes=300)
         print 'CR50 RESPONSE:', output
         print 'waiting for cr50 reboot'
         # Cr50 may be rebooting. Wait a bit
-        time.sleep(3)
-        self.check_ccd_settings('process_response: success!' in output)
+        time.sleep(5)
+        # Update the ccd state after the authcode attempt
+        self.update_ccd_state()
+
+        authcode_match = 'process_response: success!' in output
+        if not self.check(CCD_IS_UNRESTRICTED):
+            if not authcode_match:
+                debug(DEBUG_AUTHCODE_MISMATCH)
+                message = 'Authcode mismatch. Check args and url'
+            else:
+                message = 'Could not set all capability privileges to Always'
+            raise ValueError(message)
 
 
-    def ccd_is_closed(self, debug=False):
+    def wp_is_force_disabled(self):
+        """Returns True if write protect is forced disabled"""
+        output = self.send_cmd_get_output('wp')
+        wp_state = output.split('Flash WP:', 1)[-1].split('\n', 1)[0].strip()
+        info('wp: ' + wp_state)
+        return wp_state == 'forced disabled'
+
+
+    def ccd_is_restricted(self):
         """Returns True if any of the capabilities are still restricted"""
         output = self.send_cmd_get_output('ccd')
         if 'Capabilities' not in output:
             raise ValueError('Could not get ccd output')
-        if debug:
+        if self.print_caps:
             print 'CURRENT CCD SETTINGS:\n', output
-        is_closed = 'IfOpened' in output or 'IfUnlocked' in output
-        if not is_closed:
-            info('Cr50 ccd is Open. RMA Open complete')
-        return is_closed
+        restricted = 'IfOpened' in output or 'IfUnlocked' in output
+        info('ccd: ' + ('Restricted' if restricted else 'Unrestricted'))
+        return restricted
 
 
-    def check_ccd_settings(self, authcode_match):
-        """Raise an error if Cr50 CCD is not open
+    def update_ccd_state(self):
+        """Get the wp and ccd state from cr50. Save it in _ccd_state"""
+        self._ccd_state = 0
+        if not self.ccd_is_restricted():
+            self._ccd_state |= CCD_IS_UNRESTRICTED
+        if self.wp_is_force_disabled():
+            self._ccd_state |= WP_IS_DISABLED
 
-        Choose the error and debug messages based on if Cr50 successfully
-        matched the authcode.
 
-        Args:
-            authcode_match: True if Cr50 successfully processed the authcode.
+    def check(self, setting):
+        """Returns true if the all of the 1s in setting are 1 in _ccd_state"""
+        return self._ccd_state & setting == setting
 
-        Raises:
-            ValueError if 'ccd' does shows any capabilities are restricted.
-        """
-        if self.ccd_is_closed(debug=True):
-            if not authcode_match:
-                debug(DEBUG_AUTHCODE_MISMATCH)
-                raise ValueError('Authcode mismatch. Check args and url')
-            else:
-                raise ValueError('Could not set all capability privileges to '
-                        'Always')
+
+    def wp_disable(self):
+        """Disable write protect"""
+        print 'Disabling write protect'
+        self.send_cmd_get_output('wp disable')
+        # Update the state after attempting to disable write protect
+        self.update_ccd_state()
+        if not self.check(WP_IS_DISABLED):
+            raise ValueError('Could not disable write protect')
 
 
     def check_version(self):
@@ -357,19 +396,44 @@ class RMAOpen(object):
 
 def main():
     args = parser.parse_args()
+    tried_authcode = False
+    info('Running cr50_rma_open version %s' % SCRIPT_VERSION)
 
-    cr50_rma_open = RMAOpen(args.device, args.serialname)
-    if args.check_connection or not cr50_rma_open.ccd_is_closed():
+    cr50_rma_open = RMAOpen(args.device, args.serialname, args.print_caps)
+    if args.check_connection:
         sys.exit(0)
-    elif args.authcode:
-        info('Using authcode: ' + args.authcode)
-        cr50_rma_open.try_authcode(args.authcode)
-        info('Successfully ran RMA Open')
-    elif args.generate_challenge:
-        if not args.hwid:
-            debug('--hwid necessary to generate challenge url')
+
+    if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
+        if args.generate_challenge:
+            if not args.hwid:
+                debug('--hwid necessary to generate challenge url')
+                sys.exit(0)
+            cr50_rma_open.generate_challenge_url(args.hwid)
             sys.exit(0)
-        cr50_rma_open.generate_challenge_url(args.hwid)
+        elif args.authcode:
+            info('Using authcode: ' + args.authcode)
+            ccd_state = cr50_rma_open.try_authcode(args.authcode)
+            tried_authcode = True
+
+    if not cr50_rma_open.check(WP_IS_DISABLED) and (tried_authcode or
+            args.wp_disable):
+        if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
+            raise ValueError("Can't disable write protect unless ccd is "
+                    "open. Run through the rma open process first")
+        if tried_authcode:
+            debug("It's weird rma open didn't disable write protect. Trying to "
+                    "disable it manually")
+        cr50_rma_open.wp_disable()
+
+    if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
+        print 'CCD is still restricted.'
+        print 'Run cr50_rma_open.py -g -i $HWID to generate a url'
+        print 'Run cr50_rma_open.py -a $AUTHCODE to open cr50 with an authcode'
+    elif not cr50_rma_open.check(WP_IS_DISABLED):
+        print 'WP is still enabled.'
+        print 'Run cr50_rma_open.py -w to disable write protect'
+    if cr50_rma_open.check(RMA_OPENED):
+        info('RMA Open complete')
 
 if __name__ == "__main__":
     main()
