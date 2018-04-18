@@ -6507,8 +6507,8 @@ static void cmd_cbi_help(char *cmd)
 		"      0: BOARD_VERSION\n"
 		"      1: OEM_ID\n"
 		"      2: SKU_ID\n"
-		"    <size> is the size of the data"
-		"    <value> is integer to be set. No raw data support yet."
+		"    <size> is the size of the data\n"
+		"    <value> is integer to be set. No raw data support yet.\n"
 		"    [get_flag] is combination of:\n"
 		"      01b: Invalidate cache and reload data from EEPROM\n"
 		"    [set_flag] is combination of:\n"
@@ -6609,7 +6609,9 @@ static int cmd_cbi(int argc, char *argv[])
 				p, sizeof(*p) + size, NULL, 0);
 		if (rv < 0) {
 			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
-				fprintf(stderr, "Write failed. WP enabled?\n");
+				fprintf(stderr, "Write failed. Write-protect "
+					"is enabled or EC explicitly refused "
+					"to change the requested field.");
 			else
 				fprintf(stderr, "Error code: %d\n", rv);
 			return rv;

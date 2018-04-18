@@ -2514,6 +2514,9 @@
  *
  * NOTE: This should ONLY be defined during bringup, and should never be
  * defined on a shipping / released platform.
+ *
+ * When defined, CBI allows ectool to reprogram all the fields. Once undefined,
+ * it refuses to change certain fields. (e.g. board version, OEM ID)
  */
 #undef CONFIG_SYSTEM_UNLOCKED
 

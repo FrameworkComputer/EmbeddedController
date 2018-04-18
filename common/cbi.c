@@ -264,6 +264,13 @@ static int hc_cbi_set(struct host_cmd_handler_args *args)
 	const struct __ec_align4 ec_params_set_cbi *p = args->params;
 	int rv;
 
+#ifndef CONFIG_SYSTEM_UNLOCKED
+	/* These fields are not allowed to be reprogrammed regardless the
+	 * hardware WP state. They're considered as a part of the hardware. */
+	if (p->tag == CBI_TAG_BOARD_VERSION || p->tag == CBI_TAG_OEM_ID)
+		return EC_RES_ACCESS_DENIED;
+#endif
+
 	if (p->flag & CBI_SET_INIT) {
 		memset(cbi, 0, sizeof(cbi));
 		memcpy(head->magic, cbi_magic, sizeof(cbi_magic));
