@@ -147,6 +147,8 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_PP5000_CONTROL
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR_NCP15WB
 #define CONFIG_EXTPOWER_GPIO
 #undef	CONFIG_EXTPOWER_DEBOUNCE_MS
 /*
@@ -162,8 +164,10 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_VBUS_C0,
-	ADC_VBUS_C1,
+	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
+	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
+	ADC_VBUS_C0,			/* ADC4 */
+	ADC_VBUS_C1,			/* ADC9 */
 	ADC_CH_COUNT
 };
 
@@ -184,8 +188,13 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
-/* Motion sensors */
+enum temp_sensor_id {
+	TEMP_SENSOR_AMBIENT = 0,
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_COUNT
+};
 
+/* Motion sensors */
 enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,

@@ -31,6 +31,8 @@
 #include "power_button.h"
 #include "switch.h"
 #include "system.h"
+#include "temp_sensor.h"
+#include "thermistor.h"
 #include "tcpci.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
@@ -83,6 +85,10 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_AMB] = {
+		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
 	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
 	[ADC_VBUS_C0] = {
 		"VBUS_C0", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
@@ -128,6 +134,92 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A_5V,
 	/* TODO(b/74388692): Add second port control after hardware fix. */
 };
+
+/*
+ * Data derived from Seinhart-Hart equation in a resistor divider circuit with
+ * Vdd=3300mV, R = 13.7Kohm, and Murata NCP15WB-series thermistor (B = 4050,
+ * T0 = 298.15, nominal resistance (R0) = 47Kohm).
+ */
+#define CHARGER_THERMISTOR_SCALING_FACTOR 13
+static const struct thermistor_data_pair charger_thermistor_data[] = {
+	{ 3044 / CHARGER_THERMISTOR_SCALING_FACTOR, 0 },
+	{ 2890 / CHARGER_THERMISTOR_SCALING_FACTOR, 10 },
+	{ 2680 / CHARGER_THERMISTOR_SCALING_FACTOR, 20 },
+	{ 2418 / CHARGER_THERMISTOR_SCALING_FACTOR, 30 },
+	{ 2117 / CHARGER_THERMISTOR_SCALING_FACTOR, 40 },
+	{ 1800 / CHARGER_THERMISTOR_SCALING_FACTOR, 50 },
+	{ 1490 / CHARGER_THERMISTOR_SCALING_FACTOR, 60 },
+	{ 1208 / CHARGER_THERMISTOR_SCALING_FACTOR, 70 },
+	{ 966 / CHARGER_THERMISTOR_SCALING_FACTOR, 80 },
+	{ 860 / CHARGER_THERMISTOR_SCALING_FACTOR, 85 },
+	{ 766 / CHARGER_THERMISTOR_SCALING_FACTOR, 90 },
+	{ 679 / CHARGER_THERMISTOR_SCALING_FACTOR, 95 },
+	{ 603 / CHARGER_THERMISTOR_SCALING_FACTOR, 100 },
+};
+
+static const struct thermistor_info charger_thermistor_info = {
+	.scaling_factor = CHARGER_THERMISTOR_SCALING_FACTOR,
+	.num_pairs = ARRAY_SIZE(charger_thermistor_data),
+	.data = charger_thermistor_data,
+};
+
+int board_get_charger_temp(int idx, int *temp_ptr)
+{
+	int mv = adc_read_channel(NPCX_ADC_CH1);
+
+	if (mv < 0)
+		return EC_ERROR_UNKNOWN;
+
+	*temp_ptr = thermistor_linear_interpolate(mv, &charger_thermistor_info);
+	*temp_ptr = C_TO_K(*temp_ptr);
+	return EC_SUCCESS;
+}
+
+/*
+ * Data derived from Seinhart-Hart equation in a resistor divider circuit with
+ * Vdd=3300mV, R = 51.1Kohm, and Murata NCP15WB-series thermistor (B = 4050,
+ * T0 = 298.15, nominal resistance (R0) = 47Kohm).
+ */
+#define AMB_THERMISTOR_SCALING_FACTOR 11
+static const struct thermistor_data_pair amb_thermistor_data[] = {
+	{ 2512 / AMB_THERMISTOR_SCALING_FACTOR, 0 },
+	{ 2158 / AMB_THERMISTOR_SCALING_FACTOR, 10 },
+	{ 1772 / AMB_THERMISTOR_SCALING_FACTOR, 20 },
+	{ 1398 / AMB_THERMISTOR_SCALING_FACTOR, 30 },
+	{ 1070 / AMB_THERMISTOR_SCALING_FACTOR, 40 },
+	{ 803 / AMB_THERMISTOR_SCALING_FACTOR, 50 },
+	{ 597 / AMB_THERMISTOR_SCALING_FACTOR, 60 },
+	{ 443 / AMB_THERMISTOR_SCALING_FACTOR, 70 },
+	{ 329 / AMB_THERMISTOR_SCALING_FACTOR, 80 },
+	{ 285 / AMB_THERMISTOR_SCALING_FACTOR, 85 },
+	{ 247 / AMB_THERMISTOR_SCALING_FACTOR, 90 },
+	{ 214 / AMB_THERMISTOR_SCALING_FACTOR, 95 },
+	{ 187 / AMB_THERMISTOR_SCALING_FACTOR, 100 },
+};
+
+static const struct thermistor_info amb_thermistor_info = {
+	.scaling_factor = AMB_THERMISTOR_SCALING_FACTOR,
+	.num_pairs = ARRAY_SIZE(amb_thermistor_data),
+	.data = amb_thermistor_data,
+};
+
+int board_get_ambient_temp(int idx, int *temp_ptr)
+{
+	int mv = adc_read_channel(NPCX_ADC_CH0);
+
+	if (mv < 0)
+		return EC_ERROR_UNKNOWN;
+
+	*temp_ptr = thermistor_linear_interpolate(mv, &amb_thermistor_info);
+	*temp_ptr = C_TO_K(*temp_ptr);
+	return EC_SUCCESS;
+}
+
+const struct temp_sensor_t temp_sensors[] = {
+	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0, 5},
+	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
 void chipset_pre_init_callback(void)
