@@ -73,14 +73,15 @@ enum led_power_state {
 /* Defines a LED pattern for a single state */
 struct led_pattern {
 	uint8_t color;
-	uint8_t pulse; /* Interval in sec. 0 for static. MSB: 1=pulse 0=blink */
+	/* Interval in 100 msec. 0 for solid. MSB: 1=pulse 0=blink */
+	uint8_t pulse;
 };
 
 #define PULSE_NO		0
 #define PULSE(interval)		(1 << 7 | interval)
 #define BLINK(interval) 	(interval)
 #define IS_PULSING(pulse)	((pulse) & 0x80)
-#define PULSE_INTERVAL(pulse)	((pulse) & 0x7f)
+#define PULSE_INTERVAL(pulse)	(((pulse) & 0x7f) * 100 * MSEC)
 
 /* 40 msec for nice and smooth transition. */
 #define LED_PULSE_TICK_US	(40 * MSEC)
@@ -99,7 +100,7 @@ typedef struct led_pattern led_patterns[LED_CHARGE_STATE_COUNT]
  */
 const static led_patterns battery_pattern_0 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(2)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
 	/* charging: s0, s3, s5 */
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
@@ -111,13 +112,13 @@ const static led_patterns battery_pattern_0 = {
  * AC is attached      Solid ON White
  * charging            Solid ON Amber
  * Discharge in S0     Off
- * TODO:Battery Error  Blinking white (0.5 sec On and 0.5 sec Off)
+ * Battery Error       Blinking white (0.5 sec On and 0.5 sec Off)
  * Discharge in S3     Blinking white (1 sec On, 1 sec off regardless AC status)
  * TODO:fuel < 10%     Blinking white (1 sec On, 1 sec Off)
  */
 const static led_patterns battery_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_OFF,   PULSE_NO}, {LED_WHITE, BLINK(1)}, {LED_OFF,   PULSE_NO}},
+	{{LED_OFF,   PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
 	/* charging: s0, s3, s5 */
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
@@ -132,11 +133,11 @@ const static led_patterns battery_pattern_1 = {
  */
 const static led_patterns power_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(1)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
 	/* charging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(1)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(1)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
 };
 
 /*
@@ -162,15 +163,17 @@ const static led_patterns battery_pattern_2 = {
  */
 const static led_patterns power_pattern_2 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(2)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
 	/* charging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(2)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(2)}, {LED_OFF,   PULSE_NO}},
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
 };
 
 /* Patterns for battery LED and power LED. Initialized at run-time. */
 static led_patterns const *patterns[2];
+/* Pattern for battery error. Only blinking battery LED is supported. */
+static struct led_pattern battery_error = {LED_AMBER, BLINK(10)};
 static void led_charge_hook(void);
 static enum led_power_state power_state;
 
@@ -189,6 +192,8 @@ static void led_init(void)
 	case PROJECT_SONA:
 		patterns[0] = &battery_pattern_1;
 		patterns[1] = &power_pattern_1;
+		battery_error.color = LED_WHITE;
+		battery_error.pulse = BLINK(5);
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
@@ -311,7 +316,9 @@ static void led_alert(int enable)
 {
 	if (enable) {
 		/* Overwrite the current signal */
-		config_tick(EC_LED_ID_BATTERY_LED, 1 * SECOND, 100, LED_AMBER);
+		config_tick(EC_LED_ID_BATTERY_LED,
+			    PULSE_INTERVAL(battery_error.pulse),
+			    100, battery_error.color);
 		tick_battery();
 	} else {
 		led_charge_hook();
@@ -352,7 +359,7 @@ void config_one_led(enum ec_led_id id, enum led_charge_state charge)
 		return;
 	}
 
-	stride = PULSE_INTERVAL(p.pulse) * SECOND;
+	stride = PULSE_INTERVAL(p.pulse);
 	if (IS_PULSING(p.pulse))
 		config_tick(id, LED_PULSE_TICK_US,
 			    100 / (stride / LED_PULSE_TICK_US), p.color);
