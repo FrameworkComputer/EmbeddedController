@@ -32,6 +32,7 @@
 #include "trng.h"
 #include "uart_bitbang.h"
 #include "uartn.h"
+#include "usart.h"
 #include "usb_descriptor.h"
 #include "usb_hid.h"
 #include "usb_i2c.h"
@@ -103,12 +104,18 @@ struct uart_bitbang_properties bitbang_config = {
 	.rx_pinmux_regval = GC_PINMUX_GPIO1_GPIO4_SEL,
 };
 
-extern struct deferred_data ec_uart_deferred__data;
 void ec_tx_cr50_rx(enum gpio_signal signal)
 {
 	uart_bitbang_receive_char(UART_EC);
-	/* Let the USART module know that there's new bits to consume. */
-	hook_call_deferred(&ec_uart_deferred__data, 0);
+	/*
+	 * Let the USART module know that there's new bits to consume.
+	 *
+	 * When programming the EC in bitbang mode the rest of the system is
+	 * shut down, there not much else to do, so this could be processed
+	 * directly on interrupt context the same way it is done with EC
+	 * console output.
+	 */
+	send_data_to_usb(&ec_uart);
 }
 
 const char *device_state_names[] = {
