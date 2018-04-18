@@ -197,7 +197,6 @@ endif
 include test/build.mk
 include util/build.mk
 include util/lock/build.mk
-include util/signer/build.mk
 
 includes+=$(includes-y)
 

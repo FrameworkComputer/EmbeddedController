@@ -124,19 +124,37 @@ endif
 
 MANIFEST := util/signer/ec_RW-manifest-dev.json
 CR50_RO_KEY ?= rom-testkey-A.pem
+
+# Make sure signing happens only when the signer is available.
 REAL_SIGNER = /usr/bin/cr50-codesigner
 ifneq ($(wildcard $(REAL_SIGNER)),)
 SIGNED_IMAGES = 1
 SIGNER := $(REAL_SIGNER)
 endif
 
+ifeq ($(CHIP_MK_INCLUDED_ONCE),)
+
+CHIP_MK_INCLUDED_ONCE := 1
+# We'll have to tweak the manifest no matter what, but different ways
+# depending on the way the image is built.
+SIGNER_MANIFEST := $(shell mktemp /tmp/h1.signer.XXXXXX)
+RW_SIGNER_EXTRAS += -j $(SIGNER_MANIFEST) -x util/signer/fuses.xml
+
+ifneq ($(CR50_SWAP_RMA_KEYS),)
+RMA_KEY_BASE := board/$(BOARD)/rma_key_blob
+RW_SIGNER_EXTRAS += --swap $(RMA_KEY_BASE).test,$(RMA_KEY_BASE).prod
+endif
+
+endif
+
 ifeq ($(H1_DEVIDS),)
+# Signing with non-secret test key.
 CR50_RW_KEY = loader-testkey-A.pem
-SIGNER_EXTRAS =
-SIGNER_MANIFEST := $(MANIFEST)
+# Make sure manifset Key ID field matches the actual key.
+DUM := $(shell sed 's/1187158727/764428053/' $(MANIFEST) > $(SIGNER_MANIFEST))
 else
+# The private key comes from the sighing fob.
 CR50_RW_KEY = cr50_rom0-dev-blsign.pem.pub
-RW_SIGNER_EXTRAS = -x util/signer/fuses.xml
 
 ifneq ($(CHIP_MK_INCLUDED_ONCE),)
 #
@@ -152,9 +170,6 @@ ifneq ($(CHIP_MK_INCLUDED_ONCE),)
 #
 # H1_DEVIDS='<num 1> <num 2>' make ...
 #
-ifeq ($(SIGNER_MANIFEST),)
-SIGNER_MANIFEST := $(shell mktemp /tmp/h1.signer.XXXXXX)
-endif
 ifneq ($(CR50_DEV),)
 
 #
@@ -175,7 +190,6 @@ REPLACEMENT := $(shell printf \
 NODE_JSON :=  $(shell sed -i \
 	"s/\"fuses\": {/\"fuses\": {$(REPLACEMENT)/" $(SIGNER_MANIFEST))
 
-RW_SIGNER_EXTRAS += -j $(SIGNER_MANIFEST)
 endif  # CHIP_MK_INCLUDED_ONCE defined
 endif  # H1_DEVIDS defined
 
@@ -184,15 +198,7 @@ endif  # H1_DEVIDS defined
 # # and then again after defining all the CONFIG_ and HAS_TASK variables. We use
 # # a guard so that recipe definitions and variable extensions only happen the
 # # second time.
-ifeq ($(CHIP_MK_INCLUDED_ONCE),)
-CHIP_MK_INCLUDED_ONCE=1
-else
-
-ifneq ($(CR50_SWAP_RMA_KEYS),)
-RMA_KEY_BASE := board/$(BOARD)/rma_key_blob
-RW_SIGNER_EXTRAS += --swap $(RMA_KEY_BASE).test,$(RMA_KEY_BASE).prod
-endif
-
+ifneq ($(CHIP_MK_INCLUDED_ONCE),)
 $(out)/RW/ec.RW_B.flat: $(out)/RW/ec.RW.flat
 $(out)/RW/ec.RW.flat $(out)/RW/ec.RW_B.flat: SIGNER_EXTRAS = $(RW_SIGNER_EXTRAS)
 
