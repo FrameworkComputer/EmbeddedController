@@ -12,24 +12,13 @@
 #ifndef __CROS_FORWARD_UART_H
 #define __CROS_FORWARD_UART_H
 
-#ifdef CONFIG_STREAM_SIGNATURE
-/*
- * When configured for signing over streaming data, call the consumer handler
- * directly to help avoid incoming uart overruns.
- * Note this will run under interrupt handler so consumer beware.
- */
 #define CONFIGURE_INTERRUPTS__rx_int(NAME) send_data_to_usb(&NAME)
-#else
-#define CONFIGURE_INTERRUPTS__rx_int(NAME) hook_call_deferred(NAME.deferred, 0)
-#endif
 
 struct usart_config {
 	int uart;
 
 	struct producer const producer;
 	struct consumer const consumer;
-
-	const struct deferred_data *deferred;
 };
 
 extern struct consumer_ops const uart_consumer_ops;
@@ -63,8 +52,6 @@ extern struct producer_ops const uart_producer_ops;
 		     UART,						\
 		     RX_QUEUE,						\
 		     TX_QUEUE)						\
-	static void CONCAT2(NAME, _deferred_)(void);			\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
 	struct usart_config const NAME = {				\
 		.uart      = UART,					\
 		.consumer  = {						\
@@ -75,12 +62,7 @@ extern struct producer_ops const uart_producer_ops;
 			.queue = &RX_QUEUE,				\
 			.ops   = &uart_producer_ops,			\
 		},							\
-		.deferred  = &CONCAT2(NAME, _deferred__data),		\
-	};								\
-	static void CONCAT2(NAME, _deferred_)(void)			\
-	{								\
-		send_data_to_usb(&NAME);				\
-	}								\
+	}
 
 
 /* Read data from UART and add it to the producer queue */
@@ -88,4 +70,8 @@ void send_data_to_usb(struct usart_config const *config);
 
 /* Read data from the consumer queue and send it to the UART */
 void get_data_from_usb(struct usart_config const *config);
+
+/* Helper for UART bitbang mode. */
+extern struct usart_config const ec_uart;
+
 #endif  /* __CROS_FORWARD_UART_H */
