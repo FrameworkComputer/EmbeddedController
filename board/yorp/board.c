@@ -130,12 +130,11 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 };
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
-static void chipset_pre_init(void)
+void chipset_pre_init_callback(void)
 {
 	/* Enable 5.0V and 3.3V rails, and wait for Power Good */
-#ifdef HAS_TASK_CHIPSET
 	power_5v_enable(task_get_current(), 1);
-#endif
+
 	gpio_set_level(GPIO_EN_PP3300, 1);
 	while (!gpio_get_level(GPIO_PP5000_PG) ||
 	       !gpio_get_level(GPIO_PP3300_PG))
@@ -144,7 +143,6 @@ static void chipset_pre_init(void)
 	/* Enable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)

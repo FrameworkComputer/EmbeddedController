@@ -77,7 +77,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
-static void chipset_pre_init(void)
+void chipset_pre_init_callback(void)
 {
 	int data;
 
@@ -102,8 +102,6 @@ static void chipset_pre_init(void)
 	/* Enable PMIC_EN: Set the Output port O0.0 to high level */
 	PCA555_PMIC_GPIO_WRITE(PCA9555_CMD_OUTPUT_PORT_0, data | PCA9555_IO_0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
-
 
 /* Initialize board. */
 static void board_init(void)

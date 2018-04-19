@@ -277,7 +277,7 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
-static void chipset_pre_init(void)
+void chipset_pre_init_callback(void)
 {
 	/*
 	 * No need to re-init PMIC since settings are sticky across sysjump.
@@ -304,7 +304,6 @@ static void chipset_pre_init(void)
 	/* Enable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
 static void board_set_tablet_mode(void)
 {

@@ -243,3 +243,8 @@ uint16_t tcpc_get_alert_status(void)
 	/* TODO(b/76218141): Flesh out USB code */
 	return 0;
 }
+
+void chipset_pre_init_callback(void)
+{
+	/* Dummy until chipset support is added. */
+}

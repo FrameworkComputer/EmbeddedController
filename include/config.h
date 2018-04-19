@@ -3536,6 +3536,10 @@
 #define CONFIG_CHIPSET_APL_GLK
 #endif
 
+#if defined(CONFIG_CHIPSET_APL_GLK)
+#define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
+#endif
+
 /*****************************************************************************/
 /*
  * Apply test config overrides last, since tests need to override some of the
