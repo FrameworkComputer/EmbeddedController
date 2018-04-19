@@ -784,7 +784,7 @@ function flash_stm32() {
 	info "${MCU} UART pty : ${EC_UART}"
 	claim_pty ${EC_UART}
 
-	if ! on_raiden && [ "${SERVO_TYPE}" =~ "servo" ] ; then
+	if ! on_raiden && [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
 		dut_control ${MCU}_uart_en:on
 	fi
 	dut_control ${MCU}_uart_parity:even
