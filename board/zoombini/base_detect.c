@@ -17,6 +17,7 @@
  */
 
 #include "adc.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -57,13 +58,23 @@ enum base_detect_state {
 static int debug;
 static enum base_detect_state state;
 
-static void base_detect_changed(void)
+static void base_power_enable(int enable)
 {
-	switch (state) {
-	case BASE_DETACHED:
-		/* Indicate that we are in tablet mode. */
-		tablet_set_mode(1);
+	/* Nothing to do if the state is the same. */
+	if (gpio_get_level(GPIO_BASE_PWR_EN) == enable)
+		return;
 
+	if (enable) {
+		/* Apply power to the base only if the AP is on or sleeping. */
+		if (chipset_in_state(CHIPSET_STATE_ON |
+				     CHIPSET_STATE_ANY_SUSPEND)) {
+			gpio_set_level(GPIO_BASE_PWR_EN, 1);
+			/* Allow time for the fault line to rise. */
+			msleep(1);
+			/* Monitor for base power faults. */
+			gpio_enable_interrupt(GPIO_BASE_PWR_FLT_L);
+		}
+	} else {
 		/*
 		 * Disable power fault interrupt.  It will read low when base
 		 * power is removed.
@@ -71,6 +82,18 @@ static void base_detect_changed(void)
 		gpio_disable_interrupt(GPIO_BASE_PWR_FLT_L);
 		/* Now, remove power to the base. */
 		gpio_set_level(GPIO_BASE_PWR_EN, 0);
+	}
+
+	CPRINTS("BP: %d", enable);
+}
+
+static void base_detect_changed(void)
+{
+	switch (state) {
+	case BASE_DETACHED:
+		/* Indicate that we are in tablet mode. */
+		tablet_set_mode(1);
+		base_power_enable(0);
 		break;
 
 	case BASE_ATTACHED:
@@ -79,13 +102,7 @@ static void base_detect_changed(void)
 		 * now, but we may have to revisit this.
 		 */
 		tablet_set_mode(0);
-
-		/* Apply power to the base. */
-		gpio_set_level(GPIO_BASE_PWR_EN, 1);
-		/* Allow time for the fault line to rise. */
-		msleep(1);
-		/* Monitor for base power faults. */
-		gpio_enable_interrupt(GPIO_BASE_PWR_FLT_L);
+		base_power_enable(1);
 		break;
 
 	default:
@@ -188,10 +205,23 @@ static void base_detect_deferred(void)
 		break;
 	};
 
-	/* Check again in the appropriate time. */
-	hook_call_deferred(&base_detect_deferred_data, timeout);
+	/* Check again in the appropriate time only if the AP is on. */
+	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND))
+		hook_call_deferred(&base_detect_deferred_data, timeout);
 };
 DECLARE_HOOK(HOOK_INIT, base_detect_deferred, HOOK_PRIO_INIT_ADC + 1);
+
+static void power_on_base(void)
+{
+	hook_call_deferred(&base_detect_deferred_data, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, power_on_base, HOOK_PRIO_DEFAULT);
+
+static void power_off_base(void)
+{
+	base_power_enable(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, power_off_base, HOOK_PRIO_DEFAULT);
 
 static uint8_t base_power_on_attempts;
 static void clear_base_power_on_attempts_deferred(void)
@@ -207,7 +237,7 @@ static void check_and_reapply_base_power_deferred(void)
 
 	if (base_power_on_attempts < POWER_FAULT_MAX_RETRIES) {
 		CPRINTS("Reapply base pwr");
-		gpio_set_level(GPIO_BASE_PWR_EN, 1);
+		base_power_enable(1);
 		base_power_on_attempts++;
 
 		hook_call_deferred(&clear_base_power_on_attempts_deferred_data,
@@ -225,7 +255,7 @@ void base_pwr_fault_interrupt(enum gpio_signal s)
 	if (fault_detected) {
 		/* Turn off base power. */
 		CPRINTS("Base Pwr Flt!");
-		gpio_set_level(GPIO_BASE_PWR_EN, 0);
+		base_power_enable(0);
 
 		/*
 		 * Try and apply power in a bit if maybe it was just a temporary
