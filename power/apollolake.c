@@ -9,21 +9,40 @@
 #include "console.h"
 #include "gpio.h"
 #include "intel_x86.h"
+#include "task.h"
 #include "timer.h"
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+
+/*
+ * force_shutdown is used to maintain chipset shutdown request. This request
+ * needs to be handled from within the chipset task.
+ */
+static int force_shutdown;
 
 __attribute__((weak)) void chipset_do_shutdown(void)
 {
 	/* Need to implement board specific shutdown */
 }
 
-void chipset_force_shutdown(void)
+static void internal_chipset_shutdown(void)
 {
 	CPRINTS("%s()", __func__);
 
+	force_shutdown = 0;
 	chipset_do_shutdown();
+}
+
+void chipset_force_shutdown(void)
+{
+	/*
+	 * This function is called from multiple tasks and hence it is racy! But
+	 * since things are going down hard, it does not matter if some task
+	 * misses out.
+	 */
+	force_shutdown = 1;
+	task_wake(TASK_ID_CHIPSET);
 }
 
 enum power_state chipset_force_g3(void)
@@ -64,12 +83,16 @@ enum power_state power_handle_state(enum power_state state)
 
 	if (state == POWER_S5 && !power_has_signals(IN_PGOOD_ALL_CORE)) {
 		/* Required rail went away */
-		chipset_force_shutdown();
+		internal_chipset_shutdown();
 
 		new_state = POWER_S5G3;
 		goto rsmrst_handle;
 
 	}
+
+	/* If force shutdown is requested, perform that. */
+	if (force_shutdown)
+		internal_chipset_shutdown();
 
 	new_state = common_intel_x86_power_handle_state(state);
 

@@ -167,9 +167,8 @@ void chipset_do_shutdown(void)
 	gpio_set_level(GPIO_PMIC_EN, 0);
 
 	/* Disable 5.0V and 3.3V rails, and wait until they power down. */
-#ifdef HAS_TASK_CHIPSET
 	power_5v_enable(task_get_current(), 0);
-#endif
+
 	/*
 	 * Shutdown the 3.3V rail and wait for it to go down. We cannot wait
 	 * for the 5V rail since other tasks may be using it.
