@@ -308,6 +308,14 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			msleep(200);
 #endif
 
+#ifdef CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
+		/*
+		 * Callback to do pre-initialization within the context of
+		 * chipset task.
+		 */
+		chipset_pre_init_callback();
+#endif
+
 		/* Call hooks to initialize PMIC */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 

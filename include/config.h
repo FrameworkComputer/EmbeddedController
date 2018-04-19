@@ -750,6 +750,9 @@
 /* Support PMIC reset(using LDO_EN) in chipset */
 #undef CONFIG_CHIPSET_HAS_PLATFORM_PMIC_RESET
 
+/* Board requires chipset pre-init callback */
+#undef CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
+
 /* Redefine when we need a different power-on sequence on the same chipset. */
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 0
 
@@ -3532,7 +3535,6 @@
 	defined(CONFIG_CHIPSET_GEMINILAKE)
 #define CONFIG_CHIPSET_APL_GLK
 #endif
-
 
 /*****************************************************************************/
 /*
