@@ -120,18 +120,8 @@ void system_reset(int flags)
 	/* Disable interrupts to avoid task swaps during reboot. */
 	interrupt_disable();
 
-	/* Save current reset reasons if necessary */
-	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		save_flags = system_get_reset_flags() | RESET_FLAG_PRESERVED;
-
-	/* Add in AP off flag into saved flags. */
-	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		save_flags |= RESET_FLAG_AP_OFF;
-
-	if (flags & SYSTEM_RESET_HARD)
-		save_flags |= RESET_FLAG_HARD;
-	else
-		save_flags |= RESET_FLAG_SOFT;
+	/* Handle saving common reset flags. */
+	system_encode_save_flags(flags, &save_flags);
 
 	if (clock_ec_wake_from_sleep())
 		save_flags |= RESET_FLAG_HIBERNATE;
@@ -141,6 +131,17 @@ void system_reset(int flags)
 	BRAM_RESET_FLAGS1 = (save_flags >> 16) & 0xff;
 	BRAM_RESET_FLAGS2 = (save_flags >> 8) & 0xff;
 	BRAM_RESET_FLAGS3 = save_flags & 0xff;
+
+	/* If WAIT_EXT is set, then allow 10 seconds for external reset */
+	if (flags & SYSTEM_RESET_WAIT_EXT) {
+		int i;
+
+		/* Wait 10 seconds for external reset */
+		for (i = 0; i < 1000; i++) {
+			watchdog_reload();
+			udelay(10000);
+		}
+	}
 
 	/*
 	 * bit4, disable debug mode through SMBus.
