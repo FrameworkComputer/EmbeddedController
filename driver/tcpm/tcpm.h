@@ -154,7 +154,7 @@ static inline int tcpm_set_snk_ctrl(int port, int enable)
 
 static inline int tcpm_set_src_ctrl(int port, int enable)
 {
-	if (tcpc_config[port].drv->set_snk_ctrl != NULL)
+	if (tcpc_config[port].drv->set_src_ctrl != NULL)
 		return tcpc_config[port].drv->set_src_ctrl(port, enable);
 	else
 		return EC_ERROR_UNIMPLEMENTED;
