@@ -290,13 +290,6 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
-/* Called by power state machine when transitioning from G3 to S5 */
-static void chipset_pre_init(void)
-{
-
-}
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
-
 /* Initialize board. */
 static void board_init(void)
 {
