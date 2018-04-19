@@ -1029,7 +1029,7 @@ info "Using ${SERVO_TYPE}."
 IMG="$(ec_image)"
 info "Using ${MCU} image : ${IMG}"
 
-if ! on_raiden && [ "${NEED_SERVO}" != "no" ] ; then
+if [ "${NEED_SERVO}" != "no" ] ; then
 	save="$(servo_save)"
 fi
 
