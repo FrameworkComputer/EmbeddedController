@@ -174,6 +174,9 @@ const static led_patterns power_pattern_2 = {
 static led_patterns const *patterns[2];
 /* Pattern for battery error. Only blinking battery LED is supported. */
 static struct led_pattern battery_error = {LED_AMBER, BLINK(10)};
+/* Pattern for low state of charge. Only battery LED is supported. */
+static struct led_pattern low_battery = {LED_WHITE, BLINK(10)};
+static int low_battery_soc;
 static void led_charge_hook(void);
 static enum led_power_state power_state;
 
@@ -194,6 +197,7 @@ static void led_init(void)
 		patterns[1] = &power_pattern_1;
 		battery_error.color = LED_WHITE;
 		battery_error.pulse = BLINK(5);
+		low_battery_soc = 10;
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
@@ -351,7 +355,13 @@ void config_one_led(enum ec_led_id id, enum led_charge_state charge)
 	if (!pattern)
 		return;	/* This LED isn't present */
 
-	p = (*pattern)[charge][power_state];
+	if (id == EC_LED_ID_BATTERY_LED &&
+			charge == LED_STATE_DISCHARGE &&
+			charge_get_percent() < low_battery_soc)
+		p = low_battery;
+	else
+		p = (*pattern)[charge][power_state];
+
 	if (!p.pulse) {
 		/* solid/static color */
 		cancel_tick(id);
