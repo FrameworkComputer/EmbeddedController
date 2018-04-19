@@ -30,8 +30,7 @@
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_V2
- /* TODO(b/76429930): Use correct driver below after writing BQ25703 driver */
-#define CONFIG_CHARGER_ISL9238
+#define CONFIG_CHARGER_BQ25703
 #define CONFIG_CHARGER_INPUT_CURRENT 512 /* Allow low-current USB charging */
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
