@@ -421,11 +421,10 @@ pmic_error:
 	CPRINTS("PMIC init failed: %d", err);
 }
 
-static void chipset_pre_init(void)
+void chipset_pre_init_callback(void)
 {
 	board_pmic_init();
 }
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, chipset_pre_init, HOOK_PRIO_DEFAULT);
 
 /**
  * Buffer the AC present GPIO to the PCH.
