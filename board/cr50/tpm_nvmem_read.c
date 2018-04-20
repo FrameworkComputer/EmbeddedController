@@ -19,12 +19,12 @@
 enum tpm_read_rv read_tpm_nvmem(uint16_t obj_index,
 				uint16_t obj_size, void *obj_value)
 {
-	TPMI_RH_NV_INDEX object_handle;
+	TPM_HANDLE       object_handle;
 	NV_INDEX         nvIndex;
 
 	object_handle = HR_NV_INDEX + obj_index;
-	if (NvIndexIsAccessible(object_handle,
-				TPM_CC_NV_Read) != TPM_RC_SUCCESS) {
+
+	if (!NvEarlyStageFindHandle(object_handle)) {
 		CPRINTF("%s: object at 0x%x not found\n", __func__, obj_index);
 		return tpm_read_not_found;
 	}
