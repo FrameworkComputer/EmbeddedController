@@ -303,7 +303,11 @@ static int power_seq_run(const struct power_seq_op *power_seq_ops, int op_count)
 			       power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
-		if (power_seq_ops == s0s3_power_seq)
+		if ((power_seq_ops == s0s3_power_seq)
+#ifdef S3_USB_WAKE
+		    || (power_seq_ops == s0s3_usb_wake_power_seq)
+#endif
+		   )
 			MSLEEP_CHECK_ABORTED_SUSPEND(power_seq_ops[i].delay);
 		else
 			msleep(power_seq_ops[i].delay);
