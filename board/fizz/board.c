@@ -689,3 +689,11 @@ int fan_percent_to_rpm(int fan, int pct)
 	}
 	return get_custom_rpm(fan, pct, oem_id);
 }
+
+void board_rtc_reset(void)
+{
+	CPRINTS("Asserting RTCRST# to PCH");
+	gpio_set_level(GPIO_PCH_RTCRST, 1);
+	udelay(100);
+	gpio_set_level(GPIO_PCH_RTCRST, 0);
+}

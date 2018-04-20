@@ -230,7 +230,6 @@ enum sensor_id {
 
 void base_pwr_fault_interrupt(enum gpio_signal s);
 int board_get_version(void);
-void board_rtc_reset(void);
 
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
