@@ -1382,8 +1382,9 @@ int cmd_fp_template(int argc, char *argv[])
 {
 	struct ec_response_fp_info r;
 	struct ec_params_fp_template *p = ec_outbuf;
+	/* TODO(b/78544921): removing 32 bits is a workaround for the MCU bug */
 	int max_chunk = ec_max_outsize
-			- offsetof(struct ec_params_fp_template, data);
+			- offsetof(struct ec_params_fp_template, data) - 4;
 	int idx = -1;
 	char *e;
 	int size;
