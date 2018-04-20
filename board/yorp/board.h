@@ -202,6 +202,14 @@ enum sensor_id {
 	SENSOR_COUNT
 };
 
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_LGC15,
+	BATTERY_PANASONIC,
+	BATTERY_SANYO,
+	BATTERY_TYPE_COUNT,
+};
+
 /* Forward declare board-specific functions */
 void board_reset_pd_mcu(void);
 int board_get_version(void);

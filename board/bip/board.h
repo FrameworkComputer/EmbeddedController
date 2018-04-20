@@ -41,8 +41,10 @@
 
 /* Battery Configuration */
 #define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
 /* TODO(b/74427009): Ensure this works in dead battery conditions */
-#define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
+#define CONFIG_BATTERY_HW_PRESENT_CUSTOM
+#define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_SMART
 
 /* USB-C Configuration */
@@ -56,6 +58,7 @@
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_COMM_LOCKED
+#define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_ITE83XX	/* C0 & C1 TCPC: ITE EC */
 #define CONFIG_USB_MUX_IT5205		/* C0 MUX: IT5205 */
@@ -150,6 +153,12 @@ enum power_signal {
 
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT
+};
+
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_PANASONIC,
+	BATTERY_TYPE_COUNT,
 };
 
 /* Forward declare board-specific functions */

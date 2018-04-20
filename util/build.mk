@@ -45,7 +45,11 @@ $(out)/util/genvif: BUILD_LDFLAGS+=$(out)/util/usb_pd_policy.o -flto
 
 STANDALONE_FLAGS=-ffreestanding -fno-builtin -nostdinc \
 			-Ibuiltin/ -D"__keep= " -DVIF_BUILD
-$(out)/util/usb_pd_policy.o: board/$(BOARD)/usb_pd_policy.c
+
+# If baseboard is defined, include its usb_pd_policy; otherwise,
+# $(BASEDIR) will alias to `board/$(BOARD)` and includes same board file twice.
+$(out)/util/usb_pd_policy.o: $(BASEDIR)/usb_pd_policy.c \
+	board/$(BOARD)/usb_pd_policy.c
 	$(call quiet,c_to_vif,BUILDCC)
 deps-$(CONFIG_USB_POWER_DELIVERY) += $(out)/util/usb_pd_policy.o.d
 endif # CONFIG_USB_POWER_DELIVERY

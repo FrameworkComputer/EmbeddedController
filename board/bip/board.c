@@ -216,33 +216,42 @@ enum adc_channel board_get_vbus_adc(int port)
  */
 void board_reset_pd_mcu(void)
 {
-	/* TODO(b/76218141): Flesh out USB code */
-}
+	/*
+	 * C0: The internal TCPC on ITE EC does not have a reset signal, but
+	 * it will get reset when the EC gets reset.
+	 */
 
-int board_set_active_charge_port(int port)
-{
-	/* TODO(b/76218141): Flesh out USB code */
-	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	/* TODO(b/76218141): Flesh out USB code */
+	/* C1: Assert reset to TCPC (PS8751) for required delay (1ms) */
+	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
+	msleep(PS8XXX_RESET_DELAY_MS);
+	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
 }
 
 void board_overcurrent_event(int port)
 {
-	/* TODO(b/76218141): Do we need to pass this signal upstream? */
-
+	/* TODO(b/78344554): pass this signal upstream once hardware reworked */
 	cprints(CC_USBPD, "p%d: overcurrent!", port);
 }
 
 
 uint16_t tcpc_get_alert_status(void)
 {
-	/* TODO(b/76218141): Flesh out USB code */
-	return 0;
+	uint16_t status = 0;
+
+	/*
+	 * Since C0 TCPC is embedded within EC, we don't need the PDCMD tasks
+	 * to query the (embedded) TCPC status since chip driver code will
+	 * handles its own interrupts and forward the correct events to
+	 * the PD_C0 task. See it83xx/intc.c
+	 */
+
+	/* Check C1 interrupt pin to let PDCMD task know to query TCPC */
+	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
 }
 
 void chipset_pre_init_callback(void)
