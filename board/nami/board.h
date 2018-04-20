@@ -241,6 +241,7 @@ enum pwm_channel {
 	PWM_CH_LED1,
 	PWM_CH_LED2,
 	PWM_CH_FAN,
+	PWM_CH_KBLIGHT,
 	/* Number of PWM channels */
 	PWM_CH_COUNT,
 };
