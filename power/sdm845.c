@@ -73,6 +73,14 @@ static char power_button_was_pressed;
 /* 1 if lid-open event has been detected */
 static char lid_opened;
 
+/*
+ * 1 if power state is controlled by special functions, like a console command
+ * or an interrupt handler, for bypassing POWER_GOOD lost trigger. It is
+ * because these functions control the PMIC and AP power signals directly and
+ * don't want to get preempted by the chipset state machine.
+ */
+static uint8_t bypass_power_lost_trigger;
+
 /* Time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
 
@@ -115,6 +123,19 @@ enum power_on_event_t {
 
 	POWER_ON_EVENT_COUNT,
 };
+
+/* AP-requested reset GPIO interrupt handlers */
+static void chipset_reset_request_handler(void)
+{
+	CPRINTS("AP wants reset");
+	chipset_reset();
+}
+DECLARE_DEFERRED(chipset_reset_request_handler);
+
+void chipset_reset_request_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&chipset_reset_request_handler_data, 0);
+}
 
 static void sdm845_lid_event(void)
 {
@@ -256,6 +277,9 @@ enum power_state power_chipset_init(void)
 {
 	int init_power_state;
 	uint32_t reset_flags = system_get_reset_flags();
+
+	/* Enable reboot control input from AP */
+	gpio_enable_interrupt(GPIO_AP_RST_REQ);
 
 	/*
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
@@ -444,7 +468,7 @@ static int check_for_power_off_event(void)
 	power_button_was_pressed = pressed;
 
 	/* POWER_GOOD released by AP : shutdown immediately */
-	if (!power_has_signals(IN_POWER_GOOD)) {
+	if (!power_has_signals(IN_POWER_GOOD) && !bypass_power_lost_trigger) {
 		if (power_button_was_pressed)
 			timer_cancel(TASK_ID_CHIPSET);
 
@@ -474,7 +498,9 @@ void chipset_reset(void)
 	 * reset pin and zero-latency. We do cold reset instead.
 	 */
 	CPRINTS("EC triggered cold reboot");
+	bypass_power_lost_trigger = 1;
 	power_off();
+	bypass_power_lost_trigger = 0;
 
 	/* Issue a request to initiate a power-on sequence */
 	power_request = POWER_REQ_ON;

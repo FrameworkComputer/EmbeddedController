@@ -7,6 +7,7 @@
 
 #include "adc_chip.h"
 #include "button.h"
+#include "chipset.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"

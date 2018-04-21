@@ -13,6 +13,7 @@ GPIO_INT(VOLUME_DOWN_L,     PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO_INT(VOLUME_UP_L,       PIN(1, 1), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* EC_VOLUP_BTN_ODL */
 GPIO_INT(WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* EC_WP_ODL */
 GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPEN_EC */
+GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN, chipset_reset_request_interrupt)  /* Reset request from AP */
 /* AP_RST_L is used for PMIC and AP negotiation. Don't change its state. */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, power_signal_interrupt)
 
@@ -30,7 +31,6 @@ GPIO(CCD_MODE_ODL,          PIN(E, 3), GPIO_INPUT)     /* Case Closed Debug Mode
 GPIO(BATT_PRES_ODL,         PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)  /* EC_BATT_PRES_ODL: Battery Present */
 GPIO(PMIC_FAULT_L,          PIN(7, 6), GPIO_INPUT)     /* Any PMIC fault? */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_OUT_HIGH)  /* TP10, rework jumps to PMIC power button */
-GPIO(AP_RST_REQ,            PIN(C, 2), GPIO_INPUT)     /* Reset request from AP */
 GPIO(AP_EC_INT_L,           PIN(A, 2), GPIO_INPUT)     /* Interrupt line between AP and EC */
 
 /* Power enables */
