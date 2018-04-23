@@ -95,8 +95,11 @@ int ps8xxx_tcpc_get_fw_version(int port, int *version)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 /*
  * Read Vbus level directly instead of using the cached version because some
- * TPCPs do not fire the Vbus level change interrupt correctly after resuming
+ * TCPCs do not fire the Vbus level change interrupt correctly after resuming
  * from low-power mode.
+ *
+ * TODO(b/77639399): Remove this method once PS8751 firmware has updated to
+ * support better handling of vbus detection
  */
 int ps8xxx_tcpm_get_vbus_level(int port)
 {
@@ -160,6 +163,10 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.release		= &ps8xxx_tcpm_release,
 	.get_cc			= &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+/*
+ * TODO(b/77639399): Replace with tcpci_tcpm_get_vbus_level() after firmware
+ * upgrade.
+ */
 	.get_vbus_level		= &ps8xxx_tcpm_get_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
