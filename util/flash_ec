@@ -331,8 +331,8 @@ toad_ec_boot0() {
 }
 
 ccd_ec_boot0() {
-	info "Using CCD."
-	dut_control ccd_ec_boot_mode:on
+	info "Using CCD $1."
+	dut_control ccd_ec_boot_mode_$1:on
 }
 
 servo_ec_boot0() {
@@ -359,7 +359,7 @@ ec_enable_boot0() {
 	else
 		stype=${SERVO_TYPE}
 	fi
-	eval ${stype}_${MCU}_boot0
+	eval ${stype}_${MCU}_boot0 $1
 }
 
 # Returns 0 on success (if on beaglebone)
@@ -410,7 +410,8 @@ cleanup() {
 		dut_control --ftdii2c setclock
 	fi
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
-		dut_control ccd_ec_boot_mode:off
+		dut_control ccd_ec_boot_mode_uut:off
+		dut_control ccd_ec_boot_mode_bitbang:off
 		dut_control ${MCU}_uart_bitbang_en:off
 	fi
 
@@ -501,14 +502,14 @@ servo_v4_with_ccd_cr50_VARS="cold_reset"
 # Flashing an STM32 over the UART requires modifying the UART properties along
 # with the boot mode pin.
 if [ "${CHIP}" = "stm32" ] ; then
-	common_stm32_VARS=" ${MCU}_uart_en ${MCU}_uart_parity"
+	common_stm32_VARS=" ${MCU}_boot_mode ${MCU}_uart_parity"
 	common_stm32_VARS+=" ${MCU}_uart_baudrate"
 	servo_v2_VARS+=$common_stm32_VARS
-	servo_v2_VARS+=" ${MCU}_boot_mode"
+	servo_v2_VARS+=" ${MCU}_uart_en"
 	servo_micro_VARS+=$common_stm32_VARS
-	servo_micro_VARS+=" ${MCU}_boot_mode"
+	servo_micro_VARS+=" ${MCU}_uart_en"
 	servo_v4_with_ccd_cr50_VARS+=$common_stm32_VARS
-	servo_v4_with_ccd_cr50_VARS+=" ccd_${MCU}_boot_mode ec_uart_bitbang_en"
+	servo_v4_with_ccd_cr50_VARS+=" ec_uart_bitbang_en ccd_ec_boot_mode_uut"
 fi
 if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 	servo_v2_VARS+=" prog_en"
@@ -516,7 +517,8 @@ fi
 if [ "${CHIP}" = "npcx_uut" ] ; then
 	servo_v2_VARS+=" ${MCU}_boot_mode"
 	servo_micro_VARS+=" ${MCU}_boot_mode"
-	servo_v4_with_ccd_cr50_VARS+=" ccd_${MCU}_boot_mode ccd_keepalive_en"
+	servo_v4_with_ccd_cr50_VARS+=" ccd_${MCU}_boot_mode_uut"
+	servo_v4_with_ccd_cr50_VARS+=" ccd_keepalive_en"
 fi
 toad_VARS="${MCU}_uart_parity ${MCU}_uart_baudrate boot_mode"
 
@@ -810,7 +812,7 @@ function flash_stm32() {
 	fi
 
 	# Force the EC to boot in serial monitor mode
-	ec_enable_boot0
+	ec_enable_boot0 "bitbang"
 
 	# Add a delay long enough for cr50 to update the ccdstate. Cr50 updates
 	# ccdstate once a second, so a 2 second delay should be safe.
@@ -954,7 +956,7 @@ function flash_npcx_uut() {
 	fi
 
 	# Force the EC to boot in UART update mode
-	ec_enable_boot0
+	ec_enable_boot0 "uut"
 	ec_reset
 
 	# Have to wait a bit for EC boot-up
