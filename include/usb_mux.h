@@ -15,6 +15,11 @@
 /* USB-C mux state */
 typedef uint8_t mux_state_t;
 
+/* Packing and Unpacking defines used with CONFIG_USB_PD_TCPM_TCPCI_MUX_ONLY */
+#define MUX_PORT_AND_ADDR(port, addr) ((port << 8) | (addr & 0xFF))
+#define MUX_PORT(port_addr) (port_addr >> 8)
+#define MUX_ADDR(port_addr) (port_addr & 0xFF)
+
 /* Mux state attributes */
 /* TODO: Directly use USB_PD_MUX_* everywhere and remove these 3 defines */
 #define MUX_USB_ENABLED        USB_PD_MUX_USB_ENABLED
