@@ -65,6 +65,8 @@
 #define USB_PD_PORT_PS8751	0
 #define USB_PD_PORT_ANX7447	1
 
+static uint32_t oem = PROJECT_NAMI;
+
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C0_PD_INT_ODL) &&
@@ -661,23 +663,6 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-static void board_set_motion_sensor_count(void)
-{
-	/* There are two possible sensor configurations.
-	 * Vayne/Sona/Pantheon/Akali are without ALS sensor
-	 * Nami is with ALS sensor
-	 * Use the oem id to different them.
-	 */
-	uint32_t oem_id;
-
-	if (cbi_get_oem_id(&oem_id) == EC_SUCCESS) {
-		if (oem_id == PROJECT_VAYNE || oem_id == PROJECT_SONA
-			|| oem_id == PROJECT_PANTHEON
-			|| oem_id == PROJECT_AKALI)
-			motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
-	}
-}
-
 /* Initialize board. */
 static void board_init(void)
 {
@@ -685,6 +670,9 @@ static void board_init(void)
 
 	if (cbi_get_board_version(&version) == EC_SUCCESS)
 		CPRINTS("Board Version: 0x%04x", version);
+
+	if (cbi_get_oem_id(&oem))
+		CPRINTS("OEM: 0x%x", oem);
 
 	/*
 	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
@@ -711,8 +699,9 @@ static void board_init(void)
 	/* Enable Gyro interrupt for BMI160 */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 
-	/* Update motion_sensor_count  */
-	board_set_motion_sensor_count();
+	/* Only Nami has an ALS sensor. */
+	if (oem != PROJECT_NAMI)
+		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -736,3 +725,8 @@ struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+int board_is_lid_angle_tablet_mode(void)
+{
+	/* Boards with no GMR sensor use lid angles to detect tablet mode. */
+	return oem == PROJECT_NAMI || oem == PROJECT_VAYNE;
+}

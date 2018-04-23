@@ -28,49 +28,6 @@
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ## args)
 
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
-
-#ifndef CONFIG_LID_ANGLE_INVALID_CHECK
-#error "Check for invalid transition needed"
-#endif
-/*
- * We are in tablet mode when the lid angle has been calculated
- * to be large.
- *
- * By default, at boot, we are in tablet mode.
- * Once a lid angle is calculated, we will get out of this fake state and enter
- * tablet mode only if a high angle has been calculated.
- *
- * There might be false positives:
- * - when the EC enters RO or RW mode.
- * - when lid is closed while the hinge is perpendicalar to the floor, we will
- *   stay in tablet mode.
- *
- * Tablet mode is defined as the base being behind the lid. We use 2 threshold
- * to calculate tablet mode:
- * tablet_mode:
- *   1 |                  +-----<----+----------
- *     |                  \/         /\
- *     |                  |          |
- *   0 |------------------------>----+
- *     +------------------+----------+----------+ lid angle
- *     0                 240        300        360
- */
-#define TABLET_ZONE_LID_ANGLE FLOAT_TO_FP(300)
-#define LAPTOP_ZONE_LID_ANGLE FLOAT_TO_FP(240)
-
-/*
- * We will change our tablet mode status when we are "convinced" that it has
- * changed.  This means we will have to consecutively calculate our new tablet
- * mode while the angle is stable and come to the same conclusion.  The number
- * of consecutive calculations is the debounce count with an interval between
- * readings set by the motion_sense task.  This should avoid spurious forces
- * that may trigger false transitions of the tablet mode switch.
- */
-#define TABLET_MODE_DEBOUNCE_COUNT 3
-static int tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
-#endif
-
 #ifdef CONFIG_LID_ANGLE_INVALID_CHECK
 /* Previous lid_angle. */
 static fp_t last_lid_angle_fp = FLOAT_TO_FP(-1);
@@ -158,6 +115,94 @@ const struct motion_sensor_t * const accel_base =
 const struct motion_sensor_t * const accel_lid =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 
+__attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
+{
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+#ifdef CONFIG_LID_ANGLE_TABLET_MODE
+#ifndef CONFIG_LID_ANGLE_INVALID_CHECK
+#error "Check for invalid transition needed"
+#endif
+/*
+ * We are in tablet mode when the lid angle has been calculated
+ * to be large.
+ *
+ * By default, at boot, we are in tablet mode.
+ * Once a lid angle is calculated, we will get out of this fake state and enter
+ * tablet mode only if a high angle has been calculated.
+ *
+ * There might be false positives:
+ * - when the EC enters RO or RW mode.
+ * - when lid is closed while the hinge is perpendicalar to the floor, we will
+ *   stay in tablet mode.
+ *
+ * Tablet mode is defined as the base being behind the lid. We use 2 threshold
+ * to calculate tablet mode:
+ * tablet_mode:
+ *   1 |                  +-----<----+----------
+ *     |                  \/         /\
+ *     |                  |          |
+ *   0 |------------------------>----+
+ *     +------------------+----------+----------+ lid angle
+ *     0                 240        300        360
+ */
+#define TABLET_ZONE_LID_ANGLE FLOAT_TO_FP(300)
+#define LAPTOP_ZONE_LID_ANGLE FLOAT_TO_FP(240)
+
+/*
+ * We will change our tablet mode status when we are "convinced" that it has
+ * changed.  This means we will have to consecutively calculate our new tablet
+ * mode while the angle is stable and come to the same conclusion.  The number
+ * of consecutive calculations is the debounce count with an interval between
+ * readings set by the motion_sense task.  This should avoid spurious forces
+ * that may trigger false transitions of the tablet mode switch.
+ */
+#define TABLET_MODE_DEBOUNCE_COUNT 3
+
+static int motion_lid_set_tablet_mode(int reliable)
+{
+	static int tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
+	const int current_mode = tablet_get_mode();
+	int new_mode = current_mode;
+
+	if (reliable) {
+		if (last_lid_angle_fp > TABLET_ZONE_LID_ANGLE)
+			new_mode = 1;
+		else if (last_lid_angle_fp < LAPTOP_ZONE_LID_ANGLE)
+			new_mode = 0;
+
+		/* Only change tablet mode if we're sure. */
+		if (current_mode != new_mode) {
+			if (tablet_mode_debounce_cnt == 0) {
+				/* Alright, we're convinced. */
+				tablet_mode_debounce_cnt =
+					TABLET_MODE_DEBOUNCE_COUNT;
+				tablet_set_mode(new_mode);
+				return reliable;
+			}
+			tablet_mode_debounce_cnt--;
+			return reliable;
+		}
+	}
+
+	/*
+	 * If we got a reliable measurement that agrees with our current tablet
+	 * mode, then reset the debounce counter.  Also, make it harder to leave
+	 * tablet mode by resetting the debounce count when we encounter an
+	 * unreliable angle when we're already in tablet mode.
+	 */
+	if (((reliable == 0) && current_mode == 1) ||
+	    ((reliable == 1) && (current_mode == new_mode)))
+		tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
+	return reliable;
+}
+#endif
+
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
  * the base and one in the lid.
@@ -176,10 +221,6 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 	fp_t lid_to_base, base_to_hinge;
 	fp_t denominator;
 	int reliable = 1;
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
-	int new_tablet_mode = tablet_get_mode();
-	int current_tablet_mode;
-#endif
 	int base_magnitude2, lid_magnitude2;
 	int base_range, lid_range, i;
 	vector_3_t scaled_base, scaled_lid;
@@ -354,38 +395,8 @@ static int calculate_lid_angle(const vector_3_t base, const vector_3_t lid,
 	 */
 	*lid_angle = FP_TO_INT(last_lid_angle_fp + FLOAT_TO_FP(0.5));
 
-#ifdef CONFIG_LID_ANGLE_TABLET_MODE
-	current_tablet_mode = tablet_get_mode();
-	if (reliable) {
-		if (last_lid_angle_fp > TABLET_ZONE_LID_ANGLE)
-			new_tablet_mode = 1;
-		else if (last_lid_angle_fp < LAPTOP_ZONE_LID_ANGLE)
-			new_tablet_mode = 0;
-
-		/* Only change tablet mode if we're sure. */
-		if (current_tablet_mode != new_tablet_mode) {
-			if (tablet_mode_debounce_cnt == 0) {
-				/* Alright, we're convinced. */
-				tablet_mode_debounce_cnt =
-					TABLET_MODE_DEBOUNCE_COUNT;
-				tablet_set_mode(new_tablet_mode);
-				return reliable;
-			}
-			tablet_mode_debounce_cnt--;
-			return reliable;
-		}
-	}
-
-	/*
-	 * If we got a reliable measurement that agrees with our current tablet
-	 * mode, then reset the debounce counter.  Also, make it harder to leave
-	 * tablet mode by resetting the debounce count when we encounter an
-	 * unreliable angle when we're already in tablet mode.
-	 */
-	if (((reliable == 0) && current_tablet_mode == 1) ||
-	    ((reliable == 1) && (current_tablet_mode == new_tablet_mode)))
-		tablet_mode_debounce_cnt = TABLET_MODE_DEBOUNCE_COUNT;
-#endif   /* CONFIG_LID_ANGLE_TABLET_MODE */
+	if (board_is_lid_angle_tablet_mode())
+		reliable = motion_lid_set_tablet_mode(reliable);
 #else    /* CONFIG_LID_ANGLE_INVALID_CHECK */
 	*lid_angle = FP_TO_INT(lid_to_base_fp + FLOAT_TO_FP(0.5));
 #endif
