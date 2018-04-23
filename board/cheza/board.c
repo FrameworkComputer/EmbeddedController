@@ -21,6 +21,7 @@
 /* 8-bit I2C address */
 #define PI3USB9281_I2C_ADDR	0x4a
 #define DA9313_I2C_ADDR		0xd0
+#define CHARGER_I2C_ADDR	0x12
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -63,5 +64,11 @@ static void board_init(void)
 	 * TODO(b/77957956): Remove it after hardware fix.
 	 */
 	i2c_write8(I2C_PORT_POWER, DA9313_I2C_ADDR, 0x02, 0x34);
+
+	/*
+	 * Increase AdapterCurrentLimit{1,2} to max (6080mA)
+	 */
+	i2c_write16(I2C_PORT_POWER, CHARGER_I2C_ADDR, 0x3B, 0x17c0);
+	i2c_write16(I2C_PORT_POWER, CHARGER_I2C_ADDR, 0x3F, 0x17c0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
