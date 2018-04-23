@@ -21,6 +21,9 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
+#define CONFIG_CRC8
+#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_BOARD_VERSION_CBI
 
 /* Charger Configuration */
 #define CONFIG_CHARGE_MANAGER
@@ -93,6 +96,7 @@
 #define I2C_PORT_USBC1		IT83XX_I2C_CH_E
 #define I2C_PORT_USB_MUX	I2C_PORT_USBC0	/* For MUX driver */
 #define I2C_PORT_EEPROM		IT83XX_I2C_CH_F
+#define I2C_ADDR_EEPROM		0xA0
 
 /* SoC / PCH Configuration */
 #define CONFIG_CHIPSET_GEMINILAKE
