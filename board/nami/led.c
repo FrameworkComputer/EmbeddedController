@@ -73,15 +73,19 @@ enum led_power_state {
 /* Defines a LED pattern for a single state */
 struct led_pattern {
 	uint8_t color;
-	/* Interval in 100 msec. 0 for solid. MSB: 1=pulse 0=blink */
+	/* Bit 0-5: Interval in 100 msec. 0=solid. Max is 3.2 sec.
+	 * Bit 6: 1=alternate (on-off-off-off), 0=regular (on-off-on-off)
+	 * Bit 7: 1=pulse, 0=blink */
 	uint8_t pulse;
 };
 
 #define PULSE_NO		0
-#define PULSE(interval)		(1 << 7 | interval)
+#define PULSE(interval)		(1 << 7 | (interval))
 #define BLINK(interval) 	(interval)
+#define ALTERNATE(interval)	(1 << 6 | (interval))
 #define IS_PULSING(pulse)	((pulse) & 0x80)
-#define PULSE_INTERVAL(pulse)	(((pulse) & 0x7f) * 100 * MSEC)
+#define IS_ALTERNATE(pulse)	((pulse) & 0x40)
+#define PULSE_INTERVAL(pulse)	(((pulse) & 0x3f) * 100 * MSEC)
 
 /* 40 msec for nice and smooth transition. */
 #define LED_PULSE_TICK_US	(40 * MSEC)
@@ -170,6 +174,24 @@ const static led_patterns power_pattern_2 = {
 	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(20)}, {LED_OFF,   PULSE_NO}},
 };
 
+/*
+ * Akali - battery LED
+ * Charge:           Amber on (s0/s3/s5)
+ * Full:             Blue on (s0/s3/s5)
+ * Discharge in S0:  Blue on
+ * Discharge in S3:  Amber on 1 sec off 3 sec
+ * Discharge in S5:  Off
+ * Battery Error:    Amber on 1sec off 1sec
+ */
+const static led_patterns battery_pattern_3 = {
+	/* discharging: s0, s3, s5 */
+	{{LED_WHITE, 0}, {LED_AMBER, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
+	/* charging: s0, s3, s5 */
+	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER,  PULSE_NO}},
+	/* full: s0, s3, s5 */
+	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE,  PULSE_NO}},
+};
+
 /* Patterns for battery LED and power LED. Initialized at run-time. */
 static led_patterns const *patterns[2];
 /* Pattern for battery error. Only blinking battery LED is supported. */
@@ -188,7 +210,6 @@ static void led_init(void)
 	switch (oem) {
 	case PROJECT_NAMI:
 	case PROJECT_VAYNE:
-	default:
 		patterns[0] = &battery_pattern_0;
 		patterns[1] = NULL;
 		break;
@@ -202,6 +223,13 @@ static void led_init(void)
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
 		patterns[1] = &power_pattern_2;
+		break;
+	case PROJECT_AKALI:
+		patterns[0] = &battery_pattern_3;
+		patterns[1] = NULL;
+		break;
+	default:
+		break;
 	}
 
 	pwm_enable(PWM_CH_LED1, 1);
@@ -265,15 +293,24 @@ static struct {
 	int duty_inc;
 	enum led_color color;
 	int duty;
+	int alternate;
+	uint8_t pulse;
 } tick[2];
 
-static void config_tick(enum ec_led_id id, uint32_t interval, int duty_inc,
-			enum led_color color)
+static void config_tick(enum ec_led_id id, struct led_pattern *pattern)
 {
-	tick[id].interval = interval;
-	tick[id].duty_inc = duty_inc;
-	tick[id].color = color;
+	uint32_t stride = PULSE_INTERVAL(pattern->pulse);
+	if (IS_PULSING(pattern->pulse)) {
+		tick[id].interval = LED_PULSE_TICK_US;
+		tick[id].duty_inc = 100 / (stride / LED_PULSE_TICK_US);
+	} else {
+		tick[id].interval = stride;
+		tick[id].duty_inc = 100;
+	}
+	tick[id].color = pattern->color;
 	tick[id].duty = 0;
+	tick[id].alternate = 0;
+	tick[id].pulse = pattern->pulse;
 }
 
 /*
@@ -282,12 +319,18 @@ static void config_tick(enum ec_led_id id, uint32_t interval, int duty_inc,
  */
 static void pulse_led(enum ec_led_id id)
 {
-	if (tick[id].duty + tick[id].duty_inc > 100)
+	if (tick[id].duty + tick[id].duty_inc > 100) {
 		tick[id].duty_inc = tick[id].duty_inc * -1;
-	else if (tick[id].duty + tick[id].duty_inc < 0)
+	} else if (tick[id].duty + tick[id].duty_inc < 0) {
+		if (IS_ALTERNATE(tick[id].pulse)) {
+			/* Falling phase landing. Flip the alternate flag. */
+			tick[id].alternate = !tick[id].alternate;
+			if (tick[id].alternate)
+				return;
+		}
 		tick[id].duty_inc = tick[id].duty_inc * -1;
+	}
 	tick[id].duty += tick[id].duty_inc;
-
 	set_color(id, tick[id].color, tick[id].duty);
 }
 
@@ -295,11 +338,17 @@ static uint32_t tick_led(enum ec_led_id id)
 {
 	uint32_t elapsed;
 	uint32_t start = get_time().le.lo;
+	uint32_t next;
 
 	if (led_auto_control_is_enabled(id))
 		pulse_led(id);
+	if (tick[id].alternate)
+		/* Skip 2 phases (rising & falling) */
+		next = PULSE_INTERVAL(tick[id].pulse) * 2;
+	else
+		next = tick[id].interval;
 	elapsed = get_time().le.lo - start;
-	return tick[id].interval > elapsed ? tick[id].interval - elapsed : 0;
+	return next > elapsed ? next - elapsed : 0;
 }
 
 static void tick_battery(void);
@@ -320,9 +369,7 @@ static void led_alert(int enable)
 {
 	if (enable) {
 		/* Overwrite the current signal */
-		config_tick(EC_LED_ID_BATTERY_LED,
-			    PULSE_INTERVAL(battery_error.pulse),
-			    100, battery_error.color);
+		config_tick(EC_LED_ID_BATTERY_LED, &battery_error);
 		tick_battery();
 	} else {
 		led_charge_hook();
@@ -349,7 +396,6 @@ void config_one_led(enum ec_led_id id, enum led_charge_state charge)
 {
 	const led_patterns *pattern;
 	struct led_pattern p;
-	uint32_t stride;
 
 	pattern = patterns[id];
 	if (!pattern)
@@ -369,12 +415,7 @@ void config_one_led(enum ec_led_id id, enum led_charge_state charge)
 		return;
 	}
 
-	stride = PULSE_INTERVAL(p.pulse);
-	if (IS_PULSING(p.pulse))
-		config_tick(id, LED_PULSE_TICK_US,
-			    100 / (stride / LED_PULSE_TICK_US), p.color);
-	else  /* Blinking */
-		config_tick(id, stride, 100, p.color);
+	config_tick(id, &p);
 	start_tick(id);
 }
 

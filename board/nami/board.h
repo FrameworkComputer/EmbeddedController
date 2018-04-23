@@ -258,10 +258,11 @@ enum mft_channel {
 };
 
 enum oem_id {
-	PROJECT_VAYNE = 3,	/* Vayne */
-	PROJECT_SONA,		/* Sona */
-	PROJECT_PANTHEON,	/* Pantheon */
-	PROJECT_NAMI,		/* Nami */
+	PROJECT_AKALI = 1,
+	PROJECT_VAYNE = 3,
+	PROJECT_SONA,
+	PROJECT_PANTHEON,
+	PROJECT_NAMI,
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */
