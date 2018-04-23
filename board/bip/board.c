@@ -99,21 +99,20 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-#define USB_PD_PORT_0_ITE 0
-#define USB_PD_PORT_1_PS8751 1
+#define USB_PD_PORT_0 0
+#define USB_PD_PORT_1 1
 
 /******************************************************************************/
 /* USB-C TCPC config. */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_0_ITE] = {
+	[USB_PD_PORT_0] = {
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
-	[USB_PD_PORT_1_PS8751] = {
-		.i2c_host_port = I2C_PORT_USBC1,
-		.i2c_slave_addr = PS8751_I2C_ADDR1,
-		.drv = &ps8xxx_tcpm_drv,
+	[USB_PD_PORT_1] = {
+		/* TCPC is embedded within EC so no i2c config needed */
+		.drv = &it83xx_tcpm_drv,
 		.pol = TCPC_ALERT_ACTIVE_LOW,
 	},
 };
@@ -123,14 +122,16 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 static void board_it83xx_hpd_status(int port, int hpd_lvl, int hpd_irq);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_0_ITE] = {
+	[USB_PD_PORT_0] = {
 		/* Driver uses I2C_PORT_USB_MUX as I2C port */
 		.port_addr = IT5205_I2C_ADDR1,
 		.driver = &it5205_usb_mux_driver,
 		.hpd_update = &board_it83xx_hpd_status,
 	},
-	[USB_PD_PORT_1_PS8751] = {
-		.port_addr = USB_PD_PORT_1_PS8751,
+	[USB_PD_PORT_1] = {
+		/* Use PS8751 as mux only */
+		.port_addr = MUX_PORT_AND_ADDR(
+			I2C_PORT_USBC1, PS8751_I2C_ADDR1),
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &board_it83xx_hpd_status,
 	}
@@ -139,12 +140,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 /******************************************************************************/
 /* USB-C PPC config */
 const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_0_ITE] = {
+	[USB_PD_PORT_0] = {
 		.i2c_port = I2C_PORT_USBC0,
 		.i2c_addr = SN5S330_ADDR0,
 		.drv = &sn5s330_drv
 	},
-	[USB_PD_PORT_1_PS8751] = {
+	[USB_PD_PORT_1] = {
 		.i2c_port = I2C_PORT_USBC1,
 		.i2c_addr = SN5S330_ADDR0,
 		.drv = &sn5s330_drv
@@ -155,12 +156,12 @@ const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /******************************************************************************/
 /* USB-C BC 1.2 chip Configuration */
 const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_0_ITE] = {
+	[USB_PD_PORT_0] = {
 		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON,
 		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET_L,
 		.flags = BQ24392_FLAGS_CHG_DET_ACTIVE_LOW,
 	},
-	[USB_PD_PORT_1_PS8751] = {
+	[USB_PD_PORT_1] = {
 		.chip_enable_pin = GPIO_USB_C1_BC12_VBUS_ON,
 		.chg_det_pin = GPIO_USB_C1_BC12_CHG_DET_L,
 		.flags = BQ24392_FLAGS_CHG_DET_ACTIVE_LOW,
