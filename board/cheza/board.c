@@ -32,6 +32,16 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
+void board_set_switchcap(int enable)
+{
+	/*
+	 * Disable SwitchCap auto-boot and make EN pin level-trigger
+	 * TODO(b/77957956): Remove it after hardware fix.
+	 */
+	i2c_write8(I2C_PORT_POWER, DA9313_I2C_ADDR, 0x02, 0x34);
+	gpio_set_level(GPIO_SWITCHCAP_ON_L, enable);
+}
+
 const struct adc_t adc_channels[] = {};
 
 /* Power signal list. Must match order of enum power_signal. */

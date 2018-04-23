@@ -68,6 +68,8 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+void board_set_switchcap(int asserted);
+
 #endif /* !defined(__ASSEMBLER__) */
 
 #endif /* __CROS_EC_BOARD_H */
