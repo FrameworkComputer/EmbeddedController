@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-SCRIPT_VERSION = 1
+SCRIPT_VERSION = 2
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1
 RMA_OPENED = CCD_IS_UNRESTRICTED | WP_IS_DISABLED
@@ -110,6 +110,10 @@ DEBUG AUTHCODE MISMATCH:
       rerunning the process.
 """
 
+DEBUG_DUT_CONTROL_OSERROR = """
+Run from chroot if you are trying to use a /dev/pts ccd servo console
+"""
+
 parser = argparse.ArgumentParser(
     description=HELP_INFO, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('-g', '--generate_challenge', action='store_true',
@@ -128,6 +132,8 @@ parser.add_argument('-i', '--hwid', type=str, default='',
         help='The board hwid. Necessary to generate a challenge')
 parser.add_argument('-a', '--authcode', type=str, default='',
         help='The authcode string generated from the challenge url')
+parser.add_argument('-P', '--servo_port', type=str, default='',
+        help='the servo port')
 
 def debug(string):
     """Print yellow string"""
@@ -140,10 +146,14 @@ def info(string):
 class RMAOpen(object):
     """Used to find the cr50 console and run RMA open"""
 
-    def __init__(self, device=None, usb_serial=None, print_caps=False):
+    def __init__(self, device=None, usb_serial=None, print_caps=False,
+            servo_port=None):
+        self.servo_port = servo_port if servo_port else '9999'
         self.print_caps = print_caps
         if device:
             self.set_cr50_device(device)
+        elif servo_port:
+            self.find_cr50_servo_uart()
         else:
             self.find_cr50_device(usb_serial)
         info('DEVICE: ' + self.device)
@@ -151,6 +161,22 @@ class RMAOpen(object):
         self.print_platform_info()
         info('Cr50 setup ok')
         self.update_ccd_state()
+        self.using_ccd = self.device_is_running_with_servo_ccd()
+
+
+    def _dut_control(self, control):
+        """Run dut-control and return the response"""
+        try:
+            return subprocess.check_output(['dut-control', '-p',
+                    self.servo_port, control]).strip()
+        except OSError, e:
+            debug(DEBUG_DUT_CONTROL_OSERROR)
+            raise
+
+
+    def find_cr50_servo_uart(self):
+        """Save the device used for the console"""
+        self.device = self._dut_control('cr50_uart_pty').split(':')[-1]
 
 
     def set_cr50_device(self, device):
@@ -186,6 +212,23 @@ class RMAOpen(object):
         if output and cmd and split_cmd in output:
             return ''.join(output.rpartition(split_cmd)[1::]).split('>')[0]
         return output
+
+
+    def device_is_running_with_servo_ccd(self):
+        """Return True if the device is a servod ccd console"""
+        # servod uses /dev/pts consoles. Non-servod uses /dev/ttyUSBX
+        if '/dev/pts' not in self.device:
+            return False
+        # If cr50 doesn't show rdd is connected, cr50 the device must not be
+        # a ccd device
+        if 'Rdd:     connected' not in self.send_cmd_get_output('ccdstate'):
+            return False
+        # Check if the servod is running with ccd. This requires the script
+        # is run in the chroot, so run it last.
+        if 'ccd_cr50' not in self._dut_control('servo_type'):
+            return False
+        info('running through servod ccd')
+        return True
 
 
     def get_rma_challenge(self):
@@ -232,6 +275,9 @@ class RMAOpen(object):
         print 'waiting for cr50 reboot'
         # Cr50 may be rebooting. Wait a bit
         time.sleep(5)
+        if self.using_ccd:
+            # After reboot, reset the ccd endpoints
+            self._dut_control('power_state:ccd_reset')
         # Update the ccd state after the authcode attempt
         self.update_ccd_state()
 
@@ -399,7 +445,8 @@ def main():
     tried_authcode = False
     info('Running cr50_rma_open version %s' % SCRIPT_VERSION)
 
-    cr50_rma_open = RMAOpen(args.device, args.serialname, args.print_caps)
+    cr50_rma_open = RMAOpen(args.device, args.serialname, args.print_caps,
+            args.servo_port)
     if args.check_connection:
         sys.exit(0)
 
