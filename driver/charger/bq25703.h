@@ -27,7 +27,8 @@
 #define BQ25703_REG_ADC_PSYS			0x26
 #define BQ25703_REG_ADC_VBUS			0x27
 #define BQ25703_REG_ADC_IBAT			0x28
-#define BQ25703_REG_ADC_IINCMPIN		0x2A
+#define BQ25703_REG_ADC_CMPIN			0x2A
+#define BQ25703_REG_ADC_IIN			0x2B
 #define BQ25703_REG_ADC_VSYS_VBAT		0x2C
 #define BQ25703_REG_OTG_VOLTAGE			0x06
 #define BQ25703_REG_OTG_CURRENT			0x08
@@ -40,5 +41,18 @@
 /* ChargeOption0 Register */
 #define BQ25793_CHARGE_OPTION_0_EN_LEARN	(1 << 5)
 #define BQ25793_CHARGE_OPTION_0_CHRG_INHIBIT	(1 << 0)
+
+/* ChargeOption3 Register */
+#define BQ25793_CHARGE_OPTION_3_EN_ICO_MODE	(1 << 11)
+
+/* ChargeStatus Register */
+#define BQ25793_CHARGE_STATUS_ICO_DONE		(1 << 14)
+
+/* ADCOption Register */
+#define BQ25793_ADC_OPTION_ADC_START		(1 << 14)
+#define BQ25793_ADC_OPTION_EN_ADC_IIN		(1 << 4)
+
+/* ADCIIN Register */
+#define BQ25793_ADC_IIN_STEP_MA			50
 
 #endif /* __CROS_EC_BQ25703_H */

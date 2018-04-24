@@ -11,6 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "timer.h"
 
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
@@ -220,3 +221,68 @@ int charger_set_option(int option)
 	/* There are 4 option registers, but we only need the first for now. */
 	return raw_write16(BQ25703_REG_CHARGE_OPTION_0, option);
 }
+
+#ifdef CONFIG_CHARGE_RAMP_HW
+int charger_set_hw_ramp(int enable)
+{
+	int reg, rv;
+
+	rv = raw_read16(BQ25703_REG_CHARGE_OPTION_3, &reg);
+	if (rv)
+		return rv;
+
+	if (enable)
+		reg |= BQ25793_CHARGE_OPTION_3_EN_ICO_MODE;
+	else
+		reg &= ~BQ25793_CHARGE_OPTION_3_EN_ICO_MODE;
+
+	return raw_write16(BQ25703_REG_CHARGE_OPTION_3, reg);
+}
+
+int chg_ramp_is_stable(void)
+{
+	int reg;
+
+	if (raw_read16(BQ25703_REG_CHARGER_STATUS, &reg))
+		return 0;
+
+	return reg & BQ25793_CHARGE_STATUS_ICO_DONE;
+}
+
+int chg_ramp_is_detected(void)
+{
+	return 1;
+}
+
+int chg_ramp_get_current_limit(void)
+{
+	int reg;
+	int tries_left = 8;
+
+	/* Turn on the ADC for one reading */
+	reg = BQ25793_ADC_OPTION_ADC_START | BQ25793_ADC_OPTION_EN_ADC_IIN;
+	if (raw_write16(BQ25703_REG_ADC_OPTION, reg))
+		goto error;
+
+	/* Wait until the ADC operation completes. Typically 10ms */
+	do {
+		msleep(2);
+		raw_read16(BQ25703_REG_ADC_OPTION, &reg);
+	} while (--tries_left && (reg & BQ25793_ADC_OPTION_ADC_START));
+
+	/* Could not complete read */
+	if (reg & BQ25793_ADC_OPTION_ADC_START)
+		goto error;
+
+	/* Read ADC value */
+	if (raw_read8(BQ25703_REG_ADC_IIN, &reg))
+		goto error;
+
+	/* LSB => 50mA */
+	return reg * BQ25793_ADC_IIN_STEP_MA;
+
+error:
+	CPRINTF("Could not read input current limit ADC!");
+	return 0;
+}
+#endif /* CONFIG_CHARGE_RAMP_HW */
