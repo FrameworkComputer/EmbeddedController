@@ -7834,8 +7834,9 @@ int cmd_cec_write(int argc, char *argv[])
 {
 	char *e;
 	long val;
-	int i, msg_len;
+	int rv, i, msg_len;
 	struct ec_params_cec_write p;
+	struct ec_response_get_next_event buffer;
 
 	if (argc < 2 || argc > 17) {
 		fprintf(stderr, "%s <MSG[0]> [MSG[1] ... MSG[15]]>\n", argv[0]);
@@ -7857,7 +7858,31 @@ int cmd_cec_write(int argc, char *argv[])
 		printf("0x%02x ", p.msg[i]);
 	printf("\n");
 
-	return ec_command(EC_CMD_CEC_WRITE_MSG, 0, &p, msg_len, NULL, 0);
+	rv = ec_command(EC_CMD_CEC_WRITE_MSG, 0, &p, msg_len, NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	rv = ec_pollevent(1 << EC_MKBP_EVENT_CEC, &buffer,
+			  sizeof(buffer), 1000);
+	if (rv == 0) {
+		fprintf(stderr, "Timeout waiting CEC event\n");
+		return -ETIMEDOUT;
+	} else if (rv < 0) {
+		perror("Error polling for MKBP event\n");
+		return -EIO;
+	}
+
+	if (buffer.data.cec_events & EC_MKBP_CEC_SEND_OK)
+		return 0;
+
+	if (buffer.data.cec_events & EC_MKBP_CEC_SEND_FAILED) {
+		fprintf(stderr, "Send failed\n");
+		return -1;
+	}
+
+	fprintf(stderr, "No send result received\n");
+
+	return -1;
 }
 
 /* NULL-terminated list of commands */
