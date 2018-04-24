@@ -76,6 +76,10 @@ const char help_str[] =
 	"      Prints supported version mask for a command number\n"
 	"  console\n"
 	"      Prints the last output to the EC debug console\n"
+	"  cecset <address|enable> <val>\n"
+	"      Set the value of a CEC setting\n"
+	"  cecget <address|enable>\n"
+	"      Get the value of a CEC setting\n"
 	"  cecread [timeout]\n"
 	"      Read data from the CEC bus\n"
 	"  cecwrite [write bytes...]\n"
@@ -7935,6 +7939,74 @@ int cmd_cec_read(int argc, char *argv[])
 	return 0;
 }
 
+static int cec_cmd_from_str(const char *str)
+{
+	if (!strcmp("address", str))
+		return CEC_CMD_LOGICAL_ADDRESS;
+	if (!strcmp("enable", str))
+		return CEC_CMD_ENABLE;
+	return -1;
+}
+
+int cmd_cec_set(int argc, char *argv[])
+{
+	char *e;
+	struct ec_params_cec_set p;
+	uint8_t val;
+	int cmd;
+
+	if (argc != 3) {
+		fprintf(stderr, "Usage: %s [address|enable] param\n", argv[0]);
+		return -1;
+	}
+
+	val = (uint8_t)strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad parameter '%s'.\n", argv[2]);
+		return -1;
+	}
+
+	cmd = cec_cmd_from_str(argv[1]);
+	if (cmd < 0) {
+		fprintf(stderr, "Invalid command '%s'.\n", argv[1]);
+		return -1;
+	}
+	p.cmd = cmd;
+	p.val = val;
+
+	return ec_command(EC_CMD_CEC_SET,
+			  0, &p, sizeof(p), NULL, 0);
+}
+
+
+int cmd_cec_get(int argc, char *argv[])
+{
+	int rv, cmd;
+	struct ec_params_cec_get p;
+	struct ec_response_cec_get r;
+
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s [address|enable]\n", argv[0]);
+		return -1;
+	}
+
+	cmd = cec_cmd_from_str(argv[1]);
+	if (cmd < 0) {
+		fprintf(stderr, "Invalid command '%s'.\n", argv[1]);
+		return -1;
+	}
+	p.cmd = cmd;
+
+
+	rv = ec_command(EC_CMD_CEC_GET, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("%d\n", r.val);
+
+	return 0;
+}
 
 /* NULL-terminated list of commands */
 const struct command commands[] = {
@@ -7954,6 +8026,8 @@ const struct command commands[] = {
 	{"console", cmd_console},
 	{"cecwrite", cmd_cec_write},
 	{"cecread", cmd_cec_read},
+	{"cecset", cmd_cec_set},
+	{"cecget", cmd_cec_get},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
 	{"eventclearb", cmd_host_event_clear_b},
