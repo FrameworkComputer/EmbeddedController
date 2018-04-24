@@ -8,7 +8,7 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
-CHIP_VARIANT:=npcx7m6xb
+CHIP_VARIANT:=npcx7m6fb
 BASEBOARD:=octopus
 
 board-y=board.o led.o

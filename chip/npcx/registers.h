@@ -1201,7 +1201,7 @@ enum PM_CHANNEL_T {
 
 /* BBRAM register fields */
 #define NPCX_BKUP_STS_IBBR               7
-#if defined(CHIP_VARIANT_NPCX7M7W) || defined(CHIP_VARIANT_NPCX7M6XB)
+#if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M7WB)
 #define NPCX_BBRAM_SIZE                 128  /* Size of BBRAM */
 #else
 #define NPCX_BBRAM_SIZE                  64  /* Size of BBRAM */

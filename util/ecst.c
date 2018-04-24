@@ -43,6 +43,10 @@ struct chip_info chip_info[] = {{NPCX5M5G_RAM_ADDR, NPCX5M5G_RAM_SIZE},
 				{NPCX7M6X_RAM_ADDR, NPCX7M6X_RAM_SIZE},
 				{NPCX7M7X_RAM_ADDR, NPCX7M7X_RAM_SIZE},};
 
+/* Support chips name strings */
+const char *supported_chips = "npcx5m5g, npcx5m6g, npcx7m5g, npcx7m6g, "
+		"npcx7m6f, npcx7m6fb or npcx7m7wb";
+
 static unsigned int calc_api_csum_bin(void);
 static unsigned int initialize_crc_32(void);
 static unsigned int update_crc_32(unsigned int crc, char c);
@@ -192,15 +196,12 @@ int main(int argc, char *argv[])
 				(sscanf(hdr_args[arg_ind],
 					"%s",
 					main_str_temp) != 1)) {
-				my_printf(TERR, "\nCannot read chip name, ");
-				my_printf(TERR, "npcx7m7w");
-				my_printf(TERR, "npcx7m6xb, npcx7m6f");
-				my_printf(TERR, ", npcx7m6g, npcx7m5g");
-				my_printf(TERR, ", npcx5m5g or npcx5m6g.\n");
+				my_printf(TERR, "\nCannot read chip name %s.\n",
+						supported_chips);
 				main_status = FALSE;
 			} else {
 				if (str_cmp_no_case(main_str_temp,
-					"npcx7m7w") == 0) {
+					"npcx7m7wb") == 0) {
 					if ((bin_params.bin_params
 						& BIN_FW_LOAD_START_ADDR) ==
 						0x00000000)
@@ -220,7 +221,7 @@ int main(int argc, char *argv[])
 				} else if ((str_cmp_no_case(main_str_temp,
 					"npcx7m6f") == 0) ||
 					       (str_cmp_no_case(main_str_temp,
-					"npcx7m6xb") == 0) ||
+					"npcx7m6fb") == 0) ||
 					       (str_cmp_no_case(main_str_temp,
 					"npcx7m6g") == 0)) {
 					if ((bin_params.bin_params
@@ -302,11 +303,8 @@ int main(int argc, char *argv[])
 					my_printf(TERR,
 						  "\nInvalid chip name (%s) ",
 						  main_str_temp);
-					my_printf(TERR, "should be npcx7m7w, ");
-					my_printf(TERR, "npcx7m6xb, ");
-					my_printf(TERR, "npcx7m6f, npcx7m6g, ");
-					my_printf(TERR, "npcx7m5g, npcx5m5g, ");
-					my_printf(TERR, "or npcx5m6g.");
+					my_printf(TERR, ", it should be %s.\n",
+						supported_chips);
 					main_status = FALSE;
 				}
 
@@ -841,10 +839,9 @@ void exit_with_usage(void)
 	my_printf(TUSG, "(default is out_<input_filename>.bin)");
 	my_printf(TUSG, "\n -argfile <filename> - Arguments file name; ");
 	my_printf(TUSG, "includes multiple flags");
-	my_printf(TUSG, "\n -chip <name>        - EC Chip Name: ");
-	my_printf(TUSG, "npcx7m7w|npcx7m6f|npcx7m6xb|npcx7m6g|npcx7m5g|");
-	my_printf(TUSG, "npcx5m5g|npcx5m6g");
-	my_printf(TUSG, " (default is npcx5m5g)");
+	my_printf(TUSG, "\n -chip <name>        - Supported EC Chip Name: ");
+	my_printf(TUSG, "%s. ", supported_chips);
+	my_printf(TUSG, "(default is npcx5m5g)");
 	my_printf(TUSG, "\n -v          - Verbose; prints ");
 	my_printf(TUSG, "information messages");
 	my_printf(TUSG, "\n -vv         - Super Verbose; prints ");

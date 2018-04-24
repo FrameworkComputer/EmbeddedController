@@ -7,7 +7,7 @@
 
 /*
  * NPCX5 Series Device-Specific Information
- * Ex. NPCX5-M-N-G
+ * Ex. NPCX5(M)(N)(G)
  * @param M: 7: 132-pins package, 8: 128-pins package
  * @param N: 5: 128KB RAM Size, 6: 256KB RAM Size
  * @param G: Google EC.

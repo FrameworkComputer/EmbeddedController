@@ -8,6 +8,6 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
-CHIP_VARIANT:=npcx7m7w
+CHIP_VARIANT:=npcx7m7wb
 
 board-y=board.o

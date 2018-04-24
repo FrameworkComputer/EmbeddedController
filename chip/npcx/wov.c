@@ -261,7 +261,7 @@ static enum ec_error_list wov_calc_pll_div_l(uint32_t i2s_clk_freq,
 
 	/*
 	 * The code below implemented the “PLL setting option” table as
-	 * describe in the NPCX7m7w specification document.
+	 * describe in the NPCX7m7wb specification document.
 	 * - Total_div is VCO frequency in MHz / 12 MHz
 	 * - d_f is the Feedback Divider
 	 * - d_in is the Input Divider (PLL_INDV)

@@ -11,7 +11,7 @@
 /*
  * npcx7 EVB version:
  * 1 - for EVB version 1 which supports npcx7m6f/npcx7m6g
- * 2 - for EVB version 2 which supports npcx7m7w/npcx7m6xb
+ * 2 - for EVB version 2 which supports npcx7m7wb/npcx7m6fb
  */
 #define BOARD_VERSION  2
 
