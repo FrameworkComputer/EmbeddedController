@@ -16,6 +16,9 @@ CONSOLE_CHANNEL(CC_BLUETOOTH_LL, "bluetooth_ll")
 CONSOLE_CHANNEL(CC_BLUETOOTH_HCI,"bluetooth_hci")
 #endif
 #endif /* CONFIG_BLUETOOTH_LE */
+#ifdef CONFIG_CEC
+CONSOLE_CHANNEL(CC_CEC, "cec")
+#endif
 #ifdef CONFIG_EXTENSION_COMMAND
 CONSOLE_CHANNEL(CC_EXTENSION,    "extension")
 #endif
