@@ -66,6 +66,9 @@
 /* Delay between power-off the system and all things (PMIC/AP) expected off */
 #define SYSTEM_POWER_OFF_DELAY		(350 * MSEC)
 
+/* Delay to confirm the power lost */
+#define POWER_LOST_CONFIRM_DELAY        (350 * MSEC)
+
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
@@ -80,6 +83,9 @@ static char lid_opened;
  * don't want to get preempted by the chipset state machine.
  */
 static uint8_t bypass_power_lost_trigger;
+
+/* The timestamp of the latest power lost */
+static timestamp_t latest_power_lost_time;
 
 /* Time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
@@ -135,6 +141,49 @@ DECLARE_DEFERRED(chipset_reset_request_handler);
 void chipset_reset_request_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&chipset_reset_request_handler_data, 0);
+}
+
+/* Confirm power lost if the POWER_GOOD signal keeps low for a while */
+static uint32_t chipset_is_power_lost(void)
+{
+	/*
+	 * Current POWER_GOOD signal is lost and the latest power lost trigger
+	 * happened before the confirmation delay.
+	 */
+	return (get_time().val - latest_power_lost_time.val >=
+		POWER_LOST_CONFIRM_DELAY) && !power_has_signals(IN_POWER_GOOD);
+}
+
+/* The deferred handler to save the power signal */
+static void deferred_power_signal_handler(void)
+{
+	/* Wake the chipset task to check the power lost duration */
+	task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_DEFERRED(deferred_power_signal_handler);
+
+/**
+ * Power signal interrupt, overrides the default one.
+ *
+ * It handles the short-low-pulse during the reset sequence which we don't
+ * consider it as a power-lost.
+ */
+void chipset_power_signal_interrupt(enum gpio_signal signal)
+{
+	/* Call the default power signal interrupt */
+	power_signal_interrupt(signal);
+
+	/*
+	 * It is the start of the low pulse, save the timestamp, wake the
+	 * chipset task after POWER_LOST_CONFIRM_DELAY in order to check if it
+	 * is a power-lost or a reset (short low-pulse).
+	 */
+	if (!(power_get_signals() & IN_POWER_GOOD)) {
+		/* Keep the timestamp just at the low pulse happens. */
+		latest_power_lost_time = get_time();
+		hook_call_deferred(&deferred_power_signal_handler_data,
+				   POWER_LOST_CONFIRM_DELAY);
+	}
 }
 
 static void sdm845_lid_event(void)
@@ -467,8 +516,8 @@ static int check_for_power_off_event(void)
 
 	power_button_was_pressed = pressed;
 
-	/* POWER_GOOD released by AP : shutdown immediately */
-	if (!power_has_signals(IN_POWER_GOOD) && !bypass_power_lost_trigger) {
+	/* Power lost: shutdown immediately */
+	if (chipset_is_power_lost() && !bypass_power_lost_trigger) {
 		if (power_button_was_pressed)
 			timer_cancel(TASK_ID_CHIPSET);
 

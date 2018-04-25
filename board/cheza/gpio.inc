@@ -15,7 +15,7 @@ GPIO_INT(WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* EC_W
 GPIO_INT(LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* LID_OPEN_EC */
 GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN, chipset_reset_request_interrupt)  /* Reset request from AP */
 /* AP_RST_L is used for PMIC and AP negotiation. Don't change its state. */
-GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, chipset_power_signal_interrupt)
 
 /*
  * Should always make it low, to prevent AP unexpected up.

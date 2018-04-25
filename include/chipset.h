@@ -129,4 +129,12 @@ void chipset_handle_reboot(void);
  */
 void chipset_reset_request_interrupt(enum gpio_signal signal);
 
+/**
+ * Chipset-specific power signal interrupt, overrides the default one.
+ *
+ * It is used in SDM845, to handle the short-low-pulse during the reset
+ * sequence which we don't consider it as a power-lost.
+ */
+void chipset_power_signal_interrupt(enum gpio_signal signal);
+
 #endif  /* __CROS_EC_CHIPSET_H */
