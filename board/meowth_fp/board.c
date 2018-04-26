@@ -30,10 +30,8 @@ static void ap_deferred(void)
 			&& gpio_get_level(GPIO_PCH_SLP_S0_L);
 
 	if (running) { /* S0 */
-		gpio_set_flags(GPIO_EC_INT_L,   GPIO_ODR_HIGH | GPIO_PULL_UP);
 		hook_notify(HOOK_CHIPSET_RESUME);
 	} else { /* S3 */
-		gpio_set_flags(GPIO_EC_INT_L,   GPIO_INPUT);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 	}
 }
