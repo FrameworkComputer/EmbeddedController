@@ -9,69 +9,63 @@
 
 #include "cryptoc/util.h"
 
-const struct {
-	const char *name;
-	/* SHA256(name) */
-	const uint32_t digest[SHA256_DIGEST_WORDS];
-} dcrypto_app_names[] = {
-	{
-		"RESERVED",
-		{
-			0x89ef2e22,  0x0032b61a,  0x7b349ab1,  0x3f512449,
-			0x4cd161dd,  0x2a6cac94,  0x109a045a,  0x23d669ea
-		}
-	},
-	{
-		"NVMEM",
-		{
-			0xd137e92f,  0x0f39686e,  0xd663f548,  0x9b570397,
-			0x5801c4ce,  0x8e7c7654,  0xa2a13c85,  0x875779b6
-		}
-	},
-	{
-		"U2F_ATTEST",
-		{
-			0xe108bde1,  0xb87820a9,  0x8b4b943a,  0xc7c1dbc4,
-			0xa027d3f1,  0x96538c5f,  0x49a07d16,  0xd0c8e1da
-		}
-	},
-	{
-		"U2F_ORIGIN",
-		{
-			0xeb4ba9f1,  0x12b0ec6c,  0xd0791cd4,  0x4a1f4e6d,
-			0x51e60c00,  0xad84c2c0,  0x38b78b24,  0x1ded57ea
-		}
-	},
-	{
-		"U2F_WRAP",
-		{
-			0xa013e112,  0x4cb0134c,  0x1cab1edf,  0xbd741b61,
-			0xcd375bcd,  0x8065e8cc,  0xc892ed69,  0x72436c7d
-		}
-	},
-	{
-		/* This key signs data from H1's configured by mn50/scribe. */
-		"PERSO_AUTH",
-		{
-			0x2019da34,  0xf1a01a13,  0x0fb9f73f,  0xf2e85f76,
-			0x5ecb7690,  0x09f732c9,  0xe540bf14,  0xcc46799a
-		}
-	},
-	{
-		"PINWEAVER",
-		{
-			0x51cd9166,  0x911a7460,  0x96aeaf06,  0xa9d0371c,
-			0xfa08a500,  0xfe4e04a1,  0xe0a36b57,  0x0418c429
-		}
-	},
+#include "console.h"
+
+const char *const dcrypto_app_names[] = {
+	"RESERVED",
+	"NVMEM",
+	"U2F_ATTEST",
+	"U2F_ORIGIN",
+	"U2F_WRAP",
+	/* This key signs data from H1's configured by mn50/scribe. */
+	"PERSO_AUTH",
+	"PINWEAVER",
 };
+
+static void name_hash(enum dcrypto_appid appid,
+		      uint32_t digest[SHA256_DIGEST_WORDS])
+{
+	LITE_SHA256_CTX ctx;
+	const char *name = dcrypto_app_names[appid];
+	size_t x;
+
+	/* The PERSO_AUTH digest was improperly defined, so now this exception
+	 * exists to prevent data loss.
+	 */
+	if (appid == PERSO_AUTH) {
+		digest[0] = 0x2019da34;
+		digest[1] = 0xf1a01a13;
+		digest[2] = 0x0fb9f73f;
+		digest[3] = 0xf2e85f76;
+		digest[4] = 0x5ecb7690;
+		digest[5] = 0x09f732c9;
+		digest[6] = 0xe540bf14;
+		digest[7] = 0xcc46799a;
+		return;
+	}
+
+	DCRYPTO_SHA256_init(&ctx, 0);
+	HASH_update(&ctx, name, strlen(name));
+	memcpy(digest, HASH_final(&ctx), SHA256_DIGEST_SIZE);
+
+	/* The digests were originally endian swapped because xxd was used to
+	 * print them so this operation is needed to keep the derived keys the
+	 * same. Any changes to they key derivation process must result in the
+	 * same keys being produced given the same inputs, or devices will
+	 * effectively be reset and user data will be lost by the key change.
+	 */
+	for (x = 0; x < SHA256_DIGEST_WORDS; ++x)
+		digest[x] = __builtin_bswap32(digest[x]);
+}
 
 int DCRYPTO_appkey_init(enum dcrypto_appid appid, struct APPKEY_CTX *ctx)
 {
-	memset(ctx, 0, sizeof(*ctx));
+	uint32_t digest[SHA256_DIGEST_WORDS];
 
-	if (!dcrypto_ladder_compute_usr(
-			appid, dcrypto_app_names[appid].digest))
+	memset(ctx, 0, sizeof(*ctx));
+	name_hash(appid, digest);
+
+	if (!dcrypto_ladder_compute_usr(appid, digest))
 		return 0;
 
 	return 1;
@@ -86,6 +80,8 @@ void DCRYPTO_appkey_finish(struct APPKEY_CTX *ctx)
 int DCRYPTO_appkey_derive(enum dcrypto_appid appid, const uint32_t input[8],
 			  uint32_t output[8])
 {
-	return !!dcrypto_ladder_derive(appid, dcrypto_app_names[appid].digest,
-				       input, output);
+	uint32_t digest[SHA256_DIGEST_WORDS];
+
+	name_hash(appid, digest);
+	return !!dcrypto_ladder_derive(appid, digest, input, output);
 }
