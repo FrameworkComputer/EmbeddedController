@@ -69,6 +69,16 @@ struct cros_perso_certificate_response_v0 {
 BUILD_ASSERT(sizeof(struct cros_perso_response_component_info_v0) == 8);
 BUILD_ASSERT(sizeof(struct cros_perso_certificate_response_v0) == 8);
 
+
+/*
+ * Uncomment the #define below to enable fallback certificate installatin
+ * capability.
+ *
+#define CR50_INCLUDE_FALLBACK_CERT
+ */
+
+#ifdef CR50_INCLUDE_FALLBACK_CERT
+
 /* This is a fixed seed (and corresponding certificates) for use in a
  * developer environment.  Use of this fixed seed will be triggered if
  * the HMAC on the certificate region (i.e. read-only certificates
@@ -247,6 +257,30 @@ const uint8_t FIXED_ECC_ENDORSEMENT_CERT[804] = {
 	0x53, 0xff, 0x13, 0x27, 0x61, 0x87, 0x66, 0x99, 0x76, 0x9c, 0x5f, 0x03,
 	0x52, 0x95, 0x13, 0x6e, 0xb7, 0x33, 0x1f, 0x8d, 0xc6, 0x22, 0xd8, 0xe4
 };
+
+static int store_eps(const uint8_t eps[PRIMARY_SEED_SIZE]);
+static int store_cert(enum cros_perso_component_type component_type,
+		      const uint8_t *cert, size_t cert_len);
+
+static int install_fixed_certs(void)
+{
+	if (!store_eps(FIXED_ENDORSEMENT_SEED))
+		return 0;
+
+	if (!store_cert(CROS_PERSO_COMPONENT_TYPE_RSA_CERT,
+				FIXED_RSA_ENDORSEMENT_CERT,
+				sizeof(FIXED_RSA_ENDORSEMENT_CERT)))
+		return 0;
+
+	if (!store_cert(CROS_PERSO_COMPONENT_TYPE_P256_CERT,
+				FIXED_ECC_ENDORSEMENT_CERT,
+				sizeof(FIXED_ECC_ENDORSEMENT_CERT)))
+		return 0;
+
+	return 1;
+}
+
+#endif
 
 /* Test endorsement CA root. */
 static const uint32_t TEST_ENDORSEMENT_CA_RSA_N[64] = {
@@ -478,24 +512,6 @@ static void endorsement_complete(void)
 	CPRINTF("%s(): SUCCESS\n", __func__);
 }
 
-static int install_fixed_certs(void)
-{
-	if (!store_eps(FIXED_ENDORSEMENT_SEED))
-		return 0;
-
-	if (!store_cert(CROS_PERSO_COMPONENT_TYPE_RSA_CERT,
-				FIXED_RSA_ENDORSEMENT_CERT,
-				sizeof(FIXED_RSA_ENDORSEMENT_CERT)))
-		return 0;
-
-	if (!store_cert(CROS_PERSO_COMPONENT_TYPE_P256_CERT,
-				FIXED_ECC_ENDORSEMENT_CERT,
-				sizeof(FIXED_ECC_ENDORSEMENT_CERT)))
-		return 0;
-
-	return 1;
-}
-
 static int handle_cert(
 	const struct cros_perso_response_component_info_v0 *cert_info,
 	const struct cros_perso_certificate_response_v0 *cert,
@@ -594,6 +610,7 @@ enum manufacturing_status tpm_endorse(void)
 		HASH_update(&hmac.hash, p, RO_CERTS_REGION_SIZE - 32);
 		if (!DCRYPTO_equals(p + RO_CERTS_REGION_SIZE - 32,
 				   DCRYPTO_HMAC_final(&hmac), 32)) {
+#ifdef CR50_INCLUDE_FALLBACK_CERT
 			CPRINTF("%s: bad cert region hmac; falling back\n"
 				"    to fixed endorsement\n", __func__);
 
@@ -613,6 +630,10 @@ enum manufacturing_status tpm_endorse(void)
 					"    unknown endorsement state\n",
 					__func__);
 			}
+#else
+			CPRINTF("%s: bad cert region hmac; no certs installed!"
+				"\n", __func__);
+#endif
 
 			/* TODO(ngm): is this state considered
 			 * endorsement failure?
