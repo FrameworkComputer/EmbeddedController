@@ -664,7 +664,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 static void board_set_motion_sensor_count(void)
 {
 	/* There are two possible sensor configurations.
-	 * Vayne/Sona/Pantheon are without ALS sensor
+	 * Vayne/Sona/Pantheon/Akali are without ALS sensor
 	 * Nami is with ALS sensor
 	 * Use the oem id to different them.
 	 */
@@ -672,7 +672,8 @@ static void board_set_motion_sensor_count(void)
 
 	if (cbi_get_oem_id(&oem_id) == EC_SUCCESS) {
 		if (oem_id == PROJECT_VAYNE || oem_id == PROJECT_SONA
-			|| oem_id == PROJECT_PANTHEON)
+			|| oem_id == PROJECT_PANTHEON
+			|| oem_id == PROJECT_AKALI)
 			motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
 	}
 }
