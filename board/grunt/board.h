@@ -73,6 +73,12 @@
 
 #define CONFIG_CHIPSET_STONEY
 #define CONFIG_CHIPSET_RESET_HOOK
+/*
+ * ACOK from ISL9238 sometimes has a negative pulse after connecting
+ * USB-C power. We want to ignore it. b/77455171
+ */
+#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
