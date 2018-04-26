@@ -83,7 +83,8 @@
  *  for receiving.
  */
 enum cec_state {
-	CEC_STATE_IDLE = 0,
+	CEC_STATE_DISABLED = 0,
+	CEC_STATE_IDLE,
 	CEC_STATE_INITIATOR_FREE_TIME,
 	CEC_STATE_INITIATOR_START_LOW,
 	CEC_STATE_INITIATOR_START_HIGH,
@@ -194,6 +195,11 @@ void enter_state(enum cec_state new_state)
 
 	cec_state = new_state;
 	switch (new_state) {
+	case CEC_STATE_DISABLED:
+		gpio = 1;
+		memset(&cec_tx, 0, sizeof(struct cec_tx));
+		cec_events = 0;
+		break;
 	case CEC_STATE_IDLE:
 		cec_tx.msgt.bit = 0;
 		cec_tx.msgt.byte = 0;
@@ -272,6 +278,7 @@ void enter_state(enum cec_state new_state)
 static void cec_event_timeout(void)
 {
 	switch (cec_state) {
+	case CEC_STATE_DISABLED:
 	case CEC_STATE_IDLE:
 		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
@@ -407,6 +414,9 @@ static int hc_cec_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_write *params = args->params;
 
+	if (cec_state == CEC_STATE_DISABLED)
+		return EC_RES_UNAVAILABLE;
+
 	if (args->params_size == 0 || args->params_size > MAX_CEC_MSG_LEN)
 		return EC_RES_INVALID_PARAM;
 
@@ -416,6 +426,82 @@ static int hc_cec_write(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
+
+static int cec_set_enable(uint8_t enable)
+{
+	int mdl = NPCX_MFT_MODULE_1;
+
+	if (enable != 0 && enable != 1)
+		return EC_RES_INVALID_PARAM;
+
+	/* Enabling when already enabled? */
+	if (enable && cec_state != CEC_STATE_DISABLED)
+		return EC_RES_SUCCESS;
+
+	/* Disabling when already disabled? */
+	if (!enable && cec_state == CEC_STATE_DISABLED)
+		return EC_RES_SUCCESS;
+
+	if (enable) {
+		enter_state(CEC_STATE_IDLE);
+
+		/* Enable timer interrupts */
+		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TCIEN);
+		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
+
+		/* Enable multifunction timer interrupt */
+		task_enable_irq(NPCX_IRQ_MFT_1);
+
+		CPRINTF("CEC enabled\n");
+	} else {
+		/* Disable timer interrupts */
+		CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TCIEN);
+		CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
+
+		tmr2_stop();
+
+		task_disable_irq(NPCX_IRQ_MFT_1);
+
+		enter_state(CEC_STATE_DISABLED);
+
+		CPRINTF("CEC disabled\n");
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+static int hc_cec_set(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_cec_set *params = args->params;
+
+	switch (params->cmd) {
+	case CEC_CMD_ENABLE:
+		return cec_set_enable(params->val);
+	}
+
+	return EC_RES_INVALID_PARAM;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_SET, hc_cec_set, EC_VER_MASK(0));
+
+
+static int hc_cec_get(struct host_cmd_handler_args *args)
+{
+	struct ec_response_cec_get *response = args->response;
+	const struct ec_params_cec_get *params = args->params;
+
+	switch (params->cmd) {
+	case CEC_CMD_ENABLE:
+		response->val = cec_state == CEC_STATE_DISABLED ? 0 : 1;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	args->response_size = sizeof(*response);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_GET, hc_cec_get, EC_VER_MASK(0));
 
 static int cec_get_next_event(uint8_t *out)
 {
@@ -439,13 +525,6 @@ static void cec_init(void)
 
 	/* Mode 2 - Dual-input capture */
 	SET_FIELD(NPCX_TMCTRL(mdl), NPCX_TMCTRL_MDSEL_FIELD, NPCX_MFT_MDSEL_2);
-
-	/* Enable timer interrupts */
-	SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TCIEN);
-	SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
-
-	/* Enable multifunction timer interrupt */
-	task_enable_irq(NPCX_IRQ_MFT_1);
 
 	CPRINTS("CEC initialized");
 }
