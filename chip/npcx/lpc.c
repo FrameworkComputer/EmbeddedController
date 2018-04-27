@@ -1042,3 +1042,23 @@ static int lpc_get_protocol_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
 		lpc_get_protocol_info,
 		EC_VER_MASK(0));
+
+#if DEBUG_LPC
+static int command_lpc(int argc, char **argv)
+{
+	if (argc == 1)
+		return EC_ERROR_PARAM1;
+
+	if (!strcasecmp(argv[1], "sci"))
+		lpc_generate_sci();
+	else if (!strcasecmp(argv[1], "smi"))
+		lpc_generate_smi();
+	else if (!strcasecmp(argv[1], "wake"))
+		lpc_update_wake(-1);
+	else
+		return EC_ERROR_PARAM1;
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(lpc, command_lpc, "[sci|smi|wake]", "Trigger SCI/SMI");
+
+#endif
