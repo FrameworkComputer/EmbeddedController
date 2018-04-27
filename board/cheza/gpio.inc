@@ -28,7 +28,7 @@ GPIO(SYS_RST_L,             PIN(0, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
 GPIO(PS_HOLD,               PIN(D, 4), GPIO_INPUT)     /* Indicate when AP triggers reset/shutdown */
 GPIO(ENTERING_RW,           PIN(E, 1), GPIO_OUT_LOW)   /* EC_ENTERING_RW: Indicate when EC is entering RW code */
 GPIO(CCD_MODE_ODL,          PIN(E, 3), GPIO_INPUT)     /* Case Closed Debug Mode */
-GPIO(BATT_PRES_ODL,         PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)  /* EC_BATT_PRES_ODL: Battery Present */
+GPIO(BATT_PRES_ODL,         PIN(E, 5), GPIO_INPUT)     /* EC_BATT_PRES_ODL: Battery Present */
 GPIO(PMIC_FAULT_L,          PIN(7, 6), GPIO_INPUT)     /* Any PMIC fault? */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_OUT_HIGH)  /* TP10, rework jumps to PMIC power button */
 GPIO(AP_EC_INT_L,           PIN(A, 2), GPIO_INPUT)     /* Interrupt line between AP and EC */
