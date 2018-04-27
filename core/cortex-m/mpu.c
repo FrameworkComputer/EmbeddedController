@@ -7,6 +7,7 @@
 
 #include "mpu.h"
 #include "console.h"
+#include "cpu.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -32,8 +33,16 @@ static void mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 	MPU_SIZE &= ~1;					/* Disable */
 	if (enable) {
 		MPU_BASE = addr;
-		MPU_ATTR = attr;
-		MPU_SIZE = (srd << 8) | ((size_bit - 1) << 1) | 1; /* Enable */
+		/*
+		 * MPU_ATTR = attr;
+		 * MPU_SIZE = (srd << 8) | ((size_bit - 1) << 1) | 1;
+		 *
+		 * WORKAROUND: the 2 half-word accesses above should work
+		 * according to the doc, but they don't ..., do a single 32-bit
+		 * one.
+		 */
+		REG32(&MPU_SIZE) = ((uint32_t)attr << 16)
+				 | (srd << 8) | ((size_bit - 1) << 1) | 1;
 	}
 
 	asm volatile("isb; dsb;");
@@ -202,16 +211,42 @@ int mpu_lock_rw_flash(void)
 }
 #endif /* !CONFIG_EXTERNAL_STORAGE */
 
+#ifdef CONFIG_CHIP_UNCACHED_REGION
+/* Store temporarily the regions ranges to use them for the MPU configuration */
+#define REGION(_name, _flag, _start, _size) \
+	static const uint32_t CONCAT2(_region_start_, _name) \
+		__attribute__((unused, section(".unused"))) = _start; \
+	static const uint32_t CONCAT2(_region_size_, _name) \
+		__attribute__((unused, section(".unused"))) = _size;
+#include "memory_regions.inc"
+#undef REGION
+#endif /* CONFIG_CHIP_UNCACHED_REGION */
+
 int mpu_pre_init(void)
 {
 	int i;
+	uint32_t mpu_type = mpu_get_type();
 
-	if (mpu_get_type() != 0x00000800)
+	/* Supports MPU with 8 or 16 unified regions */
+	if ((mpu_type & MPU_TYPE_UNIFIED_MASK) ||
+	    (MPU_TYPE_REG_COUNT(mpu_type) != 8 &&
+	     MPU_TYPE_REG_COUNT(mpu_type) != 16))
 		return EC_ERROR_UNIMPLEMENTED;
 
 	mpu_disable();
-	for (i = 0; i < 8; ++i)
+	for (i = 0; i < MPU_TYPE_REG_COUNT(mpu_type); ++i)
 		mpu_config_region(i, CONFIG_RAM_BASE, CONFIG_RAM_SIZE, 0, 0);
+
+#ifdef CONFIG_ARMV7M_CACHE
+#ifdef CONFIG_CHIP_UNCACHED_REGION
+	mpu_config_region(REGION_UNCACHED_RAM,
+			  CONCAT2(_region_start_, CONFIG_CHIP_UNCACHED_REGION),
+			  CONCAT2(_region_size_, CONFIG_CHIP_UNCACHED_REGION),
+			  MPU_ATTR_XN | MPU_ATTR_RW_RW, 1);
+	mpu_enable();
+#endif /* CONFIG_CHIP_UNCACHED_REGION */
+	cpu_enable_caches();
+#endif /* CONFIG_ARMV7M_CACHE */
 
 	return EC_SUCCESS;
 }

@@ -742,6 +742,14 @@
  */
 #undef CONFIG_CHIP_PRE_INIT
 
+/*
+ * Set the caching attributes of one of the RAM regions to uncached.
+ *
+ * When defined, CONFIG_CHIP_UNCACHED_REGION must be equal to the name of one
+ * of the regions defined in memory_regions.inc for CONFIG_CHIP_MEMORY_REGIONS.
+ */
+#undef CONFIG_CHIP_UNCACHED_REGION
+
 /*****************************************************************************/
 /* Chipset config */
 

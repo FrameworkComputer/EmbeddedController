@@ -9,6 +9,7 @@
 #define __CROS_EC_MPU_H
 
 #include "common.h"
+#include "config.h" /* chips might override MPU attribute settings */
 
 /*
  * Region assignment. 7 as the highest, a higher index has a higher priority.
@@ -28,6 +29,8 @@ enum mpu_region {
 	REGION_STORAGE2 = 5,		/* Second region for unaligned size */
 	REGION_DATA_RAM_TEXT = 6,	/* Exempt region of data RAM */
 	REGION_CHIP_RESERVED = 7,	/* Reserved for use in chip/ */
+	/* only for chips with MPU supporting 16 regions */
+	REGION_UNCACHED_RAM = 8,        /* For uncached data RAM */
 };
 
 #define MPU_TYPE		REG32(0xe000ed90)
@@ -36,6 +39,9 @@ enum mpu_region {
 #define MPU_BASE		REG32(0xe000ed9c)
 #define MPU_SIZE		REG16(0xe000eda0)
 #define MPU_ATTR		REG16(0xe000eda2)
+
+#define MPU_TYPE_UNIFIED_MASK	0x00FF0001
+#define MPU_TYPE_REG_COUNT(t)	(((t) >> 8) & 0xFF)
 
 #define MPU_CTRL_PRIVDEFEN	(1 << 2)
 #define MPU_CTRL_HFNMIENA	(1 << 1)
@@ -55,8 +61,12 @@ enum mpu_region {
 
 /* Suggested value for TEX S/C/B bit. See table 3-6 of Stellaris LM4F232H5QC
  * datasheet and table 38 of STM32F10xxx Cortex-M3 programming manual. */
+#ifndef MPU_ATTR_INTERNAL_SRAM
 #define MPU_ATTR_INTERNAL_SRAM  6  /* for Internal SRAM */
+#endif
+#ifndef MPU_ATTR_FLASH_MEMORY
 #define MPU_ATTR_FLASH_MEMORY   2  /* for flash memory */
+#endif
 
 /**
  * Enable MPU

@@ -30,7 +30,7 @@ static void cpu_invalidate_icache(void)
 	asm volatile("dsb; isb");
 }
 
-void cpu_enable_icache(void)
+void cpu_enable_caches(void)
 {
 	/* Check whether the I-cache is already enabled */
 	if (!(CPU_NVIC_CCR & CPU_NVIC_CCR_ICACHE)) {
@@ -40,16 +40,25 @@ void cpu_enable_icache(void)
 		CPU_NVIC_CCR |= CPU_NVIC_CCR_ICACHE;
 		asm volatile("dsb; isb");
 	}
+	/* Check whether the D-cache is already enabled */
+	if (!(CPU_NVIC_CCR & CPU_NVIC_CCR_DCACHE)) {
+		/* Invalidate the D-cache first */
+		cpu_invalidate_dcache();
+		/* Turn on the caching */
+		CPU_NVIC_CCR |= CPU_NVIC_CCR_DCACHE;
+		asm volatile("dsb; isb");
+	}
 }
 
 static void cpu_sysjump_cache(void)
 {
 	/*
-	 * Disable the I-cache
-	 * so we will invalidate it after the sysjump if needed
+	 * Disable the I-cache and the D-cache
+	 * The I-cache will be invalidated after the sysjump if needed
 	 * (e.g after a flash update).
 	 */
-	CPU_NVIC_CCR &= ~CPU_NVIC_CCR_ICACHE;
+	cpu_clean_invalidate_dcache();
+	CPU_NVIC_CCR &= ~(CPU_NVIC_CCR_ICACHE | CPU_NVIC_CCR_DCACHE);
 	asm volatile("dsb; isb");
 }
 DECLARE_HOOK(HOOK_SYSJUMP, cpu_sysjump_cache, HOOK_PRIO_LAST);

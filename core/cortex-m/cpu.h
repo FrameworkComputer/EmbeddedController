@@ -60,10 +60,15 @@ enum {
 #define CPU_SCB_CCSELR         CPUREG(0xe000ed84)
 #define CPU_SCB_ICIALLU        CPUREG(0xe000ef50)
 #define CPU_SCB_DCISW          CPUREG(0xe000ef60)
+#define CPU_SCB_DCCISW         CPUREG(0xe000ef74)
 
 /* Set up the cpu to detect faults */
 void cpu_init(void);
-/* Enable the CPU instruction cache if it is not already enabled */
-void cpu_enable_icache(void);
+/* Enable the CPU I-cache and D-cache if they are not already enabled */
+void cpu_enable_caches(void);
+/* Invalidate the D-cache */
+void cpu_invalidate_dcache(void);
+/* Clean and Invalidate the D-cache to the Point of Coherency */
+void cpu_clean_invalidate_dcache(void);
 
 #endif /* __CROS_EC_CPU_H */
