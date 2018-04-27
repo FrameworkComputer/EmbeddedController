@@ -19,7 +19,8 @@ WP_IS_DISABLED = 1 << 1
 RMA_OPENED = CCD_IS_UNRESTRICTED | WP_IS_DISABLED
 URL = 'https://www.google.com/chromeos/partner/console/cr50reset?' \
     'challenge=%s&hwid=%s'
-RMA_SUPPORT = '0.3.3'
+RMA_SUPPORT_PROD = '0.3.3'
+RMA_SUPPORT_PREPVT = '0.4.5'
 CR50_USB = '18d1:5014'
 ERASED_BID = 'ffffffff'
 
@@ -343,14 +344,20 @@ class RMAOpen(object):
             raise ValueError('Could not communicate with %s' % self.device)
 
         version = re.search('RW.*\* ([\d\.]+)/', output).group(1)
-        print 'RMA support added in:', RMA_SUPPORT
         print 'Running Cr50 Version:', version
         fields = [int(field) for field in version.split('.')]
-        rma_fields = [int(field) for field in RMA_SUPPORT.split('.')]
+
+        # prePVT images have even major versions. Prod have odd
+        self.is_prepvt = fields[1] % 2 == 0
+        rma_support = RMA_SUPPORT_PREPVT if self.is_prepvt else RMA_SUPPORT_PROD
+
+        print 'prePVT' if self.is_prepvt else 'prod',
+        print 'RMA support added in:', rma_support
+        rma_fields = [int(field) for field in rma_support.split('.')]
         for i, field in enumerate(fields):
             if field < int(rma_fields[i]):
                 raise ValueError('%s does not have RMA support. Update to at '
-                        'least %s' % (version, RMA_SUPPORT))
+                        'least %s' % (version, rma_support))
 
 
     def device_matches_devid(self, devid, device):
