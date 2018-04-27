@@ -2805,6 +2805,12 @@
 /* Ask charger if VBUS is enabled on a source port, instead of using GPIO */
 #undef CONFIG_USB_PD_5V_CHARGER_CTRL
 
+/*
+ * If defined, use a custom function to determine if VBUS is enabled on a
+ * source port. The custom function is board_is_sourcing_vbus(port).
+ */
+#undef CONFIG_USB_PD_5V_EN_CUSTOM
+
 /* Dynamic USB PD source capability */
 #undef CONFIG_USB_PD_DYNAMIC_SRC_CAP
 

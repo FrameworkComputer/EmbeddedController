@@ -8,6 +8,17 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/* USB-C interrupts */
+GPIO_INT(USB_C0_PD_INT_ODL,    PIN(A, 0), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
+GPIO_INT(USB_C1_PD_INT_ODL,    PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-1 TCPC */
+GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(0, 3), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
+GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interrupt from port-0 BC1.2 */
+GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING, usb1_evt)  /* Interrupt from port-1 BC1.2 */
+GPIO_INT(USB_C0_VBUS_DET_L,    PIN(6, 2), GPIO_INT_BOTH | GPIO_PULL_UP, vbus0_evt)  /* BC1.2 VBUS detection on port-0 */
+GPIO_INT(USB_C1_VBUS_DET_L,    PIN(8, 3), GPIO_INT_BOTH | GPIO_PULL_UP, vbus1_evt)  /* BC1.2 VBUS detection on port-1 */
+GPIO_INT(USB_C0_CABLE_DET,     PIN(3, 7), GPIO_INT_RISING, anx74xx_cable_det_interrupt)  /* Cable detection from port-0 TCPC */
+
+/* System interrupts */
 /*
  * The ACOK_OD is also a PMIC power-on trigger, resulting some side-efforts.
  * Check the bug (b/78035750) for details. The next hardware rev will fix it.
@@ -90,13 +101,6 @@ GPIO(USB_C1_HS_MUX_SEL,     PIN(B, 7), GPIO_OUT_LOW)   /* L:D1(hub), H:D2(AP) */
 GPIO(USB_C0_PD_RST_R_L,     PIN(F, 1), GPIO_OUT_HIGH)  /* Port-0 TCPC chip reset */
 GPIO(EN_USB_C0_TCPC_PWR,    PIN(6, 0), GPIO_OUT_LOW)   /* Port-0 TCPC power enable */
 
-/* USB-C port-0 interrupts */
-GPIO(USB_C0_VBUS_DET_L,     PIN(6, 2), GPIO_INPUT | GPIO_PULL_UP)   /* BC1.2 VBUS detection on port-0 */
-GPIO(USB_C0_BC12_INT_L,     PIN(6, 1), GPIO_INPUT)     /* Interrupt from port-0 BC1.2 */
-GPIO(USB_C0_PD_INT_ODL,     PIN(A, 0), GPIO_INPUT)     /* Interrupt from port-0 TCPC */
-GPIO(USB_C0_CABLE_DET,      PIN(3, 7), GPIO_INPUT)     /* Cable detection from port-0 TCPC */
-GPIO(USB_C0_SWCTL_INT_ODL,  PIN(0, 3), GPIO_INPUT)    /* Interrupt from port-0 PPC */
-
 /* USB-C port-1 controls */
 GPIO(USB_C1_PD_RST_ODL,     PIN(E, 4), GPIO_ODR_HIGH)  /* Port-1 TCPC chip reset */
 GPIO(EN_USB_C1_5V_OUT,      PIN(C, 0), GPIO_OUT_LOW)   /* Port-1 power switch 5V output */
@@ -104,9 +108,6 @@ GPIO(EN_USB_C1_3A,          PIN(5, 6), GPIO_OUT_LOW)   /* Port-1 power switch 3A
 GPIO(EN_USB_C1_CHARGE_EC_L, PIN(B, 1), GPIO_OUT_LOW) /* Port-1 enable charging */
 
 /* USB-C port-1 interrupts */
-GPIO(USB_C1_VBUS_DET_L,     PIN(8, 3), GPIO_INPUT | GPIO_PULL_UP)   /* BC1.2 VBUS detection on port-1 */
-GPIO(USB_C1_BC12_INT_L,     PIN(8, 2), GPIO_INPUT)     /* Interrupt from port-1 BC1.2 */
-GPIO(USB_C1_PD_INT_ODL,     PIN(F, 5), GPIO_INPUT)     /* Interrupt from port-1 TCPC */
 GPIO(USB_C1_DP_HPD,         PIN(9, 6), GPIO_INPUT)     /* DP HPD from port-1 TCPC */
 GPIO(USB_C1_OC_ODL,         PIN(D, 7), GPIO_INPUT)     /* Port-1 power switch over-current */
 

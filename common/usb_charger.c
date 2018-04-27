@@ -40,7 +40,9 @@ static void update_vbus_supplier(int port, int vbus_level)
 	}
 }
 
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USB_PD_5V_EN_CUSTOM
+#define USB_5V_EN(port) board_is_sourcing_vbus(port)
+#elif defined(CONFIG_USBC_PPC)
 #define USB_5V_EN(port) ppc_is_sourcing_vbus(port)
 #elif defined(CONFIG_USB_PD_5V_CHARGER_CTRL)
 #define USB_5V_EN(port) charger_is_sourcing_otg_power(port)
