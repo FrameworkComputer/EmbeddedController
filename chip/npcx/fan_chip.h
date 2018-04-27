@@ -8,6 +8,17 @@
 #ifndef __CROS_EC_FAN_CHIP_H
 #define __CROS_EC_FAN_CHIP_H
 
+/* MFT mode select */
+enum npcx_mft_mdsel {
+	NPCX_MFT_MDSEL_1,
+	NPCX_MFT_MDSEL_2,
+	NPCX_MFT_MDSEL_3,
+	NPCX_MFT_MDSEL_4,
+	NPCX_MFT_MDSEL_5,
+	/* Number of MFT modes */
+	NPCX_MFT_MDSEL_COUNT
+};
+
 /* MFT module select */
 enum npcx_mft_module {
 	NPCX_MFT_MODULE_1,

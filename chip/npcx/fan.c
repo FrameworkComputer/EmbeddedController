@@ -28,17 +28,6 @@
 #define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
 #endif
 
-/* MFT model select */
-enum npcx_mft_mdsel {
-	NPCX_MFT_MDSEL_1,
-	NPCX_MFT_MDSEL_2,
-	NPCX_MFT_MDSEL_3,
-	NPCX_MFT_MDSEL_4,
-	NPCX_MFT_MDSEL_5,
-	/* Number of MFT modes */
-	NPCX_MFT_MDSEL_COUNT
-};
-
 /* Tacho measurement state */
 enum tacho_measure_state {
 	/* Tacho normal state */
