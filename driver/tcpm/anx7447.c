@@ -16,6 +16,9 @@
 #include "usb_pd.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
 #define ANX7447_VENDOR_ALERT    (1 << 15)
 
 #define ANX7447_REG_STATUS      0x82
@@ -422,47 +425,57 @@ static int anx7447_mux_init(int port)
 	return EC_SUCCESS;
 }
 
+/*
+ * Set mux.
+ *
+ * sstx and ssrx are the USB superspeed transmit and receive pairs. ml is the
+ * DisplayPort Main Link. There are four lanes total. For example, DP cases
+ * connect them all and dock cases connect 2 DP and USB.
+ *
+ * a2, a3, a10, a11, b2, b3, b10, b11 are pins on the USB-C connector.
+ */
 static int anx7447_mux_set(int port, mux_state_t mux_state)
 {
 	int cc_direction;
 	mux_state_t mux_type;
-	int sw_sel = 0x30, aux_sw = 0x00;
-	int rv = EC_SUCCESS;
+	int sw_sel = 0x00, aux_sw = 0x00;
+	int rv;
 
 	cc_direction = mux_state & MUX_POLARITY_INVERTED;
 	mux_type = mux_state & TYPEC_MUX_DOCK;
-	ccprintf("mux_state = 0x%x, mux_type = 0x%x\n", mux_state, mux_type);
+	CPRINTS("mux_state = 0x%x, mux_type = 0x%x\n", mux_state, mux_type);
 
-	if (mux_type == TYPEC_MUX_NONE) {
-		/* set MUX control as no connection */
-		sw_sel = 0x00;
-	}
-
-	/* type-C interface detect cable plug direction
-	 * is positive orientation
-	 */
-	/* CC1_CONNECTED */
 	if (cc_direction == 0) {
 		/* cc1 connection */
 		if (mux_type == TYPEC_MUX_DOCK) {
-			/* L0-a10/11,L1-b2/b3, sstx-a2/a3, ssrx-b10/11 */
+			/* ml0-a10/11, ml1-b2/b3, sstx-a2/a3, ssrx-b10/11 */
 			sw_sel = 0x21;
+			/* aux+ <-> sbu1, aux- <-> sbu2 */
 			aux_sw = 0x03;
 		} else if (mux_type == TYPEC_MUX_DP) {
-			/* L0-a10/11,L1-b2/b3, L2-a2/a3, L3-b10/11 */
+			/* ml0-a10/11, ml1-b2/b3, ml2-a2/a3, ml3-b10/11 */
 			sw_sel = 0x09;
+			/* aux+ <-> sbu1, aux- <-> sbu2 */
 			aux_sw = 0x03;
+		} else if (mux_type == TYPEC_MUX_USB) {
+			/* ssrxp<->b11, ssrxn<->b10, sstxp<->a2, sstxn<->a3 */
+			sw_sel = 0x20;
 		}
 	} else {
 		/* cc2 connection */
 		if (mux_type == TYPEC_MUX_DOCK) {
-			/* L0-b10/11,L1-a2/b3, sstx-b2/a3, ssrx-a10/11 */
+			/* ml0-b10/11, ml1-a2/b3, sstx-b2/a3, ssrx-a10/11 */
 			sw_sel = 0x12;
+			/* aux+ <-> sbu2, aux- <-> sbu1 */
 			aux_sw = 0x0C;
 		} else if (mux_type == TYPEC_MUX_DP) {
-			/* L0-b10/11,L1-a2/b3, L2-b2/a3, L3-a10/11 */
+			/* ml0-b10/11, ml1-a2/b3, ml2-b2/a3, ml3-a10/11 */
 			sw_sel = 0x06;
+			/* aux+ <-> sbu2, aux- <-> sbu1 */
 			aux_sw = 0x0C;
+		} else if (mux_type == TYPEC_MUX_USB) {
+			/* ssrxp<->a11, ssrxn<->a10, sstxp<->b2, sstxn<->b3 */
+			sw_sel = 0x10;
 		}
 	}
 	rv = tcpc_write(port, ANX7447_REG_TCPC_SWITCH_0, sw_sel);
