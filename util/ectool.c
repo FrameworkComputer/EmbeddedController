@@ -641,7 +641,7 @@ int cmd_version(int argc, char *argv[])
 		image_names[r.current_image] : "?"));
 	printf("Build info:    %s\n", build_string);
 exit:
-	printf("Tool version:  %s %s %s\n", CROS_EC_VERSION, DATE, BUILDER);
+	printf("Tool version:  %s %s %s\n", CROS_ECTOOL_VERSION, DATE, BUILDER);
 
 	return rv;
 }
