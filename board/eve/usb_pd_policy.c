@@ -191,6 +191,10 @@ int pd_check_vconn_swap(int port)
 
 void pd_execute_data_swap(int port, int data_role)
 {
+	/* Only port 0 supports device mode. */
+	if (port != 0)
+		return;
+
 	gpio_set_level(GPIO_USB2_OTG_ID,
 		      (data_role == PD_ROLE_UFP) ? 1 : 0);
 	gpio_set_level(GPIO_USB2_OTG_VBUSSENSE,
