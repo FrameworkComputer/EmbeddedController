@@ -871,8 +871,9 @@ enum pd_data_msg_type {
 #define PD_ROLE_SINK   0
 #define PD_ROLE_SOURCE 1
 /* Data role */
-#define PD_ROLE_UFP    0
-#define PD_ROLE_DFP    1
+#define PD_ROLE_UFP          0
+#define PD_ROLE_DFP          1
+#define PD_ROLE_DISCONNECTED 2
 /* Vconn role */
 #define PD_ROLE_VCONN_OFF 0
 #define PD_ROLE_VCONN_ON  1
