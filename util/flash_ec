@@ -136,6 +136,7 @@ BOARDS_NPCX_INT_SPI=(
 	grunt
 	meowth
 	nocturne
+	phaser
 	yorp
 	zoombini
 )
