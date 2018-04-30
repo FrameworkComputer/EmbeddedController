@@ -36,9 +36,6 @@
 struct anx_state {
 	int i2c_slave_addr;
 	int mux_state;
-#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
-	int flash_checked_once;
-#endif
 };
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_COUNT];
@@ -114,7 +111,7 @@ void anx7447_set_hpd_level(int port, int hpd_lvl)
 	anx7447_reg_write(port, ANX7447_REG_HPD_CTRL_0, reg);
 }
 
-#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
+#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 static inline void anx7447_reg_write_and(int port, int reg, int v_and)
 {
 	int val;
@@ -182,8 +179,11 @@ static void anx7447_flash_check(int port)
 	tcpc_read(port, TCPC_REG_COMMAND, &r);
 	usleep(ANX7447_DELAY_IN_US);
 
-	if (anx7447_flash_is_empty(port) == 1)
+	if (anx7447_flash_is_empty(port) == 1) {
+		ccprintf("C%d: Nothing to erase!\n", port);
 		return;
+	}
+	ccprintf("C%d: Erasing ANX7447 OCM flash...\n", port);
 
 	anx7447_flash_op_init(port);
 
@@ -197,9 +197,37 @@ static void anx7447_flash_check(int port)
 	do {
 		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
 	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
-
-	ccprintf("anx7447: OCM flash checked and erased\n");
 }
+
+/* Add console command to erase OCM flash if needed. */
+static int command_anx_ocm(int argc, char **argv)
+{
+	char *e = NULL;
+	int port;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* Get port number from first parameter */
+	port = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	if (argc > 2) {
+		if (!strcasecmp(argv[2], "erase"))
+			anx7447_flash_check(port);
+		else
+			return EC_ERROR_PARAM2;
+	}
+
+	ccprintf("C%d: OCM flash is %sempty.\n",
+		port, anx7447_flash_is_empty(port) ? "" : "not ");
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(anx_ocm, command_anx_ocm,
+			"port [erase]",
+			"Print OCM status or erases OCM for a given port.");
 #endif
 
 static int anx7447_init(int port)
@@ -226,23 +254,16 @@ static int anx7447_init(int port)
 		return EC_ERROR_UNKNOWN;
 	}
 
-#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
-	/*
-	 * The ANX7447 has an on chip microcontroller (OCM) that can provide USB
-	 * PD functionality. If the OCM is active, then it can interfere with
-	 * getting alerts from the TCPC when PD messages are received. Check to
-	 * see if the flash is not erased, and if not, then erase the OCM
-	 * flash. This status is saved in a static variable so this check only
-	 * happens once per EC reboot.
-	 */
-	if (anx[port].flash_checked_once == 0) {
-		anx7447_flash_check(port);
-		anx[port].flash_checked_once = 1;
-	}
-#endif
+
 	rv = tcpci_tcpm_init(port);
 	if (rv)
 		return rv;
+
+#ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
+	/* Check and print OCM status to console. */
+	ccprintf("C%d: OCM flash is %sempty.\n",
+		port, anx7447_flash_is_empty(port) ? "" : "not ");
+#endif
 
 	/*
 	 * 7447 has a physical pin to detect the presence of VBUS, VBUS_SENSE

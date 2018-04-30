@@ -33,7 +33,7 @@
 
 /*
  * This section of defines are only required to support the config option
- * CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE.
+ * CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND.
  */
 /* SPI registers used for OCM flash operations */
 #define ANX7447_DELAY_IN_US		(20*1000)
@@ -70,7 +70,7 @@
 /* ADDR_GPIO_CTRL_0 bit definitions */
 #define ANX7447_ADDR_GPIO_CTRL_0_SPI_WP			(1<<7)
 #define ANX7447_ADDR_GPIO_CTRL_0_SPI_CLK_ENABLE		(1<<6)
-/* End of defines used for CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE */
+/* End of defines used for CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND */
 
 struct anx7447_i2c_addr {
 	int tcpc_slave_addr;

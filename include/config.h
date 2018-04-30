@@ -2881,11 +2881,11 @@
 #undef CONFIG_USB_PD_TCPM_PS8805
 
 /*
- * Check the ANX7447 OCM flash at initialization time. If not erased, will then
- * erase the OCM flash. (note this is intended to be a temporary option and
- * won't be needed when ANX7447 are put on boards with OCM already erased)
+ * Adds an EC console command to erase the ANX7447 OCM flash.
+ * Note: this is intended to be a temporary option and
+ * won't be needed when ANX7447 are put on boards with OCM already erased
  */
-#undef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE
+#undef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 
 /*
  * Use this option if the TCPC port controller supports the optional register
