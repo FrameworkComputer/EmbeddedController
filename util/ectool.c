@@ -156,6 +156,8 @@ const char help_str[] =
 	"      Get info about USB type-C accessory attached to port\n"
 	"  inventory\n"
 	"      Return the list of supported features\n"
+	"  kbinfo\n"
+	"      Dump keyboard matrix dimensions\n"
 	"  keyscan <beat_us> <filename>\n"
 	"      Test low-level key scanning\n"
 	"  led <name> <query | auto | off | <color> | <color>=<value>...>\n"
@@ -7024,6 +7026,29 @@ static int show_fields(struct ec_mkbp_config *config, int argc, char *argv[])
 	return 0;
 }
 
+static int cmd_kbinfo(int argc, char *argv[])
+{
+	struct ec_params_mkbp_info info = {
+		.info_type = EC_MKBP_INFO_KBD,
+	};
+	struct ec_response_mkbp_info resp;
+	int rv;
+
+	if (argc > 1) {
+		fprintf(stderr, "Too many args\n");
+		return -1;
+	}
+	rv = ec_command(EC_CMD_MKBP_INFO, 0, &info, sizeof(info), &resp,
+			sizeof(resp));
+	if (rv < 0)
+		return rv;
+
+	printf("Matrix rows: %d\n", resp.rows);
+	printf("Matrix columns: %d\n", resp.cols);
+
+	return 0;
+}
+
 static int cmd_keyconfig(int argc, char *argv[])
 {
 	struct ec_params_mkbp_set_config req;
@@ -7858,6 +7883,7 @@ const struct command commands[] = {
 	{"led", cmd_led},
 	{"lightbar", cmd_lightbar},
 	{"keyconfig", cmd_keyconfig},
+	{"kbinfo", cmd_kbinfo},
 	{"keyscan", cmd_keyscan},
 	{"kbfactorytest", cmd_keyboard_factory_test},
 	{"motionsense", cmd_motionsense},
