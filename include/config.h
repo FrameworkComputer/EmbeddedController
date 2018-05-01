@@ -3329,9 +3329,6 @@
 #endif
 
 #include "config_chip.h"
-#ifdef HAS_BASEBOARD
-#include "baseboard.h"
-#endif
 #include "board.h"
 
 /******************************************************************************/
