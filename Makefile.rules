@@ -467,6 +467,21 @@ flash_dfu: $(out)/ec.bin
 print-baseboard:
 	@echo "${BASEBOARD}"
 
+.PHONY: print-configs
+print-configs:
+	@echo "----------------------------------------------------------------"
+	@echo "| RO Config:                                                   |"
+	@echo "----------------------------------------------------------------"
+	@$(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
+		-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RO include/config.h | \
+		grep "#define CONFIG_" | cut -c9- | sort
+	@echo "----------------------------------------------------------------"
+	@echo "| RW Config:                                                   |"
+	@echo "----------------------------------------------------------------"
+	@$(_tsk_cfg_rw) $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
+		-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW include/config.h | \
+		grep "#define CONFIG_" | cut -c9- | sort
+
 .PHONY: clean
 clean:
 	-rm -rf $(out)
