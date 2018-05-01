@@ -31,6 +31,7 @@
 #include "power_button.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "tcpci.h"
@@ -305,6 +306,14 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 /* This callback disables keyboard when convertibles are fully open */
 void lid_angle_peripheral_enable(int enable)
 {
+	/*
+	 * If the lid is in tablet position via other sensors,
+	 * ignore the lid angle, which might be faulty then
+	 * disable keyboard.
+	 */
+	if (tablet_get_mode())
+		enable = 0;
+
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif

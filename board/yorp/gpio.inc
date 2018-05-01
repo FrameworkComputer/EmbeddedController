@@ -14,6 +14,12 @@ GPIO_INT(LID_OPEN,	 PIN(D, 2), GPIO_INT_BOTH |
 GPIO_INT(POWER_BUTTON_L, PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)	/* EC_PWR_BTN_ODL */
 GPIO_INT(AC_PRESENT, 	 PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)		/* ACOK_OD */
 
+/*
+ * Active = Low, Off = High for HGDEDM GMR sensor,
+ * (b/79779455) rename TABLET_MODE to TABLET_MODE_L in schematics
+ */
+GPIO_INT(TABLET_MODE_L,	PIN(8, 6), GPIO_INT_BOTH, tablet_mode_isr)
+
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PD_INT_ODL, PIN(6, 1), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C1_PD_INT_ODL, PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)
