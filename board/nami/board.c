@@ -20,6 +20,7 @@
 #include "driver/pmic_tps650x30.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/als_opt3001.h"
 #include "driver/baro_bmp280.h"
 #include "driver/led/lm3509.h"
@@ -515,7 +516,9 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
+/* Lid accel private data */
 static struct bmi160_drv_data_t g_bmi160_data;
+static struct kionix_accel_data g_kx022_data;
 
 /* BMA255 private data */
 static struct accelgyro_saved_data_t g_bma255_data;
@@ -536,6 +539,39 @@ const matrix_3x3_t lid_standard_ref = {
 	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+const matrix_3x3_t lid_Rx180_Ry180 = {
+	{ FLOAT_TO_FP(-1), 0, 0 },
+	{ 0, FLOAT_TO_FP(-1), 0 },
+	{ 0, 0, FLOAT_TO_FP(1) }
+};
+
+const struct motion_sensor_t lid_accel_1 = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_kx022_data,
+	.port = I2C_PORT_ACCEL,
+	.addr = KX022_ADDR1,
+	.rot_standard_ref = &lid_Rx180_Ry180,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support tablet mode */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -689,6 +725,16 @@ static void cbi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
+static void setup_motion_sensors(void)
+{
+	if (oem != PROJECT_NAMI)
+		/* Only Nami has ALS */
+		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
+	if (oem == PROJECT_AKALI)
+		/* Akali uses KX022 */
+		motion_sensors[LID_ACCEL] = lid_accel_1;
+}
+
 static void board_init(void)
 {
 	/*
@@ -716,9 +762,7 @@ static void board_init(void)
 	/* Enable Gyro interrupt for BMI160 */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 
-	/* Only Nami has an ALS sensor. */
-	if (oem != PROJECT_NAMI)
-		motion_sensor_count = ARRAY_SIZE(motion_sensors) - 1;
+	setup_motion_sensors();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
