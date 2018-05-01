@@ -24,6 +24,7 @@
 
 #include "ccd_config.h"
 #include "compile_time_macros.h"
+#include "generated_version.h"
 #include "gsctool.h"
 #include "misc_util.h"
 #include "signed_header.h"
@@ -194,7 +195,7 @@ struct upgrade_pkt {
 
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:fhIikO:oPprstUu";
+static char *short_opts = "abcd:fhIikO:oPprstUuv";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		0,   NULL, 'a'},
@@ -214,6 +215,7 @@ static const struct option long_opts[] = {
 	{"rma_auth",	2,   NULL, 'r'},
 	{"systemdev",	0,   NULL, 's'},
 	{"trunks_send",	0,   NULL, 't'},
+	{"version",	0,   NULL, 'v'},
 	{"upstart",	0,   NULL, 'u'},
 	{},
 };
@@ -503,11 +505,12 @@ static void usage(int errs)
 	       "\n"
 	       "  -a,--any                 Try any interfaces to find Cr50"
 	       " (-d, -s, -t are all ignored)\n"
-	       "  -b,--binvers             Report versions of image's "
+	       "  -b,--binvers             Report versions of Cr50 image's "
 				"RW and RO headers, do not update\n"
 	       "  -c,--corrupt             Corrupt the inactive rw\n"
 	       "  -d,--device  VID:PID     USB device (default %04x:%04x)\n"
-	       "  -f,--fwver               Report running firmware versions\n"
+	       "  -f,--fwver               "
+	       "Report running Cr50 firmware versions\n"
 	       "  -h,--help                Show this message\n"
 	       "  -I,--ccd_info            Get information about CCD state\n"
 	       "  -i,--board_id [ID[:FLAGS]]\n"
@@ -533,6 +536,7 @@ static void usage(int errs)
 	       "  -U,--ccd_unlock          Start CCD unlock sequence\n"
 	       "  -u,--upstart             "
 			"Upstart mode (strict header checks)\n"
+	       "  -v,--version             Report this utility version\n"
 	       "\n", progname, VID, PID);
 
 	exit(errs ? update_error : noop);
@@ -1884,6 +1888,15 @@ static void process_rma(struct transfer_descriptor *td, const char *authcode)
 	printf("RMA unlock succeeded.\n");
 }
 
+static void report_version(void)
+{
+	/* Get version from the generated file, ignore the underscore prefix. */
+	const char *v = VERSION + 1;
+
+	printf("Version: %s, built on %s by %s\n", v, DATE, BUILDER);
+	exit(0);
+}
+
 int main(int argc, char *argv[])
 {
 	struct transfer_descriptor td;
@@ -2016,6 +2029,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'u':
 			td.upstart_mode = 1;
+			break;
+		case 'v':
+			report_version();  /* This will call exit(). */
 			break;
 		case 0:				/* auto-handled option */
 			break;

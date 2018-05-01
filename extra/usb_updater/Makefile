@@ -52,14 +52,19 @@ gsctool: $(GSCTOOL_OBJS) Makefile
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_g) -c -MMD -MF $(basename $@).d -o $@ $<
 
+gsctool.o:  generated_version.h
+
 # common EC code USB updater
 usb_updater2: usb_updater2.c Makefile
 	$(CC) $(CFLAGS) $< $(LFLAGS) $(LIBS) $(LIBS_common) -o $@
 
 .PHONY: clean
 
+generated_version.h: $(GSCTOOL_SOURCES)
+	@../../util/getversion.sh > $@
+
 clean:
-	rm -rf $(PROGRAMS) *~ *.o *.d dp
+	rm -rf $(PROGRAMS) *~ *.o *.d dp generated_version.h
 
 parser_debug: desc_parser.c
 	gcc -g -O0  -DTEST_PARSER desc_parser.c -o dp
