@@ -49,7 +49,6 @@ static void anx74xx_cable_det_interrupt(enum gpio_signal signal);
 #include "gpio_list.h"
 
 /* 8-bit I2C address */
-#define PI3USB9281_I2C_ADDR	0x4a
 #define DA9313_I2C_ADDR		0xd0
 #define CHARGER_I2C_ADDR	0x12
 
@@ -230,19 +229,6 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 /* Initialize board. */
 static void board_init(void)
 {
-	/*
-	 * Hack to enable the internal switch in BC1.2
-	 * TODO(waihong): Enable BC1.2 autodetection.
-	 */
-	i2c_write8(I2C_PORT_TCPC0, PI3USB9281_I2C_ADDR, PI3USB9281_REG_CONTROL,
-		   0x1b);  /* Manual switch on port-0 */
-	i2c_write8(I2C_PORT_TCPC0, PI3USB9281_I2C_ADDR, PI3USB9281_REG_MANUAL,
-		   0x24);  /* Connection of D+ and D- */
-	i2c_write8(I2C_PORT_TCPC1, PI3USB9281_I2C_ADDR, PI3USB9281_REG_CONTROL,
-		   0x1b);  /* Manual switch on port-1 */
-	i2c_write8(I2C_PORT_TCPC1, PI3USB9281_I2C_ADDR, PI3USB9281_REG_MANUAL,
-		   0x24);  /* Connection of D+ and D- */
-
 	/*
 	 * Disable SwitchCap auto-boot and make EN pin level-trigger
 	 * TODO(b/77957956): Remove it after hardware fix.
