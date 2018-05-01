@@ -10,6 +10,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#define CONFIG_CMD_PPC_DUMP
 
 /* ITE Config */
 #define CONFIG_IT83XX_FLASH_CLOCK_48MHZ /* Flash clock must be > (50Mhz / 2) */
@@ -74,6 +75,7 @@
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 #define CONFIG_BC12_DETECT_BQ24392
+#define CONFIG_CMD_PD_CONTROL
 
 /* USB-A Configuration */
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -116,6 +118,7 @@
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_EXTPOWER_GPIO
+#define CONFIG_POWER_PP5000_CONTROL
 
 /*
  * From BQ25703: CHRG_OK is HIGH after 50ms deglitch time.
