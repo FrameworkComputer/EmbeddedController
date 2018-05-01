@@ -193,9 +193,10 @@ struct upgrade_pkt {
  */
 #define MAX_BUF_SIZE	500
 
+static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:fhIikO:oPprstUuv";
+static char *short_opts = "abcd:fhIikO:oPprstUuVv";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		0,   NULL, 'a'},
@@ -215,6 +216,7 @@ static const struct option long_opts[] = {
 	{"rma_auth",	2,   NULL, 'r'},
 	{"systemdev",	0,   NULL, 's'},
 	{"trunks_send",	0,   NULL, 't'},
+	{"verbose",	0,   NULL, 'V'},
 	{"version",	0,   NULL, 'v'},
 	{"upstart",	0,   NULL, 'u'},
 	{},
@@ -536,6 +538,7 @@ static void usage(int errs)
 	       "  -U,--ccd_unlock          Start CCD unlock sequence\n"
 	       "  -u,--upstart             "
 			"Upstart mode (strict header checks)\n"
+	       "  -V,--verbose             Enable debug messages\n"
 	       "  -v,--version             Report this utility version\n"
 	       "\n", progname, VID, PID);
 
@@ -2029,6 +2032,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'u':
 			td.upstart_mode = 1;
+			break;
+		case 'V':
+			verbose_mode = 1;
 			break;
 		case 'v':
 			report_version();  /* This will call exit(). */
