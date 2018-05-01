@@ -151,16 +151,16 @@ int spi_flash_set_status(int reg1, int reg2)
  */
 int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 {
-	int i, read_size, ret;
+	int i, read_size, ret, spi_addr;
 	uint8_t cmd[4];
 	if (offset + bytes > CONFIG_FLASH_SIZE)
 		return EC_ERROR_INVAL;
 	cmd[0] = SPI_FLASH_READ;
 	for (i = 0; i < bytes; i += read_size) {
-		offset += i;
-		cmd[1] = (offset >> 16) & 0xFF;
-		cmd[2] = (offset >> 8) & 0xFF;
-		cmd[3] = offset & 0xFF;
+		spi_addr = offset + i;
+		cmd[1] = (spi_addr >> 16) & 0xFF;
+		cmd[2] = (spi_addr >> 8) & 0xFF;
+		cmd[3] = spi_addr & 0xFF;
 		read_size = MIN((bytes - i), SPI_FLASH_MAX_READ_SIZE);
 		ret = spi_transaction(SPI_FLASH_DEVICE,
 			cmd,
