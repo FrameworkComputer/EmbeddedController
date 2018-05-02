@@ -27,11 +27,6 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-/* TODO(b/75972988): Fill out correctly */
-enum pwm_channel {
-	PWM_CH_COUNT
-};
-
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_PANASONIC,
