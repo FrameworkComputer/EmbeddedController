@@ -8,6 +8,11 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/*
+ * The ACOK_OD is also a PMIC power-on trigger, resulting some side-efforts.
+ * Check the bug (b/78035750) for details. The next hardware rev will fix it.
+ */
+GPIO_INT(AC_PRESENT,        PIN(0, 0), GPIO_INT_BOTH | GPIO_PULL_UP, extpower_interrupt) /* ACOK_OD */
 GPIO_INT(POWER_BUTTON_L,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)  /* EC_PWR_BTN_ODL */
 GPIO_INT(VOLUME_DOWN_L,     PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* EC_VOLDN_BTN_ODL */
 GPIO_INT(VOLUME_UP_L,       PIN(1, 1), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* EC_VOLUP_BTN_ODL */
@@ -17,11 +22,6 @@ GPIO_INT(AP_RST_REQ,        PIN(C, 2), GPIO_INT_RISING | GPIO_PULL_DOWN, chipset
 /* AP_RST_L is used for PMIC and AP negotiation. Don't change its state. */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH, chipset_power_signal_interrupt)
 
-/*
- * Should always make it low, to prevent AP unexpected up.
- * TODO(b/78035750): Remove it after hardware fix.
- */
-GPIO(AC_PRESENT,            PIN(0, 0), GPIO_OUT_LOW)   /* ACOK_OD: PMIC power-on trigger PON_1 */
 GPIO(EC_SELF_RST,           PIN(E, 0), GPIO_OUT_LOW)   /* Self-reset EC */
 GPIO(SYS_RST_L,             PIN(0, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
 /* PS_HOLD is used for PMIC and AP negotiation. Don't change its state. */
