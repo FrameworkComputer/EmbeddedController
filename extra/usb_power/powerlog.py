@@ -328,25 +328,25 @@ class Spower(object):
     debuglog("Command RESET: %s" % "success" if ret == 0 else "failure")
 
   def reset(self):
-    """Try resetting the USB interface until success
+    """Try resetting the USB interface until success.
+
+    Use linear back off strategy when encounter the error with 10ms increment.
 
     Raises:
       Exception on failure.
     """
-    count = 10
-    while count > 0:
+    max_reset_retry = 100
+    for count in range(1, max_reset_retry + 1):
       self.clear()
       try:
         self.send_reset()
-        count = 0
+        return
       except Exception as e:
         self.clear()
         self.clear()
-        debuglog("TRY %d of 10: %s" % (count, e))
-      finally:
-        count -= 1
-    if count == 0:
-      raise Exception("Power", "Failed to reset")
+        debuglog("TRY %d of %d: %s" % (count, max_reset_retry, e))
+        time.sleep(count * 0.01)
+    raise Exception("Power", "Failed to reset")
 
   def stop(self):
     """Stop any active data acquisition."""
