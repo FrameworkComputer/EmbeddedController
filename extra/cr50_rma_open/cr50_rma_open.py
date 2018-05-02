@@ -16,6 +16,7 @@ import time
 SCRIPT_VERSION = 2
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1
+TESTLAB_IS_ENABLED = 1 << 2
 RMA_OPENED = CCD_IS_UNRESTRICTED | WP_IS_DISABLED
 URL = 'https://www.google.com/chromeos/partner/console/cr50reset?' \
     'challenge=%s&hwid=%s'
@@ -53,6 +54,11 @@ If for some reason hardware write protect doesn't get disabled during rma
 open or gets enabled at some point the script can be used to disable
 write protect.
     sudo python cr50_rma_open.py -w
+
+When prepping devices for the testlab, you need to enable testlab mode.
+Prod cr50 images can't enable testlab mode. If the device is running a
+prod image, you can skip this step.
+    sudo python cr50_rma_open.py -t
 """
 
 DEBUG_MISSING_USB = """
@@ -121,6 +127,8 @@ parser.add_argument('-g', '--generate_challenge', action='store_true',
         help='Generate Cr50 challenge. Must be used in combination with -i')
 parser.add_argument('-p', '--print_caps', action='store_true',
         help='Print the ccd output when checking the capabilities')
+parser.add_argument('-t', '--enable_testlab', action='store_true',
+        help='enable testlab mode')
 parser.add_argument('-w', '--wp_disable', action='store_true',
         help='Disable write protect')
 parser.add_argument('-c', '--check_connection', action='store_true',
@@ -300,6 +308,14 @@ class RMAOpen(object):
         return wp_state == 'forced disabled'
 
 
+    def testlab_is_enabled(self):
+        """Returns True if testlab mode is enabled"""
+        output = self.send_cmd_get_output('ccd testlab')
+        testlab_state = output.split('mode')[-1].strip().lower()
+        info('testlab: ' + testlab_state)
+        return testlab_state == 'enabled'
+
+
     def ccd_is_restricted(self):
         """Returns True if any of the capabilities are still restricted"""
         output = self.send_cmd_get_output('ccd')
@@ -319,11 +335,67 @@ class RMAOpen(object):
             self._ccd_state |= CCD_IS_UNRESTRICTED
         if self.wp_is_force_disabled():
             self._ccd_state |= WP_IS_DISABLED
+        if self.testlab_is_enabled():
+            self._ccd_state |= TESTLAB_IS_ENABLED
 
 
     def check(self, setting):
         """Returns true if the all of the 1s in setting are 1 in _ccd_state"""
         return self._ccd_state & setting == setting
+
+
+    def enable_testlab(self):
+        """Disable write protect"""
+        if not self.is_prepvt:
+            debug('Testlab mode is not supported in prod iamges')
+            return
+        print 'Disabling write protect'
+        self.send_cmd_get_output('ccd open')
+        print 'Enabling testlab mode reqires pressing the power button.'
+        print 'Once the process starts keep tapping the power button for 10',
+        print 'seconds.'
+        raw_input("Press Enter when you're ready to start...")
+        end_time = time.time() + 15
+
+        ser = serial.Serial(self.device, timeout=1)
+        printed_lines = ''
+        output = ''
+        # start ccd testlab enable
+        ser.write('ccd testlab enabled\n')
+        print 'start pressing the power button\n\n'
+        # Print all of the cr50 output as we get it, so the user will have more
+        # information about pressing the power button. Tapping the power button
+        # a couple of times should do it, but this will give us more confidence
+        # the process is still running/worked.
+        try:
+            while time.time() < end_time:
+                output += ser.read(100)
+                full_lines = output.rsplit('\n', 1)[0]
+                new_lines = full_lines
+                if printed_lines:
+                    new_lines = full_lines.split(printed_lines, 1)[-1]
+                print new_lines,
+                printed_lines = full_lines
+
+                # Make sure the process hasn't ended. If it has, print the last
+                # of the output and exit.
+                new_lines = output.split(printed_lines, 1)[-1]
+                if 'CCD test lab mode enabled' in output:
+                    # print the last of the ou
+                    print new_lines
+                    break
+                elif 'Physical presence check timeout' in output:
+                    print new_lines
+                    debug('Did not detect power button press in time')
+                    raise ValueError('Could not enable testlab mode try again')
+        finally:
+            ser.close()
+        # Wait for the ccd hook to update things
+        time.sleep(3)
+        # Update the state after attempting to disable write protect
+        self.update_ccd_state()
+        if not self.check(TESTLAB_IS_ENABLED):
+            raise ValueError('Could not enable testlab mode try again')
 
 
     def wp_disable(self):
@@ -353,6 +425,8 @@ class RMAOpen(object):
 
         print 'prePVT' if self.is_prepvt else 'prod',
         print 'RMA support added in:', rma_support
+        if not self.is_prepvt:
+            debug('No testlab support in prod images')
         rma_fields = [int(field) for field in rma_support.split('.')]
         for i, field in enumerate(fields):
             if field < int(rma_fields[i]):
@@ -479,6 +553,13 @@ def main():
                     "disable it manually")
         cr50_rma_open.wp_disable()
 
+    if not cr50_rma_open.check(TESTLAB_IS_ENABLED) and args.enable_testlab:
+        if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
+            raise ValueError("Can't enable testlab mode unless ccd is "
+                    "open. Run through the rma open process first")
+        cr50_rma_open.enable_testlab()
+
+
     if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
         print 'CCD is still restricted.'
         print 'Run cr50_rma_open.py -g -i $HWID to generate a url'
@@ -488,6 +569,12 @@ def main():
         print 'Run cr50_rma_open.py -w to disable write protect'
     if cr50_rma_open.check(RMA_OPENED):
         info('RMA Open complete')
+
+    if not cr50_rma_open.check(TESTLAB_IS_ENABLED) and cr50_rma_open.is_prepvt:
+        print 'testlab mode is still disabled.'
+        print 'If you are prepping a device for the testlab, you should enable',
+        print 'testlab mode'
+        print 'Run cr50_rma_open.py -t to enable testlab mode'
 
 if __name__ == "__main__":
     main()
