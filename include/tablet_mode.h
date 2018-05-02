@@ -9,4 +9,11 @@
 int tablet_get_mode(void);
 void tablet_set_mode(int mode);
 
-
+/**
+ * Interrupt service routine for tablet switch.
+ *
+ * TABLET_MODE_GPIO_L must be defined.
+ *
+ * @param signal: GPIO signal
+ */
+void tablet_mode_isr(enum gpio_signal signal);
