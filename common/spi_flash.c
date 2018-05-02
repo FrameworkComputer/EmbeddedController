@@ -275,7 +275,7 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes)
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_write(unsigned int offset, unsigned int bytes,
-	const uint8_t const *data)
+	const uint8_t *data)
 {
 	int rv, write_size;
 

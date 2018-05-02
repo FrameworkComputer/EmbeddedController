@@ -109,7 +109,7 @@ static const struct {
 	uint32_t r0;
 	uint32_t pc;
 	uint16_t stack_size;
-} const tasks_init[] = {
+} tasks_init[] = {
 	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
 	CONFIG_TASK_LIST
 	CONFIG_TEST_TASK_LIST
