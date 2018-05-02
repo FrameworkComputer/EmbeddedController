@@ -14,10 +14,10 @@
 
 /*
  * Variant EC defines. Pick one:
- * OCTOPUS_EC_NPCX796FB
- * OCTOPUS_EC_ITE8320
+ * VARIANT_OCTOPUS_EC_NPCX796FB
+ * VARIANT_OCTOPUS_EC_ITE8320
  */
-#if defined(OCTOPUS_EC_NPCX796FB)
+#if defined(VARIANT_OCTOPUS_EC_NPCX796FB)
 	/* NPCX7 config */
 	#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 	#define NPCX_TACH_SEL2    0  /* [0:GPIO40/73, 1:GPIO93/A6] as TACH */
@@ -40,8 +40,8 @@
 	#define I2C_ADDR_EEPROM		0xA0
 
 	/* EC variant determines USB-C variant */
-	#define OCTOPUS_USBC_STANDALONE_TCPCS
-#elif defined(OCTOPUS_EC_ITE8320)
+	#define VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
+#elif defined(VARIANT_OCTOPUS_EC_ITE8320)
 	 /* Flash clock must be > (50Mhz / 2) */
 	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 
@@ -56,10 +56,10 @@
 	#define I2C_ADDR_EEPROM		0xA0
 
 	/* EC variant determines USB-C variant */
-	#define OCTOPUS_USBC_ITE_EC_TCPCS
+	#define VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
 #else
-	#error Must define OCTOPUS_EC_ variant
-#endif /* OCTOPUS_EC_ variants */
+	#error Must define a VARIANT_OCTOPUS_EC
+#endif /* VARIANT_OCTOPUS_EC */
 
 /* Common EC defines */
 #define CONFIG_I2C
@@ -78,10 +78,10 @@
 
 /*
  * Variant charger defines. Pick one:
- * OCTOPUS_CHARGER_ISL9238
- * OCTOPUS_CHARGER_BQ25703
+ * VARIANT_OCTOPUS_CHARGER_ISL9238
+ * VARIANT_OCTOPUS_CHARGER_BQ25703
  */
-#if defined(OCTOPUS_CHARGER_ISL9238)
+#if defined(VARIANT_OCTOPUS_CHARGER_ISL9238)
 	#define CONFIG_CHARGER_ISL9238
 	#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 	/*
@@ -90,7 +90,7 @@
 	 */
 	#undef	CONFIG_EXTPOWER_DEBOUNCE_MS
 	#define	CONFIG_EXTPOWER_DEBOUNCE_MS 200
-#elif defined(OCTOPUS_CHARGER_BQ25703)
+#elif defined(VARIANT_OCTOPUS_CHARGER_BQ25703)
 	#define CONFIG_CHARGER_BQ25703
 	#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 	/*
@@ -99,8 +99,8 @@
 	#undef	CONFIG_EXTPOWER_DEBOUNCE_MS
 	#define	CONFIG_EXTPOWER_DEBOUNCE_MS 50
 #else
-	#error Must define OCTOPUS_CHARGER_ variant
-#endif /* OCTOPUS_CHARGER_ variants */
+	#error Must define a VARIANT_OCTOPUS_CHARGER
+#endif /* VARIANT_OCTOPUS_CHARGER */
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
@@ -123,15 +123,15 @@
 
 /*******************************************************************************
  * USB-C Configs
- * Automatically defined by OCTOPUS_EC_ variant.
+ * Automatically defined by VARIANT_OCTOPUS_EC_ variant.
  */
 
  /*
   * Variant USBC defines. Pick one:
-  * OCTOPUS_USBC_STANDALONE_TCPCS
-  * OCTOPUS_USBC_ITE_EC_TCPCS (requires)
+  * VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
+  * VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS (requires)
   */
-#if defined(OCTOPUS_USBC_STANDALONE_TCPCS)
+#if defined(VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS)
 	/*
 	 * TODO(b/77544959): This mode doe not work with ANX7447 currently and
 	 * floods the EC console with low power mode messages.
@@ -143,7 +143,7 @@
 	#define CONFIG_USB_PD_TCPM_PS8751	/* C1 TCPC: PS8751 */
 	#define CONFIG_USB_PD_VBUS_DETECT_TCPC
 	#define CONFIG_USBC_PPC_NX20P3483
-#elif defined(OCTOPUS_USBC_ITE_EC_TCPCS)
+#elif defined(VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS)
 	#define CONFIG_USB_PD_TCPC_LOW_POWER
 	#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	#define CONFIG_USB_PD_VBUS_DETECT_PPC
@@ -154,8 +154,8 @@
 	#define CONFIG_USBC_PPC_SN5S330		/* C0 & C1 PPC: each SN5S330 */
 	#define CONFIG_USBC_PPC_VCONN
 #else
-	#error Must define OCTOPUS_USBC_ variant
-#endif /* OCTOPUS_USBC_ variants */
+	#error Must define a VARIANT_OCTOPUS_USBC
+#endif /* VARIANT_OCTOPUS_USBC */
 
 /* Common USB-C defines */
 #define CONFIG_USB_POWER_DELIVERY
@@ -249,7 +249,7 @@ enum power_signal {
 /* Forward declare common (within octopus) board-specific functions */
 void board_reset_pd_mcu(void);
 
-#ifdef OCTOPUS_USBC_ITE_EC_TCPCS
+#ifdef VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
 void board_pd_vconn_ctrl(int port, int cc_pin, int enabled);
 #endif
 

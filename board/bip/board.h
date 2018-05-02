@@ -9,8 +9,8 @@
 #define __CROS_EC_BOARD_H
 
 /* Select Baseboard features */
-#define OCTOPUS_EC_ITE8320
-#define OCTOPUS_CHARGER_BQ25703
+#define VARIANT_OCTOPUS_EC_ITE8320
+#define VARIANT_OCTOPUS_CHARGER_BQ25703
 #include "baseboard.h"
 
 /* Optional features */

@@ -125,12 +125,14 @@ CPPFLAGS_RW+=$(foreach t,$(_tsk_cfg_rw),-D$(t)) \
 		$(foreach t,$(_tsk_cfg_ro),-D$(t)_RO)
 CPPFLAGS+=$(foreach t,$(_tsk_cfg),-D$(t))
 
+# Get the CONFIG_ and VARIANT_ options that are defined for this target and make
+# them into variables available to this build script
 _flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
 	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RO include/config.h | \
-	grep -o "\#define CONFIG_[A-Z0-9_]*" | cut -c9- | sort)
+	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort)
 _flag_cfg_rw:=$(_tsk_cfg_rw) $(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
 	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW include/config.h | \
-	grep -o "\#define CONFIG_[A-Z0-9_]*" | cut -c9- | sort)
+	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort)
 
 _flag_cfg:= $(filter $(_flag_cfg_ro), $(_flag_cfg_rw))
 _flag_cfg_ro:= $(filter-out $(_flag_cfg), $(_flag_cfg_ro))

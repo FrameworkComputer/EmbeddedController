@@ -41,9 +41,6 @@
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
-
 static void tcpc_alert_event(enum gpio_signal signal)
 {
 	if ((signal == GPIO_USB_C1_PD_INT_ODL) &&
@@ -89,23 +86,6 @@ const struct adc_t adc_channels[] = {
 		"VBUS_C1", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
-/* I2C port map. */
-const struct i2c_port_t i2c_ports[] = {
-	{"battery", I2C_PORT_BATTERY, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0,   100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"tcpc1",   I2C_PORT_TCPC1,   100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"eeprom",  I2C_PORT_EEPROM,  100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"charger", I2C_PORT_CHARGER, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
-	{"sensor",  I2C_PORT_SENSOR,  100, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
-};
-const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-/* USB-A port configuration */
-const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_USB_A_5V,
-	/* TODO(b/74388692): Add second port control after hardware fix. */
-};
 
 /*
  * Data derived from Seinhart-Hart equation in a resistor divider circuit with
@@ -193,21 +173,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/* Called by APL power state machine when transitioning from G3 to S5 */
-void chipset_pre_init_callback(void)
-{
-	/* Enable 5.0V and 3.3V rails, and wait for Power Good */
-	power_5v_enable(task_get_current(), 1);
-
-	gpio_set_level(GPIO_EN_PP3300, 1);
-	while (!gpio_get_level(GPIO_PP5000_PG) ||
-	       !gpio_get_level(GPIO_PP3300_PG))
-		;
-
-	/* Enable PMIC */
-	gpio_set_level(GPIO_PMIC_EN, 1);
-}
-
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
@@ -236,89 +201,12 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-/* Called by APL power state machine when transitioning to G3. */
-void chipset_do_shutdown(void)
-{
-	/* Disable PMIC */
-	gpio_set_level(GPIO_PMIC_EN, 0);
-
-	/* Disable 5.0V and 3.3V rails, and wait until they power down. */
-	power_5v_enable(task_get_current(), 0);
-
-	/*
-	 * Shutdown the 3.3V rail and wait for it to go down. We cannot wait
-	 * for the 5V rail since other tasks may be using it.
-	 */
-	gpio_set_level(GPIO_EN_PP3300, 0);
-	while (gpio_get_level(GPIO_PP3300_PG))
-		;
-}
-
-static void board_init(void)
-{
-
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 enum adc_channel board_get_vbus_adc(int port)
 {
 	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;
 }
 
-void board_tcpc_init(void)
-{
-	int count = 0;
-	int port;
-
-	/* Wait for disconnected battery to wake up */
-	while (battery_hw_present() == BP_YES &&
-	       battery_is_present() == BP_NO) {
-		usleep(100 * MSEC);
-		/* Give up waiting after 1 second */
-		if (++count > 10) {
-			ccprintf("TCPC_init: 1 second w/no battery\n");
-			break;
-		}
-	}
-
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
-		board_reset_pd_mcu();
-
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_L);
-	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_L);
-
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
-
-	/*
-	 * Initialize HPD to low; after sysjump SOC needs to see
-	 * HPD pulse to enable video path
-	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-		const struct usb_mux *mux = &usb_muxes[port];
-
-		mux->hpd_update(port, 0, 0);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_0;
-
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
-			status |= PD_STATUS_TCPC_ALERT_1;
-	}
-
-	return status;
-}
 
 /* Motion sensors */
 /* Mutexes */
@@ -421,62 +309,3 @@ void lid_angle_peripheral_enable(int enable)
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
-
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_ANX7447] = {
-		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = AN7447_TCPC0_I2C_ADDR,
-		.drv = &anx7447_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW,
-	},
-	[USB_PD_PORT_PS8751] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = PS8751_I2C_ADDR1,
-		.drv = &ps8xxx_tcpm_drv,
-		.pol = TCPC_ALERT_ACTIVE_LOW,
-	},
-};
-
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_ANX7447] = {
-		.port_addr = USB_PD_PORT_ANX7447,
-		.driver = &anx7447_usb_mux_driver,
-		.hpd_update = &anx7447_tcpc_update_hpd_status,
-	},
-	[USB_PD_PORT_PS8751] = {
-		.port_addr = USB_PD_PORT_PS8751,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	}
-};
-
-const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_ANX7447] = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr = NX20P3483_ADDR2,
-		.drv = &nx20p3483_drv,
-	},
-	[USB_PD_PORT_PS8751] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr = NX20P3483_ADDR2,
-		.drv = &nx20p3483_drv,
-		.flags = PPC_CFG_FLAGS_GPIO_CONTROL,
-		.snk_gpio = GPIO_USB_C1_CHARGE_ON,
-		.src_gpio = GPIO_EN_USB_C1_5V_OUT,
-	},
-};
-const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-/* BC 1.2 chip Configuration */
-const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
-	[USB_PD_PORT_ANX7447] = {
-		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON,
-		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET_L,
-		.flags = BQ24392_FLAGS_CHG_DET_ACTIVE_LOW,
-	},
-	[USB_PD_PORT_PS8751] = {
-		.chip_enable_pin = GPIO_USB_C1_BC12_VBUS_ON,
-		.chg_det_pin = GPIO_USB_C1_BC12_CHG_DET_L,
-		.flags = BQ24392_FLAGS_CHG_DET_ACTIVE_LOW,
-	},
-};

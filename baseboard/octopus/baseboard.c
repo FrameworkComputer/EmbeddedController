@@ -9,10 +9,13 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
-#include "driver/tcpm/ps8xxx.h"
+#include "driver/bc12/bq24392.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "keyboard_scan.h"
 #include "power.h"
+#include "system.h"
+#include "task.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -68,6 +71,69 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
+
+/******************************************************************************/
+/* USB-A Configuration */
+const int usb_port_enable[USB_PORT_COUNT] = {
+#if USB_PORT_COUNT == 1
+	GPIO_EN_USB_A_5V,
+	/* TODO(b/74388692): Add second port control after hardware fix. */
+#else
+	GPIO_EN_USB_A0_5V,
+	GPIO_EN_USB_A1_5V,
+#endif
+};
+
+/******************************************************************************/
+/* BC 1.2 chip Configuration */
+const struct bq24392_config_t bq24392_config[CONFIG_USB_PD_PORT_COUNT] = {
+	{
+		.chip_enable_pin = GPIO_USB_C0_BC12_VBUS_ON,
+		.chg_det_pin = GPIO_USB_C0_BC12_CHG_DET_L,
+		.flags = BQ24392_FLAGS_CHG_DET_ACTIVE_LOW,
+	},
+	{
+		.chip_enable_pin = GPIO_USB_C1_BC12_VBUS_ON,
+		.chg_det_pin = GPIO_USB_C1_BC12_CHG_DET_L,
+		.flags = BQ24392_FLAGS_CHG_DET_ACTIVE_LOW,
+	},
+};
+
+/******************************************************************************/
+/* Chipset callbacks/hooks */
+
+/* Called by APL power state machine when transitioning from G3 to S5 */
+void chipset_pre_init_callback(void)
+{
+	/* Enable 5.0V and 3.3V rails, and wait for Power Good */
+	power_5v_enable(task_get_current(), 1);
+
+	gpio_set_level(GPIO_EN_PP3300, 1);
+	while (!gpio_get_level(GPIO_PP5000_PG) ||
+	       !gpio_get_level(GPIO_PP3300_PG))
+		;
+
+	/* Enable PMIC */
+	gpio_set_level(GPIO_PMIC_EN, 1);
+}
+
+/* Called by APL power state machine when transitioning to G3. */
+void chipset_do_shutdown(void)
+{
+	/* Disable PMIC */
+	gpio_set_level(GPIO_PMIC_EN, 0);
+
+	/* Disable 5.0V and 3.3V rails, and wait until they power down. */
+	power_5v_enable(task_get_current(), 0);
+
+	/*
+	 * Shutdown the 3.3V rail and wait for it to go down. We cannot wait
+	 * for the 5V rail since other tasks may be using it.
+	 */
+	gpio_set_level(GPIO_EN_PP3300, 0);
+	while (gpio_get_level(GPIO_PP3300_PG))
+		;
+}
 
 int board_set_active_charge_port(int port)
 {
@@ -131,39 +197,3 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT),
 				       charge_mv);
 }
-
-/**
- * Reset all system PD/TCPC MCUs -- currently only called from
- * handle_pending_reboot() in common/power.c just before hard
- * resetting the system. This logic is likely not needed as the
- * PP3300_A rail should be dropped on EC reset.
- */
-void board_reset_pd_mcu(void)
-{
-#if defined(OCTOPUS_USBC_STANDALONE_TCPCS)
-	/* C0: ANX7447 does not have a reset pin. */
-
-	/* C1: Assert reset to TCPC1 (PS8751) for required delay (1ms) */
-	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
-#elif defined(OCTOPUS_USBC_ITE_EC_TCPCS)
-	/*
-	 * C0 & C1: The internal TCPC on ITE EC does not have a reset signal,
-	 * but it will get reset when the EC gets reset.
-	 */
-#endif
-}
-
-#ifdef OCTOPUS_USBC_ITE_EC_TCPCS
-void board_pd_vconn_ctrl(int port, int cc_pin, int enabled)
-{
-	/*
-	 * We ignore the cc_pin because the polarity should already be set
-	 * correctly in the PPC driver via the pd state machine.
-	 */
-	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
-		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
-			port, enabled ? "en" : "dis");
-}
-#endif

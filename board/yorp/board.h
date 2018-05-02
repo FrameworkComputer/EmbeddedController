@@ -9,8 +9,8 @@
 #define __CROS_EC_BOARD_H
 
 /* Select Baseboard features */
-#define OCTOPUS_EC_NPCX796FB
-#define OCTOPUS_CHARGER_ISL9238
+#define VARIANT_OCTOPUS_EC_NPCX796FB
+#define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
 /* Optional features */
