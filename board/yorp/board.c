@@ -202,6 +202,18 @@ static void board_chipset_suspend(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 
+void board_hibernate(void)
+{
+	/*
+	 * To support hibernate called from console commands, ectool commands
+	 * and key sequence, shutdown the AP before hibernating.
+	 */
+	chipset_force_shutdown();
+
+	/* Added delay to allow AP power state machine to settle down */
+	msleep(100);
+}
+
 enum adc_channel board_get_vbus_adc(int port)
 {
 	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;
