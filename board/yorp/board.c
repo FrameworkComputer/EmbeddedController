@@ -201,9 +201,10 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-
 void board_hibernate(void)
 {
+	int port;
+
 	/*
 	 * To support hibernate called from console commands, ectool commands
 	 * and key sequence, shutdown the AP before hibernating.
@@ -212,6 +213,13 @@ void board_hibernate(void)
 
 	/* Added delay to allow AP power state machine to settle down */
 	msleep(100);
+
+	/*
+	 * Enable SINK_CTRL on the PPC. This is required to wake up from
+	 * hibernate when AC is connected. (b/79173959)
+	 */
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++)
+		ppc_vbus_sink_enable(port, 1);
 }
 
 enum adc_channel board_get_vbus_adc(int port)
