@@ -46,13 +46,13 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	int ret = EC_SUCCESS;
 	int int1_ctrl_val;
 
-	ret = raw_read8(s->port, s->addr, LSM6DSM_INT1_CTRL, &int1_ctrl_val);
+	ret = st_raw_read8(s->port, s->addr, LSM6DSM_INT1_CTRL, &int1_ctrl_val);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 #ifdef CONFIG_ACCEL_FIFO
 	/* As soon as one sample is ready, trigger an interrupt. */
-	ret = raw_write8(s->port, s->addr, LSM6DSM_FIFO_CTRL1_ADDR,
+	ret = st_raw_write8(s->port, s->addr, LSM6DSM_FIFO_CTRL1_ADDR,
 			 OUT_XYZ_SIZE / sizeof(uint16_t));
 	if (ret != EC_SUCCESS)
 		return ret;
@@ -60,7 +60,8 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		LSM6DSM_INT_FIFO_FULL;
 #endif /* CONFIG_ACCEL_FIFO */
 
-	return raw_write8(s->port, s->addr, LSM6DSM_INT1_CTRL, int1_ctrl_val);
+	return st_raw_write8(
+		s->port, s->addr, LSM6DSM_INT1_CTRL, int1_ctrl_val);
 }
 
 
@@ -72,7 +73,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
  */
 static int fifo_disable(const struct motion_sensor_t *s)
 {
-	return raw_write8(s->port, s->addr, LSM6DSM_FIFO_CTRL5_ADDR, 0x00);
+	return st_raw_write8(s->port, s->addr, LSM6DSM_FIFO_CTRL5_ADDR, 0x00);
 }
 
 /**
@@ -136,14 +137,14 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 			private->config.samples_in_pattern[i] = 0;
 		}
 	}
-	raw_write8(accel->port, accel->addr, LSM6DSM_FIFO_CTRL3_ADDR,
+	st_raw_write8(accel->port, accel->addr, LSM6DSM_FIFO_CTRL3_ADDR,
 			(decimator[FIFO_DEV_GYRO] << LSM6DSM_FIFO_DEC_G_OFF) |
 			(decimator[FIFO_DEV_ACCEL] << LSM6DSM_FIFO_DEC_XL_OFF));
 #ifdef CONFIG_MAG_LSM6DSM_LIS2MDL
-	raw_write8(accel->port, accel->addr, LSM6DSM_FIFO_CTRL4_ADDR,
+	st_raw_write8(accel->port, accel->addr, LSM6DSM_FIFO_CTRL4_ADDR,
 			decimator[FIFO_DEV_MAG]);
 #endif /* CONFIG_MAG_LSM6DSM_LIS2MDL */
-	err = raw_write8(accel->port, accel->addr, LSM6DSM_FIFO_CTRL5_ADDR,
+	err = st_raw_write8(accel->port, accel->addr, LSM6DSM_FIFO_CTRL5_ADDR,
 			 (LSM6DSM_ODR_TO_REG(max_odr) <<
 			  LSM6DSM_FIFO_CTRL5_ODR_OFF) |
 			 LSM6DSM_FIFO_MODE_CONTINUOUS_VAL);
@@ -434,7 +435,7 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = raw_read8(s->port, s->addr, LSM6DSM_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->addr, LSM6DSM_STATUS_REG, &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("[%T %s type:0x%X RS Error]", s->name, s->type);
 		return ret;
@@ -492,7 +493,7 @@ static int init(const struct motion_sensor_t *s)
 	int ret = 0, tmp;
 	struct stprivate_data *data = s->drv_data;
 
-	ret = raw_read8(s->port, s->addr, LSM6DSM_WHO_AM_I_REG, &tmp);
+	ret = st_raw_read8(s->port, s->addr, LSM6DSM_WHO_AM_I_REG, &tmp);
 	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
@@ -510,7 +511,7 @@ static int init(const struct motion_sensor_t *s)
 		mutex_lock(s->mutex);
 
 		/* Software reset. */
-		ret = raw_write8(s->port, s->addr, LSM6DSM_CTRL3_ADDR,
+		ret = st_raw_write8(s->port, s->addr, LSM6DSM_CTRL3_ADDR,
 				LSM6DSM_SW_RESET);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
@@ -519,7 +520,7 @@ static int init(const struct motion_sensor_t *s)
 		 * Output data not updated until have been read.
 		 * Prefer interrupt to be active low.
 		 */
-		ret = raw_write8(s->port, s->addr, LSM6DSM_CTRL3_ADDR,
+		ret = st_raw_write8(s->port, s->addr, LSM6DSM_CTRL3_ADDR,
 				LSM6DSM_BDU | LSM6DSM_H_L_ACTIVE |
 				LSM6DSM_IF_INC);
 		if (ret != EC_SUCCESS)

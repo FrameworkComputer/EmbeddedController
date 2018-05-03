@@ -9,24 +9,6 @@
 #include "stm_mems_common.h"
 
 /**
- * Read single register
- */
-int raw_read8(const int port, const int addr, const int reg, int *data_ptr)
-{
-	/* TODO: Implement SPI interface support */
-	return i2c_read8(port, addr, reg, data_ptr);
-}
-
-/**
- * Write single register
- */
-int raw_write8(const int port, const int addr, const int reg, int data)
-{
-	/* TODO: Implement SPI interface support */
-	return i2c_write8(port, addr, reg, data);
-}
-
-/**
  * st_raw_read_n - Read n bytes for read
  */
 int st_raw_read_n(const int port, const int addr, const uint8_t reg,
@@ -72,7 +54,7 @@ int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 	int err;
 	int new_data = 0x00, old_data = 0x00;
 
-	err = raw_read8(s->port, s->addr, reg, &old_data);
+	err = st_raw_read8(s->port, s->addr, reg, &old_data);
 	if (err != EC_SUCCESS)
 		return err;
 
@@ -82,7 +64,7 @@ int st_write_data_with_mask(const struct motion_sensor_t *s, int reg,
 	if (new_data == old_data)
 		return EC_SUCCESS;
 
-	return raw_write8(s->port, s->addr, reg, new_data);
+	return st_raw_write8(s->port, s->addr, reg, new_data);
 }
 
 /**
