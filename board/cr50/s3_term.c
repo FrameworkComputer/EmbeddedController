@@ -4,6 +4,7 @@
  */
 
 #include "console.h"
+#include "hooks.h"
 #include "registers.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
@@ -12,7 +13,7 @@
 #define AP_TX_TERM	(1 << 0)
 #define SPS_TERM	(1 << 1)
 
-int term_enabled;
+static uint8_t term_enabled;
 
 static void update_term_state(int term, int enable)
 {
@@ -65,9 +66,10 @@ static void sps_term_enable(int term_enable)
 	update_term_state(SPS_TERM, term_enable);
 }
 
-void board_s3_term(int term_enable)
+static void s3_term(int term_enable)
 {
-	if (!board_needs_s3_term() || (!term_enable == !term_enabled))
+	/* If the board doesn't use s3_term, return before doing anything */
+	if (!board_needs_s3_term())
 		return;
 	CPRINTS("%sable S3 signal terminations", term_enable ? "En" : "Dis");
 
@@ -77,9 +79,31 @@ void board_s3_term(int term_enable)
 		sps_term_enable(term_enable);
 }
 
+/*
+ * Disable all terminations after cr50 reset. CCD state will re-enable them if
+ * needed. We just want to make sure any terminations enabled from the previous
+ * boot don't interfere with any other peripheral initialization. The pins
+ * s3_term controls may not be covered by the standard gpio init, so they won't
+ * be reset unless s3_term resets them during init.
+ */
+static void s3_term_init(void)
+{
+	s3_term(0);
+}
+DECLARE_HOOK(HOOK_INIT, s3_term_init, HOOK_PRIO_FIRST);
+
+void board_s3_term(int term_enable)
+{
+	/* Only update the terminations if something has changed */
+	if (!term_enable == !term_enabled)
+		return;
+	s3_term(term_enable);
+}
+
 static int command_s3term(int argc, char **argv)
 {
-	ccprintf("Terminations:%s%s\n",
+	ccprintf("Terminations:%s%s%s\n",
+		term_enabled ? "" : "None",
 		term_enabled & AP_TX_TERM ? " AP" : "",
 		term_enabled & SPS_TERM ? " SPS" : "");
 	return EC_SUCCESS;
