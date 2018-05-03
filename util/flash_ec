@@ -135,6 +135,7 @@ BOARDS_NPCX_INT_SPI=(
 	atlas
 	grunt
 	meowth
+	nocturne
 	yorp
 	zoombini
 )
