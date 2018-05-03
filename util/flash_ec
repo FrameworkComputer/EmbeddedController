@@ -67,6 +67,7 @@ BOARDS_STM32=(
 	hammer
 	jerry
 	kitty
+	kukui
 	meowth_fp
 	minimuffin
 	nocturne_fp
@@ -163,6 +164,7 @@ BOARDS_RAIDEN=(
 	coral
 	eve
 	fizz
+	kukui
 	nami
 	nautilus
 	poppy
