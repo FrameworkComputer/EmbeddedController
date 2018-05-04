@@ -141,12 +141,8 @@
   * VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS (requires)
   */
 #if defined(VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS)
-	/*
-	 * TODO(b/77544959): This mode doe not work with ANX7447 currently and
-	 * floods the EC console with low power mode messages.
-	 */
-	#undef CONFIG_USB_PD_TCPC_LOW_POWER
-	#undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	#define CONFIG_USB_PD_TCPC_LOW_POWER
+	#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	#define CONFIG_USB_PD_TCPM_ANX7447	/* C0 TCPC: ANX7447QN */
 	#define CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 	#define CONFIG_USB_PD_TCPM_PS8751	/* C1 TCPC: PS8751 */
