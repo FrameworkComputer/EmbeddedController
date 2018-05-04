@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+#include <errno.h>
 #include <getopt.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -30,7 +31,18 @@
 #define DEFAULT_BAUD_RATE 115200
 #define DEFAULT_PORT_NAME "ttyS0"
 #define DEFAULT_DEV_NUM 0
+#define DEFAULT_FLASH_OFFSET 0
 
+/* The magic number in monitor header */
+#define MONITOR_HDR_TAG        0xA5075001
+/* The location of monitor header */
+#define MONITOR_HDR_ADDR       0x200C3000
+/* The start address of the monitor little firmware to execute */
+#define MONITOR_ADDR           0x200C3020
+/* The start address to store the firmware segment to be programmed */
+#define FIRMWARE_START_ADDR    0x10090000
+/* Divide the ec firmware image into 4K byte */
+#define FIRMWARE_SEGMENT       0x1000
 /*---------------------------------------------------------------------------
  * Global variables
  *---------------------------------------------------------------------------
@@ -54,6 +66,8 @@ static char addr_str[MAX_PARAM_SIZE];
 static char size_str[MAX_PARAM_SIZE];
 static uint32_t baudrate;
 static uint32_t dev_num;
+static uint32_t flash_offset;
+static bool auto_mode;
 
 /*---------------------------------------------------------------------------
  * Functions prototypes
@@ -66,7 +80,7 @@ static uint32_t param_get_file_size(const char *file_name);
 static uint32_t param_get_str_size(char *string);
 static void main_print_version(void);
 static void tool_usage(void);
-static void exit_uart_app(uint32_t exit_status);
+static void exit_uart_app(int32_t exit_status);
 
 enum EXIT_CODE {
 	EC_OK = 0x00,
@@ -86,6 +100,108 @@ enum EXIT_CODE {
  */
 
 /*---------------------------------------------------------------------------
+ * Function:	image_auto_write
+ *
+ * Parameters:    offset - The start address of the flash to write the firmware
+ *                         to.
+ *                buffer - The buffer holds data of the firmware.
+ *                file_size - the size to be programmed.
+ * Returns:       1 for a successful operation, 0 otherwise.
+ * Side effects:
+ * Description:
+ *               Divide the firmware to segments and program them one by one.
+ *---------------------------------------------------------------------------
+ */
+static bool image_auto_write(uint32_t offset, uint8_t *buffer,
+				uint32_t file_size)
+{
+	uint32_t data_buf[4];
+	uint32_t addr, chunk_remain, file_seg, flash_index, seg;
+	uint32_t count, percent, total;
+
+	flash_index = offset;
+	/* Monitor tag */
+	data_buf[0] = MONITOR_HDR_TAG;
+	/* Where the source(RAM) address the firmware stored. */
+	data_buf[2] = FIRMWARE_START_ADDR;
+
+	file_seg = file_size;
+	total = 0;
+	while (file_seg) {
+		seg = (file_seg > FIRMWARE_SEGMENT) ?
+					FIRMWARE_SEGMENT : file_seg;
+		chunk_remain = seg;
+		addr = FIRMWARE_START_ADDR;
+		/* the size to be programmed */
+		data_buf[1] = seg;
+		/*
+		 * The offset of the flash where the segment to be programmed.
+		 */
+		data_buf[3] = flash_index;
+		/* Write the monitor header to RAM */
+		opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR, 16);
+		while (chunk_remain) {
+			count = (chunk_remain > MAX_RW_DATA_SIZE) ?
+						MAX_RW_DATA_SIZE : chunk_remain;
+			if (opr_write_chunk(buffer, addr, count) != true)
+				return false;
+
+			addr += count;
+			buffer += count;
+			chunk_remain -= count;
+			total += count;
+			percent = total * 100 / file_size;
+			printf("\r[%d%%] %d/%d", percent, total, file_size);
+		}
+		fflush(stdout);
+		if (opr_execute_return(MONITOR_ADDR) != true)
+			return false;
+		file_seg -= seg;
+		flash_index += seg;
+	}
+	printf("\n");
+	return true;
+}
+
+/*---------------------------------------------------------------------------
+ * Function:	read_input_file
+ *
+ * Parameters:    size - The size of input file.
+ *                file_name - The name if input file.
+ * Returns:       The address of the buffer allocated to stroe file content.
+ * Side effects:
+ * Description:
+ *               Read the file content into an allocated buffer.
+ *---------------------------------------------------------------------------
+ */
+static uint8_t *read_input_file(uint32_t size, const char *file_name)
+{
+	uint8_t *buffer;
+	FILE *input_fp;
+
+	buffer = malloc(size);
+	if (!buffer) {
+		fprintf(stderr, "Cannot allocate %d bytes\n", size);
+		return NULL;
+	}
+	input_fp = fopen(file_name, "r");
+	if (!input_fp) {
+		display_color_msg(FAIL,
+			"ERROR: cannot open file %s\n", file_name);
+		free(buffer);
+		return NULL;
+	}
+	if (fread(buffer, size, 1, input_fp) != 1) {
+		fprintf(stderr, "Cannot read %s\n", file_name);
+		fclose(input_fp);
+		free(buffer);
+		return NULL;
+	}
+	fclose(input_fp);
+	return buffer;
+}
+
+/*---------------------------------------------------------------------------
  * Function:	main
  *
  * Parameters:		argc - Argument Count.
@@ -102,7 +218,9 @@ int main(int argc, char *argv[])
 	char aux_buf[MAX_FILE_NAME_SIZE];
 	uint32_t size = 0;
 	uint32_t addr = 0;
+	uint32_t strip_size;
 	enum sync_result sr;
+	uint8_t *buffer;
 
 	if (argc <= 1)
 		exit(EC_UNSUPPORTED_CMD_ERR);
@@ -111,9 +229,11 @@ int main(int argc, char *argv[])
 	strncpy(port_name, DEFAULT_PORT_NAME, sizeof(port_name));
 	baudrate = DEFAULT_BAUD_RATE;
 	dev_num = DEFAULT_DEV_NUM;
+	flash_offset = DEFAULT_FLASH_OFFSET;
 	opr_name[0] = '\0';
 	verbose = true;
 	console = false;
+	auto_mode = false;
 
 	param_parse_cmd_line(argc, argv);
 
@@ -145,29 +265,59 @@ int main(int argc, char *argv[])
 		exit_uart_app(EC_SYNC_ERR);
 	}
 
+	if (auto_mode) {
+		size = param_get_file_size(file_name);
+		if (size == 0)
+			exit_uart_app(EC_FILE_ERR);
+
+		buffer = read_input_file(size, file_name);
+		if (!buffer)
+			exit_uart_app(EC_FILE_ERR);
+
+		/* Ignore the trailing white space to speed up writing */
+		strip_size = size;
+		while ((strip_size > 0) && (buffer[strip_size-1] == 0xFF))
+			strip_size--;
+
+		printf("Write file %s at %d with %d bytes\n",
+					file_name, flash_offset, strip_size);
+		if (image_auto_write(flash_offset, buffer, strip_size)) {
+			printf("Flash Done.\n");
+			free(buffer);
+			exit_uart_app(EC_OK);
+		}
+		free(buffer);
+		exit_uart_app(-1);
+	}
+
 	param_check_opr_num(opr_name);
 
 	/* Write buffer data to chosen address */
 	if (strcmp(opr_name, OPR_WRITE_MEM) == 0) {
 		addr = strtoul(addr_str, &stop_str, 0);
 
-		/*
-		 * Copy the input string to an auxiliary buffer, since string
-		 * is altered by param_get_str_size
-		 */
-		memcpy(aux_buf, file_name, sizeof(file_name));
-
-		/* Retrieve input size */
-		if (console)
-			size = param_get_str_size(aux_buf);
-		else
+		if (console) {
+			/*
+			 * Copy the input string to an auxiliary buffer, since
+			 * string is altered by param_get_str_size
+			 */
+			memcpy(aux_buf, file_name, sizeof(file_name));
+			/* Retrieve input size */
+			size = param_get_str_size(file_name);
+			/* Ensure non-zero size */
+			if (size == 0)
+				exit_uart_app(EC_FILE_ERR);
+			opr_write_mem(aux_buf, addr, size);
+		} else {
 			size = param_get_file_size(file_name);
-
-		/* Ensure non-zero size */
-		if (size == 0)
-			exit_uart_app(EC_FILE_ERR);
-
-		opr_write_mem(file_name, addr, size);
+			if (size == 0)
+				exit_uart_app(EC_FILE_ERR);
+			buffer = read_input_file(size, file_name);
+			if (!buffer)
+				exit_uart_app(EC_FILE_ERR);
+			opr_write_mem(buffer, addr, size);
+			free(buffer);
+		}
 	} else if (strcmp(opr_name, OPR_READ_MEM) == 0) {
 		/* Read data to chosen address */
 
@@ -213,16 +363,18 @@ static const struct option long_opts[] = {
 	{"help",     0, 0, 'h'},
 	{"quiet",    0, 0, 'q'},
 	{"console",  0, 0, 'c'},
+	{"auto",     0, 0, 'A'},
 	{"baudrate", 1, 0, 'b'},
 	{"opr",      1, 0, 'o'},
 	{"port",     1, 0, 'p'},
 	{"file",     1, 0, 'f'},
 	{"addr",     1, 0, 'a'},
 	{"size",     1, 0, 's'},
+	{"offset",   1, 0, 'O'},
 	{NULL,       0, 0, 0}
 };
 
-static char *short_opts = "vhqcb:o:p:f:a:s:?";
+static char *short_opts = "vhqcAb:o:p:f:a:s:O:?";
 
 static void param_parse_cmd_line(int argc, char *argv[])
 {
@@ -245,6 +397,9 @@ static void param_parse_cmd_line(int argc, char *argv[])
 			break;
 		case 'c':
 			console = true;
+			break;
+		case 'A':
+			auto_mode = true;
 			break;
 		case 'b':
 			if (sscanf(optarg, "%du", &baudrate) == 0)
@@ -269,6 +424,9 @@ static void param_parse_cmd_line(int argc, char *argv[])
 		case 's':
 			strncpy(size_str, optarg, sizeof(size_str));
 			size_str[sizeof(size_str)-1] = '\0';
+			break;
+		case 'O':
+			flash_offset = strtol(optarg, NULL, 0);
 			break;
 		}
 	}
@@ -376,22 +534,25 @@ static void tool_usage(void)
 {
 	printf("%s version %s\n\n", tool_name, tool_version);
 	printf("General switches:\n");
-	printf("      --version         - Print version\n");
-	printf("      --help            - Help menu\n");
-	printf("      --quiet           - Suppress verbose mode (default is "
+	printf("  -v, --version        - Print version\n");
+	printf("  -h, --help           - Help menu\n");
+	printf("  -q, --quiet          - Suppress verbose mode (default is "
 	       "verbose ON)\n");
-	printf("      --console         - Print data to console (default is "
+	printf("  -c, --console        - Print data to console (default is "
 	       "print to file)\n");
-	printf("      --port <name>     - Serial port name (default is %s)\n",
+	printf("  -p, --port <name>    - Serial port name (default is %s)\n",
 		DEFAULT_PORT_NAME);
-	printf("      --baudrate <num>  - COM Port baud-rate (default is %d)\n",
+	printf("  -b, --baudrate <num> - COM Port baud-rate (default is %d)\n",
 		DEFAULT_BAUD_RATE);
+	printf("  -A, --auto           - Enable auto mode. (default is off)\n");
+	printf("  -O, --offset <num>   - With --auto, assign the offset of");
+	printf(" flash where the image to be written.\n");
 	printf("\n");
 	printf("Operation specific switches:\n");
-	printf("      --opr   <name>    - Operation number (see list below)\n");
-	printf("      --file  <name>    - Input/output file name\n");
-	printf("      --addr  <num>     - Start memory address\n");
-	printf("      --size  <num>     - Size of data to read\n");
+	printf("  -o, --opr   <name>   - Operation number (see list below)\n");
+	printf("  -f, --file  <name>   - Input/output file name\n");
+	printf("  -a, --addr  <num>    - Start memory address\n");
+	printf("  -s, --size  <num>    - Size of data to read\n");
 	printf("\n");
 }
 
@@ -420,7 +581,7 @@ static void main_print_version(void)
  *		Exit "nicely" the application.
  *---------------------------------------------------------------------------
  */
-static void exit_uart_app(uint32_t exit_status)
+static void exit_uart_app(int32_t exit_status)
 {
 	if (opr_close_port() != true)
 		display_color_msg(FAIL, "ERROR: Port close failed.\n");

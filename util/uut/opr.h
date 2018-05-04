@@ -48,10 +48,11 @@ extern struct comport_fields port_cfg;
 void opr_usage(void);
 bool opr_close_port(void);
 bool opr_open_port(const char *port_name, struct comport_fields port_cfg);
-void opr_write_mem(char *input, uint32_t addr, uint32_t size);
+bool opr_write_chunk(uint8_t *buffer, uint32_t addr, uint32_t size);
+void opr_write_mem(uint8_t *buffer, uint32_t addr, uint32_t size);
 void opr_read_mem(char *output, uint32_t addr, uint32_t size);
 void opr_execute_exit(uint32_t addr);
-void opr_execute_return(uint32_t addr);
+bool opr_execute_return(uint32_t addr);
 bool opr_scan_baudrate(void);
 enum sync_result opr_check_sync(uint32_t baudrate);
 #endif /* __UTIL_UUT_OPR_H */
