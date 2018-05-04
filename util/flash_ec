@@ -143,6 +143,7 @@ BOARDS_NPCX_INT_SPI=(
 
 BOARDS_NPCX_UUT=(
 	cheza
+	grunt
 )
 
 BOARDS_NRF51=(
@@ -175,6 +176,14 @@ BOARDS_RAIDEN=(
 	scarlet
 	soraka
 )
+
+# A map of supported board + chip + servo permutations.
+# The value is a regex that will be checked against $SERVO_TYPE.
+# i.e., If a board needs to use one CHIP when connected via a Suzy-Q and another
+# chip when connected via a Servo.
+declare -A VALID_CHIP_COMBO
+VALID_CHIP_COMBO["grunt.npcx_uut"]="ccd_cr50"
+VALID_CHIP_COMBO["grunt.npcx_spi"]="servo"
 
 # Flags
 DEFINE_string board "${DEFAULT_BOARD}" \
@@ -240,36 +249,97 @@ in_array() {
 	return 1
 }
 
+declare -a SUPPORTED_CHIPS
+
 if $(in_array "${BOARDS_LM4[@]}" "${BOARD}"); then
-	CHIP="lm4"
-elif $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
-	CHIP="stm32"
-elif $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
-	CHIP="stm32_dfu"
-elif $(in_array "${BOARDS_NPCX_5M5G_JTAG[@]}" "${BOARD}"); then
-	CHIP="npcx_5m5g_jtag"
-elif $(in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"); then
-	CHIP="npcx_5m6g_jtag"
-elif $(in_array "${BOARDS_NPCX_7M6X_JTAG[@]}" "${BOARD}"); then
-	CHIP="npcx_7m6x_jtag"
-elif $(in_array "${BOARDS_NPCX_7M7X_JTAG[@]}" "${BOARD}"); then
-	CHIP="npcx_7m7x_jtag"
-elif $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
-	CHIP="npcx_spi"
-elif $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
-	CHIP="npcx_spi"
-elif $(in_array "${BOARDS_NPCX_UUT[@]}" "${BOARD}"); then
-	CHIP="npcx_uut"
-elif $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
-	CHIP="nrf51"
-elif $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
-	CHIP="mec1322"
-elif $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
-	CHIP="it83xx"
+	SUPPORTED_CHIPS+=("lm4")
+fi
+
+if $(in_array "${BOARDS_STM32[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("stm32")
+fi
+
+if $(in_array "${BOARDS_STM32_DFU[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("stm32_dfu")
+fi
+
+if $(in_array "${BOARDS_NPCX_5M5G_JTAG[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_5m5g_jtag")
+fi
+
+if $(in_array "${BOARDS_NPCX_5M6G_JTAG[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_5m6g_jtag")
+fi
+
+if $(in_array "${BOARDS_NPCX_7M6X_JTAG[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_7m6x_jtag")
+fi
+
+if $(in_array "${BOARDS_NPCX_7M7X_JTAG[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_7m7x_jtag")
+fi
+
+if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_spi")
+fi
+
+if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_spi")
+fi
+
+if $(in_array "${BOARDS_NPCX_UUT[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_uut")
+fi
+
+if $(in_array "${BOARDS_NRF51[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("nrf51")
+fi
+
+if $(in_array "${BOARDS_MEC1322[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("mec1322")
+fi
+
+if $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("it83xx")
+fi
+
+if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
+	SUPPORTED_CHIPS+="${FLAGS_chip}"
+fi
+
+SERVO_TYPE="$(get_servo_type)"
+
+if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 ]]; then
+	die "board '${BOARD}' not supported. Please manually specify --chip="
+elif [[ ${#SUPPORTED_CHIPS[@]} -eq 1 ]]; then
+	CHIP="${SUPPORTED_CHIPS[0]}"
 elif [ -n "${FLAGS_chip}" ]; then
-	CHIP="${FLAGS_chip}"
+	if $(in_array "${SUPPORTED_CHIPS[@]}" "${FLAGS_chip}"); then
+		CHIP="${FLAGS_chip}"
+	else
+		die "board ${BOARD} only supports (${SUPPORTED_CHIPS[@]})," \
+		"not ${FLAGS_chip}."
+	fi
 else
-	die "board ${BOARD} not supported"
+	declare -a FILTERED_CHIPS
+
+	for i in "${SUPPORTED_CHIPS[@]}"; do
+		SUPPORTED_SERVO="${VALID_CHIP_COMBO["${BOARD}.${i}"]}"
+		if [[ -z "$SUPPORTED_SERVO" || \
+				"$SERVO_TYPE" =~ "$SUPPORTED_SERVO" ]]; then
+			FILTERED_CHIPS+=("$i")
+		fi
+
+	done
+
+	if [[ ${#FILTERED_CHIPS[@]} -eq 0 ]]; then
+		die "servo ${SERVO_TYPE} is unsupported for board ${BOARD}."
+	elif [[ ${#FILTERED_CHIPS[@]} -eq 1 ]]; then
+		CHIP="${FILTERED_CHIPS[0]}"
+	else
+		die "board ${BOARD} supports multiple chips" \
+		"(${FILTERED_CHIPS[@]}). Use --chip= to choose one."
+	fi
 fi
 
 if [ -n "${FLAGS_chip}" -a "${CHIP}" != "${FLAGS_chip}" ]; then
@@ -1022,7 +1092,6 @@ function flash_mec1322() {
 	flash_flashrom
 }
 
-SERVO_TYPE="$(get_servo_type)"
 if dut_control boot_mode 2>/dev/null ; then
 	if [[ "${MCU}" != "ec" ]] ; then
 		die "Toad cable can't support non-ec UARTs"
