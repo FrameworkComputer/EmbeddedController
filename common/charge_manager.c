@@ -1079,6 +1079,9 @@ static int hc_pd_power_info(struct host_cmd_handler_args *args)
 	if (port == PD_POWER_CHARGING_PORT)
 		port = charge_port;
 
+	if (port >= CHARGE_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
 	charge_manager_fill_power_info(port, r);
 
 	args->response_size = sizeof(*r);
