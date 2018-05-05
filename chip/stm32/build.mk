@@ -75,7 +75,6 @@ chip-$(CONFIG_USB)+=usb_dwc.o usb_endpoints.o
 chip-$(CONFIG_USB_CONSOLE)+=usb_dwc_console.o
 chip-$(CONFIG_USB_POWER)+=usb_power.o
 chip-$(CONFIG_STREAM_USB)+=usb_dwc_stream.o
-chip-$(CONFIG_USB_I2C)+=usb_dwc_i2c.o
 else
 chip-$(CONFIG_STREAM_USB)+=usb-stream.o
 chip-$(CONFIG_USB)+=usb.o usb-$(CHIP_FAMILY).o usb_endpoints.o
