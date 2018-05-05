@@ -1089,6 +1089,19 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_POWER_INFO,
 		     EC_VER_MASK(0));
 #endif /* TEST_BUILD */
 
+static int hc_charge_port_count(struct host_cmd_handler_args *args)
+{
+	struct ec_response_charge_port_count *resp = args->response;
+
+	args->response_size = sizeof(*resp);
+	resp->port_count = CHARGE_PORT_COUNT;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_PORT_COUNT,
+		     hc_charge_port_count,
+		     EC_VER_MASK(0));
+
 static int hc_charge_port_override(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_port_override *p = args->params;
