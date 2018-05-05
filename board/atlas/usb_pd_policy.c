@@ -168,7 +168,14 @@ int pd_check_vconn_swap(int port)
 
 void pd_execute_data_swap(int port, int data_role)
 {
-	/* Do nothing */
+	/* Only port 0 supports device mode. */
+	if (port != 0)
+		return;
+
+	gpio_set_level(GPIO_USB2_ID,
+		      (data_role == PD_ROLE_UFP) ? 1 : 0);
+	gpio_set_level(GPIO_USB2_VBUSSENSE,
+		      (data_role == PD_ROLE_UFP) ? 1 : 0);
 }
 
 void pd_check_pr_role(int port, int pr_role, int flags)
@@ -332,14 +339,6 @@ static int svdm_dp_config(int port, uint32_t *payload)
 	return 2;
 };
 
-/*
- * timestamp of the next possible toggle to ensure the 2-ms spacing
- * between IRQ_HPD.
- */
-static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_COUNT];
-
-#define PORT_TO_HPD(port) ((port) ? GPIO_USB_C1_DP_HPD : GPIO_USB_C0_DP_HPD)
-
 static void svdm_dp_post_config(int port)
 {
 	const struct usb_mux *mux = &usb_muxes[port];
@@ -348,23 +347,15 @@ static void svdm_dp_post_config(int port)
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
-	gpio_set_level(PORT_TO_HPD(port), 1);
-
-	/* set the minimum time delay (2ms) for the next HPD IRQ */
-	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-
 	mux->hpd_update(port, 1, 0);
 }
 
 static int svdm_dp_attention(int port, uint32_t *payload)
 {
-	int cur_lvl;
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	enum gpio_signal hpd = PORT_TO_HPD(port);
 	const struct usb_mux *mux = &usb_muxes[port];
 
-	cur_lvl = gpio_get_level(hpd);
 	dp_status[port] = payload[1];
 
 	/* Its initial DP status message prior to config */
@@ -373,29 +364,8 @@ static int svdm_dp_attention(int port, uint32_t *payload)
 			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
 		return 1;
 	}
-
-	if (irq & cur_lvl) {
-		uint64_t now = get_time().val;
-		/* wait for the minimum spacing between IRQ_HPD if needed */
-		if (now < hpd_deadline[port])
-			usleep(hpd_deadline[port] - now);
-
-		/* generate IRQ_HPD pulse */
-		gpio_set_level(hpd, 0);
-		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
-		gpio_set_level(hpd, 1);
-
-		/* set the minimum time delay (2ms) for the next HPD IRQ */
-		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	} else if (irq & !cur_lvl) {
-		CPRINTF("ERR:HPD:IRQ&LOW\n");
-		return 0; /* nak */
-	} else {
-		gpio_set_level(hpd, lvl);
-		/* set the minimum time delay (2ms) for the next HPD IRQ */
-		hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	}
 	mux->hpd_update(port, lvl, irq);
+
 	/* ack */
 	return 1;
 }
@@ -405,7 +375,6 @@ static void svdm_exit_dp_mode(int port)
 	const struct usb_mux *mux = &usb_muxes[port];
 
 	svdm_safe_dp_mode(port);
-	gpio_set_level(PORT_TO_HPD(port), 0);
 	mux->hpd_update(port, 0, 0);
 }
 
