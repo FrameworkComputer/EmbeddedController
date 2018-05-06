@@ -58,39 +58,42 @@
  * the last bit (not from the start). We compensate by having one
  * free-time period less than in the spec.
  */
-#define NOMINAL_BIT_TIME APB1_TICKS(2400)
-#define FREE_TIME_RS	(2 * (NOMINAL_BIT_TIME)) /* Resend */
-#define FREE_TIME_NI	(4 * (NOMINAL_BIT_TIME)) /* New initiator */
-#define FREE_TIME_PI	(6 * (NOMINAL_BIT_TIME)) /* Present initiator */
+#define NOMINAL_BIT_TICKS APB1_TICKS(2400)
+ /* Resend */
+#define FREE_TIME_RS_TICKS (2 * (NOMINAL_BIT_TICKS))
+/* New initiator */
+#define FREE_TIME_NI_TICKS (4 * (NOMINAL_BIT_TICKS))
+/* Present initiator */
+#define FREE_TIME_PI_TICKS (6 * (NOMINAL_BIT_TICKS))
 
-/* Start bit timing (us) */
-#define START_BIT_LOW		APB1_TICKS(3700)
-#define START_BIT_MIN_LOW	APB1_TICKS(3500)
-#define START_BIT_MAX_LOW	APB1_TICKS(3900)
-#define START_BIT_HIGH		APB1_TICKS(800)
-#define START_BIT_MIN_DURATION	APB1_TICKS(4300)
-#define START_BIT_MAX_DURATION	APB1_TICKS(5700)
+/* Start bit timing */
+#define START_BIT_LOW_TICKS		APB1_TICKS(3700)
+#define START_BIT_MIN_LOW_TICKS		APB1_TICKS(3500)
+#define START_BIT_MAX_LOW_TICKS		APB1_TICKS(3900)
+#define START_BIT_HIGH_TICKS		APB1_TICKS(800)
+#define START_BIT_MIN_DURATION_TICKS	APB1_TICKS(4300)
+#define START_BIT_MAX_DURATION_TICKS	APB1_TICKS(5700)
 
-/* Data bit timing (us)  */
-#define DATA_ZERO_LOW		APB1_TICKS(1500)
-#define DATA_ZERO_MIN_LOW	APB1_TICKS(1300)
-#define DATA_ZERO_MAX_LOW	APB1_TICKS(1700)
-#define DATA_ZERO_HIGH		APB1_TICKS(900)
-#define DATA_ZERO_MIN_DURATION	APB1_TICKS(2050)
-#define DATA_ZERO_MAX_DURATION	APB1_TICKS(2750)
+/* Data bit timing */
+#define DATA_ZERO_LOW_TICKS		APB1_TICKS(1500)
+#define DATA_ZERO_MIN_LOW_TICKS		APB1_TICKS(1300)
+#define DATA_ZERO_MAX_LOW_TICKS		APB1_TICKS(1700)
+#define DATA_ZERO_HIGH_TICKS		APB1_TICKS(900)
+#define DATA_ZERO_MIN_DURATION_TICKS	APB1_TICKS(2050)
+#define DATA_ZERO_MAX_DURATION_TICKS	APB1_TICKS(2750)
 
-#define DATA_ONE_LOW		APB1_TICKS(600)
-#define DATA_ONE_MIN_LOW	APB1_TICKS(400)
-#define DATA_ONE_MAX_LOW	APB1_TICKS(800)
-#define DATA_ONE_HIGH		APB1_TICKS(1800)
-#define DATA_ONE_MIN_DURATION	APB1_TICKS(2050)
-#define DATA_ONE_MAX_DURATION	APB1_TICKS(2750)
+#define DATA_ONE_LOW_TICKS		APB1_TICKS(600)
+#define DATA_ONE_MIN_LOW_TICKS		APB1_TICKS(400)
+#define DATA_ONE_MAX_LOW_TICKS		APB1_TICKS(800)
+#define DATA_ONE_HIGH_TICKS		APB1_TICKS(1800)
+#define DATA_ONE_MIN_DURATION_TICKS	APB1_TICKS(2050)
+#define DATA_ONE_MAX_DURATION_TICKS	APB1_TICKS(2750)
 
 /* Time from low that it should be safe to sample an ACK */
-#define NOMINAL_SAMPLE_TIME APB1_TICKS(1050)
+#define NOMINAL_SAMPLE_TIME_TICKS APB1_TICKS(1050)
 
-#define DATA_TIME(type, data) ((data) ? (DATA_ONE_ ## type) : \
-					(DATA_ZERO_ ## type))
+#define DATA_TIME(type, data) ((data) ? (DATA_ONE_ ## type ## _TICKS) : \
+					(DATA_ZERO_ ## type ## _TICKS))
 #define DATA_HIGH(data) DATA_TIME(HIGH, data)
 #define DATA_LOW(data) DATA_TIME(LOW, data)
 
@@ -101,37 +104,41 @@
 #define DEBOUNCE_CUTOFF 3
 
 /* The limit how short a start-bit can be to trigger debounce logic */
-#define DEBOUNCE_LIMIT APB1_TICKS(200)
+#define DEBOUNCE_LIMIT_TICKS APB1_TICKS(200)
 /* The time we ignore the bus for the first three debounce cases */
-#define DEBOUNCE_WAIT_SHORT APB1_TICKS(100)
+#define DEBOUNCE_WAIT_SHORT_TICKS APB1_TICKS(100)
 /* The time we ignore the bus after the three initial debounce cases */
-#define DEBOUNCE_WAIT_LONG APB1_TICKS(500)
+#define DEBOUNCE_WAIT_LONG_TICKS APB1_TICKS(500)
 
 /*
  * The variance in timing we allow outside of the CEC specification for
  * incoming signals. Our measurements aren't 100% accurate either, so this
  * gives some robustness.
  */
-#define VALID_TOLERANCE APB1_TICKS(100)
+#define VALID_TOLERANCE_TICKS APB1_TICKS(100)
 
 /*
  * Defines used for setting capture timers to a point where we are
  * sure that if we get a timeout, something is wrong.
  */
-#define CAP_START_LOW (START_BIT_MAX_LOW + VALID_TOLERANCE)
-#define CAP_START_HIGH (START_BIT_MAX_DURATION - START_BIT_MIN_LOW + \
-						VALID_TOLERANCE)
-#define CAP_DATA_LOW (DATA_ZERO_MAX_LOW + VALID_TOLERANCE)
-#define CAP_DATA_HIGH (DATA_ONE_MAX_DURATION - DATA_ONE_MIN_LOW + \
-						VALID_TOLERANCE)
+#define CAP_START_LOW_TICKS (START_BIT_MAX_LOW_TICKS + VALID_TOLERANCE_TICKS)
+#define CAP_START_HIGH_TICKS (START_BIT_MAX_DURATION_TICKS - \
+			      START_BIT_MIN_LOW_TICKS +	\
+			      VALID_TOLERANCE_TICKS)
+#define CAP_DATA_LOW_TICKS (DATA_ZERO_MAX_LOW_TICKS + VALID_TOLERANCE_TICKS)
+#define CAP_DATA_HIGH_TICKS (DATA_ONE_MAX_DURATION_TICKS - \
+			     DATA_ONE_MIN_LOW_TICKS + \
+			     VALID_TOLERANCE_TICKS)
 
-#define VALID_TIME(type, bit, t)  \
-	((t) >= ((bit ## _MIN_ ## type) - (VALID_TOLERANCE)) && \
-	 (t) <=  (bit ##_MAX_ ## type) + (VALID_TOLERANCE))
+#define VALID_TIME(type, bit, t) \
+	((t) >= ((bit ## _MIN_ ## type ## _TICKS) - (VALID_TOLERANCE_TICKS)) \
+	 && (t) <=  (bit ##_MAX_ ## type ## _TICKS) + (VALID_TOLERANCE_TICKS))
 #define VALID_LOW(bit, t) VALID_TIME(LOW, bit, t)
 #define VALID_HIGH(bit, low_time, high_time) \
-	(((low_time) + (high_time) <= bit ## _MAX_DURATION + VALID_TOLERANCE) \
-	&& ((low_time) + (high_time) >= bit ## _MIN_DURATION - VALID_TOLERANCE))
+	(((low_time) + (high_time) <= \
+	  bit ## _MAX_DURATION_TICKS + VALID_TOLERANCE_TICKS) && \
+	 ((low_time) + (high_time) >= \
+	  bit ## _MIN_DURATION_TICKS - VALID_TOLERANCE_TICKS))
 #define VALID_DATA_HIGH(data, low_time, high_time) ((data) ? \
 				VALID_HIGH(DATA_ONE, low_time, high_time) : \
 				VALID_HIGH(DATA_ZERO, low_time, high_time))
@@ -221,7 +228,7 @@ struct cec_rx {
 	 * Keep track of pulse low time to be able to verify
 	 * pulse duration
 	 */
-	int low_time;
+	int low_ticks;
 	/* Number of too short pulses seen in a row */
 	int debounce_count;
 };
@@ -506,23 +513,23 @@ void enter_state(enum cec_state new_state)
 		gpio = 1;
 		cap_edge = CAP_EDGE_FALLING;
 		if (cec_tx.resends)
-			timeout = FREE_TIME_RS;
+			timeout = FREE_TIME_RS_TICKS;
 		else if (cec_tx.present_initiator)
-			timeout = FREE_TIME_PI;
+			timeout = FREE_TIME_PI_TICKS;
 		else
-			timeout = FREE_TIME_NI;
+			timeout = FREE_TIME_NI_TICKS;
 		break;
 	case CEC_STATE_INITIATOR_START_LOW:
 		cec_tx.present_initiator = 1;
 		cec_tx.msgt.bit = 0;
 		cec_tx.msgt.byte = 0;
 		gpio = 0;
-		timeout = START_BIT_LOW;
+		timeout = START_BIT_LOW_TICKS;
 		break;
 	case CEC_STATE_INITIATOR_START_HIGH:
 		gpio = 1;
 		cap_edge = CAP_EDGE_FALLING;
-		timeout = START_BIT_HIGH;
+		timeout = START_BIT_HIGH_TICKS;
 		break;
 	case CEC_STATE_INITIATOR_HEADER_INIT_LOW:
 	case CEC_STATE_INITIATOR_HEADER_DEST_LOW:
@@ -555,7 +562,8 @@ void enter_state(enum cec_state new_state)
 	case CEC_STATE_INITIATOR_ACK_HIGH:
 		gpio = 1;
 		/* Aim for the middle of the safe sample time */
-		timeout = (DATA_ONE_LOW + DATA_ZERO_LOW)/2 - DATA_ONE_LOW;
+		timeout = (DATA_ONE_LOW_TICKS + DATA_ZERO_LOW_TICKS)/2 -
+							DATA_ONE_LOW_TICKS;
 		break;
 	case CEC_STATE_INITIATOR_ACK_VERIFY:
 		cec_tx.ack = !gpio_get_level(CEC_GPIO_OUT);
@@ -571,23 +579,23 @@ void enter_state(enum cec_state new_state)
 		 * We are at the safe sample time. Wait
 		 * until the end of this bit
 		 */
-		timeout = NOMINAL_BIT_TIME - NOMINAL_SAMPLE_TIME;
+		timeout = NOMINAL_BIT_TICKS - NOMINAL_SAMPLE_TIME_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_START_LOW:
 		cec_tx.present_initiator = 0;
 		cap_edge = CAP_EDGE_RISING;
-		timeout = CAP_START_LOW;
+		timeout = CAP_START_LOW_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_START_HIGH:
 		cec_rx.debounce_count = 0;
 		cap_edge = CAP_EDGE_FALLING;
-		timeout = CAP_START_HIGH;
+		timeout = CAP_START_HIGH_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_DEBOUNCE:
 		if (cec_rx.debounce_count >= DEBOUNCE_CUTOFF) {
-			timeout = DEBOUNCE_WAIT_LONG;
+			timeout = DEBOUNCE_WAIT_LONG_TICKS;
 		} else {
-			timeout = DEBOUNCE_WAIT_SHORT;
+			timeout = DEBOUNCE_WAIT_SHORT_TICKS;
 			cec_rx.debounce_count++;
 		}
 		break;
@@ -595,25 +603,25 @@ void enter_state(enum cec_state new_state)
 	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
 	case CEC_STATE_FOLLOWER_EOM_LOW:
 		cap_edge = CAP_EDGE_RISING;
-		timeout = CAP_DATA_LOW;
+		timeout = CAP_DATA_LOW_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
 	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
 	case CEC_STATE_FOLLOWER_EOM_HIGH:
 		cap_edge = CAP_EDGE_FALLING;
-		timeout = CAP_DATA_HIGH;
+		timeout = CAP_DATA_HIGH_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_ACK_LOW:
 		addr = cec_rx.msgt.buf[0] & 0x0f;
 		if (addr == cec_addr) {
 			/* Destination is our address */
 			gpio = 0;
-			timeout = NOMINAL_SAMPLE_TIME;
+			timeout = NOMINAL_SAMPLE_TIME_TICKS;
 		} else if (addr == CEC_BROADCAST_ADDR) {
 			/* Don't ack broadcast or packets which destination
 			 * are us, but continue reading
 			 */
-			timeout = NOMINAL_SAMPLE_TIME;
+			timeout = NOMINAL_SAMPLE_TIME_TICKS;
 		}
 		break;
 	case CEC_STATE_FOLLOWER_ACK_VERIFY:
@@ -630,7 +638,7 @@ void enter_state(enum cec_state new_state)
 		 * We release the ACK at the end of data zero low
 		 * period (ACK is technically a zero).
 		 */
-		timeout = DATA_ZERO_LOW - NOMINAL_SAMPLE_TIME;
+		timeout = DATA_ZERO_LOW_TICKS - NOMINAL_SAMPLE_TIME_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_ACK_FINISH:
 		gpio = 1;
@@ -640,19 +648,19 @@ void enter_state(enum cec_state new_state)
 				task_set_event(TASK_ID_CEC,
 					       TASK_EVENT_RECEIVED_DATA, 0);
 			}
-			timeout = DATA_ZERO_HIGH;
+			timeout = DATA_ZERO_HIGH_TICKS;
 		} else {
 			cap_edge = CAP_EDGE_FALLING;
-			timeout = CAP_DATA_HIGH;
+			timeout = CAP_DATA_HIGH_TICKS;
 		}
 		break;
 	case CEC_STATE_FOLLOWER_DATA_LOW:
 		cap_edge = CAP_EDGE_RISING;
-		timeout = CAP_DATA_LOW;
+		timeout = CAP_DATA_LOW_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_DATA_HIGH:
 		cap_edge = CAP_EDGE_FALLING;
-		timeout = CAP_DATA_HIGH;
+		timeout = CAP_DATA_HIGH_TICKS;
 		break;
 	/* No default case, since all states must be handled explicitly */
 	}
@@ -802,9 +810,9 @@ static void cec_event_cap(void)
 		/* Rising edge of start bit, validate low time */
 		t =  tmr_cap_get();
 		if (VALID_LOW(START_BIT, t)) {
-			cec_rx.low_time = t;
+			cec_rx.low_ticks = t;
 			enter_state(CEC_STATE_FOLLOWER_START_HIGH);
-		} else if (t < DEBOUNCE_LIMIT) {
+		} else if (t < DEBOUNCE_LIMIT_TICKS) {
 			/* Wait a bit if start-pulses are really short */
 			enter_state(CEC_STATE_FOLLOWER_DEBOUNCE);
 		} else {
@@ -812,7 +820,7 @@ static void cec_event_cap(void)
 		}
 		break;
 	case CEC_STATE_FOLLOWER_START_HIGH:
-		if (VALID_HIGH(START_BIT, cec_rx.low_time, tmr_cap_get()))
+		if (VALID_HIGH(START_BIT, cec_rx.low_ticks, tmr_cap_get()))
 			enter_state(CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
 		else
 			enter_state(CEC_STATE_IDLE);
@@ -822,11 +830,11 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_DATA_LOW:
 		t = tmr_cap_get();
 		if (VALID_LOW(DATA_ZERO, t)) {
-			cec_rx.low_time = t;
+			cec_rx.low_ticks = t;
 			msgt_set_bit(&cec_rx.msgt, 0);
 			enter_state(cec_state + 1);
 		} else if (VALID_LOW(DATA_ONE, t)) {
-			cec_rx.low_time = t;
+			cec_rx.low_ticks = t;
 			msgt_set_bit(&cec_rx.msgt, 1);
 			enter_state(cec_state + 1);
 		} else {
@@ -836,7 +844,7 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
 		t = tmr_cap_get();
 		data = msgt_get_bit(&cec_rx.msgt);
-		if (VALID_DATA_HIGH(data, cec_rx.low_time, t)) {
+		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			msgt_inc_bit(&cec_rx.msgt);
 			if (cec_rx.msgt.bit == 4)
 				enter_state(CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
@@ -849,7 +857,7 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
 		t = tmr_cap_get();
 		data = msgt_get_bit(&cec_rx.msgt);
-		if (VALID_DATA_HIGH(data, cec_rx.low_time, t)) {
+		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			msgt_inc_bit(&cec_rx.msgt);
 			if (cec_rx.msgt.bit == 0)
 				enter_state(CEC_STATE_FOLLOWER_EOM_LOW);
@@ -862,11 +870,11 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_EOM_LOW:
 		t = tmr_cap_get();
 		if (VALID_LOW(DATA_ZERO, t)) {
-			cec_rx.low_time = t;
+			cec_rx.low_ticks = t;
 			cec_rx.eom = 0;
 			enter_state(CEC_STATE_FOLLOWER_EOM_HIGH);
 		} else if (VALID_LOW(DATA_ONE, t)) {
-			cec_rx.low_time = t;
+			cec_rx.low_ticks = t;
 			cec_rx.eom = 1;
 			enter_state(CEC_STATE_FOLLOWER_EOM_HIGH);
 		} else {
@@ -876,7 +884,7 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_EOM_HIGH:
 		t = tmr_cap_get();
 		data = cec_rx.eom;
-		if (VALID_DATA_HIGH(data, cec_rx.low_time, t))
+		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t))
 			enter_state(CEC_STATE_FOLLOWER_ACK_LOW);
 		else
 			enter_state(CEC_STATE_IDLE);
@@ -890,7 +898,7 @@ static void cec_event_cap(void)
 	case CEC_STATE_FOLLOWER_DATA_HIGH:
 		t = tmr_cap_get();
 		data = msgt_get_bit(&cec_rx.msgt);
-		if (VALID_DATA_HIGH(data, cec_rx.low_time, t)) {
+		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			msgt_inc_bit(&cec_rx.msgt);
 			if (cec_rx.msgt.bit == 0)
 				enter_state(CEC_STATE_FOLLOWER_EOM_LOW);
