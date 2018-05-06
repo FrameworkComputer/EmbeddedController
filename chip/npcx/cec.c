@@ -32,6 +32,9 @@
 #define APB1_US(ticks) (100*(ticks)/apb1_freq_div_10k)
 #endif
 
+/* Notification from interrupt to CEC task that data has been received */
+#define TASK_EVENT_RECEIVED_DATA TASK_EVENT_CUSTOM(1 << 0)
+
 /* CEC broadcast address. Also the highest possible CEC address */
 #define CEC_BROADCAST_ADDR 15
 
@@ -40,6 +43,15 @@
  * five resends attempts
  */
 #define CEC_MAX_RESENDS 5
+
+/* Size of circular buffer used to store incoming CEC messages */
+#define CEC_CIRCBUF_SIZE 20
+#if CEC_CIRCBUF_SIZE < MAX_CEC_MSG_LEN + 1
+#error "Buffer must fit at least a CEC message and a length byte"
+#endif
+#if CEC_CIRCBUF_SIZE > 255
+#error "Buffer size must not exceed 255 since offsets are uint8_t"
+#endif
 
 /* Free time timing (us). */
 #define NOMINAL_BIT_TIME APB1_TICKS(2400)
@@ -159,6 +171,22 @@ struct cec_msg_transfer {
 	uint8_t byte;
 };
 
+/*
+ * Circular buffer of completed incoming CEC messages
+ * ready to be read out by AP
+ */
+struct cec_rx_cb {
+	/* Cicular buffer data  */
+	uint8_t buf[CEC_CIRCBUF_SIZE];
+	/*
+	 * Write offset. Updated from interrupt context when we
+	 * have received a complete message.
+	 */
+	uint8_t write_offset;
+	/* Read offset. Updated when AP sends CEC read command */
+	uint8_t read_offset;
+};
+
 /* Receive buffer and states */
 struct cec_rx {
 	/*
@@ -195,6 +223,9 @@ static enum cec_state cec_state;
 /* Parameters and buffers for follower (receiver) state */
 static struct cec_rx cec_rx;
 
+/* Circular buffer of completed incoming */
+static struct cec_rx_cb cec_rx_cb;
+
 /* Parameters and buffer for initiator (sender) state */
 static struct cec_tx cec_tx;
 
@@ -215,6 +246,12 @@ static uint32_t cec_events;
 
 /* APB1 frequency. Store divided by 10k to avoid some runtime divisions */
 static uint32_t apb1_freq_div_10k;
+
+/*
+ * Mutex for the read-offset of the circular buffer. Needed since the
+ * buffer is read and flushed from different contexts
+ */
+static struct mutex circbuf_readoffset_mutex;
 
 static void send_mkbp_event(uint32_t event)
 {
@@ -327,6 +364,75 @@ static int msgt_is_eom(const struct cec_msg_transfer *msgt, int len)
 	return (msgt->byte == len);
 }
 
+static void rx_circbuf_flush(struct cec_rx_cb *cb)
+{
+	mutex_lock(&circbuf_readoffset_mutex);
+	cb->read_offset = 0;
+	mutex_unlock(&circbuf_readoffset_mutex);
+	cb->write_offset = 0;
+}
+
+static int rx_circbuf_push(struct cec_rx_cb *cb, uint8_t *msg, uint8_t msg_len)
+{
+	int i;
+	uint32_t offset;
+
+	offset = cb->write_offset;
+	/* Fill in message length last, if successful. Set to zero for now */
+	cb->buf[offset] = 0;
+	offset = (offset + 1) % CEC_CIRCBUF_SIZE;
+
+	for (i = 0 ; i < msg_len; i++) {
+		if (offset == cb->read_offset) {
+			/* Buffer full */
+			return -1;
+		}
+
+		cb->buf[offset] = msg[i];
+		offset = (offset + 1) % CEC_CIRCBUF_SIZE;
+	}
+
+	/* Commit the push */
+	cb->buf[cb->write_offset] = msg_len;
+	cb->write_offset = offset;
+	mutex_unlock(&circbuf_readoffset_mutex);
+
+	return 0;
+}
+
+static int rx_circbuf_pop(struct cec_rx_cb *cb, uint8_t *msg, uint8_t *msg_len)
+{
+	int i;
+
+	mutex_lock(&circbuf_readoffset_mutex);
+	if (cb->read_offset == cb->write_offset) {
+		/* Circular buffer empty */
+		mutex_unlock(&circbuf_readoffset_mutex);
+		*msg_len = 0;
+		return -1;
+	}
+
+	/* The first byte in the buffer is the message length */
+	*msg_len = cb->buf[cb->read_offset];
+	if (*msg_len == 0 || *msg_len > MAX_CEC_MSG_LEN) {
+		mutex_unlock(&circbuf_readoffset_mutex);
+		*msg_len = 0;
+		CPRINTF("Invalid CEC msg size: %u\n", *msg_len);
+		return -1;
+	}
+
+	cb->read_offset = (cb->read_offset + 1) % CEC_CIRCBUF_SIZE;
+	for (i = 0; i < *msg_len; i++) {
+		msg[i] = cb->buf[cb->read_offset];
+		cb->read_offset = (cb->read_offset + 1) % CEC_CIRCBUF_SIZE;
+
+	}
+
+	mutex_unlock(&circbuf_readoffset_mutex);
+
+	return 0;
+}
+
 void enter_state(enum cec_state new_state)
 {
 	int gpio = -1, timeout = -1;
@@ -339,6 +445,7 @@ void enter_state(enum cec_state new_state)
 		gpio = 1;
 		memset(&cec_rx, 0, sizeof(struct cec_rx));
 		memset(&cec_tx, 0, sizeof(struct cec_tx));
+		memset(&cec_rx_cb, 0, sizeof(struct cec_rx_cb));
 		cap_charge = 0;
 		cec_events = 0;
 		break;
@@ -479,10 +586,8 @@ void enter_state(enum cec_state new_state)
 		if (cec_rx.eom || cec_rx.msgt.byte >= MAX_CEC_MSG_LEN) {
 			addr = cec_rx.msgt.buf[0] & 0x0f;
 			if (addr == cec_addr || addr == CEC_BROADCAST_ADDR) {
-				/*
-				 * TODO(sadolfsson): Do something with
-				 * incoming packet
-				 */
+				task_set_event(TASK_ID_CEC,
+					       TASK_EVENT_RECEIVED_DATA, 0);
 			}
 			timeout = DATA_ZERO_HIGH;
 		} else {
@@ -808,6 +913,11 @@ static int cec_send(const uint8_t *msg, uint8_t len)
 	return 0;
 }
 
+static int cec_recv(uint8_t *msg, uint8_t *len)
+{
+	return rx_circbuf_pop(&cec_rx_cb, msg, len);
+}
+
 static int hc_cec_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_write *params = args->params;
@@ -824,6 +934,24 @@ static int hc_cec_write(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
+
+static int hc_cec_read(struct host_cmd_handler_args *args)
+{
+	struct ec_response_cec_read *response = args->response;
+	uint8_t msg_len;
+
+	if (cec_state == CEC_STATE_DISABLED)
+		return EC_RES_UNAVAILABLE;
+
+	if (cec_recv(response->msg, &msg_len) != 0)
+		return EC_RES_UNAVAILABLE;
+
+	args->response_size = msg_len;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_READ_MSG, hc_cec_read, EC_VER_MASK(0));
+
 
 static int cec_set_enable(uint8_t enable)
 {
@@ -925,12 +1053,42 @@ static void cec_init(void)
 	/* APB1 is the clock we base the timers on */
 	apb1_freq_div_10k = clock_get_apb1_freq()/10000;
 
+	/* Configure TA1 as capture timer input instead of GPIO */
+	CLEAR_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
+	SET_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
+
 	/* Ensure Multi-Function timer is powered up. */
 	CLEAR_BIT(NPCX_PWDWN_CTL(mdl), NPCX_PWDWN_CTL1_MFT1_PD);
 
 	/* Mode 2 - Dual-input capture */
 	SET_FIELD(NPCX_TMCTRL(mdl), NPCX_TMCTRL_MDSEL_FIELD, NPCX_MFT_MDSEL_2);
 
+	/* Enable capture TCNT1 into TCRA and preset TCNT1. */
+	SET_BIT(NPCX_TMCTRL(mdl), NPCX_TMCTRL_TAEN);
+
 	CPRINTS("CEC initialized");
 }
 DECLARE_HOOK(HOOK_INIT, cec_init, HOOK_PRIO_LAST);
+
+void cec_task(void)
+{
+	int rv;
+	uint32_t events;
+
+	CPRINTF("CEC task starting\n");
+
+	while (1) {
+		events = task_wait_event(-1);
+		if (events & TASK_EVENT_RECEIVED_DATA) {
+			rv = rx_circbuf_push(&cec_rx_cb, cec_rx.msgt.buf,
+					     cec_rx.msgt.byte);
+			if (rv < 0) {
+				/* Buffer full, prefer the most recent msg */
+				rx_circbuf_flush(&cec_rx_cb);
+				rx_circbuf_push(&cec_rx_cb, cec_rx.msgt.buf,
+						cec_rx.msgt.byte);
+			}
+			send_mkbp_event(EC_MKBP_CEC_HAVE_DATA);
+		}
+	}
+}
