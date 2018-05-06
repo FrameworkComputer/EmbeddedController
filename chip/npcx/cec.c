@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "clock_chip.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -10,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "mkbp_event.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -126,9 +128,17 @@ static enum cec_state cec_state;
 /* Parameters and buffer for initiator (sender) state */
 static struct cec_tx cec_tx;
 
+/* Events to send to AP */
+static uint32_t cec_events;
+
 /* APB1 frequency. Store divided by 10k to avoid some runtime divisions */
 static uint32_t apb1_freq_div_10k;
 
+static void send_mkbp_event(uint32_t event)
+{
+	atomic_or(&cec_events, event);
+	mkbp_send_event(EC_MKBP_EVENT_CEC);
+}
 
 static void tmr_oneshot_start(int timeout)
 {
@@ -315,6 +325,7 @@ static void cec_event_timeout(void)
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
 				enter_state(CEC_STATE_IDLE);
+				send_mkbp_event(EC_MKBP_CEC_SEND_OK);
 			}
 		} else {
 			if (cec_tx.resends < CEC_MAX_RESENDS) {
@@ -326,6 +337,7 @@ static void cec_event_timeout(void)
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
 				enter_state(CEC_STATE_IDLE);
+				send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
 			}
 		}
 		break;
@@ -404,6 +416,16 @@ static int hc_cec_write(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
+
+static int cec_get_next_event(uint8_t *out)
+{
+	uint32_t event_out = atomic_read_clear(&cec_events);
+
+	memcpy(out, &event_out, sizeof(event_out));
+
+	return sizeof(event_out);
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC, cec_get_next_event);
 
 static void cec_init(void)
 {
