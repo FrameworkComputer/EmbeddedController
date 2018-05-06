@@ -33,8 +33,15 @@
 /* CEC broadcast address. Also the highest possible CEC address */
 #define CEC_BROADCAST_ADDR 15
 
+/*
+ * The CEC specification requires at least one and a maximum of
+ * five resends attempts
+ */
+#define CEC_MAX_RESENDS 5
+
 /* Free time timing (us). */
 #define NOMINAL_BIT_TIME APB1_TICKS(2400)
+#define FREE_TIME_RS	(3 * (NOMINAL_BIT_TIME)) /* Resend */
 #define FREE_TIME_NI	(5 * (NOMINAL_BIT_TIME)) /* New initiator */
 
 /* Start bit timing (us) */
@@ -107,6 +114,8 @@ struct cec_tx {
 	struct cec_msg_transfer msgt;
 	/* Message length */
 	uint8_t len;
+	/* Number of resends attempted in current send */
+	uint8_t resends;
 	/* Acknowledge received from sink? */
 	uint8_t ack;
 };
@@ -181,7 +190,10 @@ void enter_state(enum cec_state new_state)
 		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
 		gpio = 1;
-		timeout = FREE_TIME_NI;
+		if (cec_tx.resends)
+			timeout = FREE_TIME_RS;
+		else
+			timeout = FREE_TIME_NI;
 		break;
 	case CEC_STATE_INITIATOR_START_LOW:
 		cec_tx.msgt.bit = 0;
@@ -301,12 +313,20 @@ static void cec_event_timeout(void)
 			} else {
 				/* Transfer completed successfully */
 				cec_tx.len = 0;
+				cec_tx.resends = 0;
 				enter_state(CEC_STATE_IDLE);
 			}
 		} else {
-			/* Transfer failed */
-			cec_tx.len = 0;
-			enter_state(CEC_STATE_IDLE);
+			if (cec_tx.resends < CEC_MAX_RESENDS) {
+				/* Resend */
+				cec_tx.resends++;
+				enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+			} else {
+				/* Transfer failed */
+				cec_tx.len = 0;
+				cec_tx.resends = 0;
+				enter_state(CEC_STATE_IDLE);
+			}
 		}
 		break;
 	case CEC_STATE_INITIATOR_DATA_LOW:
