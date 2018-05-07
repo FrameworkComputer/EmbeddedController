@@ -170,7 +170,6 @@ static int anx7447_flash_is_empty(int port)
 	int r;
 
 	anx7447_reg_read(port, ANX7447_REG_OCM_VERSION, &r);
-	anx7447_reg_write(port, ANX7447_REG_OCM_VERSION, 0);
 
 	return ((r == 0) ? 1 : 0);
 }
