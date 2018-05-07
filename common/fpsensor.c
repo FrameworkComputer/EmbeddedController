@@ -142,16 +142,19 @@ static uint32_t fp_process_match(void)
 {
 	int res;
 	uint32_t updated = 0;
+	int32_t fgr = -1;
 
 	/* match finger against current templates */
 	CPRINTS("Matching/%d ...", templ_valid);
-	res = fp_finger_match(fp_template[0], templ_valid, fp_buffer, &updated);
-	CPRINTS("Match =>%d", res);
+	res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
+			      &fgr, &updated);
+	CPRINTS("Match =>%d (finger %d)", res, fgr);
 	if (res < 0)
 		res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
 	if (res == EC_MKBP_FP_ERR_MATCH_YES_UPDATED)
 		templ_dirty |= updated;
-	return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res);
+	return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res)
+	| ((fgr << EC_MKBP_FP_MATCH_IDX_OFFSET) & EC_MKBP_FP_MATCH_IDX_MASK);
 }
 
 static void fp_process_finger(void)

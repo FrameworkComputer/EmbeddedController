@@ -3225,6 +3225,10 @@ struct __ec_align2 ec_response_keyboard_factory_test {
 #define EC_MKBP_FP_ENROLL_PROGRESS_OFFSET 4
 #define EC_MKBP_FP_ENROLL_PROGRESS(fpe) (((fpe) & 0x00000FF0) \
 					 >> EC_MKBP_FP_ENROLL_PROGRESS_OFFSET)
+#define EC_MKBP_FP_MATCH_IDX_OFFSET 12
+#define EC_MKBP_FP_MATCH_IDX_MASK 0x0000F000
+#define EC_MKBP_FP_MATCH_IDX(fpe) (((fpe) & EC_MKBP_FP_MATCH_IDX_MASK) \
+					 >> EC_MKBP_FP_MATCH_IDX_OFFSET)
 #define EC_MKBP_FP_ENROLL               (1 << 27)
 #define EC_MKBP_FP_MATCH                (1 << 28)
 #define EC_MKBP_FP_FINGER_DOWN          (1 << 29)

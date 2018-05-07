@@ -102,6 +102,7 @@ int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
  * @param templ a pointer to the array of template buffers.
  * @param templ_count the number of buffers in the array of templates.
  * @param image the buffer containing the finger image
+ * @param match_index index of the matched finger in the template array if any.
  * @param update_bitmap contains one bit per template, the bit is set if the
  * match has updated the given template.
  * @return negative value on error, else one of the following code :
@@ -116,7 +117,7 @@ int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
  *   due to finger covering too little area of the sensor
  */
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
-		    uint32_t *update_bitmap);
+		    int32_t *match_index, uint32_t *update_bitmap);
 
 /*
  * Start a finger enrollment session.
