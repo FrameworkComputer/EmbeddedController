@@ -480,19 +480,6 @@ int board_has_working_reset_flags(void)
 	return 1;
 }
 
-/*
- * Update status of the ACPRESENT pin on the PCH.  In order to prevent
- * Deep S3 when USB is inserted this will indicate that AC is present
- * if either port is supplying VBUS or there an external charger present.
- */
-void board_update_ac_status(void)
-{
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present() ||
-		       board_vbus_source_enabled(0) ||
-		       board_vbus_source_enabled(1));
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, board_update_ac_status, HOOK_PRIO_DEFAULT);
-
 /* Initialize board. */
 static void board_init(void)
 {
@@ -508,8 +495,8 @@ static void board_init(void)
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 
-	/* Update AC status to the PCH */
-	board_update_ac_status();
+	/* Provide AC status to the PCH */
+	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
 #ifndef TEST_BUILD
 	if (board_get_version() == BOARD_VERSION_EVT) {
@@ -526,6 +513,15 @@ static void board_init(void)
 	hook_call_deferred(&board_pmic_init_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Buffer the AC present GPIO to the PCH.
+ */
+static void board_extpower(void)
+{
+	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 int pd_snk_is_vbus_provided(int port)
 {
