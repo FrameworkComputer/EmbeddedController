@@ -35,6 +35,8 @@ enum pwm_channel {
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_PANASONIC,
+	BATTERY_SMP,
+	BATTERY_LGC,
 	BATTERY_TYPE_COUNT,
 };
 
