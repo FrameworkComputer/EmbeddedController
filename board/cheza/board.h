@@ -98,8 +98,8 @@
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_POWER_COMMON
 
-/* NPCX Features */
-#define CONFIG_HIBERNATE_PSL
+/* TODO(b/79348203): Enable EC hibernate */
+#undef CONFIG_HIBERNATE
 
 /* I2C Ports */
 #define I2C_PORT_BATTERY I2C_PORT_POWER
