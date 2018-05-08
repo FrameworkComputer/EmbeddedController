@@ -10,6 +10,7 @@
 #include "dptf.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_backlight.h"
 #include "lpc.h"
 #include "ec_commands.h"
 #include "tablet_mode.h"
@@ -147,7 +148,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #ifdef CONFIG_PWM_KBLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
-			result = pwm_get_duty(PWM_CH_KBLIGHT);
+			result = kblight_get();
 			break;
 #endif
 #ifdef CONFIG_FANS
@@ -231,7 +232,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			 * debug console.
 			 */
 			CPRINTF("\r[%T ACPI kblight %d]", data);
-			pwm_set_duty(PWM_CH_KBLIGHT, data);
+			kblight_set(data);
 			break;
 #endif
 #ifdef CONFIG_FANS

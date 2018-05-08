@@ -7,6 +7,7 @@
 
 #include "compile_time_macros.h"
 #include "i2c.h"
+#include "keyboard_backlight.h"
 #include "lm3509.h"
 
 inline int lm3509_write(uint8_t reg, uint8_t val)
@@ -44,7 +45,7 @@ static int brightness_to_bmain(int percent)
 	return i - 1;
 }
 
-int lm3509_power(int enable)
+static int lm3509_power(int enable)
 {
 	int ret = 0;
 	uint8_t gp = 0, bmain = 0;
@@ -71,7 +72,7 @@ int lm3509_power(int enable)
 	return ret;
 }
 
-int lm3509_set_brightness(int percent)
+static int lm3509_set_brightness(int percent)
 {
 	/* We don't need to read/mask/write BMAIN because bit6 and 7 are non
 	 * functional read only bits.
@@ -79,13 +80,24 @@ int lm3509_set_brightness(int percent)
 	return lm3509_write(LM3509_REG_BMAIN, brightness_to_bmain(percent));
 }
 
-int lm3509_get_brightness(int *percent)
+static int lm3509_get_brightness(void)
 {
 	int rv, val;
 	rv = lm3509_read(LM3509_REG_BMAIN, &val);
 	if (rv)
-		return rv;
+		return -1;
 	val &= LM3509_BMAIN_MASK;
-	*percent = lm3509_brightness[val] / 10;
+	return lm3509_brightness[val] / 10;
+}
+
+static int lm3509_init(void)
+{
 	return EC_SUCCESS;
 }
+
+const struct kblight_drv kblight_lm3509 = {
+	.init = lm3509_init,
+	.set = lm3509_set_brightness,
+	.get = lm3509_get_brightness,
+	.enable = lm3509_power,
+};

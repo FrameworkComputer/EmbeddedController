@@ -32,6 +32,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "keyboard_backlight.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -740,4 +741,21 @@ int board_is_lid_angle_tablet_mode(void)
 {
 	/* Boards with no GMR sensor use lid angles to detect tablet mode. */
 	return oem == PROJECT_NAMI || oem == PROJECT_VAYNE;
+}
+
+void board_kblight_init(void)
+{
+	switch (oem) {
+	default:
+	case PROJECT_NAMI:
+	case PROJECT_VAYNE:
+	case PROJECT_PANTHEON:
+		kblight_register(&kblight_lm3509);
+		break;
+	case PROJECT_SONA:
+		if (sku == 0x3AE2)
+			break;
+		kblight_register(&kblight_pwm);
+		break;
+	}
 }
