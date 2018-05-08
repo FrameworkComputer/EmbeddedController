@@ -16,6 +16,10 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+/* Hardware for proto bip does not support ec keyboard backlight control. */
+#undef CONFIG_PWM
+#undef CONFIG_PWM_KBLIGHT
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

@@ -135,6 +135,8 @@ static void baseboard_chipset_resume(void)
 	 * LID_OPEN connection in hardware.
 	 */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	/* Enable the keyboard backlight */
+	gpio_set_level(GPIO_KB_BL_PWR_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -146,6 +148,8 @@ static void baseboard_chipset_suspend(void)
 	 * LID_OPEN connection in hardware.
 	 */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	/* Disable the keyboard backlight */
+	gpio_set_level(GPIO_KB_BL_PWR_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 	     HOOK_PRIO_DEFAULT);

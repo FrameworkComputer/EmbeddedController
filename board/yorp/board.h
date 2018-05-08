@@ -66,6 +66,11 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum pwm_channel {
+	PWM_CH_KBLIGHT,
+	PWM_CH_COUNT
+};
+
 /* Motion sensors */
 enum sensor_id {
 	LID_ACCEL,
