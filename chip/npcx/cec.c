@@ -78,6 +78,35 @@
 #define DATA_LOW(data) DATA_TIME(LOW, data)
 
 /*
+ * The variance in timing we allow outside of the CEC specification for
+ * incoming signals. Our measurements aren't 100% accurate either, so this
+ * gives some robustness.
+ */
+#define VALID_TOLERANCE APB1_TICKS(100)
+
+/*
+ * Defines used for setting capture timers to a point where we are
+ * sure that if we get a timeout, something is wrong.
+ */
+#define CAP_START_LOW (START_BIT_MAX_LOW + VALID_TOLERANCE)
+#define CAP_START_HIGH (START_BIT_MAX_DURATION - START_BIT_MIN_LOW + \
+						VALID_TOLERANCE)
+#define CAP_DATA_LOW (DATA_ZERO_MAX_LOW + VALID_TOLERANCE)
+#define CAP_DATA_HIGH (DATA_ONE_MAX_DURATION - DATA_ONE_MIN_LOW + \
+						VALID_TOLERANCE)
+
+#define VALID_TIME(type, bit, t)  \
+	((t) >= ((bit ## _MIN_ ## type) - (VALID_TOLERANCE)) && \
+	 (t) <=  (bit ##_MAX_ ## type) + (VALID_TOLERANCE))
+#define VALID_LOW(bit, t) VALID_TIME(LOW, bit, t)
+#define VALID_HIGH(bit, low_time, high_time) \
+	(((low_time) + (high_time) <= bit ## _MAX_DURATION + VALID_TOLERANCE) \
+	&& ((low_time) + (high_time) >= bit ## _MIN_DURATION - VALID_TOLERANCE))
+#define VALID_DATA_HIGH(data, low_time, high_time) ((data) ? \
+				VALID_HIGH(DATA_ONE, low_time, high_time) : \
+				VALID_HIGH(DATA_ZERO, low_time, high_time))
+
+/*
  * CEC state machine states. Each state typically takes action on entry and
  * timeouts. INITIATIOR states are used for sending, FOLLOWER states are used
  *  for receiving.
@@ -99,6 +128,19 @@ enum cec_state {
 	CEC_STATE_INITIATOR_ACK_LOW,
 	CEC_STATE_INITIATOR_ACK_HIGH,
 	CEC_STATE_INITIATOR_ACK_VERIFY,
+	CEC_STATE_FOLLOWER_START_LOW,
+	CEC_STATE_FOLLOWER_START_HIGH,
+	CEC_STATE_FOLLOWER_HEADER_INIT_LOW,
+	CEC_STATE_FOLLOWER_HEADER_INIT_HIGH,
+	CEC_STATE_FOLLOWER_HEADER_DEST_LOW,
+	CEC_STATE_FOLLOWER_HEADER_DEST_HIGH,
+	CEC_STATE_FOLLOWER_EOM_LOW,
+	CEC_STATE_FOLLOWER_EOM_HIGH,
+	CEC_STATE_FOLLOWER_ACK_LOW,
+	CEC_STATE_FOLLOWER_ACK_VERIFY,
+	CEC_STATE_FOLLOWER_ACK_FINISH,
+	CEC_STATE_FOLLOWER_DATA_LOW,
+	CEC_STATE_FOLLOWER_DATA_HIGH,
 };
 
 /* Edge to trigger capture timer interrupt on */
@@ -117,6 +159,24 @@ struct cec_msg_transfer {
 	uint8_t byte;
 };
 
+/* Receive buffer and states */
+struct cec_rx {
+	/*
+	 * The current incoming message being parsed. Copied to
+	 * circular buffer upon completion
+	 */
+	struct cec_msg_transfer msgt;
+	/* End of Message received from source? */
+	uint8_t eom;
+	/* A follower NAK:ed a broadcast transfer */
+	uint8_t broadcast_nak;
+	/*
+	 * Keep track of pulse low time to be able to verify
+	 * pulse duration
+	 */
+	int low_time;
+};
+
 /* Transfer buffer and states */
 struct cec_tx {
 	/* Outgoing message */
@@ -132,8 +192,23 @@ struct cec_tx {
 /* Single state for CEC. We are INITIATOR, FOLLOWER or IDLE */
 static enum cec_state cec_state;
 
+/* Parameters and buffers for follower (receiver) state */
+static struct cec_rx cec_rx;
+
 /* Parameters and buffer for initiator (sender) state */
 static struct cec_tx cec_tx;
+
+/* Value charged into the capture timer on last capture start */
+static int cap_charge;
+
+/*
+ * CEC address of ourself. We ack incoming packages on this address.
+ * However, the AP is responsible for writing the initiator address
+ * on writes. UINT32_MAX means means that the address hasn't been
+ * set by the AP yet.
+ * TODO(sadolfsson): Make it possible to change this using cecset
+ */
+static uint8_t cec_addr = 5;
 
 /* Events to send to AP */
 static uint32_t cec_events;
@@ -161,7 +236,8 @@ static void tmr_cap_start(enum cap_edge edge, int timeout)
 	 * the edge change.
 	 */
 	if (timeout > 0) {
-		NPCX_TCNT1(mdl) = timeout;
+		cap_charge = timeout;
+		NPCX_TCNT1(mdl) = cap_charge;
 		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TCIEN);
 	} else {
 		CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TCIEN);
@@ -182,6 +258,13 @@ static void tmr_cap_stop(void)
 
 	CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TCIEN);
 	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C1CSEL_FIELD, 0);
+}
+
+static int tmr_cap_get(void)
+{
+	int mdl = NPCX_MFT_MODULE_1;
+
+	return (cap_charge - NPCX_TCRA(mdl));
 }
 
 static void tmr_oneshot_start(int timeout)
@@ -212,7 +295,19 @@ static int msgt_get_bit(const struct cec_msg_transfer *msgt)
 	if (msgt->byte >= MAX_CEC_MSG_LEN)
 		return 0;
 
-	return msgt->buf[msgt->byte] & (1 << (7 - msgt->bit));
+	return msgt->buf[msgt->byte] & (0x80 >> msgt->bit);
+}
+
+static void msgt_set_bit(struct cec_msg_transfer *msgt, int val)
+{
+	uint8_t bit_flag;
+
+	if (msgt->byte >= MAX_CEC_MSG_LEN)
+		return;
+	bit_flag = 0x80 >> msgt->bit;
+	msgt->buf[msgt->byte] &= ~bit_flag;
+	if (val)
+		msgt->buf[msgt->byte] |= bit_flag;
 }
 
 static void msgt_inc_bit(struct cec_msg_transfer *msgt)
@@ -236,20 +331,30 @@ void enter_state(enum cec_state new_state)
 {
 	int gpio = -1, timeout = -1;
 	enum cap_edge cap_edge = -1;
+	uint8_t addr;
 
 	cec_state = new_state;
 	switch (new_state) {
 	case CEC_STATE_DISABLED:
 		gpio = 1;
+		memset(&cec_rx, 0, sizeof(struct cec_rx));
 		memset(&cec_tx, 0, sizeof(struct cec_tx));
+		cap_charge = 0;
 		cec_events = 0;
 		break;
 	case CEC_STATE_IDLE:
 		cec_tx.msgt.bit = 0;
 		cec_tx.msgt.byte = 0;
+		cec_rx.msgt.bit = 0;
+		cec_rx.msgt.byte = 0;
 		if (cec_tx.len > 0) {
 			/* Execute a postponed send */
 			enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+		} else {
+			/* Wait for incoming command */
+			gpio = 1;
+			cap_edge = CAP_EDGE_FALLING;
+			timeout = 0;
 		}
 		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
@@ -319,6 +424,79 @@ void enter_state(enum cec_state new_state)
 		 * until the end of this bit
 		 */
 		timeout = NOMINAL_BIT_TIME - NOMINAL_SAMPLE_TIME;
+		break;
+	case CEC_STATE_FOLLOWER_START_LOW:
+		cap_edge = CAP_EDGE_RISING;
+		timeout = CAP_START_LOW;
+		break;
+	case CEC_STATE_FOLLOWER_START_HIGH:
+		cap_edge = CAP_EDGE_FALLING;
+		timeout = CAP_START_HIGH;
+		break;
+	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
+	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
+	case CEC_STATE_FOLLOWER_EOM_LOW:
+		cap_edge = CAP_EDGE_RISING;
+		timeout = CAP_DATA_LOW;
+		break;
+	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
+	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
+	case CEC_STATE_FOLLOWER_EOM_HIGH:
+		cap_edge = CAP_EDGE_FALLING;
+		timeout = CAP_DATA_HIGH;
+		break;
+	case CEC_STATE_FOLLOWER_ACK_LOW:
+		addr = cec_rx.msgt.buf[0] & 0x0f;
+		if (addr == cec_addr) {
+			/* Destination is our address */
+			gpio = 0;
+			timeout = NOMINAL_SAMPLE_TIME;
+		} else if (addr == CEC_BROADCAST_ADDR) {
+			/* Don't ack broadcast or packets which destination
+			 * are us, but continue reading
+			 */
+			timeout = NOMINAL_SAMPLE_TIME;
+		}
+		break;
+	case CEC_STATE_FOLLOWER_ACK_VERIFY:
+		/*
+		 * We are at safe sample time. A broadcast frame is considered
+		 * lost if any follower pulls the line low
+		 */
+		if ((cec_rx.msgt.buf[0] & 0x0f) == CEC_BROADCAST_ADDR)
+			cec_rx.broadcast_nak = !gpio_get_level(CEC_GPIO_OUT);
+		else
+			cec_rx.broadcast_nak = 0;
+
+		/*
+		 * We release the ACK at the end of data zero low
+		 * period (ACK is technically a zero).
+		 */
+		timeout = DATA_ZERO_LOW - NOMINAL_SAMPLE_TIME;
+		break;
+	case CEC_STATE_FOLLOWER_ACK_FINISH:
+		gpio = 1;
+		if (cec_rx.eom || cec_rx.msgt.byte >= MAX_CEC_MSG_LEN) {
+			addr = cec_rx.msgt.buf[0] & 0x0f;
+			if (addr == cec_addr || addr == CEC_BROADCAST_ADDR) {
+				/*
+				 * TODO(sadolfsson): Do something with
+				 * incoming packet
+				 */
+			}
+			timeout = DATA_ZERO_HIGH;
+		} else {
+			cap_edge = CAP_EDGE_FALLING;
+			timeout = CAP_DATA_HIGH;
+		}
+		break;
+	case CEC_STATE_FOLLOWER_DATA_LOW:
+		cap_edge = CAP_EDGE_RISING;
+		timeout = CAP_DATA_LOW;
+		break;
+	case CEC_STATE_FOLLOWER_DATA_HIGH:
+		cap_edge = CAP_EDGE_FALLING;
+		timeout = CAP_DATA_HIGH;
 		break;
 	/* No default case, since all states must be handled explicitly */
 	}
@@ -416,22 +594,151 @@ static void cec_event_timeout(void)
 		else
 			enter_state(CEC_STATE_INITIATOR_DATA_LOW);
 		break;
+	case CEC_STATE_FOLLOWER_ACK_LOW:
+		enter_state(CEC_STATE_FOLLOWER_ACK_VERIFY);
+		break;
+	case CEC_STATE_FOLLOWER_ACK_VERIFY:
+		if (cec_rx.broadcast_nak)
+			enter_state(CEC_STATE_IDLE);
+		else
+			enter_state(CEC_STATE_FOLLOWER_ACK_FINISH);
+		break;
+	case CEC_STATE_FOLLOWER_START_LOW:
+	case CEC_STATE_FOLLOWER_START_HIGH:
+	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
+	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
+	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
+	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
+	case CEC_STATE_FOLLOWER_EOM_LOW:
+	case CEC_STATE_FOLLOWER_EOM_HIGH:
+	case CEC_STATE_FOLLOWER_ACK_FINISH:
+	case CEC_STATE_FOLLOWER_DATA_LOW:
+	case CEC_STATE_FOLLOWER_DATA_HIGH:
+		enter_state(CEC_STATE_IDLE);
+		break;
+
 	}
 }
 
 static void cec_event_cap(void)
 {
+	int t;
+	int data;
+
 	switch (cec_state) {
+	case CEC_STATE_IDLE:
+		/* A falling edge during idle, likely a start bit */
+		enter_state(CEC_STATE_FOLLOWER_START_LOW);
+		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
 	case CEC_STATE_INITIATOR_START_HIGH:
 	case CEC_STATE_INITIATOR_HEADER_INIT_HIGH:
 		/*
 		 * A falling edge during free-time, postpone
-		 * this send
+		 * this send and listen
 		 */
 		cec_tx.msgt.bit = 0;
 		cec_tx.msgt.byte = 0;
-		enter_state(CEC_STATE_IDLE);
+		enter_state(CEC_STATE_FOLLOWER_START_LOW);
+		break;
+	case CEC_STATE_FOLLOWER_START_LOW:
+		/* Rising edge of start bit, validate low time */
+		t =  tmr_cap_get();
+		if (VALID_LOW(START_BIT, t)) {
+			cec_rx.low_time = t;
+			enter_state(CEC_STATE_FOLLOWER_START_HIGH);
+		} else {
+			enter_state(CEC_STATE_IDLE);
+		}
+		break;
+	case CEC_STATE_FOLLOWER_START_HIGH:
+		if (VALID_HIGH(START_BIT, cec_rx.low_time, tmr_cap_get()))
+			enter_state(CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
+		else
+			enter_state(CEC_STATE_IDLE);
+		break;
+	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
+	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
+	case CEC_STATE_FOLLOWER_DATA_LOW:
+		t = tmr_cap_get();
+		if (VALID_LOW(DATA_ZERO, t)) {
+			cec_rx.low_time = t;
+			msgt_set_bit(&cec_rx.msgt, 0);
+			enter_state(cec_state + 1);
+		} else if (VALID_LOW(DATA_ONE, t)) {
+			cec_rx.low_time = t;
+			msgt_set_bit(&cec_rx.msgt, 1);
+			enter_state(cec_state + 1);
+		} else {
+			enter_state(CEC_STATE_IDLE);
+		}
+		break;
+	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
+		t = tmr_cap_get();
+		data = msgt_get_bit(&cec_rx.msgt);
+		if (VALID_DATA_HIGH(data, cec_rx.low_time, t)) {
+			msgt_inc_bit(&cec_rx.msgt);
+			if (cec_rx.msgt.bit == 4)
+				enter_state(CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
+			else
+				enter_state(CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
+		} else {
+			enter_state(CEC_STATE_IDLE);
+		}
+		break;
+	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
+		t = tmr_cap_get();
+		data = msgt_get_bit(&cec_rx.msgt);
+		if (VALID_DATA_HIGH(data, cec_rx.low_time, t)) {
+			msgt_inc_bit(&cec_rx.msgt);
+			if (cec_rx.msgt.bit == 0)
+				enter_state(CEC_STATE_FOLLOWER_EOM_LOW);
+			else
+				enter_state(CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
+		} else {
+			enter_state(CEC_STATE_IDLE);
+		}
+		break;
+	case CEC_STATE_FOLLOWER_EOM_LOW:
+		t = tmr_cap_get();
+		if (VALID_LOW(DATA_ZERO, t)) {
+			cec_rx.low_time = t;
+			cec_rx.eom = 0;
+			enter_state(CEC_STATE_FOLLOWER_EOM_HIGH);
+		} else if (VALID_LOW(DATA_ONE, t)) {
+			cec_rx.low_time = t;
+			cec_rx.eom = 1;
+			enter_state(CEC_STATE_FOLLOWER_EOM_HIGH);
+		} else {
+			enter_state(CEC_STATE_IDLE);
+		}
+		break;
+	case CEC_STATE_FOLLOWER_EOM_HIGH:
+		t = tmr_cap_get();
+		data = cec_rx.eom;
+		if (VALID_DATA_HIGH(data, cec_rx.low_time, t))
+			enter_state(CEC_STATE_FOLLOWER_ACK_LOW);
+		else
+			enter_state(CEC_STATE_IDLE);
+		break;
+	case CEC_STATE_FOLLOWER_ACK_LOW:
+		enter_state(CEC_STATE_FOLLOWER_ACK_FINISH);
+		break;
+	case CEC_STATE_FOLLOWER_ACK_FINISH:
+		enter_state(CEC_STATE_FOLLOWER_DATA_LOW);
+		break;
+	case CEC_STATE_FOLLOWER_DATA_HIGH:
+		t = tmr_cap_get();
+		data = msgt_get_bit(&cec_rx.msgt);
+		if (VALID_DATA_HIGH(data, cec_rx.low_time, t)) {
+			msgt_inc_bit(&cec_rx.msgt);
+			if (cec_rx.msgt.bit == 0)
+				enter_state(CEC_STATE_FOLLOWER_EOM_LOW);
+			else
+				enter_state(CEC_STATE_FOLLOWER_DATA_LOW);
+		} else {
+			enter_state(CEC_STATE_IDLE);
+		}
 		break;
 	default:
 		break;
@@ -440,7 +747,12 @@ static void cec_event_cap(void)
 
 static void cec_event_tx(void)
 {
-	enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+	/*
+	 * If we have an ongoing receive, this transfer
+	 * will start when transitioning to IDLE
+	 */
+	if (cec_state == CEC_STATE_IDLE)
+		enter_state(CEC_STATE_INITIATOR_FREE_TIME);
 }
 
 static void cec_isr(void)
@@ -530,6 +842,12 @@ static int cec_set_enable(uint8_t enable)
 
 	if (enable) {
 		enter_state(CEC_STATE_IDLE);
+
+		/*
+		 * Capture falling edge of first start
+		 * bit to get things going
+		 */
+		tmr_cap_start(CAP_EDGE_FALLING, 0);
 
 		/* Enable timer interrupts */
 		SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
