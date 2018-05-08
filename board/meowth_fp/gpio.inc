@@ -17,7 +17,7 @@ GPIO(WP,                  PIN(B, 7), GPIO_INPUT)
 
 /* Outputs */
 GPIO(EC_INT_L,            PIN(A, 1),  GPIO_INPUT) /* Enabled when PCH is up */
-GPIO(FP_RST_ODL,          PIN(E, 0),  GPIO_ODR_HIGH)
+GPIO(FP_RST_ODL,          PIN(E, 0),  GPIO_OUT_HIGH)
 GPIO(SPI4_NSS,            PIN(E, 4),  GPIO_OUT_HIGH)
 GPIO(USER_PRES_L,         PIN(C, 5),  GPIO_ODR_HIGH)
 
