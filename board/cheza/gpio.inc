@@ -48,13 +48,7 @@ GPIO(AP_EC_INT_L,           PIN(A, 2), GPIO_INPUT)     /* Interrupt line between
 GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_OUT_HIGH)  /* Enable switch cap. XXX: It's active-high */
 GPIO(VBOB_EN,               PIN(9, 5), GPIO_OUT_HIGH)  /* Enable VBOB */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_HIGH)  /* Enable PP3300 */
-/*
- * Before we have VBUS auto-detection, we hack to enable the BC1.2 switch,
- * for USB boot. Enabling PP5000 may cause power leak via VBUS (a USB device
- * may have a pullup on a data line) to block AP boot. Safer to disable PP5000.
- * TODO(waihong): Enable it when remove the BC1.2 hack.
- */
-GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
+GPIO(EN_PP5000,             PIN(6, 7), GPIO_OUT_LOW)   /* EN_PP5000_A: Enable PP5000 */
 GPIO(BL_DISABLE_L,          PIN(2, 6), GPIO_OUT_HIGH)  /* EC_BL_DISABLE_L: Backlight disable signal from EC */
 
 /* Sensors */

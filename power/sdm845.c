@@ -22,6 +22,7 @@
  *  - If POWER_GOOD is dropped by the AP, then we power the AP off
  */
 
+#include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "gpio.h"
@@ -59,6 +60,12 @@
 
 /* Wait for polling the AP on signal */
 #define PMIC_POWER_AP_WAIT		(1 * MSEC)
+
+/* The timeout of the check if the system can boot AP */
+#define CAN_BOOT_AP_CHECK_TIMEOUT	(500 * MSEC)
+
+/* Wait for polling if the system can boot AP */
+#define CAN_BOOT_AP_CHECK_WAIT		(100 * MSEC)
 
 /* Delay between power-on the system and power-on the PMIC */
 #define SYSTEM_POWER_ON_DELAY		(10 * MSEC)
@@ -389,9 +396,39 @@ static void power_off(void)
 	/* Wait longer to ensure the PMIC/AP totally off */
 	usleep(SYSTEM_POWER_OFF_DELAY);
 
+	/* Turn off the 5V rail. */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+	power_5v_enable(task_get_current(), 0);
+#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
+	gpio_set_level(GPIO_EN_PP5000, 0);
+#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
+
 	lid_opened = 0;
 	enable_sleep(SLEEP_MASK_AP_RUN);
 	CPRINTS("power shutdown complete");
+}
+
+/**
+ * Check if the power is enough to boot the AP.
+ */
+static int power_is_enough(void)
+{
+	timestamp_t poll_deadline;
+
+	/* If powered by adapter only, wait a while for PD negoiation. */
+	poll_deadline = get_time();
+	poll_deadline.val += CAN_BOOT_AP_CHECK_TIMEOUT;
+
+	/*
+	 * Wait for PD negotiation. If a system with drained battery, don't
+	 * waste the time and exit the loop.
+	 */
+	while (!system_can_boot_ap() && !charge_want_shutdown() &&
+		get_time().val < poll_deadline.val) {
+		usleep(CAN_BOOT_AP_CHECK_WAIT);
+	}
+
+	return system_can_boot_ap() && !charge_want_shutdown();
 }
 
 /**
@@ -400,10 +437,24 @@ static void power_off(void)
 static void power_on(void)
 {
 	/*
+	 * If no enough power, return and the state machine will transition
+	 * back to S5.
+	 */
+	if (!power_is_enough())
+		return;
+
+	/*
 	 * When power_on() is called, we are at S5S3. Initialize components
 	 * to ready state before AP is up.
 	 */
 	hook_notify(HOOK_CHIPSET_PRE_INIT);
+
+	/* Enable the 5V rail. */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+	power_5v_enable(task_get_current(), 1);
+#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
+	gpio_set_level(GPIO_EN_PP5000, 1);
+#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 
 	set_system_power(1);
 	usleep(SYSTEM_POWER_ON_DELAY);

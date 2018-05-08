@@ -50,7 +50,6 @@ static void anx74xx_cable_det_interrupt(enum gpio_signal signal);
 
 /* 8-bit I2C address */
 #define DA9313_I2C_ADDR		0xd0
-#define CHARGER_I2C_ADDR	0x12
 
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)
@@ -234,13 +233,6 @@ static void board_init(void)
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-
-	/*
-	 * Increase AdapterCurrentLimit{1,2} to max (6080mA)
-	 */
-	i2c_write16(I2C_PORT_POWER, CHARGER_I2C_ADDR, 0x3B, 0x17c0);
-	i2c_write16(I2C_PORT_POWER, CHARGER_I2C_ADDR, 0x3F, 0x17c0);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
