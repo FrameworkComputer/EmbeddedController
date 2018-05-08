@@ -76,14 +76,8 @@ const char help_str[] =
 	"      Prints supported version mask for a command number\n"
 	"  console\n"
 	"      Prints the last output to the EC debug console\n"
-	"  cecset <address|enable> <val>\n"
-	"      Set the value of a CEC setting\n"
-	"  cecget <address|enable>\n"
-	"      Get the value of a CEC setting\n"
-	"  cecread [timeout]\n"
-	"      Read data from the CEC bus\n"
-	"  cecwrite [write bytes...]\n"
-	"      Write data on the CEC bus\n"
+	"  cec\n"
+	"      Read or write CEC messages and settings\n"
 	"  echash [CMDS]\n"
 	"      Various EC hash commands\n"
 	"  eventclear <mask>\n"
@@ -7849,7 +7843,25 @@ int cmd_wait_event(int argc, char *argv[])
 	return 0;
 }
 
-int cmd_cec_write(int argc, char *argv[])
+static void cmd_cec_help(const char *cmd)
+{
+	fprintf(stderr,
+		"  Usage: %s write [write bytes...]\n"
+		"    Write message on the CEC bus\n"
+		"  Usage: %s read [timeout]\n"
+		"    [timeout] in seconds\n"
+		"  Usage: %s get <param>\n"
+		"  Usage: %s set <param> <val>\n"
+		"    <param> is one of:\n"
+		"      address: CEC receive address\n"
+		"        <val> is the new CEC address\n"
+		"      enable: Enable or disable CEC\n"
+		"        <val> is 1 to enable, 0 to disable\n",
+		cmd, cmd, cmd, cmd);
+
+}
+
+static int cmd_cec_write(int argc, char *argv[])
 {
 	char *e;
 	long val;
@@ -7857,14 +7869,15 @@ int cmd_cec_write(int argc, char *argv[])
 	struct ec_params_cec_write p;
 	struct ec_response_get_next_event buffer;
 
-	if (argc < 2 || argc > 17) {
-		fprintf(stderr, "%s <MSG[0]> [MSG[1] ... MSG[15]]>\n", argv[0]);
+	if (argc < 3 || argc > 18) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_cec_help(argv[0]);
 		return -1;
 	}
 
-	msg_len = argc - 1;
+	msg_len = argc - 2;
 	for (i = 0; i < msg_len; i++) {
-		val = strtol(argv[i + 1], &e, 16);
+		val = strtol(argv[i + 2], &e, 16);
 		if (e && *e)
 			return -1;
 		if (val < 0 || val > 0xff)
@@ -7898,7 +7911,7 @@ int cmd_cec_write(int argc, char *argv[])
 	return -1;
 }
 
-int cmd_cec_read(int argc, char *argv[])
+static int cmd_cec_read(int argc, char *argv[])
 {
 	int msg_len, i, rv;
 	char *e;
@@ -7911,10 +7924,10 @@ int cmd_cec_read(int argc, char *argv[])
 		return -EINVAL;
 	}
 
-	if (argc >= 2) {
-		timeout = strtol(argv[1], &e, 0);
+	if (argc >= 3) {
+		timeout = strtol(argv[2], &e, 0);
 		if (e && *e) {
-			fprintf(stderr, "Bad timeout value '%s'.\n", argv[1]);
+			fprintf(stderr, "Bad timeout value '%s'.\n", argv[2]);
 			return -1;
 		}
 	}
@@ -7948,27 +7961,28 @@ static int cec_cmd_from_str(const char *str)
 	return -1;
 }
 
-int cmd_cec_set(int argc, char *argv[])
+static int cmd_cec_set(int argc, char *argv[])
 {
 	char *e;
 	struct ec_params_cec_set p;
 	uint8_t val;
 	int cmd;
 
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s [address|enable] param\n", argv[0]);
+	if (argc != 4) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_cec_help(argv[0]);
 		return -1;
 	}
 
-	val = (uint8_t)strtol(argv[2], &e, 0);
+	val = (uint8_t)strtol(argv[3], &e, 0);
 	if (e && *e) {
-		fprintf(stderr, "Bad parameter '%s'.\n", argv[2]);
+		fprintf(stderr, "Bad parameter '%s'.\n", argv[3]);
 		return -1;
 	}
 
-	cmd = cec_cmd_from_str(argv[1]);
+	cmd = cec_cmd_from_str(argv[2]);
 	if (cmd < 0) {
-		fprintf(stderr, "Invalid command '%s'.\n", argv[1]);
+		fprintf(stderr, "Invalid command '%s'.\n", argv[2]);
 		return -1;
 	}
 	p.cmd = cmd;
@@ -7979,21 +7993,22 @@ int cmd_cec_set(int argc, char *argv[])
 }
 
 
-int cmd_cec_get(int argc, char *argv[])
+static int cmd_cec_get(int argc, char *argv[])
 {
 	int rv, cmd;
 	struct ec_params_cec_get p;
 	struct ec_response_cec_get r;
 
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s [address|enable]\n", argv[0]);
+	if (argc != 3) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_cec_help(argv[0]);
 		return -1;
 	}
 
-	cmd = cec_cmd_from_str(argv[1]);
+	cmd = cec_cmd_from_str(argv[2]);
 	if (cmd < 0) {
-		fprintf(stderr, "Invalid command '%s'.\n", argv[1]);
+		fprintf(stderr, "Invalid command '%s'.\n", argv[2]);
 		return -1;
 	}
 	p.cmd = cmd;
@@ -8006,6 +8021,28 @@ int cmd_cec_get(int argc, char *argv[])
 	printf("%d\n", r.val);
 
 	return 0;
+}
+
+int cmd_cec(int argc, char *argv[])
+{
+	if (argc < 2) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_cec_help(argv[0]);
+		return -1;
+	}
+	if (!strcmp(argv[1], "write"))
+		return cmd_cec_write(argc, argv);
+	if (!strcmp(argv[1], "read"))
+		return cmd_cec_read(argc, argv);
+	if (!strcmp(argv[1], "get"))
+		return cmd_cec_get(argc, argv);
+	if (!strcmp(argv[1], "set"))
+		return cmd_cec_set(argc, argv);
+
+	fprintf(stderr, "Invalid sub command: %s\n", argv[1]);
+	cmd_cec_help(argv[0]);
+
+	return -1;
 }
 
 /* NULL-terminated list of commands */
@@ -8024,10 +8061,7 @@ const struct command commands[] = {
 	{"chipinfo", cmd_chipinfo},
 	{"cmdversions", cmd_cmdversions},
 	{"console", cmd_console},
-	{"cecwrite", cmd_cec_write},
-	{"cecread", cmd_cec_read},
-	{"cecset", cmd_cec_set},
-	{"cecget", cmd_cec_get},
+	{"cec", cmd_cec},
 	{"echash", cmd_ec_hash},
 	{"eventclear", cmd_host_event_clear},
 	{"eventclearb", cmd_host_event_clear_b},
