@@ -88,9 +88,11 @@ static int nx20p3483_set_vbus_source_current_limit(int port,
 		return status;
 
 	regval &= ~NX20P3483_ILIM_MASK;
+
+	/* We need buffer room for all current values. */
 	switch (rp) {
 	case TYPEC_RP_3A0:
-		regval |= NX20P3483_ILIM_3_000;
+		regval |= NX20P3483_ILIM_3_200;
 		break;
 
 	case TYPEC_RP_1A5:
@@ -306,6 +308,7 @@ static void nx20p3483_handle_interrupt(int port)
 
 	/* Check for 5V OC interrupt */
 	if (reg & NX20P3483_INT1_OC_5VSRC) {
+		CPRINTS("C%d: PPC detected overcurrent!", port);
 		/*
 		 * TODO (b/69935262): The overcurrent action hasn't
 		 * been completed yet, but is required for TI PPC. When that
