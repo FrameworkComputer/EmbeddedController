@@ -696,6 +696,7 @@ static int update_static_battery_info(void)
 {
 	char *batt_str;
 	int batt_serial;
+	uint8_t batt_flags = 0;
 	/*
 	 * The return values have type enum ec_error_list, but EC_SUCCESS is
 	 * zero. We'll just look for any failures so we can try them all again.
@@ -743,7 +744,9 @@ static int update_static_battery_info(void)
 	*(int *)host_get_memmap(EC_MEMMAP_BATT_RATE) = 0;
 	*(int *)host_get_memmap(EC_MEMMAP_BATT_CAP) = 0;
 	*(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC) = 0;
-	*host_get_memmap(EC_MEMMAP_BATT_FLAG) = 0;
+	if (extpower_is_present())
+		batt_flags |= EC_BATT_FLAG_AC_PRESENT;
+	*host_get_memmap(EC_MEMMAP_BATT_FLAG) = batt_flags;
 
 	if (rv)
 		problem(PR_STATIC_UPDATE, rv);
