@@ -392,12 +392,16 @@ class Spower(object):
 
     for datum in self._brdcfg:
       if datum["name"] == name:
-        channel = int(datum["channel"])
         rs = int(float(datum["rs"]) * 1000.)
         board = datum["sweetberry"]
 
         if board == self._board:
-          port, addr = self.CHMAP[channel]
+          if 'port' in datum and 'addr' in datum:
+            port = datum['port']
+            addr = datum['addr']
+          else:
+            channel = int(datum["channel"])
+            port, addr = self.CHMAP[channel]
           self.add_ina(port, ina_type, addr, 0, rs, data=datum)
           return True
         else:
