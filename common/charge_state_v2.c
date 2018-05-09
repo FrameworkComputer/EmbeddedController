@@ -1866,8 +1866,14 @@ int charge_prevent_power_on(int power_button_pressed)
 		current_batt_params = &params;
 	}
 
-	/* Require a minimum battery level to power on */
+	/*
+	 * Require a minimum battery level to power on and ensure that the
+	 * battery can prvoide power to the system.
+	 */
 	if (current_batt_params->is_present != BP_YES ||
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+	    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED ||
+#endif
 	    current_batt_params->state_of_charge <
 	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
