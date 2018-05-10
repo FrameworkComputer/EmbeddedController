@@ -46,6 +46,6 @@ void port_80_interrupt(void)
 
 	MCHP_INT_SOURCE(MCHP_P80_GIRQ) = MCHP_P80_GIRQ_BIT(0);
 }
-DECLARE_IRQ(MCHP_IRQ_PORT80DBG0, port_80_interrupt, 2);
+DECLARE_IRQ(MCHP_IRQ_PORT80DBG0, port_80_interrupt, 3);
 
 
