@@ -509,89 +509,19 @@ static void espi_host_init(void)
 	MCHP_ESPI_IO_BAR_VALID(MCHP_ESPI_IO_BAR_ID_CFG_PORT) = 1;
 
 	/* Set up ACPI0 for 0x62/0x66 */
-	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_ACPI_EC0) = 0x04;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_ACPI_EC0) =
-			(0x62ul << 16) + 0x01ul;
-	MCHP_INT_ENABLE(MCHP_ACPI_EC_GIRQ) =
-			MCHP_ACPI_EC_IBF_GIRQ_BIT(0);
-	/* Clear STATUS_PROCESSING bit in case it was set during sysjump */
-	MCHP_ACPI_EC_STATUS(0) &= ~EC_LPC_STATUS_PROCESSING;
-	task_enable_irq(MCHP_IRQ_ACPIEC0_IBF);
+	chip_acpi_ec_config(0, 0x62, 0x04);
 
 	/* Set up ACPI1 for 0x200-0x203, 0x204-0x207 */
-	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_ACPI_EC1) = 0x07;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_ACPI_EC1) =
-			(0x200ul << 16) + 0x01ul;
-	MCHP_INT_ENABLE(MCHP_ACPI_EC_GIRQ) =
-			MCHP_ACPI_EC_IBF_GIRQ_BIT(1);
-	MCHP_ACPI_EC_STATUS(1) &= ~EC_LPC_STATUS_PROCESSING;
-	task_enable_irq(MCHP_IRQ_ACPIEC1_IBF);
+	chip_acpi_ec_config(1, 0x200, 0x07);
 
 	/* Set up 8042 interface at 0x60/0x64 */
-	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_8042) = 0x04;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_8042) =
-			(0x64ul << 16) + 0x01ul;
+	chip_8042_config(0x60);
 
-	/* Set up indication of Auxiliary sts */
-	MCHP_8042_KB_CTRL |= 1 << 7;
-
-	MCHP_8042_ACT |= 1;
-	MCHP_INT_ENABLE(MCHP_8042_GIRQ) = MCHP_8042_OBE_GIRQ_BIT +
-			MCHP_8042_IBF_GIRQ_BIT;
-	task_enable_irq(MCHP_IRQ_8042EM_IBF);
-	task_enable_irq(MCHP_IRQ_8042EM_OBE);
-
-#ifndef CONFIG_KEYBOARD_IRQ_GPIO
-	/* Set up SERIRQ for keyboard */
-	MCHP_8042_KB_CTRL |= (1 << 5);
-	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = 1;
-#endif
-
-	/* Set up EMI module for memory mapped region,
-	 * IO range 0x800-0x80f
-	 */
-	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_EMI0) = 0x0F;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_EMI0) =
-			(0x800ul << 16) + 0x01ul;
-	MCHP_INT_ENABLE(MCHP_EMI_GIRQ) = MCHP_EMI_GIRQ_BIT(0);
-	task_enable_irq(MCHP_IRQ_EMI0);
-
-	/*
-	 * Access data RAM
-	 * MCHP EMI Base address register = physical address in
-	 * SRAM of buffer.
-	 * EMI hardware adds 16-bit offset Host programs into
-	 * EC_Address_LSB/MSB registers.
-	 */
-	MCHP_EMI_MBA0(0) = lpc_mem_mapped_addr();
-
-	/*
-	 * Limit EMI read / write range. First 256 bytes are RW for host
-	 * commands. Second 256 bytes are RO for mem-mapped data.
-	 */
-	MCHP_EMI_MRL0(0) = 0x200;
-	MCHP_EMI_MWL0(0) = 0x100;
+	/* EMI at 0x800 for accessing shared memory */
+	chip_emi0_config(0x800);
 
 	/* Setup Port80 Debug Hardware for I/O 80h */
-	MCHP_P80_CFG(0) = MCHP_P80_FLUSH_FIFO_WO +
-			MCHP_P80_RESET_TIMESTAMP_WO;
-
-	/* IO 0x80 only, mask = 0 */
-	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_P80_0) = 0x00;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_P80_0) =
-			(0x80ul << 16) + 0x01ul;
-
-	MCHP_P80_CFG(0) = MCHP_P80_FIFO_THRHOLD_1 +
-			MCHP_P80_TIMEBASE_1500KHZ +
-			MCHP_P80_TIMER_ENABLE;
-
-
-	MCHP_P80_ACTIVATE(0) = 1;
-
-	MCHP_INT_SOURCE(15) = (1ul << 22);
-	MCHP_INT_ENABLE(15) = (1ul << 22);
-
-	task_enable_irq(MCHP_IRQ_PORT80DBG0);
+	chip_port80_config(0x80);
 
 	lpc_mem_mapped_init();
 

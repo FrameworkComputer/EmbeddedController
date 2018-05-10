@@ -12,6 +12,9 @@
 
 #include "espi.h"
 
+#define MCHP_HOST_IF_LPC  (0)
+#define MCHP_HOST_IF_ESPI (1)
+
 /* eSPI Initialization functions */
 void espi_init(void);
 
@@ -32,8 +35,15 @@ void lpcrst_interrupt(enum gpio_signal signal);
 
 void lpc_set_init_done(int val);
 
-uint32_t lpc_mem_mapped_addr(void);
-
 void lpc_mem_mapped_init(void);
+
+#ifndef CONFIG_HOSTCMD_ESPI
+void lpcrst_interrupt(enum gpio_signal signal);
+#endif
+
+void chip_acpi_ec_config(int instance, uint32_t io_base, uint8_t mask);
+void chip_8042_config(uint32_t io_base);
+void chip_emi0_config(uint32_t io_base);
+void chip_port80_config(uint32_t io_base);
 
 #endif /* __CROS_EC_LPC_CHIP_H */

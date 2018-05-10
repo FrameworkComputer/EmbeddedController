@@ -2166,6 +2166,15 @@
 /* Presence of a Bosh Sensortec BMM150 magnetometer behind a BMI160. */
 #undef CONFIG_MAG_BMI160_BMM150
 
+/* Microchip LPC enable debug messages */
+#undef CONFIG_MCHP_DEBUG_LPC
+
+/* Microchip I2C controller slave addresses */
+#undef CONFIG_MCHP_I2C0_SLAVE_ADDRS
+#undef CONFIG_MCHP_I2C1_SLAVE_ADDRS
+#undef CONFIG_MCHP_I2C2_SLAVE_ADDRS
+#undef CONFIG_MCHP_I2C3_SLAVE_ADDRS
+
 /* Microchip EC SRAM start address */
 #undef CONFIG_MEC_SRAM_BASE_START
 

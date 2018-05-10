@@ -144,6 +144,11 @@
 #undef CONFIG_MCHP_ESPI_EC_CMD
 
 /*
+ * Enable CPRINT debug messages in LPC module
+ */
+#undef CONFIG_MCHP_DEBUG_LPC
+
+/*
  * Define this to use MEC1701 ROM SPI read API
  * in little firmware module instead of SPI code
  * from this module
