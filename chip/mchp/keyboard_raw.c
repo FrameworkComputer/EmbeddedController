@@ -69,8 +69,6 @@ test_mockable int keyboard_raw_read_rows(void)
 
 	b1 = MCHP_KS_KSI_INPUT;
 	b2 = (b1 & 0xff) ^ 0xff;
-	trace2(0, MEC, 0, "raw_read_rows: KSI_IN=0x%02x Invert=0x%02x",
-	       b1, b2);
 
 	/* Invert it so 0=not pressed, 1=pressed */
 	/* return (MCHP_KS_KSI_INPUT & 0xff) ^ 0xff; */
@@ -90,12 +88,6 @@ void keyboard_raw_enable_interrupt(int enable)
 
 void keyboard_raw_interrupt(void)
 {
-	trace3(0, MEC, 0,
-	       "KEYSCAN IRQ KSI_IN=0x%02x KSI_STS=0x%02x KSI_IEN=0x%02x",
-	       MCHP_KS_KSI_INPUT,
-	       MCHP_KS_KSI_STATUS,
-	       MCHP_KS_KSI_INT_EN);
-
 	/* Clear interrupt status bits */
 	MCHP_KS_KSI_STATUS = 0xff;
 
