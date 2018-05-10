@@ -459,6 +459,11 @@
  */
 #undef CONFIG_BOARD_FORCE_RESET_PIN
 
+/*
+ * Call board level configuration at the end of chip level system pre-init.
+ */
+#undef CONFIG_BOARD_SYS_PRE_INIT
+
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
 

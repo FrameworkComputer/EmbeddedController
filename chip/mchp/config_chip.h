@@ -27,7 +27,6 @@
  */
 #define CONFIG_CHIP_PRE_INIT
 
-
 /*
  * MCHP EC's have I2C master/slave
  * controllers and multiple I2C ports. Any

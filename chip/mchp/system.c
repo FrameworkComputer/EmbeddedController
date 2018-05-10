@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "util.h"
 #include "spi.h"
+#include "clock_chip.h"
 #include "lpc_chip.h"
 #include "tfdp_chip.h"
 
@@ -50,7 +51,6 @@ static void check_reset_cause(void)
 	/* Clear the reset causes now that we've read them */
 	MCHP_VBAT_STS |= status;
 	MCHP_PCR_PWR_RST_STS |= rst_sts;
-
 
 	trace0(0, MEC, 0, "check_reset_cause: after clear");
 	trace11(0, MEC, 0, "  VBAT_PFR  = 0x%08X", MCHP_VBAT_STS);
@@ -133,16 +133,35 @@ static void chip_periph_sleep_control(void)
 #ifdef CONFIG_CHIP_PRE_INIT
 void chip_pre_init(void)
 {
+#ifdef CONFIG_MCHP_TFDP
+	uint8_t imgtype;
+#endif
 	chip_periph_sleep_control();
+
+#ifdef CONFIG_MCHP_TFDP
+	/*
+	 * MCHP Enable TFDP for fast debug messages
+	 * If not defined then traceN() and TRACEN() macros are empty
+	 */
+	tfdp_power(1);
+	tfdp_enable(1, 1);
+	imgtype = MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
+	CPRINTS("chip_pre_init: Image type = 0x%02x", imgtype);
+	trace1(0, MEC, 0,
+		"chip_pre_init: Image type = 0x%02x", imgtype);
+
+	trace11(0, MEC, 0,
+		"chip_pre_init: MCHP_VBAT_STS = 0x%0x",
+		MCHP_VBAT_STS);
+	trace11(0, MEC, 0,
+		"chip_pre_init: MCHP_PCR_PWR_RST_STS = 0x%0x",
+		MCHP_VBAT_STS);
+#endif
 }
 #endif
 
 void system_pre_init(void)
 {
-#ifdef CONFIG_MCHP_TFDP
-	uint8_t imgtype;
-#endif
-
 	/*
 	 * Make sure AHB Error capture is enabled.
 	 * Signals bus fault to Cortex-M4 core if an address presented
@@ -178,37 +197,6 @@ void system_pre_init(void)
 	MCHP_INT_BLK_EN = (0x1Ful << 8) + (0x07ul << 24);
 
 	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
-
-#ifdef CONFIG_MCHP_TFDP
-	/*
-	 * MCHP Enable TFDP for fast debug messages
-	 * If not defined then traceN() and TRACEN() macros are empty
-	 */
-	tfdp_power(1);
-	tfdp_enable(1, 1);
-	imgtype = MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
-	CPRINTS("system_pre_init. Image type = 0x%02x", imgtype);
-	trace1(0, MEC, 0, "System pre-init. Image type = 0x%02x", imgtype);
-
-	/* Debug: dump some signals */
-	imgtype = gpio_get_level(GPIO_PCH_RSMRST_L);
-	trace1(0, MEC, 0, "PCH_RSMRST_L = %d", imgtype);
-
-	imgtype = gpio_get_level(GPIO_RSMRST_L_PGOOD);
-	trace1(0, MEC, 0, "RSMRST_L_PGOOD = %d", imgtype);
-	imgtype = gpio_get_level(GPIO_POWER_BUTTON_L);
-	trace1(0, MEC, 0, "POWER_BUTTON_L = %d", imgtype);
-	imgtype = gpio_get_level(GPIO_PMIC_DPWROK);
-	trace1(0, MEC, 0, "PMIC_DPWROK = %d", imgtype);
-	imgtype = gpio_get_level(GPIO_ALL_SYS_PWRGD);
-	trace1(0, MEC, 0, "ALL_SYS_PWRGD = %d", imgtype);
-	imgtype = gpio_get_level(GPIO_AC_PRESENT);
-	trace1(0, MEC, 0, "AC_PRESENT = %d", imgtype);
-	imgtype = gpio_get_level(GPIO_PCH_SLP_SUS_L);
-	trace1(0, MEC, 0, "PCH_SLP_SUS_L = %d", imgtype);
-	imgtype = gpio_get_level(GPIO_PMIC_INT_L);
-	trace1(0, MEC, 0, "PCH_PMIC_INT_L = %d", imgtype);
-#endif
 }
 
 void chip_save_reset_flags(int flags)
@@ -249,7 +237,8 @@ void __attribute__((noreturn)) _system_reset(int flags,
 	/*
 	 * Trigger chip reset
 	 */
-#ifndef CONFIG_CHIPSET_DEBUG
+#if defined(CONFIG_CHIPSET_DEBUG)
+#else
 	MCHP_PCR_SYS_RST |= MCHP_PCR_SYS_SOFT_RESET;
 #endif
 	/* Spin and wait for reboot; should never return */
@@ -364,25 +353,25 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	/* Disable interrupts */
 	interrupt_disable();
-	for (i = 0; i <= 92; ++i) {
+	for (i = 0; i < MCHP_IRQ_MAX; ++i) {
 		task_disable_irq(i);
 		task_clear_pending_irq(i);
 	}
 
-	for (i = 8; i <= 26; ++i)
+	for (i = MCHP_INT_GIRQ_FIRST; i <= MCHP_INT_GIRQ_LAST; ++i) {
 		MCHP_INT_DISABLE(i) = 0xffffffff;
-
-	MCHP_INT_BLK_DIS |= 0xffff00;
+		MCHP_INT_SOURCE(i)  = 0xffffffff;
+	}
 
 	/* Disable UART */
 	MCHP_UART_ACT(0) &= ~0x1;
+#ifdef CONFIG_HOSTCMD_ESPI
+	MCHP_ESPI_ACTIVATE &= ~0x01;
+#else
 	MCHP_LPC_ACT &= ~0x1;
-
+#endif
 	/* Disable JTAG */
 	MCHP_EC_JTAG_EN &= ~1;
-
-	/* Disable 32KHz clock */
-	MCHP_VBAT_CE &= ~0x2;
 
 	/* Stop watchdog */
 	MCHP_WDG_CTL &= ~1;
@@ -390,7 +379,8 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* Stop timers */
 	MCHP_TMR32_CTL(0) &= ~1;
 	MCHP_TMR32_CTL(1) &= ~1;
-	MCHP_TMR16_CTL(0) &= ~1;
+	for (i = 0; i < MCHP_TMR16_MAX; i++)
+		MCHP_TMR16_CTL(i) &= ~1;
 
 	/* Power down ADC */
 	/*
@@ -400,14 +390,6 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	/* Disable blocks */
 	MCHP_PCR_SLOW_CLK_CTL &= ~(MCHP_PCR_SLOW_CLK_CTL_MASK);
-
-	/*
-	 * Set sleep state
-	 * arm sleep state to trigger on next WFI
-	 */
-	CPU_SCB_SYSCTRL |= 0x4;
-	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_HEAVY;
-	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_ALL;
 
 	/* Setup GPIOs for hibernate */
 	if (board_hibernate_late)
@@ -427,33 +409,35 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 		task_enable_irq(MCHP_IRQ_GIRQ10);
 		task_enable_irq(MCHP_IRQ_GIRQ11);
 		task_enable_irq(MCHP_IRQ_GIRQ12);
+		task_enable_irq(MCHP_IRQ_GIRQ26);
 	}
 
 	if (seconds || microseconds) {
-		/*
-		 * Not needed when using direct mode interrupts.
-		 * MCHP_INT_BLK_EN |= 1 << MCHP_HTIMER_GIRQ;
-		 */
-		MCHP_INT_ENABLE(MCHP_HTIMER_GIRQ) =
-				MCHP_HTIMER_GIRQ_BIT(0);
+		htimer_init();
+		system_set_htimer_alarm(seconds, microseconds);
 		interrupt_enable();
-		task_enable_irq(MCHP_IRQ_HTIMER0);
-		if (seconds > 2) {
-			ASSERT(seconds <= 0xffff / 8);
-			MCHP_HTIMER_CONTROL(0) = 1;
-			MCHP_HTIMER_PRELOAD(0) =
-				(seconds * 8 + microseconds / 125000);
-		} else {
-			MCHP_HTIMER_CONTROL(0) = 0;
-			MCHP_HTIMER_PRELOAD(0) =
-				(seconds * 1000000 + microseconds) * 2 / 71;
-		}
+	} else {
+		/* Not using hibernation timer. Disable 32KHz clock */
+		MCHP_VBAT_CE &= ~0x2;
 	}
 
+	/*
+	 * Set sleep state
+	 * arm sleep state to trigger on next WFI
+	 */
+	CPU_SCB_SYSCTRL |= 0x4;
+	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_HEAVY;
+	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_ALL;
+
+	asm("dsb");
 	asm("wfi");
+	asm("isb");
+	asm("nop");
 
 	/* Use 48MHz clock to speed through wake-up */
 	MCHP_PCR_PROC_CLK_CTL = 1;
+
+	trace0(0, SYS, 0, "Wake from hibernate: _system_reset[0,1]");
 
 	/* Reboot */
 	_system_reset(0, 1);

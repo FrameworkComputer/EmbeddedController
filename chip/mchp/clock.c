@@ -143,7 +143,6 @@ DECLARE_HOOK(HOOK_INIT,
 		clock_turbo_disable,
 		HOOK_PRIO_INIT_VBOOT_HASH + 1);
 
-#ifdef CONFIG_LOW_POWER_IDLE
 /**
  * initialization of Hibernation timer0
  * Clear PCR sleep enable.
@@ -152,12 +151,14 @@ DECLARE_HOOK(HOOK_INIT,
  * (exception GPIO's) then the MCHP_INT_BLK_EN GIRQ bit should not be
  * set.
  */
-static void htimer_init(void)
+void htimer_init(void)
 {
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_HTMR0);
+	MCHP_HTIMER_PRELOAD(0) = 0; /* disable at beginning */
+	MCHP_INT_SOURCE(MCHP_HTIMER_GIRQ) =
+			MCHP_HTIMER_GIRQ_BIT(0);
 	MCHP_INT_ENABLE(MCHP_HTIMER_GIRQ) =
 			MCHP_HTIMER_GIRQ_BIT(0);
-	MCHP_HTIMER_PRELOAD(0) = 0; /* disable at beginning */
 
 	task_enable_irq(MCHP_IRQ_HTIMER0);
 }
@@ -168,51 +169,56 @@ static void htimer_init(void)
  *
  * @param seconds      Number of seconds before htimer interrupt
  * @param microseconds Number of microseconds before htimer interrupt
- * @note hibernation timer input clock is 32.768KHz and has two
- * divider values.
+ * @note hibernation timer input clock is 32.768KHz.
  * Control register bit[0] selects the divider.
- * 0 is divide by 1 for 30.5us per LSB for a maximum of ~2 seconds.
+ * 0 is divide by 1 for 30.5us per LSB for a maximum of
+ *	65535 * 30.5us = 1998817.5 us or 32.786 counts per second
  * 1 is divide by 4096 for 0.125s per LSB for a maximum of ~2 hours.
+ *	65535 * 0.125s ~ 8192 s = 2.27 hours
  */
-static void system_set_htimer_alarm(uint32_t seconds,
+void system_set_htimer_alarm(uint32_t seconds,
 		uint32_t microseconds)
 {
-	uint32_t hcnt;
+	uint32_t hcnt, ns;
+	uint8_t hctrl;
 
-	if (microseconds >= 1000000) {
-		seconds += microseconds / 1000000;
-		microseconds -= (microseconds / 1000000) * 1000000;
+	MCHP_HTIMER_PRELOAD(0) = 0; /* disable */
+
+	trace12(0, SLP, 0, "sys set htimer: sec=%d us=%d",
+		seconds, microseconds);
+
+	if (microseconds > 1000000ul) {
+		ns = (microseconds / 1000000ul);
+		microseconds %= 1000000ul;
+		if ((0xfffffffful - seconds) > ns)
+			seconds += ns;
+		else
+			seconds = 0xfffffffful;
 	}
 
-	if (seconds || microseconds) {
-
-		/* if (seconds > 2) { */
-		if (seconds > 1) {
-			/* count from 2 sec to 2 hrs, mec1322 sec 18.10.2 */
-			ASSERT(seconds <= 0xffff / 8);
-			/* 0.125(=1/8) per clock */
-			MCHP_HTIMER_CONTROL(0) = 1;
-			/* (number of counts to be loaded)
-			 * = seconds * ( 8 clocks per second )
-			 *   + microseconds / 125000
-			 *   ---> (0 if (microseconds < 125000)
-			 */
-			hcnt = (seconds * 8 + microseconds / 125000);
-
-		} else { /* count up to 2 sec. */
-			/* 30.5(= 2/61) usec */
-			MCHP_HTIMER_CONTROL(0) = 0;
-
-			/* (number of counts to be loaded)
-			 * = (total microseconds) / 30.5;
-			 */
-			hcnt = (seconds * 1000000 + microseconds) *
-					2 / 61;
-		}
-
-		MCHP_HTIMER_PRELOAD(0) = hcnt;
+	if (seconds > 1) {
+		hcnt = (seconds << 3);	/* divide by 0.125 */
+		if (hcnt > 0xfffful)
+			hcnt = 0xfffful;
+		hctrl = 1;
+	} else {
+		/*
+		 * approximate(~2% error) as seconds is 0 or 1
+		 * seconds / 30.5e-6 + microseonds / 30.5
+		 */
+		hcnt = (seconds << 15) + (microseconds >> 5) +
+			(microseconds >> 10);
+		hctrl = 0;
 	}
+
+	trace12(0, SLP, 0,
+		"sys set htimer: ctrl=0x%0x preload=0x%0x",
+		hctrl, hcnt);
+	MCHP_HTIMER_CONTROL(0) = hctrl;
+	MCHP_HTIMER_PRELOAD(0) = hcnt;
 }
+
+#ifdef CONFIG_LOW_POWER_IDLE
 
 /**
  * return time slept in micro-seconds
@@ -340,17 +346,19 @@ static void prepare_for_deep_sleep(void)
 	/* Stop timers */
 	MCHP_TMR32_CTL(0) &= ~1;
 	MCHP_TMR32_CTL(1) &= ~1;
+#ifdef CONFIG_WATCHDOG_HELP
 	MCHP_TMR16_CTL(0) &= ~1;
+	MCHP_INT_DISABLE(MCHP_TMR16_GIRQ) =
+			MCHP_TMR16_GIRQ_BIT(0);
+	MCHP_INT_SOURCE(MCHP_TMR16_GIRQ) =
+			MCHP_TMR16_GIRQ_BIT(0);
+#endif
 	MCHP_INT_DISABLE(MCHP_TMR32_GIRQ) =
 			MCHP_TMR32_GIRQ_BIT(0) +
 			MCHP_TMR32_GIRQ_BIT(1);
 	MCHP_INT_SOURCE(MCHP_TMR32_GIRQ) =
 			MCHP_TMR32_GIRQ_BIT(0) +
 			MCHP_TMR32_GIRQ_BIT(1);
-	MCHP_INT_DISABLE(MCHP_TMR16_GIRQ) =
-			MCHP_TMR16_GIRQ_BIT(0);
-	MCHP_INT_SOURCE(MCHP_TMR16_GIRQ) =
-			MCHP_TMR16_GIRQ_BIT(0);
 
 #ifdef CONFIG_WATCHDOG
 	/* Stop watchdog */
@@ -359,19 +367,11 @@ static void prepare_for_deep_sleep(void)
 
 
 #ifdef CONFIG_HOSTCMD_ESPI
-	#ifdef CONFIG_POWER_S0IX
 	MCHP_INT_SOURCE(22) = MCHP_INT22_WAKE_ONLY_ESPI;
 	MCHP_INT_ENABLE(22) = MCHP_INT22_WAKE_ONLY_ESPI;
-	#else
-	MCHP_ESPI_ACTIVATE &= ~1;
-	#endif
 #else
-	#ifdef CONFIG_POWER_S0IX
 	MCHP_INT_SOURCE(22) = MCHP_INT22_WAKE_ONLY_LPC;
 	MCHP_INT_ENABLE(22) = MCHP_INT22_WAKE_ONLY_LPC;
-	#else
-	MCHP_LPC_ACT |= 1;
-	#endif
 #endif
 
 #ifdef CONFIG_ADC
@@ -402,7 +402,7 @@ static void prepare_for_deep_sleep(void)
 
 #ifdef CONFIG_CHIPSET_DEBUG
 	/* Disable JTAG and preserve mode */
-	/* MCHP_EC_JTAG_EN &= ~(MCHP_JTAG_ENABLE); */
+	MCHP_EC_JTAG_EN &= ~(MCHP_JTAG_ENABLE);
 #endif
 
 	/* call board level */
