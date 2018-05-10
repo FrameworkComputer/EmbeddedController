@@ -19,17 +19,38 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
+/*
+ * MCHP I2C BAUD clock source is 16 MHz.
+ */
 #define I2C_CLOCK 16000000 /* 16 MHz */
 
+/* SMBus Timing values for 1MHz Speed */
+#define SPEED_1MHZ_BUS_CLOCK		0x0509
+#define SPEED_1MHZ_DATA_TIMING		0x06060601
+#define SPEED_1MHZ_DATA_TIMING_2	0x06
+#define SPEED_1MHZ_IDLE_SCALING		0x01000050
+#define SPEED_1MHZ_TIMEOUT_SCALING	0x149CC2C7
+/* SMBus Timing values for 400kHz speed */
+#define SPEED_400KHZ_BUS_CLOCK		0x0F17
+#define SPEED_400KHZ_DATA_TIMING	0x040A0F01
+#define SPEED_400KHZ_DATA_TIMING_2	0x0A
+#define SPEED_400KHZ_IDLE_SCALING	0x01000050
+#define SPEED_400KHZ_TIMEOUT_SCALING	0x149CC2C7
+/* SMBus Timing values for 100kHz speed */
+#define SPEED_100KHZ_BUS_CLOCK		0x4F4Ful
+#define SPEED_100KHZ_DATA_TIMING	0x0C4D4306ul
+#define SPEED_100KHZ_DATA_TIMING_2	0x4Dul
+#define SPEED_100KHZ_IDLE_SCALING	0x01FC01EDul
+#define SPEED_100KHZ_TIMEOUT_SCALING	0x4B9CC2C7ul
 /* Status */
 #define STS_NBB (1 << 0) /* Bus busy */
 #define STS_LAB (1 << 1) /* Arbitration lost */
 #define STS_LRB (1 << 3) /* Last received bit */
 #define STS_BER (1 << 4) /* Bus error */
 #define STS_PIN (1 << 7) /* Pending interrupt */
-
 /* Control */
 #define CTRL_ACK (1 << 0) /* Acknowledge */
 #define CTRL_STO (1 << 1) /* STOP */
@@ -37,14 +58,41 @@
 #define CTRL_ENI (1 << 3) /* Enable interrupt */
 #define CTRL_ESO (1 << 6) /* Enable serial output */
 #define CTRL_PIN (1 << 7) /* Pending interrupt not */
-
 /* Completion */
-#define COMP_IDLE (1 << 29)    /* i2c bus is idle */
+#define COMP_DTEN	(1 << 2) /* enable device timeouts */
+#define COMP_MCEN	(1 << 3) /* enable master cumulative timeouts */
+#define COMP_SCEN	(1 << 4) /* enable slave cumulative timeouts */
+#define COMP_BIDEN	(1 << 5) /* enable Bus idle timeouts */
+#define COMP_IDLE	(1 << 29)  /* i2c bus is idle */
 #define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
+/* Configuration */
+#define CFG_PORT_MASK	(0x0F)	/* port selection field */
+#define CFG_TCEN	(1 << 4) /* Enable HW bus timeouts */
+#define CFG_FEN		(1 << 8) /* enable input filtering */
+#define CFG_RESET	(1 << 9) /* reset controller */
+#define CFG_ENABLE	(1 << 10) /* enable controller */
+#define CFG_GC_DIS	(1 << 14) /* disable general call address */
+#define CFG_ENIDI	(1 << 29) /* Enable I2C idle interrupt */
+/* Enable network layer master done interrupt */
+#define CFG_ENMI	(1 << 30)
+/* Enable network layer slave done interrupt */
+#define CFG_ENSI	(1 << 31)
+/* Master Command */
+#define MCMD_MRUN		(1 << 0)
+#define MCMD_MPROCEED		(1 << 1)
+#define MCMD_START0		(1 << 8)
+#define MCMD_STARTN		(1 << 9)
+#define MCMD_STOP		(1 << 10)
+#define MCMD_READM		(1 << 12)
+#define MCMD_WCNT_BITPOS	(16)
+#define MCMD_WCNT_MASK0		(0xFF)
+#define MCMD_WCNT_MASK		(0xFF << 16)
+#define MCMD_RCNT_BITPOS	(24)
+#define MCMD_RCNT_MASK0		(0xFF)
+#define MCMD_RCNT_MASK		(0xFF << 24)
 
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
-
 /*
  * Amount of time to blocking wait for i2c bus to finish. After this
  * blocking timeout, if the bus is still not finished, then allow other
@@ -75,22 +123,23 @@ static struct {
 	 */
 	task_id_t task_waiting;
 	enum i2c_transaction_state transaction_state;
+	/* transaction context */
+	int out_size;
+	const uint8_t *outp;
+	int in_size;
+	uint8_t *inp;
+	int xflags;
+	uint32_t i2c_complete; /* ISR write */
+	uint32_t flags;
+	uint8_t port;
+	uint8_t slv_addr;
+	uint8_t ctrl;
+	uint8_t hwsts;
+	uint8_t hwsts2;
+	uint8_t hwsts3; /* ISR write */
+	uint8_t hwsts4;
+	uint8_t lines;
 } cdata[I2C_CONTROLLER_COUNT];
-
-/*
- * Map port number to port name in datasheet, for debug prints.
- * Refer to registers.h
- * MCHP_I2C0_n defines
- */
-static const char __attribute__((unused))
-*i2c_port_names[MCHP_I2C_PORT_COUNT] = {
-	"0_0",
-	"N/A", /* MCHP I2C Port 1 pins not present */
-	"0_2",
-	"1_3",
-	"2_4",
-	"3_5",
-};
 
 static const uint16_t i2c_controller_pcr[MCHP_I2C_CTRL_MAX] = {
 	MCHP_PCR_I2C0,
@@ -103,48 +152,132 @@ static void i2c_ctrl_slp_en(int controller, int sleep_en)
 {
 	if ((controller < 0) || (controller > MCHP_I2C_CTRL_MAX))
 		return;
-
 	if (sleep_en)
 		MCHP_PCR_SLP_EN_DEV(i2c_controller_pcr[controller]);
 	else
 		MCHP_PCR_SLP_DIS_DEV(i2c_controller_pcr[controller]);
 }
 
-static void configure_controller_speed(int controller, int kbps)
+static int chip_i2c_is_controller_valid(int controller)
 {
-	int t_low, t_high;
-	const int period = I2C_CLOCK / 1000 / kbps;
+	if ((controller < 0) || (controller >= MCHP_I2C_CTRL_MAX))
+		return 0;
+	return 1;
+}
 
-	/* Clear PCR sleep enable for controller */
-	i2c_ctrl_slp_en(controller, 0);
+uint32_t chip_i2c_get_ctx_flags(int port)
+{
+	int controller = i2c_port_to_controller(port);
 
-	/*
-	 * Refer to NXP UM10204 for minimum timing requirement of T_Low and
-	 * T_High.
-	 * http://www.nxp.com/documents/user_manual/UM10204.pdf
+	if (!chip_i2c_is_controller_valid(controller))
+		return 0;
+	return cdata[controller].flags;
+}
+
+/*
+ * MCHP I2C controller tuned bus clock values.
+ * MCHP I2C_SMB_Controller_3.6.pdf Table 6-3
+ */
+struct i2c_bus_clk {
+	int freq_khz;
+	int bus_clk;
+};
+
+const struct i2c_bus_clk i2c_freq_tbl[] = {
+	{ 40, 0xC7C7 },
+	{ 80, 0x6363 },
+	{ 100, 0x4F4F },
+	{ 333, 0x0F1F },
+	{ 400, 0x0F17 },
+	{ 1000, 0x0509 },
+};
+
+static int get_closest(int lesser, int greater, int target)
+{
+	if (target - i2c_freq_tbl[lesser].freq_khz >=
+			i2c_freq_tbl[greater].freq_khz - target)
+		return greater;
+	else
+		return lesser;
+}
+
+/*
+ * Return index in i2c_freq_tbl of supported frequeny
+ * closest to requested frequency.
+ */
+static const struct i2c_bus_clk *get_supported_speed_idx(int req_kbps)
+{
+	int i, limit, m, imax;
+
+	ASSERT(ARRAY_SIZE(i2c_freq_tbl) != 0);
+
+	if (req_kbps <= i2c_freq_tbl[0].freq_khz)
+		return &i2c_freq_tbl[0];
+
+	imax = ARRAY_SIZE(i2c_freq_tbl);
+	if (req_kbps >= i2c_freq_tbl[imax-1].freq_khz)
+		return &i2c_freq_tbl[imax-1];
+
+	/* we only get here if ARRAY_SIZE(...) > 1
+	 * and req_kbps is in range.
 	 */
-	if (kbps > 400) {
-		/* Fast mode plus */
-		t_low = t_high = period / 2 - 1;
-		MCHP_I2C_DATA_TIM(controller) = 0x06060601;
-		MCHP_I2C_DATA_TIM_2(controller) = 0x06;
-	} else if (kbps > 100) {
-		/* Fast mode */
-		/* By spec, clk low period is 1.3us min */
-		t_low = MAX((int)(I2C_CLOCK * 1.3 / 1000000), period / 2 - 1);
-		t_high = period - t_low - 2;
-		MCHP_I2C_DATA_TIM(controller) = 0x040a0a01;
-		MCHP_I2C_DATA_TIM_2(controller) = 0x0a;
-	} else {
-		/* Standard mode */
-		t_low = t_high = period / 2 - 1;
-		MCHP_I2C_DATA_TIM(controller) = 0x0c4d5006;
-		MCHP_I2C_DATA_TIM_2(controller) = 0x4d;
+	i = 0;
+	limit = imax;
+	while (i < limit) {
+		m = (i + limit) / 2;
+		if (i2c_freq_tbl[m].freq_khz == req_kbps)
+			break;
+
+		if (req_kbps < i2c_freq_tbl[m].freq_khz) {
+			if (m > 0 && req_kbps > i2c_freq_tbl[m-1].freq_khz) {
+				m = get_closest(m-1, m, req_kbps);
+				break;
+			}
+			limit = m;
+		} else {
+			if (m < imax-1 &&
+				req_kbps < i2c_freq_tbl[m+1].freq_khz) {
+				m = get_closest(m, m+1, req_kbps);
+				break;
+			}
+			i = m + 1;
+		}
 	}
 
-	/* Clock periods is one greater than the contents of these fields */
-	MCHP_I2C_BUS_CLK(controller) = ((t_high & 0xff) << 8) |
-					  (t_low & 0xff);
+	return &i2c_freq_tbl[m];
+}
+
+/*
+ * Refer to NXP UM10204 for minimum timing requirement of T_Low and T_High.
+ * http://www.nxp.com/documents/user_manual/UM10204.pdf
+ * I2C spec. timing value are used in recommended registers values
+ * in MCHP I2C_SMB_Controller_3.6.pdf
+ * Restrict frequencies to those in the above MCHP spec.
+ * 40, 80, 100, 333, 400, and 1000 kHz.
+ */
+static void configure_controller_speed(int controller, int kbps)
+{
+	const struct i2c_bus_clk *p;
+
+	p = get_supported_speed_idx(kbps);
+	MCHP_I2C_BUS_CLK(controller) = p->bus_clk;
+
+	if (p->freq_khz > 400) { /* Fast mode plus */
+		MCHP_I2C_DATA_TIM(controller) = SPEED_1MHZ_DATA_TIMING;
+		MCHP_I2C_DATA_TIM_2(controller) = SPEED_1MHZ_DATA_TIMING_2;
+		MCHP_I2C_IDLE_SCALE(controller) = SPEED_1MHZ_IDLE_SCALING;
+		MCHP_I2C_TOUT_SCALE(controller) = SPEED_1MHZ_TIMEOUT_SCALING;
+	} else if (p->freq_khz > 100) { /* Fast mode */
+		MCHP_I2C_DATA_TIM(controller) = SPEED_400KHZ_DATA_TIMING;
+		MCHP_I2C_DATA_TIM_2(controller) = SPEED_400KHZ_DATA_TIMING_2;
+		MCHP_I2C_IDLE_SCALE(controller) = SPEED_400KHZ_IDLE_SCALING;
+		MCHP_I2C_TOUT_SCALE(controller) = SPEED_400KHZ_TIMEOUT_SCALING;
+	} else { /* Standard mode */
+		MCHP_I2C_DATA_TIM(controller) = SPEED_100KHZ_DATA_TIMING;
+		MCHP_I2C_DATA_TIM_2(controller) = SPEED_100KHZ_DATA_TIMING_2;
+		MCHP_I2C_IDLE_SCALE(controller) = SPEED_100KHZ_IDLE_SCALING;
+		MCHP_I2C_TOUT_SCALE(controller) = SPEED_100KHZ_TIMEOUT_SCALING;
+	}
 }
 
 /*
@@ -162,35 +295,55 @@ static void disable_controller_irq(int controller)
 {
 	MCHP_INT_DISABLE(MCHP_I2C_GIRQ) =
 			MCHP_I2C_GIRQ_BIT(controller);
+	/* read back into read-only reg. to insure disable takes effect */
+	MCHP_INT_BLK_IRQ = MCHP_INT_DISABLE(MCHP_I2C_GIRQ);
 	task_disable_irq(MCHP_IRQ_I2C_0 + controller);
+	task_clear_pending_irq(MCHP_IRQ_I2C_0 + controller);
 }
 
+/*
+ * Do NOT enable controller's IDLE interrupt in the configuration
+ * register. IDLE is meant for mult-master and controller as slave.
+ */
 static void configure_controller(int controller, int port, int kbps)
 {
-	uint32_t cfg;
+	if (!chip_i2c_is_controller_valid(controller))
+		return;
 
-	/* update port select field b[3:0] */
-	cfg = MCHP_I2C_CONFIG(controller) & ~0xf;
-	MCHP_I2C_CONFIG(controller) = cfg + (port & 0xf);
+	disable_controller_irq(controller);
+	MCHP_INT_SOURCE(MCHP_I2C_GIRQ) =
+			MCHP_I2C_GIRQ_BIT(controller);
 
+	/* set to default except for port select field b[3:0] */
+	MCHP_I2C_CONFIG(controller) = (uint32_t)(port & 0xf);
 	MCHP_I2C_CTRL(controller) = CTRL_PIN;
-	MCHP_I2C_OWN_ADDR(controller) = board_i2c_slave_addrs(controller);
-	configure_controller_speed(controller, kbps);
-	MCHP_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-				       CTRL_ACK | CTRL_ENI;
-	MCHP_I2C_CONFIG(controller) |= 1 << 10; /* ENAB */
 
-	/* Enable interrupt */
-	MCHP_I2C_CONFIG(controller) |= 1 << 29; /* ENIDI */
-	enable_controller_irq(controller);
+	/* Set both controller slave addresses to 0 the
+	 * general call address. We disable general call
+	 * below.
+	 */
+	MCHP_I2C_OWN_ADDR(controller) = 0;
+
+	configure_controller_speed(controller, kbps);
+
+	/* Controller timings done, clear RO status, enable
+	 * output, and ACK generation.
+	 */
+	MCHP_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO | CTRL_ACK;
+
+	/* filter enable, disable General Call */
+	MCHP_I2C_CONFIG(controller) |= CFG_FEN + CFG_GC_DIS;
+	/* enable controller */
+	MCHP_I2C_CONFIG(controller) |= CFG_ENABLE;
 }
 
 static void reset_controller(int controller)
 {
 	int i;
 
+	/* Reset asserted for at least one AHB clock */
 	MCHP_I2C_CONFIG(controller) |= 1 << 9;
-	udelay(100);
+	MCHP_EC_ID_RO = 0;
 	MCHP_I2C_CONFIG(controller) &= ~(1 << 9);
 
 	for (i = 0; i < i2c_ports_used; ++i)
@@ -203,6 +356,12 @@ static void reset_controller(int controller)
 		}
 }
 
+/*
+ * !!! WARNING !!!
+ * We have observed task_wait_event_mask() returning 0 if the I2C
+ * controller IDLE interrupt is enabled. We believe it is due to the ISR
+ * post multiple events too quickly but don't have absolute proof.
+ */
 static int wait_for_interrupt(int controller, int timeout)
 {
 	int event;
@@ -234,7 +393,7 @@ static int wait_idle(int controller)
 			return rv;
 		if (get_time().val > block_timeout)
 			rv = wait_for_interrupt(controller,
-						task_timeout - get_time().val);
+					task_timeout - get_time().val);
 		sts = MCHP_I2C_STATUS(controller);
 	}
 
@@ -243,53 +402,127 @@ static int wait_idle(int controller)
 	return EC_SUCCESS;
 }
 
-static int wait_byte_done(int controller)
+/*
+ * Return EC_SUCCESS on ACK of byte else EC_ERROR_UNKNOWN.
+ * Record I2C.Status in cdata[controller] structure.
+ * Byte transmit finished with no I2C bus error or lost arbitration.
+ *	PIN -> 0. LRB bit contains slave ACK/NACK bit.
+ *	Slave ACK:  I2C.Status == 0x00
+ *	Slave NACK: I2C.Status == 0x08
+ * Byte transmit finished with I2C bus errors or lost arbitration.
+ *	PIN -> 0 and BER and/or LAB set.
+ *
+ * Byte receive finished with no I2C bus errors or lost arbitration.
+ *	PIN -> 0. LRB=0/1 based on ACK bit in I2C.Control.
+ *	Master receiver must NACK last byte it wants to receive.
+ *	How do we handle this if we don't know direction of transfer?
+ *	I2C.Control is write-only so we can't see Master's ACK control bit.
+ *
+ */
+static int wait_byte_done(int controller, uint8_t mask, uint8_t expected)
 {
-	uint8_t sts = MCHP_I2C_STATUS(controller);
-	uint64_t block_timeout = get_time().val + I2C_WAIT_BLOCKING_TIMEOUT_US;
-	uint64_t task_timeout = block_timeout + cdata[controller].timeout_us;
-	int rv = 0;
+	uint64_t block_timeout;
+	uint64_t task_timeout;
+	int rv;
+	uint8_t sts;
 
+	rv = 0;
+	block_timeout = get_time().val + I2C_WAIT_BLOCKING_TIMEOUT_US;
+	task_timeout = block_timeout + cdata[controller].timeout_us;
+	sts = MCHP_I2C_STATUS(controller);
+	cdata[controller].hwsts = sts;
 	while (sts & STS_PIN) {
 		if (rv)
 			return rv;
-		if (get_time().val > block_timeout)
+		if (get_time().val > block_timeout) {
 			rv = wait_for_interrupt(controller,
-						task_timeout - get_time().val);
+					task_timeout - get_time().val);
+		}
 		sts = MCHP_I2C_STATUS(controller);
+		cdata[controller].hwsts = sts;
 	}
 
-	return sts & STS_LRB;
+	rv = EC_SUCCESS;
+	if ((sts & mask) != expected)
+		rv = EC_ERROR_UNKNOWN;
+	return rv;
 }
 
 /*
- * MEC1701H allows mapping any I2C port to any controller.
- * port is a zero based number. Call i2c_port_to_controller
- * to look up controller the specified port.
+ * Select port on controller. If controller configured
+ * for port do nothing.
+ * Switch port by reset and reconfigure to handle cases where
+ * the slave on current port is driving line(s) low.
+ * NOTE: I2C hardware reset only requires one AHB clock, back to back
+ * writes is OK but we added a dummy write as insurance.
  */
-static void select_port(int port)
+static void select_port(int port, int controller)
 {
-	uint32_t port_sel = (uint32_t)(port & 0x0f);
-	int controller = i2c_port_to_controller(port);
+	uint32_t port_sel;
 
-	uint32_t cfg = MCHP_I2C_CONFIG(controller) & ~0xf;
+	port_sel = (uint32_t)(port & 0x0f);
+	if ((MCHP_I2C_CONFIG(controller) & 0x0f) == port_sel)
+		return;
 
-	MCHP_I2C_CONFIG(controller) = cfg | port_sel;
-
+	MCHP_I2C_CONFIG(controller) |= 1 << 9;
+	MCHP_EC_ID_RO = 0; /* dummy write to read-only as delay */
+	MCHP_I2C_CONFIG(controller) &= ~(1 << 9);
+	configure_controller(controller, port_sel, i2c_ports[port].kbps);
 }
 
-static inline int get_line_level(int controller)
+/*
+ * Use safe method (reading GPIO.Control PAD input bit)
+ * to obtain SCL line state in bit[0] and SDA line state in bit[1].
+ * NOTE: I2C controller bit-bang register is not safe. Using
+ * bit-bang requires timeouts be disabled and the controller in an
+ * idle state. Switching controller to bit-bang mode when the controller
+ * is not idle will cause problems.
+ */
+static uint32_t get_line_level(int port)
 {
-	int ret, ctrl;
-	/*
-	 * We need to enable BB (Bit Bang) mode in order to read line level
-	 * properly, otherwise line levels return always idle (0x60).
-	 */
-	ctrl = MCHP_I2C_BB_CTRL(controller);
-	MCHP_I2C_BB_CTRL(controller) |= 1;
-	ret = (MCHP_I2C_BB_CTRL(controller) >> 5) & 0x3;
-	MCHP_I2C_BB_CTRL(controller) = ctrl;
-	return ret;
+	uint32_t lines;
+
+	lines = i2c_raw_get_scl(port) & 0x01;
+	lines |= (i2c_raw_get_sda(port) & 0x01) << 1;
+	return lines;
+}
+
+/*
+ * Check if I2C port connected to controller has bus error or
+ * other signalling issues such as stuck clock/data lines.
+ */
+static int i2c_check_recover(int port, int controller)
+{
+	uint32_t lines;
+	uint8_t reg;
+	lines = get_line_level(port);
+	reg = MCHP_I2C_STATUS(controller);
+
+	if ((((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
+			(lines != I2C_LINE_IDLE))) {
+		cdata[controller].flags |= (1ul << 16);
+		CPRINTS("I2C%d port%d recov status 0x%02x, SDA:SCL=0x%0x\n",
+			controller, port, reg, lines);
+		/* Attempt to unwedge the port. */
+		if (lines != I2C_LINE_IDLE)
+			if (i2c_unwedge(port))
+				return EC_ERROR_UNKNOWN;
+
+		/* Bus error, bus busy, or arbitration lost. Try reset. */
+		reset_controller(controller);
+		select_port(port, controller);
+		/*
+		 * We don't know what edges the slave saw, so sleep long enough
+		 * that the slave will see the new start condition below.
+		 */
+		usleep(1000);
+		reg = MCHP_I2C_STATUS(controller);
+		lines = get_line_level(port);
+		if ((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB) ||
+				(lines != I2C_LINE_IDLE))
+			return EC_ERROR_UNKNOWN;
+	}
+	return EC_SUCCESS;
 }
 
 static inline void push_in_buf(uint8_t **in, uint8_t val, int skip)
@@ -300,210 +533,308 @@ static inline void push_in_buf(uint8_t **in, uint8_t val, int skip)
 	}
 }
 
+/*
+ * I2C Master transmit
+ * Caller has filled in cdata[ctrl] parameters
+ */
+static int i2c_mtx(int ctrl)
+{
+	int i, rv;
+
+	rv = EC_SUCCESS;
+	cdata[ctrl].flags |= (1ul << 1);
+	if (cdata[ctrl].xflags & I2C_XFER_START) {
+		cdata[ctrl].flags |= (1ul << 2);
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr;
+		/* Clock out the slave address, sending START bit */
+		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
+			CTRL_ACK | CTRL_STA;
+		cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
+	}
+
+	for (i = 0; i < cdata[ctrl].out_size; ++i) {
+		rv = wait_byte_done(ctrl, 0xff, 0x00);
+		if (rv) {
+			cdata[ctrl].flags |= (1ul << 17);
+			MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO |
+					CTRL_ENI | CTRL_STO | CTRL_ACK;
+			return rv;
+		}
+		cdata[ctrl].flags |= (1ul << 15);
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].outp[i];
+	}
+
+	rv = wait_byte_done(ctrl, 0xff, 0x00);
+	if (rv) {
+		cdata[ctrl].flags |= (1ul << 18);
+		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
+			CTRL_STO | CTRL_ACK;
+		return rv;
+	}
+
+	/*
+	 * Send STOP bit if the stop flag is on, and caller
+	 * doesn't expect to receive data.
+	 */
+	if ((cdata[ctrl].xflags & I2C_XFER_STOP) &&
+			(cdata[ctrl].in_size == 0)) {
+		cdata[ctrl].flags |= (1ul << 3);
+		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO |
+			CTRL_STO | CTRL_ACK;
+		cdata[ctrl].transaction_state = I2C_TRANSACTION_STOPPED;
+	}
+	return rv;
+}
+
+/*
+ * I2C Master-Receive helper routine for sending START or
+ * Repeated-START.
+ * This routine should only be called if a (Repeated-)START
+ * is required.
+ * If I2C controller is Idle or Stopped
+ *   Send START by:
+ *	Write read address to I2C.Data
+ *	Write PIN=ESO=STA=ACK=1, STO=0 to I2C.Ctrl. This
+ *	will trigger controller to output 8-bits of data.
+ * Else if I2C controller is Open (previous START sent)
+ *   Send Repeated-START by:
+ *	Write ESO=STA=ACK=1, PIN=STO=0 to I2C.Ctrl. Controller
+ *	will generate START but not transmit data.
+ *	Write read address to I2C.Data. Controller will transmit
+ *	8-bits of data
+ * Endif
+ * NOTE: Controller clocks in address on SDA as its transmitting.
+ * Therefore 1-byte RX-FIFO will contain address plus R/nW bit.
+ * Controller will wait for slave to release SCL before transmitting
+ * 9th clock and latching (N)ACK on SDA.
+ * Spin on I2C.Status PIN -> 0. Enable I2C interrupt if spin time
+ * exceeds threshold. If a timeout occurs generate STOP and return
+ * an error.
+ *
+ * Because I2C generates clocks for next byte when reading I2C.Data
+ * register we must prepare control logic.
+ * If the caller requests STOP and read length is 1 then set
+ * clear ACK bit in I2C.Ctrl. Set ESO=ENI=1, PIN=STA=STO=ACK=0
+ * in I2C.Ctrl. Master must NACK last byte.
+ */
+static int i2c_mrx_start(int ctrl)
+{
+	uint8_t u8;
+	int rv;
+
+	cdata[ctrl].flags |= (1ul << 4);
+	u8 = CTRL_ESO | CTRL_ENI | CTRL_STA | CTRL_ACK;
+	if (cdata[ctrl].transaction_state == I2C_TRANSACTION_OPEN) {
+		cdata[ctrl].flags |= (1ul << 5);
+		/* Repeated-START then address */
+		MCHP_I2C_CTRL(ctrl) = u8;
+	}
+	MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr | 0x01;
+	if (cdata[ctrl].transaction_state == I2C_TRANSACTION_STOPPED) {
+		cdata[ctrl].flags |= (1ul << 6);
+		/* address then START */
+		MCHP_I2C_CTRL(ctrl) = u8 | CTRL_PIN;
+	}
+	cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
+	/* Controller generates START, transmits data(address) capturing
+	 * 9-bits from SDA (8-bit address + (N)Ack bit).
+	 * We leave captured address in I2C.Data register.
+	 * Master Receive data read routine assumes data is pending
+	 * in I2C.Data
+	 */
+	cdata[ctrl].flags |= (1ul << 7);
+	rv = wait_byte_done(ctrl, 0xff, 0x00);
+	if (rv) {
+		cdata[ctrl].flags |= (1ul << 19);
+		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO |
+			CTRL_STO | CTRL_ACK;
+		return rv;
+	}
+	/* if STOP requested and last 1 or 2 bytes prepare controller
+	 * to NACK last byte. Do this before read of dummy data so
+	 * controller is setup to NACK last byte.
+	 */
+	cdata[ctrl].flags |= (1ul << 8);
+	if (cdata[ctrl].xflags & I2C_XFER_STOP &&
+			(cdata[ctrl].in_size < 2)) {
+		cdata[ctrl].flags |= (1ul << 9);
+		MCHP_I2C_CTRL(ctrl) = CTRL_ESO | CTRL_ENI;
+	}
+	/*
+	 * Read & discard slave address.
+	 * Generates clocks for next data
+	 */
+	cdata[ctrl].flags |= (1ul << 10);
+	u8 = MCHP_I2C_DATA(ctrl);
+	return rv;
+}
+/*
+ * I2C Master-Receive data read helper.
+ * Assumes I2C is in use, (Rpt-)START was previously sent.
+ * Reading I2C.Data generates clocks for the next byte. If caller
+ * requests STOP then we must clear I2C.Ctrl ACK before reading
+ * second to last byte from RX-FIFO data register. Before reading
+ * the last byte we must set I2C.Ctrl to generate a stop after
+ * the read from RX-FIFO register.
+ * NOTE: I2C.Status.LRB only records the (N)ACK bit in master
+ * transmit mode, not in master receive mode.
+ * NOTE2: Do not set ENI bit in I2C.Ctrl for STOP generation.
+ */
+static int i2c_mrx_data(int ctrl)
+{
+	uint32_t nrx = (uint32_t)cdata[ctrl].in_size;
+	uint32_t stop = (uint32_t)cdata[ctrl].xflags & I2C_XFER_STOP;
+	uint8_t *pdest = cdata[ctrl].inp;
+	int rv;
+
+	cdata[ctrl].flags |= (1ul << 11);
+	while (nrx) {
+		rv = wait_byte_done(ctrl, 0xff, 0x00);
+		if (rv) {
+			cdata[ctrl].flags |= (1ul << 20);
+			MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO |
+				CTRL_STO | CTRL_ACK;
+			return rv;
+		}
+		if (stop) {
+			if (nrx == 2) {
+				cdata[ctrl].flags |= (1ul << 12);
+				MCHP_I2C_CTRL(ctrl) = CTRL_ESO | CTRL_ENI;
+			} else if (nrx == 1) {
+				cdata[ctrl].flags |= (1ul << 13);
+				MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO |
+					CTRL_STO | CTRL_ACK;
+			}
+		}
+		*pdest++ = MCHP_I2C_DATA(ctrl);
+		nrx--;
+	}
+	cdata[ctrl].flags |= (1ul << 14);
+	return EC_SUCCESS;
+}
+
+/*
+ * Called from common/i2c_master
+ */
 int chip_i2c_xfer(int port, int slave_addr, const uint8_t *out,
 		int out_size, uint8_t *in, int in_size, int flags)
 {
-	int i;
-	int controller;
-	int send_start = flags & I2C_XFER_START;
-	int send_stop = flags & I2C_XFER_STOP;
-	int skip = 0;
-	int bytes_to_read;
-	uint8_t reg;
+	int ctrl;
 	int ret_done;
 
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
-	select_port(port);
-	controller = i2c_port_to_controller(port);
+	ctrl = i2c_port_to_controller(port);
+	if (ctrl < 0)
+		return EC_ERROR_INVAL;
 
-	if (send_start &&
-	    cdata[controller].transaction_state == I2C_TRANSACTION_STOPPED)
-		wait_idle(controller);
+	cdata[ctrl].flags = (1ul << 0);
+	disable_controller_irq(ctrl);
+	select_port(port, ctrl);
 
-	reg = MCHP_I2C_STATUS(controller);
-	if (send_start &&
-	    cdata[controller].transaction_state == I2C_TRANSACTION_STOPPED &&
-	    (((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB)) ||
-			    (get_line_level(controller)
-			    != I2C_LINE_IDLE))) {
-		CPRINTS("MEC1701 i2c%s bad status 0x%02x, SCL=%d, SDA=%d",
-			i2c_port_names[port], reg,
-			get_line_level(controller) & I2C_LINE_SCL_HIGH,
-			get_line_level(controller) & I2C_LINE_SDA_HIGH);
+	/* store transfer context */
+	cdata[ctrl].i2c_complete = 0;
+	cdata[ctrl].hwsts = 0;
+	cdata[ctrl].hwsts2 = 0;
+	cdata[ctrl].hwsts3 = 0;
+	cdata[ctrl].hwsts4 = 0;
+	cdata[ctrl].port = (uint8_t)(port & 0xff);
+	cdata[ctrl].slv_addr = (uint8_t)(slave_addr & 0xff);
+	cdata[ctrl].out_size = out_size;
+	cdata[ctrl].outp = out;
+	cdata[ctrl].in_size = in_size;
+	cdata[ctrl].inp = in;
+	cdata[ctrl].xflags = flags;
 
-		/* Attempt to unwedge the port. */
-		i2c_unwedge(port);
-
-		/* Bus error, bus busy, or arbitration lost. Try reset. */
-		reset_controller(controller);
-		select_port(port);
-
-		/*
-		 * We don't know what edges the slave saw, so sleep long enough
-		 * that the slave will see the new start condition below.
-		 */
-		usleep(1000);
-	}
-
-	if (out_size) {
-		if (send_start) {
-			MCHP_I2C_DATA(controller) = (uint8_t)slave_addr;
-
-			/* Clock out the slave address, sending START bit */
-			MCHP_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-						       CTRL_ENI | CTRL_ACK |
-						       CTRL_STA;
-			cdata[controller].transaction_state =
-				I2C_TRANSACTION_OPEN;
-		}
-
-		for (i = 0; i < out_size; ++i) {
-			ret_done = wait_byte_done(controller);
-			if (ret_done)
-				goto err_chip_i2c_xfer;
-
-			MCHP_I2C_DATA(controller) = out[i];
-		}
-		ret_done = wait_byte_done(controller);
+	if ((flags & I2C_XFER_START) &&
+		cdata[ctrl].transaction_state == I2C_TRANSACTION_STOPPED) {
+		wait_idle(ctrl);
+		ret_done = i2c_check_recover(port, ctrl);
 		if (ret_done)
 			goto err_chip_i2c_xfer;
+	}
 
-		/*
-		 * Send STOP bit if the stop flag is on, and caller
-		 * doesn't expect to receive data.
-		 */
-		if (send_stop && in_size == 0) {
-			MCHP_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-						       CTRL_STO | CTRL_ACK;
-			cdata[controller].transaction_state =
-				I2C_TRANSACTION_STOPPED;
-		}
+	ret_done = EC_SUCCESS;
+	if (out_size) {
+		ret_done = i2c_mtx(ctrl);
+		if (ret_done)
+			goto err_chip_i2c_xfer;
 	}
 
 	if (in_size) {
-		/* Resend start bit when changing direction */
-		if (out_size || send_start) {
-			/* Repeated start case */
-			if (cdata[controller].transaction_state ==
-			    I2C_TRANSACTION_OPEN)
-				MCHP_I2C_CTRL(controller) = CTRL_ESO |
-							       CTRL_STA |
-							       CTRL_ACK |
-							       CTRL_ENI;
-
-			MCHP_I2C_DATA(controller) = (uint8_t)slave_addr
-						     | 0x01;
-
-			/* New transaction case, clock out slave address. */
-			if (cdata[controller].transaction_state ==
-			    I2C_TRANSACTION_STOPPED)
-				MCHP_I2C_CTRL(controller) = CTRL_ESO |
-							       CTRL_STA |
-							       CTRL_ACK |
-							       CTRL_ENI |
-							       CTRL_PIN;
-
-			cdata[controller].transaction_state =
-				I2C_TRANSACTION_OPEN;
-
-			/* Skip over the dummy byte */
-			skip = 1;
-			in_size++;
-		}
-
-		/* Special flags need to be set for last two bytes */
-		bytes_to_read = send_stop ? in_size - 2 : in_size;
-
-		for (i = 0; i < bytes_to_read; ++i) {
-			ret_done = wait_byte_done(controller);
+		if (cdata[ctrl].xflags & I2C_XFER_START) {
+			ret_done = i2c_mrx_start(ctrl);
 			if (ret_done)
 				goto err_chip_i2c_xfer;
-
-			push_in_buf(&in, MCHP_I2C_DATA(controller), skip);
-			skip = 0;
 		}
-		ret_done = wait_byte_done(controller);
+		ret_done = i2c_mrx_data(ctrl);
 		if (ret_done)
 			goto err_chip_i2c_xfer;
-
-		if (send_stop) {
-			/*
-			 * De-assert ACK bit before reading the next to last
-			 * byte, so that the last byte is NACK'ed.
-			 */
-			MCHP_I2C_CTRL(controller) = CTRL_ESO | CTRL_ENI;
-			push_in_buf(&in, MCHP_I2C_DATA(controller), skip);
-			ret_done = wait_byte_done(controller);
-			if (ret_done)
-				goto err_chip_i2c_xfer;
-
-			/* Send STOP */
-			MCHP_I2C_CTRL(controller) =
-				CTRL_PIN | CTRL_ESO | CTRL_ACK | CTRL_STO;
-
-			cdata[controller].transaction_state =
-				I2C_TRANSACTION_STOPPED;
-
-			/*
-			 * We need to know our stop point two bytes in
-			 * advance. If we don't know soon enough, we need
-			 * to do an extra dummy read (to last_addr + 1) to
-			 * issue the stop.
-			 */
-			push_in_buf(&in, MCHP_I2C_DATA(controller),
-				    in_size == 1);
-		}
 	}
+
+	cdata[ctrl].flags |= (1ul << 15);
+	/* MCHP wait for STOP to complete */
+	if (cdata[ctrl].xflags & I2C_XFER_STOP)
+		wait_idle(ctrl);
 
 	/* Check for error conditions */
-	if (MCHP_I2C_STATUS(controller) & (STS_LAB | STS_BER))
-		return EC_ERROR_UNKNOWN;
-
+	if (MCHP_I2C_STATUS(ctrl) & (STS_LAB | STS_BER)) {
+		cdata[ctrl].flags |= (1ul << 21);
+		goto err_chip_i2c_xfer;
+	}
+	cdata[ctrl].flags |= (1ul << 14);
 	return EC_SUCCESS;
-err_chip_i2c_xfer:
-	/* Send STOP and return error */
-	MCHP_I2C_CTRL(controller) = CTRL_PIN | CTRL_ESO |
-				       CTRL_STO | CTRL_ACK;
-	cdata[controller].transaction_state = I2C_TRANSACTION_STOPPED;
-	if (ret_done == STS_LRB) {
-		return EC_ERROR_BUSY;
-	}
-	else if (ret_done == EC_ERROR_TIMEOUT) {
-		/*
-		 * If our transaction timed out then our i2c controller
-		 * may be wedged without showing any other outward signs
-		 * of failure. Reset the controller so that future
-		 * transactions have a chance of success.
-		 */
-		reset_controller(controller);
-		return EC_ERROR_TIMEOUT;
-	}
-	else {
-		return EC_ERROR_UNKNOWN;
-	}
-}
 
+err_chip_i2c_xfer:
+	cdata[ctrl].flags |= (1ul << 22);
+	cdata[ctrl].hwsts2 = MCHP_I2C_STATUS(ctrl); /* record status */
+	/* NOTE: writing I2C.Ctrl.PIN=1 will clear all bits
+	 * except NBB in I2C.Status
+	 */
+	MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO |
+				       CTRL_STO | CTRL_ACK;
+	cdata[ctrl].transaction_state = I2C_TRANSACTION_STOPPED;
+	/* record status after STOP */
+	cdata[ctrl].hwsts4 = MCHP_I2C_STATUS(ctrl);
+
+	/* record line levels.
+	 * Note line levels may reflect STOP condition
+	 */
+	cdata[ctrl].lines = (uint8_t)get_line_level(cdata[ctrl].port);
+	if (cdata[ctrl].hwsts2 & STS_BER) {
+		cdata[ctrl].flags |= (1ul << 23);
+		reset_controller(ctrl);
+	}
+	return EC_ERROR_UNKNOWN;
+}
+/*
+ * A safe method of reading port's SCL pin level.
+ */
 int i2c_raw_get_scl(int port)
 {
 	enum gpio_signal g;
 
-	/* If no SCL pin defined for this port, then return 1 to appear idle. */
+	/* If no SCL pin defined for this port,
+	 * then return 1 to appear idle.
+	 */
 	if (get_scl_from_i2c_port(port, &g) != EC_SUCCESS)
 		return 1;
-
 	return gpio_get_level(g);
 }
 
+/*
+ * A safe method of reading port's SDA pin level.
+ */
 int i2c_raw_get_sda(int port)
 {
 	enum gpio_signal g;
 
-	/* If no SDA pin defined for this port, then return 1 to appear idle. */
+	/* If no SDA pin defined for this port,
+	 * then return 1 to appear idle.
+	 */
 	if (get_sda_from_i2c_port(port, &g) != EC_SUCCESS)
 		return 1;
-
 	return gpio_get_level(g);
 }
 
@@ -512,10 +843,14 @@ int i2c_raw_get_sda(int port)
  */
 int i2c_get_line_levels(int port)
 {
-	int rv;
+	int rv, controller;
 
-	select_port(port);
-	rv = get_line_level(i2c_port_to_controller(port));
+	controller = i2c_port_to_controller(port);
+	if (controller < 0)
+		return 0x03; /* No controller, return high line levels */
+
+	select_port(port, controller);
+	rv = get_line_level(port);
 	return rv;
 }
 
@@ -544,9 +879,9 @@ void i2c_set_timeout(int port, uint32_t timeout)
  */
 static void i2c_init(void)
 {
-	int i;
-	int controller, kbps;
+	int i, controller, kbps;
 	int controller_kbps[MCHP_I2C_CTRL_MAX];
+	const struct i2c_bus_clk *pbc;
 
 	for (i = 0; i < MCHP_I2C_CTRL_MAX; i++)
 		controller_kbps[i] = 0;
@@ -554,40 +889,50 @@ static void i2c_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
 
+	memset(cdata, 0, sizeof(cdata));
+
 	for (i = 0; i < i2c_ports_used; ++i) {
 		controller = i2c_port_to_controller(i2c_ports[i].port);
-
 		kbps = i2c_ports[i].kbps;
-		if (controller_kbps[controller] && 
+
+		/* Clear PCR sleep enable for controller */
+		i2c_ctrl_slp_en(controller, 0);
+
+		if (controller_kbps[controller] &&
 				(controller_kbps[controller] != kbps)) {
-			CPRINTS("i2c_init(): controller %d"
-				" speed conflict: %d != %d",
-				controller, kbps, 
+			CPRINTF("I2C[%d] init speed conflict: %d != %d\n",
+				controller, kbps,
 				controller_kbps[controller]);
 			kbps = MIN(kbps, controller_kbps[controller]);
 		}
-		controller_kbps[controller] = kbps;
 
+		/* controller speed hardware limits */
+		pbc = get_supported_speed_idx(kbps);
+		if (pbc->freq_khz != kbps)
+			CPRINTF("I2C[%d] init requested speed %d"
+				" using closest supported speed %d\n",
+				controller, kbps, pbc->freq_khz);
+
+		controller_kbps[controller] = pbc->freq_khz;
 		configure_controller(controller, i2c_ports[i].port,
 					controller_kbps[controller]);
-
 		cdata[controller].task_waiting = TASK_ID_INVALID;
 		cdata[controller].transaction_state = I2C_TRANSACTION_STOPPED;
-
 		/* Use default timeout. */
 		i2c_set_timeout(i2c_ports[i].port, 0);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, i2c_init, HOOK_PRIO_INIT_I2C);
-
+/*
+ * Handle I2C interrupts.
+ * I2C controller is configured to fire interrupts on
+ * anything causing PIN 1->0 and I2C IDLE (NBB -> 1).
+ * NVIC interrupt disable must clear NVIC pending bit.
+ */
 static void handle_interrupt(int controller)
 {
+	uint32_t r;
 	int id = cdata[controller].task_waiting;
-
-	/* Clear the interrupt status */
-	MCHP_I2C_COMPLETE(controller) &= (COMP_RW_BITS_MASK | COMP_IDLE);
-
-	MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
 
 	/*
 	 * Write to control register interferes with I2C transaction.
@@ -595,6 +940,12 @@ static void handle_interrupt(int controller)
 	 * we want to wait for STS_PIN/STS_NBB.
 	 */
 	disable_controller_irq(controller);
+	cdata[controller].hwsts3 = MCHP_I2C_STATUS(controller);
+	/* Clear all interrupt status */
+	r = MCHP_I2C_COMPLETE(controller);
+	MCHP_I2C_COMPLETE(controller) = r;
+	cdata[controller].i2c_complete = r;
+	MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
 
 	/* Wake up the task which was waiting on the I2C interrupt, if any. */
 	if (id != TASK_ID_INVALID)
