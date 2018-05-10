@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+#define DEBUG_LPC		0
+#define DEBUG_I2C		0
 
 /*
  * Helper function for RAM address aliasing
@@ -429,7 +431,7 @@
 #define MCHP_INT15_8042_OBE		(1ul << 18)
 #define MCHP_INT15_8042_IBF		(1ul << 19)
 #define MCHP_INT15_MAILBOX		(1ul << 20)
-#define MCHP_INT15_P80(x)		(1ul << (22 + (x) & 0x01))
+#define MCHP_INT15_P80(x)		(1ul << (22 + ((x) & 0x01)))
 
 
 /* Bits for INT=16(GIRQ16) registers */
@@ -644,8 +646,18 @@
 #define MCHP_GPIO_CTRL_FUNC_3		(3 << 12)
 #define MCHP_GPIO_CTRL_OUT_LVL		(1 << 16)
 
+/* GPIO Parallel Input and Output registers.
+ * gpio_bank in [0, 5]
+ */
+#define MCHP_GPIO_PARIN(gpio_bank) REG32(MCHP_GPIO_BASE + 0x0300 +\
+	((gpio_bank) << 2))
+
+#define MCHP_GPIO_PAROUT(gpio_bank) REG32(MCHP_GPIO_BASE + 0x0380 +\
+	((gpio_bank) << 2))
 
 /* Timer */
+#define MCHP_TMR16_MAX		(4)
+#define MCHP_TMR32_MAX		(2)
 #define MCHP_TMR16_BASE(x)  (0x40000c00 + (x) * 0x20)
 #define MCHP_TMR32_BASE(x)  (0x40000c80 + (x) * 0x20)
 
@@ -814,6 +826,12 @@
 #define MCHP_LPC_P80DBG0_BAR  REG32(MCHP_LPC_CFG_BASE + 0x9C)
 #define MCHP_LPC_P80DBG1_BAR  REG32(MCHP_LPC_CFG_BASE + 0xA0)
 #define MCHP_LPC_RTC_BAR      REG32(MCHP_LPC_CFG_BASE + 0xA4)
+
+#define MCHP_LPC_ACPI_EC_BAR(x) REG32(MCHP_LPC_CFG_BASE + 0x6C + ((x)<<2))
+
+/* LPC BAR bits */
+#define MCHP_LPC_IO_BAR_ADDR_BITPOS	(16)
+#define MCHP_LPC_IO_BAR_EN		(1ul << 15)
 
 /* LPC Generic Memory BAR's, 64-bit registers */
 #define MCHP_LPC_SRAM0_BAR_LO    REG32(MCHP_LPC_CFG_BASE + 0xB0)
@@ -992,6 +1010,7 @@
 
 
 /* ACPI */
+#define MCHP_ACPI_EC_MAX		(5)
 #define MCHP_ACPI_EC_BASE(x)		(0x400f0800 + ((x) << 10))
 #define MCHP_ACPI_EC_EC2OS(x, y)	REG8(MCHP_ACPI_EC_BASE(x) +\
 	0x100 + (y))
@@ -2209,6 +2228,8 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #define MCHP_IRQ_CCT_CMP1	154
 #define MCHP_IRQ_EEPROM		155
 #define MCHP_IRQ_ESPI_VW_EN	156
+
+#define MCHP_IRQ_MAX		157
 
 #else
 #error "BUILD ERROR: CHIP_FAMILY_MEC17XX not defined!"
