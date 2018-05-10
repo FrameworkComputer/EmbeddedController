@@ -53,13 +53,18 @@
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR OPT3001_I2C_ADDR1
 #define ALS_COUNT 1
-#define CONFIG_SYNC
 
+#ifdef BOARD_MEOWTH
+#define CONFIG_SYNC
+#endif
+
+#ifdef BOARD_MEOWTH
 /* FIFO size is in power of 2. */
 #define CONFIG_ACCEL_FIFO 1024
 
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO / 3)
+#endif
 
 /* Interrupt management. */
 #define CONFIG_ACCEL_INTERRUPTS

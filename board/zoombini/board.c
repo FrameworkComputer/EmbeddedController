@@ -283,6 +283,7 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
+#ifdef BOARD_MEOWTH
 	[VSYNC] = {
 	 .name = "Camera vsync",
 	 .active_mask = SENSOR_ACTIVE_S0,
@@ -294,6 +295,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .min_frequency = 0,
 	 .max_frequency = 1,
 	},
+#endif
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
