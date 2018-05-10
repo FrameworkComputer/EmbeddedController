@@ -26,9 +26,10 @@ struct gpio_int_mapping {
 	int8_t port_offset;
 };
 
-/* TODO will this mapping change for other MEC chips?
+/*
  * Mapping from GPIO port to GIRQ info
- * MEC1701 each bank contains 32 GPIO's. Pin Id is the bit position [0:31]
+ * MEC17xx each bank contains 32 GPIO's.
+ * Pin Id is the bit position [0:31]
  * Bank		GPIO's		GIRQ
  * 0		0000 - 0036	11
  * 1		0040 - 0076	10
@@ -369,40 +370,53 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
  * GPIO interrupt handlers.
  *
  * @param girq		GIRQ index
- * @param port_offset	GPIO port offset for the given GIRQ
+ * @param port	zero based GPIO port number [0, 5]
+ * @note __builtin_ffs(x) returns bitpos+1 of least significant 1-bit
+ * in x or 0 if no bits are set.
  */
-static void gpio_interrupt(int girq)
+static void gpio_interrupt(int girq, int port)
 {
 	int i, bit;
 	const struct gpio_info *g = gpio_list;
 	uint32_t sts = MCHP_INT_RESULT(girq);
 
-    /* CPRINTS("MEC1701 GPIO GIRQ %d result = 0x%08x", girq, sts); */
-	trace12(0, GPIO, 0, "GPIO GIRQ %d result = 0x%08x", girq, sts);
-
 	/* RW1C, no need for read-modify-write */
 	MCHP_INT_SOURCE(girq) = sts;
 
-	for (i = 0; i < GPIO_IH_COUNT && sts; ++i, ++g) {
-		bit = __builtin_ffs(g->mask) - 1;
-		if (sts & (1 << bit))
-			gpio_irq_handlers[i](i);
-		sts &= ~(1 << bit);
+	trace12(0, GPIO, 0, "GPIO GIRQ %d result = 0x%08x", girq, sts);
+	trace12(0, GPIO, 0, "GPIO ParIn[%d]      = 0x%08x",
+		port, MCHP_GPIO_PARIN(port));
+
+	for (i = 0; (i < GPIO_IH_COUNT) && sts; ++i, ++g) {
+		if (g->port != port)
+			continue;
+
+		bit = __builtin_ffs(g->mask);
+		if (bit) {
+			bit--;
+			if (sts & (1 << bit)) {
+				trace12(0, GPIO, 0,
+					"Bit[%d]: handler @ 0x%08x", bit,
+					(uint32_t)gpio_irq_handlers[i]);
+				gpio_irq_handlers[i](i);
+			}
+			sts &= ~(1 << bit);
+		}
 	}
 }
 
-#define GPIO_IRQ_FUNC(irqfunc, girq) \
+#define GPIO_IRQ_FUNC(irqfunc, girq, port)\
 	void irqfunc(void) \
 	{ \
-		gpio_interrupt(girq); \
+		gpio_interrupt(girq, port);\
 	}
 
-GPIO_IRQ_FUNC(__girq_8_interrupt, 8);
-GPIO_IRQ_FUNC(__girq_9_interrupt, 9);
-GPIO_IRQ_FUNC(__girq_10_interrupt, 10);
-GPIO_IRQ_FUNC(__girq_11_interrupt, 11);
-GPIO_IRQ_FUNC(__girq_12_interrupt, 12);
-GPIO_IRQ_FUNC(__girq_26_interrupt, 26);
+GPIO_IRQ_FUNC(__girq_8_interrupt, 8, 3);
+GPIO_IRQ_FUNC(__girq_9_interrupt, 9, 2);
+GPIO_IRQ_FUNC(__girq_10_interrupt, 10, 1);
+GPIO_IRQ_FUNC(__girq_11_interrupt, 11, 0);
+GPIO_IRQ_FUNC(__girq_12_interrupt, 12, 4);
+GPIO_IRQ_FUNC(__girq_26_interrupt, 26, 5);
 
 #undef GPIO_IRQ_FUNC
 
