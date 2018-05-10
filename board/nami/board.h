@@ -266,6 +266,7 @@ enum oem_id {
 	PROJECT_SONA,
 	PROJECT_PANTHEON,
 	PROJECT_NAMI,
+	PROJECT_COUNT,
 };
 
 /* TODO(crosbug.com/p/61098): Verify the numbers below. */

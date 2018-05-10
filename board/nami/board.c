@@ -65,7 +65,9 @@
 #define USB_PD_PORT_PS8751	0
 #define USB_PD_PORT_ANX7447	1
 
-static uint32_t oem = PROJECT_NAMI;
+static uint16_t board_version;
+static uint8_t oem = PROJECT_NAMI;
+static uint16_t sku;
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -663,17 +665,26 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-/* Initialize board. */
+static void cbi_init(void)
+{
+	uint32_t val;
+
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= UINT16_MAX)
+		board_version = val;
+	CPRINTS("Board Version: 0x%04x", board_version);
+
+	if (cbi_get_oem_id(&val) == EC_SUCCESS && val < PROJECT_COUNT)
+		oem = val;
+	CPRINTS("OEM: %d", oem);
+
+	if (cbi_get_sku_id(&val) == EC_SUCCESS && val <= UINT16_MAX)
+		sku = val;
+	CPRINTS("SKU: 0x%04x", sku);
+}
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
 static void board_init(void)
 {
-	uint32_t version;
-
-	if (cbi_get_board_version(&version) == EC_SUCCESS)
-		CPRINTS("Board Version: 0x%04x", version);
-
-	if (cbi_get_oem_id(&oem))
-		CPRINTS("OEM: 0x%x", oem);
-
 	/*
 	 * This enables pull-down on F_DIO1 (SPI MISO), and F_DIO0 (SPI MOSI),
 	 * whenever the EC is not doing SPI flash transactions. This avoids
