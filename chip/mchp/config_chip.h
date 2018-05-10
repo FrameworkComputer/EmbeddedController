@@ -14,7 +14,7 @@
 
 /* Use a bigger console output buffer */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE	2048
+#define CONFIG_UART_TX_BUF_SIZE	1024
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS	250
@@ -71,32 +71,35 @@
 #define CONFIG_MEC_SRAM_SIZE		(CONFIG_MEC_SRAM_BASE_END - \
 					CONFIG_MEC_SRAM_BASE_START)
 
-/* 32k RAM for RO / RW / loader */
-#define CONFIG_RAM_SIZE			0x00008000
+/* 64k Data RAM for RO / RW / loader */
+#define CONFIG_RAM_SIZE			0x00010000
 #define CONFIG_RAM_BASE			(CONFIG_MEC_SRAM_BASE_END - \
 					CONFIG_RAM_SIZE)
 
 /* System stack size */
-#define CONFIG_STACK_SIZE		1024
+/* was 1024, temporarily expanded to 2048 for debug */
+#define CONFIG_STACK_SIZE		2048
 
 /* non-standard task stack sizes */
-#define IDLE_TASK_STACK_SIZE		512
-#define LARGER_TASK_STACK_SIZE		640
-#define VENTI_TASK_STACK_SIZE		768
+/* temporarily expanded for debug */
+#define IDLE_TASK_STACK_SIZE		1024	/* 512 */
+#define LARGER_TASK_STACK_SIZE		1024	/* 640 */
+#define VENTI_TASK_STACK_SIZE		1024	/* 768 */
 
-#define CHARGER_TASK_STACK_SIZE		640
-#define HOOKS_TASK_STACK_SIZE		640
-#define CONSOLE_TASK_STACK_SIZE		640
-#define HOST_CMD_TASK_STACK_SIZE	640
+#define CHARGER_TASK_STACK_SIZE		1024	/* 640 */
+#define HOOKS_TASK_STACK_SIZE		1024	/* 640 */
+#define CONSOLE_TASK_STACK_SIZE		1024	/* 640 */
+#define HOST_CMD_TASK_STACK_SIZE	1024	/* 640 */
 
 /*
  * TODO: Large stack consumption
  * https://code.google.com/p/chrome-os-partner/issues/detail?id=49245
  */
-#define PD_TASK_STACK_SIZE		800
+/* dsw original = 800, if stack exceptions expand to 1024 for debug */
+#define PD_TASK_STACK_SIZE		2048
 
 /* Default task stack size */
-#define TASK_STACK_SIZE			512
+#define TASK_STACK_SIZE			1024	/* 512 */
 
 /************************************************************************/
 /* Define our flash layout. */

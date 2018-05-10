@@ -242,6 +242,34 @@ def PacklfwRoImage(rorw_file, loader_file, image_size):
   fo.close()
   return fo.name
 
+#
+# Generate a test EC_RW image of same size
+# as original.
+# Preserve image_data structure and fill all
+# other bytes with 0xA5.
+# useful for testing SPI read and EC build
+# process hash generation.
+#
+def gen_test_ecrw(pldrw):
+  debug_print("gen_test_ecrw: pldrw type =", type(pldrw))
+  debug_print("len pldrw =", len(pldrw), " = ", hex(len(pldrw)))
+  cookie1_pos = pldrw.find(b'\x99\x88\x77\xce')
+  cookie2_pos = pldrw.find(b'\xdd\xbb\xaa\xce', cookie1_pos+4)
+  t = struct.unpack("<L", pldrw[cookie1_pos+0x24:cookie1_pos+0x28])
+  size = t[0]
+  debug_print("EC_RW size =", size, " = ", hex(size))
+
+  debug_print("Found cookie1 at ", hex(cookie1_pos))
+  debug_print("Found cookie2 at ", hex(cookie2_pos))
+
+  if cookie1_pos > 0 and cookie2_pos > cookie1_pos:
+    for i in range(0, cookie1_pos):
+      pldrw[i] = 0xA5
+    for i in range(cookie2_pos+4, len(pldrw)):
+      pldrw[i] = 0xA5
+
+  with open("ec_RW_test.bin", "wb") as fecrw:
+      fecrw.write(pldrw[:size])
 
 def parseargs():
   rpath = os.path.dirname(os.path.relpath(__file__))
@@ -263,11 +291,11 @@ def parseargs():
                       help="Location of header in SPI flash",
                       default=0x1000)
   parser.add_argument("-p", "--payload_offset", type=int,
-                      help="The offset of payload from the header",
+                      help="The offset of payload from the start of header",
                       default=0x80)
-  parser.add_argument("-r", "--rwheader_loc", type=int,
-                      help="The offset of payload from the header",
-                      default=0x40000)
+  parser.add_argument("-r", "--rw_loc", type=int,
+                      help="Start offset of EC_RW. Default is -1 meaning 1/2 flash size",
+                      default=-1)
   parser.add_argument("--spi_clock", type=int,
                       help="SPI clock speed. 8, 12, 24, or 48 MHz.",
                       default=24)
@@ -275,10 +303,13 @@ def parseargs():
                       help="SPI read command. 0x3, 0xB, or 0x3B.",
                       default=0xb)
   parser.add_argument("--image_size", type=int,
-                      help="Size of a single image.",
-                      default=(188 * 1024))
+                      help="Size of a single image. Default 220KB",
+                      default=(220 * 1024))
   parser.add_argument("--test_spi", action='store_true',
                       help="Test SPI data integrity by adding CRC32 in last 4-bytes of RO/RW binaries",
+                      default=False)
+  parser.add_argument("--test_ecrw", action='store_true',
+                      help="Use fixed pattern for EC_RW but preserve image_data",
                       default=False)
   parser.add_argument("--verbose", action='store_true',
                       help="Enable verbose output",
@@ -288,6 +319,7 @@ def parseargs():
 
 # Debug helper routine
 def dumpsects(spi_list):
+  debug_print("spi_list has {0} entries".format(len(spi_list)))
   for s in spi_list:
     debug_print("0x{0:x} 0x{1:x} {2:s}".format(s[0],len(s[1]),s[2]))
 
@@ -310,7 +342,10 @@ def print_args(args):
   debug_print(".image_size = ", hex(args.image_size))
   debug_print(".header_loc = ", hex(args.header_loc))
   debug_print(".payload_offset = ", hex(args.payload_offset))
-  debug_print(".rwheader_loc = ", hex(args.rwheader_loc))
+  if args.rw_loc < 0:
+    debug_print(".rw_loc = ", args.rw_loc)
+  else:
+    debug_print(".rw_loc = ", hex(args.rw_loc))
   debug_print(".spi_clock = ", args.spi_clock)
   debug_print(".spi_read_cmd = ", args.spi_read_cmd)
   debug_print(".test_spi = ", args.test_spi)
@@ -344,11 +379,9 @@ def main():
   # !!! IMPORTANT !!!
   # These values MUST match chip/mec1701/config_flash_layout.h
   # defines.
-  #args.header_loc = spi_size - (192 * 1024)
-  #args.rwpayload_loc = spi_size - (384 * 1024)
-  # loader + EC_RO starts at beginning of second 4KB sector
+  # MEC17xx Boot-ROM TAGs are at offset 0 and 4.
+  # lfw + EC_RO starts at beginning of second 4KB sector
   # EC_RW starts at offset 0x40000 (256KB)
-  # MEC1701 Boot-ROM TAGs are at offset 0 and 4.
 
   spi_list = []
 
@@ -396,7 +429,7 @@ def main():
   printByteArrayAsHex(header_signature, "header_signature")
 
   tag = BuildTag(args)
-  # MEC17xx truncate RW length to 188KB to not overwrite LFW
+  # MEC17xx truncate RW length to args.image_size to not overwrite LFW
   # offset may be different due to Header size and other changes
   # MCHP we want to append a SHA-256 to the end of the actual payload
   # to test SPI read routines.
@@ -420,6 +453,10 @@ def main():
   payload_entry = payload_entry_tuple[0]
   debug_print("payload_entry = ", hex(payload_entry))
 
+  # Note: payload_rw is a bytearray therefore is mutable
+  if args.test_ecrw:
+    gen_test_ecrw(payload_rw)
+
   # SPI image integrity test
   # compute CRC32 of EC_RW except for last 4 bytes
   # Store CRC32 in last 4 bytes
@@ -435,16 +472,6 @@ def main():
   # debug
   printByteArrayAsHex(payload_rw_sig, "payload_rw_sig")
 
-  header_rw = BuildHeader2(args, payload_rw_len,
-                           LOAD_ADDR_RW, payload_entry)
-
-  # debug
-  printByteArrayAsHex(header_rw, "Header EC_RW")
-
-  header_rw_sig = SignByteArray(header_rw)
-
-  printByteArrayAsHex(header_rw_sig, "header_rw_sig")
-
   os.remove(rorofile)           # clean up the temp file
 
   # MEC170x Boot-ROM Tags are located at SPI offset 0
@@ -458,22 +485,30 @@ def main():
 
   offset = args.header_loc + args.payload_offset + payload_len
 
+  # No SPI Header for EC_RW as its not loaded by BootROM
   spi_list.append((offset, payload_signature,
                    "payload(lfw_ro) signature"))
 
-  spi_list.append((args.rwheader_loc, header_rw, "header(rw)"))
-  spi_list.append((args.rwheader_loc + HEADER_SIZE, header_rw_sig,
-    "header(rw) signature"))
-  spi_list.append((args.rwheader_loc + args.payload_offset, payload_rw,
-    "payload(rw)"))
+  # EC_RW location
+  rw_offset = int(spi_size // 2)
+  if args.rw_loc >= 0:
+    rw_offset = args.rw_loc
 
-  offset = args.rwheader_loc + args.payload_offset + payload_rw_len
+  debug_print("rw_offset = 0x{0:08x}".format(rw_offset))
 
-  spi_list.append((offset, payload_rw_sig,
-                   "payload(rw) signature"))
+  if rw_offset < offset + len(payload_signature):
+    print("ERROR: EC_RW overlaps EC_RO")
+
+  spi_list.append((rw_offset, payload_rw, "payload(rw)"))
+
+  # don't add to EC_RW. We don't know if Google will process
+  # EC SPI flash binary with other tools during build of
+  # coreboot and OS.
+  #offset = rw_offset + payload_rw_len
+  #spi_list.append((offset, payload_rw_sig, "payload(rw) signature"))
 
   spi_list = sorted(spi_list)
-  # uncomment to debug
+
   dumpsects(spi_list)
 
   #
