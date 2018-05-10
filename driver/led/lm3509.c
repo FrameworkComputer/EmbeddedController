@@ -47,29 +47,9 @@ static int brightness_to_bmain(int percent)
 
 static int lm3509_power(int enable)
 {
-	int ret = 0;
-	uint8_t gp = 0, bmain = 0;
-
-	if (enable) {
-		/*
-		 * [2]= set both main and secondary current same
-		 *      both control by BMAIN.
-		 * [1]= enable secondary current sink.
-		 * [0]= enable main current sink.
-		 */
-		gp = 0x07;
-		/*
-		 * Brightness register
-		 * 0x00= 0%
-		 * 0x1F= 100%
-		 */
-		bmain = ARRAY_SIZE(lm3509_brightness) - 1;
-	}
-
-	ret |= lm3509_write(LM3509_REG_GP, gp);
-	ret |= lm3509_write(LM3509_REG_BMAIN, bmain);
-
-	return ret;
+	/* Enable both MAIN and SUB in unison mode.
+	 * Don't alter brightness here. It's not driver's business. */
+	return lm3509_write(LM3509_REG_GP, enable ? 0x7 : 0);
 }
 
 static int lm3509_set_brightness(int percent)

@@ -11,7 +11,23 @@
 /* 8-bit I2C address */
 #define LM3509_I2C_ADDR		0x6C
 
+/*
+ * General purpose register
+ *
+ * [2]= set both main and secondary current same
+ *      both control by BMAIN.
+ * [1]= enable secondary current sink.
+ * [0]= enable main current sink.
+ */
 #define LM3509_REG_GP		0x10
+
+/*
+ * Brightness register
+ *
+ * 0x00: 0%
+ * 0x1F: 100%
+ * Power-on-value: 0% (0xE0)
+ */
 #define LM3509_REG_BMAIN	0xA0
 #define LM3509_REG_BSUB		0xB0
 
