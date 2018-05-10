@@ -113,7 +113,8 @@ void uart_enable_interrupt(void)
 }
 
 /**
- * Interrupt handler for UART
+ * Interrupt handler for UART.
+ * Lower priority below other critical ISR's.
  */
 void uart_ec_interrupt(void)
 {
@@ -122,7 +123,7 @@ void uart_ec_interrupt(void)
 	/* Trace statement to provide time marker for UART output? */
 	uart_process_output();
 }
-DECLARE_IRQ(MCHP_IRQ_UART0, uart_ec_interrupt, 1);
+DECLARE_IRQ(MCHP_IRQ_UART0, uart_ec_interrupt, 2);
 
 void uart_init(void)
 {
