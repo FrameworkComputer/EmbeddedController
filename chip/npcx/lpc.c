@@ -410,6 +410,11 @@ uint8_t lpc_sib_read_kbc_reg(uint8_t io_offset)
 
 void lpc_keyboard_clear_buffer(void)
 {
+	/*
+	 * Only npcx5 series need this bypass. The bug of FW_OBF is fixed in
+	 * npcx7 series and later npcx ec.
+	 */
+#ifdef CHIP_FAMILY_NPCX5
 	/* Clear OBF flag in host STATUS and HIKMST regs */
 	if (IS_BIT_SET(NPCX_HIKMST, NPCX_HIKMST_OBF)) {
 		/*
@@ -420,6 +425,14 @@ void lpc_keyboard_clear_buffer(void)
 		 */
 		lpc_sib_read_kbc_reg(0x0);
 	}
+#else
+	/* Make sure the previous TOH and IRQ has been sent out. */
+	udelay(4);
+	/* Clear OBE flag in host STATUS  and HIKMST regs*/
+	SET_BIT(NPCX_HICTRL, NPCX_HICTRL_FW_OBF);
+	/* Ensure there is no TOH set in this period. */
+	udelay(4);
+#endif
 }
 
 void lpc_keyboard_resume_irq(void)
