@@ -6510,7 +6510,7 @@ static void cmd_cbi_help(char *cmd)
 		"      0: BOARD_VERSION\n"
 		"      1: OEM_ID\n"
 		"      2: SKU_ID\n"
-		"    <size> is the size of the data\n"
+		"    <size> is the size of the data in byte\n"
 		"    <value> is integer to be set. No raw data support yet.\n"
 		"    [get_flag] is combination of:\n"
 		"      01b: Invalidate cache and reload data from EEPROM\n"
@@ -6594,8 +6594,9 @@ static int cmd_cbi(int argc, char *argv[])
 			return -1;
 		}
 		size = strtol(argv[4], &e, 0);
-		if ((e && *e) || val >= (1 << size*8)) {
-			fprintf(stderr, "Bad size\n");
+		if ((e && *e) || size < 1 || 4 < size ||
+				val >= (1ull << size*8)) {
+			fprintf(stderr, "Bad size: %d\n", size);
 			return -1;
 		}
 		/* Little endian */
