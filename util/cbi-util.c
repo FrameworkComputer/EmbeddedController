@@ -29,12 +29,6 @@
 /* TODO: Set it by macro */
 const char cmd_name[] = "cbi-util";
 
-struct board_info {
-	uint32_t version;
-	uint32_t oem_id;
-	uint32_t sku_id;
-} __attribute__((packed));
-
 /* Command line options */
 enum {
 	OPT_FILENAME,
@@ -80,8 +74,9 @@ const char help_create[] =
 	"  --oem_id <value>            OEM ID\n"
 	"  --sku_id <value>            SKU ID\n"
 	"  --size <size>               Size of output file in bytes\n"
-	"<value> must be a positive integer <= 0XFFFFFFFF\n"
-	"and <size> must be a positive integer <= 0XFFFF.\n"
+	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
+	"be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
+	"<size> must be a positive integer <= 0XFFFF.\n"
 	"Optional ARGS are:\n"
 	"  --erase_byte <uint8>       Byte used for empty space. Default:0xff\n"
 	"  --format_version <uint16>  Data format version\n"
@@ -97,6 +92,11 @@ const char help_show[] =
 	"It also validates the contents against the checksum and\n"
 	"returns non-zero if validation fails.\n"
 	"\n";
+
+struct integer_field {
+	uint32_t val;
+	int size;
+};
 
 static void print_help_create(void)
 {
@@ -180,7 +180,7 @@ static uint8_t *read_file(const char *filename, uint32_t *size_ptr)
 	return buf;
 }
 
-static int get_field_size(uint32_t value)
+static int estimate_field_size(uint32_t value)
 {
 	if (value <= UINT8_MAX)
 		return 1;
@@ -189,10 +189,49 @@ static int get_field_size(uint32_t value)
 	return 4;
 }
 
+static int parse_integer_field(const char *arg, struct integer_field *f)
+{
+	uint64_t val;
+	char *e;
+	char *ch;
+
+	val = strtoul(arg, &e, 0);
+	if (val > UINT32_MAX || !*arg || (e && *e && *e != ':')) {
+		fprintf(stderr, "Invalid integer value\n");
+		return -1;
+	}
+	f->val = val;
+
+	ch = strchr(arg, ':');
+	if (ch) {
+		ch++;
+		val = strtoul(ch, &e , 0);
+		if (val < 1 || 4 < val || !*ch || (e && *e)) {
+			fprintf(stderr, "Invalid size suffix\n");
+			return -1;
+		}
+		f->size = val;
+	} else {
+		f->size = estimate_field_size(f->val);
+	}
+
+	if (f->val > (1ull << f->size * 8)) {
+		fprintf(stderr, "Value (0x%x) exceeds field size (%d)\n",
+			f->val, f->size);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int cmd_create(int argc, char **argv)
 {
 	uint8_t *cbi;
-	struct board_info bi;
+	struct board_info {
+		struct integer_field ver;
+		struct integer_field oem;
+		struct integer_field sku;
+	} bi;
 	struct cbi_header *h;
 	int rv;
 	uint8_t *p;
@@ -215,12 +254,8 @@ static int cmd_create(int argc, char **argv)
 			print_help_create();
 			return 0;
 		case OPT_BOARD_VERSION:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT32_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --board_version\n");
+			if (parse_integer_field(optarg, &bi.ver))
 				return -1;
-			}
-			bi.version = val;
 			set_mask |= ARGS_MASK_BOARD_VERSION;
 			break;
 		case OPT_ERASE_BYTE:
@@ -235,12 +270,8 @@ static int cmd_create(int argc, char **argv)
 			set_mask |= ARGS_MASK_FILENAME;
 			break;
 		case OPT_OEM_ID:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT32_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --oem_id\n");
+			if (parse_integer_field(optarg, &bi.oem))
 				return -1;
-			}
-			bi.oem_id = val;
 			set_mask |= ARGS_MASK_OEM_ID;
 			break;
 		case OPT_SIZE:
@@ -253,12 +284,8 @@ static int cmd_create(int argc, char **argv)
 			set_mask |= ARGS_MASK_SIZE;
 			break;
 		case OPT_SKU_ID:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT32_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --sku_id\n");
+			if (parse_integer_field(optarg, &bi.sku))
 				return -1;
-			}
-			bi.sku_id = val;
 			set_mask |= ARGS_MASK_SKU_ID;
 			break;
 		}
@@ -283,12 +310,9 @@ static int cmd_create(int argc, char **argv)
 	h->major_version = CBI_VERSION_MAJOR;
 	h->minor_version = CBI_VERSION_MINOR;
 	p = h->data;
-	p = cbi_set_data(p, CBI_TAG_BOARD_VERSION,
-			 &bi.version, get_field_size(bi.version));
-	p = cbi_set_data(p, CBI_TAG_OEM_ID,
-			 &bi.oem_id, get_field_size(bi.oem_id));
-	p = cbi_set_data(p, CBI_TAG_SKU_ID,
-			 &bi.sku_id, get_field_size(bi.sku_id));
+	p = cbi_set_data(p, CBI_TAG_BOARD_VERSION, &bi.ver.val, bi.ver.size);
+	p = cbi_set_data(p, CBI_TAG_OEM_ID, &bi.oem.val, bi.oem.size);
+	p = cbi_set_data(p, CBI_TAG_SKU_ID, &bi.sku.val, bi.sku.size);
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);
 

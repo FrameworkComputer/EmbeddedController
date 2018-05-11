@@ -81,7 +81,7 @@ uint8_t cbi_crc8(const struct cbi_header *h);
  * 		should be pointing to the data section of CBI.
  * @param tag	Tag of the data item
  * @param buf	Pointer to the buffer containing the data being copied.
- * @param size	Size of the data
+ * @param size	Size of the data in bytes. Must be 0 < size < 256.
  * @return	Address of the byte following the stored data in the
  * 		destination buffer
  */
