@@ -24,6 +24,7 @@
 #include "flash_info.h"
 #include "printf.h"
 #include "registers.h"
+#include "system.h"
 #include "tpm_manufacture.h"
 #include "tpm_registers.h"
 
@@ -610,10 +611,10 @@ enum manufacturing_status tpm_endorse(void)
 		HASH_update(&hmac.hash, p, RO_CERTS_REGION_SIZE - 32);
 		if (!DCRYPTO_equals(p + RO_CERTS_REGION_SIZE - 32,
 				   DCRYPTO_HMAC_final(&hmac), 32)) {
-#ifdef CR50_INCLUDE_FALLBACK_CERT
-			CPRINTF("%s: bad cert region hmac; falling back\n"
-				"    to fixed endorsement\n", __func__);
+			const struct SignedHeader *h;
 
+			CPRINTF("%s: bad cert region hmac;", __func__);
+#ifdef CR50_INCLUDE_FALLBACK_CERT
 			/* HMAC verification failure indicates either
 			 * a manufacture fault, or mis-match in
 			 * production mode and currently running
@@ -625,21 +626,39 @@ enum manufacturing_status tpm_endorse(void)
 			 * by production infrastructure.
 			 */
 			if (!install_fixed_certs()) {
-				CPRINTF("%s: failed to install fixed "
-					"endorsement certs; \n"
-					"    unknown endorsement state\n",
-					__func__);
+				CPRINTF(" failed to install fixed "
+					"endorsement certs;");
+				result = mnf_hmac_mismatch;
+				break;
 			}
 #else
-			CPRINTF("%s: bad cert region hmac; no certs installed!"
-				"\n", __func__);
-#endif
+			h = (const struct SignedHeader *)
+				get_program_memory_addr
+				(system_get_image_copy());
+			if (G_SIGNED_FOR_PROD(h)) {
 
-			/* TODO(ngm): is this state considered
-			 * endorsement failure?
+				/* TODO(ngm): is this state considered
+				 * endorsement failure?
+				 */
+				CPRINTF("NO certs installed\n");
+				result = mnf_hmac_mismatch;
+				break;
+			}
+
+			/*
+			 * This will install bogus certificate, will happen
+			 * only when Cr50 image is signed with dev key.
+			 *
+			 * Installing bogus certificate helps with simple TPM
+			 * operations, as it allows to prevent TPM going
+			 * through manufacturing process after every reset,
+			 * but the generated RSA endorsement will not
+			 * correspond to the certificate, which will cause
+			 * problems when TPM identity is required.
 			 */
-			result = mnf_hmac_mismatch;
-			break;
+			result = mnf_unverified_cert;
+			CPRINTF("instaling UNVERIFIED certs\n");
+#endif
 		}
 
 		if (!handle_cert(
