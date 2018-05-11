@@ -20,17 +20,14 @@
 #include "cros_board_info.h"
 #include "crc8.h"
 
-#define REQUIRED_MASK_BOARD_VERSION	(1 << 0)
-#define REQUIRED_MASK_OEM_ID		(1 << 1)
-#define REQUIRED_MASK_SKU_ID		(1 << 2)
-#define REQUIRED_MASK_SIZE		(1 << 3)
-#define REQUIRED_MASK_FILENAME		(1 << 4)
-#define REQUIRED_MASK_CREATE	(REQUIRED_MASK_BOARD_VERSION | \
-				 REQUIRED_MASK_OEM_ID | \
-				 REQUIRED_MASK_SKU_ID | \
-				 REQUIRED_MASK_SIZE | \
-				 REQUIRED_MASK_FILENAME)
-#define REQUIRED_MASK_SHOW	(REQUIRED_MASK_FILENAME)
+#define ARGS_MASK_BOARD_VERSION		(1 << 0)
+#define ARGS_MASK_FILENAME		(1 << 1)
+#define ARGS_MASK_OEM_ID		(1 << 2)
+#define ARGS_MASK_SIZE			(1 << 3)
+#define ARGS_MASK_SKU_ID		(1 << 4)
+
+/* TODO: Set it by macro */
+const char cmd_name[] = "cbi-util";
 
 struct board_info {
 	uint32_t version;
@@ -40,10 +37,7 @@ struct board_info {
 
 /* Command line options */
 enum {
-	/* mode options */
-	OPT_MODE_NONE,
-	OPT_MODE_CREATE,
-	OPT_MODE_SHOW,
+	OPT_FILENAME,
 	OPT_BOARD_VERSION,
 	OPT_OEM_ID,
 	OPT_SKU_ID,
@@ -53,16 +47,19 @@ enum {
 	OPT_HELP,
 };
 
-static const struct option long_opts[] = {
-	{"create", 1, 0, OPT_MODE_CREATE},
-	{"show", 1, 0, OPT_MODE_SHOW},
+static const struct option opts_create[] = {
+	{"file", 1, 0, OPT_FILENAME},
 	{"board_version", 1, 0, OPT_BOARD_VERSION},
 	{"oem_id", 1, 0, OPT_OEM_ID},
 	{"sku_id", 1, 0, OPT_SKU_ID},
 	{"size", 1, 0, OPT_SIZE},
 	{"erase_byte", 1, 0, OPT_ERASE_BYTE},
+	{NULL, 0, 0, 0}
+};
+
+static const struct option opts_show[] = {
+	{"file", 1, 0, OPT_FILENAME},
 	{"all", 0, 0, OPT_SHOW_ALL},
-	{"help", 0, 0, OPT_HELP},
 	{NULL, 0, 0, 0}
 };
 
@@ -73,6 +70,52 @@ static const char *field_name[] = {
 	"SKU_ID",
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
+
+const char help_create[] =
+	"\n"
+	"'%s create [ARGS]' creates an EEPROM image file.\n"
+	"Required ARGS are:\n"
+	"  --file <file>               Path to output file\n"
+	"  --board_version <value>     Board version\n"
+	"  --oem_id <value>            OEM ID\n"
+	"  --sku_id <value>            SKU ID\n"
+	"  --size <size>               Size of output file in bytes\n"
+	"<value> must be a positive integer <= 0XFFFFFFFF\n"
+	"and <size> must be a positive integer <= 0XFFFF.\n"
+	"Optional ARGS are:\n"
+	"  --erase_byte <uint8>       Byte used for empty space. Default:0xff\n"
+	"  --format_version <uint16>  Data format version\n"
+	"\n";
+
+const char help_show[] =
+	"\n"
+	"'%s show [ARGS]' shows data in an EEPROM image file.\n"
+	"Required ARGS are:\n"
+	"  --file <file>               Path to input file\n"
+	"Optional ARGS are:\n"
+	"  --all                       Dump all information\n"
+	"It also validates the contents against the checksum and\n"
+	"returns non-zero if validation fails.\n"
+	"\n";
+
+static void print_help_create(void)
+{
+	printf(help_create, cmd_name);
+}
+
+static void print_help_show(void)
+{
+	printf(help_show, cmd_name);
+}
+
+static void print_help(void)
+{
+	printf("\nUsage: %s <create|show> [ARGS]\n"
+		"\n"
+		"Utility for CBI:Cros Board Info images.\n", cmd_name);
+	print_help_create();
+	print_help_show();
+}
 
 static int write_file(const char *filename, const char *buf, int size)
 {
@@ -146,16 +189,87 @@ static int get_field_size(uint32_t value)
 	return 4;
 }
 
-/*
- * Create a CBI blob
- */
-static int do_create(const char *filename, uint32_t size, uint8_t erase,
-		     struct board_info *bi)
+static int cmd_create(int argc, char **argv)
 {
 	uint8_t *cbi;
+	struct board_info bi;
 	struct cbi_header *h;
 	int rv;
 	uint8_t *p;
+	const char *filename;
+	uint32_t set_mask = 0;
+	uint16_t size;
+	uint8_t erase = 0xff;
+	int i;
+
+	memset(&bi, 0, sizeof(bi));
+
+	while ((i = getopt_long(argc, argv, "", opts_create, NULL)) != -1) {
+		uint64_t val;
+		char *e;
+		switch (i) {
+		case '?': /* Unhandled option */
+			print_help_create();
+			return -1;
+		case OPT_HELP:
+			print_help_create();
+			return 0;
+		case OPT_BOARD_VERSION:
+			val = strtoul(optarg, &e, 0);
+			if (val > UINT32_MAX || !*optarg || (e && *e)) {
+				fprintf(stderr, "Invalid --board_version\n");
+				return -1;
+			}
+			bi.version = val;
+			set_mask |= ARGS_MASK_BOARD_VERSION;
+			break;
+		case OPT_ERASE_BYTE:
+			erase = strtoul(optarg, &e, 0);
+			if (!*optarg || (e && *e)) {
+				fprintf(stderr, "Invalid --erase_byte\n");
+				return -1;
+			}
+			break;
+		case OPT_FILENAME:
+			filename = optarg;
+			set_mask |= ARGS_MASK_FILENAME;
+			break;
+		case OPT_OEM_ID:
+			val = strtoul(optarg, &e, 0);
+			if (val > UINT32_MAX || !*optarg || (e && *e)) {
+				fprintf(stderr, "Invalid --oem_id\n");
+				return -1;
+			}
+			bi.oem_id = val;
+			set_mask |= ARGS_MASK_OEM_ID;
+			break;
+		case OPT_SIZE:
+			val = strtoul(optarg, &e, 0);
+			if (val > UINT16_MAX || !*optarg || (e && *e)) {
+				fprintf(stderr, "Invalid --size\n");
+				return -1;
+			}
+			size = val;
+			set_mask |= ARGS_MASK_SIZE;
+			break;
+		case OPT_SKU_ID:
+			val = strtoul(optarg, &e, 0);
+			if (val > UINT32_MAX || !*optarg || (e && *e)) {
+				fprintf(stderr, "Invalid --sku_id\n");
+				return -1;
+			}
+			bi.sku_id = val;
+			set_mask |= ARGS_MASK_SKU_ID;
+			break;
+		}
+	}
+
+	if (set_mask != (ARGS_MASK_BOARD_VERSION | ARGS_MASK_FILENAME |
+			ARGS_MASK_OEM_ID | ARGS_MASK_SIZE | ARGS_MASK_SKU_ID)) {
+		fprintf(stderr, "Missing required arguments\n");
+		print_help_create();
+		return -1;
+	}
 
 	cbi = malloc(size);
 	if (!cbi) {
@@ -170,22 +284,22 @@ static int do_create(const char *filename, uint32_t size, uint8_t erase,
 	h->minor_version = CBI_VERSION_MINOR;
 	p = h->data;
 	p = cbi_set_data(p, CBI_TAG_BOARD_VERSION,
-			 &bi->version, get_field_size(bi->version));
+			 &bi.version, get_field_size(bi.version));
 	p = cbi_set_data(p, CBI_TAG_OEM_ID,
-			 &bi->oem_id, get_field_size(bi->oem_id));
+			 &bi.oem_id, get_field_size(bi.oem_id));
 	p = cbi_set_data(p, CBI_TAG_SKU_ID,
-			 &bi->sku_id, get_field_size(bi->sku_id));
+			 &bi.sku_id, get_field_size(bi.sku_id));
 	h->total_size = p - cbi;
 	h->crc = cbi_crc8(h);
 
-	/* Output blob */
+	/* Output image */
 	rv = write_file(filename, cbi, size);
 	if (rv) {
-		fprintf(stderr, "Unable to write CBI blob to %s\n", filename);
+		fprintf(stderr, "Unable to write CBI image to %s\n", filename);
 		return rv;
 	}
 
-	fprintf(stderr, "CBI blob is created successfully\n");
+	fprintf(stderr, "CBI image is created successfully\n");
 
 	return 0;
 }
@@ -217,25 +331,48 @@ static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 	printf("    %s: %u (0x%x, %u, %u)\n", name, v, v, d->tag, d->size);
 }
 
-static int do_show(const char *filename, int show_all)
+static int cmd_show(int argc, char **argv)
 {
 	uint8_t *buf;
 	uint32_t size;
 	struct cbi_header *h;
+	uint32_t set_mask = 0;
+	const char *filename;
+	int show_all = 0;
+	int i;
 
-	if (!filename) {
-		fprintf(stderr, "Missing arguments\n");
+	while ((i = getopt_long(argc, argv, "", opts_show, NULL)) != -1) {
+		switch (i) {
+		case '?': /* Unhandled option */
+			print_help_show();
+			return -1;
+		case OPT_HELP:
+			print_help_show();
+			return 0;
+		case OPT_FILENAME:
+			filename = optarg;
+			set_mask |= ARGS_MASK_FILENAME;
+			break;
+		case OPT_SHOW_ALL:
+			show_all = 1;
+			break;
+		}
+	}
+
+	if (set_mask != ARGS_MASK_FILENAME) {
+		fprintf(stderr, "Missing required arguments\n");
+		print_help_show();
 		return -1;
 	}
 
 	buf = read_file(filename, &size);
 	if (!buf) {
-		fprintf(stderr, "Unable to read CBI blob\n");
+		fprintf(stderr, "Unable to read CBI image\n");
 		return -1;
 	}
 
 	h = (struct cbi_header *)buf;
-	printf("CBI blob: %s\n", filename);
+	printf("CBI image: %s\n", filename);
 
 	if (memcmp(h->magic, cbi_magic, sizeof(cbi_magic))) {
 		fprintf(stderr, "Invalid Magic\n");
@@ -248,7 +385,8 @@ static int do_show(const char *filename, int show_all)
 	}
 
 	printf("  TOTAL_SIZE: %u\n", h->total_size);
-	printf("  CBI_VERSION: %u\n", h->version);
+	if (show_all)
+		printf("  CBI_VERSION: %u\n", h->version);
 	printf("  Data Field: name: value (hex, tag, size)\n");
 	print_integer(buf, CBI_TAG_BOARD_VERSION);
 	print_integer(buf, CBI_TAG_OEM_ID);
@@ -258,142 +396,21 @@ static int do_show(const char *filename, int show_all)
 	return 0;
 }
 
-/* Print help and return error */
-static void print_help(int argc, char *argv[])
-{
-	printf("\nUsage: %s <--create|--show>\n"
-	       "\n"
-	       "Utility for managing Cros Board Info (CBIs).\n"
-	       "\n"
-	       "'--create <file> [OPTIONS]' creates an EEPROM image file.\n"
-	       "Required OPTIONS are:\n"
-	       "  --board_version <value>     Board version\n"
-	       "  --oem_id <value>            OEM ID\n"
-	       "  --sku_id <value>            SKU ID\n"
-	       "  --size <size>               Size of output file in bytes\n"
-	       "<value> must be a positive integer <= 0XFFFFFFFF\n"
-	       "and <size> must be a positive integer <= 0XFFFF.\n"
-	       "Optional OPTIONS are:\n"
-	       "  --erase_byte <uint8>        Byte used for empty space\n"
-	       "  --format_version <uint16>   Data format version\n"
-	       "\n"
-	       "'--show <file> [OPTIONS]' shows data in an EEPROM image file.\n"
-	       "OPTIONS are:\n"
-	       "  --all                       Dump all information\n"
-	       "It also validates the contents against the checksum and\n"
-	       "returns non-zero if validation fails.\n"
-	       "\n",
-	       argv[0]);
-}
-
 int main(int argc, char **argv)
 {
-	int mode = OPT_MODE_NONE;
-	const char *cbi_filename = NULL;
-	struct board_info bi;
-	uint32_t size = 0;
-	uint8_t erase = 0xff;
-	int show_all = 0;
-	int parse_error = 0;
-	uint32_t required_mask = 0;
-	uint32_t set_mask = 0;
-	uint64_t val;
-	char *e;
-	int i;
-
-	memset(&bi, 0, sizeof(bi));
-
-	while ((i = getopt_long(argc, argv, "", long_opts, NULL)) != -1) {
-		switch (i) {
-		case '?':
-			/* Unhandled option */
-			fprintf(stderr, "Unknown option or missing value\n");
-			parse_error = 1;
-			break;
-		case OPT_HELP:
-			print_help(argc, argv);
-			return !!parse_error;
-		case OPT_MODE_CREATE:
-			mode = i;
-			cbi_filename = optarg;
-			required_mask = REQUIRED_MASK_CREATE;
-			set_mask |= REQUIRED_MASK_FILENAME;
-			break;
-		case OPT_MODE_SHOW:
-			mode = i;
-			cbi_filename = optarg;
-			required_mask = REQUIRED_MASK_SHOW;
-			set_mask |= REQUIRED_MASK_FILENAME;
-			break;
-		case OPT_BOARD_VERSION:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT32_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --board_version\n");
-				parse_error = 1;
-			}
-			bi.version = val;
-			set_mask |= REQUIRED_MASK_BOARD_VERSION;
-			break;
-		case OPT_OEM_ID:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT32_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --oem_id\n");
-				parse_error = 1;
-			}
-			bi.oem_id = val;
-			set_mask |= REQUIRED_MASK_OEM_ID;
-			break;
-		case OPT_SKU_ID:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT32_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --sku_id\n");
-				parse_error = 1;
-			}
-			bi.sku_id = val;
-			set_mask |= REQUIRED_MASK_SKU_ID;
-			break;
-		case OPT_SIZE:
-			val = strtoul(optarg, &e, 0);
-			if (val > UINT16_MAX || !*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --size\n");
-				parse_error = 1;
-			}
-			size = val;
-			set_mask |= REQUIRED_MASK_SIZE;
-			break;
-		case OPT_ERASE_BYTE:
-			erase = strtoul(optarg, &e, 0);
-			if (!*optarg || (e && *e)) {
-				fprintf(stderr, "Invalid --erase_byte\n");
-				parse_error = 1;
-			}
-			break;
-		case OPT_SHOW_ALL:
-			show_all = 1;
-			break;
-		}
+	if (argc < 2) {
+		fprintf(stderr, "Unknown option or missing value\n");
+		print_help();
+		return -1;
 	}
 
-	if (parse_error) {
-		print_help(argc, argv);
-		return 1;
-	}
+	if (!strncmp(argv[1], "create", sizeof("create")))
+		return cmd_create(--argc, ++argv);
+	else if (!strncmp(argv[1], "show", sizeof("show")))
+		return cmd_show(--argc, ++argv);
 
-	if (set_mask != required_mask) {
-		fprintf(stderr, "Missing required arguments\n");
-		print_help(argc, argv);
-		return 1;
-	}
+	fprintf(stderr, "Unknown option or missing value\n");
+	print_help();
 
-	switch (mode) {
-	case OPT_MODE_CREATE:
-		return do_create(cbi_filename, size, erase, &bi);
-	case OPT_MODE_SHOW:
-		return do_show(cbi_filename, show_all);
-	case OPT_MODE_NONE:
-	default:
-		fprintf(stderr, "Must specify a mode.\n");
-		print_help(argc, argv);
-		return 1;
-	}
+	return -1;
 }
