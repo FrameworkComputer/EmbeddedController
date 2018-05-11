@@ -334,7 +334,8 @@
 /*
  * Check for battery in disconnect state (similar to cut-off state). If this
  * battery is found to be in disconnect state, take it out of this state by
- * force-applying a charge current.
+ * force-applying a charge current. This option requires
+ * battery_get_disconnect_state() to be defined.
  */
 #undef CONFIG_BATTERY_REVIVE_DISCONNECT
 
