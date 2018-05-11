@@ -67,6 +67,11 @@ timestamp_t get_time(void)
 	return ret;
 }
 
+uint32_t __hw_clock_source_read(void)
+{
+	return get_time().le.lo;
+}
+
 void force_time(timestamp_t ts)
 {
 	timestamp_t now = _get_time();
