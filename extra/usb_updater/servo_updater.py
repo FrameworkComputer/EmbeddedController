@@ -40,6 +40,22 @@ def flash(brdfile, serialno, binfile):
   print("Done. Finalizing.")
   p.stop()
 
+def flash2(vidpid, serialno, binfile):
+  """Call fw update via usb_updater2 commandline."""
+  cmd = "usb_updater2 -d %s" % vidpid
+  if serialno:
+    cmd += " -S %s" % serialno
+  cmd += " -n"
+  cmd += " %s" % binfile
+
+  print(cmd)
+  res = subprocess.call(cmd.split())
+
+  if res in (0, 1, 2):
+    return res
+  else:
+    raise ServoUpdaterException("usb_updater2 exit with res = %d" % res)
+
 def connect(vidpid, iface, serialno, debuglog=False):
   """Connect to console.
 
@@ -69,7 +85,10 @@ def select(vidpid, iface, serialno, region, debuglog=False):
 
   pty = connect(vidpid, iface, serialno)
 
-  cmd = "sysjump %s\nreboot" % region
+  if region is "ro":
+    cmd = "reboot"
+  else:
+    cmd = "sysjump %s" % region
   pty._issue_cmd(cmd)
   time.sleep(1)
   pty.close()
@@ -97,6 +116,28 @@ def do_version(vidpid, iface, serialno):
   pty.close()
 
   return results[1].strip(' \t\r\n\0')
+
+def do_updater_version(vidpid, iface, serialno):
+  """Check whether this uses python updater or c++ updater
+
+  Args:
+    see connect()
+
+  Returns:
+    updater version number. 2 or 6.
+  """
+  vers = do_version(vidpid, iface, serialno)
+
+  m = re.search('_v1.1.(\d\d\d\d)-', vers)
+  if m:
+    version_number = int(m.group(1))
+    # Servo versions below 58 are from servo-9040.B.
+    # Updater version is not directly queryable.
+    if version_number < 5800:
+      return 2
+    else:
+      return 6
+  return 0
 
 def findfiles(cname, fname):
   """Select config and firmware binary files.
@@ -203,11 +244,25 @@ def main():
 
   select(vidpid, iface, serialno, "ro", debuglog=debuglog)
 
-  flash(brdfile, serialno, binfile)
+  vers = do_updater_version(vidpid, iface, serialno)
+  if vers == 2:
+    flash(brdfile, serialno, binfile)
+  elif vers == 6:
+    flash2(vidpid, serialno, binfile)
+  else:
+    raise ServoUpdaterException("Can't detect updater version")
 
   select(vidpid, iface, serialno, "rw", debuglog=debuglog)
 
-  flash(brdfile, serialno, binfile)
+  vers = do_updater_version(vidpid, iface, serialno)
+  if vers == 2:
+    flash(brdfile, serialno, binfile)
+  elif vers == 6:
+    flash2(vidpid, serialno, binfile)
+  else:
+    raise ServoUpdaterException("Can't detect updater version")
+
+  select(vidpid, iface, serialno, "ro", debuglog=debuglog)
 
 if __name__ == "__main__":
   main()

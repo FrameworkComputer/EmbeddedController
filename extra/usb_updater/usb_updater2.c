@@ -72,7 +72,7 @@ static struct first_response_pdu targ;
 static uint16_t protocol_version;
 static uint16_t header_type;
 static char *progname;
-static char *short_opts = "bd:efg:hjp:rsS:tuw";
+static char *short_opts = "bd:efg:hjnp:rsS:tuw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"binvers",	1,   NULL, 'b'},
@@ -82,6 +82,7 @@ static const struct option long_opts[] = {
 	{"tp_debug",	1,   NULL, 'g'},
 	{"help",	0,   NULL, 'h'},
 	{"jump_to_rw",	0,   NULL, 'j'},
+	{"no_reset",	0,   NULL, 'n'},
 	{"tp_update",	1,   NULL, 'p'},
 	{"reboot",	0,   NULL, 'r'},
 	{"stay_in_ro",	0,   NULL, 's'},
@@ -973,6 +974,7 @@ int main(int argc, char *argv[])
 	int transferred_sections = 0;
 	int binary_vers = 0;
 	int show_fw_ver = 0;
+	int no_reset_request = 0;
 	int touchpad_update = 0;
 	int extra_command = -1;
 	uint8_t extra_command_data[50];
@@ -1024,6 +1026,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'j':
 			extra_command = UPDATE_EXTRA_CMD_JUMP_TO_RW;
+			break;
+		case 'n':
+			no_reset_request = 1;
 			break;
 		case 'p':
 			touchpad_update = 1;
@@ -1119,7 +1124,7 @@ int main(int argc, char *argv[])
 							data, data_len);
 			free(data);
 
-			if (transferred_sections)
+			if (transferred_sections && !no_reset_request)
 				generate_reset_request(&td);
 		}
 	} else if (extra_command > -1) {
