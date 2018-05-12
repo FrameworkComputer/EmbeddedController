@@ -128,7 +128,7 @@ def do_updater_version(vidpid, iface, serialno):
   """
   vers = do_version(vidpid, iface, serialno)
 
-  m = re.search('_v1.1.(\d\d\d\d)-', vers)
+  m = re.search('_v1.1.(\d\d\d\d)', vers)
   if m:
     version_number = int(m.group(1))
     # Servo versions below 58 are from servo-9040.B.
