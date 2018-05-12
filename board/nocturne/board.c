@@ -335,6 +335,18 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_pmic_init(void)
+{
+	int pgmask1;
+
+	/* Mask V5A_DS3_PG from PMIC PGMASK1. */
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, &pgmask1))
+		return;
+	pgmask1 |= (1 << 2);
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x18, pgmask1);
+}
+DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
+
 void board_overcurrent_event(int port)
 {
 	/* Sanity check the port. */
