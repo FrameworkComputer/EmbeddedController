@@ -11,8 +11,8 @@
  */
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_PD_INT_ODL,  PIN(6, 1), GPIO_INT_FALLING, usb_c_interrupt)
-GPIO_INT(USB_C1_PD_INT_ODL,  PIN(F, 5), GPIO_INT_FALLING, usb_c_interrupt)
+GPIO_INT(USB_C0_PD_INT_ODL,  PIN(6, 1), GPIO_INT_FALLING | GPIO_PULL_UP, usb_c_interrupt)
+GPIO_INT(USB_C1_PD_INT_ODL,  PIN(F, 5), GPIO_INT_FALLING | GPIO_PULL_UP, usb_c_interrupt)
 
 /* Power Sequencing interrupts */
 GPIO_INT(ROP_DSW_PWROK_EC,   PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
