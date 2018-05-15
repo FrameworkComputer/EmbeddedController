@@ -99,6 +99,8 @@ GPIO(I2C7_SDA,		 PIN(B, 2), GPIO_INPUT |
 
 /* USB pins */
 GPIO(EN_USB_A_5V,	 PIN(6, 7), GPIO_OUT_LOW)	/* Enable A0/A1 5V Charging */
+/* OTG pin -  This pin will be changed to PIN(8,3) in Proto 2*/
+GPIO(USB2_OTG_ID,	 PIN(A, 0), GPIO_OUT_LOW)	/* OTG ID */
 GPIO(USB_A_CHARGE_EN_L,	 PIN(A, 2), GPIO_OUT_HIGH)	/* Enable A0/A1 1.5A Charging */
 /* TODO(b/74254366): Break out A1 signals once they are there in HW */
 /* USB_C0_PD_RST_L isn't connected to PIN(6,2) since ANX TCPC doesn't have reset */
