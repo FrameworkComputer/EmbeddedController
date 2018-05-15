@@ -67,9 +67,9 @@
 #define USB_PD_PORT_PS8751	0
 #define USB_PD_PORT_ANX7447	1
 
-static uint16_t board_version;
-static uint8_t oem = PROJECT_NAMI;
-static uint16_t sku;
+uint16_t board_version;
+uint8_t oem = PROJECT_NAMI;
+uint16_t sku;
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {

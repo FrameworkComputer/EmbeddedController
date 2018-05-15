@@ -7,11 +7,13 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "board.h"
 #include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "util.h"
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
@@ -24,25 +26,63 @@ static enum battery_present batt_pres_prev = BP_NOT_SURE;
 #define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
 #define SB_SHUTDOWN_DATA        0x0010
 
-static const struct battery_info info = {
-	.voltage_max = 8700,
-	.voltage_normal = 7700,
+/* Default, Nami, Vayne */
+static const struct battery_info info_0 = {
+	.voltage_max = 8800,
+	.voltage_normal = 7600,
 	.voltage_min = 6000,
-	/* Pre-charge values. */
-	.precharge_current = 152, /* mA */
+	.precharge_current = 256,
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
+	.discharging_min_c = -20,
+	.discharging_max_c = 70,
+};
 
+/* Sona */
+static const struct battery_info info_1 = {
+	.voltage_max = 13200,
+	.voltage_normal = 11550,
+	.voltage_min = 9000,
+	.precharge_current = 256,
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 45,
 	.charging_min_c = 0,
-	.charging_max_c = 50,
+	.charging_max_c = 45,
+	.discharging_min_c = -10,
+	.discharging_max_c = 60,
+};
+
+/* Pantheon */
+static const struct battery_info info_2 = {
+	.voltage_max = 8700,
+	.voltage_normal = 7500,
+	.voltage_min = 6000,
+	.precharge_current = 373,
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 50,
+	.charging_min_c = 0,
+	.charging_max_c = 60,
 	.discharging_min_c = -20,
 	.discharging_max_c = 60,
 };
 
+static const struct battery_info *info = &info_0;
+
 const struct battery_info *battery_get_info(void)
 {
-	return &info;
+	return info;
 }
+
+void board_battery_init(void)
+{
+	if (oem == PROJECT_SONA)
+		info = &info_1;
+	else if (oem == PROJECT_PANTHEON)
+		info = &info_2;
+}
+DECLARE_HOOK(HOOK_INIT, board_battery_init, HOOK_PRIO_DEFAULT);
 
 int board_cut_off_battery(void)
 {
