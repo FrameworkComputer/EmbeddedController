@@ -1173,93 +1173,6 @@ static void *fp_download_frame(struct ec_response_fp_info *info, int index)
 	return buffer;
 }
 
-static int fp_pattern_frame(int capt_type, const char *title, int inv)
-{
-	struct ec_response_fp_info info;
-	struct ec_params_fp_mode p;
-	struct ec_response_fp_mode r;
-	void *pattern;
-	uint8_t *ptr;
-	int rv;
-	int bad = 0;
-	int64_t cnt = 0, lo_sum = 0, hi_sum = 0;
-	int64_t lo_sum_squares = 0, hi_sum_squares = 0;
-	int x, y;
-
-	p.mode = FP_MODE_CAPTURE | (capt_type << FP_MODE_CAPTURE_TYPE_SHIFT);
-	rv = ec_command(EC_CMD_FP_MODE, 0, &p, sizeof(p), &r, sizeof(r));
-	if (rv < 0)
-		return -1;
-	/* ensure the capture has happened without using event support */
-	usleep(200000);
-	pattern = fp_download_frame(&info, FP_FRAME_INDEX_SIMPLE_IMAGE);
-	if (!pattern)
-		return -1;
-
-	ptr = pattern;
-	for (y = 0; y < info.height; y++)
-		for (x = 0; x < info.width; x++, ptr++) {
-			uint8_t v = *ptr;
-			int hi = !!(v & 128);
-
-			/*
-			 * Verify whether the captured image matches the expected
-			 * checkerboard pattern.
-			 */
-			if ((hi ^ inv) == ((x & 1) ^ (y & 1))) {
-				bad++;
-			} else {
-				/*
-				 * For all black pixels and all white pixels of
-				 * the checkerboard pattern, we will compute
-				 * their average and their variance in order to
-				 * have quality metrics later.
-				 * Do the sum and the sum of squares for each
-				 * category here, we will finalize the
-				 * computations outside of the loop.
-				 */
-				cnt++;
-				if (hi) {
-					hi_sum += v;
-					hi_sum_squares += v * v;
-				} else {
-					lo_sum += v;
-					lo_sum_squares += v * v;
-				}
-			}
-		}
-	printf("%s: bad %d\n", title, bad);
-	/*
-	 * For each category of pixels: black aka 'lo' and white aka 'hi',
-	 * the variance is: Avg[v^2] - Avg[v]^2
-	 * which is equivalent to  Sum(v^2) / cnt - Sum(v) * Sum(v) / cnt / cnt
-	 * where v is the pixel grayscale value.
-	 */
-	if (cnt)
-		printf("%s: distribution average %" PRId64 "/%" PRId64
-		       " variance %" PRId64 "/%" PRId64 "\n",
-		       title, lo_sum / cnt, hi_sum / cnt,
-		       (lo_sum_squares / cnt - lo_sum * lo_sum / cnt / cnt),
-		       (hi_sum_squares / cnt - hi_sum * hi_sum / cnt / cnt));
-	free(pattern);
-	return bad;
-}
-
-int cmd_fp_check_pixels(int argc, char *argv[])
-{
-	int bad0, bad1;
-
-	bad0 = fp_pattern_frame(FP_CAPTURE_PATTERN0, "Checkerboard", 0);
-	bad1 = fp_pattern_frame(FP_CAPTURE_PATTERN1, "Inv. Checkerboard", 1);
-	if (bad0 < 0 || bad1 < 0) {
-		fprintf(stderr, "Failed to acquire FP patterns\n");
-		return -1;
-	}
-	printf("Defects: dead %d (pattern0 %d pattern1 %d)\n",
-	       bad0 + bad1, bad0, bad1);
-	return 0;
-}
-
 int cmd_fp_mode(int argc, char *argv[])
 {
 	struct ec_params_fp_mode p;
@@ -1295,6 +1208,8 @@ int cmd_fp_mode(int argc, char *argv[])
 			capture_type = FP_CAPTURE_PATTERN1;
 		else if (!strncmp(argv[i], "qual", 4))
 			capture_type = FP_CAPTURE_QUALITY_TEST;
+		else if (!strncmp(argv[i], "test_reset", 10))
+			capture_type = FP_CAPTURE_RESET_TEST;
 	}
 	if (mode & FP_MODE_CAPTURE)
 		mode |= capture_type << FP_MODE_CAPTURE_TYPE_SHIFT;
@@ -8084,7 +7999,6 @@ const struct command commands[] = {
 	{"flashspiinfo", cmd_flash_spi_info},
 	{"flashpd", cmd_flash_pd},
 	{"forcelidopen", cmd_force_lid_open},
-	{"fpcheckpixels", cmd_fp_check_pixels},
 	{"fpframe", cmd_fp_frame},
 	{"fpinfo", cmd_fp_info},
 	{"fpmode", cmd_fp_mode},

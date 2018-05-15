@@ -102,7 +102,8 @@ static inline int is_test_capture(uint32_t mode)
 
 	return (mode & FP_MODE_CAPTURE)
 		&& (capture_type == FP_CAPTURE_PATTERN0
-		    || capture_type == FP_CAPTURE_PATTERN1);
+		    || capture_type == FP_CAPTURE_PATTERN1
+		    || capture_type == FP_CAPTURE_RESET_TEST);
 }
 
 /*
