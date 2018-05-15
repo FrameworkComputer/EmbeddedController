@@ -294,7 +294,7 @@ static struct mutex circbuf_readoffset_mutex;
 static void send_mkbp_event(uint32_t event)
 {
 	atomic_or(&cec_events, event);
-	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
+	mkbp_send_event(EC_MKBP_EVENT_CEC);
 }
 
 static void tmr_cap_start(enum cap_edge edge, int timeout)
@@ -976,6 +976,11 @@ static int cec_send(const uint8_t *msg, uint8_t len)
 	return 0;
 }
 
+static int cec_recv(uint8_t *msg, uint8_t *len)
+{
+	return rx_circbuf_pop(&cec_rx_cb, msg, len);
+}
+
 static int hc_cec_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_write *params = args->params;
@@ -992,6 +997,24 @@ static int hc_cec_write(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
+
+static int hc_cec_read(struct host_cmd_handler_args *args)
+{
+	struct ec_response_cec_read *response = args->response;
+	uint8_t msg_len;
+
+	if (cec_state == CEC_STATE_DISABLED)
+		return EC_RES_UNAVAILABLE;
+
+	if (cec_recv(response->msg, &msg_len) != 0)
+		return EC_RES_UNAVAILABLE;
+
+	args->response_size = msg_len;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_READ_MSG, hc_cec_read, EC_VER_MASK(0));
+
 
 static int cec_set_enable(uint8_t enable)
 {
@@ -1100,23 +1123,7 @@ static int cec_get_next_event(uint8_t *out)
 
 	return sizeof(event_out);
 }
-DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_EVENT, cec_get_next_event);
-
-static int cec_get_next_msg(uint8_t *out)
-{
-	int rv;
-	uint8_t msg_len, msg[MAX_CEC_MSG_LEN];
-
-	rv = rx_circbuf_pop(&cec_rx_cb, msg, &msg_len);
-	if (rv != 0)
-		return EC_RES_UNAVAILABLE;
-
-	memcpy(out, msg, msg_len);
-
-	return msg_len;
-}
-DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_MESSAGE, cec_get_next_msg);
-
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC, cec_get_next_event);
 
 static void cec_init(void)
 {
@@ -1160,7 +1167,7 @@ void cec_task(void)
 				rx_circbuf_push(&cec_rx_cb, cec_rx.msgt.buf,
 						cec_rx.msgt.byte);
 			}
-			mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+			send_mkbp_event(EC_MKBP_CEC_HAVE_DATA);
 		}
 	}
 }

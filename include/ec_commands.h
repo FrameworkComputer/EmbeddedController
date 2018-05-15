@@ -21,10 +21,6 @@
 #include "common.h"
 #endif
 
-#if !defined(__KERNEL__)
-#include "compile_time_macros.h"
-#endif
-
 /*
  * Current version of this protocol
  *
@@ -3178,10 +3174,7 @@ enum ec_mkbp_event {
 	EC_MKBP_EVENT_HOST_EVENT64 = 7,
 
 	/* Notify the AP that something happened on CEC */
-	EC_MKBP_EVENT_CEC_EVENT = 8,
-
-	/* Send an incoming CEC message to the AP */
-	EC_MKBP_EVENT_CEC_MESSAGE = 9,
+	EC_MKBP_EVENT_CEC = 8,
 
 	/* Number of MKBP events */
 	EC_MKBP_EVENT_COUNT,
@@ -3212,44 +3205,10 @@ union __ec_align_offset1 ec_response_get_next_data {
 	uint32_t cec_events;
 };
 
-union __ec_align_offset1 ec_response_get_next_data_v1 {
-	uint8_t key_matrix[16];
-
-	/* Unaligned */
-	uint32_t host_event;
-	uint64_t host_event64;
-
-	struct __ec_todo_unpacked {
-		/* For aligning the fifo_info */
-		uint8_t reserved[3];
-		struct ec_response_motion_sense_fifo_info info;
-	} sensor_fifo;
-
-	uint32_t buttons;
-
-	uint32_t switches;
-
-	uint32_t fp_events;
-
-	uint32_t sysrq;
-
-	/* CEC events from enum mkbp_cec_event */
-	uint32_t cec_events;
-
-	uint8_t cec_message[16];
-};
-BUILD_ASSERT(sizeof(union ec_response_get_next_data_v1) == 16);
-
 struct __ec_align1 ec_response_get_next_event {
 	uint8_t event_type;
 	/* Followed by event data if any */
 	union ec_response_get_next_data data;
-};
-
-struct __ec_align1 ec_response_get_next_event_v1 {
-	uint8_t event_type;
-	/* Followed by event data if any */
-	union ec_response_get_next_data_v1 data;
 };
 
 /* Bit indices for buttons and switches.*/
@@ -4158,6 +4117,14 @@ struct __ec_align1 ec_params_cec_write {
 	uint8_t msg[MAX_CEC_MSG_LEN];
 };
 
+/* CEC message from a CEC sink reported back to the AP */
+#define EC_CMD_CEC_READ_MSG 0x00B9
+
+/* Message read from to the CEC bus */
+struct __ec_align1 ec_response_cec_read {
+	uint8_t msg[MAX_CEC_MSG_LEN];
+};
+
 /* Set various CEC parameters */
 #define EC_CMD_CEC_SET 0x00BA
 
@@ -4190,6 +4157,8 @@ enum mkbp_cec_event {
 	EC_MKBP_CEC_SEND_OK			= 1 << 0,
 	/* Outgoing message was not acknowledged */
 	EC_MKBP_CEC_SEND_FAILED			= 1 << 1,
+	/* Incoming message can be read out by AP */
+	EC_MKBP_CEC_HAVE_DATA			= 1 << 2,
 };
 
 /*****************************************************************************/
