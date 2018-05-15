@@ -169,8 +169,27 @@ int board_get_ambient_temp(int idx, int *temp_ptr)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, board_get_ambient_temp, 0, 5},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_charger_temp, 1, 1},
+	{
+		.name = "Battery",
+		.type = TEMP_SENSOR_TYPE_BATTERY,
+		.read = charge_get_battery_temp,
+		.idx = 0,
+		.action_delay_sec = 1
+	},
+	{
+		.name = "Ambient",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_ambient_temp,
+		.idx = 0,
+		.action_delay_sec = 5
+	},
+	{
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_charger_temp,
+		.idx = 1,
+		.action_delay_sec = 1
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
