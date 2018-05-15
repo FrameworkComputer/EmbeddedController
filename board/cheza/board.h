@@ -25,6 +25,7 @@
 /* EC Modules */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_LED_COMMON
 #define CONFIG_ADC
 #undef CONFIG_PWM
 #undef CONFIG_PECI
