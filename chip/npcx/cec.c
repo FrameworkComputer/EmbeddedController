@@ -38,6 +38,9 @@
 /* CEC broadcast address. Also the highest possible CEC address */
 #define CEC_BROADCAST_ADDR 15
 
+/* Address to indicate that no logical address has been set */
+#define CEC_UNREGISTERED_ADDR 255
+
 /*
  * The CEC specification requires at least one and a maximum of
  * five resends attempts
@@ -1068,7 +1071,8 @@ static int cec_set_enable(uint8_t enable)
 
 static int cec_set_logical_addr(uint8_t logical_addr)
 {
-	if (logical_addr >= CEC_BROADCAST_ADDR)
+	if (logical_addr >= CEC_BROADCAST_ADDR &&
+	    logical_addr != CEC_UNREGISTERED_ADDR)
 		return EC_RES_INVALID_PARAM;
 
 	cec_addr = logical_addr;
