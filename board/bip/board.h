@@ -30,6 +30,7 @@ enum adc_channel {
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_PANASONIC,
+	BATTERY_SANYO,
 	BATTERY_TYPE_COUNT,
 };
 
