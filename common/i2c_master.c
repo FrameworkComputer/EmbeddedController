@@ -870,13 +870,13 @@ static int command_i2cxfer(int argc, char **argv)
 		/* 8-bit read */
 		rv = i2c_read8(port, slave_addr, offset, &v);
 		if (!rv)
-			ccprintf("0x%02x [%d]\n", v);
+			ccprintf("0x%02x [%d]\n", v, v);
 
 	} else if (strcasecmp(argv[1], "r16") == 0) {
 		/* 16-bit read */
 		rv = i2c_read16(port, slave_addr, offset, &v);
 		if (!rv)
-			ccprintf("0x%04x [%d]\n", v);
+			ccprintf("0x%04x [%d]\n", v, v);
 
 	} else if (strcasecmp(argv[1], "rlen") == 0) {
 		/* Arbitrary length read; param5 = len */
