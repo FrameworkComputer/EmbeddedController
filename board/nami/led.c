@@ -115,14 +115,13 @@ const static led_patterns battery_pattern_0 = {
  * Sona - Battery LED (dual color)
  * AC is attached      Solid ON White
  * charging            Solid ON Amber
- * Discharge in S0     Off
+ * Discharge in S0/3/5 Off
  * Battery Error       Blinking white (0.5 sec On and 0.5 sec Off)
- * Discharge in S3     Blinking white (1 sec On, 1 sec off regardless AC status)
- * TODO:fuel < 10%     Blinking white (1 sec On, 1 sec Off)
+ * fuel < 10%          Blinking white (1 sec On, 1 sec Off)
  */
 const static led_patterns battery_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_OFF,   PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF,   PULSE_NO}},
+	{{LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}},
 	/* charging: s0, s3, s5 */
 	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
 	/* full: s0, s3, s5 */
