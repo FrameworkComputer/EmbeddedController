@@ -789,7 +789,7 @@ struct keyboard_scan_config keyscan_config = {
 int board_is_lid_angle_tablet_mode(void)
 {
 	/* Boards with no GMR sensor use lid angles to detect tablet mode. */
-	return oem == PROJECT_NAMI || oem == PROJECT_VAYNE;
+	return oem != PROJECT_AKALI;
 }
 
 void board_kblight_init(void)
