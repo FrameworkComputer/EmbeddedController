@@ -217,7 +217,8 @@ static int charge_manager_is_seeded(void)
  */
 static int charge_manager_get_source_current(int port)
 {
-	ASSERT(is_pd_port(port));
+	if (!is_pd_port(port))
+		return 0;
 
 	switch (source_port_last_rp[port]) {
 	case TYPEC_RP_3A0:
