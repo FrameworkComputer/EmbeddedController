@@ -31,6 +31,7 @@
 #include "pwm_chip.h"
 #include "registers.h"
 #include "system.h"
+#include "system_chip.h"
 #include "switch.h"
 #include "task.h"
 #include "tcpci.h"
@@ -321,6 +322,29 @@ int board_get_version(void)
 	}
 
 	return board_version;
+}
+
+void board_hibernate(void)
+{
+	int p;
+
+	/* Configure PSL pins */
+	for (p = 0; p < hibernate_wake_pins_used; p++)
+		system_config_psl_mode(hibernate_wake_pins[p]);
+
+	/*
+	 * Enter PSL mode.  Note that on Nocturne, simply enabling PSL mode does
+	 * not cut the EC's power.  Therefore, we'll need to cut off power via
+	 * the ROP PMIC afterwards.
+	 */
+	system_enter_psl_mode();
+
+	/* Cut off DSW power via the ROP PMIC. */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x49, 0x1);
+
+	/* Wait for power to be cut. */
+	while (1)
+		;
 }
 
 static void board_init(void)
