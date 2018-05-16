@@ -1273,26 +1273,6 @@ void i2cs_set_pinmux(void)
 	GWRITE_FIELD(PINMUX, EXITEN0, DIOA1, 1);   /* enable powerdown exit */
 }
 
-/**
- * Return non-zero if this is the first boot of a board in the factory.
- *
- * This is used to determine whether the default CCD configuration will be RMA
- * (things are unlocked for factory) or normal (things locked down because not
- * in factory).
- *
- * Suggested checks:
- * - If the board ID exists, this is not the first boot
- * - If the TPM is not blank, this is not the first boot
- */
-int board_is_first_factory_boot(void)
-{
-	/*
-	 * TODO(rspangler): Add checks for factory boot.  For now, always
-	 * return 0 so we're safely locked by default.
-	 */
-	return 0;
-}
-
 /* Determine key type based on the key ID. */
 static const char *key_type(const struct SignedHeader *h)
 {

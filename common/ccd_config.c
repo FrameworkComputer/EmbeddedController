@@ -340,13 +340,12 @@ static void ccd_load_config(void)
 		if (board_is_first_factory_boot()) {
 			/* Give factory RMA access */
 			CPRINTS("CCD using factory config");
-			ccd_reset_config(CCD_RESET_TEST_LAB | CCD_RESET_RMA);
+			ccd_reset_config(CCD_RESET_RMA);
 		} else {
 			/* Somehow we lost our config; normal defaults */
 			CPRINTS("CCD using default config");
 			ccd_reset_config(CCD_RESET_TEST_LAB);
 		}
-
 		ccd_config_loaded = 1;
 		return;
 	}

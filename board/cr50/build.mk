@@ -35,6 +35,7 @@ board-y += ec_state.o
 board-y += power_button.o
 board-y += servo_state.o
 board-y += ap_uart_state.o
+board-y += factory_mode.o
 board-${CONFIG_RDD} += rdd.o
 board-${CONFIG_USB_SPI} += usb_spi.o
 board-${CONFIG_USB_I2C} += usb_i2c.o
