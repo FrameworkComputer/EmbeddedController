@@ -7698,7 +7698,7 @@ err:
 }
 
 static int wait_event(long event_type,
-		      struct ec_response_get_next_event *buffer,
+		      struct ec_response_get_next_event_v1 *buffer,
 		      size_t buffer_size, long timeout)
 {
 	int rv;
@@ -7712,13 +7712,13 @@ static int wait_event(long event_type,
 		return -EIO;
 	}
 
-	return 0;
+	return rv;
 }
 
 int cmd_wait_event(int argc, char *argv[])
 {
 	int rv, i;
-	struct ec_response_get_next_event buffer;
+	struct ec_response_get_next_event_v1 buffer;
 	long timeout = 5000;
 	long event_type;
 	char *e;
@@ -7783,7 +7783,7 @@ static int cmd_cec_write(int argc, char *argv[])
 	long val;
 	int rv, i, msg_len;
 	struct ec_params_cec_write p;
-	struct ec_response_get_next_event buffer;
+	struct ec_response_get_next_event_v1 buffer;
 
 	if (argc < 3 || argc > 18) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -7810,7 +7810,7 @@ static int cmd_cec_write(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
-	rv = wait_event(EC_MKBP_EVENT_CEC, &buffer, sizeof(buffer), 1000);
+	rv = wait_event(EC_MKBP_EVENT_CEC_EVENT, &buffer, sizeof(buffer), 1000);
 	if (rv < 0)
 		return rv;
 
@@ -7829,10 +7829,9 @@ static int cmd_cec_write(int argc, char *argv[])
 
 static int cmd_cec_read(int argc, char *argv[])
 {
-	int msg_len, i, rv;
+	int i, rv;
 	char *e;
-	struct ec_response_cec_read r;
-	struct ec_response_get_next_event buffer;
+	struct ec_response_get_next_event_v1 buffer;
 	long timeout = 5000;
 
 	if (!ec_pollevent) {
@@ -7848,21 +7847,14 @@ static int cmd_cec_read(int argc, char *argv[])
 		}
 	}
 
-	rv = wait_event(EC_MKBP_EVENT_CEC, &buffer, sizeof(buffer), timeout);
+	rv = wait_event(EC_MKBP_EVENT_CEC_MESSAGE, &buffer,
+			sizeof(buffer), timeout);
 	if (rv < 0)
 		return rv;
-
-	printf("Got CEC events 0x%08x\n", buffer.data.cec_events);
-
-	rv = ec_command(EC_CMD_CEC_READ_MSG, 0, NULL, 0, &r, sizeof(r));
-	if (rv < 0)
-		return rv;
-
-	msg_len = rv;
 
 	printf("CEC data: ");
-	for (i = 0; i < msg_len; i++)
-		printf("0x%02x ", r.msg[i]);
+	for (i = 0; i < rv - 1; i++)
+		printf("0x%02x ", buffer.data.cec_message[i]);
 	printf("\n");
 
 	return 0;
