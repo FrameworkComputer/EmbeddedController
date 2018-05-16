@@ -320,27 +320,6 @@ static int dbgr_reset(struct ftdi_context *ftdi)
 	return 0;
 }
 
-static int exit_dbgr_mode(struct ftdi_context *ftdi)
-{
-	uint8_t val;
-	int ret = 0;
-
-	/* We have to exit dbgr mode so that EC won't hold I2C bus. */
-	ret |= i2c_write_byte(ftdi, 0x2f, 0x1c);
-	ret |= i2c_write_byte(ftdi, 0x2e, 0x08);
-	ret |= i2c_read_byte(ftdi, 0x30, &val);
-	ret |= i2c_write_byte(ftdi, 0x30, (val | (1 << 4)));
-	/*
-	 * NOTE:
-	 * We won't be able to send any commands to EC
-	 * if we have exit dbgr mode.
-	 * We do a cold reset for EC after flashing.
-	 */
-	printf("=== EXIT DBGR MODE %s ===\n", (ret < 0) ? "FAILED" : "DONE");
-
-	return 0;
-}
-
 /* Enter follow mode and FSCE# high level */
 static int spi_flash_follow_mode(struct ftdi_context *ftdi, char *desc)
 {
@@ -1117,8 +1096,10 @@ int main(int argc, char **argv)
 	ret = 0;
 terminate:
 
-	/* Exit DBGR mode */
-	exit_dbgr_mode(hnd);
+	/*
+	 * Do not exit DBGR because it wedges the I2C SDA line and we cannot
+	 * perform a cold reset of the EC.
+	 */
 
 	/* Close the FTDI USB handle */
 	ftdi_usb_close(hnd);
