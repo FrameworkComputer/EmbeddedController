@@ -1224,6 +1224,7 @@ DECLARE_SAFE_CONSOLE_COMMAND(syslock, command_system_lock,
  */
 static int command_sleepmask(int argc, char **argv)
 {
+#ifdef CONFIG_CMD_SLEEPMASK_SET
 	int v;
 
 	if (argc >= 2) {
@@ -1242,14 +1243,14 @@ static int command_sleepmask(int argc, char **argv)
 			sleep_mask = v;
 		}
 	}
-
+#endif
 	ccprintf("sleep mask: %08x\n", sleep_mask);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sleepmask, command_sleepmask,
-			"[ on | off | <sleep_mask>]",
-			"Display/force sleep mask");
+DECLARE_SAFE_CONSOLE_COMMAND(sleepmask, command_sleepmask,
+			     "[ on | off | <sleep_mask>]",
+			     "Display/force sleep mask");
 #endif
 
 #ifdef CONFIG_CMD_JUMPTAGS
