@@ -262,9 +262,6 @@ int board_tpm_uses_spi(void);
 int board_id_is_mismatched(void);
 /* Allow for deep sleep to be enabled on AP shutdown */
 int board_deep_sleep_allowed(void);
-int board_needs_s3_term(void);
-int board_s3_term_is_enabled(void);
-void board_s3_term(int enable);
 
 void power_button_record(void);
 
@@ -285,7 +282,6 @@ void print_servo_state(void);
 
 int ap_is_on(void);
 int ap_uart_is_on(void);
-int ap_is_suspended(void);
 int ec_is_on(void);
 int ec_is_rx_allowed(void);
 int servo_is_connected(void);
