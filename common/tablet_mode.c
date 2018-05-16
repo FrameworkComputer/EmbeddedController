@@ -27,7 +27,7 @@ void tablet_set_mode(int mode)
 		return;
 
 	tablet_mode = mode;
-	CPRINTS("tablet mode %sabled\n", mode ? "en" : "dis");
+	CPRINTS("tablet mode %sabled", mode ? "en" : "dis");
 	hook_notify(HOOK_TABLET_MODE_CHANGE);
 }
 
