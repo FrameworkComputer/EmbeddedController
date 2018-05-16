@@ -155,6 +155,12 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 	.offset = 0,
 };
 
+/* Matrix to rotate accel/gyro into standard reference frame. */
+const matrix_3x3_t lid_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1),  0},
+	{ FLOAT_TO_FP(-1), 0,  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -168,7 +174,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ALS_GYRO,
 		.addr = BMI160_ADDR0,
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 4, /* g, enough for laptop. */
 		.min_frequency = BMI160_ACCEL_MIN_FREQ,
 		.max_frequency = BMI160_ACCEL_MAX_FREQ,
@@ -192,7 +198,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ALS_GYRO,
 		.addr = BMI160_ADDR0,
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 1000, /* dps */
 		.min_frequency = BMI160_GYRO_MIN_FREQ,
 		.max_frequency = BMI160_GYRO_MAX_FREQ,
