@@ -107,6 +107,35 @@ static void force_write_protect(int force, int wp_en)
 	set_wp_state(wp_en);
 }
 
+static enum vendor_cmd_rc vc_set_wp(enum vendor_cmd_cc code,
+				    void *buf,
+				    size_t input_size,
+				    size_t *response_size)
+{
+	uint8_t response = 0;
+
+	*response_size = 0;
+	/* There shouldn't be any args */
+	if (input_size)
+		return VENDOR_RC_BOGUS_ARGS;
+
+	/* Get current wp settings */
+	if (GREG32(PMU, LONG_LIFE_SCRATCH1) & BOARD_FORCING_WP)
+		response |= WPV_FORCE;
+	if (get_wp_state())
+		response |= WPV_ENABLE;
+	/* Get atboot wp settings */
+	if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_AT_BOOT)) {
+		response |= WPV_ATBOOT_SET;
+		if (ccd_get_flag(CCD_FLAG_OVERRIDE_WP_STATE_ENABLED))
+			response |= WPV_ATBOOT_ENABLE;
+	}
+	((uint8_t *)buf)[0] = response;
+	*response_size = sizeof(response);
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_WP, vc_set_wp);
+
 static int command_wp(int argc, char **argv)
 {
 	int val = 1;
