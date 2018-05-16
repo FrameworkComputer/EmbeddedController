@@ -1849,17 +1849,11 @@ int charge_want_shutdown(void)
 int charge_prevent_power_on(int power_button_pressed)
 {
 	int prevent_power_on = 0;
-#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 	struct batt_params params;
 	struct batt_params *current_batt_params = &curr.batt;
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 	static int automatic_power_on = 1;
-
-	/*
-	 * Remember that a power button was pressed, and assume subsequent
-	 * power-ups are user-requested and non-automatic.
-	 */
-	if (power_button_pressed)
-		automatic_power_on = 0;
+#endif
 
 	/* If battery params seem uninitialized then retrieve them */
 	if (current_batt_params->is_present == BP_NOT_SURE) {
@@ -1867,6 +1861,14 @@ int charge_prevent_power_on(int power_button_pressed)
 		current_batt_params = &params;
 	}
 
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+
+	/*
+	 * Remember that a power button was pressed, and assume subsequent
+	 * power-ups are user-requested and non-automatic.
+	 */
+	if (power_button_pressed)
+		automatic_power_on = 0;
 	/*
 	 * Require a minimum battery level to power on and ensure that the
 	 * battery can prvoide power to the system.
@@ -1879,15 +1881,14 @@ int charge_prevent_power_on(int power_button_pressed)
 	    CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
 		prevent_power_on = 1;
 
-#ifdef CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#ifdef CONFIG_CHARGE_MANAGER
+#if defined(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON) && \
+	defined(CONFIG_CHARGE_MANAGER)
 	/* However, we can power on if a sufficient charger is present. */
 	if (prevent_power_on)
 		if (charge_manager_get_power_limit_uw() >=
 		    CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000)
 			prevent_power_on = 0;
-#endif /* defined(CONFIG_CHARGE_MANAGER) */
-#endif /* defined(CONFIG_CHARGER_MIN_POWER_FOR_POWER_ON) */
+#endif /* CONFIG_CHARGE_MANAGER && CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON */
 
 	/*
 	 * Factory override: Always allow power on if WP is disabled,
@@ -1899,7 +1900,7 @@ int charge_prevent_power_on(int power_button_pressed)
 				    && battery_hw_present() == BP_YES
 #endif
 				     ));
-#endif
+#endif /* CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON */
 
 #ifdef CONFIG_CHARGE_MANAGER
 	/* Always prevent power on until charge current is initialized */
@@ -1921,6 +1922,18 @@ int charge_prevent_power_on(int power_button_pressed)
 		prevent_power_on = 1;
 #endif /* CONFIG_BATTERY_HW_PRESENT_CUSTOM */
 #endif /* CONFIG_CHARGE_MANAGER */
+
+	/*
+	 * Prevent power on if there is no battery nor ac power. This
+	 * happens when the servo is powering the EC to flash it. Only include
+	 * this logic for boards in initial bring up phase since this won't
+	 * happen for released boards.
+	 */
+#ifdef CONFIG_SYSTEM_UNLOCKED
+	if (!current_batt_params->is_present && !curr.ac)
+		prevent_power_on = 1;
+#endif /* CONFIG_SYSTEM_UNLOCKED */
+
 	return prevent_power_on;
 }
 
