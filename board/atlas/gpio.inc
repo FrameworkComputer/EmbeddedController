@@ -9,8 +9,8 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* USB PD interrupt handler section */
-GPIO_INT(USB_C0_PD_INT_ODL,	PIN(6, 1), GPIO_INT_FALLING,			tcpc_alert_event)
-GPIO_INT(USB_C1_PD_INT_ODL,	PIN(F, 5), GPIO_INT_FALLING,			tcpc_alert_event)
+GPIO_INT(USB_C0_PD_INT_ODL,	PIN(6, 1), GPIO_INT_FALLING | GPIO_PULL_UP,	tcpc_alert_event)
+GPIO_INT(USB_C1_PD_INT_ODL,	PIN(F, 5), GPIO_INT_FALLING | GPIO_PULL_UP,	tcpc_alert_event)
 
 /* power seq interrupt handler section */
 GPIO_INT(ROP_DSW_PWROK_EC,	PIN(F, 4), GPIO_INT_BOTH,			power_signal_interrupt)
