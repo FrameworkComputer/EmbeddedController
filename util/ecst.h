@@ -106,8 +106,6 @@
 #define ECRP_INPUT_FILE                 0x02
 #define ECRP_OUTPUT_FILE                0x04
 
-#define DIR_DELIMITER_STR               "/"
-
 #define SPI_MAX_CLOCK_20_MHZ_VAL        20
 #define SPI_MAX_CLOCK_25_MHZ_VAL        25
 #define SPI_MAX_CLOCK_33_MHZ_VAL        33

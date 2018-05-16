@@ -53,6 +53,45 @@ static unsigned int update_crc_32(unsigned int crc, char c);
 static unsigned int finalize_crc_32(unsigned int crc);
 
 /*
+ * Expects a path in `path`, returning a transformation as follows in `result`
+ *
+ * The last element of `path` is prefixed with `prefix` if the resulting
+ * string fits in an array of `resultsz` characters (incl 0-termination).
+ *
+ * On success returns TRUE,
+ * on error (path too long) prints an error on the TERR channel
+ *    and returns FALSE.
+ */
+static int splice_into_path(char *result, const char *path, int resultsz,
+	const char *prefix) {
+	char *last_delim, *result_last_delim;
+
+	if (strlen(path) + strlen(prefix) + 1 > resultsz) {
+		my_printf(TERR,
+			"\n\nfilename '%s' with prefix '%s' too long\n\n",
+			path, prefix);
+		my_printf(TINF,
+			"\n\n%d + %d + 1 needs to fit in %d bytes\n\n",
+			strlen(path), strlen(prefix), resultsz);
+		return FALSE;
+	}
+
+	last_delim = strrchr(path, '/');
+
+	if (last_delim == NULL) {
+		/* no delimiter: prefix and exit */
+		sprintf(result, "%s%s", prefix, path);
+		return TRUE;
+	}
+
+	/* delimiter: copy, then patch in the prefix */
+	strcpy(result, path);
+	result_last_delim = result + (last_delim - path);
+	sprintf(result_last_delim + 1, "%s%s", prefix, last_delim + 1);
+	return TRUE;
+}
+
+/*
  *----------------------------------------------------------------------
  * Function:	main()
  * Parameters:	argc, argv
@@ -316,7 +355,7 @@ int main(int argc, char *argv[])
 			if (arg_ind < arg_num) {
 				strncpy(arg_file_name,
 						hdr_args[arg_ind],
-						sizeof(arg_file_name));
+						sizeof(arg_file_name) - 1);
 				arg_file_pointer = fopen(arg_file_name, "rt");
 				if (arg_file_pointer == NULL) {
 					my_printf(TERR,
@@ -371,7 +410,7 @@ int main(int argc, char *argv[])
 			if (arg_ind < arg_num) {
 				strncpy(input_file_name,
 				hdr_args[arg_ind],
-				sizeof(input_file_name));
+				sizeof(input_file_name) - 1);
 			} else {
 				my_printf(TERR, "\nMissing Input File Name\n");
 				main_status = FALSE;
@@ -382,7 +421,7 @@ int main(int argc, char *argv[])
 			if (arg_ind < arg_num) {
 				strncpy(output_file_name,
 					hdr_args[arg_ind],
-					sizeof(output_file_name));
+					sizeof(output_file_name) - 1);
 			} else {
 				my_printf(TERR,
 					  "\nMissing Output File Name.\n");
@@ -1267,10 +1306,6 @@ int get_file_length(FILE *stream)
  */
 int main_bin(struct tbinparams binary_params)
 {
-	char dir_name[NAME_SIZE];
-	char *file_name_ptr = NULL;
-	char *tmp_str_ptr;
-	int   dir_name_len;
 	unsigned int bin_file_size_bytes;
 	unsigned int bin_fw_offset = 0;
 	unsigned int tmp_param;
@@ -1326,30 +1361,21 @@ int main_bin(struct tbinparams binary_params)
 		return FALSE;
 	}
 
-	/* Get the input directory and input file name. */
-	file_name_ptr = input_file_name;
-	for (tmp_str_ptr = input_file_name; tmp_str_ptr != NULL;) {
-		tmp_str_ptr = strstr(tmp_str_ptr, DIR_DELIMITER_STR);
-		if (tmp_str_ptr != NULL) {
-			file_name_ptr = tmp_str_ptr + strlen(DIR_DELIMITER_STR);
-			tmp_str_ptr = file_name_ptr;
-		}
-	}
-
-	dir_name_len = strlen(input_file_name) - strlen(file_name_ptr);
-	strncpy(dir_name, input_file_name, dir_name_len);
-	dir_name[dir_name_len] = '\0';
-
 	/* Create the header file in the same directory as the input file. */
-	sprintf(g_hdr_input_name, "%shdr_%s", dir_name, file_name_ptr);
+	if (!splice_into_path(g_hdr_input_name, input_file_name,
+		sizeof(g_hdr_input_name), "hdr_"))
+		return FALSE;
 	g_hfd_pointer = fopen(g_hdr_input_name, "w+b");
 	if (g_hfd_pointer == NULL) {
 		my_printf(TERR, "\n\nCannot open %s\n\n", g_hdr_input_name);
 		return FALSE;
 	}
 
-	if (strlen(output_file_name) == 0)
-		sprintf(output_file_name, "%sout_%s", dir_name, file_name_ptr);
+	if (strlen(output_file_name) == 0) {
+		if (!splice_into_path(output_file_name, input_file_name,
+			sizeof(output_file_name), "out_"))
+			return FALSE;
+	}
 
 	my_printf(TINF, "Output file name: %s\n", output_file_name);
 
@@ -2146,11 +2172,6 @@ int main_hdr(void)
  */
 int main_api(void)
 {
-
-	char dir_name[NAME_SIZE];
-	char *file_name_ptr = NULL;
-	char *tmp_str_ptr;
-	int dir_name_len;
 	char tmp_file_name[NAME_SIZE];
 	int result = 0;
 	unsigned int crc_checksum;
@@ -2166,24 +2187,9 @@ int main_api(void)
 	}
 
 	if (strlen(output_file_name) == 0) {
-		/* Get the input directory and input file name. */
-		file_name_ptr = input_file_name;
-		for (tmp_str_ptr = input_file_name; tmp_str_ptr != NULL;) {
-			tmp_str_ptr = strstr(tmp_str_ptr, DIR_DELIMITER_STR);
-			if (tmp_str_ptr != NULL) {
-				file_name_ptr =
-					tmp_str_ptr + strlen(DIR_DELIMITER_STR);
-				tmp_str_ptr = file_name_ptr;
-			}
-
-		}
-
-		dir_name_len = strlen(input_file_name) - strlen(file_name_ptr);
-		strncpy(dir_name, input_file_name, dir_name_len);
-		dir_name[dir_name_len] = '\0';
-
-		sprintf(tmp_file_name, "%sapi_%s", dir_name, file_name_ptr);
-
+		if (!splice_into_path(tmp_file_name, input_file_name,
+			sizeof(tmp_file_name), "api_"))
+			return FALSE;
 	} else
 		strncpy(tmp_file_name, output_file_name, sizeof(tmp_file_name));
 
