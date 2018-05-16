@@ -281,11 +281,15 @@ if [ "${CHIP}" = "stm32_dfu" -o "${CHIP}" = "it83xx" ]; then
 fi
 
 servo_has_warm_reset() {
-	dut_control warm_reset >/dev/null 2>&1
+	dut_control -i warm_reset >/dev/null 2>&1
 }
 
 servo_has_cold_reset() {
-	dut_control cold_reset >/dev/null 2>&1
+	dut_control -i cold_reset >/dev/null 2>&1
+}
+
+servo_has_dut_i2c_mux() {
+	dut_control -i dut_i2c_mux >/dev/null 2>&1
 }
 
 # reset the EC
@@ -412,7 +416,7 @@ cleanup() {
 		dut_control --ftdii2c setclock
 
 		# Reset the dut mux if it exists
-		if dut_control -i dut_i2c_mux 2>/dev/null; then
+		if $(servo_has_dut_i2c_mux); then
 			# Ensure servo i2c mux is on so we can talk to dut
 			dut_control i2c_mux_en:on
 			dut_control i2c_mux:remote_adc
@@ -904,7 +908,7 @@ function flash_it83xx() {
 	# Now the we have enabled the I2C mux on the servo to talk to the dut,
 	# we need to switch the I2C mux on the dut to allow ec programing (if
 	# there is a mux on the dut)
-	if dut_control -i dut_i2c_mux 2>/dev/null; then
+	if $(servo_has_dut_i2c_mux); then
 		dut_control dut_i2c_mux:ec_prog
 	fi
 
