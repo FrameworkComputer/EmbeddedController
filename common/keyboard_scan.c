@@ -542,19 +542,23 @@ static uint32_t check_key_list(const uint8_t *state)
 	/* Make copy of current debounced state. */
 	memcpy(curr_state, state, sizeof(curr_state));
 
-#ifdef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
+#ifdef KEYBOARD_MASK_PWRBTN
 	/*
-	 * Check if KSI2 is asserted for all columns due to power button hold,
-	 * and ignore it if so.
+	 * Check if KSI2 or KSI3 is asserted for all columns due to power
+	 * button hold, and ignore it if so.
 	 */
 	for (c = 0; c < KEYBOARD_COLS; c++)
-		if ((keyscan_config.actual_key_mask[c] & KEYBOARD_MASK_KSI2) &&
-		   !(curr_state[c] & KEYBOARD_MASK_KSI2))
+		if ((keyscan_config.actual_key_mask[c] & KEYBOARD_MASK_PWRBTN)
+		    && !(curr_state[c] & KEYBOARD_MASK_PWRBTN))
 			break;
 
 	if (c == KEYBOARD_COLS)
 		for (c = 0; c < KEYBOARD_COLS; c++)
-			curr_state[c] &= ~KEYBOARD_MASK_KSI2;
+			curr_state[c] &= ~KEYBOARD_MASK_PWRBTN;
+#endif
+
+#ifdef CONFIG_KEYBOARD_IGNORE_REFRESH_BOOT_KEY
+	curr_state[KEYBOARD_COL_REFRESH] &= ~KEYBOARD_MASK_REFRESH;
 #endif
 
 	/* Update mask with all boot keys that were pressed. */

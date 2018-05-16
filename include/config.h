@@ -1873,11 +1873,15 @@
 #define CONFIG_KEYBOARD_KSO_BASE 0
 
 /*
- * For certain board configurations, KSI2 will be stuck asserted for all
+ * For certain board configurations, KSI2 or KSI3 will be stuck asserted for all
  * scan columns if the power button is held. We must be aware of this case
  * in order to correctly handle recovery mode key combinations.
  */
 #undef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
+#undef CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI3
+
+/* Some boards see the refresh key pressed on boot when triggering recovery. */
+#undef CONFIG_KEYBOARD_IGNORE_REFRESH_BOOT_KEY
 
 /* Enable extra debugging output from keyboard modules */
 #undef CONFIG_KEYBOARD_DEBUG
