@@ -196,7 +196,7 @@ struct upgrade_pkt {
 static int verbose_mode;
 static uint32_t protocol_version;
 static char *progname;
-static char *short_opts = "abcd:F:fhIikO:oPprstUuVv";
+static char *short_opts = "abcd:F:fhIikO:oPprstUuVvw";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{"any",		0,   NULL, 'a'},
@@ -219,6 +219,7 @@ static const struct option long_opts[] = {
 	{"trunks_send",	0,   NULL, 't'},
 	{"verbose",	0,   NULL, 'V'},
 	{"version",	0,   NULL, 'v'},
+	{"wp",		0,   NULL, 'w'},
 	{"upstart",	0,   NULL, 'u'},
 	{},
 };
@@ -543,6 +544,7 @@ static void usage(int errs)
 			"Upstart mode (strict header checks)\n"
 	       "  -V,--verbose             Enable debug messages\n"
 	       "  -v,--version             Report this utility version\n"
+	       "  -w,--wp                  Get the current wp setting\n"
 	       "\n", progname, VID, PID);
 
 	exit(errs ? update_error : noop);
@@ -1768,6 +1770,40 @@ static void process_ccd_state(struct transfer_descriptor *td, int ccd_unlock,
 		poll_for_pp(td, VENDOR_CC_CCD, CCDV_PP_POLL_OPEN);
 }
 
+static void process_wp(struct transfer_descriptor *td)
+{
+	size_t response_size;
+	uint8_t response;
+	int rv = 0;
+
+	response_size = sizeof(response);
+
+	printf("Getting WP\n");
+
+	rv = send_vendor_command(td, VENDOR_CC_WP, NULL, 0,
+				 &response, &response_size);
+	if (rv != VENDOR_RC_SUCCESS) {
+		fprintf(stderr, "Error %d getting write protect\n", rv);
+		exit(update_error);
+	}
+	if (response_size != sizeof(response)) {
+		fprintf(stderr, "Unexpected response size %zd while getting "
+			"write protect\n",
+			response_size);
+		exit(update_error);
+	}
+
+	printf("WP: %08x\n", response);
+	printf("Flash WP: %s%s\n",
+		response & WPV_FORCE ? "forced " : "",
+		response & WPV_ENABLE ? "enabled" : "disabled");
+	printf(" at boot: %s\n",
+		!(response & WPV_ATBOOT_SET) ? "follow_batt_pres" :
+		response & WPV_ATBOOT_ENABLE ? "forced enabled" :
+		"forced disabled");
+}
+
+
 void process_bid(struct transfer_descriptor *td,
 		 enum board_id_action bid_action,
 		 struct board_id *bid)
@@ -1952,6 +1988,7 @@ int main(int argc, char *argv[])
 	int ccd_unlock = 0;
 	int ccd_lock = 0;
 	int ccd_info = 0;
+	int wp = 0;
 	int try_all_transfer = 0;
 	const char *exclusive_opt_error =
 		"Options -a, -s and -t are mutually exclusive\n";
@@ -2075,6 +2112,9 @@ int main(int argc, char *argv[])
 		case 'v':
 			report_version();  /* This will call exit(). */
 			break;
+		case 'w':
+			wp = 1;
+			break;
 		case 0:				/* auto-handled option */
 			break;
 		case '?':
@@ -2111,7 +2151,8 @@ int main(int argc, char *argv[])
 	    !password &&
 	    !rma &&
 	    !show_fw_ver &&
-	    !openbox_desc_file) {
+	    !openbox_desc_file &&
+	    !wp) {
 		if (optind >= argc) {
 			fprintf(stderr,
 				"\nERROR: Missing required <binary image>\n\n");
@@ -2138,9 +2179,9 @@ int main(int argc, char *argv[])
 
 	if (((bid_action != bid_none) + !!rma + !!password +
 	     !!ccd_open + !!ccd_unlock + !!ccd_lock + !!ccd_info +
-	     !!openbox_desc_file + !!factory_mode) > 2) {
+	     !!openbox_desc_file + !!factory_mode + !!wp) > 2) {
 		fprintf(stderr, "ERROR: "
-			"options -F, -I, -i, -k, -O, -o, -P, -r, and -u "
+			"options -F, -I, -i, -k, -O, -o, -P, -r, -u and -w "
 			"are mutually exclusive\n");
 		exit(update_error);
 	}
@@ -2176,6 +2217,8 @@ int main(int argc, char *argv[])
 
 	if (factory_mode)
 		process_factory_mode(&td, factory_mode_arg);
+	if (wp)
+		process_wp(&td);
 
 	if (corrupt_inactive_rw)
 		invalidate_inactive_rw(&td);
