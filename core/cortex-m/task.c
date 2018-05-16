@@ -210,7 +210,7 @@ inline int in_interrupt_context(void)
 	return ret;
 }
 
-inline int get_interrupt_context(void)
+static inline int get_interrupt_context(void)
 {
 	int ret;
 	asm("mrs %0, ipsr \n":"=r"(ret)); /* read exception number */

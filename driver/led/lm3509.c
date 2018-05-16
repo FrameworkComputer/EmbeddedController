@@ -10,12 +10,12 @@
 #include "keyboard_backlight.h"
 #include "lm3509.h"
 
-inline int lm3509_write(uint8_t reg, uint8_t val)
+static inline int lm3509_write(uint8_t reg, uint8_t val)
 {
 	return i2c_write8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR, reg, val);
 }
 
-inline int lm3509_read(uint8_t reg, int *val)
+static inline int lm3509_read(uint8_t reg, int *val)
 {
 	return i2c_read8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR, reg, val);
 }
