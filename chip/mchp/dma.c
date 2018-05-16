@@ -206,10 +206,11 @@ int dma_bytes_done(dma_chan_t *chan, int orig_count)
 	int bcnt = 0;
 
 	if (chan != NULL) {
-		if (chan->ctrl & MCHP_DMA_RUN)
+		if (chan->ctrl & MCHP_DMA_RUN) {
 			bcnt = (int)chan->mem_end;
 			bcnt -= (int)chan->mem_start;
 			bcnt = orig_count - bcnt;
+		}
 	}
 
 	return bcnt;
