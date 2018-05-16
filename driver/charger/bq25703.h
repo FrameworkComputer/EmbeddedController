@@ -39,20 +39,20 @@
 #define BQ25703_REG_DEVICE_ADDRESS		0x2F
 
 /* ChargeOption0 Register */
-#define BQ25793_CHARGE_OPTION_0_EN_LEARN	(1 << 5)
-#define BQ25793_CHARGE_OPTION_0_CHRG_INHIBIT	(1 << 0)
+#define BQ25703_CHARGE_OPTION_0_EN_LEARN	(1 << 5)
+#define BQ25703_CHARGE_OPTION_0_CHRG_INHIBIT	(1 << 0)
 
 /* ChargeOption3 Register */
-#define BQ25793_CHARGE_OPTION_3_EN_ICO_MODE	(1 << 11)
+#define BQ25703_CHARGE_OPTION_3_EN_ICO_MODE	(1 << 11)
 
 /* ChargeStatus Register */
-#define BQ25793_CHARGE_STATUS_ICO_DONE		(1 << 14)
+#define BQ25703_CHARGE_STATUS_ICO_DONE		(1 << 14)
 
 /* ADCOption Register */
-#define BQ25793_ADC_OPTION_ADC_START		(1 << 14)
-#define BQ25793_ADC_OPTION_EN_ADC_IIN		(1 << 4)
+#define BQ25703_ADC_OPTION_ADC_START		(1 << 14)
+#define BQ25703_ADC_OPTION_EN_ADC_IIN		(1 << 4)
 
 /* ADCIIN Register */
-#define BQ25793_ADC_IIN_STEP_MA			50
+#define BQ25703_ADC_IIN_STEP_MA			50
 
 #endif /* __CROS_EC_BQ25703_H */

@@ -99,7 +99,7 @@ int charger_get_status(int *status)
 	/* Default status */
 	*status = CHARGER_LEVEL_2;
 
-	if (option & BQ25793_CHARGE_OPTION_0_CHRG_INHIBIT)
+	if (option & BQ25703_CHARGE_OPTION_0_CHRG_INHIBIT)
 		*status |= CHARGER_CHARGE_INHIBITED;
 
 	return EC_SUCCESS;
@@ -115,9 +115,9 @@ int charger_set_mode(int mode)
 		return rv;
 
 	if (mode & CHARGER_CHARGE_INHIBITED)
-		option |= BQ25793_CHARGE_OPTION_0_CHRG_INHIBIT;
+		option |= BQ25703_CHARGE_OPTION_0_CHRG_INHIBIT;
 	else
-		option &= ~BQ25793_CHARGE_OPTION_0_CHRG_INHIBIT;
+		option &= ~BQ25703_CHARGE_OPTION_0_CHRG_INHIBIT;
 
 	return charger_set_option(option);
 }
@@ -177,9 +177,9 @@ int charger_discharge_on_ac(int enable)
 		return rv;
 
 	if (enable)
-		option |= BQ25793_CHARGE_OPTION_0_EN_LEARN;
+		option |= BQ25703_CHARGE_OPTION_0_EN_LEARN;
 	else
-		option &= ~BQ25793_CHARGE_OPTION_0_EN_LEARN;
+		option &= ~BQ25703_CHARGE_OPTION_0_EN_LEARN;
 
 	return charger_set_option(option);
 }
@@ -232,9 +232,9 @@ int charger_set_hw_ramp(int enable)
 		return rv;
 
 	if (enable)
-		reg |= BQ25793_CHARGE_OPTION_3_EN_ICO_MODE;
+		reg |= BQ25703_CHARGE_OPTION_3_EN_ICO_MODE;
 	else
-		reg &= ~BQ25793_CHARGE_OPTION_3_EN_ICO_MODE;
+		reg &= ~BQ25703_CHARGE_OPTION_3_EN_ICO_MODE;
 
 	return raw_write16(BQ25703_REG_CHARGE_OPTION_3, reg);
 }
@@ -246,7 +246,7 @@ int chg_ramp_is_stable(void)
 	if (raw_read16(BQ25703_REG_CHARGER_STATUS, &reg))
 		return 0;
 
-	return reg & BQ25793_CHARGE_STATUS_ICO_DONE;
+	return reg & BQ25703_CHARGE_STATUS_ICO_DONE;
 }
 
 int chg_ramp_is_detected(void)
@@ -260,7 +260,7 @@ int chg_ramp_get_current_limit(void)
 	int tries_left = 8;
 
 	/* Turn on the ADC for one reading */
-	reg = BQ25793_ADC_OPTION_ADC_START | BQ25793_ADC_OPTION_EN_ADC_IIN;
+	reg = BQ25703_ADC_OPTION_ADC_START | BQ25703_ADC_OPTION_EN_ADC_IIN;
 	if (raw_write16(BQ25703_REG_ADC_OPTION, reg))
 		goto error;
 
@@ -268,10 +268,10 @@ int chg_ramp_get_current_limit(void)
 	do {
 		msleep(2);
 		raw_read16(BQ25703_REG_ADC_OPTION, &reg);
-	} while (--tries_left && (reg & BQ25793_ADC_OPTION_ADC_START));
+	} while (--tries_left && (reg & BQ25703_ADC_OPTION_ADC_START));
 
 	/* Could not complete read */
-	if (reg & BQ25793_ADC_OPTION_ADC_START)
+	if (reg & BQ25703_ADC_OPTION_ADC_START)
 		goto error;
 
 	/* Read ADC value */
@@ -279,7 +279,7 @@ int chg_ramp_get_current_limit(void)
 		goto error;
 
 	/* LSB => 50mA */
-	return reg * BQ25793_ADC_IIN_STEP_MA;
+	return reg * BQ25703_ADC_IIN_STEP_MA;
 
 error:
 	CPRINTF("Could not read input current limit ADC!");
