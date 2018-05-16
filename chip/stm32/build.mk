@@ -10,7 +10,11 @@ ifeq ($(CHIP_FAMILY),stm32f0)
 # STM32F0xx sub-family has a Cortex-M0 ARM core
 CORE:=cortex-m0
 # Force ARMv6-M ISA used by the Cortex-M0
-CFLAGS_CPU+=-march=armv6-m -mcpu=cortex-m0
+# For historical reasons gcc calls it armv6s-m: ARM used to have ARMv6-M
+# without "svc" instruction, but that was short-lived. ARMv6S-M was the option
+# with "svc". GCC kept that naming scheme even though the distinction is long
+# gone.
+CFLAGS_CPU+=-march=armv6s-m -mcpu=cortex-m0
 else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f3 stm32l4 stm32f4))
 # STM32F3xx and STM32L4xx sub-family has a Cortex-M4 ARM core
 CORE:=cortex-m
