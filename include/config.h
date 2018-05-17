@@ -112,6 +112,13 @@
 /* Sync event driver */
 #undef CONFIG_SYNC
 
+/*
+ * How many sync events to buffer before motion_sense gets a chance to run.
+ * This is similar to sensor side fifos.
+ * Note: for vsync, anything above 2 is probably plenty.
+ */
+#define CONFIG_SYNC_QUEUE_SIZE 8
+
 /* Simulate command for sync */
 #undef CONFIG_SYNC_COMMAND
 

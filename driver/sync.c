@@ -12,7 +12,9 @@
 #include "console.h"
 #include "driver/sync.h"
 #include "hwtimer.h"
+#include "queue.h"
 #include "task.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
@@ -25,14 +27,22 @@
 #error This driver needs CONFIG_ACCEL_INTERRUPTS
 #endif
 
-static uint32_t previous_interrupt_timestamp, last_interrupt_timestamp;
-static int event_counter;
-struct ec_response_motion_sensor_data vector = {.flags = 0, .data = {0, 0, 0} };
+struct sync_event_t {
+	uint32_t timestamp;
+	int counter;
+};
+
+static struct queue const sync_event_queue =
+	QUEUE_NULL(CONFIG_SYNC_QUEUE_SIZE, struct sync_event_t);
+
+struct sync_event_t next_event;
+struct ec_response_motion_sensor_data vector =
+	{.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP, .data = {0, 0, 0} };
 int sync_enabled;
 
 static int sync_read(const struct motion_sensor_t *s, vector_3_t v)
 {
-	v[0] = event_counter;
+	v[0] = next_event.counter;
 	return EC_SUCCESS;
 }
 
@@ -57,13 +67,13 @@ static int sync_get_data_rate(const struct motion_sensor_t *s)
 /* Upper half of the irq handler */
 void sync_interrupt(enum gpio_signal signal)
 {
-	uint32_t timestamp = __hw_clock_source_read();
+	next_event.timestamp = __hw_clock_source_read();
 
 	if (!sync_enabled)
 		return;
 
-	last_interrupt_timestamp = timestamp;
-	event_counter++;
+	next_event.counter++;
+	queue_add_unit(&sync_event_queue, &next_event);
 
 	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_SYNC_INT_EVENT, 0);
 }
@@ -71,43 +81,44 @@ void sync_interrupt(enum gpio_signal signal)
 /* Bottom half of the irq handler */
 static int motion_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
-	uint32_t timestamp;
+	struct sync_event_t sync_event;
 
 	if (!(*event & CONFIG_SYNC_INT_EVENT))
 		return EC_ERROR_NOT_HANDLED;
 
-	/* this should be the atomic read */
-	timestamp = last_interrupt_timestamp;
+	while (queue_remove_unit(&sync_event_queue, &sync_event)) {
+		vector.data[X] = sync_event.counter;
+		motion_sense_fifo_add_data(&vector, s, 1, sync_event.timestamp);
+	}
 
-	if (previous_interrupt_timestamp == timestamp)
-		return EC_ERROR_NOT_HANDLED; /* nothing new yet */
-	previous_interrupt_timestamp = timestamp;
-
-	vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
-	vector.data[X] = event_counter;
-	motion_sense_fifo_add_data(&vector, s, 1, timestamp);
 	return EC_SUCCESS;
 }
 
 static int sync_init(const struct motion_sensor_t *s)
 {
-	last_interrupt_timestamp = __hw_clock_source_read();
-	previous_interrupt_timestamp = last_interrupt_timestamp;
-	event_counter = 0;
 	vector.sensor_num = s - motion_sensors;
 	sync_enabled = 0;
+	next_event.counter = 0;
+	queue_init(&sync_event_queue);
 	return 0;
 }
 
 #ifdef CONFIG_SYNC_COMMAND
 static int command_sync(int argc, char **argv)
 {
-	sync_interrupt(GPIO_SYNC_INT);
+	int count = 1, i;
+
+	if (argc > 1)
+		count = strtoi(argv[1], 0, 0);
+
+	for (i = 0; i < count; i++)
+		sync_interrupt(GPIO_SYNC_INT);
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sync, command_sync,
-	NULL,
-	"Simulates a sync event");
+	"[count]",
+	"Simulates sync events");
 #endif
 
 const struct accelgyro_drv sync_drv = {
