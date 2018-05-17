@@ -117,6 +117,47 @@ void chipset_pre_init_callback(void)
 	gpio_set_level(GPIO_PMIC_EN, 1);
 }
 
+/* Called on AP S5 -> S3 transition */
+static void baseboard_chipset_startup(void)
+{
+	/* Enable Trackpad in S3+, so it can be an AP wake source. */
+	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S0 transition */
+static void baseboard_chipset_resume(void)
+{
+	/*
+	 * GPIO_ENABLE_BACKLIGHT is AND'ed with SOC_EDP_BKLTEN from the SoC and
+	 * LID_OPEN connection in hardware.
+	 */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void baseboard_chipset_suspend(void)
+{
+	/*
+	 * GPIO_ENABLE_BACKLIGHT is AND'ed with SOC_EDP_BKLTEN from the SoC and
+	 * LID_OPEN connection in hardware.
+	 */
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
+	     HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void baseboard_chipset_shutdown(void)
+{
+	/* Disable Trackpad in S5- to save power; not a low power wake source */
+	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
+	     HOOK_PRIO_DEFAULT);
+
 /* Called by APL power state machine when transitioning to G3. */
 void chipset_do_shutdown(void)
 {
@@ -134,6 +175,9 @@ void chipset_do_shutdown(void)
 	while (gpio_get_level(GPIO_PP3300_PG))
 		;
 }
+
+/******************************************************************************/
+/* Charger/PD functions */
 
 int board_set_active_charge_port(int port)
 {

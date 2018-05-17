@@ -193,34 +193,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_resume(void)
-{
-	/* Enable Trackpad Power when chipset is in S0 */
-	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, 0);
-
-	/*
-	 * GPIO_ENABLE_BACKLIGHT is AND'ed with SOC_EDP_BKLTEN from the SoC and
-	 * LID_OPEN connection in hardware.
-	 */
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	/* Disable Trackpad Power when chipset transitions to sleep state */
-	gpio_set_level(GPIO_EN_P3300_TRACKPAD_ODL, 1);
-
-	/*
-	 * GPIO_ENABLE_BACKLIGHT is AND'ed with SOC_EDP_BKLTEN from the SoC and
-	 * LID_OPEN connection in hardware.
-	 */
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
 enum adc_channel board_get_vbus_adc(int port)
 {
 	return port ? ADC_VBUS_C1 : ADC_VBUS_C0;

@@ -72,6 +72,11 @@
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_LOW_POWER_IDLE
 
+/*
+ * We don't need CONFIG_BACKLIGHT_LID since hardware AND's LID_OPEN and AP
+ * signals with EC backlight enable signal.
+ */
+
 /*******************************************************************************
  * Battery/Charger/Power Config
  */

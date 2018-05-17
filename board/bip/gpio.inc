@@ -53,6 +53,11 @@ GPIO(PMIC_EN,		 PIN(D, 7), GPIO_OUT_LOW)	/* Enable A Rails via PMIC */
 GPIO(PCH_RSMRST_L,	 PIN(C, 6), GPIO_OUT_LOW)	/* RSMRST# to SOC. All _A rails now up. */
 GPIO(PCH_SYS_PWROK,	 PIN(K, 4), GPIO_OUT_LOW)	/* EC_PCH_PWROK. All S0 rails now up. */
 
+/* Peripheral rails */
+GPIO(ENABLE_BACKLIGHT,		PIN(B, 5), GPIO_ODR_HIGH |
+					   GPIO_SEL_1P8V)	/* EC_BL_EN_OD */
+GPIO(EN_P3300_TRACKPAD_ODL,	PIN(A, 2), GPIO_ODR_HIGH)
+
 GPIO(EC_BATT_PRES_L, 	 PIN(C, 0), GPIO_INPUT)
 
 /*
