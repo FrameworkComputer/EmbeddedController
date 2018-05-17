@@ -1023,6 +1023,10 @@ static int cec_set_enable(uint8_t enable)
 		return EC_RES_SUCCESS;
 
 	if (enable) {
+		/* Configure GPIO40/TA1 as capture timer input (TA1) */
+		CLEAR_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
+		SET_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
+
 		enter_state(CEC_STATE_IDLE);
 
 		/*
@@ -1048,6 +1052,10 @@ static int cec_set_enable(uint8_t enable)
 		tmr_cap_stop();
 
 		task_disable_irq(NPCX_IRQ_MFT_1);
+
+		/* Configure GPIO40/TA1 back to GPIO */
+		CLEAR_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
+		SET_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
 
 		enter_state(CEC_STATE_DISABLED);
 
@@ -1139,10 +1147,6 @@ static void cec_init(void)
 
 	/* APB1 is the clock we base the timers on */
 	apb1_freq_div_10k = clock_get_apb1_freq()/10000;
-
-	/* Configure TA1 as capture timer input instead of GPIO */
-	CLEAR_BIT(NPCX_DEVALT(0xC), NPCX_DEVALTC_TA1_SL2);
-	SET_BIT(NPCX_DEVALT(3), NPCX_DEVALT3_TA1_SL1);
 
 	/* Ensure Multi-Function timer is powered up. */
 	CLEAR_BIT(NPCX_PWDWN_CTL(mdl), NPCX_PWDWN_CTL1_MFT1_PD);
