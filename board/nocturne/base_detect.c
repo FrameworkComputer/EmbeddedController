@@ -211,11 +211,17 @@ static void base_detect_deferred(void)
 };
 DECLARE_HOOK(HOOK_INIT, base_detect_deferred, HOOK_PRIO_INIT_ADC + 1);
 
-static void power_on_base(void)
+static void restart_state_machine(void)
 {
+	/*
+	 * Since we do not poll in S5, the base may or may not be connected,
+	 * therefore intentionally set the state to detached such that we can
+	 * detect and power on the base if necessary.
+	 */
+	set_state(BASE_DETACHED);
 	hook_call_deferred(&base_detect_deferred_data, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, power_on_base, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, restart_state_machine, HOOK_PRIO_DEFAULT);
 
 static void power_off_base(void)
 {
