@@ -28,6 +28,16 @@ struct vw_channel_t {
 };
 
 /* VW settings at initialization */
+#ifdef CONFIG_CHIPSET_GEMINILAKE
+static const struct vw_channel_t vw_init_setting[] = {
+	{ESPI_SYSTEM_EVENT_VW_IDX_4,
+		VW_LEVEL_FIELD(0),
+		VW_VALID_FIELD(VW_IDX_4_OOB_RST_ACK)},
+	{ESPI_SYSTEM_EVENT_VW_IDX_5,
+		VW_LEVEL_FIELD(VW_IDX_5_BTLD_STATUS_DONE),
+		VW_VALID_FIELD(VW_IDX_5_BTLD_STATUS_DONE)},
+};
+#else
 static const struct vw_channel_t vw_init_setting[] = {
 	{ESPI_SYSTEM_EVENT_VW_IDX_4,
 		VW_LEVEL_FIELD(0),
@@ -39,6 +49,7 @@ static const struct vw_channel_t vw_init_setting[] = {
 		VW_LEVEL_FIELD(0),
 		VW_VALID_FIELD(VW_IDX_40_SUS_ACK)},
 };
+#endif
 
 /* VW settings at host startup */
 static const struct vw_channel_t vw_host_startup_setting[] = {
@@ -268,11 +279,13 @@ static void espi_vw_no_isr(uint8_t flag_changed)
 {
 }
 
+#ifndef CONFIG_CHIPSET_GEMINILAKE
 static void espi_vw_idx41_isr(uint8_t flag_changed)
 {
 	if (flag_changed & VW_LEVEL_FIELD(VW_IDX_41_SUS_WARN))
 		espi_vw_set_wire(VW_SUS_ACK, espi_vw_get_wire(VW_SUS_WARN_L));
 }
+#endif
 
 static void espi_vw_idx7_isr(uint8_t flag_changed)
 {
@@ -315,6 +328,18 @@ struct vw_interrupt_t {
 	uint8_t vw_index;
 };
 
+#ifdef CONFIG_CHIPSET_GEMINILAKE
+static const struct vw_interrupt_t vw_isr_list[CHIP_ESPI_VW_INTERRUPT_NUM] = {
+	{espi_vw_idx2_isr,  ESPI_SYSTEM_EVENT_VW_IDX_2},
+	{espi_vw_idx3_isr,  ESPI_SYSTEM_EVENT_VW_IDX_3},
+	{espi_vw_idx7_isr,  ESPI_SYSTEM_EVENT_VW_IDX_7},
+	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_41},
+	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_42},
+	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_43},
+	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_44},
+	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_47},
+};
+#else
 static const struct vw_interrupt_t vw_isr_list[CHIP_ESPI_VW_INTERRUPT_NUM] = {
 	{espi_vw_idx2_isr,  ESPI_SYSTEM_EVENT_VW_IDX_2},
 	{espi_vw_idx3_isr,  ESPI_SYSTEM_EVENT_VW_IDX_3},
@@ -325,6 +350,7 @@ static const struct vw_interrupt_t vw_isr_list[CHIP_ESPI_VW_INTERRUPT_NUM] = {
 	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_44},
 	{espi_vw_no_isr,    ESPI_SYSTEM_EVENT_VW_IDX_47},
 };
+#endif
 
 /*
  * This is used to record the previous VW valid / level field state to discover
