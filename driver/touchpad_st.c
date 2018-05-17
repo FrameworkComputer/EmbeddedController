@@ -763,7 +763,18 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		   uint8_t **data, unsigned int *data_size)
 {
-	return EC_RES_INVALID_COMMAND;
+	if (param_size != 1)
+		return EC_RES_INVALID_PARAM;
+
+	switch (*param) {
+	case ST_TP_DEBUG_CMD_CALIBRATE:
+		/* no return value */
+		*data = NULL;
+		*data_size = 0;
+		st_tp_full_initialize();
+		return EC_SUCCESS;
+	}
+	return EC_RES_INVALID_PARAM;
 }
 #endif
 
