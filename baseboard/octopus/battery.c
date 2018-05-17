@@ -205,12 +205,14 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	CPRINTS("Battery FET: reg 0x%04x mask 0x%04x disc 0x%04x", reg,
-		board_battery_info[type].fuel_gauge.fet.reg_mask,
-		board_battery_info[type].fuel_gauge.fet.disconnect_val);
-	reg &= board_battery_info[type].fuel_gauge.fet.reg_mask;
-	if (reg == board_battery_info[type].fuel_gauge.fet.disconnect_val)
+	if ((reg & board_battery_info[type].fuel_gauge.fet.reg_mask) ==
+	    board_battery_info[type].fuel_gauge.fet.disconnect_val) {
+		CPRINTS("Batt disconnected: reg 0x%04x mask 0x%04x disc 0x%04x",
+			reg,
+			board_battery_info[type].fuel_gauge.fet.reg_mask,
+			board_battery_info[type].fuel_gauge.fet.disconnect_val);
 		return BATTERY_DISCONNECTED;
+	}
 
 	return BATTERY_NOT_DISCONNECTED;
 }
