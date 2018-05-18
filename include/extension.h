@@ -22,19 +22,31 @@ enum vendor_cmd_flags {
 	VENDOR_CMD_FROM_USB = (1 << 0),
 };
 
-/*
- * Type of function handling extension commands.
- *
- * @param buffer        As input points to the input data to be processed, as
- *                      output stores data, processing result.
- * @param command_size  Number of bytes of input data
- * @param response_size On input - max size of the buffer, on output - actual
- *                      number of data returned by the handler.
- */
-typedef enum vendor_cmd_rc (*extension_handler)(enum vendor_cmd_cc code,
-						void *buffer,
-						size_t command_size,
-						size_t *response_size);
+/* Parameters for vendor commands */
+struct vendor_cmd_params {
+	/* Command code */
+	enum vendor_cmd_cc code;
+
+	/* On input, data to be processed.  On output, response data. */
+	void *buffer;
+
+	/* Number of bytes of input data */
+	size_t in_size;
+
+	/*
+	 * On input, size of output buffer.  On output, actual response size.
+	 * Both in bytes.  A single response byte usually indicates an error
+	 * and contains the error code.
+	 */
+	size_t out_size;
+
+	/* Flags; zero or more of enum vendor_cmd_flags */
+	uint32_t flags;
+};
+
+/* Type of function handling extension commands. */
+typedef enum vendor_cmd_rc
+		(*extension_handler)(struct vendor_cmd_params *params);
 
 /**
  * Find handler for an extension command.
@@ -42,20 +54,11 @@ typedef enum vendor_cmd_rc (*extension_handler)(enum vendor_cmd_cc code,
  * Use the interface specific function call in order to check the policies for
  * handling the commands on that interface.
  *
- * @param command_code Code associated with a extension command handler.
- * @param buffer       Data to be processd by the handler, the same space
- *                     is used for data returned by the handler.
- * @param in_size      Size of the input data.
- * @param out_size     On input: max size of the buffer.  On output: actual
- *                     number of bytes returned by the handler; a single byte
- *                     usually indicates an error and contains the error code.
- * @param flags        Zero or more flags from vendor_cmd_flags.
+ * @param p		Parameters for the command
+ * @return The return code from processing the command.
  */
-uint32_t extension_route_command(uint16_t command_code,
-				 void *buffer,
-				 size_t in_size,
-				 size_t *out_size,
-				 uint32_t flags);
+uint32_t extension_route_command(struct vendor_cmd_params *p);
+
 
 /* Pointer table */
 struct extension_command {
@@ -64,20 +67,34 @@ struct extension_command {
 } __packed;
 
 #define DECLARE_EXTENSION_COMMAND(code, func)				\
-	static enum vendor_cmd_rc func##_wrap(enum vendor_cmd_cc code,	\
-				       void *cmd_body,			\
-				       size_t cmd_size,			\
-				       size_t *response_size) {		\
-		func(cmd_body, cmd_size, response_size);		\
+	static enum vendor_cmd_rc					\
+	func##_wrap(struct vendor_cmd_params *params)			\
+	{								\
+		func(params->buffer, params->in_size,			\
+		     &params->out_size);				\
 		return 0;						\
 	}								\
 	const struct extension_command __keep __extension_cmd_##code	\
 	__attribute__((section(".rodata.extensioncmds")))		\
 		= {.command_code = code, .handler = func##_wrap }
 
-#define DECLARE_VENDOR_COMMAND(code, func)				\
-	const struct extension_command __keep __vendor_cmd_##code	\
+/* Vendor command which takes params directly */
+#define DECLARE_VENDOR_COMMAND(cmd_code, func)				\
+	static enum vendor_cmd_rc					\
+	func##_wrap(struct vendor_cmd_params *params)			\
+	{								\
+		func(params->code, params->buffer, params->in_size,	\
+		     &params->out_size);				\
+		return 0;						\
+	}								\
+	const struct extension_command __keep __vendor_cmd_##cmd_code	\
 	__attribute__((section(".rodata.extensioncmds")))		\
-		= {.command_code = code, .handler = func}
+		= {.command_code = cmd_code, .handler = func##_wrap}
+
+/* Vendor command which takes params as struct */
+#define DECLARE_VENDOR_COMMAND_P(cmd_code, func)			\
+	const struct extension_command __keep __vendor_cmd_##cmd_code	\
+	__attribute__((section(".rodata.extensioncmds")))		\
+		= {.command_code = cmd_code, .handler = func}
 
 #endif  /* __EC_INCLUDE_EXTENSION_H */

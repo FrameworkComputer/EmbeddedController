@@ -643,21 +643,21 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 
 	/* Verify there is room for at least the extension command header. */
 	if (command_size >= sizeof(struct tpm_cmd_header)) {
-		uint16_t subcommand_code;
+		struct vendor_cmd_params p = {
+			.code = be16toh(tpmh->subcommand_code),
+			/* The header takes room in the buffer. */
+			.buffer = tpmh + 1,
+			.in_size = command_size - sizeof(struct tpm_cmd_header),
+			.out_size = *total_size - sizeof(struct tpm_cmd_header),
+			.flags = flags
+		};
 
-		/* The header takes room in the buffer. */
-		*total_size -= sizeof(struct tpm_cmd_header);
+		rc = extension_route_command(&p);
 
-		subcommand_code = be16toh(tpmh->subcommand_code);
-		rc = extension_route_command(subcommand_code,
-					     tpmh + 1,
-					     command_size -
-					     sizeof(struct tpm_cmd_header),
-					     total_size,
-					     flags);
 		/* Add the header size back. */
-		*total_size += sizeof(struct tpm_cmd_header);
+		*total_size = p.out_size + sizeof(struct tpm_cmd_header);
 		tpmh->size = htobe32(*total_size);
+
 		/* Flag errors from commands as vendor-specific */
 		if (rc)
 			rc |= VENDOR_RC_ERR;

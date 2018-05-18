@@ -11,11 +11,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_EXTENSION, format, ## args)
 
-uint32_t extension_route_command(uint16_t command_code,
-				 void *buffer,
-				 size_t in_size,
-				 size_t *out_size,
-				 uint32_t flags)
+uint32_t extension_route_command(struct vendor_cmd_params *p)
 {
 	struct extension_command *cmd_p;
 	struct extension_command *end_p;
@@ -27,8 +23,8 @@ uint32_t extension_route_command(uint16_t command_code,
 #endif
 
 	/* Filter commands from USB */
-	if (flags & VENDOR_CMD_FROM_USB) {
-		switch (command_code) {
+	if (p->flags & VENDOR_CMD_FROM_USB) {
+		switch (p->code) {
 #ifdef CR50_DEV
 		case VENDOR_CC_IMMEDIATE_RESET:
 		case VENDOR_CC_INVALIDATE_INACTIVE_RW:
@@ -54,7 +50,7 @@ uint32_t extension_route_command(uint16_t command_code,
 	 * Cr50 firmware.
 	 */
 	if (board_id_is_mismatched()) {
-		switch (command_code) {
+		switch (p->code) {
 		case EXTENSION_FW_UPGRADE:
 		case VENDOR_CC_REPORT_TPM_STATE:
 		case VENDOR_CC_TURN_UPDATE_ON:
@@ -71,15 +67,14 @@ uint32_t extension_route_command(uint16_t command_code,
 	cmd_p = (struct extension_command *)&__extension_cmds;
 	end_p = (struct extension_command *)&__extension_cmds_end;
 	while (cmd_p != end_p) {
-		if (cmd_p->command_code == command_code)
-			return cmd_p->handler(command_code, buffer,
-					      in_size, out_size);
+		if (cmd_p->command_code == p->code)
+			return cmd_p->handler(p);
 		cmd_p++;
 	}
 
 ignore_cmd:
 	/* Command not found or not allowed */
-	CPRINTS("%s: ignore %d: %s", __func__, command_code, why_ignore);
-	*out_size = 0;
+	CPRINTS("%s: ignore %d: %s", __func__, p->code, why_ignore);
+	p->out_size = 0;
 	return VENDOR_RC_NO_SUCH_COMMAND;
 }

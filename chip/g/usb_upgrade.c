@@ -107,39 +107,17 @@ static int valid_transfer_start(struct consumer const *consumer, size_t count,
 	return 1;
 }
 
-static void usb_extension_route_command(uint16_t command_code,
-					uint8_t *buffer,
-					size_t in_size,
-					size_t *out_size)
-{
-	uint32_t rv;
-	size_t buf_size;
-
-	/*
-	 * The return code normally put into the TPM response header
-	 * is not present in the USB response. Vendor command return
-	 * code is guaranteed to fit in a byte. Let's keep space for
-	 * it in the front of the buffer.
-	 */
-	buf_size = *out_size - 1;
-	rv = extension_route_command(command_code, buffer, in_size, &buf_size,
-				     VENDOR_CMD_FROM_USB);
-	/*
-	 * Copy actual response, if any, one byte up, to free room for
-	 * the return code.
-	 */
-	if (buf_size)
-		memmove(buffer + 1, buffer, buf_size);
-	*out_size = buf_size + 1;
-
-	buffer[0] = rv;  /* We care about LSB only. */
-}
-
 static int try_vendor_command(struct consumer const *consumer, size_t count)
 {
 	struct update_frame_header ufh;
 	struct update_frame_header *cmd_buffer;
-	int rv = 0;
+	uint16_t *subcommand;
+	size_t request_size;
+	/*
+	 * Should be enough for any vendor command/response. We'll generate an
+	 * error if it is not.
+	 */
+	uint8_t subcommand_body[32];
 
 	if (count < sizeof(ufh))
 		return 0;	/* Too short to be a valid vendor command. */
@@ -169,47 +147,58 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 	queue_peek_units(consumer->queue, cmd_buffer, 0, count);
 
 	/* Looks like this is a vendor command, let's verify it. */
-	if (usb_pdu_valid(&cmd_buffer->cmd,
+	if (!usb_pdu_valid(&cmd_buffer->cmd,
 			  count - offsetof(struct update_frame_header, cmd))) {
-		uint16_t *subcommand;
-		size_t response_size;
-		size_t request_size;
-		/*
-		 * Should be enough for any vendor command/response. We'll
-		 * generate an error if it is not.
-		 */
-		uint8_t subcommand_body[32];
-
-		/* looks good, let's process it. */
-		rv = 1;
-
-		/* Now remove if from the queue. */
-		queue_advance_head(consumer->queue, count);
-
-		subcommand = (uint16_t *)(cmd_buffer + 1);
-		request_size = count - sizeof(struct update_frame_header) -
-			sizeof(*subcommand);
-
-		if (request_size > sizeof(subcommand_body)) {
-			CPRINTS("%s: vendor command payload too big (%d)",
-				__func__, request_size);
-			subcommand_body[0] = VENDOR_RC_REQUEST_TOO_BIG;
-			response_size = 1;
-		} else {
-			memcpy(subcommand_body, subcommand + 1, request_size);
-			response_size = sizeof(subcommand_body);
-			usb_extension_route_command(be16toh(*subcommand),
-						    subcommand_body,
-						    request_size,
-						    &response_size);
-		}
-
-		QUEUE_ADD_UNITS(&upgrade_to_usb,
-				subcommand_body, response_size);
+		/* Didn't verify */
+		shared_mem_release(cmd_buffer);
+		return 0;
 	}
-	shared_mem_release(cmd_buffer);
 
-	return rv;
+	/* Looks good; remove from the queue and process it. */
+	queue_advance_head(consumer->queue, count);
+
+	subcommand = (uint16_t *)(cmd_buffer + 1);
+	request_size = count - sizeof(struct update_frame_header) -
+		       sizeof(*subcommand);
+
+	if (request_size > sizeof(subcommand_body)) {
+		const uint8_t err = VENDOR_RC_REQUEST_TOO_BIG;
+
+		CPRINTS("%s: payload too big (%d)", __func__, request_size);
+		QUEUE_ADD_UNITS(&upgrade_to_usb, &err, 1);
+	} else {
+		uint32_t rv;
+		struct vendor_cmd_params p = {
+			.code = be16toh(*subcommand),
+			.buffer = subcommand_body,
+			.in_size = request_size,
+			/*
+			 * The return code normally put into the TPM response
+			 * header is not present in the USB response. Vendor
+			 * command return code is guaranteed to fit in a
+			 * byte. Let's keep space for it in the front of the
+			 * buffer.
+			 */
+			.out_size = sizeof(subcommand_body) - 1,
+			.flags = VENDOR_CMD_FROM_USB
+		};
+		memcpy(subcommand_body, subcommand + 1, request_size);
+		rv = extension_route_command(&p);
+		/*
+		 * Copy actual response, if any, one byte up, to free room for
+		 * the return code.
+		 */
+		if (p.out_size)
+			memmove(subcommand_body + 1, subcommand_body,
+				p.out_size);
+		subcommand_body[0] = rv;  /* We care about LSB only. */
+
+		QUEUE_ADD_UNITS(&upgrade_to_usb, subcommand_body,
+				p.out_size + 1);
+	}
+
+	shared_mem_release(cmd_buffer);
+	return 1;
 }
 
 /*
