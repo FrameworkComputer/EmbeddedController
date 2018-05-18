@@ -14,7 +14,7 @@ GPIO_INT(WP_L,		 PIN(I, 4), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH, power_button_interrupt)	/* MECH_PWR_BTN_ODL */
 #ifdef CONFIG_LOW_POWER_IDLE
 /* Used to wake up the EC from Deep Doze mode when writing to console */
-GPIO_INT(UART1_RX,	 PIN(B, 0), GPIO_INT_FALLING, uart_deepsleep_interrupt)	/* UART_SERVO_TX_EC_RX */
+GPIO_INT(UART1_RX,	 PIN(B, 0), GPIO_INT_BOTH, uart_deepsleep_interrupt)	/* UART_SERVO_TX_EC_RX */
 #endif
 
 /* USB-C interrupts */
