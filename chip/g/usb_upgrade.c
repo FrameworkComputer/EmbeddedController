@@ -106,6 +106,35 @@ static int valid_transfer_start(struct consumer const *consumer, size_t count,
 			return 0;
 	return 1;
 }
+
+static void usb_extension_route_command(uint16_t command_code,
+					uint8_t *buffer,
+					size_t in_size,
+					size_t *out_size)
+{
+	uint32_t rv;
+	size_t buf_size;
+
+	/*
+	 * The return code normally put into the TPM response header
+	 * is not present in the USB response. Vendor command return
+	 * code is guaranteed to fit in a byte. Let's keep space for
+	 * it in the front of the buffer.
+	 */
+	buf_size = *out_size - 1;
+	rv = extension_route_command(command_code, buffer, in_size, &buf_size,
+				     VENDOR_CMD_FROM_USB);
+	/*
+	 * Copy actual response, if any, one byte up, to free room for
+	 * the return code.
+	 */
+	if (buf_size)
+		memmove(buffer + 1, buffer, buf_size);
+	*out_size = buf_size + 1;
+
+	buffer[0] = rv;  /* We care about LSB only. */
+}
+
 static int try_vendor_command(struct consumer const *consumer, size_t count)
 {
 	struct update_frame_header ufh;

@@ -9,20 +9,48 @@
 #include "link_defs.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_EXTENSION, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_EXTENSION, format, ## args)
 
-static uint32_t extension_route_command(uint16_t command_code,
-					void *buffer,
-					size_t in_size,
-					size_t *out_size)
+uint32_t extension_route_command(uint16_t command_code,
+				 void *buffer,
+				 size_t in_size,
+				 size_t *out_size,
+				 uint32_t flags)
 {
 	struct extension_command *cmd_p;
 	struct extension_command *end_p;
+	const char *why_ignore = "not found";
 
-	cmd_p = (struct extension_command *)&__extension_cmds;
-	end_p = (struct extension_command *)&__extension_cmds_end;
+#ifdef DEBUG_EXTENSION
+	CPRINTS("%s(%d,%s)", __func__, command_code,
+		flags & VENDOR_CMD_FROM_USB ? "USB" : "AP");
+#endif
+
+	/* Filter commands from USB */
+	if (flags & VENDOR_CMD_FROM_USB) {
+		switch (command_code) {
+#ifdef CR50_DEV
+		case VENDOR_CC_IMMEDIATE_RESET:
+		case VENDOR_CC_INVALIDATE_INACTIVE_RW:
+		case VENDOR_CC_SET_BOARD_ID:
+#endif /* defined(CR50_DEV) */
+		case EXTENSION_POST_RESET: /* Always need to reset. */
+		case VENDOR_CC_GET_BOARD_ID:
+		case VENDOR_CC_SPI_HASH:   /* Requires physical presence. */
+		case VENDOR_CC_TURN_UPDATE_ON:
+			break;
+		default:
+			/* Otherwise, we don't allow this command. */
+			why_ignore = "usb";
+			goto ignore_cmd;
+		}
+	}
 
 #ifdef CONFIG_BOARD_ID_SUPPORT
+	/*
+	 * If board ID is mismatched, allow only the commands needed to upgrade
+	 * Cr50 firmware.
+	 */
 	if (board_id_is_mismatched()) {
 		switch (command_code) {
 		case EXTENSION_FW_UPGRADE:
@@ -31,13 +59,15 @@ static uint32_t extension_route_command(uint16_t command_code,
 		case EXTENSION_POST_RESET:
 			break;
 		default:
-			CPRINTF("%s: ignoring command 0x%x "
-				"due to board ID mismatch\n",
-				__func__, command_code);
-			return VENDOR_RC_NO_SUCH_COMMAND;
+			why_ignore = "BoardID mismatch";
+			goto ignore_cmd;
 		}
 	}
 #endif
+
+	/* Find the command handler */
+	cmd_p = (struct extension_command *)&__extension_cmds;
+	end_p = (struct extension_command *)&__extension_cmds_end;
 	while (cmd_p != end_p) {
 		if (cmd_p->command_code == command_code)
 			return cmd_p->handler(command_code, buffer,
@@ -45,69 +75,9 @@ static uint32_t extension_route_command(uint16_t command_code,
 		cmd_p++;
 	}
 
-	CPRINTF("%s: handler %d not found\n", __func__, command_code);
-
-	/* This covers the case of the handler not found. */
+ignore_cmd:
+	/* Command not found or not allowed */
+	CPRINTS("%s: ignore %d: %s", __func__, command_code, why_ignore);
 	*out_size = 0;
 	return VENDOR_RC_NO_SUCH_COMMAND;
-}
-
-void usb_extension_route_command(uint16_t command_code,
-				 void *buffer,
-				 size_t in_size,
-				 size_t *out_size)
-{
-	uint32_t rv;
-	uint8_t *buf = buffer;  /* Cache it for easy pointer arithmetics. */
-	size_t buf_size;
-
-	switch (command_code) {
-#ifdef CR50_DEV
-	case VENDOR_CC_IMMEDIATE_RESET:
-	case VENDOR_CC_INVALIDATE_INACTIVE_RW:
-	case VENDOR_CC_SET_BOARD_ID:
-#endif /* defined(CR50_DEV) */
-	case EXTENSION_POST_RESET: /* Always need to be able to reset. */
-	case VENDOR_CC_GET_BOARD_ID:
-	case VENDOR_CC_SPI_HASH:   /* This will require physical presence. */
-	case VENDOR_CC_TURN_UPDATE_ON:
-
-		/*
-		 * The return code normally put into the TPM response header
-		 * is not present in the USB response. Vendor command return
-		 * code is guaranteed to fit in a byte. Let's keep space for
-		 * it in the front of the buffer.
-		 */
-		buf_size = *out_size - 1;
-		rv = extension_route_command(command_code, buffer,
-					     in_size, &buf_size);
-		/*
-		 * Copy actual response, if any, one byte up, to free room for
-		 * the return code.
-		 */
-		if (buf_size)
-			memmove(buf + 1, buf, buf_size);
-		*out_size = buf_size + 1;
-		break;
-
-	default:
-		/* Otherwise, we don't allow this command. */
-		CPRINTF("%s: ignoring vendor cmd %d\n", __func__, command_code);
-		*out_size = 1;
-		rv = VENDOR_RC_NO_SUCH_COMMAND;
-		break;
-	}
-
-	buf[0] = rv;  /* We care about LSB only. */
-}
-
-uint32_t tpm_extension_route_command(uint16_t command_code,
-				     void *buffer,
-				     size_t in_size,
-				     size_t *out_size)
-{
-	/*
-	 * TODO(aaboagye): Determine what commands (if any) should be filtered.
-	 */
-	return extension_route_command(command_code, buffer, in_size, out_size);
 }

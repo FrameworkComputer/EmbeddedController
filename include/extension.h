@@ -12,6 +12,16 @@
 #include "common.h"
 #include "tpm_vendor_cmds.h"
 
+/* Flags for vendor or extension commands */
+enum vendor_cmd_flags {
+	/*
+	 * Command is coming from the USB interface (either via the vendor
+	 * command endpoint or the console).  If this flag is not present,
+	 * the command is coming from the AP.
+	 */
+	VENDOR_CMD_FROM_USB = (1 << 0),
+};
+
 /*
  * Type of function handling extension commands.
  *
@@ -35,19 +45,17 @@ typedef enum vendor_cmd_rc (*extension_handler)(enum vendor_cmd_cc code,
  * @param command_code Code associated with a extension command handler.
  * @param buffer       Data to be processd by the handler, the same space
  *                     is used for data returned by the handler.
- * @command_size       Size of the input data.
- * @param size On input - max size of the buffer, on output - actual number of
- *                     data returned by the handler. A single byte return
+ * @param in_size      Size of the input data.
+ * @param out_size     On input: max size of the buffer.  On output: actual
+ *                     number of bytes returned by the handler; a single byte
  *                     usually indicates an error and contains the error code.
+ * @param flags        Zero or more flags from vendor_cmd_flags.
  */
-void usb_extension_route_command(uint16_t command_code,
+uint32_t extension_route_command(uint16_t command_code,
 				 void *buffer,
-				 size_t command_size,
-				 size_t *size);
-uint32_t tpm_extension_route_command(uint16_t command_code,
-				     void *buffer,
-				     size_t command_size,
-				     size_t *size);
+				 size_t in_size,
+				 size_t *out_size,
+				 uint32_t flags);
 
 /* Pointer table */
 struct extension_command {
