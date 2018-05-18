@@ -131,38 +131,54 @@ static inline void anx7447_reg_write_or(int port, int reg, int v_or)
 		anx7447_reg_write(port, reg, (val | v_or));
 }
 
-static void anx7447_flash_write_en(int port)
+#define ANX7447_FLASH_DONE_TIMEOUT_US	(100 * MSEC)
+
+static int anx7447_wait_for_flash_done(int port)
 {
+	timestamp_t deadline;
+	int rv;
 	int r;
 
+	deadline.val = get_time().val + ANX7447_FLASH_DONE_TIMEOUT_US;
+	do {
+		if (timestamp_expired(deadline, NULL))
+			return EC_ERROR_TIMEOUT;
+		rv = anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
+		if (rv)
+			return rv;
+	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+
+	return EC_SUCCESS;
+}
+
+static int anx7447_flash_write_en(int port)
+{
 	anx7447_reg_write(port, ANX7447_REG_FLASH_INST_TYPE,
 			  ANX7447_FLASH_INST_TYPE_WRITEENABLE);
 	anx7447_reg_write_or(port, ANX7447_REG_R_FLASH_RW_CTRL,
 			     ANX7447_R_FLASH_RW_CTRL_GENERAL_INST_EN);
-	do {
-		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
-	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+	return anx7447_wait_for_flash_done(port);
 }
 
-static void anx7447_flash_op_init(int port)
+static int anx7447_flash_op_init(int port)
 {
-	int r;
+	int rv;
 
 	anx7447_reg_write_or(port, ANX7447_REG_OCM_CTRL_0,
 			     ANX7447_OCM_CTRL_OCM_RESET);
 	anx7447_reg_write_or(port, ANX7447_REG_ADDR_GPIO_CTRL_0,
 			     ANX7447_ADDR_GPIO_CTRL_0_SPI_WP);
 
-	anx7447_flash_write_en(port);
+	rv = anx7447_flash_write_en(port);
+	if (rv)
+		return rv;
 
 	anx7447_reg_write_and(port, ANX7447_REG_R_FLASH_STATUS_0,
 			      ANX7447_FLASH_STATUS_SPI_STATUS_0);
 	anx7447_reg_write_or(port, ANX7447_REG_R_FLASH_RW_CTRL,
 			     ANX7447_R_FLASH_RW_CTRL_WRITE_STATUS_EN);
 
-	do {
-		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
-	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+	return anx7447_wait_for_flash_done(port);
 }
 
 static int anx7447_flash_is_empty(int port)
@@ -174,31 +190,36 @@ static int anx7447_flash_is_empty(int port)
 	return ((r == 0) ? 1 : 0);
 }
 
-static void anx7447_flash_check(int port)
+int anx7447_flash_erase(int port)
 {
+	int rv;
 	int r;
 
 	tcpc_read(port, TCPC_REG_COMMAND, &r);
 	usleep(ANX7447_DELAY_IN_US);
 
 	if (anx7447_flash_is_empty(port) == 1) {
-		ccprintf("C%d: Nothing to erase!\n", port);
-		return;
+		CPRINTS("C%d: Nothing to erase!", port);
+		return EC_SUCCESS;
 	}
-	ccprintf("C%d: Erasing ANX7447 OCM flash...\n", port);
+	CPRINTS("C%d: Erasing OCM flash...", port);
 
-	anx7447_flash_op_init(port);
+	rv = anx7447_flash_op_init(port);
+	if (rv)
+		return rv;
 
 	usleep(ANX7447_DELAY_IN_US);
 
-	anx7447_flash_write_en(port);
+	rv = anx7447_flash_write_en(port);
+	if (rv)
+		return rv;
+
 	anx7447_reg_write(port, ANX7447_REG_FLASH_ERASE_TYPE,
 			  ANX7447_FLASH_ERASE_TYPE_CHIPERASE);
 	anx7447_reg_write_or(port, ANX7447_REG_R_FLASH_RW_CTRL,
 			     ANX7447_R_FLASH_RW_CTRL_FLASH_ERASE_EN);
-	do {
-		anx7447_reg_read(port, ANX7447_REG_R_RAM_CTRL, &r);
-	} while (!(r & ANX7447_R_RAM_CTRL_FLASH_DONE));
+
+	return anx7447_wait_for_flash_done(port);
 }
 
 /* Add console command to erase OCM flash if needed. */
@@ -216,10 +237,12 @@ static int command_anx_ocm(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	if (argc > 2) {
-		if (!strcasecmp(argv[2], "erase"))
-			anx7447_flash_check(port);
-		else
+		int rv;
+		if (strcasecmp(argv[2], "erase"))
 			return EC_ERROR_PARAM2;
+		rv = anx7447_flash_erase(port);
+		if (rv)
+			ccprintf("C%d: Failed to erase OCM flash (%d)\n", rv);
 	}
 
 	ccprintf("C%d: OCM flash is %sempty.\n",
@@ -263,7 +286,7 @@ static int anx7447_init(int port)
 
 #ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 	/* Check and print OCM status to console. */
-	ccprintf("C%d: OCM flash is %sempty.\n",
+	CPRINTS("C%d: OCM flash is %sempty",
 		port, anx7447_flash_is_empty(port) ? "" : "not ");
 #endif
 

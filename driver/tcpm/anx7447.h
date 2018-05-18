@@ -99,4 +99,12 @@ extern const struct usb_mux_driver anx7447_usb_mux_driver;
 void anx7447_tcpc_update_hpd_status(int port, int hpd_lvl, int hpd_irq);
 void anx7447_tcpc_clear_hpd_status(int port);
 
+/**
+ * Erase OCM flash if it's not empty
+ *
+ * @param port: USB-C port number
+ * @return: EC_SUCCESS or EC_ERROR_*
+ */
+int anx7447_flash_erase(int port);
+
 #endif /* __CROS_EC_USB_PD_TCPM_ANX7688_H */
