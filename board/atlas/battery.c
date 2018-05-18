@@ -160,8 +160,12 @@ int charger_profile_override(struct charge_state_data *curr)
 {
 	const struct battery_info *batt_info;
 	/* battery temp in 0.1 deg C */
-	int bat_temp_c = curr->batt.temperature - 2731;
+	int bat_temp_c;
 
+	if (curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE)
+		return 0;
+
+	bat_temp_c = curr->batt.temperature - 2731;
 	batt_info = battery_get_info();
 	/* Don't charge if outside of allowable temperature range */
 	if (bat_temp_c >= batt_info->charging_max_c * 10 ||
