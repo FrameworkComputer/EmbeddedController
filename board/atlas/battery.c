@@ -41,7 +41,6 @@ struct board_batt_params {
  * discharged state.
  */
 #define DEFAULT_BATTERY_TYPE BATTERY_LISHEN
-static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static enum battery_type board_battery_type = BATTERY_TYPE_COUNT;
 
 /* Battery may delay reporting battery present */
@@ -199,14 +198,6 @@ enum battery_present battery_hw_present(void)
 	return gpio_get_level(GPIO_BATTERY_PRESENT_L) ? BP_NO : BP_YES;
 }
 
-static int battery_init(void)
-{
-	int batt_status;
-
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
-}
-
 /* Allow booting now that the battery has woke up */
 static void battery_now_present(void)
 {
@@ -216,82 +207,12 @@ static void battery_now_present(void)
 DECLARE_DEFERRED(battery_now_present);
 
 /*
- * Check for case where XDSG bit is set indicating that even
- * though the FG can be read from the battery, the battery is not able to be
- * charged or discharged. This situation will happen if a battery disconnect was
- * intiaited via H1 setting the DISCONN signal to the battery. This will put the
- * battery pack into a sleep state and when power is reconnected, the FG can be
- * read, but the battery is still not able to provide power to the system. The
- * calling function returns batt_pres = BP_NO, which instructs the charging
- * state machine to prevent powering up the AP on battery alone which could lead
- * to a brownout event when the battery isn't able yet to provide power to the
- * system. .
- */
-static int battery_check_disconnect(void)
-{
-	int rv;
-	uint8_t data[6];
-
-	/* Check if battery discharging is disabled. */
-	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
-	if (rv)
-		return BATTERY_DISCONNECT_ERROR;
-
-	if (data[3] & BATTERY_DISCHARGING_DISABLED)
-		return BATTERY_DISCONNECTED;
-
-	return BATTERY_NOT_DISCONNECTED;
-}
-
-/*
  * Physical detection of battery.
  */
 enum battery_present battery_is_present(void)
 {
-	enum battery_present batt_pres;
-	static int battery_report_present_timer_started;
+	if (battery_hw_present() == BP_NO || battery_is_cut_off())
+		return BP_NO;
 
-	/* Get the physical hardware status */
-	batt_pres = battery_hw_present();
-
-	/*
-	 * Make sure battery status is implemented, I2C transactions are
-	 * success & the battery status is Initialized to find out if it
-	 * is a working battery and it is not in the cut-off mode.
-	 *
-	 * If battery I2C fails but VBATT is high, battery is booting from
-	 * cut-off mode.
-	 *
-	 * FETs are turned off after Power Shutdown time.
-	 * The device will wake up when a voltage is applied to PACK.
-	 * Battery status will be inactive until it is initialized.
-	 */
-	if (batt_pres == BP_YES && batt_pres_prev != batt_pres &&
-	    (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL ||
-	     battery_check_disconnect() != BATTERY_NOT_DISCONNECTED ||
-	     battery_init() == 0)) {
-		battery_report_present = 0;
-	} else if (batt_pres == BP_YES && batt_pres_prev == BP_NO &&
-		   !battery_report_present_timer_started) {
-		/*
-		 * Wait 1 second before reporting present if it was
-		 * previously reported as not present
-		 */
-		battery_report_present_timer_started = 1;
-		battery_report_present = 0;
-		hook_call_deferred(&battery_now_present_data, SECOND);
-	}
-
-	if (!battery_report_present)
-		batt_pres = BP_NO;
-
-	batt_pres_prev = batt_pres;
-
-	return batt_pres;
-}
-
-int board_battery_initialized(void)
-{
-	return battery_hw_present() == batt_pres_prev;
+	return BP_YES;
 }
