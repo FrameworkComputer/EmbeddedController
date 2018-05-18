@@ -91,6 +91,10 @@ struct tpm_cmd_header {
  *             TPM task how much room there is to store the response.
  *
  * Command execution result is reported in the response body.
+ *
+ * The extension command handler will consider all these commands to come from
+ * the USB interface, since the only current users for this are console
+ * commands.
  */
 void tpm_alt_extension(struct tpm_cmd_header *tpmh, size_t buffer_size);
 

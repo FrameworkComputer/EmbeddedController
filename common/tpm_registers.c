@@ -630,7 +630,8 @@ size_t tpm_get_burst_size(void)
 	 (code & TPM_CC_VENDOR_BIT_MASK))
 
 static void call_extension_command(struct tpm_cmd_header *tpmh,
-				   size_t *total_size)
+				   size_t *total_size,
+				   uint32_t flags)
 {
 	size_t command_size = be32toh(tpmh->size);
 	uint32_t rc;
@@ -653,7 +654,7 @@ static void call_extension_command(struct tpm_cmd_header *tpmh,
 					     command_size -
 					     sizeof(struct tpm_cmd_header),
 					     total_size,
-					     0);
+					     flags);
 		/* Add the header size back. */
 		*total_size += sizeof(struct tpm_cmd_header);
 		tpmh->size = htobe32(*total_size);
@@ -995,7 +996,9 @@ void tpm_task(void)
 #ifdef CONFIG_EXTENSION_COMMAND
 		if (IS_CUSTOM_CODE(command_code)) {
 			response_size = buffer_size;
-			call_extension_command(tpmh, &response_size);
+			call_extension_command(tpmh, &response_size,
+					       alt_if_command ?
+					       VENDOR_CMD_FROM_USB : 0);
 		} else
 #endif
 		{

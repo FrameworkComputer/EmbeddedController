@@ -35,7 +35,9 @@ uint32_t extension_route_command(uint16_t command_code,
 		case VENDOR_CC_SET_BOARD_ID:
 #endif /* defined(CR50_DEV) */
 		case EXTENSION_POST_RESET: /* Always need to reset. */
+		case VENDOR_CC_CCD:
 		case VENDOR_CC_GET_BOARD_ID:
+		case VENDOR_CC_RMA_CHALLENGE_RESPONSE:
 		case VENDOR_CC_SPI_HASH:   /* Requires physical presence. */
 		case VENDOR_CC_TURN_UPDATE_ON:
 			break;

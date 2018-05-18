@@ -859,6 +859,14 @@ static enum vendor_cmd_rc ccd_open(void *buf,
 	if (ccd_state == CCD_STATE_OPENED)
 		return VENDOR_RC_SUCCESS;
 
+	/* FWMP blocks open even if a password is set */
+	if (!board_fwmp_allows_unlock()) {
+		*response_size = 1;
+		buffer[0] = EC_ERROR_ACCESS_DENIED;
+		return VENDOR_RC_NOT_ALLOWED;
+	}
+
+	/* If a password is set, check it */
 	if (raw_has_password()) {
 		if (!input_size) {
 			*response_size = 1;
@@ -877,10 +885,6 @@ static enum vendor_cmd_rc ccd_open(void *buf,
 			buffer[0] = rv;
 			return VENDOR_RC_INTERNAL_ERROR;
 		}
-	} else if (!board_fwmp_allows_unlock()) {
-		*response_size = 1;
-		buffer[0] = EC_ERROR_ACCESS_DENIED;
-		return VENDOR_RC_NOT_ALLOWED;
 	}
 
 	/* Fail and abort if already checking physical presence */
@@ -944,47 +948,30 @@ static enum vendor_cmd_rc ccd_unlock(void *buf,
 		return VENDOR_RC_SUCCESS;
 	}
 
-	if (raw_has_password()) {
-		if (!input_size) {
-			*response_size = 1;
-			buffer[0] = EC_ERROR_PARAM_COUNT;
-			return VENDOR_RC_PASSWORD_REQUIRED;
-		}
-
-		/*
-		 * We know there is plenty of room in the TPM buffer this is
-		 * stored in.
-		 */
-		buffer[input_size] = '\0';
-		rv = raw_check_password(buffer);
-		if (rv) {
-			*response_size = 1;
-			buffer[0] = rv;
-			return VENDOR_RC_INTERNAL_ERROR;
-		}
-	} else if (!board_fwmp_allows_unlock()) {
+	/* Only allowed if password is already set, and not blocked by FWMP */
+	if (!raw_has_password() || !board_fwmp_allows_unlock()) {
 		*response_size = 1;
 		buffer[0] = EC_ERROR_ACCESS_DENIED;
 		return VENDOR_RC_NOT_ALLOWED;
-	} else {
-		/*
-		 * When unlock is requested via the console, physical presence
-		 * is required unless disabled by config.  This prevents a
-		 * malicious peripheral from setitng a password.
-		 *
-		 * If this were a TPM vendor command from the AP, we would
-		 * instead check unlock restrictions based on the user login
-		 * state stored in ccd_unlock_restrict:
-		 *
-		 * 1) Unlock from the AP is unrestricted before any users
-		 * login, so enrollment policy scripts can update CCD config.
-		 *
-		 * 2) Owner accounts can unlock, but require physical presence
-		 * to prevent OS-level compromises from setting a password.
-		 *
-		 * 3) A non-owner account logging in blocks CCD config until
-		 * the next AP reboot, as implied by TPM reboot.
-		 */
+	}
+
+	/* Make sure password was specified */
+	if (!input_size) {
+		*response_size = 1;
+		buffer[0] = EC_ERROR_PARAM_COUNT;
+		return VENDOR_RC_PASSWORD_REQUIRED;
+	}
+
+	/*
+	 * Check the password.  We know there is plenty of room in the TPM
+	 * buffer this is stored in.
+	 */
+	buffer[input_size] = '\0';
+	rv = raw_check_password(buffer);
+	if (rv) {
+		*response_size = 1;
+		buffer[0] = rv;
+		return VENDOR_RC_INTERNAL_ERROR;
 	}
 
 	/* Fail and abort if already checking physical presence */
