@@ -53,7 +53,6 @@
 #endif /* BAT_OCP_HYSTERESIS_PCT */
 #define BAT_OCP_HYSTERESIS \
 	(BAT_MAX_DISCHG_CURRENT * BAT_OCP_HYSTERESIS_PCT / 100) /* mA */
-static timestamp_t ocp_throttle_start_time;
 #endif /* CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT */
 
 static int charge_request(int voltage, int current);
@@ -1347,6 +1346,8 @@ static void set_charge_state(enum charge_state_v2 state)
 static void notify_host_of_over_current(struct batt_params *batt)
 {
 #ifdef CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+	static timestamp_t ocp_throttle_start_time;
+
 	if (batt->flags & BATT_FLAG_BAD_CURRENT)
 		return;
 
