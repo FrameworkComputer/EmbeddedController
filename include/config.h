@@ -2634,6 +2634,14 @@
 #undef CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
 
 /*
+ * Throttle the CPU when battery voltage drops below a defined threshold
+ * where the board still boots but some components don't function perfectly.
+ * When this feature is enabled, BAT_LOW_VOLTAGE_THRESH must be defined in
+ * board.h.
+ */
+#undef CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE
+
+/*
  * If defined, dptf is enabled to manage thermals.
  *
  * NOTE: This doesn't mean that thermal control is completely taken care by

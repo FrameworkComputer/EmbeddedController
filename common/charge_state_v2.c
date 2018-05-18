@@ -55,6 +55,14 @@
 	(BAT_MAX_DISCHG_CURRENT * BAT_OCP_HYSTERESIS_PCT / 100) /* mA */
 #endif /* CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT */
 
+#ifdef CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE
+#ifndef CONFIG_HOSTCMD_EVENTS
+#error "CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE needs CONFIG_HOSTCMD_EVENTS"
+#endif /* CONFIG_HOSTCMD_EVENTS */
+#define BAT_UVP_TIMEOUT_US (60 * SECOND)
+static timestamp_t uvp_throttle_start_time;
+#endif /* CONFIG_THROTTLE_AP_ON_BAT_OLTAGE */
+
 static int charge_request(int voltage, int current);
 
 /*
@@ -1320,7 +1328,7 @@ static int shutdown_on_critical_battery(void)
  * host events. We send these even if the AP is off, since the AP will read and
  * discard any events it doesn't care about the next time it wakes up.
  */
-static void notify_host_of_low_battery(void)
+static void notify_host_of_low_battery_charge(void)
 {
 	/* We can't tell what the current charge is. Assume it's okay. */
 	if (curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE)
@@ -1341,6 +1349,29 @@ static void set_charge_state(enum charge_state_v2 state)
 {
 	prev_state = curr.state;
 	curr.state = state;
+}
+
+static void notify_host_of_low_battery_voltage(void)
+{
+#ifdef CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE
+	if ((curr.batt.flags & BATT_FLAG_BAD_VOLTAGE) ||
+	    chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	if (curr.batt.voltage < BAT_LOW_VOLTAGE_THRESH) {
+		if (!uvp_throttle_start_time.val) {
+			throttle_ap(THROTTLE_ON, THROTTLE_SOFT,
+				    THROTTLE_SRC_BAT_VOLTAGE);
+		}
+		uvp_throttle_start_time = get_time();
+	} else if (uvp_throttle_start_time.val &&
+		   (get_time().val > uvp_throttle_start_time.val +
+		     BAT_UVP_TIMEOUT_US)) {
+		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT,
+			    THROTTLE_SRC_BAT_VOLTAGE);
+		uvp_throttle_start_time.val = 0;
+	}
+#endif
 }
 
 static void notify_host_of_over_current(struct batt_params *batt)
@@ -1398,6 +1429,16 @@ DECLARE_HOOK(HOOK_AC_CHANGE, charge_wakeup, HOOK_PRIO_DEFAULT);
 #ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
 /* Reset the base on S5->S0 transition. */
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_base_reset, HOOK_PRIO_DEFAULT);
+#endif
+
+#ifdef CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE
+static void bat_low_voltage_throttle_reset(void)
+{
+	uvp_throttle_start_time.val = 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
+	     bat_low_voltage_throttle_reset,
+	     HOOK_PRIO_DEFAULT);
 #endif
 
 static int get_desired_input_current(enum battery_present batt_present,
@@ -1702,7 +1743,8 @@ wait_for_it:
 		/* Wait on the dynamic info until the static info is good. */
 		if (!need_static)
 			update_dynamic_battery_info();
-		notify_host_of_low_battery();
+		notify_host_of_low_battery_charge();
+		notify_host_of_low_battery_voltage();
 
 		/* And the EC console */
 		is_full = calc_is_full();

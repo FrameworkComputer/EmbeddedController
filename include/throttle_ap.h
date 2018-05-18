@@ -31,6 +31,7 @@ enum throttle_type {
 enum throttle_sources {
 	THROTTLE_SRC_THERMAL = 0,
 	THROTTLE_SRC_BAT_DISCHG_CURRENT,
+	THROTTLE_SRC_BAT_VOLTAGE,
 };
 
 /**
@@ -44,7 +45,8 @@ enum throttle_sources {
  * @param source        Which task is requesting throttling
  */
 #if defined(CONFIG_THROTTLE_AP) || \
-	defined(CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT)
+	defined(CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT) || \
+	defined(CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE)
 
 void throttle_ap(enum throttle_level level,
 		 enum throttle_type type,
