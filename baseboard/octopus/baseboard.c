@@ -7,9 +7,11 @@
 
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "driver/bc12/bq24392.h"
+#include "driver/ppc/nx20p3483.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -17,6 +19,7 @@
 #include "system.h"
 #include "task.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -276,4 +279,44 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT),
 				       charge_mv);
+}
+
+void board_hibernate(void)
+{
+	int port;
+
+	/*
+	 * To support hibernate called from console commands, ectool commands
+	 * and key sequence, shutdown the AP before hibernating.
+	 */
+	chipset_force_shutdown();
+
+#ifdef CONFIG_USBC_PPC_NX20P3483
+	/*
+	 * If we are charging, then drop the Vbus level down to 5V to ensure
+	 * that we don't get locked out of the 6.8V OVLO for our PPCs in
+	 * dead-battery mode. This is needed when the TCPC/PPC rails go away.
+	 * (b/79218851)
+	 */
+	port = charge_manager_get_active_charge_port();
+	if (port != CHARGE_PORT_NONE)
+		pd_request_source_voltage(port, NX20P3483_SAFE_RESET_VBUS_MV);
+#endif
+
+	/*
+	 * Delay allows AP power state machine to settle down along
+	 * with any PD contract renegotiation.
+	 */
+	msleep(100);
+
+	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
+		/*
+		 * If Vbus isn't already on this port, then open the SNK path
+		 * to allow AC to pass through to the charger when connected.
+		 * This is need if the TCPC/PPC rails do not go away.
+		 * (b/79173959)
+		 */
+		if (!pd_is_vbus_present(port))
+			ppc_vbus_sink_enable(port, 1);
+	}
 }

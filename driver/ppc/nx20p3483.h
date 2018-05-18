@@ -13,6 +13,13 @@
 #define NX20P3483_ADDR2 0xE4
 #define NX20P3483_ADDR3 0xE6
 
+/*
+ * This PPC hard-codes the over voltage protect of Vbus at 6.8V in dead-battery
+ * mode. If we ever are every going to drop the PD rail, we need to first ensure
+ * that Vbus is negotiated to below 6.8V otherwise we can lock out Vbus.
+ */
+#define NX20P3483_SAFE_RESET_VBUS_MV 5000
+
 /* NX20P3483 register addresses */
 #define NX20P3483_DEVICE_ID_REG		0x00
 #define NX20P3483_DEVICE_STATUS_REG		0x01

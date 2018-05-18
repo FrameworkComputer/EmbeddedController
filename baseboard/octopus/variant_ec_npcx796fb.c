@@ -6,13 +6,10 @@
 /* Common code for VARIANT_OCTOPUS_EC_NPCX796FB configuration */
 
 #include "charge_manager.h"
-#include "chipset.h"
-#include "config.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "power.h"
 #include "pwm_chip.h"
-#include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 #include "timer.h"
@@ -35,45 +32,3 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = { .channel = 3, .flags = 0, .freq = 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/******************************************************************************/
-/* Board power callback/hooks */
-#define HIBERNATE_VBUS_LEVEL_MV	5000
-
-void board_hibernate(void)
-{
-	int port;
-
-	/*
-	 * To support hibernate called from console commands, ectool commands
-	 * and key sequence, shutdown the AP before hibernating.
-	 */
-	chipset_force_shutdown();
-
-	/*
-	 * If we are charging, then drop the Vbus level down to 5V to ensure
-	 * that we don't get locked out of the 6.8V OVLO for our PPCs in
-	 * dead-battery mode. This is needed when the TCPC/PPC rails go away.
-	 * (b/79218851)
-	 */
-	port = charge_manager_get_active_charge_port();
-	if (port != CHARGE_PORT_NONE)
-		pd_request_source_voltage(port, HIBERNATE_VBUS_LEVEL_MV);
-
-	/*
-	 * Delay allows AP power state machine to settle down along
-	 * with any PD contract renegotiation.
-	 */
-	msleep(100);
-
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-		/*
-		 * If Vbus isn't already on this port, then open the SNK path
-		 * to allow AC to pass through to the charger when connected.
-		 * This is need if the TCPC/PPC rails do not go away.
-		 * (b/79173959)
-		 */
-		if (!pd_is_vbus_present(port))
-			ppc_vbus_sink_enable(port, 1);
-	}
-}
