@@ -76,6 +76,8 @@
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_SMART
+/* battery briefly requests V=0, A=0 when woken up */
+#define CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
 
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
