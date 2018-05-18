@@ -232,6 +232,12 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 
 void board_reset_pd_mcu(void)
 {
+	if (oem == PROJECT_AKALI && board_version < 0x0200) {
+		if (anx7447_flash_erase(USB_PD_PORT_ANX7447))
+			CPRINTS("Failed to erase OCM flash");
+
+	}
+
 	/* Assert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
@@ -245,9 +251,8 @@ void board_tcpc_init(void)
 	int port;
 
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
+	if (!system_jumped_to_this_image())
 		board_reset_pd_mcu();
-	}
 
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
@@ -263,7 +268,7 @@ void board_tcpc_init(void)
 		mux->hpd_update(port, 0, 0);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
 uint16_t tcpc_get_alert_status(void)
 {
