@@ -239,16 +239,31 @@ int board_wipe_tpm(void)
 }
 
 /****************************************************************************/
-/* FWMP TPM NVRAM space support */
+/* Verified boot TPM NVRAM space support */
 
 /*
  * These definitions and the structure layout were manually copied from
  * src/platform/vboot_reference/firmware/lib/include/rollback_index.h. at
  * git sha c7282f6.
  */
+#define FIRMWARE_NV_INDEX           0x1007
 #define FWMP_NV_INDEX		    0x100a
 #define FWMP_HASH_SIZE		    32
 #define FWMP_DEV_DISABLE_CCD_UNLOCK (1 << 6)
+#define FIRMWARE_FLAG_DEV_MODE      0x02
+
+struct RollbackSpaceFirmware {
+	/* Struct version, for backwards compatibility */
+	uint8_t struct_version;
+	/* Flags (see FIRMWARE_FLAG_* above) */
+	uint8_t flags;
+	/* Firmware versions */
+	uint32_t fw_versions;
+	/* Reserved for future expansion */
+	uint8_t reserved[3];
+	/* Checksum (v2 and later only) */
+	uint8_t crc8;
+} __packed;
 
 /* Firmware management parameters */
 struct RollbackSpaceFwmp {
@@ -318,6 +333,19 @@ int board_fwmp_allows_unlock(void)
 
 	return allows_unlock;
 #endif
+}
+
+int board_vboot_dev_mode_enabled(void)
+{
+	struct RollbackSpaceFirmware fw;
+
+	if (tpm_read_success ==
+	    read_tpm_nvmem(FIRMWARE_NV_INDEX, sizeof(fw), &fw)) {
+		return !!(fw.flags & FIRMWARE_FLAG_DEV_MODE);
+	}
+
+	/* If not found or other error, assume dev mode is disabled */
+	return 0;
 }
 
 /****************************************************************************/
