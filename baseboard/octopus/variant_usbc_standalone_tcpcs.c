@@ -79,26 +79,8 @@ const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /******************************************************************************/
 /* Power Delivery and charing functions */
 
-void board_tcpc_init(void)
+void variant_tcpc_init(void)
 {
-	int count = 0;
-	int port;
-
-	/* Wait for disconnected battery to wake up */
-	while (battery_hw_present() == BP_YES &&
-	       battery_is_present() == BP_NO) {
-		usleep(100 * MSEC);
-		/* Give up waiting after 1 second */
-		if (++count > 10) {
-			ccprintf("TCPC_init: 1 second w/no battery\n");
-			break;
-		}
-	}
-
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
-		board_reset_pd_mcu();
-
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_PD_C0_INT_L);
 	gpio_enable_interrupt(GPIO_USB_PD_C1_INT_L);
@@ -106,18 +88,9 @@ void board_tcpc_init(void)
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
-
-	/*
-	 * Initialize HPD to low; after sysjump SOC needs to see
-	 * HPD pulse to enable video path
-	 */
-	for (port = 0; port < CONFIG_USB_PD_PORT_COUNT; port++) {
-		const struct usb_mux *mux = &usb_muxes[port];
-
-		mux->hpd_update(port, 0, 0);
-	}
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+/* Called after the baseboard_tcpc_init (via +2) */
+DECLARE_HOOK(HOOK_INIT, variant_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
 uint16_t tcpc_get_alert_status(void)
 {
