@@ -62,3 +62,12 @@
 
 /* the Cortex-M7 core has 'standard' ARMv7-M caches */
 #define CONFIG_ARMV7M_CACHE
+/* Use the MPU to configure cacheability */
+#define CONFIG_MPU
+/* Store in uncached buffers for DMA transfers in ahb4 region */
+#define CONFIG_CHIP_UNCACHED_REGION ahb4
+/* Override MPU attribute settings to match the chip requirements */
+/* Code is Normal memory type / non-shareable / write-through */
+#define MPU_ATTR_FLASH_MEMORY  0x02
+/* SRAM Data is Normal memory type / non-shareable / write-back, write-alloc */
+#define MPU_ATTR_INTERNAL_SRAM 0x0B

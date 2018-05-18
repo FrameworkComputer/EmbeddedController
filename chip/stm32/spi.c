@@ -15,6 +15,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "link_defs.h"
 #include "registers.h"
 #include "spi.h"
 #include "stm32-dma.h"
@@ -111,8 +112,8 @@ static const uint8_t out_preamble[4] = {
  * message, including protocol overhead, and must be 32-bit aligned.
  */
 static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble) +
-	EC_SPI_PAST_END_LENGTH] __aligned(4);
-static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4);
+	EC_SPI_PAST_END_LENGTH] __aligned(4) __uncached;
+static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4) __uncached;
 static uint8_t enabled;
 #ifdef CONFIG_SPI_PROTOCOL_V2
 static struct host_cmd_handler_args args;

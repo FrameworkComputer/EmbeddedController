@@ -39,8 +39,8 @@
 #define FP_TEMPLATE_SECTION
 #endif
 
-/* Last acquired frame */
-static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION;
+/* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
+static uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
 /* Fingers templates for the current user */
 static uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE]
 	FP_TEMPLATE_SECTION;
