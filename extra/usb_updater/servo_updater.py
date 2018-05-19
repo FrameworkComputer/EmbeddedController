@@ -213,6 +213,8 @@ def main():
       help="Update even if version match", default=False)
   parser.add_argument('-v', '--verbose', action="store_true",
       help="Chatty output")
+  parser.add_argument('-r', '--reboot', action="store_true",
+      help="Always reboot, even after probe.")
 
   args = parser.parse_args()
 
@@ -237,6 +239,8 @@ def main():
 
     if newvers == vers:
       print("No version update needed")
+      if args.reboot is True:
+        select(vidpid, iface, serialno, "ro", debuglog=debuglog)
       return
     else:
       print("Updating to recommended version.")
