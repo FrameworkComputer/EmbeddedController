@@ -18,8 +18,9 @@ uint32_t extension_route_command(struct vendor_cmd_params *p)
 	const char *why_ignore = "not found";
 
 #ifdef DEBUG_EXTENSION
-	CPRINTS("%s(%d,%s)", __func__, command_code,
-		flags & VENDOR_CMD_FROM_USB ? "USB" : "AP");
+	CPRINTS("%s(%d,%s) is=%d os=%d", __func__, p->code,
+		p->flags & VENDOR_CMD_FROM_USB ? "USB" : "AP",
+		p->in_size, p->out_size);
 #endif
 
 	/* Filter commands from USB */
