@@ -55,6 +55,14 @@ enum vendor_cmd_cc {
 	VENDOR_CC_GET_ALERTS_DATA = 35,
 	VENDOR_CC_SPI_HASH = 36,
 	VENDOR_CC_PINWEAVER = 37,
+	/*
+	 * Check the factory reset settings. If they're all set correctly, do a
+	 * factory reset to enable ccd factory mode. All capabilities will be
+	 * set to Always and write protect will be permanently disabled. This
+	 * mode can't be reset unless VENDOR_CC_DISABLE_FACTORY is called or
+	 * the 'ccd reset' console command is run.
+	 */
+	VENDOR_CC_RESET_FACTORY = 38,
 
 	LAST_VENDOR_COMMAND = 65535,
 };

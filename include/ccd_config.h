@@ -276,6 +276,15 @@ int ccd_reset_config(unsigned int flags);
 void ccd_tpm_reset_callback(void);
 
 /**
+ * Return True if the ccd password is set. It is possible that a pending ccd
+ * change would set or clear the password, but we don't think this is a big
+ * issue or risk for now.
+ *
+ * @return 1 if password is set, 0 if it's not
+ */
+int ccd_has_password(void);
+
+/**
  * Enter CCD factory mode. This will clear the TPM and do a hard reboot after
  * updating the ccd config.
  */

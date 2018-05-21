@@ -5,6 +5,8 @@
 
 #include "board_id.h"
 #include "console.h"
+#include "ccd_config.h"
+#include "extension.h"
 #include "system.h"
 
 #define CPRINTS(format, args...) cprints(CC_CCD, format, ## args)
@@ -75,3 +77,43 @@ int board_is_first_factory_boot(void)
 	return (!(system_get_reset_flags() & RESET_FLAG_HIBERNATE) &&
 		inactive_image_is_guc_image() && board_id_is_erased());
 }
+
+/*
+ * Vendor command for ccd factory reset.
+ *
+ * This vendor command can be used to enable ccd and disable write protect with
+ * a factory reset. A factory reset is automatically done during the first
+ * factory boot, but this vendor command can be used to do a factory reset at
+ * any time. Before calling factory reset, cr50 will make sure it is safe to do
+ * so. Cr50 checks batt_is_present to make sure the user has physical access to
+ * the device. Cr50 also checks ccd isn't disabled by the FWMP or ccd password.
+ *
+ * checks:
+ * - batt_is_present - Factory reset can only be done if HW write protect is
+ *              removed.
+ * - FWMP disables ccd -  If FWMP has disabled ccd, then we can't bypass it with
+ *              a factory reset.
+ * - CCD password is set - If there is a password, someone will have to use that
+ *              to open ccd and enable ccd manually. A factory reset cannot be
+ *              used to get around the password.
+ */
+static enum vendor_cmd_rc vc_factory_reset(enum vendor_cmd_cc code,
+					   void *buf,
+					   size_t input_size,
+					   size_t *response_size)
+{
+	*response_size = 0;
+
+	if (input_size)
+		return VENDOR_RC_BOGUS_ARGS;
+
+	if (board_battery_is_present() || !board_fwmp_allows_unlock() ||
+	    ccd_has_password())
+		return VENDOR_RC_NOT_ALLOWED;
+
+	CPRINTF("factory reset\n");
+	enable_ccd_factory_mode();
+
+	return VENDOR_RC_SUCCESS;
+}
+DECLARE_VENDOR_COMMAND(VENDOR_CC_RESET_FACTORY, vc_factory_reset);

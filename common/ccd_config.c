@@ -581,6 +581,11 @@ static void ccd_testlab_toggle(void)
 /******************************************************************************/
 /* External interface */
 
+int ccd_has_password(void)
+{
+	return raw_has_password();
+}
+
 void ccd_config_init(enum ccd_state state)
 {
 	/* Set initial state, after making sure it's a valid one */
