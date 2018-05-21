@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
+#include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/bq24392.h"
@@ -308,3 +309,19 @@ void lid_angle_peripheral_enable(int enable)
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
+
+static void update_drivers_from_board_id(void)
+{
+	uint32_t board_id = 0;
+
+	/* Errors will count as board_id 0 */
+	cbi_get_board_version(&board_id);
+
+	if (board_id == 0) {
+		/* EC drives C1 PPC for proto 1. b/78896495 */
+		ppc_chips[1].flags = PPC_CFG_FLAGS_GPIO_CONTROL;
+		ppc_chips[1].snk_gpio = GPIO_USB_C1_CHARGE_ON;
+		ppc_chips[1].src_gpio = GPIO_EN_USB_C1_5V_OUT;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, update_drivers_from_board_id, HOOK_PRIO_INIT_I2C + 1);

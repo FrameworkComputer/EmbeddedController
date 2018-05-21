@@ -21,6 +21,9 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+
 #define USB_PD_PORT_ANX7447	0
 #define USB_PD_PORT_PS8751	1
 
@@ -69,9 +72,6 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 		.i2c_port = I2C_PORT_TCPC1,
 		.i2c_addr = NX20P3483_ADDR2,
 		.drv = &nx20p3483_drv,
-		.flags = PPC_CFG_FLAGS_GPIO_CONTROL,
-		.snk_gpio = GPIO_USB_C1_CHARGE_ON,
-		.src_gpio = GPIO_EN_USB_C1_5V_OUT,
 	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
@@ -117,8 +117,19 @@ void board_reset_pd_mcu(void)
 {
 	/* C0: ANX7447 does not have a reset pin. */
 
-	/* C1: Assert reset to TCPC1 (PS8751) for required delay (1ms) */
-	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
+	/*
+	 * C1: Assert reset to TCPC1 (PS8751) for required delay (1ms) only if
+	 * we have a battery, otherwise we may brown out the system.
+	 */
+	if (battery_is_present() == BP_YES) {
+		/*
+		 * TODO(crbug:846412): After refactor, ensure that battery has
+		 * enough charge to last the reboot as well
+		 */
+		gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
+		msleep(PS8XXX_RESET_DELAY_MS);
+		gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
+	} else {
+		CPRINTS("Skipping C1 TCPC reset because no battery");
+	}
 }
