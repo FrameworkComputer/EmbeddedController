@@ -193,7 +193,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ,
 				1, 1, 5, 1, 0);
 		task_clear_pending_irq(et_ctrl_regs[LOW_POWER_EXT_TIMER].irq);
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 		/*
 		 * Workaround for (b:70537592):
 		 * We have to set chip select pin as input mode in order to
@@ -203,7 +203,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 #endif
 		/* Update PLL settings. */
 		clock_pll_changed();
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 		/* (b:70537592) Change back to ESPI CS# function. */
 		IT83XX_GPIO_GPCRM5 &= ~0xc0;
 #endif
@@ -259,7 +259,7 @@ void clock_init(void)
 
 	clock_module_disable();
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	IT83XX_WUC_WUESR4 = (1 << 2);
 	task_clear_pending_irq(IT83XX_IRQ_WKINTAD);
 	/* bit2, wake-up enable for LPC access */
@@ -450,7 +450,7 @@ void clock_sleep_mode_wakeup_isr(void)
 		clock_event_timer_clock_change(EXT_PSR_8M_HZ, 0xffffffff);
 		task_clear_pending_irq(et_ctrl_regs[EVENT_EXT_TIMER].irq);
 		process_timers(0);
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 		/* disable lpc access wui */
 		task_disable_irq(IT83XX_IRQ_WKINTAD);
 		IT83XX_WUC_WUESR4 = (1 << 2);
@@ -490,7 +490,7 @@ void __idle(void)
 			/* reset low power mode hw timer */
 			IT83XX_ETWD_ETXCTRL(LOW_POWER_EXT_TIMER) |= (1 << 1);
 			sleep_mode_t0 = get_time();
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 			/* enable lpc access wui */
 			task_enable_irq(IT83XX_IRQ_WKINTAD);
 #endif

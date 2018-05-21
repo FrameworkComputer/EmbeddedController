@@ -123,7 +123,7 @@ void uart_host_interrupt(void)
 	/* Clear transmit and receive interrupt status */
 	LM4_UART_ICR(CONFIG_UART_HOST) = 0x70;
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_LPC
 	/*
 	 * If we have space in our FIFO and a character is pending in LPC,
 	 * handle that character.

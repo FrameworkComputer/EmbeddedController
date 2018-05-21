@@ -501,7 +501,7 @@ void _irq_func(void)					\
 /* If we need to handle the other type interrupts except GPIO, add code here */
 void __gpio_wk0efgh_interrupt(void)
 {
-#if defined(CONFIG_LPC) || defined(CONFIG_ESPI)
+#ifdef CONFIG_HOSTCMD_X86
 	/* Pending bit 7 or 6 or 5? */
 	if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0 , MIWU_GROUP_5), 6) &&
 	    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0 , MIWU_GROUP_5), 6)) {
@@ -510,7 +510,7 @@ void __gpio_wk0efgh_interrupt(void)
 		/* Clear pending bit of WUI */
 		SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_5), 6);
 	}
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	else if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 5) &&
 		 IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5), 5))
 		espi_espirst_handler();

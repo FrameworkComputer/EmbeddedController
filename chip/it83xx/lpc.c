@@ -136,7 +136,7 @@ static void keyboard_irq_assert(void)
  */
 static void lpc_generate_smi(void)
 {
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	espi_vw_set_wire(VW_SMI_L, 0);
 	udelay(65);
 	espi_vw_set_wire(VW_SMI_L, 1);
@@ -149,7 +149,7 @@ static void lpc_generate_smi(void)
 
 static void lpc_generate_sci(void)
 {
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	espi_vw_set_wire(VW_SCI_L, 0);
 	udelay(65);
 	espi_vw_set_wire(VW_SCI_L, 1);
@@ -700,7 +700,7 @@ static void lpc_init(void)
 	task_clear_pending_irq(IT83XX_IRQ_PMC3_IN);
 	task_enable_irq(IT83XX_IRQ_PMC3_IN);
 
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	espi_init();
 #endif
 	/* Sufficiently initialized */

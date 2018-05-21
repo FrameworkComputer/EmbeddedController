@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 The Chromium OS Authors. All rights reserved.
+/* Copyright 2016 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -70,7 +70,7 @@
 /* Optional features present on this chip */
 
 /* Note: ISH does not use the LPC bus but the protocol. */
-#define CONFIG_LPC
+#define CONFIG_HOSTCMD_LPC
 
 /* GPIO - to be implemented */
 #define GPIO_PIN(index) (index)

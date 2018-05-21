@@ -523,7 +523,7 @@ static void __gpio_irq(void)
 	}
 #endif
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	if (irq == IT83XX_IRQ_WKINTAD)
 		return;
 #endif

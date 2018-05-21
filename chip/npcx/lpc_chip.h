@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 The Chromium OS Authors. All rights reserved.
+/* Copyright 2015 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,7 +11,7 @@
 /* For host registers initialization via SIB module */
 void host_register_init(void);
 
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 /* eSPI Initialization functions */
 void espi_init(void);
 /* eSPI reset assert/de-assert interrupt */

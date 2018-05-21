@@ -52,7 +52,7 @@
  * For eSPI - it is 200 us.
  * For LPC - it is 5 us.
  */
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 #define LPC_HOST_TRANSACTION_TIMEOUT_US 200
 #else
 #define LPC_HOST_TRANSACTION_TIMEOUT_US 5
@@ -102,7 +102,7 @@ static void lpc_task_enable_irq(void)
 #endif
 	task_enable_irq(NPCX_IRQ_PM_CHAN_IBF);
 	task_enable_irq(NPCX_IRQ_PORT80);
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	task_enable_irq(NPCX_IRQ_ESPI);
 	/* Virtual Wire: SLP_S3/4/5, SUS_STAT, PLTRST, OOB_RST_WARN */
 	task_enable_irq(NPCX_IRQ_WKINTA_2);
@@ -121,7 +121,7 @@ static void lpc_task_disable_irq(void)
 #endif
 	task_disable_irq(NPCX_IRQ_PM_CHAN_IBF);
 	task_disable_irq(NPCX_IRQ_PORT80);
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	task_disable_irq(NPCX_IRQ_ESPI);
 	/* Virtual Wire: SLP_S3/4/5, SUS_STAT, PLTRST, OOB_RST_WARN */
 	task_disable_irq(NPCX_IRQ_WKINTA_2);
@@ -153,7 +153,7 @@ static void lpc_generate_smi(void)
 	udelay(65);
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(GPIO_PCH_SMI_L, 1);
-#elif defined(CONFIG_ESPI)
+#elif defined(CONFIG_HOSTCMD_ESPI)
 	/*
 	 * Don't use SET_BIT/CLEAR_BIT macro to toggle SMIB/SCIB to generate
 	 * virtual wire. Use NPCX_VW_SMI/NPCX_VW_SCI macro instead.
@@ -199,7 +199,7 @@ static void lpc_generate_sci(void)
 	udelay(65);
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
-#elif defined(CONFIG_ESPI)
+#elif defined(CONFIG_HOSTCMD_ESPI)
 	/*
 	 * Don't use SET_BIT/CLEAR_BIT macro to toggle SMIB/SCIB to generate
 	 * virtual wire. Use NPCX_VW_SMI/NPCX_VW_SCI macro instead.
@@ -812,7 +812,7 @@ int lpc_get_pltrst_asserted(void)
 	return IS_BIT_SET(NPCX_MSWCTL1, NPCX_MSWCTL1_PLTRST_ACT);
 }
 
-#ifndef CONFIG_ESPI
+#ifndef CONFIG_HOSTCMD_ESPI
 /* Initialize host settings by interrupt */
 void lpc_lreset_pltrst_handler(void)
 {
@@ -855,7 +855,7 @@ static void lpc_init(void)
 	/* Enable clock for LPC peripheral */
 	clock_enable_peripheral(CGC_OFFSET_LPC, CGC_LPC_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	/* Initialize eSPI IP */
 	espi_init();
 #else
@@ -870,7 +870,7 @@ static void lpc_init(void)
 	/* Clear Host Access Hold state */
 	NPCX_SMC_CTL = 0xC0;
 
-#ifndef CONFIG_ESPI
+#ifndef CONFIG_HOSTCMD_ESPI
 	/*
 	 * Set alternative pin from GPIO to CLKRUN no matter SERIRQ is under
 	 * continuous or quiet mode.
@@ -883,7 +883,7 @@ static void lpc_init(void)
 	 * valid if CONFIG_SCI_GPIO isn't defined. eSPI sends SMI/SCI through VW
 	 * automatically by toggling them, too. It's unnecessary to set pin mux.
 	 */
-#if !defined(CONFIG_SCI_GPIO) && !defined(CONFIG_ESPI)
+#if !defined(CONFIG_SCI_GPIO) && !defined(CONFIG_HOSTCMD_ESPI)
 	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_EC_SCI_SL);
 	SET_BIT(NPCX_DEVALT(1), NPCX_DEVALT1_SMI_SL);
 #endif
@@ -962,7 +962,7 @@ static void lpc_init(void)
 	 * Init PORT80
 	 * Enable Port80, Enable Port80 function & Interrupt & Read auto
 	 */
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	NPCX_DP80CTL = 0x2b;
 #else
 	NPCX_DP80CTL = 0x29;
@@ -1012,7 +1012,7 @@ static void lpc_init(void)
 	/* initial IO port address via SIB-write modules */
 	host_register_init();
 #else
-#ifndef CONFIG_ESPI
+#ifndef CONFIG_HOSTCMD_ESPI
 	/*
 	 * Initialize LRESET# interrupt only in case of LPC. For eSPI, there is
 	 * no dedicated GPIO pin for LRESET/PLTRST. PLTRST is indicated as a VW

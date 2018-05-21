@@ -47,7 +47,7 @@ void intc_cpu_int_group_5(void)
 	int intc_group_5 = intc_get_ec_int();
 
 	switch (intc_group_5) {
-#if defined(CONFIG_LPC) && defined(HAS_TASK_KEYPROTO)
+#if defined(CONFIG_HOSTCMD_X86) && defined(HAS_TASK_KEYPROTO)
 	case IT83XX_IRQ_KBC_OUT:
 		lpc_kbc_obe_interrupt();
 		break;
@@ -68,7 +68,7 @@ void intc_cpu_int_group_4(void)
 	int intc_group_4 = intc_get_ec_int();
 
 	switch (intc_group_4) {
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	case IT83XX_IRQ_PMC_IN:
 		pm1_ibf_interrupt();
 		break;
@@ -106,7 +106,7 @@ void intc_cpu_int_group_12(void)
 		peci_interrupt();
 		break;
 #endif
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	case IT83XX_IRQ_ESPI:
 		espi_interrupt();
 		break;

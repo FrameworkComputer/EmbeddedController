@@ -151,7 +151,7 @@ void system_pre_init(void)
 	MCHP_EC_AHB_ERR = 0;	/* write any value to clear */
 	MCHP_EC_AHB_ERR_EN = 0; /* enable capture of address on error */
 
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	MCHP_EC_GPIO_BANK_PWR |= MCHP_EC_GPIO_BANK_PWR_VTR3_18;
 #endif
 

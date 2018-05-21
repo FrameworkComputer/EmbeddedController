@@ -85,7 +85,7 @@ static void lpc_generate_smi(void)
 {
 	/* CPRINTS("LPC Pulse SMI"); */
 	trace0(0, LPC, 0, "LPC Pulse SMI");
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	/* eSPI: pulse SMI# Virtual Wire low */
 	espi_vw_pulse_wire(VW_SMI_L, 0);
 #else
@@ -104,7 +104,7 @@ static void lpc_generate_sci(void)
 	udelay(65);
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #else
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	espi_vw_pulse_wire(VW_SCI_L, 0);
 #else
 	MCHP_ACPI_PM_STS |= 1;
@@ -127,7 +127,7 @@ static void lpc_update_wake(host_event_t wake_events)
 	 */
 	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
 
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	espi_vw_set_wire(VW_WAKE_L, !wake_events);
 #else
 	/* Signal is asserted low when wake events is non-zero */
@@ -308,7 +308,7 @@ void lpc_mem_mapped_init(void)
  * For eSPI PLATFORM_RESET# virtual wire is used as LRESET#
  *
  */
-#ifndef CONFIG_ESPI
+#ifndef CONFIG_HOSTCMD_ESPI
 static void setup_lpc(void)
 {
 	gpio_config_module(MODULE_LPC, 1);
@@ -425,7 +425,7 @@ static void lpc_init(void)
 
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_P80CAP0);
 
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 
 	espi_init();
 
@@ -490,7 +490,7 @@ void lpc_set_init_done(int val)
  */
 void lpcrst_interrupt(enum gpio_signal signal)
 {
-#ifndef CONFIG_ESPI
+#ifndef CONFIG_HOSTCMD_ESPI
 	/* Initialize LPC module when LRESET# is deasserted */
 	if (!lpc_get_pltrst_asserted()) {
 		setup_lpc();
@@ -813,7 +813,7 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 
 int lpc_get_pltrst_asserted(void)
 {
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 	/*
 	 * eSPI PLTRST# a VWire or side-band signal
 	 * Controlled by CONFIG_ESPI_PLTRST_IS_VWIRE

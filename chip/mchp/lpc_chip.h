@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_LPC_CHIP_H
 #define __CROS_EC_LPC_CHIP_H
 
-#ifdef CONFIG_ESPI
+#ifdef CONFIG_HOSTCMD_ESPI
 
 #include "espi.h"
 

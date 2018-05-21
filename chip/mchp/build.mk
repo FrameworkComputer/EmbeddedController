@@ -32,12 +32,12 @@ endif
 chip-y=clock.o gpio.o hwtimer.o system.o uart.o port80.o tfdp.o
 chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_DMA)+=dma.o
-chip-$(CONFIG_ESPI)+=espi.o
+chip-$(CONFIG_HOSTCMD_ESPI)+=espi.o
 chip-$(CONFIG_FANS)+=fan.o
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_MEC_GPIO_EC_CMDS)+=gpio_cmds.o
-chip-$(CONFIG_LPC)+=lpc.o
+chip-$(CONFIG_HOSTCMD_X86)+=lpc.o
 chip-$(CONFIG_MCHP_GPSPI)+=gpspi.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o qmspi.o

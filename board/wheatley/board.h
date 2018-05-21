@@ -150,7 +150,7 @@
 #undef CONFIG_CMD_PWR_AVG
 
 /* Features of eSPI */
-#undef CONFIG_ESPI       /* Use eSPI protocol for host interface of x86 CPU */
+#undef CONFIG_HOSTCMD_ESPI
 #undef CONFIG_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
 
 #ifndef __ASSEMBLER__

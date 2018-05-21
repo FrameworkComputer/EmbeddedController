@@ -93,7 +93,7 @@
 /* Optional features present on this chip */
 #define CONFIG_ADC
 #define CONFIG_HOSTCMD_ALIGNED
-#define CONFIG_LPC
+#define CONFIG_HOSTCMD_LPC
 #define CONFIG_PECI
 #define CONFIG_SWITCH
 #define CONFIG_MPU
