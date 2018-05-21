@@ -3401,15 +3401,6 @@
 #error Must select one type of host communication bus.
 #endif
 
-/* TODO(chromium:818804): Remove temp transition code below once finished */
-#ifdef CONFIG_HOSTCMD_ESPI
-#define CONFIG_LPC
-#define CONFIG_ESPI
-#endif
-
-#ifdef CONFIG_HOSTCMD_LPC
-#define CONFIG_LPC
-#endif
 /******************************************************************************/
 /*
  * Set default data ram size unless it's customized by the chip.

@@ -19,7 +19,6 @@
 
 /* Modules we want to exclude */
 #undef CONFIG_LID_SWITCH
-#undef CONFIG_LPC /* TODO(chromium:818804): Remove after transition */
 #undef CONFIG_HOSTCMD_LPC
 #undef CONFIG_PECI
 #undef CONFIG_SWITCH
