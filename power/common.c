@@ -209,7 +209,7 @@ void power_set_state(enum power_state new_state)
 		want_g3_exit = 0;
 }
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 
 /* If host doesn't program s0ix lazy wake mask, use default s0ix mask */
 #define DEFAULT_WAKE_MASK_S0IX  (EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \

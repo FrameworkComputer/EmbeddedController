@@ -40,7 +40,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_PSTORE
 		| EC_FEATURE_MASK_0(EC_FEATURE_PSTORE)
 #endif
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 		| EC_FEATURE_MASK_0(EC_FEATURE_PORT80)
 #endif
 #ifdef CONFIG_TEMP_SENSOR

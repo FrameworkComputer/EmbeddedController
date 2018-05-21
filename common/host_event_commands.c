@@ -46,7 +46,7 @@ static void host_event_set_bit(host_event_t *ev, uint8_t bit)
 		*ptr = HOST_EVENT_32BIT_MASK(bit);
 }
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 
 #define LPC_SYSJUMP_TAG 0x4c50  /* "LP" */
 #define LPC_SYSJUMP_OLD_VERSION 1
@@ -228,7 +228,7 @@ static host_event_t events;
 static host_event_t events_copy_b;
 
 /* Lazy wake masks */
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 static struct lazy_wake_masks {
 	host_event_t s3_lazy_wm;
 	host_event_t s5_lazy_wm;
@@ -258,7 +258,7 @@ static void host_events_atomic_clear(host_event_t *e, host_event_t m)
 #endif
 }
 
-#if !defined(CONFIG_LPC) && defined(CONFIG_MKBP_EVENT)
+#if !defined(CONFIG_HOSTCMD_X86) && defined(CONFIG_MKBP_EVENT)
 static void host_events_send_mkbp_event(host_event_t e)
 {
 #ifdef CONFIG_HOST_EVENT64
@@ -288,7 +288,7 @@ void host_set_events(host_event_t mask)
 	mask &= CONFIG_HOST_EVENT_REPORT_MASK;
 #endif
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	/*
 	 * Host only cares about the events for which the masks are set either
 	 * in wake mask, SCI mask or SMI mask. In addition to that, there are
@@ -309,7 +309,7 @@ void host_set_events(host_event_t mask)
 	host_events_atomic_or(&events, mask);
 	host_events_atomic_or(&events_copy_b, mask);
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	lpc_set_host_event_state(events);
 #else
 	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
@@ -319,7 +319,7 @@ void host_set_events(host_event_t mask)
 #endif
 	host_events_send_mkbp_event(events);
 #endif  /* CONFIG_MKBP_EVENT */
-#endif  /* !CONFIG_LPC */
+#endif  /* !CONFIG_HOSTCMD_X86 */
 }
 
 void host_set_single_event(enum host_event_code event)
@@ -355,17 +355,17 @@ void host_clear_events(host_event_t mask)
 
 	host_events_atomic_clear(&events, mask);
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	lpc_set_host_event_state(events);
 #else
 	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) = events;
 #ifdef CONFIG_MKBP_EVENT
 	host_events_send_mkbp_event(events);
 #endif
-#endif  /* !CONFIG_LPC */
+#endif  /* !CONFIG_HOSTCMD_X86 */
 }
 
-#ifndef CONFIG_LPC
+#ifndef CONFIG_HOSTCMD_X86
 static int host_get_next_event(uint8_t *out)
 {
 	uint32_t event_out = (uint32_t)events;
@@ -435,7 +435,7 @@ static int command_host_event(int argc, char **argv)
 			host_clear_events(i);
 		else if (!strcasecmp(argv[1], "clearb"))
 			host_clear_events_b(i);
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 		else if (!strcasecmp(argv[1], "smi"))
 			lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, i);
 		else if (!strcasecmp(argv[1], "sci"))
@@ -453,7 +453,7 @@ static int command_host_event(int argc, char **argv)
 	/* Print current SMI/SCI status */
 	HOST_EVENT_CCPRINTF("Events:             ", host_get_events());
 	HOST_EVENT_CCPRINTF("Events-B:           ", events_copy_b);
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	HOST_EVENT_CCPRINTF("SMI mask:           ",
 		 lpc_get_host_event_mask(LPC_HOST_EVENT_SMI));
 	HOST_EVENT_CCPRINTF("SCI mask:           ",
@@ -472,7 +472,7 @@ DECLARE_CONSOLE_COMMAND(hostevent, command_host_event,
 /*****************************************************************************/
 /* Host commands */
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 
 static int host_event_get_smi_mask(struct host_cmd_handler_args *args)
 {
@@ -552,7 +552,7 @@ uint8_t lpc_is_active_wm_set_by_host(void)
 	return active_wm_set_by_host;
 }
 
-#endif  /* CONFIG_LPC */
+#endif  /* CONFIG_HOSTCMD_X86 */
 
 static int host_event_get_b(struct host_cmd_handler_args *args)
 {
@@ -602,7 +602,7 @@ static int host_event_action_get(struct host_cmd_handler_args *args)
 	case EC_HOST_EVENT_B:
 		r->value = events_copy_b;
 		break;
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	case EC_HOST_EVENT_SCI_MASK:
 		r->value = lpc_get_host_event_mask(LPC_HOST_EVENT_SCI);
 		break;
@@ -643,7 +643,7 @@ static int host_event_action_set(struct host_cmd_handler_args *args)
 	host_event_t mask_value __unused = (host_event_t)(p->value);
 
 	switch (p->mask_type) {
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	case EC_HOST_EVENT_SCI_MASK:
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, mask_value);
 		break;
@@ -723,7 +723,7 @@ DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT,
 #define LAZY_WAKE_MASK_SYSJUMP_TAG		0x4C4D /* LM - Lazy Mask*/
 #define LAZY_WAKE_MASK_HOOK_VERSION		1
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 int get_lazy_wake_mask(enum power_state state, host_event_t *mask)
 {
 	int ret = EC_SUCCESS;

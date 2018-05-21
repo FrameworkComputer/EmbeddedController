@@ -160,7 +160,7 @@ test_mockable __keep int main(void)
 	 * done, lpc always report mask needs to be initialized
 	 * correctly.
 	 */
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 	lpc_init_mask();
 #endif
 #ifdef HAS_TASK_KEYSCAN

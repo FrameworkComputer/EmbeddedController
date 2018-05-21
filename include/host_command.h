@@ -184,7 +184,7 @@ host_event_t host_get_events(void);
  */
 int host_is_event_set(enum host_event_code event);
 
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 
 /*
  * Get lazy wake masks for the sleep state provided

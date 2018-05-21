@@ -51,7 +51,7 @@ CONSOLE_CHANNEL(CC_LIDANGLE,     "lidangle")
 #ifdef HAS_TASK_LIGHTBAR
 CONSOLE_CHANNEL(CC_LIGHTBAR,     "lightbar")
 #endif
-#ifdef CONFIG_LPC
+#ifdef CONFIG_HOSTCMD_X86
 CONSOLE_CHANNEL(CC_LPC,          "lpc")
 #endif
 CONSOLE_CHANNEL(CC_MOTION_LID,   "motionlid")
