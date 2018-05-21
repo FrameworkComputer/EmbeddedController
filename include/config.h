@@ -1172,9 +1172,6 @@
  */
 #undef CONFIG_EMULATED_SYSRQ
 
-/* Support for eSPI for host communication */
-#undef CONFIG_ESPI
-
 /* Use Virtual Wire signals instead of GPIO with eSPI interface */
 #undef CONFIG_ESPI_VW_SIGNALS
 
@@ -2074,8 +2071,17 @@
  */
 #undef CONFIG_LOW_POWER_S0
 
-/* Support LPC interface */
-#undef CONFIG_LPC
+/*
+ * EC supports x86 host communication with AP. This can either be through LPC
+ * or eSPI. The CONFIG_HOSTCMD_X86 will get automatically defined if either
+ * CONFIG_HOSTCMD_LPC or CONFIG_HOSTCMD_ESPI are defined. LPC and eSPI are
+ * mutually exclusive.
+ */
+#undef CONFIG_HOSTCMD_X86
+/* Support host command interface over LPC bus. */
+#undef CONFIG_HOSTCMD_LPC
+/* Support host command interface over eSPI bus. */
+#undef CONFIG_HOSTCMD_ESPI
 
 /* Base address of low power RAM. */
 #undef CONFIG_LPRAM_BASE
@@ -3376,6 +3382,34 @@
 #include "config_chip.h"
 #include "board.h"
 
+/******************************************************************************/
+/*
+ * Automatically define CONFIG_HOSTCMD_X86 if either child option is defined.
+ * Ensure LPC and eSPI are mutually exclusive
+ */
+#if defined(CONFIG_HOSTCMD_LPC) || defined(CONFIG_HOSTCMD_ESPI)
+#define CONFIG_HOSTCMD_X86
+#endif
+
+#if defined(CONFIG_HOSTCMD_LPC) && defined(CONFIG_HOSTCMD_ESPI)
+#error Must select only one type of host communication bus.
+#endif
+
+#if defined(CONFIG_HOSTCMD_X86) && \
+	!defined(CONFIG_HOSTCMD_LPC) && \
+	!defined(CONFIG_HOSTCMD_ESPI)
+#error Must select one type of host communication bus.
+#endif
+
+/* TODO(chromium:818804): Remove temp transition code below once finished */
+#ifdef CONFIG_HOSTCMD_ESPI
+#define CONFIG_LPC
+#define CONFIG_ESPI
+#endif
+
+#ifdef CONFIG_HOSTCMD_LPC
+#define CONFIG_LPC
+#endif
 /******************************************************************************/
 /*
  * Set default data ram size unless it's customized by the chip.
