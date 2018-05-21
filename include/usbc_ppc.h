@@ -123,8 +123,8 @@ struct ppc_config_t {
 	const struct ppc_drv *drv;
 };
 
-extern const struct ppc_config_t ppc_chips[];
-extern const unsigned int ppc_cnt;
+extern struct ppc_config_t ppc_chips[];
+extern unsigned int ppc_cnt;
 
 /**
  * Initializes the PPC for the specified port.

@@ -306,7 +306,7 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 /* TODO(aaboagye): Add the other ports. 3 for Zoombini, 2 for Meowth */
-const struct ppc_config_t ppc_chips[] = {
+struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr = SN5S330_ADDR0,
@@ -325,7 +325,7 @@ const struct ppc_config_t ppc_chips[] = {
 	}
 #endif /* defined(BOARD_ZOOMBINI) */
 };
-const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 #ifdef BOARD_ZOOMBINI
 /* BC 1.2 chip Configuration */

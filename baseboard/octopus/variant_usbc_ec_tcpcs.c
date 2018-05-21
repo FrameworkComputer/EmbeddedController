@@ -78,7 +78,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_COUNT] = {
 
 /******************************************************************************/
 /* USB-C PPC Configuration */
-const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
+struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		.i2c_port = I2C_PORT_USBC0,
 		.i2c_addr = SN5S330_ADDR0,
@@ -90,7 +90,7 @@ const struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_COUNT] = {
 		.drv = &sn5s330_drv
 	},
 };
-const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /******************************************************************************/
 /* Power Delivery and charing functions */

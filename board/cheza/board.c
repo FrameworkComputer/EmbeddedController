@@ -169,7 +169,7 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* Power Path Controller */
-const struct ppc_config_t ppc_chips[] = {
+struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr = SN5S330_ADDR0,
@@ -182,7 +182,7 @@ const struct ppc_config_t ppc_chips[] = {
 	 * which are controlled directly by EC GPIOs.
 	 */
 };
-const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {

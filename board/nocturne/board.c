@@ -247,7 +247,7 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
-const struct ppc_config_t ppc_chips[] = {
+struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
 		.i2c_addr = SN5S330_ADDR0,
@@ -259,7 +259,7 @@ const struct ppc_config_t ppc_chips[] = {
 		.drv = &sn5s330_drv,
 	},
 };
-const unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_COUNT] = {
 	{
