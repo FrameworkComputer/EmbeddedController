@@ -32,8 +32,7 @@ void system_mpu_config(void)
 #error "Do not enable CONFIG_HIBERNATE_PSL if npcx ec doesn't support PSL mode!"
 #endif
 
-/* Hibernate function implemented by PSL (Power Switch Logic) mode. */
-void __keep __attribute__ ((noreturn)) __enter_hibernate_in_psl(void)
+void system_enter_psl_mode(void)
 {
 	/* Configure pins from GPIOs to PSL which rely on VSBY power rail. */
 	gpio_config_module(MODULE_PMU, 1);
@@ -49,7 +48,12 @@ void __keep __attribute__ ((noreturn)) __enter_hibernate_in_psl(void)
 	 * setting bit 5 of PDOUT(8).
 	 */
 	SET_BIT(NPCX_PDOUT(GPIO_PORT_8), 5);
+}
 
+/* Hibernate function implemented by PSL (Power Switch Logic) mode. */
+void __keep __attribute__ ((noreturn)) __enter_hibernate_in_psl(void)
+{
+	system_enter_psl_mode();
 	/* Spin and wait for PSL cuts power; should never return */
 	while (1)
 		;

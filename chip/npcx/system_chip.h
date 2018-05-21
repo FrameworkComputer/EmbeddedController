@@ -67,6 +67,9 @@ extern unsigned int __flash_lplfw_end;
 /* Configure PSL mode setting for the wake-up pins. */
 int system_config_psl_mode(enum gpio_signal signal);
 
+/* Configure PSL pins and enter PSL mode. */
+void system_enter_psl_mode(void);
+
 /* End address for hibernate utility; defined in linker script */
 extern unsigned int __after_init_end;
 
