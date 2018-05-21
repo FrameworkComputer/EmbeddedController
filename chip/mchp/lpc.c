@@ -816,7 +816,7 @@ int lpc_get_pltrst_asserted(void)
 #ifdef CONFIG_HOSTCMD_ESPI
 	/*
 	 * eSPI PLTRST# a VWire or side-band signal
-	 * Controlled by CONFIG_ESPI_PLTRST_IS_VWIRE
+	 * Controlled by CONFIG_HOSTCMD_ESPI_PLTRST_IS_VWIRE
 	 */
 	return espi_vw_get_wire(VW_PLTRST_L);
 #else

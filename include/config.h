@@ -1173,35 +1173,6 @@
  */
 #undef CONFIG_EMULATED_SYSRQ
 
-/* Use Virtual Wire signals instead of GPIO with eSPI interface */
-#undef CONFIG_ESPI_VW_SIGNALS
-
-/* MCHP next two items are EC eSPI slave configuration */
-/* Maximum clock frequence eSPI EC slave advertises
- * Values in MHz are 20, 25, 33, 50, and 66
- */
-#undef CONFIG_ESPI_EC_MAX_FREQ
-
-/* EC eSPI slave advertises IO lanes
- * 0 = Single
- * 1 = Single and Dual
- * 2 = Single and Quad
- * 3 = Single, Dual, and Quad
- */
-#undef CONFIG_ESPI_EC_MODE
-
-/* Bit map of eSPI channels EC advertises
- * bit[0] = 1 Peripheral channel
- * bit[1] = 1 Virtual Wire channel
- * bit[2] = 1 OOB channel
- * bit[3] = 1 Flash channel
- */
-#undef CONFIG_ESPI_EC_CHAN_BITMAP
-
-/* Use Virtual Wire for Platform Reset instead of a sideband signal */
-#undef CONFIG_ESPI_PLTRST_IS_VWIRE
-
-
 /* Include code for handling external power */
 #define CONFIG_EXTPOWER
 
@@ -2083,6 +2054,34 @@
 #undef CONFIG_HOSTCMD_LPC
 /* Support host command interface over eSPI bus. */
 #undef CONFIG_HOSTCMD_ESPI
+
+/* Use Virtual Wire signals instead of GPIO with eSPI interface */
+#undef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
+
+/* MCHP next two items are EC eSPI slave configuration */
+/* Maximum clock frequence eSPI EC slave advertises
+ * Values in MHz are 20, 25, 33, 50, and 66
+ */
+#undef CONFIG_HOSTCMD_ESPI_EC_MAX_FREQ
+
+/* EC eSPI slave advertises IO lanes
+ * 0 = Single
+ * 1 = Single and Dual
+ * 2 = Single and Quad
+ * 3 = Single, Dual, and Quad
+ */
+#undef CONFIG_HOSTCMD_ESPI_EC_MODE
+
+/* Bit map of eSPI channels EC advertises
+ * bit[0] = 1 Peripheral channel
+ * bit[1] = 1 Virtual Wire channel
+ * bit[2] = 1 OOB channel
+ * bit[3] = 1 Flash channel
+ */
+#undef CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP
+
+/* Use Virtual Wire for Platform Reset instead of a sideband signal */
+#undef CONFIG_HOSTCMD_ESPI_PLTRST_IS_VWIRE
 
 /* Base address of low power RAM. */
 #undef CONFIG_LPRAM_BASE

@@ -377,7 +377,7 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 	pm_set_status(LPC_ACPI_CMD, mask, 0);
 }
 
-#ifndef CONFIG_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
 int lpc_get_pltrst_asserted(void)
 {
 	return !gpio_get_level(GPIO_PCH_PLTRST_L);
@@ -677,7 +677,7 @@ static void lpc_init(void)
 	 */
 	IT83XX_GCTRL_SPCTRL1 |= 0xC2;
 
-#ifndef CONFIG_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
 	gpio_enable_interrupt(GPIO_PCH_PLTRST_L);
 #endif
 
@@ -715,7 +715,7 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
-#ifndef CONFIG_ESPI_VW_SIGNALS
+#ifndef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
 void lpcrst_interrupt(enum gpio_signal signal)
 {
 	if (lpc_get_pltrst_asserted())

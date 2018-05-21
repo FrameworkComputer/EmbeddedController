@@ -151,7 +151,7 @@
 
 /* Features of eSPI */
 #undef CONFIG_HOSTCMD_ESPI
-#undef CONFIG_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
+#undef CONFIG_HOSTCMD_ESPI_VW_SIGNALS /* Use VW signals instead of GPIOs */
 
 #ifndef __ASSEMBLER__
 

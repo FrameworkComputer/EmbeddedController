@@ -45,7 +45,7 @@ enum sys_sleep_state {
 };
 
 static const int sleep_sig[] = {
-#ifdef CONFIG_ESPI_VW_SIGNALS
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
 	[SYS_SLEEP_S3] = VW_SLP_S3_L,
 	[SYS_SLEEP_S4] = VW_SLP_S4_L,
 #else
@@ -98,7 +98,7 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, power_up_inhibited_cb, HOOK_PRIO_DEFAULT);
 /* Get system sleep state through GPIOs or VWs */
 static inline int chipset_get_sleep_signal(enum sys_sleep_state state)
 {
-#ifdef CONFIG_ESPI_VW_SIGNALS
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SIGNALS
 	if (espi_signal_is_vw(sleep_sig[state]))
 		return espi_vw_get_wire(sleep_sig[state]);
 	else

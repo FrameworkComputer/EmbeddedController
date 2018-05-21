@@ -100,7 +100,7 @@
  * Values in MHz are 20, 25, 33, 50, and 66
  */
 /* KBL + EVB fly-wire hook up only supports 20MHz */
-#define CONFIG_ESPI_EC_MAX_FREQ		20
+#define CONFIG_HOSTCMD_ESPI_EC_MAX_FREQ		20
 
 /*
  * EC eSPI slave advertises IO lanes
@@ -110,7 +110,7 @@
  * 3 = Single, Dual, and Quad
  */
 /* KBL + EVB fly-wire hook up only support Single mode */
-#define CONFIG_ESPI_EC_MODE		0
+#define CONFIG_HOSTCMD_ESPI_EC_MODE		0
 
 /*
  * Bit map of eSPI channels EC advertises
@@ -119,13 +119,13 @@
  * bit[2] = 1 OOB channel
  * bit[3] = 1 Flash channel
  */
-#define CONFIG_ESPI_EC_CHAN_BITMAP	0x0F
+#define CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP	0x0F
 
 /*
  * MEC17xx EVB + KBL RVP3 board uses eSPI default of
  * Platform Reset being a virtual wire.
  */
-#define CONFIG_ESPI_PLTRST_IS_VWIRE
+#define CONFIG_HOSTCMD_ESPI_PLTRST_IS_VWIRE
 
 #define CONFIG_MCHP_ESPI_VW_SAVE_ON_SLEEP
 
@@ -172,7 +172,7 @@
 #define CONFIG_CHIPSET_RESET_HOOK
 
 #define CONFIG_HOSTCMD_ESPI
-#define CONFIG_ESPI_VW_SIGNALS
+#define CONFIG_HOSTCMD_ESPI_VW_SIGNALS
 
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_EXTPOWER_GPIO
